@@ -1,0 +1,27 @@
+AIG Studio 5.0 - First Core Test Report
+Date: 2026-09-15
+
+Environment available here:
+- OpenJDK 21
+- Kotlin compiler 1.9.0
+- No Android SDK / Gradle executable in this container
+
+Executed regression tests:
+PASS - Deleting one side of a rectangle leaves exactly 3 open line entities; no auto-created triangle.
+PASS - Undo/Redo restores/deletes the same entity deterministically.
+PASS - C5 true geometry on a 90-degree corner.
+PASS - R5 true tangent geometry on a 90-degree corner.
+PASS - Independent corner radii: left R5 and right R10 remain independent.
+PASS - One coordinate transform round-trip and zoom-focus preservation.
+PASS - CAD/CAM isolation through immutable geometry snapshot.
+
+Android UI source included:
+- Adaptive wrapping toolbar
+- Functional Line / Rectangle / Circle / Delete / C / R / Undo / Redo / Pan
+- Pinch zoom and world-coordinate grid
+- Selected tool visual highlight
+- No placeholder buttons in the current first-screen source
+
+APK status:
+NOT BUILT in this environment because Android SDK/Gradle are not installed here.
+The source project is structured for Android Studio / Gradle build once an Android build environment is available.
