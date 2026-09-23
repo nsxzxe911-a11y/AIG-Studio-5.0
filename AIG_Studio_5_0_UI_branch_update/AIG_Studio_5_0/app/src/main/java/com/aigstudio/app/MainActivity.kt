@@ -241,7 +241,7 @@ class CadView(context: Context) : View(context) {
         drawGrid(canvas)
         drawEntities(canvas)
         firstPoint?.let { val p = transform.worldToScreen(it); canvas.drawCircle(p.x.toFloat(), p.y.toFloat(), 8f, accentPaint) }
-        canvas.drawText("RES 0.001 mm • FMT 0.000 • ${tool.name}   X ${DisplayFormat.mm(lastWorld.x)}  Y ${DisplayFormat.mm(lastWorld.y)}   C${DisplayFormat.mm(chamferValue)} R${DisplayFormat.mm(filletValue)}", 16f, 26f, textPaint)
+        canvas.drawText("G54 工件座標 • RES 0.001 mm • FMT 0.000 • ${tool.name}   X${DisplayFormat.mm(lastWorld.x)} Y${DisplayFormat.mm(lastWorld.y)}   C${DisplayFormat.mm(chamferValue)} R${DisplayFormat.mm(filletValue)}", 16f, 26f, textPaint)
     }
 
     private fun drawGrid(canvas: Canvas) {
@@ -252,7 +252,7 @@ class CadView(context: Context) : View(context) {
         while (y < height) { canvas.drawLine(0f, y.toFloat(), width.toFloat(), y.toFloat(), gridPaint); y += step }
         canvas.drawLine(0f, transform.originScreenY.toFloat(), width.toFloat(), transform.originScreenY.toFloat(), axisPaint)
         canvas.drawLine(transform.originScreenX.toFloat(), 0f, transform.originScreenX.toFloat(), height.toFloat(), axisPaint)
-        canvas.drawText("歸零點 X0.000 Y0.000", transform.originScreenX.toFloat()+8f, transform.originScreenY.toFloat()-8f, textPaint)
+        canvas.drawText("G54 歸零點 X0.000 Y0.000", transform.originScreenX.toFloat()+8f, transform.originScreenY.toFloat()-8f, textPaint)
     }
 
     private fun drawEntities(canvas: Canvas) {
