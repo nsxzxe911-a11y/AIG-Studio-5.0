@@ -1,0 +1,145 @@
+name: AIG Studio 5.0 Signed Android Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: aig-studio-signed-android-release
+  cancel-in-progress: true
+
+jobs:
+  signed-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require same-revision Android Runtime PASS
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ROW="$(gh run list -R "${{ github.repository }}" --workflow main.yml --branch main --limit 20 --json databaseId,status,conclusion,headSha --jq '.[] | select(.headSha=="'"$GITHUB_SHA"'") | [.databaseId,.status,.conclusion,.headSha] | @tsv' | head -1)"
+          test -n "$ROW" || { echo "BLOCKED: no Studio Android Runtime Gate for $GITHUB_SHA"; exit 40; }
+          RUN_ID="$(printf '%s' "$ROW" | cut -f1)"
+          STATUS="$(printf '%s' "$ROW" | cut -f2)"
+          CONCLUSION="$(printf '%s' "$ROW" | cut -f3)"
+          test "$STATUS" = "completed"
+          test "$CONCLUSION" = "success"
+          echo "STUDIO_ANDROID_RUNTIME_SOURCE_RUN=$RUN_ID"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android signing tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Require locked production Android signing identity
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.STUDIO_ANDROID_RELEASE_KEYSTORE_B64 }}
+          STORE_PASSWORD: ${{ secrets.STUDIO_ANDROID_RELEASE_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.STUDIO_ANDROID_RELEASE_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.STUDIO_ANDROID_RELEASE_KEY_ALIAS }}
+          EXPECTED_CERT_SHA256: ${{ secrets.STUDIO_ANDROID_RELEASE_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          test -n "$KEYSTORE_B64" || { echo 'BLOCKED: missing STUDIO_ANDROID_RELEASE_KEYSTORE_B64'; exit 41; }
+          test -n "$STORE_PASSWORD" || { echo 'BLOCKED: missing STUDIO_ANDROID_RELEASE_STORE_PASSWORD'; exit 41; }
+          test -n "$KEY_PASSWORD" || { echo 'BLOCKED: missing STUDIO_ANDROID_RELEASE_KEY_PASSWORD'; exit 41; }
+          test -n "$KEY_ALIAS" || { echo 'BLOCKED: missing STUDIO_ANDROID_RELEASE_KEY_ALIAS'; exit 41; }
+          test -n "$EXPECTED_CERT_SHA256" || { echo 'BLOCKED: missing STUDIO_ANDROID_RELEASE_CERT_SHA256'; exit 41; }
+          mkdir -p private-signing signed-release
+          printf '%s' "$KEYSTORE_B64" | base64 -d > private-signing/studio-release.jks
+          chmod 600 private-signing/studio-release.jks
+          echo "STUDIO_STORE_PASSWORD=$STORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "STUDIO_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+          echo "STUDIO_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "STUDIO_EXPECTED_CERT_SHA256=$(printf '%s' "$EXPECTED_CERT_SHA256" | tr '[:upper:]' '[:lower:]' | tr -d ': ')" >> "$GITHUB_ENV"
+          keytool -list -v -keystore private-signing/studio-release.jks -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" > signed-release/KEYSTORE_IDENTITY.txt
+
+      - name: Build unsigned release APK
+        working-directory: AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0
+        run: gradle --no-daemon clean :app:assembleRelease --stacktrace
+
+      - name: Align sign verify and lock APK identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          BT="$ANDROID_HOME/build-tools/35.0.0"
+          UNSIGNED="AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/app/build/outputs/apk/release/app-release-unsigned.apk"
+          ALIGNED="signed-release/studio-release-aligned.apk"
+          FINAL="signed-release/AIG_Studio_5_0_RGB_FULL_RELEASE.apk"
+          test -f "$UNSIGNED"
+          "$BT/zipalign" -f -p 4 "$UNSIGNED" "$ALIGNED"
+          "$BT/apksigner" sign --ks private-signing/studio-release.jks --ks-key-alias "$STUDIO_KEY_ALIAS" --ks-pass env:STUDIO_STORE_PASSWORD --key-pass env:STUDIO_KEY_PASSWORD --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out "$FINAL" "$ALIGNED"
+          "$BT/zipalign" -c -v 4 "$FINAL" | tee signed-release/ZIPALIGN_VERIFY.txt
+          "$BT/apksigner" verify --verbose --print-certs "$FINAL" | tee signed-release/APKSIGNER_VERIFY.txt
+          "$BT/aapt" dump badging "$FINAL" | tee signed-release/APK_BADGING.txt
+          sha256sum "$FINAL" | tee signed-release/APK_SHA256.txt
+          grep -q "package: name='com.aigstudio.app'" signed-release/APK_BADGING.txt
+          grep -q "versionCode='50000'" signed-release/APK_BADGING.txt
+          grep -q "versionName='5.0.0'" signed-release/APK_BADGING.txt
+          grep -q 'Verified using v2 scheme (APK Signature Scheme v2): true' signed-release/APKSIGNER_VERIFY.txt
+          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signed-release/APKSIGNER_VERIFY.txt | head -1 | tr '[:upper:]' '[:lower:]' | tr -d ': \r\n')"
+          echo "EXPECTED=$STUDIO_EXPECTED_CERT_SHA256" | tee signed-release/RELEASE_CERT_GATE.txt
+          echo "ACTUAL=$ACTUAL" | tee -a signed-release/RELEASE_CERT_GATE.txt
+          test -n "$ACTUAL"
+          test "$ACTUAL" = "$STUDIO_EXPECTED_CERT_SHA256"
+          echo 'STUDIO_ANDROID_SIGNING_IDENTITY=PASS' | tee -a signed-release/RELEASE_CERT_GATE.txt
+
+      - name: Install emulator runtime libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libpulse0
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; else echo 'BLOCKED: /dev/kvm unavailable'; exit 42; fi
+
+      - name: Signed APK fresh upgrade uninstall reinstall gate
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          cores: 4
+          emulator-boot-timeout: 720
+          emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -gpu swiftshader_indirect
+          disable-animations: true
+          script: bash "$GITHUB_WORKSPACE/.github/scripts/studio_android_signed_install_gate.sh"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG_Studio_5_0_RGB_FULL_RELEASE_APK
+          path: |
+            signed-release/AIG_Studio_5_0_RGB_FULL_RELEASE.apk
+            signed-release/APKSIGNER_VERIFY.txt
+            signed-release/APK_BADGING.txt
+            signed-release/APK_SHA256.txt
+            signed-release/ZIPALIGN_VERIFY.txt
+            signed-release/RELEASE_CERT_GATE.txt
+            signed-release/install-evidence/**
+          if-no-files-found: error
+          retention-days: 90
