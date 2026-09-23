@@ -60,6 +60,19 @@ jobs:
           fi
           echo 'STUDIO_SECURITY_UPDATE_GATE=PASS'
 
+      - name: 2D CNC thousandth ruler gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          MAIN=app/src/main/java/com/aigstudio/app/MainActivity.kt
+          grep -Fq 'private fun cncRulerStepMm()' "$MAIN"
+          grep -Fq 'drawCncThousandthRulers(canvas, stepMm)' "$MAIN"
+          grep -Fq '顯示 0.000' "$MAIN"
+          grep -Fq '精度 0.001 mm' "$MAIN"
+          grep -Fq 'DisplayFormat.mm(lastWorld.x)' "$MAIN"
+          grep -Fq 'DisplayFormat.mm(lastWorld.y)' "$MAIN"
+          echo 'STUDIO_2D_CNC_THOUSANDTH_RULER_GATE=PASS'
+
       - name: Run 0.001 mm core regression
         run: bash scripts/run_core_tests.sh
 
