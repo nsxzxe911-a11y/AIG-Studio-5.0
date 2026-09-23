@@ -168,6 +168,8 @@ private fun testAiGapToleranceContract() {
 private fun testMicronDisplayScale() {
     check(micronUnits(0.001) == 1L)
     check(micronUnits(0.010) == 10L)
+    check(DisplayFormat.mm(10.0) == "10.000")
+    check(DisplayFormat.mm(10.001) == "10.001")
     assertNear(mmFromMicronUnits(1), 0.001, eps=1e-12, msg="1u")
     assertNear(mmFromMicronUnits(10), 0.010, eps=1e-12, msg="10u")
     println("✓ 0.000 display scale = 1 micron per last digit")
