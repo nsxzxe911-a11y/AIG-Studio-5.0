@@ -24,6 +24,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Record exact source revision
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $Project = Join-Path $PWD 'AIG_Studio_5_0_UI_branch_update\AIG_Studio_5_0'
+          $Evidence = Join-Path $Project 'windows-evidence'
+          New-Item -ItemType Directory -Force $Evidence | Out-Null
+          $sha = (git rev-parse HEAD).Trim()
+          "STUDIO_WINDOWS_SOURCE_SHA=$sha" | Tee-Object -FilePath (Join-Path $Evidence 'SOURCE_REVISION.txt')
+          if ($sha -ne $env:GITHUB_SHA) { throw "Source SHA mismatch: $sha != $env:GITHUB_SHA" }
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
