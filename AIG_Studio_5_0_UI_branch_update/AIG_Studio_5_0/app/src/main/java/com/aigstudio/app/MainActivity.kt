@@ -154,9 +154,13 @@ class MainActivity : Activity() {
                     orientation = LinearLayout.VERTICAL
                     setBackgroundColor(0xFF050A11.toInt())
                 }
+                val screenH = resources.displayMetrics.heightPixels
+                val min3dH = dp(220)
+                val max3dH = dp(620)
+                val threeDHeight = (screenH * 0.56f).roundToInt().coerceIn(min3dH, max3dH)
                 box.addView(
                     Machining3DView(this, result),
-                    LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(520))
+                    LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, threeDHeight)
                 )
 
                 val removed = result.removal.depth.count { it < 0.0 }
