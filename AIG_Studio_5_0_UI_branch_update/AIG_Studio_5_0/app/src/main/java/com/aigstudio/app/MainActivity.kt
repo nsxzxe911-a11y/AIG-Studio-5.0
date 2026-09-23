@@ -306,16 +306,16 @@ class CadView(context: Context) : View(context) {
     private fun handleTap(p: Vec2) {
         when (tool) {
             Tool.LINE -> twoPoint(p) { a,b ->
-                if (a.distanceTo(b) > CNC_RESOLUTION_MM) history.run(AddEntitiesCommand(listOf(Line(a=a,b=b))))
+                if (a.distanceTo(b) >= CNC_RESOLUTION_MM) history.run(AddEntitiesCommand(listOf(Line(a=a,b=b))))
             }
             Tool.RECT -> twoPoint(p) { a,b ->
-                if (abs(a.x - b.x) <= CNC_RESOLUTION_MM || abs(a.y - b.y) <= CNC_RESOLUTION_MM) return@twoPoint
+                if (abs(a.x - b.x) < CNC_RESOLUTION_MM || abs(a.y - b.y) < CNC_RESOLUTION_MM) return@twoPoint
                 history.run(AddEntitiesCommand(listOf(
                     Line(a=a,b=Vec2(b.x,a.y)), Line(a=Vec2(b.x,a.y),b=b),
                     Line(a=b,b=Vec2(a.x,b.y)), Line(a=Vec2(a.x,b.y),b=a)
                 )))
             }
-            Tool.CIRCLE -> twoPoint(p) { a,b -> a.distanceTo(b).takeIf { it > CNC_RESOLUTION_MM }?.let { history.run(AddEntitiesCommand(listOf(Circle(center=a,radius=it)))) } }
+            Tool.CIRCLE -> twoPoint(p) { a,b -> a.distanceTo(b).takeIf { it >= CNC_RESOLUTION_MM }?.let { history.run(AddEntitiesCommand(listOf(Circle(center=a,radius=it)))) } }
             Tool.DELETE -> nearest(p)?.let { history.run(DeleteEntityCommand(it.id)) }
             Tool.CHAMFER, Tool.FILLET -> selectTwoLines(p)
             Tool.PAN -> Unit
