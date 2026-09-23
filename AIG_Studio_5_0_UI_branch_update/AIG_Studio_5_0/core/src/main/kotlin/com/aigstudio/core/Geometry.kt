@@ -20,6 +20,8 @@ data class Vec2(val x: Double, val y: Double) {
 }
 
 const val EPS = 1e-9
+const val CNC_RESOLUTION_MM = 0.001
+const val JOIN_TOLERANCE_MM = 0.001
 
 typealias EntityId = String
 
@@ -93,7 +95,7 @@ object Geometry {
         // unexpectedly destroy unrelated geometry.  A tiny tolerance allows lines
         // that visually meet but differ by floating-point noise.
         val endpointGap = min(line.a.distanceTo(corner), line.b.distanceTo(corner))
-        val tolerance = max(1e-6, line.length * 1e-6)
+        val tolerance = JOIN_TOLERANCE_MM
         require(endpointGap <= tolerance) { "Selected lines must meet at their endpoints" }
     }
 
