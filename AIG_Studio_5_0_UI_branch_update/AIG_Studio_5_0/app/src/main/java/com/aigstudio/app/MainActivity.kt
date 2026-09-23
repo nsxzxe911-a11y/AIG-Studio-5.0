@@ -241,7 +241,7 @@ class CadView(context: Context) : View(context) {
         drawGrid(canvas)
         drawEntities(canvas)
         firstPoint?.let { val p = transform.worldToScreen(it); canvas.drawCircle(p.x.toFloat(), p.y.toFloat(), 8f, accentPaint) }
-        canvas.drawText("${tool.name}   X %.2f  Y %.2f   C%.2f R%.2f".format(lastWorld.x,lastWorld.y,chamferValue,filletValue), 16f, 26f, textPaint)
+        canvas.drawText("${tool.name}   X %.3f  Y %.3f   C%.3f R%.3f".format(lastWorld.x,lastWorld.y,chamferValue,filletValue), 16f, 26f, textPaint)
     }
 
     private fun drawGrid(canvas: Canvas) {
@@ -306,16 +306,16 @@ class CadView(context: Context) : View(context) {
     private fun handleTap(p: Vec2) {
         when (tool) {
             Tool.LINE -> twoPoint(p) { a,b ->
-                if (a.distanceTo(b) > 0.001) history.run(AddEntitiesCommand(listOf(Line(a=a,b=b))))
+                if (a.distanceTo(b) > CNC_RESOLUTION_MM) history.run(AddEntitiesCommand(listOf(Line(a=a,b=b))))
             }
             Tool.RECT -> twoPoint(p) { a,b ->
-                if (abs(a.x - b.x) <= 0.001 || abs(a.y - b.y) <= 0.001) return@twoPoint
+                if (abs(a.x - b.x) <= CNC_RESOLUTION_MM || abs(a.y - b.y) <= CNC_RESOLUTION_MM) return@twoPoint
                 history.run(AddEntitiesCommand(listOf(
                     Line(a=a,b=Vec2(b.x,a.y)), Line(a=Vec2(b.x,a.y),b=b),
                     Line(a=b,b=Vec2(a.x,b.y)), Line(a=Vec2(a.x,b.y),b=a)
                 )))
             }
-            Tool.CIRCLE -> twoPoint(p) { a,b -> a.distanceTo(b).takeIf { it > 0.001 }?.let { history.run(AddEntitiesCommand(listOf(Circle(center=a,radius=it)))) } }
+            Tool.CIRCLE -> twoPoint(p) { a,b -> a.distanceTo(b).takeIf { it > CNC_RESOLUTION_MM }?.let { history.run(AddEntitiesCommand(listOf(Circle(center=a,radius=it)))) } }
             Tool.DELETE -> nearest(p)?.let { history.run(DeleteEntityCommand(it.id)) }
             Tool.CHAMFER, Tool.FILLET -> selectTwoLines(p)
             Tool.PAN -> Unit
