@@ -81,6 +81,10 @@ jobs:
         with:
           gradle-version: '8.10.2'
 
+      - name: Build unsigned release APK
+        working-directory: AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0
+        run: gradle --no-daemon clean :app:assembleRelease --stacktrace
+
       - name: Require locked production Android signing identity
         shell: bash
         env:
@@ -91,12 +95,22 @@ jobs:
           EXPECTED_CERT_SHA256: ${{ secrets.STUDIO_ANDROID_RELEASE_CERT_SHA256 }}
         run: |
           set -euo pipefail
-          test -n "$KEYSTORE_B64" || { echo 'BLOCKED: missing STUDIO_ANDROID_RELEASE_KEYSTORE_B64'; exit 41; }
-          test -n "$STORE_PASSWORD" || { echo 'BLOCKED: missing STUDIO_ANDROID_RELEASE_STORE_PASSWORD'; exit 41; }
-          test -n "$KEY_PASSWORD" || { echo 'BLOCKED: missing STUDIO_ANDROID_RELEASE_KEY_PASSWORD'; exit 41; }
-          test -n "$KEY_ALIAS" || { echo 'BLOCKED: missing STUDIO_ANDROID_RELEASE_KEY_ALIAS'; exit 41; }
-          test -n "$EXPECTED_CERT_SHA256" || { echo 'BLOCKED: missing STUDIO_ANDROID_RELEASE_CERT_SHA256'; exit 41; }
           mkdir -p private-signing signed-release
+          missing=()
+          test -n "$KEYSTORE_B64" || missing+=("STUDIO_ANDROID_RELEASE_KEYSTORE_B64")
+          test -n "$STORE_PASSWORD" || missing+=("STUDIO_ANDROID_RELEASE_STORE_PASSWORD")
+          test -n "$KEY_PASSWORD" || missing+=("STUDIO_ANDROID_RELEASE_KEY_PASSWORD")
+          test -n "$KEY_ALIAS" || missing+=("STUDIO_ANDROID_RELEASE_KEY_ALIAS")
+          test -n "$EXPECTED_CERT_SHA256" || missing+=("STUDIO_ANDROID_RELEASE_CERT_SHA256")
+          if [ "${#missing[@]}" -ne 0 ]; then
+            {
+              echo "STUDIO_ANDROID_SIGNING_IDENTITY=BLOCKED"
+              for name in "${missing[@]}"; do echo "MISSING=$name"; done
+            } | tee signed-release/SIGNING_GATE.txt
+            echo "BLOCKED: production signing secret(s) missing"
+            exit 41
+          fi
+          echo "STUDIO_ANDROID_SIGNING_IDENTITY=READY" | tee signed-release/SIGNING_GATE.txt
           printf '%s' "$KEYSTORE_B64" | base64 -d > private-signing/studio-release.jks
           chmod 600 private-signing/studio-release.jks
           echo "STUDIO_STORE_PASSWORD=$STORE_PASSWORD" >> "$GITHUB_ENV"
@@ -104,10 +118,6 @@ jobs:
           echo "STUDIO_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
           echo "STUDIO_EXPECTED_CERT_SHA256=$(printf '%s' "$EXPECTED_CERT_SHA256" | tr '[:upper:]' '[:lower:]' | tr -d ': ')" >> "$GITHUB_ENV"
           keytool -list -v -keystore private-signing/studio-release.jks -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" > signed-release/KEYSTORE_IDENTITY.txt
-
-      - name: Build unsigned release APK
-        working-directory: AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0
-        run: gradle --no-daemon clean :app:assembleRelease --stacktrace
 
       - name: Align sign verify and lock APK identity
         shell: bash
@@ -156,8 +166,27 @@ jobs:
           disable-animations: true
           script: SIGNED_APK="$GITHUB_WORKSPACE/signed-release/AIG_Studio_5_0_RGB_FULL_RELEASE.apk" bash "$GITHUB_WORKSPACE/.github/scripts/studio_signed_install_gate.sh"
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload release build evidence
+        uses: actions/upload-artifact@v4
         if: always()
+        with:
+          name: AIG_Studio_5_0_RELEASE_BUILD_EVIDENCE
+          path: |
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/app/build/outputs/apk/release/app-release-unsigned.apk
+            signed-release/SIGNING_GATE.txt
+            signed-release/KEYSTORE_IDENTITY.txt
+            signed-release/APKSIGNER_VERIFY.txt
+            signed-release/APK_BADGING.txt
+            signed-release/APK_SHA256.txt
+            signed-release/ZIPALIGN_VERIFY.txt
+            signed-release/RELEASE_CERT_GATE.txt
+            signed-install-evidence/**
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Upload FINAL signed APK
+        uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: AIG_Studio_5_0_RGB_FULL_RELEASE_APK
           path: |
