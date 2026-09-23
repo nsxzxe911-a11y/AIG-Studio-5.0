@@ -37,6 +37,29 @@ jobs:
         with:
           gradle-version: "8.10.2"
 
+      - name: Security update and antivirus gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          MANIFEST=app/src/main/AndroidManifest.xml
+          SECURE=app/src/main/java/com/aigstudio/app/SecureServices.kt
+          MAIN=app/src/main/java/com/aigstudio/app/MainActivity.kt
+          grep -Fq 'android.permission.INTERNET' "$MANIFEST"
+          grep -Fq 'android.permission.ACCESS_NETWORK_STATE' "$MANIFEST"
+          grep -Fq 'android:usesCleartextTraffic="false"' "$MANIFEST"
+          grep -Fq 'SHA256withRSA' "$SECURE"
+          grep -Fq 'MessageDigest.getInstance("SHA-256")' "$SECURE"
+          grep -Fq 'APK signing certificate mismatch' "$SECURE"
+          grep -Fq 'object AppSecurityScanner' "$SECURE"
+          grep -Fq 'Executable magic=' "$SECURE"
+          grep -Fq 'SecureUpdateManager.autoCheck' "$MAIN"
+          grep -Fq 'AppSecurityScanner.scan' "$MAIN"
+          if grep -R --include='*.kt' -n 'http://' app/src/main/java; then
+            echo 'BLOCKED: clear-text URL found'
+            exit 70
+          fi
+          echo 'STUDIO_SECURITY_UPDATE_GATE=PASS'
+
       - name: Run 0.001 mm core regression
         run: bash scripts/run_core_tests.sh
 
