@@ -59,6 +59,18 @@ jobs:
         shell: bash
         run: mkdir -p runtime-evidence
 
+      - name: Enable Android emulator KVM acceleration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm
+            ls -l /dev/kvm
+          else
+            echo "BLOCKED: /dev/kvm is unavailable on this runner"
+            exit 42
+          fi
+
       - name: Install and launch on Pixel Google APIs emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
