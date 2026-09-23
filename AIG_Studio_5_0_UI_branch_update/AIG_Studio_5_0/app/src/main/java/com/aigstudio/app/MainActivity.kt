@@ -44,18 +44,18 @@ class MainActivity : Activity() {
             setBackgroundColor(0xFF07111B.toInt())
         }
         val title = TextView(this).apply {
-            text = "AIG Studio 5.0    CAD CORE"
-            setTextColor(Color.WHITE); textSize = 18f; gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(14), dp(8), dp(14), dp(8))
+            text = "AIG Studio 5.0 • 2D CAD • 原點 0.000 • 精度 0.001 mm"
+            setTextColor(Color.WHITE); textSize = 15f; gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(12), dp(6), dp(12), dp(6))
         }
-        root.addView(title, LinearLayout.LayoutParams(-1, dp(48)))
+        root.addView(title, LinearLayout.LayoutParams(-1, dp(40)))
         cad = CadView(this)
         root.addView(cad, LinearLayout.LayoutParams(-1, 0, 1f))
 
         // Branch area: hidden until a category is selected.  This keeps the CAD canvas clean.
         branchFlow = FlowLayout(this).apply { setPadding(dp(6), dp(2), dp(6), dp(2)); visibility = View.GONE }
         root.addView(branchFlow, LinearLayout.LayoutParams(-1, -2))
-        categoryFlow = FlowLayout(this).apply { setPadding(dp(6), dp(4), dp(6), dp(6)) }
+        categoryFlow = FlowLayout(this).apply { setPadding(dp(6), dp(3), dp(6), dp(4)) }
         root.addView(categoryFlow, LinearLayout.LayoutParams(-1, -2))
 
         addCategory("繪圖", 0) { showDrawingBranch() }
@@ -140,13 +140,13 @@ class MainActivity : Activity() {
         val b = toolButton(label, colors[colorIndex]); b.setOnClickListener { run() }; parent.addView(b)
     }
     private fun toolButton(label: String, color: Int) = Button(this).apply {
-        text = label; setTextColor(Color.WHITE); textSize = 14f; minWidth = dp(62); minHeight = dp(52)
+        text = label; setTextColor(Color.WHITE); textSize = 13f; minWidth = dp(64); minHeight = dp(50)
         isAllCaps = false; elevation = dp(3).toFloat(); setPadding(dp(10), 0, dp(10), 0)
         styleButton(this, color, false)
     }
     private fun styleButton(button: Button, color: Int, selected: Boolean) {
         button.background = GradientDrawable().apply {
-            cornerRadius = dp(14).toFloat(); setColor(if (selected) 0xFF173248.toInt() else 0xFF102334.toInt())
+            cornerRadius = dp(14).toFloat(); setColor(if (selected) 0xFF173248.toInt() else 0xFF0E1E2C.toInt())
             setStroke(dp(if (selected) 3 else 2), color)
         }
         button.alpha = if (selected) 1f else 0.72f
