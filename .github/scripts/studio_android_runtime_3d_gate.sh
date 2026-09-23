@@ -20,9 +20,15 @@ adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1 || true
 adb shell settings put system user_rotation 0 >/dev/null 2>&1 || true
 adb shell settings put system font_scale 1.0 >/dev/null 2>&1 || true
 
-adb install --no-streaming -r "$APK"
-adb shell am force-stop com.aigstudio.app
-adb shell am start -W -n com.aigstudio.app/.MainActivity | tee "$EVIDENCE/ANDROID_START.txt"
+PACKAGE="com.aigstudio.app"
+adb uninstall "$PACKAGE" >/dev/null 2>&1 || true
+adb install --no-streaming "$APK"
+adb shell pm path "$PACKAGE" | tee "$EVIDENCE/PM_PATH_FRESH.txt"
+adb shell dumpsys package "$PACKAGE" | grep -E 'versionCode=|versionName=' | tee "$EVIDENCE/VERSION_FRESH.txt"
+grep -q 'versionCode=50000' "$EVIDENCE/VERSION_FRESH.txt"
+grep -q 'versionName=5.0.0' "$EVIDENCE/VERSION_FRESH.txt"
+adb shell am force-stop "$PACKAGE"
+adb shell am start -W -n "$PACKAGE/.MainActivity" | tee "$EVIDENCE/ANDROID_START.txt"
 
 alive=false
 for i in $(seq 1 30); do
@@ -116,6 +122,28 @@ echo "STUDIO_TRUE_3D_INTERACTION=PASS" | tee "$EVIDENCE/TRUE_3D_GATE.txt"
 adb exec-out screencap -p > "$EVIDENCE/STARTUP.png"
 test -s "$EVIDENCE/STARTUP.png"
 adb logcat -d -t 600 > "$EVIDENCE/LOGCAT.txt" 2>/dev/null || true
+
+adb shell am force-stop "$PACKAGE"
+adb install --no-streaming -r "$APK"
+adb shell dumpsys package "$PACKAGE" | grep -E 'versionCode=|versionName=' | tee "$EVIDENCE/VERSION_UPGRADE.txt"
+adb shell am start -W -n "$PACKAGE/.MainActivity" | tee "$EVIDENCE/ANDROID_UPGRADE_START.txt"
+sleep 2
+adb shell dumpsys activity activities > "$EVIDENCE/ACTIVITY_UPGRADE.txt"
+grep -Fq "$PACKAGE/.MainActivity" "$EVIDENCE/ACTIVITY_UPGRADE.txt"
+
+adb uninstall "$PACKAGE" | tee "$EVIDENCE/UNINSTALL.txt"
+if adb shell pm path "$PACKAGE" >/dev/null 2>&1; then
+  echo "STUDIO_ANDROID_UNINSTALL=FAIL"
+  exit 67
+fi
+
+adb install --no-streaming "$APK"
+adb shell dumpsys package "$PACKAGE" | grep -E 'versionCode=|versionName=' | tee "$EVIDENCE/VERSION_CLEAN_REINSTALL.txt"
+adb shell am start -W -n "$PACKAGE/.MainActivity" | tee "$EVIDENCE/ANDROID_CLEAN_REINSTALL_START.txt"
+sleep 2
+adb shell dumpsys activity activities > "$EVIDENCE/ACTIVITY_CLEAN_REINSTALL.txt"
+grep -Fq "$PACKAGE/.MainActivity" "$EVIDENCE/ACTIVITY_CLEAN_REINSTALL.txt"
+echo "STUDIO_ANDROID_FRESH_UPGRADE_UNINSTALL_REINSTALL=PASS" | tee "$EVIDENCE/INSTALL_CYCLE_GATE.txt"
 
 {
   echo "ANDROID_EMULATOR_PROFILE=GOOGLE_APIS_PIXEL_7_HEADLESS"
