@@ -87,7 +87,7 @@ jobs:
           profile: pixel_7
           cores: 4
           emulator-boot-timeout: 720
-          emulator-options: -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -gpu swiftshader_indirect
+          emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -gpu swiftshader_indirect
           disable-animations: true
           script: |
             set -euo pipefail
@@ -141,6 +141,62 @@ jobs:
             test "$dumped" = true
             grep -Fq 'AIG Studio 5.0' "$EVIDENCE/UI.xml"
             grep -Fq '繪圖' "$EVIDENCE/UI.xml"
+
+            tap_ui_text() {
+              label="$1"
+              adb shell rm -f /data/local/tmp/aigstudio-action.xml >/dev/null 2>&1 || true
+              adb shell uiautomator dump /data/local/tmp/aigstudio-action.xml >/dev/null
+              adb exec-out cat /data/local/tmp/aigstudio-action.xml > "$EVIDENCE/UI_ACTION.xml"
+              coords="$(python3 - "$label" "$EVIDENCE/UI_ACTION.xml" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+label=sys.argv[1]
+path=sys.argv[2]
+root=ET.parse(path).getroot()
+for n in root.iter("node"):
+    text=n.attrib.get("text","")
+    desc=n.attrib.get("content-desc","")
+    if text==label or desc==label:
+        m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", n.attrib.get("bounds",""))
+        if m:
+            x1,y1,x2,y2=map(int,m.groups())
+            print((x1+x2)//2, (y1+y2)//2)
+            raise SystemExit(0)
+raise SystemExit(2)
+PY
+)"
+              test -n "$coords"
+              adb shell input tap $coords
+              sleep 1
+            }
+
+            tap_ui_text "矩形"
+            adb shell input tap 300 600
+            adb shell input tap 760 1250
+            sleep 1
+            tap_ui_text "加工 ＋"
+            tap_ui_text "3D 加工"
+
+            for i in $(seq 1 12); do
+              adb shell uiautomator dump /data/local/tmp/aigstudio-3d.xml >/dev/null 2>&1 || true
+              adb exec-out cat /data/local/tmp/aigstudio-3d.xml > "$EVIDENCE/UI_3D.xml" 2>/dev/null || true
+              if grep -Fq 'RGB 真 3D 加工' "$EVIDENCE/UI_3D.xml" && grep -Fq 'TRUE 3D' "$EVIDENCE/UI_3D.xml"; then
+                break
+              fi
+              sleep 1
+            done
+            grep -Fq 'RGB 真 3D 加工' "$EVIDENCE/UI_3D.xml"
+            grep -Fq 'TRUE 3D' "$EVIDENCE/UI_3D.xml"
+            adb exec-out screencap -p > "$EVIDENCE/TRUE_3D_BEFORE.png"
+            adb shell input swipe 300 650 760 820 450
+            sleep 1
+            adb exec-out screencap -p > "$EVIDENCE/TRUE_3D_AFTER.png"
+            test -s "$EVIDENCE/TRUE_3D_BEFORE.png"
+            test -s "$EVIDENCE/TRUE_3D_AFTER.png"
+            if cmp -s "$EVIDENCE/TRUE_3D_BEFORE.png" "$EVIDENCE/TRUE_3D_AFTER.png"; then
+              echo "STUDIO_TRUE_3D_INTERACTION=FAIL"
+              exit 66
+            fi
+            echo "STUDIO_TRUE_3D_INTERACTION=PASS" | tee "$EVIDENCE/TRUE_3D_GATE.txt"
 
             adb exec-out screencap -p > "$EVIDENCE/STARTUP.png"
             test -s "$EVIDENCE/STARTUP.png"
