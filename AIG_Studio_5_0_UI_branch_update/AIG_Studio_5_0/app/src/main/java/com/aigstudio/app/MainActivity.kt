@@ -468,8 +468,57 @@ class CadView(context: Context) : View(context) {
         canvas.drawText("精度 0.001 mm • 顯示 0.000 • ${tool.name}   X ${DisplayFormat.mm(lastWorld.x)}  Y ${DisplayFormat.mm(lastWorld.y)}   C${DisplayFormat.mm(chamferValue)} R${DisplayFormat.mm(filletValue)}", 16f, 26f, textPaint)
     }
 
+    private fun cncRulerStepMm(): Double {
+        val targetPixels = 92.0
+        var decade = CNC_RESOLUTION_MM
+        while (decade * transform.pixelsPerUnit * 10.0 < targetPixels) decade *= 10.0
+        for (m in doubleArrayOf(1.0, 2.0, 5.0, 10.0)) {
+            val step = decade * m
+            if (step * transform.pixelsPerUnit >= targetPixels) return step
+        }
+        return decade * 10.0
+    }
+
+    private fun drawCncThousandthRulers(canvas: Canvas, stepMm: Double) {
+        val left = transform.screenToWorld(Vec2(0.0, height.toDouble())).x
+        val right = transform.screenToWorld(Vec2(width.toDouble(), height.toDouble())).x
+        val top = transform.screenToWorld(Vec2(0.0, 0.0)).y
+        val bottom = transform.screenToWorld(Vec2(0.0, height.toDouble())).y
+
+        var xVal = floor(min(left, right) / stepMm) * stepMm
+        val xMax = max(left, right)
+        var guard = 0
+        while (xVal <= xMax + stepMm * 0.5 && guard < 80) {
+            val p = transform.worldToScreen(Vec2(xVal, 0.0))
+            val px = p.x.toFloat()
+            if (px >= 0f && px <= width.toFloat()) {
+                canvas.drawLine(px, height - 13f, px, height.toFloat(), axisPaint)
+                val label = DisplayFormat.mm(if (abs(xVal) < CNC_RESOLUTION_MM / 2.0) 0.0 else xVal)
+                canvas.drawText(label, px + 3f, height - 17f, textPaint)
+            }
+            xVal += stepMm
+            guard++
+        }
+
+        var yVal = floor(min(bottom, top) / stepMm) * stepMm
+        val yMax = max(bottom, top)
+        guard = 0
+        while (yVal <= yMax + stepMm * 0.5 && guard < 80) {
+            val p = transform.worldToScreen(Vec2(0.0, yVal))
+            val py = p.y.toFloat()
+            if (py >= 32f && py <= height.toFloat()) {
+                canvas.drawLine(0f, py, 13f, py, axisPaint)
+                val label = DisplayFormat.mm(if (abs(yVal) < CNC_RESOLUTION_MM / 2.0) 0.0 else yVal)
+                canvas.drawText(label, 17f, py - 4f, textPaint)
+            }
+            yVal += stepMm
+            guard++
+        }
+    }
+
     private fun drawGrid(canvas: Canvas) {
-        val step = (10.0 * transform.pixelsPerUnit).coerceAtLeast(20.0)
+        val stepMm = cncRulerStepMm()
+        val step = stepMm * transform.pixelsPerUnit
         gridPath.reset()
         var x = transform.originScreenX % step
         while (x < width) {
@@ -487,6 +536,7 @@ class CadView(context: Context) : View(context) {
         canvas.drawLine(0f, transform.originScreenY.toFloat(), width.toFloat(), transform.originScreenY.toFloat(), axisPaint)
         canvas.drawLine(transform.originScreenX.toFloat(), 0f, transform.originScreenX.toFloat(), height.toFloat(), axisPaint)
         canvas.drawText("原點 X0.000 Y0.000", transform.originScreenX.toFloat()+8f, transform.originScreenY.toFloat()-8f, textPaint)
+        drawCncThousandthRulers(canvas, stepMm)
     }
 
     private fun drawEntities(canvas: Canvas) {
