@@ -65,7 +65,7 @@ root=ET.parse(path).getroot()
 for n in root.iter("node"):
     text=n.attrib.get("text","")
     desc=n.attrib.get("content-desc","")
-    if text==label or desc==label:
+    if text==label or desc==label or text.endswith(label) or desc.endswith(label):
         m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", n.attrib.get("bounds",""))
         if m:
             x1,y1,x2,y2=map(int,m.groups())
