@@ -2,6 +2,13 @@ name: AIG Studio 5.0 Signed Android Release
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - AIG Studio 5.0 Android Build + Runtime Gate
+    branches:
+      - main
+    types:
+      - completed
 
 permissions:
   actions: read
@@ -13,13 +20,17 @@ concurrency:
 
 jobs:
   signed-release:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      SOURCE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
 
       - name: Require same-revision Android Runtime PASS
         shell: bash
@@ -27,14 +38,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          ROW="$(gh run list -R "${{ github.repository }}" --workflow main.yml --branch main --limit 20 --json databaseId,status,conclusion,headSha --jq '.[] | select(.headSha=="'"$GITHUB_SHA"'") | [.databaseId,.status,.conclusion,.headSha] | @tsv' | head -1)"
-          test -n "$ROW" || { echo "BLOCKED: no Studio Android Runtime Gate for $GITHUB_SHA"; exit 40; }
+          ROW="$(gh run list -R "${{ github.repository }}" --workflow main.yml --branch main --limit 20 --json databaseId,status,conclusion,headSha --jq '.[] | select(.headSha=="'"$SOURCE_SHA"'") | [.databaseId,.status,.conclusion,.headSha] | @tsv' | head -1)"
+          test -n "$ROW" || { echo "BLOCKED: no Studio Android Runtime Gate for $SOURCE_SHA"; exit 40; }
           RUN_ID="$(printf '%s' "$ROW" | cut -f1)"
           STATUS="$(printf '%s' "$ROW" | cut -f2)"
           CONCLUSION="$(printf '%s' "$ROW" | cut -f3)"
           test "$STATUS" = "completed"
           test "$CONCLUSION" = "success"
           echo "STUDIO_ANDROID_RUNTIME_SOURCE_RUN=$RUN_ID"
+          echo "STUDIO_ANDROID_RUNTIME_SOURCE_SHA=$SOURCE_SHA"
 
       - uses: actions/setup-java@v4
         with:
