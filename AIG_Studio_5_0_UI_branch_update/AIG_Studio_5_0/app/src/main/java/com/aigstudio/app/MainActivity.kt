@@ -201,7 +201,7 @@ class MainActivity : Activity() {
     private fun showSecurityBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addActionTo(branchFlow, "網路狀態", 0) { showNetworkStatus() }
-        addActionTo(branchFlow, "AI 自動更新", 1) { runSecureUpdateCheck() }
+        addActionTo(branchFlow, "ChatGPT AI 更新", 1) { runSecureUpdateCheck() }
         addActionTo(branchFlow, "防毒掃描", 4) { showSecurityScan() }
         addActionTo(branchFlow, "更新設定", 5) { showUpdateSettings() }
     }
@@ -220,10 +220,10 @@ class MainActivity : Activity() {
 
     private fun runSecureUpdateCheck() {
         val config = UpdateConfigStore.load(this)
-        Toast.makeText(this, "AI UPDATE CHECK...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "ChatGPT AI 更新檢查…", Toast.LENGTH_SHORT).show()
         SecureUpdateManager.autoCheck(this, config) { result ->
             AlertDialog.Builder(this)
-                .setTitle(if (result.ok) "AI SECURE UPDATE" else "UPDATE BLOCKED")
+                .setTitle(if (result.ok) "ChatGPT AI 更新" else "UPDATE BLOCKED")
                 .setMessage(result.message + (result.verifiedApk?.let { "\nVERIFIED FILE: " + it.name } ?: ""))
                 .setPositiveButton("OK", null)
                 .show()
