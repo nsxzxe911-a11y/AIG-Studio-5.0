@@ -127,7 +127,7 @@ jobs:
           emulator-boot-timeout: 720
           emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -gpu swiftshader_indirect
           disable-animations: true
-          script: bash "$GITHUB_WORKSPACE/.github/scripts/studio_android_signed_install_gate.sh"
+          script: SIGNED_APK="$GITHUB_WORKSPACE/signed-release/AIG_Studio_5_0_RGB_FULL_RELEASE.apk" bash "$GITHUB_WORKSPACE/.github/scripts/studio_signed_install_gate.sh"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -140,6 +140,6 @@ jobs:
             signed-release/APK_SHA256.txt
             signed-release/ZIPALIGN_VERIFY.txt
             signed-release/RELEASE_CERT_GATE.txt
-            signed-release/install-evidence/**
+            signed-install-evidence/**
           if-no-files-found: error
           retention-days: 90
