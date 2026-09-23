@@ -252,7 +252,7 @@ class CadView(context: Context) : View(context) {
         while (y < height) { canvas.drawLine(0f, y.toFloat(), width.toFloat(), y.toFloat(), gridPaint); y += step }
         canvas.drawLine(0f, transform.originScreenY.toFloat(), width.toFloat(), transform.originScreenY.toFloat(), axisPaint)
         canvas.drawLine(transform.originScreenX.toFloat(), 0f, transform.originScreenX.toFloat(), height.toFloat(), axisPaint)
-        canvas.drawText("X0 Y0", transform.originScreenX.toFloat()+8f, transform.originScreenY.toFloat()-8f, textPaint)
+        canvas.drawText("歸零點 X0.000 Y0.000", transform.originScreenX.toFloat()+8f, transform.originScreenY.toFloat()-8f, textPaint)
     }
 
     private fun drawEntities(canvas: Canvas) {
