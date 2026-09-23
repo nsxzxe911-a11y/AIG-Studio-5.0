@@ -32,6 +32,7 @@ class MainActivity : Activity() {
     private val toolButtons = mutableMapOf<Tool, Button>()
     private val categoryButtons = mutableMapOf<String, Button>()
     private var activeCategory: String? = null
+    private var camSettings = CamSettings()
     private val colors = listOf(
         0xFF00BCD4.toInt(), 0xFF8B5CF6.toInt(), 0xFFF59E0B.toInt(),
         0xFF22C55E.toInt(), 0xFFEF4444.toInt(), 0xFF3B82F6.toInt()
@@ -61,6 +62,7 @@ class MainActivity : Activity() {
         addCategory("繪圖", 0) { showDrawingBranch() }
         addCategory("修改", 3) { showModifyBranch() }
         addCategory("角部", 2) { showCornerBranch() }
+        addCategory("加工", 5) { showMachiningBranch() }
         addCategory("AI", 1) { showAiBranch() }
         addActionTo(categoryFlow, "↶", 3) { cad.undo() }
         addActionTo(categoryFlow, "↷", 5) { cad.redo() }
@@ -90,6 +92,98 @@ class MainActivity : Activity() {
             askValue("R 角半徑", cad.filletValue) { cad.filletValue = it; selectTool(Tool.FILLET) }
         }
     }
+    private fun showMachiningBranch() {
+        branchFlow.removeAllViews(); toolButtons.clear()
+        addActionTo(branchFlow, "CAM 設定", 5) { showCamSettingsDialog() }
+        addActionTo(branchFlow, "3D 加工", 4) { showMachining3D() }
+    }
+
+    private fun showCamSettingsDialog() {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(8), dp(14), dp(4))
+        }
+        fun numeric(label: String, value: Double, signed: Boolean = false): EditText {
+            return EditText(this).apply {
+                hint = label
+                setText(DisplayFormat.mm(value))
+                inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or
+                    (if (signed) InputType.TYPE_NUMBER_FLAG_SIGNED else 0)
+                box.addView(this)
+            }
+        }
+
+        val diameter = numeric("刀徑 mm", camSettings.toolDiameter)
+        val depth = numeric("加工深度 Z mm", camSettings.depth, true)
+        val safeZ = numeric("Safe-Z mm", camSettings.safeZ)
+        val feed = numeric("Feed mm/min", camSettings.feedMmMin)
+
+        AlertDialog.Builder(this)
+            .setTitle("真 CAM 設定")
+            .setView(box)
+            .setPositiveButton("套用") { _, _ ->
+                runCatching {
+                    CamSettings(
+                        toolDiameter = diameter.text.toString().toDouble(),
+                        depth = depth.text.toString().toDouble(),
+                        safeZ = safeZ.text.toString().toDouble(),
+                        feedMmMin = feed.text.toString().toDouble(),
+                        climb = camSettings.climb
+                    )
+                }.onSuccess {
+                    camSettings = it
+                    Toast.makeText(this, "CAM 設定已套用", Toast.LENGTH_SHORT).show()
+                }.onFailure { error ->
+                    Toast.makeText(this, "CAM 設定無效: " + error.message, Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showMachining3D() {
+        val snapshot = cad.snapshot()
+        if (snapshot.entities.isEmpty()) {
+            Toast.makeText(this, "3D 加工 BLOCKED：請先建立真 2D 幾何", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        runCatching { Machining3DEngine.build(snapshot, camSettings) }
+            .onSuccess { result ->
+                val box = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setBackgroundColor(0xFF050A11.toInt())
+                }
+                box.addView(
+                    Machining3DView(this, result),
+                    LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(520))
+                )
+
+                val removed = result.removal.depth.count { it < 0.0 }
+                val cuts = result.cam.toolpaths.sumOf { path -> path.moves.count { !it.rapid } }
+                box.addView(TextView(this).apply {
+                    setTextColor(0xFF63FF9D.toInt())
+                    textSize = 12f
+                    setPadding(dp(12), dp(6), dp(12), dp(8))
+                    text = "TRUE 3D • mesh V=" + result.mesh.vertices.size +
+                        " T=" + result.mesh.triangles.size +
+                        " • CAM=" + result.cam.toolpaths.size +
+                        " • CUT=" + cuts +
+                        " • removed=" + removed +
+                        " • 精度 0.001 mm"
+                })
+
+                AlertDialog.Builder(this)
+                    .setTitle("RGB 真 3D 加工 • 拖曳旋轉 • 雙指縮放/平移")
+                    .setView(box)
+                    .setPositiveButton("返回 2D", null)
+                    .show()
+            }
+            .onFailure { error ->
+                Toast.makeText(this, "3D 加工 BLOCKED: " + error.message, Toast.LENGTH_LONG).show()
+            }
+    }
+
     private fun showAiBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addActionTo(branchFlow, "AI CAD 檢查", 3) { cad.aiInspect() }
@@ -118,7 +212,7 @@ class MainActivity : Activity() {
     }
 
     private fun categoryColor(name: String): Int = when(name) {
-        "繪圖" -> colors[0]; "修改" -> colors[3]; "角部" -> colors[2]; else -> colors[1]
+        "繪圖" -> colors[0]; "修改" -> colors[3]; "角部" -> colors[2]; "加工" -> colors[5]; else -> colors[1]
     }
 
     private fun selectTool(tool: Tool) {
@@ -231,6 +325,7 @@ class CadView(context: Context) : View(context) {
         accentPaint.isDither = true
     }
 
+    fun snapshot(): DrawingSnapshot = doc.snapshot()
     fun setTool(t: Tool) { tool = t; firstPoint = null; selectedLines.clear(); invalidate() }
     fun undo() { history.undo(); firstPoint = null; selectedLines.clear(); invalidate() }
     fun redo() { history.redo(); firstPoint = null; selectedLines.clear(); invalidate() }
