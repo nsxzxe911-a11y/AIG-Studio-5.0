@@ -16,6 +16,7 @@ import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -63,6 +64,7 @@ class MainActivity : Activity() {
         addCategory("修改", 3) { showModifyBranch() }
         addCategory("角部", 2) { showCornerBranch() }
         addCategory("加工", 5) { showMachiningBranch() }
+        addCategory("安全", 4) { showSecurityBranch() }
         addCategory("AI", 1) { showAiBranch() }
         addActionTo(categoryFlow, "↶", 3) { cad.undo() }
         addActionTo(categoryFlow, "↷", 5) { cad.redo() }
@@ -70,6 +72,14 @@ class MainActivity : Activity() {
         setContentView(root)
         openCategory("繪圖") { showDrawingBranch() }
         selectTool(Tool.LINE)
+        val updateConfig = UpdateConfigStore.load(this)
+        if (updateConfig.configured) {
+            SecureUpdateManager.autoCheck(this, updateConfig) { result ->
+                if (result.available || !result.ok) {
+                    Toast.makeText(this, result.message, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 
     private fun showDrawingBranch() {
@@ -188,6 +198,107 @@ class MainActivity : Activity() {
             }
     }
 
+    private fun showSecurityBranch() {
+        branchFlow.removeAllViews(); toolButtons.clear()
+        addActionTo(branchFlow, "網路狀態", 0) { showNetworkStatus() }
+        addActionTo(branchFlow, "AI 自動更新", 1) { runSecureUpdateCheck() }
+        addActionTo(branchFlow, "防毒掃描", 4) { showSecurityScan() }
+        addActionTo(branchFlow, "更新設定", 5) { showUpdateSettings() }
+    }
+
+    private fun showNetworkStatus() {
+        AlertDialog.Builder(this)
+            .setTitle("NETWORK SECURITY")
+            .setMessage(
+                "NETWORK: " + NetworkSecurity.status(this) +
+                    "\nHTTPS ONLY: ENABLED" +
+                    "\nCLEAR-TEXT HTTP: BLOCKED"
+            )
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
+    private fun runSecureUpdateCheck() {
+        val config = UpdateConfigStore.load(this)
+        Toast.makeText(this, "AI UPDATE CHECK...", Toast.LENGTH_SHORT).show()
+        SecureUpdateManager.autoCheck(this, config) { result ->
+            AlertDialog.Builder(this)
+                .setTitle(if (result.ok) "AI SECURE UPDATE" else "UPDATE BLOCKED")
+                .setMessage(result.message + (result.verifiedApk?.let { "\nVERIFIED FILE: " + it.name } ?: ""))
+                .setPositiveButton("OK", null)
+                .show()
+        }
+    }
+
+    private fun showUpdateSettings() {
+        val current = UpdateConfigStore.load(this)
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(8), dp(14), dp(6))
+        }
+        val url = EditText(this).apply {
+            hint = "HTTPS update manifest URL"
+            setText(current.manifestUrl)
+            isSingleLine = false
+            box.addView(this)
+        }
+        val key = EditText(this).apply {
+            hint = "RSA public key (X.509 Base64)"
+            setText(current.rsaPublicKeyBase64)
+            minLines = 3
+            box.addView(this)
+        }
+        val auto = CheckBox(this).apply {
+            text = "自動檢查並下載已驗證更新"
+            isChecked = current.autoDownload
+            box.addView(this)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("AI UPDATE SETTINGS")
+            .setView(box)
+            .setPositiveButton("儲存") { _, _ ->
+                val next = UpdateConfig(url.text.toString().trim(), key.text.toString(), auto.isChecked)
+                val valid = runCatching {
+                    if (next.manifestUrl.isNotBlank()) NetworkSecurity.requireHttps(next.manifestUrl)
+                }.isSuccess
+                if (valid) {
+                    UpdateConfigStore.save(this, next)
+                    Toast.makeText(
+                        this,
+                        if (next.configured) "安全更新設定完成" else "設定未完整：更新保持 BLOCKED",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    Toast.makeText(this, "只允許 HTTPS 更新網址", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showSecurityScan() {
+        Toast.makeText(this, "安全掃描中…", Toast.LENGTH_SHORT).show()
+        Thread({
+            val report = AppSecurityScanner.scan(listOf(filesDir, cacheDir))
+            runOnUiThread {
+                val body = buildString {
+                    appendLine("範圍：App 可存取檔案")
+                    appendLine("Scanned=" + report.scannedFiles + "  Hashed=" + report.hashedFiles)
+                    appendLine("High-risk=" + report.findings.count { it.severity == "HIGH" })
+                    report.findings.take(8).forEach {
+                        appendLine(it.severity + " • " + java.io.File(it.path).name + " • " + it.reason)
+                    }
+                    if (report.findings.size > 8) append("... +" + (report.findings.size - 8) + " findings")
+                }
+                AlertDialog.Builder(this)
+                    .setTitle(if (report.clean) "防毒 / 安全掃描 PASS" else "防毒 / 安全掃描 BLOCKED")
+                    .setMessage(body)
+                    .setPositiveButton("OK", null)
+                    .show()
+            }
+        }, "AppSecurityScan").start()
+    }
+
     private fun showAiBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addActionTo(branchFlow, "AI CAD 檢查", 3) { cad.aiInspect() }
@@ -216,7 +327,7 @@ class MainActivity : Activity() {
     }
 
     private fun categoryColor(name: String): Int = when(name) {
-        "繪圖" -> colors[0]; "修改" -> colors[3]; "角部" -> colors[2]; "加工" -> colors[5]; else -> colors[1]
+        "繪圖" -> colors[0]; "修改" -> colors[3]; "角部" -> colors[2]; "加工" -> colors[5]; "安全" -> colors[4]; else -> colors[1]
     }
 
     private fun selectTool(tool: Tool) {
