@@ -28,6 +28,10 @@ const val JOIN_TOLERANCE_MM = 0.001
 fun micronUnits(mm: Double): Long = kotlin.math.round(mm / MICRON_MM).toLong()
 fun mmFromMicronUnits(units: Long): Double = units * MICRON_MM
 
+object DisplayFormat {
+    fun mm(v: Double): String = java.lang.String.format(java.util.Locale.US, "%.3f", v)
+}
+
 typealias EntityId = String
 
 sealed interface Entity { val id: EntityId }
