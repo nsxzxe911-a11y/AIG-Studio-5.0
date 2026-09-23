@@ -21,6 +21,9 @@ fun main() {
     testRejectMidSegmentCorner()
     testTransformRoundTrip()
     testCamSnapshotIsIsolated()
+    testRealCamToolpath()
+    testMaterialRemoval3D()
+    testMachiningMesh3D()
     testAigIiPrecisionContract()
     testAiGapToleranceContract()
     testMicronDisplayScale()
@@ -173,4 +176,39 @@ private fun testMicronDisplayScale() {
     assertNear(mmFromMicronUnits(1), 0.001, eps=1e-12, msg="1u")
     assertNear(mmFromMicronUnits(10), 0.010, eps=1e-12, msg="10u")
     println("✓ 0.000 display scale = 1 micron per last digit")
+}
+
+
+private fun testRealCamToolpath() {
+    val snap = DrawingSnapshot(rectangle())
+    val settings = CamSettings(toolDiameter=6.0, depth=-3.0, safeZ=8.0, feedMmMin=180.0)
+    val cam = CamModel.fromCad(2, snap, settings)
+    check(cam.toolpaths.isNotEmpty()) { "CAM must generate real toolpaths" }
+    val moves = cam.toolpaths.flatMap { it.moves }
+    check(moves.any { !it.rapid && it.z < 0.0 }) { "CAM must contain cutting moves below Z0" }
+    check(moves.filter { it.rapid }.all { it.z >= settings.safeZ }) { "All rapid moves must stay at safe-Z" }
+    println("✓ real CAM toolpath + safe-Z")
+}
+
+private fun testMaterialRemoval3D() {
+    val snap = DrawingSnapshot(rectangle())
+    val settings = CamSettings(toolDiameter=6.0, depth=-3.0, safeZ=8.0, feedMmMin=180.0)
+    val stock = Stock3D.fromSnapshot(snap, margin=8.0, thickness=20.0)
+    val cam = CamModel.fromCad(3, snap, settings)
+    val removal = MaterialRemoval3D.simulate(cam.toolpaths, settings, stock)
+    check(removal.depth.any { it < 0.0 }) { "Material-removal field must contain cut cells" }
+    check(removal.depth.min() <= settings.depth + 1e-9) { "Removal depth must reflect CAM cutting depth" }
+    println("✓ true material-removal height field")
+}
+
+private fun testMachiningMesh3D() {
+    val snap = DrawingSnapshot(rectangle())
+    val result = Machining3DEngine.build(
+        snap,
+        CamSettings(toolDiameter=6.0, depth=-3.0, safeZ=8.0, feedMmMin=180.0)
+    )
+    check(result.mesh.vertices.size > 100) { "3D mesh must contain real surface vertices" }
+    check(result.mesh.triangles.size > 100) { "3D mesh must contain real triangles" }
+    check(result.mesh.vertices.any { it.z < 0.0 }) { "3D mesh must include machined depth" }
+    println("✓ true 3D machining mesh")
 }
