@@ -21,6 +21,7 @@ fun main() {
     testRejectMidSegmentCorner()
     testTransformRoundTrip()
     testCamSnapshotIsIsolated()
+    testAigIiPrecisionContract()
     println("ALL TESTS PASSED")
 }
 
@@ -122,4 +123,24 @@ private fun testCamSnapshotIsIsolated() {
     check(d.size()==3)
     check(cam.geometry.entities.size==4) { "CAM snapshot must not be mutated by later CAD edits" }
     println("✓ CAD/CAM isolation")
+}
+
+private fun testAigIiPrecisionContract() {
+    check(CNC_RESOLUTION_MM == 0.001)
+    check(JOIN_TOLERANCE_MM == 0.001)
+    val p = Vec2(12.345, -7.891)
+    val t = WorldTransform(500.0, 700.0, 8.0)
+    val roundTrip = t.screenToWorld(t.worldToScreen(p))
+    assertNear(roundTrip.x, p.x, eps=1e-9, msg="0.001 mm X precision")
+    assertNear(roundTrip.y, p.y, eps=1e-9, msg="0.001 mm Y precision")
+
+    val within = Line(id="J1", a=Vec2(0.0,0.0), b=Vec2(10.0,0.0))
+    val mateWithin = Line(id="J2", a=Vec2(0.0009,0.0), b=Vec2(0.0009,10.0))
+    check(runCatching { Geometry.chamfer(within, mateWithin, 1.0) }.isSuccess)
+
+    val outside = Line(id="J3", a=Vec2(0.0,0.0), b=Vec2(10.0,0.0))
+    val mateOutside = Line(id="J4", a=Vec2(0.0011,0.0), b=Vec2(0.0011,10.0))
+    check(runCatching { Geometry.chamfer(outside, mateOutside, 1.0) }.isFailure)
+
+    println("✓ AIG II 0.001 mm precision contract")
 }
