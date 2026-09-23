@@ -48,6 +48,8 @@ verify_package() {
 launch_app() {
   local label="$1"
   adb shell am force-stop "$PACKAGE"
+  adb shell am force-stop com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+  adb shell am force-stop com.android.launcher3 >/dev/null 2>&1 || true
   adb shell am start -W -n "$PACKAGE/.MainActivity" | tee "$EVIDENCE_DIR/${label}_START.txt"
   local alive=0
   for i in $(seq 1 30); do
