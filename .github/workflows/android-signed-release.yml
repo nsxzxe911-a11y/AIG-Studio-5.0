@@ -2,6 +2,9 @@ name: AIG Studio 5.0 Signed Android Release
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
   workflow_run:
     workflows:
       - AIG Studio 5.0 Android Build + Runtime Gate
@@ -20,7 +23,7 @@ concurrency:
 
 jobs:
   signed-release:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -38,15 +41,27 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          ROW="$(gh run list -R "${{ github.repository }}" --workflow main.yml --branch main --limit 20 --json databaseId,status,conclusion,headSha --jq '.[] | select(.headSha=="'"$SOURCE_SHA"'") | [.databaseId,.status,.conclusion,.headSha] | @tsv' | head -1)"
-          test -n "$ROW" || { echo "BLOCKED: no Studio Android Runtime Gate for $SOURCE_SHA"; exit 40; }
-          RUN_ID="$(printf '%s' "$ROW" | cut -f1)"
-          STATUS="$(printf '%s' "$ROW" | cut -f2)"
-          CONCLUSION="$(printf '%s' "$ROW" | cut -f3)"
-          test "$STATUS" = "completed"
-          test "$CONCLUSION" = "success"
-          echo "STUDIO_ANDROID_RUNTIME_SOURCE_RUN=$RUN_ID"
-          echo "STUDIO_ANDROID_RUNTIME_SOURCE_SHA=$SOURCE_SHA"
+          ROW=""
+          for attempt in $(seq 1 48); do
+            ROW="$(gh run list -R "${{ github.repository }}" --workflow main.yml --branch main --limit 30 --json databaseId,status,conclusion,headSha --jq '.[] | select(.headSha=="'"$SOURCE_SHA"'") | [.databaseId,.status,.conclusion,.headSha] | @tsv' | head -1)"
+            if [ -n "$ROW" ]; then
+              RUN_ID="$(printf '%s' "$ROW" | cut -f1)"
+              STATUS="$(printf '%s' "$ROW" | cut -f2)"
+              CONCLUSION="$(printf '%s' "$ROW" | cut -f3)"
+              echo "RUNTIME_WAIT|attempt=$attempt|run=$RUN_ID|status=$STATUS|conclusion=$CONCLUSION|sha=$SOURCE_SHA"
+              if [ "$STATUS" = "completed" ]; then
+                test "$CONCLUSION" = "success"
+                echo "STUDIO_ANDROID_RUNTIME_SOURCE_RUN=$RUN_ID"
+                echo "STUDIO_ANDROID_RUNTIME_SOURCE_SHA=$SOURCE_SHA"
+                exit 0
+              fi
+            else
+              echo "RUNTIME_WAIT|attempt=$attempt|run=NONE|sha=$SOURCE_SHA"
+            fi
+            sleep 15
+          done
+          echo "BLOCKED: same-revision Android Runtime did not reach success for $SOURCE_SHA"
+          exit 40
 
       - uses: actions/setup-java@v4
         with:
