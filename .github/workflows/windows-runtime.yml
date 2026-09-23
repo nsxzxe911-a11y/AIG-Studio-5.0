@@ -4,11 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/core/**'
-      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/desktop/**'
-      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/build_windows_native.ps1'
-      - '.github/workflows/windows-runtime.yml'
 
 permissions:
   contents: read
