@@ -28,6 +28,8 @@ adb shell dumpsys package "$PACKAGE" | grep -E 'versionCode=|versionName=' | tee
 grep -q 'versionCode=50000' "$EVIDENCE/VERSION_FRESH.txt"
 grep -q 'versionName=5.0.0' "$EVIDENCE/VERSION_FRESH.txt"
 adb shell am force-stop "$PACKAGE"
+adb shell am force-stop com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+adb shell am force-stop com.android.launcher3 >/dev/null 2>&1 || true
 adb shell am start -W -n "$PACKAGE/.MainActivity" | tee "$EVIDENCE/ANDROID_START.txt"
 
 alive=false
@@ -42,21 +44,64 @@ for i in $(seq 1 30); do
 done
 test "$alive" = true
 
+dismiss_system_error_dialog_from_xml() {
+  local xml="$1"
+  local coords
+  coords="$(python3 - "$xml" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+path=sys.argv[1]
+try:
+    root=ET.parse(path).getroot()
+except Exception:
+    raise SystemExit(2)
+preferred=("android:id/aerr_wait","android:id/aerr_close")
+nodes=list(root.iter("node"))
+for rid in preferred:
+    for n in nodes:
+        if n.attrib.get("resource-id","") == rid:
+            m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", n.attrib.get("bounds",""))
+            if m:
+                x1,y1,x2,y2=map(int,m.groups())
+                print((x1+x2)//2, (y1+y2)//2)
+                raise SystemExit(0)
+raise SystemExit(3)
+PY
+)" || return 1
+  test -n "$coords" || return 1
+  adb shell input tap $coords >/dev/null 2>&1 || return 1
+  sleep 1
+  return 0
+}
+
 dump_ui() {
   local target="$1"
   local out="$2"
   local ok=false
-  for i in $(seq 1 12); do
+  for i in $(seq 1 16); do
     adb shell rm -f "$target" >/dev/null 2>&1 || true
     if adb shell uiautomator dump "$target" >/dev/null 2>&1; then
       if adb exec-out cat "$target" > "$out" 2>/dev/null && grep -q '<hierarchy' "$out"; then
-        ok=true
-        break
+        if grep -Eq 'android:id/aerr_wait|android:id/aerr_close' "$out"; then
+          cp "$out" "$EVIDENCE/SYSTEM_DIALOG_LAST.xml" || true
+          dismiss_system_error_dialog_from_xml "$out" || true
+          adb shell am force-stop com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+          adb shell am force-stop com.android.launcher3 >/dev/null 2>&1 || true
+          adb shell am start -n "$PACKAGE/.MainActivity" >/dev/null 2>&1 || true
+          sleep 1
+          continue
+        fi
+        if grep -q 'package="com.aigstudio.app"' "$out"; then
+          ok=true
+          break
+        fi
       fi
     fi
     sleep 1
   done
-  test "$ok" = true
+  if [ "$ok" != true ]; then
+    echo "STUDIO_UI_DUMP=FAIL|expected_package=com.aigstudio.app" | tee "$EVIDENCE/UI_DUMP_FAIL.txt"
+    return 1
+  fi
 }
 
 tap_ui_text() {
