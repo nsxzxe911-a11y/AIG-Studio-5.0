@@ -1,4 +1,4 @@
-name: Build AIGStudio5 B001 APK
+name: AIG Studio 5.0 Android Build + Runtime Gate
 
 on:
   workflow_dispatch:
@@ -6,9 +6,17 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
+concurrency:
+  group: aig-studio-android-runtime-gate
+  cancel-in-progress: true
+
 jobs:
-  build:
+  build-runtime:
     runs-on: ubuntu-latest
+    timeout-minutes: 50
 
     defaults:
       run:
@@ -47,12 +55,98 @@ jobs:
           test -s APK_OUTER_SHA256.txt
           test -s APK_PAYLOAD_SHA256.txt
 
-      - name: Upload APK
+      - name: Prepare runtime evidence directory
+        shell: bash
+        run: mkdir -p runtime-evidence
+
+      - name: Install and launch on Pixel Google APIs emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          cores: 4
+          emulator-boot-timeout: 720
+          emulator-options: -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -gpu swiftshader_indirect
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            APP_DIR="$GITHUB_WORKSPACE/AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0"
+            APK="$APP_DIR/AIGStudio5_B001.apk"
+            EVIDENCE="$APP_DIR/runtime-evidence"
+
+            adb wait-for-device
+            for i in $(seq 1 120); do
+              boot="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+              if [ "$boot" = "1" ]; then
+                break
+              fi
+              sleep 2
+            done
+            test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1"
+
+            adb shell wm size 1080x2340
+            adb shell wm density 425
+            adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1 || true
+            adb shell settings put system user_rotation 0 >/dev/null 2>&1 || true
+            adb shell settings put system font_scale 1.0 >/dev/null 2>&1 || true
+
+            adb install --no-streaming -r "$APK"
+            adb shell am force-stop com.aigstudio.app
+            adb shell am start -W -n com.aigstudio.app/.MainActivity | tee "$EVIDENCE/ANDROID_START.txt"
+
+            alive=false
+            for i in $(seq 1 30); do
+              adb shell pidof com.aigstudio.app > "$EVIDENCE/PID.txt" 2>/dev/null || true
+              adb shell dumpsys activity activities > "$EVIDENCE/ACTIVITY.txt" 2>/dev/null || true
+              if [ -s "$EVIDENCE/PID.txt" ] && grep -Fq 'com.aigstudio.app/.MainActivity' "$EVIDENCE/ACTIVITY.txt"; then
+                alive=true
+                break
+              fi
+              sleep 2
+            done
+            test "$alive" = true
+
+            dumped=false
+            for i in $(seq 1 12); do
+              adb shell rm -f /data/local/tmp/aigstudio-ui.xml >/dev/null 2>&1 || true
+              if adb shell uiautomator dump /data/local/tmp/aigstudio-ui.xml >/dev/null 2>&1; then
+                if adb exec-out cat /data/local/tmp/aigstudio-ui.xml > "$EVIDENCE/UI.xml" 2>/dev/null && grep -q '<hierarchy' "$EVIDENCE/UI.xml"; then
+                  dumped=true
+                  break
+                fi
+              fi
+              sleep 2
+            done
+            test "$dumped" = true
+            grep -Fq 'AIG Studio 5.0' "$EVIDENCE/UI.xml"
+            grep -Fq '繪圖' "$EVIDENCE/UI.xml"
+
+            adb exec-out screencap -p > "$EVIDENCE/STARTUP.png"
+            test -s "$EVIDENCE/STARTUP.png"
+            adb logcat -d -t 600 > "$EVIDENCE/LOGCAT.txt" 2>/dev/null || true
+
+            {
+              echo "ANDROID_EMULATOR_PROFILE=GOOGLE_APIS_PIXEL_7"
+              adb shell wm size
+              adb shell wm density
+              echo "USER_ROTATION=$(adb shell settings get system user_rotation | tr -d '\r')"
+              echo "FONT_SCALE=$(adb shell settings get system font_scale | tr -d '\r')"
+              echo "STUDIO_ANDROID_RUNTIME_GATE=PASS"
+            } | tee "$EVIDENCE/RUNTIME_GATE.txt"
+
+            grep -Eq 'Override size: 1080x2340|Physical size: 1080x2340' "$EVIDENCE/RUNTIME_GATE.txt"
+            grep -Eq 'Override density: 425|Physical density: 425' "$EVIDENCE/RUNTIME_GATE.txt"
+
+      - name: Upload APK and runtime evidence
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: AIGStudio5_B001
           path: |
             AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/AIGStudio5_B001.apk
             AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/APK_OUTER_SHA256.txt
             AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/APK_PAYLOAD_SHA256.txt
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/runtime-evidence/**
           if-no-files-found: error
