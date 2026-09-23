@@ -153,7 +153,7 @@ class MainActivity : Activity() {
         button.elevation = dp(if (selected) 8 else 3).toFloat()
     }
     private fun askValue(title: String, current: Double, done: (Double) -> Unit) {
-        val input = EditText(this).apply { setText(current.toString()); inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
+        val input = EditText(this).apply { setText(DisplayFormat.mm(current)); inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
         AlertDialog.Builder(this).setTitle(title).setView(input)
             .setPositiveButton("確定") { _, _ -> input.text.toString().toDoubleOrNull()?.takeIf { it > 0 }?.let(done) }
             .setNegativeButton("取消", null).show()
@@ -241,7 +241,7 @@ class CadView(context: Context) : View(context) {
         drawGrid(canvas)
         drawEntities(canvas)
         firstPoint?.let { val p = transform.worldToScreen(it); canvas.drawCircle(p.x.toFloat(), p.y.toFloat(), 8f, accentPaint) }
-        canvas.drawText("${tool.name}   X %.3f  Y %.3f   C%.3f R%.3f".format(lastWorld.x,lastWorld.y,chamferValue,filletValue), 16f, 26f, textPaint)
+        canvas.drawText("${tool.name}   X ${DisplayFormat.mm(lastWorld.x)}  Y ${DisplayFormat.mm(lastWorld.y)}   C${DisplayFormat.mm(chamferValue)} R${DisplayFormat.mm(filletValue)}", 16f, 26f, textPaint)
     }
 
     private fun drawGrid(canvas: Canvas) {
