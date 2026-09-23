@@ -198,7 +198,11 @@ class CadView(context: Context) : View(context) {
     private val axisPaint = Paint(2).apply { color = 0xFF00B8D4.toInt() }
     private val geoPaint = Paint(3).apply { color = 0xFFE8F1FA.toInt(); style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
     private val accentPaint = Paint(3).apply { color = 0xFFFFB020.toInt(); style = Paint.Style.STROKE }
-    private val textPaint = Paint(1).apply { color = 0xFF8FB3C9.toInt(); textSize = 14 * resources.displayMetrics.scaledDensity }
+    private val textPaint = Paint(1).apply { color = 0xFF8FB3C9.toInt(); textSize = 14 * resources.displayMetrics.scaledDensity; isDither = true }
+    private val gridPath = Path()
+    private val normalLinePath = Path()
+    private val selectedLinePath = Path()
+    private val arcPath = Path()
     private var tool = Tool.LINE
     private var firstPoint: Vec2? = null
     private val selectedLines = mutableListOf<String>()
@@ -211,11 +215,21 @@ class CadView(context: Context) : View(context) {
     private val scaleDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
             transform.zoomAt(Vec2(detector.focusX.toDouble(), detector.focusY.toDouble()), detector.scaleFactor.toDouble())
-            invalidate(); return true
+            postInvalidateOnAnimation(); return true
         }
     })
 
-    init { setBackgroundColor(0xFF081622.toInt()); isFocusable = true }
+    init {
+        setBackgroundColor(0xFF081622.toInt())
+        isFocusable = true
+        setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        geoPaint.strokeJoin = Paint.Join.ROUND
+        geoPaint.strokeCap = Paint.Cap.ROUND
+        geoPaint.isDither = true
+        accentPaint.strokeJoin = Paint.Join.ROUND
+        accentPaint.strokeCap = Paint.Cap.ROUND
+        accentPaint.isDither = true
+    }
 
     fun setTool(t: Tool) { tool = t; firstPoint = null; selectedLines.clear(); invalidate() }
     fun undo() { history.undo(); firstPoint = null; selectedLines.clear(); invalidate() }
@@ -246,28 +260,49 @@ class CadView(context: Context) : View(context) {
 
     private fun drawGrid(canvas: Canvas) {
         val step = (10.0 * transform.pixelsPerUnit).coerceAtLeast(20.0)
+        gridPath.reset()
         var x = transform.originScreenX % step
-        while (x < width) { canvas.drawLine(x.toFloat(), 0f, x.toFloat(), height.toFloat(), gridPaint); x += step }
+        while (x < width) {
+            gridPath.moveTo(x.toFloat(), 0f)
+            gridPath.lineTo(x.toFloat(), height.toFloat())
+            x += step
+        }
         var y = transform.originScreenY % step
-        while (y < height) { canvas.drawLine(0f, y.toFloat(), width.toFloat(), y.toFloat(), gridPaint); y += step }
+        while (y < height) {
+            gridPath.moveTo(0f, y.toFloat())
+            gridPath.lineTo(width.toFloat(), y.toFloat())
+            y += step
+        }
+        canvas.drawPath(gridPath, gridPaint)
         canvas.drawLine(0f, transform.originScreenY.toFloat(), width.toFloat(), transform.originScreenY.toFloat(), axisPaint)
         canvas.drawLine(transform.originScreenX.toFloat(), 0f, transform.originScreenX.toFloat(), height.toFloat(), axisPaint)
         canvas.drawText("歸零點 X0.000 Y0.000", transform.originScreenX.toFloat()+8f, transform.originScreenY.toFloat()-8f, textPaint)
     }
 
     private fun drawEntities(canvas: Canvas) {
+        normalLinePath.reset()
+        selectedLinePath.reset()
         doc.all().forEach { e -> when (e) {
             is Line -> {
                 val a = transform.worldToScreen(e.a); val b = transform.worldToScreen(e.b)
-                geoPaint.color = if (selectedLines.contains(e.id)) 0xFFFFB020.toInt() else 0xFFE8F1FA.toInt()
-                canvas.drawLine(a.x.toFloat(), a.y.toFloat(), b.x.toFloat(), b.y.toFloat(), geoPaint)
+                val path = if (selectedLines.contains(e.id)) selectedLinePath else normalLinePath
+                path.moveTo(a.x.toFloat(), a.y.toFloat())
+                path.lineTo(b.x.toFloat(), b.y.toFloat())
             }
             is Circle -> {
                 val p = transform.worldToScreen(e.center)
+                geoPaint.color = 0xFFE8F1FA.toInt()
                 canvas.drawCircle(p.x.toFloat(), p.y.toFloat(), (e.radius * transform.pixelsPerUnit).toFloat(), geoPaint)
             }
-            is Arc -> drawArcPolyline(canvas, e)
+            is Arc -> {
+                geoPaint.color = 0xFFE8F1FA.toInt()
+                drawArcPolyline(canvas, e)
+            }
         } }
+        geoPaint.color = 0xFFE8F1FA.toInt()
+        canvas.drawPath(normalLinePath, geoPaint)
+        geoPaint.color = 0xFFFFB020.toInt()
+        canvas.drawPath(selectedLinePath, geoPaint)
     }
 
     private fun drawArcPolyline(canvas: Canvas, arc: Arc) {
@@ -276,13 +311,13 @@ class CadView(context: Context) : View(context) {
         var delta = endA - startA
         if (arc.clockwise) while (delta > 0) delta -= 2 * Math.PI else while (delta < 0) delta += 2 * Math.PI
         if (abs(delta) > Math.PI) delta += if (delta > 0) -2 * Math.PI else 2 * Math.PI
-        val path = Path()
+        arcPath.reset()
         for (i in 0..32) {
             val a = startA + delta * i / 32.0
             val p = transform.worldToScreen(Vec2(arc.center.x + cos(a) * arc.radius, arc.center.y + sin(a) * arc.radius))
-            if (i == 0) path.moveTo(p.x.toFloat(), p.y.toFloat()) else path.lineTo(p.x.toFloat(), p.y.toFloat())
+            if (i == 0) arcPath.moveTo(p.x.toFloat(), p.y.toFloat()) else arcPath.lineTo(p.x.toFloat(), p.y.toFloat())
         }
-        canvas.drawPath(path, geoPaint)
+        canvas.drawPath(arcPath, geoPaint)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -297,7 +332,7 @@ class CadView(context: Context) : View(context) {
             }
             MotionEvent.ACTION_MOVE -> if (tool == Tool.PAN) {
                 transform.pan((event.x-lastX).toDouble(), (event.y-lastY).toDouble())
-                lastX=event.x; lastY=event.y; invalidate(); return true
+                lastX=event.x; lastY=event.y; postInvalidateOnAnimation(); return true
             }
         }
         return true
