@@ -22,6 +22,7 @@ fun main() {
     testTransformRoundTrip()
     testCamSnapshotIsIsolated()
     testAigIiPrecisionContract()
+    testAiGapToleranceContract()
     println("ALL TESTS PASSED")
 }
 
@@ -143,4 +144,22 @@ private fun testAigIiPrecisionContract() {
     check(runCatching { Geometry.chamfer(outside, mateOutside, 1.0) }.isFailure)
 
     println("✓ AIG II 0.001 mm precision contract")
+}
+
+private fun testAiGapToleranceContract() {
+    val within = DrawingSnapshot(listOf(
+        Line(id="A", a=Vec2(0.0,0.0), b=Vec2(10.0,0.0)),
+        Line(id="B", a=Vec2(0.0009,0.0), b=Vec2(0.0009,10.0))
+    ))
+    val withinIssues = AiCadInspector.inspect(within).issues
+    check(withinIssues.any { it.code == "NEAR_GAP" }) { "0.0009 mm near-gap must be detected" }
+
+    val outside = DrawingSnapshot(listOf(
+        Line(id="C", a=Vec2(0.0,0.0), b=Vec2(10.0,0.0)),
+        Line(id="D", a=Vec2(0.0011,0.0), b=Vec2(0.0011,10.0))
+    ))
+    val outsideIssues = AiCadInspector.inspect(outside).issues
+    check(outsideIssues.none { it.code == "NEAR_GAP" }) { "0.0011 mm gap must not be classified as 0.001 mm near-gap" }
+
+    println("✓ AI 0.001 mm near-gap contract")
 }
