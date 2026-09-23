@@ -54,6 +54,11 @@ jobs:
           grep -Fq 'Executable magic=' "$SECURE"
           grep -Fq 'SecureUpdateManager.autoCheck' "$MAIN"
           grep -Fq 'AppSecurityScanner.scan' "$MAIN"
+          grep -Fq 'ChatGPT AI 更新' "$MAIN"
+          if grep -Fq 'AI 自動更新' "$MAIN"; then
+            echo 'BLOCKED: legacy AI update wording found'
+            exit 71
+          fi
           if grep -R --include='*.kt' -n 'http://' app/src/main/java; then
             echo 'BLOCKED: clear-text URL found'
             exit 70
