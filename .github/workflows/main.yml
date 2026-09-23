@@ -43,20 +43,7 @@ jobs:
         run: |
           set -euo pipefail
           sha256sum AIGStudio5_B001.apk | tee APK_OUTER_SHA256.txt
-          python3 - <<'PY'
-import hashlib, zipfile
-apk="AIGStudio5_B001.apk"
-with zipfile.ZipFile(apk) as z:
-    rows=[]
-    for name in sorted(z.namelist()):
-        if name.endswith("/"):
-            continue
-        data=z.read(name)
-        rows.append(f"{hashlib.sha256(data).hexdigest()}  {len(data):>10}  {name}")
-with open("APK_PAYLOAD_SHA256.txt","w",encoding="utf-8") as f:
-    f.write("\n".join(rows)+"\n")
-print(f"APK_PAYLOAD_ENTRIES={len(rows)}")
-PY
+          python3 -c 'import hashlib,zipfile; apk="AIGStudio5_B001.apk"; z=zipfile.ZipFile(apk); rows=[f"{hashlib.sha256(z.read(n)).hexdigest()}  {len(z.read(n)):>10}  {n}" for n in sorted(z.namelist()) if not n.endswith("/")]; open("APK_PAYLOAD_SHA256.txt","w",encoding="utf-8").write("\n".join(rows)+"\n"); print(f"APK_PAYLOAD_ENTRIES={len(rows)}")'
           test -s APK_OUTER_SHA256.txt
           test -s APK_PAYLOAD_SHA256.txt
 
