@@ -1,0 +1,141 @@
+name: AIG Studio 5.0 Windows Build Install Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/core/**'
+      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/desktop/**'
+      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/build_windows_native.ps1'
+      - '.github/workflows/windows-runtime.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aig-studio-windows-install-gate
+  cancel-in-progress: true
+
+jobs:
+  windows-install:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Kotlin and WiX
+        shell: pwsh
+        run: |
+          choco install kotlinc -y
+          choco install wixtoolset -y
+
+      - name: Build true-core desktop and self-contained installer
+        shell: pwsh
+        run: |
+          .\AIG_Studio_5_0_UI_branch_update\AIG_Studio_5_0\build_windows_native.ps1
+
+      - name: Validate install repair uninstall reinstall
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $Project = Join-Path $PWD 'AIG_Studio_5_0_UI_branch_update\AIG_Studio_5_0'
+          $Evidence = Join-Path $Project 'windows-evidence'
+          New-Item -ItemType Directory -Force $Evidence | Out-Null
+          $Installer = Join-Path $Project 'dist\windows-self-contained\AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
+          if (-not (Test-Path $Installer)) { throw 'Studio Windows installer missing.' }
+          Get-FileHash $Installer -Algorithm SHA256 | Format-List | Out-File (Join-Path $Evidence 'INSTALLER_SHA256.txt')
+
+          function Get-App {
+            $candidates = @(
+              "$env:ProgramFiles\AIG_Studio_5_0_RGB_FULL_RELEASE_PC\AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe",
+              "$env:LOCALAPPDATA\AIG_Studio_5_0_RGB_FULL_RELEASE_PC\AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe"
+            )
+            $app = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+            if (-not $app) {
+              foreach ($root in @($env:ProgramFiles,$env:LOCALAPPDATA)) {
+                if ($root -and (Test-Path $root)) {
+                  $app = Get-ChildItem $root -Recurse -Filter 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName -First 1
+                  if ($app) { break }
+                }
+              }
+            }
+            return $app
+          }
+
+          function Get-UninstallEntry {
+            $roots = @(
+              'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
+              'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
+              'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'
+            )
+            return Get-ItemProperty $roots -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC*' } | Select-Object -First 1
+          }
+
+          function Install-Studio([string]$label) {
+            $p = Start-Process -FilePath $Installer -ArgumentList '/quiet','/norestart' -PassThru
+            if (-not $p.WaitForExit(180000)) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; throw "$label install timeout" }
+            if ($p.ExitCode -notin @(0,1641,3010)) { throw "$label install failed: $($p.ExitCode)" }
+            "$label=$($p.ExitCode)" | Out-File (Join-Path $Evidence 'INSTALL_CYCLE.txt') -Append
+          }
+
+          function Smoke-Studio([string]$label) {
+            $app = Get-App
+            if (-not $app) { throw "$label installed launcher missing" }
+            $dir = Join-Path $Evidence $label
+            New-Item -ItemType Directory -Force $dir | Out-Null
+            $p = Start-Process -FilePath $app -ArgumentList '--smoke' -WorkingDirectory $dir -PassThru
+            if (-not $p.WaitForExit(60000)) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; throw "$label smoke timeout" }
+            if ($p.ExitCode -ne 0) { throw "$label smoke failed: $($p.ExitCode)" }
+            foreach ($name in @('desktop_launch.png','desktop_3d.png','desktop_smoke.txt')) {
+              if (-not (Test-Path (Join-Path $dir $name))) { throw "$label missing $name" }
+            }
+            Select-String -Path (Join-Path $dir 'desktop_smoke.txt') -Pattern 'STUDIO_WINDOWS_SMOKE=PASS' | Out-Null
+            $runtime = Get-ChildItem (Split-Path $app -Parent) -Recurse -Filter 'java.dll' -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $runtime) { throw 'Bundled Java runtime missing from installed package.' }
+            Get-FileHash $app -Algorithm SHA256 | Format-List | Out-File (Join-Path $dir 'INSTALLED_EXE_SHA256.txt')
+          }
+
+          function Uninstall-Studio {
+            $entry = Get-UninstallEntry
+            if (-not $entry) { throw 'Studio uninstall registration missing.' }
+            $cmd = [string]$entry.QuietUninstallString
+            if (-not $cmd) { $cmd = [string]$entry.UninstallString }
+            $guid = [regex]::Match($cmd, '\{[0-9A-Fa-f-]{36}\}')
+            if ($guid.Success) {
+              $p = Start-Process msiexec.exe -ArgumentList '/x',$guid.Value,'/qn','/norestart' -PassThru
+            } else {
+              $p = Start-Process cmd.exe -ArgumentList '/d','/s','/c',($cmd + ' /quiet /norestart') -PassThru
+            }
+            if (-not $p.WaitForExit(180000)) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; throw 'Studio uninstall timeout.' }
+            if ($p.ExitCode -notin @(0,1605,1614,1641,3010)) { throw "Studio uninstall failed: $($p.ExitCode)" }
+          }
+
+          if (Get-UninstallEntry) { Uninstall-Studio }
+          Install-Studio 'FRESH_INSTALL'
+          Smoke-Studio 'fresh_install_smoke'
+          Install-Studio 'REPAIR_REINSTALL'
+          Smoke-Studio 'repair_reinstall_smoke'
+          Uninstall-Studio
+          Start-Sleep -Seconds 3
+          if (Get-App) { throw 'Studio launcher remained after uninstall.' }
+          Install-Studio 'CLEAN_REINSTALL'
+          Smoke-Studio 'clean_reinstall_smoke'
+          if (-not (Get-UninstallEntry)) { throw 'Final Studio uninstall registration missing.' }
+          'STUDIO_WINDOWS_INSTALL_REPAIR_UNINSTALL_REINSTALL=PASS' | Out-File (Join-Path $Evidence 'WINDOWS_INSTALL_GATE.txt')
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Studio-5.0-Windows-Installable
+          path: |
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/dist/windows-self-contained/AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/dist/desktop_*.png
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/dist/desktop_smoke.txt
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/windows-evidence/**
+          if-no-files-found: error
