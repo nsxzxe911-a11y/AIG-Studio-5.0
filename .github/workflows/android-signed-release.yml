@@ -5,13 +5,6 @@ on:
   push:
     branches:
       - main
-  workflow_run:
-    workflows:
-      - AIG Studio 5.0 Android Build + Runtime Gate
-    branches:
-      - main
-    types:
-      - completed
 
 permissions:
   actions: read
@@ -23,13 +16,12 @@ concurrency:
 
 jobs:
   signed-release:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-      SOURCE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      SOURCE_SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
