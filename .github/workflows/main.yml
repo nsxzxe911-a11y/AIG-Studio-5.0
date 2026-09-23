@@ -38,9 +38,34 @@ jobs:
       - name: Rename APK
         run: cp app/build/outputs/apk/debug/app-debug.apk AIGStudio5_B001.apk
 
+      - name: Record APK outer and payload digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum AIGStudio5_B001.apk | tee APK_OUTER_SHA256.txt
+          python3 - <<'PY'
+import hashlib, zipfile
+apk="AIGStudio5_B001.apk"
+with zipfile.ZipFile(apk) as z:
+    rows=[]
+    for name in sorted(z.namelist()):
+        if name.endswith("/"):
+            continue
+        data=z.read(name)
+        rows.append(f"{hashlib.sha256(data).hexdigest()}  {len(data):>10}  {name}")
+with open("APK_PAYLOAD_SHA256.txt","w",encoding="utf-8") as f:
+    f.write("\n".join(rows)+"\n")
+print(f"APK_PAYLOAD_ENTRIES={len(rows)}")
+PY
+          test -s APK_OUTER_SHA256.txt
+          test -s APK_PAYLOAD_SHA256.txt
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: AIGStudio5_B001
-          path: AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/AIGStudio5_B001.apk
+          path: |
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/AIGStudio5_B001.apk
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/APK_OUTER_SHA256.txt
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/APK_PAYLOAD_SHA256.txt
           if-no-files-found: error
