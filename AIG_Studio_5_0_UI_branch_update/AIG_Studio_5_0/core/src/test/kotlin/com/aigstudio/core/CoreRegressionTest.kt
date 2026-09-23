@@ -23,6 +23,7 @@ fun main() {
     testCamSnapshotIsIsolated()
     testAigIiPrecisionContract()
     testAiGapToleranceContract()
+    testMicronDisplayScale()
     println("ALL TESTS PASSED")
 }
 
@@ -162,4 +163,12 @@ private fun testAiGapToleranceContract() {
     check(outsideIssues.none { it.code == "NEAR_GAP" }) { "0.0011 mm gap must not be classified as 0.001 mm near-gap" }
 
     println("✓ AI 0.001 mm near-gap contract")
+}
+
+private fun testMicronDisplayScale() {
+    check(micronUnits(0.001) == 1L)
+    check(micronUnits(0.010) == 10L)
+    assertNear(mmFromMicronUnits(1), 0.001, eps=1e-12, msg="1u")
+    assertNear(mmFromMicronUnits(10), 0.010, eps=1e-12, msg="10u")
+    println("✓ 0.000 display scale = 1 micron per last digit")
 }
