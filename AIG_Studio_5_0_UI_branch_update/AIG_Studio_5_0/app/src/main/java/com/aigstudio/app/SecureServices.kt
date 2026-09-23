@@ -367,9 +367,14 @@ object SecureUpdateManager {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun currentVersionCode(context: Context): Long {
         val info = context.packageManager.getPackageInfo(context.packageName, 0)
-        return if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else @Suppress("DEPRECATION") info.versionCode.toLong()
+        return if (Build.VERSION.SDK_INT >= 28) {
+            info.longVersionCode
+        } else {
+            info.versionCode.toLong()
+        }
     }
 
     private fun apkPackageName(context: Context, apk: File): String? =
