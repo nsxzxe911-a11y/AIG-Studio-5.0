@@ -21,7 +21,12 @@ data class Vec2(val x: Double, val y: Double) {
 
 const val EPS = 1e-9
 const val CNC_RESOLUTION_MM = 0.001
+const val MICRON_MM = 0.001
+const val MM_PER_TEN_MICRONS = 0.010
 const val JOIN_TOLERANCE_MM = 0.001
+
+fun micronUnits(mm: Double): Long = kotlin.math.round(mm / MICRON_MM).toLong()
+fun mmFromMicronUnits(units: Long): Double = units * MICRON_MM
 
 typealias EntityId = String
 
