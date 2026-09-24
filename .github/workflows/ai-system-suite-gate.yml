@@ -1,0 +1,45 @@
+name: AIG Studio 5.0 AI SYSTEM SUITE Gate
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/core/src/main/kotlin/com/aigstudio/core/PackageBundle.kt'
+      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/core/src/main/kotlin/com/aigstudio/core/Geometry.kt'
+      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/app/src/main/java/com/aigstudio/app/MainActivity.kt'
+      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt'
+      - '.github/workflows/ai-system-suite-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  ai-system-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify AI SYSTEM SUITE contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0
+          REG=$ROOT/core/src/main/kotlin/com/aigstudio/core/PackageBundle.kt
+          CORE=$ROOT/core/src/main/kotlin/com/aigstudio/core/Geometry.kt
+          MAIN=$ROOT/app/src/main/java/com/aigstudio/app/MainActivity.kt
+          TEST=$ROOT/core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt
+          for p in ai-voice ai-command-router voice-safety-confirm ai-health ai-system-suite system-monitor-hud performance-telemetry thermal-guard renderer-governor renderer-burn-in software-absolute-coordinate chatgpt-ai-update; do
+            grep -Fq ""$p"" "$REG"
+          done
+          grep -Fq 'AI VOICE' "$MAIN"
+          grep -Fq 'AI SUITE' "$MAIN"
+          grep -Fq 'confirmVoiceAction' "$MAIN"
+          grep -Fq 'showExpandedSystemHud' "$MAIN"
+          grep -Fq 'thermalStatusLabel' "$MAIN"
+          grep -Fq 'object SoftwareCoordinateContract' "$CORE"
+          grep -Fq 'fun originDisplay(): String = "0.000"' "$CORE"
+          grep -Fq 'fun displayResolutionMm(): Double = CNC_RESOLUTION_MM' "$CORE"
+          grep -Fq 'fun machineOffsetAffectsGeometry(): Boolean = false' "$CORE"
+          grep -Fq 'SOFTWARE_ABSOLUTE_ORIGIN_LOCK_PASS' "$TEST"
+          echo 'AI_SYSTEM_SUITE_GATE=PASS'
+          echo 'PHYSICAL_BURN_IN=OPTIONAL_DIAGNOSTIC_NOT_RELEASE_GATE'
