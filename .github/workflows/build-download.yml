@@ -4,17 +4,12 @@ run-name: AIG Studio release build
 on:
   workflow_dispatch:
 
-concurrency:
-  group: aig-studio-release-build
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
 jobs:
   android-and-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -54,7 +49,6 @@ jobs:
 
   windows-exe:
     runs-on: windows-latest
-    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
