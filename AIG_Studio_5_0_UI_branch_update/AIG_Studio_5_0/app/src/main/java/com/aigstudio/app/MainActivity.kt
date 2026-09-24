@@ -103,8 +103,6 @@ class MainActivity : Activity() {
     private var monitorFpsSamples = 0L
     private var monitorMaxRamMb = 0.0
     private var monitorStartMs = 0L
-    private var burnInActive = false
-    private var burnInStartMs = 0L
     private var lastCpuMs = 0L
     private var lastCpuWallMs = 0L
     private var monitorSnapshot = "MONITOR --"
@@ -132,7 +130,6 @@ class MainActivity : Activity() {
                 monitorFrames = 0
                 monitorWindowStartNs = frameTimeNanos
             }
-            if (burnInActive) cad.postInvalidateOnAnimation()
             Choreographer.getInstance().postFrameCallback(this)
         }
     }
@@ -241,27 +238,11 @@ class MainActivity : Activity() {
         box.addView(TextView(this).apply {
             setTextColor(0xFFE1EFFF.toInt())
             textSize = 13f
-            text = "AIG CNC AI 系統套裝\nAI VOICE • SYSTEM HUD • FPS/Frame Time • BAT/Thermal • RAM • Dropped Frames • Renderer Governor • Burn-in"
+            text = "AIG CNC AI 系統套裝\nAI VOICE • SYSTEM HUD • FPS/Frame Time • BAT/Thermal • RAM • Dropped Frames • Renderer Governor"
             setPadding(dp(4),dp(4),dp(4),dp(10))
         })
         action("AI VOICE") { startVoiceAssistant() }
         action("系統監控 HUD") { applySystemHudPreference(true); showExpandedSystemHud() }
-        action(if (burnInActive) "停止 Renderer 燒機" else "開始 Renderer 燒機") {
-            burnInActive = !burnInActive
-            if (burnInActive) {
-                burnInStartMs = SystemClock.elapsedRealtime()
-                monitorDroppedFrames = 0L
-                monitorMaxTempC = Double.NEGATIVE_INFINITY
-                monitorMinFps = Double.POSITIVE_INFINITY
-                monitorFpsSum = 0.0
-                monitorFpsSamples = 0L
-                monitorMaxRamMb = 0.0
-                if (!systemMonitorRunning) applySystemHudPreference(true)
-                speakVoice("Renderer 燒機開始，高溫會自動停止")
-            } else {
-                speakVoice("Renderer 燒機已停止")
-            }
-        }
         action("環境 / FPS / 溫度設定") { showEnvironmentSettings() }
         action("ChatGPT AI 更新") { runSecureUpdateCheck() }
         AlertDialog.Builder(this)
@@ -334,19 +315,6 @@ class MainActivity : Activity() {
                 am.getMemoryInfo(mi)
                 speakVoice("AIG CNC 使用記憶體 " + String.format("%.0f MB", appRam) + "，可用 " + String.format("%.0f MB", mi.availMem / 1048576.0))
             }
-            cmd.contains("開始燒機") || cmd.contains("開始壓力測試") -> {
-                burnInActive = true
-                burnInStartMs = SystemClock.elapsedRealtime()
-                monitorDroppedFrames = 0L
-                monitorMaxTempC = Double.NEGATIVE_INFINITY
-                monitorMinFps = Double.POSITIVE_INFINITY
-                monitorFpsSum = 0.0
-                monitorFpsSamples = 0L
-                monitorMaxRamMb = 0.0
-                if (!systemMonitorRunning) applySystemHudPreference(true)
-                speakVoice("Renderer 燒機開始，高溫會自動停止")
-            }
-            cmd.contains("停止燒機") || cmd.contains("停止壓力測試") -> { burnInActive = false; speakVoice("Renderer 燒機已停止") }
             cmd.contains("系統監控") || cmd.contains("hud") -> { showExpandedSystemHud(); speakVoice("已開啟系統監控") }
             cmd.contains("加工") || cmd.contains("cam") -> { openCategory("加工") { showMachiningBranch() }; speakVoice("切換加工") }
             cmd.contains("安全") -> { openCategory("安全") { showSecurityBranch() }; speakVoice("切換安全") }
@@ -546,7 +514,7 @@ class MainActivity : Activity() {
             lastCpuWallMs = SystemClock.elapsedRealtime()
             Choreographer.getInstance().postFrameCallback(systemFrameCallback)
             systemMonitorHandler.post(systemMonitorRunnable)
-        } else if (!enabled && systemMonitorRunning && !burnInActive) {
+        } else if (!enabled && systemMonitorRunning) {
             systemMonitorRunning = false
             Choreographer.getInstance().removeFrameCallback(systemFrameCallback)
             systemMonitorHandler.removeCallbacks(systemMonitorRunnable)
@@ -605,12 +573,6 @@ class MainActivity : Activity() {
             thermal in setOf("MODERATE","SEVERE") || (!tempC.isNaN() && tempC >= 43.0) || monitorFrameTimeMs > 20.0 -> "YELLOW"
             else -> "GREEN"
         }
-        val elapsedMs = if (burnInActive) nowWall - burnInStartMs else nowWall - monitorStartMs
-        val hh = elapsedMs / 3_600_000
-        val mm = (elapsedMs / 60_000) % 60
-        val ss = (elapsedMs / 1000) % 60
-        val avgFps = if (monitorFpsSamples > 0) monitorFpsSum / monitorFpsSamples else monitorFps
-        val minFps = if (monitorMinFps.isFinite()) monitorMinFps else monitorFps
         val tempText = if (tempC.isNaN()) "--.-" else String.format("%.1f", tempC)
         monitorSnapshot =
             "FPS " + String.format("%.1f", monitorFps) +
@@ -621,8 +583,7 @@ class MainActivity : Activity() {
             "\nDropped " + monitorDroppedFrames +
             " | App CPU " + String.format("%.0f", cpuLoad) + "%" +
             " | Mem " + ramPressure +
-            " | State " + perfState +
-            (if (burnInActive) " | BURN " + String.format("%02d:%02d:%02d", hh, mm, ss) else "")
+            " | State " + perfState
         if (::systemHudIndicator.isInitialized) {
             systemHudIndicator.text = monitorSnapshot.substringBefore("\n")
             systemHudIndicator.setTextColor(when(perfState) {
@@ -631,22 +592,11 @@ class MainActivity : Activity() {
                 else -> Color.rgb(99,255,157)
             })
         }
-
-        if (burnInActive && (thermal in setOf("CRITICAL","EMERGENCY","SHUTDOWN") || (!tempC.isNaN() && tempC >= 47.0))) {
-            burnInActive = false
-            Toast.makeText(this, "Renderer 燒機已因高溫自動停止 • BAT " + tempText + "°C • Thermal " + thermal, Toast.LENGTH_LONG).show()
-        }
-
-        // Keep expanded statistics available without changing CNC safety state.
-        if (systemHudExpanded) {
-            systemHudExpanded = false
-        }
+        if (systemHudExpanded) systemHudExpanded = false
     }
 
     private fun showExpandedSystemHud() {
         systemHudExpanded = true
-        val now = SystemClock.elapsedRealtime()
-        val elapsed = if (burnInActive) now - burnInStartMs else now - monitorStartMs
         val avgFps = if (monitorFpsSamples > 0) monitorFpsSum / monitorFpsSamples else monitorFps
         val minFps = if (monitorMinFps.isFinite()) monitorMinFps else monitorFps
         val maxTemp = if (monitorMaxTempC.isFinite()) String.format("%.1f°C", monitorMaxTempC) else "--"
@@ -662,26 +612,9 @@ class MainActivity : Activity() {
             append("0.001 mm precision: LOCKED")
         }
         AlertDialog.Builder(this)
-            .setTitle(if (burnInActive) "系統監控 HUD • Renderer 燒機中" else "系統監控 HUD")
+            .setTitle("系統監控 HUD")
             .setMessage(body)
-            .setPositiveButton(if (burnInActive) "停止 Renderer 燒機" else "開始 Renderer 燒機") { _, _ ->
-                if (burnInActive) {
-                    burnInActive = false
-                    Toast.makeText(this, "Renderer 燒機停止", Toast.LENGTH_SHORT).show()
-                } else {
-                    burnInActive = true
-                    burnInStartMs = SystemClock.elapsedRealtime()
-                    monitorDroppedFrames = 0L
-                    monitorMaxTempC = Double.NEGATIVE_INFINITY
-                    monitorMinFps = Double.POSITIVE_INFINITY
-                    monitorFpsSum = 0.0
-                    monitorFpsSamples = 0L
-                    monitorMaxRamMb = 0.0
-                    if (!systemMonitorRunning) applySystemHudPreference(true)
-                    Toast.makeText(this, "Renderer 燒機開始 • 高溫將自動停止", Toast.LENGTH_LONG).show()
-                }
-            }
-            .setNegativeButton("關閉", null)
+            .setPositiveButton("關閉", null)
             .show()
     }
 
