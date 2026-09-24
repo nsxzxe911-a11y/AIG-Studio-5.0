@@ -16,6 +16,7 @@ import android.view.Gravity
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
+import android.view.Choreographer
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Spinner
@@ -221,6 +222,21 @@ class MainActivity : Activity() {
         addActionTo(branchFlow, "系統環境", 2) { showEnvironmentSettings() }
     }
 
+    private fun applyFpsDisplayPreference(enabled: Boolean) {
+        if (::fpsIndicator.isInitialized) {
+            fpsIndicator.visibility = if (enabled) View.VISIBLE else View.GONE
+        }
+        if (enabled && !fpsLoopRunning) {
+            fpsLoopRunning = true
+            fpsLastNs = 0L
+            fpsFrames = 0
+            Choreographer.getInstance().postFrameCallback(fpsFrameCallback)
+        } else if (!enabled && fpsLoopRunning) {
+            fpsLoopRunning = false
+            Choreographer.getInstance().removeFrameCallback(fpsFrameCallback)
+        }
+    }
+
     private fun showEnvironmentSettings() {
         val prefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
         val box = LinearLayout(this).apply {
@@ -262,6 +278,12 @@ class MainActivity : Activity() {
             box.addView(this)
         }
 
+        val fpsDisplay = CheckBox(this).apply {
+            text = "FPS 顯示：開啟即時實測 FPS"
+            isChecked = prefs.getBoolean("fps_display_enabled", false)
+            box.addView(this)
+        }
+
         val hud = CheckBox(this).apply {
             text = "效能 HUD：FPS / Frame Time / Battery / Thermal"
             isChecked = prefs.getBoolean("hud_enabled", false)
@@ -290,10 +312,13 @@ class MainActivity : Activity() {
                     .putString("power_mode", powerValues[power.selectedItemPosition])
                     .putString("render_quality", qualityValues[quality.selectedItemPosition])
                     .putInt("rgb_brightness", rgb.progress)
+                    .putBoolean("fps_display_enabled", fpsDisplay.isChecked)
                     .putBoolean("hud_enabled", hud.isChecked)
                     .putBoolean("thermal_auto", autoThermal.isChecked)
                     .putBoolean("idle_throttle", idleThrottle.isChecked)
                     .apply()
+
+                applyFpsDisplayPreference(fpsDisplay.isChecked)
 
                 if (Build.VERSION.SDK_INT >= 30) {
                     val requested = when (selectedFps) {
