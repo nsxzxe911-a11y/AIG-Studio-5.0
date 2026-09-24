@@ -51,7 +51,7 @@ Version numbers only move forward. Generated build outputs are excluded from ver
 - Android package: `com.aigstudio.app`, versionName `93.0.0`, versionCode `930000`, compile/targetSdk 36
 - APK verification: zipalign + apksigner + package + targetSdk 36 + SHA256 = **PASS**
 - Android release manifest version: `93.0.0` = workflow version
-- Android release manifest git_sha: `28a295da1cc4c0938eb710bda93dcaf14bc3e60a` = workflow SHA
+- Android release manifest git_sha: `1b92ab8db9156351990ea63302acde2bc1922955` = workflow SHA
 - Source release manifest version/git_sha: **MATCH**
 - Android/source artifact: `AIG-Studio-Android-and-Source` (artifact 10833348126, digest `sha256:92399d97b4b22e38dd7b8403843ef957b6039e1735ded3c946c624d9768fdc3e`)
 - Windows release wrapper remains fail-closed through explicit subprocess exit-code checks.
