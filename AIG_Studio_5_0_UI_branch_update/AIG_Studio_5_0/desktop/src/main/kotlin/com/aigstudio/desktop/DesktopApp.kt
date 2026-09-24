@@ -195,7 +195,7 @@ private class CadPanel(
 
         g2.color = Color(143, 179, 201)
         g2.font = Font(Font.SANS_SERIF, Font.PLAIN, 14)
-        g2.drawString("AIG CNC • OFFICIAL RGB ORIGINAL • 2D CAD • 原點 X0.000 Y0.000 • 精度 0.001 mm", 14, 22)
+        g2.drawString("AIG CNC • OFFICIAL RGB ORIGINAL • 1080P/2K/3K/4K+ • 2D CAD • 原點 X0.000 Y0.000 • 精度 0.001 mm", 14, 22)
     }
 }
 
@@ -315,6 +315,22 @@ private class Mesh3DPanel(private val result: Machining3DResult) : JPanel() {
             14, 22
         )
     }
+}
+
+private fun desktopAdaptiveSize(baseW: Int, baseH: Int): Dimension {
+    val bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
+    val shortEdge = min(bounds.width, bounds.height)
+    val longEdge = max(bounds.width, bounds.height)
+    val scale = when {
+        shortEdge >= 2160 && longEdge >= 3800 -> 1.35
+        shortEdge >= 1440 && longEdge >= 2880 -> 1.22
+        shortEdge >= 1440 && longEdge >= 2400 -> 1.14
+        else -> 1.0
+    }
+    return Dimension(
+        min((baseW * scale).roundToInt(), (bounds.width * 0.92).roundToInt()),
+        min((baseH * scale).roundToInt(), (bounds.height * 0.90).roundToInt())
+    )
 }
 
 private fun addRectangle(doc: DrawingDocument, x0: Double, y0: Double, x1: Double, y1: Double) {
@@ -565,7 +581,7 @@ private fun showApp() {
     frame.add(toolbar, BorderLayout.NORTH)
     frame.add(cad, BorderLayout.CENTER)
     frame.add(status, BorderLayout.SOUTH)
-    frame.setSize(1280, 820)
+    frame.size = desktopAdaptiveSize(1280, 820)
     frame.setLocationRelativeTo(null)
     frame.isVisible = true
 }
