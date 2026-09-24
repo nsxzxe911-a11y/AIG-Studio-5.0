@@ -4,6 +4,8 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.os.SystemClock
 import android.speech.RecognizerIntent
+import android.speech.RecognitionListener
+import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import java.util.Locale
 import android.os.Process
@@ -11,7 +13,9 @@ import android.os.PowerManager
 import android.content.IntentFilter
 import android.content.Intent
 import android.app.ActivityManager
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.ActivityNotFoundException
 import android.graphics.Canvas
 import android.graphics.Color
@@ -48,9 +52,12 @@ enum class Tool { LINE, RECT, CIRCLE, DELETE, CHAMFER, FILLET, PAN }
 class MainActivity : Activity() {
     companion object {
         private const val REQ_AI_VOICE = 7110
+        private const val REQ_AI_VOICE_PERMISSION = 7111
     }
     private lateinit var cad: CadView
     private var voiceTts: TextToSpeech? = null
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var voiceListening = false
     private lateinit var branchFlow: FlowLayout
     private lateinit var categoryFlow: FlowLayout
     private val toolButtons = mutableMapOf<Tool, Button>()
@@ -266,20 +273,64 @@ class MainActivity : Activity() {
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
     }
 
+    private fun ensureSpeechRecognizer(): Boolean {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) return false
+        if (speechRecognizer != null) return true
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this).apply {
+            setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: Bundle?) {
+                    voiceListening = true
+                    Toast.makeText(this@MainActivity, "AI VOICE • 聆聽中", Toast.LENGTH_SHORT).show()
+                }
+                override fun onBeginningOfSpeech() {}
+                override fun onRmsChanged(rmsdB: Float) {}
+                override fun onBufferReceived(buffer: ByteArray?) {}
+                override fun onEndOfSpeech() { voiceListening = false }
+                override fun onError(error: Int) {
+                    voiceListening = false
+                    Toast.makeText(this@MainActivity, "AI VOICE • 辨識結束", Toast.LENGTH_SHORT).show()
+                }
+                override fun onResults(results: Bundle?) {
+                    voiceListening = false
+                    val heard = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+                    if (!heard.isNullOrBlank()) handleVoiceCommand(heard) else speakVoice("沒有聽清楚")
+                }
+                override fun onPartialResults(partialResults: Bundle?) {
+                    val partial = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+                    if (!partial.isNullOrBlank()) {
+                        // Partial text is intentionally not spoken to avoid audio feedback.
+                    }
+                }
+                override fun onEvent(eventType: Int, params: Bundle?) {}
+            })
+        }
+        return true
+    }
+
     private fun startVoiceAssistant() {
         initVoiceAssistant()
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_AI_VOICE_PERMISSION)
+            return
+        }
+        if (!ensureSpeechRecognizer()) {
+            speakVoice("此裝置沒有可用的語音辨識服務")
+            return
+        }
+        if (voiceListening) {
+            speechRecognizer?.stopListening()
+            voiceListening = false
+            Toast.makeText(this, "AI VOICE • 已停止", Toast.LENGTH_SHORT).show()
+            return
+        }
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "zh-TW")
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "zh-TW")
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "AIG CNC AI 語音")
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
         }
-        try {
-            startActivityForResult(intent, REQ_AI_VOICE)
-        } catch (_: ActivityNotFoundException) {
-            speakVoice("此裝置沒有可用的語音辨識服務")
-        }
+        speechRecognizer?.startListening(intent)
     }
 
     private fun confirmVoiceAction(description: String, action: () -> Unit) {
@@ -329,6 +380,14 @@ class MainActivity : Activity() {
         }
     }
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQ_AI_VOICE_PERMISSION) {
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) startVoiceAssistant()
+            else speakVoice("麥克風權限未開啟")
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQ_AI_VOICE) {
@@ -340,6 +399,9 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        speechRecognizer?.cancel()
+        speechRecognizer?.destroy()
+        speechRecognizer = null
         voiceTts?.stop()
         voiceTts?.shutdown()
         systemMonitorHandler.removeCallbacks(systemMonitorRunnable)
