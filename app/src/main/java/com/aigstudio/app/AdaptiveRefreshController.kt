@@ -37,8 +37,9 @@ class AdaptiveRefreshController(
 
     fun stop() {
         handler.removeCallbacks(idleRunnable)
-        if (Build.VERSION.SDK_INT >= 29 && thermalListener != null) {
-            runCatching { powerManager.removeThermalStatusListener(thermalListener) }
+        val listener = thermalListener
+        if (Build.VERSION.SDK_INT >= 29 && listener != null) {
+            powerManager.removeThermalStatusListener(listener)
         }
         started = false
     }
