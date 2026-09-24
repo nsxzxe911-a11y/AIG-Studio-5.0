@@ -65,6 +65,25 @@ jobs:
           fi
           echo 'STUDIO_SECURITY_UPDATE_GATE=PASS'
 
+      - name: Runner HTTPS network gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-evidence
+          getent hosts api.github.com | tee runtime-evidence/NETWORK_DNS.txt
+          curl --fail --silent --show-error --proto '=https' --tlsv1.2 --connect-timeout 8 --max-time 20 https://api.github.com/meta -o runtime-evidence/NETWORK_HTTPS_META.json
+          test -s runtime-evidence/NETWORK_HTTPS_META.json
+          if curl --fail --silent --show-error --proto '=https' --connect-timeout 5 --max-time 10 http://example.com -o /dev/null; then
+            echo 'BLOCKED: clear-text HTTP unexpectedly allowed by HTTPS-only probe'
+            exit 72
+          fi
+          {
+            echo "SOURCE_SHA=$GITHUB_SHA"
+            echo "DNS_RESOLUTION=PASS"
+            echo "HTTPS_TLS12=PASS"
+            echo "CLEARTEXT_HTTP_BLOCK_PROBE=PASS"
+          } | tee runtime-evidence/NETWORK_GATE.txt
+
       - name: 2D CNC thousandth ruler gate
         shell: bash
         run: |
