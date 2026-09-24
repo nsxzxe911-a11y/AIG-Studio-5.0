@@ -131,7 +131,9 @@ PY
 }
 
 dump_ui /data/local/tmp/aigstudio-ui.xml "$EVIDENCE/UI.xml"
-grep -Fq 'AIG Studio 5.0' "$EVIDENCE/UI.xml"
+grep -Fq 'AIG CNC' "$EVIDENCE/UI.xml"
+grep -Fq 'OFFICIAL RGB ORIGINAL' "$EVIDENCE/UI.xml"
+grep -Fq 'ChatGPT AI 更新' "$EVIDENCE/UI.xml"
 grep -Fq '繪圖' "$EVIDENCE/UI.xml"
 
 tap_ui_text "矩形"
@@ -166,6 +168,10 @@ echo "STUDIO_TRUE_3D_INTERACTION=PASS" | tee "$EVIDENCE/TRUE_3D_GATE.txt"
 
 adb exec-out screencap -p > "$EVIDENCE/STARTUP.png"
 test -s "$EVIDENCE/STARTUP.png"
+sha256sum "$EVIDENCE/STARTUP.png" | tee "$EVIDENCE/STARTUP_SHA256.txt"
+echo "SOURCE_SHA=$GITHUB_SHA" | tee "$EVIDENCE/RGB_UI_RUNTIME.txt"
+echo "OFFICIAL_RGB_UI_RUNTIME_SCREENSHOT=STARTUP.png" | tee -a "$EVIDENCE/RGB_UI_RUNTIME.txt"
+echo "STUDIO_OFFICIAL_RGB_UI_RUNTIME=PASS" | tee -a "$EVIDENCE/RGB_UI_RUNTIME.txt"
 adb logcat -d -t 600 > "$EVIDENCE/LOGCAT.txt" 2>/dev/null || true
 
 adb shell am force-stop "$PACKAGE"
