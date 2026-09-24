@@ -911,7 +911,8 @@ class MainActivity : Activity() {
             }
         val risk = MachiningRiskScanner.inspect(cam, Stock3D.fromSnapshot(snapshot))
         val editor = EditText(this).apply {
-            setText(FanucNc.generate(cam, FanucPostSettings(workOffset = workOffset, axisA = axisA, axisB = axisB)) + if (drillCycleBlock.isBlank()) "" else "\n" + drillCycleBlock)
+            val baseNc = FanucNc.generate(cam, FanucPostSettings(workOffset = workOffset, axisA = axisA, axisB = axisB))
+            setText(if (drillCycleBlock.isBlank()) baseNc else FanucNc.insertBeforeProgramEnd(baseNc, drillCycleBlock))
             setTextColor(Color.rgb(225,240,255))
             setBackgroundColor(Color.rgb(5,12,20))
             textSize = 13f
