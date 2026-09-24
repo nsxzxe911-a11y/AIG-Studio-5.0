@@ -11,15 +11,14 @@ android {
         applicationId = "com.aigstudio.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 52300
-        versionName = "5.23.0"
+        versionCode = 52400
+        versionName = "5.24.0"
     }
 }
 
 kotlin {
     jvmToolchain(17)
 }
-
 
 dependencies {
     implementation(project(":core"))
