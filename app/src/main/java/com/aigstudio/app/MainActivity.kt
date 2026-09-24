@@ -284,9 +284,24 @@ class MainActivity : Activity() {
     private val temperatureRunnable = object : Runnable {
         override fun run() {
             if (!temperatureLoopRunning) return
-            val battery = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-            val raw = battery?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE) ?: Int.MIN_VALUE
-            temperatureIndicator.text = if (raw == Int.MIN_VALUE) "BAT --.-°C" else "BAT " + String.format("%.1f", raw / 10.0) + "°C"
+            val temps = CpuGpuTemperatureProbe.read()
+            if (::temperatureIndicator.isInitialized) {
+                temperatureIndicator.text =
+                    "CPU " + CpuGpuTemperatureProbe.format(temps.cpuC) +
+                    "  |  GPU " + CpuGpuTemperatureProbe.format(temps.gpuC)
+                val hottest = listOfNotNull(temps.cpuC, temps.gpuC).maxOrNull()
+                val prefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
+                val warnC = prefs.getInt("temperature_warn_c", 75).toDouble()
+                val highC = prefs.getInt("temperature_high_c", 85).toDouble()
+                temperatureIndicator.setTextColor(
+                    when {
+                        hottest == null -> 0xFFA0B4C3.toInt()
+                        hottest >= highC -> 0xFFFF5252.toInt()
+                        hottest >= warnC -> 0xFFFFC107.toInt()
+                        else -> 0xFF3DEBFF.toInt()
+                    }
+                )
+            }
             temperatureHandler.postDelayed(this, RuntimeDeviceProfile.temperatureIntervalMs)
         }
     }
@@ -389,7 +404,7 @@ class MainActivity : Activity() {
         }
         root.addView(fpsIndicator, LinearLayout.LayoutParams(-1, -2))
         temperatureIndicator = TextView(this).apply {
-            setTextColor(0xFF3DEBFF.toInt()); textSize = 11f; text = "BAT --.-°C"
+            setTextColor(0xFF3DEBFF.toInt()); textSize = 11f; text = "CPU N/A  |  GPU N/A"
             setPadding(dp(12), dp(2), dp(12), dp(2)); visibility = View.GONE
         }
         root.addView(temperatureIndicator, LinearLayout.LayoutParams(-1, -2))
@@ -633,8 +648,11 @@ class MainActivity : Activity() {
                 speakVoice("目前 FPS " + String.format("%.1f", monitorFps) + "，Frame Time " + String.format("%.1f", monitorFrameTimeMs) + " 毫秒")
             }
             cmd.contains("溫度") || cmd.contains("thermal") -> {
-                val temp = currentBatteryTemperatureC()
-                speakVoice("目前電池溫度 " + (temp?.let { String.format("%.1f 度", it) } ?: "無法取得") + "，Thermal " + thermalStatusLabel())
+                val temps = CpuGpuTemperatureProbe.read()
+                speakVoice(
+                    "CPU 溫度 " + (temps.cpuC?.let { String.format("%.1f 度", it) } ?: "無法取得") +
+                    "，GPU 溫度 " + (temps.gpuC?.let { String.format("%.1f 度", it) } ?: "無法取得")
+                )
             }
             cmd.contains("記憶體") || cmd.contains("ram") -> {
                 val appRam = android.os.Debug.getPss().toDouble() / 1024.0
@@ -1450,7 +1468,7 @@ private fun showEnvironmentSettings() {
 
         val systemHud = CheckBox(this).apply {
             text = "系統監控 HUD：精簡列 / 點擊展開"
-            isChecked = prefs.getBoolean("system_hud_enabled", RuntimeDeviceProfile.defaultSystemHudEnabled)
+            isChecked = prefs.getBoolean("system_hud_enabled", false)
             box.addView(this)
         }
 
@@ -1461,13 +1479,13 @@ private fun showEnvironmentSettings() {
         }
 
         val temperatureDisplay = CheckBox(this).apply {
-            text = "溫度顯示（電池感測）：BAT °C"
+            text = "溫度顯示：CPU °C / GPU °C"
             isChecked = prefs.getBoolean("temperature_display_enabled", RuntimeDeviceProfile.defaultTemperatureDisplayEnabled)
             box.addView(this)
         }
 
         val overheatWarning = CheckBox(this).apply {
-            text = "過熱提醒：43°C 警告 / 47°C 高溫"
+            text = "過熱提醒：CPU/GPU 75°C 警告 / 85°C 高溫"
             isChecked = prefs.getBoolean("overheat_warning_enabled", true)
             box.addView(this)
         }
@@ -1504,8 +1522,8 @@ private fun showEnvironmentSettings() {
                     .putBoolean("fps_display_enabled", fpsDisplay.isChecked)
                     .putBoolean("temperature_display_enabled", temperatureDisplay.isChecked)
                     .putBoolean("overheat_warning_enabled", overheatWarning.isChecked)
-                    .putInt("temperature_warn_c", 43)
-                    .putInt("temperature_high_c", 47)
+                    .putInt("temperature_warn_c", 75)
+                    .putInt("temperature_high_c", 85)
                     .putBoolean("hud_enabled", hud.isChecked)
                     .putBoolean("thermal_auto", autoThermal.isChecked)
                     .putBoolean("idle_throttle", idleThrottle.isChecked)

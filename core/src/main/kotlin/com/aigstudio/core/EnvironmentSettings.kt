@@ -293,3 +293,23 @@ object PlatformRefreshPolicy {
 
     fun visualLoadScale(isEmulator:Boolean):Double = if(isEmulator) 0.65 else 1.0
 }
+
+object ThermalSensorPolicy {
+    fun isCpuType(type:String):Boolean {
+        val t=type.lowercase()
+        return listOf("cpu","cluster","big","little","ap_thermal","ap-thermal").any { t.contains(it) }
+    }
+
+    fun isGpuType(type:String):Boolean {
+        val t=type.lowercase()
+        return listOf("gpu","g3d","mali","adreno").any { t.contains(it) }
+    }
+
+    fun normalizeCelsius(raw:Double):Double? {
+        val c=when {
+            kotlin.math.abs(raw)>=1000.0 -> raw/1000.0
+            else -> raw
+        }
+        return c.takeIf { it in -20.0..150.0 }
+    }
+}

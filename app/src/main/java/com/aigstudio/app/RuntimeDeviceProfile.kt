@@ -22,7 +22,7 @@ object RuntimeDeviceProfile {
             product.contains("sdk")
     }
 
-    val defaultSystemHudEnabled: Boolean get() = !isEmulator
+    val defaultSystemHudEnabled: Boolean get() = false
     val defaultTemperatureDisplayEnabled: Boolean get() = !isEmulator
     val systemMonitorIntervalMs: Long get() = if (isEmulator) 2_500L else 1_000L
     val temperatureIntervalMs: Long get() = if (isEmulator) 5_000L else 2_000L

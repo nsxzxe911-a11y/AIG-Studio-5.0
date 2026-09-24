@@ -233,6 +233,12 @@ private fun testEnvironmentSettingsContract() {
     check(PlatformRefreshPolicy.capForRuntime(120,true)==60)
     check(PlatformRefreshPolicy.capForRuntime(60,true)==60)
     check(PlatformRefreshPolicy.visualLoadScale(true)<1.0)
+    check(ThermalSensorPolicy.isCpuType("cpu-thermal"))
+    check(ThermalSensorPolicy.isCpuType("cluster0"))
+    check(ThermalSensorPolicy.isGpuType("gpu"))
+    check(ThermalSensorPolicy.isGpuType("g3d"))
+    check(ThermalSensorPolicy.normalizeCelsius(65000.0)==65.0)
+    check(ThermalSensorPolicy.normalizeCelsius(65.0)==65.0)
     println("✓ ENVIRONMENT_SETTINGS_GATE_PASS 120/60/30/Auto RGB thermal battery precision-isolated")
 }
 
