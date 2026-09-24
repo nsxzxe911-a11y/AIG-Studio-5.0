@@ -25,16 +25,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Android-APK
-          path: |
-            AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
-            AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk.sha256
+          path: release/android/
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Full-Project-Source
-          path: |
-            AIG_Studio_FULL_PROJECT_SOURCE.zip
-            AIG_Studio_FULL_PROJECT_SOURCE.zip.sha256
+          path: release/source/
           if-no-files-found: error
 
   windows-exe:
@@ -51,7 +47,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Windows-EXE
-          path: |
-            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe
-            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe.sha256
+          path: release/windows/
           if-no-files-found: error

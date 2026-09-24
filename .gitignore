@@ -13,18 +13,14 @@ local.properties
 *.jar
 out/
 
-# Windows packaging / generated runtime
+# Generated release/runtime outputs
+release/
 **/dist/
+*.apk
+*.exe
 *.msi
 *.appx
 *.msix
-
-# Release outputs
-*.apk
-*.exe
-AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk*
-AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe*
-AIG_Studio_FULL_PROJECT_SOURCE.zip*
 
 # Signing / credentials
 *.pfx
