@@ -228,6 +228,7 @@ class Axis5xPreview(
 }
 
 class MainActivity : Activity() {
+    private var adaptiveRefreshController: AdaptiveRefreshController? = null
     companion object {
         private const val REQ_AI_VOICE = 7110
         private const val REQ_AI_VOICE_PERMISSION = 7111
@@ -351,14 +352,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (Build.VERSION.SDK_INT >= 30) {
-            display?.supportedModes
-                ?.filter { it.refreshRate >= 119.0f }
-                ?.maxByOrNull { it.refreshRate }
-                ?.let { mode ->
-                    window.attributes = window.attributes.apply { preferredDisplayModeId = mode.modeId }
-                }
-        }
+        adaptiveRefreshController = AdaptiveRefreshController(this).also { it.start() }
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(0xFF07111B.toInt())
@@ -686,7 +680,14 @@ class MainActivity : Activity() {
         super.onPause()
     }
 
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        adaptiveRefreshController?.markInteractive()
+        return super.dispatchTouchEvent(event)
+    }
+
     override fun onDestroy() {
+        adaptiveRefreshController?.stop()
+        adaptiveRefreshController = null
         autosaveHandler.removeCallbacks(autosaveRunnable)
         speechRecognizer?.cancel()
         speechRecognizer?.destroy()
@@ -1422,10 +1423,10 @@ private fun showEnvironmentSettings() {
             box.addView(this)
         }
 
-        val powerValues = arrayOf("Balanced", "Performance", "Eco", "Auto")
+        val powerValues = arrayOf("Auto", "Performance", "Balanced", "Eco")
         val power = Spinner(this).apply {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, powerValues)
-            val current = prefs.getString("power_mode", "Balanced") ?: "Balanced"
+            val current = prefs.getString("power_mode", "Auto") ?: "Auto"
             setSelection(powerValues.indexOf(current).coerceAtLeast(0))
             box.addView(TextView(this@MainActivity).apply { text = "省電 / 效能模式" })
             box.addView(this)
@@ -1513,18 +1514,7 @@ private fun showEnvironmentSettings() {
                 applySystemHudPreference(systemHud.isChecked)
                 applyFpsDisplayPreference(fpsDisplay.isChecked)
                 applyTemperatureDisplayPreference(temperatureDisplay.isChecked)
-
-                if (Build.VERSION.SDK_INT >= 30) {
-                    val requested = when (selectedFps) {
-                        "120 FPS" -> 120f
-                        "60 FPS" -> 60f
-                        "30 FPS" -> 30f
-                        else -> display?.refreshRate ?: 60f
-                    }
-                    display?.supportedModes
-                        ?.minByOrNull { kotlin.math.abs(it.refreshRate - requested) }
-                        ?.let { mode -> window.attributes = window.attributes.apply { preferredDisplayModeId = mode.modeId } }
-                }
+                adaptiveRefreshController?.applyFromPreferences()
                 val visualAlpha = (0.35f + rgb.progress / 100f * 0.65f).coerceIn(0.35f, 1f)
                 categoryButtons.values.forEach { it.alpha = visualAlpha }
                 toolButtons.values.forEach { it.alpha = visualAlpha }

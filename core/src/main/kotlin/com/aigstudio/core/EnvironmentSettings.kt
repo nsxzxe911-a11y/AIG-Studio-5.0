@@ -23,10 +23,12 @@ data class RuntimeEnvironmentSettings(
     val glowLevel:GlowLevel=GlowLevel.MEDIUM,
     val selectedGlowBoostPercent:Int=20,
     val glassOpacityPercent:Int=70,
-    val powerMode:PowerMode=PowerMode.BALANCED,
+    val powerMode:PowerMode=PowerMode.AUTO,
     val renderQuality:RenderQuality=RenderQuality.HIGH,
     val vsync:Boolean=true,
     val idleRedrawThrottle:Boolean=true,
+    val idleFps:Int=30,
+    val interactionBoostEnabled:Boolean=true,
     val autoThermalThrottle:Boolean=true,
     val thermalCooldownMs:Long=15_000L,
     val frameTimeGateEnabled:Boolean=true,
@@ -48,6 +50,7 @@ data class RuntimeEnvironmentSettings(
         require(rgbBrightness in 0..100)
         require(selectedGlowBoostPercent in 0..25)
         require(glassOpacityPercent in 0..100)
+        require(idleFps in setOf(30,60))
         require(thermalCooldownMs in 1_000L..120_000L)
         require(frameTimeBadFramesBeforeDrop in 2..120)
         require(frameTimeGoodFramesBeforeRaise in 30..3_600)
@@ -85,6 +88,30 @@ data class RuntimeEnvironmentSettings(
                 batteryPercent<=lowBatteryBalancedThreshold && !charging->minOf(target,60)
                 else->target
             }
+        }
+        return normalizeFps(target)
+    }
+
+    fun adaptiveTargetFps(
+        displayHz:Double,
+        batteryPercent:Int=100,
+        thermalLevel:Int=0,
+        charging:Boolean=false,
+        interactive:Boolean=true
+    ):Int{
+        var target=targetFps(displayHz,batteryPercent,thermalLevel,charging)
+        if(
+            interactionBoostEnabled &&
+            interactive &&
+            fpsMode==FpsMode.AUTO &&
+            powerMode==PowerMode.AUTO &&
+            thermalLevel<2 &&
+            (charging || batteryPercent>lowBatteryBalancedThreshold)
+        ){
+            target=normalizeFps(minOf(maxFps,displayHz.toInt().coerceAtLeast(30),120))
+        }
+        if(idleRedrawThrottle && !interactive){
+            target=minOf(target,idleFps)
         }
         return normalizeFps(target)
     }
@@ -141,10 +168,11 @@ class RendererGovernor(
         batteryPercent:Int,
         thermalLevel:Int,
         charging:Boolean,
-        memoryPressure:MemoryPressure=MemoryPressure.NORMAL
+        memoryPressure:MemoryPressure=MemoryPressure.NORMAL,
+        interactive:Boolean=true
     ):RenderBudget{
         require(frameTimeMs>=0.0)
-        val requested=settings.targetFps(displayHz,batteryPercent,thermalLevel,charging)
+        val requested=settings.adaptiveTargetFps(displayHz,batteryPercent,thermalLevel,charging,interactive)
 
         // Thermal protection drops immediately. Recovery is intentionally delayed.
         val thermalCap=when{
@@ -203,6 +231,7 @@ class RendererGovernor(
             MemoryPressure.CRITICAL->0.60
         }
         val reason=when{
+            !interactive && settings.idleRedrawThrottle->"IDLE_THROTTLE"
             thermalLevel>=4->"THERMAL_HIGH"
             thermalLevel>=2->"THERMAL_WARM"
             memory==MemoryPressure.CRITICAL->"MEMORY_CRITICAL_VISUAL_ONLY"
