@@ -6,6 +6,8 @@ if (-not (Test-Path $VersionFile)) { throw 'release-version.properties is requir
 $Version = ConvertFrom-StringData (Get-Content $VersionFile -Raw)
 $VersionName = $Version.versionName
 if (-not $VersionName) { throw 'Release version metadata is incomplete.' }
+$GitSha = (& git -C $RepoRoot rev-parse HEAD).Trim()
+if (-not $GitSha) { throw 'Unable to resolve Git commit SHA.' }
 
 function Refresh-ProcessPath {
   $machine = [Environment]::GetEnvironmentVariable('Path', 'Machine')
@@ -34,6 +36,7 @@ $PackageOut = Join-Path $Dist 'windows-self-contained'
 $ReleaseOut = Join-Path $RepoRoot 'release\windows'
 $FinalExe = Join-Path $ReleaseOut 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
 $SumsFile = Join-Path $ReleaseOut 'SHA256SUMS.txt'
+$ManifestFile = Join-Path $ReleaseOut 'RELEASE_MANIFEST.txt'
 $UpgradeUuid = '8c54d63a-6ac2-45ea-a474-63d0d88b1f50'
 $Product = 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC'
 
@@ -69,6 +72,16 @@ if ($Bytes.Length -lt 2 -or $Bytes[0] -ne 0x4D -or $Bytes[1] -ne 0x5A) { throw '
 Copy-Item $Installer.FullName $FinalExe -Force
 $Hash = (Get-FileHash $FinalExe -Algorithm SHA256).Hash.ToLowerInvariant()
 ("$Hash  " + (Split-Path -Leaf $FinalExe)) | Out-File $SumsFile -Encoding ascii
+@(
+  'product=AIG-Studio'
+  "version=$VersionName"
+  "git_sha=$GitSha"
+  ('artifact=' + (Split-Path -Leaf $FinalExe))
+  "sha256=$Hash"
+  'release_state=BUILD_ARTIFACT_ONLY_NOT_FINAL'
+) | Out-File $ManifestFile -Encoding ascii
+
 Write-Host ('AIG_STUDIO_VERSION=' + $VersionName)
+Write-Host ('AIG_STUDIO_GIT_SHA=' + $GitSha)
 Write-Host ('AIG_STUDIO_EXE_SHA256=' + $Hash)
 Write-Host 'STUDIO_WINDOWS_SELF_CONTAINED_BUILD=PASS'
