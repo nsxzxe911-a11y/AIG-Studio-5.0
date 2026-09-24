@@ -11,22 +11,7 @@ if (-not $VersionName) { throw 'Release version metadata is incomplete.' }
 $GitSha = (& git -C $RepoRoot rev-parse HEAD).Trim()
 if (-not $GitSha) { throw 'Unable to resolve Git commit SHA.' }
 
-function Refresh-ProcessPath {
-  $machine = [Environment]::GetEnvironmentVariable('Path', 'Machine')
-  $user = [Environment]::GetEnvironmentVariable('Path', 'User')
-  $env:Path = "$machine;$user"
-}
-
-function Ensure-Tool([string]$Command, [string]$ChocolateyPackage) {
-  if (Get-Command $Command -ErrorAction SilentlyContinue) { return }
-  if (-not (Get-Command choco -ErrorAction SilentlyContinue)) { throw "$Command is required and Chocolatey is unavailable." }
-  choco install $ChocolateyPackage -y --no-progress --limit-output
-  if ($LASTEXITCODE -notin @(0, 1641, 3010)) { throw "$ChocolateyPackage installation failed." }
-  Refresh-ProcessPath
-  if (-not (Get-Command $Command -ErrorAction SilentlyContinue)) { throw "$Command is still unavailable after installing $ChocolateyPackage." }
-}
-
-Ensure-Tool 'light.exe' 'wixtoolset'
+if (-not (Get-Command light.exe -ErrorAction SilentlyContinue)) { throw 'WiX Toolset 3 light.exe is required on the Windows runner.' }
 if (-not (Get-Command gradle -ErrorAction SilentlyContinue)) { throw 'Gradle is required.' }
 if (-not (Get-Command jpackage -ErrorAction SilentlyContinue)) { throw 'JDK 17+ jpackage is required.' }
 
