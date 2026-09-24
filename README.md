@@ -41,6 +41,18 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 Version numbers only move forward. Generated build outputs are excluded from version control and do not replace source as the release truth.
 
+## Direct validation evidence for 52.0.0
+
+- Validated source SHA: `aa1564061a649cf9c5a171ac2044786c2af95f5c`
+- GitHub Actions run: `36029546599` = **SUCCESS**
+- Android + source job: **SUCCESS**
+- Core regression: **ALL TESTS PASSED**
+- APK verification: zipalign + apksigner + package + targetSdk 36 + SHA256 = **PASS**
+- Android/source artifact: `AIG-Studio-Android-and-Source` (artifact 10821195217)
+- Windows build + PE/MZ + SHA256 verification: **PASS**
+- Windows artifact: `AIG-Studio-Windows-EXE` (artifact 10821625105)
+- The APK remains a debug/installable artifact; production signing/real-device launch gates are still separate from FINAL.
+
 ## Release policy
 
 A version bump does not mean APK/EXE/FINAL PASS.
