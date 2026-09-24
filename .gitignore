@@ -1,0 +1,52 @@
+# AIG Studio — generated outputs must never become source-of-truth
+
+# Android / Gradle
+.gradle/
+**/.gradle/
+**/build/
+local.properties
+.externalNativeBuild/
+.cxx/
+
+# Kotlin / JVM
+*.class
+*.jar
+out/
+
+# Windows packaging / generated runtime
+**/dist/
+*.msi
+*.appx
+*.msix
+
+# Release outputs
+*.apk
+*.exe
+AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk*
+AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe*
+AIG_Studio_FULL_PROJECT_SOURCE.zip*
+
+# Signing / credentials
+*.pfx
+*.p12
+*.jks
+*.keystore
+*.pem
+*.key
+secrets/
+.env
+.env.*
+!.env.example
+
+# IDE / OS / temp
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.temp
+*.bak
+*.swp
+*.log
