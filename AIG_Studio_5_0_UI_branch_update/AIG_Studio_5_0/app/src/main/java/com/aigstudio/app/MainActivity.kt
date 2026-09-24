@@ -958,7 +958,11 @@ class MainActivity : Activity() {
                 previewStatus.text = "NC PREVIEW • EMPTY"
                 return
             }
-            while (previewLine < lines.size && ncBlockSkip && lines[previewLine].trimStart().startsWith("/")) {
+            while (previewLine < lines.size) {
+                val trimmed = lines[previewLine].trim()
+                val nonExecutable = trimmed.isBlank() || trimmed == "%" || trimmed.startsWith("(")
+                val skippedBlock = ncBlockSkip && trimmed.startsWith("/")
+                if (!nonExecutable && !skippedBlock) break
                 previewLine++
             }
             if (previewLine >= lines.size) {
@@ -986,6 +990,7 @@ class MainActivity : Activity() {
         toggle("SINGLE") { ncSingleBlock = !ncSingleBlock; if (ncSingleBlock) stepPreview(reset = true) }
         toggle("DRY RUN") { ncDryRun = !ncDryRun; previewStatus.text = if (ncDryRun) "DRY RUN • READY" else "NC PREVIEW • READY" }
         toggle("STEP") { stepPreview() }
+        toggle("RESET") { previewLine = 0; previewStatus.text = "NC PREVIEW • READY" }
         toggle("BLOCK /") {
             ncBlockSkip = !ncBlockSkip
             val lines = editor.text.toString().lineSequence().toList()
