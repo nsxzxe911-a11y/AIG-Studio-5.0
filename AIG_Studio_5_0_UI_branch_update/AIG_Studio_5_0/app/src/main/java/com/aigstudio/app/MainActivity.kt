@@ -355,6 +355,7 @@ class MainActivity : Activity() {
                 .edit()
                 .putString("cad_state", cad.exportState())
                 .putLong("saved_at", System.currentTimeMillis())
+                .putInt("format_version", 2)
                 .apply()
         }
     }
@@ -363,6 +364,8 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences("aig_cad_autosave", MODE_PRIVATE)
         val raw = prefs.getString("cad_state", null) ?: return
         if (raw.isBlank()) return
+        val formatVersion = prefs.getInt("format_version", 1)
+        if (formatVersion !in 1..2) return
         runCatching { cad.importState(raw) }
             .onSuccess {
                 Toast.makeText(this, "AUTO RECOVERY • CAD restored", Toast.LENGTH_SHORT).show()
@@ -1665,7 +1668,8 @@ class CadView(context: Context) : View(context) {
     private fun snapPoint(p: Vec2): Vec2 {
         val tolerance = 18.0 / transform.pixelsPerUnit
         val candidates = mutableListOf<Vec2>()
-        doc.all().forEach { e ->
+        val entities = doc.all()
+        entities.forEach { e ->
             when (e) {
                 is Line -> {
                     candidates += e.a
@@ -1677,6 +1681,17 @@ class CadView(context: Context) : View(context) {
                     candidates += e.center
                     candidates += e.start
                     candidates += e.end
+                }
+            }
+        }
+        val lines = entities.filterIsInstance<Line>()
+        for (i in 0 until lines.size) {
+            for (j in i + 1 until lines.size) {
+                Geometry.lineIntersection(lines[i], lines[j])?.let { inter ->
+                    if (inter.t1 >= -EPS && inter.t1 <= 1.0 + EPS &&
+                        inter.t2 >= -EPS && inter.t2 <= 1.0 + EPS) {
+                        candidates += inter.point
+                    }
                 }
             }
         }
