@@ -55,23 +55,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Ensure Kotlin and WiX
-        shell: pwsh
-        run: |
-          if (-not (Get-Command kotlinc -ErrorAction SilentlyContinue)) {
-            choco install kotlinc -y --no-progress --limit-output
-            if ($LASTEXITCODE -notin @(0, 1641, 3010)) { throw 'Kotlin installation failed.' }
-          }
-          if (-not (Get-Command light.exe -ErrorAction SilentlyContinue)) {
-            choco install wixtoolset -y --no-progress --limit-output
-            if ($LASTEXITCODE -notin @(0, 1641, 3010)) { throw 'WiX installation failed.' }
-          }
       - name: Build Windows EXE
         shell: pwsh
         run: |
           $Project='AIG_Studio_5_0_UI_branch_update\AIG_Studio_5_0'
           & ".\$Project\build_windows_native.ps1"
-          if ($LASTEXITCODE -ne 0) { throw 'Windows build failed' }
           $exe=Get-ChildItem "$Project\dist\windows-self-contained" -Filter *.exe | Select-Object -First 1
           if (-not $exe) { throw 'Windows EXE missing' }
           Copy-Item $exe.FullName AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe -Force

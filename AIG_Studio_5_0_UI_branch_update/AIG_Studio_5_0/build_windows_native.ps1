@@ -6,6 +6,33 @@ $Version = ConvertFrom-StringData (Get-Content $VersionFile -Raw)
 $VersionName = $Version.versionName
 if (-not $VersionName) { throw 'Release version metadata is incomplete.' }
 
+function Refresh-ProcessPath {
+  $machine = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+  $user = [Environment]::GetEnvironmentVariable('Path', 'User')
+  $env:Path = "$machine;$user"
+}
+
+function Ensure-Tool([string]$Command, [string]$ChocolateyPackage) {
+  if (Get-Command $Command -ErrorAction SilentlyContinue) { return }
+  if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+    throw "$Command is required and Chocolatey is unavailable."
+  }
+  choco install $ChocolateyPackage -y --no-progress --limit-output
+  if ($LASTEXITCODE -notin @(0, 1641, 3010)) {
+    throw "$ChocolateyPackage installation failed."
+  }
+  Refresh-ProcessPath
+  if (-not (Get-Command $Command -ErrorAction SilentlyContinue)) {
+    throw "$Command is still unavailable after installing $ChocolateyPackage."
+  }
+}
+
+Ensure-Tool 'kotlinc' 'kotlinc'
+Ensure-Tool 'light.exe' 'wixtoolset'
+if (-not (Get-Command jpackage -ErrorAction SilentlyContinue)) {
+  throw 'JDK 17+ jpackage is required.'
+}
+
 $CoreDir = Join-Path $Root 'core\src\main\kotlin\com\aigstudio\core'
 $DesktopDir = Join-Path $Root 'desktop\src\main\kotlin\com\aigstudio\desktop'
 $Dist = Join-Path $Root 'dist'
@@ -28,7 +55,6 @@ $DesktopSources = @(
 if ($Sources.Count -eq 0) { throw 'No Studio core Kotlin sources found.' }
 if ($DesktopSources.Count -eq 0) { throw 'No Studio desktop Kotlin sources found.' }
 $Sources += $DesktopSources
-if (-not (Get-Command kotlinc -ErrorAction SilentlyContinue)) { throw 'kotlinc is required.' }
 & kotlinc @Sources -include-runtime -d $Jar
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path $Jar)) { throw 'Studio Windows Kotlin build failed.' }
 
@@ -41,7 +67,6 @@ try {
   }
 } finally { Pop-Location }
 
-if (-not (Get-Command jpackage -ErrorAction SilentlyContinue)) { throw 'JDK 17+ jpackage is required.' }
 if (Test-Path $Out) { Remove-Item -Recurse -Force $Out }
 New-Item -ItemType Directory -Force $Out | Out-Null
 & jpackage --type exe --name $Product --dest $Out --input $Dist --main-jar (Split-Path -Leaf $Jar) --main-class com.aigstudio.desktop.DesktopAppKt --app-version $VersionName --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
