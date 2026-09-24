@@ -4,15 +4,15 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 ## Current main
 
-- Version: **35.0.0**
-- Runtime project root: repository-root `AIG_Studio/`
+- Version: **36.0.0**
+- Runtime project root: repository root
 - Android versionCode: derived automatically from the major version
-- Version source: repository-root `release-version.properties`
-- Android build/package entry: repository-root `build_android_release.sh`
-- Windows build/package entry: repository-root `build_windows_native.ps1`
-- Core regression entry: repository-root `test_core.sh`
-- Release workflow: repository-root `.github/workflows/build-download.yml`
-- Release outputs: repository-root `release/android/`, `release/windows/`, `release/source/`
+- Version source: `release-version.properties`
+- Android build/package entry: `build_android_release.sh`
+- Windows build/package entry: `build_windows_native.ps1`
+- Core regression entry: `test_core.sh`
+- Release workflow: `.github/workflows/build-download.yml`
+- Release outputs: `release/android/`, `release/windows/`, `release/source/`
 - Stable Gradle project identity: `AIGStudio`
 
 Version numbers only move forward. Generated build outputs are excluded from version control and do not replace source as the release truth.

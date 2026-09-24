@@ -2,7 +2,6 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT="$ROOT/AIG_Studio"
 ANDROID_OUT="$ROOT/release/android"
 SOURCE_OUT="$ROOT/release/source"
 VERSION="$(awk -F= '$1=="versionName"{print $2}' "$ROOT/release-version.properties")"
@@ -10,14 +9,14 @@ GIT_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 
 test -n "$VERSION"
 test -n "$GIT_SHA"
-test -f "$PROJECT/settings.gradle.kts"
+test -f "$ROOT/settings.gradle.kts"
 
 rm -rf "$ANDROID_OUT" "$SOURCE_OUT"
 mkdir -p "$ANDROID_OUT" "$SOURCE_OUT"
 
-gradle -p "$PROJECT" --no-daemon :app:assembleDebug
+gradle -p "$ROOT" --no-daemon :app:assembleDebug
 
-APK="$PROJECT/app/build/outputs/apk/debug/app-debug.apk"
+APK="$ROOT/app/build/outputs/apk/debug/app-debug.apk"
 test -s "$APK"
 
 APK_NAME="AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk"

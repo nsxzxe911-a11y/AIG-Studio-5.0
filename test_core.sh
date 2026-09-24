@@ -2,12 +2,11 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT="$ROOT/AIG_Studio"
-MAIN="$PROJECT/core/src/main/kotlin"
-TEST="$PROJECT/core/src/test/kotlin"
-OUT="$PROJECT/build/core-tests.jar"
+MAIN="$ROOT/core/src/main/kotlin"
+TEST="$ROOT/core/src/test/kotlin"
+OUT="$ROOT/build/core-tests.jar"
 
-test -f "$PROJECT/settings.gradle.kts"
+test -f "$ROOT/settings.gradle.kts"
 mapfile -t SOURCES < <(find "$MAIN" "$TEST" -type f -name '*.kt' | sort)
 test "${#SOURCES[@]}" -gt 0
 

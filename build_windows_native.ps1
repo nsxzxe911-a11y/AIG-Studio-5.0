@@ -1,9 +1,8 @@
 $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ProjectRoot = Join-Path $RepoRoot 'AIG_Studio'
 $VersionFile = Join-Path $RepoRoot 'release-version.properties'
 if (-not (Test-Path $VersionFile)) { throw 'release-version.properties is required.' }
-if (-not (Test-Path (Join-Path $ProjectRoot 'settings.gradle.kts'))) { throw 'AIG_Studio project root is missing.' }
+if (-not (Test-Path (Join-Path $RepoRoot 'settings.gradle.kts'))) { throw 'AIG Studio Gradle root is missing.' }
 
 $Version = ConvertFrom-StringData (Get-Content $VersionFile -Raw)
 $VersionName = $Version.versionName
@@ -31,9 +30,9 @@ Ensure-Tool 'kotlinc' 'kotlinc'
 Ensure-Tool 'light.exe' 'wixtoolset'
 if (-not (Get-Command jpackage -ErrorAction SilentlyContinue)) { throw 'JDK 17+ jpackage is required.' }
 
-$CoreDir = Join-Path $ProjectRoot 'core\src\main\kotlin\com\aigstudio\core'
-$DesktopDir = Join-Path $ProjectRoot 'desktop\src\main\kotlin\com\aigstudio\desktop'
-$Dist = Join-Path $ProjectRoot 'dist'
+$CoreDir = Join-Path $RepoRoot 'core\src\main\kotlin\com\aigstudio\core'
+$DesktopDir = Join-Path $RepoRoot 'desktop\src\main\kotlin\com\aigstudio\desktop'
+$Dist = Join-Path $RepoRoot 'dist'
 $Jar = Join-Path $Dist 'AIG_Studio_PC.jar'
 $PackageOut = Join-Path $Dist 'windows-self-contained'
 $ReleaseOut = Join-Path $RepoRoot 'release\windows'
