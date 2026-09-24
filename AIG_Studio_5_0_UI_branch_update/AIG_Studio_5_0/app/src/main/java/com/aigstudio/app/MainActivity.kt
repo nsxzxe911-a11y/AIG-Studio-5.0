@@ -34,7 +34,6 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.Choreographer
-import android.view.Surface
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Spinner
@@ -1278,15 +1277,6 @@ class CadView(context: Context) : View(context) {
         isFocusable = true
         setLayerType(View.LAYER_TYPE_HARDWARE, null)
         isClickable = true
-        if (Build.VERSION.SDK_INT >= 30) {
-            post {
-                val displayHz = display?.supportedModes
-                    ?.filter { it.refreshRate <= 121f }
-                    ?.maxOfOrNull { it.refreshRate }
-                    ?: (display?.refreshRate ?: 60f)
-                setFrameRate(minOf(120f, displayHz), Surface.FRAME_RATE_COMPATIBILITY_DEFAULT)
-            }
-        }
         geoPaint.strokeJoin = Paint.Join.ROUND
         geoPaint.strokeCap = Paint.Cap.ROUND
         geoPaint.isDither = true
