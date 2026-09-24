@@ -196,7 +196,8 @@ private fun testPackageBundleContract() {
     check(broken.missingDependencies.any { it.contains("cam-core->cad-core") || it.contains("mesh-3d-renderer->cad-core") })
     check(runCatching { StudioPackageRegistry.requireHealthy(official, missingCad) }.isFailure)
 
-    val duplicate = official.copy(packages = official.packages + official.packages.first())
+    val cadCore = official.packages.single { it.id == "cad-core" }
+    val duplicate = official.copy(packages = official.packages + cadCore)
     check(StudioPackageRegistry.validate(duplicate, duplicate.packages.map { it.id }.toSet()).duplicatePackages.contains("cad-core"))
     println("✓ PACKAGE_BUNDLE_GATE_PASS dependencies / enable-disable / duplicate fail-closed")
 }
