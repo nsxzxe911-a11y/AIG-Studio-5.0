@@ -34,6 +34,7 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.Choreographer
+import android.view.Surface
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Spinner
@@ -48,6 +49,75 @@ import com.aigstudio.core.*
 import kotlin.math.*
 
 enum class Tool { LINE, RECT, CIRCLE, DELETE, CHAMFER, FILLET, PAN }
+
+class RgbGlowButton(context: Context) : Button(context) {
+    private var accent = Color.rgb(61,235,255)
+    private var selectedGlow = false
+    private var alarmGlow = false
+    private val density = resources.displayMetrics.density
+
+    init {
+        isAllCaps = false
+        stateListAnimator = null
+        setTextColor(Color.WHITE)
+        render()
+    }
+
+    fun setRgbState(color: Int, selected: Boolean, alarm: Boolean = false) {
+        accent = color
+        selectedGlow = selected
+        alarmGlow = alarm
+        render()
+    }
+
+    override fun drawableStateChanged() {
+        super.drawableStateChanged()
+        render()
+    }
+
+    private fun mix(base: Int, overlay: Int, amount: Float): Int {
+        val a = amount.coerceIn(0f,1f)
+        fun m(x:Int,y:Int)=(x+(y-x)*a).roundToInt().coerceIn(0,255)
+        return Color.rgb(m(Color.red(base),Color.red(overlay)),m(Color.green(base),Color.green(overlay)),m(Color.blue(base),Color.blue(overlay)))
+    }
+
+    private fun render() {
+        val disabled = !isEnabled
+        val pressedNow = isPressed
+        val edge = if (alarmGlow) Color.rgb(255,72,72) else accent
+        val base = Color.rgb(10,24,38)
+        val amount = when {
+            disabled -> 0.04f
+            alarmGlow -> 0.38f
+            pressedNow -> 0.46f
+            selectedGlow -> 0.28f
+            else -> 0.08f
+        }
+        background = GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(mix(base,edge,amount+0.08f),mix(base,edge,amount))
+        ).apply {
+            cornerRadius = 15f * density
+            setStroke(
+                ((if (pressedNow || selectedGlow || alarmGlow) 3.2f else 2f) * density).roundToInt().coerceAtLeast(1),
+                if (disabled) Color.rgb(90,100,110) else edge
+            )
+        }
+        alpha = when {
+            disabled -> 0.42f
+            pressedNow || selectedGlow || alarmGlow -> 1f
+            else -> 0.82f
+        }
+        elevation = when {
+            disabled -> 0f
+            pressedNow -> 2f*density
+            selectedGlow || alarmGlow -> 9f*density
+            else -> 3f*density
+        }
+        scaleX = if (pressedNow) 0.97f else 1f
+        scaleY = if (pressedNow) 0.97f else 1f
+    }
+}
 
 class MainActivity : Activity() {
     companion object {
@@ -1111,18 +1181,23 @@ private fun showEnvironmentSettings() {
     private fun addActionTo(parent: FlowLayout, label: String, colorIndex: Int, run: () -> Unit) {
         val b = toolButton(label, colors[colorIndex]); b.setOnClickListener { run() }; parent.addView(b)
     }
-    private fun toolButton(label: String, color: Int) = Button(this).apply {
-        text = label; setTextColor(Color.WHITE); textSize = 13f; minWidth = dp(72); minHeight = dp(52)
-        isAllCaps = false; elevation = dp(3).toFloat(); setPadding(dp(10), 0, dp(10), 0)
-        styleButton(this, color, false)
+    private fun toolButton(label: String, color: Int) = RgbGlowButton(this).apply {
+        text = label; textSize = 13f; minWidth = dp(72); minHeight = dp(52)
+        setPadding(dp(10), 0, dp(10), 0)
+        setRgbState(color, false)
     }
     private fun styleButton(button: Button, color: Int, selected: Boolean) {
-        button.background = GradientDrawable().apply {
-            cornerRadius = dp(15).toFloat(); setColor(if (selected) Color.argb(225, 23, 58, 80) else Color.argb(155, 10, 24, 38))
-            setStroke(dp(if (selected) 3 else 2), color)
+        if (button is RgbGlowButton) {
+            button.setRgbState(color, selected)
+        } else {
+            button.background = GradientDrawable().apply {
+                cornerRadius = dp(15).toFloat()
+                setColor(if (selected) Color.argb(225, 23, 58, 80) else Color.argb(155, 10, 24, 38))
+                setStroke(dp(if (selected) 3 else 2), color)
+            }
+            button.alpha = if (selected) 1f else 0.82f
+            button.elevation = dp(if (selected) 8 else 3).toFloat()
         }
-        button.alpha = if (selected) 1f else 0.82f
-        button.elevation = dp(if (selected) 8 else 3).toFloat()
     }
     private fun askValue(title: String, current: Double, done: (Double) -> Unit) {
         val input = EditText(this).apply { setText(DisplayFormat.mm(current)); inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
@@ -1202,6 +1277,16 @@ class CadView(context: Context) : View(context) {
         setBackgroundColor(0xFF081622.toInt())
         isFocusable = true
         setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        isClickable = true
+        if (Build.VERSION.SDK_INT >= 30) {
+            post {
+                val displayHz = display?.supportedModes
+                    ?.filter { it.refreshRate <= 121f }
+                    ?.maxOfOrNull { it.refreshRate }
+                    ?: (display?.refreshRate ?: 60f)
+                setFrameRate(minOf(120f, displayHz), Surface.FRAME_RATE_COMPATIBILITY_DEFAULT)
+            }
+        }
         geoPaint.strokeJoin = Paint.Join.ROUND
         geoPaint.strokeCap = Paint.Cap.ROUND
         geoPaint.isDither = true
