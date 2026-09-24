@@ -245,7 +245,7 @@ class MainActivity : Activity() {
         box.addView(TextView(this).apply {
             setTextColor(0xFFE1EFFF.toInt())
             textSize = 13f
-            text = "AIG CNC AI 系統套裝\nAI VOICE • SYSTEM HUD • FPS/Frame Time • BAT/Thermal • RAM • Dropped Frames • Renderer Governor"
+            text = "AIG CNC AI 系統套裝\nAI VOICE 2 • CAM 語音設定 • SYSTEM HUD • FPS/Frame Time • BAT/Thermal • RAM • Dropped Frames • Renderer Governor"
             setPadding(dp(4),dp(4),dp(4),dp(10))
         })
         action("AI VOICE") { startVoiceAssistant() }
@@ -348,9 +348,70 @@ class MainActivity : Activity() {
         return if (raw == Int.MIN_VALUE) null else raw / 10.0
     }
 
+    private fun voiceNumber(text: String): Double? {
+        val normalized = text
+            .replace("負", "-")
+            .replace("點", ".")
+            .replace("毫米", "")
+            .replace("mm", "", ignoreCase = true)
+        return Regex("-?\\d+(?:\\.\\d+)?").find(normalized)?.value?.toDoubleOrNull()
+    }
+
     private fun handleVoiceCommand(raw: String) {
         val cmd = raw.trim().lowercase(Locale.TAIWAN)
         when {
+            cmd.contains("刀徑") || cmd.contains("tool diameter") -> {
+                val value = voiceNumber(cmd)
+                if (value == null || value <= 0.0) speakVoice("刀徑數值無效")
+                else confirmVoiceAction("刀徑 " + DisplayFormat.mm(value) + " mm") {
+                    camSettings = CamSettings(
+                        toolDiameter = value,
+                        depth = camSettings.depth,
+                        safeZ = camSettings.safeZ,
+                        feedMmMin = camSettings.feedMmMin,
+                        climb = camSettings.climb
+                    )
+                }
+            }
+            cmd.contains("safe-z") || cmd.contains("safe z") || cmd.contains("安全高度") -> {
+                val value = voiceNumber(cmd)
+                if (value == null) speakVoice("Safe-Z 數值無效")
+                else confirmVoiceAction("Safe-Z " + DisplayFormat.mm(value) + " mm") {
+                    camSettings = CamSettings(
+                        toolDiameter = camSettings.toolDiameter,
+                        depth = camSettings.depth,
+                        safeZ = value,
+                        feedMmMin = camSettings.feedMmMin,
+                        climb = camSettings.climb
+                    )
+                }
+            }
+            cmd.contains("深度") || cmd.contains("depth") -> {
+                val value = voiceNumber(cmd)
+                if (value == null) speakVoice("加工深度數值無效")
+                else confirmVoiceAction("加工深度 " + DisplayFormat.mm(value) + " mm") {
+                    camSettings = CamSettings(
+                        toolDiameter = camSettings.toolDiameter,
+                        depth = value,
+                        safeZ = camSettings.safeZ,
+                        feedMmMin = camSettings.feedMmMin,
+                        climb = camSettings.climb
+                    )
+                }
+            }
+            cmd.contains("進給") || cmd.contains("feed") -> {
+                val value = voiceNumber(cmd)
+                if (value == null || value <= 0.0) speakVoice("Feed 數值無效")
+                else confirmVoiceAction("Feed " + String.format("%.1f", value) + " mm/min") {
+                    camSettings = CamSettings(
+                        toolDiameter = camSettings.toolDiameter,
+                        depth = camSettings.depth,
+                        safeZ = camSettings.safeZ,
+                        feedMmMin = value,
+                        climb = camSettings.climb
+                    )
+                }
+            }
             cmd.contains("fps") || cmd.contains("幀率") -> {
                 updateSystemMonitorSnapshot()
                 speakVoice("目前 FPS " + String.format("%.1f", monitorFps) + "，Frame Time " + String.format("%.1f", monitorFrameTimeMs) + " 毫秒")
