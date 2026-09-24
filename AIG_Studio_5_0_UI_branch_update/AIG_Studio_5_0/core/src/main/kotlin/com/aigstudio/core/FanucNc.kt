@@ -84,6 +84,17 @@ object FanucNc {
         return out.toString()
     }
 
+    fun insertBeforeProgramEnd(program: String, block: String, endSubprogram: Int = 5): String {
+        require(block.isNotBlank()) { "NC block is empty" }
+        val normalized = program.replace("\r\n", "\n")
+        val marker = "M98 P" + endSubprogram
+        val index = normalized.indexOf("\n" + marker + "\n")
+        require(index >= 0) { "Fanuc program end marker not found" }
+        val before = normalized.substring(0, index + 1).trimEnd()
+        val after = normalized.substring(index + 1)
+        return before + "\n" + block.trim() + "\n" + after
+    }
+
     fun fmt(v: Double): String {
         var s = String.format(Locale.US, "%.3f", v)
         while (s.contains('.') && s.endsWith('0')) s = s.dropLast(1)
