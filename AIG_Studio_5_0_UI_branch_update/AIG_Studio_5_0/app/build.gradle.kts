@@ -6,7 +6,7 @@ plugins {
 }
 
 val releaseVersion = Properties().apply {
-    rootProject.file("release-version.properties").inputStream().use { load(it) }
+    rootProject.file("../../release-version.properties").inputStream().use { load(it) }
 }
 val releaseVersionName = releaseVersion.getProperty("versionName")
     ?: error("versionName is required")

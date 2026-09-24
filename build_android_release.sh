@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT="$ROOT/AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0"
 ANDROID_OUT="$ROOT/release/android"
 SOURCE_OUT="$ROOT/release/source"
-VERSION="$(awk -F= '$1=="versionName"{print $2}' "$PROJECT/release-version.properties")"
+VERSION="$(awk -F= '$1=="versionName"{print $2}' "$ROOT/release-version.properties")"
 GIT_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 
 test -n "$VERSION"

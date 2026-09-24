@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Join-Path $RepoRoot 'AIG_Studio_5_0_UI_branch_update\AIG_Studio_5_0'
-$VersionFile = Join-Path $ProjectRoot 'release-version.properties'
+$VersionFile = Join-Path $RepoRoot 'release-version.properties'
 if (-not (Test-Path $VersionFile)) { throw 'release-version.properties is required.' }
 
 $Version = ConvertFrom-StringData (Get-Content $VersionFile -Raw)

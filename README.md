@@ -4,9 +4,9 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 ## Current main
 
-- Version: **32.0.0**
+- Version: **33.0.0**
 - Android versionCode: derived automatically from the major version
-- Version source: `release-version.properties`
+- Version source: repository-root `release-version.properties`
 - Android build/package entry: repository-root `build_android_release.sh`
 - Windows build/package entry: repository-root `build_windows_native.ps1`
 - Release workflow: repository-root `.github/workflows/build-download.yml`
