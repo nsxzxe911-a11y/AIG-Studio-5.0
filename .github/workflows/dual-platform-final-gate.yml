@@ -2,10 +2,6 @@ name: AIG Studio 5.0 Dual-Platform FINAL Gate
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-
 permissions:
   actions: read
   contents: read
