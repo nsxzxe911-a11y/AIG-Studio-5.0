@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -51,15 +51,21 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-      - name: Install Kotlin and WiX
+      - name: Ensure Kotlin and WiX
         shell: pwsh
         run: |
-          choco install kotlinc -y --no-progress
-          choco install wixtoolset -y --no-progress
+          if (-not (Get-Command kotlinc -ErrorAction SilentlyContinue)) {
+            choco install kotlinc -y --no-progress --limit-output
+            if ($LASTEXITCODE -notin @(0, 1641, 3010)) { throw 'Kotlin installation failed.' }
+          }
+          if (-not (Get-Command light.exe -ErrorAction SilentlyContinue)) {
+            choco install wixtoolset -y --no-progress --limit-output
+            if ($LASTEXITCODE -notin @(0, 1641, 3010)) { throw 'WiX installation failed.' }
+          }
       - name: Build Windows EXE
         shell: pwsh
         run: |
