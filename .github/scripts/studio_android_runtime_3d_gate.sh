@@ -139,7 +139,7 @@ PY
 dump_ui /data/local/tmp/aigstudio-ui.xml "$EVIDENCE/UI.xml"
 grep -Fq 'AIG CNC' "$EVIDENCE/UI.xml"
 grep -Fq 'OFFICIAL RGB ORIGINAL' "$EVIDENCE/UI.xml"
-grep -Fq 'ChatGPT AI 一鍵更新' "$EVIDENCE/UI.xml"
+grep -Fq 'ChatGPT AI 更新 • 一鍵' "$EVIDENCE/UI.xml"
 grep -Fq '繪圖' "$EVIDENCE/UI.xml"
 
 tap_ui_text "矩形"
