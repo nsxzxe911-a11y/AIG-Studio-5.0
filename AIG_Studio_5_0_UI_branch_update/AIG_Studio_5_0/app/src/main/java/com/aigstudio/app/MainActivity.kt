@@ -178,6 +178,13 @@ class MainActivity : Activity() {
     private var fpsLastNs = 0L
     private var fpsFrames = 0
     private val temperatureHandler = Handler(Looper.getMainLooper())
+    private val autosaveHandler = Handler(Looper.getMainLooper())
+    private val autosaveRunnable = object : Runnable {
+        override fun run() {
+            saveCadCheckpoint()
+            autosaveHandler.postDelayed(this, 15000L)
+        }
+    }
     private var temperatureLoopRunning = false
     private val fpsFrameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
@@ -326,6 +333,8 @@ class MainActivity : Activity() {
 
 
         setContentView(root)
+        restoreCadCheckpointIfAvailable()
+        autosaveHandler.postDelayed(autosaveRunnable, 15000L)
         openCategory("繪圖") { showDrawingBranch() }
         selectTool(Tool.LINE)
         val updateConfig = UpdateConfigStore.load(this)
@@ -339,6 +348,26 @@ class MainActivity : Activity() {
     }
 
 
+
+    private fun saveCadCheckpoint() {
+        runCatching {
+            getSharedPreferences("aig_cad_autosave", MODE_PRIVATE)
+                .edit()
+                .putString("cad_state", cad.exportState())
+                .putLong("saved_at", System.currentTimeMillis())
+                .apply()
+        }
+    }
+
+    private fun restoreCadCheckpointIfAvailable() {
+        val prefs = getSharedPreferences("aig_cad_autosave", MODE_PRIVATE)
+        val raw = prefs.getString("cad_state", null) ?: return
+        if (raw.isBlank()) return
+        runCatching { cad.importState(raw) }
+            .onSuccess {
+                Toast.makeText(this, "AUTO RECOVERY • CAD restored", Toast.LENGTH_SHORT).show()
+            }
+    }
 
     private fun showAiSystemSuiteDialog() {
         val prefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
@@ -570,7 +599,13 @@ class MainActivity : Activity() {
         }
     }
 
+    override fun onPause() {
+        saveCadCheckpoint()
+        super.onPause()
+    }
+
     override fun onDestroy() {
+        autosaveHandler.removeCallbacks(autosaveRunnable)
         speechRecognizer?.cancel()
         speechRecognizer?.destroy()
         speechRecognizer = null
@@ -1411,6 +1446,36 @@ class CadView(context: Context) : View(context) {
     }
 
     fun snapshot(): DrawingSnapshot = doc.snapshot()
+    fun exportState(): String = buildString {
+        doc.all().forEach { e ->
+            when (e) {
+                is Line -> append("L|").append(e.id).append('|').append(e.a.x).append('|').append(e.a.y).append('|').append(e.b.x).append('|').append(e.b.y).append('\n')
+                is Circle -> append("C|").append(e.id).append('|').append(e.center.x).append('|').append(e.center.y).append('|').append(e.radius).append('\n')
+                is Arc -> append("A|").append(e.id).append('|').append(e.center.x).append('|').append(e.center.y).append('|').append(e.radius).append('|').append(e.start.x).append('|').append(e.start.y).append('|').append(e.end.x).append('|').append(e.end.y).append('|').append(e.clockwise).append('\n')
+            }
+        }
+    }
+    fun importState(raw: String) {
+        val restored = mutableListOf<Entity>()
+        raw.lineSequence().filter { it.isNotBlank() }.forEach { line ->
+            val p = line.split('|')
+            when (p.firstOrNull()) {
+                "L" -> if (p.size == 6) restored += Line(p[1], Vec2(p[2].toDouble(), p[3].toDouble()), Vec2(p[4].toDouble(), p[5].toDouble()))
+                "C" -> if (p.size == 5) restored += Circle(p[1], Vec2(p[2].toDouble(), p[3].toDouble()), p[4].toDouble())
+                "A" -> if (p.size == 11) restored += Arc(
+                    p[1], Vec2(p[2].toDouble(), p[3].toDouble()), p[4].toDouble(),
+                    Vec2(p[5].toDouble(), p[6].toDouble()), Vec2(p[7].toDouble(), p[8].toDouble()), p[9].toBooleanStrictOrNull() ?: false
+                )
+            }
+        }
+        if (restored.isNotEmpty()) {
+            doc.clear()
+            restored.forEach(doc::put)
+            firstPoint = null
+            selectedLines.clear()
+            invalidate()
+        }
+    }
     fun setTool(t: Tool) { tool = t; firstPoint = null; selectedLines.clear(); invalidate() }
     fun undo() { history.undo(); firstPoint = null; selectedLines.clear(); invalidate() }
     fun redo() { history.redo(); firstPoint = null; selectedLines.clear(); invalidate() }
