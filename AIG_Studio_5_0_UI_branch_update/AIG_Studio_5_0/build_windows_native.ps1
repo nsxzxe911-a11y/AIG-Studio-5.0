@@ -14,13 +14,9 @@ function Refresh-ProcessPath {
 
 function Ensure-Tool([string]$Command, [string]$ChocolateyPackage) {
   if (Get-Command $Command -ErrorAction SilentlyContinue) { return }
-  if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-    throw "$Command is required and Chocolatey is unavailable."
-  }
+  if (-not (Get-Command choco -ErrorAction SilentlyContinue)) { throw "$Command is required and Chocolatey is unavailable." }
   choco install $ChocolateyPackage -y --no-progress --limit-output
-  if ($LASTEXITCODE -notin @(0, 1641, 3010)) {
-    throw "$ChocolateyPackage installation failed."
-  }
+  if ($LASTEXITCODE -notin @(0, 1641, 3010)) { throw "$ChocolateyPackage installation failed." }
   Refresh-ProcessPath
   if (-not (Get-Command $Command -ErrorAction SilentlyContinue)) {
     throw "$Command is still unavailable after installing $ChocolateyPackage."
@@ -29,32 +25,25 @@ function Ensure-Tool([string]$Command, [string]$ChocolateyPackage) {
 
 Ensure-Tool 'kotlinc' 'kotlinc'
 Ensure-Tool 'light.exe' 'wixtoolset'
-if (-not (Get-Command jpackage -ErrorAction SilentlyContinue)) {
-  throw 'JDK 17+ jpackage is required.'
-}
+if (-not (Get-Command jpackage -ErrorAction SilentlyContinue)) { throw 'JDK 17+ jpackage is required.' }
 
 $CoreDir = Join-Path $Root 'core\src\main\kotlin\com\aigstudio\core'
 $DesktopDir = Join-Path $Root 'desktop\src\main\kotlin\com\aigstudio\desktop'
 $Dist = Join-Path $Root 'dist'
 $Jar = Join-Path $Dist 'AIG_Studio_5_0_PC.jar'
 $Out = Join-Path $Dist 'windows-self-contained'
+$FinalExe = Join-Path $Root 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
+$FinalHash = Join-Path $Root 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe.sha256'
 $UpgradeUuid = '8c54d63a-6ac2-45ea-a474-63d0d88b1f50'
 $Product = 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC'
 
 New-Item -ItemType Directory -Force $Dist | Out-Null
-$Sources = @(
-  Get-ChildItem $CoreDir -Recurse -Filter '*.kt' |
-    Sort-Object FullName |
-    ForEach-Object { $_.FullName }
-)
-$DesktopSources = @(
-  Get-ChildItem $DesktopDir -Recurse -Filter '*.kt' |
-    Sort-Object FullName |
-    ForEach-Object { $_.FullName }
-)
+$Sources = @(Get-ChildItem $CoreDir -Recurse -Filter '*.kt' | Sort-Object FullName | ForEach-Object { $_.FullName })
+$DesktopSources = @(Get-ChildItem $DesktopDir -Recurse -Filter '*.kt' | Sort-Object FullName | ForEach-Object { $_.FullName })
 if ($Sources.Count -eq 0) { throw 'No Studio core Kotlin sources found.' }
 if ($DesktopSources.Count -eq 0) { throw 'No Studio desktop Kotlin sources found.' }
 $Sources += $DesktopSources
+
 & kotlinc @Sources -include-runtime -d $Jar
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path $Jar)) { throw 'Studio Windows Kotlin build failed.' }
 
@@ -68,15 +57,20 @@ try {
 } finally { Pop-Location }
 
 if (Test-Path $Out) { Remove-Item -Recurse -Force $Out }
+if (Test-Path $FinalExe) { Remove-Item -Force $FinalExe }
+if (Test-Path $FinalHash) { Remove-Item -Force $FinalHash }
 New-Item -ItemType Directory -Force $Out | Out-Null
+
 & jpackage --type exe --name $Product --dest $Out --input $Dist --main-jar (Split-Path -Leaf $Jar) --main-class com.aigstudio.desktop.DesktopAppKt --app-version $VersionName --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
 if ($LASTEXITCODE -ne 0) { throw 'Studio jpackage EXE build failed.' }
 $Installer = Get-ChildItem $Out -Filter '*.exe' | Select-Object -First 1
 if (-not $Installer) { throw 'Studio jpackage installer missing.' }
-$FinalInstaller = Join-Path $Out ($Product + '.exe')
-if ($Installer.FullName -ne $FinalInstaller) { Move-Item $Installer.FullName $FinalInstaller -Force }
-$Bytes = [System.IO.File]::ReadAllBytes($FinalInstaller)
+$Bytes = [System.IO.File]::ReadAllBytes($Installer.FullName)
 if ($Bytes.Length -lt 2 -or $Bytes[0] -ne 0x4D -or $Bytes[1] -ne 0x5A) { throw 'Studio installer is not valid PE/MZ.' }
-Get-FileHash $FinalInstaller -Algorithm SHA256
+
+Copy-Item $Installer.FullName $FinalExe -Force
+$Hash = (Get-FileHash $FinalExe -Algorithm SHA256).Hash.ToLowerInvariant()
+$Hash | Out-File $FinalHash -Encoding ascii
 Write-Host ('AIG_STUDIO_VERSION=' + $VersionName)
+Write-Host ('AIG_STUDIO_EXE_SHA256=' + $Hash)
 Write-Host 'STUDIO_WINDOWS_SELF_CONTAINED_BUILD=PASS'

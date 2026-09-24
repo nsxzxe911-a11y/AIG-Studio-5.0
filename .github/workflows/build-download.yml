@@ -57,17 +57,11 @@ jobs:
           java-version: '17'
       - name: Build Windows EXE
         shell: pwsh
-        run: |
-          $Project='AIG_Studio_5_0_UI_branch_update\AIG_Studio_5_0'
-          & ".\$Project\build_windows_native.ps1"
-          $exe=Get-ChildItem "$Project\dist\windows-self-contained" -Filter *.exe | Select-Object -First 1
-          if (-not $exe) { throw 'Windows EXE missing' }
-          Copy-Item $exe.FullName AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe -Force
-          (Get-FileHash AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe -Algorithm SHA256).Hash | Out-File AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe.sha256 -Encoding ascii
+        run: .\AIG_Studio_5_0_UI_branch_update\AIG_Studio_5_0\build_windows_native.ps1
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Windows-EXE
           path: |
-            AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe
-            AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe.sha256
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe.sha256
           if-no-files-found: error
