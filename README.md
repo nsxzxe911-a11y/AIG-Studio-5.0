@@ -9,8 +9,9 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 - Android versionCode: derived automatically from the major version
 - Version source: `release-version.properties`
 - Android build/package entry: `build_android_release.sh`
-- Android compile/target platform: **API 37 / Android 17**
+- Android compile/target platform: **API 36 / Android 16 stable**
 - Android platform downgrade gate: `:app:verifyAndroidPlatform`
+- API 37 preview is not promoted to release validation until it is available from the stable SDK repository
 - Adaptive refresh: Auto = interaction up to 120 Hz / idle 30 Hz / thermal 60→30 Hz caps
 - Physical Android device path: up to 120 Hz
 - Emulator path: capped at 60 Hz / idle 30 Hz so PC emulation does not distort phone performance expectations
