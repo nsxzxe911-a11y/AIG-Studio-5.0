@@ -278,8 +278,23 @@ private fun runSmoke() {
     require(result.mesh.vertices.isNotEmpty() && result.mesh.triangles.isNotEmpty()) { "3D mesh smoke failed" }
     require(result.removal.depth.any { it < 0.0 }) { "Material removal smoke failed" }
 
-    val cadPanel = CadPanel(doc) {}
-    writePanel(cadPanel, File("desktop_launch.png"))
+    val smokeRoot = JPanel(BorderLayout()).apply {
+        background = Color(5,10,17)
+        val header = JPanel(FlowLayout(FlowLayout.LEFT,8,8)).apply {
+            background = Color(8,18,30)
+            add(JLabel("AIG CNC • OFFICIAL RGB ORIGINAL").apply { foreground=Color(61,235,255);font=font.deriveFont(Font.BOLD,20f) })
+            listOf("2D CAD","CAM","3D SIM","5X","NC EDIT","ChatGPT AI 更新").forEachIndexed { i,label ->
+                add(JButton(label).apply {
+                    foreground=Color.WHITE;background=Color(18,38,56);isFocusPainted=false
+                    border=BorderFactory.createLineBorder(listOf(Color(61,235,255),Color(63,255,157),Color(236,72,153),Color(125,112,255),Color(80,170,255),Color(245,158,11))[i],2,true)
+                })
+            }
+        }
+        add(header,BorderLayout.NORTH)
+        add(CadPanel(doc) {},BorderLayout.CENTER)
+        add(JLabel("AIG CNC • 0.001 mm • FANUC • RGB RUNTIME").apply { foreground=Color(99,255,157);border=BorderFactory.createEmptyBorder(8,12,8,12) },BorderLayout.SOUTH)
+    }
+    writePanel(smokeRoot, File("desktop_launch.png"))
     val meshPanel = Mesh3DPanel(result)
     writePanel(meshPanel, File("desktop_3d.png"))
 
@@ -289,7 +304,8 @@ private fun runSmoke() {
             "CAM_PATHS=" + cam.toolpaths.size + "\n" +
             "MESH_VERTICES=" + result.mesh.vertices.size + "\n" +
             "MESH_TRIANGLES=" + result.mesh.triangles.size + "\n" +
-            "REMOVED_CELLS=" + result.removal.depth.count { it < 0.0 } + "\n"
+            "REMOVED_CELLS=" + result.removal.depth.count { it < 0.0 } + "\n" +
+            "OFFICIAL_RGB_UI_SCREENSHOT=desktop_launch.png\n"
     )
 }
 
