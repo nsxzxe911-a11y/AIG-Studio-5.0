@@ -28,7 +28,17 @@ data class FanucPostSettings(
     }
 }
 
-data class DrillHole(val x: Double, val y: Double, val z: Double, val r: Double, val k: Double? = null, val feed: Double = 120.0)
+data class DrillHole(
+    val x: Double,
+    val y: Double,
+    val z: Double,
+    val r: Double,
+    val k: Double? = null,
+    val feed: Double = 120.0,
+    val tapPitchMm: Double? = null,
+    val tapSpindleRpm: Int? = null,
+    val rigidTapM29: Boolean = false
+)
 
 object FanucNc {
     fun generate(cam: CamModel, post: FanucPostSettings = FanucPostSettings()): String {
@@ -71,13 +81,23 @@ object FanucNc {
         holes.forEachIndexed { index, h ->
             require(h.z < 0.0 && h.feed > 0.0)
             if (index == 0) {
-                out.append(cycle.code).append(" X").append(fmt(h.x)).append(" Y").append(fmt(h.y)).append(" Z").append(fmt(h.z)).append(" R").append(fmt(retractZ))
-                if (cycle == DrillCycle.G73 || cycle == DrillCycle.G83) {
-                    val q = h.k ?: error(cycle.code + " requires K/Q peck value")
-                    require(q > 0.0)
-                    out.append(" Q").append(fmt(q))
+                if (cycle == DrillCycle.G84) {
+                    val pitch = h.tapPitchMm ?: error("G84 requires tap pitch mm/rev")
+                    val rpm = h.tapSpindleRpm ?: error("G84 requires tapping spindle RPM")
+                    require(pitch > 0.0 && rpm in 1..99999)
+                    if (h.rigidTapM29) out.appendLine("M29 S" + rpm)
+                    out.append("G84 X").append(fmt(h.x)).append(" Y").append(fmt(h.y))
+                        .append(" Z").append(fmt(h.z)).append(" R").append(fmt(retractZ))
+                        .append(" F").append(fmt(pitch * rpm)).appendLine()
+                } else {
+                    out.append(cycle.code).append(" X").append(fmt(h.x)).append(" Y").append(fmt(h.y)).append(" Z").append(fmt(h.z)).append(" R").append(fmt(retractZ))
+                    if (cycle == DrillCycle.G73 || cycle == DrillCycle.G83) {
+                        val q = h.k ?: error(cycle.code + " requires K/Q peck value")
+                        require(q > 0.0)
+                        out.append(" Q").append(fmt(q))
+                    }
+                    out.append(" F").append(fmt(h.feed)).appendLine()
                 }
-                out.append(" F").append(fmt(h.feed)).appendLine()
             } else out.append("X").append(fmt(h.x)).append(" Y").append(fmt(h.y)).appendLine()
         }
         out.appendLine("G80")
