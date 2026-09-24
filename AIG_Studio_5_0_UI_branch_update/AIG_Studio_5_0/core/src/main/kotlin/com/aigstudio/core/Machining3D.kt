@@ -73,7 +73,25 @@ object MaterialRemoval3D {
             for (move in path.moves) {
                 val prev = previous
                 if (!move.rapid && move.z < 0.0) {
-                    if (prev == null || prev.to.distanceTo(move.to) < EPS) {
+                    if (move is ArcFeed && prev != null) {
+                        val center = prev.to + move.centerOffset
+                        val radius = prev.to.distanceTo(center)
+                        if (radius < EPS) {
+                            carve(field, move.to.x, move.to.y, toolRadius, move.z)
+                        } else {
+                            val a0 = atan2(prev.to.y - center.y, prev.to.x - center.x)
+                            val a1 = atan2(move.to.y - center.y, move.to.x - center.x)
+                            var sweep = a1 - a0
+                            if (move.clockwise) while (sweep >= 0.0) sweep -= 2.0 * Math.PI
+                            else while (sweep <= 0.0) sweep += 2.0 * Math.PI
+                            val arcLength = abs(sweep) * radius
+                            val steps = max(4, ceil(arcLength / max(toolRadius / 3.0, 0.25)).toInt())
+                            for (i in 0..steps) {
+                                val a = a0 + sweep * i / steps
+                                carve(field, center.x + radius * cos(a), center.y + radius * sin(a), toolRadius, move.z)
+                            }
+                        }
+                    } else if (prev == null || prev.to.distanceTo(move.to) < EPS) {
                         carve(field, move.to.x, move.to.y, toolRadius, move.z)
                     } else {
                         val distance = prev.to.distanceTo(move.to)
