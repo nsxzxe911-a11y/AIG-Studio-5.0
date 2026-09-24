@@ -4,7 +4,7 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 ## Current main
 
-- Version: **59.0.0**
+- Version: **60.0.0**
 - Runtime project root: repository root
 - Android versionCode: derived automatically from the major version
 - Version source: `release-version.properties`
@@ -41,24 +41,24 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 Version numbers only move forward. Generated build outputs are excluded from version control and do not replace source as the release truth.
 
-## Direct validation evidence for 59.0.0
+## Direct validation evidence for 60.0.0
 
-- Validated source SHA: `44c8e9bbbcdafa3e1321f144e672debcbf7db1ce`
-- GitHub Actions run: `36037695629` = **SUCCESS**
+- Validated source SHA: `5fc8e3bd237261b0c9b273ad6d50afec14308729`
+- GitHub Actions run: `36038543434` = **SUCCESS**
 - Android + source job: **SUCCESS**
 - Windows EXE job: **SUCCESS**
 - Android core regression: **ALL TESTS PASSED**
-- Regression PASS is check-backed; the test entrypoint executes the geometry/CAM/SIM/precision contracts before printing the final PASS line.
-- Android package: `com.aigstudio.app`, versionName `59.0.0`, versionCode `590000`, compile/targetSdk 36
+- Android package: `com.aigstudio.app`, versionName `60.0.0`, versionCode `600000`, compile/targetSdk 36
 - APK verification: zipalign + apksigner + package + targetSdk 36 + SHA256 = **PASS**
-- Android release manifest version: `59.0.0` = workflow version
-- Android release manifest git_sha: `44c8e9bbbcdafa3e1321f144e672debcbf7db1ce` = workflow SHA
+- Android release manifest version: `60.0.0` = workflow version
+- Android release manifest git_sha: `5fc8e3bd237261b0c9b273ad6d50afec14308729` = workflow SHA
 - Source release manifest version/git_sha: **MATCH**
-- Android/source artifact: `AIG-Studio-Android-and-Source` (artifact 10825253719, digest `sha256:b1e96c531bf9c523c48f1a67b18815f14a07bdb7d8e99a284475606ad8917de2`)
+- Android/source artifact: `AIG-Studio-Android-and-Source` (artifact 10826155197, digest `sha256:4d783c0eb16d615f009816689ca527b687916efbede3e85462b8abd9de050100`)
+- Source package is created with `git archive ... HEAD`, preventing stale workspace build/release evidence from being bundled into the project ZIP.
 - Windows build + source-bound smoke + PE/MZ + SHA256 verification: **PASS**
 - Windows release manifest version/git_sha: **MATCH**
-- Windows EXE SHA256: `03166a887ed9f71a86bc76437cdaf585cea861155213beeaf1bd506133b085ec`
-- Windows artifact: `AIG-Studio-Windows-EXE` (artifact 10824424347, digest `sha256:682b3a8c06cf4828b2c197406643b3fc4a24c2db647d3402499c6c113f2d4800`)
+- Windows EXE SHA256: `85041b937b9218b30799f7758e9269ecce671d21e3453cbe8318a972076b0b26`
+- Windows artifact: `AIG-Studio-Windows-EXE` (artifact 10825319913, digest `sha256:fc65139023dbea191d8b8b052c9e57a827920c667971d8d5ced92f61a50ab7fb`)
 - Artifact and smoke evidence remain bound to the exact workflow SHA/version to reject stale or cross-version reuse.
 - The APK remains a debug/installable artifact; production signing/real-device launch gates are still separate from FINAL.
 
