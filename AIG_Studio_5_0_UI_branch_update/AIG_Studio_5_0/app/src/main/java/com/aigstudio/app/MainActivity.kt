@@ -944,6 +944,37 @@ class MainActivity : Activity() {
         }
         refreshMode()
         box.addView(mode)
+        val previewStatus = TextView(this).apply {
+            setTextColor(Color.rgb(61,235,255))
+            textSize = 11f
+            text = "NC PREVIEW • READY"
+            setPadding(dp(2),dp(4),dp(2),dp(4))
+        }
+        var previewLine = 0
+        fun stepPreview(reset: Boolean = false) {
+            val lines = editor.text.toString().split("\n")
+            if (reset) previewLine = 0
+            if (lines.isEmpty()) {
+                previewStatus.text = "NC PREVIEW • EMPTY"
+                return
+            }
+            while (previewLine < lines.size && ncBlockSkip && lines[previewLine].trimStart().startsWith("/")) {
+                previewLine++
+            }
+            if (previewLine >= lines.size) {
+                previewStatus.text = "NC PREVIEW • END"
+                return
+            }
+            val start = lines.take(previewLine).sumOf { it.length + 1 }
+            val end = (start + lines[previewLine].length).coerceAtMost(editor.length())
+            editor.requestFocus()
+            editor.setSelection(start.coerceAtMost(editor.length()), end)
+            editor.post { editor.bringPointIntoView(start.coerceAtMost(editor.length())) }
+            previewStatus.text = (if (ncDryRun) "DRY RUN" else "NC PREVIEW") +
+                " • BLOCK " + (previewLine + 1) + " • " + lines[previewLine].trim()
+            previewLine++
+        }
+        box.addView(previewStatus)
         val controls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         fun toggle(label: String, action: () -> Unit) {
             controls.addView(RgbGlowButton(this).apply {
@@ -952,8 +983,9 @@ class MainActivity : Activity() {
                 setOnClickListener { action(); refreshMode() }
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
-        toggle("SINGLE") { ncSingleBlock = !ncSingleBlock }
-        toggle("DRY RUN") { ncDryRun = !ncDryRun }
+        toggle("SINGLE") { ncSingleBlock = !ncSingleBlock; if (ncSingleBlock) stepPreview(reset = true) }
+        toggle("DRY RUN") { ncDryRun = !ncDryRun; previewStatus.text = if (ncDryRun) "DRY RUN • READY" else "NC PREVIEW • READY" }
+        toggle("STEP") { stepPreview() }
         toggle("BLOCK /") {
             ncBlockSkip = !ncBlockSkip
             val lines = editor.text.toString().lineSequence().toList()
