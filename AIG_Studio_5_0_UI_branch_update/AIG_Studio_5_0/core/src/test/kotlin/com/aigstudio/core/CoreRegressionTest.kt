@@ -23,6 +23,7 @@ fun main() {
     testCamSnapshotIsIsolated()
     testDataSyncDesyncContract()
     testPackageBundleContract()
+    testEnvironmentSettingsContract()
     testRealCamToolpath()
     testMaterialRemoval3D()
     testMachiningMesh3D()
@@ -177,6 +178,32 @@ private fun testPackageBundleContract() {
     val duplicate = official.copy(packages = official.packages + official.packages.first())
     check(StudioPackageRegistry.validate(duplicate, duplicate.packages.map { it.id }.toSet()).duplicatePackages.contains("cad-core"))
     println("✓ PACKAGE_BUNDLE_GATE_PASS dependencies / enable-disable / duplicate fail-closed")
+}
+
+private fun testEnvironmentSettingsContract() {
+    val perf = RuntimeEnvironmentSettings(
+        fpsMode=FpsMode.FPS_120,
+        maxFps=120,
+        rgbBrightness=65,
+        glowLevel=GlowLevel.MEDIUM,
+        powerMode=PowerMode.PERFORMANCE,
+        renderQuality=RenderQuality.HIGH,
+        hudEnabled=true
+    )
+    check(perf.targetFps(120.0,100,0,false)==120)
+    check(perf.targetFps(60.0,100,0,false)==60)
+
+    val auto = perf.copy(fpsMode=FpsMode.AUTO,powerMode=PowerMode.AUTO)
+    check(auto.targetFps(120.0,15,0,false)==60)
+    check(auto.targetFps(120.0,8,0,false)==30)
+    check(auto.targetFps(120.0,80,4,false)==30)
+    check(auto.targetFps(120.0,80,2,false)==60)
+    check(auto.effectiveRgbBrightness(8,false)<=35)
+    check(auto.effectiveRgbBrightness(15,false)<=50)
+    check(auto.effectiveRgbBrightness(80,false)==65)
+    CncPrecisionContract.assertRendererIsolation(auto)
+    check(CNC_RESOLUTION_MM==0.001)
+    println("✓ ENVIRONMENT_SETTINGS_GATE_PASS 120/60/30/Auto RGB thermal battery precision-isolated")
 }
 
 private fun testAigIiPrecisionContract() {
