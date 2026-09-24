@@ -8,6 +8,10 @@ plugins {
 val releaseVersion = Properties().apply {
     rootProject.file("release-version.properties").inputStream().use { load(it) }
 }
+val releaseVersionName = releaseVersion.getProperty("versionName")
+    ?: error("versionName is required")
+val releaseMajor = releaseVersionName.substringBefore('.').toInt()
+val releaseVersionCode = releaseMajor * 10000
 
 android {
     namespace = "com.aigstudio.app"
@@ -16,8 +20,8 @@ android {
         applicationId = "com.aigstudio.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = releaseVersion.getProperty("versionCode").toInt()
-        versionName = releaseVersion.getProperty("versionName")
+        versionCode = releaseVersionCode
+        versionName = releaseVersionName
     }
 }
 
