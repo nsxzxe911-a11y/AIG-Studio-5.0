@@ -4,7 +4,7 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 ## Current main
 
-- Version: **48.0.0**
+- Version: **53.0.0**
 - Runtime project root: repository root
 - Android versionCode: derived automatically from the major version
 - Version source: `release-version.properties`
@@ -41,16 +41,20 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 Version numbers only move forward. Generated build outputs are excluded from version control and do not replace source as the release truth.
 
-## Direct validation evidence for 52.0.0
+## Direct validation evidence for 53.0.0
 
-- Validated source SHA: `aa1564061a649cf9c5a171ac2044786c2af95f5c`
-- GitHub Actions run: `36029546599` = **SUCCESS**
+- Validated source SHA: `71369f10f1cee90907be0c084d5794e5585e9caa`
+- GitHub Actions run: `36030896783` = **SUCCESS**
 - Android + source job: **SUCCESS**
 - Core regression: **ALL TESTS PASSED**
+- Android package: `com.aigstudio.app`, versionName `53.0.0`, versionCode `530000`, compile/targetSdk 36
 - APK verification: zipalign + apksigner + package + targetSdk 36 + SHA256 = **PASS**
-- Android/source artifact: `AIG-Studio-Android-and-Source` (artifact 10821195217)
+- APK SHA manifest check: `AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk: OK`
+- Source ZIP SHA manifest check: `AIG_Studio_FULL_PROJECT_SOURCE.zip: OK`
+- Android/source artifact: `AIG-Studio-Android-and-Source` (artifact 10821876103, artifact digest `sha256:1777bac068eaf0a935b787764d92c89124ca0a561b11169d01df4235facb6b51`)
 - Windows build + PE/MZ + SHA256 verification: **PASS**
-- Windows artifact: `AIG-Studio-Windows-EXE` (artifact 10821625105)
+- Windows EXE SHA256: `1816d6e9efd3eb44c49bc9c819696d821495bf93389c9d6938109457f476da11`
+- Windows artifact: `AIG-Studio-Windows-EXE` (artifact 10821881446, artifact digest `sha256:7dd370adfde967815721a1743c2f86872544b50d00020a5110bd8279ecd9cb1e`)
 - The APK remains a debug/installable artifact; production signing/real-device launch gates are still separate from FINAL.
 
 ## Release policy
