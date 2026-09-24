@@ -1462,7 +1462,7 @@ class CadView(context: Context) : View(context) {
             when (p.firstOrNull()) {
                 "L" -> if (p.size == 6) restored += Line(p[1], Vec2(p[2].toDouble(), p[3].toDouble()), Vec2(p[4].toDouble(), p[5].toDouble()))
                 "C" -> if (p.size == 5) restored += Circle(p[1], Vec2(p[2].toDouble(), p[3].toDouble()), p[4].toDouble())
-                "A" -> if (p.size == 11) restored += Arc(
+                "A" -> if (p.size == 10) restored += Arc(
                     p[1], Vec2(p[2].toDouble(), p[3].toDouble()), p[4].toDouble(),
                     Vec2(p[5].toDouble(), p[6].toDouble()), Vec2(p[7].toDouble(), p[8].toDouble()), p[9].toBooleanStrictOrNull() ?: false
                 )
