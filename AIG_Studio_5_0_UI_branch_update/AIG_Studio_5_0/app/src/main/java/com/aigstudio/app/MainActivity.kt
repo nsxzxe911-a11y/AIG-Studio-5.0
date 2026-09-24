@@ -3,12 +3,16 @@ package com.aigstudio.app
 import android.app.Activity
 import android.app.AlertDialog
 import android.os.SystemClock
+import android.speech.RecognizerIntent
+import android.speech.tts.TextToSpeech
+import java.util.Locale
 import android.os.Process
 import android.os.PowerManager
 import android.content.IntentFilter
 import android.content.Intent
 import android.app.ActivityManager
 import android.content.Context
+import android.content.ActivityNotFoundException
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -40,7 +44,11 @@ import kotlin.math.*
 enum class Tool { LINE, RECT, CIRCLE, DELETE, CHAMFER, FILLET, PAN }
 
 class MainActivity : Activity() {
+    companion object {
+        private const val REQ_AI_VOICE = 7110
+    }
     private lateinit var cad: CadView
+    private var voiceTts: TextToSpeech? = null
     private lateinit var branchFlow: FlowLayout
     private lateinit var categoryFlow: FlowLayout
     private val toolButtons = mutableMapOf<Tool, Button>()
@@ -173,6 +181,7 @@ class MainActivity : Activity() {
         addCategory("加工", 5) { showMachiningBranch() }
         addCategory("安全", 4) { showSecurityBranch() }
         addCategory("AI", 1) { showAiBranch() }
+        addActionTo(categoryFlow, "AI VOICE", 0) { startVoiceAssistant() }
         addActionTo(categoryFlow, "ChatGPT AI 更新 • 一鍵", 1) { runSecureUpdateCheck() }
         addActionTo(categoryFlow, "↶", 3) { cad.undo() }
         addActionTo(categoryFlow, "↷", 5) { cad.redo() }
@@ -209,6 +218,114 @@ class MainActivity : Activity() {
                 }
             }
         }
+    }
+
+
+    private fun initVoiceAssistant() {
+        if (voiceTts != null) return
+        voiceTts = TextToSpeech(this) { statusCode ->
+            if (statusCode == TextToSpeech.SUCCESS) voiceTts?.language = Locale.TAIWAN
+        }
+    }
+
+    private fun speakVoice(text: String) {
+        initVoiceAssistant()
+        voiceTts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "aig_voice")
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun startVoiceAssistant() {
+        initVoiceAssistant()
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "zh-TW")
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "zh-TW")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "AIG CNC AI 語音")
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+        }
+        try {
+            startActivityForResult(intent, REQ_AI_VOICE)
+        } catch (_: ActivityNotFoundException) {
+            speakVoice("此裝置沒有可用的語音辨識服務")
+        }
+    }
+
+    private fun confirmVoiceAction(description: String, action: () -> Unit) {
+        AlertDialog.Builder(this)
+            .setTitle("AI VOICE 安全確認")
+            .setMessage("辨識到：$description\n\n這個動作會改變工作狀態，是否執行？")
+            .setPositiveButton("執行") { _, _ -> action(); speakVoice("已執行 $description") }
+            .setNegativeButton("取消") { _, _ -> speakVoice("已取消") }
+            .show()
+    }
+
+    private fun currentBatteryTemperatureC(): Double? {
+        val battery = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val raw = battery?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE) ?: Int.MIN_VALUE
+        return if (raw == Int.MIN_VALUE) null else raw / 10.0
+    }
+
+    private fun handleVoiceCommand(raw: String) {
+        val cmd = raw.trim().lowercase(Locale.TAIWAN)
+        when {
+            cmd.contains("fps") || cmd.contains("幀率") -> {
+                updateSystemMonitorSnapshot()
+                speakVoice("目前 FPS " + String.format("%.1f", monitorFps) + "，Frame Time " + String.format("%.1f", monitorFrameTimeMs) + " 毫秒")
+            }
+            cmd.contains("溫度") || cmd.contains("thermal") -> {
+                val temp = currentBatteryTemperatureC()
+                speakVoice("目前電池溫度 " + (temp?.let { String.format("%.1f 度", it) } ?: "無法取得") + "，Thermal " + thermalStatusLabel())
+            }
+            cmd.contains("記憶體") || cmd.contains("ram") -> {
+                val appRam = android.os.Debug.getPss().toDouble() / 1024.0
+                val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                val mi = ActivityManager.MemoryInfo()
+                am.getMemoryInfo(mi)
+                speakVoice("AIG CNC 使用記憶體 " + String.format("%.0f MB", appRam) + "，可用 " + String.format("%.0f MB", mi.availMem / 1048576.0))
+            }
+            cmd.contains("開始燒機") || cmd.contains("開始壓力測試") -> {
+                burnInActive = true
+                burnInStartMs = SystemClock.elapsedRealtime()
+                monitorDroppedFrames = 0L
+                monitorMaxTempC = Double.NEGATIVE_INFINITY
+                monitorMinFps = Double.POSITIVE_INFINITY
+                monitorFpsSum = 0.0
+                monitorFpsSamples = 0L
+                monitorMaxRamMb = 0.0
+                if (!systemMonitorRunning) applySystemHudPreference(true)
+                speakVoice("Renderer 燒機開始，高溫會自動停止")
+            }
+            cmd.contains("停止燒機") || cmd.contains("停止壓力測試") -> { burnInActive = false; speakVoice("Renderer 燒機已停止") }
+            cmd.contains("系統監控") || cmd.contains("hud") -> { showExpandedSystemHud(); speakVoice("已開啟系統監控") }
+            cmd.contains("加工") || cmd.contains("cam") -> { openCategory("加工") { showMachiningBranch() }; speakVoice("切換加工") }
+            cmd.contains("安全") -> { openCategory("安全") { showSecurityBranch() }; speakVoice("切換安全") }
+            cmd.contains("ai") -> { openCategory("AI") { showAiBranch() }; speakVoice("切換 AI") }
+            cmd.contains("角部") || cmd.contains("倒角") || cmd.contains("圓角") -> { openCategory("角部") { showCornerBranch() }; speakVoice("切換角部工具") }
+            cmd.contains("修改") -> { openCategory("修改") { showModifyBranch() }; speakVoice("切換修改") }
+            cmd.contains("繪圖") || cmd.contains("cad") -> { openCategory("繪圖") { showDrawingBranch() }; speakVoice("切換繪圖") }
+            cmd.contains("畫線") || cmd == "line" -> confirmVoiceAction("切換 LINE 繪圖工具") { selectTool(Tool.LINE) }
+            cmd.contains("畫圓") || cmd == "circle" -> confirmVoiceAction("切換 CIRCLE 繪圖工具") { selectTool(Tool.CIRCLE) }
+            cmd.contains("矩形") || cmd == "rect" -> confirmVoiceAction("切換 RECT 繪圖工具") { selectTool(Tool.RECT) }
+            else -> speakVoice("沒有辨識到可安全執行的 AIG CNC 指令")
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQ_AI_VOICE) {
+            if (resultCode == RESULT_OK) {
+                val heard = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+                if (!heard.isNullOrBlank()) handleVoiceCommand(heard) else speakVoice("沒有聽清楚")
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        voiceTts?.stop()
+        voiceTts?.shutdown()
+        systemMonitorHandler.removeCallbacks(systemMonitorRunnable)
+        temperatureHandler.removeCallbacks(temperatureRunnable)
+        super.onDestroy()
     }
 
     private fun showDrawingBranch() {
