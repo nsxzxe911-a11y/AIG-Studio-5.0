@@ -1,13 +1,11 @@
-name: AIG Studio latest main build
-run-name: AIG Studio latest main build
+name: AIG Studio release build
+run-name: AIG Studio release build
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 concurrency:
-  group: aig-studio-main-build
+  group: aig-studio-release-build
   cancel-in-progress: true
 
 permissions:
