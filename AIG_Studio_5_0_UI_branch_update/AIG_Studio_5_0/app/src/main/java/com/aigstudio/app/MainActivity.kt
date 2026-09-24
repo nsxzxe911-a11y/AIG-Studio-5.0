@@ -114,7 +114,8 @@ class MainActivity : Activity() {
     private var lastCpuWallMs = 0L
     private var monitorSnapshot = "MONITOR --"
     private val monitorHistory = mutableListOf<MonitorSample>()
-    private val monitorHistoryLimit = 180
+    private var monitorHistoryLimit = 180
+    private var monitorHistoryPaused = false
     private val systemMonitorHandler = Handler(Looper.getMainLooper())
     private val systemFrameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
@@ -686,13 +687,15 @@ class MainActivity : Activity() {
         lastCpuWallMs = nowWall
 
         if (!tempC.isNaN()) monitorMaxTempC = maxOf(monitorMaxTempC, tempC)
-        monitorHistory += MonitorSample(
-            fps = monitorFps,
-            frameTimeMs = monitorFrameTimeMs,
-            temperatureC = if (tempC.isNaN()) null else tempC,
-            ramMb = appRamMb
-        )
-        while (monitorHistory.size > monitorHistoryLimit) monitorHistory.removeAt(0)
+        if (!monitorHistoryPaused) {
+            monitorHistory += MonitorSample(
+                fps = monitorFps,
+                frameTimeMs = monitorFrameTimeMs,
+                temperatureC = if (tempC.isNaN()) null else tempC,
+                ramMb = appRamMb
+            )
+            while (monitorHistory.size > monitorHistoryLimit) monitorHistory.removeAt(0)
+        }
         val thermal = thermalStatusLabel()
         val ramPressure = when {
             mi.lowMemory -> "HIGH"
@@ -729,34 +732,100 @@ class MainActivity : Activity() {
 
     private fun showExpandedSystemHud() {
         systemHudExpanded = true
-        val avgFps = if (monitorFpsSamples > 0) monitorFpsSum / monitorFpsSamples else monitorFps
-        val minFps = if (monitorMinFps.isFinite()) monitorMinFps else monitorFps
-        val maxTemp = if (monitorMaxTempC.isFinite()) String.format("%.1f°C", monitorMaxTempC) else "--"
-
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12), dp(8), dp(12), dp(8))
         }
-        box.addView(TextView(this).apply {
+        val stats = TextView(this).apply {
             setTextColor(0xFFE1EFFF.toInt())
             textSize = 12f
-            text = buildString {
-                appendLine(monitorSnapshot)
-                appendLine("平均 FPS: " + String.format("%.1f", avgFps) + " • 最低 FPS: " + String.format("%.1f", minFps))
-                appendLine("最高 BAT: " + maxTemp + " • 最高 App RAM: " + String.format("%.0f MB", monitorMaxRamMb))
-                appendLine("Dropped Frames: " + monitorDroppedFrames + " • 歷史: " + monitorHistory.size + " 秒")
-                append("Renderer Governor: UI/VISUAL ONLY • 0.001 mm precision unchanged")
-            }
-        })
-        box.addView(MonitorHistoryView(this).apply {
-            samples = monitorHistory.toList()
-        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(260)))
+        }
+        val chart = MonitorHistoryView(this)
+        box.addView(stats)
+        box.addView(
+            chart,
+            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(260))
+        )
 
-        AlertDialog.Builder(this)
+        val controls = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+        fun control(label: String, action: () -> Unit) {
+            controls.addView(Button(this).apply {
+                text = label
+                isAllCaps = false
+                setOnClickListener { action() }
+            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }
+
+        fun setWindow(seconds: Int) {
+            monitorHistoryLimit = seconds.coerceIn(180, 1800)
+            while (monitorHistory.size > monitorHistoryLimit) monitorHistory.removeAt(0)
+            Toast.makeText(this, "歷史範圍 " + (monitorHistoryLimit / 60) + " 分鐘", Toast.LENGTH_SHORT).show()
+        }
+
+        control("3m") { setWindow(180) }
+        control("10m") { setWindow(600) }
+        control("30m") { setWindow(1800) }
+        control("暫停/繼續") {
+            monitorHistoryPaused = !monitorHistoryPaused
+            Toast.makeText(this, if (monitorHistoryPaused) "監控歷史已暫停" else "監控歷史已繼續", Toast.LENGTH_SHORT).show()
+        }
+        control("清除") {
+            monitorHistory.clear()
+            monitorDroppedFrames = 0L
+            monitorMinFps = Double.POSITIVE_INFINITY
+            monitorFpsSum = 0.0
+            monitorFpsSamples = 0L
+            monitorMaxTempC = Double.NEGATIVE_INFINITY
+            monitorMaxRamMb = 0.0
+            Toast.makeText(this, "監控歷史已清除", Toast.LENGTH_SHORT).show()
+        }
+        box.addView(controls)
+
+        fun range(values: List<Double>, suffix: String): String {
+            if (values.isEmpty()) return "--"
+            return "MIN " + String.format("%.1f", values.minOrNull()) +
+                " / AVG " + String.format("%.1f", values.average()) +
+                " / MAX " + String.format("%.1f", values.maxOrNull()) + suffix
+        }
+
+        val refreshHandler = Handler(Looper.getMainLooper())
+        lateinit var refresh: Runnable
+        refresh = object : Runnable {
+            override fun run() {
+                val visible = monitorHistory.takeLast(monitorHistoryLimit)
+                chart.samples = visible.toList()
+                val fps = visible.map { it.fps }
+                val frame = visible.map { it.frameTimeMs }
+                val temp = visible.mapNotNull { it.temperatureC }
+                val ram = visible.map { it.ramMb }
+                stats.text = buildString {
+                    appendLine(monitorSnapshot)
+                    appendLine("範圍 " + (monitorHistoryLimit / 60) + " 分鐘 • " +
+                        (if (monitorHistoryPaused) "PAUSED" else "LIVE") + " • samples=" + visible.size)
+                    appendLine("FPS        " + range(fps, ""))
+                    appendLine("Frame Time " + range(frame, " ms"))
+                    appendLine("BAT        " + range(temp, " °C"))
+                    appendLine("RAM        " + range(ram, " MB"))
+                    append("Dropped Frames: " + monitorDroppedFrames +
+                        " • UI/VISUAL ONLY • CNC 0.001 mm unchanged")
+                }
+                refreshHandler.postDelayed(this, 1000L)
+            }
+        }
+
+        val dialog = AlertDialog.Builder(this)
             .setTitle("系統監控歷史曲線")
             .setView(box)
             .setPositiveButton("關閉", null)
-            .show()
+            .create()
+        dialog.setOnDismissListener {
+            refreshHandler.removeCallbacks(refresh)
+            systemHudExpanded = false
+        }
+        dialog.show()
+        refreshHandler.post(refresh)
     }
 
 private fun showEnvironmentSettings() {
