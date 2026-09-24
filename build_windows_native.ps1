@@ -15,8 +15,8 @@ if (-not (Get-Command light.exe -ErrorAction SilentlyContinue)) { throw 'WiX Too
 if (-not (Get-Command gradle -ErrorAction SilentlyContinue)) { throw 'Gradle is required.' }
 if (-not (Get-Command jpackage -ErrorAction SilentlyContinue)) { throw 'JDK 17+ jpackage is required.' }
 
-& gradle -p $RepoRoot --no-daemon :desktop:installDist
-if ($LASTEXITCODE -ne 0) { throw 'Studio Gradle desktop runtime build failed.' }
+& gradle -p $RepoRoot --no-daemon :core:coreRegression :desktop:installDist
+if ($LASTEXITCODE -ne 0) { throw 'Studio core regression or desktop runtime build failed.' }
 
 $LibDir = Join-Path $RepoRoot 'desktop\build\install\desktop\lib'
 $MainJar = Join-Path $LibDir 'AIG_Studio_PC.jar'
