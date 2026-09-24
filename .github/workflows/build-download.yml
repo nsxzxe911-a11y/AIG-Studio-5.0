@@ -1,5 +1,4 @@
 name: AIG Studio release build
-run-name: AIG Studio release build
 
 on:
   workflow_dispatch:
@@ -24,13 +23,10 @@ jobs:
         run: ./build_android_release.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: AIG-Studio-Android-APK
-          path: release/android/
-          if-no-files-found: error
-      - uses: actions/upload-artifact@v4
-        with:
-          name: AIG-Studio-Full-Project-Source
-          path: release/source/
+          name: AIG-Studio-Android-and-Source
+          path: |
+            release/android/
+            release/source/
           if-no-files-found: error
 
   windows-exe:
