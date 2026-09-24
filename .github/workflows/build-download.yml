@@ -39,7 +39,7 @@ jobs:
           java-version: '17'
       - name: Build Windows EXE
         shell: pwsh
-        run: .\AIG_Studio_5_0_UI_branch_update\AIG_Studio_5_0\build_windows_native.ps1
+        run: .\build_windows_native.ps1
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Windows-EXE
