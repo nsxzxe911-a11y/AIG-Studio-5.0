@@ -182,6 +182,7 @@ class MainActivity : Activity() {
         addCategory("安全", 4) { showSecurityBranch() }
         addCategory("AI", 1) { showAiBranch() }
         addActionTo(categoryFlow, "AI VOICE", 0) { startVoiceAssistant() }
+        addActionTo(categoryFlow, "AI SUITE", 2) { showAiSystemSuiteDialog() }
         addActionTo(categoryFlow, "ChatGPT AI 更新 • 一鍵", 1) { runSecureUpdateCheck() }
         addActionTo(categoryFlow, "↶", 3) { cad.undo() }
         addActionTo(categoryFlow, "↷", 5) { cad.redo() }
@@ -220,6 +221,54 @@ class MainActivity : Activity() {
         }
     }
 
+
+
+    private fun showAiSystemSuiteDialog() {
+        val prefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(10), dp(14), dp(8))
+        }
+        fun action(label: String, run: () -> Unit) {
+            box.addView(Button(this).apply {
+                text = label
+                isAllCaps = false
+                setOnClickListener { run() }
+            })
+        }
+        box.addView(TextView(this).apply {
+            setTextColor(0xFFE1EFFF.toInt())
+            textSize = 13f
+            text = "AIG CNC AI 系統套裝\nAI VOICE • SYSTEM HUD • FPS/Frame Time • BAT/Thermal • RAM • Dropped Frames • Renderer Governor • Burn-in"
+            setPadding(dp(4),dp(4),dp(4),dp(10))
+        })
+        action("AI VOICE") { startVoiceAssistant() }
+        action("系統監控 HUD") { applySystemHudPreference(true); showExpandedSystemHud() }
+        action(if (burnInActive) "停止 Renderer 燒機" else "開始 Renderer 燒機") {
+            burnInActive = !burnInActive
+            if (burnInActive) {
+                burnInStartMs = SystemClock.elapsedRealtime()
+                monitorDroppedFrames = 0L
+                monitorMaxTempC = Double.NEGATIVE_INFINITY
+                monitorMinFps = Double.POSITIVE_INFINITY
+                monitorFpsSum = 0.0
+                monitorFpsSamples = 0L
+                monitorMaxRamMb = 0.0
+                if (!systemMonitorRunning) applySystemHudPreference(true)
+                speakVoice("Renderer 燒機開始，高溫會自動停止")
+            } else {
+                speakVoice("Renderer 燒機已停止")
+            }
+        }
+        action("環境 / FPS / 溫度設定") { showEnvironmentSettings() }
+        action("ChatGPT AI 更新") { runSecureUpdateCheck() }
+        AlertDialog.Builder(this)
+            .setTitle("AIG CNC AI SYSTEM SUITE")
+            .setView(box)
+            .setPositiveButton("關閉", null)
+            .show()
+        prefs.edit().putBoolean("ai_system_suite_enabled", true).apply()
+    }
 
     private fun initVoiceAssistant() {
         if (voiceTts != null) return
