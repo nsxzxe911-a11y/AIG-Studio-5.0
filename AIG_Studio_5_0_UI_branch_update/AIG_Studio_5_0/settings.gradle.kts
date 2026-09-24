@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "AIGStudio5"
+rootProject.name = "AIGStudio"
 include(":app", ":core")
