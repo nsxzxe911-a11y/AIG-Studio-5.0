@@ -246,6 +246,8 @@ class MainActivity : Activity() {
     private var ncBlockSkip = false
     private var axisA = 0.0
     private var axisB = 0.0
+    private var workOffset = "G54"
+    private var drillCycleBlock = ""
     private lateinit var fpsIndicator: TextView
     private lateinit var temperatureIndicator: TextView
     private var fpsLoopRunning = false
@@ -721,6 +723,8 @@ class MainActivity : Activity() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addActionTo(branchFlow, "CAM 設定", 5) { showCamSettingsDialog() }
         addActionTo(branchFlow, "NC EDIT", 0) { showNcEditDialog() }
+        addActionTo(branchFlow, "G54–G59", 3) { showWorkOffsetDialog() }
+        addActionTo(branchFlow, "G81/G73/G83/G84", 2) { showDrillCycleDialog() }
         addActionTo(branchFlow, "5X A/B", 1) { show5xDialog() }
         addActionTo(branchFlow, "3D 加工", 4) { showMachining3D() }
     }
@@ -772,6 +776,68 @@ class MainActivity : Activity() {
             .show()
     }
 
+
+    private fun showWorkOffsetDialog() {
+        val offsets = arrayOf("G54","G55","G56","G57","G58","G59")
+        AlertDialog.Builder(this)
+            .setTitle("工件座標 • " + workOffset)
+            .setSingleChoiceItems(offsets, offsets.indexOf(workOffset).coerceAtLeast(0)) { dialog, which ->
+                workOffset = offsets[which]
+                Toast.makeText(this, "WORK OFFSET " + workOffset, Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showDrillCycleDialog() {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12),dp(8),dp(12),dp(8))
+        }
+        val cycleSpinner = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, DrillCycle.entries.map { it.code })
+            box.addView(this)
+        }
+        fun num(label: String, value: Double, signed: Boolean = false): EditText = EditText(this).apply {
+            hint = label
+            setText(DisplayFormat.mm(value))
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or
+                (if (signed) InputType.TYPE_NUMBER_FLAG_SIGNED else 0)
+            box.addView(this)
+        }
+        val x = num("X mm", 0.0, true)
+        val y = num("Y mm", 0.0, true)
+        val z = num("Z depth mm", camSettings.depth, true)
+        val r = num("R retract mm", 2.0)
+        val q = num("Q peck mm (G73/G83)", 5.0)
+        val feed = num("Feed mm/min", camSettings.feedMmMin)
+
+        AlertDialog.Builder(this)
+            .setTitle("Fanuc 鑽孔循環")
+            .setView(box)
+            .setPositiveButton("套用到 NC") { _, _ ->
+                runCatching {
+                    val cycle = DrillCycle.entries[cycleSpinner.selectedItemPosition]
+                    val hole = DrillHole(
+                        x.text.toString().toDouble(),
+                        y.text.toString().toDouble(),
+                        z.text.toString().toDouble(),
+                        r.text.toString().toDouble(),
+                        if (cycle == DrillCycle.G73 || cycle == DrillCycle.G83) q.text.toString().toDouble() else null,
+                        feed.text.toString().toDouble()
+                    )
+                    FanucNc.cannedCycle(cycle, listOf(hole), camSettings.safeZ, hole.r)
+                }.onSuccess {
+                    drillCycleBlock = it
+                    Toast.makeText(this, "DRILL CYCLE READY", Toast.LENGTH_SHORT).show()
+                }.onFailure {
+                    Toast.makeText(this, "DRILL CYCLE 無效: " + it.message, Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
 
     private fun show5xDialog() {
         val box = LinearLayout(this).apply {
@@ -845,7 +911,7 @@ class MainActivity : Activity() {
             }
         val risk = MachiningRiskScanner.inspect(cam, Stock3D.fromSnapshot(snapshot))
         val editor = EditText(this).apply {
-            setText(FanucNc.generate(cam, FanucPostSettings(axisA = axisA, axisB = axisB)))
+            setText(FanucNc.generate(cam, FanucPostSettings(workOffset = workOffset, axisA = axisA, axisB = axisB)) + if (drillCycleBlock.isBlank()) "" else "\n" + drillCycleBlock)
             setTextColor(Color.rgb(225,240,255))
             setBackgroundColor(Color.rgb(5,12,20))
             textSize = 13f
