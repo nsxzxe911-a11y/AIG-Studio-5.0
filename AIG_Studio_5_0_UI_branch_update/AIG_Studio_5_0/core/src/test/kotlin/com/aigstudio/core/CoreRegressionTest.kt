@@ -166,6 +166,12 @@ private fun testDataSyncDesyncContract() {
 private fun testPackageBundleContract() {
     val official = StudioPackageRegistry.official
     val all = official.packages.map { it.id }.toSet()
+    val requiredAiSuite = setOf(
+        "ai-voice","ai-command-router","voice-safety-confirm",
+        "system-monitor-hud","performance-telemetry","thermal-guard",
+        "renderer-governor","renderer-burn-in","software-absolute-coordinate"
+    )
+    check(all.containsAll(requiredAiSuite)) { "AI SYSTEM SUITE packages missing: " + (requiredAiSuite - all) }
     check(StudioPackageRegistry.validate(official, all).ok)
     check(runCatching { StudioPackageRegistry.requireHealthy(official, all) }.isSuccess)
 
