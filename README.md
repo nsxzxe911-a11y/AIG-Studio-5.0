@@ -4,7 +4,7 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 ## Current main
 
-- Version: **67.0.0**
+- Version: **68.0.0**
 - Runtime project root: repository root
 - Android versionCode: derived automatically from the major version
 - Version source: `release-version.properties`
@@ -41,23 +41,24 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 Version numbers only move forward. Generated build outputs are excluded from version control and do not replace source as the release truth.
 
-## Direct validation evidence for 67.0.0
+## Direct validation evidence for 68.0.0
 
-- Validated source SHA: `78b0bb3660032230cf6080840d564863d1f91c1e`
-- GitHub Actions run: `36043634177` = **SUCCESS**
+- Validated source SHA: `7bbac51626540301915d7f01bf1c97ade56910bb`
+- GitHub Actions run: `36044307279` = **SUCCESS**
 - Android + source job: **SUCCESS**
 - Windows EXE job: **SUCCESS**
 - Android core regression: **ALL TESTS PASSED**
-- Android package: `com.aigstudio.app`, versionName `67.0.0`, versionCode `670000`, compile/targetSdk 36
+- Android package: `com.aigstudio.app`, versionName `68.0.0`, versionCode `680000`, compile/targetSdk 36
 - APK verification: zipalign + apksigner + package + targetSdk 36 + SHA256 = **PASS**
-- Android release manifest version: `67.0.0` = workflow version
-- Android release manifest git_sha: `78b0bb3660032230cf6080840d564863d1f91c1e` = workflow SHA
+- Android release manifest version: `68.0.0` = workflow version
+- Android release manifest git_sha: `7bbac51626540301915d7f01bf1c97ade56910bb` = workflow SHA
 - Source release manifest version/git_sha: **MATCH**
-- Android/source artifact: `AIG-Studio-Android-and-Source` (artifact 10827716907, digest `sha256:0514de7085f2e5103c3d866cc328a4b113503db587719779f551062e473b320d`)
+- Android/source artifact: `AIG-Studio-Android-and-Source` (artifact 10828215868, digest `sha256:1938671f223a8e3b11bbd5f0bf32109df19f25fe69289a9583dbe49d6fe0d282`)
+- Windows release wrapper audit: Gradle, Java smoke and jpackage subprocesses are fail-closed through explicit `$LASTEXITCODE` checks.
 - Windows build + source-bound smoke + PE/MZ + SHA256 verification: **PASS**
 - Windows release manifest version/git_sha: **MATCH**
-- Windows EXE SHA256: `bdc34425936cd445266f4f9200e332426ce624f93ce4d69c2501906aebbd10e7`
-- Windows artifact: `AIG-Studio-Windows-EXE` (artifact 10827143096, digest `sha256:92c9b3179cbf584c51d86116ffe0b7dd0f3f2a650b6ad132b10f0afc26961123`)
+- Windows EXE SHA256: `f8e5c9d66c3d310220dfe0fb2abcb5a49f6e993c754c7f074cb19a02a10c43e7`
+- Windows artifact: `AIG-Studio-Windows-EXE` (artifact 10827064263, digest `sha256:fde031fc6a3daad8ba278f7fdc3e88d72873732009152376cedb7727dd608222`)
 - Artifact and smoke evidence remain bound to the exact workflow SHA/version.
 - The APK remains a debug/installable artifact; production signing/real-device launch gates are still separate from FINAL.
 
