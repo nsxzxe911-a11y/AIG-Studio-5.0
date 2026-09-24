@@ -1,34 +1,31 @@
-# AIG Studio 5.0 — clean-core rebuild
+# AIG Studio
 
-This is a from-scratch Android project foundation for the locked 5.0 direction.
+AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current AIG CNC line.
 
-## Implemented in this first code drop
-- App name: **AIG Studio 5.0**
-- Adaptive wrapping mobile tool bar (no AndroidX dependency)
-- Real CAD entities: line / circle / arc
-- One world-coordinate transform used by drawing and touch
-- Functional visible tools only: Line, Rectangle, Circle, Delete, C chamfer, R fillet, Undo, Redo, Pan
-- Pinch zoom that preserves the world point under the fingers
-- Command-based Undo/Redo
-- Delete means delete only: no automatic reconnect/closure
-- C chamfer: select two lines, trims both, inserts real chamfer line
-- R fillet: select two lines, trims both, inserts mathematically tangent arc
-- Read-only CAD snapshot boundary for CAM foundation
-- Pure Kotlin regression suite covering the historical failure modes
+## Current main
 
-## Regression rules already encoded
-1. Deleting one side from a 4-side rectangle leaves exactly 3 open line entities.
-2. Undo/Redo restores deterministic geometry.
-3. C5 on a 90-degree corner trims to (5,0)/(0,5) and inserts the bridge.
-4. R5 on a 90-degree corner creates a center at (5,5) and true 5 mm radius.
-5. Screen/world coordinate conversion round-trips and zoom preserves the focused world point.
-6. CAM receives a geometry snapshot; later CAD edits do not mutate it.
+- Version: **27.0.0**
+- Android versionCode: derived automatically from the major version
+- Version source: `release-version.properties`
+- Android build/package entry: repository-root `build_android_release.sh`
+- Windows build/package entry: `build_windows_native.ps1`
+- Release workflow: repository-root `.github/workflows/build-download.yml`
+- Release outputs: repository-root `release/android/`, `release/windows/`, `release/source/`
 
-## Build note
-The current execution container has Java/Kotlin but no Android SDK / Gradle installation, so the Android APK cannot be compiled here yet. The geometry core is compiled and executed directly with `kotlinc` as a real test in this environment.
+Version numbers only move forward. Generated build outputs are excluded from version control and do not replace source as the release truth.
 
-## 5.0 AI safety update
-- Added local AI-style CAD preflight inspection without changing the 5.0 version number.
-- Detects zero/tiny geometry, duplicate geometry, and near-connected line endpoints.
-- Inspection is read-only: it never silently edits CAD geometry or emits machining code.
-- CAM/G-code safety remains confirmation-first; tool/Z/offset checks must be validated before machining.
+## Release policy
+
+A version bump does not mean APK/EXE/FINAL PASS.
+
+Current-version evidence is required before FINAL, including build, artifact integrity, install/launch, regression and CNC safety. The release workflow is manual-only; no workflow run means no current build verdict.
+
+## Runtime direction
+
+- Real editable CAD geometry, not static images.
+- CAM toolpaths remain separate from drawing geometry.
+- Simulation must represent real machining/material removal behavior.
+- Fanuc NC safety rules and 0.001 mm precision remain mandatory.
+- 3D/5X interaction must be real and movable.
+- Mobile UI follows the approved RGB/glass visual direction.
+- `ChatGPT AI 更新` is the canonical update feature name.
