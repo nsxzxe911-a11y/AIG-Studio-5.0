@@ -22,25 +22,18 @@ try {
   if (-not (Test-Path 'desktop_launch.png') -or -not (Test-Path 'desktop_3d.png') -or -not (Test-Path 'desktop_smoke.txt')) {
     throw 'Studio Windows smoke evidence missing.'
   }
-} finally {
-  Pop-Location
-}
+} finally { Pop-Location }
 
 if (-not (Get-Command jpackage -ErrorAction SilentlyContinue)) { throw 'JDK 17+ jpackage is required.' }
 if (Test-Path $Out) { Remove-Item -Recurse -Force $Out }
 New-Item -ItemType Directory -Force $Out | Out-Null
-
-& jpackage --type exe --name $Product --dest $Out --input $Dist --main-jar (Split-Path -Leaf $Jar) --main-class com.aigstudio.desktop.DesktopAppKt --app-version 7.0.0 --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
+& jpackage --type exe --name $Product --dest $Out --input $Dist --main-jar (Split-Path -Leaf $Jar) --main-class com.aigstudio.desktop.DesktopAppKt --app-version 8.0.0 --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
 if ($LASTEXITCODE -ne 0) { throw 'Studio jpackage EXE build failed.' }
-
 $Installer = Get-ChildItem $Out -Filter '*.exe' | Select-Object -First 1
 if (-not $Installer) { throw 'Studio jpackage installer missing.' }
 $FinalInstaller = Join-Path $Out ($Product + '.exe')
-if ($Installer.FullName -ne $FinalInstaller) {
-  Move-Item $Installer.FullName $FinalInstaller -Force
-}
+if ($Installer.FullName -ne $FinalInstaller) { Move-Item $Installer.FullName $FinalInstaller -Force }
 $Bytes = [System.IO.File]::ReadAllBytes($FinalInstaller)
 if ($Bytes.Length -lt 2 -or $Bytes[0] -ne 0x4D -or $Bytes[1] -ne 0x5A) { throw 'Studio installer is not valid PE/MZ.' }
 Get-FileHash $FinalInstaller -Algorithm SHA256
-Write-Host ('STUDIO_WINDOWS_UPGRADE_UUID=' + $UpgradeUuid)
 Write-Host 'STUDIO_WINDOWS_SELF_CONTAINED_BUILD=PASS'
