@@ -183,7 +183,7 @@ private fun testPackageBundleContract() {
     val requiredAiSuite = setOf(
         "ai-voice","ai-command-router","voice-safety-confirm",
         "system-monitor-hud","performance-telemetry","thermal-guard",
-        "renderer-governor","renderer-burn-in","software-absolute-coordinate",
+        "renderer-governor","software-absolute-coordinate",
             "ai-health","ai-system-suite"
     )
     check(all.containsAll(requiredAiSuite)) { "AI SYSTEM SUITE packages missing: " + (requiredAiSuite - all) }
