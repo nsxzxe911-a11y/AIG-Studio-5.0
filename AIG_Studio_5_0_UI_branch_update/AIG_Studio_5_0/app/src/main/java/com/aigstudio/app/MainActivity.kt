@@ -353,7 +353,7 @@ class MainActivity : Activity() {
         box.addView(TextView(this).apply {
             setTextColor(0xFFE1EFFF.toInt())
             textSize = 13f
-            text = "AIG CNC AI 系統套裝\nAI VOICE 2 • CAM 語音設定 • SYSTEM HUD • FPS/Frame Time • BAT/Thermal • RAM • Dropped Frames • Renderer Governor"
+            text = "AIG CNC CURRENT UPGRADE\nAI VOICE 2 • CAM 語音設定 • LIVE HISTORY • FPS/Frame Time • BAT/Thermal • RAM • 120Hz • 1080P/2K/3K/4K+ • RGB TACTILE • Renderer Governor • ChatGPT AI 更新"
             setPadding(dp(4),dp(4),dp(4),dp(10))
         })
         action("AI VOICE") { startVoiceAssistant() }
