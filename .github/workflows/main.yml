@@ -2,10 +2,6 @@ name: AIG Studio 5.0 Android Build + Runtime Gate
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-
 permissions:
   contents: read
 
