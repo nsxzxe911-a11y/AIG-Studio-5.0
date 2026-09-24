@@ -21,6 +21,7 @@ fun main() {
     testRejectMidSegmentCorner()
     testTransformRoundTrip()
     testCamSnapshotIsIsolated()
+    testDataSyncDesyncContract()
     testRealCamToolpath()
     testMaterialRemoval3D()
     testMachiningMesh3D()
@@ -128,6 +129,36 @@ private fun testCamSnapshotIsIsolated() {
     check(d.size()==3)
     check(cam.geometry.entities.size==4) { "CAM snapshot must not be mutated by later CAD edits" }
     println("✓ CAD/CAM isolation")
+}
+
+private fun testDataSyncDesyncContract() {
+    val doc = DrawingDocument()
+    rectangle().forEach(doc::put)
+    val sourceRevision = 10L
+    val snapshot = doc.snapshot()
+    val cam = CamModel.fromCad(sourceRevision, snapshot, CamSettings(toolDiameter=6.0, depth=-2.0, safeZ=8.0, feedMmMin=180.0))
+    check(cam.sourceRevision == sourceRevision)
+    check(cam.geometry.entities.size == doc.size())
+    val removal = MaterialRemoval3D.simulate(cam.toolpaths, cam.settings, Stock3D.fromSnapshot(cam.geometry))
+    check(removal.depth.any { it < 0.0 })
+
+    doc.remove("L2")
+    check(doc.size() == 3)
+    check(cam.geometry.entities.size == 4) { "Existing CAM snapshot must remain immutable after CAD mutation" }
+
+    val newSnapshot = doc.snapshot()
+    check(newSnapshot.entities.size == 3)
+    check(newSnapshot != cam.geometry) { "Changed CAD must not masquerade as synchronized CAM geometry" }
+    val rebuilt = CamModel.fromCad(sourceRevision + 1L, newSnapshot, cam.settings)
+    check(rebuilt.sourceRevision != cam.sourceRevision)
+    check(rebuilt.geometry.entities.size == 3)
+
+    val changedSettings = cam.settings.copy(feedMmMin = 181.0)
+    val toolChanged = CamModel.fromCad(sourceRevision + 2L, newSnapshot, changedSettings)
+    check(toolChanged.settings.feedMmMin != rebuilt.settings.feedMmMin)
+    check(toolChanged.sourceRevision != rebuilt.sourceRevision)
+
+    println("✓ DATA_SYNC_DESYNC_GATE_PASS CAD→CAM→SIM revision/snapshot/tool-change")
 }
 
 private fun testAigIiPrecisionContract() {
