@@ -12,6 +12,7 @@ import android.os.Process
 import android.os.PowerManager
 import android.content.IntentFilter
 import android.content.Intent
+import android.content.res.Configuration
 import android.app.ActivityManager
 import android.Manifest
 import android.content.Context
@@ -961,7 +962,11 @@ class MainActivity : Activity() {
             textSize = 13f
             gravity = Gravity.TOP or Gravity.START
             minLines = 18
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            showSoftInputOnFocus = false
+            isVerticalScrollBarEnabled = true
+            isHorizontalScrollBarEnabled = true
+            setHorizontallyScrolling(true)
             setPadding(dp(12),dp(10),dp(12),dp(10))
         }
         val box = LinearLayout(this).apply {
@@ -1040,9 +1045,73 @@ class MainActivity : Activity() {
             )
         }
         box.addView(controls)
-        box.addView(editor, LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, dp(460)
-        ))
+
+        fun insertNcToken(token: String) {
+            val start = editor.selectionStart.coerceAtLeast(0)
+            val end = editor.selectionEnd.coerceAtLeast(start)
+            editor.text.replace(start, end, token)
+            editor.requestFocus()
+        }
+        fun deleteNcToken() {
+            val start = editor.selectionStart.coerceAtLeast(0)
+            val end = editor.selectionEnd.coerceAtLeast(start)
+            if (end > start) editor.text.delete(start, end)
+            else if (start > 0) editor.text.delete(start - 1, start)
+            editor.requestFocus()
+        }
+        fun jumpNc(position: Int) {
+            val p = position.coerceIn(0, editor.length())
+            editor.requestFocus()
+            editor.setSelection(p)
+            editor.post { editor.bringPointIntoView(p) }
+        }
+
+        val keyboard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(4),dp(4),dp(4),dp(4))
+        }
+        val rows = listOf(
+            listOf("G","M","X","Y","Z"),
+            listOf("F","S","T","A","B"),
+            listOf("7","8","9","-","."),
+            listOf("4","5","6","0","/"),
+            listOf("1","2","3","INSERT","DELETE"),
+            listOf("TOP","BOTTOM","BLOCK SKIP")
+        )
+        rows.forEach { keys ->
+            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            keys.forEach { key ->
+                row.addView(RgbGlowButton(this).apply {
+                    text = key
+                    setRgbState(Color.rgb(61,235,255), false)
+                    setOnClickListener {
+                        when (key) {
+                            "DELETE" -> deleteNcToken()
+                            "INSERT" -> insertNcToken("\n")
+                            "TOP" -> jumpNc(0)
+                            "BOTTOM" -> jumpNc(editor.length())
+                            "BLOCK SKIP" -> insertNcToken("/")
+                            else -> insertNcToken(key)
+                        }
+                    }
+                }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            }
+            keyboard.addView(row)
+        }
+
+        val landscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val content = LinearLayout(this).apply {
+            orientation = if (landscape) LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
+        }
+        if (landscape) {
+            content.addView(editor, LinearLayout.LayoutParams(0, dp(460), 0.62f))
+            content.addView(keyboard, LinearLayout.LayoutParams(0, dp(460), 0.38f))
+        } else {
+            content.addView(editor, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(320)))
+            content.addView(keyboard, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+        }
+        box.addView(content)
+
         AlertDialog.Builder(this)
             .setTitle("AIG CNC NC EDIT • FANUC")
             .setView(box)
