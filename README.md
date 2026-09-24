@@ -4,7 +4,7 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 ## Current main
 
-- Version: **55.0.0**
+- Version: **56.0.0**
 - Runtime project root: repository root
 - Android versionCode: derived automatically from the major version
 - Version source: `release-version.properties`
@@ -41,20 +41,26 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 Version numbers only move forward. Generated build outputs are excluded from version control and do not replace source as the release truth.
 
-## Direct validation evidence for 55.0.0
+## Direct validation evidence for 56.0.0
 
-- Validated source SHA: `bae88eebeec44f1e3112e3ef290eaa3875ec811c`
-- GitHub Actions run: `36032698774` = **SUCCESS**
+- Validated source SHA: `441bd202bf2f872c24a7a51e8645ffedc083847d`
+- GitHub Actions run: `36033478297` = **SUCCESS**
 - Android + source job: **SUCCESS**
-- Core regression: **ALL TESTS PASSED**
-- Android package: `com.aigstudio.app`, versionName `55.0.0`, versionCode `550000`, compile/targetSdk 36
+- Windows EXE job: **SUCCESS**
+- Android core regression: **ALL TESTS PASSED**
+- Windows core regression: **ALL TESTS PASSED**
+- Android package: `com.aigstudio.app`, versionName `56.0.0`, versionCode `560000`, compile/targetSdk 36
 - APK verification: zipalign + apksigner + package + targetSdk 36 + SHA256 = **PASS**
-- APK SHA manifest check: `AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk: OK`
-- Source ZIP SHA manifest check: `AIG_Studio_FULL_PROJECT_SOURCE.zip: OK`
-- Android/source artifact: `AIG-Studio-Android-and-Source` (artifact 10822907477, artifact digest `sha256:57b3eecc2719c23b14e727cb0638c71a4a623c073f1d0e1f36d6b6ee00014358`)
+- Android release manifest version: `56.0.0` = workflow version
+- Android release manifest git_sha: `441bd202bf2f872c24a7a51e8645ffedc083847d` = workflow SHA
+- Source release manifest version/git_sha: **MATCH**
+- Android/source artifact: `AIG-Studio-Android-and-Source` (artifact 10823482975, digest `sha256:9e3920eb3bb1bc7c22dace9ef9d2c9d1e145e695ae52d02b594c59218522e2e0`)
 - Windows build + PE/MZ + SHA256 verification: **PASS**
-- Windows EXE SHA256: `4c0be83a19f2c7d1a47906942bef7608a0e0afa0ece649fa992a52a66010fc9c`
-- Windows artifact: `AIG-Studio-Windows-EXE` (artifact 10823906799, artifact digest `sha256:c324da2063da673517f70ddd232eeab02377f0b959cbd6b568d6b81d225ed3b1`)
+- Windows release manifest version/git_sha: **MATCH**
+- Windows EXE SHA256: `0b99098749844f6853b8034428283af74b7258e59da29c5f5da73cbf36237535`
+- Windows artifact: `AIG-Studio-Windows-EXE` (artifact 10823673024, digest `sha256:5a72c1059ffd23c22c1275b8aead5349017901880006f39a2c717360497e53f5`)
+- Windows packaging is now directly regression-gated before installDist/jpackage.
+- Artifact manifests are bound to the exact workflow SHA and version to reject stale or cross-version artifact reuse.
 - The APK remains a debug/installable artifact; production signing/real-device launch gates are still separate from FINAL.
 
 ## Release policy
