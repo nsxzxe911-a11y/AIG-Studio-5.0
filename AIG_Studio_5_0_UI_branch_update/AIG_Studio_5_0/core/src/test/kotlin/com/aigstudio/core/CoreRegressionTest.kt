@@ -5,6 +5,19 @@ import kotlin.math.abs
 private fun assertNear(actual: Double, expected: Double, eps: Double = 1e-6, msg: String = "") {
     check(abs(actual - expected) <= eps) { "$msg expected=$expected actual=$actual" }
 }
+private fun testSoftwareAbsoluteCoordinateContract() {
+    val type = Class.forName("com.aigstudio.core.SoftwareCoordinateContract")
+    val instance = type.getField("INSTANCE").get(null)
+    val origin = type.getMethod("originDisplay").invoke(instance) as String
+    val resolution = type.getMethod("displayResolutionMm").invoke(instance) as Double
+    val offsetAffectsGeometry = type.getMethod("machineOffsetAffectsGeometry").invoke(instance) as Boolean
+    check(origin == "0.000")
+    check(resolution == 0.001)
+    check(!offsetAffectsGeometry)
+    check(DisplayFormat.mm(0.0) == "0.000")
+    println("✓ SOFTWARE_ABSOLUTE_ORIGIN_LOCK_PASS origin 0.000 / resolution 0.001 / machine offsets NC-only")
+}
+
 private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
     assertNear(actual.x, expected.x, msg = "$msg x")
     assertNear(actual.y, expected.y, msg = "$msg y")
@@ -12,6 +25,7 @@ private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
 
 fun main() {
     println("AIG Studio 5.0 core regression tests")
+    testSoftwareAbsoluteCoordinateContract()
     testDeleteDoesNotInventTriangle()
     testUndoRedo()
     testChamferC5()
