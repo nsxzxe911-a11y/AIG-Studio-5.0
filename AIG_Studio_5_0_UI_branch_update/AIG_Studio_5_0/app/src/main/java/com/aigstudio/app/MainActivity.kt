@@ -215,8 +215,106 @@ class MainActivity : Activity() {
         addActionTo(branchFlow, "ChatGPT AI 更新 • 一鍵", 1) { runSecureUpdateCheck() }
         addActionTo(branchFlow, "防毒掃描", 4) { showSecurityScan() }
         addActionTo(branchFlow, "更新設定", 5) { showUpdateSettings() }
+        addActionTo(branchFlow, "系統環境", 2) { showEnvironmentSettings() }
     }
 
+    private fun showEnvironmentSettings() {
+        val prefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(10), dp(16), dp(8))
+        }
+
+        val fpsValues = arrayOf("Auto", "120 FPS", "60 FPS", "30 FPS")
+        val fps = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, fpsValues)
+            val current = prefs.getString("fps_mode", "Auto") ?: "Auto"
+            setSelection(fpsValues.indexOf(current).coerceAtLeast(0))
+            box.addView(TextView(this@MainActivity).apply { text = "FPS 模式" })
+            box.addView(this)
+        }
+
+        val powerValues = arrayOf("Balanced", "Performance", "Eco", "Auto")
+        val power = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, powerValues)
+            val current = prefs.getString("power_mode", "Balanced") ?: "Balanced"
+            setSelection(powerValues.indexOf(current).coerceAtLeast(0))
+            box.addView(TextView(this@MainActivity).apply { text = "省電 / 效能模式" })
+            box.addView(this)
+        }
+
+        val qualityValues = arrayOf("High", "Ultra", "Balanced", "Eco")
+        val quality = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, qualityValues)
+            val current = prefs.getString("render_quality", "High") ?: "High"
+            setSelection(qualityValues.indexOf(current).coerceAtLeast(0))
+            box.addView(TextView(this@MainActivity).apply { text = "3D / SIM 畫質" })
+            box.addView(this)
+        }
+
+        val rgb = SeekBar(this).apply {
+            max = 100
+            progress = prefs.getInt("rgb_brightness", 65)
+            box.addView(TextView(this@MainActivity).apply { text = "RGB 亮度 0–100%" })
+            box.addView(this)
+        }
+
+        val hud = CheckBox(this).apply {
+            text = "效能 HUD：FPS / Frame Time / Battery / Thermal"
+            isChecked = prefs.getBoolean("hud_enabled", false)
+            box.addView(this)
+        }
+
+        val autoThermal = CheckBox(this).apply {
+            text = "自動溫度降頻：120 → 60 → 30"
+            isChecked = prefs.getBoolean("thermal_auto", true)
+            box.addView(this)
+        }
+
+        val idleThrottle = CheckBox(this).apply {
+            text = "Idle redraw throttling 省電"
+            isChecked = prefs.getBoolean("idle_throttle", true)
+            box.addView(this)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("AIG CNC 系統環境設定")
+            .setView(box)
+            .setPositiveButton("套用") { _, _ ->
+                val selectedFps = fpsValues[fps.selectedItemPosition]
+                prefs.edit()
+                    .putString("fps_mode", selectedFps)
+                    .putString("power_mode", powerValues[power.selectedItemPosition])
+                    .putString("render_quality", qualityValues[quality.selectedItemPosition])
+                    .putInt("rgb_brightness", rgb.progress)
+                    .putBoolean("hud_enabled", hud.isChecked)
+                    .putBoolean("thermal_auto", autoThermal.isChecked)
+                    .putBoolean("idle_throttle", idleThrottle.isChecked)
+                    .apply()
+
+                if (Build.VERSION.SDK_INT >= 30) {
+                    val requested = when (selectedFps) {
+                        "120 FPS" -> 120f
+                        "60 FPS" -> 60f
+                        "30 FPS" -> 30f
+                        else -> display?.refreshRate ?: 60f
+                    }
+                    display?.supportedModes
+                        ?.minByOrNull { kotlin.math.abs(it.refreshRate - requested) }
+                        ?.let { mode -> window.attributes = window.attributes.apply { preferredDisplayModeId = mode.modeId } }
+                }
+                val visualAlpha = (0.35f + rgb.progress / 100f * 0.65f).coerceIn(0.35f, 1f)
+                categoryButtons.values.forEach { it.alpha = visualAlpha }
+                toolButtons.values.forEach { it.alpha = visualAlpha }
+                Toast.makeText(
+                    this,
+                    "ENV APPLIED • " + selectedFps + " • RGB " + rgb.progress + "% • CNC 精度仍為 0.001 mm",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
     private fun showNetworkStatus() {
         AlertDialog.Builder(this)
             .setTitle("NETWORK SECURITY")
