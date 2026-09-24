@@ -154,6 +154,78 @@ class RgbGlowButton(context: Context) : Button(context) {
     }
 }
 
+
+class Axis5xPreview(
+    context: Context,
+    initialA: Double,
+    initialB: Double,
+    private val onAxesChanged: (Double, Double) -> Unit
+) : View(context) {
+    var axisA: Double = initialA
+        private set
+    var axisB: Double = initialB
+        private set
+    private var lastX = 0f
+    private var lastY = 0f
+    private val grid = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(25,65,88); strokeWidth = 1.2f }
+    private val axisPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(61,235,255); strokeWidth = 5f; strokeCap = Paint.Cap.ROUND }
+    private val rotaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(245,158,11); strokeWidth = 4f; style = Paint.Style.STROKE }
+    private val textPaint5x = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; textSize = 15f * resources.displayMetrics.scaledDensity }
+
+    init {
+        setBackgroundColor(Color.rgb(5,15,24))
+        isClickable = true
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val cx = width / 2f
+        val cy = height / 2f
+        for (i in 1..5) {
+            val x = width * i / 6f
+            val y = height * i / 6f
+            canvas.drawLine(x, 0f, x, height.toFloat(), grid)
+            canvas.drawLine(0f, y, width.toFloat(), y, grid)
+        }
+        val scale = min(width, height) * 0.28f
+        val aRad = Math.toRadians(axisA)
+        val bRad = Math.toRadians(axisB)
+        val xEnd = cx + (cos(bRad) * scale).toFloat()
+        val xY = cy + (sin(bRad) * scale).toFloat()
+        val zEndX = cx + (sin(aRad) * scale * 0.65).toFloat()
+        val zEndY = cy - (cos(aRad) * scale).toFloat()
+        canvas.drawLine(cx, cy, xEnd, xY, axisPaint)
+        canvas.drawLine(cx, cy, zEndX, zEndY, axisPaint)
+        val r = scale * 0.78f
+        canvas.drawCircle(cx, cy, r, rotaryPaint)
+        canvas.drawText("A " + DisplayFormat.mm(axisA) + "°", 18f, 28f, textPaint5x)
+        canvas.drawText("B " + DisplayFormat.mm(axisB) + "°", 18f, 54f, textPaint5x)
+        canvas.drawText("拖曳：上下=A / 左右=B", 18f, height - 18f, textPaint5x)
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                lastX = event.x
+                lastY = event.y
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                val dx = event.x - lastX
+                val dy = event.y - lastY
+                axisB = (axisB + dx * 0.35).coerceIn(-360.0, 360.0)
+                axisA = (axisA - dy * 0.35).coerceIn(-360.0, 360.0)
+                lastX = event.x
+                lastY = event.y
+                onAxesChanged(axisA, axisB)
+                postInvalidateOnAnimation()
+                return true
+            }
+        }
+        return true
+    }
+}
+
 class MainActivity : Activity() {
     companion object {
         private const val REQ_AI_VOICE = 7110
@@ -714,13 +786,20 @@ class MainActivity : Activity() {
         }
         val aInput = axisEditor("A axis °", axisA)
         val bInput = axisEditor("B axis °", axisB)
-        val preview = TextView(this).apply {
+        val previewText = TextView(this).apply {
             setTextColor(Color.rgb(61,235,255))
             textSize = 12f
-            text = "5X • A " + DisplayFormat.mm(axisA) + "° • B " + DisplayFormat.mm(axisB) + "°"
             setPadding(dp(4),dp(6),dp(4),dp(4))
         }
-        box.addView(preview)
+        fun refresh5xText(a: Double, b: Double) {
+            previewText.text = "5X • A " + DisplayFormat.mm(a) + "° • B " + DisplayFormat.mm(b) + "°"
+            aInput.setText(DisplayFormat.mm(a))
+            bInput.setText(DisplayFormat.mm(b))
+        }
+        val preview = Axis5xPreview(this, axisA, axisB) { a, b -> refresh5xText(a, b) }
+        box.addView(preview, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(260)))
+        box.addView(previewText)
+        refresh5xText(axisA, axisB)
         AlertDialog.Builder(this)
             .setTitle("AIG CNC 5X • A/B")
             .setView(box)
