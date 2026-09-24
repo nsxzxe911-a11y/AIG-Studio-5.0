@@ -10,6 +10,61 @@ import javax.imageio.ImageIO
 import javax.swing.*
 import kotlin.math.*
 
+private class AdaptiveGlassToolbar : JPanel() {
+    private var cols = 7
+    init {
+        isOpaque = false
+        border = BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        layout = GridLayout(0, cols, 6, 6)
+        addComponentListener(object : ComponentAdapter() {
+            override fun componentResized(e: ComponentEvent) {
+                val next = max(2, width / 128)
+                if (next != cols) {
+                    cols = next
+                    layout = GridLayout(0, cols, 6, 6)
+                    revalidate(); repaint()
+                }
+            }
+        })
+    }
+    override fun paintComponent(g: Graphics) {
+        val g2 = g.create() as Graphics2D
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        g2.color = Color(8, 22, 36, 178)
+        g2.fillRoundRect(0, 0, width, height, 20, 20)
+        g2.color = Color(61, 235, 255, 105)
+        g2.stroke = BasicStroke(1.2f)
+        g2.drawRoundRect(1, 1, max(0, width - 3), max(0, height - 3), 20, 20)
+        g2.dispose()
+        super.paintComponent(g)
+    }
+}
+
+private class GlassActionButton(label: String, private val accent: Color) : JButton(label) {
+    var active = false
+        set(value) { field = value; repaint() }
+    init {
+        foreground = Color.WHITE
+        isOpaque = false
+        isContentAreaFilled = false
+        isFocusPainted = false
+        border = BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        preferredSize = Dimension(118, 44)
+    }
+    override fun paintComponent(g: Graphics) {
+        val g2 = g.create() as Graphics2D
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        val a = if (active) 220 else 150
+        g2.color = Color(12, 28, 44, a)
+        g2.fillRoundRect(3, 3, width - 6, height - 6, 16, 16)
+        g2.color = Color(accent.red, accent.green, accent.blue, if (active) 235 else 170)
+        g2.stroke = BasicStroke(if (active) 2.6f else 1.4f)
+        g2.drawRoundRect(3, 3, width - 6, height - 6, 16, 16)
+        g2.dispose()
+        super.paintComponent(g)
+    }
+}
+
 private enum class DrawMode { LINE, RECT, CIRCLE }
 
 private class CadPanel(
@@ -287,14 +342,11 @@ private fun runSmoke() {
 
     val smokeRoot = JPanel(BorderLayout()).apply {
         background = Color(5,10,17)
-        val header = JPanel(FlowLayout(FlowLayout.LEFT,8,8)).apply {
+        val header = AdaptiveGlassToolbar().apply {
             background = Color(8,18,30)
             add(JLabel("AIG CNC • OFFICIAL RGB ORIGINAL").apply { foreground=Color(61,235,255);font=font.deriveFont(Font.BOLD,20f) })
             listOf("2D CAD","CAM","3D SIM","5X","NC EDIT","ChatGPT AI 更新").forEachIndexed { i,label ->
-                add(JButton(label).apply {
-                    foreground=Color.WHITE;background=Color(18,38,56);isFocusPainted=false
-                    border=BorderFactory.createLineBorder(listOf(Color(61,235,255),Color(63,255,157),Color(236,72,153),Color(125,112,255),Color(80,170,255),Color(245,158,11))[i],2,true)
-                })
+                add(GlassActionButton(label, listOf(Color(61,235,255),Color(63,255,157),Color(236,72,153),Color(125,112,255),Color(80,170,255),Color(245,158,11))[i]))
             }
         }
         add(header,BorderLayout.NORTH)
@@ -327,17 +379,17 @@ private fun showApp() {
     frame.layout = BorderLayout()
     frame.contentPane.background = Color(5, 10, 17)
 
-    val toolbar = JPanel(FlowLayout(FlowLayout.LEFT, 8, 8))
-    toolbar.background = Color(8, 18, 30)
+    val toolbar = AdaptiveGlassToolbar()
 
-    fun button(label: String, color: Color, action: () -> Unit): JButton {
-        return JButton(label).apply {
-            foreground = Color.WHITE
-            background = Color(18, 38, 56)
-            border = BorderFactory.createLineBorder(color, 2, true)
-            isFocusPainted = false
-            preferredSize = Dimension(116, 42)
-            addActionListener { action() }
+    val activeButtons = mutableListOf<GlassActionButton>()
+    fun button(label: String, color: Color, action: () -> Unit): GlassActionButton {
+        return GlassActionButton(label, color).apply {
+            activeButtons += this
+            addActionListener {
+                activeButtons.forEach { b -> b.active = false }
+                active = true
+                action()
+            }
         }
     }
 
@@ -366,7 +418,7 @@ private fun showApp() {
     })
     toolbar.add(button("NC EDIT", Color(80, 170, 255)) { status.text = "NC EDIT • FANUC" })
     toolbar.add(button("5X", Color(125, 112, 255)) { status.text = "5X • A/B" })
-    toolbar.add(button("ChatGPT AI 更新", Color(61, 235, 255)) { status.text = "ChatGPT AI 更新 • VERIFIED CHANNEL" })
+    toolbar.add(button("ChatGPT AI 更新 • 一鍵", Color(61, 235, 255)) { status.text = "ChatGPT AI 更新 • 一鍵 • VERIFIED CHANNEL" })
     toolbar.add(button("CLEAR", Color(239, 68, 68)) { cad.clearCad() })
 
     status.border = BorderFactory.createEmptyBorder(8, 12, 8, 12)
