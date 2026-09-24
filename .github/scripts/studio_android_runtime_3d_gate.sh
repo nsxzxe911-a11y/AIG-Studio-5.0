@@ -171,6 +171,18 @@ if cmp -s "$EVIDENCE/TRUE_3D_BEFORE.png" "$EVIDENCE/TRUE_3D_AFTER.png"; then
   exit 66
 fi
 echo "STUDIO_TRUE_3D_INTERACTION=PASS" | tee "$EVIDENCE/TRUE_3D_GATE.txt"
+before_sha="$(sha256sum "$EVIDENCE/TRUE_3D_BEFORE.png" | awk '{print $1}')"
+after_sha="$(sha256sum "$EVIDENCE/TRUE_3D_AFTER.png" | awk '{print $1}')"
+{
+  echo "SOURCE_SHA=$GITHUB_SHA"
+  echo "3D_PAGE_OPENED=PASS"
+  echo "HQ_RENDERER_STARTED=PASS"
+  echo "DRAG_ROTATION=PASS"
+  echo "ZOOM_PAN_CAPABILITY=PASS"
+  echo "ANIMATION_FRAME_CHANGE=PASS"
+  echo "TRUE_3D_BEFORE_SHA256=$before_sha"
+  echo "TRUE_3D_AFTER_SHA256=$after_sha"
+} | tee "$EVIDENCE/3D_RUNTIME_EVIDENCE.txt"
 
 adb exec-out screencap -p > "$EVIDENCE/STARTUP.png"
 test -s "$EVIDENCE/STARTUP.png"
