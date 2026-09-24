@@ -98,10 +98,16 @@ jobs:
             $p = Start-Process -FilePath $app -ArgumentList '--smoke' -WorkingDirectory $dir -PassThru
             if (-not $p.WaitForExit(60000)) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; throw "$label smoke timeout" }
             if ($p.ExitCode -ne 0) { throw "$label smoke failed: $($p.ExitCode)" }
-            foreach ($name in @('desktop_launch.png','desktop_3d.png','desktop_smoke.txt')) {
+            foreach ($name in @('desktop_launch.png','desktop_3d_before.png','desktop_3d.png','desktop_smoke.txt','3D_RUNTIME_EVIDENCE.txt','REMOVED_CELLS.txt','3D_RUNTIME_SHA256.txt')) {
               if (-not (Test-Path (Join-Path $dir $name))) { throw "$label missing $name" }
             }
             Select-String -Path (Join-Path $dir 'desktop_smoke.txt') -Pattern 'STUDIO_WINDOWS_SMOKE=PASS' | Out-Null
+            Select-String -Path (Join-Path $dir '3D_RUNTIME_EVIDENCE.txt') -Pattern '3D_PAGE_OPENED=PASS' | Out-Null
+            Select-String -Path (Join-Path $dir '3D_RUNTIME_EVIDENCE.txt') -Pattern 'ANIMATION_FRAME_CHANGE=PASS' | Out-Null
+            Select-String -Path (Join-Path $dir '3D_RUNTIME_EVIDENCE.txt') -Pattern 'MATERIAL_REMOVAL=PASS' | Out-Null
+            if ((Get-FileHash (Join-Path $dir 'desktop_3d_before.png') -Algorithm SHA256).Hash -eq (Get-FileHash (Join-Path $dir 'desktop_3d.png') -Algorithm SHA256).Hash) {
+              throw "$label 3D before/after frames are identical"
+            }
             $runtime = Get-ChildItem (Split-Path $app -Parent) -Recurse -Filter 'java.dll' -ErrorAction SilentlyContinue | Select-Object -First 1
             if (-not $runtime) { throw 'Bundled Java runtime missing from installed package.' }
             Get-FileHash $app -Algorithm SHA256 | Format-List | Out-File (Join-Path $dir 'INSTALLED_EXE_SHA256.txt')
@@ -143,5 +149,8 @@ jobs:
             AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/dist/windows-self-contained/AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe
             AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/dist/desktop_*.png
             AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/dist/desktop_smoke.txt
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/dist/3D_RUNTIME_EVIDENCE.txt
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/dist/REMOVED_CELLS.txt
+            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/dist/3D_RUNTIME_SHA256.txt
             AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/windows-evidence/**
           if-no-files-found: error
