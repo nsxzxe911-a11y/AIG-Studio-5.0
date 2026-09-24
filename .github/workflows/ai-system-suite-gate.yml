@@ -1,15 +1,6 @@
 name: AIG Studio 5.0 AI SYSTEM SUITE Gate
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/core/src/main/kotlin/com/aigstudio/core/PackageBundle.kt'
-      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/core/src/main/kotlin/com/aigstudio/core/Geometry.kt'
-      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/app/src/main/java/com/aigstudio/app/MainActivity.kt'
-      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt'
-      - '.github/workflows/ai-system-suite-gate.yml'
-
 permissions:
   contents: read
 
