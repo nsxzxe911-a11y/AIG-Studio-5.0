@@ -266,6 +266,7 @@ class MainActivity : Activity() {
         }
     }
     private var temperatureLoopRunning = false
+    private var overheatAlertShown = false
     private val fpsFrameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
             if (!fpsLoopRunning) return
@@ -301,6 +302,19 @@ class MainActivity : Activity() {
                         else -> 0xFF3DEBFF.toInt()
                     }
                 )
+                if (
+                    prefs.getBoolean("overheat_warning_enabled", true) &&
+                    hottest != null && hottest >= highC && !overheatAlertShown
+                ) {
+                    overheatAlertShown = true
+                    Toast.makeText(
+                        this@MainActivity,
+                        "高溫提醒 • CPU/GPU " + String.format("%.1f", hottest) + "°C • 已降低渲染負載",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else if (hottest == null || hottest < warnC) {
+                    overheatAlertShown = false
+                }
             }
             temperatureHandler.postDelayed(this, RuntimeDeviceProfile.temperatureIntervalMs)
         }
