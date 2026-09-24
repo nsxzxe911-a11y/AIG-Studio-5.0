@@ -199,25 +199,32 @@ private class Mesh3DPanel(private val result: Machining3DResult) : JPanel() {
         super.paintComponent(g)
         val g2 = g as Graphics2D
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
         val span = max(max(result.stock.maxX - result.stock.minX, result.stock.maxY - result.stock.minY), result.stock.thickness).coerceAtLeast(1.0)
         val scale = min(width, height) * 0.72 / span * zoom
         val projected = result.mesh.vertices.map { project(it, scale) }
         val stride = max(1, ceil(result.mesh.triangles.size / 5500.0).toInt())
 
-        g2.stroke = BasicStroke(1f)
-        g2.color = Color(61, 220, 255, 145)
-        val path = Path2D.Double()
-        result.mesh.triangles.forEachIndexed { index, t ->
-            if (index % stride != 0) return@forEachIndexed
+        val rotated = result.mesh.vertices.map { rotate(it) }
+        val visible = result.mesh.triangles.mapIndexedNotNull { index, t ->
+            if (index % stride != 0) null else {
+                val depth = (rotated[t.a].z + rotated[t.b].z + rotated[t.c].z) / 3.0
+                Pair(depth, t)
+            }
+        }.sortedBy { it.first }
+        visible.forEachIndexed { index, item ->
+            val t = item.second
             val a = projected[t.a]
             val b = projected[t.b]
             val c = projected[t.c]
-            path.moveTo(a.x.toDouble(), a.y.toDouble())
-            path.lineTo(b.x.toDouble(), b.y.toDouble())
-            path.lineTo(c.x.toDouble(), c.y.toDouble())
-            path.closePath()
+            val poly = Polygon(intArrayOf(a.x,b.x,c.x), intArrayOf(a.y,b.y,c.y), 3)
+            val shade = (70 + index * 150 / max(1, visible.size)).coerceIn(70,220)
+            g2.color = Color(30, shade, 220, 120)
+            g2.fillPolygon(poly)
+            g2.color = Color(61, 220, 255, 165)
+            g2.stroke = BasicStroke(0.8f)
+            g2.drawPolygon(poly)
         }
-        g2.draw(path)
 
         g2.stroke = BasicStroke(2.4f)
         var previous: Move? = null
@@ -239,7 +246,7 @@ private class Mesh3DPanel(private val result: Machining3DResult) : JPanel() {
         g2.color = Color(220, 240, 255)
         g2.font = Font(Font.SANS_SERIF, Font.PLAIN, 14)
         g2.drawString(
-            "TRUE 3D • CAM=" + result.cam.toolpaths.size + " • removed=" + removed + " • 精度 0.001 mm",
+            "HQ 3D RENDER ENGINE • TRUE MESH • CAM=" + result.cam.toolpaths.size + " • removed=" + removed + " • 精度 0.001 mm",
             14, 22
         )
     }
@@ -347,7 +354,7 @@ private fun showApp() {
     toolbar.add(button("3D 加工", Color(236, 72, 153)) {
         runCatching { Machining3DEngine.build(doc.snapshot()) }
             .onSuccess { result ->
-                JDialog(frame, "RGB 真 3D 加工", false).apply {
+                JDialog(frame, "RGB 真 3D 加工 • HQ RENDER", false).apply {
                     layout = BorderLayout()
                     add(Mesh3DPanel(result), BorderLayout.CENTER)
                     setSize(1050, 760)
