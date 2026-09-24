@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT="$ROOT/AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0"
+PROJECT="$ROOT/AIG_Studio"
 ANDROID_OUT="$ROOT/release/android"
 SOURCE_OUT="$ROOT/release/source"
 VERSION="$(awk -F= '$1=="versionName"{print $2}' "$ROOT/release-version.properties")"
@@ -10,6 +10,7 @@ GIT_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 
 test -n "$VERSION"
 test -n "$GIT_SHA"
+test -f "$PROJECT/settings.gradle.kts"
 
 rm -rf "$ANDROID_OUT" "$SOURCE_OUT"
 mkdir -p "$ANDROID_OUT" "$SOURCE_OUT"

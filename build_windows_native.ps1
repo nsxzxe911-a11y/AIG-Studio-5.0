@@ -1,8 +1,9 @@
 $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ProjectRoot = Join-Path $RepoRoot 'AIG_Studio_5_0_UI_branch_update\AIG_Studio_5_0'
+$ProjectRoot = Join-Path $RepoRoot 'AIG_Studio'
 $VersionFile = Join-Path $RepoRoot 'release-version.properties'
 if (-not (Test-Path $VersionFile)) { throw 'release-version.properties is required.' }
+if (-not (Test-Path (Join-Path $ProjectRoot 'settings.gradle.kts'))) { throw 'AIG_Studio project root is missing.' }
 
 $Version = ConvertFrom-StringData (Get-Content $VersionFile -Raw)
 $VersionName = $Version.versionName
