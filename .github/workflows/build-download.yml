@@ -2,6 +2,9 @@ name: AIG Studio direct release validation
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -15,10 +18,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
       - name: Install Android 17 SDK
         shell: bash
-        run: sdkmanager "platform-tools" "platforms;android-37" "build-tools;36.0.0"
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-37" "build-tools;36.0.0"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
@@ -52,10 +58,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
       - name: Install Android 17 SDK
         shell: pwsh
-        run: sdkmanager "platform-tools" "platforms;android-37" "build-tools;36.0.0"
+        run: |
+          $sdkmanager = Get-ChildItem "$env:ANDROID_HOME\cmdline-tools" -Recurse -Filter sdkmanager.bat |
+            Sort-Object FullName | Select-Object -Last 1
+          if (-not $sdkmanager) { throw 'sdkmanager.bat missing' }
+          & $sdkmanager.FullName "platform-tools" "platforms;android-37" "build-tools;36.0.0"
+          if ($LASTEXITCODE -ne 0) { throw 'Android SDK install failed' }
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
