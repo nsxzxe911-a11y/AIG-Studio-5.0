@@ -10,6 +10,7 @@ import android.graphics.Path
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.os.Build
+import android.os.BatteryManager
 import android.view.Window
 import android.text.InputType
 import android.view.Gravity
@@ -237,6 +238,19 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun applyTemperatureDisplayPreference(enabled: Boolean) {
+        if (::temperatureIndicator.isInitialized) {
+            temperatureIndicator.visibility = if (enabled) View.VISIBLE else View.GONE
+        }
+        if (enabled && !temperatureLoopRunning) {
+            temperatureLoopRunning = true
+            temperatureHandler.post(temperatureRunnable)
+        } else if (!enabled && temperatureLoopRunning) {
+            temperatureLoopRunning = false
+            temperatureHandler.removeCallbacks(temperatureRunnable)
+        }
+    }
+
     private fun showEnvironmentSettings() {
         val prefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
         val box = LinearLayout(this).apply {
@@ -284,6 +298,18 @@ class MainActivity : Activity() {
             box.addView(this)
         }
 
+        val temperatureDisplay = CheckBox(this).apply {
+            text = "溫度顯示（電池感測）：BAT °C"
+            isChecked = prefs.getBoolean("temperature_display_enabled", true)
+            box.addView(this)
+        }
+
+        val overheatWarning = CheckBox(this).apply {
+            text = "過熱提醒：43°C 警告 / 47°C 高溫"
+            isChecked = prefs.getBoolean("overheat_warning_enabled", true)
+            box.addView(this)
+        }
+
         val hud = CheckBox(this).apply {
             text = "效能 HUD：FPS / Frame Time / Battery / Thermal"
             isChecked = prefs.getBoolean("hud_enabled", false)
@@ -313,12 +339,17 @@ class MainActivity : Activity() {
                     .putString("render_quality", qualityValues[quality.selectedItemPosition])
                     .putInt("rgb_brightness", rgb.progress)
                     .putBoolean("fps_display_enabled", fpsDisplay.isChecked)
+                    .putBoolean("temperature_display_enabled", temperatureDisplay.isChecked)
+                    .putBoolean("overheat_warning_enabled", overheatWarning.isChecked)
+                    .putInt("temperature_warn_c", 43)
+                    .putInt("temperature_high_c", 47)
                     .putBoolean("hud_enabled", hud.isChecked)
                     .putBoolean("thermal_auto", autoThermal.isChecked)
                     .putBoolean("idle_throttle", idleThrottle.isChecked)
                     .apply()
 
                 applyFpsDisplayPreference(fpsDisplay.isChecked)
+                applyTemperatureDisplayPreference(temperatureDisplay.isChecked)
 
                 if (Build.VERSION.SDK_INT >= 30) {
                     val requested = when (selectedFps) {
