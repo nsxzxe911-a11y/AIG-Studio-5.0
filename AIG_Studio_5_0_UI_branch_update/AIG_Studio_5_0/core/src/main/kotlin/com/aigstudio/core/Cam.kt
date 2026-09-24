@@ -61,12 +61,69 @@ data class Feed(
     override val rapid: Boolean = false
 }
 
+data class ArcFeed(
+    override val to: Vec2,
+    val centerOffset: Vec2,
+    val clockwise: Boolean,
+    val feedMmMin: Double,
+    override val z: Double = -2.0
+) : Move {
+    override val rapid: Boolean = false
+}
+
 object CamEngine {
     fun generate(snapshot: DrawingSnapshot, settings: CamSettings = CamSettings()): List<Toolpath> {
         if (snapshot.entities.isEmpty()) return emptyList()
         val radiusComp = settings.toolDiameter / 2.0
         val side = if (settings.climb) 1.0 else -1.0
         val output = mutableListOf<Toolpath>()
+
+        fun arcPath(center: Vec2, radius: Double, startAngle: Double, sweep: Double) {
+            if (radius <= CNC_RESOLUTION_MM || abs(sweep) <= 1e-12) return
+            val directionSweep = if (settings.climb) sweep else -sweep
+            val actualStart = if (settings.climb) startAngle else startAngle + sweep
+            val start = Vec2(center.x + radius * cos(actualStart), center.y + radius * sin(actualStart))
+            val leadStartAngle = actualStart
+            val tangent = Vec2(-sin(leadStartAngle), cos(leadStartAngle)) * if (directionSweep >= 0.0) 1.0 else -1.0
+            val leadIn = if (settings.leadInMm > 0.0) start - tangent * settings.leadInMm else start
+            val moves = mutableListOf<Move>()
+            moves += Rapid(leadIn, settings.safeZ)
+            moves += Feed(leadIn, settings.feedMmMin, settings.depth)
+            if (leadIn.distanceTo(start) >= CNC_RESOLUTION_MM) moves += Feed(start, settings.feedMmMin, settings.depth)
+
+            val maxSweep = Math.PI
+            val segments = max(1, ceil(abs(directionSweep) / maxSweep).toInt())
+            var current = start
+            for (i in 1..segments) {
+                val a = actualStart + directionSweep * i / segments
+                val next = Vec2(center.x + radius * cos(a), center.y + radius * sin(a))
+                moves += ArcFeed(
+                    to = next,
+                    centerOffset = center - current,
+                    clockwise = directionSweep < 0.0,
+                    feedMmMin = settings.feedMmMin,
+                    z = settings.depth
+                )
+                current = next
+            }
+
+            val endAngle = actualStart + directionSweep
+            val end = Vec2(center.x + radius * cos(endAngle), center.y + radius * sin(endAngle))
+            val endTangent = Vec2(-sin(endAngle), cos(endAngle)) * if (directionSweep >= 0.0) 1.0 else -1.0
+            if (current.distanceTo(end) >= CNC_RESOLUTION_MM) {
+                moves += ArcFeed(
+                    to = end,
+                    centerOffset = center - current,
+                    clockwise = directionSweep < 0.0,
+                    feedMmMin = settings.feedMmMin,
+                    z = settings.depth
+                )
+            }
+            val leadOut = if (settings.leadOutMm > 0.0) end + endTangent * settings.leadOutMm else end
+            if (leadOut.distanceTo(end) >= CNC_RESOLUTION_MM) moves += Feed(leadOut, settings.feedMmMin, settings.depth)
+            moves += Rapid(leadOut, settings.safeZ)
+            output += Toolpath(moves)
+        }
 
         fun pathFrom(points: List<Vec2>) {
             if (points.size < 2) return
@@ -116,29 +173,16 @@ object CamEngine {
                 }
                 is Circle -> {
                     val r = entity.radius + radiusComp
-                    val segments = 72
-                    val points = (0..segments).map { i ->
-                        val a = 2.0 * Math.PI * i / segments
-                        Vec2(entity.center.x + r * cos(a), entity.center.y + r * sin(a))
-                    }
-                    pathFrom(points)
+                    arcPath(entity.center, r, 0.0, 2.0 * Math.PI)
                 }
                 is Arc -> {
                     val r = entity.radius + radiusComp
                     val startA = atan2(entity.start.y - entity.center.y, entity.start.x - entity.center.x)
                     val endA = atan2(entity.end.y - entity.center.y, entity.end.x - entity.center.x)
                     var sweep = endA - startA
-                    if (entity.clockwise) {
-                        while (sweep >= 0.0) sweep -= 2.0 * Math.PI
-                    } else {
-                        while (sweep <= 0.0) sweep += 2.0 * Math.PI
-                    }
-                    val segments = max(8, ceil(abs(sweep) / Math.toRadians(5.0)).toInt())
-                    val points = (0..segments).map { i ->
-                        val a = startA + sweep * i / segments
-                        Vec2(entity.center.x + r * cos(a), entity.center.y + r * sin(a))
-                    }
-                    pathFrom(points)
+                    if (entity.clockwise) while (sweep >= 0.0) sweep -= 2.0 * Math.PI
+                    else while (sweep <= 0.0) sweep += 2.0 * Math.PI
+                    arcPath(entity.center, r, startA, sweep)
                 }
             }
         }
