@@ -4,7 +4,7 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 ## Current main
 
-- Version: **102.0.0**
+- Version: **103.0.0**
 - Runtime project root: repository root
 - Android versionCode: derived automatically from the major version
 - Version source: `release-version.properties`
@@ -41,24 +41,24 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 Version numbers only move forward. Generated build outputs are excluded from version control and do not replace source as the release truth.
 
-## Direct validation evidence for 102.0.0
+## Direct validation evidence for 103.0.0
 
-- Validated source SHA: `183337eff5a5c6e6be12422cf0e66b3280c60477`
-- GitHub Actions run: `36063585669` = **SUCCESS**
+- Validated source SHA: `44f6a4de81f96f7ae38c496cbab2f173c8037142`
+- GitHub Actions run: `36063963124` = **SUCCESS**
 - Android + source job: **SUCCESS**
 - Windows EXE job: **SUCCESS**
 - Android core regression: **ALL TESTS PASSED**
-- Android package: `com.aigstudio.app`, versionName `102.0.0`, versionCode `1020000`, compile/targetSdk 36
+- Android package: `com.aigstudio.app`, versionName `103.0.0`, versionCode `1030000`, compile/targetSdk 36
 - APK verification: zipalign + apksigner + package + targetSdk 36 + SHA256 = **PASS**
-- Android release manifest version: `102.0.0` = workflow version
-- Android release manifest git_sha: `183337eff5a5c6e6be12422cf0e66b3280c60477` = workflow SHA
+- Android release manifest version: `103.0.0` = workflow version
+- Android release manifest git_sha: `44f6a4de81f96f7ae38c496cbab2f173c8037142` = workflow SHA
 - Source release manifest version/git_sha: **MATCH**
-- Android/source artifact: `AIG-Studio-Android-and-Source` (artifact 10835930932, digest `sha256:4f1fde1278730ab39e6c308e69b74f7c6a5d1ea3c9e7da1e0be341e03bbe9677`)
+- Android/source artifact: `AIG-Studio-Android-and-Source` (artifact 10834809409, digest `sha256:d2674d911486e14829463129fd9c65f877c1aceae8851620beaaf8d6aa2b3585`)
 - Windows release wrapper remains fail-closed through explicit subprocess exit-code checks.
 - Windows build + source-bound smoke + PE/MZ + SHA256 verification: **PASS**
 - Windows release manifest version/git_sha: **MATCH**
-- Windows EXE SHA256: `0c085014a9e17d2f3822dd7e0d2c6f9f9efb989bbb577e5a1e31be8697d1d5b2`
-- Windows artifact: `AIG-Studio-Windows-EXE` (artifact 10835187597, digest `sha256:f1fad419669e025aa753194e09a4aeeab7a871a8d43661804b0a4ed464dc4151`)
+- Windows EXE SHA256: `ef63861ae96126c05b70705b105594458d6d7a4e38a5419c7fa25db821bc86d4`
+- Windows artifact: `AIG-Studio-Windows-EXE` (artifact 10835443870, digest `sha256:a5dc3a9542c212779544268b6408a355d405e65c3c4057cc413dc5b763a3bd14`)
 - Artifact and smoke evidence remain bound to the exact workflow SHA/version.
 - The workflow trigger event is not itself treated as PASS; PASS requires the executed build/verify jobs and bound artifacts above.
 - The APK remains a debug/installable artifact; production signing/real-device launch gates are still separate from FINAL.
