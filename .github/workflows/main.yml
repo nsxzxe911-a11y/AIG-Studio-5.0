@@ -54,7 +54,7 @@ jobs:
           grep -Fq 'Executable magic=' "$SECURE"
           grep -Fq 'SecureUpdateManager.autoCheck' "$MAIN"
           grep -Fq 'AppSecurityScanner.scan' "$MAIN"
-          grep -Fq 'ChatGPT AI 一鍵更新' "$MAIN"
+          grep -Fq 'ChatGPT AI 更新 • 一鍵' "$MAIN"
           if grep -Fq 'AI 自動更新' "$MAIN"; then
             echo 'BLOCKED: legacy AI update wording found'
             exit 71
