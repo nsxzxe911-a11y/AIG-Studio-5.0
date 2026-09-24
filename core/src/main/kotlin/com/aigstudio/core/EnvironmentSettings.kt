@@ -282,3 +282,14 @@ object CncPrecisionContract{
         require(RESOLUTION_MM==0.001)
     }
 }
+
+object PlatformRefreshPolicy {
+    const val PHYSICAL_MAX_HZ = 120
+    const val EMULATOR_MAX_HZ = 60
+    const val IDLE_HZ = 30
+
+    fun capForRuntime(requestedHz:Int,isEmulator:Boolean):Int =
+        minOf(requestedHz, if(isEmulator) EMULATOR_MAX_HZ else PHYSICAL_MAX_HZ)
+
+    fun visualLoadScale(isEmulator:Boolean):Double = if(isEmulator) 0.65 else 1.0
+}

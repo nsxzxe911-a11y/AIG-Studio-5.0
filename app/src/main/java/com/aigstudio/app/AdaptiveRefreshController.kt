@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.view.Display
+import com.aigstudio.core.PlatformRefreshPolicy
 
 class AdaptiveRefreshController(
     private val activity: Activity
@@ -81,7 +82,27 @@ class AdaptiveRefreshController(
             }
         }
 
+        requested = PlatformRefreshPolicy.capForRuntime(requested.toInt(), isProbablyEmulator()).toFloat()
         applyRefreshRate(display, requested)
+    }
+
+    private fun isProbablyEmulator(): Boolean {
+        val fingerprint = Build.FINGERPRINT.lowercase()
+        val model = Build.MODEL.lowercase()
+        val manufacturer = Build.MANUFACTURER.lowercase()
+        val brand = Build.BRAND.lowercase()
+        val device = Build.DEVICE.lowercase()
+        val product = Build.PRODUCT.lowercase()
+        val hardware = Build.HARDWARE.lowercase()
+        return fingerprint.contains("generic") ||
+            fingerprint.contains("emulator") ||
+            model.contains("sdk_gphone") ||
+            model.contains("emulator") ||
+            manufacturer.contains("genymotion") ||
+            hardware.contains("goldfish") ||
+            hardware.contains("ranchu") ||
+            (brand.startsWith("generic") && device.startsWith("generic")) ||
+            product.contains("sdk")
     }
 
     private fun applyRefreshRate(display: Display, requestedHz: Float) {

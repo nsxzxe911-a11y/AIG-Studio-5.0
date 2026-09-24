@@ -4,7 +4,7 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 ## Current main
 
-- Version: **42.0.0**
+- Version: **43.0.0**
 - Runtime project root: repository root
 - Android versionCode: derived automatically from the major version
 - Version source: `release-version.properties`
@@ -12,6 +12,9 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 - Android compile/target platform: **API 36 / Android 16**
 - Android platform downgrade gate: `:app:verifyAndroidPlatform`
 - Adaptive refresh: Auto = interaction up to 120 Hz / idle 30 Hz / thermal 60→30 Hz caps
+- Physical Android device path: up to 120 Hz
+- Emulator path: capped at 60 Hz / idle 30 Hz so PC emulation does not distort phone performance expectations
+- Core regression locks physical 120 Hz vs emulator 60 Hz policy
 - Thermal refresh listener is lifecycle-bound and removed on Activity destroy
 - Core regression locks the adaptive 120/30/60/30 policy against regression
 - Android Gradle Plugin: **8.10.1** / Gradle: **8.11.1**

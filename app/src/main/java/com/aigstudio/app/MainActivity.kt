@@ -358,7 +358,7 @@ class MainActivity : Activity() {
             setBackgroundColor(0xFF07111B.toInt())
         }
         val title = TextView(this).apply {
-            text = "AIG CNC • OFFICIAL RGB ORIGINAL • 1080P/2K/3K/4K+ • 120Hz TARGET • 原點 0.000 • 精度 0.001 mm"
+            text = "AIG CNC • OFFICIAL RGB ORIGINAL • PHYSICAL 120Hz / EMULATOR 60Hz CAP • 原點 0.000 • 精度 0.001 mm"
             setTextColor(0xFF3DEBFF.toInt()); textSize = 16f; gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(6), dp(12), dp(6))
         }

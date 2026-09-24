@@ -229,6 +229,10 @@ private fun testEnvironmentSettingsContract() {
     check(auto.effectiveRgbBrightness(80,false)==65)
     CncPrecisionContract.assertRendererIsolation(auto)
     check(CNC_RESOLUTION_MM==0.001)
+    check(PlatformRefreshPolicy.capForRuntime(120,false)==120)
+    check(PlatformRefreshPolicy.capForRuntime(120,true)==60)
+    check(PlatformRefreshPolicy.capForRuntime(60,true)==60)
+    check(PlatformRefreshPolicy.visualLoadScale(true)<1.0)
     println("✓ ENVIRONMENT_SETTINGS_GATE_PASS 120/60/30/Auto RGB thermal battery precision-isolated")
 }
 
