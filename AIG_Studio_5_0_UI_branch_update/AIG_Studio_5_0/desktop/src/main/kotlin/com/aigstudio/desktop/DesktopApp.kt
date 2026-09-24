@@ -18,13 +18,29 @@ private class CadPanel(
 ) : JPanel() {
     var mode = DrawMode.LINE
     private var first: Vec2? = null
-    private val pxPerMm = 5.0
+    private var pxPerMm = 5.0
+    private var panX = 0.0
+    private var panY = 0.0
+    private var dragPoint: Point? = null
 
     init {
         background = Color(8, 18, 30)
         preferredSize = Dimension(1000, 650)
+        addMouseWheelListener {
+            pxPerMm = (pxPerMm * if (it.wheelRotation < 0) 1.12 else 1.0 / 1.12).coerceIn(0.5, 80.0)
+            repaint()
+        }
+        addMouseMotionListener(object : MouseMotionAdapter() {
+            override fun mouseDragged(e: MouseEvent) {
+                if (SwingUtilities.isMiddleMouseButton(e) || SwingUtilities.isRightMouseButton(e)) {
+                    dragPoint?.let { p -> panX += e.x - p.x; panY += e.y - p.y }
+                    dragPoint = e.point; repaint()
+                }
+            }
+        })
         addMouseListener(object : MouseAdapter() {
             override fun mousePressed(e: MouseEvent) {
+                if (SwingUtilities.isMiddleMouseButton(e) || SwingUtilities.isRightMouseButton(e)) { dragPoint = e.point; return }
                 val p = screenToWorld(e.x, e.y)
                 val a = first
                 if (a == null) {
@@ -56,6 +72,7 @@ private class CadPanel(
                     repaint()
                 }
             }
+            override fun mouseReleased(e: MouseEvent) { dragPoint = null }
         })
     }
 
@@ -67,10 +84,10 @@ private class CadPanel(
     }
 
     private fun screenToWorld(x: Int, y: Int) =
-        Vec2((x - width / 2.0) / pxPerMm, (height / 2.0 - y) / pxPerMm)
+        Vec2((x - width / 2.0 - panX) / pxPerMm, (height / 2.0 + panY - y) / pxPerMm)
 
     private fun worldToScreen(p: Vec2) =
-        Point((width / 2.0 + p.x * pxPerMm).roundToInt(), (height / 2.0 - p.y * pxPerMm).roundToInt())
+        Point((width / 2.0 + panX + p.x * pxPerMm).roundToInt(), (height / 2.0 + panY - p.y * pxPerMm).roundToInt())
 
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
