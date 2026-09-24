@@ -287,7 +287,7 @@ class MainActivity : Activity() {
             val battery = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
             val raw = battery?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE) ?: Int.MIN_VALUE
             temperatureIndicator.text = if (raw == Int.MIN_VALUE) "BAT --.-°C" else "BAT " + String.format("%.1f", raw / 10.0) + "°C"
-            temperatureHandler.postDelayed(this, 2000L)
+            temperatureHandler.postDelayed(this, RuntimeDeviceProfile.temperatureIntervalMs)
         }
     }
     private lateinit var systemHudIndicator: TextView
@@ -342,7 +342,7 @@ class MainActivity : Activity() {
         override fun run() {
             if (!systemMonitorRunning) return
             updateSystemMonitorSnapshot()
-            systemMonitorHandler.postDelayed(this, 1000L)
+            systemMonitorHandler.postDelayed(this, RuntimeDeviceProfile.systemMonitorIntervalMs)
         }
     }
     private val colors = listOf(
@@ -358,7 +358,7 @@ class MainActivity : Activity() {
             setBackgroundColor(0xFF07111B.toInt())
         }
         val title = TextView(this).apply {
-            text = "AIG CNC • OFFICIAL RGB ORIGINAL • PHYSICAL 120Hz / EMULATOR 60Hz CAP • 原點 0.000 • 精度 0.001 mm"
+            text = "AIG CNC • OFFICIAL RGB ORIGINAL • ${RuntimeDeviceProfile.verificationLabel} • PHYSICAL 120Hz / EMULATOR 60Hz CAP • 原點 0.000 • 精度 0.001 mm"
             setTextColor(0xFF3DEBFF.toInt()); textSize = 16f; gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(6), dp(12), dp(6))
         }
@@ -401,8 +401,8 @@ class MainActivity : Activity() {
         root.addView(systemHudIndicator, LinearLayout.LayoutParams(-1, -2))
         val envPrefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
         applyFpsDisplayPreference(envPrefs.getBoolean("fps_display_enabled", false))
-        applyTemperatureDisplayPreference(envPrefs.getBoolean("temperature_display_enabled", true))
-        applySystemHudPreference(envPrefs.getBoolean("system_hud_enabled", true))
+        applyTemperatureDisplayPreference(envPrefs.getBoolean("temperature_display_enabled", RuntimeDeviceProfile.defaultTemperatureDisplayEnabled))
+        applySystemHudPreference(envPrefs.getBoolean("system_hud_enabled", RuntimeDeviceProfile.defaultSystemHudEnabled))
 
 
         setContentView(root)
@@ -461,7 +461,7 @@ class MainActivity : Activity() {
         box.addView(TextView(this).apply {
             setTextColor(0xFFE1EFFF.toInt())
             textSize = 13f
-            text = "AIG CNC CURRENT UPGRADE\nAI VOICE 2 • CAM 語音設定 • LIVE HISTORY • FPS/Frame Time • BAT/Thermal • RAM • 120Hz • 1080P/2K/3K/4K+ • RGB TACTILE • Renderer Governor • ChatGPT AI 更新"
+            text = "AIG CNC CURRENT UPGRADE • ${RuntimeDeviceProfile.verificationLabel}\nAI VOICE 2 • CAM 語音設定 • LIVE HISTORY • FPS/Frame Time • BAT/Thermal • RAM • 120Hz • 1080P/2K/3K/4K+ • RGB TACTILE • Renderer Governor • ChatGPT AI 更新"
             setPadding(dp(4),dp(4),dp(4),dp(10))
         })
         action("AI VOICE") { startVoiceAssistant() }
@@ -1450,7 +1450,7 @@ private fun showEnvironmentSettings() {
 
         val systemHud = CheckBox(this).apply {
             text = "系統監控 HUD：精簡列 / 點擊展開"
-            isChecked = prefs.getBoolean("system_hud_enabled", true)
+            isChecked = prefs.getBoolean("system_hud_enabled", RuntimeDeviceProfile.defaultSystemHudEnabled)
             box.addView(this)
         }
 
@@ -1462,7 +1462,7 @@ private fun showEnvironmentSettings() {
 
         val temperatureDisplay = CheckBox(this).apply {
             text = "溫度顯示（電池感測）：BAT °C"
-            isChecked = prefs.getBoolean("temperature_display_enabled", true)
+            isChecked = prefs.getBoolean("temperature_display_enabled", RuntimeDeviceProfile.defaultTemperatureDisplayEnabled)
             box.addView(this)
         }
 
