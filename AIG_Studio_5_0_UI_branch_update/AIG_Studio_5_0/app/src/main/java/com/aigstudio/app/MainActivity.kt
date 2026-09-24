@@ -47,7 +47,7 @@ import android.widget.Toast
 import com.aigstudio.core.*
 import kotlin.math.*
 
-enum class Tool { LINE, RECT, CIRCLE, DELETE, CHAMFER, FILLET, PAN }
+enum class Tool { LINE, RECT, CIRCLE, DELETE, CHAMFER, FILLET, PAN, MEASURE }
 
 
 data class StudioDisplayProfile(
@@ -586,11 +586,15 @@ class MainActivity : Activity() {
         addToolToBranch("線", Tool.LINE, 0)
         addToolToBranch("矩形", Tool.RECT, 1)
         addToolToBranch("圓", Tool.CIRCLE, 2)
+        addActionTo(branchFlow, "SNAP", 3) { cad.toggleSnap() }
+        addToolToBranch("尺寸", Tool.MEASURE, 5)
     }
     private fun showModifyBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addToolToBranch("刪除", Tool.DELETE, 4)
         addToolToBranch("移動", Tool.PAN, 0)
+        addActionTo(branchFlow, "GRID", 2) { cad.toggleGrid() }
+        addActionTo(branchFlow, "GEOMETRY", 1) { cad.toggleGeometry() }
     }
     private fun showCornerBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
@@ -1286,7 +1290,7 @@ private fun showEnvironmentSettings() {
     }
     private fun toolColor(tool: Tool): Int = when (tool) {
         Tool.LINE, Tool.PAN -> colors[0]; Tool.RECT, Tool.FILLET -> colors[1]
-        Tool.CIRCLE, Tool.CHAMFER -> colors[2]; Tool.DELETE -> colors[4]
+        Tool.CIRCLE, Tool.CHAMFER -> colors[2]; Tool.DELETE -> colors[4]; Tool.MEASURE -> colors[5]
     }
     private fun addToolToBranch(label: String, tool: Tool, colorIndex: Int, onClick: (() -> Unit)? = null) {
         val b = toolButton("└─ $label", colors[colorIndex % colors.size])
@@ -1382,6 +1386,9 @@ class CadView(context: Context) : View(context) {
     private var lastWorld = Vec2(0.0, 0.0)
     var chamferValue = 5.0
     var filletValue = 5.0
+    private var snapEnabled = true
+    private var gridVisible = true
+    private var geometryVisible = true
 
     private val scaleDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
@@ -1407,6 +1414,9 @@ class CadView(context: Context) : View(context) {
     fun setTool(t: Tool) { tool = t; firstPoint = null; selectedLines.clear(); invalidate() }
     fun undo() { history.undo(); firstPoint = null; selectedLines.clear(); invalidate() }
     fun redo() { history.redo(); firstPoint = null; selectedLines.clear(); invalidate() }
+    fun toggleSnap() { snapEnabled = !snapEnabled; Toast.makeText(context, "SNAP " + if (snapEnabled) "ON" else "OFF", Toast.LENGTH_SHORT).show(); invalidate() }
+    fun toggleGrid() { gridVisible = !gridVisible; invalidate() }
+    fun toggleGeometry() { geometryVisible = !geometryVisible; invalidate() }
     fun aiInspect() {
         val result = AiCadInspector.inspect(doc.snapshot())
         val message = if (result.issues.isEmpty()) "未發現明顯幾何異常。CAM 前仍需人工確認刀具、座標與 Z 高度。"
@@ -1425,8 +1435,8 @@ class CadView(context: Context) : View(context) {
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        drawGrid(canvas)
-        drawEntities(canvas)
+        if (gridVisible) drawGrid(canvas)
+        if (geometryVisible) drawEntities(canvas)
         firstPoint?.let { val p = transform.worldToScreen(it); canvas.drawCircle(p.x.toFloat(), p.y.toFloat(), 8f, accentPaint) }
         canvas.drawText("精度 0.001 mm • 顯示 0.000 • ${StudioDisplayPolicy.profile(this).tier} • ${tool.name}   X ${DisplayFormat.mm(lastWorld.x)}  Y ${DisplayFormat.mm(lastWorld.y)}   C${DisplayFormat.mm(chamferValue)} R${DisplayFormat.mm(filletValue)}", 16f, 26f, textPaint)
     }
@@ -1546,7 +1556,8 @@ class CadView(context: Context) : View(context) {
     override fun onTouchEvent(event: MotionEvent): Boolean {
         scaleDetector.onTouchEvent(event)
         if (event.pointerCount > 1) return true
-        lastWorld = transform.screenToWorld(Vec2(event.x.toDouble(), event.y.toDouble()))
+        val rawWorld = transform.screenToWorld(Vec2(event.x.toDouble(), event.y.toDouble()))
+        lastWorld = if (snapEnabled) snapPoint(rawWorld) else rawWorld
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 lastX = event.x; lastY = event.y
@@ -1576,6 +1587,7 @@ class CadView(context: Context) : View(context) {
             Tool.CIRCLE -> twoPoint(p) { a,b -> a.distanceTo(b).takeIf { it >= CNC_RESOLUTION_MM }?.let { history.run(AddEntitiesCommand(listOf(Circle(center=a,radius=it)))) } }
             Tool.DELETE -> nearest(p)?.let { history.run(DeleteEntityCommand(it.id)) }
             Tool.CHAMFER, Tool.FILLET -> selectTwoLines(p)
+            Tool.MEASURE -> showMeasurement(p)
             Tool.PAN -> Unit
         }
     }
@@ -1583,6 +1595,44 @@ class CadView(context: Context) : View(context) {
     private fun twoPoint(p: Vec2, done: (Vec2,Vec2)->Unit) {
         val a = firstPoint
         if (a == null) firstPoint = p else { done(a,p); firstPoint = null }
+    }
+
+    private fun snapPoint(p: Vec2): Vec2 {
+        val tolerance = 18.0 / transform.pixelsPerUnit
+        val candidates = mutableListOf<Vec2>()
+        doc.all().forEach { e ->
+            when (e) {
+                is Line -> {
+                    candidates += e.a
+                    candidates += e.b
+                    candidates += Vec2((e.a.x + e.b.x) / 2.0, (e.a.y + e.b.y) / 2.0)
+                }
+                is Circle -> candidates += e.center
+                is Arc -> {
+                    candidates += e.center
+                    candidates += e.start
+                    candidates += e.end
+                }
+            }
+        }
+        return candidates.minByOrNull { it.distanceTo(p) }?.takeIf { it.distanceTo(p) <= tolerance } ?: p
+    }
+
+    private fun showMeasurement(p: Vec2) {
+        val e = nearest(p) ?: run {
+            Toast.makeText(context, "尺寸：未選到幾何", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val text = when (e) {
+            is Line -> "LINE 長度 = " + DisplayFormat.mm(e.a.distanceTo(e.b)) + " mm"
+            is Circle -> "CIRCLE Ø = " + DisplayFormat.mm(e.radius * 2.0) + " mm\nR = " + DisplayFormat.mm(e.radius) + " mm"
+            is Arc -> "ARC R = " + DisplayFormat.mm(e.radius) + " mm"
+        }
+        AlertDialog.Builder(context)
+            .setTitle("尺寸 • 0.001 mm")
+            .setMessage(text)
+            .setPositiveButton("確定", null)
+            .show()
     }
 
     private fun nearest(p: Vec2): Entity? {
