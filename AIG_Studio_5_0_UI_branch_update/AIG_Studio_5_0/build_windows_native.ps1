@@ -1,5 +1,11 @@
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$VersionFile = Join-Path $Root 'release-version.properties'
+if (-not (Test-Path $VersionFile)) { throw 'release-version.properties is required.' }
+$Version = ConvertFrom-StringData (Get-Content $VersionFile -Raw)
+$VersionName = $Version.versionName
+if (-not $VersionName) { throw 'Release version metadata is incomplete.' }
+
 $CoreDir = Join-Path $Root 'core\src\main\kotlin\com\aigstudio\core'
 $DesktopDir = Join-Path $Root 'desktop\src\main\kotlin\com\aigstudio\desktop'
 $Dist = Join-Path $Root 'dist'
@@ -38,7 +44,7 @@ try {
 if (-not (Get-Command jpackage -ErrorAction SilentlyContinue)) { throw 'JDK 17+ jpackage is required.' }
 if (Test-Path $Out) { Remove-Item -Recurse -Force $Out }
 New-Item -ItemType Directory -Force $Out | Out-Null
-& jpackage --type exe --name $Product --dest $Out --input $Dist --main-jar (Split-Path -Leaf $Jar) --main-class com.aigstudio.desktop.DesktopAppKt --app-version 15.0.0 --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
+& jpackage --type exe --name $Product --dest $Out --input $Dist --main-jar (Split-Path -Leaf $Jar) --main-class com.aigstudio.desktop.DesktopAppKt --app-version $VersionName --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
 if ($LASTEXITCODE -ne 0) { throw 'Studio jpackage EXE build failed.' }
 $Installer = Get-ChildItem $Out -Filter '*.exe' | Select-Object -First 1
 if (-not $Installer) { throw 'Studio jpackage installer missing.' }
@@ -47,4 +53,5 @@ if ($Installer.FullName -ne $FinalInstaller) { Move-Item $Installer.FullName $Fi
 $Bytes = [System.IO.File]::ReadAllBytes($FinalInstaller)
 if ($Bytes.Length -lt 2 -or $Bytes[0] -ne 0x4D -or $Bytes[1] -ne 0x5A) { throw 'Studio installer is not valid PE/MZ.' }
 Get-FileHash $FinalInstaller -Algorithm SHA256
+Write-Host ('AIG_STUDIO_VERSION=' + $VersionName)
 Write-Host 'STUDIO_WINDOWS_SELF_CONTAINED_BUILD=PASS'
