@@ -39,6 +39,11 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "targetSdkVersion:'36'"
           (cd release/android && sha256sum -c SHA256SUMS.txt)
           (cd release/source && sha256sum -c SHA256SUMS.txt)
+          VERSION="$(awk -F= '$1=="versionName"{print $2}' release-version.properties)"
+          grep -Fx "version=$VERSION" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "git_sha=$GITHUB_SHA" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "version=$VERSION" release/source/RELEASE_MANIFEST.txt
+          grep -Fx "git_sha=$GITHUB_SHA" release/source/RELEASE_MANIFEST.txt
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Android-and-Source
@@ -71,6 +76,10 @@ jobs:
           $actual = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
           $expected = ((Get-Content 'release\windows\SHA256SUMS.txt' -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
           if ($actual -ne $expected) { throw 'SHA256 mismatch' }
+          $versionName = (ConvertFrom-StringData (Get-Content 'release-version.properties' -Raw)).versionName
+          $manifest = Get-Content 'release\windows\RELEASE_MANIFEST.txt'
+          if ($manifest -notcontains ("version=" + $versionName)) { throw 'Manifest version mismatch' }
+          if ($manifest -notcontains ("git_sha=" + $env:GITHUB_SHA)) { throw 'Manifest Git SHA mismatch' }
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Windows-EXE
