@@ -59,10 +59,15 @@ object FanucNc {
         out.appendLine()
         cam.toolpaths.forEach { path ->
             path.moves.forEach { move ->
-                val g = if (move.rapid) "G0" else "G1"
-                out.append(g).append(" X").append(fmt(move.to.x)).append(" Y").append(fmt(move.to.y)).append(" Z").append(fmt(move.z))
-                if (!move.rapid) out.append(" F").append(fmt((move as Feed).feedMmMin))
-                out.appendLine()
+                when (move) {
+                    is Rapid -> out.append("G0 X").append(fmt(move.to.x)).append(" Y").append(fmt(move.to.y)).append(" Z").append(fmt(move.z)).appendLine()
+                    is Feed -> out.append("G1 X").append(fmt(move.to.x)).append(" Y").append(fmt(move.to.y)).append(" Z").append(fmt(move.z))
+                        .append(" F").append(fmt(move.feedMmMin)).appendLine()
+                    is ArcFeed -> out.append(if (move.clockwise) "G2" else "G3")
+                        .append(" X").append(fmt(move.to.x)).append(" Y").append(fmt(move.to.y)).append(" Z").append(fmt(move.z))
+                        .append(" I").append(fmt(move.centerOffset.x)).append(" J").append(fmt(move.centerOffset.y))
+                        .append(" F").append(fmt(move.feedMmMin)).appendLine()
+                }
             }
         }
         out.appendLine("G0 Z" + fmt(max(s.safeZ, 30.0)))
