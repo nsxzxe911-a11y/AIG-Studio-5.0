@@ -2,6 +2,12 @@ package com.aigstudio.app
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.os.SystemClock
+import android.os.Process
+import android.os.PowerManager
+import android.content.IntentFilter
+import android.content.Intent
+import android.app.ActivityManager
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -41,6 +47,92 @@ class MainActivity : Activity() {
     private val categoryButtons = mutableMapOf<String, Button>()
     private var activeCategory: String? = null
     private var camSettings = CamSettings()
+    private lateinit var fpsIndicator: TextView
+    private lateinit var temperatureIndicator: TextView
+    private var fpsLoopRunning = false
+    private var fpsLastNs = 0L
+    private var fpsFrames = 0
+    private val temperatureHandler = Handler(Looper.getMainLooper())
+    private var temperatureLoopRunning = false
+    private val fpsFrameCallback = object : Choreographer.FrameCallback {
+        override fun doFrame(frameTimeNanos: Long) {
+            if (!fpsLoopRunning) return
+            if (fpsLastNs == 0L) fpsLastNs = frameTimeNanos
+            fpsFrames++
+            val elapsed = frameTimeNanos - fpsLastNs
+            if (elapsed >= 500_000_000L) {
+                val measured = fpsFrames * 1_000_000_000.0 / elapsed.toDouble()
+                fpsIndicator.text = "FPS " + String.format("%.1f", measured)
+                fpsFrames = 0
+                fpsLastNs = frameTimeNanos
+            }
+            Choreographer.getInstance().postFrameCallback(this)
+        }
+    }
+    private val temperatureRunnable = object : Runnable {
+        override fun run() {
+            if (!temperatureLoopRunning) return
+            val battery = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            val raw = battery?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE) ?: Int.MIN_VALUE
+            temperatureIndicator.text = if (raw == Int.MIN_VALUE) "BAT --.-°C" else "BAT " + String.format("%.1f", raw / 10.0) + "°C"
+            temperatureHandler.postDelayed(this, 2000L)
+        }
+    }
+    private lateinit var systemHudIndicator: TextView
+    private var systemMonitorRunning = false
+    private var systemHudExpanded = false
+    private var monitorFps = 0.0
+    private var monitorFrameTimeMs = 0.0
+    private var monitorDroppedFrames = 0L
+    private var monitorFrames = 0
+    private var monitorLastFrameNs = 0L
+    private var monitorWindowStartNs = 0L
+    private var monitorMaxTempC = Double.NEGATIVE_INFINITY
+    private var monitorMinFps = Double.POSITIVE_INFINITY
+    private var monitorFpsSum = 0.0
+    private var monitorFpsSamples = 0L
+    private var monitorMaxRamMb = 0.0
+    private var monitorStartMs = 0L
+    private var burnInActive = false
+    private var burnInStartMs = 0L
+    private var lastCpuMs = 0L
+    private var lastCpuWallMs = 0L
+    private var monitorSnapshot = "MONITOR --"
+    private val systemMonitorHandler = Handler(Looper.getMainLooper())
+    private val systemFrameCallback = object : Choreographer.FrameCallback {
+        override fun doFrame(frameTimeNanos: Long) {
+            if (!systemMonitorRunning) return
+            if (monitorLastFrameNs != 0L) {
+                monitorFrameTimeMs = (frameTimeNanos - monitorLastFrameNs) / 1_000_000.0
+                val refresh = if (Build.VERSION.SDK_INT >= 30) display?.refreshRate?.toDouble() ?: 60.0 else 60.0
+                val budget = 1000.0 / refresh.coerceAtLeast(30.0)
+                if (monitorFrameTimeMs > budget * 1.5) {
+                    monitorDroppedFrames += ((monitorFrameTimeMs / budget).toInt() - 1).coerceAtLeast(1)
+                }
+            }
+            monitorLastFrameNs = frameTimeNanos
+            if (monitorWindowStartNs == 0L) monitorWindowStartNs = frameTimeNanos
+            monitorFrames++
+            val elapsedNs = frameTimeNanos - monitorWindowStartNs
+            if (elapsedNs >= 500_000_000L) {
+                monitorFps = monitorFrames * 1_000_000_000.0 / elapsedNs.toDouble()
+                monitorMinFps = minOf(monitorMinFps, monitorFps)
+                monitorFpsSum += monitorFps
+                monitorFpsSamples++
+                monitorFrames = 0
+                monitorWindowStartNs = frameTimeNanos
+            }
+            if (burnInActive) cad.postInvalidateOnAnimation()
+            Choreographer.getInstance().postFrameCallback(this)
+        }
+    }
+    private val systemMonitorRunnable = object : Runnable {
+        override fun run() {
+            if (!systemMonitorRunning) return
+            updateSystemMonitorSnapshot()
+            systemMonitorHandler.postDelayed(this, 1000L)
+        }
+    }
     private val colors = listOf(
         0xFF00BCD4.toInt(), 0xFF8B5CF6.toInt(), 0xFFF59E0B.toInt(),
         0xFF22C55E.toInt(), 0xFFEF4444.toInt(), 0xFF3B82F6.toInt()
@@ -84,6 +176,27 @@ class MainActivity : Activity() {
         addActionTo(categoryFlow, "ChatGPT AI 更新 • 一鍵", 1) { runSecureUpdateCheck() }
         addActionTo(categoryFlow, "↶", 3) { cad.undo() }
         addActionTo(categoryFlow, "↷", 5) { cad.redo() }
+        fpsIndicator = TextView(this).apply {
+            setTextColor(0xFF3DEBFF.toInt()); textSize = 11f; text = "FPS --"
+            setPadding(dp(12), dp(2), dp(12), dp(2)); visibility = View.GONE
+        }
+        root.addView(fpsIndicator, LinearLayout.LayoutParams(-1, -2))
+        temperatureIndicator = TextView(this).apply {
+            setTextColor(0xFF3DEBFF.toInt()); textSize = 11f; text = "BAT --.-°C"
+            setPadding(dp(12), dp(2), dp(12), dp(2)); visibility = View.GONE
+        }
+        root.addView(temperatureIndicator, LinearLayout.LayoutParams(-1, -2))
+        systemHudIndicator = TextView(this).apply {
+            setTextColor(0xFF63FF9D.toInt()); textSize = 11f
+            text = "SYSTEM HUD --"; setPadding(dp(12), dp(3), dp(12), dp(5)); visibility = View.GONE
+            setOnClickListener { showExpandedSystemHud() }
+        }
+        root.addView(systemHudIndicator, LinearLayout.LayoutParams(-1, -2))
+        val envPrefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
+        applyFpsDisplayPreference(envPrefs.getBoolean("fps_display_enabled", false))
+        applyTemperatureDisplayPreference(envPrefs.getBoolean("temperature_display_enabled", true))
+        applySystemHudPreference(envPrefs.getBoolean("system_hud_enabled", true))
+
 
         setContentView(root)
         openCategory("繪圖") { showDrawingBranch() }
@@ -251,7 +364,160 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showEnvironmentSettings() {
+    
+    private fun applySystemHudPreference(enabled: Boolean) {
+        if (::systemHudIndicator.isInitialized) {
+            systemHudIndicator.visibility = if (enabled) View.VISIBLE else View.GONE
+        }
+        if (enabled && !systemMonitorRunning) {
+            systemMonitorRunning = true
+            monitorStartMs = SystemClock.elapsedRealtime()
+            monitorWindowStartNs = 0L
+            monitorLastFrameNs = 0L
+            lastCpuMs = Process.getElapsedCpuTime()
+            lastCpuWallMs = SystemClock.elapsedRealtime()
+            Choreographer.getInstance().postFrameCallback(systemFrameCallback)
+            systemMonitorHandler.post(systemMonitorRunnable)
+        } else if (!enabled && systemMonitorRunning && !burnInActive) {
+            systemMonitorRunning = false
+            Choreographer.getInstance().removeFrameCallback(systemFrameCallback)
+            systemMonitorHandler.removeCallbacks(systemMonitorRunnable)
+        }
+    }
+
+    private fun thermalStatusLabel(): String {
+        if (Build.VERSION.SDK_INT < 29) return "N/A"
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        return when (pm.currentThermalStatus) {
+            PowerManager.THERMAL_STATUS_NONE -> "NORMAL"
+            PowerManager.THERMAL_STATUS_LIGHT -> "LIGHT"
+            PowerManager.THERMAL_STATUS_MODERATE -> "MODERATE"
+            PowerManager.THERMAL_STATUS_SEVERE -> "SEVERE"
+            PowerManager.THERMAL_STATUS_CRITICAL -> "CRITICAL"
+            PowerManager.THERMAL_STATUS_EMERGENCY -> "EMERGENCY"
+            PowerManager.THERMAL_STATUS_SHUTDOWN -> "SHUTDOWN"
+            else -> "UNKNOWN"
+        }
+    }
+
+    private fun updateSystemMonitorSnapshot() {
+        val battery = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val rawTemp = battery?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE) ?: Int.MIN_VALUE
+        val tempC = if (rawTemp == Int.MIN_VALUE) Double.NaN else rawTemp / 10.0
+        val level = battery?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = battery?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
+        val batteryPct = if (level >= 0 && scale > 0) level * 100 / scale else -1
+        val batteryStatus = battery?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+        val charging = batteryStatus == BatteryManager.BATTERY_STATUS_CHARGING || batteryStatus == BatteryManager.BATTERY_STATUS_FULL
+
+        val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val mi = ActivityManager.MemoryInfo()
+        am.getMemoryInfo(mi)
+        val appRamMb = android.os.Debug.getPss().toDouble() / 1024.0
+        val availRamMb = mi.availMem.toDouble() / (1024.0 * 1024.0)
+        monitorMaxRamMb = maxOf(monitorMaxRamMb, appRamMb)
+
+        val nowWall = SystemClock.elapsedRealtime()
+        val nowCpu = Process.getElapsedCpuTime()
+        val wallDelta = (nowWall - lastCpuWallMs).coerceAtLeast(1L)
+        val cpuLoad = ((nowCpu - lastCpuMs).toDouble() / wallDelta.toDouble() * 100.0).coerceIn(0.0, 999.0)
+        lastCpuMs = nowCpu
+        lastCpuWallMs = nowWall
+
+        if (!tempC.isNaN()) monitorMaxTempC = maxOf(monitorMaxTempC, tempC)
+        val thermal = thermalStatusLabel()
+        val ramPressure = when {
+            mi.lowMemory -> "HIGH"
+            availRamMb < 512.0 -> "HIGH"
+            availRamMb < 1024.0 -> "MODERATE"
+            else -> "NORMAL"
+        }
+        val perfState = when {
+            thermal in setOf("CRITICAL","EMERGENCY","SHUTDOWN") || ramPressure == "HIGH" -> "RED"
+            thermal in setOf("MODERATE","SEVERE") || (!tempC.isNaN() && tempC >= 43.0) || monitorFrameTimeMs > 20.0 -> "YELLOW"
+            else -> "GREEN"
+        }
+        val elapsedMs = if (burnInActive) nowWall - burnInStartMs else nowWall - monitorStartMs
+        val hh = elapsedMs / 3_600_000
+        val mm = (elapsedMs / 60_000) % 60
+        val ss = (elapsedMs / 1000) % 60
+        val avgFps = if (monitorFpsSamples > 0) monitorFpsSum / monitorFpsSamples else monitorFps
+        val minFps = if (monitorMinFps.isFinite()) monitorMinFps else monitorFps
+        val tempText = if (tempC.isNaN()) "--.-" else String.format("%.1f", tempC)
+        monitorSnapshot =
+            "FPS " + String.format("%.1f", monitorFps) +
+            " | " + String.format("%.1f", monitorFrameTimeMs) + "ms" +
+            " | BAT " + tempText + "°C " + (if (batteryPct >= 0) "$batteryPct%" else "--%") + (if (charging) "⚡" else "") +
+            " | RAM " + String.format("%.0f", appRamMb) + "MB" +
+            " | Thermal " + thermal +
+            "\nDropped " + monitorDroppedFrames +
+            " | App CPU " + String.format("%.0f", cpuLoad) + "%" +
+            " | Mem " + ramPressure +
+            " | State " + perfState +
+            (if (burnInActive) " | BURN " + String.format("%02d:%02d:%02d", hh, mm, ss) else "")
+        if (::systemHudIndicator.isInitialized) {
+            systemHudIndicator.text = monitorSnapshot.substringBefore("\n")
+            systemHudIndicator.setTextColor(when(perfState) {
+                "RED" -> Color.rgb(255,82,82)
+                "YELLOW" -> Color.rgb(255,193,7)
+                else -> Color.rgb(99,255,157)
+            })
+        }
+
+        if (burnInActive && (thermal in setOf("CRITICAL","EMERGENCY","SHUTDOWN") || (!tempC.isNaN() && tempC >= 47.0))) {
+            burnInActive = false
+            Toast.makeText(this, "Renderer 燒機已因高溫自動停止 • BAT " + tempText + "°C • Thermal " + thermal, Toast.LENGTH_LONG).show()
+        }
+
+        // Keep expanded statistics available without changing CNC safety state.
+        if (systemHudExpanded) {
+            systemHudExpanded = false
+        }
+    }
+
+    private fun showExpandedSystemHud() {
+        systemHudExpanded = true
+        val now = SystemClock.elapsedRealtime()
+        val elapsed = if (burnInActive) now - burnInStartMs else now - monitorStartMs
+        val avgFps = if (monitorFpsSamples > 0) monitorFpsSum / monitorFpsSamples else monitorFps
+        val minFps = if (monitorMinFps.isFinite()) monitorMinFps else monitorFps
+        val maxTemp = if (monitorMaxTempC.isFinite()) String.format("%.1f°C", monitorMaxTempC) else "--"
+        val body = buildString {
+            appendLine(monitorSnapshot)
+            appendLine("平均 FPS: " + String.format("%.1f", avgFps))
+            appendLine("最低 FPS: " + String.format("%.1f", minFps))
+            appendLine("最高 BAT 溫度: " + maxTemp)
+            appendLine("最高 App RAM: " + String.format("%.0f MB", monitorMaxRamMb))
+            appendLine("Dropped Frames: " + monitorDroppedFrames)
+            appendLine("Renderer Governor: UI/VISUAL ONLY")
+            appendLine("CNC Safety Gate: SEPARATE / UNCHANGED")
+            append("0.001 mm precision: LOCKED")
+        }
+        AlertDialog.Builder(this)
+            .setTitle(if (burnInActive) "系統監控 HUD • Renderer 燒機中" else "系統監控 HUD")
+            .setMessage(body)
+            .setPositiveButton(if (burnInActive) "停止 Renderer 燒機" else "開始 Renderer 燒機") { _, _ ->
+                if (burnInActive) {
+                    burnInActive = false
+                    Toast.makeText(this, "Renderer 燒機停止", Toast.LENGTH_SHORT).show()
+                } else {
+                    burnInActive = true
+                    burnInStartMs = SystemClock.elapsedRealtime()
+                    monitorDroppedFrames = 0L
+                    monitorMaxTempC = Double.NEGATIVE_INFINITY
+                    monitorMinFps = Double.POSITIVE_INFINITY
+                    monitorFpsSum = 0.0
+                    monitorFpsSamples = 0L
+                    monitorMaxRamMb = 0.0
+                    if (!systemMonitorRunning) applySystemHudPreference(true)
+                    Toast.makeText(this, "Renderer 燒機開始 • 高溫將自動停止", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("關閉", null)
+            .show()
+    }
+
+private fun showEnvironmentSettings() {
         val prefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -289,6 +555,12 @@ class MainActivity : Activity() {
             max = 100
             progress = prefs.getInt("rgb_brightness", 65)
             box.addView(TextView(this@MainActivity).apply { text = "RGB 亮度 0–100%" })
+            box.addView(this)
+        }
+
+        val systemHud = CheckBox(this).apply {
+            text = "系統監控 HUD：精簡列 / 點擊展開"
+            isChecked = prefs.getBoolean("system_hud_enabled", true)
             box.addView(this)
         }
 
@@ -338,6 +610,7 @@ class MainActivity : Activity() {
                     .putString("power_mode", powerValues[power.selectedItemPosition])
                     .putString("render_quality", qualityValues[quality.selectedItemPosition])
                     .putInt("rgb_brightness", rgb.progress)
+                    .putBoolean("system_hud_enabled", systemHud.isChecked)
                     .putBoolean("fps_display_enabled", fpsDisplay.isChecked)
                     .putBoolean("temperature_display_enabled", temperatureDisplay.isChecked)
                     .putBoolean("overheat_warning_enabled", overheatWarning.isChecked)
@@ -348,6 +621,7 @@ class MainActivity : Activity() {
                     .putBoolean("idle_throttle", idleThrottle.isChecked)
                     .apply()
 
+                applySystemHudPreference(systemHud.isChecked)
                 applyFpsDisplayPreference(fpsDisplay.isChecked)
                 applyTemperatureDisplayPreference(temperatureDisplay.isChecked)
 
