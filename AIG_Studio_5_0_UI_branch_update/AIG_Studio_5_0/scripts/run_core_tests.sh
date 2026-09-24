@@ -10,6 +10,7 @@ kotlinc \
   "$ROOT/core/src/main/kotlin/com/aigstudio/core/Machining3D.kt" \
   "$ROOT/core/src/main/kotlin/com/aigstudio/core/AiAssist.kt" \
   "$ROOT/core/src/main/kotlin/com/aigstudio/core/PackageBundle.kt" \
+  "$ROOT/core/src/main/kotlin/com/aigstudio/core/EnvironmentSettings.kt" \
   "$ROOT/core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt" \
   -include-runtime -d "$ROOT/build/core-tests.jar"
 java -jar "$ROOT/build/core-tests.jar"
