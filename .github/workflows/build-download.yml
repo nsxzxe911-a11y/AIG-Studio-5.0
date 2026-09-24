@@ -5,9 +5,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/**'
-      - '.github/workflows/build-download.yml'
 
 concurrency:
   group: aig-studio-main-build
@@ -17,12 +14,9 @@ permissions:
   contents: read
 
 jobs:
-  android-apk:
+  android-and-source:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    defaults:
-      run:
-        working-directory: AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -33,21 +27,31 @@ jobs:
         with:
           gradle-version: '8.10.2'
       - name: Build installable APK
+        working-directory: AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0
         run: gradle --no-daemon clean :app:assembleDebug
-      - name: Prepare APK download
+      - name: Prepare APK and source package
         shell: bash
         run: |
           set -euo pipefail
-          APK="app/build/outputs/apk/debug/app-debug.apk"
+          APK="AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK"
           cp "$APK" AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
           sha256sum AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk > AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk.sha256
+          git archive --format=zip --output=AIG_Studio_FULL_PROJECT_SOURCE.zip HEAD
+          sha256sum AIG_Studio_FULL_PROJECT_SOURCE.zip > AIG_Studio_FULL_PROJECT_SOURCE.zip.sha256
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Android-APK
           path: |
-            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
-            AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk.sha256
+            AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
+            AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk.sha256
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AIG-Studio-Full-Project-Source
+          path: |
+            AIG_Studio_FULL_PROJECT_SOURCE.zip
+            AIG_Studio_FULL_PROJECT_SOURCE.zip.sha256
           if-no-files-found: error
 
   windows-exe:
@@ -80,23 +84,4 @@ jobs:
           path: |
             AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe
             AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe.sha256
-          if-no-files-found: error
-
-  source-project:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - name: Package complete project source
-        shell: bash
-        run: |
-          set -euo pipefail
-          git archive --format=zip --output=AIG_Studio_FULL_PROJECT_SOURCE.zip HEAD
-          sha256sum AIG_Studio_FULL_PROJECT_SOURCE.zip > AIG_Studio_FULL_PROJECT_SOURCE.zip.sha256
-      - uses: actions/upload-artifact@v4
-        with:
-          name: AIG-Studio-Full-Project-Source
-          path: |
-            AIG_Studio_FULL_PROJECT_SOURCE.zip
-            AIG_Studio_FULL_PROJECT_SOURCE.zip.sha256
           if-no-files-found: error
