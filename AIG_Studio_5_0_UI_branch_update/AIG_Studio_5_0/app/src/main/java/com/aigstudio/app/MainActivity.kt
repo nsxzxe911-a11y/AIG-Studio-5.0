@@ -376,10 +376,10 @@ class MainActivity : Activity() {
     }
     private fun styleButton(button: Button, color: Int, selected: Boolean) {
         button.background = GradientDrawable().apply {
-            cornerRadius = dp(15).toFloat(); setColor(if (selected) 0xFF173A50.toInt() else 0xFF0A1826.toInt())
+            cornerRadius = dp(15).toFloat(); setColor(if (selected) Color.argb(225, 23, 58, 80) else Color.argb(155, 10, 24, 38))
             setStroke(dp(if (selected) 3 else 2), color)
         }
-        button.alpha = if (selected) 1f else 0.72f
+        button.alpha = if (selected) 1f else 0.82f
         button.elevation = dp(if (selected) 8 else 3).toFloat()
     }
     private fun askValue(title: String, current: Double, done: (Double) -> Unit) {
@@ -393,6 +393,13 @@ class MainActivity : Activity() {
 
 class FlowLayout(context: Context) : ViewGroup(context) {
     private val gap = (6 * resources.displayMetrics.density).roundToInt()
+    init {
+        background = GradientDrawable().apply {
+            cornerRadius = 16f * resources.displayMetrics.density
+            setColor(Color.argb(112, 8, 24, 38))
+            setStroke(max(1, (1.1f * resources.displayMetrics.density).roundToInt()), Color.argb(150, 61, 235, 255))
+        }
+    }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val available = MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight
