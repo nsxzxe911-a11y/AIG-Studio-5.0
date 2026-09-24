@@ -26,36 +26,24 @@ function Ensure-Tool([string]$Command, [string]$ChocolateyPackage) {
   if (-not (Get-Command $Command -ErrorAction SilentlyContinue)) { throw "$Command is still unavailable after installing $ChocolateyPackage." }
 }
 
-Ensure-Tool 'kotlinc' 'kotlinc'
 Ensure-Tool 'light.exe' 'wixtoolset'
+if (-not (Get-Command gradle -ErrorAction SilentlyContinue)) { throw 'Gradle is required.' }
 if (-not (Get-Command jpackage -ErrorAction SilentlyContinue)) { throw 'JDK 17+ jpackage is required.' }
 
-$CoreDir = Join-Path $RepoRoot 'core\src\main\kotlin\com\aigstudio\core'
-$DesktopDir = Join-Path $RepoRoot 'desktop\src\main\kotlin\com\aigstudio\desktop'
-$Dist = Join-Path $RepoRoot 'dist'
-$Jar = Join-Path $Dist 'AIG_Studio_PC.jar'
-$PackageOut = Join-Path $Dist 'windows-self-contained'
-$ReleaseOut = Join-Path $RepoRoot 'release\windows'
-$FinalExe = Join-Path $ReleaseOut 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
-$SumsFile = Join-Path $ReleaseOut 'SHA256SUMS.txt'
-$ManifestFile = Join-Path $ReleaseOut 'RELEASE_MANIFEST.txt'
-$UpgradeUuid = '8c54d63a-6ac2-45ea-a474-63d0d88b1f50'
-$Product = 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC'
+& gradle -p $RepoRoot --no-daemon :desktop:installDist
+if ($LASTEXITCODE -ne 0) { throw 'Studio Gradle desktop runtime build failed.' }
 
-$Sources = @(Get-ChildItem $CoreDir -Recurse -Filter '*.kt' | Sort-Object FullName | ForEach-Object { $_.FullName })
-$DesktopSources = @(Get-ChildItem $DesktopDir -Recurse -Filter '*.kt' | Sort-Object FullName | ForEach-Object { $_.FullName })
-if ($Sources.Count -eq 0) { throw 'No Studio core Kotlin sources found.' }
-if ($DesktopSources.Count -eq 0) { throw 'No Studio desktop Kotlin sources found.' }
-$Sources += $DesktopSources
+$LibDir = Join-Path $RepoRoot 'desktop\build\install\desktop\lib'
+$MainJar = Join-Path $LibDir 'AIG_Studio_PC.jar'
+if (-not (Test-Path $MainJar)) { throw 'Studio desktop runtime JAR missing.' }
 
-New-Item -ItemType Directory -Force $Dist | Out-Null
-& kotlinc @Sources -include-runtime -d $Jar
-if ($LASTEXITCODE -ne 0 -or -not (Test-Path $Jar)) { throw 'Studio Windows Kotlin build failed.' }
-
-Push-Location $Dist
+$SmokeDir = Join-Path $RepoRoot 'build\desktop-smoke'
+if (Test-Path $SmokeDir) { Remove-Item -Recurse -Force $SmokeDir }
+New-Item -ItemType Directory -Force $SmokeDir | Out-Null
+Push-Location $SmokeDir
 try {
-  & java -cp (Split-Path -Leaf $Jar) com.aigstudio.desktop.DesktopAppKt --smoke
-  if ($LASTEXITCODE -ne 0) { throw 'Studio Windows JAR smoke failed.' }
+  & java -cp "$LibDir\*" com.aigstudio.desktop.DesktopAppKt --smoke
+  if ($LASTEXITCODE -ne 0) { throw 'Studio Windows Gradle runtime smoke failed.' }
   if (-not (Test-Path 'desktop_launch.png') -or -not (Test-Path 'desktop_3d.png') -or -not (Test-Path 'desktop_smoke.txt')) {
     throw 'Studio Windows smoke evidence missing.'
   }
@@ -63,12 +51,20 @@ try {
   Pop-Location
 }
 
+$PackageOut = Join-Path $RepoRoot 'build\windows-self-contained'
+$ReleaseOut = Join-Path $RepoRoot 'release\windows'
+$FinalExe = Join-Path $ReleaseOut 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
+$SumsFile = Join-Path $ReleaseOut 'SHA256SUMS.txt'
+$ManifestFile = Join-Path $ReleaseOut 'RELEASE_MANIFEST.txt'
+$UpgradeUuid = '8c54d63a-6ac2-45ea-a474-63d0d88b1f50'
+$Product = 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC'
+
 if (Test-Path $PackageOut) { Remove-Item -Recurse -Force $PackageOut }
 if (Test-Path $ReleaseOut) { Remove-Item -Recurse -Force $ReleaseOut }
 New-Item -ItemType Directory -Force $PackageOut | Out-Null
 New-Item -ItemType Directory -Force $ReleaseOut | Out-Null
 
-& jpackage --type exe --name $Product --dest $PackageOut --input $Dist --main-jar (Split-Path -Leaf $Jar) --main-class com.aigstudio.desktop.DesktopAppKt --app-version $VersionName --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
+& jpackage --type exe --name $Product --dest $PackageOut --input $LibDir --main-jar 'AIG_Studio_PC.jar' --main-class com.aigstudio.desktop.DesktopAppKt --app-version $VersionName --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
 if ($LASTEXITCODE -ne 0) { throw 'Studio jpackage EXE build failed.' }
 
 $Installer = Get-ChildItem $PackageOut -Filter '*.exe' | Select-Object -First 1

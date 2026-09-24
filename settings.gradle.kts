@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "AIGStudio"
-include(":app", ":core")
+include(":app", ":core", ":desktop")
