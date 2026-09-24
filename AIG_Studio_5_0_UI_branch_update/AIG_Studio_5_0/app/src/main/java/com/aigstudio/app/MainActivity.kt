@@ -46,8 +46,8 @@ class MainActivity : Activity() {
             setBackgroundColor(0xFF07111B.toInt())
         }
         val title = TextView(this).apply {
-            text = "AIG Studio 5.0 • 2D CAD • 原點 0.000 • 精度 0.001 mm"
-            setTextColor(Color.WHITE); textSize = 15f; gravity = Gravity.CENTER_VERTICAL
+            text = "AIG CNC • OFFICIAL RGB ORIGINAL • 2D CAD • 原點 0.000 • 精度 0.001 mm"
+            setTextColor(0xFF3DEBFF.toInt()); textSize = 16f; gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(6), dp(12), dp(6))
         }
         root.addView(title, LinearLayout.LayoutParams(-1, dp(40)))
@@ -66,6 +66,7 @@ class MainActivity : Activity() {
         addCategory("加工", 5) { showMachiningBranch() }
         addCategory("安全", 4) { showSecurityBranch() }
         addCategory("AI", 1) { showAiBranch() }
+        addActionTo(categoryFlow, "ChatGPT AI 更新", 1) { runSecureUpdateCheck() }
         addActionTo(categoryFlow, "↶", 3) { cad.undo() }
         addActionTo(categoryFlow, "↷", 5) { cad.redo() }
 
@@ -349,13 +350,13 @@ class MainActivity : Activity() {
         val b = toolButton(label, colors[colorIndex]); b.setOnClickListener { run() }; parent.addView(b)
     }
     private fun toolButton(label: String, color: Int) = Button(this).apply {
-        text = label; setTextColor(Color.WHITE); textSize = 13f; minWidth = dp(64); minHeight = dp(50)
+        text = label; setTextColor(Color.WHITE); textSize = 13f; minWidth = dp(72); minHeight = dp(52)
         isAllCaps = false; elevation = dp(3).toFloat(); setPadding(dp(10), 0, dp(10), 0)
         styleButton(this, color, false)
     }
     private fun styleButton(button: Button, color: Int, selected: Boolean) {
         button.background = GradientDrawable().apply {
-            cornerRadius = dp(14).toFloat(); setColor(if (selected) 0xFF173248.toInt() else 0xFF0E1E2C.toInt())
+            cornerRadius = dp(15).toFloat(); setColor(if (selected) 0xFF173A50.toInt() else 0xFF0A1826.toInt())
             setStroke(dp(if (selected) 3 else 2), color)
         }
         button.alpha = if (selected) 1f else 0.72f
