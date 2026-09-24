@@ -4,11 +4,14 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 ## Current main
 
-- Version: **40.0.0**
+- Version: **41.0.0**
 - Runtime project root: repository root
 - Android versionCode: derived automatically from the major version
 - Version source: `release-version.properties`
 - Android build/package entry: `build_android_release.sh`
+- Android compile/target platform: **API 36 / Android 16**
+- Android platform downgrade gate: `:app:verifyAndroidPlatform`
+- Android Gradle Plugin: **8.10.1** / Gradle: **8.11.1**
 - Windows build/package entry: `build_windows_native.ps1`
 - Android and Windows Kotlin compilation use the same Gradle/Kotlin toolchain
 - Windows release runner is pinned to `windows-2025`; WiX is supplied by the runner image, not installed during the build

@@ -14,7 +14,7 @@ test -f "$ROOT/settings.gradle.kts"
 rm -rf "$ANDROID_OUT" "$SOURCE_OUT"
 mkdir -p "$ANDROID_OUT" "$SOURCE_OUT"
 
-gradle -p "$ROOT" --no-daemon :core:coreRegression :app:assembleDebug
+gradle -p "$ROOT" --no-daemon :app:verifyAndroidPlatform :core:coreRegression :app:assembleDebug
 
 APK="$ROOT/app/build/outputs/apk/debug/app-debug.apk"
 test -s "$APK"
