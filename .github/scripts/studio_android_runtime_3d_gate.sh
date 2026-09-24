@@ -16,6 +16,12 @@ test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1"
 
 adb shell wm size 1080x2340
 adb shell wm density 425
+adb shell dumpsys display > "$EVIDENCE/DISPLAY_CAPABILITIES.txt" 2>/dev/null || true
+if ! grep -Eq '120(\.0+)?|119\.[0-9]+' "$EVIDENCE/DISPLAY_CAPABILITIES.txt"; then
+  echo "STUDIO_120HZ_CAPABILITY=UNAVAILABLE_ON_TEST_DISPLAY" | tee "$EVIDENCE/120HZ_GATE.txt"
+else
+  echo "STUDIO_120HZ_CAPABILITY=AVAILABLE" | tee "$EVIDENCE/120HZ_GATE.txt"
+fi
 adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1 || true
 adb shell settings put system user_rotation 0 >/dev/null 2>&1 || true
 adb shell settings put system font_scale 1.0 >/dev/null 2>&1 || true
@@ -203,6 +209,8 @@ echo "STUDIO_ANDROID_FRESH_UPGRADE_UNINSTALL_REINSTALL=PASS" | tee "$EVIDENCE/IN
   echo "USER_ROTATION=$(adb shell settings get system user_rotation | tr -d '\r')"
   echo "FONT_SCALE=$(adb shell settings get system font_scale | tr -d '\r')"
   echo "STUDIO_ANDROID_RUNTIME_GATE=PASS"
+  echo "HIGH_QUALITY_RENDERING=REQUIRED"
+  cat "$EVIDENCE/120HZ_GATE.txt"
 } | tee "$EVIDENCE/RUNTIME_GATE.txt"
 
 grep -Eq 'Override size: 1080x2340|Physical size: 1080x2340' "$EVIDENCE/RUNTIME_GATE.txt"
