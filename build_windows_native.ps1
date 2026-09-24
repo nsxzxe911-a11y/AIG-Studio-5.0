@@ -29,8 +29,23 @@ Push-Location $SmokeDir
 try {
   & java -cp "$LibDir\*" com.aigstudio.desktop.DesktopAppKt --smoke
   if ($LASTEXITCODE -ne 0) { throw 'Studio Windows Gradle runtime smoke failed.' }
-  if (-not (Test-Path 'desktop_launch.png') -or -not (Test-Path 'desktop_3d.png') -or -not (Test-Path 'desktop_smoke.txt')) {
-    throw 'Studio Windows smoke evidence missing.'
+  $RequiredSmokeEvidence = @(
+    'desktop_launch.png',
+    'desktop_3d_before.png',
+    'desktop_3d.png',
+    'desktop_smoke.txt',
+    'REMOVED_CELLS.txt',
+    '3D_RUNTIME_EVIDENCE.txt',
+    '3D_RUNTIME_SHA256.txt'
+  )
+  foreach ($name in $RequiredSmokeEvidence) {
+    if (-not (Test-Path $name)) { throw "Studio Windows smoke evidence missing: $name" }
+  }
+  foreach ($name in @('REMOVED_CELLS.txt','3D_RUNTIME_EVIDENCE.txt','3D_RUNTIME_SHA256.txt')) {
+    $content = Get-Content $name -Raw
+    if ($content -notmatch [regex]::Escape("SOURCE_SHA=$GitSha")) {
+      throw "Studio Windows smoke evidence source mismatch: $name"
+    }
   }
 } finally {
   Pop-Location
