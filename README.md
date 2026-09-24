@@ -4,7 +4,7 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 ## Current main
 
-- Version: **46.0.0**
+- Version: **47.0.0**
 - Runtime project root: repository root
 - Android versionCode: derived automatically from the major version
 - Version source: `release-version.properties`
@@ -15,6 +15,9 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 - Physical Android device path: up to 120 Hz
 - Emulator path: capped at 60 Hz / idle 30 Hz so PC emulation does not distort phone performance expectations
 - Monitoring default: **CPU temperature + GPU temperature only**
+- FPS / RAM / Dropped Frames / full System HUD remain available as optional monitors
+- FPS / refresh / temperature / HUD / RGB / thermal controls apply live
+- 3D/SIM render-quality changes set a restart-required marker and apply fully after app restart
 - CPU/GPU temperatures are read from Android thermal zones when exposed; unavailable sensors show `N/A`
 - Battery temperature is no longer presented as CPU/GPU temperature
 - CPU/GPU overheat warning is wired to the real temperature probe; the setting is not a placeholder

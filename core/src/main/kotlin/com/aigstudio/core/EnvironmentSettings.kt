@@ -313,3 +313,11 @@ object ThermalSensorPolicy {
         return c.takeIf { it in -20.0..150.0 }
     }
 }
+
+object SettingsApplyPolicy {
+    fun requiresRestart(previousRenderQuality:String,newRenderQuality:String):Boolean =
+        previousRenderQuality.trim().uppercase() != newRenderQuality.trim().uppercase()
+
+    fun restartReason(previousRenderQuality:String,newRenderQuality:String):String? =
+        if(requiresRestart(previousRenderQuality,newRenderQuality)) "3D_SIM_RENDER_QUALITY" else null
+}

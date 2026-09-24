@@ -239,6 +239,9 @@ private fun testEnvironmentSettingsContract() {
     check(ThermalSensorPolicy.isGpuType("g3d"))
     check(ThermalSensorPolicy.normalizeCelsius(65000.0)==65.0)
     check(ThermalSensorPolicy.normalizeCelsius(65.0)==65.0)
+    check(SettingsApplyPolicy.requiresRestart("High","Ultra"))
+    check(!SettingsApplyPolicy.requiresRestart("High","high"))
+    check(SettingsApplyPolicy.restartReason("Balanced","High")=="3D_SIM_RENDER_QUALITY")
     println("✓ ENVIRONMENT_SETTINGS_GATE_PASS 120/60/30/Auto RGB thermal battery precision-isolated")
 }
 

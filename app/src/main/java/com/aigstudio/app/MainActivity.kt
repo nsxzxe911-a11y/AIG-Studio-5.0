@@ -228,6 +228,7 @@ class Axis5xPreview(
 }
 
 class MainActivity : Activity() {
+    private var environmentRestartApplied = false
     private var adaptiveRefreshController: AdaptiveRefreshController? = null
     companion object {
         private const val REQ_AI_VOICE = 7110
@@ -381,6 +382,11 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val environmentPrefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
+        environmentRestartApplied = environmentPrefs.getBoolean("restart_required", false)
+        if (environmentRestartApplied) {
+            environmentPrefs.edit().putBoolean("restart_required", false).remove("restart_reason").apply()
+        }
         adaptiveRefreshController = AdaptiveRefreshController(this).also { it.start() }
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -435,6 +441,9 @@ class MainActivity : Activity() {
 
 
         setContentView(root)
+        if (environmentRestartApplied) {
+            Toast.makeText(this, "重開套用完成 • 3D/SIM 畫質核心已重新載入", Toast.LENGTH_SHORT).show()
+        }
         restoreCadCheckpointIfAvailable()
         autosaveHandler.postDelayed(autosaveRunnable, 15000L)
         openCategory("繪圖") { showDrawingBranch() }
@@ -1522,15 +1531,29 @@ private fun showEnvironmentSettings() {
             box.addView(this)
         }
 
+        box.addView(TextView(this).apply {
+            text = "即時套用：FPS / 120Hz / CPU/GPU 溫度 / HUD / RGB / 熱控\n重開套用：3D / SIM 畫質核心"
+            setTextColor(0xFFA0BED2.toInt())
+            textSize = 11f
+            setPadding(dp(4), dp(10), dp(4), dp(4))
+        })
+
         AlertDialog.Builder(this)
             .setTitle("AIG CNC 系統環境設定")
             .setView(box)
             .setPositiveButton("套用") { _, _ ->
                 val selectedFps = fpsValues[fps.selectedItemPosition]
+                val selectedQuality = qualityValues[quality.selectedItemPosition]
+                val previousQuality = prefs.getString("render_quality", "High") ?: "High"
+                val restartRequired =
+                    prefs.getBoolean("restart_required", false) ||
+                    SettingsApplyPolicy.requiresRestart(previousQuality, selectedQuality)
                 prefs.edit()
                     .putString("fps_mode", selectedFps)
                     .putString("power_mode", powerValues[power.selectedItemPosition])
-                    .putString("render_quality", qualityValues[quality.selectedItemPosition])
+                    .putString("render_quality", selectedQuality)
+                    .putBoolean("restart_required", restartRequired)
+                    .putString("restart_reason", if (restartRequired) "3D_SIM_RENDER_QUALITY" else "")
                     .putInt("rgb_brightness", rgb.progress)
                     .putBoolean("system_hud_enabled", systemHud.isChecked)
                     .putBoolean("fps_display_enabled", fpsDisplay.isChecked)
@@ -1552,7 +1575,8 @@ private fun showEnvironmentSettings() {
                 toolButtons.values.forEach { it.alpha = visualAlpha }
                 Toast.makeText(
                     this,
-                    "ENV APPLIED • " + selectedFps + " • RGB " + rgb.progress + "% • CNC 精度仍為 0.001 mm",
+                    "ENV APPLIED • " + selectedFps + " • RGB " + rgb.progress + "% • CNC 精度仍為 0.001 mm" +
+                        if (restartRequired) " • 3D/SIM 畫質：重開後完整生效" else "",
                     Toast.LENGTH_LONG
                 ).show()
             }
