@@ -37,7 +37,6 @@ object StudioPackageRegistry {
             StudioPackage("system-monitor-hud","5.0",setOf("performance-telemetry")),
             StudioPackage("thermal-guard","5.0",setOf("performance-telemetry")),
             StudioPackage("renderer-governor","5.0",setOf("performance-telemetry","thermal-guard")),
-            StudioPackage("5.0",setOf("renderer-governor","system-monitor-hud")),
             StudioPackage("ai-command-router","5.0",setOf("cad-core","system-monitor-hud")),
             StudioPackage("voice-safety-confirm","5.0",setOf("ai-command-router")),
             StudioPackage("ai-voice","5.0",setOf("ai-command-router","voice-safety-confirm")),
