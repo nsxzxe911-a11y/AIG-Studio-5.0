@@ -15,10 +15,16 @@ APK="$PROJECT/app/build/outputs/apk/debug/app-debug.apk"
 test -s "$APK"
 
 cp "$APK" "$ANDROID_OUT/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk"
-sha256sum "$ANDROID_OUT/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk" > "$ANDROID_OUT/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk.sha256"
+(
+  cd "$ANDROID_OUT"
+  sha256sum AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk > SHA256SUMS.txt
+)
 
 cd "$ROOT"
 git archive --format=zip --output="$SOURCE_OUT/AIG_Studio_FULL_PROJECT_SOURCE.zip" HEAD
-sha256sum "$SOURCE_OUT/AIG_Studio_FULL_PROJECT_SOURCE.zip" > "$SOURCE_OUT/AIG_Studio_FULL_PROJECT_SOURCE.zip.sha256"
+(
+  cd "$SOURCE_OUT"
+  sha256sum AIG_Studio_FULL_PROJECT_SOURCE.zip > SHA256SUMS.txt
+)
 
 echo "AIG_STUDIO_ANDROID_PACKAGE=PASS"
