@@ -113,6 +113,8 @@ class MainActivity : Activity() {
     private var lastCpuMs = 0L
     private var lastCpuWallMs = 0L
     private var monitorSnapshot = "MONITOR --"
+    private val monitorHistory = mutableListOf<MonitorSample>()
+    private val monitorHistoryLimit = 180
     private val systemMonitorHandler = Handler(Looper.getMainLooper())
     private val systemFrameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
@@ -684,6 +686,13 @@ class MainActivity : Activity() {
         lastCpuWallMs = nowWall
 
         if (!tempC.isNaN()) monitorMaxTempC = maxOf(monitorMaxTempC, tempC)
+        monitorHistory += MonitorSample(
+            fps = monitorFps,
+            frameTimeMs = monitorFrameTimeMs,
+            temperatureC = if (tempC.isNaN()) null else tempC,
+            ramMb = appRamMb
+        )
+        while (monitorHistory.size > monitorHistoryLimit) monitorHistory.removeAt(0)
         val thermal = thermalStatusLabel()
         val ramPressure = when {
             mi.lowMemory -> "HIGH"
@@ -723,20 +732,29 @@ class MainActivity : Activity() {
         val avgFps = if (monitorFpsSamples > 0) monitorFpsSum / monitorFpsSamples else monitorFps
         val minFps = if (monitorMinFps.isFinite()) monitorMinFps else monitorFps
         val maxTemp = if (monitorMaxTempC.isFinite()) String.format("%.1f°C", monitorMaxTempC) else "--"
-        val body = buildString {
-            appendLine(monitorSnapshot)
-            appendLine("平均 FPS: " + String.format("%.1f", avgFps))
-            appendLine("最低 FPS: " + String.format("%.1f", minFps))
-            appendLine("最高 BAT 溫度: " + maxTemp)
-            appendLine("最高 App RAM: " + String.format("%.0f MB", monitorMaxRamMb))
-            appendLine("Dropped Frames: " + monitorDroppedFrames)
-            appendLine("Renderer Governor: UI/VISUAL ONLY")
-            appendLine("CNC Safety Gate: SEPARATE / UNCHANGED")
-            append("0.001 mm precision: LOCKED")
+
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), dp(8), dp(12), dp(8))
         }
+        box.addView(TextView(this).apply {
+            setTextColor(0xFFE1EFFF.toInt())
+            textSize = 12f
+            text = buildString {
+                appendLine(monitorSnapshot)
+                appendLine("平均 FPS: " + String.format("%.1f", avgFps) + " • 最低 FPS: " + String.format("%.1f", minFps))
+                appendLine("最高 BAT: " + maxTemp + " • 最高 App RAM: " + String.format("%.0f MB", monitorMaxRamMb))
+                appendLine("Dropped Frames: " + monitorDroppedFrames + " • 歷史: " + monitorHistory.size + " 秒")
+                append("Renderer Governor: UI/VISUAL ONLY • 0.001 mm precision unchanged")
+            }
+        })
+        box.addView(MonitorHistoryView(this).apply {
+            samples = monitorHistory.toList()
+        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(260)))
+
         AlertDialog.Builder(this)
-            .setTitle("系統監控 HUD")
-            .setMessage(body)
+            .setTitle("系統監控歷史曲線")
+            .setView(box)
             .setPositiveButton("關閉", null)
             .show()
     }
