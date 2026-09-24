@@ -49,6 +49,42 @@ import kotlin.math.*
 
 enum class Tool { LINE, RECT, CIRCLE, DELETE, CHAMFER, FILLET, PAN }
 
+
+data class StudioDisplayProfile(
+    val tier: String,
+    val uiScale: Float,
+    val widthPx: Int,
+    val heightPx: Int
+)
+
+object StudioDisplayPolicy {
+    fun profile(view: View): StudioDisplayProfile {
+        val m = view.resources.displayMetrics
+        val width = max(view.width, m.widthPixels)
+        val height = max(view.height, m.heightPixels)
+        val shortEdge = min(width, height)
+        val longEdge = max(width, height)
+        val tier = when {
+            shortEdge >= 2160 && longEdge >= 3800 -> "UHD/4K+"
+            shortEdge >= 1440 && longEdge >= 2880 -> "3K-class"
+            shortEdge >= 1440 && longEdge >= 2400 -> "2K-class"
+            else -> "1080P/FHD+"
+        }
+        val uiScale = when (tier) {
+            "UHD/4K+" -> 1.18f
+            "3K-class" -> 1.12f
+            "2K-class" -> 1.07f
+            else -> 1.0f
+        }
+        return StudioDisplayProfile(tier, uiScale, width, height)
+    }
+
+    fun dp(view: View, value: Float): Int =
+        (value * view.resources.displayMetrics.density * profile(view).uiScale).roundToInt()
+
+    fun sp(view: View, value: Float): Float = value * profile(view).uiScale
+}
+
 class RgbGlowButton(context: Context) : Button(context) {
     private var accent = Color.rgb(61,235,255)
     private var selectedGlow = false
@@ -239,7 +275,7 @@ class MainActivity : Activity() {
             setBackgroundColor(0xFF07111B.toInt())
         }
         val title = TextView(this).apply {
-            text = "AIG CNC • OFFICIAL RGB ORIGINAL • 2D CAD • HQ • 120Hz TARGET • 原點 0.000 • 精度 0.001 mm"
+            text = "AIG CNC • OFFICIAL RGB ORIGINAL • 1080P/2K/3K/4K+ • 120Hz TARGET • 原點 0.000 • 精度 0.001 mm"
             setTextColor(0xFF3DEBFF.toInt()); textSize = 16f; gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(6), dp(12), dp(6))
         }
@@ -1181,8 +1217,9 @@ private fun showEnvironmentSettings() {
         val b = toolButton(label, colors[colorIndex]); b.setOnClickListener { run() }; parent.addView(b)
     }
     private fun toolButton(label: String, color: Int) = RgbGlowButton(this).apply {
-        text = label; textSize = 13f; minWidth = dp(72); minHeight = dp(52)
-        setPadding(dp(10), 0, dp(10), 0)
+        text = label; textSize = StudioDisplayPolicy.sp(this, 13f)
+        minWidth = StudioDisplayPolicy.dp(this, 72f); minHeight = StudioDisplayPolicy.dp(this, 52f)
+        setPadding(StudioDisplayPolicy.dp(this, 10f), 0, StudioDisplayPolicy.dp(this, 10f), 0)
         setRgbState(color, false)
     }
     private fun styleButton(button: Button, color: Int, selected: Boolean) {
@@ -1208,12 +1245,12 @@ private fun showEnvironmentSettings() {
 }
 
 class FlowLayout(context: Context) : ViewGroup(context) {
-    private val gap = (6 * resources.displayMetrics.density).roundToInt()
+    private val gap = StudioDisplayPolicy.dp(this, 6f)
     init {
         background = GradientDrawable().apply {
-            cornerRadius = 16f * resources.displayMetrics.density
+            cornerRadius = StudioDisplayPolicy.dp(this@FlowLayout, 16f).toFloat()
             setColor(Color.argb(112, 8, 24, 38))
-            setStroke(max(1, (1.1f * resources.displayMetrics.density).roundToInt()), Color.argb(150, 61, 235, 255))
+            setStroke(max(1, StudioDisplayPolicy.dp(this@FlowLayout, 1.1f)), Color.argb(150, 61, 235, 255))
         }
     }
 
@@ -1310,7 +1347,7 @@ class CadView(context: Context) : View(context) {
         drawGrid(canvas)
         drawEntities(canvas)
         firstPoint?.let { val p = transform.worldToScreen(it); canvas.drawCircle(p.x.toFloat(), p.y.toFloat(), 8f, accentPaint) }
-        canvas.drawText("精度 0.001 mm • 顯示 0.000 • ${tool.name}   X ${DisplayFormat.mm(lastWorld.x)}  Y ${DisplayFormat.mm(lastWorld.y)}   C${DisplayFormat.mm(chamferValue)} R${DisplayFormat.mm(filletValue)}", 16f, 26f, textPaint)
+        canvas.drawText("精度 0.001 mm • 顯示 0.000 • ${StudioDisplayPolicy.profile(this).tier} • ${tool.name}   X ${DisplayFormat.mm(lastWorld.x)}  Y ${DisplayFormat.mm(lastWorld.y)}   C${DisplayFormat.mm(chamferValue)} R${DisplayFormat.mm(filletValue)}", 16f, 26f, textPaint)
     }
 
     private fun cncRulerStepMm(): Double {
