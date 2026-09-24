@@ -122,7 +122,7 @@ private class CadPanel(
 
         g2.color = Color(143, 179, 201)
         g2.font = Font(Font.SANS_SERIF, Font.PLAIN, 14)
-        g2.drawString("AIG Studio 5.0 • TRUE CORE • 原點 X0.000 Y0.000 • 精度 0.001 mm", 14, 22)
+        g2.drawString("AIG CNC • OFFICIAL RGB ORIGINAL • 2D CAD • 原點 X0.000 Y0.000 • 精度 0.001 mm", 14, 22)
     }
 }
 
@@ -278,11 +278,11 @@ private fun runSmoke() {
 
 private fun showApp() {
     val doc = DrawingDocument()
-    val status = JLabel("AIG Studio 5.0 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
+    val status = JLabel("AIG CNC • OFFICIAL RGB ORIGINAL • 原點 X0.000 Y0.000 • 精度 0.001 mm")
     status.foreground = Color(99, 255, 157)
     val cad = CadPanel(doc) { status.text = it }
 
-    val frame = JFrame("AIG Studio 5.0 — RGB CNC Workstation")
+    val frame = JFrame("AIG CNC — OFFICIAL RGB ORIGINAL")
     frame.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     frame.layout = BorderLayout()
     frame.contentPane.background = Color(5, 10, 17)
@@ -324,6 +324,9 @@ private fun showApp() {
             }
             .onFailure { JOptionPane.showMessageDialog(frame, "3D BLOCKED: " + it.message, "3D", JOptionPane.WARNING_MESSAGE) }
     })
+    toolbar.add(button("NC EDIT", Color(80, 170, 255)) { status.text = "NC EDIT • FANUC" })
+    toolbar.add(button("5X", Color(125, 112, 255)) { status.text = "5X • A/B" })
+    toolbar.add(button("ChatGPT AI 更新", Color(61, 235, 255)) { status.text = "ChatGPT AI 更新 • VERIFIED CHANNEL" })
     toolbar.add(button("CLEAR", Color(239, 68, 68)) { cad.clearCad() })
 
     status.border = BorderFactory.createEmptyBorder(8, 12, 8, 12)
