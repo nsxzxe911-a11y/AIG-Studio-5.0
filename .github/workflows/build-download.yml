@@ -1,7 +1,10 @@
-name: AIG Studio release build
+name: AIG Studio direct release validation
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -15,12 +18,27 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android 17 SDK
+        shell: bash
+        run: sdkmanager "platform-tools" "platforms;android-37" "build-tools;36.0.0"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
       - name: Build Android APK and source package
         shell: bash
         run: ./build_android_release.sh
+      - name: Verify Android APK
+        shell: bash
+        run: |
+          APK=release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 4 "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "package: name='com.aigstudio.app'"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "targetSdkVersion:'37'"
+          (cd release/android && sha256sum -c SHA256SUMS.txt)
+          (cd release/source && sha256sum -c SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Android-and-Source
@@ -37,12 +55,26 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android 17 SDK
+        shell: pwsh
+        run: sdkmanager "platform-tools" "platforms;android-37" "build-tools;36.0.0"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
       - name: Build Windows EXE
         shell: pwsh
         run: .\build_windows_native.ps1
+      - name: Verify Windows EXE
+        shell: pwsh
+        run: |
+          $exe = 'release\windows\AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
+          if (-not (Test-Path $exe)) { throw 'EXE missing' }
+          $bytes = [IO.File]::ReadAllBytes($exe)
+          if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw 'PE/MZ invalid' }
+          $actual = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          $expected = ((Get-Content 'release\windows\SHA256SUMS.txt' -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
+          if ($actual -ne $expected) { throw 'SHA256 mismatch' }
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Windows-EXE
