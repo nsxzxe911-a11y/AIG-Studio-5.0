@@ -256,7 +256,9 @@ object SecureUpdateManager {
                 val manifest = fetchManifest(config)
                 validateManifest(context, config, manifest)
                 val current = currentVersionCode(context)
-                if (manifest.versionCode <= current) {
+                if (manifest.versionCode < current) {
+                    UpdateOutcome(false, false, "DOWNGRADE BLOCKED: " + manifest.versionCode + " < " + current + " • UPGRADE ONLY")
+                } else if (manifest.versionCode == current) {
                     UpdateOutcome(true, false, "UPDATE CURRENT: v" + current)
                 } else if (!config.autoDownload) {
                     UpdateOutcome(true, true, "UPDATE AVAILABLE: " + manifest.versionName + " (" + manifest.versionCode + ")")
@@ -279,6 +281,12 @@ object SecureUpdateManager {
     fun installVerifiedUpdate(context: Context, apk: File): String {
         require(apk.isFile && apk.parentFile?.name == "verified-updates") { "Verified APK missing" }
         require(apkPackageName(context, apk) == context.packageName) { "APK package mismatch before install" }
+        val installedVersion = currentVersionCode(context)
+        val candidateVersion = apkVersionCode(context, apk) ?: error("Verified APK version unreadable")
+        require(candidateVersion > installedVersion) {
+            "DOWNGRADE/EQUAL VERSION BLOCKED: candidate=" + candidateVersion +
+                " current=" + installedVersion + " • UPGRADE ONLY"
+        }
         require(installedSignerDigests(context) == archiveSignerDigests(context, apk)) {
             "APK signing certificate mismatch before install"
         }
@@ -437,6 +445,12 @@ object SecureUpdateManager {
 
     private fun apkPackageName(context: Context, apk: File): String? =
         context.packageManager.getPackageArchiveInfo(apk.absolutePath, 0)?.packageName
+
+    @Suppress("DEPRECATION")
+    private fun apkVersionCode(context: Context, apk: File): Long? {
+        val info = context.packageManager.getPackageArchiveInfo(apk.absolutePath, 0) ?: return null
+        return if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
+    }
 
     @Suppress("DEPRECATION")
     private fun installedSignerDigests(context: Context): Set<String> {
