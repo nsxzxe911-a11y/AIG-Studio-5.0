@@ -169,6 +169,9 @@ class MainActivity : Activity() {
     private val categoryButtons = mutableMapOf<String, Button>()
     private var activeCategory: String? = null
     private var camSettings = CamSettings()
+    private var ncSingleBlock = false
+    private var ncDryRun = false
+    private var ncBlockSkip = false
     private lateinit var fpsIndicator: TextView
     private lateinit var temperatureIndicator: TextView
     private var fpsLoopRunning = false
@@ -601,6 +604,7 @@ class MainActivity : Activity() {
     private fun showMachiningBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addActionTo(branchFlow, "CAM 設定", 5) { showCamSettingsDialog() }
+        addActionTo(branchFlow, "NC EDIT", 0) { showNcEditDialog() }
         addActionTo(branchFlow, "3D 加工", 4) { showMachining3D() }
     }
 
@@ -623,6 +627,8 @@ class MainActivity : Activity() {
         val depth = numeric("加工深度 Z mm", camSettings.depth, true)
         val safeZ = numeric("Safe-Z mm", camSettings.safeZ)
         val feed = numeric("Feed mm/min", camSettings.feedMmMin)
+        val leadIn = numeric("Lead-in mm", camSettings.leadInMm)
+        val leadOut = numeric("Lead-out mm", camSettings.leadOutMm)
 
         AlertDialog.Builder(this)
             .setTitle("真 CAM 設定")
@@ -634,7 +640,9 @@ class MainActivity : Activity() {
                         depth = depth.text.toString().toDouble(),
                         safeZ = safeZ.text.toString().toDouble(),
                         feedMmMin = feed.text.toString().toDouble(),
-                        climb = camSettings.climb
+                        climb = camSettings.climb,
+                        leadInMm = leadIn.text.toString().toDouble(),
+                        leadOutMm = leadOut.text.toString().toDouble()
                     )
                 }.onSuccess {
                     camSettings = it
@@ -643,6 +651,79 @@ class MainActivity : Activity() {
                     Toast.makeText(this, "CAM 設定無效: " + error.message, Toast.LENGTH_LONG).show()
                 }
             }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+
+    private fun showNcEditDialog() {
+        val snapshot = cad.snapshot()
+        if (snapshot.entities.isEmpty()) {
+            Toast.makeText(this, "NC EDIT：請先建立 2D 幾何", Toast.LENGTH_LONG).show()
+            return
+        }
+        val cam = runCatching { CamModel.fromCad(System.currentTimeMillis(), snapshot, camSettings) }
+            .getOrElse {
+                Toast.makeText(this, "CAM 產生失敗: " + it.message, Toast.LENGTH_LONG).show()
+                return
+            }
+        val risk = MachiningRiskScanner.inspect(cam, Stock3D.fromSnapshot(snapshot))
+        val editor = EditText(this).apply {
+            setText(FanucNc.generate(cam))
+            setTextColor(Color.rgb(225,240,255))
+            setBackgroundColor(Color.rgb(5,12,20))
+            textSize = 13f
+            gravity = Gravity.TOP or Gravity.START
+            minLines = 18
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            setPadding(dp(12),dp(10),dp(12),dp(10))
+        }
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(10),dp(8),dp(10),dp(6))
+        }
+        val mode = TextView(this).apply {
+            setTextColor(Color.rgb(99,255,157))
+            textSize = 12f
+        }
+        fun refreshMode() {
+            mode.text = "NC EDIT • SINGLE BLOCK=" + if (ncSingleBlock) "ON" else "OFF" +
+                " • DRY RUN=" + if (ncDryRun) "ON" else "OFF" +
+                " • BLOCK SKIP=" + if (ncBlockSkip) "ON" else "OFF" +
+                " • COLLISION=" + risk.collisionCount +
+                " • OVERCUT=" + risk.overcutCount
+        }
+        refreshMode()
+        box.addView(mode)
+        val controls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        fun toggle(label: String, action: () -> Unit) {
+            controls.addView(RgbGlowButton(this).apply {
+                text = label
+                setRgbState(Color.rgb(61,235,255), false)
+                setOnClickListener { action(); refreshMode() }
+            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }
+        toggle("SINGLE") { ncSingleBlock = !ncSingleBlock }
+        toggle("DRY RUN") { ncDryRun = !ncDryRun }
+        toggle("BLOCK /") {
+            ncBlockSkip = !ncBlockSkip
+            val lines = editor.text.toString().lineSequence().toList()
+            editor.setText(
+                lines.joinToString("\n") { line ->
+                    if (ncBlockSkip && line.startsWith("M98 P")) "/" + line
+                    else if (!ncBlockSkip && line.startsWith("/M98 P")) line.removePrefix("/")
+                    else line
+                }
+            )
+        }
+        box.addView(controls)
+        box.addView(editor, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, dp(460)
+        ))
+        AlertDialog.Builder(this)
+            .setTitle("AIG CNC NC EDIT • FANUC")
+            .setView(box)
+            .setPositiveButton("完成", null)
             .setNegativeButton("取消", null)
             .show()
     }
