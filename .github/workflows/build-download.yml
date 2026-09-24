@@ -1,4 +1,5 @@
-name: AIG Studio 5.0 Build Download Bundle
+name: AIG Studio Build Download Bundle
+run-name: AIG Studio latest main build
 
 on:
   workflow_dispatch:
@@ -43,7 +44,7 @@ jobs:
           sha256sum AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk > AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: AIG-Studio-5.0-Android-APK
+          name: AIG-Studio-Android-APK
           path: |
             AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
             AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk.sha256
@@ -75,7 +76,7 @@ jobs:
           (Get-FileHash AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe -Algorithm SHA256).Hash | Out-File AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe.sha256 -Encoding ascii
       - uses: actions/upload-artifact@v4
         with:
-          name: AIG-Studio-5.0-Windows-EXE
+          name: AIG-Studio-Windows-EXE
           path: |
             AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe
             AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe.sha256
@@ -90,12 +91,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git archive --format=zip --output=AIG_Studio_5_0_FULL_PROJECT_SOURCE.zip HEAD
-          sha256sum AIG_Studio_5_0_FULL_PROJECT_SOURCE.zip > AIG_Studio_5_0_FULL_PROJECT_SOURCE.zip.sha256
+          git archive --format=zip --output=AIG_Studio_FULL_PROJECT_SOURCE.zip HEAD
+          sha256sum AIG_Studio_FULL_PROJECT_SOURCE.zip > AIG_Studio_FULL_PROJECT_SOURCE.zip.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: AIG-Studio-5.0-Full-Project-Source
+          name: AIG-Studio-Full-Project-Source
           path: |
-            AIG_Studio_5_0_FULL_PROJECT_SOURCE.zip
-            AIG_Studio_5_0_FULL_PROJECT_SOURCE.zip.sha256
+            AIG_Studio_FULL_PROJECT_SOURCE.zip
+            AIG_Studio_FULL_PROJECT_SOURCE.zip.sha256
           if-no-files-found: error
