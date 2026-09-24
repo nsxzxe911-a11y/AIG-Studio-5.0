@@ -6,6 +6,7 @@ enum class PowerMode{ PERFORMANCE, BALANCED, ECO, AUTO }
 enum class RenderQuality{ ULTRA, HIGH, BALANCED, ECO }
 enum class OrientationMode{ AUTO, PORTRAIT, LANDSCAPE, WORKSPACE_FIRST }
 enum class InputProfile{ TOUCH, SPEN, MOUSE }
+enum class MemoryPressure{ NORMAL, MODERATE, HIGH, CRITICAL }
 
 data class AnimationToggles(
     val rgbBreathing:Boolean=true,
@@ -27,6 +28,11 @@ data class RuntimeEnvironmentSettings(
     val vsync:Boolean=true,
     val idleRedrawThrottle:Boolean=true,
     val autoThermalThrottle:Boolean=true,
+    val thermalCooldownMs:Long=15_000L,
+    val frameTimeGateEnabled:Boolean=true,
+    val frameTimeBadFramesBeforeDrop:Int=6,
+    val frameTimeGoodFramesBeforeRaise:Int=90,
+    val memoryPressureModeEnabled:Boolean=true,
     val lowBatteryBalancedThreshold:Int=20,
     val lowBatteryEcoThreshold:Int=10,
     val animations:AnimationToggles=AnimationToggles(),
@@ -41,6 +47,9 @@ data class RuntimeEnvironmentSettings(
         require(rgbBrightness in 0..100)
         require(selectedGlowBoostPercent in 0..25)
         require(glassOpacityPercent in 0..100)
+        require(thermalCooldownMs in 1_000L..120_000L)
+        require(frameTimeBadFramesBeforeDrop in 2..120)
+        require(frameTimeGoodFramesBeforeRaise in 30..3_600)
         require(lowBatteryEcoThreshold in 1..20)
         require(lowBatteryBalancedThreshold in 10..40)
         require(lowBatteryEcoThreshold < lowBatteryBalancedThreshold)
@@ -76,11 +85,7 @@ data class RuntimeEnvironmentSettings(
                 else->target
             }
         }
-        return when{
-            target>=120->120
-            target>=60->60
-            else->30
-        }
+        return normalizeFps(target)
     }
 
     fun effectiveRgbBrightness(batteryPercent:Int=100,charging:Boolean=false):Int{
@@ -91,6 +96,141 @@ data class RuntimeEnvironmentSettings(
             else->rgbBrightness
         }
     }
+
+    companion object{
+        fun normalizeFps(value:Int)=when{
+            value>=120->120
+            value>=60->60
+            else->30
+        }
+    }
+}
+
+data class RenderBudget(
+    val fps:Int,
+    val frameBudgetMs:Double,
+    val meshScale:Double,
+    val overlayScale:Double,
+    val glowScale:Double,
+    val cacheScale:Double,
+    val reason:String
+)
+
+/**
+ * Stateful UI/renderer governor.
+ *
+ * Safety contract:
+ * - May change display FPS, visual mesh/overlay density, glow and visual caches only.
+ * - Must never mutate CAD geometry, CAM toolpaths, material-removal math, NC output,
+ *   offsets, Safe-Z, or CNC numeric precision.
+ */
+class RendererGovernor(
+    private val settings:RuntimeEnvironmentSettings,
+    initialFps:Int=60
+){
+    private var currentFps=RuntimeEnvironmentSettings.normalizeFps(initialFps)
+    private var lastThermalDropMs:Long=Long.MIN_VALUE
+    private var badFrameCount=0
+    private var goodFrameCount=0
+
+    fun update(
+        nowMs:Long,
+        displayHz:Double,
+        frameTimeMs:Double,
+        batteryPercent:Int,
+        thermalLevel:Int,
+        charging:Boolean,
+        memoryPressure:MemoryPressure=MemoryPressure.NORMAL
+    ):RenderBudget{
+        require(frameTimeMs>=0.0)
+        val requested=settings.targetFps(displayHz,batteryPercent,thermalLevel,charging)
+
+        // Thermal protection drops immediately. Recovery is intentionally delayed.
+        val thermalCap=when{
+            !settings.autoThermalThrottle->120
+            thermalLevel>=4->30
+            thermalLevel>=2->60
+            else->120
+        }
+        if(currentFps>thermalCap){
+            currentFps=thermalCap
+            lastThermalDropMs=nowMs
+            badFrameCount=0
+            goodFrameCount=0
+        }
+
+        val targetBudgetMs=1000.0/currentFps
+        if(settings.frameTimeGateEnabled){
+            if(frameTimeMs>targetBudgetMs*1.15){
+                badFrameCount++
+                goodFrameCount=0
+            }else if(frameTimeMs<targetBudgetMs*0.90){
+                goodFrameCount++
+                badFrameCount=0
+            }else{
+                badFrameCount=0
+                goodFrameCount=0
+            }
+
+            if(badFrameCount>=settings.frameTimeBadFramesBeforeDrop){
+                currentFps=stepDown(currentFps)
+                badFrameCount=0
+                goodFrameCount=0
+            }
+        }
+
+        val cooldownElapsed=lastThermalDropMs==Long.MIN_VALUE ||
+            nowMs-lastThermalDropMs>=settings.thermalCooldownMs
+        if(currentFps<requested && cooldownElapsed &&
+            (!settings.frameTimeGateEnabled || goodFrameCount>=settings.frameTimeGoodFramesBeforeRaise)){
+            currentFps=minOf(stepUp(currentFps),requested)
+            goodFrameCount=0
+        }
+        if(currentFps>requested) currentFps=requested
+
+        val memory=if(settings.memoryPressureModeEnabled) memoryPressure else MemoryPressure.NORMAL
+        val cacheScale=when(memory){
+            MemoryPressure.NORMAL->1.0
+            MemoryPressure.MODERATE->0.75
+            MemoryPressure.HIGH->0.50
+            MemoryPressure.CRITICAL->0.25
+        }
+        val visualScale=when(memory){
+            MemoryPressure.NORMAL->1.0
+            MemoryPressure.MODERATE->0.90
+            MemoryPressure.HIGH->0.75
+            MemoryPressure.CRITICAL->0.60
+        }
+        val reason=when{
+            thermalLevel>=4->"THERMAL_HIGH"
+            thermalLevel>=2->"THERMAL_WARM"
+            memory==MemoryPressure.CRITICAL->"MEMORY_CRITICAL_VISUAL_ONLY"
+            memory==MemoryPressure.HIGH->"MEMORY_HIGH_VISUAL_ONLY"
+            currentFps<requested->"FRAME_TIME_OR_COOLDOWN"
+            else->"NORMAL"
+        }
+        return RenderBudget(
+            fps=currentFps,
+            frameBudgetMs=1000.0/currentFps,
+            meshScale=visualScale,
+            overlayScale=visualScale,
+            glowScale=if(memory>=MemoryPressure.HIGH)0.75 else 1.0,
+            cacheScale=cacheScale,
+            reason=reason
+        )
+    }
+
+    private fun stepDown(fps:Int)=when{
+        fps>=120->60
+        fps>=60->30
+        else->30
+    }
+
+    private fun stepUp(fps:Int)=when{
+        fps<60->60
+        fps<120->120
+        else->120
+    }
 }
 
 object CncPrecisionContract{
@@ -98,6 +238,17 @@ object CncPrecisionContract{
     fun assertRendererIsolation(settings:RuntimeEnvironmentSettings){
         require(CNC_RESOLUTION_MM==RESOLUTION_MM)
         require(JOIN_TOLERANCE_MM==RESOLUTION_MM)
-        settings.targetFps(120.0)
+        val governor=RendererGovernor(settings)
+        val budget=governor.update(
+            nowMs=0L,
+            displayHz=120.0,
+            frameTimeMs=8.33,
+            batteryPercent=100,
+            thermalLevel=0,
+            charging=true,
+            memoryPressure=MemoryPressure.CRITICAL
+        )
+        require(budget.cacheScale<=1.0)
+        require(RESOLUTION_MM==0.001)
     }
 }
