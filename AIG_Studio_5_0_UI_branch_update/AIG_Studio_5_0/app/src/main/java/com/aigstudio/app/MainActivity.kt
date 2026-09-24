@@ -248,6 +248,8 @@ class MainActivity : Activity() {
     private var axisB = 0.0
     private var workOffset = "G54"
     private var drillCycleBlock = ""
+    private var stockMarginMm = 10.0
+    private var stockThicknessMm = 20.0
     private lateinit var fpsIndicator: TextView
     private lateinit var temperatureIndicator: TextView
     private var fpsLoopRunning = false
@@ -722,11 +724,45 @@ class MainActivity : Activity() {
     private fun showMachiningBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addActionTo(branchFlow, "CAM 設定", 5) { showCamSettingsDialog() }
+        addActionTo(branchFlow, "STOCK", 4) { showStockDialog() }
         addActionTo(branchFlow, "NC EDIT", 0) { showNcEditDialog() }
         addActionTo(branchFlow, "G54–G59", 3) { showWorkOffsetDialog() }
         addActionTo(branchFlow, "G81/G73/G83/G84", 2) { showDrillCycleDialog() }
         addActionTo(branchFlow, "5X A/B", 1) { show5xDialog() }
         addActionTo(branchFlow, "3D 加工", 4) { showMachining3D() }
+    }
+
+    private fun showStockDialog() {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(8), dp(14), dp(4))
+        }
+        fun numeric(label: String, value: Double): EditText = EditText(this).apply {
+            hint = label
+            setText(DisplayFormat.mm(value))
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            box.addView(this)
+        }
+        val margin = numeric("工件外框 Margin mm", stockMarginMm)
+        val thickness = numeric("工件厚度 mm", stockThicknessMm)
+        AlertDialog.Builder(this)
+            .setTitle("STOCK / 工件")
+            .setView(box)
+            .setPositiveButton("套用") { _, _ ->
+                runCatching {
+                    val m = margin.text.toString().toDouble()
+                    val t = thickness.text.toString().toDouble()
+                    require(m >= 0.0 && t > 0.0)
+                    stockMarginMm = m
+                    stockThicknessMm = t
+                }.onSuccess {
+                    Toast.makeText(this, "STOCK 已套用 • margin=" + DisplayFormat.mm(stockMarginMm) + " • T=" + DisplayFormat.mm(stockThicknessMm), Toast.LENGTH_SHORT).show()
+                }.onFailure {
+                    Toast.makeText(this, "STOCK 設定無效", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     private fun showCamSettingsDialog() {
@@ -915,7 +951,8 @@ class MainActivity : Activity() {
                 Toast.makeText(this, "CAM 產生失敗: " + it.message, Toast.LENGTH_LONG).show()
                 return
             }
-        val risk = MachiningRiskScanner.inspect(cam, Stock3D.fromSnapshot(snapshot))
+        val stock = Stock3D.fromSnapshot(snapshot, stockMarginMm, stockThicknessMm)
+        val risk = MachiningRiskScanner.inspect(cam, stock)
         val editor = EditText(this).apply {
             val baseNc = FanucNc.generate(cam, FanucPostSettings(workOffset = workOffset, axisA = axisA, axisB = axisB))
             setText(if (drillCycleBlock.isBlank()) baseNc else FanucNc.insertBeforeProgramEnd(baseNc, drillCycleBlock))
@@ -1021,7 +1058,7 @@ class MainActivity : Activity() {
             return
         }
 
-        runCatching { Machining3DEngine.build(snapshot, camSettings) }
+        runCatching { Machining3DEngine.build(snapshot, camSettings, Stock3D.fromSnapshot(snapshot, stockMarginMm, stockThicknessMm)) }
             .onSuccess { result ->
                 val box = LinearLayout(this).apply {
                     orientation = LinearLayout.VERTICAL
