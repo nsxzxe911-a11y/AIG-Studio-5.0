@@ -140,6 +140,7 @@ object MachiningRiskScanner {
         val warnings = mutableListOf<String>()
         val bottom = -stock.thickness
         cam.toolpaths.forEachIndexed { pathIndex, path ->
+            var previous: Move? = null
             path.moves.forEachIndexed { moveIndex, move ->
                 if (move.rapid && move.z + 1e-9 < cam.settings.safeZ) {
                     collisions++
@@ -149,11 +150,36 @@ object MachiningRiskScanner {
                     overcuts++
                     warnings += "Cut below stock bottom at path=" + pathIndex + " move=" + moveIndex
                 }
-                val outside = move.to.x < stock.minX || move.to.x > stock.maxX || move.to.y < stock.minY || move.to.y > stock.maxY
-                if (!move.rapid && outside) {
+
+                fun outside(x: Double, y: Double): Boolean =
+                    x < stock.minX || x > stock.maxX || y < stock.minY || y > stock.maxY
+
+                var pathOutside = !move.rapid && outside(move.to.x, move.to.y)
+                val prev = previous
+                if (!move.rapid && move is ArcFeed && prev != null) {
+                    val center = prev.to + move.centerOffset
+                    val radius = prev.to.distanceTo(center)
+                    if (radius > EPS) {
+                        val a0 = kotlin.math.atan2(prev.to.y - center.y, prev.to.x - center.x)
+                        val a1 = kotlin.math.atan2(move.to.y - center.y, move.to.x - center.x)
+                        var sweep = a1 - a0
+                        if (move.clockwise) while (sweep >= 0.0) sweep -= 2.0 * Math.PI
+                        else while (sweep <= 0.0) sweep += 2.0 * Math.PI
+                        val steps = kotlin.math.max(8, kotlin.math.ceil(kotlin.math.abs(sweep) / Math.toRadians(10.0)).toInt())
+                        for (i in 0..steps) {
+                            val a = a0 + sweep * i / steps
+                            if (outside(center.x + radius * kotlin.math.cos(a), center.y + radius * kotlin.math.sin(a))) {
+                                pathOutside = true
+                                break
+                            }
+                        }
+                    }
+                }
+                if (pathOutside) {
                     overcuts++
                     warnings += "Cut outside stock XY at path=" + pathIndex + " move=" + moveIndex
                 }
+                previous = move
             }
         }
         return MachiningRiskReport(collisions, overcuts, warnings.distinct())
