@@ -368,8 +368,8 @@ private fun runSmoke() {
         val header = AdaptiveGlassToolbar().apply {
             background = Color(8,18,30)
             add(JLabel("AIG CNC • OFFICIAL RGB ORIGINAL").apply { foreground=Color(61,235,255);font=font.deriveFont(Font.BOLD,20f) })
-            listOf("2D CAD","CAM","3D SIM","5X","NC EDIT","ChatGPT AI 更新").forEachIndexed { i,label ->
-                add(GlassActionButton(label, listOf(Color(61,235,255),Color(63,255,157),Color(236,72,153),Color(125,112,255),Color(80,170,255),Color(245,158,11))[i]))
+            listOf("2D CAD","CAM","3D SIM","NC EDIT").forEachIndexed { i,label ->
+                add(GlassActionButton(label, listOf(Color(61,235,255),Color(63,255,157),Color(236,72,153),Color(80,170,255))[i]))
             }
         }
         add(header,BorderLayout.NORTH)
@@ -440,6 +440,69 @@ private fun runSmoke() {
     )
 }
 
+private fun fanucFromCam(cam: CamModel): String {
+    fun fmt(v: Double): String = java.lang.String.format(java.util.Locale.US, "%.3f", v)
+    val out = mutableListOf<String>()
+    out += "%"
+    out += "O5000"
+    out += "G90 G54"
+    out += "T1 M6"
+    out += "S2300 M3"
+    out += "G43 H1 Z" + fmt(cam.settings.safeZ) + " M8"
+    cam.toolpaths.forEachIndexed { index, path ->
+        out += "N" + ((index + 1) * 10)
+        path.moves.forEach { move ->
+            val code = if (move.rapid) "G0" else "G1"
+            val feed = if (move.rapid) "" else " F" + fmt((move as Feed).feedMmMin)
+            out += code + " X" + fmt(move.to.x) + " Y" + fmt(move.to.y) + " Z" + fmt(move.z) + feed
+        }
+    }
+    out += "G0 Z" + fmt(cam.settings.safeZ)
+    out += "M9"
+    out += "M5"
+    out += "M99"
+    out += "%"
+    return out.joinToString("\n")
+}
+
+private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
+    val cam = CamModel.fromCad(1L, doc.snapshot())
+    require(cam.toolpaths.isNotEmpty()) { "NC BLOCKED: no CAM toolpath" }
+    val area = JTextArea(fanucFromCam(cam)).apply {
+        background = Color(5,8,12)
+        foreground = Color(99,255,157)
+        font = Font(Font.MONOSPACED, Font.PLAIN, 15)
+        lineWrap = false
+    }
+    val keys = listOf("G","M","X","Y","Z","F","S","T","A","B","7","8","9","-",".","4","5","6","0","/","1","2","3","INSERT","DELETE","BLOCK SKIP")
+    val keypad = AdaptiveGlassToolbar()
+    keys.forEach { key ->
+        keypad.add(GlassActionButton(key, Color(80,170,255)).apply {
+            addActionListener {
+                when (key) {
+                    "DELETE" -> {
+                        val s = area.selectionStart
+                        val e = area.selectionEnd
+                        if (e > s) area.replaceRange("", s, e) else if (s > 0) area.replaceRange("", s-1, s)
+                    }
+                    "INSERT" -> area.insert("\n", area.caretPosition)
+                    "BLOCK SKIP" -> area.insert("/", area.caretPosition)
+                    else -> area.insert(key, area.caretPosition)
+                }
+                area.requestFocusInWindow()
+            }
+        })
+    }
+    JDialog(frame, "AIG CNC • NC EDIT • FANUC", false).apply {
+        layout = BorderLayout()
+        add(JScrollPane(area), BorderLayout.CENTER)
+        add(keypad, BorderLayout.SOUTH)
+        setSize(920,720)
+        setLocationRelativeTo(frame)
+        isVisible = true
+    }
+}
+
 private fun showApp() {
     val doc = DrawingDocument()
     val status = JLabel("AIG CNC • OFFICIAL RGB ORIGINAL • 原點 X0.000 Y0.000 • 精度 0.001 mm")
@@ -488,9 +551,11 @@ private fun showApp() {
             }
             .onFailure { JOptionPane.showMessageDialog(frame, "3D BLOCKED: " + it.message, "3D", JOptionPane.WARNING_MESSAGE) }
     })
-    toolbar.add(button("NC EDIT", Color(80, 170, 255)) { status.text = "NC EDIT • FANUC" })
-    toolbar.add(button("5X", Color(125, 112, 255)) { status.text = "5X • A/B" })
-    toolbar.add(button("ChatGPT AI 更新 • 一鍵", Color(61, 235, 255)) { status.text = "ChatGPT AI 更新 • 一鍵 • VERIFIED CHANNEL" })
+    toolbar.add(button("NC EDIT", Color(80, 170, 255)) {
+        runCatching { showNcEditor(frame, doc) }
+            .onSuccess { status.text = "NC EDIT • FANUC • REAL EDITOR" }
+            .onFailure { status.text = "NC EDIT BLOCKED: " + it.message }
+    })
     toolbar.add(button("CLEAR", Color(239, 68, 68)) { cad.clearCad() })
 
     status.border = BorderFactory.createEmptyBorder(8, 12, 8, 12)
