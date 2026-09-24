@@ -40,7 +40,8 @@ data class RuntimeEnvironmentSettings(
     val touchSensitivity:Double=1.0,
     val sPenSensitivity:Double=0.85,
     val mouseSensitivity:Double=1.0,
-    val hudEnabled:Boolean=false
+    val hudEnabled:Boolean=false,
+    val fpsDisplayEnabled:Boolean=false
 ){
     init{
         require(maxFps in setOf(30,60,120))
