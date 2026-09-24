@@ -24,7 +24,7 @@ private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
 }
 
 fun main() {
-    println("AIG Studio 5.0 core regression tests")
+    println("AIG Studio core regression tests")
     testSoftwareAbsoluteCoordinateContract()
     testDeleteDoesNotInventTriangle()
     testUndoRedo()

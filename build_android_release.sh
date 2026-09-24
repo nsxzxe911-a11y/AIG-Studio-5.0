@@ -14,19 +14,7 @@ test -f "$ROOT/settings.gradle.kts"
 rm -rf "$ANDROID_OUT" "$SOURCE_OUT"
 mkdir -p "$ANDROID_OUT" "$SOURCE_OUT"
 
-MAIN="$ROOT/core/src/main/kotlin"
-TEST="$ROOT/core/src/test/kotlin"
-TEST_JAR="$ROOT/build/core-tests.jar"
-mapfile -t CORE_SOURCES < <(find "$MAIN" "$TEST" -type f -name '*.kt' | sort)
-test "${#CORE_SOURCES[@]}" -gt 0
-mkdir -p "$(dirname "$TEST_JAR")"
-rm -f "$TEST_JAR"
-kotlinc "${CORE_SOURCES[@]}" -include-runtime -d "$TEST_JAR"
-test -s "$TEST_JAR"
-java -jar "$TEST_JAR"
-echo "AIG_STUDIO_CORE_REGRESSION=PASS"
-
-gradle -p "$ROOT" --no-daemon :app:assembleDebug
+gradle -p "$ROOT" --no-daemon :core:coreRegression :app:assembleDebug
 
 APK="$ROOT/app/build/outputs/apk/debug/app-debug.apk"
 test -s "$APK"
