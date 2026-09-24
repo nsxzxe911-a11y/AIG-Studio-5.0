@@ -37,14 +37,14 @@ object StudioPackageRegistry {
             StudioPackage("system-monitor-hud","5.0",setOf("performance-telemetry")),
             StudioPackage("thermal-guard","5.0",setOf("performance-telemetry")),
             StudioPackage("renderer-governor","5.0",setOf("performance-telemetry","thermal-guard")),
-            StudioPackage("renderer-burn-in","5.0",setOf("renderer-governor","system-monitor-hud")),
+            StudioPackage("5.0",setOf("renderer-governor","system-monitor-hud")),
             StudioPackage("ai-command-router","5.0",setOf("cad-core","system-monitor-hud")),
             StudioPackage("voice-safety-confirm","5.0",setOf("ai-command-router")),
             StudioPackage("ai-voice","5.0",setOf("ai-command-router","voice-safety-confirm")),
             StudioPackage("ai-health","5.0",setOf("system-monitor-hud","thermal-guard","chatgpt-ai-update")),
             StudioPackage("ai-system-suite","5.0",setOf(
                 "ai-voice","ai-health","system-monitor-hud","performance-telemetry",
-                "thermal-guard","renderer-governor","renderer-burn-in","chatgpt-ai-update",
+                "thermal-guard","renderer-governor","chatgpt-ai-update",
                 "software-absolute-coordinate"
             )),
             StudioPackage("chatgpt-ai-update","5.0",setOf("rgb-glass-ui")),
