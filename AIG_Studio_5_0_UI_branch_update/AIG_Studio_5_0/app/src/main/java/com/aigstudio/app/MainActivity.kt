@@ -812,6 +812,9 @@ class MainActivity : Activity() {
         val r = num("R retract mm", 2.0)
         val q = num("Q peck mm (G73/G83)", 5.0)
         val feed = num("Feed mm/min", camSettings.feedMmMin)
+        val tapPitch = num("Tap pitch mm/rev (G84)", 1.0)
+        val tapRpm = num("Tap spindle RPM (G84)", 500.0)
+        val useM29 = CheckBox(this).apply { text = "G84 使用 Fanuc M29 rigid tapping"; isChecked = false; box.addView(this) }
 
         AlertDialog.Builder(this)
             .setTitle("Fanuc 鑽孔循環")
@@ -820,12 +823,15 @@ class MainActivity : Activity() {
                 runCatching {
                     val cycle = DrillCycle.entries[cycleSpinner.selectedItemPosition]
                     val hole = DrillHole(
-                        x.text.toString().toDouble(),
-                        y.text.toString().toDouble(),
-                        z.text.toString().toDouble(),
-                        r.text.toString().toDouble(),
-                        if (cycle == DrillCycle.G73 || cycle == DrillCycle.G83) q.text.toString().toDouble() else null,
-                        feed.text.toString().toDouble()
+                        x = x.text.toString().toDouble(),
+                        y = y.text.toString().toDouble(),
+                        z = z.text.toString().toDouble(),
+                        r = r.text.toString().toDouble(),
+                        k = if (cycle == DrillCycle.G73 || cycle == DrillCycle.G83) q.text.toString().toDouble() else null,
+                        feed = feed.text.toString().toDouble(),
+                        tapPitchMm = if (cycle == DrillCycle.G84) tapPitch.text.toString().toDouble() else null,
+                        tapSpindleRpm = if (cycle == DrillCycle.G84) tapRpm.text.toString().toInt() else null,
+                        rigidTapM29 = cycle == DrillCycle.G84 && useM29.isChecked
                     )
                     FanucNc.cannedCycle(cycle, listOf(hole), camSettings.safeZ, hole.r)
                 }.onSuccess {
