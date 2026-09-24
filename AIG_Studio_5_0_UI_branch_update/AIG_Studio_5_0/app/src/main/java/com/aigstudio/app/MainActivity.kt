@@ -799,6 +799,19 @@ class MainActivity : Activity() {
         val preview = Axis5xPreview(this, axisA, axisB) { a, b -> refresh5xText(a, b) }
         box.addView(preview, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(260)))
         box.addView(previewText)
+        val presets = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        fun preset(label: String, a: Double, b: Double) {
+            presets.addView(RgbGlowButton(this).apply {
+                text = label
+                setRgbState(Color.rgb(61,235,255), false)
+                setOnClickListener { refresh5xText(a,b) }
+            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }
+        preset("ZERO",0.0,0.0)
+        preset("A90",90.0,0.0)
+        preset("B60",0.0,60.0)
+        preset("B90",0.0,90.0)
+        box.addView(presets)
         refresh5xText(axisA, axisB)
         AlertDialog.Builder(this)
             .setTitle("AIG CNC 5X • A/B")
@@ -811,7 +824,8 @@ class MainActivity : Activity() {
                 } else {
                     axisA = a
                     axisB = b
-                    Toast.makeText(this, "5X A=" + DisplayFormat.mm(axisA) + " B=" + DisplayFormat.mm(axisB), Toast.LENGTH_SHORT).show()
+                    val ncPreview = "G0 A" + FanucNc.fmt(axisA) + " B" + FanucNc.fmt(axisB)
+                    Toast.makeText(this, "5X " + ncPreview, Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("取消", null)
