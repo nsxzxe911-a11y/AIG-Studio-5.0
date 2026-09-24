@@ -1676,7 +1676,25 @@ class CadView(context: Context) : View(context) {
                     candidates += e.b
                     candidates += Vec2((e.a.x + e.b.x) / 2.0, (e.a.y + e.b.y) / 2.0)
                 }
-                is Circle -> candidates += e.center
+                is Circle -> {
+                    candidates += e.center
+                    val dx = p.x - e.center.x
+                    val dy = p.y - e.center.y
+                    val d2 = dx * dx + dy * dy
+                    val r2 = e.radius * e.radius
+                    if (d2 > r2 + EPS) {
+                        val l = r2 / d2
+                        val m = e.radius * sqrt(d2 - r2) / d2
+                        candidates += Vec2(
+                            e.center.x + l * dx - m * dy,
+                            e.center.y + l * dy + m * dx
+                        )
+                        candidates += Vec2(
+                            e.center.x + l * dx + m * dy,
+                            e.center.y + l * dy - m * dx
+                        )
+                    }
+                }
                 is Arc -> {
                     candidates += e.center
                     candidates += e.start
