@@ -11,8 +11,8 @@ android {
         applicationId = "com.aigstudio.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 50200
-        versionName = "5.2.0"
+        versionCode = 50300
+        versionName = "5.3.0"
     }
 }
 
