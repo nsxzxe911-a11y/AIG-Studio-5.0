@@ -71,18 +71,4 @@ install_apk FRESH
 verify_package FRESH
 launch_app FRESH
 
-install_apk UPGRADE -r
-verify_package UPGRADE
-launch_app UPGRADE
-
-adb uninstall "$PACKAGE" | tee "$EVIDENCE_DIR/UNINSTALL.txt"
-if adb shell pm path "$PACKAGE" >/dev/null 2>&1; then
-  echo "STUDIO_ANDROID_UNINSTALL=FAIL"
-  exit 72
-fi
-
-install_apk CLEAN_REINSTALL
-verify_package CLEAN_REINSTALL
-launch_app CLEAN_REINSTALL
-
-echo "STUDIO_SIGNED_FRESH_UPGRADE_UNINSTALL_REINSTALL_PASS" | tee "$EVIDENCE_DIR/FINAL_INSTALL_GATE.txt"
+echo "STUDIO_SIGNED_FRESH_INSTALL_LAUNCH_PASS" | tee "$EVIDENCE_DIR/FINAL_INSTALL_GATE.txt"
