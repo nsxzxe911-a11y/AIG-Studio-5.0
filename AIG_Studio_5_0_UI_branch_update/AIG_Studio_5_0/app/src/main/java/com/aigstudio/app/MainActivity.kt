@@ -172,6 +172,8 @@ class MainActivity : Activity() {
     private var ncSingleBlock = false
     private var ncDryRun = false
     private var ncBlockSkip = false
+    private var axisA = 0.0
+    private var axisB = 0.0
     private lateinit var fpsIndicator: TextView
     private lateinit var temperatureIndicator: TextView
     private var fpsLoopRunning = false
@@ -647,6 +649,7 @@ class MainActivity : Activity() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addActionTo(branchFlow, "CAM 設定", 5) { showCamSettingsDialog() }
         addActionTo(branchFlow, "NC EDIT", 0) { showNcEditDialog() }
+        addActionTo(branchFlow, "5X A/B", 1) { show5xDialog() }
         addActionTo(branchFlow, "3D 加工", 4) { showMachining3D() }
     }
 
@@ -698,6 +701,44 @@ class MainActivity : Activity() {
     }
 
 
+    private fun show5xDialog() {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+        }
+        fun axisEditor(label: String, value: Double): EditText = EditText(this).apply {
+            hint = label
+            setText(DisplayFormat.mm(value))
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            box.addView(this)
+        }
+        val aInput = axisEditor("A axis °", axisA)
+        val bInput = axisEditor("B axis °", axisB)
+        val preview = TextView(this).apply {
+            setTextColor(Color.rgb(61,235,255))
+            textSize = 12f
+            text = "5X • A " + DisplayFormat.mm(axisA) + "° • B " + DisplayFormat.mm(axisB) + "°"
+            setPadding(dp(4),dp(6),dp(4),dp(4))
+        }
+        box.addView(preview)
+        AlertDialog.Builder(this)
+            .setTitle("AIG CNC 5X • A/B")
+            .setView(box)
+            .setPositiveButton("套用") { _, _ ->
+                val a = aInput.text.toString().toDoubleOrNull()
+                val b = bInput.text.toString().toDoubleOrNull()
+                if (a == null || b == null || a !in -360.0..360.0 || b !in -360.0..360.0) {
+                    Toast.makeText(this, "A/B 軸角度無效", Toast.LENGTH_LONG).show()
+                } else {
+                    axisA = a
+                    axisB = b
+                    Toast.makeText(this, "5X A=" + DisplayFormat.mm(axisA) + " B=" + DisplayFormat.mm(axisB), Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
     private fun showNcEditDialog() {
         val snapshot = cad.snapshot()
         if (snapshot.entities.isEmpty()) {
@@ -711,7 +752,7 @@ class MainActivity : Activity() {
             }
         val risk = MachiningRiskScanner.inspect(cam, Stock3D.fromSnapshot(snapshot))
         val editor = EditText(this).apply {
-            setText(FanucNc.generate(cam))
+            setText(FanucNc.generate(cam, FanucPostSettings(axisA = axisA, axisB = axisB)))
             setTextColor(Color.rgb(225,240,255))
             setBackgroundColor(Color.rgb(5,12,20))
             textSize = 13f
