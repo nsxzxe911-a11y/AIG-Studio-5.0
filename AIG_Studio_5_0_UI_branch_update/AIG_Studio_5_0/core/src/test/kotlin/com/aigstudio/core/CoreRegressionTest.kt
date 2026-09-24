@@ -22,6 +22,7 @@ fun main() {
     testTransformRoundTrip()
     testCamSnapshotIsIsolated()
     testDataSyncDesyncContract()
+    testPackageBundleContract()
     testRealCamToolpath()
     testMaterialRemoval3D()
     testMachiningMesh3D()
@@ -159,6 +160,23 @@ private fun testDataSyncDesyncContract() {
     check(toolChanged.sourceRevision != rebuilt.sourceRevision)
 
     println("✓ DATA_SYNC_DESYNC_GATE_PASS CAD→CAM→SIM revision/snapshot/tool-change")
+}
+
+private fun testPackageBundleContract() {
+    val official = StudioPackageRegistry.official
+    val all = official.packages.map { it.id }.toSet()
+    check(StudioPackageRegistry.validate(official, all).ok)
+    check(runCatching { StudioPackageRegistry.requireHealthy(official, all) }.isSuccess)
+
+    val missingCad = all - "cad-core"
+    val broken = StudioPackageRegistry.validate(official, missingCad)
+    check(!broken.ok)
+    check(broken.missingDependencies.any { it.contains("cam-core->cad-core") || it.contains("mesh-3d-renderer->cad-core") })
+    check(runCatching { StudioPackageRegistry.requireHealthy(official, missingCad) }.isFailure)
+
+    val duplicate = official.copy(packages = official.packages + official.packages.first())
+    check(StudioPackageRegistry.validate(duplicate, duplicate.packages.map { it.id }.toSet()).duplicatePackages.contains("cad-core"))
+    println("✓ PACKAGE_BUNDLE_GATE_PASS dependencies / enable-disable / duplicate fail-closed")
 }
 
 private fun testAigIiPrecisionContract() {
