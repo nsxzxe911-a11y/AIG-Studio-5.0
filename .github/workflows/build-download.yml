@@ -2,9 +2,6 @@ name: AIG Studio direct release validation
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 permissions:
   contents: read
@@ -24,7 +21,7 @@ jobs:
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
           test -x "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" "platform-tools" "platforms;android-37" "build-tools;36.0.0"
+          "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
@@ -39,7 +36,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 4 "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "package: name='com.aigstudio.app'"
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "targetSdkVersion:'37'"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "targetSdkVersion:'36'"
           (cd release/android && sha256sum -c SHA256SUMS.txt)
           (cd release/source && sha256sum -c SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
@@ -64,7 +61,7 @@ jobs:
           $sdkmanager = Get-ChildItem "$env:ANDROID_HOME\cmdline-tools" -Recurse -Filter sdkmanager.bat |
             Sort-Object FullName | Select-Object -Last 1
           if (-not $sdkmanager) { throw 'sdkmanager.bat missing' }
-          & $sdkmanager.FullName "platform-tools" "platforms;android-37" "build-tools;36.0.0"
+          & $sdkmanager.FullName "platform-tools" "platforms;android-36" "build-tools;36.0.0"
           if ($LASTEXITCODE -ne 0) { throw 'Android SDK install failed' }
       - uses: gradle/actions/setup-gradle@v4
         with:
