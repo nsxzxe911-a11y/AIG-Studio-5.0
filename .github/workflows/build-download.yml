@@ -21,7 +21,7 @@ jobs:
           gradle-version: '8.10.2'
       - name: Build installable APK
         working-directory: AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0
-        run: gradle --no-daemon clean :app:assembleDebug
+        run: gradle --no-daemon :app:assembleDebug
       - name: Prepare APK and source package
         shell: bash
         run: |
@@ -58,8 +58,8 @@ jobs:
       - name: Install Kotlin and WiX
         shell: pwsh
         run: |
-          choco install kotlinc -y
-          choco install wixtoolset -y
+          choco install kotlinc -y --no-progress
+          choco install wixtoolset -y --no-progress
       - name: Build Windows EXE
         shell: pwsh
         run: |
