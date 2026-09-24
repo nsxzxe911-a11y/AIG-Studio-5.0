@@ -4,12 +4,12 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 
 ## Current main
 
-- Version: **47.0.0**
+- Version: **48.0.0**
 - Runtime project root: repository root
 - Android versionCode: derived automatically from the major version
 - Version source: `release-version.properties`
 - Android build/package entry: `build_android_release.sh`
-- Android compile/target platform: **API 36 / Android 16**
+- Android compile/target platform: **API 37 / Android 17**
 - Android platform downgrade gate: `:app:verifyAndroidPlatform`
 - Adaptive refresh: Auto = interaction up to 120 Hz / idle 30 Hz / thermal 60→30 Hz caps
 - Physical Android device path: up to 120 Hz
@@ -28,7 +28,8 @@ AIG Studio is the Android + Windows CNC/CAD/CAM runtime project for the current 
 - Core regression locks physical 120 Hz vs emulator 60 Hz policy
 - Thermal refresh listener is lifecycle-bound and removed on Activity destroy
 - Core regression locks the adaptive 120/30/60/30 policy against regression
-- Android Gradle Plugin: **8.10.1** / Gradle: **8.11.1**
+- Android Gradle Plugin: **9.4.0** / Gradle: **9.6.0**
+- Android Kotlin compilation uses AGP 9 built-in Kotlin; core/desktop Kotlin JVM plugin is **2.2.10**
 - Windows build/package entry: `build_windows_native.ps1`
 - Android and Windows Kotlin compilation use the same Gradle/Kotlin toolchain
 - Windows release runner is pinned to `windows-2025`; WiX is supplied by the runner image, not installed during the build
