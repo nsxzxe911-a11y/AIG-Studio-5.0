@@ -26,6 +26,20 @@ adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1 || true
 adb shell settings put system user_rotation 0 >/dev/null 2>&1 || true
 adb shell settings put system font_scale 1.0 >/dev/null 2>&1 || true
 
+adb shell dumpsys connectivity > "$EVIDENCE/ANDROID_CONNECTIVITY.txt" 2>/dev/null || true
+if grep -Eq 'VALIDATED|NET_CAPABILITY_VALIDATED' "$EVIDENCE/ANDROID_CONNECTIVITY.txt"; then
+  net_validated=PASS
+else
+  net_validated=FAIL
+fi
+dns_prop="$(adb shell getprop net.dns1 2>/dev/null | tr -d '\r' || true)"
+{
+  echo "SOURCE_SHA=$GITHUB_SHA"
+  echo "NETWORK_VALIDATED=$net_validated"
+  echo "DNS1=$dns_prop"
+} | tee "$EVIDENCE/ANDROID_NETWORK_GATE.txt"
+test "$net_validated" = PASS
+
 PACKAGE="com.aigstudio.app"
 adb uninstall "$PACKAGE" >/dev/null 2>&1 || true
 adb install --no-streaming "$APK"
