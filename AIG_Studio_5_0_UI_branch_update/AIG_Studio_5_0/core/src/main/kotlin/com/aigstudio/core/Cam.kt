@@ -7,13 +7,16 @@ data class CamSettings(
     val depth: Double = -2.0,
     val safeZ: Double = 5.0,
     val feedMmMin: Double = 150.0,
-    val climb: Boolean = true
+    val climb: Boolean = true,
+    val leadInMm: Double = 2.0,
+    val leadOutMm: Double = 2.0
 ) {
     init {
         require(toolDiameter > 0.0) { "Tool diameter must be positive" }
         require(depth < 0.0) { "Cut depth must be below Z0" }
         require(safeZ > 0.0) { "Safe-Z must be positive" }
         require(feedMmMin > 0.0) { "Feed must be positive" }
+        require(leadInMm >= 0.0 && leadOutMm >= 0.0) { "Lead-in/out must be non-negative" }
     }
 }
 
@@ -69,10 +72,32 @@ object CamEngine {
             if (points.size < 2) return
             val ordered = if (settings.climb) points else points.reversed()
             val moves = mutableListOf<Move>()
-            moves += Rapid(ordered.first(), settings.safeZ)
-            moves += Feed(ordered.first(), settings.feedMmMin, settings.depth)
+            val first = ordered.first()
+            val second = ordered.getOrElse(1) { first }
+            val last = ordered.last()
+            val beforeLast = ordered.getOrElse(ordered.lastIndex - 1) { last }
+            fun offsetFrom(a: Vec2, b: Vec2, distance: Double): Vec2 {
+                val dx = b.x - a.x
+                val dy = b.y - a.y
+                val len = hypot(dx, dy)
+                if (len < CNC_RESOLUTION_MM || distance <= 0.0) return a
+                return Vec2(a.x - dx / len * distance, a.y - dy / len * distance)
+            }
+            fun offsetPast(a: Vec2, b: Vec2, distance: Double): Vec2 {
+                val dx = b.x - a.x
+                val dy = b.y - a.y
+                val len = hypot(dx, dy)
+                if (len < CNC_RESOLUTION_MM || distance <= 0.0) return b
+                return Vec2(b.x + dx / len * distance, b.y + dy / len * distance)
+            }
+            val leadIn = offsetFrom(first, second, settings.leadInMm)
+            val leadOut = offsetPast(beforeLast, last, settings.leadOutMm)
+            moves += Rapid(leadIn, settings.safeZ)
+            moves += Feed(leadIn, settings.feedMmMin, settings.depth)
+            if (leadIn.distanceTo(first) >= CNC_RESOLUTION_MM) moves += Feed(first, settings.feedMmMin, settings.depth)
             ordered.drop(1).forEach { moves += Feed(it, settings.feedMmMin, settings.depth) }
-            moves += Rapid(ordered.last(), settings.safeZ)
+            if (leadOut.distanceTo(last) >= CNC_RESOLUTION_MM) moves += Feed(leadOut, settings.feedMmMin, settings.depth)
+            moves += Rapid(leadOut, settings.safeZ)
             output += Toolpath(moves)
         }
 
