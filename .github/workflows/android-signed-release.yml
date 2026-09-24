@@ -2,10 +2,6 @@ name: AIG Studio 5.0 Signed Android Release
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-
 permissions:
   actions: read
   contents: read
