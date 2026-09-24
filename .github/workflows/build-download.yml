@@ -8,6 +8,10 @@ on:
       - 'AIG_Studio_5_0_UI_branch_update/AIG_Studio_5_0/**'
       - '.github/workflows/build-download.yml'
 
+concurrency:
+  group: aig-studio-main-build
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
