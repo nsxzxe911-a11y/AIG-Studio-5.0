@@ -76,7 +76,7 @@ class MainActivity : Activity() {
         addCategory("加工", 5) { showMachiningBranch() }
         addCategory("安全", 4) { showSecurityBranch() }
         addCategory("AI", 1) { showAiBranch() }
-        addActionTo(categoryFlow, "ChatGPT AI 更新", 1) { runSecureUpdateCheck() }
+        addActionTo(categoryFlow, "ChatGPT AI 一鍵更新", 1) { runSecureUpdateCheck() }
         addActionTo(categoryFlow, "↶", 3) { cad.undo() }
         addActionTo(categoryFlow, "↷", 5) { cad.redo() }
 
@@ -212,7 +212,7 @@ class MainActivity : Activity() {
     private fun showSecurityBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addActionTo(branchFlow, "網路狀態", 0) { showNetworkStatus() }
-        addActionTo(branchFlow, "ChatGPT AI 更新", 1) { runSecureUpdateCheck() }
+        addActionTo(branchFlow, "ChatGPT AI 一鍵更新", 1) { runSecureUpdateCheck() }
         addActionTo(branchFlow, "防毒掃描", 4) { showSecurityScan() }
         addActionTo(branchFlow, "更新設定", 5) { showUpdateSettings() }
     }
@@ -231,13 +231,23 @@ class MainActivity : Activity() {
 
     private fun runSecureUpdateCheck() {
         val config = UpdateConfigStore.load(this)
-        Toast.makeText(this, "ChatGPT AI 更新檢查…", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "ChatGPT AI 一鍵更新：檢查與驗證中…", Toast.LENGTH_SHORT).show()
         SecureUpdateManager.autoCheck(this, config) { result ->
-            AlertDialog.Builder(this)
-                .setTitle(if (result.ok) "ChatGPT AI 更新" else "UPDATE BLOCKED")
-                .setMessage(result.message + (result.verifiedApk?.let { "\nVERIFIED FILE: " + it.name } ?: ""))
-                .setPositiveButton("OK", null)
-                .show()
+            val apk = result.verifiedApk
+            if (result.ok && apk != null) {
+                val install = runCatching { SecureUpdateManager.installVerifiedUpdate(this, apk) }
+                AlertDialog.Builder(this)
+                    .setTitle(if (install.isSuccess) "ChatGPT AI 一鍵更新" else "UPDATE BLOCKED")
+                    .setMessage(install.getOrElse { "UPDATE BLOCKED: " + (it.message ?: "installer error") })
+                    .setPositiveButton("OK", null)
+                    .show()
+            } else {
+                AlertDialog.Builder(this)
+                    .setTitle(if (result.ok) "ChatGPT AI 更新" else "UPDATE BLOCKED")
+                    .setMessage(result.message)
+                    .setPositiveButton("OK", null)
+                    .show()
+            }
         }
     }
 
