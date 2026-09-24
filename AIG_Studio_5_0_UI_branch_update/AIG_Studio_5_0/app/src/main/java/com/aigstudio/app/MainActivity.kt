@@ -9,6 +9,8 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.os.Build
+import android.view.Window
 import android.text.InputType
 import android.view.Gravity
 import android.view.MotionEvent
@@ -41,12 +43,20 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT >= 30) {
+            display?.supportedModes
+                ?.filter { it.refreshRate >= 119.0f }
+                ?.maxByOrNull { it.refreshRate }
+                ?.let { mode ->
+                    window.attributes = window.attributes.apply { preferredDisplayModeId = mode.modeId }
+                }
+        }
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(0xFF07111B.toInt())
         }
         val title = TextView(this).apply {
-            text = "AIG CNC • OFFICIAL RGB ORIGINAL • 2D CAD • 原點 0.000 • 精度 0.001 mm"
+            text = "AIG CNC • OFFICIAL RGB ORIGINAL • 2D CAD • HQ • 120Hz TARGET • 原點 0.000 • 精度 0.001 mm"
             setTextColor(0xFF3DEBFF.toInt()); textSize = 16f; gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(6), dp(12), dp(6))
         }
