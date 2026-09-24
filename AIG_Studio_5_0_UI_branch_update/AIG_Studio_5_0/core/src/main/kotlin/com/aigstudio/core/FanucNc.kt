@@ -12,7 +12,9 @@ data class FanucPostSettings(
     val spindle: Int = 2300,
     val coolant: Boolean = true,
     val toolChangeSubprogram: Int = 4,
-    val endSubprogram: Int = 5
+    val endSubprogram: Int = 5,
+    val axisA: Double = 0.0,
+    val axisB: Double = 0.0
 ) {
     init {
         require(Regex("G5[4-9]").matches(workOffset))
@@ -21,6 +23,8 @@ data class FanucPostSettings(
         require(spindle in 1..99999)
         require(toolChangeSubprogram in 1..9999)
         require(endSubprogram in 1..9999)
+        require(axisA in -360.0..360.0)
+        require(axisB in -360.0..360.0)
     }
 }
 
@@ -37,6 +41,9 @@ object FanucNc {
         out.appendLine("T" + post.tool)
         out.appendLine("M98 P" + post.toolChangeSubprogram)
         out.appendLine("S" + post.spindle + " M3")
+        if (kotlin.math.abs(post.axisA) > 1e-9 || kotlin.math.abs(post.axisB) > 1e-9) {
+            out.append("G0 A").append(fmt(post.axisA)).append(" B").append(fmt(post.axisB)).appendLine()
+        }
         out.append("G43 Z").append(fmt(max(s.safeZ, 30.0))).append(" H").append(post.h)
         if (post.coolant) out.append(" M8")
         out.appendLine()
