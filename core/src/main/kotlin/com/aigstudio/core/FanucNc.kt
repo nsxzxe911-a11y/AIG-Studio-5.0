@@ -30,17 +30,23 @@ data class NcModalState(
     val coordinateMode: String = "G90",
     val workOffset: String = "G54",
     val temporaryOriginActive: Boolean = false,
+    val units: String = "G21",
+    val feedMode: String = "G94",
     val cutterCompensation: String = "G40",
     val toolLengthCompensation: String = "G49",
-    val plane: String = "G17"
+    val plane: String = "G17",
+    val coordinateRotation: String = "G69"
 ) {
     fun evidence(): String =
         "PROGRAM=" + coordinateMode +
         "|WORK_OFFSET=" + workOffset +
         "|G92=" + if (temporaryOriginActive) "ACTIVE" else "OFF" +
+        "|UNITS=" + units +
+        "|FEED_MODE=" + feedMode +
         "|CUTTER_COMP=" + cutterCompensation +
         "|TOOL_LENGTH=" + toolLengthCompensation +
-        "|PLANE=" + plane
+        "|PLANE=" + plane +
+        "|ROTATION=" + coordinateRotation
 }
 
 data class NcModalEvent(
@@ -67,10 +73,15 @@ object NcModalTracker {
                     91 -> { group = "PROGRAM_MODE"; state.copy(coordinateMode = "G91") }
                     54,55,56,57,58,59 -> { group = "WORK_OFFSET"; state.copy(workOffset = code) }
                     92 -> { group = "TEMP_ORIGIN"; state.copy(temporaryOriginActive = true) }
+                    20,21 -> { group = "UNITS"; state.copy(units = code) }
+                    93,94,95 -> { group = "FEED_MODE"; state.copy(feedMode = code) }
                     40,41,42 -> { group = "CUTTER_COMP"; state.copy(cutterCompensation = code) }
                     43 -> { group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G43") }
                     49 -> { group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G49") }
                     17,18,19 -> { group = "PLANE"; state.copy(plane = code) }
+                    68 -> { group = "COORD_ROTATION"; state.copy(coordinateRotation = "G68") }
+                    69 -> { group = "COORD_ROTATION"; state.copy(coordinateRotation = "G69") }
+                    53 -> { group = "MACHINE_COORD_NONMODAL"; state }
                     else -> { group = null; state }
                 }
                 if (group != null) events += NcModalEvent(index + 1, code, group, state)
@@ -149,6 +160,7 @@ object FanucNc {
         out.appendLine("(CONTROLLER " + post.controller.displayName + ")")
         out.appendLine("(CANONICAL XYZ ABSOLUTE G90 • MASTER X0.000 Y0.000 Z0.000)")
         out.appendLine("(PROGRAM MODE " + post.coordinateMode.displayName + " • ORIGIN " + post.originTransformMode.displayName + " • CUTTER COMP " + post.cutterCompensation.displayName + ")")
+        out.appendLine("G21 G94")
         out.appendLine("G90 " + post.workOffset + " G17 G40 G49 G80")
         out.appendLine("T" + post.tool)
         out.appendLine("M98 P" + post.toolChangeSubprogram)
