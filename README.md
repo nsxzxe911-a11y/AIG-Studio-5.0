@@ -73,6 +73,7 @@ Current-version evidence is required before FINAL, including build, artifact int
 - Real editable CAD geometry, not static images.
 - CAM toolpaths remain separate from drawing geometry.
 - Simulation must represent real machining/material removal behavior.
+- SIM coordinate telemetry is absolute `G90` model/toolpath data with signed X/Y/Z preserved, Master Origin fixed at `X0.000 Y0.000 Z0.000`, and no hidden work-offset or tolerance shift.
 - Fanuc NC safety rules and 0.001 mm precision remain mandatory.
 - 3D/5X interaction must be real and movable.
 - Mobile UI follows the approved RGB/glass visual direction.
