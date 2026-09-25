@@ -510,6 +510,106 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     }
     println("✓ NC_MACHINE_STABILITY_STRESS_PASS 1500-random/100-alarm-cycles/duplicate-axis/250-mode-flips")
 
+    val modalConflictCases = listOf(
+        "G90 G91" to "CONFLICTING_MODAL_GROUP_PROGRAM_MODE",
+        "G20 G21" to "CONFLICTING_MODAL_GROUP_UNITS",
+        "G93 G94" to "CONFLICTING_MODAL_GROUP_FEED_MODE",
+        "G17 G18" to "CONFLICTING_MODAL_GROUP_PLANE",
+        "G40 G41" to "CONFLICTING_MODAL_GROUP_CUTTER_COMP",
+        "G43 G49" to "CONFLICTING_MODAL_GROUP_TOOL_LENGTH",
+        "G54 G55" to "CONFLICTING_MODAL_GROUP_WORK_OFFSET",
+        "G80 G81" to "CONFLICTING_MODAL_GROUP_FIXED_CYCLE",
+        "G98 G99" to "CONFLICTING_MODAL_GROUP_CYCLE_RETURN",
+        "G61 G64" to "CONFLICTING_MODAL_GROUP_PATH_CONTROL",
+        "G96 G97" to "CONFLICTING_MODAL_GROUP_SPINDLE_SPEED_MODE"
+    )
+    modalConflictCases.forEach { (codes,expected) ->
+        val p = "G21 G94 G97 G90 G54\n" + codes + " X0.000 Y0.000 Z0.000"
+        val findings = NcRuntimeInterlock.findings(p,verifiedTravel)
+        check(findings.any { it.lineNumber==2 && it.code==expected })
+        check(NcExecutionTimeline.build(
+            p,CncControllerProfile.FANUC,verifiedTravel
+        ).any { it.lineNumber==2 && it.status=="BLOCKED" && expected in it.reasons })
+    }
+
+    val duplicateAddressCases = listOf(
+        "F100.000 F200.000" to "DUPLICATE_ADDRESS_F",
+        "S1000 S2000" to "DUPLICATE_ADDRESS_S",
+        "T1 T2" to "DUPLICATE_ADDRESS_T",
+        "H1 H2" to "DUPLICATE_ADDRESS_H",
+        "D1 D2" to "DUPLICATE_ADDRESS_D",
+        "I1.000 I2.000" to "DUPLICATE_ADDRESS_I",
+        "J1.000 J2.000" to "DUPLICATE_ADDRESS_J",
+        "K1.000 K2.000" to "DUPLICATE_ADDRESS_K",
+        "R1.000 R2.000" to "DUPLICATE_ADDRESS_R",
+        "Q1.000 Q2.000" to "DUPLICATE_ADDRESS_Q",
+        "P1 P2" to "DUPLICATE_ADDRESS_P"
+    )
+    duplicateAddressCases.forEach { (words,expected) ->
+        val p = "G21 G94 G97 G90 G54\nG1 X1.000 Y2.000 Z-1.000 " + words
+        check(NcRuntimeInterlock.findings(p,verifiedTravel).any { it.code==expected })
+    }
+
+    val inlineCommentProgram =
+        "G21 G94 G97 G90 G54\n" +
+        "G1 X1.000 (G91 X999999.000 M30) Y2.000 Z-1.000 M8\n" +
+        "G1 X2.000 (NOTE) Y3.000 Z-2.000 M9"
+    check(NcRuntimeInterlock.status(inlineCommentProgram,verifiedTravel)=="PASS")
+    check("G91" !in NcModalTracker.codes(inlineCommentProgram).map { it.second })
+    check("M30" !in NcAuxiliaryTracker.codes(inlineCommentProgram).map { it.second })
+    check("G1" in NcModalTracker.codes(inlineCommentProgram).map { it.second })
+    check("M8" in NcAuxiliaryTracker.codes(inlineCommentProgram).map { it.second })
+    check("M9" in NcAuxiliaryTracker.codes(inlineCommentProgram).map { it.second })
+
+    val commentSeparatedConflict =
+        "G21 G94 G97 G90 G54\nG90 (COMMENT ONLY) G91 X0.000"
+    check(NcRuntimeInterlock.findings(commentSeparatedConflict,verifiedTravel).any {
+        it.code=="CONFLICTING_MODAL_GROUP_PROGRAM_MODE"
+    })
+    check(NcModalTracker.codes(commentSeparatedConflict).map { it.second }.count { it=="G90" || it=="G91" } >= 2)
+
+    val crlfProgram = "G21 G94 G97 G90 G54\r\nG0 X1.000 Y-2.000 Z3.000\r\nM8\r\nM9\r\n"
+    check(NcRuntimeInterlock.status(crlfProgram,verifiedTravel)=="PASS")
+    check(NcAuxiliaryTracker.finalState(crlfProgram).coolant=="M9")
+
+    val semicolonCommentProgram =
+        "G21 G94 G97 G90 G54\nG0 X1.000 Y2.000 Z3.000 ; X999999.000 G91 M30"
+    check(NcRuntimeInterlock.status(semicolonCommentProgram,verifiedTravel)=="PASS")
+    check("G91" !in NcModalTracker.codes(semicolonCommentProgram).map { it.second })
+    check("M30" !in NcAuxiliaryTracker.codes(semicolonCommentProgram).map { it.second })
+
+    val blockSkipProgram =
+        "G21 G94 G97 G90 G54\n/G1 X1.000 Y2.000 Z-1.000 F100.000\n/M8"
+    check(NcRuntimeInterlock.status(blockSkipProgram,verifiedTravel)=="PASS")
+    check("G1" in NcModalTracker.codes(blockSkipProgram).map { it.second })
+    check("M8" in NcAuxiliaryTracker.codes(blockSkipProgram).map { it.second })
+
+    val signedZeroProgram =
+        "G21 G94 G97 G90 G54\nG0 X-0.000 Y+0.000 Z-0.000 A-0.000 B+0.000"
+    check(NcRuntimeInterlock.status(signedZeroProgram,verifiedTravel)=="PASS")
+
+    val fiveThousandBlockProgram = buildString {
+        appendLine("G21 G94 G97 G90 G54")
+        appendLine("G0 X0.000 Y0.000 Z0.000")
+        appendLine("G91")
+        repeat(5000) { appendLine("X0.001") }
+        appendLine("G90")
+    }.trim()
+    check(NcRuntimeInterlock.status(fiveThousandBlockProgram,verifiedTravel)=="PASS")
+    check(NcExecutionTimeline.build(
+        fiveThousandBlockProgram,CncControllerProfile.FANUC,verifiedTravel
+    ).none { it.status=="BLOCKED" || it.status=="SKIPPED_AFTER_BLOCK" })
+
+    val cleanRecovery = NcMachineInterlockSession(verifiedTravel)
+    check(cleanRecovery.inspect(overTravelProgram).state==NcMachineInterlockState.ALARM_LATCHED)
+    check(cleanRecovery.inspect(correctedTravelProgram).state==NcMachineInterlockState.RESET_REQUIRED)
+    check(cleanRecovery.reset().state==NcMachineInterlockState.REVALIDATE_REQUIRED)
+    check(cleanRecovery.revalidate(correctedTravelProgram).state==NcMachineInterlockState.RESUME_ALLOWED)
+    val cleanReady = cleanRecovery.resume()
+    check(cleanReady.state==NcMachineInterlockState.READY)
+    check(cleanReady.alarmCodes.isEmpty() && cleanReady.alarmLine==null && cleanReady.canExecute)
+    println("✓ NC_PARSER_CONFLICT_STRESS_PASS modal-groups/duplicate-address/comments/CRLF/block-skip/5000-block/recovery-clean")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
