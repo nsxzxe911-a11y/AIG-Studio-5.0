@@ -10,6 +10,17 @@ enum class CncControllerProfile(val displayName: String, val programLabel: Strin
     MITSUBISHI_M800_M80("MITSUBISHI M800/M80", "MITSUBISHI M800/M80 ISO")
 }
 
+enum class NcCoordinateMode(val code: String, val displayName: String) {
+    ABSOLUTE_G90("G90", "G90 ABSOLUTE"),
+    INCREMENTAL_G91("G91", "G91 INCREMENTAL")
+}
+
+enum class CutterCompensationMode(val code: String, val displayName: String) {
+    CAM_GEOMETRY_G40("G40", "G40 • CAM GEOMETRY COMP"),
+    CONTROLLER_LEFT_G41("G41", "G41 • CONTROLLER LEFT"),
+    CONTROLLER_RIGHT_G42("G42", "G42 • CONTROLLER RIGHT")
+}
+
 data class FanucPostSettings(
     val workOffset: String = "G54",
     val tool: Int = 1,
@@ -20,7 +31,10 @@ data class FanucPostSettings(
     val endSubprogram: Int = 5,
     val axisA: Double = 0.0,
     val axisB: Double = 0.0,
-    val controller: CncControllerProfile = CncControllerProfile.FANUC
+    val controller: CncControllerProfile = CncControllerProfile.FANUC,
+    val coordinateMode: NcCoordinateMode = NcCoordinateMode.ABSOLUTE_G90,
+    val cutterCompensation: CutterCompensationMode = CutterCompensationMode.CAM_GEOMETRY_G40,
+    val cutterCompRegister: Int = 1
 ) {
     init {
         require(Regex("G5[4-9]").matches(workOffset))
@@ -31,6 +45,7 @@ data class FanucPostSettings(
         require(endSubprogram in 1..9999)
         require(axisA in -360.0..360.0)
         require(axisB in -360.0..360.0)
+        require(cutterCompRegister in 1..999)
     }
 }
 
@@ -49,11 +64,22 @@ data class DrillHole(
 object FanucNc {
     fun generate(cam: CamModel, post: FanucPostSettings = FanucPostSettings()): String {
         require(cam.toolpaths.isNotEmpty()) { "CAM generated no toolpaths" }
+        require(post.cutterCompensation == CutterCompensationMode.CAM_GEOMETRY_G40) {
+            "Controller G41/G42 blocked: current CAM toolpath already includes geometric tool-radius compensation; raw contour + controller-comp simulation is required to prevent double compensation"
+        }
+        if (post.coordinateMode == NcCoordinateMode.INCREMENTAL_G91) {
+            require(cam.toolpaths.flatMap { it.moves }.none { it is ArcFeed }) {
+                "G91 arc output blocked until controller-specific incremental arc-center semantics are validated"
+            }
+        }
+
         val s = cam.settings
         val out = StringBuilder()
         out.appendLine("%")
         out.appendLine("O1000 (AIG CNC " + post.controller.programLabel + ")")
         out.appendLine("(CONTROLLER " + post.controller.displayName + ")")
+        out.appendLine("(CANONICAL XYZ ABSOLUTE G90 • MASTER X0.000 Y0.000 Z0.000)")
+        out.appendLine("(PROGRAM MODE " + post.coordinateMode.displayName + " • CUTTER COMP " + post.cutterCompensation.displayName + ")")
         out.appendLine("G90 " + post.workOffset + " G17 G40 G49 G80")
         out.appendLine("T" + post.tool)
         out.appendLine("M98 P" + post.toolChangeSubprogram)
@@ -64,8 +90,10 @@ object FanucNc {
         out.append("G43 Z").append(fmt(max(s.safeZ, 30.0))).append(" H").append(post.h)
         if (post.coolant) out.append(" M8")
         out.appendLine()
-        cam.toolpaths.forEach { path ->
-            path.moves.forEach { move ->
+
+        val moves = cam.toolpaths.flatMap { it.moves }
+        if (post.coordinateMode == NcCoordinateMode.ABSOLUTE_G90) {
+            moves.forEach { move ->
                 when (move) {
                     is Rapid -> out.append("G0 X").append(fmt(move.to.x)).append(" Y").append(fmt(move.to.y)).append(" Z").append(fmt(move.z)).appendLine()
                     is Feed -> out.append("G1 X").append(fmt(move.to.x)).append(" Y").append(fmt(move.to.y)).append(" Z").append(fmt(move.z))
@@ -76,7 +104,31 @@ object FanucNc {
                         .append(" F").append(fmt(move.feedMmMin)).appendLine()
                 }
             }
+        } else {
+            val first = moves.first()
+            when (first) {
+                is Rapid -> out.append("G0 X").append(fmt(first.to.x)).append(" Y").append(fmt(first.to.y)).append(" Z").append(fmt(first.z)).appendLine()
+                is Feed -> out.append("G1 X").append(fmt(first.to.x)).append(" Y").append(fmt(first.to.y)).append(" Z").append(fmt(first.z))
+                    .append(" F").append(fmt(first.feedMmMin)).appendLine()
+                is ArcFeed -> error("G91 seed cannot be an arc")
+            }
+            out.appendLine("G91")
+            var previous = first
+            moves.drop(1).forEach { move ->
+                val dx = move.to.x - previous.to.x
+                val dy = move.to.y - previous.to.y
+                val dz = move.z - previous.z
+                when (move) {
+                    is Rapid -> out.append("G0 X").append(fmt(dx)).append(" Y").append(fmt(dy)).append(" Z").append(fmt(dz)).appendLine()
+                    is Feed -> out.append("G1 X").append(fmt(dx)).append(" Y").append(fmt(dy)).append(" Z").append(fmt(dz))
+                        .append(" F").append(fmt(move.feedMmMin)).appendLine()
+                    is ArcFeed -> error("G91 arc output blocked")
+                }
+                previous = move
+            }
+            out.appendLine("G90")
         }
+
         out.appendLine("G0 Z" + fmt(max(s.safeZ, 30.0)))
         out.appendLine("G80")
         out.appendLine("M98 P" + post.endSubprogram)
