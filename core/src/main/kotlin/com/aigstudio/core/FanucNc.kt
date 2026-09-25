@@ -106,6 +106,50 @@ object NcModalTracker {
 }
 
 
+data class NcModalSafetyFinding(
+    val lineNumber: Int,
+    val code: String,
+    val message: String
+)
+
+object NcModalSafetyPolicy {
+    fun blocking(program: String): List<NcModalSafetyFinding> {
+        val events = NcModalTracker.trace(program)
+        val findings = mutableListOf<NcModalSafetyFinding>()
+        fun add(e: NcModalEvent, code: String, message: String) {
+            findings += NcModalSafetyFinding(e.lineNumber, code, message)
+        }
+
+        events.forEach { e ->
+            when (e.code) {
+                "G20" -> add(e,"G20_INCH_MODE","Canonical AIG CAD/CAM/SIM data is millimetre based; inch execution is not verified.")
+                "G93" -> add(e,"G93_INVERSE_TIME_UNVERIFIED","Inverse-time feed is not yet represented by the current CAM/SIM feed model.")
+                "G95" -> add(e,"G95_FEED_PER_REV_UNVERIFIED","Feed-per-revolution is not yet represented by the current CAM/SIM feed model.")
+                "G53" -> add(e,"G53_MACHINE_COORD_UNSIMULATED","Machine-coordinate motion bypasses work offsets and is not represented by current CAM/SIM.")
+                "G68" -> add(e,"G68_ROTATION_UNSIMULATED","Coordinate rotation is tracked but not yet applied by canonical CAM/SIM.")
+                "G92" -> add(e,"G92_ORIGIN_UNVERIFIED","Temporary origin transform is tracked but controller-specific execution semantics are not yet verified.")
+                "G41","G42" -> add(e,"G41_G42_DOUBLE_COMP_RISK","Controller cutter compensation is blocked while the current CAM path already contains geometric radius compensation.")
+                "G99" -> add(e,"G99_RETURN_UNSIMULATED","R-point canned-cycle return is not yet represented by the current SIM return-path model; generated cycles use explicit G98.")
+            }
+        }
+
+        if (events.none { it.code == "G21" }) {
+            findings += NcModalSafetyFinding(0,"G21_REQUIRED","Explicit G21 metric mode is required for canonical millimetre coordinate evidence.")
+        }
+        if (events.none { it.code == "G94" }) {
+            findings += NcModalSafetyFinding(0,"G94_REQUIRED","Explicit G94 feed-per-minute mode is required for the current AIG feed model.")
+        }
+        return findings.distinctBy { Triple(it.lineNumber,it.code,it.message) }
+    }
+
+    fun status(program: String): String {
+        val blocked = blocking(program)
+        return if (blocked.isEmpty()) "PASS"
+        else "BLOCKED:" + blocked.joinToString(",") { (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code }
+    }
+}
+
+
 data class FanucPostSettings(
     val workOffset: String = "G54",
     val tool: Int = 1,
