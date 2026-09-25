@@ -1134,6 +1134,18 @@ class MainActivity : Activity() {
                 }
         }
         refreshModalStatus()
+        val lineHelp = TextView(this).apply {
+            setTextColor(Color.rgb(190,220,255))
+            textSize = 10.5f
+            setPadding(dp(2),dp(4),dp(2),dp(4))
+        }
+        fun refreshLineHelp() {
+            val program = editor.text.toString()
+            val line = NcCodeCatalog.lineNumberAt(program, editor.selectionStart.coerceAtLeast(0))
+            lineHelp.text = "LINE HELP • " + NcCodeCatalog.lineHelp(program, line)
+        }
+        editor.setOnClickListener { editor.post { refreshLineHelp() } }
+        refreshLineHelp()
         val mode = TextView(this).apply {
             setTextColor(Color.rgb(99,255,157))
             textSize = 12f
@@ -1148,6 +1160,7 @@ class MainActivity : Activity() {
         refreshMode()
         box.addView(mode)
         box.addView(modalStatus)
+        box.addView(lineHelp)
         val previewStatus = TextView(this).apply {
             setTextColor(Color.rgb(61,235,255))
             textSize = 11f
@@ -1177,6 +1190,7 @@ class MainActivity : Activity() {
             val end = (start + lines[previewLine].length).coerceAtMost(editor.length())
             editor.requestFocus()
             editor.setSelection(start.coerceAtMost(editor.length()), end)
+            refreshLineHelp()
             editor.post { editor.bringPointIntoView(start.coerceAtMost(editor.length())) }
             previewStatus.text = (if (ncDryRun) "DRY RUN" else "NC PREVIEW") +
                 " • BLOCK " + (previewLine + 1) + " • " + lines[previewLine].trim()
@@ -1214,6 +1228,7 @@ class MainActivity : Activity() {
             val end = editor.selectionEnd.coerceAtLeast(start)
             editor.text.replace(start, end, token)
             refreshModalStatus()
+            refreshLineHelp()
             editor.requestFocus()
         }
         fun deleteNcToken() {
@@ -1228,6 +1243,7 @@ class MainActivity : Activity() {
             val p = position.coerceIn(0, editor.length())
             editor.requestFocus()
             editor.setSelection(p)
+            refreshLineHelp()
             editor.post { editor.bringPointIntoView(p) }
         }
 
