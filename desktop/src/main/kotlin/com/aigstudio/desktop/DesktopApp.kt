@@ -538,7 +538,7 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     }
     fun refreshLineHelp() {
         val line = NcCodeCatalog.lineNumberAt(area.text, area.caretPosition)
-        lineHelp.text = "LINE HELP • " + NcCodeCatalog.lineHelp(area.text, line) + " • " + NcSemanticAuthority.lineEvidence(area.text, line, controllerProfile)
+        lineHelp.text = "LINE HELP • " + NcCodeCatalog.lineHelp(area.text, line) + " • " + NcSemanticAuthority.lineEvidence(area.text, line, controllerProfile) + " • " + NcExecutionTimeline.lineEvidence(area.text, line, controllerProfile)
     }
     fun refreshModalStatus() {
         val blocked = NcProgramSafetyPolicy.blocking(area.text)
@@ -736,7 +736,7 @@ private fun showApp() {
         runCatching { Machining3DEngine.build(doc.snapshot()) }
             .onSuccess { result ->
                 val animationSummary = runCatching {
-                    NcSemanticAuthority.programSummary(CncPost.generate(result.cam, FanucPostSettings()), CncControllerProfile.FANUC)
+                    NcExecutionTimeline.programSummary(CncPost.generate(result.cam, FanucPostSettings()), CncControllerProfile.FANUC)
                 }.getOrElse { error -> "NC→3D ANIM BLOCKED • NC_POST=" + (error.message ?: "error") }
                 status.text = animationSummary
                 JDialog(frame, "RGB 真 3D 加工 • HQ RENDER", false).apply {
