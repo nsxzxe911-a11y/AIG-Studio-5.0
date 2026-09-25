@@ -546,6 +546,7 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     }
     val coordinate = JComboBox(NcCoordinateMode.entries.toTypedArray()).apply {
         selectedItem = coordinateMode
+        toolTipText = "G90: general machining/copy blocks • G91: repeated patterns/subprograms"
         renderer = object : DefaultListCellRenderer() {
             override fun getListCellRendererComponent(
                 list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean
@@ -560,6 +561,7 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     }
     val origin = JComboBox(NcOriginTransformMode.entries.toTypedArray()).apply {
         selectedItem = originTransformMode
+        toolTipText = "G92: temporary origin layer; canonical CAD/CAM/SIM ABS XYZ unchanged"
         renderer = object : DefaultListCellRenderer() {
             override fun getListCellRendererComponent(
                 list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean
