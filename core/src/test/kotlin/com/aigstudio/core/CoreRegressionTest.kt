@@ -909,7 +909,7 @@ private fun testNcModalTracker() {
         it.code=="UNKNOWN_GCODE_FAIL_CLOSED" && it.lineNumber==2
     })
     check(NcModalSafetyPolicy.blocking(
-        "G21 G94 G97 G90 G54 G17 G40 G49\nG34 X0.000 Y0.000 Z-1.000 K4 F100.000"
+        "G21 G94 G97 G90 G54 G17 G40 G49\nG34 I15.000 J6 K50.000"
     ).none { it.code=="UNKNOWN_GCODE_FAIL_CLOSED" })
     println("✓ NC_MODAL_TRACKER_PASS integer/decimal provenance + unknown G-code fail-closed")
 }
@@ -927,6 +927,15 @@ private fun testCannedCycleReturnMode() {
         "G21 G94 G97 G90 G54 G17 G40 G49\nG43 Z30.000 H1\n" + cycle
     ).isEmpty())
     println("✓ CANNED_CYCLE_RETURN_PASS G98 explicit / G81 / G80")
+    val pattern = FanucNc.circularHolePattern(15.0,6,50.0)
+    check(pattern=="G34 I15. J6 K50.")
+    check(NcRuntimeInterlock.status(
+        "G21 G94 G97 G90 G54\n"+pattern
+    )=="PASS")
+    check(runCatching { FanucNc.circularHolePattern(0.0,0,50.0) }.isFailure)
+    check(runCatching { FanucNc.circularHolePattern(0.0,6,0.0) }.isFailure)
+    println("✓ NC_G34_PATTERN_SEMANTICS_PASS I-angle/J-count/K-radius")
+
 }
 
 private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
