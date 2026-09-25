@@ -468,7 +468,8 @@ object RenderStressProfiler {
         var fpsSum:Double=0.0,
         var frameMsSum:Double=0.0,
         var dropped:Long=0,
-        var peakFrameMs:Double=0.0
+        var peakFrameMs:Double=0.0,
+        var lastDropSnapshot:Long=0
     )
 
     private val data=linkedMapOf<RenderStressScenario,MutableAggregate>()
@@ -480,7 +481,11 @@ object RenderStressProfiler {
         a.samples++
         a.fpsSum+=stats.fps
         a.frameMsSum+=stats.frameIntervalMs
-        a.dropped+=stats.droppedFrames
+        val dropDelta =
+            if(stats.droppedFrames>=a.lastDropSnapshot) stats.droppedFrames-a.lastDropSnapshot
+            else stats.droppedFrames
+        a.dropped+=dropDelta.coerceAtLeast(0L)
+        a.lastDropSnapshot=stats.droppedFrames
         a.peakFrameMs=maxOf(a.peakFrameMs,stats.frameIntervalMs)
     }
 
@@ -502,16 +507,23 @@ object RenderStressProfiler {
         snapshot().maxWithOrNull(
             compareBy<RenderStressAggregate> { it.averageFrameMs }
                 .thenBy { it.totalDroppedFrames }
-                .thenByDescending { -it.averageFps }
+                .thenBy { -it.averageFps }
         )
+
+    @Synchronized
+    fun missingScenarios():List<RenderStressScenario> =
+        RenderStressScenario.entries.filter { it !in data.keys }
 
     @Synchronized
     fun summary():String {
         val all=snapshot()
         if(all.isEmpty()) return "STRESS • collecting"
         val worst=heaviest()
+        val missing=missingScenarios()
         return "STRESS • " + all.joinToString(" | "){it.compact()} +
-            (worst?.let{" • HEAVIEST=" + it.scenario.name} ?: "")
+            (worst?.let{" • HEAVIEST=" + it.scenario.name} ?: "") +
+            (if(missing.isEmpty()) " • COVERAGE=COMPLETE"
+             else " • pending=" + missing.joinToString(","){it.name})
     }
 
     @Synchronized
