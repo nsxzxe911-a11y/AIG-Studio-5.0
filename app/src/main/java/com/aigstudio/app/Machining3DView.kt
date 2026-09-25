@@ -58,6 +58,7 @@ class Machining3DView(
         textSize = 12f * resources.displayMetrics.scaledDensity
     }
     private val trianglePath = Path()
+    private val fpsMeter = SurfaceFpsMeter(refreshHzProvider = { display?.refreshRate?.toDouble() ?: 60.0 })
 
     private val scaleDetector = ScaleGestureDetector(
         context,
@@ -163,6 +164,7 @@ class Machining3DView(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (width <= 0 || height <= 0) return
+        val fpsStats = fpsMeter.record(System.nanoTime())
 
         val stockW = result.stock.maxX - result.stock.minX
         val stockH = result.stock.maxY - result.stock.minY
@@ -237,7 +239,8 @@ class Machining3DView(
         val removed = result.removal.depth.count { it < 0.0 }
         val label = "TRUE 3D • CAM=" + result.cam.toolpaths.size +
             " • removed=" + removed +
-            " • 原點 X0.000 Y0.000 • 精度 0.001 mm"
+            " • 原點 X0.000 Y0.000 • 精度 0.001 mm" +
+            " • " + fpsStats.compact("3D")
         canvas.drawText(label, 14f, 24f, textPaint)
     }
 }
