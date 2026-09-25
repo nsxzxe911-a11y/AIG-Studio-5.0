@@ -20,6 +20,30 @@ data class CamSettings(
     }
 }
 
+enum class MultiAxisInterpolationMode { INDEXED, LINEAR_SYNC }
+
+data class MultiAxisOrientationSchedule(
+    val startA: Double,
+    val startB: Double,
+    val endA: Double,
+    val endB: Double,
+    val mode: MultiAxisInterpolationMode = MultiAxisInterpolationMode.LINEAR_SYNC
+) {
+    init {
+        listOf(startA,startB,endA,endB).forEach {
+            require(it.isFinite() && abs(it)<=360.0) { "Unsafe multi-axis schedule angle" }
+        }
+    }
+    fun at(progress:Double):Pair<Double,Double> {
+        val p=progress.coerceIn(0.0,1.0)
+        return if(mode==MultiAxisInterpolationMode.INDEXED) endA to endB
+        else (startA+(endA-startA)*p) to (startB+(endB-startB)*p)
+    }
+    fun isContinuous():Boolean =
+        mode==MultiAxisInterpolationMode.LINEAR_SYNC &&
+            (abs(endA-startA)>EPS || abs(endB-startB)>EPS)
+}
+
 /** CAM receives a read-only geometry snapshot. It never receives DrawingDocument itself. */
 class CamModel private constructor(
     val sourceRevision: Long,
@@ -33,8 +57,14 @@ class CamModel private constructor(
             snapshot: DrawingSnapshot,
             settings: CamSettings = CamSettings(),
             axisA: Double = 0.0,
-            axisB: Double = 0.0
-        ): CamModel = CamModel(revision, snapshot, settings, CamEngine.generate(snapshot, settings, axisA, axisB))
+            axisB: Double = 0.0,
+            axisSchedule: MultiAxisOrientationSchedule? = null
+        ): CamModel = CamModel(
+            revision,
+            snapshot,
+            settings,
+            CamEngine.generate(snapshot, settings, axisA, axisB, axisSchedule)
+        )
     }
 }
 
@@ -86,7 +116,8 @@ object CamEngine {
         snapshot: DrawingSnapshot,
         settings: CamSettings = CamSettings(),
         axisA: Double = 0.0,
-        axisB: Double = 0.0
+        axisB: Double = 0.0,
+        axisSchedule: MultiAxisOrientationSchedule? = null
     ): List<Toolpath> {
         require(axisA.isFinite() && axisB.isFinite() && abs(axisA) <= 360.0 && abs(axisB) <= 360.0) {
             "Unsafe CAM A/B orientation"
@@ -204,12 +235,17 @@ object CamEngine {
                 }
             }
         }
+        val totalMoves=output.sumOf { it.moves.size }.coerceAtLeast(1)
+        var moveIndex=0
         return output.map { path ->
             Toolpath(path.moves.map { move ->
+                val progress=if(totalMoves<=1) 1.0 else moveIndex.toDouble()/(totalMoves-1).toDouble()
+                val orientation=axisSchedule?.at(progress) ?: (axisA to axisB)
+                moveIndex++
                 when (move) {
-                    is Rapid -> move.copy(axisA=axisA,axisB=axisB)
-                    is Feed -> move.copy(axisA=axisA,axisB=axisB)
-                    is ArcFeed -> move.copy(axisA=axisA,axisB=axisB)
+                    is Rapid -> move.copy(axisA=orientation.first,axisB=orientation.second)
+                    is Feed -> move.copy(axisA=orientation.first,axisB=orientation.second)
+                    is ArcFeed -> move.copy(axisA=orientation.first,axisB=orientation.second)
                 }
             })
         }

@@ -67,6 +67,11 @@ object MaterialRemoval3D {
         require(toolpaths.isNotEmpty()) { "No CAM toolpath" }
         val field = RemovalField3D(stock)
         val toolRadius = settings.toolDiameter / 2.0
+        fun conservativeProjectedRadius(move:Move):Double {
+            val tiltDeg=min(80.0,hypot(move.axisA,move.axisB))
+            val factor=1.0/cos(Math.toRadians(tiltDeg)).coerceAtLeast(0.1736481777)
+            return (toolRadius*factor).coerceAtMost(toolRadius*5.76)
+        }
 
         for (path in toolpaths) {
             var previous: Move? = null
@@ -77,7 +82,7 @@ object MaterialRemoval3D {
                         val center = prev.to + move.centerOffset
                         val radius = prev.to.distanceTo(center)
                         if (radius < EPS) {
-                            carve(field, move.to.x, move.to.y, toolRadius, move.z)
+                            carve(field, move.to.x, move.to.y, conservativeProjectedRadius(move), move.z)
                         } else {
                             val a0 = atan2(prev.to.y - center.y, prev.to.x - center.x)
                             val a1 = atan2(move.to.y - center.y, move.to.x - center.x)
@@ -95,7 +100,8 @@ object MaterialRemoval3D {
                         carve(field, move.to.x, move.to.y, toolRadius, move.z)
                     } else {
                         val distance = prev.to.distanceTo(move.to)
-                        val stepMm = max(toolRadius / 3.0, 0.25)
+                        val effectiveRadius=conservativeProjectedRadius(move)
+                        val stepMm = max(effectiveRadius / 3.0, 0.25)
                         val steps = max(1, ceil(distance / stepMm).toInt())
                         for (i in 0..steps) {
                             val t = i.toDouble() / steps
@@ -103,7 +109,7 @@ object MaterialRemoval3D {
                                 field,
                                 prev.to.x + (move.to.x - prev.to.x) * t,
                                 prev.to.y + (move.to.y - prev.to.y) * t,
-                                toolRadius,
+                                effectiveRadius,
                                 move.z
                             )
                         }
@@ -217,9 +223,10 @@ object Machining3DEngine {
         settings: CamSettings = CamSettings(),
         stock: Stock3D = Stock3D.fromSnapshot(snapshot),
         axisA: Double = 0.0,
-        axisB: Double = 0.0
+        axisB: Double = 0.0,
+        axisSchedule: MultiAxisOrientationSchedule? = null
     ): Machining3DResult {
-        val cam = CamModel.fromCad(0L, snapshot, settings, axisA, axisB)
+        val cam = CamModel.fromCad(0L, snapshot, settings, axisA, axisB, axisSchedule)
         require(cam.toolpaths.isNotEmpty()) { "CAM generated no toolpaths" }
         val removal = MaterialRemoval3D.simulate(cam.toolpaths, settings, stock)
         val mesh = SurfaceMesh3D.fromRemoval(removal)

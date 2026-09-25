@@ -1186,6 +1186,7 @@ fun main() {
     testCamWorkstationContract()
     testUnifiedMachiningWorkspaceContract()
     testMultiAxisToolpointProvenance()
+    testContinuousMultiAxisToolpointSchedule()
     testNcDraftRecoveryContract()
     testPixelLayoutPrecheckContract()
     println("ALL TESTS PASSED")
@@ -1965,4 +1966,28 @@ private fun testPixelLayoutPrecheckContract() {
     check(PixelLayoutPrecheckContract.workspaceNotCrushed(844,390))
     check(PixelLayoutPrecheckContract.workspaceNotCrushed(1440,900))
     println("✓ PIXEL_LAYOUT_PRECHECK_GATE_PASS PORTRAIT LANDSCAPE DESKTOP NO_OVERLAP NC_VISIBLE WORKSPACE_MIN FONT_MIN")
+}
+
+
+private fun testContinuousMultiAxisToolpointSchedule() {
+    val snapshot=DrawingSnapshot(listOf(Line("SYNC-L",Vec2(-30.0,-10.0),Vec2(30.0,10.0))))
+    val settings=CamSettings(toolDiameter=6.0,depth=-2.0,safeZ=5.0,feedMmMin=120.0)
+    val schedule=MultiAxisOrientationSchedule(
+        startA=0.0,startB=0.0,endA=45.0,endB=-30.0,
+        mode=MultiAxisInterpolationMode.LINEAR_SYNC
+    )
+    val cam=CamModel.fromCad(14300L,snapshot,settings,axisSchedule=schedule)
+    val moves=cam.toolpaths.flatMap { it.moves }
+    check(moves.size>=4)
+    check(abs(moves.first().axisA-0.0)<1e-12 && abs(moves.first().axisB-0.0)<1e-12)
+    check(abs(moves.last().axisA-45.0)<1e-12 && abs(moves.last().axisB+30.0)<1e-12)
+    check(moves.zipWithNext().any { (a,b) -> abs(a.axisA-b.axisA)>1e-9 || abs(a.axisB-b.axisB)>1e-9 })
+    check(moves.all { it.axisA in 0.0..45.0 && it.axisB in -30.0..0.0 })
+    val nc=CncPost.generate(cam,FanucPostSettings())
+    check("(MULTIAXIS TOOLPOINT A/B SOURCE CAM_TOOLPOINTS)" in nc)
+    check(Regex("""A\d+(?:\.\d+)? B-?\d+(?:\.\d+)?""").findAll(nc).count()>=2)
+    val stock=Stock3D.fromSnapshot(snapshot)
+    val removal=MaterialRemoval3D.simulate(cam.toolpaths,settings,stock)
+    check(removal.depth.any { it<0.0 })
+    println("✓ CONTINUOUS_MULTIAXIS_TOOLPOINT_GATE_PASS PER_POINT_AB CAM_TO_SIM_TO_NC LINEAR_SYNC")
 }

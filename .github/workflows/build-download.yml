@@ -53,6 +53,7 @@ jobs:
           grep -Fq 'NC_DRAFT_RECOVERY_GATE_PASS' release-validation.log
           grep -Fq 'PIXEL_LAYOUT_PRECHECK_GATE_PASS' release-validation.log
           grep -Fq 'MULTIAXIS_TOOLPOINT_PROVENANCE_GATE_PASS' release-validation.log
+          grep -Fq 'CONTINUOUS_MULTIAXIS_TOOLPOINT_GATE_PASS' release-validation.log
           echo 'RENDER_CACHE_RELEASE_GATE=PASS'
           echo 'CAM_WORKSTATION_RELEASE_GATE=PASS'
       - name: Verify Android APK
