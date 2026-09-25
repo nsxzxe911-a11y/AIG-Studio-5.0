@@ -1186,6 +1186,13 @@ class MainActivity : Activity() {
 
                 val removed = result.removal.depth.count { it < 0.0 }
                 val cuts = result.cam.toolpaths.sumOf { path -> path.moves.count { !it.rapid } }
+                val absoluteMoves = result.cam.toolpaths.flatMap { it.moves }
+                val minX = absoluteMoves.minOfOrNull { it.to.x } ?: 0.0
+                val maxX = absoluteMoves.maxOfOrNull { it.to.x } ?: 0.0
+                val minY = absoluteMoves.minOfOrNull { it.to.y } ?: 0.0
+                val maxY = absoluteMoves.maxOfOrNull { it.to.y } ?: 0.0
+                val minZ = absoluteMoves.minOfOrNull { it.z } ?: 0.0
+                val maxZ = absoluteMoves.maxOfOrNull { it.z } ?: 0.0
                 box.addView(TextView(this).apply {
                     setTextColor(0xFF63FF9D.toInt())
                     textSize = 12f
@@ -1195,7 +1202,13 @@ class MainActivity : Activity() {
                         " • CAM=" + result.cam.toolpaths.size +
                         " • CUT=" + cuts +
                         " • removed=" + removed +
-                        " • 精度 0.001 mm"
+                        " • 精度 0.001 mm" +
+                        "\nABS " + SoftwareCoordinateContract.coordinateMode() +
+                        " • MASTER " + SoftwareCoordinateContract.masterOriginData() +
+                        " • X[" + DisplayFormat.mm(minX) + ".." + DisplayFormat.mm(maxX) + "]" +
+                        " • Y[" + DisplayFormat.mm(minY) + ".." + DisplayFormat.mm(maxY) + "]" +
+                        " • Z[" + DisplayFormat.mm(minZ) + ".." + DisplayFormat.mm(maxZ) + "]" +
+                        " • " + workOffset + " NC-only • OFFSET SHIFT=OFF • TOLERANCE SHIFT=OFF"
                 })
 
                 AlertDialog.Builder(this)
