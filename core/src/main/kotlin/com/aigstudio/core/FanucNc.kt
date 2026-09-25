@@ -244,6 +244,84 @@ object NcCodeCatalog {
     }
 }
 
+data class NcAnimationCue(
+    val lineNumber: Int,
+    val code: String,
+    val action: String,
+    val layer: String,
+    val blocked: Boolean,
+    val safetyCodes: List<String>
+) {
+    fun compact(): String = code + "=>" + if (blocked) "BLOCKED" else action
+}
+
+object NcAnimationBridge {
+    fun actionFor(rawCode: String): String {
+        val code = rawCode.uppercase()
+        return when (code) {
+            "G0" -> "RAPID_MOVE"
+            "G1" -> "CUT_LINEAR"
+            "G2" -> "CUT_ARC_CW"
+            "G3" -> "CUT_ARC_CCW"
+            "G34" -> "HOLE_PATTERN"
+            "G73","G81","G82","G83","G84","G85","G86","G87","G88","G89" -> "CANNED_CYCLE"
+            "G43.1","G43.4","G43.5","G43.7","G53.1","G53.6","G68.2","G68.3" -> "AXIS_5X_ORIENTATION"
+            "M3" -> "SPINDLE_CW"
+            "M4" -> "SPINDLE_CCW"
+            "M5" -> "SPINDLE_STOP"
+            "M6" -> "TOOL_CHANGE"
+            "M7" -> "COOLANT_MIST"
+            "M8" -> "COOLANT_FLOOD"
+            "M9" -> "COOLANT_OFF"
+            "M19" -> "SPINDLE_ORIENT"
+            "M0","M1" -> "PROGRAM_PAUSE"
+            "M2","M30" -> "PROGRAM_END"
+            "M98" -> "SUBPROGRAM_CALL"
+            "M99" -> "SUBPROGRAM_RETURN"
+            else -> if (NcCodeCatalog.describe(code).layer == "UNKNOWN") "UNSUPPORTED" else "STATE_SYNC"
+        }
+    }
+
+    fun cuesForLine(program: String, lineNumber: Int): List<NcAnimationCue> {
+        val lines = program.split("\n")
+        if (lineNumber !in 1..lines.size) return emptyList()
+        val safety = NcProgramSafetyPolicy.blocking(program)
+            .filter { it.lineNumber == lineNumber }
+            .map { it.code }
+            .distinct()
+        return NcCodeCatalog.codesInLine(lines[lineNumber - 1]).map { code ->
+            val d = NcCodeCatalog.describe(code)
+            NcAnimationCue(lineNumber, code, actionFor(code), d.layer, safety.isNotEmpty(), safety)
+        }
+    }
+
+    fun lineEvidence(program: String, lineNumber: Int): String {
+        val cues = cuesForLine(program, lineNumber)
+        if (cues.isEmpty()) return "ANIM L" + lineNumber + " • NO G/M EVENT"
+        val blocked = cues.flatMap { it.safetyCodes }.distinct()
+        if (blocked.isNotEmpty()) {
+            return "ANIM L" + lineNumber + " • BLOCKED=" + blocked.joinToString(",")
+        }
+        return "ANIM L" + lineNumber + " • " + cues.joinToString(" | ") { it.compact() }
+    }
+
+    fun programSummary(program: String, limit: Int = 12): String {
+        val blocked = NcProgramSafetyPolicy.blocking(program)
+        if (blocked.isNotEmpty()) {
+            return "NC→3D ANIM BLOCKED • " + blocked.take(4).joinToString(",") {
+                (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code
+            }
+        }
+        val cues = program.split("\n").indices
+            .flatMap { index -> cuesForLine(program, index + 1) }
+            .filter { it.action != "STATE_SYNC" }
+            .distinctBy { it.code + "|" + it.action }
+        if (cues.isEmpty()) return "NC→3D ANIM READY • STATE_SYNC_ONLY"
+        val shown = cues.take(limit).joinToString(" | ") { it.compact() }
+        return "NC→3D ANIM READY • " + shown + if (cues.size > limit) " | +" + (cues.size - limit) else ""
+    }
+}
+
 enum class NcCoordinateMode(val code: String, val displayName: String) {
     ABSOLUTE_G90("G90", "G90 ABSOLUTE"),
     INCREMENTAL_G91("G91", "G91 INCREMENTAL")
