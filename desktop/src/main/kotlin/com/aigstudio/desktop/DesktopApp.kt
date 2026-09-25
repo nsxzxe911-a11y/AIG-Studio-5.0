@@ -537,6 +537,7 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
         val blocked = NcModalSafetyPolicy.blocking(area.text)
         modalStatus.foreground = if (blocked.isEmpty()) Color(255,210,90) else Color(255,110,110)
         modalStatus.text = "MODAL • " + NcModalTracker.evidence(area.text) +
+            " • " + CncControllerCapabilityMatrix.summary(controllerProfile, area.text) +
             if (blocked.isEmpty()) " • SAFETY=PASS"
             else " • BLOCKED=" + blocked.take(4).joinToString(",") {
                 (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code
