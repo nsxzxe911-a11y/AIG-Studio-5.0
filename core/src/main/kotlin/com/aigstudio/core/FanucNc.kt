@@ -89,6 +89,126 @@ object CncControllerCapabilityMatrix {
     }
 }
 
+
+data class NcCodeDescriptor(
+    val code: String,
+    val shortName: String,
+    val layer: String,
+    val meaning: String
+) {
+    fun compact(): String = code + "=" + shortName
+}
+
+object NcCodeCatalog {
+    fun describe(rawCode: String): NcCodeDescriptor {
+        val code = rawCode.uppercase()
+        return when (code) {
+            "G0" -> NcCodeDescriptor(code,"RAPID","MOTION","Rapid positioning")
+            "G1" -> NcCodeDescriptor(code,"LINE","MOTION","Linear interpolation")
+            "G2" -> NcCodeDescriptor(code,"ARC-CW","MOTION","Clockwise circular interpolation")
+            "G3" -> NcCodeDescriptor(code,"ARC-CCW","MOTION","Counter-clockwise circular interpolation")
+            "G4" -> NcCodeDescriptor(code,"DWELL","TIMING","Dwell")
+            "G9" -> NcCodeDescriptor(code,"EXACT","PATH","Exact stop")
+            "G17" -> NcCodeDescriptor(code,"XY","PLANE","XY plane")
+            "G18" -> NcCodeDescriptor(code,"XZ","PLANE","XZ plane")
+            "G19" -> NcCodeDescriptor(code,"YZ","PLANE","YZ plane")
+            "G20" -> NcCodeDescriptor(code,"INCH","UNITS","Inch units")
+            "G21" -> NcCodeDescriptor(code,"MM","UNITS","Millimetre units")
+            "G28" -> NcCodeDescriptor(code,"REF-1","REFERENCE","Reference return")
+            "G29" -> NcCodeDescriptor(code,"REF-FROM","REFERENCE","Return from reference position")
+            "G30" -> NcCodeDescriptor(code,"REF-2","REFERENCE","Second reference return")
+            "G30.1","G30.2","G30.3","G30.4","G30.5","G30.6" ->
+                NcCodeDescriptor(code,"REF-X","REFERENCE","Extended reference return")
+            "G31","G31.1","G31.2","G31.3" ->
+                NcCodeDescriptor(code,"SKIP","PROBE","Skip/probe triggered motion")
+            "G34" -> NcCodeDescriptor(code,"HOLE-CIRCLE","DRILL","AIG circular-hole pattern")
+            "G40" -> NcCodeDescriptor(code,"COMP-OFF","CUTTER_COMP","Cutter compensation cancel")
+            "G41" -> NcCodeDescriptor(code,"L-COMP","CUTTER_COMP","Controller cutter compensation left")
+            "G42" -> NcCodeDescriptor(code,"R-COMP","CUTTER_COMP","Controller cutter compensation right")
+            "G40.1","G150" -> NcCodeDescriptor(code,"NORM-OFF","5X_ORIENTATION","Normal-line control cancel")
+            "G41.1","G151" -> NcCodeDescriptor(code,"NORM-L","5X_ORIENTATION","Normal-line control left")
+            "G42.1","G152" -> NcCodeDescriptor(code,"NORM-R","5X_ORIENTATION","Normal-line control right")
+            "G41.2" -> NcCodeDescriptor(code,"3D-L","3D_COMP","3D cutter compensation left")
+            "G42.2" -> NcCodeDescriptor(code,"3D-R","3D_COMP","3D cutter compensation right")
+            "G43" -> NcCodeDescriptor(code,"TLEN","TOOL_LENGTH","Tool length compensation positive")
+            "G43.1" -> NcCodeDescriptor(code,"TAXIS","5X_TCP","Tool-axis control")
+            "G43.4" -> NcCodeDescriptor(code,"TCP","5X_TCP","Tool center point control")
+            "G43.5" -> NcCodeDescriptor(code,"TCP-V","5X_TCP","Vector/tool center point control")
+            "G43.7" -> NcCodeDescriptor(code,"TCP-X","5X_TCP","Extended tool center control")
+            "G49" -> NcCodeDescriptor(code,"TLEN-OFF","TOOL_LENGTH","Tool length compensation cancel")
+            "G50" -> NcCodeDescriptor(code,"SCALE-OFF","GEOMETRY_XFORM","Scaling cancel")
+            "G51" -> NcCodeDescriptor(code,"SCALE","GEOMETRY_XFORM","Scaling")
+            "G50.1" -> NcCodeDescriptor(code,"MIRROR-OFF","GEOMETRY_XFORM","Mirror cancel")
+            "G51.1" -> NcCodeDescriptor(code,"MIRROR","GEOMETRY_XFORM","Mirror image")
+            "G52" -> NcCodeDescriptor(code,"LOCAL","COORD_XFORM","Local coordinate system")
+            "G53" -> NcCodeDescriptor(code,"MACHINE","COORD_XFORM","Machine coordinate move")
+            "G53.1","G53.6" -> NcCodeDescriptor(code,"TAXIS-DIR","5X_ORIENTATION","Tool-axis direction control")
+            "G54","G55","G56","G57","G58","G59" ->
+                NcCodeDescriptor(code,"WCS","WORK_OFFSET","Work coordinate system")
+            "G54.1" -> NcCodeDescriptor(code,"WCS-EXT","WORK_OFFSET","Extended work coordinate system")
+            "G54.2" -> NcCodeDescriptor(code,"ROT-WCS","5X_OFFSET","Rotary-axis workpiece offset")
+            "G54.4" -> NcCodeDescriptor(code,"INSTALL-COMP","5X_OFFSET","Workpiece installation error compensation")
+            "G61" -> NcCodeDescriptor(code,"EXACT-MODE","PATH","Exact stop mode")
+            "G61.1","G61.2","G61.4" -> NcCodeDescriptor(code,"HI-ACC","PATH","Controller high-accuracy path mode")
+            "G64" -> NcCodeDescriptor(code,"CONT","PATH","Continuous cutting mode")
+            "G65" -> NcCodeDescriptor(code,"MACRO-CALL","MACRO","Non-modal macro call")
+            "G66","G66.1" -> NcCodeDescriptor(code,"MACRO-MOD","MACRO","Modal macro call")
+            "G67" -> NcCodeDescriptor(code,"MACRO-OFF","MACRO","Modal macro cancel")
+            "G68" -> NcCodeDescriptor(code,"ROTATE","COORD_XFORM","Coordinate rotation")
+            "G69" -> NcCodeDescriptor(code,"ROT-OFF","COORD_XFORM","Coordinate rotation cancel")
+            "G68.2","G68.3" -> NcCodeDescriptor(code,"TILT-PLANE","5X_XFORM","Inclined-surface coordinate transform")
+            "G73" -> NcCodeDescriptor(code,"PECK-HS","CYCLE","High-speed peck drilling")
+            "G80" -> NcCodeDescriptor(code,"CYCLE-OFF","CYCLE","Fixed cycle cancel")
+            "G81" -> NcCodeDescriptor(code,"DRILL","CYCLE","Drilling cycle")
+            "G82" -> NcCodeDescriptor(code,"DRILL-DWELL","CYCLE","Drilling with dwell")
+            "G83" -> NcCodeDescriptor(code,"PECK","CYCLE","Peck drilling cycle")
+            "G84" -> NcCodeDescriptor(code,"TAP","CYCLE","Tapping cycle")
+            "G85" -> NcCodeDescriptor(code,"BORE-FEED","CYCLE","Boring feed/feed")
+            "G86" -> NcCodeDescriptor(code,"BORE-STOP","CYCLE","Boring with spindle stop")
+            "G87" -> NcCodeDescriptor(code,"BACK-BORE","CYCLE","Back boring")
+            "G88" -> NcCodeDescriptor(code,"BORE-MAN","CYCLE","Boring/manual return")
+            "G89" -> NcCodeDescriptor(code,"BORE-DWELL","CYCLE","Boring with dwell")
+            "G90" -> NcCodeDescriptor(code,"ABS","PROGRAM_MODE","Absolute coordinate programming")
+            "G91" -> NcCodeDescriptor(code,"INC","PROGRAM_MODE","Incremental coordinate programming")
+            "G92" -> NcCodeDescriptor(code,"TEMP-ORG","COORD_XFORM","Temporary coordinate/origin definition")
+            "G92.1" -> NcCodeDescriptor(code,"WCS-PRESET","COORD_XFORM","Work coordinate preset/state change")
+            "G93" -> NcCodeDescriptor(code,"INV-TIME","FEED_MODE","Inverse-time feed")
+            "G94" -> NcCodeDescriptor(code,"F/MIN","FEED_MODE","Feed per minute")
+            "G95" -> NcCodeDescriptor(code,"F/REV","FEED_MODE","Feed per revolution")
+            "G96" -> NcCodeDescriptor(code,"CSS","SPINDLE_MODE","Constant surface speed")
+            "G97" -> NcCodeDescriptor(code,"RPM","SPINDLE_MODE","Fixed spindle RPM mode")
+            "G98" -> NcCodeDescriptor(code,"RET-INIT","CYCLE_RETURN","Return to initial plane")
+            "G99" -> NcCodeDescriptor(code,"RET-R","CYCLE_RETURN","Return to R plane")
+            "M0" -> NcCodeDescriptor(code,"STOP","PROGRAM_CONTROL","Program stop")
+            "M1" -> NcCodeDescriptor(code,"OPT-STOP","PROGRAM_CONTROL","Optional stop")
+            "M2" -> NcCodeDescriptor(code,"END","PROGRAM_CONTROL","Program end")
+            "M3" -> NcCodeDescriptor(code,"SP-CW","SPINDLE","Spindle clockwise")
+            "M4" -> NcCodeDescriptor(code,"SP-CCW","SPINDLE","Spindle counter-clockwise")
+            "M5" -> NcCodeDescriptor(code,"SP-OFF","SPINDLE","Spindle stop")
+            "M6" -> NcCodeDescriptor(code,"TOOL-CHG","TOOL_CHANGE","Tool change")
+            "M7" -> NcCodeDescriptor(code,"MIST","COOLANT","Mist coolant")
+            "M8" -> NcCodeDescriptor(code,"COOL-ON","COOLANT","Flood coolant on")
+            "M9" -> NcCodeDescriptor(code,"COOL-OFF","COOLANT","Coolant off")
+            "M19" -> NcCodeDescriptor(code,"SP-ORIENT","SPINDLE","Spindle orientation")
+            "M30" -> NcCodeDescriptor(code,"END-RESET","PROGRAM_CONTROL","Program end and reset")
+            "M98" -> NcCodeDescriptor(code,"SUB-CALL","SUBPROGRAM","Subprogram call")
+            "M99" -> NcCodeDescriptor(code,"SUB-RET","SUBPROGRAM","Subprogram return")
+            else -> NcCodeDescriptor(code,"UNKNOWN","UNKNOWN","Unclassified CNC code")
+        }
+    }
+
+    fun programLegend(program: String, limit: Int = 18): String {
+        val codes = (NcModalTracker.codes(program) + NcAuxiliaryTracker.codes(program))
+            .sortedBy { it.first }
+            .map { it.second }
+            .distinct()
+        val shown = codes.take(limit).joinToString(" | ") { describe(it).compact() }
+        return if (codes.size <= limit) shown else shown + " | +" + (codes.size-limit)
+    }
+
+    fun layerOf(code: String): String = describe(code).layer
+}
+
 enum class NcCoordinateMode(val code: String, val displayName: String) {
     ABSOLUTE_G90("G90", "G90 ABSOLUTE"),
     INCREMENTAL_G91("G91", "G91 INCREMENTAL")
