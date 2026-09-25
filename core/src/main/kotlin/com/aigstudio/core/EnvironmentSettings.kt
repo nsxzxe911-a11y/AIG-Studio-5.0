@@ -430,6 +430,94 @@ class SurfaceFpsMeter(
     }
 }
 
+enum class RenderStressScenario {
+    SMALL_MODEL,
+    MEDIUM_MODEL,
+    LARGE_MODEL,
+    MATERIAL_REMOVAL,
+    FIVE_AXIS_SYNC
+}
+
+data class RenderStressAggregate(
+    val scenario:RenderStressScenario,
+    val samples:Long,
+    val averageFps:Double,
+    val averageFrameMs:Double,
+    val totalDroppedFrames:Long,
+    val peakFrameMs:Double
+){
+    fun compact():String =
+        scenario.name +
+            " fps=" + "%.1f".format(java.util.Locale.US,averageFps) +
+            " ms=" + "%.2f".format(java.util.Locale.US,averageFrameMs) +
+            " drop=" + totalDroppedFrames +
+            " n=" + samples
+}
+
+object RenderStressClassifier {
+    fun modelScenario(triangleCount:Int):RenderStressScenario = when {
+        triangleCount <= 1_500 -> RenderStressScenario.SMALL_MODEL
+        triangleCount <= 6_000 -> RenderStressScenario.MEDIUM_MODEL
+        else -> RenderStressScenario.LARGE_MODEL
+    }
+}
+
+object RenderStressProfiler {
+    private data class MutableAggregate(
+        var samples:Long=0,
+        var fpsSum:Double=0.0,
+        var frameMsSum:Double=0.0,
+        var dropped:Long=0,
+        var peakFrameMs:Double=0.0
+    )
+
+    private val data=linkedMapOf<RenderStressScenario,MutableAggregate>()
+
+    @Synchronized
+    fun record(scenario:RenderStressScenario,stats:SurfaceFpsStats){
+        if(stats.fps<=0.0 || stats.frameIntervalMs<=0.0) return
+        val a=data.getOrPut(scenario){MutableAggregate()}
+        a.samples++
+        a.fpsSum+=stats.fps
+        a.frameMsSum+=stats.frameIntervalMs
+        a.dropped+=stats.droppedFrames
+        a.peakFrameMs=maxOf(a.peakFrameMs,stats.frameIntervalMs)
+    }
+
+    @Synchronized
+    fun snapshot():List<RenderStressAggregate> =
+        data.map { (scenario,a) ->
+            RenderStressAggregate(
+                scenario=scenario,
+                samples=a.samples,
+                averageFps=if(a.samples==0L)0.0 else a.fpsSum/a.samples,
+                averageFrameMs=if(a.samples==0L)0.0 else a.frameMsSum/a.samples,
+                totalDroppedFrames=a.dropped,
+                peakFrameMs=a.peakFrameMs
+            )
+        }
+
+    @Synchronized
+    fun heaviest():RenderStressAggregate? =
+        snapshot().maxWithOrNull(
+            compareBy<RenderStressAggregate> { it.averageFrameMs }
+                .thenBy { it.totalDroppedFrames }
+                .thenByDescending { -it.averageFps }
+        )
+
+    @Synchronized
+    fun summary():String {
+        val all=snapshot()
+        if(all.isEmpty()) return "STRESS • collecting"
+        val worst=heaviest()
+        return "STRESS • " + all.joinToString(" | "){it.compact()} +
+            (worst?.let{" • HEAVIEST=" + it.scenario.name} ?: "")
+    }
+
+    @Synchronized
+    fun reset(){ data.clear() }
+}
+
 object RenderFrameContract{
     fun budgetMs(fps:Int):Double{
         require(fps in setOf(30,60,90,120))
