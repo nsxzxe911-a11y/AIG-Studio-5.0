@@ -652,9 +652,9 @@ data class NcMachineInterlockSnapshot(
     val feedHold: Boolean get() = !canExecute
     fun evidence(): String =
         "MACHINE • " + state.name +
-            " • FEED_HOLD=" + if (feedHold) "ON" else "OFF" +
-            if (alarmCodes.isEmpty()) "" else
-                " • ALARM=" + (alarmLine?.let { "L" + it + ":" } ?: "") + alarmCodes.joinToString(",")
+            " • FEED_HOLD=" + (if (feedHold) "ON" else "OFF") +
+            (if (alarmCodes.isEmpty()) "" else
+                " • ALARM=" + (alarmLine?.let { "L" + it + ":" } ?: "") + alarmCodes.joinToString(","))
 }
 
 class NcMachineInterlockSession(
