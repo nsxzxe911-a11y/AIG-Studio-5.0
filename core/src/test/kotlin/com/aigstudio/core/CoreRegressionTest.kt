@@ -98,6 +98,50 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check("UNKNOWN_BLOCK=1" in fanucCapability)
     check("CTRL=MITSUBISHI M800/M80" in mitsubishiCapability)
     println("✓ CONTROLLER_CAPABILITY_MATRIX_PASS FANUC/MITSUBISHI modeled/review/unknown")
+
+    check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
+        "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
+        "COOLANT=M7_M8_M9_EXECUTION_LAYER",
+        "TOOL_CHANGE=M6_NONMODAL_LAYER",
+        "SPINDLE_ORIENT=M19_CONTROLLER_LAYER",
+        "PROGRAM_STOP=M0_M1_CONTROL_LAYER",
+        "SUBPROGRAM=M98_M99_CALL_RETURN_LAYER",
+        "PROGRAM_END=M2_M30_CONTROL_LAYER"
+    ))
+    val auxProgram = """
+        G21 G94 G97 G90 G54 G17 G40 G49
+        M3
+        M8
+        M98 P4
+        M9
+        M5
+        M30
+    """.trimIndent()
+    val auxEvents = NcAuxiliaryTracker.trace(auxProgram)
+    check(auxEvents.any { it.code=="M3" && it.group=="SPINDLE" })
+    check(auxEvents.any { it.code=="M8" && it.group=="COOLANT" })
+    check(auxEvents.any { it.code=="M98" && it.group=="SUBPROGRAM_CALL" })
+    check(auxEvents.any { it.code=="M30" && it.group=="PROGRAM_END" })
+    check(NcAuxiliaryTracker.finalState(auxProgram).spindle=="M5")
+    check(NcAuxiliaryTracker.finalState(auxProgram).coolant=="M9")
+    check(NcAuxiliaryTracker.finalState(auxProgram).programControl=="M30")
+    check(NcProgramSafetyPolicy.blocking(auxProgram).isEmpty())
+    check(CncControllerCapabilityMatrix.classify(CncControllerProfile.FANUC,"M3").status == ControllerCapabilityStatus.MODELED_ALLOWED)
+    check(CncControllerCapabilityMatrix.classify(CncControllerProfile.MITSUBISHI_M800_M80,"M19").status == ControllerCapabilityStatus.TRACKED_REVIEW)
+
+    val blockedAux = """
+        G21 G94 G97 G90 G54 G17 G40 G49
+        M4
+        M7
+        M19
+        M777
+    """.trimIndent()
+    val blockedAuxCodes = NcProgramSafetyPolicy.blocking(blockedAux).map { it.code }.toSet()
+    check("M4_REVERSE_SPINDLE_UNVERIFIED" in blockedAuxCodes)
+    check("M7_MIST_COOLANT_UNVERIFIED" in blockedAuxCodes)
+    check("M19_SPINDLE_ORIENT_UNVERIFIED" in blockedAuxCodes)
+    check("UNKNOWN_MCODE_FAIL_CLOSED" in blockedAuxCodes)
+    println("✓ NC_AUXILIARY_TRACKER_PASS spindle/coolant/toolchange/subprogram/program-control")
 }
 
 
