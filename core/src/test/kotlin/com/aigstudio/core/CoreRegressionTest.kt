@@ -1186,6 +1186,7 @@ fun main() {
     testCamWorkstationContract()
     testUnifiedMachiningWorkspaceContract()
     testMultiAxisToolpointProvenance()
+    testNcDraftRecoveryContract()
     println("ALL TESTS PASSED")
 }
 
@@ -1934,4 +1935,16 @@ private fun testMultiAxisToolpointProvenance() {
     val fallbackNc=CncPost.generate(fallbackCam,FanucPostSettings(axisA=10.0,axisB=0.0))
     check("(MULTIAXIS TOOLPOINT A/B SOURCE POST_COMPAT_FALLBACK)" in fallbackNc)
     println("✓ MULTIAXIS_TOOLPOINT_PROVENANCE_GATE_PASS CAM_POINT_AB NC_POST_SOURCE INDEXED_ORIENTATION COMPAT_FALLBACK")
+}
+
+
+private fun testNcDraftRecoveryContract() {
+    check(NcDraftRecoveryContract.CHECKPOINT_FORMAT==3)
+    check(NcDraftRecoveryContract.restoreState(false,true,false)=="NO_DRAFT")
+    check(NcDraftRecoveryContract.restoreState(true,true,false)=="FRESH_DRAFT")
+    check(NcDraftRecoveryContract.restoreState(true,false,false)=="STALE")
+    check(NcDraftRecoveryContract.restoreState(true,true,true)=="STALE")
+    check(NcDraftRecoveryContract.canClaimNcReady("FRESH_DRAFT"))
+    check(!NcDraftRecoveryContract.canClaimNcReady("STALE"))
+    println("✓ NC_DRAFT_RECOVERY_GATE_PASS AUTOSAVE_V3 SOURCE_BOUND STALE_FAIL_CLOSED")
 }

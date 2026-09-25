@@ -905,3 +905,19 @@ object UnifiedMachiningWorkspaceContract {
     fun ncEditorAlwaysVisible():Boolean = true
     fun coreSamePageIntact():Boolean = samePageModes.toSet()==setOf("3D","3AX","4AX","5AX","NC_EDIT")
 }
+
+
+object NcDraftRecoveryContract {
+    const val CHECKPOINT_FORMAT = 3
+    const val DRAFT_SOURCE_BINDING = "SHA256_CAD_CAM_AXIS_POST"
+    const val RESTORE_POLICY = "PRESERVE_DRAFT_MARK_STALE_ON_SOURCE_CHANGE"
+    const val FINAL_POLICY = "STALE_DRAFT_NEVER_NC_READY"
+
+    fun restoreState(hasDraft:Boolean,sourceMatches:Boolean,storedStale:Boolean):String = when {
+        !hasDraft -> "NO_DRAFT"
+        storedStale || !sourceMatches -> "STALE"
+        else -> "FRESH_DRAFT"
+    }
+
+    fun canClaimNcReady(state:String):Boolean = state=="FRESH_DRAFT"
+}

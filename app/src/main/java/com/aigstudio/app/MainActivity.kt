@@ -8,6 +8,7 @@ import android.speech.RecognitionListener
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import java.util.Locale
+import java.security.MessageDigest
 import android.os.Process
 import android.os.PowerManager
 import android.content.IntentFilter
@@ -413,6 +414,8 @@ class MainActivity : Activity() {
     private var lastCpuWallMs = 0L
     private var monitorSnapshot = "MONITOR --"
     private var unifiedNcDraft: String? = null
+    private var unifiedNcDraftSourceSignature: String? = null
+    private var unifiedNcDraftStale: Boolean = false
     private val monitorHistory = mutableListOf<MonitorSample>()
     private var monitorHistoryLimit = 180
     private var monitorHistoryPaused = false
@@ -737,14 +740,40 @@ class MainActivity : Activity() {
 
 
 
+    private fun currentUnifiedNcSourceSignature(): String {
+        val raw = buildString {
+            append(cad.exportState()).append('|')
+            append(camSettings.toString()).append('|')
+            append(workOffset).append('|')
+            append(axisA).append('|').append(axisB).append('|')
+            append(controllerProfile.name).append('|')
+            append(ncCoordinateMode.name).append('|')
+            append(ncOriginTransformMode.name).append('|')
+            append(ncCutterCompensation.name).append('|')
+            append(drillCycleBlock)
+        }
+        val digest = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray(Charsets.UTF_8))
+        return digest.joinToString("") { "%02x".format(it) }
+    }
+
     private fun saveCadCheckpoint() {
         runCatching {
-            getSharedPreferences("aig_cad_autosave", MODE_PRIVATE)
+            val editor = getSharedPreferences("aig_cad_autosave", MODE_PRIVATE)
                 .edit()
                 .putString("cad_state", cad.exportState())
                 .putLong("saved_at", System.currentTimeMillis())
-                .putInt("format_version", 2)
-                .apply()
+                .putInt("format_version", 3)
+            val draft = unifiedNcDraft
+            if (draft.isNullOrBlank()) {
+                editor.remove("nc_draft")
+                    .remove("nc_source_signature")
+                    .remove("nc_stale")
+            } else {
+                editor.putString("nc_draft", draft)
+                    .putString("nc_source_signature", unifiedNcDraftSourceSignature ?: currentUnifiedNcSourceSignature())
+                    .putBoolean("nc_stale", unifiedNcDraftStale)
+            }
+            editor.apply()
         }
     }
 
@@ -753,10 +782,22 @@ class MainActivity : Activity() {
         val raw = prefs.getString("cad_state", null) ?: return
         if (raw.isBlank()) return
         val formatVersion = prefs.getInt("format_version", 1)
-        if (formatVersion !in 1..2) return
+        if (formatVersion !in 1..3) return
         runCatching { cad.importState(raw) }
             .onSuccess {
-                Toast.makeText(this, "AUTO RECOVERY • CAD restored", Toast.LENGTH_SHORT).show()
+                if (formatVersion >= 3) {
+                    unifiedNcDraft = prefs.getString("nc_draft", null)?.takeIf { it.isNotBlank() }
+                    unifiedNcDraftSourceSignature = prefs.getString("nc_source_signature", null)
+                    val sourceChanged = unifiedNcDraft != null &&
+                        unifiedNcDraftSourceSignature != currentUnifiedNcSourceSignature()
+                    unifiedNcDraftStale = prefs.getBoolean("nc_stale", false) || sourceChanged
+                }
+                val ncState = when {
+                    unifiedNcDraft == null -> "NO NC DRAFT"
+                    unifiedNcDraftStale -> "NC DRAFT STALE"
+                    else -> "NC DRAFT RESTORED"
+                }
+                Toast.makeText(this, "AUTO RECOVERY • CAD restored • " + ncState, Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -1333,8 +1374,9 @@ class MainActivity : Activity() {
             orientation=LinearLayout.VERTICAL
             setBackgroundColor(0xEE081722.toInt())
             addView(TextView(this@MainActivity).apply {
-                text="可編輯 G-code • EDITABLE NC • "+controllerProfile.displayName
-                setTextColor(0xFFFFD25A.toInt())
+                val draftState = if(unifiedNcDraftStale) " • DRAFT STALE" else if(unifiedNcDraft!=null) " • DRAFT RESTORED" else ""
+                text="可編輯 G-code • EDITABLE NC • "+controllerProfile.displayName+draftState
+                setTextColor(if(unifiedNcDraftStale) 0xFFFF6E6E.toInt() else 0xFFFFD25A.toInt())
                 textSize=StudioDisplayPolicy.sp(this,10.5f)
                 setPadding(dp(8),dp(5),dp(8),dp(5))
             })
@@ -1437,14 +1479,22 @@ class MainActivity : Activity() {
         action("套用軸向\nAPPLY AXIS",0xFF8B5CF6.toInt()){
             axisA=if(activeMode=="3D"||activeMode=="3AX")0.0 else draftA
             axisB=if(activeMode=="5AX")draftB else 0.0
-            Toast.makeText(this,"AXIS APPLIED • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+" • NC需重新驗證",Toast.LENGTH_SHORT).show()
+            if(!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale=true
+            saveCadCheckpoint()
+            Toast.makeText(this,"AXIS APPLIED • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+" • NC DRAFT STALE",Toast.LENGTH_SHORT).show()
         }
         action("儲存草稿\nSAVE NC",0xFF22C55E.toInt()){
             unifiedNcDraft=ncEditor.text.toString()
-            Toast.makeText(this,"NC DRAFT SAVED • FINAL UNVERIFIED",Toast.LENGTH_SHORT).show()
+            unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
+            unifiedNcDraftStale=false
+            saveCadCheckpoint()
+            Toast.makeText(this,"NC DRAFT SAVED • AUTOSAVE V3 • SOURCE BOUND",Toast.LENGTH_SHORT).show()
         }
         action("完整NC鍵盤\nNC KEYBOARD",0xFF3B82F6.toInt()){
             unifiedNcDraft=ncEditor.text.toString()
+            unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
+            unifiedNcDraftStale=false
+            saveCadCheckpoint()
             showNcEditDialog()
         }
         action("返回\nBACK",0xFFF59E0B.toInt()){ dialog.dismiss() }
