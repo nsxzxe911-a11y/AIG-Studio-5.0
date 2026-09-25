@@ -355,6 +355,82 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check("READY" in resumed.evidence() && "FEED_HOLD=OFF" in resumed.evidence())
     println("✓ NC_MACHINE_ALARM_RECOVERY_PASS latched/feed-hold/reset/revalidate/resume")
 
+    val boundaryCases = listOf(
+        Triple('X', -500.0, 500.0),
+        Triple('Y', -300.0, 300.0),
+        Triple('Z', -200.0, 200.0),
+        Triple('A', -110.0, 110.0),
+        Triple('B', -30.0, 120.0)
+    )
+    boundaryCases.forEach { (axis, minValue, maxValue) ->
+        val minProgram = "G21 G94 G97 G90 G54\nG0 " + axis + "%.3f".format(java.util.Locale.US,minValue)
+        val maxProgram = "G21 G94 G97 G90 G54\nG0 " + axis + "%.3f".format(java.util.Locale.US,maxValue)
+        check(NcRuntimeInterlock.status(minProgram,verifiedTravel)=="PASS")
+        check(NcRuntimeInterlock.status(maxProgram,verifiedTravel)=="PASS")
+
+        val underProgram = "G21 G94 G97 G90 G54\nG0 " + axis + "%.3f".format(java.util.Locale.US,minValue-0.001)
+        val overProgram = "G21 G94 G97 G90 G54\nG0 " + axis + "%.3f".format(java.util.Locale.US,maxValue+0.001)
+        val code = "AXIS_" + axis + "_TRAVEL_LIMIT_EXCEEDED"
+        check(NcRuntimeInterlock.findings(underProgram,verifiedTravel).any { it.code==code })
+        check(NcRuntimeInterlock.findings(overProgram,verifiedTravel).any { it.code==code })
+    }
+
+    val exactG91Boundary = """
+        G21 G94 G97 G90 G54
+        G0 X499.999 Y0.000 Z0.000
+        G91
+        X0.001
+    """.trimIndent()
+    check(NcRuntimeInterlock.status(exactG91Boundary,verifiedTravel)=="PASS")
+
+    val g91OneMicronPast = exactG91Boundary + "\nX0.001"
+    check(NcRuntimeInterlock.findings(g91OneMicronPast,verifiedTravel).any {
+        it.lineNumber==5 && it.code=="AXIS_X_TRAVEL_LIMIT_EXCEEDED"
+    })
+
+    val simultaneousOverTravel = """
+        G21 G94 G97 G90 G54
+        G0 X500.001 Y300.001 Z200.001
+    """.trimIndent()
+    val simultaneousCodes = NcRuntimeInterlock.findings(simultaneousOverTravel,verifiedTravel).map { it.code }.toSet()
+    check(setOf(
+        "AXIS_X_TRAVEL_LIMIT_EXCEEDED",
+        "AXIS_Y_TRAVEL_LIMIT_EXCEEDED",
+        "AXIS_Z_TRAVEL_LIMIT_EXCEEDED"
+    ).all { it in simultaneousCodes })
+
+    val malformedVariants = listOf(
+        "G1 X+ Y0.000 Z-1.000 F100.000",
+        "G1 X--1.000 Y0.000 Z-1.000 F100.000",
+        "G1 X1E3 Y0.000 Z-1.000 F100.000",
+        "G1 X. Y0.000 Z-1.000 F100.000"
+    )
+    malformedVariants.forEach { line ->
+        val p = "G21 G94 G97 G90 G54\n" + line
+        check(NcRuntimeInterlock.findings(p,verifiedTravel).isNotEmpty())
+        check(NcExecutionTimeline.build(p,CncControllerProfile.FANUC,verifiedTravel).any { it.status=="BLOCKED" })
+    }
+
+    val repeatedAlarmSession = NcMachineInterlockSession(verifiedTravel)
+    check(repeatedAlarmSession.inspect(overTravelProgram).state==NcMachineInterlockState.ALARM_LATCHED)
+    check(repeatedAlarmSession.inspect(overTravelProgram).state==NcMachineInterlockState.ALARM_LATCHED)
+    check(repeatedAlarmSession.resume().state==NcMachineInterlockState.ALARM_LATCHED)
+    check(repeatedAlarmSession.reset().state==NcMachineInterlockState.REVALIDATE_REQUIRED)
+    check(repeatedAlarmSession.resume().state==NcMachineInterlockState.REVALIDATE_REQUIRED)
+    check(repeatedAlarmSession.revalidate(correctedTravelProgram).state==NcMachineInterlockState.RESUME_ALLOWED)
+    check(repeatedAlarmSession.revalidate(correctedTravelProgram).state==NcMachineInterlockState.RESUME_ALLOWED)
+    check(repeatedAlarmSession.resume().state==NcMachineInterlockState.READY)
+
+    val longSafeIncrementalProgram = buildString {
+        appendLine("G21 G94 G97 G90 G54")
+        appendLine("G0 X0.000 Y0.000 Z0.000")
+        appendLine("G91")
+        repeat(500) { appendLine("X0.001") }
+        appendLine("G90")
+    }.trim()
+    check(NcRuntimeInterlock.status(longSafeIncrementalProgram,verifiedTravel)=="PASS")
+    println("✓ NC_MACHINE_BOUNDARY_MATRIX_PASS XYZAB/min-max/0.001/G91/multi-axis/malformed/alarm-order")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
