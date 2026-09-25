@@ -52,6 +52,8 @@ fun main() {
     testRealCamToolpath()
     testWorkOffsetDoesNotShiftAbsoluteCoordinates()
     testControllerProfilesDoNotShiftAbsoluteCoordinates()
+    testG91PostPreservesCanonicalAbsoluteCoordinates()
+    testControllerCutterCompensationDoubleApplyBlocked()
     testMaterialRemoval3D()
     testMachiningMesh3D()
     testAigIiPrecisionContract()
@@ -420,5 +422,67 @@ private fun testControllerProfilesDoNotShiftAbsoluteCoordinates() {
         check(xyz in mitsubishi) { "Mitsubishi profile XYZ mismatch at " + index }
     }
     println("✓ CONTROLLER_PROFILE_COORDINATE_PARITY_PASS FANUC/MITSUBISHI absolute XYZ unchanged")
+}
+
+private fun testG91PostPreservesCanonicalAbsoluteCoordinates() {
+    val snapshot = DrawingSnapshot(
+        listOf(Line("G91-L",Vec2(-50.0,-10.0),Vec2(50.0,-10.0)))
+    )
+    val cam = CamModel.fromCad(
+        9200L,
+        snapshot,
+        CamSettings(toolDiameter=6.0, depth=-3.0, safeZ=5.0, feedMmMin=150.0)
+    )
+    val canonicalBefore = cam.toolpaths.flatMap { it.moves }.map { Triple(it.to.x,it.to.y,it.z) }
+    val absoluteNc = CncPost.generate(
+        cam,
+        FanucPostSettings(
+            coordinateMode=NcCoordinateMode.ABSOLUTE_G90,
+            cutterCompensation=CutterCompensationMode.CAM_GEOMETRY_G40
+        )
+    )
+    val incrementalNc = CncPost.generate(
+        cam,
+        FanucPostSettings(
+            coordinateMode=NcCoordinateMode.INCREMENTAL_G91,
+            cutterCompensation=CutterCompensationMode.CAM_GEOMETRY_G40
+        )
+    )
+    val canonicalAfter = cam.toolpaths.flatMap { it.moves }.map { Triple(it.to.x,it.to.y,it.z) }
+    check(canonicalBefore == canonicalAfter)
+    check("(CANONICAL XYZ ABSOLUTE G90" in absoluteNc)
+    check("(CANONICAL XYZ ABSOLUTE G90" in incrementalNc)
+    check("(PROGRAM MODE G90 ABSOLUTE" in absoluteNc)
+    check("(PROGRAM MODE G91 INCREMENTAL" in incrementalNc)
+    check("\nG91\n" in incrementalNc)
+    check("\nG90\n" in incrementalNc)
+    check(canonicalBefore.any { it.first < 0.0 || it.second < 0.0 })
+    println("✓ G91_POST_CANONICAL_ABS_PARITY_PASS canonical CAM XYZ unchanged")
+}
+
+private fun testControllerCutterCompensationDoubleApplyBlocked() {
+    val snapshot = DrawingSnapshot(
+        listOf(Line("COMP-L",Vec2(-20.0,0.0),Vec2(20.0,0.0)))
+    )
+    val cam = CamModel.fromCad(
+        9300L,
+        snapshot,
+        CamSettings(toolDiameter=10.0, depth=-2.0, safeZ=5.0, feedMmMin=120.0)
+    )
+    val canonical = cam.toolpaths.flatMap { it.moves }.map { Triple(it.to.x,it.to.y,it.z) }
+    check(runCatching {
+        CncPost.generate(
+            cam,
+            FanucPostSettings(cutterCompensation=CutterCompensationMode.CONTROLLER_LEFT_G41)
+        )
+    }.isFailure)
+    check(runCatching {
+        CncPost.generate(
+            cam,
+            FanucPostSettings(cutterCompensation=CutterCompensationMode.CONTROLLER_RIGHT_G42)
+        )
+    }.isFailure)
+    check(canonical == cam.toolpaths.flatMap { it.moves }.map { Triple(it.to.x,it.to.y,it.z) })
+    println("✓ G41_G42_DOUBLE_COMP_BLOCK_PASS canonical CAM path preserved")
 }
 
