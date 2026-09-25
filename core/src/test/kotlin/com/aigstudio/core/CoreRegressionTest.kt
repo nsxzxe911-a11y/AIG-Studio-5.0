@@ -1469,7 +1469,7 @@ private fun testEnvironmentSettingsContract() {
     check(stressSnapshot.size==5)
     check(RenderStressProfiler.missingScenarios().isEmpty())
     check(RenderStressProfiler.heaviest()?.scenario==RenderStressScenario.FIVE_AXIS_SYNC)
-    check(RenderStressProfiler.heaviest()?.averageFps in 43.9..44.1)
+    check((RenderStressProfiler.heaviest()?.averageFps ?: 0.0) in 43.9..44.1)
     check("COVERAGE=COMPLETE" in RenderStressProfiler.summary())
     check("HEAVIEST=FIVE_AXIS_SYNC" in RenderStressProfiler.summary())
 
