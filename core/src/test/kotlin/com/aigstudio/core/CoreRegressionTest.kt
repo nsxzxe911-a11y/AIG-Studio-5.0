@@ -431,6 +431,85 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check(NcRuntimeInterlock.status(longSafeIncrementalProgram,verifiedTravel)=="PASS")
     println("✓ NC_MACHINE_BOUNDARY_MATRIX_PASS XYZAB/min-max/0.001/G91/multi-axis/malformed/alarm-order")
 
+    val duplicateAxisProgram = """
+        G21 G94 G97 G90 G54
+        G1 X1.000 X2.000 Y0.000 Z-1.000 F100.000
+    """.trimIndent()
+    val duplicateAxisFindings = NcRuntimeInterlock.findings(duplicateAxisProgram,verifiedTravel)
+    check(duplicateAxisFindings.any { it.lineNumber==2 && it.code=="DUPLICATE_AXIS_WORD_X" })
+    check(NcExecutionTimeline.build(
+        duplicateAxisProgram,CncControllerProfile.FANUC,verifiedTravel
+    ).any { it.lineNumber==2 && it.status=="BLOCKED" })
+
+    val commentOnlyOutOfRange = """
+        G21 G94 G97 G90 G54
+        (X999999.000 Y999999.000 Z999999.000)
+        G0 X0.000 Y0.000 Z0.000
+    """.trimIndent()
+    check(NcRuntimeInterlock.status(commentOnlyOutOfRange,verifiedTravel)=="PASS")
+
+    val lowercaseAndWhitespace = "g21 g94 g97 g90 g54\n\tg0   x1.000   y-2.000   z3.000"
+    check(NcRuntimeInterlock.status(lowercaseAndWhitespace,verifiedTravel)=="PASS")
+
+    val stabilityRanges = mapOf(
+        'X' to (-500.0 to 500.0),
+        'Y' to (-300.0 to 300.0),
+        'Z' to (-200.0 to 200.0),
+        'A' to (-110.0 to 110.0),
+        'B' to (-30.0 to 120.0)
+    )
+    val rng = kotlin.random.Random(0xA1C0FFEE.toInt())
+    var safeSamples = 0
+    var blockedSamples = 0
+    repeat(750) {
+        val axis = stabilityRanges.keys.elementAt(rng.nextInt(stabilityRanges.size))
+        val (minValue,maxValue) = stabilityRanges.getValue(axis)
+        val safeValue = minValue + rng.nextDouble() * (maxValue-minValue)
+        val safeProgram = "G21 G94 G97 G90 G54\nG0 " + axis +
+            "%.6f".format(java.util.Locale.US,safeValue)
+        check(NcRuntimeInterlock.status(safeProgram,verifiedTravel)=="PASS")
+        safeSamples++
+
+        val delta = 0.001 + rng.nextDouble() * 25.0
+        val blockedValue = if (rng.nextBoolean()) maxValue + delta else minValue - delta
+        val blockedProgram = "G21 G94 G97 G90 G54\nG0 " + axis +
+            "%.6f".format(java.util.Locale.US,blockedValue)
+        val expectedCode = "AXIS_" + axis + "_TRAVEL_LIMIT_EXCEEDED"
+        check(NcRuntimeInterlock.findings(blockedProgram,verifiedTravel).any { it.code==expectedCode })
+        check(NcExecutionTimeline.build(
+            blockedProgram,CncControllerProfile.FANUC,verifiedTravel
+        ).any { it.status=="BLOCKED" && expectedCode in it.reasons })
+        blockedSamples++
+    }
+    check(safeSamples==750 && blockedSamples==750)
+
+    repeat(100) { cycle ->
+        val session = NcMachineInterlockSession(verifiedTravel)
+        val bad = "G21 G94 G97 G90 G54\nG0 X" +
+            "%.3f".format(java.util.Locale.US,500.001 + cycle * 0.001)
+        val good = "G21 G94 G97 G90 G54\nG0 X" +
+            "%.3f".format(java.util.Locale.US,499.000 - cycle * 0.001)
+        check(session.inspect(bad).state==NcMachineInterlockState.ALARM_LATCHED)
+        check(session.inspect(good).state==NcMachineInterlockState.RESET_REQUIRED)
+        check(session.reset().state==NcMachineInterlockState.REVALIDATE_REQUIRED)
+        check(session.revalidate(good).state==NcMachineInterlockState.RESUME_ALLOWED)
+        check(session.resume().state==NcMachineInterlockState.READY)
+        check(session.current().canExecute)
+    }
+
+    val longModeFlipProgram = buildString {
+        appendLine("G21 G94 G97 G90 G54")
+        appendLine("G0 X0.000 Y0.000 Z0.000")
+        repeat(250) {
+            appendLine("G91 X0.001 Y-0.001 Z0.001")
+            appendLine("G90 X0.000 Y0.000 Z0.000")
+        }
+    }.trim()
+    repeat(10) {
+        check(NcRuntimeInterlock.status(longModeFlipProgram,verifiedTravel)=="PASS")
+    }
+    println("✓ NC_MACHINE_STABILITY_STRESS_PASS 1500-random/100-alarm-cycles/duplicate-axis/250-mode-flips")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
