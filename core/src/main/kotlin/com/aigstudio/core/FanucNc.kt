@@ -633,6 +633,123 @@ object NcRuntimeInterlock {
     }
 }
 
+
+enum class NcMachineInterlockState {
+    READY,
+    ALARM_LATCHED,
+    RESET_REQUIRED,
+    REVALIDATE_REQUIRED,
+    RESUME_ALLOWED
+}
+
+data class NcMachineInterlockSnapshot(
+    val state: NcMachineInterlockState,
+    val alarmLine: Int?,
+    val alarmCodes: List<String>,
+    val message: String
+) {
+    val canExecute: Boolean get() = state == NcMachineInterlockState.READY
+    val feedHold: Boolean get() = !canExecute
+    fun evidence(): String =
+        "MACHINE • " + state.name +
+            " • FEED_HOLD=" + if (feedHold) "ON" else "OFF" +
+            if (alarmCodes.isEmpty()) "" else
+                " • ALARM=" + (alarmLine?.let { "L" + it + ":" } ?: "") + alarmCodes.joinToString(",")
+}
+
+class NcMachineInterlockSession(
+    private val limits: NcMachineTravelLimits = NcMachineTravelLimits()
+) {
+    private var state: NcMachineInterlockState = NcMachineInterlockState.READY
+    private var latchedFindings: List<NcRuntimeInterlockFinding> = emptyList()
+
+    private fun snapshot(message: String): NcMachineInterlockSnapshot {
+        val first = latchedFindings.firstOrNull()
+        return NcMachineInterlockSnapshot(
+            state = state,
+            alarmLine = first?.lineNumber,
+            alarmCodes = latchedFindings.map { it.code }.distinct(),
+            message = message
+        )
+    }
+
+    fun inspect(program: String): NcMachineInterlockSnapshot {
+        val findings = NcRuntimeInterlock.findings(program, limits)
+        if (findings.isNotEmpty()) {
+            latchedFindings = findings
+            state = NcMachineInterlockState.ALARM_LATCHED
+            return snapshot("Runtime interlock alarm latched; execution/feed is held.")
+        }
+
+        if (state == NcMachineInterlockState.ALARM_LATCHED) {
+            state = NcMachineInterlockState.RESET_REQUIRED
+            return snapshot("Input is corrected, but the latched alarm requires RESET before revalidation.")
+        }
+        return snapshot(
+            when (state) {
+                NcMachineInterlockState.READY -> "Program is validated and execution is permitted."
+                NcMachineInterlockState.RESET_REQUIRED -> "Corrected input detected; RESET is required."
+                NcMachineInterlockState.REVALIDATE_REQUIRED -> "RESET accepted; revalidation is required."
+                NcMachineInterlockState.RESUME_ALLOWED -> "Revalidation passed; RESUME is allowed."
+                NcMachineInterlockState.ALARM_LATCHED -> "Alarm remains latched."
+            }
+        )
+    }
+
+    fun reset(): NcMachineInterlockSnapshot {
+        if (state == NcMachineInterlockState.ALARM_LATCHED ||
+            state == NcMachineInterlockState.RESET_REQUIRED) {
+            state = NcMachineInterlockState.REVALIDATE_REQUIRED
+        }
+        return snapshot(
+            if (state == NcMachineInterlockState.REVALIDATE_REQUIRED)
+                "RESET accepted; run revalidation before RESUME."
+            else
+                "RESET ignored because no resettable alarm state is active."
+        )
+    }
+
+    fun revalidate(program: String): NcMachineInterlockSnapshot {
+        val findings = NcRuntimeInterlock.findings(program, limits)
+        if (findings.isNotEmpty()) {
+            latchedFindings = findings
+            state = NcMachineInterlockState.ALARM_LATCHED
+            return snapshot("Revalidation failed; alarm latched and execution remains held.")
+        }
+
+        state = when (state) {
+            NcMachineInterlockState.REVALIDATE_REQUIRED -> NcMachineInterlockState.RESUME_ALLOWED
+            NcMachineInterlockState.READY -> NcMachineInterlockState.READY
+            NcMachineInterlockState.RESUME_ALLOWED -> NcMachineInterlockState.RESUME_ALLOWED
+            NcMachineInterlockState.ALARM_LATCHED,
+            NcMachineInterlockState.RESET_REQUIRED -> NcMachineInterlockState.RESET_REQUIRED
+        }
+        if (state == NcMachineInterlockState.RESUME_ALLOWED ||
+            state == NcMachineInterlockState.READY) {
+            latchedFindings = emptyList()
+        }
+        return snapshot(
+            when (state) {
+                NcMachineInterlockState.RESUME_ALLOWED -> "Revalidation passed; RESUME is now allowed."
+                NcMachineInterlockState.READY -> "Program remains READY."
+                else -> "Revalidation is clean, but RESET is still required before RESUME."
+            }
+        )
+    }
+
+    fun resume(): NcMachineInterlockSnapshot {
+        if (state == NcMachineInterlockState.RESUME_ALLOWED) {
+            state = NcMachineInterlockState.READY
+            latchedFindings = emptyList()
+            return snapshot("RESUME accepted; execution returned to READY.")
+        }
+        return snapshot("RESUME blocked until RESET and revalidation pass.")
+    }
+
+    fun current(): NcMachineInterlockSnapshot = snapshot("Current interlock state.")
+}
+
+
 object NcExecutionTimeline {
     private fun domainsFor(action: String): Set<NcExecutionDomain> = when (action) {
         "RAPID_MOVE" -> setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.MOTION_3D)
