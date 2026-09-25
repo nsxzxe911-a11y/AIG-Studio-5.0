@@ -26,6 +26,66 @@ enum class CutterCompensationMode(val code: String, val displayName: String) {
     CONTROLLER_RIGHT_G42("G42", "G42 • CONTROLLER RIGHT")
 }
 
+data class NcModalState(
+    val coordinateMode: String = "G90",
+    val workOffset: String = "G54",
+    val temporaryOriginActive: Boolean = false,
+    val cutterCompensation: String = "G40",
+    val toolLengthCompensation: String = "G49",
+    val plane: String = "G17"
+) {
+    fun evidence(): String =
+        "PROGRAM=" + coordinateMode +
+        "|WORK_OFFSET=" + workOffset +
+        "|G92=" + if (temporaryOriginActive) "ACTIVE" else "OFF" +
+        "|CUTTER_COMP=" + cutterCompensation +
+        "|TOOL_LENGTH=" + toolLengthCompensation +
+        "|PLANE=" + plane
+}
+
+data class NcModalEvent(
+    val lineNumber: Int,
+    val code: String,
+    val group: String,
+    val stateAfter: NcModalState
+)
+
+object NcModalTracker {
+    private val gCode = Regex("""(?i)(?<![A-Z0-9.])G\s*(\d{1,3})(?![0-9.])""")
+
+    fun trace(program: String): List<NcModalEvent> {
+        var state = NcModalState()
+        val events = mutableListOf<NcModalEvent>()
+        program.lineSequence().forEachIndexed { index, raw ->
+            val line = raw.substringBefore('(').substringBefore(';')
+            gCode.findAll(line).forEach { match ->
+                val n = match.groupValues[1].toInt()
+                val code = "G" + n
+                val group: String?
+                state = when (n) {
+                    90 -> { group = "PROGRAM_MODE"; state.copy(coordinateMode = "G90") }
+                    91 -> { group = "PROGRAM_MODE"; state.copy(coordinateMode = "G91") }
+                    54,55,56,57,58,59 -> { group = "WORK_OFFSET"; state.copy(workOffset = code) }
+                    92 -> { group = "TEMP_ORIGIN"; state.copy(temporaryOriginActive = true) }
+                    40,41,42 -> { group = "CUTTER_COMP"; state.copy(cutterCompensation = code) }
+                    43 -> { group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G43") }
+                    49 -> { group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G49") }
+                    17,18,19 -> { group = "PLANE"; state.copy(plane = code) }
+                    else -> { group = null; state }
+                }
+                if (group != null) events += NcModalEvent(index + 1, code, group, state)
+            }
+        }
+        return events
+    }
+
+    fun finalState(program: String): NcModalState =
+        trace(program).lastOrNull()?.stateAfter ?: NcModalState()
+
+    fun evidence(program: String): String = finalState(program).evidence()
+}
+
+
 data class FanucPostSettings(
     val workOffset: String = "G54",
     val tool: Int = 1,
