@@ -99,6 +99,35 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check("CTRL=MITSUBISHI M800/M80" in mitsubishiCapability)
     println("✓ CONTROLLER_CAPABILITY_MATRIX_PASS FANUC/MITSUBISHI modeled/review/unknown")
 
+    check(NcCodeCatalog.describe("G90").compact()=="G90=ABS")
+    check(NcCodeCatalog.describe("G91").compact()=="G91=INC")
+    check(NcCodeCatalog.describe("G92").compact()=="G92=TEMP-ORG")
+    check(NcCodeCatalog.describe("G41").compact()=="G41=L-COMP")
+    check(NcCodeCatalog.describe("G42").compact()=="G42=R-COMP")
+    check(NcCodeCatalog.describe("G43").compact()=="G43=TLEN")
+    check(NcCodeCatalog.describe("G43.4").compact()=="G43.4=TCP")
+    check(NcCodeCatalog.describe("G54").compact()=="G54=WCS")
+    check(NcCodeCatalog.describe("G54.4").compact()=="G54.4=INSTALL-COMP")
+    check(NcCodeCatalog.describe("M3").compact()=="M3=SP-CW")
+    check(NcCodeCatalog.describe("M8").compact()=="M8=COOL-ON")
+    check(NcCodeCatalog.describe("M98").compact()=="M98=SUB-CALL")
+    check(NcCodeCatalog.describe("M99").compact()=="M99=SUB-RET")
+    check(NcCodeCatalog.describe("G777.7").shortName=="UNKNOWN")
+    val codeLegend = NcCodeCatalog.programLegend(
+        "G21 G94 G97 G90 G54 G43\nM3 M8\nG41 G42\nM98 P4\nM99",
+        20
+    )
+    check("G90=ABS" in codeLegend)
+    check("G54=WCS" in codeLegend)
+    check("G43=TLEN" in codeLegend)
+    check("M3=SP-CW" in codeLegend)
+    check("M8=COOL-ON" in codeLegend)
+    check("G41=L-COMP" in codeLegend)
+    check("G42=R-COMP" in codeLegend)
+    check("M98=SUB-CALL" in codeLegend)
+    check("M99=SUB-RET" in codeLegend)
+    println("✓ NC_CODE_CATALOG_PASS G/M aliases locked")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
