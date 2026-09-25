@@ -66,6 +66,33 @@ private class GlassActionButton(label: String, private val accent: Color) : JBut
     }
 }
 
+
+private class RgbGlyphIcon(private val kind:String, private val accent:Color) : Icon {
+    override fun getIconWidth()=24
+    override fun getIconHeight()=24
+    override fun paintIcon(c:Component?,g0:Graphics?,x:Int,y:Int){
+        val g=(g0?.create() as? Graphics2D) ?: return
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)
+        g.color=Color(accent.red,accent.green,accent.blue,220)
+        g.stroke=BasicStroke(2.2f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+        val cx=x+12;val cy=y+12
+        when(kind){
+            "CAD" -> { g.drawRect(x+4,y+5,16,14);g.drawLine(x+7,y+16,x+17,y+8);g.drawOval(x+9,y+9,6,6) }
+            "CAM" -> { g.drawOval(x+5,y+5,14,14);g.drawArc(x+8,y+8,8,8,30,280);g.drawLine(cx,y+3,cx,y+8) }
+            "3D" -> {
+                val p=Polygon(intArrayOf(cx,x+20,cx,x+4),intArrayOf(y+3,y+8,y+14,y+8),4);g.drawPolygon(p)
+                g.drawLine(x+4,y+8,x+4,y+17);g.drawLine(x+20,y+8,x+20,y+17);g.drawLine(x+4,y+17,cx,y+22);g.drawLine(x+20,y+17,cx,y+22);g.drawLine(cx,y+14,cx,y+22)
+            }
+            "3AX" -> { g.drawLine(x+5,y+19,x+19,y+19);g.drawLine(x+5,y+19,x+5,y+5);g.drawLine(x+5,y+19,x+16,y+8) }
+            "4AX" -> { g.drawOval(x+4,y+6,16,12);g.drawArc(x+7,y+3,12,18,210,220);g.drawLine(x+18,y+5,x+21,y+7) }
+            "5AX" -> { g.drawOval(x+5,y+5,14,14);g.drawArc(x+2,y+7,20,10,200,200);g.drawArc(x+7,y+2,10,20,20,200) }
+            "NC_EDIT" -> { g.drawRect(x+5,y+3,14,18);for(i in 0..3)g.drawLine(x+8,y+8+i*3,x+16,y+8+i*3) }
+            else -> g.drawOval(x+5,y+5,14,14)
+        }
+        g.dispose()
+    }
+}
+
 private enum class DrawMode { LINE, RECT, CIRCLE }
 
 private class CadPanel(
@@ -330,6 +357,74 @@ private class Mesh3DPanel(private val result: Machining3DResult) : JPanel() {
                 " • OFFSET SHIFT=OFF • TOLERANCE SHIFT=OFF",
             14, 42
         )
+    }
+}
+
+
+private class AxisMachiningPanel(private val result:Machining3DResult) : JPanel() {
+    var axisA=0.0
+        private set
+    var axisB=0.0
+        private set
+    private var zoom=1.0
+    init{
+        background=Color(5,10,17)
+        preferredSize=Dimension(860,620)
+        addMouseWheelListener { zoom=(zoom*if(it.wheelRotation<0)1.1 else 0.9).coerceIn(0.3,5.0);repaint() }
+    }
+    fun setAngles(a:Double,b:Double){axisA=a;axisB=b;repaint()}
+    private fun axisTransform(v:Vec3):Vec3{
+        val cx=(result.stock.minX+result.stock.maxX)/2.0
+        val cy=(result.stock.minY+result.stock.maxY)/2.0
+        val cz=-result.stock.thickness/2.0
+        var x=v.x-cx;var y=v.y-cy;var z=v.z-cz
+        val aa=Math.toRadians(axisA)
+        val bb=Math.toRadians(axisB)
+        val y1=y*cos(aa)-z*sin(aa);val z1=y*sin(aa)+z*cos(aa);y=y1;z=z1
+        val x1=x*cos(bb)+z*sin(bb);val z2=-x*sin(bb)+z*cos(bb);x=x1;z=z2
+        return Vec3(x,y,z)
+    }
+    private fun project(v:Vec3,scale:Double):Point{
+        val r=axisTransform(v)
+        return Point(
+            (width/2.0+(r.x-r.z*.34)*scale).roundToInt(),
+            (height/2.0-(r.y+r.z*.28)*scale).roundToInt()
+        )
+    }
+    override fun paintComponent(g0:Graphics){
+        super.paintComponent(g0)
+        val g=g0 as Graphics2D
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)
+        g.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY)
+        val span=max(max(result.stock.maxX-result.stock.minX,result.stock.maxY-result.stock.minY),result.stock.thickness).coerceAtLeast(1.0)
+        val scale=min(width,height)*0.68/span*zoom
+        val pts=result.mesh.vertices.map{project(it,scale)}
+        val stride=max(1,ceil(result.mesh.triangles.size/4500.0).toInt())
+        result.mesh.triangles.forEachIndexed { i,t ->
+            if(i%stride==0){
+                val a=pts[t.a];val b=pts[t.b];val c=pts[t.c]
+                val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
+                g.color=Color(35,120,210,70);g.fillPolygon(poly)
+                g.color=Color(61,235,255,155);g.stroke=BasicStroke(.9f);g.drawPolygon(poly)
+            }
+        }
+        var prev:Move?=null
+        result.cam.toolpaths.forEach { tp ->
+            prev=null
+            tp.moves.forEach { m ->
+                val p=prev
+                if(p!=null){
+                    val a=project(Vec3(p.to.x,p.to.y,p.z),scale)
+                    val b=project(Vec3(m.to.x,m.to.y,m.z),scale)
+                    g.color=if(m.rapid)Color(61,235,255,195) else Color(255,176,32)
+                    g.stroke=BasicStroke(if(m.rapid)1.8f else 2.7f)
+                    g.drawLine(a.x,a.y,b.x,b.y)
+                }
+                prev=m
+            }
+        }
+        g.color=Color(235,245,255);g.font=Font(Font.SANS_SERIF,Font.BOLD,14)
+        g.drawString("TRUE AXIS VIEW • A="+DisplayFormat.mm(axisA)+"° • B="+DisplayFormat.mm(axisB)+"° • G0 CYAN • CUT ORANGE",14,22)
     }
 }
 
@@ -716,6 +811,89 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     }
 }
 
+
+private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:JLabel){
+    val snapshot=doc.snapshot()
+    require(snapshot.entities.isNotEmpty()){"UNIFIED WORKSPACE BLOCKED: no CAD geometry"}
+    val result=Machining3DEngine.build(snapshot)
+    var axisA=0.0
+    var axisB=0.0
+    fun generateNc():String=CncPost.generate(
+        result.cam,
+        FanucPostSettings(axisA=axisA,axisB=axisB)
+    )
+    val editor=JTextArea(generateNc()).apply{
+        background=Color(5,8,12);foreground=Color(99,255,157)
+        font=Font(Font.MONOSPACED,Font.PLAIN,14);lineWrap=false;tabSize=4
+    }
+    val editorPanel=JPanel(BorderLayout()).apply{
+        background=Color(8,18,30)
+        border=BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color(61,235,255,130),1,true),EmptyBorder(8,8,8,8))
+        add(JLabel("可編輯 G-code • EDITABLE NC • FANUC").apply{foreground=Color(255,210,90);font=font.deriveFont(Font.BOLD,14f)},BorderLayout.NORTH)
+        add(JScrollPane(editor),BorderLayout.CENTER)
+    }
+    val card=CardLayout()
+    val visual=JPanel(card).apply{background=Color(5,10,17)}
+    val mesh=Mesh3DPanel(result)
+    val axes=AxisMachiningPanel(result)
+    visual.add(mesh,"3D");visual.add(axes,"AXIS")
+    val split=JSplitPane(JSplitPane.HORIZONTAL_SPLIT,visual,editorPanel).apply{
+        resizeWeight=.66;dividerSize=6;border=null
+    }
+    val dlg=JDialog(frame,"AIG CNC • 3D / 3AX / 4AX / 5AX + EDITABLE G-CODE",false).apply{
+        layout=BorderLayout();minimumSize=Dimension(1100,720)
+    }
+    val modeBar=AdaptiveGlassToolbar()
+    val modeButtons=mutableListOf<GlassActionButton>()
+    fun mode(id:String,zh:String,en:String,color:Color,icon:String,run:()->Unit){
+        val b=GlassActionButton("$zh / $en",color).apply{
+            this.icon=RgbGlyphIcon(icon,color)
+            horizontalTextPosition=SwingConstants.RIGHT
+            addActionListener{
+                modeButtons.forEach{it.active=false};active=true;run()
+            }
+        }
+        modeButtons+=b;modeBar.add(b)
+    }
+    mode("CAD","2D繪圖","2D CAD",Color(61,235,255),"CAD"){dlg.dispose()}
+    mode("CAM","刀路","CAM",Color(63,255,157),"CAM"){status.text="REAL CAM • paths="+result.cam.toolpaths.size}
+    mode("3D","3D模擬","3D",Color(139,92,246),"3D"){axisA=0.0;axisB=0.0;card.show(visual,"3D")}
+    mode("3AX","三軸","3 AXIS",Color(59,130,246),"3AX"){axisA=0.0;axisB=0.0;axes.setAngles(0.0,0.0);card.show(visual,"AXIS")}
+    mode("4AX","四軸","4 AXIS",Color(245,158,11),"4AX"){axisB=0.0;axes.setAngles(axisA,0.0);card.show(visual,"AXIS")}
+    mode("5AX","五軸","5 AXIS",Color(236,72,153),"5AX"){axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    mode("NC_EDIT","程式","NC EDIT",Color(80,170,255),"NC_EDIT"){editor.requestFocusInWindow()}
+    modeButtons.getOrNull(2)?.active=true
+
+    val actions=AdaptiveGlassToolbar()
+    fun action(label:String,color:Color,icon:String,run:()->Unit){
+        actions.add(GlassActionButton(label,color).apply{
+            this.icon=RgbGlyphIcon(icon,color);addActionListener{run()}
+        })
+    }
+    action("A−",Color(139,92,246),"4AX"){axisA=(axisA-15.0).coerceAtLeast(-360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    action("A+",Color(139,92,246),"4AX"){axisA=(axisA+15.0).coerceAtMost(360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    action("B−",Color(236,72,153),"5AX"){axisB=(axisB-15.0).coerceAtLeast(-360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    action("B+",Color(236,72,153),"5AX"){axisB=(axisB+15.0).coerceAtMost(360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    action("重建NC / REBUILD NC",Color(34,197,94),"NC_EDIT"){
+        runCatching{generateNc()}.onSuccess{editor.text=it;status.text="UNIFIED NC REBUILT • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)}
+            .onFailure{status.text="UNIFIED NC BLOCKED: "+(it.message?:"error")}
+    }
+    action("安全檢查 / SAFE CHECK",Color(255,176,32),"NC_EDIT"){
+        val blocked=NcProgramSafetyPolicy.blocking(editor.text)
+        status.text=if(blocked.isEmpty())"UNIFIED NC SAFETY PASS" else "UNIFIED NC BLOCKED • "+blocked.take(3).joinToString(","){it.code}
+    }
+    action("儲存草稿 / SAVE DRAFT",Color(61,235,255),"NC_EDIT"){
+        status.text="NC DRAFT IN EDITOR • FINAL UNVERIFIED • chars="+editor.text.length
+    }
+
+    dlg.add(modeBar,BorderLayout.NORTH)
+    dlg.add(split,BorderLayout.CENTER)
+    dlg.add(actions,BorderLayout.SOUTH)
+    dlg.size=desktopAdaptiveSize(1500,900)
+    dlg.setLocationRelativeTo(frame)
+    dlg.isVisible=true
+}
+
 private fun showApp() {
     val doc = DrawingDocument()
     val status = JLabel("AIG CNC • FANUC / MITSUBISHI M800/M80 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
@@ -776,6 +954,10 @@ private fun showApp() {
         runCatching { showNcEditor(frame, doc) }
             .onSuccess { status.text = "NC EDIT • FANUC / MITSUBISHI • G90/G91 EXPLICIT • ABS XYZ LOCKED" }
             .onFailure { status.text = "NC EDIT BLOCKED: " + it.message }
+    })
+    toolbar.add(button("3D/3AX/4AX/5AX + NC", Color(125,112,255)) {
+        runCatching { showUnifiedMachiningEditor(frame,doc,status) }
+            .onFailure { status.text="UNIFIED WORKSPACE BLOCKED: "+(it.message?:"error") }
     })
     toolbar.add(button("CLEAR", Color(239, 68, 68)) { cad.clearCad() })
 
