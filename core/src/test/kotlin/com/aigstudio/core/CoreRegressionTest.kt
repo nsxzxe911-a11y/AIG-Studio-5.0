@@ -634,6 +634,46 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     }
     println("✓ NC_TIMELINE_LINEAR_PRECOMPUTE_PASS 5000-block/prepared-authority/<30s")
 
+    val valueDomainCases = listOf(
+        "G1 X1.000 Y0.000 Z-1.000 F0" to "FEED_NONPOSITIVE",
+        "G1 X1.000 Y0.000 Z-1.000 F-10.000" to "FEED_NONPOSITIVE",
+        "S-100" to "SPINDLE_SPEED_NEGATIVE",
+        "T-1" to "INVALID_INTEGER_WORD_T",
+        "T1.5" to "INVALID_INTEGER_WORD_T",
+        "H-1" to "INVALID_INTEGER_WORD_H",
+        "H1.5" to "INVALID_INTEGER_WORD_H",
+        "D-1" to "INVALID_INTEGER_WORD_D",
+        "D1.5" to "INVALID_INTEGER_WORD_D",
+        "M3 M4" to "CONFLICTING_AUX_GROUP_SPINDLE",
+        "M3 M5" to "CONFLICTING_AUX_GROUP_SPINDLE",
+        "M0 M30" to "CONFLICTING_AUX_GROUP_PROGRAM_CONTROL",
+        "M98 P4 M99" to "CONFLICTING_AUX_GROUP_SUBPROGRAM_FLOW"
+    )
+    valueDomainCases.forEach { (line,expected) ->
+        val p = "G21 G94 G97 G90 G54\n" + line
+        val findings = NcRuntimeInterlock.findings(p,verifiedTravel)
+        check(findings.any { it.lineNumber==2 && it.code==expected })
+        check(NcExecutionTimeline.build(
+            p,CncControllerProfile.FANUC,verifiedTravel
+        ).any { it.lineNumber==2 && it.status=="BLOCKED" && expected in it.reasons })
+    }
+
+    val validValueDomainProgram = """
+        G21 G94 G97 G90 G54
+        T0
+        H0
+        D0
+        S0
+        G1 X1.000 Y2.000 Z-1.000 F0.001
+        M3
+        M8
+        M9
+        M5
+        M30
+    """.trimIndent()
+    check(NcRuntimeInterlock.status(validValueDomainProgram,verifiedTravel)=="PASS")
+    println("✓ NC_CONTROLLER_VALUE_DOMAIN_PASS feed/spindle/tool-index/M-code-conflict")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
