@@ -51,6 +51,7 @@ fun main() {
     testEnvironmentSettingsContract()
     testRealCamToolpath()
     testWorkOffsetDoesNotShiftAbsoluteCoordinates()
+    testControllerProfilesDoNotShiftAbsoluteCoordinates()
     testMaterialRemoval3D()
     testMachiningMesh3D()
     testAigIiPrecisionContract()
@@ -382,5 +383,42 @@ private fun testWorkOffsetDoesNotShiftAbsoluteCoordinates() {
         "SIM must not rewrite CAD absolute coordinates"
     }
     println("✓ WORK_OFFSET_NO_GEOMETRY_SHIFT_PASS G54/G55 CAM/SIM absolute coordinates unchanged")
+}
+
+private fun testControllerProfilesDoNotShiftAbsoluteCoordinates() {
+    val snapshot = DrawingSnapshot(
+        listOf(
+            Line("M1",Vec2(-50.0,-40.0),Vec2(50.0,-40.0)),
+            Line("M2",Vec2(50.0,-40.0),Vec2(50.0,40.0)),
+            Line("M3",Vec2(50.0,40.0),Vec2(-50.0,40.0)),
+            Line("M4",Vec2(-50.0,40.0),Vec2(-50.0,-40.0))
+        )
+    )
+    val cam = CamModel.fromCad(
+        9100L,
+        snapshot,
+        CamSettings(toolDiameter=6.0, depth=-3.0, safeZ=5.0, feedMmMin=150.0)
+    )
+    val before = cam.toolpaths.flatMap { it.moves }.map { Triple(it.to.x,it.to.y,it.z) }
+    val fanuc = CncPost.generate(
+        cam,
+        FanucPostSettings(workOffset="G54", controller=CncControllerProfile.FANUC)
+    )
+    val mitsubishi = CncPost.generate(
+        cam,
+        FanucPostSettings(workOffset="G54", controller=CncControllerProfile.MITSUBISHI_M800_M80)
+    )
+    val after = cam.toolpaths.flatMap { it.moves }.map { Triple(it.to.x,it.to.y,it.z) }
+    check(before == after)
+    check("(CONTROLLER FANUC)" in fanuc)
+    check("(CONTROLLER MITSUBISHI M800/M80)" in mitsubishi)
+    check("G90 G54 G17 G40 G49 G80" in fanuc)
+    check("G90 G54 G17 G40 G49 G80" in mitsubishi)
+    before.forEachIndexed { index,p ->
+        val xyz="X"+FanucNc.fmt(p.first)+" Y"+FanucNc.fmt(p.second)+" Z"+FanucNc.fmt(p.third)
+        check(xyz in fanuc) { "Fanuc profile XYZ mismatch at " + index }
+        check(xyz in mitsubishi) { "Mitsubishi profile XYZ mismatch at " + index }
+    }
+    println("✓ CONTROLLER_PROFILE_COORDINATE_PARITY_PASS FANUC/MITSUBISHI absolute XYZ unchanged")
 }
 
