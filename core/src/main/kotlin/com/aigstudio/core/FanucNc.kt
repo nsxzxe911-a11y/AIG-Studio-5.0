@@ -77,6 +77,17 @@ object NcModalTracker {
         return if (tail.isEmpty()) "G" + head else "G" + head + "." + tail
     }
 
+    fun codes(program: String): List<Pair<Int,String>> {
+        val out = mutableListOf<Pair<Int,String>>()
+        program.lineSequence().forEachIndexed { index, raw ->
+            val line = raw.substringBefore('(').substringBefore(';')
+            gCode.findAll(line).forEach { match ->
+                out += (index + 1) to normalizeCode(match.groupValues[1])
+            }
+        }
+        return out
+    }
+
     fun trace(program: String): List<NcModalEvent> {
         var state = NcModalState()
         val events = mutableListOf<NcModalEvent>()
@@ -138,6 +149,20 @@ data class NcModalSafetyFinding(
 )
 
 object NcModalSafetyPolicy {
+    private val knownExecutionCodes = setOf(
+        "G0","G1","G2","G3","G4","G9",
+        "G17","G18","G19","G20","G21",
+        "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6",
+        "G31","G31.1","G31.2","G31.3",
+        "G34",
+        "G40","G41","G42","G43","G49",
+        "G52","G53","G54","G55","G56","G57","G58","G59",
+        "G61","G64","G65","G66","G66.1","G67",
+        "G68","G68.2","G68.3","G69",
+        "G73","G80","G81","G82","G83","G84","G85","G86","G87","G88","G89",
+        "G90","G91","G92","G92.1","G93","G94","G95","G96","G97","G98","G99"
+    )
+
     fun blocking(program: String): List<NcModalSafetyFinding> {
         val events = NcModalTracker.trace(program)
         val findings = mutableListOf<NcModalSafetyFinding>()
@@ -180,6 +205,16 @@ object NcModalSafetyPolicy {
         }
         if (events.none { it.code == "G97" }) {
             findings += NcModalSafetyFinding(0,"G97_REQUIRED","Explicit G97 fixed-RPM mode is required for the current AIG spindle model.")
+        }
+
+        NcModalTracker.codes(program).forEach { (line, code) ->
+            if (code !in knownExecutionCodes) {
+                findings += NcModalSafetyFinding(
+                    line,
+                    "UNKNOWN_GCODE_FAIL_CLOSED",
+                    code + " is not in the current AIG verified/tracked CNC vocabulary; execution is blocked until controller semantics are classified."
+                )
+            }
         }
         return findings.distinctBy { Triple(it.lineNumber,it.code,it.message) }
     }
