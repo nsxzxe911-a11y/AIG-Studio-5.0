@@ -412,6 +412,7 @@ class MainActivity : Activity() {
     private var lastCpuMs = 0L
     private var lastCpuWallMs = 0L
     private var monitorSnapshot = "MONITOR --"
+    private var unifiedNcDraft: String? = null
     private val monitorHistory = mutableListOf<MonitorSample>()
     private var monitorHistoryLimit = 180
     private var monitorHistoryPaused = false
@@ -1045,12 +1046,15 @@ class MainActivity : Activity() {
         addActionTo(branchFlow, "REAL CAM", 5) { showCamWorkstation() }
         addActionTo(branchFlow, "CAM 設定", 5) { showCamSettingsDialog() }
         addActionTo(branchFlow, "STOCK", 4) { showStockDialog() }
-        addActionTo(branchFlow, "NC EDIT", 0) { showNcEditDialog() }
+        addActionTo(branchFlow, "3D/3AX/4AX/5AX + NC", 0) { showUnifiedMachiningWorkspace("3D") }
+        addActionTo(branchFlow, "NC EDIT", 0) { showUnifiedMachiningWorkspace("NC_EDIT") }
         addActionTo(branchFlow, "G54–G59", 3) { showWorkOffsetDialog() }
         addActionTo(branchFlow, "CONTROL", 5) { showControllerDialog() }
         addActionTo(branchFlow, "G81/G73/G83/G84", 2) { showDrillCycleDialog() }
-        addActionTo(branchFlow, "5X A/B", 1) { show5xDialog() }
-        addActionTo(branchFlow, "3D 加工", 4) { showMachining3D() }
+        addActionTo(branchFlow, "3 AXIS", 3) { showUnifiedMachiningWorkspace("3AX") }
+        addActionTo(branchFlow, "4 AXIS", 2) { showUnifiedMachiningWorkspace("4AX") }
+        addActionTo(branchFlow, "5X A/B", 1) { showUnifiedMachiningWorkspace("5AX") }
+        addActionTo(branchFlow, "3D 加工", 4) { showUnifiedMachiningWorkspace("3D") }
     }
 
     private fun showCamWorkstation() {
@@ -1253,6 +1257,205 @@ class MainActivity : Activity() {
             .setView(root)
             .create()
         dialog.show()
+    }
+
+    private fun showUnifiedMachiningWorkspace(initialMode:String) {
+        val snapshot=cad.snapshot()
+        if(snapshot.entities.isEmpty()){
+            Toast.makeText(this,"整合加工工作站：請先建立 2D 幾何",Toast.LENGTH_LONG).show()
+            return
+        }
+        val result=runCatching {
+            Machining3DEngine.build(snapshot,camSettings,Stock3D.fromSnapshot(snapshot,stockMarginMm,stockThicknessMm))
+        }.getOrElse {
+            Toast.makeText(this,"整合工作站 BLOCKED: "+(it.message?:"3D/CAM build error"),Toast.LENGTH_LONG).show()
+            return
+        }
+        val generatedNc=runCatching {
+            val base=CncPost.generate(
+                result.cam,
+                FanucPostSettings(
+                    workOffset=workOffset,
+                    axisA=axisA,
+                    axisB=axisB,
+                    controller=controllerProfile,
+                    coordinateMode=ncCoordinateMode,
+                    originTransformMode=ncOriginTransformMode,
+                    cutterCompensation=ncCutterCompensation
+                )
+            )
+            if(drillCycleBlock.isBlank()) base else FanucNc.insertBeforeProgramEnd(base,drillCycleBlock)
+        }.getOrElse {
+            Toast.makeText(this,"NC POST BLOCKED • 同頁 3D/軸向仍可檢視 • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+            ""
+        }
+
+        val widthDp=resources.configuration.screenWidthDp.coerceAtLeast(1)
+        val heightDp=resources.configuration.screenHeightDp.coerceAtLeast(1)
+        val plan=UnifiedMachiningWorkspaceContract.plan(widthDp,heightDp)
+        lateinit var dialog:AlertDialog
+
+        val root=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setBackgroundColor(0xFF040A11.toInt())
+            setPadding(dp(6),dp(6),dp(6),dp(6))
+        }
+        root.addView(TextView(this).apply {
+            text="AIG CNC • 3D / 3 AXIS / 4 AXIS / 5 AXIS + EDITABLE G-CODE • AI AUTO LAYOUT"
+            setTextColor(0xFF3DEBFF.toInt())
+            textSize=StudioDisplayPolicy.sp(this,11.5f)
+            setTypeface(typeface,android.graphics.Typeface.BOLD)
+            setPadding(dp(8),dp(5),dp(8),dp(5))
+        })
+
+        val modeFlow=FlowLayout(this).apply { setPadding(dp(4),dp(3),dp(4),dp(3)) }
+        val modeButtons=mutableMapOf<String,RgbGlowButton>()
+        val usage=getSharedPreferences("aig_unified_usage",MODE_PRIVATE)
+        val usageMap=UnifiedMachiningWorkspaceContract.rgbImageButtonIds().associateWith { usage.getInt(it,0) }
+        val arranged=UnifiedMachiningWorkspaceContract.aiArrange(widthDp,heightDp,usageMap)
+
+        val visualHost=FrameLayout(this).apply { setBackgroundColor(0xFF06101A.toInt()) }
+        val ncEditor=EditText(this).apply {
+            setText(unifiedNcDraft ?: generatedNc)
+            setTextColor(0xFF63FF9D.toInt())
+            setBackgroundColor(0xFF05080C.toInt())
+            textSize=StudioDisplayPolicy.sp(this,12f)
+            typeface=android.graphics.Typeface.MONOSPACE
+            gravity=Gravity.TOP or Gravity.START
+            inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            isVerticalScrollBarEnabled=true
+            isHorizontalScrollBarEnabled=true
+            setHorizontallyScrolling(true)
+            minLines=10
+            setPadding(dp(10),dp(8),dp(10),dp(8))
+        }
+        val ncPanel=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setBackgroundColor(0xEE081722.toInt())
+            addView(TextView(this@MainActivity).apply {
+                text="可編輯 G-code • EDITABLE NC • "+controllerProfile.displayName
+                setTextColor(0xFFFFD25A.toInt())
+                textSize=StudioDisplayPolicy.sp(this,10.5f)
+                setPadding(dp(8),dp(5),dp(8),dp(5))
+            })
+            addView(ncEditor,LinearLayout.LayoutParams(-1,0,1f))
+        }
+
+        var activeMode=initialMode
+        var draftA=axisA
+        var draftB=axisB
+        fun iconFor(id:String):Int=when(id){
+            "CAD" -> android.R.drawable.ic_menu_edit
+            "CAM" -> android.R.drawable.ic_menu_manage
+            "NC_EDIT" -> android.R.drawable.ic_menu_agenda
+            else -> android.R.drawable.ic_menu_view
+        }
+        fun renderMode(mode:String){
+            activeMode=mode
+            modeButtons.forEach { (id,b)-> b.setRgbState(colors[(id.hashCode() and Int.MAX_VALUE)%colors.size],id==mode) }
+            visualHost.removeAllViews()
+            when(mode){
+                "CAD" -> {
+                    visualHost.addView(TextView(this).apply {
+                        text="2D CAD / 2D繪圖\n使用 RGB 圖片鍵返回主 CAD 工作區"
+                        gravity=Gravity.CENTER
+                        setTextColor(0xFF3DEBFF.toInt())
+                        textSize=StudioDisplayPolicy.sp(this,16f)
+                    },FrameLayout.LayoutParams(-1,-1))
+                }
+                "CAM" -> {
+                    visualHost.addView(TextView(this).apply {
+                        text="REAL CAM / 真實刀路\nCAM paths="+result.cam.toolpaths.size+"\nG0 青藍 • Cutting 黃橘"
+                        gravity=Gravity.CENTER
+                        setTextColor(0xFFFFB020.toInt())
+                        textSize=StudioDisplayPolicy.sp(this,15f)
+                    },FrameLayout.LayoutParams(-1,-1))
+                }
+                "3D","3AX" -> {
+                    draftA=0.0; draftB=0.0
+                    visualHost.addView(Machining3DView(this,result),FrameLayout.LayoutParams(-1,-1))
+                }
+                "4AX" -> {
+                    draftB=0.0
+                    visualHost.addView(Axis5xPreview(this,draftA,0.0){a,_->draftA=a;draftB=0.0},FrameLayout.LayoutParams(-1,-1))
+                }
+                "5AX" -> {
+                    visualHost.addView(Axis5xPreview(this,draftA,draftB){a,b->draftA=a;draftB=b},FrameLayout.LayoutParams(-1,-1))
+                }
+                "NC_EDIT" -> {
+                    visualHost.addView(Machining3DView(this,result),FrameLayout.LayoutParams(-1,-1))
+                    ncEditor.requestFocus()
+                }
+            }
+            usage.edit().putInt(mode,(usage.getInt(mode,0)+1).coerceAtMost(20)).apply()
+        }
+
+        arranged.forEach { spec ->
+            val b=RgbGlowButton(this).apply {
+                text=UnifiedMachiningWorkspaceContract.bilingualLabel(spec.id)
+                textSize=StudioDisplayPolicy.sp(this,UnifiedMachiningWorkspaceContract.adaptiveTextSp(spec.id,widthDp).toFloat())
+                setCompoundDrawablesWithIntrinsicBounds(iconFor(spec.id),0,0,0)
+                compoundDrawablePadding=dp(4)
+                gravity=Gravity.CENTER
+                minHeight=dp(54)
+                setRgbState(colors[(spec.id.hashCode() and Int.MAX_VALUE)%colors.size],spec.id==initialMode)
+                setOnClickListener {
+                    if(spec.id=="CAD"){
+                        dialog.dismiss()
+                        openCategory("繪圖"){showDrawingBranch()}
+                    } else if(spec.id=="CAM"){
+                        dialog.dismiss()
+                        showCamWorkstation()
+                    } else renderMode(spec.id)
+                }
+            }
+            modeButtons[spec.id]=b
+            modeFlow.addView(b)
+        }
+        root.addView(modeFlow,LinearLayout.LayoutParams(-1,-2))
+
+        val body=LinearLayout(this).apply {
+            orientation=if(plan.ncDock=="RIGHT") LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
+        }
+        if(plan.ncDock=="RIGHT"){
+            body.addView(visualHost,LinearLayout.LayoutParams(0,dp(520),plan.visualWeight.toFloat()))
+            body.addView(ncPanel,LinearLayout.LayoutParams(0,dp(520),plan.ncWeight.toFloat()))
+        }else{
+            body.addView(visualHost,LinearLayout.LayoutParams(-1,dp(340)))
+            body.addView(ncPanel,LinearLayout.LayoutParams(-1,dp(280)))
+        }
+        root.addView(body,LinearLayout.LayoutParams(-1,-2))
+
+        val actionFlow=FlowLayout(this)
+        fun action(label:String,color:Int,run:()->Unit){
+            actionFlow.addView(RgbGlowButton(this).apply {
+                text=label
+                setRgbState(color,false)
+                setOnClickListener{run()}
+            })
+        }
+        action("套用軸向\nAPPLY AXIS",0xFF8B5CF6.toInt()){
+            axisA=if(activeMode=="3D"||activeMode=="3AX")0.0 else draftA
+            axisB=if(activeMode=="5AX")draftB else 0.0
+            Toast.makeText(this,"AXIS APPLIED • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+" • NC需重新驗證",Toast.LENGTH_SHORT).show()
+        }
+        action("儲存草稿\nSAVE NC",0xFF22C55E.toInt()){
+            unifiedNcDraft=ncEditor.text.toString()
+            Toast.makeText(this,"NC DRAFT SAVED • FINAL UNVERIFIED",Toast.LENGTH_SHORT).show()
+        }
+        action("完整NC鍵盤\nNC KEYBOARD",0xFF3B82F6.toInt()){
+            unifiedNcDraft=ncEditor.text.toString()
+            showNcEditDialog()
+        }
+        action("返回\nBACK",0xFFF59E0B.toInt()){ dialog.dismiss() }
+        root.addView(actionFlow,LinearLayout.LayoutParams(-1,-2))
+
+        dialog=AlertDialog.Builder(this)
+            .setTitle("AIG CNC • UNIFIED MACHINING WORKSPACE")
+            .setView(root)
+            .create()
+        dialog.show()
+        renderMode(initialMode)
     }
 
     private fun showStockDialog() {
