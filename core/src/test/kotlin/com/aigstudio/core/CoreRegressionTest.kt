@@ -1989,5 +1989,10 @@ private fun testContinuousMultiAxisToolpointSchedule() {
     val stock=Stock3D.fromSnapshot(snapshot)
     val removal=MaterialRemoval3D.simulate(cam.toolpaths,settings,stock)
     check(removal.depth.any { it<0.0 })
-    println("✓ CONTINUOUS_MULTIAXIS_TOOLPOINT_GATE_PASS PER_POINT_AB CAM_TO_SIM_TO_NC LINEAR_SYNC")
+    val vertical=CamModel.fromCad(14301L,snapshot,settings)
+    val verticalRemoval=MaterialRemoval3D.simulate(vertical.toolpaths,settings,stock)
+    check(removal.depth.count { it<0.0 } > verticalRemoval.depth.count { it<0.0 }) {
+        "Tilt-aware conservative cutter envelope did not expand removal coverage"
+    }
+    println("✓ CONTINUOUS_MULTIAXIS_TOOLPOINT_GATE_PASS PER_POINT_AB CAM_TO_SIM_TO_NC LINEAR_SYNC TILT_ENVELOPE")
 }

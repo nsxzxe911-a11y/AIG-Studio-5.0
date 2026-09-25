@@ -90,14 +90,15 @@ object MaterialRemoval3D {
                             if (move.clockwise) while (sweep >= 0.0) sweep -= 2.0 * Math.PI
                             else while (sweep <= 0.0) sweep += 2.0 * Math.PI
                             val arcLength = abs(sweep) * radius
-                            val steps = max(4, ceil(arcLength / max(toolRadius / 3.0, 0.25)).toInt())
+                            val effectiveRadius=conservativeProjectedRadius(move)
+                            val steps = max(4, ceil(arcLength / max(effectiveRadius / 3.0, 0.25)).toInt())
                             for (i in 0..steps) {
                                 val a = a0 + sweep * i / steps
-                                carve(field, center.x + radius * cos(a), center.y + radius * sin(a), toolRadius, move.z)
+                                carve(field, center.x + radius * cos(a), center.y + radius * sin(a), effectiveRadius, move.z)
                             }
                         }
                     } else if (prev == null || prev.to.distanceTo(move.to) < EPS) {
-                        carve(field, move.to.x, move.to.y, toolRadius, move.z)
+                        carve(field, move.to.x, move.to.y, conservativeProjectedRadius(move), move.z)
                     } else {
                         val distance = prev.to.distanceTo(move.to)
                         val effectiveRadius=conservativeProjectedRadius(move)
