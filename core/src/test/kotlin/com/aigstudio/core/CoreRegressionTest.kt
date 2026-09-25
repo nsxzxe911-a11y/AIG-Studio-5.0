@@ -149,6 +149,29 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check(NcCodeCatalog.lineNumberAt(lineProgram,lineProgram.indexOf("G92"))==3)
     println("✓ NC_LINE_HELP_PASS cursor-line alias/layer/meaning/safety")
 
+    check(NcAnimationBridge.actionFor("G0")=="RAPID_MOVE")
+    check(NcAnimationBridge.actionFor("G1")=="CUT_LINEAR")
+    check(NcAnimationBridge.actionFor("G2")=="CUT_ARC_CW")
+    check(NcAnimationBridge.actionFor("G3")=="CUT_ARC_CCW")
+    check(NcAnimationBridge.actionFor("M3")=="SPINDLE_CW")
+    check(NcAnimationBridge.actionFor("M8")=="COOLANT_FLOOD")
+    check(NcAnimationBridge.actionFor("M6")=="TOOL_CHANGE")
+    val animationReadyProgram = """
+        G21 G94 G97 G90 G54 G17 G40 G49
+        M3 M8
+        G0 X0.000 Y0.000 Z5.000
+        G1 X10.000 Y0.000 Z-1.000 F100.000
+        G2 X10.000 Y10.000 I0.000 J5.000
+        M9 M5 M30
+    """.trimIndent()
+    check("G0=>RAPID_MOVE" in NcAnimationBridge.lineEvidence(animationReadyProgram,3))
+    check("G1=>CUT_LINEAR" in NcAnimationBridge.lineEvidence(animationReadyProgram,4))
+    check("G2=>CUT_ARC_CW" in NcAnimationBridge.lineEvidence(animationReadyProgram,5))
+    check("NC→3D ANIM READY" in NcAnimationBridge.programSummary(animationReadyProgram))
+    check("G92_ORIGIN_UNVERIFIED" in NcAnimationBridge.programSummary("G21 G94 G97 G90 G54\nG92 X0 Y0"))
+    check("UNKNOWN_GCODE_FAIL_CLOSED" in NcAnimationBridge.programSummary("G21 G94 G97 G90 G54\nG777.7 X1.000"))
+    println("✓ NC_3D_ANIMATION_BRIDGE_PASS motion/aux/5X/fail-closed")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
