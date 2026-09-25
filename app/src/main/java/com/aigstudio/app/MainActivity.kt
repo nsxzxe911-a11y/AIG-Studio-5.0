@@ -1121,7 +1121,14 @@ class MainActivity : Activity() {
             setPadding(dp(2),dp(4),dp(2),dp(4))
         }
         fun refreshModalStatus() {
-            modalStatus.text = "MODAL • " + NcModalTracker.evidence(editor.text.toString())
+            val program = editor.text.toString()
+            val blocked = NcModalSafetyPolicy.blocking(program)
+            modalStatus.setTextColor(if (blocked.isEmpty()) Color.rgb(255,210,90) else Color.rgb(255,110,110))
+            modalStatus.text = "MODAL • " + NcModalTracker.evidence(program) +
+                if (blocked.isEmpty()) " • SAFETY=PASS"
+                else "\nBLOCKED • " + blocked.take(4).joinToString(" • ") {
+                    (if (it.lineNumber > 0) "L" + it.lineNumber + " " else "") + it.code
+                }
         }
         refreshModalStatus()
         val mode = TextView(this).apply {
