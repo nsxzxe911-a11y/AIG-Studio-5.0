@@ -1671,13 +1671,12 @@ object FanucNc {
         out.appendLine("G90 " + post.workOffset + " G17 G40 G49 G80")
         out.appendLine("T" + post.tool)
         out.appendLine("M98 P" + post.toolChangeSubprogram)
-        out.appendLine("S" + post.spindle + " M3")
+        out.append("G0 G43 Z").append(fmt(max(s.safeZ, 30.0))).append(" H").append(post.h).appendLine()
         if (kotlin.math.abs(post.axisA) > 1e-9 || kotlin.math.abs(post.axisB) > 1e-9) {
             out.append("G0 A").append(fmt(post.axisA)).append(" B").append(fmt(post.axisB)).appendLine()
         }
-        out.append("G43 Z").append(fmt(max(s.safeZ, 30.0))).append(" H").append(post.h)
-        if (post.coolant) out.append(" M8")
-        out.appendLine()
+        out.appendLine("S" + post.spindle + " M3")
+        if (post.coolant) out.appendLine("M8")
 
         val moves = cam.toolpaths.flatMap { it.moves }
         if (post.coordinateMode == NcCoordinateMode.ABSOLUTE_G90) {
