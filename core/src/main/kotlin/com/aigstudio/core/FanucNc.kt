@@ -374,12 +374,26 @@ object NcSemanticAuthority {
         return issues.distinct()
     }
 
-    fun resolveLine(
-        program: String,
+    private fun animationEvidence(
         lineNumber: Int,
-        controller: CncControllerProfile
+        codes: List<String>,
+        safetyCodes: List<String>
+    ): String {
+        if (codes.isEmpty()) return "ANIM L" + lineNumber + " • NO G/M EVENT"
+        if (safetyCodes.isNotEmpty()) {
+            return "ANIM L" + lineNumber + " • BLOCKED=" + safetyCodes.joinToString(",")
+        }
+        return "ANIM L" + lineNumber + " • " + codes.joinToString(" | ") { code ->
+            code + "=>" + NcAnimationBridge.actionFor(code)
+        }
+    }
+
+    private fun resolvePrepared(
+        lines: List<String>,
+        lineNumber: Int,
+        controller: CncControllerProfile,
+        safetyByLine: Map<Int,List<String>>
     ): NcSemanticAuthorityResult {
-        val lines = program.split("\n")
         if (lineNumber !in 1..lines.size) {
             return NcSemanticAuthorityResult(
                 lineNumber,
@@ -391,11 +405,7 @@ object NcSemanticAuthority {
         }
 
         val codes = NcCodeCatalog.codesInLine(lines[lineNumber - 1])
-        val safetyCodes = NcProgramSafetyPolicy.blocking(program)
-            .filter { it.lineNumber == lineNumber }
-            .map { it.code }
-            .distinct()
-
+        val safetyCodes = safetyByLine[lineNumber].orEmpty().distinct()
         val conflicts = codes.flatMap { code ->
             consistencyIssues(
                 code,
@@ -410,8 +420,33 @@ object NcSemanticAuthority {
             codes,
             safetyCodes,
             conflicts,
-            NcAnimationBridge.lineEvidence(program, lineNumber)
+            animationEvidence(lineNumber, codes, safetyCodes)
         )
+    }
+
+    fun resolveLine(
+        program: String,
+        lineNumber: Int,
+        controller: CncControllerProfile
+    ): NcSemanticAuthorityResult {
+        val lines = program.split("\n")
+        val safetyByLine = NcProgramSafetyPolicy.blocking(program)
+            .groupBy { it.lineNumber }
+            .mapValues { (_, findings) -> findings.map { it.code }.distinct() }
+        return resolvePrepared(lines, lineNumber, controller, safetyByLine)
+    }
+
+    fun resolveProgram(
+        program: String,
+        controller: CncControllerProfile
+    ): List<NcSemanticAuthorityResult> {
+        val lines = program.split("\n")
+        val safetyByLine = NcProgramSafetyPolicy.blocking(program)
+            .groupBy { it.lineNumber }
+            .mapValues { (_, findings) -> findings.map { it.code }.distinct() }
+        return lines.indices.map { index ->
+            resolvePrepared(lines, index + 1, controller, safetyByLine)
+        }
     }
 
     fun lineEvidence(
@@ -424,8 +459,7 @@ object NcSemanticAuthority {
         program: String,
         controller: CncControllerProfile
     ): String {
-        val lines = program.split("\n")
-        val results = lines.indices.map { resolveLine(program, it + 1, controller) }
+        val results = resolveProgram(program, controller)
         val conflicts = results.flatMap { it.conflictCodes }.distinct()
         if (conflicts.isNotEmpty()) {
             return "NC SEMANTIC AUTHORITY • CONFLICT BLOCKED • " + conflicts.take(6).joinToString(",")
@@ -843,12 +877,13 @@ object NcExecutionTimeline {
         val lines = program.split("\n")
         val out = mutableListOf<NcExecutionEvent>()
         val runtimeInterlocks = NcRuntimeInterlock.findings(program, machineLimits).groupBy { it.lineNumber }
+        val authorityByLine = NcSemanticAuthority.resolveProgram(program, controller).associateBy { it.lineNumber }
         var halted = false
         var sequence = 1
 
         lines.indices.forEach { index ->
             val lineNumber = index + 1
-            val authority = NcSemanticAuthority.resolveLine(program, lineNumber, controller)
+            val authority = authorityByLine.getValue(lineNumber)
             val codes = authority.codes
             val runtimeReasons = runtimeInterlocks[lineNumber].orEmpty().map { it.code }.distinct()
             val effectiveCodes = if (codes.isEmpty() && runtimeReasons.isNotEmpty()) listOf("INPUT") else codes
