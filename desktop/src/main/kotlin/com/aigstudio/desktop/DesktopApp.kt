@@ -308,11 +308,27 @@ private class Mesh3DPanel(private val result: Machining3DResult) : JPanel() {
         }
 
         val removed = result.removal.depth.count { it < 0.0 }
+        val absoluteMoves = result.cam.toolpaths.flatMap { it.moves }
+        val minX = absoluteMoves.minOfOrNull { it.to.x } ?: 0.0
+        val maxX = absoluteMoves.maxOfOrNull { it.to.x } ?: 0.0
+        val minY = absoluteMoves.minOfOrNull { it.to.y } ?: 0.0
+        val maxY = absoluteMoves.maxOfOrNull { it.to.y } ?: 0.0
+        val minZ = absoluteMoves.minOfOrNull { it.z } ?: 0.0
+        val maxZ = absoluteMoves.maxOfOrNull { it.z } ?: 0.0
         g2.color = Color(220, 240, 255)
         g2.font = Font(Font.SANS_SERIF, Font.PLAIN, 14)
         g2.drawString(
             "HQ 3D RENDER ENGINE • TRUE MESH • CAM=" + result.cam.toolpaths.size + " • removed=" + removed + " • 精度 0.001 mm",
             14, 22
+        )
+        g2.drawString(
+            "ABS " + SoftwareCoordinateContract.coordinateMode() +
+                " • MASTER " + SoftwareCoordinateContract.masterOriginData() +
+                " • X[" + DisplayFormat.mm(minX) + ".." + DisplayFormat.mm(maxX) + "]" +
+                " • Y[" + DisplayFormat.mm(minY) + ".." + DisplayFormat.mm(maxY) + "]" +
+                " • Z[" + DisplayFormat.mm(minZ) + ".." + DisplayFormat.mm(maxZ) + "]" +
+                " • OFFSET SHIFT=OFF • TOLERANCE SHIFT=OFF",
+            14, 42
         )
     }
 }
@@ -424,6 +440,12 @@ private fun runSmoke() {
 
     val removed = result.removal.depth.count { it < 0.0 }
     require(removed > 0) { "Material removal result empty" }
+    val absoluteMoves = result.cam.toolpaths.flatMap { it.moves }
+    require(absoluteMoves.any { it.to.x < 0.0 || it.to.y < 0.0 }) { "Signed negative CAM coordinates missing" }
+    require(SoftwareCoordinateContract.masterOriginData() == "X0.000 Y0.000 Z0.000")
+    require(SoftwareCoordinateContract.xyzData(-40.0, -25.0, -2.0) == "X-40.000 Y-25.000 Z-2.000")
+    require(!SoftwareCoordinateContract.simulationAppliesWorkOffset())
+    require(!SoftwareCoordinateContract.simulationUsesToleranceCompensation())
     val sourceSha = System.getenv()["GITHUB_SHA"] ?: "LOCAL"
     File("REMOVED_CELLS.txt").writeText(
         "SOURCE_SHA=$sourceSha\nREMOVED_CELLS=$removed\n"
@@ -433,6 +455,11 @@ private fun runSmoke() {
             "OFFICIAL_RGB_UI=PASS\n3D_PAGE_OPENED=PASS\nHQ_RENDERER_STARTED=PASS\n" +
             "DRAG_ROTATION_CAPABILITY=PASS\nWHEEL_ZOOM_CAPABILITY=PASS\n" +
             "ANIMATION_FRAME_CHANGE=PASS\nMATERIAL_REMOVAL=PASS\nREMOVED_CELLS=$removed\n" +
+            "ABS_MODE=" + SoftwareCoordinateContract.coordinateMode() + "\n" +
+            "MASTER_ORIGIN=" + SoftwareCoordinateContract.masterOriginData() + "\n" +
+            "SIGNED_NEGATIVE_SAMPLE=" + SoftwareCoordinateContract.xyzData(-40.0, -25.0, -2.0) + "\n" +
+            "SIM_WORK_OFFSET_SHIFT=" + SoftwareCoordinateContract.simulationAppliesWorkOffset() + "\n" +
+            "SIM_TOLERANCE_SHIFT=" + SoftwareCoordinateContract.simulationUsesToleranceCompensation() + "\n" +
             "STATE_BEFORE=$beforeState\nSTATE_AFTER=$afterState\n" +
             "DESKTOP_3D_SHA256=" + sha256File(afterFile) + "\n"
     )
