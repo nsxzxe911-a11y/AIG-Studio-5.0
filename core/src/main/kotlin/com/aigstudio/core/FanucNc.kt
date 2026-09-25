@@ -1528,6 +1528,7 @@ object NcGeneratedProcessGate {
                     lineNumber,"TOOL_CHANGE_WITHOUT_T","M6 requires prior/current tool selection T."
                 )
                 toolChangeSeen=true
+                toolLengthActive=false
             }
 
             if (98 in m && p==toolChangeSubprogram) {
@@ -1538,6 +1539,7 @@ object NcGeneratedProcessGate {
                     lineNumber,"TOOL_CHANGE_CALL_WITHOUT_T","Tool-change subprogram call requires prior tool selection T."
                 )
                 toolChangeSeen=true
+                toolLengthActive=false
             }
 
             val zWord=words.lastOrNull { it.first=='Z' }?.second
@@ -1580,6 +1582,27 @@ object NcGeneratedProcessGate {
             }
 
             if (listOf(73.0,81.0,82.0,83.0,84.0,85.0,86.0,87.0,88.0,89.0).any { hasG(it) }) {
+                val r = words.lastOrNull { it.first=='R' }?.second
+                val z = words.lastOrNull { it.first=='Z' }?.second
+                if (r == null) findings += NcProcessSafetyFinding(
+                    lineNumber,"CYCLE_WITHOUT_R","Generated drilling/tapping cycle requires explicit R plane."
+                )
+                if (z == null) findings += NcProcessSafetyFinding(
+                    lineNumber,"CYCLE_WITHOUT_Z","Generated drilling/tapping cycle requires explicit Z depth."
+                )
+                if (r != null && z != null && r <= z) findings += NcProcessSafetyFinding(
+                    lineNumber,"CYCLE_R_NOT_ABOVE_Z","Generated cycle requires R plane above Z depth."
+                )
+                if (hasG(84.0)) {
+                    val s = words.lastOrNull { it.first=='S' }?.second
+                    val fWord = words.lastOrNull { it.first=='F' }?.second
+                    if (fWord == null || fWord <= 0.0) findings += NcProcessSafetyFinding(
+                        lineNumber,"G84_INVALID_FEED","Generated G84 requires positive F."
+                    )
+                    if (s != null && s <= 0.0) findings += NcProcessSafetyFinding(
+                        lineNumber,"G84_INVALID_SPINDLE_SPEED","Generated G84 S must be positive when specified."
+                    )
+                }
                 fixedCycleActive=true
             }
             if (hasG(80.0)) fixedCycleActive=false
