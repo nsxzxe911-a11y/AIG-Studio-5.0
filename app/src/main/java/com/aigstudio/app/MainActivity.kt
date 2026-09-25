@@ -1130,10 +1130,10 @@ class MainActivity : Activity() {
                 "\nAUX • " + NcAuxiliaryTracker.evidence(program) +
                 "\nCODE • " + NcCodeCatalog.programLegend(program) +
                 "\n" + CncControllerCapabilityMatrix.summary(controllerProfile, program) +
-                if (blocked.isEmpty()) " • SAFETY=PASS"
+                (if (blocked.isEmpty()) " • SAFETY=PASS"
                 else "\nBLOCKED • " + blocked.take(4).joinToString(" • ") {
                     (if (it.lineNumber > 0) "L" + it.lineNumber + " " else "") + it.code
-                } + "\n" + machine.evidence()
+                }) + "\n" + machine.evidence()
         }
         refreshModalStatus()
         val lineHelp = TextView(this).apply {
