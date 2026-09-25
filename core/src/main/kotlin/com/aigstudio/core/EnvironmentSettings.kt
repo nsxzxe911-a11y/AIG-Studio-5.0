@@ -363,9 +363,13 @@ class SurfaceFpsMeter(
         if(interval>budgetNs*1.5){
             dropped += ((interval/budgetNs).toLong()-1L).coerceAtLeast(1L)
         }
-        latest=latest.copy(frameIntervalMs=interval/1_000_000.0)
         lastFrameNs=frameTimeNs
         frames++
+        latest=latest.copy(
+            frameIntervalMs=interval/1_000_000.0,
+            frames=frames,
+            droppedFrames=dropped
+        )
 
         val elapsed=frameTimeNs-windowStartNs
         if(elapsed>=sampleWindowNs && elapsed>0L){
