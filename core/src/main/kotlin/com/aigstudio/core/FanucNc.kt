@@ -1567,6 +1567,13 @@ object FanucNc {
         return out.toString()
     }
 
+    fun circularHolePattern(startAngleDeg: Double, holeCount: Int, radius: Double): String {
+        require(startAngleDeg.isFinite())
+        require(holeCount in 1..99999)
+        require(radius.isFinite() && radius > 0.0)
+        return "G34 I" + fmt(startAngleDeg) + " J" + holeCount + " K" + fmt(radius)
+    }
+
     fun cannedCycle(cycle: DrillCycle, holes: List<DrillHole>, safeZ: Double, retractZ: Double = 2.0): String {
         require(holes.isNotEmpty())
         require(safeZ > retractZ && retractZ >= 0.0)
