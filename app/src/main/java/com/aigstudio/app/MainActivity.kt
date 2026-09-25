@@ -2019,6 +2019,8 @@ class CadView(context: Context) : View(context) {
     private val normalLinePath = Path()
     private val selectedLinePath = Path()
     private val arcPath = Path()
+    private val renderEngine = CadRenderEngine("AIG-Studio-CAD2D")
+    private var sceneRevision = 1L
     private var tool = Tool.LINE
     private var firstPoint: Vec2? = null
     private val selectedLines = mutableListOf<String>()
@@ -2034,6 +2036,7 @@ class CadView(context: Context) : View(context) {
     private val scaleDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
             transform.zoomAt(Vec2(detector.focusX.toDouble(), detector.focusY.toDouble()), detector.scaleFactor.toDouble())
+            sceneRevision++
             postInvalidateOnAnimation(); return true
         }
     })
@@ -2079,15 +2082,16 @@ class CadView(context: Context) : View(context) {
             restored.forEach(doc::put)
             firstPoint = null
             selectedLines.clear()
+            sceneRevision++
             invalidate()
         }
     }
-    fun setTool(t: Tool) { tool = t; firstPoint = null; selectedLines.clear(); invalidate() }
-    fun undo() { history.undo(); firstPoint = null; selectedLines.clear(); invalidate() }
-    fun redo() { history.redo(); firstPoint = null; selectedLines.clear(); invalidate() }
+    fun setTool(t: Tool) { tool = t; firstPoint = null; selectedLines.clear(); sceneRevision++; invalidate() }
+    fun undo() { history.undo(); firstPoint = null; selectedLines.clear(); sceneRevision++; invalidate() }
+    fun redo() { history.redo(); firstPoint = null; selectedLines.clear(); sceneRevision++; invalidate() }
     fun toggleSnap() { snapEnabled = !snapEnabled; Toast.makeText(context, "SNAP " + if (snapEnabled) "ON" else "OFF", Toast.LENGTH_SHORT).show(); invalidate() }
-    fun toggleGrid() { gridVisible = !gridVisible; invalidate() }
-    fun toggleGeometry() { geometryVisible = !geometryVisible; invalidate() }
+    fun toggleGrid() { gridVisible = !gridVisible; sceneRevision++; invalidate() }
+    fun toggleGeometry() { geometryVisible = !geometryVisible; sceneRevision++; invalidate() }
     fun aiInspect() {
         val result = AiCadInspector.inspect(doc.snapshot())
         val message = if (result.issues.isEmpty()) "未發現明顯幾何異常。CAM 前仍需人工確認刀具、座標與 Z 高度。"
@@ -2102,14 +2106,18 @@ class CadView(context: Context) : View(context) {
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         if (oldw == 0) { transform.originScreenX = w / 2.0; transform.originScreenY = h / 2.0 }
+        sceneRevision++
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (gridVisible) drawGrid(canvas)
-        if (geometryVisible) drawEntities(canvas)
+        val sceneKey = sceneRevision xor (width.toLong() shl 32) xor height.toLong()
+        renderEngine.draw(canvas, width, height, sceneKey) { layer ->
+            if (gridVisible) drawGrid(layer)
+            if (geometryVisible) drawEntities(layer)
+        }
         firstPoint?.let { val p = transform.worldToScreen(it); canvas.drawCircle(p.x.toFloat(), p.y.toFloat(), 8f, accentPaint) }
-        canvas.drawText("精度 0.001 mm • 顯示 0.000 • ${StudioDisplayPolicy.profile(this).tier} • ${tool.name}   X ${DisplayFormat.mm(lastWorld.x)}  Y ${DisplayFormat.mm(lastWorld.y)}   C${DisplayFormat.mm(chamferValue)} R${DisplayFormat.mm(filletValue)}", 16f, 26f, textPaint)
+        canvas.drawText("精度 0.001 mm • 顯示 0.000 • ${StudioDisplayPolicy.profile(this).tier} • ${renderEngine.backendName} cache=${renderEngine.cacheHits}/${renderEngine.recordings} • ${tool.name}   X ${DisplayFormat.mm(lastWorld.x)}  Y ${DisplayFormat.mm(lastWorld.y)}   C${DisplayFormat.mm(chamferValue)} R${DisplayFormat.mm(filletValue)}", 16f, 26f, textPaint)
     }
 
     private fun cncRulerStepMm(): Double {
@@ -2233,11 +2241,12 @@ class CadView(context: Context) : View(context) {
             MotionEvent.ACTION_DOWN -> {
                 lastX = event.x; lastY = event.y
                 if (tool != Tool.PAN) handleTap(lastWorld)
+                sceneRevision++
                 invalidate(); return true
             }
             MotionEvent.ACTION_MOVE -> if (tool == Tool.PAN) {
                 transform.pan((event.x-lastX).toDouble(), (event.y-lastY).toDouble())
-                lastX=event.x; lastY=event.y; postInvalidateOnAnimation(); return true
+                lastX=event.x; lastY=event.y; sceneRevision++; postInvalidateOnAnimation(); return true
             }
         }
         return true

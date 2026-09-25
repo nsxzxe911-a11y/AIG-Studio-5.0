@@ -74,13 +74,13 @@ jobs:
           test "$(grep -Fc 'ALL TESTS PASSED' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_MACHINE_STABILITY_STRESS_PASS' semantic-timeline.log)" -eq 3
           echo 'STUDIO_NC_SEMANTIC_TIMELINE_GATE=PASS'
-      - name: Install Android SDK 36 for UI compile
+      - name: Install Android SDK 37 for UI compile
         shell: bash
         run: |
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
           test -x "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          "$SDKMANAGER" "platform-tools" "platforms;android-37" "build-tools;36.0.0"
       - name: Compile Android and Windows UI surfaces
         shell: bash
         run: |
