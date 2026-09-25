@@ -156,6 +156,9 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check(NcAnimationBridge.actionFor("M3")=="SPINDLE_CW")
     check(NcAnimationBridge.actionFor("M8")=="COOLANT_FLOOD")
     check(NcAnimationBridge.actionFor("M6")=="TOOL_CHANGE")
+    check(NcAnimationBridge.actionFor("G43.4")=="AXIS_5X_ORIENTATION")
+    check(NcAnimationBridge.actionFor("G68.2")=="AXIS_5X_ORIENTATION")
+    check(NcAnimationBridge.actionFor("M9")=="COOLANT_OFF")
     val animationReadyProgram = """
         G21 G94 G97 G90 G54 G17 G40 G49
         M3 M8
