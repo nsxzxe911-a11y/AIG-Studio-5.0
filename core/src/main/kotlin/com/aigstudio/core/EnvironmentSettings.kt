@@ -585,3 +585,114 @@ class RenderCachePolicy {
         return if(total==0L) 0.0 else cacheHits.toDouble()/total.toDouble()
     }
 }
+
+
+enum class RgbStressMode { RGB_OFF, RGB_MAX }
+
+data class RgbStressSample(
+    val fps:Double,
+    val frameTimeMs:Double,
+    val cpuPercent:Double,
+    val temperatureC:Double?,
+    val droppedFrames:Long,
+    val hardwareEvidence:Boolean
+)
+
+data class RgbStressAggregate(
+    val mode:RgbStressMode,
+    val samples:Long,
+    val hardwareSamples:Long,
+    val averageFps:Double,
+    val averageFrameMs:Double,
+    val averageCpuPercent:Double,
+    val averageTemperatureC:Double?,
+    val droppedFrames:Long
+)
+
+data class RgbStressComparison(
+    val fpsDelta:Double,
+    val frameTimeDeltaMs:Double,
+    val cpuDeltaPercent:Double,
+    val temperatureDeltaC:Double?,
+    val droppedFrameDelta:Long,
+    val hardwareEvidence:Boolean
+)
+
+object RgbMaxStressProfiler {
+    private data class MutableAggregate(
+        var samples:Long=0,
+        var hardwareSamples:Long=0,
+        var fpsSum:Double=0.0,
+        var frameMsSum:Double=0.0,
+        var cpuSum:Double=0.0,
+        var tempSum:Double=0.0,
+        var tempSamples:Long=0,
+        var dropped:Long=0,
+        var lastDropSnapshot:Long=0
+    )
+    private val data=linkedMapOf<RgbStressMode,MutableAggregate>()
+
+    @Synchronized
+    fun record(mode:RgbStressMode,sample:RgbStressSample){
+        require(sample.fps>=0.0 && sample.frameTimeMs>=0.0)
+        require(sample.cpuPercent in 0.0..999.0)
+        require(sample.droppedFrames>=0L)
+        val a=data.getOrPut(mode){MutableAggregate()}
+        a.samples++
+        if(sample.hardwareEvidence) a.hardwareSamples++
+        a.fpsSum+=sample.fps
+        a.frameMsSum+=sample.frameTimeMs
+        a.cpuSum+=sample.cpuPercent
+        sample.temperatureC?.takeIf{it.isFinite()}?.let{
+            a.tempSum+=it
+            a.tempSamples++
+        }
+        val delta=if(sample.droppedFrames>=a.lastDropSnapshot) sample.droppedFrames-a.lastDropSnapshot else sample.droppedFrames
+        a.dropped+=delta.coerceAtLeast(0L)
+        a.lastDropSnapshot=sample.droppedFrames
+    }
+
+    @Synchronized
+    fun snapshot():List<RgbStressAggregate> = data.map { (mode,a) ->
+        RgbStressAggregate(
+            mode=mode,
+            samples=a.samples,
+            hardwareSamples=a.hardwareSamples,
+            averageFps=if(a.samples==0L)0.0 else a.fpsSum/a.samples,
+            averageFrameMs=if(a.samples==0L)0.0 else a.frameMsSum/a.samples,
+            averageCpuPercent=if(a.samples==0L)0.0 else a.cpuSum/a.samples,
+            averageTemperatureC=if(a.tempSamples==0L)null else a.tempSum/a.tempSamples,
+            droppedFrames=a.dropped
+        )
+    }
+
+    @Synchronized
+    fun comparison():RgbStressComparison? {
+        val off=snapshot().firstOrNull{it.mode==RgbStressMode.RGB_OFF} ?: return null
+        val max=snapshot().firstOrNull{it.mode==RgbStressMode.RGB_MAX} ?: return null
+        return RgbStressComparison(
+            fpsDelta=max.averageFps-off.averageFps,
+            frameTimeDeltaMs=max.averageFrameMs-off.averageFrameMs,
+            cpuDeltaPercent=max.averageCpuPercent-off.averageCpuPercent,
+            temperatureDeltaC=if(off.averageTemperatureC!=null && max.averageTemperatureC!=null)
+                max.averageTemperatureC-off.averageTemperatureC else null,
+            droppedFrameDelta=max.droppedFrames-off.droppedFrames,
+            hardwareEvidence=off.hardwareSamples>0L && max.hardwareSamples>0L
+        )
+    }
+
+    @Synchronized
+    fun summary():String {
+        val c=comparison() ?: return "RGB A/B • pending OFF+MAX"
+        fun f(v:Double)=String.format(java.util.Locale.US,"%.1f",v)
+        return "RGB A/B • MAX-OFF FPS=" + f(c.fpsDelta) +
+            " frame=" + f(c.frameTimeDeltaMs) + "ms" +
+            " CPU=" + f(c.cpuDeltaPercent) + "%" +
+            " temp=" + (c.temperatureDeltaC?.let{f(it)+"°C"} ?: "--") +
+            " drop=" + c.droppedFrameDelta +
+            " • " + if(c.hardwareEvidence) "DEVICE=MEASURED" else "DEVICE=PENDING"
+    }
+
+    @Synchronized
+    fun reset(){ data.clear() }
+}

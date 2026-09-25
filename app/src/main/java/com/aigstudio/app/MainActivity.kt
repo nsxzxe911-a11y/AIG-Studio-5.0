@@ -87,12 +87,25 @@ object StudioDisplayPolicy {
 }
 
 class RgbGlowButton(context: Context) : Button(context) {
+    companion object {
+        private val instances = java.util.Collections.newSetFromMap(java.util.WeakHashMap<RgbGlowButton, Boolean>())
+        private var globalBrightnessPercent = 65
+
+        fun setGlobalBrightness(percent:Int) {
+            globalBrightnessPercent = percent.coerceIn(0,100)
+            instances.toList().forEach { it.render() }
+        }
+
+        fun globalBrightness():Int = globalBrightnessPercent
+    }
+
     private var accent = Color.rgb(61,235,255)
     private var selectedGlow = false
     private var alarmGlow = false
     private val density = resources.displayMetrics.density
 
     init {
+        instances.add(this)
         isAllCaps = false
         stateListAnimator = null
         setTextColor(Color.WHITE)
@@ -120,15 +133,18 @@ class RgbGlowButton(context: Context) : Button(context) {
     private fun render() {
         val disabled = !isEnabled
         val pressedNow = isPressed
-        val edge = if (alarmGlow) Color.rgb(255,72,72) else accent
+        val rawEdge = if (alarmGlow) Color.rgb(255,72,72) else accent
         val base = Color.rgb(10,24,38)
-        val amount = when {
+        val brightness = if (alarmGlow) 1f else globalBrightnessPercent / 100f
+        val edge = mix(base, rawEdge, brightness)
+        val baseAmount = when {
             disabled -> 0.04f
             alarmGlow -> 0.38f
             pressedNow -> 0.46f
             selectedGlow -> 0.28f
             else -> 0.08f
         }
+        val amount = if (alarmGlow) baseAmount else baseAmount * brightness
         background = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
             intArrayOf(mix(base,edge,amount+0.08f),mix(base,edge,amount))
@@ -1519,6 +1535,26 @@ class MainActivity : Activity() {
                 ramMb = appRamMb
             )
             while (monitorHistory.size > monitorHistoryLimit) monitorHistory.removeAt(0)
+
+            val rgbLevel = getSharedPreferences("aig_environment", MODE_PRIVATE).getInt("rgb_brightness", 65)
+            val rgbMode = when(rgbLevel) {
+                0 -> RgbStressMode.RGB_OFF
+                100 -> RgbStressMode.RGB_MAX
+                else -> null
+            }
+            if(rgbMode != null && monitorFps > 0.0 && monitorFrameTimeMs >= 0.0) {
+                RgbMaxStressProfiler.record(
+                    rgbMode,
+                    RgbStressSample(
+                        fps=monitorFps,
+                        frameTimeMs=monitorFrameTimeMs,
+                        cpuPercent=cpuLoad,
+                        temperatureC=if(tempC.isNaN()) null else tempC,
+                        droppedFrames=monitorDroppedFrames,
+                        hardwareEvidence=true
+                    )
+                )
+            }
         }
         val thermal = thermalStatusLabel()
         val ramPressure = when {
@@ -1605,7 +1641,8 @@ class MainActivity : Activity() {
             monitorMaxTempC = Double.NEGATIVE_INFINITY
             monitorMaxRamMb = 0.0
             RenderStressProfiler.reset()
-            Toast.makeText(this, "監控與 3D/5X 壓力資料已清除", Toast.LENGTH_SHORT).show()
+            RgbMaxStressProfiler.reset()
+            Toast.makeText(this, "監控、3D/5X 與 RGB A/B 壓力資料已清除", Toast.LENGTH_SHORT).show()
         }
         box.addView(controls)
 
@@ -1635,6 +1672,7 @@ class MainActivity : Activity() {
                     appendLine("BAT        " + range(temp, " °C"))
                     appendLine("RAM        " + range(ram, " MB"))
                     appendLine(RenderStressProfiler.summary())
+                    appendLine(RgbMaxStressProfiler.summary())
                     append("Dropped Frames: " + monitorDroppedFrames +
                         " • UI/VISUAL ONLY • CNC 0.001 mm unchanged")
                 }
@@ -1739,7 +1777,7 @@ private fun showEnvironmentSettings() {
         }
 
         box.addView(TextView(this).apply {
-            text = "即時套用：FPS / 120Hz / CPU/GPU 溫度 / HUD / RGB / 熱控\n重開套用：3D / SIM 畫質核心"
+            text = "即時套用：FPS / 120Hz / CPU/GPU 溫度 / HUD / RGB / 熱控\nRGB A/B：設 0% 或 100% 會自動記錄真機 FPS / CPU / 溫度\n重開套用：3D / SIM 畫質核心"
             setTextColor(0xFFA0BED2.toInt())
             textSize = 11f
             setPadding(dp(4), dp(10), dp(4), dp(4))
@@ -1777,9 +1815,7 @@ private fun showEnvironmentSettings() {
                 applyFpsDisplayPreference(fpsDisplay.isChecked)
                 applyTemperatureDisplayPreference(temperatureDisplay.isChecked)
                 adaptiveRefreshController?.applyFromPreferences()
-                val visualAlpha = (0.35f + rgb.progress / 100f * 0.65f).coerceIn(0.35f, 1f)
-                categoryButtons.values.forEach { it.alpha = visualAlpha }
-                toolButtons.values.forEach { it.alpha = visualAlpha }
+                RgbGlowButton.setGlobalBrightness(rgb.progress)
                 Toast.makeText(
                     this,
                     "ENV APPLIED • " + selectedFps + " • RGB " + rgb.progress + "% • CNC 精度仍為 0.001 mm" +

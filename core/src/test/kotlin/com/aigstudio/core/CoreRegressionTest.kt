@@ -1179,6 +1179,7 @@ fun main() {
     testAiGapToleranceContract()
     testMicronDisplayScale()
     testRenderCachePolicyStress()
+    testRgbMaxStressProfilerContract()
     println("ALL TESTS PASSED")
 }
 
@@ -1771,4 +1772,28 @@ private fun testRenderCachePolicyStress() {
     check(cache.shouldRecord(0x1002L,2400,1080,true))
     check(cache.recordings==5L)
     println("✓ RENDER_CACHE_STRESS_GATE_PASS 10000_STATIC_HITS SCENE_RESIZE_BACKEND_INVALIDATION")
+}
+
+
+private fun testRgbMaxStressProfilerContract() {
+    RgbMaxStressProfiler.reset()
+    repeat(20) { i ->
+        RgbMaxStressProfiler.record(
+            RgbStressMode.RGB_OFF,
+            RgbStressSample(120.0,8.3,22.0,35.0,i.toLong()/10,false)
+        )
+        RgbMaxStressProfiler.record(
+            RgbStressMode.RGB_MAX,
+            RgbStressSample(116.0,8.7,25.0,36.0,i.toLong()/8,false)
+        )
+    }
+    val c=RgbMaxStressProfiler.comparison() ?: error("RGB A/B comparison missing")
+    check(c.fpsDelta in -4.1..-3.9)
+    check(c.frameTimeDeltaMs in 0.39..0.41)
+    check(c.cpuDeltaPercent in 2.9..3.1)
+    check(c.temperatureDeltaC != null && c.temperatureDeltaC in 0.99..1.01)
+    check(!c.hardwareEvidence)
+    check("DEVICE=PENDING" in RgbMaxStressProfiler.summary())
+    RgbMaxStressProfiler.reset()
+    println("✓ RGB_MAX_STRESS_PROFILER_GATE_PASS A/B_DELTA DROP_DELTA SYNTHETIC_ONLY NO_FAKE_DEVICE_CLAIM")
 }
