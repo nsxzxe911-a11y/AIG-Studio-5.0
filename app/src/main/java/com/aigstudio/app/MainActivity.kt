@@ -1604,7 +1604,8 @@ class MainActivity : Activity() {
             monitorFpsSamples = 0L
             monitorMaxTempC = Double.NEGATIVE_INFINITY
             monitorMaxRamMb = 0.0
-            Toast.makeText(this, "監控歷史已清除", Toast.LENGTH_SHORT).show()
+            RenderStressProfiler.reset()
+            Toast.makeText(this, "監控與 3D/5X 壓力資料已清除", Toast.LENGTH_SHORT).show()
         }
         box.addView(controls)
 
@@ -1633,6 +1634,7 @@ class MainActivity : Activity() {
                     appendLine("Frame Time " + range(frame, " ms"))
                     appendLine("BAT        " + range(temp, " °C"))
                     appendLine("RAM        " + range(ram, " MB"))
+                    appendLine(RenderStressProfiler.summary())
                     append("Dropped Frames: " + monitorDroppedFrames +
                         " • UI/VISUAL ONLY • CNC 0.001 mm unchanged")
                 }
