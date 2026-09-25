@@ -38,7 +38,9 @@ data class NcModalState(
     val coordinateRotation: String = "G69",
     val fixedCycle: String = "G80",
     val cycleReturn: String = "G98",
-    val pathControl: String = "G64"
+    val pathControl: String = "G64",
+    val spindleSpeedMode: String = "G97",
+    val macroMode: String = "G67"
 ) {
     fun evidence(): String =
         "PROGRAM=" + coordinateMode +
@@ -52,7 +54,9 @@ data class NcModalState(
         "|ROTATION=" + coordinateRotation +
         "|CYCLE=" + fixedCycle +
         "|RETURN=" + cycleReturn +
-        "|PATH=" + pathControl
+        "|PATH=" + pathControl +
+        "|SPINDLE_MODE=" + spindleSpeedMode +
+        "|MACRO=" + macroMode
 }
 
 data class NcModalEvent(
@@ -63,7 +67,15 @@ data class NcModalEvent(
 )
 
 object NcModalTracker {
-    private val gCode = Regex("""(?i)(?<![A-Z0-9.])G\s*(\d{1,3})(?![0-9.])""")
+    private val gCode = Regex("""(?i)(?<![A-Z0-9.])G\s*(\d{1,3}(?:\.\d+)?)(?![0-9.])""")
+
+    private fun normalizeCode(raw: String): String {
+        val parts = raw.split('.', limit = 2)
+        val head = parts[0].toInt().toString()
+        if (parts.size == 1) return "G" + head
+        val tail = parts[1].trimEnd('0')
+        return if (tail.isEmpty()) "G" + head else "G" + head + "." + tail
+    }
 
     fun trace(program: String): List<NcModalEvent> {
         var state = NcModalState()
@@ -71,26 +83,40 @@ object NcModalTracker {
         program.lineSequence().forEachIndexed { index, raw ->
             val line = raw.substringBefore('(').substringBefore(';')
             gCode.findAll(line).forEach { match ->
-                val n = match.groupValues[1].toInt()
-                val code = "G" + n
+                val code = normalizeCode(match.groupValues[1])
                 val group: String?
-                state = when (n) {
-                    90 -> { group = "PROGRAM_MODE"; state.copy(coordinateMode = "G90") }
-                    91 -> { group = "PROGRAM_MODE"; state.copy(coordinateMode = "G91") }
-                    54,55,56,57,58,59 -> { group = "WORK_OFFSET"; state.copy(workOffset = code) }
-                    92 -> { group = "TEMP_ORIGIN"; state.copy(temporaryOriginActive = true) }
-                    20,21 -> { group = "UNITS"; state.copy(units = code) }
-                    93,94,95 -> { group = "FEED_MODE"; state.copy(feedMode = code) }
-                    40,41,42 -> { group = "CUTTER_COMP"; state.copy(cutterCompensation = code) }
-                    43 -> { group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G43") }
-                    49 -> { group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G49") }
-                    17,18,19 -> { group = "PLANE"; state.copy(plane = code) }
-                    68 -> { group = "COORD_ROTATION"; state.copy(coordinateRotation = "G68") }
-                    69 -> { group = "COORD_ROTATION"; state.copy(coordinateRotation = "G69") }
-                    80,81,82,83,84,85,86,87,88,89 -> { group = "FIXED_CYCLE"; state.copy(fixedCycle = code) }
-                    98,99 -> { group = "CYCLE_RETURN"; state.copy(cycleReturn = code) }
-                    61,64 -> { group = "PATH_CONTROL"; state.copy(pathControl = code) }
-                    53 -> { group = "MACHINE_COORD_NONMODAL"; state }
+                state = when (code) {
+                    "G90" -> { group = "PROGRAM_MODE"; state.copy(coordinateMode = "G90") }
+                    "G91" -> { group = "PROGRAM_MODE"; state.copy(coordinateMode = "G91") }
+                    "G54","G55","G56","G57","G58","G59" -> { group = "WORK_OFFSET"; state.copy(workOffset = code) }
+                    "G92" -> { group = "TEMP_ORIGIN"; state.copy(temporaryOriginActive = true) }
+                    "G20","G21" -> { group = "UNITS"; state.copy(units = code) }
+                    "G93","G94","G95" -> { group = "FEED_MODE"; state.copy(feedMode = code) }
+                    "G40","G41","G42" -> { group = "CUTTER_COMP"; state.copy(cutterCompensation = code) }
+                    "G43" -> { group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G43") }
+                    "G49" -> { group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G49") }
+                    "G17","G18","G19" -> { group = "PLANE"; state.copy(plane = code) }
+                    "G68" -> { group = "COORD_ROTATION"; state.copy(coordinateRotation = "G68") }
+                    "G69" -> { group = "COORD_ROTATION"; state.copy(coordinateRotation = "G69") }
+                    "G80","G81","G82","G83","G84","G85","G86","G87","G88","G89" -> {
+                        group = "FIXED_CYCLE"; state.copy(fixedCycle = code)
+                    }
+                    "G98","G99" -> { group = "CYCLE_RETURN"; state.copy(cycleReturn = code) }
+                    "G61","G64" -> { group = "PATH_CONTROL"; state.copy(pathControl = code) }
+                    "G96","G97" -> { group = "SPINDLE_SPEED_MODE"; state.copy(spindleSpeedMode = code) }
+                    "G66","G66.1" -> { group = "MACRO_MODE"; state.copy(macroMode = code) }
+                    "G67" -> { group = "MACRO_MODE"; state.copy(macroMode = "G67") }
+                    "G4" -> { group = "DWELL_NONMODAL"; state }
+                    "G9" -> { group = "EXACT_STOP_NONMODAL"; state }
+                    "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6" -> {
+                        group = "REFERENCE_RETURN_NONMODAL"; state
+                    }
+                    "G31","G31.1","G31.2","G31.3" -> { group = "SKIP_NONMODAL"; state }
+                    "G52" -> { group = "LOCAL_COORD_TRANSFORM"; state }
+                    "G53" -> { group = "MACHINE_COORD_NONMODAL"; state }
+                    "G65" -> { group = "MACRO_CALL_NONMODAL"; state }
+                    "G68.2","G68.3" -> { group = "INCLINED_SURFACE_TRANSFORM"; state }
+                    "G92.1" -> { group = "WORK_COORD_PRESET_NONMODAL"; state }
                     else -> { group = null; state }
                 }
                 if (group != null) events += NcModalEvent(index + 1, code, group, state)
@@ -104,7 +130,6 @@ object NcModalTracker {
 
     fun evidence(program: String): String = finalState(program).evidence()
 }
-
 
 data class NcModalSafetyFinding(
     val lineNumber: Int,
