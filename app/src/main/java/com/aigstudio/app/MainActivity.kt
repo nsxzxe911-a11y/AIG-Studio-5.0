@@ -297,7 +297,8 @@ class MainActivity : Activity() {
             if (::temperatureIndicator.isInitialized) {
                 temperatureIndicator.text =
                     "CPU " + CpuGpuTemperatureProbe.format(temps.cpuC) +
-                    "  |  GPU " + CpuGpuTemperatureProbe.format(temps.gpuC)
+                    "  |  GPU " + CpuGpuTemperatureProbe.format(temps.gpuC) +
+                    "  |  AUTO CAP " + (adaptiveRefreshController?.currentCpuThermalCap() ?: 120) + " FPS"
                 val hottest = listOfNotNull(temps.cpuC, temps.gpuC).maxOrNull()
                 val prefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
                 val warnC = prefs.getInt("temperature_warn_c", 75).toDouble()
@@ -1533,6 +1534,7 @@ class MainActivity : Activity() {
             " | BAT " + tempText + "°C " + (if (batteryPct >= 0) "$batteryPct%" else "--%") + (if (charging) "⚡" else "") +
             " | RAM " + String.format("%.0f", appRamMb) + "MB" +
             " | Thermal " + thermal +
+            " | AUTO CAP " + (adaptiveRefreshController?.currentCpuThermalCap() ?: 120) + " FPS" +
             "\nDropped " + monitorDroppedFrames +
             " | App CPU " + String.format("%.0f", cpuLoad) + "%" +
             " | Mem " + ramPressure +
