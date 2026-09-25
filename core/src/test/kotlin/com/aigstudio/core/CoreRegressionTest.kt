@@ -793,7 +793,7 @@ private fun testWorkOffsetDoesNotShiftAbsoluteCoordinates() {
 
     check(before == after) { "NC work-offset selection must not mutate CAM absolute coordinates" }
     check("G90 G54" in nc54 && "G90 G55" in nc55)
-    check(nc54.replace("G54", "G5X") == nc55.replace("G55", "G5X")) {
+    check(nc54.replace("G90 G54", "G90 G5X") == nc55.replace("G90 G55", "G90 G5X")) {
         "G54/G55 must change only the explicit NC work-offset selector"
     }
     check(nc54.contains("X-") || nc54.contains("Y-")) { "Signed negative NC coordinate evidence missing" }
