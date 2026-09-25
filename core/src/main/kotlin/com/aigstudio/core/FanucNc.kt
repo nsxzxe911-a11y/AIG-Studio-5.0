@@ -10,6 +10,82 @@ enum class CncControllerProfile(val displayName: String, val programLabel: Strin
     MITSUBISHI_M800_M80("MITSUBISHI M800/M80", "MITSUBISHI M800/M80 ISO")
 }
 
+
+enum class ControllerCapabilityStatus {
+    MODELED_ALLOWED,
+    TRACKED_FAIL_CLOSED,
+    UNKNOWN_FAIL_CLOSED
+}
+
+data class ControllerCapabilityDecision(
+    val controller: CncControllerProfile,
+    val code: String,
+    val status: ControllerCapabilityStatus,
+    val reason: String
+)
+
+object CncControllerCapabilityMatrix {
+    private val modeledAllowed = setOf(
+        "G0","G1","G2","G3",
+        "G17","G21",
+        "G40","G43","G49",
+        "G54","G55","G56","G57","G58","G59",
+        "G73","G80","G81","G83","G84",
+        "G90","G91","G94","G97","G98"
+    )
+
+    private val trackedFailClosed = setOf(
+        "G4","G9","G18","G19","G20",
+        "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6",
+        "G31","G31.1","G31.2","G31.3","G34",
+        "G40.1","G41","G41.1","G41.2","G42","G42.1","G42.2",
+        "G43.1","G43.4","G43.5","G43.7",
+        "G50","G50.1","G51","G51.1","G52","G53","G53.1","G53.6",
+        "G54.1","G54.2","G54.4",
+        "G61","G61.1","G61.2","G61.4","G64",
+        "G65","G66","G66.1","G67",
+        "G68","G68.2","G68.3","G69",
+        "G82","G85","G86","G87","G88","G89",
+        "G92","G92.1","G93","G95","G96","G99",
+        "G150","G151","G152"
+    )
+
+    fun classify(controller: CncControllerProfile, code: String): ControllerCapabilityDecision {
+        val normalized = code.uppercase()
+        return when {
+            normalized in modeledAllowed -> ControllerCapabilityDecision(
+                controller,
+                normalized,
+                ControllerCapabilityStatus.MODELED_ALLOWED,
+                "AIG canonical post/CAM-SIM contract has an explicit modeled path for this code; context-specific safety rules still apply."
+            )
+            normalized in trackedFailClosed -> ControllerCapabilityDecision(
+                controller,
+                normalized,
+                ControllerCapabilityStatus.TRACKED_FAIL_CLOSED,
+                "AIG recognizes this controller code but the current canonical CAM/SIM execution model does not yet prove its full effect."
+            )
+            else -> ControllerCapabilityDecision(
+                controller,
+                normalized,
+                ControllerCapabilityStatus.UNKNOWN_FAIL_CLOSED,
+                "Code is not classified for this controller profile."
+            )
+        }
+    }
+
+    fun summary(controller: CncControllerProfile, program: String): String {
+        val decisions = NcModalTracker.codes(program).map { classify(controller,it.second) }
+        val allowed = decisions.count { it.status == ControllerCapabilityStatus.MODELED_ALLOWED }
+        val tracked = decisions.count { it.status == ControllerCapabilityStatus.TRACKED_FAIL_CLOSED }
+        val unknown = decisions.count { it.status == ControllerCapabilityStatus.UNKNOWN_FAIL_CLOSED }
+        return "CTRL=" + controller.displayName +
+            "|MODELED=" + allowed +
+            "|TRACKED_BLOCK=" + tracked +
+            "|UNKNOWN_BLOCK=" + unknown
+    }
+}
+
 enum class NcCoordinateMode(val code: String, val displayName: String) {
     ABSOLUTE_G90("G90", "G90 ABSOLUTE"),
     INCREMENTAL_G91("G91", "G91 INCREMENTAL")
