@@ -40,7 +40,16 @@ data class NcModalState(
     val cycleReturn: String = "G98",
     val pathControl: String = "G64",
     val spindleSpeedMode: String = "G97",
-    val macroMode: String = "G67"
+    val macroMode: String = "G67",
+    val fiveAxisToolControl: String = "G49",
+    val rotaryWorkOffset: String = "OFF",
+    val installErrorComp: String = "OFF",
+    val normalLineControl: String = "OFF",
+    val threeDCutterComp: String = "OFF",
+    val toolAxisDirection: String = "OFF",
+    val scalingMode: String = "G50",
+    val mirrorMode: String = "G50.1",
+    val highAccuracyMode: String = "OFF"
 ) {
     fun evidence(): String =
         "PROGRAM=" + coordinateMode +
@@ -56,7 +65,16 @@ data class NcModalState(
         "|RETURN=" + cycleReturn +
         "|PATH=" + pathControl +
         "|SPINDLE_MODE=" + spindleSpeedMode +
-        "|MACRO=" + macroMode
+        "|MACRO=" + macroMode +
+        "|TCP=" + fiveAxisToolControl +
+        "|ROTARY_WCS=" + rotaryWorkOffset +
+        "|INSTALL_COMP=" + installErrorComp +
+        "|NORMAL_LINE=" + normalLineControl +
+        "|3D_CUTTER_COMP=" + threeDCutterComp +
+        "|TOOL_AXIS_DIR=" + toolAxisDirection +
+        "|SCALING=" + scalingMode +
+        "|MIRROR=" + mirrorMode +
+        "|HIGH_ACCURACY=" + highAccuracyMode
 }
 
 data class NcModalEvent(
@@ -105,7 +123,12 @@ object NcModalTracker {
                     "G93","G94","G95" -> { group = "FEED_MODE"; state.copy(feedMode = code) }
                     "G40","G41","G42" -> { group = "CUTTER_COMP"; state.copy(cutterCompensation = code) }
                     "G43" -> { group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G43") }
-                    "G49" -> { group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G49") }
+                    "G43.1","G43.4","G43.5","G43.7" -> {
+                        group = "FIVE_AXIS_TOOL_CONTROL"; state.copy(fiveAxisToolControl = code)
+                    }
+                    "G49" -> {
+                        group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G49", fiveAxisToolControl = "G49")
+                    }
                     "G17","G18","G19" -> { group = "PLANE"; state.copy(plane = code) }
                     "G68" -> { group = "COORD_ROTATION"; state.copy(coordinateRotation = "G68") }
                     "G69" -> { group = "COORD_ROTATION"; state.copy(coordinateRotation = "G69") }
@@ -125,6 +148,19 @@ object NcModalTracker {
                     "G31","G31.1","G31.2","G31.3" -> { group = "SKIP_NONMODAL"; state }
                     "G52" -> { group = "LOCAL_COORD_TRANSFORM"; state }
                     "G53" -> { group = "MACHINE_COORD_NONMODAL"; state }
+                    "G53.1","G53.6" -> { group = "TOOL_AXIS_DIRECTION"; state.copy(toolAxisDirection = code) }
+                    "G54.1" -> { group = "EXTENDED_WORK_OFFSET"; state.copy(workOffset = "G54.1") }
+                    "G54.2" -> { group = "ROTARY_WORK_OFFSET"; state.copy(rotaryWorkOffset = "G54.2") }
+                    "G54.4" -> { group = "WORKPIECE_INSTALL_ERROR_COMP"; state.copy(installErrorComp = "G54.4") }
+                    "G40.1","G150" -> { group = "NORMAL_LINE_CONTROL"; state.copy(normalLineControl = "OFF") }
+                    "G41.1","G151" -> { group = "NORMAL_LINE_CONTROL"; state.copy(normalLineControl = code) }
+                    "G42.1","G152" -> { group = "NORMAL_LINE_CONTROL"; state.copy(normalLineControl = code) }
+                    "G41.2","G42.2" -> { group = "THREE_D_CUTTER_COMP"; state.copy(threeDCutterComp = code) }
+                    "G50" -> { group = "SCALING"; state.copy(scalingMode = "G50") }
+                    "G51" -> { group = "SCALING"; state.copy(scalingMode = "G51") }
+                    "G50.1" -> { group = "MIRROR"; state.copy(mirrorMode = "G50.1") }
+                    "G51.1" -> { group = "MIRROR"; state.copy(mirrorMode = "G51.1") }
+                    "G61.1","G61.2","G61.4" -> { group = "HIGH_ACCURACY_PATH"; state.copy(highAccuracyMode = code) }
                     "G65" -> { group = "MACRO_CALL_NONMODAL"; state }
                     "G68.2","G68.3" -> { group = "INCLINED_SURFACE_TRANSFORM"; state }
                     "G92.1" -> { group = "WORK_COORD_PRESET_NONMODAL"; state }
@@ -155,12 +191,15 @@ object NcModalSafetyPolicy {
         "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6",
         "G31","G31.1","G31.2","G31.3",
         "G34",
-        "G40","G41","G42","G43","G49",
-        "G52","G53","G54","G55","G56","G57","G58","G59",
-        "G61","G64","G65","G66","G66.1","G67",
+        "G40","G40.1","G41","G41.1","G41.2","G42","G42.1","G42.2",
+        "G43","G43.1","G43.4","G43.5","G43.7","G49",
+        "G50","G50.1","G51","G51.1","G52","G53","G53.1","G53.6",
+        "G54","G54.1","G54.2","G54.4","G55","G56","G57","G58","G59",
+        "G61","G61.1","G61.2","G61.4","G64","G65","G66","G66.1","G67",
         "G68","G68.2","G68.3","G69",
         "G73","G80","G81","G82","G83","G84","G85","G86","G87","G88","G89",
-        "G90","G91","G92","G92.1","G93","G94","G95","G96","G97","G98","G99"
+        "G90","G91","G92","G92.1","G93","G94","G95","G96","G97","G98","G99",
+        "G150","G151","G152"
     )
 
     fun blocking(program: String): List<NcModalSafetyFinding> {
@@ -194,6 +233,26 @@ object NcModalSafetyPolicy {
                     add(e,"WORK_COORD_PRESET_UNVERIFIED","Work-coordinate preset changes controller coordinate state and is not yet modeled by canonical CAM/SIM.")
                 "G96" ->
                     add(e,"G96_CSS_UNVERIFIED","Constant-surface-speed spindle control is not represented by the current fixed-RPM spindle model; generated programs use explicit G97.")
+                "G43.1","G43.4","G43.5","G43.7" ->
+                    add(e,"FIVE_AXIS_TCP_UNSIMULATED","5-axis tool-axis/TCP compensation is tracked but not yet applied by the canonical AIG 5X CAM/SIM execution model.")
+                "G53.1","G53.6" ->
+                    add(e,"TOOL_AXIS_DIRECTION_UNSIMULATED","Tool-axis direction control is controller-managed 5X motion and is not yet represented by canonical CAM/SIM.")
+                "G54.1" ->
+                    add(e,"EXTENDED_WCS_UNVERIFIED","Extended workpiece coordinate selection is tracked but the selected extended offset index is not yet resolved by canonical CAM/SIM.")
+                "G54.2" ->
+                    add(e,"ROTARY_WCS_OFFSET_UNSIMULATED","Rotary-axis workpiece position offset is not yet represented by canonical 5X CAM/SIM.")
+                "G54.4" ->
+                    add(e,"WORKPIECE_INSTALL_COMP_UNSIMULATED","Workpiece installation error compensation changes effective 5X coordinates and is not yet represented by canonical CAM/SIM.")
+                "G41.1","G42.1","G151","G152" ->
+                    add(e,"NORMAL_LINE_CONTROL_UNSIMULATED","Normal-line control changes tool orientation/path behavior and is not yet represented by canonical CAM/SIM.")
+                "G41.2","G42.2" ->
+                    add(e,"THREE_D_CUTTER_COMP_UNSIMULATED","3D cutter compensation is not yet represented by the current geometrically compensated CAM/SIM model.")
+                "G51" ->
+                    add(e,"SCALING_UNSIMULATED","Scaling changes effective geometry and is not yet applied by canonical CAM/SIM.")
+                "G51.1" ->
+                    add(e,"MIRROR_UNSIMULATED","Mirror-image execution changes effective geometry and is not yet applied by canonical CAM/SIM.")
+                "G61.1","G61.2","G61.4" ->
+                    add(e,"HIGH_ACCURACY_PATH_UNVERIFIED","Controller high-accuracy/path-shaping mode is tracked but not yet represented in AIG path timing/deviation validation.")
             }
         }
 
