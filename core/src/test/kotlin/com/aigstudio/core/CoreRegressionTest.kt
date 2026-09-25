@@ -241,6 +241,87 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check(unknownTimeline.filter { it.lineNumber>2 }.all { it.status=="SKIPPED_AFTER_BLOCK" })
     println("✓ NC_EXECUTION_TIMELINE_PASS nc/3d/sim/5x/safety-lockstep")
 
+    val verifiedTravel = NcMachineTravelLimits.verified(
+        xMin=-500.0, xMax=500.0,
+        yMin=-300.0, yMax=300.0,
+        zMin=-200.0, zMax=200.0,
+        aMin=-110.0, aMax=110.0,
+        bMin=-30.0, bMax=120.0
+    )
+
+    val overTravelProgram = """
+        G21 G94 G97 G90 G54
+        G0 X400.000 Y0.000 Z5.000
+        X600.000
+        G1 X450.000 Y0.000 Z-1.000 F100.000
+        M8
+    """.trimIndent()
+    val overTravelTimeline = NcExecutionTimeline.build(
+        overTravelProgram,CncControllerProfile.FANUC,verifiedTravel
+    )
+    check(overTravelTimeline.any {
+        it.lineNumber==3 && it.code=="INPUT" && it.status=="BLOCKED" &&
+            "AXIS_X_TRAVEL_LIMIT_EXCEEDED" in it.reasons &&
+            NcExecutionDomain.MOTION_3D in it.domains &&
+            NcExecutionDomain.MATERIAL_REMOVAL in it.domains &&
+            NcExecutionDomain.AXIS_5X in it.domains
+    })
+    check(overTravelTimeline.filter { it.lineNumber>3 }.all { it.status=="SKIPPED_AFTER_BLOCK" })
+    check("HALTED AT L3" in NcExecutionTimeline.programSummary(
+        overTravelProgram,CncControllerProfile.FANUC,verifiedTravel
+    ))
+
+    val correctedTravelProgram = overTravelProgram.replace("X600.000","X480.000")
+    check(NcRuntimeInterlock.status(correctedTravelProgram,verifiedTravel)=="PASS")
+    check(NcExecutionTimeline.build(
+        correctedTravelProgram,CncControllerProfile.FANUC,verifiedTravel
+    ).none { it.status=="BLOCKED" || it.status=="SKIPPED_AFTER_BLOCK" })
+
+    val incrementalOverTravel = """
+        G21 G94 G97 G90 G54
+        G0 X400.000 Y0.000 Z5.000
+        G91
+        X150.000
+        G90
+        G1 X450.000 Y0.000 Z-1.000 F100.000
+    """.trimIndent()
+    val incrementalTimeline = NcExecutionTimeline.build(
+        incrementalOverTravel,CncControllerProfile.FANUC,verifiedTravel
+    )
+    check(incrementalTimeline.any {
+        it.lineNumber==4 && it.status=="BLOCKED" &&
+            "AXIS_X_TRAVEL_LIMIT_EXCEEDED" in it.reasons
+    })
+    val correctedIncremental = incrementalOverTravel.replace("X150.000","X50.000")
+    check(NcRuntimeInterlock.status(correctedIncremental,verifiedTravel)=="PASS")
+
+    val malformedNumeric = """
+        G21 G94 G97 G90 G54
+        G0 X0.000 Y0.000 Z5.000
+        G1 X12..3 Y0.000 Z-1.000 F100.000
+        M8
+    """.trimIndent()
+    val malformedTimeline = NcExecutionTimeline.build(
+        malformedNumeric,CncControllerProfile.FANUC,verifiedTravel
+    )
+    check(malformedTimeline.any {
+        it.lineNumber==3 && it.status=="BLOCKED" &&
+            "MALFORMED_NUMERIC_WORD_X" in it.reasons
+    })
+    check(malformedTimeline.filter { it.lineNumber>3 }.all { it.status=="SKIPPED_AFTER_BLOCK" })
+    val correctedNumeric = malformedNumeric.replace("X12..3","X12.300")
+    check(NcRuntimeInterlock.status(correctedNumeric,verifiedTravel)=="PASS")
+
+    val rotaryOverTravel = """
+        G21 G94 G97 G90 G54
+        G0 A111.000 B0.000
+        G1 X0.000 Y0.000 Z-1.000 F100.000
+    """.trimIndent()
+    check(NcRuntimeInterlock.findings(rotaryOverTravel,verifiedTravel).any {
+        it.lineNumber==2 && it.code=="AXIS_A_TRAVEL_LIMIT_EXCEEDED"
+    })
+    println("✓ NC_RUNTIME_INTERLOCK_PASS malformed/absolute/G91/5X-overtravel/correct-and-resume")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
