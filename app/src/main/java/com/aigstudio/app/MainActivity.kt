@@ -1115,6 +1115,7 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(10),dp(8),dp(10),dp(6))
         }
+        val machineInterlockSession = NcMachineInterlockSession()
         val modalStatus = TextView(this).apply {
             setTextColor(Color.rgb(255,210,90))
             textSize = 10.5f
@@ -1123,7 +1124,8 @@ class MainActivity : Activity() {
         fun refreshModalStatus() {
             val program = editor.text.toString()
             val blocked = NcProgramSafetyPolicy.blocking(program)
-            modalStatus.setTextColor(if (blocked.isEmpty()) Color.rgb(255,210,90) else Color.rgb(255,110,110))
+            val machine = machineInterlockSession.inspect(program)
+            modalStatus.setTextColor(if (blocked.isEmpty() && machine.canExecute) Color.rgb(255,210,90) else Color.rgb(255,110,110))
             modalStatus.text = "MODAL • " + NcModalTracker.evidence(program) +
                 "\nAUX • " + NcAuxiliaryTracker.evidence(program) +
                 "\nCODE • " + NcCodeCatalog.programLegend(program) +
@@ -1131,7 +1133,7 @@ class MainActivity : Activity() {
                 if (blocked.isEmpty()) " • SAFETY=PASS"
                 else "\nBLOCKED • " + blocked.take(4).joinToString(" • ") {
                     (if (it.lineNumber > 0) "L" + it.lineNumber + " " else "") + it.code
-                }
+                } + "\n" + machine.evidence()
         }
         refreshModalStatus()
         val lineHelp = TextView(this).apply {
@@ -1169,7 +1171,15 @@ class MainActivity : Activity() {
         }
         var previewLine = 0
         fun stepPreview(reset: Boolean = false) {
-            val lines = editor.text.toString().split("\n")
+            val program = editor.text.toString()
+            val machine = machineInterlockSession.inspect(program)
+            if (!machine.canExecute) {
+                previewStatus.setTextColor(Color.rgb(255,110,110))
+                previewStatus.text = machine.evidence() + " • STEP BLOCKED"
+                return
+            }
+            previewStatus.setTextColor(Color.rgb(61,235,255))
+            val lines = program.split("\n")
             if (reset) previewLine = 0
             if (lines.isEmpty()) {
                 previewStatus.text = "NC PREVIEW • EMPTY"
@@ -1208,7 +1218,19 @@ class MainActivity : Activity() {
         toggle("SINGLE") { ncSingleBlock = !ncSingleBlock; if (ncSingleBlock) stepPreview(reset = true) }
         toggle("DRY RUN") { ncDryRun = !ncDryRun; previewStatus.text = if (ncDryRun) "DRY RUN • READY" else "NC PREVIEW • READY" }
         toggle("STEP") { stepPreview() }
-        toggle("RESET") { previewLine = 0; previewStatus.text = "NC PREVIEW • READY" }
+        toggle("RESET") {
+            previewLine = 0
+            val reset = machineInterlockSession.reset()
+            val checked = if (reset.state == NcMachineInterlockState.REVALIDATE_REQUIRED)
+                machineInterlockSession.revalidate(editor.text.toString()) else reset
+            previewStatus.text = checked.evidence()
+            refreshModalStatus()
+        }
+        toggle("RESUME") {
+            val resumed = machineInterlockSession.resume()
+            previewStatus.text = resumed.evidence()
+            refreshModalStatus()
+        }
         toggle("BLOCK /") {
             ncBlockSkip = !ncBlockSkip
             val lines = editor.text.toString().lineSequence().toList()
