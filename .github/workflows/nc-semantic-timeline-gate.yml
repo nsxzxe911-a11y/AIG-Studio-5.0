@@ -39,4 +39,18 @@ jobs:
           grep -Fq 'NC_MODAL_EVIDENCE_NO_TRUNCATION_PASS' semantic-timeline.log
           grep -Fq 'NC_RUNTIME_INTERLOCK_PASS' semantic-timeline.log
           grep -Fq 'NC_MACHINE_ALARM_RECOVERY_PASS' semantic-timeline.log
+          grep -Fq 'NC_MACHINE_BOUNDARY_MATRIX_PASS' semantic-timeline.log
           echo 'STUDIO_NC_SEMANTIC_TIMELINE_GATE=PASS'
+      - name: Install Android SDK 36 for UI compile
+        shell: bash
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+      - name: Compile Android and Windows UI surfaces
+        shell: bash
+        run: |
+          gradle :app:assembleDebug :desktop:compileKotlin --no-daemon --stacktrace | tee ui-compile.log
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          echo 'STUDIO_NC_UI_COMPILE_GATE=PASS'
