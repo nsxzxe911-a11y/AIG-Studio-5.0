@@ -358,6 +358,9 @@ private fun testNcModalTracker() {
     check(final.macroMode=="G67")
     check(NcModalTracker.evidence(program).contains("SPINDLE_MODE=G97"))
     check(NcModalTracker.evidence(program).contains("MACRO=G67"))
+    check(NcModalTracker.evidence(program).contains("G92=ACTIVE|UNITS=G21"))
+    check(NcModalTracker.evidence(program).contains("SPINDLE_MODE=G97|MACRO=G67"))
+    println("NC_MODAL_EVIDENCE_NO_TRUNCATION_PASS|G92|UNITS|SPINDLE|MACRO")
 
     val safe = """
         %
