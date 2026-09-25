@@ -322,6 +322,35 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     })
     println("✓ NC_RUNTIME_INTERLOCK_PASS malformed/absolute/G91/5X-overtravel/correct-and-resume")
 
+    val interlockSession = NcMachineInterlockSession(verifiedTravel)
+    val alarmed = interlockSession.inspect(overTravelProgram)
+    check(alarmed.state == NcMachineInterlockState.ALARM_LATCHED)
+    check(alarmed.feedHold && !alarmed.canExecute)
+    check("AXIS_X_TRAVEL_LIMIT_EXCEEDED" in alarmed.alarmCodes)
+
+    val correctedButLatched = interlockSession.inspect(correctedTravelProgram)
+    check(correctedButLatched.state == NcMachineInterlockState.RESET_REQUIRED)
+    check(correctedButLatched.feedHold)
+    check(interlockSession.resume().state == NcMachineInterlockState.RESET_REQUIRED)
+
+    val afterReset = interlockSession.reset()
+    check(afterReset.state == NcMachineInterlockState.REVALIDATE_REQUIRED)
+    check(afterReset.feedHold)
+
+    val badRevalidation = interlockSession.revalidate(overTravelProgram)
+    check(badRevalidation.state == NcMachineInterlockState.ALARM_LATCHED)
+    check(badRevalidation.feedHold)
+
+    check(interlockSession.inspect(correctedTravelProgram).state == NcMachineInterlockState.RESET_REQUIRED)
+    check(interlockSession.reset().state == NcMachineInterlockState.REVALIDATE_REQUIRED)
+    val resumeAllowed = interlockSession.revalidate(correctedTravelProgram)
+    check(resumeAllowed.state == NcMachineInterlockState.RESUME_ALLOWED)
+    check(resumeAllowed.feedHold)
+    val resumed = interlockSession.resume()
+    check(resumed.state == NcMachineInterlockState.READY)
+    check(resumed.canExecute && !resumed.feedHold)
+    println("✓ NC_MACHINE_ALARM_RECOVERY_PASS latched/feed-hold/reset/revalidate/resume")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
