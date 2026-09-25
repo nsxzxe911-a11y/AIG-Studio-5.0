@@ -47,6 +47,8 @@ jobs:
           grep -Fq 'NC_MACHINE_ALARM_RECOVERY_PASS' semantic-timeline.log
           grep -Fq 'NC_MACHINE_BOUNDARY_MATRIX_PASS' semantic-timeline.log
           grep -Fq 'NC_MACHINE_STABILITY_STRESS_PASS' semantic-timeline.log
+          grep -Fq 'NC_PARSER_CONFLICT_STRESS_PASS' semantic-timeline.log
+          test "$(grep -Fc 'NC_PARSER_CONFLICT_STRESS_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'ALL TESTS PASSED' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_MACHINE_STABILITY_STRESS_PASS' semantic-timeline.log)" -eq 3
           echo 'STUDIO_NC_SEMANTIC_TIMELINE_GATE=PASS'
