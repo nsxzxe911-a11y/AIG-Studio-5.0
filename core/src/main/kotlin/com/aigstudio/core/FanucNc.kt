@@ -1722,7 +1722,19 @@ object FanucNc {
         out.appendLine("M98 P" + post.endSubprogram)
         out.appendLine("M30")
         out.appendLine("%")
-        return out.toString()
+        val program = out.toString()
+        val processBlocked = NcGeneratedProcessGate.blocking(
+            program,
+            s.safeZ,
+            post.toolChangeSubprogram,
+            post.endSubprogram
+        )
+        require(processBlocked.isEmpty()) {
+            "Generated NC process gate blocked: " + processBlocked.joinToString(",") {
+                "L" + it.lineNumber + ":" + it.code
+            }
+        }
+        return program
     }
 
     fun circularHolePattern(startAngleDeg: Double, holeCount: Int, radius: Double): String {
