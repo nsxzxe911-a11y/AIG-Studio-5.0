@@ -961,7 +961,7 @@ private fun testCannedCycleReturnMode() {
     val noH = processCodes(safeGeneratedProcess.replace("G43 Z30.000 H1 M8","G43 Z30.000 M8"))
     check("G43_WITHOUT_H" in noH && "CUT_WITHOUT_G43_H" in noH)
     check("CUT_BEFORE_TOOL_CHANGE" in processCodes(
-        safeGeneratedProcess.replace("    M98 P4\n","")
+        safeGeneratedProcess.replace("M98 P4\n","")
     ))
     check("TOOL_CHANGE_CALL_SPINDLE_RUNNING" in processCodes(
         safeGeneratedProcess.replace("T1\nM98 P4\nS2300 M3","T1\nS2300 M3\nM98 P4")
