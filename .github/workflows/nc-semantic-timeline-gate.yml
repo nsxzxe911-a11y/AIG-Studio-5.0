@@ -50,6 +50,8 @@ jobs:
           grep -Fq 'NC_PARSER_CONFLICT_STRESS_PASS' semantic-timeline.log
           grep -Fq 'NC_TIMELINE_LINEAR_PRECOMPUTE_PASS' semantic-timeline.log
           grep -Fq 'NC_CONTROLLER_VALUE_DOMAIN_PASS' semantic-timeline.log
+          grep -Fq 'NC_PARAMETER_INTEGRITY_PASS' semantic-timeline.log
+          test "$(grep -Fc 'NC_PARAMETER_INTEGRITY_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_CONTROLLER_VALUE_DOMAIN_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_TIMELINE_LINEAR_PRECOMPUTE_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_PARSER_CONFLICT_STRESS_PASS' semantic-timeline.log)" -eq 3
