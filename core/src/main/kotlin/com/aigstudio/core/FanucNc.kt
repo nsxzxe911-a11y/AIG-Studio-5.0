@@ -31,7 +31,8 @@ object CncControllerCapabilityMatrix {
         "G40","G43","G49",
         "G54","G55","G56","G57","G58","G59",
         "G73","G80","G81","G83","G84",
-        "G90","G91","G94","G97","G98"
+        "G90","G91","G94","G97","G98",
+        "M3","M5","M6","M8","M9","M98","M99","M30"
     )
 
     private val trackedReview = setOf(
@@ -47,7 +48,8 @@ object CncControllerCapabilityMatrix {
         "G68","G68.2","G68.3","G69",
         "G82","G85","G86","G87","G88","G89",
         "G92","G92.1","G93","G95","G96","G99",
-        "G150","G151","G152"
+        "G150","G151","G152",
+        "M0","M1","M2","M4","M7","M19"
     )
 
     fun classify(controller: CncControllerProfile, code: String): ControllerCapabilityDecision {
@@ -75,7 +77,8 @@ object CncControllerCapabilityMatrix {
     }
 
     fun summary(controller: CncControllerProfile, program: String): String {
-        val decisions = NcModalTracker.codes(program).map { classify(controller,it.second) }
+        val decisions = (NcModalTracker.codes(program) + NcAuxiliaryTracker.codes(program))
+            .map { classify(controller,it.second) }
         val allowed = decisions.count { it.status == ControllerCapabilityStatus.MODELED_ALLOWED }
         val tracked = decisions.count { it.status == ControllerCapabilityStatus.TRACKED_REVIEW }
         val unknown = decisions.count { it.status == ControllerCapabilityStatus.UNKNOWN_FAIL_CLOSED }
@@ -254,6 +257,69 @@ object NcModalTracker {
     fun evidence(program: String): String = finalState(program).evidence()
 }
 
+
+data class NcAuxiliaryState(
+    val spindle: String = "M5",
+    val coolant: String = "M9",
+    val spindleOrientation: String = "OFF",
+    val programControl: String = "RUN"
+) {
+    fun evidence(): String =
+        "SPINDLE=" + spindle +
+        "|COOLANT=" + coolant +
+        "|ORIENT=" + spindleOrientation +
+        "|PROGRAM=" + programControl
+}
+
+data class NcAuxiliaryEvent(
+    val lineNumber: Int,
+    val code: String,
+    val group: String,
+    val stateAfter: NcAuxiliaryState
+)
+
+object NcAuxiliaryTracker {
+    private val mCode = Regex("""(?i)(?<![A-Z0-9.])M\s*(\d{1,3})(?![0-9.])""")
+
+    fun codes(program: String): List<Pair<Int,String>> {
+        val out = mutableListOf<Pair<Int,String>>()
+        program.lineSequence().forEachIndexed { index, raw ->
+            val line = raw.substringBefore('(').substringBefore(';')
+            mCode.findAll(line).forEach { match ->
+                out += (index + 1) to ("M" + match.groupValues[1].toInt())
+            }
+        }
+        return out
+    }
+
+    fun trace(program: String): List<NcAuxiliaryEvent> {
+        var state = NcAuxiliaryState()
+        val events = mutableListOf<NcAuxiliaryEvent>()
+        codes(program).forEach { (line, code) ->
+            val group: String?
+            state = when (code) {
+                "M3","M4","M5" -> { group = "SPINDLE"; state.copy(spindle = code) }
+                "M7","M8","M9" -> { group = "COOLANT"; state.copy(coolant = code) }
+                "M19" -> { group = "SPINDLE_ORIENT"; state.copy(spindleOrientation = "M19") }
+                "M0" -> { group = "PROGRAM_STOP"; state.copy(programControl = "M0") }
+                "M1" -> { group = "OPTIONAL_STOP"; state.copy(programControl = "M1") }
+                "M2","M30" -> { group = "PROGRAM_END"; state.copy(programControl = code) }
+                "M6" -> { group = "TOOL_CHANGE"; state }
+                "M98" -> { group = "SUBPROGRAM_CALL"; state }
+                "M99" -> { group = "SUBPROGRAM_RETURN"; state }
+                else -> { group = null; state }
+            }
+            if (group != null) events += NcAuxiliaryEvent(line,code,group,state)
+        }
+        return events
+    }
+
+    fun finalState(program: String): NcAuxiliaryState =
+        trace(program).lastOrNull()?.stateAfter ?: NcAuxiliaryState()
+
+    fun evidence(program: String): String = finalState(program).evidence()
+}
+
 data class NcModalSafetyFinding(
     val lineNumber: Int,
     val code: String,
@@ -358,6 +424,56 @@ object NcModalSafetyPolicy {
         val blocked = blocking(program)
         return if (blocked.isEmpty()) "PASS"
         else "BLOCKED:" + blocked.joinToString(",") { (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code }
+    }
+}
+
+
+object NcAuxiliarySafetyPolicy {
+    private val known = setOf(
+        "M0","M1","M2","M3","M4","M5","M6","M7","M8","M9","M19","M30","M98","M99"
+    )
+
+    fun blocking(program: String): List<NcModalSafetyFinding> {
+        val findings = mutableListOf<NcModalSafetyFinding>()
+        NcAuxiliaryTracker.trace(program).forEach { e ->
+            when (e.code) {
+                "M4" -> findings += NcModalSafetyFinding(
+                    e.lineNumber,"M4_REVERSE_SPINDLE_UNVERIFIED",
+                    "Reverse-spindle execution is tracked but the current AIG CAM/SIM spindle model is forward/fixed-RPM only."
+                )
+                "M7" -> findings += NcModalSafetyFinding(
+                    e.lineNumber,"M7_MIST_COOLANT_UNVERIFIED",
+                    "Mist coolant is tracked but not part of the current verified AIG coolant contract."
+                )
+                "M19" -> findings += NcModalSafetyFinding(
+                    e.lineNumber,"M19_SPINDLE_ORIENT_UNVERIFIED",
+                    "Spindle orientation is controller-managed and not yet represented by canonical CAM/SIM execution."
+                )
+            }
+        }
+        NcAuxiliaryTracker.codes(program).forEach { (line, code) ->
+            if (code !in known) {
+                findings += NcModalSafetyFinding(
+                    line,"UNKNOWN_MCODE_FAIL_CLOSED",
+                    code + " is not in the current AIG verified/tracked M-code vocabulary."
+                )
+            }
+        }
+        return findings.distinctBy { Triple(it.lineNumber,it.code,it.message) }
+    }
+}
+
+object NcProgramSafetyPolicy {
+    fun blocking(program: String): List<NcModalSafetyFinding> =
+        (NcModalSafetyPolicy.blocking(program) + NcAuxiliarySafetyPolicy.blocking(program))
+            .distinctBy { Triple(it.lineNumber,it.code,it.message) }
+
+    fun status(program: String): String {
+        val blocked = blocking(program)
+        return if (blocked.isEmpty()) "PASS"
+        else "BLOCKED:" + blocked.joinToString(",") {
+            (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code
+        }
     }
 }
 
