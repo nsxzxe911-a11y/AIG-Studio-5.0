@@ -45,9 +45,18 @@ object SoftwareCoordinateContract {
         "GEOMETRY=CANONICAL_ABS_XYZ",
         "PROGRAM_MODE=G90_OR_G91_REPRESENTATION",
         "WORK_OFFSET=G54_G59_NC_EXECUTION_LAYER",
+        "TEMP_ORIGIN=G92_NC_TRANSFORM_LAYER",
         "CUTTER_COMP=G40_G41_G42_EXPLICIT",
         "TOOL_LENGTH=G43_H_EXPLICIT",
         "CONTROLLER=POST_PROFILE_ONLY"
+    )
+    fun coordinateUsageGuidance(): List<String> = listOf(
+        "GENERAL_MACHINING=G90",
+        "REPEATED_POCKET_PATTERN=G91",
+        "SUBPROGRAM_MACRO=G91",
+        "ANGULAR_FEATURE_TEMP_ORIGIN=G92",
+        "MULTI_FIXTURE_TEMP_ORIGIN=G92",
+        "COPY_PASTE_PROGRAM_BLOCK=G90"
     )
     fun xyzData(x: Double, y: Double, z: Double): String =
         "X" + DisplayFormat.mm(x) + " Y" + DisplayFormat.mm(y) + " Z" + DisplayFormat.mm(z)
