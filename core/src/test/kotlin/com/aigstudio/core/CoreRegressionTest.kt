@@ -1418,6 +1418,22 @@ private fun testEnvironmentSettingsContract() {
     dropMeter.record(3_025_000_000L)
     check(dropMeter.current().droppedFrames>=2)
     println("✓ RENDER_SURFACE_FPS_GATE_PASS 30/60/90/120 budgets + per-surface meter + drop detection")
+
+    check(CpuThermalFpsPolicy.capForTemperature(null)==120)
+    check(CpuThermalFpsPolicy.capForTemperature(64.999)==120)
+    check(CpuThermalFpsPolicy.capForTemperature(65.0)==90)
+    check(CpuThermalFpsPolicy.capForTemperature(74.999)==90)
+    check(CpuThermalFpsPolicy.capForTemperature(75.0)==60)
+    check(CpuThermalFpsPolicy.capForTemperature(84.999)==60)
+    check(CpuThermalFpsPolicy.capForTemperature(85.0)==30)
+    check(CpuThermalFpsPolicy.capWithHysteresis(73.0,60)==60)
+    check(CpuThermalFpsPolicy.capWithHysteresis(72.0,60)==90)
+    check(CpuThermalFpsPolicy.capWithHysteresis(83.0,30)==30)
+    check(CpuThermalFpsPolicy.capWithHysteresis(82.0,30)==60)
+    check(CpuThermalFpsPolicy.capWithHysteresis(63.0,90)==90)
+    check(CpuThermalFpsPolicy.capWithHysteresis(62.0,90)==120)
+    check("CPU_TEMP_75.0C_CAP_60"==CpuThermalFpsPolicy.reason(75.0,60))
+    println("✓ CPU_THERMAL_AUTO_FPS_PASS 120@<65 / 90@65 / 60@75 / 30@85 + hysteresis")
 }
 
 private fun testAigIiPrecisionContract() {
