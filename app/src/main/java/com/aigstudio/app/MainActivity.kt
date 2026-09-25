@@ -182,6 +182,7 @@ class Axis5xPreview(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val fpsStats = fpsMeter5x.record(System.nanoTime())
+        RenderStressProfiler.record(RenderStressScenario.FIVE_AXIS_SYNC, fpsStats)
         val cx = width / 2f
         val cy = height / 2f
         for (i in 1..5) {
@@ -203,7 +204,11 @@ class Axis5xPreview(
         canvas.drawCircle(cx, cy, r, rotaryPaint)
         canvas.drawText("A " + DisplayFormat.mm(axisA) + "°", 18f, 28f, textPaint5x)
         canvas.drawText("B " + DisplayFormat.mm(axisB) + "°", 18f, 54f, textPaint5x)
-        canvas.drawText(fpsStats.compact("5X"), 18f, 80f, textPaint5x)
+        canvas.drawText(
+            fpsStats.compact("5X") + " • HEAVIEST=" +
+                (RenderStressProfiler.heaviest()?.scenario?.name ?: "collecting"),
+            18f, 80f, textPaint5x
+        )
         canvas.drawText("拖曳：上下=A / 左右=B", 18f, height - 18f, textPaint5x)
     }
 
