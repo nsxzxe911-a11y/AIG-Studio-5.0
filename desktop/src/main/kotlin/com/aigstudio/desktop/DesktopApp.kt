@@ -512,9 +512,15 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     val cam = CamModel.fromCad(1L, doc.snapshot())
     require(cam.toolpaths.isNotEmpty()) { "NC BLOCKED: no CAM toolpath" }
     var controllerProfile = CncControllerProfile.FANUC
+    var coordinateMode = NcCoordinateMode.ABSOLUTE_G90
+    var cutterCompensation = CutterCompensationMode.CAM_GEOMETRY_G40
     fun generateNc(): String = CncPost.generate(
         cam,
-        FanucPostSettings(controller = controllerProfile)
+        FanucPostSettings(
+            controller = controllerProfile,
+            coordinateMode = coordinateMode,
+            cutterCompensation = cutterCompensation
+        )
     )
     val area = JTextArea(generateNc()).apply {
         background = Color(5,8,12)
@@ -535,11 +541,42 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
                 cellHasFocus
             )
         }
-        addActionListener {
-            controllerProfile = selectedItem as? CncControllerProfile ?: CncControllerProfile.FANUC
-            area.text = generateNc()
-        }
     }
+    val coordinate = JComboBox(NcCoordinateMode.entries.toTypedArray()).apply {
+        selectedItem = coordinateMode
+    }
+    val compensation = JComboBox(CutterCompensationMode.entries.toTypedArray()).apply {
+        selectedItem = cutterCompensation
+    }
+    fun refreshNcFromPostSelection() {
+        val nextController = controller.selectedItem as? CncControllerProfile ?: CncControllerProfile.FANUC
+        val nextCoordinate = coordinate.selectedItem as? NcCoordinateMode ?: NcCoordinateMode.ABSOLUTE_G90
+        val nextComp = compensation.selectedItem as? CutterCompensationMode ?: CutterCompensationMode.CAM_GEOMETRY_G40
+        if (nextComp != CutterCompensationMode.CAM_GEOMETRY_G40) {
+            compensation.selectedItem = CutterCompensationMode.CAM_GEOMETRY_G40
+            JOptionPane.showMessageDialog(
+                frame,
+                nextComp.code + " BLOCKED: current CAM already applies geometric tool-radius compensation.",
+                "CUTTER COMP",
+                JOptionPane.WARNING_MESSAGE
+            )
+            return
+        }
+        controllerProfile = nextController
+        coordinateMode = nextCoordinate
+        cutterCompensation = nextComp
+        runCatching { generateNc() }
+            .onSuccess { area.text = it }
+            .onFailure {
+                coordinate.selectedItem = NcCoordinateMode.ABSOLUTE_G90
+                coordinateMode = NcCoordinateMode.ABSOLUTE_G90
+                area.text = generateNc()
+                JOptionPane.showMessageDialog(frame,it.message,"NC POST BLOCKED",JOptionPane.WARNING_MESSAGE)
+            }
+    }
+    controller.addActionListener { refreshNcFromPostSelection() }
+    coordinate.addActionListener { refreshNcFromPostSelection() }
+    compensation.addActionListener { refreshNcFromPostSelection() }
     val keys = listOf("G","M","X","Y","Z","F","S","T","A","B","7","8","9","-",".","4","5","6","0","/","1","2","3","INSERT","DELETE","BLOCK SKIP")
     val keypad = AdaptiveGlassToolbar()
     keys.forEach { key ->
@@ -565,6 +602,8 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
             background = Color(8,18,30)
             add(JLabel("CONTROL").apply { foreground = Color(61,235,255) })
             add(controller)
+            add(coordinate)
+            add(compensation)
         }, BorderLayout.NORTH)
         add(JScrollPane(area), BorderLayout.CENTER)
         add(keypad, BorderLayout.SOUTH)
@@ -624,7 +663,7 @@ private fun showApp() {
     })
     toolbar.add(button("NC EDIT", Color(80, 170, 255)) {
         runCatching { showNcEditor(frame, doc) }
-            .onSuccess { status.text = "NC EDIT • FANUC • REAL EDITOR" }
+            .onSuccess { status.text = "NC EDIT • FANUC / MITSUBISHI • G90/G91 EXPLICIT • ABS XYZ LOCKED" }
             .onFailure { status.text = "NC EDIT BLOCKED: " + it.message }
     })
     toolbar.add(button("CLEAR", Color(239, 68, 68)) { cad.clearCad() })
