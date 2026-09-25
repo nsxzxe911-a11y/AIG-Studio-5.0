@@ -50,6 +50,7 @@ fun main() {
     testPackageBundleContract()
     testEnvironmentSettingsContract()
     testRealCamToolpath()
+    testWorkOffsetDoesNotShiftAbsoluteCoordinates()
     testMaterialRemoval3D()
     testMachiningMesh3D()
     testAigIiPrecisionContract()
@@ -338,3 +339,42 @@ private fun testMachiningMesh3D() {
     check(result.mesh.vertices.any { it.z < 0.0 }) { "3D mesh must include machined depth" }
     println("✓ true 3D machining mesh")
 }
+
+private fun testWorkOffsetDoesNotShiftAbsoluteCoordinates() {
+    val doc = DrawingDocument()
+    rectangle().map {
+        when (it.id) {
+            "L1" -> it.copy(a=Vec2(-50.0,-40.0), b=Vec2(50.0,-40.0))
+            "L2" -> it.copy(a=Vec2(50.0,-40.0), b=Vec2(50.0,40.0))
+            "L3" -> it.copy(a=Vec2(50.0,40.0), b=Vec2(-50.0,40.0))
+            else -> it.copy(a=Vec2(-50.0,40.0), b=Vec2(-50.0,-40.0))
+        }
+    }.forEach(doc::put)
+    val snapshot = doc.snapshot()
+    val cam = CamModel.fromCad(
+        9001L,
+        snapshot,
+        CamSettings(toolDiameter=6.0, depth=-3.0, safeZ=5.0, feedMmMin=150.0)
+    )
+    val before = cam.toolpaths.map { tp -> tp.moves.map { Triple(it.to.x, it.to.y, it.z) } }
+    val nc54 = FanucNc.generate(cam, FanucPostSettings(workOffset="G54"))
+    val nc55 = FanucNc.generate(cam, FanucPostSettings(workOffset="G55"))
+    val after = cam.toolpaths.map { tp -> tp.moves.map { Triple(it.to.x, it.to.y, it.z) } }
+
+    check(before == after) { "NC work-offset selection must not mutate CAM absolute coordinates" }
+    check("G90 G54" in nc54 && "G90 G55" in nc55)
+    check(nc54.replace("G54", "G5X") == nc55.replace("G55", "G5X")) {
+        "G54/G55 must change only the explicit NC work-offset selector"
+    }
+    check(nc54.contains("X-") || nc54.contains("Y-")) { "Signed negative NC coordinate evidence missing" }
+
+    val first = cam.geometry.entities.first() as Line
+    check(first.a == Vec2(-50.0,-40.0))
+    check(first.b == Vec2(50.0,-40.0))
+    MaterialRemoval3D.simulate(cam.toolpaths, cam.settings, Stock3D.fromSnapshot(cam.geometry))
+    check(first.a == Vec2(-50.0,-40.0) && first.b == Vec2(50.0,-40.0)) {
+        "SIM must not rewrite CAD absolute coordinates"
+    }
+    println("✓ WORK_OFFSET_NO_GEOMETRY_SHIFT_PASS G54/G55 CAM/SIM absolute coordinates unchanged")
+}
+
