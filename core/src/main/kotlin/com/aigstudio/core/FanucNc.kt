@@ -607,7 +607,7 @@ data class NcModalState(
     fun evidence(): String =
         "PROGRAM=" + coordinateMode +
         "|WORK_OFFSET=" + workOffset +
-        "|G92=" + if (temporaryOriginActive) "ACTIVE" else "OFF" +
+        "|G92=" + (if (temporaryOriginActive) "ACTIVE" else "OFF") +
         "|UNITS=" + units +
         "|FEED_MODE=" + feedMode +
         "|CUTTER_COMP=" + cutterCompensation +
