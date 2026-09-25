@@ -56,6 +56,8 @@ jobs:
           grep -Fq 'RENDER_SURFACE_FPS_GATE_PASS' semantic-timeline.log
           grep -Fq 'CPU_THERMAL_AUTO_FPS_PASS' semantic-timeline.log
           grep -Fq 'RENDER_STRESS_TIER_GATE_PASS' semantic-timeline.log
+          grep -Fq 'MULTIAXIS_TOOLPOINT_PROVENANCE_GATE_PASS' semantic-timeline.log
+          test "$(grep -Fc 'MULTIAXIS_TOOLPOINT_PROVENANCE_GATE_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'RENDER_STRESS_TIER_GATE_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'CPU_THERMAL_AUTO_FPS_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'RENDER_SURFACE_FPS_GATE_PASS' semantic-timeline.log)" -eq 3
