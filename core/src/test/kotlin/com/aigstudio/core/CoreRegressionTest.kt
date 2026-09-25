@@ -1983,9 +1983,10 @@ private fun testContinuousMultiAxisToolpointSchedule() {
     check(abs(moves.last().axisA-45.0)<1e-12 && abs(moves.last().axisB+30.0)<1e-12)
     check(moves.zipWithNext().any { (a,b) -> abs(a.axisA-b.axisA)>1e-9 || abs(a.axisB-b.axisB)>1e-9 })
     check(moves.all { it.axisA in 0.0..45.0 && it.axisB in -30.0..0.0 })
-    val nc=CncPost.generate(cam,FanucPostSettings())
-    check("(MULTIAXIS TOOLPOINT A/B SOURCE CAM_TOOLPOINTS)" in nc)
-    check(Regex("""A\d+(?:\.\d+)? B-?\d+(?:\.\d+)?""").findAll(nc).count()>=2)
+    val ncAttempt=runCatching { CncPost.generate(cam,FanucPostSettings()) }
+    check(ncAttempt.isFailure) { "Continuous A/B must remain NC fail-closed until controller-specific TCP is validated" }
+    val ncError=ncAttempt.exceptionOrNull()?.message.orEmpty()
+    check("ROTARY_MOVE" in ncError || "process gate blocked" in ncError.lowercase())
     val stock=Stock3D.fromSnapshot(snapshot)
     val removal=MaterialRemoval3D.simulate(cam.toolpaths,settings,stock)
     check(removal.depth.any { it<0.0 })
@@ -1994,5 +1995,5 @@ private fun testContinuousMultiAxisToolpointSchedule() {
     check(removal.depth.count { it<0.0 } > verticalRemoval.depth.count { it<0.0 }) {
         "Tilt-aware conservative cutter envelope did not expand removal coverage"
     }
-    println("✓ CONTINUOUS_MULTIAXIS_TOOLPOINT_GATE_PASS PER_POINT_AB CAM_TO_SIM_TO_NC LINEAR_SYNC TILT_ENVELOPE")
+    println("✓ CONTINUOUS_MULTIAXIS_CAM_SIM_GATE_PASS PER_POINT_AB LINEAR_SYNC TILT_ENVELOPE NC_FAIL_CLOSED")
 }
