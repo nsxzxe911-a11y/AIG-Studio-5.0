@@ -1187,6 +1187,7 @@ fun main() {
     testUnifiedMachiningWorkspaceContract()
     testMultiAxisToolpointProvenance()
     testNcDraftRecoveryContract()
+    testPixelLayoutPrecheckContract()
     println("ALL TESTS PASSED")
 }
 
@@ -1947,4 +1948,21 @@ private fun testNcDraftRecoveryContract() {
     check(NcDraftRecoveryContract.canClaimNcReady("FRESH_DRAFT"))
     check(!NcDraftRecoveryContract.canClaimNcReady("STALE"))
     println("✓ NC_DRAFT_RECOVERY_GATE_PASS AUTOSAVE_V3 SOURCE_BOUND STALE_FAIL_CLOSED")
+}
+
+
+private fun testPixelLayoutPrecheckContract() {
+    val portrait=PixelLayoutPrecheckContract.budget(360,800)
+    val landscape=PixelLayoutPrecheckContract.budget(844,390)
+    val desktop=PixelLayoutPrecheckContract.budget(1440,900)
+    check(portrait.mode=="MOBILE_PORTRAIT" && portrait.ncVisible)
+    check(landscape.mode=="MOBILE_LANDSCAPE" && landscape.ncVisible)
+    check(desktop.mode=="DESKTOP" && desktop.ncVisible)
+    check(PixelLayoutPrecheckContract.noOverlap(360,800,7))
+    check(PixelLayoutPrecheckContract.noOverlap(844,390,7))
+    check(PixelLayoutPrecheckContract.noOverlap(1440,900,7))
+    check(PixelLayoutPrecheckContract.workspaceNotCrushed(360,800))
+    check(PixelLayoutPrecheckContract.workspaceNotCrushed(844,390))
+    check(PixelLayoutPrecheckContract.workspaceNotCrushed(1440,900))
+    println("✓ PIXEL_LAYOUT_PRECHECK_GATE_PASS PORTRAIT LANDSCAPE DESKTOP NO_OVERLAP NC_VISIBLE WORKSPACE_MIN FONT_MIN")
 }

@@ -51,6 +51,7 @@ jobs:
           grep -Fq 'AI_ERGONOMIC_LAYOUT_GATE_PASS' release-validation.log
           grep -Fq 'BILINGUAL_ADAPTIVE_UI_GATE_PASS' release-validation.log
           grep -Fq 'NC_DRAFT_RECOVERY_GATE_PASS' release-validation.log
+          grep -Fq 'PIXEL_LAYOUT_PRECHECK_GATE_PASS' release-validation.log
           grep -Fq 'MULTIAXIS_TOOLPOINT_PROVENANCE_GATE_PASS' release-validation.log
           echo 'RENDER_CACHE_RELEASE_GATE=PASS'
           echo 'CAM_WORKSTATION_RELEASE_GATE=PASS'

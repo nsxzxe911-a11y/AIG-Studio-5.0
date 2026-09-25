@@ -921,3 +921,44 @@ object NcDraftRecoveryContract {
 
     fun canClaimNcReady(state:String):Boolean = state=="FRESH_DRAFT"
 }
+
+
+data class PixelLayoutBudget(
+    val mode:String,
+    val workspaceFraction:Double,
+    val ncFraction:Double,
+    val minButtonDp:Int,
+    val minTextSp:Double,
+    val ncVisible:Boolean
+)
+
+object PixelLayoutPrecheckContract {
+    fun budget(widthDp:Int,heightDp:Int):PixelLayoutBudget {
+        require(widthDp>0 && heightDp>0)
+        return when {
+            widthDp>=1180 -> PixelLayoutBudget("DESKTOP",0.66,0.30,48,10.0,true)
+            widthDp>heightDp -> PixelLayoutBudget("MOBILE_LANDSCAPE",0.62,0.34,50,9.5,true)
+            else -> PixelLayoutBudget("MOBILE_PORTRAIT",0.58,0.36,52,9.0,true)
+        }
+    }
+
+    fun buttonColumns(widthDp:Int,heightDp:Int):Int = when(budget(widthDp,heightDp).mode) {
+        "DESKTOP" -> 7
+        "MOBILE_LANDSCAPE" -> 5
+        else -> 3
+    }
+
+    fun noOverlap(widthDp:Int,heightDp:Int,buttonCount:Int):Boolean {
+        require(buttonCount>=0)
+        val b=budget(widthDp,heightDp)
+        val cols=buttonColumns(widthDp,heightDp)
+        val availablePerColumn=widthDp.toDouble()/cols.toDouble()
+        val rows=(buttonCount+cols-1)/cols
+        return availablePerColumn>=b.minButtonDp && rows<=4
+    }
+
+    fun workspaceNotCrushed(widthDp:Int,heightDp:Int):Boolean {
+        val b=budget(widthDp,heightDp)
+        return b.workspaceFraction>=0.58 && b.ncFraction in 0.28..0.38 && b.ncVisible
+    }
+}
