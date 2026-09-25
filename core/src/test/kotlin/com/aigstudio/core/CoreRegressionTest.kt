@@ -1082,6 +1082,67 @@ private fun testCannedCycleReturnMode() {
     check("G84_INVALID_FEED" !in processCodes(goodTap))
     println("✓ NC_MULTI_TOOL_CYCLE_SAFETY_PASS stale-H/R-Z/G84")
 
+    val effectProgram = """
+        G21 G94 G97 G90 G54 G17 G40 G49 G80
+        T1
+        M6
+        G0 G43 Z30.000 H1
+        M3
+        M8
+        G0 X0.000 Y0.000 Z5.000
+        G1 X10.000 Y0.000 Z-1.000 F100.000
+        G2 X20.000 Y0.000 I5.000 J0.000
+        G3 X10.000 Y0.000 R5.000
+        G81 X0.000 Y0.000 Z-5.000 R2.000 F100.000
+        G80
+        M9
+        M5
+        M30
+    """.trimIndent()
+    check(NcControlEffectPolicy.blocking(effectProgram).isEmpty()) {
+        NcControlEffectPolicy.evidence(effectProgram)
+    }
+
+    val stateOnlyProgram = """
+        G21 G94 G97 G90 G54 G17 G40 G49 G80 G98 G61
+    """.trimIndent()
+    check(NcControlEffectPolicy.blocking(stateOnlyProgram).isEmpty()) {
+        NcControlEffectPolicy.evidence(stateOnlyProgram)
+    }
+
+    check(NcControlEffectPolicy.consistencyIssues(
+        "G90",
+        blockedBySafety=false,
+        modalGroup=null,
+        auxiliaryGroup=null,
+        animationAction="STATE_SYNC"
+    ) == listOf("NO_EFFECT_CONTROL_CODE:G90"))
+
+    check(NcControlEffectPolicy.consistencyIssues(
+        "G90",
+        blockedBySafety=false,
+        modalGroup="PROGRAM_MODE",
+        auxiliaryGroup=null,
+        animationAction="STATE_SYNC"
+    ).isEmpty())
+
+    check(NcControlEffectPolicy.consistencyIssues(
+        "M8",
+        blockedBySafety=false,
+        modalGroup=null,
+        auxiliaryGroup="COOLANT",
+        animationAction="COOLANT_FLOOD"
+    ).isEmpty())
+
+    check(NcControlEffectPolicy.consistencyIssues(
+        "G92",
+        blockedBySafety=true,
+        modalGroup="TEMP_ORIGIN",
+        auxiliaryGroup=null,
+        animationAction="STATE_SYNC"
+    ).isEmpty())
+    println("✓ NC_CONTROL_EFFECT_GATE_PASS no-fake-control/state/aux/motion/cycle/fail-closed")
+
 }
 
 private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
