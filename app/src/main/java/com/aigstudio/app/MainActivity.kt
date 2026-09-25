@@ -172,6 +172,7 @@ class Axis5xPreview(
     private val axisPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(61,235,255); strokeWidth = 5f; strokeCap = Paint.Cap.ROUND }
     private val rotaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(245,158,11); strokeWidth = 4f; style = Paint.Style.STROKE }
     private val textPaint5x = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; textSize = 15f * resources.displayMetrics.scaledDensity }
+    private val fpsMeter5x = SurfaceFpsMeter(refreshHzProvider = { display?.refreshRate?.toDouble() ?: 60.0 })
 
     init {
         setBackgroundColor(Color.rgb(5,15,24))
@@ -180,6 +181,7 @@ class Axis5xPreview(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        val fpsStats = fpsMeter5x.record(System.nanoTime())
         val cx = width / 2f
         val cy = height / 2f
         for (i in 1..5) {
@@ -201,6 +203,7 @@ class Axis5xPreview(
         canvas.drawCircle(cx, cy, r, rotaryPaint)
         canvas.drawText("A " + DisplayFormat.mm(axisA) + "°", 18f, 28f, textPaint5x)
         canvas.drawText("B " + DisplayFormat.mm(axisB) + "°", 18f, 54f, textPaint5x)
+        canvas.drawText(fpsStats.compact("5X"), 18f, 80f, textPaint5x)
         canvas.drawText("拖曳：上下=A / 左右=B", 18f, height - 18f, textPaint5x)
     }
 
