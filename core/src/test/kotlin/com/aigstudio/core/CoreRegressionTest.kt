@@ -201,6 +201,46 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check("ANIMATION_UNSUPPORTED_NOT_BLOCKED:G777.7" in forcedConflict)
     println("✓ NC_SEMANTIC_AUTHORITY_PASS single-truth/conflict/fail-closed")
 
+    val timelineReady = NcExecutionTimeline.build(animationReadyProgram,CncControllerProfile.FANUC)
+    check(timelineReady.isNotEmpty())
+    check(timelineReady.all { it.status=="READY" })
+    check(timelineReady.any { it.code=="G0" && NcExecutionDomain.MOTION_3D in it.domains })
+    check(timelineReady.any { it.code=="G1" && NcExecutionDomain.MATERIAL_REMOVAL in it.domains })
+    check(timelineReady.any { it.code=="M8" && NcExecutionDomain.COOLANT in it.domains })
+    check("READY" in NcExecutionTimeline.programSummary(animationReadyProgram,CncControllerProfile.FANUC))
+
+    val timeline5xProgram = """
+        G21 G94 G97 G90 G54 G17 G40 G49
+        G43.4 H1
+        G68.2 X0.000 Y0.000 Z0.000 I0.000 J0.000 K0.000
+        G0 X0.000 Y0.000 Z5.000
+    """.trimIndent()
+    val timeline5x = NcExecutionTimeline.build(timeline5xProgram,CncControllerProfile.FANUC)
+    check(timeline5x.any { it.code=="G43.4" && NcExecutionDomain.AXIS_5X in it.domains })
+    check(timeline5x.any { it.code=="G68.2" && NcExecutionDomain.AXIS_5X in it.domains })
+
+    val timelineBlockedProgram = """
+        G21 G94 G97 G90 G54
+        G0 X0.000 Y0.000 Z5.000
+        G92 X0 Y0
+        G1 X10.000 Y0.000 Z-1.000 F100.000
+        M8
+    """.trimIndent()
+    val blockedTimeline = NcExecutionTimeline.build(timelineBlockedProgram,CncControllerProfile.FANUC)
+    check(blockedTimeline.any { it.lineNumber==3 && it.status=="BLOCKED" && "G92_ORIGIN_UNVERIFIED" in it.reasons })
+    check(blockedTimeline.filter { it.lineNumber>3 }.all { it.status=="SKIPPED_AFTER_BLOCK" })
+    check("HALTED AT L3" in NcExecutionTimeline.programSummary(timelineBlockedProgram,CncControllerProfile.FANUC))
+
+    val timelineUnknownProgram = """
+        G21 G94 G97 G90 G54
+        G777.7 X1.000
+        G1 X2.000 Y0.000 Z-1.000 F100.000
+    """.trimIndent()
+    val unknownTimeline = NcExecutionTimeline.build(timelineUnknownProgram,CncControllerProfile.FANUC)
+    check(unknownTimeline.any { it.lineNumber==2 && it.status=="BLOCKED" && "UNKNOWN_GCODE_FAIL_CLOSED" in it.reasons })
+    check(unknownTimeline.filter { it.lineNumber>2 }.all { it.status=="SKIPPED_AFTER_BLOCK" })
+    println("✓ NC_EXECUTION_TIMELINE_PASS nc/3d/sim/5x/safety-lockstep")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
