@@ -1125,6 +1125,7 @@ class MainActivity : Activity() {
             val blocked = NcModalSafetyPolicy.blocking(program)
             modalStatus.setTextColor(if (blocked.isEmpty()) Color.rgb(255,210,90) else Color.rgb(255,110,110))
             modalStatus.text = "MODAL • " + NcModalTracker.evidence(program) +
+                "\n" + CncControllerCapabilityMatrix.summary(controllerProfile, program) +
                 if (blocked.isEmpty()) " • SAFETY=PASS"
                 else "\nBLOCKED • " + blocked.take(4).joinToString(" • ") {
                     (if (it.lineNumber > 0) "L" + it.lineNumber + " " else "") + it.code
