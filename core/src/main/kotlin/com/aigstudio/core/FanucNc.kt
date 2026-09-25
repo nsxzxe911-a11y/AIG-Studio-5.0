@@ -577,6 +577,23 @@ object NcRuntimeInterlock {
 
         program.split("\n").forEachIndexed { index, raw ->
             val lineNumber = index + 1
+            val commentScope = raw.substringBefore(';')
+            var depth = 0
+            var nested = false
+            var unmatchedClose = false
+            commentScope.forEach { ch ->
+                when (ch) {
+                    '(' -> { depth++; if (depth > 1) nested = true }
+                    ')' -> { if (depth == 0) unmatchedClose = true else depth-- }
+                }
+            }
+            if (nested) findings += NcRuntimeInterlockFinding(
+                lineNumber,"NESTED_COMMENT_UNSUPPORTED","Nested parenthesis comments are fail-closed."
+            )
+            if (unmatchedClose || depth != 0) findings += NcRuntimeInterlockFinding(
+                lineNumber,"MALFORMED_COMMENT","Unbalanced parenthesis comment is fail-closed."
+            )
+
             val line = cleanLine(raw)
             if (line.isBlank() || line == "%") return@forEachIndexed
 
@@ -717,6 +734,50 @@ object NcRuntimeInterlock {
             conflict("CYCLE_RETURN", listOf(98.0,99.0))
             conflict("PATH_CONTROL", listOf(61.0,64.0))
             conflict("SPINDLE_SPEED_MODE", listOf(96.0,97.0))
+
+            words.filter { it.first == 'N' || it.first == 'O' }.forEach { (address,value) ->
+                if (value < 0.0 || kotlin.math.abs(value-kotlin.math.round(value)) > 1e-9) {
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,
+                        "INVALID_INTEGER_WORD_" + address,
+                        "Address " + address + " must be a non-negative integer."
+                    )
+                }
+            }
+
+            if (hasG(34.0)) {
+                val j = words.lastOrNull { it.first == 'J' }?.second
+                val k = words.lastOrNull { it.first == 'K' }?.second
+                if (j == null || j < 1.0 || kotlin.math.abs(j-kotlin.math.round(j)) > 1e-9) {
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,"G34_INVALID_HOLE_COUNT_J","G34 requires integer J >= 1."
+                    )
+                }
+                if (k == null || k <= 0.0) {
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,"G34_INVALID_RADIUS_K","G34 requires K > 0."
+                    )
+                }
+            }
+
+            if (hasG(73.0) || hasG(83.0)) {
+                words.filter { it.first == 'Q' && it.second <= 0.0 }.forEach {
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,"PECK_Q_NONPOSITIVE","G73/G83 Q must be > 0 when provided."
+                    )
+                }
+            }
+
+            if (hasG(2.0) || hasG(3.0)) {
+                val hasR = words.any { it.first == 'R' }
+                val hasIjk = words.any { it.first == 'I' || it.first == 'J' || it.first == 'K' }
+                if (hasR && hasIjk) findings += NcRuntimeInterlockFinding(
+                    lineNumber,"ARC_CENTER_FORMAT_CONFLICT","G2/G3 cannot mix R with I/J/K in the AIG execution model."
+                )
+                if (!hasR && !hasIjk) findings += NcRuntimeInterlockFinding(
+                    lineNumber,"ARC_CENTER_MISSING","G2/G3 requires R or I/J/K in the AIG execution model."
+                )
+            }
 
             words.filter { it.first == 'G' }.forEach { (_, value) ->
                 when {
