@@ -7,6 +7,7 @@ import android.os.Looper
 import android.os.PowerManager
 import android.view.Display
 import com.aigstudio.core.PlatformRefreshPolicy
+import com.aigstudio.core.CpuThermalFpsPolicy
 
 class AdaptiveRefreshController(
     private val activity: Activity
@@ -15,6 +16,18 @@ class AdaptiveRefreshController(
     private val powerManager = activity.getSystemService(PowerManager::class.java)
     private var interactive = true
     private var started = false
+    private var latestCpuC: Double? = null
+    private var cpuThermalCap = 120
+
+    private val cpuThermalRunnable = object : Runnable {
+        override fun run() {
+            if (!started) return
+            latestCpuC = CpuGpuTemperatureProbe.read().cpuC
+            cpuThermalCap = CpuThermalFpsPolicy.capWithHysteresis(latestCpuC, cpuThermalCap)
+            applyFromPreferences()
+            handler.postDelayed(this, RuntimeDeviceProfile.temperatureIntervalMs)
+        }
+    }
 
     private val idleRunnable = Runnable {
         interactive = false
@@ -33,10 +46,13 @@ class AdaptiveRefreshController(
             powerManager.addThermalStatusListener(activity.mainExecutor, thermalListener)
         }
         markInteractive()
+        handler.removeCallbacks(cpuThermalRunnable)
+        handler.post(cpuThermalRunnable)
     }
 
     fun stop() {
         handler.removeCallbacks(idleRunnable)
+        handler.removeCallbacks(cpuThermalRunnable)
         val listener = thermalListener
         if (Build.VERSION.SDK_INT >= 29 && listener != null) {
             powerManager.removeThermalStatusListener(listener)
@@ -75,10 +91,21 @@ class AdaptiveRefreshController(
             requested = minOf(requested, 30f)
         }
 
-        if (thermalAuto && Build.VERSION.SDK_INT >= 29) {
+        if (thermalAuto && fpsMode == "Auto") {
+            val cpuC = latestCpuC
+            if (cpuC != null && cpuC.isFinite()) {
+                requested = minOf(requested, cpuThermalCap.toFloat())
+            } else if (Build.VERSION.SDK_INT >= 29) {
+                requested = when {
+                    powerManager.currentThermalStatus >= PowerManager.THERMAL_STATUS_SEVERE -> minOf(requested, 30f)
+                    powerManager.currentThermalStatus >= PowerManager.THERMAL_STATUS_MODERATE -> minOf(requested, 60f)
+                    else -> requested
+                }
+            }
+        } else if (thermalAuto && Build.VERSION.SDK_INT >= 29) {
+            // Manual FPS remains user-selected unless Android reports a severe thermal state.
             requested = when {
                 powerManager.currentThermalStatus >= PowerManager.THERMAL_STATUS_SEVERE -> minOf(requested, 30f)
-                powerManager.currentThermalStatus >= PowerManager.THERMAL_STATUS_MODERATE -> minOf(requested, 60f)
                 else -> requested
             }
         }
@@ -86,6 +113,10 @@ class AdaptiveRefreshController(
         requested = PlatformRefreshPolicy.capForRuntime(requested.toInt(), RuntimeDeviceProfile.isEmulator).toFloat()
         applyRefreshRate(display, requested)
     }
+
+    fun currentCpuTemperatureC(): Double? = latestCpuC
+    fun currentCpuThermalCap(): Int = cpuThermalCap
+    fun currentCpuThermalReason(): String = CpuThermalFpsPolicy.reason(latestCpuC, cpuThermalCap)
 
     private fun applyRefreshRate(display: Display, requestedHz: Float) {
         if (Build.VERSION.SDK_INT < 23) return
