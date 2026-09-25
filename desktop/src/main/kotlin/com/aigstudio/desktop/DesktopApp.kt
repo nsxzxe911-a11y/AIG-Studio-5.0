@@ -513,12 +513,14 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     require(cam.toolpaths.isNotEmpty()) { "NC BLOCKED: no CAM toolpath" }
     var controllerProfile = CncControllerProfile.FANUC
     var coordinateMode = NcCoordinateMode.ABSOLUTE_G90
+    var originTransformMode = NcOriginTransformMode.WORK_OFFSET_ONLY
     var cutterCompensation = CutterCompensationMode.CAM_GEOMETRY_G40
     fun generateNc(): String = CncPost.generate(
         cam,
         FanucPostSettings(
             controller = controllerProfile,
             coordinateMode = coordinateMode,
+            originTransformMode = originTransformMode,
             cutterCompensation = cutterCompensation
         )
     )
@@ -556,6 +558,20 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
             )
         }
     }
+    val origin = JComboBox(NcOriginTransformMode.entries.toTypedArray()).apply {
+        selectedItem = originTransformMode
+        renderer = object : DefaultListCellRenderer() {
+            override fun getListCellRendererComponent(
+                list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean
+            ): Component = super.getListCellRendererComponent(
+                list,
+                (value as? NcOriginTransformMode)?.displayName ?: value,
+                index,
+                isSelected,
+                cellHasFocus
+            )
+        }
+    }
     val compensation = JComboBox(CutterCompensationMode.entries.toTypedArray()).apply {
         selectedItem = cutterCompensation
         renderer = object : DefaultListCellRenderer() {
@@ -573,6 +589,7 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     fun refreshNcFromPostSelection() {
         val nextController = controller.selectedItem as? CncControllerProfile ?: CncControllerProfile.FANUC
         val nextCoordinate = coordinate.selectedItem as? NcCoordinateMode ?: NcCoordinateMode.ABSOLUTE_G90
+        val nextOrigin = origin.selectedItem as? NcOriginTransformMode ?: NcOriginTransformMode.WORK_OFFSET_ONLY
         val nextComp = compensation.selectedItem as? CutterCompensationMode ?: CutterCompensationMode.CAM_GEOMETRY_G40
         if (nextComp != CutterCompensationMode.CAM_GEOMETRY_G40) {
             compensation.selectedItem = CutterCompensationMode.CAM_GEOMETRY_G40
@@ -586,18 +603,25 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
         }
         controllerProfile = nextController
         coordinateMode = nextCoordinate
+        originTransformMode = nextOrigin
         cutterCompensation = nextComp
         runCatching { generateNc() }
             .onSuccess { area.text = it }
             .onFailure {
-                coordinate.selectedItem = NcCoordinateMode.ABSOLUTE_G90
-                coordinateMode = NcCoordinateMode.ABSOLUTE_G90
+                if (originTransformMode == NcOriginTransformMode.TEMPORARY_G92) {
+                    origin.selectedItem = NcOriginTransformMode.WORK_OFFSET_ONLY
+                    originTransformMode = NcOriginTransformMode.WORK_OFFSET_ONLY
+                } else if (coordinateMode == NcCoordinateMode.INCREMENTAL_G91) {
+                    coordinate.selectedItem = NcCoordinateMode.ABSOLUTE_G90
+                    coordinateMode = NcCoordinateMode.ABSOLUTE_G90
+                }
                 area.text = generateNc()
-                JOptionPane.showMessageDialog(frame,it.message,"NC POST BLOCKED",JOptionPane.WARNING_MESSAGE)
+                JOptionPane.showMessageDialog(frame,it.message,"NC POST BLOCKED • CANONICAL ABS XYZ UNCHANGED",JOptionPane.WARNING_MESSAGE)
             }
     }
     controller.addActionListener { refreshNcFromPostSelection() }
     coordinate.addActionListener { refreshNcFromPostSelection() }
+    origin.addActionListener { refreshNcFromPostSelection() }
     compensation.addActionListener { refreshNcFromPostSelection() }
     val keys = listOf("G","M","X","Y","Z","F","S","T","A","B","7","8","9","-",".","4","5","6","0","/","1","2","3","INSERT","DELETE","BLOCK SKIP")
     val keypad = AdaptiveGlassToolbar()
@@ -625,6 +649,7 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
             add(JLabel("CONTROL").apply { foreground = Color(61,235,255) })
             add(controller)
             add(coordinate)
+            add(origin)
             add(compensation)
         }, BorderLayout.NORTH)
         add(JScrollPane(area), BorderLayout.CENTER)
