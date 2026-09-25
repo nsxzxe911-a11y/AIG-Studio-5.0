@@ -367,6 +367,12 @@ private fun testWorkOffsetDoesNotShiftAbsoluteCoordinates() {
         "G54/G55 must change only the explicit NC work-offset selector"
     }
     check(nc54.contains("X-") || nc54.contains("Y-")) { "Signed negative NC coordinate evidence missing" }
+    cam.toolpaths.flatMap { it.moves }.forEachIndexed { index, move ->
+        val xyz = "X" + FanucNc.fmt(move.to.x) +
+            " Y" + FanucNc.fmt(move.to.y) +
+            " Z" + FanucNc.fmt(move.z)
+        check(xyz in nc54) { "CAM→NC absolute XYZ mismatch at move " + index + ": " + xyz }
+    }
 
     val first = cam.geometry.entities.first() as Line
     check(first.a == Vec2(-50.0,-40.0))
