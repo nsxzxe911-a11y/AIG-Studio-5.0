@@ -1446,6 +1446,164 @@ object NcProgramSafetyPolicy {
 }
 
 
+
+data class NcProcessSafetyFinding(
+    val lineNumber: Int,
+    val code: String,
+    val message: String
+)
+
+object NcGeneratedProcessGate {
+    private val word = Regex("""(?i)([A-Z])\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))(?=\s|[A-Z]|$)""")
+    private fun clean(raw: String): String =
+        raw.replace(Regex("""\([^)]*\)"""), " ").substringBefore(';').trim().uppercase()
+
+    fun blocking(
+        program: String,
+        safeZ: Double,
+        toolChangeSubprogram: Int = 4,
+        endSubprogram: Int = 5
+    ): List<NcProcessSafetyFinding> {
+        val findings = mutableListOf<NcProcessSafetyFinding>()
+        if (!safeZ.isFinite() || safeZ <= 0.0) {
+            return listOf(NcProcessSafetyFinding(0,"INVALID_SAFE_Z","Generated-process Safe-Z must be finite and > 0."))
+        }
+
+        var spindleRunning = false
+        var toolLengthActive = false
+        var toolSelected = false
+        var toolChangeSeen = false
+        var fixedCycleActive = false
+        var absolute = true
+        var currentZ = 0.0
+        var endCallSeen = false
+        var m30Seen = false
+
+        program.split("\n").forEachIndexed { index, raw ->
+            val lineNumber = index + 1
+            val line = clean(raw)
+            if (line.isBlank() || line=="%") return@forEachIndexed
+            val words = word.findAll(line).mapNotNull { m ->
+                val address=m.groupValues[1].uppercase()[0]
+                val value=m.groupValues[2].toDoubleOrNull()
+                if(value!=null && value.isFinite()) address to value else null
+            }.toList()
+            val g = words.filter { it.first=='G' }.map { it.second }
+            val m = words.filter { it.first=='M' }.map { kotlin.math.round(it.second).toInt() }
+            val p = words.lastOrNull { it.first=='P' }?.second?.let { kotlin.math.round(it).toInt() }
+            val hasG: (Double)->Boolean = { value -> g.any { kotlin.math.abs(it-value)<=1e-9 } }
+
+            if (m30Seen && (g.isNotEmpty() || m.isNotEmpty() || words.any { it.first in setOf('X','Y','Z','A','B') })) {
+                findings += NcProcessSafetyFinding(lineNumber,"EXECUTION_AFTER_M30","Executable NC content appears after M30.")
+            }
+
+            if (words.any { it.first=='T' }) toolSelected = true
+
+            if (hasG(90.0)) absolute=true
+            if (hasG(91.0)) absolute=false
+
+            if (hasG(49.0)) toolLengthActive=false
+            if (hasG(43.0)) {
+                val h=words.lastOrNull { it.first=='H' }?.second
+                if (h==null) {
+                    findings += NcProcessSafetyFinding(lineNumber,"G43_WITHOUT_H","G43 requires an explicit H register in generated AIG NC.")
+                } else {
+                    toolLengthActive=true
+                }
+            }
+
+            if (m.any { it==3 || it==4 }) spindleRunning=true
+            if (5 in m) spindleRunning=false
+
+            if (6 in m) {
+                if (spindleRunning) findings += NcProcessSafetyFinding(
+                    lineNumber,"TOOL_CHANGE_SPINDLE_RUNNING","M6 is blocked while spindle state is running."
+                )
+                if (!toolSelected) findings += NcProcessSafetyFinding(
+                    lineNumber,"TOOL_CHANGE_WITHOUT_T","M6 requires prior/current tool selection T."
+                )
+                toolChangeSeen=true
+            }
+
+            if (98 in m && p==toolChangeSubprogram) {
+                if (spindleRunning) findings += NcProcessSafetyFinding(
+                    lineNumber,"TOOL_CHANGE_CALL_SPINDLE_RUNNING","Tool-change subprogram call is blocked while spindle is running."
+                )
+                if (!toolSelected) findings += NcProcessSafetyFinding(
+                    lineNumber,"TOOL_CHANGE_CALL_WITHOUT_T","Tool-change subprogram call requires prior tool selection T."
+                )
+                toolChangeSeen=true
+            }
+
+            val zWord=words.lastOrNull { it.first=='Z' }?.second
+            val targetZ=zWord?.let { if(absolute) it else currentZ+it }
+
+            val isRapid=hasG(0.0)
+            if (isRapid && targetZ!=null && targetZ + 1e-9 < safeZ) {
+                findings += NcProcessSafetyFinding(
+                    lineNumber,"RAPID_BELOW_SAFE_Z","Generated AIG rapid Z target "+targetZ+" is below required Safe-Z "+safeZ+"."
+                )
+            }
+
+            val isCut=hasG(1.0)||hasG(2.0)||hasG(3.0)||
+                listOf(73.0,81.0,82.0,83.0,84.0,85.0,86.0,87.0,88.0,89.0).any { hasG(it) }
+            if (isCut) {
+                if (!toolChangeSeen) findings += NcProcessSafetyFinding(
+                    lineNumber,"CUT_BEFORE_TOOL_CHANGE","Generated cutting motion occurs before tool-change confirmation."
+                )
+                if (!spindleRunning) findings += NcProcessSafetyFinding(
+                    lineNumber,"CUT_WITH_SPINDLE_STOPPED","Generated cutting motion/cycle occurs while spindle is stopped."
+                )
+                if (!toolLengthActive) findings += NcProcessSafetyFinding(
+                    lineNumber,"CUT_WITHOUT_G43_H","Generated cutting motion/cycle occurs before G43/H tool-length compensation."
+                )
+            }
+
+            if (listOf(73.0,81.0,82.0,83.0,84.0,85.0,86.0,87.0,88.0,89.0).any { hasG(it) }) {
+                fixedCycleActive=true
+            }
+            if (hasG(80.0)) fixedCycleActive=false
+
+            if (98 in m && p==endSubprogram) {
+                if (currentZ + 1e-9 < safeZ && (targetZ==null || targetZ + 1e-9 < safeZ)) {
+                    findings += NcProcessSafetyFinding(
+                        lineNumber,"END_CALL_BELOW_SAFE_Z","End subprogram call requires a prior Safe-Z retract."
+                    )
+                }
+                if (fixedCycleActive) findings += NcProcessSafetyFinding(
+                    lineNumber,"CYCLE_ACTIVE_AT_END_CALL","Fixed cycle must be cancelled with G80 before end subprogram."
+                )
+                endCallSeen=true
+            }
+
+            if (30 in m) {
+                if (!endCallSeen) findings += NcProcessSafetyFinding(
+                    lineNumber,"M30_WITHOUT_END_SUBPROGRAM","Generated main program must call the configured end subprogram before M30."
+                )
+                if (fixedCycleActive) findings += NcProcessSafetyFinding(
+                    lineNumber,"CYCLE_ACTIVE_AT_M30","Fixed cycle must be cancelled before M30."
+                )
+                m30Seen=true
+            }
+
+            if (targetZ!=null) currentZ=targetZ
+        }
+        return findings.distinctBy { Triple(it.lineNumber,it.code,it.message) }
+    }
+
+    fun status(
+        program:String,
+        safeZ:Double,
+        toolChangeSubprogram:Int=4,
+        endSubprogram:Int=5
+    ):String {
+        val blocked=blocking(program,safeZ,toolChangeSubprogram,endSubprogram)
+        return if(blocked.isEmpty()) "PASS" else
+            "PROCESS_BLOCKED:"+blocked.joinToString(","){"L"+it.lineNumber+":"+it.code}
+    }
+}
+
+
 data class FanucPostSettings(
     val workOffset: String = "G54",
     val tool: Int = 1,
