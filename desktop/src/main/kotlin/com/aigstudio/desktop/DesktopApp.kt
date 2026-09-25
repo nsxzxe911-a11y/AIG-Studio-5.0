@@ -530,6 +530,17 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
         font = Font(Font.MONOSPACED, Font.PLAIN, 15)
         lineWrap = false
     }
+    val modalStatus = JLabel("MODAL • " + NcModalTracker.evidence(area.text)).apply {
+        foreground = Color(255,210,90)
+    }
+    fun refreshModalStatus() {
+        modalStatus.text = "MODAL • " + NcModalTracker.evidence(area.text)
+    }
+    area.document.addDocumentListener(object : javax.swing.event.DocumentListener {
+        override fun insertUpdate(e: javax.swing.event.DocumentEvent?) = refreshModalStatus()
+        override fun removeUpdate(e: javax.swing.event.DocumentEvent?) = refreshModalStatus()
+        override fun changedUpdate(e: javax.swing.event.DocumentEvent?) = refreshModalStatus()
+    })
     val controller = JComboBox(CncControllerProfile.entries.toTypedArray()).apply {
         selectedItem = controllerProfile
         renderer = object : DefaultListCellRenderer() {
@@ -644,13 +655,17 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     }
     JDialog(frame, "AIG CNC • NC EDIT • CONTROLLER", false).apply {
         layout = BorderLayout()
-        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+        add(JPanel(BorderLayout()).apply {
             background = Color(8,18,30)
-            add(JLabel("CONTROL").apply { foreground = Color(61,235,255) })
-            add(controller)
-            add(coordinate)
-            add(origin)
-            add(compensation)
+            add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                background = Color(8,18,30)
+                add(JLabel("CONTROL").apply { foreground = Color(61,235,255) })
+                add(controller)
+                add(coordinate)
+                add(origin)
+                add(compensation)
+            }, BorderLayout.CENTER)
+            add(modalStatus, BorderLayout.SOUTH)
         }, BorderLayout.NORTH)
         add(JScrollPane(area), BorderLayout.CENTER)
         add(keypad, BorderLayout.SOUTH)
