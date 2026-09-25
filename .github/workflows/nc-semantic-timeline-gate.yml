@@ -53,6 +53,8 @@ jobs:
           grep -Fq 'NC_PARAMETER_INTEGRITY_PASS' semantic-timeline.log
           grep -Fq 'NC_G34_PATTERN_SEMANTICS_PASS' semantic-timeline.log
           grep -Fq 'NC_GENERATED_PROCESS_GATE_PASS' semantic-timeline.log
+          grep -Fq 'NC_5X_PROCESS_ORDER_PASS' semantic-timeline.log
+          test "$(grep -Fc 'NC_5X_PROCESS_ORDER_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_G34_PATTERN_SEMANTICS_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_GENERATED_PROCESS_GATE_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_PARAMETER_INTEGRITY_PASS' semantic-timeline.log)" -eq 3
