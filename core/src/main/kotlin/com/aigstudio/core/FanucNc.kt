@@ -1431,10 +1431,69 @@ object NcAuxiliarySafetyPolicy {
     }
 }
 
+object NcControlEffectPolicy {
+    fun consistencyIssues(
+        code: String,
+        blockedBySafety: Boolean,
+        modalGroup: String?,
+        auxiliaryGroup: String?,
+        animationAction: String
+    ): List<String> {
+        if (blockedBySafety) return emptyList()
+        val known = NcCodeCatalog.describe(code).layer != "UNKNOWN"
+        if (!known) return emptyList()
+        val hasEffect =
+            modalGroup != null ||
+            auxiliaryGroup != null ||
+            (animationAction != "STATE_SYNC" && animationAction != "UNSUPPORTED")
+        return if (hasEffect) emptyList() else listOf("NO_EFFECT_CONTROL_CODE:" + code)
+    }
+
+    fun blocking(program: String): List<NcModalSafetyFinding> {
+        val baseSafety =
+            (NcModalSafetyPolicy.blocking(program) + NcAuxiliarySafetyPolicy.blocking(program))
+                .distinctBy { Triple(it.lineNumber,it.code,it.message) }
+        val blockedLines = baseSafety.filter { it.lineNumber > 0 }.map { it.lineNumber }.toSet()
+        val modal = NcModalTracker.trace(program).associateBy { it.lineNumber to it.code }
+        val auxiliary = NcAuxiliaryTracker.trace(program).associateBy { it.lineNumber to it.code }
+        val findings = mutableListOf<NcModalSafetyFinding>()
+
+        program.split("\n").forEachIndexed { index, raw ->
+            val lineNumber = index + 1
+            val blockedBySafety = lineNumber in blockedLines
+            NcCodeCatalog.codesInLine(raw).forEach { code ->
+                val modalGroup = modal[lineNumber to code]?.group
+                val auxiliaryGroup = auxiliary[lineNumber to code]?.group
+                val action = NcAnimationBridge.actionFor(code)
+                consistencyIssues(code, blockedBySafety, modalGroup, auxiliaryGroup, action)
+                    .forEach { issue ->
+                        findings += NcModalSafetyFinding(
+                            lineNumber,
+                            issue.substringBefore(':'),
+                            code + " is classified by AIG but has no modeled state/event/execution effect; fail-closed until wired."
+                        )
+                    }
+            }
+        }
+        return findings.distinctBy { Triple(it.lineNumber,it.code,it.message) }
+    }
+
+    fun evidence(program: String): String {
+        val findings = blocking(program)
+        return if (findings.isEmpty()) "CONTROL_EFFECT=PASS"
+        else "CONTROL_EFFECT=BLOCKED:" + findings.joinToString(",") {
+            "L" + it.lineNumber + ":" + it.code
+        }
+    }
+}
+
 object NcProgramSafetyPolicy {
     fun blocking(program: String): List<NcModalSafetyFinding> =
-        (NcModalSafetyPolicy.blocking(program) + NcAuxiliarySafetyPolicy.blocking(program))
-            .distinctBy { Triple(it.lineNumber,it.code,it.message) }
+        (
+            NcModalSafetyPolicy.blocking(program) +
+            NcAuxiliarySafetyPolicy.blocking(program) +
+            NcControlEffectPolicy.blocking(program)
+        ).distinctBy { Triple(it.lineNumber,it.code,it.message) }
 
     fun status(program: String): String {
         val blocked = blocking(program)
