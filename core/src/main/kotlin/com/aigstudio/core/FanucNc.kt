@@ -322,6 +322,129 @@ object NcAnimationBridge {
     }
 }
 
+data class NcSemanticAuthorityResult(
+    val lineNumber: Int,
+    val codes: List<String>,
+    val safetyCodes: List<String>,
+    val conflictCodes: List<String>,
+    val animationEvidence: String
+) {
+    val blocked: Boolean get() = safetyCodes.isNotEmpty() || conflictCodes.isNotEmpty()
+    fun evidence(): String {
+        val status = if (conflictCodes.isNotEmpty()) "CONFLICT_BLOCKED"
+            else if (safetyCodes.isNotEmpty()) "SAFETY_BLOCKED"
+            else "CONSENSUS_PASS"
+        val codeText = if (codes.isEmpty()) "NONE" else codes.joinToString(",")
+        val detail = when {
+            conflictCodes.isNotEmpty() -> " • CONFLICT=" + conflictCodes.joinToString(",")
+            safetyCodes.isNotEmpty() -> " • SAFETY=" + safetyCodes.joinToString(",")
+            else -> ""
+        }
+        return "AUTH=" + status + " • CODES=" + codeText + detail + " • " + animationEvidence
+    }
+}
+
+object NcSemanticAuthority {
+    fun consistencyIssues(
+        code: String,
+        safetyCodes: List<String>,
+        capabilityStatus: ControllerCapabilityStatus,
+        animationAction: String
+    ): List<String> {
+        val descriptor = NcCodeCatalog.describe(code)
+        val issues = mutableListOf<String>()
+        val unknown = descriptor.layer == "UNKNOWN"
+        val unknownSafety = safetyCodes.any { it.startsWith("UNKNOWN_") }
+
+        if (unknown && capabilityStatus != ControllerCapabilityStatus.UNKNOWN_FAIL_CLOSED) {
+            issues += "UNKNOWN_CAPABILITY_MISMATCH:" + code
+        }
+        if (unknown && !unknownSafety) {
+            issues += "UNKNOWN_NOT_FAIL_CLOSED:" + code
+        }
+        if (!unknown && animationAction == "UNSUPPORTED") {
+            issues += "KNOWN_CODE_ANIMATION_UNSUPPORTED:" + code
+        }
+        if (capabilityStatus == ControllerCapabilityStatus.UNKNOWN_FAIL_CLOSED && !unknownSafety) {
+            issues += "CAPABILITY_UNKNOWN_NOT_BLOCKED:" + code
+        }
+        if (animationAction == "UNSUPPORTED" && !unknownSafety) {
+            issues += "ANIMATION_UNSUPPORTED_NOT_BLOCKED:" + code
+        }
+        return issues.distinct()
+    }
+
+    fun resolveLine(
+        program: String,
+        lineNumber: Int,
+        controller: CncControllerProfile
+    ): NcSemanticAuthorityResult {
+        val lines = program.split("\n")
+        if (lineNumber !in 1..lines.size) {
+            return NcSemanticAuthorityResult(
+                lineNumber,
+                emptyList(),
+                emptyList(),
+                listOf("LINE_OUT_OF_RANGE"),
+                "ANIM L" + lineNumber + " • OUT OF RANGE"
+            )
+        }
+
+        val codes = NcCodeCatalog.codesInLine(lines[lineNumber - 1])
+        val safetyCodes = NcProgramSafetyPolicy.blocking(program)
+            .filter { it.lineNumber == lineNumber }
+            .map { it.code }
+            .distinct()
+
+        val conflicts = codes.flatMap { code ->
+            consistencyIssues(
+                code,
+                safetyCodes,
+                CncControllerCapabilityMatrix.classify(controller, code).status,
+                NcAnimationBridge.actionFor(code)
+            )
+        }.distinct()
+
+        return NcSemanticAuthorityResult(
+            lineNumber,
+            codes,
+            safetyCodes,
+            conflicts,
+            NcAnimationBridge.lineEvidence(program, lineNumber)
+        )
+    }
+
+    fun lineEvidence(
+        program: String,
+        lineNumber: Int,
+        controller: CncControllerProfile
+    ): String = resolveLine(program, lineNumber, controller).evidence()
+
+    fun programSummary(
+        program: String,
+        controller: CncControllerProfile
+    ): String {
+        val lines = program.split("\n")
+        val results = lines.indices.map { resolveLine(program, it + 1, controller) }
+        val conflicts = results.flatMap { it.conflictCodes }.distinct()
+        if (conflicts.isNotEmpty()) {
+            return "NC SEMANTIC AUTHORITY • CONFLICT BLOCKED • " + conflicts.take(6).joinToString(",")
+        }
+        val safety = results.flatMap { result ->
+            result.safetyCodes.map { code -> "L" + result.lineNumber + ":" + code }
+        }.distinct()
+        if (safety.isNotEmpty()) {
+            return "NC SEMANTIC AUTHORITY • SAFETY BLOCKED • " + safety.take(6).joinToString(",")
+        }
+        val activeCodes = results.flatMap { it.codes }.distinct()
+        val animations = activeCodes.map { code -> code + "=>" + NcAnimationBridge.actionFor(code) }
+            .filterNot { it.endsWith("=>STATE_SYNC") }
+        return "NC SEMANTIC AUTHORITY • CONSENSUS PASS • " +
+            if (animations.isEmpty()) "STATE_SYNC_ONLY" else animations.take(12).joinToString(" | ")
+    }
+}
+
+
 enum class NcCoordinateMode(val code: String, val displayName: String) {
     ABSOLUTE_G90("G90", "G90 ABSOLUTE"),
     INCREMENTAL_G91("G91", "G91 INCREMENTAL")
