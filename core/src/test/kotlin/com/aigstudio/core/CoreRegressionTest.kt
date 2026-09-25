@@ -1180,6 +1180,7 @@ fun main() {
     testMicronDisplayScale()
     testRenderCachePolicyStress()
     testRgbMaxStressProfilerContract()
+    testHomeWorkstationChromeContract()
     println("ALL TESTS PASSED")
 }
 
@@ -1796,4 +1797,19 @@ private fun testRgbMaxStressProfilerContract() {
     check("DEVICE=PENDING" in RgbMaxStressProfiler.summary())
     RgbMaxStressProfiler.reset()
     println("✓ RGB_MAX_STRESS_PROFILER_GATE_PASS A/B_DELTA DROP_DELTA SYNTHETIC_ONLY NO_FAKE_DEVICE_CLAIM")
+}
+
+
+private fun testHomeWorkstationChromeContract() {
+    check(WorkstationChromeContract.BRAND=="AIG CNC")
+    check(WorkstationChromeContract.WORKSTATION=="CNC AI WORKSTATION")
+    check(WorkstationChromeContract.ORIGINAL=="OFFICIAL RGB ORIGINAL")
+    check("2D CAD" in WorkstationChromeContract.WORKSPACE)
+    check("X0.000" in WorkstationChromeContract.MASTER_ORIGIN)
+    check(WorkstationChromeContract.PRECISION=="0.001 mm")
+    check(WorkstationChromeContract.layout(360,780)==WorkstationChromeContract.Layout.COMPACT)
+    check(WorkstationChromeContract.layout(780,360)==WorkstationChromeContract.Layout.COMPACT)
+    check(WorkstationChromeContract.layout(1280,720)==WorkstationChromeContract.Layout.WIDE)
+    check(WorkstationChromeContract.requiredSections()==setOf("BRAND","WORKSPACE","STATUS","FUNCTIONS"))
+    println("✓ HOME_WORKSTATION_UI_GATE_PASS BRAND WORKSPACE STATUS FUNCTIONS COMPACT WIDE")
 }

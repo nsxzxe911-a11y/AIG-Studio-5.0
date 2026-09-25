@@ -419,18 +419,125 @@ class MainActivity : Activity() {
         adaptiveRefreshController = AdaptiveRefreshController(this).also { it.start() }
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(0xFF07111B.toInt())
+            setBackgroundColor(0xFF050B12.toInt())
         }
-        val title = TextView(this).apply {
-            text = "AIG CNC • OFFICIAL RGB ORIGINAL • ${RuntimeDeviceProfile.verificationLabel} • PHYSICAL 120Hz / EMULATOR 60Hz CAP • 原點 0.000 • 精度 0.001 mm"
-            setTextColor(0xFF3DEBFF.toInt()); textSize = 16f; gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(12), dp(6), dp(12), dp(6))
-        }
-        root.addView(title, LinearLayout.LayoutParams(-1, dp(40)))
-        cad = CadView(this)
-        root.addView(cad, LinearLayout.LayoutParams(-1, 0, 1f))
+        val screenWidthDp = resources.configuration.screenWidthDp.coerceAtLeast(1)
+        val screenHeightDp = resources.configuration.screenHeightDp.coerceAtLeast(1)
+        val workstationLayout = WorkstationChromeContract.layout(screenWidthDp, screenHeightDp)
+        fun panel(stroke:Int = 0x553DEBFF): GradientDrawable =
+            GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(0xE60A1724.toInt(), 0xE6050C14.toInt())
+            ).apply {
+                cornerRadius = dp(10).toFloat()
+                setStroke(dp(1), stroke)
+            }
+        fun chromeText(label:String, color:Int = 0xFFDDEBFA.toInt(), size:Float = 11f): TextView =
+            TextView(this).apply {
+                text = label
+                setTextColor(color)
+                textSize = StudioDisplayPolicy.sp(this, size)
+                setPadding(dp(8), dp(4), dp(8), dp(4))
+            }
 
-        // Branch area: hidden until a category is selected.  This keeps the CAD canvas clean.
+        val brandBar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = panel()
+            setPadding(dp(6), dp(4), dp(6), dp(4))
+        }
+        val brandStack = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        brandStack.addView(chromeText(WorkstationChromeContract.BRAND, 0xFFFFFFFF.toInt(), 19f).apply {
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            letterSpacing = 0.08f
+        })
+        brandStack.addView(chromeText(
+            WorkstationChromeContract.WORKSTATION + " • " + WorkstationChromeContract.ORIGINAL,
+            0xFF3DEBFF.toInt(), 10f
+        ))
+        brandBar.addView(brandStack, LinearLayout.LayoutParams(0, -2, 1f))
+        val brandState = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.END
+        }
+        brandState.addView(chromeText(
+            WorkstationChromeContract.SYSTEM_READY + " • " + RuntimeDeviceProfile.verificationLabel,
+            0xFF63FF9D.toInt(), 9.5f
+        ).apply { gravity = Gravity.END })
+        brandState.addView(chromeText(
+            WorkstationChromeContract.MASTER_ORIGIN + " • " + WorkstationChromeContract.PRECISION,
+            0xFFA0BED2.toInt(), 9f
+        ).apply { gravity = Gravity.END })
+        brandBar.addView(brandState, LinearLayout.LayoutParams(0, -2, 1f))
+        root.addView(brandBar, LinearLayout.LayoutParams(-1, -2).apply {
+            setMargins(dp(5), dp(5), dp(5), dp(3))
+        })
+
+        cad = CadView(this)
+        val workspaceColumn = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = panel(0x663DEBFF)
+            setPadding(dp(3), dp(2), dp(3), dp(3))
+        }
+        workspaceColumn.addView(chromeText(
+            WorkstationChromeContract.WORKSPACE,
+            0xFF3DEBFF.toInt(), 10.5f
+        ))
+        workspaceColumn.addView(cad, LinearLayout.LayoutParams(-1, 0, 1f))
+
+        val machineRail = LinearLayout(this).apply {
+            orientation = if(workstationLayout==WorkstationChromeContract.Layout.COMPACT)
+                LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            background = panel(0x4474F7FF)
+            setPadding(dp(4), dp(4), dp(4), dp(4))
+        }
+        fun railCell(title:String,value:String,color:Int): LinearLayout =
+            LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                addView(chromeText(title, 0xFF7894A8.toInt(), 8.5f).apply { gravity = Gravity.CENTER })
+                addView(chromeText(value, color, 10f).apply {
+                    gravity = Gravity.CENTER
+                    setTypeface(typeface, android.graphics.Typeface.BOLD)
+                })
+            }
+        val railCells = listOf(
+            railCell("MACHINE","READY",0xFF63FF9D.toInt()),
+            railCell("ORIGIN","X0.000 Y0.000",0xFF3DEBFF.toInt()),
+            railCell("PRECISION","0.001 mm",0xFFF59E0B.toInt()),
+            railCell("RGB","LIVE",0xFF8B5CF6.toInt())
+        )
+        railCells.forEach {
+            machineRail.addView(
+                it,
+                if(workstationLayout==WorkstationChromeContract.Layout.COMPACT)
+                    LinearLayout.LayoutParams(0,-2,1f)
+                else LinearLayout.LayoutParams(-1,0,1f)
+            )
+        }
+
+        val workspaceFrame = LinearLayout(this).apply {
+            orientation = if(workstationLayout==WorkstationChromeContract.Layout.COMPACT)
+                LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+            setPadding(dp(5), dp(2), dp(5), dp(2))
+        }
+        workspaceFrame.addView(workspaceColumn, LinearLayout.LayoutParams(0, 0).apply {
+            if(workstationLayout==WorkstationChromeContract.Layout.COMPACT) {
+                width = -1; height = 0; weight = 1f
+            } else {
+                width = 0; height = -1; weight = 1f
+            }
+        })
+        workspaceFrame.addView(
+            machineRail,
+            if(workstationLayout==WorkstationChromeContract.Layout.COMPACT)
+                LinearLayout.LayoutParams(-1, dp(62))
+            else LinearLayout.LayoutParams(dp(132), -1)
+        )
+        root.addView(workspaceFrame, LinearLayout.LayoutParams(-1, 0, 1f))
+
+        // Branch area stays hidden until a category is selected; CAD remains the dominant workspace.
         branchFlow = FlowLayout(this).apply { setPadding(dp(6), dp(2), dp(6), dp(2)); visibility = View.GONE }
         root.addView(branchFlow, LinearLayout.LayoutParams(-1, -2))
         categoryFlow = FlowLayout(this).apply { setPadding(dp(6), dp(3), dp(6), dp(4)) }
@@ -447,6 +554,17 @@ class MainActivity : Activity() {
         addActionTo(categoryFlow, "ChatGPT AI 更新 • 一鍵", 1) { runSecureUpdateCheck() }
         addActionTo(categoryFlow, "↶", 3) { cad.undo() }
         addActionTo(categoryFlow, "↷", 5) { cad.redo() }
+        val workstationFooter = chromeText(
+            WorkstationChromeContract.FUNCTION_STRIP + "  •  MAKE IT REAL.",
+            0xFF7894A8.toInt(), 9f
+        ).apply {
+            gravity = Gravity.CENTER
+            background = panel(0x334D7189)
+        }
+        root.addView(workstationFooter, LinearLayout.LayoutParams(-1, -2).apply {
+            setMargins(dp(5), dp(2), dp(5), dp(2))
+        })
+
         fpsIndicator = TextView(this).apply {
             setTextColor(0xFF3DEBFF.toInt()); textSize = 11f; text = "FPS --"
             setPadding(dp(12), dp(2), dp(12), dp(2)); visibility = View.GONE

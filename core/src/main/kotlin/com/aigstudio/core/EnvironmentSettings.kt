@@ -696,3 +696,25 @@ object RgbMaxStressProfiler {
     @Synchronized
     fun reset(){ data.clear() }
 }
+
+
+object WorkstationChromeContract {
+    const val BRAND = "AIG CNC"
+    const val WORKSTATION = "CNC AI WORKSTATION"
+    const val ORIGINAL = "OFFICIAL RGB ORIGINAL"
+    const val WORKSPACE = "2D CAD • LIVE WORKSPACE"
+    const val SYSTEM_READY = "SYSTEM READY"
+    const val MASTER_ORIGIN = "MASTER X0.000 Y0.000"
+    const val PRECISION = "0.001 mm"
+    const val FUNCTION_STRIP = "AI FOR REAL MACHINING • ACCURATE • REAL • SAFE • SMART"
+
+    enum class Layout { COMPACT, WIDE }
+
+    fun layout(widthDp:Int,heightDp:Int):Layout {
+        require(widthDp>0 && heightDp>0)
+        return if(minOf(widthDp,heightDp)<600) Layout.COMPACT else Layout.WIDE
+    }
+
+    fun requiredSections():Set<String> =
+        setOf("BRAND","WORKSPACE","STATUS","FUNCTIONS")
+}
