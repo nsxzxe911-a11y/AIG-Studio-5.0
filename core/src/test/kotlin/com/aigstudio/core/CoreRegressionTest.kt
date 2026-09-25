@@ -32,12 +32,22 @@ private fun testSoftwareAbsoluteCoordinateContract() {
         "GEOMETRY=CANONICAL_ABS_XYZ",
         "PROGRAM_MODE=G90_OR_G91_REPRESENTATION",
         "WORK_OFFSET=G54_G59_NC_EXECUTION_LAYER",
+        "TEMP_ORIGIN=G92_NC_TRANSFORM_LAYER",
         "CUTTER_COMP=G40_G41_G42_EXPLICIT",
         "TOOL_LENGTH=G43_H_EXPLICIT",
         "CONTROLLER=POST_PROFILE_ONLY"
     ))
+    check(SoftwareCoordinateContract.coordinateUsageGuidance() == listOf(
+        "GENERAL_MACHINING=G90",
+        "REPEATED_POCKET_PATTERN=G91",
+        "SUBPROGRAM_MACRO=G91",
+        "ANGULAR_FEATURE_TEMP_ORIGIN=G92",
+        "MULTI_FIXTURE_TEMP_ORIGIN=G92",
+        "COPY_PASTE_PROGRAM_BLOCK=G90"
+    ))
     println("✓ ABSOLUTE_COORDINATE_DATA_GATE_PASS G90 MASTER=X0.000/Y0.000/Z0.000 SIGNED=TRUE SIM_OFFSET_SHIFT=OFF SIM_TOLERANCE_SHIFT=OFF")
-    println("✓ COORDINATE_RESPONSIBILITY_GATE_PASS GEOMETRY/PROGRAM_MODE/WORK_OFFSET/CUTTER_COMP/TOOL_LENGTH/CONTROLLER")
+    println("✓ COORDINATE_RESPONSIBILITY_GATE_PASS GEOMETRY/PROGRAM_MODE/WORK_OFFSET/TEMP_ORIGIN_G92/CUTTER_COMP/TOOL_LENGTH/CONTROLLER")
+    println("✓ COORDINATE_USAGE_GUIDE_PASS G90/G91/G92 use cases locked")
 }
 
 private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
@@ -64,6 +74,7 @@ fun main() {
     testWorkOffsetDoesNotShiftAbsoluteCoordinates()
     testControllerProfilesDoNotShiftAbsoluteCoordinates()
     testG91PostPreservesCanonicalAbsoluteCoordinates()
+    testG92TemporaryOriginIsPostOnlyAndFailClosed()
     testControllerCutterCompensationDoubleApplyBlocked()
     testMaterialRemoval3D()
     testMachiningMesh3D()
@@ -469,6 +480,33 @@ private fun testG91PostPreservesCanonicalAbsoluteCoordinates() {
     check("\nG90\n" in incrementalNc)
     check(canonicalBefore.any { it.first < 0.0 || it.second < 0.0 })
     println("✓ G91_POST_CANONICAL_ABS_PARITY_PASS canonical CAM XYZ unchanged")
+}
+
+
+private fun testG92TemporaryOriginIsPostOnlyAndFailClosed() {
+    val snapshot = DrawingSnapshot(
+        listOf(Line("G92-L",Vec2(-30.0,10.0),Vec2(30.0,10.0)))
+    )
+    val cam = CamModel.fromCad(
+        9250L,
+        snapshot,
+        CamSettings(toolDiameter=6.0, depth=-2.0, safeZ=5.0, feedMmMin=120.0)
+    )
+    val canonicalBefore = cam.toolpaths.flatMap { it.moves }.map { Triple(it.to.x,it.to.y,it.z) }
+    val normal = CncPost.generate(
+        cam,
+        FanucPostSettings(originTransformMode=NcOriginTransformMode.WORK_OFFSET_ONLY)
+    )
+    check("(PROGRAM MODE G90 ABSOLUTE • ORIGIN G54-G59 WORK OFFSET" in normal)
+    check(runCatching {
+        CncPost.generate(
+            cam,
+            FanucPostSettings(originTransformMode=NcOriginTransformMode.TEMPORARY_G92)
+        )
+    }.isFailure)
+    val canonicalAfter = cam.toolpaths.flatMap { it.moves }.map { Triple(it.to.x,it.to.y,it.z) }
+    check(canonicalBefore == canonicalAfter)
+    println("✓ G92_POST_ONLY_GATE_PASS canonical CAM XYZ unchanged and NC fail-closed")
 }
 
 private fun testControllerCutterCompensationDoubleApplyBlocked() {
