@@ -35,20 +35,30 @@ private fun testSoftwareAbsoluteCoordinateContract() {
         "FEED_MODE=G93_G94_G95_EXECUTION_LAYER",
         "SPINDLE_MODE=G96_G97_EXECUTION_LAYER",
         "WORK_OFFSET=G54_G59_NC_EXECUTION_LAYER",
+        "EXTENDED_WCS=G54_1_CONTROLLER_OFFSET_LAYER",
+        "ROTARY_WCS_OFFSET=G54_2_5X_TRANSFORM_LAYER",
+        "WORKPIECE_INSTALL_COMP=G54_4_5X_TRANSFORM_LAYER",
         "LOCAL_COORD=G52_TRANSFORM_LAYER",
         "MACHINE_COORD=G53_NONMODAL_EXECUTION_LAYER",
+        "TOOL_AXIS_DIRECTION=G53_1_G53_6_5X_CONTROL_LAYER",
         "REFERENCE_RETURN=G28_G29_G30_NONMODAL_LAYER",
         "TEMP_ORIGIN=G92_NC_TRANSFORM_LAYER",
         "WORK_COORD_PRESET=G92_1_CONTROLLER_STATE_LAYER",
         "COORD_ROTATION=G68_G69_TRANSFORM_LAYER",
         "INCLINED_SURFACE=G68_2_G68_3_TRANSFORM_LAYER",
+        "FIVE_AXIS_TCP=G43_1_G43_4_G43_5_G43_7_CONTROL_LAYER",
         "CUTTER_COMP=G40_G41_G42_EXPLICIT",
-        "TOOL_LENGTH=G43_H_EXPLICIT",
+        "NORMAL_LINE_CONTROL=G40_1_G41_1_G42_1_G150_G151_G152_LAYER",
+        "THREE_D_CUTTER_COMP=G41_2_G42_2_LAYER",
+        "TOOL_LENGTH=G43_G49_H_EXPLICIT",
+        "SCALING=G50_G51_GEOMETRY_TRANSFORM_LAYER",
+        "MIRROR=G50_1_G51_1_GEOMETRY_TRANSFORM_LAYER",
         "PROBE_SKIP=G31_TRIGGERED_MOTION_LAYER",
         "USER_MACRO=G65_G66_G67_EXECUTION_LAYER",
         "FIXED_CYCLE=G80_G89_MODAL_LAYER",
         "CYCLE_RETURN=G98_G99_RETRACT_LAYER",
         "PATH_CONTROL=G61_G64_MOTION_LAYER",
+        "HIGH_ACCURACY_PATH=G61_1_G61_2_G61_4_CONTROLLER_LAYER",
         "NONMODAL_TIMING=G04_G09_EXECUTION_LAYER",
         "CONTROLLER=POST_PROFILE_ONLY"
     ))
@@ -73,6 +83,14 @@ private fun testNcModalTracker() {
         G92 X0 Y0
         G41 D1
         G43 H1
+        G43.4 H1
+        G54.2
+        G54.4
+        G53.1
+        G41.2 D1
+        G51 X2.000 Y2.000 Z2.000
+        G51.1 X0.000
+        G61.1
         G18
         G68
         G81 G99
@@ -98,6 +116,14 @@ private fun testNcModalTracker() {
     check(events.any { it.code=="G52" && it.group=="LOCAL_COORD_TRANSFORM" })
     check(events.any { it.code=="G65" && it.group=="MACRO_CALL_NONMODAL" })
     check(events.any { it.code=="G66.1" && it.group=="MACRO_MODE" })
+    check(events.any { it.code=="G43.4" && it.group=="FIVE_AXIS_TOOL_CONTROL" })
+    check(events.any { it.code=="G54.2" && it.group=="ROTARY_WORK_OFFSET" })
+    check(events.any { it.code=="G54.4" && it.group=="WORKPIECE_INSTALL_ERROR_COMP" })
+    check(events.any { it.code=="G53.1" && it.group=="TOOL_AXIS_DIRECTION" })
+    check(events.any { it.code=="G41.2" && it.group=="THREE_D_CUTTER_COMP" })
+    check(events.any { it.code=="G51" && it.group=="SCALING" })
+    check(events.any { it.code=="G51.1" && it.group=="MIRROR" })
+    check(events.any { it.code=="G61.1" && it.group=="HIGH_ACCURACY_PATH" })
     check(events.any { it.code=="G68.2" && it.group=="INCLINED_SURFACE_TRANSFORM" })
     check(events.any { it.code=="G92.1" && it.group=="WORK_COORD_PRESET_NONMODAL" })
     check(events.any { it.code=="G96" && it.group=="SPINDLE_SPEED_MODE" })
@@ -147,6 +173,16 @@ private fun testNcModalTracker() {
         G68.2 X0.000 Y0.000 Z0.000
         G92.1
         G96
+        G43.5 H1
+        G53.6
+        G54.1 P1
+        G54.2
+        G54.4
+        G41.1
+        G41.2 D1
+        G51 X2.000 Y2.000 Z2.000
+        G51.1 X0.000
+        G61.2
     """.trimIndent()
     val blockedCodes = NcModalSafetyPolicy.blocking(blocked).map { it.code }.toSet()
     check(setOf(
@@ -163,7 +199,17 @@ private fun testNcModalTracker() {
         "USER_MACRO_UNEXPANDED",
         "INCLINED_SURFACE_UNSIMULATED",
         "WORK_COORD_PRESET_UNVERIFIED",
-        "G96_CSS_UNVERIFIED"
+        "G96_CSS_UNVERIFIED",
+        "FIVE_AXIS_TCP_UNSIMULATED",
+        "TOOL_AXIS_DIRECTION_UNSIMULATED",
+        "EXTENDED_WCS_UNVERIFIED",
+        "ROTARY_WCS_OFFSET_UNSIMULATED",
+        "WORKPIECE_INSTALL_COMP_UNSIMULATED",
+        "NORMAL_LINE_CONTROL_UNSIMULATED",
+        "THREE_D_CUTTER_COMP_UNSIMULATED",
+        "SCALING_UNSIMULATED",
+        "MIRROR_UNSIMULATED",
+        "HIGH_ACCURACY_PATH_UNVERIFIED"
     ).all { it in blockedCodes })
     val unknown = """
         G21 G94 G97 G90 G54 G17 G40 G49
