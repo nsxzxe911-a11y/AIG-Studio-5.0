@@ -1122,9 +1122,10 @@ class MainActivity : Activity() {
         }
         fun refreshModalStatus() {
             val program = editor.text.toString()
-            val blocked = NcModalSafetyPolicy.blocking(program)
+            val blocked = NcProgramSafetyPolicy.blocking(program)
             modalStatus.setTextColor(if (blocked.isEmpty()) Color.rgb(255,210,90) else Color.rgb(255,110,110))
             modalStatus.text = "MODAL • " + NcModalTracker.evidence(program) +
+                "\nAUX • " + NcAuxiliaryTracker.evidence(program) +
                 "\n" + CncControllerCapabilityMatrix.summary(controllerProfile, program) +
                 if (blocked.isEmpty()) " • SAFETY=PASS"
                 else "\nBLOCKED • " + blocked.take(4).joinToString(" • ") {
