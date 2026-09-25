@@ -610,6 +610,30 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check(cleanReady.alarmCodes.isEmpty() && cleanReady.alarmLine==null && cleanReady.canExecute)
     println("✓ NC_PARSER_CONFLICT_STRESS_PASS modal-groups/duplicate-address/comments/CRLF/block-skip/5000-block/recovery-clean")
 
+    val preparedAuthority = NcSemanticAuthority.resolveProgram(inlineCommentProgram,CncControllerProfile.FANUC)
+    inlineCommentProgram.split("\n").indices.forEach { index ->
+        val direct = NcSemanticAuthority.resolveLine(
+            inlineCommentProgram,index+1,CncControllerProfile.FANUC
+        )
+        val prepared = preparedAuthority[index]
+        check(direct.codes==prepared.codes)
+        check(direct.safetyCodes==prepared.safetyCodes)
+        check(direct.conflictCodes==prepared.conflictCodes)
+        check(direct.animationEvidence==prepared.animationEvidence)
+    }
+
+    val timelineStartedNs = System.nanoTime()
+    val performanceTimeline = NcExecutionTimeline.build(
+        fiveThousandBlockProgram,CncControllerProfile.FANUC,verifiedTravel
+    )
+    val timelineElapsedMs = (System.nanoTime()-timelineStartedNs)/1_000_000L
+    check(performanceTimeline.isNotEmpty())
+    check(performanceTimeline.none { it.status=="BLOCKED" || it.status=="SKIPPED_AFTER_BLOCK" })
+    check(timelineElapsedMs < 30_000L) {
+        "5000-block execution timeline performance regression: " + timelineElapsedMs + "ms"
+    }
+    println("✓ NC_TIMELINE_LINEAR_PRECOMPUTE_PASS 5000-block/prepared-authority/<30s")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
