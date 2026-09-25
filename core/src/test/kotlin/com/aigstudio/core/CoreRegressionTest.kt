@@ -105,6 +105,52 @@ private fun testNcModalTracker() {
     check(final.pathControl=="G61")
     check(NcModalTracker.evidence(program)=="PROGRAM=G91|WORK_OFFSET=G54|G92=ACTIVE|UNITS=G21|FEED_MODE=G94|CUTTER_COMP=G42|TOOL_LENGTH=G49|PLANE=G18|ROTATION=G69|CYCLE=G80|RETURN=G98|PATH=G61")
     println("✓ NC_MODAL_TRACKER_PASS G90/G91 G20/G21 G93/G94/G95 G53 G54-G59 G92 G68/G69 G40-G42 G43/G49 G17-G19 G80-G89 G98/G99 G61/G64")
+
+    val safe = """
+        %
+        G21 G94
+        G90 G54 G17 G40 G49 G80 G98
+        G43 Z30.000 H1
+        %
+    """.trimIndent()
+    check(NcModalSafetyPolicy.blocking(safe).isEmpty())
+
+    val blocked = """
+        G21 G94 G90 G54
+        G20
+        G95
+        G53 G0 Z0
+        G68
+        G92 X0 Y0
+        G41 D1
+        G99
+    """.trimIndent()
+    val blockedCodes = NcModalSafetyPolicy.blocking(blocked).map { it.code }.toSet()
+    check(setOf(
+        "G20_INCH_MODE",
+        "G95_FEED_PER_REV_UNVERIFIED",
+        "G53_MACHINE_COORD_UNSIMULATED",
+        "G68_ROTATION_UNSIMULATED",
+        "G92_ORIGIN_UNVERIFIED",
+        "G41_G42_DOUBLE_COMP_RISK",
+        "G99_RETURN_UNSIMULATED"
+    ).all { it in blockedCodes })
+    println("✓ NC_MODAL_SAFETY_POLICY_PASS safe base and unsupported execution transforms blocked")
+}
+
+private fun testCannedCycleReturnMode() {
+    val cycle = FanucNc.cannedCycle(
+        DrillCycle.G81,
+        listOf(DrillHole(x=-10.0,y=5.0,z=-8.0,r=2.0,feed=120.0)),
+        safeZ=10.0,
+        retractZ=2.0
+    )
+    check("G98 G81" in cycle)
+    check("G80" in cycle)
+    check(NcModalSafetyPolicy.blocking(
+        "G21 G94 G90 G54 G17 G40 G49\nG43 Z30.000 H1\n" + cycle
+    ).isEmpty())
+    println("✓ CANNED_CYCLE_RETURN_PASS G98 explicit / G81 / G80")
 }
 
 private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
@@ -116,6 +162,7 @@ fun main() {
     println("AIG Studio core regression tests")
     testSoftwareAbsoluteCoordinateContract()
     testNcModalTracker()
+    testCannedCycleReturnMode()
     testDeleteDoesNotInventTriangle()
     testUndoRedo()
     testChamferC5()
