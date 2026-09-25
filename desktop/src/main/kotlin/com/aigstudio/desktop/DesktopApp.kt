@@ -534,7 +534,13 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
         foreground = Color(255,210,90)
     }
     fun refreshModalStatus() {
-        modalStatus.text = "MODAL • " + NcModalTracker.evidence(area.text)
+        val blocked = NcModalSafetyPolicy.blocking(area.text)
+        modalStatus.foreground = if (blocked.isEmpty()) Color(255,210,90) else Color(255,110,110)
+        modalStatus.text = "MODAL • " + NcModalTracker.evidence(area.text) +
+            if (blocked.isEmpty()) " • SAFETY=PASS"
+            else " • BLOCKED=" + blocked.take(4).joinToString(",") {
+                (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code
+            }
     }
     area.document.addDocumentListener(object : javax.swing.event.DocumentListener {
         override fun insertUpdate(e: javax.swing.event.DocumentEvent?) = refreshModalStatus()
