@@ -35,7 +35,10 @@ data class NcModalState(
     val cutterCompensation: String = "G40",
     val toolLengthCompensation: String = "G49",
     val plane: String = "G17",
-    val coordinateRotation: String = "G69"
+    val coordinateRotation: String = "G69",
+    val fixedCycle: String = "G80",
+    val cycleReturn: String = "G98",
+    val pathControl: String = "G64"
 ) {
     fun evidence(): String =
         "PROGRAM=" + coordinateMode +
@@ -46,7 +49,10 @@ data class NcModalState(
         "|CUTTER_COMP=" + cutterCompensation +
         "|TOOL_LENGTH=" + toolLengthCompensation +
         "|PLANE=" + plane +
-        "|ROTATION=" + coordinateRotation
+        "|ROTATION=" + coordinateRotation +
+        "|CYCLE=" + fixedCycle +
+        "|RETURN=" + cycleReturn +
+        "|PATH=" + pathControl
 }
 
 data class NcModalEvent(
@@ -81,6 +87,9 @@ object NcModalTracker {
                     17,18,19 -> { group = "PLANE"; state.copy(plane = code) }
                     68 -> { group = "COORD_ROTATION"; state.copy(coordinateRotation = "G68") }
                     69 -> { group = "COORD_ROTATION"; state.copy(coordinateRotation = "G69") }
+                    80,81,82,83,84,85,86,87,88,89 -> { group = "FIXED_CYCLE"; state.copy(fixedCycle = code) }
+                    98,99 -> { group = "CYCLE_RETURN"; state.copy(cycleReturn = code) }
+                    61,64 -> { group = "PATH_CONTROL"; state.copy(pathControl = code) }
                     53 -> { group = "MACHINE_COORD_NONMODAL"; state }
                     else -> { group = null; state }
                 }
@@ -231,11 +240,11 @@ object FanucNc {
                     val rpm = h.tapSpindleRpm ?: error("G84 requires tapping spindle RPM")
                     require(pitch > 0.0 && rpm in 1..99999)
                     if (h.rigidTapM29) out.appendLine("M29 S" + rpm)
-                    out.append("G84 X").append(fmt(h.x)).append(" Y").append(fmt(h.y))
+                    out.append("G98 G84 X").append(fmt(h.x)).append(" Y").append(fmt(h.y))
                         .append(" Z").append(fmt(h.z)).append(" R").append(fmt(retractZ))
                         .append(" F").append(fmt(pitch * rpm)).appendLine()
                 } else {
-                    out.append(cycle.code).append(" X").append(fmt(h.x)).append(" Y").append(fmt(h.y)).append(" Z").append(fmt(h.z)).append(" R").append(fmt(retractZ))
+                    out.append("G98 ").append(cycle.code).append(" X").append(fmt(h.x)).append(" Y").append(fmt(h.y)).append(" Z").append(fmt(h.z)).append(" R").append(fmt(retractZ))
                     if (cycle == DrillCycle.G73 || cycle == DrillCycle.G83) {
                         val q = h.k ?: error(cycle.code + " requires K/Q peck value")
                         require(q > 0.0)
