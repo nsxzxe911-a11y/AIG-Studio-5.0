@@ -5,6 +5,11 @@ import kotlin.math.max
 
 enum class DrillCycle(val code: String) { G81("G81"), G73("G73"), G83("G83"), G84("G84") }
 
+enum class CncControllerProfile(val displayName: String, val programLabel: String) {
+    FANUC("FANUC", "FANUC"),
+    MITSUBISHI_M800_M80("MITSUBISHI M800/M80", "MITSUBISHI M800/M80 ISO")
+}
+
 data class FanucPostSettings(
     val workOffset: String = "G54",
     val tool: Int = 1,
@@ -14,7 +19,8 @@ data class FanucPostSettings(
     val toolChangeSubprogram: Int = 4,
     val endSubprogram: Int = 5,
     val axisA: Double = 0.0,
-    val axisB: Double = 0.0
+    val axisB: Double = 0.0,
+    val controller: CncControllerProfile = CncControllerProfile.FANUC
 ) {
     init {
         require(Regex("G5[4-9]").matches(workOffset))
@@ -46,7 +52,8 @@ object FanucNc {
         val s = cam.settings
         val out = StringBuilder()
         out.appendLine("%")
-        out.appendLine("O1000 (AIG CNC)")
+        out.appendLine("O1000 (AIG CNC " + post.controller.programLabel + ")")
+        out.appendLine("(CONTROLLER " + post.controller.displayName + ")")
         out.appendLine("G90 " + post.workOffset + " G17 G40 G49 G80")
         out.appendLine("T" + post.tool)
         out.appendLine("M98 P" + post.toolChangeSubprogram)
@@ -184,4 +191,9 @@ object MachiningRiskScanner {
         }
         return MachiningRiskReport(collisions, overcuts, warnings.distinct())
     }
+}
+
+object CncPost {
+    fun generate(cam: CamModel, post: FanucPostSettings = FanucPostSettings()): String =
+        FanucNc.generate(cam, post)
 }
