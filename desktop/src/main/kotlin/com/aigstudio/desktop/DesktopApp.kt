@@ -511,11 +511,34 @@ private fun fanucFromCam(cam: CamModel): String {
 private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     val cam = CamModel.fromCad(1L, doc.snapshot())
     require(cam.toolpaths.isNotEmpty()) { "NC BLOCKED: no CAM toolpath" }
-    val area = JTextArea(fanucFromCam(cam)).apply {
+    var controllerProfile = CncControllerProfile.FANUC
+    fun generateNc(): String = CncPost.generate(
+        cam,
+        FanucPostSettings(controller = controllerProfile)
+    )
+    val area = JTextArea(generateNc()).apply {
         background = Color(5,8,12)
         foreground = Color(99,255,157)
         font = Font(Font.MONOSPACED, Font.PLAIN, 15)
         lineWrap = false
+    }
+    val controller = JComboBox(CncControllerProfile.entries.toTypedArray()).apply {
+        selectedItem = controllerProfile
+        renderer = object : DefaultListCellRenderer() {
+            override fun getListCellRendererComponent(
+                list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean
+            ): Component = super.getListCellRendererComponent(
+                list,
+                (value as? CncControllerProfile)?.displayName ?: value,
+                index,
+                isSelected,
+                cellHasFocus
+            )
+        }
+        addActionListener {
+            controllerProfile = selectedItem as? CncControllerProfile ?: CncControllerProfile.FANUC
+            area.text = generateNc()
+        }
     }
     val keys = listOf("G","M","X","Y","Z","F","S","T","A","B","7","8","9","-",".","4","5","6","0","/","1","2","3","INSERT","DELETE","BLOCK SKIP")
     val keypad = AdaptiveGlassToolbar()
@@ -536,8 +559,13 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
             }
         })
     }
-    JDialog(frame, "AIG CNC • NC EDIT • FANUC", false).apply {
+    JDialog(frame, "AIG CNC • NC EDIT • CONTROLLER", false).apply {
         layout = BorderLayout()
+        add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            background = Color(8,18,30)
+            add(JLabel("CONTROL").apply { foreground = Color(61,235,255) })
+            add(controller)
+        }, BorderLayout.NORTH)
         add(JScrollPane(area), BorderLayout.CENTER)
         add(keypad, BorderLayout.SOUTH)
         setSize(920,720)
@@ -548,7 +576,7 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
 
 private fun showApp() {
     val doc = DrawingDocument()
-    val status = JLabel("AIG CNC • OFFICIAL RGB ORIGINAL • 原點 X0.000 Y0.000 • 精度 0.001 mm")
+    val status = JLabel("AIG CNC • FANUC / MITSUBISHI M800/M80 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
     status.foreground = Color(99, 255, 157)
     val cad = CadPanel(doc) { status.text = it }
 
