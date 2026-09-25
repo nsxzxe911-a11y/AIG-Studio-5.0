@@ -250,6 +250,7 @@ class MainActivity : Activity() {
     private var axisA = 0.0
     private var axisB = 0.0
     private var workOffset = "G54"
+    private var controllerProfile = CncControllerProfile.FANUC
     private var drillCycleBlock = ""
     private var stockMarginMm = 10.0
     private var stockThicknessMm = 20.0
@@ -770,6 +771,7 @@ class MainActivity : Activity() {
         addActionTo(branchFlow, "STOCK", 4) { showStockDialog() }
         addActionTo(branchFlow, "NC EDIT", 0) { showNcEditDialog() }
         addActionTo(branchFlow, "G54–G59", 3) { showWorkOffsetDialog() }
+        addActionTo(branchFlow, "CONTROL", 5) { showControllerDialog() }
         addActionTo(branchFlow, "G81/G73/G83/G84", 2) { showDrillCycleDialog() }
         addActionTo(branchFlow, "5X A/B", 1) { show5xDialog() }
         addActionTo(branchFlow, "3D 加工", 4) { showMachining3D() }
@@ -856,6 +858,26 @@ class MainActivity : Activity() {
     }
 
 
+    private fun showControllerDialog() {
+        val profiles = CncControllerProfile.entries
+        val labels = profiles.map { it.displayName }.toTypedArray()
+        val selected = profiles.indexOf(controllerProfile).coerceAtLeast(0)
+        AlertDialog.Builder(this)
+            .setTitle("CNC CONTROL • " + controllerProfile.displayName)
+            .setSingleChoiceItems(labels, selected) { dialog, which ->
+                controllerProfile = profiles[which]
+                drillCycleBlock = ""
+                Toast.makeText(
+                    this,
+                    "CNC CONTROL " + controllerProfile.displayName + " • ABS G90 truth unchanged",
+                    Toast.LENGTH_SHORT
+                ).show()
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
     private fun showWorkOffsetDialog() {
         val offsets = arrayOf("G54","G55","G56","G57","G58","G59")
         AlertDialog.Builder(this)
@@ -893,10 +915,10 @@ class MainActivity : Activity() {
         val feed = num("Feed mm/min", camSettings.feedMmMin)
         val tapPitch = num("Tap pitch mm/rev (G84)", 1.0)
         val tapRpm = num("Tap spindle RPM (G84)", 500.0)
-        val useM29 = CheckBox(this).apply { text = "G84 使用 Fanuc M29 rigid tapping"; isChecked = false; box.addView(this) }
+        val useM29 = CheckBox(this).apply { text = "G84 使用 Fanuc M29 rigid tapping（三菱Profile不套用）"; isChecked = false; box.addView(this) }
 
         AlertDialog.Builder(this)
-            .setTitle("Fanuc 鑽孔循環")
+            .setTitle(controllerProfile.displayName + " • 鑽孔循環")
             .setView(box)
             .setPositiveButton("套用到 NC") { _, _ ->
                 runCatching {
@@ -910,7 +932,9 @@ class MainActivity : Activity() {
                         feed = feed.text.toString().toDouble(),
                         tapPitchMm = if (cycle == DrillCycle.G84) tapPitch.text.toString().toDouble() else null,
                         tapSpindleRpm = if (cycle == DrillCycle.G84) tapRpm.text.toString().toInt() else null,
-                        rigidTapM29 = cycle == DrillCycle.G84 && useM29.isChecked
+                        rigidTapM29 = cycle == DrillCycle.G84 &&
+                            useM29.isChecked &&
+                            controllerProfile == CncControllerProfile.FANUC
                     )
                     FanucNc.cannedCycle(cycle, listOf(hole), camSettings.safeZ, hole.r)
                 }.onSuccess {
@@ -997,7 +1021,15 @@ class MainActivity : Activity() {
         val stock = Stock3D.fromSnapshot(snapshot, stockMarginMm, stockThicknessMm)
         val risk = MachiningRiskScanner.inspect(cam, stock)
         val editor = EditText(this).apply {
-            val baseNc = FanucNc.generate(cam, FanucPostSettings(workOffset = workOffset, axisA = axisA, axisB = axisB))
+            val baseNc = CncPost.generate(
+                cam,
+                FanucPostSettings(
+                    workOffset = workOffset,
+                    axisA = axisA,
+                    axisB = axisB,
+                    controller = controllerProfile
+                )
+            )
             setText(if (drillCycleBlock.isBlank()) baseNc else FanucNc.insertBeforeProgramEnd(baseNc, drillCycleBlock))
             setTextColor(Color.rgb(225,240,255))
             setBackgroundColor(Color.rgb(5,12,20))
