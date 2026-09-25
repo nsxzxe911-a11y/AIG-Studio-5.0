@@ -935,6 +935,56 @@ private fun testCannedCycleReturnMode() {
     check(runCatching { FanucNc.circularHolePattern(0.0,0,50.0) }.isFailure)
     check(runCatching { FanucNc.circularHolePattern(0.0,6,0.0) }.isFailure)
     println("✓ NC_G34_PATTERN_SEMANTICS_PASS I-angle/J-count/K-radius")
+    val safeGeneratedProcess = """
+        %
+        O1000
+        G21 G94 G97
+        G90 G54 G17 G40 G49 G80
+        T1
+        M98 P4
+        S2300 M3
+        G43 Z30.000 H1 M8
+        G0 X0.000 Y0.000 Z5.000
+        G1 X10.000 Y0.000 Z-1.000 F100.000
+        G0 Z30.000
+        G80
+        M98 P5
+        M30
+        %
+    """.trimIndent()
+    check(NcGeneratedProcessGate.status(safeGeneratedProcess,5.0)=="PASS")
+
+    fun processCodes(program:String)=NcGeneratedProcessGate.blocking(program,5.0).map{it.code}.toSet()
+    check("CUT_WITH_SPINDLE_STOPPED" in processCodes(
+        safeGeneratedProcess.replace("S2300 M3","S2300 M5")
+    ))
+    val noH = processCodes(safeGeneratedProcess.replace("G43 Z30.000 H1 M8","G43 Z30.000 M8"))
+    check("G43_WITHOUT_H" in noH && "CUT_WITHOUT_G43_H" in noH)
+    check("CUT_BEFORE_TOOL_CHANGE" in processCodes(
+        safeGeneratedProcess.replace("    M98 P4\n","")
+    ))
+    check("TOOL_CHANGE_CALL_SPINDLE_RUNNING" in processCodes(
+        safeGeneratedProcess.replace("T1\nM98 P4\nS2300 M3","T1\nS2300 M3\nM98 P4")
+    ))
+    val lowRetract = processCodes(safeGeneratedProcess.replace("G0 Z30.000\nG80\nM98 P5","G0 Z1.000\nG80\nM98 P5"))
+    check("RAPID_BELOW_SAFE_Z" in lowRetract && "END_CALL_BELOW_SAFE_Z" in lowRetract)
+    check("EXECUTION_AFTER_M30" in processCodes(safeGeneratedProcess + "\nG0 X1.000"))
+    check("TOOL_CHANGE_SPINDLE_RUNNING" in processCodes(
+        "T2\nM3\nM6"
+    ))
+    val activeCycleAtEnd = """
+        G21 G94 G97 G90 G54
+        T1
+        M98 P4
+        S1000 M3
+        G43 Z30.000 H1
+        G83 X0.000 Y0.000 Z-5.000 R2.000 Q1.000 F100.000
+        G0 Z30.000
+        M98 P5
+        M30
+    """.trimIndent()
+    check("CYCLE_ACTIVE_AT_END_CALL" in processCodes(activeCycleAtEnd))
+    println("✓ NC_GENERATED_PROCESS_GATE_PASS spindle/toolchange/G43/safeZ/cycle/end-order")
 
 }
 
