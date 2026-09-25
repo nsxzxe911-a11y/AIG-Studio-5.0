@@ -175,6 +175,32 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check("UNKNOWN_GCODE_FAIL_CLOSED" in NcAnimationBridge.programSummary("G21 G94 G97 G90 G54\nG777.7 X1.000"))
     println("✓ NC_3D_ANIMATION_BRIDGE_PASS motion/aux/5X/fail-closed")
 
+    val authoritySafe = NcSemanticAuthority.programSummary(animationReadyProgram,CncControllerProfile.FANUC)
+    check("CONSENSUS PASS" in authoritySafe)
+    val authorityLine = NcSemanticAuthority.lineEvidence(animationReadyProgram,3,CncControllerProfile.FANUC)
+    check("AUTH=CONSENSUS_PASS" in authorityLine)
+    check("G0=>RAPID_MOVE" in authorityLine)
+    val authorityG92 = NcSemanticAuthority.programSummary(
+        "G21 G94 G97 G90 G54\nG92 X0 Y0",
+        CncControllerProfile.FANUC
+    )
+    check("SAFETY BLOCKED" in authorityG92 && "G92_ORIGIN_UNVERIFIED" in authorityG92)
+    val authorityUnknown = NcSemanticAuthority.programSummary(
+        "G21 G94 G97 G90 G54\nG777.7 X1.000",
+        CncControllerProfile.FANUC
+    )
+    check("SAFETY BLOCKED" in authorityUnknown && "UNKNOWN_GCODE_FAIL_CLOSED" in authorityUnknown)
+    check(NcSemanticAuthority.consistencyIssues(
+        "G1", emptyList(), ControllerCapabilityStatus.MODELED_ALLOWED, "CUT_LINEAR"
+    ).isEmpty())
+    val forcedConflict = NcSemanticAuthority.consistencyIssues(
+        "G777.7", emptyList(), ControllerCapabilityStatus.UNKNOWN_FAIL_CLOSED, "UNSUPPORTED"
+    )
+    check("UNKNOWN_NOT_FAIL_CLOSED:G777.7" in forcedConflict)
+    check("CAPABILITY_UNKNOWN_NOT_BLOCKED:G777.7" in forcedConflict)
+    check("ANIMATION_UNSUPPORTED_NOT_BLOCKED:G777.7" in forcedConflict)
+    println("✓ NC_SEMANTIC_AUTHORITY_PASS single-truth/conflict/fail-closed")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
