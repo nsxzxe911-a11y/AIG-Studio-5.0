@@ -15,6 +15,11 @@ enum class NcCoordinateMode(val code: String, val displayName: String) {
     INCREMENTAL_G91("G91", "G91 INCREMENTAL")
 }
 
+enum class NcOriginTransformMode(val code: String, val displayName: String) {
+    WORK_OFFSET_ONLY("G54-G59", "G54-G59 WORK OFFSET"),
+    TEMPORARY_G92("G92", "G92 TEMPORARY ORIGIN")
+}
+
 enum class CutterCompensationMode(val code: String, val displayName: String) {
     CAM_GEOMETRY_G40("G40", "G40 • CAM GEOMETRY COMP"),
     CONTROLLER_LEFT_G41("G41", "G41 • CONTROLLER LEFT"),
@@ -33,6 +38,7 @@ data class FanucPostSettings(
     val axisB: Double = 0.0,
     val controller: CncControllerProfile = CncControllerProfile.FANUC,
     val coordinateMode: NcCoordinateMode = NcCoordinateMode.ABSOLUTE_G90,
+    val originTransformMode: NcOriginTransformMode = NcOriginTransformMode.WORK_OFFSET_ONLY,
     val cutterCompensation: CutterCompensationMode = CutterCompensationMode.CAM_GEOMETRY_G40,
     val cutterCompRegister: Int = 1
 ) {
@@ -64,6 +70,9 @@ data class DrillHole(
 object FanucNc {
     fun generate(cam: CamModel, post: FanucPostSettings = FanucPostSettings()): String {
         require(cam.toolpaths.isNotEmpty()) { "CAM generated no toolpaths" }
+        require(post.originTransformMode == NcOriginTransformMode.WORK_OFFSET_ONLY) {
+            "G92 output blocked until controller-specific current-position/origin-transform semantics are validated; canonical CAD/CAM/SIM ABS XYZ remains unchanged"
+        }
         require(post.cutterCompensation == CutterCompensationMode.CAM_GEOMETRY_G40) {
             "Controller G41/G42 blocked: current CAM toolpath already includes geometric tool-radius compensation; raw contour + controller-comp simulation is required to prevent double compensation"
         }
@@ -79,7 +88,7 @@ object FanucNc {
         out.appendLine("O1000 (AIG CNC " + post.controller.programLabel + ")")
         out.appendLine("(CONTROLLER " + post.controller.displayName + ")")
         out.appendLine("(CANONICAL XYZ ABSOLUTE G90 • MASTER X0.000 Y0.000 Z0.000)")
-        out.appendLine("(PROGRAM MODE " + post.coordinateMode.displayName + " • CUTTER COMP " + post.cutterCompensation.displayName + ")")
+        out.appendLine("(PROGRAM MODE " + post.coordinateMode.displayName + " • ORIGIN " + post.originTransformMode.displayName + " • CUTTER COMP " + post.cutterCompensation.displayName + ")")
         out.appendLine("G90 " + post.workOffset + " G17 G40 G49 G80")
         out.appendLine("T" + post.tool)
         out.appendLine("M98 P" + post.toolChangeSubprogram)
