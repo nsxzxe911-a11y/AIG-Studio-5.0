@@ -1434,6 +1434,62 @@ private fun testEnvironmentSettingsContract() {
     check(CpuThermalFpsPolicy.capWithHysteresis(62.0,90)==120)
     check("CPU_TEMP_75.0C_CAP_60"==CpuThermalFpsPolicy.reason(75.0,60))
     println("✓ CPU_THERMAL_AUTO_FPS_PASS 120@<65 / 90@65 / 60@75 / 30@85 + hysteresis")
+
+    check(RenderStressClassifier.modelScenario(0)==RenderStressScenario.SMALL_MODEL)
+    check(RenderStressClassifier.modelScenario(1500)==RenderStressScenario.SMALL_MODEL)
+    check(RenderStressClassifier.modelScenario(1501)==RenderStressScenario.MEDIUM_MODEL)
+    check(RenderStressClassifier.modelScenario(6000)==RenderStressScenario.MEDIUM_MODEL)
+    check(RenderStressClassifier.modelScenario(6001)==RenderStressScenario.LARGE_MODEL)
+
+    RenderStressProfiler.reset()
+    check(RenderStressProfiler.missingScenarios().size==5)
+    repeat(5){
+        RenderStressProfiler.record(
+            RenderStressScenario.SMALL_MODEL,
+            SurfaceFpsStats(120.0,8.2,60,0)
+        )
+        RenderStressProfiler.record(
+            RenderStressScenario.MEDIUM_MODEL,
+            SurfaceFpsStats(90.0,11.1,45,0)
+        )
+        RenderStressProfiler.record(
+            RenderStressScenario.LARGE_MODEL,
+            SurfaceFpsStats(58.0,17.3,29,1)
+        )
+        RenderStressProfiler.record(
+            RenderStressScenario.MATERIAL_REMOVAL,
+            SurfaceFpsStats(52.0,19.2,26,2)
+        )
+        RenderStressProfiler.record(
+            RenderStressScenario.FIVE_AXIS_SYNC,
+            SurfaceFpsStats(44.0,22.7,22,3)
+        )
+    }
+    val stressSnapshot=RenderStressProfiler.snapshot()
+    check(stressSnapshot.size==5)
+    check(RenderStressProfiler.missingScenarios().isEmpty())
+    check(RenderStressProfiler.heaviest()?.scenario==RenderStressScenario.FIVE_AXIS_SYNC)
+    check(RenderStressProfiler.heaviest()?.averageFps in 43.9..44.1)
+    check("COVERAGE=COMPLETE" in RenderStressProfiler.summary())
+    check("HEAVIEST=FIVE_AXIS_SYNC" in RenderStressProfiler.summary())
+
+    RenderStressProfiler.reset()
+    RenderStressProfiler.record(
+        RenderStressScenario.SMALL_MODEL,
+        SurfaceFpsStats(120.0,8.2,60,2)
+    )
+    RenderStressProfiler.record(
+        RenderStressScenario.SMALL_MODEL,
+        SurfaceFpsStats(119.0,8.4,60,2)
+    )
+    RenderStressProfiler.record(
+        RenderStressScenario.SMALL_MODEL,
+        SurfaceFpsStats(118.0,8.6,60,3)
+    )
+    check(RenderStressProfiler.snapshot().single().totalDroppedFrames==3L)
+    check("pending=" in RenderStressProfiler.summary())
+    RenderStressProfiler.reset()
+    println("✓ RENDER_STRESS_TIER_GATE_PASS small/medium/large/removal/5X/heaviest/drop-delta")
 }
 
 private fun testAigIiPrecisionContract() {
