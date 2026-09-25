@@ -445,6 +445,124 @@ object NcSemanticAuthority {
 }
 
 
+enum class NcExecutionDomain {
+    NC_CURSOR,
+    MOTION_3D,
+    MATERIAL_REMOVAL,
+    AXIS_5X,
+    SPINDLE,
+    COOLANT,
+    TOOL_CHANGE,
+    PROGRAM_CONTROL
+}
+
+data class NcExecutionEvent(
+    val sequence: Int,
+    val lineNumber: Int,
+    val code: String,
+    val action: String,
+    val domains: Set<NcExecutionDomain>,
+    val status: String,
+    val reasons: List<String>
+) {
+    val executable: Boolean get() = status == "READY"
+    fun compact(): String =
+        "#" + sequence + " L" + lineNumber + " " + code + "=>" + action +
+            " [" + domains.joinToString("+") { it.name } + "] " + status +
+            if (reasons.isEmpty()) "" else "{" + reasons.joinToString(",") + "}"
+}
+
+object NcExecutionTimeline {
+    private fun domainsFor(action: String): Set<NcExecutionDomain> = when (action) {
+        "RAPID_MOVE" -> setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.MOTION_3D)
+        "CUT_LINEAR","CUT_ARC_CW","CUT_ARC_CCW","HOLE_PATTERN","CANNED_CYCLE" ->
+            setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.MOTION_3D, NcExecutionDomain.MATERIAL_REMOVAL)
+        "AXIS_5X_ORIENTATION" ->
+            setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.MOTION_3D, NcExecutionDomain.AXIS_5X)
+        "SPINDLE_CW","SPINDLE_CCW","SPINDLE_STOP","SPINDLE_ORIENT" ->
+            setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.SPINDLE)
+        "COOLANT_MIST","COOLANT_FLOOD","COOLANT_OFF" ->
+            setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.COOLANT)
+        "TOOL_CHANGE" ->
+            setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.TOOL_CHANGE)
+        "PROGRAM_PAUSE","PROGRAM_END","SUBPROGRAM_CALL","SUBPROGRAM_RETURN" ->
+            setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.PROGRAM_CONTROL)
+        else -> setOf(NcExecutionDomain.NC_CURSOR)
+    }
+
+    fun build(program: String, controller: CncControllerProfile): List<NcExecutionEvent> {
+        val lines = program.split("\n")
+        val out = mutableListOf<NcExecutionEvent>()
+        var halted = false
+        var sequence = 1
+
+        lines.indices.forEach { index ->
+            val lineNumber = index + 1
+            val authority = NcSemanticAuthority.resolveLine(program, lineNumber, controller)
+            val codes = authority.codes
+            if (codes.isEmpty()) return@forEach
+
+            val reasons = (authority.conflictCodes + authority.safetyCodes).distinct()
+            val blockedHere = reasons.isNotEmpty()
+
+            codes.forEach { code ->
+                val action = NcAnimationBridge.actionFor(code)
+                val status = when {
+                    halted -> "SKIPPED_AFTER_BLOCK"
+                    blockedHere -> "BLOCKED"
+                    else -> "READY"
+                }
+                out += NcExecutionEvent(
+                    sequence = sequence++,
+                    lineNumber = lineNumber,
+                    code = code,
+                    action = action,
+                    domains = domainsFor(action),
+                    status = status,
+                    reasons = if (status == "READY") emptyList() else
+                        if (halted && !blockedHere) listOf("PREVIOUS_BLOCK") else reasons
+                )
+            }
+
+            if (blockedHere) halted = true
+        }
+        return out
+    }
+
+    fun lineEvents(
+        program: String,
+        lineNumber: Int,
+        controller: CncControllerProfile
+    ): List<NcExecutionEvent> = build(program, controller).filter { it.lineNumber == lineNumber }
+
+    fun lineEvidence(
+        program: String,
+        lineNumber: Int,
+        controller: CncControllerProfile
+    ): String {
+        val events = lineEvents(program, lineNumber, controller)
+        if (events.isEmpty()) return "TIMELINE L" + lineNumber + " • NO EVENT"
+        return "TIMELINE L" + lineNumber + " • " + events.joinToString(" | ") { it.compact() }
+    }
+
+    fun programSummary(program: String, controller: CncControllerProfile): String {
+        val events = build(program, controller)
+        val blocked = events.firstOrNull { it.status == "BLOCKED" }
+        if (blocked != null) {
+            val skipped = events.count { it.status == "SKIPPED_AFTER_BLOCK" }
+            return "NC EXECUTION TIMELINE • HALTED AT L" + blocked.lineNumber +
+                " • " + blocked.reasons.joinToString(",") +
+                " • downstream_skipped=" + skipped
+        }
+        val executable = events.count { it.executable }
+        val domains = events.flatMap { it.domains }.distinct()
+        return "NC EXECUTION TIMELINE • READY • events=" + executable +
+            " • domains=" + domains.joinToString(",") { it.name }
+    }
+}
+
+
+
 enum class NcCoordinateMode(val code: String, val displayName: String) {
     ABSOLUTE_G90("G90", "G90 ABSOLUTE"),
     INCREMENTAL_G91("G91", "G91 INCREMENTAL")
