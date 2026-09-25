@@ -735,9 +735,17 @@ private fun showApp() {
     toolbar.add(button("3D 加工", Color(236, 72, 153)) {
         runCatching { Machining3DEngine.build(doc.snapshot()) }
             .onSuccess { result ->
+                val animationSummary = runCatching {
+                    NcAnimationBridge.programSummary(CncPost.generate(result.cam, FanucPostSettings()))
+                }.getOrElse { error -> "NC→3D ANIM BLOCKED • NC_POST=" + (error.message ?: "error") }
+                status.text = animationSummary
                 JDialog(frame, "RGB 真 3D 加工 • HQ RENDER", false).apply {
                     layout = BorderLayout()
                     add(Mesh3DPanel(result), BorderLayout.CENTER)
+                    add(JLabel(animationSummary).apply {
+                        foreground = if (animationSummary.contains("BLOCKED")) Color(255,110,110) else Color(99,255,157)
+                        border = BorderFactory.createEmptyBorder(6,10,8,10)
+                    }, BorderLayout.SOUTH)
                     setSize(1050, 760)
                     setLocationRelativeTo(frame)
                     isVisible = true
