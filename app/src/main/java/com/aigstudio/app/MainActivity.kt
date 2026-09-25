@@ -1115,6 +1115,15 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(10),dp(8),dp(10),dp(6))
         }
+        val modalStatus = TextView(this).apply {
+            setTextColor(Color.rgb(255,210,90))
+            textSize = 10.5f
+            setPadding(dp(2),dp(4),dp(2),dp(4))
+        }
+        fun refreshModalStatus() {
+            modalStatus.text = "MODAL • " + NcModalTracker.evidence(editor.text.toString())
+        }
+        refreshModalStatus()
         val mode = TextView(this).apply {
             setTextColor(Color.rgb(99,255,157))
             textSize = 12f
@@ -1128,6 +1137,7 @@ class MainActivity : Activity() {
         }
         refreshMode()
         box.addView(mode)
+        box.addView(modalStatus)
         val previewStatus = TextView(this).apply {
             setTextColor(Color.rgb(61,235,255))
             textSize = 11f
@@ -1185,6 +1195,7 @@ class MainActivity : Activity() {
                     else line
                 }
             )
+            refreshModalStatus()
         }
         box.addView(controls)
 
@@ -1192,6 +1203,7 @@ class MainActivity : Activity() {
             val start = editor.selectionStart.coerceAtLeast(0)
             val end = editor.selectionEnd.coerceAtLeast(start)
             editor.text.replace(start, end, token)
+            refreshModalStatus()
             editor.requestFocus()
         }
         fun deleteNcToken() {
@@ -1199,6 +1211,7 @@ class MainActivity : Activity() {
             val end = editor.selectionEnd.coerceAtLeast(start)
             if (end > start) editor.text.delete(start, end)
             else if (start > 0) editor.text.delete(start - 1, start)
+            refreshModalStatus()
             editor.requestFocus()
         }
         fun jumpNc(position: Int) {
