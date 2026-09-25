@@ -9,6 +9,7 @@ import java.io.File
 import java.security.MessageDigest
 import javax.imageio.ImageIO
 import javax.swing.*
+import javax.swing.border.EmptyBorder
 import kotlin.math.*
 
 private class AdaptiveGlassToolbar : JPanel() {
