@@ -40,6 +40,15 @@ object SoftwareCoordinateContract {
     fun simulationAppliesWorkOffset(): Boolean = false
     fun simulationUsesToleranceCompensation(): Boolean = false
     fun preserveSignedCoordinates(): Boolean = true
+    fun canonicalCoordinateTruth(): String = "CAD/CAM/SIM ABS G90 • MASTER X0.000 Y0.000 Z0.000"
+    fun coordinateResponsibilityLayers(): List<String> = listOf(
+        "GEOMETRY=CANONICAL_ABS_XYZ",
+        "PROGRAM_MODE=G90_OR_G91_REPRESENTATION",
+        "WORK_OFFSET=G54_G59_NC_EXECUTION_LAYER",
+        "CUTTER_COMP=G40_G41_G42_EXPLICIT",
+        "TOOL_LENGTH=G43_H_EXPLICIT",
+        "CONTROLLER=POST_PROFILE_ONLY"
+    )
     fun xyzData(x: Double, y: Double, z: Double): String =
         "X" + DisplayFormat.mm(x) + " Y" + DisplayFormat.mm(y) + " Z" + DisplayFormat.mm(z)
 }
