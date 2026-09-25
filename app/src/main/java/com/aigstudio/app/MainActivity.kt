@@ -1292,6 +1292,8 @@ class MainActivity : Activity() {
                         " • X[" + DisplayFormat.mm(minX) + ".." + DisplayFormat.mm(maxX) + "]" +
                         " • Y[" + DisplayFormat.mm(minY) + ".." + DisplayFormat.mm(maxY) + "]" +
                         " • Z[" + DisplayFormat.mm(minZ) + ".." + DisplayFormat.mm(maxZ) + "]" +
+                        " • NC MODE=" + ncCoordinateMode.code +
+                        " • COMP=" + ncCutterCompensation.code +
                         " • " + workOffset + " NC-only • OFFSET SHIFT=OFF • TOLERANCE SHIFT=OFF"
                 })
 
