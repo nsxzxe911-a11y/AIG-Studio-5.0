@@ -544,9 +544,31 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     }
     val coordinate = JComboBox(NcCoordinateMode.entries.toTypedArray()).apply {
         selectedItem = coordinateMode
+        renderer = object : DefaultListCellRenderer() {
+            override fun getListCellRendererComponent(
+                list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean
+            ): Component = super.getListCellRendererComponent(
+                list,
+                (value as? NcCoordinateMode)?.displayName ?: value,
+                index,
+                isSelected,
+                cellHasFocus
+            )
+        }
     }
     val compensation = JComboBox(CutterCompensationMode.entries.toTypedArray()).apply {
         selectedItem = cutterCompensation
+        renderer = object : DefaultListCellRenderer() {
+            override fun getListCellRendererComponent(
+                list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean
+            ): Component = super.getListCellRendererComponent(
+                list,
+                (value as? CutterCompensationMode)?.displayName ?: value,
+                index,
+                isSelected,
+                cellHasFocus
+            )
+        }
     }
     fun refreshNcFromPostSelection() {
         val nextController = controller.selectedItem as? CncControllerProfile ?: CncControllerProfile.FANUC
