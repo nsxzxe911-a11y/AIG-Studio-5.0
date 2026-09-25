@@ -653,6 +653,46 @@ object NcRuntimeInterlock {
                     )
                 }
 
+            words.filter { it.first == 'F' && it.second <= 0.0 }.forEach {
+                findings += NcRuntimeInterlockFinding(
+                    lineNumber,
+                    "FEED_NONPOSITIVE",
+                    "Feed F must be greater than zero for executable machining."
+                )
+            }
+            words.filter { it.first == 'S' && it.second < 0.0 }.forEach {
+                findings += NcRuntimeInterlockFinding(
+                    lineNumber,
+                    "SPINDLE_SPEED_NEGATIVE",
+                    "Spindle speed S cannot be negative."
+                )
+            }
+            words.filter { it.first == 'T' || it.first == 'H' || it.first == 'D' }.forEach { (address,value) ->
+                if (value < 0.0 || kotlin.math.abs(value-kotlin.math.round(value)) > 1e-9) {
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,
+                        "INVALID_INTEGER_WORD_" + address,
+                        "Address " + address + " must be a non-negative integer in the AIG execution model."
+                    )
+                }
+            }
+
+            val mValues = words.filter { it.first == 'M' }.map { kotlin.math.round(it.second).toInt() }
+            fun conflictM(group: String, values: Set<Int>) {
+                val active = mValues.filter { it in values }.distinct()
+                if (active.size > 1) {
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,
+                        "CONFLICTING_AUX_GROUP_" + group,
+                        "Conflicting M codes in group " + group + ": " +
+                            active.joinToString(",") { "M" + it }
+                    )
+                }
+            }
+            conflictM("SPINDLE", setOf(3,4,5))
+            conflictM("PROGRAM_CONTROL", setOf(0,1,2,30))
+            conflictM("SUBPROGRAM_FLOW", setOf(98,99))
+
             val gValues = words.filter { it.first == 'G' }.map { it.second }
             fun hasG(value: Double): Boolean = gValues.any { kotlin.math.abs(it - value) <= 1e-9 }
             fun conflict(group: String, values: List<Double>) {
