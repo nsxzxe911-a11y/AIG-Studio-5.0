@@ -237,10 +237,16 @@ class Machining3DView(
         }
 
         val removed = result.removal.depth.count { it < 0.0 }
+        val modelScenario = RenderStressClassifier.modelScenario(triangles.size)
+        RenderStressProfiler.record(modelScenario, fpsStats)
+        if (removed > 0) RenderStressProfiler.record(RenderStressScenario.MATERIAL_REMOVAL, fpsStats)
+        val worst = RenderStressProfiler.heaviest()?.scenario?.name ?: "collecting"
         val label = "TRUE 3D • CAM=" + result.cam.toolpaths.size +
             " • removed=" + removed +
+            " • tier=" + modelScenario.name +
             " • 原點 X0.000 Y0.000 • 精度 0.001 mm" +
-            " • " + fpsStats.compact("3D")
+            " • " + fpsStats.compact("3D") +
+            " • HEAVIEST=" + worst
         canvas.drawText(label, 14f, 24f, textPaint)
     }
 }
