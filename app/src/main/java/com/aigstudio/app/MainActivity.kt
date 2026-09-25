@@ -886,6 +886,13 @@ class MainActivity : Activity() {
         val originSpinner = spinner(origins,{it.displayName},ncOriginTransformMode)
         val compensationSpinner = spinner(compensations,{it.displayName},ncCutterCompensation)
 
+        box.addView(TextView(this).apply {
+            text = "適用時機：一般加工/複製區段→G90；重複圖形/子程式→G91；角度特徵暫時原點/多夾具重新指定原點→G92。G92是獨立ORIGIN TRANSFORM，不改CAD/CAM/SIM ABS XYZ。"
+            setTextColor(Color.rgb(160,190,210))
+            textSize = 11f
+            setPadding(dp(4),dp(10),dp(4),dp(4))
+        })
+
         AlertDialog.Builder(this)
             .setTitle("CNC CONTROL / POST MODE")
             .setView(box)
