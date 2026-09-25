@@ -350,18 +350,23 @@ class SurfaceFpsMeter(
 
     fun record(frameTimeNs:Long):SurfaceFpsStats{
         require(frameTimeNs>=0L)
-        if(windowStartNs==0L) windowStartNs=frameTimeNs
-        if(lastFrameNs!=0L && frameTimeNs>lastFrameNs){
-            val interval=frameTimeNs-lastFrameNs
-            val refresh=refreshHzProvider().coerceIn(30.0,240.0)
-            val budgetNs=1_000_000_000.0/refresh
-            if(interval>budgetNs*1.5){
-                dropped += ((interval/budgetNs).toLong()-1L).coerceAtLeast(1L)
-            }
-            latest=latest.copy(frameIntervalMs=interval/1_000_000.0)
+        if(lastFrameNs==0L){
+            lastFrameNs=frameTimeNs
+            windowStartNs=frameTimeNs
+            return latest
         }
+        if(frameTimeNs<=lastFrameNs) return latest
+
+        val interval=frameTimeNs-lastFrameNs
+        val refresh=refreshHzProvider().coerceIn(30.0,240.0)
+        val budgetNs=1_000_000_000.0/refresh
+        if(interval>budgetNs*1.5){
+            dropped += ((interval/budgetNs).toLong()-1L).coerceAtLeast(1L)
+        }
+        latest=latest.copy(frameIntervalMs=interval/1_000_000.0)
         lastFrameNs=frameTimeNs
         frames++
+
         val elapsed=frameTimeNs-windowStartNs
         if(elapsed>=sampleWindowNs && elapsed>0L){
             latest=SurfaceFpsStats(
