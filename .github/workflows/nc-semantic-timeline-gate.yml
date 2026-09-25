@@ -35,5 +35,6 @@ jobs:
           grep -Fq 'NC_SEMANTIC_AUTHORITY_PASS' semantic-timeline.log
           grep -Fq 'NC_EXECUTION_TIMELINE_PASS' semantic-timeline.log
           grep -Fq 'NC_3D_ANIMATION_BRIDGE_PASS' semantic-timeline.log
-          grep -Fq 'FINAL_REGRESSION_PASS' semantic-timeline.log
+          grep -Fq 'ALL TESTS PASSED' semantic-timeline.log
+          grep -Fq 'NC_MODAL_EVIDENCE_NO_TRUNCATION_PASS' semantic-timeline.log
           echo 'STUDIO_NC_SEMANTIC_TIMELINE_GATE=PASS'
