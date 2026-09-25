@@ -1182,6 +1182,7 @@ fun main() {
     testRgbMaxStressProfilerContract()
     testHomeWorkstationChromeContract()
     testFloatingCadToolContract()
+    testRgbGlassVisualContract()
     println("ALL TESTS PASSED")
 }
 
@@ -1828,4 +1829,21 @@ private fun testFloatingCadToolContract() {
     check(FloatingCadToolContract.overlayPreservesWorkspace(true))
     check(FloatingCadToolContract.overlayPreservesWorkspace(false))
     println("✓ CAD_FLOATING_TOOL_GATE_PASS OVERLAY BACK CLOSE REOPEN WORKSPACE_PRESERVED")
+}
+
+
+private fun testRgbGlassVisualContract() {
+    check(RgbGlassVisualContract.LAYER_COUNT==3)
+    check(RgbGlassVisualContract.strokeDp(false,false,false,false)==2.0)
+    check(RgbGlassVisualContract.strokeDp(false,false,true,false)==3.2)
+    check(RgbGlassVisualContract.strokeDp(false,true,false,false)==3.6)
+    check(RgbGlassVisualContract.strokeDp(false,false,false,true)==4.0)
+    check(RgbGlassVisualContract.strokeDp(true,false,false,false)==1.2)
+    check(RgbGlassVisualContract.elevationDp(false,false,true,false)==9.0)
+    check(RgbGlassVisualContract.elevationDp(false,false,false,true)==11.0)
+    check(RgbGlassVisualContract.highlightAlpha(0,false,false)==0)
+    check(RgbGlassVisualContract.highlightAlpha(100,true,false)==58)
+    check(RgbGlassVisualContract.highlightAlpha(0,true,true)==92)
+    check(RgbGlassVisualContract.alarmVisibleAtBrightness(0))
+    println("✓ RGB_GLASS_STYLE_GATE_PASS 3_LAYER SELECTED PRESSED DISABLED ALARM BRIGHTNESS_SAFE")
 }

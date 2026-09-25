@@ -738,3 +738,36 @@ object FloatingCadToolContract {
 
     fun overlayPreservesWorkspace(panelVisible:Boolean):Boolean = true
 }
+
+
+object RgbGlassVisualContract {
+    const val LAYER_COUNT = 3
+
+    fun strokeDp(disabled:Boolean,pressed:Boolean,selected:Boolean,alarm:Boolean):Double = when {
+        disabled -> 1.2
+        alarm -> 4.0
+        pressed -> 3.6
+        selected -> 3.2
+        else -> 2.0
+    }
+
+    fun elevationDp(disabled:Boolean,pressed:Boolean,selected:Boolean,alarm:Boolean):Double = when {
+        disabled -> 0.0
+        pressed -> 2.0
+        alarm -> 11.0
+        selected -> 9.0
+        else -> 3.0
+    }
+
+    fun highlightAlpha(brightnessPercent:Int,active:Boolean,alarm:Boolean):Int {
+        require(brightnessPercent in 0..100)
+        if(alarm) return 92
+        val base=if(active)58 else 34
+        return (base*brightnessPercent/100.0).toInt().coerceIn(0,92)
+    }
+
+    fun alarmVisibleAtBrightness(brightnessPercent:Int):Boolean {
+        require(brightnessPercent in 0..100)
+        return true
+    }
+}

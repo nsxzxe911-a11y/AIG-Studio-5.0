@@ -23,6 +23,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -146,27 +147,70 @@ class RgbGlowButton(context: Context) : Button(context) {
             else -> 0.08f
         }
         val amount = if (alarmGlow) baseAmount else baseAmount * brightness
-        background = GradientDrawable(
+        val active = pressedNow || selectedGlow || alarmGlow
+        val strokePx = (RgbGlassVisualContract.strokeDp(
+            disabled, pressedNow, selectedGlow, alarmGlow
+        ) * density).roundToInt().coerceAtLeast(1)
+        val glowAlpha = when {
+            disabled -> 55
+            alarmGlow -> 255
+            pressedNow -> 235
+            selectedGlow -> 210
+            else -> (70 + 100 * brightness).roundToInt().coerceIn(70,170)
+        }
+        val outer = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
-            intArrayOf(mix(base,edge,amount+0.08f),mix(base,edge,amount))
+            intArrayOf(
+                Color.argb((glowAlpha*0.30f).roundToInt(), Color.red(edge), Color.green(edge), Color.blue(edge)),
+                Color.argb((glowAlpha*0.10f).roundToInt(), Color.red(edge), Color.green(edge), Color.blue(edge))
+            )
+        ).apply {
+            cornerRadius = 18f * density
+            setStroke(strokePx, Color.argb(glowAlpha, Color.red(edge), Color.green(edge), Color.blue(edge)))
+        }
+        val body = GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(
+                mix(base, edge, (amount + 0.16f).coerceAtMost(0.72f)),
+                mix(base, edge, (amount + 0.05f).coerceAtMost(0.62f)),
+                mix(Color.rgb(5,12,20), edge, (amount*0.48f).coerceAtMost(0.42f))
+            )
         ).apply {
             cornerRadius = 15f * density
             setStroke(
-                ((if (pressedNow || selectedGlow || alarmGlow) 3.2f else 2f) * density).roundToInt().coerceAtLeast(1),
-                if (disabled) Color.rgb(90,100,110) else edge
+                max(1,(1.1f*density).roundToInt()),
+                Color.argb(if(active)190 else 110,255,255,255)
             )
+        }
+        val highlightAlpha = RgbGlassVisualContract.highlightAlpha(
+            globalBrightnessPercent, active, alarmGlow
+        )
+        val highlight = GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(
+                Color.argb(highlightAlpha,255,255,255),
+                Color.argb((highlightAlpha*0.18f).roundToInt(),61,235,255),
+                Color.TRANSPARENT
+            )
+        ).apply {
+            cornerRadius = 13f*density
+        }
+        background = LayerDrawable(arrayOf(outer,body,highlight)).apply {
+            val inset=(2f*density).roundToInt().coerceAtLeast(1)
+            val hiInset=(3f*density).roundToInt().coerceAtLeast(inset)
+            setLayerInset(1,inset,inset,inset,inset)
+            setLayerInset(2,hiInset,hiInset,hiInset,hiInset)
         }
         alpha = when {
             disabled -> 0.42f
-            pressedNow || selectedGlow || alarmGlow -> 1f
-            else -> 0.82f
+            active -> 1f
+            else -> 0.86f
         }
-        elevation = when {
-            disabled -> 0f
-            pressedNow -> 2f*density
-            selectedGlow || alarmGlow -> 9f*density
-            else -> 3f*density
-        }
+        elevation = (
+            RgbGlassVisualContract.elevationDp(
+                disabled,pressedNow,selectedGlow,alarmGlow
+            ) * density
+        ).toFloat()
         scaleX = if (pressedNow) 0.97f else 1f
         scaleY = if (pressedNow) 0.97f else 1f
     }
