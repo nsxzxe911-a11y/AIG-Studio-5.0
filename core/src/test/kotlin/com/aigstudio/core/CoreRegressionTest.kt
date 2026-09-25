@@ -674,6 +674,49 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check(NcRuntimeInterlock.status(validValueDomainProgram,verifiedTravel)=="PASS")
     println("✓ NC_CONTROLLER_VALUE_DOMAIN_PASS feed/spindle/tool-index/M-code-conflict")
 
+    val parameterIntegrityCases = listOf(
+        "N10.5 G0 X0.000" to "INVALID_INTEGER_WORD_N",
+        "O100.5" to "INVALID_INTEGER_WORD_O",
+        "G34 I0.000 J0 K50.000" to "G34_INVALID_HOLE_COUNT_J",
+        "G34 I0.000 J4 K0.000" to "G34_INVALID_RADIUS_K",
+        "G83 X0.000 Y0.000 Z-10.000 Q0.000 F100.000" to "PECK_Q_NONPOSITIVE",
+        "G2 X10.000 Y0.000 R5.000 I5.000" to "ARC_CENTER_FORMAT_CONFLICT",
+        "G3 X10.000 Y0.000 F100.000" to "ARC_CENTER_MISSING",
+        "G1 X0.000 (BROKEN" to "MALFORMED_COMMENT",
+        "G1 X0.000 )" to "MALFORMED_COMMENT",
+        "G1 X0.000 (A(B)C)" to "NESTED_COMMENT_UNSUPPORTED"
+    )
+    parameterIntegrityCases.forEach { (body, expected) ->
+        val p = "G21 G94 G97 G90 G54\n" + body
+        val findings = NcRuntimeInterlock.findings(p,verifiedTravel)
+        check(findings.any { it.code==expected }) { expected + " missing for " + body }
+        check(NcExecutionTimeline.build(p,CncControllerProfile.FANUC,verifiedTravel).any {
+            it.status=="BLOCKED" && expected in it.reasons
+        })
+    }
+
+    val validParameterPrograms = listOf(
+        "G21 G94 G97 G90 G54\nN10 G0 X0.000 Y0.000 Z5.000",
+        "O1000\nG21 G94 G97 G90 G54",
+        "G21 G94 G97 G90 G54\nG34 I15.000 J6 K50.000",
+        "G21 G94 G97 G90 G54\nG83 X0.000 Y0.000 Z-10.000 Q1.000 F100.000",
+        "G21 G94 G97 G90 G54\nG2 X10.000 Y0.000 I5.000 J0.000 F100.000",
+        "G21 G94 G97 G90 G54\nG3 X10.000 Y0.000 R5.000 F100.000",
+        "G21 G94 G97 G90 G54\nG1 X0.000 (SAFE COMMENT) Y0.000 Z0.000"
+    )
+    validParameterPrograms.forEach { p ->
+        check(NcRuntimeInterlock.status(p,verifiedTravel)=="PASS") { p }
+    }
+
+    val repairedComment = "G21 G94 G97 G90 G54\nG1 X0.000 (BROKEN)"
+    val repairSession = NcMachineInterlockSession(verifiedTravel)
+    check(repairSession.inspect("G21 G94 G97 G90 G54\nG1 X0.000 (BROKEN").state==NcMachineInterlockState.ALARM_LATCHED)
+    check(repairSession.inspect(repairedComment).state==NcMachineInterlockState.RESET_REQUIRED)
+    check(repairSession.reset().state==NcMachineInterlockState.REVALIDATE_REQUIRED)
+    check(repairSession.revalidate(repairedComment).state==NcMachineInterlockState.RESUME_ALLOWED)
+    check(repairSession.resume().state==NcMachineInterlockState.READY)
+    println("✓ NC_PARAMETER_INTEGRITY_PASS labels/comments/G34/peck/arc/recovery")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
