@@ -842,7 +842,7 @@ private fun testNcModalTracker() {
         %
         G21 G94 G97
         G90 G54 G17 G40 G49 G80 G98
-        G43 Z30.000 H1
+        G0 G43 Z30.000 H1
         %
     """.trimIndent()
     check(NcModalSafetyPolicy.blocking(safe).isEmpty())
@@ -943,7 +943,7 @@ private fun testCannedCycleReturnMode() {
         T1
         M98 P4
         S2300 M3
-        G43 Z30.000 H1 M8
+        G0 G43 Z30.000 H1 M8
         G0 X0.000 Y0.000 Z5.000
         G1 X10.000 Y0.000 Z-1.000 F100.000
         G0 Z30.000
@@ -958,7 +958,7 @@ private fun testCannedCycleReturnMode() {
     check("CUT_WITH_SPINDLE_STOPPED" in processCodes(
         safeGeneratedProcess.replace("S2300 M3","S2300 M5")
     ))
-    val noH = processCodes(safeGeneratedProcess.replace("G43 Z30.000 H1 M8","G43 Z30.000 M8"))
+    val noH = processCodes(safeGeneratedProcess.replace("G0 G43 Z30.000 H1 M8","G43 Z30.000 M8"))
     check("G43_WITHOUT_H" in noH && "CUT_WITHOUT_G43_H" in noH)
     check("CUT_BEFORE_TOOL_CHANGE" in processCodes(
         safeGeneratedProcess.replace("M98 P4\n","")
@@ -977,7 +977,7 @@ private fun testCannedCycleReturnMode() {
         T1
         M98 P4
         S1000 M3
-        G43 Z30.000 H1
+        G0 G43 Z30.000 H1
         G83 X0.000 Y0.000 Z-5.000 R2.000 Q1.000 F100.000
         G0 Z30.000
         M98 P5
@@ -985,6 +985,44 @@ private fun testCannedCycleReturnMode() {
     """.trimIndent()
     check("CYCLE_ACTIVE_AT_END_CALL" in processCodes(activeCycleAtEnd))
     println("✓ NC_GENERATED_PROCESS_GATE_PASS spindle/toolchange/G43/safeZ/cycle/end-order")
+    val good5xProcess = """
+        G21 G94 G97 G90 G54
+        T1
+        M98 P4
+        G0 G43 Z30.000 H1
+        G0 A30.000 B-15.000
+        S2300 M3
+        G1 X1.000 Y0.000 Z-1.000 F100.000
+        G0 Z30.000
+        G80
+        M98 P5
+        M30
+    """.trimIndent()
+    check(NcGeneratedProcessGate.status(good5xProcess,5.0)=="PASS")
+    check("G43_WITHOUT_G0_APPROACH" in processCodes(
+        good5xProcess.replace("G0 G43 Z30.000 H1","G43 Z30.000 H1")
+    ))
+    val rotaryBelowSafe = """
+        G21 G94 G97 G90 G54
+        T1
+        M98 P4
+        G0 G43 Z30.000 H1
+        G0 Z1.000
+        G0 A30.000 B-15.000
+        S2300 M3
+        G1 X1.000 Y0.000 Z-1.000 F100.000
+        G0 Z30.000
+        G80
+        M98 P5
+        M30
+    """.trimIndent()
+    check("ROTARY_MOVE_BELOW_SAFE_Z" in processCodes(rotaryBelowSafe))
+    val rotaryWithSpindle = good5xProcess.replace(
+        "G0 A30.000 B-15.000\nS2300 M3",
+        "S2300 M3\nG0 A30.000 B-15.000"
+    )
+    check("ROTARY_MOVE_SPINDLE_RUNNING" in processCodes(rotaryWithSpindle))
+    println("✓ NC_5X_PROCESS_ORDER_PASS G0-G43/safeZ/rotary-before-spindle")
 
 }
 
