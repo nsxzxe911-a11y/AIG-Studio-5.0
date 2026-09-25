@@ -1024,6 +1024,64 @@ private fun testCannedCycleReturnMode() {
     check("ROTARY_MOVE_SPINDLE_RUNNING" in processCodes(rotaryWithSpindle))
     println("✓ NC_5X_PROCESS_ORDER_PASS G0-G43/safeZ/rotary-before-spindle")
 
+    val multiToolStaleH = """
+        G21 G94 G97 G90 G54
+        T1
+        M98 P4
+        G0 G43 Z30.000 H1
+        S2000 M3
+        G1 X1.000 Y0.000 Z-1.000 F100.000
+        M5
+        G0 Z30.000
+        T2
+        M98 P4
+        S1800 M3
+        G1 X2.000 Y0.000 Z-1.000 F100.000
+        G0 Z30.000
+        G80
+        M98 P5
+        M30
+    """.trimIndent()
+    check("CUT_WITHOUT_G43_H" in processCodes(multiToolStaleH))
+
+    val multiToolCorrected = multiToolStaleH.replace(
+        "T2\n        M98 P4\n        S1800 M3",
+        "T2\n        M98 P4\n        G0 G43 Z30.000 H2\n        S1800 M3"
+    )
+    check(NcGeneratedProcessGate.status(multiToolCorrected,5.0)=="PASS")
+
+    val badCycleR = safeGeneratedProcess.replace(
+        "G1 X10.000 Y0.000 Z-1.000 F100.000",
+        "G81 X10.000 Y0.000 Z-5.000 R-6.000 F100.000"
+    )
+    check("CYCLE_R_NOT_ABOVE_Z" in processCodes(badCycleR))
+
+    val noCycleR = safeGeneratedProcess.replace(
+        "G1 X10.000 Y0.000 Z-1.000 F100.000",
+        "G83 X10.000 Y0.000 Z-5.000 Q1.000 F100.000"
+    )
+    check("CYCLE_WITHOUT_R" in processCodes(noCycleR))
+
+    val noCycleZ = safeGeneratedProcess.replace(
+        "G1 X10.000 Y0.000 Z-1.000 F100.000",
+        "G83 X10.000 Y0.000 R2.000 Q1.000 F100.000"
+    )
+    check("CYCLE_WITHOUT_Z" in processCodes(noCycleZ))
+
+    val badTapFeed = safeGeneratedProcess.replace(
+        "G1 X10.000 Y0.000 Z-1.000 F100.000",
+        "G84 X10.000 Y0.000 Z-5.000 R2.000 F0.000"
+    )
+    check("G84_INVALID_FEED" in processCodes(badTapFeed))
+
+    val goodTap = safeGeneratedProcess.replace(
+        "G1 X10.000 Y0.000 Z-1.000 F100.000",
+        "G84 X10.000 Y0.000 Z-5.000 R2.000 F500.000"
+    )
+    check("CYCLE_R_NOT_ABOVE_Z" !in processCodes(goodTap))
+    check("G84_INVALID_FEED" !in processCodes(goodTap))
+    println("✓ NC_MULTI_TOOL_CYCLE_SAFETY_PASS stale-H/R-Z/G84")
+
 }
 
 private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
