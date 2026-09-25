@@ -252,6 +252,7 @@ class MainActivity : Activity() {
     private var workOffset = "G54"
     private var controllerProfile = CncControllerProfile.FANUC
     private var ncCoordinateMode = NcCoordinateMode.ABSOLUTE_G90
+    private var ncOriginTransformMode = NcOriginTransformMode.WORK_OFFSET_ONLY
     private var ncCutterCompensation = CutterCompensationMode.CAM_GEOMETRY_G40
     private var drillCycleBlock = ""
     private var stockMarginMm = 10.0
@@ -878,9 +879,11 @@ class MainActivity : Activity() {
 
         val profiles = CncControllerProfile.entries.toTypedArray()
         val coordinates = NcCoordinateMode.entries.toTypedArray()
+        val origins = NcOriginTransformMode.entries.toTypedArray()
         val compensations = CutterCompensationMode.entries.toTypedArray()
         val profileSpinner = spinner(profiles,{it.displayName},controllerProfile)
         val coordinateSpinner = spinner(coordinates,{it.displayName},ncCoordinateMode)
+        val originSpinner = spinner(origins,{it.displayName},ncOriginTransformMode)
         val compensationSpinner = spinner(compensations,{it.displayName},ncCutterCompensation)
 
         AlertDialog.Builder(this)
@@ -889,6 +892,7 @@ class MainActivity : Activity() {
             .setPositiveButton("套用") { _, _ ->
                 val profile = profiles[profileSpinner.selectedItemPosition]
                 val coordinate = coordinates[coordinateSpinner.selectedItemPosition]
+                val origin = origins[originSpinner.selectedItemPosition]
                 val comp = compensations[compensationSpinner.selectedItemPosition]
                 if (comp != CutterCompensationMode.CAM_GEOMETRY_G40) {
                     Toast.makeText(
@@ -899,13 +903,17 @@ class MainActivity : Activity() {
                 } else {
                     controllerProfile = profile
                     ncCoordinateMode = coordinate
+                    ncOriginTransformMode = origin
                     ncCutterCompensation = comp
                     drillCycleBlock = ""
                     Toast.makeText(
                         this,
-                        "POST " + controllerProfile.displayName + " • " + ncCoordinateMode.displayName +
-                            " • G40 CAM COMP • ABS XYZ真值不變",
-                        Toast.LENGTH_SHORT
+                        if (origin == NcOriginTransformMode.TEMPORARY_G92)
+                            "G92 已選 • NC POST待控制器原點語意驗證 • CAD/CAM/SIM ABS XYZ不變"
+                        else
+                            "POST " + controllerProfile.displayName + " • " + ncCoordinateMode.displayName + " • " +
+                                origin.displayName + " • G40 CAM COMP • ABS XYZ真值不變",
+                        Toast.LENGTH_LONG
                     ).show()
                 }
             }
@@ -1064,6 +1072,7 @@ class MainActivity : Activity() {
                     axisB = axisB,
                     controller = controllerProfile,
                     coordinateMode = ncCoordinateMode,
+                    originTransformMode = ncOriginTransformMode,
                     cutterCompensation = ncCutterCompensation
                 )
             )
@@ -1293,6 +1302,7 @@ class MainActivity : Activity() {
                         " • Y[" + DisplayFormat.mm(minY) + ".." + DisplayFormat.mm(maxY) + "]" +
                         " • Z[" + DisplayFormat.mm(minZ) + ".." + DisplayFormat.mm(maxZ) + "]" +
                         " • NC MODE=" + ncCoordinateMode.code +
+                        " • ORIGIN=" + ncOriginTransformMode.code +
                         " • COMP=" + ncCutterCompensation.code +
                         " • " + workOffset + " NC-only • OFFSET SHIFT=OFF • TOLERANCE SHIFT=OFF"
                 })
