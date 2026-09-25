@@ -178,6 +178,9 @@ object NcModalSafetyPolicy {
         if (events.none { it.code == "G94" }) {
             findings += NcModalSafetyFinding(0,"G94_REQUIRED","Explicit G94 feed-per-minute mode is required for the current AIG feed model.")
         }
+        if (events.none { it.code == "G97" }) {
+            findings += NcModalSafetyFinding(0,"G97_REQUIRED","Explicit G97 fixed-RPM mode is required for the current AIG spindle model.")
+        }
         return findings.distinctBy { Triple(it.lineNumber,it.code,it.message) }
     }
 
