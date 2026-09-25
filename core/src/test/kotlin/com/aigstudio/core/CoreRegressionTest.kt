@@ -14,8 +14,19 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check(origin == "0.000")
     check(resolution == 0.001)
     check(!offsetAffectsGeometry)
+    check(SoftwareCoordinateContract.coordinateMode() == "G90")
+    check(SoftwareCoordinateContract.masterOriginX() == 0.0)
+    check(SoftwareCoordinateContract.masterOriginY() == 0.0)
+    check(SoftwareCoordinateContract.masterOriginZ() == 0.0)
+    check(SoftwareCoordinateContract.masterOriginData() == "X0.000 Y0.000 Z0.000")
+    check(SoftwareCoordinateContract.preserveSignedCoordinates())
+    check(!SoftwareCoordinateContract.simulationAppliesWorkOffset())
+    check(!SoftwareCoordinateContract.simulationUsesToleranceCompensation())
+    check(SoftwareCoordinateContract.xyzData(-50.0, -40.0, -3.0) == "X-50.000 Y-40.000 Z-3.000")
+    check(SoftwareCoordinateContract.xyzData(50.0, 40.0, 5.0) == "X50.000 Y40.000 Z5.000")
+    check(DisplayFormat.mm(-50.0) == "-50.000")
     check(DisplayFormat.mm(0.0) == "0.000")
-    println("✓ SOFTWARE_ABSOLUTE_ORIGIN_LOCK_PASS origin 0.000 / resolution 0.001 / machine offsets NC-only")
+    println("✓ ABSOLUTE_COORDINATE_DATA_GATE_PASS G90 MASTER=X0.000/Y0.000/Z0.000 SIGNED=TRUE SIM_OFFSET_SHIFT=OFF SIM_TOLERANCE_SHIFT=OFF")
 }
 
 private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
