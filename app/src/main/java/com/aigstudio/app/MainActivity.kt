@@ -1142,7 +1142,7 @@ class MainActivity : Activity() {
         fun refreshLineHelp() {
             val program = editor.text.toString()
             val line = NcCodeCatalog.lineNumberAt(program, editor.selectionStart.coerceAtLeast(0))
-            lineHelp.text = "LINE HELP • " + NcCodeCatalog.lineHelp(program, line) + "\n" + NcSemanticAuthority.lineEvidence(program, line, controllerProfile)
+            lineHelp.text = "LINE HELP • " + NcCodeCatalog.lineHelp(program, line) + "\n" + NcSemanticAuthority.lineEvidence(program, line, controllerProfile) + "\n" + NcExecutionTimeline.lineEvidence(program, line, controllerProfile)
         }
         editor.setOnClickListener { editor.post { refreshLineHelp() } }
         refreshLineHelp()
@@ -1193,7 +1193,7 @@ class MainActivity : Activity() {
             refreshLineHelp()
             editor.post { editor.bringPointIntoView(start.coerceAtMost(editor.length())) }
             previewStatus.text = (if (ncDryRun) "DRY RUN" else "NC PREVIEW") +
-                " • BLOCK " + (previewLine + 1) + " • " + lines[previewLine].trim()
+                " • BLOCK " + (previewLine + 1) + " • " + lines[previewLine].trim() + "\n" + NcExecutionTimeline.lineEvidence(editor.text.toString(), previewLine + 1, controllerProfile)
             previewLine++
         }
         box.addView(previewStatus)
@@ -1345,7 +1345,7 @@ class MainActivity : Activity() {
                             cutterCompensation = ncCutterCompensation
                         )
                     )
-                    NcSemanticAuthority.programSummary(program, controllerProfile)
+                    NcExecutionTimeline.programSummary(program, controllerProfile)
                 }.getOrElse { error ->
                     "NC→3D ANIM BLOCKED • NC_POST=" + (error.message ?: "error")
                 }
