@@ -610,15 +610,13 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
         runCatching { generateNc() }
             .onSuccess { area.text = it }
             .onFailure {
-                if (originTransformMode == NcOriginTransformMode.TEMPORARY_G92) {
-                    origin.selectedItem = NcOriginTransformMode.WORK_OFFSET_ONLY
-                    originTransformMode = NcOriginTransformMode.WORK_OFFSET_ONLY
-                } else if (coordinateMode == NcCoordinateMode.INCREMENTAL_G91) {
-                    coordinate.selectedItem = NcCoordinateMode.ABSOLUTE_G90
-                    coordinateMode = NcCoordinateMode.ABSOLUTE_G90
-                }
-                area.text = generateNc()
-                JOptionPane.showMessageDialog(frame,it.message,"NC POST BLOCKED • CANONICAL ABS XYZ UNCHANGED",JOptionPane.WARNING_MESSAGE)
+                area.text = ""
+                JOptionPane.showMessageDialog(
+                    frame,
+                    (it.message ?: "unsupported post mode") + "\nCAD/CAM/SIM canonical ABS XYZ remains unchanged.",
+                    "NC POST BLOCKED",
+                    JOptionPane.WARNING_MESSAGE
+                )
             }
     }
     controller.addActionListener { refreshNcFromPostSelection() }
