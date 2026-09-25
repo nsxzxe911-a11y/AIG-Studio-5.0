@@ -155,6 +155,20 @@ object NcModalSafetyPolicy {
                 "G92" -> add(e,"G92_ORIGIN_UNVERIFIED","Temporary origin transform is tracked but controller-specific execution semantics are not yet verified.")
                 "G41","G42" -> add(e,"G41_G42_DOUBLE_COMP_RISK","Controller cutter compensation is blocked while the current CAM path already contains geometric radius compensation.")
                 "G99" -> add(e,"G99_RETURN_UNSIMULATED","R-point canned-cycle return is not yet represented by the current SIM return-path model; generated cycles use explicit G98.")
+                "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6" ->
+                    add(e,"REFERENCE_RETURN_UNSIMULATED","Reference/start/tool-change position return is tracked but not represented by canonical CAM/SIM machine-coordinate motion.")
+                "G31","G31.1","G31.2","G31.3" ->
+                    add(e,"SKIP_PROBE_UNSIMULATED","Skip/probe motion depends on external trigger feedback and is not represented by the current deterministic CAM/SIM path.")
+                "G52" ->
+                    add(e,"G52_LOCAL_COORD_UNVERIFIED","Local coordinate transform is tracked but not yet applied by canonical CAM/SIM.")
+                "G65","G66","G66.1" ->
+                    add(e,"USER_MACRO_UNEXPANDED","User macro execution can generate hidden motion/state and must be expanded or independently validated before machining.")
+                "G68.2","G68.3" ->
+                    add(e,"INCLINED_SURFACE_UNSIMULATED","Inclined-surface/3D coordinate transform is tracked but not yet applied by canonical CAM/SIM.")
+                "G92.1" ->
+                    add(e,"WORK_COORD_PRESET_UNVERIFIED","Work-coordinate preset changes controller coordinate state and is not yet modeled by canonical CAM/SIM.")
+                "G96" ->
+                    add(e,"G96_CSS_UNVERIFIED","Constant-surface-speed spindle control is not represented by the current fixed-RPM spindle model; generated programs use explicit G97.")
             }
         }
 
@@ -238,7 +252,7 @@ object FanucNc {
         out.appendLine("(CONTROLLER " + post.controller.displayName + ")")
         out.appendLine("(CANONICAL XYZ ABSOLUTE G90 • MASTER X0.000 Y0.000 Z0.000)")
         out.appendLine("(PROGRAM MODE " + post.coordinateMode.displayName + " • ORIGIN " + post.originTransformMode.displayName + " • CUTTER COMP " + post.cutterCompensation.displayName + ")")
-        out.appendLine("G21 G94")
+        out.appendLine("G21 G94 G97")
         out.appendLine("G90 " + post.workOffset + " G17 G40 G49 G80")
         out.appendLine("T" + post.tool)
         out.appendLine("M98 P" + post.toolChangeSubprogram)
