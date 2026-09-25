@@ -1332,6 +1332,23 @@ class MainActivity : Activity() {
                 val maxY = absoluteMoves.maxOfOrNull { it.to.y } ?: 0.0
                 val minZ = absoluteMoves.minOfOrNull { it.z } ?: 0.0
                 val maxZ = absoluteMoves.maxOfOrNull { it.z } ?: 0.0
+                val animationSummary = runCatching {
+                    val program = CncPost.generate(
+                        result.cam,
+                        FanucPostSettings(
+                            workOffset = workOffset,
+                            axisA = axisA,
+                            axisB = axisB,
+                            controller = controllerProfile,
+                            coordinateMode = ncCoordinateMode,
+                            originTransformMode = ncOriginTransformMode,
+                            cutterCompensation = ncCutterCompensation
+                        )
+                    )
+                    NcAnimationBridge.programSummary(program)
+                }.getOrElse { error ->
+                    "NC→3D ANIM BLOCKED • NC_POST=" + (error.message ?: "error")
+                }
                 box.addView(TextView(this).apply {
                     setTextColor(0xFF63FF9D.toInt())
                     textSize = 12f
@@ -1350,7 +1367,8 @@ class MainActivity : Activity() {
                         " • NC MODE=" + ncCoordinateMode.code +
                         " • ORIGIN=" + ncOriginTransformMode.code +
                         " • COMP=" + ncCutterCompensation.code +
-                        " • " + workOffset + " NC-only • OFFSET SHIFT=OFF • TOLERANCE SHIFT=OFF"
+                        " • " + workOffset + " NC-only • OFFSET SHIFT=OFF • TOLERANCE SHIFT=OFF" +
+                        "\n" + animationSummary
                 })
 
                 AlertDialog.Builder(this)
