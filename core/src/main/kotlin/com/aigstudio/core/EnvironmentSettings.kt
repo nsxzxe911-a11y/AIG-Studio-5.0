@@ -46,7 +46,7 @@ data class RuntimeEnvironmentSettings(
     val fpsDisplayEnabled:Boolean=false
 ){
     init{
-        require(maxFps in setOf(30,60,120))
+        require(maxFps in setOf(30,60,90,120))
         require(rgbBrightness in 0..100)
         require(selectedGlowBoostPercent in 0..25)
         require(glassOpacityPercent in 0..100)
@@ -128,6 +128,7 @@ data class RuntimeEnvironmentSettings(
     companion object{
         fun normalizeFps(value:Int)=when{
             value>=120->120
+            value>=90->90
             value>=60->60
             else->30
         }
@@ -251,13 +252,15 @@ class RendererGovernor(
     }
 
     private fun stepDown(fps:Int)=when{
-        fps>=120->60
+        fps>=120->90
+        fps>=90->60
         fps>=60->30
         else->30
     }
 
     private fun stepUp(fps:Int)=when{
         fps<60->60
+        fps<90->90
         fps<120->120
         else->120
     }
@@ -320,4 +323,83 @@ object SettingsApplyPolicy {
 
     fun restartReason(previousRenderQuality:String,newRenderQuality:String):String? =
         if(requiresRestart(previousRenderQuality,newRenderQuality)) "3D_SIM_RENDER_QUALITY" else null
+}
+
+
+data class SurfaceFpsStats(
+    val fps:Double,
+    val frameIntervalMs:Double,
+    val frames:Long,
+    val droppedFrames:Long
+){
+    fun compact(label:String):String =
+        label + " FPS " + "%.1f".format(java.util.Locale.US,fps) +
+            " • " + "%.2f".format(java.util.Locale.US,frameIntervalMs) + "ms" +
+            " • drop=" + droppedFrames
+}
+
+class SurfaceFpsMeter(
+    private val refreshHzProvider:()->Double = { 60.0 },
+    private val sampleWindowNs:Long = 500_000_000L
+){
+    private var lastFrameNs=0L
+    private var windowStartNs=0L
+    private var frames=0L
+    private var dropped=0L
+    private var latest=SurfaceFpsStats(0.0,0.0,0,0)
+
+    fun record(frameTimeNs:Long):SurfaceFpsStats{
+        require(frameTimeNs>=0L)
+        if(windowStartNs==0L) windowStartNs=frameTimeNs
+        if(lastFrameNs!=0L && frameTimeNs>lastFrameNs){
+            val interval=frameTimeNs-lastFrameNs
+            val refresh=refreshHzProvider().coerceIn(30.0,240.0)
+            val budgetNs=1_000_000_000.0/refresh
+            if(interval>budgetNs*1.5){
+                dropped += ((interval/budgetNs).toLong()-1L).coerceAtLeast(1L)
+            }
+            latest=latest.copy(frameIntervalMs=interval/1_000_000.0)
+        }
+        lastFrameNs=frameTimeNs
+        frames++
+        val elapsed=frameTimeNs-windowStartNs
+        if(elapsed>=sampleWindowNs && elapsed>0L){
+            latest=SurfaceFpsStats(
+                fps=frames*1_000_000_000.0/elapsed.toDouble(),
+                frameIntervalMs=latest.frameIntervalMs,
+                frames=frames,
+                droppedFrames=dropped
+            )
+            frames=0L
+            dropped=0L
+            windowStartNs=frameTimeNs
+        }
+        return latest
+    }
+
+    fun current():SurfaceFpsStats=latest
+
+    fun reset(){
+        lastFrameNs=0L
+        windowStartNs=0L
+        frames=0L
+        dropped=0L
+        latest=SurfaceFpsStats(0.0,0.0,0,0)
+    }
+}
+
+object RenderFrameContract{
+    fun budgetMs(fps:Int):Double{
+        require(fps in setOf(30,60,90,120))
+        return 1000.0/fps
+    }
+
+    fun isWithinBudget(frameTimeMs:Double,fps:Int,tolerance:Double=1.15):Boolean{
+        require(frameTimeMs>=0.0)
+        require(tolerance>=1.0)
+        return frameTimeMs<=budgetMs(fps)*tolerance
+    }
+
+    fun displayBucket(displayHz:Double):Int =
+        RuntimeEnvironmentSettings.normalizeFps(displayHz.toInt().coerceAtLeast(30))
 }
