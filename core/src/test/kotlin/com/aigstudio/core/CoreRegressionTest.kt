@@ -1183,6 +1183,7 @@ fun main() {
     testHomeWorkstationChromeContract()
     testFloatingCadToolContract()
     testRgbGlassVisualContract()
+    testCamWorkstationContract()
     println("ALL TESTS PASSED")
 }
 
@@ -1846,4 +1847,35 @@ private fun testRgbGlassVisualContract() {
     check(RgbGlassVisualContract.highlightAlpha(0,true,true)==92)
     check(RgbGlassVisualContract.alarmVisibleAtBrightness(0))
     println("✓ RGB_GLASS_STYLE_GATE_PASS 3_LAYER SELECTED PRESSED DISABLED ALARM BRIGHTNESS_SAFE")
+}
+
+
+private fun testCamWorkstationContract() {
+    check(CamWorkstationContract.TITLE=="REAL CAM")
+    check(CamWorkstationContract.SAFE_Z=="SAFE-Z")
+    check(CamWorkstationContract.TOOL_RADIUS=="TOOL RADIUS")
+    check(CamWorkstationContract.WORK_OFFSET=="WORK OFFSET")
+    check(CamWorkstationContract.CAM_READY=="CAM READY")
+    println("✓ CAM_WORKSTATION_UI_GATE_PASS REAL_CAM SAFE_Z TOOL_RADIUS WORK_OFFSET STATUS_SEPARATED")
+
+    val colors=CamWorkstationContract.pathColorsArgb
+    check(colors.keys.containsAll(listOf("G0","CUTTING","REGION","TOOL","SELECTED","WARNING")))
+    check(colors["G0"]!=colors["CUTTING"])
+    check(colors["CUTTING"]!=colors["WARNING"])
+    println("✓ CAM_PATH_VISUAL_GATE_PASS G0 CUTTING REGION TOOL SELECTED WARNING")
+
+    val required=setOf("TOOL DIA","TOOL RADIUS","DEPTH","SAFE-Z","FEED","SPINDLE","WORK OFFSET","LEAD-IN","LEAD-OUT","TOOL DIRECTION","TOOLPATH STATUS")
+    check(CamWorkstationContract.parameterKeys.toSet().containsAll(required))
+    println("✓ CAM_PARAMETER_PANEL_GATE_PASS DIA RADIUS DEPTH SAFE_Z FEED SPINDLE OFFSET LEAD DIRECTION STATUS")
+
+    check(CamWorkstationContract.layout(360)==CamWorkstationContract.Layout.MOBILE_COMPACT)
+    check(CamWorkstationContract.layout(720)==CamWorkstationContract.Layout.MOBILE_COMPACT)
+    check(CamWorkstationContract.layout(1280)==CamWorkstationContract.Layout.DESKTOP_EXPANDED)
+    check(CamWorkstationContract.adaptiveTextSp("WORK OFFSET",360)<CamWorkstationContract.adaptiveTextSp("TOOL",360))
+    check(CamWorkstationContract.buttonMinWidthDp(CamWorkstationContract.Layout.DESKTOP_EXPANDED,"TOOL RADIUS") >
+        CamWorkstationContract.buttonMinWidthDp(CamWorkstationContract.Layout.MOBILE_COMPACT,"TOOL"))
+    println("✓ CAM_LAYOUT_DEVICE_SPLIT_GATE_PASS MOBILE_COMPACT DESKTOP_EXPANDED FONT_AUTOSIZE BUTTON_REFLOW")
+
+    check(CamWorkstationContract.runtimeBindingPolicy()=="LIVE_CAM_STATE_ONLY")
+    println("✓ CAM_RUNTIME_NO_FAKE_GATE_PASS LIVE_CAM_STATE_ONLY REBUILD STALE OFFSET TOOLPATH")
 }

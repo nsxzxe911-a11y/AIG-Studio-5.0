@@ -674,6 +674,7 @@ class MainActivity : Activity() {
         addCategory("繪圖", 0) { showDrawingBranch() }
         addCategory("修改", 3) { showModifyBranch() }
         addCategory("角部", 2) { showCornerBranch() }
+        addCategory("CAM", 5) { showCamWorkstation() }
         addCategory("加工", 5) { showMachiningBranch() }
         addCategory("安全", 4) { showSecurityBranch() }
         addCategory("AI", 1) { showAiBranch() }
@@ -1041,6 +1042,7 @@ class MainActivity : Activity() {
     }
     private fun showMachiningBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
+        addActionTo(branchFlow, "REAL CAM", 5) { showCamWorkstation() }
         addActionTo(branchFlow, "CAM 設定", 5) { showCamSettingsDialog() }
         addActionTo(branchFlow, "STOCK", 4) { showStockDialog() }
         addActionTo(branchFlow, "NC EDIT", 0) { showNcEditDialog() }
@@ -1049,6 +1051,208 @@ class MainActivity : Activity() {
         addActionTo(branchFlow, "G81/G73/G83/G84", 2) { showDrillCycleDialog() }
         addActionTo(branchFlow, "5X A/B", 1) { show5xDialog() }
         addActionTo(branchFlow, "3D 加工", 4) { showMachining3D() }
+    }
+
+    private fun showCamWorkstation() {
+        val snapshot = cad.snapshot()
+        if (snapshot.entities.isEmpty()) {
+            Toast.makeText(this, "REAL CAM BLOCKED • 請先建立 2D 幾何", Toast.LENGTH_LONG).show()
+            return
+        }
+        val cam = runCatching { CamModel.fromCad(System.currentTimeMillis(), snapshot, camSettings) }
+            .getOrElse {
+                Toast.makeText(this, "REAL CAM BLOCKED • " + (it.message ?: "CAM build error"), Toast.LENGTH_LONG).show()
+                return
+            }
+        val stock = Stock3D.fromSnapshot(snapshot, stockMarginMm, stockThicknessMm)
+        val risk = MachiningRiskScanner.inspect(cam, stock)
+        val post = FanucPostSettings(
+            workOffset = workOffset,
+            tool = 1,
+            h = 1,
+            spindle = 2300,
+            axisA = axisA,
+            axisB = axisB,
+            controller = controllerProfile,
+            coordinateMode = ncCoordinateMode,
+            originTransformMode = ncOriginTransformMode,
+            cutterCompensation = ncCutterCompensation
+        )
+        val ncReady = runCatching { CncPost.generate(cam, post) }.isSuccess
+        val screenWidthDp = resources.configuration.screenWidthDp.coerceAtLeast(1)
+        val layoutMode = CamWorkstationContract.layout(screenWidthDp)
+
+        fun glass(stroke:Int): GradientDrawable = GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(0xEE0A1826.toInt(), 0xEE050B12.toInt())
+        ).apply {
+            cornerRadius = dp(12).toFloat()
+            setStroke(dp(1), stroke)
+        }
+        fun textLine(value:String,color:Int=0xFFDDEBFA.toInt(),size:Float=11f):TextView =
+            TextView(this).apply {
+                text=value
+                setTextColor(color)
+                textSize=StudioDisplayPolicy.sp(this,size)
+                setPadding(dp(8),dp(4),dp(8),dp(4))
+            }
+
+        val root = LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(8),dp(8),dp(8),dp(8))
+            setBackgroundColor(0xFF040A11.toInt())
+        }
+        root.addView(textLine(
+            "AIG CNC • " + CamWorkstationContract.TITLE + " • " +
+                CamWorkstationContract.SAFE_Z + " " + DisplayFormat.mm(cam.settings.safeZ) + " • " +
+                CamWorkstationContract.TOOL_RADIUS + " " + DisplayFormat.mm(cam.settings.toolDiameter/2.0) + " • " +
+                workOffset,
+            0xFF3DEBFF.toInt(), 12.5f
+        ).apply {
+            setTypeface(typeface,android.graphics.Typeface.BOLD)
+            background=glass(0xAA3DEBFF.toInt())
+        })
+        root.addView(textLine(
+            CamWorkstationContract.CAM_READY + " • " + CamWorkstationContract.TOOLPATH_FRESH +
+                " • NC " + (if(ncReady)"READY" else "BLOCKED"),
+            if(ncReady)0xFF63FF9D.toInt() else 0xFFFFB020.toInt(),10.5f
+        ))
+
+        val body = LinearLayout(this).apply {
+            orientation=if(layoutMode==CamWorkstationContract.Layout.MOBILE_COMPACT)
+                LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+        }
+
+        val preview = object: View(this) {
+            private val linePaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style=Paint.Style.STROKE
+                strokeCap=Paint.Cap.ROUND
+            }
+            private val fillPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply { style=Paint.Style.FILL }
+            override fun onDraw(canvas:Canvas) {
+                super.onDraw(canvas)
+                canvas.drawColor(0xFF06101A.toInt())
+                val moves=cam.toolpaths.flatMap{it.moves}
+                if(moves.isEmpty()) return
+                val minX=minOf(stock.minX,moves.minOf{it.to.x})
+                val maxX=maxOf(stock.maxX,moves.maxOf{it.to.x})
+                val minY=minOf(stock.minY,moves.minOf{it.to.y})
+                val maxY=maxOf(stock.maxY,moves.maxOf{it.to.y})
+                val spanX=(maxX-minX).coerceAtLeast(1.0)
+                val spanY=(maxY-minY).coerceAtLeast(1.0)
+                val pad=dp(24).toFloat()
+                fun sx(x:Double)=pad+((x-minX)/spanX*(width-2*pad)).toFloat()
+                fun sy(y:Double)=height-pad-((y-minY)/spanY*(height-2*pad)).toFloat()
+
+                fillPaint.color=0x223B82F6
+                canvas.drawRect(sx(stock.minX),sy(stock.maxY),sx(stock.maxX),sy(stock.minY),fillPaint)
+                linePaint.color=0x663B82F6
+                linePaint.strokeWidth=dp(1).toFloat()
+                canvas.drawRect(sx(stock.minX),sy(stock.maxY),sx(stock.maxX),sy(stock.minY),linePaint)
+
+                cam.toolpaths.forEach { path ->
+                    val list=path.moves
+                    for(i in 1 until list.size) {
+                        val a=list[i-1]
+                        val b=list[i]
+                        linePaint.color=if(b.rapid)0xFF3DEBFF.toInt() else 0xFFFFB020.toInt()
+                        linePaint.strokeWidth=dp(if(b.rapid)2 else 3).toFloat()
+                        canvas.drawLine(sx(a.to.x),sy(a.to.y),sx(b.to.x),sy(b.to.y),linePaint)
+                    }
+                }
+                val last=moves.last()
+                fillPaint.color=0xFF63FF9D.toInt()
+                canvas.drawCircle(sx(last.to.x),sy(last.to.y),dp(5).toFloat(),fillPaint)
+
+                linePaint.color=0x66FFFFFF
+                linePaint.strokeWidth=dp(1).toFloat()
+                canvas.drawLine(pad,sy(0.0),width-pad,sy(0.0),linePaint)
+                canvas.drawLine(sx(0.0),pad,sx(0.0),height-pad,linePaint)
+            }
+        }.apply {
+            background=glass(0x773DEBFF)
+        }
+
+        val parameters=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            background=glass(0x668B5CF6)
+            setPadding(dp(6),dp(6),dp(6),dp(6))
+        }
+        fun param(label:String,value:String,color:Int=0xFFDDEBFA.toInt()) {
+            parameters.addView(textLine(label + "  " + value,color,10.5f))
+        }
+        param("TOOL DIA",DisplayFormat.mm(cam.settings.toolDiameter)+" mm")
+        param("TOOL RADIUS",DisplayFormat.mm(cam.settings.toolDiameter/2.0)+" mm",0xFF3DEBFF.toInt())
+        param("DEPTH",DisplayFormat.mm(cam.settings.depth)+" mm")
+        param("SAFE-Z",DisplayFormat.mm(cam.settings.safeZ)+" mm",0xFF63FF9D.toInt())
+        param("FEED",DisplayFormat.mm(cam.settings.feedMmMin)+" mm/min")
+        param("SPINDLE","2300 RPM • POST")
+        param("WORK OFFSET",workOffset,0xFFF59E0B.toInt())
+        param("LEAD-IN",DisplayFormat.mm(cam.settings.leadInMm)+" mm")
+        param("LEAD-OUT",DisplayFormat.mm(cam.settings.leadOutMm)+" mm")
+        param("TOOL DIRECTION",if(cam.settings.climb)"CLIMB" else "CONVENTIONAL")
+        param("TOOLPATH STATUS","FRESH • paths="+cam.toolpaths.size)
+        param("MACHINING REGION","STOCK XY")
+
+        val legend=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+        legend.addView(textLine("● G0 RAPID",0xFF3DEBFF.toInt(),9.5f),LinearLayout.LayoutParams(0,-2,1f))
+        legend.addView(textLine("● CUTTING",0xFFFFB020.toInt(),9.5f),LinearLayout.LayoutParams(0,-2,1f))
+        legend.addView(textLine("● TOOL",0xFF63FF9D.toInt(),9.5f),LinearLayout.LayoutParams(0,-2,1f))
+        parameters.addView(legend)
+
+        if(layoutMode==CamWorkstationContract.Layout.MOBILE_COMPACT) {
+            body.addView(preview,LinearLayout.LayoutParams(-1,dp(300)))
+            body.addView(android.widget.ScrollView(this).apply { addView(parameters) },
+                LinearLayout.LayoutParams(-1,dp(230)))
+        } else {
+            body.addView(preview,LinearLayout.LayoutParams(0,dp(520),1f))
+            body.addView(android.widget.ScrollView(this).apply { addView(parameters) },
+                LinearLayout.LayoutParams(dp(310),dp(520)))
+        }
+        root.addView(body,LinearLayout.LayoutParams(-1,-2))
+
+        root.addView(textLine(
+            "CAM " + (if(risk.ok)"SAFE" else "WARNING") +
+                " • COLLISION " + risk.collisionCount +
+                " • OVERCUT " + risk.overcutCount +
+                " • " + CamWorkstationContract.MAKE_IT_REAL,
+            if(risk.ok)0xFF63FF9D.toInt() else 0xFFFF5252.toInt(),10f
+        ).apply { background=glass(if(risk.ok)0x5563FF9D else 0x88FF5252.toInt()) })
+
+        val actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+        lateinit var dialog:AlertDialog
+        fun action(label:String,accent:Int,block:()->Unit) {
+            val b=RgbGlowButton(this).apply {
+                text=label
+                setRgbState(accent,false)
+                minHeight=dp(44)
+                minimumWidth=dp(CamWorkstationContract.buttonMinWidthDp(layoutMode,label))
+                if(Build.VERSION.SDK_INT>=26) {
+                    setAutoSizeTextTypeUniformWithConfiguration(
+                        9, CamWorkstationContract.adaptiveTextSp(label,screenWidthDp).toInt().coerceAtLeast(10),
+                        1, android.util.TypedValue.COMPLEX_UNIT_SP
+                    )
+                }
+                setOnClickListener { block() }
+            }
+            actions.addView(b,LinearLayout.LayoutParams(0,-2,1f))
+        }
+        action("REBUILD",0xFF3DEBFF.toInt()) {
+            dialog.dismiss()
+            showCamWorkstation()
+        }
+        action("SETTINGS",0xFF8B5CF6.toInt()) { showCamSettingsDialog() }
+        action("OFFSET",0xFFF59E0B.toInt()) { showWorkOffsetDialog() }
+        action("3D SIM",0xFF22C55E.toInt()) { showMachining3D() }
+        action("NC",0xFF3B82F6.toInt()) { showNcEditDialog() }
+        action("BACK",0xFF7894A8.toInt()) { dialog.dismiss() }
+        root.addView(actions,LinearLayout.LayoutParams(-1,-2))
+
+        dialog=AlertDialog.Builder(this)
+            .setTitle("AIG CNC • REAL CAM")
+            .setView(root)
+            .create()
+        dialog.show()
     }
 
     private fun showStockDialog() {

@@ -39,7 +39,13 @@ jobs:
         run: |
           ./build_android_release.sh | tee release-validation.log
           grep -Fq 'RENDER_CACHE_STRESS_GATE_PASS' release-validation.log
+          grep -Fq 'CAM_WORKSTATION_UI_GATE_PASS' release-validation.log
+          grep -Fq 'CAM_PATH_VISUAL_GATE_PASS' release-validation.log
+          grep -Fq 'CAM_PARAMETER_PANEL_GATE_PASS' release-validation.log
+          grep -Fq 'CAM_LAYOUT_DEVICE_SPLIT_GATE_PASS' release-validation.log
+          grep -Fq 'CAM_RUNTIME_NO_FAKE_GATE_PASS' release-validation.log
           echo 'RENDER_CACHE_RELEASE_GATE=PASS'
+          echo 'CAM_WORKSTATION_RELEASE_GATE=PASS'
       - name: Verify Android APK
         shell: bash
         run: |

@@ -771,3 +771,55 @@ object RgbGlassVisualContract {
         return true
     }
 }
+
+
+object CamWorkstationContract {
+    const val TITLE = "REAL CAM"
+    const val SAFE_Z = "SAFE-Z"
+    const val TOOL_RADIUS = "TOOL RADIUS"
+    const val WORK_OFFSET = "WORK OFFSET"
+    const val CAM_READY = "CAM READY"
+    const val TOOLPATH_FRESH = "TOOLPATH FRESH"
+    const val TOOLPATH_STALE = "TOOLPATH STALE"
+    const val MAKE_IT_REAL = "MAKE IT REAL."
+
+    enum class Layout { MOBILE_COMPACT, DESKTOP_EXPANDED }
+
+    fun layout(widthDp:Int):Layout {
+        require(widthDp>0)
+        return if(widthDp<840) Layout.MOBILE_COMPACT else Layout.DESKTOP_EXPANDED
+    }
+
+    val parameterKeys = listOf(
+        "TOOL DIA","TOOL RADIUS","DEPTH","SAFE-Z","FEED","SPINDLE","WORK OFFSET",
+        "LEAD-IN","LEAD-OUT","TOOL DIRECTION","TOOLPATH STATUS"
+    )
+
+    val pathColorsArgb = linkedMapOf(
+        "G0" to 0xFF3DEBFF.toInt(),
+        "CUTTING" to 0xFFFFB020.toInt(),
+        "REGION" to 0x553B82F6,
+        "TOOL" to 0xFF63FF9D.toInt(),
+        "SELECTED" to 0xFFFFFFFF.toInt(),
+        "WARNING" to 0xFFFF5252.toInt()
+    )
+
+    fun adaptiveTextSp(label:String,widthDp:Int):Double {
+        require(widthDp>0)
+        val base=if(widthDp<420)12.0 else if(widthDp<840)13.0 else 14.0
+        return when {
+            label.length>=18 -> base-3.0
+            label.length>=12 -> base-2.0
+            label.length>=8 -> base-1.0
+            else -> base
+        }.coerceAtLeast(9.0)
+    }
+
+    fun buttonMinWidthDp(layout:Layout,label:String):Int =
+        when(layout){
+            Layout.MOBILE_COMPACT -> (72 + label.length*2).coerceIn(72,132)
+            Layout.DESKTOP_EXPANDED -> (88 + label.length*3).coerceIn(88,176)
+        }
+
+    fun runtimeBindingPolicy():String = "LIVE_CAM_STATE_ONLY"
+}
