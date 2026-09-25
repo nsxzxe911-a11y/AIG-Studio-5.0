@@ -42,6 +42,7 @@ import android.widget.SeekBar
 import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -483,7 +484,95 @@ class MainActivity : Activity() {
             WorkstationChromeContract.WORKSPACE,
             0xFF3DEBFF.toInt(), 10.5f
         ))
-        workspaceColumn.addView(cad, LinearLayout.LayoutParams(-1, 0, 1f))
+
+        val cadStage = FrameLayout(this)
+        cadStage.addView(cad, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+
+        branchFlow = FlowLayout(this).apply {
+            setPadding(dp(6), dp(2), dp(6), dp(2))
+            visibility = View.GONE
+        }
+        categoryFlow = FlowLayout(this).apply {
+            setPadding(dp(6), dp(3), dp(6), dp(4))
+        }
+
+        val floatingToolCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(0xE80A1C2B.toInt(), 0xD9081622.toInt())
+            ).apply {
+                cornerRadius = dp(14).toFloat()
+                setStroke(dp(2), 0xAA3DEBFF.toInt())
+            }
+            elevation = dp(10).toFloat()
+            setPadding(dp(5), dp(4), dp(5), dp(5))
+        }
+        val floatingHeader = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        floatingHeader.addView(chromeText(
+            FloatingCadToolContract.TITLE,
+            0xFF3DEBFF.toInt(), 10f
+        ).apply {
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+
+        val backButton = RgbGlowButton(this).apply {
+            text = FloatingCadToolContract.BACK
+            textSize = StudioDisplayPolicy.sp(this, 9f)
+            minWidth = dp(58); minHeight = dp(38)
+            setRgbState(0xFFF59E0B.toInt(), false)
+            setOnClickListener { closeBranches() }
+        }
+        val closeButton = RgbGlowButton(this).apply {
+            text = FloatingCadToolContract.CLOSE
+            textSize = StudioDisplayPolicy.sp(this, 9f)
+            minWidth = dp(62); minHeight = dp(38)
+            setRgbState(0xFFEF4444.toInt(), false)
+        }
+        floatingHeader.addView(backButton)
+        floatingHeader.addView(closeButton)
+        floatingToolCard.addView(floatingHeader, LinearLayout.LayoutParams(-1, -2))
+        floatingToolCard.addView(categoryFlow, LinearLayout.LayoutParams(-1, -2))
+        floatingToolCard.addView(branchFlow, LinearLayout.LayoutParams(-1, -2))
+
+        val reopenButton = RgbGlowButton(this).apply {
+            text = FloatingCadToolContract.REOPEN
+            textSize = StudioDisplayPolicy.sp(this, 9.5f)
+            minWidth = dp(72); minHeight = dp(42)
+            setRgbState(0xFF3DEBFF.toInt(), true)
+            visibility = View.GONE
+        }
+        closeButton.setOnClickListener {
+            floatingToolCard.visibility = View.GONE
+            reopenButton.visibility = View.VISIBLE
+        }
+        reopenButton.setOnClickListener {
+            floatingToolCard.visibility = View.VISIBLE
+            reopenButton.visibility = View.GONE
+        }
+
+        cadStage.addView(
+            floatingToolCard,
+            FrameLayout.LayoutParams(
+                dp(FloatingCadToolContract.panelWidthDp(screenWidthDp)),
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP or Gravity.START
+            ).apply { setMargins(dp(8), dp(8), dp(8), dp(8)) }
+        )
+        cadStage.addView(
+            reopenButton,
+            FrameLayout.LayoutParams(
+                dp(82), dp(44),
+                Gravity.TOP or Gravity.START
+            ).apply { setMargins(dp(8), dp(8), 0, 0) }
+        )
+        workspaceColumn.addView(cadStage, LinearLayout.LayoutParams(-1, 0, 1f))
 
         val machineRail = LinearLayout(this).apply {
             orientation = if(workstationLayout==WorkstationChromeContract.Layout.COMPACT)
@@ -537,12 +626,7 @@ class MainActivity : Activity() {
         )
         root.addView(workspaceFrame, LinearLayout.LayoutParams(-1, 0, 1f))
 
-        // Branch area stays hidden until a category is selected; CAD remains the dominant workspace.
-        branchFlow = FlowLayout(this).apply { setPadding(dp(6), dp(2), dp(6), dp(2)); visibility = View.GONE }
-        root.addView(branchFlow, LinearLayout.LayoutParams(-1, -2))
-        categoryFlow = FlowLayout(this).apply { setPadding(dp(6), dp(3), dp(6), dp(4)) }
-        root.addView(categoryFlow, LinearLayout.LayoutParams(-1, -2))
-
+        // Tool controls now float over the CAD stage; they no longer consume workspace height.
         addCategory("繪圖", 0) { showDrawingBranch() }
         addCategory("修改", 3) { showModifyBranch() }
         addCategory("角部", 2) { showCornerBranch() }

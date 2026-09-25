@@ -1181,6 +1181,7 @@ fun main() {
     testRenderCachePolicyStress()
     testRgbMaxStressProfilerContract()
     testHomeWorkstationChromeContract()
+    testFloatingCadToolContract()
     println("ALL TESTS PASSED")
 }
 
@@ -1812,4 +1813,19 @@ private fun testHomeWorkstationChromeContract() {
     check(WorkstationChromeContract.layout(1280,720)==WorkstationChromeContract.Layout.WIDE)
     check(WorkstationChromeContract.requiredSections()==setOf("BRAND","WORKSPACE","STATUS","FUNCTIONS"))
     println("✓ HOME_WORKSTATION_UI_GATE_PASS BRAND WORKSPACE STATUS FUNCTIONS COMPACT WIDE")
+}
+
+
+private fun testFloatingCadToolContract() {
+    check(FloatingCadToolContract.TITLE=="CAD TOOL DECK")
+    check(FloatingCadToolContract.BACK=="BACK")
+    check(FloatingCadToolContract.CLOSE=="CLOSE")
+    check(FloatingCadToolContract.REOPEN=="TOOLS")
+    check(FloatingCadToolContract.groups==listOf("CAD","VIEW","PHOTO","CORNER","EDIT","FILE"))
+    check(FloatingCadToolContract.panelWidthDp(360)==336)
+    check(FloatingCadToolContract.panelWidthDp(540)==360)
+    check(FloatingCadToolContract.panelWidthDp(1280)==430)
+    check(FloatingCadToolContract.overlayPreservesWorkspace(true))
+    check(FloatingCadToolContract.overlayPreservesWorkspace(false))
+    println("✓ CAD_FLOATING_TOOL_GATE_PASS OVERLAY BACK CLOSE REOPEN WORKSPACE_PRESERVED")
 }

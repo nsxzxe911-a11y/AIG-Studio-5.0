@@ -718,3 +718,23 @@ object WorkstationChromeContract {
     fun requiredSections():Set<String> =
         setOf("BRAND","WORKSPACE","STATUS","FUNCTIONS")
 }
+
+
+object FloatingCadToolContract {
+    const val TITLE = "CAD TOOL DECK"
+    const val BACK = "BACK"
+    const val CLOSE = "CLOSE"
+    const val REOPEN = "TOOLS"
+    val groups = listOf("CAD","VIEW","PHOTO","CORNER","EDIT","FILE")
+
+    fun panelWidthDp(screenWidthDp:Int):Int {
+        require(screenWidthDp>0)
+        return when {
+            screenWidthDp < 420 -> (screenWidthDp-24).coerceAtLeast(280)
+            screenWidthDp < 700 -> 360
+            else -> 430
+        }
+    }
+
+    fun overlayPreservesWorkspace(panelVisible:Boolean):Boolean = true
+}
