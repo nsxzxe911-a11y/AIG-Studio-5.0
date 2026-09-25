@@ -1,0 +1,26 @@
+{
+  "schema": "aig-ui-approved-visual-target-v1",
+  "approval": "USER_APPROVED_VISUAL_TARGET",
+  "provenance_note": "AI-generated restoration target approved by user; not claimed as recovered original-source binary.",
+  "assets": [
+    {
+      "id": "AIG_CNC_CAM_RGB_BILINGUAL_MOBILE_APPROVED",
+      "library_path": "/AIG/UI_APPROVED/AIG_CNC_CAM_RGB_BILINGUAL_MOBILE_APPROVED.png",
+      "sha256": "203d24c884b23cf07a1e654349d8896965c273056bb73fbec1c3f2fe8c826d56",
+      "role": "mobile_cam_rgb_bilingual_ergonomic_target"
+    },
+    {
+      "id": "AIG_II_CAM_RGB_BILINGUAL_DESKTOP_APPROVED",
+      "library_path": "/AIG/UI_APPROVED/AIG_II_CAM_RGB_BILINGUAL_DESKTOP_APPROVED.png",
+      "sha256": "20c8c5a47bbb2a4c1ce1eec948ca32acbfdcd9016ab4551720eda7cc160c80b6",
+      "role": "desktop_cam_rgb_bilingual_ergonomic_target"
+    }
+  ],
+  "layout_policy": {
+    "same_page": ["3D","3AX","4AX","5AX","NC_EDIT"],
+    "editable_gcode": true,
+    "rgb_image_buttons": ["CAD","CAM","3D","3AX","4AX","5AX","NC_EDIT"],
+    "ai_auto_arrange": true,
+    "mobile_and_desktop_separate_density": true
+  }
+}

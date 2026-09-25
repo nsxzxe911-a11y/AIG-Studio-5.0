@@ -823,3 +823,85 @@ object CamWorkstationContract {
 
     fun runtimeBindingPolicy():String = "LIVE_CAM_STATE_ONLY"
 }
+
+
+data class RgbImageButtonSpec(
+    val id:String,
+    val zh:String,
+    val en:String,
+    val imageKey:String,
+    val priority:Int,
+    val safetyCritical:Boolean=false
+)
+
+data class UnifiedWorkspacePlan(
+    val layout:String,
+    val ncDock:String,
+    val visualWeight:Int,
+    val ncWeight:Int,
+    val buttonColumns:Int,
+    val keepNcVisible:Boolean
+)
+
+object UnifiedMachiningWorkspaceContract {
+    const val IMAGE_BUTTON_POLICY = "RGB_IMAGE_ICON_TEXT"
+    const val AI_LAYOUT_POLICY = "ERGONOMIC_PRIORITY_REACHABILITY"
+    const val NC_BINDING_POLICY = "EDITABLE_GCODE_SAME_PAGE"
+
+    val samePageModes = listOf("3D","3AX","4AX","5AX","NC_EDIT")
+
+    val imageButtons = listOf(
+        RgbImageButtonSpec("CAD","2D繪圖","2D CAD","rgb_cad",100),
+        RgbImageButtonSpec("CAM","刀路","CAM","rgb_cam",100),
+        RgbImageButtonSpec("3D","3D模擬","3D","rgb_3d",95),
+        RgbImageButtonSpec("3AX","三軸","3 AXIS","rgb_3axis",92),
+        RgbImageButtonSpec("4AX","四軸","4 AXIS","rgb_4axis",91),
+        RgbImageButtonSpec("5AX","五軸","5 AXIS","rgb_5axis",90),
+        RgbImageButtonSpec("NC_EDIT","程式","NC EDIT","rgb_nc",98,true)
+    )
+
+    fun plan(widthDp:Int,heightDp:Int):UnifiedWorkspacePlan {
+        require(widthDp>0 && heightDp>0)
+        return when {
+            widthDp>=1180 -> UnifiedWorkspacePlan("DESKTOP_WIDE","RIGHT",68,32,7,true)
+            widthDp>heightDp -> UnifiedWorkspacePlan("MOBILE_LANDSCAPE","RIGHT",64,36,5,true)
+            else -> UnifiedWorkspacePlan("MOBILE_PORTRAIT","BOTTOM",62,38,3,true)
+        }
+    }
+
+    fun bilingualLabel(id:String):String {
+        val b=imageButtons.first { it.id==id }
+        return b.zh+"\n"+b.en
+    }
+
+    fun adaptiveTextSp(id:String,widthDp:Int):Double {
+        require(widthDp>0)
+        val label=bilingualLabel(id).replace("\n"," / ")
+        val base=when {
+            widthDp<400 -> 11.0
+            widthDp<840 -> 12.0
+            else -> 13.0
+        }
+        return when {
+            label.length>=18 -> base-2.0
+            label.length>=12 -> base-1.0
+            else -> base
+        }.coerceAtLeast(9.0)
+    }
+
+    fun aiArrange(widthDp:Int,heightDp:Int,usage:Map<String,Int> = emptyMap()):List<RgbImageButtonSpec> {
+        val p=plan(widthDp,heightDp)
+        return imageButtons.sortedWith(
+            compareByDescending<RgbImageButtonSpec> { it.priority + (usage[it.id] ?: 0).coerceIn(0,20) }
+                .thenByDescending { it.safetyCritical }
+                .thenBy { it.id }
+        ).let { ordered ->
+            if(p.layout=="MOBILE_PORTRAIT") ordered
+            else ordered.sortedByDescending { it.priority + (usage[it.id] ?: 0).coerceIn(0,20) }
+        }
+    }
+
+    fun rgbImageButtonIds():Set<String> = imageButtons.map { it.id }.toSet()
+    fun ncEditorAlwaysVisible():Boolean = true
+    fun coreSamePageIntact():Boolean = samePageModes.toSet()==setOf("3D","3AX","4AX","5AX","NC_EDIT")
+}

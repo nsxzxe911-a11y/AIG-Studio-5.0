@@ -1184,6 +1184,7 @@ fun main() {
     testFloatingCadToolContract()
     testRgbGlassVisualContract()
     testCamWorkstationContract()
+    testUnifiedMachiningWorkspaceContract()
     println("ALL TESTS PASSED")
 }
 
@@ -1878,4 +1879,36 @@ private fun testCamWorkstationContract() {
 
     check(CamWorkstationContract.runtimeBindingPolicy()=="LIVE_CAM_STATE_ONLY")
     println("✓ CAM_RUNTIME_NO_FAKE_GATE_PASS LIVE_CAM_STATE_ONLY REBUILD STALE OFFSET TOOLPATH")
+}
+
+
+private fun testUnifiedMachiningWorkspaceContract() {
+    check(UnifiedMachiningWorkspaceContract.NC_BINDING_POLICY=="EDITABLE_GCODE_SAME_PAGE")
+    check(UnifiedMachiningWorkspaceContract.coreSamePageIntact())
+    check(UnifiedMachiningWorkspaceContract.ncEditorAlwaysVisible())
+    println("✓ UNIFIED_3D_AXIS_NC_WORKSPACE_GATE_PASS 3D 3AX 4AX 5AX EDITABLE_GCODE SAME_PAGE")
+
+    val ids=UnifiedMachiningWorkspaceContract.rgbImageButtonIds()
+    check(ids.containsAll(setOf("CAD","CAM","3D","3AX","4AX","5AX","NC_EDIT")))
+    check(UnifiedMachiningWorkspaceContract.IMAGE_BUTTON_POLICY=="RGB_IMAGE_ICON_TEXT")
+    check(UnifiedMachiningWorkspaceContract.bilingualLabel("CAD").contains("2D繪圖"))
+    check(UnifiedMachiningWorkspaceContract.bilingualLabel("CAD").contains("2D CAD"))
+    check(UnifiedMachiningWorkspaceContract.bilingualLabel("CAM").contains("刀路"))
+    check(UnifiedMachiningWorkspaceContract.bilingualLabel("CAM").contains("CAM"))
+    println("✓ RGB_IMAGE_BUTTON_GATE_PASS CAD CAM 3D 3AX 4AX 5AX NC BILINGUAL")
+
+    val portrait=UnifiedMachiningWorkspaceContract.plan(390,844)
+    val landscape=UnifiedMachiningWorkspaceContract.plan(844,390)
+    val desktop=UnifiedMachiningWorkspaceContract.plan(1440,900)
+    check(portrait.layout=="MOBILE_PORTRAIT" && portrait.ncDock=="BOTTOM" && portrait.keepNcVisible)
+    check(landscape.layout=="MOBILE_LANDSCAPE" && landscape.ncDock=="RIGHT" && landscape.keepNcVisible)
+    check(desktop.layout=="DESKTOP_WIDE" && desktop.ncDock=="RIGHT" && desktop.keepNcVisible)
+    check(portrait.buttonColumns==3 && desktop.buttonColumns==7)
+    println("✓ AI_ERGONOMIC_LAYOUT_GATE_PASS MOBILE_PORTRAIT MOBILE_LANDSCAPE DESKTOP_WIDE NC_ALWAYS_VISIBLE")
+
+    val arranged=UnifiedMachiningWorkspaceContract.aiArrange(390,844,mapOf("5AX" to 20))
+    check(arranged.map{it.id}.toSet()==ids)
+    check(arranged.first().id in setOf("CAD","CAM","5AX","NC_EDIT"))
+    check(UnifiedMachiningWorkspaceContract.adaptiveTextSp("NC_EDIT",360)>=9.0)
+    println("✓ BILINGUAL_ADAPTIVE_UI_GATE_PASS ZH_EN FONT_AUTOSIZE RGB_IMAGE_BUTTONS")
 }
