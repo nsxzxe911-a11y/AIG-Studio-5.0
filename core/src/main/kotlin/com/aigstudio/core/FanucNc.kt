@@ -606,6 +606,44 @@ object NcRuntimeInterlock {
                     )
                 }
 
+            val singletonAddresses = setOf('I','J','K','R','Q','F','S','T','H','P','D')
+            words.filter { it.first in singletonAddresses }
+                .groupingBy { it.first }
+                .eachCount()
+                .filterValues { it > 1 }
+                .forEach { (address, count) ->
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,
+                        "DUPLICATE_ADDRESS_" + address,
+                        "Address " + address + " appears " + count + " times in one block; execution is fail-closed."
+                    )
+                }
+
+            val gValues = words.filter { it.first == 'G' }.map { it.second }
+            fun hasG(value: Double): Boolean = gValues.any { kotlin.math.abs(it - value) <= 1e-9 }
+            fun conflict(group: String, values: List<Double>) {
+                val active = values.filter { hasG(it) }
+                if (active.size > 1) {
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,
+                        "CONFLICTING_MODAL_GROUP_" + group,
+                        "Conflicting modal G codes in group " + group + ": " +
+                            active.joinToString(",") { "G" + it.toString().removeSuffix(".0") }
+                    )
+                }
+            }
+            conflict("PROGRAM_MODE", listOf(90.0,91.0))
+            conflict("UNITS", listOf(20.0,21.0))
+            conflict("FEED_MODE", listOf(93.0,94.0,95.0))
+            conflict("PLANE", listOf(17.0,18.0,19.0))
+            conflict("CUTTER_COMP", listOf(40.0,41.0,42.0))
+            conflict("TOOL_LENGTH", listOf(43.0,49.0))
+            conflict("WORK_OFFSET", listOf(54.0,55.0,56.0,57.0,58.0,59.0))
+            conflict("FIXED_CYCLE", listOf(80.0,81.0,82.0,83.0,84.0,85.0,86.0,87.0,88.0,89.0))
+            conflict("CYCLE_RETURN", listOf(98.0,99.0))
+            conflict("PATH_CONTROL", listOf(61.0,64.0))
+            conflict("SPINDLE_SPEED_MODE", listOf(96.0,97.0))
+
             words.filter { it.first == 'G' }.forEach { (_, value) ->
                 when {
                     kotlin.math.abs(value - 90.0) <= 1e-9 -> absolute = true
@@ -971,7 +1009,7 @@ object NcModalTracker {
     fun codes(program: String): List<Pair<Int,String>> {
         val out = mutableListOf<Pair<Int,String>>()
         program.lineSequence().forEachIndexed { index, raw ->
-            val line = raw.substringBefore('(').substringBefore(';')
+            val line = raw.replace(Regex("""\([^)]*\)"""), " ").substringBefore(';')
             gCode.findAll(line).forEach { match ->
                 out += (index + 1) to normalizeCode(match.groupValues[1])
             }
@@ -983,7 +1021,7 @@ object NcModalTracker {
         var state = NcModalState()
         val events = mutableListOf<NcModalEvent>()
         program.lineSequence().forEachIndexed { index, raw ->
-            val line = raw.substringBefore('(').substringBefore(';')
+            val line = raw.replace(Regex("""\([^)]*\)"""), " ").substringBefore(';')
             gCode.findAll(line).forEach { match ->
                 val code = normalizeCode(match.groupValues[1])
                 val group: String?
@@ -1078,7 +1116,7 @@ object NcAuxiliaryTracker {
     fun codes(program: String): List<Pair<Int,String>> {
         val out = mutableListOf<Pair<Int,String>>()
         program.lineSequence().forEachIndexed { index, raw ->
-            val line = raw.substringBefore('(').substringBefore(';')
+            val line = raw.replace(Regex("""\([^)]*\)"""), " ").substringBefore(';')
             mCode.findAll(line).forEach { match ->
                 out += (index + 1) to ("M" + match.groupValues[1].toInt())
             }
