@@ -207,6 +207,41 @@ object NcCodeCatalog {
     }
 
     fun layerOf(code: String): String = describe(code).layer
+
+    fun codesInLine(line: String): List<String> =
+        (NcModalTracker.codes(line) + NcAuxiliaryTracker.codes(line))
+            .sortedBy { it.first }
+            .map { it.second }
+            .distinct()
+
+    fun lineHelp(program: String, lineNumber: Int): String {
+        val lines = program.split("\n")
+        if (lineNumber !in 1..lines.size) return "LINE " + lineNumber + " • OUT OF RANGE"
+        val raw = lines[lineNumber - 1]
+        val codes = codesInLine(raw)
+        val decoded = if (codes.isEmpty()) {
+            "NO G/M CODE"
+        } else {
+            codes.joinToString(" • ") { code ->
+                val d = describe(code)
+                d.compact() + " [" + d.layer + "] " + d.meaning
+            }
+        }
+        val blocked = NcProgramSafetyPolicy.blocking(program).filter { it.lineNumber == lineNumber }
+        val safety = if (blocked.isEmpty()) {
+            "SAFETY=PASS"
+        } else {
+            "BLOCKED=" + blocked.joinToString(",") { it.code }
+        }
+        return "L" + lineNumber + " • " + decoded + " • " + safety
+    }
+
+    fun lineNumberAt(program: String, caret: Int): Int {
+        val p = caret.coerceIn(0, program.length)
+        var line = 1
+        for (i in 0 until p) if (program[i] == '\n') line++
+        return line
+    }
 }
 
 enum class NcCoordinateMode(val code: String, val displayName: String) {
