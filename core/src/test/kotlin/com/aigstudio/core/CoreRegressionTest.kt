@@ -50,6 +50,36 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     println("✓ COORDINATE_USAGE_GUIDE_PASS G90/G91/G92 use cases locked")
 }
 
+
+private fun testNcModalTracker() {
+    val program = """
+        G90 G54 G17 G40 G49
+        G91
+        G92 X0 Y0
+        G41 D1
+        G43 H1
+        G18
+        G42
+        G49
+    """.trimIndent()
+    val events = NcModalTracker.trace(program)
+    check(events.map { it.code } == listOf("G90","G54","G17","G40","G49","G91","G92","G41","G43","G18","G42","G49"))
+    check(events.first { it.code=="G91" }.group=="PROGRAM_MODE")
+    check(events.first { it.code=="G92" }.group=="TEMP_ORIGIN")
+    check(events.first { it.code=="G41" }.group=="CUTTER_COMP")
+    check(events.first { it.code=="G43" }.group=="TOOL_LENGTH")
+    check(events.first { it.code=="G18" }.group=="PLANE")
+    val final = NcModalTracker.finalState(program)
+    check(final.coordinateMode=="G91")
+    check(final.workOffset=="G54")
+    check(final.temporaryOriginActive)
+    check(final.cutterCompensation=="G42")
+    check(final.toolLengthCompensation=="G49")
+    check(final.plane=="G18")
+    check(NcModalTracker.evidence(program)=="PROGRAM=G91|WORK_OFFSET=G54|G92=ACTIVE|CUTTER_COMP=G42|TOOL_LENGTH=G49|PLANE=G18")
+    println("✓ NC_MODAL_TRACKER_PASS G90/G91 G54-G59 G92 G40-G42 G43/G49 G17-G19")
+}
+
 private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
     assertNear(actual.x, expected.x, msg = "$msg x")
     assertNear(actual.y, expected.y, msg = "$msg y")
@@ -58,6 +88,7 @@ private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
 fun main() {
     println("AIG Studio core regression tests")
     testSoftwareAbsoluteCoordinateContract()
+    testNcModalTracker()
     testDeleteDoesNotInventTriangle()
     testUndoRedo()
     testChamferC5()
