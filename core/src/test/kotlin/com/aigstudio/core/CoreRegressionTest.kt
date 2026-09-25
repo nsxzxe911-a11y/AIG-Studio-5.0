@@ -128,6 +128,27 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check("M99=SUB-RET" in codeLegend)
     println("✓ NC_CODE_CATALOG_PASS G/M aliases locked")
 
+    val lineProgram = """
+        G21 G94 G97
+        G90 G54 G43 H1 M8
+        G92 X0 Y0
+        G777.7 X1.000
+    """.trimIndent()
+    val line2 = NcCodeCatalog.lineHelp(lineProgram,2)
+    check("G90=ABS [PROGRAM_MODE]" in line2)
+    check("G54=WCS [WORK_OFFSET]" in line2)
+    check("G43=TLEN [TOOL_LENGTH]" in line2)
+    check("M8=COOL-ON [COOLANT]" in line2)
+    check("SAFETY=PASS" in line2)
+    val line3 = NcCodeCatalog.lineHelp(lineProgram,3)
+    check("G92=TEMP-ORG [COORD_XFORM]" in line3)
+    check("BLOCKED=G92_ORIGIN_UNVERIFIED" in line3)
+    val line4 = NcCodeCatalog.lineHelp(lineProgram,4)
+    check("G777.7=UNKNOWN [UNKNOWN]" in line4)
+    check("UNKNOWN_GCODE_FAIL_CLOSED" in line4)
+    check(NcCodeCatalog.lineNumberAt(lineProgram,lineProgram.indexOf("G92"))==3)
+    println("✓ NC_LINE_HELP_PASS cursor-line alias/layer/meaning/safety")
+
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
         "COOLANT=M7_M8_M9_EXECUTION_LAYER",
