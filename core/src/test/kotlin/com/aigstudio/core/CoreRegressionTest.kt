@@ -31,10 +31,17 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check(SoftwareCoordinateContract.coordinateResponsibilityLayers() == listOf(
         "GEOMETRY=CANONICAL_ABS_XYZ",
         "PROGRAM_MODE=G90_OR_G91_REPRESENTATION",
+        "UNITS=G20_G21_INTERPRETATION_LAYER",
+        "FEED_MODE=G93_G94_G95_EXECUTION_LAYER",
         "WORK_OFFSET=G54_G59_NC_EXECUTION_LAYER",
+        "MACHINE_COORD=G53_NONMODAL_EXECUTION_LAYER",
         "TEMP_ORIGIN=G92_NC_TRANSFORM_LAYER",
+        "COORD_ROTATION=G68_G69_TRANSFORM_LAYER",
         "CUTTER_COMP=G40_G41_G42_EXPLICIT",
         "TOOL_LENGTH=G43_H_EXPLICIT",
+        "FIXED_CYCLE=G80_G89_MODAL_LAYER",
+        "CYCLE_RETURN=G98_G99_RETRACT_LAYER",
+        "PATH_CONTROL=G61_G64_MOTION_LAYER",
         "CONTROLLER=POST_PROFILE_ONLY"
     ))
     check(SoftwareCoordinateContract.coordinateUsageGuidance() == listOf(
@@ -46,38 +53,58 @@ private fun testSoftwareAbsoluteCoordinateContract() {
         "COPY_PASTE_PROGRAM_BLOCK=G90"
     ))
     println("✓ ABSOLUTE_COORDINATE_DATA_GATE_PASS G90 MASTER=X0.000/Y0.000/Z0.000 SIGNED=TRUE SIM_OFFSET_SHIFT=OFF SIM_TOLERANCE_SHIFT=OFF")
-    println("✓ COORDINATE_RESPONSIBILITY_GATE_PASS GEOMETRY/PROGRAM_MODE/WORK_OFFSET/TEMP_ORIGIN_G92/CUTTER_COMP/TOOL_LENGTH/CONTROLLER")
+    println("✓ COORDINATE_RESPONSIBILITY_GATE_PASS GEOMETRY/PROGRAM_MODE/UNITS/FEED_MODE/WORK_OFFSET/MACHINE_COORD/TEMP_ORIGIN_G92/COORD_ROTATION/CUTTER_COMP/TOOL_LENGTH/FIXED_CYCLE/CYCLE_RETURN/PATH_CONTROL/CONTROLLER")
     println("✓ COORDINATE_USAGE_GUIDE_PASS G90/G91/G92 use cases locked")
 }
 
 
 private fun testNcModalTracker() {
     val program = """
-        G90 G54 G17 G40 G49
+        G21 G94 G90 G54 G17 G40 G49 G64 G80 G98
         G91
         G92 X0 Y0
         G41 D1
         G43 H1
         G18
+        G68
+        G81 G99
+        G53 G0 Z0
         G42
         G49
+        G69 G80 G98 G61
     """.trimIndent()
     val events = NcModalTracker.trace(program)
-    check(events.map { it.code } == listOf("G90","G54","G17","G40","G49","G91","G92","G41","G43","G18","G42","G49"))
+    check(events.map { it.code } == listOf(
+        "G21","G94","G90","G54","G17","G40","G49","G64","G80","G98",
+        "G91","G92","G41","G43","G18","G68","G81","G99","G53","G42","G49","G69","G80","G98","G61"
+    ))
+    check(events.first { it.code=="G21" }.group=="UNITS")
+    check(events.first { it.code=="G94" }.group=="FEED_MODE")
     check(events.first { it.code=="G91" }.group=="PROGRAM_MODE")
     check(events.first { it.code=="G92" }.group=="TEMP_ORIGIN")
     check(events.first { it.code=="G41" }.group=="CUTTER_COMP")
     check(events.first { it.code=="G43" }.group=="TOOL_LENGTH")
     check(events.first { it.code=="G18" }.group=="PLANE")
+    check(events.first { it.code=="G68" }.group=="COORD_ROTATION")
+    check(events.first { it.code=="G81" }.group=="FIXED_CYCLE")
+    check(events.first { it.code=="G99" }.group=="CYCLE_RETURN")
+    check(events.first { it.code=="G53" }.group=="MACHINE_COORD_NONMODAL")
+    check(events.first { it.code=="G61" }.group=="PATH_CONTROL")
     val final = NcModalTracker.finalState(program)
     check(final.coordinateMode=="G91")
     check(final.workOffset=="G54")
     check(final.temporaryOriginActive)
+    check(final.units=="G21")
+    check(final.feedMode=="G94")
     check(final.cutterCompensation=="G42")
     check(final.toolLengthCompensation=="G49")
     check(final.plane=="G18")
-    check(NcModalTracker.evidence(program)=="PROGRAM=G91|WORK_OFFSET=G54|G92=ACTIVE|CUTTER_COMP=G42|TOOL_LENGTH=G49|PLANE=G18")
-    println("✓ NC_MODAL_TRACKER_PASS G90/G91 G54-G59 G92 G40-G42 G43/G49 G17-G19")
+    check(final.coordinateRotation=="G69")
+    check(final.fixedCycle=="G80")
+    check(final.cycleReturn=="G98")
+    check(final.pathControl=="G61")
+    check(NcModalTracker.evidence(program)=="PROGRAM=G91|WORK_OFFSET=G54|G92=ACTIVE|UNITS=G21|FEED_MODE=G94|CUTTER_COMP=G42|TOOL_LENGTH=G49|PLANE=G18|ROTATION=G69|CYCLE=G80|RETURN=G98|PATH=G61")
+    println("✓ NC_MODAL_TRACKER_PASS G90/G91 G20/G21 G93/G94/G95 G53 G54-G59 G92 G68/G69 G40-G42 G43/G49 G17-G19 G80-G89 G98/G99 G61/G64")
 }
 
 private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
@@ -467,6 +494,8 @@ private fun testControllerProfilesDoNotShiftAbsoluteCoordinates() {
     check(before == after)
     check("(CONTROLLER FANUC)" in fanuc)
     check("(CONTROLLER MITSUBISHI M800/M80)" in mitsubishi)
+    check("G21 G94" in fanuc)
+    check("G21 G94" in mitsubishi)
     check("G90 G54 G17 G40 G49 G80" in fanuc)
     check("G90 G54 G17 G40 G49 G80" in mitsubishi)
     before.forEachIndexed { index,p ->
