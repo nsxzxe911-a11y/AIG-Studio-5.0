@@ -1055,8 +1055,8 @@ class MainActivity : Activity() {
             }
         val stock = Stock3D.fromSnapshot(snapshot, stockMarginMm, stockThicknessMm)
         val risk = MachiningRiskScanner.inspect(cam, stock)
-        val editor = EditText(this).apply {
-            val baseNc = CncPost.generate(
+        val baseNc = runCatching {
+            CncPost.generate(
                 cam,
                 FanucPostSettings(
                     workOffset = workOffset,
@@ -1067,7 +1067,22 @@ class MainActivity : Activity() {
                     cutterCompensation = ncCutterCompensation
                 )
             )
-            setText(if (drillCycleBlock.isBlank()) baseNc else FanucNc.insertBeforeProgramEnd(baseNc, drillCycleBlock))
+        }.getOrElse { error ->
+            Toast.makeText(
+                this,
+                "NC POST BLOCKED • CAD/CAM/SIM ABS XYZ不變 • " + (error.message ?: "unsupported post mode"),
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+        val ncProgram = if (drillCycleBlock.isBlank()) baseNc else
+            runCatching { FanucNc.insertBeforeProgramEnd(baseNc, drillCycleBlock) }
+                .getOrElse { error ->
+                    Toast.makeText(this,"NC INSERT BLOCKED: "+(error.message?:"invalid block"),Toast.LENGTH_LONG).show()
+                    return
+                }
+        val editor = EditText(this).apply {
+            setText(ncProgram)
             setTextColor(Color.rgb(225,240,255))
             setBackgroundColor(Color.rgb(5,12,20))
             textSize = 13f
