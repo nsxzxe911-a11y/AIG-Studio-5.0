@@ -472,6 +472,167 @@ data class NcExecutionEvent(
             if (reasons.isEmpty()) "" else "{" + reasons.joinToString(",") + "}"
 }
 
+
+data class NcAxisTravelRange(val min: Double, val max: Double) {
+    init {
+        require(min.isFinite() && max.isFinite() && min < max)
+    }
+    fun contains(value: Double): Boolean = value.isFinite() && value >= min && value <= max
+    fun compact(): String = "[" + min + "," + max + "]"
+}
+
+data class NcMachineTravelLimits(
+    val x: NcAxisTravelRange? = null,
+    val y: NcAxisTravelRange? = null,
+    val z: NcAxisTravelRange? = null,
+    val a: NcAxisTravelRange? = NcAxisTravelRange(-360.0, 360.0),
+    val b: NcAxisTravelRange? = NcAxisTravelRange(-360.0, 360.0)
+) {
+    fun rangeFor(axis: Char): NcAxisTravelRange? = when (axis.uppercaseChar()) {
+        'X' -> x
+        'Y' -> y
+        'Z' -> z
+        'A' -> a
+        'B' -> b
+        else -> null
+    }
+
+    companion object {
+        fun verified(
+            xMin: Double, xMax: Double,
+            yMin: Double, yMax: Double,
+            zMin: Double, zMax: Double,
+            aMin: Double = -360.0, aMax: Double = 360.0,
+            bMin: Double = -360.0, bMax: Double = 360.0
+        ): NcMachineTravelLimits = NcMachineTravelLimits(
+            x = NcAxisTravelRange(xMin, xMax),
+            y = NcAxisTravelRange(yMin, yMax),
+            z = NcAxisTravelRange(zMin, zMax),
+            a = NcAxisTravelRange(aMin, aMax),
+            b = NcAxisTravelRange(bMin, bMax)
+        )
+    }
+}
+
+data class NcRuntimeInterlockFinding(
+    val lineNumber: Int,
+    val code: String,
+    val message: String
+)
+
+object NcRuntimeInterlock {
+    private val numericWord = Regex("""(?i)([A-Z])\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))(?=\s|[A-Z]|$)""")
+    private val recognizedAddresses = setOf(
+        'G','M','N','O','X','Y','Z','A','B','I','J','K','R','Q','F','S','T','H','P','D'
+    )
+    private val axisAddresses = setOf('X','Y','Z','A','B')
+
+    private fun cleanLine(raw: String): String =
+        raw.replace(Regex("""\([^)]*\)"""), " ")
+            .substringBefore(';')
+            .trim()
+            .uppercase()
+
+    fun findings(
+        program: String,
+        limits: NcMachineTravelLimits = NcMachineTravelLimits()
+    ): List<NcRuntimeInterlockFinding> {
+        val findings = mutableListOf<NcRuntimeInterlockFinding>()
+        val current = mutableMapOf('X' to 0.0, 'Y' to 0.0, 'Z' to 0.0, 'A' to 0.0, 'B' to 0.0)
+        var absolute = true
+
+        program.split("\n").forEachIndexed { index, raw ->
+            val lineNumber = index + 1
+            val line = cleanLine(raw)
+            if (line.isBlank() || line == "%") return@forEachIndexed
+
+            if ('#' in line || '[' in line || ']' in line) {
+                findings += NcRuntimeInterlockFinding(
+                    lineNumber,
+                    "UNRESOLVED_NUMERIC_EXPRESSION",
+                    "Macro/expression numeric input is not resolved by the deterministic runtime interlock."
+                )
+            }
+
+            val matches = numericWord.findAll(line).toList()
+            val covered = BooleanArray(line.length)
+            matches.forEach { m ->
+                for (i in m.range) if (i in covered.indices) covered[i] = true
+            }
+
+            line.forEachIndexed { charIndex, ch ->
+                if (ch.isLetter() && !covered[charIndex]) {
+                    val address = ch.uppercaseChar()
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,
+                        if (address in recognizedAddresses) "MALFORMED_NUMERIC_WORD_" + address
+                        else "UNSUPPORTED_NC_ADDRESS_" + address,
+                        if (address in recognizedAddresses)
+                            "Address " + address + " requires a finite numeric value."
+                        else "Address " + address + " is not supported by the current AIG NC execution model."
+                    )
+                }
+            }
+
+            val words = matches.mapNotNull { m ->
+                val address = m.groupValues[1].uppercase()[0]
+                val value = m.groupValues[2].toDoubleOrNull()
+                if (value == null || !value.isFinite()) {
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,
+                        "NON_FINITE_NUMERIC_WORD_" + address,
+                        "Address " + address + " must contain a finite numeric value."
+                    )
+                    null
+                } else address to value
+            }
+
+            words.filter { it.first == 'G' }.forEach { (_, value) ->
+                when {
+                    kotlin.math.abs(value - 90.0) <= 1e-9 -> absolute = true
+                    kotlin.math.abs(value - 91.0) <= 1e-9 -> absolute = false
+                }
+            }
+
+            words.filter { it.first in axisAddresses }.forEach { (axis, programmed) ->
+                val previous = current.getValue(axis)
+                val target = if (absolute) programmed else previous + programmed
+                if (!target.isFinite()) {
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,
+                        "AXIS_" + axis + "_NON_FINITE_TARGET",
+                        "Axis " + axis + " target is non-finite."
+                    )
+                    return@forEach
+                }
+
+                val range = limits.rangeFor(axis)
+                if (range != null && !range.contains(target)) {
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,
+                        "AXIS_" + axis + "_TRAVEL_LIMIT_EXCEEDED",
+                        "Axis " + axis + " target " + target + " exceeds configured travel " + range.compact() + "."
+                    )
+                }
+                current[axis] = target
+            }
+        }
+
+        return findings.distinctBy { Triple(it.lineNumber, it.code, it.message) }
+    }
+
+    fun status(
+        program: String,
+        limits: NcMachineTravelLimits = NcMachineTravelLimits()
+    ): String {
+        val blocked = findings(program, limits)
+        return if (blocked.isEmpty()) "PASS"
+        else "INTERLOCK_BLOCKED:" + blocked.joinToString(",") {
+            "L" + it.lineNumber + ":" + it.code
+        }
+    }
+}
+
 object NcExecutionTimeline {
     private fun domainsFor(action: String): Set<NcExecutionDomain> = when (action) {
         "RAPID_MOVE" -> setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.MOTION_3D)
