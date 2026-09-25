@@ -73,6 +73,31 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     println("✓ ABSOLUTE_COORDINATE_DATA_GATE_PASS G90 MASTER=X0.000/Y0.000/Z0.000 SIGNED=TRUE SIM_OFFSET_SHIFT=OFF SIM_TOLERANCE_SHIFT=OFF")
     println("✓ COORDINATE_RESPONSIBILITY_GATE_PASS expanded modal/transform provenance")
     println("✓ COORDINATE_USAGE_GUIDE_PASS G90/G91/G92 use cases locked")
+
+    val capabilityProgram = "G21 G94 G97 G90 G54 G34 G43.4 G54.4 G777.7"
+    check(CncControllerCapabilityMatrix.classify(
+        CncControllerProfile.FANUC,"G90"
+    ).status == ControllerCapabilityStatus.MODELED_ALLOWED)
+    check(CncControllerCapabilityMatrix.classify(
+        CncControllerProfile.MITSUBISHI_M800_M80,"G34"
+    ).status == ControllerCapabilityStatus.MODELED_ALLOWED)
+    check(CncControllerCapabilityMatrix.classify(
+        CncControllerProfile.FANUC,"G43.4"
+    ).status == ControllerCapabilityStatus.TRACKED_REVIEW)
+    check(CncControllerCapabilityMatrix.classify(
+        CncControllerProfile.MITSUBISHI_M800_M80,"G54.4"
+    ).status == ControllerCapabilityStatus.TRACKED_REVIEW)
+    check(CncControllerCapabilityMatrix.classify(
+        CncControllerProfile.FANUC,"G777.7"
+    ).status == ControllerCapabilityStatus.UNKNOWN_FAIL_CLOSED)
+    val fanucCapability = CncControllerCapabilityMatrix.summary(CncControllerProfile.FANUC,capabilityProgram)
+    val mitsubishiCapability = CncControllerCapabilityMatrix.summary(CncControllerProfile.MITSUBISHI_M800_M80,capabilityProgram)
+    check("CTRL=FANUC" in fanucCapability)
+    check("MODELED=6" in fanucCapability)
+    check("TRACKED_REVIEW=2" in fanucCapability)
+    check("UNKNOWN_BLOCK=1" in fanucCapability)
+    check("CTRL=MITSUBISHI M800/M80" in mitsubishiCapability)
+    println("✓ CONTROLLER_CAPABILITY_MATRIX_PASS FANUC/MITSUBISHI modeled/review/unknown")
 }
 
 
