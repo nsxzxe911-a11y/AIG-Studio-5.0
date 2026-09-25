@@ -594,6 +594,18 @@ object NcRuntimeInterlock {
                 } else address to value
             }
 
+            words.filter { it.first in axisAddresses }
+                .groupingBy { it.first }
+                .eachCount()
+                .filterValues { it > 1 }
+                .forEach { (axis, count) ->
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,
+                        "DUPLICATE_AXIS_WORD_" + axis,
+                        "Axis " + axis + " appears " + count + " times in one block; execution is fail-closed."
+                    )
+                }
+
             words.filter { it.first == 'G' }.forEach { (_, value) ->
                 when {
                     kotlin.math.abs(value - 90.0) <= 1e-9 -> absolute = true
