@@ -577,7 +577,14 @@ object NcRuntimeInterlock {
             val words = matches.mapNotNull { m ->
                 val address = m.groupValues[1].uppercase()[0]
                 val value = m.groupValues[2].toDoubleOrNull()
-                if (value == null || !value.isFinite()) {
+                if (address !in recognizedAddresses) {
+                    findings += NcRuntimeInterlockFinding(
+                        lineNumber,
+                        "UNSUPPORTED_NC_ADDRESS_" + address,
+                        "Address " + address + " is not supported by the current AIG NC execution model."
+                    )
+                    null
+                } else if (value == null || !value.isFinite()) {
                     findings += NcRuntimeInterlockFinding(
                         lineNumber,
                         "NON_FINITE_NUMERIC_WORD_" + address,
