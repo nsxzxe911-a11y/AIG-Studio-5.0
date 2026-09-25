@@ -648,12 +648,27 @@ object NcExecutionTimeline {
             setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.TOOL_CHANGE)
         "PROGRAM_PAUSE","PROGRAM_END","SUBPROGRAM_CALL","SUBPROGRAM_RETURN" ->
             setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.PROGRAM_CONTROL)
+        "INTERLOCK_HALT" -> setOf(
+            NcExecutionDomain.NC_CURSOR,
+            NcExecutionDomain.MOTION_3D,
+            NcExecutionDomain.MATERIAL_REMOVAL,
+            NcExecutionDomain.AXIS_5X,
+            NcExecutionDomain.SPINDLE,
+            NcExecutionDomain.COOLANT,
+            NcExecutionDomain.TOOL_CHANGE,
+            NcExecutionDomain.PROGRAM_CONTROL
+        )
         else -> setOf(NcExecutionDomain.NC_CURSOR)
     }
 
-    fun build(program: String, controller: CncControllerProfile): List<NcExecutionEvent> {
+    fun build(
+        program: String,
+        controller: CncControllerProfile,
+        machineLimits: NcMachineTravelLimits = NcMachineTravelLimits()
+    ): List<NcExecutionEvent> {
         val lines = program.split("\n")
         val out = mutableListOf<NcExecutionEvent>()
+        val runtimeInterlocks = NcRuntimeInterlock.findings(program, machineLimits).groupBy { it.lineNumber }
         var halted = false
         var sequence = 1
 
@@ -661,13 +676,15 @@ object NcExecutionTimeline {
             val lineNumber = index + 1
             val authority = NcSemanticAuthority.resolveLine(program, lineNumber, controller)
             val codes = authority.codes
-            if (codes.isEmpty()) return@forEach
+            val runtimeReasons = runtimeInterlocks[lineNumber].orEmpty().map { it.code }.distinct()
+            val effectiveCodes = if (codes.isEmpty() && runtimeReasons.isNotEmpty()) listOf("INPUT") else codes
+            if (effectiveCodes.isEmpty()) return@forEach
 
-            val reasons = (authority.conflictCodes + authority.safetyCodes).distinct()
+            val reasons = (authority.conflictCodes + authority.safetyCodes + runtimeReasons).distinct()
             val blockedHere = reasons.isNotEmpty()
 
-            codes.forEach { code ->
-                val action = NcAnimationBridge.actionFor(code)
+            effectiveCodes.forEach { code ->
+                val action = if (code == "INPUT") "INTERLOCK_HALT" else NcAnimationBridge.actionFor(code)
                 val status = when {
                     halted -> "SKIPPED_AFTER_BLOCK"
                     blockedHere -> "BLOCKED"
@@ -693,21 +710,27 @@ object NcExecutionTimeline {
     fun lineEvents(
         program: String,
         lineNumber: Int,
-        controller: CncControllerProfile
-    ): List<NcExecutionEvent> = build(program, controller).filter { it.lineNumber == lineNumber }
+        controller: CncControllerProfile,
+        machineLimits: NcMachineTravelLimits = NcMachineTravelLimits()
+    ): List<NcExecutionEvent> = build(program, controller, machineLimits).filter { it.lineNumber == lineNumber }
 
     fun lineEvidence(
         program: String,
         lineNumber: Int,
-        controller: CncControllerProfile
+        controller: CncControllerProfile,
+        machineLimits: NcMachineTravelLimits = NcMachineTravelLimits()
     ): String {
-        val events = lineEvents(program, lineNumber, controller)
+        val events = lineEvents(program, lineNumber, controller, machineLimits)
         if (events.isEmpty()) return "TIMELINE L" + lineNumber + " • NO EVENT"
         return "TIMELINE L" + lineNumber + " • " + events.joinToString(" | ") { it.compact() }
     }
 
-    fun programSummary(program: String, controller: CncControllerProfile): String {
-        val events = build(program, controller)
+    fun programSummary(
+        program: String,
+        controller: CncControllerProfile,
+        machineLimits: NcMachineTravelLimits = NcMachineTravelLimits()
+    ): String {
+        val events = build(program, controller, machineLimits)
         val blocked = events.firstOrNull { it.status == "BLOCKED" }
         if (blocked != null) {
             val skipped = events.count { it.status == "SKIPPED_AFTER_BLOCK" }
