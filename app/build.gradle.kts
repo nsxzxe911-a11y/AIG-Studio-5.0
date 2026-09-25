@@ -17,6 +17,7 @@ val androidTargetSdk = 37
 android {
     namespace = "com.aigstudio.app"
     compileSdk = androidCompileSdk
+    buildToolsVersion = "37.0.0"
     defaultConfig {
         applicationId = "com.aigstudio.app"
         minSdk = 26
