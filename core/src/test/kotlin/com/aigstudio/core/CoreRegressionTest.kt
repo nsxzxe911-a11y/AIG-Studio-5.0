@@ -165,7 +165,17 @@ private fun testNcModalTracker() {
         "WORK_COORD_PRESET_UNVERIFIED",
         "G96_CSS_UNVERIFIED"
     ).all { it in blockedCodes })
-    println("✓ NC_MODAL_TRACKER_PASS integer/decimal G-code provenance + modal safety")
+    val unknown = """
+        G21 G94 G97 G90 G54 G17 G40 G49
+        G777.7 X1.000
+    """.trimIndent()
+    check(NcModalSafetyPolicy.blocking(unknown).any {
+        it.code=="UNKNOWN_GCODE_FAIL_CLOSED" && it.lineNumber==2
+    })
+    check(NcModalSafetyPolicy.blocking(
+        "G21 G94 G97 G90 G54 G17 G40 G49\nG34 X0.000 Y0.000 Z-1.000 K4 F100.000"
+    ).none { it.code=="UNKNOWN_GCODE_FAIL_CLOSED" })
+    println("✓ NC_MODAL_TRACKER_PASS integer/decimal provenance + unknown G-code fail-closed")
 }
 
 private fun testCannedCycleReturnMode() {
