@@ -75,6 +75,15 @@ object SoftwareCoordinateContract {
         "NONMODAL_TIMING=G04_G09_EXECUTION_LAYER",
         "CONTROLLER=POST_PROFILE_ONLY"
     )
+    fun machineAuxiliaryResponsibilityLayers(): List<String> = listOf(
+        "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
+        "COOLANT=M7_M8_M9_EXECUTION_LAYER",
+        "TOOL_CHANGE=M6_NONMODAL_LAYER",
+        "SPINDLE_ORIENT=M19_CONTROLLER_LAYER",
+        "PROGRAM_STOP=M0_M1_CONTROL_LAYER",
+        "SUBPROGRAM=M98_M99_CALL_RETURN_LAYER",
+        "PROGRAM_END=M2_M30_CONTROL_LAYER"
+    )
     fun coordinateUsageGuidance(): List<String> = listOf(
         "GENERAL_MACHINING=G90",
         "REPEATED_POCKET_PATTERN=G91",
