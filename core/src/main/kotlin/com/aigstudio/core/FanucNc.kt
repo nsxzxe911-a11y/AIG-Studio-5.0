@@ -1510,6 +1510,11 @@ object NcGeneratedProcessGate {
                 } else {
                     toolLengthActive=true
                 }
+                if (!hasG(0.0)) {
+                    findings += NcProcessSafetyFinding(
+                        lineNumber,"G43_WITHOUT_G0_APPROACH","Generated AIG G43/H approach must explicitly use G0."
+                    )
+                }
             }
 
             if (m.any { it==3 || it==4 }) spindleRunning=true
@@ -1537,6 +1542,21 @@ object NcGeneratedProcessGate {
 
             val zWord=words.lastOrNull { it.first=='Z' }?.second
             val targetZ=zWord?.let { if(absolute) it else currentZ+it }
+
+            val rotaryMove = words.any { it.first=='A' || it.first=='B' }
+            if (rotaryMove) {
+                val zForRotary = targetZ ?: currentZ
+                if (zForRotary + 1e-9 < safeZ) {
+                    findings += NcProcessSafetyFinding(
+                        lineNumber,"ROTARY_MOVE_BELOW_SAFE_Z","Generated A/B orientation is blocked below required Safe-Z."
+                    )
+                }
+                if (spindleRunning) {
+                    findings += NcProcessSafetyFinding(
+                        lineNumber,"ROTARY_MOVE_SPINDLE_RUNNING","Generated A/B orientation must complete before spindle start."
+                    )
+                }
+            }
 
             val isRapid=hasG(0.0)
             if (isRapid && targetZ!=null && targetZ + 1e-9 < safeZ) {
