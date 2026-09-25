@@ -251,6 +251,8 @@ class MainActivity : Activity() {
     private var axisB = 0.0
     private var workOffset = "G54"
     private var controllerProfile = CncControllerProfile.FANUC
+    private var ncCoordinateMode = NcCoordinateMode.ABSOLUTE_G90
+    private var ncCutterCompensation = CutterCompensationMode.CAM_GEOMETRY_G40
     private var drillCycleBlock = ""
     private var stockMarginMm = 10.0
     private var stockThicknessMm = 20.0
@@ -859,20 +861,53 @@ class MainActivity : Activity() {
 
 
     private fun showControllerDialog() {
-        val profiles = CncControllerProfile.entries
-        val labels = profiles.map { it.displayName }.toTypedArray()
-        val selected = profiles.indexOf(controllerProfile).coerceAtLeast(0)
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(8), dp(14), dp(4))
+        }
+        fun <T> spinner(values: Array<T>, label: (T) -> String, selected: T): Spinner =
+            Spinner(this).apply {
+                adapter = ArrayAdapter(
+                    this@MainActivity,
+                    android.R.layout.simple_spinner_dropdown_item,
+                    values.map(label)
+                )
+                setSelection(values.indexOf(selected).coerceAtLeast(0))
+                box.addView(this)
+            }
+
+        val profiles = CncControllerProfile.entries.toTypedArray()
+        val coordinates = NcCoordinateMode.entries.toTypedArray()
+        val compensations = CutterCompensationMode.entries.toTypedArray()
+        val profileSpinner = spinner(profiles,{it.displayName},controllerProfile)
+        val coordinateSpinner = spinner(coordinates,{it.displayName},ncCoordinateMode)
+        val compensationSpinner = spinner(compensations,{it.displayName},ncCutterCompensation)
+
         AlertDialog.Builder(this)
-            .setTitle("CNC CONTROL • " + controllerProfile.displayName)
-            .setSingleChoiceItems(labels, selected) { dialog, which ->
-                controllerProfile = profiles[which]
-                drillCycleBlock = ""
-                Toast.makeText(
-                    this,
-                    "CNC CONTROL " + controllerProfile.displayName + " • ABS G90 truth unchanged",
-                    Toast.LENGTH_SHORT
-                ).show()
-                dialog.dismiss()
+            .setTitle("CNC CONTROL / POST MODE")
+            .setView(box)
+            .setPositiveButton("套用") { _, _ ->
+                val profile = profiles[profileSpinner.selectedItemPosition]
+                val coordinate = coordinates[coordinateSpinner.selectedItemPosition]
+                val comp = compensations[compensationSpinner.selectedItemPosition]
+                if (comp != CutterCompensationMode.CAM_GEOMETRY_G40) {
+                    Toast.makeText(
+                        this,
+                        comp.code + " BLOCKED：目前CAM已做刀半徑幾何補償，禁止雙重補償",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    controllerProfile = profile
+                    ncCoordinateMode = coordinate
+                    ncCutterCompensation = comp
+                    drillCycleBlock = ""
+                    Toast.makeText(
+                        this,
+                        "POST " + controllerProfile.displayName + " • " + ncCoordinateMode.displayName +
+                            " • G40 CAM COMP • ABS XYZ真值不變",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
             .setNegativeButton("取消", null)
             .show()
@@ -1027,7 +1062,9 @@ class MainActivity : Activity() {
                     workOffset = workOffset,
                     axisA = axisA,
                     axisB = axisB,
-                    controller = controllerProfile
+                    controller = controllerProfile,
+                    coordinateMode = ncCoordinateMode,
+                    cutterCompensation = ncCutterCompensation
                 )
             )
             setText(if (drillCycleBlock.isBlank()) baseNc else FanucNc.insertBeforeProgramEnd(baseNc, drillCycleBlock))
