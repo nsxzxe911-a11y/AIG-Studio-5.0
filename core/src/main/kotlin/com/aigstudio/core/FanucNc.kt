@@ -1,5 +1,6 @@
 package com.aigstudio.core
 
+import kotlin.math.abs
 import java.util.Locale
 import kotlin.math.max
 
