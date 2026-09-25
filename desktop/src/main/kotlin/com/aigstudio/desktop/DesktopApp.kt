@@ -530,6 +530,7 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
         font = Font(Font.MONOSPACED, Font.PLAIN, 15)
         lineWrap = false
     }
+    val machineInterlockSession = NcMachineInterlockSession()
     val modalStatus = JLabel("MODAL • " + NcModalTracker.evidence(area.text)).apply {
         foreground = Color(255,210,90)
     }
@@ -542,15 +543,16 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     }
     fun refreshModalStatus() {
         val blocked = NcProgramSafetyPolicy.blocking(area.text)
-        modalStatus.foreground = if (blocked.isEmpty()) Color(255,210,90) else Color(255,110,110)
+        val machine = machineInterlockSession.inspect(area.text)
+        modalStatus.foreground = if (blocked.isEmpty() && machine.canExecute) Color(255,210,90) else Color(255,110,110)
         modalStatus.text = "MODAL • " + NcModalTracker.evidence(area.text) +
             " • AUX=" + NcAuxiliaryTracker.evidence(area.text) +
             " • CODE=" + NcCodeCatalog.programLegend(area.text,12) +
             " • " + CncControllerCapabilityMatrix.summary(controllerProfile, area.text) +
-            if (blocked.isEmpty()) " • SAFETY=PASS"
+            (if (blocked.isEmpty()) " • SAFETY=PASS"
             else " • BLOCKED=" + blocked.take(4).joinToString(",") {
                 (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code
-            }
+            }) + " • " + machine.evidence()
     }
     area.document.addDocumentListener(object : javax.swing.event.DocumentListener {
         override fun insertUpdate(e: javax.swing.event.DocumentEvent?) { refreshModalStatus(); refreshLineHelp() }
@@ -671,6 +673,21 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
             }
         })
     }
+    val alarmReset = GlassActionButton("ALARM RESET", Color(255,110,110)).apply {
+        addActionListener {
+            val reset = machineInterlockSession.reset()
+            if (reset.state == NcMachineInterlockState.REVALIDATE_REQUIRED) {
+                machineInterlockSession.revalidate(area.text)
+            }
+            refreshModalStatus()
+        }
+    }
+    val resume = GlassActionButton("RESUME", Color(99,255,157)).apply {
+        addActionListener {
+            machineInterlockSession.resume()
+            refreshModalStatus()
+        }
+    }
     JDialog(frame, "AIG CNC • NC EDIT • CONTROLLER", false).apply {
         layout = BorderLayout()
         add(JPanel(BorderLayout()).apply {
@@ -682,6 +699,8 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
                 add(coordinate)
                 add(origin)
                 add(compensation)
+                add(alarmReset)
+                add(resume)
             }, BorderLayout.CENTER)
             add(JPanel(GridLayout(0,1)).apply {
                 background = Color(8,18,30)
