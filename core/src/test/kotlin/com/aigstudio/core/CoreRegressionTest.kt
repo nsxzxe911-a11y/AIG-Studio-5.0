@@ -1377,6 +1377,47 @@ private fun testEnvironmentSettingsContract() {
     check(!SettingsApplyPolicy.requiresRestart("High","high"))
     check(SettingsApplyPolicy.restartReason("Balanced","High")=="3D_SIM_RENDER_QUALITY")
     println("✓ ENVIRONMENT_SETTINGS_GATE_PASS 120/60/30/Auto RGB thermal battery precision-isolated")
+
+    check(perf.targetFps(90.0,100,0,false)==90)
+    check(auto.adaptiveTargetFps(90.0,80,0,false,true)==90)
+    check(RuntimeEnvironmentSettings.normalizeFps(89)==60)
+    check(RuntimeEnvironmentSettings.normalizeFps(90)==90)
+    check(RuntimeEnvironmentSettings.normalizeFps(119)==90)
+    check(RuntimeEnvironmentSettings.normalizeFps(120)==120)
+
+    check(kotlin.math.abs(RenderFrameContract.budgetMs(120)-8.3333333333)<1e-6)
+    check(kotlin.math.abs(RenderFrameContract.budgetMs(90)-11.1111111111)<1e-6)
+    check(kotlin.math.abs(RenderFrameContract.budgetMs(60)-16.6666666667)<1e-6)
+    check(kotlin.math.abs(RenderFrameContract.budgetMs(30)-33.3333333333)<1e-6)
+    check(RenderFrameContract.displayBucket(120.0)==120)
+    check(RenderFrameContract.displayBucket(90.0)==90)
+    check(RenderFrameContract.displayBucket(60.0)==60)
+    check(RenderFrameContract.isWithinBudget(8.0,120))
+    check(!RenderFrameContract.isWithinBudget(12.0,120))
+
+    val meter120=SurfaceFpsMeter(refreshHzProvider={120.0})
+    var t120=1_000_000_000L
+    meter120.record(t120)
+    repeat(72){
+        t120 += 8_333_333L
+        meter120.record(t120)
+    }
+    check(meter120.current().fps in 118.0..122.0) { meter120.current().toString() }
+
+    val meter60=SurfaceFpsMeter(refreshHzProvider={60.0})
+    var t60=2_000_000_000L
+    meter60.record(t60)
+    repeat(36){
+        t60 += 16_666_667L
+        meter60.record(t60)
+    }
+    check(meter60.current().fps in 59.0..61.0) { meter60.current().toString() }
+
+    val dropMeter=SurfaceFpsMeter(refreshHzProvider={120.0})
+    dropMeter.record(3_000_000_000L)
+    dropMeter.record(3_025_000_000L)
+    check(dropMeter.current().droppedFrames>=2)
+    println("✓ RENDER_SURFACE_FPS_GATE_PASS 30/60/90/120 budgets + per-surface meter + drop detection")
 }
 
 private fun testAigIiPrecisionContract() {
