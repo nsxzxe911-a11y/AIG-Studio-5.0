@@ -327,6 +327,9 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check(alarmed.state == NcMachineInterlockState.ALARM_LATCHED)
     check(alarmed.feedHold && !alarmed.canExecute)
     check("AXIS_X_TRAVEL_LIMIT_EXCEEDED" in alarmed.alarmCodes)
+    check("ALARM_LATCHED" in alarmed.evidence())
+    check("FEED_HOLD=ON" in alarmed.evidence())
+    check("AXIS_X_TRAVEL_LIMIT_EXCEEDED" in alarmed.evidence())
 
     val correctedButLatched = interlockSession.inspect(correctedTravelProgram)
     check(correctedButLatched.state == NcMachineInterlockState.RESET_REQUIRED)
@@ -349,6 +352,7 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     val resumed = interlockSession.resume()
     check(resumed.state == NcMachineInterlockState.READY)
     check(resumed.canExecute && !resumed.feedHold)
+    check("READY" in resumed.evidence() && "FEED_HOLD=OFF" in resumed.evidence())
     println("✓ NC_MACHINE_ALARM_RECOVERY_PASS latched/feed-hold/reset/revalidate/resume")
 
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
