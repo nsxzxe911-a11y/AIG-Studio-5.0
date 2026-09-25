@@ -1,0 +1,24 @@
+{
+  "theme_id": "official-rgb-v1",
+  "product": "AIG CNC",
+  "role": "runtime-rgb-image-button-assets",
+  "assets": [
+    "ic_rgb_cad",
+    "ic_rgb_cam",
+    "ic_rgb_3d",
+    "ic_rgb_3ax",
+    "ic_rgb_4ax",
+    "ic_rgb_5ax",
+    "ic_rgb_nc"
+  ],
+  "bilingual": true,
+  "states": [
+    "Normal",
+    "Pressed",
+    "Selected",
+    "Disabled",
+    "Alarm"
+  ],
+  "integrity": "design/theme/official_rgb/android-drawable.sha256",
+  "provenance": "programmatic vector assets approved for runtime use; separate from recovered-original asset provenance"
+}

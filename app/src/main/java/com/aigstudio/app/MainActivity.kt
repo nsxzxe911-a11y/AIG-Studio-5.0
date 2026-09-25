@@ -1387,10 +1387,14 @@ class MainActivity : Activity() {
         var draftA=axisA
         var draftB=axisB
         fun iconFor(id:String):Int=when(id){
-            "CAD" -> android.R.drawable.ic_menu_edit
-            "CAM" -> android.R.drawable.ic_menu_manage
-            "NC_EDIT" -> android.R.drawable.ic_menu_agenda
-            else -> android.R.drawable.ic_menu_view
+            "CAD" -> R.drawable.ic_rgb_cad
+            "CAM" -> R.drawable.ic_rgb_cam
+            "3D" -> R.drawable.ic_rgb_3d
+            "3AX" -> R.drawable.ic_rgb_3ax
+            "4AX" -> R.drawable.ic_rgb_4ax
+            "5AX" -> R.drawable.ic_rgb_5ax
+            "NC_EDIT" -> R.drawable.ic_rgb_nc
+            else -> R.drawable.ic_rgb_3d
         }
         fun renderMode(mode:String){
             activeMode=mode

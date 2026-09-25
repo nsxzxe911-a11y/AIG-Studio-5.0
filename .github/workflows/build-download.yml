@@ -37,6 +37,8 @@ jobs:
       - name: Build Android APK and source package
         shell: bash
         run: |
+          sha256sum -c design/theme/official_rgb/android-drawable.sha256
+          echo 'RGB_VECTOR_ASSET_INTEGRITY=PASS'
           ./build_android_release.sh | tee release-validation.log
           grep -Fq 'RENDER_CACHE_STRESS_GATE_PASS' release-validation.log
           grep -Fq 'CAM_WORKSTATION_UI_GATE_PASS' release-validation.log
