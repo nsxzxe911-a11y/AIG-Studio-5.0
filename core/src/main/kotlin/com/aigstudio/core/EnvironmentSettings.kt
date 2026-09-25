@@ -545,3 +545,43 @@ object RenderFrameContract{
     fun displayBucket(displayHz:Double):Int =
         RuntimeEnvironmentSettings.normalizeFps(displayHz.toInt().coerceAtLeast(30))
 }
+
+
+/**
+ * Pure cache decision policy shared by the Android renderer and core regression.
+ * It never touches geometry; it only decides whether a display list must be re-recorded.
+ */
+class RenderCachePolicy {
+    private var valid=false
+    private var sceneKey=Long.MIN_VALUE
+    private var width=-1
+    private var height=-1
+
+    var recordings:Long=0
+        private set
+    var cacheHits:Long=0
+        private set
+
+    fun shouldRecord(nextSceneKey:Long,nextWidth:Int,nextHeight:Int,backendCacheValid:Boolean):Boolean {
+        require(nextWidth>0 && nextHeight>0)
+        val hit=valid && backendCacheValid &&
+            sceneKey==nextSceneKey && width==nextWidth && height==nextHeight
+        if(hit){
+            cacheHits++
+            return false
+        }
+        valid=true
+        sceneKey=nextSceneKey
+        width=nextWidth
+        height=nextHeight
+        recordings++
+        return true
+    }
+
+    fun invalidate(){ valid=false }
+
+    fun hitRate():Double {
+        val total=recordings+cacheHits
+        return if(total==0L) 0.0 else cacheHits.toDouble()/total.toDouble()
+    }
+}

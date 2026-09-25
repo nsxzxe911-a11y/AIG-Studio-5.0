@@ -1178,6 +1178,7 @@ fun main() {
     testAigIiPrecisionContract()
     testAiGapToleranceContract()
     testMicronDisplayScale()
+    testRenderCachePolicyStress()
     println("ALL TESTS PASSED")
 }
 
@@ -1747,3 +1748,27 @@ private fun testControllerCutterCompensationDoubleApplyBlocked() {
     println("✓ G41_G42_DOUBLE_COMP_BLOCK_PASS canonical CAM path preserved")
 }
 
+
+
+private fun testRenderCachePolicyStress() {
+    val cache=RenderCachePolicy()
+    check(cache.shouldRecord(0x1001L,1080,2400,false))
+    repeat(10_000) {
+        check(!cache.shouldRecord(0x1001L,1080,2400,true))
+    }
+    check(cache.recordings==1L)
+    check(cache.cacheHits==10_000L)
+    check(cache.hitRate()>0.9998)
+
+    check(cache.shouldRecord(0x1002L,1080,2400,true))
+    check(cache.recordings==2L)
+    check(cache.shouldRecord(0x1002L,2400,1080,true))
+    check(cache.recordings==3L)
+    check(cache.shouldRecord(0x1002L,2400,1080,false))
+    check(cache.recordings==4L)
+
+    cache.invalidate()
+    check(cache.shouldRecord(0x1002L,2400,1080,true))
+    check(cache.recordings==5L)
+    println("✓ RENDER_CACHE_STRESS_GATE_PASS 10000_STATIC_HITS SCENE_RESIZE_BACKEND_INVALIDATION")
+}

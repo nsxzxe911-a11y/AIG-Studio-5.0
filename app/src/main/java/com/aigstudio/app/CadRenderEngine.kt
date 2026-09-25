@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Picture
 import android.graphics.RenderNode
 import android.os.Build
+import com.aigstudio.core.RenderCachePolicy
 
 /**
  * CAD drawing engine v2.
@@ -23,11 +24,13 @@ internal class CadRenderEngine(private val nodeName: String) {
     private var pictureKey = Long.MIN_VALUE
     private var pictureWidth = -1
     private var pictureHeight = -1
+    private val nodeCachePolicy = RenderCachePolicy()
+    private val pictureCachePolicy = RenderCachePolicy()
 
-    var recordings: Long = 0
-        private set
-    var cacheHits: Long = 0
-        private set
+    val recordings: Long
+        get() = nodeCachePolicy.recordings + pictureCachePolicy.recordings
+    val cacheHits: Long
+        get() = nodeCachePolicy.cacheHits + pictureCachePolicy.cacheHits
 
     val backendName: String
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) "RenderNode" else "Picture"
@@ -47,30 +50,32 @@ internal class CadRenderEngine(private val nodeName: String) {
         if (canvas.isHardwareAccelerated && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val holder = (nodeHolder as? Api29NodeHolder)
                 ?: Api29NodeHolder(nodeName).also { nodeHolder = it }
-            val cacheValid = nodeKey == sceneKey &&
-                nodeWidth == width &&
-                nodeHeight == height &&
+            val mustRecord = nodeCachePolicy.shouldRecord(
+                sceneKey,
+                width,
+                height,
                 holder.hasDisplayList()
-            if (!cacheValid) {
+            )
+            if (mustRecord) {
                 holder.record(width, height, recordScene)
                 nodeKey = sceneKey
                 nodeWidth = width
                 nodeHeight = height
                 picture = null
                 pictureKey = Long.MIN_VALUE
-                recordings++
-            } else {
-                cacheHits++
+                pictureCachePolicy.invalidate()
             }
             holder.draw(canvas)
             return
         }
 
-        val cacheValid = pictureKey == sceneKey &&
-            pictureWidth == width &&
-            pictureHeight == height &&
+        val mustRecord = pictureCachePolicy.shouldRecord(
+            sceneKey,
+            width,
+            height,
             picture != null
-        if (!cacheValid) {
+        )
+        if (mustRecord) {
             val next = Picture()
             val recordingCanvas = next.beginRecording(width, height)
             try {
@@ -83,9 +88,7 @@ internal class CadRenderEngine(private val nodeName: String) {
             pictureWidth = width
             pictureHeight = height
             nodeKey = Long.MIN_VALUE
-            recordings++
-        } else {
-            cacheHits++
+            nodeCachePolicy.invalidate()
         }
         canvas.drawPicture(picture!!)
     }

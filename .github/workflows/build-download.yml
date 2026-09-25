@@ -1,6 +1,15 @@
 name: AIG Studio direct release validation
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'release-version.properties'
+      - 'app/**'
+      - 'core/**'
+      - 'build_android_release.sh'
+      - 'build_windows_native.ps1'
+      - '.github/workflows/build-download.yml'
   workflow_dispatch:
 
 permissions:
@@ -27,7 +36,10 @@ jobs:
           gradle-version: '9.6.0'
       - name: Build Android APK and source package
         shell: bash
-        run: ./build_android_release.sh
+        run: |
+          ./build_android_release.sh | tee release-validation.log
+          grep -Fq 'RENDER_CACHE_STRESS_GATE_PASS' release-validation.log
+          echo 'RENDER_CACHE_RELEASE_GATE=PASS'
       - name: Verify Android APK
         shell: bash
         run: |
