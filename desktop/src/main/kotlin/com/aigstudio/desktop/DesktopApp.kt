@@ -538,6 +538,7 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
         modalStatus.foreground = if (blocked.isEmpty()) Color(255,210,90) else Color(255,110,110)
         modalStatus.text = "MODAL • " + NcModalTracker.evidence(area.text) +
             " • AUX=" + NcAuxiliaryTracker.evidence(area.text) +
+            " • CODE=" + NcCodeCatalog.programLegend(area.text,12) +
             " • " + CncControllerCapabilityMatrix.summary(controllerProfile, area.text) +
             if (blocked.isEmpty()) " • SAFETY=PASS"
             else " • BLOCKED=" + blocked.take(4).joinToString(",") {
