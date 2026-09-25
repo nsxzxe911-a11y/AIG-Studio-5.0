@@ -26,7 +26,18 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check(SoftwareCoordinateContract.xyzData(50.0, 40.0, 5.0) == "X50.000 Y40.000 Z5.000")
     check(DisplayFormat.mm(-50.0) == "-50.000")
     check(DisplayFormat.mm(0.0) == "0.000")
+    check(SoftwareCoordinateContract.canonicalCoordinateTruth() ==
+        "CAD/CAM/SIM ABS G90 • MASTER X0.000 Y0.000 Z0.000")
+    check(SoftwareCoordinateContract.coordinateResponsibilityLayers() == listOf(
+        "GEOMETRY=CANONICAL_ABS_XYZ",
+        "PROGRAM_MODE=G90_OR_G91_REPRESENTATION",
+        "WORK_OFFSET=G54_G59_NC_EXECUTION_LAYER",
+        "CUTTER_COMP=G40_G41_G42_EXPLICIT",
+        "TOOL_LENGTH=G43_H_EXPLICIT",
+        "CONTROLLER=POST_PROFILE_ONLY"
+    ))
     println("✓ ABSOLUTE_COORDINATE_DATA_GATE_PASS G90 MASTER=X0.000/Y0.000/Z0.000 SIGNED=TRUE SIM_OFFSET_SHIFT=OFF SIM_TOLERANCE_SHIFT=OFF")
+    println("✓ COORDINATE_RESPONSIBILITY_GATE_PASS GEOMETRY/PROGRAM_MODE/WORK_OFFSET/CUTTER_COMP/TOOL_LENGTH/CONTROLLER")
 }
 
 private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
