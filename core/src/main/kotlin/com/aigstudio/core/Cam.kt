@@ -31,8 +31,10 @@ class CamModel private constructor(
         fun fromCad(
             revision: Long,
             snapshot: DrawingSnapshot,
-            settings: CamSettings = CamSettings()
-        ): CamModel = CamModel(revision, snapshot, settings, CamEngine.generate(snapshot, settings))
+            settings: CamSettings = CamSettings(),
+            axisA: Double = 0.0,
+            axisB: Double = 0.0
+        ): CamModel = CamModel(revision, snapshot, settings, CamEngine.generate(snapshot, settings, axisA, axisB))
     }
 }
 
@@ -44,11 +46,15 @@ sealed interface Move {
     val to: Vec2
     val z: Double
     val rapid: Boolean
+    val axisA: Double
+    val axisB: Double
 }
 
 data class Rapid(
     override val to: Vec2,
-    override val z: Double = 5.0
+    override val z: Double = 5.0,
+    override val axisA: Double = 0.0,
+    override val axisB: Double = 0.0
 ) : Move {
     override val rapid: Boolean = true
 }
@@ -56,7 +62,9 @@ data class Rapid(
 data class Feed(
     override val to: Vec2,
     val feedMmMin: Double,
-    override val z: Double = -2.0
+    override val z: Double = -2.0,
+    override val axisA: Double = 0.0,
+    override val axisB: Double = 0.0
 ) : Move {
     override val rapid: Boolean = false
 }
@@ -66,13 +74,23 @@ data class ArcFeed(
     val centerOffset: Vec2,
     val clockwise: Boolean,
     val feedMmMin: Double,
-    override val z: Double = -2.0
+    override val z: Double = -2.0,
+    override val axisA: Double = 0.0,
+    override val axisB: Double = 0.0
 ) : Move {
     override val rapid: Boolean = false
 }
 
 object CamEngine {
-    fun generate(snapshot: DrawingSnapshot, settings: CamSettings = CamSettings()): List<Toolpath> {
+    fun generate(
+        snapshot: DrawingSnapshot,
+        settings: CamSettings = CamSettings(),
+        axisA: Double = 0.0,
+        axisB: Double = 0.0
+    ): List<Toolpath> {
+        require(axisA.isFinite() && axisB.isFinite() && abs(axisA) <= 360.0 && abs(axisB) <= 360.0) {
+            "Unsafe CAM A/B orientation"
+        }
         if (snapshot.entities.isEmpty()) return emptyList()
         val radiusComp = settings.toolDiameter / 2.0
         val side = if (settings.climb) 1.0 else -1.0
@@ -186,6 +204,14 @@ object CamEngine {
                 }
             }
         }
-        return output
+        return output.map { path ->
+            Toolpath(path.moves.map { move ->
+                when (move) {
+                    is Rapid -> move.copy(axisA=axisA,axisB=axisB)
+                    is Feed -> move.copy(axisA=axisA,axisB=axisB)
+                    is ArcFeed -> move.copy(axisA=axisA,axisB=axisB)
+                }
+            })
+        }
     }
 }

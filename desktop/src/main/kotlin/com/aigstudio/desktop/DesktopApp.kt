@@ -819,10 +819,13 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     val result=Machining3DEngine.build(snapshot)
     var axisA=0.0
     var axisB=0.0
-    fun generateNc():String=CncPost.generate(
-        result.cam,
-        FanucPostSettings(axisA=axisA,axisB=axisB)
-    )
+    fun generateNc():String {
+        val orientedCam=CamModel.fromCad(0L,snapshot,result.cam.settings,axisA,axisB)
+        return CncPost.generate(
+            orientedCam,
+            FanucPostSettings(axisA=axisA,axisB=axisB)
+        )
+    }
     val editor=JTextArea(generateNc()).apply{
         background=Color(5,8,12);foreground=Color(99,255,157)
         font=Font(Font.MONOSPACED,Font.PLAIN,14);lineWrap=false;tabSize=4

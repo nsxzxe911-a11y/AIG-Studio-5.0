@@ -1063,7 +1063,7 @@ class MainActivity : Activity() {
             Toast.makeText(this, "REAL CAM BLOCKED • 請先建立 2D 幾何", Toast.LENGTH_LONG).show()
             return
         }
-        val cam = runCatching { CamModel.fromCad(System.currentTimeMillis(), snapshot, camSettings) }
+        val cam = runCatching { CamModel.fromCad(System.currentTimeMillis(), snapshot, camSettings, axisA, axisB) }
             .getOrElse {
                 Toast.makeText(this, "REAL CAM BLOCKED • " + (it.message ?: "CAM build error"), Toast.LENGTH_LONG).show()
                 return
@@ -1266,7 +1266,7 @@ class MainActivity : Activity() {
             return
         }
         val result=runCatching {
-            Machining3DEngine.build(snapshot,camSettings,Stock3D.fromSnapshot(snapshot,stockMarginMm,stockThicknessMm))
+            Machining3DEngine.build(snapshot,camSettings,Stock3D.fromSnapshot(snapshot,stockMarginMm,stockThicknessMm),axisA,axisB)
         }.getOrElse {
             Toast.makeText(this,"整合工作站 BLOCKED: "+(it.message?:"3D/CAM build error"),Toast.LENGTH_LONG).show()
             return
@@ -2008,7 +2008,7 @@ class MainActivity : Activity() {
             return
         }
 
-        runCatching { Machining3DEngine.build(snapshot, camSettings, Stock3D.fromSnapshot(snapshot, stockMarginMm, stockThicknessMm)) }
+        runCatching { Machining3DEngine.build(snapshot, camSettings, Stock3D.fromSnapshot(snapshot, stockMarginMm, stockThicknessMm), axisA, axisB) }
             .onSuccess { result ->
                 val box = LinearLayout(this).apply {
                     orientation = LinearLayout.VERTICAL

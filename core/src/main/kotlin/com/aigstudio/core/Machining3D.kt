@@ -215,9 +215,11 @@ object Machining3DEngine {
     fun build(
         snapshot: DrawingSnapshot,
         settings: CamSettings = CamSettings(),
-        stock: Stock3D = Stock3D.fromSnapshot(snapshot)
+        stock: Stock3D = Stock3D.fromSnapshot(snapshot),
+        axisA: Double = 0.0,
+        axisB: Double = 0.0
     ): Machining3DResult {
-        val cam = CamModel.fromCad(0L, snapshot, settings)
+        val cam = CamModel.fromCad(0L, snapshot, settings, axisA, axisB)
         require(cam.toolpaths.isNotEmpty()) { "CAM generated no toolpaths" }
         val removal = MaterialRemoval3D.simulate(cam.toolpaths, settings, stock)
         val mesh = SurfaceMesh3D.fromRemoval(removal)

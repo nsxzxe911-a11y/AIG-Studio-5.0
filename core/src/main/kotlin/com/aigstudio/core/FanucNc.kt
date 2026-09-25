@@ -1756,9 +1756,17 @@ object FanucNc {
         require(post.cutterCompensation == CutterCompensationMode.CAM_GEOMETRY_G40) {
             "Controller G41/G42 blocked: current CAM toolpath already includes geometric tool-radius compensation; raw contour + controller-comp simulation is required to prevent double compensation"
         }
+        val moves = cam.toolpaths.flatMap { it.moves }
+        val camHasAxisProvenance = moves.any { abs(it.axisA) > 1e-9 || abs(it.axisB) > 1e-9 }
+        fun effectiveA(move:Move):Double = if(camHasAxisProvenance) move.axisA else post.axisA
+        fun effectiveB(move:Move):Double = if(camHasAxisProvenance) move.axisB else post.axisB
         if (post.coordinateMode == NcCoordinateMode.INCREMENTAL_G91) {
-            require(cam.toolpaths.flatMap { it.moves }.none { it is ArcFeed }) {
+            require(moves.none { it is ArcFeed }) {
                 "G91 arc output blocked until controller-specific incremental arc-center semantics are validated"
+            }
+            val seed=moves.first()
+            require(moves.all { abs(effectiveA(it)-effectiveA(seed))<=EPS && abs(effectiveB(it)-effectiveB(seed))<=EPS }) {
+                "G91 varying A/B output blocked until controller-specific incremental rotary semantics are validated"
             }
         }
 
@@ -1769,28 +1777,47 @@ object FanucNc {
         out.appendLine("(CONTROLLER " + post.controller.displayName + ")")
         out.appendLine("(CANONICAL XYZ ABSOLUTE G90 • MASTER X0.000 Y0.000 Z0.000)")
         out.appendLine("(PROGRAM MODE " + post.coordinateMode.displayName + " • ORIGIN " + post.originTransformMode.displayName + " • CUTTER COMP " + post.cutterCompensation.displayName + ")")
+        out.appendLine("(MULTIAXIS TOOLPOINT A/B SOURCE " + if(camHasAxisProvenance) "CAM_TOOLPOINTS" else "POST_COMPAT_FALLBACK" + ")")
         out.appendLine("G21 G94 G97")
         out.appendLine("G90 " + post.workOffset + " G17 G40 G49 G80")
         out.appendLine("T" + post.tool)
         out.appendLine("M98 P" + post.toolChangeSubprogram)
         out.append("G0 G43 Z").append(fmt(max(s.safeZ, 30.0))).append(" H").append(post.h).appendLine()
-        if (kotlin.math.abs(post.axisA) > 1e-9 || kotlin.math.abs(post.axisB) > 1e-9) {
-            out.append("G0 A").append(fmt(post.axisA)).append(" B").append(fmt(post.axisB)).appendLine()
+        val firstMove=moves.first()
+        var lastA=effectiveA(firstMove)
+        var lastB=effectiveB(firstMove)
+        if (kotlin.math.abs(lastA) > 1e-9 || kotlin.math.abs(lastB) > 1e-9) {
+            out.append("G0 A").append(fmt(lastA)).append(" B").append(fmt(lastB)).appendLine()
         }
         out.appendLine("S" + post.spindle + " M3")
         if (post.coolant) out.appendLine("M8")
 
-        val moves = cam.toolpaths.flatMap { it.moves }
+        fun appendAxisIfChanged(move:Move) {
+            val a=effectiveA(move)
+            val b=effectiveB(move)
+            if(abs(a-lastA)>EPS || abs(b-lastB)>EPS) {
+                out.append(" A").append(fmt(a)).append(" B").append(fmt(b))
+                lastA=a
+                lastB=b
+            }
+        }
         if (post.coordinateMode == NcCoordinateMode.ABSOLUTE_G90) {
             moves.forEach { move ->
                 when (move) {
-                    is Rapid -> out.append("G0 X").append(fmt(move.to.x)).append(" Y").append(fmt(move.to.y)).append(" Z").append(fmt(move.z)).appendLine()
-                    is Feed -> out.append("G1 X").append(fmt(move.to.x)).append(" Y").append(fmt(move.to.y)).append(" Z").append(fmt(move.z))
-                        .append(" F").append(fmt(move.feedMmMin)).appendLine()
-                    is ArcFeed -> out.append(if (move.clockwise) "G2" else "G3")
-                        .append(" X").append(fmt(move.to.x)).append(" Y").append(fmt(move.to.y)).append(" Z").append(fmt(move.z))
-                        .append(" I").append(fmt(move.centerOffset.x)).append(" J").append(fmt(move.centerOffset.y))
-                        .append(" F").append(fmt(move.feedMmMin)).appendLine()
+                    is Rapid -> {
+                        out.append("G0 X").append(fmt(move.to.x)).append(" Y").append(fmt(move.to.y)).append(" Z").append(fmt(move.z))
+                        appendAxisIfChanged(move); out.appendLine()
+                    }
+                    is Feed -> {
+                        out.append("G1 X").append(fmt(move.to.x)).append(" Y").append(fmt(move.to.y)).append(" Z").append(fmt(move.z))
+                        appendAxisIfChanged(move); out.append(" F").append(fmt(move.feedMmMin)).appendLine()
+                    }
+                    is ArcFeed -> {
+                        out.append(if (move.clockwise) "G2" else "G3")
+                            .append(" X").append(fmt(move.to.x)).append(" Y").append(fmt(move.to.y)).append(" Z").append(fmt(move.z))
+                            .append(" I").append(fmt(move.centerOffset.x)).append(" J").append(fmt(move.centerOffset.y))
+                        appendAxisIfChanged(move); out.append(" F").append(fmt(move.feedMmMin)).appendLine()
+                    }
                 }
             }
         } else {

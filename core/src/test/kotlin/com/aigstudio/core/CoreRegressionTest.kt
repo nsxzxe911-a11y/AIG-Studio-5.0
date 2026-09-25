@@ -1185,6 +1185,7 @@ fun main() {
     testRgbGlassVisualContract()
     testCamWorkstationContract()
     testUnifiedMachiningWorkspaceContract()
+    testMultiAxisToolpointProvenance()
     println("ALL TESTS PASSED")
 }
 
@@ -1911,4 +1912,26 @@ private fun testUnifiedMachiningWorkspaceContract() {
     check(arranged.first().id in setOf("CAD","CAM","5AX","NC_EDIT"))
     check(UnifiedMachiningWorkspaceContract.adaptiveTextSp("NC_EDIT",360)>=9.0)
     println("✓ BILINGUAL_ADAPTIVE_UI_GATE_PASS ZH_EN FONT_AUTOSIZE RGB_IMAGE_BUTTONS")
+}
+
+
+private fun testMultiAxisToolpointProvenance() {
+    val snapshot=DrawingSnapshot(listOf(Line("AX-L",Vec2(-20.0,0.0),Vec2(20.0,0.0))))
+    val cam=CamModel.fromCad(
+        13700L,
+        snapshot,
+        CamSettings(toolDiameter=6.0,depth=-2.0,safeZ=5.0,feedMmMin=120.0),
+        axisA=30.0,
+        axisB=-15.0
+    )
+    val moves=cam.toolpaths.flatMap { it.moves }
+    check(moves.isNotEmpty())
+    check(moves.all { abs(it.axisA-30.0)<1e-12 && abs(it.axisB+15.0)<1e-12 })
+    val nc=CncPost.generate(cam,FanucPostSettings(axisA=30.0,axisB=-15.0))
+    check("(MULTIAXIS TOOLPOINT A/B SOURCE CAM_TOOLPOINTS)" in nc)
+    check("G0 A30. B-15." in nc)
+    val fallbackCam=CamModel.fromCad(13701L,snapshot,cam.settings)
+    val fallbackNc=CncPost.generate(fallbackCam,FanucPostSettings(axisA=10.0,axisB=0.0))
+    check("(MULTIAXIS TOOLPOINT A/B SOURCE POST_COMPAT_FALLBACK)" in fallbackNc)
+    println("✓ MULTIAXIS_TOOLPOINT_PROVENANCE_GATE_PASS CAM_POINT_AB NC_POST_SOURCE INDEXED_ORIENTATION COMPAT_FALLBACK")
 }
