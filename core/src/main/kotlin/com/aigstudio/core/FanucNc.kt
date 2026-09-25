@@ -34,7 +34,7 @@ object CncControllerCapabilityMatrix {
         "G90","G91","G94","G97","G98"
     )
 
-    private val trackedFailClosed = setOf(
+    private val trackedReview = setOf(
         "G4","G9","G18","G19","G20",
         "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6",
         "G31","G31.1","G31.2","G31.3",
@@ -59,7 +59,7 @@ object CncControllerCapabilityMatrix {
                 ControllerCapabilityStatus.MODELED_ALLOWED,
                 "AIG canonical post/CAM-SIM contract has an explicit modeled path for this code; context-specific safety rules still apply."
             )
-            normalized in trackedFailClosed -> ControllerCapabilityDecision(
+            normalized in trackedReview -> ControllerCapabilityDecision(
                 controller,
                 normalized,
                 ControllerCapabilityStatus.TRACKED_REVIEW,
