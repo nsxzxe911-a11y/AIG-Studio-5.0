@@ -27,9 +27,21 @@ const val MM_PER_TEN_MICRONS = 0.010
 const val JOIN_TOLERANCE_MM = 0.001
 
 object SoftwareCoordinateContract {
-    fun originDisplay(): String = "0.000"
+    private const val MASTER_ORIGIN_MM = 0.0
+
+    fun coordinateMode(): String = "G90"
+    fun masterOriginX(): Double = MASTER_ORIGIN_MM
+    fun masterOriginY(): Double = MASTER_ORIGIN_MM
+    fun masterOriginZ(): Double = MASTER_ORIGIN_MM
+    fun originDisplay(): String = DisplayFormat.mm(MASTER_ORIGIN_MM)
+    fun masterOriginData(): String = xyzData(MASTER_ORIGIN_MM, MASTER_ORIGIN_MM, MASTER_ORIGIN_MM)
     fun displayResolutionMm(): Double = CNC_RESOLUTION_MM
     fun machineOffsetAffectsGeometry(): Boolean = false
+    fun simulationAppliesWorkOffset(): Boolean = false
+    fun simulationUsesToleranceCompensation(): Boolean = false
+    fun preserveSignedCoordinates(): Boolean = true
+    fun xyzData(x: Double, y: Double, z: Double): String =
+        "X" + DisplayFormat.mm(x) + " Y" + DisplayFormat.mm(y) + " Z" + DisplayFormat.mm(z)
 }
 
 fun micronUnits(mm: Double): Long = kotlin.math.round(mm / MICRON_MM).toLong()
