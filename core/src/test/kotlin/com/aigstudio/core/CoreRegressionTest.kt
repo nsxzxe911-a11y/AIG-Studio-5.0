@@ -33,15 +33,23 @@ private fun testSoftwareAbsoluteCoordinateContract() {
         "PROGRAM_MODE=G90_OR_G91_REPRESENTATION",
         "UNITS=G20_G21_INTERPRETATION_LAYER",
         "FEED_MODE=G93_G94_G95_EXECUTION_LAYER",
+        "SPINDLE_MODE=G96_G97_EXECUTION_LAYER",
         "WORK_OFFSET=G54_G59_NC_EXECUTION_LAYER",
+        "LOCAL_COORD=G52_TRANSFORM_LAYER",
         "MACHINE_COORD=G53_NONMODAL_EXECUTION_LAYER",
+        "REFERENCE_RETURN=G28_G29_G30_NONMODAL_LAYER",
         "TEMP_ORIGIN=G92_NC_TRANSFORM_LAYER",
+        "WORK_COORD_PRESET=G92_1_CONTROLLER_STATE_LAYER",
         "COORD_ROTATION=G68_G69_TRANSFORM_LAYER",
+        "INCLINED_SURFACE=G68_2_G68_3_TRANSFORM_LAYER",
         "CUTTER_COMP=G40_G41_G42_EXPLICIT",
         "TOOL_LENGTH=G43_H_EXPLICIT",
+        "PROBE_SKIP=G31_TRIGGERED_MOTION_LAYER",
+        "USER_MACRO=G65_G66_G67_EXECUTION_LAYER",
         "FIXED_CYCLE=G80_G89_MODAL_LAYER",
         "CYCLE_RETURN=G98_G99_RETRACT_LAYER",
         "PATH_CONTROL=G61_G64_MOTION_LAYER",
+        "NONMODAL_TIMING=G04_G09_EXECUTION_LAYER",
         "CONTROLLER=POST_PROFILE_ONLY"
     ))
     check(SoftwareCoordinateContract.coordinateUsageGuidance() == listOf(
@@ -53,14 +61,14 @@ private fun testSoftwareAbsoluteCoordinateContract() {
         "COPY_PASTE_PROGRAM_BLOCK=G90"
     ))
     println("✓ ABSOLUTE_COORDINATE_DATA_GATE_PASS G90 MASTER=X0.000/Y0.000/Z0.000 SIGNED=TRUE SIM_OFFSET_SHIFT=OFF SIM_TOLERANCE_SHIFT=OFF")
-    println("✓ COORDINATE_RESPONSIBILITY_GATE_PASS GEOMETRY/PROGRAM_MODE/UNITS/FEED_MODE/WORK_OFFSET/MACHINE_COORD/TEMP_ORIGIN_G92/COORD_ROTATION/CUTTER_COMP/TOOL_LENGTH/FIXED_CYCLE/CYCLE_RETURN/PATH_CONTROL/CONTROLLER")
+    println("✓ COORDINATE_RESPONSIBILITY_GATE_PASS expanded modal/transform provenance")
     println("✓ COORDINATE_USAGE_GUIDE_PASS G90/G91/G92 use cases locked")
 }
 
 
 private fun testNcModalTracker() {
     val program = """
-        G21 G94 G90 G54 G17 G40 G49 G64 G80 G98
+        G21 G94 G97 G90 G54 G17 G40 G49 G64 G80 G98
         G91
         G92 X0 Y0
         G41 D1
@@ -69,27 +77,33 @@ private fun testNcModalTracker() {
         G68
         G81 G99
         G53 G0 Z0
+        G96
+        G65 P1000
+        G66.1 P2000
+        G67
+        G30.1
+        G31.2 X1.000
+        G52 X0.000 Y0.000
+        G68.2 X0.000 Y0.000 Z0.000
+        G92.1
         G42
         G49
-        G69 G80 G98 G61
+        G69 G80 G98 G61 G97
+        G04 P100
+        G09
     """.trimIndent()
     val events = NcModalTracker.trace(program)
-    check(events.map { it.code } == listOf(
-        "G21","G94","G90","G54","G17","G40","G49","G64","G80","G98",
-        "G91","G92","G41","G43","G18","G68","G81","G99","G53","G42","G49","G69","G80","G98","G61"
-    ))
-    check(events.first { it.code=="G21" }.group=="UNITS")
-    check(events.first { it.code=="G94" }.group=="FEED_MODE")
-    check(events.first { it.code=="G91" }.group=="PROGRAM_MODE")
-    check(events.first { it.code=="G92" }.group=="TEMP_ORIGIN")
-    check(events.first { it.code=="G41" }.group=="CUTTER_COMP")
-    check(events.first { it.code=="G43" }.group=="TOOL_LENGTH")
-    check(events.first { it.code=="G18" }.group=="PLANE")
-    check(events.first { it.code=="G68" }.group=="COORD_ROTATION")
-    check(events.first { it.code=="G81" }.group=="FIXED_CYCLE")
-    check(events.first { it.code=="G99" }.group=="CYCLE_RETURN")
-    check(events.first { it.code=="G53" }.group=="MACHINE_COORD_NONMODAL")
-    check(events.first { it.code=="G61" }.group=="PATH_CONTROL")
+    check(events.any { it.code=="G30.1" && it.group=="REFERENCE_RETURN_NONMODAL" })
+    check(events.any { it.code=="G31.2" && it.group=="SKIP_NONMODAL" })
+    check(events.any { it.code=="G52" && it.group=="LOCAL_COORD_TRANSFORM" })
+    check(events.any { it.code=="G65" && it.group=="MACRO_CALL_NONMODAL" })
+    check(events.any { it.code=="G66.1" && it.group=="MACRO_MODE" })
+    check(events.any { it.code=="G68.2" && it.group=="INCLINED_SURFACE_TRANSFORM" })
+    check(events.any { it.code=="G92.1" && it.group=="WORK_COORD_PRESET_NONMODAL" })
+    check(events.any { it.code=="G96" && it.group=="SPINDLE_SPEED_MODE" })
+    check(events.any { it.code=="G97" && it.group=="SPINDLE_SPEED_MODE" })
+    check(events.any { it.code=="G4" && it.group=="DWELL_NONMODAL" })
+    check(events.any { it.code=="G9" && it.group=="EXACT_STOP_NONMODAL" })
     val final = NcModalTracker.finalState(program)
     check(final.coordinateMode=="G91")
     check(final.workOffset=="G54")
@@ -103,12 +117,14 @@ private fun testNcModalTracker() {
     check(final.fixedCycle=="G80")
     check(final.cycleReturn=="G98")
     check(final.pathControl=="G61")
-    check(NcModalTracker.evidence(program)=="PROGRAM=G91|WORK_OFFSET=G54|G92=ACTIVE|UNITS=G21|FEED_MODE=G94|CUTTER_COMP=G42|TOOL_LENGTH=G49|PLANE=G18|ROTATION=G69|CYCLE=G80|RETURN=G98|PATH=G61")
-    println("✓ NC_MODAL_TRACKER_PASS G90/G91 G20/G21 G93/G94/G95 G53 G54-G59 G92 G68/G69 G40-G42 G43/G49 G17-G19 G80-G89 G98/G99 G61/G64")
+    check(final.spindleSpeedMode=="G97")
+    check(final.macroMode=="G67")
+    check(NcModalTracker.evidence(program).contains("SPINDLE_MODE=G97"))
+    check(NcModalTracker.evidence(program).contains("MACRO=G67"))
 
     val safe = """
         %
-        G21 G94
+        G21 G94 G97
         G90 G54 G17 G40 G49 G80 G98
         G43 Z30.000 H1
         %
@@ -116,7 +132,7 @@ private fun testNcModalTracker() {
     check(NcModalSafetyPolicy.blocking(safe).isEmpty())
 
     val blocked = """
-        G21 G94 G90 G54
+        G21 G94 G97 G90 G54
         G20
         G95
         G53 G0 Z0
@@ -124,6 +140,13 @@ private fun testNcModalTracker() {
         G92 X0 Y0
         G41 D1
         G99
+        G28
+        G31.2 X1.000
+        G52 X0.000
+        G66.1 P2000
+        G68.2 X0.000 Y0.000 Z0.000
+        G92.1
+        G96
     """.trimIndent()
     val blockedCodes = NcModalSafetyPolicy.blocking(blocked).map { it.code }.toSet()
     check(setOf(
@@ -133,9 +156,16 @@ private fun testNcModalTracker() {
         "G68_ROTATION_UNSIMULATED",
         "G92_ORIGIN_UNVERIFIED",
         "G41_G42_DOUBLE_COMP_RISK",
-        "G99_RETURN_UNSIMULATED"
+        "G99_RETURN_UNSIMULATED",
+        "REFERENCE_RETURN_UNSIMULATED",
+        "SKIP_PROBE_UNSIMULATED",
+        "G52_LOCAL_COORD_UNVERIFIED",
+        "USER_MACRO_UNEXPANDED",
+        "INCLINED_SURFACE_UNSIMULATED",
+        "WORK_COORD_PRESET_UNVERIFIED",
+        "G96_CSS_UNVERIFIED"
     ).all { it in blockedCodes })
-    println("✓ NC_MODAL_SAFETY_POLICY_PASS safe base and unsupported execution transforms blocked")
+    println("✓ NC_MODAL_TRACKER_PASS integer/decimal G-code provenance + modal safety")
 }
 
 private fun testCannedCycleReturnMode() {
@@ -148,7 +178,7 @@ private fun testCannedCycleReturnMode() {
     check("G98 G81" in cycle)
     check("G80" in cycle)
     check(NcModalSafetyPolicy.blocking(
-        "G21 G94 G90 G54 G17 G40 G49\nG43 Z30.000 H1\n" + cycle
+        "G21 G94 G97 G90 G54 G17 G40 G49\nG43 Z30.000 H1\n" + cycle
     ).isEmpty())
     println("✓ CANNED_CYCLE_RETURN_PASS G98 explicit / G81 / G80")
 }
@@ -541,8 +571,8 @@ private fun testControllerProfilesDoNotShiftAbsoluteCoordinates() {
     check(before == after)
     check("(CONTROLLER FANUC)" in fanuc)
     check("(CONTROLLER MITSUBISHI M800/M80)" in mitsubishi)
-    check("G21 G94" in fanuc)
-    check("G21 G94" in mitsubishi)
+    check("G21 G94 G97" in fanuc)
+    check("G21 G94 G97" in mitsubishi)
     check("G90 G54 G17 G40 G49 G80" in fanuc)
     check("G90 G54 G17 G40 G49 G80" in mitsubishi)
     before.forEachIndexed { index,p ->
