@@ -533,6 +533,13 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     val modalStatus = JLabel("MODAL • " + NcModalTracker.evidence(area.text)).apply {
         foreground = Color(255,210,90)
     }
+    val lineHelp = JLabel().apply {
+        foreground = Color(190,220,255)
+    }
+    fun refreshLineHelp() {
+        val line = NcCodeCatalog.lineNumberAt(area.text, area.caretPosition)
+        lineHelp.text = "LINE HELP • " + NcCodeCatalog.lineHelp(area.text, line)
+    }
     fun refreshModalStatus() {
         val blocked = NcProgramSafetyPolicy.blocking(area.text)
         modalStatus.foreground = if (blocked.isEmpty()) Color(255,210,90) else Color(255,110,110)
@@ -546,10 +553,12 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
             }
     }
     area.document.addDocumentListener(object : javax.swing.event.DocumentListener {
-        override fun insertUpdate(e: javax.swing.event.DocumentEvent?) = refreshModalStatus()
-        override fun removeUpdate(e: javax.swing.event.DocumentEvent?) = refreshModalStatus()
-        override fun changedUpdate(e: javax.swing.event.DocumentEvent?) = refreshModalStatus()
+        override fun insertUpdate(e: javax.swing.event.DocumentEvent?) { refreshModalStatus(); refreshLineHelp() }
+        override fun removeUpdate(e: javax.swing.event.DocumentEvent?) { refreshModalStatus(); refreshLineHelp() }
+        override fun changedUpdate(e: javax.swing.event.DocumentEvent?) { refreshModalStatus(); refreshLineHelp() }
     })
+    area.addCaretListener { refreshLineHelp() }
+    refreshLineHelp()
     val controller = JComboBox(CncControllerProfile.entries.toTypedArray()).apply {
         selectedItem = controllerProfile
         renderer = object : DefaultListCellRenderer() {
@@ -674,7 +683,11 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
                 add(origin)
                 add(compensation)
             }, BorderLayout.CENTER)
-            add(modalStatus, BorderLayout.SOUTH)
+            add(JPanel(GridLayout(0,1)).apply {
+                background = Color(8,18,30)
+                add(modalStatus)
+                add(lineHelp)
+            }, BorderLayout.SOUTH)
         }, BorderLayout.NORTH)
         add(JScrollPane(area), BorderLayout.CENTER)
         add(keypad, BorderLayout.SOUTH)
