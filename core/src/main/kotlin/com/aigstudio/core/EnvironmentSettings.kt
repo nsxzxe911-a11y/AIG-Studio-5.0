@@ -297,6 +297,39 @@ object PlatformRefreshPolicy {
     fun visualLoadScale(isEmulator:Boolean):Double = if(isEmulator) 0.65 else 1.0
 }
 
+object CpuThermalFpsPolicy {
+    const val COOL_TO_120_C = 65.0
+    const val WARM_TO_90_C = 75.0
+    const val HOT_TO_60_C = 85.0
+    const val RECOVERY_HYSTERESIS_C = 3.0
+
+    fun capForTemperature(cpuC:Double?):Int = when {
+        cpuC == null || !cpuC.isFinite() -> 120
+        cpuC >= HOT_TO_60_C -> 30
+        cpuC >= WARM_TO_90_C -> 60
+        cpuC >= COOL_TO_120_C -> 90
+        else -> 120
+    }
+
+    fun capWithHysteresis(cpuC:Double?,currentCap:Int):Int {
+        val raw=capForTemperature(cpuC)
+        if(cpuC == null || !cpuC.isFinite()) return raw
+        if(raw < currentCap) return raw
+        if(raw == currentCap) return raw
+        val recoveryThreshold=when(currentCap){
+            30 -> HOT_TO_60_C - RECOVERY_HYSTERESIS_C
+            60 -> WARM_TO_90_C - RECOVERY_HYSTERESIS_C
+            90 -> COOL_TO_120_C - RECOVERY_HYSTERESIS_C
+            else -> Double.NEGATIVE_INFINITY
+        }
+        return if(cpuC <= recoveryThreshold) raw else currentCap
+    }
+
+    fun reason(cpuC:Double?,cap:Int):String =
+        if(cpuC == null || !cpuC.isFinite()) "CPU_TEMP_UNAVAILABLE"
+        else "CPU_TEMP_" + "%.1f".format(java.util.Locale.US,cpuC) + "C_CAP_" + cap
+}
+
 object ThermalSensorPolicy {
     fun isCpuType(type:String):Boolean {
         val t=type.lowercase()
