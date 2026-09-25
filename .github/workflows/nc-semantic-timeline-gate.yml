@@ -53,6 +53,8 @@ jobs:
           grep -Fq 'NC_PARAMETER_INTEGRITY_PASS' semantic-timeline.log
           grep -Fq 'NC_MULTI_TOOL_CYCLE_SAFETY_PASS' semantic-timeline.log
           grep -Fq 'NC_CONTROL_EFFECT_GATE_PASS' semantic-timeline.log
+          grep -Fq 'RENDER_SURFACE_FPS_GATE_PASS' semantic-timeline.log
+          test "$(grep -Fc 'RENDER_SURFACE_FPS_GATE_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_CONTROL_EFFECT_GATE_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_MULTI_TOOL_CYCLE_SAFETY_PASS' semantic-timeline.log)" -eq 3
           grep -Fq 'NC_G34_PATTERN_SEMANTICS_PASS' semantic-timeline.log
