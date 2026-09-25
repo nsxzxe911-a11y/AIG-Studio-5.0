@@ -26,9 +26,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
-      - name: Compile and run core regression
+      - name: Compile and run core regression three times
         shell: bash
-        run: gradle :core:coreRegression --no-daemon --stacktrace | tee semantic-timeline.log
+        run: |
+          : > semantic-timeline.log
+          for pass in 1 2 3; do
+            echo "=== CORE REGRESSION PASS $pass/3 ===" | tee -a semantic-timeline.log
+            gradle :core:coreRegression --no-daemon --stacktrace | tee semantic-pass-$pass.log
+            cat semantic-pass-$pass.log >> semantic-timeline.log
+          done
       - name: Verify semantic authority and execution timeline
         shell: bash
         run: |
@@ -40,6 +46,9 @@ jobs:
           grep -Fq 'NC_RUNTIME_INTERLOCK_PASS' semantic-timeline.log
           grep -Fq 'NC_MACHINE_ALARM_RECOVERY_PASS' semantic-timeline.log
           grep -Fq 'NC_MACHINE_BOUNDARY_MATRIX_PASS' semantic-timeline.log
+          grep -Fq 'NC_MACHINE_STABILITY_STRESS_PASS' semantic-timeline.log
+          test "$(grep -Fc 'ALL TESTS PASSED' semantic-timeline.log)" -eq 3
+          test "$(grep -Fc 'NC_MACHINE_STABILITY_STRESS_PASS' semantic-timeline.log)" -eq 3
           echo 'STUDIO_NC_SEMANTIC_TIMELINE_GATE=PASS'
       - name: Install Android SDK 36 for UI compile
         shell: bash
