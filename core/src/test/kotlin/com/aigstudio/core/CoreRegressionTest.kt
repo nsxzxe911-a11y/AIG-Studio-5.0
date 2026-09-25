@@ -1045,8 +1045,8 @@ private fun testCannedCycleReturnMode() {
     check("CUT_WITHOUT_G43_H" in processCodes(multiToolStaleH))
 
     val multiToolCorrected = multiToolStaleH.replace(
-        "T2\n        M98 P4\n        S1800 M3",
-        "T2\n        M98 P4\n        G0 G43 Z30.000 H2\n        S1800 M3"
+        "T2\nM98 P4\nS1800 M3",
+        "T2\nM98 P4\nG0 G43 Z30.000 H2\nS1800 M3"
     )
     check(NcGeneratedProcessGate.status(multiToolCorrected,5.0)=="PASS")
 
