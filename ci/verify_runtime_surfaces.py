@@ -101,6 +101,17 @@ for needle in (
 ):
     require(unified, needle, "INLINE_NC_TOOL")
 
+# NC safety findings are warning/interlock state, never an editor or draft-save lock.
+if "SAFE SAVE BLOCKED" in unified or "NC SAFE SAVE BLOCKED" in unified:
+    raise SystemExit("BLOCKED NC_EDITOR_WARNING_ONLY_REGRESSION: warning must not disable draft save")
+for needle in (
+    "val hasExecutionWarning=blocked.isNotEmpty() || !machine.canExecute",
+    "unifiedNcDraftStale=hasExecutionWarning",
+    "NC DRAFT SAVED • WARNING ONLY • EDITING ENABLED • EXECUTION INTERLOCK",
+    "NC 草稿已儲存 • 警告不鎖編輯 • 執行前需修正/確認",
+):
+    require(unified, needle, "NC_EDITOR_WARNING_ONLY")
+
 # Machine-specific rotary M-codes must be editable, persisted and never treated as universal defaults.
 for needle in (
     'loadRotaryMachineProfile()',
@@ -136,12 +147,15 @@ for needle in (
     'action("重建NC / REBUILD NC"',
     'action("安全檢查 / SAFE CHECK"',
     'action("儲存草稿 / SAVE DRAFT"',
-    'var rotaryClampProfile=RotaryAxisClampProfile.unconfigured()',
+    'var rotaryClampProfile=loadDesktopRotaryMachineProfile()',
     'rotaryMode=currentRotaryMode()',
     'rotaryClampProfile=rotaryClampProfile',
     'NcProgramSafetyPolicy.blocking(editor.text,rotaryClampProfile,currentRotaryMode())',
     'loadDesktopRotaryMachineProfile()',
     'saveDesktopRotaryMachineProfile(rotaryClampProfile)',
+    'UNIFIED NC WARNING • EDITING ENABLED • EXECUTION INTERLOCK',
+    'NC REBUILD WARNING • existing editor preserved',
+    'WARNING DOES NOT LOCK EDITING',
     'CncPost.generate(',
     'Machining3DEngine.build(',
 ):
@@ -170,6 +184,7 @@ print("✓ INLINE_NC_PAGE_CLOSURE_GATE_PASS KEYBOARD SAFETY TIMELINE BLOCK_CONTR
 print("✓ ROTARY_CLAMP_UI_BINDING_GATE_PASS PROFILE DRILL POST NC_STALE FAIL_CLOSED")
 print("✓ ROTARY_CLAMP_CROSS_PLATFORM_GATE_PASS ANDROID WINDOWS PROFILE_AWARE_POST")
 print("✓ ROTARY_MACHINE_PROFILE_PERSISTENCE_GATE_PASS CUSTOM_MCODE NO_UNIVERSAL_DEFAULT NC_STALE")
+print("✓ NC_EDITOR_WARNING_ONLY_GATE_PASS EDIT SAVE_DRAFT UPDATE_SEPARATE EXECUTION_INTERLOCK")
 print("✓ DESKTOP_ALL_PAGES_ENTRY_GATE_PASS CAM 3D 3AX 4AX 5AX NC")
 print("✓ RGB_ALL_PAGE_ASSET_INTEGRITY_PASS CAD CAM 3D 3AX 4AX 5AX NC")
 print("✓ NO_FAKE_PAGE_CALLBACK_GATE_PASS TOOL_ACTION_CALLBACKS_BOUND")
