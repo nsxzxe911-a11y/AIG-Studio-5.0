@@ -1188,6 +1188,7 @@ fun main() {
     testMultiAxisToolpointProvenance()
     testAxis345RuntimeContract()
     testContinuousMultiAxisToolpointSchedule()
+    testAxisMode345RuntimeMatrix()
     testNcDraftRecoveryContract()
     testPixelLayoutPrecheckContract()
     println("ALL TESTS PASSED")
@@ -2052,4 +2053,48 @@ private fun testAxis345RuntimeContract() {
     check(assetKeys==mapOf("3AX" to "ic_rgb_3ax","4AX" to "ic_rgb_4ax","5AX" to "ic_rgb_5ax"))
     println("✓ RGB_3_4_5_SKIN_BINDING_GATE_PASS 3AX=ic_rgb_3ax 4AX=ic_rgb_4ax 5AX=ic_rgb_5ax")
     println("✓ AXIS_3_4_5_RUNTIME_GATE_PASS 3AX_ZERO 4AX_A_ONLY 5AX_AB CAM_SIM_SHARED_TOOLPOINTS")
+}
+
+
+private fun testAxisMode345RuntimeMatrix() {
+    val snapshot=DrawingSnapshot(listOf(Line("AXIS-MATRIX",Vec2(-25.0,0.0),Vec2(25.0,0.0))))
+    val settings=CamSettings(toolDiameter=6.0,depth=-2.0,safeZ=5.0,feedMmMin=120.0)
+
+    val three=CamModel.fromCad(14800L,snapshot,settings)
+    val threeMoves=three.toolpaths.flatMap { it.moves }
+    check(threeMoves.all { abs(it.axisA)<=EPS && abs(it.axisB)<=EPS })
+    val threeNc=CncPost.generate(three,FanucPostSettings())
+    check(!Regex("""(?:^|\\s)[AB][+-]?\\d""").containsMatchIn(threeNc))
+    check(MaterialRemoval3D.simulate(three.toolpaths,settings,Stock3D.fromSnapshot(snapshot)).depth.any { it<0.0 })
+
+    val four=CamModel.fromCad(14801L,snapshot,settings,axisA=35.0,axisB=0.0)
+    val fourMoves=four.toolpaths.flatMap { it.moves }
+    check(fourMoves.all { abs(it.axisA-35.0)<=EPS && abs(it.axisB)<=EPS })
+    val fourNc=CncPost.generate(four,FanucPostSettings(axisA=35.0,axisB=0.0))
+    check("G0 A35. B0." in fourNc)
+    check(MaterialRemoval3D.simulate(four.toolpaths,settings,Stock3D.fromSnapshot(snapshot)).depth.any { it<0.0 })
+
+    val fiveIndexed=CamModel.fromCad(14802L,snapshot,settings,axisA=30.0,axisB=-20.0)
+    val fiveIndexedMoves=fiveIndexed.toolpaths.flatMap { it.moves }
+    check(fiveIndexedMoves.all { abs(it.axisA-30.0)<=EPS && abs(it.axisB+20.0)<=EPS })
+    val fiveIndexedNc=CncPost.generate(fiveIndexed,FanucPostSettings(axisA=30.0,axisB=-20.0))
+    check("G0 A30. B-20." in fiveIndexedNc)
+    check(MaterialRemoval3D.simulate(fiveIndexed.toolpaths,settings,Stock3D.fromSnapshot(snapshot)).depth.any { it<0.0 })
+
+    val continuous=CamModel.fromCad(
+        14803L,snapshot,settings,
+        axisSchedule=MultiAxisOrientationSchedule(0.0,0.0,35.0,-25.0,MultiAxisInterpolationMode.LINEAR_SYNC)
+    )
+    val continuousMoves=continuous.toolpaths.flatMap { it.moves }
+    check(continuousMoves.zipWithNext().any { (a,b) -> abs(a.axisA-b.axisA)>EPS || abs(a.axisB-b.axisB)>EPS })
+    check(MaterialRemoval3D.simulate(continuous.toolpaths,settings,Stock3D.fromSnapshot(snapshot)).depth.any { it<0.0 })
+    check(runCatching { CncPost.generate(continuous,FanucPostSettings()) }.isFailure) {
+        "Continuous 5X must remain NC fail-closed until controller-specific TCP/RTCP kinematics is verified"
+    }
+
+    val skins=UnifiedMachiningWorkspaceContract.imageButtons.associate { it.id to it.imageKey }
+    check(skins["3AX"]=="ic_rgb_3ax")
+    check(skins["4AX"]=="ic_rgb_4ax")
+    check(skins["5AX"]=="ic_rgb_5ax")
+    println("✓ AXIS_MODE_3_4_5_GATE_PASS 3AX_CAM_SIM_NC 4AX_INDEXED_CAM_SIM_NC 5AX_INDEXED_CAM_SIM_NC 5AX_CONTINUOUS_CAM_SIM_NC_FAIL_CLOSED RGB_SKINS_BOUND")
 }
