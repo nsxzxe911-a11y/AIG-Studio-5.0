@@ -69,6 +69,19 @@ require(android, 'Axis5xPreview(this,draftA,draftB,"4AX")', "4AX_PREVIEW_BINDING
 require(android, 'Axis5xPreview(this,draftA,draftB,"5AX")', "5AX_PREVIEW_BINDING")
 require(env, 'samePageModes = listOf("3D","3AX","4AX","5AX","NC_EDIT")', "AXIS_MODE_INVENTORY")
 
+# Rotary clamp safety must be wired end-to-end in the Android machining path.
+for needle in (
+    'private var machiningAxisMode = "3AX"',
+    'private var rotaryClampProfile = RotaryAxisClampProfile.unconfigured()',
+    '"CONTROLLER / PMC AUTO • VERIFIED MACHINE ONLY"',
+    '"EXPLICIT MACHINE M-CODES"',
+    'rotaryMode = currentRotaryOperationMode()',
+    'rotaryClampProfile = rotaryClampProfile',
+    'clampProfile = rotaryClampProfile',
+    'machiningAxisMode=activeAxisMode',
+):
+    require(android, needle, "ROTARY_CLAMP_UI_BINDING")
+
 # Same-page NC closure must remain inline: keyboard, line help/safety, block controls and safe save.
 start = android.find("private fun showUnifiedMachiningWorkspace")
 end = android.find("private fun showStockDialog", start)
@@ -82,7 +95,7 @@ for needle in (
     'listOf("A","B","F","S","T")',
     '"BLOCK /","SINGLE","DRY RUN","BLOCK SKIP","STEP"',
     'listOf("SAFE SAVE")',
-    "NcProgramSafetyPolicy.blocking(candidate)",
+    "NcProgramSafetyPolicy.blocking(candidate,rotaryClampProfile,currentRotaryOperationMode())",
     "inlineInterlock.inspect(candidate)",
     "NcExecutionTimeline.lineEvidence",
 ):
@@ -137,6 +150,7 @@ for asset in assets:
 print("✓ ANDROID_ALL_PAGES_ENTRY_GATE_PASS CAD MODIFY CORNER CAM MACHINING SECURITY AI UPDATE")
 print("✓ AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS 3AX_CONSTRAINED 4AX_A_ONLY 5AX_AB")
 print("✓ INLINE_NC_PAGE_CLOSURE_GATE_PASS KEYBOARD SAFETY TIMELINE BLOCK_CONTROLS SAFE_SAVE")
+print("✓ ROTARY_CLAMP_UI_BINDING_GATE_PASS PROFILE DRILL POST NC_STALE FAIL_CLOSED")
 print("✓ DESKTOP_ALL_PAGES_ENTRY_GATE_PASS CAM 3D 3AX 4AX 5AX NC")
 print("✓ RGB_ALL_PAGE_ASSET_INTEGRITY_PASS CAD CAM 3D 3AX 4AX 5AX NC")
 print("✓ NO_FAKE_PAGE_CALLBACK_GATE_PASS TOOL_ACTION_CALLBACKS_BOUND")
