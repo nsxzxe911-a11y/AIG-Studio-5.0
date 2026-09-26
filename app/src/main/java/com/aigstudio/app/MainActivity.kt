@@ -1375,17 +1375,185 @@ class MainActivity : Activity() {
             minLines=10
             setPadding(dp(10),dp(8),dp(10),dp(8))
         }
+        val inlineInterlock=NcMachineInterlockSession()
+        val inlineNcStatus=TextView(this).apply {
+            setTextColor(0xFFBEDCFF.toInt())
+            textSize=StudioDisplayPolicy.sp(this,9.5f)
+            setPadding(dp(6),dp(3),dp(6),dp(3))
+        }
+        var inlinePreviewLine=0
+
+        fun refreshInlineNcStatus() {
+            val program=ncEditor.text.toString()
+            val line=NcCodeCatalog.lineNumberAt(program,ncEditor.selectionStart.coerceAtLeast(0))
+            val blocked=NcProgramSafetyPolicy.blocking(program)
+            val machine=inlineInterlock.inspect(program)
+            inlineNcStatus.setTextColor(
+                if(blocked.isEmpty() && machine.canExecute) 0xFF63FF9D.toInt() else 0xFFFF6E6E.toInt()
+            )
+            inlineNcStatus.text=
+                "LINE "+line+" • "+NcCodeCatalog.lineHelp(program,line)+"\n"+
+                NcSemanticAuthority.lineEvidence(program,line,controllerProfile)+"\n"+
+                NcExecutionTimeline.lineEvidence(program,line,controllerProfile)+"\n"+
+                CncControllerCapabilityMatrix.summary(controllerProfile,program)+
+                (if(blocked.isEmpty() && machine.canExecute) " • SAFETY=PASS"
+                else " • BLOCKED="+(
+                    blocked.take(2).map{it.code} +
+                        (if(machine.canExecute) emptyList() else listOf(machine.evidence()))
+                ).joinToString(","))
+        }
+
+        fun inlineInsert(token:String) {
+            val start=ncEditor.selectionStart.coerceAtLeast(0)
+            val end=ncEditor.selectionEnd.coerceAtLeast(start)
+            ncEditor.text.replace(start,end,token)
+            refreshInlineNcStatus()
+            ncEditor.requestFocus()
+        }
+
+        fun inlineDelete() {
+            val start=ncEditor.selectionStart.coerceAtLeast(0)
+            val end=ncEditor.selectionEnd.coerceAtLeast(start)
+            if(end>start) ncEditor.text.delete(start,end)
+            else if(start>0) ncEditor.text.delete(start-1,start)
+            refreshInlineNcStatus()
+            ncEditor.requestFocus()
+        }
+
+        fun toggleCurrentBlockPrefix() {
+            val text=ncEditor.text
+            val pos=ncEditor.selectionStart.coerceIn(0,text.length)
+            val lineStart=(text.lastIndexOf('\n',(pos-1).coerceAtLeast(0))+1).coerceAtLeast(0)
+            if(lineStart<text.length && text[lineStart]=='/') text.delete(lineStart,lineStart+1)
+            else text.insert(lineStart,"/")
+            refreshInlineNcStatus()
+        }
+
+        fun stepInlineNc(reset:Boolean=false) {
+            val program=ncEditor.text.toString()
+            val machine=inlineInterlock.inspect(program)
+            val blocked=NcProgramSafetyPolicy.blocking(program)
+            if(!machine.canExecute || blocked.isNotEmpty()){
+                inlineNcStatus.setTextColor(0xFFFF6E6E.toInt())
+                inlineNcStatus.text=
+                    "STEP BLOCKED • "+
+                    (blocked.take(3).joinToString(","){it.code}.ifBlank { machine.evidence() })
+                return
+            }
+            val lines=program.split("\n")
+            if(reset) inlinePreviewLine=0
+            while(inlinePreviewLine<lines.size){
+                val t=lines[inlinePreviewLine].trim()
+                val nonExecutable=t.isBlank() || t=="%" || t.startsWith("(")
+                val skipped=ncBlockSkip && t.startsWith("/")
+                if(!nonExecutable && !skipped) break
+                inlinePreviewLine++
+            }
+            if(inlinePreviewLine>=lines.size){
+                inlineNcStatus.text="NC PREVIEW • END"
+                return
+            }
+            val start=lines.take(inlinePreviewLine).sumOf{it.length+1}.coerceAtMost(ncEditor.length())
+            val end=(start+lines[inlinePreviewLine].length).coerceAtMost(ncEditor.length())
+            ncEditor.requestFocus()
+            ncEditor.setSelection(start,end)
+            inlineNcStatus.text=
+                (if(ncDryRun)"DRY RUN" else "SINGLE BLOCK")+
+                " • LINE "+(inlinePreviewLine+1)+" • "+lines[inlinePreviewLine].trim()+"\n"+
+                NcExecutionTimeline.lineEvidence(program,inlinePreviewLine+1,controllerProfile)
+            inlinePreviewLine++
+        }
+
+        fun safeSaveInlineNc() {
+            val candidate=ncEditor.text.toString()
+            val blocked=NcProgramSafetyPolicy.blocking(candidate)
+            val machine=inlineInterlock.inspect(candidate)
+            if(blocked.isNotEmpty() || !machine.canExecute){
+                inlineNcStatus.setTextColor(0xFFFF6E6E.toInt())
+                inlineNcStatus.text=
+                    "SAFE SAVE BLOCKED • "+
+                    (blocked.take(4).joinToString(","){it.code}.ifBlank { machine.evidence() })
+                Toast.makeText(this,"NC SAFE SAVE BLOCKED • 修正 Safety/Interlock 紅燈",Toast.LENGTH_LONG).show()
+                return
+            }
+            unifiedNcDraft=candidate
+            unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
+            unifiedNcDraftStale=false
+            saveCadCheckpoint()
+            refreshInlineNcStatus()
+            Toast.makeText(this,"NC SAFE SAVE PASS • AUTOSAVE V3 • SOURCE BOUND",Toast.LENGTH_SHORT).show()
+        }
+
+        ncEditor.setOnClickListener { ncEditor.post { refreshInlineNcStatus() } }
+
+        val inlineKeyboard=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(3),dp(2),dp(3),dp(2))
+        }
+        val inlineRows=listOf(
+            listOf("G","M","X","Y","Z"),
+            listOf("A","B","F","S","T"),
+            listOf("7","8","9","-","."),
+            listOf("4","5","6","0","/"),
+            listOf("1","2","3","INSERT","DELETE"),
+            listOf("BLOCK /","SINGLE","DRY RUN","BLOCK SKIP","STEP"),
+            listOf("SAFE SAVE")
+        )
+        inlineRows.forEach { keys ->
+            val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+            keys.forEach { key ->
+                row.addView(RgbGlowButton(this).apply {
+                    text=key
+                    textSize=StudioDisplayPolicy.sp(this,8.5f)
+                    minHeight=dp(32)
+                    setRgbState(0xFF3DEBFF.toInt(),false)
+                    setOnClickListener {
+                        when(key){
+                            "INSERT" -> inlineInsert("\n")
+                            "DELETE" -> inlineDelete()
+                            "BLOCK /" -> toggleCurrentBlockPrefix()
+                            "SINGLE" -> {
+                                ncSingleBlock=!ncSingleBlock
+                                if(ncSingleBlock) stepInlineNc(true)
+                                else { refreshInlineNcStatus(); Toast.makeText(this@MainActivity,"SINGLE BLOCK OFF",Toast.LENGTH_SHORT).show() }
+                            }
+                            "DRY RUN" -> {
+                                ncDryRun=!ncDryRun
+                                refreshInlineNcStatus()
+                                Toast.makeText(this@MainActivity,"DRY RUN "+if(ncDryRun)"ON" else "OFF",Toast.LENGTH_SHORT).show()
+                            }
+                            "BLOCK SKIP" -> {
+                                ncBlockSkip=!ncBlockSkip
+                                refreshInlineNcStatus()
+                                Toast.makeText(this@MainActivity,"BLOCK SKIP "+if(ncBlockSkip)"ON" else "OFF",Toast.LENGTH_SHORT).show()
+                            }
+                            "STEP" -> stepInlineNc()
+                            "SAFE SAVE" -> safeSaveInlineNc()
+                            else -> inlineInsert(key)
+                        }
+                    }
+                },LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f))
+            }
+            inlineKeyboard.addView(row)
+        }
+        refreshInlineNcStatus()
+
         val ncPanel=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             setBackgroundColor(0xEE081722.toInt())
             addView(TextView(this@MainActivity).apply {
                 val draftState = if(unifiedNcDraftStale) " • DRAFT STALE" else if(unifiedNcDraft!=null) " • DRAFT RESTORED" else ""
-                text="可編輯 G-code • EDITABLE NC • "+controllerProfile.displayName+draftState
+                text="可編輯 G-code • EDITABLE NC • "+controllerProfile.displayName+draftState+" • INLINE TOOLS"
                 setTextColor(if(unifiedNcDraftStale) 0xFFFF6E6E.toInt() else 0xFFFFD25A.toInt())
                 textSize=StudioDisplayPolicy.sp(this,10.5f)
                 setPadding(dp(8),dp(5),dp(8),dp(5))
             })
+            addView(inlineNcStatus,LinearLayout.LayoutParams(-1,-2))
             addView(ncEditor,LinearLayout.LayoutParams(-1,0,1f))
+            addView(android.widget.ScrollView(this@MainActivity).apply {
+                isFillViewport=false
+                addView(inlineKeyboard)
+            },LinearLayout.LayoutParams(-1,dp(190)))
         }
 
         var activeMode=initialMode
@@ -1500,19 +1668,14 @@ class MainActivity : Activity() {
             saveCadCheckpoint()
             Toast.makeText(this,"AXIS APPLIED • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+" • NC DRAFT STALE",Toast.LENGTH_SHORT).show()
         }
-        action("儲存草稿\nSAVE NC",0xFF22C55E.toInt()){
-            unifiedNcDraft=ncEditor.text.toString()
-            unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
-            unifiedNcDraftStale=false
-            saveCadCheckpoint()
-            Toast.makeText(this,"NC DRAFT SAVED • AUTOSAVE V3 • SOURCE BOUND",Toast.LENGTH_SHORT).show()
+        action("安全儲存\nSAFE SAVE",0xFF22C55E.toInt()){
+            safeSaveInlineNc()
         }
-        action("完整NC鍵盤\nNC KEYBOARD",0xFF3B82F6.toInt()){
-            unifiedNcDraft=ncEditor.text.toString()
-            unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
-            unifiedNcDraftStale=false
-            saveCadCheckpoint()
-            showNcEditDialog()
+        action("同頁NC\nNC TOOLS",0xFF3B82F6.toInt()){
+            renderMode("NC_EDIT")
+            ncEditor.requestFocus()
+            refreshInlineNcStatus()
+            Toast.makeText(this,"INLINE NC TOOLS READY • NO SECOND DIALOG",Toast.LENGTH_SHORT).show()
         }
         action("返回\nBACK",0xFFF59E0B.toInt()){ dialog.dismiss() }
         root.addView(actionFlow,LinearLayout.LayoutParams(-1,-2))
