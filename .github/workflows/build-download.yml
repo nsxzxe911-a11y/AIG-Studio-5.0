@@ -47,6 +47,7 @@ jobs:
           grep -Fq 'CAM_LAYOUT_DEVICE_SPLIT_GATE_PASS' release-validation.log
           grep -Fq 'CAM_RUNTIME_NO_FAKE_GATE_PASS' release-validation.log
           grep -Fq 'UNIFIED_3D_AXIS_NC_WORKSPACE_GATE_PASS' release-validation.log
+          grep -Fq 'INLINE_NC_CLOSURE_GATE_PASS' release-validation.log
           grep -Fq 'RGB_IMAGE_BUTTON_GATE_PASS' release-validation.log
           grep -Fq 'AI_ERGONOMIC_LAYOUT_GATE_PASS' release-validation.log
           grep -Fq 'BILINGUAL_ADAPTIVE_UI_GATE_PASS' release-validation.log
