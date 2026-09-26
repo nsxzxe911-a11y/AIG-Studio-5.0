@@ -91,6 +91,6 @@ class AigStartupOverlay(context: Context) : View(context) {
         canvas.drawRoundRect(left,barTop,width-left,barTop+6f*resources.displayMetrics.density,6f,6f,barPaint)
         barPaint.color=if(blockedReason==null)Color.rgb(61,235,255) else Color.rgb(255,90,90)
         canvas.drawRoundRect(left,barTop,left+(width-2*left)*progress,barTop+6f*resources.displayMetrics.density,6f,6f,barPaint)
-        canvas.drawText("v${BuildConfig.VERSION_NAME} • SDK 37 • 3D/5X FAST RENDER",left,barTop+34f*resources.displayMetrics.density,smallPaint)
+        canvas.drawText(("v" + runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty() + " • SDK 37 • 3D/5X FAST RENDER"),left,barTop+34f*resources.displayMetrics.density,smallPaint)
     }
 }
