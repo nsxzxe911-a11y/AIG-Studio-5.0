@@ -111,7 +111,7 @@ class RgbGlowButton(context: Context) : Button(context) {
         instances.add(this)
         isAllCaps = false
         stateListAnimator = null
-        setTextColor(Color.WHITE)
+        setTextColor(Color.rgb(232,244,255))
         render()
     }
 
@@ -137,7 +137,7 @@ class RgbGlowButton(context: Context) : Button(context) {
         val disabled = !isEnabled
         val pressedNow = isPressed
         val rawEdge = if (alarmGlow) Color.rgb(255,72,72) else accent
-        val base = Color.rgb(10,24,38)
+        val base = Color.rgb(11,23,38)
         val brightness = if (alarmGlow) 1f else globalBrightnessPercent / 100f
         val edge = mix(base, rawEdge, brightness)
         val baseAmount = when {
@@ -239,7 +239,7 @@ class Axis5xPreview(
     private val fpsMeter5x = SurfaceFpsMeter(refreshHzProvider = { display?.refreshRate?.toDouble() ?: 60.0 })
 
     init {
-        setBackgroundColor(Color.rgb(5,15,24))
+        setBackgroundColor(Color.rgb(5,10,18))
         isClickable = true
     }
 
