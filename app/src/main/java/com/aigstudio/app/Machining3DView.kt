@@ -58,6 +58,8 @@ class Machining3DView(
         textSize = 12f * resources.displayMetrics.scaledDensity
     }
     private val trianglePath = Path()
+    private val projectedBuffer = ArrayList<ScreenPoint>(8192)
+    private val visibleTriangleBuffer = ArrayList<Int>(8192)
     private val fpsMeter = SurfaceFpsMeter(refreshHzProvider = { display?.refreshRate?.toDouble() ?: 60.0 })
 
     private val scaleDetector = ScaleGestureDetector(
@@ -161,6 +163,29 @@ class Machining3DView(
         )
     }
 
+    private fun dynamicTriangleBudget(currentFps: Double): Int {
+        val target = (display?.refreshRate ?: 60f).coerceIn(30f, 120f).toDouble()
+        val base = if (target >= 90.0) 4600 else 5500
+        val ratio = if (currentFps <= 1.0) 1.0 else currentFps / target
+        val scale = when {
+            ratio < 0.55 -> 0.55
+            ratio < 0.72 -> 0.68
+            ratio < 0.86 -> 0.82
+            else -> 1.0
+        }
+        return (base * scale).roundToInt().coerceAtLeast(700)
+    }
+
+    private fun triangleVisible(a: ScreenPoint, b: ScreenPoint, c: ScreenPoint): Boolean {
+        val margin = 36f * resources.displayMetrics.density
+        val minX = min(a.x, min(b.x, c.x))
+        val maxX = max(a.x, max(b.x, c.x))
+        val minY = min(a.y, min(b.y, c.y))
+        val maxY = max(a.y, max(b.y, c.y))
+        return maxX >= -margin && minX <= width + margin &&
+            maxY >= -margin && minY <= height + margin
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (width <= 0 || height <= 0) return
@@ -171,17 +196,28 @@ class Machining3DView(
         val span = max(max(stockW, stockH), result.stock.thickness).coerceAtLeast(1.0)
         val scale = min(width, height) * 0.72 / span * zoom
 
-        val projected = result.mesh.vertices.map { project(it, scale) }
+        projectedBuffer.clear()
+        result.mesh.vertices.forEach { projectedBuffer.add(project(it, scale)) }
+        val projected = projectedBuffer
         val triangles = result.mesh.triangles
-        val stride = max(1, ceil(triangles.size / 5500.0).toInt())
-        val visible = triangles.indices
-            .filter { it % stride == 0 }
-            .sortedBy { index ->
-                val triangle = triangles[index]
-                (projected[triangle.a].depth + projected[triangle.b].depth + projected[triangle.c].depth) / 3.0
-            }
+        val budget = dynamicTriangleBudget(fpsStats.fps)
+        val stride = max(1, ceil(triangles.size / budget.toDouble()).toInt())
+        visibleTriangleBuffer.clear()
+        var triangleIndex = 0
+        while (triangleIndex < triangles.size) {
+            val triangle = triangles[triangleIndex]
+            val a = projected[triangle.a]
+            val b = projected[triangle.b]
+            val c = projected[triangle.c]
+            if (triangleVisible(a,b,c)) visibleTriangleBuffer.add(triangleIndex)
+            triangleIndex += stride
+        }
+        visibleTriangleBuffer.sortBy { index ->
+            val triangle = triangles[index]
+            (projected[triangle.a].depth + projected[triangle.b].depth + projected[triangle.c].depth) / 3.0
+        }
 
-        for (index in visible) {
+        for (index in visibleTriangleBuffer) {
             val triangle = triangles[index]
             val a = projected[triangle.a]
             val b = projected[triangle.b]

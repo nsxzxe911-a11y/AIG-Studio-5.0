@@ -467,12 +467,21 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val bootShell = android.widget.FrameLayout(this)
+        val bootOverlay = AigStartupOverlay(this)
+        bootShell.addView(bootOverlay, android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+        setContentView(bootShell)
+        bootOverlay.advance(StartupMilestone.INITIALIZING_CORE)
         val environmentPrefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
         environmentRestartApplied = environmentPrefs.getBoolean("restart_required", false)
         if (environmentRestartApplied) {
             environmentPrefs.edit().putBoolean("restart_required", false).remove("restart_reason").apply()
         }
         adaptiveRefreshController = AdaptiveRefreshController(this).also { it.start() }
+        bootOverlay.advance(StartupMilestone.CHECKING_CONFIGURATION)
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(0xFF050B12.toInt())
@@ -727,15 +736,29 @@ class MainActivity : Activity() {
         applySystemHudPreference(envPrefs.getBoolean("system_hud_enabled", RuntimeDeviceProfile.defaultSystemHudEnabled))
 
 
-        setContentView(root)
+        bootOverlay.advance(StartupMilestone.LOADING_UI)
+        bootShell.addView(root, 0, android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+        ))
         if (environmentRestartApplied) {
             Toast.makeText(this, "重開套用完成 • 3D/SIM 畫質核心已重新載入", Toast.LENGTH_SHORT).show()
         }
+        bootOverlay.advance(StartupMilestone.CHECKING_PROJECT_DATA)
         loadRotaryMachineProfile()
         restoreCadCheckpointIfAvailable()
         autosaveHandler.postDelayed(autosaveRunnable, 15000L)
         openCategory("繪圖") { showDrawingBranch() }
         selectTool(Tool.LINE)
+        bootOverlay.advance(StartupMilestone.HEALTH_CHECK)
+        root.post {
+            if (root.isAttachedToWindow) {
+                bootOverlay.advance(StartupMilestone.READY)
+                bootOverlay.completeAndDetach(bootShell)
+            } else {
+                bootOverlay.fail("UI ATTACH BLOCKED")
+            }
+        }
         val updateConfig = UpdateConfigStore.load(this)
         if (updateConfig.configured) {
             SecureUpdateManager.autoCheck(this, updateConfig) { result ->
