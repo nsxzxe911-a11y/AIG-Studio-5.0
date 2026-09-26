@@ -33,7 +33,7 @@ private class AdaptiveGlassToolbar : JPanel() {
     override fun paintComponent(g: Graphics) {
         val g2 = g.create() as Graphics2D
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        g2.color = Color(8, 22, 36, 178)
+        g2.color = Color(11, 23, 38, 178)
         g2.fillRoundRect(0, 0, width, height, 20, 20)
         g2.color = Color(61, 235, 255, 105)
         g2.stroke = BasicStroke(1.2f)
@@ -47,7 +47,7 @@ private class GlassActionButton(label: String, private val accent: Color) : JBut
     var active = false
         set(value) { field = value; repaint() }
     init {
-        foreground = Color.WHITE
+        foreground = Color(232, 244, 255)
         isOpaque = false
         isContentAreaFilled = false
         isFocusPainted = false
@@ -58,7 +58,7 @@ private class GlassActionButton(label: String, private val accent: Color) : JBut
         val g2 = g.create() as Graphics2D
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
         val a = if (active) 220 else 150
-        g2.color = Color(12, 28, 44, a)
+        g2.color = Color(11, 23, 38, a)
         g2.fillRoundRect(3, 3, width - 6, height - 6, 16, 16)
         g2.color = Color(accent.red, accent.green, accent.blue, if (active) 235 else 170)
         g2.stroke = BasicStroke(if (active) 2.6f else 1.4f)
@@ -109,7 +109,7 @@ private class CadPanel(
     private var dragPoint: Point? = null
 
     init {
-        background = Color(8, 18, 30)
+        background = Color(5, 10, 18)
         preferredSize = Dimension(1000, 650)
         addMouseWheelListener {
             pxPerMm = (pxPerMm * if (it.wheelRotation < 0) 1.12 else 1.0 / 1.12).coerceIn(0.5, 80.0)
