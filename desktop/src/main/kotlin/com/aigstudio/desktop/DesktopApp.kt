@@ -974,7 +974,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
                 saveDesktopRotaryMachineProfile(rotaryClampProfile)
                 status.text="ROTARY PROFILE SAVED • "+axisMode+" • "+clampStatus()+" • NC STALE / REBUILD REQUIRED"
             }.onFailure{
-                status.text="ROTARY PROFILE BLOCKED • "+(it.message?:"invalid machine profile")
+                status.text="ROTARY PROFILE WARNING • "+(it.message?:"invalid machine profile")+" • EDITOR STILL ENABLED"
             }
         }
     }
@@ -983,14 +983,14 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
             editor.text=it
             status.text="UNIFIED NC REBUILT • "+axisMode+" • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+" • "+clampStatus()
         }
-            .onFailure{status.text="UNIFIED NC BLOCKED: "+(it.message?:"error")}
+            .onFailure{status.text="NC REBUILD WARNING • existing editor preserved • "+(it.message?:"error")}
     }
     action("安全檢查 / SAFE CHECK",Color(255,176,32),"NC_EDIT"){
         val blocked=NcProgramSafetyPolicy.blocking(editor.text,rotaryClampProfile,currentRotaryMode())
-        status.text=if(blocked.isEmpty())"UNIFIED NC SAFETY PASS" else "UNIFIED NC BLOCKED • "+blocked.take(3).joinToString(","){it.code}
+        status.text=if(blocked.isEmpty())"UNIFIED NC SAFETY PASS" else "UNIFIED NC WARNING • EDITING ENABLED • EXECUTION INTERLOCK • "+blocked.take(3).joinToString(","){it.code}
     }
     action("儲存草稿 / SAVE DRAFT",Color(61,235,255),"NC_EDIT"){
-        status.text="NC DRAFT IN EDITOR • FINAL UNVERIFIED • chars="+editor.text.length
+        status.text="NC DRAFT SAVED IN EDITOR • WARNING DOES NOT LOCK EDITING • FINAL UNVERIFIED • chars="+editor.text.length
     }
 
     dlg.add(modeBar,BorderLayout.NORTH)
