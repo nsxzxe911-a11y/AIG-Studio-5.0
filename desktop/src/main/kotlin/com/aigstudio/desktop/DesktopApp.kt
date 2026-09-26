@@ -7,6 +7,7 @@ import java.awt.geom.Path2D
 import java.awt.image.BufferedImage
 import java.io.File
 import java.security.MessageDigest
+import java.util.prefs.Preferences
 import javax.imageio.ImageIO
 import javax.swing.*
 import javax.swing.border.EmptyBorder
@@ -813,6 +814,44 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
 }
 
 
+private val rotaryMachinePrefs: Preferences =
+    Preferences.userRoot().node("com/aigstudio/rotary-machine-profile")
+
+private fun loadDesktopRotaryMachineProfile(): RotaryAxisClampProfile {
+    return when (rotaryMachinePrefs.get("mode","UNCONFIGURED")) {
+        "PMC_AUTO" -> RotaryAxisClampProfile.controllerAutomatic(
+            rotaryMachinePrefs.getBoolean("require_indexed_cut_lock",false)
+        )
+        "EXPLICIT" -> {
+            val lock=rotaryMachinePrefs.getInt("lock_m",-1)
+            val unlock=rotaryMachinePrefs.getInt("unlock_m",-1)
+            if(lock in 0..999 && unlock in 0..999 && lock!=unlock) {
+                RotaryAxisClampProfile.explicit(
+                    clampM=lock,
+                    unclampM=unlock,
+                    requireClampForIndexedCutting=rotaryMachinePrefs.getBoolean("require_indexed_cut_lock",false)
+                )
+            } else RotaryAxisClampProfile.unconfigured()
+        }
+        else -> RotaryAxisClampProfile.unconfigured()
+    }
+}
+
+private fun saveDesktopRotaryMachineProfile(profile:RotaryAxisClampProfile){
+    rotaryMachinePrefs.clear()
+    rotaryMachinePrefs.putBoolean("require_indexed_cut_lock",profile.requireClampForIndexedCutting)
+    when {
+        profile.controllerAutomatic -> rotaryMachinePrefs.put("mode","PMC_AUTO")
+        profile.explicit -> {
+            rotaryMachinePrefs.put("mode","EXPLICIT")
+            rotaryMachinePrefs.putInt("lock_m",profile.clampM!!)
+            rotaryMachinePrefs.putInt("unlock_m",profile.unclampM!!)
+        }
+        else -> rotaryMachinePrefs.put("mode","UNCONFIGURED")
+    }
+    rotaryMachinePrefs.flush()
+}
+
 private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:JLabel){
     val snapshot=doc.snapshot()
     require(snapshot.entities.isNotEmpty()){"UNIFIED WORKSPACE BLOCKED: no CAD geometry"}
@@ -820,7 +859,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     var axisA=0.0
     var axisB=0.0
     var axisMode="3AX"
-    var rotaryClampProfile=RotaryAxisClampProfile.unconfigured()
+    var rotaryClampProfile=loadDesktopRotaryMachineProfile()
     fun currentRotaryMode():RotaryAxisOperationMode=when(axisMode){
         "4AX" -> RotaryAxisOperationMode.INDEXED_4AX
         "5AX" -> RotaryAxisOperationMode.INDEXED_5AX
@@ -911,7 +950,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         val lock=JTextField(rotaryClampProfile.clampM?.toString().orEmpty(),8)
         val cutLock=JCheckBox("Indexed cutting also requires LOCK",rotaryClampProfile.requireClampForIndexedCutting)
         val panel=JPanel(GridLayout(0,1,4,4)).apply{
-            add(JLabel("Machine-specific rotary clamp profile • never assume universal M-codes"))
+            add(JLabel("Machine-specific rotary clamp profile • never assume universal M-codes • M42/M44 is example only"))
             add(mode)
             add(JLabel("UNLOCK M number"));add(unlock)
             add(JLabel("LOCK M number"));add(lock)
@@ -932,7 +971,8 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
                 }
             }.onSuccess{
                 rotaryClampProfile=it
-                status.text="ROTARY PROFILE • "+axisMode+" • "+clampStatus()+" • NC STALE / REBUILD REQUIRED"
+                saveDesktopRotaryMachineProfile(rotaryClampProfile)
+                status.text="ROTARY PROFILE SAVED • "+axisMode+" • "+clampStatus()+" • NC STALE / REBUILD REQUIRED"
             }.onFailure{
                 status.text="ROTARY PROFILE BLOCKED • "+(it.message?:"invalid machine profile")
             }
