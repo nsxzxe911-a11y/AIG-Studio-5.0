@@ -1,0 +1,161 @@
+name: AIG Studio Windows trusted signing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-trusted-signing:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+
+      - name: Build exact-source Windows artifact
+        shell: pwsh
+        run: .\build_windows_native.ps1
+
+      - name: Trusted Authenticode sign and verify
+        shell: pwsh
+        env:
+          WINDOWS_SIGNING_PFX_BASE64: ${{ secrets.WINDOWS_SIGNING_PFX_BASE64 }}
+          WINDOWS_SIGNING_PFX_PASSWORD: ${{ secrets.WINDOWS_SIGNING_PFX_PASSWORD }}
+          WINDOWS_SIGNING_EXPECTED_SUBJECT: ${{ secrets.WINDOWS_SIGNING_EXPECTED_SUBJECT }}
+          WINDOWS_SIGNING_EXPECTED_THUMBPRINT: ${{ secrets.WINDOWS_SIGNING_EXPECTED_THUMBPRINT }}
+          WINDOWS_SIGNING_TIMESTAMP_URL: ${{ secrets.WINDOWS_SIGNING_TIMESTAMP_URL }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          foreach ($name in @(
+            'WINDOWS_SIGNING_PFX_BASE64',
+            'WINDOWS_SIGNING_PFX_PASSWORD',
+            'WINDOWS_SIGNING_EXPECTED_SUBJECT',
+            'WINDOWS_SIGNING_EXPECTED_THUMBPRINT',
+            'WINDOWS_SIGNING_TIMESTAMP_URL'
+          )) {
+            if ([string]::IsNullOrWhiteSpace((Get-Item "Env:$name").Value)) {
+              throw "WINDOWS_TRUSTED_CODE_SIGN_CERT=MISSING:$name"
+            }
+          }
+
+          $pfxPath = Join-Path $env:RUNNER_TEMP 'aig-windows-signing.pfx'
+          try {
+            [IO.File]::WriteAllBytes(
+              $pfxPath,
+              [Convert]::FromBase64String($env:WINDOWS_SIGNING_PFX_BASE64)
+            )
+
+            $flags = [Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet
+            $cert = [Security.Cryptography.X509Certificates.X509Certificate2]::new(
+              $pfxPath,
+              $env:WINDOWS_SIGNING_PFX_PASSWORD,
+              $flags
+            )
+
+            if (-not $cert.HasPrivateKey) { throw 'WINDOWS_SIGNING_PRIVATE_KEY_MISSING' }
+            if ($cert.NotBefore.ToUniversalTime() -gt [DateTime]::UtcNow) { throw 'WINDOWS_SIGNING_CERT_NOT_YET_VALID' }
+            if ($cert.NotAfter.ToUniversalTime() -le [DateTime]::UtcNow) { throw 'WINDOWS_SIGNING_CERT_EXPIRED' }
+            if ($cert.Subject -eq $cert.Issuer) { throw 'WINDOWS_SIGNING_SELF_SIGNED_REJECTED' }
+
+            $expectedThumb = ($env:WINDOWS_SIGNING_EXPECTED_THUMBPRINT -replace '[^0-9A-Fa-f]','').ToUpperInvariant()
+            $actualThumb = ($cert.Thumbprint -replace '[^0-9A-Fa-f]','').ToUpperInvariant()
+            if ($actualThumb -ne $expectedThumb) { throw 'WINDOWS_SIGNING_THUMBPRINT_MISMATCH' }
+            if ($cert.Subject -notlike ('*' + $env:WINDOWS_SIGNING_EXPECTED_SUBJECT + '*')) {
+              throw 'WINDOWS_SIGNING_SUBJECT_MISMATCH'
+            }
+
+            $codeSigningOid = '1.3.6.1.5.5.7.3.3'
+            $ekuOk = $false
+            foreach ($ext in $cert.Extensions) {
+              if ($ext -is [Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension]) {
+                foreach ($oid in $ext.EnhancedKeyUsages) {
+                  if ($oid.Value -eq $codeSigningOid) { $ekuOk = $true }
+                }
+              }
+            }
+            if (-not $ekuOk) { throw 'WINDOWS_SIGNING_CODE_SIGNING_EKU_MISSING' }
+
+            $chain = [Security.Cryptography.X509Certificates.X509Chain]::new()
+            $chain.ChainPolicy.RevocationMode = [Security.Cryptography.X509Certificates.X509RevocationMode]::Online
+            $chain.ChainPolicy.RevocationFlag = [Security.Cryptography.X509Certificates.X509RevocationFlag]::ExcludeRoot
+            $chain.ChainPolicy.VerificationFlags = [Security.Cryptography.X509Certificates.X509VerificationFlags]::NoFlag
+            if (-not $chain.Build($cert)) {
+              $detail = ($chain.ChainStatus | ForEach-Object { $_.Status.ToString() + ':' + $_.StatusInformation.Trim() }) -join ';'
+              throw ('WINDOWS_SIGNING_TRUST_CHAIN_INVALID:' + $detail)
+            }
+            if ($chain.ChainElements.Count -lt 2) { throw 'WINDOWS_SIGNING_PUBLIC_TRUST_CHAIN_MISSING' }
+
+            $signtool = (Get-Command signtool.exe -ErrorAction SilentlyContinue).Source
+            if (-not $signtool) {
+              $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
+                Sort-Object FullName -Descending |
+                Select-Object -First 1 -ExpandProperty FullName
+            }
+            if (-not $signtool) { throw 'SIGNTOOL_NOT_FOUND' }
+
+            $exe = 'release\windows\AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
+            if (-not (Test-Path $exe)) { throw 'STUDIO_SIGN_TARGET_MISSING' }
+
+            & $signtool sign /fd SHA256 /td SHA256 /tr $env:WINDOWS_SIGNING_TIMESTAMP_URL /f $pfxPath /p $env:WINDOWS_SIGNING_PFX_PASSWORD /d 'AIG Studio RGB CNC Workstation' $exe
+            if ($LASTEXITCODE -ne 0) { throw 'SIGNTOOL_SIGN_FAILED' }
+
+            & $signtool verify /pa /all /v /tw $exe
+            if ($LASTEXITCODE -ne 0) { throw 'SIGNTOOL_TRUST_VERIFY_FAILED' }
+
+            $auth = Get-AuthenticodeSignature $exe
+            if ($auth.Status -ne 'Valid') { throw "AUTHENTICODE_STATUS_INVALID:$($auth.Status)" }
+            if (-not $auth.SignerCertificate) { throw 'AUTHENTICODE_SIGNER_MISSING' }
+            if (-not $auth.TimeStamperCertificate) { throw 'AUTHENTICODE_TIMESTAMP_MISSING' }
+
+            $signerThumb = ($auth.SignerCertificate.Thumbprint -replace '[^0-9A-Fa-f]','').ToUpperInvariant()
+            if ($signerThumb -ne $expectedThumb) { throw 'AUTHENTICODE_SIGNER_THUMBPRINT_MISMATCH' }
+            if ($auth.SignerCertificate.Subject -notlike ('*' + $env:WINDOWS_SIGNING_EXPECTED_SUBJECT + '*')) {
+              throw 'AUTHENTICODE_SIGNER_SUBJECT_MISMATCH'
+            }
+
+            $hash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+            ("$hash  AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe") | Set-Content 'release\windows\SHA256SUMS.txt' -Encoding ascii
+
+            $manifestPath = 'release\windows\RELEASE_MANIFEST.txt'
+            $manifest = Get-Content $manifestPath | Where-Object {
+              $_ -notmatch '^(sha256|release_state|windows_signing_)='
+            }
+            @(
+              $manifest
+              "sha256=$hash"
+              "windows_signing_subject=$($cert.Subject)"
+              "windows_signing_thumbprint=$actualThumb"
+              'windows_signing_digest=SHA256'
+              'windows_signing_timestamp=RFC3161-SHA256'
+              'windows_signing_trust=PUBLIC_CHAIN_VERIFIED'
+              'release_state=WINDOWS_TRUSTED_SIGNED_NOT_FINAL'
+            ) | Set-Content $manifestPath -Encoding ascii
+
+            $verifyHash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($verifyHash -ne $hash) { throw 'POST_SIGN_SHA256_MISMATCH' }
+
+            Write-Host 'WINDOWS_TRUSTED_CODE_SIGN_CERT=PASS'
+            Write-Host 'WINDOWS_AUTHENTICODE_SIGNING=PASS'
+            Write-Host 'WINDOWS_RFC3161_TIMESTAMP=PASS'
+            Write-Host 'WINDOWS_PUBLIC_TRUST_CHAIN=PASS'
+            Write-Host 'WINDOWS_POST_SIGN_SHA256=PASS'
+          }
+          finally {
+            if (Test-Path $pfxPath) { Remove-Item $pfxPath -Force -ErrorAction SilentlyContinue }
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AIG-Studio-Windows-Trusted-Signed
+          path: release/windows/
+          if-no-files-found: error
