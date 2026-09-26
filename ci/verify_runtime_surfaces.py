@@ -122,9 +122,14 @@ for needle in (
     'mode("4AX","四軸","4 AXIS"',
     'mode("5AX","五軸","5 AXIS"',
     'mode("NC_EDIT","程式","NC EDIT"',
+    'action("旋轉鎖定 / ROTARY CLAMP"',
     'action("重建NC / REBUILD NC"',
     'action("安全檢查 / SAFE CHECK"',
     'action("儲存草稿 / SAVE DRAFT"',
+    'var rotaryClampProfile=RotaryAxisClampProfile.unconfigured()',
+    'rotaryMode=currentRotaryMode()',
+    'rotaryClampProfile=rotaryClampProfile',
+    'NcProgramSafetyPolicy.blocking(editor.text,rotaryClampProfile,currentRotaryMode())',
     'CncPost.generate(',
     'Machining3DEngine.build(',
 ):
@@ -151,6 +156,7 @@ print("✓ ANDROID_ALL_PAGES_ENTRY_GATE_PASS CAD MODIFY CORNER CAM MACHINING SEC
 print("✓ AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS 3AX_CONSTRAINED 4AX_A_ONLY 5AX_AB")
 print("✓ INLINE_NC_PAGE_CLOSURE_GATE_PASS KEYBOARD SAFETY TIMELINE BLOCK_CONTROLS SAFE_SAVE")
 print("✓ ROTARY_CLAMP_UI_BINDING_GATE_PASS PROFILE DRILL POST NC_STALE FAIL_CLOSED")
+print("✓ ROTARY_CLAMP_CROSS_PLATFORM_GATE_PASS ANDROID WINDOWS PROFILE_AWARE_POST")
 print("✓ DESKTOP_ALL_PAGES_ENTRY_GATE_PASS CAM 3D 3AX 4AX 5AX NC")
 print("✓ RGB_ALL_PAGE_ASSET_INTEGRITY_PASS CAD CAM 3D 3AX 4AX 5AX NC")
 print("✓ NO_FAKE_PAGE_CALLBACK_GATE_PASS TOOL_ACTION_CALLBACKS_BOUND")
