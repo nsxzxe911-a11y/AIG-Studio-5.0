@@ -1891,7 +1891,13 @@ private fun testUnifiedMachiningWorkspaceContract() {
     check(UnifiedMachiningWorkspaceContract.NC_BINDING_POLICY=="EDITABLE_GCODE_SAME_PAGE")
     check(UnifiedMachiningWorkspaceContract.coreSamePageIntact())
     check(UnifiedMachiningWorkspaceContract.ncEditorAlwaysVisible())
+    check(UnifiedMachiningWorkspaceContract.INLINE_NC_POLICY=="NO_SECOND_DIALOG")
+    check(UnifiedMachiningWorkspaceContract.inlineNcClosureComplete())
+    check(UnifiedMachiningWorkspaceContract.inlineNcTools.containsAll(setOf(
+        "LINE_HELP","MODAL_SAFETY","SINGLE_BLOCK","DRY_RUN","BLOCK_SKIP","STEP","SAFE_SAVE"
+    )))
     println("✓ UNIFIED_3D_AXIS_NC_WORKSPACE_GATE_PASS 3D 3AX 4AX 5AX EDITABLE_GCODE SAME_PAGE")
+    println("✓ INLINE_NC_CLOSURE_GATE_PASS KEYBOARD LINE_HELP MODAL_SAFETY SINGLE_BLOCK DRY_RUN BLOCK_SKIP STEP SAFE_SAVE NO_SECOND_DIALOG")
 
     val ids=UnifiedMachiningWorkspaceContract.rgbImageButtonIds()
     check(ids.containsAll(setOf("CAD","CAM","3D","3AX","4AX","5AX","NC_EDIT")))
