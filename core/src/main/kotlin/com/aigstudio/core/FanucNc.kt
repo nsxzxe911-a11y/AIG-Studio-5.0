@@ -1860,7 +1860,9 @@ data class FanucPostSettings(
     val coordinateMode: NcCoordinateMode = NcCoordinateMode.ABSOLUTE_G90,
     val originTransformMode: NcOriginTransformMode = NcOriginTransformMode.WORK_OFFSET_ONLY,
     val cutterCompensation: CutterCompensationMode = CutterCompensationMode.CAM_GEOMETRY_G40,
-    val cutterCompRegister: Int = 1
+    val cutterCompRegister: Int = 1,
+    val rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE,
+    val rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured()
 ) {
     init {
         require(Regex("G5[4-9]").matches(workOffset))
@@ -1872,6 +1874,10 @@ data class FanucPostSettings(
         require(axisA in -360.0..360.0)
         require(axisB in -360.0..360.0)
         require(cutterCompRegister in 1..999)
+        if (rotaryMode == RotaryAxisOperationMode.INDEXED_4AX ||
+            rotaryMode == RotaryAxisOperationMode.SIMULTANEOUS_4AX) {
+            require(abs(axisB) <= EPS) { "4AX post mode forbids B-axis command" }
+        }
     }
 }
 
@@ -1900,6 +1906,19 @@ object FanucNc {
         val camHasAxisProvenance = moves.any { abs(it.axisA) > 1e-9 || abs(it.axisB) > 1e-9 }
         fun effectiveA(move:Move):Double = if(camHasAxisProvenance) move.axisA else post.axisA
         fun effectiveB(move:Move):Double = if(camHasAxisProvenance) move.axisB else post.axisB
+        val hasRotaryOrientation = moves.any { abs(effectiveA(it)) > EPS || abs(effectiveB(it)) > EPS }
+        val explicitRotaryMode = post.rotaryMode != RotaryAxisOperationMode.NONE
+        if (explicitRotaryMode && hasRotaryOrientation) {
+            require(post.rotaryClampProfile.configured) {
+                "4/5-axis NC requires a machine-specific rotary clamp profile or verified controller/PMC automatic clamp mode"
+            }
+        }
+        if (post.rotaryMode == RotaryAxisOperationMode.INDEXED_4AX ||
+            post.rotaryMode == RotaryAxisOperationMode.SIMULTANEOUS_4AX) {
+            require(moves.all { abs(effectiveB(it)) <= EPS }) {
+                "4AX post mode forbids B-axis motion"
+            }
+        }
         if (post.coordinateMode == NcCoordinateMode.INCREMENTAL_G91) {
             require(moves.none { it is ArcFeed }) {
                 "G91 arc output blocked until controller-specific incremental arc-center semantics are validated"
@@ -1918,6 +1937,12 @@ object FanucNc {
         out.appendLine("(CANONICAL XYZ ABSOLUTE G90 • MASTER X0.000 Y0.000 Z0.000)")
         out.appendLine("(PROGRAM MODE " + post.coordinateMode.displayName + " • ORIGIN " + post.originTransformMode.displayName + " • CUTTER COMP " + post.cutterCompensation.displayName + ")")
         out.appendLine("(MULTIAXIS TOOLPOINT A/B SOURCE " + (if(camHasAxisProvenance) "CAM_TOOLPOINTS" else "POST_COMPAT_FALLBACK") + ")")
+        out.appendLine("(ROTARY MODE " + post.rotaryMode.name + " • CLAMP " +
+            when {
+                post.rotaryClampProfile.controllerAutomatic -> "CONTROLLER_PMC_AUTO"
+                post.rotaryClampProfile.explicit -> "MACHINE_MCODE_PROFILE"
+                else -> "UNCONFIGURED_COMPAT"
+            } + ")")
         out.appendLine("G21 G94 G97")
         out.appendLine("G90 " + post.workOffset + " G17 G40 G49 G80")
         out.appendLine("T" + post.tool)
@@ -1927,7 +1952,17 @@ object FanucNc {
         var lastA=effectiveA(firstMove)
         var lastB=effectiveB(firstMove)
         if (kotlin.math.abs(lastA) > 1e-9 || kotlin.math.abs(lastB) > 1e-9) {
+            if (explicitRotaryMode && post.rotaryClampProfile.explicit) {
+                out.appendLine("M" + post.rotaryClampProfile.unclampM)
+            }
             out.append("G0 A").append(fmt(lastA)).append(" B").append(fmt(lastB)).appendLine()
+            if (explicitRotaryMode &&
+                post.rotaryClampProfile.explicit &&
+                post.rotaryClampProfile.requireClampForIndexedCutting &&
+                (post.rotaryMode == RotaryAxisOperationMode.INDEXED_4AX ||
+                    post.rotaryMode == RotaryAxisOperationMode.INDEXED_5AX)) {
+                out.appendLine("M" + post.rotaryClampProfile.clampM)
+            }
         }
         out.appendLine("S" + post.spindle + " M3")
         if (post.coolant) out.appendLine("M8")
@@ -2000,6 +2035,18 @@ object FanucNc {
         require(processBlocked.isEmpty()) {
             "Generated NC process gate blocked: " + processBlocked.joinToString(",") {
                 "L" + it.lineNumber + ":" + it.code
+            }
+        }
+        if (explicitRotaryMode) {
+            val rotaryBlocked = RotaryAxisClampPolicy.blocking(
+                program,
+                post.rotaryMode,
+                post.rotaryClampProfile
+            )
+            require(rotaryBlocked.isEmpty()) {
+                "Generated NC rotary clamp gate blocked: " + rotaryBlocked.joinToString(",") {
+                    (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code
+                }
             }
         }
         return program
