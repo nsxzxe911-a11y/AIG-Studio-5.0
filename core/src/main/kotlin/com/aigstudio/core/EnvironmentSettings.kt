@@ -847,6 +847,14 @@ object UnifiedMachiningWorkspaceContract {
     const val IMAGE_BUTTON_POLICY = "RGB_IMAGE_ICON_TEXT"
     const val AI_LAYOUT_POLICY = "ERGONOMIC_PRIORITY_REACHABILITY"
     const val NC_BINDING_POLICY = "EDITABLE_GCODE_SAME_PAGE"
+    const val INLINE_NC_POLICY = "NO_SECOND_DIALOG"
+
+    val inlineNcTools = setOf(
+        "G","M","X","Y","Z","A","B","F","S","T",
+        "INSERT","DELETE","BLOCK_PREFIX",
+        "LINE_HELP","MODAL_SAFETY",
+        "SINGLE_BLOCK","DRY_RUN","BLOCK_SKIP","STEP","SAFE_SAVE"
+    )
 
     val samePageModes = listOf("3D","3AX","4AX","5AX","NC_EDIT")
 
@@ -904,6 +912,12 @@ object UnifiedMachiningWorkspaceContract {
     fun rgbImageButtonIds():Set<String> = imageButtons.map { it.id }.toSet()
     fun ncEditorAlwaysVisible():Boolean = true
     fun coreSamePageIntact():Boolean = samePageModes.toSet()==setOf("3D","3AX","4AX","5AX","NC_EDIT")
+    fun inlineNcClosureComplete():Boolean =
+        INLINE_NC_POLICY=="NO_SECOND_DIALOG" &&
+            inlineNcTools.containsAll(setOf(
+                "LINE_HELP","MODAL_SAFETY","SINGLE_BLOCK","DRY_RUN",
+                "BLOCK_SKIP","STEP","SAFE_SAVE"
+            ))
 }
 
 
