@@ -1460,8 +1460,8 @@ class MainActivity : Activity() {
                 NcSemanticAuthority.lineEvidence(program,line,controllerProfile)+"\n"+
                 NcExecutionTimeline.lineEvidence(program,line,controllerProfile)+"\n"+
                 CncControllerCapabilityMatrix.summary(controllerProfile,program)+
-                (if(blocked.isEmpty() && machine.canExecute) " • SAFETY=PASS"
-                else " • BLOCKED="+(
+                (if(blocked.isEmpty() && machine.canExecute) " • SAFETY=PASS • SESSION ACTIVE"
+                else " • WARNING • SESSION ACTIVE • EDITING ENABLED • EXECUTION INTERLOCK="+(
                     blocked.take(2).map{it.code} +
                         (if(machine.canExecute) emptyList() else listOf(machine.evidence()))
                 ).joinToString(","))
