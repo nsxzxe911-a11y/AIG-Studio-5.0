@@ -1,0 +1,19 @@
+{
+  "theme_id": "aigii_rgb_neon_v2",
+  "product": "AIG CNC",
+  "linked_control_surface": "AIG II",
+  "role": "cross-project-runtime-skin",
+  "version": "2.0.0",
+  "base_theme_id": "official-rgb-v1",
+  "official_baseline_replaced": false,
+  "startup_skin": "rgb_grid_neon",
+  "states": [
+    "Normal",
+    "Pressed",
+    "Selected",
+    "Disabled",
+    "Alarm"
+  ],
+  "shared_theme_id_with": "AIG-II",
+  "provenance": "new optional skin; official AIG CNC RGB baseline remains immutable"
+}
