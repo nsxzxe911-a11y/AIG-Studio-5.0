@@ -1186,6 +1186,7 @@ fun main() {
     testCamWorkstationContract()
     testUnifiedMachiningWorkspaceContract()
     testMultiAxisToolpointProvenance()
+    testAxis345RuntimeContract()
     testContinuousMultiAxisToolpointSchedule()
     testNcDraftRecoveryContract()
     testPixelLayoutPrecheckContract()
@@ -1996,4 +1997,53 @@ private fun testContinuousMultiAxisToolpointSchedule() {
         "Tilt-aware conservative cutter envelope did not expand removal coverage"
     }
     println("✓ CONTINUOUS_MULTIAXIS_CAM_SIM_GATE_PASS PER_POINT_AB LINEAR_SYNC TILT_ENVELOPE NC_FAIL_CLOSED")
+}
+
+
+private fun testAxis345RuntimeContract() {
+    val three=MachiningAxisRuntimeContract.state("3AX",90.0,-45.0)
+    check(three.axisA==0.0 && three.axisB==0.0 && !three.allowADrag && !three.allowBDrag)
+
+    val four=MachiningAxisRuntimeContract.state("4AX",30.0,70.0)
+    check(four.axisA==30.0 && four.axisB==0.0 && four.allowADrag && !four.allowBDrag)
+    val fourDragged=MachiningAxisRuntimeContract.applyDrag("4AX",30.0,0.0,15.0,120.0)
+    check(fourDragged.axisA==45.0 && fourDragged.axisB==0.0) { "4AX must never expose or persist B motion" }
+
+    val five=MachiningAxisRuntimeContract.applyDrag("5AX",10.0,-20.0,15.0,5.0)
+    check(five.axisA==25.0 && five.axisB==-15.0 && five.allowADrag && five.allowBDrag)
+
+    val fourSchedule=MachiningAxisRuntimeContract.continuousSchedule("4AX",0.0,999.0,90.0,-999.0)!!
+    check(fourSchedule.startB==0.0 && fourSchedule.endB==0.0)
+    check(fourSchedule.at(0.5).let { abs(it.first-45.0)<1e-12 && abs(it.second)<1e-12 })
+
+    val fiveSchedule=MachiningAxisRuntimeContract.continuousSchedule("5AX",0.0,0.0,45.0,-30.0)!!
+    check(fiveSchedule.at(0.5).let { abs(it.first-22.5)<1e-12 && abs(it.second+15.0)<1e-12 })
+    check(MachiningAxisRuntimeContract.continuousSchedule("3AX",0.0,0.0,90.0,90.0)==null)
+
+    val snapshot=DrawingSnapshot(listOf(Line("AX345",Vec2(-25.0,0.0),Vec2(25.0,0.0))))
+    val settings=CamSettings(toolDiameter=6.0,depth=-2.0,safeZ=5.0,feedMmMin=120.0)
+    val stock=Stock3D.fromSnapshot(snapshot)
+    val stale3=Machining3DEngine.build(snapshot,settings,stock,axisA=90.0,axisB=45.0,axisSchedule=null)
+    val normalized3=Machining3DEngine.build(snapshot,settings,stock,axisA=three.axisA,axisB=three.axisB)
+    check(normalized3.cam.toolpaths.flatMap { it.moves }.all { abs(it.axisA)<EPS && abs(it.axisB)<EPS })
+    check(stale3.cam.toolpaths.flatMap { it.moves }.any { abs(it.axisA)>EPS || abs(it.axisB)>EPS }) {
+        "Test fixture must prove stale-axis risk exists without normalization"
+    }
+
+    val r4=Machining3DEngine.build(snapshot,settings,stock,axisSchedule=fourSchedule)
+    val moves4=r4.cam.toolpaths.flatMap { it.moves }
+    check(moves4.any { abs(it.axisA)>EPS } && moves4.all { abs(it.axisB)<EPS })
+    check(r4.removal.depth.any { it<0.0 })
+
+    val r5=Machining3DEngine.build(snapshot,settings,stock,axisSchedule=fiveSchedule)
+    val moves5=r5.cam.toolpaths.flatMap { it.moves }
+    check(moves5.any { abs(it.axisA)>EPS } && moves5.any { abs(it.axisB)>EPS })
+    check(r5.removal.depth.any { it<0.0 })
+
+    val assetKeys=UnifiedMachiningWorkspaceContract.imageButtons
+        .filter { it.id in setOf("3AX","4AX","5AX") }
+        .associate { it.id to it.imageKey }
+    check(assetKeys==mapOf("3AX" to "ic_rgb_3ax","4AX" to "ic_rgb_4ax","5AX" to "ic_rgb_5ax"))
+    println("✓ RGB_3_4_5_SKIN_BINDING_GATE_PASS 3AX=ic_rgb_3ax 4AX=ic_rgb_4ax 5AX=ic_rgb_5ax")
+    println("✓ AXIS_3_4_5_RUNTIME_GATE_PASS 3AX_ZERO 4AX_A_ONLY 5AX_AB CAM_SIM_SHARED_TOOLPOINTS")
 }
