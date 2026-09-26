@@ -324,6 +324,8 @@ class MainActivity : Activity() {
     private var ncBlockSkip = false
     private var axisA = 0.0
     private var axisB = 0.0
+    private var machiningAxisMode = "3AX"
+    private var rotaryClampProfile = RotaryAxisClampProfile.unconfigured()
     private var workOffset = "G54"
     private var controllerProfile = CncControllerProfile.FANUC
     private var ncCoordinateMode = NcCoordinateMode.ABSOLUTE_G90
@@ -745,12 +747,31 @@ class MainActivity : Activity() {
 
 
 
+    private fun currentRotaryOperationMode(): RotaryAxisOperationMode = when (machiningAxisMode) {
+        "4AX" -> RotaryAxisOperationMode.INDEXED_4AX
+        "5AX" -> RotaryAxisOperationMode.INDEXED_5AX
+        else -> RotaryAxisOperationMode.NONE
+    }
+
+    private fun rotaryClampStatusText(): String = when {
+        rotaryClampProfile.controllerAutomatic -> "PMC AUTO • VERIFIED MACHINE ONLY"
+        rotaryClampProfile.explicit ->
+            "EXPLICIT M" + rotaryClampProfile.unclampM + " UNLOCK / M" + rotaryClampProfile.clampM + " LOCK" +
+                if (rotaryClampProfile.requireClampForIndexedCutting) " • INDEXED CUT LOCK" else " • CUT LOCK NOT FORCED"
+        else -> "UNCONFIGURED • 4/5AX ROTARY DRILL BLOCKED"
+    }
+
     private fun currentUnifiedNcSourceSignature(): String {
         val raw = buildString {
             append(cad.exportState()).append('|')
             append(camSettings.toString()).append('|')
             append(workOffset).append('|')
             append(axisA).append('|').append(axisB).append('|')
+            append(machiningAxisMode).append('|')
+            append(rotaryClampProfile.controllerAutomatic).append('|')
+            append(rotaryClampProfile.clampM ?: -1).append('|')
+            append(rotaryClampProfile.unclampM ?: -1).append('|')
+            append(rotaryClampProfile.requireClampForIndexedCutting).append('|')
             append(controllerProfile.name).append('|')
             append(ncCoordinateMode.name).append('|')
             append(ncOriginTransformMode.name).append('|')
@@ -1126,7 +1147,9 @@ class MainActivity : Activity() {
             controller = controllerProfile,
             coordinateMode = ncCoordinateMode,
             originTransformMode = ncOriginTransformMode,
-            cutterCompensation = ncCutterCompensation
+            cutterCompensation = ncCutterCompensation,
+            rotaryMode = currentRotaryOperationMode(),
+            rotaryClampProfile = rotaryClampProfile
         )
         val ncReady = runCatching { CncPost.generate(cam, post) }.isSuccess
         val screenWidthDp = resources.configuration.screenWidthDp.coerceAtLeast(1)
@@ -1327,7 +1350,9 @@ class MainActivity : Activity() {
                     controller=controllerProfile,
                     coordinateMode=ncCoordinateMode,
                     originTransformMode=ncOriginTransformMode,
-                    cutterCompensation=ncCutterCompensation
+                    cutterCompensation=ncCutterCompensation,
+                    rotaryMode=currentRotaryOperationMode(),
+                    rotaryClampProfile=rotaryClampProfile
                 )
             )
             if(drillCycleBlock.isBlank()) base else FanucNc.insertBeforeProgramEnd(base,drillCycleBlock)
@@ -1386,7 +1411,7 @@ class MainActivity : Activity() {
         fun refreshInlineNcStatus() {
             val program=ncEditor.text.toString()
             val line=NcCodeCatalog.lineNumberAt(program,ncEditor.selectionStart.coerceAtLeast(0))
-            val blocked=NcProgramSafetyPolicy.blocking(program)
+            val blocked=NcProgramSafetyPolicy.blocking(program,rotaryClampProfile,currentRotaryOperationMode())
             val machine=inlineInterlock.inspect(program)
             inlineNcStatus.setTextColor(
                 if(blocked.isEmpty() && machine.canExecute) 0xFF63FF9D.toInt() else 0xFFFF6E6E.toInt()
@@ -1432,7 +1457,7 @@ class MainActivity : Activity() {
         fun stepInlineNc(reset:Boolean=false) {
             val program=ncEditor.text.toString()
             val machine=inlineInterlock.inspect(program)
-            val blocked=NcProgramSafetyPolicy.blocking(program)
+            val blocked=NcProgramSafetyPolicy.blocking(program,rotaryClampProfile,currentRotaryOperationMode())
             if(!machine.canExecute || blocked.isNotEmpty()){
                 inlineNcStatus.setTextColor(0xFFFF6E6E.toInt())
                 inlineNcStatus.text=
@@ -1466,7 +1491,7 @@ class MainActivity : Activity() {
 
         fun safeSaveInlineNc() {
             val candidate=ncEditor.text.toString()
-            val blocked=NcProgramSafetyPolicy.blocking(candidate)
+            val blocked=NcProgramSafetyPolicy.blocking(candidate,rotaryClampProfile,currentRotaryOperationMode())
             val machine=inlineInterlock.inspect(candidate)
             if(blocked.isNotEmpty() || !machine.canExecute){
                 inlineNcStatus.setTextColor(0xFFFF6E6E.toInt())
@@ -1557,6 +1582,12 @@ class MainActivity : Activity() {
         }
 
         var activeMode=initialMode
+        var activeAxisMode=when(initialMode) {
+            "4AX" -> "4AX"
+            "5AX" -> "5AX"
+            "3D","3AX" -> "3AX"
+            else -> machiningAxisMode
+        }
         var draftA=axisA
         var draftB=axisB
         fun iconFor(id:String):Int=when(id){
@@ -1591,6 +1622,7 @@ class MainActivity : Activity() {
                     },FrameLayout.LayoutParams(-1,-1))
                 }
                 "3D","3AX" -> {
+                    activeAxisMode="3AX"
                     val state=MachiningAxisRuntimeContract.state("3AX",draftA,draftB)
                     draftA=state.axisA; draftB=state.axisB
                     val threeAxisResult=Machining3DEngine.build(
@@ -1600,11 +1632,13 @@ class MainActivity : Activity() {
                     visualHost.addView(Machining3DView(this,threeAxisResult),FrameLayout.LayoutParams(-1,-1))
                 }
                 "4AX" -> {
+                    activeAxisMode="4AX"
                     val state=MachiningAxisRuntimeContract.state("4AX",draftA,draftB)
                     draftA=state.axisA; draftB=state.axisB
                     visualHost.addView(Axis5xPreview(this,draftA,draftB,"4AX"){a,b->draftA=a;draftB=b},FrameLayout.LayoutParams(-1,-1))
                 }
                 "5AX" -> {
+                    activeAxisMode="5AX"
                     val state=MachiningAxisRuntimeContract.state("5AX",draftA,draftB)
                     draftA=state.axisA; draftB=state.axisB
                     visualHost.addView(Axis5xPreview(this,draftA,draftB,"5AX"){a,b->draftA=a;draftB=b},FrameLayout.LayoutParams(-1,-1))
@@ -1662,11 +1696,18 @@ class MainActivity : Activity() {
             })
         }
         action("套用軸向\nAPPLY AXIS",0xFF8B5CF6.toInt()){
-            axisA=if(activeMode=="3D"||activeMode=="3AX")0.0 else draftA
-            axisB=if(activeMode=="5AX")draftB else 0.0
+            machiningAxisMode=activeAxisMode
+            axisA=if(activeAxisMode=="3AX")0.0 else draftA
+            axisB=if(activeAxisMode=="5AX")draftB else 0.0
+            drillCycleBlock=""
             if(!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale=true
             saveCadCheckpoint()
-            Toast.makeText(this,"AXIS APPLIED • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+" • NC DRAFT STALE",Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "AXIS APPLIED • "+machiningAxisMode+" • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+
+                    " • "+rotaryClampStatusText()+" • DRILL BLOCK RESET • NC DRAFT STALE",
+                Toast.LENGTH_LONG
+            ).show()
         }
         action("安全儲存\nSAFE SAVE",0xFF22C55E.toInt()){
             safeSaveInlineNc()
@@ -1794,6 +1835,44 @@ class MainActivity : Activity() {
         val originSpinner = spinner(origins,{it.displayName},ncOriginTransformMode)
         val compensationSpinner = spinner(compensations,{it.displayName},ncCutterCompensation)
 
+        val clampModes = arrayOf(
+            "ROTARY CLAMP UNCONFIGURED / BLOCK",
+            "CONTROLLER / PMC AUTO • VERIFIED MACHINE ONLY",
+            "EXPLICIT MACHINE M-CODES"
+        )
+        val selectedClampMode = when {
+            rotaryClampProfile.controllerAutomatic -> clampModes[1]
+            rotaryClampProfile.explicit -> clampModes[2]
+            else -> clampModes[0]
+        }
+        val clampModeSpinner = spinner(clampModes,{it},selectedClampMode)
+        val unlockM = EditText(this).apply {
+            hint = "ROTARY UNLOCK M number • machine builder manual"
+            setText(rotaryClampProfile.unclampM?.toString().orEmpty())
+            inputType = InputType.TYPE_CLASS_NUMBER
+            box.addView(this)
+        }
+        val clampM = EditText(this).apply {
+            hint = "ROTARY LOCK M number • machine builder manual"
+            setText(rotaryClampProfile.clampM?.toString().orEmpty())
+            inputType = InputType.TYPE_CLASS_NUMBER
+            box.addView(this)
+        }
+        val clampIndexedCut = CheckBox(this).apply {
+            text = "Indexed 4/5AX cutting also requires LOCK • only if this machine requires it"
+            isChecked = rotaryClampProfile.requireClampForIndexedCutting
+            box.addView(this)
+        }
+
+        box.addView(TextView(this).apply {
+            text = "ROTARY SAFETY • 4/5軸鑽孔/攻牙：Safe-Z → UNLOCK → A/B定位 → LOCK → cycle。" +
+                " 同步4/5軸切削時A/B必須可動，不可鎖死。UNLOCK/LOCK不是通用G-code；" +
+                "請選PMC AUTO或輸入這台機器製造商確認的M-code。未設定時4/5軸鑽孔直接BLOCK。"
+            setTextColor(Color.rgb(255,190,90))
+            textSize = 11f
+            setPadding(dp(4),dp(10),dp(4),dp(4))
+        })
+
         box.addView(TextView(this).apply {
             text = "適用時機：一般加工/複製區段→G90；重複圖形/子程式→G91；角度特徵暫時原點/多夾具重新指定原點→G92。G92是獨立ORIGIN TRANSFORM，不改CAD/CAM/SIM ABS XYZ。"
             setTextColor(Color.rgb(160,190,210))
@@ -1805,31 +1884,47 @@ class MainActivity : Activity() {
             .setTitle("CNC CONTROL / POST MODE")
             .setView(box)
             .setPositiveButton("套用") { _, _ ->
-                val profile = profiles[profileSpinner.selectedItemPosition]
-                val coordinate = coordinates[coordinateSpinner.selectedItemPosition]
-                val origin = origins[originSpinner.selectedItemPosition]
-                val comp = compensations[compensationSpinner.selectedItemPosition]
-                if (comp != CutterCompensationMode.CAM_GEOMETRY_G40) {
-                    Toast.makeText(
-                        this,
-                        comp.code + " BLOCKED：目前CAM已做刀半徑幾何補償，禁止雙重補償",
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else {
-                    controllerProfile = profile
-                    ncCoordinateMode = coordinate
-                    ncOriginTransformMode = origin
-                    ncCutterCompensation = comp
+                runCatching {
+                    val profile = profiles[profileSpinner.selectedItemPosition]
+                    val coordinate = coordinates[coordinateSpinner.selectedItemPosition]
+                    val origin = origins[originSpinner.selectedItemPosition]
+                    val comp = compensations[compensationSpinner.selectedItemPosition]
+                    require(comp == CutterCompensationMode.CAM_GEOMETRY_G40) {
+                        comp.code + " BLOCKED：目前CAM已做刀半徑幾何補償，禁止雙重補償"
+                    }
+                    val clampProfile = when (clampModeSpinner.selectedItemPosition) {
+                        0 -> RotaryAxisClampProfile.unconfigured()
+                        1 -> RotaryAxisClampProfile.controllerAutomatic(clampIndexedCut.isChecked)
+                        else -> {
+                            val unlock = unlockM.text.toString().trim().toIntOrNull()
+                                ?: error("請輸入這台機器確認的 ROTARY UNLOCK M number")
+                            val lock = clampM.text.toString().trim().toIntOrNull()
+                                ?: error("請輸入這台機器確認的 ROTARY LOCK M number")
+                            RotaryAxisClampProfile.explicit(
+                                clampM = lock,
+                                unclampM = unlock,
+                                requireClampForIndexedCutting = clampIndexedCut.isChecked
+                            )
+                        }
+                    }
+                    arrayOf(profile,coordinate,origin,comp,clampProfile)
+                }.onSuccess { values ->
+                    controllerProfile = values[0] as CncControllerProfile
+                    ncCoordinateMode = values[1] as NcCoordinateMode
+                    ncOriginTransformMode = values[2] as NcOriginTransformMode
+                    ncCutterCompensation = values[3] as CutterCompensationMode
+                    rotaryClampProfile = values[4] as RotaryAxisClampProfile
                     drillCycleBlock = ""
+                    if(!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
                     Toast.makeText(
                         this,
-                        if (origin == NcOriginTransformMode.TEMPORARY_G92)
-                            "G92 已選 • NC POST待控制器原點語意驗證 • CAD/CAM/SIM ABS XYZ不變"
-                        else
-                            "POST " + controllerProfile.displayName + " • " + ncCoordinateMode.displayName + " • " +
-                                origin.displayName + " • G40 CAM COMP • ABS XYZ真值不變",
+                        "POST " + controllerProfile.displayName + " • " + ncCoordinateMode.displayName +
+                            " • " + ncOriginTransformMode.displayName + " • " + rotaryClampStatusText() +
+                            " • NC DRAFT STALE",
                         Toast.LENGTH_LONG
                     ).show()
+                }.onFailure { error ->
+                    Toast.makeText(this,"CONTROL BLOCKED • "+(error.message?:"invalid rotary/post profile"),Toast.LENGTH_LONG).show()
                 }
             }
             .setNegativeButton("取消", null)
@@ -1854,6 +1949,13 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12),dp(8),dp(12),dp(8))
         }
+        box.addView(TextView(this).apply {
+            text = "AXIS MODE " + machiningAxisMode + " • " + rotaryClampStatusText()
+            setTextColor(if(currentRotaryOperationMode()==RotaryAxisOperationMode.NONE || rotaryClampProfile.configured)
+                Color.rgb(99,255,157) else Color.rgb(255,110,110))
+            textSize = 11f
+            setPadding(dp(4),dp(4),dp(4),dp(8))
+        })
         val cycleSpinner = Spinner(this).apply {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, DrillCycle.entries.map { it.code })
             box.addView(this)
@@ -1873,10 +1975,14 @@ class MainActivity : Activity() {
         val feed = num("Feed mm/min", camSettings.feedMmMin)
         val tapPitch = num("Tap pitch mm/rev (G84)", 1.0)
         val tapRpm = num("Tap spindle RPM (G84)", 500.0)
-        val useM29 = CheckBox(this).apply { text = "G84 使用 Fanuc M29 rigid tapping（三菱Profile不套用）"; isChecked = false; box.addView(this) }
+        val useM29 = CheckBox(this).apply {
+            text = "G84 使用 Fanuc M29 rigid tapping（三菱Profile不套用）"
+            isChecked = false
+            box.addView(this)
+        }
 
         AlertDialog.Builder(this)
-            .setTitle(controllerProfile.displayName + " • 鑽孔循環")
+            .setTitle(controllerProfile.displayName + " • " + machiningAxisMode + " • 鑽孔循環")
             .setView(box)
             .setPositiveButton("套用到 NC") { _, _ ->
                 runCatching {
@@ -1894,12 +2000,23 @@ class MainActivity : Activity() {
                             useM29.isChecked &&
                             controllerProfile == CncControllerProfile.FANUC
                     )
-                    FanucNc.cannedCycle(cycle, listOf(hole), camSettings.safeZ, hole.r)
+                    val rotaryMode = currentRotaryOperationMode()
+                    FanucNc.cannedCycle(
+                        cycle = cycle,
+                        holes = listOf(hole),
+                        safeZ = camSettings.safeZ,
+                        retractZ = hole.r,
+                        rotaryMode = rotaryMode,
+                        axisA = if(rotaryMode==RotaryAxisOperationMode.NONE) 0.0 else axisA,
+                        axisB = if(rotaryMode==RotaryAxisOperationMode.INDEXED_5AX) axisB else 0.0,
+                        clampProfile = rotaryClampProfile
+                    )
                 }.onSuccess {
                     drillCycleBlock = it
-                    Toast.makeText(this, "DRILL CYCLE READY", Toast.LENGTH_SHORT).show()
+                    if(!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
+                    Toast.makeText(this, "DRILL CYCLE READY • "+machiningAxisMode+" • "+rotaryClampStatusText(), Toast.LENGTH_LONG).show()
                 }.onFailure {
-                    Toast.makeText(this, "DRILL CYCLE 無效: " + it.message, Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "DRILL CYCLE BLOCKED: " + it.message, Toast.LENGTH_LONG).show()
                 }
             }
             .setNegativeButton("取消", null)
@@ -1957,6 +2074,9 @@ class MainActivity : Activity() {
                 } else {
                     axisA = a
                     axisB = b
+                    machiningAxisMode = "5AX"
+                    drillCycleBlock = ""
+                    if(!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
                     val ncPreview = "G0 A" + FanucNc.fmt(axisA) + " B" + FanucNc.fmt(axisB)
                     Toast.makeText(this, "5X " + ncPreview, Toast.LENGTH_SHORT).show()
                 }
@@ -2031,7 +2151,7 @@ class MainActivity : Activity() {
         }
         fun refreshModalStatus() {
             val program = editor.text.toString()
-            val blocked = NcProgramSafetyPolicy.blocking(program)
+            val blocked = NcProgramSafetyPolicy.blocking(program,rotaryClampProfile,currentRotaryOperationMode())
             val machine = machineInterlockSession.inspect(program)
             modalStatus.setTextColor(if (blocked.isEmpty() && machine.canExecute) Color.rgb(255,210,90) else Color.rgb(255,110,110))
             modalStatus.text = "MODAL • " + NcModalTracker.evidence(program) +
