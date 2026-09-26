@@ -819,11 +819,29 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     val result=Machining3DEngine.build(snapshot)
     var axisA=0.0
     var axisB=0.0
+    var axisMode="3AX"
+    var rotaryClampProfile=RotaryAxisClampProfile.unconfigured()
+    fun currentRotaryMode():RotaryAxisOperationMode=when(axisMode){
+        "4AX" -> RotaryAxisOperationMode.INDEXED_4AX
+        "5AX" -> RotaryAxisOperationMode.INDEXED_5AX
+        else -> RotaryAxisOperationMode.NONE
+    }
+    fun clampStatus():String=when{
+        rotaryClampProfile.controllerAutomatic -> "PMC AUTO"
+        rotaryClampProfile.explicit ->
+            "M"+rotaryClampProfile.unclampM+" UNLOCK / M"+rotaryClampProfile.clampM+" LOCK"
+        else -> "UNCONFIGURED"
+    }
     fun generateNc():String {
         val orientedCam=CamModel.fromCad(0L,snapshot,result.cam.settings,axisA,axisB)
         return CncPost.generate(
             orientedCam,
-            FanucPostSettings(axisA=axisA,axisB=axisB)
+            FanucPostSettings(
+                axisA=axisA,
+                axisB=axisB,
+                rotaryMode=currentRotaryMode(),
+                rotaryClampProfile=rotaryClampProfile
+            )
         )
     }
     val editor=JTextArea(generateNc()).apply{
@@ -861,10 +879,10 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     }
     mode("CAD","2D繪圖","2D CAD",Color(61,235,255),"CAD"){dlg.dispose()}
     mode("CAM","刀路","CAM",Color(63,255,157),"CAM"){status.text="REAL CAM • paths="+result.cam.toolpaths.size}
-    mode("3D","3D模擬","3D",Color(139,92,246),"3D"){axisA=0.0;axisB=0.0;card.show(visual,"3D")}
-    mode("3AX","三軸","3 AXIS",Color(59,130,246),"3AX"){axisA=0.0;axisB=0.0;axes.setAngles(0.0,0.0);card.show(visual,"AXIS")}
-    mode("4AX","四軸","4 AXIS",Color(245,158,11),"4AX"){axisB=0.0;axes.setAngles(axisA,0.0);card.show(visual,"AXIS")}
-    mode("5AX","五軸","5 AXIS",Color(236,72,153),"5AX"){axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    mode("3D","3D模擬","3D",Color(139,92,246),"3D"){axisMode="3AX";axisA=0.0;axisB=0.0;card.show(visual,"3D")}
+    mode("3AX","三軸","3 AXIS",Color(59,130,246),"3AX"){axisMode="3AX";axisA=0.0;axisB=0.0;axes.setAngles(0.0,0.0);card.show(visual,"AXIS")}
+    mode("4AX","四軸","4 AXIS",Color(245,158,11),"4AX"){axisMode="4AX";axisB=0.0;axes.setAngles(axisA,0.0);card.show(visual,"AXIS")}
+    mode("5AX","五軸","5 AXIS",Color(236,72,153),"5AX"){axisMode="5AX";axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
     mode("NC_EDIT","程式","NC EDIT",Color(80,170,255),"NC_EDIT"){editor.requestFocusInWindow()}
     modeButtons.getOrNull(2)?.active=true
 
@@ -874,16 +892,61 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
             this.icon=RgbGlyphIcon(icon,color);addActionListener{run()}
         })
     }
-    action("A−",Color(139,92,246),"4AX"){axisA=(axisA-15.0).coerceAtLeast(-360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
-    action("A+",Color(139,92,246),"4AX"){axisA=(axisA+15.0).coerceAtMost(360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
-    action("B−",Color(236,72,153),"5AX"){axisB=(axisB-15.0).coerceAtLeast(-360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
-    action("B+",Color(236,72,153),"5AX"){axisB=(axisB+15.0).coerceAtMost(360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    action("A−",Color(139,92,246),"4AX"){if(axisMode!="5AX")axisMode="4AX";axisA=(axisA-15.0).coerceAtLeast(-360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    action("A+",Color(139,92,246),"4AX"){if(axisMode!="5AX")axisMode="4AX";axisA=(axisA+15.0).coerceAtMost(360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    action("B−",Color(236,72,153),"5AX"){axisMode="5AX";axisB=(axisB-15.0).coerceAtLeast(-360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    action("B+",Color(236,72,153),"5AX"){axisMode="5AX";axisB=(axisB+15.0).coerceAtMost(360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    action("旋轉鎖定 / ROTARY CLAMP",Color(125,112,255),"4AX"){
+        val mode=JComboBox(arrayOf(
+            "UNCONFIGURED / BLOCK",
+            "CONTROLLER / PMC AUTO • VERIFIED MACHINE ONLY",
+            "EXPLICIT MACHINE M-CODES"
+        ))
+        mode.selectedIndex=when{
+            rotaryClampProfile.controllerAutomatic -> 1
+            rotaryClampProfile.explicit -> 2
+            else -> 0
+        }
+        val unlock=JTextField(rotaryClampProfile.unclampM?.toString().orEmpty(),8)
+        val lock=JTextField(rotaryClampProfile.clampM?.toString().orEmpty(),8)
+        val cutLock=JCheckBox("Indexed cutting also requires LOCK",rotaryClampProfile.requireClampForIndexedCutting)
+        val panel=JPanel(GridLayout(0,1,4,4)).apply{
+            add(JLabel("Machine-specific rotary clamp profile • never assume universal M-codes"))
+            add(mode)
+            add(JLabel("UNLOCK M number"));add(unlock)
+            add(JLabel("LOCK M number"));add(lock)
+            add(cutLock)
+        }
+        if(JOptionPane.showConfirmDialog(
+            dlg,panel,"ROTARY CLAMP / MACHINE PROFILE",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE
+        )==JOptionPane.OK_OPTION){
+            runCatching{
+                when(mode.selectedIndex){
+                    0 -> RotaryAxisClampProfile.unconfigured()
+                    1 -> RotaryAxisClampProfile.controllerAutomatic(cutLock.isSelected)
+                    else -> RotaryAxisClampProfile.explicit(
+                        clampM=lock.text.trim().toIntOrNull() ?: error("LOCK M number required"),
+                        unclampM=unlock.text.trim().toIntOrNull() ?: error("UNLOCK M number required"),
+                        requireClampForIndexedCutting=cutLock.isSelected
+                    )
+                }
+            }.onSuccess{
+                rotaryClampProfile=it
+                status.text="ROTARY PROFILE • "+axisMode+" • "+clampStatus()+" • NC STALE / REBUILD REQUIRED"
+            }.onFailure{
+                status.text="ROTARY PROFILE BLOCKED • "+(it.message?:"invalid machine profile")
+            }
+        }
+    }
     action("重建NC / REBUILD NC",Color(34,197,94),"NC_EDIT"){
-        runCatching{generateNc()}.onSuccess{editor.text=it;status.text="UNIFIED NC REBUILT • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)}
+        runCatching{generateNc()}.onSuccess{
+            editor.text=it
+            status.text="UNIFIED NC REBUILT • "+axisMode+" • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+" • "+clampStatus()
+        }
             .onFailure{status.text="UNIFIED NC BLOCKED: "+(it.message?:"error")}
     }
     action("安全檢查 / SAFE CHECK",Color(255,176,32),"NC_EDIT"){
-        val blocked=NcProgramSafetyPolicy.blocking(editor.text)
+        val blocked=NcProgramSafetyPolicy.blocking(editor.text,rotaryClampProfile,currentRotaryMode())
         status.text=if(blocked.isEmpty())"UNIFIED NC SAFETY PASS" else "UNIFIED NC BLOCKED • "+blocked.take(3).joinToString(","){it.code}
     }
     action("儲存草稿 / SAVE DRAFT",Color(61,235,255),"NC_EDIT"){
