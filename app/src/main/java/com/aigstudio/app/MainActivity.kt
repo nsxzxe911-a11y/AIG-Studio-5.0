@@ -1532,20 +1532,29 @@ class MainActivity : Activity() {
             val candidate=ncEditor.text.toString()
             val blocked=NcProgramSafetyPolicy.blocking(candidate,rotaryClampProfile,currentRotaryOperationMode())
             val machine=inlineInterlock.inspect(candidate)
-            if(blocked.isNotEmpty() || !machine.canExecute){
-                inlineNcStatus.setTextColor(0xFFFF6E6E.toInt())
-                inlineNcStatus.text=
-                    "SAFE SAVE BLOCKED • "+
-                    (blocked.take(4).joinToString(","){it.code}.ifBlank { machine.evidence() })
-                Toast.makeText(this,"NC SAFE SAVE BLOCKED • 修正 Safety/Interlock 紅燈",Toast.LENGTH_LONG).show()
-                return
-            }
+            val hasExecutionWarning=blocked.isNotEmpty() || !machine.canExecute
+
+            // Editing and draft persistence must never be disabled by NC warnings.
+            // Safety findings only prevent machine execution/rotary motion until revalidated.
             unifiedNcDraft=candidate
             unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
-            unifiedNcDraftStale=false
+            unifiedNcDraftStale=hasExecutionWarning
             saveCadCheckpoint()
             refreshInlineNcStatus()
-            Toast.makeText(this,"NC SAFE SAVE PASS • AUTOSAVE V3 • SOURCE BOUND",Toast.LENGTH_SHORT).show()
+
+            if(hasExecutionWarning){
+                inlineNcStatus.setTextColor(0xFFFFB020.toInt())
+                inlineNcStatus.text=
+                    "NC DRAFT SAVED • WARNING ONLY • EDITING ENABLED • EXECUTION INTERLOCK • "+
+                    (blocked.take(4).joinToString(","){it.code}.ifBlank { machine.evidence() })
+                Toast.makeText(
+                    this,
+                    "NC 草稿已儲存 • 警告不鎖編輯 • 執行前需修正/確認",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                Toast.makeText(this,"NC DRAFT SAVED • SAFETY PASS • SOURCE BOUND",Toast.LENGTH_SHORT).show()
+            }
         }
 
         ncEditor.setOnClickListener { ncEditor.post { refreshInlineNcStatus() } }
