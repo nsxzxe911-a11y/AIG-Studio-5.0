@@ -1,0 +1,20 @@
+{
+  "repository_name": "AIG UI Theme Repository",
+  "repository_version": "2.1.0",
+  "format_version": 1,
+  "default_theme_id": "aigii_rgb_neon_v2",
+  "asset_policy": {
+    "preserve_existing_rgb_assets": true,
+    "delete_stock_assets": false,
+    "appearance_changes_block_upgrade": false
+  },
+  "themes": [
+    {
+      "theme_id": "aigii_rgb_neon_v2",
+      "theme_name": "AIG II RGB Neon V2",
+      "version": "2.0.0",
+      "embedded_trusted": true,
+      "path": "themes/aigii_rgb_neon_v2/theme.json"
+    }
+  ]
+}
