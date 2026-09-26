@@ -1,0 +1,25 @@
+{
+  "theme_id": "aigii_rgb_neon_v2",
+  "theme_name": "AIG II RGB Neon V2",
+  "theme_version": "2.0.0",
+  "target_apps": [
+    "AIG-II",
+    "AIG-CNC"
+  ],
+  "min_app_version": "104.0.0",
+  "embedded_trusted": true,
+  "background_color": "#050A12",
+  "panel_color": "#0B1726",
+  "text_color": "#E8F4FF",
+  "accent_color": "#3DEBFF",
+  "corner_radius_dp": 16,
+  "idle_alpha": 0.86,
+  "glow_stroke_dp": 3.5,
+  "active_elevation_dp": 9,
+  "startup_skin": "rgb_grid_neon",
+  "asset_policy": {
+    "preserve_existing_rgb_assets": true,
+    "delete_stock_assets": false,
+    "appearance_changes_block_upgrade": false
+  }
+}
