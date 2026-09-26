@@ -101,6 +101,16 @@ for needle in (
 ):
     require(unified, needle, "INLINE_NC_TOOL")
 
+# Machine-specific rotary M-codes must be editable, persisted and never treated as universal defaults.
+for needle in (
+    'loadRotaryMachineProfile()',
+    'saveRotaryMachineProfile(rotaryClampProfile)',
+    'getSharedPreferences("aig_rotary_machine_profile", MODE_PRIVATE)',
+    '"EXPLICIT MACHINE M-CODES"',
+    'M42/M44 等僅可作機台範例，不是通用預設',
+):
+    require(android, needle, "ROTARY_MACHINE_PROFILE_PERSISTENCE")
+
 # Security/environment/AI pages must call operational handlers.
 for needle in (
     'addActionTo(branchFlow, "網路狀態", 0) { showNetworkStatus() }',
@@ -130,6 +140,8 @@ for needle in (
     'rotaryMode=currentRotaryMode()',
     'rotaryClampProfile=rotaryClampProfile',
     'NcProgramSafetyPolicy.blocking(editor.text,rotaryClampProfile,currentRotaryMode())',
+    'loadDesktopRotaryMachineProfile()',
+    'saveDesktopRotaryMachineProfile(rotaryClampProfile)',
     'CncPost.generate(',
     'Machining3DEngine.build(',
 ):
@@ -157,6 +169,7 @@ print("✓ AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS 3AX_CONSTRAINED 4AX_A_ONLY 5AX_A
 print("✓ INLINE_NC_PAGE_CLOSURE_GATE_PASS KEYBOARD SAFETY TIMELINE BLOCK_CONTROLS SAFE_SAVE")
 print("✓ ROTARY_CLAMP_UI_BINDING_GATE_PASS PROFILE DRILL POST NC_STALE FAIL_CLOSED")
 print("✓ ROTARY_CLAMP_CROSS_PLATFORM_GATE_PASS ANDROID WINDOWS PROFILE_AWARE_POST")
+print("✓ ROTARY_MACHINE_PROFILE_PERSISTENCE_GATE_PASS CUSTOM_MCODE NO_UNIVERSAL_DEFAULT NC_STALE")
 print("✓ DESKTOP_ALL_PAGES_ENTRY_GATE_PASS CAM 3D 3AX 4AX 5AX NC")
 print("✓ RGB_ALL_PAGE_ASSET_INTEGRITY_PASS CAD CAM 3D 3AX 4AX 5AX NC")
 print("✓ NO_FAKE_PAGE_CALLBACK_GATE_PASS TOOL_ACTION_CALLBACKS_BOUND")
