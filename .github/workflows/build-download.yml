@@ -7,6 +7,7 @@ on:
       - 'release-version.properties'
       - 'app/**'
       - 'core/**'
+      - 'ci/**'
       - 'build_android_release.sh'
       - 'build_windows_native.ps1'
       - '.github/workflows/build-download.yml'
@@ -34,6 +35,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
+      - name: Verify all runtime pages and callbacks
+        shell: bash
+        run: |
+          python3 ci/verify_runtime_surfaces.py | tee runtime-surfaces.log
+          grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
+          grep -Fq 'AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS' runtime-surfaces.log
+          grep -Fq 'NO_FAKE_PAGE_CALLBACK_GATE_PASS' runtime-surfaces.log
       - name: Build Android APK and source package
         shell: bash
         run: |
