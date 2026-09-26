@@ -854,9 +854,9 @@ object UnifiedMachiningWorkspaceContract {
         RgbImageButtonSpec("CAD","2D繪圖","2D CAD","rgb_cad",100),
         RgbImageButtonSpec("CAM","刀路","CAM","rgb_cam",100),
         RgbImageButtonSpec("3D","3D模擬","3D","rgb_3d",95),
-        RgbImageButtonSpec("3AX","三軸","3 AXIS","rgb_3axis",92),
-        RgbImageButtonSpec("4AX","四軸","4 AXIS","rgb_4axis",91),
-        RgbImageButtonSpec("5AX","五軸","5 AXIS","rgb_5axis",90),
+        RgbImageButtonSpec("3AX","三軸","3 AXIS","ic_rgb_3ax",92),
+        RgbImageButtonSpec("4AX","四軸","4 AXIS","ic_rgb_4ax",91),
+        RgbImageButtonSpec("5AX","五軸","5 AXIS","ic_rgb_5ax",90),
         RgbImageButtonSpec("NC_EDIT","程式","NC EDIT","rgb_nc",98,true)
     )
 
@@ -904,6 +904,56 @@ object UnifiedMachiningWorkspaceContract {
     fun rgbImageButtonIds():Set<String> = imageButtons.map { it.id }.toSet()
     fun ncEditorAlwaysVisible():Boolean = true
     fun coreSamePageIntact():Boolean = samePageModes.toSet()==setOf("3D","3AX","4AX","5AX","NC_EDIT")
+}
+
+
+data class MachiningAxisRuntimeState(
+    val mode:String,
+    val axisA:Double,
+    val axisB:Double,
+    val allowADrag:Boolean,
+    val allowBDrag:Boolean
+)
+
+object MachiningAxisRuntimeContract {
+    private fun clamp(v:Double):Double {
+        require(v.isFinite()) { "Axis angle must be finite" }
+        return v.coerceIn(-360.0,360.0)
+    }
+
+    fun state(mode:String, axisA:Double, axisB:Double):MachiningAxisRuntimeState = when(mode.uppercase()) {
+        "3D","3AX" -> MachiningAxisRuntimeState("3AX",0.0,0.0,false,false)
+        "4AX" -> MachiningAxisRuntimeState("4AX",clamp(axisA),0.0,true,false)
+        "5AX" -> MachiningAxisRuntimeState("5AX",clamp(axisA),clamp(axisB),true,true)
+        else -> error("Unsupported machining axis mode: "+mode)
+    }
+
+    fun applyDrag(mode:String, axisA:Double, axisB:Double, deltaA:Double, deltaB:Double):MachiningAxisRuntimeState {
+        require(deltaA.isFinite() && deltaB.isFinite()) { "Axis drag delta must be finite" }
+        val current=state(mode,axisA,axisB)
+        return state(
+            current.mode,
+            if(current.allowADrag) current.axisA+deltaA else current.axisA,
+            if(current.allowBDrag) current.axisB+deltaB else current.axisB
+        )
+    }
+
+    fun continuousSchedule(
+        mode:String,
+        startA:Double,
+        startB:Double,
+        endA:Double,
+        endB:Double
+    ):MultiAxisOrientationSchedule? {
+        val start=state(mode,startA,startB)
+        val end=state(mode,endA,endB)
+        if(start.mode=="3AX") return null
+        return MultiAxisOrientationSchedule(
+            startA=start.axisA, startB=start.axisB,
+            endA=end.axisA, endB=end.axisB,
+            mode=MultiAxisInterpolationMode.LINEAR_SYNC
+        )
+    }
 }
 
 
