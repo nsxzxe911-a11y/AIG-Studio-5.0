@@ -222,11 +222,13 @@ class Axis5xPreview(
     context: Context,
     initialA: Double,
     initialB: Double,
+    private val runtimeMode: String = "5AX",
     private val onAxesChanged: (Double, Double) -> Unit
 ) : View(context) {
-    var axisA: Double = initialA
+    private val initialState = MachiningAxisRuntimeContract.state(runtimeMode, initialA, initialB)
+    var axisA: Double = initialState.axisA
         private set
-    var axisB: Double = initialB
+    var axisB: Double = initialState.axisB
         private set
     private var lastX = 0f
     private var lastY = 0f
@@ -284,8 +286,11 @@ class Axis5xPreview(
             MotionEvent.ACTION_MOVE -> {
                 val dx = event.x - lastX
                 val dy = event.y - lastY
-                axisB = (axisB + dx * 0.35).coerceIn(-360.0, 360.0)
-                axisA = (axisA - dy * 0.35).coerceIn(-360.0, 360.0)
+                val next = MachiningAxisRuntimeContract.applyDrag(
+                    runtimeMode, axisA, axisB, -dy * 0.35, dx * 0.35
+                )
+                axisA = next.axisA
+                axisB = next.axisB
                 lastX = event.x
                 lastY = event.y
                 onAxesChanged(axisA, axisB)
@@ -1418,15 +1423,23 @@ class MainActivity : Activity() {
                     },FrameLayout.LayoutParams(-1,-1))
                 }
                 "3D","3AX" -> {
-                    draftA=0.0; draftB=0.0
-                    visualHost.addView(Machining3DView(this,result),FrameLayout.LayoutParams(-1,-1))
+                    val state=MachiningAxisRuntimeContract.state("3AX",draftA,draftB)
+                    draftA=state.axisA; draftB=state.axisB
+                    val threeAxisResult=Machining3DEngine.build(
+                        snapshot,camSettings,Stock3D.fromSnapshot(snapshot,stockMarginMm,stockThicknessMm),
+                        state.axisA,state.axisB
+                    )
+                    visualHost.addView(Machining3DView(this,threeAxisResult),FrameLayout.LayoutParams(-1,-1))
                 }
                 "4AX" -> {
-                    draftB=0.0
-                    visualHost.addView(Axis5xPreview(this,draftA,0.0){a,_->draftA=a;draftB=0.0},FrameLayout.LayoutParams(-1,-1))
+                    val state=MachiningAxisRuntimeContract.state("4AX",draftA,draftB)
+                    draftA=state.axisA; draftB=state.axisB
+                    visualHost.addView(Axis5xPreview(this,draftA,draftB,"4AX"){a,b->draftA=a;draftB=b},FrameLayout.LayoutParams(-1,-1))
                 }
                 "5AX" -> {
-                    visualHost.addView(Axis5xPreview(this,draftA,draftB){a,b->draftA=a;draftB=b},FrameLayout.LayoutParams(-1,-1))
+                    val state=MachiningAxisRuntimeContract.state("5AX",draftA,draftB)
+                    draftA=state.axisA; draftB=state.axisB
+                    visualHost.addView(Axis5xPreview(this,draftA,draftB,"5AX"){a,b->draftA=a;draftB=b},FrameLayout.LayoutParams(-1,-1))
                 }
                 "NC_EDIT" -> {
                     visualHost.addView(Machining3DView(this,result),FrameLayout.LayoutParams(-1,-1))
