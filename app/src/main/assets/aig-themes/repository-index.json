@@ -3,6 +3,7 @@
   "repository_version": "2.1.0",
   "format_version": 1,
   "default_theme_id": "aigii_rgb_neon_v2",
+  "runtime_binding": "android_windows_shared_tokens",
   "asset_policy": {
     "preserve_existing_rgb_assets": true,
     "delete_stock_assets": false,
