@@ -28,6 +28,7 @@ jobs:
       - name: Trusted Authenticode sign and verify
         shell: pwsh
         env:
+          WINDOWS_SIGNING_MODE: ${{ secrets.WINDOWS_SIGNING_MODE }}
           WINDOWS_SIGNING_PFX_BASE64: ${{ secrets.WINDOWS_SIGNING_PFX_BASE64 }}
           WINDOWS_SIGNING_PFX_PASSWORD: ${{ secrets.WINDOWS_SIGNING_PFX_PASSWORD }}
           WINDOWS_SIGNING_EXPECTED_SUBJECT: ${{ secrets.WINDOWS_SIGNING_EXPECTED_SUBJECT }}
@@ -37,8 +38,6 @@ jobs:
           $ErrorActionPreference = 'Stop'
 
           foreach ($name in @(
-            'WINDOWS_SIGNING_PFX_BASE64',
-            'WINDOWS_SIGNING_PFX_PASSWORD',
             'WINDOWS_SIGNING_EXPECTED_SUBJECT',
             'WINDOWS_SIGNING_EXPECTED_THUMBPRINT',
             'WINDOWS_SIGNING_TIMESTAMP_URL'
@@ -48,26 +47,53 @@ jobs:
             }
           }
 
-          $pfxPath = Join-Path $env:RUNNER_TEMP 'aig-windows-signing.pfx'
-          try {
-            [IO.File]::WriteAllBytes(
-              $pfxPath,
-              [Convert]::FromBase64String($env:WINDOWS_SIGNING_PFX_BASE64)
-            )
+          $mode = $env:WINDOWS_SIGNING_MODE
+          if ([string]::IsNullOrWhiteSpace($mode)) { $mode = 'CERT_STORE' }
+          $mode = $mode.ToUpperInvariant()
+          if ($mode -notin @('CERT_STORE','PFX_COMPAT')) {
+            throw 'WINDOWS_SIGNING_MODE_INVALID: use CERT_STORE or PFX_COMPAT'
+          }
 
-            $flags = [Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet
-            $cert = [Security.Cryptography.X509Certificates.X509Certificate2]::new(
-              $pfxPath,
-              $env:WINDOWS_SIGNING_PFX_PASSWORD,
-              $flags
-            )
+          $expectedThumb = ($env:WINDOWS_SIGNING_EXPECTED_THUMBPRINT -replace '[^0-9A-Fa-f]','').ToUpperInvariant()
+          $pfxPath = Join-Path $env:RUNNER_TEMP 'aig-windows-signing.pfx'
+          $certStoreMachine = $false
+
+          try {
+            if ($mode -eq 'PFX_COMPAT') {
+              foreach ($name in @('WINDOWS_SIGNING_PFX_BASE64','WINDOWS_SIGNING_PFX_PASSWORD')) {
+                if ([string]::IsNullOrWhiteSpace((Get-Item "Env:$name").Value)) {
+                  throw "WINDOWS_TRUSTED_CODE_SIGN_CERT=MISSING:$name"
+                }
+              }
+              [IO.File]::WriteAllBytes(
+                $pfxPath,
+                [Convert]::FromBase64String($env:WINDOWS_SIGNING_PFX_BASE64)
+              )
+              $flags = [Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet
+              $cert = [Security.Cryptography.X509Certificates.X509Certificate2]::new(
+                $pfxPath,
+                $env:WINDOWS_SIGNING_PFX_PASSWORD,
+                $flags
+              )
+            }
+            else {
+              $cert = Get-ChildItem Cert:\CurrentUser\My |
+                Where-Object { (($_.Thumbprint -replace '[^0-9A-Fa-f]','').ToUpperInvariant()) -eq $expectedThumb } |
+                Select-Object -First 1
+              if (-not $cert) {
+                $cert = Get-ChildItem Cert:\LocalMachine\My |
+                  Where-Object { (($_.Thumbprint -replace '[^0-9A-Fa-f]','').ToUpperInvariant()) -eq $expectedThumb } |
+                  Select-Object -First 1
+                if ($cert) { $certStoreMachine = $true }
+              }
+              if (-not $cert) { throw 'WINDOWS_SIGNING_CERT_STORE_NOT_PROVISIONED' }
+            }
 
             if (-not $cert.HasPrivateKey) { throw 'WINDOWS_SIGNING_PRIVATE_KEY_MISSING' }
             if ($cert.NotBefore.ToUniversalTime() -gt [DateTime]::UtcNow) { throw 'WINDOWS_SIGNING_CERT_NOT_YET_VALID' }
             if ($cert.NotAfter.ToUniversalTime() -le [DateTime]::UtcNow) { throw 'WINDOWS_SIGNING_CERT_EXPIRED' }
             if ($cert.Subject -eq $cert.Issuer) { throw 'WINDOWS_SIGNING_SELF_SIGNED_REJECTED' }
 
-            $expectedThumb = ($env:WINDOWS_SIGNING_EXPECTED_THUMBPRINT -replace '[^0-9A-Fa-f]','').ToUpperInvariant()
             $actualThumb = ($cert.Thumbprint -replace '[^0-9A-Fa-f]','').ToUpperInvariant()
             if ($actualThumb -ne $expectedThumb) { throw 'WINDOWS_SIGNING_THUMBPRINT_MISMATCH' }
             if ($cert.Subject -notlike ('*' + $env:WINDOWS_SIGNING_EXPECTED_SUBJECT + '*')) {
@@ -106,7 +132,16 @@ jobs:
             $exe = 'release\windows\AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
             if (-not (Test-Path $exe)) { throw 'STUDIO_SIGN_TARGET_MISSING' }
 
-            & $signtool sign /fd SHA256 /td SHA256 /tr $env:WINDOWS_SIGNING_TIMESTAMP_URL /f $pfxPath /p $env:WINDOWS_SIGNING_PFX_PASSWORD /d 'AIG Studio RGB CNC Workstation' $exe
+            $signArgs = @('sign','/fd','SHA256','/td','SHA256','/tr',$env:WINDOWS_SIGNING_TIMESTAMP_URL,'/d','AIG Studio RGB CNC Workstation')
+            if ($mode -eq 'PFX_COMPAT') {
+              $signArgs += @('/f',$pfxPath,'/p',$env:WINDOWS_SIGNING_PFX_PASSWORD)
+            }
+            else {
+              $signArgs += @('/sha1',$expectedThumb,'/s','My')
+              if ($certStoreMachine) { $signArgs += '/sm' }
+            }
+            $signArgs += $exe
+            & $signtool @signArgs
             if ($LASTEXITCODE -ne 0) { throw 'SIGNTOOL_SIGN_FAILED' }
 
             & $signtool verify /pa /all /v /tw $exe
@@ -144,6 +179,7 @@ jobs:
             $verifyHash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
             if ($verifyHash -ne $hash) { throw 'POST_SIGN_SHA256_MISMATCH' }
 
+            Write-Host ('WINDOWS_SIGNING_MODE=' + $mode)
             Write-Host 'WINDOWS_TRUSTED_CODE_SIGN_CERT=PASS'
             Write-Host 'WINDOWS_AUTHENTICODE_SIGNING=PASS'
             Write-Host 'WINDOWS_RFC3161_TIMESTAMP=PASS'
