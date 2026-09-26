@@ -57,6 +57,14 @@ jobs:
           grep -Fq 'RGB_3_4_5_SKIN_BINDING_GATE_PASS' release-validation.log
           grep -Fq 'AXIS_3_4_5_RUNTIME_GATE_PASS' release-validation.log
           grep -Fq 'CONTINUOUS_MULTIAXIS_CAM_SIM_GATE_PASS' release-validation.log
+          grep -Fq 'AXIS_MODE_3_4_5_GATE_PASS' release-validation.log
+          test -s app/src/main/res/drawable/ic_rgb_3ax.xml
+          test -s app/src/main/res/drawable/ic_rgb_4ax.xml
+          test -s app/src/main/res/drawable/ic_rgb_5ax.xml
+          grep -Fq 'app/src/main/res/drawable/ic_rgb_3ax.xml' design/theme/official_rgb/android-drawable.sha256
+          grep -Fq 'app/src/main/res/drawable/ic_rgb_4ax.xml' design/theme/official_rgb/android-drawable.sha256
+          grep -Fq 'app/src/main/res/drawable/ic_rgb_5ax.xml' design/theme/official_rgb/android-drawable.sha256
+          echo 'AXIS_3_4_5_RGB_SKIN_INTEGRITY=PASS'
           echo 'RENDER_CACHE_RELEASE_GATE=PASS'
           echo 'CAM_WORKSTATION_RELEASE_GATE=PASS'
       - name: Verify Android APK
