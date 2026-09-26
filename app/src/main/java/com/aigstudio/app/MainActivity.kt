@@ -731,6 +731,7 @@ class MainActivity : Activity() {
         if (environmentRestartApplied) {
             Toast.makeText(this, "重開套用完成 • 3D/SIM 畫質核心已重新載入", Toast.LENGTH_SHORT).show()
         }
+        loadRotaryMachineProfile()
         restoreCadCheckpointIfAvailable()
         autosaveHandler.postDelayed(autosaveRunnable, 15000L)
         openCategory("繪圖") { showDrawingBranch() }
@@ -746,6 +747,44 @@ class MainActivity : Activity() {
     }
 
 
+
+    private fun rotaryMachinePrefs() = getSharedPreferences("aig_rotary_machine_profile", MODE_PRIVATE)
+
+    private fun loadRotaryMachineProfile() {
+        val prefs = rotaryMachinePrefs()
+        rotaryClampProfile = when (prefs.getString("mode", "UNCONFIGURED")) {
+            "PMC_AUTO" -> RotaryAxisClampProfile.controllerAutomatic(
+                prefs.getBoolean("require_indexed_cut_lock", false)
+            )
+            "EXPLICIT" -> {
+                val lock = prefs.getInt("lock_m", -1)
+                val unlock = prefs.getInt("unlock_m", -1)
+                if (lock in 0..999 && unlock in 0..999 && lock != unlock) {
+                    RotaryAxisClampProfile.explicit(
+                        clampM = lock,
+                        unclampM = unlock,
+                        requireClampForIndexedCutting = prefs.getBoolean("require_indexed_cut_lock", false)
+                    )
+                } else RotaryAxisClampProfile.unconfigured()
+            }
+            else -> RotaryAxisClampProfile.unconfigured()
+        }
+    }
+
+    private fun saveRotaryMachineProfile(profile: RotaryAxisClampProfile) {
+        val editor = rotaryMachinePrefs().edit()
+            .clear()
+            .putBoolean("require_indexed_cut_lock", profile.requireClampForIndexedCutting)
+        when {
+            profile.controllerAutomatic -> editor.putString("mode", "PMC_AUTO")
+            profile.explicit -> editor
+                .putString("mode", "EXPLICIT")
+                .putInt("lock_m", profile.clampM!!)
+                .putInt("unlock_m", profile.unclampM!!)
+            else -> editor.putString("mode", "UNCONFIGURED")
+        }
+        editor.apply()
+    }
 
     private fun currentRotaryOperationMode(): RotaryAxisOperationMode = when (machiningAxisMode) {
         "4AX" -> RotaryAxisOperationMode.INDEXED_4AX
@@ -1865,7 +1904,7 @@ class MainActivity : Activity() {
         }
 
         box.addView(TextView(this).apply {
-            text = "ROTARY SAFETY • 4/5軸鑽孔/攻牙：Safe-Z → UNLOCK → A/B定位 → LOCK → cycle。" +
+            text = "ROTARY SAFETY • 4/5軸鑽孔/攻牙：Safe-Z → UNLOCK → A/B定位 → LOCK → cycle。M42/M44 等僅可作機台範例，不是通用預設。" +
                 " 同步4/5軸切削時A/B必須可動，不可鎖死。UNLOCK/LOCK不是通用G-code；" +
                 "請選PMC AUTO或輸入這台機器製造商確認的M-code。未設定時4/5軸鑽孔直接BLOCK。"
             setTextColor(Color.rgb(255,190,90))
@@ -1914,6 +1953,7 @@ class MainActivity : Activity() {
                     ncOriginTransformMode = values[2] as NcOriginTransformMode
                     ncCutterCompensation = values[3] as CutterCompensationMode
                     rotaryClampProfile = values[4] as RotaryAxisClampProfile
+                    saveRotaryMachineProfile(rotaryClampProfile)
                     drillCycleBlock = ""
                     if(!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
                     Toast.makeText(
