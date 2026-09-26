@@ -11,6 +11,134 @@ enum class CncControllerProfile(val displayName: String, val programLabel: Strin
     MITSUBISHI_M800_M80("MITSUBISHI M800/M80", "MITSUBISHI M800/M80 ISO")
 }
 
+enum class RotaryAxisOperationMode {
+    NONE, INDEXED_4AX, INDEXED_5AX, SIMULTANEOUS_4AX, SIMULTANEOUS_5AX
+}
+
+data class RotaryAxisClampProfile(
+    val clampM: Int? = null,
+    val unclampM: Int? = null,
+    val controllerAutomatic: Boolean = false,
+    val requireClampForIndexedCutting: Boolean = false
+) {
+    init {
+        require((clampM == null) == (unclampM == null)) {
+            "Rotary clamp/unclamp M-codes must be configured as a pair"
+        }
+        require(!(controllerAutomatic && clampM != null)) {
+            "Controller-automatic clamp mode must not also define explicit M-codes"
+        }
+        if (clampM != null && unclampM != null) {
+            require(clampM in 0..999 && unclampM in 0..999) { "Rotary clamp M-code out of range" }
+            require(clampM != unclampM) { "Rotary clamp and unclamp M-codes must differ" }
+        }
+    }
+
+    val explicit: Boolean get() = clampM != null && unclampM != null
+    val configured: Boolean get() = controllerAutomatic || explicit
+    fun allowedMCodes(): Set<String> = if (explicit) setOf("M" + clampM, "M" + unclampM) else emptySet()
+
+    companion object {
+        fun unconfigured(): RotaryAxisClampProfile = RotaryAxisClampProfile()
+        fun explicit(clampM: Int, unclampM: Int, requireClampForIndexedCutting: Boolean = false): RotaryAxisClampProfile =
+            RotaryAxisClampProfile(clampM, unclampM, false, requireClampForIndexedCutting)
+        fun controllerAutomatic(requireClampForIndexedCutting: Boolean = false): RotaryAxisClampProfile =
+            RotaryAxisClampProfile(null, null, true, requireClampForIndexedCutting)
+    }
+}
+
+object RotaryAxisClampPolicy {
+    private val word = Regex("""(?i)([A-Z])\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))(?=\s|[A-Z]|$)""")
+    private fun clean(raw: String): String =
+        raw.replace(Regex("""\([^)]*\)"""), " ").substringBefore(';').trim().uppercase()
+
+    fun blocking(
+        program: String,
+        mode: RotaryAxisOperationMode,
+        profile: RotaryAxisClampProfile
+    ): List<NcModalSafetyFinding> {
+        if (mode == RotaryAxisOperationMode.NONE) return emptyList()
+        if (!profile.configured) {
+            return listOf(NcModalSafetyFinding(
+                0,
+                "ROTARY_CLAMP_PROFILE_UNCONFIGURED",
+                "4/5-axis drilling/indexing requires a machine-specific clamp profile or verified controller-automatic clamp mode."
+            ))
+        }
+        val simultaneous = mode == RotaryAxisOperationMode.SIMULTANEOUS_4AX ||
+            mode == RotaryAxisOperationMode.SIMULTANEOUS_5AX
+        val fourAxis = mode == RotaryAxisOperationMode.INDEXED_4AX ||
+            mode == RotaryAxisOperationMode.SIMULTANEOUS_4AX
+        val findings = mutableListOf<NcModalSafetyFinding>()
+        if (profile.controllerAutomatic) {
+            if (simultaneous && program.contains(Regex("""(?i)G(?:73|81|82|83|84|85|86|87|88|89)"""))) {
+                findings += NcModalSafetyFinding(
+                    0,"SIMULTANEOUS_ROTARY_CANNED_CYCLE_UNSUPPORTED",
+                    "Canned drilling/tapping must use indexed rotary orientation; simultaneous rotary cutting cannot be mechanically clamped during the cycle."
+                )
+            }
+            return findings
+        }
+
+        var clamped: Boolean? = null
+        program.split("\n").forEachIndexed { index, raw ->
+            val lineNumber = index + 1
+            val line = clean(raw)
+            if (line.isBlank()) return@forEachIndexed
+            val words = word.findAll(line).mapNotNull { m ->
+                val address = m.groupValues[1].uppercase()[0]
+                val value = m.groupValues[2].toDoubleOrNull()
+                if (value != null && value.isFinite()) address to value else null
+            }.toList()
+            val mCodes = words.filter { it.first == 'M' }.map { kotlin.math.round(it.second).toInt() }
+            val gCodes = words.filter { it.first == 'G' }.map { it.second }
+            val hasRotary = words.any { it.first == 'A' || it.first == 'B' }
+            val hasB = words.any { it.first == 'B' }
+            val isCut = gCodes.any { g -> kotlin.math.abs(g-1.0)<=1e-9 || kotlin.math.abs(g-2.0)<=1e-9 || kotlin.math.abs(g-3.0)<=1e-9 }
+            val isCycle = gCodes.any { g -> listOf(73.0,81.0,82.0,83.0,84.0,85.0,86.0,87.0,88.0,89.0).any { kotlin.math.abs(g-it)<=1e-9 } }
+
+            if (profile.unclampM in mCodes) clamped = false
+            if (profile.clampM in mCodes) clamped = true
+
+            if (fourAxis && hasB) {
+                findings += NcModalSafetyFinding(lineNumber,"4AX_B_MOTION_FORBIDDEN","4-axis mode permits A motion only; B must remain zero/uncommanded.")
+            }
+            if (hasRotary && !simultaneous) {
+                if (clamped == true) findings += NcModalSafetyFinding(
+                    lineNumber,"ROTARY_MOVE_WHILE_CLAMPED","Indexed A/B orientation is blocked while the rotary clamp state is LOCKED."
+                )
+                if (clamped != false) findings += NcModalSafetyFinding(
+                    lineNumber,"ROTARY_MOVE_WITHOUT_UNCLAMP","Indexed A/B orientation requires verified UNCLAMP before movement."
+                )
+            }
+            if (isCycle && !simultaneous && clamped != true) {
+                findings += NcModalSafetyFinding(
+                    lineNumber,"ROTARY_DRILL_WITHOUT_CLAMP","Indexed 4/5-axis drilling/tapping requires verified CLAMP before the canned cycle."
+                )
+            }
+            if (simultaneous && isCycle) {
+                findings += NcModalSafetyFinding(
+                    lineNumber,"SIMULTANEOUS_ROTARY_CANNED_CYCLE_UNSUPPORTED",
+                    "Canned drilling/tapping must use indexed rotary orientation; simultaneous rotary motion cannot remain clamped."
+                )
+            }
+            if (simultaneous && isCut && hasRotary && clamped == true) {
+                findings += NcModalSafetyFinding(
+                    lineNumber,"SIMULTANEOUS_ROTARY_CUT_WHILE_CLAMPED",
+                    "Simultaneous 4/5-axis cutting requires rotary axes free to interpolate; clamp must not be active during A/B cutting motion."
+                )
+            }
+            if (!simultaneous && isCut && profile.requireClampForIndexedCutting && clamped != true) {
+                findings += NcModalSafetyFinding(
+                    lineNumber,"INDEXED_ROTARY_CUT_WITHOUT_CLAMP",
+                    "This machine profile requires the indexed rotary axis clamped during cutting."
+                )
+            }
+        }
+        return findings.distinctBy { Triple(it.lineNumber,it.code,it.message) }
+    }
+}
+
 
 enum class ControllerCapabilityStatus {
     MODELED_ALLOWED,
@@ -1402,7 +1530,7 @@ object NcAuxiliarySafetyPolicy {
         "M0","M1","M2","M3","M4","M5","M6","M7","M8","M9","M19","M30","M98","M99"
     )
 
-    fun blocking(program: String): List<NcModalSafetyFinding> {
+    fun blocking(program: String, machineSpecificAllowed: Set<String> = emptySet()): List<NcModalSafetyFinding> {
         val findings = mutableListOf<NcModalSafetyFinding>()
         NcAuxiliaryTracker.trace(program).forEach { e ->
             when (e.code) {
@@ -1421,7 +1549,7 @@ object NcAuxiliarySafetyPolicy {
             }
         }
         NcAuxiliaryTracker.codes(program).forEach { (line, code) ->
-            if (code !in known) {
+            if (code !in known && code !in machineSpecificAllowed) {
                 findings += NcModalSafetyFinding(
                     line,"UNKNOWN_MCODE_FAIL_CLOSED",
                     code + " is not in the current AIG verified/tracked M-code vocabulary."
@@ -1450,9 +1578,9 @@ object NcControlEffectPolicy {
         return if (hasEffect) emptyList() else listOf("NO_EFFECT_CONTROL_CODE:" + code)
     }
 
-    fun blocking(program: String): List<NcModalSafetyFinding> {
+    fun blocking(program: String, machineSpecificAllowed: Set<String> = emptySet()): List<NcModalSafetyFinding> {
         val baseSafety =
-            (NcModalSafetyPolicy.blocking(program) + NcAuxiliarySafetyPolicy.blocking(program))
+            (NcModalSafetyPolicy.blocking(program) + NcAuxiliarySafetyPolicy.blocking(program,machineSpecificAllowed))
                 .distinctBy { Triple(it.lineNumber,it.code,it.message) }
         val blockedLines = baseSafety.filter { it.lineNumber > 0 }.map { it.lineNumber }.toSet()
         val modal = NcModalTracker.trace(program).associateBy { it.lineNumber to it.code }
@@ -1489,15 +1617,26 @@ object NcControlEffectPolicy {
 }
 
 object NcProgramSafetyPolicy {
-    fun blocking(program: String): List<NcModalSafetyFinding> =
-        (
+    fun blocking(
+        program: String,
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
+    ): List<NcModalSafetyFinding> {
+        val allowed = rotaryClampProfile.allowedMCodes()
+        return (
             NcModalSafetyPolicy.blocking(program) +
-            NcAuxiliarySafetyPolicy.blocking(program) +
-            NcControlEffectPolicy.blocking(program)
+            NcAuxiliarySafetyPolicy.blocking(program,allowed) +
+            NcControlEffectPolicy.blocking(program,allowed) +
+            RotaryAxisClampPolicy.blocking(program,rotaryMode,rotaryClampProfile)
         ).distinctBy { Triple(it.lineNumber,it.code,it.message) }
+    }
 
-    fun status(program: String): String {
-        val blocked = blocking(program)
+    fun status(
+        program: String,
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
+    ): String {
+        val blocked = blocking(program,rotaryClampProfile,rotaryMode)
         return if (blocked.isEmpty()) "PASS"
         else "BLOCKED:" + blocked.joinToString(",") {
             (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code
@@ -1873,11 +2012,39 @@ object FanucNc {
         return "G34 I" + fmt(startAngleDeg) + " J" + holeCount + " K" + fmt(radius)
     }
 
-    fun cannedCycle(cycle: DrillCycle, holes: List<DrillHole>, safeZ: Double, retractZ: Double = 2.0): String {
+    fun cannedCycle(
+        cycle: DrillCycle,
+        holes: List<DrillHole>,
+        safeZ: Double,
+        retractZ: Double = 2.0,
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE,
+        axisA: Double = 0.0,
+        axisB: Double = 0.0,
+        clampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured()
+    ): String {
         require(holes.isNotEmpty())
         require(safeZ > retractZ && retractZ >= 0.0)
+        require(axisA.isFinite() && axisB.isFinite() && axisA in -360.0..360.0 && axisB in -360.0..360.0)
+        require(!(rotaryMode == RotaryAxisOperationMode.INDEXED_4AX && abs(axisB) > EPS)) {
+            "4AX drilling permits A orientation only; B must remain zero"
+        }
+        if (rotaryMode != RotaryAxisOperationMode.NONE) {
+            require(clampProfile.configured) {
+                "4/5-axis drilling requires a configured machine clamp/unclamp profile or verified controller-automatic clamp mode"
+            }
+            require(rotaryMode == RotaryAxisOperationMode.INDEXED_4AX || rotaryMode == RotaryAxisOperationMode.INDEXED_5AX) {
+                "Canned drilling/tapping requires indexed 4/5-axis orientation; simultaneous rotary canned cycles are blocked"
+            }
+        }
         val out = StringBuilder()
         out.appendLine("G0 Z" + fmt(safeZ))
+        if (rotaryMode != RotaryAxisOperationMode.NONE) {
+            if (clampProfile.explicit) out.appendLine("M" + clampProfile.unclampM)
+            out.append("G0 A").append(fmt(axisA))
+            if (rotaryMode == RotaryAxisOperationMode.INDEXED_5AX) out.append(" B").append(fmt(axisB))
+            out.appendLine()
+            if (clampProfile.explicit) out.appendLine("M" + clampProfile.clampM)
+        }
         holes.forEachIndexed { index, h ->
             require(h.z < 0.0 && h.feed > 0.0)
             if (index == 0) {
@@ -1901,7 +2068,14 @@ object FanucNc {
             } else out.append("X").append(fmt(h.x)).append(" Y").append(fmt(h.y)).appendLine()
         }
         out.appendLine("G80")
-        return out.toString()
+        val block = out.toString()
+        val rotaryBlocked = RotaryAxisClampPolicy.blocking(block,rotaryMode,clampProfile)
+        require(rotaryBlocked.isEmpty()) {
+            "Rotary clamp gate blocked: " + rotaryBlocked.joinToString(",") {
+                (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code
+            }
+        }
+        return block
     }
 
     fun insertBeforeProgramEnd(program: String, block: String, endSubprogram: Int = 5): String {
