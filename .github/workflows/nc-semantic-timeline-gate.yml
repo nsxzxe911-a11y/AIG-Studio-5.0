@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'core/**'
+      - 'ci/**'
       - 'app/src/main/java/com/aigstudio/app/MainActivity.kt'
       - 'desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'
       - 'release-version.properties'
@@ -26,6 +27,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
+      - name: Verify all runtime pages and callbacks
+        shell: bash
+        run: |
+          python3 ci/verify_runtime_surfaces.py | tee runtime-surfaces.log
+          grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
+          grep -Fq 'AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS' runtime-surfaces.log
+          grep -Fq 'INLINE_NC_PAGE_CLOSURE_GATE_PASS' runtime-surfaces.log
       - name: Compile and run core regression three times
         shell: bash
         run: |
