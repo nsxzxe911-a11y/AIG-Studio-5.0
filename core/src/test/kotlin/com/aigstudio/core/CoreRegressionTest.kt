@@ -1157,6 +1157,7 @@ fun main() {
     testCannedCycleReturnMode()
     testDeleteDoesNotInventTriangle()
     testUndoRedo()
+    testCadEditIntegrity()
     testChamferC5()
     testFilletR5()
     testDifferentCornerRadii()
@@ -1218,6 +1219,63 @@ private fun testUndoRedo() {
     check(h.undo()); check(d.size()==4 && d.get("L2") != null)
     check(h.redo()); check(d.size()==3 && d.get("L2") == null)
     println("✓ undo/redo")
+}
+
+private fun testCadEditIntegrity() {
+    val d=DrawingDocument()
+    d.put(Line(id="A",a=Vec2(0.0,0.0),b=Vec2(10.0,0.0)))
+    d.put(Line(id="B",a=Vec2(10.0005,0.0),b=Vec2(20.0,0.0)))
+    val h=History(d)
+    val original=d.snapshot()
+
+    h.run(CadEditEngine.connectCommand(d,listOf("A","B"),JOIN_TOLERANCE_MM))
+    check(d.links()==setOf(CadTopologyLink.of("A","B")))
+    check(d.snapshot()==original) { "CONNECT must not mutate CAD geometry" }
+    check(h.undoWithEffect()==false)
+    check(d.links().isEmpty() && d.snapshot()==original)
+    check(h.redoWithEffect()==false)
+    check(d.links().size==1)
+
+    h.run(CadEditEngine.moveCommand(d,listOf("A","B"),5.0,-2.0))
+    assertPoint((d.get("A") as Line).a,Vec2(5.0,-2.0),"MOVE A")
+    assertPoint((d.get("B") as Line).a,Vec2(15.0005,-2.0),"MOVE B")
+    check(d.links().size==1) { "Moving linked geometry together must preserve topology" }
+    check(h.undoWithEffect()==true)
+    check(d.links().size==1)
+    assertPoint((d.get("A") as Line).a,Vec2(0.0,0.0),"MOVE undo")
+
+    h.run(CadEditEngine.moveCommand(d,listOf("A"),1.0,0.0))
+    check(d.links().isEmpty()) { "Moving only one linked entity must prune invalid topology" }
+    check(h.undoWithEffect()==true)
+    check(d.links().size==1) { "Undo must restore valid topology" }
+
+    val beforeCopy=d.size()
+    h.run(CadEditEngine.copyCommand(d,listOf("A"),25.0,0.0))
+    check(d.size()==beforeCopy+1)
+    check(h.undoWithEffect()==true && d.size()==beforeCopy)
+    check(h.redoWithEffect()==true && d.size()==beforeCopy+1)
+
+    val arc=Arc(id="ARC",center=Vec2(5.0,5.0),radius=5.0,start=Vec2(10.0,5.0),end=Vec2(5.0,10.0),clockwise=false)
+    d.put(arc)
+    h.run(CadEditEngine.mirrorVerticalCommand(d,listOf("ARC"),0.0))
+    val mirrored=d.get("ARC") as Arc
+    check(mirrored.clockwise)
+    assertPoint(mirrored.center,Vec2(-5.0,5.0),"MIRROR ARC")
+
+    h.run(CadEditEngine.rotateCommand(d,listOf("ARC"),90.0,Vec2(0.0,0.0)))
+    assertPoint((d.get("ARC") as Arc).center,Vec2(-5.0,-5.0),"ROTATE ARC")
+
+    h.run(CadEditEngine.deleteCommand(listOf("A")))
+    check(d.get("A")==null && d.links().isEmpty())
+    check(h.undoWithEffect()==true)
+    check(d.get("A")!=null && d.links().size==1)
+
+    val tooFar=DrawingDocument()
+    tooFar.put(Line(id="X",a=Vec2(0.0,0.0),b=Vec2(1.0,0.0)))
+    tooFar.put(Line(id="Y",a=Vec2(1.002,0.0),b=Vec2(2.0,0.0)))
+    check(runCatching { CadEditEngine.connectCommand(tooFar,listOf("X","Y"),JOIN_TOLERANCE_MM) }.isFailure)
+
+    println("✓ CAD_EDIT_INTEGRITY_GATE_PASS SELECT MOVE COPY ROTATE MIRROR DELETE UNDO_REDO CONNECT DISCONNECT TOPOLOGY_ONLY TOL=0.001")
 }
 
 private fun testChamferC5() {

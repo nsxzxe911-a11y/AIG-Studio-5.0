@@ -63,7 +63,7 @@ object EngineeringImageAssets {
     }.getOrNull()
 }
 
-enum class Tool { LINE, RECT, CIRCLE, DELETE, CHAMFER, FILLET, PAN, MEASURE }
+enum class Tool { LINE, RECT, CIRCLE, SELECT, DELETE, CHAMFER, FILLET, PAN, MEASURE }
 
 
 data class StudioDisplayProfile(
@@ -550,7 +550,9 @@ class MainActivity : Activity() {
             setMargins(dp(5), dp(5), dp(5), dp(3))
         })
 
-        cad = CadView(this)
+        cad = CadView(this) {
+            if (!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
+        }
         val workspaceColumn = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             background = panel(0x663DEBFF)
@@ -1168,8 +1170,17 @@ class MainActivity : Activity() {
     }
     private fun showModifyBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
-        addToolToBranch("刪除", Tool.DELETE, 4)
-        addToolToBranch("移動", Tool.PAN, 0)
+        addToolToBranch("選取", Tool.SELECT, 1)
+        addActionTo(branchFlow, "移動", 0) { cad.promptMoveCopy(copy=false) }
+        addActionTo(branchFlow, "複製", 1) { cad.promptMoveCopy(copy=true) }
+        addActionTo(branchFlow, "旋轉", 2) { cad.promptRotate() }
+        addActionTo(branchFlow, "鏡射 X", 3) { cad.mirrorSelected(vertical=true) }
+        addActionTo(branchFlow, "鏡射 Y", 3) { cad.mirrorSelected(vertical=false) }
+        addActionTo(branchFlow, "連接", 1) { cad.connectSelected() }
+        addActionTo(branchFlow, "斷開", 4) { cad.disconnectSelected() }
+        addActionTo(branchFlow, "刪除選取", 4) { cad.deleteSelected() }
+        addToolToBranch("單點刪除", Tool.DELETE, 4)
+        addToolToBranch("視圖平移", Tool.PAN, 0)
         addActionTo(branchFlow, "GRID", 2) { cad.toggleGrid() }
         addActionTo(branchFlow, "GEOMETRY", 1) { cad.toggleGeometry() }
     }
@@ -3073,7 +3084,7 @@ private fun showEnvironmentSettings() {
         toolButtons.forEach { (t, b) -> styleButton(b, toolColor(t), selected = t == tool) }
     }
     private fun toolColor(tool: Tool): Int = when (tool) {
-        Tool.LINE, Tool.PAN -> colors[0]; Tool.RECT, Tool.FILLET -> colors[1]
+        Tool.LINE, Tool.PAN -> colors[0]; Tool.RECT, Tool.FILLET, Tool.SELECT -> colors[1]
         Tool.CIRCLE, Tool.CHAMFER -> colors[2]; Tool.DELETE -> colors[4]; Tool.MEASURE -> colors[5]
     }
     private fun addToolToBranch(label: String, tool: Tool, colorIndex: Int, onClick: (() -> Unit)? = null) {
@@ -3150,7 +3161,10 @@ class FlowLayout(context: Context) : ViewGroup(context) {
     }
 }
 
-class CadView(context: Context) : View(context) {
+class CadView(
+    context: Context,
+    private val onGeometryChanged: () -> Unit = {}
+) : View(context) {
     private val doc = DrawingDocument()
     private val history = History(doc)
     private val gridPaint = Paint(1).apply { color = 0xFF163044.toInt() }
@@ -3166,7 +3180,7 @@ class CadView(context: Context) : View(context) {
     private var sceneRevision = 1L
     private var tool = Tool.LINE
     private var firstPoint: Vec2? = null
-    private val selectedLines = mutableListOf<String>()
+    private val selectedIds = linkedSetOf<String>()
     private val transform = WorldTransform(0.0, 0.0, 5.0)
     private var lastX = 0f; private var lastY = 0f
     private var lastWorld = Vec2(0.0, 0.0)
@@ -3206,9 +3220,13 @@ class CadView(context: Context) : View(context) {
                 is Arc -> append("A|").append(e.id).append('|').append(e.center.x).append('|').append(e.center.y).append('|').append(e.radius).append('|').append(e.start.x).append('|').append(e.start.y).append('|').append(e.end.x).append('|').append(e.end.y).append('|').append(e.clockwise).append('\n')
             }
         }
+        doc.links().forEach { link ->
+            append("T|").append(link.aId).append('|').append(link.bId).append('\n')
+        }
     }
     fun importState(raw: String) {
         val restored = mutableListOf<Entity>()
+        val restoredLinks = mutableListOf<CadTopologyLink>()
         raw.lineSequence().filter { it.isNotBlank() }.forEach { line ->
             val p = line.split('|')
             when (p.firstOrNull()) {
@@ -3218,23 +3236,159 @@ class CadView(context: Context) : View(context) {
                     p[1], Vec2(p[2].toDouble(), p[3].toDouble()), p[4].toDouble(),
                     Vec2(p[5].toDouble(), p[6].toDouble()), Vec2(p[7].toDouble(), p[8].toDouble()), p[9].toBooleanStrictOrNull() ?: false
                 )
+                "T" -> if (p.size == 3) restoredLinks += CadTopologyLink.of(p[1],p[2])
             }
         }
         if (restored.isNotEmpty()) {
             doc.clear()
             restored.forEach(doc::put)
+            doc.restoreLinks(restoredLinks)
             firstPoint = null
-            selectedLines.clear()
+            selectedIds.clear()
             sceneRevision++
             invalidate()
         }
     }
-    fun setTool(t: Tool) { tool = t; firstPoint = null; selectedLines.clear(); sceneRevision++; invalidate() }
-    fun undo() { history.undo(); firstPoint = null; selectedLines.clear(); sceneRevision++; invalidate() }
-    fun redo() { history.redo(); firstPoint = null; selectedLines.clear(); sceneRevision++; invalidate() }
+    fun setTool(t: Tool) { tool = t; firstPoint = null; selectedIds.clear(); sceneRevision++; invalidate() }
+    fun undo() {
+        val geometryChanged = history.undoWithEffect() ?: return
+        firstPoint = null; selectedIds.clear(); sceneRevision++
+        if (geometryChanged) onGeometryChanged()
+        invalidate()
+    }
+    fun redo() {
+        val geometryChanged = history.redoWithEffect() ?: return
+        firstPoint = null; selectedIds.clear(); sceneRevision++
+        if (geometryChanged) onGeometryChanged()
+        invalidate()
+    }
     fun toggleSnap() { snapEnabled = !snapEnabled; Toast.makeText(context, "SNAP " + if (snapEnabled) "ON" else "OFF", Toast.LENGTH_SHORT).show(); invalidate() }
     fun toggleGrid() { gridVisible = !gridVisible; sceneRevision++; invalidate() }
     fun toggleGeometry() { geometryVisible = !geometryVisible; sceneRevision++; invalidate() }
+
+    private fun runGeometryCommand(command: Command) {
+        history.run(command)
+        sceneRevision++
+        onGeometryChanged()
+        invalidate()
+    }
+
+    private fun runTopologyCommand(command: Command) {
+        history.run(command)
+        sceneRevision++
+        invalidate()
+    }
+
+    private fun ensureSelection(action: String): Boolean {
+        if (selectedIds.isNotEmpty()) return true
+        Toast.makeText(context, "$action：請先用「選取」點選幾何", Toast.LENGTH_SHORT).show()
+        return false
+    }
+
+    fun promptMoveCopy(copy: Boolean) {
+        val action = if (copy) "複製" else "移動"
+        if (!ensureSelection(action)) return
+        val box = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(24,12,24,4)
+        }
+        fun value(hintText:String)=EditText(context).apply {
+            hint=hintText
+            setText("0.000")
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            box.addView(this)
+        }
+        val dx=value("ΔX mm")
+        val dy=value("ΔY mm")
+        AlertDialog.Builder(context)
+            .setTitle("$action • ${selectedIds.size} 個幾何")
+            .setView(box)
+            .setPositiveButton("套用") { _, _ ->
+                val x=dx.text.toString().toDoubleOrNull()
+                val y=dy.text.toString().toDoubleOrNull()
+                if(x==null || y==null) {
+                    Toast.makeText(context,"$action BLOCKED：ΔX/ΔY 格式錯誤",Toast.LENGTH_SHORT).show()
+                } else runCatching {
+                    if(copy) {
+                        val before=doc.all().map{it.id}.toSet()
+                        runGeometryCommand(CadEditEngine.copyCommand(doc,selectedIds,x,y))
+                        selectedIds.clear()
+                        selectedIds.addAll(doc.all().map{it.id}.filter{it !in before})
+                    } else {
+                        runGeometryCommand(CadEditEngine.moveCommand(doc,selectedIds,x,y))
+                    }
+                }.onFailure {
+                    Toast.makeText(context,"$action BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("取消",null)
+            .show()
+    }
+
+    fun promptRotate() {
+        if (!ensureSelection("旋轉")) return
+        val input=EditText(context).apply {
+            setText("90.000")
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+        }
+        AlertDialog.Builder(context)
+            .setTitle("旋轉 • 選取中心")
+            .setView(input)
+            .setPositiveButton("套用") { _, _ ->
+                val angle=input.text.toString().toDoubleOrNull()
+                if(angle==null) Toast.makeText(context,"旋轉 BLOCKED：角度格式錯誤",Toast.LENGTH_SHORT).show()
+                else runCatching {
+                    runGeometryCommand(CadEditEngine.rotateCommand(doc,selectedIds,angle))
+                }.onFailure {
+                    Toast.makeText(context,"旋轉 BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("取消",null)
+            .show()
+    }
+
+    fun mirrorSelected(vertical: Boolean) {
+        if (!ensureSelection("鏡射")) return
+        runCatching {
+            val command = if(vertical)
+                CadEditEngine.mirrorVerticalCommand(doc,selectedIds)
+            else CadEditEngine.mirrorHorizontalCommand(doc,selectedIds)
+            runGeometryCommand(command)
+        }.onFailure {
+            Toast.makeText(context,"鏡射 BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun connectSelected() {
+        if (!ensureSelection("連接")) return
+        runCatching {
+            runTopologyCommand(CadEditEngine.connectCommand(doc,selectedIds,JOIN_TOLERANCE_MM))
+            Toast.makeText(context,"CONNECT PASS • TOPOLOGY ONLY • 0.001 mm",Toast.LENGTH_SHORT).show()
+        }.onFailure {
+            Toast.makeText(context,"CONNECT BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun disconnectSelected() {
+        if (!ensureSelection("斷開")) return
+        runCatching {
+            runTopologyCommand(CadEditEngine.disconnectCommand(doc,selectedIds))
+            Toast.makeText(context,"DISCONNECT PASS • TOPOLOGY ONLY",Toast.LENGTH_SHORT).show()
+        }.onFailure {
+            Toast.makeText(context,"DISCONNECT BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun deleteSelected() {
+        if (!ensureSelection("刪除選取")) return
+        runCatching {
+            runGeometryCommand(CadEditEngine.deleteCommand(selectedIds))
+            selectedIds.clear()
+        }.onFailure {
+            Toast.makeText(context,"刪除 BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+        }
+    }
+
     fun aiInspect() {
         val result = AiCadInspector.inspect(doc.snapshot())
         val message = if (result.issues.isEmpty()) "未發現明顯幾何異常。CAM 前仍需人工確認刀具、座標與 Z 高度。"
@@ -3340,27 +3494,41 @@ class CadView(context: Context) : View(context) {
         doc.all().forEach { e -> when (e) {
             is Line -> {
                 val a = transform.worldToScreen(e.a); val b = transform.worldToScreen(e.b)
-                val path = if (selectedLines.contains(e.id)) selectedLinePath else normalLinePath
+                val path = if (e.id in selectedIds) selectedLinePath else normalLinePath
                 path.moveTo(a.x.toFloat(), a.y.toFloat())
                 path.lineTo(b.x.toFloat(), b.y.toFloat())
             }
             is Circle -> {
                 val p = transform.worldToScreen(e.center)
-                geoPaint.color = 0xFFE8F1FA.toInt()
-                canvas.drawCircle(p.x.toFloat(), p.y.toFloat(), (e.radius * transform.pixelsPerUnit).toFloat(), geoPaint)
+                val paint = if (e.id in selectedIds) accentPaint else geoPaint
+                canvas.drawCircle(p.x.toFloat(), p.y.toFloat(), (e.radius * transform.pixelsPerUnit).toFloat(), paint)
             }
             is Arc -> {
-                geoPaint.color = 0xFFE8F1FA.toInt()
-                drawArcPolyline(canvas, e)
+                val paint = if (e.id in selectedIds) accentPaint else geoPaint
+                drawArcPolyline(canvas, e, paint)
             }
         } }
         geoPaint.color = 0xFFE8F1FA.toInt()
         canvas.drawPath(normalLinePath, geoPaint)
-        geoPaint.color = 0xFFFFB020.toInt()
-        canvas.drawPath(selectedLinePath, geoPaint)
+        accentPaint.color = 0xFFFFB020.toInt()
+        canvas.drawPath(selectedLinePath, accentPaint)
+
+        doc.links().forEach { link ->
+            val a=doc.get(link.aId) as? Line
+            val b=doc.get(link.bId) as? Line
+            if(a!=null && b!=null) {
+                val pa=listOf(a.a,a.b).minByOrNull { p -> min(p.distanceTo(b.a),p.distanceTo(b.b)) }
+                val pb=listOf(b.a,b.b).minByOrNull { p -> pa?.distanceTo(p) ?: Double.MAX_VALUE }
+                if(pa!=null && pb!=null) {
+                    val sa=transform.worldToScreen(pa); val sb=transform.worldToScreen(pb)
+                    canvas.drawCircle(sa.x.toFloat(),sa.y.toFloat(),6f,accentPaint)
+                    canvas.drawCircle(sb.x.toFloat(),sb.y.toFloat(),6f,accentPaint)
+                }
+            }
+        }
     }
 
-    private fun drawArcPolyline(canvas: Canvas, arc: Arc) {
+    private fun drawArcPolyline(canvas: Canvas, arc: Arc, paint: Paint = geoPaint) {
         val startA = atan2(arc.start.y - arc.center.y, arc.start.x - arc.center.x)
         val endA = atan2(arc.end.y - arc.center.y, arc.end.x - arc.center.x)
         var delta = endA - startA
@@ -3372,7 +3540,7 @@ class CadView(context: Context) : View(context) {
             val p = transform.worldToScreen(Vec2(arc.center.x + cos(a) * arc.radius, arc.center.y + sin(a) * arc.radius))
             if (i == 0) arcPath.moveTo(p.x.toFloat(), p.y.toFloat()) else arcPath.lineTo(p.x.toFloat(), p.y.toFloat())
         }
-        canvas.drawPath(arcPath, geoPaint)
+        canvas.drawPath(arcPath, paint)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -3398,17 +3566,29 @@ class CadView(context: Context) : View(context) {
     private fun handleTap(p: Vec2) {
         when (tool) {
             Tool.LINE -> twoPoint(p) { a,b ->
-                if (a.distanceTo(b) >= CNC_RESOLUTION_MM) history.run(AddEntitiesCommand(listOf(Line(a=a,b=b))))
+                if (a.distanceTo(b) >= CNC_RESOLUTION_MM)
+                    runGeometryCommand(AddEntitiesCommand(listOf(Line(a=a,b=b))))
             }
             Tool.RECT -> twoPoint(p) { a,b ->
                 if (abs(a.x - b.x) < CNC_RESOLUTION_MM || abs(a.y - b.y) < CNC_RESOLUTION_MM) return@twoPoint
-                history.run(AddEntitiesCommand(listOf(
+                runGeometryCommand(AddEntitiesCommand(listOf(
                     Line(a=a,b=Vec2(b.x,a.y)), Line(a=Vec2(b.x,a.y),b=b),
                     Line(a=b,b=Vec2(a.x,b.y)), Line(a=Vec2(a.x,b.y),b=a)
                 )))
             }
-            Tool.CIRCLE -> twoPoint(p) { a,b -> a.distanceTo(b).takeIf { it >= CNC_RESOLUTION_MM }?.let { history.run(AddEntitiesCommand(listOf(Circle(center=a,radius=it)))) } }
-            Tool.DELETE -> nearest(p)?.let { history.run(DeleteEntityCommand(it.id)) }
+            Tool.CIRCLE -> twoPoint(p) { a,b ->
+                a.distanceTo(b).takeIf { it >= CNC_RESOLUTION_MM }?.let {
+                    runGeometryCommand(AddEntitiesCommand(listOf(Circle(center=a,radius=it))))
+                }
+            }
+            Tool.SELECT -> {
+                nearest(p)?.let { e ->
+                    if(!selectedIds.add(e.id)) selectedIds.remove(e.id)
+                    sceneRevision++
+                    invalidate()
+                }
+            }
+            Tool.DELETE -> nearest(p)?.let { runGeometryCommand(DeleteEntityCommand(it.id)) }
             Tool.CHAMFER, Tool.FILLET -> selectTwoLines(p)
             Tool.MEASURE -> showMeasurement(p)
             Tool.PAN -> Unit
@@ -3499,17 +3679,20 @@ class CadView(context: Context) : View(context) {
 
     private fun selectTwoLines(p: Vec2) {
         val line = nearest(p) as? Line ?: return
-        if (!selectedLines.contains(line.id)) selectedLines.add(line.id)
-        if (selectedLines.size == 2) {
+        selectedIds.add(line.id)
+        if (selectedIds.size == 2) {
+            val pair=selectedIds.toList()
             try {
                 val command = if (tool == Tool.CHAMFER)
-                    chamferCommand(doc, selectedLines[0], selectedLines[1], chamferValue)
-                else filletCommand(doc, selectedLines[0], selectedLines[1], filletValue)
-                history.run(command)
+                    chamferCommand(doc, pair[0], pair[1], chamferValue)
+                else filletCommand(doc, pair[0], pair[1], filletValue)
+                runGeometryCommand(command)
             } catch (ex: Exception) {
                 Toast.makeText(context, ex.message ?: "幾何運算失敗", Toast.LENGTH_SHORT).show()
             }
-            selectedLines.clear()
+            selectedIds.clear()
         }
+        sceneRevision++
+        invalidate()
     }
 }

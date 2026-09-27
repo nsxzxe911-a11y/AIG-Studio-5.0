@@ -21,6 +21,8 @@ def require(source: str, needle: str, label: str) -> None:
 android = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
 desktop = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
 env = read("core/src/main/kotlin/com/aigstudio/core/EnvironmentSettings.kt")
+document = read("core/src/main/kotlin/com/aigstudio/core/Document.kt")
+regression = read("core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt")
 hashes = read("design/theme/official_rgb/android-drawable.sha256")
 workflow = read(".github/workflows/build-download.yml")
 theme_manifest = json.loads(read("design/theme/aigii_rgb_neon_v2/theme-manifest.json"))
@@ -90,14 +92,72 @@ for needle in (
     'addToolToBranch("圓", Tool.CIRCLE, 2)',
     'addActionTo(branchFlow, "SNAP", 3) { cad.toggleSnap() }',
     'addToolToBranch("尺寸", Tool.MEASURE, 5)',
-    'addToolToBranch("刪除", Tool.DELETE, 4)',
-    'addToolToBranch("移動", Tool.PAN, 0)',
+    'addToolToBranch("選取", Tool.SELECT, 1)',
+    'addActionTo(branchFlow, "移動", 0) { cad.promptMoveCopy(copy=false) }',
+    'addActionTo(branchFlow, "複製", 1) { cad.promptMoveCopy(copy=true) }',
+    'addActionTo(branchFlow, "旋轉", 2) { cad.promptRotate() }',
+    'addActionTo(branchFlow, "鏡射 X", 3) { cad.mirrorSelected(vertical=true) }',
+    'addActionTo(branchFlow, "鏡射 Y", 3) { cad.mirrorSelected(vertical=false) }',
+    'addActionTo(branchFlow, "連接", 1) { cad.connectSelected() }',
+    'addActionTo(branchFlow, "斷開", 4) { cad.disconnectSelected() }',
+    'addActionTo(branchFlow, "刪除選取", 4) { cad.deleteSelected() }',
+    'addToolToBranch("單點刪除", Tool.DELETE, 4)',
+    'addToolToBranch("視圖平移", Tool.PAN, 0)',
     'addActionTo(branchFlow, "GRID", 2) { cad.toggleGrid() }',
     'addActionTo(branchFlow, "GEOMETRY", 1) { cad.toggleGeometry() }',
     'addToolToBranch("C 倒角", Tool.CHAMFER, 2)',
     'addToolToBranch("R 角", Tool.FILLET, 1)',
 ):
     require(android, needle, "ANDROID_CAD_CALLBACK")
+
+# 159 CAD edit integrity: Android and Windows must expose real geometry editing,
+# while CONNECT/DISCONNECT are topology-only and bounded by 0.001 mm.
+for needle in (
+    "data class CadTopologyLink",
+    "object CadEditEngine",
+    "fun moveCommand(",
+    "fun copyCommand(",
+    "fun rotateCommand(",
+    "fun mirrorVerticalCommand(",
+    "fun mirrorHorizontalCommand(",
+    "fun deleteCommand(",
+    "fun connectCommand(",
+    "fun disconnectCommand(",
+    "override val geometryMutation: Boolean = false",
+    '"CONNECT tolerance must be <= 0.001 mm"',
+):
+    require(document, needle, "CAD_EDIT_CORE_159")
+for needle in (
+    "Tool.SELECT",
+    "fun promptMoveCopy(copy: Boolean)",
+    "fun promptRotate()",
+    "fun mirrorSelected(vertical: Boolean)",
+    "fun connectSelected()",
+    "fun disconnectSelected()",
+    "fun deleteSelected()",
+    "runGeometryCommand(CadEditEngine.moveCommand",
+    "runTopologyCommand(CadEditEngine.connectCommand",
+):
+    require(android, needle, "ANDROID_CAD_EDIT_RUNTIME_159")
+for needle in (
+    "DrawMode.SELECT",
+    "fun moveSelected(dx:Double,dy:Double)",
+    "fun copySelected(dx:Double,dy:Double)",
+    "fun rotateSelected(angleDeg:Double)",
+    "fun mirrorSelected(vertical:Boolean)",
+    "fun connectSelected()",
+    "fun disconnectSelected()",
+    "fun deleteSelected()",
+    'toolbar.add(button("選取"',
+    'toolbar.add(button("移動"',
+    'toolbar.add(button("複製"',
+):
+    require(desktop, needle, "WINDOWS_CAD_EDIT_RUNTIME_159")
+require(
+    regression,
+    "CAD_EDIT_INTEGRITY_GATE_PASS SELECT MOVE COPY ROTATE MIRROR DELETE UNDO_REDO CONNECT DISCONNECT TOPOLOGY_ONLY TOL=0.001",
+    "CAD_EDIT_REGRESSION_159",
+)
 
 # Machining page must expose each real path and controller/safety surface.
 for needle in (
@@ -265,8 +325,10 @@ print("✓ ROTARY_CLAMP_CROSS_PLATFORM_GATE_PASS ANDROID WINDOWS PROFILE_AWARE_P
 print("✓ ROTARY_MACHINE_PROFILE_PERSISTENCE_GATE_PASS CUSTOM_MCODE NO_UNIVERSAL_DEFAULT NC_STALE")
 print("✓ NC_EDITOR_WARNING_ONLY_GATE_PASS EDIT SAVE_DRAFT UPDATE_SEPARATE EXECUTION_INTERLOCK SESSION_ACTIVE")
 print("✓ DESKTOP_ALL_PAGES_ENTRY_GATE_PASS CAM 3D 3AX 4AX 5AX NC")
+print("✓ CAD_EDIT_RUNTIME_GATE_PASS SELECT MOVE COPY ROTATE MIRROR DELETE UNDO_REDO CONNECT DISCONNECT ANDROID WINDOWS TOPOLOGY_ONLY TOL_0.001")
 print("✓ RGB_ALL_PAGE_ASSET_INTEGRITY_PASS CAD CAM 3D 3AX 4AX 5AX NC")
 require(workflow, "grep -Fq 'ADAPTIVE_UI_TEXT_GATE_PASS' release-validation.log", "CI_ADAPTIVE_UI_TEXT_MARKER_158")
+require(workflow, "grep -Fq 'CAD_EDIT_INTEGRITY_GATE_PASS' release-validation.log", "CI_CAD_EDIT_MARKER_159")
 if "grep -Fq 'BILINGUAL_ADAPTIVE_UI_GATE_PASS' release-validation.log" in workflow:
     raise SystemExit("BLOCKED CI_ADAPTIVE_UI_TEXT_MARKER_158: stale bilingual marker")
 
