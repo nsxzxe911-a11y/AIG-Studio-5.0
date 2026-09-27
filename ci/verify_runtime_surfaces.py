@@ -353,7 +353,7 @@ print("✓ CAD_RGB_WORKSPACE_GATE_PASS ANDROID_FLOATING_DECK WINDOWS_LEFT_DECK L
 print("✓ RGB_ALL_PAGE_ASSET_INTEGRITY_PASS CAD CAM 3D 3AX 4AX 5AX NC")
 require(workflow, "grep -Fq 'ADAPTIVE_UI_TEXT_GATE_PASS' release-validation.log", "CI_ADAPTIVE_UI_TEXT_MARKER_158")
 require(workflow, "grep -Fq 'CAD_EDIT_INTEGRITY_GATE_PASS' release-validation.log", "CI_CAD_EDIT_MARKER_159")
-require(workflow, "grep -Fq 'CAD_RGB_WORKSPACE_GATE_PASS' release-validation.log", "CI_CAD_RGB_WORKSPACE_MARKER_160")
+require(workflow, "grep -Fq 'CAD_RGB_WORKSPACE_GATE_PASS' runtime-surfaces.log", "CI_CAD_RGB_WORKSPACE_MARKER_161")
 if "grep -Fq 'BILINGUAL_ADAPTIVE_UI_GATE_PASS' release-validation.log" in workflow:
     raise SystemExit("BLOCKED CI_ADAPTIVE_UI_TEXT_MARKER_158: stale bilingual marker")
 
