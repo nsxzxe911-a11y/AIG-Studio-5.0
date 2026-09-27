@@ -515,17 +515,9 @@ private fun runSmoke() {
         val header = AdaptiveGlassToolbar().apply {
             background = Color(8,18,30)
             add(JLabel("AIG CNC • OFFICIAL RGB ORIGINAL").apply { foreground=Color(61,235,255);font=font.deriveFont(Font.BOLD,20f) })
-            listOf(
-                "2D CAD" to "CAD",
-                "CAM" to "CAM",
-                "3D" to "3D",
-                "3AX" to "3AX",
-                "4AX" to "4AX",
-                "5AX" to "5AX",
-                "NC EDIT" to "NC_EDIT"
-            ).forEachIndexed { i,(label,assetId) ->
+            listOf("CAD","CAM","3D","3AX","4AX","5AX","NC_EDIT").forEachIndexed { i,assetId ->
                 val colors=listOf(Color(61,235,255),Color(63,255,157),Color(139,92,246),Color(59,130,246),Color(245,158,11),Color(236,72,153),Color(80,170,255))
-                add(GlassActionButton(label,colors[i]).apply {
+                add(GlassActionButton(UiTextPolicy.display(assetId,118),colors[i]).apply {
                     icon=EngineeringImageAssets.icon(assetId) ?: RgbGlyphIcon(assetId,colors[i])
                     iconTextGap=7
                     horizontalTextPosition=SwingConstants.RIGHT
@@ -938,7 +930,8 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     val modeBar=AdaptiveGlassToolbar()
     val modeButtons=mutableListOf<GlassActionButton>()
     fun mode(id:String,zh:String,en:String,color:Color,icon:String,run:()->Unit){
-        val b=GlassActionButton("$zh / $en",color).apply{
+        val b=GlassActionButton(UiTextPolicy.display(id,118),color).apply{
+            toolTipText="$zh / $en"
             this.icon=EngineeringImageAssets.icon(icon) ?: RgbGlyphIcon(icon,color)
             horizontalTextPosition=SwingConstants.RIGHT
             addActionListener{
@@ -966,7 +959,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     action("A+",Color(139,92,246),"4AX"){if(axisMode!="5AX")axisMode="4AX";axisA=(axisA+15.0).coerceAtMost(360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
     action("B−",Color(236,72,153),"5AX"){axisMode="5AX";axisB=(axisB-15.0).coerceAtLeast(-360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
     action("B+",Color(236,72,153),"5AX"){axisMode="5AX";axisB=(axisB+15.0).coerceAtMost(360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
-    action("旋轉鎖定 / ROTARY CLAMP",Color(125,112,255),"4AX"){
+    action(UiTextPolicy.display("ROTARY_CLAMP",118),Color(125,112,255),"4AX"){
         val mode=JComboBox(arrayOf(
             "UNCONFIGURED / BLOCK",
             "CONTROLLER / PMC AUTO • VERIFIED MACHINE ONLY",
@@ -1009,18 +1002,18 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
             }
         }
     }
-    action("重建NC / REBUILD NC",Color(34,197,94),"NC_EDIT"){
+    action("重建 NC",Color(34,197,94),"NC_EDIT"){
         runCatching{generateNc()}.onSuccess{
             editor.text=it
             status.text="UNIFIED NC REBUILT • "+axisMode+" • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+" • "+clampStatus()
         }
             .onFailure{status.text="NC REBUILD WARNING • existing editor preserved • "+(it.message?:"error")}
     }
-    action("安全檢查 / SAFE CHECK",Color(255,176,32),"NC_EDIT"){
+    action("檢查",Color(255,176,32),"NC_EDIT"){
         val blocked=NcProgramSafetyPolicy.blocking(editor.text,rotaryClampProfile,currentRotaryMode())
         status.text=if(blocked.isEmpty())"UNIFIED NC SAFETY PASS" else "UNIFIED NC WARNING • EDITING ENABLED • EXECUTION INTERLOCK • "+blocked.take(3).joinToString(","){it.code}
     }
-    action("儲存草稿 / SAVE DRAFT",Color(61,235,255),"NC_EDIT"){
+    action("儲存",Color(61,235,255),"NC_EDIT"){
         status.text="NC DRAFT SAVED IN EDITOR • WARNING DOES NOT LOCK EDITING • FINAL UNVERIFIED • chars="+editor.text.length
     }
 

@@ -1384,15 +1384,15 @@ class MainActivity : Activity() {
             }
             actions.addView(b,LinearLayout.LayoutParams(0,-2,1f))
         }
-        action("REBUILD",0xFF3DEBFF.toInt()) {
+        action("重算",0xFF3DEBFF.toInt()) {
             dialog.dismiss()
             showCamWorkstation()
         }
-        action("SETTINGS",0xFF8B5CF6.toInt()) { showCamSettingsDialog() }
-        action("OFFSET",0xFFF59E0B.toInt()) { showWorkOffsetDialog() }
-        action("3D SIM",0xFF22C55E.toInt()) { showMachining3D() }
+        action("設定",0xFF8B5CF6.toInt()) { showCamSettingsDialog() }
+        action("偏置",0xFFF59E0B.toInt()) { showWorkOffsetDialog() }
+        action("3D",0xFF22C55E.toInt()) { showMachining3D() }
         action("NC",0xFF3B82F6.toInt()) { showNcEditDialog() }
-        action("BACK",0xFF7894A8.toInt()) { dialog.dismiss() }
+        action("←",0xFF7894A8.toInt()) { dialog.dismiss() }
         root.addView(actions,LinearLayout.LayoutParams(-1,-2))
 
         dialog=AlertDialog.Builder(this)
@@ -1446,7 +1446,7 @@ class MainActivity : Activity() {
             setPadding(dp(6),dp(6),dp(6),dp(6))
         }
         root.addView(TextView(this).apply {
-            text="AIG CNC • 3D / 3 AXIS / 4 AXIS / 5 AXIS + EDITABLE G-CODE • AI AUTO LAYOUT"
+            text="AIG CNC • 3D / 3AX / 4AX / 5AX + NC • 智慧排版"
             setTextColor(0xFF3DEBFF.toInt())
             textSize=StudioDisplayPolicy.sp(this,11.5f)
             setTypeface(typeface,android.graphics.Typeface.BOLD)
@@ -1610,9 +1610,22 @@ class MainActivity : Activity() {
         inlineRows.forEach { keys ->
             val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
             keys.forEach { key ->
+                val displayKey=when(key){
+                    "INSERT" -> UiTextPolicy.display("INSERT",54)
+                    "DELETE" -> UiTextPolicy.display("DELETE",54)
+                    "BLOCK /" -> "/"
+                    "SINGLE" -> UiTextPolicy.display("SINGLE_BLOCK",54)
+                    "DRY RUN" -> UiTextPolicy.display("DRY_RUN",54)
+                    "BLOCK SKIP" -> UiTextPolicy.display("BLOCK_SKIP",54)
+                    "STEP" -> UiTextPolicy.display("STEP",54)
+                    "SAFE SAVE" -> UiTextPolicy.display("SAFE_SAVE",54)
+                    else -> key
+                }
                 row.addView(RgbGlowButton(this).apply {
-                    text=key
-                    textSize=StudioDisplayPolicy.sp(this,8.5f)
+                    text=displayKey
+                    contentDescription=key
+                    maxLines=1
+                    textSize=StudioDisplayPolicy.sp(this,9.5f)
                     minHeight=dp(32)
                     setRgbState(0xFF3DEBFF.toInt(),false)
                     setOnClickListener {
@@ -1736,10 +1749,13 @@ class MainActivity : Activity() {
             usage.edit().putInt(mode,(usage.getInt(mode,0)+1).coerceAtMost(20)).apply()
         }
 
+        val modeButtonWidthDp=(widthDp/plan.buttonColumns).coerceIn(58,140)
         arranged.forEach { spec ->
             val b=RgbGlowButton(this).apply {
-                text=UnifiedMachiningWorkspaceContract.bilingualLabel(spec.id)
-                textSize=StudioDisplayPolicy.sp(this,UnifiedMachiningWorkspaceContract.adaptiveTextSp(spec.id,widthDp).toFloat())
+                text=UnifiedMachiningWorkspaceContract.displayLabel(spec.id,modeButtonWidthDp)
+                contentDescription=spec.zh+" / "+spec.en
+                maxLines=1
+                textSize=StudioDisplayPolicy.sp(this,UnifiedMachiningWorkspaceContract.adaptiveTextSp(spec.id,modeButtonWidthDp).toFloat())
                 setCompoundDrawablesWithIntrinsicBounds(iconFor(spec.id),null,null,null)
                 compoundDrawablePadding=dp(4)
                 gravity=Gravity.CENTER
@@ -1773,14 +1789,16 @@ class MainActivity : Activity() {
         root.addView(body,LinearLayout.LayoutParams(-1,-2))
 
         val actionFlow=FlowLayout(this)
-        fun action(label:String,color:Int,run:()->Unit){
+        fun action(key:String,color:Int,description:String,run:()->Unit){
             actionFlow.addView(RgbGlowButton(this).apply {
-                text=label
+                text=UiTextPolicy.display(key,72)
+                contentDescription=description
+                maxLines=1
                 setRgbState(color,false)
                 setOnClickListener{run()}
             })
         }
-        action("套用軸向\nAPPLY AXIS",0xFF8B5CF6.toInt()){
+        action("APPLY_AXIS",0xFF8B5CF6.toInt(),"套用軸向"){
             machiningAxisMode=activeAxisMode
             axisA=if(activeAxisMode=="3AX")0.0 else draftA
             axisB=if(activeAxisMode=="5AX")draftB else 0.0
@@ -1794,16 +1812,16 @@ class MainActivity : Activity() {
                 Toast.LENGTH_LONG
             ).show()
         }
-        action("安全儲存\nSAFE SAVE",0xFF22C55E.toInt()){
+        action("SAFE_SAVE",0xFF22C55E.toInt(),"安全儲存"){
             safeSaveInlineNc()
         }
-        action("同頁NC\nNC TOOLS",0xFF3B82F6.toInt()){
+        action("NC_TOOLS",0xFF3B82F6.toInt(),"同頁 NC 工具"){
             renderMode("NC_EDIT")
             ncEditor.requestFocus()
             refreshInlineNcStatus()
             Toast.makeText(this,"INLINE NC TOOLS READY • NO SECOND DIALOG",Toast.LENGTH_SHORT).show()
         }
-        action("返回\nBACK",0xFFF59E0B.toInt()){ dialog.dismiss() }
+        action("BACK",0xFFF59E0B.toInt(),"返回"){ dialog.dismiss() }
         root.addView(actionFlow,LinearLayout.LayoutParams(-1,-2))
 
         dialog=AlertDialog.Builder(this)

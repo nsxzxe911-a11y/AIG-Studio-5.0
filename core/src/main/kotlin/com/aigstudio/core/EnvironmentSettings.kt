@@ -721,10 +721,10 @@ object WorkstationChromeContract {
 
 
 object FloatingCadToolContract {
-    const val TITLE = "CAD TOOL DECK"
-    const val BACK = "BACK"
-    const val CLOSE = "CLOSE"
-    const val REOPEN = "TOOLS"
+    const val TITLE = "CAD 工具"
+    const val BACK = "←"
+    const val CLOSE = "×"
+    const val REOPEN = "工具"
     val groups = listOf("CAD","VIEW","PHOTO","CORNER","EDIT","FILE")
 
     fun panelWidthDp(screenWidthDp:Int):Int {
@@ -825,6 +825,51 @@ object CamWorkstationContract {
 }
 
 
+object UiTextPolicy {
+    const val POLICY = "ZH_TW_FIRST_COMPACT_STABLE_ORDER"
+
+    private val technical=mapOf(
+        "CAD" to "CAD", "CAM" to "CAM", "SIM" to "SIM", "3D" to "3D",
+        "3AX" to "3AX", "4AX" to "4AX", "5AX" to "5AX",
+        "NC" to "NC", "NC_EDIT" to "NC", "AI" to "AI", "FIT" to "FIT"
+    )
+    private val fullZh=mapOf(
+        "HOME" to "首頁", "FILE" to "檔案", "SAVE" to "儲存", "OPEN" to "開啟",
+        "BACK" to "返回", "CLOSE" to "關閉", "UNDO" to "復原", "REDO" to "重做",
+        "RECALC" to "重算", "SETTINGS" to "設定", "TOOLS" to "工具", "OFFSET" to "偏置",
+        "APPLY_AXIS" to "套用軸向", "SAFE_SAVE" to "安全儲存", "NC_TOOLS" to "同頁 NC",
+        "ROTARY_CLAMP" to "旋轉鎖定", "RESET" to "重設", "SPEED" to "速度",
+        "REFRESH_NC" to "更新 NC", "ALARM_RESET" to "警報重設", "RESUME" to "繼續",
+        "INSERT" to "插入", "DELETE" to "刪除", "SINGLE_BLOCK" to "單節",
+        "DRY_RUN" to "空跑", "BLOCK_SKIP" to "跳段", "STEP" to "單步",
+        "RUN" to "執行", "STOP" to "停止"
+    )
+    private val compact=mapOf(
+        "APPLY_AXIS" to "套用", "SAFE_SAVE" to "儲存", "NC_TOOLS" to "NC",
+        "ROTARY_CLAMP" to "鎖定", "REFRESH_NC" to "更新", "ALARM_RESET" to "警報",
+        "SETTINGS" to "設定"
+    )
+    private val symbol=mapOf(
+        "BACK" to "←", "CLOSE" to "×", "UNDO" to "↶", "REDO" to "↷",
+        "SETTINGS" to "⚙", "RUN" to "▶", "STOP" to "■"
+    )
+    private val shortEnglish=mapOf(
+        "RECALC" to "RECALC", "OPEN" to "OPEN", "SAVE" to "SAVE"
+    )
+
+    fun display(key:String, availableDp:Int):String {
+        require(availableDp>0)
+        val k=key.trim().uppercase()
+        technical[k]?.let { return it }
+        val full=fullZh[k] ?: key.trim()
+        return when {
+            availableDp>=96 -> full
+            availableDp>=60 -> compact[k] ?: full
+            else -> symbol[k] ?: compact[k] ?: shortEnglish[k] ?: full
+        }
+    }
+}
+
 data class RgbImageButtonSpec(
     val id:String,
     val zh:String,
@@ -882,31 +927,28 @@ object UnifiedMachiningWorkspaceContract {
         return b.zh+"\n"+b.en
     }
 
+    fun displayLabel(id:String, availableDp:Int):String =
+        UiTextPolicy.display(id,availableDp)
+
     fun adaptiveTextSp(id:String,widthDp:Int):Double {
         require(widthDp>0)
-        val label=bilingualLabel(id).replace("\n"," / ")
+        val label=displayLabel(id,widthDp)
         val base=when {
-            widthDp<400 -> 11.0
+            widthDp<400 -> 11.5
             widthDp<840 -> 12.0
             else -> 13.0
         }
         return when {
-            label.length>=18 -> base-2.0
-            label.length>=12 -> base-1.0
+            label.length>=10 -> base-1.0
+            label.length>=7 -> base-0.5
             else -> base
-        }.coerceAtLeast(9.0)
+        }.coerceAtLeast(11.0)
     }
 
     fun aiArrange(widthDp:Int,heightDp:Int,usage:Map<String,Int> = emptyMap()):List<RgbImageButtonSpec> {
-        val p=plan(widthDp,heightDp)
-        return imageButtons.sortedWith(
-            compareByDescending<RgbImageButtonSpec> { it.priority + (usage[it.id] ?: 0).coerceIn(0,20) }
-                .thenByDescending { it.safetyCritical }
-                .thenBy { it.id }
-        ).let { ordered ->
-            if(p.layout=="MOBILE_PORTRAIT") ordered
-            else ordered.sortedByDescending { it.priority + (usage[it.id] ?: 0).coerceIn(0,20) }
-        }
+        plan(widthDp,heightDp)
+        usage.size
+        return imageButtons.toList()
     }
 
     fun rgbImageButtonIds():Set<String> = imageButtons.map { it.id }.toSet()

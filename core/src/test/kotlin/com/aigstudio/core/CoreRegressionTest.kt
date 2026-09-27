@@ -1826,10 +1826,10 @@ private fun testHomeWorkstationChromeContract() {
 
 
 private fun testFloatingCadToolContract() {
-    check(FloatingCadToolContract.TITLE=="CAD TOOL DECK")
-    check(FloatingCadToolContract.BACK=="BACK")
-    check(FloatingCadToolContract.CLOSE=="CLOSE")
-    check(FloatingCadToolContract.REOPEN=="TOOLS")
+    check(FloatingCadToolContract.TITLE=="CAD 工具")
+    check(FloatingCadToolContract.BACK=="←")
+    check(FloatingCadToolContract.CLOSE=="×")
+    check(FloatingCadToolContract.REOPEN=="工具")
     check(FloatingCadToolContract.groups==listOf("CAD","VIEW","PHOTO","CORNER","EDIT","FILE"))
     check(FloatingCadToolContract.panelWidthDp(360)==336)
     check(FloatingCadToolContract.panelWidthDp(540)==360)
@@ -1919,10 +1919,14 @@ private fun testUnifiedMachiningWorkspaceContract() {
     println("✓ AI_ERGONOMIC_LAYOUT_GATE_PASS MOBILE_PORTRAIT MOBILE_LANDSCAPE DESKTOP_WIDE NC_ALWAYS_VISIBLE")
 
     val arranged=UnifiedMachiningWorkspaceContract.aiArrange(390,844,mapOf("5AX" to 20))
-    check(arranged.map{it.id}.toSet()==ids)
-    check(arranged.first().id in setOf("CAD","CAM","5AX","NC_EDIT"))
-    check(UnifiedMachiningWorkspaceContract.adaptiveTextSp("NC_EDIT",360)>=9.0)
-    println("✓ BILINGUAL_ADAPTIVE_UI_GATE_PASS ZH_EN FONT_AUTOSIZE RGB_IMAGE_BUTTONS")
+    check(arranged.map{it.id}==UnifiedMachiningWorkspaceContract.imageButtons.map{it.id})
+    check(arranged.first().id=="CAD")
+    check(UnifiedMachiningWorkspaceContract.displayLabel("CAD",60)=="CAD")
+    check(UiTextPolicy.display("BACK",48)=="←")
+    check(UiTextPolicy.display("SETTINGS",48)=="⚙")
+    check(UiTextPolicy.display("APPLY_AXIS",72)=="套用")
+    check(UnifiedMachiningWorkspaceContract.adaptiveTextSp("NC_EDIT",360)>=11.0)
+    println("✓ ADAPTIVE_UI_TEXT_GATE_PASS ZH_TW_FIRST SHORT_ZH TECH_ABBR SYMBOL SHORT_EN NO_OVERFLOW STABLE_ORDER")
 }
 
 

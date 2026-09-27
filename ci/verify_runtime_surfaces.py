@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 import json
+import sys
 from pathlib import Path
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -190,10 +194,10 @@ for needle in (
     'mode("4AX","四軸","4 AXIS"',
     'mode("5AX","五軸","5 AXIS"',
     'mode("NC_EDIT","程式","NC EDIT"',
-    'action("旋轉鎖定 / ROTARY CLAMP"',
-    'action("重建NC / REBUILD NC"',
-    'action("安全檢查 / SAFE CHECK"',
-    'action("儲存草稿 / SAVE DRAFT"',
+    'action(UiTextPolicy.display("ROTARY_CLAMP",118)',
+    'action("重建 NC"',
+    'action("檢查"',
+    'action("儲存"',
     'var rotaryClampProfile=loadDesktopRotaryMachineProfile()',
     'rotaryMode=currentRotaryMode()',
     'rotaryClampProfile=rotaryClampProfile',
@@ -207,6 +211,33 @@ for needle in (
     'Machining3DEngine.build(',
 ):
     require(desktop, needle, "DESKTOP_RUNTIME_PAGE")
+
+# Compact UI text must prefer Traditional Chinese, use short labels/symbols when needed,
+# never reshuffle action IDs, and keep the same functional order across layouts.
+for needle in (
+    'const val POLICY = "ZH_TW_FIRST_COMPACT_STABLE_ORDER"',
+    '"BACK" to "←"',
+    '"CLOSE" to "×"',
+    '"UNDO" to "↶"',
+    '"REDO" to "↷"',
+    'fun display(key:String, availableDp:Int):String',
+    'return imageButtons.toList()',
+):
+    require(env, needle, "ADAPTIVE_UI_TEXT_POLICY_157")
+for needle in (
+    'text=UnifiedMachiningWorkspaceContract.displayLabel(spec.id,modeButtonWidthDp)',
+    'contentDescription=spec.zh+" / "+spec.en',
+    'maxLines=1',
+    'UiTextPolicy.display("SINGLE_BLOCK",54)',
+    'UiTextPolicy.display("DRY_RUN",54)',
+    'UiTextPolicy.display("BLOCK_SKIP",54)',
+):
+    require(android, needle, "ANDROID_ADAPTIVE_UI_TEXT_157")
+for needle in (
+    'GlassActionButton(UiTextPolicy.display(id,118),color)',
+    'toolTipText="$zh / $en"',
+):
+    require(desktop, needle, "WINDOWS_ADAPTIVE_UI_TEXT_157")
 
 # Every unified page RGB icon must exist and be included in the approved SHA list.
 assets = (
@@ -235,5 +266,6 @@ print("✓ NC_EDITOR_WARNING_ONLY_GATE_PASS EDIT SAVE_DRAFT UPDATE_SEPARATE EXEC
 print("✓ DESKTOP_ALL_PAGES_ENTRY_GATE_PASS CAM 3D 3AX 4AX 5AX NC")
 print("✓ RGB_ALL_PAGE_ASSET_INTEGRITY_PASS CAD CAM 3D 3AX 4AX 5AX NC")
 print("✓ ASSET_ENGINEERING_POLICY_GATE_PASS 最高工程權限 圖片直通 不需人工認證 不需資產簽名 不鎖定 不需固定白名單 Preview不阻擋 正式Release仍驗證")
+print("✓ ADAPTIVE_UI_TEXT_GATE_PASS 繁中優先 SHORT_ZH TECH_ABBR SYMBOL SHORT_EN NO_OVERFLOW STABLE_ORDER")
 print("✓ NO_FAKE_PAGE_CALLBACK_GATE_PASS TOOL_ACTION_CALLBACKS_BOUND")
 print("✓ ALL_SCREENS_RUNTIME_GATE_PASS")
