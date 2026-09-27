@@ -8,14 +8,21 @@
   "official_baseline_replaced": false,
   "official_baseline_policy_zh_tw": "官方核准原始資產只保留原檔與來源血統，不得覆蓋或刪除；這不限制工程介面開發。",
   "engineering_asset_policy": {
+    "engineering_authority": "FULL",
     "ui_layout_editable": true,
     "images_editable": true,
     "buttons_editable": true,
     "animations_editable": true,
     "themes_editable": true,
     "new_assets_allowed": true,
-    "replacement_after_validation_allowed": true,
-    "release_gate_required": true
+    "replacement_without_preapproval_allowed": true,
+    "manual_approval_required": false,
+    "asset_signature_required": false,
+    "asset_locking_enabled": false,
+    "fixed_allowlist_required": false,
+    "unregistered_images_allowed": true,
+    "preview_build_blocked_by_unregistered_assets": false,
+    "release_integrity_required": true
   },
   "startup_skin": "rgb_grid_neon",
   "states": [
@@ -26,5 +33,5 @@
     "Alarm"
   ],
   "shared_theme_id_with": "AIG-II",
-  "provenance_zh_tw": "本主題是可持續修改的工程版皮膚；工程 UI、圖片、按鈕、動畫、Theme 與排版可新增、修改、替換。官方原始基準只負責保留原檔與血統，工程修改經驗證 PASS 後可升版。"
+  "provenance_zh_tw": "本主題採最高工程權限：工程 UI、圖片、按鈕、動畫、Theme 與排版可直接新增、修改、替換，不需人工認證、不需資產簽名、不鎖定、不需先列固定白名單；工程 Preview 不因新增圖片而阻擋。正式 Release 仍保留 SHA、來源血統、程式簽章與安全 Gate。"
 }

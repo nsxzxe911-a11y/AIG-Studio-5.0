@@ -23,6 +23,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
@@ -50,6 +51,17 @@ import android.widget.TextView
 import android.widget.Toast
 import com.aigstudio.core.*
 import kotlin.math.*
+
+object EngineeringImageAssets {
+    private const val ROOT="images"
+    private fun id(name:String):String = name.lowercase(Locale.US).replace("nc_edit","nc")
+    fun drawable(context:Context,name:String):Drawable? = runCatching {
+        val key=id(name)
+        context.assets.open("$ROOT/$key.png").use { input ->
+            Drawable.createFromStream(input,"$key.png")
+        }
+    }.getOrNull()
+}
 
 enum class Tool { LINE, RECT, CIRCLE, DELETE, CHAMFER, FILLET, PAN, MEASURE }
 
@@ -1661,7 +1673,7 @@ class MainActivity : Activity() {
         }
         var draftA=axisA
         var draftB=axisB
-        fun iconFor(id:String):Int=when(id){
+        fun fallbackIconRes(id:String):Int=when(id){
             "CAD" -> R.drawable.ic_rgb_cad
             "CAM" -> R.drawable.ic_rgb_cam
             "3D" -> R.drawable.ic_rgb_3d
@@ -1671,6 +1683,8 @@ class MainActivity : Activity() {
             "NC_EDIT" -> R.drawable.ic_rgb_nc
             else -> R.drawable.ic_rgb_3d
         }
+        fun iconFor(id:String):Drawable? =
+            EngineeringImageAssets.drawable(this,id) ?: getDrawable(fallbackIconRes(id))
         fun renderMode(mode:String){
             activeMode=mode
             modeButtons.forEach { (id,b)-> b.setRgbState(colors[(id.hashCode() and Int.MAX_VALUE)%colors.size],id==mode) }
@@ -1726,7 +1740,7 @@ class MainActivity : Activity() {
             val b=RgbGlowButton(this).apply {
                 text=UnifiedMachiningWorkspaceContract.bilingualLabel(spec.id)
                 textSize=StudioDisplayPolicy.sp(this,UnifiedMachiningWorkspaceContract.adaptiveTextSp(spec.id,widthDp).toFloat())
-                setCompoundDrawablesWithIntrinsicBounds(iconFor(spec.id),0,0,0)
+                setCompoundDrawablesWithIntrinsicBounds(iconFor(spec.id),null,null,null)
                 compoundDrawablePadding=dp(4)
                 gravity=Gravity.CENTER
                 minHeight=dp(54)

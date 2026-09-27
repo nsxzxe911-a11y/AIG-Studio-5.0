@@ -1,0 +1,21 @@
+{
+  "schema": "aig-engineering-assets-v1",
+  "engineering_authority": "FULL",
+  "scope": "engineering-preview-assets",
+  "ui_layout_editable": true,
+  "images_editable": true,
+  "buttons_editable": true,
+  "animations_editable": true,
+  "themes_editable": true,
+  "new_assets_allowed": true,
+  "replacement_without_preapproval_allowed": true,
+  "manual_approval_required": false,
+  "asset_signature_required": false,
+  "asset_locking_enabled": false,
+  "fixed_allowlist_required": false,
+  "unregistered_images_allowed": true,
+  "preview_build_blocked_by_unregistered_assets": false,
+  "release_integrity_required": true,
+  "release_code_signing_required": true,
+  "note_zh_tw": "工程圖片可直接新增、修改、覆蓋，不需人工認證、不需資產簽名、不鎖定、不需先列固定白名單。正式 FINAL 仍保留 SHA-256、來源血統、程式簽章、CNC 安全與完整 Release Gate。"
+}

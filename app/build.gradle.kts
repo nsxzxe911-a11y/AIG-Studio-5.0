@@ -25,6 +25,9 @@ android {
         versionCode = releaseVersionCode
         versionName = releaseVersionName
     }
+    sourceSets.named("main") {
+        assets.srcDir("../engineering-assets")
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

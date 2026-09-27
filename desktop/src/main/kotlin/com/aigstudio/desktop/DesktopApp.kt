@@ -95,6 +95,18 @@ private class RgbGlyphIcon(private val kind:String, private val accent:Color) : 
     }
 }
 
+private object EngineeringImageAssets {
+    private const val ROOT="/images"
+    private fun id(name:String):String = name.lowercase().replace("nc_edit","nc")
+    fun icon(name:String):Icon? {
+        val key=id(name)
+        val image=runCatching {
+            EngineeringImageAssets::class.java.getResourceAsStream("$ROOT/$key.png")?.use { ImageIO.read(it) }
+        }.getOrNull() ?: return null
+        return ImageIcon(image.getScaledInstance(24,24,Image.SCALE_SMOOTH))
+    }
+}
+
 private enum class DrawMode { LINE, RECT, CIRCLE }
 
 private class CadPanel(
@@ -458,8 +470,14 @@ private fun addRectangle(doc: DrawingDocument, x0: Double, y0: Double, x1: Doubl
 }
 
 private fun writePanel(panel: JPanel, file: File, width: Int = 1280, height: Int = 800) {
+    fun layoutTree(component: Component) {
+        if (component is Container) {
+            component.doLayout()
+            component.components.forEach { layoutTree(it) }
+        }
+    }
     panel.setSize(width, height)
-    panel.doLayout()
+    layoutTree(panel)
     val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
     val g = image.createGraphics()
     panel.paint(g)
@@ -497,8 +515,21 @@ private fun runSmoke() {
         val header = AdaptiveGlassToolbar().apply {
             background = Color(8,18,30)
             add(JLabel("AIG CNC • OFFICIAL RGB ORIGINAL").apply { foreground=Color(61,235,255);font=font.deriveFont(Font.BOLD,20f) })
-            listOf("2D CAD","CAM","3D SIM","NC EDIT").forEachIndexed { i,label ->
-                add(GlassActionButton(label, listOf(Color(61,235,255),Color(63,255,157),Color(236,72,153),Color(80,170,255))[i]))
+            listOf(
+                "2D CAD" to "CAD",
+                "CAM" to "CAM",
+                "3D" to "3D",
+                "3AX" to "3AX",
+                "4AX" to "4AX",
+                "5AX" to "5AX",
+                "NC EDIT" to "NC_EDIT"
+            ).forEachIndexed { i,(label,assetId) ->
+                val colors=listOf(Color(61,235,255),Color(63,255,157),Color(139,92,246),Color(59,130,246),Color(245,158,11),Color(236,72,153),Color(80,170,255))
+                add(GlassActionButton(label,colors[i]).apply {
+                    icon=EngineeringImageAssets.icon(assetId) ?: RgbGlyphIcon(assetId,colors[i])
+                    iconTextGap=7
+                    horizontalTextPosition=SwingConstants.RIGHT
+                })
             }
         }
         add(header,BorderLayout.NORTH)
@@ -908,7 +939,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     val modeButtons=mutableListOf<GlassActionButton>()
     fun mode(id:String,zh:String,en:String,color:Color,icon:String,run:()->Unit){
         val b=GlassActionButton("$zh / $en",color).apply{
-            this.icon=RgbGlyphIcon(icon,color)
+            this.icon=EngineeringImageAssets.icon(icon) ?: RgbGlyphIcon(icon,color)
             horizontalTextPosition=SwingConstants.RIGHT
             addActionListener{
                 modeButtons.forEach{it.active=false};active=true;run()
@@ -928,7 +959,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     val actions=AdaptiveGlassToolbar()
     fun action(label:String,color:Color,icon:String,run:()->Unit){
         actions.add(GlassActionButton(label,color).apply{
-            this.icon=RgbGlyphIcon(icon,color);addActionListener{run()}
+            this.icon=EngineeringImageAssets.icon(icon) ?: RgbGlyphIcon(icon,color);addActionListener{run()}
         })
     }
     action("A−",Color(139,92,246),"4AX"){if(axisMode!="5AX")axisMode="4AX";axisA=(axisA-15.0).coerceAtLeast(-360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
