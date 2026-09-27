@@ -102,7 +102,7 @@ for needle in (
     'addActionTo(branchFlow, "斷開", 4) { cad.disconnectSelected() }',
     'addActionTo(branchFlow, "刪除選取", 4) { cad.deleteSelected() }',
     'addToolToBranch("單點刪除", Tool.DELETE, 4)',
-    'addToolToBranch("視圖平移", Tool.PAN, 0)',
+    'addToolToBranch("平移", Tool.PAN, 0)',
     'addActionTo(branchFlow, "GRID", 2) { cad.toggleGrid() }',
     'addActionTo(branchFlow, "GEOMETRY", 1) { cad.toggleGeometry() }',
     'addToolToBranch("C 倒角", Tool.CHAMFER, 2)',
@@ -148,11 +148,34 @@ for needle in (
     "fun connectSelected()",
     "fun disconnectSelected()",
     "fun deleteSelected()",
-    'toolbar.add(button("選取"',
-    'toolbar.add(button("移動"',
-    'toolbar.add(button("複製"',
+    'drawTools.add(button("選取"',
+    'editTools.add(button("移動"',
+    'editTools.add(button("複製"',
 ):
     require(desktop, needle, "WINDOWS_CAD_EDIT_RUNTIME_159")
+
+# 160 CAD RGB workspace: preserve a large center canvas, grouped controls and a live status rail.
+for needle in (
+    'addCategory("檢視", 0) { showViewBranch() }',
+    'addCategory("連接", 1) { showLinkBranch() }',
+    'private fun showViewBranch()',
+    'private fun showLinkBranch()',
+    'val floatingToolCard = LinearLayout(this).apply',
+    'val machineRail = LinearLayout(this).apply',
+):
+    require(android, needle, "ANDROID_CAD_RGB_WORKSPACE_160")
+for needle in (
+    'val cadDeck=JTabbedPane(JTabbedPane.LEFT).apply',
+    'addTab("繪圖",drawTools)',
+    'addTab("修改",editTools)',
+    'addTab("連接",linkTools)',
+    'addTab("檢視",viewTools)',
+    'add(cadDeck,BorderLayout.WEST)',
+    'add(cad,BorderLayout.CENTER)',
+    'add(infoRail,BorderLayout.EAST)',
+    '"AIG CNC • CAD / 2D"',
+):
+    require(desktop, needle, "WINDOWS_CAD_RGB_WORKSPACE_160")
 require(
     regression,
     "CAD_EDIT_INTEGRITY_GATE_PASS SELECT MOVE COPY ROTATE MIRROR DELETE UNDO_REDO CONNECT DISCONNECT TOPOLOGY_ONLY TOL=0.001",
@@ -326,9 +349,11 @@ print("✓ ROTARY_MACHINE_PROFILE_PERSISTENCE_GATE_PASS CUSTOM_MCODE NO_UNIVERSA
 print("✓ NC_EDITOR_WARNING_ONLY_GATE_PASS EDIT SAVE_DRAFT UPDATE_SEPARATE EXECUTION_INTERLOCK SESSION_ACTIVE")
 print("✓ DESKTOP_ALL_PAGES_ENTRY_GATE_PASS CAM 3D 3AX 4AX 5AX NC")
 print("✓ CAD_EDIT_RUNTIME_GATE_PASS SELECT MOVE COPY ROTATE MIRROR DELETE UNDO_REDO CONNECT DISCONNECT ANDROID WINDOWS TOPOLOGY_ONLY TOL_0.001")
+print("✓ CAD_RGB_WORKSPACE_GATE_PASS ANDROID_FLOATING_DECK WINDOWS_LEFT_DECK LARGE_CANVAS RIGHT_STATUS_RAIL RESPONSIVE NO_FAKE")
 print("✓ RGB_ALL_PAGE_ASSET_INTEGRITY_PASS CAD CAM 3D 3AX 4AX 5AX NC")
 require(workflow, "grep -Fq 'ADAPTIVE_UI_TEXT_GATE_PASS' release-validation.log", "CI_ADAPTIVE_UI_TEXT_MARKER_158")
 require(workflow, "grep -Fq 'CAD_EDIT_INTEGRITY_GATE_PASS' release-validation.log", "CI_CAD_EDIT_MARKER_159")
+require(workflow, "grep -Fq 'CAD_RGB_WORKSPACE_GATE_PASS' release-validation.log", "CI_CAD_RGB_WORKSPACE_MARKER_160")
 if "grep -Fq 'BILINGUAL_ADAPTIVE_UI_GATE_PASS' release-validation.log" in workflow:
     raise SystemExit("BLOCKED CI_ADAPTIVE_UI_TEXT_MARKER_158: stale bilingual marker")
 

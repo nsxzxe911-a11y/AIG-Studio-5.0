@@ -706,7 +706,9 @@ class MainActivity : Activity() {
 
         // Tool controls now float over the CAD stage; they no longer consume workspace height.
         addCategory("繪圖", 0) { showDrawingBranch() }
+        addCategory("檢視", 0) { showViewBranch() }
         addCategory("修改", 3) { showModifyBranch() }
+        addCategory("連接", 1) { showLinkBranch() }
         addCategory("角部", 2) { showCornerBranch() }
         addCategory("CAM", 5) { showCamWorkstation() }
         addCategory("加工", 5) { showMachiningBranch() }
@@ -1168,6 +1170,13 @@ class MainActivity : Activity() {
         addActionTo(branchFlow, "SNAP", 3) { cad.toggleSnap() }
         addToolToBranch("尺寸", Tool.MEASURE, 5)
     }
+    private fun showViewBranch() {
+        branchFlow.removeAllViews(); toolButtons.clear()
+        addToolToBranch("平移", Tool.PAN, 0)
+        addActionTo(branchFlow, "GRID", 2) { cad.toggleGrid() }
+        addActionTo(branchFlow, "GEOMETRY", 1) { cad.toggleGeometry() }
+        addActionTo(branchFlow, "SNAP", 3) { cad.toggleSnap() }
+    }
     private fun showModifyBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addToolToBranch("選取", Tool.SELECT, 1)
@@ -1176,13 +1185,14 @@ class MainActivity : Activity() {
         addActionTo(branchFlow, "旋轉", 2) { cad.promptRotate() }
         addActionTo(branchFlow, "鏡射 X", 3) { cad.mirrorSelected(vertical=true) }
         addActionTo(branchFlow, "鏡射 Y", 3) { cad.mirrorSelected(vertical=false) }
-        addActionTo(branchFlow, "連接", 1) { cad.connectSelected() }
-        addActionTo(branchFlow, "斷開", 4) { cad.disconnectSelected() }
         addActionTo(branchFlow, "刪除選取", 4) { cad.deleteSelected() }
         addToolToBranch("單點刪除", Tool.DELETE, 4)
-        addToolToBranch("視圖平移", Tool.PAN, 0)
-        addActionTo(branchFlow, "GRID", 2) { cad.toggleGrid() }
-        addActionTo(branchFlow, "GEOMETRY", 1) { cad.toggleGeometry() }
+    }
+    private fun showLinkBranch() {
+        branchFlow.removeAllViews(); toolButtons.clear()
+        addToolToBranch("選取", Tool.SELECT, 1)
+        addActionTo(branchFlow, "連接", 1) { cad.connectSelected() }
+        addActionTo(branchFlow, "斷開", 4) { cad.disconnectSelected() }
     }
     private fun showCornerBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()

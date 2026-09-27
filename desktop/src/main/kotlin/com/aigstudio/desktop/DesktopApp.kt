@@ -43,6 +43,21 @@ private class AdaptiveGlassToolbar : JPanel() {
     }
 }
 
+private class CadToolGrid : JPanel(FlowLayout(FlowLayout.LEFT,8,8)) {
+    init {
+        isOpaque=true
+        background=Color(8,18,30)
+        border=BorderFactory.createEmptyBorder(8,8,8,8)
+    }
+    override fun addImpl(comp:Component,constraints:Any?,index:Int) {
+        if(comp is JButton) {
+            comp.preferredSize=Dimension(96,50)
+            comp.minimumSize=Dimension(88,46)
+        }
+        super.addImpl(comp,constraints,index)
+    }
+}
+
 private class GlassActionButton(label: String, private val accent: Color) : JButton(label) {
     var active = false
         set(value) { field = value; repaint() }
@@ -186,6 +201,8 @@ private class CadPanel(
             override fun mouseReleased(e: MouseEvent) { dragPoint = null }
         })
     }
+
+    fun selectedCount():Int = selectedIds.size
 
     fun clearCad() {
         doc.clear()
@@ -598,9 +615,7 @@ private fun runSmoke() {
     val smokeCad=CadPanel(doc) { cadStatus.text=it }
     val smokeRoot = JPanel(BorderLayout()).apply {
         background = Color(5,10,17)
-        val header = AdaptiveGlassToolbar().apply {
-            background = Color(8,18,30)
-            add(JLabel("AIG CNC • OFFICIAL RGB ORIGINAL").apply { foreground=Color(61,235,255);font=font.deriveFont(Font.BOLD,20f) })
+        val navBar=AdaptiveGlassToolbar().apply {
             listOf("CAD","CAM","3D","3AX","4AX","5AX","NC_EDIT").forEachIndexed { i,assetId ->
                 val colors=listOf(Color(61,235,255),Color(63,255,157),Color(139,92,246),Color(59,130,246),Color(245,158,11),Color(236,72,153),Color(80,170,255))
                 add(GlassActionButton(UiTextPolicy.display(assetId,118),colors[i]).apply {
@@ -610,26 +625,90 @@ private fun runSmoke() {
                 })
             }
         }
-        val editBar=AdaptiveGlassToolbar().apply {
+        val header = JPanel(BorderLayout()).apply {
+            background=Color(8,18,30)
+            border=BorderFactory.createMatteBorder(0,0,1,0,Color(61,235,255,105))
+            add(JLabel("AIG CNC • CAD / 2D").apply {
+                foreground=Color(61,235,255)
+                font=font.deriveFont(Font.BOLD,18f)
+                preferredSize=Dimension(330,58)
+            },BorderLayout.WEST)
+            add(navBar,BorderLayout.CENTER)
+        }
+        val drawBar=CadToolGrid().apply {
+            add(GlassActionButton("線",Color(61,235,255)))
+            add(GlassActionButton("矩形",Color(139,92,246)))
+            add(GlassActionButton("圓",Color(245,158,11)))
+            add(GlassActionButton("選取",Color(80,170,255)))
+        }
+        val editBar=CadToolGrid().apply {
             fun edit(label:String,color:Color,action:()->Unit)=add(GlassActionButton(label,color).apply{addActionListener{action()}})
-            edit("選取",Color(80,170,255)){smokeCad.mode=DrawMode.SELECT}
             edit("移動",Color(61,235,255)){smokeCad.moveSelected(1.0,0.0)}
             edit("複製",Color(63,255,157)){smokeCad.copySelected(1.0,0.0)}
             edit("旋轉",Color(139,92,246)){smokeCad.rotateSelected(90.0)}
             edit("鏡射 X",Color(245,158,11)){smokeCad.mirrorSelected(true)}
             edit("鏡射 Y",Color(245,158,11)){smokeCad.mirrorSelected(false)}
-            edit("連接",Color(63,255,157)){smokeCad.connectSelected()}
-            edit("斷開",Color(255,176,32)){smokeCad.disconnectSelected()}
             edit("刪除",Color(239,68,68)){smokeCad.deleteSelected()}
             edit("復原",Color(125,112,255)){smokeCad.undoEdit()}
             edit("重做",Color(125,112,255)){smokeCad.redoEdit()}
         }
+        val linkBar=CadToolGrid().apply {
+            add(GlassActionButton("連接",Color(63,255,157)))
+            add(GlassActionButton("斷開",Color(255,176,32)))
+        }
+        val viewPanel=JPanel().apply {
+            layout=BoxLayout(this,BoxLayout.Y_AXIS)
+            background=Color(8,18,30)
+            border=BorderFactory.createEmptyBorder(10,10,10,10)
+            add(JLabel("中鍵 / 右鍵拖曳 = 視圖平移").apply{foreground=Color(143,179,201)})
+            add(Box.createVerticalStrut(8))
+            add(JLabel("滾輪 = 縮放").apply{foreground=Color(143,179,201)})
+            add(Box.createVerticalStrut(8))
+            add(JLabel("Master X0.000 Y0.000").apply{foreground=Color(61,235,255)})
+            add(Box.createVerticalStrut(8))
+            add(JLabel("顯示精度 0.001 mm").apply{foreground=Color(245,158,11)})
+        }
+        val smokeDeck=JTabbedPane(JTabbedPane.LEFT).apply {
+            background=Color(8,18,30)
+            foreground=Color(232,241,250)
+            preferredSize=Dimension(300,0)
+            addTab("繪圖",drawBar)
+            addTab("修改",editBar)
+            addTab("連接",linkBar)
+            addTab("檢視",viewPanel)
+        }
+        val infoRail=JPanel().apply {
+            layout=BoxLayout(this,BoxLayout.Y_AXIS)
+            background=Color(5,10,17)
+            preferredSize=Dimension(190,0)
+            border=BorderFactory.createEmptyBorder(8,8,8,8)
+            listOf(
+                "MACHINE" to "READY",
+                "ORIGIN" to "X0.000 Y0.000",
+                "PRECISION" to "0.001 mm",
+                "ENTITIES" to doc.size().toString(),
+                "LINKS" to doc.links().size.toString()
+            ).forEach { (title,value) ->
+                add(JPanel(BorderLayout()).apply {
+                    background=Color(8,18,30)
+                    border=BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(Color(61,235,255,100),1,true),
+                        BorderFactory.createEmptyBorder(7,9,7,9)
+                    )
+                    add(JLabel(title).apply{foreground=Color(120,148,168)},BorderLayout.NORTH)
+                    add(JLabel(value).apply{foreground=Color(99,255,157);font=font.deriveFont(Font.BOLD,12f)},BorderLayout.CENTER)
+                })
+                add(Box.createVerticalStrut(6))
+            }
+            add(Box.createVerticalGlue())
+        }
+        add(header,BorderLayout.NORTH)
         add(JPanel(BorderLayout()).apply {
-            isOpaque=false
-            add(header,BorderLayout.NORTH)
-            add(editBar,BorderLayout.SOUTH)
-        },BorderLayout.NORTH)
-        add(smokeCad,BorderLayout.CENTER)
+            background=Color(5,10,17)
+            add(smokeDeck,BorderLayout.WEST)
+            add(smokeCad,BorderLayout.CENTER)
+            add(infoRail,BorderLayout.EAST)
+        },BorderLayout.CENTER)
         add(cadStatus.apply {
             foreground=Color(99,255,157)
             border=BorderFactory.createEmptyBorder(8,12,8,12)
@@ -1143,7 +1222,44 @@ private fun showApp() {
     frame.layout = BorderLayout()
     frame.contentPane.background = Color(5, 10, 17)
 
-    val toolbar = AdaptiveGlassToolbar()
+    val moduleButtons=AdaptiveGlassToolbar()
+    val toolbar = JPanel(BorderLayout()).apply {
+        background=Color(8,18,30)
+        border=BorderFactory.createMatteBorder(0,0,1,0,Color(61,235,255,105))
+        add(JLabel("AIG CNC • CAD / 2D").apply {
+            foreground=Color(61,235,255)
+            font=font.deriveFont(Font.BOLD,17f)
+            border=BorderFactory.createEmptyBorder(0,10,0,0)
+            preferredSize=Dimension(330,58)
+        },BorderLayout.WEST)
+        add(moduleButtons,BorderLayout.CENTER)
+    }
+    val drawTools=CadToolGrid()
+    val editTools=CadToolGrid()
+    val linkTools=CadToolGrid()
+    val viewTools=JPanel().apply{
+        layout=BoxLayout(this,BoxLayout.Y_AXIS)
+        background=Color(8,18,30)
+        border=BorderFactory.createEmptyBorder(10,10,10,10)
+        add(JLabel("中鍵 / 右鍵拖曳 = 視圖平移").apply{foreground=Color(143,179,201)})
+        add(Box.createVerticalStrut(8))
+        add(JLabel("滾輪 = 縮放").apply{foreground=Color(143,179,201)})
+        add(Box.createVerticalStrut(8))
+        add(JLabel("Master X0.000 Y0.000").apply{foreground=Color(61,235,255)})
+        add(Box.createVerticalStrut(8))
+        add(JLabel("顯示精度 0.001 mm").apply{foreground=Color(245,158,11)})
+    }
+    val cadDeck=JTabbedPane(JTabbedPane.LEFT).apply{
+        background=Color(8,18,30)
+        foreground=Color(232,241,250)
+        preferredSize=Dimension(300,0)
+        minimumSize=Dimension(260,0)
+        font=font.deriveFont(Font.BOLD,12f)
+        addTab("繪圖",drawTools)
+        addTab("修改",editTools)
+        addTab("連接",linkTools)
+        addTab("檢視",viewTools)
+    }
 
     val activeButtons = mutableListOf<GlassActionButton>()
     fun button(label: String, color: Color, action: () -> Unit): GlassActionButton {
@@ -1178,28 +1294,28 @@ private fun showApp() {
         }
     }
 
-    toolbar.add(button("LINE", Color(61, 235, 255)) { cad.mode = DrawMode.LINE; status.text = "LINE" })
-    toolbar.add(button("RECT", Color(139, 92, 246)) { cad.mode = DrawMode.RECT; status.text = "RECT" })
-    toolbar.add(button("CIRCLE", Color(245, 158, 11)) { cad.mode = DrawMode.CIRCLE; status.text = "CIRCLE" })
-    toolbar.add(button("選取", Color(80,170,255)) { cad.mode=DrawMode.SELECT; status.text="SELECT • click to toggle • middle/right drag = PAN" })
-    toolbar.add(button("移動", Color(61,235,255)) { askDelta("MOVE"){x,y->cad.moveSelected(x,y)} })
-    toolbar.add(button("複製", Color(63,255,157)) { askDelta("COPY"){x,y->cad.copySelected(x,y)} })
-    toolbar.add(button("旋轉", Color(139,92,246)) { askAngle(cad::rotateSelected) })
-    toolbar.add(button("鏡射 X", Color(245,158,11)) { cad.mirrorSelected(true) })
-    toolbar.add(button("鏡射 Y", Color(245,158,11)) { cad.mirrorSelected(false) })
-    toolbar.add(button("連接", Color(63,255,157)) { cad.connectSelected() })
-    toolbar.add(button("斷開", Color(255,176,32)) { cad.disconnectSelected() })
-    toolbar.add(button("刪除", Color(239,68,68)) { cad.deleteSelected() })
-    toolbar.add(button("復原", Color(125,112,255)) { cad.undoEdit() })
-    toolbar.add(button("重做", Color(125,112,255)) { cad.redoEdit() })
-    toolbar.add(button("CAM", Color(34, 197, 94)) {
+    drawTools.add(button("線", Color(61, 235, 255)) { cad.mode = DrawMode.LINE; status.text = "LINE" })
+    drawTools.add(button("矩形", Color(139, 92, 246)) { cad.mode = DrawMode.RECT; status.text = "RECT" })
+    drawTools.add(button("圓", Color(245, 158, 11)) { cad.mode = DrawMode.CIRCLE; status.text = "CIRCLE" })
+    drawTools.add(button("選取", Color(80,170,255)) { cad.mode=DrawMode.SELECT; status.text="SELECT • click to toggle • middle/right drag = PAN" })
+    editTools.add(button("移動", Color(61,235,255)) { askDelta("MOVE"){x,y->cad.moveSelected(x,y)} })
+    editTools.add(button("複製", Color(63,255,157)) { askDelta("COPY"){x,y->cad.copySelected(x,y)} })
+    editTools.add(button("旋轉", Color(139,92,246)) { askAngle(cad::rotateSelected) })
+    editTools.add(button("鏡射 X", Color(245,158,11)) { cad.mirrorSelected(true) })
+    editTools.add(button("鏡射 Y", Color(245,158,11)) { cad.mirrorSelected(false) })
+    editTools.add(button("刪除", Color(239,68,68)) { cad.deleteSelected() })
+    editTools.add(button("復原", Color(125,112,255)) { cad.undoEdit() })
+    editTools.add(button("重做", Color(125,112,255)) { cad.redoEdit() })
+    linkTools.add(button("連接", Color(63,255,157)) { cad.connectSelected() })
+    linkTools.add(button("斷開", Color(255,176,32)) { cad.disconnectSelected() })
+    moduleButtons.add(button("CAM", Color(34, 197, 94)) {
         runCatching { CamModel.fromCad(1L, doc.snapshot()) }
             .onSuccess { cam ->
                 JOptionPane.showMessageDialog(frame, "TRUE CAM paths=" + cam.toolpaths.size, "CAM", JOptionPane.INFORMATION_MESSAGE)
             }
             .onFailure { JOptionPane.showMessageDialog(frame, "CAM BLOCKED: " + it.message, "CAM", JOptionPane.WARNING_MESSAGE) }
     })
-    toolbar.add(button("3D 加工", Color(236, 72, 153)) {
+    moduleButtons.add(button("3D 加工", Color(236, 72, 153)) {
         runCatching { Machining3DEngine.build(doc.snapshot()) }
             .onSuccess { result ->
                 val animationSummary = runCatching {
@@ -1220,23 +1336,67 @@ private fun showApp() {
             }
             .onFailure { JOptionPane.showMessageDialog(frame, "3D BLOCKED: " + it.message, "3D", JOptionPane.WARNING_MESSAGE) }
     })
-    toolbar.add(button("NC EDIT", Color(80, 170, 255)) {
+    moduleButtons.add(button("NC", Color(80, 170, 255)) {
         runCatching { showNcEditor(frame, doc) }
             .onSuccess { status.text = "NC EDIT • FANUC / MITSUBISHI • G90/G91 EXPLICIT • ABS XYZ LOCKED" }
             .onFailure { status.text = "NC EDIT BLOCKED: " + it.message }
     })
-    toolbar.add(button("3D/3AX/4AX/5AX + NC", Color(125,112,255)) {
+    moduleButtons.add(button("多軸 + NC", Color(125,112,255)) {
         runCatching { showUnifiedMachiningEditor(frame,doc,status) }
             .onFailure { status.text="UNIFIED WORKSPACE BLOCKED: "+(it.message?:"error") }
     })
-    toolbar.add(button("CLEAR", Color(239, 68, 68)) { cad.clearCad() })
+    editTools.add(button("清除", Color(239, 68, 68)) { cad.clearCad() })
 
     status.border = BorderFactory.createEmptyBorder(8, 12, 8, 12)
     status.background = Color(5, 10, 17)
     status.isOpaque = true
 
+    val selectedValue=JLabel("0")
+    val entityValue=JLabel(doc.size().toString())
+    val linkValue=JLabel(doc.links().size.toString())
+    fun railCell(title:String,value:JLabel,color:Color)=JPanel(BorderLayout()).apply{
+        background=Color(8,18,30)
+        border=BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color(color.red,color.green,color.blue,110),1,true),
+            BorderFactory.createEmptyBorder(8,10,8,10)
+        )
+        add(JLabel(title).apply{foreground=Color(120,148,168)},BorderLayout.NORTH)
+        value.foreground=color
+        value.font=value.font.deriveFont(Font.BOLD,13f)
+        add(value,BorderLayout.CENTER)
+    }
+    val infoRail=JPanel().apply{
+        layout=BoxLayout(this,BoxLayout.Y_AXIS)
+        background=Color(5,10,17)
+        preferredSize=Dimension(190,0)
+        border=BorderFactory.createEmptyBorder(6,6,6,6)
+        add(railCell("MACHINE",JLabel("READY"),Color(99,255,157)))
+        add(Box.createVerticalStrut(6))
+        add(railCell("ORIGIN",JLabel("X0.000 Y0.000"),Color(61,235,255)))
+        add(Box.createVerticalStrut(6))
+        add(railCell("PRECISION",JLabel("0.001 mm"),Color(245,158,11)))
+        add(Box.createVerticalStrut(6))
+        add(railCell("SELECTED",selectedValue,Color(236,72,153)))
+        add(Box.createVerticalStrut(6))
+        add(railCell("ENTITIES",entityValue,Color(99,255,157)))
+        add(Box.createVerticalStrut(6))
+        add(railCell("LINKS",linkValue,Color(63,255,157)))
+        add(Box.createVerticalGlue())
+    }
+    Timer(350){
+        selectedValue.text=cad.selectedCount().toString()
+        entityValue.text=doc.size().toString()
+        linkValue.text=doc.links().size.toString()
+    }.apply{isRepeats=true;start()}
+
+    val workspace=JPanel(BorderLayout()).apply{
+        background=Color(5,10,17)
+        add(cadDeck,BorderLayout.WEST)
+        add(cad,BorderLayout.CENTER)
+        add(infoRail,BorderLayout.EAST)
+    }
     frame.add(toolbar, BorderLayout.NORTH)
-    frame.add(cad, BorderLayout.CENTER)
+    frame.add(workspace, BorderLayout.CENTER)
     frame.add(status, BorderLayout.SOUTH)
     frame.size = desktopAdaptiveSize(1280, 820)
     frame.setLocationRelativeTo(null)
