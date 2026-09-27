@@ -22,6 +22,7 @@ android = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
 desktop = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
 env = read("core/src/main/kotlin/com/aigstudio/core/EnvironmentSettings.kt")
 hashes = read("design/theme/official_rgb/android-drawable.sha256")
+workflow = read(".github/workflows/build-download.yml")
 theme_manifest = json.loads(read("design/theme/aigii_rgb_neon_v2/theme-manifest.json"))
 asset_policy = theme_manifest.get("engineering_asset_policy") or {}
 if theme_manifest.get("official_baseline_replaced") is not False:
@@ -265,7 +266,12 @@ print("✓ ROTARY_MACHINE_PROFILE_PERSISTENCE_GATE_PASS CUSTOM_MCODE NO_UNIVERSA
 print("✓ NC_EDITOR_WARNING_ONLY_GATE_PASS EDIT SAVE_DRAFT UPDATE_SEPARATE EXECUTION_INTERLOCK SESSION_ACTIVE")
 print("✓ DESKTOP_ALL_PAGES_ENTRY_GATE_PASS CAM 3D 3AX 4AX 5AX NC")
 print("✓ RGB_ALL_PAGE_ASSET_INTEGRITY_PASS CAD CAM 3D 3AX 4AX 5AX NC")
+require(workflow, "grep -Fq 'ADAPTIVE_UI_TEXT_GATE_PASS' release-validation.log", "CI_ADAPTIVE_UI_TEXT_MARKER_158")
+if "grep -Fq 'BILINGUAL_ADAPTIVE_UI_GATE_PASS' release-validation.log" in workflow:
+    raise SystemExit("BLOCKED CI_ADAPTIVE_UI_TEXT_MARKER_158: stale bilingual marker")
+
 print("✓ ASSET_ENGINEERING_POLICY_GATE_PASS 最高工程權限 圖片直通 不需人工認證 不需資產簽名 不鎖定 不需固定白名單 Preview不阻擋 正式Release仍驗證")
 print("✓ ADAPTIVE_UI_TEXT_GATE_PASS 繁中優先 SHORT_ZH TECH_ABBR SYMBOL SHORT_EN NO_OVERFLOW STABLE_ORDER")
+print("✓ CI_ADAPTIVE_UI_TEXT_MARKER_GATE_PASS WORKFLOW_MATCHES_RUNTIME_GATE")
 print("✓ NO_FAKE_PAGE_CALLBACK_GATE_PASS TOOL_ACTION_CALLBACKS_BOUND")
 print("✓ ALL_SCREENS_RUNTIME_GATE_PASS")
