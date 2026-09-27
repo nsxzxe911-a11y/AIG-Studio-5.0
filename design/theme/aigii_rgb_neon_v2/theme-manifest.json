@@ -3,9 +3,20 @@
   "product": "AIG CNC",
   "linked_control_surface": "AIG II",
   "role": "cross-project-runtime-skin",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "base_theme_id": "official-rgb-v1",
   "official_baseline_replaced": false,
+  "official_baseline_policy_zh_tw": "官方核准原始資產只保留原檔與來源血統，不得覆蓋或刪除；這不限制工程介面開發。",
+  "engineering_asset_policy": {
+    "ui_layout_editable": true,
+    "images_editable": true,
+    "buttons_editable": true,
+    "animations_editable": true,
+    "themes_editable": true,
+    "new_assets_allowed": true,
+    "replacement_after_validation_allowed": true,
+    "release_gate_required": true
+  },
   "startup_skin": "rgb_grid_neon",
   "states": [
     "Normal",
@@ -15,5 +26,5 @@
     "Alarm"
   ],
   "shared_theme_id_with": "AIG-II",
-  "provenance": "new optional skin; official AIG CNC RGB baseline remains immutable"
+  "provenance_zh_tw": "本主題是可持續修改的工程版皮膚；工程 UI、圖片、按鈕、動畫、Theme 與排版可新增、修改、替換。官方原始基準只負責保留原檔與血統，工程修改經驗證 PASS 後可升版。"
 }

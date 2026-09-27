@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,6 +18,20 @@ android = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
 desktop = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
 env = read("core/src/main/kotlin/com/aigstudio/core/EnvironmentSettings.kt")
 hashes = read("design/theme/official_rgb/android-drawable.sha256")
+theme_manifest = json.loads(read("design/theme/aigii_rgb_neon_v2/theme-manifest.json"))
+asset_policy = theme_manifest.get("engineering_asset_policy") or {}
+if theme_manifest.get("official_baseline_replaced") is not False:
+    raise SystemExit("資產工程規則錯誤：官方原始基準不得被工程版覆蓋")
+if "官方核准原始資產只保留原檔與來源血統" not in theme_manifest.get("official_baseline_policy_zh_tw", ""):
+    raise SystemExit("資產工程規則缺少繁體中文官方基準說明")
+for key in (
+    "ui_layout_editable","images_editable","buttons_editable","animations_editable",
+    "themes_editable","new_assets_allowed","replacement_after_validation_allowed","release_gate_required",
+):
+    if asset_policy.get(key) is not True:
+        raise SystemExit(f"資產工程規則未開放：{key}")
+if "工程 UI、圖片、按鈕、動畫、Theme 與排版可新增、修改、替換" not in theme_manifest.get("provenance_zh_tw", ""):
+    raise SystemExit("資產工程規則缺少工程介面可修改說明")
 
 # Main Android page/category entry points must bind to real callbacks.
 android_entries = {
@@ -188,5 +203,6 @@ print("✓ ROTARY_MACHINE_PROFILE_PERSISTENCE_GATE_PASS CUSTOM_MCODE NO_UNIVERSA
 print("✓ NC_EDITOR_WARNING_ONLY_GATE_PASS EDIT SAVE_DRAFT UPDATE_SEPARATE EXECUTION_INTERLOCK SESSION_ACTIVE")
 print("✓ DESKTOP_ALL_PAGES_ENTRY_GATE_PASS CAM 3D 3AX 4AX 5AX NC")
 print("✓ RGB_ALL_PAGE_ASSET_INTEGRITY_PASS CAD CAM 3D 3AX 4AX 5AX NC")
+print("✓ ASSET_ENGINEERING_POLICY_GATE_PASS 官方原始基準保留 工程UI可改 圖片可改 按鈕可改 動畫可改 Theme可改 可新增可替換 驗證後升版")
 print("✓ NO_FAKE_PAGE_CALLBACK_GATE_PASS TOOL_ACTION_CALLBACKS_BOUND")
 print("✓ ALL_SCREENS_RUNTIME_GATE_PASS")
