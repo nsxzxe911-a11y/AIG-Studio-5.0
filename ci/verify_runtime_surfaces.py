@@ -27,6 +27,8 @@ document = read("core/src/main/kotlin/com/aigstudio/core/Document.kt")
 regression = read("core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt")
 hashes = read("design/theme/official_rgb/android-drawable.sha256")
 workflow = read(".github/workflows/build-download.yml")
+theme_index = json.loads(read("app/src/main/assets/aig-themes/repository-index.json"))
+production_theme = json.loads(read("app/src/main/assets/aig-themes/themes/official_rgb_original/theme.json"))
 theme_manifest = json.loads(read("design/theme/aigii_rgb_neon_v2/theme-manifest.json"))
 asset_policy = theme_manifest.get("engineering_asset_policy") or {}
 if theme_manifest.get("official_baseline_replaced") is not False:
@@ -64,14 +66,38 @@ for path in (
 app_gradle = read("app/build.gradle.kts")
 desktop_gradle = read("desktop/build.gradle.kts")
 for source,label in ((app_gradle,"ANDROID"),(desktop_gradle,"WINDOWS")):
-    if "../engineering-assets" not in source:
-        raise SystemExit(f"{label} 未綁定工程圖片目錄")
-for needle in ("object EngineeringImageAssets", 'ROOT="images"', "EngineeringImageAssets.drawable(this,id)"):
+    if "../engineering-assets" in source:
+        raise SystemExit(f"{label} 正式 Runtime 不得綁定 engineering-assets")
+if theme_index.get("default_theme_id") != "official_rgb_original":
+    raise SystemExit("正式 Runtime 預設 Theme 不是 official_rgb_original")
+if production_theme.get("theme_id") != "official_rgb_original":
+    raise SystemExit("official_rgb_original Theme 遺失或身分錯誤")
+for needle in ("object ProductionRgbAssets", 'ROOT="aig-generated-rgb/approved/184"', "ProductionRgbAssets.drawable(this,id)"):
     if needle not in android:
-        raise SystemExit(f"Android 工程圖片 Runtime 未綁定：{needle}")
-for needle in ("private object EngineeringImageAssets", 'ROOT="/images"', "EngineeringImageAssets.icon(icon)"):
+        raise SystemExit(f"Android 正式 RGB Runtime 未綁定：{needle}")
+for needle in ("private object ProductionRgbAssets", 'ROOT="/aig-generated-rgb/approved/184"', "ProductionRgbAssets.icon"):
     if needle not in desktop:
-        raise SystemExit(f"Windows 工程圖片 Runtime 未綁定：{needle}")
+        raise SystemExit(f"Windows 正式 RGB Runtime 未綁定：{needle}")
+for forbidden in ("EngineeringImageAssets.drawable(", "EngineeringImageAssets.icon("):
+    if forbidden in android or forbidden in desktop:
+        raise SystemExit(f"正式 Runtime 誤用工程圖片：{forbidden}")
+for path in (
+    ROOT / "app" / "src" / "main" / "assets" / "aig-generated-rgb" / "approved" / "184" / "cad.png",
+    ROOT / "app" / "src" / "main" / "assets" / "aig-generated-rgb" / "approved" / "184" / "cam.png",
+    ROOT / "desktop" / "src" / "main" / "resources" / "aig-generated-rgb" / "approved" / "184" / "cad.png",
+    ROOT / "desktop" / "src" / "main" / "resources" / "aig-generated-rgb" / "approved" / "184" / "cam.png",
+):
+    if not path.is_file():
+        raise SystemExit(f"正式 RGB 資產缺少：{path}")
+for needle in (
+    "REAL CAD / CAM",
+    "buildProductionCamPanel",
+    'moduleButtons.add(button("2D CAD"',
+    'moduleButtons.add(button("4AX"',
+    'moduleButtons.add(button("5AX"',
+):
+    if needle not in desktop:
+        raise SystemExit(f"Windows Production UI 缺少：{needle}")
 
 # Main Android page/category entry points must bind to real callbacks.
 android_entries = {
@@ -167,17 +193,19 @@ for needle in (
 ):
     require(android, needle, "ANDROID_CAD_RGB_WORKSPACE_160")
 for needle in (
-    'val cadDeck=JTabbedPane(JTabbedPane.LEFT).apply',
-    'addTab("繪圖",drawTools)',
-    'addTab("修改",editTools)',
-    'addTab("連接",linkTools)',
-    'addTab("檢視",viewTools)',
+    'val cadCardLayout=CardLayout()',
+    'val cadCardHost=JPanel(cadCardLayout).apply',
+    'cadDeckButton("繪圖","DRAW"',
+    'cadDeckButton("修改","EDIT"',
+    'cadDeckButton("連接","LINK"',
+    'cadDeckButton("檢視","VIEW"',
+    'val cadDeck=JPanel(BorderLayout(6,6)).apply',
     'add(cadDeck,BorderLayout.WEST)',
     'add(cad,BorderLayout.CENTER)',
     'add(infoRail,BorderLayout.EAST)',
-    '"AIG CNC • CAD / 2D"',
+    '"AIG CNC  •  REAL CAD / CAM"',
 ):
-    require(desktop, needle, "WINDOWS_CAD_RGB_WORKSPACE_160")
+    require(desktop, needle, "WINDOWS_CAD_RGB_WORKSPACE_165")
 require(
     regression,
     "CAD_EDIT_INTEGRITY_GATE_PASS SELECT MOVE COPY ROTATE MIRROR DELETE UNDO_REDO CONNECT DISCONNECT TOPOLOGY_ONLY TOL=0.001",

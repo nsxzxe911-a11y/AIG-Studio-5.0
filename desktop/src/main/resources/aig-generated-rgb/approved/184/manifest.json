@@ -1,0 +1,347 @@
+{
+  "schema": 1,
+  "profile": "AIG_II_OFFICIAL_DERIVED_RGB_BUTTONS_184",
+  "version": "184.0.0",
+  "theme_family": "aigii_rgb_neon",
+  "derived_from": "official_rgb_original",
+  "approval_state": "VALIDATED_DERIVED",
+  "generator": "ci/generate_rgb_button_assets.py",
+  "generator_sha256": "531e4f9182645385147c4e98adca9e534397d2227c062802d2bbced953769f29",
+  "runtime_layer": "compound_icon_only",
+  "logic_binding_authority": "runtime_callback",
+  "official_original_overwritten": false,
+  "official_baseline_policy_zh_tw": "官方核准原始資產只保留原檔與來源血統，不得覆蓋或刪除；這不限制工程介面開發。",
+  "engineering_assets_editable": true,
+  "engineering_images_editable": true,
+  "engineering_buttons_editable": true,
+  "engineering_animations_editable": true,
+  "engineering_themes_editable": true,
+  "engineering_layout_editable": true,
+  "engineering_new_assets_allowed": true,
+  "engineering_replacement_after_validation_allowed": true,
+  "release_gate_required": true,
+  "physical_color_equality_required": false,
+  "asset_count": 32,
+  "assets": [
+    {
+      "id": "line",
+      "label": "LINE",
+      "semantic_role": "CAD",
+      "filename": "line.png",
+      "sha256": "b043e1073c71a2535f4bcae4ebcd19f566cb2452b5b9c76e5ee8e0e567266474",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#3DEBFF"
+    },
+    {
+      "id": "rect",
+      "label": "RECT",
+      "semantic_role": "CAD",
+      "filename": "rect.png",
+      "sha256": "20157f6d7a345c2f6ce1fe5bdeb77d243dc83961ae252ff9d66256c53079e24e",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#8B5CF6"
+    },
+    {
+      "id": "circle",
+      "label": "CIRCLE",
+      "semantic_role": "CAD",
+      "filename": "circle.png",
+      "sha256": "eb3801daee91c551025d52e92cb817c95c2fab07cd8c56e9a73919208e9f026b",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#F59E0B"
+    },
+    {
+      "id": "arc",
+      "label": "ARC",
+      "semantic_role": "CAD",
+      "filename": "arc.png",
+      "sha256": "13ae98d7e5f7ad2d45fccee1b51cf69ee224b81114f5990e5d31d3f6b61642ff",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#22C55E"
+    },
+    {
+      "id": "hole",
+      "label": "HOLE",
+      "semantic_role": "CAD",
+      "filename": "hole.png",
+      "sha256": "8c9ed3e0dfd4db35629ee6b920dc2d49538a3b431473153815a53c76f8aab98a",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#3B82F6"
+    },
+    {
+      "id": "select",
+      "label": "SELECT",
+      "semantic_role": "CAD",
+      "filename": "select.png",
+      "sha256": "420ad253979475c3afe4055ce95767c3b854c921c5a80346a9ae50b20d08b683",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#EC4899"
+    },
+    {
+      "id": "connect",
+      "label": "CONNECT",
+      "semantic_role": "CAD",
+      "filename": "connect.png",
+      "sha256": "e2507bbd8384030875624be1a011821d985990148e04c0cb0452f0607b555f34",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#3FFF9D"
+    },
+    {
+      "id": "disconnect",
+      "label": "DISCONNECT",
+      "semantic_role": "CAD",
+      "filename": "disconnect.png",
+      "sha256": "bda89c11d44611e8a4b9fb7939b7f274df577679dcf00daceb1c5f11275d77cb",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#FFB84D"
+    },
+    {
+      "id": "cad_toggle",
+      "label": "CAD ON/OFF",
+      "semantic_role": "CAD",
+      "filename": "cad_toggle.png",
+      "sha256": "fa2e847a9c31270e9a60ac3689f0f0245168bdb25ed54796f08789cdabf1bc00",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#3DEBFF"
+    },
+    {
+      "id": "cam_toggle",
+      "label": "CAM ON/OFF",
+      "semantic_role": "CAM",
+      "filename": "cam_toggle.png",
+      "sha256": "47c63e3a2661e6cdf1ba86f118e3df3a672e44c7fd86a0a77da2bbce0c91ef7a",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#FF50DC"
+    },
+    {
+      "id": "sim_toggle",
+      "label": "SIM ON/OFF",
+      "semantic_role": "SIM",
+      "filename": "sim_toggle.png",
+      "sha256": "ecfc5bb7308952c455694c7be88dcca13915f5f5f4f9b7eee274c19087042285",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#63FF9D"
+    },
+    {
+      "id": "cad",
+      "label": "CAD",
+      "semantic_role": "CAD",
+      "filename": "cad.png",
+      "sha256": "b3888ae2dbaec740ec328a27a197bc96c24916b31606f28d327c3cd1013ffbd4",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#3DEBFF"
+    },
+    {
+      "id": "cam",
+      "label": "CAM",
+      "semantic_role": "CAM",
+      "filename": "cam.png",
+      "sha256": "65093559d25bf04bb42e92ce2028465e399b602ddecfaa0d6988467383cd5eb2",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#FF50DC"
+    },
+    {
+      "id": "sim",
+      "label": "SIM",
+      "semantic_role": "SIM",
+      "filename": "sim.png",
+      "sha256": "9e015f72c8b08a8ea926ba422cfa0ea29b895af9633051cbe1f38b22623e8bba",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#63FF9D"
+    },
+    {
+      "id": "3ax",
+      "label": "3AX",
+      "semantic_role": "AXIS",
+      "filename": "3ax.png",
+      "sha256": "3046808270c254ff4c1998579d98e20b9a259bece0b98d307bd10c12a345f1aa",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#3DEBFF"
+    },
+    {
+      "id": "4ax",
+      "label": "4AX",
+      "semantic_role": "AXIS",
+      "filename": "4ax.png",
+      "sha256": "f8fccddae7b9c5bb8e1e4805dbea433c5797441ea4e28f116caa97c4ff743ead",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#8B5CF6"
+    },
+    {
+      "id": "5ax",
+      "label": "5AX",
+      "semantic_role": "AXIS",
+      "filename": "5ax.png",
+      "sha256": "009a62dc9a8bf3ad807fae8fcc2b804d1f19a0dd695f05551971e489687b2b5f",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#FF50DC"
+    },
+    {
+      "id": "nc",
+      "label": "NC",
+      "semantic_role": "NC",
+      "filename": "nc.png",
+      "sha256": "71cf045494592d34dbcafefa71fdb84df5b17f4fd5d8520e4002c04d30dd16bb",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#FFB84D"
+    },
+    {
+      "id": "ai",
+      "label": "AI",
+      "semantic_role": "AI",
+      "filename": "ai.png",
+      "sha256": "62183f20146d927d240c63508ede220bbeac9caab78a78c8e32fbb6aa0d31807",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#3DEBFF"
+    },
+    {
+      "id": "ai_resume",
+      "label": "AI RESUME",
+      "semantic_role": "AI",
+      "filename": "ai_resume.png",
+      "sha256": "b9debd1027e3102c84b715074939237761a51f8bf3875de6657ed36f7ee449b6",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#63FF9D"
+    },
+    {
+      "id": "save",
+      "label": "SAVE",
+      "semantic_role": "FILE",
+      "filename": "save.png",
+      "sha256": "a9f0cde3afe6d3b9dd6d3ccae714b2b0d91d692fdc7ae22fb8bb5a83da03c0c5",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#22C55E"
+    },
+    {
+      "id": "recover",
+      "label": "RECOVER",
+      "semantic_role": "FILE",
+      "filename": "recover.png",
+      "sha256": "996af75616af2e81c998ae1150bec45e49961904ecd0e81053632d5a87260251",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#F59E0B"
+    },
+    {
+      "id": "verify",
+      "label": "VERIFY",
+      "semantic_role": "VERIFY",
+      "filename": "verify.png",
+      "sha256": "366d95717372a7d090fc6fc06dbebc3bde5a5cc310bc40f22d5eb5b3bad112c8",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#3FFF9D"
+    },
+    {
+      "id": "machine_model",
+      "label": "MACHINE MODEL",
+      "semantic_role": "AXIS",
+      "filename": "machine_model.png",
+      "sha256": "b6aa484cc6f29c5c5208e6dfc1d01299110c4774d7b4af956e5a9533f020f8c6",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#3DEBFF"
+    },
+    {
+      "id": "machine_skin",
+      "label": "MACHINE SKIN",
+      "semantic_role": "AXIS",
+      "filename": "machine_skin.png",
+      "sha256": "a8ef3c56fd9d80f11d415becab95010a78b4488524d3ebe3afc1eb5a841e4859",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#8B5CF6"
+    },
+    {
+      "id": "material_skin",
+      "label": "MATERIAL SKIN",
+      "semantic_role": "SIM",
+      "filename": "material_skin.png",
+      "sha256": "390fed8bfadf8a9855d947ca0c5973effa7601ebf37f55168c92adb5806ad26d",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#63FF9D"
+    },
+    {
+      "id": "workspace",
+      "label": "WORKSPACE",
+      "semantic_role": "CAD",
+      "filename": "workspace.png",
+      "sha256": "99770865bf4fb6f7dd4f911808e1e6d28c18a717857a2a0e0386834594127622",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#3DEBFF"
+    },
+    {
+      "id": "chain_audit",
+      "label": "CHAIN AUDIT",
+      "semantic_role": "VERIFY",
+      "filename": "chain_audit.png",
+      "sha256": "46c03ca3d81eff69f031e189dc3470ee130b1471f9417db69c62f764cbc0fdc6",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#3FFF9D"
+    },
+    {
+      "id": "machine_motion",
+      "label": "MACHINE MOTION",
+      "semantic_role": "AXIS",
+      "filename": "machine_motion.png",
+      "sha256": "0cdd7988253e50c7e70f50c404eb1ac20735ed63e4d81cc8ce09b97374fffceb",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#FF50DC"
+    },
+    {
+      "id": "rgb_wallpaper",
+      "label": "RGB WALLPAPER",
+      "semantic_role": "DISPLAY",
+      "filename": "rgb_wallpaper.png",
+      "sha256": "a4b50e8470faa8914231f8190be4673363f908be18938834482ffed2099a4708",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#3B82F6"
+    },
+    {
+      "id": "tool_group",
+      "label": "TOOL GROUP",
+      "semantic_role": "CAD",
+      "filename": "tool_group.png",
+      "sha256": "15cc5ebe82d143584ffd5cf193fef6c07dd6e7e56e5044c1a8bcac6433f22086",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#F59E0B"
+    },
+    {
+      "id": "skin_pack",
+      "label": "SKIN PACK",
+      "semantic_role": "DISPLAY",
+      "filename": "skin_pack.png",
+      "sha256": "ed32c76a5f6de41385cdd6ddbdf16ee901d49ab800aef55a0d3c83f683872048",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#8B5CF6"
+    }
+  ]
+}

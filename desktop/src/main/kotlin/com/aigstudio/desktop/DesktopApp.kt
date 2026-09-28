@@ -7,6 +7,7 @@ import java.awt.geom.Path2D
 import java.awt.image.BufferedImage
 import java.io.File
 import java.security.MessageDigest
+import java.util.Properties
 import java.util.prefs.Preferences
 import javax.imageio.ImageIO
 import javax.swing.*
@@ -103,7 +104,7 @@ private class AdaptiveGlassToolbar : JPanel() {
         layout = GridLayout(0, cols, 6, 6)
         addComponentListener(object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent) {
-                val next = max(2, width / 128)
+                val next = max(2, width / 112)
                 if (next != cols) {
                     cols = next
                     layout = GridLayout(0, cols, 6, 6)
@@ -115,9 +116,9 @@ private class AdaptiveGlassToolbar : JPanel() {
     override fun paintComponent(g: Graphics) {
         val g2 = g.create() as Graphics2D
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        g2.color = Color(11, 23, 38, 178)
-        g2.fillRoundRect(0, 0, width, height, 20, 20)
-        g2.color = Color(61, 235, 255, 105)
+        g2.paint = GradientPaint(0f,0f,Color(16,28,42,235),0f,height.toFloat(),Color(8,12,22,238))
+        g2.fillRoundRect(0, 0, width, height, 22, 22)
+        g2.color = Color(61, 235, 255, 140)
         g2.stroke = BasicStroke(1.2f)
         g2.drawRoundRect(1, 1, max(0, width - 3), max(0, height - 3), 20, 20)
         g2.dispose()
@@ -144,18 +145,23 @@ private class GlassActionButton(label: String, private val accent: Color) : JBut
     var active = false
         set(value) { field = value; repaint() }
     init {
-        foreground = Color(232, 244, 255)
+        foreground = StudioDesktopProductionTheme.text
         isOpaque = false
         isContentAreaFilled = false
         isFocusPainted = false
         border = BorderFactory.createEmptyBorder(8, 10, 8, 10)
-        preferredSize = Dimension(118, 44)
+        preferredSize = Dimension(118, 48)
+        ProductionRgbAssets.icon(label)?.let {
+            icon=it
+            iconTextGap=7
+            horizontalTextPosition=SwingConstants.RIGHT
+        }
     }
     override fun paintComponent(g: Graphics) {
         val g2 = g.create() as Graphics2D
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
         val a = if (active) 220 else 150
-        g2.color = Color(11, 23, 38, a)
+        g2.color = Color(StudioDesktopProductionTheme.panel.red, StudioDesktopProductionTheme.panel.green, StudioDesktopProductionTheme.panel.blue, a)
         g2.fillRoundRect(3, 3, width - 6, height - 6, 16, 16)
         g2.color = Color(accent.red, accent.green, accent.blue, if (active) 235 else 170)
         g2.stroke = BasicStroke(if (active) 2.6f else 1.4f)
@@ -192,15 +198,73 @@ private class RgbGlyphIcon(private val kind:String, private val accent:Color) : 
     }
 }
 
-private object EngineeringImageAssets {
-    private const val ROOT="/images"
-    private fun id(name:String):String = name.lowercase().replace("nc_edit","nc")
+private object StudioDesktopProductionTheme {
+    const val ID="official_rgb_original"
+    val background=Color(8,12,22)
+    val panel=Color(16,28,42)
+    val text=Color(225,240,255)
+    val accent=Color(61,235,255)
+    val selected=Color(0,229,255)
+    val cutting=Color(0,230,118)
+    val rapid=Color(213,0,249)
+    val warning=Color(255,152,0)
+    val alarm=Color(255,23,68)
+}
+
+private object ProductionRgbAssets {
+    private const val ROOT="/aig-generated-rgb/approved/184"
+    private val hashes:Map<String,String> by lazy {
+        val props=Properties()
+        val stream=ProductionRgbAssets::class.java.getResourceAsStream("$ROOT/sha256.properties")
+            ?: error("Production RGB hash manifest missing")
+        stream.use{props.load(it)}
+        props.stringPropertyNames().associateWith{props.getProperty(it)}
+    }
+    private val cache=mutableMapOf<String,ByteArray>()
+
+    private fun assetId(name:String):String? {
+        val n=name.trim().uppercase().replace(Regex("\\s+")," ")
+        return when {
+            n=="LINE" || name=="線" -> "line"
+            n=="RECT" || n.contains("RECT") || name=="矩形" -> "rect"
+            n=="CIRCLE" || name=="圓" -> "circle"
+            n=="ARC" || name=="圓弧" -> "arc"
+            n=="HOLE" || name=="孔" -> "hole"
+            n=="SELECT" || name=="選取" -> "select"
+            n.contains("2D CAD") || n=="CAD" -> "cad"
+            n=="CAM" || n.contains("CAM ") -> "cam"
+            n=="SIM" || n.contains("3D SIM") -> "sim"
+            n=="3D" || n.contains("3D ") -> "3d"
+            n.contains("3AX") || n.contains("3 AXIS") -> "3ax"
+            n.contains("4AX") || n.contains("4 AXIS") || name.contains("四軸") -> "4ax"
+            n.contains("5AX") || n.contains("5 AXIS") || n=="5X" || name.contains("五軸") -> "5ax"
+            n=="NC" || n.contains("NC_EDIT") || n.contains("NC EDIT") -> "nc"
+            n=="AI" || n.contains("AI ") -> "ai"
+            else -> null
+        }
+    }
+
+    private fun sha256(bytes:ByteArray):String =
+        MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
+
+    @Synchronized
+    private fun verifiedBytes(id:String):ByteArray {
+        cache[id]?.let{return it}
+        val bytes=ProductionRgbAssets::class.java.getResourceAsStream("$ROOT/$id.png")
+            ?.use{it.readBytes()} ?: error("Production RGB asset missing: $id")
+        val expected=hashes[id] ?: error("Production RGB hash missing: $id")
+        require(sha256(bytes)==expected){"Production RGB hash mismatch: $id"}
+        cache[id]=bytes
+        return bytes
+    }
+
     fun icon(name:String):Icon? {
-        val key=id(name)
-        val image=runCatching {
-            EngineeringImageAssets::class.java.getResourceAsStream("$ROOT/$key.png")?.use { ImageIO.read(it) }
-        }.getOrNull() ?: return null
-        return ImageIcon(image.getScaledInstance(24,24,Image.SCALE_SMOOTH))
+        val id=assetId(name) ?: return null
+        return runCatching {
+            val image=ImageIO.read(java.io.ByteArrayInputStream(verifiedBytes(id)))
+                ?: error("Production RGB decode failed: $id")
+            ImageIcon(image.getScaledInstance(24,24,Image.SCALE_SMOOTH))
+        }.getOrNull()
     }
 }
 
@@ -229,7 +293,7 @@ private class CadPanel(
     private val selectedIds = linkedSetOf<EntityId>()
 
     init {
-        background = Color(5, 10, 18)
+        background = StudioDesktopProductionTheme.background
         preferredSize = Dimension(1000, 650)
         addMouseWheelListener {
             pxPerMm = (pxPerMm * if (it.wheelRotation < 0) 1.12 else 1.0 / 1.12).coerceIn(0.5, 80.0)
@@ -839,7 +903,7 @@ private fun runSmoke() {
             listOf("CAD","CAM","3D","3AX","4AX","5AX","NC_EDIT").forEachIndexed { i,assetId ->
                 val colors=listOf(Color(61,235,255),Color(63,255,157),Color(139,92,246),Color(59,130,246),Color(245,158,11),Color(236,72,153),Color(80,170,255))
                 add(GlassActionButton(UiTextPolicy.display(assetId,118),colors[i]).apply {
-                    icon=EngineeringImageAssets.icon(assetId) ?: RgbGlyphIcon(assetId,colors[i])
+                    icon=ProductionRgbAssets.icon(assetId) ?: RgbGlyphIcon(assetId,colors[i])
                     iconTextGap=7
                     horizontalTextPosition=SwingConstants.RIGHT
                 })
@@ -1386,7 +1450,8 @@ private fun saveDesktopRotaryMachineProfile(profile:RotaryAxisClampProfile){
     rotaryMachinePrefs.flush()
 }
 
-private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:JLabel){
+private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:JLabel,initialMode:String="3AX"){
+    require(initialMode in setOf("3D","3AX","4AX","5AX")){"Unsupported initial mode: $initialMode"}
     val snapshot=doc.snapshot()
     require(snapshot.entities.isNotEmpty()){"UNIFIED WORKSPACE BLOCKED: no CAD geometry"}
     var result=Machining3DEngine.build(snapshot)
@@ -1479,7 +1544,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     fun mode(id:String,zh:String,en:String,color:Color,icon:String,run:()->Unit){
         val b=GlassActionButton(UiTextPolicy.display(id,118),color).apply{
             toolTipText="$zh / $en"
-            this.icon=EngineeringImageAssets.icon(icon) ?: RgbGlyphIcon(icon,color)
+            this.icon=ProductionRgbAssets.icon(icon) ?: RgbGlyphIcon(icon,color)
             horizontalTextPosition=SwingConstants.RIGHT
             addActionListener{
                 modeButtons.forEach{it.active=false};active=true;run()
@@ -1502,7 +1567,12 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         axisMode="5AX";rebuildMachiningForMode();card.show(visual,"AXIS")
     }
     mode("NC_EDIT","程式","NC EDIT",Color(80,170,255),"NC_EDIT"){editor.requestFocusInWindow()}
-    modeButtons.getOrNull(2)?.active=true
+    when(initialMode){
+        "4AX" -> modeButtons.getOrNull(4)?.doClick()
+        "5AX" -> modeButtons.getOrNull(5)?.doClick()
+        "3AX" -> modeButtons.getOrNull(3)?.doClick()
+        else -> modeButtons.getOrNull(2)?.doClick()
+    }
 
     fun showPlaybackFrame(index:Int){
         if(simulationMoves.isEmpty()){
@@ -1539,7 +1609,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     val actions=AdaptiveGlassToolbar()
     fun action(label:String,color:Color,icon:String,run:()->Unit){
         actions.add(GlassActionButton(label,color).apply{
-            this.icon=EngineeringImageAssets.icon(icon) ?: RgbGlyphIcon(icon,color);addActionListener{run()}
+            this.icon=ProductionRgbAssets.icon(icon) ?: RgbGlyphIcon(icon,color);addActionListener{run()}
         })
     }
     action("▶",Color(63,255,157),"SIM"){
@@ -1657,17 +1727,25 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
     startup?.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")
     frame.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     frame.layout = BorderLayout()
-    frame.contentPane.background = Color(5, 10, 17)
+    frame.contentPane.background = StudioDesktopProductionTheme.background
 
+    val mainCardLayout=CardLayout()
+    val mainCardHost=JPanel(mainCardLayout).apply{
+        background=StudioDesktopProductionTheme.background
+    }
     val moduleButtons=AdaptiveGlassToolbar()
     val toolbar = JPanel(BorderLayout()).apply {
-        background=Color(8,18,30)
-        border=BorderFactory.createMatteBorder(0,0,1,0,Color(61,235,255,105))
-        add(JLabel("AIG CNC • CAD / 2D").apply {
-            foreground=Color(61,235,255)
+        background=StudioDesktopProductionTheme.background
+        border=BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0,0,2,0,Color(61,235,255,150)),
+            BorderFactory.createEmptyBorder(4,6,4,6)
+        )
+        add(JLabel("AIG CNC  •  REAL CAD / CAM").apply {
+            foreground=StudioDesktopProductionTheme.accent
             font=font.deriveFont(Font.BOLD,17f)
-            border=BorderFactory.createEmptyBorder(0,10,0,0)
-            preferredSize=Dimension(330,58)
+            border=BorderFactory.createEmptyBorder(0,10,0,8)
+            preferredSize=Dimension(260,62)
+            toolTipText="Theme: "+StudioDesktopProductionTheme.ID
         },BorderLayout.WEST)
         add(moduleButtons,BorderLayout.CENTER)
     }
@@ -1686,16 +1764,46 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         add(Box.createVerticalStrut(8))
         add(JLabel("顯示精度 0.001 mm").apply{foreground=Color(245,158,11)})
     }
-    val cadDeck=JTabbedPane(JTabbedPane.LEFT).apply{
-        background=Color(8,18,30)
-        foreground=Color(232,241,250)
-        preferredSize=Dimension(300,0)
-        minimumSize=Dimension(260,0)
-        font=font.deriveFont(Font.BOLD,12f)
-        addTab("繪圖",drawTools)
-        addTab("修改",editTools)
-        addTab("連接",linkTools)
-        addTab("檢視",viewTools)
+    val cadCardLayout=CardLayout()
+    val cadCardHost=JPanel(cadCardLayout).apply{
+        background=StudioDesktopProductionTheme.panel
+        add(drawTools,"DRAW")
+        add(editTools,"EDIT")
+        add(linkTools,"LINK")
+        add(viewTools,"VIEW")
+    }
+    val cadDeckButtons=mutableListOf<GlassActionButton>()
+    val cadDeckNav=JPanel(GridLayout(0,1,6,6)).apply{
+        background=StudioDesktopProductionTheme.background
+        border=BorderFactory.createEmptyBorder(8,8,8,8)
+    }
+    fun cadDeckButton(label:String,card:String,color:Color){
+        val b=GlassActionButton(label,color).apply{
+            preferredSize=Dimension(104,48)
+            addActionListener{
+                cadDeckButtons.forEach{it.active=false}
+                active=true
+                cadCardLayout.show(cadCardHost,card)
+            }
+        }
+        cadDeckButtons+=b
+        cadDeckNav.add(b)
+    }
+    cadDeckButton("繪圖","DRAW",StudioDesktopProductionTheme.accent)
+    cadDeckButton("修改","EDIT",Color(236,72,153))
+    cadDeckButton("連接","LINK",StudioDesktopProductionTheme.cutting)
+    cadDeckButton("檢視","VIEW",Color(125,112,255))
+    cadDeckButtons.firstOrNull()?.active=true
+    val cadDeck=JPanel(BorderLayout(6,6)).apply{
+        background=StudioDesktopProductionTheme.background
+        preferredSize=Dimension(320,0)
+        minimumSize=Dimension(290,0)
+        border=BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color(61,235,255,120),1,true),
+            BorderFactory.createEmptyBorder(4,4,4,4)
+        )
+        add(cadDeckNav,BorderLayout.WEST)
+        add(cadCardHost,BorderLayout.CENTER)
     }
 
     val activeButtons = mutableListOf<GlassActionButton>()
@@ -1751,6 +1859,117 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         }
     }
 
+    fun buildProductionCamPanel():JPanel {
+        val snapshot=doc.snapshot()
+        if(snapshot.entities.isEmpty()){
+            return JPanel(BorderLayout()).apply{
+                background=StudioDesktopProductionTheme.background
+                border=BorderFactory.createEmptyBorder(18,18,18,18)
+                add(JLabel("CAM 尚未建立 • 請先完成 CAD 幾何").apply{
+                    foreground=StudioDesktopProductionTheme.warning
+                    font=font.deriveFont(Font.BOLD,18f)
+                    horizontalAlignment=SwingConstants.CENTER
+                },BorderLayout.CENTER)
+            }
+        }
+        val result=Machining3DEngine.build(snapshot)
+        val cam=result.cam
+        val settings=cam.settings
+        val left=JPanel(BorderLayout(6,6)).apply{
+            background=StudioDesktopProductionTheme.panel
+            preferredSize=Dimension(235,0)
+            border=BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color(61,235,255,135),1,true),
+                BorderFactory.createEmptyBorder(10,10,10,10)
+            )
+            add(JLabel("刀路 / TOOLPATH").apply{
+                foreground=StudioDesktopProductionTheme.accent
+                font=font.deriveFont(Font.BOLD,14f)
+            },BorderLayout.NORTH)
+            add(JTextArea(buildString{
+                append("CAM READY\n")
+                append("PATHS  ").append(cam.toolpaths.size).append("\n")
+                append("MOVES  ").append(cam.toolpaths.sumOf{it.moves.size}).append("\n\n")
+                cam.toolpaths.take(18).forEachIndexed{i,path->
+                    append(String.format("%02d",i+1)).append("  moves=").append(path.moves.size).append("\n")
+                }
+            }).apply{
+                isEditable=false;isOpaque=false
+                foreground=StudioDesktopProductionTheme.text
+                font=Font(Font.MONOSPACED,Font.PLAIN,12)
+            },BorderLayout.CENTER)
+        }
+        val right=JPanel(GridLayout(0,1,5,5)).apply{
+            background=StudioDesktopProductionTheme.background
+            preferredSize=Dimension(225,0)
+            border=BorderFactory.createEmptyBorder(2,2,2,2)
+        }
+        fun parameter(title:String,value:String,color:Color){
+            right.add(JPanel(BorderLayout()).apply{
+                background=StudioDesktopProductionTheme.panel
+                border=BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(Color(color.red,color.green,color.blue,125),1,true),
+                    BorderFactory.createEmptyBorder(8,10,8,10)
+                )
+                add(JLabel(title).apply{foreground=Color(145,175,198)},BorderLayout.NORTH)
+                add(JLabel(value).apply{foreground=color;font=font.deriveFont(Font.BOLD,13f)},BorderLayout.CENTER)
+            })
+        }
+        parameter("TOOL DIA",DisplayFormat.mm(settings.toolDiameter)+" mm",StudioDesktopProductionTheme.accent)
+        parameter("TOOL RADIUS",DisplayFormat.mm(settings.toolDiameter/2.0)+" mm",Color(139,92,246))
+        parameter("DEPTH",DisplayFormat.mm(settings.depth)+" mm",StudioDesktopProductionTheme.cutting)
+        parameter("SAFE-Z",DisplayFormat.mm(settings.safeZ)+" mm",StudioDesktopProductionTheme.warning)
+        parameter("FEED",DisplayFormat.mm(settings.feedMmMin)+" mm/min",Color(80,170,255))
+        parameter("DIRECTION",if(settings.climb)"CLIMB" else "CONVENTIONAL",Color(236,72,153))
+        val actions=AdaptiveGlassToolbar()
+        fun camAction(label:String,color:Color,run:()->Unit){
+            actions.add(GlassActionButton(label,color).apply{addActionListener{run()}})
+        }
+        camAction("3D SIM",Color(139,92,246)){
+            runCatching{showUnifiedMachiningEditor(frame,doc,status,"3D")}
+                .onFailure{status.text="3D SIM BLOCKED • "+(it.message?:"error")}
+        }
+        camAction("3AX",Color(59,130,246)){
+            runCatching{showUnifiedMachiningEditor(frame,doc,status,"3AX")}
+                .onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}
+        }
+        camAction("4AX",Color(245,158,11)){
+            runCatching{showUnifiedMachiningEditor(frame,doc,status,"4AX")}
+                .onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}
+        }
+        camAction("5AX",Color(236,72,153)){
+            runCatching{showUnifiedMachiningEditor(frame,doc,status,"5AX")}
+                .onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}
+        }
+        camAction("NC",Color(80,170,255)){
+            runCatching{showNcEditor(frame,doc)}
+                .onFailure{status.text="NC EDIT BLOCKED • "+(it.message?:"error")}
+        }
+        return JPanel(BorderLayout(7,7)).apply{
+            name="CAM_CARD"
+            background=StudioDesktopProductionTheme.background
+            border=BorderFactory.createEmptyBorder(7,7,7,7)
+            add(JLabel("AIG CNC • REAL CAM 真實刀路 • "+StudioDesktopProductionTheme.ID).apply{
+                foreground=StudioDesktopProductionTheme.accent
+                font=font.deriveFont(Font.BOLD,15f)
+                border=BorderFactory.createEmptyBorder(4,8,5,8)
+            },BorderLayout.NORTH)
+            add(left,BorderLayout.WEST)
+            add(Mesh3DPanel(result),BorderLayout.CENTER)
+            add(right,BorderLayout.EAST)
+            add(actions,BorderLayout.SOUTH)
+        }
+    }
+
+    fun showProductionCam(){
+        mainCardHost.components.filter{it.name=="CAM_CARD"}.forEach{mainCardHost.remove(it)}
+        mainCardHost.add(buildProductionCamPanel(),"CAM")
+        mainCardLayout.show(mainCardHost,"CAM")
+        mainCardHost.revalidate()
+        mainCardHost.repaint()
+        status.text=if(doc.size()>0)"CAM READY • 真刀路 / 真 3D / 材料移除" else "CAM WAITING • CAD geometry required"
+    }
+
     viewTools.add(button("SNAP",Color(61,235,255)) {
         cad.snapEnabled=!cad.snapEnabled
         status.text="SNAP "+if(cad.snapEnabled)"ON • END/MID/CENTER/INTERSECTION/TANGENT/H/V" else "OFF"
@@ -1780,54 +1999,52 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
     editTools.add(button("重做", Color(125,112,255)) { cad.redoEdit() })
     linkTools.add(button("連接", Color(63,255,157)) { cad.connectSelected() })
     linkTools.add(button("斷開", Color(255,176,32)) { cad.disconnectSelected() })
-    moduleButtons.add(button("CAM", Color(34, 197, 94)) {
-        runCatching { CamModel.fromCad(1L, doc.snapshot()) }
-            .onSuccess { cam ->
-                JOptionPane.showMessageDialog(frame, "TRUE CAM paths=" + cam.toolpaths.size, "CAM", JOptionPane.INFORMATION_MESSAGE)
-            }
-            .onFailure { JOptionPane.showMessageDialog(frame, "CAM BLOCKED: " + it.message, "CAM", JOptionPane.WARNING_MESSAGE) }
+    moduleButtons.add(button("2D CAD", StudioDesktopProductionTheme.accent) {
+        mainCardLayout.show(mainCardHost,"CAD")
+        status.text="2D CAD • PRODUCTION UI • MASTER X0.000 Y0.000 • 0.001 mm"
     })
-    moduleButtons.add(button("3D 加工", Color(236, 72, 153)) {
-        runCatching { Machining3DEngine.build(doc.snapshot()) }
-            .onSuccess { result ->
-                val animationSummary = runCatching {
-                    NcExecutionTimeline.programSummary(CncPost.generate(result.cam, FanucPostSettings()), CncControllerProfile.FANUC)
-                }.getOrElse { error -> "NC→3D ANIM BLOCKED • NC_POST=" + (error.message ?: "error") }
-                status.text = animationSummary
-                JDialog(frame, "RGB 真 3D 加工 • HQ RENDER", false).apply {
-                    layout = BorderLayout()
-                    add(Mesh3DPanel(result), BorderLayout.CENTER)
-                    add(JLabel(animationSummary).apply {
-                        foreground = if (animationSummary.contains("BLOCKED")) Color(255,110,110) else Color(99,255,157)
-                        border = BorderFactory.createEmptyBorder(6,10,8,10)
-                    }, BorderLayout.SOUTH)
-                    setSize(1050, 760)
-                    setLocationRelativeTo(frame)
-                    isVisible = true
-                }
-            }
-            .onFailure { JOptionPane.showMessageDialog(frame, "3D BLOCKED: " + it.message, "3D", JOptionPane.WARNING_MESSAGE) }
+    moduleButtons.add(button("CAM", StudioDesktopProductionTheme.cutting) {
+        showProductionCam()
     })
-    moduleButtons.add(button("NC", Color(80, 170, 255)) {
-        runCatching { showNcEditor(frame, doc) }
-            .onSuccess { status.text = "NC EDIT • FANUC / MITSUBISHI • G90/G91 EXPLICIT • ABS XYZ LOCKED" }
-            .onFailure { status.text = "NC EDIT BLOCKED: " + it.message }
+    moduleButtons.add(button("3D", Color(139,92,246)) {
+        runCatching { showUnifiedMachiningEditor(frame,doc,status,"3D") }
+            .onFailure { status.text="3D BLOCKED • "+(it.message?:"error") }
     })
-    moduleButtons.add(button("多軸 + NC", Color(125,112,255)) {
-        runCatching { showUnifiedMachiningEditor(frame,doc,status) }
-            .onFailure { status.text="UNIFIED WORKSPACE BLOCKED: "+(it.message?:"error") }
+    moduleButtons.add(button("3AX", Color(59,130,246)) {
+        runCatching { showUnifiedMachiningEditor(frame,doc,status,"3AX") }
+            .onFailure { status.text="3AX BLOCKED • "+(it.message?:"error") }
+    })
+    moduleButtons.add(button("4AX", StudioDesktopProductionTheme.warning) {
+        runCatching { showUnifiedMachiningEditor(frame,doc,status,"4AX") }
+            .onFailure { status.text="4AX BLOCKED • "+(it.message?:"error") }
+    })
+    moduleButtons.add(button("5AX", Color(236,72,153)) {
+        runCatching { showUnifiedMachiningEditor(frame,doc,status,"5AX") }
+            .onFailure { status.text="5AX BLOCKED • "+(it.message?:"error") }
+    })
+    moduleButtons.add(button("SIM", Color(63,255,157)) {
+        runCatching { showUnifiedMachiningEditor(frame,doc,status,"3D") }
+            .onFailure { status.text="SIM BLOCKED • "+(it.message?:"error") }
+    })
+    moduleButtons.add(button("NC", Color(80,170,255)) {
+        runCatching { showNcEditor(frame,doc) }
+            .onSuccess { status.text="NC EDIT • FANUC / MITSUBISHI • G90/G91 EXPLICIT • ABS XYZ LOCKED" }
+            .onFailure { status.text="NC EDIT BLOCKED • "+(it.message?:"error") }
     })
     editTools.add(button("清除", Color(239, 68, 68)) { cad.clearCad() })
 
-    status.border = BorderFactory.createEmptyBorder(8, 12, 8, 12)
-    status.background = Color(5, 10, 17)
+    status.border = BorderFactory.createCompoundBorder(
+        BorderFactory.createMatteBorder(1,0,0,0,Color(61,235,255,125)),
+        BorderFactory.createEmptyBorder(8,12,8,12)
+    )
+    status.background = StudioDesktopProductionTheme.background
     status.isOpaque = true
 
     val selectedValue=JLabel("0")
     val entityValue=JLabel(doc.size().toString())
     val linkValue=JLabel(doc.links().size.toString())
     fun railCell(title:String,value:JLabel,color:Color)=JPanel(BorderLayout()).apply{
-        background=Color(8,18,30)
+        background=StudioDesktopProductionTheme.panel
         border=BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(Color(color.red,color.green,color.blue,110),1,true),
             BorderFactory.createEmptyBorder(8,10,8,10)
@@ -1839,7 +2056,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
     }
     val infoRail=JPanel().apply{
         layout=BoxLayout(this,BoxLayout.Y_AXIS)
-        background=Color(5,10,17)
+        background=StudioDesktopProductionTheme.background
         preferredSize=Dimension(190,0)
         border=BorderFactory.createEmptyBorder(6,6,6,6)
         add(railCell("MACHINE",JLabel("READY"),Color(99,255,157)))
@@ -1861,14 +2078,18 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         linkValue.text=doc.links().size.toString()
     }.apply{isRepeats=true;start()}
 
-    val workspace=JPanel(BorderLayout()).apply{
-        background=Color(5,10,17)
+    val workspace=JPanel(BorderLayout(6,6)).apply{
+        name="CAD_CARD"
+        background=StudioDesktopProductionTheme.background
+        border=BorderFactory.createEmptyBorder(5,5,5,5)
         add(cadDeck,BorderLayout.WEST)
         add(cad,BorderLayout.CENTER)
         add(infoRail,BorderLayout.EAST)
     }
+    mainCardHost.add(workspace,"CAD")
+    mainCardLayout.show(mainCardHost,"CAD")
     frame.add(toolbar, BorderLayout.NORTH)
-    frame.add(workspace, BorderLayout.CENTER)
+    frame.add(mainCardHost, BorderLayout.CENTER)
     frame.add(status, BorderLayout.SOUTH)
     startup?.advance(StudioStartupStage.PROJECT_DATA,"檢查專案 / Recovery")
     startup?.advance(StudioStartupStage.HEALTH,"Runtime 健康檢查")

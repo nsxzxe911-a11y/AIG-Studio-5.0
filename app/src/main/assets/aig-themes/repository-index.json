@@ -1,8 +1,8 @@
-﻿{
+{
     "repository_name":  "AIG UI Theme Repository",
     "repository_version":  "2.1.0",
     "format_version":  1,
-    "default_theme_id":  "aigii_rgb_neon_v2",
+    "default_theme_id":  "official_rgb_original",
     "runtime_binding":  "android_windows_shared_tokens",
     "asset_policy":  {
                          "engineering_authority":  "FULL",
@@ -19,6 +19,13 @@
                          "release_integrity_required":  true
                      },
     "themes":  [
+                   {
+                       "theme_id":  "official_rgb_original",
+                       "theme_name":  "Official RGB Original",
+                       "version":  "1.0.0",
+                       "embedded_trusted":  true,
+                       "path":  "aig-themes/themes/official_rgb_original/theme.json"
+                   },
                    {
                        "theme_id":  "aigii_rgb_neon_v2",
                        "theme_name":  "AIG II RGB Neon V2",

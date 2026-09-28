@@ -52,15 +52,86 @@ import android.widget.Toast
 import com.aigstudio.core.*
 import kotlin.math.*
 
-object EngineeringImageAssets {
-    private const val ROOT="images"
-    private fun id(name:String):String = name.lowercase(Locale.US).replace("nc_edit","nc")
-    fun drawable(context:Context,name:String):Drawable? = runCatching {
-        val key=id(name)
-        context.assets.open("$ROOT/$key.png").use { input ->
-            Drawable.createFromStream(input,"$key.png")
+object StudioProductionTheme {
+    const val ID="official_rgb_original"
+    val background=Color.rgb(8,12,22)
+    val panel=Color.rgb(16,28,42)
+    val text=Color.rgb(225,240,255)
+    val accent=Color.rgb(61,235,255)
+    val selected=Color.rgb(0,229,255)
+    val cutting=Color.rgb(0,230,118)
+    val rapid=Color.rgb(213,0,249)
+    val warning=Color.rgb(255,152,0)
+    val alarm=Color.rgb(255,23,68)
+}
+
+object ProductionRgbAssets {
+    private const val ROOT="aig-generated-rgb/approved/184"
+    @Volatile private var expectedHashes:Map<String,String>?=null
+    private val cache=mutableMapOf<String,ByteArray>()
+
+    private fun assetId(name:String):String? {
+        val n=name.trim().uppercase(Locale.US).replace(Regex("\\s+")," ")
+        return when {
+            n=="LINE" || name=="線" -> "line"
+            n=="RECT" || n.contains("RECT") || name=="矩形" -> "rect"
+            n=="CIRCLE" || name=="圓" -> "circle"
+            n=="ARC" || name=="圓弧" -> "arc"
+            n=="HOLE" || name=="孔" -> "hole"
+            n=="SELECT" || name=="選取" -> "select"
+            n.contains("2D CAD") || n=="CAD" -> "cad"
+            n=="CAM" || n.contains("CAM ") -> "cam"
+            n=="SIM" || n.contains("3D SIM") -> "sim"
+            n=="3D" -> "3d"
+            n.contains("3AX") || n.contains("3 AXIS") -> "3ax"
+            n.contains("4AX") || n.contains("4 AXIS") -> "4ax"
+            n.contains("5AX") || n.contains("5 AXIS") || n=="5X" -> "5ax"
+            n=="NC" || n.contains("NC_EDIT") || n.contains("NC EDIT") -> "nc"
+            n=="AI" || n.contains("AI ") -> "ai"
+            n.contains("SAVE") || name=="儲存" -> "save"
+            n.contains("RECOVER") || name=="復原" -> "recover"
+            n.contains("VERIFY") || name=="驗證" -> "verify"
+            else -> null
         }
-    }.getOrNull()
+    }
+
+    @Synchronized
+    private fun hashes(context:Context):Map<String,String> {
+        expectedHashes?.let{return it}
+        val map=context.assets.open("$ROOT/sha256.properties").bufferedReader(Charsets.US_ASCII).useLines { lines ->
+            lines.mapNotNull { raw ->
+                val line=raw.trim()
+                if(line.isBlank() || line.startsWith("#") || !line.contains("=")) null
+                else line.substringBefore("=") to line.substringAfter("=")
+            }.toMap()
+        }
+        require(map.isNotEmpty()){"Production RGB asset manifest is empty"}
+        expectedHashes=map
+        return map
+    }
+
+    private fun sha256(bytes:ByteArray):String =
+        MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
+
+    @Synchronized
+    private fun verifiedBytes(context:Context,id:String):ByteArray {
+        cache[id]?.let{return it}
+        val bytes=context.assets.open("$ROOT/$id.png").use{it.readBytes()}
+        val expected=hashes(context)[id] ?: error("Production RGB hash missing: $id")
+        require(sha256(bytes)==expected){"Production RGB hash mismatch: $id"}
+        cache[id]=bytes
+        return bytes
+    }
+
+    fun drawable(context:Context,name:String):Drawable? {
+        val id=assetId(name) ?: return null
+        return runCatching {
+            Drawable.createFromStream(
+                java.io.ByteArrayInputStream(verifiedBytes(context,id)),
+                "$id.png"
+            )
+        }.getOrNull()
+    }
 }
 
 enum class Tool { LINE, RECT, CIRCLE, ARC, HOLE, SELECT, DELETE, CHAMFER, FILLET, PAN, MEASURE }
@@ -123,8 +194,25 @@ class RgbGlowButton(context: Context) : Button(context) {
         instances.add(this)
         isAllCaps = false
         stateListAnimator = null
-        setTextColor(Color.rgb(232,244,255))
+        setTextColor(StudioProductionTheme.text)
         render()
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (compoundDrawables.none { it != null }) {
+            val candidates=listOfNotNull(
+                contentDescription?.toString()?.takeIf{it.isNotBlank()},
+                text?.toString()?.takeIf{it.isNotBlank()}
+            )
+            val drawable=candidates.firstNotNullOfOrNull { ProductionRgbAssets.drawable(context,it) }
+            drawable?.let {
+                val size=StudioDisplayPolicy.dp(this,22f).coerceAtLeast(18)
+                it.setBounds(0,0,size,size)
+                setCompoundDrawables(it,null,null,null)
+                compoundDrawablePadding=StudioDisplayPolicy.dp(this,6f)
+            }
+        }
     }
 
     fun setRgbState(color: Int, selected: Boolean, alarm: Boolean = false) {
@@ -148,8 +236,8 @@ class RgbGlowButton(context: Context) : Button(context) {
     private fun render() {
         val disabled = !isEnabled
         val pressedNow = isPressed
-        val rawEdge = if (alarmGlow) Color.rgb(255,72,72) else accent
-        val base = Color.rgb(11,23,38)
+        val rawEdge = if (alarmGlow) StudioProductionTheme.alarm else accent
+        val base = StudioProductionTheme.panel
         val brightness = if (alarmGlow) 1f else globalBrightnessPercent / 100f
         val edge = mix(base, rawEdge, brightness)
         val baseAmount = when {
@@ -186,7 +274,7 @@ class RgbGlowButton(context: Context) : Button(context) {
             intArrayOf(
                 mix(base, edge, (amount + 0.16f).coerceAtMost(0.72f)),
                 mix(base, edge, (amount + 0.05f).coerceAtMost(0.62f)),
-                mix(Color.rgb(5,12,20), edge, (amount*0.48f).coerceAtMost(0.42f))
+                mix(StudioProductionTheme.background, edge, (amount*0.48f).coerceAtMost(0.42f))
             )
         ).apply {
             cornerRadius = 15f * density
@@ -513,20 +601,23 @@ class MainActivity : Activity() {
         bootOverlay.advance(StartupMilestone.CHECKING_CONFIGURATION)
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(0xFF050B12.toInt())
+            setBackgroundColor(StudioProductionTheme.background)
         }
         val screenWidthDp = resources.configuration.screenWidthDp.coerceAtLeast(1)
         val screenHeightDp = resources.configuration.screenHeightDp.coerceAtLeast(1)
         val workstationLayout = WorkstationChromeContract.layout(screenWidthDp, screenHeightDp)
-        fun panel(stroke:Int = 0x553DEBFF): GradientDrawable =
+        fun panel(stroke:Int = Color.argb(110,61,235,255)): GradientDrawable =
             GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
-                intArrayOf(0xE60A1724.toInt(), 0xE6050C14.toInt())
+                intArrayOf(
+                    Color.argb(238,Color.red(StudioProductionTheme.panel),Color.green(StudioProductionTheme.panel),Color.blue(StudioProductionTheme.panel)),
+                    Color.argb(246,Color.red(StudioProductionTheme.background),Color.green(StudioProductionTheme.background),Color.blue(StudioProductionTheme.background))
+                )
             ).apply {
-                cornerRadius = dp(10).toFloat()
-                setStroke(dp(1), stroke)
+                cornerRadius = dp(16).toFloat()
+                setStroke(dp(2), stroke)
             }
-        fun chromeText(label:String, color:Int = 0xFFDDEBFA.toInt(), size:Float = 11f): TextView =
+        fun chromeText(label:String, color:Int = StudioProductionTheme.text, size:Float = 11f): TextView =
             TextView(this).apply {
                 text = label
                 setTextColor(color)
@@ -546,8 +637,8 @@ class MainActivity : Activity() {
             letterSpacing = 0.08f
         })
         brandStack.addView(chromeText(
-            WorkstationChromeContract.WORKSTATION + " • " + WorkstationChromeContract.ORIGINAL,
-            0xFF3DEBFF.toInt(), 10f
+            WorkstationChromeContract.WORKSTATION + " • " + WorkstationChromeContract.ORIGINAL + " • " + StudioProductionTheme.ID,
+            StudioProductionTheme.accent, 10f
         ))
         brandBar.addView(brandStack, LinearLayout.LayoutParams(0, -2, 1f))
         val brandState = LinearLayout(this).apply {
@@ -1761,7 +1852,7 @@ class MainActivity : Activity() {
             else -> R.drawable.ic_rgb_3d
         }
         fun iconFor(id:String):Drawable? =
-            EngineeringImageAssets.drawable(this,id) ?: getDrawable(fallbackIconRes(id))
+            ProductionRgbAssets.drawable(this,id) ?: getDrawable(fallbackIconRes(id))
 
         fun rebuildSimulationResult(mode:String) {
             val m=simulationMode(mode)

@@ -1,0 +1,14 @@
+{
+  "theme_id": "official_rgb_original",
+  "theme_name": "Official RGB Original",
+  "theme_version": "1.0.0",
+  "background_color": "#080C16",
+  "panel_color": "#101C2A",
+  "text_color": "#E1F0FF",
+  "accent_color": "#3DEBFF",
+  "corner_radius_dp": 14.0,
+  "idle_alpha": 0.82,
+  "glow_stroke_dp": 3.0,
+  "active_elevation_dp": 8.0,
+  "appearance_only": true
+}

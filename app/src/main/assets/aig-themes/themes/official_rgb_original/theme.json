@@ -1,0 +1,44 @@
+{
+  "theme_id": "official_rgb_original",
+  "theme_name": "Official RGB Original",
+  "theme_version": "1.0.0",
+  "target_apps": ["AIG-II", "AIG-CNC"],
+  "min_app_version": "5.0.0",
+  "embedded_trusted": true,
+  "remote_signature_required": true,
+  "background": {
+    "base_color": "#08101A",
+    "secondary_color": "#102033",
+    "grid_overlay": true,
+    "glow_overlay": true
+  },
+  "button_style": {
+    "shape": "rounded_square",
+    "corner_radius_dp": 14.0,
+    "transparency": 0.18,
+    "glass_effect": true,
+    "border_glow": true,
+    "elevation_dp": 6.0
+  },
+  "rgb_glow": {
+    "enabled": true,
+    "idle_color": "#3DEBFF",
+    "selected_color": "#00E5FF",
+    "cutting_color": "#00E676",
+    "rapid_color": "#D500F9",
+    "warning_color": "#FF9800",
+    "error_color": "#FF1744",
+    "glow_strength": 0.85
+  },
+  "typography": {
+    "title_sp": 16.0,
+    "body_sp": 12.0,
+    "status_sp": 12.0
+  },
+  "layout": {
+    "toolbar_style": "grouped",
+    "spacing_dp": 8.0,
+    "panel_roundness_dp": 18.0
+  }
+}
+
