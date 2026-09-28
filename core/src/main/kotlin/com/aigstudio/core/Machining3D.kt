@@ -234,9 +234,11 @@ data class MachineModel3D(
     fun triangleCount():Int = components.sumOf{it.mesh.triangles.size}
 }
 
-object MachineModel3DBuilder {
-    private fun transform(v:Vec3,axisA:Double,axisB:Double):Vec3 {
-        val a=Math.toRadians(axisA); val b=Math.toRadians(axisB)
+object MachineKinematics3D {
+    fun transform(v:Vec3,axisA:Double,axisB:Double):Vec3 {
+        require(axisA.isFinite() && axisB.isFinite()){"Non-finite machine axis"}
+        val a=Math.toRadians(axisA)
+        val b=Math.toRadians(axisB)
         val y1=v.y*cos(a)-v.z*sin(a)
         val z1=v.y*sin(a)+v.z*cos(a)
         val x2=v.x*cos(b)+z1*sin(b)
@@ -244,10 +246,12 @@ object MachineModel3DBuilder {
         return Vec3(x2,y1,z2)
     }
 
-    private fun transform(mesh:Mesh3D,a:Double,b:Double):Mesh3D =
-        if(abs(a)<=EPS && abs(b)<=EPS) mesh
-        else Mesh3D(mesh.vertices.map{transform(it,a,b)},mesh.triangles)
+    fun transform(mesh:Mesh3D,axisA:Double,axisB:Double):Mesh3D =
+        if(abs(axisA)<=EPS && abs(axisB)<=EPS) mesh
+        else Mesh3D(mesh.vertices.map{transform(it,axisA,axisB)},mesh.triangles)
+}
 
+object MachineModel3DBuilder {
     private fun box(minX:Double,minY:Double,maxX:Double,maxY:Double,z0:Double,z1:Double):Mesh3D {
         val v=listOf(
             Vec3(minX,minY,z0),Vec3(maxX,minY,z0),Vec3(maxX,maxY,z0),Vec3(minX,maxY,z0),
@@ -317,12 +321,12 @@ object MachineModel3DBuilder {
             box(cx-span*.24,cy+span*.34,cx+span*.24,cy+span*.54,span*.28,span*.48))
 
         val table=box(stock.minX-8.0,stock.minY-8.0,stock.maxX+8.0,stock.maxY+8.0,floorZ-10.0,floorZ-3.0)
-        out+=MachineComponent3D("table",MachineComponentRole.TABLE,transform(table,a,b),mode!="3AX",
+        out+=MachineComponent3D("table",MachineComponentRole.TABLE,MachineKinematics3D.transform(table,a,b),mode!="3AX",
             if(mode=="5AX")"A+B" else if(mode=="4AX")"A" else "")
         val fixtureL=box(stock.minX-10.0,stock.minY-5.0,stock.minX-2.0,stock.maxY+5.0,floorZ-3.0,3.0)
         val fixtureR=box(stock.maxX+2.0,stock.minY-5.0,stock.maxX+10.0,stock.maxY+5.0,floorZ-3.0,3.0)
-        out+=MachineComponent3D("fixture_l",MachineComponentRole.FIXTURE,transform(fixtureL,a,b),mode!="3AX")
-        out+=MachineComponent3D("fixture_r",MachineComponentRole.FIXTURE,transform(fixtureR,a,b),mode!="3AX")
+        out+=MachineComponent3D("fixture_l",MachineComponentRole.FIXTURE,MachineKinematics3D.transform(fixtureL,a,b),mode!="3AX")
+        out+=MachineComponent3D("fixture_r",MachineComponentRole.FIXTURE,MachineKinematics3D.transform(fixtureR,a,b),mode!="3AX")
 
         if(mode=="4AX" || mode=="5AX"){
             out+=MachineComponent3D("trunnion_l",MachineComponentRole.TRUNNION,
@@ -332,23 +336,29 @@ object MachineModel3DBuilder {
             out+=MachineComponent3D("trunnion_bridge",MachineComponentRole.TRUNNION,
                 box(cx-span*.48,cy-span*.10,cx+span*.48,cy+span*.10,floorZ-16.0,floorZ-11.0))
             val rotaryA=cylinder(cx,cy,span*.40,floorZ-15.0,floorZ-8.0,32)
-            out+=MachineComponent3D("rotary_a",MachineComponentRole.ROTARY_A,transform(rotaryA,a,0.0),true,"A")
+            out+=MachineComponent3D("rotary_a",MachineComponentRole.ROTARY_A,MachineKinematics3D.transform(rotaryA,a,0.0),true,"A")
         }
         if(mode=="5AX"){
             val rotaryB=cylinder(cx,cy,span*.30,floorZ-8.0,floorZ-2.0,32)
-            out+=MachineComponent3D("rotary_b",MachineComponentRole.ROTARY_B,transform(rotaryB,a,b),true,"B")
+            out+=MachineComponent3D("rotary_b",MachineComponentRole.ROTARY_B,MachineKinematics3D.transform(rotaryB,a,b),true,"B")
         }
 
-        val tx=live?.to?.x ?: cx
-        val ty=live?.to?.y ?: cy
-        val tz=live?.z ?: result.cam.settings.safeZ
+        val rawToolPoint=Vec3(
+            live?.to?.x ?: cx,
+            live?.to?.y ?: cy,
+            live?.z ?: result.cam.settings.safeZ
+        )
+        val machineToolPoint=MachineKinematics3D.transform(rawToolPoint,a,b)
+        val tx=machineToolPoint.x
+        val ty=machineToolPoint.y
+        val tz=machineToolPoint.z
         val toolRadius=max(.5,result.cam.settings.toolDiameter/2.0)
         out+=MachineComponent3D("spindle",MachineComponentRole.SPINDLE,
-            cylinder(tx,ty,max(8.0,toolRadius*2.8),tz+24.0,tz+62.0,32))
+            cylinder(tx,ty,max(8.0,toolRadius*2.8),tz+24.0,tz+62.0,32),true,"XYZ")
         out+=MachineComponent3D("holder",MachineComponentRole.HOLDER,
-            cylinder(tx,ty,max(4.0,toolRadius*1.5),tz+12.0,tz+28.0,28))
+            cylinder(tx,ty,max(4.0,toolRadius*1.5),tz+12.0,tz+28.0,28),true,"XYZ")
         out+=MachineComponent3D("tool",MachineComponentRole.TOOL,
-            cylinder(tx,ty,toolRadius,tz,tz+16.0,24))
+            cylinder(tx,ty,toolRadius,tz,tz+16.0,24),true,"XYZ")
         return MachineModel3D(mode,out,result.cam.sourceRevision)
     }
 }

@@ -350,7 +350,8 @@ for needle in (
     'fun showProgressiveFrame(index: Int): ProgressiveMachining3DFrame',
     'val activeMesh = activeFrame?.mesh ?: result.mesh',
     'val liveMove = activeFrame?.toolPoint ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()',
-    'val axis = toolAxisVector(toolLength, liveMove.axisA, liveMove.axisB)',
+    'val machineTip=machineSpace(Vec3(liveMove.to.x, liveMove.to.y, liveMove.z),resolvedMode,liveMove)',
+    'val top = project(Vec3(machineTip.x,machineTip.y,machineTip.z+toolLength),scale)',
     'val removed = activeFrame?.removedCells ?: result.removal.depth.count { it < 0.0 }',
 ):
     require(machining3d, needle, "ANDROID_PROGRESSIVE_3D_BINDING")
@@ -391,7 +392,12 @@ print("ANDROID_PROGRESSIVE_3D_PLAYBACK_GATE_PASS|3D|3AX|4AX|5AX|PLAY|PAUSE|STEP|
 for needle in (
     "enum class MachineComponentRole",
     "data class MachineModel3D(",
+    "object MachineKinematics3D",
     "object MachineModel3DBuilder",
+    "MachineKinematics3D.transform(table,a,b)",
+    "MachineKinematics3D.transform(rotaryA,a,0.0)",
+    "MachineKinematics3D.transform(rotaryB,a,b)",
+    "val machineToolPoint=MachineKinematics3D.transform(rawToolPoint,a,b)",
     "MachineComponentRole.TRUNNION",
     "MachineComponentRole.ROTARY_A",
     "MachineComponentRole.ROTARY_B",
@@ -402,10 +408,14 @@ for needle in (
     require(machining3d_core, needle, "STUDIO_TRUE_MACHINE_MODEL_CORE_174")
 for needle in (
     "private fun drawMachineModel(canvas: Canvas, model: MachineModel3D, scale: Double) {",
+    "private fun machineSpace(v:Vec3,mode:String,live:Move?):Vec3",
+    "return MachineKinematics3D.transform(v,a,b)",
     "val machineModel=MachineModel3DBuilder.build(",
     "liveMove?.axisA",
     "liveMove?.axisB",
     "drawMachineModel(canvas,machineModel,scale)",
+    "activeMesh.vertices.forEach { projectedBuffer.add(project(machineSpace(it,resolvedMode,liveMove), scale)) }",
+    "SPACE=MACHINE",
     "model.components.forEach",
     "MachineComponentRole.ROTARY_A",
     "MachineComponentRole.ROTARY_B",
@@ -413,15 +423,18 @@ for needle in (
 ):
     require(machining3d, needle, "STUDIO_ANDROID_TRUE_MACHINE_MODEL_174")
 for needle in (
-    "private fun drawMachineModel(g2:Graphics2D,scale:Double,frame:ProgressiveMachining3DFrame?)",
+    "private fun drawMachineModel(g2:Graphics2D,scale:Double,frame:ProgressiveMachining3DFrame?):MachineModel3D",
     "private fun projectMachine(v:Vec3,scale:Double):Point",
-    "drawMachineModel(g2,scale,activeFrame)",
-    "drawMachineModel(g,scale,activeFrame)",
-    "MachineModel3DBuilder.build(",
+    "val machineModel=drawMachineModel(g2,scale,activeFrame)",
+    "private fun kinematicTransform(v:Vec3):Vec3",
+    "return MachineKinematics3D.transform(v,a,b)",
+    "val machineModel=drawMachineModel(g,scale,activeFrame)",
+    "result,machineMode,axisA,axisB,live",
 ):
     require(desktop, needle, "STUDIO_WINDOWS_TRUE_MACHINE_MODEL_174")
 require(regression, "REAL_MACHINE_MODEL_3_4_5AX_GATE_PASS", "STUDIO_TRUE_MACHINE_MODEL_REGRESSION_174")
-print("TRUE_MACHINE_MODEL_RUNTIME_PARITY_GATE_PASS|ANDROID|WINDOWS|3AX|4AX|5AX|BASE|COLUMN|TABLE|FIXTURE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL|DYNAMIC_AB")
+require(regression, "MACHINE_KINEMATICS_RUNTIME_PARITY_PASS", "STUDIO_MACHINE_KINEMATICS_REGRESSION_174")
+print("TRUE_MACHINE_MODEL_RUNTIME_PARITY_GATE_PASS|ANDROID|WINDOWS|3AX|4AX|5AX|BASE|COLUMN|TABLE|FIXTURE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL|DYNAMIC_AB|MASTER_ORIGIN|SHARED_KINEMATICS")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',

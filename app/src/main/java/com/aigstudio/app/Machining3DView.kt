@@ -263,6 +263,12 @@ class Machining3DView(
         }
     }
 
+    private fun machineSpace(v:Vec3,mode:String,live:Move?):Vec3 {
+        val a=if(mode=="3AX")0.0 else live?.axisA ?: 0.0
+        val b=if(mode=="5AX")live?.axisB ?: 0.0 else 0.0
+        return MachineKinematics3D.transform(v,a,b)
+    }
+
     private fun dynamicTriangleBudget(currentFps: Double): Int {
         val target = (display?.refreshRate ?: 60f).coerceIn(30f, 120f).toDouble()
         val base = if (target >= 90.0) 4600 else 5500
@@ -322,7 +328,7 @@ class Machining3DView(
         drawMachineModel(canvas,machineModel,scale)
         val activeMesh = activeFrame?.mesh ?: result.mesh
         projectedBuffer.clear()
-        activeMesh.vertices.forEach { projectedBuffer.add(project(it, scale)) }
+        activeMesh.vertices.forEach { projectedBuffer.add(project(machineSpace(it,resolvedMode,liveMove), scale)) }
         val projected = projectedBuffer
         val triangles = activeMesh.triangles
         val budget = dynamicTriangleBudget(fpsStats.fps)
@@ -376,8 +382,8 @@ class Machining3DView(
             toolpath.moves.take(takeCount).forEach { move ->
                 val prev = previous
                 if (prev != null) {
-                    val a = project(Vec3(prev.to.x, prev.to.y, prev.z), scale)
-                    val b = project(Vec3(move.to.x, move.to.y, move.z), scale)
+                    val a = project(machineSpace(Vec3(prev.to.x, prev.to.y, prev.z),resolvedMode,liveMove), scale)
+                    val b = project(machineSpace(Vec3(move.to.x, move.to.y, move.z),resolvedMode,liveMove), scale)
                     canvas.drawLine(a.x, a.y, b.x, b.y, if (move.rapid) rapidPaint else cutPaint)
                 }
                 previous = move
@@ -390,8 +396,8 @@ class Machining3DView(
             if(flatMoves.size>1){
                 val prev=flatMoves[i-1]
                 val move=flatMoves[i]
-                val a=project(Vec3(prev.to.x,prev.to.y,prev.z),scale)
-                val b=project(Vec3(move.to.x,move.to.y,move.z),scale)
+                val a=project(machineSpace(Vec3(prev.to.x,prev.to.y,prev.z),resolvedMode,liveMove),scale)
+                val b=project(machineSpace(Vec3(move.to.x,move.to.y,move.z),resolvedMode,liveMove),scale)
                 canvas.drawLine(a.x,a.y,b.x,b.y,activePathGlowPaint)
                 canvas.drawLine(a.x,a.y,b.x,b.y,activePathPaint)
                 canvas.drawCircle(b.x,b.y,5f*resources.displayMetrics.density,activePathPaint)
@@ -399,17 +405,10 @@ class Machining3DView(
         }
 
         if (liveMove != null) {
-            val tip = project(Vec3(liveMove.to.x, liveMove.to.y, liveMove.z), scale)
+            val machineTip=machineSpace(Vec3(liveMove.to.x, liveMove.to.y, liveMove.z),resolvedMode,liveMove)
+            val tip = project(machineTip, scale)
             val toolLength = max(12.0, result.cam.settings.toolDiameter * 2.0)
-            val axis = toolAxisVector(toolLength, liveMove.axisA, liveMove.axisB)
-            val top = project(
-                Vec3(
-                    liveMove.to.x + axis.x,
-                    liveMove.to.y + axis.y,
-                    liveMove.z + axis.z
-                ),
-                scale
-            )
+            val top = project(Vec3(machineTip.x,machineTip.y,machineTip.z+toolLength),scale)
             val radius = max(4f, (result.cam.settings.toolDiameter * scale * 0.12).toFloat())
             canvas.drawCircle(tip.x,tip.y,radius+4f*resources.displayMetrics.density,toolHaloPaint)
             canvas.drawLine(tip.x, tip.y, top.x, top.y, toolPaint)
@@ -439,7 +438,7 @@ class Machining3DView(
             " • removed=" + removed +
             (activeFrame?.let { " • frame=" + (it.index + 1) + "/" + it.total +
                 " • " + String.format(java.util.Locale.US, "%.1f", it.progress * 100.0) + "%" } ?: "") +
-            " • tier=" + modelScenario.name +
+            " • SPACE=MACHINE • tier=" + modelScenario.name +
             " • 原點 X0.000 Y0.000 • 精度 0.001 mm" +
             " • " + fpsStats.compact("3D") +
             " • HEAVIEST=" + worst

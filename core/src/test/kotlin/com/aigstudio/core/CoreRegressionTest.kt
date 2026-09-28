@@ -1768,7 +1768,12 @@ private fun testRealMachineModel3D() {
     check(signature(four0,MachineComponentRole.ROTARY_A)!=signature(four,MachineComponentRole.ROTARY_A))
     check(signature(five0,MachineComponentRole.ROTARY_B)!=signature(five,MachineComponentRole.ROTARY_B))
     check(five.sourceRevision==result.cam.sourceRevision)
-    println("? REAL_MACHINE_MODEL_3_4_5AX_GATE_PASS BASE COLUMN TABLE FIXTURE TRUNNION ROTARY_A ROTARY_B SPINDLE HOLDER TOOL TRUE_MESH DYNAMIC_AB SOURCE_REVISION")
+    check(MachineKinematics3D.transform(Vec3(0.0,0.0,0.0),30.0,-20.0)==Vec3(0.0,0.0,0.0))
+    val sample=Vec3(12.0,-7.0,-3.0)
+    check(MachineKinematics3D.transform(sample,0.0,0.0)==sample)
+    check(MachineKinematics3D.transform(sample,30.0,-20.0)!=sample)
+    println("? REAL_MACHINE_MODEL_3_4_5AX_GATE_PASS BASE COLUMN TABLE FIXTURE TRUNNION ROTARY_A ROTARY_B SPINDLE HOLDER TOOL TRUE_MESH DYNAMIC_AB SOURCE_REVISION MASTER_ORIGIN")
+    println("? MACHINE_KINEMATICS_RUNTIME_PARITY_PASS MASTER_ORIGIN A_THEN_B ANDROID_WINDOWS_SHARED")
 }
 
 private fun testWorkOffsetDoesNotShiftAbsoluteCoordinates() {

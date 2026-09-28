@@ -880,22 +880,17 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         repaint()
     }
     fun clearProgressiveFrame(){progressiveFrame=null;repaint()}
-    private fun kinematicTransform(v:Vec3):Vec3{
-        val aa=Math.toRadians(if(machineMode=="3AX")0.0 else axisA)
-        val bb=Math.toRadians(if(machineMode=="5AX")axisB else 0.0)
-        val y1=v.y*cos(aa)-v.z*sin(aa)
-        val z1=v.y*sin(aa)+v.z*cos(aa)
-        val x2=v.x*cos(bb)+z1*sin(bb)
-        val z2=-v.x*sin(bb)+z1*cos(bb)
-        return Vec3(x2,y1,z2)
+    private fun kinematicTransform(v:Vec3):Vec3 {
+        val a=if(machineMode=="3AX")0.0 else axisA
+        val b=if(machineMode=="5AX")axisB else 0.0
+        return MachineKinematics3D.transform(v,a,b)
     }
     private fun axisTransform(v:Vec3):Vec3{
         val cx=(result.stock.minX+result.stock.maxX)/2.0
         val cy=(result.stock.minY+result.stock.maxY)/2.0
         val cz=-result.stock.thickness/2.0
         val r=kinematicTransform(v)
-        val center=kinematicTransform(Vec3(cx,cy,cz))
-        return Vec3(r.x-center.x,r.y-center.y,r.z-center.z)
+        return Vec3(r.x-cx,r.y-cy,r.z-cz)
     }
     private fun project(v:Vec3,scale:Double):Point{
         val r=axisTransform(v)
