@@ -65,6 +65,15 @@ for needle in (
 ):
     require(android, needle, "ANDROID_LARGE_MACHINING_WORKSPACE_GATE")
 print("LARGE_MACHINING_WORKSPACE_GATE_PASS|WINDOWS_VISUAL_100|NC_ON_DEMAND|ANDROID_FULLSCREEN|3D_HEIGHT_72PCT|TOUCH_44")
+for needle in (
+    "preferredSize=Dimension(250,0)",
+    "minimumSize=Dimension(225,0)",
+    "preferredSize=Dimension(158,0)",
+    "preferredSize=Dimension(190,0)",
+    "preferredSize=Dimension(180,0)",
+):
+    require(desktop, needle, "CAD_CAM_LARGE_WORKSPACE_GATE")
+print("CAD_CAM_LARGE_WORKSPACE_GATE_PASS|CAD_DECK_250|INFO_RAIL_158|CAM_LEFT_190|CAM_RIGHT_180|CENTER_CANVAS_PRIORITY")
 theme_index = json.loads(read("app/src/main/assets/aig-themes/repository-index.json"))
 production_theme = json.loads(read("app/src/main/assets/aig-themes/themes/official_rgb_original/theme.json"))
 theme_manifest = json.loads(read("design/theme/aigii_rgb_neon_v2/theme-manifest.json"))

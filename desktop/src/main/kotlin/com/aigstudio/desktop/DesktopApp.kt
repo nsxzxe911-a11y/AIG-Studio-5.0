@@ -1010,7 +1010,7 @@ private fun runSmoke() {
         smokeDeck=JTabbedPane(JTabbedPane.LEFT).apply {
             background=Color(8,18,30)
             foreground=Color(232,241,250)
-            preferredSize=Dimension(300,0)
+            preferredSize=Dimension(250,0)
             addTab("繪圖",drawBar)
             addTab("修改",editBar)
             addTab("連接",linkBar)
@@ -1019,8 +1019,8 @@ private fun runSmoke() {
         val infoRail=JPanel().apply {
             layout=BoxLayout(this,BoxLayout.Y_AXIS)
             background=Color(5,10,17)
-            preferredSize=Dimension(190,0)
-            border=BorderFactory.createEmptyBorder(8,8,8,8)
+            preferredSize=Dimension(158,0)
+            border=BorderFactory.createEmptyBorder(6,6,6,6)
             listOf(
                 "MACHINE" to "READY",
                 "ORIGIN" to "X0.000 Y0.000",
@@ -1860,8 +1860,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
     cadDeckButtons.firstOrNull()?.active=true
     val cadDeck=JPanel(BorderLayout(6,6)).apply{
         background=StudioDesktopProductionTheme.background
-        preferredSize=Dimension(320,0)
-        minimumSize=Dimension(290,0)
+        preferredSize=Dimension(250,0)
+        minimumSize=Dimension(225,0)
         border=BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(Color(61,235,255,120),1,true),
             BorderFactory.createEmptyBorder(4,4,4,4)
@@ -1941,7 +1941,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         val settings=cam.settings
         val left=JPanel(BorderLayout(6,6)).apply{
             background=StudioDesktopProductionTheme.panel
-            preferredSize=Dimension(235,0)
+            preferredSize=Dimension(190,0)
+            minimumSize=Dimension(178,0)
             border=BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Color(61,235,255,135),1,true),
                 BorderFactory.createEmptyBorder(10,10,10,10)
@@ -1965,7 +1966,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         }
         val right=JPanel(GridLayout(0,1,5,5)).apply{
             background=StudioDesktopProductionTheme.background
-            preferredSize=Dimension(225,0)
+            preferredSize=Dimension(180,0)
+            minimumSize=Dimension(168,0)
             border=BorderFactory.createEmptyBorder(2,2,2,2)
         }
         fun parameter(title:String,value:String,color:Color){
@@ -2121,8 +2123,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
     val infoRail=JPanel().apply{
         layout=BoxLayout(this,BoxLayout.Y_AXIS)
         background=StudioDesktopProductionTheme.background
-        preferredSize=Dimension(190,0)
-        border=BorderFactory.createEmptyBorder(6,6,6,6)
+        preferredSize=Dimension(158,0)
+        minimumSize=Dimension(150,0)
+        border=BorderFactory.createEmptyBorder(4,4,4,4)
         add(railCell("MACHINE",JLabel("READY"),Color(99,255,157)))
         add(Box.createVerticalStrut(6))
         add(railCell("ORIGIN",JLabel("X0.000 Y0.000"),Color(61,235,255)))
