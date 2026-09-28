@@ -140,6 +140,12 @@ class Machining3DView(
         style = Paint.Style.FILL
         color = Color.argb(235,255,78,205)
     }
+    private val toolAxisGhostPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.4f * resources.displayMetrics.density
+        strokeCap = Paint.Cap.ROUND
+        color = Color.argb(105,86,188,225)
+    }
     private val toolAxisCueTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         color = Color.argb(245,255,160,232)
@@ -684,7 +690,7 @@ class Machining3DView(
             val radius = max(4f, (result.cam.settings.toolDiameter * scale * 0.12).toFloat())
             canvas.drawCircle(tip.x,tip.y,radius+4f*resources.displayMetrics.density,toolHaloPaint)
             canvas.drawLine(tip.x, tip.y, top.x, top.y, toolPaint)
-            canvas.drawLine(tip.x, tip.y, axisCueTop.x, axisCueTop.y, toolAxisCuePaint)
+            // Draw the bright current axis after the previous-pose ghost so current attitude stays dominant.
             val axisDepthDelta=rawAxisCueTop.depth-tip.depth
             val depthPolarity=when {
                 axisDepthDelta>1e-6 -> "近"
@@ -705,6 +711,22 @@ class Machining3DView(
             val previousB=if(resolvedMode=="5AX")previousTool?.axisB ?: badgeB else 0.0
             val deltaA=badgeA-previousA
             val deltaB=badgeB-previousB
+            if(previousTool!=null && (kotlin.math.abs(deltaA)>1e-9 || kotlin.math.abs(deltaB)>1e-9)){
+                val previousCueAxis=MachineKinematics3D.transform(Vec3(0.0,0.0,cueLength),previousA,previousB)
+                val rawPreviousAxisCueTop=project(
+                    Vec3(machineTip.x+previousCueAxis.x,machineTip.y+previousCueAxis.y,machineTip.z+previousCueAxis.z),
+                    scale
+                )
+                val previousAxisCueTop=ScreenPoint(
+                    rawPreviousAxisCueTop.x.coerceIn(cueMargin,(width-cueMargin).coerceAtLeast(cueMargin)),
+                    rawPreviousAxisCueTop.y.coerceIn(cueMargin,(height-cueMargin).coerceAtLeast(cueMargin)),
+                    rawPreviousAxisCueTop.depth
+                )
+                canvas.drawLine(tip.x,tip.y,previousAxisCueTop.x,previousAxisCueTop.y,toolAxisGhostPaint)
+                canvas.drawCircle(previousAxisCueTop.x,previousAxisCueTop.y,2.8f*resources.displayMetrics.density,toolAxisGhostPaint)
+                canvas.drawLine(previousAxisCueTop.x,previousAxisCueTop.y,axisCueTop.x,axisCueTop.y,toolAxisGhostPaint)
+            }
+            canvas.drawLine(tip.x, tip.y, axisCueTop.x, axisCueTop.y, toolAxisCuePaint)
             val deltaAMark=when { deltaA>1e-9 -> "↑"; deltaA< -1e-9 -> "↓"; else -> "•" }
             val deltaBMark=when { deltaB>1e-9 -> "↑"; deltaB< -1e-9 -> "↓"; else -> "•" }
             val badgeText=String.format(java.util.Locale.US,"A%+.3f°%s B%+.3f°%s %s",badgeA,deltaAMark,badgeB,deltaBMark,depthPolarity)

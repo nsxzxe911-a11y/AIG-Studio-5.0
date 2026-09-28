@@ -849,6 +849,25 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_AXIS_DELTA_DIRECTION_203")
 print("AXIS_DELTA_DIRECTION_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|CURRENT_MINUS_PREVIOUS|POS_NEG_ZERO|TRUE_PROGRESSIVE_FRAMES|NO_PREDICTION|VISUAL_ONLY")
 for needle in (
+    "private val toolAxisGhostPaint",
+    "val previousCueAxis=MachineKinematics3D.transform(Vec3(0.0,0.0,cueLength),previousA,previousB)",
+    "canvas.drawLine(tip.x,tip.y,previousAxisCueTop.x,previousAxisCueTop.y,toolAxisGhostPaint)",
+    "canvas.drawLine(previousAxisCueTop.x,previousAxisCueTop.y,axisCueTop.x,axisCueTop.y,toolAxisGhostPaint)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_AXIS_POSE_GHOST_204")
+for needle in (
+    "val previousCueAxis=MachineKinematics3D.transform(Vec3(0.0,0.0,cueLength),previousTool.axisA,previousTool.axisB)",
+    "g2.drawLine(previousAxisTop.x,previousAxisTop.y,axisTop.x,axisTop.y)",
+    "p.x+((previousCueAxis.x-previousCueAxis.z*.34)*scale).roundToInt()",
+    "g.drawLine(previousAxisTop.x,previousAxisTop.y,axisTop.x,axisTop.y)",
+    "Studio 5AX previous-pose ghost vector did not differ from current axis",
+    "5X_AXIS_POSE_GHOST=PASS",
+    "5X_AXIS_POSE_GHOST_DELTA=",
+    "5X_AXIS_POSE_GHOST_ANCHOR=CURRENT_TOOL_TIP",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_AXIS_POSE_GHOST_204")
+print("AXIS_POSE_GHOST_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|PREVIOUS_TRUE_AB|CURRENT_TOOL_TIP_ANCHOR|POSE_ONLY|SCREEN_CLAMP|NO_XYZ_MIX|SMOKE_EVIDENCE|VISUAL_ONLY")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',

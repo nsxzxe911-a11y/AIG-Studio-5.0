@@ -1012,6 +1012,22 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             g2.fillOval(p.x-12,p.y-12,24,24)
             g2.color=Color(255,220,90,235)
             g2.fillOval(p.x-6,p.y-6,12,12)
+            val previousTool=previousProgressiveFrame?.toolPoint
+            val deltaA=tool.axisA-(previousTool?.axisA ?: tool.axisA)
+            val deltaB=tool.axisB-(previousTool?.axisB ?: tool.axisB)
+            if(previousTool!=null && (abs(deltaA)>1e-9 || abs(deltaB)>1e-9)){
+                val previousCueAxis=MachineKinematics3D.transform(Vec3(0.0,0.0,cueLength),previousTool.axisA,previousTool.axisB)
+                val rawPreviousAxisTop=project(Vec3(tool.to.x+previousCueAxis.x,tool.to.y+previousCueAxis.y,tool.z+previousCueAxis.z),scale)
+                val previousAxisTop=Point(
+                    rawPreviousAxisTop.x.coerceIn(cueMargin,(width-cueMargin).coerceAtLeast(cueMargin)),
+                    rawPreviousAxisTop.y.coerceIn(cueMargin,(height-cueMargin).coerceAtLeast(cueMargin))
+                )
+                g2.color=Color(86,188,225,105)
+                g2.stroke=BasicStroke(1.4f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+                g2.drawLine(p.x,p.y,previousAxisTop.x,previousAxisTop.y)
+                g2.drawOval(previousAxisTop.x-3,previousAxisTop.y-3,6,6)
+                g2.drawLine(previousAxisTop.x,previousAxisTop.y,axisTop.x,axisTop.y)
+            }
             g2.color=Color(255,78,205,220)
             g2.stroke=BasicStroke(2.2f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
             g2.drawLine(p.x,p.y,axisTop.x,axisTop.y)
@@ -1030,9 +1046,6 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
                 g2.fillOval(axisTop.x-1,axisTop.y-1,2,2)
             }
             g2.font=Font(Font.SANS_SERIF,Font.BOLD,11)
-            val previousTool=previousProgressiveFrame?.toolPoint
-            val deltaA=tool.axisA-(previousTool?.axisA ?: tool.axisA)
-            val deltaB=tool.axisB-(previousTool?.axisB ?: tool.axisB)
             val deltaAMark=when { deltaA>1e-9 -> "↑"; deltaA< -1e-9 -> "↓"; else -> "•" }
             val deltaBMark=when { deltaB>1e-9 -> "↑"; deltaB< -1e-9 -> "↓"; else -> "•" }
             val badgeText=String.format(java.util.Locale.US,"A%+.3f°%s B%+.3f°%s %s",tool.axisA,deltaAMark,tool.axisB,deltaBMark,depthPolarity)
@@ -1401,6 +1414,27 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             )
             g.color=Color(255,225,80,62);g.fillOval(p.x-12,p.y-12,24,24)
             g.color=Color(255,225,80,240);g.fillOval(p.x-6,p.y-6,12,12)
+            val previousTool=previousProgressiveFrame?.toolPoint
+            val previousA=if(machineMode=="3AX")0.0 else previousTool?.axisA ?: axisA
+            val previousB=if(machineMode=="5AX")previousTool?.axisB ?: axisB else 0.0
+            val deltaA=axisA-previousA
+            val deltaB=axisB-previousB
+            if(previousTool!=null && (abs(deltaA)>1e-9 || abs(deltaB)>1e-9)){
+                val previousCueAxis=MachineKinematics3D.transform(Vec3(0.0,0.0,cueLength),previousA,previousB)
+                val rawPreviousAxisTop=Point(
+                    p.x+((previousCueAxis.x-previousCueAxis.z*.34)*scale).roundToInt(),
+                    p.y-((previousCueAxis.y+previousCueAxis.z*.28)*scale).roundToInt()
+                )
+                val previousAxisTop=Point(
+                    rawPreviousAxisTop.x.coerceIn(cueMargin,(width-cueMargin).coerceAtLeast(cueMargin)),
+                    rawPreviousAxisTop.y.coerceIn(cueMargin,(height-cueMargin).coerceAtLeast(cueMargin))
+                )
+                g.color=Color(86,188,225,105)
+                g.stroke=BasicStroke(1.4f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+                g.drawLine(p.x,p.y,previousAxisTop.x,previousAxisTop.y)
+                g.drawOval(previousAxisTop.x-3,previousAxisTop.y-3,6,6)
+                g.drawLine(previousAxisTop.x,previousAxisTop.y,axisTop.x,axisTop.y)
+            }
             g.color=Color(255,78,205,220)
             g.stroke=BasicStroke(2.2f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
             g.drawLine(p.x,p.y,axisTop.x,axisTop.y)
@@ -1419,11 +1453,6 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                 g.fillOval(axisTop.x-1,axisTop.y-1,2,2)
             }
             g.font=Font(Font.SANS_SERIF,Font.BOLD,11)
-            val previousTool=previousProgressiveFrame?.toolPoint
-            val previousA=if(machineMode=="3AX")0.0 else previousTool?.axisA ?: axisA
-            val previousB=if(machineMode=="5AX")previousTool?.axisB ?: axisB else 0.0
-            val deltaA=axisA-previousA
-            val deltaB=axisB-previousB
             val deltaAMark=when { deltaA>1e-9 -> "↑"; deltaA< -1e-9 -> "↓"; else -> "•" }
             val deltaBMark=when { deltaB>1e-9 -> "↑"; deltaB< -1e-9 -> "↓"; else -> "•" }
             val badgeText=String.format(java.util.Locale.US,"A%+.3f°%s B%+.3f°%s %s",axisA,deltaAMark,axisB,deltaBMark,depthPolarity)
@@ -1768,6 +1797,13 @@ private fun runSmoke() {
     require(abs(fiveCueDeltaA)>1e-9 || abs(fiveCueDeltaB)>1e-9){"Studio 5AX A/B delta-direction evidence did not change"}
     val fiveCueDeltaACode=when { fiveCueDeltaA>1e-9 -> "POS"; fiveCueDeltaA< -1e-9 -> "NEG"; else -> "ZERO" }
     val fiveCueDeltaBCode=when { fiveCueDeltaB>1e-9 -> "POS"; fiveCueDeltaB< -1e-9 -> "NEG"; else -> "ZERO" }
+    val fiveCuePreviousAxis=MachineKinematics3D.transform(Vec3(0.0,0.0,1.0),fiveCuePrevious.toolPoint.axisA,fiveCuePrevious.toolPoint.axisB)
+    val fiveCuePoseGhostDelta=sqrt(
+        (fiveCueDepthVector.x-fiveCuePreviousAxis.x).pow(2)+
+        (fiveCueDepthVector.y-fiveCuePreviousAxis.y).pow(2)+
+        (fiveCueDepthVector.z-fiveCuePreviousAxis.z).pow(2)
+    )
+    require(fiveCuePoseGhostDelta>1e-9){"Studio 5AX previous-pose ghost vector did not differ from current axis"}
     fiveAxisPanel.showProgressiveFrame(fiveCueFrame)
     require(fiveCueFrame.index>0 && fiveAxisPanel.freshRemovalSourceFrame()==fiveCueFrame.index-1){"Studio 5AX fresh-removal source did not lock to current index - 1"}
     val fiveCueFile=File("desktop_5x_axis_cue.png")
@@ -1845,6 +1881,9 @@ private fun runSmoke() {
             "5X_AXIS_DELTA_B=${DisplayFormat.mm(fiveCueDeltaB)}\n" +
             "5X_AXIS_DELTA_A_CODE=$fiveCueDeltaACode\n" +
             "5X_AXIS_DELTA_B_CODE=$fiveCueDeltaBCode\n" +
+            "5X_AXIS_POSE_GHOST=PASS\n" +
+            "5X_AXIS_POSE_GHOST_DELTA=${DisplayFormat.mm(fiveCuePoseGhostDelta)}\n" +
+            "5X_AXIS_POSE_GHOST_ANCHOR=CURRENT_TOOL_TIP\n" +
             "5X_DEPTH_OCCLUSION=PASS\n" +
             "5X_FRESH_REMOVAL_FRONTIER=PASS\n" +
             "5X_FRESH_REMOVAL_VISIBLE_POINTS=$fiveFreshRemoval\n" +
