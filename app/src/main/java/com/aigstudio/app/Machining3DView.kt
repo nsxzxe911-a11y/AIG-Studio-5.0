@@ -737,12 +737,33 @@ class Machining3DView(
             val poseAngleText=String.format(java.util.Locale.US,"Δθ%.2f°",poseAngleDeg)
             val displayBadgeText="$badgeText $poseAngleText"
             val pad=4f*resources.displayMetrics.density
-            val textWidth=toolAxisCueTextPaint.measureText(displayBadgeText)
-            val badgeX=(axisCueTop.x+6f*resources.displayMetrics.density).coerceIn(pad,(width-textWidth-pad*3f).coerceAtLeast(pad))
-            val badgeBaseline=(axisCueTop.y-7f*resources.displayMetrics.density).coerceIn(18f*resources.displayMetrics.density,height-12f*resources.displayMetrics.density)
-            val badgeTop=badgeBaseline-toolAxisCueTextPaint.textSize-pad
-            canvas.drawRoundRect(badgeX-pad,badgeTop,badgeX+textWidth+pad,badgeBaseline+pad,5f*resources.displayMetrics.density,5f*resources.displayMetrics.density,toolAxisBadgePaint)
-            canvas.drawText(displayBadgeText,badgeX,badgeBaseline,toolAxisCueTextPaint)
+            val lineGap=2f*resources.displayMetrics.density
+            val singleLineWidth=toolAxisCueTextPaint.measureText(displayBadgeText)
+            val maxBadgeTextWidth=(width.toFloat()-pad*4f).coerceAtLeast(pad)
+            val wrapBadge=singleLineWidth>maxBadgeTextWidth
+            val badgeLine1=badgeText
+            val badgeLine2=poseAngleText
+            val textWidth=if(wrapBadge) max(
+                toolAxisCueTextPaint.measureText(badgeLine1),
+                toolAxisCueTextPaint.measureText(badgeLine2)
+            ) else singleLineWidth
+            val lineHeight=toolAxisCueTextPaint.textSize+lineGap
+            val badgeHeight=(if(wrapBadge) lineHeight*2f else lineHeight)+pad*2f
+            val maxBadgeBottom=(height.toFloat()-pad).coerceAtLeast(badgeHeight+pad)
+            val badgeBottom=(axisCueTop.y-7f*resources.displayMetrics.density).coerceIn(badgeHeight+pad,maxBadgeBottom)
+            val badgeTop=badgeBottom-badgeHeight
+            val badgeX=(axisCueTop.x+6f*resources.displayMetrics.density).coerceIn(
+                pad,
+                (width.toFloat()-textWidth-pad*2f).coerceAtLeast(pad)
+            )
+            canvas.drawRoundRect(badgeX-pad,badgeTop,badgeX+textWidth+pad,badgeBottom,5f*resources.displayMetrics.density,5f*resources.displayMetrics.density,toolAxisBadgePaint)
+            val firstBaseline=badgeTop+pad+toolAxisCueTextPaint.textSize
+            if(wrapBadge){
+                canvas.drawText(badgeLine1,badgeX,firstBaseline,toolAxisCueTextPaint)
+                canvas.drawText(badgeLine2,badgeX,firstBaseline+lineHeight,toolAxisCueTextPaint)
+            } else {
+                canvas.drawText(displayBadgeText,badgeX,firstBaseline,toolAxisCueTextPaint)
+            }
             canvas.drawCircle(tip.x, tip.y, radius, toolPaint)
         }
 
