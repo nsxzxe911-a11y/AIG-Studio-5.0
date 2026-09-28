@@ -794,7 +794,7 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         val g2 = g as Graphics2D
         StudioDesktopOriginalVisuals.paintCover(g2,width,height,StudioDesktopOriginalVisuals.machine,0.60f)
         g2.color=Color(2,7,14,42);g2.fillRect(0,0,width,height)
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
         g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
         val span = max(max(result.stock.maxX - result.stock.minX, result.stock.maxY - result.stock.minY), result.stock.thickness).coerceAtLeast(1.0)
         val scale = min(width, height) * 0.48 / span * zoom
@@ -828,6 +828,7 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             }
         }
 
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
         val allMoves=result.cam.toolpaths.flatMap{it.moves}
         val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
         var previous:Move?=null
@@ -1061,7 +1062,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         val g=g0 as Graphics2D
         StudioDesktopOriginalVisuals.paintCover(g,width,height,StudioDesktopOriginalVisuals.machine,0.62f)
         g.color=Color(2,7,14,40);g.fillRect(0,0,width,height)
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF)
         g.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY)
         val span=max(max(result.stock.maxX-result.stock.minX,result.stock.maxY-result.stock.minY),result.stock.thickness).coerceAtLeast(1.0)
         val scale=min(width,height)*0.46/span*zoom
@@ -1081,6 +1082,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                 }
             }
         }
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)
         val allMoves=result.cam.toolpaths.flatMap{it.moves}
         val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
         var prev:Move?=null

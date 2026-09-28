@@ -618,6 +618,20 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_MATERIAL_FILL_PRIORITY_185")
 print("MATERIAL_FILL_PRIORITY_GATE_PASS|ANDROID|WINDOWS|TRUE_REMOVAL_FILL|INTERNAL_MESH_EDGES_OFF|5AX_MACHINE_VISIBLE|VISUAL_ONLY")
 for needle in (
+    "private val surfacePaint = Paint().apply",
+    "private val machinePaint = Paint().apply",
+    "isAntiAlias = false",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_TRIANGLE_SEAM_SUPPRESSION_186")
+for needle in (
+    "g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)",
+    "g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)",
+    "g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF)",
+    "g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_TRIANGLE_SEAM_SUPPRESSION_186")
+print("TRIANGLE_SEAM_SUPPRESSION_GATE_PASS|ANDROID|WINDOWS|MACHINE_FILL_AA_OFF|MATERIAL_FILL_AA_OFF|TOOLPATH_AA_ON|TRUE_MESH|VISUAL_ONLY")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',

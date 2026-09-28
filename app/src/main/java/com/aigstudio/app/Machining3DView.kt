@@ -33,8 +33,9 @@ class Machining3DView(
     private val machineVisual: android.graphics.Bitmap? = null
     private val machineVisualPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { alpha = 118 }
 
-    private val surfacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val surfacePaint = Paint().apply {
         style = Paint.Style.FILL
+        isAntiAlias = false
         isDither = true
     }
     private val edgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -75,8 +76,9 @@ class Machining3DView(
     private val progressPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
     }
-    private val machinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val machinePaint = Paint().apply {
         style = Paint.Style.FILL
+        isAntiAlias = false
         isDither = true
     }
     private val machineEdgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
