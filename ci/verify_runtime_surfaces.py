@@ -643,6 +643,22 @@ require(desktop, "g2.drawPolygon(poly)", "STUDIO_WINDOWS_MATERIAL_SEAM_WELD_191"
 require(desktop, "g.drawPolygon(poly)", "STUDIO_WINDOWS_MATERIAL_SEAM_WELD_191")
 print("OPAQUE_MATERIAL_SURFACE_GATE_PASS|ANDROID|WINDOWS|OPAQUE_FILL|SEAM_WELD|ROTARY_BATCHED|TRUE_MESH|TOOLPATH_PRESERVED|VISUAL_ONLY")
 for needle in (
+    "private fun drawToolStackForeground(canvas:Canvas,model:MachineModel3D,scale:Double)",
+    "MachineComponentRole.TOOL -> 1",
+    "MachineComponentRole.HOLDER -> 48",
+    "MachineComponentRole.SPINDLE -> 72",
+    "drawToolStackForeground(canvas,machineModel,scale)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_TOOL_STACK_FOREGROUND_192")
+for needle in (
+    "private fun drawToolStackForeground(g2:Graphics2D,model:MachineModel3D,scale:Double)",
+    "private fun drawToolStackForeground(g:Graphics2D,model:MachineModel3D,scale:Double)",
+    "drawToolStackForeground(g2,machineModel,scale)",
+    "drawToolStackForeground(g,machineModel,scale)",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_TOOL_STACK_FOREGROUND_192")
+print("TOOL_STACK_FOREGROUND_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|SPINDLE|HOLDER|TOOL|POST_MATERIAL|TRUE_GEOMETRY|VISUAL_ONLY")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',

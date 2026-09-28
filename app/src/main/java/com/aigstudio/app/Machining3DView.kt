@@ -335,6 +335,39 @@ class Machining3DView(
         }
     }
 
+    private fun drawToolStackForeground(canvas:Canvas,model:MachineModel3D,scale:Double) {
+        model.components.forEach { component ->
+            val edgeStep=when(component.role){
+                MachineComponentRole.TOOL -> 1
+                MachineComponentRole.HOLDER -> 48
+                MachineComponentRole.SPINDLE -> 72
+                else -> return@forEach
+            }
+            machineEdgePaint.color=when(component.role){
+                MachineComponentRole.TOOL -> Color.argb(255,255,196,64)
+                MachineComponentRole.HOLDER -> Color.argb(236,92,186,232)
+                else -> Color.argb(232,188,226,255)
+            }
+            machineEdgePaint.strokeWidth=when(component.role){
+                MachineComponentRole.TOOL -> 2.4f*resources.displayMetrics.density
+                MachineComponentRole.HOLDER -> 1.7f*resources.displayMetrics.density
+                else -> 1.5f*resources.displayMetrics.density
+            }
+            val pts=component.mesh.vertices.map { project(it,scale) }
+            component.mesh.triangles.forEachIndexed { index,tri ->
+                if(index%edgeStep==0){
+                    val a=pts[tri.a]; val b=pts[tri.b]; val c=pts[tri.c]
+                    trianglePath.reset()
+                    trianglePath.moveTo(a.x,a.y)
+                    trianglePath.lineTo(b.x,b.y)
+                    trianglePath.lineTo(c.x,c.y)
+                    trianglePath.close()
+                    canvas.drawPath(trianglePath,machineEdgePaint)
+                }
+            }
+        }
+    }
+
     private fun machineSpace(v:Vec3,mode:String,live:Move?):Vec3 {
         val a=if(mode=="3AX")0.0 else live?.axisA ?: 0.0
         val b=if(mode=="5AX")live?.axisB ?: 0.0 else 0.0
@@ -430,6 +463,7 @@ class Machining3DView(
             canvas.drawPath(trianglePath,surfaceSeamPaint)
             if(showMaterialMeshEdges && visibleIndex % 18 == 0) { canvas.drawPath(trianglePath,edgePaint) }
         }
+        drawToolStackForeground(canvas,machineModel,scale)
 
         var remainingMoves = activeFrame?.index?.plus(1) ?: Int.MAX_VALUE
         result.cam.toolpaths.forEach { toolpath ->

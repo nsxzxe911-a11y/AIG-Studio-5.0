@@ -787,6 +787,32 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         return model
     }
 
+    private fun drawToolStackForeground(g2:Graphics2D,model:MachineModel3D,scale:Double){
+        model.components.forEach { component ->
+            val edgeStep=when(component.role){
+                MachineComponentRole.TOOL -> 1
+                MachineComponentRole.HOLDER -> 48
+                MachineComponentRole.SPINDLE -> 72
+                else -> return@forEach
+            }
+            val pts=component.mesh.vertices.map { project(it,scale) }
+            g2.color=when(component.role){
+                MachineComponentRole.TOOL -> Color(255,196,64,255)
+                MachineComponentRole.HOLDER -> Color(92,186,232,236)
+                else -> Color(188,226,255,232)
+            }
+            g2.stroke=BasicStroke(when(component.role){
+                MachineComponentRole.TOOL -> 2.4f
+                MachineComponentRole.HOLDER -> 1.7f
+                else -> 1.5f
+            },BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+            component.mesh.triangles.forEachIndexed { index,t -> if(index%edgeStep==0){
+                val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
+                g2.drawPolygon(Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3))
+            }}
+        }
+    }
+
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
         val g2 = g as Graphics2D
@@ -817,6 +843,7 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         }
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        drawToolStackForeground(g2,machineModel,scale)
         val allMoves=result.cam.toolpaths.flatMap{it.moves}
         val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
         var previous:Move?=null
@@ -1043,6 +1070,31 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         }
         return model
     }
+    private fun drawToolStackForeground(g:Graphics2D,model:MachineModel3D,scale:Double){
+        model.components.forEach { component ->
+            val edgeStep=when(component.role){
+                MachineComponentRole.TOOL -> 1
+                MachineComponentRole.HOLDER -> 48
+                MachineComponentRole.SPINDLE -> 72
+                else -> return@forEach
+            }
+            val pts=component.mesh.vertices.map { projectMachine(it,scale) }
+            g.color=when(component.role){
+                MachineComponentRole.TOOL -> Color(255,196,64,255)
+                MachineComponentRole.HOLDER -> Color(92,186,232,236)
+                else -> Color(188,226,255,232)
+            }
+            g.stroke=BasicStroke(when(component.role){
+                MachineComponentRole.TOOL -> 2.4f
+                MachineComponentRole.HOLDER -> 1.7f
+                else -> 1.5f
+            },BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+            component.mesh.triangles.forEachIndexed { index,t -> if(index%edgeStep==0){
+                val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
+                g.drawPolygon(Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3))
+            }}
+        }
+    }
     override fun paintComponent(g0:Graphics){
         super.paintComponent(g0)
         val g=g0 as Graphics2D
@@ -1067,6 +1119,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             if(showMaterialMeshEdges && i%(stride*18)==0){ g.color=Color(61,235,255,46);g.stroke=BasicStroke(.55f);g.drawPolygon(poly) }
         }}
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)
+        drawToolStackForeground(g,machineModel,scale)
         val allMoves=result.cam.toolpaths.flatMap{it.moves}
         val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
         var prev:Move?=null
