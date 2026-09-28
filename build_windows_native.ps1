@@ -25,6 +25,7 @@ if (-not (Test-Path $MainJar)) { throw 'Studio desktop runtime JAR missing.' }
 $SmokeDir = Join-Path $RepoRoot 'build\desktop-smoke'
 if (Test-Path $SmokeDir) { Remove-Item -Recurse -Force $SmokeDir }
 New-Item -ItemType Directory -Force $SmokeDir | Out-Null
+$env:GITHUB_SHA = $GitSha
 Push-Location $SmokeDir
 try {
   & java -cp "$LibDir\*" com.aigstudio.desktop.DesktopAppKt --smoke

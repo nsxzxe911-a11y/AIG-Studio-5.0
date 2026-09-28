@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -86,9 +87,18 @@ for path in (
     ROOT / "app" / "src" / "main" / "assets" / "aig-generated-rgb" / "approved" / "184" / "cam.png",
     ROOT / "desktop" / "src" / "main" / "resources" / "aig-generated-rgb" / "approved" / "184" / "cad.png",
     ROOT / "desktop" / "src" / "main" / "resources" / "aig-generated-rgb" / "approved" / "184" / "cam.png",
+    ROOT / "app" / "src" / "main" / "assets" / "visuals" / "studio_startup_original.png",
+    ROOT / "desktop" / "src" / "main" / "resources" / "visuals" / "studio_startup_original.png",
 ):
     if not path.is_file():
-        raise SystemExit(f"正式 RGB 資產缺少：{path}")
+        raise SystemExit(f"正式 RGB / Boot 資產缺少：{path}")
+for boot_path in (
+    ROOT / "app" / "src" / "main" / "assets" / "visuals" / "studio_startup_original.png",
+    ROOT / "desktop" / "src" / "main" / "resources" / "visuals" / "studio_startup_original.png",
+):
+    if hashlib.sha256(boot_path.read_bytes()).hexdigest() != "a2e7b24d32fb9c852b83ee176480f59cb43559fe152ac3e05e0aa2c52f0a82ac":
+        raise SystemExit(f"BLOCKED PRODUCTION_BOOT_SHA_MISMATCH: {boot_path}")
+print("PRODUCTION_BOOT_ASSET_GATE_PASS|ANDROID|WINDOWS|VALIDATED_DERIVED|SHA256")
 for needle in (
     "REAL CAD / CAM",
     "buildProductionCamPanel",
