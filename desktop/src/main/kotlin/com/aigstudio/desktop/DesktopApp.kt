@@ -601,6 +601,7 @@ private class CadPanel(
     }
 }
 
+
 private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
     private var rx = -35.0
     private var ry = 35.0
@@ -682,6 +683,56 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         )
     }
 
+    private fun drawMachineModel(g2:Graphics2D,scale:Double,frame:ProgressiveMachining3DFrame?):MachineModel3D {
+        val live=frame?.toolPoint ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
+        val model=MachineModel3DBuilder.build(
+            result,
+            axisAOverride=live?.axisA,
+            axisBOverride=live?.axisB,
+            toolPointOverride=live
+        )
+        model.components.forEach { component ->
+            val pts=component.mesh.vertices.map { project(it,scale) }
+            val alpha=when(component.role){
+                MachineComponentRole.TOOL -> 220
+                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 165
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 145
+                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 120
+                else -> 90
+            }
+            g2.color=when(component.role){
+                MachineComponentRole.TOOL -> Color(255,196,64,alpha)
+                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> Color(214,229,255,alpha)
+                MachineComponentRole.ROTARY_A -> Color(61,235,255,alpha)
+                MachineComponentRole.ROTARY_B -> Color(255,78,205,alpha)
+                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> Color(90,130,170,alpha)
+                else -> Color(55,78,105,alpha)
+            }
+            val stride=max(1,ceil(component.mesh.triangles.size/900.0).toInt())
+            component.mesh.triangles.forEachIndexed { i,t ->
+                if(i%stride==0){
+                    val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
+                    val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
+                    g2.fillPolygon(poly)
+                    if(i%(stride*5)==0 || component.role==MachineComponentRole.TOOL){
+                        g2.color=Color(180,220,255,(alpha+60).coerceAtMost(245))
+                        g2.stroke=BasicStroke(if(component.role==MachineComponentRole.TOOL)1.6f else .7f)
+                        g2.drawPolygon(poly)
+                        g2.color=when(component.role){
+                            MachineComponentRole.TOOL -> Color(255,196,64,alpha)
+                            MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> Color(214,229,255,alpha)
+                            MachineComponentRole.ROTARY_A -> Color(61,235,255,alpha)
+                            MachineComponentRole.ROTARY_B -> Color(255,78,205,alpha)
+                            MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> Color(90,130,170,alpha)
+                            else -> Color(55,78,105,alpha)
+                        }
+                    }
+                }
+            }
+        }
+        return model
+    }
+
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
         val g2 = g as Graphics2D
@@ -690,8 +741,9 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
         g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
         val span = max(max(result.stock.maxX - result.stock.minX, result.stock.maxY - result.stock.minY), result.stock.thickness).coerceAtLeast(1.0)
-        val scale = min(width, height) * 0.72 / span * zoom
+        val scale = min(width, height) * 0.48 / span * zoom
         val activeFrame=progressiveFrame
+        val machineModel=drawMachineModel(g2,scale,activeFrame)
         val activeMesh=activeFrame?.mesh ?: result.mesh
         val projected = activeMesh.vertices.map { project(it, scale) }
         val stride = max(1, ceil(activeMesh.triangles.size / 5500.0).toInt())
@@ -775,7 +827,8 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         g2.color = Color(220, 240, 255)
         g2.font = Font(Font.SANS_SERIF, Font.PLAIN, 14)
         g2.drawString(
-            "HQ 3D RENDER ENGINE • TRUE MESH • CAM=" + result.cam.toolpaths.size + " • removed=" + removed +
+            "HQ 3D RENDER ENGINE • MACHINE=" + machineModel.mode + " • PARTS=" + machineModel.components.size +
+                " • TRUE MESH • CAM=" + result.cam.toolpaths.size + " • removed=" + removed +
                 (activeFrame?.let{" • frame=${it.index+1}/${it.total} • ${String.format(java.util.Locale.US,"%.1f",it.progress*100.0)}%"} ?: "") +
                 " • 精度 0.001 mm",
             14, 22
@@ -800,12 +853,21 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         private set
     private var zoom=1.0
     private var progressiveFrame:ProgressiveMachining3DFrame?=null
+    private var machineMode="3AX"
     init{
         background=Color(5,10,17)
         preferredSize=Dimension(860,620)
         addMouseWheelListener { zoom=(zoom*if(it.wheelRotation<0)1.1 else 0.9).coerceIn(0.3,5.0);repaint() }
     }
     fun setAngles(a:Double,b:Double){axisA=a;axisB=b;repaint()}
+    fun setMachineMode(mode:String){
+        val normalized=mode.uppercase()
+        require(normalized in setOf("3AX","4AX","5AX"))
+        machineMode=normalized
+        if(machineMode=="3AX"){axisA=0.0;axisB=0.0}
+        if(machineMode=="4AX")axisB=0.0
+        repaint()
+    }
     fun setResult(next:Machining3DResult){
         result=next
         progressiveFrame=null
@@ -818,16 +880,22 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         repaint()
     }
     fun clearProgressiveFrame(){progressiveFrame=null;repaint()}
+    private fun kinematicTransform(v:Vec3):Vec3{
+        val aa=Math.toRadians(if(machineMode=="3AX")0.0 else axisA)
+        val bb=Math.toRadians(if(machineMode=="5AX")axisB else 0.0)
+        val y1=v.y*cos(aa)-v.z*sin(aa)
+        val z1=v.y*sin(aa)+v.z*cos(aa)
+        val x2=v.x*cos(bb)+z1*sin(bb)
+        val z2=-v.x*sin(bb)+z1*cos(bb)
+        return Vec3(x2,y1,z2)
+    }
     private fun axisTransform(v:Vec3):Vec3{
         val cx=(result.stock.minX+result.stock.maxX)/2.0
         val cy=(result.stock.minY+result.stock.maxY)/2.0
         val cz=-result.stock.thickness/2.0
-        var x=v.x-cx;var y=v.y-cy;var z=v.z-cz
-        val aa=Math.toRadians(axisA)
-        val bb=Math.toRadians(axisB)
-        val y1=y*cos(aa)-z*sin(aa);val z1=y*sin(aa)+z*cos(aa);y=y1;z=z1
-        val x1=x*cos(bb)+z*sin(bb);val z2=-x*sin(bb)+z*cos(bb);x=x1;z=z2
-        return Vec3(x,y,z)
+        val r=kinematicTransform(v)
+        val center=kinematicTransform(Vec3(cx,cy,cz))
+        return Vec3(r.x-center.x,r.y-center.y,r.z-center.z)
     }
     private fun project(v:Vec3,scale:Double):Point{
         val r=axisTransform(v)
@@ -835,6 +903,54 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             (width/2.0+(r.x-r.z*.34)*scale).roundToInt(),
             (height/2.0-(r.y+r.z*.28)*scale).roundToInt()
         )
+    }
+    private fun projectMachine(v:Vec3,scale:Double):Point{
+        val cx=(result.stock.minX+result.stock.maxX)/2.0
+        val cy=(result.stock.minY+result.stock.maxY)/2.0
+        val cz=-result.stock.thickness/2.0
+        val x=v.x-cx; val y=v.y-cy; val z=v.z-cz
+        return Point(
+            (width/2.0+(x-z*.34)*scale).roundToInt(),
+            (height/2.0-(y+z*.28)*scale).roundToInt()
+        )
+    }
+    private fun drawMachineModel(g:Graphics2D,scale:Double,frame:ProgressiveMachining3DFrame?):MachineModel3D{
+        val live=frame?.toolPoint ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
+        val model=MachineModel3DBuilder.build(
+            result,machineMode,axisA,axisB,live
+        )
+        model.components.forEach { component ->
+            val pts=component.mesh.vertices.map{projectMachine(it,scale)}
+            val alpha=when(component.role){
+                MachineComponentRole.TOOL -> 220
+                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 165
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 145
+                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 120
+                else -> 90
+            }
+            g.color=when(component.role){
+                MachineComponentRole.TOOL -> Color(255,196,64,alpha)
+                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> Color(214,229,255,alpha)
+                MachineComponentRole.ROTARY_A -> Color(61,235,255,alpha)
+                MachineComponentRole.ROTARY_B -> Color(255,78,205,alpha)
+                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> Color(90,130,170,alpha)
+                else -> Color(55,78,105,alpha)
+            }
+            val stride=max(1,ceil(component.mesh.triangles.size/900.0).toInt())
+            component.mesh.triangles.forEachIndexed { i,t ->
+                if(i%stride==0){
+                    val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
+                    val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
+                    g.fillPolygon(poly)
+                    if(i%(stride*5)==0 || component.role==MachineComponentRole.TOOL){
+                        g.color=Color(180,220,255,(alpha+60).coerceAtMost(245))
+                        g.stroke=BasicStroke(if(component.role==MachineComponentRole.TOOL)1.6f else .7f)
+                        g.drawPolygon(poly)
+                    }
+                }
+            }
+        }
+        return model
     }
     override fun paintComponent(g0:Graphics){
         super.paintComponent(g0)
@@ -844,8 +960,9 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)
         g.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY)
         val span=max(max(result.stock.maxX-result.stock.minX,result.stock.maxY-result.stock.minY),result.stock.thickness).coerceAtLeast(1.0)
-        val scale=min(width,height)*0.68/span*zoom
+        val scale=min(width,height)*0.46/span*zoom
         val activeFrame=progressiveFrame
+        val machineModel=drawMachineModel(g,scale,activeFrame)
         val activeMesh=activeFrame?.mesh ?: result.mesh
         val pts=activeMesh.vertices.map{project(it,scale)}
         val stride=max(1,ceil(activeMesh.triangles.size/4500.0).toInt())
@@ -900,7 +1017,8 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         }
         g.color=Color(235,245,255);g.font=Font(Font.SANS_SERIF,Font.BOLD,14)
         g.drawString(
-            "TRUE AXIS VIEW • A="+DisplayFormat.mm(axisA)+"° • B="+DisplayFormat.mm(axisB)+"°"+
+            "TRUE AXIS VIEW • MACHINE="+machineModel.mode+" • PARTS="+machineModel.components.size+
+                " • A="+DisplayFormat.mm(axisA)+"° • B="+DisplayFormat.mm(axisB)+"°"+
                 (activeFrame?.let{" • frame=${it.index+1}/${it.total} • removed=${it.removedCells}"} ?: "")+
                 " • material-first",
             14,22
@@ -1176,6 +1294,7 @@ private fun runSmoke() {
     } ?: error("No Studio 5AX frame changes XYZ + rotary axes + material removal together")
     val fiveAfterFrame=ProgressiveMachining3D.frame(fiveAxisResult,fiveAfterIndex)
     val fiveAxisPanel=AxisMachiningPanel(fiveAxisResult)
+    fiveAxisPanel.setMachineMode("5AX")
     fiveAxisPanel.showProgressiveFrame(fiveBeforeFrame)
     val fiveBeforeFile=File("desktop_5x_before.png")
     writePanel(fiveAxisPanel,fiveBeforeFile,980,620)
@@ -1610,6 +1729,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         )
         mesh.setResult(result)
         axes.setResult(result)
+        axes.setMachineMode(axisMode)
         axes.setAngles(
             if(axisMode=="3AX")0.0 else axisA,
             if(axisMode=="5AX")axisB else 0.0

@@ -1177,6 +1177,7 @@ fun main() {
     testControllerCutterCompensationDoubleApplyBlocked()
     testMaterialRemoval3D()
     testMachiningMesh3D()
+    testRealMachineModel3D()
     testAigIiPrecisionContract()
     testAiGapToleranceContract()
     testMicronDisplayScale()
@@ -1735,6 +1736,39 @@ private fun testMachiningMesh3D() {
     check(result.mesh.triangles.size > 100) { "3D mesh must contain real triangles" }
     check(result.mesh.vertices.any { it.z < 0.0 }) { "3D mesh must include machined depth" }
     println("✓ true 3D machining mesh")
+}
+
+private fun testRealMachineModel3D() {
+    val snap=DrawingSnapshot(rectangle())
+    val result=Machining3DEngine.build(
+        snap,
+        CamSettings(toolDiameter=6.0,depth=-3.0,safeZ=8.0,feedMmMin=180.0)
+    )
+    val live=result.cam.toolpaths.last().moves.last()
+    val three=MachineModel3DBuilder.build(result,"3AX",0.0,0.0,live)
+    val four0=MachineModel3DBuilder.build(result,"4AX",0.0,0.0,live)
+    val four=MachineModel3DBuilder.build(result,"4AX",30.0,0.0,live)
+    val five0=MachineModel3DBuilder.build(result,"5AX",0.0,0.0,live)
+    val five=MachineModel3DBuilder.build(result,"5AX",30.0,-20.0,live)
+    val baseRoles=setOf(
+        MachineComponentRole.BASE,MachineComponentRole.COLUMN,MachineComponentRole.TABLE,
+        MachineComponentRole.FIXTURE,MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER,
+        MachineComponentRole.TOOL
+    )
+    check(three.roles().containsAll(baseRoles))
+    check(MachineComponentRole.TRUNNION !in three.roles())
+    check(four.roles().containsAll(baseRoles+setOf(MachineComponentRole.TRUNNION,MachineComponentRole.ROTARY_A)))
+    check(MachineComponentRole.ROTARY_B !in four.roles())
+    check(five.roles().containsAll(baseRoles+setOf(
+        MachineComponentRole.TRUNNION,MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B
+    )))
+    check(three.triangleCount()>0 && four.triangleCount()>three.triangleCount() && five.triangleCount()>four.triangleCount())
+    fun signature(model:MachineModel3D,role:MachineComponentRole)=
+        model.component(role)!!.mesh.vertices.take(8).joinToString("|"){"%.4f,%.4f,%.4f".format(it.x,it.y,it.z)}
+    check(signature(four0,MachineComponentRole.ROTARY_A)!=signature(four,MachineComponentRole.ROTARY_A))
+    check(signature(five0,MachineComponentRole.ROTARY_B)!=signature(five,MachineComponentRole.ROTARY_B))
+    check(five.sourceRevision==result.cam.sourceRevision)
+    println("? REAL_MACHINE_MODEL_3_4_5AX_GATE_PASS BASE COLUMN TABLE FIXTURE TRUNNION ROTARY_A ROTARY_B SPINDLE HOLDER TOOL TRUE_MESH DYNAMIC_AB SOURCE_REVISION")
 }
 
 private fun testWorkOffsetDoesNotShiftAbsoluteCoordinates() {

@@ -389,6 +389,40 @@ for needle in (
     require(android, needle, "ANDROID_PROGRESSIVE_3D_PLAYBACK_172")
 print("ANDROID_PROGRESSIVE_3D_PLAYBACK_GATE_PASS|3D|3AX|4AX|5AX|PLAY|PAUSE|STEP|RESET|SPEED|REMOVED_CELLS|AXIS_SYNC")
 for needle in (
+    "enum class MachineComponentRole",
+    "data class MachineModel3D(",
+    "object MachineModel3DBuilder",
+    "MachineComponentRole.TRUNNION",
+    "MachineComponentRole.ROTARY_A",
+    "MachineComponentRole.ROTARY_B",
+    "MachineComponentRole.SPINDLE",
+    "MachineComponentRole.HOLDER",
+    "MachineComponentRole.TOOL",
+):
+    require(machining3d_core, needle, "STUDIO_TRUE_MACHINE_MODEL_CORE_174")
+for needle in (
+    "private fun drawMachineModel(canvas: Canvas, model: MachineModel3D, scale: Double) {",
+    "val machineModel=MachineModel3DBuilder.build(",
+    "liveMove?.axisA",
+    "liveMove?.axisB",
+    "drawMachineModel(canvas,machineModel,scale)",
+    "model.components.forEach",
+    "MachineComponentRole.ROTARY_A",
+    "MachineComponentRole.ROTARY_B",
+    'val label = "TRUE 3D • MACHINE=" + machineModel.mode',
+):
+    require(machining3d, needle, "STUDIO_ANDROID_TRUE_MACHINE_MODEL_174")
+for needle in (
+    "private fun drawMachineModel(g2:Graphics2D,scale:Double,frame:ProgressiveMachining3DFrame?)",
+    "private fun projectMachine(v:Vec3,scale:Double):Point",
+    "drawMachineModel(g2,scale,activeFrame)",
+    "drawMachineModel(g,scale,activeFrame)",
+    "MachineModel3DBuilder.build(",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_TRUE_MACHINE_MODEL_174")
+require(regression, "REAL_MACHINE_MODEL_3_4_5AX_GATE_PASS", "STUDIO_TRUE_MACHINE_MODEL_REGRESSION_174")
+print("TRUE_MACHINE_MODEL_RUNTIME_PARITY_GATE_PASS|ANDROID|WINDOWS|3AX|4AX|5AX|BASE|COLUMN|TABLE|FIXTURE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL|DYNAMIC_AB")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',

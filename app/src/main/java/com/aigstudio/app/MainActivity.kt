@@ -1907,7 +1907,7 @@ class MainActivity : Activity() {
 
         fun installSimulationView(mode:String,axisOverlay:Boolean) {
             rebuildSimulationResult(mode)
-            val view=Machining3DView(this,simulationResult)
+            val view=Machining3DView(this,simulationResult,simulationMode(mode))
             activeMachiningView=view
             visualHost.addView(view,FrameLayout.LayoutParams(-1,-1))
             if(axisOverlay){
@@ -2003,7 +2003,7 @@ class MainActivity : Activity() {
                     showSimulationFrame(0)
                 }
                 "NC_EDIT" -> {
-                    visualHost.addView(Machining3DView(this,result),FrameLayout.LayoutParams(-1,-1))
+                    visualHost.addView(Machining3DView(this,result,machiningAxisMode),FrameLayout.LayoutParams(-1,-1))
                     ncEditor.requestFocus()
                 }
             }

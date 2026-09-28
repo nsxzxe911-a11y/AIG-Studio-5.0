@@ -14,7 +14,8 @@ import kotlin.math.*
 
 class Machining3DView(
     context: Context,
-    private val result: Machining3DResult
+    private val result: Machining3DResult,
+    private val machineMode: String? = null
 ) : View(context) {
     private data class ScreenPoint(val x: Float, val y: Float, val depth: Double)
 
@@ -72,6 +73,14 @@ class Machining3DView(
     }
     private val progressPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
+    }
+    private val machinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        isDither = true
+    }
+    private val machineEdgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 0.85f * resources.displayMetrics.density
     }
     private val toolPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -211,6 +220,49 @@ class Machining3DView(
         )
     }
 
+    private fun machineColor(role: MachineComponentRole, moving: Boolean): Int = when(role) {
+        MachineComponentRole.BASE, MachineComponentRole.COLUMN, MachineComponentRole.FIXTURE ->
+            Color.argb(if(moving) 210 else 178, 50, 92, 122)
+        MachineComponentRole.TABLE, MachineComponentRole.TRUNNION ->
+            Color.argb(if(moving) 218 else 188, 94, 72, 176)
+        MachineComponentRole.ROTARY_A ->
+            Color.argb(224, 38, 190, 210)
+        MachineComponentRole.ROTARY_B ->
+            Color.argb(226, 224, 64, 176)
+        MachineComponentRole.SPINDLE, MachineComponentRole.HOLDER ->
+            Color.argb(232, 118, 205, 235)
+        MachineComponentRole.TOOL ->
+            Color.argb(246, 255, 185, 62)
+    }
+
+    private fun drawMachineModel(canvas: Canvas, model: MachineModel3D, scale: Double) {
+        model.components.forEach { component ->
+            val pts=component.mesh.vertices.map { project(it,scale) }
+            val ordered=component.mesh.triangles.map { tri ->
+                val depth=(pts[tri.a].depth+pts[tri.b].depth+pts[tri.c].depth)/3.0
+                depth to tri
+            }.sortedBy { it.first }
+            machinePaint.color=machineColor(component.role,component.moving)
+            machineEdgePaint.color=Color.argb(
+                if(component.role==MachineComponentRole.TOOL) 220 else 82,
+                160,235,255
+            )
+            ordered.forEachIndexed { index,item ->
+                val tri=item.second
+                val a=pts[tri.a]; val b=pts[tri.b]; val c=pts[tri.c]
+                trianglePath.reset()
+                trianglePath.moveTo(a.x,a.y)
+                trianglePath.lineTo(b.x,b.y)
+                trianglePath.lineTo(c.x,c.y)
+                trianglePath.close()
+                canvas.drawPath(trianglePath,machinePaint)
+                if(index%5==0 || component.role==MachineComponentRole.TOOL){
+                    canvas.drawPath(trianglePath,machineEdgePaint)
+                }
+            }
+        }
+    }
+
     private fun dynamicTriangleBudget(currentFps: Double): Int {
         val target = (display?.refreshRate ?: 60f).coerceIn(30f, 120f).toDouble()
         val base = if (target >= 90.0) 4600 else 5500
@@ -251,9 +303,23 @@ class Machining3DView(
         val stockW = result.stock.maxX - result.stock.minX
         val stockH = result.stock.maxY - result.stock.minY
         val span = max(max(stockW, stockH), result.stock.thickness).coerceAtLeast(1.0)
-        val scale = min(width, height) * 0.72 / span * zoom
+        val scale = min(width, height) * 0.48 / span * zoom
 
         val activeFrame = progressiveFrame
+        val liveMove = activeFrame?.toolPoint ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
+        val resolvedMode=(machineMode ?: when {
+            abs(liveMove?.axisB ?: 0.0)>1e-9 -> "5AX"
+            abs(liveMove?.axisA ?: 0.0)>1e-9 -> "4AX"
+            else -> "3AX"
+        }).uppercase()
+        val machineModel=MachineModel3DBuilder.build(
+            result,
+            resolvedMode,
+            liveMove?.axisA,
+            liveMove?.axisB,
+            liveMove
+        )
+        drawMachineModel(canvas,machineModel,scale)
         val activeMesh = activeFrame?.mesh ?: result.mesh
         projectedBuffer.clear()
         activeMesh.vertices.forEach { projectedBuffer.add(project(it, scale)) }
@@ -332,7 +398,6 @@ class Machining3DView(
             }
         }
 
-        val liveMove = activeFrame?.toolPoint ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
         if (liveMove != null) {
             val tip = project(Vec3(liveMove.to.x, liveMove.to.y, liveMove.z), scale)
             val toolLength = max(12.0, result.cam.settings.toolDiameter * 2.0)
@@ -368,7 +433,9 @@ class Machining3DView(
         RenderStressProfiler.record(modelScenario, fpsStats)
         if (removed > 0) RenderStressProfiler.record(RenderStressScenario.MATERIAL_REMOVAL, fpsStats)
         val worst = RenderStressProfiler.heaviest()?.scenario?.name ?: "collecting"
-        val label = "TRUE 3D • CAM=" + result.cam.toolpaths.size +
+        val label = "TRUE 3D • MACHINE=" + machineModel.mode +
+            " • PARTS=" + machineModel.components.size +
+            " • CAM=" + result.cam.toolpaths.size +
             " • removed=" + removed +
             (activeFrame?.let { " • frame=" + (it.index + 1) + "/" + it.total +
                 " • " + String.format(java.util.Locale.US, "%.1f", it.progress * 100.0) + "%" } ?: "") +
