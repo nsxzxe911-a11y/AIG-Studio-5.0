@@ -719,27 +719,49 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             }
         }
 
-        g2.stroke = BasicStroke(1.15f)
         val allMoves=result.cam.toolpaths.flatMap{it.moves}
         val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
-        val trailMoves=if(activeFrame!=null) visibleMoves.takeLast(32) else visibleMoves
         var previous:Move?=null
-        trailMoves.forEach { move ->
+        g2.stroke=BasicStroke(1.8f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+        visibleMoves.forEach { move ->
             val prev=previous
             if(prev!=null){
                 val a=project(Vec3(prev.to.x,prev.to.y,prev.z),scale)
                 val b=project(Vec3(move.to.x,move.to.y,move.z),scale)
-                g2.color=if(move.rapid)Color(255,70,220,62) else Color(63,255,157,105)
+                g2.color=if(move.rapid)Color(255,70,220,88) else Color(63,255,157,125)
                 g2.drawLine(a.x,a.y,b.x,b.y)
             }
             previous=move
         }
+        activeFrame?.let { frame ->
+            if(allMoves.size>1){
+                val i=frame.index.coerceIn(1,allMoves.lastIndex)
+                val prev=allMoves[i-1];val move=allMoves[i]
+                val a=project(Vec3(prev.to.x,prev.to.y,prev.z),scale)
+                val b=project(Vec3(move.to.x,move.to.y,move.z),scale)
+                g2.color=Color(61,235,255,68)
+                g2.stroke=BasicStroke(10f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+                g2.drawLine(a.x,a.y,b.x,b.y)
+                g2.color=Color(61,235,255)
+                g2.stroke=BasicStroke(4f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+                g2.drawLine(a.x,a.y,b.x,b.y)
+                g2.fillOval(b.x-6,b.y-6,12,12)
+            }
+        }
         activeFrame?.toolPoint?.let { tool ->
             val p=project(Vec3(tool.to.x,tool.to.y,tool.z),scale)
+            g2.color=Color(255,220,90,62)
+            g2.fillOval(p.x-12,p.y-12,24,24)
             g2.color=Color(255,220,90,235)
             g2.fillOval(p.x-6,p.y-6,12,12)
             g2.stroke=BasicStroke(2f)
             g2.drawLine(p.x,p.y-20,p.x,p.y+20)
+        }
+        activeFrame?.let { frame ->
+            val progress=frame.progress.coerceIn(0.0,1.0)
+            val x=14;val y=height-16;val w=(width-28).coerceAtLeast(1)
+            g2.color=Color(8,20,32,175);g2.fillRoundRect(x,y,w,7,7,7)
+            g2.color=Color(61,235,255);g2.fillRoundRect(x,y,(w*progress).roundToInt(),7,7,7)
         }
 
         val removed = activeFrame?.removedCells ?: result.removal.depth.count { it < 0.0 }
@@ -839,24 +861,42 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         }
         val allMoves=result.cam.toolpaths.flatMap{it.moves}
         val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
-        val tailMoves=if(activeFrame!=null) visibleMoves.takeLast(32) else visibleMoves
         var prev:Move?=null
-        tailMoves.forEach { m ->
+        visibleMoves.forEach { m ->
             val p=prev
             if(p!=null){
                 val a=project(Vec3(p.to.x,p.to.y,p.z),scale)
                 val b=project(Vec3(m.to.x,m.to.y,m.z),scale)
-                g.color=if(m.rapid)Color(61,235,255,55) else Color(255,176,32,110)
-                g.stroke=BasicStroke(if(m.rapid).8f else 1.2f)
+                g.color=if(m.rapid)Color(61,235,255,88) else Color(255,176,32,135)
+                g.stroke=BasicStroke(if(m.rapid)1.8f else 2.4f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
                 g.drawLine(a.x,a.y,b.x,b.y)
             }
             prev=m
         }
+        activeFrame?.let { frame ->
+            if(allMoves.size>1){
+                val i=frame.index.coerceIn(1,allMoves.lastIndex)
+                val p=allMoves[i-1];val m=allMoves[i]
+                val a=project(Vec3(p.to.x,p.to.y,p.z),scale)
+                val b=project(Vec3(m.to.x,m.to.y,m.z),scale)
+                g.color=Color(61,235,255,68);g.stroke=BasicStroke(10f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+                g.drawLine(a.x,a.y,b.x,b.y)
+                g.color=Color(61,235,255);g.stroke=BasicStroke(4f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+                g.drawLine(a.x,a.y,b.x,b.y)
+                g.fillOval(b.x-6,b.y-6,12,12)
+            }
+        }
         activeFrame?.toolPoint?.let { tool ->
             val p=project(Vec3(tool.to.x,tool.to.y,tool.z),scale)
-            g.color=Color(255,225,80,240)
-            g.fillOval(p.x-6,p.y-6,12,12)
+            g.color=Color(255,225,80,62);g.fillOval(p.x-12,p.y-12,24,24)
+            g.color=Color(255,225,80,240);g.fillOval(p.x-6,p.y-6,12,12)
             g.stroke=BasicStroke(2f);g.drawLine(p.x,p.y-20,p.x,p.y+20)
+        }
+        activeFrame?.let { frame ->
+            val progress=frame.progress.coerceIn(0.0,1.0)
+            val x=14;val y=height-16;val w=(width-28).coerceAtLeast(1)
+            g.color=Color(8,20,32,175);g.fillRoundRect(x,y,w,7,7,7)
+            g.color=Color(61,235,255);g.fillRoundRect(x,y,(w*progress).roundToInt(),7,7,7)
         }
         g.color=Color(235,245,255);g.font=Font(Font.SANS_SERIF,Font.BOLD,14)
         g.drawString(

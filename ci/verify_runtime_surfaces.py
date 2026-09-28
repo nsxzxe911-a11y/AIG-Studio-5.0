@@ -406,6 +406,17 @@ for needle in (
 ):
     require(machining3d, needle, "ANDROID_TOOLPATH_VISIBILITY_173")
 print("ANDROID_TOOLPATH_VISIBILITY_GATE_PASS|3D|3AX|4AX|5AX|ACTIVE_GLOW|TOOL_HALO|PROGRESS_BAR|HUD_OVERLAY|SINGLE_ROW_CONTROLS")
+for needle in (
+    'g2.stroke=BasicStroke(10f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)',
+    'g2.stroke=BasicStroke(4f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)',
+    'g2.fillOval(p.x-12,p.y-12,24,24)',
+    'g2.fillRoundRect(x,y,(w*progress).roundToInt(),7,7,7)',
+    'g.stroke=BasicStroke(10f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)',
+    'g.stroke=BasicStroke(4f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)',
+    'g.fillRoundRect(x,y,(w*progress).roundToInt(),7,7,7)',
+):
+    require(desktop, needle, "WINDOWS_TOOLPATH_VISIBILITY_173")
+print("WINDOWS_TOOLPATH_VISIBILITY_GATE_PASS|3D|3AX|4AX|5AX|COMPLETED_PATH|ACTIVE_GLOW|TOOL_HALO|PROGRESS_BAR")
 
 # Rotary clamp safety must be wired end-to-end in the Android machining path.
 for needle in (
