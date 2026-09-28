@@ -680,6 +680,21 @@ for needle in (
     require(desktop, needle, "STUDIO_5X_CUT_CONTACT_SMOKE_193")
 print("CUT_CONTACT_BOUNDARY_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|NON_RAPID_ONLY|ACTIVE_MESH|LIVE_TOOLPOINT|POST_MATERIAL|TOOL_STACK_ABOVE|SMOKE_NON_RAPID|VISUAL_ONLY")
 for needle in (
+    "private val activeTrailPaint",
+    "val trailStart=(i-3).coerceAtLeast(1)",
+    "if(!trailMove.rapid)",
+    "canvas.drawLine(ta.x,ta.y,tb.x,tb.y,activeTrailPaint)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_RECENT_CUT_TRAIL_194")
+for needle in (
+    "g2.color=Color(61,235,255,(112-age*22).coerceAtLeast(46))",
+    "g.color=Color(61,235,255,(112-age*22).coerceAtLeast(46))",
+    "val trailStart=(i-3).coerceAtLeast(1)",
+    "if(!trailMove.rapid)",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_RECENT_CUT_TRAIL_194")
+print("RECENT_CUT_TRAIL_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|LAST_3_HISTORY_PLUS_ACTIVE|NON_RAPID_ONLY|TRUE_CAM_MOVES|NO_INTERPOLATION|VISUAL_ONLY")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',

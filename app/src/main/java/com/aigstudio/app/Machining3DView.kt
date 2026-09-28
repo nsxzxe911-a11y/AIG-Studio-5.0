@@ -68,6 +68,13 @@ class Machining3DView(
         strokeJoin = Paint.Join.ROUND
         color = Color.argb(210,255,176,32)
     }
+    private val activeTrailPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 3f * resources.displayMetrics.density
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+        color = Color.argb(96,61,235,255)
+    }
     private val activePathGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 9f * resources.displayMetrics.density
@@ -512,6 +519,19 @@ class Machining3DView(
             val flatMoves=result.cam.toolpaths.flatMap{it.moves}
             val i=frame.index.coerceIn(1,(flatMoves.size-1).coerceAtLeast(1))
             if(flatMoves.size>1){
+                val trailStart=(i-3).coerceAtLeast(1)
+                for(j in trailStart until i){
+                    val trailMove=flatMoves[j]
+                    if(!trailMove.rapid){
+                        val trailPrev=flatMoves[j-1]
+                        val age=i-j
+                        activeTrailPaint.color=Color.argb((112-age*22).coerceAtLeast(46),61,235,255)
+                        activeTrailPaint.strokeWidth=(3.4f-age*0.45f).coerceAtLeast(1.5f)*resources.displayMetrics.density
+                        val ta=project(machineSpace(Vec3(trailPrev.to.x,trailPrev.to.y,trailPrev.z),resolvedMode,liveMove),scale)
+                        val tb=project(machineSpace(Vec3(trailMove.to.x,trailMove.to.y,trailMove.z),resolvedMode,liveMove),scale)
+                        canvas.drawLine(ta.x,ta.y,tb.x,tb.y,activeTrailPaint)
+                    }
+                }
                 val prev=flatMoves[i-1]
                 val move=flatMoves[i]
                 val a=project(machineSpace(Vec3(prev.to.x,prev.to.y,prev.z),resolvedMode,liveMove),scale)

@@ -881,6 +881,19 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         activeFrame?.let { frame ->
             if(allMoves.size>1){
                 val i=frame.index.coerceIn(1,allMoves.lastIndex)
+                val trailStart=(i-3).coerceAtLeast(1)
+                for(j in trailStart until i){
+                    val trailMove=allMoves[j]
+                    if(!trailMove.rapid){
+                        val trailPrev=allMoves[j-1]
+                        val age=i-j
+                        val ta=project(Vec3(trailPrev.to.x,trailPrev.to.y,trailPrev.z),scale)
+                        val tb=project(Vec3(trailMove.to.x,trailMove.to.y,trailMove.z),scale)
+                        g2.color=Color(61,235,255,(112-age*22).coerceAtLeast(46))
+                        g2.stroke=BasicStroke((3.4f-age*0.45f).coerceAtLeast(1.5f),BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+                        g2.drawLine(ta.x,ta.y,tb.x,tb.y)
+                    }
+                }
                 val prev=allMoves[i-1];val move=allMoves[i]
                 val a=project(Vec3(prev.to.x,prev.to.y,prev.z),scale)
                 val b=project(Vec3(move.to.x,move.to.y,move.z),scale)
@@ -1177,6 +1190,19 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         activeFrame?.let { frame ->
             if(allMoves.size>1){
                 val i=frame.index.coerceIn(1,allMoves.lastIndex)
+                val trailStart=(i-3).coerceAtLeast(1)
+                for(j in trailStart until i){
+                    val trailMove=allMoves[j]
+                    if(!trailMove.rapid){
+                        val trailPrev=allMoves[j-1]
+                        val age=i-j
+                        val ta=project(Vec3(trailPrev.to.x,trailPrev.to.y,trailPrev.z),scale)
+                        val tb=project(Vec3(trailMove.to.x,trailMove.to.y,trailMove.z),scale)
+                        g.color=Color(61,235,255,(112-age*22).coerceAtLeast(46))
+                        g.stroke=BasicStroke((3.4f-age*0.45f).coerceAtLeast(1.5f),BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+                        g.drawLine(ta.x,ta.y,tb.x,tb.y)
+                    }
+                }
                 val p=allMoves[i-1];val m=allMoves[i]
                 val a=project(Vec3(p.to.x,p.to.y,p.z),scale)
                 val b=project(Vec3(m.to.x,m.to.y,m.z),scale)
