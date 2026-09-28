@@ -1059,19 +1059,27 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             val maxBadgeW=(width-12).coerceAtLeast(1)
             val singleLineW=fm.stringWidth(displayBadgeText)+10
             val wrapBadge=singleLineW>maxBadgeW
-            val badgeLine1=badgeText
-            val badgeLine2=poseAngleText
-            val badgeW=(if(wrapBadge) max(fm.stringWidth(badgeLine1),fm.stringWidth(badgeLine2))+10 else singleLineW).coerceAtMost(maxBadgeW)
-            val badgeH=if(wrapBadge) fm.height*2+6 else fm.height+6
+            val axisLineW=fm.stringWidth(badgeText)+10
+            val aBadgeText=String.format(java.util.Locale.US,"A%+.3f°%s",tool.axisA,deltaAMark)
+            val bBadgeText=String.format(java.util.Locale.US,"B%+.3f°%s",tool.axisB,deltaBMark)
+            val depthPoseBadgeText="$depthPolarity $poseAngleText"
+            val badgeLines=when {
+                !wrapBadge -> listOf(displayBadgeText)
+                axisLineW<=maxBadgeW -> listOf(badgeText,poseAngleText)
+                else -> listOf(aBadgeText,bBadgeText,depthPoseBadgeText)
+            }
+            val badgeW=(badgeLines.maxOf { fm.stringWidth(it) }+10).coerceAtMost(maxBadgeW)
+            val badgeH=fm.height*badgeLines.size+6
             val badgeX=(axisTop.x+6).coerceIn(6,(width-badgeW-6).coerceAtLeast(6))
             val badgeY=(axisTop.y-badgeH-6).coerceIn(6,(height-badgeH-6).coerceAtLeast(6))
             g2.color=Color(8,20,32,188);g2.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)
             g2.color=Color(255,160,232,245)
-            if(wrapBadge){
-                g2.drawString(badgeLine1,badgeX+5,badgeY+fm.ascent+3)
-                g2.drawString(badgeLine2,badgeX+5,badgeY+fm.ascent+3+fm.height)
-            } else {
+            if(badgeLines.size==1){
                 g2.drawString(displayBadgeText,badgeX+5,badgeY+fm.ascent+3)
+            } else {
+                badgeLines.forEachIndexed { index,line ->
+                    g2.drawString(line,badgeX+5,badgeY+fm.ascent+3+fm.height*index)
+                }
             }
         }
         activeFrame?.let { frame ->
@@ -1485,19 +1493,27 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             val maxBadgeW=(width-12).coerceAtLeast(1)
             val singleLineW=fm.stringWidth(displayBadgeText)+10
             val wrapBadge=singleLineW>maxBadgeW
-            val badgeLine1=badgeText
-            val badgeLine2=poseAngleText
-            val badgeW=(if(wrapBadge) max(fm.stringWidth(badgeLine1),fm.stringWidth(badgeLine2))+10 else singleLineW).coerceAtMost(maxBadgeW)
-            val badgeH=if(wrapBadge) fm.height*2+6 else fm.height+6
+            val axisLineW=fm.stringWidth(badgeText)+10
+            val aBadgeText=String.format(java.util.Locale.US,"A%+.3f°%s",axisA,deltaAMark)
+            val bBadgeText=String.format(java.util.Locale.US,"B%+.3f°%s",axisB,deltaBMark)
+            val depthPoseBadgeText="$depthPolarity $poseAngleText"
+            val badgeLines=when {
+                !wrapBadge -> listOf(displayBadgeText)
+                axisLineW<=maxBadgeW -> listOf(badgeText,poseAngleText)
+                else -> listOf(aBadgeText,bBadgeText,depthPoseBadgeText)
+            }
+            val badgeW=(badgeLines.maxOf { fm.stringWidth(it) }+10).coerceAtMost(maxBadgeW)
+            val badgeH=fm.height*badgeLines.size+6
             val badgeX=(axisTop.x+6).coerceIn(6,(width-badgeW-6).coerceAtLeast(6))
             val badgeY=(axisTop.y-badgeH-6).coerceIn(6,(height-badgeH-6).coerceAtLeast(6))
             g.color=Color(8,20,32,188);g.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)
             g.color=Color(255,160,232,245)
-            if(wrapBadge){
-                g.drawString(badgeLine1,badgeX+5,badgeY+fm.ascent+3)
-                g.drawString(badgeLine2,badgeX+5,badgeY+fm.ascent+3+fm.height)
-            } else {
+            if(badgeLines.size==1){
                 g.drawString(displayBadgeText,badgeX+5,badgeY+fm.ascent+3)
+            } else {
+                badgeLines.forEachIndexed { index,line ->
+                    g.drawString(line,badgeX+5,badgeY+fm.ascent+3+fm.height*index)
+                }
             }
         }
         activeFrame?.let { frame ->
