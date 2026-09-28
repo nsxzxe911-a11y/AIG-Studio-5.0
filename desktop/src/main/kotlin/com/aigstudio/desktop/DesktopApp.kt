@@ -816,13 +816,13 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         val allMoves=result.cam.toolpaths.flatMap{it.moves}
         val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
         var previous:Move?=null
-        g2.stroke=BasicStroke(1.8f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+        g2.stroke=BasicStroke(1.15f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
         visibleMoves.forEach { move ->
             val prev=previous
             if(prev!=null){
                 val a=project(Vec3(prev.to.x,prev.to.y,prev.z),scale)
                 val b=project(Vec3(move.to.x,move.to.y,move.z),scale)
-                g2.color=if(move.rapid)Color(255,70,220,88) else Color(63,255,157,125)
+                g2.color=if(move.rapid)Color(255,70,220,40) else Color(63,255,157,82)
                 g2.drawLine(a.x,a.y,b.x,b.y)
             }
             previous=move
@@ -1059,8 +1059,8 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             if(p!=null){
                 val a=project(Vec3(p.to.x,p.to.y,p.z),scale)
                 val b=project(Vec3(m.to.x,m.to.y,m.z),scale)
-                g.color=if(m.rapid)Color(61,235,255,88) else Color(255,176,32,135)
-                g.stroke=BasicStroke(if(m.rapid)1.8f else 2.4f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+                g.color=if(m.rapid)Color(61,235,255,36) else Color(255,176,32,78)
+                g.stroke=BasicStroke(if(m.rapid)1.05f else 1.5f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
                 g.drawLine(a.x,a.y,b.x,b.y)
             }
             prev=m

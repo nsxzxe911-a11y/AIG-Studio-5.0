@@ -44,15 +44,15 @@ class Machining3DView(
     }
     private val rapidPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 2.0f * resources.displayMetrics.density
+        strokeWidth = 1.35f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
-        color = Color.argb(125,255,70,220)
+        color = Color.argb(58,255,70,220)
     }
     private val cutPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 2.8f * resources.displayMetrics.density
+        strokeWidth = 1.9f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
-        color = Color.argb(180,63,255,157)
+        color = Color.argb(108,63,255,157)
     }
     private val activePathGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE

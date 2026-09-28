@@ -545,6 +545,27 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_MATERIAL_SURFACE_READABILITY_181")
 print("MATERIAL_SURFACE_READABILITY_GATE_PASS|ANDROID|WINDOWS|FILLED_REMOVAL_SURFACE|SPARSE_MESH_EDGES|5AX_MACHINE_PRIORITY|VISUAL_ONLY")
 for needle in (
+    "strokeWidth = 1.35f * resources.displayMetrics.density",
+    "color = Color.argb(58,255,70,220)",
+    "strokeWidth = 1.9f * resources.displayMetrics.density",
+    "color = Color.argb(108,63,255,157)",
+    "private val activePathGlowPaint",
+    "private val activePathPaint",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_TOOLPATH_HIERARCHY_182")
+for needle in (
+    "g2.stroke=BasicStroke(1.15f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)",
+    "Color(255,70,220,40)",
+    "Color(63,255,157,82)",
+    "Color(61,235,255,36)",
+    "Color(255,176,32,78)",
+    "BasicStroke(if(m.rapid)1.05f else 1.5f",
+    "BasicStroke(10f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)",
+    "BasicStroke(4f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_TOOLPATH_HIERARCHY_182")
+print("TOOLPATH_VISUAL_HIERARCHY_GATE_PASS|ANDROID|WINDOWS|COMPLETED_PATH_FADED|ACTIVE_SEGMENT_BRIGHT|TOOL_HALO|MATERIAL_REMOVAL_UNCHANGED|VISUAL_ONLY")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',
