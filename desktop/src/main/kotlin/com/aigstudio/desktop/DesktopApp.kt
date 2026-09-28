@@ -908,12 +908,19 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         }
         activeFrame?.toolPoint?.let { tool ->
             val p=project(Vec3(tool.to.x,tool.to.y,tool.z),scale)
+            val cueLength=max(18.0,result.cam.settings.toolDiameter*3.0)
+            val cueAxis=MachineKinematics3D.transform(Vec3(0.0,0.0,cueLength),tool.axisA,tool.axisB)
+            val axisTop=project(Vec3(tool.to.x+cueAxis.x,tool.to.y+cueAxis.y,tool.z+cueAxis.z),scale)
             g2.color=Color(255,220,90,62)
             g2.fillOval(p.x-12,p.y-12,24,24)
             g2.color=Color(255,220,90,235)
             g2.fillOval(p.x-6,p.y-6,12,12)
-            g2.stroke=BasicStroke(2f)
-            g2.drawLine(p.x,p.y-20,p.x,p.y+20)
+            g2.color=Color(255,78,205,220)
+            g2.stroke=BasicStroke(2.2f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+            g2.drawLine(p.x,p.y,axisTop.x,axisTop.y)
+            g2.fillOval(axisTop.x-4,axisTop.y-4,8,8)
+            g2.font=Font(Font.SANS_SERIF,Font.BOLD,11)
+            g2.drawString("A/B",axisTop.x+6,axisTop.y-6)
         }
         activeFrame?.let { frame ->
             val progress=frame.progress.coerceIn(0.0,1.0)
@@ -1215,9 +1222,16 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         }
         activeFrame?.toolPoint?.let { tool ->
             val p=project(Vec3(tool.to.x,tool.to.y,tool.z),scale)
+            val cueLength=max(18.0,result.cam.settings.toolDiameter*3.0)
+            val axisTop=project(Vec3(tool.to.x,tool.to.y,tool.z+cueLength),scale)
             g.color=Color(255,225,80,62);g.fillOval(p.x-12,p.y-12,24,24)
             g.color=Color(255,225,80,240);g.fillOval(p.x-6,p.y-6,12,12)
-            g.stroke=BasicStroke(2f);g.drawLine(p.x,p.y-20,p.x,p.y+20)
+            g.color=Color(255,78,205,220)
+            g.stroke=BasicStroke(2.2f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+            g.drawLine(p.x,p.y,axisTop.x,axisTop.y)
+            g.fillOval(axisTop.x-4,axisTop.y-4,8,8)
+            g.font=Font(Font.SANS_SERIF,Font.BOLD,11)
+            g.drawString("A/B",axisTop.x+6,axisTop.y-6)
         }
         activeFrame?.let { frame ->
             val progress=frame.progress.coerceIn(0.0,1.0)
@@ -1503,6 +1517,10 @@ private fun runSmoke() {
         }
     } ?: error("No Studio 5AX frame changes XYZ + rotary axes + material removal together")
     val fiveAfterFrame=ProgressiveMachining3D.frame(fiveAxisResult,fiveAfterIndex)
+    val cueUnit=Vec3(0.0,0.0,1.0)
+    val fiveAxisCueBefore=MachineKinematics3D.transform(cueUnit,fiveBeforeFrame.toolPoint.axisA,fiveBeforeFrame.toolPoint.axisB)
+    val fiveAxisCueAfter=MachineKinematics3D.transform(cueUnit,fiveAfterFrame.toolPoint.axisA,fiveAfterFrame.toolPoint.axisB)
+    require(fiveAxisCueBefore!=fiveAxisCueAfter){"Studio 5AX tool-axis cue did not follow A/B change"}
     val fiveAxisPanel=AxisMachiningPanel(fiveAxisResult)
     fiveAxisPanel.setMachineMode("5AX")
     fiveAxisPanel.showProgressiveFrame(fiveBeforeFrame)
@@ -1511,7 +1529,15 @@ private fun runSmoke() {
     fiveAxisPanel.showProgressiveFrame(fiveAfterFrame)
     val fiveAfterFile=File("desktop_5x_after.png")
     writePanel(fiveAxisPanel,fiveAfterFile,980,620)
-    require(!fiveMoves[fiveBeforeIndex].rapid && !fiveMoves[fiveAfterIndex].rapid){"Studio 5AX cut-contact evidence must use non-rapid frames"}
+    val fiveCueIndex=fiveMoves.indices.filter { !fiveMoves[it].rapid }.maxByOrNull { i ->
+        abs(fiveMoves[i].axisA)+abs(fiveMoves[i].axisB)
+    } ?: fiveAfterIndex
+    val fiveCueFrame=ProgressiveMachining3D.frame(fiveAxisResult,fiveCueIndex)
+    require(abs(fiveCueFrame.toolPoint.axisA)+abs(fiveCueFrame.toolPoint.axisB)>5.0){"Studio 5AX axis-cue evidence angle too small"}
+    fiveAxisPanel.showProgressiveFrame(fiveCueFrame)
+    val fiveCueFile=File("desktop_5x_axis_cue.png")
+    writePanel(fiveAxisPanel,fiveCueFile,980,620)
+    require(!fiveMoves[fiveBeforeIndex].rapid && !fiveMoves[fiveAfterIndex].rapid && !fiveMoves[fiveCueIndex].rapid){"Studio 5AX cut-contact evidence must use non-rapid frames"}
     require(fiveAfterFrame.removedCells>fiveBeforeFrame.removedCells){"Studio 5AX material removal did not increase"}
     require(
         abs(fiveAfterFrame.toolPoint.to.x-fiveBeforeFrame.toolPoint.to.x)>1e-9 ||
@@ -1557,6 +1583,13 @@ private fun runSmoke() {
             "5X_REMOVED_BEFORE=${fiveBeforeFrame.removedCells}\n" +
             "5X_REMOVED_AFTER=${fiveAfterFrame.removedCells}\n" +
             "5X_DYNAMIC_TOOL_CHANGE=PASS\n5X_DYNAMIC_AXIS_CHANGE=PASS\n5X_PROGRESSIVE_MATERIAL_REMOVAL=PASS\n5X_CUT_CONTACT_FRAME=PASS\n" +
+            "5X_TOOL_AXIS_CUE_CHANGE=PASS\n" +
+            "5X_AXIS_CUE_BEFORE=${DisplayFormat.mm(fiveAxisCueBefore.x)},${DisplayFormat.mm(fiveAxisCueBefore.y)},${DisplayFormat.mm(fiveAxisCueBefore.z)}\n" +
+            "5X_AXIS_CUE_AFTER=${DisplayFormat.mm(fiveAxisCueAfter.x)},${DisplayFormat.mm(fiveAxisCueAfter.y)},${DisplayFormat.mm(fiveAxisCueAfter.z)}\n" +
+            "5X_AXIS_CUE_EVIDENCE=PASS\n" +
+            "5X_AXIS_CUE_FRAME=${fiveCueFrame.index+1}/${fiveCueFrame.total}\n" +
+            "5X_AXIS_CUE_A=${DisplayFormat.mm(fiveCueFrame.toolPoint.axisA)}\n" +
+            "5X_AXIS_CUE_B=${DisplayFormat.mm(fiveCueFrame.toolPoint.axisB)}\n" +
             "ABS_MODE=" + SoftwareCoordinateContract.coordinateMode() + "\n" +
             "MASTER_ORIGIN=" + SoftwareCoordinateContract.masterOriginData() + "\n" +
             "SIGNED_NEGATIVE_SAMPLE=" + SoftwareCoordinateContract.xyzData(-40.0, -25.0, -2.0) + "\n" +
@@ -1574,6 +1607,7 @@ private fun runSmoke() {
             sha256File(materialAfterFile) + "  desktop_material_after.png\n" +
             sha256File(fiveBeforeFile) + "  desktop_5x_before.png\n" +
             sha256File(fiveAfterFile) + "  desktop_5x_after.png\n" +
+            sha256File(fiveCueFile) + "  desktop_5x_axis_cue.png\n" +
             "SOURCE_SHA=$sourceSha\n"
     )
 
@@ -1591,6 +1625,7 @@ private fun runSmoke() {
             "PROGRESSIVE_MATERIAL_AFTER=desktop_material_after.png\n" +
             "5X_BEFORE=desktop_5x_before.png\n" +
             "5X_AFTER=desktop_5x_after.png\n" +
+            "5X_AXIS_CUE=desktop_5x_axis_cue.png\n" +
             "VIEW_ANIMATION_FRAME_CHANGE=PASS\n" +
             "PROGRESSIVE_MATERIAL_REMOVAL=PASS\n" +
             "5X_REAL_MOTION_AND_REMOVAL=PASS\n"

@@ -695,6 +695,25 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_RECENT_CUT_TRAIL_194")
 print("RECENT_CUT_TRAIL_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|LAST_3_HISTORY_PLUS_ACTIVE|NON_RAPID_ONLY|TRUE_CAM_MOVES|NO_INTERPOLATION|VISUAL_ONLY")
 for needle in (
+    "private val toolAxisCuePaint",
+    "private val toolAxisCueTextPaint",
+    "machineSpace(Vec3(liveMove.to.x,liveMove.to.y,liveMove.z+cueLength),resolvedMode,liveMove)",
+    "canvas.drawLine(tip.x, tip.y, axisCueTop.x, axisCueTop.y, toolAxisCuePaint)",
+    "canvas.drawText(\"A/B\"",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_TOOL_AXIS_CUE_195")
+for needle in (
+    "val cueAxis=MachineKinematics3D.transform(Vec3(0.0,0.0,cueLength),tool.axisA,tool.axisB)",
+    "val axisTop=project(Vec3(tool.to.x,tool.to.y,tool.z+cueLength),scale)",
+    "Studio 5AX tool-axis cue did not follow A/B change",
+    "Studio 5AX axis-cue evidence angle too small",
+    "desktop_5x_axis_cue.png",
+    "5X_TOOL_AXIS_CUE_CHANGE=PASS",
+    "5X_AXIS_CUE_EVIDENCE=PASS",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_TOOL_AXIS_CUE_195")
+print("TOOL_AXIS_CUE_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|A_THEN_B|TRUNNION_PHYSICAL_SPINDLE_VERTICAL|WORKPIECE_RELATIVE_AXIS|SMOKE_VECTOR_CHANGE|MAX_ANGLE_EVIDENCE|VISUAL_ONLY")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',

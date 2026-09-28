@@ -109,6 +109,21 @@ class Machining3DView(
         strokeWidth = 3f * resources.displayMetrics.density
         color = Color.rgb(245, 158, 11)
     }
+    private val toolAxisCuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 2.2f * resources.displayMetrics.density
+        strokeCap = Paint.Cap.ROUND
+        color = Color.argb(220,255,78,205)
+    }
+    private val toolAxisCueDotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = Color.argb(235,255,78,205)
+    }
+    private val toolAxisCueTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = Color.argb(235,255,110,220)
+        textSize = 10f * resources.displayMetrics.scaledDensity
+    }
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.rgb(225, 240, 255)
         textSize = 12f * resources.displayMetrics.scaledDensity
@@ -546,10 +561,18 @@ class Machining3DView(
             val machineTip=machineSpace(Vec3(liveMove.to.x, liveMove.to.y, liveMove.z),resolvedMode,liveMove)
             val tip = project(machineTip, scale)
             val toolLength = max(12.0, result.cam.settings.toolDiameter * 2.0)
+            val cueLength = max(18.0, result.cam.settings.toolDiameter * 3.0)
             val top = project(Vec3(machineTip.x,machineTip.y,machineTip.z+toolLength),scale)
+            val axisCueTop = project(
+                machineSpace(Vec3(liveMove.to.x,liveMove.to.y,liveMove.z+cueLength),resolvedMode,liveMove),
+                scale
+            )
             val radius = max(4f, (result.cam.settings.toolDiameter * scale * 0.12).toFloat())
             canvas.drawCircle(tip.x,tip.y,radius+4f*resources.displayMetrics.density,toolHaloPaint)
             canvas.drawLine(tip.x, tip.y, top.x, top.y, toolPaint)
+            canvas.drawLine(tip.x, tip.y, axisCueTop.x, axisCueTop.y, toolAxisCuePaint)
+            canvas.drawCircle(axisCueTop.x,axisCueTop.y,3.5f*resources.displayMetrics.density,toolAxisCueDotPaint)
+            canvas.drawText("A/B",axisCueTop.x+5f*resources.displayMetrics.density,axisCueTop.y-5f*resources.displayMetrics.density,toolAxisCueTextPaint)
             canvas.drawCircle(tip.x, tip.y, radius, toolPaint)
         }
 
