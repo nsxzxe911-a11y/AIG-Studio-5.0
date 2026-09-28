@@ -659,6 +659,27 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_TOOL_STACK_FOREGROUND_192")
 print("TOOL_STACK_FOREGROUND_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|SPINDLE|HOLDER|TOOL|POST_MATERIAL|TRUE_GEOMETRY|VISUAL_ONLY")
 for needle in (
+    "private val cutBoundaryPaint",
+    "activeCutMove!=null && !activeCutMove.rapid",
+    "visibleTriangleBuffer.forEach { index ->",
+    "canvas.drawCircle(tip.x,tip.y,contactRadius,cutBoundaryPaint)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_CUT_CONTACT_BOUNDARY_193")
+for needle in (
+    "val contactMoves=result.cam.toolpaths.flatMap{it.moves}",
+    "activeCutMove!=null && !activeCutMove.rapid",
+    "g2.drawOval(tip.x-contactRadius,tip.y-contactRadius,contactRadius*2,contactRadius*2)",
+    "g.drawOval(tip.x-contactRadius,tip.y-contactRadius,contactRadius*2,contactRadius*2)",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_CUT_CONTACT_BOUNDARY_193")
+for needle in (
+    "if(i<=fiveBeforeIndex || fiveMoves[i].rapid) false else",
+    "Studio 5AX cut-contact evidence must use non-rapid frames",
+    "5X_CUT_CONTACT_FRAME=PASS",
+):
+    require(desktop, needle, "STUDIO_5X_CUT_CONTACT_SMOKE_193")
+print("CUT_CONTACT_BOUNDARY_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|NON_RAPID_ONLY|ACTIVE_MESH|LIVE_TOOLPOINT|POST_MATERIAL|TOOL_STACK_ABOVE|SMOKE_NON_RAPID|VISUAL_ONLY")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',

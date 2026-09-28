@@ -842,9 +842,29 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             if(showMaterialMeshEdges && index % 18 == 0){ g2.color=Color(61, 220, 255, 46); g2.stroke=BasicStroke(.55f); g2.drawPolygon(poly) }
         }
 
+        val contactMoves=result.cam.toolpaths.flatMap{it.moves}
+        val activeCutMove=activeFrame?.let { frame ->
+            if(contactMoves.size>1) contactMoves[frame.index.coerceIn(1,contactMoves.lastIndex)] else null
+        }
+        if(activeCutMove!=null && !activeCutMove.rapid){
+            val tip=project(Vec3(activeCutMove.to.x,activeCutMove.to.y,activeCutMove.z),scale)
+            val contactRadius=max(10.0,result.cam.settings.toolDiameter*scale*0.72).roundToInt()
+            val contactRadius2=contactRadius*contactRadius
+            g2.color=Color(255,176,32,210)
+            g2.stroke=BasicStroke(1.65f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+            visible.forEach { item ->
+                val t=item.second; val a=projected[t.a]; val b=projected[t.b]; val c=projected[t.c]
+                val cx=(a.x+b.x+c.x)/3; val cy=(a.y+b.y+c.y)/3
+                val dx=cx-tip.x; val dy=cy-tip.y
+                if(dx*dx+dy*dy<=contactRadius2){
+                    g2.drawPolygon(Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3))
+                }
+            }
+            g2.drawOval(tip.x-contactRadius,tip.y-contactRadius,contactRadius*2,contactRadius*2)
+        }
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
         drawToolStackForeground(g2,machineModel,scale)
-        val allMoves=result.cam.toolpaths.flatMap{it.moves}
+        val allMoves=contactMoves
         val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
         var previous:Move?=null
         g2.stroke=BasicStroke(1.15f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
@@ -1118,9 +1138,29 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             g.color=materialColor;g.stroke=BasicStroke(1.15f);g.drawPolygon(poly)
             if(showMaterialMeshEdges && i%(stride*18)==0){ g.color=Color(61,235,255,46);g.stroke=BasicStroke(.55f);g.drawPolygon(poly) }
         }}
+        val contactMoves=result.cam.toolpaths.flatMap{it.moves}
+        val activeCutMove=activeFrame?.let { frame ->
+            if(contactMoves.size>1) contactMoves[frame.index.coerceIn(1,contactMoves.lastIndex)] else null
+        }
+        if(activeCutMove!=null && !activeCutMove.rapid){
+            val tip=project(Vec3(activeCutMove.to.x,activeCutMove.to.y,activeCutMove.z),scale)
+            val contactRadius=max(10.0,result.cam.settings.toolDiameter*scale*0.72).roundToInt()
+            val contactRadius2=contactRadius*contactRadius
+            g.color=Color(255,176,32,210)
+            g.stroke=BasicStroke(1.65f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+            activeMesh.triangles.forEachIndexed { i,t -> if(i%stride==0){
+                val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
+                val cx=(a.x+b.x+c.x)/3; val cy=(a.y+b.y+c.y)/3
+                val dx=cx-tip.x; val dy=cy-tip.y
+                if(dx*dx+dy*dy<=contactRadius2){
+                    g.drawPolygon(Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3))
+                }
+            }}
+            g.drawOval(tip.x-contactRadius,tip.y-contactRadius,contactRadius*2,contactRadius*2)
+        }
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)
         drawToolStackForeground(g,machineModel,scale)
-        val allMoves=result.cam.toolpaths.flatMap{it.moves}
+        val allMoves=contactMoves
         val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
         var prev:Move?=null
         visibleMoves.forEach { m ->
@@ -1424,7 +1464,7 @@ private fun runSmoke() {
     } ?: 0
     val fiveBeforeFrame=ProgressiveMachining3D.frame(fiveAxisResult,fiveBeforeIndex)
     val fiveAfterIndex=fiveMoves.indices.firstOrNull{i->
-        if(i<=fiveBeforeIndex) false else {
+        if(i<=fiveBeforeIndex || fiveMoves[i].rapid) false else {
             val f=ProgressiveMachining3D.frame(fiveAxisResult,i)
             val xyzChanged=
                 abs(f.toolPoint.to.x-fiveBeforeFrame.toolPoint.to.x)>1e-9 ||
@@ -1445,6 +1485,7 @@ private fun runSmoke() {
     fiveAxisPanel.showProgressiveFrame(fiveAfterFrame)
     val fiveAfterFile=File("desktop_5x_after.png")
     writePanel(fiveAxisPanel,fiveAfterFile,980,620)
+    require(!fiveMoves[fiveBeforeIndex].rapid && !fiveMoves[fiveAfterIndex].rapid){"Studio 5AX cut-contact evidence must use non-rapid frames"}
     require(fiveAfterFrame.removedCells>fiveBeforeFrame.removedCells){"Studio 5AX material removal did not increase"}
     require(
         abs(fiveAfterFrame.toolPoint.to.x-fiveBeforeFrame.toolPoint.to.x)>1e-9 ||
@@ -1489,7 +1530,7 @@ private fun runSmoke() {
             "5X_B_AFTER=${DisplayFormat.mm(fiveAfterFrame.toolPoint.axisB)}\n" +
             "5X_REMOVED_BEFORE=${fiveBeforeFrame.removedCells}\n" +
             "5X_REMOVED_AFTER=${fiveAfterFrame.removedCells}\n" +
-            "5X_DYNAMIC_TOOL_CHANGE=PASS\n5X_DYNAMIC_AXIS_CHANGE=PASS\n5X_PROGRESSIVE_MATERIAL_REMOVAL=PASS\n" +
+            "5X_DYNAMIC_TOOL_CHANGE=PASS\n5X_DYNAMIC_AXIS_CHANGE=PASS\n5X_PROGRESSIVE_MATERIAL_REMOVAL=PASS\n5X_CUT_CONTACT_FRAME=PASS\n" +
             "ABS_MODE=" + SoftwareCoordinateContract.coordinateMode() + "\n" +
             "MASTER_ORIGIN=" + SoftwareCoordinateContract.masterOriginData() + "\n" +
             "SIGNED_NEGATIVE_SAMPLE=" + SoftwareCoordinateContract.xyzData(-40.0, -25.0, -2.0) + "\n" +

@@ -62,6 +62,12 @@ class Machining3DView(
         strokeCap = Paint.Cap.ROUND
         color = Color.argb(108,63,255,157)
     }
+    private val cutBoundaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.65f * resources.displayMetrics.density
+        strokeJoin = Paint.Join.ROUND
+        color = Color.argb(210,255,176,32)
+    }
     private val activePathGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 9f * resources.displayMetrics.density
@@ -462,6 +468,27 @@ class Machining3DView(
             canvas.drawPath(trianglePath,surfacePaint)
             canvas.drawPath(trianglePath,surfaceSeamPaint)
             if(showMaterialMeshEdges && visibleIndex % 18 == 0) { canvas.drawPath(trianglePath,edgePaint) }
+        }
+        val contactMoves=result.cam.toolpaths.flatMap{it.moves}
+        val activeCutMove=activeFrame?.let { frame ->
+            if(contactMoves.size>1) contactMoves[frame.index.coerceIn(1,contactMoves.lastIndex)] else null
+        }
+        if(activeCutMove!=null && !activeCutMove.rapid){
+            val machineTip=machineSpace(Vec3(activeCutMove.to.x,activeCutMove.to.y,activeCutMove.z),resolvedMode,liveMove)
+            val tip=project(machineTip,scale)
+            val contactRadius=max(10f*resources.displayMetrics.density,(result.cam.settings.toolDiameter*scale*0.72).toFloat())
+            val contactRadius2=contactRadius*contactRadius
+            visibleTriangleBuffer.forEach { index ->
+                val triangle=triangles[index]
+                val a=projected[triangle.a]; val b=projected[triangle.b]; val c=projected[triangle.c]
+                val cx=(a.x+b.x+c.x)/3f; val cy=(a.y+b.y+c.y)/3f
+                val dx=cx-tip.x; val dy=cy-tip.y
+                if(dx*dx+dy*dy<=contactRadius2){
+                    trianglePath.reset(); trianglePath.moveTo(a.x,a.y); trianglePath.lineTo(b.x,b.y); trianglePath.lineTo(c.x,c.y); trianglePath.close()
+                    canvas.drawPath(trianglePath,cutBoundaryPaint)
+                }
+            }
+            canvas.drawCircle(tip.x,tip.y,contactRadius,cutBoundaryPaint)
         }
         drawToolStackForeground(canvas,machineModel,scale)
 
