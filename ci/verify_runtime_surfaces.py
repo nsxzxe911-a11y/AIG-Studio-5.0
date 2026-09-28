@@ -480,20 +480,17 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_MACHINE_MATERIAL_SEPARATION_177")
 print("MACHINE_MATERIAL_SEPARATION_GATE_PASS|ANDROID|WINDOWS|NO_STATIC_MACHINE_IMAGE|ROLE_FILL_COLOR|EDGE_RESTORE|FIXTURE|TABLE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL")
 for needle in (
-    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 48",
-    "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 24",
-    "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 40",
-    "MachineComponentRole.FIXTURE -> 48",
-    "else -> 56",
-    "if(index%edgeStep==0)",
+    "val drawRoleEdges=when(component.role){",
+    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 256",
+    "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96",
+    "if(drawRoleEdges && index%edgeStep==0)",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_MACHINE_SURFACE_CLEANUP_178")
 for needle in (
-    "val edgeStride=stride*when(component.role){",
-    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 48",
-    "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 24",
-    "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 40",
-    "if(i%edgeStride==0)",
+    "val drawInternalEdges=when(component.role){",
+    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> stride*256",
+    "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> stride*96",
+    "if(drawInternalEdges && i%edgeStride==0)",
 ):
     require(desktop, needle, "STUDIO_WINDOWS_MACHINE_SURFACE_CLEANUP_178")
 print("MACHINE_SURFACE_CLEANUP_GATE_PASS|ANDROID|WINDOWS|TRUE_MESH_FILL|SPARSE_INTERNAL_EDGES|TOOL_FULL_EDGE|NO_STATIC_IMAGE")
@@ -569,10 +566,10 @@ for needle in (
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 180",
     "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 128",
     "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 96",
-    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 48",
-    "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 24",
-    "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 40",
-    "else -> 56",
+    "val drawRoleEdges=when(component.role){",
+    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 256",
+    "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96",
+    "if(drawRoleEdges && index%edgeStep==0)",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_MACHINE_EDGE_CLEANUP_183")
 for needle in (
@@ -580,13 +577,34 @@ for needle in (
     "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 128",
     "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 96",
     "MachineComponentRole.FIXTURE -> 84",
-    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 48",
-    "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 40",
+    "val drawInternalEdges=when(component.role){",
+    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> stride*256",
+    "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> stride*96",
     "g2.color=Color(180,220,255,edgeAlpha)",
     "g.color=Color(180,220,255,edgeAlpha)",
 ):
     require(desktop, needle, "STUDIO_WINDOWS_MACHINE_EDGE_CLEANUP_183")
 print("MACHINE_EDGE_CLEANUP_GATE_PASS|ANDROID|WINDOWS|SOLID_FILL_PRIORITY|SPARSE_INTERNAL_EDGES|TOOL_OUTLINE_PRESERVED|ROTARY_READABLE|VISUAL_ONLY")
+for needle in (
+    "val drawRoleEdges=when(component.role){",
+    "MachineComponentRole.TOOL,",
+    "MachineComponentRole.SPINDLE,",
+    "MachineComponentRole.HOLDER,",
+    "MachineComponentRole.ROTARY_A,",
+    "MachineComponentRole.ROTARY_B -> true",
+    "else -> false",
+    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 256",
+    "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_SOLID_SURFACE_PRIORITY_184")
+for needle in (
+    "val drawInternalEdges=when(component.role){",
+    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> stride*256",
+    "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> stride*96",
+    "if(drawInternalEdges && i%edgeStride==0)",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_SOLID_SURFACE_PRIORITY_184")
+print("SOLID_SURFACE_PRIORITY_GATE_PASS|ANDROID|WINDOWS|FIXED_COMPONENT_INTERNAL_EDGES_OFF|ROTARY_MINIMAL_GUIDES|SPINDLE_SPARSE|TOOL_OUTLINE_FULL|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',

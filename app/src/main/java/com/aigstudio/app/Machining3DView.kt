@@ -285,13 +285,19 @@ class Machining3DView(
                 MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 0.85f*resources.displayMetrics.density
                 else -> 0.75f*resources.displayMetrics.density
             }
+            val drawRoleEdges=when(component.role){
+                MachineComponentRole.TOOL,
+                MachineComponentRole.SPINDLE,
+                MachineComponentRole.HOLDER,
+                MachineComponentRole.ROTARY_A,
+                MachineComponentRole.ROTARY_B -> true
+                else -> false
+            }
             val edgeStep=when(component.role){
                 MachineComponentRole.TOOL -> 1
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 48
-                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 24
-                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 40
-                MachineComponentRole.FIXTURE -> 48
-                else -> 56
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 256
+                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96
+                else -> 1
             }
             ordered.forEachIndexed { index,item ->
                 val tri=item.second
@@ -303,7 +309,7 @@ class Machining3DView(
                 trianglePath.lineTo(c.x,c.y)
                 trianglePath.close()
                 canvas.drawPath(trianglePath,machinePaint)
-                if(index%edgeStep==0){
+                if(drawRoleEdges && index%edgeStep==0){
                     canvas.drawPath(trianglePath,machineEdgePaint)
                 }
             }
