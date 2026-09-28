@@ -741,14 +741,18 @@ class Machining3DView(
             val singleLineWidth=toolAxisCueTextPaint.measureText(displayBadgeText)
             val maxBadgeTextWidth=(width.toFloat()-pad*4f).coerceAtLeast(pad)
             val wrapBadge=singleLineWidth>maxBadgeTextWidth
-            val badgeLine1=badgeText
-            val badgeLine2=poseAngleText
-            val textWidth=if(wrapBadge) max(
-                toolAxisCueTextPaint.measureText(badgeLine1),
-                toolAxisCueTextPaint.measureText(badgeLine2)
-            ) else singleLineWidth
+            val axisLineWidth=toolAxisCueTextPaint.measureText(badgeText)
+            val aBadgeText=String.format(java.util.Locale.US,"A%+.3f°%s",badgeA,deltaAMark)
+            val bBadgeText=String.format(java.util.Locale.US,"B%+.3f°%s",badgeB,deltaBMark)
+            val depthPoseBadgeText="$depthPolarity $poseAngleText"
+            val badgeLines=when {
+                !wrapBadge -> listOf(displayBadgeText)
+                axisLineWidth<=maxBadgeTextWidth -> listOf(badgeText,poseAngleText)
+                else -> listOf(aBadgeText,bBadgeText,depthPoseBadgeText)
+            }
+            val textWidth=badgeLines.maxOf { toolAxisCueTextPaint.measureText(it) }.coerceAtMost(maxBadgeTextWidth)
             val lineHeight=toolAxisCueTextPaint.textSize+lineGap
-            val badgeHeight=(if(wrapBadge) lineHeight*2f else lineHeight)+pad*2f
+            val badgeHeight=lineHeight*badgeLines.size.toFloat()+pad*2f
             val maxBadgeBottom=(height.toFloat()-pad).coerceAtLeast(badgeHeight+pad)
             val badgeBottom=(axisCueTop.y-7f*resources.displayMetrics.density).coerceIn(badgeHeight+pad,maxBadgeBottom)
             val badgeTop=badgeBottom-badgeHeight
@@ -758,11 +762,12 @@ class Machining3DView(
             )
             canvas.drawRoundRect(badgeX-pad,badgeTop,badgeX+textWidth+pad,badgeBottom,5f*resources.displayMetrics.density,5f*resources.displayMetrics.density,toolAxisBadgePaint)
             val firstBaseline=badgeTop+pad+toolAxisCueTextPaint.textSize
-            if(wrapBadge){
-                canvas.drawText(badgeLine1,badgeX,firstBaseline,toolAxisCueTextPaint)
-                canvas.drawText(badgeLine2,badgeX,firstBaseline+lineHeight,toolAxisCueTextPaint)
-            } else {
+            if(badgeLines.size==1){
                 canvas.drawText(displayBadgeText,badgeX,firstBaseline,toolAxisCueTextPaint)
+            } else {
+                badgeLines.forEachIndexed { index,line ->
+                    canvas.drawText(line,badgeX,firstBaseline+lineHeight*index.toFloat(),toolAxisCueTextPaint)
+                }
             }
             canvas.drawCircle(tip.x, tip.y, radius, toolPaint)
         }
