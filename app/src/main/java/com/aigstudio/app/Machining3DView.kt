@@ -271,26 +271,27 @@ class Machining3DView(
             machineEdgePaint.color=Color.argb(
                 when(component.role){
                     MachineComponentRole.TOOL -> 255
-                    MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 220
-                    MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 210
-                    MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 178
-                    else -> 148
+                    MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 180
+                    MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 128
+                    MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 96
+                    else -> 72
                 },
                 174,240,255
             )
             machineEdgePaint.strokeWidth=when(component.role){
                 MachineComponentRole.TOOL -> 1.9f*resources.displayMetrics.density
-                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 1.45f*resources.displayMetrics.density
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 1.35f*resources.displayMetrics.density
-                else -> 1.1f*resources.displayMetrics.density
+                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 1.3f*resources.displayMetrics.density
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 1.0f*resources.displayMetrics.density
+                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 0.85f*resources.displayMetrics.density
+                else -> 0.75f*resources.displayMetrics.density
             }
             val edgeStep=when(component.role){
                 MachineComponentRole.TOOL -> 1
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 14
-                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 10
-                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 12
-                MachineComponentRole.FIXTURE -> 14
-                else -> 16
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 48
+                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 24
+                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 40
+                MachineComponentRole.FIXTURE -> 48
+                else -> 56
             }
             ordered.forEachIndexed { index,item ->
                 val tri=item.second
