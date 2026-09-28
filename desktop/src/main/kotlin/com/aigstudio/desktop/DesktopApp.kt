@@ -1056,12 +1056,23 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             val poseAngleText=String.format(java.util.Locale.US,"Δθ%.2f°",poseAngleDeg)
             val displayBadgeText="$badgeText $poseAngleText"
             val fm=g2.fontMetrics
-            val badgeW=fm.stringWidth(displayBadgeText)+10
-            val badgeH=fm.height+6
+            val maxBadgeW=(width-12).coerceAtLeast(1)
+            val singleLineW=fm.stringWidth(displayBadgeText)+10
+            val wrapBadge=singleLineW>maxBadgeW
+            val badgeLine1=badgeText
+            val badgeLine2=poseAngleText
+            val badgeW=(if(wrapBadge) max(fm.stringWidth(badgeLine1),fm.stringWidth(badgeLine2))+10 else singleLineW).coerceAtMost(maxBadgeW)
+            val badgeH=if(wrapBadge) fm.height*2+6 else fm.height+6
             val badgeX=(axisTop.x+6).coerceIn(6,(width-badgeW-6).coerceAtLeast(6))
             val badgeY=(axisTop.y-badgeH-6).coerceIn(6,(height-badgeH-6).coerceAtLeast(6))
             g2.color=Color(8,20,32,188);g2.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)
-            g2.color=Color(255,160,232,245);g2.drawString(displayBadgeText,badgeX+5,badgeY+fm.ascent+3)
+            g2.color=Color(255,160,232,245)
+            if(wrapBadge){
+                g2.drawString(badgeLine1,badgeX+5,badgeY+fm.ascent+3)
+                g2.drawString(badgeLine2,badgeX+5,badgeY+fm.ascent+3+fm.height)
+            } else {
+                g2.drawString(displayBadgeText,badgeX+5,badgeY+fm.ascent+3)
+            }
         }
         activeFrame?.let { frame ->
             val progress=frame.progress.coerceIn(0.0,1.0)
@@ -1471,12 +1482,23 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             val poseAngleText=String.format(java.util.Locale.US,"Δθ%.2f°",poseAngleDeg)
             val displayBadgeText="$badgeText $poseAngleText"
             val fm=g.fontMetrics
-            val badgeW=fm.stringWidth(displayBadgeText)+10
-            val badgeH=fm.height+6
+            val maxBadgeW=(width-12).coerceAtLeast(1)
+            val singleLineW=fm.stringWidth(displayBadgeText)+10
+            val wrapBadge=singleLineW>maxBadgeW
+            val badgeLine1=badgeText
+            val badgeLine2=poseAngleText
+            val badgeW=(if(wrapBadge) max(fm.stringWidth(badgeLine1),fm.stringWidth(badgeLine2))+10 else singleLineW).coerceAtMost(maxBadgeW)
+            val badgeH=if(wrapBadge) fm.height*2+6 else fm.height+6
             val badgeX=(axisTop.x+6).coerceIn(6,(width-badgeW-6).coerceAtLeast(6))
             val badgeY=(axisTop.y-badgeH-6).coerceIn(6,(height-badgeH-6).coerceAtLeast(6))
             g.color=Color(8,20,32,188);g.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)
-            g.color=Color(255,160,232,245);g.drawString(displayBadgeText,badgeX+5,badgeY+fm.ascent+3)
+            g.color=Color(255,160,232,245)
+            if(wrapBadge){
+                g.drawString(badgeLine1,badgeX+5,badgeY+fm.ascent+3)
+                g.drawString(badgeLine2,badgeX+5,badgeY+fm.ascent+3+fm.height)
+            } else {
+                g.drawString(displayBadgeText,badgeX+5,badgeY+fm.ascent+3)
+            }
         }
         activeFrame?.let { frame ->
             val progress=frame.progress.coerceIn(0.0,1.0)
@@ -1821,10 +1843,29 @@ private fun runSmoke() {
     val fiveCuePoseDot=(fiveCueDepthVector.x*fiveCuePreviousAxis.x+fiveCueDepthVector.y*fiveCuePreviousAxis.y+fiveCueDepthVector.z*fiveCuePreviousAxis.z).coerceIn(-1.0,1.0)
     val fiveCuePoseAngleDeg=Math.toDegrees(acos(fiveCuePoseDot))
     require(fiveCuePoseAngleDeg>1e-9){"Studio 5AX true pose angle delta did not change"}
+    val fiveCueDeltaAMark=when { fiveCueDeltaA>1e-9 -> "↑"; fiveCueDeltaA< -1e-9 -> "↓"; else -> "•" }
+    val fiveCueDeltaBMark=when { fiveCueDeltaB>1e-9 -> "↑"; fiveCueDeltaB< -1e-9 -> "↓"; else -> "•" }
+    val poseBadgeProbe=String.format(
+        java.util.Locale.US,
+        "A%+.3f°%s B%+.3f°%s %s Δθ%.2f°",
+        fiveCueFrame.toolPoint.axisA,fiveCueDeltaAMark,
+        fiveCueFrame.toolPoint.axisB,fiveCueDeltaBMark,
+        fiveCueDepthLabel,fiveCuePoseAngleDeg
+    )
+    val poseBadgeProbeImage=BufferedImage(1,1,BufferedImage.TYPE_INT_ARGB)
+    val poseBadgeProbeGraphics=poseBadgeProbeImage.createGraphics()
+    poseBadgeProbeGraphics.font=Font(Font.SANS_SERIF,Font.BOLD,11)
+    val poseBadgeProbeWidth=poseBadgeProbeGraphics.fontMetrics.stringWidth(poseBadgeProbe)+10
+    poseBadgeProbeGraphics.dispose()
+    val poseBadgeNarrowWidth=(poseBadgeProbeWidth-20).coerceAtLeast(140)
+    require(poseBadgeProbeWidth>poseBadgeNarrowWidth){"Studio 5AX adaptive badge smoke did not require narrow reflow"}
     fiveAxisPanel.showProgressiveFrame(fiveCueFrame)
     require(fiveCueFrame.index>0 && fiveAxisPanel.freshRemovalSourceFrame()==fiveCueFrame.index-1){"Studio 5AX fresh-removal source did not lock to current index - 1"}
     val fiveCueFile=File("desktop_5x_axis_cue.png")
     writePanel(fiveAxisPanel,fiveCueFile,980,620)
+    val fiveCueNarrowFile=File("desktop_5x_axis_badge_narrow.png")
+    writePanel(fiveAxisPanel,fiveCueNarrowFile,poseBadgeNarrowWidth,620)
+    require(fiveCueNarrowFile.exists() && fiveCueNarrowFile.length()>0){"Studio 5AX narrow badge smoke image missing"}
     val fiveOcclusionEvidence=fiveAxisPanel.occlusionEvidence()
     require(fiveOcclusionEvidence.first>0){"Studio 5AX depth occlusion evidence found no occluded historical path segment"}
     require(fiveOcclusionEvidence.second>0){"Studio 5AX depth occlusion evidence found no foreground historical path segment"}
@@ -1904,6 +1945,10 @@ private fun runSmoke() {
             "5X_AXIS_POSE_ANGLE=PASS\n" +
             "5X_AXIS_POSE_ANGLE_DEG=${DisplayFormat.mm(fiveCuePoseAngleDeg)}\n" +
             "5X_AXIS_POSE_ANGLE_SOURCE=UNIT_AXIS_DOT_ACOS\n" +
+            "5X_AXIS_BADGE_REFLOW=PASS\n" +
+            "5X_AXIS_BADGE_REFLOW_SINGLE_WIDTH=$poseBadgeProbeWidth\n" +
+            "5X_AXIS_BADGE_REFLOW_NARROW_WIDTH=$poseBadgeNarrowWidth\n" +
+            "5X_AXIS_BADGE_REFLOW_PRESERVE=AB_DIRECTION_DEPTH_POSE_ANGLE\n" +
             "5X_DEPTH_OCCLUSION=PASS\n" +
             "5X_FRESH_REMOVAL_FRONTIER=PASS\n" +
             "5X_FRESH_REMOVAL_VISIBLE_POINTS=$fiveFreshRemoval\n" +
