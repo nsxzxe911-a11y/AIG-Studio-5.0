@@ -375,6 +375,19 @@ for needle in (
     require(desktop, needle, "WINDOWS_PROGRESSIVE_3D_PLAYBACK_BINDING")
 
 require(env, 'samePageModes = listOf("3D","3AX","4AX","5AX","NC_EDIT")', "AXIS_MODE_INVENTORY")
+for needle in (
+    'view.showProgressiveFrame(0)',
+    'val frame=runCatching { view.showProgressiveFrame(index) }',
+    'activeAxisPreview?.setAngles(frame.toolPoint.axisA,frame.toolPoint.axisB)',
+    'removed="+frame.removedCells',
+    'action("PLAY"',
+    'action("PAUSE"',
+    'action("STEP"',
+    'action("RESET"',
+    'action("SPEED"',
+):
+    require(android, needle, "ANDROID_PROGRESSIVE_3D_PLAYBACK_172")
+print("ANDROID_PROGRESSIVE_3D_PLAYBACK_GATE_PASS|3D|3AX|4AX|5AX|PLAY|PAUSE|STEP|RESET|SPEED|REMOVED_CELLS|AXIS_SYNC")
 
 # Rotary clamp safety must be wired end-to-end in the Android machining path.
 for needle in (
