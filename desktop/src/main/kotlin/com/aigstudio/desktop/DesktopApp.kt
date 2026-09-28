@@ -748,28 +748,33 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
                 MachineComponentRole.FIXTURE -> 84
                 else -> 72
             }
+            val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B
             val drawInternalEdges=when(component.role){
                 MachineComponentRole.TOOL,
                 MachineComponentRole.SPINDLE,
-                MachineComponentRole.HOLDER,
+                MachineComponentRole.HOLDER -> true
                 MachineComponentRole.ROTARY_A,
-                MachineComponentRole.ROTARY_B -> true
+                MachineComponentRole.ROTARY_B -> false
                 else -> false
             }
             val edgeStride=when(component.role){
                 MachineComponentRole.TOOL -> stride
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> stride*256
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> stride*96
                 else -> stride
             }
             ordered.forEachIndexed { i,item ->
                 if(i%stride==0){
                     val t=item.second
-                    val shadedFill=machineDepthShade(fillColor,item.first,minDepth,maxDepth)
+                    val shadedFill=if(rotarySurfaceSolid) fillColor else machineDepthShade(fillColor,item.first,minDepth,maxDepth)
                     val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
                     val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
                     g2.color=shadedFill
                     g2.fillPolygon(poly)
+                    if(rotarySurfaceSolid){
+                        g2.color=shadedFill
+                        g2.stroke=BasicStroke(1.15f)
+                        g2.drawPolygon(poly)
+                    }
                     if(drawInternalEdges && i%edgeStride==0){
                         g2.color=Color(180,220,255,edgeAlpha)
                         g2.stroke=BasicStroke(
@@ -819,8 +824,12 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             val c = projected[t.c]
             val poly = Polygon(intArrayOf(a.x,b.x,c.x), intArrayOf(a.y,b.y,c.y), 3)
             val shade = (70 + index * 150 / max(1, visible.size)).coerceIn(70,220)
-            g2.color = Color(45, shade, 220, 210)
+            val materialColor = Color(45, shade, 220, 210)
+            g2.color = materialColor
             g2.fillPolygon(poly)
+            g2.color = materialColor
+            g2.stroke = BasicStroke(1.15f)
+            g2.drawPolygon(poly)
             if(showMaterialMeshEdges && index % 18 == 0) {
                 g2.color = Color(61, 220, 255, 46)
                 g2.stroke = BasicStroke(0.55f)
@@ -1017,28 +1026,33 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                 MachineComponentRole.FIXTURE -> 84
                 else -> 72
             }
+            val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B
             val drawInternalEdges=when(component.role){
                 MachineComponentRole.TOOL,
                 MachineComponentRole.SPINDLE,
-                MachineComponentRole.HOLDER,
+                MachineComponentRole.HOLDER -> true
                 MachineComponentRole.ROTARY_A,
-                MachineComponentRole.ROTARY_B -> true
+                MachineComponentRole.ROTARY_B -> false
                 else -> false
             }
             val edgeStride=when(component.role){
                 MachineComponentRole.TOOL -> stride
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> stride*256
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> stride*96
                 else -> stride
             }
             ordered.forEachIndexed { i,item ->
                 if(i%stride==0){
                     val t=item.second
-                    val shadedFill=machineDepthShade(fillColor,item.first,minDepth,maxDepth)
+                    val shadedFill=if(rotarySurfaceSolid) fillColor else machineDepthShade(fillColor,item.first,minDepth,maxDepth)
                     val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
                     val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
                     g.color=shadedFill
                     g.fillPolygon(poly)
+                    if(rotarySurfaceSolid){
+                        g.color=shadedFill
+                        g.stroke=BasicStroke(1.15f)
+                        g.drawPolygon(poly)
+                    }
                     if(drawInternalEdges && i%edgeStride==0){
                         g.color=Color(180,220,255,edgeAlpha)
                         g.stroke=BasicStroke(
@@ -1076,7 +1090,9 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             if(i%stride==0){
                 val a=pts[t.a];val b=pts[t.b];val c=pts[t.c]
                 val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
-                g.color=Color(45,145,220,190);g.fillPolygon(poly)
+                val materialColor=Color(45,145,220,190)
+                g.color=materialColor;g.fillPolygon(poly)
+                g.color=materialColor;g.stroke=BasicStroke(1.15f);g.drawPolygon(poly)
                 if(showMaterialMeshEdges && i%(stride*18)==0){
                     g.color=Color(61,235,255,46);g.stroke=BasicStroke(.55f);g.drawPolygon(poly)
                 }

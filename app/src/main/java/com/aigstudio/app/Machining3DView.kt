@@ -38,6 +38,12 @@ class Machining3DView(
         isAntiAlias = false
         isDither = true
     }
+    private val surfaceSeamPaint = Paint().apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.15f * resources.displayMetrics.density
+        isAntiAlias = false
+        isDither = true
+    }
     private val edgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 0.55f
@@ -78,6 +84,12 @@ class Machining3DView(
     }
     private val machinePaint = Paint().apply {
         style = Paint.Style.FILL
+        isAntiAlias = false
+        isDither = true
+    }
+    private val machineSeamPaint = Paint().apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.15f * resources.displayMetrics.density
         isAntiAlias = false
         isDither = true
     }
@@ -288,23 +300,23 @@ class Machining3DView(
                 MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 0.85f*resources.displayMetrics.density
                 else -> 0.75f*resources.displayMetrics.density
             }
+            val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B
             val drawRoleEdges=when(component.role){
                 MachineComponentRole.TOOL,
                 MachineComponentRole.SPINDLE,
-                MachineComponentRole.HOLDER,
+                MachineComponentRole.HOLDER -> true
                 MachineComponentRole.ROTARY_A,
-                MachineComponentRole.ROTARY_B -> true
+                MachineComponentRole.ROTARY_B -> false
                 else -> false
             }
             val edgeStep=when(component.role){
                 MachineComponentRole.TOOL -> 1
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 256
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96
                 else -> 1
             }
             ordered.forEachIndexed { index,item ->
                 val tri=item.second
-                machinePaint.color=machineDepthShade(baseColor,item.first,minDepth,maxDepth)
+                machinePaint.color=if(rotarySurfaceSolid) baseColor else machineDepthShade(baseColor,item.first,minDepth,maxDepth)
                 val a=pts[tri.a]; val b=pts[tri.b]; val c=pts[tri.c]
                 trianglePath.reset()
                 trianglePath.moveTo(a.x,a.y)
@@ -312,6 +324,10 @@ class Machining3DView(
                 trianglePath.lineTo(c.x,c.y)
                 trianglePath.close()
                 canvas.drawPath(trianglePath,machinePaint)
+                if(rotarySurfaceSolid){
+                    machineSeamPaint.color=machinePaint.color
+                    canvas.drawPath(trianglePath,machineSeamPaint)
+                }
                 if(drawRoleEdges && index%edgeStep==0){
                     canvas.drawPath(trianglePath,machineEdgePaint)
                 }
@@ -427,6 +443,8 @@ class Machining3DView(
             trianglePath.lineTo(d.x, d.y)
             trianglePath.close()
             canvas.drawPath(trianglePath, surfacePaint)
+            surfaceSeamPaint.color=surfacePaint.color
+            canvas.drawPath(trianglePath, surfaceSeamPaint)
             if(showMaterialMeshEdges && visibleIndex % 18 == 0) {
                 canvas.drawPath(trianglePath, edgePaint)
             }
