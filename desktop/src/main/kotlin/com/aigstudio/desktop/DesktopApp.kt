@@ -804,20 +804,16 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
 
         val rotated = activeMesh.vertices.map { rotate(it) }
         val showMaterialMeshEdges=false
-        val visible = activeMesh.triangles.mapIndexedNotNull { index, t ->
+        val visible = activeMesh.triangles.mapIndexedNotNull { index,t ->
             if(index%stride!=0) null else Pair((rotated[t.a].z+rotated[t.b].z+rotated[t.c].z)/3.0,t)
         }.sortedBy{it.first}
-        val materialSurface=Path2D.Double(Path2D.WIND_NON_ZERO)
-        visible.forEach { item ->
-            val t=item.second; val a=projected[t.a]; val b=projected[t.b]; val c=projected[t.c]
-            materialSurface.moveTo(a.x.toDouble(),a.y.toDouble()); materialSurface.lineTo(b.x.toDouble(),b.y.toDouble()); materialSurface.lineTo(c.x.toDouble(),c.y.toDouble()); materialSurface.closePath()
-        }
-        g2.color=Color(45,145,220,220); g2.fill(materialSurface)
+        val materialColor=Color(45,145,220)
         visible.forEachIndexed { index,item ->
-            if(showMaterialMeshEdges && index % 18 == 0){
-                val t=item.second; val a=projected[t.a]; val b=projected[t.b]; val c=projected[t.c]
-                g2.color=Color(61, 220, 255, 46); g2.stroke=BasicStroke(.55f); g2.drawPolygon(Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3))
-            }
+            val t=item.second; val a=projected[t.a]; val b=projected[t.b]; val c=projected[t.c]
+            val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
+            g2.color=materialColor; g2.fillPolygon(poly)
+            g2.color=materialColor; g2.stroke=BasicStroke(1.15f); g2.drawPolygon(poly)
+            if(showMaterialMeshEdges && index % 18 == 0){ g2.color=Color(61, 220, 255, 46); g2.stroke=BasicStroke(.55f); g2.drawPolygon(poly) }
         }
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
@@ -1062,18 +1058,14 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         val pts=activeMesh.vertices.map{project(it,scale)}
         val stride=max(1,ceil(activeMesh.triangles.size/4500.0).toInt())
         val showMaterialMeshEdges=false
-        val materialSurface=Path2D.Double(Path2D.WIND_NON_ZERO)
+        val materialColor=Color(45,145,220)
         activeMesh.triangles.forEachIndexed { i,t -> if(i%stride==0){
             val a=pts[t.a];val b=pts[t.b];val c=pts[t.c]
-            materialSurface.moveTo(a.x.toDouble(),a.y.toDouble()); materialSurface.lineTo(b.x.toDouble(),b.y.toDouble()); materialSurface.lineTo(c.x.toDouble(),c.y.toDouble()); materialSurface.closePath()
+            val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
+            g.color=materialColor;g.fillPolygon(poly)
+            g.color=materialColor;g.stroke=BasicStroke(1.15f);g.drawPolygon(poly)
+            if(showMaterialMeshEdges && i%(stride*18)==0){ g.color=Color(61,235,255,46);g.stroke=BasicStroke(.55f);g.drawPolygon(poly) }
         }}
-        g.color=Color(45,145,220,210);g.fill(materialSurface)
-        activeMesh.triangles.forEachIndexed { i,t ->
-            if(showMaterialMeshEdges && i%(stride*18)==0){
-                val a=pts[t.a];val b=pts[t.b];val c=pts[t.c]
-                g.color=Color(61,235,255,46);g.stroke=BasicStroke(.55f);g.drawPolygon(Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3))
-            }
-        }
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)
         val allMoves=result.cam.toolpaths.flatMap{it.moves}
         val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves

@@ -529,10 +529,13 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_MACHINE_SOLID_MATERIAL_180")
 print("MACHINE_SOLID_MATERIAL_GATE_PASS|ANDROID|WINDOWS|OPAQUE_FIXED_PARTS|ROTARY_READABLE|SPINDLE_HOLDER_TOOL_LAYERED|VISUAL_ONLY")
 for needle in (
-    "val materialSurfacePath=Path()",
+    "surfacePaint.color=Color.rgb(45,145,220)",
+    "surfaceSeamPaint.color=surfacePaint.color",
+    "canvas.drawPath(trianglePath,surfacePaint)",
+    "canvas.drawPath(trianglePath,surfaceSeamPaint)",
     "if(showMaterialMeshEdges && visibleIndex % 18 == 0)",
 ):
-    require(machining3d, needle, "STUDIO_ANDROID_MATERIAL_SURFACE_READABILITY_181")
+    require(machining3d, needle, "STUDIO_ANDROID_MATERIAL_SURFACE_READABILITY_191")
 for needle in (
     "if(showMaterialMeshEdges && index % 18 == 0)",
     "Color(61, 220, 255, 46)",
@@ -631,11 +634,14 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_TRIANGLE_SEAM_SUPPRESSION_186")
 print("TRIANGLE_SEAM_SUPPRESSION_GATE_PASS|ANDROID|WINDOWS|MACHINE_FILL_AA_OFF|MATERIAL_FILL_AA_OFF|TOOLPATH_AA_ON|TRUE_MESH|VISUAL_ONLY")
-require(machining3d, "val solidPath=Path()", "STUDIO_ANDROID_BATCHED_SURFACE_190")
-require(machining3d, "val materialSurfacePath=Path()", "STUDIO_ANDROID_BATCHED_SURFACE_190")
-require(desktop, "val solidPath=Path2D.Double(Path2D.WIND_NON_ZERO)", "STUDIO_WINDOWS_BATCHED_SURFACE_190")
-require(desktop, "val materialSurface=Path2D.Double(Path2D.WIND_NON_ZERO)", "STUDIO_WINDOWS_BATCHED_SURFACE_190")
-print("BATCHED_SOLID_SURFACE_GATE_PASS|ANDROID|WINDOWS|ROTARY|MATERIAL|SINGLE_FILL|TRUE_MESH|TOOLPATH_PRESERVED|VISUAL_ONLY")
+require(machining3d, "val solidPath=Path()", "STUDIO_ANDROID_BATCHED_MACHINE_SURFACE_191")
+require(machining3d, "surfacePaint.color=Color.rgb(45,145,220)", "STUDIO_ANDROID_OPAQUE_MATERIAL_SURFACE_191")
+require(machining3d, "canvas.drawPath(trianglePath,surfaceSeamPaint)", "STUDIO_ANDROID_MATERIAL_SEAM_WELD_191")
+require(desktop, "val solidPath=Path2D.Double(Path2D.WIND_NON_ZERO)", "STUDIO_WINDOWS_BATCHED_MACHINE_SURFACE_191")
+require(desktop, "val materialColor=Color(45,145,220)", "STUDIO_WINDOWS_OPAQUE_MATERIAL_SURFACE_191")
+require(desktop, "g2.drawPolygon(poly)", "STUDIO_WINDOWS_MATERIAL_SEAM_WELD_191")
+require(desktop, "g.drawPolygon(poly)", "STUDIO_WINDOWS_MATERIAL_SEAM_WELD_191")
+print("OPAQUE_MATERIAL_SURFACE_GATE_PASS|ANDROID|WINDOWS|OPAQUE_FILL|SEAM_WELD|ROTARY_BATCHED|TRUE_MESH|TOOLPATH_PRESERVED|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',

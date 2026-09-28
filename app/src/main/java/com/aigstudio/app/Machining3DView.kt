@@ -38,6 +38,12 @@ class Machining3DView(
         isAntiAlias = false
         isDither = true
     }
+    private val surfaceSeamPaint = Paint().apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.15f * resources.displayMetrics.density
+        isAntiAlias = false
+        isDither = true
+    }
     private val edgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 0.55f
@@ -414,24 +420,15 @@ class Machining3DView(
             (projected[triangle.a].depth + projected[triangle.b].depth + projected[triangle.c].depth) / 3.0
         }
 
-        val materialSurfacePath=Path()
-        visibleTriangleBuffer.forEach { index ->
+        surfacePaint.color=Color.rgb(45,145,220)
+        surfaceSeamPaint.color=surfacePaint.color
+        visibleTriangleBuffer.forEachIndexed { visibleIndex,index ->
             val triangle=triangles[index]
             val a=projected[triangle.a]; val b=projected[triangle.b]; val c=projected[triangle.c]
-            materialSurfacePath.moveTo(a.x,a.y)
-            materialSurfacePath.lineTo(b.x,b.y)
-            materialSurfacePath.lineTo(c.x,c.y)
-            materialSurfacePath.close()
-        }
-        surfacePaint.color=Color.argb(232,45,145,220)
-        canvas.drawPath(materialSurfacePath,surfacePaint)
-        visibleTriangleBuffer.forEachIndexed { visibleIndex,index ->
-            if(showMaterialMeshEdges && visibleIndex % 18 == 0) {
-                val triangle=triangles[index]
-                val a=projected[triangle.a]; val b=projected[triangle.b]; val c=projected[triangle.c]
-                trianglePath.reset(); trianglePath.moveTo(a.x,a.y); trianglePath.lineTo(b.x,b.y); trianglePath.lineTo(c.x,c.y); trianglePath.close()
-                canvas.drawPath(trianglePath,edgePaint)
-            }
+            trianglePath.reset(); trianglePath.moveTo(a.x,a.y); trianglePath.lineTo(b.x,b.y); trianglePath.lineTo(c.x,c.y); trianglePath.close()
+            canvas.drawPath(trianglePath,surfacePaint)
+            canvas.drawPath(trianglePath,surfaceSeamPaint)
+            if(showMaterialMeshEdges && visibleIndex % 18 == 0) { canvas.drawPath(trianglePath,edgePaint) }
         }
 
         var remainingMoves = activeFrame?.index?.plus(1) ?: Int.MAX_VALUE
