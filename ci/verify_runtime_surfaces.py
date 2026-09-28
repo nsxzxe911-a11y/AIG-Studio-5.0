@@ -888,6 +888,26 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_AXIS_POSE_ANGLE_205")
 print("AXIS_POSE_ANGLE_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|UNIT_AXIS_DOT_ACOS|TRUE_POSE_DELTA|BADGE_CLAMP|SMOKE_EVIDENCE|NO_PREDICTION|VISUAL_ONLY")
 for needle in (
+    "val maxBadgeTextWidth=(width.toFloat()-pad*4f).coerceAtLeast(pad)",
+    "val wrapBadge=singleLineWidth>maxBadgeTextWidth",
+    "val badgeLine1=badgeText",
+    "val badgeLine2=poseAngleText",
+    "canvas.drawText(badgeLine2,badgeX,firstBaseline+lineHeight,toolAxisCueTextPaint)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_AXIS_POSE_BADGE_REFLOW_206")
+for needle in (
+    "val maxBadgeW=(width-12).coerceAtLeast(1)",
+    "val wrapBadge=singleLineW>maxBadgeW",
+    "g2.drawString(badgeLine2,badgeX+5,badgeY+fm.ascent+3+fm.height)",
+    "g.drawString(badgeLine2,badgeX+5,badgeY+fm.ascent+3+fm.height)",
+    "Studio 5AX adaptive badge smoke did not require narrow reflow",
+    "desktop_5x_axis_badge_narrow.png",
+    "5X_AXIS_BADGE_REFLOW=PASS",
+    "5X_AXIS_BADGE_REFLOW_PRESERVE=AB_DIRECTION_DEPTH_POSE_ANGLE",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_AXIS_POSE_BADGE_REFLOW_206")
+print("AXIS_POSE_BADGE_REFLOW_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|NARROW_WRAP|NO_OVERFLOW|FULL_AB_PRECISION|DIRECTION|DEPTH|POSE_ANGLE|SMOKE_IMAGE|VISUAL_ONLY")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',
