@@ -128,8 +128,7 @@ private class AdaptiveGlassToolbar : JPanel() {
 
 private class CadToolGrid : JPanel(FlowLayout(FlowLayout.LEFT,8,8)) {
     init {
-        isOpaque=true
-        background=Color(8,18,30)
+        isOpaque=false
         border=BorderFactory.createEmptyBorder(8,8,8,8)
     }
     override fun addImpl(comp:Component,constraints:Any?,index:Int) {
@@ -139,16 +138,40 @@ private class CadToolGrid : JPanel(FlowLayout(FlowLayout.LEFT,8,8)) {
         }
         super.addImpl(comp,constraints,index)
     }
+    override fun paintComponent(g:Graphics) {
+        val g2=g.create() as Graphics2D
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)
+        g2.paint=GradientPaint(
+            0f,0f,Color(20,38,58,230),
+            width.toFloat(),height.toFloat(),Color(5,13,24,220)
+        )
+        g2.fillRoundRect(1,1,max(0,width-2),max(0,height-2),22,22)
+        g2.color=Color(61,235,255,42)
+        g2.fillRoundRect(7,7,max(0,width-14),max(0,height-14),18,18)
+        g2.color=Color(61,235,255,118)
+        g2.stroke=BasicStroke(1.35f)
+        g2.drawRoundRect(1,1,max(0,width-3),max(0,height-3),22,22)
+        g2.color=Color(255,255,255,30)
+        g2.drawLine(12,6,max(12,width-12),6)
+        g2.dispose()
+        super.paintComponent(g)
+    }
 }
 
 private class GlassActionButton(label: String, private val accent: Color) : JButton(label) {
+    private val pulseTimer=Timer(90) { if(active && isShowing) repaint() }.apply { isRepeats=true }
     var active = false
-        set(value) { field = value; repaint() }
+        set(value) {
+            field = value
+            if(value) pulseTimer.start() else pulseTimer.stop()
+            repaint()
+        }
     init {
         foreground = StudioDesktopProductionTheme.text
         isOpaque = false
         isContentAreaFilled = false
         isFocusPainted = false
+        isRolloverEnabled = true
         border = BorderFactory.createEmptyBorder(8, 10, 8, 10)
         preferredSize = Dimension(118, 48)
         ProductionRgbAssets.icon(label)?.let {
@@ -160,12 +183,38 @@ private class GlassActionButton(label: String, private val accent: Color) : JBut
     override fun paintComponent(g: Graphics) {
         val g2 = g.create() as Graphics2D
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        val a = if (active) 220 else 150
-        g2.color = Color(StudioDesktopProductionTheme.panel.red, StudioDesktopProductionTheme.panel.green, StudioDesktopProductionTheme.panel.blue, a)
-        g2.fillRoundRect(3, 3, width - 6, height - 6, 16, 16)
-        g2.color = Color(accent.red, accent.green, accent.blue, if (active) 235 else 170)
-        g2.stroke = BasicStroke(if (active) 2.6f else 1.4f)
-        g2.drawRoundRect(3, 3, width - 6, height - 6, 16, 16)
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY)
+        val pressed=model.isPressed
+        val hover=model.isRollover
+        val phase=2.0*Math.PI*((System.nanoTime()%1_180_000_000L).toDouble()/1_180_000_000.0)
+        val pulse=if(active) 0.84+0.16*((sin(phase)+1.0)*0.5) else 1.0
+        fun mix(base:Color,tint:Color,amount:Float,alpha:Int):Color {
+            val a=amount.coerceIn(0f,1f)
+            fun m(x:Int,y:Int)=(x+(y-x)*a).roundToInt().coerceIn(0,255)
+            return Color(m(base.red,tint.red),m(base.green,tint.green),m(base.blue,tint.blue),alpha.coerceIn(0,255))
+        }
+        val glowAlpha=when {
+            active -> (92*pulse).roundToInt().coerceIn(68,112)
+            pressed -> 82
+            hover -> 62
+            else -> 30
+        }
+        g2.color=Color(accent.red,accent.green,accent.blue,glowAlpha)
+        g2.fillRoundRect(0,0,max(0,width-1),max(0,height-1),20,20)
+        val topTint=when{pressed->0.54f;active->0.46f;hover->0.36f;else->0.27f}
+        val bottomTint=when{pressed->0.22f;active->0.18f;hover->0.14f;else->0.10f}
+        val top=mix(Color(30,45,65),accent,topTint,238)
+        val bottom=mix(Color(6,14,26),accent,bottomTint,226)
+        g2.paint=GradientPaint(0f,4f,top,0f,height.toFloat(),bottom)
+        g2.fillRoundRect(4,4,max(0,width-8),max(0,height-8),18,18)
+        g2.color=Color(255,255,255,if(active || hover || pressed)62 else 44)
+        g2.stroke=BasicStroke(1.0f)
+        g2.drawLine(12,8,max(12,width-12),8)
+        g2.color=Color(accent.red,accent.green,accent.blue,if(active)78 else if(hover)58 else 38)
+        g2.drawLine(12,max(9,height-9),max(12,width-12),max(9,height-9))
+        g2.color = Color(accent.red, accent.green, accent.blue, when{active->248;pressed->235;hover->218;else->190})
+        g2.stroke = BasicStroke(when{active->3.0f;pressed->2.7f;hover->2.1f;else->1.6f})
+        g2.drawRoundRect(4,4,max(0,width-9),max(0,height-9),18,18)
         g2.dispose()
         super.paintComponent(g)
     }

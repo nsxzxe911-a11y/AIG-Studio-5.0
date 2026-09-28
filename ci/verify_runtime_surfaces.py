@@ -30,6 +30,16 @@ hashes = read("design/theme/official_rgb/android-drawable.sha256")
 workflow = read(".github/workflows/build-download.yml")
 windows_release = read("build_windows_native.ps1")
 require(windows_release, "--win-per-user-install", "WINDOWS_PER_USER_INSTALLER_GATE")
+for needle in (
+    "private val pulseTimer=Timer(90)",
+    "val topTint=when",
+    "val bottomTint=when",
+    "isRolloverEnabled = true",
+    "g2.drawLine(12,max(9,height-9)",
+    "private class CadToolGrid",
+):
+    require(desktop, needle, "RGB_PRODUCTION_GLASS_RUNTIME_GATE")
+print("RGB_PRODUCTION_GLASS_RUNTIME_GATE_PASS|WINDOWS|NORMAL_TINT|HOVER|PRESSED|SELECTED_BREATHING|CAD_GLASS_PANEL")
 theme_index = json.loads(read("app/src/main/assets/aig-themes/repository-index.json"))
 production_theme = json.loads(read("app/src/main/assets/aig-themes/themes/official_rgb_original/theme.json"))
 theme_manifest = json.loads(read("design/theme/aigii_rgb_neon_v2/theme-manifest.json"))
