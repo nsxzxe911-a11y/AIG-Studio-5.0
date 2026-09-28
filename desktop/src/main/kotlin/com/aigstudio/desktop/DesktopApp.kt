@@ -748,24 +748,24 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
                 MachineComponentRole.FIXTURE -> 84
                 else -> 72
             }
+            val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B
             val drawInternalEdges=when(component.role){
                 MachineComponentRole.TOOL,
                 MachineComponentRole.SPINDLE,
-                MachineComponentRole.HOLDER,
+                MachineComponentRole.HOLDER -> true
                 MachineComponentRole.ROTARY_A,
-                MachineComponentRole.ROTARY_B -> true
+                MachineComponentRole.ROTARY_B -> false
                 else -> false
             }
             val edgeStride=when(component.role){
                 MachineComponentRole.TOOL -> stride
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> stride*256
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> stride*96
                 else -> stride
             }
             ordered.forEachIndexed { i,item ->
                 if(i%stride==0){
                     val t=item.second
-                    val shadedFill=machineDepthShade(fillColor,item.first,minDepth,maxDepth)
+                    val shadedFill=if(rotarySurfaceSolid) fillColor else machineDepthShade(fillColor,item.first,minDepth,maxDepth)
                     val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
                     val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
                     g2.color=shadedFill
@@ -1017,24 +1017,24 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                 MachineComponentRole.FIXTURE -> 84
                 else -> 72
             }
+            val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B
             val drawInternalEdges=when(component.role){
                 MachineComponentRole.TOOL,
                 MachineComponentRole.SPINDLE,
-                MachineComponentRole.HOLDER,
+                MachineComponentRole.HOLDER -> true
                 MachineComponentRole.ROTARY_A,
-                MachineComponentRole.ROTARY_B -> true
+                MachineComponentRole.ROTARY_B -> false
                 else -> false
             }
             val edgeStride=when(component.role){
                 MachineComponentRole.TOOL -> stride
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> stride*256
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> stride*96
                 else -> stride
             }
             ordered.forEachIndexed { i,item ->
                 if(i%stride==0){
                     val t=item.second
-                    val shadedFill=machineDepthShade(fillColor,item.first,minDepth,maxDepth)
+                    val shadedFill=if(rotarySurfaceSolid) fillColor else machineDepthShade(fillColor,item.first,minDepth,maxDepth)
                     val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
                     val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
                     g.color=shadedFill

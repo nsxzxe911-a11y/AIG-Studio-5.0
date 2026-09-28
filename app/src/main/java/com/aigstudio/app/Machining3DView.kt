@@ -288,23 +288,23 @@ class Machining3DView(
                 MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 0.85f*resources.displayMetrics.density
                 else -> 0.75f*resources.displayMetrics.density
             }
+            val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B
             val drawRoleEdges=when(component.role){
                 MachineComponentRole.TOOL,
                 MachineComponentRole.SPINDLE,
-                MachineComponentRole.HOLDER,
+                MachineComponentRole.HOLDER -> true
                 MachineComponentRole.ROTARY_A,
-                MachineComponentRole.ROTARY_B -> true
+                MachineComponentRole.ROTARY_B -> false
                 else -> false
             }
             val edgeStep=when(component.role){
                 MachineComponentRole.TOOL -> 1
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 256
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96
                 else -> 1
             }
             ordered.forEachIndexed { index,item ->
                 val tri=item.second
-                machinePaint.color=machineDepthShade(baseColor,item.first,minDepth,maxDepth)
+                machinePaint.color=if(rotarySurfaceSolid) baseColor else machineDepthShade(baseColor,item.first,minDepth,maxDepth)
                 val a=pts[tri.a]; val b=pts[tri.b]; val c=pts[tri.c]
                 trianglePath.reset()
                 trianglePath.moveTo(a.x,a.y)
