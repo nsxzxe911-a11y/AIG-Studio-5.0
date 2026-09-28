@@ -713,12 +713,15 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             val pts=item.second
             val rotated=component.mesh.vertices.map { rotate(it) }
             val alpha=when(component.role){
-                MachineComponentRole.TOOL -> 252
-                MachineComponentRole.SPINDLE -> 238
-                MachineComponentRole.HOLDER -> 226
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 218
-                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 196
-                else -> 168
+                MachineComponentRole.TOOL -> 255
+                MachineComponentRole.SPINDLE -> 250
+                MachineComponentRole.HOLDER -> 246
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 244
+                MachineComponentRole.TRUNNION -> 236
+                MachineComponentRole.TABLE -> 232
+                MachineComponentRole.FIXTURE -> 228
+                MachineComponentRole.BASE,MachineComponentRole.COLUMN -> 224
+                else -> 220
             }
             val fillColor=when(component.role){
                 MachineComponentRole.TOOL -> Color(255,196,64,alpha)
@@ -963,12 +966,15 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             val pts=item.second
             val axisDepth=component.mesh.vertices.map{it.x*.34-it.y*.28+it.z}
             val alpha=when(component.role){
-                MachineComponentRole.TOOL -> 252
-                MachineComponentRole.SPINDLE -> 238
-                MachineComponentRole.HOLDER -> 226
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 218
-                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 196
-                else -> 168
+                MachineComponentRole.TOOL -> 255
+                MachineComponentRole.SPINDLE -> 250
+                MachineComponentRole.HOLDER -> 246
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 244
+                MachineComponentRole.TRUNNION -> 236
+                MachineComponentRole.TABLE -> 232
+                MachineComponentRole.FIXTURE -> 228
+                MachineComponentRole.BASE,MachineComponentRole.COLUMN -> 224
+                else -> 220
             }
             val fillColor=when(component.role){
                 MachineComponentRole.TOOL -> Color(255,196,64,alpha)
