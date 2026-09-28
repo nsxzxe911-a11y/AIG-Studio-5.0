@@ -673,11 +673,13 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_CUT_CONTACT_BOUNDARY_193")
 for needle in (
-    "if(i<=fiveBeforeIndex || fiveMoves[i].rapid) false else",
+    "if(fiveMoves[i].rapid || fiveMoves[i+1].rapid) false else",
+    "val fiveAfterIndex=fiveBeforeIndex+1",
     "Studio 5AX cut-contact evidence must use non-rapid frames",
+    "Studio 5AX fresh-removal evidence is not adjacent",
     "5X_CUT_CONTACT_FRAME=PASS",
 ):
-    require(desktop, needle, "STUDIO_5X_CUT_CONTACT_SMOKE_193")
+    require(desktop, needle, "STUDIO_5X_CUT_CONTACT_SMOKE_198")
 print("CUT_CONTACT_BOUNDARY_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|NON_RAPID_ONLY|ACTIVE_MESH|LIVE_TOOLPOINT|POST_MATERIAL|TOOL_STACK_ABOVE|SMOKE_NON_RAPID|VISUAL_ONLY")
 for needle in (
     "private val activeTrailPaint",
@@ -732,6 +734,32 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_MATERIAL_DEPTH_OCCLUSION_196")
 print("MATERIAL_DEPTH_OCCLUSION_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|96X96_SCREEN_DEPTH|TRUE_MATERIAL_MESH|MIDPOINT_DEPTH_TEST|OCCLUDED_DIM|ACTIVE_TRAIL_ABOVE|SMOKE_BOTH_CLASSES|VISUAL_ONLY")
+for needle in (
+    "private var previousProgressiveFrame: ProgressiveMachining3DFrame? = null",
+    "private val freshRemovalGlowPaint",
+    "private val freshRemovalPaint",
+    "previousProgressiveFrame = progressiveFrame?.takeIf { it.index < frame.index }",
+    "currentDepth[i]<previousDepth[i]-1e-9",
+    "materialPointIsFront(p)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_FRESH_REMOVAL_FRONTIER_198")
+for needle in (
+    "fun freshRemovalEvidence():Int = lastFreshRemovalCells",
+    "No adjacent Studio 3D frames increase material removal",
+    "Studio 3D fresh-removal evidence is not adjacent",
+    "No adjacent Studio 5AX frames change XYZ + rotary axes + material removal together",
+    "Studio 5AX fresh-removal evidence is not adjacent",
+    "Studio 3D fresh-removal frontier found no changed removal cells",
+    "Studio 5AX fresh-removal frontier found no changed removal cells",
+    "desktop_fresh_removal_frontier.png",
+    "FRESH_REMOVAL_FRONTIER=PASS",
+    "FRESH_REMOVAL_3D_VISIBLE_POINTS",
+    "5X_FRESH_REMOVAL_FRONTIER=PASS",
+    "5X_FRESH_REMOVAL_VISIBLE_POINTS",
+    "lastFreshRemovalCells++",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_FRESH_REMOVAL_FRONTIER_198")
+print("FRESH_REMOVAL_FRONTIER_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|TRUE_REMOVAL_DIFF|FORWARD_FRAME_ONLY|ADJACENT_FRAME_HARD_GATE|DEPTH_VISIBLE|SAMPLED_700_MAX|SMOKE_3D_5X|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',

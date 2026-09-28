@@ -651,6 +651,14 @@ private fun materialDepthOccludes(grid:DoubleArray,width:Int,height:Int,a:Point,
     return materialDepth.isFinite() && materialDepth>(ad+bd)*0.5+1e-6
 }
 
+private fun materialDepthPointIsFront(grid:DoubleArray,width:Int,height:Int,p:Point,depth:Double):Boolean{
+    if(width<=0 || height<=0 || p.x<0 || p.x>=width || p.y<0 || p.y>=height)return false
+    val gx=(p.x.toDouble()/width*MATERIAL_DEPTH_GRID_W).toInt().coerceIn(0,MATERIAL_DEPTH_GRID_W-1)
+    val gy=(p.y.toDouble()/height*MATERIAL_DEPTH_GRID_H).toInt().coerceIn(0,MATERIAL_DEPTH_GRID_H-1)
+    val materialDepth=grid[gy*MATERIAL_DEPTH_GRID_W+gx]
+    return !materialDepth.isFinite() || depth>=materialDepth-1e-5
+}
+
 private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
     private var rx = -35.0
     private var ry = 35.0
@@ -658,10 +666,13 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
     private var lastX = 0
     private var lastY = 0
     private var progressiveFrame:ProgressiveMachining3DFrame?=null
+    private var previousProgressiveFrame:ProgressiveMachining3DFrame?=null
     private val materialDepthGrid=DoubleArray(MATERIAL_DEPTH_GRID_W*MATERIAL_DEPTH_GRID_H){Double.NEGATIVE_INFINITY}
     private var lastOccludedPathSegments=0
     private var lastForegroundPathSegments=0
+    private var lastFreshRemovalCells=0
     fun occlusionEvidence():Pair<Int,Int> = lastOccludedPathSegments to lastForegroundPathSegments
+    fun freshRemovalEvidence():Int = lastFreshRemovalCells
 
     init {
         background = Color(5, 10, 17)
@@ -692,18 +703,21 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
 
     fun setResult(next:Machining3DResult){
         result=next
+        previousProgressiveFrame=null
         progressiveFrame=null
+        lastFreshRemovalCells=0
         repaint()
     }
 
     fun showProgressiveFrame(index:Int):ProgressiveMachining3DFrame {
         val frame=ProgressiveMachining3D.frame(result,index)
+        previousProgressiveFrame=progressiveFrame?.takeIf{it.index<frame.index}
         progressiveFrame=frame
         repaint()
         return frame
     }
 
-    fun clearProgressiveFrame(){progressiveFrame=null;repaint()}
+    fun clearProgressiveFrame(){previousProgressiveFrame=null;progressiveFrame=null;lastFreshRemovalCells=0;repaint()}
     fun progressiveRemovedCells():Int = progressiveFrame?.removedCells ?: result.removal.depth.count{it<0.0}
 
     fun evidenceState(): String =
@@ -888,6 +902,27 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             g2.color=materialColor; g2.stroke=BasicStroke(1.15f); g2.drawPolygon(poly)
             if(showMaterialMeshEdges && index % 18 == 0){ g2.color=Color(61, 220, 255, 46); g2.stroke=BasicStroke(.55f); g2.drawPolygon(poly) }
         }
+        lastFreshRemovalCells=0
+        val previousFrame=previousProgressiveFrame
+        if(activeFrame!=null && previousFrame!=null && previousFrame.index<activeFrame.index &&
+            previousFrame.removal.nx==activeFrame.removal.nx && previousFrame.removal.ny==activeFrame.removal.ny){
+            val currentDepth=activeFrame.removal.depth;val previousDepth=previousFrame.removal.depth
+            var freshCount=0
+            currentDepth.indices.forEach { i -> if(currentDepth[i]<previousDepth[i]-1e-9)freshCount++ }
+            val freshStride=max(1,ceil(freshCount/700.0).toInt())
+            var freshSeen=0
+            currentDepth.indices.forEach { i ->
+                if(currentDepth[i]<previousDepth[i]-1e-9){
+                    if(freshSeen%freshStride==0 && i<projected.size && materialDepthPointIsFront(materialDepthGrid,width,height,projected[i],rotated[i].z)){
+                        val p=projected[i]
+                        g2.color=Color(255,176,32,55);g2.fillOval(p.x-5,p.y-5,10,10)
+                        g2.color=Color(255,205,70,225);g2.fillOval(p.x-2,p.y-2,4,4)
+                        lastFreshRemovalCells++
+                    }
+                    freshSeen++
+                }
+            }
+        }
 
         val contactMoves=result.cam.toolpaths.flatMap{it.moves}
         val activeCutMove=activeFrame?.let { frame ->
@@ -1022,10 +1057,13 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         private set
     private var zoom=1.0
     private var progressiveFrame:ProgressiveMachining3DFrame?=null
+    private var previousProgressiveFrame:ProgressiveMachining3DFrame?=null
     private val materialDepthGrid=DoubleArray(MATERIAL_DEPTH_GRID_W*MATERIAL_DEPTH_GRID_H){Double.NEGATIVE_INFINITY}
     private var lastOccludedPathSegments=0
     private var lastForegroundPathSegments=0
+    private var lastFreshRemovalCells=0
     fun occlusionEvidence():Pair<Int,Int> = lastOccludedPathSegments to lastForegroundPathSegments
+    fun freshRemovalEvidence():Int = lastFreshRemovalCells
     private var machineMode="3AX"
     init{
         background=Color(5,10,17)
@@ -1043,16 +1081,19 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
     }
     fun setResult(next:Machining3DResult){
         result=next
+        previousProgressiveFrame=null
         progressiveFrame=null
+        lastFreshRemovalCells=0
         repaint()
     }
     fun showProgressiveFrame(frame:ProgressiveMachining3DFrame){
+        previousProgressiveFrame=progressiveFrame?.takeIf{it.index<frame.index}
         progressiveFrame=frame
         axisA=frame.toolPoint.axisA
         axisB=frame.toolPoint.axisB
         repaint()
     }
-    fun clearProgressiveFrame(){progressiveFrame=null;repaint()}
+    fun clearProgressiveFrame(){previousProgressiveFrame=null;progressiveFrame=null;lastFreshRemovalCells=0;repaint()}
     private fun kinematicTransform(v:Vec3):Vec3 {
         val a=if(machineMode=="3AX")0.0 else axisA
         val b=if(machineMode=="5AX")axisB else 0.0
@@ -1225,6 +1266,27 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             g.color=materialColor;g.stroke=BasicStroke(1.15f);g.drawPolygon(poly)
             if(showMaterialMeshEdges && i%(stride*18)==0){ g.color=Color(61,235,255,46);g.stroke=BasicStroke(.55f);g.drawPolygon(poly) }
         }}
+        lastFreshRemovalCells=0
+        val previousFrame=previousProgressiveFrame
+        if(activeFrame!=null && previousFrame!=null && previousFrame.index<activeFrame.index &&
+            previousFrame.removal.nx==activeFrame.removal.nx && previousFrame.removal.ny==activeFrame.removal.ny){
+            val currentDepth=activeFrame.removal.depth;val previousDepth=previousFrame.removal.depth
+            var freshCount=0
+            currentDepth.indices.forEach { i -> if(currentDepth[i]<previousDepth[i]-1e-9)freshCount++ }
+            val freshStride=max(1,ceil(freshCount/700.0).toInt())
+            var freshSeen=0
+            currentDepth.indices.forEach { i ->
+                if(currentDepth[i]<previousDepth[i]-1e-9){
+                    if(freshSeen%freshStride==0 && i<pts.size && materialDepthPointIsFront(materialDepthGrid,width,height,pts[i],axisViewDepth(axisSpace[i]))){
+                        val p=pts[i]
+                        g.color=Color(255,176,32,55);g.fillOval(p.x-5,p.y-5,10,10)
+                        g.color=Color(255,205,70,225);g.fillOval(p.x-2,p.y-2,4,4)
+                        lastFreshRemovalCells++
+                    }
+                    freshSeen++
+                }
+            }
+        }
         val contactMoves=result.cam.toolpaths.flatMap{it.moves}
         val activeCutMove=activeFrame?.let { frame ->
             if(contactMoves.size>1) contactMoves[frame.index.coerceIn(1,contactMoves.lastIndex)] else null
@@ -1560,6 +1622,22 @@ private fun runSmoke() {
     require(materialBeforeFrame.toolPoint!=materialAfterFrame.toolPoint){"Progressive tool point did not move"}
     require(sha256File(materialBeforeFile)!=sha256File(materialAfterFile)){"Progressive material frames are identical"}
     meshPanel.clearProgressiveFrame()
+    val fresh3DStart=(0 until absoluteMoves.lastIndex).firstOrNull { i ->
+        val before=ProgressiveMachining3D.frame(result,i)
+        val after=ProgressiveMachining3D.frame(result,i+1)
+        after.removedCells>before.removedCells
+    } ?: error("No adjacent Studio 3D frames increase material removal")
+    val fresh3DBefore=meshPanel.showProgressiveFrame(fresh3DStart)
+    val fresh3DBeforeFile=File("desktop_fresh_removal_before.png")
+    writePanel(renderRoot,fresh3DBeforeFile)
+    val fresh3DAfter=meshPanel.showProgressiveFrame(fresh3DStart+1)
+    val fresh3DAfterFile=File("desktop_fresh_removal_frontier.png")
+    writePanel(renderRoot,fresh3DAfterFile)
+    val materialFreshRemoval=meshPanel.freshRemovalEvidence()
+    require(fresh3DAfter.index==fresh3DBefore.index+1){"Studio 3D fresh-removal evidence is not adjacent"}
+    require(materialFreshRemoval>0){"Studio 3D fresh-removal frontier found no changed removal cells"}
+    require(fresh3DAfter.removedCells>fresh3DBefore.removedCells){"Studio 3D adjacent fresh-removal evidence did not increase removal"}
+    meshPanel.clearProgressiveFrame()
 
     val fiveAxisSchedule=MultiAxisOrientationSchedule(
         startA=0.0,startB=0.0,endA=35.0,endB=-25.0,
@@ -1574,24 +1652,22 @@ private fun runSmoke() {
     )
     val fiveMoves=fiveAxisResult.cam.toolpaths.flatMap{it.moves}
     require(fiveMoves.isNotEmpty()){"5AX CAM generated no moves"}
-    val fiveBeforeIndex=fiveMoves.indices.firstOrNull{i->
-        val m=fiveMoves[i]
-        !m.rapid && m.z<0.0
-    } ?: 0
-    val fiveBeforeFrame=ProgressiveMachining3D.frame(fiveAxisResult,fiveBeforeIndex)
-    val fiveAfterIndex=fiveMoves.indices.firstOrNull{i->
-        if(i<=fiveBeforeIndex || fiveMoves[i].rapid) false else {
-            val f=ProgressiveMachining3D.frame(fiveAxisResult,i)
+    val fiveBeforeIndex=(0 until fiveMoves.lastIndex).firstOrNull { i ->
+        if(fiveMoves[i].rapid || fiveMoves[i+1].rapid) false else {
+            val before=ProgressiveMachining3D.frame(fiveAxisResult,i)
+            val after=ProgressiveMachining3D.frame(fiveAxisResult,i+1)
             val xyzChanged=
-                abs(f.toolPoint.to.x-fiveBeforeFrame.toolPoint.to.x)>1e-9 ||
-                abs(f.toolPoint.to.y-fiveBeforeFrame.toolPoint.to.y)>1e-9 ||
-                abs(f.toolPoint.z-fiveBeforeFrame.toolPoint.z)>1e-9
+                abs(after.toolPoint.to.x-before.toolPoint.to.x)>1e-9 ||
+                abs(after.toolPoint.to.y-before.toolPoint.to.y)>1e-9 ||
+                abs(after.toolPoint.z-before.toolPoint.z)>1e-9
             val rotaryChanged=
-                abs(f.toolPoint.axisA-fiveBeforeFrame.toolPoint.axisA)>1e-9 ||
-                abs(f.toolPoint.axisB-fiveBeforeFrame.toolPoint.axisB)>1e-9
-            xyzChanged && rotaryChanged && f.removedCells>fiveBeforeFrame.removedCells
+                abs(after.toolPoint.axisA-before.toolPoint.axisA)>1e-9 ||
+                abs(after.toolPoint.axisB-before.toolPoint.axisB)>1e-9
+            before.toolPoint.z<0.0 && xyzChanged && rotaryChanged && after.removedCells>before.removedCells
         }
-    } ?: error("No Studio 5AX frame changes XYZ + rotary axes + material removal together")
+    } ?: error("No adjacent Studio 5AX frames change XYZ + rotary axes + material removal together")
+    val fiveAfterIndex=fiveBeforeIndex+1
+    val fiveBeforeFrame=ProgressiveMachining3D.frame(fiveAxisResult,fiveBeforeIndex)
     val fiveAfterFrame=ProgressiveMachining3D.frame(fiveAxisResult,fiveAfterIndex)
     val cueUnit=Vec3(0.0,0.0,1.0)
     val fiveAxisCueBefore=MachineKinematics3D.transform(cueUnit,fiveBeforeFrame.toolPoint.axisA,fiveBeforeFrame.toolPoint.axisB)
@@ -1605,6 +1681,9 @@ private fun runSmoke() {
     fiveAxisPanel.showProgressiveFrame(fiveAfterFrame)
     val fiveAfterFile=File("desktop_5x_after.png")
     writePanel(fiveAxisPanel,fiveAfterFile,980,620)
+    val fiveFreshRemoval=fiveAxisPanel.freshRemovalEvidence()
+    require(fiveAfterFrame.index==fiveBeforeFrame.index+1){"Studio 5AX fresh-removal evidence is not adjacent"}
+    require(fiveFreshRemoval>0){"Studio 5AX fresh-removal frontier found no changed removal cells"}
     val fiveCueIndex=fiveMoves.indices.filter { !fiveMoves[it].rapid }.maxByOrNull { i ->
         abs(fiveMoves[i].axisA)+abs(fiveMoves[i].axisB)
     } ?: fiveAfterIndex
@@ -1646,6 +1725,10 @@ private fun runSmoke() {
             "DRAG_ROTATION_CAPABILITY=PASS\nWHEEL_ZOOM_CAPABILITY=PASS\n" +
             "VIEW_ANIMATION_FRAME_CHANGE=PASS\n" +
             "PROGRESSIVE_MATERIAL_REMOVAL=PASS\n" +
+            "FRESH_REMOVAL_FRONTIER=PASS\n" +
+            "FRESH_REMOVAL_3D_VISIBLE_POINTS=$materialFreshRemoval\n" +
+            "FRESH_REMOVAL_3D_FRAME_BEFORE=${fresh3DBefore.index+1}/${fresh3DBefore.total}\n" +
+            "FRESH_REMOVAL_3D_FRAME_AFTER=${fresh3DAfter.index+1}/${fresh3DAfter.total}\n" +
             "REMOVED_BEFORE=${materialBeforeFrame.removedCells}\n" +
             "REMOVED_AFTER=${materialAfterFrame.removedCells}\n" +
             "TOOL_BEFORE=${DisplayFormat.mm(materialBeforeFrame.toolPoint.to.x)},${DisplayFormat.mm(materialBeforeFrame.toolPoint.to.y)},${DisplayFormat.mm(materialBeforeFrame.toolPoint.z)}\n" +
@@ -1670,6 +1753,10 @@ private fun runSmoke() {
             "5X_AXIS_CUE_A=${DisplayFormat.mm(fiveCueFrame.toolPoint.axisA)}\n" +
             "5X_AXIS_CUE_B=${DisplayFormat.mm(fiveCueFrame.toolPoint.axisB)}\n" +
             "5X_DEPTH_OCCLUSION=PASS\n" +
+            "5X_FRESH_REMOVAL_FRONTIER=PASS\n" +
+            "5X_FRESH_REMOVAL_VISIBLE_POINTS=$fiveFreshRemoval\n" +
+            "5X_FRESH_REMOVAL_FRAME_BEFORE=${fiveBeforeFrame.index+1}/${fiveBeforeFrame.total}\n" +
+            "5X_FRESH_REMOVAL_FRAME_AFTER=${fiveAfterFrame.index+1}/${fiveAfterFrame.total}\n" +
             "5X_OCCLUDED_PATH_SEGMENTS=${fiveOcclusionEvidence.first}\n" +
             "5X_FOREGROUND_PATH_SEGMENTS=${fiveOcclusionEvidence.second}\n" +
             "ABS_MODE=" + SoftwareCoordinateContract.coordinateMode() + "\n" +
@@ -1687,6 +1774,8 @@ private fun runSmoke() {
             sha256File(afterFile) + "  desktop_3d.png\n" +
             sha256File(materialBeforeFile) + "  desktop_material_before.png\n" +
             sha256File(materialAfterFile) + "  desktop_material_after.png\n" +
+            sha256File(fresh3DBeforeFile) + "  desktop_fresh_removal_before.png\n" +
+            sha256File(fresh3DAfterFile) + "  desktop_fresh_removal_frontier.png\n" +
             sha256File(fiveBeforeFile) + "  desktop_5x_before.png\n" +
             sha256File(fiveAfterFile) + "  desktop_5x_after.png\n" +
             sha256File(fiveCueFile) + "  desktop_5x_axis_cue.png\n" +
@@ -1705,6 +1794,9 @@ private fun runSmoke() {
             "HQ_3D_RUNTIME_SCREENSHOT=desktop_3d.png\n" +
             "PROGRESSIVE_MATERIAL_BEFORE=desktop_material_before.png\n" +
             "PROGRESSIVE_MATERIAL_AFTER=desktop_material_after.png\n" +
+            "FRESH_REMOVAL_FRONTIER=PASS\n" +
+            "FRESH_REMOVAL_SCREENSHOT=desktop_fresh_removal_frontier.png\n" +
+            "5X_FRESH_REMOVAL_FRONTIER=PASS\n" +
             "5X_BEFORE=desktop_5x_before.png\n" +
             "5X_AFTER=desktop_5x_after.png\n" +
             "5X_AXIS_CUE=desktop_5x_axis_cue.png\n" +

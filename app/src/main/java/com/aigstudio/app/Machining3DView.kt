@@ -29,6 +29,7 @@ class Machining3DView(
     private var lastFocusX = 0f
     private var lastFocusY = 0f
     private var progressiveFrame: ProgressiveMachining3DFrame? = null
+    private var previousProgressiveFrame: ProgressiveMachining3DFrame? = null
 
     private val machineVisual: android.graphics.Bitmap? = null
     private val machineVisualPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { alpha = 118 }
@@ -79,6 +80,14 @@ class Machining3DView(
         strokeWidth = 1.65f * resources.displayMetrics.density
         strokeJoin = Paint.Join.ROUND
         color = Color.argb(210,255,176,32)
+    }
+    private val freshRemovalGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = Color.argb(52,255,176,32)
+    }
+    private val freshRemovalPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = Color.argb(220,255,205,70)
     }
     private val activeTrailPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -166,12 +175,14 @@ class Machining3DView(
 
     fun showProgressiveFrame(index: Int): ProgressiveMachining3DFrame {
         val frame = ProgressiveMachining3D.frame(result, index)
+        previousProgressiveFrame = progressiveFrame?.takeIf { it.index < frame.index }
         progressiveFrame = frame
         postInvalidateOnAnimation()
         return frame
     }
 
     fun clearProgressiveFrame() {
+        previousProgressiveFrame = null
         progressiveFrame = null
         postInvalidateOnAnimation()
     }
@@ -481,6 +492,14 @@ class Machining3DView(
         return materialDepth.isFinite() && materialDepth>segmentDepth+1e-6
     }
 
+    private fun materialPointIsFront(point:ScreenPoint):Boolean {
+        if(width<=0 || height<=0 || point.x<0f || point.x>=width || point.y<0f || point.y>=height) return false
+        val gx=(point.x/width*materialDepthGridWidth).toInt().coerceIn(0,materialDepthGridWidth-1)
+        val gy=(point.y/height*materialDepthGridHeight).toInt().coerceIn(0,materialDepthGridHeight-1)
+        val materialDepth=materialDepthGrid[gy*materialDepthGridWidth+gx]
+        return !materialDepth.isFinite() || point.depth>=materialDepth-1e-5
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (width <= 0 || height <= 0) return
@@ -547,6 +566,27 @@ class Machining3DView(
             canvas.drawPath(trianglePath,surfacePaint)
             canvas.drawPath(trianglePath,surfaceSeamPaint)
             if(showMaterialMeshEdges && visibleIndex % 18 == 0) { canvas.drawPath(trianglePath,edgePaint) }
+        }
+        val previousFrame=previousProgressiveFrame
+        if(activeFrame!=null && previousFrame!=null && previousFrame.index<activeFrame.index &&
+            previousFrame.removal.nx==activeFrame.removal.nx && previousFrame.removal.ny==activeFrame.removal.ny){
+            val currentDepth=activeFrame.removal.depth; val previousDepth=previousFrame.removal.depth
+            var freshCount=0
+            for(i in currentDepth.indices) if(currentDepth[i]<previousDepth[i]-1e-9) freshCount++
+            val freshStride=max(1,ceil(freshCount/700.0).toInt())
+            var freshSeen=0
+            for(i in currentDepth.indices){
+                if(currentDepth[i]<previousDepth[i]-1e-9){
+                    if(freshSeen%freshStride==0 && i<projected.size){
+                        val p=projected[i]
+                        if(materialPointIsFront(p)){
+                            canvas.drawCircle(p.x,p.y,4.2f*resources.displayMetrics.density,freshRemovalGlowPaint)
+                            canvas.drawCircle(p.x,p.y,1.45f*resources.displayMetrics.density,freshRemovalPaint)
+                        }
+                    }
+                    freshSeen++
+                }
+            }
         }
         val contactMoves=result.cam.toolpaths.flatMap{it.moves}
         val activeCutMove=activeFrame?.let { frame ->
