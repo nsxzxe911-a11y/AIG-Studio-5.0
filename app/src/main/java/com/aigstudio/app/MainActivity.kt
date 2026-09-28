@@ -1846,6 +1846,7 @@ class MainActivity : Activity() {
             activeMachiningView=null
             activeAxisPreview=null
             activeMode=mode
+            ncPanel.visibility=if(mode=="NC_EDIT") View.VISIBLE else View.GONE
             modeButtons.forEach { (id,b)-> b.setRgbState(colors[(id.hashCode() and Int.MAX_VALUE)%colors.size],id==mode) }
             visualHost.removeAllViews()
             when(mode){
@@ -1920,13 +1921,13 @@ class MainActivity : Activity() {
             orientation=if(plan.ncDock=="RIGHT") LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
         }
         if(plan.ncDock=="RIGHT"){
-            body.addView(visualHost,LinearLayout.LayoutParams(0,dp(520),plan.visualWeight.toFloat()))
-            body.addView(ncPanel,LinearLayout.LayoutParams(0,dp(520),plan.ncWeight.toFloat()))
+            body.addView(visualHost,LinearLayout.LayoutParams(0,-1,plan.visualWeight.toFloat()))
+            body.addView(ncPanel,LinearLayout.LayoutParams(0,-1,plan.ncWeight.toFloat()))
         }else{
-            body.addView(visualHost,LinearLayout.LayoutParams(-1,dp(340)))
-            body.addView(ncPanel,LinearLayout.LayoutParams(-1,dp(280)))
+            body.addView(visualHost,LinearLayout.LayoutParams(-1,0,0.74f))
+            body.addView(ncPanel,LinearLayout.LayoutParams(-1,0,0.26f))
         }
-        root.addView(body,LinearLayout.LayoutParams(-1,-2))
+        root.addView(body,LinearLayout.LayoutParams(-1,0,1f))
         root.addView(simulationStatus,LinearLayout.LayoutParams(-1,-2))
 
         val actionFlow=FlowLayout(this)

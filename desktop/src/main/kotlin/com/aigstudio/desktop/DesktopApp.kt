@@ -21,12 +21,7 @@ private object StudioDesktopOriginalVisuals {
                 ?.use(ImageIO::read)
         }.getOrNull()
     }
-    val machine:BufferedImage? by lazy {
-        runCatching {
-            StudioDesktopOriginalVisuals::class.java.getResourceAsStream("/visuals/machine_visual.jpg")
-                ?.use(ImageIO::read)
-        }.getOrNull()
-    }
+    val machine:BufferedImage? by lazy { null }
     fun paintCover(g:Graphics2D,w:Int,h:Int,image:BufferedImage?,alpha:Float,zoom:Double=1.0,panX:Double=0.0) {
         if(image==null || w<=0 || h<=0)return
         val srcRatio=image.width.toDouble()/image.height.toDouble()

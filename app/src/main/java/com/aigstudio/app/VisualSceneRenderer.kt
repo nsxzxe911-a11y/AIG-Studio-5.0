@@ -24,6 +24,7 @@ object StudioVisualSceneRenderer {
     }
 
     private fun image(view:View,surface:String):Bitmap? {
+        if(surface.uppercase() != "HOME") return null
         val file=fileFor(surface)
         if(cache.containsKey(file)) return cache[file]
         val bitmap=runCatching {

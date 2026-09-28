@@ -29,9 +29,7 @@ class Machining3DView(
     private var lastFocusY = 0f
     private var progressiveFrame: ProgressiveMachining3DFrame? = null
 
-    private val machineVisual = runCatching {
-        context.assets.open("visuals/machine_visual.jpg").use(BitmapFactory::decodeStream)
-    }.getOrNull()
+    private val machineVisual: android.graphics.Bitmap? = null
     private val machineVisualPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { alpha = 118 }
 
     private val surfacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

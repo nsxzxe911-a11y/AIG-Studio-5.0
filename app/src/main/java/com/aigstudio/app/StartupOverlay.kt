@@ -109,6 +109,12 @@ class AigStartupOverlay(context: Context) : View(context) {
         animate().alpha(0f).setDuration(180L).withEndAction {
             if (parent.indexOfChild(this) >= 0) parent.removeView(this)
         }.start()
+        parent.postDelayed({
+            if (parent.indexOfChild(this) >= 0) {
+                alpha = 0f
+                parent.removeView(this)
+            }
+        }, 450L)
     }
 
     override fun onDraw(canvas: Canvas) {
