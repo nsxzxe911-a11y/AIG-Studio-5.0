@@ -805,6 +805,7 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         val stride = max(1, ceil(activeMesh.triangles.size / 5500.0).toInt())
 
         val rotated = activeMesh.vertices.map { rotate(it) }
+        val showMaterialMeshEdges=false
         val visible = activeMesh.triangles.mapIndexedNotNull { index, t ->
             if (index % stride != 0) null else {
                 val depth = (rotated[t.a].z + rotated[t.b].z + rotated[t.c].z) / 3.0
@@ -820,7 +821,7 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             val shade = (70 + index * 150 / max(1, visible.size)).coerceIn(70,220)
             g2.color = Color(45, shade, 220, 210)
             g2.fillPolygon(poly)
-            if(index % 18 == 0) {
+            if(showMaterialMeshEdges && index % 18 == 0) {
                 g2.color = Color(61, 220, 255, 46)
                 g2.stroke = BasicStroke(0.55f)
                 g2.drawPolygon(poly)
@@ -1069,12 +1070,13 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         val activeMesh=activeFrame?.mesh ?: result.mesh
         val pts=activeMesh.vertices.map{project(it,scale)}
         val stride=max(1,ceil(activeMesh.triangles.size/4500.0).toInt())
+        val showMaterialMeshEdges=false
         activeMesh.triangles.forEachIndexed { i,t ->
             if(i%stride==0){
                 val a=pts[t.a];val b=pts[t.b];val c=pts[t.c]
                 val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
                 g.color=Color(45,145,220,190);g.fillPolygon(poly)
-                if(i%(stride*18)==0){
+                if(showMaterialMeshEdges && i%(stride*18)==0){
                     g.color=Color(61,235,255,46);g.stroke=BasicStroke(.55f);g.drawPolygon(poly)
                 }
             }

@@ -42,6 +42,7 @@ class Machining3DView(
         strokeWidth = 0.55f
         color = Color.argb(36, 160, 230, 255)
     }
+    private val showMaterialMeshEdges = false
     private val rapidPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 1.35f * resources.displayMetrics.density
@@ -424,7 +425,7 @@ class Machining3DView(
             trianglePath.lineTo(d.x, d.y)
             trianglePath.close()
             canvas.drawPath(trianglePath, surfacePaint)
-            if(visibleIndex % 18 == 0) {
+            if(showMaterialMeshEdges && visibleIndex % 18 == 0) {
                 canvas.drawPath(trianglePath, edgePaint)
             }
         }

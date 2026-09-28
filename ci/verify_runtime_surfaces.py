@@ -530,13 +530,13 @@ for needle in (
 print("MACHINE_SOLID_MATERIAL_GATE_PASS|ANDROID|WINDOWS|OPAQUE_FIXED_PARTS|ROTARY_READABLE|SPINDLE_HOLDER_TOOL_LAYERED|VISUAL_ONLY")
 for needle in (
     "visibleTriangleBuffer.forEachIndexed { visibleIndex, index ->",
-    "if(visibleIndex % 18 == 0)",
+    "if(showMaterialMeshEdges && visibleIndex % 18 == 0)",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_MATERIAL_SURFACE_READABILITY_181")
 for needle in (
-    "if(index % 18 == 0)",
+    "if(showMaterialMeshEdges && index % 18 == 0)",
     "Color(61, 220, 255, 46)",
-    "if(i%(stride*18)==0)",
+    "if(showMaterialMeshEdges && i%(stride*18)==0)",
     "Color(61,235,255,46)",
 ):
     require(desktop, needle, "STUDIO_WINDOWS_MATERIAL_SURFACE_READABILITY_181")
@@ -605,6 +605,18 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_SOLID_SURFACE_PRIORITY_184")
 print("SOLID_SURFACE_PRIORITY_GATE_PASS|ANDROID|WINDOWS|FIXED_COMPONENT_INTERNAL_EDGES_OFF|ROTARY_MINIMAL_GUIDES|SPINDLE_SPARSE|TOOL_OUTLINE_FULL|VISUAL_ONLY")
+for needle in (
+    "private val showMaterialMeshEdges = false",
+    "if(showMaterialMeshEdges && visibleIndex % 18 == 0)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_MATERIAL_FILL_PRIORITY_185")
+for needle in (
+    "val showMaterialMeshEdges=false",
+    "if(showMaterialMeshEdges && index % 18 == 0)",
+    "if(showMaterialMeshEdges && i%(stride*18)==0)",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_MATERIAL_FILL_PRIORITY_185")
+print("MATERIAL_FILL_PRIORITY_GATE_PASS|ANDROID|WINDOWS|TRUE_REMOVAL_FILL|INTERNAL_MESH_EDGES_OFF|5AX_MACHINE_VISIBLE|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
