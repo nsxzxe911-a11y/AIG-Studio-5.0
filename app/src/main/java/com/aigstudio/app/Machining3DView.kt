@@ -700,7 +700,14 @@ class Machining3DView(
             }
             val badgeA=if(resolvedMode=="3AX")0.0 else liveMove.axisA
             val badgeB=if(resolvedMode=="5AX")liveMove.axisB else 0.0
-            val badgeText=String.format(java.util.Locale.US,"A%+.3f° B%+.3f° %s",badgeA,badgeB,depthPolarity)
+            val previousTool=previousProgressiveFrame?.toolPoint
+            val previousA=if(resolvedMode=="3AX")0.0 else previousTool?.axisA ?: badgeA
+            val previousB=if(resolvedMode=="5AX")previousTool?.axisB ?: badgeB else 0.0
+            val deltaA=badgeA-previousA
+            val deltaB=badgeB-previousB
+            val deltaAMark=when { deltaA>1e-9 -> "↑"; deltaA< -1e-9 -> "↓"; else -> "•" }
+            val deltaBMark=when { deltaB>1e-9 -> "↑"; deltaB< -1e-9 -> "↓"; else -> "•" }
+            val badgeText=String.format(java.util.Locale.US,"A%+.3f°%s B%+.3f°%s %s",badgeA,deltaAMark,badgeB,deltaBMark,depthPolarity)
             val pad=4f*resources.displayMetrics.density
             val textWidth=toolAxisCueTextPaint.measureText(badgeText)
             val badgeX=(axisCueTop.x+6f*resources.displayMetrics.density).coerceIn(pad,(width-textWidth-pad*3f).coerceAtLeast(pad))

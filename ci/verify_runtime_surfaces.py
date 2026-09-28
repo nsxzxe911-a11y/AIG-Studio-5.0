@@ -775,15 +775,15 @@ for needle in (
 print("ADJACENT_FRONTIER_LOCK_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|CURRENT_INDEX_MINUS_ONE|UI_SKIP_INDEPENDENT|TRUE_PROGRESSIVE_FRAME|SMOKE_LOCK|VISUAL_ONLY")
 for needle in (
     "private val toolAxisBadgePaint",
-    "A%+.3f° B%+.3f°",
+    "A%+.3f°%s B%+.3f°%s %s",
     "val badgeA=if(resolvedMode==\"3AX\")0.0 else liveMove.axisA",
     "val badgeB=if(resolvedMode==\"5AX\")liveMove.axisB else 0.0",
     "canvas.drawRoundRect(badgeX-pad,badgeTop,badgeX+textWidth+pad,badgeBaseline+pad",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_TOOL_ORIENTATION_BADGE_200")
 for needle in (
-    "val badgeText=String.format(java.util.Locale.US,\"A%+.3f° B%+.3f° %s\",tool.axisA,tool.axisB,depthPolarity)",
-    "val badgeText=String.format(java.util.Locale.US,\"A%+.3f° B%+.3f° %s\",axisA,axisB,depthPolarity)",
+    "val badgeText=String.format(java.util.Locale.US,\"A%+.3f°%s B%+.3f°%s %s\",tool.axisA,deltaAMark,tool.axisB,deltaBMark,depthPolarity)",
+    "val badgeText=String.format(java.util.Locale.US,\"A%+.3f°%s B%+.3f°%s %s\",axisA,deltaAMark,axisB,deltaBMark,depthPolarity)",
     "g2.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)",
     "g.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)",
     "5X_ORIENTATION_BADGE=PASS",
@@ -813,7 +813,7 @@ for needle in (
     "axisDepthDelta>1e-6 -> \"近\"",
     "axisDepthDelta< -1e-6 -> \"遠\"",
     "else -> \"平\"",
-    "A%+.3f° B%+.3f° %s",
+    "A%+.3f°%s B%+.3f°%s %s",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_AXIS_DEPTH_POLARITY_202")
 for needle in (
@@ -833,6 +833,21 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_5X_AXIS_DEPTH_POLARITY_SMOKE_202")
 print("AXIS_DEPTH_POLARITY_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|VIEW_RELATIVE_DEPTH|NEAR_SOLID|FAR_HOLLOW|FLAT_LABEL|TRUE_AXIS|SMOKE_EVIDENCE|VISUAL_ONLY")
+for needle in (
+    "val previousTool=previousProgressiveFrame?.toolPoint",
+    "val deltaAMark=when { deltaA>1e-9 -> \"↑\"; deltaA< -1e-9 -> \"↓\"; else -> \"•\" }",
+    "val deltaBMark=when { deltaB>1e-9 -> \"↑\"; deltaB< -1e-9 -> \"↓\"; else -> \"•\" }",
+    "A%+.3f°%s B%+.3f°%s %s",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_AXIS_DELTA_DIRECTION_203")
+for needle in (
+    "Studio 5AX A/B delta-direction evidence did not change",
+    "5X_AXIS_DELTA_DIRECTION=PASS",
+    "5X_AXIS_DELTA_A_CODE=",
+    "5X_AXIS_DELTA_B_CODE=",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_AXIS_DELTA_DIRECTION_203")
+print("AXIS_DELTA_DIRECTION_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|CURRENT_MINUS_PREVIOUS|POS_NEG_ZERO|TRUE_PROGRESSIVE_FRAMES|NO_PREDICTION|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',

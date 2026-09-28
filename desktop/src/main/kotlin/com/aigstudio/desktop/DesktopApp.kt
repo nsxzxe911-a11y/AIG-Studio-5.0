@@ -1030,7 +1030,12 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
                 g2.fillOval(axisTop.x-1,axisTop.y-1,2,2)
             }
             g2.font=Font(Font.SANS_SERIF,Font.BOLD,11)
-            val badgeText=String.format(java.util.Locale.US,"A%+.3f° B%+.3f° %s",tool.axisA,tool.axisB,depthPolarity)
+            val previousTool=previousProgressiveFrame?.toolPoint
+            val deltaA=tool.axisA-(previousTool?.axisA ?: tool.axisA)
+            val deltaB=tool.axisB-(previousTool?.axisB ?: tool.axisB)
+            val deltaAMark=when { deltaA>1e-9 -> "↑"; deltaA< -1e-9 -> "↓"; else -> "•" }
+            val deltaBMark=when { deltaB>1e-9 -> "↑"; deltaB< -1e-9 -> "↓"; else -> "•" }
+            val badgeText=String.format(java.util.Locale.US,"A%+.3f°%s B%+.3f°%s %s",tool.axisA,deltaAMark,tool.axisB,deltaBMark,depthPolarity)
             val fm=g2.fontMetrics
             val badgeW=fm.stringWidth(badgeText)+10
             val badgeH=fm.height+6
@@ -1414,7 +1419,14 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                 g.fillOval(axisTop.x-1,axisTop.y-1,2,2)
             }
             g.font=Font(Font.SANS_SERIF,Font.BOLD,11)
-            val badgeText=String.format(java.util.Locale.US,"A%+.3f° B%+.3f° %s",axisA,axisB,depthPolarity)
+            val previousTool=previousProgressiveFrame?.toolPoint
+            val previousA=if(machineMode=="3AX")0.0 else previousTool?.axisA ?: axisA
+            val previousB=if(machineMode=="5AX")previousTool?.axisB ?: axisB else 0.0
+            val deltaA=axisA-previousA
+            val deltaB=axisB-previousB
+            val deltaAMark=when { deltaA>1e-9 -> "↑"; deltaA< -1e-9 -> "↓"; else -> "•" }
+            val deltaBMark=when { deltaB>1e-9 -> "↑"; deltaB< -1e-9 -> "↓"; else -> "•" }
+            val badgeText=String.format(java.util.Locale.US,"A%+.3f°%s B%+.3f°%s %s",axisA,deltaAMark,axisB,deltaBMark,depthPolarity)
             val fm=g.fontMetrics
             val badgeW=fm.stringWidth(badgeText)+10
             val badgeH=fm.height+6
@@ -1750,6 +1762,12 @@ private fun runSmoke() {
     require(fiveCueDepthValue.isFinite() && abs(fiveCueDepthValue)>1e-6){"Studio 5AX axis-depth polarity evidence is flat or non-finite"}
     val fiveCueDepthLabel=if(fiveCueDepthValue>0.0) "近" else "遠"
     val fiveCueDepthCode=if(fiveCueDepthValue>0.0) "NEAR" else "FAR"
+    val fiveCuePrevious=ProgressiveMachining3D.frame(fiveAxisResult,(fiveCueFrame.index-1).coerceAtLeast(0))
+    val fiveCueDeltaA=fiveCueFrame.toolPoint.axisA-fiveCuePrevious.toolPoint.axisA
+    val fiveCueDeltaB=fiveCueFrame.toolPoint.axisB-fiveCuePrevious.toolPoint.axisB
+    require(abs(fiveCueDeltaA)>1e-9 || abs(fiveCueDeltaB)>1e-9){"Studio 5AX A/B delta-direction evidence did not change"}
+    val fiveCueDeltaACode=when { fiveCueDeltaA>1e-9 -> "POS"; fiveCueDeltaA< -1e-9 -> "NEG"; else -> "ZERO" }
+    val fiveCueDeltaBCode=when { fiveCueDeltaB>1e-9 -> "POS"; fiveCueDeltaB< -1e-9 -> "NEG"; else -> "ZERO" }
     fiveAxisPanel.showProgressiveFrame(fiveCueFrame)
     require(fiveCueFrame.index>0 && fiveAxisPanel.freshRemovalSourceFrame()==fiveCueFrame.index-1){"Studio 5AX fresh-removal source did not lock to current index - 1"}
     val fiveCueFile=File("desktop_5x_axis_cue.png")
@@ -1822,6 +1840,11 @@ private fun runSmoke() {
             "5X_AXIS_DEPTH_POLARITY_VALUE=${DisplayFormat.mm(fiveCueDepthValue)}\n" +
             "5X_AXIS_DEPTH_POLARITY_CODE=$fiveCueDepthCode\n" +
             "5X_AXIS_DEPTH_POLARITY_LABEL=$fiveCueDepthLabel\n" +
+            "5X_AXIS_DELTA_DIRECTION=PASS\n" +
+            "5X_AXIS_DELTA_A=${DisplayFormat.mm(fiveCueDeltaA)}\n" +
+            "5X_AXIS_DELTA_B=${DisplayFormat.mm(fiveCueDeltaB)}\n" +
+            "5X_AXIS_DELTA_A_CODE=$fiveCueDeltaACode\n" +
+            "5X_AXIS_DELTA_B_CODE=$fiveCueDeltaBCode\n" +
             "5X_DEPTH_OCCLUSION=PASS\n" +
             "5X_FRESH_REMOVAL_FRONTIER=PASS\n" +
             "5X_FRESH_REMOVAL_VISIBLE_POINTS=$fiveFreshRemoval\n" +
