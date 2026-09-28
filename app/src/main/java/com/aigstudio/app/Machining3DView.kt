@@ -222,17 +222,19 @@ class Machining3DView(
 
     private fun machineColor(role: MachineComponentRole, moving: Boolean): Int = when(role) {
         MachineComponentRole.BASE, MachineComponentRole.COLUMN, MachineComponentRole.FIXTURE ->
-            Color.argb(if(moving) 210 else 178, 50, 92, 122)
+            Color.argb(if(moving) 236 else 218, 56, 104, 138)
         MachineComponentRole.TABLE, MachineComponentRole.TRUNNION ->
-            Color.argb(if(moving) 218 else 188, 94, 72, 176)
+            Color.argb(if(moving) 242 else 224, 108, 84, 196)
         MachineComponentRole.ROTARY_A ->
-            Color.argb(224, 38, 190, 210)
+            Color.argb(246, 38, 210, 230)
         MachineComponentRole.ROTARY_B ->
-            Color.argb(226, 224, 64, 176)
-        MachineComponentRole.SPINDLE, MachineComponentRole.HOLDER ->
-            Color.argb(232, 118, 205, 235)
+            Color.argb(246, 236, 72, 192)
+        MachineComponentRole.SPINDLE ->
+            Color.argb(248, 164, 222, 248)
+        MachineComponentRole.HOLDER ->
+            Color.argb(248, 108, 188, 236)
         MachineComponentRole.TOOL ->
-            Color.argb(246, 255, 185, 62)
+            Color.argb(255, 255, 194, 64)
     }
 
     private fun drawMachineModel(canvas: Canvas, model: MachineModel3D, scale: Double) {
@@ -244,9 +246,21 @@ class Machining3DView(
             }.sortedBy { it.first }
             machinePaint.color=machineColor(component.role,component.moving)
             machineEdgePaint.color=Color.argb(
-                if(component.role==MachineComponentRole.TOOL) 220 else 82,
-                160,235,255
+                when(component.role){
+                    MachineComponentRole.TOOL -> 255
+                    MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 220
+                    MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 210
+                    MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 178
+                    else -> 148
+                },
+                174,240,255
             )
+            machineEdgePaint.strokeWidth=when(component.role){
+                MachineComponentRole.TOOL -> 1.9f*resources.displayMetrics.density
+                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 1.45f*resources.displayMetrics.density
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 1.35f*resources.displayMetrics.density
+                else -> 1.1f*resources.displayMetrics.density
+            }
             ordered.forEachIndexed { index,item ->
                 val tri=item.second
                 val a=pts[tri.a]; val b=pts[tri.b]; val c=pts[tri.c]

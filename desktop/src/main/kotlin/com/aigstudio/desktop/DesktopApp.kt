@@ -694,11 +694,12 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         model.components.forEach { component ->
             val pts=component.mesh.vertices.map { project(it,scale) }
             val alpha=when(component.role){
-                MachineComponentRole.TOOL -> 220
-                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 165
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 145
-                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 120
-                else -> 90
+                MachineComponentRole.TOOL -> 252
+                MachineComponentRole.SPINDLE -> 238
+                MachineComponentRole.HOLDER -> 226
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 218
+                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 196
+                else -> 168
             }
             g2.color=when(component.role){
                 MachineComponentRole.TOOL -> Color(255,196,64,alpha)
@@ -716,7 +717,14 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
                     g2.fillPolygon(poly)
                     if(i%(stride*5)==0 || component.role==MachineComponentRole.TOOL){
                         g2.color=Color(180,220,255,(alpha+60).coerceAtMost(245))
-                        g2.stroke=BasicStroke(if(component.role==MachineComponentRole.TOOL)1.6f else .7f)
+                        g2.stroke=BasicStroke(
+                            when(component.role){
+                                MachineComponentRole.TOOL -> 2.1f
+                                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 1.55f
+                                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 1.45f
+                                else -> 1.0f
+                            }
+                        )
                         g2.drawPolygon(poly)
                         g2.color=when(component.role){
                             MachineComponentRole.TOOL -> Color(255,196,64,alpha)
@@ -917,11 +925,12 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         model.components.forEach { component ->
             val pts=component.mesh.vertices.map{projectMachine(it,scale)}
             val alpha=when(component.role){
-                MachineComponentRole.TOOL -> 220
-                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 165
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 145
-                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 120
-                else -> 90
+                MachineComponentRole.TOOL -> 252
+                MachineComponentRole.SPINDLE -> 238
+                MachineComponentRole.HOLDER -> 226
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 218
+                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 196
+                else -> 168
             }
             g.color=when(component.role){
                 MachineComponentRole.TOOL -> Color(255,196,64,alpha)
@@ -939,7 +948,14 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                     g.fillPolygon(poly)
                     if(i%(stride*5)==0 || component.role==MachineComponentRole.TOOL){
                         g.color=Color(180,220,255,(alpha+60).coerceAtMost(245))
-                        g.stroke=BasicStroke(if(component.role==MachineComponentRole.TOOL)1.6f else .7f)
+                        g.stroke=BasicStroke(
+                            when(component.role){
+                                MachineComponentRole.TOOL -> 2.1f
+                                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 1.55f
+                                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 1.45f
+                                else -> 1.0f
+                            }
+                        )
                         g.drawPolygon(poly)
                     }
                 }

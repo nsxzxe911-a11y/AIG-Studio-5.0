@@ -436,6 +436,27 @@ require(regression, "REAL_MACHINE_MODEL_3_4_5AX_GATE_PASS", "STUDIO_TRUE_MACHINE
 require(regression, "MACHINE_KINEMATICS_RUNTIME_PARITY_PASS", "STUDIO_MACHINE_KINEMATICS_REGRESSION_174")
 print("TRUE_MACHINE_MODEL_RUNTIME_PARITY_GATE_PASS|ANDROID|WINDOWS|3AX|4AX|5AX|BASE|COLUMN|TABLE|FIXTURE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL|DYNAMIC_AB|MASTER_ORIGIN|SHARED_KINEMATICS")
 for needle in (
+    "Color.argb(if(moving) 236 else 218, 56, 104, 138)",
+    "Color.argb(if(moving) 242 else 224, 108, 84, 196)",
+    "Color.argb(246, 38, 210, 230)",
+    "Color.argb(246, 236, 72, 192)",
+    "Color.argb(248, 164, 222, 248)",
+    "Color.argb(248, 108, 188, 236)",
+    "MachineComponentRole.TOOL -> 1.9f*resources.displayMetrics.density",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_MACHINE_VISUAL_DEPTH_176")
+for needle in (
+    "MachineComponentRole.TOOL -> 252",
+    "MachineComponentRole.SPINDLE -> 238",
+    "MachineComponentRole.HOLDER -> 226",
+    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 218",
+    "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 196",
+    "MachineComponentRole.TOOL -> 2.1f",
+    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 1.45f",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_MACHINE_VISUAL_DEPTH_176")
+print("MACHINE_VISUAL_DEPTH_GATE_PASS|ANDROID|WINDOWS|SOLID_FIXED_PARTS|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL|ROLE_EDGES")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',
