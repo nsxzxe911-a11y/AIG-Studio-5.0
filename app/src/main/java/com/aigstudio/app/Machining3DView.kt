@@ -62,6 +62,18 @@ class Machining3DView(
         strokeCap = Paint.Cap.ROUND
         color = Color.argb(108,63,255,157)
     }
+    private val occludedRapidPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.0f * resources.displayMetrics.density
+        strokeCap = Paint.Cap.ROUND
+        color = Color.argb(18,255,70,220)
+    }
+    private val occludedCutPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.25f * resources.displayMetrics.density
+        strokeCap = Paint.Cap.ROUND
+        color = Color.argb(30,63,255,157)
+    }
     private val cutBoundaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 1.65f * resources.displayMetrics.density
@@ -131,6 +143,9 @@ class Machining3DView(
     private val trianglePath = Path()
     private val projectedBuffer = ArrayList<ScreenPoint>(8192)
     private val visibleTriangleBuffer = ArrayList<Int>(8192)
+    private val materialDepthGridWidth = 96
+    private val materialDepthGridHeight = 96
+    private val materialDepthGrid = DoubleArray(materialDepthGridWidth * materialDepthGridHeight) { Double.NEGATIVE_INFINITY }
     private val fpsMeter = SurfaceFpsMeter(refreshHzProvider = { display?.refreshRate?.toDouble() ?: 60.0 })
 
     private val scaleDetector = ScaleGestureDetector(
@@ -425,6 +440,47 @@ class Machining3DView(
             maxY >= -margin && minY <= height + margin
     }
 
+    private fun triangleDepthAt(px:Float,py:Float,a:ScreenPoint,b:ScreenPoint,c:ScreenPoint):Double? {
+        val denom=(b.y-c.y)*(a.x-c.x)+(c.x-b.x)*(a.y-c.y)
+        if(abs(denom)<1e-6f) return null
+        val w1=((b.y-c.y)*(px-c.x)+(c.x-b.x)*(py-c.y))/denom
+        val w2=((c.y-a.y)*(px-c.x)+(a.x-c.x)*(py-c.y))/denom
+        val w3=1f-w1-w2
+        if(w1 < -0.001f || w2 < -0.001f || w3 < -0.001f) return null
+        return w1*a.depth+w2*b.depth+w3*c.depth
+    }
+
+    private fun rebuildMaterialDepthGrid(projected:List<ScreenPoint>,triangles:List<Triangle3D>,visible:List<Int>) {
+        java.util.Arrays.fill(materialDepthGrid,Double.NEGATIVE_INFINITY)
+        if(width<=0 || height<=0) return
+        visible.forEach { index ->
+            val t=triangles[index]
+            val a=projected[t.a]; val b=projected[t.b]; val c=projected[t.c]
+            val gx0=floor(min(a.x,min(b.x,c.x))/width*materialDepthGridWidth).toInt().coerceIn(0,materialDepthGridWidth-1)
+            val gx1=ceil(max(a.x,max(b.x,c.x))/width*materialDepthGridWidth).toInt().coerceIn(0,materialDepthGridWidth-1)
+            val gy0=floor(min(a.y,min(b.y,c.y))/height*materialDepthGridHeight).toInt().coerceIn(0,materialDepthGridHeight-1)
+            val gy1=ceil(max(a.y,max(b.y,c.y))/height*materialDepthGridHeight).toInt().coerceIn(0,materialDepthGridHeight-1)
+            for(gy in gy0..gy1) for(gx in gx0..gx1){
+                val px=(gx+0.5f)*width/materialDepthGridWidth
+                val py=(gy+0.5f)*height/materialDepthGridHeight
+                val depth=triangleDepthAt(px,py,a,b,c) ?: continue
+                val cell=gy*materialDepthGridWidth+gx
+                if(depth>materialDepthGrid[cell]) materialDepthGrid[cell]=depth
+            }
+        }
+    }
+
+    private fun materialOccludesSegment(a:ScreenPoint,b:ScreenPoint):Boolean {
+        if(width<=0 || height<=0) return false
+        val mx=(a.x+b.x)*0.5f; val my=(a.y+b.y)*0.5f
+        if(mx<0f || mx>=width || my<0f || my>=height) return false
+        val gx=(mx/width*materialDepthGridWidth).toInt().coerceIn(0,materialDepthGridWidth-1)
+        val gy=(my/height*materialDepthGridHeight).toInt().coerceIn(0,materialDepthGridHeight-1)
+        val materialDepth=materialDepthGrid[gy*materialDepthGridWidth+gx]
+        val segmentDepth=(a.depth+b.depth)*0.5
+        return materialDepth.isFinite() && materialDepth>segmentDepth+1e-6
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (width <= 0 || height <= 0) return
@@ -480,6 +536,7 @@ class Machining3DView(
             val triangle = triangles[index]
             (projected[triangle.a].depth + projected[triangle.b].depth + projected[triangle.c].depth) / 3.0
         }
+        rebuildMaterialDepthGrid(projected,triangles,visibleTriangleBuffer)
 
         surfacePaint.color=Color.rgb(45,145,220)
         surfaceSeamPaint.color=surfacePaint.color
@@ -524,7 +581,14 @@ class Machining3DView(
                 if (prev != null) {
                     val a = project(machineSpace(Vec3(prev.to.x, prev.to.y, prev.z),resolvedMode,liveMove), scale)
                     val b = project(machineSpace(Vec3(move.to.x, move.to.y, move.z),resolvedMode,liveMove), scale)
-                    canvas.drawLine(a.x, a.y, b.x, b.y, if (move.rapid) rapidPaint else cutPaint)
+                    val occluded=materialOccludesSegment(a,b)
+                    val pathPaint=when {
+                        move.rapid && occluded -> occludedRapidPaint
+                        !move.rapid && occluded -> occludedCutPaint
+                        move.rapid -> rapidPaint
+                        else -> cutPaint
+                    }
+                    canvas.drawLine(a.x, a.y, b.x, b.y, pathPaint)
                 }
                 previous = move
             }

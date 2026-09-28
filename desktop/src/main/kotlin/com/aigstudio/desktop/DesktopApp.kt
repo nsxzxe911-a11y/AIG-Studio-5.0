@@ -614,6 +614,43 @@ private fun machineDepthShade(base:Color,depth:Double,minDepth:Double,maxDepth:D
     )
 }
 
+private const val MATERIAL_DEPTH_GRID_W=96
+private const val MATERIAL_DEPTH_GRID_H=96
+
+private fun rasterDepthTriangle(
+    grid:DoubleArray,width:Int,height:Int,
+    a:Point,ad:Double,b:Point,bd:Double,c:Point,cd:Double
+){
+    if(width<=0 || height<=0)return
+    val denom=(b.y-c.y).toDouble()*(a.x-c.x)+(c.x-b.x).toDouble()*(a.y-c.y)
+    if(abs(denom)<1e-9)return
+    val gx0=floor(min(a.x,min(b.x,c.x)).toDouble()/width*MATERIAL_DEPTH_GRID_W).toInt().coerceIn(0,MATERIAL_DEPTH_GRID_W-1)
+    val gx1=ceil(max(a.x,max(b.x,c.x)).toDouble()/width*MATERIAL_DEPTH_GRID_W).toInt().coerceIn(0,MATERIAL_DEPTH_GRID_W-1)
+    val gy0=floor(min(a.y,min(b.y,c.y)).toDouble()/height*MATERIAL_DEPTH_GRID_H).toInt().coerceIn(0,MATERIAL_DEPTH_GRID_H-1)
+    val gy1=ceil(max(a.y,max(b.y,c.y)).toDouble()/height*MATERIAL_DEPTH_GRID_H).toInt().coerceIn(0,MATERIAL_DEPTH_GRID_H-1)
+    for(gy in gy0..gy1)for(gx in gx0..gx1){
+        val px=(gx+0.5)*width/MATERIAL_DEPTH_GRID_W
+        val py=(gy+0.5)*height/MATERIAL_DEPTH_GRID_H
+        val w1=((b.y-c.y)*(px-c.x)+(c.x-b.x)*(py-c.y))/denom
+        val w2=((c.y-a.y)*(px-c.x)+(a.x-c.x)*(py-c.y))/denom
+        val w3=1.0-w1-w2
+        if(w1 < -0.001 || w2 < -0.001 || w3 < -0.001)continue
+        val depth=w1*ad+w2*bd+w3*cd
+        val cell=gy*MATERIAL_DEPTH_GRID_W+gx
+        if(depth>grid[cell])grid[cell]=depth
+    }
+}
+
+private fun materialDepthOccludes(grid:DoubleArray,width:Int,height:Int,a:Point,ad:Double,b:Point,bd:Double):Boolean{
+    if(width<=0 || height<=0)return false
+    val mx=(a.x+b.x)/2.0;val my=(a.y+b.y)/2.0
+    if(mx<0.0 || mx>=width || my<0.0 || my>=height)return false
+    val gx=(mx/width*MATERIAL_DEPTH_GRID_W).toInt().coerceIn(0,MATERIAL_DEPTH_GRID_W-1)
+    val gy=(my/height*MATERIAL_DEPTH_GRID_H).toInt().coerceIn(0,MATERIAL_DEPTH_GRID_H-1)
+    val materialDepth=grid[gy*MATERIAL_DEPTH_GRID_W+gx]
+    return materialDepth.isFinite() && materialDepth>(ad+bd)*0.5+1e-6
+}
+
 private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
     private var rx = -35.0
     private var ry = 35.0
@@ -621,6 +658,10 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
     private var lastX = 0
     private var lastY = 0
     private var progressiveFrame:ProgressiveMachining3DFrame?=null
+    private val materialDepthGrid=DoubleArray(MATERIAL_DEPTH_GRID_W*MATERIAL_DEPTH_GRID_H){Double.NEGATIVE_INFINITY}
+    private var lastOccludedPathSegments=0
+    private var lastForegroundPathSegments=0
+    fun occlusionEvidence():Pair<Int,Int> = lastOccludedPathSegments to lastForegroundPathSegments
 
     init {
         background = Color(5, 10, 17)
@@ -833,6 +874,12 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         val visible = activeMesh.triangles.mapIndexedNotNull { index,t ->
             if(index%stride!=0) null else Pair((rotated[t.a].z+rotated[t.b].z+rotated[t.c].z)/3.0,t)
         }.sortedBy{it.first}
+        java.util.Arrays.fill(materialDepthGrid,Double.NEGATIVE_INFINITY)
+        visible.forEach { item ->
+            val t=item.second
+            rasterDepthTriangle(materialDepthGrid,width,height,
+                projected[t.a],rotated[t.a].z,projected[t.b],rotated[t.b].z,projected[t.c],rotated[t.c].z)
+        }
         val materialColor=Color(45,145,220)
         visible.forEachIndexed { index,item ->
             val t=item.second; val a=projected[t.a]; val b=projected[t.b]; val c=projected[t.c]
@@ -867,13 +914,22 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         val allMoves=contactMoves
         val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
         var previous:Move?=null
+        lastOccludedPathSegments=0;lastForegroundPathSegments=0
         g2.stroke=BasicStroke(1.15f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
         visibleMoves.forEach { move ->
             val prev=previous
             if(prev!=null){
-                val a=project(Vec3(prev.to.x,prev.to.y,prev.z),scale)
-                val b=project(Vec3(move.to.x,move.to.y,move.z),scale)
-                g2.color=if(move.rapid)Color(255,70,220,40) else Color(63,255,157,82)
+                val av=Vec3(prev.to.x,prev.to.y,prev.z);val bv=Vec3(move.to.x,move.to.y,move.z)
+                val ar=rotate(av);val br=rotate(bv)
+                val a=project(av,scale);val b=project(bv,scale)
+                val occluded=materialDepthOccludes(materialDepthGrid,width,height,a,ar.z,b,br.z)
+                if(occluded)lastOccludedPathSegments++ else lastForegroundPathSegments++
+                g2.color=when {
+                    move.rapid && occluded -> Color(255,70,220,12)
+                    !move.rapid && occluded -> Color(63,255,157,20)
+                    move.rapid -> Color(255,70,220,40)
+                    else -> Color(63,255,157,82)
+                }
                 g2.drawLine(a.x,a.y,b.x,b.y)
             }
             previous=move
@@ -966,6 +1022,10 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         private set
     private var zoom=1.0
     private var progressiveFrame:ProgressiveMachining3DFrame?=null
+    private val materialDepthGrid=DoubleArray(MATERIAL_DEPTH_GRID_W*MATERIAL_DEPTH_GRID_H){Double.NEGATIVE_INFINITY}
+    private var lastOccludedPathSegments=0
+    private var lastForegroundPathSegments=0
+    fun occlusionEvidence():Pair<Int,Int> = lastOccludedPathSegments to lastForegroundPathSegments
     private var machineMode="3AX"
     init{
         background=Color(5,10,17)
@@ -1005,6 +1065,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         val r=kinematicTransform(v)
         return Vec3(r.x-cx,r.y-cy,r.z-cz)
     }
+    private fun axisViewDepth(r:Vec3):Double = r.x*.34-r.y*.28+r.z
     private fun project(v:Vec3,scale:Double):Point{
         val r=axisTransform(v)
         return Point(
@@ -1147,8 +1208,14 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         val activeFrame=progressiveFrame
         val machineModel=drawMachineModel(g,scale,activeFrame)
         val activeMesh=activeFrame?.mesh ?: result.mesh
+        val axisSpace=activeMesh.vertices.map{axisTransform(it)}
         val pts=activeMesh.vertices.map{project(it,scale)}
         val stride=max(1,ceil(activeMesh.triangles.size/4500.0).toInt())
+        java.util.Arrays.fill(materialDepthGrid,Double.NEGATIVE_INFINITY)
+        activeMesh.triangles.forEachIndexed { i,t -> if(i%stride==0){
+            rasterDepthTriangle(materialDepthGrid,width,height,
+                pts[t.a],axisViewDepth(axisSpace[t.a]),pts[t.b],axisViewDepth(axisSpace[t.b]),pts[t.c],axisViewDepth(axisSpace[t.c]))
+        }}
         val showMaterialMeshEdges=false
         val materialColor=Color(45,145,220)
         activeMesh.triangles.forEachIndexed { i,t -> if(i%stride==0){
@@ -1183,12 +1250,21 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         val allMoves=contactMoves
         val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
         var prev:Move?=null
+        lastOccludedPathSegments=0;lastForegroundPathSegments=0
         visibleMoves.forEach { m ->
             val p=prev
             if(p!=null){
-                val a=project(Vec3(p.to.x,p.to.y,p.z),scale)
-                val b=project(Vec3(m.to.x,m.to.y,m.z),scale)
-                g.color=if(m.rapid)Color(61,235,255,36) else Color(255,176,32,78)
+                val av=Vec3(p.to.x,p.to.y,p.z);val bv=Vec3(m.to.x,m.to.y,m.z)
+                val ar=axisTransform(av);val br=axisTransform(bv)
+                val a=project(av,scale);val b=project(bv,scale)
+                val occluded=materialDepthOccludes(materialDepthGrid,width,height,a,axisViewDepth(ar),b,axisViewDepth(br))
+                if(occluded)lastOccludedPathSegments++ else lastForegroundPathSegments++
+                g.color=when {
+                    m.rapid && occluded -> Color(61,235,255,10)
+                    !m.rapid && occluded -> Color(255,176,32,18)
+                    m.rapid -> Color(61,235,255,36)
+                    else -> Color(255,176,32,78)
+                }
                 g.stroke=BasicStroke(if(m.rapid)1.05f else 1.5f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
                 g.drawLine(a.x,a.y,b.x,b.y)
             }
@@ -1537,6 +1613,9 @@ private fun runSmoke() {
     fiveAxisPanel.showProgressiveFrame(fiveCueFrame)
     val fiveCueFile=File("desktop_5x_axis_cue.png")
     writePanel(fiveAxisPanel,fiveCueFile,980,620)
+    val fiveOcclusionEvidence=fiveAxisPanel.occlusionEvidence()
+    require(fiveOcclusionEvidence.first>0){"Studio 5AX depth occlusion evidence found no occluded historical path segment"}
+    require(fiveOcclusionEvidence.second>0){"Studio 5AX depth occlusion evidence found no foreground historical path segment"}
     require(!fiveMoves[fiveBeforeIndex].rapid && !fiveMoves[fiveAfterIndex].rapid && !fiveMoves[fiveCueIndex].rapid){"Studio 5AX cut-contact evidence must use non-rapid frames"}
     require(fiveAfterFrame.removedCells>fiveBeforeFrame.removedCells){"Studio 5AX material removal did not increase"}
     require(
@@ -1590,6 +1669,9 @@ private fun runSmoke() {
             "5X_AXIS_CUE_FRAME=${fiveCueFrame.index+1}/${fiveCueFrame.total}\n" +
             "5X_AXIS_CUE_A=${DisplayFormat.mm(fiveCueFrame.toolPoint.axisA)}\n" +
             "5X_AXIS_CUE_B=${DisplayFormat.mm(fiveCueFrame.toolPoint.axisB)}\n" +
+            "5X_DEPTH_OCCLUSION=PASS\n" +
+            "5X_OCCLUDED_PATH_SEGMENTS=${fiveOcclusionEvidence.first}\n" +
+            "5X_FOREGROUND_PATH_SEGMENTS=${fiveOcclusionEvidence.second}\n" +
             "ABS_MODE=" + SoftwareCoordinateContract.coordinateMode() + "\n" +
             "MASTER_ORIGIN=" + SoftwareCoordinateContract.masterOriginData() + "\n" +
             "SIGNED_NEGATIVE_SAMPLE=" + SoftwareCoordinateContract.xyzData(-40.0, -25.0, -2.0) + "\n" +
@@ -1626,6 +1708,7 @@ private fun runSmoke() {
             "5X_BEFORE=desktop_5x_before.png\n" +
             "5X_AFTER=desktop_5x_after.png\n" +
             "5X_AXIS_CUE=desktop_5x_axis_cue.png\n" +
+            "5X_DEPTH_OCCLUSION=PASS\n" +
             "VIEW_ANIMATION_FRAME_CHANGE=PASS\n" +
             "PROGRESSIVE_MATERIAL_REMOVAL=PASS\n" +
             "5X_REAL_MOTION_AND_REMOVAL=PASS\n"

@@ -714,6 +714,25 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_TOOL_AXIS_CUE_195")
 print("TOOL_AXIS_CUE_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|A_THEN_B|TRUNNION_PHYSICAL_SPINDLE_VERTICAL|WORKPIECE_RELATIVE_AXIS|SMOKE_VECTOR_CHANGE|MAX_ANGLE_EVIDENCE|VISUAL_ONLY")
 for needle in (
+    "private val materialDepthGridWidth = 96",
+    "private fun rebuildMaterialDepthGrid",
+    "private fun materialOccludesSegment",
+    "occludedRapidPaint",
+    "occludedCutPaint",
+    "rebuildMaterialDepthGrid(projected,triangles,visibleTriangleBuffer)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_MATERIAL_DEPTH_OCCLUSION_196")
+for needle in (
+    "private const val MATERIAL_DEPTH_GRID_W=96",
+    "private fun rasterDepthTriangle",
+    "private fun materialDepthOccludes",
+    "fun occlusionEvidence():Pair<Int,Int>",
+    "Studio 5AX depth occlusion evidence found no occluded historical path segment",
+    "5X_DEPTH_OCCLUSION=PASS",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_MATERIAL_DEPTH_OCCLUSION_196")
+print("MATERIAL_DEPTH_OCCLUSION_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|96X96_SCREEN_DEPTH|TRUE_MATERIAL_MESH|MIDPOINT_DEPTH_TEST|OCCLUDED_DIM|ACTIVE_TRAIL_ABOVE|SMOKE_BOTH_CLASSES|VISUAL_ONLY")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',
