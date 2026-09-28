@@ -1012,7 +1012,14 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             g2.drawLine(p.x,p.y,axisTop.x,axisTop.y)
             g2.fillOval(axisTop.x-4,axisTop.y-4,8,8)
             g2.font=Font(Font.SANS_SERIF,Font.BOLD,11)
-            g2.drawString("A/B",axisTop.x+6,axisTop.y-6)
+            val badgeText=String.format(java.util.Locale.US,"A%+.3f° B%+.3f°",tool.axisA,tool.axisB)
+            val fm=g2.fontMetrics
+            val badgeW=fm.stringWidth(badgeText)+10
+            val badgeH=fm.height+6
+            val badgeX=(axisTop.x+6).coerceIn(6,(width-badgeW-6).coerceAtLeast(6))
+            val badgeY=(axisTop.y-badgeH-6).coerceIn(6,(height-badgeH-6).coerceAtLeast(6))
+            g2.color=Color(8,20,32,188);g2.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)
+            g2.color=Color(255,160,232,245);g2.drawString(badgeText,badgeX+5,badgeY+fm.ascent+3)
         }
         activeFrame?.let { frame ->
             val progress=frame.progress.coerceIn(0.0,1.0)
@@ -1371,7 +1378,14 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             g.drawLine(p.x,p.y,axisTop.x,axisTop.y)
             g.fillOval(axisTop.x-4,axisTop.y-4,8,8)
             g.font=Font(Font.SANS_SERIF,Font.BOLD,11)
-            g.drawString("A/B",axisTop.x+6,axisTop.y-6)
+            val badgeText=String.format(java.util.Locale.US,"A%+.3f° B%+.3f°",axisA,axisB)
+            val fm=g.fontMetrics
+            val badgeW=fm.stringWidth(badgeText)+10
+            val badgeH=fm.height+6
+            val badgeX=(axisTop.x+6).coerceIn(6,(width-badgeW-6).coerceAtLeast(6))
+            val badgeY=(axisTop.y-badgeH-6).coerceIn(6,(height-badgeH-6).coerceAtLeast(6))
+            g.color=Color(8,20,32,188);g.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)
+            g.color=Color(255,160,232,245);g.drawString(badgeText,badgeX+5,badgeY+fm.ascent+3)
         }
         activeFrame?.let { frame ->
             val progress=frame.progress.coerceIn(0.0,1.0)
@@ -1760,6 +1774,9 @@ private fun runSmoke() {
             "5X_AXIS_CUE_FRAME=${fiveCueFrame.index+1}/${fiveCueFrame.total}\n" +
             "5X_AXIS_CUE_A=${DisplayFormat.mm(fiveCueFrame.toolPoint.axisA)}\n" +
             "5X_AXIS_CUE_B=${DisplayFormat.mm(fiveCueFrame.toolPoint.axisB)}\n" +
+            "5X_ORIENTATION_BADGE=PASS\n" +
+            "5X_ORIENTATION_BADGE_A=${DisplayFormat.mm(fiveCueFrame.toolPoint.axisA)}\n" +
+            "5X_ORIENTATION_BADGE_B=${DisplayFormat.mm(fiveCueFrame.toolPoint.axisB)}\n" +
             "5X_DEPTH_OCCLUSION=PASS\n" +
             "5X_FRESH_REMOVAL_FRONTIER=PASS\n" +
             "5X_FRESH_REMOVAL_VISIBLE_POINTS=$fiveFreshRemoval\n" +

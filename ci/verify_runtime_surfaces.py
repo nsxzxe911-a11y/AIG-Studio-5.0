@@ -701,7 +701,7 @@ for needle in (
     "private val toolAxisCueTextPaint",
     "machineSpace(Vec3(liveMove.to.x,liveMove.to.y,liveMove.z+cueLength),resolvedMode,liveMove)",
     "canvas.drawLine(tip.x, tip.y, axisCueTop.x, axisCueTop.y, toolAxisCuePaint)",
-    "canvas.drawText(\"A/B\"",
+    "canvas.drawText(badgeText,badgeX,badgeBaseline,toolAxisCueTextPaint)",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_TOOL_AXIS_CUE_195")
 for needle in (
@@ -773,6 +773,25 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_ADJACENT_FRONTIER_LOCK_199")
 print("ADJACENT_FRONTIER_LOCK_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|CURRENT_INDEX_MINUS_ONE|UI_SKIP_INDEPENDENT|TRUE_PROGRESSIVE_FRAME|SMOKE_LOCK|VISUAL_ONLY")
+for needle in (
+    "private val toolAxisBadgePaint",
+    "A%+.3f° B%+.3f°",
+    "val badgeA=if(resolvedMode==\"3AX\")0.0 else liveMove.axisA",
+    "val badgeB=if(resolvedMode==\"5AX\")liveMove.axisB else 0.0",
+    "canvas.drawRoundRect(badgeX-pad,badgeTop,badgeX+textWidth+pad,badgeBaseline+pad",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_TOOL_ORIENTATION_BADGE_200")
+for needle in (
+    "val badgeText=String.format(java.util.Locale.US,\"A%+.3f° B%+.3f°\",tool.axisA,tool.axisB)",
+    "val badgeText=String.format(java.util.Locale.US,\"A%+.3f° B%+.3f°\",axisA,axisB)",
+    "g2.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)",
+    "g.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)",
+    "5X_ORIENTATION_BADGE=PASS",
+    "5X_ORIENTATION_BADGE_A=",
+    "5X_ORIENTATION_BADGE_B=",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_TOOL_ORIENTATION_BADGE_200")
+print("TOOL_ORIENTATION_BADGE_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|TRUE_AB_VALUES|TOOL_FOLLOW|VIEW_CLAMPED|AXIS_CUE_BOUND|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',

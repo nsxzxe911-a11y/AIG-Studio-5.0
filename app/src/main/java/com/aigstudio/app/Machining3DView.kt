@@ -142,8 +142,12 @@ class Machining3DView(
     }
     private val toolAxisCueTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = Color.argb(235,255,110,220)
+        color = Color.argb(245,255,160,232)
         textSize = 10f * resources.displayMetrics.scaledDensity
+    }
+    private val toolAxisBadgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = Color.argb(188,8,20,32)
     }
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.rgb(225, 240, 255)
@@ -676,7 +680,16 @@ class Machining3DView(
             canvas.drawLine(tip.x, tip.y, top.x, top.y, toolPaint)
             canvas.drawLine(tip.x, tip.y, axisCueTop.x, axisCueTop.y, toolAxisCuePaint)
             canvas.drawCircle(axisCueTop.x,axisCueTop.y,3.5f*resources.displayMetrics.density,toolAxisCueDotPaint)
-            canvas.drawText("A/B",axisCueTop.x+5f*resources.displayMetrics.density,axisCueTop.y-5f*resources.displayMetrics.density,toolAxisCueTextPaint)
+            val badgeA=if(resolvedMode=="3AX")0.0 else liveMove.axisA
+            val badgeB=if(resolvedMode=="5AX")liveMove.axisB else 0.0
+            val badgeText=String.format(java.util.Locale.US,"A%+.3f° B%+.3f°",badgeA,badgeB)
+            val pad=4f*resources.displayMetrics.density
+            val textWidth=toolAxisCueTextPaint.measureText(badgeText)
+            val badgeX=(axisCueTop.x+6f*resources.displayMetrics.density).coerceIn(pad,(width-textWidth-pad*3f).coerceAtLeast(pad))
+            val badgeBaseline=(axisCueTop.y-7f*resources.displayMetrics.density).coerceIn(18f*resources.displayMetrics.density,height-12f*resources.displayMetrics.density)
+            val badgeTop=badgeBaseline-toolAxisCueTextPaint.textSize-pad
+            canvas.drawRoundRect(badgeX-pad,badgeTop,badgeX+textWidth+pad,badgeBaseline+pad,5f*resources.displayMetrics.density,5f*resources.displayMetrics.density,toolAxisBadgePaint)
+            canvas.drawText(badgeText,badgeX,badgeBaseline,toolAxisCueTextPaint)
             canvas.drawCircle(tip.x, tip.y, radius, toolPaint)
         }
 
