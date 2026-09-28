@@ -673,6 +673,7 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
     private var lastFreshRemovalCells=0
     fun occlusionEvidence():Pair<Int,Int> = lastOccludedPathSegments to lastForegroundPathSegments
     fun freshRemovalEvidence():Int = lastFreshRemovalCells
+    fun freshRemovalSourceFrame():Int? = previousProgressiveFrame?.index
 
     init {
         background = Color(5, 10, 17)
@@ -711,7 +712,7 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
 
     fun showProgressiveFrame(index:Int):ProgressiveMachining3DFrame {
         val frame=ProgressiveMachining3D.frame(result,index)
-        previousProgressiveFrame=progressiveFrame?.takeIf{it.index<frame.index}
+        previousProgressiveFrame=if(frame.index>0) ProgressiveMachining3D.frame(result,frame.index-1) else null
         progressiveFrame=frame
         repaint()
         return frame
@@ -1064,6 +1065,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
     private var lastFreshRemovalCells=0
     fun occlusionEvidence():Pair<Int,Int> = lastOccludedPathSegments to lastForegroundPathSegments
     fun freshRemovalEvidence():Int = lastFreshRemovalCells
+    fun freshRemovalSourceFrame():Int? = previousProgressiveFrame?.index
     private var machineMode="3AX"
     init{
         background=Color(5,10,17)
@@ -1087,7 +1089,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         repaint()
     }
     fun showProgressiveFrame(frame:ProgressiveMachining3DFrame){
-        previousProgressiveFrame=progressiveFrame?.takeIf{it.index<frame.index}
+        previousProgressiveFrame=if(frame.index>0) ProgressiveMachining3D.frame(result,frame.index-1) else null
         progressiveFrame=frame
         axisA=frame.toolPoint.axisA
         axisB=frame.toolPoint.axisB
@@ -1638,6 +1640,10 @@ private fun runSmoke() {
     require(materialFreshRemoval>0){"Studio 3D fresh-removal frontier found no changed removal cells"}
     require(fresh3DAfter.removedCells>fresh3DBefore.removedCells){"Studio 3D adjacent fresh-removal evidence did not increase removal"}
     meshPanel.clearProgressiveFrame()
+    val fresh3DJumpTarget=absoluteMoves.lastIndex.coerceAtLeast(1)
+    meshPanel.showProgressiveFrame(fresh3DJumpTarget)
+    require(meshPanel.freshRemovalSourceFrame()==fresh3DJumpTarget-1){"Studio 3D fresh-removal source did not lock to current index - 1"}
+    meshPanel.clearProgressiveFrame()
 
     val fiveAxisSchedule=MultiAxisOrientationSchedule(
         startA=0.0,startB=0.0,endA=35.0,endB=-25.0,
@@ -1690,6 +1696,7 @@ private fun runSmoke() {
     val fiveCueFrame=ProgressiveMachining3D.frame(fiveAxisResult,fiveCueIndex)
     require(abs(fiveCueFrame.toolPoint.axisA)+abs(fiveCueFrame.toolPoint.axisB)>5.0){"Studio 5AX axis-cue evidence angle too small"}
     fiveAxisPanel.showProgressiveFrame(fiveCueFrame)
+    require(fiveCueFrame.index>0 && fiveAxisPanel.freshRemovalSourceFrame()==fiveCueFrame.index-1){"Studio 5AX fresh-removal source did not lock to current index - 1"}
     val fiveCueFile=File("desktop_5x_axis_cue.png")
     writePanel(fiveAxisPanel,fiveCueFile,980,620)
     val fiveOcclusionEvidence=fiveAxisPanel.occlusionEvidence()
@@ -1729,6 +1736,7 @@ private fun runSmoke() {
             "FRESH_REMOVAL_3D_VISIBLE_POINTS=$materialFreshRemoval\n" +
             "FRESH_REMOVAL_3D_FRAME_BEFORE=${fresh3DBefore.index+1}/${fresh3DBefore.total}\n" +
             "FRESH_REMOVAL_3D_FRAME_AFTER=${fresh3DAfter.index+1}/${fresh3DAfter.total}\n" +
+            "FRESH_REMOVAL_SOURCE_LOCK=PASS\n" +
             "REMOVED_BEFORE=${materialBeforeFrame.removedCells}\n" +
             "REMOVED_AFTER=${materialAfterFrame.removedCells}\n" +
             "TOOL_BEFORE=${DisplayFormat.mm(materialBeforeFrame.toolPoint.to.x)},${DisplayFormat.mm(materialBeforeFrame.toolPoint.to.y)},${DisplayFormat.mm(materialBeforeFrame.toolPoint.z)}\n" +
@@ -1757,6 +1765,7 @@ private fun runSmoke() {
             "5X_FRESH_REMOVAL_VISIBLE_POINTS=$fiveFreshRemoval\n" +
             "5X_FRESH_REMOVAL_FRAME_BEFORE=${fiveBeforeFrame.index+1}/${fiveBeforeFrame.total}\n" +
             "5X_FRESH_REMOVAL_FRAME_AFTER=${fiveAfterFrame.index+1}/${fiveAfterFrame.total}\n" +
+            "5X_FRESH_REMOVAL_SOURCE_LOCK=PASS\n" +
             "5X_OCCLUDED_PATH_SEGMENTS=${fiveOcclusionEvidence.first}\n" +
             "5X_FOREGROUND_PATH_SEGMENTS=${fiveOcclusionEvidence.second}\n" +
             "ABS_MODE=" + SoftwareCoordinateContract.coordinateMode() + "\n" +

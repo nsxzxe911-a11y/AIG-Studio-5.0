@@ -738,7 +738,7 @@ for needle in (
     "private var previousProgressiveFrame: ProgressiveMachining3DFrame? = null",
     "private val freshRemovalGlowPaint",
     "private val freshRemovalPaint",
-    "previousProgressiveFrame = progressiveFrame?.takeIf { it.index < frame.index }",
+    "previousProgressiveFrame = if(frame.index>0) ProgressiveMachining3D.frame(result,frame.index-1) else null",
     "currentDepth[i]<previousDepth[i]-1e-9",
     "materialPointIsFront(p)",
 ):
@@ -760,6 +760,19 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_FRESH_REMOVAL_FRONTIER_198")
 print("FRESH_REMOVAL_FRONTIER_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|TRUE_REMOVAL_DIFF|FORWARD_FRAME_ONLY|ADJACENT_FRAME_HARD_GATE|DEPTH_VISIBLE|SAMPLED_700_MAX|SMOKE_3D_5X|VISUAL_ONLY")
+for needle in (
+    "previousProgressiveFrame = if(frame.index>0) ProgressiveMachining3D.frame(result,frame.index-1) else null",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_ADJACENT_FRONTIER_LOCK_199")
+for needle in (
+    "fun freshRemovalSourceFrame():Int? = previousProgressiveFrame?.index",
+    "Studio 3D fresh-removal source did not lock to current index - 1",
+    "Studio 5AX fresh-removal source did not lock to current index - 1",
+    "FRESH_REMOVAL_SOURCE_LOCK=PASS",
+    "5X_FRESH_REMOVAL_SOURCE_LOCK=PASS",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_ADJACENT_FRONTIER_LOCK_199")
+print("ADJACENT_FRONTIER_LOCK_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|CURRENT_INDEX_MINUS_ONE|UI_SKIP_INDEPENDENT|TRUE_PROGRESSIVE_FRAME|SMOKE_LOCK|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',

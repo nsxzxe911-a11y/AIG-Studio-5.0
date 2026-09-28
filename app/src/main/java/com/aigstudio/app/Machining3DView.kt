@@ -175,7 +175,7 @@ class Machining3DView(
 
     fun showProgressiveFrame(index: Int): ProgressiveMachining3DFrame {
         val frame = ProgressiveMachining3D.frame(result, index)
-        previousProgressiveFrame = progressiveFrame?.takeIf { it.index < frame.index }
+        previousProgressiveFrame = if(frame.index>0) ProgressiveMachining3D.frame(result,frame.index-1) else null
         progressiveFrame = frame
         postInvalidateOnAnimation()
         return frame
