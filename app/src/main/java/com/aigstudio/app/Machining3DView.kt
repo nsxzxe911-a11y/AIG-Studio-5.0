@@ -730,13 +730,19 @@ class Machining3DView(
             val deltaAMark=when { deltaA>1e-9 -> "↑"; deltaA< -1e-9 -> "↓"; else -> "•" }
             val deltaBMark=when { deltaB>1e-9 -> "↑"; deltaB< -1e-9 -> "↓"; else -> "•" }
             val badgeText=String.format(java.util.Locale.US,"A%+.3f°%s B%+.3f°%s %s",badgeA,deltaAMark,badgeB,deltaBMark,depthPolarity)
+            val currentAxisUnit=MachineKinematics3D.transform(Vec3(0.0,0.0,1.0),badgeA,badgeB)
+            val previousAxisUnit=MachineKinematics3D.transform(Vec3(0.0,0.0,1.0),previousA,previousB)
+            val poseDot=(currentAxisUnit.x*previousAxisUnit.x+currentAxisUnit.y*previousAxisUnit.y+currentAxisUnit.z*previousAxisUnit.z).coerceIn(-1.0,1.0)
+            val poseAngleDeg=Math.toDegrees(acos(poseDot))
+            val poseAngleText=String.format(java.util.Locale.US,"Δθ%.2f°",poseAngleDeg)
+            val displayBadgeText="$badgeText $poseAngleText"
             val pad=4f*resources.displayMetrics.density
-            val textWidth=toolAxisCueTextPaint.measureText(badgeText)
+            val textWidth=toolAxisCueTextPaint.measureText(displayBadgeText)
             val badgeX=(axisCueTop.x+6f*resources.displayMetrics.density).coerceIn(pad,(width-textWidth-pad*3f).coerceAtLeast(pad))
             val badgeBaseline=(axisCueTop.y-7f*resources.displayMetrics.density).coerceIn(18f*resources.displayMetrics.density,height-12f*resources.displayMetrics.density)
             val badgeTop=badgeBaseline-toolAxisCueTextPaint.textSize-pad
             canvas.drawRoundRect(badgeX-pad,badgeTop,badgeX+textWidth+pad,badgeBaseline+pad,5f*resources.displayMetrics.density,5f*resources.displayMetrics.density,toolAxisBadgePaint)
-            canvas.drawText(badgeText,badgeX,badgeBaseline,toolAxisCueTextPaint)
+            canvas.drawText(displayBadgeText,badgeX,badgeBaseline,toolAxisCueTextPaint)
             canvas.drawCircle(tip.x, tip.y, radius, toolPaint)
         }
 

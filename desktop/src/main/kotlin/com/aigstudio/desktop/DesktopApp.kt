@@ -1049,13 +1049,19 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             val deltaAMark=when { deltaA>1e-9 -> "↑"; deltaA< -1e-9 -> "↓"; else -> "•" }
             val deltaBMark=when { deltaB>1e-9 -> "↑"; deltaB< -1e-9 -> "↓"; else -> "•" }
             val badgeText=String.format(java.util.Locale.US,"A%+.3f°%s B%+.3f°%s %s",tool.axisA,deltaAMark,tool.axisB,deltaBMark,depthPolarity)
+            val currentAxisUnit=MachineKinematics3D.transform(Vec3(0.0,0.0,1.0),tool.axisA,tool.axisB)
+            val previousAxisUnit=MachineKinematics3D.transform(Vec3(0.0,0.0,1.0),previousTool?.axisA ?: tool.axisA,previousTool?.axisB ?: tool.axisB)
+            val poseDot=(currentAxisUnit.x*previousAxisUnit.x+currentAxisUnit.y*previousAxisUnit.y+currentAxisUnit.z*previousAxisUnit.z).coerceIn(-1.0,1.0)
+            val poseAngleDeg=Math.toDegrees(acos(poseDot))
+            val poseAngleText=String.format(java.util.Locale.US,"Δθ%.2f°",poseAngleDeg)
+            val displayBadgeText="$badgeText $poseAngleText"
             val fm=g2.fontMetrics
-            val badgeW=fm.stringWidth(badgeText)+10
+            val badgeW=fm.stringWidth(displayBadgeText)+10
             val badgeH=fm.height+6
             val badgeX=(axisTop.x+6).coerceIn(6,(width-badgeW-6).coerceAtLeast(6))
             val badgeY=(axisTop.y-badgeH-6).coerceIn(6,(height-badgeH-6).coerceAtLeast(6))
             g2.color=Color(8,20,32,188);g2.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)
-            g2.color=Color(255,160,232,245);g2.drawString(badgeText,badgeX+5,badgeY+fm.ascent+3)
+            g2.color=Color(255,160,232,245);g2.drawString(displayBadgeText,badgeX+5,badgeY+fm.ascent+3)
         }
         activeFrame?.let { frame ->
             val progress=frame.progress.coerceIn(0.0,1.0)
@@ -1456,13 +1462,21 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             val deltaAMark=when { deltaA>1e-9 -> "↑"; deltaA< -1e-9 -> "↓"; else -> "•" }
             val deltaBMark=when { deltaB>1e-9 -> "↑"; deltaB< -1e-9 -> "↓"; else -> "•" }
             val badgeText=String.format(java.util.Locale.US,"A%+.3f°%s B%+.3f°%s %s",axisA,deltaAMark,axisB,deltaBMark,depthPolarity)
+            val currentA=if(machineMode=="3AX")0.0 else axisA
+            val currentB=if(machineMode=="5AX")axisB else 0.0
+            val currentAxisUnit=MachineKinematics3D.transform(Vec3(0.0,0.0,1.0),currentA,currentB)
+            val previousAxisUnit=MachineKinematics3D.transform(Vec3(0.0,0.0,1.0),previousA,previousB)
+            val poseDot=(currentAxisUnit.x*previousAxisUnit.x+currentAxisUnit.y*previousAxisUnit.y+currentAxisUnit.z*previousAxisUnit.z).coerceIn(-1.0,1.0)
+            val poseAngleDeg=Math.toDegrees(acos(poseDot))
+            val poseAngleText=String.format(java.util.Locale.US,"Δθ%.2f°",poseAngleDeg)
+            val displayBadgeText="$badgeText $poseAngleText"
             val fm=g.fontMetrics
-            val badgeW=fm.stringWidth(badgeText)+10
+            val badgeW=fm.stringWidth(displayBadgeText)+10
             val badgeH=fm.height+6
             val badgeX=(axisTop.x+6).coerceIn(6,(width-badgeW-6).coerceAtLeast(6))
             val badgeY=(axisTop.y-badgeH-6).coerceIn(6,(height-badgeH-6).coerceAtLeast(6))
             g.color=Color(8,20,32,188);g.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)
-            g.color=Color(255,160,232,245);g.drawString(badgeText,badgeX+5,badgeY+fm.ascent+3)
+            g.color=Color(255,160,232,245);g.drawString(displayBadgeText,badgeX+5,badgeY+fm.ascent+3)
         }
         activeFrame?.let { frame ->
             val progress=frame.progress.coerceIn(0.0,1.0)
@@ -1804,6 +1818,9 @@ private fun runSmoke() {
         (fiveCueDepthVector.z-fiveCuePreviousAxis.z).pow(2)
     )
     require(fiveCuePoseGhostDelta>1e-9){"Studio 5AX previous-pose ghost vector did not differ from current axis"}
+    val fiveCuePoseDot=(fiveCueDepthVector.x*fiveCuePreviousAxis.x+fiveCueDepthVector.y*fiveCuePreviousAxis.y+fiveCueDepthVector.z*fiveCuePreviousAxis.z).coerceIn(-1.0,1.0)
+    val fiveCuePoseAngleDeg=Math.toDegrees(acos(fiveCuePoseDot))
+    require(fiveCuePoseAngleDeg>1e-9){"Studio 5AX true pose angle delta did not change"}
     fiveAxisPanel.showProgressiveFrame(fiveCueFrame)
     require(fiveCueFrame.index>0 && fiveAxisPanel.freshRemovalSourceFrame()==fiveCueFrame.index-1){"Studio 5AX fresh-removal source did not lock to current index - 1"}
     val fiveCueFile=File("desktop_5x_axis_cue.png")
@@ -1884,6 +1901,9 @@ private fun runSmoke() {
             "5X_AXIS_POSE_GHOST=PASS\n" +
             "5X_AXIS_POSE_GHOST_DELTA=${DisplayFormat.mm(fiveCuePoseGhostDelta)}\n" +
             "5X_AXIS_POSE_GHOST_ANCHOR=CURRENT_TOOL_TIP\n" +
+            "5X_AXIS_POSE_ANGLE=PASS\n" +
+            "5X_AXIS_POSE_ANGLE_DEG=${DisplayFormat.mm(fiveCuePoseAngleDeg)}\n" +
+            "5X_AXIS_POSE_ANGLE_SOURCE=UNIT_AXIS_DOT_ACOS\n" +
             "5X_DEPTH_OCCLUSION=PASS\n" +
             "5X_FRESH_REMOVAL_FRONTIER=PASS\n" +
             "5X_FRESH_REMOVAL_VISIBLE_POINTS=$fiveFreshRemoval\n" +

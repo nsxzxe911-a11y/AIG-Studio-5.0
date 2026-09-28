@@ -701,7 +701,7 @@ for needle in (
     "private val toolAxisCueTextPaint",
     "machineSpace(Vec3(liveMove.to.x,liveMove.to.y,liveMove.z+cueLength),resolvedMode,liveMove)",
     "canvas.drawLine(tip.x, tip.y, axisCueTop.x, axisCueTop.y, toolAxisCuePaint)",
-    "canvas.drawText(badgeText,badgeX,badgeBaseline,toolAxisCueTextPaint)",
+    "canvas.drawText(displayBadgeText,badgeX,badgeBaseline,toolAxisCueTextPaint)",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_TOOL_AXIS_CUE_195")
 for needle in (
@@ -867,6 +867,26 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_AXIS_POSE_GHOST_204")
 print("AXIS_POSE_GHOST_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|PREVIOUS_TRUE_AB|CURRENT_TOOL_TIP_ANCHOR|POSE_ONLY|SCREEN_CLAMP|NO_XYZ_MIX|SMOKE_EVIDENCE|VISUAL_ONLY")
+for needle in (
+    "val currentAxisUnit=MachineKinematics3D.transform(Vec3(0.0,0.0,1.0),badgeA,badgeB)",
+    "val poseAngleDeg=Math.toDegrees(acos(poseDot))",
+    "val poseAngleText=String.format(java.util.Locale.US,\"Δθ%.2f°\",poseAngleDeg)",
+    "canvas.drawText(displayBadgeText,badgeX,badgeBaseline,toolAxisCueTextPaint)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_AXIS_POSE_ANGLE_205")
+for needle in (
+    "val currentAxisUnit=MachineKinematics3D.transform(Vec3(0.0,0.0,1.0),tool.axisA,tool.axisB)",
+    "val currentA=if(machineMode==\"3AX\")0.0 else axisA",
+    "val poseAngleText=String.format(java.util.Locale.US,\"Δθ%.2f°\",poseAngleDeg)",
+    "g2.drawString(displayBadgeText,badgeX+5,badgeY+fm.ascent+3)",
+    "g.drawString(displayBadgeText,badgeX+5,badgeY+fm.ascent+3)",
+    "Studio 5AX true pose angle delta did not change",
+    "5X_AXIS_POSE_ANGLE=PASS",
+    "5X_AXIS_POSE_ANGLE_DEG=",
+    "5X_AXIS_POSE_ANGLE_SOURCE=UNIT_AXIS_DOT_ACOS",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_AXIS_POSE_ANGLE_205")
+print("AXIS_POSE_ANGLE_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|UNIT_AXIS_DOT_ACOS|TRUE_POSE_DELTA|BADGE_CLAMP|SMOKE_EVIDENCE|NO_PREDICTION|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
