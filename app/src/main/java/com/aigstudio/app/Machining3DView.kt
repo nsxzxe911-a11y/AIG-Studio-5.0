@@ -685,10 +685,22 @@ class Machining3DView(
             canvas.drawCircle(tip.x,tip.y,radius+4f*resources.displayMetrics.density,toolHaloPaint)
             canvas.drawLine(tip.x, tip.y, top.x, top.y, toolPaint)
             canvas.drawLine(tip.x, tip.y, axisCueTop.x, axisCueTop.y, toolAxisCuePaint)
-            canvas.drawCircle(axisCueTop.x,axisCueTop.y,3.5f*resources.displayMetrics.density,toolAxisCueDotPaint)
+            val axisDepthDelta=rawAxisCueTop.depth-tip.depth
+            val depthPolarity=when {
+                axisDepthDelta>1e-6 -> "近"
+                axisDepthDelta< -1e-6 -> "遠"
+                else -> "平"
+            }
+            val cueDotRadius=3.5f*resources.displayMetrics.density
+            if(axisDepthDelta>=-1e-6){
+                canvas.drawCircle(axisCueTop.x,axisCueTop.y,cueDotRadius,toolAxisCueDotPaint)
+            } else {
+                canvas.drawCircle(axisCueTop.x,axisCueTop.y,cueDotRadius,toolAxisCuePaint)
+                canvas.drawCircle(axisCueTop.x,axisCueTop.y,1.3f*resources.displayMetrics.density,toolAxisBadgePaint)
+            }
             val badgeA=if(resolvedMode=="3AX")0.0 else liveMove.axisA
             val badgeB=if(resolvedMode=="5AX")liveMove.axisB else 0.0
-            val badgeText=String.format(java.util.Locale.US,"A%+.3f° B%+.3f°",badgeA,badgeB)
+            val badgeText=String.format(java.util.Locale.US,"A%+.3f° B%+.3f° %s",badgeA,badgeB,depthPolarity)
             val pad=4f*resources.displayMetrics.density
             val textWidth=toolAxisCueTextPaint.measureText(badgeText)
             val badgeX=(axisCueTop.x+6f*resources.displayMetrics.density).coerceIn(pad,(width-textWidth-pad*3f).coerceAtLeast(pad))

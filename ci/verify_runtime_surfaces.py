@@ -782,8 +782,8 @@ for needle in (
 ):
     require(machining3d, needle, "STUDIO_ANDROID_TOOL_ORIENTATION_BADGE_200")
 for needle in (
-    "val badgeText=String.format(java.util.Locale.US,\"A%+.3f° B%+.3f°\",tool.axisA,tool.axisB)",
-    "val badgeText=String.format(java.util.Locale.US,\"A%+.3f° B%+.3f°\",axisA,axisB)",
+    "val badgeText=String.format(java.util.Locale.US,\"A%+.3f° B%+.3f° %s\",tool.axisA,tool.axisB,depthPolarity)",
+    "val badgeText=String.format(java.util.Locale.US,\"A%+.3f° B%+.3f° %s\",axisA,axisB,depthPolarity)",
     "g2.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)",
     "g.fillRoundRect(badgeX,badgeY,badgeW,badgeH,10,10)",
     "5X_ORIENTATION_BADGE=PASS",
@@ -808,6 +808,31 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_AXIS_CUE_SCREEN_CLAMP_201")
 print("AXIS_CUE_SCREEN_CLAMP_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|RAW_TRUE_PROJECTION|SCREEN_ENDPOINT_ONLY|AB_UNCHANGED|GEOMETRY_UNCHANGED|BADGE_VISIBLE|VISUAL_ONLY")
+for needle in (
+    "val axisDepthDelta=rawAxisCueTop.depth-tip.depth",
+    "axisDepthDelta>1e-6 -> \"近\"",
+    "axisDepthDelta< -1e-6 -> \"遠\"",
+    "else -> \"平\"",
+    "A%+.3f° B%+.3f° %s",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_AXIS_DEPTH_POLARITY_202")
+for needle in (
+    "val tipDepth=rotate(Vec3(tool.to.x,tool.to.y,tool.z)).z",
+    "val cueDepth=rotate(Vec3(tool.to.x+cueAxis.x,tool.to.y+cueAxis.y,tool.z+cueAxis.z)).z",
+    "val axisDepthDelta=axisViewDepth(cueView)-axisViewDepth(tipView)",
+    "g2.drawOval(axisTop.x-4,axisTop.y-4,8,8)",
+    "g.drawOval(axisTop.x-4,axisTop.y-4,8,8)",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_AXIS_DEPTH_POLARITY_202")
+for needle in (
+    "Studio 5AX axis-depth polarity evidence is flat or non-finite",
+    "5X_AXIS_DEPTH_POLARITY=PASS",
+    "5X_AXIS_DEPTH_POLARITY_VALUE=",
+    "5X_AXIS_DEPTH_POLARITY_CODE=",
+    "5X_AXIS_DEPTH_POLARITY_LABEL=",
+):
+    require(desktop, needle, "STUDIO_5X_AXIS_DEPTH_POLARITY_SMOKE_202")
+print("AXIS_DEPTH_POLARITY_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|VIEW_RELATIVE_DEPTH|NEAR_SOLID|FAR_HOLLOW|FLAT_LABEL|TRUE_AXIS|SMOKE_EVIDENCE|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',

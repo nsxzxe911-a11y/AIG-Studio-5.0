@@ -1015,9 +1015,22 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             g2.color=Color(255,78,205,220)
             g2.stroke=BasicStroke(2.2f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
             g2.drawLine(p.x,p.y,axisTop.x,axisTop.y)
-            g2.fillOval(axisTop.x-4,axisTop.y-4,8,8)
+            val tipDepth=rotate(Vec3(tool.to.x,tool.to.y,tool.z)).z
+            val cueDepth=rotate(Vec3(tool.to.x+cueAxis.x,tool.to.y+cueAxis.y,tool.z+cueAxis.z)).z
+            val axisDepthDelta=cueDepth-tipDepth
+            val depthPolarity=when {
+                axisDepthDelta>1e-6 -> "近"
+                axisDepthDelta< -1e-6 -> "遠"
+                else -> "平"
+            }
+            if(axisDepthDelta>=-1e-6){
+                g2.fillOval(axisTop.x-4,axisTop.y-4,8,8)
+            } else {
+                g2.drawOval(axisTop.x-4,axisTop.y-4,8,8)
+                g2.fillOval(axisTop.x-1,axisTop.y-1,2,2)
+            }
             g2.font=Font(Font.SANS_SERIF,Font.BOLD,11)
-            val badgeText=String.format(java.util.Locale.US,"A%+.3f° B%+.3f°",tool.axisA,tool.axisB)
+            val badgeText=String.format(java.util.Locale.US,"A%+.3f° B%+.3f° %s",tool.axisA,tool.axisB,depthPolarity)
             val fm=g2.fontMetrics
             val badgeW=fm.stringWidth(badgeText)+10
             val badgeH=fm.height+6
@@ -1386,9 +1399,22 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             g.color=Color(255,78,205,220)
             g.stroke=BasicStroke(2.2f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
             g.drawLine(p.x,p.y,axisTop.x,axisTop.y)
-            g.fillOval(axisTop.x-4,axisTop.y-4,8,8)
+            val tipView=axisTransform(Vec3(tool.to.x,tool.to.y,tool.z))
+            val cueView=axisTransform(Vec3(tool.to.x,tool.to.y,tool.z+cueLength))
+            val axisDepthDelta=axisViewDepth(cueView)-axisViewDepth(tipView)
+            val depthPolarity=when {
+                axisDepthDelta>1e-6 -> "近"
+                axisDepthDelta< -1e-6 -> "遠"
+                else -> "平"
+            }
+            if(axisDepthDelta>=-1e-6){
+                g.fillOval(axisTop.x-4,axisTop.y-4,8,8)
+            } else {
+                g.drawOval(axisTop.x-4,axisTop.y-4,8,8)
+                g.fillOval(axisTop.x-1,axisTop.y-1,2,2)
+            }
             g.font=Font(Font.SANS_SERIF,Font.BOLD,11)
-            val badgeText=String.format(java.util.Locale.US,"A%+.3f° B%+.3f°",axisA,axisB)
+            val badgeText=String.format(java.util.Locale.US,"A%+.3f° B%+.3f° %s",axisA,axisB,depthPolarity)
             val fm=g.fontMetrics
             val badgeW=fm.stringWidth(badgeText)+10
             val badgeH=fm.height+6
@@ -1719,6 +1745,11 @@ private fun runSmoke() {
     } ?: fiveAfterIndex
     val fiveCueFrame=ProgressiveMachining3D.frame(fiveAxisResult,fiveCueIndex)
     require(abs(fiveCueFrame.toolPoint.axisA)+abs(fiveCueFrame.toolPoint.axisB)>5.0){"Studio 5AX axis-cue evidence angle too small"}
+    val fiveCueDepthVector=MachineKinematics3D.transform(Vec3(0.0,0.0,1.0),fiveCueFrame.toolPoint.axisA,fiveCueFrame.toolPoint.axisB)
+    val fiveCueDepthValue=fiveCueDepthVector.x*.34-fiveCueDepthVector.y*.28+fiveCueDepthVector.z
+    require(fiveCueDepthValue.isFinite() && abs(fiveCueDepthValue)>1e-6){"Studio 5AX axis-depth polarity evidence is flat or non-finite"}
+    val fiveCueDepthLabel=if(fiveCueDepthValue>0.0) "近" else "遠"
+    val fiveCueDepthCode=if(fiveCueDepthValue>0.0) "NEAR" else "FAR"
     fiveAxisPanel.showProgressiveFrame(fiveCueFrame)
     require(fiveCueFrame.index>0 && fiveAxisPanel.freshRemovalSourceFrame()==fiveCueFrame.index-1){"Studio 5AX fresh-removal source did not lock to current index - 1"}
     val fiveCueFile=File("desktop_5x_axis_cue.png")
@@ -1787,6 +1818,10 @@ private fun runSmoke() {
             "5X_ORIENTATION_BADGE=PASS\n" +
             "5X_ORIENTATION_BADGE_A=${DisplayFormat.mm(fiveCueFrame.toolPoint.axisA)}\n" +
             "5X_ORIENTATION_BADGE_B=${DisplayFormat.mm(fiveCueFrame.toolPoint.axisB)}\n" +
+            "5X_AXIS_DEPTH_POLARITY=PASS\n" +
+            "5X_AXIS_DEPTH_POLARITY_VALUE=${DisplayFormat.mm(fiveCueDepthValue)}\n" +
+            "5X_AXIS_DEPTH_POLARITY_CODE=$fiveCueDepthCode\n" +
+            "5X_AXIS_DEPTH_POLARITY_LABEL=$fiveCueDepthLabel\n" +
             "5X_DEPTH_OCCLUSION=PASS\n" +
             "5X_FRESH_REMOVAL_FRONTIER=PASS\n" +
             "5X_FRESH_REMOVAL_VISIBLE_POINTS=$fiveFreshRemoval\n" +
