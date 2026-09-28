@@ -706,7 +706,7 @@ for needle in (
     require(machining3d, needle, "STUDIO_ANDROID_TOOL_AXIS_CUE_195")
 for needle in (
     "val cueAxis=MachineKinematics3D.transform(Vec3(0.0,0.0,cueLength),tool.axisA,tool.axisB)",
-    "val axisTop=project(Vec3(tool.to.x,tool.to.y,tool.z+cueLength),scale)",
+    "val rawAxisTop=project(Vec3(tool.to.x,tool.to.y,tool.z+cueLength),scale)",
     "Studio 5AX tool-axis cue did not follow A/B change",
     "Studio 5AX axis-cue evidence angle too small",
     "desktop_5x_axis_cue.png",
@@ -792,6 +792,22 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_TOOL_ORIENTATION_BADGE_200")
 print("TOOL_ORIENTATION_BADGE_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|TRUE_AB_VALUES|TOOL_FOLLOW|VIEW_CLAMPED|AXIS_CUE_BOUND|VISUAL_ONLY")
+for needle in (
+    "val rawAxisCueTop = project(",
+    "val cueMargin=10f*resources.displayMetrics.density",
+    "rawAxisCueTop.x.coerceIn(cueMargin,(width-cueMargin).coerceAtLeast(cueMargin))",
+    "rawAxisCueTop.y.coerceIn(cueMargin,(height-cueMargin).coerceAtLeast(cueMargin))",
+    "rawAxisCueTop.depth",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_AXIS_CUE_SCREEN_CLAMP_201")
+for needle in (
+    "val rawAxisTop=project(Vec3(tool.to.x+cueAxis.x,tool.to.y+cueAxis.y,tool.z+cueAxis.z),scale)",
+    "val rawAxisTop=project(Vec3(tool.to.x,tool.to.y,tool.z+cueLength),scale)",
+    "rawAxisTop.x.coerceIn(cueMargin,(width-cueMargin).coerceAtLeast(cueMargin))",
+    "rawAxisTop.y.coerceIn(cueMargin,(height-cueMargin).coerceAtLeast(cueMargin))",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_AXIS_CUE_SCREEN_CLAMP_201")
+print("AXIS_CUE_SCREEN_CLAMP_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|RAW_TRUE_PROJECTION|SCREEN_ENDPOINT_ONLY|AB_UNCHANGED|GEOMETRY_UNCHANGED|BADGE_VISIBLE|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',

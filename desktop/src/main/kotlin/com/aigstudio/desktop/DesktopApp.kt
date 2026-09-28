@@ -1002,7 +1002,12 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             val p=project(Vec3(tool.to.x,tool.to.y,tool.z),scale)
             val cueLength=max(18.0,result.cam.settings.toolDiameter*3.0)
             val cueAxis=MachineKinematics3D.transform(Vec3(0.0,0.0,cueLength),tool.axisA,tool.axisB)
-            val axisTop=project(Vec3(tool.to.x+cueAxis.x,tool.to.y+cueAxis.y,tool.z+cueAxis.z),scale)
+            val rawAxisTop=project(Vec3(tool.to.x+cueAxis.x,tool.to.y+cueAxis.y,tool.z+cueAxis.z),scale)
+            val cueMargin=10
+            val axisTop=Point(
+                rawAxisTop.x.coerceIn(cueMargin,(width-cueMargin).coerceAtLeast(cueMargin)),
+                rawAxisTop.y.coerceIn(cueMargin,(height-cueMargin).coerceAtLeast(cueMargin))
+            )
             g2.color=Color(255,220,90,62)
             g2.fillOval(p.x-12,p.y-12,24,24)
             g2.color=Color(255,220,90,235)
@@ -1370,7 +1375,12 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         activeFrame?.toolPoint?.let { tool ->
             val p=project(Vec3(tool.to.x,tool.to.y,tool.z),scale)
             val cueLength=max(18.0,result.cam.settings.toolDiameter*3.0)
-            val axisTop=project(Vec3(tool.to.x,tool.to.y,tool.z+cueLength),scale)
+            val rawAxisTop=project(Vec3(tool.to.x,tool.to.y,tool.z+cueLength),scale)
+            val cueMargin=10
+            val axisTop=Point(
+                rawAxisTop.x.coerceIn(cueMargin,(width-cueMargin).coerceAtLeast(cueMargin)),
+                rawAxisTop.y.coerceIn(cueMargin,(height-cueMargin).coerceAtLeast(cueMargin))
+            )
             g.color=Color(255,225,80,62);g.fillOval(p.x-12,p.y-12,24,24)
             g.color=Color(255,225,80,240);g.fillOval(p.x-6,p.y-6,12,12)
             g.color=Color(255,78,205,220)

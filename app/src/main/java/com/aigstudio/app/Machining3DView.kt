@@ -671,9 +671,15 @@ class Machining3DView(
             val toolLength = max(12.0, result.cam.settings.toolDiameter * 2.0)
             val cueLength = max(18.0, result.cam.settings.toolDiameter * 3.0)
             val top = project(Vec3(machineTip.x,machineTip.y,machineTip.z+toolLength),scale)
-            val axisCueTop = project(
+            val rawAxisCueTop = project(
                 machineSpace(Vec3(liveMove.to.x,liveMove.to.y,liveMove.z+cueLength),resolvedMode,liveMove),
                 scale
+            )
+            val cueMargin=10f*resources.displayMetrics.density
+            val axisCueTop=ScreenPoint(
+                rawAxisCueTop.x.coerceIn(cueMargin,(width-cueMargin).coerceAtLeast(cueMargin)),
+                rawAxisCueTop.y.coerceIn(cueMargin,(height-cueMargin).coerceAtLeast(cueMargin)),
+                rawAxisCueTop.depth
             )
             val radius = max(4f, (result.cam.settings.toolDiameter * scale * 0.12).toFloat())
             canvas.drawCircle(tip.x,tip.y,radius+4f*resources.displayMetrics.density,toolHaloPaint)
