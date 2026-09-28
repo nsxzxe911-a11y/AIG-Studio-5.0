@@ -175,6 +175,7 @@ object StudioDisplayPolicy {
 class RgbGlowButton(context: Context) : Button(context) {
     companion object {
         private val instances = java.util.Collections.newSetFromMap(java.util.WeakHashMap<RgbGlowButton, Boolean>())
+        private val pulseHandler = Handler(Looper.getMainLooper())
         private var globalBrightnessPercent = 65
 
         fun setGlobalBrightness(percent:Int) {
@@ -189,6 +190,14 @@ class RgbGlowButton(context: Context) : Button(context) {
     private var selectedGlow = false
     private var alarmGlow = false
     private val density = resources.displayMetrics.density
+    private val pulseRunnable = object : Runnable {
+        override fun run() {
+            if (selectedGlow && isAttachedToWindow && isShown) {
+                render()
+                pulseHandler.postDelayed(this,90L)
+            }
+        }
+    }
 
     init {
         instances.add(this)
@@ -219,7 +228,14 @@ class RgbGlowButton(context: Context) : Button(context) {
         accent = color
         selectedGlow = selected
         alarmGlow = alarm
+        pulseHandler.removeCallbacks(pulseRunnable)
         render()
+        if(selectedGlow && isAttachedToWindow) pulseHandler.post(pulseRunnable)
+    }
+
+    override fun onDetachedFromWindow() {
+        pulseHandler.removeCallbacks(pulseRunnable)
+        super.onDetachedFromWindow()
     }
 
     override fun drawableStateChanged() {
@@ -238,14 +254,17 @@ class RgbGlowButton(context: Context) : Button(context) {
         val pressedNow = isPressed
         val rawEdge = if (alarmGlow) StudioProductionTheme.alarm else accent
         val base = StudioProductionTheme.panel
-        val brightness = if (alarmGlow) 1f else globalBrightnessPercent / 100f
+        val baseBrightness = if (alarmGlow) 1f else globalBrightnessPercent / 100f
+        val phase = 2.0 * Math.PI * ((SystemClock.uptimeMillis() % 1180L).toDouble() / 1180.0)
+        val pulse = if(selectedGlow) (0.84 + 0.16 * ((sin(phase) + 1.0) * 0.5)).toFloat() else 1f
+        val brightness = (baseBrightness * pulse).coerceIn(0f,1f)
         val edge = mix(base, rawEdge, brightness)
         val baseAmount = when {
             disabled -> 0.04f
-            alarmGlow -> 0.38f
-            pressedNow -> 0.46f
-            selectedGlow -> 0.28f
-            else -> 0.08f
+            alarmGlow -> 0.48f
+            pressedNow -> 0.54f
+            selectedGlow -> 0.42f
+            else -> 0.24f
         }
         val amount = if (alarmGlow) baseAmount else baseAmount * brightness
         val active = pressedNow || selectedGlow || alarmGlow

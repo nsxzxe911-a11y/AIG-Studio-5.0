@@ -40,6 +40,16 @@ for needle in (
 ):
     require(desktop, needle, "RGB_PRODUCTION_GLASS_RUNTIME_GATE")
 print("RGB_PRODUCTION_GLASS_RUNTIME_GATE_PASS|WINDOWS|NORMAL_TINT|HOVER|PRESSED|SELECTED_BREATHING|CAD_GLASS_PANEL")
+for needle in (
+    "private val pulseHandler = Handler(Looper.getMainLooper())",
+    "pulseHandler.postDelayed(this,90L)",
+    "pressedNow -> 0.54f",
+    "selectedGlow -> 0.42f",
+    "else -> 0.24f",
+    "SystemClock.uptimeMillis() % 1180L",
+):
+    require(android, needle, "ANDROID_RGB_PRODUCTION_GLASS_RUNTIME_GATE")
+print("ANDROID_RGB_PRODUCTION_GLASS_RUNTIME_GATE_PASS|NORMAL_TINT|PRESSED|SELECTED|BREATHING|LAYERED_GLASS")
 theme_index = json.loads(read("app/src/main/assets/aig-themes/repository-index.json"))
 production_theme = json.loads(read("app/src/main/assets/aig-themes/themes/official_rgb_original/theme.json"))
 theme_manifest = json.loads(read("design/theme/aigii_rgb_neon_v2/theme-manifest.json"))
