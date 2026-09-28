@@ -1583,7 +1583,22 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
 
     visual.add(mesh,"3D");visual.add(axes,"AXIS")
     val split=JSplitPane(JSplitPane.HORIZONTAL_SPLIT,visual,editorPanel).apply{
-        resizeWeight=.66;dividerSize=6;border=null
+        resizeWeight=1.0
+        dividerSize=0
+        border=null
+        editorPanel.minimumSize=Dimension(0,0)
+    }
+    fun maximizeVisualWorkspace(){
+        split.resizeWeight=1.0
+        split.dividerSize=0
+        editorPanel.minimumSize=Dimension(0,0)
+        SwingUtilities.invokeLater { split.setDividerLocation(1.0) }
+    }
+    fun showNcWorkspace(){
+        split.resizeWeight=.76
+        split.dividerSize=6
+        editorPanel.minimumSize=Dimension(330,0)
+        SwingUtilities.invokeLater { split.setDividerLocation(.76) }
     }
     val dlg=JDialog(frame,"AIG CNC • 3D / 3AX / 4AX / 5AX + EDITABLE G-CODE",false).apply{
         layout=BorderLayout();minimumSize=Dimension(1100,720)
@@ -1601,21 +1616,21 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         }
         modeButtons+=b;modeBar.add(b)
     }
-    mode("CAD","2D繪圖","2D CAD",Color(61,235,255),"CAD"){dlg.dispose()}
-    mode("CAM","刀路","CAM",Color(63,255,157),"CAM"){status.text="REAL CAM • paths="+result.cam.toolpaths.size}
+    mode("CAD","2D繪圖","2D CAD",Color(61,235,255),"CAD"){maximizeVisualWorkspace();dlg.dispose()}
+    mode("CAM","刀路","CAM",Color(63,255,157),"CAM"){maximizeVisualWorkspace();status.text="REAL CAM • paths="+result.cam.toolpaths.size}
     mode("3D","3D模擬","3D",Color(139,92,246),"3D"){
-        axisMode="3AX";axisA=0.0;axisB=0.0;rebuildMachiningForMode();card.show(visual,"3D")
+        maximizeVisualWorkspace();axisMode="3AX";axisA=0.0;axisB=0.0;rebuildMachiningForMode();card.show(visual,"3D")
     }
     mode("3AX","三軸","3 AXIS",Color(59,130,246),"3AX"){
-        axisMode="3AX";axisA=0.0;axisB=0.0;rebuildMachiningForMode();card.show(visual,"AXIS")
+        maximizeVisualWorkspace();axisMode="3AX";axisA=0.0;axisB=0.0;rebuildMachiningForMode();card.show(visual,"AXIS")
     }
     mode("4AX","四軸","4 AXIS",Color(245,158,11),"4AX"){
-        axisMode="4AX";axisB=0.0;rebuildMachiningForMode();card.show(visual,"AXIS")
+        maximizeVisualWorkspace();axisMode="4AX";axisB=0.0;rebuildMachiningForMode();card.show(visual,"AXIS")
     }
     mode("5AX","五軸","5 AXIS",Color(236,72,153),"5AX"){
-        axisMode="5AX";rebuildMachiningForMode();card.show(visual,"AXIS")
+        maximizeVisualWorkspace();axisMode="5AX";rebuildMachiningForMode();card.show(visual,"AXIS")
     }
-    mode("NC_EDIT","程式","NC EDIT",Color(80,170,255),"NC_EDIT"){editor.requestFocusInWindow()}
+    mode("NC_EDIT","程式","NC EDIT",Color(80,170,255),"NC_EDIT"){showNcWorkspace();editor.requestFocusInWindow()}
     when(initialMode){
         "4AX" -> modeButtons.getOrNull(4)?.doClick()
         "5AX" -> modeButtons.getOrNull(5)?.doClick()

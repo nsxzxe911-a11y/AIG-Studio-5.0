@@ -50,6 +50,21 @@ for needle in (
 ):
     require(android, needle, "ANDROID_RGB_PRODUCTION_GLASS_RUNTIME_GATE")
 print("ANDROID_RGB_PRODUCTION_GLASS_RUNTIME_GATE_PASS|NORMAL_TINT|PRESSED|SELECTED|BREATHING|LAYERED_GLASS")
+for needle in (
+    "fun maximizeVisualWorkspace()",
+    "split.setDividerLocation(1.0)",
+    "fun showNcWorkspace()",
+    "split.setDividerLocation(.76)",
+):
+    require(desktop, needle, "LARGE_MACHINING_WORKSPACE_GATE")
+for needle in (
+    "minHeight=dp(48)",
+    "minimumHeight=dp(44)",
+    "android.view.WindowManager.LayoutParams.MATCH_PARENT",
+    "screenH * 0.72f",
+):
+    require(android, needle, "ANDROID_LARGE_MACHINING_WORKSPACE_GATE")
+print("LARGE_MACHINING_WORKSPACE_GATE_PASS|WINDOWS_VISUAL_100|NC_ON_DEMAND|ANDROID_FULLSCREEN|3D_HEIGHT_72PCT|TOUCH_44")
 theme_index = json.loads(read("app/src/main/assets/aig-themes/repository-index.json"))
 production_theme = json.loads(read("app/src/main/assets/aig-themes/themes/official_rgb_original/theme.json"))
 theme_manifest = json.loads(read("design/theme/aigii_rgb_neon_v2/theme-manifest.json"))

@@ -2010,7 +2010,8 @@ class MainActivity : Activity() {
                 setCompoundDrawablesWithIntrinsicBounds(iconFor(spec.id),null,null,null)
                 compoundDrawablePadding=dp(4)
                 gravity=Gravity.CENTER
-                minHeight=dp(54)
+                minHeight=dp(48)
+                minimumHeight=dp(44)
                 setRgbState(colors[(spec.id.hashCode() and Int.MAX_VALUE)%colors.size],spec.id==initialMode)
                 setOnClickListener {
                     if(spec.id=="CAD"){
@@ -2046,6 +2047,9 @@ class MainActivity : Activity() {
                 text=UiTextPolicy.display(key,72)
                 contentDescription=description
                 maxLines=1
+                minHeight=dp(44)
+                minimumHeight=dp(44)
+                textSize=StudioDisplayPolicy.sp(this,9.5f)
                 setRgbState(color,false)
                 setOnClickListener{run()}
             })
@@ -2119,6 +2123,19 @@ class MainActivity : Activity() {
             simulationHandler.removeCallbacks(simulationTick)
         }
         dialog.show()
+        dialog.window?.apply {
+            setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+            setLayout(
+                android.view.WindowManager.LayoutParams.MATCH_PARENT,
+                android.view.WindowManager.LayoutParams.MATCH_PARENT
+            )
+            attributes=attributes.apply {
+                width=android.view.WindowManager.LayoutParams.MATCH_PARENT
+                height=android.view.WindowManager.LayoutParams.MATCH_PARENT
+                dimAmount=0.18f
+            }
+            addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        }
         renderMode(initialMode)
     }
 
@@ -2760,8 +2777,8 @@ class MainActivity : Activity() {
                 }
                 val screenH = resources.displayMetrics.heightPixels
                 val min3dH = dp(220)
-                val max3dH = dp(620)
-                val threeDHeight = (screenH * 0.56f).roundToInt().coerceIn(min3dH, max3dH)
+                val max3dH = dp(820)
+                val threeDHeight = (screenH * 0.72f).roundToInt().coerceIn(min3dH, max3dH)
                 box.addView(
                     Machining3DView(this, result),
                     LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, threeDHeight)
