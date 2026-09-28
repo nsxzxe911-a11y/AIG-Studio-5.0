@@ -46,6 +46,7 @@ import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -1852,7 +1853,16 @@ class MainActivity : Activity() {
         val simulationStatus=TextView(this).apply {
             setTextColor(0xFF63FF9D.toInt())
             textSize=StudioDisplayPolicy.sp(this,9.5f)
-            setPadding(dp(7),dp(3),dp(7),dp(3))
+            maxLines=2
+            setPadding(dp(9),dp(5),dp(9),dp(5))
+            background=GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                intArrayOf(Color.argb(224,5,18,31),Color.argb(190,11,35,50),Color.argb(224,5,18,31))
+            ).apply {
+                cornerRadius=dp(10).toFloat()
+                setStroke(dp(1),0xFF3DEBFF.toInt())
+            }
+            elevation=dp(5).toFloat()
             text="真走刀 • 3AX/4AX/5AX • PLAY / PAUSE / STEP / RESET • MACHINE EXECUTION=OFF"
         }
         fun simulationMode(mode:String):String=when(mode){
@@ -1997,6 +2007,14 @@ class MainActivity : Activity() {
                     ncEditor.requestFocus()
                 }
             }
+            if(mode in setOf("3D","3AX","4AX","5AX")){
+                visualHost.addView(
+                    simulationStatus,
+                    FrameLayout.LayoutParams(-1,-2,Gravity.TOP).apply {
+                        setMargins(dp(8),dp(8),dp(8),0)
+                    }
+                )
+            }
             usage.edit().putInt(mode,(usage.getInt(mode,0)+1).coerceAtMost(20)).apply()
         }
 
@@ -2039,20 +2057,31 @@ class MainActivity : Activity() {
             body.addView(ncPanel,LinearLayout.LayoutParams(-1,0,0.26f))
         }
         root.addView(body,LinearLayout.LayoutParams(-1,0,1f))
-        root.addView(simulationStatus,LinearLayout.LayoutParams(-1,-2))
 
-        val actionFlow=FlowLayout(this)
+        val actionRow=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            setPadding(dp(6),dp(4),dp(6),dp(4))
+        }
+        val actionScroll=HorizontalScrollView(this).apply {
+            isFillViewport=false
+            isHorizontalScrollBarEnabled=false
+            overScrollMode=View.OVER_SCROLL_NEVER
+            addView(actionRow,FrameLayout.LayoutParams(-2,-2))
+        }
         fun action(key:String,color:Int,description:String,run:()->Unit){
-            actionFlow.addView(RgbGlowButton(this).apply {
+            val button=RgbGlowButton(this).apply {
                 text=UiTextPolicy.display(key,72)
                 contentDescription=description
                 maxLines=1
                 minHeight=dp(44)
                 minimumHeight=dp(44)
+                minWidth=dp(78)
                 textSize=StudioDisplayPolicy.sp(this,9.5f)
+                setPadding(dp(10),dp(4),dp(10),dp(4))
                 setRgbState(color,false)
                 setOnClickListener{run()}
-            })
+            }
+            actionRow.addView(button,LinearLayout.LayoutParams(-2,-2).apply { marginEnd=dp(6) })
         }
         action("PLAY",0xFF3FFF9D.toInt(),"真走刀播放"){
             if(activeMode !in setOf("3D","3AX","4AX","5AX")){
@@ -2112,7 +2141,7 @@ class MainActivity : Activity() {
             Toast.makeText(this,"INLINE NC TOOLS READY • NO SECOND DIALOG",Toast.LENGTH_SHORT).show()
         }
         action("BACK",0xFFF59E0B.toInt(),"返回"){ dialog.dismiss() }
-        root.addView(actionFlow,LinearLayout.LayoutParams(-1,-2))
+        root.addView(actionScroll,LinearLayout.LayoutParams(-1,-2))
 
         dialog=AlertDialog.Builder(this)
             .setTitle("AIG CNC • UNIFIED MACHINING WORKSPACE")

@@ -388,6 +388,24 @@ for needle in (
 ):
     require(android, needle, "ANDROID_PROGRESSIVE_3D_PLAYBACK_172")
 print("ANDROID_PROGRESSIVE_3D_PLAYBACK_GATE_PASS|3D|3AX|4AX|5AX|PLAY|PAUSE|STEP|RESET|SPEED|REMOVED_CELLS|AXIS_SYNC")
+for needle in (
+    'val actionScroll=HorizontalScrollView(this).apply',
+    'minWidth=dp(78)',
+    'visualHost.addView(',
+    'FrameLayout.LayoutParams(-1,-2,Gravity.TOP)',
+    'text="真走刀 • 3AX/4AX/5AX • PLAY / PAUSE / STEP / RESET • MACHINE EXECUTION=OFF"',
+):
+    require(android, needle, "ANDROID_WORKSPACE_VISUAL_PRIORITY_173")
+for needle in (
+    'private val activePathGlowPaint',
+    'private val activePathPaint',
+    'private val toolHaloPaint',
+    'canvas.drawLine(a.x,a.y,b.x,b.y,activePathGlowPaint)',
+    'canvas.drawCircle(tip.x,tip.y,radius+4f*resources.displayMetrics.density,toolHaloPaint)',
+    'val progress=frame.progress.toFloat().coerceIn(0f,1f)',
+):
+    require(machining3d, needle, "ANDROID_TOOLPATH_VISIBILITY_173")
+print("ANDROID_TOOLPATH_VISIBILITY_GATE_PASS|3D|3AX|4AX|5AX|ACTIVE_GLOW|TOOL_HALO|PROGRESS_BAR|HUD_OVERLAY|SINGLE_ROW_CONTROLS")
 
 # Rotary clamp safety must be wired end-to-end in the Android machining path.
 for needle in (

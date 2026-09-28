@@ -43,19 +43,39 @@ class Machining3DView(
     }
     private val rapidPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 1.1f
+        strokeWidth = 2.0f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
-        color = Color.argb(70,255,70,220)
+        color = Color.argb(125,255,70,220)
     }
     private val cutPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 1.45f
+        strokeWidth = 2.8f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
-        color = Color.argb(118,63,255,157)
+        color = Color.argb(180,63,255,157)
+    }
+    private val activePathGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 9f * resources.displayMetrics.density
+        strokeCap = Paint.Cap.ROUND
+        color = Color.argb(66,61,235,255)
+    }
+    private val activePathPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 4f * resources.displayMetrics.density
+        strokeCap = Paint.Cap.ROUND
+        color = StudioProductionTheme.selected
+    }
+    private val toolHaloPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 8f * resources.displayMetrics.density
+        color = Color.argb(58,245,158,11)
+    }
+    private val progressPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
     }
     private val toolPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 3f
+        strokeWidth = 3f * resources.displayMetrics.density
         color = Color.rgb(245, 158, 11)
     }
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -298,6 +318,19 @@ class Machining3DView(
             }
             if (activeFrame != null) remainingMoves -= takeCount
         }
+        activeFrame?.let { frame ->
+            val flatMoves=result.cam.toolpaths.flatMap{it.moves}
+            val i=frame.index.coerceIn(1,(flatMoves.size-1).coerceAtLeast(1))
+            if(flatMoves.size>1){
+                val prev=flatMoves[i-1]
+                val move=flatMoves[i]
+                val a=project(Vec3(prev.to.x,prev.to.y,prev.z),scale)
+                val b=project(Vec3(move.to.x,move.to.y,move.z),scale)
+                canvas.drawLine(a.x,a.y,b.x,b.y,activePathGlowPaint)
+                canvas.drawLine(a.x,a.y,b.x,b.y,activePathPaint)
+                canvas.drawCircle(b.x,b.y,5f*resources.displayMetrics.density,activePathPaint)
+            }
+        }
 
         val liveMove = activeFrame?.toolPoint ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
         if (liveMove != null) {
@@ -312,9 +345,22 @@ class Machining3DView(
                 ),
                 scale
             )
-            canvas.drawLine(tip.x, tip.y, top.x, top.y, toolPaint)
             val radius = max(4f, (result.cam.settings.toolDiameter * scale * 0.12).toFloat())
+            canvas.drawCircle(tip.x,tip.y,radius+4f*resources.displayMetrics.density,toolHaloPaint)
+            canvas.drawLine(tip.x, tip.y, top.x, top.y, toolPaint)
             canvas.drawCircle(tip.x, tip.y, radius, toolPaint)
+        }
+
+        activeFrame?.let { frame ->
+            val progress=frame.progress.toFloat().coerceIn(0f,1f)
+            val left=12f*resources.displayMetrics.density
+            val right=width-12f*resources.displayMetrics.density
+            val bottom=height-10f*resources.displayMetrics.density
+            val top=bottom-6f*resources.displayMetrics.density
+            progressPaint.color=Color.argb(155,8,20,32)
+            canvas.drawRoundRect(left,top,right,bottom,3f*resources.displayMetrics.density,3f*resources.displayMetrics.density,progressPaint)
+            progressPaint.color=StudioProductionTheme.selected
+            canvas.drawRoundRect(left,top,left+(right-left)*progress,bottom,3f*resources.displayMetrics.density,3f*resources.displayMetrics.density,progressPaint)
         }
 
         val removed = activeFrame?.removedCells ?: result.removal.depth.count { it < 0.0 }
