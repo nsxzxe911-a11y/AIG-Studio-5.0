@@ -532,6 +532,19 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_MACHINE_SOLID_MATERIAL_180")
 print("MACHINE_SOLID_MATERIAL_GATE_PASS|ANDROID|WINDOWS|OPAQUE_FIXED_PARTS|ROTARY_READABLE|SPINDLE_HOLDER_TOOL_LAYERED|VISUAL_ONLY")
 for needle in (
+    "visibleTriangleBuffer.forEachIndexed { visibleIndex, index ->",
+    "if(visibleIndex % 18 == 0)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_MATERIAL_SURFACE_READABILITY_181")
+for needle in (
+    "if(index % 18 == 0)",
+    "Color(61, 220, 255, 46)",
+    "if(i%(stride*18)==0)",
+    "Color(61,235,255,46)",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_MATERIAL_SURFACE_READABILITY_181")
+print("MATERIAL_SURFACE_READABILITY_GATE_PASS|ANDROID|WINDOWS|FILLED_REMOVAL_SURFACE|SPARSE_MESH_EDGES|5AX_MACHINE_PRIORITY|VISUAL_ONLY")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',

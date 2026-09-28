@@ -394,7 +394,7 @@ class Machining3DView(
             (projected[triangle.a].depth + projected[triangle.b].depth + projected[triangle.c].depth) / 3.0
         }
 
-        for (index in visibleTriangleBuffer) {
+        visibleTriangleBuffer.forEachIndexed { visibleIndex, index ->
             val triangle = triangles[index]
             val a = projected[triangle.a]
             val b = projected[triangle.b]
@@ -417,7 +417,9 @@ class Machining3DView(
             trianglePath.lineTo(d.x, d.y)
             trianglePath.close()
             canvas.drawPath(trianglePath, surfacePaint)
-            canvas.drawPath(trianglePath, edgePaint)
+            if(visibleIndex % 18 == 0) {
+                canvas.drawPath(trianglePath, edgePaint)
+            }
         }
 
         var remainingMoves = activeFrame?.index?.plus(1) ?: Int.MAX_VALUE
