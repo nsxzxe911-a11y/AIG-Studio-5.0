@@ -478,6 +478,24 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_MACHINE_MATERIAL_SEPARATION_177")
 print("MACHINE_MATERIAL_SEPARATION_GATE_PASS|ANDROID|WINDOWS|NO_STATIC_MACHINE_IMAGE|ROLE_FILL_COLOR|EDGE_RESTORE|FIXTURE|TABLE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL")
 for needle in (
+    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 14",
+    "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 10",
+    "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 12",
+    "MachineComponentRole.FIXTURE -> 14",
+    "else -> 16",
+    "if(index%edgeStep==0)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_MACHINE_SURFACE_CLEANUP_178")
+for needle in (
+    "val edgeStride=stride*when(component.role){",
+    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 14",
+    "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 10",
+    "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 12",
+    "if(i%edgeStride==0)",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_MACHINE_SURFACE_CLEANUP_178")
+print("MACHINE_SURFACE_CLEANUP_GATE_PASS|ANDROID|WINDOWS|TRUE_MESH_FILL|SPARSE_INTERNAL_EDGES|TOOL_FULL_EDGE|NO_STATIC_IMAGE")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',

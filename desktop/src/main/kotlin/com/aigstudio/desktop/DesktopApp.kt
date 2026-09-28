@@ -714,12 +714,20 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             }
             g2.color=fillColor
             val stride=max(1,ceil(component.mesh.triangles.size/900.0).toInt())
+            val edgeStride=stride*when(component.role){
+                MachineComponentRole.TOOL -> 1
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 14
+                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 10
+                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 12
+                MachineComponentRole.FIXTURE -> 14
+                else -> 16
+            }
             component.mesh.triangles.forEachIndexed { i,t ->
                 if(i%stride==0){
                     val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
                     val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
                     g2.fillPolygon(poly)
-                    if(i%(stride*5)==0 || component.role==MachineComponentRole.TOOL){
+                    if(i%edgeStride==0){
                         g2.color=Color(180,220,255,(alpha+60).coerceAtMost(245))
                         g2.stroke=BasicStroke(
                             when(component.role){
@@ -942,12 +950,20 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             }
             g.color=fillColor
             val stride=max(1,ceil(component.mesh.triangles.size/900.0).toInt())
+            val edgeStride=stride*when(component.role){
+                MachineComponentRole.TOOL -> 1
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 14
+                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 10
+                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 12
+                MachineComponentRole.FIXTURE -> 14
+                else -> 16
+            }
             component.mesh.triangles.forEachIndexed { i,t ->
                 if(i%stride==0){
                     val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
                     val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
                     g.fillPolygon(poly)
-                    if(i%(stride*5)==0 || component.role==MachineComponentRole.TOOL){
+                    if(i%edgeStride==0){
                         g.color=Color(180,220,255,(alpha+60).coerceAtMost(245))
                         g.stroke=BasicStroke(
                             when(component.role){
