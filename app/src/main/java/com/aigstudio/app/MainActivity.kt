@@ -255,6 +255,13 @@ class Axis5xPreview(
         isClickable = true
     }
 
+    fun setAngles(a: Double, b: Double) {
+        val next = MachiningAxisRuntimeContract.state(runtimeMode, a, b)
+        axisA = next.axisA
+        axisB = next.axisB
+        postInvalidateOnAnimation()
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val fpsStats = fpsMeter5x.record(System.nanoTime())
@@ -486,6 +493,16 @@ class MainActivity : Activity() {
             android.widget.FrameLayout.LayoutParams.MATCH_PARENT
         ))
         setContentView(bootShell)
+        val previousStartupCrashStage=StudioStartupBootGuard.begin(this)
+        val startupMemoryClass=(getSystemService(ACTIVITY_SERVICE) as ActivityManager).memoryClass
+        val startupQuality=StudioStartupEngineContract.qualityMode(
+            lowMemory=startupMemoryClass<256,
+            thermalHigh=false,
+            preferHq=startupMemoryClass>=512 && !RuntimeDeviceProfile.isEmulator
+        )
+        val startupSafeBoot=StudioStartupEngineContract.safeBootRequired(previousStartupCrashStage)
+        bootOverlay.setRuntimeProfile(startupQuality,startupSafeBoot)
+        bootOverlay.advance(StartupMilestone.SAFE_THEME)
         bootOverlay.advance(StartupMilestone.INITIALIZING_CORE)
         val environmentPrefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
         environmentRestartApplied = environmentPrefs.getBoolean("restart_required", false)
@@ -769,6 +786,7 @@ class MainActivity : Activity() {
         bootOverlay.advance(StartupMilestone.HEALTH_CHECK)
         root.post {
             if (root.isAttachedToWindow) {
+                bootOverlay.advance(StartupMilestone.WRAPPING_UP)
                 bootOverlay.advance(StartupMilestone.READY)
                 bootOverlay.completeAndDetach(bootShell)
             } else {
@@ -1714,6 +1732,24 @@ class MainActivity : Activity() {
         }
         var draftA=axisA
         var draftB=axisB
+        var activeMachiningView:Machining3DView?=null
+        var activeAxisPreview:Axis5xPreview?=null
+        var simulationResult=result
+        var simulationIndex=0
+        var simulationPlaying=false
+        var simulationSpeed=1
+        val simulationHandler=Handler(Looper.getMainLooper())
+        val simulationStatus=TextView(this).apply {
+            setTextColor(0xFF63FF9D.toInt())
+            textSize=StudioDisplayPolicy.sp(this,9.5f)
+            setPadding(dp(7),dp(3),dp(7),dp(3))
+            text="真走刀 • 3AX/4AX/5AX • PLAY / PAUSE / STEP / RESET • MACHINE EXECUTION=OFF"
+        }
+        fun simulationMode(mode:String):String=when(mode){
+            "4AX" -> "4AX"
+            "5AX" -> "5AX"
+            else -> "3AX"
+        }
         fun fallbackIconRes(id:String):Int=when(id){
             "CAD" -> R.drawable.ic_rgb_cad
             "CAM" -> R.drawable.ic_rgb_cam
@@ -1726,7 +1762,89 @@ class MainActivity : Activity() {
         }
         fun iconFor(id:String):Drawable? =
             EngineeringImageAssets.drawable(this,id) ?: getDrawable(fallbackIconRes(id))
+
+        fun rebuildSimulationResult(mode:String) {
+            val m=simulationMode(mode)
+            val target=MachiningAxisRuntimeContract.state(m,draftA,draftB)
+            val schedule=when(m){
+                "4AX" -> MultiAxisOrientationSchedule(
+                    startA=0.0,startB=0.0,endA=target.axisA,endB=0.0,
+                    mode=MultiAxisInterpolationMode.LINEAR_SYNC
+                )
+                "5AX" -> MultiAxisOrientationSchedule(
+                    startA=0.0,startB=0.0,endA=target.axisA,endB=target.axisB,
+                    mode=MultiAxisInterpolationMode.LINEAR_SYNC
+                )
+                else -> null
+            }
+            simulationResult=Machining3DEngine.build(
+                snapshot,camSettings,Stock3D.fromSnapshot(snapshot,stockMarginMm,stockThicknessMm),
+                target.axisA,target.axisB,schedule
+            )
+            activeAxisMode=m
+            simulationIndex=0
+        }
+
+        fun installSimulationView(mode:String,axisOverlay:Boolean) {
+            rebuildSimulationResult(mode)
+            val view=Machining3DView(this,simulationResult)
+            activeMachiningView=view
+            visualHost.addView(view,FrameLayout.LayoutParams(-1,-1))
+            if(axisOverlay){
+                val preview=Axis5xPreview(this,draftA,draftB,activeAxisMode){a,b->draftA=a;draftB=b}
+                preview.alpha=0.88f
+                activeAxisPreview=preview
+                visualHost.addView(
+                    preview,
+                    FrameLayout.LayoutParams(dp(180),dp(150),Gravity.TOP or Gravity.END).apply {
+                        setMargins(0,dp(8),dp(8),0)
+                    }
+                )
+            }
+            view.showProgressiveFrame(0)
+        }
+
+        lateinit var simulationTick:Runnable
+        fun showSimulationFrame(index:Int) {
+            val view=activeMachiningView ?: return
+            val frame=runCatching { view.showProgressiveFrame(index) }.getOrElse {
+                simulationPlaying=false
+                simulationStatus.text="SIM BLOCKED • "+(it.message?:"error")
+                return
+            }
+            simulationIndex=frame.index
+            activeAxisPreview?.setAngles(frame.toolPoint.axisA,frame.toolPoint.axisB)
+            simulationStatus.text="真走刀 • "+activeAxisMode+" • "+(frame.index+1)+"/"+frame.total+
+                " • X="+DisplayFormat.mm(frame.toolPoint.to.x)+
+                " Y="+DisplayFormat.mm(frame.toolPoint.to.y)+
+                " Z="+DisplayFormat.mm(frame.toolPoint.z)+
+                " • A="+DisplayFormat.mm(frame.toolPoint.axisA)+
+                " B="+DisplayFormat.mm(frame.toolPoint.axisB)+
+                " • removed="+frame.removedCells+" • MACHINE EXECUTION=OFF"
+        }
+        simulationTick=object:Runnable {
+            override fun run() {
+                if(!simulationPlaying) return
+                val moves=simulationResult.cam.toolpaths.flatMap{it.moves}
+                if(moves.isEmpty() || simulationIndex>=moves.lastIndex){
+                    simulationPlaying=false
+                    simulationStatus.text="真走刀完成 • "+activeAxisMode+
+                        " • removed="+(activeMachiningView?.progressiveRemovedCells()?:0)
+                    return
+                }
+                showSimulationFrame(simulationIndex+1)
+                if(simulationPlaying){
+                    val delay=when(simulationSpeed){4->30L;2->60L;else->120L}
+                    simulationHandler.postDelayed(this,delay)
+                }
+            }
+        }
+
         fun renderMode(mode:String){
+            simulationPlaying=false
+            simulationHandler.removeCallbacks(simulationTick)
+            activeMachiningView=null
+            activeAxisPreview=null
             activeMode=mode
             modeButtons.forEach { (id,b)-> b.setRgbState(colors[(id.hashCode() and Int.MAX_VALUE)%colors.size],id==mode) }
             visualHost.removeAllViews()
@@ -1748,26 +1866,20 @@ class MainActivity : Activity() {
                     },FrameLayout.LayoutParams(-1,-1))
                 }
                 "3D","3AX" -> {
-                    activeAxisMode="3AX"
-                    val state=MachiningAxisRuntimeContract.state("3AX",draftA,draftB)
-                    draftA=state.axisA; draftB=state.axisB
-                    val threeAxisResult=Machining3DEngine.build(
-                        snapshot,camSettings,Stock3D.fromSnapshot(snapshot,stockMarginMm,stockThicknessMm),
-                        state.axisA,state.axisB
-                    )
-                    visualHost.addView(Machining3DView(this,threeAxisResult),FrameLayout.LayoutParams(-1,-1))
+                    installSimulationView("3AX",axisOverlay=false)
+                    showSimulationFrame(0)
                 }
                 "4AX" -> {
-                    activeAxisMode="4AX"
                     val state=MachiningAxisRuntimeContract.state("4AX",draftA,draftB)
                     draftA=state.axisA; draftB=state.axisB
-                    visualHost.addView(Axis5xPreview(this,draftA,draftB,"4AX"){a,b->draftA=a;draftB=b},FrameLayout.LayoutParams(-1,-1))
+                    installSimulationView("4AX",axisOverlay=true)
+                    showSimulationFrame(0)
                 }
                 "5AX" -> {
-                    activeAxisMode="5AX"
                     val state=MachiningAxisRuntimeContract.state("5AX",draftA,draftB)
                     draftA=state.axisA; draftB=state.axisB
-                    visualHost.addView(Axis5xPreview(this,draftA,draftB,"5AX"){a,b->draftA=a;draftB=b},FrameLayout.LayoutParams(-1,-1))
+                    installSimulationView("5AX",axisOverlay=true)
+                    showSimulationFrame(0)
                 }
                 "NC_EDIT" -> {
                     visualHost.addView(Machining3DView(this,result),FrameLayout.LayoutParams(-1,-1))
@@ -1815,6 +1927,7 @@ class MainActivity : Activity() {
             body.addView(ncPanel,LinearLayout.LayoutParams(-1,dp(280)))
         }
         root.addView(body,LinearLayout.LayoutParams(-1,-2))
+        root.addView(simulationStatus,LinearLayout.LayoutParams(-1,-2))
 
         val actionFlow=FlowLayout(this)
         fun action(key:String,color:Int,description:String,run:()->Unit){
@@ -1825,6 +1938,40 @@ class MainActivity : Activity() {
                 setRgbState(color,false)
                 setOnClickListener{run()}
             })
+        }
+        action("PLAY",0xFF3FFF9D.toInt(),"真走刀播放"){
+            if(activeMode !in setOf("3D","3AX","4AX","5AX")){
+                simulationStatus.text="SIM BLOCKED • 請先選 3D / 3AX / 4AX / 5AX"
+            }else{
+                renderMode(activeMode)
+                simulationPlaying=true
+                showSimulationFrame(simulationIndex)
+                simulationHandler.removeCallbacks(simulationTick)
+                simulationHandler.post(simulationTick)
+            }
+        }
+        action("PAUSE",0xFFFFB020.toInt(),"暫停仿真"){
+            simulationPlaying=false
+            simulationHandler.removeCallbacks(simulationTick)
+            simulationStatus.text="真走刀暫停 • "+activeAxisMode+" • frame="+(simulationIndex+1)
+        }
+        action("STEP",0xFF3DEBFF.toInt(),"單步仿真"){
+            simulationPlaying=false
+            simulationHandler.removeCallbacks(simulationTick)
+            if(activeMachiningView==null && activeMode in setOf("3D","3AX","4AX","5AX")) renderMode(activeMode)
+            val moves=simulationResult.cam.toolpaths.flatMap{it.moves}
+            if(moves.isNotEmpty()) showSimulationFrame((simulationIndex+1).coerceAtMost(moves.lastIndex))
+        }
+        action("RESET",0xFF7D70FF.toInt(),"重置仿真"){
+            simulationPlaying=false
+            simulationHandler.removeCallbacks(simulationTick)
+            simulationIndex=0
+            if(activeMachiningView!=null) showSimulationFrame(0)
+            simulationStatus.text="真走刀重置 • "+activeAxisMode+" • MACHINE EXECUTION=OFF"
+        }
+        action("SPEED",0xFFEC4899.toInt(),"仿真速度"){
+            simulationSpeed=when(simulationSpeed){1->2;2->4;else->1}
+            simulationStatus.text="真走刀速度 ×"+simulationSpeed+" • "+activeAxisMode
         }
         action("APPLY_AXIS",0xFF8B5CF6.toInt(),"套用軸向"){
             machiningAxisMode=activeAxisMode
@@ -1856,6 +2003,10 @@ class MainActivity : Activity() {
             .setTitle("AIG CNC • UNIFIED MACHINING WORKSPACE")
             .setView(root)
             .create()
+        dialog.setOnDismissListener {
+            simulationPlaying=false
+            simulationHandler.removeCallbacks(simulationTick)
+        }
         dialog.show()
         renderMode(initialMode)
     }

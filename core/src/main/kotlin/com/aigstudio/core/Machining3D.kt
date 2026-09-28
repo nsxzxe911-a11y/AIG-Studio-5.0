@@ -218,6 +218,55 @@ data class Machining3DResult(
     val mesh: Mesh3D
 )
 
+data class ProgressiveMachining3DFrame(
+    val index:Int,
+    val total:Int,
+    val progress:Double,
+    val toolPoint:Move,
+    val removal:RemovalField3D,
+    val mesh:Mesh3D,
+    val removedCells:Int
+)
+
+object ProgressiveMachining3D {
+    fun frame(result:Machining3DResult,index:Int):ProgressiveMachining3DFrame {
+        val flattened=result.cam.toolpaths.flatMap{it.moves}
+        require(flattened.isNotEmpty()){"No CAM moves"}
+        val i=index.coerceIn(0,flattened.lastIndex)
+        var remaining=i+1
+        val prefix=mutableListOf<Toolpath>()
+        for(path in result.cam.toolpaths){
+            if(remaining<=0) break
+            val takeCount=min(remaining,path.moves.size)
+            if(takeCount>0) prefix+=Toolpath(path.moves.take(takeCount))
+            remaining-=takeCount
+        }
+        val removal=MaterialRemoval3D.simulate(prefix,result.cam.settings,result.stock)
+        val mesh=SurfaceMesh3D.fromRemoval(removal)
+        return ProgressiveMachining3DFrame(
+            index=i,
+            total=flattened.size,
+            progress=if(flattened.size<=1)1.0 else i.toDouble()/flattened.lastIndex.toDouble(),
+            toolPoint=flattened[i],
+            removal=removal,
+            mesh=mesh,
+            removedCells=removal.depth.count{it<0.0}
+        )
+    }
+
+    fun firstCuttingIndex(result:Machining3DResult):Int {
+        val moves=result.cam.toolpaths.flatMap{it.moves}
+        val index=moves.indexOfFirst{!it.rapid && it.z<0.0}
+        return if(index<0)0 else index
+    }
+
+    fun progressiveIndex(result:Machining3DResult,fraction:Double):Int {
+        val moves=result.cam.toolpaths.flatMap{it.moves}
+        require(moves.isNotEmpty()){"No CAM moves"}
+        return ((moves.lastIndex)*fraction.coerceIn(0.0,1.0)).roundToInt()
+    }
+}
+
 object Machining3DEngine {
     fun build(
         snapshot: DrawingSnapshot,

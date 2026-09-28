@@ -1017,7 +1017,7 @@ object NcDraftRecoveryContract {
     const val CHECKPOINT_FORMAT = 3
     const val DRAFT_SOURCE_BINDING = "SHA256_CAD_CAM_AXIS_POST"
     const val RESTORE_POLICY = "PRESERVE_DRAFT_MARK_STALE_ON_SOURCE_CHANGE"
-    const val FINAL_POLICY = "STALE_DRAFT_NEVER_NC_READY"
+    const val VERIFY_POLICY = "STALE_DRAFT_NEVER_NC_READY"
 
     fun restoreState(hasDraft:Boolean,sourceMatches:Boolean,storedStale:Boolean):String = when {
         !hasDraft -> "NO_DRAFT"
@@ -1067,4 +1067,70 @@ object PixelLayoutPrecheckContract {
         val b=budget(widthDp,heightDp)
         return b.workspaceFraction>=0.58 && b.ncFraction in 0.28..0.38 && b.ncVisible
     }
+}
+
+
+enum class StudioStartupQualityMode { LITE, STANDARD, HQ }
+
+enum class StudioStartupStage {
+    BOOTSTRAP,
+    SAFE_THEME,
+    CORE,
+    CONFIGURATION,
+    UI_RENDERER,
+    PROJECT_DATA,
+    HEALTH,
+    WRAP_UP,
+    HOME
+}
+
+object StudioStartupEngineContract {
+    const val PROFILE="AIG_STUDIO_STARTUP_ENGINE_163"
+    val orderedStages=listOf(
+        StudioStartupStage.BOOTSTRAP,
+        StudioStartupStage.SAFE_THEME,
+        StudioStartupStage.CORE,
+        StudioStartupStage.CONFIGURATION,
+        StudioStartupStage.UI_RENDERER,
+        StudioStartupStage.PROJECT_DATA,
+        StudioStartupStage.HEALTH,
+        StudioStartupStage.WRAP_UP,
+        StudioStartupStage.HOME
+    )
+    val stageWeights=linkedMapOf(
+        StudioStartupStage.CORE to 15,
+        StudioStartupStage.CONFIGURATION to 15,
+        StudioStartupStage.UI_RENDERER to 30,
+        StudioStartupStage.PROJECT_DATA to 20,
+        StudioStartupStage.HEALTH to 15,
+        StudioStartupStage.WRAP_UP to 5
+    )
+
+    init {
+        require(stageWeights.values.sum()==100){"Startup progress weights must total 100"}
+    }
+
+    fun canAdvance(from:StudioStartupStage,to:StudioStartupStage):Boolean =
+        orderedStages.indexOf(to)>=orderedStages.indexOf(from)
+
+    fun progressBefore(stage:StudioStartupStage):Int {
+        if(stage==StudioStartupStage.HOME)return 100
+        val index=orderedStages.indexOf(stage).coerceAtLeast(0)
+        val completed=orderedStages.take(index).toSet()
+        return stageWeights.filterKeys{it in completed}.values.sum().coerceIn(0,100)
+    }
+
+    fun qualityMode(lowMemory:Boolean,thermalHigh:Boolean,preferHq:Boolean):StudioStartupQualityMode =
+        when {
+            lowMemory || thermalHigh -> StudioStartupQualityMode.LITE
+            preferHq -> StudioStartupQualityMode.HQ
+            else -> StudioStartupQualityMode.STANDARD
+        }
+
+    fun safeBootRequired(previousCrashStage:StudioStartupStage?):Boolean =
+        previousCrashStage in setOf(
+            StudioStartupStage.SAFE_THEME,
+            StudioStartupStage.CONFIGURATION,
+            StudioStartupStage.UI_RENDERER
+        )
 }

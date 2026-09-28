@@ -19,7 +19,9 @@ def require(source: str, needle: str, label: str) -> None:
         raise SystemExit(f"BLOCKED {label}: missing {needle!r}")
 
 android = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
+machining3d = read("app/src/main/java/com/aigstudio/app/Machining3DView.kt")
 desktop = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
+machining3d_core = read("core/src/main/kotlin/com/aigstudio/core/Machining3D.kt")
 env = read("core/src/main/kotlin/com/aigstudio/core/EnvironmentSettings.kt")
 document = read("core/src/main/kotlin/com/aigstudio/core/Document.kt")
 regression = read("core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt")
@@ -244,11 +246,50 @@ for needle in (
 ):
     require(android, needle, "ANDROID_MACHINING_CALLBACK")
 
-# 3/4/5-axis modes must bind to the runtime contract, not just labels or images.
-for mode in ("3AX", "4AX", "5AX"):
-    require(android, f'MachiningAxisRuntimeContract.state("{mode}"', f"{mode}_RUNTIME_BINDING")
-require(android, 'Axis5xPreview(this,draftA,draftB,"4AX")', "4AX_PREVIEW_BINDING")
-require(android, 'Axis5xPreview(this,draftA,draftB,"5AX")', "5AX_PREVIEW_BINDING")
+# 3/4/5-axis modes must bind to true progressive CAM/SIM state, not just labels or images.
+for needle in (
+    'fun simulationMode(mode:String):String=when(mode){',
+    '"4AX" -> "4AX"',
+    '"5AX" -> "5AX"',
+    'else -> "3AX"',
+    'val target=MachiningAxisRuntimeContract.state(m,draftA,draftB)',
+    'MultiAxisOrientationSchedule(',
+    'mode=MultiAxisInterpolationMode.LINEAR_SYNC',
+    'installSimulationView("3AX",axisOverlay=false)',
+    'installSimulationView("4AX",axisOverlay=true)',
+    'installSimulationView("5AX",axisOverlay=true)',
+    'showSimulationFrame(simulationIndex+1)',
+):
+    require(android, needle, "AXIS_PROGRESSIVE_RUNTIME_BINDING")
+
+for needle in (
+    'fun showProgressiveFrame(index: Int): ProgressiveMachining3DFrame',
+    'val activeMesh = activeFrame?.mesh ?: result.mesh',
+    'val liveMove = activeFrame?.toolPoint ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()',
+    'val axis = toolAxisVector(toolLength, liveMove.axisA, liveMove.axisB)',
+    'val removed = activeFrame?.removedCells ?: result.removal.depth.count { it < 0.0 }',
+):
+    require(machining3d, needle, "ANDROID_PROGRESSIVE_3D_BINDING")
+
+for needle in (
+    'data class ProgressiveMachining3DFrame(',
+    'object ProgressiveMachining3D',
+    'val removal=MaterialRemoval3D.simulate(prefix,result.cam.settings,result.stock)',
+    'val mesh=SurfaceMesh3D.fromRemoval(removal)',
+):
+    require(machining3d_core, needle, "CORE_PROGRESSIVE_MATERIAL_REMOVAL_BINDING")
+
+for needle in (
+    'val playbackTimer=Timer(110,null)',
+    'mesh.showProgressiveFrame(simulationIndex)',
+    'axes.showProgressiveFrame(frameState)',
+    'action("▶"',
+    'action("⏸"',
+    'action("STEP"',
+    'action("RESET"',
+):
+    require(desktop, needle, "WINDOWS_PROGRESSIVE_3D_PLAYBACK_BINDING")
+
 require(env, 'samePageModes = listOf("3D","3AX","4AX","5AX","NC_EDIT")', "AXIS_MODE_INVENTORY")
 
 # Rotary clamp safety must be wired end-to-end in the Android machining path.

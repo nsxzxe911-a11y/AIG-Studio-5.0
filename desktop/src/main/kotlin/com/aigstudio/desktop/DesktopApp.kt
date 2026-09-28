@@ -13,6 +13,93 @@ import javax.swing.*
 import javax.swing.border.EmptyBorder
 import kotlin.math.*
 
+
+private object StudioDesktopOriginalVisuals {
+    val startup:BufferedImage? by lazy {
+        runCatching {
+            StudioDesktopOriginalVisuals::class.java.getResourceAsStream("/visuals/studio_startup_original.png")
+                ?.use(ImageIO::read)
+        }.getOrNull()
+    }
+    val machine:BufferedImage? by lazy {
+        runCatching {
+            StudioDesktopOriginalVisuals::class.java.getResourceAsStream("/visuals/machine_visual.jpg")
+                ?.use(ImageIO::read)
+        }.getOrNull()
+    }
+    fun paintCover(g:Graphics2D,w:Int,h:Int,image:BufferedImage?,alpha:Float,zoom:Double=1.0,panX:Double=0.0) {
+        if(image==null || w<=0 || h<=0)return
+        val srcRatio=image.width.toDouble()/image.height.toDouble()
+        val dstRatio=w.toDouble()/h.toDouble()
+        val baseW=if(srcRatio>dstRatio) h*srcRatio else w.toDouble()
+        val baseH=if(srcRatio>dstRatio) h.toDouble() else w/srcRatio
+        val dw=baseW*zoom; val dh=baseH*zoom
+        val x=((w-dw)/2.0+panX).roundToInt()
+        val y=((h-dh)/2.0).roundToInt()
+        val old=g.composite
+        g.composite=AlphaComposite.SrcOver.derive(alpha.coerceIn(0f,1f))
+        g.drawImage(image,x,y,dw.roundToInt(),dh.roundToInt(),null)
+        g.composite=old
+    }
+}
+
+
+private class StudioDesktopStartupWindow {
+    private val window=JWindow()
+    private val title=JLabel("AIG CNC",SwingConstants.CENTER)
+    private val detail=JLabel("CAD • CAM • SIM • 3AX • 4AX • 5AX • NC • AI",SwingConstants.CENTER)
+    private val status=JLabel("啟動中…",SwingConstants.CENTER)
+    private val progress=JProgressBar(0,100)
+    private var stage=StudioStartupStage.BOOTSTRAP
+    private val timer=Timer(40){window.repaint()}
+    private val panel=object:JPanel(){
+        override fun paintComponent(g0:Graphics){
+            super.paintComponent(g0)
+            val g=g0.create() as Graphics2D
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+            val phase=(System.currentTimeMillis()%9000L)/9000.0
+            val zoom=1.02+0.035*sin(phase*2.0*PI)
+            StudioDesktopOriginalVisuals.paintCover(g,width,height,StudioDesktopOriginalVisuals.startup,0.90f,zoom,(phase-0.5)*20.0)
+            g.color=Color(2,7,14,100);g.fillRect(0,0,width,height)
+            g.color=Color(61,235,255,72);g.fillRect(0,(phase*height).roundToInt(),width,2)
+            g.dispose()
+        }
+    }.apply{
+        layout=BoxLayout(this,BoxLayout.Y_AXIS)
+        background=Color(4,9,18)
+        border=BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color(61,235,255),2,true),
+            EmptyBorder(30,42,30,42)
+        )
+    }
+
+    init{
+        title.foreground=Color.WHITE;title.font=title.font.deriveFont(Font.BOLD,32f)
+        detail.foreground=Color(190,215,235);detail.font=detail.font.deriveFont(Font.PLAIN,12f)
+        status.foreground=Color(61,235,255);status.font=status.font.deriveFont(Font.BOLD,15f)
+        progress.isStringPainted=true;progress.foreground=Color(61,235,255);progress.background=Color(22,32,46)
+        listOf<JComponent>(title,detail,status,progress).forEach{
+            it.alignmentX=Component.CENTER_ALIGNMENT;panel.add(it);panel.add(Box.createVerticalStrut(14))
+        }
+        window.contentPane=panel
+        window.setSize(760,430)
+        window.setLocationRelativeTo(null)
+    }
+
+    fun show(){timer.start();window.isVisible=true;window.toFront()}
+    fun advance(next:StudioStartupStage,message:String){
+        if(!StudioStartupEngineContract.canAdvance(stage,next))return
+        stage=next
+        val pct=StudioStartupEngineContract.progressBefore(next)
+        progress.value=pct;progress.string="$pct%";status.text=message
+        window.repaint();Toolkit.getDefaultToolkit().sync()
+    }
+    fun close(){
+        progress.value=100;progress.string="100%";timer.stop();window.dispose()
+    }
+    fun evidencePanel():JPanel=panel
+}
+
 private class AdaptiveGlassToolbar : JPanel() {
     private var cols = 7
     init {
@@ -406,12 +493,13 @@ private class CadPanel(
     }
 }
 
-private class Mesh3DPanel(private val result: Machining3DResult) : JPanel() {
+private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
     private var rx = -35.0
     private var ry = 35.0
     private var zoom = 1.0
     private var lastX = 0
     private var lastY = 0
+    private var progressiveFrame:ProgressiveMachining3DFrame?=null
 
     init {
         background = Color(5, 10, 17)
@@ -440,7 +528,26 @@ private class Mesh3DPanel(private val result: Machining3DResult) : JPanel() {
         repaint()
     }
 
-    fun evidenceState(): String = "rx=$rx,ry=$ry,zoom=$zoom"
+    fun setResult(next:Machining3DResult){
+        result=next
+        progressiveFrame=null
+        repaint()
+    }
+
+    fun showProgressiveFrame(index:Int):ProgressiveMachining3DFrame {
+        val frame=ProgressiveMachining3D.frame(result,index)
+        progressiveFrame=frame
+        repaint()
+        return frame
+    }
+
+    fun clearProgressiveFrame(){progressiveFrame=null;repaint()}
+    fun progressiveRemovedCells():Int = progressiveFrame?.removedCells ?: result.removal.depth.count{it<0.0}
+
+    fun evidenceState(): String =
+        "rx=$rx,ry=$ry,zoom=$zoom"+
+            (progressiveFrame?.let{",frame=${it.index+1}/${it.total},removed=${it.removedCells},tool="+
+                "${DisplayFormat.mm(it.toolPoint.to.x)},${DisplayFormat.mm(it.toolPoint.to.y)},${DisplayFormat.mm(it.toolPoint.z)}"} ?: "")
 
     private fun rotate(v: Vec3): Vec3 {
         val cx = (result.stock.minX + result.stock.maxX) / 2.0
@@ -470,15 +577,19 @@ private class Mesh3DPanel(private val result: Machining3DResult) : JPanel() {
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
         val g2 = g as Graphics2D
+        StudioDesktopOriginalVisuals.paintCover(g2,width,height,StudioDesktopOriginalVisuals.machine,0.60f)
+        g2.color=Color(2,7,14,42);g2.fillRect(0,0,width,height)
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
         g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
         val span = max(max(result.stock.maxX - result.stock.minX, result.stock.maxY - result.stock.minY), result.stock.thickness).coerceAtLeast(1.0)
         val scale = min(width, height) * 0.72 / span * zoom
-        val projected = result.mesh.vertices.map { project(it, scale) }
-        val stride = max(1, ceil(result.mesh.triangles.size / 5500.0).toInt())
+        val activeFrame=progressiveFrame
+        val activeMesh=activeFrame?.mesh ?: result.mesh
+        val projected = activeMesh.vertices.map { project(it, scale) }
+        val stride = max(1, ceil(activeMesh.triangles.size / 5500.0).toInt())
 
-        val rotated = result.mesh.vertices.map { rotate(it) }
-        val visible = result.mesh.triangles.mapIndexedNotNull { index, t ->
+        val rotated = activeMesh.vertices.map { rotate(it) }
+        val visible = activeMesh.triangles.mapIndexedNotNull { index, t ->
             if (index % stride != 0) null else {
                 val depth = (rotated[t.a].z + rotated[t.b].z + rotated[t.c].z) / 3.0
                 Pair(depth, t)
@@ -491,30 +602,39 @@ private class Mesh3DPanel(private val result: Machining3DResult) : JPanel() {
             val c = projected[t.c]
             val poly = Polygon(intArrayOf(a.x,b.x,c.x), intArrayOf(a.y,b.y,c.y), 3)
             val shade = (70 + index * 150 / max(1, visible.size)).coerceIn(70,220)
-            g2.color = Color(30, shade, 220, 120)
+            g2.color = Color(45, shade, 220, 210)
             g2.fillPolygon(poly)
-            g2.color = Color(61, 220, 255, 165)
-            g2.stroke = BasicStroke(0.8f)
-            g2.drawPolygon(poly)
-        }
-
-        g2.stroke = BasicStroke(2.4f)
-        var previous: Move? = null
-        result.cam.toolpaths.forEach { tp ->
-            previous = null
-            tp.moves.forEach { move ->
-                val prev = previous
-                if (prev != null) {
-                    val a = project(Vec3(prev.to.x, prev.to.y, prev.z), scale)
-                    val b = project(Vec3(move.to.x, move.to.y, move.z), scale)
-                    g2.color = if (move.rapid) Color(255, 70, 220, 170) else Color(63, 255, 157)
-                    g2.drawLine(a.x, a.y, b.x, b.y)
-                }
-                previous = move
+            if(index % 8 == 0) {
+                g2.color = Color(61, 220, 255, 68)
+                g2.stroke = BasicStroke(0.65f)
+                g2.drawPolygon(poly)
             }
         }
 
-        val removed = result.removal.depth.count { it < 0.0 }
+        g2.stroke = BasicStroke(1.15f)
+        val allMoves=result.cam.toolpaths.flatMap{it.moves}
+        val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
+        val trailMoves=if(activeFrame!=null) visibleMoves.takeLast(32) else visibleMoves
+        var previous:Move?=null
+        trailMoves.forEach { move ->
+            val prev=previous
+            if(prev!=null){
+                val a=project(Vec3(prev.to.x,prev.to.y,prev.z),scale)
+                val b=project(Vec3(move.to.x,move.to.y,move.z),scale)
+                g2.color=if(move.rapid)Color(255,70,220,62) else Color(63,255,157,105)
+                g2.drawLine(a.x,a.y,b.x,b.y)
+            }
+            previous=move
+        }
+        activeFrame?.toolPoint?.let { tool ->
+            val p=project(Vec3(tool.to.x,tool.to.y,tool.z),scale)
+            g2.color=Color(255,220,90,235)
+            g2.fillOval(p.x-6,p.y-6,12,12)
+            g2.stroke=BasicStroke(2f)
+            g2.drawLine(p.x,p.y-20,p.x,p.y+20)
+        }
+
+        val removed = activeFrame?.removedCells ?: result.removal.depth.count { it < 0.0 }
         val absoluteMoves = result.cam.toolpaths.flatMap { it.moves }
         val minX = absoluteMoves.minOfOrNull { it.to.x } ?: 0.0
         val maxX = absoluteMoves.maxOfOrNull { it.to.x } ?: 0.0
@@ -525,7 +645,9 @@ private class Mesh3DPanel(private val result: Machining3DResult) : JPanel() {
         g2.color = Color(220, 240, 255)
         g2.font = Font(Font.SANS_SERIF, Font.PLAIN, 14)
         g2.drawString(
-            "HQ 3D RENDER ENGINE • TRUE MESH • CAM=" + result.cam.toolpaths.size + " • removed=" + removed + " • 精度 0.001 mm",
+            "HQ 3D RENDER ENGINE • TRUE MESH • CAM=" + result.cam.toolpaths.size + " • removed=" + removed +
+                (activeFrame?.let{" • frame=${it.index+1}/${it.total} • ${String.format(java.util.Locale.US,"%.1f",it.progress*100.0)}%"} ?: "") +
+                " • 精度 0.001 mm",
             14, 22
         )
         g2.drawString(
@@ -541,18 +663,31 @@ private class Mesh3DPanel(private val result: Machining3DResult) : JPanel() {
 }
 
 
-private class AxisMachiningPanel(private val result:Machining3DResult) : JPanel() {
+private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel() {
     var axisA=0.0
         private set
     var axisB=0.0
         private set
     private var zoom=1.0
+    private var progressiveFrame:ProgressiveMachining3DFrame?=null
     init{
         background=Color(5,10,17)
         preferredSize=Dimension(860,620)
         addMouseWheelListener { zoom=(zoom*if(it.wheelRotation<0)1.1 else 0.9).coerceIn(0.3,5.0);repaint() }
     }
     fun setAngles(a:Double,b:Double){axisA=a;axisB=b;repaint()}
+    fun setResult(next:Machining3DResult){
+        result=next
+        progressiveFrame=null
+        repaint()
+    }
+    fun showProgressiveFrame(frame:ProgressiveMachining3DFrame){
+        progressiveFrame=frame
+        axisA=frame.toolPoint.axisA
+        axisB=frame.toolPoint.axisB
+        repaint()
+    }
+    fun clearProgressiveFrame(){progressiveFrame=null;repaint()}
     private fun axisTransform(v:Vec3):Vec3{
         val cx=(result.stock.minX+result.stock.maxX)/2.0
         val cy=(result.stock.minY+result.stock.maxY)/2.0
@@ -574,37 +709,54 @@ private class AxisMachiningPanel(private val result:Machining3DResult) : JPanel(
     override fun paintComponent(g0:Graphics){
         super.paintComponent(g0)
         val g=g0 as Graphics2D
+        StudioDesktopOriginalVisuals.paintCover(g,width,height,StudioDesktopOriginalVisuals.machine,0.62f)
+        g.color=Color(2,7,14,40);g.fillRect(0,0,width,height)
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)
         g.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY)
         val span=max(max(result.stock.maxX-result.stock.minX,result.stock.maxY-result.stock.minY),result.stock.thickness).coerceAtLeast(1.0)
         val scale=min(width,height)*0.68/span*zoom
-        val pts=result.mesh.vertices.map{project(it,scale)}
-        val stride=max(1,ceil(result.mesh.triangles.size/4500.0).toInt())
-        result.mesh.triangles.forEachIndexed { i,t ->
+        val activeFrame=progressiveFrame
+        val activeMesh=activeFrame?.mesh ?: result.mesh
+        val pts=activeMesh.vertices.map{project(it,scale)}
+        val stride=max(1,ceil(activeMesh.triangles.size/4500.0).toInt())
+        activeMesh.triangles.forEachIndexed { i,t ->
             if(i%stride==0){
                 val a=pts[t.a];val b=pts[t.b];val c=pts[t.c]
                 val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
-                g.color=Color(35,120,210,70);g.fillPolygon(poly)
-                g.color=Color(61,235,255,155);g.stroke=BasicStroke(.9f);g.drawPolygon(poly)
+                g.color=Color(45,145,220,190);g.fillPolygon(poly)
+                if(i%(stride*8)==0){
+                    g.color=Color(61,235,255,68);g.stroke=BasicStroke(.65f);g.drawPolygon(poly)
+                }
             }
         }
+        val allMoves=result.cam.toolpaths.flatMap{it.moves}
+        val visibleMoves=activeFrame?.let{allMoves.take(it.index+1)} ?: allMoves
+        val tailMoves=if(activeFrame!=null) visibleMoves.takeLast(32) else visibleMoves
         var prev:Move?=null
-        result.cam.toolpaths.forEach { tp ->
-            prev=null
-            tp.moves.forEach { m ->
-                val p=prev
-                if(p!=null){
-                    val a=project(Vec3(p.to.x,p.to.y,p.z),scale)
-                    val b=project(Vec3(m.to.x,m.to.y,m.z),scale)
-                    g.color=if(m.rapid)Color(61,235,255,195) else Color(255,176,32)
-                    g.stroke=BasicStroke(if(m.rapid)1.8f else 2.7f)
-                    g.drawLine(a.x,a.y,b.x,b.y)
-                }
-                prev=m
+        tailMoves.forEach { m ->
+            val p=prev
+            if(p!=null){
+                val a=project(Vec3(p.to.x,p.to.y,p.z),scale)
+                val b=project(Vec3(m.to.x,m.to.y,m.z),scale)
+                g.color=if(m.rapid)Color(61,235,255,55) else Color(255,176,32,110)
+                g.stroke=BasicStroke(if(m.rapid).8f else 1.2f)
+                g.drawLine(a.x,a.y,b.x,b.y)
             }
+            prev=m
+        }
+        activeFrame?.toolPoint?.let { tool ->
+            val p=project(Vec3(tool.to.x,tool.to.y,tool.z),scale)
+            g.color=Color(255,225,80,240)
+            g.fillOval(p.x-6,p.y-6,12,12)
+            g.stroke=BasicStroke(2f);g.drawLine(p.x,p.y-20,p.x,p.y+20)
         }
         g.color=Color(235,245,255);g.font=Font(Font.SANS_SERIF,Font.BOLD,14)
-        g.drawString("TRUE AXIS VIEW • A="+DisplayFormat.mm(axisA)+"° • B="+DisplayFormat.mm(axisB)+"° • G0 CYAN • CUT ORANGE",14,22)
+        g.drawString(
+            "TRUE AXIS VIEW • A="+DisplayFormat.mm(axisA)+"° • B="+DisplayFormat.mm(axisB)+"°"+
+                (activeFrame?.let{" • frame=${it.index+1}/${it.total} • removed=${it.removedCells}"} ?: "")+
+                " • material-first",
+            14,22
+        )
     }
 }
 
@@ -666,6 +818,13 @@ private fun sha256File(file: File): String {
 }
 
 private fun runSmoke() {
+    val startupEvidence=StudioDesktopStartupWindow()
+    startupEvidence.advance(StudioStartupStage.SAFE_THEME,"載入原版 RGB 啟動圖")
+    startupEvidence.advance(StudioStartupStage.CORE,"初始化 CAD / CAM 核心")
+    startupEvidence.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
+    startupEvidence.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")
+    writePanel(startupEvidence.evidencePanel(),File("desktop_startup.png"),760,430)
+
     val doc = DrawingDocument()
     addRectangle(doc, -40.0, -25.0, 40.0, 25.0)
     require(doc.size() == 4) { "2D CAD smoke failed" }
@@ -820,9 +979,75 @@ private fun runSmoke() {
     val afterState = meshPanel.evidenceState()
     require(sha256File(beforeFile) != sha256File(afterFile)) { "3D rotate/zoom produced identical frames" }
 
+    val absoluteMoves = result.cam.toolpaths.flatMap { it.moves }
+    val earlyIndex=ProgressiveMachining3D.firstCuttingIndex(result)
+    val lateIndex=absoluteMoves.lastIndex
+    val materialBeforeFrame=meshPanel.showProgressiveFrame(earlyIndex)
+    val materialBeforeFile=File("desktop_material_before.png")
+    writePanel(renderRoot,materialBeforeFile)
+    val materialAfterFrame=meshPanel.showProgressiveFrame(lateIndex)
+    val materialAfterFile=File("desktop_material_after.png")
+    writePanel(renderRoot,materialAfterFile)
+    require(materialAfterFrame.removedCells>materialBeforeFrame.removedCells){
+        "Progressive material removal did not increase: before=${materialBeforeFrame.removedCells} after=${materialAfterFrame.removedCells}"
+    }
+    require(materialBeforeFrame.toolPoint!=materialAfterFrame.toolPoint){"Progressive tool point did not move"}
+    require(sha256File(materialBeforeFile)!=sha256File(materialAfterFile)){"Progressive material frames are identical"}
+    meshPanel.clearProgressiveFrame()
+
+    val fiveAxisSchedule=MultiAxisOrientationSchedule(
+        startA=0.0,startB=0.0,endA=35.0,endB=-25.0,
+        mode=MultiAxisInterpolationMode.LINEAR_SYNC
+    )
+    val fiveAxisResult=Machining3DEngine.build(
+        snapshot,
+        cam.settings,
+        axisA=35.0,
+        axisB=-25.0,
+        axisSchedule=fiveAxisSchedule
+    )
+    val fiveMoves=fiveAxisResult.cam.toolpaths.flatMap{it.moves}
+    require(fiveMoves.isNotEmpty()){"5AX CAM generated no moves"}
+    val fiveBeforeIndex=fiveMoves.indices.firstOrNull{i->
+        val m=fiveMoves[i]
+        !m.rapid && m.z<0.0
+    } ?: 0
+    val fiveBeforeFrame=ProgressiveMachining3D.frame(fiveAxisResult,fiveBeforeIndex)
+    val fiveAfterIndex=fiveMoves.indices.firstOrNull{i->
+        if(i<=fiveBeforeIndex) false else {
+            val f=ProgressiveMachining3D.frame(fiveAxisResult,i)
+            val xyzChanged=
+                abs(f.toolPoint.to.x-fiveBeforeFrame.toolPoint.to.x)>1e-9 ||
+                abs(f.toolPoint.to.y-fiveBeforeFrame.toolPoint.to.y)>1e-9 ||
+                abs(f.toolPoint.z-fiveBeforeFrame.toolPoint.z)>1e-9
+            val rotaryChanged=
+                abs(f.toolPoint.axisA-fiveBeforeFrame.toolPoint.axisA)>1e-9 ||
+                abs(f.toolPoint.axisB-fiveBeforeFrame.toolPoint.axisB)>1e-9
+            xyzChanged && rotaryChanged && f.removedCells>fiveBeforeFrame.removedCells
+        }
+    } ?: error("No Studio 5AX frame changes XYZ + rotary axes + material removal together")
+    val fiveAfterFrame=ProgressiveMachining3D.frame(fiveAxisResult,fiveAfterIndex)
+    val fiveAxisPanel=AxisMachiningPanel(fiveAxisResult)
+    fiveAxisPanel.showProgressiveFrame(fiveBeforeFrame)
+    val fiveBeforeFile=File("desktop_5x_before.png")
+    writePanel(fiveAxisPanel,fiveBeforeFile,980,620)
+    fiveAxisPanel.showProgressiveFrame(fiveAfterFrame)
+    val fiveAfterFile=File("desktop_5x_after.png")
+    writePanel(fiveAxisPanel,fiveAfterFile,980,620)
+    require(fiveAfterFrame.removedCells>fiveBeforeFrame.removedCells){"Studio 5AX material removal did not increase"}
+    require(
+        abs(fiveAfterFrame.toolPoint.to.x-fiveBeforeFrame.toolPoint.to.x)>1e-9 ||
+        abs(fiveAfterFrame.toolPoint.to.y-fiveBeforeFrame.toolPoint.to.y)>1e-9 ||
+        abs(fiveAfterFrame.toolPoint.z-fiveBeforeFrame.toolPoint.z)>1e-9
+    ){"Studio 5AX tool XYZ did not move"}
+    require(
+        abs(fiveAfterFrame.toolPoint.axisA-fiveBeforeFrame.toolPoint.axisA)>1e-9 ||
+        abs(fiveAfterFrame.toolPoint.axisB-fiveBeforeFrame.toolPoint.axisB)>1e-9
+    ){"Studio 5AX rotary axes did not change"}
+    require(sha256File(fiveBeforeFile)!=sha256File(fiveAfterFile)){"Studio 5AX runtime frames are identical"}
+
     val removed = result.removal.depth.count { it < 0.0 }
     require(removed > 0) { "Material removal result empty" }
-    val absoluteMoves = result.cam.toolpaths.flatMap { it.moves }
     require(absoluteMoves.any { it.to.x < 0.0 || it.to.y < 0.0 }) { "Signed negative CAM coordinates missing" }
     require(SoftwareCoordinateContract.masterOriginData() == "X0.000 Y0.000 Z0.000")
     require(SoftwareCoordinateContract.xyzData(-40.0, -25.0, -2.0) == "X-40.000 Y-25.000 Z-2.000")
@@ -836,7 +1061,24 @@ private fun runSmoke() {
         "SOURCE_SHA=$sourceSha\n" +
             "OFFICIAL_RGB_UI=PASS\n3D_PAGE_OPENED=PASS\nHQ_RENDERER_STARTED=PASS\n" +
             "DRAG_ROTATION_CAPABILITY=PASS\nWHEEL_ZOOM_CAPABILITY=PASS\n" +
-            "ANIMATION_FRAME_CHANGE=PASS\nMATERIAL_REMOVAL=PASS\nREMOVED_CELLS=$removed\n" +
+            "VIEW_ANIMATION_FRAME_CHANGE=PASS\n" +
+            "PROGRESSIVE_MATERIAL_REMOVAL=PASS\n" +
+            "REMOVED_BEFORE=${materialBeforeFrame.removedCells}\n" +
+            "REMOVED_AFTER=${materialAfterFrame.removedCells}\n" +
+            "TOOL_BEFORE=${DisplayFormat.mm(materialBeforeFrame.toolPoint.to.x)},${DisplayFormat.mm(materialBeforeFrame.toolPoint.to.y)},${DisplayFormat.mm(materialBeforeFrame.toolPoint.z)}\n" +
+            "TOOL_AFTER=${DisplayFormat.mm(materialAfterFrame.toolPoint.to.x)},${DisplayFormat.mm(materialAfterFrame.toolPoint.to.y)},${DisplayFormat.mm(materialAfterFrame.toolPoint.z)}\n" +
+            "MATERIAL_REMOVAL=PASS\nREMOVED_CELLS=$removed\n" +
+            "5X_FRAME_BEFORE=${fiveBeforeFrame.index+1}/${fiveBeforeFrame.total}\n" +
+            "5X_FRAME_AFTER=${fiveAfterFrame.index+1}/${fiveAfterFrame.total}\n" +
+            "5X_TOOL_BEFORE=${DisplayFormat.mm(fiveBeforeFrame.toolPoint.to.x)},${DisplayFormat.mm(fiveBeforeFrame.toolPoint.to.y)},${DisplayFormat.mm(fiveBeforeFrame.toolPoint.z)}\n" +
+            "5X_TOOL_AFTER=${DisplayFormat.mm(fiveAfterFrame.toolPoint.to.x)},${DisplayFormat.mm(fiveAfterFrame.toolPoint.to.y)},${DisplayFormat.mm(fiveAfterFrame.toolPoint.z)}\n" +
+            "5X_A_BEFORE=${DisplayFormat.mm(fiveBeforeFrame.toolPoint.axisA)}\n" +
+            "5X_B_BEFORE=${DisplayFormat.mm(fiveBeforeFrame.toolPoint.axisB)}\n" +
+            "5X_A_AFTER=${DisplayFormat.mm(fiveAfterFrame.toolPoint.axisA)}\n" +
+            "5X_B_AFTER=${DisplayFormat.mm(fiveAfterFrame.toolPoint.axisB)}\n" +
+            "5X_REMOVED_BEFORE=${fiveBeforeFrame.removedCells}\n" +
+            "5X_REMOVED_AFTER=${fiveAfterFrame.removedCells}\n" +
+            "5X_DYNAMIC_TOOL_CHANGE=PASS\n5X_DYNAMIC_AXIS_CHANGE=PASS\n5X_PROGRESSIVE_MATERIAL_REMOVAL=PASS\n" +
             "ABS_MODE=" + SoftwareCoordinateContract.coordinateMode() + "\n" +
             "MASTER_ORIGIN=" + SoftwareCoordinateContract.masterOriginData() + "\n" +
             "SIGNED_NEGATIVE_SAMPLE=" + SoftwareCoordinateContract.xyzData(-40.0, -25.0, -2.0) + "\n" +
@@ -850,6 +1092,10 @@ private fun runSmoke() {
             sha256File(cadEditFile) + "  desktop_cad_edit.png\n" +
             sha256File(beforeFile) + "  desktop_3d_before.png\n" +
             sha256File(afterFile) + "  desktop_3d.png\n" +
+            sha256File(materialBeforeFile) + "  desktop_material_before.png\n" +
+            sha256File(materialAfterFile) + "  desktop_material_after.png\n" +
+            sha256File(fiveBeforeFile) + "  desktop_5x_before.png\n" +
+            sha256File(fiveAfterFile) + "  desktop_5x_after.png\n" +
             "SOURCE_SHA=$sourceSha\n"
     )
 
@@ -863,7 +1109,13 @@ private fun runSmoke() {
             "OFFICIAL_RGB_UI_SCREENSHOT=desktop_launch.png\n" +
             "CAD_PRECISION_EDIT_SCREENSHOT=desktop_cad_edit.png\n" +
             "HQ_3D_RUNTIME_SCREENSHOT=desktop_3d.png\n" +
-            "ANIMATION_FRAME_CHANGE=PASS\n"
+            "PROGRESSIVE_MATERIAL_BEFORE=desktop_material_before.png\n" +
+            "PROGRESSIVE_MATERIAL_AFTER=desktop_material_after.png\n" +
+            "5X_BEFORE=desktop_5x_before.png\n" +
+            "5X_AFTER=desktop_5x_after.png\n" +
+            "VIEW_ANIMATION_FRAME_CHANGE=PASS\n" +
+            "PROGRESSIVE_MATERIAL_REMOVAL=PASS\n" +
+            "5X_REAL_MOTION_AND_REMOVAL=PASS\n"
     )
 }
 
@@ -1142,14 +1394,14 @@ private fun saveDesktopRotaryMachineProfile(profile:RotaryAxisClampProfile){
 private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:JLabel){
     val snapshot=doc.snapshot()
     require(snapshot.entities.isNotEmpty()){"UNIFIED WORKSPACE BLOCKED: no CAD geometry"}
-    val result=Machining3DEngine.build(snapshot)
+    var result=Machining3DEngine.build(snapshot)
     var axisA=0.0
     var axisB=0.0
     var axisMode="3AX"
     var rotaryClampProfile=loadDesktopRotaryMachineProfile()
     fun currentRotaryMode():RotaryAxisOperationMode=when(axisMode){
-        "4AX" -> RotaryAxisOperationMode.INDEXED_4AX
-        "5AX" -> RotaryAxisOperationMode.INDEXED_5AX
+        "4AX" -> RotaryAxisOperationMode.SIMULTANEOUS_4AX
+        "5AX" -> RotaryAxisOperationMode.SIMULTANEOUS_5AX
         else -> RotaryAxisOperationMode.NONE
     }
     fun clampStatus():String=when{
@@ -1159,9 +1411,8 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         else -> "UNCONFIGURED"
     }
     fun generateNc():String {
-        val orientedCam=CamModel.fromCad(0L,snapshot,result.cam.settings,axisA,axisB)
         return CncPost.generate(
-            orientedCam,
+            result.cam,
             FanucPostSettings(
                 axisA=axisA,
                 axisB=axisB,
@@ -1184,6 +1435,43 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     val visual=JPanel(card).apply{background=Color(5,10,17)}
     val mesh=Mesh3DPanel(result)
     val axes=AxisMachiningPanel(result)
+    var simulationMoves=result.cam.toolpaths.flatMap{it.moves}
+    var simulationIndex=0
+    val playbackTimer=Timer(110,null)
+
+    fun rebuildMachiningForMode(){
+        playbackTimer.stop()
+        val schedule=when(axisMode){
+            "4AX" -> MultiAxisOrientationSchedule(
+                startA=0.0,startB=0.0,endA=axisA,endB=0.0,
+                mode=MultiAxisInterpolationMode.LINEAR_SYNC
+            )
+            "5AX" -> MultiAxisOrientationSchedule(
+                startA=0.0,startB=0.0,endA=axisA,endB=axisB,
+                mode=MultiAxisInterpolationMode.LINEAR_SYNC
+            )
+            else -> null
+        }
+        result=Machining3DEngine.build(
+            snapshot,
+            result.cam.settings,
+            axisA=if(axisMode=="3AX")0.0 else axisA,
+            axisB=if(axisMode=="5AX")axisB else 0.0,
+            axisSchedule=schedule
+        )
+        mesh.setResult(result)
+        axes.setResult(result)
+        axes.setAngles(
+            if(axisMode=="3AX")0.0 else axisA,
+            if(axisMode=="5AX")axisB else 0.0
+        )
+        simulationMoves=result.cam.toolpaths.flatMap{it.moves}
+        simulationIndex=0
+        status.text="CAM "+axisMode+" REBUILT • moves="+simulationMoves.size+
+            " • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+
+            " • NC STALE / REBUILD REQUIRED"
+    }
+
     visual.add(mesh,"3D");visual.add(axes,"AXIS")
     val split=JSplitPane(JSplitPane.HORIZONTAL_SPLIT,visual,editorPanel).apply{
         resizeWeight=.66;dividerSize=6;border=null
@@ -1206,12 +1494,52 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     }
     mode("CAD","2D繪圖","2D CAD",Color(61,235,255),"CAD"){dlg.dispose()}
     mode("CAM","刀路","CAM",Color(63,255,157),"CAM"){status.text="REAL CAM • paths="+result.cam.toolpaths.size}
-    mode("3D","3D模擬","3D",Color(139,92,246),"3D"){axisMode="3AX";axisA=0.0;axisB=0.0;card.show(visual,"3D")}
-    mode("3AX","三軸","3 AXIS",Color(59,130,246),"3AX"){axisMode="3AX";axisA=0.0;axisB=0.0;axes.setAngles(0.0,0.0);card.show(visual,"AXIS")}
-    mode("4AX","四軸","4 AXIS",Color(245,158,11),"4AX"){axisMode="4AX";axisB=0.0;axes.setAngles(axisA,0.0);card.show(visual,"AXIS")}
-    mode("5AX","五軸","5 AXIS",Color(236,72,153),"5AX"){axisMode="5AX";axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    mode("3D","3D模擬","3D",Color(139,92,246),"3D"){
+        axisMode="3AX";axisA=0.0;axisB=0.0;rebuildMachiningForMode();card.show(visual,"3D")
+    }
+    mode("3AX","三軸","3 AXIS",Color(59,130,246),"3AX"){
+        axisMode="3AX";axisA=0.0;axisB=0.0;rebuildMachiningForMode();card.show(visual,"AXIS")
+    }
+    mode("4AX","四軸","4 AXIS",Color(245,158,11),"4AX"){
+        axisMode="4AX";axisB=0.0;rebuildMachiningForMode();card.show(visual,"AXIS")
+    }
+    mode("5AX","五軸","5 AXIS",Color(236,72,153),"5AX"){
+        axisMode="5AX";rebuildMachiningForMode();card.show(visual,"AXIS")
+    }
     mode("NC_EDIT","程式","NC EDIT",Color(80,170,255),"NC_EDIT"){editor.requestFocusInWindow()}
     modeButtons.getOrNull(2)?.active=true
+
+    fun showPlaybackFrame(index:Int){
+        if(simulationMoves.isEmpty()){
+            status.text="SIM BLOCKED • CAM has no moves"
+            return
+        }
+        val frameState=ProgressiveMachining3D.frame(result,index)
+        simulationIndex=frameState.index
+        mesh.showProgressiveFrame(simulationIndex)
+        axes.showProgressiveFrame(frameState)
+        axisA=frameState.toolPoint.axisA
+        axisB=frameState.toolPoint.axisB
+        if(axisMode=="4AX" || axisMode=="5AX") card.show(visual,"AXIS")
+        else card.show(visual,"3D")
+        status.text=
+            "SIM • frame="+(frameState.index+1)+"/"+frameState.total+
+            " • removed="+frameState.removedCells+
+            " • X="+DisplayFormat.mm(frameState.toolPoint.to.x)+
+            " Y="+DisplayFormat.mm(frameState.toolPoint.to.y)+
+            " Z="+DisplayFormat.mm(frameState.toolPoint.z)+
+            " • A="+DisplayFormat.mm(frameState.toolPoint.axisA)+
+            " B="+DisplayFormat.mm(frameState.toolPoint.axisB)
+    }
+
+    playbackTimer.addActionListener{
+        if(simulationMoves.isEmpty() || simulationIndex>=simulationMoves.lastIndex){
+            playbackTimer.stop()
+            status.text="SIM COMPLETE • material removal="+mesh.progressiveRemovedCells()
+        }else{
+            showPlaybackFrame(simulationIndex+1)
+        }
+    }
 
     val actions=AdaptiveGlassToolbar()
     fun action(label:String,color:Color,icon:String,run:()->Unit){
@@ -1219,10 +1547,39 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
             this.icon=EngineeringImageAssets.icon(icon) ?: RgbGlyphIcon(icon,color);addActionListener{run()}
         })
     }
-    action("A−",Color(139,92,246),"4AX"){if(axisMode!="5AX")axisMode="4AX";axisA=(axisA-15.0).coerceAtLeast(-360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
-    action("A+",Color(139,92,246),"4AX"){if(axisMode!="5AX")axisMode="4AX";axisA=(axisA+15.0).coerceAtMost(360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
-    action("B−",Color(236,72,153),"5AX"){axisMode="5AX";axisB=(axisB-15.0).coerceAtLeast(-360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
-    action("B+",Color(236,72,153),"5AX"){axisMode="5AX";axisB=(axisB+15.0).coerceAtMost(360.0);axes.setAngles(axisA,axisB);card.show(visual,"AXIS")}
+    action("▶",Color(63,255,157),"SIM"){
+        if(simulationMoves.isNotEmpty()){
+            if(simulationIndex>=simulationMoves.lastIndex)simulationIndex=0
+            showPlaybackFrame(simulationIndex)
+            playbackTimer.start()
+        }
+    }
+    action("⏸",Color(255,176,32),"SIM"){playbackTimer.stop();status.text="SIM PAUSE • frame="+(simulationIndex+1)}
+    action("STEP",Color(61,235,255),"SIM"){
+        playbackTimer.stop()
+        showPlaybackFrame((simulationIndex+1).coerceAtMost(simulationMoves.lastIndex.coerceAtLeast(0)))
+    }
+    action("RESET",Color(125,112,255),"SIM"){
+        playbackTimer.stop()
+        simulationIndex=0
+        if(simulationMoves.isNotEmpty())showPlaybackFrame(0)
+    }
+    action("A−",Color(139,92,246),"4AX"){
+        playbackTimer.stop();if(axisMode!="5AX")axisMode="4AX"
+        axisA=(axisA-15.0).coerceAtLeast(-360.0);rebuildMachiningForMode();card.show(visual,"AXIS")
+    }
+    action("A+",Color(139,92,246),"4AX"){
+        playbackTimer.stop();if(axisMode!="5AX")axisMode="4AX"
+        axisA=(axisA+15.0).coerceAtMost(360.0);rebuildMachiningForMode();card.show(visual,"AXIS")
+    }
+    action("B−",Color(236,72,153),"5AX"){
+        playbackTimer.stop();axisMode="5AX";axisB=(axisB-15.0).coerceAtLeast(-360.0)
+        rebuildMachiningForMode();card.show(visual,"AXIS")
+    }
+    action("B+",Color(236,72,153),"5AX"){
+        playbackTimer.stop();axisMode="5AX";axisB=(axisB+15.0).coerceAtMost(360.0)
+        rebuildMachiningForMode();card.show(visual,"AXIS")
+    }
     action(UiTextPolicy.display("ROTARY_CLAMP",118),Color(125,112,255),"4AX"){
         val mode=JComboBox(arrayOf(
             "UNCONFIGURED / BLOCK",
@@ -1278,9 +1635,14 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         status.text=if(blocked.isEmpty())"UNIFIED NC SAFETY PASS" else "UNIFIED NC WARNING • EDITING ENABLED • EXECUTION INTERLOCK • "+blocked.take(3).joinToString(","){it.code}
     }
     action("儲存",Color(61,235,255),"NC_EDIT"){
-        status.text="NC DRAFT SAVED IN EDITOR • WARNING DOES NOT LOCK EDITING • FINAL UNVERIFIED • chars="+editor.text.length
+        status.text="NC DRAFT SAVED IN EDITOR • WARNING DOES NOT LOCK EDITING • VERIFY PENDING • chars="+editor.text.length
     }
 
+    dlg.defaultCloseOperation=WindowConstants.DISPOSE_ON_CLOSE
+    dlg.addWindowListener(object:WindowAdapter(){
+        override fun windowClosing(e:WindowEvent?){playbackTimer.stop()}
+        override fun windowClosed(e:WindowEvent?){playbackTimer.stop()}
+    })
     dlg.add(modeBar,BorderLayout.NORTH)
     dlg.add(split,BorderLayout.CENTER)
     dlg.add(actions,BorderLayout.SOUTH)
@@ -1289,13 +1651,15 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     dlg.isVisible=true
 }
 
-private fun showApp() {
+private fun showApp(startup:StudioDesktopStartupWindow?=null) {
+    startup?.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
     val doc = DrawingDocument()
     val status = JLabel("AIG CNC • FANUC / MITSUBISHI M800/M80 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
     status.foreground = Color(99, 255, 157)
     val cad = CadPanel(doc) { status.text = it }
 
     val frame = JFrame("AIG CNC — OFFICIAL RGB ORIGINAL")
+    startup?.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")
     frame.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     frame.layout = BorderLayout()
     frame.contentPane.background = Color(5, 10, 17)
@@ -1511,9 +1875,14 @@ private fun showApp() {
     frame.add(toolbar, BorderLayout.NORTH)
     frame.add(workspace, BorderLayout.CENTER)
     frame.add(status, BorderLayout.SOUTH)
+    startup?.advance(StudioStartupStage.PROJECT_DATA,"檢查專案 / Recovery")
+    startup?.advance(StudioStartupStage.HEALTH,"Runtime 健康檢查")
     frame.size = desktopAdaptiveSize(1280, 820)
     frame.setLocationRelativeTo(null)
+    startup?.advance(StudioStartupStage.WRAP_UP,"完成啟動收尾")
     frame.isVisible = true
+    startup?.advance(StudioStartupStage.HOME,"AIG CNC READY")
+    startup?.close()
 }
 
 fun main(args: Array<String>) {
@@ -1522,5 +1891,11 @@ fun main(args: Array<String>) {
         return
     }
     if (GraphicsEnvironment.isHeadless()) error("Desktop UI requires a graphical Windows session")
-    SwingUtilities.invokeLater { showApp() }
+    SwingUtilities.invokeLater {
+        val startup=StudioDesktopStartupWindow()
+        startup.show()
+        startup.advance(StudioStartupStage.SAFE_THEME,"載入原版 RGB 啟動圖")
+        startup.advance(StudioStartupStage.CORE,"初始化 CAD / CAM 核心")
+        showApp(startup)
+    }
 }

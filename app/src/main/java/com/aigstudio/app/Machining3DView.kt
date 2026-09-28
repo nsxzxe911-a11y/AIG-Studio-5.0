@@ -1,6 +1,7 @@
 package com.aigstudio.app
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -26,6 +27,12 @@ class Machining3DView(
     private var lastY = 0f
     private var lastFocusX = 0f
     private var lastFocusY = 0f
+    private var progressiveFrame: ProgressiveMachining3DFrame? = null
+
+    private val machineVisual = runCatching {
+        context.assets.open("visuals/machine_visual.jpg").use(BitmapFactory::decodeStream)
+    }.getOrNull()
+    private val machineVisualPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { alpha = 118 }
 
     private val surfacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -33,20 +40,20 @@ class Machining3DView(
     }
     private val edgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 0.8f
-        color = Color.argb(90, 160, 230, 255)
+        strokeWidth = 0.55f
+        color = Color.argb(36, 160, 230, 255)
     }
     private val rapidPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 2f
+        strokeWidth = 1.1f
         strokeCap = Paint.Cap.ROUND
-        color = Color.argb(150, 255, 70, 220)
+        color = Color.argb(70,255,70,220)
     }
     private val cutPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 3f
+        strokeWidth = 1.45f
         strokeCap = Paint.Cap.ROUND
-        color = Color.rgb(63, 255, 157)
+        color = Color.argb(118,63,255,157)
     }
     private val toolPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -76,6 +83,29 @@ class Machining3DView(
     init {
         setBackgroundColor(Color.rgb(5, 10, 17))
         setLayerType(LAYER_TYPE_HARDWARE, null)
+    }
+
+    fun showProgressiveFrame(index: Int): ProgressiveMachining3DFrame {
+        val frame = ProgressiveMachining3D.frame(result, index)
+        progressiveFrame = frame
+        postInvalidateOnAnimation()
+        return frame
+    }
+
+    fun clearProgressiveFrame() {
+        progressiveFrame = null
+        postInvalidateOnAnimation()
+    }
+
+    fun progressiveRemovedCells(): Int =
+        progressiveFrame?.removedCells ?: result.removal.depth.count { it < 0.0 }
+
+    private fun toolAxisVector(length: Double, axisA: Double, axisB: Double): Vec3 {
+        val a = Math.toRadians(axisA)
+        val b = Math.toRadians(axisB)
+        val y1 = -length * sin(a)
+        val z1 = length * cos(a)
+        return Vec3(z1 * sin(b), y1, z1 * cos(b))
     }
 
     private fun centroid(event: MotionEvent): Pair<Float, Float> {
@@ -189,6 +219,15 @@ class Machining3DView(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (width <= 0 || height <= 0) return
+        machineVisual?.let { bitmap ->
+            val srcRatio=bitmap.width.toFloat()/bitmap.height.toFloat()
+            val dstRatio=width.toFloat()/height.toFloat()
+            val dw=if(srcRatio>dstRatio) height*srcRatio else width.toFloat()
+            val dh=if(srcRatio>dstRatio) height.toFloat() else width/srcRatio
+            val dst=android.graphics.RectF((width-dw)/2f,(height-dh)/2f,(width+dw)/2f,(height+dh)/2f)
+            canvas.drawBitmap(bitmap,null,dst,machineVisualPaint)
+            canvas.drawColor(Color.argb(52,2,7,14))
+        }
         val fpsStats = fpsMeter.record(System.nanoTime())
 
         val stockW = result.stock.maxX - result.stock.minX
@@ -196,10 +235,12 @@ class Machining3DView(
         val span = max(max(stockW, stockH), result.stock.thickness).coerceAtLeast(1.0)
         val scale = min(width, height) * 0.72 / span * zoom
 
+        val activeFrame = progressiveFrame
+        val activeMesh = activeFrame?.mesh ?: result.mesh
         projectedBuffer.clear()
-        result.mesh.vertices.forEach { projectedBuffer.add(project(it, scale)) }
+        activeMesh.vertices.forEach { projectedBuffer.add(project(it, scale)) }
         val projected = projectedBuffer
-        val triangles = result.mesh.triangles
+        val triangles = activeMesh.triangles
         val budget = dynamicTriangleBudget(fpsStats.fps)
         val stride = max(1, ceil(triangles.size / budget.toDouble()).toInt())
         visibleTriangleBuffer.clear()
@@ -223,13 +264,13 @@ class Machining3DView(
             val b = projected[triangle.b]
             val d = projected[triangle.c]
             val avgZ = (
-                result.mesh.vertices[triangle.a].z +
-                    result.mesh.vertices[triangle.b].z +
-                    result.mesh.vertices[triangle.c].z
+                activeMesh.vertices[triangle.a].z +
+                    activeMesh.vertices[triangle.b].z +
+                    activeMesh.vertices[triangle.c].z
                 ) / 3.0
             val cutRatio = (-avgZ / result.stock.thickness).coerceIn(0.0, 1.0)
             surfacePaint.color = Color.argb(
-                215,
+                232,
                 (20 + 45 * cutRatio).roundToInt(),
                 (115 + 105 * (1.0 - cutRatio)).roundToInt(),
                 (175 + 65 * (1.0 - cutRatio)).roundToInt()
@@ -243,9 +284,12 @@ class Machining3DView(
             canvas.drawPath(trianglePath, edgePaint)
         }
 
+        var remainingMoves = activeFrame?.index?.plus(1) ?: Int.MAX_VALUE
         result.cam.toolpaths.forEach { toolpath ->
+            if (remainingMoves <= 0) return@forEach
             var previous: Move? = null
-            toolpath.moves.forEach { move ->
+            val takeCount = min(remainingMoves, toolpath.moves.size)
+            toolpath.moves.take(takeCount).forEach { move ->
                 val prev = previous
                 if (prev != null) {
                     val a = project(Vec3(prev.to.x, prev.to.y, prev.z), scale)
@@ -254,16 +298,19 @@ class Machining3DView(
                 }
                 previous = move
             }
+            if (activeFrame != null) remainingMoves -= takeCount
         }
 
-        val lastMove = result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
-        if (lastMove != null) {
-            val tip = project(Vec3(lastMove.to.x, lastMove.to.y, lastMove.z), scale)
+        val liveMove = activeFrame?.toolPoint ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
+        if (liveMove != null) {
+            val tip = project(Vec3(liveMove.to.x, liveMove.to.y, liveMove.z), scale)
+            val toolLength = max(12.0, result.cam.settings.toolDiameter * 2.0)
+            val axis = toolAxisVector(toolLength, liveMove.axisA, liveMove.axisB)
             val top = project(
                 Vec3(
-                    lastMove.to.x,
-                    lastMove.to.y,
-                    lastMove.z + max(12.0, result.cam.settings.toolDiameter * 2.0)
+                    liveMove.to.x + axis.x,
+                    liveMove.to.y + axis.y,
+                    liveMove.z + axis.z
                 ),
                 scale
             )
@@ -272,13 +319,15 @@ class Machining3DView(
             canvas.drawCircle(tip.x, tip.y, radius, toolPaint)
         }
 
-        val removed = result.removal.depth.count { it < 0.0 }
+        val removed = activeFrame?.removedCells ?: result.removal.depth.count { it < 0.0 }
         val modelScenario = RenderStressClassifier.modelScenario(triangles.size)
         RenderStressProfiler.record(modelScenario, fpsStats)
         if (removed > 0) RenderStressProfiler.record(RenderStressScenario.MATERIAL_REMOVAL, fpsStats)
         val worst = RenderStressProfiler.heaviest()?.scenario?.name ?: "collecting"
         val label = "TRUE 3D • CAM=" + result.cam.toolpaths.size +
             " • removed=" + removed +
+            (activeFrame?.let { " • frame=" + (it.index + 1) + "/" + it.total +
+                " • " + String.format(java.util.Locale.US, "%.1f", it.progress * 100.0) + "%" } ?: "") +
             " • tier=" + modelScenario.name +
             " • 原點 X0.000 Y0.000 • 精度 0.001 mm" +
             " • " + fpsStats.compact("3D") +
