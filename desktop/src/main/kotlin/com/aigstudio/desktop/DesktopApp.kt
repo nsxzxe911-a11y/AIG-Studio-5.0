@@ -751,14 +751,13 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             val drawInternalEdges=when(component.role){
                 MachineComponentRole.TOOL,
                 MachineComponentRole.SPINDLE,
-                MachineComponentRole.HOLDER,
+                MachineComponentRole.HOLDER -> true
                 MachineComponentRole.ROTARY_A,
-                MachineComponentRole.ROTARY_B -> true
+                MachineComponentRole.ROTARY_B -> false
                 else -> false
             }
             val edgeStride=when(component.role){
                 MachineComponentRole.TOOL -> stride
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> stride*256
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> stride*96
                 else -> stride
             }
@@ -1020,14 +1019,13 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             val drawInternalEdges=when(component.role){
                 MachineComponentRole.TOOL,
                 MachineComponentRole.SPINDLE,
-                MachineComponentRole.HOLDER,
+                MachineComponentRole.HOLDER -> true
                 MachineComponentRole.ROTARY_A,
-                MachineComponentRole.ROTARY_B -> true
+                MachineComponentRole.ROTARY_B -> false
                 else -> false
             }
             val edgeStride=when(component.role){
                 MachineComponentRole.TOOL -> stride
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> stride*256
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> stride*96
                 else -> stride
             }
