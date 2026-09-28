@@ -288,32 +288,42 @@ class Machining3DView(
                 MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 0.85f*resources.displayMetrics.density
                 else -> 0.75f*resources.displayMetrics.density
             }
+            val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B
             val drawRoleEdges=when(component.role){
                 MachineComponentRole.TOOL,
                 MachineComponentRole.SPINDLE,
-                MachineComponentRole.HOLDER,
-                MachineComponentRole.ROTARY_A,
-                MachineComponentRole.ROTARY_B -> true
+                MachineComponentRole.HOLDER -> true
                 else -> false
             }
             val edgeStep=when(component.role){
                 MachineComponentRole.TOOL -> 1
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 256
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96
                 else -> 1
             }
-            ordered.forEachIndexed { index,item ->
-                val tri=item.second
-                machinePaint.color=machineDepthShade(baseColor,item.first,minDepth,maxDepth)
-                val a=pts[tri.a]; val b=pts[tri.b]; val c=pts[tri.c]
-                trianglePath.reset()
-                trianglePath.moveTo(a.x,a.y)
-                trianglePath.lineTo(b.x,b.y)
-                trianglePath.lineTo(c.x,c.y)
-                trianglePath.close()
-                canvas.drawPath(trianglePath,machinePaint)
-                if(drawRoleEdges && index%edgeStep==0){
-                    canvas.drawPath(trianglePath,machineEdgePaint)
+            if(rotarySurfaceSolid){
+                val solidPath=Path()
+                ordered.forEach { item ->
+                    val tri=item.second
+                    val a=pts[tri.a]; val b=pts[tri.b]; val c=pts[tri.c]
+                    solidPath.moveTo(a.x,a.y)
+                    solidPath.lineTo(b.x,b.y)
+                    solidPath.lineTo(c.x,c.y)
+                    solidPath.close()
+                }
+                machinePaint.color=baseColor
+                canvas.drawPath(solidPath,machinePaint)
+            } else {
+                ordered.forEachIndexed { index,item ->
+                    val tri=item.second
+                    machinePaint.color=machineDepthShade(baseColor,item.first,minDepth,maxDepth)
+                    val a=pts[tri.a]; val b=pts[tri.b]; val c=pts[tri.c]
+                    trianglePath.reset()
+                    trianglePath.moveTo(a.x,a.y)
+                    trianglePath.lineTo(b.x,b.y)
+                    trianglePath.lineTo(c.x,c.y)
+                    trianglePath.close()
+                    canvas.drawPath(trianglePath,machinePaint)
+                    if(drawRoleEdges && index%edgeStep==0){ canvas.drawPath(trianglePath,machineEdgePaint) }
                 }
             }
         }
@@ -404,31 +414,23 @@ class Machining3DView(
             (projected[triangle.a].depth + projected[triangle.b].depth + projected[triangle.c].depth) / 3.0
         }
 
-        visibleTriangleBuffer.forEachIndexed { visibleIndex, index ->
-            val triangle = triangles[index]
-            val a = projected[triangle.a]
-            val b = projected[triangle.b]
-            val d = projected[triangle.c]
-            val avgZ = (
-                activeMesh.vertices[triangle.a].z +
-                    activeMesh.vertices[triangle.b].z +
-                    activeMesh.vertices[triangle.c].z
-                ) / 3.0
-            val cutRatio = (-avgZ / result.stock.thickness).coerceIn(0.0, 1.0)
-            surfacePaint.color = Color.argb(
-                232,
-                (20 + 45 * cutRatio).roundToInt(),
-                (115 + 105 * (1.0 - cutRatio)).roundToInt(),
-                (175 + 65 * (1.0 - cutRatio)).roundToInt()
-            )
-            trianglePath.reset()
-            trianglePath.moveTo(a.x, a.y)
-            trianglePath.lineTo(b.x, b.y)
-            trianglePath.lineTo(d.x, d.y)
-            trianglePath.close()
-            canvas.drawPath(trianglePath, surfacePaint)
+        val materialSurfacePath=Path()
+        visibleTriangleBuffer.forEach { index ->
+            val triangle=triangles[index]
+            val a=projected[triangle.a]; val b=projected[triangle.b]; val c=projected[triangle.c]
+            materialSurfacePath.moveTo(a.x,a.y)
+            materialSurfacePath.lineTo(b.x,b.y)
+            materialSurfacePath.lineTo(c.x,c.y)
+            materialSurfacePath.close()
+        }
+        surfacePaint.color=Color.argb(232,45,145,220)
+        canvas.drawPath(materialSurfacePath,surfacePaint)
+        visibleTriangleBuffer.forEachIndexed { visibleIndex,index ->
             if(showMaterialMeshEdges && visibleIndex % 18 == 0) {
-                canvas.drawPath(trianglePath, edgePaint)
+                val triangle=triangles[index]
+                val a=projected[triangle.a]; val b=projected[triangle.b]; val c=projected[triangle.c]
+                trianglePath.reset(); trianglePath.moveTo(a.x,a.y); trianglePath.lineTo(b.x,b.y); trianglePath.lineTo(c.x,c.y); trianglePath.close()
+                canvas.drawPath(trianglePath,edgePaint)
             }
         }
 

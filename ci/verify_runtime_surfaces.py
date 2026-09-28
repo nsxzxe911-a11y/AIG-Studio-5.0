@@ -481,14 +481,14 @@ for needle in (
 print("MACHINE_MATERIAL_SEPARATION_GATE_PASS|ANDROID|WINDOWS|NO_STATIC_MACHINE_IMAGE|ROLE_FILL_COLOR|EDGE_RESTORE|FIXTURE|TABLE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL")
 for needle in (
     "val drawRoleEdges=when(component.role){",
-    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 256",
+    "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96",
     "if(drawRoleEdges && index%edgeStep==0)",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_MACHINE_SURFACE_CLEANUP_178")
 for needle in (
     "val drawInternalEdges=when(component.role){",
-    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> stride*256",
+    "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> stride*96",
     "if(drawInternalEdges && i%edgeStride==0)",
 ):
@@ -529,7 +529,7 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_MACHINE_SOLID_MATERIAL_180")
 print("MACHINE_SOLID_MATERIAL_GATE_PASS|ANDROID|WINDOWS|OPAQUE_FIXED_PARTS|ROTARY_READABLE|SPINDLE_HOLDER_TOOL_LAYERED|VISUAL_ONLY")
 for needle in (
-    "visibleTriangleBuffer.forEachIndexed { visibleIndex, index ->",
+    "val materialSurfacePath=Path()",
     "if(showMaterialMeshEdges && visibleIndex % 18 == 0)",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_MATERIAL_SURFACE_READABILITY_181")
@@ -567,7 +567,7 @@ for needle in (
     "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 128",
     "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 96",
     "val drawRoleEdges=when(component.role){",
-    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 256",
+    "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96",
     "if(drawRoleEdges && index%edgeStep==0)",
 ):
@@ -578,7 +578,7 @@ for needle in (
     "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 96",
     "MachineComponentRole.FIXTURE -> 84",
     "val drawInternalEdges=when(component.role){",
-    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> stride*256",
+    "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> stride*96",
     "g2.color=Color(180,220,255,edgeAlpha)",
     "g.color=Color(180,220,255,edgeAlpha)",
@@ -589,17 +589,17 @@ for needle in (
     "val drawRoleEdges=when(component.role){",
     "MachineComponentRole.TOOL,",
     "MachineComponentRole.SPINDLE,",
-    "MachineComponentRole.HOLDER,",
+    "MachineComponentRole.HOLDER -> true",
     "MachineComponentRole.ROTARY_A,",
-    "MachineComponentRole.ROTARY_B -> true",
+    "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
     "else -> false",
-    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 256",
+    "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_SOLID_SURFACE_PRIORITY_184")
 for needle in (
     "val drawInternalEdges=when(component.role){",
-    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> stride*256",
+    "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> stride*96",
     "if(drawInternalEdges && i%edgeStride==0)",
 ):
@@ -631,6 +631,11 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_TRIANGLE_SEAM_SUPPRESSION_186")
 print("TRIANGLE_SEAM_SUPPRESSION_GATE_PASS|ANDROID|WINDOWS|MACHINE_FILL_AA_OFF|MATERIAL_FILL_AA_OFF|TOOLPATH_AA_ON|TRUE_MESH|VISUAL_ONLY")
+require(machining3d, "val solidPath=Path()", "STUDIO_ANDROID_BATCHED_SURFACE_190")
+require(machining3d, "val materialSurfacePath=Path()", "STUDIO_ANDROID_BATCHED_SURFACE_190")
+require(desktop, "val solidPath=Path2D.Double(Path2D.WIND_NON_ZERO)", "STUDIO_WINDOWS_BATCHED_SURFACE_190")
+require(desktop, "val materialSurface=Path2D.Double(Path2D.WIND_NON_ZERO)", "STUDIO_WINDOWS_BATCHED_SURFACE_190")
+print("BATCHED_SOLID_SURFACE_GATE_PASS|ANDROID|WINDOWS|ROTARY|MATERIAL|SINGLE_FILL|TRUE_MESH|TOOLPATH_PRESERVED|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
