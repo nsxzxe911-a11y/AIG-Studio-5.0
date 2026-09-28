@@ -416,7 +416,7 @@ for needle in (
     "drawMachineModel(canvas,machineModel,scale)",
     "activeMesh.vertices.forEach { projectedBuffer.add(project(machineSpace(it,resolvedMode,liveMove), scale)) }",
     "SPACE=MACHINE",
-    "model.components.forEach",
+    "val prepared=model.components.map { component ->",
     "MachineComponentRole.ROTARY_A",
     "MachineComponentRole.ROTARY_B",
     'val label = "TRUE 3D • MACHINE=" + machineModel.mode',
@@ -473,7 +473,7 @@ for needle in (
     "MachineComponentRole.FIXTURE -> Color(112,132,150,alpha)",
     "MachineComponentRole.SPINDLE -> Color(188,226,255,alpha)",
     "MachineComponentRole.HOLDER -> Color(92,186,232,alpha)",
-    "g.color=fillColor",
+    "g.color=shadedFill",
 ):
     require(desktop, needle, "STUDIO_WINDOWS_MACHINE_MATERIAL_SEPARATION_177")
 print("MACHINE_MATERIAL_SEPARATION_GATE_PASS|ANDROID|WINDOWS|NO_STATIC_MACHINE_IMAGE|ROLE_FILL_COLOR|EDGE_RESTORE|FIXTURE|TABLE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL")
@@ -495,6 +495,21 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_MACHINE_SURFACE_CLEANUP_178")
 print("MACHINE_SURFACE_CLEANUP_GATE_PASS|ANDROID|WINDOWS|TRUE_MESH_FILL|SPARSE_INTERNAL_EDGES|TOOL_FULL_EDGE|NO_STATIC_IMAGE")
+for needle in (
+    "private fun machineDepthShade(base: Int, depth: Double, minDepth: Double, maxDepth: Double): Int",
+    "val prepared=model.components.map { component ->",
+    "Triple(component,pts,pts.map { it.depth }.average())",
+    "machinePaint.color=machineDepthShade(baseColor,item.first,minDepth,maxDepth)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_MACHINE_DEPTH_CUE_179")
+for needle in (
+    "private fun machineDepthShade(base:Color,depth:Double,minDepth:Double,maxDepth:Double):Color",
+    "Triple(component,pts,rotated.map { it.z }.average())",
+    "val depth=component.mesh.vertices.map{it.x*.34-it.y*.28+it.z}.average()",
+    "val shadedFill=machineDepthShade(fillColor,item.first,minDepth,maxDepth)",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_MACHINE_DEPTH_CUE_179")
+print("MACHINE_DEPTH_CUE_GATE_PASS|ANDROID|WINDOWS|COMPONENT_DEPTH_SORT|FACE_DEPTH_SHADE|5AX_FRONT_BACK_READABILITY|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',

@@ -602,6 +602,18 @@ private class CadPanel(
 }
 
 
+private fun machineDepthShade(base:Color,depth:Double,minDepth:Double,maxDepth:Double):Color {
+    val ratio=if(abs(maxDepth-minDepth)<1e-9)0.5 else
+        ((depth-minDepth)/(maxDepth-minDepth)).coerceIn(0.0,1.0)
+    val factor=0.76+ratio*0.30
+    return Color(
+        (base.red*factor).roundToInt().coerceIn(0,255),
+        (base.green*factor).roundToInt().coerceIn(0,255),
+        (base.blue*factor).roundToInt().coerceIn(0,255),
+        base.alpha
+    )
+}
+
 private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
     private var rx = -35.0
     private var ry = 35.0
@@ -691,8 +703,15 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             axisBOverride=live?.axisB,
             toolPointOverride=live
         )
-        model.components.forEach { component ->
+        val prepared=model.components.map { component ->
+            val rotated=component.mesh.vertices.map { rotate(it) }
             val pts=component.mesh.vertices.map { project(it,scale) }
+            Triple(component,pts,rotated.map { it.z }.average())
+        }.sortedBy { it.third }
+        prepared.forEach { item ->
+            val component=item.first
+            val pts=item.second
+            val rotated=component.mesh.vertices.map { rotate(it) }
             val alpha=when(component.role){
                 MachineComponentRole.TOOL -> 252
                 MachineComponentRole.SPINDLE -> 238
@@ -712,7 +731,11 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
                 MachineComponentRole.FIXTURE -> Color(112,132,150,alpha)
                 else -> Color(55,78,105,alpha)
             }
-            g2.color=fillColor
+            val ordered=component.mesh.triangles.map { t ->
+                ((rotated[t.a].z+rotated[t.b].z+rotated[t.c].z)/3.0) to t
+            }.sortedBy { it.first }
+            val minDepth=ordered.firstOrNull()?.first ?: 0.0
+            val maxDepth=ordered.lastOrNull()?.first ?: minDepth
             val stride=max(1,ceil(component.mesh.triangles.size/900.0).toInt())
             val edgeStride=stride*when(component.role){
                 MachineComponentRole.TOOL -> 1
@@ -722,10 +745,13 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
                 MachineComponentRole.FIXTURE -> 14
                 else -> 16
             }
-            component.mesh.triangles.forEachIndexed { i,t ->
+            ordered.forEachIndexed { i,item ->
                 if(i%stride==0){
+                    val t=item.second
+                    val shadedFill=machineDepthShade(fillColor,item.first,minDepth,maxDepth)
                     val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
                     val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
+                    g2.color=shadedFill
                     g2.fillPolygon(poly)
                     if(i%edgeStride==0){
                         g2.color=Color(180,220,255,(alpha+60).coerceAtMost(245))
@@ -738,7 +764,7 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
                             }
                         )
                         g2.drawPolygon(poly)
-                        g2.color=fillColor
+                        g2.color=shadedFill
                     }
                 }
             }
@@ -927,8 +953,15 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         val model=MachineModel3DBuilder.build(
             result,machineMode,axisA,axisB,live
         )
-        model.components.forEach { component ->
+        val prepared=model.components.map { component ->
             val pts=component.mesh.vertices.map{projectMachine(it,scale)}
+            val depth=component.mesh.vertices.map{it.x*.34-it.y*.28+it.z}.average()
+            Triple(component,pts,depth)
+        }.sortedBy { it.third }
+        prepared.forEach { item ->
+            val component=item.first
+            val pts=item.second
+            val axisDepth=component.mesh.vertices.map{it.x*.34-it.y*.28+it.z}
             val alpha=when(component.role){
                 MachineComponentRole.TOOL -> 252
                 MachineComponentRole.SPINDLE -> 238
@@ -948,7 +981,11 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                 MachineComponentRole.FIXTURE -> Color(112,132,150,alpha)
                 else -> Color(55,78,105,alpha)
             }
-            g.color=fillColor
+            val ordered=component.mesh.triangles.map { t ->
+                ((axisDepth[t.a]+axisDepth[t.b]+axisDepth[t.c])/3.0) to t
+            }.sortedBy { it.first }
+            val minDepth=ordered.firstOrNull()?.first ?: 0.0
+            val maxDepth=ordered.lastOrNull()?.first ?: minDepth
             val stride=max(1,ceil(component.mesh.triangles.size/900.0).toInt())
             val edgeStride=stride*when(component.role){
                 MachineComponentRole.TOOL -> 1
@@ -958,10 +995,13 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                 MachineComponentRole.FIXTURE -> 14
                 else -> 16
             }
-            component.mesh.triangles.forEachIndexed { i,t ->
+            ordered.forEachIndexed { i,item ->
                 if(i%stride==0){
+                    val t=item.second
+                    val shadedFill=machineDepthShade(fillColor,item.first,minDepth,maxDepth)
                     val a=pts[t.a]; val b=pts[t.b]; val c=pts[t.c]
                     val poly=Polygon(intArrayOf(a.x,b.x,c.x),intArrayOf(a.y,b.y,c.y),3)
+                    g.color=shadedFill
                     g.fillPolygon(poly)
                     if(i%edgeStride==0){
                         g.color=Color(180,220,255,(alpha+60).coerceAtMost(245))
@@ -974,7 +1014,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                             }
                         )
                         g.drawPolygon(poly)
-                        g.color=fillColor
+                        g.color=shadedFill
                     }
                 }
             }

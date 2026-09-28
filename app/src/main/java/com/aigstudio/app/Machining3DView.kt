@@ -241,14 +241,33 @@ class Machining3DView(
             Color.argb(255, 255, 194, 64)
     }
 
+    private fun machineDepthShade(base: Int, depth: Double, minDepth: Double, maxDepth: Double): Int {
+        val ratio = if(abs(maxDepth-minDepth) < 1e-9) 0.5 else
+            ((depth-minDepth)/(maxDepth-minDepth)).coerceIn(0.0,1.0)
+        val factor = 0.76 + ratio*0.30
+        return Color.argb(
+            Color.alpha(base),
+            (Color.red(base)*factor).roundToInt().coerceIn(0,255),
+            (Color.green(base)*factor).roundToInt().coerceIn(0,255),
+            (Color.blue(base)*factor).roundToInt().coerceIn(0,255)
+        )
+    }
+
     private fun drawMachineModel(canvas: Canvas, model: MachineModel3D, scale: Double) {
-        model.components.forEach { component ->
+        val prepared=model.components.map { component ->
             val pts=component.mesh.vertices.map { project(it,scale) }
+            Triple(component,pts,pts.map { it.depth }.average())
+        }.sortedBy { it.third }
+        prepared.forEach { item ->
+            val component=item.first
+            val pts=item.second
             val ordered=component.mesh.triangles.map { tri ->
                 val depth=(pts[tri.a].depth+pts[tri.b].depth+pts[tri.c].depth)/3.0
                 depth to tri
             }.sortedBy { it.first }
-            machinePaint.color=machineColor(component.role,component.moving)
+            val baseColor=machineColor(component.role,component.moving)
+            val minDepth=ordered.firstOrNull()?.first ?: 0.0
+            val maxDepth=ordered.lastOrNull()?.first ?: minDepth
             machineEdgePaint.color=Color.argb(
                 when(component.role){
                     MachineComponentRole.TOOL -> 255
@@ -275,6 +294,7 @@ class Machining3DView(
             }
             ordered.forEachIndexed { index,item ->
                 val tri=item.second
+                machinePaint.color=machineDepthShade(baseColor,item.first,minDepth,maxDepth)
                 val a=pts[tri.a]; val b=pts[tri.b]; val c=pts[tri.c]
                 trianglePath.reset()
                 trianglePath.moveTo(a.x,a.y)
