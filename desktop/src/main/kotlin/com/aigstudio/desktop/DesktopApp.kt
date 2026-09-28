@@ -701,14 +701,18 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
                 MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 196
                 else -> 168
             }
-            g2.color=when(component.role){
+            val fillColor=when(component.role){
                 MachineComponentRole.TOOL -> Color(255,196,64,alpha)
-                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> Color(214,229,255,alpha)
+                MachineComponentRole.SPINDLE -> Color(188,226,255,alpha)
+                MachineComponentRole.HOLDER -> Color(92,186,232,alpha)
                 MachineComponentRole.ROTARY_A -> Color(61,235,255,alpha)
                 MachineComponentRole.ROTARY_B -> Color(255,78,205,alpha)
-                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> Color(90,130,170,alpha)
+                MachineComponentRole.TRUNNION -> Color(126,92,208,alpha)
+                MachineComponentRole.TABLE -> Color(82,132,184,alpha)
+                MachineComponentRole.FIXTURE -> Color(112,132,150,alpha)
                 else -> Color(55,78,105,alpha)
             }
+            g2.color=fillColor
             val stride=max(1,ceil(component.mesh.triangles.size/900.0).toInt())
             component.mesh.triangles.forEachIndexed { i,t ->
                 if(i%stride==0){
@@ -726,14 +730,7 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
                             }
                         )
                         g2.drawPolygon(poly)
-                        g2.color=when(component.role){
-                            MachineComponentRole.TOOL -> Color(255,196,64,alpha)
-                            MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> Color(214,229,255,alpha)
-                            MachineComponentRole.ROTARY_A -> Color(61,235,255,alpha)
-                            MachineComponentRole.ROTARY_B -> Color(255,78,205,alpha)
-                            MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> Color(90,130,170,alpha)
-                            else -> Color(55,78,105,alpha)
-                        }
+                        g2.color=fillColor
                     }
                 }
             }
@@ -932,14 +929,18 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                 MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 196
                 else -> 168
             }
-            g.color=when(component.role){
+            val fillColor=when(component.role){
                 MachineComponentRole.TOOL -> Color(255,196,64,alpha)
-                MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> Color(214,229,255,alpha)
+                MachineComponentRole.SPINDLE -> Color(188,226,255,alpha)
+                MachineComponentRole.HOLDER -> Color(92,186,232,alpha)
                 MachineComponentRole.ROTARY_A -> Color(61,235,255,alpha)
                 MachineComponentRole.ROTARY_B -> Color(255,78,205,alpha)
-                MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> Color(90,130,170,alpha)
+                MachineComponentRole.TRUNNION -> Color(126,92,208,alpha)
+                MachineComponentRole.TABLE -> Color(82,132,184,alpha)
+                MachineComponentRole.FIXTURE -> Color(112,132,150,alpha)
                 else -> Color(55,78,105,alpha)
             }
+            g.color=fillColor
             val stride=max(1,ceil(component.mesh.triangles.size/900.0).toInt())
             component.mesh.triangles.forEachIndexed { i,t ->
                 if(i%stride==0){
@@ -957,6 +958,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                             }
                         )
                         g.drawPolygon(poly)
+                        g.color=fillColor
                     }
                 }
             }

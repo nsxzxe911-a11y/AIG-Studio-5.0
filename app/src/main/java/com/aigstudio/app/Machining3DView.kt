@@ -221,18 +221,22 @@ class Machining3DView(
     }
 
     private fun machineColor(role: MachineComponentRole, moving: Boolean): Int = when(role) {
-        MachineComponentRole.BASE, MachineComponentRole.COLUMN, MachineComponentRole.FIXTURE ->
+        MachineComponentRole.BASE, MachineComponentRole.COLUMN ->
             Color.argb(if(moving) 236 else 218, 56, 104, 138)
-        MachineComponentRole.TABLE, MachineComponentRole.TRUNNION ->
-            Color.argb(if(moving) 242 else 224, 108, 84, 196)
+        MachineComponentRole.FIXTURE ->
+            Color.argb(if(moving) 238 else 220, 112, 132, 150)
+        MachineComponentRole.TABLE ->
+            Color.argb(if(moving) 242 else 224, 82, 132, 184)
+        MachineComponentRole.TRUNNION ->
+            Color.argb(if(moving) 244 else 226, 126, 92, 208)
         MachineComponentRole.ROTARY_A ->
             Color.argb(246, 38, 210, 230)
         MachineComponentRole.ROTARY_B ->
             Color.argb(246, 236, 72, 192)
         MachineComponentRole.SPINDLE ->
-            Color.argb(248, 164, 222, 248)
+            Color.argb(248, 188, 226, 255)
         MachineComponentRole.HOLDER ->
-            Color.argb(248, 108, 188, 236)
+            Color.argb(248, 92, 186, 232)
         MachineComponentRole.TOOL ->
             Color.argb(255, 255, 194, 64)
     }

@@ -437,11 +437,11 @@ require(regression, "MACHINE_KINEMATICS_RUNTIME_PARITY_PASS", "STUDIO_MACHINE_KI
 print("TRUE_MACHINE_MODEL_RUNTIME_PARITY_GATE_PASS|ANDROID|WINDOWS|3AX|4AX|5AX|BASE|COLUMN|TABLE|FIXTURE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL|DYNAMIC_AB|MASTER_ORIGIN|SHARED_KINEMATICS")
 for needle in (
     "Color.argb(if(moving) 236 else 218, 56, 104, 138)",
-    "Color.argb(if(moving) 242 else 224, 108, 84, 196)",
+    "Color.argb(if(moving) 242 else 224, 82, 132, 184)",
     "Color.argb(246, 38, 210, 230)",
     "Color.argb(246, 236, 72, 192)",
-    "Color.argb(248, 164, 222, 248)",
-    "Color.argb(248, 108, 188, 236)",
+    "Color.argb(248, 188, 226, 255)",
+    "Color.argb(248, 92, 186, 232)",
     "MachineComponentRole.TOOL -> 1.9f*resources.displayMetrics.density",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_MACHINE_VISUAL_DEPTH_176")
@@ -456,6 +456,27 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_MACHINE_VISUAL_DEPTH_176")
 print("MACHINE_VISUAL_DEPTH_GATE_PASS|ANDROID|WINDOWS|SOLID_FIXED_PARTS|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL|ROLE_EDGES")
+for needle in (
+    "MachineComponentRole.FIXTURE ->",
+    "Color.argb(if(moving) 238 else 220, 112, 132, 150)",
+    "Color.argb(if(moving) 242 else 224, 82, 132, 184)",
+    "Color.argb(if(moving) 244 else 226, 126, 92, 208)",
+    "Color.argb(248, 188, 226, 255)",
+    "Color.argb(248, 92, 186, 232)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_MACHINE_MATERIAL_SEPARATION_177")
+for needle in (
+    "val machine:BufferedImage? by lazy { null }",
+    "val fillColor=when(component.role){",
+    "MachineComponentRole.TRUNNION -> Color(126,92,208,alpha)",
+    "MachineComponentRole.TABLE -> Color(82,132,184,alpha)",
+    "MachineComponentRole.FIXTURE -> Color(112,132,150,alpha)",
+    "MachineComponentRole.SPINDLE -> Color(188,226,255,alpha)",
+    "MachineComponentRole.HOLDER -> Color(92,186,232,alpha)",
+    "g.color=fillColor",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_MACHINE_MATERIAL_SEPARATION_177")
+print("MACHINE_MATERIAL_SEPARATION_GATE_PASS|ANDROID|WINDOWS|NO_STATIC_MACHINE_IMAGE|ROLE_FILL_COLOR|EDGE_RESTORE|FIXTURE|TABLE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
