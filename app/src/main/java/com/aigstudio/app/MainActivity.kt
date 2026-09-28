@@ -63,7 +63,7 @@ object EngineeringImageAssets {
     }.getOrNull()
 }
 
-enum class Tool { LINE, RECT, CIRCLE, SELECT, DELETE, CHAMFER, FILLET, PAN, MEASURE }
+enum class Tool { LINE, RECT, CIRCLE, ARC, HOLE, SELECT, DELETE, CHAMFER, FILLET, PAN, MEASURE }
 
 
 data class StudioDisplayProfile(
@@ -1167,6 +1167,8 @@ class MainActivity : Activity() {
         addToolToBranch("線", Tool.LINE, 0)
         addToolToBranch("矩形", Tool.RECT, 1)
         addToolToBranch("圓", Tool.CIRCLE, 2)
+        addToolToBranch("圓弧", Tool.ARC, 3)
+        addToolToBranch("孔", Tool.HOLE, 4)
         addActionTo(branchFlow, "SNAP", 3) { cad.toggleSnap() }
         addToolToBranch("尺寸", Tool.MEASURE, 5)
     }
@@ -1185,6 +1187,11 @@ class MainActivity : Activity() {
         addActionTo(branchFlow, "旋轉", 2) { cad.promptRotate() }
         addActionTo(branchFlow, "鏡射 X", 3) { cad.mirrorSelected(vertical=true) }
         addActionTo(branchFlow, "鏡射 Y", 3) { cad.mirrorSelected(vertical=false) }
+        addActionTo(branchFlow, "TRIM", 0) { cad.trimSelected() }
+        addActionTo(branchFlow, "EXTEND", 1) { cad.extendSelected() }
+        addActionTo(branchFlow, "OFFSET", 2) { cad.promptOffset() }
+        addActionTo(branchFlow, "ARRAY", 3) { cad.promptArray() }
+        addActionTo(branchFlow, "尺寸驅動", 5) { cad.promptDrivenDimension() }
         addActionTo(branchFlow, "刪除選取", 4) { cad.deleteSelected() }
         addToolToBranch("單點刪除", Tool.DELETE, 4)
     }
@@ -3095,7 +3102,8 @@ private fun showEnvironmentSettings() {
     }
     private fun toolColor(tool: Tool): Int = when (tool) {
         Tool.LINE, Tool.PAN -> colors[0]; Tool.RECT, Tool.FILLET, Tool.SELECT -> colors[1]
-        Tool.CIRCLE, Tool.CHAMFER -> colors[2]; Tool.DELETE -> colors[4]; Tool.MEASURE -> colors[5]
+        Tool.CIRCLE, Tool.CHAMFER -> colors[2]; Tool.ARC -> colors[3]; Tool.HOLE, Tool.DELETE -> colors[4]
+        Tool.MEASURE -> colors[5]
     }
     private fun addToolToBranch(label: String, tool: Tool, colorIndex: Int, onClick: (() -> Unit)? = null) {
         val b = toolButton("└─ $label", colors[colorIndex % colors.size])
@@ -3190,6 +3198,8 @@ class CadView(
     private var sceneRevision = 1L
     private var tool = Tool.LINE
     private var firstPoint: Vec2? = null
+    private var arcCenter: Vec2? = null
+    private var arcStart: Vec2? = null
     private val selectedIds = linkedSetOf<String>()
     private val transform = WorldTransform(0.0, 0.0, 5.0)
     private var lastX = 0f; private var lastY = 0f
@@ -3254,25 +3264,43 @@ class CadView(
             restored.forEach(doc::put)
             doc.restoreLinks(restoredLinks)
             firstPoint = null
+            arcCenter = null
+            arcStart = null
             selectedIds.clear()
             sceneRevision++
             invalidate()
         }
     }
-    fun setTool(t: Tool) { tool = t; firstPoint = null; selectedIds.clear(); sceneRevision++; invalidate() }
+    fun setTool(t: Tool) {
+        tool = t
+        firstPoint = null
+        arcCenter = null
+        arcStart = null
+        selectedIds.clear()
+        sceneRevision++
+        invalidate()
+    }
     fun undo() {
         val geometryChanged = history.undoWithEffect() ?: return
-        firstPoint = null; selectedIds.clear(); sceneRevision++
+        firstPoint = null; arcCenter=null; arcStart=null; selectedIds.clear(); sceneRevision++
         if (geometryChanged) onGeometryChanged()
         invalidate()
     }
     fun redo() {
         val geometryChanged = history.redoWithEffect() ?: return
-        firstPoint = null; selectedIds.clear(); sceneRevision++
+        firstPoint = null; arcCenter=null; arcStart=null; selectedIds.clear(); sceneRevision++
         if (geometryChanged) onGeometryChanged()
         invalidate()
     }
-    fun toggleSnap() { snapEnabled = !snapEnabled; Toast.makeText(context, "SNAP " + if (snapEnabled) "ON" else "OFF", Toast.LENGTH_SHORT).show(); invalidate() }
+    fun toggleSnap() {
+        snapEnabled = !snapEnabled
+        Toast.makeText(
+            context,
+            "SNAP " + if (snapEnabled) "ON • END/MID/CENTER/INTERSECTION/TANGENT/H/V" else "OFF",
+            Toast.LENGTH_SHORT
+        ).show()
+        invalidate()
+    }
     fun toggleGrid() { gridVisible = !gridVisible; sceneRevision++; invalidate() }
     fun toggleGeometry() { geometryVisible = !geometryVisible; sceneRevision++; invalidate() }
 
@@ -3397,6 +3425,84 @@ class CadView(
         }.onFailure {
             Toast.makeText(context,"刪除 BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
         }
+    }
+
+    fun trimSelected() {
+        if (!ensureSelection("TRIM")) return
+        runCatching { runGeometryCommand(CadEditEngine.trimCommand(doc,selectedIds)) }
+            .onSuccess { Toast.makeText(context,"TRIM PASS • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show() }
+            .onFailure { Toast.makeText(context,"TRIM BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+    }
+
+    fun extendSelected() {
+        if (!ensureSelection("EXTEND")) return
+        runCatching { runGeometryCommand(CadEditEngine.extendCommand(doc,selectedIds)) }
+            .onSuccess { Toast.makeText(context,"EXTEND PASS • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show() }
+            .onFailure { Toast.makeText(context,"EXTEND BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+    }
+
+    fun promptOffset() {
+        if (!ensureSelection("OFFSET")) return
+        val input=EditText(context).apply {
+            setText("1.000")
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+        }
+        AlertDialog.Builder(context)
+            .setTitle("OFFSET • mm")
+            .setView(input)
+            .setPositiveButton("套用") { _, _ ->
+                val value=input.text.toString().toDoubleOrNull()
+                if(value==null) Toast.makeText(context,"OFFSET BLOCKED：格式錯誤",Toast.LENGTH_SHORT).show()
+                else runCatching { runGeometryCommand(CadEditEngine.offsetCommand(doc,selectedIds,value)) }
+                    .onFailure { Toast.makeText(context,"OFFSET BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+            }
+            .setNegativeButton("取消",null)
+            .show()
+    }
+
+    fun promptArray() {
+        if (!ensureSelection("ARRAY")) return
+        val box=LinearLayout(context).apply{orientation=LinearLayout.VERTICAL;setPadding(24,12,24,4)}
+        fun field(label:String,initial:String)=EditText(context).apply{hint=label;setText(initial);inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED;box.addView(this)}
+        val count=field("總數","3")
+        val dx=field("ΔX mm","10.000")
+        val dy=field("ΔY mm","0.000")
+        AlertDialog.Builder(context)
+            .setTitle("LINEAR ARRAY")
+            .setView(box)
+            .setPositiveButton("套用") { _, _ ->
+                runCatching {
+                    val n=count.text.toString().toInt()
+                    val x=dx.text.toString().toDouble()
+                    val y=dy.text.toString().toDouble()
+                    runGeometryCommand(CadEditEngine.linearArrayCommand(doc,selectedIds,n,x,y))
+                }.onFailure { Toast.makeText(context,"ARRAY BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+            }
+            .setNegativeButton("取消",null)
+            .show()
+    }
+
+    fun promptDrivenDimension() {
+        val id=selectedIds.firstOrNull()
+        val entity=id?.let(doc::get)
+        if(entity==null){Toast.makeText(context,"尺寸驅動：請先選取幾何",Toast.LENGTH_SHORT).show();return}
+        val kind=DimensionDriveEngine.defaultKind(entity)
+        val current=DimensionDriveEngine.currentValue(entity,kind)
+        val input=EditText(context).apply{
+            setText(DisplayFormat.mm(current))
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        AlertDialog.Builder(context)
+            .setTitle("尺寸驅動 • ${kind.name}")
+            .setView(input)
+            .setPositiveButton("套用") { _, _ ->
+                val value=input.text.toString().toDoubleOrNull()
+                if(value==null) Toast.makeText(context,"DIM BLOCKED：格式錯誤",Toast.LENGTH_SHORT).show()
+                else runCatching { runGeometryCommand(DimensionDriveEngine.command(doc,id,value,kind)) }
+                    .onFailure { Toast.makeText(context,"DIM BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+            }
+            .setNegativeButton("取消",null)
+            .show()
     }
 
     fun aiInspect() {
@@ -3581,9 +3687,12 @@ class CadView(
             }
             Tool.RECT -> twoPoint(p) { a,b ->
                 if (abs(a.x - b.x) < CNC_RESOLUTION_MM || abs(a.y - b.y) < CNC_RESOLUTION_MM) return@twoPoint
+                val ids=CadSemanticIdentity.newRectIds()
                 runGeometryCommand(AddEntitiesCommand(listOf(
-                    Line(a=a,b=Vec2(b.x,a.y)), Line(a=Vec2(b.x,a.y),b=b),
-                    Line(a=b,b=Vec2(a.x,b.y)), Line(a=Vec2(a.x,b.y),b=a)
+                    Line(id=ids[0],a=a,b=Vec2(b.x,a.y)),
+                    Line(id=ids[1],a=Vec2(b.x,a.y),b=b),
+                    Line(id=ids[2],a=b,b=Vec2(a.x,b.y)),
+                    Line(id=ids[3],a=Vec2(a.x,b.y),b=a)
                 )))
             }
             Tool.CIRCLE -> twoPoint(p) { a,b ->
@@ -3591,14 +3700,50 @@ class CadView(
                     runGeometryCommand(AddEntitiesCommand(listOf(Circle(center=a,radius=it))))
                 }
             }
+            Tool.ARC -> {
+                val center=arcCenter
+                if(center==null){
+                    arcCenter=p
+                    Toast.makeText(context,"ARC：中心點",Toast.LENGTH_SHORT).show()
+                } else {
+                    val start=arcStart
+                    if(start==null){
+                        if(center.distanceTo(p)>=CNC_RESOLUTION_MM){
+                            arcStart=p
+                            Toast.makeText(context,"ARC：終點",Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        val radius=center.distanceTo(start)
+                        val direction=p-center
+                        if(direction.length()>=CNC_RESOLUTION_MM){
+                            val end=center+direction.normalized()*radius
+                            runGeometryCommand(AddEntitiesCommand(listOf(
+                                Arc(center=center,radius=radius,start=start,end=end,clockwise=false)
+                            )))
+                        }
+                        arcCenter=null
+                        arcStart=null
+                    }
+                }
+            }
+            Tool.HOLE -> twoPoint(p) { center,edge ->
+                center.distanceTo(edge).takeIf { it>=CNC_RESOLUTION_MM }?.let { radius ->
+                    runGeometryCommand(AddEntitiesCommand(listOf(
+                        Circle(id=CadSemanticIdentity.newHoleId(),center=center,radius=radius)
+                    )))
+                }
+            }
             Tool.SELECT -> {
                 nearest(p)?.let { e ->
-                    if(!selectedIds.add(e.id)) selectedIds.remove(e.id)
+                    val group=CadSelectionEngine.selectionIds(doc,e)
+                    if(group.all{it in selectedIds}) selectedIds.removeAll(group) else selectedIds.addAll(group)
                     sceneRevision++
                     invalidate()
                 }
             }
-            Tool.DELETE -> nearest(p)?.let { runGeometryCommand(DeleteEntityCommand(it.id)) }
+            Tool.DELETE -> nearest(p)?.let { e ->
+                runGeometryCommand(DeleteEntitiesCommand(CadSelectionEngine.selectionIds(doc,e)))
+            }
             Tool.CHAMFER, Tool.FILLET -> selectTwoLines(p)
             Tool.MEASURE -> showMeasurement(p)
             Tool.PAN -> Unit
@@ -3612,53 +3757,7 @@ class CadView(
 
     private fun snapPoint(p: Vec2): Vec2 {
         val tolerance = 18.0 / transform.pixelsPerUnit
-        val candidates = mutableListOf<Vec2>()
-        val entities = doc.all()
-        entities.forEach { e ->
-            when (e) {
-                is Line -> {
-                    candidates += e.a
-                    candidates += e.b
-                    candidates += Vec2((e.a.x + e.b.x) / 2.0, (e.a.y + e.b.y) / 2.0)
-                }
-                is Circle -> {
-                    candidates += e.center
-                    val dx = p.x - e.center.x
-                    val dy = p.y - e.center.y
-                    val d2 = dx * dx + dy * dy
-                    val r2 = e.radius * e.radius
-                    if (d2 > r2 + EPS) {
-                        val l = r2 / d2
-                        val m = e.radius * sqrt(d2 - r2) / d2
-                        candidates += Vec2(
-                            e.center.x + l * dx - m * dy,
-                            e.center.y + l * dy + m * dx
-                        )
-                        candidates += Vec2(
-                            e.center.x + l * dx + m * dy,
-                            e.center.y + l * dy - m * dx
-                        )
-                    }
-                }
-                is Arc -> {
-                    candidates += e.center
-                    candidates += e.start
-                    candidates += e.end
-                }
-            }
-        }
-        val lines = entities.filterIsInstance<Line>()
-        for (i in 0 until lines.size) {
-            for (j in i + 1 until lines.size) {
-                Geometry.lineIntersection(lines[i], lines[j])?.let { inter ->
-                    if (inter.t1 >= -EPS && inter.t1 <= 1.0 + EPS &&
-                        inter.t2 >= -EPS && inter.t2 <= 1.0 + EPS) {
-                        candidates += inter.point
-                    }
-                }
-            }
-        }
-        return candidates.minByOrNull { it.distanceTo(p) }?.takeIf { it.distanceTo(p) <= tolerance } ?: p
+        return CadSnapEngine.snapTo(doc,p,tolerance,reference=firstPoint) ?: p
     }
 
     private fun showMeasurement(p: Vec2) {
@@ -3680,11 +3779,7 @@ class CadView(
 
     private fun nearest(p: Vec2): Entity? {
         val tolerance = 18.0 / transform.pixelsPerUnit
-        return doc.all().mapNotNull { e -> when (e) {
-            is Line -> Geometry.distancePointToSegment(p,e) to e
-            is Circle -> abs(p.distanceTo(e.center)-e.radius) to e
-            is Arc -> abs(p.distanceTo(e.center)-e.radius) to e
-        }}.filter { it.first < tolerance }.minByOrNull { it.first }?.second
+        return CadSelectionEngine.nearest(doc,p,tolerance)
     }
 
     private fun selectTwoLines(p: Vec2) {

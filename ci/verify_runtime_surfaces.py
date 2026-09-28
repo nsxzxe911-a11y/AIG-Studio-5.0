@@ -182,6 +182,54 @@ require(
     "CAD_EDIT_REGRESSION_159",
 )
 
+# 162 precision CAD editing: shared-core geometry, seven snap modes, driven dimensions,
+# consistent selection and real Android/Windows runtime actions.
+for needle in (
+    "fun trimCommand(doc: DrawingDocument, ids: Collection<EntityId>): Command",
+    "fun extendCommand(doc: DrawingDocument, ids: Collection<EntityId>): Command",
+    "fun offsetCommand(doc: DrawingDocument, ids: Collection<EntityId>, distance: Double): Command",
+    "fun linearArrayCommand(doc: DrawingDocument, ids: Collection<EntityId>, count: Int, dx: Double, dy: Double): Command",
+    "enum class SnapMode { ENDPOINT, MIDPOINT, CENTER, INTERSECTION, TANGENT, HORIZONTAL, VERTICAL }",
+    "object CadSnapEngine",
+    "object CadSelectionEngine",
+    "object CadSemanticIdentity",
+    "object DimensionDriveEngine",
+    "fun selectionIds(doc:DrawingDocument,entity:Entity):Set<EntityId>",
+):
+    require(document, needle, "CAD_PRECISION_EDIT_CORE_162")
+for needle in (
+    'addActionTo(branchFlow, "TRIM", 0) { cad.trimSelected() }',
+    'addActionTo(branchFlow, "EXTEND", 1) { cad.extendSelected() }',
+    'addActionTo(branchFlow, "OFFSET", 2) { cad.promptOffset() }',
+    'addActionTo(branchFlow, "ARRAY", 3) { cad.promptArray() }',
+    'addActionTo(branchFlow, "尺寸驅動", 5) { cad.promptDrivenDimension() }',
+    'addToolToBranch("圓弧", Tool.ARC, 3)',
+    'addToolToBranch("孔", Tool.HOLE, 4)',
+    "CadSnapEngine.snapTo(doc,p,tolerance,reference=firstPoint)",
+    "CadSelectionEngine.nearest(doc,p,tolerance)",
+    "CadSelectionEngine.selectionIds(doc,e)",
+):
+    require(android, needle, "ANDROID_CAD_PRECISION_EDIT_162")
+for needle in (
+    'editTools.add(button("TRIM"',
+    'editTools.add(button("EXTEND"',
+    'editTools.add(button("OFFSET"',
+    'editTools.add(button("ARRAY"',
+    'viewTools.add(button("尺寸驅動"',
+    'private enum class DrawMode { LINE, RECT, CIRCLE, ARC, HOLE, SELECT }',
+    'drawTools.add(button("圓弧"',
+    'drawTools.add(button("孔"',
+    "CadSnapEngine.snapTo(doc,raw,18.0/pxPerMm,reference=first)",
+    "CadSelectionEngine.nearest(doc,p,tolerance)",
+    "CadSelectionEngine.selectionIds(doc,entity)",
+):
+    require(desktop, needle, "WINDOWS_CAD_PRECISION_EDIT_162")
+require(
+    regression,
+    "CAD_PRECISION_EDIT_GATE_PASS SNAP_ENDPOINT MIDPOINT CENTER INTERSECTION TANGENT HORIZONTAL VERTICAL DIM_DRIVE TRIM EXTEND OFFSET ARRAY SELECTION_LINE_RECT_CIRCLE_ARC_HOLE GROUP_PRESERVED TOL=0.001",
+    "CAD_PRECISION_EDIT_REGRESSION_162",
+)
+
 # Machining page must expose each real path and controller/safety surface.
 for needle in (
     'addActionTo(branchFlow, "REAL CAM", 5) { showCamWorkstation() }',
@@ -350,10 +398,13 @@ print("✓ NC_EDITOR_WARNING_ONLY_GATE_PASS EDIT SAVE_DRAFT UPDATE_SEPARATE EXEC
 print("✓ DESKTOP_ALL_PAGES_ENTRY_GATE_PASS CAM 3D 3AX 4AX 5AX NC")
 print("✓ CAD_EDIT_RUNTIME_GATE_PASS SELECT MOVE COPY ROTATE MIRROR DELETE UNDO_REDO CONNECT DISCONNECT ANDROID WINDOWS TOPOLOGY_ONLY TOL_0.001")
 print("✓ CAD_RGB_WORKSPACE_GATE_PASS ANDROID_FLOATING_DECK WINDOWS_LEFT_DECK LARGE_CANVAS RIGHT_STATUS_RAIL RESPONSIVE NO_FAKE")
+print("✓ CAD_PRECISION_EDIT_RUNTIME_GATE_PASS SNAP7 DIM_DRIVE TRIM EXTEND OFFSET ARRAY SELECTION_LINE_RECT_CIRCLE_ARC_HOLE GROUP_PRESERVED ANDROID WINDOWS TOL_0.001")
 print("✓ RGB_ALL_PAGE_ASSET_INTEGRITY_PASS CAD CAM 3D 3AX 4AX 5AX NC")
 require(workflow, "grep -Fq 'ADAPTIVE_UI_TEXT_GATE_PASS' release-validation.log", "CI_ADAPTIVE_UI_TEXT_MARKER_158")
 require(workflow, "grep -Fq 'CAD_EDIT_INTEGRITY_GATE_PASS' release-validation.log", "CI_CAD_EDIT_MARKER_159")
 require(workflow, "grep -Fq 'CAD_RGB_WORKSPACE_GATE_PASS' runtime-surfaces.log", "CI_CAD_RGB_WORKSPACE_MARKER_161")
+require(workflow, "grep -Fq 'CAD_PRECISION_EDIT_RUNTIME_GATE_PASS' runtime-surfaces.log", "CI_CAD_PRECISION_EDIT_RUNTIME_MARKER_162")
+require(workflow, "grep -Fq 'CAD_PRECISION_EDIT_GATE_PASS' release-validation.log", "CI_CAD_PRECISION_EDIT_REGRESSION_MARKER_162")
 if "grep -Fq 'BILINGUAL_ADAPTIVE_UI_GATE_PASS' release-validation.log" in workflow:
     raise SystemExit("BLOCKED CI_ADAPTIVE_UI_TEXT_MARKER_158: stale bilingual marker")
 

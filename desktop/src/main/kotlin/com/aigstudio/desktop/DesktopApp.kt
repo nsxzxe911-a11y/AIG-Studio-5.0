@@ -122,18 +122,27 @@ private object EngineeringImageAssets {
     }
 }
 
-private enum class DrawMode { LINE, RECT, CIRCLE, SELECT }
+private enum class DrawMode { LINE, RECT, CIRCLE, ARC, HOLE, SELECT }
 
 private class CadPanel(
     private val doc: DrawingDocument,
     private val status: (String) -> Unit
 ) : JPanel() {
     var mode = DrawMode.LINE
+        set(value) {
+            field=value
+            first=null
+            arcCenter=null
+            arcStart=null
+        }
     private var first: Vec2? = null
+    private var arcCenter: Vec2? = null
+    private var arcStart: Vec2? = null
     private var pxPerMm = 5.0
     private var panX = 0.0
     private var panY = 0.0
     private var dragPoint: Point? = null
+    var snapEnabled = true
     private val history = History(doc)
     private val selectedIds = linkedSetOf<EntityId>()
 
@@ -155,12 +164,43 @@ private class CadPanel(
         addMouseListener(object : MouseAdapter() {
             override fun mousePressed(e: MouseEvent) {
                 if (SwingUtilities.isMiddleMouseButton(e) || SwingUtilities.isRightMouseButton(e)) { dragPoint = e.point; return }
-                val p = screenToWorld(e.x, e.y)
+                val raw = screenToWorld(e.x, e.y)
+                val p = if(snapEnabled) CadSnapEngine.snapTo(doc,raw,18.0/pxPerMm,reference=first) ?: raw else raw
                 if(mode==DrawMode.SELECT){
                     nearest(p)?.let { entity ->
-                        if(!selectedIds.add(entity.id)) selectedIds.remove(entity.id)
-                        status("SELECT • count="+selectedIds.size+" • CONNECT/DISCONNECT=2 entities")
+                        val group=CadSelectionEngine.selectionIds(doc,entity)
+                        if(group.all{it in selectedIds}) selectedIds.removeAll(group) else selectedIds.addAll(group)
+                        status("SELECT • kind="+CadSelectionEngine.semanticKind(entity)+" • count="+selectedIds.size)
                         repaint()
+                    }
+                    return
+                }
+                if(mode==DrawMode.ARC){
+                    val center=arcCenter
+                    if(center==null){
+                        arcCenter=p
+                        status("ARC • CENTER X="+DisplayFormat.mm(p.x)+" Y="+DisplayFormat.mm(p.y))
+                    } else {
+                        val start=arcStart
+                        if(start==null){
+                            if(center.distanceTo(p)>=CNC_RESOLUTION_MM){
+                                arcStart=p
+                                status("ARC • END POINT")
+                            }
+                        } else {
+                            val radius=center.distanceTo(start)
+                            val direction=p-center
+                            if(direction.length()>=CNC_RESOLUTION_MM){
+                                val end=center+direction.normalized()*radius
+                                history.run(AddEntitiesCommand(listOf(
+                                    Arc(center=center,radius=radius,start=start,end=end,clockwise=false)
+                                )))
+                            }
+                            arcCenter=null
+                            arcStart=null
+                            status("ARC PASS • entities="+doc.size())
+                            repaint()
+                        }
                     }
                     return
                 }
@@ -178,11 +218,12 @@ private class CadPanel(
                                 val b = Vec2(p.x, a.y)
                                 val c = p
                                 val d = Vec2(a.x, p.y)
+                                val ids=CadSemanticIdentity.newRectIds()
                                 history.run(AddEntitiesCommand(listOf(
-                                    Line(a = a, b = b),
-                                    Line(a = b, b = c),
-                                    Line(a = c, b = d),
-                                    Line(a = d, b = a)
+                                    Line(id=ids[0],a = a, b = b),
+                                    Line(id=ids[1],a = b, b = c),
+                                    Line(id=ids[2],a = c, b = d),
+                                    Line(id=ids[3],a = d, b = a)
                                 )))
                             }
                         }
@@ -191,7 +232,12 @@ private class CadPanel(
                             if (r >= CNC_RESOLUTION_MM)
                                 history.run(AddEntitiesCommand(listOf(Circle(center = a, radius = r))))
                         }
-                        DrawMode.SELECT -> Unit
+                        DrawMode.HOLE -> {
+                            val r=a.distanceTo(p)
+                            if(r>=CNC_RESOLUTION_MM)
+                                history.run(AddEntitiesCommand(listOf(Circle(id=CadSemanticIdentity.newHoleId(),center=a,radius=r))))
+                        }
+                        DrawMode.ARC, DrawMode.SELECT -> Unit
                     }
                     first = null
                     status("CAD entities=" + doc.size() + " • 原點 X0.000 Y0.000 • 精度 0.001 mm")
@@ -207,6 +253,8 @@ private class CadPanel(
     fun clearCad() {
         doc.clear()
         first = null
+        arcCenter = null
+        arcStart = null
         selectedIds.clear()
         repaint()
         status("CAD cleared")
@@ -214,13 +262,13 @@ private class CadPanel(
 
     fun undoEdit() {
         val effect=history.undoWithEffect() ?: return
-        selectedIds.clear();first=null;repaint()
+        selectedIds.clear();first=null;arcCenter=null;arcStart=null;repaint()
         status("UNDO • "+if(effect)"GEOMETRY • CAM/SIM/NC REBUILD" else "TOPOLOGY ONLY")
     }
 
     fun redoEdit() {
         val effect=history.redoWithEffect() ?: return
-        selectedIds.clear();first=null;repaint()
+        selectedIds.clear();first=null;arcCenter=null;arcStart=null;repaint()
         status("REDO • "+if(effect)"GEOMETRY • CAM/SIM/NC REBUILD" else "TOPOLOGY ONLY")
     }
 
@@ -257,6 +305,30 @@ private class CadPanel(
         selectedIds.clear();repaint()
     }.onFailure { status("DELETE BLOCKED • "+(it.message?:"error")) }
 
+    fun trimSelected() = runCatching {
+        applyGeometry("TRIM",CadEditEngine.trimCommand(doc,selectedIds))
+    }.onFailure { status("TRIM BLOCKED • "+(it.message?:"error")) }
+
+    fun extendSelected() = runCatching {
+        applyGeometry("EXTEND",CadEditEngine.extendCommand(doc,selectedIds))
+    }.onFailure { status("EXTEND BLOCKED • "+(it.message?:"error")) }
+
+    fun offsetSelected(distance:Double) = runCatching {
+        applyGeometry("OFFSET",CadEditEngine.offsetCommand(doc,selectedIds,distance))
+    }.onFailure { status("OFFSET BLOCKED • "+(it.message?:"error")) }
+
+    fun arraySelected(count:Int,dx:Double,dy:Double) = runCatching {
+        applyGeometry("ARRAY",CadEditEngine.linearArrayCommand(doc,selectedIds,count,dx,dy))
+    }.onFailure { status("ARRAY BLOCKED • "+(it.message?:"error")) }
+
+    fun selectedDimensionValue():Double? =
+        selectedIds.firstOrNull()?.let(doc::get)?.let { DimensionDriveEngine.currentValue(it) }
+
+    fun driveDimension(value:Double) = runCatching {
+        val id=selectedIds.firstOrNull() ?: error("DIM requires selected geometry")
+        applyGeometry("DIM",DimensionDriveEngine.command(doc,id,value))
+    }.onFailure { status("DIM BLOCKED • "+(it.message?:"error")) }
+
     fun connectSelected() = runCatching {
         history.run(CadEditEngine.connectCommand(doc,selectedIds,JOIN_TOLERANCE_MM))
         repaint()
@@ -271,14 +343,7 @@ private class CadPanel(
 
     private fun nearest(p:Vec2):Entity? {
         val tolerance=18.0/pxPerMm
-        return doc.all().map { entity ->
-            val distance=when(entity) {
-                is Line -> Geometry.distancePointToSegment(p,entity)
-                is Circle -> abs(p.distanceTo(entity.center)-entity.radius)
-                is Arc -> abs(p.distanceTo(entity.center)-entity.radius)
-            }
-            distance to entity
-        }.filter{it.first<=tolerance}.minByOrNull{it.first}?.second
+        return CadSelectionEngine.nearest(doc,p,tolerance)
     }
 
     private fun screenToWorld(x: Int, y: Int) =
@@ -611,8 +676,9 @@ private fun runSmoke() {
     require(result.mesh.vertices.isNotEmpty() && result.mesh.triangles.isNotEmpty()) { "3D mesh smoke failed" }
     require(result.removal.depth.any { it < 0.0 }) { "Material removal smoke failed" }
 
-    val cadStatus=JLabel("CAD EDIT • SELECT / MOVE / COPY / ROTATE / MIRROR / CONNECT / DISCONNECT • 0.001 mm")
+    val cadStatus=JLabel("CAD EDIT • SNAP7 / DIM / TRIM / EXTEND / OFFSET / ARRAY • 0.001 mm")
     val smokeCad=CadPanel(doc) { cadStatus.text=it }
+    lateinit var smokeDeck:JTabbedPane
     val smokeRoot = JPanel(BorderLayout()).apply {
         background = Color(5,10,17)
         val navBar=AdaptiveGlassToolbar().apply {
@@ -639,6 +705,8 @@ private fun runSmoke() {
             add(GlassActionButton("線",Color(61,235,255)))
             add(GlassActionButton("矩形",Color(139,92,246)))
             add(GlassActionButton("圓",Color(245,158,11)))
+            add(GlassActionButton("圓弧",Color(59,130,246)))
+            add(GlassActionButton("孔",Color(236,72,153)))
             add(GlassActionButton("選取",Color(80,170,255)))
         }
         val editBar=CadToolGrid().apply {
@@ -648,6 +716,10 @@ private fun runSmoke() {
             edit("旋轉",Color(139,92,246)){smokeCad.rotateSelected(90.0)}
             edit("鏡射 X",Color(245,158,11)){smokeCad.mirrorSelected(true)}
             edit("鏡射 Y",Color(245,158,11)){smokeCad.mirrorSelected(false)}
+            edit("TRIM",Color(61,235,255)){smokeCad.trimSelected()}
+            edit("EXTEND",Color(63,255,157)){smokeCad.extendSelected()}
+            edit("OFFSET",Color(139,92,246)){smokeCad.offsetSelected(1.0)}
+            edit("ARRAY",Color(59,130,246)){smokeCad.arraySelected(3,10.0,0.0)}
             edit("刪除",Color(239,68,68)){smokeCad.deleteSelected()}
             edit("復原",Color(125,112,255)){smokeCad.undoEdit()}
             edit("重做",Color(125,112,255)){smokeCad.redoEdit()}
@@ -668,7 +740,7 @@ private fun runSmoke() {
             add(Box.createVerticalStrut(8))
             add(JLabel("顯示精度 0.001 mm").apply{foreground=Color(245,158,11)})
         }
-        val smokeDeck=JTabbedPane(JTabbedPane.LEFT).apply {
+        smokeDeck=JTabbedPane(JTabbedPane.LEFT).apply {
             background=Color(8,18,30)
             foreground=Color(232,241,250)
             preferredSize=Dimension(300,0)
@@ -716,6 +788,10 @@ private fun runSmoke() {
     }
     val launchFile = File("desktop_launch.png")
     writePanel(smokeRoot, launchFile)
+    smokeDeck.selectedIndex=1
+    val cadEditFile = File("desktop_cad_edit.png")
+    writePanel(smokeRoot,cadEditFile)
+    smokeDeck.selectedIndex=0
 
     val meshPanel = Mesh3DPanel(result)
     val renderRoot = JPanel(BorderLayout()).apply {
@@ -771,6 +847,7 @@ private fun runSmoke() {
     )
     File("3D_RUNTIME_SHA256.txt").writeText(
         sha256File(launchFile) + "  desktop_launch.png\n" +
+            sha256File(cadEditFile) + "  desktop_cad_edit.png\n" +
             sha256File(beforeFile) + "  desktop_3d_before.png\n" +
             sha256File(afterFile) + "  desktop_3d.png\n" +
             "SOURCE_SHA=$sourceSha\n"
@@ -784,6 +861,7 @@ private fun runSmoke() {
             "MESH_TRIANGLES=" + result.mesh.triangles.size + "\n" +
             "REMOVED_CELLS=$removed\n" +
             "OFFICIAL_RGB_UI_SCREENSHOT=desktop_launch.png\n" +
+            "CAD_PRECISION_EDIT_SCREENSHOT=desktop_cad_edit.png\n" +
             "HQ_3D_RUNTIME_SCREENSHOT=desktop_3d.png\n" +
             "ANIMATION_FRAME_CHANGE=PASS\n"
     )
@@ -1294,15 +1372,50 @@ private fun showApp() {
         }
     }
 
+    fun askSingle(title:String,initial:String="1.000",run:(Double)->Unit) {
+        val value=JTextField(initial,10)
+        if(JOptionPane.showConfirmDialog(frame,value,title,JOptionPane.OK_CANCEL_OPTION)==JOptionPane.OK_OPTION){
+            value.text.trim().toDoubleOrNull()?.let(run) ?: run { status.text="$title BLOCKED • invalid value" }
+        }
+    }
+
+    fun askArray(run:(Int,Double,Double)->Unit) {
+        val count=JTextField("3",8); val dx=JTextField("10.000",10); val dy=JTextField("0.000",10)
+        val panel=JPanel(GridLayout(0,2,5,5)).apply {
+            add(JLabel("總數"));add(count)
+            add(JLabel("ΔX mm"));add(dx)
+            add(JLabel("ΔY mm"));add(dy)
+        }
+        if(JOptionPane.showConfirmDialog(frame,panel,"LINEAR ARRAY",JOptionPane.OK_CANCEL_OPTION)==JOptionPane.OK_OPTION){
+            val n=count.text.trim().toIntOrNull(); val x=dx.text.trim().toDoubleOrNull(); val y=dy.text.trim().toDoubleOrNull()
+            if(n==null || x==null || y==null) status.text="ARRAY BLOCKED • invalid values" else run(n,x,y)
+        }
+    }
+
+    viewTools.add(button("SNAP",Color(61,235,255)) {
+        cad.snapEnabled=!cad.snapEnabled
+        status.text="SNAP "+if(cad.snapEnabled)"ON • END/MID/CENTER/INTERSECTION/TANGENT/H/V" else "OFF"
+    })
+    viewTools.add(Box.createVerticalStrut(8))
+    viewTools.add(button("尺寸驅動",Color(245,158,11)) {
+        askSingle("尺寸驅動 mm",cad.selectedDimensionValue()?.let(DisplayFormat::mm)?:"10.000",cad::driveDimension)
+    })
+
     drawTools.add(button("線", Color(61, 235, 255)) { cad.mode = DrawMode.LINE; status.text = "LINE" })
     drawTools.add(button("矩形", Color(139, 92, 246)) { cad.mode = DrawMode.RECT; status.text = "RECT" })
     drawTools.add(button("圓", Color(245, 158, 11)) { cad.mode = DrawMode.CIRCLE; status.text = "CIRCLE" })
-    drawTools.add(button("選取", Color(80,170,255)) { cad.mode=DrawMode.SELECT; status.text="SELECT • click to toggle • middle/right drag = PAN" })
+    drawTools.add(button("圓弧", Color(59,130,246)) { cad.mode=DrawMode.ARC; status.text="ARC • CENTER / START / END" })
+    drawTools.add(button("孔", Color(236,72,153)) { cad.mode=DrawMode.HOLE; status.text="HOLE • CENTER / RADIUS" })
+    drawTools.add(button("選取", Color(80,170,255)) { cad.mode=DrawMode.SELECT; status.text="SELECT • LINE / RECT / CIRCLE / ARC / HOLE" })
     editTools.add(button("移動", Color(61,235,255)) { askDelta("MOVE"){x,y->cad.moveSelected(x,y)} })
     editTools.add(button("複製", Color(63,255,157)) { askDelta("COPY"){x,y->cad.copySelected(x,y)} })
     editTools.add(button("旋轉", Color(139,92,246)) { askAngle(cad::rotateSelected) })
     editTools.add(button("鏡射 X", Color(245,158,11)) { cad.mirrorSelected(true) })
     editTools.add(button("鏡射 Y", Color(245,158,11)) { cad.mirrorSelected(false) })
+    editTools.add(button("TRIM", Color(61,235,255)) { cad.trimSelected() })
+    editTools.add(button("EXTEND", Color(63,255,157)) { cad.extendSelected() })
+    editTools.add(button("OFFSET", Color(139,92,246)) { askSingle("OFFSET mm","1.000",cad::offsetSelected) })
+    editTools.add(button("ARRAY", Color(59,130,246)) { askArray(cad::arraySelected) })
     editTools.add(button("刪除", Color(239,68,68)) { cad.deleteSelected() })
     editTools.add(button("復原", Color(125,112,255)) { cad.undoEdit() })
     editTools.add(button("重做", Color(125,112,255)) { cad.redoEdit() })

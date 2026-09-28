@@ -42,6 +42,7 @@ jobs:
           grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
           grep -Fq 'AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS' runtime-surfaces.log
           grep -Fq 'NO_FAKE_PAGE_CALLBACK_GATE_PASS' runtime-surfaces.log
+          grep -Fq 'CAD_PRECISION_EDIT_RUNTIME_GATE_PASS' runtime-surfaces.log
       - name: Build Android APK and source package
         shell: bash
         run: |
@@ -60,6 +61,7 @@ jobs:
           grep -Fq 'AI_ERGONOMIC_LAYOUT_GATE_PASS' release-validation.log
           grep -Fq 'ADAPTIVE_UI_TEXT_GATE_PASS' release-validation.log
           grep -Fq 'CAD_EDIT_INTEGRITY_GATE_PASS' release-validation.log
+          grep -Fq 'CAD_PRECISION_EDIT_GATE_PASS' release-validation.log
           grep -Fq 'CAD_RGB_WORKSPACE_GATE_PASS' runtime-surfaces.log
           grep -Fq 'NC_DRAFT_RECOVERY_GATE_PASS' release-validation.log
           grep -Fq 'PIXEL_LAYOUT_PRECHECK_GATE_PASS' release-validation.log

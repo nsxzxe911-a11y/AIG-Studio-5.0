@@ -1158,6 +1158,7 @@ fun main() {
     testDeleteDoesNotInventTriangle()
     testUndoRedo()
     testCadEditIntegrity()
+    testCadPrecisionEditing()
     testChamferC5()
     testFilletR5()
     testDifferentCornerRadii()
@@ -1276,6 +1277,96 @@ private fun testCadEditIntegrity() {
     check(runCatching { CadEditEngine.connectCommand(tooFar,listOf("X","Y"),JOIN_TOLERANCE_MM) }.isFailure)
 
     println("✓ CAD_EDIT_INTEGRITY_GATE_PASS SELECT MOVE COPY ROTATE MIRROR DELETE UNDO_REDO CONNECT DISCONNECT TOPOLOGY_ONLY TOL=0.001")
+}
+
+private fun testCadPrecisionEditing() {
+    val snap=DrawingDocument()
+    snap.put(Line(id="H",a=Vec2(0.0,0.0),b=Vec2(10.0,0.0)))
+    snap.put(Line(id="V",a=Vec2(5.0,-5.0),b=Vec2(5.0,5.0)))
+    snap.put(Circle(id="C",center=Vec2(20.0,10.0),radius=5.0))
+    snap.put(Arc(id="A",center=Vec2(40.0,10.0),radius=5.0,start=Vec2(45.0,10.0),end=Vec2(40.0,15.0),clockwise=false))
+
+    assertPoint(CadSnapEngine.snapTo(snap,Vec2(0.2,0.1),1.0,setOf(SnapMode.ENDPOINT))!!,Vec2(0.0,0.0),"snap endpoint")
+    assertPoint(CadSnapEngine.snapTo(snap,Vec2(5.1,0.2),1.0,setOf(SnapMode.MIDPOINT))!!,Vec2(5.0,0.0),"snap midpoint")
+    assertPoint(CadSnapEngine.snapTo(snap,Vec2(20.2,10.1),1.0,setOf(SnapMode.CENTER))!!,Vec2(20.0,10.0),"snap center")
+    assertPoint(CadSnapEngine.snapTo(snap,Vec2(5.2,0.2),1.0,setOf(SnapMode.INTERSECTION))!!,Vec2(5.0,0.0),"snap intersection")
+    check(CadSnapEngine.snapTo(snap,Vec2(27.0,10.0),20.0,setOf(SnapMode.TANGENT))!=null)
+    assertPoint(CadSnapEngine.snapTo(snap,Vec2(7.0,3.0),2.0,setOf(SnapMode.HORIZONTAL),Vec2(1.0,2.0))!!,Vec2(7.0,2.0),"snap horizontal")
+    assertPoint(CadSnapEngine.snapTo(snap,Vec2(7.0,3.0),7.0,setOf(SnapMode.VERTICAL),Vec2(1.0,2.0))!!,Vec2(1.0,3.0),"snap vertical")
+
+    val lineHit=CadSelectionEngine.nearest(snap,Vec2(2.0,0.05),0.2)!!
+    val circleHit=CadSelectionEngine.nearest(snap,Vec2(25.05,10.0),0.2)!!
+    val arcHit=CadSelectionEngine.nearest(snap,Vec2(43.55,13.55),0.2)!!
+    check(lineHit.id=="H" && CadSelectionEngine.semanticKind(lineHit)=="LINE")
+    check(circleHit.id=="C" && CadSelectionEngine.semanticKind(circleHit)=="CIRCLE")
+    check(arcHit.id=="A" && CadSelectionEngine.semanticKind(arcHit)=="ARC")
+
+    val semantic=DrawingDocument()
+    val rectIds=CadSemanticIdentity.newRectIds()
+    semantic.put(Line(id=rectIds[0],a=Vec2(0.0,0.0),b=Vec2(20.0,0.0)))
+    semantic.put(Line(id=rectIds[1],a=Vec2(20.0,0.0),b=Vec2(20.0,10.0)))
+    semantic.put(Line(id=rectIds[2],a=Vec2(20.0,10.0),b=Vec2(0.0,10.0)))
+    semantic.put(Line(id=rectIds[3],a=Vec2(0.0,10.0),b=Vec2(0.0,0.0)))
+    val holeId=CadSemanticIdentity.newHoleId()
+    semantic.put(Circle(id=holeId,center=Vec2(30.0,5.0),radius=3.0))
+    val rectHit=CadSelectionEngine.nearest(semantic,Vec2(5.0,0.05),0.2)!!
+    val holeHit=CadSelectionEngine.nearest(semantic,Vec2(33.05,5.0),0.2)!!
+    check(CadSelectionEngine.semanticKind(rectHit)=="RECT")
+    check(CadSelectionEngine.selectionIds(semantic,rectHit).toSet()==rectIds.toSet())
+    check(CadSelectionEngine.semanticKind(holeHit)=="HOLE")
+    check(CadSelectionEngine.selectionIds(semantic,holeHit)==setOf(holeId))
+
+    val semanticHistory=History(semantic)
+    val originalIds=semantic.all().map{it.id}.toSet()
+    semanticHistory.run(CadEditEngine.copyCommand(semantic,rectIds,40.0,0.0))
+    val copiedRect=semantic.all().first{it.id !in originalIds && CadSelectionEngine.semanticKind(it)=="RECT"}
+    check(CadSelectionEngine.selectionIds(semantic,copiedRect).size==4)
+    val beforeArray=semantic.all().map{it.id}.toSet()
+    semanticHistory.run(CadEditEngine.linearArrayCommand(semantic,rectIds,3,0.0,20.0))
+    val arrayRectRoots=semantic.all()
+        .filter{it.id !in beforeArray && CadSelectionEngine.semanticKind(it)=="RECT"}
+        .groupBy{it.id.substringBeforeLast(':')}
+    check(arrayRectRoots.size==2 && arrayRectRoots.values.all{it.size==4})
+
+    val dim=DrawingDocument()
+    dim.put(Line(id="DL",a=Vec2(0.0,0.0),b=Vec2(10.0,0.0)))
+    val dh=History(dim)
+    dh.run(DimensionDriveEngine.command(dim,"DL",25.0))
+    assertNear((dim.get("DL") as Line).length,25.0)
+    check(dh.undoWithEffect()==true)
+    assertNear((dim.get("DL") as Line).length,10.0)
+    dim.put(Circle(id="DC",center=Vec2(0.0,0.0),radius=5.0))
+    dh.run(DimensionDriveEngine.command(dim,"DC",20.0,DrivenDimensionKind.DIAMETER))
+    assertNear((dim.get("DC") as Circle).radius,10.0)
+
+    val trim=DrawingDocument()
+    trim.put(Line(id="T",a=Vec2(0.0,0.0),b=Vec2(10.0,0.0)))
+    trim.put(Line(id="B",a=Vec2(6.0,-5.0),b=Vec2(6.0,5.0)))
+    CadEditEngine.trimCommand(trim,listOf("T","B")).execute(trim)
+    val trimmed=trim.get("T") as Line
+    assertPoint(trimmed.a,Vec2(0.0,0.0),"trim a")
+    assertPoint(trimmed.b,Vec2(6.0,0.0),"trim b")
+
+    val extend=DrawingDocument()
+    extend.put(Line(id="T",a=Vec2(0.0,0.0),b=Vec2(5.0,0.0)))
+    extend.put(Line(id="B",a=Vec2(10.0,-5.0),b=Vec2(10.0,5.0)))
+    CadEditEngine.extendCommand(extend,listOf("T","B")).execute(extend)
+    assertPoint((extend.get("T") as Line).b,Vec2(10.0,0.0),"extend")
+
+    val offset=DrawingDocument()
+    offset.put(Line(id="O",a=Vec2(0.0,0.0),b=Vec2(10.0,0.0)))
+    CadEditEngine.offsetCommand(offset,listOf("O"),2.0).execute(offset)
+    check(offset.size()==2)
+    val shifted=offset.all().filterIsInstance<Line>().first{it.id!="O"}
+    assertPoint(shifted.a,Vec2(0.0,2.0),"offset a")
+    assertPoint(shifted.b,Vec2(10.0,2.0),"offset b")
+
+    val array=DrawingDocument()
+    array.put(Circle(id="SRC",center=Vec2(0.0,0.0),radius=2.0))
+    CadEditEngine.linearArrayCommand(array,listOf("SRC"),4,10.0,0.0).execute(array)
+    check(array.all().filterIsInstance<Circle>().map{it.center.x}.sorted()==listOf(0.0,10.0,20.0,30.0))
+
+    println("✓ CAD_PRECISION_EDIT_GATE_PASS SNAP_ENDPOINT MIDPOINT CENTER INTERSECTION TANGENT HORIZONTAL VERTICAL DIM_DRIVE TRIM EXTEND OFFSET ARRAY SELECTION_LINE_RECT_CIRCLE_ARC_HOLE GROUP_PRESERVED TOL=0.001")
 }
 
 private fun testChamferC5() {

@@ -1,6 +1,7 @@
 package com.aigstudio.core
 
 import java.util.ArrayDeque
+import java.util.UUID
 import kotlin.math.*
 
 data class CadTopologyLink(val aId: EntityId, val bId: EntityId) {
@@ -184,13 +185,13 @@ object CadEditEngine {
     private fun mirrorPoint(p: Vec2, vertical: Boolean, axis: Double): Vec2 =
         if (vertical) Vec2(2.0 * axis - p.x, p.y) else Vec2(p.x, 2.0 * axis - p.y)
 
-    private fun moved(entity: Entity, dx: Double, dy: Double, keepId: Boolean): Entity = when (entity) {
+    private fun moved(entity: Entity, dx: Double, dy: Double, keepId: Boolean, newId:EntityId?=null): Entity = when (entity) {
         is Line -> if (keepId) entity.copy(a=entity.a+Vec2(dx,dy), b=entity.b+Vec2(dx,dy))
-            else Line(a=entity.a+Vec2(dx,dy), b=entity.b+Vec2(dx,dy))
+            else Line(id=newId ?: UUID.randomUUID().toString(),a=entity.a+Vec2(dx,dy), b=entity.b+Vec2(dx,dy))
         is Circle -> if (keepId) entity.copy(center=entity.center+Vec2(dx,dy))
-            else Circle(center=entity.center+Vec2(dx,dy), radius=entity.radius)
+            else Circle(id=newId ?: UUID.randomUUID().toString(),center=entity.center+Vec2(dx,dy), radius=entity.radius)
         is Arc -> if (keepId) entity.copy(center=entity.center+Vec2(dx,dy), start=entity.start+Vec2(dx,dy), end=entity.end+Vec2(dx,dy))
-            else Arc(center=entity.center+Vec2(dx,dy), radius=entity.radius, start=entity.start+Vec2(dx,dy), end=entity.end+Vec2(dx,dy), clockwise=entity.clockwise)
+            else Arc(id=newId ?: UUID.randomUUID().toString(),center=entity.center+Vec2(dx,dy), radius=entity.radius, start=entity.start+Vec2(dx,dy), end=entity.end+Vec2(dx,dy), clockwise=entity.clockwise)
     }
 
     private fun rotated(entity: Entity, pivot: Vec2, angleDeg: Double): Entity = when (entity) {
@@ -239,7 +240,8 @@ object CadEditEngine {
         require(dx.isFinite() && dy.isFinite()) { "COPY delta must be finite" }
         val before = ids.distinct().mapNotNull(doc::get)
         require(before.isNotEmpty()) { "COPY requires selected geometry" }
-        return AddEntitiesCommand(before.map { moved(it,dx,dy,false) })
+        val idMap=CadSemanticIdentity.copiedIdMap(before)
+        return AddEntitiesCommand(before.map { moved(it,dx,dy,false,idMap.getValue(it.id)) })
     }
 
     fun rotateCommand(doc: DrawingDocument, ids: Collection<EntityId>, angleDeg: Double, pivot: Vec2 = selectionCenter(doc,ids)): Command {
@@ -261,6 +263,84 @@ object CadEditEngine {
         val before = ids.distinct().mapNotNull(doc::get)
         require(before.isNotEmpty()) { "MIRROR requires selected geometry" }
         return ReplaceEntitiesCommand(before, before.map { mirrored(it,false,axisY) })
+    }
+
+    fun trimCommand(doc: DrawingDocument, ids: Collection<EntityId>): Command {
+        val pair=ids.distinct()
+        require(pair.size==2) { "TRIM requires target then boundary selection" }
+        val target=doc.get(pair[0]) as? Line ?: error("TRIM target must be LINE")
+        val boundary=doc.get(pair[1]) as? Line ?: error("TRIM boundary must be LINE")
+        val inter=Geometry.lineIntersection(target,boundary) ?: error("TRIM lines are parallel")
+        require(inter.t1 in -EPS..1.0+EPS && inter.t2 in -EPS..1.0+EPS) {
+            "TRIM requires a real segment intersection"
+        }
+        val da=target.a.distanceTo(inter.point)
+        val db=target.b.distanceTo(inter.point)
+        val after=if(da>=db) target.copy(b=inter.point) else target.copy(a=inter.point)
+        require(after.length>=CNC_RESOLUTION_MM) { "TRIM result is below 0.001 mm" }
+        return ReplaceEntitiesCommand(listOf(target),listOf(after))
+    }
+
+    fun extendCommand(doc: DrawingDocument, ids: Collection<EntityId>): Command {
+        val pair=ids.distinct()
+        require(pair.size==2) { "EXTEND requires target then boundary selection" }
+        val target=doc.get(pair[0]) as? Line ?: error("EXTEND target must be LINE")
+        val boundary=doc.get(pair[1]) as? Line ?: error("EXTEND boundary must be LINE")
+        val inter=Geometry.lineIntersection(target,boundary) ?: error("EXTEND lines are parallel")
+        require(inter.t2 in -EPS..1.0+EPS) { "EXTEND boundary intersection is outside boundary segment" }
+        require(inter.t1 < -EPS || inter.t1 > 1.0+EPS) { "EXTEND target already reaches/crosses boundary" }
+        val after=if(inter.t1<0.0) target.copy(a=inter.point) else target.copy(b=inter.point)
+        return ReplaceEntitiesCommand(listOf(target),listOf(after))
+    }
+
+    fun offsetCommand(doc: DrawingDocument, ids: Collection<EntityId>, distance: Double): Command {
+        require(distance.isFinite() && abs(distance)>=CNC_RESOLUTION_MM) {
+            "OFFSET distance must be finite and >= 0.001 mm"
+        }
+        val selected=ids.distinct().mapNotNull(doc::get)
+        require(selected.isNotEmpty()) { "OFFSET requires selected geometry" }
+        val idMap=CadSemanticIdentity.copiedIdMap(selected)
+        val created=selected.map { entity ->
+            val newId=idMap.getValue(entity.id)
+            when(entity) {
+                is Line -> {
+                    val d=entity.b-entity.a
+                    val len=d.length()
+                    require(len>=CNC_RESOLUTION_MM) { "OFFSET degenerate line" }
+                    val n=Vec2(-d.y/len*distance,d.x/len*distance)
+                    Line(id=newId,a=entity.a+n,b=entity.b+n)
+                }
+                is Circle -> {
+                    val r=entity.radius+distance
+                    require(r>=CNC_RESOLUTION_MM) { "OFFSET collapses circle" }
+                    Circle(id=newId,center=entity.center,radius=r)
+                }
+                is Arc -> {
+                    val r=entity.radius+distance
+                    require(r>=CNC_RESOLUTION_MM) { "OFFSET collapses arc" }
+                    val su=(entity.start-entity.center).normalized()
+                    val eu=(entity.end-entity.center).normalized()
+                    Arc(id=newId,center=entity.center,radius=r,start=entity.center+su*r,end=entity.center+eu*r,clockwise=entity.clockwise)
+                }
+            }
+        }
+        return AddEntitiesCommand(created)
+    }
+
+    fun linearArrayCommand(doc: DrawingDocument, ids: Collection<EntityId>, count: Int, dx: Double, dy: Double): Command {
+        require(count in 2..1000) { "ARRAY count must be 2..1000 total instances" }
+        require(dx.isFinite() && dy.isFinite() && (abs(dx)>=CNC_RESOLUTION_MM || abs(dy)>=CNC_RESOLUTION_MM)) {
+            "ARRAY step must be finite and at least 0.001 mm"
+        }
+        val originals=ids.distinct().mapNotNull(doc::get)
+        require(originals.isNotEmpty()) { "ARRAY requires selected geometry" }
+        val created=buildList {
+            for(k in 1 until count) {
+                val idMap=CadSemanticIdentity.copiedIdMap(originals)
+                originals.forEach { add(moved(it,dx*k,dy*k,false,idMap.getValue(it.id))) }
+            }
+        }
+        return AddEntitiesCommand(created)
     }
 
     fun deleteCommand(ids: Collection<EntityId>): Command = DeleteEntitiesCommand(ids.toSet())
@@ -286,6 +366,183 @@ object CadEditEngine {
         val pair = ids.distinct()
         require(pair.size == 2) { "DISCONNECT requires exactly two selected entities" }
         return DisconnectTopologyCommand(CadTopologyLink.of(pair[0],pair[1]))
+    }
+}
+
+enum class SnapMode { ENDPOINT, MIDPOINT, CENTER, INTERSECTION, TANGENT, HORIZONTAL, VERTICAL }
+
+object CadSemanticIdentity {
+    fun newRectIds():List<EntityId> {
+        val root="RECT:"+UUID.randomUUID().toString()
+        return (0..3).map{"$root:$it"}
+    }
+    fun newHoleId():EntityId = "HOLE:"+UUID.randomUUID().toString()
+    fun semanticKind(entity:Entity):String = when {
+        entity.id.startsWith("RECT:") -> "RECT"
+        entity.id.startsWith("HOLE:") -> "HOLE"
+        entity is Line -> "LINE"
+        entity is Circle -> "CIRCLE"
+        entity is Arc -> "ARC"
+        else -> "UNKNOWN"
+    }
+    fun selectionIds(doc:DrawingDocument,entity:Entity):Set<EntityId> {
+        if(!entity.id.startsWith("RECT:")) return setOf(entity.id)
+        val root=entity.id.substringBeforeLast(':')
+        return doc.all().map{it.id}.filter{it.startsWith("$root:")}.toSet().ifEmpty{setOf(entity.id)}
+    }
+    fun copiedIdMap(entities:Collection<Entity>):Map<EntityId,EntityId> {
+        val rectRoots=mutableMapOf<String,String>()
+        return entities.associate { entity ->
+            val id=entity.id
+            val newId=when {
+                id.startsWith("RECT:") -> {
+                    val root=id.substringBeforeLast(':')
+                    val suffix=id.substringAfterLast(':')
+                    val newRoot=rectRoots.getOrPut(root){"RECT:"+UUID.randomUUID().toString()}
+                    "$newRoot:$suffix"
+                }
+                id.startsWith("HOLE:") -> newHoleId()
+                else -> UUID.randomUUID().toString()
+            }
+            id to newId
+        }
+    }
+}
+
+object CadSnapEngine {
+    private fun tangentPoints(p:Vec2,c:Vec2,r:Double):List<Vec2> {
+        val d=p-c
+        val d2=d.dot(d)
+        if(d2<=r*r+EPS) return emptyList()
+        val l=r*r/d2
+        val m=r*sqrt(d2-r*r)/d2
+        return listOf(
+            Vec2(c.x+l*d.x-m*d.y,c.y+l*d.y+m*d.x),
+            Vec2(c.x+l*d.x+m*d.y,c.y+l*d.y-m*d.x)
+        )
+    }
+
+    fun snapTo(
+        doc:DrawingDocument,
+        p:Vec2,
+        tolerance:Double,
+        modes:Set<SnapMode> = SnapMode.entries.toSet(),
+        reference:Vec2?=null
+    ):Vec2? {
+        require(tolerance.isFinite() && tolerance>0.0)
+        val candidates=mutableListOf<Vec2>()
+        reference?.let { ref ->
+            if(SnapMode.HORIZONTAL in modes) candidates+=Vec2(p.x,ref.y)
+            if(SnapMode.VERTICAL in modes) candidates+=Vec2(ref.x,p.y)
+        }
+        val entities=doc.all()
+        entities.forEach { e ->
+            when(e) {
+                is Line -> {
+                    if(SnapMode.ENDPOINT in modes){ candidates+=e.a; candidates+=e.b }
+                    if(SnapMode.MIDPOINT in modes)candidates+=Vec2((e.a.x+e.b.x)/2.0,(e.a.y+e.b.y)/2.0)
+                }
+                is Circle -> {
+                    if(SnapMode.CENTER in modes)candidates+=e.center
+                    if(SnapMode.TANGENT in modes)candidates+=tangentPoints(p,e.center,e.radius)
+                }
+                is Arc -> {
+                    if(SnapMode.ENDPOINT in modes){ candidates+=e.start; candidates+=e.end }
+                    if(SnapMode.CENTER in modes)candidates+=e.center
+                    if(SnapMode.TANGENT in modes)candidates+=tangentPoints(p,e.center,e.radius)
+                }
+            }
+        }
+        if(SnapMode.INTERSECTION in modes){
+            val lines=entities.filterIsInstance<Line>()
+            for(i in lines.indices) for(j in i+1 until lines.size) {
+                Geometry.lineIntersection(lines[i],lines[j])?.let { hit ->
+                    if(hit.t1 in -EPS..1.0+EPS && hit.t2 in -EPS..1.0+EPS) candidates+=hit.point
+                }
+            }
+        }
+        return candidates.minByOrNull{it.distanceTo(p)}?.takeIf{it.distanceTo(p)<=tolerance}
+    }
+}
+
+object CadSelectionEngine {
+    private fun normalize(v:Double):Double {
+        var a=v%(2.0*Math.PI)
+        if(a<0)a+=2.0*Math.PI
+        return a
+    }
+    private fun onArc(arc:Arc,p:Vec2):Boolean {
+        val a=normalize(atan2(p.y-arc.center.y,p.x-arc.center.x))
+        val s=normalize(atan2(arc.start.y-arc.center.y,arc.start.x-arc.center.x))
+        val e=normalize(atan2(arc.end.y-arc.center.y,arc.end.x-arc.center.x))
+        return if(arc.clockwise) normalize(s-a)<=normalize(s-e)+1e-9
+        else normalize(a-s)<=normalize(e-s)+1e-9
+    }
+    fun distanceTo(entity:Entity,p:Vec2):Double = when(entity){
+        is Line -> Geometry.distancePointToSegment(p,entity)
+        is Circle -> abs(p.distanceTo(entity.center)-entity.radius)
+        is Arc -> if(onArc(entity,p)) abs(p.distanceTo(entity.center)-entity.radius)
+            else min(p.distanceTo(entity.start),p.distanceTo(entity.end))
+    }
+    fun nearest(doc:DrawingDocument,p:Vec2,tolerance:Double):Entity? =
+        doc.all().map{distanceTo(it,p) to it}.filter{it.first<=tolerance}.minByOrNull{it.first}?.second
+
+    fun semanticKind(entity:Entity):String = CadSemanticIdentity.semanticKind(entity)
+
+    fun selectionIds(doc:DrawingDocument,entity:Entity):Set<EntityId> =
+        CadSemanticIdentity.selectionIds(doc,entity)
+}
+
+enum class DrivenDimensionKind { LENGTH, DIAMETER, RADIUS }
+
+object DimensionDriveEngine {
+    fun defaultKind(entity:Entity):DrivenDimensionKind = when(entity){
+        is Line -> DrivenDimensionKind.LENGTH
+        is Circle -> DrivenDimensionKind.DIAMETER
+        is Arc -> DrivenDimensionKind.RADIUS
+    }
+    fun currentValue(entity:Entity,kind:DrivenDimensionKind=defaultKind(entity)):Double = when(entity){
+        is Line -> {
+            require(kind==DrivenDimensionKind.LENGTH)
+            entity.length
+        }
+        is Circle -> when(kind){
+            DrivenDimensionKind.RADIUS -> entity.radius
+            DrivenDimensionKind.DIAMETER -> entity.radius*2.0
+            else -> error("Unsupported circle dimension")
+        }
+        is Arc -> {
+            require(kind==DrivenDimensionKind.RADIUS)
+            entity.radius
+        }
+    }
+    fun command(doc:DrawingDocument,id:EntityId,value:Double,kind:DrivenDimensionKind?=null):Command {
+        require(value.isFinite() && value>=CNC_RESOLUTION_MM){"Dimension must be >= 0.001 mm"}
+        val before=doc.get(id) ?: error("Dimension target not found")
+        val actualKind=kind ?: defaultKind(before)
+        val after:Entity=when(before){
+            is Line -> {
+                require(actualKind==DrivenDimensionKind.LENGTH)
+                val u=(before.b-before.a).normalized()
+                before.copy(b=before.a+u*value)
+            }
+            is Circle -> {
+                val r=when(actualKind){
+                    DrivenDimensionKind.RADIUS -> value
+                    DrivenDimensionKind.DIAMETER -> value/2.0
+                    else -> error("Unsupported circle dimension")
+                }
+                require(r>=CNC_RESOLUTION_MM)
+                before.copy(radius=r)
+            }
+            is Arc -> {
+                require(actualKind==DrivenDimensionKind.RADIUS)
+                val su=(before.start-before.center).normalized()
+                val eu=(before.end-before.center).normalized()
+                before.copy(radius=value,start=before.center+su*value,end=before.center+eu*value)
+            }
+        }
+        return ReplaceEntitiesCommand(listOf(before),listOf(after))
     }
 }
 
