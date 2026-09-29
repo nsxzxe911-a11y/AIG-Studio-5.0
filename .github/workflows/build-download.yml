@@ -19,6 +19,7 @@ on:
       - studio-218-network-retry-ui
       - studio-219-integrated-maintenance
       - studio-220-low-latency-network
+      - studio-221-low-latency-validator
     paths:
       - 'release-version.properties'
       - 'app/**'
@@ -57,7 +58,7 @@ jobs:
         shell: bash
         run: |
           python3 ci/verify_production_runtime.py | tee production-runtime.log
-          grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_220|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE' production-runtime.log
+          grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_221|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE' production-runtime.log
           grep -Fq 'PRODUCTION_UI_SWITCH_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|STABLE_ORDER|LIVE_RUNTIME' production-runtime.log
           grep -Fq 'VISIBLE_FUNCTION_UI_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' production-runtime.log
           grep -Fq 'OFFLINE_FIRST_UI_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' production-runtime.log

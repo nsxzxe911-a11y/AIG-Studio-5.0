@@ -8,8 +8,8 @@ if not version_line.startswith("versionName="):
     raise SystemExit("release version metadata missing")
 version = version_line.split("=", 1)[1]
 parts = tuple(int(x) for x in version.split("."))
-if parts < (220, 0, 0):
-    raise SystemExit(f"production runtime line requires >=220.0.0, got {version}")
+if parts < (221, 0, 0):
+    raise SystemExit(f"production runtime line requires >=221.0.0, got {version}")
 
 runtime_roots = [
     ROOT / "app" / "src" / "main",
@@ -54,7 +54,7 @@ for marker in required_desktop:
     if marker not in desktop:
         raise SystemExit(f"Windows production runtime marker missing: {marker}")
 
-if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_220"' not in env:
+if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_221"' not in env:
     raise SystemExit("production startup profile missing")
 if "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" not in android_build:
     raise SystemExit("Android production release state missing")
@@ -165,7 +165,8 @@ for marker in [
     'onlineAutoCheckRunning.compareAndSet(false,true)',
     'onlineAutoCheckCompleted.set(false)',
     'renderNetworkState(true,"更新可用")',
-    'renderNetworkState(true,"更新待重試")',
+    'renderNetworkState(true,"更新快速重試")',
+    'renderNetworkState(true,"更新待手動重試")',
 ]:
     if marker not in android_main:
         raise SystemExit(f"Android network retry marker missing: {marker}")
@@ -231,4 +232,4 @@ for marker in [
     if marker not in secure_services:
         raise SystemExit(f"secure update latency marker missing: {marker}")
 print("LOW_LATENCY_NETWORK_GATE_PASS|START_180MS|MANIFEST_1200_2000|APK_IDLE_2500_5000|RETRY_350MS_X2|BACKGROUND_CHECK_ONLY|UI_NEVER_WAIT")
-print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_220|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
+print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_221|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
