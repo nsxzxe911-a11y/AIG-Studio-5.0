@@ -160,6 +160,38 @@ jobs:
           grep -Fx "release_class=PRODUCTION_RUNTIME" release/android/RELEASE_MANIFEST.txt
           grep -Fx "runtime_evidence=APK_BUILD_SIGN_PACKAGE" release/android/RELEASE_MANIFEST.txt
           grep -Fx "device_launch_evidence=REQUIRED_FOR_FINAL" release/android/RELEASE_MANIFEST.txt
+      - name: Android offline Runtime UI entry
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            APK='release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk'
+            PKG='com.aigstudio.app'
+            mkdir -p release/android/runtime-evidence
+            adb install -r "$APK"
+            adb shell svc wifi disable || true
+            adb shell svc data disable || true
+            adb shell am force-stop "$PKG"
+            adb shell am start -W -n "$PKG/.MainActivity" | tee release/android/runtime-evidence/android_launch.txt
+            sleep 3
+            adb shell dumpsys activity activities > release/android/runtime-evidence/activity.txt
+            grep -F "$PKG/.MainActivity" release/android/runtime-evidence/activity.txt
+            adb shell uiautomator dump /sdcard/aig-ui.xml >/dev/null
+            adb pull /sdcard/aig-ui.xml release/android/runtime-evidence/android_ui.xml >/dev/null
+            grep -F 'CURRENT PRODUCTION MODE' release/android/runtime-evidence/android_ui.xml
+            adb exec-out screencap -p > release/android/runtime-evidence/android_runtime_launch.png
+            test "$(stat -c%s release/android/runtime-evidence/android_runtime_launch.png)" -gt 20000
+            printf 'device_launch_evidence=EMULATOR_OFFLINE_MAINACTIVITY_VISIBLE_UI_PASS\npackage=%s\n' "$PKG" > release/android/runtime-evidence/UI_ENTRY_EVIDENCE.txt
+            if grep -q '^device_launch_evidence=' release/android/RELEASE_MANIFEST.txt; then
+              sed -i 's/^device_launch_evidence=.*/device_launch_evidence=EMULATOR_OFFLINE_MAINACTIVITY_VISIBLE_UI_PASS/' release/android/RELEASE_MANIFEST.txt
+            else
+              echo 'device_launch_evidence=EMULATOR_OFFLINE_MAINACTIVITY_VISIBLE_UI_PASS' >> release/android/RELEASE_MANIFEST.txt
+            fi
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Android-and-Source
