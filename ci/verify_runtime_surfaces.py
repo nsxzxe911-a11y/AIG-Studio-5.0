@@ -917,6 +917,24 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_AXIS_POSE_BADGE_REFLOW_206")
 print("AXIS_POSE_BADGE_REFLOW_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|ONE_TWO_THREE_LINE|DYNAMIC_2LINE_3LINE_SMOKE|NO_OVERFLOW|FULL_AB_PRECISION|DIRECTION|DEPTH|POSE_ANGLE|SMOKE_IMAGE|VISUAL_ONLY")
 for needle in (
+    "private val toolAxisDepthBeadPaint",
+    "val depthMagnitude=(kotlin.math.abs(axisDepthDelta)/cueLength.coerceAtLeast(1e-9)).coerceIn(0.0,1.0).toFloat()",
+    "val nearBias=if(axisDepthDelta>=0.0)t else 1f-t",
+    "canvas.drawCircle(beadX,beadY,beadRadius,toolAxisDepthBeadPaint)",
+):
+    require(machining3d, needle, "STUDIO_ANDROID_AXIS_DEPTH_BEADS_207")
+for needle in (
+    "g2.color=Color(61,235,255,beadAlpha)",
+    "g2.fillOval(beadX-beadRadius,beadY-beadRadius,beadRadius*2,beadRadius*2)",
+    "g.color=Color(61,235,255,beadAlpha)",
+    "g.fillOval(beadX-beadRadius,beadY-beadRadius,beadRadius*2,beadRadius*2)",
+    "5X_AXIS_DEPTH_BEADS=PASS",
+    "5X_AXIS_DEPTH_BEADS_SOURCE=PROJECTED_DEPTH_DELTA",
+    "5X_AXIS_DEPTH_BEADS_STYLE=DIRECTIONAL_RADIUS_ALPHA",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_AXIS_DEPTH_BEADS_207")
+print("AXIS_DEPTH_BEADS_GATE_PASS|ANDROID|WINDOWS|3D|5AX|PROJECTED_DEPTH_DELTA|DIRECTIONAL_RADIUS|DIRECTIONAL_ALPHA|SMOKE_EVIDENCE|VISUAL_ONLY")
+for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
     'visualHost.addView(',
