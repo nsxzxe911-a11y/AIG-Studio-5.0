@@ -703,7 +703,14 @@ class MainActivity : Activity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         try {
-        val uiBootstrap=StudioRuntimeUiDirectoryBootstrap.read(this)
+        // First frame never waits on external UI-directory I/O.
+        // Persisted UI state is hydrated only after the production Runtime has drawn once.
+        val uiBootstrap=StudioRuntimeUiBootstrapState(
+            source="EMBEDDED_FIRST_FRAME",
+            entryMode="CAD",
+            themeId=StudioProductionTheme.ID,
+            validLocalUi=false
+        )
         val environmentPrefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
         environmentRestartApplied = environmentPrefs.getBoolean("restart_required", false)
         if (environmentRestartApplied) {
@@ -1175,37 +1182,54 @@ class MainActivity : Activity() {
         openCategory("繪圖") { showDrawingBranch() }
         selectTool(Tool.LINE)
         refreshVisibleMode(uiBootstrap.entryMode)
-        root.post {
-            if (!root.isAttachedToWindow) {
-                showStartupRecoveryUi(IllegalStateException("PRODUCTION UI ATTACH BLOCKED"))
-                return@post
-            }
-            root.post {
-                runCatching {
-                    StudioRuntimeUiDirectoryBootstrap.writeReady(
-                        this,
-                        uiBootstrap.entryMode,
-                        StudioProductionTheme.ID
-                    )
-                    status.text="UI AUTOLOAD • "+uiBootstrap.source+" • "+uiBootstrap.entryMode+
-                        " • Theme "+StudioProductionTheme.ID
-                    reportFullyDrawn()
-                }.onFailure {
-                    status.text="UI READY • UI DIRECTORY EVIDENCE BLOCKED: "+(it.message?:"error")
-                }
-                scheduleBackgroundOnlineServices()
-
-                root.postDelayed({
-                    if (environmentRestartApplied) {
-                        Toast.makeText(this, "重開套用完成 • 3D/SIM 畫質核心已重新載入", Toast.LENGTH_SHORT).show()
+        // Tie UI readiness to the first actual draw rather than Handler ordering.
+        var firstProductionDrawHandled=false
+        val firstDrawListener=object:android.view.ViewTreeObserver.OnDrawListener {
+            override fun onDraw() {
+                if(firstProductionDrawHandled) return
+                firstProductionDrawHandled=true
+                root.post {
+                    if(root.viewTreeObserver.isAlive) {
+                        runCatching { root.viewTreeObserver.removeOnDrawListener(this) }
                     }
-                    loadRotaryMachineProfile()
-                    restoreCadCheckpointIfAvailable()
-                    autosaveHandler.postDelayed(autosaveRunnable, 15000L)
-                    cad.invalidate()
-                }, 350L)
+                    if (!root.isAttachedToWindow) {
+                        showStartupRecoveryUi(IllegalStateException("PRODUCTION UI DRAW DETACHED"))
+                        return@post
+                    }
+
+                    val localUi=StudioRuntimeUiDirectoryBootstrap.read(this@MainActivity)
+                    if(localUi.validLocalUi && localUi.entryMode!=uiBootstrap.entryMode) {
+                        selectProductionUi(localUi.entryMode)
+                        refreshVisibleMode(localUi.entryMode)
+                    }
+                    val readyMode=if(localUi.validLocalUi) localUi.entryMode else uiBootstrap.entryMode
+                    runCatching {
+                        StudioRuntimeUiDirectoryBootstrap.writeReady(
+                            this@MainActivity,
+                            readyMode,
+                            StudioProductionTheme.ID
+                        )
+                        status.text="UI AUTOLOAD • "+localUi.source+" • "+readyMode+
+                            " • Theme "+StudioProductionTheme.ID
+                        reportFullyDrawn()
+                    }.onFailure {
+                        status.text="UI READY • UI DIRECTORY EVIDENCE BLOCKED: "+(it.message?:"error")
+                    }
+
+                    root.postDelayed({ scheduleBackgroundOnlineServices() },250L)
+                    root.postDelayed({
+                        if (environmentRestartApplied) {
+                            Toast.makeText(this@MainActivity, "重開套用完成 • 3D/SIM 畫質核心已重新載入", Toast.LENGTH_SHORT).show()
+                        }
+                        loadRotaryMachineProfile()
+                        restoreCadCheckpointIfAvailable()
+                        autosaveHandler.postDelayed(autosaveRunnable, 15000L)
+                        cad.invalidate()
+                    },350L)
+                }
             }
         }
+        root.viewTreeObserver.addOnDrawListener(firstDrawListener)
         // Network never participates in startup. Online services run only after visible UI.
         } catch (startupError: Throwable) {
             showStartupRecoveryUi(startupError)
