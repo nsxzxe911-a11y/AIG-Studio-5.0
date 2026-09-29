@@ -2731,6 +2731,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         add(moduleButtons,BorderLayout.CENTER)
     }
     val drawTools=CadToolGrid()
+    val quickTools=CadToolGrid()
     val editTools=CadToolGrid()
     val linkTools=CadToolGrid()
     val assemblyTools=CadToolGrid()
@@ -2750,6 +2751,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     val cadCardHost=JPanel(cadCardLayout).apply{
         background=StudioDesktopProductionTheme.panel
         add(drawTools,"DRAW")
+        add(quickTools,"QUICK")
         add(editTools,"EDIT")
         add(linkTools,"LINK")
         add(assemblyTools,"ASSEMBLY")
@@ -2773,6 +2775,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         cadDeckNav.add(b)
     }
     cadDeckButton("繪圖","DRAW",StudioDesktopProductionTheme.accent)
+    cadDeckButton("快速","QUICK",Color(245,158,11))
     cadDeckButton("修改","EDIT",Color(236,72,153))
     cadDeckButton("連接","LINK",StudioDesktopProductionTheme.cutting)
     cadDeckButton("組裝","ASSEMBLY",Color(245,158,11))
@@ -2827,6 +2830,18 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         val value=JTextField(initial,10)
         if(JOptionPane.showConfirmDialog(frame,value,title,JOptionPane.OK_CANCEL_OPTION)==JOptionPane.OK_OPTION){
             value.text.trim().toDoubleOrNull()?.let(run) ?: run { status.text="$title BLOCKED • invalid value" }
+        }
+    }
+
+    fun askValues(title:String,specs:List<Pair<String,String>>,run:(List<Double>)->Unit) {
+        val inputs=specs.map{(label,initial)->label to JTextField(initial,10)}
+        val panel=JPanel(GridLayout(0,2,5,5)).apply{
+            inputs.forEach{(label,input)->add(JLabel(label));add(input)}
+        }
+        if(JOptionPane.showConfirmDialog(frame,panel,title,JOptionPane.OK_CANCEL_OPTION)==JOptionPane.OK_OPTION){
+            val values=inputs.map{it.second.text.trim().toDoubleOrNull()}
+            if(values.any{it==null}) status.text="$title BLOCKED • invalid values"
+            else run(values.filterNotNull())
         }
     }
 
@@ -3048,6 +3063,26 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     drawTools.add(button("圓弧", Color(59,130,246)) { cad.mode=DrawMode.ARC; status.text="ARC • CENTER / START / END" })
     drawTools.add(button("孔", Color(236,72,153)) { cad.mode=DrawMode.HOLE; status.text="HOLE • CENTER / RADIUS" })
     drawTools.add(button("選取", Color(80,170,255)) { cad.mode=DrawMode.SELECT; status.text="SELECT • LINE / RECT / CIRCLE / ARC / HOLE" })
+    quickTools.add(button("中心矩形",Color(245,158,11)){
+        askValues("中心矩形",listOf("中心 X mm" to "0.000","中心 Y mm" to "0.000","寬 mm" to "40.000","高 mm" to "20.000")){v->
+            cad.centerRect(Vec2(v[0],v[1]),v[2],v[3])
+        }
+    })
+    quickTools.add(button("SLOT",Color(139,92,246)){
+        askValues("SLOT",listOf("中心 X mm" to "0.000","中心 Y mm" to "0.000","總長 mm" to "30.000","寬 mm" to "10.000","角度 °" to "0.000")){v->
+            cad.slot(Vec2(v[0],v[1]),v[2],v[3],v[4])
+        }
+    })
+    quickTools.add(button("POLYGON",Color(59,130,246)){
+        askValues("POLYGON",listOf("中心 X mm" to "0.000","中心 Y mm" to "0.000","半徑 mm" to "10.000","邊數" to "6","旋轉 °" to "0.000")){v->
+            cad.polygon(Vec2(v[0],v[1]),v[2],v[3].toInt(),v[4])
+        }
+    })
+    quickTools.add(button("孔群",Color(236,72,153)){
+        askValues("孔群",listOf("中心 X mm" to "0.000","中心 Y mm" to "0.000","PCD mm" to "40.000","孔徑 mm" to "6.000","孔數" to "6","起始角 °" to "0.000")){v->
+            cad.boltCircle(Vec2(v[0],v[1]),v[2],v[3],v[4].toInt(),v[5])
+        }
+    })
     editTools.add(button("移動", Color(61,235,255)) { askDelta("MOVE"){x,y->cad.moveSelected(x,y)} })
     editTools.add(button("複製", Color(63,255,157)) { askDelta("COPY"){x,y->cad.copySelected(x,y)} })
     editTools.add(button("旋轉", Color(139,92,246)) { askAngle(cad::rotateSelected) })
