@@ -2209,22 +2209,11 @@ class MainActivity : Activity() {
             simulationIndex=0
         }
 
-        fun installSimulationView(mode:String,axisOverlay:Boolean) {
+        fun installSimulationView(mode:String) {
             rebuildSimulationResult(mode)
             val view=Machining3DView(this,simulationResult,simulationMode(mode))
             activeMachiningView=view
             visualHost.addView(view,FrameLayout.LayoutParams(-1,-1))
-            if(axisOverlay){
-                val preview=Axis5xPreview(this,draftA,draftB,activeAxisMode){a,b->draftA=a;draftB=b}
-                preview.alpha=0.88f
-                activeAxisPreview=preview
-                visualHost.addView(
-                    preview,
-                    FrameLayout.LayoutParams(dp(180),dp(150),Gravity.TOP or Gravity.END).apply {
-                        setMargins(0,dp(8),dp(8),0)
-                    }
-                )
-            }
             view.showProgressiveFrame(0)
         }
 
@@ -2238,7 +2227,7 @@ class MainActivity : Activity() {
             }
             simulationIndex=frame.index
             activeAxisPreview?.setAngles(frame.toolPoint.axisA,frame.toolPoint.axisB)
-            simulationStatus.text="真走刀 • "+activeAxisMode+" • "+(frame.index+1)+"/"+frame.total+
+            simulationStatus.text="主 UI 機台 • "+activeAxisMode+" • "+(frame.index+1)+"/"+frame.total+
                 " • X="+DisplayFormat.mm(frame.toolPoint.to.x)+
                 " Y="+DisplayFormat.mm(frame.toolPoint.to.y)+
                 " Z="+DisplayFormat.mm(frame.toolPoint.z)+
@@ -2291,19 +2280,19 @@ class MainActivity : Activity() {
                     },FrameLayout.LayoutParams(-1,-1))
                 }
                 "3D","3AX" -> {
-                    installSimulationView("3AX",axisOverlay=false)
+                    installSimulationView("3AX")
                     showSimulationFrame(0)
                 }
                 "4AX" -> {
                     val state=MachiningAxisRuntimeContract.state("4AX",draftA,draftB)
                     draftA=state.axisA; draftB=state.axisB
-                    installSimulationView("4AX",axisOverlay=true)
+                    installSimulationView("4AX")
                     showSimulationFrame(0)
                 }
                 "5AX" -> {
                     val state=MachiningAxisRuntimeContract.state("5AX",draftA,draftB)
                     draftA=state.axisA; draftB=state.axisB
-                    installSimulationView("5AX",axisOverlay=true)
+                    installSimulationView("5AX")
                     showSimulationFrame(0)
                 }
                 "NC_EDIT" -> {
