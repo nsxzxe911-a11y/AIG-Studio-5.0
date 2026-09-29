@@ -1772,12 +1772,39 @@ private fun runSmoke() {
         node.doLayout()
         node.components.filterIsInstance<Container>().forEach(::layoutTree)
     }
+    fun findButton(node:Component,label:String):AbstractButton?{
+        if(node is AbstractButton && node.text==label)return node
+        if(node is Container)node.components.forEach{child->findButton(child,label)?.let{return it}}
+        return null
+    }
+    fun onEdt(block:()->Unit){
+        if(SwingUtilities.isEventDispatchThread())block()
+        else SwingUtilities.invokeAndWait{block()}
+    }
     layoutTree(productionPanel)
     val productionImage=BufferedImage(1280,800,BufferedImage.TYPE_INT_ARGB)
     val productionGraphics=productionImage.createGraphics()
     productionPanel.printAll(productionGraphics)
     productionGraphics.dispose()
     ImageIO.write(productionImage,"png",launchFile)
+    val toolToggle=findButton(productionPanel,"工具 ◀") ?: error("Windows tool dock toggle not found")
+    val contextToggle=findButton(productionPanel,"狀態 ◀") ?: error("Windows context dock toggle not found")
+    onEdt{
+        toolToggle.doClick(0)
+        contextToggle.doClick(0)
+        layoutTree(productionPanel)
+        productionPanel.revalidate()
+        productionPanel.repaint()
+        (productionPanel as? JComponent)?.paintImmediately(0,0,productionPanel.width,productionPanel.height)
+    }
+    val collapsedImage=BufferedImage(1280,800,BufferedImage.TYPE_INT_ARGB)
+    val collapsedGraphics=collapsedImage.createGraphics()
+    productionPanel.printAll(collapsedGraphics)
+    collapsedGraphics.dispose()
+    val collapsedFile=File("desktop_cad_collapsed.png")
+    ImageIO.write(collapsedImage,"png",collapsedFile)
+    require(collapsedFile.isFile && collapsedFile.length()>0){"Collapsed production shell image missing"}
+    require(toolToggle.text=="工具 ▶" && contextToggle.text=="狀態 ▶"){"Windows dock collapse state failed"}
     productionFrame.dispose()
     require(launchFile.isFile && launchFile.length()>0){"Production shell launch image missing"}
     smokeDeck.selectedIndex=1
@@ -2918,17 +2945,20 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             runCatching{showUnifiedMachiningEditor(frame,doc,status,"3D")}
                 .onFailure{status.text="3D SIM BLOCKED • "+(it.message?:"error")}
         }
-        camAction("3AX",LibraryFiveAxisSkin208.cyan){
-            runCatching{showUnifiedMachiningEditor(frame,doc,status,"3AX")}
-                .onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}
-        }
-        camAction("4AX",LibraryFiveAxisSkin208.warning){
-            runCatching{showUnifiedMachiningEditor(frame,doc,status,"4AX")}
-                .onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}
-        }
-        camAction("5AX",LibraryFiveAxisSkin208.magenta){
-            runCatching{showUnifiedMachiningEditor(frame,doc,status,"5AX")}
-                .onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}
+        camAction("軸模式",LibraryFiveAxisSkin208.cyan){
+            val choice=JOptionPane.showInputDialog(
+                frame,
+                "選擇 CAM / SIM 軸模式",
+                "軸模式",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                arrayOf("3AX","4AX","5AX"),
+                "3AX"
+            ) as? String
+            if(choice!=null){
+                runCatching{showUnifiedMachiningEditor(frame,doc,status,choice)}
+                    .onFailure{status.text=choice+" BLOCKED • "+(it.message?:"error")}
+            }
         }
         camAction("NC",Color(80,170,255)){
             runCatching{showNcEditor(frame,doc)}
@@ -3119,13 +3149,75 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         linkValue.text=doc.links().size.toString()
     }.apply{isRepeats=true;start()}
 
+    val toolDock=JPanel(BorderLayout()).apply{
+        background=StudioDesktopProductionTheme.background
+        preferredSize=Dimension(260,0)
+        minimumSize=Dimension(52,0)
+    }
+    val toolDockToggle=GlassActionButton("工具 ◀",StudioDesktopProductionTheme.accent).apply{
+        preferredSize=Dimension(0,38)
+        addActionListener{
+            val expanded=!cadDeck.isVisible
+            cadDeck.isVisible=expanded
+            toolDock.preferredSize=Dimension(if(expanded)260 else 52,0)
+            text=if(expanded)"工具 ◀" else "工具 ▶"
+            toolDock.parent?.revalidate()
+            toolDock.parent?.repaint()
+        }
+    }
+    toolDock.add(toolDockToggle,BorderLayout.NORTH)
+    toolDock.add(cadDeck,BorderLayout.CENTER)
+
+    val contextDock=JPanel(BorderLayout()).apply{
+        background=StudioDesktopProductionTheme.background
+        preferredSize=Dimension(190,0)
+        minimumSize=Dimension(52,0)
+    }
+    val contextToggle=GlassActionButton("狀態 ◀",Color(125,112,255)).apply{
+        preferredSize=Dimension(0,38)
+        addActionListener{
+            val expanded=!infoRail.isVisible
+            infoRail.isVisible=expanded
+            contextDock.preferredSize=Dimension(if(expanded)190 else 52,0)
+            text=if(expanded)"狀態 ◀" else "狀態 ▶"
+            contextDock.parent?.revalidate()
+            contextDock.parent?.repaint()
+        }
+    }
+    contextDock.add(contextToggle,BorderLayout.NORTH)
+    contextDock.add(infoRail,BorderLayout.CENTER)
+
+    val desktopQuickBar=AdaptiveGlassToolbar().apply{
+        add(GlassActionButton("LINE",Color(61,235,255)).apply{addActionListener{cad.mode=DrawMode.LINE;status.text="CAD LINE"}})
+        add(GlassActionButton("SELECT",Color(80,170,255)).apply{addActionListener{cad.mode=DrawMode.SELECT;status.text="CAD SELECT"}})
+        add(GlassActionButton("SNAP",Color(63,255,157)).apply{addActionListener{
+            cad.snapEnabled=!cad.snapEnabled
+            status.text="SNAP "+if(cad.snapEnabled)"ON • END/MID/CENTER/INTERSECTION/TANGENT/H/V" else "OFF"
+        }})
+        add(GlassActionButton("UNDO",Color(125,112,255)).apply{addActionListener{cad.undoEdit();status.text="UNDO"}})
+        add(GlassActionButton("REDO",Color(125,112,255)).apply{addActionListener{cad.redoEdit();status.text="REDO"}})
+        add(GlassActionButton("更多",Color(139,92,246)).apply{addActionListener{if(!cadDeck.isVisible)toolDockToggle.doClick()}})
+    }
+    check(desktopQuickBar.componentCount<=DesktopUxContract.WINDOWS_MAX_VISIBLE_ACTIONS)
+
+    val workspaceCore=JPanel(BorderLayout(6,6)).apply{
+        background=StudioDesktopProductionTheme.background
+        add(toolDock,BorderLayout.WEST)
+        add(cad,BorderLayout.CENTER)
+        add(contextDock,BorderLayout.EAST)
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).apply{
+            put(KeyStroke.getKeyStroke("control Z"),"cadUndo")
+            put(KeyStroke.getKeyStroke("control Y"),"cadRedo")
+        }
+        actionMap.put("cadUndo",object:AbstractAction(){override fun actionPerformed(e:ActionEvent?){cad.undoEdit();status.text="UNDO"}})
+        actionMap.put("cadRedo",object:AbstractAction(){override fun actionPerformed(e:ActionEvent?){cad.redoEdit();status.text="REDO"}})
+    }
     val workspace=JPanel(BorderLayout(6,6)).apply{
         name="CAD_CARD"
         background=StudioDesktopProductionTheme.background
         border=BorderFactory.createEmptyBorder(5,5,5,5)
-        add(cadDeck,BorderLayout.WEST)
-        add(cad,BorderLayout.CENTER)
-        add(infoRail,BorderLayout.EAST)
+        add(desktopQuickBar,BorderLayout.NORTH)
+        add(workspaceCore,BorderLayout.CENTER)
     }
     val aiSummary=JTextArea().apply{
         isEditable=false

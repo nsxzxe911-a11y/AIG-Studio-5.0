@@ -877,6 +877,28 @@ object RuntimeUxFlowContract {
     }
 }
 
+object DesktopUxContract {
+    const val POLICY = "WINDOWS_WORKSPACE_FIRST_COLLAPSIBLE_DOCKS"
+    const val WINDOWS_MAX_VISIBLE_ACTIONS = 6
+    const val COLLAPSIBLE_TOOL_DOCK = true
+    const val COLLAPSIBLE_CONTEXT_DOCK = true
+    const val AXIS_SELECTOR_SINGLE_ENTRY = true
+    const val KEYBOARD_SHORTCUTS = true
+    const val WORKSPACE_FIRST = true
+
+    fun quickActions(mode:String):List<String> = when(mode.trim().uppercase()) {
+        "CAD" -> listOf("LINE","SELECT","SNAP","UNDO","REDO","更多")
+        "CAM" -> listOf("GENERATE","PARAM","AXIS MODE","SIM")
+        "SIM" -> listOf("RUN","RISK","AXIS MODE","NC")
+        "NC" -> listOf("EDIT","SAFETY","SIM")
+        "AI" -> listOf("INSPECT","MAINT","UPDATE","CAD")
+        else -> emptyList()
+    }
+
+    fun valid(mode:String):Boolean =
+        quickActions(mode).size in 1..WINDOWS_MAX_VISIBLE_ACTIONS
+}
+
 object OfflineFirstRuntimeContract {
     const val POLICY = "OFFLINE_FIRST_UI_BOOT"
     const val NETWORK_REQUIRED_FOR_STARTUP = false
