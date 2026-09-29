@@ -34,6 +34,8 @@ try {
     'desktop_launch.png',
     'desktop_3d_before.png',
     'desktop_3d.png',
+    'desktop_5x_axis_badge_mid.png',
+    'desktop_5x_axis_badge_narrow.png',
     'desktop_smoke.txt',
     'REMOVED_CELLS.txt',
     '3D_RUNTIME_EVIDENCE.txt',
@@ -46,6 +48,18 @@ try {
     $content = Get-Content $name -Raw
     if ($content -notmatch [regex]::Escape("SOURCE_SHA=$GitSha")) {
       throw "Studio Windows smoke evidence source mismatch: $name"
+    }
+  }
+  $RuntimeEvidence = Get-Content '3D_RUNTIME_EVIDENCE.txt' -Raw
+  foreach ($marker in @(
+    '5X_AXIS_BADGE_REFLOW=PASS',
+    '5X_AXIS_BADGE_REFLOW_2LINE=PASS',
+    '5X_AXIS_BADGE_REFLOW_3LINE=PASS',
+    '5X_AXIS_BADGE_REFLOW_NO_OVERFLOW=PASS',
+    '5X_AXIS_BADGE_REFLOW_PRESERVE=AB_DIRECTION_DEPTH_POSE_ANGLE'
+  )) {
+    if ($RuntimeEvidence -notmatch [regex]::Escape($marker)) {
+      throw "Studio 206 pose badge smoke evidence missing: $marker"
     }
   }
 } finally {
