@@ -748,6 +748,10 @@ class MainActivity : Activity() {
                     action("CIRCLE",2){selectTool(Tool.CIRCLE)}
                     action("ARC",3){selectTool(Tool.ARC)}
                     action("HOLE",4){selectTool(Tool.HOLE)}
+                    action("中心矩形",5){cad.promptCenterRect()}
+                    action("SLOT",2){cad.promptSlot()}
+                    action("POLYGON",3){cad.promptPolygon()}
+                    action("孔群",4){cad.promptBoltCircle()}
                     action("SELECT",1){selectTool(Tool.SELECT)}
                     action("SNAP",0){cad.toggleSnap()}
                     action("尺寸",5){cad.promptDrivenDimension()}
@@ -1045,6 +1049,7 @@ class MainActivity : Activity() {
 
         // Tool controls now float over the CAD stage; they no longer consume workspace height.
         addCategory("繪圖", 0) { showDrawingBranch() }
+        addCategory("快速", 5) { showQuickCreateBranch() }
         addCategory("檢視", 0) { showViewBranch() }
         addCategory("修改", 3) { showModifyBranch() }
         addCategory("連接", 1) { showLinkBranch() }
@@ -1651,6 +1656,13 @@ class MainActivity : Activity() {
         addToolToBranch("孔", Tool.HOLE, 4)
         addActionTo(branchFlow, "SNAP", 3) { cad.toggleSnap() }
         addToolToBranch("尺寸", Tool.MEASURE, 5)
+    }
+    private fun showQuickCreateBranch() {
+        branchFlow.removeAllViews(); toolButtons.clear()
+        addActionTo(branchFlow, "中心矩形", 5) { cad.promptCenterRect() }
+        addActionTo(branchFlow, "SLOT", 2) { cad.promptSlot() }
+        addActionTo(branchFlow, "POLYGON", 3) { cad.promptPolygon() }
+        addActionTo(branchFlow, "孔群", 4) { cad.promptBoltCircle() }
     }
     private fun showViewBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
