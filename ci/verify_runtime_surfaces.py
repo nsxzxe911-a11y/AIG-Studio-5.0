@@ -196,7 +196,7 @@ for needle in (
 ):
     require(env, needle, "OFFLINE_FIRST_CONTRACT_221")
 for needle in (
-    'bootOverlay.completeAndDetach(bootShell)',
+    'setContentView(root)',
     'scheduleBackgroundOnlineServices()',
     'cm.registerDefaultNetworkCallback(callback)',
     'OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)',
@@ -261,7 +261,7 @@ for needle in (
 for needle in (
     'GlassActionButton("維修"',
     'fun showMaintenanceCenter()',
-    'showApp(startup=null,showWindow=false)',
+    'showApp(showWindow=true)',
     'productionFrame.contentPane',
 ):
     require(desktop, needle, "WINDOWS_INTEGRATED_MAINTENANCE_221")
