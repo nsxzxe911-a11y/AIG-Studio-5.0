@@ -444,6 +444,16 @@ private class CadPanel(
     }
 
     fun selectedCount():Int = selectedIds.size
+    fun selectedEntityIds():Set<EntityId> = selectedIds.toSet()
+
+    fun addGenerated(label:String,entities:List<Entity>) {
+        require(entities.isNotEmpty()) { "$label generated no geometry" }
+        history.run(AddEntitiesCommand(entities))
+        selectedIds.clear()
+        selectedIds.addAll(entities.map{it.id})
+        repaint()
+        status("$label PASS • entities="+entities.size+" • CAM/SIM/NC REBUILD")
+    }
 
     fun clearCad() {
         doc.clear()
@@ -2640,6 +2650,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
     val status = JLabel("AIG CNC • FANUC / MITSUBISHI M800/M80 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
     status.foreground = Color(99, 255, 157)
     val cad = CadPanel(doc) { status.text = it }
+    var desktopCamSettings = CamSettings()
+    var moduleClipboard:CadModuleTemplate? = null
 
     val frame = JFrame("AIG CNC — OFFICIAL RGB ORIGINAL")
     startup?.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")
@@ -2668,8 +2680,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         add(moduleButtons,BorderLayout.CENTER)
     }
     val drawTools=CadToolGrid()
+    val createTools=CadToolGrid()
     val editTools=CadToolGrid()
     val linkTools=CadToolGrid()
+    val assemblyTools=CadToolGrid()
     val viewTools=JPanel().apply{
         layout=BoxLayout(this,BoxLayout.Y_AXIS)
         background=Color(8,18,30)
@@ -2686,8 +2700,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
     val cadCardHost=JPanel(cadCardLayout).apply{
         background=StudioDesktopProductionTheme.panel
         add(drawTools,"DRAW")
+        add(createTools,"CREATE")
         add(editTools,"EDIT")
         add(linkTools,"LINK")
+        add(assemblyTools,"ASSEMBLY")
         add(viewTools,"VIEW")
     }
     val cadDeckButtons=mutableListOf<GlassActionButton>()
@@ -2708,8 +2724,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         cadDeckNav.add(b)
     }
     cadDeckButton("繪圖","DRAW",StudioDesktopProductionTheme.accent)
+    cadDeckButton("建立","CREATE",Color(59,130,246))
     cadDeckButton("修改","EDIT",Color(236,72,153))
     cadDeckButton("連接","LINK",StudioDesktopProductionTheme.cutting)
+    cadDeckButton("組裝","ASSEMBLY",Color(245,158,11))
     cadDeckButton("檢視","VIEW",Color(125,112,255))
     cadDeckButtons.firstOrNull()?.active=true
     val cadDeck=JPanel(BorderLayout(6,6)).apply{
@@ -2777,6 +2795,17 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         }
     }
 
+    fun askCsv(title:String,example:String,count:Int,run:(List<String>)->Unit) {
+        val input=JTextField(example,32)
+        if(JOptionPane.showConfirmDialog(frame,input,title,JOptionPane.OK_CANCEL_OPTION)==JOptionPane.OK_OPTION){
+            val values=input.text.split(',').map{it.trim()}
+            if(values.size!=count) status.text="$title BLOCKED • expected $count values"
+            else run(values)
+        }
+    }
+
+    lateinit var refreshProductionCam:()->Unit
+
     fun buildProductionCamPanel():JPanel {
         val snapshot=doc.snapshot()
         if(snapshot.entities.isEmpty()){
@@ -2790,7 +2819,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
                 },BorderLayout.CENTER)
             }
         }
-        val result=Machining3DEngine.build(snapshot)
+        val result=Machining3DEngine.build(snapshot,desktopCamSettings)
         val cam=result.cam
         val settings=cam.settings
         val left=JPanel(BorderLayout(6,6)).apply{
@@ -2841,9 +2870,24 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         parameter("SAFE-Z",DisplayFormat.mm(settings.safeZ)+" mm",StudioDesktopProductionTheme.warning)
         parameter("FEED",DisplayFormat.mm(settings.feedMmMin)+" mm/min",Color(80,170,255))
         parameter("DIRECTION",if(settings.climb)"CLIMB" else "CONVENTIONAL",Color(236,72,153))
+        parameter("QUICK CAM",settings.operationMode.name,Color(139,92,246))
         val actions=AdaptiveGlassToolbar()
         fun camAction(label:String,color:Color,run:()->Unit){
             actions.add(GlassActionButton(label,color).apply{addActionListener{run()}})
+        }
+        listOf(
+            CamOperationMode.AUTO to "AUTO",
+            CamOperationMode.CONTOUR to "輪廓",
+            CamOperationMode.POCKET to "口袋",
+            CamOperationMode.DRILL to "鑽孔",
+            CamOperationMode.ENGRAVE to "雕刻",
+            CamOperationMode.FACE to "面銑"
+        ).forEach { (mode,label) ->
+            camAction(label,if(mode==settings.operationMode)Color(61,235,255) else Color(80,170,255)){
+                desktopCamSettings=desktopCamSettings.copy(operationMode=mode)
+                refreshProductionCam()
+                status.text="QUICK CAM "+mode.name+" • 真刀路已重算"
+            }
         }
         camAction("3D SIM",Color(139,92,246)){
             runCatching{showUnifiedMachiningEditor(frame,doc,status,"3D")}
@@ -2887,8 +2931,11 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         mainCardLayout.show(mainCardHost,"CAM")
         mainCardHost.revalidate()
         mainCardHost.repaint()
-        status.text=if(doc.size()>0)"CAM READY • 真刀路 / 真 3D / 材料移除" else "CAM WAITING • CAD geometry required"
+        status.text=if(doc.size()>0)
+            "CAM "+desktopCamSettings.operationMode.name+" READY • 真刀路 / 真 3D / 材料移除"
+        else "CAM WAITING • CAD geometry required"
     }
+    refreshProductionCam={showProductionCam()}
 
     viewTools.add(button("SNAP",Color(61,235,255)) {
         cad.snapEnabled=!cad.snapEnabled
@@ -2905,6 +2952,64 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
     drawTools.add(button("圓弧", Color(59,130,246)) { cad.mode=DrawMode.ARC; status.text="ARC • CENTER / START / END" })
     drawTools.add(button("孔", Color(236,72,153)) { cad.mode=DrawMode.HOLE; status.text="HOLE • CENTER / RADIUS" })
     drawTools.add(button("選取", Color(80,170,255)) { cad.mode=DrawMode.SELECT; status.text="SELECT • LINE / RECT / CIRCLE / ARC / HOLE" })
+
+    createTools.add(button("中心矩形",Color(59,130,246)){
+        askCsv("中心矩形：CenterX, CenterY, Width, Height","0.000, 0.000, 40.000, 25.000",4){p->
+            runCatching{CadQuickCreateEngine.centerRect(Vec2(p[0].toDouble(),p[1].toDouble()),p[2].toDouble(),p[3].toDouble())}
+                .onSuccess{cad.addGenerated("CENTER RECT",it)}
+                .onFailure{status.text="CENTER RECT BLOCKED • "+(it.message?:"error")}
+        }
+    })
+    createTools.add(button("槽孔",Color(236,72,153)){
+        askCsv("槽孔：CenterX, CenterY, Length, Width, Angle","0.000, 0.000, 40.000, 12.000, 0.000",5){p->
+            runCatching{CadQuickCreateEngine.slot(Vec2(p[0].toDouble(),p[1].toDouble()),p[2].toDouble(),p[3].toDouble(),p[4].toDouble())}
+                .onSuccess{cad.addGenerated("SLOT",it)}
+                .onFailure{status.text="SLOT BLOCKED • "+(it.message?:"error")}
+        }
+    })
+    createTools.add(button("正多邊形",Color(139,92,246)){
+        askCsv("正多邊形：CenterX, CenterY, Radius, Sides, Rotation","0.000, 0.000, 20.000, 6, 0.000",5){p->
+            runCatching{CadQuickCreateEngine.regularPolygon(Vec2(p[0].toDouble(),p[1].toDouble()),p[2].toDouble(),p[3].toInt(),p[4].toDouble())}
+                .onSuccess{cad.addGenerated("POLYGON",it)}
+                .onFailure{status.text="POLYGON BLOCKED • "+(it.message?:"error")}
+        }
+    })
+    createTools.add(button("孔群",Color(245,158,11)){
+        askCsv("孔群：CenterX, CenterY, PCD, HoleDia, Count, StartAngle","0.000, 0.000, 40.000, 6.000, 6, 0.000",6){p->
+            runCatching{CadQuickCreateEngine.boltCircle(Vec2(p[0].toDouble(),p[1].toDouble()),p[2].toDouble(),p[3].toDouble(),p[4].toInt(),p[5].toDouble())}
+                .onSuccess{cad.addGenerated("BOLT CIRCLE",it)}
+                .onFailure{status.text="BOLT CIRCLE BLOCKED • "+(it.message?:"error")}
+        }
+    })
+
+    assemblyTools.add(button("選取零件",Color(80,170,255)){cad.mode=DrawMode.SELECT;status.text="MODULE • 選取零件"})
+    assemblyTools.add(button("儲存模組",Color(63,255,157)){
+        runCatching{CadModuleEngine.capture(doc,cad.selectedEntityIds(),"WORKPIECE")}
+            .onSuccess{moduleClipboard=it;status.text="MODULE SAVE PASS • entities="+it.entities.size}
+            .onFailure{status.text="MODULE SAVE BLOCKED • "+(it.message?:"select geometry first")}
+    })
+    assemblyTools.add(button("插入模組",Color(245,158,11)){
+        val module=moduleClipboard
+        if(module==null){
+            status.text="MODULE INSERT BLOCKED • 請先儲存模組"
+        }else{
+            askCsv(
+                "插入模組：X, Y, Rotation",
+                DisplayFormat.mm(module.origin.x)+", "+DisplayFormat.mm(module.origin.y)+", 0.000",
+                3
+            ){p->
+                runCatching{
+                    CadModuleEngine.instantiate(
+                        module,
+                        Vec2(p[0].toDouble(),p[1].toDouble()),
+                        p[2].toDouble()
+                    )
+                }.onSuccess{cad.addGenerated("MODULE INSERT",it)}
+                    .onFailure{status.text="MODULE INSERT BLOCKED • "+(it.message?:"error")}
+            }
+        }
+    })
+
     editTools.add(button("移動", Color(61,235,255)) { askDelta("MOVE"){x,y->cad.moveSelected(x,y)} })
     editTools.add(button("複製", Color(63,255,157)) { askDelta("COPY"){x,y->cad.copySelected(x,y)} })
     editTools.add(button("旋轉", Color(139,92,246)) { askAngle(cad::rotateSelected) })
