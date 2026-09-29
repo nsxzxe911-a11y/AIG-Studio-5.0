@@ -824,6 +824,21 @@ class MainActivity : Activity() {
             contentDescription="NETWORK OPTIONAL STATUS"
         }
         root.addView(networkStateBadge,LinearLayout.LayoutParams(-1,-2))
+        val maintenanceStrip=FlowLayout(this).apply {
+            contentDescription="MAINTENANCE SYSTEM STRIP"
+            setPadding(dp(5),dp(1),dp(5),dp(2))
+            addView(RgbGlowButton(this@MainActivity).apply {
+                text="維修"
+                contentDescription="MAINTENANCE CENTER"
+                textSize=StudioDisplayPolicy.sp(this,9.5f)
+                minWidth=dp(76)
+                minHeight=dp(42)
+                maxLines=1
+                setRgbState(0xFF8B5CF6.toInt(),false)
+                setOnClickListener { showMaintenanceCenter() }
+            })
+        }
+        root.addView(maintenanceStrip,LinearLayout.LayoutParams(-1,-2))
         root.addView(visibleModeActions,LinearLayout.LayoutParams(-1,-2))
 
         cad = CadView(this) {
@@ -1247,6 +1262,50 @@ class MainActivity : Activity() {
                 Toast.makeText(this, "AUTO RECOVERY • CAD restored • " + ncState, Toast.LENGTH_SHORT).show()
             }
     }
+
+    private fun showMaintenanceCenter() {
+        val prefs=getSharedPreferences("aig_cad_autosave",MODE_PRIVATE)
+        val checkpoint=prefs.getString("cad_state",null)
+        val ncDraftState=prefs.getString("nc_draft",null)
+        val networkText=if(::networkStateBadge.isInitialized) networkStateBadge.text.toString() else "網路 • 未初始化"
+        val box=LinearLayout(this).apply{
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(14),dp(10),dp(14),dp(8))
+        }
+        box.addView(TextView(this).apply{
+            setTextColor(0xFFE1EFFF.toInt())
+            textSize=12.5f
+            text=buildString{
+                appendLine("AIG CNC "+BuildConfig.VERSION_NAME+" • 正式 Runtime UI 內建維修")
+                appendLine("BOOT="+IntegratedMaintenanceUiContract.DEFAULT_BOOT_TARGET+" • separate engineering shell=OFF")
+                appendLine(networkText+" • 維修可離線")
+                appendLine("RECOVERY="+if(!checkpoint.isNullOrBlank())"CAD READY" else "NONE"+
+                    " • NC="+if(!ncDraftState.isNullOrBlank())"DRAFT" else "NONE")
+                append("Master X0.000 Y0.000 Z0.000 • 0.001 mm")
+            }
+            setPadding(dp(4),dp(4),dp(4),dp(10))
+        })
+        fun action(label:String,run:()->Unit){
+            box.addView(Button(this).apply{
+                text=label
+                isAllCaps=false
+                setOnClickListener{run()}
+            })
+        }
+        action("Recovery / AutoSave"){ restoreCadCheckpointIfAvailable() }
+        action("系統監控 HUD"){ applySystemHudPreference(true); showExpandedSystemHud() }
+        action("環境 / FPS / 溫度"){ showEnvironmentSettings() }
+        action("Security"){ openCategory("安全"){showSecurityBranch()} }
+        action("AI SYSTEM SUITE"){ showAiSystemSuiteDialog() }
+        action("ChatGPT AI 更新"){ runSecureUpdateCheck() }
+        AlertDialog.Builder(this)
+            .setTitle("AIG CNC • 維修 / 診斷")
+            .setView(box)
+            .setPositiveButton("關閉",null)
+            .show()
+        Toast.makeText(this,"MAINTENANCE CENTER • PRODUCTION UI",Toast.LENGTH_SHORT).show()
+    }
+
 
     private fun showAiSystemSuiteDialog() {
         val prefs = getSharedPreferences("aig_environment", MODE_PRIVATE)

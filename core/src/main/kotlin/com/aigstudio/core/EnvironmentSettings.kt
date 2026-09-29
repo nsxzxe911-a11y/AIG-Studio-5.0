@@ -785,6 +785,21 @@ object OfflineFirstRuntimeContract {
 }
 
 
+object IntegratedMaintenanceUiContract {
+    const val POLICY = "ENGINEERING_TOOLS_IN_PRODUCTION_UI"
+    const val DEFAULT_BOOT_TARGET = "PRODUCTION_UI"
+    const val SEPARATE_ENGINEERING_SHELL = false
+    const val OFFLINE_MAINTENANCE_AVAILABLE = true
+    val actions = listOf("RECOVERY","HUD","SYSTEM","SECURITY","AI_SUITE","AI_UPDATE","VERSION")
+
+    fun valid():Boolean =
+        DEFAULT_BOOT_TARGET=="PRODUCTION_UI" &&
+            !SEPARATE_ENGINEERING_SHELL &&
+            OFFLINE_MAINTENANCE_AVAILABLE &&
+            actions.isNotEmpty()
+}
+
+
 object FloatingCadToolContract {
     const val TITLE = "CAD 工具"
     const val BACK = "←"
@@ -1150,7 +1165,7 @@ enum class StudioStartupStage {
 }
 
 object StudioStartupEngineContract {
-    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_218"
+    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_219"
     val orderedStages=listOf(
         StudioStartupStage.BOOTSTRAP,
         StudioStartupStage.SAFE_THEME,

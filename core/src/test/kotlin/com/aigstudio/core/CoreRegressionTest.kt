@@ -1215,6 +1215,12 @@ fun main() {
     check(OfflineFirstRuntimeContract.NETWORK_BADGE_COMPACT)
     check(OfflineFirstRuntimeContract.SINGLE_UPDATE_CHECK_AT_A_TIME)
     println("NETWORK_RETRY_UI_CORE_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE")
+    check(IntegratedMaintenanceUiContract.POLICY=="ENGINEERING_TOOLS_IN_PRODUCTION_UI")
+    check(IntegratedMaintenanceUiContract.DEFAULT_BOOT_TARGET=="PRODUCTION_UI")
+    check(!IntegratedMaintenanceUiContract.SEPARATE_ENGINEERING_SHELL)
+    check(IntegratedMaintenanceUiContract.OFFLINE_MAINTENANCE_AVAILABLE)
+    check(IntegratedMaintenanceUiContract.valid())
+    println("INTEGRATED_MAINTENANCE_UI_CORE_GATE_PASS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|RECOVERY|HUD|SYSTEM|SECURITY|AI_SUITE|AI_UPDATE")
     println("ALL TESTS PASSED")
 }
 

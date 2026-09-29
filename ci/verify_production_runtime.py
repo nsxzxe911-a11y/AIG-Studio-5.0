@@ -8,8 +8,8 @@ if not version_line.startswith("versionName="):
     raise SystemExit("release version metadata missing")
 version = version_line.split("=", 1)[1]
 parts = tuple(int(x) for x in version.split("."))
-if parts < (218, 0, 0):
-    raise SystemExit(f"production runtime line requires >=218.0.0, got {version}")
+if parts < (219, 0, 0):
+    raise SystemExit(f"production runtime line requires >=219.0.0, got {version}")
 
 runtime_roots = [
     ROOT / "app" / "src" / "main",
@@ -53,7 +53,7 @@ for marker in required_desktop:
     if marker not in desktop:
         raise SystemExit(f"Windows production runtime marker missing: {marker}")
 
-if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_218"' not in env:
+if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_219"' not in env:
     raise SystemExit("production startup profile missing")
 if "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" not in android_build:
     raise SystemExit("Android production release state missing")
@@ -171,4 +171,36 @@ for marker in [
 if 'renderNetworkState(true,"更新可用 • "+result.message)' in android_main:
     raise SystemExit("network badge must stay compact")
 print("NETWORK_RETRY_UI_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE")
-print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_218|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
+for marker in [
+    'const val POLICY = "ENGINEERING_TOOLS_IN_PRODUCTION_UI"',
+    'const val DEFAULT_BOOT_TARGET = "PRODUCTION_UI"',
+    'const val SEPARATE_ENGINEERING_SHELL = false',
+    'const val OFFLINE_MAINTENANCE_AVAILABLE = true',
+]:
+    if marker not in env:
+        raise SystemExit(f"integrated maintenance contract missing: {marker}")
+for marker in [
+    'contentDescription="MAINTENANCE CENTER"',
+    'private fun showMaintenanceCenter()',
+    '"AIG CNC • 維修 / 診斷"',
+    'action("Recovery / AutoSave")',
+    'action("系統監控 HUD")',
+    'action("環境 / FPS / 溫度")',
+    'action("Security")',
+    'action("AI SYSTEM SUITE")',
+    'action("ChatGPT AI 更新")',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android integrated maintenance marker missing: {marker}")
+for marker in [
+    'GlassActionButton("維修"',
+    'fun showMaintenanceCenter()',
+    '"AIG CNC • 維修 / 診斷"',
+    'showApp(startup=null,showWindow=false)',
+    'productionFrame.contentPane',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Windows integrated maintenance/production-shell evidence marker missing: {marker}")
+print("INTEGRATED_MAINTENANCE_UI_GATE_PASS|ANDROID|WINDOWS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|REAL_ACTIONS")
+print("PRODUCTION_SHELL_EVIDENCE_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY")
+print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_219|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")

@@ -196,54 +196,79 @@ for needle in (
     'const val NETWORK_REQUIRED_FOR_STARTUP = false',
     'fun startupAllowed(networkAvailable:Boolean):Boolean = true',
 ):
-    require(env, needle, "OFFLINE_FIRST_CONTRACT_218")
+    require(env, needle, "OFFLINE_FIRST_CONTRACT_219")
 for needle in (
     'bootOverlay.completeAndDetach(bootShell)',
     'scheduleBackgroundOnlineServices()',
     'cm.registerDefaultNetworkCallback(callback)',
     'OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)',
 ):
-    require(android, needle, "ANDROID_OFFLINE_FIRST_UI_218")
+    require(android, needle, "ANDROID_OFFLINE_FIRST_UI_219")
 for needle in (
     'LOCAL READY • NETWORK OPTIONAL',
     'OFFLINE-FIRST',
 ):
-    require(desktop, needle, "WINDOWS_OFFLINE_FIRST_UI_218")
+    require(desktop, needle, "WINDOWS_OFFLINE_FIRST_UI_219")
 print("OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY")
 for needle in (
     'const val POST_READY_NETWORK_OBSERVER = true',
     'const val NETWORK_STATUS_MUST_NOT_OVERRIDE_OPERATION = true',
 ):
-    require(env, needle, "NETWORK_RESUME_CONTRACT_218")
+    require(env, needle, "NETWORK_RESUME_CONTRACT_219")
 for needle in (
     'contentDescription="NETWORK OPTIONAL STATUS"',
     'cm.registerDefaultNetworkCallback(callback)',
     'cm.unregisterNetworkCallback(callback)',
     '"網路 • 離線可用 • 本機功能正常"',
 ):
-    require(android, needle, "NETWORK_RESUME_ANDROID_218")
+    require(android, needle, "NETWORK_RESUME_ANDROID_219")
 for needle in (
     'LOCAL READY • NETWORK OPTIONAL',
 ):
-    require(desktop, needle, "NETWORK_RESUME_WINDOWS_218")
+    require(desktop, needle, "NETWORK_RESUME_WINDOWS_219")
 print("NETWORK_RESUME_UI_RUNTIME_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY")
 for needle in (
     'const val NETWORK_RETRY_ON_RECONNECT = true',
     'const val NETWORK_BADGE_COMPACT = true',
     'const val SINGLE_UPDATE_CHECK_AT_A_TIME = true',
 ):
-    require(env, needle, "NETWORK_RETRY_CONTRACT_218")
+    require(env, needle, "NETWORK_RETRY_CONTRACT_219")
 for needle in (
     'onlineAutoCheckRunning.compareAndSet(false,true)',
     'onlineAutoCheckCompleted.set(false)',
     'renderNetworkState(true,"更新可用")',
     'renderNetworkState(true,"更新待重試")',
 ):
-    require(android, needle, "NETWORK_RETRY_ANDROID_218")
+    require(android, needle, "NETWORK_RETRY_ANDROID_219")
 if 'renderNetworkState(true,"更新可用 • "+result.message)' in android:
     raise SystemExit("BLOCKED: long update text may expand network badge")
-require(regression, "NETWORK_RETRY_UI_CORE_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE", "NETWORK_RETRY_REGRESSION_218")
+require(regression, "NETWORK_RETRY_UI_CORE_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE", "NETWORK_RETRY_REGRESSION_219")
 print("NETWORK_RETRY_UI_RUNTIME_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE")
+for needle in (
+    'const val POLICY = "ENGINEERING_TOOLS_IN_PRODUCTION_UI"',
+    'const val DEFAULT_BOOT_TARGET = "PRODUCTION_UI"',
+    'const val SEPARATE_ENGINEERING_SHELL = false',
+    'const val OFFLINE_MAINTENANCE_AVAILABLE = true',
+):
+    require(env, needle, "INTEGRATED_MAINTENANCE_CONTRACT_219")
+for needle in (
+    'contentDescription="MAINTENANCE CENTER"',
+    'private fun showMaintenanceCenter()',
+    'action("Recovery / AutoSave")',
+    'action("系統監控 HUD")',
+    'action("Security")',
+):
+    require(android, needle, "ANDROID_INTEGRATED_MAINTENANCE_219")
+for needle in (
+    'GlassActionButton("維修"',
+    'fun showMaintenanceCenter()',
+    'showApp(startup=null,showWindow=false)',
+    'productionFrame.contentPane',
+):
+    require(desktop, needle, "WINDOWS_INTEGRATED_MAINTENANCE_219")
+require(regression, "INTEGRATED_MAINTENANCE_UI_CORE_GATE_PASS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|RECOVERY|HUD|SYSTEM|SECURITY|AI_SUITE|AI_UPDATE", "INTEGRATED_MAINTENANCE_REGRESSION_219")
+print("INTEGRATED_MAINTENANCE_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|REAL_ACTIONS")
+print("PRODUCTION_SHELL_EVIDENCE_RUNTIME_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY")
 
 # Main Android page/category entry points must bind to real callbacks.
 android_entries = {

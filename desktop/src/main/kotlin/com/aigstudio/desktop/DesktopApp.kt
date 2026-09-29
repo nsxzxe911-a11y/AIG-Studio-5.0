@@ -1759,6 +1759,17 @@ private fun runSmoke() {
     }
     val launchFile = File("desktop_launch.png")
     writePanel(smokeRoot, launchFile)
+    val productionFrame=showApp(startup=null,showWindow=false)
+    val productionPanel=productionFrame.contentPane as Container
+    productionPanel.setSize(1280,800)
+    val productionImage=BufferedImage(1280,800,BufferedImage.TYPE_INT_ARGB)
+    val productionGraphics=productionImage.createGraphics()
+    productionPanel.doLayout()
+    productionPanel.printAll(productionGraphics)
+    productionGraphics.dispose()
+    ImageIO.write(productionImage,"png",launchFile)
+    productionFrame.dispose()
+    require(launchFile.isFile && launchFile.length()>0){"Production shell launch image missing"}
     smokeDeck.selectedIndex=1
     val cadEditFile = File("desktop_cad_edit.png")
     writePanel(smokeRoot,cadEditFile)
@@ -2649,7 +2660,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     dlg.isVisible=true
 }
 
-private fun showApp(startup:StudioDesktopStartupWindow?=null) {
+private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean=true):JFrame {
     startup?.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
     val doc = DrawingDocument()
     val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • FANUC / MITSUBISHI M800/M80 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
@@ -2906,6 +2917,44 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         status.text=if(doc.size()>0)"CAM READY • 真刀路 / 真 3D / 材料移除" else "CAM WAITING • CAD geometry required"
     }
 
+    fun showMaintenanceCenter(){
+        val summary=JTextArea().apply{
+            isEditable=false
+            isOpaque=false
+            foreground=StudioDesktopProductionTheme.text
+            font=Font(Font.MONOSPACED,Font.PLAIN,12)
+            text=buildString{
+                appendLine("AIG CNC "+desktopVersionName()+" • 正式 Runtime UI 內建維修")
+                appendLine("BOOT="+IntegratedMaintenanceUiContract.DEFAULT_BOOT_TARGET+" • separate engineering shell=OFF")
+                appendLine("NETWORK OPTIONAL • OFFLINE MAINTENANCE=ON")
+                appendLine("ENTITIES="+doc.size()+" • LINKS="+doc.links().size)
+                append("MASTER X0.000 Y0.000 Z0.000 • 0.001 mm")
+            }
+        }
+        val actions=JPanel(GridLayout(0,2,6,6)).apply{background=StudioDesktopProductionTheme.background}
+        fun action(label:String,run:()->Unit){
+            actions.add(GlassActionButton(label,Color(139,92,246)).apply{addActionListener{run()}})
+        }
+        action("AI 診斷"){mainCardLayout.show(mainCardHost,"AI");status.text="MAINT • AI LOCAL ASSIST"}
+        action("CAM 檢查"){showProductionCam()}
+        action("NC 安全"){runCatching{showNcEditor(frame,doc)}.onFailure{status.text="MAINT NC BLOCKED • "+(it.message?:"error")}}
+        action("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="CAD • PRODUCTION UI"}
+        val panel=JPanel(BorderLayout(8,8)).apply{
+            background=StudioDesktopProductionTheme.background
+            border=BorderFactory.createEmptyBorder(10,10,10,10)
+            add(summary,BorderLayout.CENTER)
+            add(actions,BorderLayout.SOUTH)
+        }
+        JOptionPane.showMessageDialog(frame,panel,"AIG CNC • 維修 / 診斷",JOptionPane.INFORMATION_MESSAGE)
+        status.text="MAINTENANCE CENTER • PRODUCTION UI • OFFLINE CAPABLE"
+    }
+
+    toolbar.add(GlassActionButton("維修",Color(139,92,246)).apply{
+        toolTipText="正式 Runtime UI 內建維修 / 診斷"
+        preferredSize=Dimension(92,48)
+        addActionListener{showMaintenanceCenter()}
+    },BorderLayout.EAST)
+
     viewTools.add(button("SNAP",Color(61,235,255)) {
         cad.snapEnabled=!cad.snapEnabled
         status.text="SNAP "+if(cad.snapEnabled)"ON • END/MID/CENTER/INTERSECTION/TANGENT/H/V" else "OFF"
@@ -3083,9 +3132,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
     frame.size = desktopAdaptiveSize(1280, 820)
     frame.setLocationRelativeTo(null)
     startup?.advance(StudioStartupStage.WRAP_UP,"完成啟動收尾")
-    frame.isVisible = true
+    if(showWindow) frame.isVisible = true
     startup?.advance(StudioStartupStage.HOME,"AIG CNC READY")
     startup?.close()
+    return frame
 }
 
 fun main(args: Array<String>) {
