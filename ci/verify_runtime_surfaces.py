@@ -1329,3 +1329,28 @@ for needle in (
     require(desktop, needle, "WINDOWS_LIVE_AXIS_CONTROL_UI")
 print("LIVE_AXIS_CONTROL_UI_GATE_PASS|STUDIO_222|ANDROID|WINDOWS|XYZAB|JOG_AB|REAL_CALLBACKS")
 
+# Runtime-first architecture: the first interactive UI must not wait on RGB asset
+# verification/decoding or recovery, and Windows evidence must come from the packaged Runtime.
+for needle in (
+    'private val assetExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()',
+    'assetExecutor.execute {',
+    'root.postDelayed({',
+):
+    require(android, needle, "STUDIO_RUNTIME_FIRST_ANDROID")
+if android.index('bootOverlay.completeAndDetach(bootShell)') > android.index('loadRotaryMachineProfile()'):
+    raise SystemExit("BLOCKED STUDIO_RUNTIME_FIRST_ANDROID: machine profile restore precedes Runtime overlay detach")
+for needle in (
+    'showApp(startup=null,showWindow=true)',
+    'Robot().createScreenCapture(launchBounds)',
+):
+    require(desktop, needle, "STUDIO_VISIBLE_RUNTIME_EVIDENCE")
+for needle in (
+    '--type app-image',
+    'STUDIO_WINDOWS_APP_IMAGE_LAUNCH_PASS',
+    "'runtime_evidence=WINDOWS_PACKAGED_LAUNCHER_VISIBLE_UI_CAPTURED'",
+):
+    require(windows_release, needle, "STUDIO_RUNTIME_LAUNCHER_IDENTITY")
+if "AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe" in windows_release:
+    raise SystemExit("BLOCKED STUDIO_RUNTIME_LAUNCHER_IDENTITY: installer is still named as production Runtime executable")
+print("RUNTIME_FIRST_BOOT_ARCHITECTURE_GATE_PASS|STUDIO_222|UI_FIRST|ASYNC_RGB_ASSETS|RECOVERY_AFTER_READY|RUNTIME_LAUNCHER_NOT_INSTALLER")
+
