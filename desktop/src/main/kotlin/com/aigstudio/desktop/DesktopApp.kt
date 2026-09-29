@@ -43,7 +43,7 @@ private object StudioDesktopOriginalVisuals {
 private class StudioDesktopStartupWindow {
     private val window=JWindow()
     private val title=JLabel("AIG CNC",SwingConstants.CENTER)
-    private val detail=JLabel("CAD • CAM • SIM • 3AX • 4AX • 5AX • NC • AI",SwingConstants.CENTER)
+    private val detail=JLabel("CAD • CAM • SIM • 3AX • 4AX • 5AX • NC • AI • OFFLINE READY",SwingConstants.CENTER)
     private val status=JLabel("啟動中…",SwingConstants.CENTER)
     private val progress=JProgressBar(0,100)
     private var stage=StudioStartupStage.BOOTSTRAP

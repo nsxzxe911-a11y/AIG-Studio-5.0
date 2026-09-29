@@ -1044,11 +1044,17 @@ class MainActivity : Activity() {
         }
         val updateConfig = UpdateConfigStore.load(this)
         if (updateConfig.configured) {
-            SecureUpdateManager.autoCheck(this, updateConfig) { result ->
-                if (result.available || !result.ok) {
-                    Toast.makeText(this, result.message, Toast.LENGTH_LONG).show()
+            root.postDelayed({
+                if (!root.isAttachedToWindow) return@postDelayed
+                SecureUpdateManager.autoCheck(this, updateConfig) { result ->
+                    when {
+                        result.available -> Toast.makeText(this, result.message, Toast.LENGTH_LONG).show()
+                        !result.ok && OfflineFirstRuntimeContract.isOfflineLike(result.message) ->
+                            Toast.makeText(this, OfflineFirstRuntimeContract.offlineStatus(), Toast.LENGTH_SHORT).show()
+                        !result.ok -> Toast.makeText(this, result.message, Toast.LENGTH_LONG).show()
+                    }
                 }
-            }
+            }, OfflineFirstRuntimeContract.NETWORK_TASK_DELAY_MS)
         }
     }
 

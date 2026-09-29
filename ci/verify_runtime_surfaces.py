@@ -190,6 +190,26 @@ for needle in (
 ):
     require(desktop, needle, "WINDOWS_VISIBLE_FUNCTION_UI_212")
 print("VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
+for needle in (
+    'const val POLICY = "UI_FIRST_NETWORK_OPTIONAL"',
+    'const val UI_MUST_NOT_WAIT_FOR_NETWORK = true',
+    'const val NETWORK_TASK_DELAY_MS = 1500L',
+    'val localRuntimeModes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC")',
+):
+    require(env, needle, "OFFLINE_FIRST_CONTRACT_213")
+for needle in (
+    'root.postDelayed({',
+    'if (!root.isAttachedToWindow) return@postDelayed',
+    'SecureUpdateManager.autoCheck(this, updateConfig)',
+    'OfflineFirstRuntimeContract.isOfflineLike(result.message)',
+    'OfflineFirstRuntimeContract.offlineStatus()',
+):
+    require(android, needle, "ANDROID_OFFLINE_FIRST_213")
+if android.index('SecureUpdateManager.autoCheck(this, updateConfig)') < android.index('bootOverlay.completeAndDetach(bootShell)'):
+    raise SystemExit("OFFLINE_FIRST_ORDER_213: network task appears before UI READY")
+require(desktop, 'OFFLINE READY', "WINDOWS_OFFLINE_FIRST_213")
+require(regression, "OFFLINE_FIRST_UI_CORE_GATE_PASS|UI_FIRST|NETWORK_OPTIONAL|NO_BOOT_WAIT|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI_UPDATE_DEFERRED", "OFFLINE_FIRST_REGRESSION_213")
+print("OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|UI_READY_BEFORE_NETWORK|NO_BOOT_WAIT|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI_UPDATE_DEFERRED")
 
 # Main Android page/category entry points must bind to real callbacks.
 android_entries = {

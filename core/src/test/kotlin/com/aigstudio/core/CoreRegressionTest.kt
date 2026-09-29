@@ -1201,6 +1201,15 @@ fun main() {
     check(VisibleFunctionUiContract.requiredActions["CAD"]==listOf("LINE","RECT","CIRCLE","ARC","HOLE","SELECT"))
     check(VisibleFunctionUiContract.requiredActions["AI"]==listOf("INSPECT","VOICE","SUITE","UPDATE"))
     println("VISIBLE_FUNCTION_UI_CORE_GATE_PASS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
+    check(OfflineFirstRuntimeContract.POLICY=="UI_FIRST_NETWORK_OPTIONAL")
+    check(OfflineFirstRuntimeContract.UI_MUST_NOT_WAIT_FOR_NETWORK)
+    check(OfflineFirstRuntimeContract.NETWORK_TASK_DELAY_MS>=1000L)
+    check(OfflineFirstRuntimeContract.bootAllowed(false))
+    check(OfflineFirstRuntimeContract.bootAllowed(true))
+    check(OfflineFirstRuntimeContract.localRuntimeModes==listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC"))
+    check(OfflineFirstRuntimeContract.isOfflineLike("Unable to resolve host api.example.com"))
+    check(OfflineFirstRuntimeContract.offlineStatus().contains("UI READY"))
+    println("OFFLINE_FIRST_UI_CORE_GATE_PASS|UI_FIRST|NETWORK_OPTIONAL|NO_BOOT_WAIT|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI_UPDATE_DEFERRED")
     println("ALL TESTS PASSED")
 }
 

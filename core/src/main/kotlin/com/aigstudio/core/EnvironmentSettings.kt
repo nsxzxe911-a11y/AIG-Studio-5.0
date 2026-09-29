@@ -768,6 +768,32 @@ object VisibleFunctionUiContract {
 }
 
 
+object OfflineFirstRuntimeContract {
+    const val POLICY = "UI_FIRST_NETWORK_OPTIONAL"
+    const val UI_MUST_NOT_WAIT_FOR_NETWORK = true
+    const val NETWORK_TASK_DELAY_MS = 1500L
+    val localRuntimeModes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC")
+
+    fun bootAllowed(networkAvailable:Boolean):Boolean = true
+
+    fun isOfflineLike(message:String):Boolean {
+        val value=message.lowercase()
+        return listOf(
+            "unable to resolve host",
+            "failed to connect",
+            "timeout",
+            "timed out",
+            "network is unreachable",
+            "no route to host",
+            "connection refused"
+        ).any(value::contains)
+    }
+
+    fun offlineStatus():String =
+        "離線模式 • UI READY • CAD/CAM/SIM/3AX/4AX/5AX/NC 可用 • AI/更新等待網路"
+}
+
+
 object FloatingCadToolContract {
     const val TITLE = "CAD 工具"
     const val BACK = "←"
@@ -1133,7 +1159,7 @@ enum class StudioStartupStage {
 }
 
 object StudioStartupEngineContract {
-    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_212"
+    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_213"
     val orderedStages=listOf(
         StudioStartupStage.BOOTSTRAP,
         StudioStartupStage.SAFE_THEME,
