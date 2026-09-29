@@ -20,6 +20,8 @@ data class CamSettings(
     }
 }
 
+enum class CamOperationMode { AUTO, CONTOUR, POCKET, DRILL, ENGRAVE, FACE }
+
 enum class MultiAxisInterpolationMode { INDEXED, LINEAR_SYNC }
 
 data class MultiAxisOrientationSchedule(
@@ -49,6 +51,7 @@ class CamModel private constructor(
     val sourceRevision: Long,
     val geometry: DrawingSnapshot,
     val settings: CamSettings,
+    val operationMode: CamOperationMode,
     val toolpaths: List<Toolpath>
 ) {
     companion object {
@@ -58,12 +61,14 @@ class CamModel private constructor(
             settings: CamSettings = CamSettings(),
             axisA: Double = 0.0,
             axisB: Double = 0.0,
-            axisSchedule: MultiAxisOrientationSchedule? = null
+            axisSchedule: MultiAxisOrientationSchedule? = null,
+            operationMode: CamOperationMode = CamOperationMode.AUTO
         ): CamModel = CamModel(
             revision,
             snapshot,
             settings,
-            CamEngine.generate(snapshot, settings, axisA, axisB, axisSchedule)
+            operationMode,
+            CamEngine.generate(snapshot, settings, axisA, axisB, axisSchedule, operationMode)
         )
     }
 }
@@ -117,7 +122,8 @@ object CamEngine {
         settings: CamSettings = CamSettings(),
         axisA: Double = 0.0,
         axisB: Double = 0.0,
-        axisSchedule: MultiAxisOrientationSchedule? = null
+        axisSchedule: MultiAxisOrientationSchedule? = null,
+        operationMode: CamOperationMode = CamOperationMode.AUTO
     ): List<Toolpath> {
         require(axisA.isFinite() && axisB.isFinite() && abs(axisA) <= 360.0 && abs(axisB) <= 360.0) {
             "Unsafe CAM A/B orientation"
@@ -207,33 +213,125 @@ object CamEngine {
             output += Toolpath(moves)
         }
 
-        for (entity in snapshot.entities) {
-            when (entity) {
+        fun contourEntity(entity:Entity,compensated:Boolean=true) {
+            val comp=if(compensated) radiusComp else 0.0
+            when(entity) {
                 is Line -> {
-                    val d = entity.b - entity.a
-                    val len = d.length()
-                    if (len < CNC_RESOLUTION_MM) continue
-                    val nx = -d.y / len * radiusComp * side
-                    val ny = d.x / len * radiusComp * side
+                    val d=entity.b-entity.a
+                    val len=d.length()
+                    if(len<CNC_RESOLUTION_MM) return
+                    val nx=-d.y/len*comp*side
+                    val ny=d.x/len*comp*side
                     pathFrom(listOf(
-                        Vec2(entity.a.x + nx, entity.a.y + ny),
-                        Vec2(entity.b.x + nx, entity.b.y + ny)
+                        Vec2(entity.a.x+nx,entity.a.y+ny),
+                        Vec2(entity.b.x+nx,entity.b.y+ny)
                     ))
                 }
                 is Circle -> {
-                    val r = entity.radius + radiusComp
-                    arcPath(entity.center, r, 0.0, 2.0 * Math.PI)
+                    val r=entity.radius+comp
+                    arcPath(entity.center,r,0.0,2.0*Math.PI)
                 }
                 is Arc -> {
-                    val r = entity.radius + radiusComp
-                    val startA = atan2(entity.start.y - entity.center.y, entity.start.x - entity.center.x)
-                    val endA = atan2(entity.end.y - entity.center.y, entity.end.x - entity.center.x)
-                    var sweep = endA - startA
-                    if (entity.clockwise) while (sweep >= 0.0) sweep -= 2.0 * Math.PI
-                    else while (sweep <= 0.0) sweep += 2.0 * Math.PI
-                    arcPath(entity.center, r, startA, sweep)
+                    val r=entity.radius+comp
+                    val startA=atan2(entity.start.y-entity.center.y,entity.start.x-entity.center.x)
+                    val endA=atan2(entity.end.y-entity.center.y,entity.end.x-entity.center.x)
+                    var sweep=endA-startA
+                    if(entity.clockwise) while(sweep>=0.0) sweep-=2.0*Math.PI
+                    else while(sweep<=0.0) sweep+=2.0*Math.PI
+                    arcPath(entity.center,r,startA,sweep)
                 }
             }
+        }
+
+        fun drillPoint(center:Vec2) {
+            val moves=listOf<Move>(
+                Rapid(center,settings.safeZ),
+                Feed(center,settings.feedMmMin,settings.depth),
+                Rapid(center,settings.safeZ)
+            )
+            output+=Toolpath(moves)
+        }
+
+        fun pocketCircle(circle:Circle) {
+            var r=circle.radius-radiusComp
+            if(r<CNC_RESOLUTION_MM) {
+                drillPoint(circle.center)
+                return
+            }
+            val step=max(CNC_RESOLUTION_MM,settings.toolDiameter*0.55)
+            while(r>=CNC_RESOLUTION_MM) {
+                arcPath(circle.center,r,0.0,2.0*Math.PI)
+                r-=step
+            }
+            drillPoint(circle.center)
+        }
+
+        fun pocketRectGroup(lines:List<Line>) {
+            val xs=lines.flatMap{listOf(it.a.x,it.b.x)}
+            val ys=lines.flatMap{listOf(it.a.y,it.b.y)}
+            var minX=xs.minOrNull()!!+radiusComp
+            var maxX=xs.maxOrNull()!!-radiusComp
+            var minY=ys.minOrNull()!!+radiusComp
+            var maxY=ys.maxOrNull()!!-radiusComp
+            val step=max(CNC_RESOLUTION_MM,settings.toolDiameter*0.55)
+            while(maxX-minX>=CNC_RESOLUTION_MM && maxY-minY>=CNC_RESOLUTION_MM) {
+                pathFrom(listOf(
+                    Vec2(minX,minY),Vec2(maxX,minY),Vec2(maxX,maxY),
+                    Vec2(minX,maxY),Vec2(minX,minY)
+                ))
+                minX+=step;maxX-=step;minY+=step;maxY-=step
+            }
+        }
+
+        fun faceBounds() {
+            fun entityBounds(e:Entity):DoubleArray=when(e) {
+                is Line -> doubleArrayOf(min(e.a.x,e.b.x),min(e.a.y,e.b.y),max(e.a.x,e.b.x),max(e.a.y,e.b.y))
+                is Circle -> doubleArrayOf(e.center.x-e.radius,e.center.y-e.radius,e.center.x+e.radius,e.center.y+e.radius)
+                is Arc -> doubleArrayOf(e.center.x-e.radius,e.center.y-e.radius,e.center.x+e.radius,e.center.y+e.radius)
+            }
+            val boxes=snapshot.entities.map(::entityBounds)
+            if(boxes.isEmpty()) return
+            val minX=boxes.minOf{it[0]}-radiusComp
+            val maxX=boxes.maxOf{it[2]}+radiusComp
+            val minY=boxes.minOf{it[1]}-radiusComp
+            val maxY=boxes.maxOf{it[3]}+radiusComp
+            val step=max(CNC_RESOLUTION_MM,settings.toolDiameter*0.70)
+            var y=minY
+            var forward=true
+            while(y<=maxY+CNC_RESOLUTION_MM) {
+                pathFrom(if(forward) listOf(Vec2(minX,y),Vec2(maxX,y))
+                    else listOf(Vec2(maxX,y),Vec2(minX,y)))
+                forward=!forward
+                y+=step
+            }
+        }
+
+        when(operationMode) {
+            CamOperationMode.AUTO -> snapshot.entities.forEach { entity ->
+                if(entity is Circle && entity.id.startsWith("HOLE:")) drillPoint(entity.center)
+                else contourEntity(entity,true)
+            }
+            CamOperationMode.CONTOUR -> snapshot.entities
+                .filterNot{it is Circle && it.id.startsWith("HOLE:")}
+                .forEach{contourEntity(it,true)}
+            CamOperationMode.ENGRAVE -> snapshot.entities.forEach{contourEntity(it,false)}
+            CamOperationMode.DRILL -> snapshot.entities
+                .filterIsInstance<Circle>()
+                .filter{it.id.startsWith("HOLE:")}
+                .forEach{drillPoint(it.center)}
+            CamOperationMode.POCKET -> {
+                val rectGroups=snapshot.entities.filterIsInstance<Line>()
+                    .filter{it.id.startsWith("RECT:")}
+                    .groupBy{it.id.substringBeforeLast(':')}
+                rectGroups.values.filter{it.size>=4}.forEach(::pocketRectGroup)
+                snapshot.entities.filterIsInstance<Circle>()
+                    .filterNot{it.id.startsWith("HOLE:")}
+                    .forEach(::pocketCircle)
+            }
+            CamOperationMode.FACE -> faceBounds()
+        }
+        require(output.isNotEmpty()) {
+            "CAM "+operationMode.name+" generated no compatible toolpath for current geometry"
         }
         val totalMoves=output.sumOf { it.moves.size }.coerceAtLeast(1)
         var moveIndex=0
