@@ -1160,6 +1160,7 @@ fun main() {
     testCadEditIntegrity()
     testCadPrecisionEditing()
     testCadModuleAssembly()
+    testCamQuickOperations()
     testChamferC5()
     testFilletR5()
     testDifferentCornerRadii()
@@ -1228,6 +1229,44 @@ fun main() {
     check(OfflineFirstRuntimeContract.BACKGROUND_NETWORK_MAX_ATTEMPTS==2)
     println("LOW_LATENCY_NETWORK_CORE_GATE_PASS|START_180MS|RETRY_350MS|MAX_2|BACKGROUND_CHECK_ONLY|NO_AUTO_APK_DOWNLOAD|FAST_FAIL")
     println("ALL TESTS PASSED")
+}
+
+private fun testCamQuickOperations() {
+    val rectIds=CadSemanticIdentity.newRectIds()
+    val snapshot=DrawingSnapshot(listOf(
+        Line(rectIds[0],Vec2(0.0,0.0),Vec2(40.0,0.0)),
+        Line(rectIds[1],Vec2(40.0,0.0),Vec2(40.0,30.0)),
+        Line(rectIds[2],Vec2(40.0,30.0),Vec2(0.0,30.0)),
+        Line(rectIds[3],Vec2(0.0,30.0),Vec2(0.0,0.0)),
+        Circle(id="CIRCLE-POCKET",center=Vec2(60.0,15.0),radius=12.0),
+        Circle(id=CadSemanticIdentity.newHoleId(),center=Vec2(20.0,15.0),radius=3.0)
+    ))
+    val settings=CamSettings(toolDiameter=6.0,depth=-2.0,safeZ=5.0,feedMmMin=150.0,leadInMm=1.0,leadOutMm=1.0)
+    val auto=CamModel.fromCad(22201L,snapshot,settings,operationMode=CamOperationMode.AUTO)
+    val contour=CamModel.fromCad(22202L,snapshot,settings,operationMode=CamOperationMode.CONTOUR)
+    val pocket=CamModel.fromCad(22203L,snapshot,settings,operationMode=CamOperationMode.POCKET)
+    val drill=CamModel.fromCad(22204L,snapshot,settings,operationMode=CamOperationMode.DRILL)
+    val engrave=CamModel.fromCad(22205L,snapshot,settings,operationMode=CamOperationMode.ENGRAVE)
+    val face=CamModel.fromCad(22206L,snapshot,settings,operationMode=CamOperationMode.FACE)
+    check(auto.operationMode==CamOperationMode.AUTO && auto.toolpaths.isNotEmpty())
+    check(contour.operationMode==CamOperationMode.CONTOUR && contour.toolpaths.isNotEmpty())
+    check(pocket.operationMode==CamOperationMode.POCKET && pocket.toolpaths.size>=3)
+    check(drill.operationMode==CamOperationMode.DRILL && drill.toolpaths.size==1)
+    val drillMoves=drill.toolpaths.single().moves
+    check(drillMoves.size==3)
+    check(drillMoves.map{it.to}.distinct().size==1)
+    check(drillMoves.any{!it.rapid && abs(it.z-settings.depth)<EPS})
+    check(engrave.operationMode==CamOperationMode.ENGRAVE && engrave.toolpaths.isNotEmpty())
+    check(face.operationMode==CamOperationMode.FACE && face.toolpaths.size>=2)
+    check(runCatching {
+        CamModel.fromCad(
+            22207L,
+            DrawingSnapshot(listOf(Line("ONLY-LINE",Vec2(0.0,0.0),Vec2(20.0,0.0)))),
+            settings,
+            operationMode=CamOperationMode.DRILL
+        )
+    }.isFailure)
+    println("✓ CAM_QUICK_OPERATION_GATE_PASS AUTO CONTOUR POCKET DRILL ENGRAVE FACE REAL_TOOLPATH FAIL_CLOSED")
 }
 
 private fun testCadModuleAssembly() {
