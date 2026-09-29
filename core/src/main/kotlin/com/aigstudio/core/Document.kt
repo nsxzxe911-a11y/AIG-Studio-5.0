@@ -428,6 +428,96 @@ object CadSemanticIdentity {
     }
 }
 
+object CadQuickCreateEngine {
+    fun centerRect(center:Vec2,width:Double,height:Double):List<Entity> {
+        require(center.x.isFinite() && center.y.isFinite() &&
+            width.isFinite() && height.isFinite() &&
+            width>=CNC_RESOLUTION_MM && height>=CNC_RESOLUTION_MM)
+        val a=Vec2(center.x-width/2.0,center.y-height/2.0)
+        val b=Vec2(center.x+width/2.0,center.y+height/2.0)
+        val ids=CadSemanticIdentity.newRectIds()
+        return listOf(
+            Line(id=ids[0],a=a,b=Vec2(b.x,a.y)),
+            Line(id=ids[1],a=Vec2(b.x,a.y),b=b),
+            Line(id=ids[2],a=b,b=Vec2(a.x,b.y)),
+            Line(id=ids[3],a=Vec2(a.x,b.y),b=a)
+        )
+    }
+
+    fun regularPolygon(
+        center:Vec2,
+        radius:Double,
+        sides:Int,
+        rotationDeg:Double=0.0
+    ):List<Entity> {
+        require(center.x.isFinite() && center.y.isFinite() &&
+            radius.isFinite() && rotationDeg.isFinite())
+        require(radius>=CNC_RESOLUTION_MM && sides in 3..64)
+        val a0=Math.toRadians(rotationDeg)
+        val pts=(0 until sides).map { index ->
+            val a=a0+2.0*Math.PI*index/sides
+            Vec2(center.x+cos(a)*radius,center.y+sin(a)*radius)
+        }
+        val ids=CadSemanticIdentity.newCompositeIds("POLYGON",sides)
+        return (0 until sides).map { index ->
+            Line(id=ids[index],a=pts[index],b=pts[(index+1)%sides])
+        }
+    }
+
+    fun slot(
+        center:Vec2,
+        overallLength:Double,
+        width:Double,
+        angleDeg:Double=0.0
+    ):List<Entity> {
+        require(center.x.isFinite() && center.y.isFinite() &&
+            overallLength.isFinite() && width.isFinite() && angleDeg.isFinite())
+        require(width>=CNC_RESOLUTION_MM && overallLength>width+CNC_RESOLUTION_MM)
+        val r=width/2.0
+        val halfStraight=(overallLength-width)/2.0
+        val a=Math.toRadians(angleDeg)
+        val u=Vec2(cos(a),sin(a))
+        val v=Vec2(-sin(a),cos(a))
+        val c1=center-u*halfStraight
+        val c2=center+u*halfStraight
+        val top1=c1+v*r
+        val top2=c2+v*r
+        val bottom1=c1-v*r
+        val bottom2=c2-v*r
+        val ids=CadSemanticIdentity.newCompositeIds("SLOT",4)
+        return listOf(
+            Line(id=ids[0],a=top1,b=top2),
+            Arc(id=ids[1],center=c2,radius=r,start=bottom2,end=top2,clockwise=false),
+            Line(id=ids[2],a=bottom2,b=bottom1),
+            Arc(id=ids[3],center=c1,radius=r,start=top1,end=bottom1,clockwise=false)
+        )
+    }
+
+    fun boltCircle(
+        center:Vec2,
+        pitchDiameter:Double,
+        holeDiameter:Double,
+        count:Int,
+        startDeg:Double=0.0
+    ):List<Entity> {
+        require(center.x.isFinite() && center.y.isFinite() &&
+            pitchDiameter.isFinite() && holeDiameter.isFinite() && startDeg.isFinite())
+        require(pitchDiameter>=CNC_RESOLUTION_MM && holeDiameter>=CNC_RESOLUTION_MM && count in 2..128)
+        val pitchRadius=pitchDiameter/2.0
+        val holeRadius=holeDiameter/2.0
+        val a0=Math.toRadians(startDeg)
+        val ids=CadSemanticIdentity.newCompositeIds("BOLT",count)
+        return (0 until count).map { index ->
+            val a=a0+2.0*Math.PI*index/count
+            Circle(
+                id=ids[index],
+                center=Vec2(center.x+cos(a)*pitchRadius,center.y+sin(a)*pitchRadius),
+                radius=holeRadius
+            )
+        }
+    }
+}
+
 data class CadModuleTemplate(
     val name:String,
     val entities:List<Entity>,
