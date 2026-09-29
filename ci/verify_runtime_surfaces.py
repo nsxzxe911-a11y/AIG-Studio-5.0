@@ -561,7 +561,7 @@ for needle in (
     "val prepared=model.components.map { component ->",
     "MachineComponentRole.ROTARY_A",
     "MachineComponentRole.ROTARY_B",
-    'val label = "TRUE 3D • MACHINE=" + machineModel.mode',
+    'val label = "MAIN UI • " + extensionStage + " • MACHINE=" + machineModel.mode',
 ):
     require(machining3d, needle, "STUDIO_ANDROID_TRUE_MACHINE_MODEL_174")
 for needle in (
