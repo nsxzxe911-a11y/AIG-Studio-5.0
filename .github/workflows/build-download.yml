@@ -21,6 +21,7 @@ on:
       - studio-220-low-latency-network
       - studio-221-low-latency-validator
       - studio-222-ui-integration
+      - studio-222-ui-entry-proof-20260929
     paths:
       - 'release-version.properties'
       - 'app/**'
