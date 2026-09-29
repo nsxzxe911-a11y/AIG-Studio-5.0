@@ -23,7 +23,6 @@ for runtime_root in runtime_roots:
                 raise SystemExit(f"runtime source must not consume engineering-assets as release UI: {path}")
 
 android_main = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" / "app" / "MainActivity.kt").read_text(encoding="utf-8")
-startup = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" / "app" / "StartupOverlay.kt").read_text(encoding="utf-8")
 desktop = (ROOT / "desktop" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "desktop" / "DesktopApp.kt").read_text(encoding="utf-8")
 machining_view = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" / "app" / "Machining3DView.kt").read_text(encoding="utf-8")
 env = (ROOT / "core" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "core" / "EnvironmentSettings.kt").read_text(encoding="utf-8")
@@ -32,7 +31,10 @@ windows_build = (ROOT / "build_windows_native.ps1").read_text(encoding="utf-8")
 secure_services = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" / "app" / "SecureServices.kt").read_text(encoding="utf-8")
 
 required_android = [
-    "AigStartupOverlay(this)",
+    "installSplashScreen()",
+    "setContentView(root)",
+    "StudioRuntimeUiDirectoryBootstrap.read(this)",
+    "StudioRuntimeUiDirectoryBootstrap.writeReady(",
     "CadView(this)",
     "Machining3DView",
     "UnifiedMachiningWorkspaceContract",
@@ -40,9 +42,6 @@ required_android = [
 for marker in required_android:
     if marker not in android_main:
         raise SystemExit(f"Android production runtime marker missing: {marker}")
-
-if 'context.assets.open("visuals/studio_startup_original.png")' not in startup:
-    raise SystemExit("Android production startup asset binding missing")
 
 required_desktop = [
     'JFrame("AIG CNC — OFFICIAL RGB ORIGINAL")',
@@ -63,8 +62,8 @@ if "release_class=PRODUCTION_RUNTIME" not in android_build:
     raise SystemExit("Android production release class missing")
 if "runtime-evidence" not in windows_build:
     raise SystemExit("Windows production runtime evidence packaging missing")
-if "WINDOWS_EXECUTABLE_SMOKE_CAPTURED" not in windows_build:
-    raise SystemExit("Windows executable smoke evidence marker missing")
+if "WINDOWS_PACKAGED_LAUNCHER_VISIBLE_UI_CAPTURED" not in windows_build:
+    raise SystemExit("Windows packaged Runtime visible-UI evidence marker missing")
 
 switch_modes = 'val modes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")'
 if switch_modes not in env:
@@ -353,3 +352,9 @@ for marker in [
         raise SystemExit(f"Studio 222 Windows quick-create UI missing: {marker}")
 print("CAD_QUICK_CREATE_UI_GATE_PASS|STUDIO_222|ANDROID|WINDOWS|CENTER_RECT|SLOT|POLYGON|BOLT_CIRCLE|REAL_CORE")
 print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_222|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
+
+if "AigStartupOverlay(" in android_main:
+    raise SystemExit("custom Android startup overlay must not control production entry")
+if "StudioDesktopStartupWindow" in desktop:
+    raise SystemExit("blocking Studio desktop startup window must be removed")
+print("SYSTEM_SPLASH_PRODUCTION_ENTRY_GATE_PASS|STUDIO_222|ANDROID_SPLASHSCREEN|DIRECT_CONTENT_VIEW|WINDOWS_DIRECT_JFRAME|UI_DIRECTORY_AFTER_VISIBLE_UI")
