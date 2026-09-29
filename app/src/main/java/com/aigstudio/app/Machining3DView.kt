@@ -31,7 +31,6 @@ class Machining3DView(
     private var progressiveFrame: ProgressiveMachining3DFrame? = null
     private var previousProgressiveFrame: ProgressiveMachining3DFrame? = null
 
-    private val machineVisual: android.graphics.Bitmap? = null
     private val machineVisualPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { alpha = 118 }
 
     private val surfacePaint = Paint().apply {
@@ -513,7 +512,14 @@ class Machining3DView(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (width <= 0 || height <= 0) return
-        machineVisual?.let { bitmap ->
+        val activeFrame = progressiveFrame
+        val liveMove = activeFrame?.toolPoint ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
+        val resolvedMode=(machineMode ?: when {
+            abs(liveMove?.axisB ?: 0.0)>1e-9 -> "5AX"
+            abs(liveMove?.axisA ?: 0.0)>1e-9 -> "4AX"
+            else -> "3AX"
+        }).uppercase()
+        LibraryRgbReferenceVisuals.bitmap(context,resolvedMode)?.let { bitmap ->
             val srcRatio=bitmap.width.toFloat()/bitmap.height.toFloat()
             val dstRatio=width.toFloat()/height.toFloat()
             val dw=if(srcRatio>dstRatio) height*srcRatio else width.toFloat()
@@ -528,14 +534,6 @@ class Machining3DView(
         val stockH = result.stock.maxY - result.stock.minY
         val span = max(max(stockW, stockH), result.stock.thickness).coerceAtLeast(1.0)
         val scale = min(width, height) * 0.48 / span * zoom
-
-        val activeFrame = progressiveFrame
-        val liveMove = activeFrame?.toolPoint ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
-        val resolvedMode=(machineMode ?: when {
-            abs(liveMove?.axisB ?: 0.0)>1e-9 -> "5AX"
-            abs(liveMove?.axisA ?: 0.0)>1e-9 -> "4AX"
-            else -> "3AX"
-        }).uppercase()
         val machineModel=MachineModel3DBuilder.build(
             result,
             resolvedMode,
