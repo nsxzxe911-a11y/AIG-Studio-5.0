@@ -129,7 +129,7 @@ if android_main.index('setContentView(root)') > android_main.index('scheduleBack
     raise SystemExit("online services must be scheduled after production UI content view")
 for marker in [
     'LOCAL READY • NETWORK OPTIONAL',
-    'OFFLINE-FIRST',
+    'network_blocking=false',
 ]:
     if marker not in desktop:
         raise SystemExit(f"Windows offline-first marker missing: {marker}")
