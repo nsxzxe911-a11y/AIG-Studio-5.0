@@ -5,7 +5,7 @@
   "source_surface": "ChatGPT Android Library",
   "source_policy": "Use the exact Library originals as visual/skin/layout references. Static images are never CNC functionality.",
   "runtime_activation": false,
-  "binary_import_state": "PENDING_LIBRARY_BINARY_TRANSFER",
+  "binary_import_state": "PACK_CREATED_IN_CHATGPT_LIBRARY_PENDING_REPO_IMPORT",
   "raw_asset_directory": "design/theme/library_rgb_reference_v1/raw",
   "derivative_policy": {
     "source_originals_read_only": true,
@@ -153,5 +153,14 @@
         "collision-overcut"
       ]
     }
-  ]
+  ],
+  "normalized_asset_pack": {
+    "library_path": "/AIG/Asset Packs/AIG_Library_RGB_Reference_v1_EXACT.zip",
+    "library_file_id": "libfile_d27e4ed9bc988191b163f232f8904968",
+    "file_id": "file_000000002cc482098fbc069e46ccd543",
+    "sha256": "45d338a0c72a897cac1aa23840f197a75ac34e0dd82d1424d0c75b6451ce91ff",
+    "size_bytes": 14549525,
+    "asset_count": 7,
+    "state": "EXACT_PACK_READY"
+  }
 }
