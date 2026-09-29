@@ -25,6 +25,7 @@ desktop = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
 machining3d_core = read("core/src/main/kotlin/com/aigstudio/core/Machining3D.kt")
 env = read("core/src/main/kotlin/com/aigstudio/core/EnvironmentSettings.kt")
 document = read("core/src/main/kotlin/com/aigstudio/core/Document.kt")
+cam_core = read("core/src/main/kotlin/com/aigstudio/core/Cam.kt")
 regression = read("core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt")
 hashes = read("design/theme/official_rgb/android-drawable.sha256")
 workflow = read(".github/workflows/build-download.yml")
@@ -934,6 +935,62 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_AXIS_DEPTH_BEADS_207")
 print("AXIS_DEPTH_BEADS_GATE_PASS|ANDROID|WINDOWS|3D|5AX|PROJECTED_DEPTH_DELTA|DIRECTIONAL_RADIUS|DIRECTIONAL_ALPHA|SMOKE_EVIDENCE|VISUAL_ONLY")
+for needle in (
+    "object CadQuickCreateEngine",
+    "fun centerRect(center:Vec2,width:Double,height:Double):List<Entity>",
+    "fun regularPolygon(",
+    "fun slot(",
+    "fun boltCircle(",
+    "object CadModuleEngine",
+    "fun capture(doc:DrawingDocument,ids:Collection<EntityId>,name:String=\"MODULE\")",
+    "fun instantiate(template:CadModuleTemplate,target:Vec2,angleDeg:Double=0.0):List<Entity>",
+    'private val groupedKinds=setOf("RECT","SLOT","POLYGON","BOLT")',
+):
+    require(document, needle, "STUDIO_CAD_QUICK_MODULE_CORE_208")
+for needle in (
+    "enum class CamOperationMode { AUTO, CONTOUR, POCKET, DRILL, ENGRAVE, FACE }",
+    "val operationMode: CamOperationMode = CamOperationMode.AUTO",
+    "when(settings.operationMode)",
+    "CamOperationMode.CONTOUR",
+    "CamOperationMode.POCKET",
+    "CamOperationMode.DRILL",
+    "CamOperationMode.ENGRAVE",
+    "CamOperationMode.FACE",
+):
+    require(cam_core, needle, "STUDIO_CAM_QUICK_OPERATION_CORE_208")
+for needle in (
+    'addActionTo(branchFlow, "槽孔", 2) { cad.promptSlot() }',
+    'addActionTo(branchFlow, "正多邊形", 3) { cad.promptPolygon() }',
+    'addActionTo(branchFlow, "孔群", 4) { cad.promptBoltCircle() }',
+    'addActionTo(branchFlow, "中心矩形", 1) { cad.promptCenterRect() }',
+    'addCategory("組裝", 1) { showAssemblyBranch() }',
+    'addActionTo(branchFlow, "快速刀路", 0) { showQuickCamDialog() }',
+    'CamOperationMode.POCKET to "POCKET 口袋"',
+    'CamOperationMode.FACE to "FACE 面銑"',
+):
+    require(android, needle, "STUDIO_ANDROID_CAD_CAM_QUICK_MODULE_208")
+for needle in (
+    'val createTools=CadToolGrid()',
+    'val assemblyTools=CadToolGrid()',
+    'cadDeckButton("建立","CREATE"',
+    'cadDeckButton("組裝","ASSEMBLY"',
+    'CadQuickCreateEngine.centerRect',
+    'CadQuickCreateEngine.slot',
+    'CadQuickCreateEngine.regularPolygon',
+    'CadQuickCreateEngine.boltCircle',
+    'CadModuleEngine.capture',
+    'CamOperationMode.POCKET to "口袋"',
+    'CamOperationMode.FACE to "面銑"',
+):
+    require(desktop, needle, "STUDIO_WINDOWS_CAD_CAM_QUICK_MODULE_208")
+for needle in (
+    "CAD_QUICK_CREATE_GATE_PASS CENTER_RECT SLOT POLYGON BOLT_CIRCLE REAL_GEOMETRY",
+    "CAD_MODULE_ASSEMBLY_GATE_PASS CAPTURE_SELECTION INSERT_XY ROTATE FRESH_IDS",
+    "CAM_QUICK_OPERATION_GATE_PASS AUTO CONTOUR POCKET DRILL ENGRAVE FACE REAL_TOOLPATH",
+):
+    require(regression, needle, "STUDIO_CAD_CAM_QUICK_MODULE_REGRESSION_208")
+print("CAD_CAM_QUICK_MODULE_GATE_PASS|ANDROID|WINDOWS|CENTER_RECT|SLOT|POLYGON|BOLT_CIRCLE|MODULE|AUTO|CONTOUR|POCKET|DRILL|ENGRAVE|FACE|REAL_GEOMETRY|REAL_TOOLPATH")
+
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
