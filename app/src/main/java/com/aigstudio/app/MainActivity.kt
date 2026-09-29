@@ -716,7 +716,7 @@ class MainActivity : Activity() {
         if (environmentRestartApplied) {
             environmentPrefs.edit().putBoolean("restart_required", false).remove("restart_reason").apply()
         }
-        adaptiveRefreshController = AdaptiveRefreshController(this).also { it.start() }
+        adaptiveRefreshController = AdaptiveRefreshController(this)
 
         // System SplashScreen is the only launch surface. Production Runtime is the
         // first content view; recovery/profile/network work is deferred.
@@ -1171,11 +1171,7 @@ class MainActivity : Activity() {
         }
         root.addView(systemHudIndicator, LinearLayout.LayoutParams(-1, -2))
         val envPrefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
-        applyFpsDisplayPreference(envPrefs.getBoolean("fps_display_enabled", false))
-        applyTemperatureDisplayPreference(envPrefs.getBoolean("temperature_display_enabled", RuntimeDeviceProfile.defaultTemperatureDisplayEnabled))
-        applySystemHudPreference(envPrefs.getBoolean("system_hud_enabled", RuntimeDeviceProfile.defaultSystemHudEnabled))
-
-
+        // Performance/HUD loops are deliberately inactive until the first Runtime frame.
         setContentView(root)
 
         // Bind only the immediately visible production controls before the first frame.
@@ -1215,6 +1211,17 @@ class MainActivity : Activity() {
                     }.onFailure {
                         status.text="UI READY • UI DIRECTORY EVIDENCE BLOCKED: "+(it.message?:"error")
                     }
+
+                    // Frame governor and diagnostic monitors start only after the first
+                    // production frame is already visible.
+                    adaptiveRefreshController?.start()
+                    applyFpsDisplayPreference(envPrefs.getBoolean("fps_display_enabled", false))
+                    applyTemperatureDisplayPreference(
+                        envPrefs.getBoolean("temperature_display_enabled", RuntimeDeviceProfile.defaultTemperatureDisplayEnabled)
+                    )
+                    applySystemHudPreference(
+                        envPrefs.getBoolean("system_hud_enabled", RuntimeDeviceProfile.defaultSystemHudEnabled)
+                    )
 
                     root.postDelayed({ scheduleBackgroundOnlineServices() },250L)
                     root.postDelayed({
