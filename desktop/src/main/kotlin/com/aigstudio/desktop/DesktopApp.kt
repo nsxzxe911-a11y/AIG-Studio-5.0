@@ -1740,13 +1740,6 @@ private fun sha256File(file: File): String {
 }
 
 private fun runSmoke() {
-    val startupEvidence=StudioDesktopStartupWindow()
-    startupEvidence.advance(StudioStartupStage.SAFE_THEME,"載入原版 RGB 啟動圖")
-    startupEvidence.advance(StudioStartupStage.CORE,"初始化 CAD / CAM 核心")
-    startupEvidence.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
-    startupEvidence.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")
-    writePanel(startupEvidence.evidencePanel(),File("desktop_startup.png"),760,430)
-
     val doc = DrawingDocument()
     addRectangle(doc, -40.0, -25.0, 40.0, 25.0)
     require(doc.size() == 4) { "2D CAD smoke failed" }
@@ -3399,8 +3392,14 @@ private fun showApp(
     startup?.advance(StudioStartupStage.HOME,"AIG CNC READY")
     startup?.close()
     if(showWindow) {
-        val uiReadyMarker=StudioDesktopRuntimeUiDirectoryBootstrap.writeReady(visibleInitial)
-        status.text="UI AUTOLOAD • "+visibleInitial+" • PRODUCTION UI • "+uiReadyMarker.parentFile.absolutePath
+        EventQueue.invokeLater {
+            runCatching {
+                val uiReadyMarker=StudioDesktopRuntimeUiDirectoryBootstrap.writeReady(visibleInitial)
+                status.text="UI AUTOLOAD • "+visibleInitial+" • PRODUCTION UI • "+uiReadyMarker.parentFile.absolutePath
+            }.onFailure {
+                status.text="UI READY MARKER BLOCKED • "+(it.message?:"error")
+            }
+        }
     }
     return frame
 }
@@ -3413,10 +3412,7 @@ fun main(args: Array<String>) {
     if (GraphicsEnvironment.isHeadless()) error("Desktop UI requires a graphical Windows session")
     val uiBootstrap=StudioDesktopRuntimeUiDirectoryBootstrap.read()
     SwingUtilities.invokeLater {
-        val startup=StudioDesktopStartupWindow()
-        startup.show()
-        startup.advance(StudioStartupStage.SAFE_THEME,"讀取本機 UI / 原版 RGB")
-        startup.advance(StudioStartupStage.CORE,"初始化 CAD / CAM 核心")
-        showApp(startup,initialUiMode=uiBootstrap.entryMode)
+        // Production Runtime is the first visible Windows surface.
+        showApp(startup=null,initialUiMode=uiBootstrap.entryMode)
     }
 }
