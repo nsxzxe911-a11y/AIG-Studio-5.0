@@ -1354,3 +1354,28 @@ if "AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe" in windows_release:
     raise SystemExit("BLOCKED STUDIO_RUNTIME_LAUNCHER_IDENTITY: installer is still named as production Runtime executable")
 print("RUNTIME_FIRST_BOOT_ARCHITECTURE_GATE_PASS|STUDIO_222|UI_FIRST|ASYNC_RGB_ASSETS|RECOVERY_AFTER_READY|RUNTIME_LAUNCHER_NOT_INSTALLER")
 
+# Startup must auto-read the local UI manifest, fail open to the embedded production
+# Runtime, and never require network I/O before the first interactive frame.
+for needle in (
+    'object StudioRuntimeUiDirectoryBootstrap',
+    'runtime-ui.properties',
+    'LOCAL_UI_DIRECTORY',
+    'EMBEDDED_FALLBACK',
+    'network_blocking=false',
+    'val uiBootstrap=StudioRuntimeUiDirectoryBootstrap.read(this)',
+    'refreshVisibleMode(uiBootstrap.entryMode)',
+    'StudioRuntimeUiDirectoryBootstrap.writeReady(',
+):
+    require(android, needle, "STUDIO_UI_AUTOLOAD_BOOTSTRAP")
+for needle in (
+    'object StudioDesktopRuntimeUiDirectoryBootstrap',
+    'runtime-ui.properties',
+    'LOCAL_UI_DIRECTORY',
+    'EMBEDDED_FALLBACK',
+    'val uiBootstrap=StudioDesktopRuntimeUiDirectoryBootstrap.read()',
+    'showApp(startup,initialUiMode=uiBootstrap.entryMode)',
+):
+    require(desktop, needle, "STUDIO_WINDOWS_UI_AUTOLOAD_BOOTSTRAP")
+require(windows_release, 'STUDIO_WINDOWS_UI_AUTOLOAD_MANIFEST_GATE_PASS', "STUDIO_WINDOWS_UI_AUTOLOAD_BOOTSTRAP")
+print("UI_AUTOLOAD_BOOTSTRAP_GATE_PASS|STUDIO_222|LOCAL_UI_DIRECTORY|EMBEDDED_FALLBACK|OFFLINE_FIRST|NO_NETWORK_BLOCK|READY_MANIFEST")
+
