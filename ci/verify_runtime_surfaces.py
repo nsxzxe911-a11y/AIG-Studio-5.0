@@ -156,11 +156,40 @@ for needle in (
     'productionUiButton("4AX"',
     'productionUiButton("5AX"',
     'productionUiButton("NC"',
+    'productionUiButton("AI"',
     'ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList())',
 ):
     if needle not in desktop:
         raise SystemExit(f"Windows Production UI 缺少：{needle}")
-print("PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|STABLE_ORDER")
+print("PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|STABLE_ORDER")
+
+for needle in (
+    'const val POLICY = "NO_UI_NO_FUNCTION"',
+    'val requiredModes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")',
+):
+    require(env, needle, "VISIBLE_FUNCTION_UI_CONTRACT_212")
+for needle in (
+    'contentDescription="VISIBLE FUNCTION ACTIONS"',
+    'refreshVisibleMode(normalized)',
+    'refreshVisibleMode(ProductionUiSwitchContract.initialMode)',
+    'action("LINE",0){selectTool(Tool.LINE)}',
+    'action("CAM 參數",3){showCamWorkstation()}',
+    'action("開啟 3D",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}',
+    'action("開啟 3AX",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}',
+    'action("開啟 4AX",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}',
+    'action("開啟 5AX",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}',
+    'action("NC EDIT",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}',
+    'action("AI 檢查",3){cad.aiInspect()}',
+):
+    require(android, needle, "ANDROID_VISIBLE_FUNCTION_UI_212")
+for needle in (
+    'productionUiButton("AI"',
+    'name="AI_CARD"',
+    'AI LOCAL ASSIST',
+    'mainCardHost.add(aiPanel,"AI")',
+):
+    require(desktop, needle, "WINDOWS_VISIBLE_FUNCTION_UI_212")
+print("VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
 
 # Main Android page/category entry points must bind to real callbacks.
 android_entries = {

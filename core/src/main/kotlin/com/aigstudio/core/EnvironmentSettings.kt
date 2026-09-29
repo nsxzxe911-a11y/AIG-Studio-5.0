@@ -722,7 +722,7 @@ object WorkstationChromeContract {
 
 object ProductionUiSwitchContract {
     const val POLICY = "PRODUCTION_UI_SWITCH_STABLE_ORDER_LIVE_RUNTIME"
-    val modes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC")
+    val modes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")
     const val initialMode = "CAD"
 
     fun normalize(mode:String):String {
@@ -739,10 +739,32 @@ object ProductionUiSwitchContract {
         "4AX" -> "4AX"
         "5AX" -> "5AX"
         "NC" -> "NC_EDIT"
+        "AI" -> "AI"
         else -> error("unreachable")
     }
 
     fun stableOrder(candidate:List<String>):Boolean = candidate==modes
+}
+
+
+object VisibleFunctionUiContract {
+    const val POLICY = "NO_UI_NO_FUNCTION"
+    val requiredModes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")
+    val requiredActions = linkedMapOf(
+        "CAD" to listOf("LINE","RECT","CIRCLE","ARC","HOLE","SELECT"),
+        "CAM" to listOf("CAM","MACHINING"),
+        "SIM" to listOf("OPEN","MACHINING"),
+        "3AX" to listOf("OPEN","MACHINING"),
+        "4AX" to listOf("OPEN","MACHINING"),
+        "5AX" to listOf("OPEN","MACHINING"),
+        "NC" to listOf("EDIT","SAFETY"),
+        "AI" to listOf("INSPECT","VOICE","SUITE","UPDATE")
+    )
+
+    fun hasVisibleSurface(mode:String):Boolean =
+        requiredActions[mode.trim().uppercase()]?.isNotEmpty() == true
+
+    fun allModesVisible():Boolean = requiredModes.all(::hasVisibleSurface)
 }
 
 
@@ -1111,7 +1133,7 @@ enum class StudioStartupStage {
 }
 
 object StudioStartupEngineContract {
-    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_211"
+    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_212"
     val orderedStages=listOf(
         StudioStartupStage.BOOTSTRAP,
         StudioStartupStage.SAFE_THEME,

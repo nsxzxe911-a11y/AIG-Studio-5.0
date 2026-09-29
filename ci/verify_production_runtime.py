@@ -8,8 +8,8 @@ if not version_line.startswith("versionName="):
     raise SystemExit("release version metadata missing")
 version = version_line.split("=", 1)[1]
 parts = tuple(int(x) for x in version.split("."))
-if parts < (211, 0, 0):
-    raise SystemExit(f"production runtime line requires >=211.0.0, got {version}")
+if parts < (212, 0, 0):
+    raise SystemExit(f"production runtime line requires >=212.0.0, got {version}")
 
 runtime_roots = [
     ROOT / "app" / "src" / "main",
@@ -53,7 +53,7 @@ for marker in required_desktop:
     if marker not in desktop:
         raise SystemExit(f"Windows production runtime marker missing: {marker}")
 
-if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_211"' not in env:
+if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_212"' not in env:
     raise SystemExit("production startup profile missing")
 if "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" not in android_build:
     raise SystemExit("Android production release state missing")
@@ -64,7 +64,7 @@ if "runtime-evidence" not in windows_build:
 if "WINDOWS_EXECUTABLE_SMOKE_CAPTURED" not in windows_build:
     raise SystemExit("Windows executable smoke evidence marker missing")
 
-switch_modes = 'val modes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC")'
+switch_modes = 'val modes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")'
 if switch_modes not in env:
     raise SystemExit("production UI stable-order contract missing")
 for marker in [
@@ -76,6 +76,7 @@ for marker in [
     'addProductionUi("4AX")',
     'addProductionUi("5AX")',
     'addProductionUi("NC")',
+    'addProductionUi("AI")',
 ]:
     if marker not in android_main:
         raise SystemExit(f"Android production UI switch marker missing: {marker}")
@@ -87,9 +88,27 @@ for marker in [
     'productionUiButton("4AX"',
     'productionUiButton("5AX"',
     'productionUiButton("NC"',
+    'productionUiButton("AI"',
 ]:
     if marker not in desktop:
         raise SystemExit(f"Windows production UI switch marker missing: {marker}")
 
-print("PRODUCTION_UI_SWITCH_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|STABLE_ORDER|LIVE_RUNTIME")
-print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_211|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
+print("PRODUCTION_UI_SWITCH_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|STABLE_ORDER|LIVE_RUNTIME")
+if 'const val POLICY = "NO_UI_NO_FUNCTION"' not in env:
+    raise SystemExit("visible-function UI policy missing")
+for marker in [
+    'contentDescription="VISIBLE FUNCTION ACTIONS"',
+    'refreshVisibleMode(normalized)',
+    'action("AI 檢查",3){cad.aiInspect()}',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android visible-function UI marker missing: {marker}")
+for marker in [
+    'productionUiButton("AI"',
+    'name="AI_CARD"',
+    'AI LOCAL ASSIST',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Windows visible-function UI marker missing: {marker}")
+print("VISIBLE_FUNCTION_UI_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
+print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_212|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")

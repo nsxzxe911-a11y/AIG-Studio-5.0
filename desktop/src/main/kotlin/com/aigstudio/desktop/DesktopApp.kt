@@ -2975,6 +2975,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
             .onSuccess { status.text="NC EDIT • FANUC / MITSUBISHI • G90/G91 EXPLICIT • ABS XYZ LOCKED" }
             .onFailure { status.text="NC EDIT BLOCKED • "+(it.message?:"error") }
     })
+    moduleButtons.add(productionUiButton("AI", Color(139,92,246)) {
+        mainCardLayout.show(mainCardHost,"AI")
+        status.text="AI LOCAL ASSIST • VISIBLE UI • no hidden function"
+    })
     check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))
     productionUiButtons[ProductionUiSwitchContract.initialMode]?.active=true
     editTools.add(button("清除", Color(239, 68, 68)) { cad.clearCad() })
@@ -3033,7 +3037,43 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         add(cad,BorderLayout.CENTER)
         add(infoRail,BorderLayout.EAST)
     }
+    val aiSummary=JTextArea().apply{
+        isEditable=false
+        background=Color(7,16,28)
+        foreground=Color(220,235,250)
+        font=Font(Font.MONOSPACED,Font.PLAIN,13)
+        text="AI LOCAL ASSIST\nVisible UI required for every production function.\nNetwork AI update is intentionally not claimed here."
+    }
+    val aiActions=JPanel(FlowLayout(FlowLayout.LEFT,8,8)).apply{
+        background=StudioDesktopProductionTheme.background
+        add(button("專案摘要",Color(139,92,246)){
+            aiSummary.text="AI LOCAL ASSIST\nENTITIES="+doc.size()+"\nLINKS="+doc.links().size+"\nMASTER X0.000 Y0.000\nPRECISION 0.001 mm"
+            status.text="AI 專案摘要 • entities="+doc.size()+" • links="+doc.links().size
+        })
+        add(button("CAM 檢查",StudioDesktopProductionTheme.cutting){showProductionCam()})
+        add(button("NC 安全",Color(80,170,255)){
+            runCatching{showNcEditor(frame,doc)}
+                .onFailure{status.text="AI NC CHECK BLOCKED • "+(it.message?:"error")}
+        })
+        add(button("返回 CAD",StudioDesktopProductionTheme.accent){
+            mainCardLayout.show(mainCardHost,"CAD")
+            status.text="CAD • PRODUCTION UI"
+        })
+    }
+    val aiPanel=JPanel(BorderLayout(8,8)).apply{
+        name="AI_CARD"
+        background=StudioDesktopProductionTheme.background
+        border=BorderFactory.createEmptyBorder(12,12,12,12)
+        add(JLabel("AIG CNC • AI LOCAL ASSIST • 真 UI").apply{
+            foreground=Color(139,92,246)
+            font=font.deriveFont(Font.BOLD,18f)
+        },BorderLayout.NORTH)
+        add(JScrollPane(aiSummary),BorderLayout.CENTER)
+        add(aiActions,BorderLayout.SOUTH)
+    }
+
     mainCardHost.add(workspace,"CAD")
+    mainCardHost.add(aiPanel,"AI")
     mainCardLayout.show(mainCardHost,"CAD")
     frame.add(toolbar, BorderLayout.NORTH)
     frame.add(mainCardHost, BorderLayout.CENTER)

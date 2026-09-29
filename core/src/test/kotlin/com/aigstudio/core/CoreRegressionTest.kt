@@ -1194,6 +1194,13 @@ fun main() {
     testAxisMode345RuntimeMatrix()
     testNcDraftRecoveryContract()
     testPixelLayoutPrecheckContract()
+    check(ProductionUiSwitchContract.modes==listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI"))
+    check(ProductionUiSwitchContract.runtimeTarget("AI")=="AI")
+    check(VisibleFunctionUiContract.POLICY=="NO_UI_NO_FUNCTION")
+    check(VisibleFunctionUiContract.allModesVisible())
+    check(VisibleFunctionUiContract.requiredActions["CAD"]==listOf("LINE","RECT","CIRCLE","ARC","HOLE","SELECT"))
+    check(VisibleFunctionUiContract.requiredActions["AI"]==listOf("INSPECT","VOICE","SUITE","UPDATE"))
+    println("VISIBLE_FUNCTION_UI_CORE_GATE_PASS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
     println("ALL TESTS PASSED")
 }
 

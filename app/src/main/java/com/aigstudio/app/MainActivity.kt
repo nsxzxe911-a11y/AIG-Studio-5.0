@@ -705,8 +705,72 @@ class MainActivity : Activity() {
             "3AX" to 0xFF3B82F6.toInt(),
             "4AX" to 0xFFF59E0B.toInt(),
             "5AX" to 0xFFEC4899.toInt(),
-            "NC" to 0xFF50AAFF.toInt()
+            "NC" to 0xFF50AAFF.toInt(),
+            "AI" to 0xFF8B5CF6.toInt()
         )
+        val visibleModeTitle = chromeText(
+            "目前模式 • CAD • 真 UI / LIVE RUNTIME",
+            0xFF63FF9D.toInt(),10.5f
+        ).apply {
+            contentDescription="CURRENT PRODUCTION MODE"
+            setTypeface(typeface,android.graphics.Typeface.BOLD)
+        }
+        val visibleModeActions = FlowLayout(this).apply {
+            contentDescription="VISIBLE FUNCTION ACTIONS"
+            setPadding(dp(5),dp(2),dp(5),dp(3))
+        }
+        fun refreshVisibleMode(id:String) {
+            val mode=ProductionUiSwitchContract.normalize(id)
+            visibleModeTitle.text="目前模式 • "+mode+" • 真 UI / LIVE RUNTIME"
+            visibleModeActions.removeAllViews()
+            fun action(label:String,colorIndex:Int,run:()->Unit) {
+                addActionTo(visibleModeActions,label,colorIndex,run)
+            }
+            when(mode) {
+                "CAD" -> {
+                    action("LINE",0){selectTool(Tool.LINE)}
+                    action("RECT",1){selectTool(Tool.RECT)}
+                    action("CIRCLE",2){selectTool(Tool.CIRCLE)}
+                    action("ARC",3){selectTool(Tool.ARC)}
+                    action("HOLE",4){selectTool(Tool.HOLE)}
+                    action("SELECT",1){selectTool(Tool.SELECT)}
+                }
+                "CAM" -> {
+                    action("CAM 參數",3){showCamWorkstation()}
+                    action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
+                }
+                "SIM" -> {
+                    action("開啟 3D",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
+                    action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
+                }
+                "3AX" -> {
+                    action("開啟 3AX",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
+                    action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
+                }
+                "4AX" -> {
+                    action("開啟 4AX",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}
+                    action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
+                }
+                "5AX" -> {
+                    action("開啟 5AX",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
+                    action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
+                }
+                "NC" -> {
+                    action("NC EDIT",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}
+                    action("安全",4){openCategory("安全"){showSecurityBranch()}}
+                }
+                "AI" -> {
+                    action("AI 檢查",3){cad.aiInspect()}
+                    action("VOICE",0){startVoiceAssistant()}
+                    action("AI SUITE",2){showAiSystemSuiteDialog()}
+                    action("AI 更新",1){runSecureUpdateCheck()}
+                }
+            }
+            check(visibleModeActions.childCount>0) {
+                "NO_UI_NO_FUNCTION: visible actions missing for "+mode
+            }
+        }
+
         fun selectProductionUi(id:String) {
             val normalized=ProductionUiSwitchContract.normalize(id)
             productionUiButtons.forEach { (key,button) ->
@@ -728,6 +792,7 @@ class MainActivity : Activity() {
                 setRgbState(productionUiColors[normalized] ?: StudioProductionTheme.accent,false)
                 setOnClickListener {
                     selectProductionUi(normalized)
+                    refreshVisibleMode(normalized)
                     action()
                 }
             }
@@ -743,9 +808,12 @@ class MainActivity : Activity() {
         addProductionUi("4AX") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX")) }
         addProductionUi("5AX") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX")) }
         addProductionUi("NC") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC")) }
+        addProductionUi("AI") { showAiSystemSuiteDialog() }
         check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))
         selectProductionUi(ProductionUiSwitchContract.initialMode)
         root.addView(productionUiSwitch,LinearLayout.LayoutParams(-1,-2))
+        root.addView(visibleModeTitle,LinearLayout.LayoutParams(-1,-2))
+        root.addView(visibleModeActions,LinearLayout.LayoutParams(-1,-2))
 
         cad = CadView(this) {
             if (!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
@@ -963,6 +1031,7 @@ class MainActivity : Activity() {
         autosaveHandler.postDelayed(autosaveRunnable, 15000L)
         openCategory("繪圖") { showDrawingBranch() }
         selectTool(Tool.LINE)
+        refreshVisibleMode(ProductionUiSwitchContract.initialMode)
         bootOverlay.advance(StartupMilestone.HEALTH_CHECK)
         root.post {
             if (root.isAttachedToWindow) {
