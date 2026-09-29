@@ -3334,15 +3334,43 @@ private fun showApp(
     return frame
 }
 
+private fun activateStudioProductionMode(frame:JFrame,mode:String):Boolean {
+    val normalized=mode.trim().uppercase()
+    if(normalized !in setOf("CAD","CAM","AI")) return false
+    fun find(component:Component):JButton? {
+        if(component is JButton &&
+            component.text?.trim()?.uppercase()==normalized &&
+            component.toolTipText?.startsWith("正式 UI 切換")==true
+        ) return component
+        if(component is Container) {
+            component.components.forEach { child -> find(child)?.let { return it } }
+        }
+        return null
+    }
+    val button=find(frame.contentPane) ?: return false
+    button.doClick()
+    return true
+}
+
 fun main(args: Array<String>) {
     if (args.contains("--smoke")) {
         runSmoke()
         return
     }
     if (GraphicsEnvironment.isHeadless()) error("Desktop UI requires a graphical Windows session")
-    val uiBootstrap=StudioDesktopRuntimeUiDirectoryBootstrap.read()
     SwingUtilities.invokeLater {
-        // Production Runtime is the first visible Windows surface.
-        showApp(initialUiMode=uiBootstrap.entryMode)
+        // Production Runtime appears immediately in CAD. UI-directory state is read only
+        // after the first visible frame so disk I/O cannot delay window creation.
+        val frame=showApp(initialUiMode="CAD")
+        Thread({
+            val localUi=StudioDesktopRuntimeUiDirectoryBootstrap.read()
+            if(localUi.validLocalUi && localUi.entryMode!="CAD") {
+                SwingUtilities.invokeLater {
+                    if(activateStudioProductionMode(frame,localUi.entryMode)) {
+                        runCatching { StudioDesktopRuntimeUiDirectoryBootstrap.writeReady(localUi.entryMode) }
+                    }
+                }
+            }
+        },"Studio-UI-Bootstrap").apply{isDaemon=true}.start()
     }
 }
