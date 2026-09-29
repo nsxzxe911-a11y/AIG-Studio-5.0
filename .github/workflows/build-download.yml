@@ -182,28 +182,36 @@ jobs:
       - name: Build Windows EXE
         shell: pwsh
         run: .\build_windows_native.ps1
-      - name: Verify Windows EXE
+      - name: Verify Windows Runtime + SETUP
         shell: pwsh
         run: |
-          $exe = 'release\windows\AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
-          if (-not (Test-Path $exe)) { throw 'EXE missing' }
-          $bytes = [IO.File]::ReadAllBytes($exe)
-          if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw 'PE/MZ invalid' }
-          $actual = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
-          $expected = ((Get-Content 'release\windows\SHA256SUMS.txt' -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
-          if ($actual -ne $expected) { throw 'SHA256 mismatch' }
+          $setup = 'release\windows\AIG_Studio_SETUP.exe'
+          $launcher = 'release\windows\portable\AIG_Studio_Main_Runtime.exe'
+          foreach ($file in @($setup,$launcher)) {
+            if (-not (Test-Path $file)) { throw "Windows artifact missing: $file" }
+            $bytes = [IO.File]::ReadAllBytes($file)
+            if ($bytes.Length -lt 2 -or $bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw "PE/MZ invalid: $file" }
+          }
           $versionName = (ConvertFrom-StringData (Get-Content 'release-version.properties' -Raw)).versionName
           $manifest = Get-Content 'release\windows\RELEASE_MANIFEST.txt'
           if ($manifest -notcontains ("version=" + $versionName)) { throw 'Manifest version mismatch' }
           if ($manifest -notcontains ("git_sha=" + $env:GITHUB_SHA)) { throw 'Manifest Git SHA mismatch' }
           if ($manifest -notcontains 'release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL') { throw 'Production runtime release state missing' }
           if ($manifest -notcontains 'release_class=PRODUCTION_RUNTIME') { throw 'Production runtime class missing' }
-          if ($manifest -notcontains 'runtime_evidence=WINDOWS_EXECUTABLE_SMOKE_CAPTURED') { throw 'Windows runtime evidence marker missing' }
+          if ($manifest -notcontains 'runtime_launcher=portable\AIG_Studio_Main_Runtime.exe') { throw 'Runtime launcher identity missing' }
+          if ($manifest -notcontains 'packaged_launcher_smoke=PASS') { throw 'Packaged Runtime launcher was not executed' }
+          if ($manifest -notcontains 'runtime_evidence=WINDOWS_PACKAGED_LAUNCHER_VISIBLE_UI_CAPTURED') { throw 'Visible Runtime UI capture marker missing' }
+          $launcherExpected = ($manifest | Where-Object { $_ -like 'runtime_launcher_sha256=*' }).Split('=')[1]
+          $launcherActual = (Get-FileHash $launcher -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($launcherActual -ne $launcherExpected) { throw 'Runtime launcher SHA256 mismatch' }
+          $setupExpected = ($manifest | Where-Object { $_ -like 'installer_sha256=*' }).Split('=')[1]
+          $setupActual = (Get-FileHash $setup -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($setupActual -ne $setupExpected) { throw 'SETUP SHA256 mismatch' }
           $evidence = 'release\windows\runtime-evidence'
           foreach ($name in @('desktop_launch.png','desktop_3d_before.png','desktop_3d.png','desktop_5x_axis_badge_mid.png','desktop_5x_axis_badge_narrow.png','desktop_smoke.txt')) {
-            $path = Join-Path $evidence $name
-            if (-not (Test-Path $path)) { throw "Production runtime evidence missing: $name" }
-            if ((Get-Item $path).Length -le 0) { throw "Production runtime evidence empty: $name" }
+            $evidencePath = Join-Path $evidence $name
+            if (-not (Test-Path $evidencePath)) { throw "Production runtime evidence missing: $name" }
+            if ((Get-Item $evidencePath).Length -le 0) { throw "Production runtime evidence empty: $name" }
           }
       - uses: actions/upload-artifact@v4
         with:
