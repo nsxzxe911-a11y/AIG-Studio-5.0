@@ -2,6 +2,8 @@ package com.aigstudio.core
 
 import kotlin.math.*
 
+enum class CamOperationMode { AUTO, CONTOUR, POCKET, DRILL, ENGRAVE, FACE }
+
 data class CamSettings(
     val toolDiameter: Double = 10.0,
     val depth: Double = -2.0,
@@ -9,7 +11,8 @@ data class CamSettings(
     val feedMmMin: Double = 150.0,
     val climb: Boolean = true,
     val leadInMm: Double = 2.0,
-    val leadOutMm: Double = 2.0
+    val leadOutMm: Double = 2.0,
+    val operationMode: CamOperationMode = CamOperationMode.AUTO
 ) {
     init {
         require(toolDiameter > 0.0) { "Tool diameter must be positive" }
@@ -207,33 +210,134 @@ object CamEngine {
             output += Toolpath(moves)
         }
 
-        for (entity in snapshot.entities) {
+        fun drillAt(center:Vec2) {
+            output += Toolpath(listOf(
+                Rapid(center,settings.safeZ),
+                Feed(center,settings.feedMmMin,settings.depth),
+                Rapid(center,settings.safeZ)
+            ))
+        }
+
+        fun contourEntity(entity:Entity,compensated:Boolean=true) {
+            val comp=if(compensated) radiusComp else 0.0
             when (entity) {
                 is Line -> {
-                    val d = entity.b - entity.a
-                    val len = d.length()
-                    if (len < CNC_RESOLUTION_MM) continue
-                    val nx = -d.y / len * radiusComp * side
-                    val ny = d.x / len * radiusComp * side
+                    val d=entity.b-entity.a
+                    val len=d.length()
+                    if(len<CNC_RESOLUTION_MM) return
+                    val nx=-d.y/len*comp*side
+                    val ny=d.x/len*comp*side
                     pathFrom(listOf(
-                        Vec2(entity.a.x + nx, entity.a.y + ny),
-                        Vec2(entity.b.x + nx, entity.b.y + ny)
+                        Vec2(entity.a.x+nx,entity.a.y+ny),
+                        Vec2(entity.b.x+nx,entity.b.y+ny)
                     ))
                 }
                 is Circle -> {
-                    val r = entity.radius + radiusComp
-                    arcPath(entity.center, r, 0.0, 2.0 * Math.PI)
+                    val r=entity.radius+comp
+                    if(r>=CNC_RESOLUTION_MM) arcPath(entity.center,r,0.0,2.0*Math.PI)
                 }
                 is Arc -> {
-                    val r = entity.radius + radiusComp
-                    val startA = atan2(entity.start.y - entity.center.y, entity.start.x - entity.center.x)
-                    val endA = atan2(entity.end.y - entity.center.y, entity.end.x - entity.center.x)
-                    var sweep = endA - startA
-                    if (entity.clockwise) while (sweep >= 0.0) sweep -= 2.0 * Math.PI
-                    else while (sweep <= 0.0) sweep += 2.0 * Math.PI
-                    arcPath(entity.center, r, startA, sweep)
+                    val r=entity.radius+comp
+                    if(r<CNC_RESOLUTION_MM) return
+                    val startA=atan2(entity.start.y-entity.center.y,entity.start.x-entity.center.x)
+                    val endA=atan2(entity.end.y-entity.center.y,entity.end.x-entity.center.x)
+                    var sweep=endA-startA
+                    if(entity.clockwise) while(sweep>=0.0) sweep-=2.0*Math.PI
+                    else while(sweep<=0.0) sweep+=2.0*Math.PI
+                    arcPath(entity.center,r,startA,sweep)
                 }
             }
+        }
+
+        fun pocketCircle(circle:Circle) {
+            val maxRadius=circle.radius-radiusComp
+            if(maxRadius<CNC_RESOLUTION_MM) return
+            val stepOver=max(settings.toolDiameter*0.60,CNC_RESOLUTION_MM)
+            var r=maxRadius
+            var guard=0
+            while(r>=CNC_RESOLUTION_MM && guard<512) {
+                arcPath(circle.center,r,0.0,2.0*Math.PI)
+                r-=stepOver
+                guard++
+            }
+            if(maxRadius<stepOver) drillAt(circle.center)
+        }
+
+        fun pocketRect(lines:List<Line>) {
+            if(lines.isEmpty()) return
+            val points=lines.flatMap{listOf(it.a,it.b)}
+            var minX=points.minOf{it.x}+radiusComp
+            var maxX=points.maxOf{it.x}-radiusComp
+            var minY=points.minOf{it.y}+radiusComp
+            var maxY=points.maxOf{it.y}-radiusComp
+            val stepOver=max(settings.toolDiameter*0.60,CNC_RESOLUTION_MM)
+            var guard=0
+            while(maxX-minX>=CNC_RESOLUTION_MM && maxY-minY>=CNC_RESOLUTION_MM && guard<512) {
+                pathFrom(listOf(
+                    Vec2(minX,minY),Vec2(maxX,minY),Vec2(maxX,maxY),Vec2(minX,maxY),Vec2(minX,minY)
+                ))
+                minX+=stepOver; maxX-=stepOver; minY+=stepOver; maxY-=stepOver
+                guard++
+            }
+        }
+
+        fun faceGeometryBounds() {
+            fun bounds(entity:Entity):DoubleArray = when(entity) {
+                is Line -> doubleArrayOf(min(entity.a.x,entity.b.x),min(entity.a.y,entity.b.y),max(entity.a.x,entity.b.x),max(entity.a.y,entity.b.y))
+                is Circle -> doubleArrayOf(entity.center.x-entity.radius,entity.center.y-entity.radius,entity.center.x+entity.radius,entity.center.y+entity.radius)
+                is Arc -> doubleArrayOf(entity.center.x-entity.radius,entity.center.y-entity.radius,entity.center.x+entity.radius,entity.center.y+entity.radius)
+            }
+            val all=snapshot.entities.map(::bounds)
+            if(all.isEmpty()) return
+            val minX=all.minOf{it[0]}-radiusComp
+            val maxX=all.maxOf{it[2]}+radiusComp
+            val minY=all.minOf{it[1]}-radiusComp
+            val maxY=all.maxOf{it[3]}+radiusComp
+            val stepOver=max(settings.toolDiameter*0.70,CNC_RESOLUTION_MM)
+            var y=minY
+            var reverse=false
+            var guard=0
+            while(y<=maxY+CNC_RESOLUTION_MM && guard<4096) {
+                val a=if(reverse) Vec2(maxX,y) else Vec2(minX,y)
+                val b=if(reverse) Vec2(minX,y) else Vec2(maxX,y)
+                pathFrom(listOf(a,b))
+                y+=stepOver
+                reverse=!reverse
+                guard++
+            }
+        }
+
+        val rectGroups=snapshot.entities
+            .filterIsInstance<Line>()
+            .filter{it.id.startsWith("RECT:")}
+            .groupBy{it.id.substringBeforeLast(':')}
+
+        when(settings.operationMode) {
+            CamOperationMode.AUTO -> snapshot.entities.forEach { entity ->
+                if(CadSemanticIdentity.semanticKind(entity)=="HOLE" && entity is Circle) drillAt(entity.center)
+                else contourEntity(entity,true)
+            }
+            CamOperationMode.CONTOUR -> snapshot.entities.forEach { entity ->
+                if(CadSemanticIdentity.semanticKind(entity)!="HOLE") contourEntity(entity,true)
+            }
+            CamOperationMode.DRILL -> snapshot.entities.forEach { entity ->
+                if(CadSemanticIdentity.semanticKind(entity)=="HOLE" && entity is Circle) drillAt(entity.center)
+            }
+            CamOperationMode.ENGRAVE -> snapshot.entities.forEach { entity ->
+                if(CadSemanticIdentity.semanticKind(entity)!="HOLE") contourEntity(entity,false)
+            }
+            CamOperationMode.POCKET -> {
+                val rectIds=rectGroups.values.flatten().map{it.id}.toSet()
+                rectGroups.values.forEach(::pocketRect)
+                snapshot.entities.forEach { entity ->
+                    if(entity.id in rectIds) return@forEach
+                    when {
+                        entity is Circle && CadSemanticIdentity.semanticKind(entity)!="HOLE" -> pocketCircle(entity)
+                        CadSemanticIdentity.semanticKind(entity)!="HOLE" -> contourEntity(entity,true)
+                    }
+                }
+            }
+            CamOperationMode.FACE -> faceGeometryBounds()
         }
         val totalMoves=output.sumOf { it.moves.size }.coerceAtLeast(1)
         var moveIndex=0
