@@ -409,6 +409,90 @@ object CadSemanticIdentity {
     }
 }
 
+data class CadModuleTemplate(
+    val name:String,
+    val entities:List<Entity>,
+    val origin:Vec2
+)
+
+object CadModuleEngine {
+    private fun bounds(entity:Entity):DoubleArray = when(entity){
+        is Line -> doubleArrayOf(
+            min(entity.a.x,entity.b.x),min(entity.a.y,entity.b.y),
+            max(entity.a.x,entity.b.x),max(entity.a.y,entity.b.y)
+        )
+        is Circle -> doubleArrayOf(
+            entity.center.x-entity.radius,entity.center.y-entity.radius,
+            entity.center.x+entity.radius,entity.center.y+entity.radius
+        )
+        is Arc -> doubleArrayOf(
+            entity.center.x-entity.radius,entity.center.y-entity.radius,
+            entity.center.x+entity.radius,entity.center.y+entity.radius
+        )
+    }
+
+    fun capture(
+        doc:DrawingDocument,
+        selectedIds:Collection<EntityId>,
+        name:String="WORKPIECE"
+    ):CadModuleTemplate {
+        val selected=doc.all().filter{it.id in selectedIds}
+        require(selected.isNotEmpty()){"MODULE requires selected geometry"}
+        val boxes=selected.map(::bounds)
+        val origin=Vec2(
+            (boxes.minOf{it[0]}+boxes.maxOf{it[2]})/2.0,
+            (boxes.minOf{it[1]}+boxes.maxOf{it[3]})/2.0
+        )
+        return CadModuleTemplate(name.trim().ifBlank{"WORKPIECE"},selected,origin)
+    }
+
+    private fun transform(p:Vec2,origin:Vec2,target:Vec2,angleDeg:Double):Vec2 {
+        require(target.x.isFinite() && target.y.isFinite() && angleDeg.isFinite())
+        val a=Math.toRadians(angleDeg)
+        val cs=cos(a); val sn=sin(a)
+        val x=p.x-origin.x; val y=p.y-origin.y
+        return Vec2(target.x+x*cs-y*sn,target.y+x*sn+y*cs)
+    }
+
+    fun insertEntities(
+        template:CadModuleTemplate,
+        target:Vec2,
+        angleDeg:Double=0.0
+    ):List<Entity> {
+        require(template.entities.isNotEmpty()){"MODULE is empty"}
+        val idMap=CadSemanticIdentity.copiedIdMap(template.entities)
+        return template.entities.map { entity ->
+            val id=idMap.getValue(entity.id)
+            when(entity){
+                is Line -> Line(
+                    id=id,
+                    a=transform(entity.a,template.origin,target,angleDeg),
+                    b=transform(entity.b,template.origin,target,angleDeg)
+                )
+                is Circle -> Circle(
+                    id=id,
+                    center=transform(entity.center,template.origin,target,angleDeg),
+                    radius=entity.radius
+                )
+                is Arc -> Arc(
+                    id=id,
+                    center=transform(entity.center,template.origin,target,angleDeg),
+                    radius=entity.radius,
+                    start=transform(entity.start,template.origin,target,angleDeg),
+                    end=transform(entity.end,template.origin,target,angleDeg),
+                    clockwise=entity.clockwise
+                )
+            }
+        }
+    }
+
+    fun insertCommand(
+        template:CadModuleTemplate,
+        target:Vec2,
+        angleDeg:Double=0.0
+    ):Command = AddEntitiesCommand(insertEntities(template,target,angleDeg))
+}
+
 object CadSnapEngine {
     private fun tangentPoints(p:Vec2,c:Vec2,r:Double):List<Vec2> {
         val d=p-c
