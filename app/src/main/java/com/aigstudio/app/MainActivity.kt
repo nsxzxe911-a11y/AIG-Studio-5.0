@@ -727,7 +727,11 @@ class MainActivity : Activity() {
         }
         fun refreshVisibleMode(id:String) {
             val mode=ProductionUiSwitchContract.normalize(id)
-            visibleModeTitle.text="目前模式 • "+mode+" • 真 UI / LIVE RUNTIME"
+            visibleModeTitle.text=when(mode) {
+                "4AX" -> "目前模式 • 4AX • A軸轉台模型 • 真 UI / LIVE RUNTIME"
+                "5AX" -> "目前模式 • 5AX • A/B 搖籃模型 • 真 UI / LIVE RUNTIME"
+                else -> "目前模式 • "+mode+" • 真 UI / LIVE RUNTIME"
+            }
             visibleModeActions.removeAllViews()
             fun action(label:String,colorIndex:Int,run:()->Unit) {
                 addActionTo(visibleModeActions,label,colorIndex,run)
@@ -767,21 +771,21 @@ class MainActivity : Activity() {
                     action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
                 }
                 "3AX" -> {
-                    action("開啟 3AX",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
+                    action("3AX 模型",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
                     action("STOCK",4){showStockDialog()}
                     action("偏置",2){showWorkOffsetDialog()}
                     action("NC",0){showUnifiedMachiningWorkspace("NC_EDIT")}
                     action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
                 }
                 "4AX" -> {
-                    action("開啟 4AX",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}
+                    action("4AX 模型",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}
                     action("STOCK",4){showStockDialog()}
                     action("偏置",2){showWorkOffsetDialog()}
                     action("NC",0){showUnifiedMachiningWorkspace("NC_EDIT")}
                     action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
                 }
                 "5AX" -> {
-                    action("開啟 5AX",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
+                    action("5AX 模型",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
                     action("STOCK",4){showStockDialog()}
                     action("偏置",2){showWorkOffsetDialog()}
                     action("NC",0){showUnifiedMachiningWorkspace("NC_EDIT")}
@@ -1946,7 +1950,7 @@ class MainActivity : Activity() {
             setPadding(dp(6),dp(6),dp(6),dp(6))
         }
         root.addView(TextView(this).apply {
-            text="AIG CNC • 3D / 3AX / 4AX / 5AX + NC • 智慧排版"
+            text="AIG CNC • 4AX A軸轉台 / 5AX A+B 搖籃 • 真機械模型 + NC"
             setTextColor(0xFF3DEBFF.toInt())
             textSize=StudioDisplayPolicy.sp(this,11.5f)
             setTypeface(typeface,android.graphics.Typeface.BOLD)
@@ -2277,7 +2281,12 @@ class MainActivity : Activity() {
             }
             simulationIndex=frame.index
             activeAxisPreview?.setAngles(frame.toolPoint.axisA,frame.toolPoint.axisB)
-            simulationStatus.text="真走刀 • "+activeAxisMode+" • "+(frame.index+1)+"/"+frame.total+
+            val modelLabel=when(activeAxisMode){
+                "4AX" -> "4AX • A軸轉台模型"
+                "5AX" -> "5AX • A/B 搖籃模型"
+                else -> "3AX • 立式銑床模型"
+            }
+            simulationStatus.text=modelLabel+" • 真走刀 • "+(frame.index+1)+"/"+frame.total+
                 " • X="+DisplayFormat.mm(frame.toolPoint.to.x)+
                 " Y="+DisplayFormat.mm(frame.toolPoint.to.y)+
                 " Z="+DisplayFormat.mm(frame.toolPoint.z)+
