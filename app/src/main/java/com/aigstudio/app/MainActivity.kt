@@ -740,29 +740,57 @@ class MainActivity : Activity() {
                     action("ARC",3){selectTool(Tool.ARC)}
                     action("HOLE",4){selectTool(Tool.HOLE)}
                     action("SELECT",1){selectTool(Tool.SELECT)}
+                    action("SNAP",0){cad.toggleSnap()}
+                    action("尺寸",5){cad.promptDrivenDimension()}
+                    action("TRIM",0){cad.trimSelected()}
+                    action("EXTEND",1){cad.extendSelected()}
+                    action("OFFSET",2){cad.promptOffset()}
+                    action("ARRAY",3){cad.promptArray()}
+                    action("連接",1){cad.connectSelected()}
+                    action("斷開",4){cad.disconnectSelected()}
                 }
                 "CAM" -> {
                     action("CAM 參數",3){showCamWorkstation()}
+                    action("STOCK",4){showStockDialog()}
+                    action("偏置",2){showWorkOffsetDialog()}
+                    action("3D",1){showUnifiedMachiningWorkspace("3D")}
+                    action("NC",0){showUnifiedMachiningWorkspace("NC_EDIT")}
                     action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
                 }
                 "SIM" -> {
                     action("開啟 3D",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
+                    action("STOCK",4){showStockDialog()}
+                    action("偏置",2){showWorkOffsetDialog()}
+                    action("NC",0){showUnifiedMachiningWorkspace("NC_EDIT")}
                     action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
                 }
                 "3AX" -> {
                     action("開啟 3AX",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
+                    action("STOCK",4){showStockDialog()}
+                    action("偏置",2){showWorkOffsetDialog()}
+                    action("NC",0){showUnifiedMachiningWorkspace("NC_EDIT")}
                     action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
                 }
                 "4AX" -> {
                     action("開啟 4AX",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}
+                    action("STOCK",4){showStockDialog()}
+                    action("偏置",2){showWorkOffsetDialog()}
+                    action("NC",0){showUnifiedMachiningWorkspace("NC_EDIT")}
                     action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
                 }
                 "5AX" -> {
                     action("開啟 5AX",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
+                    action("STOCK",4){showStockDialog()}
+                    action("偏置",2){showWorkOffsetDialog()}
+                    action("NC",0){showUnifiedMachiningWorkspace("NC_EDIT")}
                     action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
                 }
                 "NC" -> {
                     action("NC EDIT",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}
+                    action("鑽孔",3){showDrillCycleDialog()}
+                    action("偏置",2){showWorkOffsetDialog()}
+                    action("控制",1){showControllerDialog()}
+                    action("SIM",0){showUnifiedMachiningWorkspace("SIM")}
                     action("安全",4){openCategory("安全"){showSecurityBranch()}}
                 }
                 "AI" -> {
@@ -770,6 +798,8 @@ class MainActivity : Activity() {
                     action("VOICE",0){startVoiceAssistant()}
                     action("AI SUITE",2){showAiSystemSuiteDialog()}
                     action("AI 更新",1){runSecureUpdateCheck()}
+                    action("維修",5){showMaintenanceCenter()}
+                    action("HUD",4){showExpandedSystemHud()}
                 }
             }
             check(visibleModeActions.childCount>0) {
