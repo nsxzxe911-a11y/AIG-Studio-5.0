@@ -7,7 +7,6 @@ import java.security.MessageDigest
 
 object LibraryRgbReferenceVisuals {
     private data class Entry(val file:String,val sha256:String)
-
     private val entries=mapOf(
         "STARTUP" to Entry("startup_aigii_future_cnc_1536x1024.png","363115847162f726ae54011da431b79f5ac4563b4b844cf8b7dfc9ee5a0fff21"),
         "HOME" to Entry("startup_aigii_future_cnc_1536x1024.png","363115847162f726ae54011da431b79f5ac4563b4b844cf8b7dfc9ee5a0fff21"),
@@ -22,10 +21,8 @@ object LibraryRgbReferenceVisuals {
         "AXIS" to Entry("axis5_realcam_portrait_941x1672.png","bb677b561ecaf6b0b42382ab0f706cf567cb7c4fa57e0ca3f14f3c73ad3b95eb")
     )
     private val cache=mutableMapOf<String,Bitmap?>()
-
     private fun sha256(bytes:ByteArray):String =
         MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
-
     @Synchronized
     fun bitmap(context:Context,surface:String):Bitmap? {
         val key=surface.uppercase()

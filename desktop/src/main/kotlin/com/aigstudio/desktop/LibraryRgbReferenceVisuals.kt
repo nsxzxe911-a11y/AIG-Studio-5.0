@@ -7,7 +7,6 @@ import javax.imageio.ImageIO
 
 object StudioLibraryRgbReferenceVisuals {
     private data class Entry(val file:String,val sha256:String)
-
     private val entries=mapOf(
         "STARTUP" to Entry("startup_aigii_future_cnc_1536x1024.png","363115847162f726ae54011da431b79f5ac4563b4b844cf8b7dfc9ee5a0fff21"),
         "HOME" to Entry("startup_aigii_future_cnc_1536x1024.png","363115847162f726ae54011da431b79f5ac4563b4b844cf8b7dfc9ee5a0fff21"),
@@ -22,10 +21,8 @@ object StudioLibraryRgbReferenceVisuals {
         "AXIS" to Entry("axis5_realcam_landscape_1672x941.png","e58d585864f61ffe60d58c76239b3d4f20af91c235024e9a50b700306a56d066")
     )
     private val cache=mutableMapOf<String,BufferedImage?>()
-
     private fun sha256(bytes:ByteArray):String =
         MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
-
     @Synchronized
     fun image(surface:String):BufferedImage? {
         val key=surface.uppercase()
