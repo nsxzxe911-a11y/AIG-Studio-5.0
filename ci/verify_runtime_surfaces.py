@@ -481,9 +481,9 @@ for needle in (
     'val target=MachiningAxisRuntimeContract.state(m,draftA,draftB)',
     'MultiAxisOrientationSchedule(',
     'mode=MultiAxisInterpolationMode.LINEAR_SYNC',
-    'installSimulationView("3AX",axisOverlay=false)',
-    'installSimulationView("4AX",axisOverlay=true)',
-    'installSimulationView("5AX",axisOverlay=true)',
+    'installSimulationView("3AX")',
+    'installSimulationView("4AX")',
+    'installSimulationView("5AX")',
     'showSimulationFrame(simulationIndex+1)',
 ):
     require(android, needle, "AXIS_PROGRESSIVE_RUNTIME_BINDING")
