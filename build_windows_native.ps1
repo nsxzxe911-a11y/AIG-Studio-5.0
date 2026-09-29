@@ -101,6 +101,9 @@ if ($LauncherBytes.Length -lt 2 -or $LauncherBytes[0] -ne 0x4D -or $LauncherByte
 
 # Execute the packaged launcher itself. --smoke now opens the real visible production
 # JFrame and captures desktop_launch.png from that live window.
+# Remove prior UI evidence first; the Runtime must recreate it after the real window is visible.
+$UiEvidenceDir = Join-Path $env:LOCALAPPDATA 'AIG-Studio\UI'
+if (Test-Path $UiEvidenceDir) { Remove-Item -Recurse -Force $UiEvidenceDir }
 $env:GITHUB_SHA = $GitSha
 $LauncherProbe = Start-Process -FilePath $PortableLauncher -ArgumentList '--smoke' -WorkingDirectory $LauncherSmokeDir -PassThru
 $LauncherExited = $LauncherProbe.WaitForExit(60000)
@@ -123,6 +126,13 @@ foreach ($name in @('REMOVED_CELLS.txt','3D_RUNTIME_EVIDENCE.txt','3D_RUNTIME_SH
     throw "Studio packaged launcher evidence source mismatch: $name"
   }
 }
+$UiReadyMarker = Join-Path $UiEvidenceDir 'runtime-ui.ready'
+if (-not (Test-Path $UiReadyMarker)) { throw 'Packaged Studio Runtime did not create UI/runtime-ui.ready' }
+$UiReadyText = Get-Content $UiReadyMarker -Raw
+if ($UiReadyText -notmatch 'runtime=PRODUCTION_UI' -or $UiReadyText -notmatch 'state=READY') {
+  throw 'Studio UI ready marker content invalid'
+}
+Write-Host 'STUDIO_WINDOWS_UI_DIRECTORY_GATE_PASS'
 Write-Host 'STUDIO_WINDOWS_APP_IMAGE_LAUNCH_PASS'
 
 # Preserve the complete portable tree because the launcher depends on its sibling
