@@ -778,7 +778,7 @@ for needle in (
     "A%+.3f°%s B%+.3f°%s %s",
     "val badgeA=if(resolvedMode==\"3AX\")0.0 else liveMove.axisA",
     "val badgeB=if(resolvedMode==\"5AX\")liveMove.axisB else 0.0",
-    "canvas.drawRoundRect(badgeX-pad,badgeTop,badgeX+textWidth+pad,badgeBaseline+pad",
+    "canvas.drawRoundRect(badgeX-pad,badgeTop,badgeX+textWidth+pad,badgeBottom",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_TOOL_ORIENTATION_BADGE_200")
 for needle in (
