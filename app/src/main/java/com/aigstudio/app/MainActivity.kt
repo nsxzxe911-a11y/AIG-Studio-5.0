@@ -455,6 +455,39 @@ class MainActivity : Activity() {
     }
     private lateinit var cad: CadView
     private lateinit var networkStateBadge: TextView
+    private val sharedProjectHandler = Handler(Looper.getMainLooper())
+    private var sharedLocalRevisionMeta = ProjectRevisionMeta()
+    private var sharedProjectBaselineDigest = ""
+    private var sharedProjectLastMessage = ""
+    private val sharedProjectRunnable = object : Runnable {
+        override fun run() {
+            val sharedFile=File(filesDir,"shared-sync/current.aigp")
+            if(sharedFile.isFile && ::cad.isInitialized) {
+                runCatching {
+                    val current=cad.capturePortableProject(
+                        camSettings,axisA,axisB,machiningAxisMode,unifiedNcDraft.orEmpty()
+                    ).copy(revisionMeta=sharedLocalRevisionMeta)
+                    val digest=StudioProjectRepository.canonicalDigest(current)
+                    val localDirty=sharedProjectBaselineDigest.isNotBlank() &&
+                        digest!=sharedProjectBaselineDigest
+                    val observation=SharedProjectFolderSync.inspect(
+                        sharedFile,sharedLocalRevisionMeta,localDirty
+                    ){StudioProjectRepository.load(it).revisionMeta}
+                    if(observation.state!=ProjectSyncState.CLEAN &&
+                        observation.message!=sharedProjectLastMessage &&
+                        ::networkStateBadge.isInitialized) {
+                        sharedProjectLastMessage=observation.message
+                        networkStateBadge.text="SYNC • "+observation.message
+                    }
+                }.onFailure {
+                    if(::networkStateBadge.isInitialized) {
+                        networkStateBadge.text="SYNC BLOCKED • "+(it.message?:"error")
+                    }
+                }
+            }
+            sharedProjectHandler.postDelayed(this,SharedProjectFolderSync.POLL_INTERVAL_MS)
+        }
+    }
     private var onlineNetworkCallback: android.net.ConnectivityManager.NetworkCallback? = null
     private val onlineAutoCheckRunning = java.util.concurrent.atomic.AtomicBoolean(false)
     private val onlineAutoCheckCompleted = java.util.concurrent.atomic.AtomicBoolean(false)
@@ -1101,6 +1134,7 @@ class MainActivity : Activity() {
                 bootOverlay.advance(StartupMilestone.READY)
                 bootOverlay.completeAndDetach(bootShell)
                 runDualPlatformProjectSmokeIfPresent()
+                startSharedProjectWatcher()
                 scheduleBackgroundOnlineServices()
             } else {
                 bootOverlay.fail("UI ATTACH BLOCKED")
@@ -1110,6 +1144,19 @@ class MainActivity : Activity() {
     }
 
 
+
+    private fun startSharedProjectWatcher() {
+        File(filesDir,"shared-sync").mkdirs()
+        if(::cad.isInitialized) {
+            sharedProjectBaselineDigest=StudioProjectRepository.canonicalDigest(
+                cad.capturePortableProject(
+                    camSettings,axisA,axisB,machiningAxisMode,unifiedNcDraft.orEmpty()
+                ).copy(revisionMeta=sharedLocalRevisionMeta)
+            )
+        }
+        sharedProjectHandler.removeCallbacks(sharedProjectRunnable)
+        sharedProjectHandler.postDelayed(sharedProjectRunnable,SharedProjectFolderSync.POLL_INTERVAL_MS)
+    }
 
     private fun runDualPlatformProjectSmokeIfPresent() {
         val input=File(filesDir,"dual-platform-import.aigp")
@@ -1121,6 +1168,7 @@ class MainActivity : Activity() {
         val localDirty=File(filesDir,"dual-platform-local-dirty.flag").isFile
         runCatching {
             val remote=StudioProjectRepository.load(input)
+            sharedLocalRevisionMeta=remote.revisionMeta
             val syncState=if(baseline.isFile) {
                 val local=StudioProjectRepository.load(baseline)
                 ProjectRevisionSync.classify(local.revisionMeta,remote.revisionMeta,localDirty)
@@ -1166,6 +1214,7 @@ class MainActivity : Activity() {
                 StudioProjectRepository.save(exported,output)
             }
             val saved=StudioProjectRepository.load(output)
+            sharedLocalRevisionMeta=saved.revisionMeta
             result.writeText(
                 "PASS\nMASTER="+SoftwareCoordinateContract.masterOriginData()+
                     "\nDIGEST="+StudioProjectRepository.canonicalDigest(saved)+
@@ -1699,6 +1748,7 @@ class MainActivity : Activity() {
         adaptiveRefreshController?.stop()
         adaptiveRefreshController = null
         autosaveHandler.removeCallbacks(autosaveRunnable)
+        sharedProjectHandler.removeCallbacks(sharedProjectRunnable)
         speechRecognizer?.cancel()
         speechRecognizer?.destroy()
         speechRecognizer = null
