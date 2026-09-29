@@ -114,6 +114,8 @@ for path in (
         raise SystemExit(f"工程圖片缺少：{path.name}")
 app_gradle = read("app/build.gradle.kts")
 desktop_gradle = read("desktop/build.gradle.kts")
+android_styles = read("app/src/main/res/values/styles.xml")
+android_manifest = read("app/src/main/AndroidManifest.xml")
 for source,label in ((app_gradle,"ANDROID"),(desktop_gradle,"WINDOWS")):
     if "../engineering-assets" in source:
         raise SystemExit(f"{label} 正式 Runtime 不得綁定 engineering-assets")
