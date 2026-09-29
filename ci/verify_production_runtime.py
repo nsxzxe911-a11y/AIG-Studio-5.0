@@ -232,4 +232,33 @@ for marker in [
     if marker not in secure_services:
         raise SystemExit(f"secure update latency marker missing: {marker}")
 print("LOW_LATENCY_NETWORK_GATE_PASS|START_180MS|MANIFEST_1200_2000|APK_IDLE_2500_5000|RETRY_350MS_X2|BACKGROUND_CHECK_ONLY|UI_NEVER_WAIT")
-print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_221|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
+for marker in [
+    'action("SNAP",0){cad.toggleSnap()}',
+    'action("尺寸",5){cad.promptDrivenDimension()}',
+    'action("TRIM",0){cad.trimSelected()}',
+    'action("EXTEND",1){cad.extendSelected()}',
+    'action("OFFSET",2){cad.promptOffset()}',
+    'action("ARRAY",3){cad.promptArray()}',
+    'action("連接",1){cad.connectSelected()}',
+    'action("斷開",4){cad.disconnectSelected()}',
+    'action("STOCK",4){showStockDialog()}',
+    'action("鑽孔",3){showDrillCycleDialog()}',
+    'action("維修",5){showMaintenanceCenter()}',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Studio 222 Android visible runtime action missing: {marker}")
+for marker in [
+    'val runtimeQuickBar=AdaptiveGlassToolbar()',
+    'runtimeQuick("SNAP"',
+    'runtimeQuick("尺寸"',
+    'runtimeQuick("TRIM"',
+    'runtimeQuick("CAM"',
+    'runtimeQuick("SIM"',
+    'runtimeQuick("5AX"',
+    'runtimeQuick("NC"',
+    'runtimeQuick("維修"',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Studio 222 Windows quick runtime action missing: {marker}")
+print("UI_INTEGRATION_WAVE1_GATE_PASS|STUDIO_222|ANDROID|WINDOWS|VISIBLE_REAL_ACTIONS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI")
+print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_222|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
