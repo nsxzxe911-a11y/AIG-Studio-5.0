@@ -805,8 +805,10 @@ class MainActivity : Activity() {
             contentDescription="VISIBLE FUNCTION ACTIONS"
             setPadding(dp(5),dp(2),dp(5),dp(3))
         }
+        var activeProductionMode="CAD"
         fun refreshVisibleMode(id:String) {
             val mode=ProductionUiSwitchContract.normalize(id)
+            activeProductionMode=mode
             visibleModeTitle.text=when(mode) {
                 "4AX" -> "目前模式 • 4AX • A軸轉台模型 • 真 UI / LIVE RUNTIME"
                 "5AX" -> "目前模式 • 5AX • A/B 搖籃模型 • 真 UI / LIVE RUNTIME"
@@ -1193,24 +1195,34 @@ class MainActivity : Activity() {
                         return@post
                     }
 
-                    val localUi=StudioRuntimeUiDirectoryBootstrap.read(this@MainActivity)
-                    if(localUi.validLocalUi && localUi.entryMode!=uiBootstrap.entryMode) {
-                        selectProductionUi(localUi.entryMode)
-                        refreshVisibleMode(localUi.entryMode)
-                    }
-                    val readyMode=if(localUi.validLocalUi) localUi.entryMode else uiBootstrap.entryMode
-                    runCatching {
-                        StudioRuntimeUiDirectoryBootstrap.writeReady(
-                            this@MainActivity,
-                            readyMode,
-                            StudioProductionTheme.ID
-                        )
-                        status.text="UI AUTOLOAD • "+localUi.source+" • "+readyMode+
-                            " • Theme "+StudioProductionTheme.ID
-                        reportFullyDrawn()
-                    }.onFailure {
-                        status.text="UI READY • UI DIRECTORY EVIDENCE BLOCKED: "+(it.message?:"error")
-                    }
+                    reportFullyDrawn()
+                    Thread({
+                        val localUi=StudioRuntimeUiDirectoryBootstrap.read(this@MainActivity)
+                        root.post {
+                            if(localUi.validLocalUi && activeProductionMode=="CAD" && localUi.entryMode!="CAD") {
+                                selectProductionUi(localUi.entryMode)
+                                refreshVisibleMode(localUi.entryMode)
+                            }
+                            val readyMode=activeProductionMode
+                            Thread({
+                                val published=runCatching {
+                                    StudioRuntimeUiDirectoryBootstrap.writeReady(
+                                        this@MainActivity,
+                                        readyMode,
+                                        StudioProductionTheme.ID
+                                    )
+                                }
+                                root.post {
+                                    published.onSuccess {
+                                        status.text="UI AUTOLOAD • "+localUi.source+" • "+readyMode+
+                                            " • Theme "+StudioProductionTheme.ID
+                                    }.onFailure {
+                                        status.text="UI READY • UI DIRECTORY EVIDENCE BLOCKED: "+(it.message?:"error")
+                                    }
+                                }
+                            },"Studio-UI-Ready-Publish").apply{isDaemon=true}.start()
+                        }
+                    },"Studio-UI-PostFrame").apply{isDaemon=true}.start()
 
                     // Frame governor and diagnostic monitors start only after the first
                     // production frame is already visible.
