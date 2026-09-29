@@ -2239,6 +2239,38 @@ class MainActivity : Activity() {
             elevation=dp(5).toFloat()
             text="真走刀 • 3AX/4AX/5AX • PLAY / PAUSE / STEP / RESET • MACHINE EXECUTION=OFF"
         }
+        val axisControlStatus=TextView(this).apply {
+            contentDescription="LIVE AXIS STATUS"
+            setTextColor(0xFFE6F7FF.toInt())
+            textSize=StudioDisplayPolicy.sp(this,9.5f)
+            maxLines=2
+            setPadding(dp(10),dp(5),dp(10),dp(5))
+            background=GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                intArrayOf(0xDD07121E.toInt(),0xCC102A38.toInt(),0xDD07121E.toInt())
+            ).apply {
+                cornerRadius=dp(10).toFloat()
+                setStroke(dp(1),0xAA8B5CF6.toInt())
+            }
+        }
+        fun refreshAxisControlStatus(
+            x:Double=0.0,
+            y:Double=0.0,
+            z:Double=camSettings.safeZ,
+            a:Double=draftA,
+            b:Double=draftB
+        ) {
+            val modeLabel=when(activeAxisMode) {
+                "4AX" -> "4AX A軸轉台"
+                "5AX" -> "5AX A/B搖籃"
+                else -> "3AX"
+            }
+            axisControlStatus.text=modeLabel+
+                " • X "+DisplayFormat.mm(x)+"  Y "+DisplayFormat.mm(y)+"  Z "+DisplayFormat.mm(z)+
+                "\nA "+DisplayFormat.mm(a)+"  B "+DisplayFormat.mm(b)+
+                " • F "+DisplayFormat.mm(camSettings.feedMmMin)+" • "+camOperationMode.name
+        }
+        refreshAxisControlStatus()
         fun simulationMode(mode:String):String=when(mode){
             "4AX" -> "4AX"
             "5AX" -> "5AX"
@@ -2320,6 +2352,13 @@ class MainActivity : Activity() {
                 " • A="+DisplayFormat.mm(frame.toolPoint.axisA)+
                 " B="+DisplayFormat.mm(frame.toolPoint.axisB)+
                 " • removed="+frame.removedCells+" • MACHINE EXECUTION=OFF"
+            refreshAxisControlStatus(
+                frame.toolPoint.to.x,
+                frame.toolPoint.to.y,
+                frame.toolPoint.z,
+                frame.toolPoint.axisA,
+                frame.toolPoint.axisB
+            )
         }
         simulationTick=object:Runnable {
             override fun run() {
@@ -2424,6 +2463,9 @@ class MainActivity : Activity() {
             modeFlow.addView(b)
         }
         root.addView(modeFlow,LinearLayout.LayoutParams(-1,-2))
+        root.addView(axisControlStatus,LinearLayout.LayoutParams(-1,-2).apply {
+            setMargins(dp(6),dp(2),dp(6),dp(2))
+        })
 
         val body=LinearLayout(this).apply {
             orientation=if(plan.ncDock=="RIGHT") LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
@@ -2496,6 +2538,28 @@ class MainActivity : Activity() {
             simulationSpeed=when(simulationSpeed){1->2;2->4;else->1}
             simulationStatus.text="真走刀速度 ×"+simulationSpeed+" • "+activeAxisMode
         }
+        fun jogAxis(deltaA:Double,deltaB:Double) {
+            val targetMode=simulationMode(activeMode)
+            if(deltaA!=0.0 && targetMode=="3AX") {
+                simulationStatus.text="AXIS JOG BLOCKED • 3AX 不開放 A 軸"
+                return
+            }
+            if(deltaB!=0.0 && targetMode!="5AX") {
+                simulationStatus.text="AXIS JOG BLOCKED • B 軸僅 5AX"
+                return
+            }
+            val next=MachiningAxisRuntimeContract.applyDrag(targetMode,draftA,draftB,deltaA,deltaB)
+            draftA=next.axisA
+            draftB=next.axisB
+            renderMode(activeMode)
+            refreshAxisControlStatus(a=draftA,b=draftB)
+            simulationStatus.text="AXIS JOG • "+targetMode+
+                " • A="+DisplayFormat.mm(draftA)+" B="+DisplayFormat.mm(draftB)+" • PREVIEW ONLY"
+        }
+        action("A−",0xFF8B5CF6.toInt(),"A軸負向 15 度"){ jogAxis(-15.0,0.0) }
+        action("A+",0xFF8B5CF6.toInt(),"A軸正向 15 度"){ jogAxis(15.0,0.0) }
+        action("B−",0xFFEC4899.toInt(),"B軸負向 15 度"){ jogAxis(0.0,-15.0) }
+        action("B+",0xFFEC4899.toInt(),"B軸正向 15 度"){ jogAxis(0.0,15.0) }
         action("APPLY_AXIS",0xFF8B5CF6.toInt(),"套用軸向"){
             machiningAxisMode=activeAxisMode
             axisA=if(activeAxisMode=="3AX")0.0 else draftA
