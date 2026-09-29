@@ -743,10 +743,15 @@ class MainActivity : Activity() {
                 }
                 "CAM" -> {
                     action("CAM 參數",3){showCamWorkstation()}
+                    action("3AX",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
+                    action("4AX",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}
+                    action("5AX",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
                     action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
                 }
                 "SIM" -> {
-                    action("開啟 3D",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
+                    action("3AX",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
+                    action("4AX",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}
+                    action("5AX",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
                     action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
                 }
                 "3AX" -> {
@@ -810,9 +815,6 @@ class MainActivity : Activity() {
         }
         addProductionUi("CAM") { showCamWorkstation() }
         addProductionUi("SIM") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM")) }
-        addProductionUi("3AX") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX")) }
-        addProductionUi("4AX") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX")) }
-        addProductionUi("5AX") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX")) }
         addProductionUi("NC") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC")) }
         addProductionUi("AI") { showAiSystemSuiteDialog() }
         check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))

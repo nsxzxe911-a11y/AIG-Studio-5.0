@@ -722,7 +722,7 @@ object WorkstationChromeContract {
 
 object ProductionUiSwitchContract {
     const val POLICY = "PRODUCTION_UI_SWITCH_STABLE_ORDER_LIVE_RUNTIME"
-    val modes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")
+    val modes = listOf("CAD","CAM","SIM","NC","AI")
     const val initialMode = "CAD"
 
     fun normalize(mode:String):String {
@@ -731,7 +731,7 @@ object ProductionUiSwitchContract {
         return id
     }
 
-    fun runtimeTarget(mode:String):String = when(normalize(mode)) {
+    fun runtimeTarget(mode:String):String = when(mode.trim().uppercase()) {
         "CAD" -> "CAD"
         "CAM" -> "CAM"
         "SIM" -> "3D"

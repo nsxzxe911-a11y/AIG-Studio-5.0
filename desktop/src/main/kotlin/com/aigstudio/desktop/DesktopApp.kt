@@ -1655,8 +1655,8 @@ private fun runSmoke() {
     val smokeRoot = JPanel(BorderLayout()).apply {
         background = Color(5,10,17)
         val navBar=AdaptiveGlassToolbar().apply {
-            listOf("CAD","CAM","3D","3AX","4AX","5AX","NC_EDIT").forEachIndexed { i,assetId ->
-                val colors=listOf(Color(61,235,255),Color(63,255,157),Color(139,92,246),Color(59,130,246),Color(245,158,11),Color(236,72,153),Color(80,170,255))
+            listOf("CAD","CAM","SIM","NC_EDIT","AI").forEachIndexed { i,assetId ->
+                val colors=listOf(Color(61,235,255),Color(63,255,157),Color(139,92,246),Color(80,170,255),Color(139,92,246))
                 add(GlassActionButton(UiTextPolicy.display(assetId,118),colors[i]).apply {
                     icon=ProductionRgbAssets.icon(assetId) ?: RgbGlyphIcon(assetId,colors[i])
                     iconTextGap=7
@@ -2498,8 +2498,6 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         }
         modeButtons+=b;modeBar.add(b)
     }
-    mode("CAD","2D繪圖","2D CAD",Color(61,235,255),"CAD"){maximizeVisualWorkspace();dlg.dispose()}
-    mode("CAM","刀路","CAM",Color(63,255,157),"CAM"){maximizeVisualWorkspace();status.text="REAL CAM • paths="+result.cam.toolpaths.size}
     mode("3D","3D模擬","3D",Color(139,92,246),"3D"){
         maximizeVisualWorkspace();axisMode="3AX";axisA=0.0;axisB=0.0;rebuildMachiningForMode();card.show(visual,"3D")
     }
@@ -2514,10 +2512,10 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     }
     mode("NC_EDIT","程式","NC EDIT",Color(80,170,255),"NC_EDIT"){showNcWorkspace();editor.requestFocusInWindow()}
     when(initialMode){
-        "4AX" -> modeButtons.getOrNull(4)?.doClick()
-        "5AX" -> modeButtons.getOrNull(5)?.doClick()
-        "3AX" -> modeButtons.getOrNull(3)?.doClick()
-        else -> modeButtons.getOrNull(2)?.doClick()
+        "4AX" -> modeButtons.getOrNull(2)?.doClick()
+        "5AX" -> modeButtons.getOrNull(3)?.doClick()
+        "3AX" -> modeButtons.getOrNull(1)?.doClick()
+        else -> modeButtons.getOrNull(0)?.doClick()
     }
 
     fun showPlaybackFrame(index:Int){
@@ -3008,18 +3006,6 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     moduleButtons.add(productionUiButton("SIM", Color(139,92,246)) {
         runCatching { showUnifiedMachiningEditor(frame,doc,status,ProductionUiSwitchContract.runtimeTarget("SIM")) }
             .onFailure { status.text="SIM BLOCKED • "+(it.message?:"error") }
-    })
-    moduleButtons.add(productionUiButton("3AX", Color(59,130,246)) {
-        runCatching { showUnifiedMachiningEditor(frame,doc,status,ProductionUiSwitchContract.runtimeTarget("3AX")) }
-            .onFailure { status.text="3AX BLOCKED • "+(it.message?:"error") }
-    })
-    moduleButtons.add(productionUiButton("4AX", StudioDesktopProductionTheme.warning) {
-        runCatching { showUnifiedMachiningEditor(frame,doc,status,ProductionUiSwitchContract.runtimeTarget("4AX")) }
-            .onFailure { status.text="4AX BLOCKED • "+(it.message?:"error") }
-    })
-    moduleButtons.add(productionUiButton("5AX", Color(236,72,153)) {
-        runCatching { showUnifiedMachiningEditor(frame,doc,status,ProductionUiSwitchContract.runtimeTarget("5AX")) }
-            .onFailure { status.text="5AX BLOCKED • "+(it.message?:"error") }
     })
     moduleButtons.add(productionUiButton("NC", Color(80,170,255)) {
         runCatching { showNcEditor(frame,doc) }
