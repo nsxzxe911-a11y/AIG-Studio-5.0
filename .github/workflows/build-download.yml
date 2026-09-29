@@ -174,6 +174,8 @@ jobs:
             PKG='com.aigstudio.app'
             mkdir -p release/android/runtime-evidence
             adb install -r "$APK"
+            UI_DIR="/sdcard/Android/data/$PKG/files/UI"
+            adb shell rm -rf "$UI_DIR" || true
             adb shell svc wifi disable || true
             adb shell svc data disable || true
             adb shell am force-stop "$PKG"
@@ -184,6 +186,10 @@ jobs:
             adb shell uiautomator dump /sdcard/aig-ui.xml >/dev/null
             adb pull /sdcard/aig-ui.xml release/android/runtime-evidence/android_ui.xml >/dev/null
             grep -F 'CURRENT PRODUCTION MODE' release/android/runtime-evidence/android_ui.xml
+            adb shell ls -l "$UI_DIR/runtime-ui.ready"
+            adb pull "$UI_DIR/runtime-ui.ready" release/android/runtime-evidence/runtime-ui.ready >/dev/null
+            grep -Fx 'runtime=PRODUCTION_UI' release/android/runtime-evidence/runtime-ui.ready
+            grep -Fx 'state=READY' release/android/runtime-evidence/runtime-ui.ready
             adb exec-out screencap -p > release/android/runtime-evidence/android_runtime_launch.png
             test "$(stat -c%s release/android/runtime-evidence/android_runtime_launch.png)" -gt 20000
             printf 'device_launch_evidence=EMULATOR_OFFLINE_MAINACTIVITY_VISIBLE_UI_PASS\npackage=%s\n' "$PKG" > release/android/runtime-evidence/UI_ENTRY_EVIDENCE.txt
