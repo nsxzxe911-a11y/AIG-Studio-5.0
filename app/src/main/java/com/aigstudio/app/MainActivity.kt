@@ -838,6 +838,7 @@ class MainActivity : Activity() {
         addCategory("修改", 3) { showModifyBranch() }
         addCategory("連接", 1) { showLinkBranch() }
         addCategory("角部", 2) { showCornerBranch() }
+        addCategory("組裝", 1) { showAssemblyBranch() }
         addCategory("CAM", 5) { showCamWorkstation() }
         addCategory("加工", 5) { showMachiningBranch() }
         addCategory("安全", 4) { showSecurityBranch() }
@@ -1298,6 +1299,10 @@ class MainActivity : Activity() {
         addToolToBranch("圓", Tool.CIRCLE, 2)
         addToolToBranch("圓弧", Tool.ARC, 3)
         addToolToBranch("孔", Tool.HOLE, 4)
+        addActionTo(branchFlow, "槽孔", 2) { cad.promptSlot() }
+        addActionTo(branchFlow, "正多邊形", 3) { cad.promptPolygon() }
+        addActionTo(branchFlow, "孔群", 4) { cad.promptBoltCircle() }
+        addActionTo(branchFlow, "中心矩形", 1) { cad.promptCenterRect() }
         addActionTo(branchFlow, "SNAP", 3) { cad.toggleSnap() }
         addToolToBranch("尺寸", Tool.MEASURE, 5)
     }
@@ -1339,9 +1344,16 @@ class MainActivity : Activity() {
             askValue("R 角半徑", cad.filletValue) { cad.filletValue = it; selectTool(Tool.FILLET) }
         }
     }
+    private fun showAssemblyBranch() {
+        branchFlow.removeAllViews(); toolButtons.clear()
+        addToolToBranch("選取零件", Tool.SELECT, 1)
+        addActionTo(branchFlow, "儲存模組", 2) { cad.saveModuleFromSelection() }
+        addActionTo(branchFlow, "插入模組", 3) { cad.promptInsertModule() }
+    }
     private fun showMachiningBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addActionTo(branchFlow, "REAL CAM", 5) { showCamWorkstation() }
+        addActionTo(branchFlow, "快速刀路", 0) { showQuickCamDialog() }
         addActionTo(branchFlow, "CAM 設定", 5) { showCamSettingsDialog() }
         addActionTo(branchFlow, "STOCK", 4) { showStockDialog() }
         addActionTo(branchFlow, "3D/3AX/4AX/5AX + NC", 0) { showUnifiedMachiningWorkspace("3D") }
@@ -1353,6 +1365,28 @@ class MainActivity : Activity() {
         addActionTo(branchFlow, "4 AXIS", 2) { showUnifiedMachiningWorkspace("4AX") }
         addActionTo(branchFlow, "5X A/B", 1) { showUnifiedMachiningWorkspace("5AX") }
         addActionTo(branchFlow, "3D 加工", 4) { showUnifiedMachiningWorkspace("3D") }
+    }
+
+    private fun showQuickCamDialog() {
+        val modes=arrayOf(
+            CamOperationMode.AUTO,
+            CamOperationMode.CONTOUR,
+            CamOperationMode.POCKET,
+            CamOperationMode.DRILL,
+            CamOperationMode.ENGRAVE,
+            CamOperationMode.FACE
+        )
+        val labels=arrayOf("AUTO 自動","CONTOUR 輪廓","POCKET 口袋","DRILL 鑽孔","ENGRAVE 雕刻","FACE 面銑")
+        AlertDialog.Builder(this)
+            .setTitle("快速刀路 • 直接套用")
+            .setSingleChoiceItems(labels,modes.indexOf(camSettings.operationMode).coerceAtLeast(0)){dialog,which->
+                camSettings=camSettings.copy(operationMode=modes[which])
+                dialog.dismiss()
+                Toast.makeText(this,"CAM "+labels[which]+" • 將依目前 CAD 重新產生刀路",Toast.LENGTH_SHORT).show()
+                showCamWorkstation()
+            }
+            .setNegativeButton("取消",null)
+            .show()
     }
 
     private fun showCamWorkstation() {
@@ -1495,6 +1529,7 @@ class MainActivity : Activity() {
         param("LEAD-IN",DisplayFormat.mm(cam.settings.leadInMm)+" mm")
         param("LEAD-OUT",DisplayFormat.mm(cam.settings.leadOutMm)+" mm")
         param("TOOL DIRECTION",if(cam.settings.climb)"CLIMB" else "CONVENTIONAL")
+        param("TOOLPATH","${cam.settings.operationMode.name} • 快速選擇",0xFF8B5CF6.toInt())
         param("TOOLPATH STATUS","FRESH • paths="+cam.toolpaths.size)
         param("MACHINING REGION","STOCK XY")
 
@@ -3517,6 +3552,7 @@ class CadView(
     private var snapEnabled = true
     private var gridVisible = true
     private var geometryVisible = true
+    private var moduleClipboard: CadModuleTemplate? = null
 
     private val scaleDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
@@ -3629,6 +3665,163 @@ class CadView(
         if (selectedIds.isNotEmpty()) return true
         Toast.makeText(context, "$action：請先用「選取」點選幾何", Toast.LENGTH_SHORT).show()
         return false
+    }
+
+    fun promptCenterRect() {
+        val box=LinearLayout(context).apply{orientation=LinearLayout.VERTICAL;setPadding(24,12,24,4)}
+        fun field(label:String,value:Double)=EditText(context).apply{
+            hint=label;setText(DisplayFormat.mm(value))
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            box.addView(this)
+        }
+        val cx=field("Center X mm",lastWorld.x)
+        val cy=field("Center Y mm",lastWorld.y)
+        val w=field("Width mm",40.0)
+        val h=field("Height mm",25.0)
+        AlertDialog.Builder(context).setTitle("中心矩形").setView(box)
+            .setPositiveButton("建立"){_,_->
+                runCatching {
+                    val x=cx.text.toString().toDouble(); val y=cy.text.toString().toDouble()
+                    val ww=w.text.toString().toDouble(); val hh=h.text.toString().toDouble()
+                    require(ww>=CNC_RESOLUTION_MM && hh>=CNC_RESOLUTION_MM)
+                    val a=Vec2(x-ww/2.0,y-hh/2.0); val b=Vec2(x+ww/2.0,y+hh/2.0)
+                    val ids=CadSemanticIdentity.newRectIds()
+                    runGeometryCommand(AddEntitiesCommand(listOf(
+                        Line(id=ids[0],a=a,b=Vec2(b.x,a.y)),
+                        Line(id=ids[1],a=Vec2(b.x,a.y),b=b),
+                        Line(id=ids[2],a=b,b=Vec2(a.x,b.y)),
+                        Line(id=ids[3],a=Vec2(a.x,b.y),b=a)
+                    )))
+                }.onFailure{Toast.makeText(context,"中心矩形 BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()}
+            }.setNegativeButton("取消",null).show()
+    }
+
+    fun promptPolygon() {
+        val box=LinearLayout(context).apply{orientation=LinearLayout.VERTICAL;setPadding(24,12,24,4)}
+        fun field(label:String,value:String)=EditText(context).apply{
+            hint=label;setText(value)
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            box.addView(this)
+        }
+        val cx=field("Center X mm",DisplayFormat.mm(lastWorld.x))
+        val cy=field("Center Y mm",DisplayFormat.mm(lastWorld.y))
+        val radius=field("Radius mm","20.000")
+        val sides=field("Sides 3..64","6")
+        val rotation=field("Rotation deg","0.000")
+        AlertDialog.Builder(context).setTitle("正多邊形").setView(box)
+            .setPositiveButton("建立"){_,_->
+                runCatching{
+                    val c=Vec2(cx.text.toString().toDouble(),cy.text.toString().toDouble())
+                    val r=radius.text.toString().toDouble(); val n=sides.text.toString().toInt()
+                    val rot=Math.toRadians(rotation.text.toString().toDouble())
+                    require(r>=CNC_RESOLUTION_MM && n in 3..64)
+                    val pts=(0 until n).map{i->
+                        val a=rot+2.0*Math.PI*i/n
+                        Vec2(c.x+cos(a)*r,c.y+sin(a)*r)
+                    }
+                    val ids=CadSemanticIdentity.newCompositeIds("POLYGON",n)
+                    runGeometryCommand(AddEntitiesCommand((0 until n).map{i->
+                        Line(id=ids[i],a=pts[i],b=pts[(i+1)%n])
+                    }))
+                }.onFailure{Toast.makeText(context,"POLYGON BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()}
+            }.setNegativeButton("取消",null).show()
+    }
+
+    fun promptSlot() {
+        val box=LinearLayout(context).apply{orientation=LinearLayout.VERTICAL;setPadding(24,12,24,4)}
+        fun field(label:String,value:String)=EditText(context).apply{
+            hint=label;setText(value)
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            box.addView(this)
+        }
+        val cx=field("Center X mm",DisplayFormat.mm(lastWorld.x))
+        val cy=field("Center Y mm",DisplayFormat.mm(lastWorld.y))
+        val length=field("Overall length mm","40.000")
+        val width=field("Width mm","12.000")
+        val angle=field("Angle deg","0.000")
+        AlertDialog.Builder(context).setTitle("槽孔 / SLOT").setView(box)
+            .setPositiveButton("建立"){_,_->
+                runCatching{
+                    val c=Vec2(cx.text.toString().toDouble(),cy.text.toString().toDouble())
+                    val l=length.text.toString().toDouble(); val w=width.text.toString().toDouble()
+                    val a=Math.toRadians(angle.text.toString().toDouble())
+                    require(w>=CNC_RESOLUTION_MM && l>w+CNC_RESOLUTION_MM)
+                    val r=w/2.0; val halfStraight=(l-w)/2.0
+                    val u=Vec2(cos(a),sin(a)); val v=Vec2(-sin(a),cos(a))
+                    val c1=c-u*halfStraight; val c2=c+u*halfStraight
+                    val ids=CadSemanticIdentity.newCompositeIds("SLOT",4)
+                    runGeometryCommand(AddEntitiesCommand(listOf(
+                        Line(id=ids[0],a=c1+v*r,b=c2+v*r),
+                        Line(id=ids[1],a=c2-v*r,b=c1-v*r),
+                        Arc(id=ids[2],center=c1,radius=r,start=c1+v*r,end=c1-v*r,clockwise=false),
+                        Arc(id=ids[3],center=c2,radius=r,start=c2-v*r,end=c2+v*r,clockwise=false)
+                    )))
+                }.onFailure{Toast.makeText(context,"SLOT BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()}
+            }.setNegativeButton("取消",null).show()
+    }
+
+    fun promptBoltCircle() {
+        val box=LinearLayout(context).apply{orientation=LinearLayout.VERTICAL;setPadding(24,12,24,4)}
+        fun field(label:String,value:String)=EditText(context).apply{
+            hint=label;setText(value)
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            box.addView(this)
+        }
+        val cx=field("Center X mm",DisplayFormat.mm(lastWorld.x))
+        val cy=field("Center Y mm",DisplayFormat.mm(lastWorld.y))
+        val pcd=field("Pitch circle Ø mm","40.000")
+        val hole=field("Hole Ø mm","6.000")
+        val count=field("Hole count 2..128","6")
+        val start=field("Start angle deg","0.000")
+        AlertDialog.Builder(context).setTitle("孔群 / BOLT CIRCLE").setView(box)
+            .setPositiveButton("建立"){_,_->
+                runCatching{
+                    val c=Vec2(cx.text.toString().toDouble(),cy.text.toString().toDouble())
+                    val pitch=pcd.text.toString().toDouble()/2.0
+                    val hr=hole.text.toString().toDouble()/2.0
+                    val n=count.text.toString().toInt()
+                    val a0=Math.toRadians(start.text.toString().toDouble())
+                    require(pitch>=CNC_RESOLUTION_MM && hr>=CNC_RESOLUTION_MM && n in 2..128)
+                    val ids=CadSemanticIdentity.newCompositeIds("BOLT",n)
+                    runGeometryCommand(AddEntitiesCommand((0 until n).map{i->
+                        val a=a0+2.0*Math.PI*i/n
+                        Circle(id=ids[i],center=Vec2(c.x+cos(a)*pitch,c.y+sin(a)*pitch),radius=hr)
+                    }))
+                }.onFailure{Toast.makeText(context,"BOLT CIRCLE BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()}
+            }.setNegativeButton("取消",null).show()
+    }
+
+    fun saveModuleFromSelection() {
+        if(!ensureSelection("儲存模組")) return
+        runCatching{CadModuleEngine.capture(doc,selectedIds,"WORKPIECE")}
+            .onSuccess{moduleClipboard=it;Toast.makeText(context,"MODULE SAVED • entities="+it.entities.size,Toast.LENGTH_SHORT).show()}
+            .onFailure{Toast.makeText(context,"MODULE BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()}
+    }
+
+    fun promptInsertModule() {
+        val module=moduleClipboard ?: run {
+            Toast.makeText(context,"MODULE BLOCKED：請先選取幾何並儲存模組",Toast.LENGTH_SHORT).show();return
+        }
+        val box=LinearLayout(context).apply{orientation=LinearLayout.VERTICAL;setPadding(24,12,24,4)}
+        fun field(label:String,value:Double)=EditText(context).apply{
+            hint=label;setText(DisplayFormat.mm(value))
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            box.addView(this)
+        }
+        val x=field("Insert X mm",lastWorld.x)
+        val y=field("Insert Y mm",lastWorld.y)
+        val angle=field("Rotation deg",0.0)
+        AlertDialog.Builder(context).setTitle("插入模組 • "+module.name).setView(box)
+            .setPositiveButton("插入"){_,_->
+                runCatching{
+                    val entities=CadModuleEngine.instantiate(
+                        module,
+                        Vec2(x.text.toString().toDouble(),y.text.toString().toDouble()),
+                        angle.text.toString().toDouble()
+                    )
+                    runGeometryCommand(AddEntitiesCommand(entities))
+                }.onFailure{Toast.makeText(context,"MODULE INSERT BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()}
+            }.setNegativeButton("取消",null).show()
     }
 
     fun promptMoveCopy(copy: Boolean) {
