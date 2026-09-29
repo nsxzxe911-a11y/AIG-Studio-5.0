@@ -1909,6 +1909,18 @@ private fun testRealMachineModel3D() {
         MachineComponentRole.TRUNNION,MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B
     )))
     check(three.triangleCount()>0 && four.triangleCount()>three.triangleCount() && five.triangleCount()>four.triangleCount())
+    val fixedFoundationIds=listOf(
+        "base","column","way_l","way_r","head_carriage","table","fixture_l","fixture_r","spindle","holder","tool"
+    )
+    fun vertices(model:MachineModel3D,id:String)=model.components.first{it.id==id}.mesh.vertices
+    fixedFoundationIds.forEach { id ->
+        check(vertices(three,id)==vertices(four,id)){"4AX rebuilt 3AX foundation: $id"}
+        check(vertices(four,id)==vertices(five,id)){"5AX rebuilt 4AX foundation: $id"}
+    }
+    check(four.components.any{it.id=="rotary_a_hub"})
+    check(four.components.none{it.id=="cradle_b_front" || it.id=="cradle_b_back" || it.id=="rotary_b_hub"})
+    check(five.components.any{it.id=="cradle_b_front"} && five.components.any{it.id=="cradle_b_back"})
+    check(five.components.any{it.id=="rotary_b_hub"})
     fun signature(model:MachineModel3D,role:MachineComponentRole)=
         model.component(role)!!.mesh.vertices.take(8).joinToString("|"){"%.4f,%.4f,%.4f".format(it.x,it.y,it.z)}
     check(signature(four0,MachineComponentRole.ROTARY_A)!=signature(four,MachineComponentRole.ROTARY_A))
@@ -1919,6 +1931,7 @@ private fun testRealMachineModel3D() {
     check(MachineKinematics3D.transform(sample,0.0,0.0)==sample)
     check(MachineKinematics3D.transform(sample,30.0,-20.0)!=sample)
     println("? REAL_MACHINE_MODEL_3_4_5AX_GATE_PASS BASE COLUMN TABLE FIXTURE TRUNNION ROTARY_A ROTARY_B SPINDLE HOLDER TOOL TRUE_MESH DYNAMIC_AB SOURCE_REVISION MASTER_ORIGIN")
+    println("? MACHINE_MODEL_EXTENSION_GATE_PASS 3AX_FOUNDATION_SHARED 4AX_ADD_A_SUPPORT_HUB_KEY 5AX_KEEP_4AX_ADD_B_CRADLE_HUB_KEY PIVOT_CENTERED NO_BASE_REBUILD TRUE_AB_VISUAL_MOTION")
     println("? MACHINE_KINEMATICS_RUNTIME_PARITY_PASS MASTER_ORIGIN A_THEN_B ANDROID_WINDOWS_SHARED")
 }
 
