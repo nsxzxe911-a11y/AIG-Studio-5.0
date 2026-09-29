@@ -21,6 +21,9 @@ android {
     sourceSets.named("main") {
         assets.srcDir(rootProject.file("design/theme/library_rgb_reference_v1/raw"))
     }
+    sourceSets.named("main") {
+        assets.srcDir(rootProject.file("design/theme/library_rgb_reference_v1/raw"))
+    }
     defaultConfig {
         applicationId = "com.aigstudio.app"
         minSdk = 26
