@@ -66,6 +66,21 @@ object StudioProductionTheme {
     val alarm=Color.rgb(255,23,68)
 }
 
+object LibraryFiveAxisSkin208 {
+    const val ID="library_5x_real_cam_208"
+    const val SOURCE_KIND="CHATGPT_ANDROID_LIBRARY_REFERENCE"
+    const val SOURCE_MOBILE="image-gen-1(1).png"
+    const val SOURCE_LANDSCAPE="image-gen-2(1).png"
+    val background=Color.rgb(3,8,16)
+    val panel=Color.rgb(10,24,38)
+    val text=Color.rgb(225,240,255)
+    val cyan=Color.rgb(61,235,255)
+    val violet=Color.rgb(139,92,246)
+    val magenta=Color.rgb(236,72,153)
+    val safe=Color.rgb(99,255,157)
+    val warning=Color.rgb(245,158,11)
+}
+
 object ProductionRgbAssets {
     private const val ROOT="aig-generated-rgb/approved/184"
     @Volatile private var expectedHashes:Map<String,String>?=null
@@ -1404,22 +1419,22 @@ class MainActivity : Activity() {
         val root = LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             setPadding(dp(8),dp(8),dp(8),dp(8))
-            setBackgroundColor(0xFF040A11.toInt())
+            setBackgroundColor(LibraryFiveAxisSkin208.background)
         }
         root.addView(textLine(
             "AIG CNC • " + CamWorkstationContract.TITLE + " • " +
                 CamWorkstationContract.SAFE_Z + " " + DisplayFormat.mm(cam.settings.safeZ) + " • " +
                 CamWorkstationContract.TOOL_RADIUS + " " + DisplayFormat.mm(cam.settings.toolDiameter/2.0) + " • " +
                 workOffset,
-            0xFF3DEBFF.toInt(), 12.5f
+            LibraryFiveAxisSkin208.cyan, 12.5f
         ).apply {
             setTypeface(typeface,android.graphics.Typeface.BOLD)
-            background=glass(0xAA3DEBFF.toInt())
+            background=glass(LibraryFiveAxisSkin208.cyan)
         })
         root.addView(textLine(
             CamWorkstationContract.CAM_READY + " • " + CamWorkstationContract.TOOLPATH_FRESH +
                 " • NC " + (if(ncReady)"READY" else "BLOCKED"),
-            if(ncReady)0xFF63FF9D.toInt() else 0xFFFFB020.toInt(),10.5f
+            if(ncReady)LibraryFiveAxisSkin208.safe else LibraryFiveAxisSkin208.warning,10.5f
         ))
 
         val body = LinearLayout(this).apply {
@@ -1435,7 +1450,7 @@ class MainActivity : Activity() {
             private val fillPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply { style=Paint.Style.FILL }
             override fun onDraw(canvas:Canvas) {
                 super.onDraw(canvas)
-                canvas.drawColor(0xFF06101A.toInt())
+                canvas.drawColor(LibraryFiveAxisSkin208.background)
                 val moves=cam.toolpaths.flatMap{it.moves}
                 if(moves.isEmpty()) return
                 val minX=minOf(stock.minX,moves.minOf{it.to.x})
@@ -1459,13 +1474,13 @@ class MainActivity : Activity() {
                     for(i in 1 until list.size) {
                         val a=list[i-1]
                         val b=list[i]
-                        linePaint.color=if(b.rapid)0xFF3DEBFF.toInt() else 0xFFFFB020.toInt()
+                        linePaint.color=if(b.rapid)LibraryFiveAxisSkin208.cyan else LibraryFiveAxisSkin208.warning
                         linePaint.strokeWidth=dp(if(b.rapid)2 else 3).toFloat()
                         canvas.drawLine(sx(a.to.x),sy(a.to.y),sx(b.to.x),sy(b.to.y),linePaint)
                     }
                 }
                 val last=moves.last()
-                fillPaint.color=0xFF63FF9D.toInt()
+                fillPaint.color=LibraryFiveAxisSkin208.safe
                 canvas.drawCircle(sx(last.to.x),sy(last.to.y),dp(5).toFloat(),fillPaint)
 
                 linePaint.color=0x66FFFFFF
@@ -1474,24 +1489,24 @@ class MainActivity : Activity() {
                 canvas.drawLine(sx(0.0),pad,sx(0.0),height-pad,linePaint)
             }
         }.apply {
-            background=glass(0x773DEBFF)
+            background=glass(LibraryFiveAxisSkin208.cyan)
         }
 
         val parameters=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
-            background=glass(0x668B5CF6)
+            background=glass(LibraryFiveAxisSkin208.violet)
             setPadding(dp(6),dp(6),dp(6),dp(6))
         }
         fun param(label:String,value:String,color:Int=0xFFDDEBFA.toInt()) {
             parameters.addView(textLine(label + "  " + value,color,10.5f))
         }
         param("TOOL DIA",DisplayFormat.mm(cam.settings.toolDiameter)+" mm")
-        param("TOOL RADIUS",DisplayFormat.mm(cam.settings.toolDiameter/2.0)+" mm",0xFF3DEBFF.toInt())
+        param("TOOL RADIUS",DisplayFormat.mm(cam.settings.toolDiameter/2.0)+" mm",LibraryFiveAxisSkin208.cyan)
         param("DEPTH",DisplayFormat.mm(cam.settings.depth)+" mm")
-        param("SAFE-Z",DisplayFormat.mm(cam.settings.safeZ)+" mm",0xFF63FF9D.toInt())
+        param("SAFE-Z",DisplayFormat.mm(cam.settings.safeZ)+" mm",LibraryFiveAxisSkin208.safe)
         param("FEED",DisplayFormat.mm(cam.settings.feedMmMin)+" mm/min")
         param("SPINDLE","2300 RPM • POST")
-        param("WORK OFFSET",workOffset,0xFFF59E0B.toInt())
+        param("WORK OFFSET",workOffset,LibraryFiveAxisSkin208.warning)
         param("LEAD-IN",DisplayFormat.mm(cam.settings.leadInMm)+" mm")
         param("LEAD-OUT",DisplayFormat.mm(cam.settings.leadOutMm)+" mm")
         param("TOOL DIRECTION",if(cam.settings.climb)"CLIMB" else "CONVENTIONAL")
@@ -1499,9 +1514,9 @@ class MainActivity : Activity() {
         param("MACHINING REGION","STOCK XY")
 
         val legend=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
-        legend.addView(textLine("● G0 RAPID",0xFF3DEBFF.toInt(),9.5f),LinearLayout.LayoutParams(0,-2,1f))
-        legend.addView(textLine("● CUTTING",0xFFFFB020.toInt(),9.5f),LinearLayout.LayoutParams(0,-2,1f))
-        legend.addView(textLine("● TOOL",0xFF63FF9D.toInt(),9.5f),LinearLayout.LayoutParams(0,-2,1f))
+        legend.addView(textLine("● G0 RAPID",LibraryFiveAxisSkin208.cyan,9.5f),LinearLayout.LayoutParams(0,-2,1f))
+        legend.addView(textLine("● CUTTING",LibraryFiveAxisSkin208.warning,9.5f),LinearLayout.LayoutParams(0,-2,1f))
+        legend.addView(textLine("● TOOL",LibraryFiveAxisSkin208.safe,9.5f),LinearLayout.LayoutParams(0,-2,1f))
         parameters.addView(legend)
 
         if(layoutMode==CamWorkstationContract.Layout.MOBILE_COMPACT) {
@@ -1520,7 +1535,7 @@ class MainActivity : Activity() {
                 " • COLLISION " + risk.collisionCount +
                 " • OVERCUT " + risk.overcutCount +
                 " • " + CamWorkstationContract.MAKE_IT_REAL,
-            if(risk.ok)0xFF63FF9D.toInt() else 0xFFFF5252.toInt(),10f
+            if(risk.ok)LibraryFiveAxisSkin208.safe else StudioProductionTheme.alarm,10f
         ).apply { background=glass(if(risk.ok)0x5563FF9D else 0x88FF5252.toInt()) })
 
         val actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
@@ -1541,12 +1556,12 @@ class MainActivity : Activity() {
             }
             actions.addView(b,LinearLayout.LayoutParams(0,-2,1f))
         }
-        action("重算",0xFF3DEBFF.toInt()) {
+        action("重算",LibraryFiveAxisSkin208.cyan) {
             dialog.dismiss()
             showCamWorkstation()
         }
-        action("設定",0xFF8B5CF6.toInt()) { showCamSettingsDialog() }
-        action("偏置",0xFFF59E0B.toInt()) { showWorkOffsetDialog() }
+        action("設定",LibraryFiveAxisSkin208.violet) { showCamSettingsDialog() }
+        action("偏置",LibraryFiveAxisSkin208.warning) { showWorkOffsetDialog() }
         action("3D",0xFF22C55E.toInt()) { showMachining3D() }
         action("NC",0xFF3B82F6.toInt()) { showNcEditDialog() }
         action("←",0xFF7894A8.toInt()) { dialog.dismiss() }
