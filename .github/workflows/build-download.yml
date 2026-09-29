@@ -4,23 +4,7 @@ on:
   push:
     branches:
       - main
-      - studio-206-adaptive-pose-badge-reflow
-      - studio-207-axis-depth-beads
-      - studio-208-library-5x-skin-binding
-      - studio-209-production-runtime
-      - studio-210-production-ui-switching
-      - studio-211-production-ui-switch-gate
-      - studio-212-visible-ui-is-function
-      - studio-213-offline-first-ui
-      - studio-214-offline-first-ui
-      - studio-215-offline-status-fix
-      - studio-216-network-resume-validator
-      - studio-217-runtime-offline-verifier
-      - studio-218-network-retry-ui
-      - studio-219-integrated-maintenance
-      - studio-220-low-latency-network
-      - studio-221-low-latency-validator
-      - studio-224-axis-model-in-ui
+      - 'studio-*'
     paths:
       - 'release-version.properties'
       - 'app/**'
@@ -121,6 +105,8 @@ jobs:
           grep -Fq 'NETWORK_RETRY_UI_CORE_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE' release-validation.log
           grep -Fq 'INTEGRATED_MAINTENANCE_UI_CORE_GATE_PASS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|RECOVERY|HUD|SYSTEM|SECURITY|AI_SUITE|AI_UPDATE' release-validation.log
           grep -Fq 'LOW_LATENCY_NETWORK_CORE_GATE_PASS|START_180MS|RETRY_350MS|MAX_2|BACKGROUND_CHECK_ONLY|NO_AUTO_APK_DOWNLOAD|FAST_FAIL' release-validation.log
+          grep -Fq 'PROJECT_REVISION_SYNC_GATE_PASS' release-validation.log
+          grep -Fq 'SHARED_PROJECT_FOLDER_SYNC_GATE_PASS' release-validation.log
           test -s app/src/main/res/drawable/ic_rgb_3ax.xml
           test -s app/src/main/res/drawable/ic_rgb_4ax.xml
           test -s app/src/main/res/drawable/ic_rgb_5ax.xml
