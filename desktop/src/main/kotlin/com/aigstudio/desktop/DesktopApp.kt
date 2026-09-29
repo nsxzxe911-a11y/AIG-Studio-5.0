@@ -1034,6 +1034,18 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             val tipDepth=rotate(Vec3(tool.to.x,tool.to.y,tool.z)).z
             val cueDepth=rotate(Vec3(tool.to.x+cueAxis.x,tool.to.y+cueAxis.y,tool.z+cueAxis.z)).z
             val axisDepthDelta=cueDepth-tipDepth
+            val depthMagnitude=(abs(axisDepthDelta)/cueLength.coerceAtLeast(1e-9)).coerceIn(0.0,1.0).toFloat()
+            for(step in 1..3){
+                val t=step/4f
+                val nearBias=if(axisDepthDelta>=0.0)t else 1f-t
+                val beadX=(p.x+(axisTop.x-p.x)*t).roundToInt()
+                val beadY=(p.y+(axisTop.y-p.y)*t).roundToInt()
+                val beadRadius=(2f+nearBias*3f+depthMagnitude*1.5f).roundToInt().coerceAtLeast(2)
+                val beadAlpha=(100f+nearBias*105f+depthMagnitude*40f).roundToInt().coerceIn(90,245)
+                g2.color=Color(61,235,255,beadAlpha)
+                g2.fillOval(beadX-beadRadius,beadY-beadRadius,beadRadius*2,beadRadius*2)
+            }
+            g2.color=Color(255,78,205,220)
             val depthPolarity=when {
                 axisDepthDelta>1e-6 -> "近"
                 axisDepthDelta< -1e-6 -> "遠"
@@ -1466,6 +1478,18 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             val tipView=axisTransform(Vec3(tool.to.x,tool.to.y,tool.z))
             val cueView=axisTransform(Vec3(tool.to.x,tool.to.y,tool.z+cueLength))
             val axisDepthDelta=axisViewDepth(cueView)-axisViewDepth(tipView)
+            val depthMagnitude=(abs(axisDepthDelta)/cueLength.coerceAtLeast(1e-9)).coerceIn(0.0,1.0).toFloat()
+            for(step in 1..3){
+                val t=step/4f
+                val nearBias=if(axisDepthDelta>=0.0)t else 1f-t
+                val beadX=(p.x+(axisTop.x-p.x)*t).roundToInt()
+                val beadY=(p.y+(axisTop.y-p.y)*t).roundToInt()
+                val beadRadius=(2f+nearBias*3f+depthMagnitude*1.5f).roundToInt().coerceAtLeast(2)
+                val beadAlpha=(100f+nearBias*105f+depthMagnitude*40f).roundToInt().coerceIn(90,245)
+                g.color=Color(61,235,255,beadAlpha)
+                g.fillOval(beadX-beadRadius,beadY-beadRadius,beadRadius*2,beadRadius*2)
+            }
+            g.color=Color(255,78,205,220)
             val depthPolarity=when {
                 axisDepthDelta>1e-6 -> "近"
                 axisDepthDelta< -1e-6 -> "遠"
@@ -1995,6 +2019,9 @@ private fun runSmoke() {
             "5X_AXIS_BADGE_REFLOW_MID_WIDTH=$poseBadgeMidWidth\n" +
             "5X_AXIS_BADGE_REFLOW_NARROW_WIDTH=$poseBadgeNarrowWidth\n" +
             "5X_AXIS_BADGE_REFLOW_PRESERVE=AB_DIRECTION_DEPTH_POSE_ANGLE\n" +
+            "5X_AXIS_DEPTH_BEADS=PASS\n" +
+            "5X_AXIS_DEPTH_BEADS_SOURCE=PROJECTED_DEPTH_DELTA\n" +
+            "5X_AXIS_DEPTH_BEADS_STYLE=DIRECTIONAL_RADIUS_ALPHA\n" +
             "5X_DEPTH_OCCLUSION=PASS\n" +
             "5X_FRESH_REMOVAL_FRONTIER=PASS\n" +
             "5X_FRESH_REMOVAL_VISIBLE_POINTS=$fiveFreshRemoval\n" +
