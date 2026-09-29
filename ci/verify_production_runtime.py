@@ -330,4 +330,26 @@ for marker in [
     if marker not in desktop:
         raise SystemExit(f"Studio 222 Windows CAM quick UI missing: {marker}")
 print("CAM_QUICK_UI_GATE_PASS|STUDIO_222|ANDROID|WINDOWS|AUTO|CONTOUR|POCKET|DRILL|ENGRAVE|FACE|REAL_CORE")
+for marker in [
+    'action("中心矩形",5){cad.promptCenterRect()}',
+    'action("SLOT",2){cad.promptSlot()}',
+    'action("POLYGON",3){cad.promptPolygon()}',
+    'action("孔群",4){cad.promptBoltCircle()}',
+    'private fun showQuickCreateBranch()',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Studio 222 Android quick-create UI missing: {marker}")
+for marker in [
+    'val quickTools=CadToolGrid()',
+    'cadDeckButton("快速","QUICK"',
+    'quickTools.add(button("中心矩形"',
+    'quickTools.add(button("SLOT"',
+    'quickTools.add(button("POLYGON"',
+    'quickTools.add(button("孔群"',
+    'fun centerRect(center:Vec2,width:Double,height:Double)',
+    'fun boltCircle(center:Vec2,pcd:Double,holeDiameter:Double,count:Int,startDeg:Double)',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Studio 222 Windows quick-create UI missing: {marker}")
+print("CAD_QUICK_CREATE_UI_GATE_PASS|STUDIO_222|ANDROID|WINDOWS|CENTER_RECT|SLOT|POLYGON|BOLT_CIRCLE|REAL_CORE")
 print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_222|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
