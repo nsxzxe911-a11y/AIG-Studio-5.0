@@ -25,6 +25,7 @@ for runtime_root in runtime_roots:
 android_main = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" / "app" / "MainActivity.kt").read_text(encoding="utf-8")
 startup = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" / "app" / "StartupOverlay.kt").read_text(encoding="utf-8")
 desktop = (ROOT / "desktop" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "desktop" / "DesktopApp.kt").read_text(encoding="utf-8")
+machining_view = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" / "app" / "Machining3DView.kt").read_text(encoding="utf-8")
 env = (ROOT / "core" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "core" / "EnvironmentSettings.kt").read_text(encoding="utf-8")
 android_build = (ROOT / "build_android_release.sh").read_text(encoding="utf-8")
 windows_build = (ROOT / "build_windows_native.ps1").read_text(encoding="utf-8")
@@ -266,10 +267,16 @@ for marker in [
     'action("5AX 模型",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}',
     '"4AX • A軸轉台模型"',
     '"5AX • A/B 搖籃模型"',
-    'MachineModel3DBuilder.build',
 ]:
     if marker not in android_main:
         raise SystemExit(f"Studio 222 Android visible machine model marker missing: {marker}")
+for marker in [
+    'MachineModel3DBuilder.build',
+    'drawMachineModel(canvas,machineModel,scale)',
+    'drawToolStackForeground(canvas,machineModel,scale)',
+]:
+    if marker not in machining_view:
+        raise SystemExit(f"Studio 222 Android live machine renderer marker missing: {marker}")
 for marker in [
     'runtimeQuick("4AX"',
     '"四軸 A軸轉台模型"',
