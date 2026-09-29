@@ -805,7 +805,12 @@ class Machining3DView(
         RenderStressProfiler.record(modelScenario, fpsStats)
         if (removed > 0) RenderStressProfiler.record(RenderStressScenario.MATERIAL_REMOVAL, fpsStats)
         val worst = RenderStressProfiler.heaviest()?.scenario?.name ?: "collecting"
-        val label = "TRUE 3D • MACHINE=" + machineModel.mode +
+        val extensionStage=when(resolvedMode){
+            "3AX" -> "3AX 基體"
+            "4AX" -> "3AX + A 軸"
+            else -> "3AX + A 軸 + B 搖籃"
+        }
+        val label = "MAIN UI • " + extensionStage + " • MACHINE=" + machineModel.mode +
             " • PARTS=" + machineModel.components.size +
             " • CAM=" + result.cam.toolpaths.size +
             " • removed=" + removed +
