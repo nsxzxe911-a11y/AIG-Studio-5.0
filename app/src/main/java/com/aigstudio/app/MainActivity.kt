@@ -54,6 +54,79 @@ import android.widget.Toast
 import com.aigstudio.core.*
 import kotlin.math.*
 
+data class StudioRuntimeUiBootstrapState(
+    val source:String,
+    val entryMode:String,
+    val themeId:String,
+    val validLocalUi:Boolean
+)
+
+object StudioRuntimeUiDirectoryBootstrap {
+    private const val MAX_MANIFEST_BYTES=32*1024
+    private val allowedModes=setOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")
+    private val requiredSurfaces=listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")
+
+    private fun uiDir(context:Context):File =
+        File(context.getExternalFilesDir(null) ?: context.filesDir,"UI")
+
+    fun read(context:Context):StudioRuntimeUiBootstrapState {
+        val dir=uiDir(context)
+        val manifest=File(dir,"runtime-ui.properties")
+        val ready=File(dir,"runtime-ui.ready")
+        if(!manifest.isFile || !ready.isFile) {
+            return StudioRuntimeUiBootstrapState("EMBEDDED_FALLBACK","CAD","official_rgb_original",false)
+        }
+        return runCatching {
+            require(manifest.length() in 1..MAX_MANIFEST_BYTES.toLong()){"UI manifest size invalid"}
+            val props=java.util.Properties().apply {
+                manifest.inputStream().buffered().use { load(it) }
+            }
+            require(props.getProperty("runtime")=="PRODUCTION_UI"){"UI runtime identity invalid"}
+            require(props.getProperty("state")=="READY"){"UI state is not READY"}
+            val surfaces=props.getProperty("surfaces","")
+                .split(',').map{it.trim().uppercase(Locale.US)}.filter{it.isNotBlank()}
+            require(requiredSurfaces.all{it in surfaces}){"UI surface inventory incomplete"}
+            val entry=props.getProperty("entry","CAD").trim().uppercase(Locale.US)
+            require(entry in allowedModes){"UI entry mode invalid"}
+            val theme=props.getProperty("theme","official_rgb_original").trim()
+            require(Regex("[a-z0-9_\\-]{3,64}").matches(theme)){"UI theme id invalid"}
+            val readyText=ready.readText(Charsets.UTF_8)
+            require("runtime=PRODUCTION_UI" in readyText && "state=READY" in readyText){"UI ready marker invalid"}
+            StudioRuntimeUiBootstrapState("LOCAL_UI_DIRECTORY",entry,theme,true)
+        }.getOrElse {
+            StudioRuntimeUiBootstrapState("EMBEDDED_FALLBACK","CAD","official_rgb_original",false)
+        }
+    }
+
+    fun writeReady(context:Context,entryMode:String,themeId:String) {
+        val entry=entryMode.trim().uppercase(Locale.US).takeIf{it in allowedModes} ?: "CAD"
+        val safeTheme=themeId.takeIf{Regex("[a-z0-9_\\-]{3,64}").matches(it)} ?: "official_rgb_original"
+        val dir=uiDir(context)
+        require(dir.exists() || dir.mkdirs()){"UI directory create failed"}
+        val temp=File(dir,"runtime-ui.properties.tmp")
+        temp.writeText(
+            buildString {
+                appendLine("format=1")
+                appendLine("runtime=PRODUCTION_UI")
+                appendLine("state=READY")
+                appendLine("entry=$entry")
+                appendLine("theme=$safeTheme")
+                appendLine("surfaces="+requiredSurfaces.joinToString(","))
+                appendLine("offline=true")
+                appendLine("network_blocking=false")
+            },
+            Charsets.UTF_8
+        )
+        val manifest=File(dir,"runtime-ui.properties")
+        if(manifest.exists()) require(manifest.delete()){"UI manifest replace blocked"}
+        require(temp.renameTo(manifest)){"UI manifest atomic publish failed"}
+        File(dir,"runtime-ui.ready").writeText(
+            "runtime=PRODUCTION_UI\nstate=READY\nmode=$entry\npackage=com.aigstudio.app\nsource=LOCAL_UI_DIRECTORY\n",
+            Charsets.UTF_8
+        )
+    }
+}
+
 object StudioProductionTheme {
     const val ID="official_rgb_original"
     val background=Color.rgb(8,12,22)
@@ -634,6 +707,7 @@ class MainActivity : Activity() {
             android.widget.FrameLayout.LayoutParams.MATCH_PARENT
         ))
         setContentView(bootShell)
+        val uiBootstrap=StudioRuntimeUiDirectoryBootstrap.read(this)
         val previousStartupCrashStage=StudioStartupBootGuard.begin(this)
         val startupMemoryClass=(getSystemService(ACTIVITY_SERVICE) as ActivityManager).memoryClass
         val startupQuality=StudioStartupEngineContract.qualityMode(
@@ -877,7 +951,7 @@ class MainActivity : Activity() {
         addProductionUi("NC") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC")) }
         addProductionUi("AI") { showAiSystemSuiteDialog() }
         check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))
-        selectProductionUi(ProductionUiSwitchContract.initialMode)
+        selectProductionUi(uiBootstrap.entryMode)
         root.addView(productionUiSwitch,LinearLayout.LayoutParams(-1,-2))
         root.addView(visibleModeTitle,LinearLayout.LayoutParams(-1,-2))
         networkStateBadge=chromeText(
@@ -1117,7 +1191,7 @@ class MainActivity : Activity() {
         // Recovery, machine profile restore and autosave are secondary hydration.
         openCategory("繪圖") { showDrawingBranch() }
         selectTool(Tool.LINE)
-        refreshVisibleMode(ProductionUiSwitchContract.initialMode)
+        refreshVisibleMode(uiBootstrap.entryMode)
         bootOverlay.advance(StartupMilestone.CHECKING_PROJECT_DATA)
         bootOverlay.advance(StartupMilestone.HEALTH_CHECK)
         root.post {
@@ -1126,17 +1200,17 @@ class MainActivity : Activity() {
                 bootOverlay.advance(StartupMilestone.READY)
                 bootOverlay.completeAndDetach(bootShell)
 
-                // A successful production UI entry creates a deterministic UI directory.
-                // Startup/build paths do not create this marker.
+                // Publish the local UI manifest only after the production Runtime is READY.
+                // The next startup auto-reads this directory before entering the UI.
                 root.postDelayed({
                     runCatching {
-                        val uiBase=getExternalFilesDir(null) ?: filesDir
-                        val uiDir=File(uiBase,"UI")
-                        require(uiDir.exists() || uiDir.mkdirs()){"UI directory create failed"}
-                        File(uiDir,"runtime-ui.ready").writeText(
-                            "runtime=PRODUCTION_UI\nstate=READY\nmode=CAD\npackage=com.aigstudio.app\n",
-                            Charsets.UTF_8
+                        StudioRuntimeUiDirectoryBootstrap.writeReady(
+                            this,
+                            uiBootstrap.entryMode,
+                            StudioProductionTheme.ID
                         )
+                        status.text="UI AUTOLOAD • "+uiBootstrap.source+" • "+uiBootstrap.entryMode+
+                            " • Theme "+StudioProductionTheme.ID
                     }.onFailure {
                         status.text="UI READY • UI DIRECTORY EVIDENCE BLOCKED: "+(it.message?:"error")
                     }
