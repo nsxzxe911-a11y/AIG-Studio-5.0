@@ -409,6 +409,101 @@ object CadSemanticIdentity {
     }
 }
 
+object CadQuickCreateEngine {
+    private fun finite(vararg values:Double) {
+        require(values.all{it.isFinite()}){"CAD quick-create requires finite values"}
+    }
+
+    fun centerRectCommand(center:Vec2,width:Double,height:Double):Command {
+        finite(center.x,center.y,width,height)
+        require(width>=CNC_RESOLUTION_MM && height>=CNC_RESOLUTION_MM){"CENTER RECT size too small"}
+        val x0=center.x-width/2.0
+        val x1=center.x+width/2.0
+        val y0=center.y-height/2.0
+        val y1=center.y+height/2.0
+        val ids=CadSemanticIdentity.newRectIds()
+        return AddEntitiesCommand(listOf(
+            Line(ids[0],Vec2(x0,y0),Vec2(x1,y0)),
+            Line(ids[1],Vec2(x1,y0),Vec2(x1,y1)),
+            Line(ids[2],Vec2(x1,y1),Vec2(x0,y1)),
+            Line(ids[3],Vec2(x0,y1),Vec2(x0,y0))
+        ))
+    }
+
+    fun regularPolygonCommand(
+        center:Vec2,
+        radius:Double,
+        sides:Int,
+        rotationDeg:Double=0.0
+    ):Command {
+        finite(center.x,center.y,radius,rotationDeg)
+        require(radius>=CNC_RESOLUTION_MM){"POLYGON radius too small"}
+        require(sides in 3..64){"POLYGON sides must be 3..64"}
+        val a0=Math.toRadians(rotationDeg)
+        val points=(0 until sides).map{i->
+            val a=a0+2.0*PI*i/sides
+            Vec2(center.x+cos(a)*radius,center.y+sin(a)*radius)
+        }
+        return AddEntitiesCommand(points.indices.map{i->
+            Line(a=points[i],b=points[(i+1)%points.size])
+        })
+    }
+
+    fun slotCommand(
+        center:Vec2,
+        overallLength:Double,
+        width:Double,
+        angleDeg:Double=0.0
+    ):Command {
+        finite(center.x,center.y,overallLength,width,angleDeg)
+        require(width>=CNC_RESOLUTION_MM && overallLength>width+CNC_RESOLUTION_MM){
+            "SLOT requires length > width"
+        }
+        val radius=width/2.0
+        val halfStraight=(overallLength-width)/2.0
+        val a=Math.toRadians(angleDeg)
+        val u=Vec2(cos(a),sin(a))
+        val v=Vec2(-sin(a),cos(a))
+        val c1=center-u*halfStraight
+        val c2=center+u*halfStraight
+        val top1=c1+v*radius
+        val top2=c2+v*radius
+        val bottom1=c1-v*radius
+        val bottom2=c2-v*radius
+        return AddEntitiesCommand(listOf(
+            Line(a=top1,b=top2),
+            Arc(center=c2,radius=radius,start=top2,end=bottom2,clockwise=true),
+            Line(a=bottom2,b=bottom1),
+            Arc(center=c1,radius=radius,start=bottom1,end=top1,clockwise=true)
+        ))
+    }
+
+    fun boltCircleCommand(
+        center:Vec2,
+        pitchDiameter:Double,
+        holeDiameter:Double,
+        count:Int,
+        startDeg:Double=0.0
+    ):Command {
+        finite(center.x,center.y,pitchDiameter,holeDiameter,startDeg)
+        require(pitchDiameter>=CNC_RESOLUTION_MM && holeDiameter>=CNC_RESOLUTION_MM){
+            "BOLT CIRCLE diameter too small"
+        }
+        require(count in 2..128){"BOLT CIRCLE count must be 2..128"}
+        val pitchRadius=pitchDiameter/2.0
+        val holeRadius=holeDiameter/2.0
+        val a0=Math.toRadians(startDeg)
+        return AddEntitiesCommand((0 until count).map{i->
+            val a=a0+2.0*PI*i/count
+            Circle(
+                id=CadSemanticIdentity.newHoleId(),
+                center=Vec2(center.x+cos(a)*pitchRadius,center.y+sin(a)*pitchRadius),
+                radius=holeRadius
+            )
+        })
+    }
+}
+
 data class CadModuleTemplate(
     val name:String,
     val entities:List<Entity>,
