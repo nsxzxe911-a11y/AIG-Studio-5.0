@@ -6,6 +6,7 @@ on:
       - main
       - studio-206-adaptive-pose-badge-reflow
       - studio-207-axis-depth-beads
+      - studio-208-cad-cam-quick-modules
     paths:
       - 'release-version.properties'
       - 'app/**'
@@ -48,6 +49,8 @@ jobs:
           grep -Fq 'NO_FAKE_PAGE_CALLBACK_GATE_PASS' runtime-surfaces.log
           grep -Fq 'CAD_PRECISION_EDIT_RUNTIME_GATE_PASS' runtime-surfaces.log
           grep -Fq 'AXIS_POSE_BADGE_REFLOW_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|ONE_TWO_THREE_LINE|DYNAMIC_2LINE_3LINE_SMOKE|NO_OVERFLOW|FULL_AB_PRECISION|DIRECTION|DEPTH|POSE_ANGLE|SMOKE_IMAGE|VISUAL_ONLY' runtime-surfaces.log
+          grep -Fq 'AXIS_DEPTH_BEADS_GATE_PASS|ANDROID|WINDOWS|3D|5AX|PROJECTED_DEPTH_DELTA|DIRECTIONAL_RADIUS|DIRECTIONAL_ALPHA|SMOKE_EVIDENCE|VISUAL_ONLY' runtime-surfaces.log
+          grep -Fq 'CAD_CAM_QUICK_MODULE_GATE_PASS|ANDROID|WINDOWS|CENTER_RECT|SLOT|POLYGON|BOLT_CIRCLE|MODULE|AUTO|CONTOUR|POCKET|DRILL|ENGRAVE|FACE|REAL_GEOMETRY|REAL_TOOLPATH' runtime-surfaces.log
       - name: Build Android APK and source package
         shell: bash
         run: |
@@ -67,6 +70,9 @@ jobs:
           grep -Fq 'ADAPTIVE_UI_TEXT_GATE_PASS' release-validation.log
           grep -Fq 'CAD_EDIT_INTEGRITY_GATE_PASS' release-validation.log
           grep -Fq 'CAD_PRECISION_EDIT_GATE_PASS' release-validation.log
+          grep -Fq 'CAD_QUICK_CREATE_GATE_PASS CENTER_RECT SLOT POLYGON BOLT_CIRCLE REAL_GEOMETRY' release-validation.log
+          grep -Fq 'CAD_MODULE_ASSEMBLY_GATE_PASS CAPTURE_SELECTION INSERT_XY ROTATE FRESH_IDS' release-validation.log
+          grep -Fq 'CAM_QUICK_OPERATION_GATE_PASS AUTO CONTOUR POCKET DRILL ENGRAVE FACE REAL_TOOLPATH' release-validation.log
           grep -Fq 'CAD_RGB_WORKSPACE_GATE_PASS' runtime-surfaces.log
           grep -Fq 'NC_DRAFT_RECOVERY_GATE_PASS' release-validation.log
           grep -Fq 'PIXEL_LAYOUT_PRECHECK_GATE_PASS' release-validation.log
