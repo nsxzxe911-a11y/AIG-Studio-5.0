@@ -1214,10 +1214,11 @@ class MainActivity : Activity() {
                                 }
                                 root.post {
                                     published.onSuccess {
-                                        status.text="UI AUTOLOAD • "+localUi.source+" • "+readyMode+
-                                            " • Theme "+StudioProductionTheme.ID
+                                        visibleModeTitle.text="目前模式 • "+readyMode+
+                                            " • 真 UI / LIVE RUNTIME • UI AUTOLOAD "+localUi.source
                                     }.onFailure {
-                                        status.text="UI READY • UI DIRECTORY EVIDENCE BLOCKED: "+(it.message?:"error")
+                                        visibleModeTitle.text="目前模式 • "+readyMode+
+                                            " • 真 UI / LIVE RUNTIME • UI DIR WARNING"
                                     }
                                 }
                             },"Studio-UI-Ready-Publish").apply{isDaemon=true}.start()
