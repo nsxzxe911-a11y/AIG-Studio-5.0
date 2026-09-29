@@ -1219,8 +1219,8 @@ require(android, 'b.setOnClickListener { run() }', "ACTION_NO_FAKE")
 # Desktop must expose the same multi-axis/NC workstation and real CAM/NC functions.
 for needle in (
     'mode("3AX","三軸","3 AXIS"',
-    'mode("4AX","四軸","4 AXIS"',
-    'mode("5AX","五軸","5 AXIS"',
+    'mode("4AX","四軸 A軸轉台模型","4AX A-ROTARY MODEL"',
+    'mode("5AX","五軸 A/B 搖籃模型","5AX A/B TRUNNION MODEL"',
     'mode("NC_EDIT","程式","NC EDIT"',
     'action(UiTextPolicy.display("ROTARY_CLAMP",118)',
     'action("重建 NC"',
