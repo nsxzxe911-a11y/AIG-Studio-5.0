@@ -372,39 +372,102 @@ object CadEditEngine {
 enum class SnapMode { ENDPOINT, MIDPOINT, CENTER, INTERSECTION, TANGENT, HORIZONTAL, VERTICAL }
 
 object CadSemanticIdentity {
-    fun newRectIds():List<EntityId> {
-        val root="RECT:"+UUID.randomUUID().toString()
-        return (0..3).map{"$root:$it"}
-    }
+    private val groupedKinds=setOf("RECT","SLOT","POLYGON","BOLT")
+
+    fun newRectIds():List<EntityId> = newCompositeIds("RECT",4)
     fun newHoleId():EntityId = "HOLE:"+UUID.randomUUID().toString()
+
+    fun newCompositeIds(kind:String,count:Int):List<EntityId> {
+        val k=kind.trim().uppercase()
+        require(k in groupedKinds) { "Unsupported CAD composite kind: $k" }
+        require(count in 1..256) { "Composite entity count out of range" }
+        val root=k+":"+UUID.randomUUID().toString()
+        return (0 until count).map{"$root:$it"}
+    }
+
+    private fun groupedRoot(id:EntityId):String? {
+        val kind=id.substringBefore(':')
+        if(kind !in groupedKinds || id.count{it==':'}<2) return null
+        return id.substringBeforeLast(':')
+    }
+
     fun semanticKind(entity:Entity):String = when {
         entity.id.startsWith("RECT:") -> "RECT"
+        entity.id.startsWith("SLOT:") -> "SLOT"
+        entity.id.startsWith("POLYGON:") -> "POLYGON"
+        entity.id.startsWith("BOLT:") -> "HOLE"
         entity.id.startsWith("HOLE:") -> "HOLE"
         entity is Line -> "LINE"
         entity is Circle -> "CIRCLE"
         entity is Arc -> "ARC"
         else -> "UNKNOWN"
     }
+
     fun selectionIds(doc:DrawingDocument,entity:Entity):Set<EntityId> {
-        if(!entity.id.startsWith("RECT:")) return setOf(entity.id)
-        val root=entity.id.substringBeforeLast(':')
+        val root=groupedRoot(entity.id) ?: return setOf(entity.id)
         return doc.all().map{it.id}.filter{it.startsWith("$root:")}.toSet().ifEmpty{setOf(entity.id)}
     }
+
     fun copiedIdMap(entities:Collection<Entity>):Map<EntityId,EntityId> {
-        val rectRoots=mutableMapOf<String,String>()
+        val groupedRoots=mutableMapOf<String,String>()
         return entities.associate { entity ->
             val id=entity.id
+            val root=groupedRoot(id)
             val newId=when {
-                id.startsWith("RECT:") -> {
-                    val root=id.substringBeforeLast(':')
+                root!=null -> {
+                    val kind=id.substringBefore(':')
                     val suffix=id.substringAfterLast(':')
-                    val newRoot=rectRoots.getOrPut(root){"RECT:"+UUID.randomUUID().toString()}
+                    val newRoot=groupedRoots.getOrPut(root){kind+":"+UUID.randomUUID().toString()}
                     "$newRoot:$suffix"
                 }
                 id.startsWith("HOLE:") -> newHoleId()
                 else -> UUID.randomUUID().toString()
             }
             id to newId
+        }
+    }
+}
+
+data class CadModuleTemplate(
+    val name:String,
+    val entities:List<Entity>,
+    val origin:Vec2
+)
+
+object CadModuleEngine {
+    private fun bounds(e:Entity):DoubleArray = when(e) {
+        is Line -> doubleArrayOf(min(e.a.x,e.b.x),min(e.a.y,e.b.y),max(e.a.x,e.b.x),max(e.a.y,e.b.y))
+        is Circle -> doubleArrayOf(e.center.x-e.radius,e.center.y-e.radius,e.center.x+e.radius,e.center.y+e.radius)
+        is Arc -> doubleArrayOf(e.center.x-e.radius,e.center.y-e.radius,e.center.x+e.radius,e.center.y+e.radius)
+    }
+
+    fun capture(doc:DrawingDocument,ids:Collection<EntityId>,name:String="MODULE"):CadModuleTemplate {
+        val selected=ids.distinct().mapNotNull(doc::get)
+        require(selected.isNotEmpty()) { "MODULE requires selected geometry" }
+        val bb=selected.map(::bounds)
+        val origin=Vec2(
+            (bb.minOf{it[0]}+bb.maxOf{it[2]})/2.0,
+            (bb.minOf{it[1]}+bb.maxOf{it[3]})/2.0
+        )
+        return CadModuleTemplate(name.trim().ifBlank{"MODULE"},selected.map{it},origin)
+    }
+
+    private fun rotateLocal(p:Vec2,angleRad:Double):Vec2 {
+        val c=cos(angleRad); val s=sin(angleRad)
+        return Vec2(p.x*c-p.y*s,p.x*s+p.y*c)
+    }
+
+    fun instantiate(template:CadModuleTemplate,target:Vec2,angleDeg:Double=0.0):List<Entity> {
+        require(target.x.isFinite() && target.y.isFinite() && angleDeg.isFinite()) { "MODULE transform must be finite" }
+        val angle=Math.toRadians(angleDeg)
+        val idMap=CadSemanticIdentity.copiedIdMap(template.entities)
+        fun tx(p:Vec2):Vec2 = target + rotateLocal(p-template.origin,angle)
+        return template.entities.map { e ->
+            when(e) {
+                is Line -> e.copy(id=idMap.getValue(e.id),a=tx(e.a),b=tx(e.b))
+                is Circle -> e.copy(id=idMap.getValue(e.id),center=tx(e.center))
+                is Arc -> e.copy(id=idMap.getValue(e.id),center=tx(e.center),start=tx(e.start),end=tx(e.end))
+            }
         }
     }
 }
