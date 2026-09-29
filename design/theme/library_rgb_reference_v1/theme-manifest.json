@@ -1,0 +1,157 @@
+{
+  "theme_id": "library-rgb-reference-v1",
+  "product": "AIG CNC",
+  "role": "approved-library-visual-reference-staging",
+  "source_surface": "ChatGPT Android Library",
+  "source_policy": "Use the exact Library originals as visual/skin/layout references. Static images are never CNC functionality.",
+  "runtime_activation": false,
+  "binary_import_state": "PENDING_LIBRARY_BINARY_TRANSFER",
+  "raw_asset_directory": "design/theme/library_rgb_reference_v1/raw",
+  "derivative_policy": {
+    "source_originals_read_only": true,
+    "derivatives_allowed": true,
+    "preserve_source_sha256": true,
+    "static_image_is_not_function": true,
+    "runtime_state_drives_xyzab_tool_material_removal": true,
+    "geometry_truth_must_not_change": true,
+    "cam_sim_nc_truth_must_not_change": true,
+    "master_origin_preserved": true,
+    "display_precision_mm": 0.001,
+    "machine_space_order": "A_THEN_B"
+  },
+  "assets": [
+    {
+      "id": "startup_aigii_future_cnc",
+      "source_name": "AIG II未來CNC啟動畫板.png",
+      "target_file": "startup_aigii_future_cnc_1536x1024.png",
+      "file_id": "file_000000004b2482079c754db2ffa11968",
+      "library_file_id": "libfile_5064c186fee081919d0360df779694c3",
+      "version_id": "1",
+      "sha256": "363115847162f726ae54011da431b79f5ac4563b4b844cf8b7dfc9ee5a0fff21",
+      "width": 1536,
+      "height": 1024,
+      "size_bytes": 1889100,
+      "usage": [
+        "startup",
+        "loading",
+        "brand-frame"
+      ]
+    },
+    {
+      "id": "mobile_cad_cam_future",
+      "source_name": "未來感 CNC CAM 手機介面.png",
+      "target_file": "mobile_cad_cam_future_853x1844.png",
+      "file_id": "file_00000000735081fb90413141dddf861e",
+      "library_file_id": "libfile_ed7fb25d8aec819187c1538031392a67",
+      "version_id": "1",
+      "sha256": "15ee24653dc67612bb61a2f105d66f25a09a6aa06b78ec094123305ec72ea06e",
+      "width": 853,
+      "height": 1844,
+      "size_bytes": 1879578,
+      "usage": [
+        "mobile-cad",
+        "mobile-cam",
+        "mobile-3d",
+        "s-pen",
+        "rgb-controls"
+      ]
+    },
+    {
+      "id": "desktop_ai_cnc_5_neon",
+      "source_name": "AI CNC 5.0霓虹加工控制台.png",
+      "target_file": "desktop_ai_cnc_5_neon_1536x1024.png",
+      "file_id": "file_000000005d2c8230befdd018176319cd",
+      "library_file_id": "libfile_c4aa81e8b7008191a3b138d6cea483f2",
+      "version_id": "1",
+      "sha256": "081cd86c8e5f096400f2b272288e1af5610c833de3e0f1aedea3a07730ec8be1",
+      "width": 1536,
+      "height": 1024,
+      "size_bytes": 1870916,
+      "usage": [
+        "desktop-cad",
+        "desktop-cam",
+        "desktop-3d",
+        "gcode",
+        "rgb-controls"
+      ]
+    },
+    {
+      "id": "axis4_hightech_sim",
+      "source_name": "高科技四軸加工模擬介面.png",
+      "target_file": "axis4_hightech_sim_1536x1024.png",
+      "file_id": "file_000000003c508230ac3d257c8efe38f2",
+      "library_file_id": "libfile_408faa49d438819185a86a31aa348eca",
+      "version_id": "1",
+      "sha256": "e06c58c424ed862b0bc4d6ec39412052d85102dc2f61eee3c3ddf1368c2ab762",
+      "width": 1536,
+      "height": 1024,
+      "size_bytes": 2220954,
+      "usage": [
+        "4ax",
+        "machine-skin",
+        "tool-skin",
+        "material-skin",
+        "toolpath-reference"
+      ]
+    },
+    {
+      "id": "axis4_aig_smart_machining",
+      "source_name": "AIG四軸CNC智能加工介面.png",
+      "target_file": "axis4_aig_smart_machining_1536x1024.png",
+      "file_id": "file_00000000068082308cf560cae03ef7ae",
+      "library_file_id": "libfile_57e3ff2248ec8191a9a26c986cca9613",
+      "version_id": "1",
+      "sha256": "40a952dba55eae4ee65e71d85c5ff101281251e3bf254b24515ae3c89d134286",
+      "width": 1536,
+      "height": 1024,
+      "size_bytes": 2360535,
+      "usage": [
+        "4ax",
+        "axis-state",
+        "calibration-ui",
+        "nc-panel",
+        "machine-skin"
+      ]
+    },
+    {
+      "id": "axis5_realcam_portrait",
+      "source_name": "image-gen-1(1).png",
+      "target_file": "axis5_realcam_portrait_941x1672.png",
+      "file_id": "file_00000000a3b08206bfaa7faeaf288b85",
+      "library_file_id": "libfile_f14b23db644c81918dba2abf3d04509f",
+      "version_id": "1",
+      "sha256": "bb677b561ecaf6b0b42382ab0f706cf567cb7c4fa57e0ca3f14f3c73ad3b95eb",
+      "width": 941,
+      "height": 1672,
+      "size_bytes": 2384388,
+      "usage": [
+        "5ax",
+        "mobile-real-cam",
+        "ab-axis",
+        "safe-z",
+        "g54",
+        "collision-overcut"
+      ]
+    },
+    {
+      "id": "axis5_realcam_landscape",
+      "source_name": "image-gen-2(1).png",
+      "target_file": "axis5_realcam_landscape_1672x941.png",
+      "file_id": "file_00000000a8f88206b2839a6ac39b11fb",
+      "library_file_id": "libfile_d93f8f6c245c8191b01c73148761d540",
+      "version_id": "1",
+      "sha256": "e58d585864f61ffe60d58c76239b3d4f20af91c235024e9a50b700306a56d066",
+      "width": 1672,
+      "height": 941,
+      "size_bytes": 2387504,
+      "usage": [
+        "5ax",
+        "desktop-real-cam",
+        "ab-axis",
+        "safe-z",
+        "g54",
+        "collision-overcut"
+      ]
+    }
+  ]
+}
