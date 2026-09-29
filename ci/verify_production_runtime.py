@@ -33,7 +33,7 @@ secure_services = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" 
 required_android = [
     "installSplashScreen()",
     "setContentView(root)",
-    "StudioRuntimeUiDirectoryBootstrap.read(this)",
+    "StudioRuntimeUiDirectoryBootstrap.read(this@MainActivity)",
     "StudioRuntimeUiDirectoryBootstrap.writeReady(",
     "CadView(this)",
     "Machining3DView",
@@ -42,6 +42,11 @@ required_android = [
 for marker in required_android:
     if marker not in android_main:
         raise SystemExit(f"Android production runtime marker missing: {marker}")
+
+if android_main.index("setContentView(root)") > android_main.index("StudioRuntimeUiDirectoryBootstrap.read(this@MainActivity)"):
+    raise SystemExit("Android production UI directory read occurs before first production content view")
+if "android.view.ViewTreeObserver.OnDrawListener" not in android_main:
+    raise SystemExit("Android production first-draw gate missing")
 
 required_desktop = [
     'JFrame("AIG CNC — OFFICIAL RGB ORIGINAL")',
