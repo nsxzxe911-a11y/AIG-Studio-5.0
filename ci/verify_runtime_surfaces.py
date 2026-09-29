@@ -1309,3 +1309,23 @@ print("✓ ADAPTIVE_UI_TEXT_GATE_PASS 繁中優先 SHORT_ZH TECH_ABBR SYMBOL SHO
 print("✓ CI_ADAPTIVE_UI_TEXT_MARKER_GATE_PASS WORKFLOW_MATCHES_RUNTIME_GATE")
 print("✓ NO_FAKE_PAGE_CALLBACK_GATE_PASS TOOL_ACTION_CALLBACKS_BOUND")
 print("✓ ALL_SCREENS_RUNTIME_GATE_PASS")
+
+# Production machining UI must expose live axis readout and real A/B jog callbacks.
+for needle in (
+    'contentDescription="LIVE AXIS STATUS"',
+    'action("A−",0xFF8B5CF6.toInt(),"A軸負向 15 度"){ jogAxis(-15.0,0.0) }',
+    'action("A+",0xFF8B5CF6.toInt(),"A軸正向 15 度"){ jogAxis(15.0,0.0) }',
+    'action("B−",0xFFEC4899.toInt(),"B軸負向 15 度"){ jogAxis(0.0,-15.0) }',
+    'action("B+",0xFFEC4899.toInt(),"B軸正向 15 度"){ jogAxis(0.0,15.0) }',
+    'MachiningAxisRuntimeContract.applyDrag(targetMode,draftA,draftB,deltaA,deltaB)',
+):
+    require(android, needle, "ANDROID_LIVE_AXIS_CONTROL_UI")
+for needle in (
+    'action("A−",Color(139,92,246),"4AX")',
+    'action("A+",Color(139,92,246),"4AX")',
+    'action("B−",Color(236,72,153),"5AX")',
+    'action("B+",Color(236,72,153),"5AX")',
+):
+    require(desktop, needle, "WINDOWS_LIVE_AXIS_CONTROL_UI")
+print("LIVE_AXIS_CONTROL_UI_GATE_PASS|STUDIO_222|ANDROID|WINDOWS|XYZAB|JOG_AB|REAL_CALLBACKS")
+
