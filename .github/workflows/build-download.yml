@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - studio-206-adaptive-pose-badge-reflow
+      - studio-207-axis-depth-beads
     paths:
       - 'release-version.properties'
       - 'app/**'
