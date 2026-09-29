@@ -9,6 +9,7 @@ import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import java.util.Locale
 import java.security.MessageDigest
+import java.io.File
 import android.os.Process
 import android.os.PowerManager
 import android.content.IntentFilter
@@ -1124,6 +1125,22 @@ class MainActivity : Activity() {
                 bootOverlay.advance(StartupMilestone.WRAPPING_UP)
                 bootOverlay.advance(StartupMilestone.READY)
                 bootOverlay.completeAndDetach(bootShell)
+
+                // A successful production UI entry creates a deterministic UI directory.
+                // Startup/build paths do not create this marker.
+                root.postDelayed({
+                    runCatching {
+                        val uiBase=getExternalFilesDir(null) ?: filesDir
+                        val uiDir=File(uiBase,"UI")
+                        require(uiDir.exists() || uiDir.mkdirs()){"UI directory create failed"}
+                        File(uiDir,"runtime-ui.ready").writeText(
+                            "runtime=PRODUCTION_UI\nstate=READY\nmode=CAD\npackage=com.aigstudio.app\n",
+                            Charsets.UTF_8
+                        )
+                    }.onFailure {
+                        status.text="UI READY • UI DIRECTORY EVIDENCE BLOCKED: "+(it.message?:"error")
+                    }
+                },250L)
                 scheduleBackgroundOnlineServices()
 
                 root.postDelayed({
