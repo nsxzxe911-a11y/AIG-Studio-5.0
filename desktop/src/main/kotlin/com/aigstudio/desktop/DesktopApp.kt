@@ -2966,7 +2966,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             foreground=StudioDesktopProductionTheme.text
             font=Font(Font.MONOSPACED,Font.PLAIN,12)
             text=buildString{
-                appendLine("AIG CNC "+desktopVersionName()+" • 正式 Runtime UI 內建維修")
+                appendLine("AIG CNC • 正式 Runtime UI 內建維修")
                 appendLine("BOOT="+IntegratedMaintenanceUiContract.DEFAULT_BOOT_TARGET+" • separate engineering shell=OFF")
                 appendLine("NETWORK OPTIONAL • OFFLINE MAINTENANCE=ON")
                 appendLine("ENTITIES="+doc.size()+" • LINKS="+doc.links().size)
