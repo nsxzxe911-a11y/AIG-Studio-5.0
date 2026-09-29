@@ -20,6 +20,7 @@ def require(source: str, needle: str, label: str) -> None:
         raise SystemExit(f"BLOCKED {label}: missing {needle!r}")
 
 android = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
+secure_services = read("app/src/main/java/com/aigstudio/app/SecureServices.kt")
 machining3d = read("app/src/main/java/com/aigstudio/app/Machining3DView.kt")
 desktop = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
 machining3d_core = read("core/src/main/kotlin/com/aigstudio/core/Machining3D.kt")
@@ -196,53 +197,53 @@ for needle in (
     'const val NETWORK_REQUIRED_FOR_STARTUP = false',
     'fun startupAllowed(networkAvailable:Boolean):Boolean = true',
 ):
-    require(env, needle, "OFFLINE_FIRST_CONTRACT_219")
+    require(env, needle, "OFFLINE_FIRST_CONTRACT_220")
 for needle in (
     'bootOverlay.completeAndDetach(bootShell)',
     'scheduleBackgroundOnlineServices()',
     'cm.registerDefaultNetworkCallback(callback)',
     'OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)',
 ):
-    require(android, needle, "ANDROID_OFFLINE_FIRST_UI_219")
+    require(android, needle, "ANDROID_OFFLINE_FIRST_UI_220")
 for needle in (
     'LOCAL READY • NETWORK OPTIONAL',
     'OFFLINE-FIRST',
 ):
-    require(desktop, needle, "WINDOWS_OFFLINE_FIRST_UI_219")
+    require(desktop, needle, "WINDOWS_OFFLINE_FIRST_UI_220")
 print("OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY")
 for needle in (
     'const val POST_READY_NETWORK_OBSERVER = true',
     'const val NETWORK_STATUS_MUST_NOT_OVERRIDE_OPERATION = true',
 ):
-    require(env, needle, "NETWORK_RESUME_CONTRACT_219")
+    require(env, needle, "NETWORK_RESUME_CONTRACT_220")
 for needle in (
     'contentDescription="NETWORK OPTIONAL STATUS"',
     'cm.registerDefaultNetworkCallback(callback)',
     'cm.unregisterNetworkCallback(callback)',
     '"網路 • 離線可用 • 本機功能正常"',
 ):
-    require(android, needle, "NETWORK_RESUME_ANDROID_219")
+    require(android, needle, "NETWORK_RESUME_ANDROID_220")
 for needle in (
     'LOCAL READY • NETWORK OPTIONAL',
 ):
-    require(desktop, needle, "NETWORK_RESUME_WINDOWS_219")
+    require(desktop, needle, "NETWORK_RESUME_WINDOWS_220")
 print("NETWORK_RESUME_UI_RUNTIME_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY")
 for needle in (
     'const val NETWORK_RETRY_ON_RECONNECT = true',
     'const val NETWORK_BADGE_COMPACT = true',
     'const val SINGLE_UPDATE_CHECK_AT_A_TIME = true',
 ):
-    require(env, needle, "NETWORK_RETRY_CONTRACT_219")
+    require(env, needle, "NETWORK_RETRY_CONTRACT_220")
 for needle in (
     'onlineAutoCheckRunning.compareAndSet(false,true)',
     'onlineAutoCheckCompleted.set(false)',
     'renderNetworkState(true,"更新可用")',
     'renderNetworkState(true,"更新待重試")',
 ):
-    require(android, needle, "NETWORK_RETRY_ANDROID_219")
+    require(android, needle, "NETWORK_RETRY_ANDROID_220")
 if 'renderNetworkState(true,"更新可用 • "+result.message)' in android:
     raise SystemExit("BLOCKED: long update text may expand network badge")
-require(regression, "NETWORK_RETRY_UI_CORE_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE", "NETWORK_RETRY_REGRESSION_219")
+require(regression, "NETWORK_RETRY_UI_CORE_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE", "NETWORK_RETRY_REGRESSION_220")
 print("NETWORK_RETRY_UI_RUNTIME_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE")
 for needle in (
     'const val POLICY = "ENGINEERING_TOOLS_IN_PRODUCTION_UI"',
@@ -250,7 +251,7 @@ for needle in (
     'const val SEPARATE_ENGINEERING_SHELL = false',
     'const val OFFLINE_MAINTENANCE_AVAILABLE = true',
 ):
-    require(env, needle, "INTEGRATED_MAINTENANCE_CONTRACT_219")
+    require(env, needle, "INTEGRATED_MAINTENANCE_CONTRACT_220")
 for needle in (
     'contentDescription="MAINTENANCE CENTER"',
     'private fun showMaintenanceCenter()',
@@ -258,17 +259,42 @@ for needle in (
     'action("系統監控 HUD")',
     'action("Security")',
 ):
-    require(android, needle, "ANDROID_INTEGRATED_MAINTENANCE_219")
+    require(android, needle, "ANDROID_INTEGRATED_MAINTENANCE_220")
 for needle in (
     'GlassActionButton("維修"',
     'fun showMaintenanceCenter()',
     'showApp(startup=null,showWindow=false)',
     'productionFrame.contentPane',
 ):
-    require(desktop, needle, "WINDOWS_INTEGRATED_MAINTENANCE_219")
-require(regression, "INTEGRATED_MAINTENANCE_UI_CORE_GATE_PASS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|RECOVERY|HUD|SYSTEM|SECURITY|AI_SUITE|AI_UPDATE", "INTEGRATED_MAINTENANCE_REGRESSION_219")
+    require(desktop, needle, "WINDOWS_INTEGRATED_MAINTENANCE_220")
+require(regression, "INTEGRATED_MAINTENANCE_UI_CORE_GATE_PASS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|RECOVERY|HUD|SYSTEM|SECURITY|AI_SUITE|AI_UPDATE", "INTEGRATED_MAINTENANCE_REGRESSION_220")
 print("INTEGRATED_MAINTENANCE_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|REAL_ACTIONS")
 print("PRODUCTION_SHELL_EVIDENCE_RUNTIME_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY")
+for needle in (
+    'const val BACKGROUND_AUTO_DOWNLOAD = false',
+    'const val BACKGROUND_NETWORK_DELAY_MS = 180L',
+    'const val BACKGROUND_NETWORK_RETRY_DELAY_MS = 350L',
+    'const val BACKGROUND_NETWORK_MAX_ATTEMPTS = 2',
+):
+    require(env, needle, "LOW_LATENCY_NETWORK_CONTRACT_220")
+for needle in (
+    'onlineAutoRetryScheduled',
+    'onlineAutoRetryCount',
+    'updateConfig.copy(',
+    'autoDownload=OfflineFirstRuntimeContract.BACKGROUND_AUTO_DOWNLOAD',
+    '"更新快速重試"',
+    '"更新待手動重試"',
+):
+    require(android, needle, "LOW_LATENCY_NETWORK_ANDROID_220")
+for needle in (
+    'MANIFEST_CONNECT_TIMEOUT_MS = 1200',
+    'MANIFEST_READ_TIMEOUT_MS = 2000',
+    'APK_CONNECT_TIMEOUT_MS = 2500',
+    'APK_READ_TIMEOUT_MS = 5000',
+):
+    require(secure_services, needle, "LOW_LATENCY_NETWORK_SECURE_220")
+require(regression, "LOW_LATENCY_NETWORK_CORE_GATE_PASS|START_180MS|RETRY_350MS|MAX_2|BACKGROUND_CHECK_ONLY|NO_AUTO_APK_DOWNLOAD|FAST_FAIL", "LOW_LATENCY_NETWORK_REGRESSION_220")
+print("LOW_LATENCY_NETWORK_RUNTIME_GATE_PASS|ANDROID|START_180MS|MANIFEST_1200_2000|APK_IDLE_2500_5000|RETRY_350MS_X2|BACKGROUND_CHECK_ONLY|UI_NEVER_WAIT")
 
 # Main Android page/category entry points must bind to real callbacks.
 android_entries = {

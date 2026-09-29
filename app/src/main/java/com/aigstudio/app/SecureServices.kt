@@ -239,6 +239,10 @@ class UpdateInstallReceiver : BroadcastReceiver() {
 object SecureUpdateManager {
     private const val MAX_MANIFEST_BYTES = 64 * 1024
     private const val MAX_APK_BYTES = 300L * 1024L * 1024L
+    private const val MANIFEST_CONNECT_TIMEOUT_MS = 1200
+    private const val MANIFEST_READ_TIMEOUT_MS = 2000
+    private const val APK_CONNECT_TIMEOUT_MS = 2500
+    private const val APK_READ_TIMEOUT_MS = 5000
     private val main = Handler(Looper.getMainLooper())
 
     fun autoCheck(
@@ -362,8 +366,8 @@ object SecureUpdateManager {
 
         val uri = NetworkSecurity.requireHttps(manifest.apkUrl)
         val conn = (URL(uri.toString()).openConnection() as HttpURLConnection).apply {
-            connectTimeout = 8000
-            readTimeout = 15000
+            connectTimeout = APK_CONNECT_TIMEOUT_MS
+            readTimeout = APK_READ_TIMEOUT_MS
             instanceFollowRedirects = false
             requestMethod = "GET"
             setRequestProperty("Accept", "application/vnd.android.package-archive,application/octet-stream")
@@ -409,8 +413,8 @@ object SecureUpdateManager {
     private fun downloadSmall(url: String, maxBytes: Int): ByteArray {
         val uri = NetworkSecurity.requireHttps(url)
         val conn = (URL(uri.toString()).openConnection() as HttpURLConnection).apply {
-            connectTimeout = 8000
-            readTimeout = 8000
+            connectTimeout = MANIFEST_CONNECT_TIMEOUT_MS
+            readTimeout = MANIFEST_READ_TIMEOUT_MS
             instanceFollowRedirects = false
             requestMethod = "GET"
             setRequestProperty("Accept", "text/plain")

@@ -776,7 +776,10 @@ object OfflineFirstRuntimeContract {
     const val NETWORK_RETRY_ON_RECONNECT = true
     const val NETWORK_BADGE_COMPACT = true
     const val SINGLE_UPDATE_CHECK_AT_A_TIME = true
-    const val BACKGROUND_NETWORK_DELAY_MS = 1200L
+    const val BACKGROUND_AUTO_DOWNLOAD = false
+    const val BACKGROUND_NETWORK_DELAY_MS = 180L
+    const val BACKGROUND_NETWORK_RETRY_DELAY_MS = 350L
+    const val BACKGROUND_NETWORK_MAX_ATTEMPTS = 2
     val localModes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")
 
     fun startupAllowed(networkAvailable:Boolean):Boolean = true
@@ -1165,7 +1168,7 @@ enum class StudioStartupStage {
 }
 
 object StudioStartupEngineContract {
-    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_219"
+    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_220"
     val orderedStages=listOf(
         StudioStartupStage.BOOTSTRAP,
         StudioStartupStage.SAFE_THEME,

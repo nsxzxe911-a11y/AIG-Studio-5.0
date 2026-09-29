@@ -8,8 +8,8 @@ if not version_line.startswith("versionName="):
     raise SystemExit("release version metadata missing")
 version = version_line.split("=", 1)[1]
 parts = tuple(int(x) for x in version.split("."))
-if parts < (219, 0, 0):
-    raise SystemExit(f"production runtime line requires >=219.0.0, got {version}")
+if parts < (220, 0, 0):
+    raise SystemExit(f"production runtime line requires >=220.0.0, got {version}")
 
 runtime_roots = [
     ROOT / "app" / "src" / "main",
@@ -28,6 +28,7 @@ desktop = (ROOT / "desktop" / "src" / "main" / "kotlin" / "com" / "aigstudio" / 
 env = (ROOT / "core" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "core" / "EnvironmentSettings.kt").read_text(encoding="utf-8")
 android_build = (ROOT / "build_android_release.sh").read_text(encoding="utf-8")
 windows_build = (ROOT / "build_windows_native.ps1").read_text(encoding="utf-8")
+secure_services = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" / "app" / "SecureServices.kt").read_text(encoding="utf-8")
 
 required_android = [
     "AigStartupOverlay(this)",
@@ -53,7 +54,7 @@ for marker in required_desktop:
     if marker not in desktop:
         raise SystemExit(f"Windows production runtime marker missing: {marker}")
 
-if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_219"' not in env:
+if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_220"' not in env:
     raise SystemExit("production startup profile missing")
 if "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" not in android_build:
     raise SystemExit("Android production release state missing")
@@ -203,4 +204,31 @@ for marker in [
         raise SystemExit(f"Windows integrated maintenance/production-shell evidence marker missing: {marker}")
 print("INTEGRATED_MAINTENANCE_UI_GATE_PASS|ANDROID|WINDOWS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|REAL_ACTIONS")
 print("PRODUCTION_SHELL_EVIDENCE_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY")
-print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_219|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
+for marker in [
+    'const val BACKGROUND_AUTO_DOWNLOAD = false',
+    'const val BACKGROUND_NETWORK_DELAY_MS = 180L',
+    'const val BACKGROUND_NETWORK_RETRY_DELAY_MS = 350L',
+    'const val BACKGROUND_NETWORK_MAX_ATTEMPTS = 2',
+]:
+    if marker not in env:
+        raise SystemExit(f"low latency network contract missing: {marker}")
+for marker in [
+    'onlineAutoRetryScheduled',
+    'onlineAutoRetryCount',
+    'updateConfig.copy(',
+    'autoDownload=OfflineFirstRuntimeContract.BACKGROUND_AUTO_DOWNLOAD',
+    '"更新快速重試"',
+    '"更新待手動重試"',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android low latency network marker missing: {marker}")
+for marker in [
+    'MANIFEST_CONNECT_TIMEOUT_MS = 1200',
+    'MANIFEST_READ_TIMEOUT_MS = 2000',
+    'APK_CONNECT_TIMEOUT_MS = 2500',
+    'APK_READ_TIMEOUT_MS = 5000',
+]:
+    if marker not in secure_services:
+        raise SystemExit(f"secure update latency marker missing: {marker}")
+print("LOW_LATENCY_NETWORK_GATE_PASS|START_180MS|MANIFEST_1200_2000|APK_IDLE_2500_5000|RETRY_350MS_X2|BACKGROUND_CHECK_ONLY|UI_NEVER_WAIT")
+print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_220|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")

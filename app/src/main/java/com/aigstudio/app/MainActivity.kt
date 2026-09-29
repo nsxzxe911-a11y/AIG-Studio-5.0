@@ -456,6 +456,8 @@ class MainActivity : Activity() {
     private var onlineNetworkCallback: android.net.ConnectivityManager.NetworkCallback? = null
     private val onlineAutoCheckRunning = java.util.concurrent.atomic.AtomicBoolean(false)
     private val onlineAutoCheckCompleted = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val onlineAutoRetryScheduled = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val onlineAutoRetryCount = java.util.concurrent.atomic.AtomicInteger(0)
     private var voiceTts: TextToSpeech? = null
     private var speechRecognizer: SpeechRecognizer? = null
     private var voiceListening = false
@@ -1100,19 +1102,39 @@ class MainActivity : Activity() {
                 }
                 renderNetworkState(true)
                 if(onlineAutoCheckCompleted.get()) return
+                if(onlineAutoRetryScheduled.get()) return
+                if(onlineAutoRetryCount.get()>=OfflineFirstRuntimeContract.BACKGROUND_NETWORK_MAX_ATTEMPTS){
+                    renderNetworkState(true,"更新待手動重試")
+                    return
+                }
                 val updateConfig=UpdateConfigStore.load(this)
                 if(!updateConfig.configured) return
                 if(!OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)) return
                 if(!onlineAutoCheckRunning.compareAndSet(false,true)) return
-                SecureUpdateManager.autoCheck(this,updateConfig){result->
+                val backgroundConfig=updateConfig.copy(
+                    autoDownload=OfflineFirstRuntimeContract.BACKGROUND_AUTO_DOWNLOAD
+                )
+                SecureUpdateManager.autoCheck(this,backgroundConfig){result->
                     onlineAutoCheckRunning.set(false)
                     if(result.ok){
                         onlineAutoCheckCompleted.set(true)
+                        onlineAutoRetryCount.set(0)
                         if(result.available) renderNetworkState(true,"更新可用")
                         else renderNetworkState(true)
                     }else{
                         onlineAutoCheckCompleted.set(false)
-                        renderNetworkState(true,"更新待重試")
+                        val attempt=onlineAutoRetryCount.incrementAndGet()
+                        if(attempt<OfflineFirstRuntimeContract.BACKGROUND_NETWORK_MAX_ATTEMPTS &&
+                            onlineAutoRetryScheduled.compareAndSet(false,true)){
+                            renderNetworkState(true,"更新快速重試")
+                            networkStateBadge.postDelayed({
+                                onlineAutoRetryScheduled.set(false)
+                                val active=cm.activeNetwork
+                                maybeStartOnlineServices(active?.let{cm.getNetworkCapabilities(it)})
+                            },OfflineFirstRuntimeContract.BACKGROUND_NETWORK_RETRY_DELAY_MS)
+                        }else{
+                            renderNetworkState(true,"更新待手動重試")
+                        }
                     }
                 }
             }
@@ -1127,6 +1149,8 @@ class MainActivity : Activity() {
                 override fun onLost(network:android.net.Network){
                     onlineAutoCheckRunning.set(false)
                     onlineAutoCheckCompleted.set(false)
+                    onlineAutoRetryScheduled.set(false)
+                    onlineAutoRetryCount.set(0)
                     renderNetworkState(false)
                 }
             }
