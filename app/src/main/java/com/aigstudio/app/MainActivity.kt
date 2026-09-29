@@ -4158,6 +4158,67 @@ class CadView(
             .show()
     }
 
+    private fun applyQuickCreate(label:String,command:Command) {
+        runCatching {
+            val before=doc.all().map{it.id}.toSet()
+            runGeometryCommand(command)
+            selectedIds.clear()
+            selectedIds.addAll(doc.all().map{it.id}.filter{it !in before})
+        }.onSuccess {
+            Toast.makeText(context,label+" PASS • selected="+selectedIds.size,Toast.LENGTH_SHORT).show()
+        }.onFailure {
+            Toast.makeText(context,label+" BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun quickCreateDialog(
+        title:String,
+        fields:List<Pair<String,String>>,
+        build:(List<Double>)->Command
+    ) {
+        val box=LinearLayout(context).apply{orientation=LinearLayout.VERTICAL;setPadding(24,12,24,4)}
+        val inputs=fields.map{(label,initial)->
+            EditText(context).apply{
+                hint=label
+                setText(initial)
+                inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+                box.addView(this)
+            }
+        }
+        AlertDialog.Builder(context)
+            .setTitle(title)
+            .setView(box)
+            .setPositiveButton("建立"){_,_->
+                val values=inputs.map{it.text.toString().trim().toDoubleOrNull()}
+                if(values.any{it==null}) Toast.makeText(context,title+" BLOCKED：格式錯誤",Toast.LENGTH_SHORT).show()
+                else runCatching{build(values.filterNotNull())}
+                    .onSuccess{applyQuickCreate(title,it)}
+                    .onFailure{Toast.makeText(context,title+" BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()}
+            }
+            .setNegativeButton("取消",null)
+            .show()
+    }
+
+    fun promptCenterRect() = quickCreateDialog(
+        "中心矩形",
+        listOf("中心 X mm" to "0.000","中心 Y mm" to "0.000","寬 mm" to "40.000","高 mm" to "20.000")
+    ){v->CadQuickCreateEngine.centerRectCommand(Vec2(v[0],v[1]),v[2],v[3])}
+
+    fun promptSlot() = quickCreateDialog(
+        "SLOT",
+        listOf("中心 X mm" to "0.000","中心 Y mm" to "0.000","總長 mm" to "30.000","寬 mm" to "10.000","角度 °" to "0.000")
+    ){v->CadQuickCreateEngine.slotCommand(Vec2(v[0],v[1]),v[2],v[3],v[4])}
+
+    fun promptPolygon() = quickCreateDialog(
+        "POLYGON",
+        listOf("中心 X mm" to "0.000","中心 Y mm" to "0.000","半徑 mm" to "10.000","邊數" to "6","旋轉 °" to "0.000")
+    ){v->CadQuickCreateEngine.regularPolygonCommand(Vec2(v[0],v[1]),v[2],v[3].toInt(),v[4])}
+
+    fun promptBoltCircle() = quickCreateDialog(
+        "孔群",
+        listOf("中心 X mm" to "0.000","中心 Y mm" to "0.000","PCD mm" to "40.000","孔徑 mm" to "6.000","孔數" to "6","起始角 °" to "0.000")
+    ){v->CadQuickCreateEngine.boltCircleCommand(Vec2(v[0],v[1]),v[2],v[3],v[4].toInt(),v[5])}
+
     fun saveModuleFromSelection() {
         runCatching { CadModuleEngine.capture(doc,selectedIds,"WORKPIECE") }
             .onSuccess {
