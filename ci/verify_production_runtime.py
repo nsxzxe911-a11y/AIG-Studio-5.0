@@ -65,7 +65,7 @@ if "runtime-evidence" not in windows_build:
 if "WINDOWS_EXECUTABLE_SMOKE_CAPTURED" not in windows_build:
     raise SystemExit("Windows executable smoke evidence marker missing")
 
-switch_modes = 'val modes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")'
+switch_modes = 'val modes = listOf("CAD","CAM","SIM","NC","AI")'
 if switch_modes not in env:
     raise SystemExit("production UI stable-order contract missing")
 for marker in [
@@ -73,11 +73,10 @@ for marker in [
     'addProductionUi("CAD")',
     'addProductionUi("CAM")',
     'addProductionUi("SIM")',
-    'addProductionUi("3AX")',
-    'addProductionUi("4AX")',
-    'addProductionUi("5AX")',
     'addProductionUi("NC")',
     'addProductionUi("AI")',
+    'action("3/4/5AX"',
+    'openCategory("加工")',
 ]:
     if marker not in android_main:
         raise SystemExit(f"Android production UI switch marker missing: {marker}")
@@ -85,16 +84,14 @@ for marker in [
     'productionUiButton("CAD"',
     'productionUiButton("CAM"',
     'productionUiButton("SIM"',
-    'productionUiButton("3AX"',
-    'productionUiButton("4AX"',
-    'productionUiButton("5AX"',
     'productionUiButton("NC"',
     'productionUiButton("AI"',
+    'camAction("軸模式"',
 ]:
     if marker not in desktop:
         raise SystemExit(f"Windows production UI switch marker missing: {marker}")
 
-print("PRODUCTION_UI_SWITCH_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|STABLE_ORDER|LIVE_RUNTIME")
+print("PRODUCTION_UI_SWITCH_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED|STABLE_ORDER|LIVE_RUNTIME")
 if 'const val POLICY = "NO_UI_NO_FUNCTION"' not in env:
     raise SystemExit("visible-function UI policy missing")
 for marker in [
