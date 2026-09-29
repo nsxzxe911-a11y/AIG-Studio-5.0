@@ -299,4 +299,28 @@ for marker in [
     if marker not in desktop:
         raise SystemExit(f"Studio 222 Windows module assembly UI missing: {marker}")
 print("MODULE_ASSEMBLY_UI_GATE_PASS|STUDIO_222|ANDROID|WINDOWS|SELECT|SAVE|INSERT|XY|ROTATE|REAL_CORE")
+for marker in [
+    'action("AUTO",0){quickCam(CamOperationMode.AUTO)}',
+    'action("輪廓",1){quickCam(CamOperationMode.CONTOUR)}',
+    'action("口袋",2){quickCam(CamOperationMode.POCKET)}',
+    'action("鑽孔",3){quickCam(CamOperationMode.DRILL)}',
+    'action("雕刻",4){quickCam(CamOperationMode.ENGRAVE)}',
+    'action("面銑",5){quickCam(CamOperationMode.FACE)}',
+    'operationMode=camOperationMode',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Studio 222 Android CAM quick UI missing: {marker}")
+for marker in [
+    'var camOperationMode=CamOperationMode.AUTO',
+    'camAction("AUTO"',
+    'camAction("輪廓"',
+    'camAction("口袋"',
+    'camAction("鑽孔"',
+    'camAction("雕刻"',
+    'camAction("面銑"',
+    'Machining3DEngine.build(snapshot,operationMode=camOperationMode)',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Studio 222 Windows CAM quick UI missing: {marker}")
+print("CAM_QUICK_UI_GATE_PASS|STUDIO_222|ANDROID|WINDOWS|AUTO|CONTOUR|POCKET|DRILL|ENGRAVE|FACE|REAL_CORE")
 print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_222|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
