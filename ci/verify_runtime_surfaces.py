@@ -560,7 +560,7 @@ for forbidden in (
 for needle in (
     "private fun drawMachineModel(canvas: Canvas, model: MachineModel3D, scale: Double) {",
     "private fun machineSpace(v:Vec3,mode:String,live:Move?):Vec3",
-    "return MachineKinematics3D.transform(v,a,b)",
+    "return MachineKinematics3D.transformAround(v,pivot,a,b)",
     "val machineModel=MachineModel3DBuilder.build(",
     "liveMove?.axisA",
     "liveMove?.axisB",
@@ -586,7 +586,9 @@ for needle in (
 require(regression, "REAL_MACHINE_MODEL_3_4_5AX_GATE_PASS", "STUDIO_TRUE_MACHINE_MODEL_REGRESSION_174")
 require(regression, "? MACHINE_MODEL_EXTENSION_GATE_PASS 3AX_FOUNDATION_SHARED 4AX_ADD_A_SUPPORT_HUB_KEY 5AX_KEEP_4AX_ADD_B_CRADLE_HUB_KEY PIVOT_CENTERED NO_BASE_REBUILD TRUE_AB_VISUAL_MOTION", "MACHINE_MODEL_EXTENSION_REGRESSION")
 require(regression, "MACHINE_KINEMATICS_RUNTIME_PARITY_PASS", "STUDIO_MACHINE_KINEMATICS_REGRESSION_174")
+require(machining3d_core, "fun transformAround(v:Vec3,pivot:Vec3,axisA:Double,axisB:Double):Vec3", "STUDIO_PIVOT_KINEMATICS_CORE")
 print("TRUE_MACHINE_MODEL_RUNTIME_PARITY_GATE_PASS|ANDROID|WINDOWS|3AX|4AX|5AX|BASE|COLUMN|TABLE|FIXTURE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL|DYNAMIC_AB|MASTER_ORIGIN|SHARED_KINEMATICS")
+print("STUDIO_ROTARY_PIVOT_ALIGNMENT_GATE_PASS|ANDROID|WINDOWS|MACHINE_MODEL|MATERIAL|TOOLPATH|SHARED_PIVOT|NO_WORLD_ORIGIN_DRIFT")
 for needle in (
     "Color.argb(if(moving) 246 else 236, 56, 104, 138)",
     "Color.argb(if(moving) 250 else 244, 82, 132, 184)",
