@@ -1159,6 +1159,7 @@ fun main() {
     testUndoRedo()
     testCadEditIntegrity()
     testCadPrecisionEditing()
+    testCadModuleAssembly()
     testChamferC5()
     testFilletR5()
     testDifferentCornerRadii()
@@ -1227,6 +1228,37 @@ fun main() {
     check(OfflineFirstRuntimeContract.BACKGROUND_NETWORK_MAX_ATTEMPTS==2)
     println("LOW_LATENCY_NETWORK_CORE_GATE_PASS|START_180MS|RETRY_350MS|MAX_2|BACKGROUND_CHECK_ONLY|NO_AUTO_APK_DOWNLOAD|FAST_FAIL")
     println("ALL TESTS PASSED")
+}
+
+private fun testCadModuleAssembly() {
+    val doc=DrawingDocument()
+    val history=History(doc)
+    val rectIds=CadSemanticIdentity.newRectIds()
+    val source=listOf<Entity>(
+        Line(rectIds[0],Vec2(0.0,0.0),Vec2(20.0,0.0)),
+        Line(rectIds[1],Vec2(20.0,0.0),Vec2(20.0,10.0)),
+        Line(rectIds[2],Vec2(20.0,10.0),Vec2(0.0,10.0)),
+        Line(rectIds[3],Vec2(0.0,10.0),Vec2(0.0,0.0)),
+        Circle(CadSemanticIdentity.newHoleId(),Vec2(10.0,5.0),2.0)
+    )
+    history.run(AddEntitiesCommand(source))
+    val module=CadModuleEngine.capture(doc,source.map{it.id},"WORKPIECE")
+    assertPoint(module.origin,Vec2(10.0,5.0),"module origin")
+    history.run(CadModuleEngine.insertCommand(module,Vec2(100.0,50.0),90.0))
+    check(doc.size()==10)
+    val inserted=doc.all().filter{it.id !in source.map{e->e.id}.toSet()}
+    check(inserted.size==5)
+    check(inserted.map{it.id}.toSet().intersect(source.map{it.id}.toSet()).isEmpty())
+    check(inserted.count{CadSemanticIdentity.semanticKind(it)=="RECT"}==4)
+    check(inserted.count{CadSemanticIdentity.semanticKind(it)=="HOLE"}==1)
+    val firstInserted=inserted.filterIsInstance<Line>().first{it.id.endsWith(":0")}
+    assertPoint(firstInserted.a,Vec2(105.0,40.0),"module rotate a")
+    assertPoint(firstInserted.b,Vec2(105.0,60.0),"module rotate b")
+    check(history.undo())
+    check(doc.size()==5)
+    check(history.redo())
+    check(doc.size()==10)
+    println("✓ CAD_MODULE_ASSEMBLY_GATE_PASS CAPTURE_SELECTION INSERT_XY ROTATE FRESH_IDS UNDO_REDO REAL_GEOMETRY")
 }
 
 private fun rectangle(): List<Line> = listOf(
