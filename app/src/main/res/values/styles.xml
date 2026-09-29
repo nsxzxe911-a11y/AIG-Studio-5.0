@@ -8,4 +8,9 @@
         <item name="android:statusBarColor">#07111B</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
+    <style name="Theme.AIGStudio.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#080C16</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.AIGStudio</item>
+    </style>
 </resources>
