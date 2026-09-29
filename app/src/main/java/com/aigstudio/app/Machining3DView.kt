@@ -140,6 +140,10 @@ class Machining3DView(
         style = Paint.Style.FILL
         color = Color.argb(235,255,78,205)
     }
+    private val toolAxisDepthBeadPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = Color.argb(220,61,235,255)
+    }
     private val toolAxisGhostPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 1.4f * resources.displayMetrics.density
@@ -727,6 +731,18 @@ class Machining3DView(
                 canvas.drawLine(previousAxisCueTop.x,previousAxisCueTop.y,axisCueTop.x,axisCueTop.y,toolAxisGhostPaint)
             }
             canvas.drawLine(tip.x, tip.y, axisCueTop.x, axisCueTop.y, toolAxisCuePaint)
+            val depthMagnitude=(kotlin.math.abs(axisDepthDelta)/cueLength.coerceAtLeast(1e-9)).coerceIn(0.0,1.0).toFloat()
+            for(step in 1..3){
+                val t=step/4f
+                val nearBias=if(axisDepthDelta>=0.0)t else 1f-t
+                val beadX=tip.x+(axisCueTop.x-tip.x)*t
+                val beadY=tip.y+(axisCueTop.y-tip.y)*t
+                val beadRadius=(1.6f+nearBias*2.2f+depthMagnitude*0.9f)*resources.displayMetrics.density
+                val beadAlpha=(100f+nearBias*105f+depthMagnitude*40f).toInt().coerceIn(90,245)
+                toolAxisDepthBeadPaint.alpha=beadAlpha
+                canvas.drawCircle(beadX,beadY,beadRadius,toolAxisDepthBeadPaint)
+            }
+            toolAxisDepthBeadPaint.alpha=255
             val deltaAMark=when { deltaA>1e-9 -> "↑"; deltaA< -1e-9 -> "↓"; else -> "•" }
             val deltaBMark=when { deltaB>1e-9 -> "↑"; deltaB< -1e-9 -> "↓"; else -> "•" }
             val badgeText=String.format(java.util.Locale.US,"A%+.3f°%s B%+.3f°%s %s",badgeA,deltaAMark,badgeB,deltaBMark,depthPolarity)
