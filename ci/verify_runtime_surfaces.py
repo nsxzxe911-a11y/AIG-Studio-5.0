@@ -1329,3 +1329,29 @@ if 'axisOverlay:Boolean' in android:
 if 'FrameLayout.LayoutParams(dp(180),dp(150),Gravity.TOP or Gravity.END)' in android:
     raise SystemExit("BLOCKED STUDIO_AXIS_MODEL_MAIN_UI_224: floating axis preview still covers the production machine viewport")
 print("STUDIO_AXIS_MODEL_MAIN_UI_GATE_PASS|224|3AX_FOUNDATION|4AX_ADD_A|5AX_ADD_B|FULL_MAIN_VIEWPORT|NO_FLOATING_AXIS_PREVIEW")
+
+# 234: cross-device shared-folder watcher is visible in the production Runtime.
+for needle in (
+    'File(filesDir,"shared-sync/current.aigp")',
+    'SharedProjectFolderSync.inspect(',
+    'SharedProjectFolderSync.POLL_INTERVAL_MS',
+    'networkStateBadge.text="SYNC • "+observation.message',
+    'startSharedProjectWatcher()',
+    'sharedProjectHandler.removeCallbacks(sharedProjectRunnable)',
+):
+    require(android, needle, "STUDIO_ANDROID_SHARED_SYNC_WATCHER_234")
+for needle in (
+    'System.getProperty("aig.shared.project.file")',
+    'Timer(SharedProjectFolderSync.POLL_INTERVAL_MS.toInt())',
+    'SharedProjectFolderSync.inspect(',
+    'status.text="共享 • "+observation.message',
+    'sharedSyncTimer?.stop()',
+):
+    require(desktop, needle, "STUDIO_WINDOWS_SHARED_SYNC_WATCHER_234")
+for needle in (
+    'const val AUTO_APPLY=false',
+    'const val NETWORK_REQUIRED=false',
+    'const val NO_SILENT_OVERWRITE=true',
+):
+    require(env, needle, "STUDIO_SHARED_SYNC_POLICY_234")
+print("SHARED_SYNC_RUNTIME_WATCHER_GATE_PASS|STUDIO_234|ANDROID|WINDOWS|POLL_1500MS|NO_AUTO_APPLY|NO_SILENT_OVERWRITE|VISIBLE_STATUS|OFFLINE_FIRST")
