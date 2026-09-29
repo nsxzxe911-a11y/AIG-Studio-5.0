@@ -9,6 +9,7 @@ on:
       - 'release-version.properties'
       - 'app/**'
       - 'core/**'
+      - 'desktop/**'
       - 'ci/**'
       - 'build_android_release.sh'
       - 'build_windows_native.ps1'
