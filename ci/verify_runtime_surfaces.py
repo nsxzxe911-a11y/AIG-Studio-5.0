@@ -965,8 +965,8 @@ for needle in (
     'addActionTo(branchFlow, "中心矩形", 1) { cad.promptCenterRect() }',
     'addCategory("組裝", 1) { showAssemblyBranch() }',
     'addActionTo(branchFlow, "快速刀路", 0) { showQuickCamDialog() }',
-    'CamOperationMode.POCKET to "POCKET 口袋"',
-    'CamOperationMode.FACE to "FACE 面銑"',
+    '"POCKET 口袋"',
+    '"FACE 面銑"',
 ):
     require(android, needle, "STUDIO_ANDROID_CAD_CAM_QUICK_MODULE_208")
 for needle in (
