@@ -2823,6 +2823,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     }
 
     var moduleClipboard:CadModuleTemplate?=null
+    var camOperationMode=CamOperationMode.AUTO
+    var refreshProductionCam:(()->Unit)?=null
     fun askModuleInsert(run:(CadModuleTemplate,Vec2,Double)->Unit){
         val module=moduleClipboard
         if(module==null){
@@ -2859,7 +2861,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 },BorderLayout.CENTER)
             }
         }
-        val result=Machining3DEngine.build(snapshot)
+        val result=Machining3DEngine.build(snapshot,operationMode=camOperationMode)
         val cam=result.cam
         val settings=cam.settings
         val left=JPanel(BorderLayout(6,6)).apply{
@@ -2914,6 +2916,17 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         fun camAction(label:String,color:Color,run:()->Unit){
             actions.add(GlassActionButton(label,color).apply{addActionListener{run()}})
         }
+        fun selectCamOperation(mode:CamOperationMode){
+            camOperationMode=mode
+            status.text="CAM "+mode.name+" • rebuilding real toolpath"
+            refreshProductionCam?.invoke()
+        }
+        camAction("AUTO",Color(61,235,255)){selectCamOperation(CamOperationMode.AUTO)}
+        camAction("輪廓",Color(63,255,157)){selectCamOperation(CamOperationMode.CONTOUR)}
+        camAction("口袋",Color(139,92,246)){selectCamOperation(CamOperationMode.POCKET)}
+        camAction("鑽孔",Color(59,130,246)){selectCamOperation(CamOperationMode.DRILL)}
+        camAction("雕刻",Color(236,72,153)){selectCamOperation(CamOperationMode.ENGRAVE)}
+        camAction("面銑",Color(245,158,11)){selectCamOperation(CamOperationMode.FACE)}
         camAction("3D SIM",LibraryFiveAxisSkin208.violet){
             runCatching{showUnifiedMachiningEditor(frame,doc,status,"3D")}
                 .onFailure{status.text="3D SIM BLOCKED • "+(it.message?:"error")}
@@ -2938,7 +2951,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             name="CAM_CARD"
             background=LibraryFiveAxisSkin208.background
             border=BorderFactory.createEmptyBorder(7,7,7,7)
-            add(JLabel("AIG CNC • REAL CAM 真實刀路 • 5AX RGB").apply{
+            add(JLabel("AIG CNC • REAL CAM • "+camOperationMode.name+" • 5AX RGB").apply{
                 foreground=LibraryFiveAxisSkin208.cyan
                 font=font.deriveFont(Font.BOLD,15f)
                 toolTipText=LibraryFiveAxisSkin208.SOURCE_MOBILE+" + "+LibraryFiveAxisSkin208.SOURCE_LANDSCAPE
@@ -2951,14 +2964,15 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         }
     }
 
-    fun showProductionCam(){
+    refreshProductionCam={
         mainCardHost.components.filter{it.name=="CAM_CARD"}.forEach{mainCardHost.remove(it)}
         mainCardHost.add(buildProductionCamPanel(),"CAM")
         mainCardLayout.show(mainCardHost,"CAM")
         mainCardHost.revalidate()
         mainCardHost.repaint()
-        status.text=if(doc.size()>0)"CAM READY • 真刀路 / 真 3D / 材料移除" else "CAM WAITING • CAD geometry required"
+        status.text=if(doc.size()>0)"CAM "+camOperationMode.name+" READY • 真刀路 / 真 3D / 材料移除" else "CAM WAITING • CAD geometry required"
     }
+    fun showProductionCam(){ refreshProductionCam?.invoke() }
 
     fun showMaintenanceCenter(){
         val summary=JTextArea().apply{
