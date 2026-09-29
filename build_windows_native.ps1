@@ -132,6 +132,13 @@ $UiReadyText = Get-Content $UiReadyMarker -Raw
 if ($UiReadyText -notmatch 'runtime=PRODUCTION_UI' -or $UiReadyText -notmatch 'state=READY') {
   throw 'Studio UI ready marker content invalid'
 }
+$UiManifest = Join-Path $UiEvidenceDir 'runtime-ui.properties'
+if (-not (Test-Path $UiManifest)) { throw 'Packaged Studio Runtime did not create UI/runtime-ui.properties' }
+$UiManifestText = Get-Content $UiManifest -Raw
+foreach ($marker in @('runtime=PRODUCTION_UI','state=READY','entry=CAD','surfaces=CAD,CAM,SIM,3AX,4AX,5AX,NC,AI','network_blocking=false')) {
+  if ($UiManifestText -notmatch [regex]::Escape($marker)) { throw "Studio UI manifest missing: $marker" }
+}
+Write-Host 'STUDIO_WINDOWS_UI_AUTOLOAD_MANIFEST_GATE_PASS'
 Write-Host 'STUDIO_WINDOWS_UI_DIRECTORY_GATE_PASS'
 Write-Host 'STUDIO_WINDOWS_APP_IMAGE_LAUNCH_PASS'
 
