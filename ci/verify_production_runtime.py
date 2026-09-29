@@ -262,6 +262,24 @@ for marker in [
         raise SystemExit(f"Studio 222 Windows quick runtime action missing: {marker}")
 print("UI_INTEGRATION_WAVE1_GATE_PASS|STUDIO_222|ANDROID|WINDOWS|VISIBLE_REAL_ACTIONS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI")
 for marker in [
+    'action("4AX 模型",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}',
+    'action("5AX 模型",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}',
+    '"4AX • A軸轉台模型"',
+    '"5AX • A/B 搖籃模型"',
+    'MachineModel3DBuilder.build',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Studio 222 Android visible machine model marker missing: {marker}")
+for marker in [
+    'runtimeQuick("4AX"',
+    '"四軸 A軸轉台模型"',
+    '"五軸 A/B 搖籃模型"',
+    'MachineModel3DBuilder.build',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Studio 222 Windows visible machine model marker missing: {marker}")
+print("VISIBLE_MACHINE_MODEL_GATE_PASS|STUDIO_222|RGB_IMAGE_BUTTONS|4AX_A_ROTARY|5AX_AB_TRUNNION|LIVE_KINEMATICS|NO_STATIC_FAKE")
+for marker in [
     'action("模組存",5){cad.saveModuleFromSelection()}',
     'action("模組插",2){cad.promptModuleInsert()}',
     'private fun showAssemblyBranch()',
