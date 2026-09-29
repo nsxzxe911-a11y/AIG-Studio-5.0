@@ -249,6 +249,16 @@ object MachineKinematics3D {
     fun transform(mesh:Mesh3D,axisA:Double,axisB:Double):Mesh3D =
         if(abs(axisA)<=EPS && abs(axisB)<=EPS) mesh
         else Mesh3D(mesh.vertices.map{transform(it,axisA,axisB)},mesh.triangles)
+
+    fun transformAround(v:Vec3,pivot:Vec3,axisA:Double,axisB:Double):Vec3 {
+        val local=Vec3(v.x-pivot.x,v.y-pivot.y,v.z-pivot.z)
+        val rotated=transform(local,axisA,axisB)
+        return Vec3(rotated.x+pivot.x,rotated.y+pivot.y,rotated.z+pivot.z)
+    }
+
+    fun transformAround(mesh:Mesh3D,pivot:Vec3,axisA:Double,axisB:Double):Mesh3D =
+        if(abs(axisA)<=EPS && abs(axisB)<=EPS) mesh
+        else Mesh3D(mesh.vertices.map{transformAround(it,pivot,axisA,axisB)},mesh.triangles)
 }
 
 object MachineModel3DBuilder {
@@ -307,17 +317,8 @@ object MachineModel3DBuilder {
         return Mesh3D(v,t)
     }
 
-    private fun transformedAround(mesh:Mesh3D,pivot:Vec3,a:Double,b:Double):Mesh3D {
-        if(abs(a)<=EPS && abs(b)<=EPS) return mesh
-        return Mesh3D(
-            mesh.vertices.map { v ->
-                val local=Vec3(v.x-pivot.x,v.y-pivot.y,v.z-pivot.z)
-                val rotated=MachineKinematics3D.transform(local,a,b)
-                Vec3(rotated.x+pivot.x,rotated.y+pivot.y,rotated.z+pivot.z)
-            },
-            mesh.triangles
-        )
-    }
+    private fun transformedAround(mesh:Mesh3D,pivot:Vec3,a:Double,b:Double):Mesh3D =
+        MachineKinematics3D.transformAround(mesh,pivot,a,b)
 
     private fun inferMode(result:Machining3DResult):String {
         val moves=result.cam.toolpaths.flatMap{it.moves}
