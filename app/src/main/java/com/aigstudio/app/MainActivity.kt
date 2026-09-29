@@ -51,6 +51,7 @@ import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.aigstudio.core.*
 import kotlin.math.*
 
@@ -699,34 +700,19 @@ class MainActivity : Activity() {
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
-        val bootShell = android.widget.FrameLayout(this)
-        val bootOverlay = AigStartupOverlay(this)
-        bootShell.addView(bootOverlay, android.widget.FrameLayout.LayoutParams(
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-        ))
-        setContentView(bootShell)
         try {
         val uiBootstrap=StudioRuntimeUiDirectoryBootstrap.read(this)
-        val previousStartupCrashStage=StudioStartupBootGuard.begin(this)
-        val startupMemoryClass=(getSystemService(ACTIVITY_SERVICE) as ActivityManager).memoryClass
-        val startupQuality=StudioStartupEngineContract.qualityMode(
-            lowMemory=startupMemoryClass<256,
-            thermalHigh=false,
-            preferHq=startupMemoryClass>=512 && !RuntimeDeviceProfile.isEmulator
-        )
-        val startupSafeBoot=StudioStartupEngineContract.safeBootRequired(previousStartupCrashStage)
-        bootOverlay.setRuntimeProfile(startupQuality,startupSafeBoot)
-        bootOverlay.advance(StartupMilestone.SAFE_THEME)
-        bootOverlay.advance(StartupMilestone.INITIALIZING_CORE)
         val environmentPrefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
         environmentRestartApplied = environmentPrefs.getBoolean("restart_required", false)
         if (environmentRestartApplied) {
             environmentPrefs.edit().putBoolean("restart_required", false).remove("restart_reason").apply()
         }
         adaptiveRefreshController = AdaptiveRefreshController(this).also { it.start() }
-        bootOverlay.advance(StartupMilestone.CHECKING_CONFIGURATION)
+
+        // System SplashScreen is the only launch surface. Production Runtime is the
+        // first content view; recovery/profile/network work is deferred.
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(StudioProductionTheme.background)
@@ -1183,39 +1169,30 @@ class MainActivity : Activity() {
         applySystemHudPreference(envPrefs.getBoolean("system_hud_enabled", RuntimeDeviceProfile.defaultSystemHudEnabled))
 
 
-        bootOverlay.advance(StartupMilestone.LOADING_UI)
-        bootShell.addView(root, 0, android.widget.FrameLayout.LayoutParams(
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-        ))
+        setContentView(root)
+
         // Bind only the immediately visible production controls before the first frame.
-        // Recovery, machine profile restore and autosave are secondary hydration.
         openCategory("繪圖") { showDrawingBranch() }
         selectTool(Tool.LINE)
         refreshVisibleMode(uiBootstrap.entryMode)
-        bootOverlay.advance(StartupMilestone.CHECKING_PROJECT_DATA)
-        bootOverlay.advance(StartupMilestone.HEALTH_CHECK)
         root.post {
-            if (root.isAttachedToWindow) {
-                bootOverlay.advance(StartupMilestone.WRAPPING_UP)
-                bootOverlay.advance(StartupMilestone.READY)
-                bootOverlay.completeAndDetach(bootShell)
-
-                // Publish the local UI manifest only after the production Runtime is READY.
-                // The next startup auto-reads this directory before entering the UI.
-                root.postDelayed({
-                    runCatching {
-                        StudioRuntimeUiDirectoryBootstrap.writeReady(
-                            this,
-                            uiBootstrap.entryMode,
-                            StudioProductionTheme.ID
-                        )
-                        status.text="UI AUTOLOAD • "+uiBootstrap.source+" • "+uiBootstrap.entryMode+
-                            " • Theme "+StudioProductionTheme.ID
-                    }.onFailure {
-                        status.text="UI READY • UI DIRECTORY EVIDENCE BLOCKED: "+(it.message?:"error")
-                    }
-                },250L)
+            if (!root.isAttachedToWindow) {
+                showStartupRecoveryUi(IllegalStateException("PRODUCTION UI ATTACH BLOCKED"))
+                return@post
+            }
+            root.post {
+                runCatching {
+                    StudioRuntimeUiDirectoryBootstrap.writeReady(
+                        this,
+                        uiBootstrap.entryMode,
+                        StudioProductionTheme.ID
+                    )
+                    status.text="UI AUTOLOAD • "+uiBootstrap.source+" • "+uiBootstrap.entryMode+
+                        " • Theme "+StudioProductionTheme.ID
+                    reportFullyDrawn()
+                }.onFailure {
+                    status.text="UI READY • UI DIRECTORY EVIDENCE BLOCKED: "+(it.message?:"error")
+                }
                 scheduleBackgroundOnlineServices()
 
                 root.postDelayed({
@@ -1226,23 +1203,16 @@ class MainActivity : Activity() {
                     restoreCadCheckpointIfAvailable()
                     autosaveHandler.postDelayed(autosaveRunnable, 15000L)
                     cad.invalidate()
-                }, 500L)
-            } else {
-                bootOverlay.fail("UI ATTACH BLOCKED")
+                }, 350L)
             }
         }
-        // Network never participates in startup. Online services run only after READY/UI attach.
+        // Network never participates in startup. Online services run only after visible UI.
         } catch (startupError: Throwable) {
-            showStartupRecoveryUi(bootShell, bootOverlay, startupError)
+            showStartupRecoveryUi(startupError)
         }
     }
 
-    private fun showStartupRecoveryUi(
-        bootShell: android.widget.FrameLayout,
-        bootOverlay: AigStartupOverlay,
-        error: Throwable
-    ) {
-        runCatching { bootShell.removeAllViews() }
+    private fun showStartupRecoveryUi(error: Throwable) {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             gravity=Gravity.CENTER
@@ -1269,10 +1239,9 @@ class MainActivity : Activity() {
         })
         setContentView(root)
         runCatching {
-            val base=getExternalFilesDir(null) ?: filesDir
-            val dir=File(base,"UI").apply { mkdirs() }
+            val dir=File(filesDir,"startup-recovery").apply { mkdirs() }
             File(dir,"startup-failure.txt").writeText(
-                "state=RECOVERY\nruntime=PRODUCTION_UI\nerror="+error.javaClass.name+
+                "state=RECOVERY\nerror="+error.javaClass.name+
                     "\nmessage="+(error.message ?: "unknown")+"\n",
                 Charsets.UTF_8
             )
