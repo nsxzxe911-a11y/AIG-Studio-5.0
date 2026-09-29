@@ -192,6 +192,7 @@ class RgbGlowButton(context: Context) : Button(context) {
     companion object {
         private val instances = java.util.Collections.newSetFromMap(java.util.WeakHashMap<RgbGlowButton, Boolean>())
         private val pulseHandler = Handler(Looper.getMainLooper())
+        private val assetExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
         private var globalBrightnessPercent = 65
 
         fun setGlobalBrightness(percent:Int) {
@@ -205,6 +206,7 @@ class RgbGlowButton(context: Context) : Button(context) {
     private var accent = Color.rgb(61,235,255)
     private var selectedGlow = false
     private var alarmGlow = false
+    private var assetLoadRequested = false
     private val density = resources.displayMetrics.density
     private val pulseRunnable = object : Runnable {
         override fun run() {
@@ -225,17 +227,25 @@ class RgbGlowButton(context: Context) : Button(context) {
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        if (compoundDrawables.none { it != null }) {
+        if (compoundDrawables.none { it != null } && !assetLoadRequested) {
             val candidates=listOfNotNull(
                 contentDescription?.toString()?.takeIf{it.isNotBlank()},
                 text?.toString()?.takeIf{it.isNotBlank()}
             )
-            val drawable=candidates.firstNotNullOfOrNull { ProductionRgbAssets.drawable(context,it) }
-            drawable?.let {
-                val size=StudioDisplayPolicy.dp(this,22f).coerceAtLeast(18)
-                it.setBounds(0,0,size,size)
-                setCompoundDrawables(it,null,null,null)
-                compoundDrawablePadding=StudioDisplayPolicy.dp(this,6f)
+            if(candidates.isEmpty()) return
+            assetLoadRequested=true
+            val appContext=context.applicationContext
+            assetExecutor.execute {
+                val drawable=candidates.firstNotNullOfOrNull { ProductionRgbAssets.drawable(appContext,it) }
+                post {
+                    assetLoadRequested=false
+                    if(drawable!=null && compoundDrawables.none { it != null }) {
+                        val size=StudioDisplayPolicy.dp(this,22f).coerceAtLeast(18)
+                        drawable.setBounds(0,0,size,size)
+                        setCompoundDrawables(drawable,null,null,null)
+                        compoundDrawablePadding=StudioDisplayPolicy.dp(this,6f)
+                    }
+                }
             }
         }
     }
@@ -1102,16 +1112,12 @@ class MainActivity : Activity() {
             android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
             android.widget.FrameLayout.LayoutParams.MATCH_PARENT
         ))
-        if (environmentRestartApplied) {
-            Toast.makeText(this, "重開套用完成 • 3D/SIM 畫質核心已重新載入", Toast.LENGTH_SHORT).show()
-        }
-        bootOverlay.advance(StartupMilestone.CHECKING_PROJECT_DATA)
-        loadRotaryMachineProfile()
-        restoreCadCheckpointIfAvailable()
-        autosaveHandler.postDelayed(autosaveRunnable, 15000L)
+        // Bind only the immediately visible production controls before the first frame.
+        // Recovery, machine profile restore and autosave are secondary hydration.
         openCategory("繪圖") { showDrawingBranch() }
         selectTool(Tool.LINE)
         refreshVisibleMode(ProductionUiSwitchContract.initialMode)
+        bootOverlay.advance(StartupMilestone.CHECKING_PROJECT_DATA)
         bootOverlay.advance(StartupMilestone.HEALTH_CHECK)
         root.post {
             if (root.isAttachedToWindow) {
@@ -1119,6 +1125,16 @@ class MainActivity : Activity() {
                 bootOverlay.advance(StartupMilestone.READY)
                 bootOverlay.completeAndDetach(bootShell)
                 scheduleBackgroundOnlineServices()
+
+                root.postDelayed({
+                    if (environmentRestartApplied) {
+                        Toast.makeText(this, "重開套用完成 • 3D/SIM 畫質核心已重新載入", Toast.LENGTH_SHORT).show()
+                    }
+                    loadRotaryMachineProfile()
+                    restoreCadCheckpointIfAvailable()
+                    autosaveHandler.postDelayed(autosaveRunnable, 15000L)
+                    cad.invalidate()
+                }, 500L)
             } else {
                 bootOverlay.fail("UI ATTACH BLOCKED")
             }
