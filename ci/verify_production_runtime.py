@@ -8,8 +8,8 @@ if not version_line.startswith("versionName="):
     raise SystemExit("release version metadata missing")
 version = version_line.split("=", 1)[1]
 parts = tuple(int(x) for x in version.split("."))
-if parts < (217, 0, 0):
-    raise SystemExit(f"production runtime line requires >=217.0.0, got {version}")
+if parts < (218, 0, 0):
+    raise SystemExit(f"production runtime line requires >=218.0.0, got {version}")
 
 runtime_roots = [
     ROOT / "app" / "src" / "main",
@@ -53,7 +53,7 @@ for marker in required_desktop:
     if marker not in desktop:
         raise SystemExit(f"Windows production runtime marker missing: {marker}")
 
-if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_217"' not in env:
+if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_218"' not in env:
     raise SystemExit("production startup profile missing")
 if "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" not in android_build:
     raise SystemExit("Android production release state missing")
@@ -152,4 +152,23 @@ for marker in [
     if marker not in desktop:
         raise SystemExit(f"Windows network-optional marker missing: {marker}")
 print("NETWORK_RESUME_UI_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY")
-print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_217|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
+for marker in [
+    'const val NETWORK_RETRY_ON_RECONNECT = true',
+    'const val NETWORK_BADGE_COMPACT = true',
+    'const val SINGLE_UPDATE_CHECK_AT_A_TIME = true',
+]:
+    if marker not in env:
+        raise SystemExit(f"network retry contract missing: {marker}")
+for marker in [
+    'java.util.concurrent.atomic.AtomicBoolean(false)',
+    'onlineAutoCheckRunning.compareAndSet(false,true)',
+    'onlineAutoCheckCompleted.set(false)',
+    'renderNetworkState(true,"更新可用")',
+    'renderNetworkState(true,"更新待重試")',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android network retry marker missing: {marker}")
+if 'renderNetworkState(true,"更新可用 • "+result.message)' in android_main:
+    raise SystemExit("network badge must stay compact")
+print("NETWORK_RETRY_UI_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE")
+print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_218|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")

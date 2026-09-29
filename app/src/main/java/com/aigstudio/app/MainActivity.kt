@@ -454,7 +454,8 @@ class MainActivity : Activity() {
     private lateinit var cad: CadView
     private lateinit var networkStateBadge: TextView
     private var onlineNetworkCallback: android.net.ConnectivityManager.NetworkCallback? = null
-    private var onlineAutoCheckStarted = false
+    private val onlineAutoCheckRunning = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val onlineAutoCheckCompleted = java.util.concurrent.atomic.AtomicBoolean(false)
     private var voiceTts: TextToSpeech? = null
     private var speechRecognizer: SpeechRecognizer? = null
     private var voiceListening = false
@@ -1083,14 +1084,20 @@ class MainActivity : Activity() {
                     return
                 }
                 renderNetworkState(true)
-                if(onlineAutoCheckStarted) return
+                if(onlineAutoCheckCompleted.get()) return
                 val updateConfig=UpdateConfigStore.load(this)
                 if(!updateConfig.configured) return
                 if(!OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)) return
-                onlineAutoCheckStarted=true
+                if(!onlineAutoCheckRunning.compareAndSet(false,true)) return
                 SecureUpdateManager.autoCheck(this,updateConfig){result->
-                    if(result.available){
-                        renderNetworkState(true,"更新可用 • "+result.message)
+                    onlineAutoCheckRunning.set(false)
+                    if(result.ok){
+                        onlineAutoCheckCompleted.set(true)
+                        if(result.available) renderNetworkState(true,"更新可用")
+                        else renderNetworkState(true)
+                    }else{
+                        onlineAutoCheckCompleted.set(false)
+                        renderNetworkState(true,"更新待重試")
                     }
                 }
             }
@@ -1103,6 +1110,8 @@ class MainActivity : Activity() {
                     maybeStartOnlineServices(caps)
                 }
                 override fun onLost(network:android.net.Network){
+                    onlineAutoCheckRunning.set(false)
+                    onlineAutoCheckCompleted.set(false)
                     renderNetworkState(false)
                 }
             }
