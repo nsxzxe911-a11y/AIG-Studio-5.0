@@ -904,13 +904,18 @@ for needle in (
     "badgeLines.forEachIndexed { index,line ->",
     "g2.drawString(line,badgeX+5,badgeY+fm.ascent+3+fm.height*index)",
     "g.drawString(line,badgeX+5,badgeY+fm.ascent+3+fm.height*index)",
-    "Studio 5AX adaptive badge smoke did not require narrow reflow",
+    "Studio 5AX adaptive badge smoke cannot force two-line reflow",
+    "Studio 5AX adaptive badge smoke cannot force three-line reflow",
+    "desktop_5x_axis_badge_mid.png",
     "desktop_5x_axis_badge_narrow.png",
     "5X_AXIS_BADGE_REFLOW=PASS",
+    "5X_AXIS_BADGE_REFLOW_2LINE=PASS",
+    "5X_AXIS_BADGE_REFLOW_3LINE=PASS",
+    "5X_AXIS_BADGE_REFLOW_NO_OVERFLOW=PASS",
     "5X_AXIS_BADGE_REFLOW_PRESERVE=AB_DIRECTION_DEPTH_POSE_ANGLE",
 ):
     require(desktop, needle, "STUDIO_WINDOWS_AXIS_POSE_BADGE_REFLOW_206")
-print("AXIS_POSE_BADGE_REFLOW_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|ONE_TWO_THREE_LINE|NARROW_WRAP|NO_OVERFLOW|FULL_AB_PRECISION|DIRECTION|DEPTH|POSE_ANGLE|SMOKE_IMAGE|VISUAL_ONLY")
+print("AXIS_POSE_BADGE_REFLOW_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|ONE_TWO_THREE_LINE|DYNAMIC_2LINE_3LINE_SMOKE|NO_OVERFLOW|FULL_AB_PRECISION|DIRECTION|DEPTH|POSE_ANGLE|SMOKE_IMAGE|VISUAL_ONLY")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
