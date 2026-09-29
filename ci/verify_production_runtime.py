@@ -8,8 +8,8 @@ if not version_line.startswith("versionName="):
     raise SystemExit("release version metadata missing")
 version = version_line.split("=", 1)[1]
 parts = tuple(int(x) for x in version.split("."))
-if parts < (221, 0, 0):
-    raise SystemExit(f"production runtime line requires >=221.0.0, got {version}")
+if parts < (222, 0, 0):
+    raise SystemExit(f"production runtime line requires >=222.0.0, got {version}")
 
 runtime_roots = [
     ROOT / "app" / "src" / "main",
@@ -261,4 +261,24 @@ for marker in [
     if marker not in desktop:
         raise SystemExit(f"Studio 222 Windows quick runtime action missing: {marker}")
 print("UI_INTEGRATION_WAVE1_GATE_PASS|STUDIO_222|ANDROID|WINDOWS|VISIBLE_REAL_ACTIONS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI")
+for marker in [
+    'action("模組存",5){cad.saveModuleFromSelection()}',
+    'action("模組插",2){cad.promptModuleInsert()}',
+    'private fun showAssemblyBranch()',
+    'addActionTo(branchFlow, "模組儲存", 5)',
+    'addActionTo(branchFlow, "模組插入", 2)',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Studio 222 Android module assembly UI missing: {marker}")
+for marker in [
+    'val assemblyTools=CadToolGrid()',
+    'cadDeckButton("組裝","ASSEMBLY"',
+    'assemblyTools.add(button("模組儲存"',
+    'assemblyTools.add(button("模組插入"',
+    'fun captureSelectedModule():CadModuleTemplate?',
+    'fun insertModule(template:CadModuleTemplate',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Studio 222 Windows module assembly UI missing: {marker}")
+print("MODULE_ASSEMBLY_UI_GATE_PASS|STUDIO_222|ANDROID|WINDOWS|SELECT|SAVE|INSERT|XY|ROTATE|REAL_CORE")
 print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_222|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
