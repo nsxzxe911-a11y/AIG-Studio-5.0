@@ -8,8 +8,8 @@ if not version_line.startswith("versionName="):
     raise SystemExit("release version metadata missing")
 version = version_line.split("=", 1)[1]
 parts = tuple(int(x) for x in version.split("."))
-if parts < (216, 0, 0):
-    raise SystemExit(f"production runtime line requires >=216.0.0, got {version}")
+if parts < (217, 0, 0):
+    raise SystemExit(f"production runtime line requires >=217.0.0, got {version}")
 
 runtime_roots = [
     ROOT / "app" / "src" / "main",
@@ -53,7 +53,7 @@ for marker in required_desktop:
     if marker not in desktop:
         raise SystemExit(f"Windows production runtime marker missing: {marker}")
 
-if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_216"' not in env:
+if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_217"' not in env:
     raise SystemExit("production startup profile missing")
 if "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" not in android_build:
     raise SystemExit("Android production release state missing")
@@ -152,4 +152,4 @@ for marker in [
     if marker not in desktop:
         raise SystemExit(f"Windows network-optional marker missing: {marker}")
 print("NETWORK_RESUME_UI_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY")
-print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_216|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
+print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_217|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")

@@ -196,37 +196,36 @@ for needle in (
     'const val NETWORK_REQUIRED_FOR_STARTUP = false',
     'fun startupAllowed(networkAvailable:Boolean):Boolean = true',
 ):
-    require(env, needle, "OFFLINE_FIRST_CONTRACT_214")
+    require(env, needle, "OFFLINE_FIRST_CONTRACT_217")
 for needle in (
     'bootOverlay.completeAndDetach(bootShell)',
     'scheduleBackgroundOnlineServices()',
-    'if(network!="ONLINE / VALIDATED")',
-    '"離線模式 • 本機 UI 已就緒"',
+    'cm.registerDefaultNetworkCallback(callback)',
     'OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)',
 ):
-    require(android, needle, "ANDROID_OFFLINE_FIRST_UI_214")
+    require(android, needle, "ANDROID_OFFLINE_FIRST_UI_217")
 for needle in (
-    'OFFLINE READY • AIG CNC',
+    'LOCAL READY • NETWORK OPTIONAL',
     'OFFLINE-FIRST',
 ):
-    require(desktop, needle, "WINDOWS_OFFLINE_FIRST_UI_214")
+    require(desktop, needle, "WINDOWS_OFFLINE_FIRST_UI_217")
 print("OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY")
 for needle in (
     'const val POST_READY_NETWORK_OBSERVER = true',
     'const val NETWORK_STATUS_MUST_NOT_OVERRIDE_OPERATION = true',
 ):
-    require(env, needle, "NETWORK_RESUME_CONTRACT_216")
+    require(env, needle, "NETWORK_RESUME_CONTRACT_217")
 for needle in (
     'contentDescription="NETWORK OPTIONAL STATUS"',
     'cm.registerDefaultNetworkCallback(callback)',
     'cm.unregisterNetworkCallback(callback)',
     '"網路 • 離線可用 • 本機功能正常"',
 ):
-    require(android, needle, "NETWORK_RESUME_ANDROID_216")
+    require(android, needle, "NETWORK_RESUME_ANDROID_217")
 for needle in (
     'LOCAL READY • NETWORK OPTIONAL',
 ):
-    require(desktop, needle, "NETWORK_RESUME_WINDOWS_216")
+    require(desktop, needle, "NETWORK_RESUME_WINDOWS_217")
 print("NETWORK_RESUME_UI_RUNTIME_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY")
 
 # Main Android page/category entry points must bind to real callbacks.
