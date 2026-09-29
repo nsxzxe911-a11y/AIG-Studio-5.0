@@ -6,12 +6,14 @@ on:
       - main
       - studio-206-adaptive-pose-badge-reflow
       - studio-207-axis-depth-beads
+      - studio-208-library-5x-skin-binding
     paths:
       - 'release-version.properties'
       - 'app/**'
       - 'core/**'
       - 'desktop/**'
       - 'ci/**'
+      - 'design/theme/library_5x_real_cam_208/**'
       - 'build_android_release.sh'
       - 'build_windows_native.ps1'
       - '.github/workflows/build-download.yml'
@@ -48,6 +50,8 @@ jobs:
           grep -Fq 'NO_FAKE_PAGE_CALLBACK_GATE_PASS' runtime-surfaces.log
           grep -Fq 'CAD_PRECISION_EDIT_RUNTIME_GATE_PASS' runtime-surfaces.log
           grep -Fq 'AXIS_POSE_BADGE_REFLOW_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|ONE_TWO_THREE_LINE|DYNAMIC_2LINE_3LINE_SMOKE|NO_OVERFLOW|FULL_AB_PRECISION|DIRECTION|DEPTH|POSE_ANGLE|SMOKE_IMAGE|VISUAL_ONLY' runtime-surfaces.log
+          grep -Fq 'AXIS_DEPTH_BEADS_GATE_PASS|ANDROID|WINDOWS|3D|5AX|PROJECTED_DEPTH_DELTA|DIRECTIONAL_RADIUS|DIRECTIONAL_ALPHA|SMOKE_EVIDENCE|VISUAL_ONLY' runtime-surfaces.log
+          grep -Fq 'LIBRARY_5X_REAL_CAM_SKIN_GATE_PASS|ANDROID|WINDOWS|CHATGPT_ANDROID_LIBRARY_REFERENCE|IMAGE_GEN_1|IMAGE_GEN_2|CAM_SETTINGS_LIVE|WORK_OFFSET_LIVE|TOOLPATH_LIVE|VISUAL_ONLY|NO_GEOMETRY_MUTATION' runtime-surfaces.log
       - name: Build Android APK and source package
         shell: bash
         run: |
