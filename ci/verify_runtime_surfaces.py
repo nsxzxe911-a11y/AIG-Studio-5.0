@@ -262,7 +262,8 @@ for needle in (
     'GlassActionButton("維修"',
     'fun showMaintenanceCenter()',
     'showApp(showWindow=true)',
-    'productionFrame.contentPane',
+    'require(productionFrame.isShowing)',
+    'Robot().createScreenCapture(launchBounds)',
 ):
     require(desktop, needle, "WINDOWS_INTEGRATED_MAINTENANCE_221")
 require(regression, "INTEGRATED_MAINTENANCE_UI_CORE_GATE_PASS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|RECOVERY|HUD|SYSTEM|SECURITY|AI_SUITE|AI_UPDATE", "INTEGRATED_MAINTENANCE_REGRESSION_221")
