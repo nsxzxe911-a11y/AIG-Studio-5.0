@@ -19,6 +19,12 @@ sourceSets {
     }
 }
 
+sourceSets {
+    named("main") {
+        resources.srcDir(rootProject.file("design/theme/library_rgb_reference_v1/raw"))
+    }
+}
+
 application {
     mainClass.set("com.aigstudio.desktop.DesktopAppKt")
 }
