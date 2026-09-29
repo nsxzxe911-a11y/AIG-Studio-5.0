@@ -536,10 +536,13 @@ for needle in (
     "data class MachineModel3D(",
     "object MachineKinematics3D",
     "object MachineModel3DBuilder",
-    "MachineKinematics3D.transform(table,a,b)",
-    "MachineKinematics3D.transform(rotaryA,a,0.0)",
-    "MachineKinematics3D.transform(rotaryB,a,b)",
-    "val machineToolPoint=MachineKinematics3D.transform(rawToolPoint,a,b)",
+    "val rotaryPivot=Vec3(cx,cy,floorZ+stock.thickness*0.5)",
+    "transformedAround(aKey,rotaryPivot,a,0.0)",
+    "transformedAround(bKey,rotaryPivot,a,b)",
+    '"rotary_a_hub",MachineComponentRole.ROTARY_A',
+    '"cradle_b_front",MachineComponentRole.TRUNNION',
+    '"cradle_b_back",MachineComponentRole.TRUNNION',
+    '"rotary_b_hub",MachineComponentRole.ROTARY_B',
     "MachineComponentRole.TRUNNION",
     "MachineComponentRole.ROTARY_A",
     "MachineComponentRole.ROTARY_B",
@@ -548,6 +551,12 @@ for needle in (
     "MachineComponentRole.TOOL",
 ):
     require(machining3d_core, needle, "STUDIO_TRUE_MACHINE_MODEL_CORE_174")
+for forbidden in (
+    "MachineKinematics3D.transform(table,a,b)",
+    "val machineToolPoint=MachineKinematics3D.transform(rawToolPoint,a,b)",
+):
+    if forbidden in machining3d_core:
+        raise SystemExit("BLOCKED STUDIO_3AX_FOUNDATION_EXTENSION: legacy whole-machine rotary transform remains: "+forbidden)
 for needle in (
     "private fun drawMachineModel(canvas: Canvas, model: MachineModel3D, scale: Double) {",
     "private fun machineSpace(v:Vec3,mode:String,live:Move?):Vec3",
