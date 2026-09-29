@@ -7,6 +7,7 @@ on:
       - studio-206-adaptive-pose-badge-reflow
       - studio-207-axis-depth-beads
       - studio-208-library-5x-skin-binding
+      - studio-209-production-runtime
     paths:
       - 'release-version.properties'
       - 'app/**'
@@ -41,6 +42,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
+      - name: Verify production runtime boundary
+        shell: bash
+        run: |
+          python3 ci/verify_production_runtime.py | tee production-runtime.log
+          grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_209|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE' production-runtime.log
       - name: Verify all runtime pages and callbacks
         shell: bash
         run: |
@@ -104,6 +110,10 @@ jobs:
           grep -Fx "git_sha=$GITHUB_SHA" release/android/RELEASE_MANIFEST.txt
           grep -Fx "version=$VERSION" release/source/RELEASE_MANIFEST.txt
           grep -Fx "git_sha=$GITHUB_SHA" release/source/RELEASE_MANIFEST.txt
+          grep -Fx "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "release_class=PRODUCTION_RUNTIME" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "runtime_evidence=APK_BUILD_SIGN_PACKAGE" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "device_launch_evidence=REQUIRED_FOR_FINAL" release/android/RELEASE_MANIFEST.txt
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Android-and-Source
@@ -140,6 +150,15 @@ jobs:
           $manifest = Get-Content 'release\windows\RELEASE_MANIFEST.txt'
           if ($manifest -notcontains ("version=" + $versionName)) { throw 'Manifest version mismatch' }
           if ($manifest -notcontains ("git_sha=" + $env:GITHUB_SHA)) { throw 'Manifest Git SHA mismatch' }
+          if ($manifest -notcontains 'release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL') { throw 'Production runtime release state missing' }
+          if ($manifest -notcontains 'release_class=PRODUCTION_RUNTIME') { throw 'Production runtime class missing' }
+          if ($manifest -notcontains 'runtime_evidence=WINDOWS_EXECUTABLE_SMOKE_CAPTURED') { throw 'Windows runtime evidence marker missing' }
+          $evidence = 'release\windows\runtime-evidence'
+          foreach ($name in @('desktop_launch.png','desktop_3d_before.png','desktop_3d.png','desktop_5x_axis_badge_mid.png','desktop_5x_axis_badge_narrow.png','desktop_smoke.txt')) {
+            $path = Join-Path $evidence $name
+            if (-not (Test-Path $path)) { throw "Production runtime evidence missing: $name" }
+            if ((Get-Item $path).Length -le 0) { throw "Production runtime evidence empty: $name" }
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Windows-EXE
