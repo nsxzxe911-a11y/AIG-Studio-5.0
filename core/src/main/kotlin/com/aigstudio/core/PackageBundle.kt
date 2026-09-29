@@ -28,6 +28,7 @@ object StudioPackageRegistry {
         packages = listOf(
             StudioPackage("software-absolute-coordinate","5.0",setOf("cad-core")),
             StudioPackage("cad-core","5.0"),
+            StudioPackage("offline-local-source","5.0",setOf("cad-core","software-absolute-coordinate")),
             StudioPackage("cam-core","5.0",setOf("cad-core","software-absolute-coordinate")),
             StudioPackage("material-removal-3d","5.0",setOf("cam-core","software-absolute-coordinate")),
             StudioPackage("mesh-3d-renderer","5.0",setOf("cad-core","material-removal-3d","software-absolute-coordinate")),
@@ -47,7 +48,10 @@ object StudioPackageRegistry {
                 "software-absolute-coordinate"
             )),
             StudioPackage("chatgpt-ai-update","5.0",setOf("rgb-glass-ui")),
-            StudioPackage("network-security","5.0",setOf("chatgpt-ai-update"))
+            StudioPackage("network-security","5.0",setOf("chatgpt-ai-update")),
+            StudioPackage("offline-runtime-repository","5.0",setOf("offline-local-source","cam-core","material-removal-3d","fanuc-nc-editor")),
+            StudioPackage("runtime-ux-flow","5.0",setOf("offline-runtime-repository","rgb-glass-ui")),
+            StudioPackage("offline-background-sync","5.0",setOf("offline-runtime-repository","network-security"))
         )
     )
 

@@ -677,7 +677,7 @@ class MainActivity : Activity() {
                 0xFF63FF9D.toInt(),10f
             ).apply { setTypeface(typeface,android.graphics.Typeface.BOLD) },
                 LinearLayout.LayoutParams(0,-2,1f))
-            addView(chromeText(if(workstationLayout==WorkstationChromeContract.Layout.COMPACT) "ROOT → CAD" else "ROOT → CAD → CAM → SIM → NC",0xFFA0BED2.toInt(),9f).apply {
+            addView(chromeText(if(workstationLayout==WorkstationChromeContract.Layout.COMPACT) "LOCAL • SYNC IDLE" else OfflineFirstModuleContract.uiBadge(),0xFF3DEBFF.toInt(),9f).apply {
                 gravity=Gravity.END
             })
         }
@@ -746,7 +746,7 @@ class MainActivity : Activity() {
         }
         fun refreshVisibleMode(id:String) {
             val mode=ProductionUiSwitchContract.normalize(id)
-            visibleModeTitle.text="目前模式 • "+mode+" • 真 UI / LIVE RUNTIME"
+            visibleModeTitle.text="UX • "+RuntimeUxFlowContract.title(mode)
             visibleModeActions.removeAllViews()
             fun action(label:String,colorIndex:Int,run:()->Unit) {
                 addActionTo(visibleModeActions,label,colorIndex,run)
@@ -754,24 +754,21 @@ class MainActivity : Activity() {
             when(mode) {
                 "CAD" -> {
                     action("LINE",0){selectTool(Tool.LINE)}
-                    action("RECT",1){selectTool(Tool.RECT)}
-                    action("CIRCLE",2){selectTool(Tool.CIRCLE)}
-                    action("ARC",3){selectTool(Tool.ARC)}
-                    action("HOLE",4){selectTool(Tool.HOLE)}
                     action("SELECT",1){selectTool(Tool.SELECT)}
+                    action("更多",2){openCategory("製圖"){showDrawingBranch()}}
+                    action("→ CAM",3){showCamWorkstation()}
                 }
                 "CAM" -> {
-                    action("CAM 參數",3){showCamWorkstation()}
-                    action("3AX",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
-                    action("4AX",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}
-                    action("5AX",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
-                    action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
+                    action("AUTO",3){showCamWorkstation()}
+                    action("參數",2){showCamWorkstation()}
+                    action("3/4/5AX",5){openCategory("加工"){showMachiningBranch()}}
+                    action("→ SIM",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
                 }
                 "SIM" -> {
-                    action("3AX",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
-                    action("4AX",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}
-                    action("5AX",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
-                    action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
+                    action("模擬",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
+                    action("風險",4){openCategory("安全"){showSecurityBranch()}}
+                    action("3/4/5AX",2){openCategory("加工"){showMachiningBranch()}}
+                    action("→ NC",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}
                 }
                 "3AX" -> {
                     action("開啟 3AX",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
@@ -788,16 +785,20 @@ class MainActivity : Activity() {
                 "NC" -> {
                     action("NC EDIT",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}
                     action("安全",4){openCategory("安全"){showSecurityBranch()}}
+                    action("← SIM",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
                 }
                 "AI" -> {
                     action("AI 檢查",3){cad.aiInspect()}
-                    action("VOICE",0){startVoiceAssistant()}
                     action("AI SUITE",2){showAiSystemSuiteDialog()}
-                    action("AI 更新",1){runSecureUpdateCheck()}
+                    action("更新",1){runSecureUpdateCheck()}
+                    action("← CAD",0){selectTool(Tool.SELECT)}
                 }
             }
             check(visibleModeActions.childCount>0) {
                 "NO_UI_NO_FUNCTION: visible actions missing for "+mode
+            }
+            check(visibleModeActions.childCount<=RuntimeUxFlowContract.MAX_VISIBLE_ACTIONS) {
+                "UX overflow: "+mode+" visible actions="+visibleModeActions.childCount
             }
         }
 

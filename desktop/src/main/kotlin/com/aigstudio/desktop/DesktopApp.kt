@@ -2713,6 +2713,11 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         add(JLabel("ROOT → CAD → CAM → SIM → NC").apply{
             foreground=Color(143,179,201)
             font=font.deriveFont(Font.PLAIN,12f)
+            horizontalAlignment=SwingConstants.CENTER
+        },BorderLayout.CENTER)
+        add(JLabel(OfflineFirstModuleContract.uiBadge()).apply{
+            foreground=Color(61,235,255)
+            font=font.deriveFont(Font.BOLD,11f)
         },BorderLayout.EAST)
     }
     val moduleButtons=AdaptiveGlassToolbar()
@@ -2960,7 +2965,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         mainCardLayout.show(mainCardHost,"CAM")
         mainCardHost.revalidate()
         mainCardHost.repaint()
-        status.text=if(doc.size()>0)"CAM READY • "+MasterRuntimeChainContract.masterOriginLabel()+" • 真刀路 / 真 3D / 材料移除" else "CAM WAITING • "+MasterRuntimeChainContract.masterOriginLabel()+" • CAD geometry required"
+        status.text=if(doc.size()>0)"UX • "+RuntimeUxFlowContract.title("CAM")+" • "+MasterRuntimeChainContract.masterOriginLabel() else "UX • CAM • CAD geometry required • "+MasterRuntimeChainContract.masterOriginLabel()
     }
 
     fun showMaintenanceCenter(){
@@ -3044,26 +3049,28 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     }
     moduleButtons.add(productionUiButton("CAD", StudioDesktopProductionTheme.accent) {
         mainCardLayout.show(mainCardHost,"CAD")
-        status.text="CAD • PRODUCTION UI • "+MasterRuntimeChainContract.uiLabel()
+        status.text="UX • "+RuntimeUxFlowContract.title("CAD")+" • "+MasterRuntimeChainContract.uiLabel()
     })
     moduleButtons.add(productionUiButton("CAM", StudioDesktopProductionTheme.cutting) {
         showProductionCam()
     })
     moduleButtons.add(productionUiButton("SIM", Color(139,92,246)) {
         runCatching { showUnifiedMachiningEditor(frame,doc,status,ProductionUiSwitchContract.runtimeTarget("SIM")) }
+            .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("SIM")+" • "+MasterRuntimeChainContract.uiLabel() }
             .onFailure { status.text="SIM BLOCKED • "+(it.message?:"error") }
     })
     moduleButtons.add(productionUiButton("NC", Color(80,170,255)) {
         runCatching { showNcEditor(frame,doc) }
-            .onSuccess { status.text="NC EDIT • "+MasterRuntimeChainContract.masterOriginLabel()+" • FANUC / MITSUBISHI • G90/G91 EXPLICIT • ABS XYZ LOCKED" }
+            .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("NC")+" • "+MasterRuntimeChainContract.masterOriginLabel()+" • FANUC / MITSUBISHI" }
             .onFailure { status.text="NC EDIT BLOCKED • "+(it.message?:"error") }
     })
     moduleButtons.add(productionUiButton("AI", Color(139,92,246)) {
         mainCardLayout.show(mainCardHost,"AI")
-        status.text="AI LOCAL ASSIST • VISIBLE UI • no hidden function"
+        status.text="UX • "+RuntimeUxFlowContract.title("AI")+" • LOCAL ASSIST"
     })
     check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))
     productionUiButtons[ProductionUiSwitchContract.initialMode]?.active=true
+    status.text="UX • "+RuntimeUxFlowContract.title(ProductionUiSwitchContract.initialMode)+" • "+MasterRuntimeChainContract.uiLabel()
     editTools.add(button("清除", Color(239, 68, 68)) { cad.clearCad() })
 
     status.border = BorderFactory.createCompoundBorder(

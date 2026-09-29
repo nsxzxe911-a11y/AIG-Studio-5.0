@@ -1204,10 +1204,30 @@ fun main() {
     check(OfflineFirstRuntimeContract.POLICY=="OFFLINE_FIRST_UI_BOOT")
     check(!OfflineFirstRuntimeContract.NETWORK_REQUIRED_FOR_STARTUP)
     check(OfflineFirstRuntimeContract.startupAllowed(false))
-    check(OfflineFirstRuntimeContract.localModes==listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI"))
+    check(OfflineFirstRuntimeContract.localModes==listOf("CAD","CAM","SIM","NC","AI"))
+    check(OfflineFirstModuleContract.POLICY=="LOCAL_SOURCE_OF_TRUTH_REPOSITORY_BACKGROUND_SYNC")
+    check(!OfflineFirstModuleContract.NETWORK_BLOCKS_UI)
+    check(OfflineFirstModuleContract.dataFlow==listOf("LOCAL_SOURCE","REPOSITORY","UI"))
+    check(OfflineFirstModuleContract.backgroundFlow==listOf("NETWORK","BACKGROUND_SYNC","LOCAL_SOURCE"))
+    check(OfflineFirstModuleContract.state(true,false).syncState=="SYNC IDLE")
+    check(OfflineFirstModuleContract.state(true,true).syncState=="SYNC READY")
+    check(OfflineFirstModuleContract.uiBadge().contains("LOCAL SOURCE"))
     check(!OfflineFirstRuntimeContract.onlineServiceAllowed(true,false))
     check(OfflineFirstRuntimeContract.onlineServiceAllowed(true,true))
     println("OFFLINE_FIRST_UI_CORE_GATE_PASS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY")
+    println("OFFLINE_FIRST_MODULE_UI_GATE_PASS|LOCAL_SOURCE|REPOSITORY|BACKGROUND_SYNC|UI_VISIBLE|NO_NETWORK_BLOCK")
+    check(RuntimeUxFlowContract.POLICY=="PROGRESSIVE_DISCLOSURE_CONTEXT_PRESERVING_FLOW")
+    check(RuntimeUxFlowContract.MAX_VISIBLE_ACTIONS==4)
+    check(RuntimeUxFlowContract.flow==listOf("CAD","CAM","SIM","NC"))
+    check(listOf("CAD","CAM","SIM","NC","AI").all(RuntimeUxFlowContract::compact))
+    check(RuntimeUxFlowContract.nextMode("CAD")=="CAM")
+    check(RuntimeUxFlowContract.nextMode("CAM")=="SIM")
+    check(RuntimeUxFlowContract.nextMode("SIM")=="NC")
+    check(RuntimeUxFlowContract.nextMode("NC")==null)
+    check(RuntimeUxFlowContract.chainState(true,false,false).contains("CAM 需重算"))
+    check(RuntimeUxFlowContract.chainState(false,true,false).contains("SIM 需重算"))
+    check(RuntimeUxFlowContract.chainState(false,true,true)=="流程同步")
+    println("✓ UX_FLOW_GATE_PASS PROGRESSIVE_DISCLOSURE MAX_VISIBLE_ACTIONS=4 CAD>CAM>SIM>NC CONTEXT_PRESERVED STALE_VISIBLE RECOVERABLE")
     check(OfflineFirstRuntimeContract.POST_READY_NETWORK_OBSERVER)
     check(OfflineFirstRuntimeContract.NETWORK_STATUS_MUST_NOT_OVERRIDE_OPERATION)
     println("NETWORK_RESUME_UI_CORE_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY")
@@ -1516,6 +1536,10 @@ private fun testPackageBundleContract() {
             "ai-health","ai-system-suite"
     )
     check(all.containsAll(requiredAiSuite)) { "AI SYSTEM SUITE packages missing: " + (requiredAiSuite - all) }
+    val offlineModules = OfflineFirstModuleContract.moduleIds.toSet()
+    check(all.containsAll(offlineModules)) { "OFFLINE FIRST modules missing: " + (offlineModules - all) }
+    check(OfflineFirstModuleContract.packageSetHealthy(all))
+    check(RuntimeUxFlowContract.MODULE_ID in all)
     check(StudioPackageRegistry.validate(official, all).ok)
     check(runCatching { StudioPackageRegistry.requireHealthy(official, all) }.isSuccess)
 
@@ -1528,7 +1552,7 @@ private fun testPackageBundleContract() {
     val cadCore = official.packages.single { it.id == "cad-core" }
     val duplicate = official.copy(packages = official.packages + cadCore)
     check(StudioPackageRegistry.validate(duplicate, duplicate.packages.map { it.id }.toSet()).duplicatePackages.contains("cad-core"))
-    println("✓ PACKAGE_BUNDLE_GATE_PASS dependencies / enable-disable / duplicate fail-closed")
+    println("✓ PACKAGE_BUNDLE_GATE_PASS dependencies / enable-disable / duplicate fail-closed / offline-local-source / runtime-repository / background-sync")
 }
 
 private fun testEnvironmentSettingsContract() {

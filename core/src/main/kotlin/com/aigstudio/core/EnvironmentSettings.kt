@@ -786,6 +786,97 @@ object VisibleFunctionUiContract {
 }
 
 
+data class OfflineModuleUiState(
+    val localSourceReady:Boolean,
+    val repositoryReady:Boolean,
+    val syncState:String
+)
+
+object OfflineFirstModuleContract {
+    const val POLICY = "LOCAL_SOURCE_OF_TRUTH_REPOSITORY_BACKGROUND_SYNC"
+    const val NETWORK_BLOCKS_UI = false
+    val moduleIds = listOf(
+        "offline-local-source",
+        "offline-runtime-repository",
+        "offline-background-sync"
+    )
+    val dataFlow = listOf("LOCAL_SOURCE","REPOSITORY","UI")
+    val backgroundFlow = listOf("NETWORK","BACKGROUND_SYNC","LOCAL_SOURCE")
+
+    fun state(uiReady:Boolean, validatedNetwork:Boolean):OfflineModuleUiState =
+        OfflineModuleUiState(
+            localSourceReady=true,
+            repositoryReady=uiReady,
+            syncState=if(validatedNetwork && uiReady) "SYNC READY" else "SYNC IDLE"
+        )
+
+    fun uiBadge(uiReady:Boolean=true, validatedNetwork:Boolean=false):String {
+        val s=state(uiReady,validatedNetwork)
+        val local=if(s.localSourceReady) "LOCAL SOURCE" else "LOCAL BLOCKED"
+        val repo=if(s.repositoryReady) "REPO READY" else "REPO WAIT"
+        return "$local • $repo • ${s.syncState}"
+    }
+
+    fun packageSetHealthy(ids:Set<String>):Boolean = moduleIds.all(ids::contains)
+}
+
+data class RuntimeUxStep(
+    val mode:String,
+    val primaryAction:String,
+    val nextMode:String?,
+    val hint:String
+)
+
+object RuntimeUxFlowContract {
+    const val MODULE_ID = "runtime-ux-flow"
+    const val POLICY = "PROGRESSIVE_DISCLOSURE_CONTEXT_PRESERVING_FLOW"
+    const val MAX_VISIBLE_ACTIONS = 4
+    val flow = listOf("CAD","CAM","SIM","NC")
+
+    private val steps = mapOf(
+        "CAD" to RuntimeUxStep("CAD","繪圖","CAM","建立/編輯幾何"),
+        "CAM" to RuntimeUxStep("CAM","產生刀路","SIM","選加工策略與軸模式"),
+        "SIM" to RuntimeUxStep("SIM","走刀模擬","NC","驗證刀路與材料移除"),
+        "NC" to RuntimeUxStep("NC","程式編輯",null,"確認後輸出 NC"),
+        "AI" to RuntimeUxStep("AI","AI 檢查","CAD","輔助，不阻塞加工流程"),
+        "3AX" to RuntimeUxStep("3AX","機台模型","SIM","XYZ 加工能力"),
+        "4AX" to RuntimeUxStep("4AX","機台模型","SIM","XYZ + A 加工能力"),
+        "5AX" to RuntimeUxStep("5AX","機台模型","SIM","XYZ + A/B 加工能力")
+    )
+
+    fun step(mode:String):RuntimeUxStep =
+        steps[mode.trim().uppercase()] ?: steps.getValue("CAD")
+
+    fun visibleActions(mode:String):List<String> = when(step(mode).mode) {
+        "CAD" -> listOf("LINE","SELECT","SNAP","→ CAM")
+        "CAM" -> listOf("AUTO","參數","3/4/5AX","→ SIM")
+        "SIM" -> listOf("模擬","風險","3/4/5AX","→ NC")
+        "NC" -> listOf("EDIT","安全","← SIM")
+        "AI" -> listOf("AI 檢查","維修","更新","← CAD")
+        "3AX" -> listOf("3AX 模型","SIM","NC")
+        "4AX" -> listOf("4AX 模型","SIM","控制","NC")
+        "5AX" -> listOf("5AX 模型","SIM","控制","NC")
+        else -> listOf("CAD")
+    }
+
+    fun nextMode(mode:String):String? = step(mode).nextMode
+
+    fun compact(mode:String):Boolean =
+        visibleActions(mode).size in 1..MAX_VISIBLE_ACTIONS
+
+    fun title(mode:String):String {
+        val s=step(mode)
+        val next=s.nextMode?.let { " • 下一步 $it" } ?: " • 驗證後輸出"
+        return s.mode+" • "+s.hint+next
+    }
+
+    fun chainState(cadChanged:Boolean, camFresh:Boolean, simFresh:Boolean):String = when {
+        cadChanged || !camFresh -> "CAM 需重算 • SIM/NC 暫停"
+        !simFresh -> "SIM 需重算 • NC 暫停"
+        else -> "流程同步"
+    }
+}
+
 object OfflineFirstRuntimeContract {
     const val POLICY = "OFFLINE_FIRST_UI_BOOT"
     const val NETWORK_REQUIRED_FOR_STARTUP = false
@@ -798,7 +889,7 @@ object OfflineFirstRuntimeContract {
     const val BACKGROUND_NETWORK_DELAY_MS = 180L
     const val BACKGROUND_NETWORK_RETRY_DELAY_MS = 350L
     const val BACKGROUND_NETWORK_MAX_ATTEMPTS = 2
-    val localModes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")
+    val localModes = listOf("CAD","CAM","SIM","NC","AI")
 
     fun startupAllowed(networkAvailable:Boolean):Boolean = true
     fun onlineServiceAllowed(uiReady:Boolean, validatedNetwork:Boolean):Boolean =
