@@ -539,6 +539,27 @@ private class CadPanel(
         applyGeometry("DIM",DimensionDriveEngine.command(doc,id,value))
     }.onFailure { status("DIM BLOCKED • "+(it.message?:"error")) }
 
+    private fun applyQuickCreate(label:String,command:Command) = runCatching {
+        val before=doc.all().map{it.id}.toSet()
+        history.run(command)
+        selectedIds.clear()
+        selectedIds.addAll(doc.all().map{it.id}.filter{it !in before})
+        repaint()
+        status("$label PASS • selected="+selectedIds.size+" • CAM/SIM/NC REBUILD")
+    }.onFailure { status("$label BLOCKED • "+(it.message?:"error")) }
+
+    fun centerRect(center:Vec2,width:Double,height:Double) =
+        applyQuickCreate("CENTER RECT",CadQuickCreateEngine.centerRectCommand(center,width,height))
+
+    fun slot(center:Vec2,length:Double,width:Double,angleDeg:Double) =
+        applyQuickCreate("SLOT",CadQuickCreateEngine.slotCommand(center,length,width,angleDeg))
+
+    fun polygon(center:Vec2,radius:Double,sides:Int,rotationDeg:Double) =
+        applyQuickCreate("POLYGON",CadQuickCreateEngine.regularPolygonCommand(center,radius,sides,rotationDeg))
+
+    fun boltCircle(center:Vec2,pcd:Double,holeDiameter:Double,count:Int,startDeg:Double) =
+        applyQuickCreate("BOLT CIRCLE",CadQuickCreateEngine.boltCircleCommand(center,pcd,holeDiameter,count,startDeg))
+
     fun captureSelectedModule():CadModuleTemplate? =
         runCatching { CadModuleEngine.capture(doc,selectedIds,"WORKPIECE") }
             .onSuccess { status("MODULE SAVE PASS • entities="+it.entities.size) }
