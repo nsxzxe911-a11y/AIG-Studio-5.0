@@ -877,6 +877,15 @@ object RuntimeUxFlowContract {
     }
 }
 
+object AndroidUxContract {
+    const val POLICY = "ANDROID_CLEAN_START_WORKSPACE_FIRST"
+    const val MAX_VISIBLE_ACTIONS = 4
+    const val CLEAN_START_TOOL_DECK_COLLAPSED = true
+    const val REOPEN_ON_DEMAND = true
+    const val MASTER_XYZ_REQUIRED = true
+    const val NETWORK_MUST_NOT_BLOCK_FIRST_UI = true
+}
+
 object DesktopUxContract {
     const val POLICY = "WINDOWS_WORKSPACE_FIRST_COLLAPSIBLE_DOCKS"
     const val WINDOWS_MAX_VISIBLE_ACTIONS = 6

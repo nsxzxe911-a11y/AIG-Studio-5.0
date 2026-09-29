@@ -949,6 +949,11 @@ class MainActivity : Activity() {
             floatingToolCard.visibility = View.VISIBLE
             reopenButton.visibility = View.GONE
         }
+        if(workstationLayout==WorkstationChromeContract.Layout.COMPACT &&
+            AndroidUxContract.CLEAN_START_TOOL_DECK_COLLAPSED) {
+            floatingToolCard.visibility = View.GONE
+            reopenButton.visibility = View.VISIBLE
+        }
 
         cadStage.addView(
             floatingToolCard,
@@ -986,7 +991,7 @@ class MainActivity : Activity() {
             }
         val railCells = listOf(
             railCell("MACHINE","READY",0xFF63FF9D.toInt()),
-            railCell("ORIGIN","X0.000 Y0.000",0xFF3DEBFF.toInt()),
+            railCell("ORIGIN","X0.000 Y0.000 Z0.000",0xFF3DEBFF.toInt()),
             railCell("PRECISION","0.001 mm",0xFFF59E0B.toInt()),
             railCell("RGB","LIVE",0xFF8B5CF6.toInt())
         )
@@ -1079,7 +1084,12 @@ class MainActivity : Activity() {
         loadRotaryMachineProfile()
         restoreCadCheckpointIfAvailable()
         autosaveHandler.postDelayed(autosaveRunnable, 15000L)
-        openCategory("繪圖") { showDrawingBranch() }
+        if(workstationLayout==WorkstationChromeContract.Layout.COMPACT &&
+            AndroidUxContract.CLEAN_START_TOOL_DECK_COLLAPSED) {
+            closeBranches()
+        } else {
+            openCategory("繪圖") { showDrawingBranch() }
+        }
         selectTool(Tool.LINE)
         refreshVisibleMode(ProductionUiSwitchContract.initialMode)
         bootOverlay.advance(StartupMilestone.HEALTH_CHECK)
