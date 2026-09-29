@@ -707,6 +707,7 @@ class MainActivity : Activity() {
             android.widget.FrameLayout.LayoutParams.MATCH_PARENT
         ))
         setContentView(bootShell)
+        try {
         val uiBootstrap=StudioRuntimeUiDirectoryBootstrap.read(this)
         val previousStartupCrashStage=StudioStartupBootGuard.begin(this)
         val startupMemoryClass=(getSystemService(ACTIVITY_SERVICE) as ActivityManager).memoryClass
@@ -1231,6 +1232,51 @@ class MainActivity : Activity() {
             }
         }
         // Network never participates in startup. Online services run only after READY/UI attach.
+        } catch (startupError: Throwable) {
+            showStartupRecoveryUi(bootShell, bootOverlay, startupError)
+        }
+    }
+
+    private fun showStartupRecoveryUi(
+        bootShell: android.widget.FrameLayout,
+        bootOverlay: AigStartupOverlay,
+        error: Throwable
+    ) {
+        runCatching { bootShell.removeAllViews() }
+        val root=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            gravity=Gravity.CENTER
+            setPadding(dp(24),dp(24),dp(24),dp(24))
+            setBackgroundColor(StudioProductionTheme.background)
+        }
+        root.addView(TextView(this).apply {
+            text="AIG CNC • PRODUCTION UI RECOVERY"
+            setTextColor(StudioProductionTheme.accent)
+            textSize=20f
+            gravity=Gravity.CENTER
+        })
+        root.addView(TextView(this).apply {
+            text="正式 Runtime 啟動失敗，已切入可見維修 UI。\n機台執行保持 OFF。\n\n"+
+                (error.javaClass.simpleName+": "+(error.message ?: "unknown startup error"))
+            setTextColor(StudioProductionTheme.text)
+            textSize=13f
+            gravity=Gravity.CENTER
+            setPadding(dp(12),dp(24),dp(12),dp(24))
+        })
+        root.addView(Button(this).apply {
+            text="重新載入正式 UI"
+            setOnClickListener { recreate() }
+        })
+        setContentView(root)
+        runCatching {
+            val base=getExternalFilesDir(null) ?: filesDir
+            val dir=File(base,"UI").apply { mkdirs() }
+            File(dir,"startup-failure.txt").writeText(
+                "state=RECOVERY\nruntime=PRODUCTION_UI\nerror="+error.javaClass.name+
+                    "\nmessage="+(error.message ?: "unknown")+"\n",
+                Charsets.UTF_8
+            )
+        }
     }
 
 
