@@ -1242,7 +1242,12 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
     private fun kinematicTransform(v:Vec3):Vec3 {
         val a=if(machineMode=="3AX")0.0 else axisA
         val b=if(machineMode=="5AX")axisB else 0.0
-        return MachineKinematics3D.transform(v,a,b)
+        val pivot=Vec3(
+            (result.stock.minX+result.stock.maxX)/2.0,
+            (result.stock.minY+result.stock.maxY)/2.0,
+            -result.stock.thickness*0.5
+        )
+        return MachineKinematics3D.transformAround(v,pivot,a,b)
     }
     private fun axisTransform(v:Vec3):Vec3{
         val cx=(result.stock.minX+result.stock.maxX)/2.0
