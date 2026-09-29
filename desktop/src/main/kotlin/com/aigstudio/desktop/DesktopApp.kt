@@ -3368,11 +3368,25 @@ private fun showApp(
 
     mainCardHost.add(workspace,"CAD")
     mainCardHost.add(aiPanel,"AI")
-    when(normalizedInitial){
-        "CAM" -> showProductionCam()
-        "AI" -> mainCardLayout.show(mainCardHost,"AI")
-        else -> mainCardLayout.show(mainCardHost,"CAD")
+    val visibleInitial=when(normalizedInitial){
+        "CAM" -> runCatching {
+            showProductionCam()
+            "CAM"
+        }.getOrElse {
+            mainCardLayout.show(mainCardHost,"CAD")
+            status.text="UI AUTOLOAD FALLBACK • CAM unavailable • CAD"
+            "CAD"
+        }
+        "AI" -> {
+            mainCardLayout.show(mainCardHost,"AI")
+            "AI"
+        }
+        else -> {
+            mainCardLayout.show(mainCardHost,"CAD")
+            "CAD"
+        }
     }
+    productionUiButtons.forEach { (key,button) -> button.active=(key==visibleInitial) }
     frame.add(toolbar, BorderLayout.NORTH)
     frame.add(mainCardHost, BorderLayout.CENTER)
     frame.add(status, BorderLayout.SOUTH)
@@ -3385,9 +3399,8 @@ private fun showApp(
     startup?.advance(StudioStartupStage.HOME,"AIG CNC READY")
     startup?.close()
     if(showWindow) {
-        val visibleEntry=if(normalizedInitial in setOf("CAD","CAM","AI")) normalizedInitial else "CAD"
-        val uiReadyMarker=StudioDesktopRuntimeUiDirectoryBootstrap.writeReady(visibleEntry)
-        status.text="UI AUTOLOAD • "+visibleEntry+" • PRODUCTION UI • "+uiReadyMarker.parentFile.absolutePath
+        val uiReadyMarker=StudioDesktopRuntimeUiDirectoryBootstrap.writeReady(visibleInitial)
+        status.text="UI AUTOLOAD • "+visibleInitial+" • PRODUCTION UI • "+uiReadyMarker.parentFile.absolutePath
     }
     return frame
 }
