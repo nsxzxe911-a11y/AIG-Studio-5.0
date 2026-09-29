@@ -1900,15 +1900,15 @@ private fun runSmoke() {
     require(fiveCueFrame.index>0 && fiveAxisPanel.freshRemovalSourceFrame()==fiveCueFrame.index-1){"Studio 5AX fresh-removal source did not lock to current index - 1"}
     val fiveCueFile=File("desktop_5x_axis_cue.png")
     writePanel(fiveAxisPanel,fiveCueFile,980,620)
+    val fiveOcclusionEvidence=fiveAxisPanel.occlusionEvidence()
+    require(fiveOcclusionEvidence.first>0){"Studio 5AX depth occlusion evidence found no occluded historical path segment"}
+    require(fiveOcclusionEvidence.second>0){"Studio 5AX depth occlusion evidence found no foreground historical path segment"}
     val fiveCueMidFile=File("desktop_5x_axis_badge_mid.png")
     writePanel(fiveAxisPanel,fiveCueMidFile,poseBadgeMidWidth,620)
     require(fiveCueMidFile.exists() && fiveCueMidFile.length()>0){"Studio 5AX two-line badge smoke image missing"}
     val fiveCueNarrowFile=File("desktop_5x_axis_badge_narrow.png")
     writePanel(fiveAxisPanel,fiveCueNarrowFile,poseBadgeNarrowWidth,620)
     require(fiveCueNarrowFile.exists() && fiveCueNarrowFile.length()>0){"Studio 5AX three-line badge smoke image missing"}
-    val fiveOcclusionEvidence=fiveAxisPanel.occlusionEvidence()
-    require(fiveOcclusionEvidence.first>0){"Studio 5AX depth occlusion evidence found no occluded historical path segment"}
-    require(fiveOcclusionEvidence.second>0){"Studio 5AX depth occlusion evidence found no foreground historical path segment"}
     require(!fiveMoves[fiveBeforeIndex].rapid && !fiveMoves[fiveAfterIndex].rapid && !fiveMoves[fiveCueIndex].rapid){"Studio 5AX cut-contact evidence must use non-rapid frames"}
     require(fiveAfterFrame.removedCells>fiveBeforeFrame.removedCells){"Studio 5AX material removal did not increase"}
     require(
