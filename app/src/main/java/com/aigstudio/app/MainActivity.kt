@@ -3843,6 +3843,7 @@ class CadView(
     private var arcCenter: Vec2? = null
     private var arcStart: Vec2? = null
     private val selectedIds = linkedSetOf<String>()
+    private var moduleClipboard: CadModuleTemplate? = null
     private val transform = WorldTransform(0.0, 0.0, 5.0)
     private var lastX = 0f; private var lastY = 0f
     private var lastWorld = Vec2(0.0, 0.0)
@@ -4119,6 +4120,67 @@ class CadView(
                     val y=dy.text.toString().toDouble()
                     runGeometryCommand(CadEditEngine.linearArrayCommand(doc,selectedIds,n,x,y))
                 }.onFailure { Toast.makeText(context,"ARRAY BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+            }
+            .setNegativeButton("取消",null)
+            .show()
+    }
+
+    fun saveModuleFromSelection() {
+        runCatching { CadModuleEngine.capture(doc,selectedIds,"WORKPIECE") }
+            .onSuccess {
+                moduleClipboard=it
+                Toast.makeText(context,"模組儲存 PASS • entities="+it.entities.size,Toast.LENGTH_SHORT).show()
+            }
+            .onFailure {
+                Toast.makeText(context,"模組儲存 BLOCKED："+(it.message?:"請先選取幾何"),Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    fun promptModuleInsert() {
+        val module=moduleClipboard
+        if(module==null){
+            Toast.makeText(context,"模組插入 BLOCKED：請先儲存選取模組",Toast.LENGTH_SHORT).show()
+            return
+        }
+        val box=LinearLayout(context).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(24,12,24,4)
+        }
+        fun field(hintText:String,initial:String)=EditText(context).apply{
+            hint=hintText
+            setText(initial)
+            inputType=android.text.InputType.TYPE_CLASS_NUMBER or
+                android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL or
+                android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
+            box.addView(this)
+        }
+        val x=field("X mm","0.000")
+        val y=field("Y mm","0.000")
+        val a=field("旋轉 °","0.000")
+        AlertDialog.Builder(context)
+            .setTitle("工件 / 模組插入")
+            .setView(box)
+            .setPositiveButton("插入"){_,_->
+                val px=x.text.toString().trim().toDoubleOrNull()
+                val py=y.text.toString().trim().toDoubleOrNull()
+                val angle=a.text.toString().trim().toDoubleOrNull()
+                if(px==null || py==null || angle==null){
+                    Toast.makeText(context,"模組插入 BLOCKED：格式錯誤",Toast.LENGTH_SHORT).show()
+                } else {
+                    runCatching {
+                        val before=doc.all().map{it.id}.toSet()
+                        history.run(CadModuleEngine.insertCommand(module,Vec2(px,py),angle))
+                        selectedIds.clear()
+                        selectedIds.addAll(doc.all().map{it.id}.filter{it !in before})
+                        sceneRevision++
+                        onGeometryChanged()
+                        invalidate()
+                    }.onSuccess {
+                        Toast.makeText(context,"模組插入 PASS • selected="+selectedIds.size,Toast.LENGTH_SHORT).show()
+                    }.onFailure {
+                        Toast.makeText(context,"模組插入 BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
             .setNegativeButton("取消",null)
             .show()
