@@ -31,7 +31,10 @@ android {
     }
 }
 
-dependencies { implementation(project(":core")) }
+dependencies {
+    implementation(project(":core"))
+    implementation("androidx.core:core-splashscreen:1.2.0")
+}
 
 tasks.register("verifyAndroidPlatform") {
     doLast {
