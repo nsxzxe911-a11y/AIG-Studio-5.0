@@ -135,18 +135,10 @@ for path in (
     ROOT / "app" / "src" / "main" / "assets" / "aig-generated-rgb" / "approved" / "184" / "cam.png",
     ROOT / "desktop" / "src" / "main" / "resources" / "aig-generated-rgb" / "approved" / "184" / "cad.png",
     ROOT / "desktop" / "src" / "main" / "resources" / "aig-generated-rgb" / "approved" / "184" / "cam.png",
-    ROOT / "app" / "src" / "main" / "assets" / "visuals" / "studio_startup_original.png",
-    ROOT / "desktop" / "src" / "main" / "resources" / "visuals" / "studio_startup_original.png",
 ):
     if not path.is_file():
-        raise SystemExit(f"正式 RGB / Boot 資產缺少：{path}")
-for boot_path in (
-    ROOT / "app" / "src" / "main" / "assets" / "visuals" / "studio_startup_original.png",
-    ROOT / "desktop" / "src" / "main" / "resources" / "visuals" / "studio_startup_original.png",
-):
-    if hashlib.sha256(boot_path.read_bytes()).hexdigest() != "a2e7b24d32fb9c852b83ee176480f59cb43559fe152ac3e05e0aa2c52f0a82ac":
-        raise SystemExit(f"BLOCKED PRODUCTION_BOOT_SHA_MISMATCH: {boot_path}")
-print("PRODUCTION_BOOT_ASSET_GATE_PASS|ANDROID|WINDOWS|VALIDATED_DERIVED|SHA256")
+        raise SystemExit(f"正式 RGB Runtime 資產缺少：{path}")
+print("PRODUCTION_RGB_ASSET_GATE_PASS|ANDROID|WINDOWS|RUNTIME_ONLY")
 for needle in (
     "REAL CAD / CAM",
     "buildProductionCamPanel",
@@ -1337,13 +1329,22 @@ for needle in (
     'root.postDelayed({',
 ):
     require(android, needle, "STUDIO_RUNTIME_FIRST_ANDROID")
-if android.index('bootOverlay.completeAndDetach(bootShell)') > android.index('loadRotaryMachineProfile()'):
-    raise SystemExit("BLOCKED STUDIO_RUNTIME_FIRST_ANDROID: machine profile restore precedes Runtime overlay detach")
 for needle in (
-    'showApp(startup=null,showWindow=true)',
+    'installSplashScreen()',
+    'setContentView(root)',
+    'StudioRuntimeUiDirectoryBootstrap.writeReady(',
+    'reportFullyDrawn()',
+):
+    require(android, needle, "STUDIO_SYSTEM_SPLASH_DIRECT_RUNTIME")
+if 'AigStartupOverlay(' in android or 'bootShell' in android or 'bootOverlay' in android:
+    raise SystemExit("BLOCKED STUDIO_SYSTEM_SPLASH_DIRECT_RUNTIME: custom startup overlay still controls entry")
+for needle in (
+    'showApp(showWindow=true)',
     'Robot().createScreenCapture(launchBounds)',
 ):
     require(desktop, needle, "STUDIO_VISIBLE_RUNTIME_EVIDENCE")
+if 'StudioDesktopStartupWindow' in desktop:
+    raise SystemExit("BLOCKED STUDIO_WINDOWS_DIRECT_RUNTIME: blocking startup JWindow still present")
 for needle in (
     '--type app-image',
     'STUDIO_WINDOWS_APP_IMAGE_LAUNCH_PASS',
@@ -1373,9 +1374,17 @@ for needle in (
     'LOCAL_UI_DIRECTORY',
     'EMBEDDED_FALLBACK',
     'val uiBootstrap=StudioDesktopRuntimeUiDirectoryBootstrap.read()',
-    'showApp(startup,initialUiMode=uiBootstrap.entryMode)',
+    'showApp(initialUiMode=uiBootstrap.entryMode)',
 ):
     require(desktop, needle, "STUDIO_WINDOWS_UI_AUTOLOAD_BOOTSTRAP")
 require(windows_release, 'STUDIO_WINDOWS_UI_AUTOLOAD_MANIFEST_GATE_PASS', "STUDIO_WINDOWS_UI_AUTOLOAD_BOOTSTRAP")
 print("UI_AUTOLOAD_BOOTSTRAP_GATE_PASS|STUDIO_222|LOCAL_UI_DIRECTORY|EMBEDDED_FALLBACK|OFFLINE_FIRST|NO_NETWORK_BLOCK|READY_MANIFEST")
 
+
+for needle in (
+    'implementation("androidx.core:core-splashscreen:1.2.0")',
+):
+    require(app_gradle, needle, "STUDIO_SPLASH_DEPENDENCY")
+require(android_styles, 'name="Theme.AIGStudio.Starting" parent="Theme.SplashScreen"', "STUDIO_SPLASH_THEME")
+require(android_manifest, 'android:theme="@style/Theme.AIGStudio.Starting"', "STUDIO_SPLASH_MANIFEST")
+print("SYSTEM_SPLASH_DIRECT_RUNTIME_GATE_PASS|STUDIO_222|ANDROIDX_1_2_0|DIRECT_CONTENT_VIEW|NO_CUSTOM_OVERLAY|WINDOWS_DIRECT_JFRAME|UI_READY_MARKER")
