@@ -539,6 +539,21 @@ private class CadPanel(
         applyGeometry("DIM",DimensionDriveEngine.command(doc,id,value))
     }.onFailure { status("DIM BLOCKED • "+(it.message?:"error")) }
 
+    fun captureSelectedModule():CadModuleTemplate? =
+        runCatching { CadModuleEngine.capture(doc,selectedIds,"WORKPIECE") }
+            .onSuccess { status("MODULE SAVE PASS • entities="+it.entities.size) }
+            .onFailure { status("MODULE SAVE BLOCKED • "+(it.message?:"select geometry first")) }
+            .getOrNull()
+
+    fun insertModule(template:CadModuleTemplate,target:Vec2,angleDeg:Double) = runCatching {
+        val before=doc.all().map{it.id}.toSet()
+        history.run(CadModuleEngine.insertCommand(template,target,angleDeg))
+        selectedIds.clear()
+        selectedIds.addAll(doc.all().map{it.id}.filter{it !in before})
+        repaint()
+        status("MODULE INSERT PASS • entities="+selectedIds.size+" • CAM/SIM/NC REBUILD")
+    }.onFailure { status("MODULE INSERT BLOCKED • "+(it.message?:"error")) }
+
     fun connectSelected() = runCatching {
         history.run(CadEditEngine.connectCommand(doc,selectedIds,JOIN_TOLERANCE_MM))
         repaint()
