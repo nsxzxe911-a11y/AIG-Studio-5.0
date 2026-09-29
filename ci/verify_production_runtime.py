@@ -119,14 +119,14 @@ for marker in [
     if marker not in env:
         raise SystemExit(f"offline-first contract missing: {marker}")
 for marker in [
-    'bootOverlay.completeAndDetach(bootShell)',
+    'setContentView(root)',
     'scheduleBackgroundOnlineServices()',
     'cm.registerDefaultNetworkCallback(callback)',
 ]:
     if marker not in android_main:
         raise SystemExit(f"Android offline-first marker missing: {marker}")
-if android_main.index('bootOverlay.completeAndDetach(bootShell)') > android_main.index('scheduleBackgroundOnlineServices()'):
-    raise SystemExit("online services must be scheduled after UI detach")
+if android_main.index('setContentView(root)') > android_main.index('scheduleBackgroundOnlineServices()'):
+    raise SystemExit("online services must be scheduled after production UI content view")
 for marker in [
     'LOCAL READY • NETWORK OPTIONAL',
     'OFFLINE-FIRST',
@@ -198,7 +198,7 @@ for marker in [
     'GlassActionButton("維修"',
     'fun showMaintenanceCenter()',
     '"AIG CNC • 維修 / 診斷"',
-    'showApp(startup=null,showWindow=false)',
+    'showApp(showWindow=true)',
     'productionFrame.contentPane',
 ]:
     if marker not in desktop:
