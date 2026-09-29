@@ -15,15 +15,77 @@ import javax.swing.border.EmptyBorder
 import kotlin.math.*
 
 
-private fun markStudioDesktopRuntimeUiReady():File {
-    val root=System.getenv("LOCALAPPDATA")?.takeIf{it.isNotBlank()} ?: System.getProperty("user.home")
-    val uiDir=File(root,"AIG-Studio/UI")
-    require(uiDir.exists() || uiDir.mkdirs()){"Unable to create Runtime UI directory"}
-    return File(uiDir,"runtime-ui.ready").apply {
-        writeText(
-            "runtime=PRODUCTION_UI\nstate=READY\nmode=CAD\nproduct=AIG-Studio\n",
+private data class StudioDesktopRuntimeUiBootstrapState(
+    val source:String,
+    val entryMode:String,
+    val themeId:String,
+    val validLocalUi:Boolean
+)
+
+private object StudioDesktopRuntimeUiDirectoryBootstrap {
+    private val allowedModes=setOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")
+    private val requiredSurfaces=listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")
+
+    private fun dir():File {
+        val root=System.getenv("LOCALAPPDATA")?.takeIf{it.isNotBlank()} ?: System.getProperty("user.home")
+        return File(root,"AIG-Studio/UI")
+    }
+
+    fun read():StudioDesktopRuntimeUiBootstrapState {
+        val uiDir=dir()
+        val manifest=File(uiDir,"runtime-ui.properties")
+        val ready=File(uiDir,"runtime-ui.ready")
+        if(!manifest.isFile || !ready.isFile) {
+            return StudioDesktopRuntimeUiBootstrapState("EMBEDDED_FALLBACK","CAD","official_rgb_original",false)
+        }
+        return runCatching {
+            require(manifest.length() in 1..32768L){"UI manifest size invalid"}
+            val props=Properties().apply{manifest.inputStream().buffered().use{load(it)}}
+            require(props.getProperty("runtime")=="PRODUCTION_UI"){"UI runtime identity invalid"}
+            require(props.getProperty("state")=="READY"){"UI state is not READY"}
+            val surfaces=props.getProperty("surfaces","")
+                .split(',').map{it.trim().uppercase()}.filter{it.isNotBlank()}
+            require(requiredSurfaces.all{it in surfaces}){"UI surface inventory incomplete"}
+            val entry=props.getProperty("entry","CAD").trim().uppercase()
+            require(entry in allowedModes){"UI entry mode invalid"}
+            val theme=props.getProperty("theme","official_rgb_original").trim()
+            require(Regex("[a-z0-9_\\-]{3,64}").matches(theme)){"UI theme id invalid"}
+            val readyText=ready.readText(Charsets.UTF_8)
+            require("runtime=PRODUCTION_UI" in readyText && "state=READY" in readyText){"UI ready marker invalid"}
+            StudioDesktopRuntimeUiBootstrapState("LOCAL_UI_DIRECTORY",entry,theme,true)
+        }.getOrElse {
+            StudioDesktopRuntimeUiBootstrapState("EMBEDDED_FALLBACK","CAD","official_rgb_original",false)
+        }
+    }
+
+    fun writeReady(entryMode:String,themeId:String=StudioDesktopProductionTheme.ID):File {
+        val entry=entryMode.trim().uppercase().takeIf{it in allowedModes} ?: "CAD"
+        val safeTheme=themeId.takeIf{Regex("[a-z0-9_\\-]{3,64}").matches(it)} ?: StudioDesktopProductionTheme.ID
+        val uiDir=dir()
+        require(uiDir.exists() || uiDir.mkdirs()){"Unable to create Runtime UI directory"}
+        val temp=File(uiDir,"runtime-ui.properties.tmp")
+        temp.writeText(
+            buildString{
+                appendLine("format=1")
+                appendLine("runtime=PRODUCTION_UI")
+                appendLine("state=READY")
+                appendLine("entry=$entry")
+                appendLine("theme=$safeTheme")
+                appendLine("surfaces="+requiredSurfaces.joinToString(","))
+                appendLine("offline=true")
+                appendLine("network_blocking=false")
+            },
             Charsets.UTF_8
         )
+        val manifest=File(uiDir,"runtime-ui.properties")
+        if(manifest.exists()) require(manifest.delete()){"UI manifest replace blocked"}
+        require(temp.renameTo(manifest)){"UI manifest atomic publish failed"}
+        return File(uiDir,"runtime-ui.ready").apply{
+            writeText(
+                "runtime=PRODUCTION_UI\nstate=READY\nmode=$entry\nproduct=AIG-Studio\nsource=LOCAL_UI_DIRECTORY\n",
+                Charsets.UTF_8
+            )
+        }
     }
 }
 
@@ -2715,7 +2777,11 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     dlg.isVisible=true
 }
 
-private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean=true):JFrame {
+private fun showApp(
+    startup:StudioDesktopStartupWindow?=null,
+    showWindow:Boolean=true,
+    initialUiMode:String="CAD"
+):JFrame {
     startup?.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
     val doc = DrawingDocument()
     val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • FANUC / MITSUBISHI M800/M80 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
@@ -3207,7 +3273,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         status.text="AI LOCAL ASSIST • VISIBLE UI • no hidden function"
     })
     check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))
-    productionUiButtons[ProductionUiSwitchContract.initialMode]?.active=true
+    val normalizedInitial=initialUiMode.trim().uppercase().takeIf{it in productionUiButtons.keys} ?: "CAD"
+    productionUiButtons[normalizedInitial]?.active=true
     editTools.add(button("清除", Color(239, 68, 68)) { cad.clearCad() })
 
     status.border = BorderFactory.createCompoundBorder(
@@ -3301,7 +3368,11 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
 
     mainCardHost.add(workspace,"CAD")
     mainCardHost.add(aiPanel,"AI")
-    mainCardLayout.show(mainCardHost,"CAD")
+    when(normalizedInitial){
+        "CAM" -> showProductionCam()
+        "AI" -> mainCardLayout.show(mainCardHost,"AI")
+        else -> mainCardLayout.show(mainCardHost,"CAD")
+    }
     frame.add(toolbar, BorderLayout.NORTH)
     frame.add(mainCardHost, BorderLayout.CENTER)
     frame.add(status, BorderLayout.SOUTH)
@@ -3314,8 +3385,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     startup?.advance(StudioStartupStage.HOME,"AIG CNC READY")
     startup?.close()
     if(showWindow) {
-        val uiReadyMarker=markStudioDesktopRuntimeUiReady()
-        status.text="CAD • PRODUCTION UI • UI READY • "+uiReadyMarker.parentFile.absolutePath
+        val visibleEntry=if(normalizedInitial in setOf("CAD","CAM","AI")) normalizedInitial else "CAD"
+        val uiReadyMarker=StudioDesktopRuntimeUiDirectoryBootstrap.writeReady(visibleEntry)
+        status.text="UI AUTOLOAD • "+visibleEntry+" • PRODUCTION UI • "+uiReadyMarker.parentFile.absolutePath
     }
     return frame
 }
@@ -3326,11 +3398,12 @@ fun main(args: Array<String>) {
         return
     }
     if (GraphicsEnvironment.isHeadless()) error("Desktop UI requires a graphical Windows session")
+    val uiBootstrap=StudioDesktopRuntimeUiDirectoryBootstrap.read()
     SwingUtilities.invokeLater {
         val startup=StudioDesktopStartupWindow()
         startup.show()
-        startup.advance(StudioStartupStage.SAFE_THEME,"載入原版 RGB 啟動圖")
+        startup.advance(StudioStartupStage.SAFE_THEME,"讀取本機 UI / 原版 RGB")
         startup.advance(StudioStartupStage.CORE,"初始化 CAD / CAM 核心")
-        showApp(startup)
+        showApp(startup,initialUiMode=uiBootstrap.entryMode)
     }
 }
