@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - studio-206-adaptive-pose-badge-reflow
+      - asset-stage-library-rgb-20260929
     paths:
       - 'release-version.properties'
       - 'app/**'
@@ -42,6 +43,8 @@ jobs:
         shell: bash
         run: |
           python3 ci/verify_runtime_surfaces.py | tee runtime-surfaces.log
+          python3 ci/verify_library_rgb_reference_assets.py | tee library-rgb-reference.log
+          grep -Fq 'LIBRARY_RGB_REFERENCE_CATALOG_GATE_PASS|7_ASSETS|PROVENANCE_LOCKED|RUNTIME_INACTIVE' library-rgb-reference.log
           grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
           grep -Fq 'AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS' runtime-surfaces.log
           grep -Fq 'NO_FAKE_PAGE_CALLBACK_GATE_PASS' runtime-surfaces.log
