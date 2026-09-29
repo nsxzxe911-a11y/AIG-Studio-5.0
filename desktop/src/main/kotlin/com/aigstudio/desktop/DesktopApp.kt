@@ -15,6 +15,18 @@ import javax.swing.border.EmptyBorder
 import kotlin.math.*
 
 
+private fun markStudioDesktopRuntimeUiReady():File {
+    val root=System.getenv("LOCALAPPDATA")?.takeIf{it.isNotBlank()} ?: System.getProperty("user.home")
+    val uiDir=File(root,"AIG-Studio/UI")
+    require(uiDir.exists() || uiDir.mkdirs()){"Unable to create Runtime UI directory"}
+    return File(uiDir,"runtime-ui.ready").apply {
+        writeText(
+            "runtime=PRODUCTION_UI\nstate=READY\nmode=CAD\nproduct=AIG-Studio\n",
+            Charsets.UTF_8
+        )
+    }
+}
+
 private object StudioDesktopOriginalVisuals {
     val startup:BufferedImage? by lazy {
         runCatching {
@@ -3301,6 +3313,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     if(showWindow) frame.isVisible = true
     startup?.advance(StudioStartupStage.HOME,"AIG CNC READY")
     startup?.close()
+    if(showWindow) {
+        val uiReadyMarker=markStudioDesktopRuntimeUiReady()
+        status.text="CAD • PRODUCTION UI • UI READY • "+uiReadyMarker.parentFile.absolutePath
+    }
     return frame
 }
 
