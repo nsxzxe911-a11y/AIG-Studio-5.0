@@ -2711,6 +2711,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     val drawTools=CadToolGrid()
     val editTools=CadToolGrid()
     val linkTools=CadToolGrid()
+    val assemblyTools=CadToolGrid()
     val viewTools=JPanel().apply{
         layout=BoxLayout(this,BoxLayout.Y_AXIS)
         background=Color(8,18,30)
@@ -2729,6 +2730,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         add(drawTools,"DRAW")
         add(editTools,"EDIT")
         add(linkTools,"LINK")
+        add(assemblyTools,"ASSEMBLY")
         add(viewTools,"VIEW")
     }
     val cadDeckButtons=mutableListOf<GlassActionButton>()
@@ -2751,6 +2753,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     cadDeckButton("繪圖","DRAW",StudioDesktopProductionTheme.accent)
     cadDeckButton("修改","EDIT",Color(236,72,153))
     cadDeckButton("連接","LINK",StudioDesktopProductionTheme.cutting)
+    cadDeckButton("組裝","ASSEMBLY",Color(245,158,11))
     cadDeckButton("檢視","VIEW",Color(125,112,255))
     cadDeckButtons.firstOrNull()?.active=true
     val cadDeck=JPanel(BorderLayout(6,6)).apply{
@@ -2815,6 +2818,30 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         if(JOptionPane.showConfirmDialog(frame,panel,"LINEAR ARRAY",JOptionPane.OK_CANCEL_OPTION)==JOptionPane.OK_OPTION){
             val n=count.text.trim().toIntOrNull(); val x=dx.text.trim().toDoubleOrNull(); val y=dy.text.trim().toDoubleOrNull()
             if(n==null || x==null || y==null) status.text="ARRAY BLOCKED • invalid values" else run(n,x,y)
+        }
+    }
+
+    var moduleClipboard:CadModuleTemplate?=null
+    fun askModuleInsert(run:(CadModuleTemplate,Vec2,Double)->Unit){
+        val module=moduleClipboard
+        if(module==null){
+            status.text="MODULE INSERT BLOCKED • save selected module first"
+            return
+        }
+        val x=JTextField("0.000",10)
+        val y=JTextField("0.000",10)
+        val a=JTextField("0.000",10)
+        val panel=JPanel(GridLayout(0,2,5,5)).apply{
+            add(JLabel("X mm"));add(x)
+            add(JLabel("Y mm"));add(y)
+            add(JLabel("旋轉 °"));add(a)
+        }
+        if(JOptionPane.showConfirmDialog(frame,panel,"工件 / 模組插入",JOptionPane.OK_CANCEL_OPTION)==JOptionPane.OK_OPTION){
+            val px=x.text.trim().toDoubleOrNull()
+            val py=y.text.trim().toDoubleOrNull()
+            val angle=a.text.trim().toDoubleOrNull()
+            if(px==null || py==null || angle==null) status.text="MODULE INSERT BLOCKED • invalid X/Y/angle"
+            else run(module,Vec2(px,py),angle)
         }
     }
 
@@ -2999,6 +3026,13 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     editTools.add(button("重做", Color(125,112,255)) { cad.redoEdit() })
     linkTools.add(button("連接", Color(63,255,157)) { cad.connectSelected() })
     linkTools.add(button("斷開", Color(255,176,32)) { cad.disconnectSelected() })
+    assemblyTools.add(button("選取",Color(80,170,255)){cad.mode=DrawMode.SELECT;status.text="SELECT • choose workpiece/module geometry"})
+    assemblyTools.add(button("模組儲存",Color(245,158,11)){
+        moduleClipboard=cad.captureSelectedModule()
+    })
+    assemblyTools.add(button("模組插入",Color(139,92,246)){
+        askModuleInsert(cad::insertModule)
+    })
 
     val runtimeQuickBar=AdaptiveGlassToolbar().apply {
         toolTipText="正式 Runtime 快捷 • 真功能 • 不使用假按鈕"
