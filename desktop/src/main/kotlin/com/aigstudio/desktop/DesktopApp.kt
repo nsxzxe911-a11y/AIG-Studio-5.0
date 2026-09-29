@@ -1868,20 +1868,44 @@ private fun runSmoke() {
         fiveCueFrame.toolPoint.axisB,fiveCueDeltaBMark,
         fiveCueDepthLabel,fiveCuePoseAngleDeg
     )
+    val poseBadgeAxisProbe=String.format(
+        java.util.Locale.US,
+        "A%+.3f°%s B%+.3f°%s %s",
+        fiveCueFrame.toolPoint.axisA,fiveCueDeltaAMark,
+        fiveCueFrame.toolPoint.axisB,fiveCueDeltaBMark,
+        fiveCueDepthLabel
+    )
+    val poseBadgeAProbe=String.format(java.util.Locale.US,"A%+.3f°%s",fiveCueFrame.toolPoint.axisA,fiveCueDeltaAMark)
+    val poseBadgeBProbe=String.format(java.util.Locale.US,"B%+.3f°%s",fiveCueFrame.toolPoint.axisB,fiveCueDeltaBMark)
+    val poseBadgeDepthPoseProbe=String.format(java.util.Locale.US,"%s Δθ%.2f°",fiveCueDepthLabel,fiveCuePoseAngleDeg)
     val poseBadgeProbeImage=BufferedImage(1,1,BufferedImage.TYPE_INT_ARGB)
     val poseBadgeProbeGraphics=poseBadgeProbeImage.createGraphics()
     poseBadgeProbeGraphics.font=Font(Font.SANS_SERIF,Font.BOLD,11)
-    val poseBadgeProbeWidth=poseBadgeProbeGraphics.fontMetrics.stringWidth(poseBadgeProbe)+10
+    val poseBadgeFm=poseBadgeProbeGraphics.fontMetrics
+    val poseBadgeProbeWidth=poseBadgeFm.stringWidth(poseBadgeProbe)+10
+    val poseBadgeAxisWidth=poseBadgeFm.stringWidth(poseBadgeAxisProbe)+10
+    val poseBadgeLeafWidth=maxOf(
+        poseBadgeFm.stringWidth(poseBadgeAProbe),
+        poseBadgeFm.stringWidth(poseBadgeBProbe),
+        poseBadgeFm.stringWidth(poseBadgeDepthPoseProbe)
+    )+10
     poseBadgeProbeGraphics.dispose()
-    val poseBadgeNarrowWidth=(poseBadgeProbeWidth-20).coerceAtLeast(140)
-    require(poseBadgeProbeWidth>poseBadgeNarrowWidth){"Studio 5AX adaptive badge smoke did not require narrow reflow"}
+    require(poseBadgeProbeWidth>poseBadgeAxisWidth){"Studio 5AX adaptive badge smoke cannot force two-line reflow"}
+    require(poseBadgeAxisWidth>poseBadgeLeafWidth){"Studio 5AX adaptive badge smoke cannot force three-line reflow"}
+    val poseBadgeMidWidth=poseBadgeAxisWidth+12
+    val poseBadgeNarrowWidth=poseBadgeLeafWidth+12
+    require(poseBadgeProbeWidth>poseBadgeMidWidth-12){"Studio 5AX adaptive badge two-line width did not require reflow"}
+    require(poseBadgeAxisWidth>poseBadgeNarrowWidth-12){"Studio 5AX adaptive badge three-line width did not require split"}
     fiveAxisPanel.showProgressiveFrame(fiveCueFrame)
     require(fiveCueFrame.index>0 && fiveAxisPanel.freshRemovalSourceFrame()==fiveCueFrame.index-1){"Studio 5AX fresh-removal source did not lock to current index - 1"}
     val fiveCueFile=File("desktop_5x_axis_cue.png")
     writePanel(fiveAxisPanel,fiveCueFile,980,620)
+    val fiveCueMidFile=File("desktop_5x_axis_badge_mid.png")
+    writePanel(fiveAxisPanel,fiveCueMidFile,poseBadgeMidWidth,620)
+    require(fiveCueMidFile.exists() && fiveCueMidFile.length()>0){"Studio 5AX two-line badge smoke image missing"}
     val fiveCueNarrowFile=File("desktop_5x_axis_badge_narrow.png")
     writePanel(fiveAxisPanel,fiveCueNarrowFile,poseBadgeNarrowWidth,620)
-    require(fiveCueNarrowFile.exists() && fiveCueNarrowFile.length()>0){"Studio 5AX narrow badge smoke image missing"}
+    require(fiveCueNarrowFile.exists() && fiveCueNarrowFile.length()>0){"Studio 5AX three-line badge smoke image missing"}
     val fiveOcclusionEvidence=fiveAxisPanel.occlusionEvidence()
     require(fiveOcclusionEvidence.first>0){"Studio 5AX depth occlusion evidence found no occluded historical path segment"}
     require(fiveOcclusionEvidence.second>0){"Studio 5AX depth occlusion evidence found no foreground historical path segment"}
@@ -1962,7 +1986,13 @@ private fun runSmoke() {
             "5X_AXIS_POSE_ANGLE_DEG=${DisplayFormat.mm(fiveCuePoseAngleDeg)}\n" +
             "5X_AXIS_POSE_ANGLE_SOURCE=UNIT_AXIS_DOT_ACOS\n" +
             "5X_AXIS_BADGE_REFLOW=PASS\n" +
+            "5X_AXIS_BADGE_REFLOW_2LINE=PASS\n" +
+            "5X_AXIS_BADGE_REFLOW_3LINE=PASS\n" +
+            "5X_AXIS_BADGE_REFLOW_NO_OVERFLOW=PASS\n" +
             "5X_AXIS_BADGE_REFLOW_SINGLE_WIDTH=$poseBadgeProbeWidth\n" +
+            "5X_AXIS_BADGE_REFLOW_AXIS_WIDTH=$poseBadgeAxisWidth\n" +
+            "5X_AXIS_BADGE_REFLOW_LEAF_WIDTH=$poseBadgeLeafWidth\n" +
+            "5X_AXIS_BADGE_REFLOW_MID_WIDTH=$poseBadgeMidWidth\n" +
             "5X_AXIS_BADGE_REFLOW_NARROW_WIDTH=$poseBadgeNarrowWidth\n" +
             "5X_AXIS_BADGE_REFLOW_PRESERVE=AB_DIRECTION_DEPTH_POSE_ANGLE\n" +
             "5X_DEPTH_OCCLUSION=PASS\n" +
@@ -1993,6 +2023,8 @@ private fun runSmoke() {
             sha256File(fiveBeforeFile) + "  desktop_5x_before.png\n" +
             sha256File(fiveAfterFile) + "  desktop_5x_after.png\n" +
             sha256File(fiveCueFile) + "  desktop_5x_axis_cue.png\n" +
+            sha256File(fiveCueMidFile) + "  desktop_5x_axis_badge_mid.png\n" +
+            sha256File(fiveCueNarrowFile) + "  desktop_5x_axis_badge_narrow.png\n" +
             "SOURCE_SHA=$sourceSha\n"
     )
 
