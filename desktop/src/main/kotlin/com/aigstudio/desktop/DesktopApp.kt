@@ -2714,10 +2714,40 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • "+MasterRuntimeChainContract.uiLabel())
     status.foreground = Color(99, 255, 157)
     val cad = CadPanel(doc) { status.text = it }
+    var sharedLocalMeta=ProjectRevisionMeta()
+    val sharedProjectFile=System.getProperty("aig.shared.project.file")
+        ?.takeIf{it.isNotBlank()}?.let(::File)
+    val sharedLocalProjectFile=System.getProperty("aig.shared.local.project.file")
+        ?.takeIf{it.isNotBlank()}?.let(::File)
+    val sharedBaselineSignature=doc.all().hashCode()*31+doc.links().hashCode()
+    var sharedLastMessage=""
+    val sharedSyncTimer:Timer?=sharedProjectFile?.let { shared ->
+        Timer(SharedProjectFolderSync.POLL_INTERVAL_MS.toInt()) {
+            runCatching {
+                val localMeta=sharedLocalProjectFile?.takeIf{it.isFile}
+                    ?.let{StudioProjectRepository.load(it).revisionMeta}
+                    ?: sharedLocalMeta
+                val localDirty=(doc.all().hashCode()*31+doc.links().hashCode())!=sharedBaselineSignature
+                val observation=SharedProjectFolderSync.inspect(
+                    shared,localMeta,localDirty
+                ){StudioProjectRepository.load(it).revisionMeta}
+                if(observation.state!=ProjectSyncState.CLEAN &&
+                    observation.message!=sharedLastMessage) {
+                    sharedLastMessage=observation.message
+                    status.text="共享 • "+observation.message
+                }
+            }.onFailure {
+                status.text="共享同步檢查 BLOCKED • "+(it.message?:"error")
+            }
+        }.apply{isRepeats=true;start()}
+    }
 
     val frame = JFrame("AIG CNC — OFFICIAL RGB ORIGINAL — v"+desktopVersionName())
     startup?.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")
     frame.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
+    frame.addWindowListener(object:java.awt.event.WindowAdapter(){
+        override fun windowClosed(e:java.awt.event.WindowEvent?) { sharedSyncTimer?.stop() }
+    })
     frame.layout = BorderLayout()
     frame.contentPane.background = StudioDesktopProductionTheme.background
 
@@ -3280,6 +3310,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         val localDirty=System.getProperty("aig.dual.project.localDirty")=="true"
         runCatching{
             val remote=StudioProjectRepository.load(input)
+            sharedLocalMeta=remote.revisionMeta
             val syncState=if(baseline?.isFile==true) {
                 val local=StudioProjectRepository.load(baseline)
                 ProjectRevisionSync.classify(local.revisionMeta,remote.revisionMeta,localDirty)
@@ -3314,6 +3345,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 StudioProjectRepository.save(working,output)
             }
             val exported=StudioProjectRepository.load(output)
+            sharedLocalMeta=exported.revisionMeta
             result.parentFile?.mkdirs()
             result.writeText(
                 "PASS\nMASTER="+SoftwareCoordinateContract.masterOriginData()+
