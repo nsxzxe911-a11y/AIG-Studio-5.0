@@ -468,7 +468,7 @@ for needle in (
 ):
     require(machining3d, needle, "STUDIO_ANDROID_MACHINE_MATERIAL_SEPARATION_177")
 for needle in (
-    "val machine:BufferedImage? by lazy { null }",
+    "val machine:BufferedImage? get()=StudioLibraryRgbReferenceVisuals.image(\"SIM\")",
     "val fillColor=when(component.role){",
     "MachineComponentRole.TRUNNION -> Color(126,92,208,alpha)",
     "MachineComponentRole.TABLE -> Color(82,132,184,alpha)",
@@ -478,7 +478,7 @@ for needle in (
     "g.color=shadedFill",
 ):
     require(desktop, needle, "STUDIO_WINDOWS_MACHINE_MATERIAL_SEPARATION_177")
-print("MACHINE_MATERIAL_SEPARATION_GATE_PASS|ANDROID|WINDOWS|NO_STATIC_MACHINE_IMAGE|ROLE_FILL_COLOR|EDGE_RESTORE|FIXTURE|TABLE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL")
+print("MACHINE_MATERIAL_SEPARATION_GATE_PASS|ANDROID|WINDOWS|REFERENCE_SKIN_ONLY|TRUE_MESH_AUTHORITATIVE|ROLE_FILL_COLOR|EDGE_RESTORE|FIXTURE|TABLE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL")
 for needle in (
     "val drawRoleEdges=when(component.role){",
     "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
