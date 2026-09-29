@@ -3271,12 +3271,39 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     frame.setLocationRelativeTo(null)
     startup?.advance(StudioStartupStage.WRAP_UP,"完成啟動收尾")
     if(showWindow) frame.isVisible = true
+    if(System.getProperty("aig.dual.project.smoke")=="true"){
+        val input=System.getProperty("aig.dual.project.import")?.let(::File) ?: error("dual project import missing")
+        val output=System.getProperty("aig.dual.project.export")?.let(::File) ?: error("dual project export missing")
+        val result=System.getProperty("aig.dual.project.result")?.let(::File) ?: error("dual project result missing")
+        runCatching{
+            val loaded=StudioProjectRepository.load(input)
+            StudioProjectRepository.applyTo(loaded,doc)
+            cad.repaint()
+            StudioProjectRepository.save(loaded,output)
+            result.parentFile?.mkdirs()
+            result.writeText(
+                "PASS\nMASTER="+SoftwareCoordinateContract.masterOriginData()+
+                    "\nDIGEST="+StudioProjectRepository.canonicalDigest(loaded)+
+                    "\nENTITIES="+loaded.entities.size+"\n",
+                Charsets.UTF_8
+            )
+            status.text="DUAL PROJECT • WINDOWS IMPORT/EXPORT PASS"
+            Timer(350){t->(t.source as Timer).stop();frame.dispose();System.exit(0)}.start()
+        }.onFailure{error->
+            result.parentFile?.mkdirs()
+            result.writeText("FAIL\n"+error.javaClass.name+"\n"+(error.message?:"unknown")+"\n",Charsets.UTF_8)
+            frame.dispose();System.exit(2)
+        }
+    }
     startup?.advance(StudioStartupStage.HOME,WorkstationChromeContract.MASTER_ORIGIN+" • CAD READY")
     startup?.close()
     return frame
 }
 
 fun main(args: Array<String>) {
+    if(args.contains("--dual-project-smoke")) {
+        System.setProperty("aig.dual.project.smoke","true")
+    }
     if (args.contains("--smoke")) {
         runSmoke()
         return

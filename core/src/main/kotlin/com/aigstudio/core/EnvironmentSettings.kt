@@ -886,6 +886,23 @@ object AndroidUxContract {
     const val NETWORK_MUST_NOT_BLOCK_FIRST_UI = true
 }
 
+object DualPlatformProjectContract {
+    const val POLICY = "ANDROID_WINDOWS_SAME_PROJECT_PACKAGE"
+    const val MASTER_XYZ = "X0.000 Y0.000 Z0.000"
+    const val PRECISION_MM = 0.001
+    const val PROJECT_EXTENSION = ".aigp"
+    val platforms = listOf("ANDROID","WINDOWS")
+    val continuity = listOf("CAD","CAM","SIM","NC")
+
+    fun valid():Boolean =
+        platforms==listOf("ANDROID","WINDOWS") &&
+            continuity==listOf("CAD","CAM","SIM","NC") &&
+            SoftwareCoordinateContract.masterOriginX()==0.0 &&
+            SoftwareCoordinateContract.masterOriginY()==0.0 &&
+            SoftwareCoordinateContract.masterOriginZ()==0.0 &&
+            SoftwareCoordinateContract.displayResolutionMm()==PRECISION_MM
+}
+
 object DesktopUxContract {
     const val POLICY = "WINDOWS_WORKSPACE_FIRST_COLLAPSIBLE_DOCKS"
     const val WINDOWS_MAX_VISIBLE_ACTIONS = 6

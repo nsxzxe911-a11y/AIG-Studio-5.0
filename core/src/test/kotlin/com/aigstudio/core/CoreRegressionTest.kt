@@ -1153,6 +1153,7 @@ private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
 fun main() {
     println("AIG Studio core regression tests")
     testSoftwareAbsoluteCoordinateContract()
+    testDualPlatformProjectPackage()
     testNcModalTracker()
     testCannedCycleReturnMode()
     testDeleteDoesNotInventTriangle()
@@ -2370,4 +2371,44 @@ private fun testAxisMode345RuntimeMatrix() {
     check(skins["4AX"]=="ic_rgb_4ax")
     check(skins["5AX"]=="ic_rgb_5ax")
     println("✓ AXIS_MODE_3_4_5_GATE_PASS 3AX_CAM_SIM_NC 4AX_INDEXED_CAM_SIM_NC 5AX_INDEXED_CAM_SIM_NC 5AX_CONTINUOUS_CAM_SIM_NC_FAIL_CLOSED RGB_SKINS_BOUND")
+}
+
+private fun testDualPlatformProjectPackage() {
+    check(DualPlatformProjectContract.valid())
+    check(DualPlatformProjectContract.platforms==listOf("ANDROID","WINDOWS"))
+    check(DualPlatformProjectContract.continuity==listOf("CAD","CAM","SIM","NC"))
+    val project=StudioProjectRepository.referenceProject()
+    System.getenv("AIG_DUAL_PROJECT_EVIDENCE")?.takeIf { it.isNotBlank() }?.let { path ->
+        StudioProjectRepository.save(project,java.io.File(path))
+    }
+    val first=kotlin.io.path.createTempFile("studio-dual-platform-",StudioProjectRepository.EXTENSION).toFile()
+    val second=kotlin.io.path.createTempFile("studio-dual-platform-resave-",StudioProjectRepository.EXTENSION).toFile()
+    try {
+        val digest=StudioProjectRepository.canonicalDigest(project)
+        StudioProjectRepository.save(project,first)
+        val loaded=StudioProjectRepository.load(first)
+        check(StudioProjectRepository.canonicalDigest(loaded)==digest)
+        check(loaded.entities.size==6)
+        check(loaded.axisMode=="5AX")
+        check(abs(loaded.axisA-30.0)<EPS && abs(loaded.axisB+15.0)<EPS)
+        check(abs(loaded.camSettings.toolDiameter-6.0)<EPS)
+        check("X25.000 Y20.000" in loaded.ncText)
+        val doc=DrawingDocument()
+        StudioProjectRepository.applyTo(loaded,doc)
+        check(doc.size()==6)
+        val circle=doc.all().filterIsInstance<Circle>().first { it.id=="REF-CIRCLE" }
+        val hole=doc.all().filterIsInstance<Circle>().first { it.id=="REF-HOLE" }
+        check(abs(circle.center.x-25.0)<EPS && abs(circle.center.y-20.0)<EPS && abs(circle.radius-10.0)<EPS)
+        check(abs(hole.center.x-75.0)<EPS && abs(hole.center.y-20.0)<EPS && abs(hole.radius-4.0)<EPS)
+        val cam=CamModel.fromCad(256L,doc.snapshot(),loaded.camSettings,axisA=loaded.axisA,axisB=loaded.axisB)
+        val moves=cam.toolpaths.flatMap { it.moves }
+        check(moves.isNotEmpty())
+        check(moves.all { abs(it.axisA-30.0)<EPS && abs(it.axisB+15.0)<EPS })
+        StudioProjectRepository.save(loaded,second)
+        check(first.readBytes().contentEquals(second.readBytes())) { "Android/Windows Studio project bytes drifted" }
+        println("✓ DUAL_PLATFORM_PROJECT_GATE_PASS ANDROID_WINDOWS SAME_PROJECT_BYTES MASTER_XYZ 0.001 CAD_CAM_SIM_NC RECT100x60 CIRCLE_D20 HOLE_D8")
+    } finally {
+        first.delete()
+        second.delete()
+    }
 }

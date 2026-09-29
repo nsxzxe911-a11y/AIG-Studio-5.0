@@ -1,5 +1,7 @@
 package com.aigstudio.app
 
+import java.io.File
+
 import android.app.Activity
 import android.app.AlertDialog
 import android.os.SystemClock
@@ -1098,6 +1100,7 @@ class MainActivity : Activity() {
                 bootOverlay.advance(StartupMilestone.WRAPPING_UP)
                 bootOverlay.advance(StartupMilestone.READY)
                 bootOverlay.completeAndDetach(bootShell)
+                runDualPlatformProjectSmokeIfPresent()
                 scheduleBackgroundOnlineServices()
             } else {
                 bootOverlay.fail("UI ATTACH BLOCKED")
@@ -1107,6 +1110,38 @@ class MainActivity : Activity() {
     }
 
 
+
+    private fun runDualPlatformProjectSmokeIfPresent() {
+        val input=File(filesDir,"dual-platform-import.aigp")
+        if(!input.isFile) return
+        val output=File(filesDir,"dual-platform-export.aigp")
+        val result=File(filesDir,"dual-platform-result.txt")
+        runCatching {
+            val loaded=StudioProjectRepository.load(input)
+            cad.applyPortableProject(loaded)
+            camSettings=loaded.camSettings
+            axisA=loaded.axisA
+            axisB=loaded.axisB
+            machiningAxisMode=loaded.axisMode
+            unifiedNcDraft=loaded.ncText.takeIf { it.isNotBlank() }
+            unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
+            unifiedNcDraftStale=false
+            val exported=cad.capturePortableProject(
+                camSettings,axisA,axisB,machiningAxisMode,unifiedNcDraft.orEmpty()
+            )
+            StudioProjectRepository.save(exported,output)
+            result.writeText(
+                "PASS\nMASTER="+SoftwareCoordinateContract.masterOriginData()+
+                    "\nDIGEST="+StudioProjectRepository.canonicalDigest(exported)+
+                    "\nENTITIES="+exported.entities.size+"\n",
+                Charsets.UTF_8
+            )
+            Toast.makeText(this,"DUAL PROJECT • ANDROID IMPORT/EXPORT PASS",Toast.LENGTH_SHORT).show()
+        }.onFailure { error ->
+            result.writeText("FAIL\n"+error.javaClass.name+"\n"+(error.message?:"unknown")+"\n",Charsets.UTF_8)
+            Toast.makeText(this,"DUAL PROJECT BLOCKED • "+(error.message?:"error"),Toast.LENGTH_LONG).show()
+        }
+    }
 
     private fun scheduleBackgroundOnlineServices() {
         if(!::networkStateBadge.isInitialized) return
@@ -3865,6 +3900,12 @@ class CadView(
     }
 
     fun snapshot(): DrawingSnapshot = doc.snapshot()
+    fun capturePortableProject(settings:CamSettings,axisA:Double,axisB:Double,axisMode:String,ncText:String):StudioProjectPackage =
+        StudioProjectRepository.capture(doc,settings,axisA,axisB,axisMode,ncText)
+    fun applyPortableProject(project:StudioProjectPackage) {
+        StudioProjectRepository.applyTo(project,doc)
+        firstPoint=null; arcCenter=null; arcStart=null; selectedIds.clear(); sceneRevision++; invalidate()
+    }
     fun exportState(): String = buildString {
         doc.all().forEach { e ->
             when (e) {
