@@ -2984,6 +2984,42 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     editTools.add(button("重做", Color(125,112,255)) { cad.redoEdit() })
     linkTools.add(button("連接", Color(63,255,157)) { cad.connectSelected() })
     linkTools.add(button("斷開", Color(255,176,32)) { cad.disconnectSelected() })
+
+    val runtimeQuickBar=AdaptiveGlassToolbar().apply {
+        toolTipText="正式 Runtime 快捷 • 真功能 • 不使用假按鈕"
+    }
+    fun runtimeQuick(label:String,color:Color,run:()->Unit){
+        runtimeQuickBar.add(GlassActionButton(label,color).apply{
+            preferredSize=Dimension(max(84,preferredSize.width),42)
+            addActionListener{run()}
+        })
+    }
+    runtimeQuick("SNAP",Color(61,235,255)){
+        cad.snapEnabled=!cad.snapEnabled
+        status.text="SNAP "+if(cad.snapEnabled)"ON • END/MID/CENTER/INTERSECTION/TANGENT/H/V" else "OFF"
+        cad.repaint()
+    }
+    runtimeQuick("尺寸",Color(245,158,11)){
+        askSingle("尺寸驅動 mm",cad.selectedDimensionValue()?.let(DisplayFormat::mm)?:"10.000",cad::driveDimension)
+    }
+    runtimeQuick("TRIM",Color(61,235,255)){cad.trimSelected()}
+    runtimeQuick("OFFSET",Color(139,92,246)){askSingle("OFFSET mm","1.000",cad::offsetSelected)}
+    runtimeQuick("CAM",StudioDesktopProductionTheme.cutting){showProductionCam()}
+    runtimeQuick("SIM",Color(139,92,246)){
+        runCatching{showUnifiedMachiningEditor(frame,doc,status,"SIM")}
+            .onFailure{status.text="SIM BLOCKED • "+(it.message?:"error")}
+    }
+    runtimeQuick("5AX",Color(236,72,153)){
+        runCatching{showUnifiedMachiningEditor(frame,doc,status,"5AX")}
+            .onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}
+    }
+    runtimeQuick("NC",Color(80,170,255)){
+        runCatching{showNcEditor(frame,doc)}
+            .onFailure{status.text="NC EDIT BLOCKED • "+(it.message?:"error")}
+    }
+    runtimeQuick("維修",Color(139,92,246)){showMaintenanceCenter()}
+    toolbar.add(runtimeQuickBar,BorderLayout.SOUTH)
+
     val productionUiButtons=linkedMapOf<String,GlassActionButton>()
     fun productionUiButton(id:String,color:Color,action:()->Unit):GlassActionButton {
         val normalized=ProductionUiSwitchContract.normalize(id)
