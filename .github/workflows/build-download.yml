@@ -2,7 +2,9 @@ name: AIG Studio direct release validation
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - studio-206-adaptive-pose-badge-reflow
     paths:
       - 'release-version.properties'
       - 'app/**'
