@@ -199,7 +199,8 @@ for marker in [
     'fun showMaintenanceCenter()',
     '"AIG CNC • 維修 / 診斷"',
     'showApp(showWindow=true)',
-    'productionFrame.contentPane',
+    'require(productionFrame.isShowing)',
+    'Robot().createScreenCapture(launchBounds)',
 ]:
     if marker not in desktop:
         raise SystemExit(f"Windows integrated maintenance/production-shell evidence marker missing: {marker}")
