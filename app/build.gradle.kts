@@ -18,6 +18,9 @@ android {
     namespace = "com.aigstudio.app"
     compileSdk = androidCompileSdk
     buildToolsVersion = "37.0.0"
+    sourceSets.named("main") {
+        assets.srcDir(rootProject.file("design/theme/library_rgb_reference_v1/raw"))
+    }
     defaultConfig {
         applicationId = "com.aigstudio.app"
         minSdk = 26
