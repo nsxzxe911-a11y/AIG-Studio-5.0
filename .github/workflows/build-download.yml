@@ -23,6 +23,9 @@ on:
       - studio-222-ui-integration
     paths:
       - 'release-version.properties'
+      - 'gradle.properties'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
       - 'app/**'
       - 'core/**'
       - 'desktop/**'
