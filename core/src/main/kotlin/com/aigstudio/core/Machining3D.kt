@@ -279,6 +279,46 @@ object MachineModel3DBuilder {
         return Mesh3D(v,t)
     }
 
+    private fun cylinderX(cy:Double,cz:Double,r:Double,x0:Double,x1:Double,n:Int=28):Mesh3D {
+        val v=mutableListOf<Vec3>(); val t=mutableListOf<Triangle3D>()
+        for(i in 0 until n){ val angle=2*PI*i/n; v+=Vec3(x0,cy+r*cos(angle),cz+r*sin(angle)) }
+        for(i in 0 until n){ val angle=2*PI*i/n; v+=Vec3(x1,cy+r*cos(angle),cz+r*sin(angle)) }
+        val left=v.size; v+=Vec3(x0,cy,cz)
+        val right=v.size; v+=Vec3(x1,cy,cz)
+        for(i in 0 until n){
+            val j=(i+1)%n
+            t+=Triangle3D(i,j,n+j); t+=Triangle3D(i,n+j,n+i)
+            t+=Triangle3D(left,j,i); t+=Triangle3D(right,n+i,n+j)
+        }
+        return Mesh3D(v,t)
+    }
+
+    private fun cylinderY(cx:Double,cz:Double,r:Double,y0:Double,y1:Double,n:Int=28):Mesh3D {
+        val v=mutableListOf<Vec3>(); val t=mutableListOf<Triangle3D>()
+        for(i in 0 until n){ val angle=2*PI*i/n; v+=Vec3(cx+r*cos(angle),y0,cz+r*sin(angle)) }
+        for(i in 0 until n){ val angle=2*PI*i/n; v+=Vec3(cx+r*cos(angle),y1,cz+r*sin(angle)) }
+        val front=v.size; v+=Vec3(cx,y0,cz)
+        val back=v.size; v+=Vec3(cx,y1,cz)
+        for(i in 0 until n){
+            val j=(i+1)%n
+            t+=Triangle3D(i,j,n+j); t+=Triangle3D(i,n+j,n+i)
+            t+=Triangle3D(front,j,i); t+=Triangle3D(back,n+i,n+j)
+        }
+        return Mesh3D(v,t)
+    }
+
+    private fun transformedAround(mesh:Mesh3D,pivot:Vec3,a:Double,b:Double):Mesh3D {
+        if(abs(a)<=EPS && abs(b)<=EPS) return mesh
+        return Mesh3D(
+            mesh.vertices.map { v ->
+                val local=Vec3(v.x-pivot.x,v.y-pivot.y,v.z-pivot.z)
+                val rotated=MachineKinematics3D.transform(local,a,b)
+                Vec3(rotated.x+pivot.x,rotated.y+pivot.y,rotated.z+pivot.z)
+            },
+            mesh.triangles
+        )
+    }
+
     private fun inferMode(result:Machining3DResult):String {
         val moves=result.cam.toolpaths.flatMap{it.moves}
         return when {
@@ -320,38 +360,74 @@ object MachineModel3DBuilder {
         out+=MachineComponent3D("head_carriage",MachineComponentRole.COLUMN,
             box(cx-span*.24,cy+span*.34,cx+span*.24,cy+span*.54,span*.28,span*.48))
 
+        // 3AX stays the permanent machine foundation. 4AX and 5AX are true
+        // bolt-on kinematic extensions instead of alternate replacement machines.
         val table=box(stock.minX-8.0,stock.minY-8.0,stock.maxX+8.0,stock.maxY+8.0,floorZ-10.0,floorZ-3.0)
-        out+=MachineComponent3D("table",MachineComponentRole.TABLE,MachineKinematics3D.transform(table,a,b),mode!="3AX",
-            if(mode=="5AX")"A+B" else if(mode=="4AX")"A" else "")
+        out+=MachineComponent3D("table",MachineComponentRole.TABLE,table)
         val fixtureL=box(stock.minX-10.0,stock.minY-5.0,stock.minX-2.0,stock.maxY+5.0,floorZ-3.0,3.0)
         val fixtureR=box(stock.maxX+2.0,stock.minY-5.0,stock.maxX+10.0,stock.maxY+5.0,floorZ-3.0,3.0)
-        out+=MachineComponent3D("fixture_l",MachineComponentRole.FIXTURE,MachineKinematics3D.transform(fixtureL,a,b),mode!="3AX")
-        out+=MachineComponent3D("fixture_r",MachineComponentRole.FIXTURE,MachineKinematics3D.transform(fixtureR,a,b),mode!="3AX")
+        out+=MachineComponent3D("fixture_l",MachineComponentRole.FIXTURE,fixtureL)
+        out+=MachineComponent3D("fixture_r",MachineComponentRole.FIXTURE,fixtureR)
 
+        val rotaryPivot=Vec3(cx,cy,floorZ+stock.thickness*0.5)
         if(mode=="4AX" || mode=="5AX"){
             out+=MachineComponent3D("trunnion_l",MachineComponentRole.TRUNNION,
-                box(cx-span*.60,cy-span*.18,cx-span*.42,cy+span*.18,floorZ-20.0,floorZ+10.0))
+                box(cx-span*.60,cy-span*.24,cx-span*.43,cy+span*.24,floorZ-3.0,rotaryPivot.z+span*.24))
             out+=MachineComponent3D("trunnion_r",MachineComponentRole.TRUNNION,
-                box(cx+span*.42,cy-span*.18,cx+span*.60,cy+span*.18,floorZ-20.0,floorZ+10.0))
+                box(cx+span*.43,cy-span*.24,cx+span*.60,cy+span*.24,floorZ-3.0,rotaryPivot.z+span*.24))
             out+=MachineComponent3D("trunnion_bridge",MachineComponentRole.TRUNNION,
-                box(cx-span*.48,cy-span*.10,cx+span*.48,cy+span*.10,floorZ-16.0,floorZ-11.0))
-            val rotaryA=cylinder(cx,cy,span*.40,floorZ-15.0,floorZ-8.0,32)
-            out+=MachineComponent3D("rotary_a",MachineComponentRole.ROTARY_A,MachineKinematics3D.transform(rotaryA,a,0.0),true,"A")
+                box(cx-span*.48,cy-span*.12,cx+span*.48,cy+span*.12,floorZ-5.0,floorZ-1.0))
+            val aKey=box(
+                cx-span*.08,cy+span*.12,cx+span*.08,cy+span*.22,
+                rotaryPivot.z-span*.055,rotaryPivot.z+span*.055
+            )
+            out+=MachineComponent3D(
+                "rotary_a",MachineComponentRole.ROTARY_A,
+                transformedAround(aKey,rotaryPivot,a,0.0),true,"A"
+            )
+            val aHub=cylinderX(cy,rotaryPivot.z,span*.18,cx-span*.43,cx+span*.43,36)
+            out+=MachineComponent3D(
+                "rotary_a_hub",MachineComponentRole.ROTARY_A,
+                transformedAround(aHub,rotaryPivot,a,0.0),true,"A"
+            )
         }
         if(mode=="5AX"){
-            val rotaryB=cylinder(cx,cy,span*.30,floorZ-8.0,floorZ-2.0,32)
-            out+=MachineComponent3D("rotary_b",MachineComponentRole.ROTARY_B,MachineKinematics3D.transform(rotaryB,a,b),true,"B")
+            val cradleFront=box(
+                cx-span*.34,cy-span*.34,cx+span*.34,cy-span*.26,
+                rotaryPivot.z-span*.18,rotaryPivot.z+span*.18
+            )
+            val cradleBack=box(
+                cx-span*.34,cy+span*.26,cx+span*.34,cy+span*.34,
+                rotaryPivot.z-span*.18,rotaryPivot.z+span*.18
+            )
+            out+=MachineComponent3D(
+                "cradle_b_front",MachineComponentRole.TRUNNION,
+                transformedAround(cradleFront,rotaryPivot,a,0.0),true,"A"
+            )
+            out+=MachineComponent3D(
+                "cradle_b_back",MachineComponentRole.TRUNNION,
+                transformedAround(cradleBack,rotaryPivot,a,0.0),true,"A"
+            )
+            val bKey=box(
+                cx+span*.12,cy-span*.08,cx+span*.22,cy+span*.08,
+                rotaryPivot.z-span*.05,rotaryPivot.z+span*.05
+            )
+            out+=MachineComponent3D(
+                "rotary_b",MachineComponentRole.ROTARY_B,
+                transformedAround(bKey,rotaryPivot,a,b),true,"B"
+            )
+            val bHub=cylinderY(cx,rotaryPivot.z,span*.14,cy-span*.26,cy+span*.26,36)
+            out+=MachineComponent3D(
+                "rotary_b_hub",MachineComponentRole.ROTARY_B,
+                transformedAround(bHub,rotaryPivot,a,b),true,"B"
+            )
         }
 
-        val rawToolPoint=Vec3(
-            live?.to?.x ?: cx,
-            live?.to?.y ?: cy,
-            live?.z ?: result.cam.settings.safeZ
-        )
-        val machineToolPoint=MachineKinematics3D.transform(rawToolPoint,a,b)
-        val tx=machineToolPoint.x
-        val ty=machineToolPoint.y
-        val tz=machineToolPoint.z
+        // Spindle/tool retain the original 3AX XYZ machine motion. The new rotary
+        // axes belong to the workholding kit; they do not drag the spindle around.
+        val tx=live?.to?.x ?: cx
+        val ty=live?.to?.y ?: cy
+        val tz=live?.z ?: result.cam.settings.safeZ
         val toolRadius=max(.5,result.cam.settings.toolDiameter/2.0)
         out+=MachineComponent3D("spindle",MachineComponentRole.SPINDLE,
             cylinder(tx,ty,max(8.0,toolRadius*2.8),tz+24.0,tz+62.0,32),true,"XYZ")
