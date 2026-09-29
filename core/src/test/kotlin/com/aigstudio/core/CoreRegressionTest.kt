@@ -1159,6 +1159,7 @@ fun main() {
     testUndoRedo()
     testCadEditIntegrity()
     testCadPrecisionEditing()
+    testCadQuickCamModules()
     testChamferC5()
     testFilletR5()
     testDifferentCornerRadii()
@@ -1368,6 +1369,47 @@ private fun testCadPrecisionEditing() {
     check(array.all().filterIsInstance<Circle>().map{it.center.x}.sorted()==listOf(0.0,10.0,20.0,30.0))
 
     println("✓ CAD_PRECISION_EDIT_GATE_PASS SNAP_ENDPOINT MIDPOINT CENTER INTERSECTION TANGENT HORIZONTAL VERTICAL DIM_DRIVE TRIM EXTEND OFFSET ARRAY SELECTION_LINE_RECT_CIRCLE_ARC_HOLE GROUP_PRESERVED TOL=0.001")
+}
+
+private fun testCadQuickCamModules() {
+    val rectDoc=DrawingDocument()
+    val rectEntities=CadQuickCreateEngine.centerRect(Vec2(0.0,0.0),40.0,20.0)
+    rectEntities.forEach(rectDoc::put)
+    check(rectEntities.size==4)
+    val rectHit=rectEntities.first()
+    check(CadSemanticIdentity.semanticKind(rectHit)=="RECT")
+    check(CadSemanticIdentity.selectionIds(rectDoc,rectHit).size==4)
+
+    val polygon=CadQuickCreateEngine.regularPolygon(Vec2(60.0,0.0),20.0,6,30.0)
+    check(polygon.size==6 && polygon.all{CadSemanticIdentity.semanticKind(it)=="POLYGON"})
+    val slot=CadQuickCreateEngine.slot(Vec2(0.0,40.0),40.0,12.0,15.0)
+    check(slot.size==4 && slot.all{CadSemanticIdentity.semanticKind(it)=="SLOT"})
+    val bolt=CadQuickCreateEngine.boltCircle(Vec2(70.0,40.0),40.0,6.0,6,0.0)
+    check(bolt.size==6 && bolt.all{CadSemanticIdentity.semanticKind(it)=="HOLE"})
+    println("✓ CAD_QUICK_CREATE_GATE_PASS CENTER_RECT SLOT POLYGON BOLT_CIRCLE REAL_GEOMETRY")
+
+    val module=CadModuleEngine.capture(rectDoc,rectEntities.map{it.id},"WORKPIECE")
+    val originalIds=module.entities.map{it.id}.toSet()
+    val inserted=CadModuleEngine.instantiate(module,Vec2(60.0,10.0),30.0)
+    check(inserted.size==module.entities.size)
+    check(inserted.map{it.id}.none{it in originalIds})
+    check(inserted.map{it.id}.toSet().size==inserted.size)
+    println("✓ CAD_MODULE_ASSEMBLY_GATE_PASS CAPTURE_SELECTION INSERT_XY ROTATE FRESH_IDS")
+
+    val camDoc=DrawingDocument()
+    CadQuickCreateEngine.centerRect(Vec2(0.0,0.0),60.0,40.0).forEach(camDoc::put)
+    CadQuickCreateEngine.boltCircle(Vec2(0.0,0.0),30.0,5.0,4,0.0).forEach(camDoc::put)
+    val snapshot=camDoc.snapshot()
+    CamOperationMode.entries.forEachIndexed { index,mode ->
+        val cam=CamModel.fromCad(
+            index.toLong()+1L,
+            snapshot,
+            CamSettings(operationMode=mode)
+        )
+        check(cam.toolpaths.isNotEmpty()) { "Quick CAM mode produced no toolpath: $mode" }
+        check(cam.toolpaths.sumOf{it.moves.size}>1)
+    }
+    println("✓ CAM_QUICK_OPERATION_GATE_PASS AUTO CONTOUR POCKET DRILL ENGRAVE FACE REAL_TOOLPATH")
 }
 
 private fun testChamferC5() {
