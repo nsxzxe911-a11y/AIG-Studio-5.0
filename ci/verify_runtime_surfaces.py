@@ -149,12 +149,18 @@ print("PRODUCTION_BOOT_ASSET_GATE_PASS|ANDROID|WINDOWS|VALIDATED_DERIVED|SHA256"
 for needle in (
     "REAL CAD / CAM",
     "buildProductionCamPanel",
-    'moduleButtons.add(button("2D CAD"',
-    'moduleButtons.add(button("4AX"',
-    'moduleButtons.add(button("5AX"',
+    'productionUiButton("CAD"',
+    'productionUiButton("CAM"',
+    'productionUiButton("SIM"',
+    'productionUiButton("3AX"',
+    'productionUiButton("4AX"',
+    'productionUiButton("5AX"',
+    'productionUiButton("NC"',
+    'ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList())',
 ):
     if needle not in desktop:
         raise SystemExit(f"Windows Production UI 缺少：{needle}")
+print("PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|STABLE_ORDER")
 
 # Main Android page/category entry points must bind to real callbacks.
 android_entries = {
