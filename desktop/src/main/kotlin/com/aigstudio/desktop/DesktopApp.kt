@@ -2471,7 +2471,8 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         )
         simulationMoves=result.cam.toolpaths.flatMap{it.moves}
         simulationIndex=0
-        status.text="CAM "+axisMode+" REBUILT • moves="+simulationMoves.size+
+        val modelName=when(axisMode){"4AX"->"A軸轉台模型";"5AX"->"A/B搖籃模型";else->"3AX立式模型"}
+        status.text=axisMode+" "+modelName+" • CAM REBUILT • moves="+simulationMoves.size+
             " • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+
             " • NC STALE / REBUILD REQUIRED"
     }
@@ -2495,7 +2496,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         editorPanel.minimumSize=Dimension(330,0)
         SwingUtilities.invokeLater { split.setDividerLocation(.76) }
     }
-    val dlg=JDialog(frame,"AIG CNC • 3D / 3AX / 4AX / 5AX + EDITABLE G-CODE",false).apply{
+    val dlg=JDialog(frame,"AIG CNC • 4AX A軸轉台 / 5AX A+B 搖籃 • TRUE MACHINE MODEL + NC",false).apply{
         layout=BorderLayout();minimumSize=Dimension(1100,720)
     }
     val modeBar=AdaptiveGlassToolbar()
@@ -2519,10 +2520,10 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
     mode("3AX","三軸","3 AXIS",Color(59,130,246),"3AX"){
         maximizeVisualWorkspace();axisMode="3AX";axisA=0.0;axisB=0.0;rebuildMachiningForMode();card.show(visual,"AXIS")
     }
-    mode("4AX","四軸","4 AXIS",Color(245,158,11),"4AX"){
+    mode("4AX","四軸 A軸轉台模型","4AX A-ROTARY MODEL",Color(245,158,11),"4AX"){
         maximizeVisualWorkspace();axisMode="4AX";axisB=0.0;rebuildMachiningForMode();card.show(visual,"AXIS")
     }
-    mode("5AX","五軸","5 AXIS",Color(236,72,153),"5AX"){
+    mode("5AX","五軸 A/B 搖籃模型","5AX A/B TRUNNION MODEL",Color(236,72,153),"5AX"){
         maximizeVisualWorkspace();axisMode="5AX";rebuildMachiningForMode();card.show(visual,"AXIS")
     }
     mode("NC_EDIT","程式","NC EDIT",Color(80,170,255),"NC_EDIT"){showNcWorkspace();editor.requestFocusInWindow()}
@@ -3057,6 +3058,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     runtimeQuick("SIM",Color(139,92,246)){
         runCatching{showUnifiedMachiningEditor(frame,doc,status,"SIM")}
             .onFailure{status.text="SIM BLOCKED • "+(it.message?:"error")}
+    }
+    runtimeQuick("4AX",StudioDesktopProductionTheme.warning){
+        runCatching{showUnifiedMachiningEditor(frame,doc,status,"4AX")}
+            .onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}
     }
     runtimeQuick("5AX",Color(236,72,153)){
         runCatching{showUnifiedMachiningEditor(frame,doc,status,"5AX")}
