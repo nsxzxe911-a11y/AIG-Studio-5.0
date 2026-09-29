@@ -1357,6 +1357,7 @@ for needle in (
 if "AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe" in windows_release:
     raise SystemExit("BLOCKED STUDIO_RUNTIME_LAUNCHER_IDENTITY: installer is still named as production Runtime executable")
 print("RUNTIME_FIRST_BOOT_ARCHITECTURE_GATE_PASS|STUDIO_222|UI_FIRST|ASYNC_RGB_ASSETS|RECOVERY_AFTER_READY|RUNTIME_LAUNCHER_NOT_INSTALLER")
+print("FIRST_DRAW_BOOT_ORDER_GATE_PASS|STUDIO_222|SYSTEM_SPLASH|DIRECT_CONTENT_VIEW|ON_DRAW_READY|UI_DIR_READ_AFTER_DRAW|NETWORK_AFTER_DRAW|WINDOWS_CAD_FIRST")
 
 # Startup must auto-read the local UI manifest, fail open to the embedded production
 # Runtime, and never require network I/O before the first interactive frame.
@@ -1365,19 +1366,25 @@ for needle in (
     'runtime-ui.properties',
     'LOCAL_UI_DIRECTORY',
     'EMBEDDED_FALLBACK',
+    'EMBEDDED_FIRST_FRAME',
     'network_blocking=false',
-    'val uiBootstrap=StudioRuntimeUiDirectoryBootstrap.read(this)',
-    'refreshVisibleMode(uiBootstrap.entryMode)',
+    'android.view.ViewTreeObserver.OnDrawListener',
+    'val localUi=StudioRuntimeUiDirectoryBootstrap.read(this@MainActivity)',
+    'refreshVisibleMode(localUi.entryMode)',
     'StudioRuntimeUiDirectoryBootstrap.writeReady(',
 ):
     require(android, needle, "STUDIO_UI_AUTOLOAD_BOOTSTRAP")
+if android.index('setContentView(root)') > android.index('val localUi=StudioRuntimeUiDirectoryBootstrap.read(this@MainActivity)'):
+    raise SystemExit("BLOCKED STUDIO_UI_AUTOLOAD_BOOTSTRAP: UI-directory read still precedes production content view")
 for needle in (
     'object StudioDesktopRuntimeUiDirectoryBootstrap',
     'runtime-ui.properties',
     'LOCAL_UI_DIRECTORY',
     'EMBEDDED_FALLBACK',
-    'val uiBootstrap=StudioDesktopRuntimeUiDirectoryBootstrap.read()',
-    'showApp(initialUiMode=uiBootstrap.entryMode)',
+    'val frame=showApp(initialUiMode="CAD")',
+    'Thread({',
+    'val localUi=StudioDesktopRuntimeUiDirectoryBootstrap.read()',
+    'activateStudioProductionMode(frame,localUi.entryMode)',
 ):
     require(desktop, needle, "STUDIO_WINDOWS_UI_AUTOLOAD_BOOTSTRAP")
 require(windows_release, 'STUDIO_WINDOWS_UI_AUTOLOAD_MANIFEST_GATE_PASS', "STUDIO_WINDOWS_UI_AUTOLOAD_BOOTSTRAP")
