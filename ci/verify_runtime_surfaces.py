@@ -465,7 +465,7 @@ require(
 
 # Machining page must expose each real path and controller/safety surface.
 for needle in (
-    'addActionTo(branchFlow, "REAL CAM", 5) { showCamWorkstation() }',
+    'addActionTo(branchFlow, "AUTO", 0) { camOperationMode=CamOperationMode.AUTO; showCamWorkstation() }',
     'addActionTo(branchFlow, "STOCK", 4) { showStockDialog() }',
     'addActionTo(branchFlow, "NC EDIT", 0) { showUnifiedMachiningWorkspace("NC_EDIT") }',
     'addActionTo(branchFlow, "G54–G59", 3) { showWorkOffsetDialog() }',
