@@ -1795,17 +1795,23 @@ private fun runSmoke() {
     }
     val launchFile = File("desktop_launch.png")
     writePanel(smokeRoot, launchFile)
-    val productionFrame=showApp(startup=null,showWindow=false)
-    val productionPanel=productionFrame.contentPane as Container
-    productionPanel.setSize(1280,800)
-    val productionImage=BufferedImage(1280,800,BufferedImage.TYPE_INT_ARGB)
-    val productionGraphics=productionImage.createGraphics()
-    productionPanel.doLayout()
-    productionPanel.printAll(productionGraphics)
-    productionGraphics.dispose()
-    ImageIO.write(productionImage,"png",launchFile)
+
+    // Runtime evidence must come from the real visible production JFrame, not an
+    // off-screen panel render. This catches launcher/startup/windowing failures.
+    val productionFrame=showApp(startup=null,showWindow=true)
+    productionFrame.toFront()
+    Toolkit.getDefaultToolkit().sync()
+    Thread.sleep(700L)
+    val launchBounds=Rectangle(
+        productionFrame.locationOnScreen.x,
+        productionFrame.locationOnScreen.y,
+        productionFrame.width,
+        productionFrame.height
+    )
+    ImageIO.write(Robot().createScreenCapture(launchBounds),"png",launchFile)
+    require(productionFrame.isShowing){"Production JFrame was not showing during launch capture"}
     productionFrame.dispose()
-    require(launchFile.isFile && launchFile.length()>0){"Production shell launch image missing"}
+    require(launchFile.isFile && launchFile.length()>20000){"Production shell launch image missing/small"}
     smokeDeck.selectedIndex=1
     val cadEditFile = File("desktop_cad_edit.png")
     writePanel(smokeRoot,cadEditFile)
