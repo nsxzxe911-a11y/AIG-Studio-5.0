@@ -164,7 +164,7 @@ for needle in (
 for needle in (
     'contentDescription="VISIBLE FUNCTION ACTIONS"',
     'refreshVisibleMode(normalized)',
-    'refreshVisibleMode(ProductionUiSwitchContract.initialMode)',
+    'refreshVisibleMode(uiBootstrap.entryMode)',
     'action("LINE",0){selectTool(Tool.LINE)}',
     'action("AUTO",0){quickCam(CamOperationMode.AUTO)}',
     'action("輪廓",1){quickCam(CamOperationMode.CONTOUR)}',
