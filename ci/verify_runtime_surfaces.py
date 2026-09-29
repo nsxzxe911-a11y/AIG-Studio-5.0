@@ -1304,3 +1304,28 @@ print("✓ ADAPTIVE_UI_TEXT_GATE_PASS 繁中優先 SHORT_ZH TECH_ABBR SYMBOL SHO
 print("✓ CI_ADAPTIVE_UI_TEXT_MARKER_GATE_PASS WORKFLOW_MATCHES_RUNTIME_GATE")
 print("✓ NO_FAKE_PAGE_CALLBACK_GATE_PASS TOOL_ACTION_CALLBACKS_BOUND")
 print("✓ ALL_SCREENS_RUNTIME_GATE_PASS")
+
+# 224: the production main viewport itself renders the 3AX/4AX/5AX machine model.
+for needle in (
+    'fun installSimulationView(mode:String)',
+    'val view=Machining3DView(this,simulationResult,simulationMode(mode))',
+    'installSimulationView("4AX")',
+    'installSimulationView("5AX")',
+    '"主 UI 機台 • "+activeAxisMode',
+):
+    require(android, needle, "STUDIO_AXIS_MODEL_MAIN_UI_224")
+for needle in (
+    'val extensionStage=when(resolvedMode)',
+    '"3AX" -> "3AX 基體"',
+    '"4AX" -> "3AX + A 軸"',
+    '"3AX + A 軸 + B 搖籃"',
+    '"MAIN UI • " + extensionStage',
+    'val machineModel=MachineModel3DBuilder.build(',
+    'drawMachineModel(canvas,machineModel,scale)',
+):
+    require(machining3d, needle, "STUDIO_AXIS_MODEL_MAIN_VIEW_224")
+if 'axisOverlay:Boolean' in android:
+    raise SystemExit("BLOCKED STUDIO_AXIS_MODEL_MAIN_UI_224: legacy axisOverlay production path remains")
+if 'FrameLayout.LayoutParams(dp(180),dp(150),Gravity.TOP or Gravity.END)' in android:
+    raise SystemExit("BLOCKED STUDIO_AXIS_MODEL_MAIN_UI_224: floating axis preview still covers the production machine viewport")
+print("STUDIO_AXIS_MODEL_MAIN_UI_GATE_PASS|224|3AX_FOUNDATION|4AX_ADD_A|5AX_ADD_B|FULL_MAIN_VIEWPORT|NO_FLOATING_AXIS_PREVIEW")
