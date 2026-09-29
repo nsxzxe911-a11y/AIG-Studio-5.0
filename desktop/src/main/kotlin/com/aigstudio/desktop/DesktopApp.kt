@@ -90,12 +90,6 @@ private object StudioDesktopRuntimeUiDirectoryBootstrap {
 }
 
 private object StudioDesktopOriginalVisuals {
-    val startup:BufferedImage? by lazy {
-        runCatching {
-            StudioDesktopOriginalVisuals::class.java.getResourceAsStream("/visuals/studio_startup_original.png")
-                ?.use(ImageIO::read)
-        }.getOrNull()
-    }
     val machine:BufferedImage? by lazy { null }
     fun paintCover(g:Graphics2D,w:Int,h:Int,image:BufferedImage?,alpha:Float,zoom:Double=1.0,panX:Double=0.0) {
         if(image==null || w<=0 || h<=0)return
@@ -113,62 +107,6 @@ private object StudioDesktopOriginalVisuals {
     }
 }
 
-
-private class StudioDesktopStartupWindow {
-    private val window=JWindow()
-    private val title=JLabel("AIG CNC",SwingConstants.CENTER)
-    private val detail=JLabel("CAD • CAM • SIM • 3AX • 4AX • 5AX • NC • AI • OFFLINE-FIRST",SwingConstants.CENTER)
-    private val status=JLabel("啟動中…",SwingConstants.CENTER)
-    private val progress=JProgressBar(0,100)
-    private var stage=StudioStartupStage.BOOTSTRAP
-    private val timer=Timer(40){window.repaint()}
-    private val panel=object:JPanel(){
-        override fun paintComponent(g0:Graphics){
-            super.paintComponent(g0)
-            val g=g0.create() as Graphics2D
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BICUBIC)
-            val phase=(System.currentTimeMillis()%9000L)/9000.0
-            val zoom=1.02+0.035*sin(phase*2.0*PI)
-            StudioDesktopOriginalVisuals.paintCover(g,width,height,StudioDesktopOriginalVisuals.startup,0.90f,zoom,(phase-0.5)*20.0)
-            g.color=Color(2,7,14,100);g.fillRect(0,0,width,height)
-            g.color=Color(61,235,255,72);g.fillRect(0,(phase*height).roundToInt(),width,2)
-            g.dispose()
-        }
-    }.apply{
-        layout=BoxLayout(this,BoxLayout.Y_AXIS)
-        background=Color(4,9,18)
-        border=BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Color(61,235,255),2,true),
-            EmptyBorder(30,42,30,42)
-        )
-    }
-
-    init{
-        title.foreground=Color.WHITE;title.font=title.font.deriveFont(Font.BOLD,32f)
-        detail.foreground=Color(190,215,235);detail.font=detail.font.deriveFont(Font.PLAIN,12f)
-        status.foreground=Color(61,235,255);status.font=status.font.deriveFont(Font.BOLD,15f)
-        progress.isStringPainted=true;progress.foreground=Color(61,235,255);progress.background=Color(22,32,46)
-        listOf<JComponent>(title,detail,status,progress).forEach{
-            it.alignmentX=Component.CENTER_ALIGNMENT;panel.add(it);panel.add(Box.createVerticalStrut(14))
-        }
-        window.contentPane=panel
-        window.setSize(760,430)
-        window.setLocationRelativeTo(null)
-    }
-
-    fun show(){timer.start();window.isVisible=true;window.toFront()}
-    fun advance(next:StudioStartupStage,message:String){
-        if(!StudioStartupEngineContract.canAdvance(stage,next))return
-        stage=next
-        val pct=StudioStartupEngineContract.progressBefore(next)
-        progress.value=pct;progress.string="$pct%";status.text=message
-        window.repaint();Toolkit.getDefaultToolkit().sync()
-    }
-    fun close(){
-        progress.value=100;progress.string="100%";timer.stop();window.dispose()
-    }
-    fun evidencePanel():JPanel=panel
-}
 
 private class AdaptiveGlassToolbar : JPanel() {
     private var cols = 7
@@ -1865,7 +1803,7 @@ private fun runSmoke() {
 
     // Runtime evidence must come from the real visible production JFrame, not an
     // off-screen panel render. This catches launcher/startup/windowing failures.
-    val productionFrame=showApp(startup=null,showWindow=true)
+    val productionFrame=showApp(showWindow=true)
     productionFrame.toFront()
     Toolkit.getDefaultToolkit().sync()
     Thread.sleep(700L)
@@ -2771,18 +2709,15 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
 }
 
 private fun showApp(
-    startup:StudioDesktopStartupWindow?=null,
     showWindow:Boolean=true,
     initialUiMode:String="CAD"
 ):JFrame {
-    startup?.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
     val doc = DrawingDocument()
     val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • FANUC / MITSUBISHI M800/M80 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
     status.foreground = Color(99, 255, 157)
     val cad = CadPanel(doc) { status.text = it }
 
     val frame = JFrame("AIG CNC — OFFICIAL RGB ORIGINAL")
-    startup?.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")
     frame.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     frame.layout = BorderLayout()
     frame.contentPane.background = StudioDesktopProductionTheme.background
@@ -3383,14 +3318,9 @@ private fun showApp(
     frame.add(toolbar, BorderLayout.NORTH)
     frame.add(mainCardHost, BorderLayout.CENTER)
     frame.add(status, BorderLayout.SOUTH)
-    startup?.advance(StudioStartupStage.PROJECT_DATA,"檢查專案 / Recovery")
-    startup?.advance(StudioStartupStage.HEALTH,"Runtime 健康檢查")
     frame.size = desktopAdaptiveSize(1280, 820)
     frame.setLocationRelativeTo(null)
-    startup?.advance(StudioStartupStage.WRAP_UP,"完成啟動收尾")
     if(showWindow) frame.isVisible = true
-    startup?.advance(StudioStartupStage.HOME,"AIG CNC READY")
-    startup?.close()
     if(showWindow) {
         EventQueue.invokeLater {
             runCatching {
@@ -3413,6 +3343,6 @@ fun main(args: Array<String>) {
     val uiBootstrap=StudioDesktopRuntimeUiDirectoryBootstrap.read()
     SwingUtilities.invokeLater {
         // Production Runtime is the first visible Windows surface.
-        showApp(startup=null,initialUiMode=uiBootstrap.entryMode)
+        showApp(initialUiMode=uiBootstrap.entryMode)
     }
 }
