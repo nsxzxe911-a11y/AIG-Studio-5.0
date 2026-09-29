@@ -439,7 +439,12 @@ class Machining3DView(
     private fun machineSpace(v:Vec3,mode:String,live:Move?):Vec3 {
         val a=if(mode=="3AX")0.0 else live?.axisA ?: 0.0
         val b=if(mode=="5AX")live?.axisB ?: 0.0 else 0.0
-        return MachineKinematics3D.transform(v,a,b)
+        val pivot=Vec3(
+            (result.stock.minX+result.stock.maxX)/2.0,
+            (result.stock.minY+result.stock.maxY)/2.0,
+            -result.stock.thickness*0.5
+        )
+        return MachineKinematics3D.transformAround(v,pivot,a,b)
     }
 
     private fun dynamicTriangleBudget(currentFps: Double): Int {
