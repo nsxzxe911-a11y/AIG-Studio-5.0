@@ -737,6 +737,10 @@ class MainActivity : Activity() {
             fun action(label:String,colorIndex:Int,run:()->Unit) {
                 addActionTo(visibleModeActions,label,colorIndex,run)
             }
+            fun quickCam(operation:CamOperationMode) {
+                camOperationMode=operation
+                showCamWorkstation()
+            }
             when(mode) {
                 "CAD" -> {
                     action("LINE",0){selectTool(Tool.LINE)}
@@ -757,12 +761,17 @@ class MainActivity : Activity() {
                     action("模組插",2){cad.promptModuleInsert()}
                 }
                 "CAM" -> {
-                    action("CAM 參數",3){showCamWorkstation()}
+                    action("AUTO",0){quickCam(CamOperationMode.AUTO)}
+                    action("輪廓",1){quickCam(CamOperationMode.CONTOUR)}
+                    action("口袋",2){quickCam(CamOperationMode.POCKET)}
+                    action("鑽孔",3){quickCam(CamOperationMode.DRILL)}
+                    action("雕刻",4){quickCam(CamOperationMode.ENGRAVE)}
+                    action("面銑",5){quickCam(CamOperationMode.FACE)}
+                    action("參數",3){showCamWorkstation()}
                     action("STOCK",4){showStockDialog()}
                     action("偏置",2){showWorkOffsetDialog()}
                     action("3D",1){showUnifiedMachiningWorkspace("3D")}
                     action("NC",0){showUnifiedMachiningWorkspace("NC_EDIT")}
-                    action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
                 }
                 "SIM" -> {
                     action("開啟 3D",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
@@ -1689,7 +1698,12 @@ class MainActivity : Activity() {
     }
     private fun showMachiningBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
-        addActionTo(branchFlow, "REAL CAM", 5) { showCamWorkstation() }
+        addActionTo(branchFlow, "AUTO", 0) { camOperationMode=CamOperationMode.AUTO; showCamWorkstation() }
+        addActionTo(branchFlow, "輪廓", 1) { camOperationMode=CamOperationMode.CONTOUR; showCamWorkstation() }
+        addActionTo(branchFlow, "口袋", 2) { camOperationMode=CamOperationMode.POCKET; showCamWorkstation() }
+        addActionTo(branchFlow, "鑽孔", 3) { camOperationMode=CamOperationMode.DRILL; showCamWorkstation() }
+        addActionTo(branchFlow, "雕刻", 4) { camOperationMode=CamOperationMode.ENGRAVE; showCamWorkstation() }
+        addActionTo(branchFlow, "面銑", 5) { camOperationMode=CamOperationMode.FACE; showCamWorkstation() }
         addActionTo(branchFlow, "CAM 設定", 5) { showCamSettingsDialog() }
         addActionTo(branchFlow, "STOCK", 4) { showStockDialog() }
         addActionTo(branchFlow, "3D/3AX/4AX/5AX + NC", 0) { showUnifiedMachiningWorkspace("3D") }
