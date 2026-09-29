@@ -1,0 +1,3 @@
+UI_ENTRY_PROOF
+product_base_sha=5d5c9a4e27fcf8f5a83bd81a6296157d4d541789
+purpose=build_launch_production_runtime_only
