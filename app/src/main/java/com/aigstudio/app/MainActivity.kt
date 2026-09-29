@@ -748,6 +748,8 @@ class MainActivity : Activity() {
                     action("ARRAY",3){cad.promptArray()}
                     action("連接",1){cad.connectSelected()}
                     action("斷開",4){cad.disconnectSelected()}
+                    action("模組存",5){cad.saveModuleFromSelection()}
+                    action("模組插",2){cad.promptModuleInsert()}
                 }
                 "CAM" -> {
                     action("CAM 參數",3){showCamWorkstation()}
@@ -1032,6 +1034,7 @@ class MainActivity : Activity() {
         addCategory("檢視", 0) { showViewBranch() }
         addCategory("修改", 3) { showModifyBranch() }
         addCategory("連接", 1) { showLinkBranch() }
+        addCategory("組裝", 5) { showAssemblyBranch() }
         addCategory("角部", 2) { showCornerBranch() }
         addCategory("CAM", 5) { showCamWorkstation() }
         addCategory("加工", 5) { showMachiningBranch() }
@@ -1663,6 +1666,12 @@ class MainActivity : Activity() {
         addToolToBranch("選取", Tool.SELECT, 1)
         addActionTo(branchFlow, "連接", 1) { cad.connectSelected() }
         addActionTo(branchFlow, "斷開", 4) { cad.disconnectSelected() }
+    }
+    private fun showAssemblyBranch() {
+        branchFlow.removeAllViews(); toolButtons.clear()
+        addToolToBranch("選取", Tool.SELECT, 1)
+        addActionTo(branchFlow, "模組儲存", 5) { cad.saveModuleFromSelection() }
+        addActionTo(branchFlow, "模組插入", 2) { cad.promptModuleInsert() }
     }
     private fun showCornerBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
