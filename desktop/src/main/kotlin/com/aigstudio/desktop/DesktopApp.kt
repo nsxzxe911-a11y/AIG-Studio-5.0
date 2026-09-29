@@ -17,12 +17,12 @@ import kotlin.math.*
 
 private object StudioDesktopOriginalVisuals {
     val startup:BufferedImage? by lazy {
-        runCatching {
+        StudioLibraryRgbReferenceVisuals.image("STARTUP") ?: runCatching {
             StudioDesktopOriginalVisuals::class.java.getResourceAsStream("/visuals/studio_startup_original.png")
                 ?.use(ImageIO::read)
         }.getOrNull()
     }
-    val machine:BufferedImage? by lazy { null }
+    val machine:BufferedImage? get()=StudioLibraryRgbReferenceVisuals.image("SIM")
     fun paintCover(g:Graphics2D,w:Int,h:Int,image:BufferedImage?,alpha:Float,zoom:Double=1.0,panX:Double=0.0) {
         if(image==null || w<=0 || h<=0)return
         val srcRatio=image.width.toDouble()/image.height.toDouble()
