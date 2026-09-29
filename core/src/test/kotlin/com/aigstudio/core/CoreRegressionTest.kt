@@ -2454,6 +2454,25 @@ private fun testProjectRevisionSync() {
         check(win3.revisionMeta.revision==3L && win3.revisionMeta.baseRevision==2L)
         check(ProjectRevisionSync.classify(remote2.revisionMeta,win3.revisionMeta,false)==ProjectSyncState.REMOTE_NEWER)
         println("✓ PROJECT_REVISION_SYNC_GATE_PASS R1_WINDOWS R2_ANDROID_CAD_EDIT_0.001 REMOTE_NEWER CONFLICT_NO_SILENT_OVERWRITE ADOPT_REMOTE_KEEP_LOCAL_SAVE_COPY R3_WINDOWS")
+        check(SharedProjectSyncContract.valid())
+        val remoteObs=SharedProjectFolderSync.inspect(f2,loaded1.revisionMeta,false){StudioProjectRepository.load(it).revisionMeta}
+        check(remoteObs.state==ProjectSyncState.REMOTE_NEWER && remoteObs.message.contains("手機有新版"))
+        val conflictObs=SharedProjectFolderSync.inspect(f2,loaded1.revisionMeta,true){StudioProjectRepository.load(it).revisionMeta}
+        check(conflictObs.state==ProjectSyncState.CONFLICT)
+        check(runCatching{
+            SharedProjectFolderSync.publishConfirmed(
+                f3,f2,null,{StudioProjectRepository.load(it).revisionMeta},true
+            )
+        }.isFailure)
+        val shared=java.io.File(f1.parentFile,"studio-shared-"+System.nanoTime()+StudioProjectRepository.EXTENSION)
+        try {
+            val published=SharedProjectFolderSync.publishConfirmed(
+                f2,shared,null,{StudioProjectRepository.load(it).revisionMeta},true
+            )
+            check(published.revision==remote2.revisionMeta.revision)
+            check(StudioProjectRepository.load(shared).revisionMeta.contentDigest==remote2.revisionMeta.contentDigest)
+        } finally { shared.delete() }
+        println("✓ SHARED_PROJECT_FOLDER_SYNC_GATE_PASS POLL_1500MS NO_AUTO_APPLY OFFLINE_FIRST REMOTE_NEWER_VISIBLE CONFLICT_VISIBLE EXPLICIT_CONFIRM RACE_GUARD")
     } finally {
         f1.delete();f2.delete();f3.delete()
     }

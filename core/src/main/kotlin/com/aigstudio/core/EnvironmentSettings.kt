@@ -917,6 +917,24 @@ object ProjectSyncUxContract {
             states==ProjectSyncState.entries.map { it.name }
 }
 
+object SharedProjectSyncContract {
+    const val POLICY="SHARED_FOLDER_BACKGROUND_REVISION_WATCH"
+    const val TRANSPORT="FOLDER"
+    const val POLL_INTERVAL_MS=1500L
+    const val AUTO_APPLY=false
+    const val NETWORK_REQUIRED=false
+    const val NO_SILENT_OVERWRITE=true
+    val visibleStates=listOf("已同步","本機有新版","手機有新版","Windows有新版","同步衝突")
+    val actions=listOf("採用新版","保留本機","另存副本")
+
+    fun valid():Boolean =
+        SharedProjectFolderSync.POLICY=="FOLDER_TRANSPORT_REVISION_WATCH_NO_AUTO_APPLY" &&
+            SharedProjectFolderSync.POLL_INTERVAL_MS==POLL_INTERVAL_MS &&
+            !SharedProjectFolderSync.AUTO_APPLY &&
+            !SharedProjectFolderSync.NETWORK_REQUIRED &&
+            ProjectRevisionSync.resolutionChoices==listOf("ADOPT_REMOTE","KEEP_LOCAL","SAVE_COPY")
+}
+
 object DesktopUxContract {
     const val POLICY = "WINDOWS_WORKSPACE_FIRST_COLLAPSIBLE_DOCKS"
     const val WINDOWS_MAX_VISIBLE_ACTIONS = 6
