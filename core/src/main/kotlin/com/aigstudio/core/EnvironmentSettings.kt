@@ -903,6 +903,20 @@ object DualPlatformProjectContract {
             SoftwareCoordinateContract.displayResolutionMm()==PRECISION_MM
 }
 
+object ProjectSyncUxContract {
+    const val POLICY = "REVISION_AWARE_NO_SILENT_OVERWRITE"
+    val states = listOf("CLEAN","LOCAL_DIRTY","REMOTE_NEWER","CONFLICT")
+    val conflictActions = listOf("ADOPT_REMOTE","KEEP_LOCAL","SAVE_COPY")
+    val conflictUiActions = listOf("採用新版","保留本機","另存副本")
+    const val REQUIRE_SOURCE_PLATFORM = true
+    const val REQUIRE_CONTENT_DIGEST = true
+    const val NO_SILENT_OVERWRITE = true
+
+    fun valid():Boolean =
+        ProjectRevisionSync.resolutionChoices==conflictActions &&
+            states==ProjectSyncState.entries.map { it.name }
+}
+
 object DesktopUxContract {
     const val POLICY = "WINDOWS_WORKSPACE_FIRST_COLLAPSIBLE_DOCKS"
     const val WINDOWS_MAX_VISIBLE_ACTIONS = 6

@@ -14,11 +14,13 @@ data class StudioProjectPackage(
     val axisA: Double,
     val axisB: Double,
     val axisMode: String,
-    val ncText: String
+    val ncText: String,
+    val revisionMeta:ProjectRevisionMeta=ProjectRevisionMeta()
 )
 
 object StudioProjectRepository {
-    const val HEADER = "AIGSTUDIO_PROJECT|1"
+    const val HEADER = "AIGSTUDIO_PROJECT|2"
+    const val LEGACY_HEADER = "AIGSTUDIO_PROJECT|1"
     const val EXTENSION = ".aigp"
     private const val MAX_BYTES = 16L * 1024L * 1024L
     private const val MAX_ENTITIES = 50_000
@@ -61,7 +63,7 @@ object StudioProjectRepository {
         doc.pruneTopology()
     }
 
-    private fun canonicalText(project:StudioProjectPackage):String = buildString {
+    private fun canonicalPayload(project:StudioProjectPackage):String = buildString {
         appendLine(HEADER)
         appendLine("MASTER|0.0|0.0|0.0")
         val c=project.camSettings
@@ -81,10 +83,20 @@ object StudioProjectRepository {
         }
     }
 
-    fun canonicalDigest(project:StudioProjectPackage):String {
-        val bytes=MessageDigest.getInstance("SHA-256").digest(canonicalText(project).toByteArray(Charsets.UTF_8))
-        return bytes.joinToString(""){"%02x".format(it)}
+    private fun sha256(text:String):String =
+        MessageDigest.getInstance("SHA-256")
+            .digest(text.toByteArray(Charsets.UTF_8))
+            .joinToString(""){"%02x".format(it)}
+
+    private fun canonicalText(project:StudioProjectPackage):String {
+        val payload=canonicalPayload(project)
+        val digest=sha256(payload)
+        val meta=project.revisionMeta.copy(contentDigest=digest)
+        return payload+"REVISION|${meta.revision}|${meta.baseRevision}|${meta.sourcePlatform}|"+
+            enc(meta.sourceDevice)+"|${meta.contentDigest}\n"
     }
+
+    fun canonicalDigest(project:StudioProjectPackage):String = sha256(canonicalPayload(project))
 
     fun save(project:StudioProjectPackage,file:File) {
         val bytes=canonicalText(project).toByteArray(Charsets.UTF_8)
@@ -106,10 +118,25 @@ object StudioProjectRepository {
         require(file.isFile && file.length()==bytes.size.toLong()) { "Project save verification failed" }
     }
 
+    fun saveRevisioned(
+        project:StudioProjectPackage,
+        file:File,
+        platform:String,
+        device:String
+    ):StudioProjectPackage {
+        val bumped=project.copy(
+            revisionMeta=ProjectRevisionSync.bump(project.revisionMeta,platform,device)
+        )
+        save(bumped,file)
+        return bumped
+    }
+
     fun load(file:File):StudioProjectPackage {
         require(file.isFile && file.length() in 1..MAX_BYTES) { "Project file missing/invalid size" }
-        val lines=file.readLines(Charsets.UTF_8)
-        require(lines.firstOrNull()?.trim()==HEADER) { "Unsupported Studio project header" }
+        val text=file.readText(Charsets.UTF_8)
+        val lines=text.lineSequence().toList()
+        val header=lines.firstOrNull()?.trim()
+        require(header==HEADER || header==LEGACY_HEADER) { "Unsupported Studio project header" }
         val entities=mutableListOf<Entity>()
         val links=linkedSetOf<CadTopologyLink>()
         var cam=CamSettings()
@@ -118,6 +145,7 @@ object StudioProjectRepository {
         var axisB=0.0
         var nc=""
         var masterSeen=false
+        var pendingRevision:ProjectRevisionMeta?=null
         lines.drop(1).filter{it.isNotBlank()}.forEach { line ->
             val p=line.split('|')
             when(p[0]) {
@@ -151,13 +179,27 @@ object StudioProjectRepository {
                     require(p.size==2)
                     nc=if(p[1]=="-") "" else String(Base64.getDecoder().decode(p[1]),Charsets.UTF_8)
                 }
+                "REVISION" -> {
+                    require(header==HEADER) { "REVISION not allowed in legacy Studio project" }
+                    require(p.size==6) { "REVISION field count" }
+                    val revision=p[1].toLongOrNull() ?: error("REVISION number invalid")
+                    val baseRevision=p[2].toLongOrNull() ?: error("REVISION base invalid")
+                    require(revision>=0L && baseRevision>=0L && baseRevision<=revision) { "REVISION order invalid" }
+                    val platform=p[3]
+                    require(platform in setOf("ANDROID","WINDOWS","UNKNOWN")) { "REVISION platform invalid" }
+                    val device=runCatching { dec(p[4]) }.getOrElse { error("REVISION device invalid") }
+                    require(device.length<=64) { "REVISION device too long" }
+                    val digest=p[5].lowercase()
+                    require(Regex("[0-9a-f]{64}").matches(digest)) { "REVISION digest invalid" }
+                    pendingRevision=ProjectRevisionMeta(revision,baseRevision,platform,device,digest)
+                }
                 "LINE" -> {
                     require(p.size==6)
                     entities+=Line(dec(p[1]),Vec2(finite(p[2].toDouble(),"x1"),finite(p[3].toDouble(),"y1")),Vec2(finite(p[4].toDouble(),"x2"),finite(p[5].toDouble(),"y2")))
                 }
                 "CIRCLE" -> {
                     require(p.size==5)
-                    entities+=Circle(dec(p[1]),Vec2(finite(p[2].toDouble(),"cx"),finite(p[3].toDouble(),"xÙ")),finite(p[4].toDouble(),"radius"))
+                    entities+=Circle(dec(p[1]),Vec2(finite(p[2].toDouble(),"cx"),finite(p[3].toDouble(),"xï¿½")),finite(p[4].toDouble(),"radius"))
                 }
                 "ARC" -> {
                     require(p.size==10)
@@ -179,7 +221,18 @@ object StudioProjectRepository {
             require(entities.size<=MAX_ENTITIES) { "Too many project entities" }
         }
         require(masterSeen) { "Master origin record missing" }
-        val project=StudioProjectPackage(entities,links,cam,axisA,axisB,axisMode,nc)
+        val revisionMeta=if(header==HEADER) {
+            val meta=pendingRevision ?: error("Project V2 REVISION missing")
+            val nonBlank=lines.filter{it.isNotBlank()}
+            require(nonBlank.last().startsWith("REVISION|")) { "Project V2 REVISION must be final record" }
+            val marker="\nREVISION|"
+            val markerIndex=text.lastIndexOf(marker)
+            require(markerIndex>0) { "Project V2 REVISION marker missing" }
+            val payload=text.substring(0,markerIndex+1)
+            require(sha256(payload)==meta.contentDigest) { "Project V2 content digest mismatch" }
+            meta
+        } else ProjectRevisionMeta()
+        val project=StudioProjectPackage(entities,links,cam,axisA,axisB,axisMode,nc,revisionMeta)
         val doc=DrawingDocument()
         project.entities.forEach(doc::put)
         project.links.forEach { require(doc.contains(it.aId) && doc.contains(it.bId)) { "Project link entity missing" } }

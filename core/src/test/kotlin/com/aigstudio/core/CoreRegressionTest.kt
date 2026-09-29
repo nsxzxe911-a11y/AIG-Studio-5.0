@@ -1154,6 +1154,7 @@ fun main() {
     println("AIG Studio core regression tests")
     testSoftwareAbsoluteCoordinateContract()
     testDualPlatformProjectPackage()
+    testProjectRevisionSync()
     testNcModalTracker()
     testCannedCycleReturnMode()
     testDeleteDoesNotInventTriangle()
@@ -2379,7 +2380,7 @@ private fun testDualPlatformProjectPackage() {
     check(DualPlatformProjectContract.continuity==listOf("CAD","CAM","SIM","NC"))
     val project=StudioProjectRepository.referenceProject()
     System.getenv("AIG_DUAL_PROJECT_EVIDENCE")?.takeIf { it.isNotBlank() }?.let { path ->
-        StudioProjectRepository.save(project,java.io.File(path))
+        StudioProjectRepository.saveRevisioned(project,java.io.File(path),"WINDOWS","DESKTOP")
     }
     val first=kotlin.io.path.createTempFile("studio-dual-platform-",StudioProjectRepository.EXTENSION).toFile()
     val second=kotlin.io.path.createTempFile("studio-dual-platform-resave-",StudioProjectRepository.EXTENSION).toFile()
@@ -2410,5 +2411,50 @@ private fun testDualPlatformProjectPackage() {
     } finally {
         first.delete()
         second.delete()
+    }
+}
+
+private fun testProjectRevisionSync() {
+    check(ProjectSyncUxContract.valid())
+    check(ProjectSyncUxContract.NO_SILENT_OVERWRITE)
+    val f1=kotlin.io.path.createTempFile("studio-sync-r1-",StudioProjectRepository.EXTENSION).toFile()
+    val f2=kotlin.io.path.createTempFile("studio-sync-r2-",StudioProjectRepository.EXTENSION).toFile()
+    val f3=kotlin.io.path.createTempFile("studio-sync-r3-",StudioProjectRepository.EXTENSION).toFile()
+    try {
+        val win1=StudioProjectRepository.saveRevisioned(
+            StudioProjectRepository.referenceProject(),f1,"WINDOWS","DESKTOP"
+        )
+        val loaded1=StudioProjectRepository.load(f1)
+        check(loaded1.revisionMeta.revision==1L && loaded1.revisionMeta.baseRevision==0L)
+        check(loaded1.revisionMeta.sourcePlatform=="WINDOWS")
+
+        val androidDraft=loaded1.copy(
+            entities=loaded1.entities.map {
+                if(it is Circle && it.id=="REF-CIRCLE") it.copy(center=Vec2(it.center.x+0.001,it.center.y)) else it
+            }
+        )
+        StudioProjectRepository.saveRevisioned(androidDraft,f2,"ANDROID","EMULATOR")
+        val remote2=StudioProjectRepository.load(f2)
+        check(remote2.revisionMeta.revision==2L && remote2.revisionMeta.baseRevision==1L)
+        check(remote2.revisionMeta.sourcePlatform=="ANDROID")
+        check(remote2.revisionMeta.contentDigest!=loaded1.revisionMeta.contentDigest)
+        check(ProjectRevisionSync.classify(loaded1.revisionMeta,remote2.revisionMeta,false)==ProjectSyncState.REMOTE_NEWER)
+
+        val staleLocal=loaded1.copy(
+            camSettings=loaded1.camSettings.copy(feedMmMin=loaded1.camSettings.feedMmMin+1.0)
+        )
+        check(ProjectRevisionSync.classify(staleLocal.revisionMeta,remote2.revisionMeta,true)==ProjectSyncState.CONFLICT)
+        check(ProjectRevisionSync.resolutionChoices==listOf("ADOPT_REMOTE","KEEP_LOCAL","SAVE_COPY"))
+
+        val win3Draft=remote2.copy(
+            camSettings=remote2.camSettings.copy(feedMmMin=remote2.camSettings.feedMmMin+1.0)
+        )
+        StudioProjectRepository.saveRevisioned(win3Draft,f3,"WINDOWS","DESKTOP")
+        val win3=StudioProjectRepository.load(f3)
+        check(win3.revisionMeta.revision==3L && win3.revisionMeta.baseRevision==2L)
+        check(ProjectRevisionSync.classify(remote2.revisionMeta,win3.revisionMeta,false)==ProjectSyncState.REMOTE_NEWER)
+        println("✓ PROJECT_REVISION_SYNC_GATE_PASS R1_WINDOWS R2_ANDROID_CAD_EDIT_0.001 REMOTE_NEWER CONFLICT_NO_SILENT_OVERWRITE ADOPT_REMOTE_KEEP_LOCAL_SAVE_COPY R3_WINDOWS")
+    } finally {
+        f1.delete();f2.delete();f3.delete()
     }
 }

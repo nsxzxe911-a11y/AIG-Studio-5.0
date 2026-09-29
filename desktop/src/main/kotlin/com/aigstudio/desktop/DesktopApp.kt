@@ -3275,19 +3275,60 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         val input=System.getProperty("aig.dual.project.import")?.let(::File) ?: error("dual project import missing")
         val output=System.getProperty("aig.dual.project.export")?.let(::File) ?: error("dual project export missing")
         val result=System.getProperty("aig.dual.project.result")?.let(::File) ?: error("dual project result missing")
+        val baseline=System.getProperty("aig.dual.project.baseline")?.let(::File)
+        val editRequested=System.getProperty("aig.dual.project.edit")=="true"
+        val localDirty=System.getProperty("aig.dual.project.localDirty")=="true"
         runCatching{
-            val loaded=StudioProjectRepository.load(input)
-            StudioProjectRepository.applyTo(loaded,doc)
+            val remote=StudioProjectRepository.load(input)
+            val syncState=if(baseline?.isFile==true) {
+                val local=StudioProjectRepository.load(baseline)
+                ProjectRevisionSync.classify(local.revisionMeta,remote.revisionMeta,localDirty)
+            } else if(remote.revisionMeta.revision>0L) {
+                ProjectSyncState.REMOTE_NEWER
+            } else ProjectSyncState.CLEAN
+            if(syncState==ProjectSyncState.CONFLICT) {
+                result.parentFile?.mkdirs()
+                result.writeText(
+                    "CONFLICT\nREMOTE_REV="+remote.revisionMeta.revision+
+                        "\nACTIONS="+ProjectSyncUxContract.conflictUiActions.joinToString("|")+"\n",
+                    Charsets.UTF_8
+                )
+                status.text="SYNC CONFLICT • "+ProjectSyncUxContract.conflictUiActions.joinToString(" / ")
+                Timer(350){t->(t.source as Timer).stop();frame.dispose();System.exit(0)}.start()
+                return@runCatching
+            }
+            val working=if(editRequested) {
+                remote.copy(
+                    entities=remote.entities.map {
+                        if(it is Circle && it.id=="REF-CIRCLE") {
+                            it.copy(center=Vec2(it.center.x+0.001,it.center.y))
+                        } else it
+                    }
+                )
+            } else remote
+            StudioProjectRepository.applyTo(working,doc)
             cad.repaint()
-            StudioProjectRepository.save(loaded,output)
+            if(editRequested) {
+                StudioProjectRepository.saveRevisioned(working,output,"WINDOWS","DESKTOP")
+            } else {
+                StudioProjectRepository.save(working,output)
+            }
+            val exported=StudioProjectRepository.load(output)
             result.parentFile?.mkdirs()
             result.writeText(
                 "PASS\nMASTER="+SoftwareCoordinateContract.masterOriginData()+
-                    "\nDIGEST="+StudioProjectRepository.canonicalDigest(loaded)+
-                    "\nENTITIES="+loaded.entities.size+"\n",
+                    "\nDIGEST="+StudioProjectRepository.canonicalDigest(exported)+
+                    "\nENTITIES="+exported.entities.size+
+                    "\nREVISION="+exported.revisionMeta.revision+
+                    "\nBASE="+exported.revisionMeta.baseRevision+
+                    "\nSOURCE="+exported.revisionMeta.sourcePlatform+
+                    "\nSYNC_STATE="+syncState.name+"\n",
                 Charsets.UTF_8
             )
-            status.text="DUAL PROJECT • WINDOWS IMPORT/EXPORT PASS"
+            status.text=ProjectRevisionSync.statusLabel(
+                if(editRequested) ProjectSyncState.LOCAL_DIRTY else ProjectSyncState.CLEAN,
+                exported.revisionMeta
+            )+" • WINDOWS"
             Timer(350){t->(t.source as Timer).stop();frame.dispose();System.exit(0)}.start()
         }.onFailure{error->
             result.parentFile?.mkdirs()

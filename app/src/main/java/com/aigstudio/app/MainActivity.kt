@@ -1116,27 +1116,74 @@ class MainActivity : Activity() {
         if(!input.isFile) return
         val output=File(filesDir,"dual-platform-export.aigp")
         val result=File(filesDir,"dual-platform-result.txt")
+        val baseline=File(filesDir,"dual-platform-local-baseline.aigp")
+        val editRequested=File(filesDir,"dual-platform-edit.flag").isFile
+        val localDirty=File(filesDir,"dual-platform-local-dirty.flag").isFile
         runCatching {
-            val loaded=StudioProjectRepository.load(input)
-            cad.applyPortableProject(loaded)
-            camSettings=loaded.camSettings
-            axisA=loaded.axisA
-            axisB=loaded.axisB
-            machiningAxisMode=loaded.axisMode
-            unifiedNcDraft=loaded.ncText.takeIf { it.isNotBlank() }
+            val remote=StudioProjectRepository.load(input)
+            val syncState=if(baseline.isFile) {
+                val local=StudioProjectRepository.load(baseline)
+                ProjectRevisionSync.classify(local.revisionMeta,remote.revisionMeta,localDirty)
+            } else if(remote.revisionMeta.revision>0L) {
+                ProjectSyncState.REMOTE_NEWER
+            } else ProjectSyncState.CLEAN
+            if(syncState==ProjectSyncState.CONFLICT) {
+                result.writeText(
+                    "CONFLICT\nREMOTE_REV="+remote.revisionMeta.revision+
+                        "\nACTIONS="+ProjectSyncUxContract.conflictUiActions.joinToString("|")+"\n",
+                    Charsets.UTF_8
+                )
+                Toast.makeText(
+                    this,
+                    "SYNC CONFLICT • "+ProjectSyncUxContract.conflictUiActions.joinToString(" / "),
+                    Toast.LENGTH_LONG
+                ).show()
+                return@runCatching
+            }
+            val working=if(editRequested) {
+                remote.copy(
+                    entities=remote.entities.map {
+                        if(it is Circle && it.id=="REF-CIRCLE") {
+                            it.copy(center=Vec2(it.center.x+0.001,it.center.y))
+                        } else it
+                    }
+                )
+            } else remote
+            cad.applyPortableProject(working)
+            camSettings=working.camSettings
+            axisA=working.axisA
+            axisB=working.axisB
+            machiningAxisMode=working.axisMode
+            unifiedNcDraft=working.ncText.takeIf { it.isNotBlank() }
             unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
             unifiedNcDraftStale=false
             val exported=cad.capturePortableProject(
                 camSettings,axisA,axisB,machiningAxisMode,unifiedNcDraft.orEmpty()
-            )
-            StudioProjectRepository.save(exported,output)
+            ).copy(revisionMeta=working.revisionMeta)
+            if(editRequested) {
+                StudioProjectRepository.saveRevisioned(exported,output,"ANDROID","EMULATOR")
+            } else {
+                StudioProjectRepository.save(exported,output)
+            }
+            val saved=StudioProjectRepository.load(output)
             result.writeText(
                 "PASS\nMASTER="+SoftwareCoordinateContract.masterOriginData()+
-                    "\nDIGEST="+StudioProjectRepository.canonicalDigest(exported)+
-                    "\nENTITIES="+exported.entities.size+"\n",
+                    "\nDIGEST="+StudioProjectRepository.canonicalDigest(saved)+
+                    "\nENTITIES="+saved.entities.size+
+                    "\nREVISION="+saved.revisionMeta.revision+
+                    "\nBASE="+saved.revisionMeta.baseRevision+
+                    "\nSOURCE="+saved.revisionMeta.sourcePlatform+
+                    "\nSYNC_STATE="+syncState.name+"\n",
                 Charsets.UTF_8
             )
-            Toast.makeText(this,"DUAL PROJECT • ANDROID IMPORT/EXPORT PASS",Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                ProjectRevisionSync.statusLabel(
+                    if(editRequested) ProjectSyncState.LOCAL_DIRTY else ProjectSyncState.CLEAN,
+                    saved.revisionMeta
+                )+" • ANDROID",
+                Toast.LENGTH_SHORT
+            ).show()
         }.onFailure { error ->
             result.writeText("FAIL\n"+error.javaClass.name+"\n"+(error.message?:"unknown")+"\n",Charsets.UTF_8)
             Toast.makeText(this,"DUAL PROJECT BLOCKED • "+(error.message?:"error"),Toast.LENGTH_LONG).show()
