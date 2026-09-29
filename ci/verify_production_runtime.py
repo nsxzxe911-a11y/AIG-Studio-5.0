@@ -44,7 +44,7 @@ if 'context.assets.open("visuals/studio_startup_original.png")' not in startup:
     raise SystemExit("Android production startup asset binding missing")
 
 required_desktop = [
-    'JFrame("AIG CNC — OFFICIAL RGB ORIGINAL")',
+    'JFrame("AIG CNC — OFFICIAL RGB ORIGINAL — v"+desktopVersionName())',
     "buildProductionCamPanel",
     "--smoke",
     "desktop_launch.png",
