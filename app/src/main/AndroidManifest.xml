@@ -17,6 +17,7 @@
             android:exported="false" />
         <activity
             android:name=".MainActivity"
+            android:theme="@style/Theme.AIGStudio.Starting"
             android:screenOrientation="unspecified"
             android:exported="true">
             <intent-filter>
