@@ -260,6 +260,21 @@ private object StudioDesktopProductionTheme {
     val alarm=Color(255,23,68)
 }
 
+private object LibraryFiveAxisSkin208 {
+    const val ID="library_5x_real_cam_208"
+    const val SOURCE_KIND="CHATGPT_ANDROID_LIBRARY_REFERENCE"
+    const val SOURCE_MOBILE="image-gen-1(1).png"
+    const val SOURCE_LANDSCAPE="image-gen-2(1).png"
+    val background=Color(3,8,16)
+    val panel=Color(10,24,38)
+    val text=Color(225,240,255)
+    val cyan=Color(61,235,255)
+    val violet=Color(139,92,246)
+    val magenta=Color(236,72,153)
+    val safe=Color(99,255,157)
+    val warning=Color(245,158,11)
+}
+
 private object ProductionRgbAssets {
     private const val ROOT="/aig-generated-rgb/approved/184"
     private val hashes:Map<String,String> by lazy {
@@ -2794,15 +2809,15 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         val cam=result.cam
         val settings=cam.settings
         val left=JPanel(BorderLayout(6,6)).apply{
-            background=StudioDesktopProductionTheme.panel
+            background=LibraryFiveAxisSkin208.panel
             preferredSize=Dimension(190,0)
             minimumSize=Dimension(178,0)
             border=BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color(61,235,255,135),1,true),
+                BorderFactory.createLineBorder(Color(LibraryFiveAxisSkin208.cyan.red,LibraryFiveAxisSkin208.cyan.green,LibraryFiveAxisSkin208.cyan.blue,150),1,true),
                 BorderFactory.createEmptyBorder(10,10,10,10)
             )
             add(JLabel("刀路 / TOOLPATH").apply{
-                foreground=StudioDesktopProductionTheme.accent
+                foreground=LibraryFiveAxisSkin208.cyan
                 font=font.deriveFont(Font.BOLD,14f)
             },BorderLayout.NORTH)
             add(JTextArea(buildString{
@@ -2819,14 +2834,14 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
             },BorderLayout.CENTER)
         }
         val right=JPanel(GridLayout(0,1,5,5)).apply{
-            background=StudioDesktopProductionTheme.background
+            background=LibraryFiveAxisSkin208.background
             preferredSize=Dimension(180,0)
             minimumSize=Dimension(168,0)
             border=BorderFactory.createEmptyBorder(2,2,2,2)
         }
         fun parameter(title:String,value:String,color:Color){
             right.add(JPanel(BorderLayout()).apply{
-                background=StudioDesktopProductionTheme.panel
+                background=LibraryFiveAxisSkin208.panel
                 border=BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(Color(color.red,color.green,color.blue,125),1,true),
                     BorderFactory.createEmptyBorder(8,10,8,10)
@@ -2835,29 +2850,29 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
                 add(JLabel(value).apply{foreground=color;font=font.deriveFont(Font.BOLD,13f)},BorderLayout.CENTER)
             })
         }
-        parameter("TOOL DIA",DisplayFormat.mm(settings.toolDiameter)+" mm",StudioDesktopProductionTheme.accent)
-        parameter("TOOL RADIUS",DisplayFormat.mm(settings.toolDiameter/2.0)+" mm",Color(139,92,246))
-        parameter("DEPTH",DisplayFormat.mm(settings.depth)+" mm",StudioDesktopProductionTheme.cutting)
-        parameter("SAFE-Z",DisplayFormat.mm(settings.safeZ)+" mm",StudioDesktopProductionTheme.warning)
-        parameter("FEED",DisplayFormat.mm(settings.feedMmMin)+" mm/min",Color(80,170,255))
-        parameter("DIRECTION",if(settings.climb)"CLIMB" else "CONVENTIONAL",Color(236,72,153))
+        parameter("TOOL DIA",DisplayFormat.mm(settings.toolDiameter)+" mm",LibraryFiveAxisSkin208.cyan)
+        parameter("TOOL RADIUS",DisplayFormat.mm(settings.toolDiameter/2.0)+" mm",LibraryFiveAxisSkin208.violet)
+        parameter("DEPTH",DisplayFormat.mm(settings.depth)+" mm",LibraryFiveAxisSkin208.magenta)
+        parameter("SAFE-Z",DisplayFormat.mm(settings.safeZ)+" mm",LibraryFiveAxisSkin208.safe)
+        parameter("FEED",DisplayFormat.mm(settings.feedMmMin)+" mm/min",LibraryFiveAxisSkin208.cyan)
+        parameter("DIRECTION",if(settings.climb)"CLIMB" else "CONVENTIONAL",LibraryFiveAxisSkin208.warning)
         val actions=AdaptiveGlassToolbar()
         fun camAction(label:String,color:Color,run:()->Unit){
             actions.add(GlassActionButton(label,color).apply{addActionListener{run()}})
         }
-        camAction("3D SIM",Color(139,92,246)){
+        camAction("3D SIM",LibraryFiveAxisSkin208.violet){
             runCatching{showUnifiedMachiningEditor(frame,doc,status,"3D")}
                 .onFailure{status.text="3D SIM BLOCKED • "+(it.message?:"error")}
         }
-        camAction("3AX",Color(59,130,246)){
+        camAction("3AX",LibraryFiveAxisSkin208.cyan){
             runCatching{showUnifiedMachiningEditor(frame,doc,status,"3AX")}
                 .onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}
         }
-        camAction("4AX",Color(245,158,11)){
+        camAction("4AX",LibraryFiveAxisSkin208.warning){
             runCatching{showUnifiedMachiningEditor(frame,doc,status,"4AX")}
                 .onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}
         }
-        camAction("5AX",Color(236,72,153)){
+        camAction("5AX",LibraryFiveAxisSkin208.magenta){
             runCatching{showUnifiedMachiningEditor(frame,doc,status,"5AX")}
                 .onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}
         }
@@ -2867,11 +2882,12 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
         }
         return JPanel(BorderLayout(7,7)).apply{
             name="CAM_CARD"
-            background=StudioDesktopProductionTheme.background
+            background=LibraryFiveAxisSkin208.background
             border=BorderFactory.createEmptyBorder(7,7,7,7)
-            add(JLabel("AIG CNC • REAL CAM 真實刀路 • "+StudioDesktopProductionTheme.ID).apply{
-                foreground=StudioDesktopProductionTheme.accent
+            add(JLabel("AIG CNC • REAL CAM 真實刀路 • 5AX RGB").apply{
+                foreground=LibraryFiveAxisSkin208.cyan
                 font=font.deriveFont(Font.BOLD,15f)
+                toolTipText=LibraryFiveAxisSkin208.SOURCE_MOBILE+" + "+LibraryFiveAxisSkin208.SOURCE_LANDSCAPE
                 border=BorderFactory.createEmptyBorder(4,8,5,8)
             },BorderLayout.NORTH)
             add(left,BorderLayout.WEST)
