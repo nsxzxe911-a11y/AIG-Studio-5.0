@@ -58,9 +58,10 @@ class AigStartupOverlay(context: Context) : View(context) {
     private var safeBoot = false
     private val bgPaint = Paint()
     private val visualPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { alpha = 205 }
-    private val originalVisual = runCatching {
-        context.assets.open("visuals/studio_startup_original.png").use(BitmapFactory::decodeStream)
-    }.getOrNull()
+    private val originalVisual =
+        LibraryRgbReferenceVisuals.bitmap(context,"STARTUP") ?: runCatching {
+            context.assets.open("visuals/studio_startup_original.png").use(BitmapFactory::decodeStream)
+        }.getOrNull()
     private val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.argb(42,61,235,255)
         strokeWidth = resources.displayMetrics.density
