@@ -18,6 +18,7 @@ on:
       - studio-217-runtime-offline-verifier
       - studio-218-network-retry-ui
       - studio-219-integrated-maintenance
+      - studio-220-maintenance-version-source
     paths:
       - 'release-version.properties'
       - 'app/**'
@@ -56,7 +57,7 @@ jobs:
         shell: bash
         run: |
           python3 ci/verify_production_runtime.py | tee production-runtime.log
-          grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_219|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE' production-runtime.log
+          grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_220|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE' production-runtime.log
           grep -Fq 'PRODUCTION_UI_SWITCH_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|STABLE_ORDER|LIVE_RUNTIME' production-runtime.log
           grep -Fq 'VISIBLE_FUNCTION_UI_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' production-runtime.log
           grep -Fq 'OFFLINE_FIRST_UI_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' production-runtime.log
@@ -76,6 +77,7 @@ jobs:
           grep -Fq 'NETWORK_RETRY_UI_RUNTIME_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE' runtime-surfaces.log
           grep -Fq 'INTEGRATED_MAINTENANCE_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|REAL_ACTIONS' runtime-surfaces.log
           grep -Fq 'PRODUCTION_SHELL_EVIDENCE_RUNTIME_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY' runtime-surfaces.log
+          grep -Fq 'MAINTENANCE_SHARED_VERSION_GATE_PASS|ANDROID|WINDOWS|RUNTIME_PROFILE_SINGLE_SOURCE' runtime-surfaces.log
           grep -Fq 'AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS' runtime-surfaces.log
           grep -Fq 'NO_FAKE_PAGE_CALLBACK_GATE_PASS' runtime-surfaces.log
           grep -Fq 'CAD_PRECISION_EDIT_RUNTIME_GATE_PASS' runtime-surfaces.log
