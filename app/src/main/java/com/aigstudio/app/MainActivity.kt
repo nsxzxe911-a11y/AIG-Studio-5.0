@@ -666,6 +666,27 @@ class MainActivity : Activity() {
                 setPadding(dp(8), dp(4), dp(8), dp(4))
             }
 
+        val masterRootBar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = panel()
+            setPadding(dp(8),dp(3),dp(8),dp(3))
+            contentDescription="MASTER COORDINATE ROOT"
+            addView(chromeText(
+                WorkstationChromeContract.MASTER_ORIGIN+" • "+
+                    WorkstationChromeContract.GEOMETRY_ROOT+" • "+
+                    WorkstationChromeContract.PRECISION,
+                0xFF63FF9D.toInt(),10f
+            ).apply { setTypeface(typeface,android.graphics.Typeface.BOLD) },
+                LinearLayout.LayoutParams(0,-2,1f))
+            addView(chromeText(if(workstationLayout==WorkstationChromeContract.Layout.COMPACT) "ROOT → CAD" else "ROOT → CAD → CAM → SIM → NC",0xFFA0BED2.toInt(),9f).apply {
+                gravity=Gravity.END
+            })
+        }
+        root.addView(masterRootBar,LinearLayout.LayoutParams(-1,-2).apply {
+            setMargins(dp(5),dp(5),dp(5),dp(2))
+        })
+
         val brandBar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL

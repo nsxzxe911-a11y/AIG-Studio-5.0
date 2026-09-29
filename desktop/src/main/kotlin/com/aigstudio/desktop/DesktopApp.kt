@@ -1709,7 +1709,7 @@ private fun runSmoke() {
             add(Box.createVerticalStrut(8))
             add(JLabel("滾輪 = 縮放").apply{foreground=Color(143,179,201)})
             add(Box.createVerticalStrut(8))
-            add(JLabel("Master X0.000 Y0.000").apply{foreground=Color(61,235,255)})
+            add(JLabel(WorkstationChromeContract.MASTER_ORIGIN).apply{foreground=Color(61,235,255)})
             add(Box.createVerticalStrut(8))
             add(JLabel("顯示精度 0.001 mm").apply{foreground=Color(245,158,11)})
         }
@@ -1729,7 +1729,7 @@ private fun runSmoke() {
             border=BorderFactory.createEmptyBorder(6,6,6,6)
             listOf(
                 "MACHINE" to "READY",
-                "ORIGIN" to "X0.000 Y0.000",
+                "ORIGIN" to "X0.000 Y0.000 Z0.000",
                 "PRECISION" to "0.001 mm",
                 "ENTITIES" to doc.size().toString(),
                 "LINKS" to doc.links().size.toString()
@@ -1762,11 +1762,18 @@ private fun runSmoke() {
     val launchFile = File("desktop_launch.png")
     writePanel(smokeRoot, launchFile)
     val productionFrame=showApp(startup=null,showWindow=false)
+    productionFrame.setSize(1280,800)
+    productionFrame.addNotify()
+    productionFrame.validate()
     val productionPanel=productionFrame.contentPane as Container
     productionPanel.setSize(1280,800)
+    fun layoutTree(node:Container){
+        node.doLayout()
+        node.components.filterIsInstance<Container>().forEach(::layoutTree)
+    }
+    layoutTree(productionPanel)
     val productionImage=BufferedImage(1280,800,BufferedImage.TYPE_INT_ARGB)
     val productionGraphics=productionImage.createGraphics()
-    productionPanel.doLayout()
     productionPanel.printAll(productionGraphics)
     productionGraphics.dispose()
     ImageIO.write(productionImage,"png",launchFile)
@@ -2663,7 +2670,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
 private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean=true):JFrame {
     startup?.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
     val doc = DrawingDocument()
-    val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • FANUC / MITSUBISHI M800/M80 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
+    val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • MASTER X0.000 Y0.000 Z0.000 • 精度 0.001 mm")
     status.foreground = Color(99, 255, 157)
     val cad = CadPanel(doc) { status.text = it }
 
@@ -2676,6 +2683,25 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     val mainCardLayout=CardLayout()
     val mainCardHost=JPanel(mainCardLayout).apply{
         background=StudioDesktopProductionTheme.background
+    }
+    val masterRootBar=JPanel(BorderLayout()).apply {
+        background=Color(4,12,20)
+        border=BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0,0,1,0,Color(61,235,255,150)),
+            BorderFactory.createEmptyBorder(5,12,5,12)
+        )
+        add(JLabel(
+            WorkstationChromeContract.MASTER_ORIGIN+" • "+
+                WorkstationChromeContract.GEOMETRY_ROOT+" • "+
+                WorkstationChromeContract.PRECISION
+        ).apply{
+            foreground=Color(99,255,157)
+            font=font.deriveFont(Font.BOLD,13f)
+        },BorderLayout.WEST)
+        add(JLabel("ROOT → CAD → CAM → SIM → NC").apply{
+            foreground=Color(143,179,201)
+            font=font.deriveFont(Font.PLAIN,12f)
+        },BorderLayout.EAST)
     }
     val moduleButtons=AdaptiveGlassToolbar()
     val toolbar = JPanel(BorderLayout()).apply {
@@ -2704,7 +2730,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         add(Box.createVerticalStrut(8))
         add(JLabel("滾輪 = 縮放").apply{foreground=Color(143,179,201)})
         add(Box.createVerticalStrut(8))
-        add(JLabel("Master X0.000 Y0.000").apply{foreground=Color(61,235,255)})
+        add(JLabel(WorkstationChromeContract.MASTER_ORIGIN).apply{foreground=Color(61,235,255)})
         add(Box.createVerticalStrut(8))
         add(JLabel("顯示精度 0.001 mm").apply{foreground=Color(245,158,11)})
     }
@@ -3044,12 +3070,12 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     val infoRail=JPanel().apply{
         layout=BoxLayout(this,BoxLayout.Y_AXIS)
         background=StudioDesktopProductionTheme.background
-        preferredSize=Dimension(158,0)
-        minimumSize=Dimension(150,0)
+        preferredSize=Dimension(182,0)
+        minimumSize=Dimension(174,0)
         border=BorderFactory.createEmptyBorder(4,4,4,4)
         add(railCell("MACHINE",JLabel("READY"),Color(99,255,157)))
         add(Box.createVerticalStrut(6))
-        add(railCell("ORIGIN",JLabel("X0.000 Y0.000"),Color(61,235,255)))
+        add(railCell("ORIGIN",JLabel("X0.000 Y0.000 Z0.000"),Color(61,235,255)))
         add(Box.createVerticalStrut(6))
         add(railCell("PRECISION",JLabel("0.001 mm"),Color(245,158,11)))
         add(Box.createVerticalStrut(6))
@@ -3112,7 +3138,12 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     mainCardHost.add(workspace,"CAD")
     mainCardHost.add(aiPanel,"AI")
     mainCardLayout.show(mainCardHost,"CAD")
-    frame.add(toolbar, BorderLayout.NORTH)
+    val northChrome=JPanel(BorderLayout()).apply{
+        background=StudioDesktopProductionTheme.background
+        add(masterRootBar,BorderLayout.NORTH)
+        add(toolbar,BorderLayout.CENTER)
+    }
+    frame.add(northChrome, BorderLayout.NORTH)
     frame.add(mainCardHost, BorderLayout.CENTER)
     frame.add(status, BorderLayout.SOUTH)
     startup?.advance(StudioStartupStage.PROJECT_DATA,"檢查專案 / Recovery")
@@ -3121,7 +3152,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     frame.setLocationRelativeTo(null)
     startup?.advance(StudioStartupStage.WRAP_UP,"完成啟動收尾")
     if(showWindow) frame.isVisible = true
-    startup?.advance(StudioStartupStage.HOME,"AIG CNC READY")
+    startup?.advance(StudioStartupStage.HOME,WorkstationChromeContract.MASTER_ORIGIN+" • CAD READY")
     startup?.close()
     return frame
 }

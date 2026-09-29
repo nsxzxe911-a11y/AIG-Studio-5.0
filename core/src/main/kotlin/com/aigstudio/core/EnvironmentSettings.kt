@@ -704,7 +704,8 @@ object WorkstationChromeContract {
     const val ORIGINAL = "OFFICIAL RGB ORIGINAL"
     const val WORKSPACE = "2D CAD • LIVE WORKSPACE"
     const val SYSTEM_READY = "SYSTEM READY"
-    const val MASTER_ORIGIN = "MASTER X0.000 Y0.000"
+    const val MASTER_ORIGIN = "MASTER X0.000 Y0.000 Z0.000"
+    const val GEOMETRY_ROOT = "CAD GEOMETRY ROOT"
     const val PRECISION = "0.001 mm"
     const val FUNCTION_STRIP = "AI FOR REAL MACHINING • ACCURATE • REAL • SAFE • SMART"
 
