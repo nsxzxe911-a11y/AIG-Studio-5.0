@@ -1159,6 +1159,7 @@ fun main() {
     testUndoRedo()
     testCadEditIntegrity()
     testCadPrecisionEditing()
+    testCadQuickCreate()
     testCadModuleAssembly()
     testCamQuickOperations()
     testChamferC5()
@@ -1229,6 +1230,48 @@ fun main() {
     check(OfflineFirstRuntimeContract.BACKGROUND_NETWORK_MAX_ATTEMPTS==2)
     println("LOW_LATENCY_NETWORK_CORE_GATE_PASS|START_180MS|RETRY_350MS|MAX_2|BACKGROUND_CHECK_ONLY|NO_AUTO_APK_DOWNLOAD|FAST_FAIL")
     println("ALL TESTS PASSED")
+}
+
+private fun testCadQuickCreate() {
+    val doc=DrawingDocument()
+    val history=History(doc)
+
+    history.run(CadQuickCreateEngine.centerRectCommand(Vec2(10.0,20.0),40.0,20.0))
+    check(doc.size()==4)
+    val rect=doc.all().filterIsInstance<Line>()
+    check(rect.size==4 && rect.all{it.id.startsWith("RECT:")})
+    val root=rect.first().id.substringBeforeLast(':')
+    check(rect.all{it.id.startsWith(root+":")})
+    assertNear(rect.flatMap{listOf(it.a.x,it.b.x)}.minOrNull()!!,-10.0)
+    assertNear(rect.flatMap{listOf(it.a.x,it.b.x)}.maxOrNull()!!,30.0)
+    assertNear(rect.flatMap{listOf(it.a.y,it.b.y)}.minOrNull()!!,10.0)
+    assertNear(rect.flatMap{listOf(it.a.y,it.b.y)}.maxOrNull()!!,30.0)
+
+    history.run(CadQuickCreateEngine.slotCommand(Vec2(0.0,0.0),30.0,10.0,0.0))
+    check(doc.size()==8)
+    val slotEntities=doc.all().drop(4)
+    check(slotEntities.count{it is Line}==2)
+    check(slotEntities.count{it is Arc}==2)
+    val slotArcs=slotEntities.filterIsInstance<Arc>()
+    check(slotArcs.all{abs(it.radius-5.0)<EPS})
+
+    history.run(CadQuickCreateEngine.regularPolygonCommand(Vec2(50.0,50.0),10.0,5,18.0))
+    check(doc.size()==13)
+    val polygon=doc.all().drop(8)
+    check(polygon.size==5 && polygon.all{it is Line})
+
+    history.run(CadQuickCreateEngine.boltCircleCommand(Vec2(100.0,100.0),40.0,6.0,6,0.0))
+    check(doc.size()==19)
+    val holes=doc.all().filterIsInstance<Circle>().filter{it.id.startsWith("HOLE:")}
+    check(holes.size==6)
+    check(holes.all{abs(it.radius-3.0)<EPS})
+    check(holes.all{abs(it.center.distanceTo(Vec2(100.0,100.0))-20.0)<1e-9})
+
+    check(history.undo())
+    check(doc.size()==13)
+    check(history.redo())
+    check(doc.size()==19)
+    println("✓ CAD_QUICK_CREATE_GATE_PASS CENTER_RECT SLOT POLYGON BOLT_CIRCLE REAL_GEOMETRY SEMANTIC_HOLES UNDO_REDO")
 }
 
 private fun testCamQuickOperations() {
