@@ -673,9 +673,7 @@ class MainActivity : Activity() {
             setPadding(dp(8),dp(3),dp(8),dp(3))
             contentDescription="MASTER COORDINATE ROOT"
             addView(chromeText(
-                WorkstationChromeContract.MASTER_ORIGIN+" • "+
-                    WorkstationChromeContract.GEOMETRY_ROOT+" • "+
-                    WorkstationChromeContract.PRECISION,
+                MasterRuntimeChainContract.uiLabel(),
                 0xFF63FF9D.toInt(),10f
             ).apply { setTypeface(typeface,android.graphics.Typeface.BOLD) },
                 LinearLayout.LayoutParams(0,-2,1f))

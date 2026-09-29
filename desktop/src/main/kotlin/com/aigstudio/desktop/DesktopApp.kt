@@ -40,12 +40,13 @@ private object StudioDesktopOriginalVisuals {
 }
 
 
-private fun desktopVersionName():String = "224.0.0"
+private fun desktopVersionName():String =
+    System.getProperty("aigstudio.version")?.takeIf { it.matches(Regex("""\d+\.\d+\.\d+""")) } ?: "DEV"
 
 private class StudioDesktopStartupWindow {
     private val window=JWindow()
     private val title=JLabel("AIG CNC",SwingConstants.CENTER)
-    private val detail=JLabel("CAD • CAM • SIM • 3AX • 4AX • 5AX • NC • AI • OFFLINE-FIRST",SwingConstants.CENTER)
+    private val detail=JLabel("MASTER XYZ • CAD • CAM • SIM • NC • AI • 3/4/5AX IN CAM/SIM • OFFLINE-FIRST",SwingConstants.CENTER)
     private val status=JLabel("啟動中…",SwingConstants.CENTER)
     private val progress=JProgressBar(0,100)
     private var stage=StudioStartupStage.BOOTSTRAP
@@ -2324,6 +2325,11 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
         layout = BorderLayout()
         add(JPanel(BorderLayout()).apply {
             background = Color(8,18,30)
+            add(JLabel(MasterRuntimeChainContract.uiLabel()).apply {
+                foreground=Color(99,255,157)
+                font=font.deriveFont(Font.BOLD,12f)
+                border=BorderFactory.createEmptyBorder(4,8,2,8)
+            },BorderLayout.NORTH)
             add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
                 background = Color(8,18,30)
                 add(JLabel("CONTROL").apply { foreground = Color(61,235,255) })
@@ -2659,7 +2665,15 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         override fun windowClosing(e:WindowEvent?){playbackTimer.stop()}
         override fun windowClosed(e:WindowEvent?){playbackTimer.stop()}
     })
-    dlg.add(modeBar,BorderLayout.NORTH)
+    dlg.add(JPanel(BorderLayout()).apply{
+        background=Color(8,18,30)
+        add(JLabel(MasterRuntimeChainContract.uiLabel()).apply{
+            foreground=Color(99,255,157)
+            font=font.deriveFont(Font.BOLD,12f)
+            border=BorderFactory.createEmptyBorder(4,8,2,8)
+        },BorderLayout.NORTH)
+        add(modeBar,BorderLayout.CENTER)
+    },BorderLayout.NORTH)
     dlg.add(split,BorderLayout.CENTER)
     dlg.add(actions,BorderLayout.SOUTH)
     dlg.size=desktopAdaptiveSize(1500,900)
@@ -2670,11 +2684,11 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
 private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean=true):JFrame {
     startup?.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
     val doc = DrawingDocument()
-    val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • MASTER X0.000 Y0.000 Z0.000 • 精度 0.001 mm")
+    val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • "+MasterRuntimeChainContract.uiLabel())
     status.foreground = Color(99, 255, 157)
     val cad = CadPanel(doc) { status.text = it }
 
-    val frame = JFrame("AIG CNC — OFFICIAL RGB ORIGINAL")
+    val frame = JFrame("AIG CNC — OFFICIAL RGB ORIGINAL — v"+desktopVersionName())
     startup?.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")
     frame.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     frame.layout = BorderLayout()
@@ -2691,9 +2705,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             BorderFactory.createEmptyBorder(5,12,5,12)
         )
         add(JLabel(
-            WorkstationChromeContract.MASTER_ORIGIN+" • "+
-                WorkstationChromeContract.GEOMETRY_ROOT+" • "+
-                WorkstationChromeContract.PRECISION
+            MasterRuntimeChainContract.uiLabel()
         ).apply{
             foreground=Color(99,255,157)
             font=font.deriveFont(Font.BOLD,13f)
@@ -2921,11 +2933,19 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             name="CAM_CARD"
             background=LibraryFiveAxisSkin208.background
             border=BorderFactory.createEmptyBorder(7,7,7,7)
-            add(JLabel("AIG CNC • REAL CAM 真實刀路 • 5AX RGB").apply{
-                foreground=LibraryFiveAxisSkin208.cyan
-                font=font.deriveFont(Font.BOLD,15f)
-                toolTipText=LibraryFiveAxisSkin208.SOURCE_MOBILE+" + "+LibraryFiveAxisSkin208.SOURCE_LANDSCAPE
-                border=BorderFactory.createEmptyBorder(4,8,5,8)
+            add(JPanel(BorderLayout()).apply{
+                isOpaque=false
+                add(JLabel("AIG CNC • REAL CAM 真實刀路 • 5AX RGB").apply{
+                    foreground=LibraryFiveAxisSkin208.cyan
+                    font=font.deriveFont(Font.BOLD,15f)
+                    toolTipText=LibraryFiveAxisSkin208.SOURCE_MOBILE+" + "+LibraryFiveAxisSkin208.SOURCE_LANDSCAPE
+                    border=BorderFactory.createEmptyBorder(4,8,2,8)
+                },BorderLayout.WEST)
+                add(JLabel(MasterRuntimeChainContract.masterOriginLabel()).apply{
+                    foreground=Color(99,255,157)
+                    font=font.deriveFont(Font.BOLD,12f)
+                    border=BorderFactory.createEmptyBorder(4,8,2,8)
+                },BorderLayout.EAST)
             },BorderLayout.NORTH)
             add(left,BorderLayout.WEST)
             add(Mesh3DPanel(result),BorderLayout.CENTER)
@@ -2940,7 +2960,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         mainCardLayout.show(mainCardHost,"CAM")
         mainCardHost.revalidate()
         mainCardHost.repaint()
-        status.text=if(doc.size()>0)"CAM READY • 真刀路 / 真 3D / 材料移除" else "CAM WAITING • CAD geometry required"
+        status.text=if(doc.size()>0)"CAM READY • "+MasterRuntimeChainContract.masterOriginLabel()+" • 真刀路 / 真 3D / 材料移除" else "CAM WAITING • "+MasterRuntimeChainContract.masterOriginLabel()+" • CAD geometry required"
     }
 
     fun showMaintenanceCenter(){
@@ -3024,7 +3044,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     }
     moduleButtons.add(productionUiButton("CAD", StudioDesktopProductionTheme.accent) {
         mainCardLayout.show(mainCardHost,"CAD")
-        status.text="CAD • PRODUCTION UI • MASTER X0.000 Y0.000 • 0.001 mm"
+        status.text="CAD • PRODUCTION UI • "+MasterRuntimeChainContract.uiLabel()
     })
     moduleButtons.add(productionUiButton("CAM", StudioDesktopProductionTheme.cutting) {
         showProductionCam()
@@ -3035,7 +3055,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     })
     moduleButtons.add(productionUiButton("NC", Color(80,170,255)) {
         runCatching { showNcEditor(frame,doc) }
-            .onSuccess { status.text="NC EDIT • FANUC / MITSUBISHI • G90/G91 EXPLICIT • ABS XYZ LOCKED" }
+            .onSuccess { status.text="NC EDIT • "+MasterRuntimeChainContract.masterOriginLabel()+" • FANUC / MITSUBISHI • G90/G91 EXPLICIT • ABS XYZ LOCKED" }
             .onFailure { status.text="NC EDIT BLOCKED • "+(it.message?:"error") }
     })
     moduleButtons.add(productionUiButton("AI", Color(139,92,246)) {
@@ -3110,7 +3130,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     val aiActions=JPanel(FlowLayout(FlowLayout.LEFT,8,8)).apply{
         background=StudioDesktopProductionTheme.background
         add(button("專案摘要",Color(139,92,246)){
-            aiSummary.text="AI LOCAL ASSIST\nENTITIES="+doc.size()+"\nLINKS="+doc.links().size+"\nMASTER X0.000 Y0.000\nPRECISION 0.001 mm"
+            aiSummary.text="AI LOCAL ASSIST\nENTITIES="+doc.size()+"\nLINKS="+doc.links().size+"\n"+MasterRuntimeChainContract.uiLabel()
             status.text="AI 專案摘要 • entities="+doc.size()+" • links="+doc.links().size
         })
         add(button("CAM 檢查",StudioDesktopProductionTheme.cutting){showProductionCam()})

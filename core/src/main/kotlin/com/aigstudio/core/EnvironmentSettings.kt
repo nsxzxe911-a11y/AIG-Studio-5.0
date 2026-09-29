@@ -721,6 +721,23 @@ object WorkstationChromeContract {
 }
 
 
+object MasterRuntimeChainContract {
+    const val POLICY = "MASTER_ORIGIN_CAD_GEOMETRY_ROOT_SINGLE_TRUTH"
+    val pipeline = listOf("CAD","CAM","SIM","NC")
+    val axisCapabilities = listOf("3AX","4AX","5AX")
+
+    fun masterOriginLabel():String = "MASTER " + SoftwareCoordinateContract.masterOriginData()
+    fun uiLabel():String =
+        masterOriginLabel()+" • "+WorkstationChromeContract.GEOMETRY_ROOT+" • "+WorkstationChromeContract.PRECISION
+
+    fun stageUsesCanonicalGeometry(stage:String):Boolean =
+        stage.trim().uppercase() in pipeline
+
+    fun evidence():String =
+        "ROOT="+masterOriginLabel()+"|GEOMETRY="+WorkstationChromeContract.GEOMETRY_ROOT+
+            "|PIPELINE="+pipeline.joinToString(">")+"|AXIS="+axisCapabilities.joinToString("/")
+}
+
 object ProductionUiSwitchContract {
     const val POLICY = "PRODUCTION_UI_SWITCH_STABLE_ORDER_LIVE_RUNTIME"
     val modes = listOf("CAD","CAM","SIM","NC","AI")

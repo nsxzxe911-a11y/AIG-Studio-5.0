@@ -28,7 +28,7 @@ New-Item -ItemType Directory -Force $SmokeDir | Out-Null
 $env:GITHUB_SHA = $GitSha
 Push-Location $SmokeDir
 try {
-  & java -cp "$LibDir\*" com.aigstudio.desktop.DesktopAppKt --smoke
+  & java "-Daigstudio.version=$VersionName" -cp "$LibDir\*" com.aigstudio.desktop.DesktopAppKt --smoke
   if ($LASTEXITCODE -ne 0) { throw 'Studio Windows Gradle runtime smoke failed.' }
   $RequiredSmokeEvidence = @(
     'desktop_launch.png',
@@ -88,7 +88,7 @@ foreach ($name in $RequiredSmokeEvidence) {
   Copy-Item (Join-Path $SmokeDir $name) (Join-Path $EvidenceOut $name) -Force
 }
 
-& jpackage --type exe --name $Product --dest $PackageOut --input $LibDir --main-jar 'AIG_Studio_PC.jar' --main-class com.aigstudio.desktop.DesktopAppKt --app-version $VersionName --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-per-user-install --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
+& jpackage --type exe --name $Product --dest $PackageOut --input $LibDir --main-jar 'AIG_Studio_PC.jar' --main-class com.aigstudio.desktop.DesktopAppKt --app-version $VersionName --java-options "-Daigstudio.version=$VersionName" --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-per-user-install --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
 if ($LASTEXITCODE -ne 0) { throw 'Studio jpackage EXE build failed.' }
 
 $Installer = Get-ChildItem $PackageOut -Filter '*.exe' | Select-Object -First 1
