@@ -70,48 +70,114 @@ try {
 }
 
 $PackageOut = Join-Path $RepoRoot 'build\windows-self-contained'
+$AppImageOut = Join-Path $RepoRoot 'build\windows-app-image'
+$LauncherSmokeDir = Join-Path $RepoRoot 'build\windows-launcher-smoke'
 $ReleaseOut = Join-Path $RepoRoot 'release\windows'
-$FinalExe = Join-Path $ReleaseOut 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
+$PortableRelease = Join-Path $ReleaseOut 'portable'
+$SetupExe = Join-Path $ReleaseOut 'AIG_Studio_SETUP.exe'
+$PortableZip = Join-Path $ReleaseOut 'AIG_Studio_PORTABLE.zip'
 $SumsFile = Join-Path $ReleaseOut 'SHA256SUMS.txt'
 $ManifestFile = Join-Path $ReleaseOut 'RELEASE_MANIFEST.txt'
 $UpgradeUuid = '8c54d63a-6ac2-45ea-a474-63d0d88b1f50'
-$Product = 'AIG_Studio_5_0_RGB_FULL_RELEASE_PC'
+$Product = 'AIG_Studio_Main_Runtime'
 
-if (Test-Path $PackageOut) { Remove-Item -Recurse -Force $PackageOut }
-if (Test-Path $ReleaseOut) { Remove-Item -Recurse -Force $ReleaseOut }
-New-Item -ItemType Directory -Force $PackageOut | Out-Null
-New-Item -ItemType Directory -Force $ReleaseOut | Out-Null
+foreach ($path in @($PackageOut,$AppImageOut,$LauncherSmokeDir,$ReleaseOut)) {
+  if (Test-Path $path) { Remove-Item -Recurse -Force $path }
+}
+New-Item -ItemType Directory -Force $PackageOut,$AppImageOut,$LauncherSmokeDir,$ReleaseOut | Out-Null
+
+# Build the actual Runtime application image first. The launcher and its sibling
+# app/runtime directories are the program; the installer is a separate delivery artifact.
+& jpackage --type app-image --name $Product --dest $AppImageOut --input $LibDir --main-jar 'AIG_Studio_PC.jar' --main-class com.aigstudio.desktop.DesktopAppKt --app-version $VersionName --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation'
+if ($LASTEXITCODE -ne 0) { throw 'Studio jpackage app-image build failed.' }
+
+$AppImageRoot = Join-Path $AppImageOut $Product
+$PortableLauncher = Join-Path $AppImageRoot ($Product + '.exe')
+if (-not (Test-Path $PortableLauncher)) { throw 'Studio packaged Runtime launcher missing.' }
+$LauncherBytes = [System.IO.File]::ReadAllBytes($PortableLauncher)
+if ($LauncherBytes.Length -lt 2 -or $LauncherBytes[0] -ne 0x4D -or $LauncherBytes[1] -ne 0x5A) {
+  throw 'Studio packaged Runtime launcher is not valid PE/MZ.'
+}
+
+# Execute the packaged launcher itself. --smoke now opens the real visible production
+# JFrame and captures desktop_launch.png from that live window.
+$env:GITHUB_SHA = $GitSha
+$LauncherProbe = Start-Process -FilePath $PortableLauncher -ArgumentList '--smoke' -WorkingDirectory $LauncherSmokeDir -PassThru
+$LauncherExited = $LauncherProbe.WaitForExit(60000)
+if (-not $LauncherExited) {
+  Stop-Process -Id $LauncherProbe.Id -Force -ErrorAction SilentlyContinue
+  throw 'Studio packaged Runtime launcher smoke timed out.'
+}
+$LauncherProbe.Refresh()
+if ($LauncherProbe.ExitCode -ne 0) {
+  throw ('Studio packaged Runtime launcher smoke failed with exit code ' + $LauncherProbe.ExitCode)
+}
+foreach ($name in $RequiredSmokeEvidence) {
+  $evidencePath = Join-Path $LauncherSmokeDir $name
+  if (-not (Test-Path $evidencePath)) { throw "Studio packaged launcher evidence missing: $name" }
+}
+foreach ($name in @('REMOVED_CELLS.txt','3D_RUNTIME_EVIDENCE.txt','3D_RUNTIME_SHA256.txt')) {
+  $evidencePath = Join-Path $LauncherSmokeDir $name
+  $content = Get-Content $evidencePath -Raw
+  if ($content -notmatch [regex]::Escape("SOURCE_SHA=$GitSha")) {
+    throw "Studio packaged launcher evidence source mismatch: $name"
+  }
+}
+Write-Host 'STUDIO_WINDOWS_APP_IMAGE_LAUNCH_PASS'
+
+# Preserve the complete portable tree because the launcher depends on its sibling
+# runtime/app directories. This is the direct-to-UI Runtime artifact.
+Copy-Item -Path $AppImageRoot -Destination $PortableRelease -Recurse -Force
+$PortableReleaseLauncher = Join-Path $PortableRelease ($Product + '.exe')
+if (-not (Test-Path $PortableReleaseLauncher)) { throw 'Studio portable Runtime launcher copy missing.' }
+Compress-Archive -Path (Join-Path $PortableRelease '*') -DestinationPath $PortableZip -Force
+$PortableHash = (Get-FileHash $PortableZip -Algorithm SHA256).Hash.ToLowerInvariant()
+$LauncherHash = (Get-FileHash $PortableReleaseLauncher -Algorithm SHA256).Hash.ToLowerInvariant()
 
 $EvidenceOut = Join-Path $ReleaseOut 'runtime-evidence'
 New-Item -ItemType Directory -Force $EvidenceOut | Out-Null
 foreach ($name in $RequiredSmokeEvidence) {
-  Copy-Item (Join-Path $SmokeDir $name) (Join-Path $EvidenceOut $name) -Force
+  Copy-Item (Join-Path $LauncherSmokeDir $name) (Join-Path $EvidenceOut $name) -Force
 }
 
-& jpackage --type exe --name $Product --dest $PackageOut --input $LibDir --main-jar 'AIG_Studio_PC.jar' --main-class com.aigstudio.desktop.DesktopAppKt --app-version $VersionName --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-per-user-install --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
-if ($LASTEXITCODE -ne 0) { throw 'Studio jpackage EXE build failed.' }
+# Build SETUP separately. Do not label the installer as the Runtime executable.
+& jpackage --type exe --name $Product --dest $PackageOut --app-image $AppImageRoot --app-version $VersionName --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-per-user-install --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
+if ($LASTEXITCODE -ne 0) { throw 'Studio jpackage SETUP build failed.' }
 
 $Installer = Get-ChildItem $PackageOut -Filter '*.exe' | Select-Object -First 1
 if (-not $Installer) { throw 'Studio jpackage installer missing.' }
-$Bytes = [System.IO.File]::ReadAllBytes($Installer.FullName)
-if ($Bytes.Length -lt 2 -or $Bytes[0] -ne 0x4D -or $Bytes[1] -ne 0x5A) { throw 'Studio installer is not valid PE/MZ.' }
+$InstallerBytes = [System.IO.File]::ReadAllBytes($Installer.FullName)
+if ($InstallerBytes.Length -lt 2 -or $InstallerBytes[0] -ne 0x4D -or $InstallerBytes[1] -ne 0x5A) {
+  throw 'Studio installer is not valid PE/MZ.'
+}
+Copy-Item $Installer.FullName $SetupExe -Force
+$InstallerHash = (Get-FileHash $SetupExe -Algorithm SHA256).Hash.ToLowerInvariant()
 
-Copy-Item $Installer.FullName $FinalExe -Force
-$Hash = (Get-FileHash $FinalExe -Algorithm SHA256).Hash.ToLowerInvariant()
-("$Hash  " + (Split-Path -Leaf $FinalExe)) | Out-File $SumsFile -Encoding ascii
+@(
+  "$InstallerHash  AIG_Studio_SETUP.exe"
+  "$PortableHash  AIG_Studio_PORTABLE.zip"
+  "$LauncherHash  portable\$Product.exe"
+) | Out-File $SumsFile -Encoding ascii
 
 @(
   'product=AIG-Studio'
   "version=$VersionName"
   "git_sha=$GitSha"
-  ('artifact=' + (Split-Path -Leaf $FinalExe))
-  "sha256=$Hash"
+  'installer=AIG_Studio_SETUP.exe'
+  "installer_sha256=$InstallerHash"
+  'portable_zip=AIG_Studio_PORTABLE.zip'
+  "portable_zip_sha256=$PortableHash"
+  "runtime_launcher=portable\$Product.exe"
+  "runtime_launcher_sha256=$LauncherHash"
+  'packaged_launcher_smoke=PASS'
+  'runtime_evidence=WINDOWS_PACKAGED_LAUNCHER_VISIBLE_UI_CAPTURED'
   'release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL'
   'release_class=PRODUCTION_RUNTIME'
-  'runtime_evidence=WINDOWS_EXECUTABLE_SMOKE_CAPTURED'
 ) | Out-File $ManifestFile -Encoding ascii
 
 Write-Host ('AIG_STUDIO_VERSION=' + $VersionName)
 Write-Host ('AIG_STUDIO_GIT_SHA=' + $GitSha)
-Write-Host ('AIG_STUDIO_EXE_SHA256=' + $Hash)
-Write-Host 'STUDIO_WINDOWS_SELF_CONTAINED_BUILD=PASS'
+Write-Host ('AIG_STUDIO_INSTALLER_SHA256=' + $InstallerHash)
+Write-Host ('AIG_STUDIO_PORTABLE_ZIP_SHA256=' + $PortableHash)
+Write-Host ('AIG_STUDIO_RUNTIME_LAUNCHER_SHA256=' + $LauncherHash)
+Write-Host 'STUDIO_WINDOWS_PACKAGED_RUNTIME_UI_LAUNCH=PASS'
