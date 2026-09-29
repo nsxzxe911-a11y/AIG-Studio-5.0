@@ -45,6 +45,7 @@ jobs:
           grep -Fq 'AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS' runtime-surfaces.log
           grep -Fq 'NO_FAKE_PAGE_CALLBACK_GATE_PASS' runtime-surfaces.log
           grep -Fq 'CAD_PRECISION_EDIT_RUNTIME_GATE_PASS' runtime-surfaces.log
+          grep -Fq 'AXIS_POSE_BADGE_REFLOW_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|ONE_TWO_THREE_LINE|DYNAMIC_2LINE_3LINE_SMOKE|NO_OVERFLOW|FULL_AB_PRECISION|DIRECTION|DEPTH|POSE_ANGLE|SMOKE_IMAGE|VISUAL_ONLY' runtime-surfaces.log
       - name: Build Android APK and source package
         shell: bash
         run: |
