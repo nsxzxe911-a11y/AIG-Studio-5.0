@@ -211,6 +211,23 @@ for needle in (
 ):
     require(desktop, needle, "WINDOWS_OFFLINE_FIRST_UI_214")
 print("OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY")
+for needle in (
+    'const val POST_READY_NETWORK_OBSERVER = true',
+    'const val NETWORK_STATUS_MUST_NOT_OVERRIDE_OPERATION = true',
+):
+    require(env, needle, "NETWORK_RESUME_CONTRACT_215")
+for needle in (
+    'contentDescription="NETWORK OPTIONAL STATUS"',
+    'cm.registerDefaultNetworkCallback(callback)',
+    'cm.unregisterNetworkCallback(callback)',
+    '"網路 • 離線可用 • 本機功能正常"',
+):
+    require(android, needle, "NETWORK_RESUME_ANDROID_215")
+for needle in (
+    'LOCAL READY • NETWORK OPTIONAL',
+):
+    require(desktop, needle, "NETWORK_RESUME_WINDOWS_215")
+print("NETWORK_RESUME_UI_RUNTIME_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY")
 
 # Main Android page/category entry points must bind to real callbacks.
 android_entries = {

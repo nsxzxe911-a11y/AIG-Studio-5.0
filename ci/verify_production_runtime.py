@@ -8,8 +8,8 @@ if not version_line.startswith("versionName="):
     raise SystemExit("release version metadata missing")
 version = version_line.split("=", 1)[1]
 parts = tuple(int(x) for x in version.split("."))
-if parts < (214, 0, 0):
-    raise SystemExit(f"production runtime line requires >=214.0.0, got {version}")
+if parts < (215, 0, 0):
+    raise SystemExit(f"production runtime line requires >=215.0.0, got {version}")
 
 runtime_roots = [
     ROOT / "app" / "src" / "main",
@@ -53,7 +53,7 @@ for marker in required_desktop:
     if marker not in desktop:
         raise SystemExit(f"Windows production runtime marker missing: {marker}")
 
-if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_214"' not in env:
+if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_215"' not in env:
     raise SystemExit("production startup profile missing")
 if "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" not in android_build:
     raise SystemExit("Android production release state missing")
@@ -133,4 +133,23 @@ for marker in [
     if marker not in desktop:
         raise SystemExit(f"Windows offline-first marker missing: {marker}")
 print("OFFLINE_FIRST_UI_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY")
-print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_214|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
+for marker in [
+    'const val POST_READY_NETWORK_OBSERVER = true',
+    'const val NETWORK_STATUS_MUST_NOT_OVERRIDE_OPERATION = true',
+]:
+    if marker not in env:
+        raise SystemExit(f"network-resume contract missing: {marker}")
+for marker in [
+    'contentDescription="NETWORK OPTIONAL STATUS"',
+    'cm.registerDefaultNetworkCallback(callback)',
+    'cm.unregisterNetworkCallback(callback)',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android network-resume marker missing: {marker}")
+for marker in [
+    'LOCAL READY • NETWORK OPTIONAL',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Windows network-optional marker missing: {marker}")
+print("NETWORK_RESUME_UI_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY")
+print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_215|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")

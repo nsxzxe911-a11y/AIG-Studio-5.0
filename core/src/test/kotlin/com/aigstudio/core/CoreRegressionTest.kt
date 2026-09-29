@@ -1208,6 +1208,9 @@ fun main() {
     check(!OfflineFirstRuntimeContract.onlineServiceAllowed(true,false))
     check(OfflineFirstRuntimeContract.onlineServiceAllowed(true,true))
     println("OFFLINE_FIRST_UI_CORE_GATE_PASS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY")
+    check(OfflineFirstRuntimeContract.POST_READY_NETWORK_OBSERVER)
+    check(OfflineFirstRuntimeContract.NETWORK_STATUS_MUST_NOT_OVERRIDE_OPERATION)
+    println("NETWORK_RESUME_UI_CORE_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY")
     println("ALL TESTS PASSED")
 }
 

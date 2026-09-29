@@ -2652,7 +2652,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
 private fun showApp(startup:StudioDesktopStartupWindow?=null) {
     startup?.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
     val doc = DrawingDocument()
-    val status = JLabel("OFFLINE READY • AIG CNC • FANUC / MITSUBISHI M800/M80 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
+    val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • FANUC / MITSUBISHI M800/M80 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
     status.foreground = Color(99, 255, 157)
     val cad = CadPanel(doc) { status.text = it }
 

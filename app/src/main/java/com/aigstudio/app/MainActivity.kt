@@ -452,6 +452,9 @@ class MainActivity : Activity() {
         private const val REQ_AI_VOICE_PERMISSION = 7111
     }
     private lateinit var cad: CadView
+    private lateinit var networkStateBadge: TextView
+    private var onlineNetworkCallback: android.net.ConnectivityManager.NetworkCallback? = null
+    private var onlineAutoCheckStarted = false
     private var voiceTts: TextToSpeech? = null
     private var speechRecognizer: SpeechRecognizer? = null
     private var voiceListening = false
@@ -813,6 +816,13 @@ class MainActivity : Activity() {
         selectProductionUi(ProductionUiSwitchContract.initialMode)
         root.addView(productionUiSwitch,LinearLayout.LayoutParams(-1,-2))
         root.addView(visibleModeTitle,LinearLayout.LayoutParams(-1,-2))
+        networkStateBadge=chromeText(
+            "網路 • 本機就緒 • 網路可選",
+            0xFFA0B4C3.toInt(),9.5f
+        ).apply{
+            contentDescription="NETWORK OPTIONAL STATUS"
+        }
+        root.addView(networkStateBadge,LinearLayout.LayoutParams(-1,-2))
         root.addView(visibleModeActions,LinearLayout.LayoutParams(-1,-2))
 
         cad = CadView(this) {
@@ -1049,23 +1059,67 @@ class MainActivity : Activity() {
 
 
     private fun scheduleBackgroundOnlineServices() {
-        cad.postDelayed({
-            val network=NetworkSecurity.status(this)
-            if(network!="ONLINE / VALIDATED"){
-                Toast.makeText(this,"離線模式 • 本機 UI 已就緒",Toast.LENGTH_SHORT).show()
-                return@postDelayed
-            }
-            val updateConfig=UpdateConfigStore.load(this)
-            if(updateConfig.configured && OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)){
-                SecureUpdateManager.autoCheck(this,updateConfig){result->
-                    if(result.available){
-                        Toast.makeText(this,result.message,Toast.LENGTH_LONG).show()
+        if(!::networkStateBadge.isInitialized) return
+        networkStateBadge.postDelayed({
+            val cm=getSystemService(CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+
+            fun renderNetworkState(validated:Boolean,message:String?=null){
+                runOnUiThread {
+                    if(!::networkStateBadge.isInitialized) return@runOnUiThread
+                    networkStateBadge.text=when{
+                        message!=null -> "網路 • "+message
+                        validated -> "網路 • ONLINE / VALIDATED"
+                        else -> "網路 • 離線可用 • 本機功能正常"
                     }
                 }
             }
+
+            fun maybeStartOnlineServices(caps:android.net.NetworkCapabilities?){
+                val validated=caps?.hasCapability(
+                    android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
+                ) == true
+                if(!validated){
+                    renderNetworkState(false)
+                    return
+                }
+                renderNetworkState(true)
+                if(onlineAutoCheckStarted) return
+                val updateConfig=UpdateConfigStore.load(this)
+                if(!updateConfig.configured) return
+                if(!OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)) return
+                onlineAutoCheckStarted=true
+                SecureUpdateManager.autoCheck(this,updateConfig){result->
+                    if(result.available){
+                        renderNetworkState(true,"更新可用 • "+result.message)
+                    }
+                }
+            }
+
+            val callback=object:android.net.ConnectivityManager.NetworkCallback(){
+                override fun onCapabilitiesChanged(
+                    network:android.net.Network,
+                    caps:android.net.NetworkCapabilities
+                ){
+                    maybeStartOnlineServices(caps)
+                }
+                override fun onLost(network:android.net.Network){
+                    renderNetworkState(false)
+                }
+            }
+
+            onlineNetworkCallback?.let { old ->
+                runCatching { cm.unregisterNetworkCallback(old) }
+            }
+            onlineNetworkCallback=callback
+            runCatching{
+                cm.registerDefaultNetworkCallback(callback)
+                val active=cm.activeNetwork
+                maybeStartOnlineServices(active?.let { cm.getNetworkCapabilities(it) })
+            }.onFailure{
+                renderNetworkState(false,"狀態未知 • 本機功能正常")
+            }
         },OfflineFirstRuntimeContract.BACKGROUND_NETWORK_DELAY_MS)
     }
-
 
     private fun rotaryMachinePrefs() = getSharedPreferences("aig_rotary_machine_profile", MODE_PRIVATE)
 
@@ -1429,6 +1483,13 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        onlineNetworkCallback?.let { callback ->
+            runCatching {
+                val cm=getSystemService(CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+                cm.unregisterNetworkCallback(callback)
+            }
+        }
+        onlineNetworkCallback=null
         adaptiveRefreshController?.stop()
         adaptiveRefreshController = null
         autosaveHandler.removeCallbacks(autosaveRunnable)
