@@ -29,6 +29,7 @@ regression = read("core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt
 hashes = read("design/theme/official_rgb/android-drawable.sha256")
 workflow = read(".github/workflows/build-download.yml")
 windows_release = read("build_windows_native.ps1")
+library_5x_skin_manifest = read("design/theme/library_5x_real_cam_208/manifest.json")
 require(windows_release, "--win-per-user-install", "WINDOWS_PER_USER_INSTALLER_GATE")
 for needle in (
     "private val pulseTimer=Timer(90)",
@@ -934,6 +935,42 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_AXIS_DEPTH_BEADS_207")
 print("AXIS_DEPTH_BEADS_GATE_PASS|ANDROID|WINDOWS|3D|5AX|PROJECTED_DEPTH_DELTA|DIRECTIONAL_RADIUS|DIRECTIONAL_ALPHA|SMOKE_EVIDENCE|VISUAL_ONLY")
+for needle in (
+    'object LibraryFiveAxisSkin208',
+    'const val ID="library_5x_real_cam_208"',
+    'const val SOURCE_KIND="CHATGPT_ANDROID_LIBRARY_REFERENCE"',
+    'const val SOURCE_MOBILE="image-gen-1(1).png"',
+    'const val SOURCE_LANDSCAPE="image-gen-2(1).png"',
+    'setBackgroundColor(LibraryFiveAxisSkin208.background)',
+    'linePaint.color=if(b.rapid)LibraryFiveAxisSkin208.cyan else LibraryFiveAxisSkin208.warning',
+    'param("SAFE-Z",DisplayFormat.mm(cam.settings.safeZ)+" mm",LibraryFiveAxisSkin208.safe)',
+    'param("WORK OFFSET",workOffset,LibraryFiveAxisSkin208.warning)',
+):
+    require(android, needle, "STUDIO_ANDROID_LIBRARY_5X_REAL_CAM_SKIN_208")
+for needle in (
+    'private object LibraryFiveAxisSkin208',
+    'const val ID="library_5x_real_cam_208"',
+    'const val SOURCE_KIND="CHATGPT_ANDROID_LIBRARY_REFERENCE"',
+    'const val SOURCE_MOBILE="image-gen-1(1).png"',
+    'const val SOURCE_LANDSCAPE="image-gen-2(1).png"',
+    'background=LibraryFiveAxisSkin208.panel',
+    'parameter("SAFE-Z",DisplayFormat.mm(settings.safeZ)+" mm",LibraryFiveAxisSkin208.safe)',
+    'camAction("5AX",LibraryFiveAxisSkin208.magenta)',
+    'toolTipText=LibraryFiveAxisSkin208.SOURCE_MOBILE+" + "+LibraryFiveAxisSkin208.SOURCE_LANDSCAPE',
+):
+    require(desktop, needle, "STUDIO_WINDOWS_LIBRARY_5X_REAL_CAM_SKIN_208")
+for needle in (
+    '"theme_id": "library_5x_real_cam_208"',
+    '"source_kind": "ChatGPT Android Library visual reference"',
+    '"name": "image-gen-1(1).png"',
+    '"name": "image-gen-2(1).png"',
+    '"embedded_as_static_runtime": false',
+    '"static_image_is_function": false',
+    '"geometry_mutation": false',
+    '"cam_sim_nc_truth_unchanged": true',
+):
+    require(library_5x_skin_manifest, needle, "STUDIO_LIBRARY_5X_REAL_CAM_MANIFEST_208")
+print("LIBRARY_5X_REAL_CAM_SKIN_GATE_PASS|ANDROID|WINDOWS|CHATGPT_ANDROID_LIBRARY_REFERENCE|IMAGE_GEN_1|IMAGE_GEN_2|CAM_SETTINGS_LIVE|WORK_OFFSET_LIVE|TOOLPATH_LIVE|VISUAL_ONLY|NO_GEOMETRY_MUTATION")
 for needle in (
     'val actionScroll=HorizontalScrollView(this).apply',
     'minWidth=dp(78)',
