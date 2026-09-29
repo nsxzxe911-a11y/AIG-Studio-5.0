@@ -204,7 +204,7 @@ for needle in (
     require(android, needle, "ANDROID_OFFLINE_FIRST_UI_221")
 for needle in (
     'LOCAL READY • NETWORK OPTIONAL',
-    'OFFLINE-FIRST',
+    'network_blocking=false',
 ):
     require(desktop, needle, "WINDOWS_OFFLINE_FIRST_UI_221")
 print("OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY")
