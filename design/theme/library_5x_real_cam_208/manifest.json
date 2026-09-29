@@ -1,0 +1,33 @@
+{
+  "theme_id": "library_5x_real_cam_208",
+  "version": "208.0.0",
+  "source_kind": "ChatGPT Android Library visual reference",
+  "sources": [
+    {
+      "name": "image-gen-1(1).png",
+      "role": "mobile 5AX REAL CAM layout and palette reference",
+      "embedded_as_static_runtime": false
+    },
+    {
+      "name": "image-gen-2(1).png",
+      "role": "landscape/desktop 5AX REAL CAM layout and palette reference",
+      "embedded_as_static_runtime": false
+    }
+  ],
+  "runtime_binding": {
+    "android": "MainActivity.showCamWorkstation + LibraryFiveAxisSkin208",
+    "windows": "DesktopApp.buildProductionCamPanel + LibraryFiveAxisSkin208",
+    "truth_source": "CamModel/Machining3DEngine/CncPost/runtime state",
+    "static_image_is_function": false,
+    "geometry_mutation": false,
+    "cam_sim_nc_truth_unchanged": true
+  },
+  "visual_contract": [
+    "dark metallic high-contrast workspace",
+    "cyan rapid/toolpath accent",
+    "magenta 5AX emphasis",
+    "violet secondary controls",
+    "green safe/tool state",
+    "gold warning/Safe-Z-work-offset emphasis"
+  ]
+}
