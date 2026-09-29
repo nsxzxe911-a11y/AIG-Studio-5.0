@@ -2935,38 +2935,48 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null) {
     editTools.add(button("重做", Color(125,112,255)) { cad.redoEdit() })
     linkTools.add(button("連接", Color(63,255,157)) { cad.connectSelected() })
     linkTools.add(button("斷開", Color(255,176,32)) { cad.disconnectSelected() })
-    moduleButtons.add(button("2D CAD", StudioDesktopProductionTheme.accent) {
+    val productionUiButtons=linkedMapOf<String,GlassActionButton>()
+    fun productionUiButton(id:String,color:Color,action:()->Unit):GlassActionButton {
+        val normalized=ProductionUiSwitchContract.normalize(id)
+        return GlassActionButton(normalized,color).apply {
+            toolTipText="正式 UI 切換 • "+normalized
+            productionUiButtons[normalized]=this
+            addActionListener {
+                productionUiButtons.forEach { (key,b) -> b.active=(key==normalized) }
+                action()
+            }
+        }
+    }
+    moduleButtons.add(productionUiButton("CAD", StudioDesktopProductionTheme.accent) {
         mainCardLayout.show(mainCardHost,"CAD")
-        status.text="2D CAD • PRODUCTION UI • MASTER X0.000 Y0.000 • 0.001 mm"
+        status.text="CAD • PRODUCTION UI • MASTER X0.000 Y0.000 • 0.001 mm"
     })
-    moduleButtons.add(button("CAM", StudioDesktopProductionTheme.cutting) {
+    moduleButtons.add(productionUiButton("CAM", StudioDesktopProductionTheme.cutting) {
         showProductionCam()
     })
-    moduleButtons.add(button("3D", Color(139,92,246)) {
-        runCatching { showUnifiedMachiningEditor(frame,doc,status,"3D") }
-            .onFailure { status.text="3D BLOCKED • "+(it.message?:"error") }
-    })
-    moduleButtons.add(button("3AX", Color(59,130,246)) {
-        runCatching { showUnifiedMachiningEditor(frame,doc,status,"3AX") }
-            .onFailure { status.text="3AX BLOCKED • "+(it.message?:"error") }
-    })
-    moduleButtons.add(button("4AX", StudioDesktopProductionTheme.warning) {
-        runCatching { showUnifiedMachiningEditor(frame,doc,status,"4AX") }
-            .onFailure { status.text="4AX BLOCKED • "+(it.message?:"error") }
-    })
-    moduleButtons.add(button("5AX", Color(236,72,153)) {
-        runCatching { showUnifiedMachiningEditor(frame,doc,status,"5AX") }
-            .onFailure { status.text="5AX BLOCKED • "+(it.message?:"error") }
-    })
-    moduleButtons.add(button("SIM", Color(63,255,157)) {
-        runCatching { showUnifiedMachiningEditor(frame,doc,status,"3D") }
+    moduleButtons.add(productionUiButton("SIM", Color(139,92,246)) {
+        runCatching { showUnifiedMachiningEditor(frame,doc,status,ProductionUiSwitchContract.runtimeTarget("SIM")) }
             .onFailure { status.text="SIM BLOCKED • "+(it.message?:"error") }
     })
-    moduleButtons.add(button("NC", Color(80,170,255)) {
+    moduleButtons.add(productionUiButton("3AX", Color(59,130,246)) {
+        runCatching { showUnifiedMachiningEditor(frame,doc,status,ProductionUiSwitchContract.runtimeTarget("3AX")) }
+            .onFailure { status.text="3AX BLOCKED • "+(it.message?:"error") }
+    })
+    moduleButtons.add(productionUiButton("4AX", StudioDesktopProductionTheme.warning) {
+        runCatching { showUnifiedMachiningEditor(frame,doc,status,ProductionUiSwitchContract.runtimeTarget("4AX")) }
+            .onFailure { status.text="4AX BLOCKED • "+(it.message?:"error") }
+    })
+    moduleButtons.add(productionUiButton("5AX", Color(236,72,153)) {
+        runCatching { showUnifiedMachiningEditor(frame,doc,status,ProductionUiSwitchContract.runtimeTarget("5AX")) }
+            .onFailure { status.text="5AX BLOCKED • "+(it.message?:"error") }
+    })
+    moduleButtons.add(productionUiButton("NC", Color(80,170,255)) {
         runCatching { showNcEditor(frame,doc) }
             .onSuccess { status.text="NC EDIT • FANUC / MITSUBISHI • G90/G91 EXPLICIT • ABS XYZ LOCKED" }
             .onFailure { status.text="NC EDIT BLOCKED • "+(it.message?:"error") }
     })
+    check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))
+    productionUiButtons[ProductionUiSwitchContract.initialMode]?.active=true
     editTools.add(button("清除", Color(239, 68, 68)) { cad.clearCad() })
 
     status.border = BorderFactory.createCompoundBorder(

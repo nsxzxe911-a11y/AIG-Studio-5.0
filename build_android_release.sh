@@ -31,7 +31,10 @@ version=$VERSION
 git_sha=$GIT_SHA
 artifact=$APK_NAME
 sha256=$APK_SHA
-release_state=BUILD_ARTIFACT_ONLY_NOT_FINAL
+release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL
+release_class=PRODUCTION_RUNTIME
+runtime_evidence=APK_BUILD_SIGN_PACKAGE
+device_launch_evidence=REQUIRED_FOR_FINAL
 EOF
 )
 
@@ -48,7 +51,10 @@ version=$VERSION
 git_sha=$GIT_SHA
 artifact=$SOURCE_NAME
 sha256=$SOURCE_SHA
-release_state=BUILD_ARTIFACT_ONLY_NOT_FINAL
+release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL
+release_class=PRODUCTION_RUNTIME
+runtime_evidence=APK_BUILD_SIGN_PACKAGE
+device_launch_evidence=REQUIRED_FOR_FINAL
 EOF
 )
 

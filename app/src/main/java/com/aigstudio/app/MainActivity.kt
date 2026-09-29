@@ -693,6 +693,60 @@ class MainActivity : Activity() {
             setMargins(dp(5), dp(5), dp(5), dp(3))
         })
 
+        val productionUiSwitch = FlowLayout(this).apply {
+            setPadding(dp(5), dp(2), dp(5), dp(3))
+            contentDescription = "PRODUCTION UI SWITCH"
+        }
+        val productionUiButtons = linkedMapOf<String,RgbGlowButton>()
+        val productionUiColors = mapOf(
+            "CAD" to 0xFF3DEBFF.toInt(),
+            "CAM" to 0xFF22C55E.toInt(),
+            "SIM" to 0xFF8B5CF6.toInt(),
+            "3AX" to 0xFF3B82F6.toInt(),
+            "4AX" to 0xFFF59E0B.toInt(),
+            "5AX" to 0xFFEC4899.toInt(),
+            "NC" to 0xFF50AAFF.toInt()
+        )
+        fun selectProductionUi(id:String) {
+            val normalized=ProductionUiSwitchContract.normalize(id)
+            productionUiButtons.forEach { (key,button) ->
+                button.setRgbState(
+                    productionUiColors[key] ?: StudioProductionTheme.accent,
+                    key==normalized
+                )
+            }
+        }
+        fun addProductionUi(id:String, action:()->Unit) {
+            val normalized=ProductionUiSwitchContract.normalize(id)
+            val button=RgbGlowButton(this).apply {
+                text=normalized
+                contentDescription="UI $normalized"
+                textSize=StudioDisplayPolicy.sp(this,9.5f)
+                minWidth=dp(68)
+                minHeight=dp(42)
+                maxLines=1
+                setRgbState(productionUiColors[normalized] ?: StudioProductionTheme.accent,false)
+                setOnClickListener {
+                    selectProductionUi(normalized)
+                    action()
+                }
+            }
+            productionUiButtons[normalized]=button
+            productionUiSwitch.addView(button)
+        }
+        addProductionUi("CAD") {
+            Toast.makeText(this,"CAD • LIVE WORKSPACE",Toast.LENGTH_SHORT).show()
+        }
+        addProductionUi("CAM") { showCamWorkstation() }
+        addProductionUi("SIM") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM")) }
+        addProductionUi("3AX") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX")) }
+        addProductionUi("4AX") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX")) }
+        addProductionUi("5AX") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX")) }
+        addProductionUi("NC") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC")) }
+        check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))
+        selectProductionUi(ProductionUiSwitchContract.initialMode)
+        root.addView(productionUiSwitch,LinearLayout.LayoutParams(-1,-2))
+
         cad = CadView(this) {
             if (!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
         }

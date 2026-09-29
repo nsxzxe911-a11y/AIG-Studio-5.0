@@ -720,6 +720,32 @@ object WorkstationChromeContract {
 }
 
 
+object ProductionUiSwitchContract {
+    const val POLICY = "PRODUCTION_UI_SWITCH_STABLE_ORDER_LIVE_RUNTIME"
+    val modes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC")
+    const val initialMode = "CAD"
+
+    fun normalize(mode:String):String {
+        val id=mode.trim().uppercase()
+        require(id in modes){"Unsupported production UI mode: $mode"}
+        return id
+    }
+
+    fun runtimeTarget(mode:String):String = when(normalize(mode)) {
+        "CAD" -> "CAD"
+        "CAM" -> "CAM"
+        "SIM" -> "3D"
+        "3AX" -> "3AX"
+        "4AX" -> "4AX"
+        "5AX" -> "5AX"
+        "NC" -> "NC_EDIT"
+        else -> error("unreachable")
+    }
+
+    fun stableOrder(candidate:List<String>):Boolean = candidate==modes
+}
+
+
 object FloatingCadToolContract {
     const val TITLE = "CAD 工具"
     const val BACK = "←"
@@ -1085,7 +1111,7 @@ enum class StudioStartupStage {
 }
 
 object StudioStartupEngineContract {
-    const val PROFILE="AIG_STUDIO_STARTUP_ENGINE_163"
+    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_210"
     val orderedStages=listOf(
         StudioStartupStage.BOOTSTRAP,
         StudioStartupStage.SAFE_THEME,

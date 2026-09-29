@@ -82,6 +82,12 @@ if (Test-Path $ReleaseOut) { Remove-Item -Recurse -Force $ReleaseOut }
 New-Item -ItemType Directory -Force $PackageOut | Out-Null
 New-Item -ItemType Directory -Force $ReleaseOut | Out-Null
 
+$EvidenceOut = Join-Path $ReleaseOut 'runtime-evidence'
+New-Item -ItemType Directory -Force $EvidenceOut | Out-Null
+foreach ($name in $RequiredSmokeEvidence) {
+  Copy-Item (Join-Path $SmokeDir $name) (Join-Path $EvidenceOut $name) -Force
+}
+
 & jpackage --type exe --name $Product --dest $PackageOut --input $LibDir --main-jar 'AIG_Studio_PC.jar' --main-class com.aigstudio.desktop.DesktopAppKt --app-version $VersionName --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-per-user-install --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
 if ($LASTEXITCODE -ne 0) { throw 'Studio jpackage EXE build failed.' }
 
@@ -100,7 +106,9 @@ $Hash = (Get-FileHash $FinalExe -Algorithm SHA256).Hash.ToLowerInvariant()
   "git_sha=$GitSha"
   ('artifact=' + (Split-Path -Leaf $FinalExe))
   "sha256=$Hash"
-  'release_state=BUILD_ARTIFACT_ONLY_NOT_FINAL'
+  'release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL'
+  'release_class=PRODUCTION_RUNTIME'
+  'runtime_evidence=WINDOWS_EXECUTABLE_SMOKE_CAPTURED'
 ) | Out-File $ManifestFile -Encoding ascii
 
 Write-Host ('AIG_STUDIO_VERSION=' + $VersionName)
