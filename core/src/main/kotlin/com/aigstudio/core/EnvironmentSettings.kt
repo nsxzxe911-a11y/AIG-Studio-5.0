@@ -1147,7 +1147,7 @@ enum class StudioStartupStage {
 }
 
 object StudioStartupEngineContract {
-    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_215"
+    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_216"
     val orderedStages=listOf(
         StudioStartupStage.BOOTSTRAP,
         StudioStartupStage.SAFE_THEME,

@@ -215,18 +215,18 @@ for needle in (
     'const val POST_READY_NETWORK_OBSERVER = true',
     'const val NETWORK_STATUS_MUST_NOT_OVERRIDE_OPERATION = true',
 ):
-    require(env, needle, "NETWORK_RESUME_CONTRACT_215")
+    require(env, needle, "NETWORK_RESUME_CONTRACT_216")
 for needle in (
     'contentDescription="NETWORK OPTIONAL STATUS"',
     'cm.registerDefaultNetworkCallback(callback)',
     'cm.unregisterNetworkCallback(callback)',
     '"網路 • 離線可用 • 本機功能正常"',
 ):
-    require(android, needle, "NETWORK_RESUME_ANDROID_215")
+    require(android, needle, "NETWORK_RESUME_ANDROID_216")
 for needle in (
     'LOCAL READY • NETWORK OPTIONAL',
 ):
-    require(desktop, needle, "NETWORK_RESUME_WINDOWS_215")
+    require(desktop, needle, "NETWORK_RESUME_WINDOWS_216")
 print("NETWORK_RESUME_UI_RUNTIME_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY")
 
 # Main Android page/category entry points must bind to real callbacks.
