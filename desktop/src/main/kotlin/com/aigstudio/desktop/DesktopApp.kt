@@ -40,6 +40,8 @@ private object StudioDesktopOriginalVisuals {
 }
 
 
+private fun desktopVersionName():String = "224.0.0"
+
 private class StudioDesktopStartupWindow {
     private val window=JWindow()
     private val title=JLabel("AIG CNC",SwingConstants.CENTER)
