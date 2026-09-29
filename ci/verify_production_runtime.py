@@ -8,8 +8,8 @@ if not version_line.startswith("versionName="):
     raise SystemExit("release version metadata missing")
 version = version_line.split("=", 1)[1]
 parts = tuple(int(x) for x in version.split("."))
-if parts < (212, 0, 0):
-    raise SystemExit(f"production runtime line requires >=212.0.0, got {version}")
+if parts < (214, 0, 0):
+    raise SystemExit(f"production runtime line requires >=214.0.0, got {version}")
 
 runtime_roots = [
     ROOT / "app" / "src" / "main",
@@ -53,7 +53,7 @@ for marker in required_desktop:
     if marker not in desktop:
         raise SystemExit(f"Windows production runtime marker missing: {marker}")
 
-if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_212"' not in env:
+if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_214"' not in env:
     raise SystemExit("production startup profile missing")
 if "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" not in android_build:
     raise SystemExit("Android production release state missing")
@@ -111,4 +111,26 @@ for marker in [
     if marker not in desktop:
         raise SystemExit(f"Windows visible-function UI marker missing: {marker}")
 print("VISIBLE_FUNCTION_UI_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
-print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_212|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
+for marker in [
+    'const val POLICY = "OFFLINE_FIRST_UI_BOOT"',
+    'const val NETWORK_REQUIRED_FOR_STARTUP = false',
+]:
+    if marker not in env:
+        raise SystemExit(f"offline-first contract missing: {marker}")
+for marker in [
+    'bootOverlay.completeAndDetach(bootShell)',
+    'scheduleBackgroundOnlineServices()',
+    'if(network!="ONLINE / VALIDATED")',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android offline-first marker missing: {marker}")
+if android_main.index('bootOverlay.completeAndDetach(bootShell)') > android_main.index('scheduleBackgroundOnlineServices()'):
+    raise SystemExit("online services must be scheduled after UI detach")
+for marker in [
+    'OFFLINE READY • AIG CNC',
+    'OFFLINE-FIRST',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Windows offline-first marker missing: {marker}")
+print("OFFLINE_FIRST_UI_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY")
+print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_214|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")

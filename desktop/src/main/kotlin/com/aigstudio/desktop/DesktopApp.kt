@@ -43,7 +43,7 @@ private object StudioDesktopOriginalVisuals {
 private class StudioDesktopStartupWindow {
     private val window=JWindow()
     private val title=JLabel("AIG CNC",SwingConstants.CENTER)
-    private val detail=JLabel("CAD • CAM • SIM • 3AX • 4AX • 5AX • NC • AI",SwingConstants.CENTER)
+    private val detail=JLabel("CAD • CAM • SIM • 3AX • 4AX • 5AX • NC • AI • OFFLINE-FIRST",SwingConstants.CENTER)
     private val status=JLabel("啟動中…",SwingConstants.CENTER)
     private val progress=JProgressBar(0,100)
     private var stage=StudioStartupStage.BOOTSTRAP
@@ -2652,7 +2652,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
 private fun showApp(startup:StudioDesktopStartupWindow?=null) {
     startup?.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
     val doc = DrawingDocument()
-    val status = JLabel("AIG CNC • FANUC / MITSUBISHI M800/M80 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
+    val status = JLabel("OFFLINE READY • AIG CNC • FANUC / MITSUBISHI M800/M80 • 原點 X0.000 Y0.000 • 精度 0.001 mm")
     status.foreground = Color(99, 255, 157)
     val cad = CadPanel(doc) { status.text = it }
 

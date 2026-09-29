@@ -1201,6 +1201,13 @@ fun main() {
     check(VisibleFunctionUiContract.requiredActions["CAD"]==listOf("LINE","RECT","CIRCLE","ARC","HOLE","SELECT"))
     check(VisibleFunctionUiContract.requiredActions["AI"]==listOf("INSPECT","VOICE","SUITE","UPDATE"))
     println("VISIBLE_FUNCTION_UI_CORE_GATE_PASS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
+    check(OfflineFirstRuntimeContract.POLICY=="OFFLINE_FIRST_UI_BOOT")
+    check(!OfflineFirstRuntimeContract.NETWORK_REQUIRED_FOR_STARTUP)
+    check(OfflineFirstRuntimeContract.startupAllowed(false))
+    check(OfflineFirstRuntimeContract.localModes==listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI"))
+    check(!OfflineFirstRuntimeContract.onlineServiceAllowed(true,false))
+    check(OfflineFirstRuntimeContract.onlineServiceAllowed(true,true))
+    println("OFFLINE_FIRST_UI_CORE_GATE_PASS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY")
     println("ALL TESTS PASSED")
 }
 

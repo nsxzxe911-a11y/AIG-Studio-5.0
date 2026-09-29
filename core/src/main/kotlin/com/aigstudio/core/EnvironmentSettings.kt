@@ -768,6 +768,18 @@ object VisibleFunctionUiContract {
 }
 
 
+object OfflineFirstRuntimeContract {
+    const val POLICY = "OFFLINE_FIRST_UI_BOOT"
+    const val NETWORK_REQUIRED_FOR_STARTUP = false
+    const val BACKGROUND_NETWORK_DELAY_MS = 1200L
+    val localModes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")
+
+    fun startupAllowed(networkAvailable:Boolean):Boolean = true
+    fun onlineServiceAllowed(uiReady:Boolean, validatedNetwork:Boolean):Boolean =
+        uiReady && validatedNetwork
+}
+
+
 object FloatingCadToolContract {
     const val TITLE = "CAD 工具"
     const val BACK = "←"
@@ -1133,7 +1145,7 @@ enum class StudioStartupStage {
 }
 
 object StudioStartupEngineContract {
-    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_212"
+    const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_214"
     val orderedStages=listOf(
         StudioStartupStage.BOOTSTRAP,
         StudioStartupStage.SAFE_THEME,

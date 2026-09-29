@@ -11,6 +11,8 @@ on:
       - studio-210-production-ui-switching
       - studio-211-production-ui-switch-gate
       - studio-212-visible-ui-is-function
+      - studio-213-offline-first-ui
+      - studio-214-offline-first-ui
     paths:
       - 'release-version.properties'
       - 'app/**'
@@ -49,9 +51,10 @@ jobs:
         shell: bash
         run: |
           python3 ci/verify_production_runtime.py | tee production-runtime.log
-          grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_212|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE' production-runtime.log
+          grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_214|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE' production-runtime.log
           grep -Fq 'PRODUCTION_UI_SWITCH_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|STABLE_ORDER|LIVE_RUNTIME' production-runtime.log
           grep -Fq 'VISIBLE_FUNCTION_UI_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' production-runtime.log
+          grep -Fq 'OFFLINE_FIRST_UI_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' production-runtime.log
       - name: Verify all runtime pages and callbacks
         shell: bash
         run: |
@@ -59,6 +62,7 @@ jobs:
           grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
           grep -Fq 'PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|STABLE_ORDER' runtime-surfaces.log
           grep -Fq 'VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' runtime-surfaces.log
+          grep -Fq 'OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' runtime-surfaces.log
           grep -Fq 'AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS' runtime-surfaces.log
           grep -Fq 'NO_FAKE_PAGE_CALLBACK_GATE_PASS' runtime-surfaces.log
           grep -Fq 'CAD_PRECISION_EDIT_RUNTIME_GATE_PASS' runtime-surfaces.log
@@ -93,6 +97,7 @@ jobs:
           grep -Fq 'CONTINUOUS_MULTIAXIS_CAM_SIM_GATE_PASS' release-validation.log
           grep -Fq 'AXIS_MODE_3_4_5_GATE_PASS' release-validation.log
           grep -Fq 'VISIBLE_FUNCTION_UI_CORE_GATE_PASS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' release-validation.log
+          grep -Fq 'OFFLINE_FIRST_UI_CORE_GATE_PASS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' release-validation.log
           test -s app/src/main/res/drawable/ic_rgb_3ax.xml
           test -s app/src/main/res/drawable/ic_rgb_4ax.xml
           test -s app/src/main/res/drawable/ic_rgb_5ax.xml

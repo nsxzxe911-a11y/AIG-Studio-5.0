@@ -191,6 +191,27 @@ for needle in (
     require(desktop, needle, "WINDOWS_VISIBLE_FUNCTION_UI_212")
 print("VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
 
+for needle in (
+    'const val POLICY = "OFFLINE_FIRST_UI_BOOT"',
+    'const val NETWORK_REQUIRED_FOR_STARTUP = false',
+    'fun startupAllowed(networkAvailable:Boolean):Boolean = true',
+):
+    require(env, needle, "OFFLINE_FIRST_CONTRACT_214")
+for needle in (
+    'bootOverlay.completeAndDetach(bootShell)',
+    'scheduleBackgroundOnlineServices()',
+    'if(network!="ONLINE / VALIDATED")',
+    '"離線模式 • 本機 UI 已就緒"',
+    'OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)',
+):
+    require(android, needle, "ANDROID_OFFLINE_FIRST_UI_214")
+for needle in (
+    'OFFLINE READY • AIG CNC',
+    'OFFLINE-FIRST',
+):
+    require(desktop, needle, "WINDOWS_OFFLINE_FIRST_UI_214")
+print("OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY")
+
 # Main Android page/category entry points must bind to real callbacks.
 android_entries = {
     "CAD_DRAW": 'addCategory("繪圖", 0) { showDrawingBranch() }',

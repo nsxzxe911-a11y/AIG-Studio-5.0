@@ -1038,20 +1038,33 @@ class MainActivity : Activity() {
                 bootOverlay.advance(StartupMilestone.WRAPPING_UP)
                 bootOverlay.advance(StartupMilestone.READY)
                 bootOverlay.completeAndDetach(bootShell)
+                scheduleBackgroundOnlineServices()
             } else {
                 bootOverlay.fail("UI ATTACH BLOCKED")
             }
         }
-        val updateConfig = UpdateConfigStore.load(this)
-        if (updateConfig.configured) {
-            SecureUpdateManager.autoCheck(this, updateConfig) { result ->
-                if (result.available || !result.ok) {
-                    Toast.makeText(this, result.message, Toast.LENGTH_LONG).show()
-                }
-            }
-        }
+        // Network never participates in startup. Online services run only after READY/UI attach.
     }
 
+
+
+    private fun scheduleBackgroundOnlineServices() {
+        cad.postDelayed({
+            val network=NetworkSecurity.status(this)
+            if(network!="ONLINE / VALIDATED"){
+                Toast.makeText(this,"離線模式 • 本機 UI 已就緒",Toast.LENGTH_SHORT).show()
+                return@postDelayed
+            }
+            val updateConfig=UpdateConfigStore.load(this)
+            if(updateConfig.configured && OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)){
+                SecureUpdateManager.autoCheck(this,updateConfig){result->
+                    if(result.available){
+                        Toast.makeText(this,result.message,Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        },OfflineFirstRuntimeContract.BACKGROUND_NETWORK_DELAY_MS)
+    }
 
 
     private fun rotaryMachinePrefs() = getSharedPreferences("aig_rotary_machine_profile", MODE_PRIVATE)
