@@ -1133,13 +1133,14 @@ function buildAdaptive2DPaths(shape,p,levels){
    const ccw=area>0,wantCcw=direction==="CCW";return ccw===wantCcw?points:[...points].reverse();
  }
  const zs=(levels||[]).map(Number).filter(Number.isFinite);
+ const stockTop=Number.isFinite(Number(p?.stockTop))?Number(p.stockTop):0;
  zs.forEach((z,li)=>{
    if(shape?.type==="rect"){
      const rad=toolDia/2;let minX=Math.min(shape.a.x,shape.b.x)+rad,maxX=Math.max(shape.a.x,shape.b.x)-rad,minY=Math.min(shape.a.y,shape.b.y)+rad,maxY=Math.max(shape.a.y,shape.b.y)-rad,ring=0;
      while(maxX>minX&&maxY>minY&&ring<1000){
        let pts=[{x:minX,y:minY},{x:maxX,y:minY},{x:maxX,y:maxY},{x:minX,y:maxY},{x:minX,y:minY}];
        if((ring+li+1)%2)pts=[...pts].reverse();pts=normalize(pts);
-       out.push({kind:"adaptive",points:pts,closed:true,depth:z,feed,rpm,safeZ,sourceId:shape.id,zLevelIndex:li+1,zLevelCount:zs.length,adaptiveRing:ring+1,radialStep:step,radialEngagement:Math.min(1,step/toolDia),entry:"SAFE_Z"});
+       out.push({kind:"adaptive",points:pts,closed:true,depth:z,feed,rpm,safeZ,sourceId:shape.id,zLevelIndex:li+1,zLevelCount:zs.length,adaptiveRing:ring+1,radialStep:step,radialEngagement:Math.min(1,step/toolDia),entry:"RAMP_LOOP",entryZStart:li===0?stockTop:zs[li-1],rampPasses:1});
        minX+=step;maxX-=step;minY+=step;maxY-=step;ring++;
      }
    }else if(shape?.type==="circle"||shape?.type==="hole"){
@@ -1147,7 +1148,7 @@ function buildAdaptive2DPaths(shape,p,levels){
      while(r>minR&&ring<1000){
        let pts=sampleCircle(shape.c,r,Math.max(32,Math.min(128,Math.ceil(Math.PI*2*r/Math.max(.5,toolDia*.35)))));
        if((ring+li+1)%2)pts=[...pts].reverse();pts=normalize(pts);
-       out.push({kind:"adaptive",points:pts,closed:true,depth:z,feed,rpm,safeZ,sourceId:shape.id,zLevelIndex:li+1,zLevelCount:zs.length,adaptiveRing:ring+1,radialStep:step,radialEngagement:Math.min(1,step/toolDia),entry:"SAFE_Z"});
+       out.push({kind:"adaptive",points:pts,closed:true,depth:z,feed,rpm,safeZ,sourceId:shape.id,zLevelIndex:li+1,zLevelCount:zs.length,adaptiveRing:ring+1,radialStep:step,radialEngagement:Math.min(1,step/toolDia),entry:"RAMP_LOOP",entryZStart:li===0?stockTop:zs[li-1],rampPasses:1});
        r-=step;ring++;
      }
    }
@@ -2121,11 +2122,11 @@ function makeToolpathRuntime(root){
    state.view.scale=Math.max(.2,Math.min(60,Math.min((w-80)/ww,(h-80)/hh)));state.view.panX=-((minX+maxX)/2)*state.view.scale;state.view.panY=((minY+maxY)/2)*state.view.scale;draw();
  }
  function renderList(){
-   listEl.innerHTML="";state.paths.forEach((p,i)=>{const b=document.createElement("button");b.className="btn"+(i===state.selected?" cadSelected":"");b.dataset.tpIndex=i;const adaptiveMeta=p.kind==="adaptive"?("  L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" R"+Number(p.adaptiveRing||0)+" Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"):"";
+   listEl.innerHTML="";state.paths.forEach((p,i)=>{const b=document.createElement("button");b.className="btn"+(i===state.selected?" cadSelected":"");b.dataset.tpIndex=i;const adaptiveMeta=p.kind==="adaptive"?("  L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" R"+Number(p.adaptiveRing||0)+" Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"+(p.entry==="RAMP_LOOP"?" Ramp":"")):"";
    b.textContent=(p.enabled===false?"[OFF] ":"")+"OP"+String(i+1).padStart(2,"0")+"  "+String(p.kind||"path").toUpperCase()+"  "+(p.points?.length||0)+" pts  Z"+Number(p.depth??0).toFixed(3)+adaptiveMeta+"  A"+Number(p.aStart||0).toFixed(1)+"→"+Number(p.aEnd??p.aStart??0).toFixed(1)+" B"+Number(p.bStart||0).toFixed(1)+"→"+Number(p.bEnd??p.bStart??0).toFixed(1);b.style.opacity=p.enabled===false?".42":"1";listEl.appendChild(b)});
  }
  function updateInfo(){
-   const enabledCount=state.paths.filter(p=>p.enabled!==false).length;countEl.textContent=enabledCount+"/"+state.paths.length+" enabled";const p=selected();selectedEl.textContent=p?("OP"+String(state.selected+1).padStart(2,"0")+" "+String(p.kind||"path").toUpperCase()+(p.kind==="adaptive"?(" • Z L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" • R"+Number(p.adaptiveRing||0)+" • Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"):"")):"無";
+   const enabledCount=state.paths.filter(p=>p.enabled!==false).length;countEl.textContent=enabledCount+"/"+state.paths.length+" enabled";const p=selected();selectedEl.textContent=p?("OP"+String(state.selected+1).padStart(2,"0")+" "+String(p.kind||"path").toUpperCase()+(p.kind==="adaptive"?(" • Z L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" • R"+Number(p.adaptiveRing||0)+" • Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"+(p.entry==="RAMP_LOOP"?(" • Ramp Z"+Number(p.entryZStart??0).toFixed(3)+"→"+Number(p.depth??0).toFixed(3)):"")):"")):"無";
    statusEl.textContent=p?.enabled===false?"OP 停用":state.edit?"節點編輯":state.visible?"顯示":"隱藏";
  }
  function leadPoint(path,which){
@@ -2202,6 +2203,10 @@ function makeToolpathRuntime(root){
        const load=Number(p.radialEngagement),ring=Number(p.adaptiveRing),li=Number(p.zLevelIndex),lc=Number(p.zLevelCount);
        if(!(load>0&&load<=.45))errors.push("OP"+(i+1)+" 自適應負載超界");
        if(!(ring>=1&&li>=1&&lc>=li))errors.push("OP"+(i+1)+" 自適應層級資料錯誤");
+       if(p.entry==="RAMP_LOOP"){
+         const ez=Number(p.entryZStart),dz=Number(p.depth),sz=Number(p.safeZ);
+         if(!Number.isFinite(ez)||!Number.isFinite(dz)||ez<dz-1e-9||ez>sz+1e-9)errors.push("OP"+(i+1)+" Ramp Z 資料錯誤");
+       }
      }
      for(const pt of p.points||[])if(!Number.isFinite(pt.x)||!Number.isFinite(pt.y))errors.push("OP"+(i+1)+" 有非法座標");
      if(!(Number(p.feed)>0))errors.push("OP"+(i+1)+" 進給錯誤");
@@ -2258,11 +2263,24 @@ function makeToolpathRuntime(root){
        push("G94 G84 X"+fmt(pt.x)+" Y"+fmt(pt.y)+" Z"+fmt(depth)+" R"+fmt(Math.min(safe,3))+" F"+fmt(tapFeed));
        push("G80");continue;
      }
-     const first=path.points[0],li=leadPoint(path,"in"),lo=leadPoint(path,"out"),start=li||first;
+     const first=path.points[0],li=leadPoint(path,"in"),lo=leadPoint(path,"out");
+     const rampLoop=path.kind==="adaptive"&&path.entry==="RAMP_LOOP"&&path.closed&&path.points.length>=3;
+     const start=rampLoop?first:(li||first);
      push("G0 X"+fmt(start.x)+" Y"+fmt(start.y));
-     push("G1 Z"+fmt(depth)+" F"+Math.max(1,Math.trunc(feed*.35)));
-     if(li)push("G1 X"+fmt(first.x)+" Y"+fmt(first.y)+(mode==="SIMULTANEOUS"?rotaryAt(path,0,target).text:"")+" F"+feed);
      const denom=Math.max(1,path.points.length-1);
+     if(rampLoop){
+       const entryZ=Math.min(safe,Number.isFinite(Number(path.entryZStart))?Number(path.entryZStart):Number(state.payload?.stock?.top??0));
+       const rampFeed=Math.max(1,Math.trunc(feed*.45));
+       push("(AIG RAMP LOOP Z"+fmt(entryZ)+" TO Z"+fmt(depth)+")");
+       push("G1 Z"+fmt(entryZ)+" F"+rampFeed);
+       for(let i=1;i<path.points.length;i++){
+         const pt=path.points[i],frac=i/denom,z=entryZ+(depth-entryZ)*frac;
+         push("G1 X"+fmt(pt.x)+" Y"+fmt(pt.y)+" Z"+fmt(z)+(mode==="SIMULTANEOUS"?rotaryAt(path,frac,target).text:"")+" F"+rampFeed);
+       }
+     }else{
+       push("G1 Z"+fmt(depth)+" F"+Math.max(1,Math.trunc(feed*.35)));
+       if(li)push("G1 X"+fmt(first.x)+" Y"+fmt(first.y)+(mode==="SIMULTANEOUS"?rotaryAt(path,0,target).text:"")+" F"+feed);
+     }
      for(let i=1;i<path.points.length;i++){
        const pt=path.points[i],frac=i/denom;
        push("G1 X"+fmt(pt.x)+" Y"+fmt(pt.y)+(mode==="SIMULTANEOUS"?rotaryAt(path,frac,target).text:"")+" F"+feed);
@@ -2308,7 +2326,7 @@ function makeToolpathRuntime(root){
    const ta=document.querySelector('textarea[data-axis="'+target+'"]');
    if(ta){ta.value=code;ta.dispatchEvent(new Event("input",{bubbles:true}))}
    statusEl.textContent="POST "+target+" READY";
-   msgEl.textContent="Fanuc NC 已使用同一份 CAM 毛坯 XYZ 通過刀具/刀柄碰撞 Preflight 並送到 "+target+"；Adaptive OP 保留 Z 層 / Ring / Load% 註解；只輸出啟用 OP，順序依刀路列表；Setup Clearance 已通過。";
+   msgEl.textContent="Fanuc NC 已使用同一份 CAM 毛坯 XYZ 通過刀具/刀柄碰撞 Preflight 並送到 "+target+"；Adaptive OP 保留 Z 層 / Ring / Load% 並使用 Ramp Loop 進刀；只輸出啟用 OP，順序依刀路列表；Setup Clearance 已通過。";
    return code;
  }
  function action(name){
