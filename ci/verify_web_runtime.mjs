@@ -166,6 +166,17 @@ const required = [
   'function aigJsonWrite',
   '使用目前記憶體資料繼續運作',
   '本次內容仍保留在目前畫面，不停止 AIG',
+  'data-cam-stocktop',
+  'data-cam-stockthickness',
+  'data-cam-stepdown',
+  'data-cam-layer-count',
+  'function zLayerDepths',
+  'function zLevelPaths',
+  'state.strategy==="ZLEVEL"',
+  'aig-stock-v1',
+  '加工深度',
+  '超過毛坯底面',
+  '只阻擋這次刀路計算',
   'CNC machine output disabled'
 ];
 
