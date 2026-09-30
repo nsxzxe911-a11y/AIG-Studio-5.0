@@ -32,6 +32,17 @@ const required = [
   'data-tool-dia',
   'data-safe-z',
   'data-g73-retract',
+  'data-cutter-len',
+  'data-holder-dia',
+  'data-holder-len',
+  'data-collision',
+  'function sampleRuntimeBlock',
+  'function scanRuntimeCollisions',
+  'HOLDER_STOCK',
+  'TOOL_TABLE',
+  'HOLDER_TABLE',
+  'RAPID_TOOL_STOCK',
+  '碰撞檢查 FAIL',
   'data-cmd="optional"',
   'data-cmd="blockskip"',
   'state.optionalStop',
@@ -128,7 +139,7 @@ const coreStart = scriptMatch[1].indexOf("function parseWords(line){");
 const coreEnd = scriptMatch[1].indexOf("function makeRuntime(root){", coreStart);
 if (coreStart < 0 || coreEnd < 0) throw new Error("WEB_RUNTIME_CORE_BOUNDS_MISSING");
 const core = scriptMatch[1].slice(coreStart, coreEnd);
-const api = new Function(core + "\nreturn {parseProgram,compilePrograms};")();
+const api = new Function(core + "\nreturn {parseProgram,compilePrograms,scanRuntimeCollisions,sampleRuntimeBlock};")();
 
 const subProgramTest = `O1000
 N10 M98 P4
@@ -171,6 +182,41 @@ const holes = drillParsed.blocks.filter(b => b.pattern === "G34" && b.drillBotto
 if (holes.length !== 6) throw new Error("G34_HOLE_COUNT_" + holes.length);
 if (!holes.every(b => b.cycle === "G81")) throw new Error("G34_MODAL_G81_MISSING");
 
+const collisionCfg = {toolDia:10,cutterLen:30,holderDia:25,holderLen:25,g73Retract:0.5,safeZ:5};
+const collisionSafeProgram = `O4000
+N10 G90 G54 G17
+N20 T1 M6
+N30 S5000 M3
+N40 G0 X0 Y0 Z20
+N50 G1 Z-5 F200
+N60 X30 F800
+N70 G0 Z20
+N80 M30`;
+const collisionSafeParsed = api.parseProgram(collisionSafeProgram, "3AX", collisionCfg);
+const collisionSafeScan = api.scanRuntimeCollisions(collisionSafeParsed, "3AX", collisionCfg);
+if (collisionSafeScan.collisions.length !== 0) throw new Error("COLLISION_FALSE_POSITIVE_" + collisionSafeScan.collisions[0]?.type);
+
+const collisionBadProgram = `O4100
+N10 G90 G54 G17
+N20 T1 M6
+N30 G0 X0 Y0 Z20
+N40 G1 Z-40 F200
+N50 X10
+N60 M30`;
+const collisionBadParsed = api.parseProgram(collisionBadProgram, "3AX", collisionCfg);
+const collisionBadScan = api.scanRuntimeCollisions(collisionBadParsed, "3AX", collisionCfg);
+if (!collisionBadScan.collisions.some(c => c.type === "HOLDER_STOCK")) throw new Error("HOLDER_STOCK_COLLISION_NOT_DETECTED");
+
+const collision5xProgram = `O4200
+N10 G90 G54
+N20 T1 M6
+N30 G0 X0 Y0 Z20 A0 B0
+N40 G1 Z-40 A35 B20 F200
+N50 M30`;
+const collision5xParsed = api.parseProgram(collision5xProgram, "5AX", collisionCfg);
+const collision5xScan = api.scanRuntimeCollisions(collision5xParsed, "5AX", collisionCfg);
+if (!collision5xScan.collisions.length) throw new Error("ROTARY_COLLISION_NOT_DETECTED");
+
 const cadRuntimeIndex = scriptMatch[1].indexOf("function makeCadRuntime(root){");
 const camRuntimeIndex = scriptMatch[1].indexOf("function makeCamRuntime(root){");
 const toolpathRuntimeIndex = scriptMatch[1].indexOf("function makeToolpathRuntime(root){");
@@ -193,4 +239,4 @@ if (pageDefs.length !== 7) {
   throw new Error("WEB_RUNTIME_PAGE_COUNT_" + pageDefs.length);
 }
 
-console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|FUNCTION_MENU_RUNTIME|NO_FAKE_SERVICE_STATE|WEBGL_3D|3AX_HEIGHTFIELD_REMOVAL|4X_5X_ROTARY_VOXEL_REMOVAL|ROTARY_TOOLPATH_AB|SIMULTANEOUS_AB_POST|FANUC_POST_SCOPE|REMOVAL_VOLUME_EVIDENCE|BLACK_RGB");
+console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|FUNCTION_MENU_RUNTIME|NO_FAKE_SERVICE_STATE|WEBGL_3D|3AX_HEIGHTFIELD_REMOVAL|4X_5X_ROTARY_VOXEL_REMOVAL|ROTARY_TOOLPATH_AB|SIMULTANEOUS_AB_POST|FANUC_POST_SCOPE|REMOVAL_VOLUME_EVIDENCE|CUTTER_HOLDER_COLLISION|COLLISION_STOP_ALARM|ROTARY_COLLISION_TEST|BLACK_RGB");
