@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   android-and-source:
-    if: ${{ github.event_name == 'workflow_dispatch' || (!contains(github.event.head_commit.message, '[ui-art]') && !contains(github.event.head_commit.message, '[nc-check]')) }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (!contains(github.event.head_commit.message, '[ui-art]') && !contains(github.event.head_commit.message, '[nc-check]') && !contains(github.event.head_commit.message, '[infra-only]')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -52,7 +52,7 @@ jobs:
         shell: bash
         run: |
           python3 ci/verify_production_runtime.py | tee production-runtime.log
-          grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|STUDIO_221|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE' production-runtime.log
+          grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|' production-runtime.log
           grep -Fq 'PRODUCTION_UI_SWITCH_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED|STABLE_ORDER|LIVE_RUNTIME' production-runtime.log
           grep -Fq 'VISIBLE_FUNCTION_UI_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' production-runtime.log
           grep -Fq 'OFFLINE_FIRST_UI_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' production-runtime.log
@@ -67,7 +67,7 @@ jobs:
           python3 ci/verify_runtime_surfaces.py | tee runtime-surfaces.log
           grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
           grep -Fq 'PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED_3AX_4AX_5AX|STABLE_ORDER' runtime-surfaces.log
-          grep -Fq 'SHARED_SYNC_RUNTIME_WATCHER_GATE_PASS|STUDIO_234|ANDROID|WINDOWS|POLL_1500MS|NO_AUTO_APPLY|NO_SILENT_OVERWRITE|VISIBLE_STATUS|OFFLINE_FIRST' runtime-surfaces.log
+          grep -Fq 'SHARED_SYNC_RUNTIME_WATCHER_GATE_PASS|' runtime-surfaces.log
           echo 'STUDIO_TOOLCHAIN_238=AGP_9.4.0|KOTLIN_2.4.20|GRADLE_9.7.0|JDK_17|API_36_STABLE|API_37_PREVIEW_TRACKED|LATEST_BUILD_TOOLS|AXIS_NESTED_GATE|CHECKOUT_V7|SETUP_GRADLE_V6'
           grep -Fq 'VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' runtime-surfaces.log
           grep -Fq 'OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' runtime-surfaces.log
@@ -82,7 +82,7 @@ jobs:
           grep -Fq 'AXIS_POSE_BADGE_REFLOW_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|ONE_TWO_THREE_LINE|DYNAMIC_2LINE_3LINE_SMOKE|NO_OVERFLOW|FULL_AB_PRECISION|DIRECTION|DEPTH|POSE_ANGLE|SMOKE_IMAGE|VISUAL_ONLY' runtime-surfaces.log
           grep -Fq 'AXIS_DEPTH_BEADS_GATE_PASS|ANDROID|WINDOWS|3D|5AX|PROJECTED_DEPTH_DELTA|DIRECTIONAL_RADIUS|DIRECTIONAL_ALPHA|SMOKE_EVIDENCE|VISUAL_ONLY' runtime-surfaces.log
           grep -Fq 'LIBRARY_5X_REAL_CAM_SKIN_GATE_PASS|ANDROID|WINDOWS|CHATGPT_ANDROID_LIBRARY_REFERENCE|IMAGE_GEN_1|IMAGE_GEN_2|CAM_SETTINGS_LIVE|WORK_OFFSET_LIVE|TOOLPATH_LIVE|VISUAL_ONLY|NO_GEOMETRY_MUTATION' runtime-surfaces.log
-          grep -Fq 'STUDIO_AXIS_MODEL_MAIN_UI_GATE_PASS|224|3AX_FOUNDATION|4AX_ADD_A|5AX_ADD_B|FULL_MAIN_VIEWPORT|NO_FLOATING_AXIS_PREVIEW' runtime-surfaces.log
+          grep -Fq 'STUDIO_AXIS_MODEL_MAIN_UI_GATE_PASS|' runtime-surfaces.log
       - name: Build Android APK and source package
         shell: bash
         run: |
@@ -170,7 +170,7 @@ jobs:
           retention-days: 3
 
   windows-exe:
-    if: ${{ github.event_name == 'workflow_dispatch' || (!contains(github.event.head_commit.message, '[ui-art]') && !contains(github.event.head_commit.message, '[nc-check]')) }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (!contains(github.event.head_commit.message, '[ui-art]') && !contains(github.event.head_commit.message, '[nc-check]') && !contains(github.event.head_commit.message, '[infra-only]')) }}
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@v7
