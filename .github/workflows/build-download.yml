@@ -166,6 +166,7 @@ jobs:
             release/android/
             release/source/
           if-no-files-found: error
+          retention-days: 3
 
   windows-exe:
     runs-on: windows-2025
@@ -209,3 +210,4 @@ jobs:
           name: AIG-Studio-Windows-EXE
           path: release/windows/
           if-no-files-found: error
+          retention-days: 3
