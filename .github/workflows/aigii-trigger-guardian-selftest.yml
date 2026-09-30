@@ -1,11 +1,7 @@
-name: AIG-II Trigger Guardian Cross-Repo Self-Test
+name: AIG-II Trigger Guardian Cross-Repo Self-Test (manual auth diagnostic)
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/aigii-trigger-guardian-selftest.yml'
 
 permissions:
   contents: read
