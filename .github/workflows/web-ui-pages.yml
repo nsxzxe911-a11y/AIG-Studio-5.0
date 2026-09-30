@@ -1,20 +1,19 @@
-name: AIG Web UI Pages
+name: AIG Web Runtime Gate
 
 on:
   push:
     branches: ["web-uiux-001-rgb-runtime"]
     paths:
       - "web/**"
+      - "ci/verify_web_runtime.mjs"
       - ".github/workflows/web-ui-pages.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "pages"
+  group: "aig-web-runtime"
   cancel-in-progress: true
 
 jobs:
@@ -24,21 +23,17 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify black RGB runtime
         run: node ci/verify_web_runtime.mjs
-
-  deploy:
-    needs: verify
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
+      - name: Build preview link
+        run: |
+          echo "## AIG Web Runtime" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Gate: PASS" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Preview:" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://htmlpreview.github.io/?https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/web/index.html" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload standalone runtime
+        uses: actions/upload-artifact@v4
         with:
-          enablement: true
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: web
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          name: aig-web-runtime-${{ github.sha }}
+          path: web/index.html
+          if-no-files-found: error
