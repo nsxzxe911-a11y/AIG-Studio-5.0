@@ -159,6 +159,13 @@ const required = [
   'ARRAY X = 0.000 mm',
   'DIM 必須大於 0 mm',
   '模擬幀發生可恢復錯誤',
+  'function aigStorageGet',
+  'function aigStorageSet',
+  'function aigStorageRemove',
+  'function aigJsonRead',
+  'function aigJsonWrite',
+  '使用目前記憶體資料繼續運作',
+  '本次內容仍保留在目前畫面，不停止 AIG',
   'CNC machine output disabled'
 ];
 
