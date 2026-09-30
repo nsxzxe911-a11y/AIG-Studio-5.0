@@ -1400,7 +1400,10 @@ function makeRuntime(root){
   if(cmd==="redo"&&state.historyIndex<state.history.length-1){state.historyIndex++;ta.value=state.history[state.historyIndex];parse()}
  });
  let timer;ta.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>{remember();parse()},350)});
- [toolInput,cutterInput,holderDiaInput,holderLenInput,safeInput,g73Input,g54x,g54y,g54z,g55x,g55y,g55z,h1,h4,h12].forEach(el=>el.addEventListener("change",()=>parse(false)));
+ [toolInput,cutterInput,holderDiaInput,holderLenInput,safeInput,g73Input,g54x,g54y,g54z,g55x,g55y,g55z,h1,h4,h12].forEach(el=>{
+   el.addEventListener("input",()=>aigGuard(root,axis+" 欄位檢查",validateMachineFields,null,"warn"));
+   el.addEventListener("change",()=>aigGuard(root,axis+" 參數更新",()=>parse(false),null,"warn"));
+ });
  try{
    const globalWcs=aigJsonRead(root,"aig-wcs-v1",null,"工作座標");
    if(globalWcs){g54x.value=globalWcs.G54?.X??g54x.value;g54y.value=globalWcs.G54?.Y??g54y.value;g54z.value=globalWcs.G54?.Z??g54z.value;g55x.value=globalWcs.G55?.X??g55x.value;g55y.value=globalWcs.G55?.Y??g55y.value;g55z.value=globalWcs.G55?.Z??g55z.value}
@@ -1728,10 +1731,10 @@ function makeCadRuntime(root){
    const after=w2s(before,w,h);state.view.panX+=sp.x-after.x;state.view.panY+=sp.y-after.y;persist();draw();
  },{passive:false});
 
- root.addEventListener("click",e=>{
+ root.addEventListener("click",e=>aigGuard(root,"CAD 操作",()=>{
    const tb=e.target.closest("[data-cad-tool]");if(tb){setTool(tb.dataset.cadTool);return}
    const ab=e.target.closest("[data-cad-action]");if(ab){action(ab.dataset.cadAction);return}
- });
+ },null,"warn"));
  if(persisted?.shapes?.length)msgEl.textContent="Recovery：已自動還原 "+persisted.shapes.length+" 個 CAD 幾何。";
  [offsetInput,arrayCountInput,arraySpacingInput,dimInput].forEach(el=>{el.addEventListener("input",()=>aigGuard(root,"CAD 欄位驗證",validateCadFields,null,"warn"));el.addEventListener("change",()=>aigGuard(root,"CAD 欄位驗證",validateCadFields,null,"warn"))});
  validateCadFields();
@@ -1885,15 +1888,18 @@ function makeCamRuntime(root){
    window.dispatchEvent(new CustomEvent("aig-stock-updated",{detail:stock}));
    aigJsonWrite(root,"aig-cam-toolpath-v1",payload,"CAM 刀路");msgEl.textContent="已套用至刀路編輯頁，共 "+state.paths.length+" 條。";
  }
- root.addEventListener("click",e=>{
-   const st=e.target.closest("[data-cam-strategy]");if(st&&!st.disabled){state.strategy=st.dataset.camStrategy;root.querySelectorAll("[data-cam-strategy]").forEach(b=>b.classList.toggle("cadSelected",b===st));strategyEl.textContent=state.strategy;msgEl.textContent="已選 "+st.textContent+"；按「計算刀路」。";return}
+ root.addEventListener("click",e=>aigGuard(root,"CAM 操作",()=>{
+   const st=e.target.closest("[data-cam-strategy]");if(st&&!st.disabled){state.strategy=st.dataset.camStrategy;validateCamFields();root.querySelectorAll("[data-cam-strategy]").forEach(b=>b.classList.toggle("cadSelected",b===st));strategyEl.textContent=state.strategy;msgEl.textContent="已選 "+st.textContent+"；按「計算刀路」。";return}
    const ac=e.target.closest("[data-cam-action]");if(!ac)return;
    if(ac.dataset.camAction==="RELOAD")loadCad();
    if(ac.dataset.camAction==="CALC")calc();
    if(ac.dataset.camAction==="FIT")fit();
-   if(ac.dataset.camAction==="APPLY")apply();
+   if(ac.dataset.camAction==="APPLY"){if(validateCamFields()>0){msgEl.textContent="CAM 欄位有錯誤；只取消這次套用，AIG 繼續使用。";return}apply()}
+ },null,"warn"));
+ [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,pitchInput,stepInput,dirInput].forEach(el=>{
+   el.addEventListener("input",()=>aigGuard(root,"CAM 欄位檢查",validateCamFields,null,"warn"));
+   el.addEventListener("change",()=>aigGuard(root,"CAM 參數更新",()=>{validateCamFields();if(state.paths.length||state.strategy==="TAP")calc()},null,"warn"));
  });
- [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,pitchInput,stepInput,dirInput].forEach(el=>el.addEventListener("change",()=>{if(state.paths.length||state.strategy==="TAP")calc()}));
  try{
    const saved=aigJsonRead(root,"aig-cam-toolpath-v1",null,"CAM 刀路");
    if(saved?.strategy){
@@ -1985,10 +1991,33 @@ function makeToolpathRuntime(root){
    path.aStart=aigFiniteNumber(a0Input.value,0);path.aEnd=aigFiniteNumber(a1Input.value,0);path.bStart=aigFiniteNumber(b0Input.value,0);path.bEnd=aigFiniteNumber(b1Input.value,0);
    if(path.rotMode==="INDEXED"){path.aEnd=path.aStart;path.bEnd=path.bStart;a1Input.value=path.aEnd;b1Input.value=path.bEnd}
  }
+ function validateToolpathFields(){
+   const fields=[safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,targetInput,wcsInput,toolNoInput,hNoInput,rotModeInput,a0Input,a1Input,b0Input,b1Input];
+   fields.forEach(aigValidateField);
+   [safeInput,depthInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,targetInput,rotModeInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>{
+     if(!el.classList.contains("aigError")&&!el.classList.contains("aigWarn"))aigFieldIssue(el,null,"");
+   });
+   let errors=0;
+   const toolDia=Number(toolDiaInput.value),cutterLen=Number(cutterLenInput.value),holderDia=Number(holderDiaInput.value),holderLen=Number(holderLenInput.value);
+   if(!(toolDia>0)){aigFieldIssue(toolDiaInput,"error","刀具 Ø 必須大於 0 mm。");errors++}
+   if(!(cutterLen>0)){aigFieldIssue(cutterLenInput,"error","刃長必須大於 0 mm。");errors++}
+   if(!(holderDia>0)){aigFieldIssue(holderDiaInput,"error","刀柄 Ø 必須大於 0 mm。");errors++}
+   else if(Number.isFinite(toolDia)&&holderDia<toolDia)aigFieldIssue(holderDiaInput,"warn","刀柄 Ø 小於刀具 Ø，請確認刀具模型。");
+   if(!(holderLen>0)){aigFieldIssue(holderLenInput,"error","刀柄長必須大於 0 mm。");errors++}
+   const depth=Number(depthInput.value),safe=Number(safeInput.value);
+   if(Number.isFinite(depth)&&Number.isFinite(safe)&&safe<=depth){aigFieldIssue(safeInput,"error","Safe-Z "+safe.toFixed(3)+" 必須高於加工深度 "+depth.toFixed(3)+"。");errors++}
+   const target=targetInput.value,a0=Number(a0Input.value)||0,a1=Number(a1Input.value)||0,b0=Number(b0Input.value)||0,b1=Number(b1Input.value)||0;
+   if(target==="3AX"&&(Math.abs(a0)+Math.abs(a1)+Math.abs(b0)+Math.abs(b1)>1e-9)){aigFieldIssue(targetInput,"warn","3AX 不輸出 A/B；旋轉角只保留在刀路資料，不寫入 NC。")}
+   if(target==="4AX"&&(Math.abs(b0)+Math.abs(b1)>1e-9)){aigFieldIssue(targetInput,"error","4AX 只能使用 A 軸；B 起點/終點必須為 0。");aigFieldIssue(b0Input,"error","4AX 不支援 B 軸。");aigFieldIssue(b1Input,"error","4AX 不支援 B 軸。");errors++}
+   const p=selected();
+   if(p?.kind==="tap"&&!(Number(pitchInput.value)>0)){aigFieldIssue(pitchInput,"error","攻牙刀路需要有效螺距 mm/rev。");errors++}
+   if(p?.kind==="tap"&&rotModeInput.value==="SIMULTANEOUS"&&(Math.abs(a1-a0)>1e-9||Math.abs(b1-b0)>1e-9)){aigFieldIssue(rotModeInput,"error","G84 攻牙只允許 INDEXED 定角；SIMULTANEOUS A/B 不輸出。");errors++}
+   return errors;
+ }
  function verify(){
-   [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,targetInput,wcsInput,toolNoInput,hNoInput,rotModeInput,a0Input,a1Input,b0Input,b1Input].forEach(aigValidateField);
+   const fieldErrors=validateToolpathFields();
    [safeInput,depthInput,feedInput,rpmInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>{if(!el.classList.contains("aigError")&&!el.classList.contains("aigWarn"))aigFieldIssue(el,null,"")});
-   const errors=[];
+   const errors=[];if(fieldErrors)errors.push("欄位有 "+fieldErrors+" 個錯誤");
    for(const [label,el] of [["刀具 Ø",toolDiaInput],["刃長",cutterLenInput],["刀柄 Ø",holderDiaInput],["刀柄長",holderLenInput]]){
      if(!(Number(el.value)>0)){errors.push(label+" 必須大於 0");aigFieldIssue(el,"error",label+" 必須大於 0。")}
    }
@@ -2102,17 +2131,20 @@ function makeToolpathRuntime(root){
      state.deleteArmedUntil=0;state.paths.splice(state.selected,1);state.selected=Math.max(0,Math.min(state.selected,state.paths.length-1));save();renderList();syncInputs();draw();updateInfo();return
    }
  }
- root.addEventListener("click",e=>{
-   const li=e.target.closest("[data-tp-index]");if(li){state.selected=Number(li.dataset.tpIndex)||0;renderList();syncInputs();updateInfo();draw();return}
+ root.addEventListener("click",e=>aigGuard(root,"刀路操作",()=>{
+   const li=e.target.closest("[data-tp-index]");if(li){state.selected=Number(li.dataset.tpIndex)||0;renderList();syncInputs();validateToolpathFields();updateInfo();draw();return}
    const ac=e.target.closest("[data-tp-action]");if(ac)action(ac.dataset.tpAction);
+ },null,"warn"));
+ [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,rotModeInput,a0Input,a1Input,b0Input,b1Input,targetInput,wcsInput,toolNoInput,hNoInput].forEach(el=>{
+   el.addEventListener("input",()=>aigGuard(root,"刀路欄位檢查",validateToolpathFields,null,"warn"));
+   el.addEventListener("change",()=>aigGuard(root,"刀路參數更新",()=>{validateToolpathFields();applyInputs();renderList();draw()},null,"warn"));
  });
- [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,rotModeInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>el.addEventListener("change",()=>{applyInputs();renderList();draw()}));
  canvas.addEventListener("pointerdown",e=>{if(!state.edit)return;const r=canvas.getBoundingClientRect(),sp={x:e.clientX-r.left,y:e.clientY-r.top},i=nearestNode(sp);if(i===null)return;state.dragNode=i;canvas.setPointerCapture(e.pointerId)});
  canvas.addEventListener("pointermove",e=>{if(state.dragNode===null)return;const r=canvas.getBoundingClientRect(),sp={x:e.clientX-r.left,y:e.clientY-r.top},{w,h}=resize(),wp=s2w(sp,w,h),p=selected();if(p?.points?.[state.dragNode]){p.points[state.dragNode]={x:Number(wp.x.toFixed(3)),y:Number(wp.y.toFixed(3))};draw()}});
  canvas.addEventListener("pointerup",e=>{if(state.dragNode!==null){state.dragNode=null;save();renderList()}});
  canvas.addEventListener("pointercancel",()=>{state.dragNode=null});
  canvas.addEventListener("wheel",e=>{e.preventDefault();const factor=e.deltaY<0?1.12:.89;state.view.scale=Math.max(.15,Math.min(80,state.view.scale*factor));draw()},{passive:false});
- load();
+ load();validateToolpathFields();
 }
 
 function makeMenuRuntime(root){
