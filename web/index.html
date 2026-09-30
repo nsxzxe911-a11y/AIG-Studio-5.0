@@ -355,6 +355,11 @@ function parseProgram(text,axis,opts={}){
 
    if(cycle==="G81"){
      moveTo(line,raw,{Z:z,F:feed},"G1",{cycle,cyclePhase:"feed",cutting:z<0,synthetic:true,drillBottom:true,...patternMeta});
+   }else if(cycle==="G84"){
+     moveTo(line,raw,{Z:z,F:feed},"G1",{cycle,cyclePhase:"tap-feed",cutting:z<0,synthetic:true,drillBottom:true,tapping:true,...patternMeta});
+     const tapReturn=returnMode==="G98"?initialZ:r;
+     if(pos.Z!==tapReturn)moveTo(line,raw,{Z:tapReturn,F:feed},"G1",{cycle,cyclePhase:"tap-return",cutting:false,synthetic:true,tapping:true,...patternMeta});
+     return;
    }else if(cycle==="G73"||cycle==="G83"){
      const q=Math.max(0.001,Number(cycleQ)||Math.max(1,Math.abs(r-z)));
      const dir=z<r?-1:1;
@@ -421,7 +426,7 @@ function parseProgram(text,axis,opts={}){
     return;
   }
 
-  const cycleStart=["G81","G73","G83"].find(g=>gMatches.includes(g));
+  const cycleStart=["G81","G73","G83","G84"].find(g=>gMatches.includes(g));
   if(cycleStart)cycle=cycleStart;
 
   // L0 loads the canned-cycle data without drilling a hole.
@@ -455,7 +460,7 @@ function parseProgram(text,axis,opts={}){
           moveTo(index,raw,hole,"G0",{cycle:null,cyclePhase:"pattern-position",cutting:false,synthetic:true,...meta});
         }
       }
-      if(!cycle)warnings.push("G34 沒有已啟用的 G81/G73/G83，因此目前只做孔位定位。");
+      if(!cycle)warnings.push("G34 沒有已啟用的 G81/G73/G83/G84，因此目前只做孔位定位。");
     }
     return;
   }
@@ -922,7 +927,7 @@ function makeRuntime(root){
   if(resetIndex){state.index=0;state.t=0;state.running=false;}
   renderExec();updateUi();draw();
   const v=root.querySelector("[data-verify]");
-  v.textContent=state.parsed.errors.length?state.parsed.errors.join(" "):state.collisions.length?("解析完成，但碰撞預檢發現 "+state.collisions.length+" 個風險；按「驗證」查看。"):state.parsed.warnings.length?("解析完成："+state.parsed.blocks.length+" 個區塊。提醒："+state.parsed.warnings.join(" ")):"解析完成："+state.parsed.blocks.length+" 個區塊。G81/G73/G83 已展開為實際模擬動作。";
+  v.textContent=state.parsed.errors.length?state.parsed.errors.join(" "):state.collisions.length?("解析完成，但碰撞預檢發現 "+state.collisions.length+" 個風險；按「驗證」查看。"):state.parsed.warnings.length?("解析完成："+state.parsed.blocks.length+" 個區塊。提醒："+state.parsed.warnings.join(" ")):"解析完成："+state.parsed.blocks.length+" 個區塊。G81/G73/G83/G84 已展開為實際模擬動作。";
   v.style.color=state.parsed.errors.length?"#ffbdc6":"#b7c8d1";
  }
  function renderExec(){
@@ -1209,7 +1214,7 @@ function makeRuntime(root){
   if(cmd==="parse"){remember();parse()}
   if(cmd==="verify"){
     parse(false);
-    const sw=safetyWarnings(),cycles=state.parsed.blocks.filter(b=>b.cycle&&b.cyclePhase==="feed"||b.cycle&&b.cyclePhase==="peck-feed").length;
+    const sw=safetyWarnings(),cycles=state.parsed.blocks.filter(b=>b.cycle&&["feed","peck-feed","tap-feed"].includes(b.cyclePhase)).length;
     const firstCollision=state.collisions[0];
     const msg=state.parsed.errors.length?state.parsed.errors.join(" "):firstCollision?("碰撞檢查 FAIL：第 "+(firstCollision.line+1)+" 行 "+firstCollision.message+" ["+firstCollision.type+"]；共 "+state.collisions.length+" 個碰撞區塊。"):sw.length?("驗證完成；Safe-Z 提醒："+sw.join("；")):"驗證 PASS：語法、Safe-Z 與刀具/刀柄幾何碰撞預檢通過；共 "+state.parsed.blocks.length+" 個模擬區塊，鑽孔進給 "+cycles+" 段。";
     root.querySelector("[data-verify]").textContent=msg;
