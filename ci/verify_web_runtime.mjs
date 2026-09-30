@@ -207,6 +207,8 @@ const required = [
   '自適應負載超界',
   '自適應層級資料錯誤',
   '• Load ',
+  'function buildAdaptive2DPaths',
+  'ADAPTIVE_RECT_NO_PATHS',
   'CNC machine output disabled'
 ];
 
@@ -221,7 +223,7 @@ const coreStart = scriptMatch[1].indexOf("function parseWords(line){");
 const coreEnd = scriptMatch[1].indexOf("function makeRuntime(root){", coreStart);
 if (coreStart < 0 || coreEnd < 0) throw new Error("WEB_RUNTIME_CORE_BOUNDS_MISSING");
 const core = scriptMatch[1].slice(coreStart, coreEnd);
-const api = new Function(core + "\nreturn {parseProgram,compilePrograms,scanRuntimeCollisions,sampleRuntimeBlock,runtimeStockEnvelope};")();
+const api = new Function(core + "\nreturn {parseProgram,compilePrograms,scanRuntimeCollisions,sampleRuntimeBlock,runtimeStockEnvelope,buildAdaptive2DPaths};")();
 
 const subProgramTest = `O1000
 N10 M98 P4
@@ -344,6 +346,19 @@ if (!stockXY.explicitXY || stockXY.minX !== -5 || stockXY.maxX !== 30 || stockXY
   throw new Error("EXPLICIT_STOCK_XY_ENVELOPE_WRONG");
 }
 if (stockXY.stockTop !== 2 || stockXY.stockBottom !== -16) throw new Error("EXPLICIT_STOCK_XYZ_ENVELOPE_WRONG");
+
+const adaptiveRect = {id:7,type:"rect",a:{x:0,y:0},b:{x:50,y:30}};
+const adaptiveParams = {toolDia:10,adaptiveLoad:.35,safeZ:5,feed:1200,rpm:12000,direction:"CW"};
+const adaptivePaths = api.buildAdaptive2DPaths(adaptiveRect, adaptiveParams, [-2,-4]);
+if (!adaptivePaths.length) throw new Error("ADAPTIVE_RECT_NO_PATHS");
+if (!adaptivePaths.some(p => p.zLevelIndex === 1) || !adaptivePaths.some(p => p.zLevelIndex === 2)) throw new Error("ADAPTIVE_Z_LAYERS_MISSING");
+if (!adaptivePaths.every(p => p.kind === "adaptive" && p.closed && p.points.length >= 5)) throw new Error("ADAPTIVE_PATH_GEOMETRY_INVALID");
+if (!adaptivePaths.every(p => p.adaptiveRing >= 1 && p.zLevelCount === 2)) throw new Error("ADAPTIVE_RING_METADATA_INVALID");
+if (!adaptivePaths.every(p => p.radialEngagement > 0 && p.radialEngagement <= .35 + 1e-9)) throw new Error("ADAPTIVE_LOAD_LIMIT_BROKEN");
+const adaptiveCircle = api.buildAdaptive2DPaths({id:8,type:"circle",c:{x:0,y:0},r:20}, adaptiveParams, [-2]);
+if (!adaptiveCircle.length || !adaptiveCircle.every(p => p.points.length >= 33)) throw new Error("ADAPTIVE_CIRCLE_PATH_INVALID");
+const adaptiveOpen = api.buildAdaptive2DPaths({id:9,type:"line",a:{x:0,y:0},b:{x:20,y:0}}, adaptiveParams, [-2]);
+if (adaptiveOpen.length !== 0) throw new Error("ADAPTIVE_OPEN_GEOMETRY_MUST_BE_IGNORED");
 
 const cadRuntimeIndex = scriptMatch[1].indexOf("function makeCadRuntime(root){");
 const camRuntimeIndex = scriptMatch[1].indexOf("function makeCamRuntime(root){");
