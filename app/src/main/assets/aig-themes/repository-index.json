@@ -1,37 +1,37 @@
 {
-    "repository_name":  "AIG UI Theme Repository",
-    "repository_version":  "2.1.0",
-    "format_version":  1,
-    "default_theme_id":  "official_rgb_original",
-    "runtime_binding":  "android_windows_shared_tokens",
-    "asset_policy":  {
-                         "engineering_authority":  "FULL",
-                         "preserve_existing_rgb_assets":  true,
-                         "delete_stock_assets":  false,
-                         "appearance_changes_block_upgrade":  false,
-                         "manual_approval_required":  false,
-                         "asset_signature_required":  false,
-                         "asset_locking_enabled":  false,
-                         "fixed_allowlist_required":  false,
-                         "unregistered_images_allowed":  true,
-                         "replacement_without_preapproval_allowed":  true,
-                         "preview_build_blocked_by_unregistered_assets":  false,
-                         "release_integrity_required":  true
-                     },
-    "themes":  [
-                   {
-                       "theme_id":  "official_rgb_original",
-                       "theme_name":  "Official RGB Original",
-                       "version":  "1.0.0",
-                       "embedded_trusted":  true,
-                       "path":  "aig-themes/themes/official_rgb_original/theme.json"
-                   },
-                   {
-                       "theme_id":  "aigii_rgb_neon_v2",
-                       "theme_name":  "AIG II RGB Neon V2",
-                       "version":  "2.0.0",
-                       "embedded_trusted":  true,
-                       "path":  "aig-themes/themes/aigii_rgb_neon_v2/theme.json"
-                   }
-               ]
+  "repository_name": "AIG UI Theme Repository",
+  "repository_version": "5.0.0",
+  "format_version": 1,
+  "default_theme_id": "aigii_rgb_neon_v2",
+  "runtime_binding": "android_windows_shared_tokens",
+  "asset_policy": {
+    "engineering_authority": "FULL",
+    "preserve_existing_rgb_assets": true,
+    "delete_stock_assets": false,
+    "appearance_changes_block_upgrade": false,
+    "manual_approval_required": false,
+    "asset_signature_required": false,
+    "asset_locking_enabled": false,
+    "fixed_allowlist_required": false,
+    "unregistered_images_allowed": true,
+    "replacement_without_preapproval_allowed": true,
+    "preview_build_blocked_by_unregistered_assets": false,
+    "release_integrity_required": true
+  },
+  "themes": [
+    {
+      "theme_id": "official_rgb_original",
+      "theme_name": "Official RGB Original",
+      "version": "1.0.0",
+      "embedded_trusted": true,
+      "path": "aig-themes/themes/official_rgb_original/theme.json"
+    },
+    {
+      "theme_id": "aigii_rgb_neon_v2",
+      "theme_name": "AIG II RGB Neon V2",
+      "version": "2.0.0",
+      "embedded_trusted": true,
+      "path": "aig-themes/themes/aigii_rgb_neon_v2/theme.json"
+    }
+  ]
 }
