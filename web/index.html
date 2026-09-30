@@ -1268,6 +1268,20 @@ function makeRuntime(root){
   });
   const active=box.querySelector(".active");if(active)active.scrollIntoView({block:"nearest"});
  }
+ function focusSourceLine(line){
+   const n=Math.max(0,Math.min((state.parsed?.lines?.length||1)-1,Math.trunc(Number(line)||0)));
+   state.running=false;state.collisionAlarm=null;
+   const bi=state.parsed?.blocks?.findIndex(b=>b.line===n)??-1;
+   if(bi>=0){state.index=bi;state.t=0}
+   renderExec();updateUi();draw();
+   const value=ta.value,starts=[0];for(let i=0;i<value.length;i++)if(value[i]==="\n")starts.push(i+1);
+   const start=starts[n]??0,next=starts[n+1]??value.length,end=Math.max(start,next-(value[next-1]==="\n"?1:0)-(value[next-2]==="\r"?1:0));
+   ta.focus();ta.setSelectionRange(start,end);
+   const row=root.querySelectorAll("[data-exec] .execLine")[n];
+   if(row){row.classList.add("alarm");row.scrollIntoView({block:"center"});setTimeout(()=>row.classList.remove("alarm"),1800)}
+   aigShowIssue(root,"info",axis+" 已跳到第 "+(n+1)+" 行；可直接修改 G-code。");
+ }
+ state.focusSourceLine=focusSourceLine;
  function currentBlock(){return state.index>=state.parsed.blocks.length?null:(state.parsed.blocks[state.index]||null)}
  function currentLine(){const b=currentBlock();return b?b.line:-1}
  function lerp(a,b,t){return a+(b-a)*t}
@@ -2472,15 +2486,15 @@ function makeMenuRuntime(root){
      const scan=scanRuntimeCollisions(parsed,axis,cfgBase),clear=evaluateSetupClearance(parsed,axis,cfgBase);
      if(scan.collisions.length){
        const hit=scan.collisions[0];
-       rows.push({axis,state:"COLLISION",detail:"第 "+(hit.line+1)+" 行 "+hit.message+" ["+hit.type+"]",tone:"error"});continue
+       rows.push({axis,state:"COLLISION",detail:"第 "+(hit.line+1)+" 行 "+hit.message+" ["+hit.type+"]",tone:"error",line:hit.line});continue
      }
      const min=Number(clear.minimum),minText=Number.isFinite(min)?min.toFixed(3):"∞";
      if(min<required){
-       rows.push({axis,state:"CLEARANCE",detail:minText+" mm < 要求 "+required.toFixed(3)+" mm；限制 "+String(clear.limitingType||"UNKNOWN"),tone:"error"});continue
+       rows.push({axis,state:"CLEARANCE",detail:minText+" mm < 要求 "+required.toFixed(3)+" mm；限制 "+String(clear.limitingType||"UNKNOWN")+(clear.line>=0?"；第 "+(clear.line+1)+" 行":""),tone:"error",line:clear.line});continue
      }
      rows.push({axis,state:"PASS",detail:"最小間隙 "+minText+" mm；要求 ≥ "+required.toFixed(3)+" mm；限制 "+String(clear.limitingType||"NONE"),tone:"pass"});
    }
-   target.innerHTML=rows.map(r=>'<div class="field"><b>'+esc(r.axis)+' Setup</b><span style="color:'+(r.tone==="pass"?"#33f39b":r.tone==="error"?"#ff465f":"#ffb326")+'">'+esc(r.state)+'</span><small>'+esc(r.detail)+'</small></div>').join("");
+   target.innerHTML=rows.map(r=>'<div class="field"><b>'+esc(r.axis)+' Setup</b><span style="color:'+(r.tone==="pass"?"#33f39b":r.tone==="error"?"#ff465f":"#ffb326")+'">'+esc(r.state)+'</span><small>'+esc(r.detail)+'</small>'+(Number.isInteger(r.line)&&r.line>=0?'<button class="btn warn" data-setup-jump-axis="'+esc(r.axis)+'" data-setup-jump-line="'+r.line+'">跳到第 '+(r.line+1)+' 行</button>':'')+'</div>').join("");
    const fail=rows.filter(r=>r.tone==="error").length,missing=rows.filter(r=>r.state==="NO NC").length;
    const msg=detail.querySelector("[data-menu-msg]");
    if(msg)msg.textContent=fail?("Setup 檢查完成："+fail+" 軸需修正；只顯示問題，不停止 AIG。"):missing?("Setup 檢查完成；"+missing+" 軸尚無 NC，其餘已檢查。"):"3AX / 4AX / 5AX Setup 檢查全部 PASS。";
@@ -2559,6 +2573,13 @@ function makeMenuRuntime(root){
  }
  root.addEventListener("click",e=>aigGuard(root,"功能選單操作",()=>{
    const card=e.target.closest("[data-menu-key]");if(card){render(card.dataset.menuKey);return}
+   const setupJump=e.target.closest("[data-setup-jump-axis]");
+   if(setupJump){
+     const axis=setupJump.dataset.setupJumpAxis,line=Math.max(0,Math.trunc(Number(setupJump.dataset.setupJumpLine)||0));
+     show(axis);
+     setTimeout(()=>aigGuard(document.querySelector('.screen[data-page="'+axis+'"]')||document.body,axis+" 問題定位",()=>runtimes[axis]?.focusSourceLine?.(line),null,"warn"),40);
+     return;
+   }
    const a=e.target.closest("[data-menu-action]");if(!a)return;const msg=detail.querySelector("[data-menu-msg]");
    if(a.dataset.menuAction==="PROJECT_SAVE"){const old=readJson("aig-project-meta-v1",{revision:0}),nameEl=detail.querySelector("[data-menu-project-name]"),name=nameEl.value.trim();if(!name){aigFieldIssue(nameEl,"error","專案名稱不可空白；原專案資料保持不變。");if(msg)msg.textContent="專案名稱空白，沒有覆蓋原資料；AIG 可繼續操作。";return}saveJson("aig-project-meta-v1",{name,revision:Number(old.revision||0)+1,updatedAt:Date.now()});projectView()}
    if(a.dataset.menuAction==="PROJECT_NEW"){saveJson("aig-project-meta-v1",{name:"AIG CNC Project",revision:1,updatedAt:Date.now()});projectView()}
