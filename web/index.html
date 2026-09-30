@@ -204,6 +204,7 @@ function camPage(){
  '<label class="param">進給<input data-cam-feed type="number" value="1200" min="1" step="1"></label>'+
  '<label class="param">轉速<input data-cam-rpm type="number" value="12000" min="1" step="1"></label>'+
  '<label class="param">Safe-Z<input data-cam-safez type="number" value="5" step="0.001"></label>'+
+ '<label class="param">攻牙螺距<input data-cam-pitch type="number" value="" placeholder="必填 mm/rev" min="0.001" step="0.001"></label>'+
  '<label class="param">步距 %<input data-cam-stepover type="number" value="50" min="5" max="95" step="1"></label>'+
  '<div class="field"><b>方向</b><select data-cam-direction style="width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px"><option value="CW">順銑 CW</option><option value="CCW">逆銑 CCW</option></select></div>'+
  '<div class="camStats"><div class="field"><b>策略</b><span data-cam-strategy-name>未選</span></div><div class="field"><b>刀路</b><span data-cam-path-count>0</span></div><div class="field"><b>估算長度</b><span data-cam-length>0.000 mm</span></div><div class="field"><b>來源</b><span data-cam-source>CAD AutoSave</span></div></div>'+
@@ -222,6 +223,7 @@ function toolpathPage(){
  '<label class="param">轉速<input data-tp-rpm type="number" value="12000" min="1" step="1"></label>'+
  '<label class="param">進刀長<input data-tp-leadin type="number" value="5" min="0" step="0.001"></label>'+
  '<label class="param">退刀長<input data-tp-leadout type="number" value="5" min="0" step="0.001"></label>'+
+ '<label class="param">攻牙螺距<input data-tp-pitch type="number" value="" placeholder="Tap 必填" min="0.001" step="0.001"></label>'+
  '<div class="field"><b>NC 目標</b><select data-tp-target style="width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px"><option>3AX</option><option>4AX</option><option>5AX</option></select></div>'+
  '<div class="field"><b>工作座標</b><select data-tp-wcs style="width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px"><option>G54</option><option>G55</option></select></div>'+
  '<label class="param">刀具 T<input data-tp-tool type="number" value="1" min="1" step="1"></label>'+
@@ -1547,10 +1549,10 @@ function makeCadRuntime(root){
 function makeCamRuntime(root){
  const canvas=root.querySelector("[data-cam-canvas]"),ctx=canvas.getContext("2d");
  const cadCountEl=root.querySelector("[data-cam-cad-count]"),msgEl=root.querySelector("[data-cam-msg]"),strategyEl=root.querySelector("[data-cam-strategy-name]"),pathCountEl=root.querySelector("[data-cam-path-count]"),lengthEl=root.querySelector("[data-cam-length]");
- const toolInput=root.querySelector("[data-cam-tool]"),depthInput=root.querySelector("[data-cam-depth]"),feedInput=root.querySelector("[data-cam-feed]"),rpmInput=root.querySelector("[data-cam-rpm]"),safeInput=root.querySelector("[data-cam-safez]"),stepInput=root.querySelector("[data-cam-stepover]"),dirInput=root.querySelector("[data-cam-direction]");
+ const toolInput=root.querySelector("[data-cam-tool]"),depthInput=root.querySelector("[data-cam-depth]"),feedInput=root.querySelector("[data-cam-feed]"),rpmInput=root.querySelector("[data-cam-rpm]"),safeInput=root.querySelector("[data-cam-safez]"),pitchInput=root.querySelector("[data-cam-pitch]"),stepInput=root.querySelector("[data-cam-stepover]"),dirInput=root.querySelector("[data-cam-direction]");
  const state={cad:[],strategy:null,paths:[],view:{scale:4,panX:0,panY:0}};
  const clone=x=>JSON.parse(JSON.stringify(x));
- function params(){return{toolDia:Math.max(.1,Number(toolInput.value)||10),depth:Number(depthInput.value)||-10,feed:Math.max(1,Number(feedInput.value)||1200),rpm:Math.max(1,Number(rpmInput.value)||12000),safeZ:Number(safeInput.value)||5,stepover:Math.max(.05,Math.min(.95,(Number(stepInput.value)||50)/100)),direction:dirInput.value}}
+ function params(){return{toolDia:Math.max(.1,Number(toolInput.value)||10),depth:Number(depthInput.value)||-10,feed:Math.max(1,Number(feedInput.value)||1200),rpm:Math.max(1,Number(rpmInput.value)||12000),safeZ:Number(safeInput.value)||5,tapPitch:Number(pitchInput.value)||0,stepover:Math.max(.05,Math.min(.95,(Number(stepInput.value)||50)/100)),direction:dirInput.value}}
  function loadCad(){
    try{const v=JSON.parse(localStorage.getItem("aig-cad-draft-v1")||"null");state.cad=Array.isArray(v?.shapes)?v.shapes:[]}catch{state.cad=[]}
    cadCountEl.textContent="CAD "+state.cad.length;msgEl.textContent=state.cad.length?"已讀取 "+state.cad.length+" 個 CAD 幾何。":"CAD 尚無幾何；先到 CAD 頁畫圖。";fit();draw();
@@ -1626,7 +1628,10 @@ function makeCamRuntime(root){
    else if(state.strategy==="DRILL")state.paths=drillPaths(p,"drill");
    else if(state.strategy==="PARALLEL")state.paths=parallelPaths(p);
    else if(state.strategy==="CHAMFER")state.paths=profilePaths(p,"chamfer");
-   else if(state.strategy==="TAP")state.paths=drillPaths(p,"tap");
+   else if(state.strategy==="TAP"){
+     if(!(p.tapPitch>0)){state.paths=[];updateStats();draw();msgEl.textContent="攻牙需要先輸入螺距 mm/rev；未產生假刀路。";return}
+     state.paths=drillPaths(p,"tap").map(x=>({...x,pitch:p.tapPitch,feed:p.rpm*p.tapPitch}));
+   }
    else state.paths=[];
    updateStats();draw();msgEl.textContent=state.paths.length?("刀路完成："+state.paths.length+" 條。"):"目前 CAD 幾何不適用此策略。";
  }
@@ -1667,14 +1672,14 @@ function makeCamRuntime(root){
    if(ac.dataset.camAction==="FIT")fit();
    if(ac.dataset.camAction==="APPLY")apply();
  });
- [toolInput,depthInput,feedInput,rpmInput,safeInput,stepInput,dirInput].forEach(el=>el.addEventListener("change",()=>{if(state.paths.length)calc()}));
+ [toolInput,depthInput,feedInput,rpmInput,safeInput,pitchInput,stepInput,dirInput].forEach(el=>el.addEventListener("change",()=>{if(state.paths.length||state.strategy==="TAP")calc()}));
  try{
    const saved=JSON.parse(localStorage.getItem("aig-cam-toolpath-v1")||"null");
    if(saved?.strategy){
      state.strategy=saved.strategy;state.paths=Array.isArray(saved.paths)?saved.paths:[];
      if(saved.params){
        toolInput.value=saved.params.toolDia??toolInput.value;depthInput.value=saved.params.depth??depthInput.value;feedInput.value=saved.params.feed??feedInput.value;
-       rpmInput.value=saved.params.rpm??rpmInput.value;safeInput.value=saved.params.safeZ??safeInput.value;stepInput.value=(saved.params.stepover??.5)*100;dirInput.value=saved.params.direction||dirInput.value;
+       rpmInput.value=saved.params.rpm??rpmInput.value;safeInput.value=saved.params.safeZ??safeInput.value;pitchInput.value=saved.params.tapPitch||"";stepInput.value=(saved.params.stepover??.5)*100;dirInput.value=saved.params.direction||dirInput.value;
      }
      root.querySelectorAll("[data-cam-strategy]").forEach(b=>b.classList.toggle("cadSelected",b.dataset.camStrategy===state.strategy));
    }
@@ -1688,7 +1693,7 @@ function makeCamRuntime(root){
 
 function makeToolpathRuntime(root){
  const canvas=root.querySelector("[data-tp-canvas]"),ctx=canvas.getContext("2d"),listEl=root.querySelector("[data-tp-list]"),msgEl=root.querySelector("[data-tp-msg]"),countEl=root.querySelector("[data-tp-count]"),selectedEl=root.querySelector("[data-tp-selected]"),statusEl=root.querySelector("[data-tp-status]");
- const safeInput=root.querySelector("[data-tp-safez]"),depthInput=root.querySelector("[data-tp-depth]"),feedInput=root.querySelector("[data-tp-feed]"),rpmInput=root.querySelector("[data-tp-rpm]"),leadInInput=root.querySelector("[data-tp-leadin]"),leadOutInput=root.querySelector("[data-tp-leadout]");
+ const safeInput=root.querySelector("[data-tp-safez]"),depthInput=root.querySelector("[data-tp-depth]"),feedInput=root.querySelector("[data-tp-feed]"),rpmInput=root.querySelector("[data-tp-rpm]"),leadInInput=root.querySelector("[data-tp-leadin]"),leadOutInput=root.querySelector("[data-tp-leadout]"),pitchInput=root.querySelector("[data-tp-pitch]");
  const targetInput=root.querySelector("[data-tp-target]"),wcsInput=root.querySelector("[data-tp-wcs]"),toolNoInput=root.querySelector("[data-tp-tool]"),hNoInput=root.querySelector("[data-tp-h]");
  const rotModeInput=root.querySelector("[data-tp-rotmode]"),a0Input=root.querySelector("[data-tp-a0]"),a1Input=root.querySelector("[data-tp-a1]"),b0Input=root.querySelector("[data-tp-b0]"),b1Input=root.querySelector("[data-tp-b1]");
  const state={payload:null,paths:[],selected:0,visible:true,edit:false,view:{scale:4,panX:0,panY:0},dragNode:null,deleteArmedUntil:0};
@@ -1702,7 +1707,7 @@ function makeToolpathRuntime(root){
  function syncInputs(){
    const p=selected(),base=state.payload?.params||{};
    safeInput.value=p?.safeZ??base.safeZ??5;depthInput.value=p?.depth??base.depth??-10;feedInput.value=p?.feed??base.feed??1200;rpmInput.value=p?.rpm??base.rpm??12000;
-   leadInInput.value=p?.leadIn??0;leadOutInput.value=p?.leadOut??0;
+   leadInInput.value=p?.leadIn??0;leadOutInput.value=p?.leadOut??0;pitchInput.value=p?.pitch??base.tapPitch??"";
    rotModeInput.value=p?.rotMode??"INDEXED";
    a0Input.value=p?.aStart??0;a1Input.value=p?.aEnd??(p?.aStart??0);
    b0Input.value=p?.bStart??0;b1Input.value=p?.bEnd??(p?.bStart??0);
@@ -1752,7 +1757,7 @@ function makeToolpathRuntime(root){
  }
  function applyInputs(path=selected()){
    if(!path)return;
-   path.safeZ=Number(safeInput.value)||5;path.depth=Number(depthInput.value)||-10;path.feed=Math.max(1,Number(feedInput.value)||1200);path.rpm=Math.max(1,Number(rpmInput.value)||12000);path.leadIn=Math.max(0,Number(leadInInput.value)||0);path.leadOut=Math.max(0,Number(leadOutInput.value)||0);
+   path.safeZ=Number(safeInput.value)||5;path.depth=Number(depthInput.value)||-10;path.feed=Math.max(1,Number(feedInput.value)||1200);path.rpm=Math.max(1,Number(rpmInput.value)||12000);path.leadIn=Math.max(0,Number(leadInInput.value)||0);path.leadOut=Math.max(0,Number(leadOutInput.value)||0);if(path.kind==="tap"){path.pitch=Number(pitchInput.value)||0;if(path.pitch>0)path.feed=path.rpm*path.pitch;}
    path.rotMode=rotModeInput.value==="SIMULTANEOUS"?"SIMULTANEOUS":"INDEXED";
    path.aStart=Number(a0Input.value)||0;path.aEnd=Number(a1Input.value)||0;path.bStart=Number(b0Input.value)||0;path.bEnd=Number(b1Input.value)||0;
    if(path.rotMode==="INDEXED"){path.aEnd=path.aStart;path.bEnd=path.bStart;a1Input.value=path.aEnd;b1Input.value=path.bEnd}
@@ -1764,6 +1769,7 @@ function makeToolpathRuntime(root){
      if(!(Number(p.feed)>0))errors.push("OP"+(i+1)+" 進給錯誤");
      if(!(Number(p.rpm)>0))errors.push("OP"+(i+1)+" 轉速錯誤");
      if(Number(p.safeZ)<=Number(p.depth))errors.push("OP"+(i+1)+" Safe-Z 不高於加工深度");
+     if(p.kind==="tap"&&!(Number(p.pitch)>0))errors.push("OP"+(i+1)+" 攻牙缺少螺距");
      for(const [label,v] of [["A0",p.aStart??0],["A1",p.aEnd??p.aStart??0],["B0",p.bStart??0],["B1",p.bEnd??p.bStart??0]])if(!Number.isFinite(Number(v)))errors.push("OP"+(i+1)+" "+label+" 非法");
    });
    if(errors.length){statusEl.textContent="VERIFY FAIL";msgEl.textContent=errors.slice(0,4).join("；");return false}
@@ -1781,7 +1787,10 @@ function makeToolpathRuntime(root){
  }
  function generateFanucNC(){
    if(!state.paths.length){msgEl.textContent="沒有刀路，不能產生 NC。";return null}
-   if(state.paths.some(p=>p.kind==="tap")){msgEl.textContent="攻牙刀路存在；G84/主軸同步尚未接入，為避免假 G-code 已阻擋 NC 產生。";statusEl.textContent="POST BLOCK";return null}
+   const invalidTap=state.paths.find(p=>p.kind==="tap"&&(!(Number(p.pitch)>0)||!(Number(p.rpm)>0)));
+   if(invalidTap){msgEl.textContent="攻牙缺少有效螺距或轉速，POST BLOCK。";statusEl.textContent="POST BLOCK";return null}
+   const simultaneousTap=state.paths.find(p=>p.kind==="tap"&&p.rotMode==="SIMULTANEOUS"&&(Math.abs(Number(p.aEnd||0)-Number(p.aStart||0))>1e-9||Math.abs(Number(p.bEnd||0)-Number(p.bStart||0))>1e-9));
+   if(simultaneousTap){msgEl.textContent="G84 攻牙目前只允許 3AX 或 INDEXED 定角；SIMULTANEOUS A/B 已阻擋。";statusEl.textContent="POST BLOCK";return null}
    const target=targetInput.value||"3AX",wcs=wcsInput.value||"G54",tool=Math.max(1,Math.trunc(Number(toolNoInput.value)||1)),hno=Math.max(1,Math.trunc(Number(hNoInput.value)||1));
    const rpm=Math.max(1,Math.trunc(Number(rpmInput.value)||12000)),defaultFeed=Math.max(1,Math.trunc(Number(feedInput.value)||1200)),defaultSafe=Number(safeInput.value)||5;
    const lines=[];let n=10;const push=line=>{lines.push("N"+n+" "+line);n+=10};
@@ -1797,6 +1806,13 @@ function makeToolpathRuntime(root){
        const pt=path.points[0];
        push("G0 X"+fmt(pt.x)+" Y"+fmt(pt.y));
        push("G81 X"+fmt(pt.x)+" Y"+fmt(pt.y)+" Z"+fmt(depth)+" R"+fmt(Math.min(safe,3))+" F"+feed);
+       push("G80");continue;
+     }
+     if(path.kind==="tap"){
+       const pt=path.points[0],pitch=Number(path.pitch),tapRpm=Math.max(1,Math.trunc(Number(path.rpm)||rpm)),tapFeed=tapRpm*pitch;
+       push("S"+tapRpm+" M3");
+       push("G0 X"+fmt(pt.x)+" Y"+fmt(pt.y));
+       push("G94 G84 X"+fmt(pt.x)+" Y"+fmt(pt.y)+" Z"+fmt(depth)+" R"+fmt(Math.min(safe,3))+" F"+fmt(tapFeed));
        push("G80");continue;
      }
      const first=path.points[0],li=leadPoint(path,"in"),lo=leadPoint(path,"out"),start=li||first;
@@ -1842,7 +1858,7 @@ function makeToolpathRuntime(root){
    const li=e.target.closest("[data-tp-index]");if(li){state.selected=Number(li.dataset.tpIndex)||0;renderList();syncInputs();updateInfo();draw();return}
    const ac=e.target.closest("[data-tp-action]");if(ac)action(ac.dataset.tpAction);
  });
- [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,rotModeInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>el.addEventListener("change",()=>{applyInputs();renderList();draw()}));
+ [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,pitchInput,rotModeInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>el.addEventListener("change",()=>{applyInputs();renderList();draw()}));
  canvas.addEventListener("pointerdown",e=>{if(!state.edit)return;const r=canvas.getBoundingClientRect(),sp={x:e.clientX-r.left,y:e.clientY-r.top},i=nearestNode(sp);if(i===null)return;state.dragNode=i;canvas.setPointerCapture(e.pointerId)});
  canvas.addEventListener("pointermove",e=>{if(state.dragNode===null)return;const r=canvas.getBoundingClientRect(),sp={x:e.clientX-r.left,y:e.clientY-r.top},{w,h}=resize(),wp=s2w(sp,w,h),p=selected();if(p?.points?.[state.dragNode]){p.points[state.dragNode]={x:Number(wp.x.toFixed(3)),y:Number(wp.y.toFixed(3))};draw()}});
  canvas.addEventListener("pointerup",e=>{if(state.dragNode!==null){state.dragNode=null;save();renderList()}});
