@@ -174,7 +174,7 @@ function simPage(axis){
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
  '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 真 3D 加工模擬<small>WebGL 機械模型 • A/B 真旋轉 • 拖曳 360° 相機</small></div></div>'+
  '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button></div>'+
- '<div class="runtimeStatus"><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric"><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
+ '<div class="runtimeStatus"><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric"><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric"><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
  '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label><label class="param">刃長<input data-cutter-len type="number" value="30" min="1" step="0.1"></label><label class="param">刀柄 Ø<input data-holder-dia type="number" value="25" min="1" step="0.1"></label><label class="param">刀柄長<input data-holder-len type="number" value="25" min="1" step="0.1"></label><label class="param">G54 X<input data-g54-x type="number" value="0" step="0.001"></label><label class="param">G54 Y<input data-g54-y type="number" value="0" step="0.001"></label><label class="param">G54 Z<input data-g54-z type="number" value="0" step="0.001"></label><label class="param">G55 X<input data-g55-x type="number" value="0" step="0.001"></label><label class="param">G55 Y<input data-g55-y type="number" value="0" step="0.001"></label><label class="param">G55 Z<input data-g55-z type="number" value="0" step="0.001"></label><label class="param">H1<input data-h1 type="number" value="0" step="0.001"></label><label class="param">H4<input data-h4 type="number" value="0" step="0.001"></label><label class="param">H12<input data-h12 type="number" value="0" step="0.001"></label></div>'+
  '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+sourceCode[axis]+'</textarea></div>'+
@@ -1167,7 +1167,7 @@ function makeRuntime(root){
  const h1=root.querySelector("[data-h1]"),h4=root.querySelector("[data-h4]"),h12=root.querySelector("[data-h12]");
  let stockConfig=aigJsonRead(root,"aig-stock-v1",null,"毛坯資料");
  let assemblyConfig=aigJsonRead(root,"aig-assembly-v1",{version:1,items:[]},"工件組裝");
- const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,optionalStop:false,blockSkip:false,last:performance.now(),history:[],historyIndex:-1,collisions:[],collisionAlarm:null};
+ const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,optionalStop:false,blockSkip:false,last:performance.now(),history:[],historyIndex:-1,collisions:[],collisionAlarm:null,setupClearance:null};
  const onStockUpdated=e=>{stockConfig=e?.detail||aigJsonRead(root,"aig-stock-v1",null,"毛坯資料");aigGuard(root,axis+" 毛坯更新",()=>parse(false),null,"warn")};
  const onAssemblyUpdated=e=>{assemblyConfig=e?.detail||aigJsonRead(root,"aig-assembly-v1",{version:1,items:[]},"工件組裝");aigGuard(root,axis+" 組裝更新",()=>parse(false),null,"warn")};
  window.addEventListener("aig-stock-updated",onStockUpdated);
@@ -1212,12 +1212,13 @@ function makeRuntime(root){
   const parsed=aigGuard(root,axis+" G-code 解析",()=>parseProgram(ta.value,axis,cfg),null,"error");
   if(!parsed){
     state.parsed={lines:ta.value.split(/\r?\n/),blocks:[],errors:["解析器發生可恢復錯誤；原始 G-code 已保留。"],warnings:[],mainProgram:"MAIN",programCount:0};
-    state.collisions=[];state.collisionAlarm=null;state.running=false;state.index=0;state.t=0;
+    state.collisions=[];state.setupClearance=null;state.collisionAlarm=null;state.running=false;state.index=0;state.t=0;
     renderExec();updateUi();draw();return;
   }
   state.parsed=parsed;
   const collisionScan=aigGuard(root,axis+" 碰撞預檢",()=>scanRuntimeCollisions(state.parsed,axis,cfg),{collisions:[]},"warn");
   state.collisions=collisionScan?.collisions||[];
+  state.setupClearance=aigGuard(root,axis+" 裝夾間隙",()=>evaluateSetupClearance(state.parsed,axis,cfg),null,"warn");
   state.collisionAlarm=null;
   if(resetIndex){state.index=0;state.t=0;state.running=false;}
   renderExec();updateUi();draw();
@@ -1505,6 +1506,16 @@ function makeRuntime(root){
     collisionEl.textContent=state.collisionAlarm?("ALARM "+state.collisionAlarm.type):(state.collisions.length?("CHECK "+state.collisions.length):"CLEAR");
     collisionEl.style.color=state.collisionAlarm?"#ff465f":state.collisions.length?"#ffb326":"#33f39b";
   }
+  const setupClearanceEl=root.querySelector("[data-setup-clearance]");
+  if(setupClearanceEl){
+    const c=Number(state.setupClearance?.minimum);
+    if(Number.isFinite(c)){
+      setupClearanceEl.textContent=c.toFixed(3)+" mm "+String(state.setupClearance?.limitingType||"");
+      setupClearanceEl.style.color=c<0?"#ff465f":c<2?"#ffb326":"#33f39b";
+    }else{
+      setupClearanceEl.textContent="—";setupClearanceEl.style.color="#b7c8d1";
+    }
+  }
   root.querySelector("[data-run-badge]").textContent=state.collisionAlarm?"ALARM":state.running?"RUN":state.index>=len&&len?"DONE":"READY";
  }
  function command(cmd){
@@ -1532,7 +1543,7 @@ function makeRuntime(root){
     parse(false);
     const sw=safetyWarnings(),cycles=state.parsed.blocks.filter(b=>b.cycle&&["feed","peck-feed","tap-feed"].includes(b.cyclePhase)).length;
     const firstCollision=state.collisions[0];
-    const msg=state.parsed.errors.length?state.parsed.errors.join(" "):firstCollision?("碰撞檢查 FAIL：第 "+(firstCollision.line+1)+" 行 "+firstCollision.message+" ["+firstCollision.type+"]；共 "+state.collisions.length+" 個碰撞區塊。"):sw.length?("驗證完成；Safe-Z 提醒："+sw.join("；")):"驗證 PASS：語法、Safe-Z 與刀具/刀柄幾何碰撞預檢通過；共 "+state.parsed.blocks.length+" 個模擬區塊，鑽孔進給 "+cycles+" 段。";
+    const msg=state.parsed.errors.length?state.parsed.errors.join(" "):firstCollision?("碰撞檢查 FAIL：第 "+(firstCollision.line+1)+" 行 "+firstCollision.message+" ["+firstCollision.type+"]；共 "+state.collisions.length+" 個碰撞區塊。"):sw.length?("驗證完成；Safe-Z 提醒："+sw.join("；")):"驗證 PASS：語法、Safe-Z 與刀具/刀柄幾何碰撞預檢通過；Setup 最小間隙 "+(Number.isFinite(Number(state.setupClearance?.minimum))?Number(state.setupClearance.minimum).toFixed(3)+" mm":"—")+"；共 "+state.parsed.blocks.length+" 個模擬區塊，鑽孔進給 "+cycles+" 段。";
     root.querySelector("[data-verify]").textContent=msg;
     root.querySelector("[data-verify]").style.color=(state.parsed.errors.length||firstCollision)?"#ff8b9b":"#b7c8d1"
   }
