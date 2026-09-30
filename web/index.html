@@ -1521,10 +1521,11 @@ function makeRuntime(root){
   // rotary table / stock
   c.save();c.translate(w/2,h/2);c.strokeStyle=axis==="3AX"?"rgba(70,120,145,.34)":axis==="4AX"?"rgba(255,179,38,.28)":"rgba(255,77,166,.27)";c.lineWidth=2;
   c.beginPath();c.ellipse(0,30,Math.min(w,h)*.29,Math.min(w,h)*.12,0,0,Math.PI*2);c.stroke();c.restore();
-  function strokeBlock(bl,tEnd,stroke,width){
+  // TOOLPATH_RGB_GLOW_250: visual-only neon halo around true path geometry.
+  function strokeBlock(bl,tEnd,stroke,width,glow=6){
     if(bl.kind!=="move")return;
     const samples=(bl.motion==="G2"||bl.motion==="G3")?28:1;
-    c.strokeStyle=stroke;c.lineWidth=width;c.lineCap="round";c.beginPath();
+    c.save();c.strokeStyle=stroke;c.shadowColor=stroke;c.shadowBlur=glow;c.lineWidth=width;c.lineCap="round";c.beginPath();
     const first=project(bl.from,b,w,h);c.moveTo(first.x,first.y);
     const count=Math.max(1,Math.ceil(samples*tEnd));
     for(let j=1;j<=count;j++){
@@ -1536,18 +1537,18 @@ function makeRuntime(root){
       const q=project(pp,b,w,h);c.lineTo(q.x,q.y);
       if(samples===1)break;
     }
-    c.stroke();
+    c.stroke();c.restore();
   }
   // full path: G2/G3 use sampled arcs instead of straight chords.
-  state.parsed.blocks.forEach(bl=>strokeBlock(bl,1,"rgba(54,148,255,.65)",1.5));
+  state.parsed.blocks.forEach(bl=>strokeBlock(bl,1,"rgba(39,233,255,.62)",1.5,5));
   // Executed trace. Cutting blocks use tool diameter; rapid/non-cut moves stay thin.
   const ppm=pixelsPerMm(b,w,h),cfgTrace=settings();
   state.parsed.blocks.forEach((bl,i)=>{
     if(bl.kind!=="move"||i>state.index)return;
     const tEnd=i<state.index?1:state.t,toolPx=Math.max(2,Math.min(20,runtimeToolDiameter(cfgTrace,bl)*ppm));
     const isCut=Boolean(bl.cutting)&&!state.dry;
-    const stroke=state.dry?"rgba(255,179,38,.86)":isCut?"rgba(51,243,155,.58)":"rgba(210,238,250,.42)";
-    strokeBlock(bl,tEnd,stroke,isCut?toolPx:(state.dry?2:1.6));
+    const stroke=state.dry?"rgba(255,179,38,.90)":isCut?"rgba(51,243,155,.72)":"rgba(39,233,255,.66)";
+    strokeBlock(bl,tEnd,stroke,isCut?toolPx:(state.dry?2:1.6),isCut?10:7);
 
     // Z-axis drilling has no XY line in top view, so show actual removed hole diameter.
     if(isCut && bl.cycle && (bl.cyclePhase==="feed"||bl.cyclePhase==="peck-feed")){
@@ -2254,13 +2255,13 @@ function makeToolpathRuntime(root){
    c.strokeStyle="rgba(39,233,255,.05)";c.lineWidth=1;for(let x=0;x<w;x+=36){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke()}for(let y=0;y<h;y+=36){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke()}
    if(!state.visible)return;
    state.paths.forEach((p,i)=>{
-     if(!p.points?.length)return;const sel=i===state.selected,disabled=p.enabled===false;c.strokeStyle=disabled?"rgba(130,145,155,.35)":sel?"#ff4da6":"#33f39b";c.lineWidth=sel?2.6:1.5;c.setLineDash(disabled?[6,5]:[]);c.beginPath();
-     p.points.forEach((pt,j)=>{const q=w2s(pt,w,h);if(j===0)c.moveTo(q.x,q.y);else c.lineTo(q.x,q.y)});c.stroke();c.setLineDash([]);
+     if(!p.points?.length)return;const sel=i===state.selected,disabled=p.enabled===false,stroke=disabled?"rgba(130,145,155,.35)":sel?"#ff4da6":"#33f39b";c.save();c.strokeStyle=stroke;c.shadowColor=stroke;c.shadowBlur=disabled?0:(sel?12:8);c.lineWidth=sel?2.8:1.7;c.setLineDash(disabled?[6,5]:[]);c.beginPath();
+     p.points.forEach((pt,j)=>{const q=w2s(pt,w,h);if(j===0)c.moveTo(q.x,q.y);else c.lineTo(q.x,q.y)});c.stroke();c.restore();c.setLineDash([]);
      if(disabled)return;
-     const li=leadPoint(p,"in"),lo=leadPoint(p,"out");c.strokeStyle="#ffb326";c.setLineDash([5,4]);
+     const li=leadPoint(p,"in"),lo=leadPoint(p,"out");c.save();c.strokeStyle="#ffb326";c.shadowColor="#ffb326";c.shadowBlur=7;c.setLineDash([5,4]);
      if(li){const a=w2s(li,w,h),b=w2s(p.points[0],w,h);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()}
      if(lo){const a=w2s(p.points[p.points.length-1],w,h),b=w2s(lo,w,h);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()}
-     c.setLineDash([]);
+     c.restore();c.setLineDash([]);
      if(sel&&state.edit){c.fillStyle="#27e9ff";for(const pt of p.points){const q=w2s(pt,w,h);c.beginPath();c.arc(q.x,q.y,4,0,Math.PI*2);c.fill()}}
    });
  }
