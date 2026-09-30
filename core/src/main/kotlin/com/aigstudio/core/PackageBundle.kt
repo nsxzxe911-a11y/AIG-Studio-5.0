@@ -24,7 +24,7 @@ data class StudioPackageValidation(
 object StudioPackageRegistry {
     val official = StudioPackageBundle(
         id = "aig-cnc-studio-official",
-        version = "5.0",
+        version = "5.1",
         packages = listOf(
             StudioPackage("software-absolute-coordinate","5.0",setOf("cad-core")),
             StudioPackage("cad-core","5.0"),
@@ -45,13 +45,19 @@ object StudioPackageRegistry {
             StudioPackage("ai-system-suite","5.0",setOf(
                 "ai-voice","ai-health","system-monitor-hud","performance-telemetry",
                 "thermal-guard","renderer-governor","chatgpt-ai-update",
+                "ai-package-delta-update","verified-working-copy-promote","rolling-baseline",
                 "software-absolute-coordinate"
             )),
             StudioPackage("chatgpt-ai-update","5.0",setOf("rgb-glass-ui")),
             StudioPackage("network-security","5.0",setOf("chatgpt-ai-update")),
             StudioPackage("offline-runtime-repository","5.0",setOf("offline-local-source","cam-core","material-removal-3d","fanuc-nc-editor")),
             StudioPackage("runtime-ux-flow","5.0",setOf("offline-runtime-repository","rgb-glass-ui")),
-            StudioPackage("offline-background-sync","5.0",setOf("offline-runtime-repository","network-security"))
+            StudioPackage("offline-background-sync","5.0",setOf("offline-runtime-repository","network-security")),
+            StudioPackage("network-update-manifest","5.1",setOf("network-security")),
+            StudioPackage("resumable-update-checkpoint","5.1",setOf("network-update-manifest")),
+            StudioPackage("ai-package-delta-update","5.1",setOf("chatgpt-ai-update","resumable-update-checkpoint")),
+            StudioPackage("verified-working-copy-promote","5.1",setOf("ai-package-delta-update","ai-health")),
+            StudioPackage("rolling-baseline","5.1",setOf("verified-working-copy-promote"))
         )
     )
 
