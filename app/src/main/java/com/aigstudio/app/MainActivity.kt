@@ -1646,6 +1646,9 @@ class MainActivity : Activity() {
     }
 
     private fun showMaintenanceCenter() {
+        val runtimeVersionName=runCatching {
+            packageManager.getPackageInfo(packageName,0).versionName ?: "UNKNOWN"
+        }.getOrDefault("UNKNOWN")
         val prefs=getSharedPreferences("aig_cad_autosave",MODE_PRIVATE)
         val checkpoint=prefs.getString("cad_state",null)
         val ncDraftState=prefs.getString("nc_draft",null)
@@ -1658,7 +1661,7 @@ class MainActivity : Activity() {
             setTextColor(0xFFE1EFFF.toInt())
             textSize=12.5f
             text=buildString{
-                appendLine("AIG CNC "+BuildConfig.VERSION_NAME+" • 正式 Runtime UI 內建維修")
+                appendLine("AIG CNC "+runtimeVersionName+" • 正式 Runtime UI 內建維修")
                 appendLine("BOOT="+IntegratedMaintenanceUiContract.DEFAULT_BOOT_TARGET+" • separate engineering shell=OFF")
                 appendLine(networkText+" • 維修可離線")
                 appendLine("RECOVERY="+if(!checkpoint.isNullOrBlank())"CAD READY" else "NONE"+
