@@ -1033,6 +1033,38 @@ function makeGlScene(canvas,axis){
  return{render,camera,getRemoval:()=>({...lastRemoval})};
 }
 
+function buildAdaptive2DPaths(shape,p,levels){
+ const out=[],toolDia=Math.max(.1,Number(p?.toolDia)||10),load=Math.max(.10,Math.min(.45,Number(p?.adaptiveLoad)||.35));
+ const step=Math.max(.1,toolDia*load),safeZ=Number.isFinite(Number(p?.safeZ))?Number(p.safeZ):5,feed=Math.max(1,Number(p?.feed)||1200),rpm=Math.max(1,Number(p?.rpm)||12000);
+ const direction=p?.direction==="CCW"?"CCW":"CW";
+ function sampleCircle(c,r,n=64){const a=[];for(let i=0;i<=n;i++){const t=Math.PI*2*i/n;a.push({x:c.x+Math.cos(t)*r,y:c.y+Math.sin(t)*r})}return a}
+ function normalize(points){
+   if(points.length<3)return points;let area=0;for(let i=0;i<points.length-1;i++)area+=points[i].x*points[i+1].y-points[i+1].x*points[i].y;
+   const ccw=area>0,wantCcw=direction==="CCW";return ccw===wantCcw?points:[...points].reverse();
+ }
+ const zs=(levels||[]).map(Number).filter(Number.isFinite);
+ zs.forEach((z,li)=>{
+   if(shape?.type==="rect"){
+     const rad=toolDia/2;let minX=Math.min(shape.a.x,shape.b.x)+rad,maxX=Math.max(shape.a.x,shape.b.x)-rad,minY=Math.min(shape.a.y,shape.b.y)+rad,maxY=Math.max(shape.a.y,shape.b.y)-rad,ring=0;
+     while(maxX>minX&&maxY>minY&&ring<1000){
+       let pts=[{x:minX,y:minY},{x:maxX,y:minY},{x:maxX,y:maxY},{x:minX,y:maxY},{x:minX,y:minY}];
+       if((ring+li+1)%2)pts=[...pts].reverse();pts=normalize(pts);
+       out.push({kind:"adaptive",points:pts,closed:true,depth:z,feed,rpm,safeZ,sourceId:shape.id,zLevelIndex:li+1,zLevelCount:zs.length,adaptiveRing:ring+1,radialStep:step,radialEngagement:Math.min(1,step/toolDia),entry:"SAFE_Z"});
+       minX+=step;maxX-=step;minY+=step;maxY-=step;ring++;
+     }
+   }else if(shape?.type==="circle"||shape?.type==="hole"){
+     const minR=Math.max(toolDia*.25,.001);let r=Number(shape.r)-toolDia/2,ring=0;
+     while(r>minR&&ring<1000){
+       let pts=sampleCircle(shape.c,r,Math.max(32,Math.min(128,Math.ceil(Math.PI*2*r/Math.max(.5,toolDia*.35)))));
+       if((ring+li+1)%2)pts=[...pts].reverse();pts=normalize(pts);
+       out.push({kind:"adaptive",points:pts,closed:true,depth:z,feed,rpm,safeZ,sourceId:shape.id,zLevelIndex:li+1,zLevelCount:zs.length,adaptiveRing:ring+1,radialStep:step,radialEngagement:Math.min(1,step/toolDia),entry:"SAFE_Z"});
+       r-=step;ring++;
+     }
+   }
+ });
+ return out;
+}
+
 function makeRuntime(root){
  const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d"),glCanvas=root.querySelector("[data-glcanvas]");
  const glScene=aigGuard(root,axis+" WebGL 初始化",()=>makeGlScene(glCanvas,axis),null,"warn");
@@ -1845,39 +1877,10 @@ function makeCamRuntime(root){
    }
    return out;
  }
- function adaptiveRingRect(sh,p,z,levelIndex,levelCount){
-   const out=[],rad=p.toolDia/2,step=Math.max(.1,p.toolDia*p.adaptiveLoad);
-   let minX=Math.min(sh.a.x,sh.b.x)+rad,maxX=Math.max(sh.a.x,sh.b.x)-rad;
-   let minY=Math.min(sh.a.y,sh.b.y)+rad,maxY=Math.max(sh.a.y,sh.b.y)-rad;
-   let ring=0;
-   while(maxX>minX&&maxY>minY&&ring<1000){
-     let pts=[{x:minX,y:minY},{x:maxX,y:minY},{x:maxX,y:maxY},{x:minX,y:maxY},{x:minX,y:minY}];
-     if((ring+levelIndex)%2)pts=[...pts].reverse();
-     pts=normalizeClosed(pts,p.direction);
-     out.push({kind:"adaptive",points:pts,closed:true,depth:z,feed:p.feed,rpm:p.rpm,safeZ:p.safeZ,sourceId:sh.id,zLevelIndex:levelIndex,zLevelCount:levelCount,adaptiveRing:ring+1,radialStep:step,radialEngagement:Math.min(1,step/p.toolDia),entry:"SAFE_Z"});
-     minX+=step;maxX-=step;minY+=step;maxY-=step;ring++;
-   }
-   return out;
- }
- function adaptiveRingCircle(sh,p,z,levelIndex,levelCount){
-   const out=[],step=Math.max(.1,p.toolDia*p.adaptiveLoad),minR=Math.max(p.toolDia*.25,.001);
-   let r=sh.r-p.toolDia/2,ring=0;
-   while(r>minR&&ring<1000){
-     let pts=sampleCircle(sh.c,r,Math.max(32,Math.min(128,Math.ceil(Math.PI*2*r/Math.max(.5,p.toolDia*.35)))));
-     if((ring+levelIndex)%2)pts=[...pts].reverse();
-     pts=normalizeClosed(pts,p.direction);
-     out.push({kind:"adaptive",points:pts,closed:true,depth:z,feed:p.feed,rpm:p.rpm,safeZ:p.safeZ,sourceId:sh.id,zLevelIndex:levelIndex,zLevelCount:levelCount,adaptiveRing:ring+1,radialStep:step,radialEngagement:Math.min(1,step/p.toolDia),entry:"SAFE_Z"});
-     r-=step;ring++;
-   }
-   return out;
- }
  function adaptivePaths(p){
    const supported=state.cad.filter(sh=>sh.type==="rect"||sh.type==="circle"||sh.type==="hole");
    const levels=zLayerDepths(p),out=[];
-   levels.forEach((z,li)=>supported.forEach(sh=>{
-     const paths=sh.type==="rect"?adaptiveRingRect(sh,p,z,li+1,levels.length):adaptiveRingCircle(sh,p,z,li+1,levels.length);
-     out.push(...paths);
-   }));
+   supported.forEach(sh=>out.push(...buildAdaptive2DPaths(sh,p,levels)));
    return out;
  }
  function drillPaths(p,kind="drill"){
