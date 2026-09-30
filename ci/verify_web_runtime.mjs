@@ -177,6 +177,12 @@ const required = [
   '加工深度',
   '超過毛坯底面',
   '只阻擋這次刀路計算',
+  'function runtimeStockEnvelope(parsed,cfg={})',
+  'stock:stockConfig',
+  'aig-stock-updated',
+  'heightfield(scene,minX,minY,spanX,spanY,stockTop,stockBottom)',
+  'voxelStock(scene,minX,minY,spanX,spanY,stockTop,stockBottom)',
+  'stockBottom',
   'CNC machine output disabled'
 ];
 
@@ -191,7 +197,7 @@ const coreStart = scriptMatch[1].indexOf("function parseWords(line){");
 const coreEnd = scriptMatch[1].indexOf("function makeRuntime(root){", coreStart);
 if (coreStart < 0 || coreEnd < 0) throw new Error("WEB_RUNTIME_CORE_BOUNDS_MISSING");
 const core = scriptMatch[1].slice(coreStart, coreEnd);
-const api = new Function(core + "\nreturn {parseProgram,compilePrograms,scanRuntimeCollisions,sampleRuntimeBlock};")();
+const api = new Function(core + "\nreturn {parseProgram,compilePrograms,scanRuntimeCollisions,sampleRuntimeBlock,runtimeStockEnvelope};")();
 
 const subProgramTest = `O1000
 N10 M98 P4
@@ -291,6 +297,16 @@ const zeroSafeRapid = zeroSafeParsed.blocks.find(b => b.cycle === "G81" && b.cyc
 if (!zeroSafeRapid || Math.abs(Number(zeroSafeRapid.to?.Z)) > 1e-9) throw new Error("SAFE_Z_ZERO_WAS_REPLACED");
 if (Math.abs(Number(tapFeed.to?.Z) + 8) > 1e-9) throw new Error("G84_DEPTH_WRONG");
 if (Math.abs(Number(tapReturn.to?.Z) - 2) > 1e-9) throw new Error("G84_G99_RETURN_WRONG");
+
+const stockParsed = api.parseProgram("O4400\nN10 G90 G54\nN20 G0 X0 Y0 Z10\nN30 G1 Z-5 F100\nN40 X20\nN50 M30", "3AX", {safeZ:5});
+const stockFallback = api.runtimeStockEnvelope(stockParsed, {});
+const stockExplicit = api.runtimeStockEnvelope(stockParsed, {stock:{top:2,thickness:18}});
+if (Math.abs(stockFallback.stockTop) > 1e-9) throw new Error("STOCK_FALLBACK_TOP_WRONG");
+if (Math.abs(stockExplicit.stockTop - 2) > 1e-9 || Math.abs(stockExplicit.stockBottom + 16) > 1e-9 || Math.abs(stockExplicit.stockH - 18) > 1e-9) {
+  throw new Error("EXPLICIT_STOCK_ENVELOPE_WRONG");
+}
+const explicitCollision = api.scanRuntimeCollisions(stockParsed, "3AX", {toolDia:10,cutterLen:30,holderDia:25,holderLen:25,safeZ:5,stock:{top:2,thickness:18}});
+if (explicitCollision.envelope.stockTop !== 2 || explicitCollision.envelope.stockBottom !== -16) throw new Error("COLLISION_STOCK_ENVELOPE_NOT_PROPAGATED");
 
 const cadRuntimeIndex = scriptMatch[1].indexOf("function makeCadRuntime(root){");
 const camRuntimeIndex = scriptMatch[1].indexOf("function makeCamRuntime(root){");
