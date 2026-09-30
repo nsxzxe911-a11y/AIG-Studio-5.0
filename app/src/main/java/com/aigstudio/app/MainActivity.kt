@@ -2077,7 +2077,12 @@ class MainActivity : Activity() {
                     for(i in 1 until list.size) {
                         val a=list[i-1]
                         val b=list[i]
-                        linePaint.color=if(b.rapid)LibraryFiveAxisSkin208.cyan else LibraryFiveAxisSkin208.warning
+                        // TOOLPATH_RGB_GLOW_250: visual-only dual-pass neon path; CAM geometry is untouched.
+                        val rgb=if(b.rapid)LibraryFiveAxisSkin208.cyan else LibraryFiveAxisSkin208.safe
+                        linePaint.color=Color.argb(if(b.rapid)42 else 54,Color.red(rgb),Color.green(rgb),Color.blue(rgb))
+                        linePaint.strokeWidth=dp(if(b.rapid)7 else 9).toFloat()
+                        canvas.drawLine(sx(a.to.x),sy(a.to.y),sx(b.to.x),sy(b.to.y),linePaint)
+                        linePaint.color=rgb
                         linePaint.strokeWidth=dp(if(b.rapid)2 else 3).toFloat()
                         canvas.drawLine(sx(a.to.x),sy(a.to.y),sx(b.to.x),sy(b.to.y),linePaint)
                     }
@@ -2118,7 +2123,7 @@ class MainActivity : Activity() {
 
         val legend=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
         legend.addView(textLine("● G0 RAPID",LibraryFiveAxisSkin208.cyan,9.5f),LinearLayout.LayoutParams(0,-2,1f))
-        legend.addView(textLine("● CUTTING",LibraryFiveAxisSkin208.warning,9.5f),LinearLayout.LayoutParams(0,-2,1f))
+        legend.addView(textLine("● CUTTING RGB",LibraryFiveAxisSkin208.safe,9.5f),LinearLayout.LayoutParams(0,-2,1f))
         legend.addView(textLine("● TOOL",LibraryFiveAxisSkin208.safe,9.5f),LinearLayout.LayoutParams(0,-2,1f))
         parameters.addView(legend)
 
@@ -2587,7 +2592,7 @@ class MainActivity : Activity() {
                 }
                 "CAM" -> {
                     visualHost.addView(TextView(this).apply {
-                        text="REAL CAM / 真實刀路\nCAM paths="+result.cam.toolpaths.size+"\nG0 青藍 • Cutting 黃橘"
+                        text="REAL CAM / 真實刀路\nCAM paths="+result.cam.toolpaths.size+"\nG0 青藍 • Cutting 綠 • Active 桃紫"
                         gravity=Gravity.CENTER
                         setTextColor(0xFFFFB020.toInt())
                         textSize=StudioDisplayPolicy.sp(this,15f)
