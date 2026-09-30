@@ -6,6 +6,7 @@ on:
     paths:
       - "web/**"
       - "ci/verify_web_runtime.mjs"
+      - "release-version.properties"
       - ".github/workflows/web-ui-pages.yml"
   workflow_dispatch:
 
