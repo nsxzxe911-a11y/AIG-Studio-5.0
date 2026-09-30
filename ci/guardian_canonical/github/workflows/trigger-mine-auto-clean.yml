@@ -1,0 +1,50 @@
+name: Studio Trigger Mine Auto Cleaner
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - 'build_android_release.sh'
+      - 'build_windows_native.ps1'
+      - 'ci/verify_production_runtime.py'
+      - 'ci/verify_trigger_policy.py'
+      - 'ci/verify_rolling_version.py'
+      - 'ci/trigger_mine_detector.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trigger-mine-cleaner-main
+  cancel-in-progress: true
+
+jobs:
+  scan-and-clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - name: Scan and safely auto-clean trigger mines
+        run: |
+          python3 -m py_compile ci/trigger_mine_detector.py
+          python3 ci/trigger_mine_detector.py --apply | tee trigger-mine-apply.log
+      - name: Verify policy after cleanup
+        run: |
+          python3 ci/verify_trigger_policy.py
+          python3 ci/trigger_mine_detector.py | tee trigger-mine-scan.log
+      - name: Commit safe auto-fixes only
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'TRIGGER_MINE_AUTO_CLEAN_NO_CHANGES'
+            exit 0
+          fi
+          git config user.name 'AIG Trigger Mine Cleaner'
+          git config user.email 'actions@users.noreply.github.com'
+          git add .github/workflows build_android_release.sh build_windows_native.ps1 ci
+          git commit -m '[mine-clean][infra-only] auto-clear safe trigger blockers'
+          git push origin HEAD:main
+          echo 'TRIGGER_MINE_AUTO_CLEAN_COMMITTED'
