@@ -246,6 +246,7 @@ function parseProgram(text,axis,opts={}){
  let cycle=null,cycleZ=null,cycleR=null,cycleQ=null;
  let machine={T:0,H:0,spindle:"M5",coolant:false};
  const blocks=[];const errors=[...compiled.errors];const warnings=[...compiled.warnings];
+ let currentMeta={subprogram:compiled.mainKey,subCall:null,subReturn:false,callDepth:0,callRepeat:1};
  const g73Retract=Math.max(0,Number(opts.g73Retract)||0.5);
 
  function moveTo(line,raw,to,motionName,extra={}){
@@ -253,7 +254,7 @@ function parseProgram(text,axis,opts={}){
    dest.F=Number.isFinite(to.F)?to.F:pos.F;dest.S=Number.isFinite(to.S)?to.S:pos.S;
    blocks.push({
      line,raw,kind:"move",motion:motionName,absolute,plane,from,to:dest,n:null,
-     arc:{I:null,J:null,K:null,R:null},cutting:false,machine:{...machine},skipEligible:/^\s*\//.test(raw),...meta,...meta,...extra
+     arc:{I:null,J:null,K:null,R:null},cutting:false,machine:{...machine},skipEligible:/^\s*\//.test(raw),...currentMeta,...extra
    });
    pos={...dest};
  }
@@ -309,6 +310,7 @@ function parseProgram(text,axis,opts={}){
  executionLines.forEach(item=>{
   const raw=item.raw,index=item.line;
   const meta={subprogram:item.program,subCall:item.subCall??null,subReturn:Boolean(item.subReturn),callDepth:item.callDepth||0,callRepeat:item.callRepeat||1};
+  currentMeta=meta;
   const {clean,out}=parseWords(raw);
   if(!clean)return;
   const gMatches=[...clean.matchAll(/G\s*0*(\d+(?:\.\d+)?)/g)].map(m=>"G"+Number(m[1]));
@@ -402,7 +404,7 @@ function parseProgram(text,axis,opts={}){
   if(moved){
     const cutting=motion!=="G0" && Math.min(from.Z,to.Z)<0;
     blocks.push({
-      line:index,raw,kind:"move",motion,absolute,plane,from,to,n,cycle:null,cutting,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw),
+      line:index,raw,kind:"move",motion,absolute,plane,from,to,n,cycle:null,cutting,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw),...meta,
       arc:{I:Number.isFinite(out.I)?out.I:null,J:Number.isFinite(out.J)?out.J:null,K:Number.isFinite(out.K)?out.K:null,R:Number.isFinite(out.R)?out.R:null}
     });
     pos={...to};
