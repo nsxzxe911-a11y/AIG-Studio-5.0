@@ -1947,6 +1947,7 @@ object FanucNc {
         out.appendLine("(CONTROLLER " + post.controller.displayName + ")")
         out.appendLine("(CANONICAL XYZ ABSOLUTE G90 • MASTER X0.000 Y0.000 Z0.000)")
         out.appendLine("(PROGRAM MODE " + post.coordinateMode.displayName + " • ORIGIN " + post.originTransformMode.displayName + " • CUTTER COMP " + post.cutterCompensation.displayName + ")")
+        out.appendLine("(CUTTER D REGISTER D" + post.cutterCompRegister + " • EXPECTED OFFSET " + fmt(post.cutterCompValueMm) + " MM • G40 MODE DOES NOT APPLY D)")
         out.appendLine("(MULTIAXIS TOOLPOINT A/B SOURCE " + (if(camHasAxisProvenance) "CAM_TOOLPOINTS" else "POST_COMPAT_FALLBACK") + ")")
         out.appendLine("(ROTARY MODE " + post.rotaryMode.name + " • CLAMP " +
             when {
