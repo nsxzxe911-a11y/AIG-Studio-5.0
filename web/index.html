@@ -161,13 +161,6 @@ function menuPage(){
  return '<section class="panel"><div class="head"><div><h2>功能選單</h2><small>非加工功能集中在這一頁；加工頁保持乾淨</small></div></div><div class="body"><div class="menuGrid">'+cards.map(x=>'<div class="menuCard">'+x+'</div>').join("")+'</div></div></section>'+
  '<section class="panel" style="margin-top:9px;border-color:rgba(255,70,95,.35)"><div class="body" style="color:#ffbdc6">Reset / Disconnect / 清除資料 / 維修診斷：只從功能選單明確進入。</div></section>';
 }
-pages.forEach(([name,color])=>{
- const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>show(name);nav.appendChild(b);
- const s=document.createElement("section");s.className="screen";s.dataset.page=name;
- s.innerHTML=name==="功能"?menuPage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="刀路"?toolpathPage():simPage(name);
- screens.appendChild(s);
-});
-
 const runtimes={};
 function parseWords(line){
  const clean=line.replace(/\([^)]*\)/g," ").replace(/;.*$/," ").trim().toUpperCase();
