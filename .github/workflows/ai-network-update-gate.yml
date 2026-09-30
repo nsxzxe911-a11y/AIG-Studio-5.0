@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
     paths:
-      - 'release-version.properties'
       - 'app/src/main/java/com/aigstudio/app/SecureServices.kt'
       - 'core/src/main/kotlin/com/aigstudio/core/PackageBundle.kt'
       - 'core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt'
@@ -41,4 +40,7 @@ jobs:
       - name: Compile changed update surfaces only
         run: gradle --no-daemon :core:compileKotlin :app:compileDebugKotlin
       - name: Gate result
-        run: echo 'STUDIO_254_AI_NETWORK_RELEVANT_GATE_PASS|NO_CNC_HEAVY_REGRESSION|ROLLING_BASELINE_CANDIDATE'
+        shell: bash
+        run: |
+          VERSION="$(awk -F= '$1=="versionName"{print $2}' release-version.properties)"
+          echo "STUDIO_${VERSION}_AI_NETWORK_RELEVANT_GATE_PASS|NO_CNC_HEAVY_REGRESSION|ROLLING_BASELINE_CANDIDATE"
