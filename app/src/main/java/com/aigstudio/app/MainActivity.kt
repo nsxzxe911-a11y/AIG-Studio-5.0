@@ -783,7 +783,8 @@ class MainActivity : Activity() {
             setPadding(dp(5),dp(2),dp(5),dp(3))
         }
         fun refreshVisibleMode(id:String) {
-            val mode=ProductionUiSwitchContract.normalize(id)
+            val mode=id.trim().uppercase(Locale.US)
+            require(mode in VisibleFunctionUiContract.requiredModes){"Unsupported visible UI mode: $id"}
             visibleModeTitle.text="UX • "+RuntimeUxFlowContract.title(mode)
             visibleModeActions.removeAllViews()
             fun action(label:String,colorIndex:Int,run:()->Unit) {
@@ -1168,10 +1169,18 @@ class MainActivity : Activity() {
             setPadding(dp(4),dp(4),dp(4),dp(4))
         }
         fun enterWorkstation(mode:String,open:()->Unit={}) {
+            val normalized=mode.trim().uppercase(Locale.US)
+            require(normalized in VisibleFunctionUiContract.requiredModes){"Unsupported HOME mode: $mode"}
             homeRoot.visibility=View.GONE
             root.visibility=View.VISIBLE
-            selectProductionUi(mode)
-            refreshVisibleMode(mode)
+            if(normalized in ProductionUiSwitchContract.modes) {
+                selectProductionUi(normalized)
+            } else {
+                productionUiButtons.forEach { (key,button) ->
+                    button.setRgbState(productionUiColors[key] ?: StudioProductionTheme.accent,false)
+                }
+            }
+            refreshVisibleMode(normalized)
             open()
         }
         fun homeAction(label:String,color:Int,run:()->Unit) {

@@ -298,9 +298,9 @@ for needle in (
     'bootShell.addView(runtimeHost, 0',
     'contentDescription="RETURN TO FORMAL RGB HOME"',
 ):
-    require(android, needle, "STUDIO_FORMAL_RGB_HOME_FIRST_243")
+    require(android, needle, "STUDIO_FORMAL_RGB_HOME_FIRST_244")
 if 'bootShell.addView(root, 0' in android:
-    raise SystemExit("STUDIO_CAD_WORKSTATION_DIRECT_BOOT_243")
+    raise SystemExit("STUDIO_CAD_WORKSTATION_DIRECT_BOOT_244")
 home_start=android.index('contentDescription="AIG CNC FORMAL RGB HOME"')
 home_end=android.index('runtimeHost.addView(homeRoot',home_start)
 home_source=android[home_start:home_end]
@@ -313,8 +313,8 @@ for forbidden in (
     "2D CAD • LIVE WORKSPACE",
 ):
     if forbidden in home_source:
-        raise SystemExit("STUDIO_HOME_ENGINEERING_CHROME_243: "+forbidden)
-print("STUDIO_FORMAL_RGB_HOME_FIRST_GATE_PASS|243|RGB_HOME|CAD_CAM_SIM_3AX_4AX_5AX_NC_AI|WORK_MAINTENANCE_NESTED|CAD_WORKSTATION_NOT_BOOT")
+        raise SystemExit("STUDIO_HOME_ENGINEERING_CHROME_244: "+forbidden)
+print("STUDIO_FORMAL_RGB_HOME_FIRST_GATE_PASS|244|RGB_HOME|CAD_CAM_SIM_3AX_4AX_5AX_NC_AI|WORK_MAINTENANCE_NESTED|CAD_WORKSTATION_NOT_BOOT")
 print("PRODUCTION_SHELL_EVIDENCE_RUNTIME_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY")
 for needle in (
     'const val BACKGROUND_AUTO_DOWNLOAD = false',
@@ -1409,4 +1409,14 @@ print("STUDIO_STABLE_ANDROID_BASELINE_GATE_PASS|238|ANDROID_16|API_36|ANDROID_17
 
 print("STUDIO_CAM_AXIS_SELECTOR_GATE_PASS|239|AXIS_MODE_SELECTOR|3AX|4AX|5AX|NO_DUPLICATE_5AX_PRIMARY_BUTTON")
 
-print("STUDIO_UI_VERIFY_SIDELOAD_ID_GATE_PASS|243|VERSION_SCOPED_PACKAGE|NO_DEBUG_SIGNATURE_COLLISION_WITH_PRIOR_UI_VERIFY")
+print("STUDIO_UI_VERIFY_SIDELOAD_ID_GATE_PASS|244|VERSION_SCOPED_PACKAGE|NO_DEBUG_SIGNATURE_COLLISION_WITH_PRIOR_UI_VERIFY")
+for needle in (
+    'val mode=id.trim().uppercase(Locale.US)',
+    'require(mode in VisibleFunctionUiContract.requiredModes)',
+    'if(normalized in ProductionUiSwitchContract.modes)',
+    'homeAction("3AX"',
+    'homeAction("4AX"',
+    'homeAction("5AX"',
+):
+    require(android, needle, "STUDIO_HOME_AXIS_ENTRY_244")
+print("STUDIO_HOME_AXIS_ENTRY_GATE_PASS|244|3AX|4AX|5AX|NO_NORMALIZE_CRASH")
