@@ -77,6 +77,9 @@ button,textarea,input,select{font:inherit}button{color:inherit}
 .ops{display:grid;gap:6px}.ops .btn{width:100%;padding:8px}
 .preview{min-height:580px;background:radial-gradient(circle,rgba(51,243,155,.08),transparent 42%),#020508;border-radius:11px;border:1px solid #123128}
 .camCanvas{display:block;width:100%;height:580px;touch-action:none;background:#010306;border-radius:11px;border:1px solid #123128}
+.tpCanvas{display:block;width:100%;height:580px;touch-action:none;background:#010306;border-radius:11px;border:1px solid #331538}
+.tpList{display:grid;gap:6px;max-height:520px;overflow:auto}.tpList .btn{width:100%;text-align:left;padding:8px}
+.tpNodeEdit{border-color:var(--pink)!important;box-shadow:0 0 16px rgba(255,77,166,.18)!important}
 .camStats{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.camStats .field{min-height:48px}
 .form{display:grid;gap:8px}.field{padding:8px;background:#04080b;border:1px solid #18303e;border-radius:9px}.field b{font-size:10px;color:var(--muted);display:block;margin-bottom:3px}.field span{font-size:12px}
 .menuGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
@@ -96,7 +99,7 @@ button,textarea,input,select{font:inherit}button{color:inherit}
 }
 @media(max-width:560px){
  .shell{padding:6px}.status{display:none}.nav{grid-template-columns:repeat(4,1fr)}.nav button{min-height:42px;font-size:11px}
- .sceneWrap,.simCanvas{min-height:44vh}.cadCanvasWrap,.cadCanvas,.camCanvas{min-height:48vh;height:48vh}.simgrid{min-height:0}.editor{min-height:500px}.code{min-height:300px}.menuGrid{grid-template-columns:1fr 1fr}
+ .sceneWrap,.simCanvas{min-height:44vh}.cadCanvasWrap,.cadCanvas,.camCanvas,.tpCanvas{min-height:48vh;height:48vh}.simgrid{min-height:0}.editor{min-height:500px}.code{min-height:300px}.menuGrid{grid-template-columns:1fr 1fr}
  .runtimeStatus{grid-template-columns:repeat(2,1fr)}
 }
 </style>
@@ -198,13 +201,22 @@ function camPage(){
  '</div></section></div></div>';
 }
 function toolpathPage(){
- const ops=["OP10 平面","OP20 口袋","OP30 輪廓","OP40 鑽孔","OP50 倒角"].map(x=>'<button class="btn">'+x+'</button>').join("");
- const top=[["顯示/隱藏",""],["重新計算","play"],["編輯節點",""],["Safe-Z","warn"],["進刀",""],["退刀",""],["驗證","play"],["刪除","danger"]].map(x=>'<button class="btn '+x[1]+'">'+x[0]+'</button>').join("");
- const fields=["刀具半徑補償","深度 -10.000","步距 0.500","進給 1200","轉速 12000","進刀 斜降","退刀 圓弧","碰撞檢查 開"].map(x=>'<div class="field"><span>'+x+'</span></div>').join("");
- return '<div class="toolstrip">'+top+'</div><div class="camgrid" style="grid-template-columns:260px minmax(0,1fr) 290px;margin-top:9px">'+
- panel("刀路列表",'<div class="ops">'+ops+'</div>')+
- '<section class="panel"><div class="head"><h2>刀路 3D 編輯區</h2><small>顯示與重新計算分開</small></div><div class="body"><div class="preview"></div></div></section>'+
- panel("刀路參數",'<div class="form">'+fields+'</div>')+'</div>';
+ return '<div data-tp-runtime><div class="toolstrip">'+
+ '<button class="btn" data-tp-action="TOGGLE">顯示/隱藏</button><button class="btn play" data-tp-action="RECALC">重新計算</button><button class="btn" data-tp-action="EDIT">編輯節點</button><button class="btn" data-tp-action="FIT">Fit</button><button class="btn play" data-tp-action="VERIFY">驗證</button><button class="btn danger" data-tp-action="DELETE">刪除</button><button class="btn play" data-tp-action="SAVE">儲存</button>'+
+ '</div><div class="camgrid" style="grid-template-columns:260px minmax(0,1fr) 300px;margin-top:9px">'+
+ '<section class="panel"><div class="head"><h3>刀路列表</h3></div><div class="body"><div class="tpList" data-tp-list></div><div class="notice" style="margin-top:8px" data-tp-msg>從 CAM 套用刀路後，會出現在這裡。</div></div></section>'+
+ '<section class="panel"><div class="head"><div><h2>刀路 2D/3D 編輯基底</h2><small>節點可拖動 • G-code 產生前驗證</small></div><span class="spacer"></span><span class="badge" data-tp-count>0 paths</span></div><div class="body"><canvas class="tpCanvas" data-tp-canvas></canvas></div></section>'+
+ '<section class="panel"><div class="head"><h3>刀路參數</h3></div><div class="body form">'+
+ '<label class="param">Safe-Z<input data-tp-safez type="number" value="5" step="0.001"></label>'+
+ '<label class="param">深度<input data-tp-depth type="number" value="-10" step="0.001"></label>'+
+ '<label class="param">進給<input data-tp-feed type="number" value="1200" min="1" step="1"></label>'+
+ '<label class="param">轉速<input data-tp-rpm type="number" value="12000" min="1" step="1"></label>'+
+ '<label class="param">進刀長<input data-tp-leadin type="number" value="5" min="0" step="0.001"></label>'+
+ '<label class="param">退刀長<input data-tp-leadout type="number" value="5" min="0" step="0.001"></label>'+
+ '<div class="field"><b>選取刀路</b><span data-tp-selected>無</span></div>'+
+ '<div class="field"><b>狀態</b><span data-tp-status>等待 CAM</span></div>'+
+ '<button class="btn" data-tp-action="APPLYALL">參數套用全部</button>'+
+ '</div></section></div></div>';
 }
 function menuPage(){
  const cards=["專案","檔案","刀具庫","工作座標","AI 助手","監控","設定","維修","同步","更新","系統資訊","說明"];
@@ -1209,7 +1221,117 @@ function makeCamRuntime(root){
    if(ac.dataset.camAction==="APPLY")apply();
  });
  [toolInput,depthInput,feedInput,rpmInput,safeInput,stepInput,dirInput].forEach(el=>el.addEventListener("change",()=>{if(state.paths.length)calc()}));
+ try{
+   const saved=JSON.parse(localStorage.getItem("aig-cam-toolpath-v1")||"null");
+   if(saved?.strategy){
+     state.strategy=saved.strategy;state.paths=Array.isArray(saved.paths)?saved.paths:[];
+     if(saved.params){
+       toolInput.value=saved.params.toolDia??toolInput.value;depthInput.value=saved.params.depth??depthInput.value;feedInput.value=saved.params.feed??feedInput.value;
+       rpmInput.value=saved.params.rpm??rpmInput.value;safeInput.value=saved.params.safeZ??safeInput.value;stepInput.value=(saved.params.stepover??.5)*100;dirInput.value=saved.params.direction||dirInput.value;
+     }
+     root.querySelectorAll("[data-cam-strategy]").forEach(b=>b.classList.toggle("cadSelected",b.dataset.camStrategy===state.strategy));
+   }
+ }catch{}
+ root.aigCamApi={
+   recalc:()=>{loadCad();if(!state.strategy)state.strategy="PROFILE";calc();apply();return state.paths.length},
+   reload:loadCad
+ };
  loadCad();updateStats();draw();
+}
+
+function makeToolpathRuntime(root){
+ const canvas=root.querySelector("[data-tp-canvas]"),ctx=canvas.getContext("2d"),listEl=root.querySelector("[data-tp-list]"),msgEl=root.querySelector("[data-tp-msg]"),countEl=root.querySelector("[data-tp-count]"),selectedEl=root.querySelector("[data-tp-selected]"),statusEl=root.querySelector("[data-tp-status]");
+ const safeInput=root.querySelector("[data-tp-safez]"),depthInput=root.querySelector("[data-tp-depth]"),feedInput=root.querySelector("[data-tp-feed]"),rpmInput=root.querySelector("[data-tp-rpm]"),leadInInput=root.querySelector("[data-tp-leadin]"),leadOutInput=root.querySelector("[data-tp-leadout]");
+ const state={payload:null,paths:[],selected:0,visible:true,edit:false,view:{scale:4,panX:0,panY:0},dragNode:null,deleteArmedUntil:0};
+ function load(){
+   try{state.payload=JSON.parse(localStorage.getItem("aig-cam-toolpath-v1")||"null")}catch{state.payload=null}
+   state.paths=Array.isArray(state.payload?.paths)?state.payload.paths:[];
+   state.selected=Math.min(state.selected,Math.max(0,state.paths.length-1));
+   syncInputs();renderList();fit();draw();updateInfo();
+ }
+ function selected(){return state.paths[state.selected]||null}
+ function syncInputs(){
+   const p=selected(),base=state.payload?.params||{};
+   safeInput.value=p?.safeZ??base.safeZ??5;depthInput.value=p?.depth??base.depth??-10;feedInput.value=p?.feed??base.feed??1200;rpmInput.value=p?.rpm??base.rpm??12000;
+   leadInInput.value=p?.leadIn??0;leadOutInput.value=p?.leadOut??0;
+ }
+ function save(){
+   if(!state.payload)state.payload={version:1,createdAt:Date.now(),strategy:"EDITED",params:{},cadEntityCount:0};
+   state.payload.paths=state.paths;state.payload.updatedAt=Date.now();localStorage.setItem("aig-cam-toolpath-v1",JSON.stringify(state.payload));statusEl.textContent="已儲存";msgEl.textContent="刀路修改已儲存到本機。";
+ }
+ function resize(){const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}ctx.setTransform(dpr,0,0,dpr,0,0);return{w:r.width,h:r.height}}
+ function w2s(p,w,h){return{x:w/2+state.view.panX+p.x*state.view.scale,y:h/2+state.view.panY-p.y*state.view.scale}}
+ function s2w(p,w,h){return{x:(p.x-w/2-state.view.panX)/state.view.scale,y:-(p.y-h/2-state.view.panY)/state.view.scale}}
+ function allPoints(){return state.paths.flatMap(p=>p.points||[])}
+ function fit(){
+   const {w,h}=resize(),pts=allPoints();if(!pts.length){state.view={scale:4,panX:0,panY:0};draw();return}
+   const minX=Math.min(...pts.map(p=>p.x)),maxX=Math.max(...pts.map(p=>p.x)),minY=Math.min(...pts.map(p=>p.y)),maxY=Math.max(...pts.map(p=>p.y)),ww=Math.max(1,maxX-minX),hh=Math.max(1,maxY-minY);
+   state.view.scale=Math.max(.2,Math.min(60,Math.min((w-80)/ww,(h-80)/hh)));state.view.panX=-((minX+maxX)/2)*state.view.scale;state.view.panY=((minY+maxY)/2)*state.view.scale;draw();
+ }
+ function renderList(){
+   listEl.innerHTML="";state.paths.forEach((p,i)=>{const b=document.createElement("button");b.className="btn"+(i===state.selected?" cadSelected":"");b.dataset.tpIndex=i;b.textContent="OP"+String(i+1).padStart(2,"0")+"  "+String(p.kind||"path").toUpperCase()+"  "+(p.points?.length||0)+" pts";listEl.appendChild(b)});
+ }
+ function updateInfo(){
+   countEl.textContent=state.paths.length+" paths";const p=selected();selectedEl.textContent=p?("OP"+String(state.selected+1).padStart(2,"0")+" "+String(p.kind||"path").toUpperCase()):"無";
+   statusEl.textContent=state.edit?"節點編輯":state.visible?"顯示":"隱藏";
+ }
+ function leadPoint(path,which){
+   if(!path?.points?.length)return null;const len=Number(which==="in"?path.leadIn:path.leadOut)||0;if(len<=0||path.points.length<2)return null;
+   const a=which==="in"?path.points[0]:path.points[path.points.length-1],b=which==="in"?path.points[1]:path.points[path.points.length-2],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy)||1;
+   return{x:a.x+dx/d*len,y:a.y+dy/d*len};
+ }
+ function draw(){
+   const {w,h}=resize(),c=ctx;c.clearRect(0,0,w,h);c.fillStyle="#010306";c.fillRect(0,0,w,h);
+   c.strokeStyle="rgba(39,233,255,.05)";c.lineWidth=1;for(let x=0;x<w;x+=36){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke()}for(let y=0;y<h;y+=36){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke()}
+   if(!state.visible)return;
+   state.paths.forEach((p,i)=>{
+     if(!p.points?.length)return;const sel=i===state.selected;c.strokeStyle=sel?"#ff4da6":"#33f39b";c.lineWidth=sel?2.6:1.5;c.beginPath();
+     p.points.forEach((pt,j)=>{const q=w2s(pt,w,h);if(j===0)c.moveTo(q.x,q.y);else c.lineTo(q.x,q.y)});c.stroke();
+     const li=leadPoint(p,"in"),lo=leadPoint(p,"out");c.strokeStyle="#ffb326";c.setLineDash([5,4]);
+     if(li){const a=w2s(li,w,h),b=w2s(p.points[0],w,h);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()}
+     if(lo){const a=w2s(p.points[p.points.length-1],w,h),b=w2s(lo,w,h);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()}
+     c.setLineDash([]);
+     if(sel&&state.edit){c.fillStyle="#27e9ff";for(const pt of p.points){const q=w2s(pt,w,h);c.beginPath();c.arc(q.x,q.y,4,0,Math.PI*2);c.fill()}}
+   });
+ }
+ function nearestNode(sp){
+   const p=selected();if(!p?.points?.length)return null;const {w,h}=resize();let best=null,d=12;
+   p.points.forEach((pt,i)=>{const q=w2s(pt,w,h),dd=Math.hypot(q.x-sp.x,q.y-sp.y);if(dd<d){d=dd;best=i}});return best;
+ }
+ function applyInputs(path=selected()){
+   if(!path)return;path.safeZ=Number(safeInput.value)||5;path.depth=Number(depthInput.value)||-10;path.feed=Math.max(1,Number(feedInput.value)||1200);path.rpm=Math.max(1,Number(rpmInput.value)||12000);path.leadIn=Math.max(0,Number(leadInInput.value)||0);path.leadOut=Math.max(0,Number(leadOutInput.value)||0);
+ }
+ function verify(){
+   const errors=[];state.paths.forEach((p,i)=>{if(!Array.isArray(p.points)||!p.points.length)errors.push("OP"+(i+1)+" 無節點");for(const pt of p.points||[])if(!Number.isFinite(pt.x)||!Number.isFinite(pt.y))errors.push("OP"+(i+1)+" 有非法座標");if(!(Number(p.feed)>0))errors.push("OP"+(i+1)+" 進給錯誤");if(!(Number(p.rpm)>0))errors.push("OP"+(i+1)+" 轉速錯誤");if(Number(p.safeZ)<=Number(p.depth))errors.push("OP"+(i+1)+" Safe-Z 不高於加工深度")});
+   if(errors.length){statusEl.textContent="VERIFY FAIL";msgEl.textContent=errors.slice(0,4).join("；");return false}
+   statusEl.textContent="VERIFY PASS";msgEl.textContent="幾何/座標/進給/轉速/Safe-Z 基礎驗證 PASS；此處不冒充碰撞驗證。";return true;
+ }
+ function action(name){
+   if(name==="TOGGLE"){state.visible=!state.visible;updateInfo();draw();return}
+   if(name==="EDIT"){state.edit=!state.edit;root.querySelector('[data-tp-action="EDIT"]').classList.toggle("tpNodeEdit",state.edit);updateInfo();draw();return}
+   if(name==="FIT"){fit();return}
+   if(name==="VERIFY"){verify();return}
+   if(name==="SAVE"){applyInputs();save();renderList();draw();return}
+   if(name==="APPLYALL"){for(const p of state.paths)applyInputs(p);save();msgEl.textContent="參數已套用全部刀路。";draw();return}
+   if(name==="RECALC"){
+     const cam=document.querySelector("[data-cam-runtime]");if(cam?.aigCamApi){const n=cam.aigCamApi.recalc();load();msgEl.textContent="CAM 已重新計算並回載 "+n+" 條刀路。"}else{load();msgEl.textContent="已重新載入 CAM 刀路。"}return
+   }
+   if(name==="DELETE"){
+     const p=selected();if(!p)return;const now=Date.now();if(now>state.deleteArmedUntil){state.deleteArmedUntil=now+2500;msgEl.textContent="刪除待命：2.5 秒內再按一次才刪除 OP"+(state.selected+1)+"。";return}
+     state.deleteArmedUntil=0;state.paths.splice(state.selected,1);state.selected=Math.max(0,Math.min(state.selected,state.paths.length-1));save();renderList();syncInputs();draw();updateInfo();return
+   }
+ }
+ root.addEventListener("click",e=>{
+   const li=e.target.closest("[data-tp-index]");if(li){state.selected=Number(li.dataset.tpIndex)||0;renderList();syncInputs();updateInfo();draw();return}
+   const ac=e.target.closest("[data-tp-action]");if(ac)action(ac.dataset.tpAction);
+ });
+ [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput].forEach(el=>el.addEventListener("change",()=>{applyInputs();draw()}));
+ canvas.addEventListener("pointerdown",e=>{if(!state.edit)return;const r=canvas.getBoundingClientRect(),sp={x:e.clientX-r.left,y:e.clientY-r.top},i=nearestNode(sp);if(i===null)return;state.dragNode=i;canvas.setPointerCapture(e.pointerId)});
+ canvas.addEventListener("pointermove",e=>{if(state.dragNode===null)return;const r=canvas.getBoundingClientRect(),sp={x:e.clientX-r.left,y:e.clientY-r.top},{w,h}=resize(),wp=s2w(sp,w,h),p=selected();if(p?.points?.[state.dragNode]){p.points[state.dragNode]={x:Number(wp.x.toFixed(3)),y:Number(wp.y.toFixed(3))};draw()}});
+ canvas.addEventListener("pointerup",e=>{if(state.dragNode!==null){state.dragNode=null;save();renderList()}});
+ canvas.addEventListener("pointercancel",()=>{state.dragNode=null});
+ canvas.addEventListener("wheel",e=>{e.preventDefault();const factor=e.deltaY<0?1.12:.89;state.view.scale=Math.max(.15,Math.min(80,state.view.scale*factor));draw()},{passive:false});
+ load();
 }
 pages.forEach(([name,color])=>{
  const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>show(name);nav.appendChild(b);
@@ -1220,6 +1342,7 @@ pages.forEach(([name,color])=>{
 document.querySelectorAll("[data-runtime]").forEach(makeRuntime);
 document.querySelectorAll("[data-cad-runtime]").forEach(makeCadRuntime);
 document.querySelectorAll("[data-cam-runtime]").forEach(makeCamRuntime);
+document.querySelectorAll("[data-tp-runtime]").forEach(makeToolpathRuntime);
 function show(name){
  if(!pages.some(p=>p[0]===name))name="5AX";
  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
