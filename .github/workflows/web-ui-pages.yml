@@ -37,3 +37,4 @@ jobs:
           name: aig-web-runtime-${{ github.sha }}
           path: web/index.html
           if-no-files-found: error
+          retention-days: 1
