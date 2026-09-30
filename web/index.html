@@ -406,10 +406,10 @@ function aigBindFieldFeedback(root){
  root.addEventListener("change",e=>{const el=e.target.closest?.("input,select,textarea");if(el)aigValidateField(el)});
  root.querySelectorAll("input,select,textarea").forEach(aigValidateField);
 }
-function aigGuard(root,label,fn,fallback=null){
+function aigGuard(root,label,fn,fallback=null,severity="error"){
  try{return fn()}catch(err){
    const detail=err&&err.message?err.message:String(err||"未知錯誤");
-   aigShowIssue(root,"error",label+"： "+detail+"。AIG 已保留目前資料並繼續運作。");
+   aigShowIssue(root,severity,label+"： "+detail+"。AIG 已保留目前資料並繼續運作。");
    return fallback;
  }
 }
@@ -1058,7 +1058,9 @@ function makeGlScene(canvas,axis){
 }
 
 function makeRuntime(root){
- const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d"),glCanvas=root.querySelector("[data-glcanvas]"),glScene=makeGlScene(glCanvas,axis);
+ const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d"),glCanvas=root.querySelector("[data-glcanvas]");
+ const glScene=aigGuard(root,axis+" WebGL 初始化",()=>makeGlScene(glCanvas,axis),null,"warn");
+ if(!glScene)aigShowIssue(root,"warn",axis+" WebGL 無法使用，已自動切換 2D fallback；G-code、模擬控制與編輯器仍可繼續使用。");
  const toolInput=root.querySelector("[data-tool-dia]"),safeInput=root.querySelector("[data-safe-z]"),g73Input=root.querySelector("[data-g73-retract]"),cutterInput=root.querySelector("[data-cutter-len]"),holderDiaInput=root.querySelector("[data-holder-dia]"),holderLenInput=root.querySelector("[data-holder-len]");
  const g54x=root.querySelector("[data-g54-x]"),g54y=root.querySelector("[data-g54-y]"),g54z=root.querySelector("[data-g54-z]");
  const g55x=root.querySelector("[data-g55-x]"),g55y=root.querySelector("[data-g55-y]"),g55z=root.querySelector("[data-g55-z]");
@@ -1086,15 +1088,22 @@ function makeRuntime(root){
   state.history=state.history.slice(0,state.historyIndex+1);state.history.push(v);state.historyIndex=state.history.length-1;
  }
  function parse(resetIndex=true){
-  state.parsed=parseProgram(ta.value,axis,settings());
-  const collisionScan=scanRuntimeCollisions(state.parsed,axis,settings());
-  state.collisions=collisionScan.collisions;
+  const cfg=settings();
+  const parsed=aigGuard(root,axis+" G-code 解析",()=>parseProgram(ta.value,axis,cfg),null,"error");
+  if(!parsed){
+    state.parsed={lines:ta.value.split(/\r?\n/),blocks:[],errors:["解析器發生可恢復錯誤；原始 G-code 已保留。"],warnings:[],mainProgram:"MAIN",programCount:0};
+    state.collisions=[];state.collisionAlarm=null;state.running=false;state.index=0;state.t=0;
+    renderExec();updateUi();draw();return;
+  }
+  state.parsed=parsed;
+  const collisionScan=aigGuard(root,axis+" 碰撞預檢",()=>scanRuntimeCollisions(state.parsed,axis,cfg),{collisions:[]},"warn");
+  state.collisions=collisionScan?.collisions||[];
   state.collisionAlarm=null;
   if(resetIndex){state.index=0;state.t=0;state.running=false;}
   renderExec();updateUi();draw();
   const v=root.querySelector("[data-verify]");
   v.textContent=state.parsed.errors.length?state.parsed.errors.join(" "):state.collisions.length?("解析完成，但碰撞預檢發現 "+state.collisions.length+" 個風險；按「驗證」查看。"):state.parsed.warnings.length?("解析完成："+state.parsed.blocks.length+" 個區塊。提醒："+state.parsed.warnings.join(" ")):"解析完成："+state.parsed.blocks.length+" 個區塊。G81/G73/G83/G84 已展開為實際模擬動作。";
-  v.style.color=state.parsed.errors.length?"#ffbdc6":"#b7c8d1";
+  v.style.color=state.parsed.errors.length?"#ffbdc6":state.collisions.length?"#ffcf70":"#b7c8d1";
  }
  function renderExec(){
   const box=root.querySelector("[data-exec]");box.innerHTML="";
@@ -2143,11 +2152,11 @@ pages.forEach(([name,color])=>{
  s.innerHTML=name==="功能"?menuPage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="刀路"?toolpathPage():simPage(name);
  screens.appendChild(s);
 });
-document.querySelectorAll("[data-runtime]").forEach(makeRuntime);
-document.querySelectorAll("[data-cad-runtime]").forEach(makeCadRuntime);
-document.querySelectorAll("[data-cam-runtime]").forEach(makeCamRuntime);
-document.querySelectorAll("[data-tp-runtime]").forEach(makeToolpathRuntime);
-document.querySelectorAll("[data-menu-runtime]").forEach(makeMenuRuntime);
+document.querySelectorAll("[data-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,(el.dataset.runtime||"NC")+" Runtime 初始化",()=>makeRuntime(el),null,"error")});
+document.querySelectorAll("[data-cad-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"CAD Runtime 初始化",()=>makeCadRuntime(el),null,"error")});
+document.querySelectorAll("[data-cam-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"CAM Runtime 初始化",()=>makeCamRuntime(el),null,"error")});
+document.querySelectorAll("[data-tp-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"刀路 Runtime 初始化",()=>makeToolpathRuntime(el),null,"error")});
+document.querySelectorAll("[data-menu-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"功能選單初始化",()=>makeMenuRuntime(el),null,"error")});
 function show(name){
  if(!pages.some(p=>p[0]===name))name="5AX";
  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
