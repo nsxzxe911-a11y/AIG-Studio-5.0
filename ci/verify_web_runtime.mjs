@@ -144,6 +144,11 @@ const required = [
   'function aigValidateAllFields',
   'function aigBindFieldFeedback',
   'function aigGuard',
+  'function aigFiniteNumber',
+  '只暫停加工播放',
+  '此次不輸出 NC，其他功能仍可繼續使用',
+  '原始 G-code 已保留',
+  '已自動切換 2D fallback',
   'AIG 已保留目前資料並繼續運作',
   'Runtime 發生可恢復錯誤',
   '非同步作業失敗',
@@ -257,6 +262,15 @@ if (tapParsed.errors.length) throw new Error("G84_PARSE_ERROR: " + tapParsed.err
 const tapFeed = tapParsed.blocks.find(b => b.cycle === "G84" && b.cyclePhase === "tap-feed");
 const tapReturn = tapParsed.blocks.find(b => b.cycle === "G84" && b.cyclePhase === "tap-return");
 if (!tapFeed || !tapReturn) throw new Error("G84_FEED_RETURN_NOT_EXPANDED");
+
+const zeroSafeProgram = `O4400
+N10 G90 G0 Z10.
+N20 G81 X0. Y0. Z-2. F100.
+N30 G80
+N40 M30`;
+const zeroSafeParsed = api.parseProgram(zeroSafeProgram, "3AX", {g73Retract:0,safeZ:0});
+const zeroSafeRapid = zeroSafeParsed.blocks.find(b => b.cycle === "G81" && b.cyclePhase === "rapid-r");
+if (!zeroSafeRapid || Math.abs(Number(zeroSafeRapid.to?.Z)) > 1e-9) throw new Error("SAFE_Z_ZERO_WAS_REPLACED");
 if (Math.abs(Number(tapFeed.to?.Z) + 8) > 1e-9) throw new Error("G84_DEPTH_WRONG");
 if (Math.abs(Number(tapReturn.to?.Z) - 2) > 1e-9) throw new Error("G84_G99_RETURN_WRONG");
 
@@ -277,9 +291,19 @@ if (runtimeCount !== 0) {
   // Runtime pages are generated dynamically through simPage(name), so direct sim(...) calls are not expected.
 }
 
+const forbiddenSilentFallbacks = [
+  'safeZ:Number(safeInput.value)||5',
+  'depth:Number(depthInput.value)||-10',
+  'Number(opts.safeZ)||5',
+  'Number(opts.g73Retract)||0.5'
+];
+for (const legacy of forbiddenSilentFallbacks) {
+  if (html.includes(legacy)) throw new Error("SILENT_NUMERIC_FALLBACK_RETURNED: " + legacy);
+}
+
 const pageDefs = [...html.matchAll(/\["(?:功能|CAD|CAM|刀路|3AX|4AX|5AX)","#[0-9a-fA-F]{6}"\]/g)];
 if (pageDefs.length !== 7) {
   throw new Error("WEB_RUNTIME_PAGE_COUNT_" + pageDefs.length);
 }
 
-console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|FUNCTION_MENU_RUNTIME|NO_FAKE_SERVICE_STATE|WEBGL_3D|3AX_HEIGHTFIELD_REMOVAL|4X_5X_ROTARY_VOXEL_REMOVAL|ROTARY_TOOLPATH_AB|SIMULTANEOUS_AB_POST|FANUC_POST_SCOPE|REMOVAL_VOLUME_EVIDENCE|CUTTER_HOLDER_COLLISION|COLLISION_STOP_ALARM|ROTARY_COLLISION_TEST|G84_TAPPING|G84_FEED_RETURN_TEST|TAP_PITCH_GATE|INDEXED_TAP_ONLY|POST_COLLISION_PREFLIGHT|EXPLICIT_POST_TOOL_GEOMETRY|INLINE_FIELD_FEEDBACK|NONFATAL_RUNTIME_ERRORS|CAD_SEMANTIC_VALIDATION|ANIMATION_RECOVERY|BLACK_RGB");
+console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|FUNCTION_MENU_RUNTIME|NO_FAKE_SERVICE_STATE|WEBGL_3D|3AX_HEIGHTFIELD_REMOVAL|4X_5X_ROTARY_VOXEL_REMOVAL|ROTARY_TOOLPATH_AB|SIMULTANEOUS_AB_POST|FANUC_POST_SCOPE|REMOVAL_VOLUME_EVIDENCE|CUTTER_HOLDER_COLLISION|COLLISION_STOP_ALARM|ROTARY_COLLISION_TEST|G84_TAPPING|G84_FEED_RETURN_TEST|TAP_PITCH_GATE|INDEXED_TAP_ONLY|POST_COLLISION_PREFLIGHT|EXPLICIT_POST_TOOL_GEOMETRY|INLINE_FIELD_FEEDBACK|NONFATAL_RUNTIME_ERRORS|CAD_SEMANTIC_VALIDATION|ANIMATION_RECOVERY|FIELD_ISSUE_CENTER|ZERO_VALUE_PRESERVED|NO_SILENT_NUMERIC_FALLBACK|NONBLOCKING_USER_MESSAGES|BLACK_RGB");
