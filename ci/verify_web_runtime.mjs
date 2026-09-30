@@ -21,6 +21,14 @@ const required = [
   'G81',
   'G73',
   'G83',
+  'G84',
+  'G94 G84',
+  'data-cam-pitch',
+  'data-tp-pitch',
+  '攻牙缺少有效螺距',
+  'SIMULTANEOUS A/B 已阻擋',
+  'tap-feed',
+  'tap-return',
   'G34',
   'pattern:"G34"',
   'presetOnly:true',
@@ -217,6 +225,20 @@ const collision5xParsed = api.parseProgram(collision5xProgram, "5AX", collisionC
 const collision5xScan = api.scanRuntimeCollisions(collision5xParsed, "5AX", collisionCfg);
 if (!collision5xScan.collisions.length) throw new Error("ROTARY_COLLISION_NOT_DETECTED");
 
+const tapProgram = `O4300
+N10 G90 G54 G17
+N20 S1000 M3
+N30 G99 G84 X10. Y5. Z-8. R2. F1500.
+N40 G80
+N50 M30`;
+const tapParsed = api.parseProgram(tapProgram, "3AX", {toolDia:6,cutterLen:25,holderDia:18,holderLen:25,g73Retract:0.5,safeZ:5});
+if (tapParsed.errors.length) throw new Error("G84_PARSE_ERROR: " + tapParsed.errors.join(" | "));
+const tapFeed = tapParsed.blocks.find(b => b.cycle === "G84" && b.cyclePhase === "tap-feed");
+const tapReturn = tapParsed.blocks.find(b => b.cycle === "G84" && b.cyclePhase === "tap-return");
+if (!tapFeed || !tapReturn) throw new Error("G84_FEED_RETURN_NOT_EXPANDED");
+if (Math.abs(Number(tapFeed.to?.Z) + 8) > 1e-9) throw new Error("G84_DEPTH_WRONG");
+if (Math.abs(Number(tapReturn.to?.Z) - 2) > 1e-9) throw new Error("G84_G99_RETURN_WRONG");
+
 const cadRuntimeIndex = scriptMatch[1].indexOf("function makeCadRuntime(root){");
 const camRuntimeIndex = scriptMatch[1].indexOf("function makeCamRuntime(root){");
 const toolpathRuntimeIndex = scriptMatch[1].indexOf("function makeToolpathRuntime(root){");
@@ -239,4 +261,4 @@ if (pageDefs.length !== 7) {
   throw new Error("WEB_RUNTIME_PAGE_COUNT_" + pageDefs.length);
 }
 
-console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|FUNCTION_MENU_RUNTIME|NO_FAKE_SERVICE_STATE|WEBGL_3D|3AX_HEIGHTFIELD_REMOVAL|4X_5X_ROTARY_VOXEL_REMOVAL|ROTARY_TOOLPATH_AB|SIMULTANEOUS_AB_POST|FANUC_POST_SCOPE|REMOVAL_VOLUME_EVIDENCE|CUTTER_HOLDER_COLLISION|COLLISION_STOP_ALARM|ROTARY_COLLISION_TEST|BLACK_RGB");
+console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|FUNCTION_MENU_RUNTIME|NO_FAKE_SERVICE_STATE|WEBGL_3D|3AX_HEIGHTFIELD_REMOVAL|4X_5X_ROTARY_VOXEL_REMOVAL|ROTARY_TOOLPATH_AB|SIMULTANEOUS_AB_POST|FANUC_POST_SCOPE|REMOVAL_VOLUME_EVIDENCE|CUTTER_HOLDER_COLLISION|COLLISION_STOP_ALARM|ROTARY_COLLISION_TEST|G84_TAPPING|G84_FEED_RETURN_TEST|TAP_PITCH_GATE|INDEXED_TAP_ONLY|BLACK_RGB");
