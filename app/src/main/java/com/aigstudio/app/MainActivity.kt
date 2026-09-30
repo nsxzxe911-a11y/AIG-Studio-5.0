@@ -1565,7 +1565,14 @@ class MainActivity : Activity() {
                 .edit()
                 .putString("cad_state", cad.exportState())
                 .putLong("saved_at", System.currentTimeMillis())
-                .putInt("format_version", 3)
+                .putInt("format_version", 4)
+                .putString("nc_controller", controllerProfile.name)
+                .putString("nc_coordinate_mode", ncCoordinateMode.name)
+                .putString("nc_origin_mode", ncOriginTransformMode.name)
+                .putString("nc_cutter_comp", ncCutterCompensation.name)
+                .putInt("nc_cutter_d_register", ncCutterCompRegister)
+                .putLong("nc_cutter_d_value_bits", java.lang.Double.doubleToLongBits(ncCutterCompValueMm))
+                .putString("nc_work_offset", workOffset)
             val draft = unifiedNcDraft
             if (draft.isNullOrBlank()) {
                 editor.remove("nc_draft")
@@ -1585,9 +1592,29 @@ class MainActivity : Activity() {
         val raw = prefs.getString("cad_state", null) ?: return
         if (raw.isBlank()) return
         val formatVersion = prefs.getInt("format_version", 1)
-        if (formatVersion !in 1..3) return
+        if (formatVersion !in 1..4) return
         runCatching { cad.importState(raw) }
             .onSuccess {
+                if (formatVersion >= 4) {
+                    controllerProfile = runCatching {
+                        CncControllerProfile.valueOf(prefs.getString("nc_controller", CncControllerProfile.FANUC.name)!!)
+                    }.getOrDefault(CncControllerProfile.FANUC)
+                    ncCoordinateMode = runCatching {
+                        NcCoordinateMode.valueOf(prefs.getString("nc_coordinate_mode", NcCoordinateMode.ABSOLUTE_G90.name)!!)
+                    }.getOrDefault(NcCoordinateMode.ABSOLUTE_G90)
+                    ncOriginTransformMode = runCatching {
+                        NcOriginTransformMode.valueOf(prefs.getString("nc_origin_mode", NcOriginTransformMode.WORK_OFFSET_ONLY.name)!!)
+                    }.getOrDefault(NcOriginTransformMode.WORK_OFFSET_ONLY)
+                    ncCutterCompensation = runCatching {
+                        CutterCompensationMode.valueOf(prefs.getString("nc_cutter_comp", CutterCompensationMode.CAM_GEOMETRY_G40.name)!!)
+                    }.getOrDefault(CutterCompensationMode.CAM_GEOMETRY_G40)
+                    ncCutterCompRegister = prefs.getInt("nc_cutter_d_register", 1).coerceIn(1,999)
+                    ncCutterCompValueMm = java.lang.Double.longBitsToDouble(
+                        prefs.getLong("nc_cutter_d_value_bits", java.lang.Double.doubleToLongBits(0.0))
+                    ).takeIf { it.isFinite() } ?: 0.0
+                    workOffset = prefs.getString("nc_work_offset", "G54")
+                        ?.takeIf { Regex("G5[4-9]").matches(it) } ?: "G54"
+                }
                 if (formatVersion >= 3) {
                     unifiedNcDraft = prefs.getString("nc_draft", null)?.takeIf { it.isNotBlank() }
                     unifiedNcDraftSourceSignature = prefs.getString("nc_source_signature", null)
