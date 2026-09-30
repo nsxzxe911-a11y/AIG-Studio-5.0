@@ -36,7 +36,7 @@ jobs:
               'app/src/main/assets/aig-themes/themes/',
               '.github/workflows/ui-art-diff-gate.yml',
           )
-          allowed_exact={'release-version.properties','ci/verify_web_runtime.mjs'}
+          allowed_exact={'release-version.properties','ci/verify_web_runtime.mjs','app/src/main/java/com/aigstudio/app/MainActivity.kt','app/src/main/java/com/aigstudio/app/Machining3DView.kt','desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'}
           blocked=[p for p in changed if p not in allowed_exact and not p.startswith(allowed_prefixes)]
           if blocked:
               raise SystemExit('UI_ART_DIFF_BLOCKED_CORE_CHANGE: '+','.join(blocked))
@@ -55,7 +55,13 @@ jobs:
           assert theme['panel_color']=='#07111B'
           assert theme['state_model']==['NORMAL','PRESSED','SELECTED','DISABLED','ALARM']
           html=Path('web/index.html').read_text(encoding='utf-8')
-          for marker in ('STUDIO_PRODUCT_ART_PASS_249','viewport-fit=cover','service-worker.js'):
+          for marker in ('STUDIO_PRODUCT_ART_PASS_249','TOOLPATH_RGB_GLOW_250','viewport-fit=cover','service-worker.js'):
               assert marker in html, marker
-          print('STUDIO_UI_ART_DIFF_GATE_PASS|BLACK_CLARITY|RGB_GLASS|VIEWPORT_PRIORITY|DESKTOP_MOBILE|OFFLINE_SHELL')
+          android=Path('app/src/main/java/com/aigstudio/app/Machining3DView.kt').read_text(encoding='utf-8')
+          desktop=Path('desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt').read_text(encoding='utf-8')
+          main=Path('app/src/main/java/com/aigstudio/app/MainActivity.kt').read_text(encoding='utf-8')
+          assert 'TOOLPATH_RGB_GLOW_250' in android
+          assert 'TOOLPATH_RGB_GLOW_250' in desktop
+          assert 'TOOLPATH_RGB_GLOW_250' in main
+          print('STUDIO_UI_ART_DIFF_GATE_PASS|BLACK_CLARITY|RGB_GLASS|RGB_TOOLPATH_GLOW|VIEWPORT_PRIORITY|DESKTOP_MOBILE|OFFLINE_SHELL')
           PY
