@@ -3422,7 +3422,7 @@ fun main(args: Array<String>) {
     }
     if (args.contains("--smoke")) {
         runSmoke()
-        return
+        System.exit(0)
     }
     if (GraphicsEnvironment.isHeadless()) error("Desktop UI requires a graphical Windows session")
     SwingUtilities.invokeLater {
