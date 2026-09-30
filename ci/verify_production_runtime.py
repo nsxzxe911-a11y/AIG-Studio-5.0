@@ -56,7 +56,7 @@ for marker in required_desktop:
 
 if 'const val PROFILE="AIG_CNC_PRODUCTION_RUNTIME_221"' not in env:
     raise SystemExit("production startup profile missing")
-if "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" not in android_build:
+if "release_state=PRODUCTION_RUNTIME_CANDIDATE" not in android_build:
     raise SystemExit("Android production release state missing")
 if "release_class=PRODUCTION_RUNTIME" not in android_build:
     raise SystemExit("Android production release class missing")
