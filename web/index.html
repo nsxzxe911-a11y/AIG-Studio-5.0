@@ -62,6 +62,14 @@ button,textarea,input,select{font:inherit}button{color:inherit}
 .canvas{min-height:580px;background:
  linear-gradient(rgba(39,233,255,.028) 1px,transparent 1px),
  linear-gradient(90deg,rgba(39,233,255,.028) 1px,transparent 1px),#020508;background-size:32px 32px;border-radius:11px}
+.cadCanvasWrap{position:relative;min-height:580px;border:1px solid #102934;border-radius:11px;overflow:hidden;background:#010306}
+.cadCanvas{display:block;width:100%;height:580px;touch-action:none;cursor:crosshair;background:#010306}
+.cadHud{position:absolute;left:9px;top:9px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
+.cadHud span{padding:4px 7px;background:rgba(0,0,0,.76);border:1px solid #17384a;border-radius:7px;font:10px ui-monospace,monospace;color:#bfefff}
+.cadSelected{border-color:var(--cyan)!important;box-shadow:0 0 16px rgba(39,233,255,.2)!important}
+.cadSide{display:grid;gap:7px}.cadSide .field{min-height:48px}
+.cadSideControls{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.cadSideControls .btn{padding:7px}
+.cadMsg{min-height:44px;color:#b7c8d1;font-size:10px;line-height:1.45}
 .toolstrip{display:flex;gap:6px;flex-wrap:wrap}.toolstrip .btn{min-width:84px;padding:7px}
 .sidegroup{display:grid;gap:7px}.sidegroup .btn{padding:8px}
 .camgrid{display:grid;grid-template-columns:250px minmax(0,1fr) 290px;gap:9px;min-height:690px}
@@ -85,7 +93,7 @@ button,textarea,input,select{font:inherit}button{color:inherit}
 }
 @media(max-width:560px){
  .shell{padding:6px}.status{display:none}.nav{grid-template-columns:repeat(4,1fr)}.nav button{min-height:42px;font-size:11px}
- .sceneWrap,.simCanvas{min-height:44vh}.simgrid{min-height:0}.editor{min-height:500px}.code{min-height:300px}.menuGrid{grid-template-columns:1fr 1fr}
+ .sceneWrap,.simCanvas{min-height:44vh}.cadCanvasWrap,.cadCanvas{min-height:48vh;height:48vh}.simgrid{min-height:0}.editor{min-height:500px}.code{min-height:300px}.menuGrid{grid-template-columns:1fr 1fr}
  .runtimeStatus{grid-template-columns:repeat(2,1fr)}
 }
 </style>
@@ -148,11 +156,23 @@ function simPage(axis){
  return '<div class="simgrid" data-runtime="'+axis+'">'+left+right+'</div>';
 }
 function cadPage(){
- const tools=["LINE","RECT","CIRCLE","ARC","HOLE","TRIM","EXTEND","OFFSET","ARRAY","DIM"].map(x=>'<button class="btn">'+x+'</button>').join("");
- return '<div class="toolstrip">'+tools+'</div><div class="workgrid" style="margin-top:9px">'+
- '<section class="panel"><div class="head"><h2>CAD 製圖</h2><small>SNAP / 尺寸驅動 / 0.001 mm</small></div><div class="body"><div class="canvas"></div><div class="controls">'+["Undo","Redo","Select","Pan","Fit","SNAP"].map(x=>'<button class="btn">'+x+'</button>').join("")+'</div></div></section>'+
- panel("製圖屬性",'<div class="sidegroup">'+["圖層 01","SNAP 全模式","X 0.000","Y 0.000","尺寸精度 0.001","CONNECT","DISCONNECT"].map(x=>'<button class="btn">'+x+'</button>').join("")+'</div>')+
- '</div>';
+ const drawTools=["LINE","RECT","CIRCLE","ARC","HOLE"].map(x=>'<button class="btn" data-cad-tool="'+x+'">'+x+'</button>').join("");
+ const editTools=["TRIM","EXTEND","OFFSET","ARRAY","DIM"].map(x=>'<button class="btn" data-cad-action="'+x+'">'+x+'</button>').join("");
+ return '<div data-cad-runtime><div class="toolstrip">'+drawTools+editTools+'</div><div class="workgrid" style="margin-top:9px">'+
+ '<section class="panel"><div class="head"><div><h2>CAD 製圖</h2><small>真 2D Canvas • SNAP • AutoSave / Recovery • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-cad-count>0 entities</span></div><div class="body">'+
+ '<div class="cadCanvasWrap"><canvas class="cadCanvas" data-cad-canvas></canvas><div class="cadHud"><span data-cad-toolhud>SELECT</span><span data-cad-coord>X 0.000 Y 0.000</span><span data-cad-snaphud>SNAP ON</span></div></div>'+
+ '<div class="controls"><button class="btn" data-cad-action="UNDO">Undo</button><button class="btn" data-cad-action="REDO">Redo</button><button class="btn" data-cad-tool="SELECT">Select</button><button class="btn" data-cad-tool="PAN">Pan</button><button class="btn" data-cad-action="FIT">Fit</button><button class="btn play" data-cad-action="SNAP">SNAP</button></div></div></section>'+
+ '<section class="panel"><div class="head"><h3>製圖屬性</h3></div><div class="body cadSide">'+
+ '<div class="field"><b>選取</b><span data-cad-selected>無</span></div>'+
+ '<div class="field"><b>SNAP</b><span data-cad-snap>端點 / 中點 / 圓心 / 交點 / H / V / 1mm Grid</span></div>'+
+ '<div class="field"><b>拓樸</b><span data-cad-topology>DISCONNECTED</span></div>'+
+ '<label class="param">OFFSET<input data-cad-offset type="number" value="5" step="0.001"></label>'+
+ '<label class="param">ARRAY 數量<input data-cad-array-count type="number" value="3" min="2" max="99" step="1"></label>'+
+ '<label class="param">ARRAY X<input data-cad-array-spacing type="number" value="10" step="0.001"></label>'+
+ '<label class="param">DIM mm<input data-cad-dim type="number" value="20" min="0.001" step="0.001"></label>'+
+ '<div class="cadSideControls"><button class="btn play" data-cad-action="CONNECT">CONNECT</button><button class="btn" data-cad-action="DISCONNECT">DISCONNECT</button><button class="btn danger" data-cad-action="DELETE">DELETE</button><button class="btn danger" data-cad-action="CLEAR">CLEAR</button></div>'+
+ '<div class="notice cadMsg" data-cad-msg>選擇工具後可直接在畫布操作。ARC：圓心 → 起點 → 終點。</div>'+
+ '</div></section></div></div>';
 }
 function camPage(){
  const ops=["平面","輪廓","口袋","鑽孔","等高","平行","自適應","倒角","攻牙"].map(x=>'<button class="btn">'+x+'</button>').join("");
@@ -737,6 +757,307 @@ function makeRuntime(root){
  [toolInput,safeInput,g73Input,g54x,g54y,g54z,g55x,g55y,g55z,h1,h4,h12].forEach(el=>el.addEventListener("change",()=>parse(false)));
  const saved=localStorage.getItem("aig-code-"+axis);if(saved!=null)ta.value=saved;remember();parse();requestAnimationFrame(tick);
 }
+
+function makeCadRuntime(root){
+ const canvas=root.querySelector("[data-cad-canvas]"),ctx=canvas.getContext("2d");
+ const countEl=root.querySelector("[data-cad-count]"),coordEl=root.querySelector("[data-cad-coord]"),snapEl=root.querySelector("[data-cad-snaphud]");
+ const toolHud=root.querySelector("[data-cad-toolhud]"),selectedEl=root.querySelector("[data-cad-selected]"),topologyEl=root.querySelector("[data-cad-topology]"),msgEl=root.querySelector("[data-cad-msg]");
+ const offsetInput=root.querySelector("[data-cad-offset]"),arrayCountInput=root.querySelector("[data-cad-array-count]"),arraySpacingInput=root.querySelector("[data-cad-array-spacing]"),dimInput=root.querySelector("[data-cad-dim]");
+ let idSeed=1;
+ const persisted=(()=>{try{return JSON.parse(localStorage.getItem("aig-cad-draft-v1")||"null")}catch{return null}})();
+ const state={
+   shapes:Array.isArray(persisted?.shapes)?persisted.shapes:[],
+   tool:"SELECT",selectedId:null,points:[],cursor:{x:0,y:0},snapPoint:null,snapType:"",
+   snap:true,view:persisted?.view||{scale:4,panX:0,panY:0},history:[],historyIndex:0,
+   panDrag:null,pointers:new Map(),gesture:null,lastPick:{x:0,y:0}
+ };
+ for(const sh of state.shapes)idSeed=Math.max(idSeed,(Number(sh.id)||0)+1);
+ const clone=x=>JSON.parse(JSON.stringify(x));
+ const snapshot=()=>JSON.stringify(state.shapes);
+ state.history=[snapshot()];
+
+ function persist(){
+   localStorage.setItem("aig-cad-draft-v1",JSON.stringify({shapes:state.shapes,view:state.view,updatedAt:Date.now()}));
+ }
+ function pushHistory(){
+   state.history=state.history.slice(0,state.historyIndex+1);
+   state.history.push(snapshot());state.historyIndex=state.history.length-1;
+   if(state.history.length>60){state.history.shift();state.historyIndex--;}
+   persist();updateInfo();draw();
+ }
+ function loadSnapshot(i){
+   state.shapes=JSON.parse(state.history[i]||"[]");state.selectedId=null;state.points=[];persist();updateInfo();draw();
+ }
+ function newId(){return idSeed++}
+ function currentSelected(){return state.shapes.find(x=>x.id===state.selectedId)||null}
+
+ function resize(){
+   const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
+   const w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));
+   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
+   ctx.setTransform(dpr,0,0,dpr,0,0);
+   return {w:r.width,h:r.height};
+ }
+ function w2s(p,w,h){return{x:w/2+state.view.panX+p.x*state.view.scale,y:h/2+state.view.panY-p.y*state.view.scale}}
+ function s2w(p,w,h){return{x:(p.x-w/2-state.view.panX)/state.view.scale,y:-(p.y-h/2-state.view.panY)/state.view.scale}}
+ function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+ function midpoint(a,b){return{x:(a.x+b.x)/2,y:(a.y+b.y)/2}}
+ function lineParam(p,a,b){
+   const dx=b.x-a.x,dy=b.y-a.y,d2=dx*dx+dy*dy;if(d2<1e-12)return 0;
+   return ((p.x-a.x)*dx+(p.y-a.y)*dy)/d2;
+ }
+ function pointSegDistance(p,a,b){
+   const t=Math.max(0,Math.min(1,lineParam(p,a,b))),q={x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};return dist(p,q);
+ }
+ function rectCorners(sh){
+   return [{x:sh.a.x,y:sh.a.y},{x:sh.b.x,y:sh.a.y},{x:sh.b.x,y:sh.b.y},{x:sh.a.x,y:sh.b.y}];
+ }
+ function segments(sh){
+   if(sh.type==="line")return [[sh.a,sh.b]];
+   if(sh.type==="rect"){const c=rectCorners(sh);return [[c[0],c[1]],[c[1],c[2]],[c[2],c[3]],[c[3],c[0]]]}
+   return [];
+ }
+ function lineIntersection(a,b,c,d,segmentAB=true,segmentCD=true){
+   const r={x:b.x-a.x,y:b.y-a.y},ss={x:d.x-c.x,y:d.y-c.y},den=r.x*ss.y-r.y*ss.x;
+   if(Math.abs(den)<1e-10)return null;
+   const ca={x:c.x-a.x,y:c.y-a.y},t=(ca.x*ss.y-ca.y*ss.x)/den,u=(ca.x*r.y-ca.y*r.x)/den;
+   if(segmentAB&&(t<-1e-9||t>1+1e-9))return null;
+   if(segmentCD&&(u<-1e-9||u>1+1e-9))return null;
+   return{x:a.x+t*r.x,y:a.y+t*r.y,t,u};
+ }
+ function shapeCandidates(){
+   const out=[];
+   for(const sh of state.shapes){
+     if(sh.type==="line"){out.push({p:sh.a,type:"END"},{p:sh.b,type:"END"},{p:midpoint(sh.a,sh.b),type:"MID"})}
+     if(sh.type==="rect"){const c=rectCorners(sh);c.forEach(p=>out.push({p,type:"END"}));for(let i=0;i<4;i++)out.push({p:midpoint(c[i],c[(i+1)%4]),type:"MID"});out.push({p:midpoint(sh.a,sh.b),type:"CENTER"})}
+     if(sh.type==="circle"||sh.type==="hole"||sh.type==="arc")out.push({p:sh.c,type:"CENTER"});
+     if(sh.type==="arc"){out.push({p:{x:sh.c.x+Math.cos(sh.a0)*sh.r,y:sh.c.y+Math.sin(sh.a0)*sh.r},type:"END"},{p:{x:sh.c.x+Math.cos(sh.a1)*sh.r,y:sh.c.y+Math.sin(sh.a1)*sh.r},type:"END"})}
+   }
+   const segs=[];for(const sh of state.shapes)for(const sg of segments(sh))segs.push(sg);
+   for(let i=0;i<segs.length;i++)for(let j=i+1;j<segs.length;j++){const p=lineIntersection(segs[i][0],segs[i][1],segs[j][0],segs[j][1],true,true);if(p)out.push({p,type:"INTERSECT"})}
+   return out;
+ }
+ function snapWorld(raw){
+   if(!state.snap)return{p:raw,type:""};
+   const tol=10/state.view.scale,cands=shapeCandidates();let best=null,bestD=Infinity;
+   for(const c of cands){const d=dist(raw,c.p);if(d<tol&&d<bestD){best=c;bestD=d}}
+   let p=best?{...best.p}:{x:Math.round(raw.x),y:Math.round(raw.y)},type=best?best.type:"GRID";
+   const anchor=state.points[0];
+   if(anchor){
+     if(Math.abs(raw.x-anchor.x)<tol){p.x=anchor.x;type=best?type+"+V":"V"}
+     if(Math.abs(raw.y-anchor.y)<tol){p.y=anchor.y;type=best?type+"+H":"H"}
+   }
+   return{p,type};
+ }
+ function eventPoint(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+
+ function shapeDistance(sh,p){
+   if(sh.type==="line")return pointSegDistance(p,sh.a,sh.b);
+   if(sh.type==="rect"){return Math.min(...segments(sh).map(x=>pointSegDistance(p,x[0],x[1])))}
+   if(sh.type==="circle"||sh.type==="hole"||sh.type==="arc")return Math.abs(dist(p,sh.c)-sh.r);
+   return Infinity;
+ }
+ function selectAt(p){
+   const tol=10/state.view.scale;let best=null,bestD=Infinity;
+   for(let i=state.shapes.length-1;i>=0;i--){const d=shapeDistance(state.shapes[i],p);if(d<tol&&d<bestD){best=state.shapes[i];bestD=d}}
+   state.selectedId=best?.id||null;state.lastPick={...p};updateInfo();draw();
+ }
+
+ function addShape(sh){
+   sh.id=newId();sh.connected=false;state.shapes.push(sh);state.selectedId=sh.id;state.points=[];pushHistory();
+ }
+ function commitPoint(p){
+   if(state.tool==="SELECT"){selectAt(p);return}
+   if(state.tool==="PAN")return;
+   state.points.push({...p});
+   if(state.tool==="LINE"&&state.points.length===2)addShape({type:"line",a:state.points[0],b:state.points[1]});
+   else if(state.tool==="RECT"&&state.points.length===2)addShape({type:"rect",a:state.points[0],b:state.points[1]});
+   else if((state.tool==="CIRCLE"||state.tool==="HOLE")&&state.points.length===2)addShape({type:state.tool.toLowerCase(),c:state.points[0],r:Math.max(.001,dist(state.points[0],state.points[1]))});
+   else if(state.tool==="ARC"&&state.points.length===3){
+     const c=state.points[0],r=Math.max(.001,dist(c,state.points[1])),a0=Math.atan2(state.points[1].y-c.y,state.points[1].x-c.x),a1=Math.atan2(state.points[2].y-c.y,state.points[2].x-c.x);
+     addShape({type:"arc",c,r,a0,a1});
+   }else draw();
+ }
+
+ function setTool(tool){
+   state.tool=tool;state.points=[];state.panDrag=null;
+   root.querySelectorAll("[data-cad-tool]").forEach(b=>b.classList.toggle("cadSelected",b.dataset.cadTool===tool));
+   toolHud.textContent=tool;msgEl.textContent=tool==="ARC"?"ARC：圓心 → 起點 → 終點。":tool==="PAN"?"拖曳平移；雙指也可縮放/平移。":tool==="SELECT"?"點選幾何後可 Trim / Extend / Offset / Array / DIM。":"點選畫布建立 "+tool+"。";
+   draw();
+ }
+
+ function translateShape(sh,dx,dy){
+   const cp=clone(sh);cp.id=newId();
+   for(const k of ["a","b","c"])if(cp[k]){cp[k].x+=dx;cp[k].y+=dy}
+   return cp;
+ }
+ function mutateSelected(fn,msg){
+   const sh=currentSelected();if(!sh){msgEl.textContent="請先 Select 幾何。";return false}
+   const ok=fn(sh);if(ok===false)return false;pushHistory();msgEl.textContent=msg;return true;
+ }
+ function trimSelected(){
+   mutateSelected(sh=>{
+     if(sh.type!=="line"){msgEl.textContent="TRIM 目前對 LINE 生效。";return false}
+     const hits=[];
+     for(const other of state.shapes){if(other.id===sh.id)continue;for(const sg of segments(other)){const p=lineIntersection(sh.a,sh.b,sg[0],sg[1],true,true);if(p&&p.t>1e-5&&p.t<1-1e-5)hits.push(p)}}
+     if(!hits.length){msgEl.textContent="找不到可 Trim 的交點。";return false}
+     hits.sort((u,v)=>dist(u,state.lastPick)-dist(v,state.lastPick));const p=hits[0];
+     if(dist(sh.a,state.lastPick)<dist(sh.b,state.lastPick))sh.a={x:p.x,y:p.y};else sh.b={x:p.x,y:p.y};
+   },"TRIM 完成。");
+ }
+ function extendSelected(){
+   mutateSelected(sh=>{
+     if(sh.type!=="line"){msgEl.textContent="EXTEND 目前對 LINE 生效。";return false}
+     const hits=[];
+     for(const other of state.shapes){if(other.id===sh.id)continue;for(const sg of segments(other)){const p=lineIntersection(sh.a,sh.b,sg[0],sg[1],false,true);if(p&&(p.t<0||p.t>1))hits.push(p)}}
+     if(!hits.length){msgEl.textContent="找不到可 Extend 的交點。";return false}
+     hits.sort((u,v)=>Math.min(Math.abs(u.t),Math.abs(u.t-1))-Math.min(Math.abs(v.t),Math.abs(v.t-1)));const p=hits[0];
+     if(p.t<0)sh.a={x:p.x,y:p.y};else sh.b={x:p.x,y:p.y};
+   },"EXTEND 完成。");
+ }
+ function offsetSelected(){
+   const d=Number(offsetInput.value)||0;
+   const sh=currentSelected();if(!sh){msgEl.textContent="請先 Select 幾何。";return}
+   let cp=clone(sh);cp.id=newId();
+   if(sh.type==="line"){const dx=sh.b.x-sh.a.x,dy=sh.b.y-sh.a.y,len=Math.hypot(dx,dy)||1,n={x:-dy/len*d,y:dx/len*d};cp.a.x+=n.x;cp.a.y+=n.y;cp.b.x+=n.x;cp.b.y+=n.y}
+   else if(sh.type==="circle"||sh.type==="hole"||sh.type==="arc")cp.r=Math.max(.001,sh.r+d);
+   else if(sh.type==="rect"){const minX=Math.min(sh.a.x,sh.b.x)-d,maxX=Math.max(sh.a.x,sh.b.x)+d,minY=Math.min(sh.a.y,sh.b.y)-d,maxY=Math.max(sh.a.y,sh.b.y)+d;cp.a={x:minX,y:minY};cp.b={x:maxX,y:maxY}}
+   else return;
+   state.shapes.push(cp);state.selectedId=cp.id;pushHistory();msgEl.textContent="OFFSET "+d.toFixed(3)+" mm 完成。";
+ }
+ function arraySelected(){
+   const sh=currentSelected();if(!sh){msgEl.textContent="請先 Select 幾何。";return}
+   const count=Math.max(2,Math.min(99,Math.trunc(Number(arrayCountInput.value)||3))),spacing=Number(arraySpacingInput.value)||10;
+   for(let i=1;i<count;i++)state.shapes.push(translateShape(sh,spacing*i,0));
+   pushHistory();msgEl.textContent="ARRAY "+count+" 個，X 間距 "+spacing.toFixed(3)+" mm。";
+ }
+ function dimensionSelected(){
+   const val=Math.max(.001,Number(dimInput.value)||.001);
+   mutateSelected(sh=>{
+     if(sh.type==="line"){const dx=sh.b.x-sh.a.x,dy=sh.b.y-sh.a.y,len=Math.hypot(dx,dy)||1;sh.b={x:sh.a.x+dx/len*val,y:sh.a.y+dy/len*val}}
+     else if(sh.type==="circle"||sh.type==="hole")sh.r=val/2;
+     else if(sh.type==="arc")sh.r=val;
+     else if(sh.type==="rect"){const sign=sh.b.x>=sh.a.x?1:-1;sh.b.x=sh.a.x+sign*val}
+   },"DIM 已套用 "+val.toFixed(3)+" mm。");
+ }
+ function action(name){
+   if(name==="UNDO"){if(state.historyIndex>0){state.historyIndex--;loadSnapshot(state.historyIndex)}return}
+   if(name==="REDO"){if(state.historyIndex<state.history.length-1){state.historyIndex++;loadSnapshot(state.historyIndex)}return}
+   if(name==="FIT"){fit();return}
+   if(name==="SNAP"){state.snap=!state.snap;snapEl.textContent=state.snap?"SNAP ON":"SNAP OFF";root.querySelector('[data-cad-action="SNAP"]').classList.toggle("play",state.snap);draw();return}
+   if(name==="TRIM"){trimSelected();return}
+   if(name==="EXTEND"){extendSelected();return}
+   if(name==="OFFSET"){offsetSelected();return}
+   if(name==="ARRAY"){arraySelected();return}
+   if(name==="DIM"){dimensionSelected();return}
+   if(name==="CONNECT"){mutateSelected(sh=>{sh.connected=true},"CONNECT：只改拓樸狀態，不破壞幾何。");return}
+   if(name==="DISCONNECT"){mutateSelected(sh=>{sh.connected=false},"DISCONNECT：幾何保留。");return}
+   if(name==="DELETE"){const sh=currentSelected();if(!sh){msgEl.textContent="請先 Select 幾何。";return}state.shapes=state.shapes.filter(x=>x.id!==sh.id);state.selectedId=null;pushHistory();msgEl.textContent="已刪除選取幾何。";return}
+   if(name==="CLEAR"){if(!state.shapes.length)return;state.shapes=[];state.selectedId=null;state.points=[];pushHistory();msgEl.textContent="CAD 畫布已清除；可 Undo 還原。";return}
+ }
+
+ function boundsOfShapes(){
+   if(!state.shapes.length)return null;const pts=[];
+   for(const sh of state.shapes){
+     if(sh.type==="line"){pts.push(sh.a,sh.b)}
+     else if(sh.type==="rect")pts.push(...rectCorners(sh));
+     else if(sh.type==="circle"||sh.type==="hole"||sh.type==="arc")pts.push({x:sh.c.x-sh.r,y:sh.c.y-sh.r},{x:sh.c.x+sh.r,y:sh.c.y+sh.r});
+   }
+   return{minX:Math.min(...pts.map(p=>p.x)),maxX:Math.max(...pts.map(p=>p.x)),minY:Math.min(...pts.map(p=>p.y)),maxY:Math.max(...pts.map(p=>p.y))};
+ }
+ function fit(){
+   const {w,h}=resize(),b=boundsOfShapes();if(!b){state.view={scale:4,panX:0,panY:0};draw();return}
+   const ww=Math.max(1,b.maxX-b.minX),hh=Math.max(1,b.maxY-b.minY);
+   state.view.scale=Math.max(.15,Math.min(60,Math.min((w-80)/ww,(h-80)/hh)));
+   const cx=(b.minX+b.maxX)/2,cy=(b.minY+b.maxY)/2;state.view.panX=-cx*state.view.scale;state.view.panY=cy*state.view.scale;
+   persist();draw();
+ }
+ function updateInfo(){
+   countEl.textContent=state.shapes.length+" entities";
+   const sh=currentSelected();
+   selectedEl.textContent=sh?sh.type.toUpperCase()+" #"+sh.id:"無";
+   topologyEl.textContent=sh?.connected?"CONNECTED":"DISCONNECTED";
+ }
+ function measureText(sh){
+   if(sh.type==="line")return "L "+dist(sh.a,sh.b).toFixed(3);
+   if(sh.type==="rect")return "W "+Math.abs(sh.b.x-sh.a.x).toFixed(3)+" H "+Math.abs(sh.b.y-sh.a.y).toFixed(3);
+   if(sh.type==="circle"||sh.type==="hole")return "Ø "+(sh.r*2).toFixed(3);
+   if(sh.type==="arc")return "R "+sh.r.toFixed(3);
+   return "";
+ }
+
+ function drawShape(sh,c,w,h,preview=false){
+   const sel=sh.id===state.selectedId,stroke=preview?"rgba(255,255,255,.5)":sel?"#ff4da6":sh.connected?"#33f39b":"#27e9ff";
+   c.strokeStyle=stroke;c.lineWidth=sel?2.3:1.5;c.setLineDash(preview?[6,5]:[]);c.beginPath();
+   if(sh.type==="line"){const a=w2s(sh.a,w,h),b=w2s(sh.b,w,h);c.moveTo(a.x,a.y);c.lineTo(b.x,b.y)}
+   else if(sh.type==="rect"){const a=w2s(sh.a,w,h),b=w2s(sh.b,w,h);c.rect(a.x,a.y,b.x-a.x,b.y-a.y)}
+   else if(sh.type==="circle"||sh.type==="hole"){const cc=w2s(sh.c,w,h);c.arc(cc.x,cc.y,sh.r*state.view.scale,0,Math.PI*2)}
+   else if(sh.type==="arc"){const cc=w2s(sh.c,w,h);c.arc(cc.x,cc.y,sh.r*state.view.scale,-sh.a0,-sh.a1,true)}
+   c.stroke();c.setLineDash([]);
+   if(sh.type==="hole"){const cc=w2s(sh.c,w,h),rr=sh.r*state.view.scale;c.strokeStyle=stroke;c.beginPath();c.moveTo(cc.x-rr*.6,cc.y);c.lineTo(cc.x+rr*.6,cc.y);c.moveTo(cc.x,cc.y-rr*.6);c.lineTo(cc.x,cc.y+rr*.6);c.stroke()}
+   if(sel&&!preview){const label=measureText(sh);if(label){const anchor=sh.c||sh.a||{x:0,y:0},q=w2s(anchor,w,h);c.fillStyle="#fff";c.font="11px ui-monospace,monospace";c.fillText(label,q.x+8,q.y-8)}}
+ }
+ function previewShape(){
+   const p=state.snapPoint||state.cursor;if(!state.points.length)return null;
+   if(state.tool==="LINE")return{type:"line",a:state.points[0],b:p};
+   if(state.tool==="RECT")return{type:"rect",a:state.points[0],b:p};
+   if(state.tool==="CIRCLE"||state.tool==="HOLE")return{type:state.tool.toLowerCase(),c:state.points[0],r:Math.max(.001,dist(state.points[0],p))};
+   if(state.tool==="ARC"&&state.points.length===1)return{type:"circle",c:state.points[0],r:Math.max(.001,dist(state.points[0],p))};
+   if(state.tool==="ARC"&&state.points.length===2){const c=state.points[0],r=Math.max(.001,dist(c,state.points[1])),a0=Math.atan2(state.points[1].y-c.y,state.points[1].x-c.x),a1=Math.atan2(p.y-c.y,p.x-c.x);return{type:"arc",c,r,a0,a1}}
+   return null;
+ }
+ function draw(){
+   const {w,h}=resize(),c=ctx;c.clearRect(0,0,w,h);c.fillStyle="#010306";c.fillRect(0,0,w,h);
+   const scale=state.view.scale,grid=10;
+   const left=s2w({x:0,y:h},w,h).x,right=s2w({x:w,y:0},w,h).x,bottom=s2w({x:0,y:h},w,h).y,top=s2w({x:w,y:0},w,h).y;
+   c.lineWidth=1;c.strokeStyle="rgba(39,233,255,.055)";
+   for(let x=Math.floor(left/grid)*grid;x<=right;x+=grid){const a=w2s({x,y:bottom},w,h),b=w2s({x,y:top},w,h);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()}
+   for(let y=Math.floor(bottom/grid)*grid;y<=top;y+=grid){const a=w2s({x:left,y},w,h),b=w2s({x:right,y},w,h);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()}
+   const ox=w2s({x:0,y:0},w,h);c.strokeStyle="rgba(39,233,255,.28)";c.beginPath();c.moveTo(0,ox.y);c.lineTo(w,ox.y);c.moveTo(ox.x,0);c.lineTo(ox.x,h);c.stroke();
+   for(const sh of state.shapes)drawShape(sh,c,w,h,false);
+   const pv=previewShape();if(pv)drawShape(pv,c,w,h,true);
+   if(state.snap&&state.snapPoint){const q=w2s(state.snapPoint,w,h);c.strokeStyle="#ffb326";c.lineWidth=1.5;c.beginPath();c.moveTo(q.x-7,q.y);c.lineTo(q.x+7,q.y);c.moveTo(q.x,q.y-7);c.lineTo(q.x,q.y+7);c.stroke()}
+ }
+
+ canvas.addEventListener("pointerdown",e=>{
+   canvas.setPointerCapture(e.pointerId);const sp=eventPoint(e);state.pointers.set(e.pointerId,sp);const {w,h}=resize();
+   if(state.pointers.size===2){
+     const pts=[...state.pointers.values()],dx=pts[1].x-pts[0].x,dy=pts[1].y-pts[0].y;
+     state.gesture={dist:Math.hypot(dx,dy)||1,scale:state.view.scale,panX:state.view.panX,panY:state.view.panY,cx:(pts[0].x+pts[1].x)/2,cy:(pts[0].y+pts[1].y)/2};
+     state.points=[];return;
+   }
+   const raw=s2w(sp,w,h),sn=snapWorld(raw);state.cursor=raw;state.snapPoint=sn.p;state.snapType=sn.type;state.lastPick={...sn.p};
+   if(state.tool==="PAN"){state.panDrag={sp,panX:state.view.panX,panY:state.view.panY};return}
+   commitPoint(sn.p);
+ });
+ canvas.addEventListener("pointermove",e=>{
+   const sp=eventPoint(e);if(state.pointers.has(e.pointerId))state.pointers.set(e.pointerId,sp);const {w,h}=resize();
+   if(state.gesture&&state.pointers.size>=2){
+     const pts=[...state.pointers.values()].slice(0,2),dx=pts[1].x-pts[0].x,dy=pts[1].y-pts[0].y,dd=Math.hypot(dx,dy)||1,cx=(pts[0].x+pts[1].x)/2,cy=(pts[0].y+pts[1].y)/2;
+     state.view.scale=Math.max(.15,Math.min(80,state.gesture.scale*dd/state.gesture.dist));
+     state.view.panX=state.gesture.panX+(cx-state.gesture.cx);state.view.panY=state.gesture.panY+(cy-state.gesture.cy);draw();return;
+   }
+   if(state.panDrag&&state.tool==="PAN"){state.view.panX=state.panDrag.panX+(sp.x-state.panDrag.sp.x);state.view.panY=state.panDrag.panY+(sp.y-state.panDrag.sp.y);draw();return}
+   const raw=s2w(sp,w,h),sn=snapWorld(raw);state.cursor=raw;state.snapPoint=sn.p;state.snapType=sn.type;
+   coordEl.textContent="X "+sn.p.x.toFixed(3)+" Y "+sn.p.y.toFixed(3)+(sn.type?" • "+sn.type:"");draw();
+ });
+ function releasePointer(e){
+   state.pointers.delete(e.pointerId);if(state.pointers.size<2){state.gesture=null;if(state.panDrag){state.panDrag=null;persist()}}
+ }
+ canvas.addEventListener("pointerup",releasePointer);canvas.addEventListener("pointercancel",releasePointer);
+ canvas.addEventListener("wheel",e=>{
+   e.preventDefault();const sp=eventPoint(e),{w,h}=resize(),before=s2w(sp,w,h),factor=e.deltaY<0?1.12:.89;
+   state.view.scale=Math.max(.15,Math.min(80,state.view.scale*factor));
+   const after=w2s(before,w,h);state.view.panX+=sp.x-after.x;state.view.panY+=sp.y-after.y;persist();draw();
+ },{passive:false});
+
+ root.addEventListener("click",e=>{
+   const tb=e.target.closest("[data-cad-tool]");if(tb){setTool(tb.dataset.cadTool);return}
+   const ab=e.target.closest("[data-cad-action]");if(ab){action(ab.dataset.cadAction);return}
+ });
+ if(persisted?.shapes?.length)msgEl.textContent="Recovery：已自動還原 "+persisted.shapes.length+" 個 CAD 幾何。";
+ setTool("SELECT");updateInfo();draw();
+}
 pages.forEach(([name,color])=>{
  const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>show(name);nav.appendChild(b);
  const s=document.createElement("section");s.className="screen";s.dataset.page=name;
@@ -744,6 +1065,7 @@ pages.forEach(([name,color])=>{
  screens.appendChild(s);
 });
 document.querySelectorAll("[data-runtime]").forEach(makeRuntime);
+document.querySelectorAll("[data-cad-runtime]").forEach(makeCadRuntime);
 function show(name){
  if(!pages.some(p=>p[0]===name))name="5AX";
  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
