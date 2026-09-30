@@ -38,6 +38,8 @@ const required = [
   'state.blockSkip',
   'machine.spindle="M3"',
   'machine.coolant=true',
+  'machine.selectedTool',
+  'mMatches.includes("M6")',
   'stopCode',
   'function compilePrograms',
   'M98 P4',
@@ -99,6 +101,12 @@ if (!subParsed.blocks.some(b => b.subCall === 4) || !subParsed.blocks.some(b => 
 if (!subParsed.blocks.some(b => b.machine?.toolComp && b.machine?.H === 1 && b.machine?.T === 9)) throw new Error("G43_H_RUNTIME_STATE_MISSING");
 if (!subParsed.blocks.some(b => b.machine?.wcs === "G55")) throw new Error("G55_RUNTIME_STATE_MISSING");
 
+const toolTest = api.parseProgram("O3000\nN10 T9\nN20 G0 X1.\nN30 M6\nN40 M30", "3AX", {g73Retract:0.5,safeZ:5});
+const beforeM6 = toolTest.blocks.find(b => /X1\./.test(b.raw));
+const afterM6 = toolTest.blocks.find(b => /M6/.test(b.raw));
+if (!beforeM6 || beforeM6.machine?.T !== 0 || beforeM6.machine?.selectedTool !== 9) throw new Error("TOOL_PRESELECT_STATE_BROKEN");
+if (!afterM6 || afterM6.machine?.T !== 9) throw new Error("M6_ACTIVE_TOOL_STATE_BROKEN");
+
 const drillTest = `O2000
 N10 G90 G54 G17
 N20 G99 G81 Z-10. R3. F150 L0
@@ -121,4 +129,4 @@ if (pageDefs.length !== 7) {
   throw new Error("WEB_RUNTIME_PAGE_COUNT_" + pageDefs.length);
 }
 
-console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|BLACK_RGB");
+console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|BLACK_RGB");
