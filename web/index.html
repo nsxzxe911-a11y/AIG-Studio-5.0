@@ -252,6 +252,8 @@ function toolpathPage(){
  '<label class="param">刃長<input data-tp-cutterlen type="number" value="30" min="1" step="0.1"></label>'+
  '<label class="param">刀柄 Ø<input data-tp-holderdia type="number" value="25" min="1" step="0.1"></label>'+
  '<label class="param">刀柄長<input data-tp-holderlen type="number" value="25" min="1" step="0.1"></label>'+
+ '<label class="param">最小安全間隙<input data-tp-clearance type="number" value="2.000" min="0" step="0.001"></label>'+
+ '<div class="field"><b>Setup 間隙</b><span data-tp-clearance-status>尚未計算</span></div>'+
  '<div class="field"><b>旋轉模式</b><select data-tp-rotmode style="width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px"><option value="INDEXED">INDEXED 定角</option><option value="SIMULTANEOUS">SIMULTANEOUS 同步</option></select></div>'+
  '<label class="param">A 起點<input data-tp-a0 type="number" value="0" step="0.001"></label>'+
  '<label class="param">A 終點<input data-tp-a1 type="number" value="0" step="0.001"></label>'+
@@ -677,6 +679,57 @@ function runtimeAssemblyBoxes(cfg={}){
      minX:x-w/2,maxX:x+w/2,minY:y-d/2,maxY:y+d/2,minZ:z,maxZ:z+h
    };
  }).filter(Boolean);
+}
+function sphereBoxClearance(p,r,b){
+ const dx=p.x<b.minX?b.minX-p.x:p.x>b.maxX?p.x-b.maxX:0;
+ const dy=p.y<b.minY?b.minY-p.y:p.y>b.maxY?p.y-b.maxY:0;
+ const dz=p.z<b.minZ?b.minZ-p.z:p.z>b.maxZ?p.z-b.maxZ:0;
+ return Math.hypot(dx,dy,dz)-Math.max(0,Number(r)||0);
+}
+function evaluateSetupClearance(parsed,axis,cfg={}){
+ const blocks=parsed?.blocks||[],env=runtimeStockEnvelope(parsed,cfg),fixtures=runtimeAssemblyBoxes(cfg);
+ const toolR=Math.max(.05,Number(cfg.toolDia)||10)/2,cutterLen=Math.max(1,Number(cfg.cutterLen)||30);
+ const holderR=Math.max(toolR,Math.max(1,Number(cfg.holderDia)||25)/2),holderLen=Math.max(1,Number(cfg.holderLen)||25);
+ const stockBox={minX:env.minX,maxX:env.maxX,minY:env.minY,maxY:env.maxY,minZ:env.minZ,maxZ:env.maxZ};
+ let minFixture=Infinity,minHolderStock=Infinity,minType="NONE",minFixtureId=null,minLine=-1,minBlock=-1;
+ function localCenter(p,d){
+   const a=axis==="3AX"?0:Number(p.A||0),b=axis==="5AX"?Number(p.B||0):0;
+   return inverseRuntimeABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b);
+ }
+ function inspectSegment(p,d0,d1,r,kind,bi,line){
+   for(let k=0;k<=8;k++){
+     const q=localCenter(p,d0+(d1-d0)*k/8);
+     for(const fx of fixtures){
+       const c=sphereBoxClearance(q,r,fx);
+       if(c<minFixture){minFixture=c;minType=kind+"_FIXTURE";minFixtureId=fx.id;minLine=line;minBlock=bi}
+     }
+     if(kind==="HOLDER"){
+       const c=sphereBoxClearance(q,r,stockBox);
+       if(c<minHolderStock)minHolderStock=c;
+     }
+   }
+ }
+ for(let bi=0;bi<blocks.length;bi++){
+   const bl=blocks[bi];if(bl.kind!=="move")continue;
+   const dx=Number(bl.to.X||0)-Number(bl.from.X||0),dy=Number(bl.to.Y||0)-Number(bl.from.Y||0),dz=Number(bl.to.Z||0)-Number(bl.from.Z||0);
+   const da=Math.abs(Number(bl.to.A||0)-Number(bl.from.A||0)),db=Math.abs(Number(bl.to.B||0)-Number(bl.from.B||0));
+   const samples=Math.max(8,Math.min(72,Math.ceil(Math.hypot(dx,dy,dz)/3+(da+db)/8)));
+   for(let j=0;j<=samples;j++){
+     const p=sampleRuntimeBlock(bl,j/samples);
+     inspectSegment(p,0,cutterLen,toolR,"TOOL",bi,bl.line);
+     inspectSegment(p,cutterLen,cutterLen+holderLen,holderR,"HOLDER",bi,bl.line);
+   }
+ }
+ const highestFixture=fixtures.length?Math.max(...fixtures.map(f=>f.maxZ)):env.tableTop;
+ const safeZ=Number(cfg.safeZ),safeZMargin=Number.isFinite(safeZ)?safeZ-highestFixture:Infinity;
+ const fixtureClearance=Number.isFinite(minFixture)?minFixture:Infinity;
+ const holderStockClearance=Number.isFinite(minHolderStock)?minHolderStock:Infinity;
+ const minimum=Math.min(fixtureClearance,holderStockClearance,safeZMargin);
+ return{
+   minimum,fixtureClearance,holderStockClearance,safeZMargin,highestFixture,
+   limitingType:minimum===safeZMargin?"SAFE_Z":minimum===holderStockClearance?"HOLDER_STOCK":minType,
+   fixtureId:minFixtureId,line:minLine,blockIndex:minBlock,envelope:env,fixtureCount:fixtures.length
+ };
 }
 function sphereHitsBox(p,r,b){
  const dx=p.x<b.minX?b.minX-p.x:p.x>b.maxX?p.x-b.maxX:0;
@@ -2034,7 +2087,7 @@ function makeCamRuntime(root){
 function makeToolpathRuntime(root){
  const canvas=root.querySelector("[data-tp-canvas]"),ctx=canvas.getContext("2d"),listEl=root.querySelector("[data-tp-list]"),msgEl=root.querySelector("[data-tp-msg]"),countEl=root.querySelector("[data-tp-count]"),selectedEl=root.querySelector("[data-tp-selected]"),statusEl=root.querySelector("[data-tp-status]");
  const safeInput=root.querySelector("[data-tp-safez]"),depthInput=root.querySelector("[data-tp-depth]"),feedInput=root.querySelector("[data-tp-feed]"),rpmInput=root.querySelector("[data-tp-rpm]"),leadInInput=root.querySelector("[data-tp-leadin]"),leadOutInput=root.querySelector("[data-tp-leadout]"),pitchInput=root.querySelector("[data-tp-pitch]");
- const targetInput=root.querySelector("[data-tp-target]"),wcsInput=root.querySelector("[data-tp-wcs]"),toolNoInput=root.querySelector("[data-tp-tool]"),hNoInput=root.querySelector("[data-tp-h]"),toolDiaInput=root.querySelector("[data-tp-tooldia]"),cutterLenInput=root.querySelector("[data-tp-cutterlen]"),holderDiaInput=root.querySelector("[data-tp-holderdia]"),holderLenInput=root.querySelector("[data-tp-holderlen]");
+ const targetInput=root.querySelector("[data-tp-target]"),wcsInput=root.querySelector("[data-tp-wcs]"),toolNoInput=root.querySelector("[data-tp-tool]"),hNoInput=root.querySelector("[data-tp-h]"),toolDiaInput=root.querySelector("[data-tp-tooldia]"),cutterLenInput=root.querySelector("[data-tp-cutterlen]"),holderDiaInput=root.querySelector("[data-tp-holderdia]"),holderLenInput=root.querySelector("[data-tp-holderlen]"),clearanceInput=root.querySelector("[data-tp-clearance]"),clearanceStatusEl=root.querySelector("[data-tp-clearance-status]");
  const rotModeInput=root.querySelector("[data-tp-rotmode]"),a0Input=root.querySelector("[data-tp-a0]"),a1Input=root.querySelector("[data-tp-a1]"),b0Input=root.querySelector("[data-tp-b0]"),b1Input=root.querySelector("[data-tp-b1]");
  const state={payload:null,paths:[],selected:0,visible:true,edit:false,view:{scale:4,panX:0,panY:0},dragNode:null,deleteArmedUntil:0};
  function load(){
@@ -2052,11 +2105,11 @@ function makeToolpathRuntime(root){
    a0Input.value=p?.aStart??0;a1Input.value=p?.aEnd??(p?.aStart??0);
    b0Input.value=p?.bStart??0;b1Input.value=p?.bEnd??(p?.bStart??0);
    const pg=state.payload?.postGeometry||{};
-   toolDiaInput.value=pg.toolDia??base.toolDia??10;cutterLenInput.value=pg.cutterLen??30;holderDiaInput.value=pg.holderDia??25;holderLenInput.value=pg.holderLen??25;
+   toolDiaInput.value=pg.toolDia??base.toolDia??10;cutterLenInput.value=pg.cutterLen??30;holderDiaInput.value=pg.holderDia??25;holderLenInput.value=pg.holderLen??25;clearanceInput.value=pg.clearance??2;
  }
  function save(){
    if(!state.payload)state.payload={version:1,createdAt:Date.now(),strategy:"EDITED",params:{},cadEntityCount:0};
-   state.payload.paths=state.paths;state.payload.postGeometry={toolDia:Math.max(.1,aigFiniteNumber(toolDiaInput.value,10)),cutterLen:Math.max(1,aigFiniteNumber(cutterLenInput.value,30)),holderDia:Math.max(1,aigFiniteNumber(holderDiaInput.value,25)),holderLen:Math.max(1,aigFiniteNumber(holderLenInput.value,25))};state.payload.updatedAt=Date.now();aigJsonWrite(root,"aig-cam-toolpath-v1",state.payload,"刀路編輯");statusEl.textContent="已儲存";msgEl.textContent="刀路修改已儲存到本機。";
+   state.payload.paths=state.paths;state.payload.postGeometry={toolDia:Math.max(.1,aigFiniteNumber(toolDiaInput.value,10)),cutterLen:Math.max(1,aigFiniteNumber(cutterLenInput.value,30)),holderDia:Math.max(1,aigFiniteNumber(holderDiaInput.value,25)),holderLen:Math.max(1,aigFiniteNumber(holderLenInput.value,25)),clearance:Math.max(0,aigFiniteNumber(clearanceInput.value,2))};state.payload.updatedAt=Date.now();aigJsonWrite(root,"aig-cam-toolpath-v1",state.payload,"刀路編輯");statusEl.textContent="已儲存";msgEl.textContent="刀路修改已儲存到本機。";
  }
  function resize(){const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}ctx.setTransform(dpr,0,0,dpr,0,0);return{w:r.width,h:r.height}}
  function w2s(p,w,h){return{x:w/2+state.view.panX+p.x*state.view.scale,y:h/2+state.view.panY-p.y*state.view.scale}}
@@ -2107,18 +2160,19 @@ function makeToolpathRuntime(root){
    if(path.rotMode==="INDEXED"){path.aEnd=path.aStart;path.bEnd=path.bStart;a1Input.value=path.aEnd;b1Input.value=path.bEnd}
  }
  function validateToolpathFields(){
-   const fields=[safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,targetInput,wcsInput,toolNoInput,hNoInput,rotModeInput,a0Input,a1Input,b0Input,b1Input];
+   const fields=[safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,clearanceInput,targetInput,wcsInput,toolNoInput,hNoInput,rotModeInput,a0Input,a1Input,b0Input,b1Input];
    fields.forEach(aigValidateField);
-   [safeInput,depthInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,targetInput,rotModeInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>{
+   [safeInput,depthInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,clearanceInput,targetInput,rotModeInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>{
      if(!el.classList.contains("aigError")&&!el.classList.contains("aigWarn"))aigFieldIssue(el,null,"");
    });
    let errors=0;
-   const toolDia=Number(toolDiaInput.value),cutterLen=Number(cutterLenInput.value),holderDia=Number(holderDiaInput.value),holderLen=Number(holderLenInput.value);
+   const toolDia=Number(toolDiaInput.value),cutterLen=Number(cutterLenInput.value),holderDia=Number(holderDiaInput.value),holderLen=Number(holderLenInput.value),clearance=Number(clearanceInput.value);
    if(!(toolDia>0)){aigFieldIssue(toolDiaInput,"error","刀具 Ø 必須大於 0 mm。");errors++}
    if(!(cutterLen>0)){aigFieldIssue(cutterLenInput,"error","刃長必須大於 0 mm。");errors++}
    if(!(holderDia>0)){aigFieldIssue(holderDiaInput,"error","刀柄 Ø 必須大於 0 mm。");errors++}
    else if(Number.isFinite(toolDia)&&holderDia<toolDia)aigFieldIssue(holderDiaInput,"warn","刀柄 Ø 小於刀具 Ø，請確認刀具模型。");
    if(!(holderLen>0)){aigFieldIssue(holderLenInput,"error","刀柄長必須大於 0 mm。");errors++}
+   if(!Number.isFinite(clearance)||clearance<0){aigFieldIssue(clearanceInput,"error","最小安全間隙不可小於 0 mm。");errors++}
    const depth=Number(depthInput.value),safe=Number(safeInput.value);
    if(Number.isFinite(depth)&&Number.isFinite(safe)&&safe<=depth){aigFieldIssue(safeInput,"error","Safe-Z "+safe.toFixed(3)+" 必須高於加工深度 "+depth.toFixed(3)+"。");errors++}
    const target=targetInput.value,a0=Number(a0Input.value)||0,a1=Number(a1Input.value)||0,b0=Number(b0Input.value)||0,b1=Number(b1Input.value)||0;
@@ -2131,7 +2185,7 @@ function makeToolpathRuntime(root){
  }
  function verify(){
    const fieldErrors=validateToolpathFields();
-   [safeInput,depthInput,feedInput,rpmInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>{if(!el.classList.contains("aigError")&&!el.classList.contains("aigWarn"))aigFieldIssue(el,null,"")});
+   [safeInput,depthInput,feedInput,rpmInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,clearanceInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>{if(!el.classList.contains("aigError")&&!el.classList.contains("aigWarn"))aigFieldIssue(el,null,"")});
    const errors=[];if(fieldErrors)errors.push("欄位有 "+fieldErrors+" 個錯誤");
    for(const [label,el] of [["刀具 Ø",toolDiaInput],["刃長",cutterLenInput],["刀柄 Ø",holderDiaInput],["刀柄長",holderLenInput]]){
      if(!(Number(el.value)>0)){errors.push(label+" 必須大於 0");aigFieldIssue(el,"error",label+" 必須大於 0。")}
@@ -2237,11 +2291,24 @@ function makeToolpathRuntime(root){
      const c=preCollision.collisions[0];statusEl.textContent="此次未輸出";
      msgEl.textContent="NC 碰撞 Preflight FAIL：第 "+(c.line+1)+" 行 "+c.message+" ["+c.type+"]；未寫入 "+target+"。";return null
    }
+   const requiredClearance=Math.max(0,aigFiniteNumber(clearanceInput.value,2));
+   const clearance=evaluateSetupClearance(preParsed,target,collisionCfg),clearanceValue=Number(clearance.minimum);
+   if(clearanceStatusEl){
+     const shown=Number.isFinite(clearanceValue)?clearanceValue.toFixed(3):"∞";
+     clearanceStatusEl.textContent=shown+" mm / 要求 ≥ "+requiredClearance.toFixed(3)+" mm";
+     clearanceStatusEl.style.color=clearanceValue<requiredClearance?"#ff465f":clearanceValue<requiredClearance+1?"#ffb326":"#33f39b";
+   }
+   if(clearanceValue<requiredClearance){
+     statusEl.textContent="此次未輸出";
+     const lineText=clearance.line>=0?("；第 "+(clearance.line+1)+" 行"):"";
+     msgEl.textContent="Setup Clearance FAIL："+clearance.limitingType+" 最小 "+clearanceValue.toFixed(3)+" mm，要求 ≥ "+requiredClearance.toFixed(3)+" mm"+lineText+"；只阻擋這次 NC 輸出。";
+     return null;
+   }
    if(!aigStorageSet(root,"aig-code-"+target,code,target+" NC")){statusEl.textContent="POST SAVE WARN";msgEl.textContent="NC 已通過驗證，但本機儲存失敗；程式仍保留在目前畫面。";}
    const ta=document.querySelector('textarea[data-axis="'+target+'"]');
    if(ta){ta.value=code;ta.dispatchEvent(new Event("input",{bubbles:true}))}
    statusEl.textContent="POST "+target+" READY";
-   msgEl.textContent="Fanuc NC 已使用同一份 CAM 毛坯 XYZ 通過刀具/刀柄碰撞 Preflight 並送到 "+target+"；Adaptive OP 保留 Z 層 / Ring / Load% 註解；只輸出啟用 OP，順序依刀路列表。";
+   msgEl.textContent="Fanuc NC 已使用同一份 CAM 毛坯 XYZ 通過刀具/刀柄碰撞 Preflight 並送到 "+target+"；Adaptive OP 保留 Z 層 / Ring / Load% 註解；只輸出啟用 OP，順序依刀路列表；Setup Clearance 已通過。";
    return code;
  }
  function action(name){
@@ -2273,7 +2340,7 @@ function makeToolpathRuntime(root){
    const li=e.target.closest("[data-tp-index]");if(li){state.selected=Number(li.dataset.tpIndex)||0;renderList();syncInputs();validateToolpathFields();updateInfo();draw();return}
    const ac=e.target.closest("[data-tp-action]");if(ac)action(ac.dataset.tpAction);
  },null,"warn"));
- [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,rotModeInput,a0Input,a1Input,b0Input,b1Input,targetInput,wcsInput,toolNoInput,hNoInput].forEach(el=>{
+ [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,clearanceInput,rotModeInput,a0Input,a1Input,b0Input,b1Input,targetInput,wcsInput,toolNoInput,hNoInput].forEach(el=>{
    el.addEventListener("input",()=>aigGuard(root,"刀路欄位檢查",validateToolpathFields,null,"warn"));
    el.addEventListener("change",()=>aigGuard(root,"刀路參數更新",()=>{validateToolpathFields();applyInputs();renderList();draw()},null,"warn"));
  });
