@@ -85,6 +85,10 @@ button,textarea,input,select{font:inherit}button{color:inherit}
 .menuGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
 .menuCard{min-height:145px;display:grid;place-items:center;text-align:center;font-size:18px;font-weight:800;border:1px solid rgba(39,233,255,.28);background:linear-gradient(145deg,#0a1118,#030507);border-radius:15px;cursor:pointer}
 .menuCard:hover{box-shadow:0 0 22px rgba(39,233,255,.1)}
+.menuCard.active{border-color:var(--violet);box-shadow:0 0 22px rgba(159,114,255,.18)}
+.menuDetail{display:grid;gap:9px}.menuDetailGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.menuDetail .field input,.menuDetail .field select{width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px}
+@media(max-width:700px){.menuDetailGrid{grid-template-columns:1fr}}
 .footer{padding:6px 10px 10px;color:#66808f;font-size:9px;text-align:center}
 .badge{font-size:10px;color:var(--muted);border:1px solid #233846;border-radius:999px;padding:5px 8px}
 .notice{font-size:10px;color:#b7c8d1;padding:6px 8px;border:1px solid #172b36;border-radius:8px;background:#03070a}
@@ -223,9 +227,14 @@ function toolpathPage(){
  '</div></section></div></div>';
 }
 function menuPage(){
- const cards=["專案","檔案","刀具庫","工作座標","AI 助手","監控","設定","維修","同步","更新","系統資訊","說明"];
- return '<section class="panel"><div class="head"><div><h2>功能選單</h2><small>非加工功能集中在這一頁；加工頁保持乾淨</small></div></div><div class="body"><div class="menuGrid">'+cards.map(x=>'<div class="menuCard">'+x+'</div>').join("")+'</div></div></section>'+
- '<section class="panel" style="margin-top:9px;border-color:rgba(255,70,95,.35)"><div class="body" style="color:#ffbdc6">Reset / Disconnect / 清除資料 / 維修診斷：只從功能選單明確進入。</div></section>';
+ const cards=[
+  ["專案","PROJECT"],["檔案","FILE"],["刀具庫","TOOLS"],["工作座標","WCS"],
+  ["AI 助手","AI"],["監控","MONITOR"],["設定","SETTINGS"],["維修","MAINT"],
+  ["同步","SYNC"],["更新","UPDATE"],["系統資訊","SYSTEM"],["說明","HELP"]
+ ];
+ return '<div data-menu-runtime><section class="panel"><div class="head"><div><h2>功能選單</h2><small>非加工功能集中在這一頁；加工頁保持乾淨</small></div></div><div class="body"><div class="menuGrid">'+cards.map(([label,key])=>'<div class="menuCard" data-menu-key="'+key+'">'+label+'</div>').join("")+'</div></div></section>'+
+ '<section class="panel" style="margin-top:9px"><div class="head"><h3 data-menu-title>功能中心</h3></div><div class="body menuDetail" data-menu-detail><div class="notice">選擇上方功能。未接線的服務會明確標示，不會假裝成功。</div></div></section>'+
+ '<section class="panel" style="margin-top:9px;border-color:rgba(255,70,95,.35)"><div class="body" style="color:#ffbdc6">Reset / Disconnect / 清除資料 / 維修診斷：只從功能選單明確進入，破壞性操作需二次確認。</div></section></div>';
 }
 const runtimes={};
 function parseWords(line){
@@ -787,6 +796,12 @@ function makeRuntime(root){
  });
  let timer;ta.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>{remember();parse()},350)});
  [toolInput,safeInput,g73Input,g54x,g54y,g54z,g55x,g55y,g55z,h1,h4,h12].forEach(el=>el.addEventListener("change",()=>parse(false)));
+ try{
+   const globalWcs=JSON.parse(localStorage.getItem("aig-wcs-v1")||"null");
+   if(globalWcs){g54x.value=globalWcs.G54?.X??g54x.value;g54y.value=globalWcs.G54?.Y??g54y.value;g54z.value=globalWcs.G54?.Z??g54z.value;g55x.value=globalWcs.G55?.X??g55x.value;g55y.value=globalWcs.G55?.Y??g55y.value;g55z.value=globalWcs.G55?.Z??g55z.value}
+   const toolTable=JSON.parse(localStorage.getItem("aig-tool-table-v1")||"null");
+   if(toolTable){h1.value=toolTable.H1??h1.value;h4.value=toolTable.H4??h4.value;h12.value=toolTable.H12??h12.value}
+ }catch{}
  const saved=localStorage.getItem("aig-code-"+axis);if(saved!=null)ta.value=saved;remember();parse();requestAnimationFrame(tick);
 }
 
@@ -1379,6 +1394,88 @@ function makeToolpathRuntime(root){
  canvas.addEventListener("wheel",e=>{e.preventDefault();const factor=e.deltaY<0?1.12:.89;state.view.scale=Math.max(.15,Math.min(80,state.view.scale*factor));draw()},{passive:false});
  load();
 }
+
+function makeMenuRuntime(root){
+ const detail=root.querySelector("[data-menu-detail]"),title=root.querySelector("[data-menu-title]");
+ let maintArmedUntil=0;
+ function readJson(key,fallback=null){try{return JSON.parse(localStorage.getItem(key)||"null")??fallback}catch{return fallback}}
+ function saveJson(key,v){localStorage.setItem(key,JSON.stringify(v))}
+ function counts(){
+   const cad=readJson("aig-cad-draft-v1",{shapes:[]}),cam=readJson("aig-cam-toolpath-v1",{paths:[]});
+   return{cad:Array.isArray(cad?.shapes)?cad.shapes.length:0,cam:Array.isArray(cam?.paths)?cam.paths.length:0,
+     n3:(localStorage.getItem("aig-code-3AX")||"").split(/\r?\n/).filter(Boolean).length,
+     n4:(localStorage.getItem("aig-code-4AX")||"").split(/\r?\n/).filter(Boolean).length,
+     n5:(localStorage.getItem("aig-code-5AX")||"").split(/\r?\n/).filter(Boolean).length};
+ }
+ function projectView(){
+   const p=readJson("aig-project-meta-v1",{name:"AIG CNC Project",revision:1});
+   detail.innerHTML='<div class="menuDetailGrid"><label class="field"><b>專案名稱</b><input data-menu-project-name value="'+String(p.name||"").replace(/"/g,"&quot;")+'"></label><div class="field"><b>Revision</b><span>'+Number(p.revision||1)+'</span></div><div class="field"><b>儲存位置</b><span>Browser Local / Offline-first</span></div></div><div class="controls"><button class="btn play" data-menu-action="PROJECT_SAVE">儲存專案資訊</button><button class="btn" data-menu-action="PROJECT_NEW">新建空專案</button></div><div class="notice" data-menu-msg>專案資料不會自動覆蓋另一台裝置。</div>';
+ }
+ function fileView(){
+   detail.innerHTML='<div class="notice">匯出會包含 CAD、CAM/刀路、3AX/4AX/5AX G-code 與專案資訊；匯入只寫入本機瀏覽器。</div><div class="controls"><button class="btn play" data-menu-action="EXPORT">匯出 AIG JSON</button><button class="btn" data-menu-action="IMPORT">匯入 AIG JSON</button><input type="file" accept=".json,application/json" data-menu-file hidden></div><div class="notice" data-menu-msg></div>';
+ }
+ function toolsView(){
+   const t=readJson("aig-tool-table-v1",{T1:10,T4:6,T12:12,H1:0,H4:0,H12:0});
+   detail.innerHTML='<div class="menuDetailGrid">'+
+    '<label class="field"><b>T1 Ø mm</b><input data-toolkey="T1" type="number" step="0.001" value="'+t.T1+'"></label>'+
+    '<label class="field"><b>T4 Ø mm</b><input data-toolkey="T4" type="number" step="0.001" value="'+t.T4+'"></label>'+
+    '<label class="field"><b>T12 Ø mm</b><input data-toolkey="T12" type="number" step="0.001" value="'+t.T12+'"></label>'+
+    '<label class="field"><b>H1 mm</b><input data-toolkey="H1" type="number" step="0.001" value="'+t.H1+'"></label>'+
+    '<label class="field"><b>H4 mm</b><input data-toolkey="H4" type="number" step="0.001" value="'+t.H4+'"></label>'+
+    '<label class="field"><b>H12 mm</b><input data-toolkey="H12" type="number" step="0.001" value="'+t.H12+'"></label>'+
+    '</div><button class="btn play" data-menu-action="TOOLS_SAVE">儲存刀具表</button><div class="notice" data-menu-msg>刀具表會同步到本機模擬器的 H1/H4/H12 預設值。</div>';
+ }
+ function wcsView(){
+   const w=readJson("aig-wcs-v1",{G54:{X:0,Y:0,Z:0},G55:{X:0,Y:0,Z:0}});
+   let html='<div class="menuDetailGrid">';
+   for(const g of ["G54","G55"])for(const a of ["X","Y","Z"])html+='<label class="field"><b>'+g+' '+a+'</b><input data-wcskey="'+g+'-'+a+'" type="number" step="0.001" value="'+Number(w[g]?.[a]||0)+'"></label>';
+   detail.innerHTML=html+'</div><button class="btn play" data-menu-action="WCS_SAVE">儲存工作座標</button><div class="notice" data-menu-msg>Master Origin 保持 X0.000 Y0.000 Z0.000；G54/G55 偏移明示，不偷偷改刀路座標。</div>';
+ }
+ function monitorView(){
+   const c=counts();detail.innerHTML='<div class="menuDetailGrid"><div class="field"><b>CAD</b><span>'+c.cad+' entities</span></div><div class="field"><b>CAM/刀路</b><span>'+c.cam+' paths</span></div><div class="field"><b>3AX NC</b><span>'+c.n3+' lines</span></div><div class="field"><b>4AX NC</b><span>'+c.n4+' lines</span></div><div class="field"><b>5AX NC</b><span>'+c.n5+' lines</span></div><div class="field"><b>Renderer</b><span>AUTO 120/60/30</span></div></div><button class="btn" data-menu-action="REFRESH_MONITOR">重新整理</button>';
+ }
+ function systemView(){
+   detail.innerHTML='<div class="menuDetailGrid"><div class="field"><b>User Agent</b><span>'+navigator.userAgent.replace(/</g,"&lt;")+'</span></div><div class="field"><b>Viewport</b><span>'+innerWidth+' × '+innerHeight+'</span></div><div class="field"><b>DPR</b><span>'+(devicePixelRatio||1)+'</span></div><div class="field"><b>Online</b><span>'+(navigator.onLine?"ONLINE":"OFFLINE")+'</span></div><div class="field"><b>Storage</b><span>localStorage</span></div><div class="field"><b>Theme</b><span>BLACK RGB</span></div></div>';
+ }
+ function simple(text){detail.innerHTML='<div class="notice">'+text+'</div>'}
+ function render(key){
+   root.querySelectorAll("[data-menu-key]").forEach(x=>x.classList.toggle("active",x.dataset.menuKey===key));
+   const names={PROJECT:"專案",FILE:"檔案",TOOLS:"刀具庫",WCS:"工作座標",AI:"AI 助手",MONITOR:"監控",SETTINGS:"設定",MAINT:"維修",SYNC:"同步",UPDATE:"更新",SYSTEM:"系統資訊",HELP:"說明"};title.textContent=names[key]||"功能中心";
+   if(key==="PROJECT")projectView();
+   else if(key==="FILE")fileView();
+   else if(key==="TOOLS")toolsView();
+   else if(key==="WCS")wcsView();
+   else if(key==="MONITOR")monitorView();
+   else if(key==="SYSTEM")systemView();
+   else if(key==="AI")simple("Web Runtime 的 AI 網路服務尚未接線；目前不顯示假 AI 成功狀態。正式接入時再由 ChatGPT AI 更新/修復服務處理。");
+   else if(key==="SYNC")simple("同步目前維持 Offline-first。Shared Folder / LAN transport 尚未接到此 Web Prototype，因此不自動覆蓋其他裝置。");
+   else if(key==="UPDATE")simple("此 Web Prototype 不執行網路自動更新；更新仍由版本分支、Gate 與驗證流程控制。");
+   else if(key==="SETTINGS")simple("正式基準：BLACK RGB、高對比、繁中優先、0.001 mm、AUTO 120/60/30。尚未生效的設定不提供假開關。");
+   else if(key==="MAINT")detail.innerHTML='<div class="notice">維修只處理 Web Prototype 暫存，不碰系統防毒或裝置安全。</div><button class="btn" data-menu-action="SELF_CHECK">Runtime 自我檢查</button><button class="btn danger" data-menu-action="CLEAR_DERIVED">清除 CAM/NC 衍生暫存</button><div class="notice" data-menu-msg></div>';
+   else if(key==="HELP")simple("流程：CAD 製圖 → CAM 選策略 → 套用至刀路 → 刀路編輯/驗證 → 產生 NC → 3AX/4AX/5AX 模擬與 G-code 編輯。");
+ }
+ root.addEventListener("click",e=>{
+   const card=e.target.closest("[data-menu-key]");if(card){render(card.dataset.menuKey);return}
+   const a=e.target.closest("[data-menu-action]");if(!a)return;const msg=detail.querySelector("[data-menu-msg]");
+   if(a.dataset.menuAction==="PROJECT_SAVE"){const old=readJson("aig-project-meta-v1",{revision:0}),name=detail.querySelector("[data-menu-project-name]").value.trim()||"AIG CNC Project";saveJson("aig-project-meta-v1",{name,revision:Number(old.revision||0)+1,updatedAt:Date.now()});projectView()}
+   if(a.dataset.menuAction==="PROJECT_NEW"){saveJson("aig-project-meta-v1",{name:"AIG CNC Project",revision:1,updatedAt:Date.now()});projectView()}
+   if(a.dataset.menuAction==="EXPORT"){
+     const data={schema:"AIG-WEB-PROJECT-1",exportedAt:new Date().toISOString(),project:readJson("aig-project-meta-v1",{}),cad:readJson("aig-cad-draft-v1",null),cam:readJson("aig-cam-toolpath-v1",null),tools:readJson("aig-tool-table-v1",null),wcs:readJson("aig-wcs-v1",null),nc:{"3AX":localStorage.getItem("aig-code-3AX"),"4AX":localStorage.getItem("aig-code-4AX"),"5AX":localStorage.getItem("aig-code-5AX")}};
+     const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="AIG_Web_Project.json";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);if(msg)msg.textContent="已匯出 AIG JSON。";
+   }
+   if(a.dataset.menuAction==="IMPORT"){detail.querySelector("[data-menu-file]").click()}
+   if(a.dataset.menuAction==="TOOLS_SAVE"){const out={};detail.querySelectorAll("[data-toolkey]").forEach(i=>out[i.dataset.toolkey]=Number(i.value)||0);saveJson("aig-tool-table-v1",out);if(msg)msg.textContent="刀具表已儲存。";}
+   if(a.dataset.menuAction==="WCS_SAVE"){const out={G54:{X:0,Y:0,Z:0},G55:{X:0,Y:0,Z:0}};detail.querySelectorAll("[data-wcskey]").forEach(i=>{const [g,k]=i.dataset.wcskey.split("-");out[g][k]=Number(i.value)||0});saveJson("aig-wcs-v1",out);if(msg)msg.textContent="G54/G55 已儲存；模擬頁重新載入時套用。";}
+   if(a.dataset.menuAction==="REFRESH_MONITOR")monitorView();
+   if(a.dataset.menuAction==="SELF_CHECK"){const c=counts();if(msg)msg.textContent="SELF CHECK PASS：CAD "+c.cad+" / CAM "+c.cam+" / NC "+(c.n3+c.n4+c.n5)+" lines。";}
+   if(a.dataset.menuAction==="CLEAR_DERIVED"){const now=Date.now();if(now>maintArmedUntil){maintArmedUntil=now+2500;if(msg)msg.textContent="清除待命：2.5 秒內再按一次才會清除 CAM 與 3/4/5AX NC；CAD 保留。";return}maintArmedUntil=0;localStorage.removeItem("aig-cam-toolpath-v1");for(const ax of ["3AX","4AX","5AX"])localStorage.removeItem("aig-code-"+ax);if(msg)msg.textContent="已清除 CAM/NC 衍生暫存；CAD 未刪除。";}
+ });
+ root.addEventListener("change",e=>{
+   const file=e.target.closest("[data-menu-file]");if(!file||!file.files?.[0])return;
+   const reader=new FileReader();reader.onload=()=>{const msg=detail.querySelector("[data-menu-msg]");try{const data=JSON.parse(String(reader.result||"{}"));if(data.schema!=="AIG-WEB-PROJECT-1")throw new Error("schema");if(data.project)saveJson("aig-project-meta-v1",data.project);if(data.cad)saveJson("aig-cad-draft-v1",data.cad);if(data.cam)saveJson("aig-cam-toolpath-v1",data.cam);if(data.tools)saveJson("aig-tool-table-v1",data.tools);if(data.wcs)saveJson("aig-wcs-v1",data.wcs);for(const ax of ["3AX","4AX","5AX"])if(data.nc?.[ax])localStorage.setItem("aig-code-"+ax,data.nc[ax]);if(msg)msg.textContent="匯入完成；重新開啟頁面即可載入全部資料。"}catch{if(msg)msg.textContent="匯入失敗：檔案不是 AIG-WEB-PROJECT-1。"}};reader.readAsText(file.files[0]);
+ });
+ render("PROJECT");
+}
 pages.forEach(([name,color])=>{
  const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>show(name);nav.appendChild(b);
  const s=document.createElement("section");s.className="screen";s.dataset.page=name;
@@ -1389,6 +1486,7 @@ document.querySelectorAll("[data-runtime]").forEach(makeRuntime);
 document.querySelectorAll("[data-cad-runtime]").forEach(makeCadRuntime);
 document.querySelectorAll("[data-cam-runtime]").forEach(makeCamRuntime);
 document.querySelectorAll("[data-tp-runtime]").forEach(makeToolpathRuntime);
+document.querySelectorAll("[data-menu-runtime]").forEach(makeMenuRuntime);
 function show(name){
  if(!pages.some(p=>p[0]===name))name="5AX";
  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
