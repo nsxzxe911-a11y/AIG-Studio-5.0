@@ -30,6 +30,11 @@ regression = read("core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt
 hashes = read("design/theme/official_rgb/android-drawable.sha256")
 workflow = read(".github/workflows/build-download.yml")
 windows_release = read("build_windows_native.ps1")
+ui_asset_contract = read("core/src/main/kotlin/com/aigstudio/core/UiAssetContract.kt")
+asset_pack_match = re.search(r'RGB_PACK_VERSION\s*=\s*"([0-9]+)"', ui_asset_contract)
+if not asset_pack_match:
+    raise SystemExit("BLOCKED RGB_PACK_VERSION_MISSING")
+asset_pack_version = asset_pack_match.group(1)
 library_5x_skin_manifest = read("design/theme/library_5x_real_cam_208/manifest.json")
 require(windows_release, "--win-per-user-install", "WINDOWS_PER_USER_INSTALLER_GATE")
 for needle in (
@@ -123,20 +128,20 @@ if production_theme.get("theme_id") != "official_rgb_original":
     raise SystemExit("official_rgb_original Theme 遺失或身分錯誤")
 if theme_manifest.get("theme_id") != "aigii_rgb_neon_v2":
     raise SystemExit("RGB Neon Theme manifest 身分錯誤")
-for needle in ("object ProductionRgbAssets", 'ROOT="aig-generated-rgb/approved/', "ProductionRgbAssets.drawable(this,id)"):
+for needle in ("object ProductionRgbAssets", "UiAssetContract.ANDROID_ROOT", "ProductionRgbAssets.drawable(this,id)"):
     if needle not in android:
         raise SystemExit(f"Android 正式 RGB Runtime 未綁定：{needle}")
-for needle in ("private object ProductionRgbAssets", 'ROOT="/aig-generated-rgb/approved/', "ProductionRgbAssets.icon"):
+for needle in ("private object ProductionRgbAssets", "UiAssetContract.DESKTOP_ROOT", "ProductionRgbAssets.icon"):
     if needle not in desktop:
         raise SystemExit(f"Windows 正式 RGB Runtime 未綁定：{needle}")
 for forbidden in ("EngineeringImageAssets.drawable(", "EngineeringImageAssets.icon("):
     if forbidden in android or forbidden in desktop:
         raise SystemExit(f"正式 Runtime 誤用工程圖片：{forbidden}")
 for path in (
-    ROOT / "app" / "src" / "main" / "assets" / "aig-generated-rgb" / "approved" / "184" / "cad.png",
-    ROOT / "app" / "src" / "main" / "assets" / "aig-generated-rgb" / "approved" / "184" / "cam.png",
-    ROOT / "desktop" / "src" / "main" / "resources" / "aig-generated-rgb" / "approved" / "184" / "cad.png",
-    ROOT / "desktop" / "src" / "main" / "resources" / "aig-generated-rgb" / "approved" / "184" / "cam.png",
+    ROOT / "app" / "src" / "main" / "assets" / "aig-generated-rgb" / "approved" / asset_pack_version / "cad.png",
+    ROOT / "app" / "src" / "main" / "assets" / "aig-generated-rgb" / "approved" / asset_pack_version / "cam.png",
+    ROOT / "desktop" / "src" / "main" / "resources" / "aig-generated-rgb" / "approved" / asset_pack_version / "cad.png",
+    ROOT / "desktop" / "src" / "main" / "resources" / "aig-generated-rgb" / "approved" / asset_pack_version / "cam.png",
     ROOT / "app" / "src" / "main" / "assets" / "visuals" / "studio_startup_original.png",
     ROOT / "desktop" / "src" / "main" / "resources" / "visuals" / "studio_startup_original.png",
 ):
