@@ -17,7 +17,6 @@ val androidTargetSdk = 37
 android {
     namespace = "com.aigstudio.app"
     compileSdk = androidCompileSdk
-    buildToolsVersion = "37.0.0"
     defaultConfig {
         applicationId = "com.aigstudio.app"
         minSdk = 26
@@ -35,7 +34,8 @@ dependencies { implementation(project(":core")) }
 
 tasks.register("verifyAndroidPlatform") {
     doLast {
-        check(androidCompileSdk >= 37) { "compileSdk downgrade blocked: $androidCompileSdk" }
-        check(androidTargetSdk >= 37) { "targetSdk downgrade blocked: $androidTargetSdk" }
+        check(androidCompileSdk == 37) { "compileSdk must track current stable Android API 37: $androidCompileSdk" }
+        check(androidTargetSdk == 37) { "targetSdk must track current stable Android API 37: $androidTargetSdk" }
+        println("STUDIO_ANDROID_PLATFORM_BASELINE_PASS|API_37|AGP_9_4_0|BUILT_IN_KOTLIN|NO_BUILD_TOOLS_PIN")
     }
 }

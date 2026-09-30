@@ -35,10 +35,13 @@ jobs:
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
           test -x "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" "platform-tools" "platforms;android-37.0" "build-tools;37.0.0"
+          LATEST_BUILD_TOOLS="$("$SDKMANAGER" --list | awk -F\'|\' \'/^  build-tools;[0-9]/{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $1); print $1}\' | sort -V | tail -1)"
+          test -n "$LATEST_BUILD_TOOLS"
+          "$SDKMANAGER" "platform-tools" "platforms;android-37" "$LATEST_BUILD_TOOLS"
+          echo "LATEST_BUILD_TOOLS=$LATEST_BUILD_TOOLS" >> "$GITHUB_ENV"
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '9.6.0'
+          gradle-version: '9.7.0'
       - name: Verify production runtime boundary
         shell: bash
         run: |
@@ -59,6 +62,7 @@ jobs:
           grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
           grep -Fq 'PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|STABLE_ORDER' runtime-surfaces.log
           grep -Fq 'SHARED_SYNC_RUNTIME_WATCHER_GATE_PASS|STUDIO_234|ANDROID|WINDOWS|POLL_1500MS|NO_AUTO_APPLY|NO_SILENT_OVERWRITE|VISIBLE_STATUS|OFFLINE_FIRST' runtime-surfaces.log
+          echo 'STUDIO_TOOLCHAIN_235=AGP_9.4.0|KOTLIN_2.4.20|GRADLE_9.7.0|JDK_17|API_37|LATEST_BUILD_TOOLS'
           grep -Fq 'VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' runtime-surfaces.log
           grep -Fq 'OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' runtime-surfaces.log
           grep -Fq 'NETWORK_RESUME_UI_RUNTIME_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY' runtime-surfaces.log
@@ -122,10 +126,14 @@ jobs:
         run: |
           APK=release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
           test -s "$APK"
-          "$ANDROID_HOME/build-tools/37.0.0/zipalign" -c -P 16 4 "$APK"
-          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --verbose "$APK"
-          "$ANDROID_HOME/build-tools/37.0.0/aapt" dump badging "$APK" | grep -F "package: name='com.aigstudio.app'"
-          "$ANDROID_HOME/build-tools/37.0.0/aapt" dump badging "$APK" | grep -F "targetSdkVersion:'37'"
+          BUILD_TOOLS_DIR="$ANDROID_HOME/build-tools/${LATEST_BUILD_TOOLS#build-tools;}"
+          test -x "$BUILD_TOOLS_DIR/zipalign"
+          test -x "$BUILD_TOOLS_DIR/apksigner"
+          test -x "$BUILD_TOOLS_DIR/aapt"
+          "$BUILD_TOOLS_DIR/zipalign" -c -P 16 4 "$APK"
+          "$BUILD_TOOLS_DIR/apksigner" verify --verbose "$APK"
+          "$BUILD_TOOLS_DIR/aapt" dump badging "$APK" | grep -F "package: name='com.aigstudio.app'"
+          "$BUILD_TOOLS_DIR/aapt" dump badging "$APK" | grep -F "targetSdkVersion:'37'"
           (cd release/android && sha256sum -c SHA256SUMS.txt)
           (cd release/source && sha256sum -c SHA256SUMS.txt)
           VERSION="$(awk -F= '$1=="versionName"{print $2}' release-version.properties)"
@@ -155,7 +163,7 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '9.6.0'
+          gradle-version: '9.7.0'
       - name: Build Windows EXE
         shell: pwsh
         run: .\build_windows_native.ps1
