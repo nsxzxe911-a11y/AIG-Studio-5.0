@@ -1861,6 +1861,7 @@ data class FanucPostSettings(
     val originTransformMode: NcOriginTransformMode = NcOriginTransformMode.WORK_OFFSET_ONLY,
     val cutterCompensation: CutterCompensationMode = CutterCompensationMode.CAM_GEOMETRY_G40,
     val cutterCompRegister: Int = 1,
+    val cutterCompValueMm: Double = 0.0,
     val rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE,
     val rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured()
 ) {
@@ -1874,6 +1875,7 @@ data class FanucPostSettings(
         require(axisA in -360.0..360.0)
         require(axisB in -360.0..360.0)
         require(cutterCompRegister in 1..999)
+        require(cutterCompValueMm.isFinite()) { "Cutter compensation D value must be finite" }
         if (rotaryMode == RotaryAxisOperationMode.INDEXED_4AX ||
             rotaryMode == RotaryAxisOperationMode.SIMULTANEOUS_4AX) {
             require(abs(axisB) <= EPS) { "4AX post mode forbids B-axis command" }
@@ -1899,8 +1901,17 @@ object FanucNc {
         require(post.originTransformMode == NcOriginTransformMode.WORK_OFFSET_ONLY) {
             "G92 output blocked until controller-specific current-position/origin-transform semantics are validated; canonical CAD/CAM/SIM ABS XYZ remains unchanged"
         }
+        if(post.cutterCompensation != CutterCompensationMode.CAM_GEOMETRY_G40){
+            require(abs(post.cutterCompValueMm) >= CNC_RESOLUTION_MM) {
+                post.cutterCompensation.code+" D"+post.cutterCompRegister+" requires a non-zero compensation value (mm)"
+            }
+            require(abs(post.cutterCompValueMm) <= cam.settings.toolDiameter + CNC_RESOLUTION_MM) {
+                post.cutterCompensation.code+" D"+post.cutterCompRegister+" offset "+fmt(post.cutterCompValueMm)+" mm exceeds current tool diameter "+fmt(cam.settings.toolDiameter)+" mm"
+            }
+        }
         require(post.cutterCompensation == CutterCompensationMode.CAM_GEOMETRY_G40) {
-            "Controller G41/G42 blocked: current CAM toolpath already includes geometric tool-radius compensation; raw contour + controller-comp simulation is required to prevent double compensation"
+            "Controller "+post.cutterCompensation.code+" D"+post.cutterCompRegister+
+                " offset="+fmt(post.cutterCompValueMm)+" mm SAVED BUT NC POST BLOCKED: current CAM toolpath already includes geometric tool-radius compensation; raw contour + controller-comp simulation must pass before machine output to prevent double compensation"
         }
         val moves = cam.toolpaths.flatMap { it.moves }
         val camHasAxisProvenance = moves.any { abs(it.axisA) > 1e-9 || abs(it.axisB) > 1e-9 }
