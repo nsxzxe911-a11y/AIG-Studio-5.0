@@ -107,18 +107,27 @@ const pages=[
 const nav=document.getElementById("nav"),screens=document.getElementById("screens");
 const sourceCode={
  "3AX":[
-  "N10 G90 G54 G17 G40 G49 G80","N20 T1 M6","N30 S12000 M3","N40 G0 X0. Y0. Z50.","N50 G43 H1 Z5. M8",
-  "N60 G99 G81 Z-10. R3. F150 L0","N70 G90 G34 X30. Y30. I20. J0. K6","N80 G80",
-  "N90 G0 X0. Y0. Z5.","N100 G1 Z-2. F800","N110 X60. Y0. F1200","N120 X60. Y60.","N130 X0. Y60.","N140 X0. Y0.","N150 M30"
+  "O1000","N10 M98 P4","N20 S12000 M3","N30 G0 X0. Y0. Z50.",
+  "N40 G99 G81 Z-10. R3. F150 L0","N50 G90 G34 X30. Y30. I20. J0. K6","N60 G80",
+  "N70 G0 X0. Y0. Z5.","N80 G1 Z-2. F800","N90 X60. Y0. F1200","N100 X60. Y60.","N110 X0. Y60.","N120 X0. Y0.",
+  "N130 M98 P5","N140 M30",
+  "O4","N10 T1 M6","N20 G90 G54 G17 G40 G49 G80","N30 G43 Z30. H1 M8","N40 M99",
+  "O5","N10 M9","N20 M5","N30 G0 Z100.","N40 M99"
  ].join("\n"),
  "4AX":[
-  "N10 G90 G54","N20 T4 M6","N30 S6000 M3","N40 G0 X0. Y0. Z40. A0.","N50 G43 H4 Z5. M8","N60 G1 Z-3. F600",
-  "N70 X45. F1000","N80 A90.","N90 X0.","N100 A180.","N110 X45.","N120 A270.","N130 M30"
+  "O2000","N10 M98 P4","N20 S6000 M3","N30 G0 X0. Y0. Z40. A0.","N40 G1 Z-3. F600",
+  "N50 X45. F1000","N60 A90.","N70 X0.","N80 A180.","N90 X45.","N100 A270.",
+  "N110 M98 P5","N120 M30",
+  "O4","N10 T4 M6","N20 G90 G54 G40 G49 G80","N30 G43 Z30. H4 M8","N40 M99",
+  "O5","N10 M9","N20 M5","N30 G0 Z100.","N40 M99"
  ].join("\n"),
  "5AX":[
-  "N10 G90 G54","N20 T12 M6","N30 S8000 M3","N40 G0 X0. Y0. Z50. A0. B0.","N50 G43 H12 Z5. M8","N60 G1 Z-2. F1200",
-  "N70 X12.430 Y-5.210 A15. B10.","N80 G1 X25.680 Y8.430 A30. B-12.","N90 G1 X36.000 Y18.000 A45. B18.",
-  "N100 G1 X22.000 Y32.000 A60. B-20.","N110 G1 X0. Y24.000 A35. B8.","N120 G1 X0. Y0. A0. B0.","N130 M30"
+  "O3000","N10 M98 P4","N20 S8000 M3","N30 G0 X0. Y0. Z50. A0. B0.","N40 G1 Z-2. F1200",
+  "N50 X12.430 Y-5.210 A15. B10.","N60 G1 X25.680 Y8.430 A30. B-12.","N70 G1 X36.000 Y18.000 A45. B18.",
+  "N80 G1 X22.000 Y32.000 A60. B-20.","N90 G1 X0. Y24.000 A35. B8.","N100 G1 X0. Y0. A0. B0.",
+  "N110 M98 P5","N120 M30",
+  "O4","N10 T12 M6","N20 G90 G54 G40 G49 G80","N30 G43 Z30. H12 M8","N40 M99",
+  "O5","N10 M9","N20 M5","N30 G0 Z100.","N40 M99"
  ].join("\n")
 };
 
@@ -174,12 +183,69 @@ function parseWords(line){
  while((m=re.exec(clean))) out[m[1]]=Number(m[2]);
  return {clean,out};
 }
+function compilePrograms(text){
+ const sourceLines=text.split(/\r?\n/);
+ const programs=new Map();
+ programs.set("MAIN",[]);
+ let current="MAIN",firstO=null;
+ sourceLines.forEach((raw,line)=>{
+   const clean=raw.replace(/\([^)]*\)/g," ").replace(/;.*$/," ").trim().toUpperCase();
+   const om=clean.match(/^O\s*0*(\d+)\b/);
+   if(om){
+     current=String(Number(om[1]));
+     if(firstO===null)firstO=current;
+     if(!programs.has(current))programs.set(current,[]);
+     return;
+   }
+   if(!programs.has(current))programs.set(current,[]);
+   programs.get(current).push({raw,line,program:current});
+ });
+ let mainKey="MAIN";
+ if((programs.get("MAIN")||[]).every(x=>!x.raw.trim()) && firstO!==null)mainKey=firstO;
+ const errors=[],warnings=[],executionLines=[];
+ const maxDepth=8,maxExpanded=12000;
+
+ function expand(key,depth,stack,repeat=1){
+   if(depth>maxDepth){errors.push("子程式巢狀超過 "+maxDepth+" 層："+stack.join("→"));return;}
+   const body=programs.get(String(Number(key)))||programs.get(key);
+   if(!body){errors.push("找不到子程式 O"+key);return;}
+   for(let r=0;r<repeat;r++){
+     for(const item of body){
+       if(executionLines.length>=maxExpanded){errors.push("子程式展開超過 "+maxExpanded+" 行，已停止以避免無限迴圈。");return;}
+       const clean=item.raw.replace(/\([^)]*\)/g," ").replace(/;.*$/," ").trim().toUpperCase();
+       const {out}=parseWords(item.raw);
+       const m98=/M\s*0*98\b/.test(clean);
+       const m99=/M\s*0*99\b/.test(clean);
+       const m30=/M\s*0*30\b/.test(clean);
+       if(m98){
+         const p=Number.isFinite(out.P)?Math.trunc(out.P):null;
+         const l=Number.isFinite(out.L)?Math.max(1,Math.min(999,Math.trunc(out.L))):1;
+         executionLines.push({...item,subCall:p,callRepeat:l,callDepth:depth});
+         if(p===null){errors.push("M98 缺少 P 子程式號：第 "+(item.line+1)+" 行");continue;}
+         const pKey=String(Number(p));
+         if(stack.includes(pKey)){errors.push("偵測到子程式遞迴："+[...stack,pKey].join("→"));continue;}
+         expand(pKey,depth+1,[...stack,pKey],l);
+         continue;
+       }
+       executionLines.push({...item,callDepth:depth,subReturn:m99});
+       if(m99)return;
+       if(m30 && key===mainKey)return;
+     }
+   }
+ }
+ expand(mainKey,0,[mainKey],1);
+ if(!executionLines.length)warnings.push("沒有可執行的 G-code 區塊。");
+ return {sourceLines,executionLines,programs,mainKey,errors,warnings};
+}
+
 function parseProgram(text,axis,opts={}){
- const lines=text.split(/\r?\n/);
+ const compiled=compilePrograms(text);
+ const lines=compiled.sourceLines;
+ const executionLines=compiled.executionLines;
  let pos={X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0},absolute=true,motion="G0",plane="G17",returnMode="G98";
  let cycle=null,cycleZ=null,cycleR=null,cycleQ=null;
  let machine={T:0,H:0,spindle:"M5",coolant:false};
- const blocks=[];const errors=[];const warnings=[];
+ const blocks=[];const errors=[...compiled.errors];const warnings=[...compiled.warnings];
  const g73Retract=Math.max(0,Number(opts.g73Retract)||0.5);
 
  function moveTo(line,raw,to,motionName,extra={}){
@@ -187,7 +253,7 @@ function parseProgram(text,axis,opts={}){
    dest.F=Number.isFinite(to.F)?to.F:pos.F;dest.S=Number.isFinite(to.S)?to.S:pos.S;
    blocks.push({
      line,raw,kind:"move",motion:motionName,absolute,plane,from,to:dest,n:null,
-     arc:{I:null,J:null,K:null,R:null},cutting:false,machine:{...machine},skipEligible:/^\s*\//.test(raw),...extra
+     arc:{I:null,J:null,K:null,R:null},cutting:false,machine:{...machine},skipEligible:/^\s*\//.test(raw),...meta,...meta,...extra
    });
    pos={...dest};
  }
@@ -240,7 +306,9 @@ function parseProgram(text,axis,opts={}){
    if(pos.Z!==returnZ)moveTo(line,raw,{Z:returnZ},"G0",{cycle,cyclePhase:"return",cutting:false,synthetic:true,...patternMeta});
  }
 
- lines.forEach((raw,index)=>{
+ executionLines.forEach(item=>{
+  const raw=item.raw,index=item.line;
+  const meta={subprogram:item.program,subCall:item.subCall??null,subReturn:Boolean(item.subReturn),callDepth:item.callDepth||0,callRepeat:item.callRepeat||1};
   const {clean,out}=parseWords(raw);
   if(!clean)return;
   const gMatches=[...clean.matchAll(/G\s*0*(\d+(?:\.\d+)?)/g)].map(m=>"G"+Number(m[1]));
@@ -269,7 +337,7 @@ function parseProgram(text,axis,opts={}){
 
   if(gMatches.includes("G80")){
     cycle=null;cycleZ=null;cycleR=null;cycleQ=null;
-    blocks.push({line:index,raw,kind:"modal",motion:"G80",absolute,plane,from:{...pos},to:{...pos},cycle:null,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw)});
+    blocks.push({line:index,raw,kind:"modal",motion:"G80",absolute,plane,from:{...pos},to:{...pos},cycle:null,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw),...meta});
     return;
   }
 
@@ -282,7 +350,7 @@ function parseProgram(text,axis,opts={}){
     if(Number.isFinite(out.R))cycleR=absolute?out.R:initialZ+out.R;
     if(Number.isFinite(out.Z))cycleZ=absolute?out.Z:(cycleR??initialZ)+out.Z;
     if(Number.isFinite(out.Q))cycleQ=Math.abs(out.Q);
-    blocks.push({line:index,raw,kind:"modal",motion:cycleStart,absolute,plane,from:{...pos},to:{...pos},cycle,cyclePhase:"preset",presetOnly:true,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw)});
+    blocks.push({line:index,raw,kind:"modal",motion:cycleStart,absolute,plane,from:{...pos},to:{...pos},cycle,cyclePhase:"preset",presetOnly:true,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw),...meta});
     return;
   }
 
@@ -321,7 +389,7 @@ function parseProgram(text,axis,opts={}){
 
   if(gMatches.includes("G92")){
     for(const a of ["X","Y","Z","A","B","C"]) if(Number.isFinite(out[a])) pos[a]=out[a];
-    blocks.push({line:index,raw,kind:"set",motion:"G92",absolute,plane,from:{...pos},to:{...pos},cycle:null,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw)});
+    blocks.push({line:index,raw,kind:"set",motion:"G92",absolute,plane,from:{...pos},to:{...pos},cycle:null,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw),...meta});
     return;
   }
 
@@ -339,12 +407,12 @@ function parseProgram(text,axis,opts={}){
     });
     pos={...to};
   }else{
-    blocks.push({line:index,raw,kind:"modal",motion,absolute,plane,from:{...pos},to:{...pos},n,cycle:null,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw)});
+    blocks.push({line:index,raw,kind:"modal",motion,absolute,plane,from:{...pos},to:{...pos},n,cycle:null,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw),...meta});
   }
  });
  if(axis==="3AX" && blocks.some(b=>Math.abs(b.to.A)>1e-9||Math.abs(b.to.B)>1e-9||Math.abs(b.to.C)>1e-9))errors.push("3AX 程式含旋轉軸指令。");
  if(axis==="4AX" && blocks.some(b=>Math.abs(b.to.B)>1e-9))errors.push("4AX 程式含 B 軸指令。");
- return {lines,blocks,errors,warnings};
+ return {lines,blocks,errors,warnings,mainProgram:compiled.mainKey,programCount:compiled.programs.size};
 }
 function makeRuntime(root){
  const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d");
