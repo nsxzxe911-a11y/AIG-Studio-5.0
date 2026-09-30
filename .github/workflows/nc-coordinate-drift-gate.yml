@@ -1,0 +1,36 @@
+name: Studio NC Coordinate Drift Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'core/**'
+      - 'release-version.properties'
+      - '.github/workflows/nc-coordinate-drift-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nc-coordinate-drift:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nc-check]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Run Studio core NC coordinate regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle -p . :core:coreRegression --no-daemon --stacktrace | tee studio-nc-regression.log
+          grep -Fq 'G41_G42_D_OFFSET_VALUE_GATE_PASS D_REGISTER_7 SIGNED_MM CAM_XYZ_UNCHANGED DOUBLE_COMP_FAIL_CLOSED' studio-nc-regression.log
+          grep -Fq 'WORK_OFFSET_NO_GEOMETRY_SHIFT_PASS G54/G55 CAM/SIM absolute coordinates unchanged' studio-nc-regression.log
+          grep -Fq 'ALL TESTS PASSED' studio-nc-regression.log
+          echo 'STUDIO_NC_COORDINATE_DRIFT_GATE_PASS|G90_G91|G54_G55|G43_H|G41_G42_D_VALUE|NO_CAM_SIM_SHIFT'
