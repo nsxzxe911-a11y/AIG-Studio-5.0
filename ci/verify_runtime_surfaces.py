@@ -117,10 +117,12 @@ desktop_gradle = read("desktop/build.gradle.kts")
 for source,label in ((app_gradle,"ANDROID"),(desktop_gradle,"WINDOWS")):
     if "../engineering-assets" in source:
         raise SystemExit(f"{label} 正式 Runtime 不得綁定 engineering-assets")
-if theme_index.get("default_theme_id") != "official_rgb_original":
-    raise SystemExit("正式 Runtime 預設 Theme 不是 official_rgb_original")
+if theme_index.get("default_theme_id") != "aigii_rgb_neon_v2":
+    raise SystemExit("正式 Runtime 預設 Theme 尚未切到 aigii_rgb_neon_v2")
 if production_theme.get("theme_id") != "official_rgb_original":
     raise SystemExit("official_rgb_original Theme 遺失或身分錯誤")
+if theme_manifest.get("theme_id") != "aigii_rgb_neon_v2":
+    raise SystemExit("RGB Neon Theme manifest 身分錯誤")
 for needle in ("object ProductionRgbAssets", 'ROOT="aig-generated-rgb/approved/', "ProductionRgbAssets.drawable(this,id)"):
     if needle not in android:
         raise SystemExit(f"Android 正式 RGB Runtime 未綁定：{needle}")
