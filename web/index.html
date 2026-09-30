@@ -205,9 +205,9 @@ function cadPage(){
 function camPage(){
  const strategies=[
   ["平面","FACE",true],["輪廓","PROFILE",true],["口袋","POCKET",true],["鑽孔","DRILL",true],
-  ["Z 等高","ZLEVEL",true],["平行","PARALLEL",true],["自適應","ADAPTIVE",false],["倒角","CHAMFER",true],["攻牙","TAP",true]
+  ["Z 等高","ZLEVEL",true],["平行","PARALLEL",true],["自適應粗加工","ADAPTIVE",true],["倒角","CHAMFER",true],["攻牙","TAP",true]
  ];
- const ops=strategies.map(([label,key,ready])=>'<button class="btn" data-cam-strategy="'+key+'" '+(ready?'':'disabled title="待 3D/自適應核心接入"')+'>'+label+'</button>').join("");
+ const ops=strategies.map(([label,key,ready])=>'<button class="btn" data-cam-strategy="'+key+'" '+(ready?'':'disabled title="待完整 3D 曲面核心接入"')+'>'+label+'</button>').join("");
  return '<div data-cam-runtime><div class="camgrid">'+
  '<section class="panel"><div class="head"><h3>快速刀路</h3></div><div class="body"><div class="ops">'+ops+'</div><div class="notice" style="margin-top:8px" data-cam-msg>先選策略；CAM 會直接讀取 CAD AutoSave 幾何。</div></div></section>'+
  '<section class="panel"><div class="head"><div><h2>CAM 加工預覽</h2><small>CAD 幾何 → 真刀路資料</small></div><span class="spacer"></span><span class="badge" data-cam-cad-count>CAD 0</span></div><div class="body"><canvas class="camCanvas" data-cam-canvas></canvas><div class="controls"><button class="btn" data-cam-action="RELOAD">重讀 CAD</button><button class="btn play" data-cam-action="CALC">計算刀路</button><button class="btn" data-cam-action="FIT">Fit</button><button class="btn play" data-cam-action="APPLY">套用至刀路</button></div></div></section>'+
@@ -224,6 +224,8 @@ function camPage(){
  '<label class="param">毛坯 Y 邊量<input data-cam-marginy type="number" value="5" min="0" step="0.001"></label>'+
  '<label class="param">攻牙螺距<input data-cam-pitch type="number" value="" placeholder="必填 mm/rev" min="0.001" step="0.001"></label>'+
  '<label class="param">步距 %<input data-cam-stepover type="number" value="50" min="5" max="95" step="1"></label>'+
+ '<label class="param">自適應負載 %<input data-cam-adaptive-load type="number" value="35" min="10" max="45" step="1"></label>'+
+ '<div class="notice">自適應粗加工目前是 2.5D 封閉區域核心：RECT / CIRCLE / HOLE，多 Z 層、限制徑向負載；不冒充自由曲面 3D Adaptive。</div>'+
  '<div class="field"><b>方向</b><select data-cam-direction style="width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px"><option value="CW">順銑 CW</option><option value="CCW">逆銑 CCW</option></select></div>'+
  '<div class="camStats"><div class="field"><b>策略</b><span data-cam-strategy-name>未選</span></div><div class="field"><b>刀路</b><span data-cam-path-count>0</span></div><div class="field"><b>Z 層數</b><span data-cam-layer-count>0</span></div><div class="field"><b>估算長度</b><span data-cam-length>0.000 mm</span></div><div class="field"><b>來源</b><span data-cam-source>CAD AutoSave</span></div></div>'+
  '</div></section></div></div>';
@@ -1752,23 +1754,24 @@ function makeCadRuntime(root){
 function makeCamRuntime(root){
  const canvas=root.querySelector("[data-cam-canvas]"),ctx=canvas.getContext("2d");
  const cadCountEl=root.querySelector("[data-cam-cad-count]"),msgEl=root.querySelector("[data-cam-msg]"),strategyEl=root.querySelector("[data-cam-strategy-name]"),pathCountEl=root.querySelector("[data-cam-path-count]"),layerCountEl=root.querySelector("[data-cam-layer-count]"),lengthEl=root.querySelector("[data-cam-length]");
- const toolInput=root.querySelector("[data-cam-tool]"),depthInput=root.querySelector("[data-cam-depth]"),feedInput=root.querySelector("[data-cam-feed]"),rpmInput=root.querySelector("[data-cam-rpm]"),safeInput=root.querySelector("[data-cam-safez]"),stockTopInput=root.querySelector("[data-cam-stocktop]"),stockThicknessInput=root.querySelector("[data-cam-stockthickness]"),stepDownInput=root.querySelector("[data-cam-stepdown]"),marginXInput=root.querySelector("[data-cam-marginx]"),marginYInput=root.querySelector("[data-cam-marginy]"),pitchInput=root.querySelector("[data-cam-pitch]"),stepInput=root.querySelector("[data-cam-stepover]"),dirInput=root.querySelector("[data-cam-direction]");
+ const toolInput=root.querySelector("[data-cam-tool]"),depthInput=root.querySelector("[data-cam-depth]"),feedInput=root.querySelector("[data-cam-feed]"),rpmInput=root.querySelector("[data-cam-rpm]"),safeInput=root.querySelector("[data-cam-safez]"),stockTopInput=root.querySelector("[data-cam-stocktop]"),stockThicknessInput=root.querySelector("[data-cam-stockthickness]"),stepDownInput=root.querySelector("[data-cam-stepdown]"),marginXInput=root.querySelector("[data-cam-marginx]"),marginYInput=root.querySelector("[data-cam-marginy]"),adaptiveLoadInput=root.querySelector("[data-cam-adaptive-load]"),pitchInput=root.querySelector("[data-cam-pitch]"),stepInput=root.querySelector("[data-cam-stepover]"),dirInput=root.querySelector("[data-cam-direction]");
  const state={cad:[],strategy:null,paths:[],view:{scale:4,panX:0,panY:0}};
  const clone=x=>JSON.parse(JSON.stringify(x));
  function validateCamFields(){
-   [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,marginXInput,marginYInput,pitchInput,stepInput,dirInput].forEach(aigValidateField);
-   const depth=Number(depthInput.value),safe=Number(safeInput.value),top=Number(stockTopInput.value),thick=Number(stockThicknessInput.value),stepDown=Number(stepDownInput.value),marginX=Number(marginXInput.value),marginY=Number(marginYInput.value);
+   [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,marginXInput,marginYInput,adaptiveLoadInput,pitchInput,stepInput,dirInput].forEach(aigValidateField);
+   const depth=Number(depthInput.value),safe=Number(safeInput.value),top=Number(stockTopInput.value),thick=Number(stockThicknessInput.value),stepDown=Number(stepDownInput.value),marginX=Number(marginXInput.value),marginY=Number(marginYInput.value),adaptiveLoad=Number(adaptiveLoadInput.value);
    if(Number.isFinite(depth)&&depth>=0)aigFieldIssue(depthInput,"warn","加工深度目前 ≥ 0；若要切入材料，通常應使用負 Z。");
    if(Number.isFinite(safe)&&Number.isFinite(top)&&safe<=top)aigFieldIssue(safeInput,"error","Safe-Z 必須高於毛坯頂面 Z "+top.toFixed(3)+"。");
    if(Number.isFinite(thick)&&thick<=0)aigFieldIssue(stockThicknessInput,"error","毛坯厚度必須大於 0 mm。");
    if(Number.isFinite(stepDown)&&stepDown<=0)aigFieldIssue(stepDownInput,"error","每層下刀必須大於 0 mm。");
    if(Number.isFinite(marginX)&&marginX<0)aigFieldIssue(marginXInput,"error","毛坯 X 邊量不可小於 0 mm。");
    if(Number.isFinite(marginY)&&marginY<0)aigFieldIssue(marginYInput,"error","毛坯 Y 邊量不可小於 0 mm。");
+   if(Number.isFinite(adaptiveLoad)&&(adaptiveLoad<10||adaptiveLoad>45))aigFieldIssue(adaptiveLoadInput,"error","自適應負載限制必須介於 10%–45%。");
    if(Number.isFinite(depth)&&Number.isFinite(top)&&Number.isFinite(thick)&&depth<top-thick-1e-9)aigFieldIssue(depthInput,"error","加工深度 "+depth.toFixed(3)+" 超過毛坯底面 "+(top-thick).toFixed(3)+" mm。");
    if(state.strategy==="TAP"&&!(Number(pitchInput.value)>0))aigFieldIssue(pitchInput,"error","攻牙需要輸入螺距 mm/rev。");
    return root.querySelectorAll("input.aigError,select.aigError,textarea.aigError").length;
  }
- function params(){validateCamFields();return{toolDia:Math.max(.1,aigFiniteNumber(toolInput.value,10)),depth:aigFiniteNumber(depthInput.value,-10),feed:Math.max(1,aigFiniteNumber(feedInput.value,1200)),rpm:Math.max(1,aigFiniteNumber(rpmInput.value,12000)),safeZ:aigFiniteNumber(safeInput.value,5),stockTop:aigFiniteNumber(stockTopInput.value,0),stockThickness:Math.max(.001,aigFiniteNumber(stockThicknessInput.value,20)),stepDown:Math.max(.001,aigFiniteNumber(stepDownInput.value,2)),stockMarginX:Math.max(0,aigFiniteNumber(marginXInput.value,5)),stockMarginY:Math.max(0,aigFiniteNumber(marginYInput.value,5)),tapPitch:aigFiniteNumber(pitchInput.value,0),stepover:Math.max(.05,Math.min(.95,aigFiniteNumber(stepInput.value,50)/100)),direction:dirInput.value}}
+ function params(){validateCamFields();return{toolDia:Math.max(.1,aigFiniteNumber(toolInput.value,10)),depth:aigFiniteNumber(depthInput.value,-10),feed:Math.max(1,aigFiniteNumber(feedInput.value,1200)),rpm:Math.max(1,aigFiniteNumber(rpmInput.value,12000)),safeZ:aigFiniteNumber(safeInput.value,5),stockTop:aigFiniteNumber(stockTopInput.value,0),stockThickness:Math.max(.001,aigFiniteNumber(stockThicknessInput.value,20)),stepDown:Math.max(.001,aigFiniteNumber(stepDownInput.value,2)),stockMarginX:Math.max(0,aigFiniteNumber(marginXInput.value,5)),stockMarginY:Math.max(0,aigFiniteNumber(marginYInput.value,5)),adaptiveLoad:Math.max(.10,Math.min(.45,aigFiniteNumber(adaptiveLoadInput.value,35)/100)),tapPitch:aigFiniteNumber(pitchInput.value,0),stepover:Math.max(.05,Math.min(.95,aigFiniteNumber(stepInput.value,50)/100)),direction:dirInput.value}}
  function loadCad(){
    const v=aigJsonRead(root,"aig-cad-draft-v1",null,"CAD AutoSave");state.cad=Array.isArray(v?.shapes)?v.shapes:[]
    cadCountEl.textContent="CAD "+state.cad.length;msgEl.textContent=state.cad.length?"已讀取 "+state.cad.length+" 個 CAD 幾何。":"CAD 尚無幾何；先到 CAD 頁畫圖。";fit();draw();
@@ -1842,6 +1845,41 @@ function makeCamRuntime(root){
    }
    return out;
  }
+ function adaptiveRingRect(sh,p,z,levelIndex,levelCount){
+   const out=[],rad=p.toolDia/2,step=Math.max(.1,p.toolDia*p.adaptiveLoad);
+   let minX=Math.min(sh.a.x,sh.b.x)+rad,maxX=Math.max(sh.a.x,sh.b.x)-rad;
+   let minY=Math.min(sh.a.y,sh.b.y)+rad,maxY=Math.max(sh.a.y,sh.b.y)-rad;
+   let ring=0;
+   while(maxX>minX&&maxY>minY&&ring<1000){
+     let pts=[{x:minX,y:minY},{x:maxX,y:minY},{x:maxX,y:maxY},{x:minX,y:maxY},{x:minX,y:minY}];
+     if((ring+levelIndex)%2)pts=[...pts].reverse();
+     pts=normalizeClosed(pts,p.direction);
+     out.push({kind:"adaptive",points:pts,closed:true,depth:z,feed:p.feed,rpm:p.rpm,safeZ:p.safeZ,sourceId:sh.id,zLevelIndex:levelIndex,zLevelCount:levelCount,adaptiveRing:ring+1,radialStep:step,radialEngagement:Math.min(1,step/p.toolDia),entry:"SAFE_Z"});
+     minX+=step;maxX-=step;minY+=step;maxY-=step;ring++;
+   }
+   return out;
+ }
+ function adaptiveRingCircle(sh,p,z,levelIndex,levelCount){
+   const out=[],step=Math.max(.1,p.toolDia*p.adaptiveLoad),minR=Math.max(p.toolDia*.25,.001);
+   let r=sh.r-p.toolDia/2,ring=0;
+   while(r>minR&&ring<1000){
+     let pts=sampleCircle(sh.c,r,Math.max(32,Math.min(128,Math.ceil(Math.PI*2*r/Math.max(.5,p.toolDia*.35)))));
+     if((ring+levelIndex)%2)pts=[...pts].reverse();
+     pts=normalizeClosed(pts,p.direction);
+     out.push({kind:"adaptive",points:pts,closed:true,depth:z,feed:p.feed,rpm:p.rpm,safeZ:p.safeZ,sourceId:sh.id,zLevelIndex:levelIndex,zLevelCount:levelCount,adaptiveRing:ring+1,radialStep:step,radialEngagement:Math.min(1,step/p.toolDia),entry:"SAFE_Z"});
+     r-=step;ring++;
+   }
+   return out;
+ }
+ function adaptivePaths(p){
+   const supported=state.cad.filter(sh=>sh.type==="rect"||sh.type==="circle"||sh.type==="hole");
+   const levels=zLayerDepths(p),out=[];
+   levels.forEach((z,li)=>supported.forEach(sh=>{
+     const paths=sh.type==="rect"?adaptiveRingRect(sh,p,z,li+1,levels.length):adaptiveRingCircle(sh,p,z,li+1,levels.length);
+     out.push(...paths);
+   }));
+   return out;
+ }
  function drillPaths(p,kind="drill"){
    const holes=state.cad.filter(sh=>sh.type==="hole");return holes.map(sh=>({kind,points:[clone(sh.c)],closed:false,depth:p.depth,feed:p.feed,rpm:p.rpm,safeZ:p.safeZ,sourceId:sh.id,holeDiameter:sh.r*2}));
  }
@@ -1856,6 +1894,11 @@ function makeCamRuntime(root){
    else if(state.strategy==="POCKET")state.paths=pocketPaths(p);
    else if(state.strategy==="DRILL")state.paths=drillPaths(p,"drill");
    else if(state.strategy==="ZLEVEL")state.paths=zLevelPaths(p);
+   else if(state.strategy==="ADAPTIVE"){
+     state.paths=adaptivePaths(p);
+     const unsupported=state.cad.filter(sh=>!["rect","circle","hole"].includes(sh.type)).length;
+     if(unsupported)msgEl.textContent="自適應粗加工已忽略 "+unsupported+" 個未支援的開放 LINE/ARC；只對封閉 RECT/CIRCLE/HOLE 產生真 2.5D 分層刀路。";
+   }
    else if(state.strategy==="PARALLEL")state.paths=parallelPaths(p);
    else if(state.strategy==="CHAMFER")state.paths=profilePaths(p,"chamfer");
    else if(state.strategy==="TAP"){
@@ -1863,7 +1906,10 @@ function makeCamRuntime(root){
      state.paths=drillPaths(p,"tap").map(x=>({...x,pitch:p.tapPitch,feed:p.rpm*p.tapPitch}));
    }
    else state.paths=[];
-   updateStats();draw();msgEl.textContent=state.paths.length?("刀路完成："+state.paths.length+" 條。"):"目前 CAD 幾何不適用此策略。";
+   updateStats();draw();
+   if(!(state.strategy==="ADAPTIVE"&&state.cad.some(sh=>!["rect","circle","hole"].includes(sh.type)))){
+     msgEl.textContent=state.paths.length?("刀路完成："+state.paths.length+" 條。"):"目前 CAD 幾何不適用此策略。";
+   }
  }
  function updateStats(){
    strategyEl.textContent=state.strategy||"未選";pathCountEl.textContent=state.paths.length;
@@ -1899,7 +1945,7 @@ function makeCamRuntime(root){
      minY:bb?bb.minY-pp.stockMarginY:null,maxY:bb?bb.maxY+pp.stockMarginY:null,
      marginX:pp.stockMarginX,marginY:pp.stockMarginY
    };
-   const payload={version:3,createdAt:Date.now(),strategy:state.strategy,params:pp,stock,paths:state.paths,cadEntityCount:state.cad.length};
+   const payload={version:4,createdAt:Date.now(),strategy:state.strategy,params:pp,stock,paths:state.paths,cadEntityCount:state.cad.length};
    aigJsonWrite(root,"aig-stock-v1",stock,"毛坯資料");
    window.dispatchEvent(new CustomEvent("aig-stock-updated",{detail:stock}));
    aigJsonWrite(root,"aig-cam-toolpath-v1",payload,"CAM 刀路");msgEl.textContent="已套用至刀路編輯頁，共 "+state.paths.length+" 條。";
@@ -1912,7 +1958,7 @@ function makeCamRuntime(root){
    if(ac.dataset.camAction==="FIT")fit();
    if(ac.dataset.camAction==="APPLY"){if(validateCamFields()>0){msgEl.textContent="CAM 欄位有錯誤；只取消這次套用，AIG 繼續使用。";return}apply()}
  },null,"warn"));
- [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,marginXInput,marginYInput,pitchInput,stepInput,dirInput].forEach(el=>{
+ [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,marginXInput,marginYInput,adaptiveLoadInput,pitchInput,stepInput,dirInput].forEach(el=>{
    el.addEventListener("input",()=>aigGuard(root,"CAM 欄位檢查",validateCamFields,null,"warn"));
    el.addEventListener("change",()=>aigGuard(root,"CAM 參數更新",()=>{validateCamFields();if(state.paths.length||state.strategy==="TAP")calc()},null,"warn"));
  });
@@ -1922,7 +1968,7 @@ function makeCamRuntime(root){
      state.strategy=saved.strategy;state.paths=Array.isArray(saved.paths)?saved.paths:[];
      if(saved.params){
        toolInput.value=saved.params.toolDia??toolInput.value;depthInput.value=saved.params.depth??depthInput.value;feedInput.value=saved.params.feed??feedInput.value;
-       rpmInput.value=saved.params.rpm??rpmInput.value;safeInput.value=saved.params.safeZ??safeInput.value;stockTopInput.value=saved.params.stockTop??saved.stock?.top??stockTopInput.value;stockThicknessInput.value=saved.params.stockThickness??saved.stock?.thickness??stockThicknessInput.value;stepDownInput.value=saved.params.stepDown??stepDownInput.value;marginXInput.value=saved.params.stockMarginX??saved.stock?.marginX??marginXInput.value;marginYInput.value=saved.params.stockMarginY??saved.stock?.marginY??marginYInput.value;pitchInput.value=saved.params.tapPitch||"";stepInput.value=(saved.params.stepover??.5)*100;dirInput.value=saved.params.direction||dirInput.value;
+       rpmInput.value=saved.params.rpm??rpmInput.value;safeInput.value=saved.params.safeZ??safeInput.value;stockTopInput.value=saved.params.stockTop??saved.stock?.top??stockTopInput.value;stockThicknessInput.value=saved.params.stockThickness??saved.stock?.thickness??stockThicknessInput.value;stepDownInput.value=saved.params.stepDown??stepDownInput.value;marginXInput.value=saved.params.stockMarginX??saved.stock?.marginX??marginXInput.value;marginYInput.value=saved.params.stockMarginY??saved.stock?.marginY??marginYInput.value;adaptiveLoadInput.value=(saved.params.adaptiveLoad??.35)*100;pitchInput.value=saved.params.tapPitch||"";stepInput.value=(saved.params.stepover??.5)*100;dirInput.value=saved.params.direction||dirInput.value;
      }
      root.querySelectorAll("[data-cam-strategy]").forEach(b=>b.classList.toggle("cadSelected",b.dataset.camStrategy===state.strategy));
    }
