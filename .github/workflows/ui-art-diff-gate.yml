@@ -10,6 +10,7 @@ on:
       - 'app/src/main/assets/aig-themes/themes/**'
       - 'app/src/main/assets/aig-themes/repository-index.json'
       - 'ci/verify_runtime_surfaces.py'
+      - 'core/src/main/kotlin/com/aigstudio/core/UiAssetContract.kt'
       - '.github/workflows/ui-art-diff-gate.yml'
   workflow_dispatch:
 
@@ -38,7 +39,7 @@ jobs:
               'app/src/main/assets/aig-themes/themes/',
               '.github/workflows/ui-art-diff-gate.yml',
           )
-          allowed_exact={'release-version.properties','ci/verify_web_runtime.mjs','ci/verify_runtime_surfaces.py','app/src/main/assets/aig-themes/repository-index.json','app/src/main/java/com/aigstudio/app/MainActivity.kt','app/src/main/java/com/aigstudio/app/Machining3DView.kt','desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'}
+          allowed_exact={'release-version.properties','ci/verify_web_runtime.mjs','ci/verify_runtime_surfaces.py','core/src/main/kotlin/com/aigstudio/core/UiAssetContract.kt','app/src/main/assets/aig-themes/repository-index.json','app/src/main/java/com/aigstudio/app/MainActivity.kt','app/src/main/java/com/aigstudio/app/Machining3DView.kt','desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'}
           blocked=[p for p in changed if p not in allowed_exact and not p.startswith(allowed_prefixes)]
           if blocked:
               raise SystemExit('UI_ART_DIFF_BLOCKED_CORE_CHANGE: '+','.join(blocked))
