@@ -10,8 +10,11 @@ def run(*args):
     if p.stderr: print(p.stderr,end="",file=sys.stderr)
     return p
 
-compile_check=run(sys.executable,"-m","py_compile","ci/trigger_mine_detector.py")
-if compile_check.returncode:
+try:
+    detector_source=(ROOT/"ci/trigger_mine_detector.py").read_text(encoding="utf-8")
+    compile(detector_source,str(ROOT/"ci/trigger_mine_detector.py"),"exec")
+except Exception as exc:
+    print(exc,file=sys.stderr)
     raise SystemExit("PREBASELINE_DETECTOR_SELF_CHECK_FAIL")
 
 apply=run(sys.executable,"ci/trigger_mine_detector.py","--apply")
