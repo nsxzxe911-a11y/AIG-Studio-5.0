@@ -728,13 +728,14 @@ function evaluateSetupClearance(parsed,axis,cfg={}){
  }
  const highestFixture=fixtures.length?Math.max(...fixtures.map(f=>f.maxZ)):env.tableTop;
  const highestObstacle=Math.max(env.stockTop,highestFixture);
- const safeZ=Number(cfg.safeZ),safeZMargin=Number.isFinite(safeZ)?safeZ-highestObstacle:Infinity;
+ const safeZ=Number(cfg.safeZ),safeZStaticMargin=Number.isFinite(safeZ)?safeZ-highestObstacle:Infinity;
+ const useStaticSafeZ=axis==="3AX",safeZMargin=useStaticSafeZ?safeZStaticMargin:Infinity;
  const fixtureClearance=Number.isFinite(minFixture)?minFixture:Infinity;
  const holderStockClearance=Number.isFinite(minHolderStock)?minHolderStock:Infinity;
  const minimum=Math.min(fixtureClearance,holderStockClearance,safeZMargin);
  return{
-   minimum,fixtureClearance,holderStockClearance,safeZMargin,highestFixture,highestObstacle,
-   limitingType:minimum===safeZMargin?"SAFE_Z":minimum===holderStockClearance?"HOLDER_STOCK":minType,
+   minimum,fixtureClearance,holderStockClearance,safeZMargin,safeZStaticMargin,highestFixture,highestObstacle,useStaticSafeZ,
+   limitingType:minimum===safeZMargin&&useStaticSafeZ?"SAFE_Z":minimum===holderStockClearance?"HOLDER_STOCK":minType,
    fixtureId:minFixtureId,line:minLine,blockIndex:minBlock,envelope:env,fixtureCount:fixtures.length
  };
 }
