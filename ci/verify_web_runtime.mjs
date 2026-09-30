@@ -189,6 +189,11 @@ const required = [
   'CAM 欄位檢查',
   '刀路欄位檢查',
   '只取消這次套用',
+  'data-cam-marginx',
+  'data-cam-marginy',
+  'explicitXY:hasXY',
+  'stockMarginX',
+  'stockMarginY',
   'CNC machine output disabled'
 ];
 
@@ -320,6 +325,12 @@ const insideStockMove = stockTopMoves.find(b => /G1 Z1/.test(b.raw));
 const aboveStockRapid = stockTopMoves.find(b => /G0 Z3/.test(b.raw));
 if (!insideStockMove?.cutting) throw new Error("STOCK_TOP_RELATIVE_CUTTING_NOT_DETECTED");
 if (aboveStockRapid?.cutting) throw new Error("ABOVE_STOCK_MOVE_FALSE_CUTTING");
+
+const stockXY = api.runtimeStockEnvelope(stockParsed, {stock:{top:2,thickness:18,minX:-5,maxX:30,minY:-7,maxY:17}});
+if (!stockXY.explicitXY || stockXY.minX !== -5 || stockXY.maxX !== 30 || stockXY.minY !== -7 || stockXY.maxY !== 17) {
+  throw new Error("EXPLICIT_STOCK_XY_ENVELOPE_WRONG");
+}
+if (stockXY.stockTop !== 2 || stockXY.stockBottom !== -16) throw new Error("EXPLICIT_STOCK_XYZ_ENVELOPE_WRONG");
 
 const cadRuntimeIndex = scriptMatch[1].indexOf("function makeCadRuntime(root){");
 const camRuntimeIndex = scriptMatch[1].indexOf("function makeCamRuntime(root){");
