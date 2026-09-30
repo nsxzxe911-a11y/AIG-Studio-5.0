@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#020407">
+<meta name="theme-color" content="#020407">\n<link rel="manifest" href="./manifest.webmanifest">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>AIG II CNC • BLACK RGB Runtime</title>
 <style>
 :root{
@@ -2708,5 +2708,5 @@ function show(name){
 }
 aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash||"#5AX").slice(1))),null,"error");
 </script>
-</body>
+\n<script>\n(function(){\n  if (!("serviceWorker" in navigator)) return;\n  window.addEventListener("load", function(){\n    navigator.serviceWorker.register("./service-worker.js", {scope:"./"})\n      .then(function(reg){ window.AIG_OFFLINE_RUNTIME={ready:true,scope:reg.scope}; })\n      .catch(function(err){ window.AIG_OFFLINE_RUNTIME={ready:false,error:String(err)}; });\n  });\n})();\n</script>\n</body>
 </html>
