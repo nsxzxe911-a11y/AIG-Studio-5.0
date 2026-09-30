@@ -2437,6 +2437,45 @@ function makeMenuRuntime(root){
    for(const g of ["G54","G55"])for(const a of ["X","Y","Z"])html+='<label class="field"><b>'+g+' '+a+'</b><input data-wcskey="'+g+'-'+a+'" type="number" step="0.001" value="'+Number(w[g]?.[a]||0)+'"></label>';
    detail.innerHTML=html+'</div><button class="btn play" data-menu-action="WCS_SAVE">儲存工作座標</button><div class="notice" data-menu-msg>Master Origin 保持 X0.000 Y0.000 Z0.000；G54/G55 偏移明示，不偷偷改刀路座標。</div>';
  }
+ function assemblySetupCheck(){
+   const target=detail.querySelector("[data-assembly-check]");if(!target)return;
+   const stock=readJson("aig-stock-v1",null),assembly=readJson("aig-assembly-v1",{version:1,items:[]});
+   const payload=readJson("aig-cam-toolpath-v1",{}),pg=payload?.postGeometry||{},base=payload?.params||{};
+   const wcs=readJson("aig-wcs-v1",{G54:{X:0,Y:0,Z:0},G55:{X:0,Y:0,Z:0}});
+   const tools=readJson("aig-tool-table-v1",{T1:10,T4:6,T12:12,H1:0,H4:0,H12:0});
+   const required=Math.max(0,Number(pg.clearance??2)||0),safeZ=Number(base.safeZ??5);
+   const cfgBase={
+     toolDia:Math.max(.1,Number(pg.toolDia??base.toolDia??tools.T1??10)||10),
+     cutterLen:Math.max(1,Number(pg.cutterLen??30)||30),
+     holderDia:Math.max(1,Number(pg.holderDia??25)||25),
+     holderLen:Math.max(1,Number(pg.holderLen??25)||25),
+     safeZ:Number.isFinite(safeZ)?safeZ:5,g73Retract:.5,stock,assembly,
+     offsets:wcs,
+     toolLengths:{1:Number(tools.H1||0),4:Number(tools.H4||0),12:Number(tools.H12||0)}
+   };
+   const esc=v=>String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));
+   const rows=[];
+   for(const axis of ["3AX","4AX","5AX"]){
+     const code=aigStorageGet(root,"aig-code-"+axis,null,axis+" G-code");
+     if(!code){rows.push({axis,state:"NO NC",detail:"尚未產生 "+axis+" NC。",tone:"warn"});continue}
+     const parsed=parseProgram(code,axis,cfgBase);
+     if(parsed.errors.length){rows.push({axis,state:"PARSER",detail:parsed.errors.slice(0,2).join("；"),tone:"error"});continue}
+     const scan=scanRuntimeCollisions(parsed,axis,cfgBase),clear=evaluateSetupClearance(parsed,axis,cfgBase);
+     if(scan.collisions.length){
+       const hit=scan.collisions[0];
+       rows.push({axis,state:"COLLISION",detail:"第 "+(hit.line+1)+" 行 "+hit.message+" ["+hit.type+"]",tone:"error"});continue
+     }
+     const min=Number(clear.minimum),minText=Number.isFinite(min)?min.toFixed(3):"∞";
+     if(min<required){
+       rows.push({axis,state:"CLEARANCE",detail:minText+" mm < 要求 "+required.toFixed(3)+" mm；限制 "+String(clear.limitingType||"UNKNOWN"),tone:"error"});continue
+     }
+     rows.push({axis,state:"PASS",detail:"最小間隙 "+minText+" mm；要求 ≥ "+required.toFixed(3)+" mm；限制 "+String(clear.limitingType||"NONE"),tone:"pass"});
+   }
+   target.innerHTML=rows.map(r=>'<div class="field"><b>'+esc(r.axis)+' Setup</b><span style="color:'+(r.tone==="pass"?"#33f39b":r.tone==="error"?"#ff465f":"#ffb326")+'">'+esc(r.state)+'</span><small>'+esc(r.detail)+'</small></div>').join("");
+   const fail=rows.filter(r=>r.tone==="error").length,missing=rows.filter(r=>r.state==="NO NC").length;
+   const msg=detail.querySelector("[data-menu-msg]");
+   if(msg)msg.textContent=fail?("Setup 檢查完成："+fail+" 軸需修正；只顯示問題，不停止 AIG。"):missing?("Setup 檢查完成；"+missing+" 軸尚無 NC，其餘已檢查。"):"3AX / 4AX / 5AX Setup 檢查全部 PASS。";
+ }
  function assemblyView(){
    const stock=readJson("aig-stock-v1",null),assembly=readJson("aig-assembly-v1",{version:1,items:[]}),items=Array.isArray(assembly?.items)?assembly.items:[];
    const esc=v=>String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));
@@ -2475,7 +2514,8 @@ function makeMenuRuntime(root){
        '<label class="field"><b>X 寬</b><input data-assembly-new="w" type="number" min="0.001" step="0.001" value="'+Math.max(20,sx*.5||40).toFixed(3)+'"></label>'+
        '<label class="field"><b>Y 深</b><input data-assembly-new="d" type="number" min="0.001" step="0.001" value="12.000"></label>'+
        '<label class="field"><b>Z 高</b><input data-assembly-new="h" type="number" min="0.001" step="0.001" value="10.000"></label>'+
-     '</div><div class="controls"><button class="btn play" data-menu-action="ASSEMBLY_ADD">新增模組</button><button class="btn" data-menu-action="ASSEMBLY_VISE">依毛坯建立虎鉗預設</button></div>'+
+     '</div><div class="controls"><button class="btn play" data-menu-action="ASSEMBLY_ADD">新增模組</button><button class="btn" data-menu-action="ASSEMBLY_VISE">依毛坯建立虎鉗預設</button><button class="btn play" data-menu-action="ASSEMBLY_CHECK">3/4/5AX Setup 檢查</button></div>'+
+     '<div class="menuDetailGrid" data-assembly-check><div class="field"><b>Setup 檢查</b><span>尚未執行</span><small>讀取目前 NC、毛坯、夾治具、刀具/刀柄與安全間隙。</small></div></div>'+
      '<div class="notice" data-menu-msg>模組尺寸錯誤只會顯示在欄位，不會讓 AIG 停止。</div>'+
      '<div style="display:grid;gap:8px;margin-top:8px">'+(rows||'<div class="notice">目前沒有夾治具模組。</div>')+'</div>';
  }
@@ -2516,6 +2556,7 @@ function makeMenuRuntime(root){
    if(a.dataset.menuAction==="IMPORT"){detail.querySelector("[data-menu-file]").click()}
    if(a.dataset.menuAction==="TOOLS_SAVE"){const out={};detail.querySelectorAll("[data-toolkey]").forEach(i=>out[i.dataset.toolkey]=Number(i.value)||0);saveJson("aig-tool-table-v1",out);if(msg)msg.textContent="刀具表已儲存。";}
    if(a.dataset.menuAction==="WCS_SAVE"){const out={G54:{X:0,Y:0,Z:0},G55:{X:0,Y:0,Z:0}};detail.querySelectorAll("[data-wcskey]").forEach(i=>{const [g,k]=i.dataset.wcskey.split("-");out[g][k]=Number(i.value)||0});saveJson("aig-wcs-v1",out);if(msg)msg.textContent="G54/G55 已儲存；模擬頁重新載入時套用。";}
+   if(a.dataset.menuAction==="ASSEMBLY_CHECK"){assemblySetupCheck();return}
    if(a.dataset.menuAction==="ASSEMBLY_ADD"){
      const fields={};detail.querySelectorAll("[data-assembly-new]").forEach(el=>{aigValidateField(el);fields[el.dataset.assemblyNew]=el});
      if(detail.querySelector("[data-assembly-new].aigError")){if(msg)msg.textContent="新模組欄位有錯誤；未新增。";return}
