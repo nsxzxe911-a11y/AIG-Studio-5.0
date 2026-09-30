@@ -886,14 +886,17 @@ function makeGlScene(canvas,axis){
 
 function makeRuntime(root){
  const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d"),glCanvas=root.querySelector("[data-glcanvas]"),glScene=makeGlScene(glCanvas,axis);
- const toolInput=root.querySelector("[data-tool-dia]"),safeInput=root.querySelector("[data-safe-z]"),g73Input=root.querySelector("[data-g73-retract]");
+ const toolInput=root.querySelector("[data-tool-dia]"),safeInput=root.querySelector("[data-safe-z]"),g73Input=root.querySelector("[data-g73-retract]"),cutterInput=root.querySelector("[data-cutter-len]"),holderDiaInput=root.querySelector("[data-holder-dia]"),holderLenInput=root.querySelector("[data-holder-len]");
  const g54x=root.querySelector("[data-g54-x]"),g54y=root.querySelector("[data-g54-y]"),g54z=root.querySelector("[data-g54-z]");
  const g55x=root.querySelector("[data-g55-x]"),g55y=root.querySelector("[data-g55-y]"),g55z=root.querySelector("[data-g55-z]");
  const h1=root.querySelector("[data-h1]"),h4=root.querySelector("[data-h4]"),h12=root.querySelector("[data-h12]");
- const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,optionalStop:false,blockSkip:false,last:performance.now(),history:[],historyIndex:-1};
+ const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,optionalStop:false,blockSkip:false,last:performance.now(),history:[],historyIndex:-1,collisions:[],collisionAlarm:null};
  function settings(){
   return {
     toolDia:Math.max(.1,Number(toolInput.value)||10),
+    cutterLen:Math.max(1,Number(cutterInput.value)||30),
+    holderDia:Math.max(1,Number(holderDiaInput.value)||25),
+    holderLen:Math.max(1,Number(holderLenInput.value)||25),
     safeZ:Number(safeInput.value)||5,
     g73Retract:Math.max(0,Number(g73Input.value)||.5),
     offsets:{
@@ -911,20 +914,26 @@ function makeRuntime(root){
  }
  function parse(resetIndex=true){
   state.parsed=parseProgram(ta.value,axis,settings());
+  const collisionScan=scanRuntimeCollisions(state.parsed,axis,settings());
+  state.collisions=collisionScan.collisions;
+  state.collisionAlarm=null;
   if(resetIndex){state.index=0;state.t=0;state.running=false;}
   renderExec();updateUi();draw();
   const v=root.querySelector("[data-verify]");
-  v.textContent=state.parsed.errors.length?state.parsed.errors.join(" "):state.parsed.warnings.length?("解析完成："+state.parsed.blocks.length+" 個區塊。提醒："+state.parsed.warnings.join(" ")):"解析完成："+state.parsed.blocks.length+" 個區塊。G81/G73/G83 已展開為實際模擬動作。";
+  v.textContent=state.parsed.errors.length?state.parsed.errors.join(" "):state.collisions.length?("解析完成，但碰撞預檢發現 "+state.collisions.length+" 個風險；按「驗證」查看。"):state.parsed.warnings.length?("解析完成："+state.parsed.blocks.length+" 個區塊。提醒："+state.parsed.warnings.join(" ")):"解析完成："+state.parsed.blocks.length+" 個區塊。G81/G73/G83 已展開為實際模擬動作。";
   v.style.color=state.parsed.errors.length?"#ffbdc6":"#b7c8d1";
  }
  function renderExec(){
   const box=root.querySelector("[data-exec]");box.innerHTML="";
   const doneLines=new Set(state.parsed.blocks.slice(0,state.index).map(b=>b.line));
-  const activeLine=currentLine();
+  const collisionLines=new Set(state.collisions.map(c=>c.line));
+  const activeLine=currentLine(),alarmLine=state.collisionAlarm?.line;
   state.parsed.lines.forEach((line,i)=>{
     const div=document.createElement("div");div.className="execLine";
     if(doneLines.has(i))div.classList.add("done");
+    if(collisionLines.has(i))div.classList.add("collision");
     if(i===activeLine)div.classList.add("active");
+    if(i===alarmLine)div.classList.add("alarm");
     div.textContent=String(i+1).padStart(3,"0")+"  "+line;box.appendChild(div);
   });
   const active=box.querySelector(".active");if(active)active.scrollIntoView({block:"nearest"});
@@ -945,24 +954,8 @@ function makeRuntime(root){
   if(b.arc.I===null||b.arc.J===null)return null;
   return {u:"X",v:"Y",w:"Z",du:b.arc.I,dv:b.arc.J};
  }
- function arcPoint(b,t){
-  const sp=arcSpec(b);
-  if(!sp){
-    const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(b?.from?.[k]||0,b?.to?.[k]||0,t);return p;
-  }
-  const cu=b.from[sp.u]+sp.du,cv=b.from[sp.v]+sp.dv;
-  const r=Math.hypot(b.from[sp.u]-cu,b.from[sp.v]-cv);
-  if(r<1e-9){
-    const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(b.from[k]||0,b.to[k]||0,t);return p;
-  }
-  let a0=Math.atan2(b.from[sp.v]-cv,b.from[sp.u]-cu),a1=Math.atan2(b.to[sp.v]-cv,b.to[sp.u]-cu),d=a1-a0;
-  if(b.motion==="G2"&&d>=0)d-=Math.PI*2;
-  if(b.motion==="G3"&&d<=0)d+=Math.PI*2;
-  const a=a0+d*t,p={};
-  for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(b.from[k]||0,b.to[k]||0,t);
-  p[sp.u]=cu+Math.cos(a)*r;p[sp.v]=cv+Math.sin(a)*r;
-  return p;
- }
+ function arcPoint(b,t){return sampleRuntimeBlock(b,t)}
+
  function currentPos(){
   const b=currentBlock();
   if(!b){
@@ -1008,6 +1001,11 @@ function makeRuntime(root){
       updateUi();renderExec();b=currentBlock();
     }
     const dur=durationFor(b);state.t+=dt/dur;
+    const collision=state.collisions.find(c=>c.blockIndex===state.index);
+    if(collision&&state.t>=collision.t){
+      state.t=Math.max(0,Math.min(1,collision.t));state.running=false;state.collisionAlarm=collision;
+      renderExec();updateUi();draw();requestAnimationFrame(tick);return;
+    }
     if(state.t>=1){
       state.t=0;state.index++;
       if(state.index>=state.parsed.blocks.length){state.index=state.parsed.blocks.length;state.running=false;}
@@ -1078,7 +1076,7 @@ function makeRuntime(root){
  function draw(){
   if(!state.parsed)return;
   const webglOk=glScene?.render({
-    parsed:state.parsed,index:state.index,t:state.t,pos:currentPos(),toolDia:settings().toolDia,dry:state.dry,
+    parsed:state.parsed,index:state.index,t:state.t,pos:currentPos(),toolDia:settings().toolDia,cutterLen:settings().cutterLen,holderDia:settings().holderDia,holderLen:settings().holderLen,collisionAlarm:state.collisionAlarm,dry:state.dry,
     sampleBlock:(bl,t)=>{
       if(bl.motion==="G2"||bl.motion==="G3")return arcPoint(bl,t);
       const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(bl.from[k]||0,bl.to[k]||0,t);return p;
@@ -1179,10 +1177,15 @@ function makeRuntime(root){
   root.querySelector("[data-wcsmetric]").textContent=mc.wcs||"G54";
   root.querySelector("[data-hmetric]").textContent=mc.toolComp?("G43 H"+mc.H+" "+toolLengthFor(mc,cfg).toFixed(3)+" mm"):"G49";
   root.querySelector("[data-subprogram]").textContent=b?.subprogram||state.parsed.mainProgram||"MAIN";
-  root.querySelector("[data-run-badge]").textContent=state.running?"RUN":state.index>=len&&len?"DONE":"READY";
+  const collisionEl=root.querySelector("[data-collision]");
+  if(collisionEl){
+    collisionEl.textContent=state.collisionAlarm?("ALARM "+state.collisionAlarm.type):(state.collisions.length?("CHECK "+state.collisions.length):"CLEAR");
+    collisionEl.style.color=state.collisionAlarm?"#ff465f":state.collisions.length?"#ffb326":"#33f39b";
+  }
+  root.querySelector("[data-run-badge]").textContent=state.collisionAlarm?"ALARM":state.running?"RUN":state.index>=len&&len?"DONE":"READY";
  }
  function command(cmd){
-  if(cmd==="play"){if(state.index>=state.parsed.blocks.length){state.index=0;state.t=0}state.single=false;state.running=true}
+  if(cmd==="play"){if(state.index>=state.parsed.blocks.length){state.index=0;state.t=0}state.collisionAlarm=null;state.single=false;state.running=true}
   if(cmd==="pause")state.running=false;
   if(cmd==="step"){if(state.index<state.parsed.blocks.length){state.single=true;state.running=true}}
   if(cmd==="dry"){
@@ -1194,7 +1197,7 @@ function makeRuntime(root){
   if(cmd==="single"){state.single=!state.single;root.querySelector('[data-cmd="single"]').classList.toggle("warn",state.single)}
   if(cmd==="optional"){state.optionalStop=!state.optionalStop;root.querySelector('[data-cmd="optional"]').classList.toggle("warn",state.optionalStop)}
   if(cmd==="blockskip"){state.blockSkip=!state.blockSkip;root.querySelector('[data-cmd="blockskip"]').classList.toggle("warn",state.blockSkip)}
-  if(cmd==="reset"){state.running=false;state.index=0;state.t=0}
+  if(cmd==="reset"){state.running=false;state.index=0;state.t=0;state.collisionAlarm=null}
   updateUi();renderExec();draw();
  }
  root.addEventListener("click",e=>{
@@ -1205,8 +1208,10 @@ function makeRuntime(root){
   if(cmd==="verify"){
     parse(false);
     const sw=safetyWarnings(),cycles=state.parsed.blocks.filter(b=>b.cycle&&b.cyclePhase==="feed"||b.cycle&&b.cyclePhase==="peck-feed").length;
-    const msg=state.parsed.errors.length?state.parsed.errors.join(" "):sw.length?("驗證完成；Safe-Z 提醒："+sw.join("；")):"驗證：語法可解析；共 "+state.parsed.blocks.length+" 個模擬區塊，鑽孔進給 "+cycles+" 段；M00/M01/M30、選擇停、跳段已啟用。";
-    root.querySelector("[data-verify]").textContent=msg
+    const firstCollision=state.collisions[0];
+    const msg=state.parsed.errors.length?state.parsed.errors.join(" "):firstCollision?("碰撞檢查 FAIL：第 "+(firstCollision.line+1)+" 行 "+firstCollision.message+" ["+firstCollision.type+"]；共 "+state.collisions.length+" 個碰撞區塊。"):sw.length?("驗證完成；Safe-Z 提醒："+sw.join("；")):"驗證 PASS：語法、Safe-Z 與刀具/刀柄幾何碰撞預檢通過；共 "+state.parsed.blocks.length+" 個模擬區塊，鑽孔進給 "+cycles+" 段。";
+    root.querySelector("[data-verify]").textContent=msg;
+    root.querySelector("[data-verify]").style.color=(state.parsed.errors.length||firstCollision)?"#ff8b9b":"#b7c8d1"
   }
   if(cmd==="save"){remember();localStorage.setItem("aig-code-"+axis,ta.value);root.querySelector("[data-verify]").textContent="已儲存到本機瀏覽器。"}
   if(cmd==="load"){const v=localStorage.getItem("aig-code-"+axis);if(v!=null){ta.value=v;remember();parse();root.querySelector("[data-verify]").textContent="已讀取本機暫存。"}}
@@ -1217,7 +1222,7 @@ function makeRuntime(root){
   if(cmd==="redo"&&state.historyIndex<state.history.length-1){state.historyIndex++;ta.value=state.history[state.historyIndex];parse()}
  });
  let timer;ta.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>{remember();parse()},350)});
- [toolInput,safeInput,g73Input,g54x,g54y,g54z,g55x,g55y,g55z,h1,h4,h12].forEach(el=>el.addEventListener("change",()=>parse(false)));
+ [toolInput,cutterInput,holderDiaInput,holderLenInput,safeInput,g73Input,g54x,g54y,g54z,g55x,g55y,g55z,h1,h4,h12].forEach(el=>el.addEventListener("change",()=>parse(false)));
  try{
    const globalWcs=JSON.parse(localStorage.getItem("aig-wcs-v1")||"null");
    if(globalWcs){g54x.value=globalWcs.G54?.X??g54x.value;g54y.value=globalWcs.G54?.Y??g54y.value;g54z.value=globalWcs.G54?.Z??g54z.value;g55x.value=globalWcs.G55?.X??g55x.value;g55y.value=globalWcs.G55?.Y??g55y.value;g55z.value=globalWcs.G55?.Z??g55z.value}
