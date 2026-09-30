@@ -24,7 +24,7 @@ jobs:
   android-and-source:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -35,14 +35,11 @@ jobs:
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
           test -x "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
-          LATEST_BUILD_TOOLS="$("$SDKMANAGER" --list \\
-            | grep -E "^[[:space:]]+build-tools;[0-9]+(\\.[0-9]+){2}[[:space:]]*\\|" \\
-            | sed -E "s/^[[:space:]]*(build-tools;[0-9.]+).*/\\1/" \\
-            | sort -V | tail -1)"
+          LATEST_BUILD_TOOLS="$("$SDKMANAGER" --list | sed -nE 's/^[[:space:]]*(build-tools;[0-9]+(\.[0-9]+){2})[[:space:]]+.*/\1/p' | sort -V | tail -1)"
           test -n "$LATEST_BUILD_TOOLS"
           "$SDKMANAGER" "platform-tools" "platforms;android-37" "$LATEST_BUILD_TOOLS"
           echo "LATEST_BUILD_TOOLS=$LATEST_BUILD_TOOLS" >> "$GITHUB_ENV"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '9.7.0'
       - name: Verify production runtime boundary
@@ -65,7 +62,7 @@ jobs:
           grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
           grep -Fq 'PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED_3AX_4AX_5AX|STABLE_ORDER' runtime-surfaces.log
           grep -Fq 'SHARED_SYNC_RUNTIME_WATCHER_GATE_PASS|STUDIO_234|ANDROID|WINDOWS|POLL_1500MS|NO_AUTO_APPLY|NO_SILENT_OVERWRITE|VISIBLE_STATUS|OFFLINE_FIRST' runtime-surfaces.log
-          echo 'STUDIO_TOOLCHAIN_236=AGP_9.4.0|KOTLIN_2.4.20|GRADLE_9.7.0|JDK_17|API_37|LATEST_BUILD_TOOLS|AXIS_NESTED_GATE'
+          echo 'STUDIO_TOOLCHAIN_237=AGP_9.4.0|KOTLIN_2.4.20|GRADLE_9.7.0|JDK_17|API_37|LATEST_BUILD_TOOLS|AXIS_NESTED_GATE|CHECKOUT_V7|SETUP_GRADLE_V6'
           grep -Fq 'VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' runtime-surfaces.log
           grep -Fq 'OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' runtime-surfaces.log
           grep -Fq 'NETWORK_RESUME_UI_RUNTIME_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY' runtime-surfaces.log
@@ -159,12 +156,12 @@ jobs:
   windows-exe:
     runs-on: windows-2025
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '9.7.0'
       - name: Build Windows EXE

@@ -168,7 +168,7 @@ for needle in (
     '"4AX" -> "4AX"',
     '"5AX" -> "5AX"',
 ):
-    require(env, needle, "WINDOWS_AXIS_NESTED_PRODUCTION_UI_236")
+    require(env, needle, "WINDOWS_AXIS_NESTED_PRODUCTION_UI_237")
 print("PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED_3AX_4AX_5AX|STABLE_ORDER")
 
 for needle in (
@@ -181,8 +181,11 @@ for needle in (
     'refreshVisibleMode(normalized)',
     'refreshVisibleMode(ProductionUiSwitchContract.initialMode)',
     'action("LINE",0){selectTool(Tool.LINE)}',
-    'action("CAM 參數",3){showCamWorkstation()}',
-    'action("開啟 3D",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}',
+    'action("→ CAM",3){showCamWorkstation()}',
+    'action("AUTO",3){showCamWorkstation()}',
+    'action("參數",2){showCamWorkstation()}',
+    'action("→ SIM",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}',
+    'action("模擬",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}',
     'action("開啟 3AX",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}',
     'action("開啟 4AX",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}',
     'action("開啟 5AX",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}',
