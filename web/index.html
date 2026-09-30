@@ -1268,9 +1268,9 @@ function makeRuntime(root){
   });
   const active=box.querySelector(".active");if(active)active.scrollIntoView({block:"nearest"});
  }
- function focusSourceLine(line){
+ function focusSourceLine(line,preserveAlarm=false,announce=true){
    const n=Math.max(0,Math.min((state.parsed?.lines?.length||1)-1,Math.trunc(Number(line)||0)));
-   state.running=false;state.collisionAlarm=null;
+   state.running=false;if(!preserveAlarm)state.collisionAlarm=null;
    const bi=state.parsed?.blocks?.findIndex(b=>b.line===n)??-1;
    if(bi>=0){state.index=bi;state.t=0}
    renderExec();updateUi();draw();
@@ -1279,7 +1279,7 @@ function makeRuntime(root){
    ta.focus();ta.setSelectionRange(start,end);
    const row=root.querySelectorAll("[data-exec] .execLine")[n];
    if(row){row.classList.add("alarm");row.scrollIntoView({block:"center"});setTimeout(()=>row.classList.remove("alarm"),1800)}
-   aigShowIssue(root,"info",axis+" 已跳到第 "+(n+1)+" 行；可直接修改 G-code。");
+   if(announce)aigShowIssue(root,"info",axis+" 已跳到第 "+(n+1)+" 行；可直接修改 G-code。");
  }
  state.focusSourceLine=focusSourceLine;
  function currentBlock(){return state.index>=state.parsed.blocks.length?null:(state.parsed.blocks[state.index]||null)}
@@ -1349,8 +1349,9 @@ function makeRuntime(root){
     const collision=state.collisions.find(c=>c.blockIndex===state.index);
     if(collision&&state.t>=collision.t){
       state.t=Math.max(0,Math.min(1,collision.t));state.running=false;state.collisionAlarm=collision;
-      aigShowIssue(root,"warn","模擬在第 "+(collision.line+1)+" 行偵測到 "+collision.message+"，只暫停加工播放；AIG、G-code 與其他頁面仍可繼續操作。");
-      renderExec();updateUi();draw();requestAnimationFrame(tick);return;
+      focusSourceLine(collision.line,true,false);
+      aigShowIssue(root,"warn","模擬在第 "+(collision.line+1)+" 行偵測到 "+collision.message+"；已自動定位 G-code 問題行。只暫停加工播放，AIG、G-code 與其他頁面仍可繼續操作。");
+      requestAnimationFrame(tick);return;
     }
     if(state.t>=1){
       state.t=0;state.index++;
