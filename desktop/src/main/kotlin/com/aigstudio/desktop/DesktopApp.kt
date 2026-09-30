@@ -978,13 +978,20 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
                 val a=project(av,scale);val b=project(bv,scale)
                 val occluded=materialDepthOccludes(materialDepthGrid,width,height,a,ar.z,b,br.z)
                 if(occluded)lastOccludedPathSegments++ else lastForegroundPathSegments++
-                g2.color=when {
-                    move.rapid && occluded -> Color(255,70,220,12)
-                    !move.rapid && occluded -> Color(63,255,157,20)
-                    move.rapid -> Color(255,70,220,40)
-                    else -> Color(63,255,157,82)
+                // TOOLPATH_RGB_GLOW_250: desktop dual-pass neon path, no CAM mutation.
+                val rgb=if(move.rapid) Color(39,233,255) else Color(51,243,155)
+                if(occluded){
+                    g2.color=Color(rgb.red,rgb.green,rgb.blue,if(move.rapid)16 else 24)
+                    g2.stroke=BasicStroke(if(move.rapid)1.1f else 1.5f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+                    g2.drawLine(a.x,a.y,b.x,b.y)
+                }else{
+                    g2.color=Color(rgb.red,rgb.green,rgb.blue,if(move.rapid)42 else 54)
+                    g2.stroke=BasicStroke(if(move.rapid)7f else 8f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+                    g2.drawLine(a.x,a.y,b.x,b.y)
+                    g2.color=Color(rgb.red,rgb.green,rgb.blue,if(move.rapid)220 else 238)
+                    g2.stroke=BasicStroke(if(move.rapid)1.6f else 2.2f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
+                    g2.drawLine(a.x,a.y,b.x,b.y)
                 }
-                g2.drawLine(a.x,a.y,b.x,b.y)
             }
             previous=move
         }
@@ -1007,10 +1014,10 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
                 val prev=allMoves[i-1];val move=allMoves[i]
                 val a=project(Vec3(prev.to.x,prev.to.y,prev.z),scale)
                 val b=project(Vec3(move.to.x,move.to.y,move.z),scale)
-                g2.color=Color(61,235,255,68)
+                g2.color=Color(255,77,166,72)
                 g2.stroke=BasicStroke(10f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
                 g2.drawLine(a.x,a.y,b.x,b.y)
-                g2.color=Color(61,235,255)
+                g2.color=Color.WHITE
                 g2.stroke=BasicStroke(4f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)
                 g2.drawLine(a.x,a.y,b.x,b.y)
                 g2.fillOval(b.x-6,b.y-6,12,12)
