@@ -71,10 +71,10 @@ t=read(rel)
 if re.search(r"STUDIO_\d+_AI_NETWORK_RELEVANT_GATE_PASS",t):
     add("HARDCODED_GATE_VERSION",AUTO_FIX,rel,"AI gate evidence hardcodes a release number")
     if args.apply:
-        replacement = """shell: bash
+        replacement = '''shell: bash
         run: |
           VERSION="$(awk -F= '$1=="versionName"{print $2}' release-version.properties)"
-          echo "STUDIO_${VERSION}_AI_NETWORK_RELEVANT_GATE_PASS|NO_CNC_HEAVY_REGRESSION|ROLLING_BASELINE_CANDIDATE""""
+          echo "STUDIO_${VERSION}_AI_NETWORK_RELEVANT_GATE_PASS|NO_CNC_HEAVY_REGRESSION|ROLLING_BASELINE_CANDIDATE"'''
         t=re.sub(
             r"run: echo 'STUDIO_\d+_AI_NETWORK_RELEVANT_GATE_PASS\|NO_CNC_HEAVY_REGRESSION\|ROLLING_BASELINE_CANDIDATE'",
             replacement,
