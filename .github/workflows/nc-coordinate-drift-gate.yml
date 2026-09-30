@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'core/**'
+      - 'app/src/main/java/com/aigstudio/app/MainActivity.kt'
+      - 'desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'
       - 'release-version.properties'
       - '.github/workflows/nc-coordinate-drift-gate.yml'
   workflow_dispatch:
@@ -33,4 +35,6 @@ jobs:
           grep -Fq 'G41_G42_D_OFFSET_VALUE_GATE_PASS D_REGISTER_7 SIGNED_MM CAM_XYZ_UNCHANGED DOUBLE_COMP_FAIL_CLOSED' studio-nc-regression.log
           grep -Fq 'WORK_OFFSET_NO_GEOMETRY_SHIFT_PASS G54/G55 CAM/SIM absolute coordinates unchanged' studio-nc-regression.log
           grep -Fq 'ALL TESTS PASSED' studio-nc-regression.log
-          echo 'STUDIO_NC_COORDINATE_DRIFT_GATE_PASS|G90_G91|G54_G55|G43_H|G41_G42_D_VALUE|NO_CAM_SIM_SHIFT'
+          grep -Fq 'nc_cutter_d_value_bits' app/src/main/java/com/aigstudio/app/MainActivity.kt
+          grep -Fq 'ncPostPrefs.putLong("cutter_d_value_bits"' desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt
+          echo 'STUDIO_NC_COORDINATE_DRIFT_GATE_PASS|G90_G91|G54_G55|G43_H|G41_G42_D_VALUE|D_VALUE_PERSIST_ANDROID_WINDOWS|NO_CAM_SIM_SHIFT'
