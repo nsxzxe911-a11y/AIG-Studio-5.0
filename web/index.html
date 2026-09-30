@@ -429,6 +429,7 @@ function parseProgram(text,axis,opts={}){
  let machine={T:0,selectedTool:0,H:0,spindle:"M5",coolant:false,wcs:"G54",toolComp:false};
  const blocks=[];const errors=[...compiled.errors];const warnings=[...compiled.warnings];
  let currentMeta={subprogram:compiled.mainKey,subCall:null,subReturn:false,callDepth:0,callRepeat:1};
+ const stockTopRaw=Number(opts?.stock?.top),stockTop=Number.isFinite(stockTopRaw)?stockTopRaw:0;
  const g73Raw=Number(opts.g73Retract),g73Retract=Number.isFinite(g73Raw)?Math.max(0,g73Raw):0.5;
 
  function moveTo(line,raw,to,motionName,extra={}){
@@ -463,9 +464,9 @@ function parseProgram(text,axis,opts={}){
    const feed=Number.isFinite(out.F)?out.F:pos.F;
 
    if(cycle==="G81"){
-     moveTo(line,raw,{Z:z,F:feed},"G1",{cycle,cyclePhase:"feed",cutting:z<0,synthetic:true,drillBottom:true,...patternMeta});
+     moveTo(line,raw,{Z:z,F:feed},"G1",{cycle,cyclePhase:"feed",cutting:z<stockTop,synthetic:true,drillBottom:true,...patternMeta});
    }else if(cycle==="G84"){
-     moveTo(line,raw,{Z:z,F:feed},"G1",{cycle,cyclePhase:"tap-feed",cutting:z<0,synthetic:true,drillBottom:true,tapping:true,...patternMeta});
+     moveTo(line,raw,{Z:z,F:feed},"G1",{cycle,cyclePhase:"tap-feed",cutting:z<stockTop,synthetic:true,drillBottom:true,tapping:true,...patternMeta});
      const tapReturn=returnMode==="G98"?initialZ:r;
      if(pos.Z!==tapReturn)moveTo(line,raw,{Z:tapReturn,F:feed},"G1",{cycle,cyclePhase:"tap-return",cutting:false,synthetic:true,tapping:true,...patternMeta});
      return;
@@ -476,7 +477,7 @@ function parseProgram(text,axis,opts={}){
      let guard=0;
      while(((dir<0&&depth>z)||(dir>0&&depth<z))&&guard++<500){
        const next=dir<0?Math.max(z,depth-q):Math.min(z,depth+q);
-       moveTo(line,raw,{Z:next,F:feed},"G1",{cycle,cyclePhase:"peck-feed",cutting:Math.min(depth,next)<0,synthetic:true,drillBottom:next===z,...patternMeta});
+       moveTo(line,raw,{Z:next,F:feed},"G1",{cycle,cyclePhase:"peck-feed",cutting:Math.min(depth,next)<stockTop,synthetic:true,drillBottom:next===z,...patternMeta});
        depth=next;
        if(depth===z)break;
        if(cycle==="G83"){
@@ -594,7 +595,7 @@ function parseProgram(text,axis,opts={}){
   to.F=pos.F;to.S=pos.S;
   const n=Number.isFinite(out.N)?out.N:null;
   if(moved){
-    const cutting=motion!=="G0" && Math.min(from.Z,to.Z)<0;
+    const cutting=motion!=="G0" && Math.min(from.Z,to.Z)<stockTop;
     blocks.push({
       line:index,raw,kind:"move",motion,absolute,plane,from,to,n,cycle:null,cutting,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw),...meta,
       arc:{I:Number.isFinite(out.I)?out.I:null,J:Number.isFinite(out.J)?out.J:null,K:Number.isFinite(out.K)?out.K:null,R:Number.isFinite(out.R)?out.R:null}
