@@ -769,7 +769,7 @@ function makeCadRuntime(root){
    shapes:Array.isArray(persisted?.shapes)?persisted.shapes:[],
    tool:"SELECT",selectedId:null,points:[],cursor:{x:0,y:0},snapPoint:null,snapType:"",
    snap:true,view:persisted?.view||{scale:4,panX:0,panY:0},history:[],historyIndex:0,
-   panDrag:null,pointers:new Map(),gesture:null,lastPick:{x:0,y:0}
+   panDrag:null,pointers:new Map(),gesture:null,lastPick:{x:0,y:0},deleteArmedUntil:0,clearArmedUntil:0
  };
  for(const sh of state.shapes)idSeed=Math.max(idSeed,(Number(sh.id)||0)+1);
  const clone=x=>JSON.parse(JSON.stringify(x));
@@ -952,8 +952,18 @@ function makeCadRuntime(root){
    if(name==="DIM"){dimensionSelected();return}
    if(name==="CONNECT"){mutateSelected(sh=>{sh.connected=true},"CONNECT：只改拓樸狀態，不破壞幾何。");return}
    if(name==="DISCONNECT"){mutateSelected(sh=>{sh.connected=false},"DISCONNECT：幾何保留。");return}
-   if(name==="DELETE"){const sh=currentSelected();if(!sh){msgEl.textContent="請先 Select 幾何。";return}state.shapes=state.shapes.filter(x=>x.id!==sh.id);state.selectedId=null;pushHistory();msgEl.textContent="已刪除選取幾何。";return}
-   if(name==="CLEAR"){if(!state.shapes.length)return;state.shapes=[];state.selectedId=null;state.points=[];pushHistory();msgEl.textContent="CAD 畫布已清除；可 Undo 還原。";return}
+   if(name==="DELETE"){
+     const sh=currentSelected();if(!sh){msgEl.textContent="請先 Select 幾何。";return}
+     const now=Date.now();
+     if(now>state.deleteArmedUntil){state.deleteArmedUntil=now+2500;msgEl.textContent="DELETE 已待命：2.5 秒內再按一次才刪除 #"+sh.id+"。";return}
+     state.deleteArmedUntil=0;state.shapes=state.shapes.filter(x=>x.id!==sh.id);state.selectedId=null;pushHistory();msgEl.textContent="已刪除選取幾何；可 Undo 還原。";return
+   }
+   if(name==="CLEAR"){
+     if(!state.shapes.length)return;
+     const now=Date.now();
+     if(now>state.clearArmedUntil){state.clearArmedUntil=now+2500;msgEl.textContent="CLEAR 已待命：2.5 秒內再按一次才清空 CAD。";return}
+     state.clearArmedUntil=0;state.shapes=[];state.selectedId=null;state.points=[];pushHistory();msgEl.textContent="CAD 畫布已清除；可 Undo 還原。";return
+   }
  }
 
  function boundsOfShapes(){
