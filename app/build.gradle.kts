@@ -19,7 +19,7 @@ android {
     namespace = "com.aigstudio.app"
     compileSdk = androidCompileSdk
     defaultConfig {
-        applicationId = if (uiVerifySideLoad) "com.aigstudio.app.uiverify" else "com.aigstudio.app"
+        applicationId = if (uiVerifySideLoad) "com.aigstudio.app.uiverify$releaseMajor" else "com.aigstudio.app"
         minSdk = 26
         targetSdk = androidTargetSdk
         versionCode = releaseVersionCode
@@ -38,6 +38,6 @@ tasks.register("verifyAndroidPlatform") {
         check(androidCompileSdk == 36) { "compileSdk must track current stable Android API 36: $androidCompileSdk" }
         check(androidTargetSdk == 36) { "targetSdk must track current stable Android API 36: $androidTargetSdk" }
         println("STUDIO_ANDROID_PLATFORM_BASELINE_PASS|API_36_STABLE|AGP_9_4_0|BUILT_IN_KOTLIN|NO_BUILD_TOOLS_PIN|API_37_PREVIEW_NOT_RELEASE_BASELINE")
-        println("STUDIO_ANDROID_INSTALL_IDENTITY|"+if(uiVerifySideLoad)"UI_VERIFY_SIDELOAD|com.aigstudio.app.uiverify" else "PRODUCTION|com.aigstudio.app")
+        println("STUDIO_ANDROID_INSTALL_IDENTITY|"+if(uiVerifySideLoad)"UI_VERIFY_SIDELOAD|com.aigstudio.app.uiverify$releaseMajor" else "PRODUCTION|com.aigstudio.app")
     }
 }

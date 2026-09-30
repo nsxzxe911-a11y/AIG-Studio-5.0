@@ -131,6 +131,9 @@ jobs:
         run: |
           APK=release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
           UI_VERIFY_APK=release/android/AIG_Studio_5_0_RGB_UI_VERIFY_SIDELOAD.apk
+          VERSION="$(awk -F= '$1=="versionName"{print $2}' release-version.properties)"
+          RELEASE_MAJOR="${VERSION%%.*}"
+          UI_VERIFY_PACKAGE="com.aigstudio.app.uiverify${RELEASE_MAJOR}"
           test -s "$APK"
           test -s "$UI_VERIFY_APK"
           BUILD_TOOLS_DIR="$ANDROID_HOME/build-tools/${LATEST_BUILD_TOOLS#build-tools;}"
@@ -141,12 +144,11 @@ jobs:
           "$BUILD_TOOLS_DIR/apksigner" verify --verbose "$APK"
           "$BUILD_TOOLS_DIR/apksigner" verify --verbose "$UI_VERIFY_APK"
           "$BUILD_TOOLS_DIR/aapt" dump badging "$APK" | grep -F "package: name='com.aigstudio.app'"
-          "$BUILD_TOOLS_DIR/aapt" dump badging "$UI_VERIFY_APK" | grep -F "package: name='com.aigstudio.app.uiverify'"
+          "$BUILD_TOOLS_DIR/aapt" dump badging "$UI_VERIFY_APK" | grep -F "package: name='$UI_VERIFY_PACKAGE'"
           "$BUILD_TOOLS_DIR/aapt" dump badging "$APK" | grep -F "targetSdkVersion:'36'"
           "$BUILD_TOOLS_DIR/aapt" dump badging "$UI_VERIFY_APK" | grep -F "targetSdkVersion:'36'"
           (cd release/android && sha256sum -c SHA256SUMS.txt)
           (cd release/source && sha256sum -c SHA256SUMS.txt)
-          VERSION="$(awk -F= '$1=="versionName"{print $2}' release-version.properties)"
           grep -Fx "version=$VERSION" release/android/RELEASE_MANIFEST.txt
           grep -Fx "git_sha=$GITHUB_SHA" release/android/RELEASE_MANIFEST.txt
           grep -Fx "version=$VERSION" release/source/RELEASE_MANIFEST.txt
@@ -154,7 +156,7 @@ jobs:
           grep -Fx "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" release/android/RELEASE_MANIFEST.txt
           grep -Fx "release_class=PRODUCTION_RUNTIME" release/android/RELEASE_MANIFEST.txt
           grep -Fx "runtime_evidence=APK_BUILD_SIGN_PACKAGE" release/android/RELEASE_MANIFEST.txt
-          grep -Fx "ui_verify_package=com.aigstudio.app.uiverify" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "ui_verify_package=$UI_VERIFY_PACKAGE" release/android/RELEASE_MANIFEST.txt
           grep -Fx "ui_verify_runtime=PRODUCTION_RUNTIME_SAME_CODE_DIFFERENT_PACKAGE_ID" release/android/RELEASE_MANIFEST.txt
           grep -Fx "device_launch_evidence=REQUIRED_FOR_FINAL" release/android/RELEASE_MANIFEST.txt
       - uses: actions/upload-artifact@v7

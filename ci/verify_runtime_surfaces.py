@@ -280,6 +280,39 @@ for needle in (
     require(desktop, needle, "WINDOWS_INTEGRATED_MAINTENANCE_221")
 require(regression, "INTEGRATED_MAINTENANCE_UI_CORE_GATE_PASS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|RECOVERY|HUD|SYSTEM|SECURITY|AI_SUITE|AI_UPDATE", "INTEGRATED_MAINTENANCE_REGRESSION_221")
 print("INTEGRATED_MAINTENANCE_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|REAL_ACTIONS")
+for needle in (
+    'contentDescription="AIG CNC FORMAL RGB HOME"',
+    'contentDescription="AIG CNC PRODUCTION RUNTIME HOST"',
+    'background=ProductionRgbAssets.drawable(this@MainActivity,"HOME")',
+    'root.visibility=View.GONE',
+    'homeAction("CAD"',
+    'homeAction("CAM"',
+    'homeAction("SIM"',
+    'homeAction("3AX"',
+    'homeAction("4AX"',
+    'homeAction("5AX"',
+    'homeAction("NC"',
+    'homeAction("AI"',
+    'text="工作/維修"',
+    'runtimeHost.addView(homeRoot',
+    'bootShell.addView(runtimeHost, 0',
+    'contentDescription="RETURN TO FORMAL RGB HOME"',
+):
+    require(android, needle, "STUDIO_FORMAL_RGB_HOME_FIRST_241")
+forbid(android, 'bootShell.addView(root, 0', "STUDIO_CAD_WORKSTATION_DIRECT_BOOT_241")
+home_start=android.index('contentDescription="AIG CNC FORMAL RGB HOME"')
+home_end=android.index('runtimeHost.addView(homeRoot',home_start)
+home_source=android[home_start:home_end]
+for forbidden in (
+    "SYSTEM READY",
+    "PHYSICAL PERFORMANCE",
+    "NETWORK OPTIONAL STATUS",
+    "MASTER COORDINATE ROOT",
+    "MAINTENANCE SYSTEM STRIP",
+    "2D CAD • LIVE WORKSPACE",
+):
+    forbid(home_source, forbidden, "STUDIO_HOME_ENGINEERING_CHROME_241")
+print("STUDIO_FORMAL_RGB_HOME_FIRST_GATE_PASS|241|RGB_HOME|CAD_CAM_SIM_3AX_4AX_5AX_NC_AI|WORK_MAINTENANCE_NESTED|CAD_WORKSTATION_NOT_BOOT")
 print("PRODUCTION_SHELL_EVIDENCE_RUNTIME_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY")
 for needle in (
     'const val BACKGROUND_AUTO_DOWNLOAD = false',
@@ -1373,3 +1406,5 @@ print("SHARED_SYNC_RUNTIME_WATCHER_GATE_PASS|STUDIO_234|ANDROID|WINDOWS|POLL_150
 print("STUDIO_STABLE_ANDROID_BASELINE_GATE_PASS|238|ANDROID_16|API_36|ANDROID_17_API_37_PREVIEW_TRACK_ONLY|NO_PREVIEW_IN_RELEASE")
 
 print("STUDIO_CAM_AXIS_SELECTOR_GATE_PASS|239|AXIS_MODE_SELECTOR|3AX|4AX|5AX|NO_DUPLICATE_5AX_PRIMARY_BUTTON")
+
+print("STUDIO_UI_VERIFY_SIDELOAD_ID_GATE_PASS|241|VERSION_SCOPED_PACKAGE|NO_DEBUG_SIGNATURE_COLLISION_WITH_PRIOR_UI_VERIFY")

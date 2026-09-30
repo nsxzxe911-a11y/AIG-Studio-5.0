@@ -97,6 +97,8 @@ object ProductionRgbAssets {
             n=="ARC" || name=="圓弧" -> "arc"
             n=="HOLE" || name=="孔" -> "hole"
             n=="SELECT" || name=="選取" -> "select"
+            n=="HOME" || n=="RGB WALLPAPER" || name=="首頁" -> "rgb_wallpaper"
+            n.contains("MAINT") || name=="工作/維修" || name=="維修" -> "tool_group"
             n.contains("2D CAD") || n=="CAD" -> "cad"
             n=="CAM" || n.contains("CAM ") -> "cam"
             n=="SIM" || n.contains("3D SIM") -> "sim"
@@ -753,6 +755,7 @@ class MainActivity : Activity() {
             setMargins(dp(5), dp(5), dp(5), dp(3))
         })
 
+        var showRuntimeHome:(()->Unit)?=null
         val productionUiSwitch = FlowLayout(this).apply {
             setPadding(dp(5), dp(2), dp(5), dp(3))
             contentDescription = "PRODUCTION UI SWITCH"
@@ -873,6 +876,16 @@ class MainActivity : Activity() {
         addProductionUi("NC") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC")) }
         addProductionUi("AI") { showAiSystemSuiteDialog() }
         check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))
+        productionUiSwitch.addView(RgbGlowButton(this).apply {
+            text="首頁"
+            contentDescription="RETURN TO FORMAL RGB HOME"
+            textSize=StudioDisplayPolicy.sp(this,9.5f)
+            minWidth=dp(68)
+            minHeight=dp(42)
+            maxLines=1
+            setRgbState(0xFF3DEBFF.toInt(),false)
+            setOnClickListener { showRuntimeHome?.invoke() }
+        })
         selectProductionUi(ProductionUiSwitchContract.initialMode)
         root.addView(productionUiSwitch,LinearLayout.LayoutParams(-1,-2))
         root.addView(visibleModeTitle,LinearLayout.LayoutParams(-1,-2))
@@ -1107,8 +1120,116 @@ class MainActivity : Activity() {
         applySystemHudPreference(envPrefs.getBoolean("system_hud_enabled", RuntimeDeviceProfile.defaultSystemHudEnabled))
 
 
+        val runtimeHost=FrameLayout(this).apply {
+            setBackgroundColor(StudioProductionTheme.background)
+            contentDescription="AIG CNC PRODUCTION RUNTIME HOST"
+        }
+        root.visibility=View.GONE
+        runtimeHost.addView(root,FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+
+        val homeRoot=FrameLayout(this).apply {
+            contentDescription="AIG CNC FORMAL RGB HOME"
+            background=ProductionRgbAssets.drawable(this@MainActivity,"HOME") ?: panel()
+        }
+        val homeContent=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            gravity=Gravity.CENTER_HORIZONTAL
+            setPadding(dp(16),dp(24),dp(16),dp(18))
+            background=GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(
+                    Color.argb(198,4,12,24),
+                    Color.argb(142,4,14,28),
+                    Color.argb(210,4,10,20)
+                )
+            )
+        }
+        homeContent.addView(chromeText(
+            "AIG CNC",
+            Color.WHITE,26f
+        ).apply {
+            gravity=Gravity.CENTER
+            setTypeface(typeface,android.graphics.Typeface.BOLD)
+            letterSpacing=0.10f
+        },LinearLayout.LayoutParams(-1,-2))
+        homeContent.addView(chromeText(
+            "RGB 智慧製造",
+            StudioProductionTheme.accent,12f
+        ).apply {
+            gravity=Gravity.CENTER
+            setTypeface(typeface,android.graphics.Typeface.BOLD)
+        },LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(2),0,dp(18)) })
+
+        val homeModes=FlowLayout(this).apply {
+            contentDescription="FORMAL RGB HOME MODES"
+            setPadding(dp(4),dp(4),dp(4),dp(4))
+        }
+        fun enterWorkstation(mode:String,open:()->Unit={}) {
+            homeRoot.visibility=View.GONE
+            root.visibility=View.VISIBLE
+            selectProductionUi(mode)
+            refreshVisibleMode(mode)
+            open()
+        }
+        fun homeAction(label:String,color:Int,run:()->Unit) {
+            homeModes.addView(RgbGlowButton(this).apply {
+                text=label
+                contentDescription="HOME $label"
+                textSize=StudioDisplayPolicy.sp(this,12f)
+                minWidth=dp(104)
+                minHeight=dp(64)
+                maxLines=1
+                setRgbState(color,false)
+                setOnClickListener { run() }
+            })
+        }
+        homeAction("CAD",0xFF3DEBFF.toInt()){enterWorkstation("CAD")}
+        homeAction("CAM",0xFF22C55E.toInt()){enterWorkstation("CAM"){showCamWorkstation()}}
+        homeAction("SIM",0xFF8B5CF6.toInt()){enterWorkstation("SIM"){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}}
+        homeAction("3AX",0xFF3B82F6.toInt()){enterWorkstation("3AX"){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}}
+        homeAction("4AX",0xFFF59E0B.toInt()){enterWorkstation("4AX"){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}}
+        homeAction("5AX",0xFFEC4899.toInt()){enterWorkstation("5AX"){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}}
+        homeAction("NC",0xFF50AAFF.toInt()){enterWorkstation("NC"){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}}
+        homeAction("AI",0xFF8B5CF6.toInt()){showAiSystemSuiteDialog()}
+        homeContent.addView(homeModes,LinearLayout.LayoutParams(-1,0,1f))
+
+        val homeUtility=FlowLayout(this).apply {
+            gravity=Gravity.CENTER
+            setPadding(dp(4),dp(8),dp(4),dp(2))
+            addView(RgbGlowButton(this@MainActivity).apply {
+                text="工作/維修"
+                contentDescription="HOME WORK MAINTENANCE"
+                textSize=StudioDisplayPolicy.sp(this,10f)
+                minWidth=dp(112)
+                minHeight=dp(44)
+                setRgbState(0xFF8B5CF6.toInt(),false)
+                setOnClickListener { showMaintenanceCenter() }
+            })
+        }
+        homeContent.addView(homeUtility,LinearLayout.LayoutParams(-1,-2))
+        homeContent.addView(chromeText(
+            "CAD • CAM • SIM • 3AX • 4AX • 5AX • NC • AI",
+            0xFFA0BED2.toInt(),9f
+        ).apply { gravity=Gravity.CENTER },LinearLayout.LayoutParams(-1,-2))
+
+        homeRoot.addView(homeContent,FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+        showRuntimeHome={
+            root.visibility=View.GONE
+            homeRoot.visibility=View.VISIBLE
+        }
+        runtimeHost.addView(homeRoot,FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+
         bootOverlay.advance(StartupMilestone.LOADING_UI)
-        bootShell.addView(root, 0, android.widget.FrameLayout.LayoutParams(
+        bootShell.addView(runtimeHost, 0, android.widget.FrameLayout.LayoutParams(
             android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
             android.widget.FrameLayout.LayoutParams.MATCH_PARENT
         ))

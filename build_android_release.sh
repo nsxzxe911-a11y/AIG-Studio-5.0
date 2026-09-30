@@ -5,6 +5,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ANDROID_OUT="$ROOT/release/android"
 SOURCE_OUT="$ROOT/release/source"
 VERSION="$(awk -F= '$1=="versionName"{print $2}' "$ROOT/release-version.properties")"
+RELEASE_MAJOR="${VERSION%%.*}"
+UI_VERIFY_PACKAGE="com.aigstudio.app.uiverify${RELEASE_MAJOR}"
 GIT_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 
 test -n "$VERSION"
@@ -39,7 +41,7 @@ git_sha=$GIT_SHA
 artifact=$APK_NAME
 sha256=$APK_SHA
 ui_verify_artifact=$UI_VERIFY_APK_NAME
-ui_verify_package=com.aigstudio.app.uiverify
+ui_verify_package=$UI_VERIFY_PACKAGE
 ui_verify_sha256=$UI_VERIFY_APK_SHA
 ui_verify_runtime=PRODUCTION_RUNTIME_SAME_CODE_DIFFERENT_PACKAGE_ID
 ui_verify_purpose=SIDE_BY_SIDE_INSTALL_WHEN_EXISTING_PACKAGE_SIGNATURE_CONFLICTS
