@@ -3,6 +3,7 @@ import re
 
 root=Path(__file__).resolve().parents[1]
 secure=(root/"app/src/main/java/com/aigstudio/app/SecureServices.kt").read_text(encoding="utf-8")
+main=(root/"app/src/main/java/com/aigstudio/app/MainActivity.kt").read_text(encoding="utf-8")
 policy=(root/"core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt").read_text(encoding="utf-8")
 bundle=(root/"core/src/main/kotlin/com/aigstudio/core/PackageBundle.kt").read_text(encoding="utf-8")
 version=(root/"release-version.properties").read_text(encoding="utf-8").strip()
@@ -15,6 +16,14 @@ required_secure=[
 ]
 for marker in required_secure:
     assert marker in secure, marker
+for marker in (
+    'if (!config.configured)',
+    'showUpdateSettings()',
+    'renderNetworkState(true,"更新設定未完成")',
+    'AI 更新設定未完成 • Runtime 正常',
+):
+    assert marker in main, marker
+
 for marker in (
     'MODE="FORWARD_ONLY_AFTER_VERIFIED_PASS"',
     'NETWORK_BLOCKS_RUNTIME=false',
