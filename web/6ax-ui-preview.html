@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407">
+<title>AIG Studio 6AX UI Preview</title>
+<style>
+:root{
+  --bg:#020407;--panel:#07111b;--panel2:#0b1723;--line:#1c4255;
+  --text:#f3fbff;--muted:#8ca5b3;--cyan:#27e9ff;--green:#33f39b;
+  --amber:#ffb326;--pink:#ff4da6;--violet:#9f72ff;--red:#ff465f
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);
+  font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
+body{background:
+  radial-gradient(circle at 20% 0%,rgba(39,233,255,.06),transparent 30%),
+  radial-gradient(circle at 100% 50%,rgba(159,114,255,.05),transparent 24%),var(--bg)}
+button{font:inherit;color:inherit}
+.top{position:sticky;top:0;z-index:20;display:flex;gap:10px;align-items:center;padding:8px 10px;
+  background:rgba(2,4,7,.98);border-bottom:1px solid rgba(39,233,255,.3)}
+.brand{font-weight:900;letter-spacing:.05em;white-space:nowrap}
+.nav{display:grid;grid-template-columns:repeat(9,minmax(58px,1fr));gap:5px;flex:1}
+.nav button,.btn{min-height:42px;border:1px solid #244557;border-radius:10px;
+  background:linear-gradient(#0d1722,#05080c);box-shadow:inset 0 1px rgba(255,255,255,.04);
+  cursor:pointer}
+.nav button.active{border-color:var(--violet);box-shadow:0 0 18px rgba(159,114,255,.25)}
+.status{color:var(--green);font-size:11px;white-space:nowrap}
+.shell{padding:9px}
+.grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(300px,.7fr);gap:9px}
+.panel{border:1px solid rgba(71,146,177,.35);background:linear-gradient(180deg,#071018,#030609);
+  border-radius:14px;overflow:hidden;box-shadow:0 14px 38px rgba(0,0,0,.5)}
+.head{display:flex;align-items:center;gap:10px;padding:9px 11px;border-bottom:1px solid rgba(63,139,168,.25)}
+.head h2,.head h3{margin:0;font-size:14px}.head small{color:var(--muted)}
+.spacer{flex:1}.badge{font-size:10px;color:#c8ffe6;border:1px solid rgba(51,243,155,.35);
+  border-radius:999px;padding:5px 8px}
+.body{padding:9px}
+.axes,.controls{display:flex;gap:6px;flex-wrap:wrap}
+.axis{min-width:96px;padding:7px 9px;border:1px solid rgba(39,233,255,.32);
+  border-radius:9px;background:#050a0e;font:11px ui-monospace,monospace}
+.axis.a{border-color:rgba(255,179,38,.5)}.axis.b{border-color:rgba(255,77,166,.5)}
+.axis.c{border-color:rgba(159,114,255,.6)}
+.scene{position:relative;min-height:600px;margin-top:8px;border:1px solid #102934;border-radius:11px;
+  background:#010306;overflow:hidden}
+canvas{display:block;width:100%;height:600px;touch-action:none}
+.hud{position:absolute;right:12px;top:12px;background:rgba(0,0,0,.78);
+  border:1px solid rgba(39,233,255,.28);border-radius:9px;padding:8px 10px;
+  font:11px/1.55 ui-monospace,monospace;min-width:135px}
+.title{position:absolute;left:16px;bottom:15px;font-weight:900;letter-spacing:.06em;text-shadow:0 2px 8px #000}
+.title small{display:block;margin-top:3px;color:var(--muted);font-weight:400;letter-spacing:0}
+.controls{padding-top:8px}.btn{padding:7px 11px;min-width:78px}.btn.play{border-color:rgba(51,243,155,.55);color:#c8ffe6}
+.btn.c{border-color:rgba(159,114,255,.58);color:#e6d8ff}.btn.warn{border-color:rgba(255,179,38,.55)}
+.notice{margin-top:8px;padding:7px 9px;border:1px solid #193441;border-radius:8px;background:#03070a;
+  color:#b7c8d1;font-size:10px;line-height:1.5}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.metric{padding:8px;border:1px solid #173344;border-radius:9px;background:#04080b}
+.metric b{display:block;color:var(--muted);font-size:9px}.metric span{font-size:12px}
+.code{width:100%;min-height:290px;margin-top:8px;padding:10px;border:1px solid #173548;border-radius:9px;
+  background:#010305;color:#edf9ff;font:12px/1.55 "Cascadia Mono","Consolas",monospace;resize:vertical}
+@media(max-width:920px){
+  .top{flex-wrap:wrap}.nav{order:3;grid-template-columns:repeat(5,1fr);flex-basis:100%}
+  .grid{grid-template-columns:1fr}.scene{min-height:52vh}canvas{height:52vh}
+}
+@media(max-width:560px){
+  .status{display:none}.nav{grid-template-columns:repeat(3,1fr)}
+  .axis{min-width:88px}.metrics{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">AIG II CNC</div>
+  <nav class="nav">
+    <button>CAD</button><button>CAM</button><button>SIM</button><button>3AX</button><button>4AX</button>
+    <button>5AX</button><button class="active">6AX</button><button>NC</button><button>AI</button>
+  </nav>
+  <div class="status">● LOCAL READY　0.001 mm</div>
+</header>
+
+<main class="shell">
+<div class="grid">
+  <section class="panel">
+    <div class="head">
+      <div><h2>6AX 真 3D 加工模擬</h2><small>XYZ + A/B 搖籃 + C 主軸頭 360° 側銑</small></div>
+      <span class="spacer"></span><span class="badge" id="runBadge">READY</span>
+    </div>
+    <div class="body">
+      <div class="axes" id="axes"></div>
+
+      <div class="controls">
+        <button class="btn warn" data-axis="A" data-step="-15">A−</button>
+        <button class="btn warn" data-axis="A" data-step="15">A+</button>
+        <button class="btn" data-axis="B" data-step="-15">B−</button>
+        <button class="btn" data-axis="B" data-step="15">B+</button>
+        <button class="btn c" data-axis="C" data-step="-15">C−</button>
+        <button class="btn c" data-axis="C" data-step="15">C+</button>
+        <button class="btn c" id="c0">C0</button>
+        <button class="btn play" id="fit">Fit</button>
+      </div>
+
+      <div class="scene">
+        <canvas id="scene"></canvas>
+        <div class="hud" id="hud"></div>
+        <div class="title">6AX 真 3D 加工模擬
+          <small>低底座 • 開放式 Trunnion • B 轉台 360° • C 主軸頭 360°</small>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn play" id="play">▶ 播放</button>
+        <button class="btn" id="pause">Ⅱ 暫停</button>
+        <button class="btn" id="reset">歸零</button>
+      </div>
+
+      <div class="notice">
+        這是 UI/UX + 動態機構預覽。C 軸表示主軸頭繞 Z 周向 360°轉向，刀具維持側銑姿態；
+        目前不輸出到實體 CNC，也不改 Fanuc Post。
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="head"><h3>6AX 控制 / G-code</h3></div>
+    <div class="body">
+      <div class="metrics">
+        <div class="metric"><b>模式</b><span>G90</span></div>
+        <div class="metric"><b>精度</b><span>0.001 mm</span></div>
+        <div class="metric"><b>A 搖籃</b><span id="ma">0.000°</span></div>
+        <div class="metric"><b>B 轉台</b><span id="mb">0.000°</span></div>
+        <div class="metric"><b>C 主軸頭</b><span id="mc">0.000°</span></div>
+        <div class="metric"><b>碰撞</b><span style="color:#33f39b">CLEAR</span></div>
+      </div>
+<textarea class="code" spellcheck="false">O6000
+N10 M98 P4
+N20 S8000 M3
+N30 G0 X0. Y0. Z50. A0. B0. C0.
+N40 G1 Z-2. F900
+N50 X12. Y0. A15. B10. C0.
+N60 X24. Y8. A30. B45. C90.
+N70 X24. Y20. A45. B90. C180.
+N80 X8. Y24. A30. B180. C270.
+N90 X0. Y0. A0. B360. C360.
+N100 M98 P5
+N110 M30</textarea>
+      <div class="notice">A/B/C 目前只做 UI 與模擬運動。正式 NC 前仍需 6AX kinematics、碰撞、軸限制與 Post 驗證。</div>
+    </div>
+  </section>
+</div>
+</main>
+
+<script>
+const state={A:0,B:0,C:0,run:false,t:0};
+const axes=document.getElementById("axes");
+const hud=document.getElementById("hud");
+const cv=document.getElementById("scene"),ctx=cv.getContext("2d");
+const $=id=>document.getElementById(id);
+function norm(v){v%=360;if(v<0)v+=360;return v}
+function axisHtml(){
+  axes.innerHTML=["X","Y","Z","A","B","C"].map(k=>
+    '<span class="axis '+k.toLowerCase()+'">'+k+'　'+(k<="Z"?"0.000":state[k].toFixed(3))+'</span>'
+  ).join("");
+}
+function resize(){
+  const r=cv.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
+  cv.width=Math.max(1,Math.floor(r.width*dpr));cv.height=Math.max(1,Math.floor(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function poly(points,fill,stroke){
+  ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
+  ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke||fill;ctx.stroke();
+}
+function draw(){
+  resize();
+  const w=cv.clientWidth,h=cv.clientHeight,cx=w*.47,cy=h*.57;
+  ctx.clearRect(0,0,w,h);ctx.fillStyle="#010306";ctx.fillRect(0,0,w,h);
+
+  // Low, wide base with open middle clearance.
+  ctx.fillStyle="#203746";ctx.beginPath();ctx.ellipse(cx,cy+118,185,36,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#162834";ctx.fillRect(cx-175,cy+92,350,34);
+
+  // Short side supports.
+  ctx.fillStyle="#345269";ctx.fillRect(cx-178,cy-12,58,105);ctx.fillRect(cx+120,cy-12,58,105);
+
+  // A trunnion cradle.
+  const a=state.A*Math.PI/180;
+  const armY=cy+20,tilt=Math.sin(a)*46;
+  ctx.save();ctx.translate(cx,armY);ctx.rotate(-a*.55);
+  ctx.fillStyle="#627d90";ctx.fillRect(-126,-14,252,28);
+  ctx.fillStyle="#8a4674";ctx.beginPath();ctx.ellipse(0,-12,82,22,0,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+
+  // Pivot caps.
+  ctx.fillStyle="#b98736";
+  ctx.beginPath();ctx.arc(cx-120,armY+tilt*.1,16,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(cx+120,armY-tilt*.1,16,0,Math.PI*2);ctx.fill();
+
+  // B rotary table indicator.
+  const br=state.B*Math.PI/180;
+  ctx.strokeStyle="#27e9ff";ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy+8,54,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy+8);ctx.lineTo(cx+Math.cos(br)*50,cy+8-Math.sin(br)*50);ctx.stroke();
+
+  // C side-milling head: azimuth around Z, tool stays horizontal.
+  const cr=state.C*Math.PI/180,headR=115;
+  const hx=cx+Math.cos(cr)*headR,hy=cy-122+Math.sin(cr)*38;
+  ctx.strokeStyle="#9f72ff";ctx.lineWidth=20;ctx.lineCap="round";
+  ctx.beginPath();ctx.moveTo(cx,cy-122);ctx.lineTo(hx,hy);ctx.stroke();
+  ctx.strokeStyle="#c5dce8";ctx.lineWidth=8;
+  ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(hx-Math.cos(cr)*58,hy-Math.sin(cr)*18);ctx.stroke();
+  ctx.fillStyle="#27e9ff";ctx.beginPath();ctx.arc(hx-Math.cos(cr)*58,hy-Math.sin(cr)*18,5,0,Math.PI*2);ctx.fill();
+
+  hud.innerHTML="<b>WORK G54</b><br>X 0.000<br>Y 0.000<br>Z 0.000<br>A "+state.A.toFixed(3)+
+    "<br>B "+state.B.toFixed(3)+"<br>C "+state.C.toFixed(3)+
+    "<br><b>MACHINE</b><br>MX 0.000<br>MY 0.000<br>MZ 0.000<br>6AX UI PREVIEW";
+  $("ma").textContent=state.A.toFixed(3)+"°";$("mb").textContent=state.B.toFixed(3)+"°";$("mc").textContent=state.C.toFixed(3)+"°";
+  axisHtml();
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-axis]");
+  if(b){const k=b.dataset.axis;state[k]=norm(state[k]+Number(b.dataset.step||0));draw()}
+});
+$("c0").onclick=()=>{state.C=0;draw()};
+$("fit").onclick=draw;
+$("reset").onclick=()=>{state.A=state.B=state.C=0;state.run=false;$("runBadge").textContent="READY";draw()};
+$("play").onclick=()=>{state.run=true;$("runBadge").textContent="RUN"};
+$("pause").onclick=()=>{state.run=false;$("runBadge").textContent="PAUSE"};
+function tick(){
+  if(state.run){
+    state.t+=.012;
+    state.A=30+30*Math.sin(state.t*.55);
+    state.B=norm(state.B+0.45);
+    state.C=norm(state.C+0.75);
+    draw();
+  }
+  requestAnimationFrame(tick);
+}
+window.addEventListener("resize",draw);
+draw();tick();
+</script>
+</body>
+</html>
