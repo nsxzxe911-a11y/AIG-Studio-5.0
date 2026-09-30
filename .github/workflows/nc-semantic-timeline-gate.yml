@@ -4,11 +4,16 @@ on:
   push:
     branches: [main]
     paths:
-      - 'core/**'
-      - 'ci/**'
+      - 'core/src/main/kotlin/com/aigstudio/core/FanucNc.kt'
+      - 'core/src/main/kotlin/com/aigstudio/core/Cam.kt'
+      - 'core/src/main/kotlin/com/aigstudio/core/Geometry.kt'
+      - 'core/src/main/kotlin/com/aigstudio/core/Machining3D.kt'
+      - 'core/src/main/kotlin/com/aigstudio/core/Document.kt'
+      - 'core/src/main/kotlin/com/aigstudio/core/Transform.kt'
+      - 'core/src/main/kotlin/com/aigstudio/core/ProjectRepository.kt'
+      - 'core/src/test/**'
       - 'app/src/main/java/com/aigstudio/app/MainActivity.kt'
       - 'desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'
-      - 'release-version.properties'
       - '.github/workflows/nc-semantic-timeline-gate.yml'
   workflow_dispatch:
 
@@ -17,7 +22,7 @@ permissions:
 
 jobs:
   semantic-timeline:
-    if: ${{ github.event_name == 'workflow_dispatch' || (!contains(github.event.head_commit.message, '[ui-art]') && !contains(github.event.head_commit.message, '[nc-check]') && !contains(github.event.head_commit.message, '[infra-only]')) }}
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nc-check]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
