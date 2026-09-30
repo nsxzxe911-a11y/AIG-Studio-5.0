@@ -209,6 +209,17 @@ const required = [
   'AIG ADAPTIVE 2.5D',
   'stock:state.payload?.stock||aigJsonRead(root,"aig-stock-v1",null,"毛坯資料")',
   'Adaptive OP 保留 Z 層 / Ring / Load% 註解',
+  '["工件組裝","ASSEMBLY"]',
+  'function assemblyView',
+  'aig-assembly-v1',
+  'ASSEMBLY_VISE',
+  '依毛坯建立虎鉗預設',
+  'function runtimeAssemblyBoxes',
+  'TOOL_FIXTURE',
+  'HOLDER_FIXTURE',
+  'aig-assembly-updated',
+  'assembly:assemblyConfig',
+  'assembly:aigJsonRead(root,"aig-assembly-v1"',
   'CNC machine output disabled'
 ];
 
@@ -223,7 +234,7 @@ const coreStart = scriptMatch[1].indexOf("function parseWords(line){");
 const coreEnd = scriptMatch[1].indexOf("function makeRuntime(root){", coreStart);
 if (coreStart < 0 || coreEnd < 0) throw new Error("WEB_RUNTIME_CORE_BOUNDS_MISSING");
 const core = scriptMatch[1].slice(coreStart, coreEnd);
-const api = new Function(core + "\nreturn {parseProgram,compilePrograms,scanRuntimeCollisions,sampleRuntimeBlock,runtimeStockEnvelope,buildAdaptive2DPaths};")();
+const api = new Function(core + "\nreturn {parseProgram,compilePrograms,scanRuntimeCollisions,sampleRuntimeBlock,runtimeStockEnvelope,buildAdaptive2DPaths,runtimeAssemblyBoxes};")();
 
 const subProgramTest = `O1000
 N10 M98 P4
@@ -360,6 +371,31 @@ if (!adaptiveCircle.length || !adaptiveCircle.every(p => p.points.length >= 33))
 const adaptiveOpen = api.buildAdaptive2DPaths({id:9,type:"line",a:{x:0,y:0},b:{x:20,y:0}}, adaptiveParams, [-2]);
 if (adaptiveOpen.length !== 0) throw new Error("ADAPTIVE_OPEN_GEOMETRY_MUST_BE_IGNORED");
 
+const assemblyCfg = {
+  toolDia:10,cutterLen:30,holderDia:25,holderLen:25,safeZ:5,
+  stock:{top:0,thickness:20,minX:-20,maxX:20,minY:-20,maxY:20},
+  assembly:{items:[
+    {id:"C1",type:"CLAMP",name:"測試壓板",x:30,y:0,z:-5,w:20,d:20,h:20,enabled:true},
+    {id:"OFF",type:"FIXTURE",name:"停用模組",x:0,y:0,z:0,w:10,d:10,h:10,enabled:false},
+    {id:"BAD",type:"FIXTURE",name:"非法尺寸",x:0,y:0,z:0,w:0,d:10,h:10,enabled:true}
+  ]}
+};
+const assemblyBoxes = api.runtimeAssemblyBoxes(assemblyCfg);
+if (assemblyBoxes.length !== 1 || assemblyBoxes[0].id !== "C1") throw new Error("ASSEMBLY_BOX_FILTER_BROKEN");
+if (assemblyBoxes[0].minX !== 20 || assemblyBoxes[0].maxX !== 40 || assemblyBoxes[0].minZ !== -5 || assemblyBoxes[0].maxZ !== 15) throw new Error("ASSEMBLY_BOX_GEOMETRY_WRONG");
+
+const fixtureProgram = api.parseProgram("O5000\nN10 G90 G54\nN20 G0 X30 Y0 Z25\nN30 G1 Z0 F100\nN40 M30","3AX",assemblyCfg);
+const fixtureScan = api.scanRuntimeCollisions(fixtureProgram,"3AX",assemblyCfg);
+if (!fixtureScan.collisions.some(c => c.type === "TOOL_FIXTURE" && c.fixtureId === "C1")) throw new Error("TOOL_FIXTURE_COLLISION_NOT_DETECTED");
+
+const fixtureSafeProgram = api.parseProgram("O5001\nN10 G90 G54\nN20 G0 X-30 Y0 Z25\nN30 M30","3AX",assemblyCfg);
+const fixtureSafeScan = api.scanRuntimeCollisions(fixtureSafeProgram,"3AX",assemblyCfg);
+if (fixtureSafeScan.collisions.some(c => c.type === "TOOL_FIXTURE" || c.type === "HOLDER_FIXTURE")) throw new Error("FIXTURE_FALSE_POSITIVE");
+
+const fixture5xProgram = api.parseProgram("O5002\nN10 G90 G54\nN20 G0 X10 Y0 Z-30 A0 B90\nN30 M30","5AX",assemblyCfg);
+const fixture5xScan = api.scanRuntimeCollisions(fixture5xProgram,"5AX",assemblyCfg);
+if (!fixture5xScan.collisions.some(c => c.type === "TOOL_FIXTURE" && c.fixtureId === "C1")) throw new Error("ROTARY_FIXTURE_COLLISION_NOT_DETECTED");
+
 const cadRuntimeIndex = scriptMatch[1].indexOf("function makeCadRuntime(root){");
 const camRuntimeIndex = scriptMatch[1].indexOf("function makeCamRuntime(root){");
 const toolpathRuntimeIndex = scriptMatch[1].indexOf("function makeToolpathRuntime(root){");
@@ -392,4 +428,4 @@ if (pageDefs.length !== 7) {
   throw new Error("WEB_RUNTIME_PAGE_COUNT_" + pageDefs.length);
 }
 
-console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|FUNCTION_MENU_RUNTIME|NO_FAKE_SERVICE_STATE|WEBGL_3D|3AX_HEIGHTFIELD_REMOVAL|4X_5X_ROTARY_VOXEL_REMOVAL|ROTARY_TOOLPATH_AB|SIMULTANEOUS_AB_POST|FANUC_POST_SCOPE|REMOVAL_VOLUME_EVIDENCE|CUTTER_HOLDER_COLLISION|COLLISION_STOP_ALARM|ROTARY_COLLISION_TEST|G84_TAPPING|G84_FEED_RETURN_TEST|TAP_PITCH_GATE|INDEXED_TAP_ONLY|POST_COLLISION_PREFLIGHT|EXPLICIT_POST_TOOL_GEOMETRY|INLINE_FIELD_FEEDBACK|NONFATAL_RUNTIME_ERRORS|CAD_SEMANTIC_VALIDATION|ANIMATION_RECOVERY|FIELD_ISSUE_CENTER|ZERO_VALUE_PRESERVED|NO_SILENT_NUMERIC_FALLBACK|NONBLOCKING_USER_MESSAGES|BLACK_RGB");
+console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|FUNCTION_MENU_RUNTIME|NO_FAKE_SERVICE_STATE|WEBGL_3D|3AX_HEIGHTFIELD_REMOVAL|4X_5X_ROTARY_VOXEL_REMOVAL|ROTARY_TOOLPATH_AB|SIMULTANEOUS_AB_POST|FANUC_POST_SCOPE|REMOVAL_VOLUME_EVIDENCE|CUTTER_HOLDER_COLLISION|COLLISION_STOP_ALARM|ROTARY_COLLISION_TEST|G84_TAPPING|G84_FEED_RETURN_TEST|TAP_PITCH_GATE|INDEXED_TAP_ONLY|POST_COLLISION_PREFLIGHT|EXPLICIT_POST_TOOL_GEOMETRY|INLINE_FIELD_FEEDBACK|NONFATAL_RUNTIME_ERRORS|CAD_SEMANTIC_VALIDATION|ANIMATION_RECOVERY|FIELD_ISSUE_CENTER|ZERO_VALUE_PRESERVED|NO_SILENT_NUMERIC_FALLBACK|NONBLOCKING_USER_MESSAGES|WORKPIECE_ASSEMBLY|FIXTURE_WEBGL|FIXTURE_COLLISION|ROTARY_FIXTURE_COLLISION|ASSEMBLY_POST_PREFLIGHT|BLACK_RGB");
