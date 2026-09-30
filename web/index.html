@@ -1100,7 +1100,7 @@ function makeGlScene(canvas,axis){
      for(const fixture of fixtureBoxes){
        const model=M(R,M(T(fixture.x,fixture.y,fixture.z+fixture.h/2),S(fixture.w,fixture.d,fixture.h)));
        const fixtureAlarm=String(scene.collisionAlarm?.fixtureId||"")===fixture.id;
-       const clearanceValue=Number(scene.setupClearance?.minimum),fixtureLimit=String(scene.setupClearance?.fixtureId||"")===fixture.id&&Number.isFinite(clearanceValue)&&clearanceValue<2;
+       const clearanceValue=Number(scene.setupClearance?.minimum),requiredClearance=Math.max(0,Number(scene.requiredClearance)||0),fixtureLimit=String(scene.setupClearance?.fixtureId||"")===fixture.id&&Number.isFinite(clearanceValue)&&clearanceValue<requiredClearance;
        const color=fixtureAlarm?rgb("#ff465f"):fixtureLimit?rgb("#ffb326"):fixture.type==="VISE_JAW"?rgb("#9a6d45"):fixture.type==="CLAMP"?rgb("#7b5ca8"):rgb("#506878");
        drawMesh(cube,model,color,vp);
      }
@@ -1183,11 +1183,13 @@ function makeRuntime(root){
  const h1=root.querySelector("[data-h1]"),h4=root.querySelector("[data-h4]"),h12=root.querySelector("[data-h12]");
  let stockConfig=aigJsonRead(root,"aig-stock-v1",null,"毛坯資料");
  let assemblyConfig=aigJsonRead(root,"aig-assembly-v1",{version:1,items:[]},"工件組裝");
- const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,optionalStop:false,blockSkip:false,last:performance.now(),history:[],historyIndex:-1,collisions:[],collisionAlarm:null,setupClearance:null};
+ const clearancePayload=aigJsonRead(root,"aig-cam-toolpath-v1",{},"刀路安全間隙"),initialRequiredClearance=Math.max(0,Number(clearancePayload?.postGeometry?.clearance??2)||0);
+ const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,optionalStop:false,blockSkip:false,last:performance.now(),history:[],historyIndex:-1,collisions:[],collisionAlarm:null,setupClearance:null,requiredClearance:initialRequiredClearance};
  const onStockUpdated=e=>{stockConfig=e?.detail||aigJsonRead(root,"aig-stock-v1",null,"毛坯資料");aigGuard(root,axis+" 毛坯更新",()=>parse(false),null,"warn")};
  const onAssemblyUpdated=e=>{assemblyConfig=e?.detail||aigJsonRead(root,"aig-assembly-v1",{version:1,items:[]},"工件組裝");aigGuard(root,axis+" 組裝更新",()=>parse(false),null,"warn")};
  window.addEventListener("aig-stock-updated",onStockUpdated);
  window.addEventListener("aig-assembly-updated",onAssemblyUpdated);
+ window.addEventListener("aig-clearance-updated",e=>{const n=Number(e?.detail);if(Number.isFinite(n)&&n>=0){state.requiredClearance=n;updateUi();draw()}});
  function validateMachineFields(){
   [toolInput,cutterInput,holderDiaInput,holderLenInput,safeInput,g73Input,g54x,g54y,g54z,g55x,g55y,g55z,h1,h4,h12].forEach(aigValidateField);
   const tool=Number(toolInput.value),cutter=Number(cutterInput.value),holderDia=Number(holderDiaInput.value),holderLen=Number(holderLenInput.value),safe=Number(safeInput.value),g73=Number(g73Input.value);
@@ -1409,7 +1411,7 @@ function makeRuntime(root){
  function draw(){
   if(!state.parsed)return;
   const webglOk=glScene?.render({
-    parsed:state.parsed,index:state.index,t:state.t,pos:currentPos(),toolDia:settings().toolDia,cutterLen:settings().cutterLen,holderDia:settings().holderDia,holderLen:settings().holderLen,stock:stockConfig,assembly:assemblyConfig,collisionAlarm:state.collisionAlarm,setupClearance:state.setupClearance,dry:state.dry,
+    parsed:state.parsed,index:state.index,t:state.t,pos:currentPos(),toolDia:settings().toolDia,cutterLen:settings().cutterLen,holderDia:settings().holderDia,holderLen:settings().holderLen,stock:stockConfig,assembly:assemblyConfig,collisionAlarm:state.collisionAlarm,setupClearance:state.setupClearance,requiredClearance:state.requiredClearance,dry:state.dry,
     sampleBlock:(bl,t)=>{
       if(bl.motion==="G2"||bl.motion==="G3")return arcPoint(bl,t);
       const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(bl.from[k]||0,bl.to[k]||0,t);return p;
@@ -1526,8 +1528,8 @@ function makeRuntime(root){
   if(setupClearanceEl){
     const c=Number(state.setupClearance?.minimum);
     if(Number.isFinite(c)){
-      setupClearanceEl.textContent=c.toFixed(3)+" mm "+String(state.setupClearance?.limitingType||"");
-      setupClearanceEl.style.color=c<0?"#ff465f":c<2?"#ffb326":"#33f39b";
+      setupClearanceEl.textContent=c.toFixed(3)+" mm / 要求 ≥ "+state.requiredClearance.toFixed(3)+" • "+String(state.setupClearance?.limitingType||"");
+      setupClearanceEl.style.color=c<0?"#ff465f":c<state.requiredClearance?"#ffb326":"#33f39b";
     }else{
       setupClearanceEl.textContent="—";setupClearanceEl.style.color="#b7c8d1";
     }
@@ -2139,7 +2141,7 @@ function makeToolpathRuntime(root){
  }
  function save(){
    if(!state.payload)state.payload={version:1,createdAt:Date.now(),strategy:"EDITED",params:{},cadEntityCount:0};
-   state.payload.paths=state.paths;state.payload.postGeometry={toolDia:Math.max(.1,aigFiniteNumber(toolDiaInput.value,10)),cutterLen:Math.max(1,aigFiniteNumber(cutterLenInput.value,30)),holderDia:Math.max(1,aigFiniteNumber(holderDiaInput.value,25)),holderLen:Math.max(1,aigFiniteNumber(holderLenInput.value,25)),clearance:Math.max(0,aigFiniteNumber(clearanceInput.value,2))};state.payload.updatedAt=Date.now();aigJsonWrite(root,"aig-cam-toolpath-v1",state.payload,"刀路編輯");statusEl.textContent="已儲存";msgEl.textContent="刀路修改已儲存到本機。";
+   state.payload.paths=state.paths;state.payload.postGeometry={toolDia:Math.max(.1,aigFiniteNumber(toolDiaInput.value,10)),cutterLen:Math.max(1,aigFiniteNumber(cutterLenInput.value,30)),holderDia:Math.max(1,aigFiniteNumber(holderDiaInput.value,25)),holderLen:Math.max(1,aigFiniteNumber(holderLenInput.value,25)),clearance:Math.max(0,aigFiniteNumber(clearanceInput.value,2))};state.payload.updatedAt=Date.now();aigJsonWrite(root,"aig-cam-toolpath-v1",state.payload,"刀路編輯");window.dispatchEvent(new CustomEvent("aig-clearance-updated",{detail:state.payload.postGeometry.clearance}));statusEl.textContent="已儲存";msgEl.textContent="刀路修改已儲存到本機。";
  }
  function resize(){const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}ctx.setTransform(dpr,0,0,dpr,0,0);return{w:r.width,h:r.height}}
  function w2s(p,w,h){return{x:w/2+state.view.panX+p.x*state.view.scale,y:h/2+state.view.panY-p.y*state.view.scale}}
