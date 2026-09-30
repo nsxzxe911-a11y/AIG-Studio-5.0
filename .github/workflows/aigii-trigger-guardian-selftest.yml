@@ -1,0 +1,41 @@
+name: AIG-II Trigger Guardian Cross-Repo Self-Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aigii-trigger-guardian-selftest.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  aigii-guardian-selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Clone exact AIG-II source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone -q https://github.com/nsxzxe911-a11y/AIG-II.git /tmp/aigii
+          git -C /tmp/aigii checkout -q --detach 391db1807e0464c55f540b23069ddc5d43e56f59
+          test "$(git -C /tmp/aigii rev-parse HEAD)" = "391db1807e0464c55f540b23069ddc5d43e56f59"
+      - name: Destructive AIG-II recovery test without hosted AIG-II runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/aigii
+          cp ci/trigger_mine_detector.py /tmp/aigii-detector.orig
+          cp .github/workflows/build-download.yml /tmp/aigii-build-gate.orig
+          rm ci/trigger_mine_detector.py
+          rm .github/workflows/build-download.yml
+          test ! -e ci/trigger_mine_detector.py
+          test ! -e .github/workflows/build-download.yml
+          python3 ci/prebaseline_trigger_clean.py | tee /tmp/aigii-guardian-selftest.log
+          cmp -s ci/trigger_mine_detector.py /tmp/aigii-detector.orig
+          cmp -s .github/workflows/build-download.yml /tmp/aigii-build-gate.orig
+          git diff --quiet
+          grep -Fq 'AIGII_PREBASELINE_TRIGGER_MINE_PASS' /tmp/aigii-guardian-selftest.log
+          echo 'AIGII_TRIGGER_GUARDIAN_DESTRUCTIVE_SELFTEST_PASS|DETECTOR_RESTORED|BUILD_GATE_RESTORED|WORKTREE_CLEAN|HOSTED_RUNNER_NOT_USED'
