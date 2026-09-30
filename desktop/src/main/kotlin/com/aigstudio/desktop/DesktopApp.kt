@@ -2182,13 +2182,17 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     var coordinateMode = NcCoordinateMode.ABSOLUTE_G90
     var originTransformMode = NcOriginTransformMode.WORK_OFFSET_ONLY
     var cutterCompensation = CutterCompensationMode.CAM_GEOMETRY_G40
+    var cutterCompRegister = 1
+    var cutterCompValueMm = 0.0
     fun generateNc(): String = CncPost.generate(
         cam,
         FanucPostSettings(
             controller = controllerProfile,
             coordinateMode = coordinateMode,
             originTransformMode = originTransformMode,
-            cutterCompensation = cutterCompensation
+            cutterCompensation = cutterCompensation,
+            cutterCompRegister = cutterCompRegister,
+            cutterCompValueMm = cutterCompValueMm
         )
     )
     val area = JTextArea(generateNc()).apply {
@@ -2286,25 +2290,30 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
             )
         }
     }
+    val cutterDRegister = JTextField(cutterCompRegister.toString(),4).apply {
+        toolTipText = "Fanuc D register 1..999"
+    }
+    val cutterDValue = JTextField(DisplayFormat.mm(cutterCompValueMm),7).apply {
+        toolTipText = "Expected D register value in mm; AIG stores/audits it, but G41/G42 machine output remains fail-closed until raw-contour simulation passes"
+    }
+
     fun refreshNcFromPostSelection() {
         val nextController = controller.selectedItem as? CncControllerProfile ?: CncControllerProfile.FANUC
         val nextCoordinate = coordinate.selectedItem as? NcCoordinateMode ?: NcCoordinateMode.ABSOLUTE_G90
         val nextOrigin = origin.selectedItem as? NcOriginTransformMode ?: NcOriginTransformMode.WORK_OFFSET_ONLY
         val nextComp = compensation.selectedItem as? CutterCompensationMode ?: CutterCompensationMode.CAM_GEOMETRY_G40
-        if (nextComp != CutterCompensationMode.CAM_GEOMETRY_G40) {
-            compensation.selectedItem = CutterCompensationMode.CAM_GEOMETRY_G40
-            JOptionPane.showMessageDialog(
-                frame,
-                nextComp.code + " BLOCKED: current CAM already applies geometric tool-radius compensation.",
-                "CUTTER COMP",
-                JOptionPane.WARNING_MESSAGE
-            )
+        val nextDRegister = cutterDRegister.text.trim().toIntOrNull()
+        val nextDValue = cutterDValue.text.trim().toDoubleOrNull()
+        if(nextDRegister==null || nextDRegister !in 1..999 || nextDValue==null || !nextDValue.isFinite()){
+            JOptionPane.showMessageDialog(frame,"D register must be 1..999 and D value must be a finite mm value.","CUTTER COMP",JOptionPane.WARNING_MESSAGE)
             return
         }
         controllerProfile = nextController
         coordinateMode = nextCoordinate
         originTransformMode = nextOrigin
         cutterCompensation = nextComp
+        cutterCompRegister = nextDRegister
+        cutterCompValueMm = nextDValue
         runCatching { generateNc() }
             .onSuccess { area.text = it }
             .onFailure {
@@ -2321,6 +2330,9 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     coordinate.addActionListener { refreshNcFromPostSelection() }
     origin.addActionListener { refreshNcFromPostSelection() }
     compensation.addActionListener { refreshNcFromPostSelection() }
+    val applyD = GlassActionButton("APPLY D", Color(80,170,255)).apply {
+        addActionListener { refreshNcFromPostSelection() }
+    }
     val keys = listOf("G","M","X","Y","Z","F","S","T","A","B","7","8","9","-",".","4","5","6","0","/","1","2","3","INSERT","DELETE","BLOCK SKIP")
     val keypad = AdaptiveGlassToolbar()
     keys.forEach { key ->
@@ -2371,6 +2383,11 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
                 add(coordinate)
                 add(origin)
                 add(compensation)
+                add(JLabel("D").apply { foreground=Color(190,220,255) })
+                add(cutterDRegister)
+                add(JLabel("mm").apply { foreground=Color(190,220,255) })
+                add(cutterDValue)
+                add(applyD)
                 add(alarmReset)
                 add(resume)
             }, BorderLayout.CENTER)
