@@ -203,6 +203,10 @@ const required = [
   'adaptiveRing',
   'state.strategy==="ADAPTIVE"',
   '只對封閉 RECT/CIRCLE/HOLE 產生真 2.5D 分層刀路',
+  'adaptiveMeta',
+  '自適應負載超界',
+  '自適應層級資料錯誤',
+  '• Load ',
   'CNC machine output disabled'
 ];
 
