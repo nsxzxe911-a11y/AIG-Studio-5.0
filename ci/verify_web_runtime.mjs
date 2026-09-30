@@ -18,6 +18,17 @@ const required = [
   'function parseProgram',
   'G90',
   'G91',
+  'G81',
+  'G73',
+  'G83',
+  'G98',
+  'G99',
+  'function invokeCycle',
+  'materialRemovalDepth',
+  'safetyWarnings',
+  'data-tool-dia',
+  'data-safe-z',
+  'data-g73-retract',
   'data-cmd="play"',
   'data-cmd="pause"',
   'data-cmd="step"',
@@ -42,4 +53,4 @@ if (pageDefs.length !== 7) {
   throw new Error("WEB_RUNTIME_PAGE_COUNT_" + pageDefs.length);
 }
 
-console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|BLACK_RGB");
+console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|BLACK_RGB");
