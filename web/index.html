@@ -265,7 +265,7 @@ function toolpathPage(){
 }
 function menuPage(){
  const cards=[
-  ["專案","PROJECT"],["檔案","FILE"],["刀具庫","TOOLS"],["工作座標","WCS"],
+  ["專案","PROJECT"],["檔案","FILE"],["刀具庫","TOOLS"],["工作座標","WCS"],["工件組裝","ASSEMBLY"],
   ["AI 助手","AI"],["監控","MONITOR"],["設定","SETTINGS"],["維修","MAINT"],
   ["同步","SYNC"],["更新","UPDATE"],["系統資訊","SYSTEM"],["說明","HELP"]
  ];
@@ -2264,8 +2264,8 @@ function makeMenuRuntime(root){
  function readJson(key,fallback=null){return aigJsonRead(root,key,fallback,"功能資料")}
  function saveJson(key,v){return aigJsonWrite(root,key,v,"功能資料")}
  function counts(){
-   const cad=readJson("aig-cad-draft-v1",{shapes:[]}),cam=readJson("aig-cam-toolpath-v1",{paths:[]});
-   return{cad:Array.isArray(cad?.shapes)?cad.shapes.length:0,cam:Array.isArray(cam?.paths)?cam.paths.length:0,
+   const cad=readJson("aig-cad-draft-v1",{shapes:[]}),cam=readJson("aig-cam-toolpath-v1",{paths:[]}),assembly=readJson("aig-assembly-v1",{items:[]});
+   return{cad:Array.isArray(cad?.shapes)?cad.shapes.length:0,cam:Array.isArray(cam?.paths)?cam.paths.length:0,fixtures:Array.isArray(assembly?.items)?assembly.items.filter(x=>x?.enabled!==false).length:0,
      n3:(aigStorageGet(root,"aig-code-3AX","","3AX G-code")||"").split(/\r?\n/).filter(Boolean).length,
      n4:(aigStorageGet(root,"aig-code-4AX","","4AX G-code")||"").split(/\r?\n/).filter(Boolean).length,
      n5:(aigStorageGet(root,"aig-code-5AX","","5AX G-code")||"").split(/\r?\n/).filter(Boolean).length};
@@ -2294,8 +2294,50 @@ function makeMenuRuntime(root){
    for(const g of ["G54","G55"])for(const a of ["X","Y","Z"])html+='<label class="field"><b>'+g+' '+a+'</b><input data-wcskey="'+g+'-'+a+'" type="number" step="0.001" value="'+Number(w[g]?.[a]||0)+'"></label>';
    detail.innerHTML=html+'</div><button class="btn play" data-menu-action="WCS_SAVE">儲存工作座標</button><div class="notice" data-menu-msg>Master Origin 保持 X0.000 Y0.000 Z0.000；G54/G55 偏移明示，不偷偷改刀路座標。</div>';
  }
+ function assemblyView(){
+   const stock=readJson("aig-stock-v1",null),assembly=readJson("aig-assembly-v1",{version:1,items:[]}),items=Array.isArray(assembly?.items)?assembly.items:[];
+   const esc=v=>String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));
+   const types=[["VISE_JAW","虎鉗顎"],["CLAMP","壓板"],["PARALLEL","墊塊"],["FIXTURE","夾治具"]];
+   const options=selected=>types.map(([v,n])=>'<option value="'+v+'" '+(v===selected?'selected':'')+'>'+n+'</option>').join("");
+   const sx=stock&&Number.isFinite(Number(stock.minX))&&Number.isFinite(Number(stock.maxX))?Number(stock.maxX)-Number(stock.minX):0;
+   const sy=stock&&Number.isFinite(Number(stock.minY))&&Number.isFinite(Number(stock.maxY))?Number(stock.maxY)-Number(stock.minY):0;
+   const cx=stock&&sx>0?(Number(stock.minX)+Number(stock.maxX))/2:0,cy=stock&&sy>0?(Number(stock.minY)+Number(stock.maxY))/2:0;
+   const bottom=Number.isFinite(Number(stock?.bottom))?Number(stock.bottom):-20;
+   const stockInfo=stock&&sx>0&&sy>0
+     ?("X "+Number(stock.minX).toFixed(3)+" ~ "+Number(stock.maxX).toFixed(3)+" / Y "+Number(stock.minY).toFixed(3)+" ~ "+Number(stock.maxY).toFixed(3)+" / Z "+Number(stock.bottom).toFixed(3)+" ~ "+Number(stock.top).toFixed(3))
+     :"尚未建立 CAM 毛坯；可先手動建立夾治具，或到 CAM 套用毛坯。";
+   const rows=items.map(item=>{
+     const id=esc(item.id),enabled=item.enabled!==false;
+     return '<div class="field" data-assembly-row="'+id+'" style="display:grid;gap:6px">'+
+       '<b>'+esc(item.name||item.type||"夾治具")+' #'+id+(enabled?'':'（隱藏）')+'</b>'+
+       '<div class="menuDetailGrid">'+
+       '<label class="field"><b>類型</b><select data-assembly-field="type">'+options(String(item.type||"FIXTURE"))+'</select></label>'+
+       '<label class="field"><b>名稱</b><input data-assembly-field="name" maxlength="40" value="'+esc(item.name||"夾治具")+'"></label>'+
+       '<label class="field"><b>X 中心</b><input data-assembly-field="x" type="number" step="0.001" value="'+Number(item.x||0)+'"></label>'+
+       '<label class="field"><b>Y 中心</b><input data-assembly-field="y" type="number" step="0.001" value="'+Number(item.y||0)+'"></label>'+
+       '<label class="field"><b>Z 底面</b><input data-assembly-field="z" type="number" step="0.001" value="'+Number(item.z||0)+'"></label>'+
+       '<label class="field"><b>X 寬</b><input data-assembly-field="w" type="number" min="0.001" step="0.001" value="'+Number(item.w||1)+'"></label>'+
+       '<label class="field"><b>Y 深</b><input data-assembly-field="d" type="number" min="0.001" step="0.001" value="'+Number(item.d||1)+'"></label>'+
+       '<label class="field"><b>Z 高</b><input data-assembly-field="h" type="number" min="0.001" step="0.001" value="'+Number(item.h||1)+'"></label>'+
+       '</div><div class="controls"><button class="btn play" data-menu-action="ASSEMBLY_SAVE_ITEM" data-id="'+id+'">儲存模組</button><button class="btn" data-menu-action="ASSEMBLY_TOGGLE_ITEM" data-id="'+id+'">'+(enabled?'隱藏':'顯示')+'</button><button class="btn danger" data-menu-action="ASSEMBLY_DELETE_ITEM" data-id="'+id+'">刪除</button></div></div>';
+   }).join("");
+   detail.innerHTML=
+     '<div class="notice"><b>目前毛坯：</b>'+esc(stockInfo)+'<br>夾治具採工作台局部座標；4AX/5AX 會與 A/B 工作台一起旋轉並參與碰撞。</div>'+
+     '<div class="menuDetailGrid">'+
+       '<label class="field"><b>新模組類型</b><select data-assembly-new="type">'+options("CLAMP")+'</select></label>'+
+       '<label class="field"><b>名稱</b><input data-assembly-new="name" maxlength="40" value="壓板"></label>'+
+       '<label class="field"><b>X 中心</b><input data-assembly-new="x" type="number" step="0.001" value="'+cx.toFixed(3)+'"></label>'+
+       '<label class="field"><b>Y 中心</b><input data-assembly-new="y" type="number" step="0.001" value="'+cy.toFixed(3)+'"></label>'+
+       '<label class="field"><b>Z 底面</b><input data-assembly-new="z" type="number" step="0.001" value="'+bottom.toFixed(3)+'"></label>'+
+       '<label class="field"><b>X 寬</b><input data-assembly-new="w" type="number" min="0.001" step="0.001" value="'+Math.max(20,sx*.5||40).toFixed(3)+'"></label>'+
+       '<label class="field"><b>Y 深</b><input data-assembly-new="d" type="number" min="0.001" step="0.001" value="12.000"></label>'+
+       '<label class="field"><b>Z 高</b><input data-assembly-new="h" type="number" min="0.001" step="0.001" value="10.000"></label>'+
+     '</div><div class="controls"><button class="btn play" data-menu-action="ASSEMBLY_ADD">新增模組</button><button class="btn" data-menu-action="ASSEMBLY_VISE">依毛坯建立虎鉗預設</button></div>'+
+     '<div class="notice" data-menu-msg>模組尺寸錯誤只會顯示在欄位，不會讓 AIG 停止。</div>'+
+     '<div style="display:grid;gap:8px;margin-top:8px">'+(rows||'<div class="notice">目前沒有夾治具模組。</div>')+'</div>';
+ }
  function monitorView(){
-   const c=counts();detail.innerHTML='<div class="menuDetailGrid"><div class="field"><b>CAD</b><span>'+c.cad+' entities</span></div><div class="field"><b>CAM/刀路</b><span>'+c.cam+' paths</span></div><div class="field"><b>3AX NC</b><span>'+c.n3+' lines</span></div><div class="field"><b>4AX NC</b><span>'+c.n4+' lines</span></div><div class="field"><b>5AX NC</b><span>'+c.n5+' lines</span></div><div class="field"><b>Renderer</b><span>AUTO 120/60/30</span></div></div><button class="btn" data-menu-action="REFRESH_MONITOR">重新整理</button>';
+   const c=counts();detail.innerHTML='<div class="menuDetailGrid"><div class="field"><b>CAD</b><span>'+c.cad+' entities</span></div><div class="field"><b>CAM/刀路</b><span>'+c.cam+' paths</span></div><div class="field"><b>夾治具</b><span>'+c.fixtures+' modules</span></div><div class="field"><b>3AX NC</b><span>'+c.n3+' lines</span></div><div class="field"><b>4AX NC</b><span>'+c.n4+' lines</span></div><div class="field"><b>5AX NC</b><span>'+c.n5+' lines</span></div><div class="field"><b>Renderer</b><span>AUTO 120/60/30</span></div></div><button class="btn" data-menu-action="REFRESH_MONITOR">重新整理</button>';
  }
  function systemView(){
    detail.innerHTML='<div class="menuDetailGrid"><div class="field"><b>User Agent</b><span>'+navigator.userAgent.replace(/</g,"&lt;")+'</span></div><div class="field"><b>Viewport</b><span>'+innerWidth+' × '+innerHeight+'</span></div><div class="field"><b>DPR</b><span>'+(devicePixelRatio||1)+'</span></div><div class="field"><b>Online</b><span>'+(navigator.onLine?"ONLINE":"OFFLINE")+'</span></div><div class="field"><b>Storage</b><span>localStorage</span></div><div class="field"><b>Theme</b><span>BLACK RGB</span></div></div>';
@@ -2303,11 +2345,12 @@ function makeMenuRuntime(root){
  function simple(text){detail.innerHTML='<div class="notice">'+text+'</div>'}
  function render(key){
    root.querySelectorAll("[data-menu-key]").forEach(x=>x.classList.toggle("active",x.dataset.menuKey===key));
-   const names={PROJECT:"專案",FILE:"檔案",TOOLS:"刀具庫",WCS:"工作座標",AI:"AI 助手",MONITOR:"監控",SETTINGS:"設定",MAINT:"維修",SYNC:"同步",UPDATE:"更新",SYSTEM:"系統資訊",HELP:"說明"};title.textContent=names[key]||"功能中心";
+   const names={PROJECT:"專案",FILE:"檔案",TOOLS:"刀具庫",WCS:"工作座標",ASSEMBLY:"工件組裝",AI:"AI 助手",MONITOR:"監控",SETTINGS:"設定",MAINT:"維修",SYNC:"同步",UPDATE:"更新",SYSTEM:"系統資訊",HELP:"說明"};title.textContent=names[key]||"功能中心";
    if(key==="PROJECT")projectView();
    else if(key==="FILE")fileView();
    else if(key==="TOOLS")toolsView();
    else if(key==="WCS")wcsView();
+   else if(key==="ASSEMBLY")assemblyView();
    else if(key==="MONITOR")monitorView();
    else if(key==="SYSTEM")systemView();
    else if(key==="AI")simple("Web Runtime 的 AI 網路服務尚未接線；目前不顯示假 AI 成功狀態。正式接入時再由 ChatGPT AI 更新/修復服務處理。");
@@ -2324,19 +2367,58 @@ function makeMenuRuntime(root){
    if(a.dataset.menuAction==="PROJECT_SAVE"){const old=readJson("aig-project-meta-v1",{revision:0}),nameEl=detail.querySelector("[data-menu-project-name]"),name=nameEl.value.trim();if(!name){aigFieldIssue(nameEl,"error","專案名稱不可空白；原專案資料保持不變。");if(msg)msg.textContent="專案名稱空白，沒有覆蓋原資料；AIG 可繼續操作。";return}saveJson("aig-project-meta-v1",{name,revision:Number(old.revision||0)+1,updatedAt:Date.now()});projectView()}
    if(a.dataset.menuAction==="PROJECT_NEW"){saveJson("aig-project-meta-v1",{name:"AIG CNC Project",revision:1,updatedAt:Date.now()});projectView()}
    if(a.dataset.menuAction==="EXPORT"){
-     const data={schema:"AIG-WEB-PROJECT-1",exportedAt:new Date().toISOString(),project:readJson("aig-project-meta-v1",{}),cad:readJson("aig-cad-draft-v1",null),cam:readJson("aig-cam-toolpath-v1",null),tools:readJson("aig-tool-table-v1",null),wcs:readJson("aig-wcs-v1",null),nc:{"3AX":aigStorageGet(root,"aig-code-3AX",null,"3AX G-code"),"4AX":aigStorageGet(root,"aig-code-4AX",null,"4AX G-code"),"5AX":aigStorageGet(root,"aig-code-5AX",null,"5AX G-code")}};
+     const data={schema:"AIG-WEB-PROJECT-1",exportedAt:new Date().toISOString(),project:readJson("aig-project-meta-v1",{}),cad:readJson("aig-cad-draft-v1",null),cam:readJson("aig-cam-toolpath-v1",null),stock:readJson("aig-stock-v1",null),assembly:readJson("aig-assembly-v1",null),tools:readJson("aig-tool-table-v1",null),wcs:readJson("aig-wcs-v1",null),nc:{"3AX":aigStorageGet(root,"aig-code-3AX",null,"3AX G-code"),"4AX":aigStorageGet(root,"aig-code-4AX",null,"4AX G-code"),"5AX":aigStorageGet(root,"aig-code-5AX",null,"5AX G-code")}};
      const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="AIG_Web_Project.json";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);if(msg)msg.textContent="已匯出 AIG JSON。";
    }
    if(a.dataset.menuAction==="IMPORT"){detail.querySelector("[data-menu-file]").click()}
    if(a.dataset.menuAction==="TOOLS_SAVE"){const out={};detail.querySelectorAll("[data-toolkey]").forEach(i=>out[i.dataset.toolkey]=Number(i.value)||0);saveJson("aig-tool-table-v1",out);if(msg)msg.textContent="刀具表已儲存。";}
    if(a.dataset.menuAction==="WCS_SAVE"){const out={G54:{X:0,Y:0,Z:0},G55:{X:0,Y:0,Z:0}};detail.querySelectorAll("[data-wcskey]").forEach(i=>{const [g,k]=i.dataset.wcskey.split("-");out[g][k]=Number(i.value)||0});saveJson("aig-wcs-v1",out);if(msg)msg.textContent="G54/G55 已儲存；模擬頁重新載入時套用。";}
+   if(a.dataset.menuAction==="ASSEMBLY_ADD"){
+     const fields={};detail.querySelectorAll("[data-assembly-new]").forEach(el=>{aigValidateField(el);fields[el.dataset.assemblyNew]=el});
+     if(detail.querySelector("[data-assembly-new].aigError")){if(msg)msg.textContent="新模組欄位有錯誤；未新增。";return}
+     const w=Number(fields.w.value),d=Number(fields.d.value),h=Number(fields.h.value);if(!(w>0&&d>0&&h>0)){aigFieldIssue(fields.w,"error","X 寬、Y 深、Z 高都必須大於 0。");if(msg)msg.textContent="模組尺寸不合法；未新增。";return}
+     const assembly=readJson("aig-assembly-v1",{version:1,items:[]}),items=Array.isArray(assembly.items)?assembly.items:[];
+     const id="F"+Date.now().toString(36).toUpperCase();
+     items.push({id,type:fields.type.value,name:fields.name.value.trim()||fields.type.value,x:Number(fields.x.value)||0,y:Number(fields.y.value)||0,z:Number(fields.z.value)||0,w,d,h,enabled:true});
+     const out={version:1,updatedAt:Date.now(),items};saveJson("aig-assembly-v1",out);window.dispatchEvent(new CustomEvent("aig-assembly-updated",{detail:out}));assemblyView();return
+   }
+   if(a.dataset.menuAction==="ASSEMBLY_VISE"){
+     const stock=readJson("aig-stock-v1",null);
+     if(!stock||![stock.minX,stock.maxX,stock.minY,stock.maxY,stock.bottom].every(v=>Number.isFinite(Number(v)))){if(msg)msg.textContent="先在 CAM 建立並套用毛坯，才能自動建立虎鉗預設。";return}
+     const minX=Number(stock.minX),maxX=Number(stock.maxX),minY=Number(stock.minY),maxY=Number(stock.maxY),bottom=Number(stock.bottom),cx=(minX+maxX)/2,cy=(minY+maxY)/2,sx=maxX-minX,sy=maxY-minY;
+     const assembly=readJson("aig-assembly-v1",{version:1,items:[]}),items=Array.isArray(assembly.items)?assembly.items:[];
+     const stamp=Date.now().toString(36).toUpperCase(),jawH=Math.max(10,Math.min(20,Number(stock.thickness||20)*.6));
+     items.push(
+       {id:"VB"+stamp,type:"PARALLEL",name:"虎鉗底座",x:cx,y:cy,z:bottom-8,w:sx+30,d:sy+30,h:8,enabled:true},
+       {id:"JF"+stamp,type:"VISE_JAW",name:"固定顎",x:cx,y:minY-5,z:bottom,w:sx+10,d:10,h:jawH,enabled:true},
+       {id:"JM"+stamp,type:"VISE_JAW",name:"活動顎",x:cx,y:maxY+5,z:bottom,w:sx+10,d:10,h:jawH,enabled:true}
+     );
+     const out={version:1,updatedAt:Date.now(),items};saveJson("aig-assembly-v1",out);window.dispatchEvent(new CustomEvent("aig-assembly-updated",{detail:out}));assemblyView();return
+   }
+   if(["ASSEMBLY_SAVE_ITEM","ASSEMBLY_TOGGLE_ITEM","ASSEMBLY_DELETE_ITEM"].includes(a.dataset.menuAction)){
+     const id=String(a.dataset.id||""),assembly=readJson("aig-assembly-v1",{version:1,items:[]}),items=Array.isArray(assembly.items)?assembly.items:[],idx=items.findIndex(x=>String(x.id)===id);
+     if(idx<0){if(msg)msg.textContent="找不到夾治具模組 "+id+"；資料未變更。";return}
+     if(a.dataset.menuAction==="ASSEMBLY_SAVE_ITEM"){
+       const row=a.closest("[data-assembly-row]"),fields={};row.querySelectorAll("[data-assembly-field]").forEach(el=>{aigValidateField(el);fields[el.dataset.assemblyField]=el});
+       if(row.querySelector(".aigError")){if(msg)msg.textContent="夾治具欄位有錯誤；未儲存，但 AIG 繼續運作。";return}
+       const w=Number(fields.w.value),d=Number(fields.d.value),h=Number(fields.h.value);if(!(w>0&&d>0&&h>0)){aigFieldIssue(fields.w,"error","X 寬、Y 深、Z 高必須大於 0。");return}
+       items[idx]={...items[idx],type:fields.type.value,name:fields.name.value.trim()||fields.type.value,x:Number(fields.x.value)||0,y:Number(fields.y.value)||0,z:Number(fields.z.value)||0,w,d,h};
+     }else if(a.dataset.menuAction==="ASSEMBLY_TOGGLE_ITEM"){
+       items[idx]={...items[idx],enabled:items[idx].enabled===false};
+     }else{
+       const now=Date.now(),key="assemblyDelete:"+id;
+       if(!AIG_ISSUES[key]||now-AIG_ISSUES[key]>2500){AIG_ISSUES[key]=now;if(msg)msg.textContent="刪除待命：2.5 秒內再按一次，才刪除 "+(items[idx].name||id)+"。";return}
+       items.splice(idx,1);delete AIG_ISSUES[key];
+     }
+     const out={version:1,updatedAt:Date.now(),items};saveJson("aig-assembly-v1",out);window.dispatchEvent(new CustomEvent("aig-assembly-updated",{detail:out}));assemblyView();return
+   }
    if(a.dataset.menuAction==="REFRESH_MONITOR")monitorView();
    if(a.dataset.menuAction==="SELF_CHECK"){const c=counts();if(msg)msg.textContent="SELF CHECK PASS：CAD "+c.cad+" / CAM "+c.cam+" / NC "+(c.n3+c.n4+c.n5)+" lines。";}
    if(a.dataset.menuAction==="CLEAR_DERIVED"){const now=Date.now();if(now>maintArmedUntil){maintArmedUntil=now+2500;if(msg)msg.textContent="清除待命：2.5 秒內再按一次才會清除 CAM 與 3/4/5AX NC；CAD 保留。";return}maintArmedUntil=0;aigStorageRemove(root,"aig-cam-toolpath-v1","CAM/NC 衍生資料");for(const ax of ["3AX","4AX","5AX"])aigStorageRemove(root,"aig-code-"+ax,ax+" G-code");if(msg)msg.textContent="已清除 CAM/NC 衍生暫存；CAD 未刪除。";}
  },null,"warn"));
  root.addEventListener("change",e=>{
    const file=e.target.closest("[data-menu-file]");if(!file||!file.files?.[0])return;
-   const reader=new FileReader();reader.onload=()=>aigGuard(root,"專案匯入",()=>{const msg=detail.querySelector("[data-menu-msg]");let data=null;try{data=JSON.parse(String(reader.result||"{}"))}catch{if(msg)msg.textContent="匯入失敗：JSON 格式無法解析；原資料未變更。";aigShowIssue(root,"warn","匯入檔案不是有效 JSON；原資料保持不變。");return}if(data?.schema!=="AIG-WEB-PROJECT-1"){if(msg)msg.textContent="匯入失敗：檔案格式不是 AIG-WEB-PROJECT-1；原資料未變更。";aigShowIssue(root,"warn","匯入格式不相容；原資料保持不變。");return}if(data.project)saveJson("aig-project-meta-v1",data.project);if(data.cad)saveJson("aig-cad-draft-v1",data.cad);if(data.cam)saveJson("aig-cam-toolpath-v1",data.cam);if(data.tools)saveJson("aig-tool-table-v1",data.tools);if(data.wcs)saveJson("aig-wcs-v1",data.wcs);for(const ax of ["3AX","4AX","5AX"])if(data.nc?.[ax])aigStorageSet(root,"aig-code-"+ax,data.nc[ax],ax+" G-code");if(msg)msg.textContent="匯入完成；重新開啟頁面即可載入全部資料。";aigShowIssue(root,"info","專案匯入完成。")},null,"warn");reader.onerror=()=>{const msg=detail.querySelector("[data-menu-msg]");if(msg)msg.textContent="檔案讀取失敗；原資料未變更。";aigShowIssue(root,"warn","檔案讀取失敗；AIG 其他功能可繼續使用。")};reader.readAsText(file.files[0]);
+   const reader=new FileReader();reader.onload=()=>aigGuard(root,"專案匯入",()=>{const msg=detail.querySelector("[data-menu-msg]");let data=null;try{data=JSON.parse(String(reader.result||"{}"))}catch{if(msg)msg.textContent="匯入失敗：JSON 格式無法解析；原資料未變更。";aigShowIssue(root,"warn","匯入檔案不是有效 JSON；原資料保持不變。");return}if(data?.schema!=="AIG-WEB-PROJECT-1"){if(msg)msg.textContent="匯入失敗：檔案格式不是 AIG-WEB-PROJECT-1；原資料未變更。";aigShowIssue(root,"warn","匯入格式不相容；原資料保持不變。");return}if(data.project)saveJson("aig-project-meta-v1",data.project);if(data.cad)saveJson("aig-cad-draft-v1",data.cad);if(data.cam)saveJson("aig-cam-toolpath-v1",data.cam);if(data.stock){saveJson("aig-stock-v1",data.stock);window.dispatchEvent(new CustomEvent("aig-stock-updated",{detail:data.stock}))}if(data.assembly){saveJson("aig-assembly-v1",data.assembly);window.dispatchEvent(new CustomEvent("aig-assembly-updated",{detail:data.assembly}))}if(data.tools)saveJson("aig-tool-table-v1",data.tools);if(data.wcs)saveJson("aig-wcs-v1",data.wcs);for(const ax of ["3AX","4AX","5AX"])if(data.nc?.[ax])aigStorageSet(root,"aig-code-"+ax,data.nc[ax],ax+" G-code");if(msg)msg.textContent="匯入完成；重新開啟頁面即可載入全部資料。";aigShowIssue(root,"info","專案匯入完成。")},null,"warn");reader.onerror=()=>{const msg=detail.querySelector("[data-menu-msg]");if(msg)msg.textContent="檔案讀取失敗；原資料未變更。";aigShowIssue(root,"warn","檔案讀取失敗；AIG 其他功能可繼續使用。")};reader.readAsText(file.files[0]);
  });
  render("PROJECT");
 }
