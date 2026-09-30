@@ -73,6 +73,14 @@ const required = [
   'function makeToolpathRuntime',
   'data-tp-runtime',
   'function generateFanucNC',
+  'function rotaryAt(path,f,target)',
+  'data-tp-rotmode',
+  'data-tp-a0',
+  'data-tp-a1',
+  'data-tp-b0',
+  'data-tp-b1',
+  'SIMULTANEOUS 同步',
+  'A/B 由使用者明示',
   '產生 NC',
   '攻牙刀路存在',
   'localStorage.setItem("aig-code-"+target',
@@ -163,6 +171,18 @@ const holes = drillParsed.blocks.filter(b => b.pattern === "G34" && b.drillBotto
 if (holes.length !== 6) throw new Error("G34_HOLE_COUNT_" + holes.length);
 if (!holes.every(b => b.cycle === "G81")) throw new Error("G34_MODAL_G81_MISSING");
 
+const cadRuntimeIndex = scriptMatch[1].indexOf("function makeCadRuntime(root){");
+const camRuntimeIndex = scriptMatch[1].indexOf("function makeCamRuntime(root){");
+const toolpathRuntimeIndex = scriptMatch[1].indexOf("function makeToolpathRuntime(root){");
+const menuRuntimeIndex = scriptMatch[1].indexOf("function makeMenuRuntime(root){");
+const postIndex = scriptMatch[1].indexOf("function generateFanucNC(){");
+if (!(cadRuntimeIndex >= 0 && camRuntimeIndex > cadRuntimeIndex && toolpathRuntimeIndex > camRuntimeIndex && postIndex > toolpathRuntimeIndex && menuRuntimeIndex > postIndex)) {
+  throw new Error("FANUC_POST_SCOPE_INVALID");
+}
+if (scriptMatch[1].indexOf("function generateFanucNC(){", postIndex + 1) !== -1) {
+  throw new Error("FANUC_POST_DUPLICATED");
+}
+
 const runtimeCount = (html.match(/sim\("3AX"|sim\("4AX"|sim\("5AX"/g) || []).length;
 if (runtimeCount !== 0) {
   // Runtime pages are generated dynamically through simPage(name), so direct sim(...) calls are not expected.
@@ -173,4 +193,4 @@ if (pageDefs.length !== 7) {
   throw new Error("WEB_RUNTIME_PAGE_COUNT_" + pageDefs.length);
 }
 
-console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|FUNCTION_MENU_RUNTIME|NO_FAKE_SERVICE_STATE|WEBGL_3D|3AX_HEIGHTFIELD_REMOVAL|4X_5X_ROTARY_VOXEL_REMOVAL|REMOVAL_VOLUME_EVIDENCE|BLACK_RGB");
+console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|FUNCTION_MENU_RUNTIME|NO_FAKE_SERVICE_STATE|WEBGL_3D|3AX_HEIGHTFIELD_REMOVAL|4X_5X_ROTARY_VOXEL_REMOVAL|ROTARY_TOOLPATH_AB|SIMULTANEOUS_AB_POST|FANUC_POST_SCOPE|REMOVAL_VOLUME_EVIDENCE|BLACK_RGB");
