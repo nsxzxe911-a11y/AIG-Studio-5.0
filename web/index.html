@@ -511,6 +511,11 @@ function parseProgram(text,axis,opts={}){
     adaptiveContext={zLevelIndex:Number(adaptiveMatch[1]),zLevelCount:Number(adaptiveMatch[2]),adaptiveRing:Number(adaptiveMatch[3]),radialEngagement:Number(adaptiveMatch[4])/100};
     return;
   }
+  const rampMatch=raw.match(/\(AIG\s+RAMP\s+LOOP\s+P(\d+)\s+ANG([\d.]+)\s+Z(-?[\d.]+)\s+TO\s+Z(-?[\d.]+)\)/i);
+  if(rampMatch){
+    if(adaptiveContext)adaptiveContext={...adaptiveContext,rampPasses:Number(rampMatch[1]),rampAngleDeg:Number(rampMatch[2]),entryZStart:Number(rampMatch[3]),depth:Number(rampMatch[4])};
+    return;
+  }
   if(/\(AIG\s+OP\s+END\)/i.test(raw)){adaptiveContext=null;return}
   const meta={subprogram:item.program,subCall:item.subCall??null,subReturn:Boolean(item.subReturn),callDepth:item.callDepth||0,callRepeat:item.callRepeat||1,adaptive:adaptiveContext?{...adaptiveContext}:null};
   currentMeta=meta;
@@ -1419,7 +1424,7 @@ function makeRuntime(root){
   const remainEl=root.querySelector("[data-remaining-volume]");if(remainEl)remainEl.textContent=remainVolume.toFixed(3)+" mm³";
   const fixtureCountEl=root.querySelector("[data-fixture-count]");if(fixtureCountEl)fixtureCountEl.textContent=String(runtimeAssemblyBoxes(cfgEvidence).length);
   const adaptiveEl=root.querySelector("[data-adaptive-op]"),activeAdaptive=currentBlock()?.adaptive;
-  if(adaptiveEl)adaptiveEl.textContent=activeAdaptive?("L"+activeAdaptive.zLevelIndex+"/"+activeAdaptive.zLevelCount+" R"+activeAdaptive.adaptiveRing+" Load "+(activeAdaptive.radialEngagement*100).toFixed(0)+"%"):"—";
+  if(adaptiveEl)adaptiveEl.textContent=activeAdaptive?("L"+activeAdaptive.zLevelIndex+"/"+activeAdaptive.zLevelCount+" R"+activeAdaptive.adaptiveRing+" Load "+(activeAdaptive.radialEngagement*100).toFixed(0)+"%"+(Number.isFinite(activeAdaptive.rampAngleDeg)?(" • Ramp×"+Number(activeAdaptive.rampPasses||1)+" "+Number(activeAdaptive.rampAngleDeg).toFixed(2)+"°"):"")):"—";
   if(webglOk){const {w,h}=resize();ctx.clearRect(0,0,w,h);updateHud();return}
   const {w,h}=resize(),c=ctx,b=bounds();c.clearRect(0,0,w,h);c.fillStyle="#010306";c.fillRect(0,0,w,h);
   c.strokeStyle="rgba(39,233,255,.06)";c.lineWidth=1;
@@ -1493,7 +1498,7 @@ function makeRuntime(root){
     "<br>"+mc.spindle+" / "+(mc.coolant?"M8":"M9")+
     "<br>SUB "+(bl?.subprogram||state.parsed.mainProgram)+
     "<br>Ø "+cfg.toolDia.toFixed(3)+(bl?.cycle?"<br>"+bl.cycle+(bl.pattern?"/"+bl.pattern:""):"")+
-    (bl?.adaptive?"<br><b>ADP</b> L"+bl.adaptive.zLevelIndex+"/"+bl.adaptive.zLevelCount+" R"+bl.adaptive.adaptiveRing+" "+(bl.adaptive.radialEngagement*100).toFixed(0)+"%":"");
+    (bl?.adaptive?"<br><b>ADP</b> L"+bl.adaptive.zLevelIndex+"/"+bl.adaptive.zLevelCount+" R"+bl.adaptive.adaptiveRing+" "+(bl.adaptive.radialEngagement*100).toFixed(0)+"%"+(Number.isFinite(bl.adaptive.rampAngleDeg)?("<br>Ramp×"+Number(bl.adaptive.rampPasses||1)+" "+Number(bl.adaptive.rampAngleDeg).toFixed(2)+"°"):""):"");
   ["X","Y","Z","A","B","C"].forEach(a=>{const e=root.querySelector('[data-axis-read="'+a+'"]');if(e)e.textContent=a+"　"+(p[a]||0).toFixed(3)});
  }
  function updateUi(){
