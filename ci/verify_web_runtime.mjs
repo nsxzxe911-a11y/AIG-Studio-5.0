@@ -206,6 +206,9 @@ const required = [
   '自適應層級資料錯誤',
   '• Load ',
   'function buildAdaptive2DPaths',
+  'AIG ADAPTIVE 2.5D',
+  'stock:state.payload?.stock||aigJsonRead(root,"aig-stock-v1",null,"毛坯資料")',
+  'Adaptive OP 保留 Z 層 / Ring / Load% 註解',
   'CNC machine output disabled'
 ];
 
