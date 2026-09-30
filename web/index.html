@@ -1185,6 +1185,7 @@ function makeRuntime(root){
   return base;
  }
  function tick(now){
+  try{
   const dt=Math.min(60,now-state.last);state.last=now;
   if(state.running&&state.parsed.blocks.length){
     let b=currentBlock();
@@ -1218,7 +1219,14 @@ function makeRuntime(root){
       renderExec();updateUi();
     }
   }
-  draw();requestAnimationFrame(tick);
+  draw();
+  }catch(err){
+    state.running=false;
+    const detail=err&&err.message?err.message:String(err||"未知錯誤");
+    aigShowIssue(root,"error",axis+" 模擬幀發生可恢復錯誤："+detail+"；只停止這次播放，AIG、G-code 與其他頁面繼續運作。");
+    aigGuard(root,axis+" 狀態恢復",()=>{updateUi();renderExec();draw()},null,"warn");
+  }
+  requestAnimationFrame(tick);
  }
  function bounds(){
   const pts=[];state.parsed.blocks.forEach(b=>{if(b.kind==="move"){pts.push(b.from,b.to)}});if(!pts.length)pts.push({X:0,Y:0,Z:0});
@@ -1450,6 +1458,14 @@ function makeCadRuntime(root){
    snap:true,view:persisted?.view||{scale:4,panX:0,panY:0},history:[],historyIndex:0,
    panDrag:null,pointers:new Map(),gesture:null,lastPick:{x:0,y:0},deleteArmedUntil:0,clearArmedUntil:0
  };
+ function validateCadFields(){
+   [offsetInput,arrayCountInput,arraySpacingInput,dimInput].forEach(aigValidateField);
+   const off=Number(offsetInput.value),count=Number(arrayCountInput.value),spacing=Number(arraySpacingInput.value),dim=Number(dimInput.value);
+   if(Number.isFinite(off)&&Math.abs(off)<1e-12)aigFieldIssue(offsetInput,"warn","OFFSET = 0.000 mm，不會產生幾何位移。");
+   if(Number.isFinite(count)&&(!Number.isInteger(count)||count<2||count>99))aigFieldIssue(arrayCountInput,"error","ARRAY 數量必須是 2–99 的整數。");
+   if(Number.isFinite(spacing)&&Math.abs(spacing)<1e-12)aigFieldIssue(arraySpacingInput,"warn","ARRAY X = 0.000 mm，複製物件會完全重疊。");
+   if(Number.isFinite(dim)&&dim<=0)aigFieldIssue(dimInput,"error","DIM 必須大於 0 mm。");
+ }
  for(const sh of state.shapes)idSeed=Math.max(idSeed,(Number(sh.id)||0)+1);
  const clone=x=>JSON.parse(JSON.stringify(x));
  const snapshot=()=>JSON.stringify(state.shapes);
@@ -1595,6 +1611,8 @@ function makeCadRuntime(root){
    },"EXTEND 完成。");
  }
  function offsetSelected(){
+   validateCadFields();
+   if(offsetInput.classList.contains("aigError")){msgEl.textContent="OFFSET 欄位有錯誤；只取消這次 OFFSET，CAD 繼續使用。";return}
    const d=Number(offsetInput.value)||0;
    const sh=currentSelected();if(!sh){msgEl.textContent="請先 Select 幾何。";return}
    let cp=clone(sh);cp.id=newId();
@@ -1605,12 +1623,16 @@ function makeCadRuntime(root){
    state.shapes.push(cp);state.selectedId=cp.id;pushHistory();msgEl.textContent="OFFSET "+d.toFixed(3)+" mm 完成。";
  }
  function arraySelected(){
+   validateCadFields();
+   if(arrayCountInput.classList.contains("aigError")||arraySpacingInput.classList.contains("aigError")){msgEl.textContent="ARRAY 欄位有錯誤；只取消這次 ARRAY。";return}
    const sh=currentSelected();if(!sh){msgEl.textContent="請先 Select 幾何。";return}
    const count=Math.max(2,Math.min(99,Math.trunc(Number(arrayCountInput.value)||3))),spacing=Number(arraySpacingInput.value)||10;
    for(let i=1;i<count;i++)state.shapes.push(translateShape(sh,spacing*i,0));
    pushHistory();msgEl.textContent="ARRAY "+count+" 個，X 間距 "+spacing.toFixed(3)+" mm。";
  }
  function dimensionSelected(){
+   validateCadFields();
+   if(dimInput.classList.contains("aigError")){msgEl.textContent="DIM 欄位有錯誤；只取消這次尺寸修改。";return}
    const val=Math.max(.001,Number(dimInput.value)||.001);
    mutateSelected(sh=>{
      if(sh.type==="line"){const dx=sh.b.x-sh.a.x,dy=sh.b.y-sh.a.y,len=Math.hypot(dx,dy)||1;sh.b={x:sh.a.x+dx/len*val,y:sh.a.y+dy/len*val}}
@@ -1746,6 +1768,8 @@ function makeCadRuntime(root){
    const ab=e.target.closest("[data-cad-action]");if(ab){action(ab.dataset.cadAction);return}
  });
  if(persisted?.shapes?.length)msgEl.textContent="Recovery：已自動還原 "+persisted.shapes.length+" 個 CAD 幾何。";
+ [offsetInput,arrayCountInput,arraySpacingInput,dimInput].forEach(el=>{el.addEventListener("input",()=>aigGuard(root,"CAD 欄位驗證",validateCadFields,null,"warn"));el.addEventListener("change",()=>aigGuard(root,"CAD 欄位驗證",validateCadFields,null,"warn"))});
+ validateCadFields();
  setTool("SELECT");updateInfo();draw();
 }
 
@@ -2187,7 +2211,7 @@ function makeMenuRuntime(root){
  render("PROJECT");
 }
 pages.forEach(([name,color])=>{
- const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>show(name);nav.appendChild(b);
+ const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>aigGuard(document.body,"頁面切換",()=>show(name),null,"warn");nav.appendChild(b);
  const s=document.createElement("section");s.className="screen";s.dataset.page=name;
  s.innerHTML=name==="功能"?menuPage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="刀路"?toolpathPage():simPage(name);
  screens.appendChild(s);
@@ -2204,7 +2228,7 @@ function show(name){
  history.replaceState(null,"","#"+encodeURIComponent(name));
  setTimeout(()=>window.dispatchEvent(new Event("resize")),0);
 }
-show(decodeURIComponent((location.hash||"#5AX").slice(1)));
+aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash||"#5AX").slice(1))),null,"error");
 </script>
 </body>
 </html>
