@@ -1,7 +1,7 @@
 {
   "theme_id": "aigii_rgb_neon_v2",
   "theme_name": "AIG RGB Glass Product UI",
-  "theme_version": "4.9.0",
+  "theme_version": "5.0.0",
   "theme_family": "aigii_rgb_neon",
   "platform_profile": "adaptive_touch_spen_desktop",
   "color_contract": {
@@ -26,7 +26,7 @@
     "AIG-II",
     "AIG-CNC"
   ],
-  "min_app_version": "249.0.0",
+  "min_app_version": "250.0.0",
   "embedded_trusted": true,
   "remote_signature_required": true,
   "style_profile": "AIG_II_FULL_RGB_GLASS",
@@ -322,5 +322,20 @@
     "LOADING_UI",
     "HEALTH_CHECK",
     "READY"
-  ]
+  ],
+  "toolpath_rgb_art": {
+    "profile": "TOOLPATH_RGB_GLOW_250",
+    "appearance_only": true,
+    "geometry_unchanged": true,
+    "rapid": "#27E9FF",
+    "retract": "#FF4DA6",
+    "cutting": "#33F39B",
+    "lead_in": "#FFB326",
+    "arc": "#9F72FF",
+    "drill": "#3694FF",
+    "active_glow": "#FF4DA6",
+    "active_core": "#FFFFFF",
+    "glow_layers": 2,
+    "occluded_alpha_reduced": true
+  }
 }
