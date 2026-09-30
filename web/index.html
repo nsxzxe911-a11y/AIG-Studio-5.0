@@ -74,6 +74,10 @@ button,textarea,input,select{font:inherit}button{color:inherit}
 .footer{padding:6px 10px 10px;color:#66808f;font-size:9px;text-align:center}
 .badge{font-size:10px;color:var(--muted);border:1px solid #233846;border-radius:999px;padding:5px 8px}
 .notice{font-size:10px;color:#b7c8d1;padding:6px 8px;border:1px solid #172b36;border-radius:8px;background:#03070a}
+.param{display:flex;align-items:center;gap:5px;min-height:32px;padding:4px 7px;border:1px solid #1b3441;border-radius:9px;background:#03070a;color:var(--muted);font-size:10px}
+.param input{width:62px;background:#010305;color:var(--text);border:1px solid #24485a;border-radius:6px;padding:4px 5px;outline:none}
+.param input:focus{border-color:var(--cyan)}
+.cycleTag{color:var(--amber)!important}
 @media(max-width:920px){
  .top{height:auto;flex-wrap:wrap}.brand{min-width:140px}.nav{order:3;grid-template-columns:repeat(7,minmax(58px,1fr));max-width:none;flex-basis:100%}
  .simgrid,.workgrid,.camgrid{grid-template-columns:1fr}.editor{min-height:560px}.code{min-height:330px}
@@ -124,9 +128,9 @@ function simPage(axis){
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
  '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 加工模擬<small>已執行刀路以綠色顯示；未執行刀路以藍色顯示</small></div></div>'+
  '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn danger" data-cmd="reset">重設</button></div>'+
- '<div class="runtimeStatus"><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>模擬</b><span data-simstate>停止</span></div></div></div></section>';
+ '<div class="runtimeStatus"><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
- '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button></div>'+
+ '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label></div>'+
  '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+sourceCode[axis]+'</textarea></div>'+
  '<div class="body" style="padding-top:0"><div class="execView" data-exec></div></div>'+
  '<div class="body editactions"><button class="btn" data-editcmd="insert">插入行</button><button class="btn danger" data-editcmd="delete">刪除行</button><button class="btn" data-editcmd="undo">復原</button><button class="btn" data-editcmd="redo">重做</button><button class="btn play" data-editcmd="save">儲存</button></div>'+
@@ -169,10 +173,71 @@ function parseWords(line){
  while((m=re.exec(clean))) out[m[1]]=Number(m[2]);
  return {clean,out};
 }
-function parseProgram(text,axis){
+function parseProgram(text,axis,opts={}){
  const lines=text.split(/\r?\n/);
- let pos={X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0},absolute=true,motion="G0",plane="G17";
- const blocks=[];const errors=[];
+ let pos={X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0},absolute=true,motion="G0",plane="G17",returnMode="G98";
+ let cycle=null,cycleZ=null,cycleR=null,cycleQ=null;
+ const blocks=[];const errors=[];const warnings=[];
+ const g73Retract=Math.max(0,Number(opts.g73Retract)||0.5);
+
+ function moveTo(line,raw,to,motionName,extra={}){
+   const from={...pos},dest={...pos,...to};
+   dest.F=Number.isFinite(to.F)?to.F:pos.F;dest.S=Number.isFinite(to.S)?to.S:pos.S;
+   blocks.push({
+     line,raw,kind:"move",motion:motionName,absolute,plane,from,to:dest,n:null,
+     arc:{I:null,J:null,K:null,R:null},cutting:false,...extra
+   });
+   pos={...dest};
+ }
+ function resolveAxisValue(word,value,base){
+   if(!Number.isFinite(value))return base;
+   return absolute?value:base+value;
+ }
+ function invokeCycle(line,raw,out,cycleStart){
+   const initialZ=pos.Z;
+   const x=resolveAxisValue("X",out.X,pos.X),y=resolveAxisValue("Y",out.Y,pos.Y);
+   if(x!==pos.X||y!==pos.Y)moveTo(line,raw,{X:x,Y:y},"G0",{cycle,cyclePhase:"xy",cutting:false,synthetic:true});
+
+   if(cycleStart || Number.isFinite(out.R)){
+     if(Number.isFinite(out.R))cycleR=absolute?out.R:initialZ+out.R;
+   }
+   if(cycleStart || Number.isFinite(out.Z)){
+     if(Number.isFinite(out.Z))cycleZ=absolute?out.Z:(cycleR??initialZ)+out.Z;
+   }
+   if(Number.isFinite(out.Q))cycleQ=Math.abs(out.Q);
+   const r=Number.isFinite(cycleR)?cycleR:Math.min(initialZ,Number(opts.safeZ)||5);
+   const z=Number.isFinite(cycleZ)?cycleZ:pos.Z;
+   if(pos.Z!==r)moveTo(line,raw,{Z:r},"G0",{cycle,cyclePhase:"rapid-r",cutting:false,synthetic:true});
+   const feed=Number.isFinite(out.F)?out.F:pos.F;
+
+   if(cycle==="G81"){
+     moveTo(line,raw,{Z:z,F:feed},"G1",{cycle,cyclePhase:"feed",cutting:z<0,synthetic:true,drillBottom:true});
+   }else if(cycle==="G73"||cycle==="G83"){
+     const q=Math.max(0.001,Number(cycleQ)||Math.max(1,Math.abs(r-z)));
+     const dir=z<r?-1:1;
+     let depth=r;
+     let guard=0;
+     while(((dir<0&&depth>z)||(dir>0&&depth<z))&&guard++<500){
+       const next=dir<0?Math.max(z,depth-q):Math.min(z,depth+q);
+       moveTo(line,raw,{Z:next,F:feed},"G1",{cycle,cyclePhase:"peck-feed",cutting:Math.min(depth,next)<0,synthetic:true,drillBottom:next===z});
+       depth=next;
+       if(depth===z)break;
+       if(cycle==="G83"){
+         moveTo(line,raw,{Z:r},"G0",{cycle,cyclePhase:"full-retract",cutting:false,synthetic:true});
+         const approach=dir<0?Math.max(depth+Math.min(q*.15,1),r):Math.min(depth-Math.min(q*.15,1),r);
+         if(approach!==r)moveTo(line,raw,{Z:approach},"G0",{cycle,cyclePhase:"re-approach",cutting:false,synthetic:true});
+         depth=approach;
+       }else{
+         const retract=dir<0?Math.min(r,depth+g73Retract):Math.max(r,depth-g73Retract);
+         moveTo(line,raw,{Z:retract},"G0",{cycle,cyclePhase:"chip-retract",cutting:false,synthetic:true});
+         depth=retract;
+       }
+     }
+   }
+   const returnZ=returnMode==="G98"?initialZ:r;
+   if(pos.Z!==returnZ)moveTo(line,raw,{Z:returnZ},"G0",{cycle,cyclePhase:"return",cutting:false,synthetic:true});
+ }
+
  lines.forEach((raw,index)=>{
   const {clean,out}=parseWords(raw);
   if(!clean)return;
@@ -182,17 +247,35 @@ function parseProgram(text,axis){
   if(gMatches.includes("G17"))plane="G17";
   if(gMatches.includes("G18"))plane="G18";
   if(gMatches.includes("G19"))plane="G19";
+  if(gMatches.includes("G98"))returnMode="G98";
+  if(gMatches.includes("G99"))returnMode="G99";
   if(gMatches.includes("G0"))motion="G0";
   if(gMatches.includes("G1"))motion="G1";
   if(gMatches.includes("G2"))motion="G2";
   if(gMatches.includes("G3"))motion="G3";
   if(Number.isFinite(out.F))pos.F=out.F;
   if(Number.isFinite(out.S))pos.S=out.S;
-  if(gMatches.includes("G92")){
-    for(const a of ["X","Y","Z","A","B","C"]) if(Number.isFinite(out[a])) pos[a]=out[a];
-    blocks.push({line:index,raw,kind:"set",motion:"G92",absolute,from:{...pos},to:{...pos}});
+
+  if(gMatches.includes("G80")){
+    cycle=null;cycleZ=null;cycleR=null;cycleQ=null;
+    blocks.push({line:index,raw,kind:"modal",motion:"G80",absolute,plane,from:{...pos},to:{...pos},cycle:null});
     return;
   }
+
+  const cycleStart=["G81","G73","G83"].find(g=>gMatches.includes(g));
+  if(cycleStart)cycle=cycleStart;
+  if(cycle && (cycleStart || Number.isFinite(out.X) || Number.isFinite(out.Y))){
+    if(plane!=="G17")warnings.push(cycle+" 目前以 Z 軸鑽孔方式模擬；非 G17 鑽孔循環需再核對機台設定。");
+    invokeCycle(index,raw,out,Boolean(cycleStart));
+    return;
+  }
+
+  if(gMatches.includes("G92")){
+    for(const a of ["X","Y","Z","A","B","C"]) if(Number.isFinite(out[a])) pos[a]=out[a];
+    blocks.push({line:index,raw,kind:"set",motion:"G92",absolute,plane,from:{...pos},to:{...pos},cycle:null});
+    return;
+  }
+
   const from={...pos},to={...pos};let moved=false;
   for(const a of ["X","Y","Z","A","B","C"]){
     if(Number.isFinite(out[a])){to[a]=absolute?out[a]:pos[a]+out[a];moved=true;}
@@ -200,22 +283,25 @@ function parseProgram(text,axis){
   to.F=pos.F;to.S=pos.S;
   const n=Number.isFinite(out.N)?out.N:null;
   if(moved){
+    const cutting=motion!=="G0" && Math.min(from.Z,to.Z)<0;
     blocks.push({
-      line:index,raw,kind:"move",motion,absolute,plane,from,to,n,
+      line:index,raw,kind:"move",motion,absolute,plane,from,to,n,cycle:null,cutting,
       arc:{I:Number.isFinite(out.I)?out.I:null,J:Number.isFinite(out.J)?out.J:null,K:Number.isFinite(out.K)?out.K:null,R:Number.isFinite(out.R)?out.R:null}
     });
     pos={...to};
   }else{
-    blocks.push({line:index,raw,kind:"modal",motion,absolute,plane,from:{...pos},to:{...pos},n});
+    blocks.push({line:index,raw,kind:"modal",motion,absolute,plane,from:{...pos},to:{...pos},n,cycle:null});
   }
  });
  if(axis==="3AX" && blocks.some(b=>Math.abs(b.to.A)>1e-9||Math.abs(b.to.B)>1e-9||Math.abs(b.to.C)>1e-9))errors.push("3AX 程式含旋轉軸指令。");
  if(axis==="4AX" && blocks.some(b=>Math.abs(b.to.B)>1e-9))errors.push("4AX 程式含 B 軸指令。");
- return {lines,blocks,errors};
+ return {lines,blocks,errors,warnings};
 }
 function makeRuntime(root){
  const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d");
+ const toolInput=root.querySelector("[data-tool-dia]"),safeInput=root.querySelector("[data-safe-z]"),g73Input=root.querySelector("[data-g73-retract]");
  const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,last:performance.now(),history:[],historyIndex:-1};
+ function settings(){return {toolDia:Math.max(.1,Number(toolInput.value)||10),safeZ:Number(safeInput.value)||5,g73Retract:Math.max(0,Number(g73Input.value)||.5)}}
  runtimes[axis]=state;
 
  function remember(){
@@ -223,11 +309,11 @@ function makeRuntime(root){
   state.history=state.history.slice(0,state.historyIndex+1);state.history.push(v);state.historyIndex=state.history.length-1;
  }
  function parse(resetIndex=true){
-  state.parsed=parseProgram(ta.value,axis);
+  state.parsed=parseProgram(ta.value,axis,settings());
   if(resetIndex){state.index=0;state.t=0;state.running=false;}
   renderExec();updateUi();draw();
   const v=root.querySelector("[data-verify]");
-  v.textContent=state.parsed.errors.length?state.parsed.errors.join(" "):"解析完成："+state.parsed.blocks.length+" 個區塊。G-code 可直接修改後重新解析。";
+  v.textContent=state.parsed.errors.length?state.parsed.errors.join(" "):state.parsed.warnings.length?("解析完成："+state.parsed.blocks.length+" 個區塊。提醒："+state.parsed.warnings.join(" ")):"解析完成："+state.parsed.blocks.length+" 個區塊。G81/G73/G83 已展開為實際模擬動作。";
   v.style.color=state.parsed.errors.length?"#ffbdc6":"#b7c8d1";
  }
  function renderExec(){
@@ -406,6 +492,7 @@ function makeRuntime(root){
   if(cmd==="redo"&&state.historyIndex<state.history.length-1){state.historyIndex++;ta.value=state.history[state.historyIndex];parse()}
  });
  let timer;ta.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>{remember();parse()},350)});
+ [toolInput,safeInput,g73Input].forEach(el=>el.addEventListener("change",()=>parse(false)));
  const saved=localStorage.getItem("aig-code-"+axis);if(saved!=null)ta.value=saved;remember();parse();requestAnimationFrame(tick);
 }
 pages.forEach(([name,color])=>{
