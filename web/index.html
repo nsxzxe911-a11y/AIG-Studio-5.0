@@ -108,7 +108,8 @@ const nav=document.getElementById("nav"),screens=document.getElementById("screen
 const sourceCode={
  "3AX":[
   "N10 G90 G54 G17 G40 G49 G80","N20 T1 M6","N30 S12000 M3","N40 G0 X0. Y0. Z50.","N50 G43 H1 Z5. M8",
-  "N60 G1 Z-2. F800","N70 X60. Y0. F1200","N80 X60. Y60.","N90 X0. Y60.","N100 X0. Y0.","N110 M30"
+  "N60 G99 G81 Z-10. R3. F150 L0","N70 G90 G34 X30. Y30. I20. J0. K6","N80 G80",
+  "N90 G0 X0. Y0. Z5.","N100 G1 Z-2. F800","N110 X60. Y0. F1200","N120 X60. Y60.","N130 X0. Y60.","N140 X0. Y0.","N150 M30"
  ].join("\n"),
  "4AX":[
   "N10 G90 G54","N20 T4 M6","N30 S6000 M3","N40 G0 X0. Y0. Z40. A0.","N50 G43 H4 Z5. M8","N60 G1 Z-3. F600",
@@ -193,10 +194,10 @@ function parseProgram(text,axis,opts={}){
    if(!Number.isFinite(value))return base;
    return absolute?value:base+value;
  }
- function invokeCycle(line,raw,out,cycleStart){
+ function invokeCycle(line,raw,out,cycleStart,resolvedXY=null,patternMeta={}){
    const initialZ=pos.Z;
-   const x=resolveAxisValue("X",out.X,pos.X),y=resolveAxisValue("Y",out.Y,pos.Y);
-   if(x!==pos.X||y!==pos.Y)moveTo(line,raw,{X:x,Y:y},"G0",{cycle,cyclePhase:"xy",cutting:false,synthetic:true});
+   const x=resolvedXY?resolvedXY.X:resolveAxisValue("X",out.X,pos.X),y=resolvedXY?resolvedXY.Y:resolveAxisValue("Y",out.Y,pos.Y);
+   if(x!==pos.X||y!==pos.Y)moveTo(line,raw,{X:x,Y:y},"G0",{cycle,cyclePhase:"xy",cutting:false,synthetic:true,...patternMeta});
 
    if(cycleStart || Number.isFinite(out.R)){
      if(Number.isFinite(out.R))cycleR=absolute?out.R:initialZ+out.R;
@@ -207,11 +208,11 @@ function parseProgram(text,axis,opts={}){
    if(Number.isFinite(out.Q))cycleQ=Math.abs(out.Q);
    const r=Number.isFinite(cycleR)?cycleR:Math.min(initialZ,Number(opts.safeZ)||5);
    const z=Number.isFinite(cycleZ)?cycleZ:pos.Z;
-   if(pos.Z!==r)moveTo(line,raw,{Z:r},"G0",{cycle,cyclePhase:"rapid-r",cutting:false,synthetic:true});
+   if(pos.Z!==r)moveTo(line,raw,{Z:r},"G0",{cycle,cyclePhase:"rapid-r",cutting:false,synthetic:true,...patternMeta});
    const feed=Number.isFinite(out.F)?out.F:pos.F;
 
    if(cycle==="G81"){
-     moveTo(line,raw,{Z:z,F:feed},"G1",{cycle,cyclePhase:"feed",cutting:z<0,synthetic:true,drillBottom:true});
+     moveTo(line,raw,{Z:z,F:feed},"G1",{cycle,cyclePhase:"feed",cutting:z<0,synthetic:true,drillBottom:true,...patternMeta});
    }else if(cycle==="G73"||cycle==="G83"){
      const q=Math.max(0.001,Number(cycleQ)||Math.max(1,Math.abs(r-z)));
      const dir=z<r?-1:1;
@@ -219,23 +220,23 @@ function parseProgram(text,axis,opts={}){
      let guard=0;
      while(((dir<0&&depth>z)||(dir>0&&depth<z))&&guard++<500){
        const next=dir<0?Math.max(z,depth-q):Math.min(z,depth+q);
-       moveTo(line,raw,{Z:next,F:feed},"G1",{cycle,cyclePhase:"peck-feed",cutting:Math.min(depth,next)<0,synthetic:true,drillBottom:next===z});
+       moveTo(line,raw,{Z:next,F:feed},"G1",{cycle,cyclePhase:"peck-feed",cutting:Math.min(depth,next)<0,synthetic:true,drillBottom:next===z,...patternMeta});
        depth=next;
        if(depth===z)break;
        if(cycle==="G83"){
-         moveTo(line,raw,{Z:r},"G0",{cycle,cyclePhase:"full-retract",cutting:false,synthetic:true});
+         moveTo(line,raw,{Z:r},"G0",{cycle,cyclePhase:"full-retract",cutting:false,synthetic:true,...patternMeta});
          const approach=dir<0?Math.max(depth+Math.min(q*.15,1),r):Math.min(depth-Math.min(q*.15,1),r);
-         if(approach!==r)moveTo(line,raw,{Z:approach},"G0",{cycle,cyclePhase:"re-approach",cutting:false,synthetic:true});
+         if(approach!==r)moveTo(line,raw,{Z:approach},"G0",{cycle,cyclePhase:"re-approach",cutting:false,synthetic:true,...patternMeta});
          depth=approach;
        }else{
          const retract=dir<0?Math.min(r,depth+g73Retract):Math.max(r,depth-g73Retract);
-         moveTo(line,raw,{Z:retract},"G0",{cycle,cyclePhase:"chip-retract",cutting:false,synthetic:true});
+         moveTo(line,raw,{Z:retract},"G0",{cycle,cyclePhase:"chip-retract",cutting:false,synthetic:true,...patternMeta});
          depth=retract;
        }
      }
    }
    const returnZ=returnMode==="G98"?initialZ:r;
-   if(pos.Z!==returnZ)moveTo(line,raw,{Z:returnZ},"G0",{cycle,cyclePhase:"return",cutting:false,synthetic:true});
+   if(pos.Z!==returnZ)moveTo(line,raw,{Z:returnZ},"G0",{cycle,cyclePhase:"return",cutting:false,synthetic:true,...patternMeta});
  }
 
  lines.forEach((raw,index)=>{
@@ -264,6 +265,43 @@ function parseProgram(text,axis,opts={}){
 
   const cycleStart=["G81","G73","G83"].find(g=>gMatches.includes(g));
   if(cycleStart)cycle=cycleStart;
+
+  // L0 loads the canned-cycle data without drilling a hole.
+  if(cycleStart && Number.isFinite(out.L) && out.L===0){
+    const initialZ=pos.Z;
+    if(Number.isFinite(out.R))cycleR=absolute?out.R:initialZ+out.R;
+    if(Number.isFinite(out.Z))cycleZ=absolute?out.Z:(cycleR??initialZ)+out.Z;
+    if(Number.isFinite(out.Q))cycleQ=Math.abs(out.Q);
+    blocks.push({line:index,raw,kind:"modal",motion:cycleStart,absolute,plane,from:{...pos},to:{...pos},cycle,cyclePhase:"preset",presetOnly:true});
+    return;
+  }
+
+  // G34: X/Y center, I radius, J start angle, K signed hole count.
+  if(gMatches.includes("G34")){
+    const centerX=resolveAxisValue("X",out.X,pos.X),centerY=resolveAxisValue("Y",out.Y,pos.Y);
+    const radius=Math.abs(Number(out.I));
+    const startDeg=Number.isFinite(out.J)?out.J:0;
+    const signedK=Math.trunc(Number(out.K));
+    const count=Math.abs(signedK);
+    if(!Number.isFinite(radius)||radius<=0)errors.push("G34 I 半徑必須大於 0。");
+    if(!Number.isFinite(signedK)||count<1)errors.push("G34 K 孔數不得為 0。");
+    if(Number.isFinite(radius)&&radius>0&&count>=1){
+      const dir=signedK>=0?1:-1;
+      for(let h=0;h<count;h++){
+        const deg=startDeg+dir*(360/count)*h,rad=deg*Math.PI/180;
+        const hole={X:centerX+radius*Math.cos(rad),Y:centerY+radius*Math.sin(rad)};
+        const meta={pattern:"G34",holeIndex:h+1,holeCount:count,patternCenter:{X:centerX,Y:centerY},patternRadius:radius,patternAngle:deg};
+        if(cycle){
+          invokeCycle(index,raw,{},false,hole,meta);
+        }else{
+          moveTo(index,raw,hole,"G0",{cycle:null,cyclePhase:"pattern-position",cutting:false,synthetic:true,...meta});
+        }
+      }
+      if(!cycle)warnings.push("G34 沒有已啟用的 G81/G73/G83，因此目前只做孔位定位。");
+    }
+    return;
+  }
+
   if(cycle && (cycleStart || Number.isFinite(out.X) || Number.isFinite(out.Y))){
     if(plane!=="G17")warnings.push(cycle+" 目前以 Z 軸鑽孔方式模擬；非 G17 鑽孔循環需再核對機台設定。");
     if(!absolute)warnings.push(cycle+" + G91 已按增量 R/Z 規則展開，實機前仍需依 Fanuc 參數核對。");
@@ -497,7 +535,7 @@ function makeRuntime(root){
  }
  function updateHud(){
   const p=currentPos(),bl=currentBlock(),cfg=settings();
-  root.querySelector("[data-hud]").innerHTML=["X","Y","Z"].concat(axis==="4AX"?["A"]:axis==="5AX"?["A","B"]:[]).map(a=>a+" "+(p[a]||0).toFixed(3)).join("<br>")+"<br>F "+Math.round(p.F||0)+"<br>S "+Math.round(p.S||0)+"<br>Ø "+cfg.toolDia.toFixed(3)+(bl?.cycle?"<br>"+bl.cycle:"");
+  root.querySelector("[data-hud]").innerHTML=["X","Y","Z"].concat(axis==="4AX"?["A"]:axis==="5AX"?["A","B"]:[]).map(a=>a+" "+(p[a]||0).toFixed(3)).join("<br>")+"<br>F "+Math.round(p.F||0)+"<br>S "+Math.round(p.S||0)+"<br>Ø "+cfg.toolDia.toFixed(3)+(bl?.cycle?"<br>"+bl.cycle+(bl.pattern?"/"+bl.pattern:""):"");
   ["X","Y","Z","A","B","C"].forEach(a=>{const e=root.querySelector('[data-axis-read="'+a+'"]');if(e)e.textContent=a+"　"+(p[a]||0).toFixed(3)});
  }
  function updateUi(){
@@ -507,7 +545,7 @@ function makeRuntime(root){
   root.querySelector("[data-block]").textContent=b?(b.raw.match(/N\s*\d+/i)?.[0]||("LINE "+(b.line+1))):"—";
   root.querySelector("[data-progress-text]").textContent=progress.toFixed(1)+"%";root.querySelector("[data-progress]").style.width=progress+"%";
   root.querySelector("[data-mode]").textContent=b?(b.absolute?"G90":"G91"):"G90";
-  root.querySelector("[data-cycle]").textContent=b?.cycle||"—";
+  root.querySelector("[data-cycle]").textContent=b?.cycle?(b.cycle+(b.pattern?"/"+b.pattern+" "+b.holeIndex+"/"+b.holeCount:"")):(b?.pattern||"—");
   root.querySelector("[data-cycle]").classList.toggle("cycleTag",Boolean(b?.cycle));
   root.querySelector("[data-toolmetric]").textContent="Ø"+cfg.toolDia.toFixed(3)+" mm";
   root.querySelector("[data-removal]").textContent=materialRemovalDepth().toFixed(3)+" mm";
