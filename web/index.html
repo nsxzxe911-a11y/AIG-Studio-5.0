@@ -8,56 +8,56 @@
 <style>
 :root{
  --bg:#020407;--panel:#060a0f;--panel2:#0a1017;--panel3:#0d151e;
- --text:#eefbff;--muted:#8aa1af;--cyan:#27e9ff;--blue:#3694ff;--green:#33f39b;
+ --text:#eefbff;--muted:#879da9;--cyan:#27e9ff;--blue:#3694ff;--green:#33f39b;
  --amber:#ffb326;--pink:#ff4da6;--violet:#9f72ff;--red:#ff465f;--line:#193446;
  --shadow:0 14px 38px rgba(0,0,0,.55);--r:14px
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#020407;color:var(--text);font-family:"Noto Sans TC","Microsoft JhengHei",Inter,system-ui,sans-serif}
-button,textarea,input,select{font:inherit}
-button{color:inherit}
+button,textarea,input,select{font:inherit}button{color:inherit}
 .app{min-height:100vh;background:
- radial-gradient(circle at 36% 0%,rgba(39,233,255,.055),transparent 30%),
- radial-gradient(circle at 100% 60%,rgba(255,77,166,.035),transparent 25%),
- #020407}
-.top{height:58px;display:flex;align-items:center;gap:12px;padding:7px 10px;position:sticky;top:0;z-index:30;
- background:rgba(2,4,7,.96);border-bottom:1px solid rgba(39,233,255,.28);box-shadow:0 8px 30px #000}
+ radial-gradient(circle at 38% 0%,rgba(39,233,255,.045),transparent 29%),
+ radial-gradient(circle at 100% 60%,rgba(255,77,166,.03),transparent 24%),#020407}
+.top{min-height:58px;display:flex;align-items:center;gap:12px;padding:7px 10px;position:sticky;top:0;z-index:30;
+ background:rgba(2,4,7,.97);border-bottom:1px solid rgba(39,233,255,.28);box-shadow:0 8px 30px #000}
 .brand{display:flex;align-items:center;gap:9px;min-width:190px}.logo{font-weight:900;font-size:21px;letter-spacing:.04em}
 .brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:.12em}
 .status{margin-left:auto;color:var(--green);font-size:11px;white-space:nowrap}
 .nav{display:grid;grid-template-columns:repeat(7,minmax(72px,1fr));gap:6px;flex:1;max-width:850px}
 .nav button,.btn{border:1px solid #223846;background:linear-gradient(#0d141c,#05080c);border-radius:10px;min-height:40px;cursor:pointer;
  box-shadow:inset 0 1px rgba(255,255,255,.045),0 7px 18px rgba(0,0,0,.35)}
+.nav button:hover,.btn:hover{border-color:#2e6681}
 .nav button.active{border-color:var(--accent,var(--cyan));box-shadow:0 0 18px color-mix(in srgb,var(--accent,var(--cyan)) 32%,transparent),inset 0 0 18px color-mix(in srgb,var(--accent,var(--cyan)) 10%,transparent)}
 .shell{padding:9px;display:grid;gap:9px}
 .screen{display:none}.screen.active{display:block}
-.panel{background:linear-gradient(180deg,#080d12,#04070a);border:1px solid rgba(71,146,177,.34);border-radius:var(--r);box-shadow:var(--shadow)}
+.panel{background:linear-gradient(180deg,#080d12,#04070a);border:1px solid rgba(71,146,177,.34);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
 .head{display:flex;align-items:center;gap:10px;padding:9px 11px;border-bottom:1px solid rgba(63,139,168,.24)}
-.head h2,.head h3{font-size:14px;margin:0}.head small{color:var(--muted)}
+.head h2,.head h3{font-size:14px;margin:0}.head small{color:var(--muted)}.head .spacer{flex:1}
 .body{padding:9px}
-.simgrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,.82fr);gap:9px;min-height:690px}
+.simgrid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(340px,.86fr);gap:9px;min-height:690px}
 .simleft{display:grid;grid-template-rows:auto 1fr auto;min-width:0}.axisbar{display:flex;gap:6px;flex-wrap:wrap}
-.axis{border:1px solid rgba(39,233,255,.3);background:#050a0e;border-radius:9px;padding:6px 9px;font-size:11px}
-.axis.a{border-color:rgba(255,179,38,.5)}.axis.b{border-color:rgba(255,77,166,.5)}
-.scene{position:relative;min-height:530px;background:
- radial-gradient(circle at 50% 45%,rgba(55,135,165,.11),transparent 36%),
- linear-gradient(rgba(39,233,255,.028) 1px,transparent 1px),
- linear-gradient(90deg,rgba(39,233,255,.028) 1px,transparent 1px),#020508;
- background-size:auto,38px 38px,38px 38px;overflow:hidden;border-radius:11px;border:1px solid #102934}
-.machineghost{position:absolute;inset:12% 9% 15%;border:1px solid rgba(39,233,255,.28);border-radius:50%;box-shadow:0 0 90px rgba(39,233,255,.06) inset}
-.machineghost:before{content:"";position:absolute;width:26%;height:54%;left:37%;top:8%;border:2px solid rgba(220,245,255,.36);border-radius:18px 18px 6px 6px;background:linear-gradient(90deg,#101820,#303b44 50%,#0c1117)}
-.machineghost:after{content:"";position:absolute;width:52%;height:24%;left:24%;bottom:13%;border:2px solid rgba(39,233,255,.4);border-radius:50%;transform:skewX(-10deg);box-shadow:0 0 26px rgba(39,233,255,.15)}
-.sceneTitle{position:absolute;left:18px;bottom:18px;font-weight:800;letter-spacing:.1em}.sceneTitle small{display:block;color:var(--muted);font-weight:400;margin-top:3px}
-.coords{position:absolute;right:15px;top:15px;padding:9px 10px;background:rgba(0,0,0,.72);border:1px solid rgba(39,233,255,.28);border-radius:10px;font:11px ui-monospace,monospace;line-height:1.55}
+.axis{border:1px solid rgba(39,233,255,.3);background:#050a0e;border-radius:9px;padding:6px 9px;font-size:11px;min-width:95px}
+.axis.a{border-color:rgba(255,179,38,.5)}.axis.b,.axis.c{border-color:rgba(255,77,166,.5)}
+.sceneWrap{position:relative;min-height:530px;border-radius:11px;border:1px solid #102934;background:#010306;overflow:hidden}
+.simCanvas{display:block;width:100%;height:100%;min-height:530px;background:#010306}
+.sceneHud{position:absolute;inset:12px 12px auto auto;padding:8px 9px;background:rgba(0,0,0,.78);border:1px solid rgba(39,233,255,.28);border-radius:9px;
+ font:11px/1.55 ui-monospace,monospace;pointer-events:none;min-width:120px}
+.sceneTitle{position:absolute;left:17px;bottom:15px;font-weight:800;letter-spacing:.08em;text-shadow:0 2px 8px #000}.sceneTitle small{display:block;color:var(--muted);font-weight:400;margin-top:3px;letter-spacing:0}
 .controls{display:flex;gap:7px;flex-wrap:wrap;padding-top:8px}.controls .btn{min-width:78px;padding:7px 10px}
 .play{border-color:rgba(51,243,155,.55)!important;color:#c8ffe6}.danger{border-color:rgba(255,70,95,.5)!important;color:#ffd0d7}.warn{border-color:rgba(255,179,38,.5)!important}
-.editor{display:grid;grid-template-rows:auto 1fr auto;min-height:690px}
+.editor{display:grid;grid-template-rows:auto auto 1fr auto auto;min-height:690px}
 .editorbar{display:flex;gap:6px;flex-wrap:wrap}.editorbar .btn{min-height:32px;padding:5px 9px}
-.code{width:100%;height:100%;min-height:545px;resize:none;background:#010305;color:#edf9ff;border:1px solid #173548;border-radius:9px;padding:12px;
+.code{width:100%;height:100%;min-height:390px;resize:none;background:#010305;color:#edf9ff;border:1px solid #173548;border-radius:9px;padding:12px;
  font:12px/1.62 "Cascadia Mono","Consolas",monospace;outline:none;tab-size:2}
 .code:focus{border-color:var(--violet);box-shadow:0 0 18px rgba(159,114,255,.12)}
-.editactions{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.editactions .btn{min-height:34px}
+.execView{max-height:165px;overflow:auto;background:#010305;border:1px solid #142a37;border-radius:9px;padding:6px;font:11px/1.5 "Cascadia Mono","Consolas",monospace}
+.execLine{padding:2px 5px;border-left:2px solid transparent;color:#a9bac3;white-space:pre}
+.execLine.active{color:#fff;background:rgba(39,233,255,.09);border-left-color:var(--cyan)}
+.execLine.done{color:#6f8c7c}
+.editactions{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.editactions .btn{min-height:34px}
+.runtimeStatus{display:grid;grid-template-columns:repeat(6,minmax(90px,1fr));gap:6px;margin-top:8px}
+.metric{padding:8px;border:1px solid #173344;border-radius:9px;background:#04080b}.metric b{display:block;font-size:9px;color:var(--muted);margin-bottom:2px}.metric span{font-size:12px}
+.progress{height:7px;background:#101820;border-radius:99px;overflow:hidden;margin-top:7px}.progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));box-shadow:0 0 12px rgba(39,233,255,.35)}
 .workgrid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:9px;min-height:690px}
 .canvas{min-height:580px;background:
  linear-gradient(rgba(39,233,255,.028) 1px,transparent 1px),
@@ -73,14 +73,16 @@ button{color:inherit}
 .menuCard:hover{box-shadow:0 0 22px rgba(39,233,255,.1)}
 .footer{padding:6px 10px 10px;color:#66808f;font-size:9px;text-align:center}
 .badge{font-size:10px;color:var(--muted);border:1px solid #233846;border-radius:999px;padding:5px 8px}
+.notice{font-size:10px;color:#b7c8d1;padding:6px 8px;border:1px solid #172b36;border-radius:8px;background:#03070a}
 @media(max-width:920px){
  .top{height:auto;flex-wrap:wrap}.brand{min-width:140px}.nav{order:3;grid-template-columns:repeat(7,minmax(58px,1fr));max-width:none;flex-basis:100%}
- .simgrid,.workgrid,.camgrid{grid-template-columns:1fr}.editor{min-height:560px}.code{min-height:420px}
- .menuGrid{grid-template-columns:repeat(2,1fr)}
+ .simgrid,.workgrid,.camgrid{grid-template-columns:1fr}.editor{min-height:560px}.code{min-height:330px}
+ .runtimeStatus{grid-template-columns:repeat(3,1fr)}.menuGrid{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:560px){
  .shell{padding:6px}.status{display:none}.nav{grid-template-columns:repeat(4,1fr)}.nav button{min-height:42px;font-size:11px}
- .scene{min-height:44vh}.simgrid{min-height:0}.editor{min-height:500px}.code{min-height:365px}.menuGrid{grid-template-columns:1fr 1fr}
+ .sceneWrap,.simCanvas{min-height:44vh}.simgrid{min-height:0}.editor{min-height:500px}.code{min-height:300px}.menuGrid{grid-template-columns:1fr 1fr}
+ .runtimeStatus{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -92,40 +94,44 @@ button{color:inherit}
  <div class="status">● LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
-<footer class="footer">AIG II CNC • 黑色高對比 Runtime UI/UX • UI prototype / CNC output disabled</footer>
+<footer class="footer">AIG II CNC • 黑色高對比 Runtime • Web motion prototype • CNC machine output disabled</footer>
 </div>
 <script>
 const pages=[
  ["功能","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["刀路","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"]
 ];
 const nav=document.getElementById("nav"),screens=document.getElementById("screens");
-const code={
+const sourceCode={
  "3AX":[
   "N10 G90 G54 G17 G40 G49 G80","N20 T1 M6","N30 S12000 M3","N40 G0 X0. Y0. Z50.","N50 G43 H1 Z5. M8",
-  "N60 G1 Z-2. F800","N70 X60. Y0. F1200","N80 X60. Y60.","N90 X0. Y60.","N100 M30"
+  "N60 G1 Z-2. F800","N70 X60. Y0. F1200","N80 X60. Y60.","N90 X0. Y60.","N100 X0. Y0.","N110 M30"
  ].join("\n"),
  "4AX":[
   "N10 G90 G54","N20 T4 M6","N30 S6000 M3","N40 G0 X0. Y0. Z40. A0.","N50 G43 H4 Z5. M8","N60 G1 Z-3. F600",
-  "N70 X45. F1000","N80 A90.","N90 X0.","N100 A180.","N110 M30"
+  "N70 X45. F1000","N80 A90.","N90 X0.","N100 A180.","N110 X45.","N120 A270.","N130 M30"
  ].join("\n"),
  "5AX":[
   "N10 G90 G54","N20 T12 M6","N30 S8000 M3","N40 G0 X0. Y0. Z50. A0. B0.","N50 G43 H12 Z5. M8","N60 G1 Z-2. F1200",
-  "N70 X12.430 Y-5.210 A35. B15.","N80 G3 X25.680 Y8.430 I6. J-3.","N90 A55. B-20.","N100 G1 X32.115 Y12.880","N110 M30"
+  "N70 X12.430 Y-5.210 A15. B10.","N80 G1 X25.680 Y8.430 A30. B-12.","N90 G1 X36.000 Y18.000 A45. B18.",
+  "N100 G1 X22.000 Y32.000 A60. B-20.","N110 G1 X0. Y24.000 A35. B8.","N120 G1 X0. Y0. A0. B0.","N130 M30"
  ].join("\n")
 };
+
 function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div class="head"><h3>'+title+'</h3></div><div class="body">'+body+'</div></section>'}
 function simPage(axis){
  const axes=axis==="3AX"?["X","Y","Z"]:axis==="4AX"?["X","Y","Z","A"]:["X","Y","Z","A","B"];
- const axisHtml=axes.map(a=>'<span class="axis '+a.toLowerCase()+'">'+a+'　0.000</span>').join("");
- const coord=axes.map(a=>a+'　0.000').join("<br>");
- const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>真實加工視窗 • G90 絕對座標</small></div><span class="badge">FPS AUTO</span></div>'+
- '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="scene"><div class="machineghost"></div><div class="coords">'+coord+'<br>F 1200<br>S 12000</div><div class="sceneTitle">'+axis+' 加工模擬<small>材料移除 / 刀路 / 碰撞檢查</small></div></div>'+
- '<div class="controls"><button class="btn play">▶ 播放</button><button class="btn">Ⅱ 暫停</button><button class="btn">單步</button><button class="btn">空跑</button><button class="btn">單節</button><button class="btn danger">重設</button></div></div></section>';
+ const axisHtml=axes.map(a=>'<span class="axis '+a.toLowerCase()+'" data-axis-read="'+a+'">'+a+'　0.000</span>').join("");
+ const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
+ '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 加工模擬<small>已執行刀路以綠色顯示；未執行刀路以藍色顯示</small></div></div>'+
+ '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn danger" data-cmd="reset">重設</button></div>'+
+ '<div class="runtimeStatus"><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>模擬</b><span data-simstate>停止</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
- '<div class="body editorbar"><button class="btn">搜尋</button><button class="btn">取代</button><button class="btn">驗證</button><button class="btn">格式化</button></div>'+
- '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+code[axis]+'</textarea></div>'+
- '<div class="body editactions"><button class="btn">插入</button><button class="btn danger">刪除</button><button class="btn">復原</button><button class="btn">重做</button><button class="btn play" onclick="saveCode(\''+axis+'\')">儲存</button></div></section>';
- return '<div class="simgrid">'+left+right+'</div>';
+ '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button></div>'+
+ '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+sourceCode[axis]+'</textarea></div>'+
+ '<div class="body" style="padding-top:0"><div class="execView" data-exec></div></div>'+
+ '<div class="body editactions"><button class="btn" data-editcmd="insert">插入行</button><button class="btn danger" data-editcmd="delete">刪除行</button><button class="btn" data-editcmd="undo">復原</button><button class="btn" data-editcmd="redo">重做</button><button class="btn play" data-editcmd="save">儲存</button></div>'+
+ '<div class="body" style="padding-top:0"><div class="notice" data-verify>可編輯 G-code；目前為瀏覽器模擬，不會送指令到實體 CNC。</div></div></section>';
+ return '<div class="simgrid" data-runtime="'+axis+'">'+left+right+'</div>';
 }
 function cadPage(){
  const tools=["LINE","RECT","CIRCLE","ARC","HOLE","TRIM","EXTEND","OFFSET","ARRAY","DIM"].map(x=>'<button class="btn">'+x+'</button>').join("");
@@ -161,18 +167,204 @@ pages.forEach(([name,color])=>{
  s.innerHTML=name==="功能"?menuPage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="刀路"?toolpathPage():simPage(name);
  screens.appendChild(s);
 });
+
+const runtimes={};
+function parseWords(line){
+ const clean=line.replace(/\([^)]*\)/g," ").replace(/;.*$/," ").trim().toUpperCase();
+ const out={};
+ const re=/([A-Z])\s*([-+]?\d*\.?\d+)/g;let m;
+ while((m=re.exec(clean))) out[m[1]]=Number(m[2]);
+ return {clean,out};
+}
+function parseProgram(text,axis){
+ const lines=text.split(/\r?\n/);
+ let pos={X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0},absolute=true,motion="G0";
+ const blocks=[];const errors=[];
+ lines.forEach((raw,index)=>{
+  const {clean,out}=parseWords(raw);
+  if(!clean)return;
+  const gMatches=[...clean.matchAll(/G\s*0*(\d+(?:\.\d+)?)/g)].map(m=>"G"+Number(m[1]));
+  if(gMatches.includes("G90"))absolute=true;
+  if(gMatches.includes("G91"))absolute=false;
+  if(gMatches.includes("G0"))motion="G0";
+  if(gMatches.includes("G1"))motion="G1";
+  if(gMatches.includes("G2"))motion="G2";
+  if(gMatches.includes("G3"))motion="G3";
+  if(Number.isFinite(out.F))pos.F=out.F;
+  if(Number.isFinite(out.S))pos.S=out.S;
+  if(gMatches.includes("G92")){
+    for(const a of ["X","Y","Z","A","B","C"]) if(Number.isFinite(out[a])) pos[a]=out[a];
+    blocks.push({line:index,raw,kind:"set",motion:"G92",absolute,from:{...pos},to:{...pos}});
+    return;
+  }
+  const from={...pos},to={...pos};let moved=false;
+  for(const a of ["X","Y","Z","A","B","C"]){
+    if(Number.isFinite(out[a])){to[a]=absolute?out[a]:pos[a]+out[a];moved=true;}
+  }
+  to.F=pos.F;to.S=pos.S;
+  const n=Number.isFinite(out.N)?out.N:null;
+  if(moved){
+    blocks.push({line:index,raw,kind:"move",motion,absolute,from,to,n});
+    pos={...to};
+  }else{
+    blocks.push({line:index,raw,kind:"modal",motion,absolute,from:{...pos},to:{...pos},n});
+  }
+ });
+ if(axis==="3AX" && blocks.some(b=>Math.abs(b.to.A)>1e-9||Math.abs(b.to.B)>1e-9||Math.abs(b.to.C)>1e-9))errors.push("3AX 程式含旋轉軸指令。");
+ if(axis==="4AX" && blocks.some(b=>Math.abs(b.to.B)>1e-9))errors.push("4AX 程式含 B 軸指令。");
+ return {lines,blocks,errors};
+}
+function makeRuntime(root){
+ const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d");
+ const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,last:performance.now(),history:[],historyIndex:-1};
+ runtimes[axis]=state;
+
+ function remember(){
+  const v=ta.value;if(state.history[state.historyIndex]===v)return;
+  state.history=state.history.slice(0,state.historyIndex+1);state.history.push(v);state.historyIndex=state.history.length-1;
+ }
+ function parse(resetIndex=true){
+  state.parsed=parseProgram(ta.value,axis);
+  if(resetIndex){state.index=0;state.t=0;state.running=false;}
+  renderExec();updateUi();draw();
+  const v=root.querySelector("[data-verify]");
+  v.textContent=state.parsed.errors.length?state.parsed.errors.join(" "):"解析完成："+state.parsed.blocks.length+" 個區塊。G-code 可直接修改後重新解析。";
+  v.style.color=state.parsed.errors.length?"#ffbdc6":"#b7c8d1";
+ }
+ function renderExec(){
+  const box=root.querySelector("[data-exec]");box.innerHTML="";
+  state.parsed.lines.forEach((line,i)=>{
+    const div=document.createElement("div");div.className="execLine";
+    if(i<currentLine())div.classList.add("done");if(i===currentLine())div.classList.add("active");
+    div.textContent=String(i+1).padStart(3,"0")+"  "+line;box.appendChild(div);
+  });
+  const active=box.querySelector(".active");if(active)active.scrollIntoView({block:"nearest"});
+ }
+ function currentBlock(){return state.parsed.blocks[Math.min(state.index,state.parsed.blocks.length-1)]||null}
+ function currentLine(){const b=currentBlock();return b?b.line:-1}
+ function lerp(a,b,t){return a+(b-a)*t}
+ function currentPos(){
+  const b=currentBlock();if(!b)return {X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0};
+  if(b.kind!=="move")return {...b.to};
+  const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(b.from[k]||0,b.to[k]||0,state.t);return p;
+ }
+ function durationFor(b){
+  if(!b||b.kind!=="move")return 150;
+  const dx=b.to.X-b.from.X,dy=b.to.Y-b.from.Y,dz=b.to.Z-b.from.Z;
+  const linear=Math.hypot(dx,dy,dz),rot=Math.abs(b.to.A-b.from.A)+Math.abs(b.to.B-b.from.B)+Math.abs(b.to.C-b.from.C);
+  const base=b.motion==="G0"?260:Math.max(350,Math.min(1600,(linear*26)+(rot*8)+280));
+  return base;
+ }
+ function tick(now){
+  const dt=Math.min(60,now-state.last);state.last=now;
+  if(state.running&&state.parsed.blocks.length){
+    const b=currentBlock(),dur=durationFor(b);state.t+=dt/dur;
+    if(state.t>=1){
+      state.t=0;state.index++;
+      if(state.index>=state.parsed.blocks.length){state.index=state.parsed.blocks.length;state.running=false;}
+      if(state.single)state.running=false;
+      renderExec();updateUi();
+    }
+  }
+  draw();requestAnimationFrame(tick);
+ }
+ function bounds(){
+  const pts=[];state.parsed.blocks.forEach(b=>{if(b.kind==="move"){pts.push(b.from,b.to)}});if(!pts.length)pts.push({X:0,Y:0,Z:0});
+  let minX=Math.min(...pts.map(p=>p.X)),maxX=Math.max(...pts.map(p=>p.X)),minY=Math.min(...pts.map(p=>p.Y)),maxY=Math.max(...pts.map(p=>p.Y)),minZ=Math.min(...pts.map(p=>p.Z)),maxZ=Math.max(...pts.map(p=>p.Z));
+  if(maxX-minX<1){minX-=10;maxX+=10}if(maxY-minY<1){minY-=10;maxY+=10}if(maxZ-minZ<1){minZ-=10;maxZ+=10}
+  return {minX,maxX,minY,maxY,minZ,maxZ};
+ }
+ function resize(){
+  const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));
+  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {w:r.width,h:r.height};
+ }
+ function project(p,b,w,h){
+  const pad=46,sx=(w-pad*2)/(b.maxX-b.minX),sy=(h-pad*2)/(b.maxY-b.minY),s=Math.min(sx,sy);
+  const cx=(b.minX+b.maxX)/2,cy=(b.minY+b.maxY)/2;
+  return {x:w/2+(p.X-cx)*s,y:h/2-(p.Y-cy)*s,z:p.Z};
+ }
+ function draw(){
+  if(!state.parsed)return;
+  const {w,h}=resize(),c=ctx,b=bounds();c.clearRect(0,0,w,h);c.fillStyle="#010306";c.fillRect(0,0,w,h);
+  c.strokeStyle="rgba(39,233,255,.06)";c.lineWidth=1;
+  for(let x=0;x<w;x+=36){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke()}
+  for(let y=0;y<h;y+=36){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke()}
+  // rotary table / stock
+  c.save();c.translate(w/2,h/2);c.strokeStyle=axis==="3AX"?"rgba(70,120,145,.34)":axis==="4AX"?"rgba(255,179,38,.28)":"rgba(255,77,166,.27)";c.lineWidth=2;
+  c.beginPath();c.ellipse(0,30,Math.min(w,h)*.29,Math.min(w,h)*.12,0,0,Math.PI*2);c.stroke();c.restore();
+  // full path
+  c.lineWidth=1.5;c.strokeStyle="rgba(54,148,255,.65)";
+  state.parsed.blocks.forEach(bl=>{if(bl.kind!=="move")return;const p1=project(bl.from,b,w,h),p2=project(bl.to,b,w,h);c.beginPath();c.moveTo(p1.x,p1.y);c.lineTo(p2.x,p2.y);c.stroke()});
+  // executed material removal path
+  c.lineWidth=state.dry?2:5;c.strokeStyle=state.dry?"rgba(255,179,38,.85)":"rgba(51,243,155,.78)";c.lineCap="round";
+  state.parsed.blocks.forEach((bl,i)=>{if(bl.kind!=="move"||i>state.index)return;const p1=project(bl.from,b,w,h);let end=bl.to;if(i===state.index&&state.index<state.parsed.blocks.length){const cp=currentPos();end=cp}const p2=project(end,b,w,h);c.beginPath();c.moveTo(p1.x,p1.y);c.lineTo(p2.x,p2.y);c.stroke()});
+  // current tool
+  const p=currentPos(),q=project(p,b,w,h),tiltX=(p.B||0)*.22,tiltY=(p.A||0)*.22;
+  c.strokeStyle="#eefbff";c.lineWidth=3;c.beginPath();c.moveTo(q.x-tiltX,q.y-55+tiltY);c.lineTo(q.x,q.y);c.stroke();
+  c.fillStyle="#27e9ff";c.beginPath();c.arc(q.x,q.y,5,0,Math.PI*2);c.fill();
+  if(axis!=="3AX"){
+    const rad=(p.A||0)*Math.PI/180;c.strokeStyle=axis==="4AX"?"#ffb326":"#ff4da6";c.lineWidth=2;c.beginPath();c.arc(w-74,h-76,32,0,Math.PI*2);c.stroke();c.beginPath();c.moveTo(w-74,h-76);c.lineTo(w-74+Math.cos(rad)*30,h-76-Math.sin(rad)*30);c.stroke();
+  }
+  if(axis==="5AX"){
+    const rad=(p.B||0)*Math.PI/180;c.strokeStyle="#27e9ff";c.beginPath();c.arc(w-74,h-76,21,0,Math.PI*2);c.stroke();c.beginPath();c.moveTo(w-74,h-76);c.lineTo(w-74+Math.cos(rad)*19,h-76-Math.sin(rad)*19);c.stroke();
+  }
+  updateHud();
+ }
+ function updateHud(){
+  const p=currentPos();root.querySelector("[data-hud]").innerHTML=["X","Y","Z"].concat(axis==="4AX"?["A"]:axis==="5AX"?["A","B"]:[]).map(a=>a+" "+(p[a]||0).toFixed(3)).join("<br>")+"<br>F "+Math.round(p.F||0)+"<br>S "+Math.round(p.S||0);
+  ["X","Y","Z","A","B","C"].forEach(a=>{const e=root.querySelector('[data-axis-read="'+a+'"]');if(e)e.textContent=a+"　"+(p[a]||0).toFixed(3)});
+ }
+ function updateUi(){
+  const p=currentPos(),len=state.parsed.blocks.length,progress=len?Math.min(100,((state.index+state.t)/len)*100):0,b=currentBlock();
+  root.querySelector("[data-spindle]").textContent=Math.round(p.S||0)+" RPM";
+  root.querySelector("[data-feed]").textContent=Math.round(p.F||0)+" mm/min";
+  root.querySelector("[data-block]").textContent=b?(b.raw.match(/N\s*\d+/i)?.[0]||("LINE "+(b.line+1))):"—";
+  root.querySelector("[data-progress-text]").textContent=progress.toFixed(1)+"%";root.querySelector("[data-progress]").style.width=progress+"%";
+  root.querySelector("[data-mode]").textContent=b?(b.absolute?"G90":"G91"):"G90";
+  root.querySelector("[data-simstate]").textContent=state.running?"執行中":state.index>=len&&len?"完成":"停止";
+  root.querySelector("[data-run-badge]").textContent=state.running?"RUN":state.index>=len&&len?"DONE":"READY";
+ }
+ function command(cmd){
+  if(cmd==="play"){if(state.index>=state.parsed.blocks.length){state.index=0;state.t=0}state.single=false;state.running=true}
+  if(cmd==="pause")state.running=false;
+  if(cmd==="step"){if(state.index<state.parsed.blocks.length){state.single=true;state.running=true}}
+  if(cmd==="dry"){state.dry=!state.dry;root.querySelector('[data-cmd="dry"]').classList.toggle("warn",state.dry)}
+  if(cmd==="single"){state.single=!state.single;root.querySelector('[data-cmd="single"]').classList.toggle("warn",state.single)}
+  if(cmd==="reset"){state.running=false;state.index=0;state.t=0}
+  updateUi();renderExec();
+ }
+ root.addEventListener("click",e=>{
+  const c=e.target.closest("[data-cmd]");if(c){command(c.dataset.cmd);return}
+  const ec=e.target.closest("[data-editcmd]");if(!ec)return;
+  const cmd=ec.dataset.editcmd;
+  if(cmd==="parse"){remember();parse()}
+  if(cmd==="verify"){parse(false);const msg=state.parsed.errors.length?state.parsed.errors.join(" "):"驗證：語法可解析；共 "+state.parsed.blocks.length+" 個區塊。";root.querySelector("[data-verify]").textContent=msg}
+  if(cmd==="save"){remember();localStorage.setItem("aig-code-"+axis,ta.value);root.querySelector("[data-verify]").textContent="已儲存到本機瀏覽器。"}
+  if(cmd==="load"){const v=localStorage.getItem("aig-code-"+axis);if(v!=null){ta.value=v;remember();parse();root.querySelector("[data-verify]").textContent="已讀取本機暫存。"}}
+  if(cmd==="clear"){localStorage.removeItem("aig-code-"+axis);root.querySelector("[data-verify]").textContent="已清除本機暫存；目前編輯內容未刪除。"}
+  if(cmd==="insert"){const start=ta.selectionStart,end=ta.selectionEnd;ta.setRangeText("\n",start,end,"end");remember()}
+  if(cmd==="delete"){const start=ta.selectionStart;const before=ta.value.lastIndexOf("\n",Math.max(0,start-1))+1;let after=ta.value.indexOf("\n",start);if(after<0)after=ta.value.length;else after++;ta.setRangeText("",before,after,"start");remember();parse()}
+  if(cmd==="undo"&&state.historyIndex>0){state.historyIndex--;ta.value=state.history[state.historyIndex];parse()}
+  if(cmd==="redo"&&state.historyIndex<state.history.length-1){state.historyIndex++;ta.value=state.history[state.historyIndex];parse()}
+ });
+ let timer;ta.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>{remember();parse()},350)});
+ const saved=localStorage.getItem("aig-code-"+axis);if(saved!=null)ta.value=saved;remember();parse();requestAnimationFrame(tick);
+}
+pages.forEach(([name,color])=>{
+ const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>show(name);nav.appendChild(b);
+ const s=document.createElement("section");s.className="screen";s.dataset.page=name;
+ s.innerHTML=name==="功能"?menuPage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="刀路"?toolpathPage():simPage(name);
+ screens.appendChild(s);
+});
+document.querySelectorAll("[data-runtime]").forEach(makeRuntime);
 function show(name){
+ if(!pages.some(p=>p[0]===name))name="5AX";
  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.dataset.page===name));
  history.replaceState(null,"","#"+encodeURIComponent(name));
+ setTimeout(()=>window.dispatchEvent(new Event("resize")),0);
 }
-function saveCode(axis){
- const t=document.querySelector('textarea[data-axis="'+axis+'"]');
- localStorage.setItem("aig-code-"+axis,t.value);
-}
-document.querySelectorAll("textarea[data-axis]").forEach(t=>{
- const saved=localStorage.getItem("aig-code-"+t.dataset.axis);if(saved)t.value=saved;
-});
 show(decodeURIComponent((location.hash||"#5AX").slice(1)));
 </script>
 </body>
