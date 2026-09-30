@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   android-and-source:
-    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[ui-art]') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (!contains(github.event.head_commit.message, '[ui-art]') && !contains(github.event.head_commit.message, '[nc-check]')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -170,7 +170,7 @@ jobs:
           retention-days: 3
 
   windows-exe:
-    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[ui-art]') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (!contains(github.event.head_commit.message, '[ui-art]') && !contains(github.event.head_commit.message, '[nc-check]')) }}
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@v7
