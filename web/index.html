@@ -224,6 +224,12 @@ function toolpathPage(){
  '<div class="field"><b>工作座標</b><select data-tp-wcs style="width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px"><option>G54</option><option>G55</option></select></div>'+
  '<label class="param">刀具 T<input data-tp-tool type="number" value="1" min="1" step="1"></label>'+
  '<label class="param">刀長 H<input data-tp-h type="number" value="1" min="1" step="1"></label>'+
+ '<div class="field"><b>旋轉模式</b><select data-tp-rotmode style="width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px"><option value="INDEXED">INDEXED 定角</option><option value="SIMULTANEOUS">SIMULTANEOUS 同步</option></select></div>'+
+ '<label class="param">A 起點<input data-tp-a0 type="number" value="0" step="0.001"></label>'+
+ '<label class="param">A 終點<input data-tp-a1 type="number" value="0" step="0.001"></label>'+
+ '<label class="param">B 起點<input data-tp-b0 type="number" value="0" step="0.001"></label>'+
+ '<label class="param">B 終點<input data-tp-b1 type="number" value="0" step="0.001"></label>'+
+ '<div class="notice">A/B 由使用者明示；目前不冒充自動 5X 刀軸計算。</div>'+
  '<div class="field"><b>選取刀路</b><span data-tp-selected>無</span></div>'+
  '<div class="field"><b>狀態</b><span data-tp-status>等待 CAM</span></div>'+
  '<button class="btn" data-tp-action="APPLYALL">參數套用全部</button>'+
@@ -1316,45 +1322,6 @@ function makeCadRuntime(root){
    },"DIM 已套用 "+val.toFixed(3)+" mm。");
  }
  function fmt(v){const n=Number(v)||0;return n.toFixed(3).replace(/0+$/,"").replace(/\.$/,".") }
- function generateFanucNC(){
-   if(!state.paths.length){msgEl.textContent="沒有刀路，不能產生 NC。";return null}
-   if(state.paths.some(p=>p.kind==="tap")){msgEl.textContent="攻牙刀路存在；G84/主軸同步尚未接入，為避免假 G-code 已阻擋 NC 產生。";statusEl.textContent="POST BLOCK";return null}
-   const target=targetInput.value||"3AX",wcs=wcsInput.value||"G54",tool=Math.max(1,Math.trunc(Number(toolNoInput.value)||1)),hno=Math.max(1,Math.trunc(Number(hNoInput.value)||1));
-   const rpm=Math.max(1,Math.trunc(Number(rpmInput.value)||12000)),defaultFeed=Math.max(1,Math.trunc(Number(feedInput.value)||1200)),defaultSafe=Number(safeInput.value)||5;
-   const lines=[];let n=10;
-   const push=line=>{lines.push("N"+n+" "+line);n+=10};
-   const mainO=target==="3AX"?"O1000":target==="4AX"?"O2000":"O3000";
-   lines.push(mainO);push("M98 P4");push("S"+rpm+" M3");
-   let oriented=false;
-   for(const path of state.paths){
-     if(!path.points?.length)continue;
-     const safe=Number(path.safeZ??defaultSafe),depth=Number(path.depth??depthInput.value??-10),feed=Math.max(1,Math.trunc(Number(path.feed)||defaultFeed));
-     if(path.kind==="drill"){
-       const pt=path.points[0];push("G0 Z"+fmt(safe));
-       let xy="X"+fmt(pt.x)+" Y"+fmt(pt.y);
-       if(!oriented&&target!=="3AX"){xy+=" A0.";if(target==="5AX")xy+=" B0.";oriented=true}
-       push("G81 "+xy+" Z"+fmt(depth)+" R"+fmt(Math.min(safe,3))+" F"+feed);push("G80");continue;
-     }
-     const first=path.points[0],li=leadPoint(path,"in"),lo=leadPoint(path,"out");
-     push("G0 Z"+fmt(safe));
-     let start=li||first,rapid="G0 X"+fmt(start.x)+" Y"+fmt(start.y);
-     if(!oriented&&target!=="3AX"){rapid+=" A0.";if(target==="5AX")rapid+=" B0.";oriented=true}
-     push(rapid);push("G1 Z"+fmt(depth)+" F"+Math.max(1,Math.trunc(feed*.35)));
-     if(li)push("G1 X"+fmt(first.x)+" Y"+fmt(first.y)+" F"+feed);
-     for(let i=1;i<path.points.length;i++){const pt=path.points[i];push("G1 X"+fmt(pt.x)+" Y"+fmt(pt.y)+" F"+feed)}
-     if(lo)push("G1 X"+fmt(lo.x)+" Y"+fmt(lo.y)+" F"+feed);
-     push("G0 Z"+fmt(safe));
-   }
-   push("M98 P5");push("M30");
-   lines.push("O4");lines.push("N10 T"+tool+" M6");lines.push("N20 G90 "+wcs+" G17 G40 G49 G80");lines.push("N30 G43 Z30. H"+hno+" M8");lines.push("N40 M99");
-   lines.push("O5");lines.push("N10 M9");lines.push("N20 M5");lines.push("N30 G0 Z100.");lines.push("N40 M99");
-   const code=lines.join("\n");
-   localStorage.setItem("aig-code-"+target,code);
-   const ta=document.querySelector('textarea[data-axis="'+target+'"]');
-   if(ta){ta.value=code;ta.dispatchEvent(new Event("input",{bubbles:true}))}
-   statusEl.textContent="POST "+target+" READY";msgEl.textContent="Fanuc NC 已產生並送到 "+target+" G-code 編輯器；含 M98 P4/P5、O4/O5、G43/H、"+wcs+"。";
-   return code;
- }
  function action(name){
    if(name==="UNDO"){if(state.historyIndex>0){state.historyIndex--;loadSnapshot(state.historyIndex)}return}
    if(name==="REDO"){if(state.historyIndex<state.history.length-1){state.historyIndex++;loadSnapshot(state.historyIndex)}return}
@@ -1630,6 +1597,7 @@ function makeToolpathRuntime(root){
  const canvas=root.querySelector("[data-tp-canvas]"),ctx=canvas.getContext("2d"),listEl=root.querySelector("[data-tp-list]"),msgEl=root.querySelector("[data-tp-msg]"),countEl=root.querySelector("[data-tp-count]"),selectedEl=root.querySelector("[data-tp-selected]"),statusEl=root.querySelector("[data-tp-status]");
  const safeInput=root.querySelector("[data-tp-safez]"),depthInput=root.querySelector("[data-tp-depth]"),feedInput=root.querySelector("[data-tp-feed]"),rpmInput=root.querySelector("[data-tp-rpm]"),leadInInput=root.querySelector("[data-tp-leadin]"),leadOutInput=root.querySelector("[data-tp-leadout]");
  const targetInput=root.querySelector("[data-tp-target]"),wcsInput=root.querySelector("[data-tp-wcs]"),toolNoInput=root.querySelector("[data-tp-tool]"),hNoInput=root.querySelector("[data-tp-h]");
+ const rotModeInput=root.querySelector("[data-tp-rotmode]"),a0Input=root.querySelector("[data-tp-a0]"),a1Input=root.querySelector("[data-tp-a1]"),b0Input=root.querySelector("[data-tp-b0]"),b1Input=root.querySelector("[data-tp-b1]");
  const state={payload:null,paths:[],selected:0,visible:true,edit:false,view:{scale:4,panX:0,panY:0},dragNode:null,deleteArmedUntil:0};
  function load(){
    try{state.payload=JSON.parse(localStorage.getItem("aig-cam-toolpath-v1")||"null")}catch{state.payload=null}
@@ -1642,6 +1610,9 @@ function makeToolpathRuntime(root){
    const p=selected(),base=state.payload?.params||{};
    safeInput.value=p?.safeZ??base.safeZ??5;depthInput.value=p?.depth??base.depth??-10;feedInput.value=p?.feed??base.feed??1200;rpmInput.value=p?.rpm??base.rpm??12000;
    leadInInput.value=p?.leadIn??0;leadOutInput.value=p?.leadOut??0;
+   rotModeInput.value=p?.rotMode??"INDEXED";
+   a0Input.value=p?.aStart??0;a1Input.value=p?.aEnd??(p?.aStart??0);
+   b0Input.value=p?.bStart??0;b1Input.value=p?.bEnd??(p?.bStart??0);
  }
  function save(){
    if(!state.payload)state.payload={version:1,createdAt:Date.now(),strategy:"EDITED",params:{},cadEntityCount:0};
@@ -1657,7 +1628,7 @@ function makeToolpathRuntime(root){
    state.view.scale=Math.max(.2,Math.min(60,Math.min((w-80)/ww,(h-80)/hh)));state.view.panX=-((minX+maxX)/2)*state.view.scale;state.view.panY=((minY+maxY)/2)*state.view.scale;draw();
  }
  function renderList(){
-   listEl.innerHTML="";state.paths.forEach((p,i)=>{const b=document.createElement("button");b.className="btn"+(i===state.selected?" cadSelected":"");b.dataset.tpIndex=i;b.textContent="OP"+String(i+1).padStart(2,"0")+"  "+String(p.kind||"path").toUpperCase()+"  "+(p.points?.length||0)+" pts";listEl.appendChild(b)});
+   listEl.innerHTML="";state.paths.forEach((p,i)=>{const b=document.createElement("button");b.className="btn"+(i===state.selected?" cadSelected":"");b.dataset.tpIndex=i;b.textContent="OP"+String(i+1).padStart(2,"0")+"  "+String(p.kind||"path").toUpperCase()+"  "+(p.points?.length||0)+" pts  A"+Number(p.aStart||0).toFixed(1)+"→"+Number(p.aEnd??p.aStart??0).toFixed(1)+" B"+Number(p.bStart||0).toFixed(1)+"→"+Number(p.bEnd??p.bStart??0).toFixed(1);listEl.appendChild(b)});
  }
  function updateInfo(){
    countEl.textContent=state.paths.length+" paths";const p=selected();selectedEl.textContent=p?("OP"+String(state.selected+1).padStart(2,"0")+" "+String(p.kind||"path").toUpperCase()):"無";
@@ -1687,12 +1658,76 @@ function makeToolpathRuntime(root){
    p.points.forEach((pt,i)=>{const q=w2s(pt,w,h),dd=Math.hypot(q.x-sp.x,q.y-sp.y);if(dd<d){d=dd;best=i}});return best;
  }
  function applyInputs(path=selected()){
-   if(!path)return;path.safeZ=Number(safeInput.value)||5;path.depth=Number(depthInput.value)||-10;path.feed=Math.max(1,Number(feedInput.value)||1200);path.rpm=Math.max(1,Number(rpmInput.value)||12000);path.leadIn=Math.max(0,Number(leadInInput.value)||0);path.leadOut=Math.max(0,Number(leadOutInput.value)||0);
+   if(!path)return;
+   path.safeZ=Number(safeInput.value)||5;path.depth=Number(depthInput.value)||-10;path.feed=Math.max(1,Number(feedInput.value)||1200);path.rpm=Math.max(1,Number(rpmInput.value)||12000);path.leadIn=Math.max(0,Number(leadInInput.value)||0);path.leadOut=Math.max(0,Number(leadOutInput.value)||0);
+   path.rotMode=rotModeInput.value==="SIMULTANEOUS"?"SIMULTANEOUS":"INDEXED";
+   path.aStart=Number(a0Input.value)||0;path.aEnd=Number(a1Input.value)||0;path.bStart=Number(b0Input.value)||0;path.bEnd=Number(b1Input.value)||0;
+   if(path.rotMode==="INDEXED"){path.aEnd=path.aStart;path.bEnd=path.bStart;a1Input.value=path.aEnd;b1Input.value=path.bEnd}
  }
  function verify(){
-   const errors=[];state.paths.forEach((p,i)=>{if(!Array.isArray(p.points)||!p.points.length)errors.push("OP"+(i+1)+" 無節點");for(const pt of p.points||[])if(!Number.isFinite(pt.x)||!Number.isFinite(pt.y))errors.push("OP"+(i+1)+" 有非法座標");if(!(Number(p.feed)>0))errors.push("OP"+(i+1)+" 進給錯誤");if(!(Number(p.rpm)>0))errors.push("OP"+(i+1)+" 轉速錯誤");if(Number(p.safeZ)<=Number(p.depth))errors.push("OP"+(i+1)+" Safe-Z 不高於加工深度")});
+   const errors=[];state.paths.forEach((p,i)=>{
+     if(!Array.isArray(p.points)||!p.points.length)errors.push("OP"+(i+1)+" 無節點");
+     for(const pt of p.points||[])if(!Number.isFinite(pt.x)||!Number.isFinite(pt.y))errors.push("OP"+(i+1)+" 有非法座標");
+     if(!(Number(p.feed)>0))errors.push("OP"+(i+1)+" 進給錯誤");
+     if(!(Number(p.rpm)>0))errors.push("OP"+(i+1)+" 轉速錯誤");
+     if(Number(p.safeZ)<=Number(p.depth))errors.push("OP"+(i+1)+" Safe-Z 不高於加工深度");
+     for(const [label,v] of [["A0",p.aStart??0],["A1",p.aEnd??p.aStart??0],["B0",p.bStart??0],["B1",p.bEnd??p.bStart??0]])if(!Number.isFinite(Number(v)))errors.push("OP"+(i+1)+" "+label+" 非法");
+   });
    if(errors.length){statusEl.textContent="VERIFY FAIL";msgEl.textContent=errors.slice(0,4).join("；");return false}
    statusEl.textContent="VERIFY PASS";msgEl.textContent="幾何/座標/進給/轉速/Safe-Z 基礎驗證 PASS；此處不冒充碰撞驗證。";return true;
+ }
+
+ function fmt(v){const n=Number(v)||0;return n.toFixed(3).replace(/0+$/,"").replace(/\.$/,".") }
+ function rotaryAt(path,f,target){
+   if(target==="3AX")return{A:0,B:0,text:""};
+   const mode=path.rotMode==="SIMULTANEOUS"?"SIMULTANEOUS":"INDEXED";
+   const a0=Number(path.aStart)||0,a1=mode==="SIMULTANEOUS"?(Number(path.aEnd)||0):a0;
+   const b0=Number(path.bStart)||0,b1=mode==="SIMULTANEOUS"?(Number(path.bEnd)||0):b0;
+   const A=a0+(a1-a0)*Math.max(0,Math.min(1,f)),B=b0+(b1-b0)*Math.max(0,Math.min(1,f));
+   return{A,B,text:" A"+fmt(A)+(target==="5AX"?" B"+fmt(B):"")};
+ }
+ function generateFanucNC(){
+   if(!state.paths.length){msgEl.textContent="沒有刀路，不能產生 NC。";return null}
+   if(state.paths.some(p=>p.kind==="tap")){msgEl.textContent="攻牙刀路存在；G84/主軸同步尚未接入，為避免假 G-code 已阻擋 NC 產生。";statusEl.textContent="POST BLOCK";return null}
+   const target=targetInput.value||"3AX",wcs=wcsInput.value||"G54",tool=Math.max(1,Math.trunc(Number(toolNoInput.value)||1)),hno=Math.max(1,Math.trunc(Number(hNoInput.value)||1));
+   const rpm=Math.max(1,Math.trunc(Number(rpmInput.value)||12000)),defaultFeed=Math.max(1,Math.trunc(Number(feedInput.value)||1200)),defaultSafe=Number(safeInput.value)||5;
+   const lines=[];let n=10;const push=line=>{lines.push("N"+n+" "+line);n+=10};
+   const mainO=target==="3AX"?"O1000":target==="4AX"?"O2000":"O3000";
+   lines.push(mainO);push("M98 P4");push("S"+rpm+" M3");
+   for(const path of state.paths){
+     if(!path.points?.length)continue;
+     const safe=Number(path.safeZ??defaultSafe),depth=Number(path.depth??depthInput.value??-10),feed=Math.max(1,Math.trunc(Number(path.feed)||defaultFeed));
+     const mode=path.rotMode==="SIMULTANEOUS"?"SIMULTANEOUS":"INDEXED",r0=rotaryAt(path,0,target);
+     push("G0 Z"+fmt(safe));
+     if(target!=="3AX")push("G0"+r0.text);
+     if(path.kind==="drill"){
+       const pt=path.points[0];
+       push("G0 X"+fmt(pt.x)+" Y"+fmt(pt.y));
+       push("G81 X"+fmt(pt.x)+" Y"+fmt(pt.y)+" Z"+fmt(depth)+" R"+fmt(Math.min(safe,3))+" F"+feed);
+       push("G80");continue;
+     }
+     const first=path.points[0],li=leadPoint(path,"in"),lo=leadPoint(path,"out"),start=li||first;
+     push("G0 X"+fmt(start.x)+" Y"+fmt(start.y));
+     push("G1 Z"+fmt(depth)+" F"+Math.max(1,Math.trunc(feed*.35)));
+     if(li)push("G1 X"+fmt(first.x)+" Y"+fmt(first.y)+(mode==="SIMULTANEOUS"?rotaryAt(path,0,target).text:"")+" F"+feed);
+     const denom=Math.max(1,path.points.length-1);
+     for(let i=1;i<path.points.length;i++){
+       const pt=path.points[i],frac=i/denom;
+       push("G1 X"+fmt(pt.x)+" Y"+fmt(pt.y)+(mode==="SIMULTANEOUS"?rotaryAt(path,frac,target).text:"")+" F"+feed);
+     }
+     if(lo)push("G1 X"+fmt(lo.x)+" Y"+fmt(lo.y)+(mode==="SIMULTANEOUS"?rotaryAt(path,1,target).text:"")+" F"+feed);
+     push("G0 Z"+fmt(safe));
+   }
+   push("M98 P5");push("M30");
+   lines.push("O4");lines.push("N10 T"+tool+" M6");lines.push("N20 G90 "+wcs+" G17 G40 G49 G80");lines.push("N30 G43 Z30. H"+hno+" M8");lines.push("N40 M99");
+   lines.push("O5");lines.push("N10 M9");lines.push("N20 M5");lines.push("N30 G0 Z100.");lines.push("N40 M99");
+   const code=lines.join("\n");
+   localStorage.setItem("aig-code-"+target,code);
+   const ta=document.querySelector('textarea[data-axis="'+target+'"]');
+   if(ta){ta.value=code;ta.dispatchEvent(new Event("input",{bubbles:true}))}
+   statusEl.textContent="POST "+target+" READY";
+   msgEl.textContent="Fanuc NC 已送到 "+target+"；旋轉軸在 Safe-Z 先定位，SIMULTANEOUS 模式再把 A/B 寫入每段 G1。";
+   return code;
  }
  function action(name){
    if(name==="TOGGLE"){state.visible=!state.visible;updateInfo();draw();return}
@@ -1714,7 +1749,7 @@ function makeToolpathRuntime(root){
    const li=e.target.closest("[data-tp-index]");if(li){state.selected=Number(li.dataset.tpIndex)||0;renderList();syncInputs();updateInfo();draw();return}
    const ac=e.target.closest("[data-tp-action]");if(ac)action(ac.dataset.tpAction);
  });
- [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput].forEach(el=>el.addEventListener("change",()=>{applyInputs();draw()}));
+ [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,rotModeInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>el.addEventListener("change",()=>{applyInputs();renderList();draw()}));
  canvas.addEventListener("pointerdown",e=>{if(!state.edit)return;const r=canvas.getBoundingClientRect(),sp={x:e.clientX-r.left,y:e.clientY-r.top},i=nearestNode(sp);if(i===null)return;state.dragNode=i;canvas.setPointerCapture(e.pointerId)});
  canvas.addEventListener("pointermove",e=>{if(state.dragNode===null)return;const r=canvas.getBoundingClientRect(),sp={x:e.clientX-r.left,y:e.clientY-r.top},{w,h}=resize(),wp=s2w(sp,w,h),p=selected();if(p?.points?.[state.dragNode]){p.points[state.dragNode]={x:Number(wp.x.toFixed(3)),y:Number(wp.y.toFixed(3))};draw()}});
  canvas.addEventListener("pointerup",e=>{if(state.dragNode!==null){state.dragNode=null;save();renderList()}});
