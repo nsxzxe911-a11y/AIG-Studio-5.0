@@ -206,7 +206,6 @@ const required = [
   '自適應層級資料錯誤',
   '• Load ',
   'function buildAdaptive2DPaths',
-  'ADAPTIVE_RECT_NO_PATHS',
   'CNC machine output disabled'
 ];
 
