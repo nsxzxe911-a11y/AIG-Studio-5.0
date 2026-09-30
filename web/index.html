@@ -1099,7 +1099,9 @@ function makeGlScene(canvas,axis){
      const fixtureBoxes=runtimeAssemblyBoxes({assembly:scene.assembly});
      for(const fixture of fixtureBoxes){
        const model=M(R,M(T(fixture.x,fixture.y,fixture.z+fixture.h/2),S(fixture.w,fixture.d,fixture.h)));
-       const color=fixture.type==="VISE_JAW"?rgb("#9a6d45"):fixture.type==="CLAMP"?rgb("#7b5ca8"):rgb("#506878");
+       const fixtureAlarm=String(scene.collisionAlarm?.fixtureId||"")===fixture.id;
+       const clearanceValue=Number(scene.setupClearance?.minimum),fixtureLimit=String(scene.setupClearance?.fixtureId||"")===fixture.id&&Number.isFinite(clearanceValue)&&clearanceValue<2;
+       const color=fixtureAlarm?rgb("#ff465f"):fixtureLimit?rgb("#ffb326"):fixture.type==="VISE_JAW"?rgb("#9a6d45"):fixture.type==="CLAMP"?rgb("#7b5ca8"):rgb("#506878");
        drawMesh(cube,model,color,vp);
      }
 
@@ -1407,7 +1409,7 @@ function makeRuntime(root){
  function draw(){
   if(!state.parsed)return;
   const webglOk=glScene?.render({
-    parsed:state.parsed,index:state.index,t:state.t,pos:currentPos(),toolDia:settings().toolDia,cutterLen:settings().cutterLen,holderDia:settings().holderDia,holderLen:settings().holderLen,stock:stockConfig,assembly:assemblyConfig,collisionAlarm:state.collisionAlarm,dry:state.dry,
+    parsed:state.parsed,index:state.index,t:state.t,pos:currentPos(),toolDia:settings().toolDia,cutterLen:settings().cutterLen,holderDia:settings().holderDia,holderLen:settings().holderLen,stock:stockConfig,assembly:assemblyConfig,collisionAlarm:state.collisionAlarm,setupClearance:state.setupClearance,dry:state.dry,
     sampleBlock:(bl,t)=>{
       if(bl.motion==="G2"||bl.motion==="G3")return arcPoint(bl,t);
       const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(bl.from[k]||0,bl.to[k]||0,t);return p;
