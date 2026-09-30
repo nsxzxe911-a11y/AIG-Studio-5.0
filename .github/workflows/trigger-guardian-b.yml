@@ -1,0 +1,79 @@
+name: Studio Trigger Guardian B
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ci/trigger_guardian.py'
+      - 'ci/guardian_canonical/**'
+      - 'ci/guardian_mirror/**'
+      - 'ci/trigger_mine_detector.py'
+      - 'ci/verify_trigger_policy.py'
+      - 'ci/prebaseline_trigger_clean.py'
+      - '.github/workflows/trigger-mine-auto-clean.yml'
+      - '.github/workflows/prebaseline-trigger-clean.yml'
+      - '.github/workflows/trigger-guardian-a.yml'
+      - '.github/workflows/trigger-guardian-b.yml'
+      - '.github/workflows/rolling-version-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trigger-guardian-guardian-b
+  cancel-in-progress: false
+
+jobs:
+  guardian-b:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - name: Majority-restore Guardian itself
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from collections import Counter
+          import hashlib, sys
+          copies=[
+              Path("ci/trigger_guardian.py"),
+              Path("ci/guardian_canonical/ci/trigger_guardian.py"),
+              Path("ci/guardian_mirror/trigger_guardian.py"),
+          ]
+          present=[(p,p.read_bytes()) for p in copies if p.is_file()]
+          if len(present)<2:
+              raise SystemExit("GUARDIAN_QUORUM_LOST")
+          digests=[hashlib.sha256(data).hexdigest() for _,data in present]
+          digest,count=Counter(digests).most_common(1)[0]
+          if count<2:
+              raise SystemExit("GUARDIAN_NO_MAJORITY")
+          source=next(data for _,data in present if hashlib.sha256(data).hexdigest()==digest)
+          repaired=[]
+          for p in copies:
+              if (not p.is_file()) or hashlib.sha256(p.read_bytes()).hexdigest()!=digest:
+                  p.parent.mkdir(parents=True,exist_ok=True)
+                  p.write_bytes(source)
+                  repaired.append(str(p))
+          print("GUARDIAN_MAJORITY_PASS|REPAIRED="+(",".join(repaired) if repaired else "NONE"))
+          PY
+      - name: Restore protected trigger system
+        run: |
+          python3 ci/trigger_guardian.py --restore
+          python3 ci/trigger_mine_detector.py
+          python3 ci/verify_trigger_policy.py
+      - name: Commit recovery if needed
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'TRIGGER_GUARDIAN_NO_RECOVERY_NEEDED'
+            exit 0
+          fi
+          git config user.name 'AIG Trigger Guardian'
+          git config user.email 'actions@users.noreply.github.com'
+          git add ci .github/workflows
+          git commit -m '[guardian-recover][infra-only] restore protected trigger system'
+          git push origin HEAD:main
+          echo 'TRIGGER_GUARDIAN_RECOVERY_COMMITTED'
