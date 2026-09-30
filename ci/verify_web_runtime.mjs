@@ -39,6 +39,22 @@ const required = [
   'machine.spindle="M3"',
   'machine.coolant=true',
   'stopCode',
+  'function compilePrograms',
+  'M98 P4',
+  'M98 P5',
+  'M99',
+  'G43',
+  'G49',
+  'G54',
+  'G55',
+  'data-g54-x',
+  'data-g55-x',
+  'data-h1',
+  'data-wcsmetric',
+  'data-hmetric',
+  'data-subprogram',
+  'function machinePosition',
+  'function toolLengthFor',
   'data-cmd="play"',
   'data-cmd="pause"',
   'data-cmd="step"',
@@ -53,6 +69,48 @@ for (const needle of required) {
   }
 }
 
+// Execute the pure parser core so runtime-scope bugs are caught, not only syntax errors.
+const coreStart = scriptMatch[1].indexOf("function parseWords(line){");
+const coreEnd = scriptMatch[1].indexOf("function makeRuntime(root){", coreStart);
+if (coreStart < 0 || coreEnd < 0) throw new Error("WEB_RUNTIME_CORE_BOUNDS_MISSING");
+const core = scriptMatch[1].slice(coreStart, coreEnd);
+const api = new Function(core + "\nreturn {parseProgram,compilePrograms};")();
+
+const subProgramTest = `O1000
+N10 M98 P4
+N20 G90 G54
+N30 G0 X10. Y20. Z5.
+N40 G55 X1. Y2.
+N50 M98 P5
+N60 M30
+O4
+N10 T9 M6
+N20 G43 H1 Z30. M8
+N30 M99
+O5
+N10 M9
+N20 M5
+N30 M99`;
+const subParsed = api.parseProgram(subProgramTest, "3AX", {g73Retract:0.5,safeZ:5});
+if (subParsed.errors.length) throw new Error("SUBPROGRAM_RUNTIME_ERROR: " + subParsed.errors.join(" | "));
+const subs = new Set(subParsed.blocks.map(b => b.subprogram));
+if (!subs.has("4") || !subs.has("5")) throw new Error("M98_P4_P5_NOT_EXPANDED");
+if (!subParsed.blocks.some(b => b.subCall === 4) || !subParsed.blocks.some(b => b.subCall === 5)) throw new Error("M98_CALL_METADATA_MISSING");
+if (!subParsed.blocks.some(b => b.machine?.toolComp && b.machine?.H === 1 && b.machine?.T === 9)) throw new Error("G43_H_RUNTIME_STATE_MISSING");
+if (!subParsed.blocks.some(b => b.machine?.wcs === "G55")) throw new Error("G55_RUNTIME_STATE_MISSING");
+
+const drillTest = `O2000
+N10 G90 G54 G17
+N20 G99 G81 Z-10. R3. F150 L0
+N30 G34 X30. Y30. I20. J0. K6
+N40 G80
+N50 M30`;
+const drillParsed = api.parseProgram(drillTest, "3AX", {g73Retract:0.5,safeZ:5});
+if (drillParsed.errors.length) throw new Error("DRILL_RUNTIME_ERROR: " + drillParsed.errors.join(" | "));
+const holes = drillParsed.blocks.filter(b => b.pattern === "G34" && b.drillBottom);
+if (holes.length !== 6) throw new Error("G34_HOLE_COUNT_" + holes.length);
+if (!holes.every(b => b.cycle === "G81")) throw new Error("G34_MODAL_G81_MISSING");
+
 const runtimeCount = (html.match(/sim\("3AX"|sim\("4AX"|sim\("5AX"/g) || []).length;
 if (runtimeCount !== 0) {
   // Runtime pages are generated dynamically through simPage(name), so direct sim(...) calls are not expected.
@@ -63,4 +121,4 @@ if (pageDefs.length !== 7) {
   throw new Error("WEB_RUNTIME_PAGE_COUNT_" + pageDefs.length);
 }
 
-console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|BLACK_RGB");
+console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|BLACK_RGB");
