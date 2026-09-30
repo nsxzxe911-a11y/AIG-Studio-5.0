@@ -1,0 +1,25 @@
+name: Studio Prebaseline Trigger Clean
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ci/prebaseline_trigger_clean.py'
+      - 'ci/trigger_mine_detector.py'
+      - 'ci/verify_trigger_policy.py'
+      - 'ci/verify_rolling_version.py'
+      - '.github/workflows/prebaseline-trigger-clean.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prebaseline-trigger-clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - name: Verify detector and clean baseline state
+        run: python3 ci/prebaseline_trigger_clean.py
