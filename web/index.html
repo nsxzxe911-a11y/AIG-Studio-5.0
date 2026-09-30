@@ -697,8 +697,19 @@ function makeGlScene(canvas,axis){
  let lost=false;canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();lost=true});canvas.addEventListener("webglcontextrestored",()=>{lost=false});
  const camera={yaw:-.72,pitch:.58,zoom:2.55,drag:null};
 
- function shader(type,src){const sh=gl.createShader(type);gl.shaderSource(sh,src);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh)||"shader");return sh}
- function program(vs,fs){const p=gl.createProgram();gl.attachShader(p,shader(gl.VERTEX_SHADER,vs));gl.attachShader(p,shader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p)||"link");return p}
+ function shader(type,src){
+  const sh=gl.createShader(type);if(!sh)return null;
+  gl.shaderSource(sh,src);gl.compileShader(sh);
+  if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)){gl.deleteShader(sh);return null}
+  return sh;
+ }
+ function program(vs,fs){
+  const v=shader(gl.VERTEX_SHADER,vs),f=shader(gl.FRAGMENT_SHADER,fs);if(!v||!f){if(v)gl.deleteShader(v);if(f)gl.deleteShader(f);return null}
+  const p=gl.createProgram();if(!p){gl.deleteShader(v);gl.deleteShader(f);return null}
+  gl.attachShader(p,v);gl.attachShader(p,f);gl.linkProgram(p);gl.deleteShader(v);gl.deleteShader(f);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS)){gl.deleteProgram(p);return null}
+  return p;
+ }
  const meshProg=program(
   'attribute vec3 aP;attribute vec3 aN;uniform mat4 uMVP;uniform mat4 uM;varying vec3 vN;void main(){gl_Position=uMVP*vec4(aP,1.0);vN=mat3(uM)*aN;}',
   'precision mediump float;uniform vec3 uC;varying vec3 vN;void main(){vec3 n=normalize(vN);float d=.30+.70*max(dot(n,normalize(vec3(.35,.55,.78))),0.0);gl_FragColor=vec4(uC*d,1.0);}'
@@ -707,6 +718,7 @@ function makeGlScene(canvas,axis){
   'attribute vec3 aP;uniform mat4 uVP;void main(){gl_Position=uVP*vec4(aP,1.0);}',
   'precision mediump float;uniform vec3 uC;void main(){gl_FragColor=vec4(uC,1.0);}'
  );
+ if(!meshProg||!lineProg)return null;
  const loc={
   mp:{p:gl.getAttribLocation(meshProg,"aP"),n:gl.getAttribLocation(meshProg,"aN"),mvp:gl.getUniformLocation(meshProg,"uMVP"),m:gl.getUniformLocation(meshProg,"uM"),c:gl.getUniformLocation(meshProg,"uC")},
   lp:{p:gl.getAttribLocation(lineProg,"aP"),vp:gl.getUniformLocation(lineProg,"uVP"),c:gl.getUniformLocation(lineProg,"uC")}
@@ -2140,7 +2152,7 @@ function makeMenuRuntime(root){
  });
  root.addEventListener("change",e=>{
    const file=e.target.closest("[data-menu-file]");if(!file||!file.files?.[0])return;
-   const reader=new FileReader();reader.onload=()=>{const msg=detail.querySelector("[data-menu-msg]");try{const data=JSON.parse(String(reader.result||"{}"));if(data.schema!=="AIG-WEB-PROJECT-1")throw new Error("schema");if(data.project)saveJson("aig-project-meta-v1",data.project);if(data.cad)saveJson("aig-cad-draft-v1",data.cad);if(data.cam)saveJson("aig-cam-toolpath-v1",data.cam);if(data.tools)saveJson("aig-tool-table-v1",data.tools);if(data.wcs)saveJson("aig-wcs-v1",data.wcs);for(const ax of ["3AX","4AX","5AX"])if(data.nc?.[ax])aigStorageSet(root,"aig-code-"+ax,data.nc[ax],ax+" G-code");if(msg)msg.textContent="匯入完成；重新開啟頁面即可載入全部資料。"}catch{if(msg)msg.textContent="匯入失敗：檔案不是 AIG-WEB-PROJECT-1。"}};reader.readAsText(file.files[0]);
+   const reader=new FileReader();reader.onload=()=>{const msg=detail.querySelector("[data-menu-msg]");let data=null;try{data=JSON.parse(String(reader.result||"{}"))}catch{if(msg)msg.textContent="匯入失敗：JSON 格式無法解析；原資料未變更。";aigShowIssue(root,"warn","匯入檔案不是有效 JSON；原資料保持不變。");return}if(data?.schema!=="AIG-WEB-PROJECT-1"){if(msg)msg.textContent="匯入失敗：檔案格式不是 AIG-WEB-PROJECT-1；原資料未變更。";aigShowIssue(root,"warn","匯入格式不相容；原資料保持不變。");return}if(data.project)saveJson("aig-project-meta-v1",data.project);if(data.cad)saveJson("aig-cad-draft-v1",data.cad);if(data.cam)saveJson("aig-cam-toolpath-v1",data.cam);if(data.tools)saveJson("aig-tool-table-v1",data.tools);if(data.wcs)saveJson("aig-wcs-v1",data.wcs);for(const ax of ["3AX","4AX","5AX"])if(data.nc?.[ax])aigStorageSet(root,"aig-code-"+ax,data.nc[ax],ax+" G-code");if(msg)msg.textContent="匯入完成；重新開啟頁面即可載入全部資料。";aigShowIssue(root,"info","專案匯入完成。")};reader.onerror=()=>{const msg=detail.querySelector("[data-menu-msg]");if(msg)msg.textContent="檔案讀取失敗；原資料未變更。";aigShowIssue(root,"warn","檔案讀取失敗；AIG 其他功能可繼續使用。")};reader.readAsText(file.files[0]);
  });
  render("PROJECT");
 }
