@@ -1,0 +1,38 @@
+name: Studio Trigger Guardian Recovery Self-Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ci/trigger_guardian.py'
+      - 'ci/guardian_canonical/**'
+      - 'ci/guardian_mirror/**'
+      - '.github/workflows/trigger-guardian-a.yml'
+      - '.github/workflows/trigger-guardian-b.yml'
+      - '.github/workflows/guardian-recovery-selftest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  destructive-recovery-selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Delete protected files in ephemeral checkout and recover them
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ci/trigger_mine_detector.py /tmp/original-detector.py
+          cp .github/workflows/trigger-mine-auto-clean.yml /tmp/original-cleaner.yml
+          rm ci/trigger_mine_detector.py
+          rm .github/workflows/trigger-mine-auto-clean.yml
+          test ! -e ci/trigger_mine_detector.py
+          test ! -e .github/workflows/trigger-mine-auto-clean.yml
+          python3 ci/trigger_guardian.py --restore | tee /tmp/guardian-recovery.log
+          cmp -s ci/trigger_mine_detector.py /tmp/original-detector.py
+          cmp -s .github/workflows/trigger-mine-auto-clean.yml /tmp/original-cleaner.yml
+          git diff --quiet
+          grep -Fq 'TRIGGER_GUARDIAN_RESTORE_PASS' /tmp/guardian-recovery.log
+          echo 'TRIGGER_GUARDIAN_DESTRUCTIVE_SELFTEST_PASS|DETECTOR_DELETED_RESTORED|AUTO_CLEANER_DELETED_RESTORED|WORKTREE_CLEAN'
