@@ -692,26 +692,35 @@ function sphereBoxClearance(p,r,b){
  const dz=p.z<b.minZ?b.minZ-p.z:p.z>b.maxZ?p.z-b.maxZ:0;
  return Math.hypot(dx,dy,dz)-Math.max(0,Number(r)||0);
 }
+function runtimeToolNumber(bl){
+ const n=Math.trunc(Number(bl?.machine?.T)||0);return n>0?n:0;
+}
+function runtimeToolDiameter(cfg={},bl=null){
+ const toolNo=runtimeToolNumber(bl),map=cfg?.toolDiameters||{};
+ const mapped=Number(map?.[toolNo]??map?.["T"+toolNo]),fallback=Number(cfg?.toolDia);
+ if(toolNo>0&&Number.isFinite(mapped)&&mapped>0)return mapped;
+ return Number.isFinite(fallback)&&fallback>0?fallback:10;
+}
 function evaluateSetupClearance(parsed,axis,cfg={}){
  const blocks=parsed?.blocks||[],env=runtimeStockEnvelope(parsed,cfg),fixtures=runtimeAssemblyBoxes(cfg);
- const toolR=Math.max(.05,Number(cfg.toolDia)||10)/2,cutterLen=Math.max(1,Number(cfg.cutterLen)||30);
- const holderR=Math.max(toolR,Math.max(1,Number(cfg.holderDia)||25)/2),holderLen=Math.max(1,Number(cfg.holderLen)||25);
+ const cutterLen=Math.max(1,Number(cfg.cutterLen)||30),holderDiaBase=Math.max(1,Number(cfg.holderDia)||25),holderLen=Math.max(1,Number(cfg.holderLen)||25);
  const stockBox={minX:env.minX,maxX:env.maxX,minY:env.minY,maxY:env.maxY,minZ:env.minZ,maxZ:env.maxZ};
  let minFixture=Infinity,minHolderStock=Infinity,minType="NONE",minFixtureId=null,fixtureLine=-1,fixtureBlock=-1,holderStockLine=-1,holderStockBlock=-1;
+ let fixtureToolNo=0,fixtureToolDia=0,holderStockToolNo=0,holderStockToolDia=0;
  function localCenter(p,d){
    const a=axis==="3AX"?0:Number(p.A||0),b=axis==="5AX"?Number(p.B||0):0;
    return inverseRuntimeABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b);
  }
- function inspectSegment(p,d0,d1,r,kind,bi,line){
+ function inspectSegment(p,d0,d1,r,kind,bi,line,toolNo,toolDia){
    for(let k=0;k<=8;k++){
      const q=localCenter(p,d0+(d1-d0)*k/8);
      for(const fx of fixtures){
        const c=sphereBoxClearance(q,r,fx);
-       if(c<minFixture){minFixture=c;minType=kind+"_FIXTURE";minFixtureId=fx.id;fixtureLine=line;fixtureBlock=bi}
+       if(c<minFixture){minFixture=c;minType=kind+"_FIXTURE";minFixtureId=fx.id;fixtureLine=line;fixtureBlock=bi;fixtureToolNo=toolNo;fixtureToolDia=toolDia}
      }
      if(kind==="HOLDER"){
        const c=sphereBoxClearance(q,r,stockBox);
-       if(c<minHolderStock){minHolderStock=c;holderStockLine=line;holderStockBlock=bi}
+       if(c<minHolderStock){minHolderStock=c;holderStockLine=line;holderStockBlock=bi;holderStockToolNo=toolNo;holderStockToolDia=toolDia}
      }
    }
  }
@@ -720,10 +729,11 @@ function evaluateSetupClearance(parsed,axis,cfg={}){
    const dx=Number(bl.to.X||0)-Number(bl.from.X||0),dy=Number(bl.to.Y||0)-Number(bl.from.Y||0),dz=Number(bl.to.Z||0)-Number(bl.from.Z||0);
    const da=Math.abs(Number(bl.to.A||0)-Number(bl.from.A||0)),db=Math.abs(Number(bl.to.B||0)-Number(bl.from.B||0));
    const samples=Math.max(8,Math.min(72,Math.ceil(Math.hypot(dx,dy,dz)/3+(da+db)/8)));
+   const toolNo=runtimeToolNumber(bl),toolDia=runtimeToolDiameter(cfg,bl),toolR=Math.max(.05,toolDia/2),holderR=Math.max(toolR,holderDiaBase/2);
    for(let j=0;j<=samples;j++){
      const p=sampleRuntimeBlock(bl,j/samples);
-     inspectSegment(p,0,cutterLen,toolR,"TOOL",bi,bl.line);
-     inspectSegment(p,cutterLen,cutterLen+holderLen,holderR,"HOLDER",bi,bl.line);
+     inspectSegment(p,0,cutterLen,toolR,"TOOL",bi,bl.line,toolNo,toolDia);
+     inspectSegment(p,cutterLen,cutterLen+holderLen,holderR,"HOLDER",bi,bl.line,toolNo,toolDia);
    }
  }
  const highestFixture=fixtures.length?Math.max(...fixtures.map(f=>f.maxZ)):env.tableTop;
@@ -736,10 +746,12 @@ function evaluateSetupClearance(parsed,axis,cfg={}){
  const limitingType=minimum===safeZMargin&&useStaticSafeZ?"SAFE_Z":minimum===holderStockClearance?"HOLDER_STOCK":minType;
  const line=limitingType==="HOLDER_STOCK"?holderStockLine:limitingType==="SAFE_Z"?-1:fixtureLine;
  const blockIndex=limitingType==="HOLDER_STOCK"?holderStockBlock:limitingType==="SAFE_Z"?-1:fixtureBlock;
+ const toolNo=limitingType==="HOLDER_STOCK"?holderStockToolNo:limitingType==="SAFE_Z"?0:fixtureToolNo;
+ const toolDia=limitingType==="HOLDER_STOCK"?holderStockToolDia:limitingType==="SAFE_Z"?runtimeToolDiameter(cfg,null):fixtureToolDia;
  return{
    minimum,fixtureClearance,holderStockClearance,safeZMargin,safeZStaticMargin,highestFixture,highestObstacle,useStaticSafeZ,
-   limitingType,fixtureId:limitingType.endsWith("_FIXTURE")?minFixtureId:null,line,blockIndex,
-   sources:{fixture:{line:fixtureLine,blockIndex:fixtureBlock,id:minFixtureId,type:minType},holderStock:{line:holderStockLine,blockIndex:holderStockBlock},safeZ:{line:-1,blockIndex:-1}},
+   limitingType,fixtureId:limitingType.endsWith("_FIXTURE")?minFixtureId:null,line,blockIndex,toolNo,toolDia,
+   sources:{fixture:{line:fixtureLine,blockIndex:fixtureBlock,id:minFixtureId,type:minType,toolNo:fixtureToolNo,toolDia:fixtureToolDia},holderStock:{line:holderStockLine,blockIndex:holderStockBlock,toolNo:holderStockToolNo,toolDia:holderStockToolDia},safeZ:{line:-1,blockIndex:-1,toolNo:0,toolDia:runtimeToolDiameter(cfg,null)}},
    envelope:env,fixtureCount:fixtures.length
  };
 }
@@ -751,8 +763,7 @@ function sphereHitsBox(p,r,b){
 }
 function scanRuntimeCollisions(parsed,axis,cfg={}){
  const blocks=parsed?.blocks||[],env=runtimeStockEnvelope(parsed,cfg),collisions=[];
- const toolR=Math.max(.05,Number(cfg.toolDia)||10)/2,cutterLen=Math.max(1,Number(cfg.cutterLen)||30);
- const holderR=Math.max(toolR,Math.max(1,Number(cfg.holderDia)||25)/2),holderLen=Math.max(1,Number(cfg.holderLen)||25);
+ const cutterLen=Math.max(1,Number(cfg.cutterLen)||30),holderDiaBase=Math.max(1,Number(cfg.holderDia)||25),holderLen=Math.max(1,Number(cfg.holderLen)||25);
  const stockBox={minX:env.minX,maxX:env.maxX,minY:env.minY,maxY:env.maxY,minZ:env.minZ,maxZ:env.maxZ};
  const fixtureBoxes=runtimeAssemblyBoxes(cfg);
  function localCenter(p,d){
@@ -781,6 +792,7 @@ function scanRuntimeCollisions(parsed,axis,cfg={}){
    const dx=Number(bl.to.X||0)-Number(bl.from.X||0),dy=Number(bl.to.Y||0)-Number(bl.from.Y||0),dz=Number(bl.to.Z||0)-Number(bl.from.Z||0);
    const da=Math.abs(Number(bl.to.A||0)-Number(bl.from.A||0)),db=Math.abs(Number(bl.to.B||0)-Number(bl.from.B||0));
    const samples=Math.max(8,Math.min(72,Math.ceil(Math.hypot(dx,dy,dz)/3+(da+db)/8)));
+   const toolNo=runtimeToolNumber(bl),toolDia=runtimeToolDiameter(cfg,bl),toolR=Math.max(.05,toolDia/2),holderR=Math.max(toolR,holderDiaBase/2);
    const p0=sampleRuntimeBlock(bl,0),startToolInside=Boolean(segmentHitsStock(p0,0,cutterLen,toolR,8));
    let hit=null;
    for(let j=0;j<=samples&&!hit;j++){
@@ -800,9 +812,9 @@ function scanRuntimeCollisions(parsed,axis,cfg={}){
        if(rapidStock){hit={type:"RAPID_TOOL_STOCK",message:"快速移動刀具進入工件",point:rapidStock,t};break}
      }
    }
-   if(hit)collisions.push({...hit,blockIndex:bi,line:bl.line,raw:bl.raw,subprogram:bl.subprogram||parsed.mainProgram||"MAIN"});
+   if(hit)collisions.push({...hit,blockIndex:bi,line:bl.line,raw:bl.raw,subprogram:bl.subprogram||parsed.mainProgram||"MAIN",toolNo,toolDia});
  }
- return{collisions,envelope:env,fixtures:fixtureBoxes,config:{toolR,cutterLen,holderR,holderLen}};
+ return{collisions,envelope:env,fixtures:fixtureBoxes,config:{defaultToolDia:runtimeToolDiameter(cfg,null),cutterLen,holderDia:holderDiaBase,holderLen,dynamicToolDiameter:Boolean(cfg?.toolDiameters)}};
 }
 
 function makeGlScene(canvas,axis){
