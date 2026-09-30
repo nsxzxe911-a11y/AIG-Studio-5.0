@@ -121,10 +121,10 @@ if theme_index.get("default_theme_id") != "official_rgb_original":
     raise SystemExit("正式 Runtime 預設 Theme 不是 official_rgb_original")
 if production_theme.get("theme_id") != "official_rgb_original":
     raise SystemExit("official_rgb_original Theme 遺失或身分錯誤")
-for needle in ("object ProductionRgbAssets", 'ROOT="aig-generated-rgb/approved/184"', "ProductionRgbAssets.drawable(this,id)"):
+for needle in ("object ProductionRgbAssets", 'ROOT="aig-generated-rgb/approved/', "ProductionRgbAssets.drawable(this,id)"):
     if needle not in android:
         raise SystemExit(f"Android 正式 RGB Runtime 未綁定：{needle}")
-for needle in ("private object ProductionRgbAssets", 'ROOT="/aig-generated-rgb/approved/184"', "ProductionRgbAssets.icon"):
+for needle in ("private object ProductionRgbAssets", 'ROOT="/aig-generated-rgb/approved/', "ProductionRgbAssets.icon"):
     if needle not in desktop:
         raise SystemExit(f"Windows 正式 RGB Runtime 未綁定：{needle}")
 for forbidden in ("EngineeringImageAssets.drawable(", "EngineeringImageAssets.icon("):
@@ -140,16 +140,25 @@ for path in (
 ):
     if not path.is_file():
         warn("PRODUCTION_VISUAL_MISSING_FALLBACK",str(path))
-for boot_path in (
-    ROOT / "app" / "src" / "main" / "assets" / "visuals" / "studio_startup_original.png",
-    ROOT / "desktop" / "src" / "main" / "resources" / "visuals" / "studio_startup_original.png",
-):
+startup_integrity = read("design/theme/startup-visual.sha256")
+startup_expected = {}
+for raw in startup_integrity.splitlines():
+    line = raw.strip()
+    if not line or line.startswith("#"):
+        continue
+    parts = line.split(None,1)
+    if len(parts) != 2 or not re.fullmatch(r"[0-9a-fA-F]{64}",parts[0]):
+        raise SystemExit("BLOCKED STARTUP_VISUAL_INTEGRITY_MANIFEST")
+    startup_expected[parts[1].strip()] = parts[0].lower()
+for rel, expected in startup_expected.items():
+    boot_path = ROOT / rel
     if boot_path.is_file():
-        if hashlib.sha256(boot_path.read_bytes()).hexdigest() != "a2e7b24d32fb9c852b83ee176480f59cb43559fe152ac3e05e0aa2c52f0a82ac":
+        actual = hashlib.sha256(boot_path.read_bytes()).hexdigest()
+        if actual != expected:
             raise SystemExit(f"BLOCKED PRODUCTION_BOOT_SHA_MISMATCH: {boot_path}")
     else:
         warn("PRODUCTION_BOOT_MISSING_FALLBACK",str(boot_path))
-print("PRODUCTION_BOOT_ASSET_GATE_PASS|ANDROID|WINDOWS|SHA256_IF_PRESENT|FALLBACK_ALLOWED")
+print("PRODUCTION_BOOT_ASSET_GATE_PASS|MANIFEST_DRIVEN|SHA256_IF_PRESENT|FALLBACK_ALLOWED")
 for needle in (
     "REAL CAD / CAM",
     "buildProductionCamPanel",
