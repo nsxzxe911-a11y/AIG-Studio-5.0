@@ -35,7 +35,10 @@ jobs:
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
           test -x "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
-          LATEST_BUILD_TOOLS="$("$SDKMANAGER" --list | awk -F\'|\' \'/^  build-tools;[0-9]/{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $1); print $1}\' | sort -V | tail -1)"
+          LATEST_BUILD_TOOLS="$("$SDKMANAGER" --list \\
+            | grep -E "^[[:space:]]+build-tools;[0-9]+(\\.[0-9]+){2}[[:space:]]*\\|" \\
+            | sed -E "s/^[[:space:]]*(build-tools;[0-9.]+).*/\\1/" \\
+            | sort -V | tail -1)"
           test -n "$LATEST_BUILD_TOOLS"
           "$SDKMANAGER" "platform-tools" "platforms;android-37" "$LATEST_BUILD_TOOLS"
           echo "LATEST_BUILD_TOOLS=$LATEST_BUILD_TOOLS" >> "$GITHUB_ENV"
@@ -60,9 +63,9 @@ jobs:
         run: |
           python3 ci/verify_runtime_surfaces.py | tee runtime-surfaces.log
           grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
-          grep -Fq 'PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|STABLE_ORDER' runtime-surfaces.log
+          grep -Fq 'PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED_3AX_4AX_5AX|STABLE_ORDER' runtime-surfaces.log
           grep -Fq 'SHARED_SYNC_RUNTIME_WATCHER_GATE_PASS|STUDIO_234|ANDROID|WINDOWS|POLL_1500MS|NO_AUTO_APPLY|NO_SILENT_OVERWRITE|VISIBLE_STATUS|OFFLINE_FIRST' runtime-surfaces.log
-          echo 'STUDIO_TOOLCHAIN_235=AGP_9.4.0|KOTLIN_2.4.20|GRADLE_9.7.0|JDK_17|API_37|LATEST_BUILD_TOOLS'
+          echo 'STUDIO_TOOLCHAIN_236=AGP_9.4.0|KOTLIN_2.4.20|GRADLE_9.7.0|JDK_17|API_37|LATEST_BUILD_TOOLS|AXIS_NESTED_GATE'
           grep -Fq 'VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' runtime-surfaces.log
           grep -Fq 'OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' runtime-surfaces.log
           grep -Fq 'NETWORK_RESUME_UI_RUNTIME_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY' runtime-surfaces.log

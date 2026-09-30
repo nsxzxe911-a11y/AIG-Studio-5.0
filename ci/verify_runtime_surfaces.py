@@ -153,16 +153,23 @@ for needle in (
     'productionUiButton("CAD"',
     'productionUiButton("CAM"',
     'productionUiButton("SIM"',
-    'productionUiButton("3AX"',
-    'productionUiButton("4AX"',
-    'productionUiButton("5AX"',
     'productionUiButton("NC"',
     'productionUiButton("AI"',
     'ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList())',
+    'mode("3AX","三軸","3 AXIS"',
+    'mode("4AX","四軸","4 AXIS"',
+    'mode("5AX","五軸","5 AXIS"',
 ):
     if needle not in desktop:
         raise SystemExit(f"Windows Production UI 缺少：{needle}")
-print("PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|STABLE_ORDER")
+for needle in (
+    'val modes = listOf("CAD","CAM","SIM","NC","AI")',
+    '"3AX" -> "3AX"',
+    '"4AX" -> "4AX"',
+    '"5AX" -> "5AX"',
+):
+    require(env, needle, "WINDOWS_AXIS_NESTED_PRODUCTION_UI_236")
+print("PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED_3AX_4AX_5AX|STABLE_ORDER")
 
 for needle in (
     'const val POLICY = "NO_UI_NO_FUNCTION"',
