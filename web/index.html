@@ -695,6 +695,15 @@ function sphereBoxClearance(p,r,b){
 function runtimeToolNumber(bl){
  const n=Math.trunc(Number(bl?.machine?.T)||0);return n>0?n:0;
 }
+function toolDiametersFromTable(table={}){
+ const out={};
+ for(const [key,value] of Object.entries(table||{})){
+   const m=String(key).match(/^T(\d+)$/i),n=Number(value);
+   if(!m||!Number.isFinite(n)||n<=0)continue;
+   const toolNo=Math.trunc(Number(m[1]));if(toolNo>0)out[toolNo]=n;
+ }
+ return out;
+}
 function runtimeToolDiameter(cfg={},bl=null){
  const toolNo=runtimeToolNumber(bl),map=cfg?.toolDiameters||{};
  const mapped=Number(map?.[toolNo]??map?.["T"+toolNo]),fallback=Number(cfg?.toolDia);
@@ -1241,7 +1250,7 @@ function makeRuntime(root){
     g73Retract:Math.max(0,aigFiniteNumber(g73Input.value,.5)),
     stock:stockConfig,
     assembly:assemblyConfig,
-    toolDiameters:{1:Math.max(.1,aigFiniteNumber(toolTableConfig.T1,10)),4:Math.max(.1,aigFiniteNumber(toolTableConfig.T4,6)),12:Math.max(.1,aigFiniteNumber(toolTableConfig.T12,12))},
+    toolDiameters:toolDiametersFromTable(toolTableConfig),
     offsets:{
       G54:{X:aigFiniteNumber(g54x.value,0),Y:aigFiniteNumber(g54y.value,0),Z:aigFiniteNumber(g54z.value,0)},
       G55:{X:aigFiniteNumber(g55x.value,0),Y:aigFiniteNumber(g55y.value,0),Z:aigFiniteNumber(g55z.value,0)}
@@ -1445,7 +1454,8 @@ function makeRuntime(root){
  function safetyWarnings(){
   const cfg=settings(),safe=cfg.safeZ,seen=new Set();
   for(const bl of state.parsed.blocks){
-    const mc=bl.machine||{};
+    const mc=bl.machine||{},toolNo=Math.trunc(Number(mc.T)||0);
+    if(toolNo>0&&!(toolNo in cfg.toolDiameters))seen.add("T"+toolNo+" 未設定刀徑；目前使用 fallback Ø"+cfg.toolDia.toFixed(3)+" mm");
     if(mc.wcs && !cfg.offsets[mc.wcs])seen.add(mc.wcs+" 尚未設定偏移；目前明確以 0.000 mm 計算");
     if(mc.toolComp && mc.H>0 && !(mc.H in cfg.toolLengths))seen.add("G43 H"+mc.H+" 尚未設定刀長；目前明確以 0.000 mm 顯示");
     if(bl.kind!=="move"||bl.motion!=="G0")continue;
@@ -2473,14 +2483,14 @@ function makeMenuRuntime(root){
  }
  function toolsView(){
    const t=readJson("aig-tool-table-v1",{T1:10,T4:6,T12:12,H1:0,H4:0,H12:0});
-   detail.innerHTML='<div class="menuDetailGrid">'+
-    '<label class="field"><b>T1 Ø mm</b><input data-toolkey="T1" type="number" min="0.001" step="0.001" value="'+t.T1+'"></label>'+
-    '<label class="field"><b>T4 Ø mm</b><input data-toolkey="T4" type="number" min="0.001" step="0.001" value="'+t.T4+'"></label>'+
-    '<label class="field"><b>T12 Ø mm</b><input data-toolkey="T12" type="number" min="0.001" step="0.001" value="'+t.T12+'"></label>'+
-    '<label class="field"><b>H1 mm</b><input data-toolkey="H1" type="number" step="0.001" value="'+t.H1+'"></label>'+
-    '<label class="field"><b>H4 mm</b><input data-toolkey="H4" type="number" step="0.001" value="'+t.H4+'"></label>'+
-    '<label class="field"><b>H12 mm</b><input data-toolkey="H12" type="number" step="0.001" value="'+t.H12+'"></label>'+
-    '</div><button class="btn play" data-menu-action="TOOLS_SAVE">儲存刀具表</button><div class="notice" data-menu-msg>刀具表會同步到本機模擬器的 H1/H4/H12 預設值。</div>';
+   const toolNos=new Set([1,4,9,12]);
+   Object.keys(t||{}).forEach(k=>{const m=String(k).match(/^T(\d+)$/i);if(m)toolNos.add(Math.trunc(Number(m[1])))});
+   const toolFields=[...toolNos].filter(n=>n>0).sort((a,b)=>a-b).map(n=>'<label class="field"><b>T'+n+' Ø mm</b><input data-toolkey="T'+n+'" type="number" min="0.001" step="0.001" value="'+(Number.isFinite(Number(t["T"+n]))?Number(t["T"+n]):"")+'" placeholder="未設定"></label>').join("");
+   detail.innerHTML='<div class="menuDetailGrid">'+toolFields+
+    '<label class="field"><b>H1 mm</b><input data-toolkey="H1" type="number" step="0.001" value="'+Number(t.H1||0)+'"></label>'+
+    '<label class="field"><b>H4 mm</b><input data-toolkey="H4" type="number" step="0.001" value="'+Number(t.H4||0)+'"></label>'+
+    '<label class="field"><b>H12 mm</b><input data-toolkey="H12" type="number" step="0.001" value="'+Number(t.H12||0)+'"></label>'+
+    '</div><button class="btn play" data-menu-action="TOOLS_SAVE">儲存刀具表</button><div class="notice" data-menu-msg>可保存任意 T<number> 刀徑；T9 已列出。未設定的刀號會明示 fallback，不會假裝已校正。</div>';
  }
  function wcsView(){
    const w=readJson("aig-wcs-v1",{G54:{X:0,Y:0,Z:0},G55:{X:0,Y:0,Z:0}});
@@ -2501,7 +2511,7 @@ function makeMenuRuntime(root){
      holderDia:Math.max(1,Number(pg.holderDia??25)||25),
      holderLen:Math.max(1,Number(pg.holderLen??25)||25),
      safeZ:Number.isFinite(safeZ)?safeZ:5,g73Retract:.5,stock,assembly,
-     toolDiameters:{1:Number(tools.T1||10),4:Number(tools.T4||6),12:Number(tools.T12||12)},
+     toolDiameters:toolDiametersFromTable(tools),
      offsets:wcs,
      toolLengths:{1:Number(tools.H1||0),4:Number(tools.H4||0),12:Number(tools.H12||0)}
    };
@@ -2626,7 +2636,7 @@ function makeMenuRuntime(root){
      const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="AIG_Web_Project.json";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);if(msg)msg.textContent="已匯出 AIG JSON。";
    }
    if(a.dataset.menuAction==="IMPORT"){detail.querySelector("[data-menu-file]").click()}
-   if(a.dataset.menuAction==="TOOLS_SAVE"){const out={};detail.querySelectorAll("[data-toolkey]").forEach(i=>out[i.dataset.toolkey]=Number(i.value)||0);saveJson("aig-tool-table-v1",out);window.dispatchEvent(new CustomEvent("aig-tool-table-updated",{detail:out}));if(msg)msg.textContent="刀具表已儲存；3AX/4AX/5AX 已依 T 刀號重新計算。";}
+   if(a.dataset.menuAction==="TOOLS_SAVE"){const out={...readJson("aig-tool-table-v1",{})};detail.querySelectorAll("[data-toolkey]").forEach(i=>{const raw=String(i.value??"").trim();if(/^T\d+$/i.test(i.dataset.toolkey)&&raw===""){delete out[i.dataset.toolkey]}else out[i.dataset.toolkey]=Number(raw)||0});saveJson("aig-tool-table-v1",out);window.dispatchEvent(new CustomEvent("aig-tool-table-updated",{detail:out}));if(msg)msg.textContent="刀具表已儲存；任意 T 刀號保留，3AX/4AX/5AX 已重新計算。";}
    if(a.dataset.menuAction==="WCS_SAVE"){const out={G54:{X:0,Y:0,Z:0},G55:{X:0,Y:0,Z:0}};detail.querySelectorAll("[data-wcskey]").forEach(i=>{const [g,k]=i.dataset.wcskey.split("-");out[g][k]=Number(i.value)||0});saveJson("aig-wcs-v1",out);if(msg)msg.textContent="G54/G55 已儲存；模擬頁重新載入時套用。";}
    if(a.dataset.menuAction==="ASSEMBLY_CHECK"){assemblySetupCheck();return}
    if(a.dataset.menuAction==="ASSEMBLY_ADD"){
