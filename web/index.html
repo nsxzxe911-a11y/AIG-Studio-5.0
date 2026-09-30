@@ -2068,7 +2068,7 @@ function makeToolpathRuntime(root){
    state.view.scale=Math.max(.2,Math.min(60,Math.min((w-80)/ww,(h-80)/hh)));state.view.panX=-((minX+maxX)/2)*state.view.scale;state.view.panY=((minY+maxY)/2)*state.view.scale;draw();
  }
  function renderList(){
-   listEl.innerHTML="";state.paths.forEach((p,i)=>{if(p.enabled===false)return;const b=document.createElement("button");b.className="btn"+(i===state.selected?" cadSelected":"");b.dataset.tpIndex=i;const adaptiveMeta=p.kind==="adaptive"?("  L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" R"+Number(p.adaptiveRing||0)+" Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"):"";
+   listEl.innerHTML="";state.paths.forEach((p,i)=>{const b=document.createElement("button");b.className="btn"+(i===state.selected?" cadSelected":"");b.dataset.tpIndex=i;const adaptiveMeta=p.kind==="adaptive"?("  L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" R"+Number(p.adaptiveRing||0)+" Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"):"";
    b.textContent=(p.enabled===false?"[OFF] ":"")+"OP"+String(i+1).padStart(2,"0")+"  "+String(p.kind||"path").toUpperCase()+"  "+(p.points?.length||0)+" pts  Z"+Number(p.depth??0).toFixed(3)+adaptiveMeta+"  A"+Number(p.aStart||0).toFixed(1)+"→"+Number(p.aEnd??p.aStart??0).toFixed(1)+" B"+Number(p.bStart||0).toFixed(1)+"→"+Number(p.bEnd??p.bStart??0).toFixed(1);b.style.opacity=p.enabled===false?".42":"1";listEl.appendChild(b)});
  }
  function updateInfo(){
@@ -2142,6 +2142,7 @@ function makeToolpathRuntime(root){
    if(target==="3AX"&&(Math.abs(a0)+Math.abs(a1)+Math.abs(b0)+Math.abs(b1)>1e-9)){aigFieldIssue(a0Input,"warn","3AX 不使用 A/B；這些值不會輸出。");aigFieldIssue(b0Input,"warn","3AX 不使用 A/B；這些值不會輸出。")}
    if(target==="4AX"&&(Math.abs(b0)+Math.abs(b1)>1e-9)){errors.push("4AX 不支援 B 軸");aigFieldIssue(b0Input,"error","4AX 只能使用 A 軸；B 必須為 0。");aigFieldIssue(b1Input,"error","4AX 只能使用 A 軸；B 必須為 0。")}
    state.paths.forEach((p,i)=>{
+     if(p.enabled===false)return;
      if(!Array.isArray(p.points)||!p.points.length)errors.push("OP"+(i+1)+" 無節點");
      if(p.kind==="adaptive"){
        const load=Number(p.radialEngagement),ring=Number(p.adaptiveRing),li=Number(p.zLevelIndex),lc=Number(p.zLevelCount);
@@ -2246,10 +2247,10 @@ function makeToolpathRuntime(root){
  function action(name){
    if(name==="TOGGLE"){state.visible=!state.visible;updateInfo();draw();return}
    if(name==="UP"){
-     if(state.selected>0){const i=state.selected,[state.paths[i-1],state.paths[i]]=[state.paths[i],state.paths[i-1]];state.selected=i-1;save();renderList();updateInfo();draw();msgEl.textContent="OP 已上移；POST 將依目前順序輸出。"}return
+     if(state.selected>0){const i=state.selected;[state.paths[i-1],state.paths[i]]=[state.paths[i],state.paths[i-1]];state.selected=i-1;save();renderList();updateInfo();draw();msgEl.textContent="OP 已上移；POST 將依目前順序輸出。"}return
    }
    if(name==="DOWN"){
-     if(state.selected<state.paths.length-1){const i=state.selected,[state.paths[i],state.paths[i+1]]=[state.paths[i+1],state.paths[i]];state.selected=i+1;save();renderList();updateInfo();draw();msgEl.textContent="OP 已下移；POST 將依目前順序輸出。"}return
+     if(state.selected<state.paths.length-1){const i=state.selected;[state.paths[i],state.paths[i+1]]=[state.paths[i+1],state.paths[i]];state.selected=i+1;save();renderList();updateInfo();draw();msgEl.textContent="OP 已下移；POST 將依目前順序輸出。"}return
    }
    if(name==="ENABLE"){
      const p=selected();if(!p)return;p.enabled=p.enabled===false;save();renderList();updateInfo();draw();msgEl.textContent=p.enabled===false?"此 OP 已停用；不會輸出 NC。":"此 OP 已啟用。";return
