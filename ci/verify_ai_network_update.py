@@ -16,6 +16,9 @@ required_secure=[
 ]
 for marker in required_secure:
     assert marker in secure, marker
+assert 'BuildConfig.VERSION_NAME' not in main, "stale BuildConfig version binding"
+assert 'packageManager.getPackageInfo(packageName,0).versionName' in main, "runtime version must come from installed package metadata"
+
 for marker in (
     'if (!config.configured)',
     'showUpdateSettings()',
