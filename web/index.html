@@ -697,7 +697,7 @@ function evaluateSetupClearance(parsed,axis,cfg={}){
  const toolR=Math.max(.05,Number(cfg.toolDia)||10)/2,cutterLen=Math.max(1,Number(cfg.cutterLen)||30);
  const holderR=Math.max(toolR,Math.max(1,Number(cfg.holderDia)||25)/2),holderLen=Math.max(1,Number(cfg.holderLen)||25);
  const stockBox={minX:env.minX,maxX:env.maxX,minY:env.minY,maxY:env.maxY,minZ:env.minZ,maxZ:env.maxZ};
- let minFixture=Infinity,minHolderStock=Infinity,minType="NONE",minFixtureId=null,minLine=-1,minBlock=-1;
+ let minFixture=Infinity,minHolderStock=Infinity,minType="NONE",minFixtureId=null,fixtureLine=-1,fixtureBlock=-1,holderStockLine=-1,holderStockBlock=-1;
  function localCenter(p,d){
    const a=axis==="3AX"?0:Number(p.A||0),b=axis==="5AX"?Number(p.B||0):0;
    return inverseRuntimeABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b);
@@ -707,11 +707,11 @@ function evaluateSetupClearance(parsed,axis,cfg={}){
      const q=localCenter(p,d0+(d1-d0)*k/8);
      for(const fx of fixtures){
        const c=sphereBoxClearance(q,r,fx);
-       if(c<minFixture){minFixture=c;minType=kind+"_FIXTURE";minFixtureId=fx.id;minLine=line;minBlock=bi}
+       if(c<minFixture){minFixture=c;minType=kind+"_FIXTURE";minFixtureId=fx.id;fixtureLine=line;fixtureBlock=bi}
      }
      if(kind==="HOLDER"){
        const c=sphereBoxClearance(q,r,stockBox);
-       if(c<minHolderStock)minHolderStock=c;
+       if(c<minHolderStock){minHolderStock=c;holderStockLine=line;holderStockBlock=bi}
      }
    }
  }
@@ -733,10 +733,14 @@ function evaluateSetupClearance(parsed,axis,cfg={}){
  const fixtureClearance=Number.isFinite(minFixture)?minFixture:Infinity;
  const holderStockClearance=Number.isFinite(minHolderStock)?minHolderStock:Infinity;
  const minimum=Math.min(fixtureClearance,holderStockClearance,safeZMargin);
+ const limitingType=minimum===safeZMargin&&useStaticSafeZ?"SAFE_Z":minimum===holderStockClearance?"HOLDER_STOCK":minType;
+ const line=limitingType==="HOLDER_STOCK"?holderStockLine:limitingType==="SAFE_Z"?-1:fixtureLine;
+ const blockIndex=limitingType==="HOLDER_STOCK"?holderStockBlock:limitingType==="SAFE_Z"?-1:fixtureBlock;
  return{
    minimum,fixtureClearance,holderStockClearance,safeZMargin,safeZStaticMargin,highestFixture,highestObstacle,useStaticSafeZ,
-   limitingType:minimum===safeZMargin&&useStaticSafeZ?"SAFE_Z":minimum===holderStockClearance?"HOLDER_STOCK":minType,
-   fixtureId:minFixtureId,line:minLine,blockIndex:minBlock,envelope:env,fixtureCount:fixtures.length
+   limitingType,fixtureId:limitingType.endsWith("_FIXTURE")?minFixtureId:null,line,blockIndex,
+   sources:{fixture:{line:fixtureLine,blockIndex:fixtureBlock,id:minFixtureId,type:minType},holderStock:{line:holderStockLine,blockIndex:holderStockBlock},safeZ:{line:-1,blockIndex:-1}},
+   envelope:env,fixtureCount:fixtures.length
  };
 }
 function sphereHitsBox(p,r,b){
