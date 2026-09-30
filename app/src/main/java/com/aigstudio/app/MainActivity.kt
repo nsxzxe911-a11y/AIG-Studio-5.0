@@ -56,16 +56,16 @@ import com.aigstudio.core.*
 import kotlin.math.*
 
 object StudioProductionTheme {
-    const val ID="official_rgb_original"
-    val background=Color.rgb(8,12,22)
-    val panel=Color.rgb(16,28,42)
-    val text=Color.rgb(225,240,255)
-    val accent=Color.rgb(61,235,255)
-    val selected=Color.rgb(0,229,255)
-    val cutting=Color.rgb(0,230,118)
-    val rapid=Color.rgb(213,0,249)
-    val warning=Color.rgb(255,152,0)
-    val alarm=Color.rgb(255,23,68)
+    const val ID="aigii_rgb_neon_v2"
+    val background=Color.rgb(2,4,7)
+    val panel=Color.rgb(7,17,27)
+    val text=Color.rgb(244,251,255)
+    val accent=Color.rgb(39,233,255)
+    val selected=Color.rgb(39,233,255)
+    val cutting=Color.rgb(51,243,155)
+    val rapid=Color.rgb(255,77,166)
+    val warning=Color.rgb(255,179,38)
+    val alarm=Color.rgb(255,70,95)
 }
 
 object LibraryFiveAxisSkin208 {
@@ -1162,8 +1162,19 @@ class MainActivity : Activity() {
         ))
 
         val homeRoot=FrameLayout(this).apply {
-            contentDescription="AIG CNC FORMAL RGB HOME"
-            background=ProductionRgbAssets.drawable(this@MainActivity,"HOME") ?: panel()
+            contentDescription="AIG CNC FORMAL RGB HOME • aigii_rgb_neon_v2"
+            val base=GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                intArrayOf(
+                    StudioProductionTheme.background,
+                    StudioProductionTheme.panel,
+                    Color.rgb(2,7,14)
+                )
+            )
+            val wallpaper=ProductionRgbAssets.drawable(this@MainActivity,"HOME")?.apply { alpha=72 }
+            background=if(wallpaper!=null)
+                android.graphics.drawable.LayerDrawable(arrayOf(base,wallpaper))
+            else base
         }
         val homeContent=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
