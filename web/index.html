@@ -159,7 +159,7 @@ function simPage(axis){
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
  '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 真 3D 加工模擬<small>WebGL 機械模型 • A/B 真旋轉 • 拖曳 360° 相機</small></div></div>'+
  '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button></div>'+
- '<div class="runtimeStatus"><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div></div></div></section>';
+ '<div class="runtimeStatus"><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric"><b>數值移除量</b><span data-removal-volume>0.000 mm³</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
  '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label><label class="param">G54 X<input data-g54-x type="number" value="0" step="0.001"></label><label class="param">G54 Y<input data-g54-y type="number" value="0" step="0.001"></label><label class="param">G54 Z<input data-g54-z type="number" value="0" step="0.001"></label><label class="param">G55 X<input data-g55-x type="number" value="0" step="0.001"></label><label class="param">G55 Y<input data-g55-y type="number" value="0" step="0.001"></label><label class="param">G55 Z<input data-g55-z type="number" value="0" step="0.001"></label><label class="param">H1<input data-h1 type="number" value="0" step="0.001"></label><label class="param">H4<input data-h4 type="number" value="0" step="0.001"></label><label class="param">H12<input data-h12 type="number" value="0" step="0.001"></label></div>'+
  '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+sourceCode[axis]+'</textarea></div>'+
@@ -534,13 +534,107 @@ function makeGlScene(canvas,axis){
    face([-.5,.5,.5],[.5,.5,.5],[.5,.5,-.5],[-.5,.5,-.5],[0,1,0]);
    face([-.5,-.5,-.5],[.5,-.5,-.5],[.5,-.5,.5],[-.5,-.5,.5],[0,-1,0]);return{p,n}
  }
+ function openBoxData(){
+   const p=[],n=[];function face(a,b,c,d,no){for(const v of [a,b,c,a,c,d]){p.push(...v);n.push(...no)}}
+   // Bottom + four sides only. Top is supplied by the numerical heightfield.
+   face([-.5,.5,-.5],[.5,.5,-.5],[.5,-.5,-.5],[-.5,-.5,-.5],[0,0,-1]);
+   face([.5,-.5,-.5],[.5,.5,-.5],[.5,.5,.5],[.5,-.5,.5],[1,0,0]);
+   face([-.5,.5,-.5],[-.5,-.5,-.5],[-.5,-.5,.5],[-.5,.5,.5],[-1,0,0]);
+   face([-.5,.5,.5],[.5,.5,.5],[.5,.5,-.5],[-.5,.5,-.5],[0,1,0]);
+   face([-.5,-.5,-.5],[.5,-.5,-.5],[.5,-.5,.5],[-.5,-.5,.5],[0,-1,0]);
+   return{p,n}
+ }
  function cylinderData(seg=28){
    const p=[],n=[];for(let i=0;i<seg;i++){const a=i*2*Math.PI/seg,b=(i+1)*2*Math.PI/seg,ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b);
      for(const v of [[ca,sa,-.5],[cb,sb,-.5],[cb,sb,.5],[ca,sa,-.5],[cb,sb,.5],[ca,sa,.5]]){p.push(v[0]*.5,v[1]*.5,v[2]);n.push(v[0],v[1],0)}
      for(const z of [-.5,.5]){const nz=z>0?1:-1;const tri=z>0?[[0,0,z],[ca*.5,sa*.5,z],[cb*.5,sb*.5,z]]:[[0,0,z],[cb*.5,sb*.5,z],[ca*.5,sa*.5,z]];for(const v of tri){p.push(...v);n.push(0,0,nz)}}
    }return{p,n}
  }
- const cube=mesh(cubeData()),cyl=mesh(cylinderData());
+ const cube=mesh(cubeData()),stockShell=mesh(openBoxData()),cyl=mesh(cylinderData());
+ const heightPb=gl.createBuffer(),heightNb=gl.createBuffer();
+ const removalCache={parsed:null,key:"",n:38,base:null,completed:0,cellX:1,cellY:1,minX:0,minY:0,stockH:1,toolDia:0};
+ let lastRemoval={depth:0,volume:0};
+
+ function resetRemoval(scene,minX,minY,spanX,spanY,stockH){
+   const n=removalCache.n;
+   removalCache.parsed=scene.parsed;
+   removalCache.key=[minX.toFixed(4),minY.toFixed(4),spanX.toFixed(4),spanY.toFixed(4),stockH.toFixed(4),Number(scene.toolDia||10).toFixed(4)].join("|");
+   removalCache.base=new Float32Array(n*n);
+   removalCache.completed=0;
+   removalCache.cellX=spanX/(n-1);
+   removalCache.cellY=spanY/(n-1);
+   removalCache.minX=minX;
+   removalCache.minY=minY;
+   removalCache.stockH=stockH;
+   removalCache.toolDia=Math.max(.1,Number(scene.toolDia)||10);
+ }
+ function cutSample(heights,p,toolRadius){
+   if(!p||!Number.isFinite(p.X)||!Number.isFinite(p.Y)||!Number.isFinite(p.Z)||p.Z>=0)return;
+   const n=removalCache.n,cellX=removalCache.cellX,cellY=removalCache.cellY,minX=removalCache.minX,minY=removalCache.minY;
+   const z=Math.max(-removalCache.stockH+.15,Math.min(0,p.Z));
+   const ix0=Math.max(0,Math.floor((p.X-toolRadius-minX)/cellX)),ix1=Math.min(n-1,Math.ceil((p.X+toolRadius-minX)/cellX));
+   const iy0=Math.max(0,Math.floor((p.Y-toolRadius-minY)/cellY)),iy1=Math.min(n-1,Math.ceil((p.Y+toolRadius-minY)/cellY));
+   const r2=toolRadius*toolRadius;
+   for(let iy=iy0;iy<=iy1;iy++){
+     const y=minY+iy*cellY,dy=y-p.Y;
+     for(let ix=ix0;ix<=ix1;ix++){
+       const x=minX+ix*cellX,dx=x-p.X;
+       if(dx*dx+dy*dy<=r2){
+         const k=iy*n+ix;
+         if(z<heights[k])heights[k]=z;
+       }
+     }
+   }
+ }
+ function cutBlock(heights,bl,tEnd,scene){
+   if(!bl?.cutting||tEnd<=0)return;
+   const toolRadius=Math.max(.05,(Number(scene.toolDia)||10)/2);
+   const dx=(bl.to.X||0)-(bl.from.X||0),dy=(bl.to.Y||0)-(bl.from.Y||0),dz=(bl.to.Z||0)-(bl.from.Z||0);
+   const dist=Math.hypot(dx,dy,dz),spacing=Math.max(.2,Math.min(removalCache.cellX,removalCache.cellY,toolRadius*.35));
+   const steps=Math.max(1,Math.min(500,Math.ceil(dist*Math.max(.01,tEnd)/spacing)));
+   for(let i=0;i<=steps;i++){
+     const t=tEnd*i/steps;
+     cutSample(heights,scene.sampleBlock(bl,t),toolRadius);
+   }
+ }
+ function heightfield(scene,minX,minY,spanX,spanY,stockH){
+   const key=[minX.toFixed(4),minY.toFixed(4),spanX.toFixed(4),spanY.toFixed(4),stockH.toFixed(4),Number(scene.toolDia||10).toFixed(4)].join("|");
+   if(removalCache.parsed!==scene.parsed||removalCache.key!==key||scene.index<removalCache.completed)resetRemoval(scene,minX,minY,spanX,spanY,stockH);
+   const target=Math.min(scene.index,scene.parsed.blocks.length);
+   while(removalCache.completed<target){
+     const bl=scene.parsed.blocks[removalCache.completed];
+     if(!scene.dry)cutBlock(removalCache.base,bl,1,scene);
+     removalCache.completed++;
+   }
+   const heights=new Float32Array(removalCache.base);
+   if(!scene.dry&&scene.index<scene.parsed.blocks.length)cutBlock(heights,scene.parsed.blocks[scene.index],scene.t,scene);
+
+   const n=removalCache.n,cx=removalCache.cellX,cy=removalCache.cellY,verts=[],norms=[];
+   function normal(ix,iy){
+     const l=heights[iy*n+Math.max(0,ix-1)],r=heights[iy*n+Math.min(n-1,ix+1)];
+     const d=heights[Math.max(0,iy-1)*n+ix],u=heights[Math.min(n-1,iy+1)*n+ix];
+     const nx=-(r-l)/(Math.max(1,Math.min(n-1,ix+1)-Math.max(0,ix-1))*cx);
+     const ny=-(u-d)/(Math.max(1,Math.min(n-1,iy+1)-Math.max(0,iy-1))*cy);
+     const z=1/Math.hypot(nx,ny,1);return[nx*z,ny*z,z];
+   }
+   function push(ix,iy){
+     verts.push(minX+ix*cx,minY+iy*cy,heights[iy*n+ix]);norms.push(...normal(ix,iy));
+   }
+   for(let iy=0;iy<n-1;iy++)for(let ix=0;ix<n-1;ix++){
+     push(ix,iy);push(ix+1,iy);push(ix+1,iy+1);
+     push(ix,iy);push(ix+1,iy+1);push(ix,iy+1);
+   }
+   let minH=0,sum=0;for(const h of heights){if(h<minH)minH=h;sum+=-Math.min(0,h)}
+   lastRemoval={depth:-minH,volume:sum*cx*cy};
+   return{p:verts,n:norms,count:verts.length/3};
+ }
+ function drawHeightfield(hf,color,vp){
+   gl.useProgram(meshProg);
+   gl.bindBuffer(gl.ARRAY_BUFFER,heightPb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(hf.p),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(loc.mp.p);gl.vertexAttribPointer(loc.mp.p,3,gl.FLOAT,false,0,0);
+   gl.bindBuffer(gl.ARRAY_BUFFER,heightNb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(hf.n),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(loc.mp.n);gl.vertexAttribPointer(loc.mp.n,3,gl.FLOAT,false,0,0);
+   const model=I();gl.uniformMatrix4fv(loc.mp.mvp,false,M(vp,model));gl.uniformMatrix4fv(loc.mp.m,false,model);gl.uniform3fv(loc.mp.c,color);gl.drawArrays(gl.TRIANGLES,0,hf.count);
+ }
+
 
  function drawMesh(me,model,color,vp){
    gl.useProgram(meshProg);gl.bindBuffer(gl.ARRAY_BUFFER,me.pb);gl.enableVertexAttribArray(loc.mp.p);gl.vertexAttribPointer(loc.mp.p,3,gl.FLOAT,false,0,0);
@@ -565,11 +659,20 @@ function makeGlScene(canvas,axis){
      const spanX=Math.max(40,maxX-minX+20),spanY=Math.max(40,maxY-minY+20),stockH=Math.max(12,Math.min(35,Math.abs(Math.min(0,minZ))+8)),cx=(minX+maxX)/2,cy=(minY+maxY)/2,sceneR=Math.max(spanX,spanY,70);
      const target=[cx,cy,-stockH*.15],rr=sceneR*camera.zoom,cp=Math.cos(camera.pitch),eye=[target[0]+Math.cos(camera.yaw)*cp*rr,target[1]+Math.sin(camera.yaw)*cp*rr,target[2]+Math.sin(camera.pitch)*rr];
      const vp=M(P(Math.PI/4,aspect,.1,sceneR*20),look(eye,target,[0,0,1]));
-     gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.clearColor(.003,.008,.012,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+     gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.clearColor(.003,.008,.012,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
      const A=axis==="3AX"?0:(pos.A||0),B=axis==="5AX"?(pos.B||0):0,R=rotMat(A,B),tableR=Math.max(spanX,spanY)*.72;
      drawMesh(cyl,M(R,M(T(0,0,-stockH-8),S(tableR*2,tableR*2,8))),rgb("#182532"),vp);
-     drawMesh(cube,M(R,M(T(cx,cy,-stockH/2),S(spanX,spanY,stockH))),rgb("#577080"),vp);
+     if(axis==="3AX"){
+       const stockMinX=cx-spanX/2,stockMinY=cy-spanY/2;
+       drawMesh(stockShell,M(T(cx,cy,-stockH/2),S(spanX,spanY,stockH)),rgb("#465f70"),vp);
+       const hf=heightfield(scene,stockMinX,stockMinY,spanX,spanY,stockH);
+       drawHeightfield(hf,rgb("#7292a4"),vp);
+     }else{
+       // Rotary/tilted material removal is intentionally gated until volumetric/boolean stock is available.
+       lastRemoval={depth:0,volume:0};
+       drawMesh(cube,M(R,M(T(cx,cy,-stockH/2),S(spanX,spanY,stockH))),rgb("#577080"),vp);
+     }
      if(axis!=="3AX"){
        drawMesh(cube,T(-tableR-7,0,-stockH-7),rgb("#24394b"),vp);drawMesh(cube,T(tableR+7,0,-stockH-7),rgb("#24394b"),vp);
      }
@@ -597,7 +700,7 @@ function makeGlScene(canvas,axis){
      return true;
    }catch{return false}
  }
- return{render,camera};
+ return{render,camera,getRemoval:()=>({...lastRemoval})};
 }
 
 function makeRuntime(root){
@@ -800,7 +903,12 @@ function makeRuntime(root){
       const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(bl.from[k]||0,bl.to[k]||0,t);return p;
     }
   });
-  const rendererEl=root.querySelector("[data-renderer]");if(rendererEl)rendererEl.textContent=webglOk?"WEBGL 3D":"2D FALLBACK";
+  const rendererEl=root.querySelector("[data-renderer]");if(rendererEl)rendererEl.textContent=webglOk?(axis==="3AX"?"WEBGL 3D + NUM REMOVE":"WEBGL 3D • 4/5X REMOVE GATED"):"2D FALLBACK";
+  const removalVolumeEl=root.querySelector("[data-removal-volume]");
+  if(removalVolumeEl){
+    const ev=glScene?.getRemoval?.()||{volume:0};
+    removalVolumeEl.textContent=(webglOk&&axis==="3AX"&&!state.dry?ev.volume:0).toFixed(3)+" mm³";
+  }
   if(webglOk){const {w,h}=resize();ctx.clearRect(0,0,w,h);updateHud();return}
   const {w,h}=resize(),c=ctx,b=bounds();c.clearRect(0,0,w,h);c.fillStyle="#010306";c.fillRect(0,0,w,h);
   c.strokeStyle="rgba(39,233,255,.06)";c.lineWidth=1;
