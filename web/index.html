@@ -1953,7 +1953,7 @@ function makeToolpathRuntime(root){
  function generateFanucNC(){
    if(!state.paths.length){msgEl.textContent="沒有刀路，不能產生 NC。";return null}
    const invalidTap=state.paths.find(p=>p.kind==="tap"&&(!(Number(p.pitch)>0)||!(Number(p.rpm)>0)));
-   if(invalidTap){msgEl.textContent="攻牙缺少有效螺距或轉速，POST BLOCK。";statusEl.textContent="此次未輸出";return null}
+   if(invalidTap){msgEl.textContent="攻牙缺少有效螺距或轉速；此次不輸出 NC，其他功能仍可繼續使用。";statusEl.textContent="此次未輸出";return null}
    const simultaneousTap=state.paths.find(p=>p.kind==="tap"&&p.rotMode==="SIMULTANEOUS"&&(Math.abs(Number(p.aEnd||0)-Number(p.aStart||0))>1e-9||Math.abs(Number(p.bEnd||0)-Number(p.bStart||0))>1e-9));
    if(simultaneousTap){msgEl.textContent="G84 攻牙目前只允許 3AX 或 INDEXED 定角；SIMULTANEOUS A/B 已阻擋。";statusEl.textContent="此次未輸出";return null}
    const target=targetInput.value||"3AX",wcs=wcsInput.value||"G54",tool=Math.max(1,Math.trunc(Number(toolNoInput.value)||1)),hno=Math.max(1,Math.trunc(Number(hNoInput.value)||1));
