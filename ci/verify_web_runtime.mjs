@@ -208,7 +208,7 @@ const required = [
   'function buildAdaptive2DPaths',
   'AIG ADAPTIVE 2.5D',
   'stock:state.payload?.stock||aigJsonRead(root,"aig-stock-v1",null,"毛坯資料")',
-  'Adaptive OP 保留 Z 層 / Ring / Load% 註解',
+  'Adaptive OP 保留 Z 層 / Ring / Load% 並使用 Ramp Loop 進刀',
   '["工件組裝","ASSEMBLY"]',
   'function assemblyView',
   'aig-assembly-v1',
@@ -244,6 +244,12 @@ const required = [
   'Setup Clearance FAIL',
   '只阻擋這次 NC 輸出',
   'Setup Clearance 已通過',
+  'entry:"RAMP_LOOP"',
+  'entryZStart',
+  'AIG RAMP LOOP',
+  'Ramp Z 資料錯誤',
+  'rampLoop=path.kind==="adaptive"',
+  'highestObstacle',
   'CNC machine output disabled'
 ];
 
@@ -390,6 +396,11 @@ if (!adaptivePaths.some(p => p.zLevelIndex === 1) || !adaptivePaths.some(p => p.
 if (!adaptivePaths.every(p => p.kind === "adaptive" && p.closed && p.points.length >= 5)) throw new Error("ADAPTIVE_PATH_GEOMETRY_INVALID");
 if (!adaptivePaths.every(p => p.adaptiveRing >= 1 && p.zLevelCount === 2)) throw new Error("ADAPTIVE_RING_METADATA_INVALID");
 if (!adaptivePaths.every(p => p.radialEngagement > 0 && p.radialEngagement <= .35 + 1e-9)) throw new Error("ADAPTIVE_LOAD_LIMIT_BROKEN");
+if (!adaptivePaths.every(p => p.entry === "RAMP_LOOP" && Number.isFinite(p.entryZStart))) throw new Error("ADAPTIVE_RAMP_METADATA_MISSING");
+const adaptiveLayer1 = adaptivePaths.find(p => p.zLevelIndex === 1 && p.adaptiveRing === 1);
+const adaptiveLayer2 = adaptivePaths.find(p => p.zLevelIndex === 2 && p.adaptiveRing === 1);
+if (!adaptiveLayer1 || Math.abs(adaptiveLayer1.entryZStart - 0) > 1e-9 || Math.abs(adaptiveLayer1.depth + 2) > 1e-9) throw new Error("ADAPTIVE_RAMP_LAYER1_WRONG");
+if (!adaptiveLayer2 || Math.abs(adaptiveLayer2.entryZStart + 2) > 1e-9 || Math.abs(adaptiveLayer2.depth + 4) > 1e-9) throw new Error("ADAPTIVE_RAMP_LAYER2_WRONG");
 const adaptiveCircle = api.buildAdaptive2DPaths({id:8,type:"circle",c:{x:0,y:0},r:20}, adaptiveParams, [-2]);
 if (!adaptiveCircle.length || !adaptiveCircle.every(p => p.points.length >= 33)) throw new Error("ADAPTIVE_CIRCLE_PATH_INVALID");
 const adaptiveOpen = api.buildAdaptive2DPaths({id:9,type:"line",a:{x:0,y:0},b:{x:20,y:0}}, adaptiveParams, [-2]);
@@ -458,6 +469,11 @@ const clearanceSafeZParsed = api.parseProgram(clearanceProgramText,"3AX",clearan
 const clearanceSafeZ = api.evaluateSetupClearance(clearanceSafeZParsed,"3AX",clearanceSafeZCfg);
 if (clearanceSafeZ.limitingType !== "SAFE_Z" || !(clearanceSafeZ.minimum < 0)) throw new Error("SAFE_Z_CLEARANCE_NOT_DETECTED");
 
+const stockTopSafeCfg = {...clearanceBase,safeZ:1,stock:{top:2,thickness:20,minX:-20,maxX:30,minY:-20,maxY:20},assembly:{items:[]}};
+const stockTopSafeParsed = api.parseProgram(clearanceProgramText,"3AX",stockTopSafeCfg);
+const stockTopSafe = api.evaluateSetupClearance(stockTopSafeParsed,"3AX",stockTopSafeCfg);
+if (stockTopSafe.limitingType !== "SAFE_Z" || Math.abs(stockTopSafe.minimum + 1) > 1e-9) throw new Error("STOCK_TOP_SAFE_Z_CLEARANCE_NOT_DETECTED");
+
 const cadRuntimeIndex = scriptMatch[1].indexOf("function makeCadRuntime(root){");
 const camRuntimeIndex = scriptMatch[1].indexOf("function makeCamRuntime(root){");
 const toolpathRuntimeIndex = scriptMatch[1].indexOf("function makeToolpathRuntime(root){");
@@ -490,4 +506,4 @@ if (pageDefs.length !== 7) {
   throw new Error("WEB_RUNTIME_PAGE_COUNT_" + pageDefs.length);
 }
 
-console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|FUNCTION_MENU_RUNTIME|NO_FAKE_SERVICE_STATE|WEBGL_3D|3AX_HEIGHTFIELD_REMOVAL|4X_5X_ROTARY_VOXEL_REMOVAL|ROTARY_TOOLPATH_AB|SIMULTANEOUS_AB_POST|FANUC_POST_SCOPE|REMOVAL_VOLUME_EVIDENCE|CUTTER_HOLDER_COLLISION|COLLISION_STOP_ALARM|ROTARY_COLLISION_TEST|G84_TAPPING|G84_FEED_RETURN_TEST|TAP_PITCH_GATE|INDEXED_TAP_ONLY|POST_COLLISION_PREFLIGHT|EXPLICIT_POST_TOOL_GEOMETRY|INLINE_FIELD_FEEDBACK|NONFATAL_RUNTIME_ERRORS|CAD_SEMANTIC_VALIDATION|ANIMATION_RECOVERY|FIELD_ISSUE_CENTER|ZERO_VALUE_PRESERVED|NO_SILENT_NUMERIC_FALLBACK|NONBLOCKING_USER_MESSAGES|WORKPIECE_ASSEMBLY|FIXTURE_WEBGL|FIXTURE_COLLISION|ROTARY_FIXTURE_COLLISION|ASSEMBLY_POST_PREFLIGHT|MATERIAL_REMOVAL_PERCENT|REMAINING_VOLUME|FIXTURE_HUD|ADAPTIVE_SIM_TRACE|ADAPTIVE_CONTEXT_END|OP_REORDER|OP_ENABLE_DISABLE|POST_ENABLED_SEQUENCE|SETUP_CLEARANCE|NEAR_MISS_CLEARANCE|SAFE_Z_CLEARANCE|NONFATAL_CLEARANCE_BLOCK|BLACK_RGB");
+console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|FUNCTION_MENU_RUNTIME|NO_FAKE_SERVICE_STATE|WEBGL_3D|3AX_HEIGHTFIELD_REMOVAL|4X_5X_ROTARY_VOXEL_REMOVAL|ROTARY_TOOLPATH_AB|SIMULTANEOUS_AB_POST|FANUC_POST_SCOPE|REMOVAL_VOLUME_EVIDENCE|CUTTER_HOLDER_COLLISION|COLLISION_STOP_ALARM|ROTARY_COLLISION_TEST|G84_TAPPING|G84_FEED_RETURN_TEST|TAP_PITCH_GATE|INDEXED_TAP_ONLY|POST_COLLISION_PREFLIGHT|EXPLICIT_POST_TOOL_GEOMETRY|INLINE_FIELD_FEEDBACK|NONFATAL_RUNTIME_ERRORS|CAD_SEMANTIC_VALIDATION|ANIMATION_RECOVERY|FIELD_ISSUE_CENTER|ZERO_VALUE_PRESERVED|NO_SILENT_NUMERIC_FALLBACK|NONBLOCKING_USER_MESSAGES|WORKPIECE_ASSEMBLY|FIXTURE_WEBGL|FIXTURE_COLLISION|ROTARY_FIXTURE_COLLISION|ASSEMBLY_POST_PREFLIGHT|MATERIAL_REMOVAL_PERCENT|REMAINING_VOLUME|FIXTURE_HUD|ADAPTIVE_SIM_TRACE|ADAPTIVE_CONTEXT_END|OP_REORDER|OP_ENABLE_DISABLE|POST_ENABLED_SEQUENCE|SETUP_CLEARANCE|NEAR_MISS_CLEARANCE|SAFE_Z_CLEARANCE|STOCK_TOP_SAFE_Z|NONFATAL_CLEARANCE_BLOCK|ADAPTIVE_RAMP_LOOP|ADAPTIVE_RAMP_LAYER_CHAIN|BLACK_RGB");
