@@ -298,9 +298,9 @@ for needle in (
     'bootShell.addView(runtimeHost, 0',
     'contentDescription="RETURN TO FORMAL RGB HOME"',
 ):
-    require(android, needle, "STUDIO_FORMAL_RGB_HOME_FIRST_245")
+    require(android, needle, "STUDIO_FORMAL_RGB_HOME_FIRST_246")
 if 'bootShell.addView(root, 0' in android:
-    raise SystemExit("STUDIO_CAD_WORKSTATION_DIRECT_BOOT_245")
+    raise SystemExit("STUDIO_CAD_WORKSTATION_DIRECT_BOOT_246")
 home_start=android.index('contentDescription="AIG CNC FORMAL RGB HOME"')
 home_end=android.index('runtimeHost.addView(homeRoot',home_start)
 home_source=android[home_start:home_end]
@@ -313,8 +313,8 @@ for forbidden in (
     "2D CAD • LIVE WORKSPACE",
 ):
     if forbidden in home_source:
-        raise SystemExit("STUDIO_HOME_ENGINEERING_CHROME_245: "+forbidden)
-print("STUDIO_FORMAL_RGB_HOME_FIRST_GATE_PASS|245|RGB_HOME|CAD_CAM_SIM_3AX_4AX_5AX_NC_AI|WORK_MAINTENANCE_NESTED|CAD_WORKSTATION_NOT_BOOT")
+        raise SystemExit("STUDIO_HOME_ENGINEERING_CHROME_246: "+forbidden)
+print("STUDIO_FORMAL_RGB_HOME_FIRST_GATE_PASS|246|RGB_HOME|CAD_CAM_SIM_3AX_4AX_5AX_NC_AI|WORK_MAINTENANCE_NESTED|CAD_WORKSTATION_NOT_BOOT")
 print("PRODUCTION_SHELL_EVIDENCE_RUNTIME_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY")
 for needle in (
     'const val BACKGROUND_AUTO_DOWNLOAD = false',
@@ -1249,12 +1249,14 @@ for needle in (
 for needle in (
     'addActionTo(branchFlow, "網路狀態", 0) { showNetworkStatus() }',
     'addActionTo(branchFlow, "ChatGPT AI 更新 • 一鍵", 1) { runSecureUpdateCheck() }',
-    'addActionTo(branchFlow, "防毒掃描", 4) { showSecurityScan() }',
     'addActionTo(branchFlow, "更新設定", 5) { showUpdateSettings() }',
     'addActionTo(branchFlow, "系統環境", 2) { showEnvironmentSettings() }',
     'addActionTo(branchFlow, "AI CAD 檢查", 3) { cad.aiInspect() }',
 ):
     require(android, needle, "ANDROID_SYSTEM_CALLBACK")
+if '"防毒掃描"' in android or 'showSecurityScan()' in android:
+    raise SystemExit("STUDIO_RUNTIME_ANTIVIRUS_PRESENT_246")
+print("STUDIO_RUNTIME_ANTIVIRUS_REMOVED_GATE_PASS|246|MANUAL_SCANNER_DETACHED|RELEASE_INTEGRITY_UNCHANGED")
 
 # Generic action/tool controls must execute callbacks instead of being decorative.
 require(android, 'b.setOnClickListener { if (onClick != null) onClick() else selectTool(tool) }', "TOOL_NO_FAKE")
@@ -1409,7 +1411,7 @@ print("STUDIO_STABLE_ANDROID_BASELINE_GATE_PASS|238|ANDROID_16|API_36|ANDROID_17
 
 print("STUDIO_CAM_AXIS_SELECTOR_GATE_PASS|239|AXIS_MODE_SELECTOR|3AX|4AX|5AX|NO_DUPLICATE_5AX_PRIMARY_BUTTON")
 
-print("STUDIO_UI_VERIFY_SIDELOAD_ID_GATE_PASS|245|VERSION_SCOPED_PACKAGE|NO_DEBUG_SIGNATURE_COLLISION_WITH_PRIOR_UI_VERIFY")
+print("STUDIO_UI_VERIFY_SIDELOAD_ID_GATE_PASS|246|VERSION_SCOPED_PACKAGE|NO_DEBUG_SIGNATURE_COLLISION_WITH_PRIOR_UI_VERIFY")
 for needle in (
     'fun enterCadRuntime()',
     'homeAction("CAD",0xFF3DEBFF.toInt()){enterCadRuntime()}',
@@ -1427,7 +1429,7 @@ for needle in (
     'machineRail.visibility=View.GONE',
     'workstationFooter.visibility=View.GONE',
 ):
-    require(android, needle, "STUDIO_FORMAL_INNER_RUNTIME_245")
+    require(android, needle, "STUDIO_FORMAL_INNER_RUNTIME_246")
 if 'fun enterWorkstation(' in android:
-    raise SystemExit("STUDIO_OLD_ROOT_FIRST_ENTRY_245")
-print("STUDIO_FORMAL_INNER_RUNTIME_GATE_PASS|245|CAD_CLEAN_PAGE|CAM_SIM_3AX_4AX_5AX_NC_DIRECT|NO_ENGINEERING_ROOT_FIRST")
+    raise SystemExit("STUDIO_OLD_ROOT_FIRST_ENTRY_246")
+print("STUDIO_FORMAL_INNER_RUNTIME_GATE_PASS|246|CAD_CLEAN_PAGE|CAM_SIM_3AX_4AX_5AX_NC_DIRECT|NO_ENGINEERING_ROOT_FIRST")
