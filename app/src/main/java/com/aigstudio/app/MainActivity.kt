@@ -3488,7 +3488,6 @@ class MainActivity : Activity() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addActionTo(branchFlow, "網路狀態", 0) { showNetworkStatus() }
         addActionTo(branchFlow, "ChatGPT AI 更新 • 一鍵", 1) { runSecureUpdateCheck() }
-        addActionTo(branchFlow, "防毒掃描", 4) { showSecurityScan() }
         addActionTo(branchFlow, "更新設定", 5) { showUpdateSettings() }
         addActionTo(branchFlow, "系統環境", 2) { showEnvironmentSettings() }
     }
@@ -3959,29 +3958,6 @@ private fun showEnvironmentSettings() {
             }
             .setNegativeButton("取消", null)
             .show()
-    }
-
-    private fun showSecurityScan() {
-        Toast.makeText(this, "安全掃描中…", Toast.LENGTH_SHORT).show()
-        Thread({
-            val report = AppSecurityScanner.scan(listOf(filesDir, cacheDir))
-            runOnUiThread {
-                val body = buildString {
-                    appendLine("範圍：App 可存取檔案")
-                    appendLine("Scanned=" + report.scannedFiles + "  Hashed=" + report.hashedFiles)
-                    appendLine("High-risk=" + report.findings.count { it.severity == "HIGH" })
-                    report.findings.take(8).forEach {
-                        appendLine(it.severity + " • " + java.io.File(it.path).name + " • " + it.reason)
-                    }
-                    if (report.findings.size > 8) append("... +" + (report.findings.size - 8) + " findings")
-                }
-                AlertDialog.Builder(this)
-                    .setTitle(if (report.clean) "防毒 / 安全掃描 PASS" else "防毒 / 安全掃描 BLOCKED")
-                    .setMessage(body)
-                    .setPositiveButton("OK", null)
-                    .show()
-            }
-        }, "AppSecurityScan").start()
     }
 
     private fun showAiBranch() {
