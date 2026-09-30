@@ -57,6 +57,25 @@ const required = [
   'data-subprogram',
   'function machinePosition',
   'function toolLengthFor',
+  'function makeCadRuntime',
+  'data-cad-canvas',
+  'aig-cad-draft-v1',
+  'TRIM',
+  'EXTEND',
+  'OFFSET',
+  'ARRAY',
+  'DIM',
+  'Recovery：已自動還原',
+  'function makeCamRuntime',
+  'data-cam-runtime',
+  'aig-cam-toolpath-v1',
+  '待 3D/自適應核心接入',
+  'function makeToolpathRuntime',
+  'data-tp-runtime',
+  'function generateFanucNC',
+  '產生 NC',
+  '攻牙刀路存在',
+  'localStorage.setItem("aig-code-"+target',
   'data-cmd="play"',
   'data-cmd="pause"',
   'data-cmd="step"',
@@ -129,4 +148,4 @@ if (pageDefs.length !== 7) {
   throw new Error("WEB_RUNTIME_PAGE_COUNT_" + pageDefs.length);
 }
 
-console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|BLACK_RGB");
+console.log("AIG_WEB_RUNTIME_GATE_PASS|7_PAGES|3AX_4AX_5AX_GCODE|G90_G91|G81_G73_G83|G34_BOLT_CIRCLE|G98_G99|TOOL_DIAMETER|SAFE_Z|MATERIAL_REMOVAL|M00_M01_M30|OPTIONAL_STOP|BLOCK_SKIP|TOOL_H_COOLANT_SPINDLE|G43_H|G54_G55_EXPLICIT|M98_P4_P5_M99|PARSER_EXECUTION_TEST|T_PRESELECT_M6_ACTIVE|CAD_RUNTIME|CAM_RUNTIME|TOOLPATH_EDITOR|FANUC_POST_3AX_4AX_5AX|BLACK_RGB");
