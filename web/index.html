@@ -1,172 +1,179 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#050914" />
-  <title>AIG CNC • RGB Runtime UI/UX</title>
-  <style>
-    :root{
-      --bg:#050914;--panel:rgba(12,24,40,.72);--panel2:rgba(18,34,54,.86);
-      --text:#e9f7ff;--muted:#8da8bb;--cyan:#3debff;--green:#63ff9d;
-      --violet:#9a7cff;--amber:#ffbd4a;--pink:#ff5fa6;--danger:#ff4f70;
-      --line:rgba(99,235,255,.24);--shadow:0 14px 44px rgba(0,0,0,.38);
-      --radius:18px;--tap:48px;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;min-height:100%;background:
-      radial-gradient(circle at 12% 0%,rgba(61,235,255,.12),transparent 32%),
-      radial-gradient(circle at 100% 18%,rgba(154,124,255,.12),transparent 30%),
-      linear-gradient(180deg,#040812,#07111d 55%,#050914);color:var(--text);
-      font-family:Inter,"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
-    button{font:inherit;color:inherit}
-    .app{min-height:100vh;display:grid;grid-template-rows:auto 1fr auto}
-    .topbar{position:sticky;top:0;z-index:20;display:flex;gap:10px;align-items:center;
-      padding:10px 12px;border-bottom:1px solid var(--line);backdrop-filter:blur(16px);
-      background:rgba(4,9,20,.78)}
-    .brand{display:flex;align-items:center;gap:9px;min-width:0}
-    .logo{width:34px;height:34px;border-radius:11px;border:1px solid rgba(61,235,255,.7);
-      box-shadow:0 0 18px rgba(61,235,255,.3) inset,0 0 18px rgba(61,235,255,.18);
-      display:grid;place-items:center;font-weight:800;color:var(--cyan)}
-    .brandtext{min-width:0}.brandtext b{display:block;font-size:14px}.brandtext span{display:block;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .topspacer{flex:1}
-    .status{font-size:11px;color:var(--green);border:1px solid rgba(99,255,157,.35);
-      padding:7px 9px;border-radius:999px;background:rgba(99,255,157,.06)}
-    .main{padding:14px;display:grid;gap:14px;align-content:start}
-    .hero{padding:18px;border:1px solid var(--line);border-radius:24px;background:
-      linear-gradient(145deg,rgba(14,28,48,.88),rgba(7,15,28,.72));box-shadow:var(--shadow)}
-    .hero h1{margin:0 0 6px;font-size:clamp(22px,5vw,34px);letter-spacing:.02em}
-    .hero p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
-    .modegrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
-    .glass{min-height:var(--tap);border-radius:16px;border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);
-      background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 16%,rgba(255,255,255,.03)),rgba(8,18,30,.86));
-      box-shadow:0 0 0 1px rgba(255,255,255,.03) inset,0 10px 24px rgba(0,0,0,.2);
-      cursor:pointer;transition:.16s transform,.16s box-shadow,.16s border-color;position:relative;overflow:hidden}
-    .glass:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.09),transparent 40%);pointer-events:none}
-    .glass:hover{transform:translateY(-1px);box-shadow:0 0 24px color-mix(in srgb,var(--accent) 20%,transparent),0 12px 28px rgba(0,0,0,.28)}
-    .glass:active{transform:scale(.98)}
-    .glass.selected{border-color:var(--accent);box-shadow:0 0 24px color-mix(in srgb,var(--accent) 34%,transparent),0 0 18px color-mix(in srgb,var(--accent) 18%,transparent) inset}
-    .glass span{display:block;font-weight:800;letter-spacing:.04em}.glass small{display:block;color:var(--muted);margin-top:3px;font-size:10px}
-    .workspace{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;min-height:470px}
-    .stage,.toolpanel{border:1px solid var(--line);border-radius:22px;background:var(--panel);box-shadow:var(--shadow);overflow:hidden}
-    .stagehead{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--line)}
-    .stagehead h2{font-size:15px;margin:0}.stagehead .subtitle{font-size:11px;color:var(--muted)}
-    .stagebody{position:relative;min-height:410px;background:
-      linear-gradient(rgba(61,235,255,.045) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(61,235,255,.045) 1px,transparent 1px),
-      radial-gradient(circle at center,rgba(61,235,255,.07),transparent 42%);
-      background-size:28px 28px,28px 28px,auto}
-    .crossx,.crossy{position:absolute;background:rgba(61,235,255,.45);pointer-events:none}.crossx{height:1px;left:8%;right:8%;top:50%}.crossy{width:1px;top:8%;bottom:8%;left:50%}
-    .origin{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border:2px solid var(--cyan);border-radius:50%;box-shadow:0 0 14px rgba(61,235,255,.7)}
-    .stagecopy{position:absolute;inset:auto 16px 16px 16px;display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:11px}
-    .toolpanel{padding:12px;display:grid;gap:12px;align-content:start}
-    .toolpanel h3{margin:0;font-size:13px;color:var(--cyan)}
-    .toolgroup{display:grid;gap:8px}
-    .toolgroup .label{font-size:10px;color:var(--muted);letter-spacing:.08em}
-    .toolrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-    .toolbtn{min-height:44px;border:1px solid rgba(61,235,255,.2);background:rgba(10,24,40,.84);border-radius:13px;cursor:pointer}
-    .toolbtn:hover{border-color:rgba(61,235,255,.55)}.toolbtn.danger{border-color:rgba(255,79,112,.35);color:#ffc2cf}
-    .footer{padding:9px 12px;color:var(--muted);font-size:10px;text-align:center}
-    .homebutton{border:1px solid rgba(61,235,255,.35);background:rgba(61,235,255,.08);border-radius:12px;padding:8px 11px;cursor:pointer}
-    @media(max-width:860px){.workspace{grid-template-columns:1fr}.toolpanel{order:-1}.toolrow{grid-template-columns:repeat(4,minmax(0,1fr))}}
-    @media(max-width:620px){.main{padding:10px}.modegrid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{padding:14px}.workspace{min-height:0}.stagebody{min-height:48vh}.toolrow{grid-template-columns:repeat(3,minmax(0,1fr))}.status{display:none}.topbar{padding-top:max(10px,env(safe-area-inset-top))}}
-    @media(orientation:landscape) and (max-height:560px){.workspace{grid-template-columns:minmax(0,1fr) 300px}.toolpanel{order:0}.stagebody{min-height:68vh}.hero p{display:none}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407">
+<title>AIG II CNC • BLACK RGB Runtime</title>
+<style>
+:root{
+ --bg:#020407;--panel:#060a0f;--panel2:#0a1017;--panel3:#0d151e;
+ --text:#eefbff;--muted:#8aa1af;--cyan:#27e9ff;--blue:#3694ff;--green:#33f39b;
+ --amber:#ffb326;--pink:#ff4da6;--violet:#9f72ff;--red:#ff465f;--line:#193446;
+ --shadow:0 14px 38px rgba(0,0,0,.55);--r:14px
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#020407;color:var(--text);font-family:"Noto Sans TC","Microsoft JhengHei",Inter,system-ui,sans-serif}
+button,textarea,input,select{font:inherit}
+button{color:inherit}
+.app{min-height:100vh;background:
+ radial-gradient(circle at 36% 0%,rgba(39,233,255,.055),transparent 30%),
+ radial-gradient(circle at 100% 60%,rgba(255,77,166,.035),transparent 25%),
+ #020407}
+.top{height:58px;display:flex;align-items:center;gap:12px;padding:7px 10px;position:sticky;top:0;z-index:30;
+ background:rgba(2,4,7,.96);border-bottom:1px solid rgba(39,233,255,.28);box-shadow:0 8px 30px #000}
+.brand{display:flex;align-items:center;gap:9px;min-width:190px}.logo{font-weight:900;font-size:21px;letter-spacing:.04em}
+.brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:.12em}
+.status{margin-left:auto;color:var(--green);font-size:11px;white-space:nowrap}
+.nav{display:grid;grid-template-columns:repeat(7,minmax(72px,1fr));gap:6px;flex:1;max-width:850px}
+.nav button,.btn{border:1px solid #223846;background:linear-gradient(#0d141c,#05080c);border-radius:10px;min-height:40px;cursor:pointer;
+ box-shadow:inset 0 1px rgba(255,255,255,.045),0 7px 18px rgba(0,0,0,.35)}
+.nav button.active{border-color:var(--accent,var(--cyan));box-shadow:0 0 18px color-mix(in srgb,var(--accent,var(--cyan)) 32%,transparent),inset 0 0 18px color-mix(in srgb,var(--accent,var(--cyan)) 10%,transparent)}
+.shell{padding:9px;display:grid;gap:9px}
+.screen{display:none}.screen.active{display:block}
+.panel{background:linear-gradient(180deg,#080d12,#04070a);border:1px solid rgba(71,146,177,.34);border-radius:var(--r);box-shadow:var(--shadow)}
+.head{display:flex;align-items:center;gap:10px;padding:9px 11px;border-bottom:1px solid rgba(63,139,168,.24)}
+.head h2,.head h3{font-size:14px;margin:0}.head small{color:var(--muted)}
+.body{padding:9px}
+.simgrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,.82fr);gap:9px;min-height:690px}
+.simleft{display:grid;grid-template-rows:auto 1fr auto;min-width:0}.axisbar{display:flex;gap:6px;flex-wrap:wrap}
+.axis{border:1px solid rgba(39,233,255,.3);background:#050a0e;border-radius:9px;padding:6px 9px;font-size:11px}
+.axis.a{border-color:rgba(255,179,38,.5)}.axis.b{border-color:rgba(255,77,166,.5)}
+.scene{position:relative;min-height:530px;background:
+ radial-gradient(circle at 50% 45%,rgba(55,135,165,.11),transparent 36%),
+ linear-gradient(rgba(39,233,255,.028) 1px,transparent 1px),
+ linear-gradient(90deg,rgba(39,233,255,.028) 1px,transparent 1px),#020508;
+ background-size:auto,38px 38px,38px 38px;overflow:hidden;border-radius:11px;border:1px solid #102934}
+.machineghost{position:absolute;inset:12% 9% 15%;border:1px solid rgba(39,233,255,.28);border-radius:50%;box-shadow:0 0 90px rgba(39,233,255,.06) inset}
+.machineghost:before{content:"";position:absolute;width:26%;height:54%;left:37%;top:8%;border:2px solid rgba(220,245,255,.36);border-radius:18px 18px 6px 6px;background:linear-gradient(90deg,#101820,#303b44 50%,#0c1117)}
+.machineghost:after{content:"";position:absolute;width:52%;height:24%;left:24%;bottom:13%;border:2px solid rgba(39,233,255,.4);border-radius:50%;transform:skewX(-10deg);box-shadow:0 0 26px rgba(39,233,255,.15)}
+.sceneTitle{position:absolute;left:18px;bottom:18px;font-weight:800;letter-spacing:.1em}.sceneTitle small{display:block;color:var(--muted);font-weight:400;margin-top:3px}
+.coords{position:absolute;right:15px;top:15px;padding:9px 10px;background:rgba(0,0,0,.72);border:1px solid rgba(39,233,255,.28);border-radius:10px;font:11px ui-monospace,monospace;line-height:1.55}
+.controls{display:flex;gap:7px;flex-wrap:wrap;padding-top:8px}.controls .btn{min-width:78px;padding:7px 10px}
+.play{border-color:rgba(51,243,155,.55)!important;color:#c8ffe6}.danger{border-color:rgba(255,70,95,.5)!important;color:#ffd0d7}.warn{border-color:rgba(255,179,38,.5)!important}
+.editor{display:grid;grid-template-rows:auto 1fr auto;min-height:690px}
+.editorbar{display:flex;gap:6px;flex-wrap:wrap}.editorbar .btn{min-height:32px;padding:5px 9px}
+.code{width:100%;height:100%;min-height:545px;resize:none;background:#010305;color:#edf9ff;border:1px solid #173548;border-radius:9px;padding:12px;
+ font:12px/1.62 "Cascadia Mono","Consolas",monospace;outline:none;tab-size:2}
+.code:focus{border-color:var(--violet);box-shadow:0 0 18px rgba(159,114,255,.12)}
+.editactions{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.editactions .btn{min-height:34px}
+.workgrid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:9px;min-height:690px}
+.canvas{min-height:580px;background:
+ linear-gradient(rgba(39,233,255,.028) 1px,transparent 1px),
+ linear-gradient(90deg,rgba(39,233,255,.028) 1px,transparent 1px),#020508;background-size:32px 32px;border-radius:11px}
+.toolstrip{display:flex;gap:6px;flex-wrap:wrap}.toolstrip .btn{min-width:84px;padding:7px}
+.sidegroup{display:grid;gap:7px}.sidegroup .btn{padding:8px}
+.camgrid{display:grid;grid-template-columns:250px minmax(0,1fr) 290px;gap:9px;min-height:690px}
+.ops{display:grid;gap:6px}.ops .btn{width:100%;padding:8px}
+.preview{min-height:580px;background:radial-gradient(circle,rgba(51,243,155,.08),transparent 42%),#020508;border-radius:11px;border:1px solid #123128}
+.form{display:grid;gap:8px}.field{padding:8px;background:#04080b;border:1px solid #18303e;border-radius:9px}.field b{font-size:10px;color:var(--muted);display:block;margin-bottom:3px}.field span{font-size:12px}
+.menuGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.menuCard{min-height:145px;display:grid;place-items:center;text-align:center;font-size:18px;font-weight:800;border:1px solid rgba(39,233,255,.28);background:linear-gradient(145deg,#0a1118,#030507);border-radius:15px;cursor:pointer}
+.menuCard:hover{box-shadow:0 0 22px rgba(39,233,255,.1)}
+.footer{padding:6px 10px 10px;color:#66808f;font-size:9px;text-align:center}
+.badge{font-size:10px;color:var(--muted);border:1px solid #233846;border-radius:999px;padding:5px 8px}
+@media(max-width:920px){
+ .top{height:auto;flex-wrap:wrap}.brand{min-width:140px}.nav{order:3;grid-template-columns:repeat(7,minmax(58px,1fr));max-width:none;flex-basis:100%}
+ .simgrid,.workgrid,.camgrid{grid-template-columns:1fr}.editor{min-height:560px}.code{min-height:420px}
+ .menuGrid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:560px){
+ .shell{padding:6px}.status{display:none}.nav{grid-template-columns:repeat(4,1fr)}.nav button{min-height:42px;font-size:11px}
+ .scene{min-height:44vh}.simgrid{min-height:0}.editor{min-height:500px}.code{min-height:365px}.menuGrid{grid-template-columns:1fr 1fr}
+}
+</style>
 </head>
 <body>
 <div class="app">
-  <header class="topbar">
-    <div class="brand"><div class="logo">AIG</div><div class="brandtext"><b>AIG CNC</b><span>正式 RGB Runtime UI/UX Prototype</span></div></div>
-    <div class="topspacer"></div><div class="status">LOCAL • READY • 0.001 mm</div>
-  </header>
-  <main class="main">
-    <section class="hero" id="home">
-      <h1>正式加工介面，直接從 UI/UX 開始</h1>
-      <p>不載入舊工程工作站。手機與 Windows 共用同一套響應式介面；危險操作與維修功能分離。</p>
-      <div class="modegrid" id="modeGrid"></div>
-    </section>
-    <section class="workspace">
-      <section class="stage">
-        <div class="stagehead">
-          <div><h2 id="modeTitle">CAD 製圖</h2><div class="subtitle" id="modeSubtitle">2D Geometry • SNAP • Dimension</div></div>
-          <div class="topspacer"></div><button class="homebutton" id="homeBtn">首頁</button>
-        </div>
-        <div class="stagebody" id="stageBody">
-          <div class="crossx"></div><div class="crossy"></div><div class="origin"></div>
-          <div class="stagecopy"><span id="stageHint">X 0.000 • Y 0.000 • Z 0.000</span><span>AUTO 120/60/30</span></div>
-        </div>
-      </section>
-      <aside class="toolpanel">
-        <h3 id="toolTitle">CAD 工具</h3>
-        <div id="toolGroups"></div>
-      </aside>
-    </section>
-  </main>
-  <footer class="footer">AIG CNC Web UI/UX v0.1 • UI prototype only • CNC command output not enabled</footer>
+<header class="top">
+ <div class="brand"><div><div class="logo">AIG II CNC</div><small>BLACK RGB RUNTIME</small></div></div>
+ <nav class="nav" id="nav"></nav>
+ <div class="status">● LOCAL READY　0.001 mm</div>
+</header>
+<main class="shell" id="screens"></main>
+<footer class="footer">AIG II CNC • 黑色高對比 Runtime UI/UX • UI prototype / CNC output disabled</footer>
 </div>
 <script>
-const modes=[
-  ["CAD","#3debff","製圖"],
-  ["CAM","#63ff9d","刀路"],
-  ["SIM","#9a7cff","模擬"],
-  ["3AX","#4f8cff","三軸"],
-  ["4AX","#ffbd4a","四軸"],
-  ["5AX","#ff5fa6","五軸"],
-  ["NC","#50aaff","程式"],
-  ["AI","#b18cff","智能"]
+const pages=[
+ ["功能","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["刀路","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"]
 ];
-const configs={
- CAD:{title:"CAD 製圖",sub:"2D Geometry • SNAP • Dimension",groups:[
-  ["繪圖",["LINE","RECT","CIRCLE","ARC","HOLE"]],
-  ["編輯",["SELECT","TRIM","EXTEND","OFFSET","ARRAY","DIM"]],
-  ["視圖",["UNDO","REDO","PAN","FIT"]],
-  ["拓樸",["CONNECT","DISCONNECT"]],
-  ["危險操作",["DELETE","CLEAR"]]
- ]},
- CAM:{title:"CAM 刀路",sub:"Toolpath • Safe-Z • Lead In/Out",groups:[
-  ["刀路",["PROFILE","POCKET","DRILL","FACE"]],
-  ["刀具",["TOOL","Ø","DEPTH","FEED","RPM"]],
-  ["方向",["CW","CCW","REGION"]],
-  ["輸出",["RECALC","SHOW/HIDE","POST"]]
- ]},
- SIM:{title:"SIM 模擬",sub:"Material Removal • G90 Absolute",groups:[
-  ["模擬",["PLAY","PAUSE","STEP","RESET"]],
-  ["檢視",["3D","FIT","SECTION","STOCK"]],
-  ["驗證",["COLLISION","LIMIT","REMOVE"]]
- ]},
- "3AX":{title:"3AX",sub:"X / Y / Z machining runtime",groups:[["軸向",["X","Y","Z"]],["控制",["JOG","HOME","FIT","SIM"]]]},
- "4AX":{title:"4AX",sub:"X / Y / Z + A rotary",groups:[["軸向",["X","Y","Z","A"]],["旋轉",["A+","A-","ZERO A"]],["模擬",["PLAY","STEP","FIT"]]]},
- "5AX":{title:"5AX",sub:"X / Y / Z + A / B synchronized",groups:[["軸向",["X","Y","Z","A","B"]],["旋轉",["A+","A-","B+","B-"]],["相機",["360°","FIT","TOOL AXIS"]]]},
- NC:{title:"NC 程式",sub:"Fanuc • G/M • 0.001 mm",groups:[["程式",["G/M","X/Y/Z","F/S/T","INSERT"]],["執行",["SINGLE","DRY RUN","BLOCK SKIP"]],["危險操作",["DELETE","RESET","DISCONNECT"]]]},
- AI:{title:"AI",sub:"ChatGPT AI Update • Repair • Assist",groups:[["智能",["CAD CHECK","NC HELP","REPAIR","UPDATE"]],["狀態",["LOCAL","NETWORK","LOG"]]]}
+const nav=document.getElementById("nav"),screens=document.getElementById("screens");
+const code={
+ "3AX":[
+  "N10 G90 G54 G17 G40 G49 G80","N20 T1 M6","N30 S12000 M3","N40 G0 X0. Y0. Z50.","N50 G43 H1 Z5. M8",
+  "N60 G1 Z-2. F800","N70 X60. Y0. F1200","N80 X60. Y60.","N90 X0. Y60.","N100 M30"
+ ].join("\n"),
+ "4AX":[
+  "N10 G90 G54","N20 T4 M6","N30 S6000 M3","N40 G0 X0. Y0. Z40. A0.","N50 G43 H4 Z5. M8","N60 G1 Z-3. F600",
+  "N70 X45. F1000","N80 A90.","N90 X0.","N100 A180.","N110 M30"
+ ].join("\n"),
+ "5AX":[
+  "N10 G90 G54","N20 T12 M6","N30 S8000 M3","N40 G0 X0. Y0. Z50. A0. B0.","N50 G43 H12 Z5. M8","N60 G1 Z-2. F1200",
+  "N70 X12.430 Y-5.210 A35. B15.","N80 G3 X25.680 Y8.430 I6. J-3.","N90 A55. B-20.","N100 G1 X32.115 Y12.880","N110 M30"
+ ].join("\n")
 };
-const modeGrid=document.getElementById("modeGrid"),groupsEl=document.getElementById("toolGroups");
-function setMode(mode){
-  const c=configs[mode]||configs.CAD;
-  document.querySelectorAll(".glass").forEach(b=>b.classList.toggle("selected",b.dataset.mode===mode));
-  document.getElementById("modeTitle").textContent=c.title;
-  document.getElementById("modeSubtitle").textContent=c.sub;
-  document.getElementById("toolTitle").textContent=mode+" 工具";
-  document.getElementById("stageHint").textContent=
-    mode==="4AX"?"X 0.000 • Y 0.000 • Z 0.000 • A 0.000°":
-    mode==="5AX"?"X 0.000 • Y 0.000 • Z 0.000 • A 0.000° • B 0.000°":
-    "X 0.000 • Y 0.000 • Z 0.000";
-  groupsEl.innerHTML="";
-  c.groups.forEach(([label,items])=>{
-    const wrap=document.createElement("div");wrap.className="toolgroup";
-    wrap.innerHTML='<div class="label">'+label+'</div>';
-    const row=document.createElement("div");row.className="toolrow";
-    items.forEach(name=>{const b=document.createElement("button");b.className="toolbtn"+(/DELETE|CLEAR|RESET|DISCONNECT/.test(name)?" danger":"");b.textContent=name;b.onclick=()=>b.classList.toggle("selected");row.appendChild(b)});
-    wrap.appendChild(row);groupsEl.appendChild(wrap);
-  });
-  history.replaceState(null,"","#"+mode);
+function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div class="head"><h3>'+title+'</h3></div><div class="body">'+body+'</div></section>'}
+function simPage(axis){
+ const axes=axis==="3AX"?["X","Y","Z"]:axis==="4AX"?["X","Y","Z","A"]:["X","Y","Z","A","B"];
+ const axisHtml=axes.map(a=>'<span class="axis '+a.toLowerCase()+'">'+a+'　0.000</span>').join("");
+ const coord=axes.map(a=>a+'　0.000').join("<br>");
+ const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>真實加工視窗 • G90 絕對座標</small></div><span class="badge">FPS AUTO</span></div>'+
+ '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="scene"><div class="machineghost"></div><div class="coords">'+coord+'<br>F 1200<br>S 12000</div><div class="sceneTitle">'+axis+' 加工模擬<small>材料移除 / 刀路 / 碰撞檢查</small></div></div>'+
+ '<div class="controls"><button class="btn play">▶ 播放</button><button class="btn">Ⅱ 暫停</button><button class="btn">單步</button><button class="btn">空跑</button><button class="btn">單節</button><button class="btn danger">重設</button></div></div></section>';
+ const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
+ '<div class="body editorbar"><button class="btn">搜尋</button><button class="btn">取代</button><button class="btn">驗證</button><button class="btn">格式化</button></div>'+
+ '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+code[axis]+'</textarea></div>'+
+ '<div class="body editactions"><button class="btn">插入</button><button class="btn danger">刪除</button><button class="btn">復原</button><button class="btn">重做</button><button class="btn play" onclick="saveCode(\''+axis+'\')">儲存</button></div></section>';
+ return '<div class="simgrid">'+left+right+'</div>';
 }
-modes.forEach(([mode,color,sub])=>{
-  const b=document.createElement("button");b.className="glass";b.dataset.mode=mode;b.style.setProperty("--accent",color);
-  b.innerHTML="<span>"+mode+"</span><small>"+sub+"</small>";b.onclick=()=>setMode(mode);modeGrid.appendChild(b);
+function cadPage(){
+ const tools=["LINE","RECT","CIRCLE","ARC","HOLE","TRIM","EXTEND","OFFSET","ARRAY","DIM"].map(x=>'<button class="btn">'+x+'</button>').join("");
+ return '<div class="toolstrip">'+tools+'</div><div class="workgrid" style="margin-top:9px">'+
+ '<section class="panel"><div class="head"><h2>CAD 製圖</h2><small>SNAP / 尺寸驅動 / 0.001 mm</small></div><div class="body"><div class="canvas"></div><div class="controls">'+["Undo","Redo","Select","Pan","Fit","SNAP"].map(x=>'<button class="btn">'+x+'</button>').join("")+'</div></div></section>'+
+ panel("製圖屬性",'<div class="sidegroup">'+["圖層 01","SNAP 全模式","X 0.000","Y 0.000","尺寸精度 0.001","CONNECT","DISCONNECT"].map(x=>'<button class="btn">'+x+'</button>').join("")+'</div>')+
+ '</div>';
+}
+function camPage(){
+ const ops=["平面","輪廓","口袋","鑽孔","等高","平行","自適應","倒角","攻牙"].map(x=>'<button class="btn">'+x+'</button>').join("");
+ const fields=["刀具｜Ø10 End Mill","深度｜-10.000 mm","進給｜1200 mm/min","轉速｜12000 RPM","Safe-Z｜5.000 mm","加工區域｜已選","方向｜順銑"].map(x=>{const p=x.split("｜");return '<div class="field"><b>'+p[0]+'</b><span>'+p[1]+'</span></div>'}).join("");
+ return '<div class="camgrid">'+panel("快速刀路",'<div class="ops">'+ops+'</div>')+
+ '<section class="panel"><div class="head"><h2>CAM 加工預覽</h2><small>策略與幾何分離</small></div><div class="body"><div class="preview"></div></div></section>'+
+ panel("刀具與參數",'<div class="form">'+fields+'<button class="btn play">計算刀路</button><button class="btn">選取區域</button><button class="btn">套用</button></div>')+'</div>';
+}
+function toolpathPage(){
+ const ops=["OP10 平面","OP20 口袋","OP30 輪廓","OP40 鑽孔","OP50 倒角"].map(x=>'<button class="btn">'+x+'</button>').join("");
+ const top=[["顯示/隱藏",""],["重新計算","play"],["編輯節點",""],["Safe-Z","warn"],["進刀",""],["退刀",""],["驗證","play"],["刪除","danger"]].map(x=>'<button class="btn '+x[1]+'">'+x[0]+'</button>').join("");
+ const fields=["刀具半徑補償","深度 -10.000","步距 0.500","進給 1200","轉速 12000","進刀 斜降","退刀 圓弧","碰撞檢查 開"].map(x=>'<div class="field"><span>'+x+'</span></div>').join("");
+ return '<div class="toolstrip">'+top+'</div><div class="camgrid" style="grid-template-columns:260px minmax(0,1fr) 290px;margin-top:9px">'+
+ panel("刀路列表",'<div class="ops">'+ops+'</div>')+
+ '<section class="panel"><div class="head"><h2>刀路 3D 編輯區</h2><small>顯示與重新計算分開</small></div><div class="body"><div class="preview"></div></div></section>'+
+ panel("刀路參數",'<div class="form">'+fields+'</div>')+'</div>';
+}
+function menuPage(){
+ const cards=["專案","檔案","刀具庫","工作座標","AI 助手","監控","設定","維修","同步","更新","系統資訊","說明"];
+ return '<section class="panel"><div class="head"><div><h2>功能選單</h2><small>非加工功能集中在這一頁；加工頁保持乾淨</small></div></div><div class="body"><div class="menuGrid">'+cards.map(x=>'<div class="menuCard">'+x+'</div>').join("")+'</div></div></section>'+
+ '<section class="panel" style="margin-top:9px;border-color:rgba(255,70,95,.35)"><div class="body" style="color:#ffbdc6">Reset / Disconnect / 清除資料 / 維修診斷：只從功能選單明確進入。</div></section>';
+}
+pages.forEach(([name,color])=>{
+ const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>show(name);nav.appendChild(b);
+ const s=document.createElement("section");s.className="screen";s.dataset.page=name;
+ s.innerHTML=name==="功能"?menuPage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="刀路"?toolpathPage():simPage(name);
+ screens.appendChild(s);
 });
-document.getElementById("homeBtn").onclick=()=>{document.getElementById("home").scrollIntoView({behavior:"smooth"});setMode("CAD")};
-setMode((location.hash||"#CAD").slice(1).toUpperCase());
+function show(name){
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
+ document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.dataset.page===name));
+ history.replaceState(null,"","#"+encodeURIComponent(name));
+}
+function saveCode(axis){
+ const t=document.querySelector('textarea[data-axis="'+axis+'"]');
+ localStorage.setItem("aig-code-"+axis,t.value);
+}
+document.querySelectorAll("textarea[data-axis]").forEach(t=>{
+ const saved=localStorage.getItem("aig-code-"+t.dataset.axis);if(saved)t.value=saved;
+});
+show(decodeURIComponent((location.hash||"#5AX").slice(1)));
 </script>
 </body>
 </html>
