@@ -1,0 +1,61 @@
+name: Studio UI Art Diff Gate
+
+on:
+  push:
+    branches: [main, 'studio-*']
+    paths:
+      - 'release-version.properties'
+      - 'web/**'
+      - 'AIG_UI_THEME_REPOSITORY/themes/**'
+      - 'app/src/main/assets/aig-themes/themes/**'
+      - '.github/workflows/ui-art-diff-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ui-art-diff:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[ui-art]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - name: Enforce appearance-only diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only HEAD^ HEAD | tee /tmp/changed.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          changed=[x.strip() for x in Path('/tmp/changed.txt').read_text().splitlines() if x.strip()]
+          allowed_prefixes=(
+              'web/',
+              'AIG_UI_THEME_REPOSITORY/themes/',
+              'app/src/main/assets/aig-themes/themes/',
+              '.github/workflows/ui-art-diff-gate.yml',
+          )
+          allowed_exact={'release-version.properties'}
+          blocked=[p for p in changed if p not in allowed_exact and not p.startswith(allowed_prefixes)]
+          if blocked:
+              raise SystemExit('UI_ART_DIFF_BLOCKED_CORE_CHANGE: '+','.join(blocked))
+          print('UI_ART_DIFF_SCOPE_PASS|APPEARANCE_ONLY|NO_CORE_GEOMETRY_CAM_SIM_NC_COORDINATE')
+          PY
+      - name: Validate theme and responsive Runtime markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          theme=json.loads(Path('app/src/main/assets/aig-themes/themes/aigii_rgb_neon_v2/theme.json').read_text(encoding='utf-8-sig'))
+          assert theme['style_profile']=='AIG_II_FULL_RGB_GLASS'
+          assert theme['background_color']=='#020407'
+          assert theme['panel_color']=='#07111B'
+          assert theme['state_model']==['NORMAL','PRESSED','SELECTED','DISABLED','ALARM']
+          html=Path('web/index.html').read_text(encoding='utf-8')
+          for marker in ('STUDIO_PRODUCT_ART_PASS_249','viewport-fit=cover','service-worker.js'):
+              assert marker in html, marker
+          print('STUDIO_UI_ART_DIFF_GATE_PASS|BLACK_CLARITY|RGB_GLASS|VIEWPORT_PRIORITY|DESKTOP_MOBILE|OFFLINE_SHELL')
+          PY
