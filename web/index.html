@@ -336,6 +336,22 @@ function aigGuard(root,label,fn,fallback=null,severity="error"){
    return fallback;
  }
 }
+function aigStorageGet(root,key,fallback=null,label="資料"){
+ try{const v=localStorage.getItem(key);return v===null?fallback:v}catch(err){aigShowIssue(root,"warn",label+"讀取失敗："+(err?.message||String(err))+"；使用目前記憶體資料繼續運作。");return fallback}
+}
+function aigStorageSet(root,key,value,label="資料"){
+ try{localStorage.setItem(key,value);return true}catch(err){aigShowIssue(root,"warn",label+"儲存失敗："+(err?.message||String(err))+"；本次內容仍保留在目前畫面，不停止 AIG。");return false}
+}
+function aigStorageRemove(root,key,label="資料"){
+ try{localStorage.removeItem(key);return true}catch(err){aigShowIssue(root,"warn",label+"清除失敗："+(err?.message||String(err))+"；AIG 繼續運作。");return false}
+}
+function aigJsonRead(root,key,fallback=null,label="資料"){
+ const raw=aigStorageGet(root,key,null,label);if(raw===null)return fallback;
+ try{return JSON.parse(raw)}catch(err){aigShowIssue(root,"warn",label+"格式損壞，未套用："+(err?.message||String(err))+"；目前資料保留。");return fallback}
+}
+function aigJsonWrite(root,key,value,label="資料"){
+ try{return aigStorageSet(root,key,JSON.stringify(value),label)}catch(err){aigShowIssue(root,"warn",label+"序列化失敗："+(err?.message||String(err))+"；AIG 繼續運作。");return false}
+}
 window.addEventListener("error",e=>{const active=document.querySelector(".screen.active");aigShowIssue(active||document.body,"error","Runtime 發生可恢復錯誤："+(e.message||"未知錯誤")+"；其他功能可繼續使用。");e.preventDefault()});
 window.addEventListener("unhandledrejection",e=>{const active=document.querySelector(".screen.active");const m=e.reason?.message||String(e.reason||"未知錯誤");aigShowIssue(active||document.body,"error","非同步作業失敗："+m+"；其他功能可繼續使用。");e.preventDefault()});
 
@@ -1344,9 +1360,9 @@ function makeRuntime(root){
     root.querySelector("[data-verify]").textContent=msg;
     root.querySelector("[data-verify]").style.color=(state.parsed.errors.length||firstCollision)?"#ff8b9b":"#b7c8d1"
   }
-  if(cmd==="save"){remember();localStorage.setItem("aig-code-"+axis,ta.value);root.querySelector("[data-verify]").textContent="已儲存到本機瀏覽器。"}
-  if(cmd==="load"){const v=localStorage.getItem("aig-code-"+axis);if(v!=null){ta.value=v;remember();parse();root.querySelector("[data-verify]").textContent="已讀取本機暫存。"}}
-  if(cmd==="clear"){localStorage.removeItem("aig-code-"+axis);root.querySelector("[data-verify]").textContent="已清除本機暫存；目前編輯內容未刪除。"}
+  if(cmd==="save"){remember();aigStorageSet(root,"aig-code-"+axis,ta.value,axis+" G-code");root.querySelector("[data-verify]").textContent="已儲存到本機瀏覽器。"}
+  if(cmd==="load"){const v=aigStorageGet(root,"aig-code-"+axis,null,axis+" G-code");if(v!=null){ta.value=v;remember();parse();root.querySelector("[data-verify]").textContent="已讀取本機暫存。"}}
+  if(cmd==="clear"){aigStorageRemove(root,"aig-code-"+axis,axis+" G-code");root.querySelector("[data-verify]").textContent="已清除本機暫存；目前編輯內容未刪除。"}
   if(cmd==="insert"){const start=ta.selectionStart,end=ta.selectionEnd;ta.setRangeText("\n",start,end,"end");remember()}
   if(cmd==="delete"){const start=ta.selectionStart;const before=ta.value.lastIndexOf("\n",Math.max(0,start-1))+1;let after=ta.value.indexOf("\n",start);if(after<0)after=ta.value.length;else after++;ta.setRangeText("",before,after,"start");remember();parse()}
   if(cmd==="undo"&&state.historyIndex>0){state.historyIndex--;ta.value=state.history[state.historyIndex];parse()}
@@ -1355,12 +1371,12 @@ function makeRuntime(root){
  let timer;ta.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>{remember();parse()},350)});
  [toolInput,cutterInput,holderDiaInput,holderLenInput,safeInput,g73Input,g54x,g54y,g54z,g55x,g55y,g55z,h1,h4,h12].forEach(el=>el.addEventListener("change",()=>parse(false)));
  try{
-   const globalWcs=JSON.parse(localStorage.getItem("aig-wcs-v1")||"null");
+   const globalWcs=aigJsonRead(root,"aig-wcs-v1",null,"工作座標");
    if(globalWcs){g54x.value=globalWcs.G54?.X??g54x.value;g54y.value=globalWcs.G54?.Y??g54y.value;g54z.value=globalWcs.G54?.Z??g54z.value;g55x.value=globalWcs.G55?.X??g55x.value;g55y.value=globalWcs.G55?.Y??g55y.value;g55z.value=globalWcs.G55?.Z??g55z.value}
-   const toolTable=JSON.parse(localStorage.getItem("aig-tool-table-v1")||"null");
+   const toolTable=aigJsonRead(root,"aig-tool-table-v1",null,"刀具表");
    if(toolTable){h1.value=toolTable.H1??h1.value;h4.value=toolTable.H4??h4.value;h12.value=toolTable.H12??h12.value}
  }catch{}
- const saved=localStorage.getItem("aig-code-"+axis);if(saved!=null)ta.value=saved;remember();parse();requestAnimationFrame(tick);
+ const saved=aigStorageGet(root,"aig-code-"+axis,null,axis+" G-code");if(saved!=null)ta.value=saved;remember();parse();requestAnimationFrame(tick);
 }
 
 function makeCadRuntime(root){
@@ -1369,7 +1385,7 @@ function makeCadRuntime(root){
  const toolHud=root.querySelector("[data-cad-toolhud]"),selectedEl=root.querySelector("[data-cad-selected]"),topologyEl=root.querySelector("[data-cad-topology]"),msgEl=root.querySelector("[data-cad-msg]");
  const offsetInput=root.querySelector("[data-cad-offset]"),arrayCountInput=root.querySelector("[data-cad-array-count]"),arraySpacingInput=root.querySelector("[data-cad-array-spacing]"),dimInput=root.querySelector("[data-cad-dim]");
  let idSeed=1;
- const persisted=(()=>{try{return JSON.parse(localStorage.getItem("aig-cad-draft-v1")||"null")}catch{return null}})();
+ const persisted=aigJsonRead(root,"aig-cad-draft-v1",null,"CAD AutoSave");
  const state={
    shapes:Array.isArray(persisted?.shapes)?persisted.shapes:[],
    tool:"SELECT",selectedId:null,points:[],cursor:{x:0,y:0},snapPoint:null,snapType:"",
@@ -1390,7 +1406,7 @@ function makeCadRuntime(root){
  state.history=[snapshot()];
 
  function persist(){
-   localStorage.setItem("aig-cad-draft-v1",JSON.stringify({shapes:state.shapes,view:state.view,updatedAt:Date.now()}));
+   aigJsonWrite(root,"aig-cad-draft-v1",{shapes:state.shapes,view:state.view,updatedAt:Date.now()},"CAD AutoSave");
  }
  function pushHistory(){
    state.history=state.history.slice(0,state.historyIndex+1);
@@ -1706,7 +1722,7 @@ function makeCamRuntime(root){
  }
  function params(){validateCamFields();return{toolDia:Math.max(.1,aigFiniteNumber(toolInput.value,10)),depth:aigFiniteNumber(depthInput.value,-10),feed:Math.max(1,aigFiniteNumber(feedInput.value,1200)),rpm:Math.max(1,aigFiniteNumber(rpmInput.value,12000)),safeZ:aigFiniteNumber(safeInput.value,5),tapPitch:aigFiniteNumber(pitchInput.value,0),stepover:Math.max(.05,Math.min(.95,aigFiniteNumber(stepInput.value,50)/100)),direction:dirInput.value}}
  function loadCad(){
-   try{const v=JSON.parse(localStorage.getItem("aig-cad-draft-v1")||"null");state.cad=Array.isArray(v?.shapes)?v.shapes:[]}catch{state.cad=[]}
+   const v=aigJsonRead(root,"aig-cad-draft-v1",null,"CAD AutoSave");state.cad=Array.isArray(v?.shapes)?v.shapes:[]
    cadCountEl.textContent="CAD "+state.cad.length;msgEl.textContent=state.cad.length?"已讀取 "+state.cad.length+" 個 CAD 幾何。":"CAD 尚無幾何；先到 CAD 頁畫圖。";fit();draw();
  }
  function resize(){
@@ -1814,7 +1830,7 @@ function makeCamRuntime(root){
  function apply(){
    if(!state.paths.length){msgEl.textContent="尚無可套用刀路。";return}
    const payload={version:1,createdAt:Date.now(),strategy:state.strategy,params:params(),paths:state.paths,cadEntityCount:state.cad.length};
-   localStorage.setItem("aig-cam-toolpath-v1",JSON.stringify(payload));msgEl.textContent="已套用至刀路編輯頁，共 "+state.paths.length+" 條。";
+   aigJsonWrite(root,"aig-cam-toolpath-v1",payload,"CAM 刀路");msgEl.textContent="已套用至刀路編輯頁，共 "+state.paths.length+" 條。";
  }
  root.addEventListener("click",e=>{
    const st=e.target.closest("[data-cam-strategy]");if(st&&!st.disabled){state.strategy=st.dataset.camStrategy;root.querySelectorAll("[data-cam-strategy]").forEach(b=>b.classList.toggle("cadSelected",b===st));strategyEl.textContent=state.strategy;msgEl.textContent="已選 "+st.textContent+"；按「計算刀路」。";return}
@@ -1826,7 +1842,7 @@ function makeCamRuntime(root){
  });
  [toolInput,depthInput,feedInput,rpmInput,safeInput,pitchInput,stepInput,dirInput].forEach(el=>el.addEventListener("change",()=>{if(state.paths.length||state.strategy==="TAP")calc()}));
  try{
-   const saved=JSON.parse(localStorage.getItem("aig-cam-toolpath-v1")||"null");
+   const saved=aigJsonRead(root,"aig-cam-toolpath-v1",null,"CAM 刀路");
    if(saved?.strategy){
      state.strategy=saved.strategy;state.paths=Array.isArray(saved.paths)?saved.paths:[];
      if(saved.params){
@@ -1850,7 +1866,7 @@ function makeToolpathRuntime(root){
  const rotModeInput=root.querySelector("[data-tp-rotmode]"),a0Input=root.querySelector("[data-tp-a0]"),a1Input=root.querySelector("[data-tp-a1]"),b0Input=root.querySelector("[data-tp-b0]"),b1Input=root.querySelector("[data-tp-b1]");
  const state={payload:null,paths:[],selected:0,visible:true,edit:false,view:{scale:4,panX:0,panY:0},dragNode:null,deleteArmedUntil:0};
  function load(){
-   try{state.payload=JSON.parse(localStorage.getItem("aig-cam-toolpath-v1")||"null")}catch{state.payload=null}
+   state.payload=aigJsonRead(root,"aig-cam-toolpath-v1",null,"CAM 刀路")
    state.paths=Array.isArray(state.payload?.paths)?state.payload.paths:[];
    state.selected=Math.min(state.selected,Math.max(0,state.paths.length-1));
    syncInputs();renderList();fit();draw();updateInfo();
@@ -1868,7 +1884,7 @@ function makeToolpathRuntime(root){
  }
  function save(){
    if(!state.payload)state.payload={version:1,createdAt:Date.now(),strategy:"EDITED",params:{},cadEntityCount:0};
-   state.payload.paths=state.paths;state.payload.postGeometry={toolDia:Math.max(.1,aigFiniteNumber(toolDiaInput.value,10)),cutterLen:Math.max(1,aigFiniteNumber(cutterLenInput.value,30)),holderDia:Math.max(1,aigFiniteNumber(holderDiaInput.value,25)),holderLen:Math.max(1,aigFiniteNumber(holderLenInput.value,25))};state.payload.updatedAt=Date.now();localStorage.setItem("aig-cam-toolpath-v1",JSON.stringify(state.payload));statusEl.textContent="已儲存";msgEl.textContent="刀路修改已儲存到本機。";
+   state.payload.paths=state.paths;state.payload.postGeometry={toolDia:Math.max(.1,aigFiniteNumber(toolDiaInput.value,10)),cutterLen:Math.max(1,aigFiniteNumber(cutterLenInput.value,30)),holderDia:Math.max(1,aigFiniteNumber(holderDiaInput.value,25)),holderLen:Math.max(1,aigFiniteNumber(holderLenInput.value,25))};state.payload.updatedAt=Date.now();aigJsonWrite(root,"aig-cam-toolpath-v1",state.payload,"刀路編輯");statusEl.textContent="已儲存";msgEl.textContent="刀路修改已儲存到本機。";
  }
  function resize(){const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}ctx.setTransform(dpr,0,0,dpr,0,0);return{w:r.width,h:r.height}}
  function w2s(p,w,h){return{x:w/2+state.view.panX+p.x*state.view.scale,y:h/2+state.view.panY-p.y*state.view.scale}}
@@ -2010,7 +2026,7 @@ function makeToolpathRuntime(root){
      const c=preCollision.collisions[0];statusEl.textContent="此次未輸出";
      msgEl.textContent="NC 碰撞 Preflight FAIL：第 "+(c.line+1)+" 行 "+c.message+" ["+c.type+"]；未寫入 "+target+"。";return null
    }
-   localStorage.setItem("aig-code-"+target,code);
+   if(!aigStorageSet(root,"aig-code-"+target,code,target+" NC")){statusEl.textContent="POST SAVE WARN";msgEl.textContent="NC 已通過驗證，但本機儲存失敗；程式仍保留在目前畫面。";}
    const ta=document.querySelector('textarea[data-axis="'+target+'"]');
    if(ta){ta.value=code;ta.dispatchEvent(new Event("input",{bubbles:true}))}
    statusEl.textContent="POST "+target+" READY";
@@ -2049,14 +2065,14 @@ function makeToolpathRuntime(root){
 function makeMenuRuntime(root){
  const detail=root.querySelector("[data-menu-detail]"),title=root.querySelector("[data-menu-title]");
  let maintArmedUntil=0;
- function readJson(key,fallback=null){try{return JSON.parse(localStorage.getItem(key)||"null")??fallback}catch{return fallback}}
- function saveJson(key,v){localStorage.setItem(key,JSON.stringify(v))}
+ function readJson(key,fallback=null){return aigJsonRead(root,key,fallback,"功能資料")}
+ function saveJson(key,v){return aigJsonWrite(root,key,v,"功能資料")}
  function counts(){
    const cad=readJson("aig-cad-draft-v1",{shapes:[]}),cam=readJson("aig-cam-toolpath-v1",{paths:[]});
    return{cad:Array.isArray(cad?.shapes)?cad.shapes.length:0,cam:Array.isArray(cam?.paths)?cam.paths.length:0,
-     n3:(localStorage.getItem("aig-code-3AX")||"").split(/\r?\n/).filter(Boolean).length,
-     n4:(localStorage.getItem("aig-code-4AX")||"").split(/\r?\n/).filter(Boolean).length,
-     n5:(localStorage.getItem("aig-code-5AX")||"").split(/\r?\n/).filter(Boolean).length};
+     n3:(aigStorageGet(root,"aig-code-3AX","","3AX G-code")||"").split(/\r?\n/).filter(Boolean).length,
+     n4:(aigStorageGet(root,"aig-code-4AX","","4AX G-code")||"").split(/\r?\n/).filter(Boolean).length,
+     n5:(aigStorageGet(root,"aig-code-5AX","","5AX G-code")||"").split(/\r?\n/).filter(Boolean).length};
  }
  function projectView(){
    const p=readJson("aig-project-meta-v1",{name:"AIG CNC Project",revision:1});
@@ -2112,7 +2128,7 @@ function makeMenuRuntime(root){
    if(a.dataset.menuAction==="PROJECT_SAVE"){const old=readJson("aig-project-meta-v1",{revision:0}),nameEl=detail.querySelector("[data-menu-project-name]"),name=nameEl.value.trim();if(!name){aigFieldIssue(nameEl,"error","專案名稱不可空白；原專案資料保持不變。");if(msg)msg.textContent="專案名稱空白，沒有覆蓋原資料；AIG 可繼續操作。";return}saveJson("aig-project-meta-v1",{name,revision:Number(old.revision||0)+1,updatedAt:Date.now()});projectView()}
    if(a.dataset.menuAction==="PROJECT_NEW"){saveJson("aig-project-meta-v1",{name:"AIG CNC Project",revision:1,updatedAt:Date.now()});projectView()}
    if(a.dataset.menuAction==="EXPORT"){
-     const data={schema:"AIG-WEB-PROJECT-1",exportedAt:new Date().toISOString(),project:readJson("aig-project-meta-v1",{}),cad:readJson("aig-cad-draft-v1",null),cam:readJson("aig-cam-toolpath-v1",null),tools:readJson("aig-tool-table-v1",null),wcs:readJson("aig-wcs-v1",null),nc:{"3AX":localStorage.getItem("aig-code-3AX"),"4AX":localStorage.getItem("aig-code-4AX"),"5AX":localStorage.getItem("aig-code-5AX")}};
+     const data={schema:"AIG-WEB-PROJECT-1",exportedAt:new Date().toISOString(),project:readJson("aig-project-meta-v1",{}),cad:readJson("aig-cad-draft-v1",null),cam:readJson("aig-cam-toolpath-v1",null),tools:readJson("aig-tool-table-v1",null),wcs:readJson("aig-wcs-v1",null),nc:{"3AX":aigStorageGet(root,"aig-code-3AX",null,"3AX G-code"),"4AX":aigStorageGet(root,"aig-code-4AX",null,"4AX G-code"),"5AX":aigStorageGet(root,"aig-code-5AX",null,"5AX G-code")}};
      const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="AIG_Web_Project.json";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);if(msg)msg.textContent="已匯出 AIG JSON。";
    }
    if(a.dataset.menuAction==="IMPORT"){detail.querySelector("[data-menu-file]").click()}
@@ -2120,11 +2136,11 @@ function makeMenuRuntime(root){
    if(a.dataset.menuAction==="WCS_SAVE"){const out={G54:{X:0,Y:0,Z:0},G55:{X:0,Y:0,Z:0}};detail.querySelectorAll("[data-wcskey]").forEach(i=>{const [g,k]=i.dataset.wcskey.split("-");out[g][k]=Number(i.value)||0});saveJson("aig-wcs-v1",out);if(msg)msg.textContent="G54/G55 已儲存；模擬頁重新載入時套用。";}
    if(a.dataset.menuAction==="REFRESH_MONITOR")monitorView();
    if(a.dataset.menuAction==="SELF_CHECK"){const c=counts();if(msg)msg.textContent="SELF CHECK PASS：CAD "+c.cad+" / CAM "+c.cam+" / NC "+(c.n3+c.n4+c.n5)+" lines。";}
-   if(a.dataset.menuAction==="CLEAR_DERIVED"){const now=Date.now();if(now>maintArmedUntil){maintArmedUntil=now+2500;if(msg)msg.textContent="清除待命：2.5 秒內再按一次才會清除 CAM 與 3/4/5AX NC；CAD 保留。";return}maintArmedUntil=0;localStorage.removeItem("aig-cam-toolpath-v1");for(const ax of ["3AX","4AX","5AX"])localStorage.removeItem("aig-code-"+ax);if(msg)msg.textContent="已清除 CAM/NC 衍生暫存；CAD 未刪除。";}
+   if(a.dataset.menuAction==="CLEAR_DERIVED"){const now=Date.now();if(now>maintArmedUntil){maintArmedUntil=now+2500;if(msg)msg.textContent="清除待命：2.5 秒內再按一次才會清除 CAM 與 3/4/5AX NC；CAD 保留。";return}maintArmedUntil=0;aigStorageRemove(root,"aig-cam-toolpath-v1","CAM/NC 衍生資料");for(const ax of ["3AX","4AX","5AX"])aigStorageRemove(root,"aig-code-"+ax,ax+" G-code");if(msg)msg.textContent="已清除 CAM/NC 衍生暫存；CAD 未刪除。";}
  });
  root.addEventListener("change",e=>{
    const file=e.target.closest("[data-menu-file]");if(!file||!file.files?.[0])return;
-   const reader=new FileReader();reader.onload=()=>{const msg=detail.querySelector("[data-menu-msg]");try{const data=JSON.parse(String(reader.result||"{}"));if(data.schema!=="AIG-WEB-PROJECT-1")throw new Error("schema");if(data.project)saveJson("aig-project-meta-v1",data.project);if(data.cad)saveJson("aig-cad-draft-v1",data.cad);if(data.cam)saveJson("aig-cam-toolpath-v1",data.cam);if(data.tools)saveJson("aig-tool-table-v1",data.tools);if(data.wcs)saveJson("aig-wcs-v1",data.wcs);for(const ax of ["3AX","4AX","5AX"])if(data.nc?.[ax])localStorage.setItem("aig-code-"+ax,data.nc[ax]);if(msg)msg.textContent="匯入完成；重新開啟頁面即可載入全部資料。"}catch{if(msg)msg.textContent="匯入失敗：檔案不是 AIG-WEB-PROJECT-1。"}};reader.readAsText(file.files[0]);
+   const reader=new FileReader();reader.onload=()=>{const msg=detail.querySelector("[data-menu-msg]");try{const data=JSON.parse(String(reader.result||"{}"));if(data.schema!=="AIG-WEB-PROJECT-1")throw new Error("schema");if(data.project)saveJson("aig-project-meta-v1",data.project);if(data.cad)saveJson("aig-cad-draft-v1",data.cad);if(data.cam)saveJson("aig-cam-toolpath-v1",data.cam);if(data.tools)saveJson("aig-tool-table-v1",data.tools);if(data.wcs)saveJson("aig-wcs-v1",data.wcs);for(const ax of ["3AX","4AX","5AX"])if(data.nc?.[ax])aigStorageSet(root,"aig-code-"+ax,data.nc[ax],ax+" G-code");if(msg)msg.textContent="匯入完成；重新開啟頁面即可載入全部資料。"}catch{if(msg)msg.textContent="匯入失敗：檔案不是 AIG-WEB-PROJECT-1。"}};reader.readAsText(file.files[0]);
  });
  render("PROJECT");
 }
