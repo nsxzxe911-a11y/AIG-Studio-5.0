@@ -197,7 +197,10 @@ function parseProgram(text,axis){
   to.F=pos.F;to.S=pos.S;
   const n=Number.isFinite(out.N)?out.N:null;
   if(moved){
-    blocks.push({line:index,raw,kind:"move",motion,absolute,from,to,n});
+    blocks.push({
+      line:index,raw,kind:"move",motion,absolute,from,to,n,
+      arc:{I:Number.isFinite(out.I)?out.I:null,J:Number.isFinite(out.J)?out.J:null,K:Number.isFinite(out.K)?out.K:null,R:Number.isFinite(out.R)?out.R:null}
+    });
     pos={...to};
   }else{
     blocks.push({line:index,raw,kind:"modal",motion,absolute,from:{...pos},to:{...pos},n});
@@ -236,16 +239,42 @@ function makeRuntime(root){
  function currentBlock(){return state.parsed.blocks[Math.min(state.index,state.parsed.blocks.length-1)]||null}
  function currentLine(){const b=currentBlock();return b?b.line:-1}
  function lerp(a,b,t){return a+(b-a)*t}
+ function arcPoint(b,t){
+  if(!b||b.kind!=="move"||(b.motion!=="G2"&&b.motion!=="G3")||b.arc.I===null||b.arc.J===null){
+    const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(b?.from?.[k]||0,b?.to?.[k]||0,t);return p;
+  }
+  const cx=b.from.X+b.arc.I,cy=b.from.Y+b.arc.J;
+  const r=Math.hypot(b.from.X-cx,b.from.Y-cy);
+  if(r<1e-9){
+    const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(b.from[k]||0,b.to[k]||0,t);return p;
+  }
+  let a0=Math.atan2(b.from.Y-cy,b.from.X-cx),a1=Math.atan2(b.to.Y-cy,b.to.X-cx),d=a1-a0;
+  if(b.motion==="G2"&&d>=0)d-=Math.PI*2;
+  if(b.motion==="G3"&&d<=0)d+=Math.PI*2;
+  const a=a0+d*t;
+  return {
+    X:cx+Math.cos(a)*r,Y:cy+Math.sin(a)*r,
+    Z:lerp(b.from.Z,b.to.Z,t),A:lerp(b.from.A,b.to.A,t),B:lerp(b.from.B,b.to.B,t),C:lerp(b.from.C,b.to.C,t),
+    F:lerp(b.from.F||0,b.to.F||0,t),S:lerp(b.from.S||0,b.to.S||0,t)
+  };
+ }
  function currentPos(){
   const b=currentBlock();if(!b)return {X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0};
   if(b.kind!=="move")return {...b.to};
-  const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(b.from[k]||0,b.to[k]||0,state.t);return p;
+  return arcPoint(b,state.t);
  }
  function durationFor(b){
   if(!b||b.kind!=="move")return 150;
   const dx=b.to.X-b.from.X,dy=b.to.Y-b.from.Y,dz=b.to.Z-b.from.Z;
-  const linear=Math.hypot(dx,dy,dz),rot=Math.abs(b.to.A-b.from.A)+Math.abs(b.to.B-b.from.B)+Math.abs(b.to.C-b.from.C);
-  const base=b.motion==="G0"?260:Math.max(350,Math.min(1600,(linear*26)+(rot*8)+280));
+  let linear=Math.hypot(dx,dy,dz);
+  if((b.motion==="G2"||b.motion==="G3")&&b.arc.I!==null&&b.arc.J!==null){
+    const cx=b.from.X+b.arc.I,cy=b.from.Y+b.arc.J,r=Math.hypot(b.from.X-cx,b.from.Y-cy);
+    let a0=Math.atan2(b.from.Y-cy,b.from.X-cx),a1=Math.atan2(b.to.Y-cy,b.to.X-cx),d=a1-a0;
+    if(b.motion==="G2"&&d>=0)d-=Math.PI*2;if(b.motion==="G3"&&d<=0)d+=Math.PI*2;
+    linear=Math.hypot(Math.abs(d)*r,dz);
+  }
+  const rot=Math.abs(b.to.A-b.from.A)+Math.abs(b.to.B-b.from.B)+Math.abs(b.to.C-b.from.C);
+  const base=b.motion==="G0"?260:Math.max(350,Math.min(1900,(linear*26)+(rot*8)+280));
   return base;
  }
  function tick(now){
@@ -286,12 +315,31 @@ function makeRuntime(root){
   // rotary table / stock
   c.save();c.translate(w/2,h/2);c.strokeStyle=axis==="3AX"?"rgba(70,120,145,.34)":axis==="4AX"?"rgba(255,179,38,.28)":"rgba(255,77,166,.27)";c.lineWidth=2;
   c.beginPath();c.ellipse(0,30,Math.min(w,h)*.29,Math.min(w,h)*.12,0,0,Math.PI*2);c.stroke();c.restore();
-  // full path
-  c.lineWidth=1.5;c.strokeStyle="rgba(54,148,255,.65)";
-  state.parsed.blocks.forEach(bl=>{if(bl.kind!=="move")return;const p1=project(bl.from,b,w,h),p2=project(bl.to,b,w,h);c.beginPath();c.moveTo(p1.x,p1.y);c.lineTo(p2.x,p2.y);c.stroke()});
-  // executed material removal path
-  c.lineWidth=state.dry?2:5;c.strokeStyle=state.dry?"rgba(255,179,38,.85)":"rgba(51,243,155,.78)";c.lineCap="round";
-  state.parsed.blocks.forEach((bl,i)=>{if(bl.kind!=="move"||i>state.index)return;const p1=project(bl.from,b,w,h);let end=bl.to;if(i===state.index&&state.index<state.parsed.blocks.length){const cp=currentPos();end=cp}const p2=project(end,b,w,h);c.beginPath();c.moveTo(p1.x,p1.y);c.lineTo(p2.x,p2.y);c.stroke()});
+  function strokeBlock(bl,tEnd,stroke,width){
+    if(bl.kind!=="move")return;
+    const samples=(bl.motion==="G2"||bl.motion==="G3")?28:1;
+    c.strokeStyle=stroke;c.lineWidth=width;c.lineCap="round";c.beginPath();
+    const first=project(bl.from,b,w,h);c.moveTo(first.x,first.y);
+    const count=Math.max(1,Math.ceil(samples*tEnd));
+    for(let j=1;j<=count;j++){
+      const t=Math.min(tEnd,j/samples);
+      const pp=(bl.motion==="G2"||bl.motion==="G3")?arcPoint(bl,t):{
+        X:lerp(bl.from.X,bl.to.X,t),Y:lerp(bl.from.Y,bl.to.Y,t),Z:lerp(bl.from.Z,bl.to.Z,t),
+        A:lerp(bl.from.A,bl.to.A,t),B:lerp(bl.from.B,bl.to.B,t),C:lerp(bl.from.C,bl.to.C,t)
+      };
+      const q=project(pp,b,w,h);c.lineTo(q.x,q.y);
+      if(samples===1)break;
+    }
+    c.stroke();
+  }
+  // full path: G2/G3 use sampled arcs instead of straight chords.
+  state.parsed.blocks.forEach(bl=>strokeBlock(bl,1,"rgba(54,148,255,.65)",1.5));
+  // executed material-removal trace.
+  state.parsed.blocks.forEach((bl,i)=>{
+    if(bl.kind!=="move"||i>state.index)return;
+    const tEnd=i<state.index?1:state.t;
+    strokeBlock(bl,tEnd,state.dry?"rgba(255,179,38,.85)":"rgba(51,243,155,.78)",state.dry?2:5);
+  });
   // current tool
   const p=currentPos(),q=project(p,b,w,h),tiltX=(p.B||0)*.22,tiltY=(p.A||0)*.22;
   c.strokeStyle="#eefbff";c.lineWidth=3;c.beginPath();c.moveTo(q.x-tiltX,q.y-55+tiltY);c.lineTo(q.x,q.y);c.stroke();
