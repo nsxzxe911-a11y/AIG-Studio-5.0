@@ -2134,6 +2134,10 @@ function makeToolpathRuntime(root){
      if(!path.points?.length)continue;
      const safe=Number(path.safeZ??defaultSafe),depth=Number(path.depth??depthInput.value??-10),feed=Math.max(1,Math.trunc(Number(path.feed)||defaultFeed));
      const mode=path.rotMode==="SIMULTANEOUS"?"SIMULTANEOUS":"INDEXED",r0=rotaryAt(path,0,target);
+     if(path.kind==="adaptive"){
+       const loadPct=Math.max(0,Math.min(100,Number(path.radialEngagement||0)*100));
+       push("(AIG ADAPTIVE 2.5D L"+Number(path.zLevelIndex||0)+"/"+Number(path.zLevelCount||0)+" R"+Number(path.adaptiveRing||0)+" LOAD"+loadPct.toFixed(0)+"%)");
+     }
      push("G0 Z"+fmt(safe));
      if(target!=="3AX")push("G0"+r0.text);
      if(path.kind==="drill"){
@@ -2170,7 +2174,8 @@ function makeToolpathRuntime(root){
      cutterLen:Math.max(1,aigFiniteNumber(cutterLenInput.value,30)),
      holderDia:Math.max(1,aigFiniteNumber(holderDiaInput.value,25)),
      holderLen:Math.max(1,aigFiniteNumber(holderLenInput.value,25)),
-     safeZ:defaultSafe,g73Retract:.5
+     safeZ:defaultSafe,g73Retract:.5,
+     stock:state.payload?.stock||aigJsonRead(root,"aig-stock-v1",null,"毛坯資料")
    };
    const preParsed=parseProgram(code,target,collisionCfg);
    if(preParsed.errors.length){statusEl.textContent="此次未輸出";msgEl.textContent="NC Preflight parser FAIL："+preParsed.errors.slice(0,3).join("；");return null}
@@ -2183,7 +2188,7 @@ function makeToolpathRuntime(root){
    const ta=document.querySelector('textarea[data-axis="'+target+'"]');
    if(ta){ta.value=code;ta.dispatchEvent(new Event("input",{bubbles:true}))}
    statusEl.textContent="POST "+target+" READY";
-   msgEl.textContent="Fanuc NC 已通過刀具/刀柄碰撞 Preflight 並送到 "+target+"；旋轉軸在 Safe-Z 先定位，SIMULTANEOUS 模式再把 A/B 寫入每段 G1。";
+   msgEl.textContent="Fanuc NC 已使用同一份 CAM 毛坯 XYZ 通過刀具/刀柄碰撞 Preflight 並送到 "+target+"；Adaptive OP 保留 Z 層 / Ring / Load% 註解。";
    return code;
  }
  function action(name){
