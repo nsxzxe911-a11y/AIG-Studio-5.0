@@ -64,6 +64,30 @@ jobs:
           python3 ci/trigger_guardian.py --restore
           python3 ci/trigger_mine_detector.py
           python3 ci/verify_trigger_policy.py
+      - name: Restore protected guardian workflows from canonical vault
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          pairs=[
+              (".github/workflows/trigger-mine-auto-clean.yml","ci/guardian_canonical/github/workflows/trigger-mine-auto-clean.yml"),
+              (".github/workflows/prebaseline-trigger-clean.yml","ci/guardian_canonical/github/workflows/prebaseline-trigger-clean.yml"),
+              (".github/workflows/trigger-guardian-a.yml","ci/guardian_canonical/github/workflows/trigger-guardian-a.yml"),
+              (".github/workflows/trigger-guardian-b.yml","ci/guardian_canonical/github/workflows/trigger-guardian-b.yml"),
+              (".github/workflows/rolling-version-gate.yml","ci/guardian_canonical/github/workflows/rolling-version-gate.yml"),
+          ]
+          restored=[]
+          for active,canonical in pairs:
+              ap,cp=Path(active),Path(canonical)
+              if not cp.is_file():
+                  raise SystemExit("GUARDIAN_CANONICAL_WORKFLOW_MISSING:"+canonical)
+              if (not ap.is_file()) or ap.read_bytes()!=cp.read_bytes():
+                  ap.parent.mkdir(parents=True,exist_ok=True)
+                  shutil.copyfile(cp,ap)
+                  restored.append(active)
+          print("GUARDIAN_WORKFLOW_RESTORE_PASS|RESTORED="+(",".join(restored) if restored else "NONE"))
+          PY
       - name: Commit recovery if needed
         shell: bash
         run: |
