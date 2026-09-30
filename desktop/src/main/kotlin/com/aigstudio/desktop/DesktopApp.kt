@@ -2178,12 +2178,22 @@ private fun fanucFromCam(cam: CamModel): String {
 private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     val cam = CamModel.fromCad(1L, doc.snapshot())
     require(cam.toolpaths.isNotEmpty()) { "NC BLOCKED: no CAM toolpath" }
-    var controllerProfile = CncControllerProfile.FANUC
-    var coordinateMode = NcCoordinateMode.ABSOLUTE_G90
-    var originTransformMode = NcOriginTransformMode.WORK_OFFSET_ONLY
-    var cutterCompensation = CutterCompensationMode.CAM_GEOMETRY_G40
-    var cutterCompRegister = 1
-    var cutterCompValueMm = 0.0
+    var controllerProfile = runCatching {
+        CncControllerProfile.valueOf(ncPostPrefs.get("controller", CncControllerProfile.FANUC.name))
+    }.getOrDefault(CncControllerProfile.FANUC)
+    var coordinateMode = runCatching {
+        NcCoordinateMode.valueOf(ncPostPrefs.get("coordinate", NcCoordinateMode.ABSOLUTE_G90.name))
+    }.getOrDefault(NcCoordinateMode.ABSOLUTE_G90)
+    var originTransformMode = runCatching {
+        NcOriginTransformMode.valueOf(ncPostPrefs.get("origin", NcOriginTransformMode.WORK_OFFSET_ONLY.name))
+    }.getOrDefault(NcOriginTransformMode.WORK_OFFSET_ONLY)
+    var cutterCompensation = runCatching {
+        CutterCompensationMode.valueOf(ncPostPrefs.get("cutter_comp", CutterCompensationMode.CAM_GEOMETRY_G40.name))
+    }.getOrDefault(CutterCompensationMode.CAM_GEOMETRY_G40)
+    var cutterCompRegister = ncPostPrefs.getInt("cutter_d_register",1).coerceIn(1,999)
+    var cutterCompValueMm = java.lang.Double.longBitsToDouble(
+        ncPostPrefs.getLong("cutter_d_value_bits", java.lang.Double.doubleToLongBits(0.0))
+    ).takeIf { it.isFinite() } ?: 0.0
     fun generateNc(): String = CncPost.generate(
         cam,
         FanucPostSettings(
@@ -2314,6 +2324,12 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
         cutterCompensation = nextComp
         cutterCompRegister = nextDRegister
         cutterCompValueMm = nextDValue
+        ncPostPrefs.put("controller",controllerProfile.name)
+        ncPostPrefs.put("coordinate",coordinateMode.name)
+        ncPostPrefs.put("origin",originTransformMode.name)
+        ncPostPrefs.put("cutter_comp",cutterCompensation.name)
+        ncPostPrefs.putInt("cutter_d_register",cutterCompRegister)
+        ncPostPrefs.putLong("cutter_d_value_bits",java.lang.Double.doubleToLongBits(cutterCompValueMm))
         runCatching { generateNc() }
             .onSuccess { area.text = it }
             .onFailure {
@@ -2405,6 +2421,9 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     }
 }
 
+
+private val ncPostPrefs: Preferences =
+    Preferences.userRoot().node("com/aigstudio/nc-post-profile")
 
 private val rotaryMachinePrefs: Preferences =
     Preferences.userRoot().node("com/aigstudio/rotary-machine-profile")
