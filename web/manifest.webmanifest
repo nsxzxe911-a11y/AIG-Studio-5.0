@@ -1,0 +1,12 @@
+{
+  "name": "AIG Studio CNC Runtime",
+  "short_name": "AIG CNC",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#020407",
+  "theme_color": "#020407",
+  "lang": "zh-Hant",
+  "description": "AIG Studio CNC production-facing responsive Runtime UI for desktop and mobile."
+}
