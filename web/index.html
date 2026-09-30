@@ -244,7 +244,7 @@ function parseProgram(text,axis,opts={}){
  const executionLines=compiled.executionLines;
  let pos={X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0},absolute=true,motion="G0",plane="G17",returnMode="G98";
  let cycle=null,cycleZ=null,cycleR=null,cycleQ=null;
- let machine={T:0,H:0,spindle:"M5",coolant:false,wcs:"G54",toolComp:false};
+ let machine={T:0,selectedTool:0,H:0,spindle:"M5",coolant:false,wcs:"G54",toolComp:false};
  const blocks=[];const errors=[...compiled.errors];const warnings=[...compiled.warnings];
  let currentMeta={subprogram:compiled.mainKey,subCall:null,subReturn:false,callDepth:0,callRepeat:1};
  const g73Retract=Math.max(0,Number(opts.g73Retract)||0.5);
@@ -315,7 +315,8 @@ function parseProgram(text,axis,opts={}){
   if(!clean)return;
   const gMatches=[...clean.matchAll(/G\s*0*(\d+(?:\.\d+)?)/g)].map(m=>"G"+Number(m[1]));
   const mMatches=[...clean.matchAll(/M\s*0*(\d+)/g)].map(m=>"M"+Number(m[1]));
-  if(Number.isFinite(out.T))machine.T=Math.trunc(out.T);
+  if(Number.isFinite(out.T))machine.selectedTool=Math.trunc(out.T);
+  if(mMatches.includes("M6"))machine.T=machine.selectedTool;
   if(Number.isFinite(out.H))machine.H=Math.trunc(out.H);
   for(const code of ["G54","G55","G56","G57","G58","G59"])if(gMatches.includes(code))machine.wcs=code;
   if(gMatches.includes("G43"))machine.toolComp=true;
@@ -586,7 +587,7 @@ function makeRuntime(root){
  }
  function activeMachine(){
   const b=currentBlock()||state.parsed?.blocks?.[state.parsed.blocks.length-1];
-  return b?.machine||{T:0,H:0,spindle:"M5",coolant:false,wcs:"G54",toolComp:false};
+  return b?.machine||{T:0,selectedTool:0,H:0,spindle:"M5",coolant:false,wcs:"G54",toolComp:false};
  }
  function workOffsetFor(mc,cfg){
   return cfg.offsets[mc?.wcs]||{X:0,Y:0,Z:0};
@@ -680,7 +681,7 @@ function makeRuntime(root){
     workAxes.map(a=>a+" "+(p[a]||0).toFixed(3)).join("<br>")+
     "<br><b>MACHINE</b><br>MX "+mp.X.toFixed(3)+"<br>MY "+mp.Y.toFixed(3)+"<br>MZ "+mp.Z.toFixed(3)+
     "<br>F "+Math.round(p.F||0)+" / S "+Math.round(p.S||0)+
-    "<br>T "+mc.T+" / "+(mc.toolComp?("G43 H"+mc.H+" "+hLen.toFixed(3)+"mm"):"G49")+
+    "<br>T "+mc.T+(mc.selectedTool!==mc.T?(" / PRE T"+mc.selectedTool):"")+" / "+(mc.toolComp?("G43 H"+mc.H+" "+hLen.toFixed(3)+"mm"):"G49")+
     "<br>"+mc.spindle+" / "+(mc.coolant?"M8":"M9")+
     "<br>SUB "+(bl?.subprogram||state.parsed.mainProgram)+
     "<br>Ø "+cfg.toolDia.toFixed(3)+(bl?.cycle?"<br>"+bl.cycle+(bl.pattern?"/"+bl.pattern:""):"");
