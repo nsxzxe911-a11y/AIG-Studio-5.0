@@ -1434,7 +1434,10 @@ class MainActivity : Activity() {
                     return
                 }
                 val updateConfig=UpdateConfigStore.load(this)
-                if(!updateConfig.configured) return
+                if(!updateConfig.configured){
+                    renderNetworkState(true,"更新設定未完成")
+                    return
+                }
                 if(!OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)) return
                 if(!onlineAutoCheckRunning.compareAndSet(false,true)) return
                 val backgroundConfig=updateConfig.copy(
@@ -3965,6 +3968,11 @@ private fun showEnvironmentSettings() {
 
     private fun runSecureUpdateCheck() {
         val config = UpdateConfigStore.load(this)
+        if (!config.configured) {
+            Toast.makeText(this, "AI 更新設定未完成 • Runtime 正常", Toast.LENGTH_SHORT).show()
+            showUpdateSettings()
+            return
+        }
         Toast.makeText(this, "ChatGPT AI 更新 • 一鍵：檢查與驗證中…", Toast.LENGTH_SHORT).show()
         SecureUpdateManager.autoCheck(this, config) { result ->
             val apk = result.verifiedApk
