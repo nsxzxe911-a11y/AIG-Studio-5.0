@@ -2775,5 +2775,14 @@ function show(name){
 }
 aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash||"#6AX").slice(1))),null,"error");
 </script>
-<script>\n(function(){\n  if (!("serviceWorker" in navigator)) return;\n  window.addEventListener("load", function(){\n    navigator.serviceWorker.register("./service-worker.js", {scope:"./"})\n      .then(function(reg){ window.AIG_OFFLINE_RUNTIME={ready:true,scope:reg.scope}; })\n      .catch(function(err){ window.AIG_OFFLINE_RUNTIME={ready:false,error:String(err)}; });\n  });\n})();\n</script>\n</body>
+<script>
+(function(){
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("./service-worker.js", {scope:"./"})
+      .then(function(reg){ window.AIG_OFFLINE_RUNTIME={ready:true,scope:reg.scope}; })
+      .catch(function(err){ window.AIG_OFFLINE_RUNTIME={ready:false,error:String(err)}; });
+  });
+})();
+</script>\n</body>
 </html>
