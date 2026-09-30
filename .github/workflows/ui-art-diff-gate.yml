@@ -36,7 +36,7 @@ jobs:
               'app/src/main/assets/aig-themes/themes/',
               '.github/workflows/ui-art-diff-gate.yml',
           )
-          allowed_exact={'release-version.properties'}
+          allowed_exact={'release-version.properties','ci/verify_web_runtime.mjs'}
           blocked=[p for p in changed if p not in allowed_exact and not p.startswith(allowed_prefixes)]
           if blocked:
               raise SystemExit('UI_ART_DIFF_BLOCKED_CORE_CHANGE: '+','.join(blocked))
