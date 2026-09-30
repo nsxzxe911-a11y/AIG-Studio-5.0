@@ -105,6 +105,19 @@ input.aigError,select.aigError,textarea.aigError{border-color:#a82d43!important;
 .param{display:flex;align-items:center;gap:5px;min-height:32px;padding:4px 7px;border:1px solid #1b3441;border-radius:9px;background:#03070a;color:var(--muted);font-size:10px}
 .param input{width:62px;background:#010305;color:var(--text);border:1px solid #24485a;border-radius:6px;padding:4px 5px;outline:none}
 .param input:focus{border-color:var(--cyan)}
+.fieldIssue{display:none;width:100%;font-size:9px;line-height:1.35;margin-top:3px;padding:3px 6px;border-radius:6px}
+.fieldIssue.show{display:block}
+.fieldIssue.error{color:#ffd6dc;background:rgba(255,70,95,.12);border:1px solid rgba(255,70,95,.34)}
+.fieldIssue.warn{color:#ffe6b4;background:rgba(255,179,38,.10);border:1px solid rgba(255,179,38,.30)}
+.fieldIssue.info{color:#bfefff;background:rgba(39,233,255,.08);border:1px solid rgba(39,233,255,.22)}
+.field-invalid{border-color:var(--red)!important;box-shadow:0 0 0 1px rgba(255,70,95,.22)!important}
+.field-warning{border-color:var(--amber)!important;box-shadow:0 0 0 1px rgba(255,179,38,.18)!important}
+.runtimeIssueDock{position:fixed;right:10px;bottom:10px;z-index:1000;display:grid;gap:6px;width:min(430px,calc(100vw - 20px));pointer-events:none}
+.runtimeIssue{pointer-events:auto;padding:8px 10px;border-radius:10px;background:rgba(3,7,10,.96);border:1px solid #24485a;box-shadow:0 10px 30px rgba(0,0,0,.55);font-size:11px;line-height:1.45}
+.runtimeIssue.error{border-color:rgba(255,70,95,.56);color:#ffd6dc}
+.runtimeIssue.warn{border-color:rgba(255,179,38,.48);color:#ffe6b4}
+.runtimeIssue.info{border-color:rgba(39,233,255,.38);color:#c9f8ff}
+.runtimeIssue b{display:block;margin-bottom:2px}
 .cycleTag{color:var(--amber)!important}
 @media(max-width:920px){
  .top{height:auto;flex-wrap:wrap}.brand{min-width:140px}.nav{order:3;grid-template-columns:repeat(7,minmax(58px,1fr));max-width:none;flex-basis:100%}
@@ -126,6 +139,7 @@ input.aigError,select.aigError,textarea.aigError{border-color:#a82d43!important;
  <div class="status">● LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
+<div class="runtimeIssueDock" id="runtimeIssues" aria-live="polite"></div>
 <footer class="footer">AIG II CNC • 黑色高對比 Runtime • Web motion prototype • CNC machine output disabled</footer>
 </div>
 <script>
@@ -133,6 +147,86 @@ const pages=[
  ["功能","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["刀路","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"]
 ];
 const nav=document.getElementById("nav"),screens=document.getElementById("screens");
+const runtimeIssues=document.getElementById("runtimeIssues");
+const runtimeIssueState={last:new Map(),items:[]};
+function reportRuntimeIssue(level,area,message,opts={}){
+ const lvl=String(level||"info").toLowerCase(),key=(area||"AIG")+"|"+message,now=Date.now();
+ if(runtimeIssueState.last.has(key)&&now-runtimeIssueState.last.get(key)<1500)return;
+ runtimeIssueState.last.set(key,now);
+ runtimeIssueState.items.push({lvl,area:area||"AIG",message:String(message||"未知訊息"),time:now});
+ runtimeIssueState.items=runtimeIssueState.items.slice(-5);
+ if(runtimeIssues){
+   runtimeIssues.innerHTML=runtimeIssueState.items.map((x,i)=>'<div class="runtimeIssue '+x.lvl+'"><b>'+escapeHtml(x.area)+' • '+(x.lvl==="error"?"錯誤":x.lvl==="warn"?"警示":"訊息")+'</b>'+escapeHtml(x.message)+'</div>').join("");
+   clearTimeout(runtimeIssueState.timer);
+   runtimeIssueState.timer=setTimeout(()=>{runtimeIssueState.items=runtimeIssueState.items.slice(-2);runtimeIssues.innerHTML=runtimeIssueState.items.map(x=>'<div class="runtimeIssue '+x.lvl+'"><b>'+escapeHtml(x.area)+'</b>'+escapeHtml(x.message)+'</div>').join("")},7000);
+ }
+}
+function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+function safeRun(area,fn,fallback=null){
+ try{return fn()}catch(err){
+   const msg=err instanceof Error?err.message:String(err);
+   reportRuntimeIssue("error",area,msg+"；此模組已隔離，AIG 其他功能繼續運作。");
+   return fallback;
+ }
+}
+function fieldCaption(el){
+ const label=el.closest("label");if(label){const txt=[...label.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE).map(n=>n.textContent).join("").trim();if(txt)return txt}
+ const field=el.closest(".field");const b=field?.querySelector("b");if(b?.textContent)return b.textContent.trim();
+ return el.getAttribute("aria-label")||el.name||el.dataset?.fieldName||el.placeholder||"欄位";
+}
+function setFieldIssue(el,level,message){
+ if(!el)return false;
+ let issue=el.parentElement?.querySelector(":scope > .fieldIssue");
+ if(!issue){issue=document.createElement("span");issue.className="fieldIssue";el.parentElement?.appendChild(issue)}
+ el.classList.remove("field-invalid","field-warning");
+ el.removeAttribute("aria-invalid");
+ if(!message){if(issue){issue.className="fieldIssue";issue.textContent=""}return false}
+ const lvl=level==="error"?"error":level==="warn"?"warn":"info";
+ issue.className="fieldIssue show "+lvl;issue.textContent=message;
+ if(lvl==="error"){el.classList.add("field-invalid");el.setAttribute("aria-invalid","true")}
+ if(lvl==="warn")el.classList.add("field-warning");
+ return lvl==="error";
+}
+function validateNativeField(el){
+ if(!el||el.disabled)return false;
+ const name=fieldCaption(el),raw=String(el.value??"").trim();
+ if(el.hasAttribute("required")&&!raw)return setFieldIssue(el,"error",name+"：不可空白。");
+ if(el.type==="number"&&raw!==""){
+   const n=Number(raw);
+   if(!Number.isFinite(n))return setFieldIssue(el,"error",name+"：請輸入有效數字。");
+   if(el.min!==""&&n<Number(el.min))return setFieldIssue(el,"error",name+"：目前 "+raw+"，不可小於 "+el.min+"。");
+   if(el.max!==""&&n>Number(el.max))return setFieldIssue(el,"error",name+"：目前 "+raw+"，不可大於 "+el.max+"。");
+ }
+ if(el.matches("textarea.code")&&!raw)return setFieldIssue(el,"warn","G-code 目前為空；AIG 可繼續編輯，但不會執行空程式。");
+ setFieldIssue(el,null,"");return false;
+}
+function validateScope(scope,custom){
+ let errors=0;
+ scope.querySelectorAll("input,select,textarea").forEach(el=>{if(validateNativeField(el))errors++});
+ if(typeof custom==="function")errors+=Number(custom()||0);
+ return errors;
+}
+function installFieldValidation(scope,custom){
+ const run=()=>validateScope(scope,custom);
+ scope.addEventListener("input",e=>{if(e.target.matches("input,select,textarea"))safeRun("欄位驗證",run,0)});
+ scope.addEventListener("change",e=>{if(e.target.matches("input,select,textarea"))safeRun("欄位驗證",run,0)});
+ scope.addEventListener("blur",e=>{if(e.target.matches("input,select,textarea"))safeRun("欄位驗證",run,0)},true);
+ safeRun("欄位驗證",run,0);
+ return run;
+}
+function safeMount(selector,name,fn){
+ document.querySelectorAll(selector).forEach((el,i)=>safeRun(name+" #"+(i+1),()=>fn(el)));
+}
+window.addEventListener("error",e=>{
+ reportRuntimeIssue("error","Runtime",String(e.message||"未預期錯誤")+"；頁面保持可用，請依訊息修正欄位或重新操作。");
+ e.preventDefault();
+});
+window.addEventListener("unhandledrejection",e=>{
+ const r=e.reason instanceof Error?e.reason.message:String(e.reason||"Promise error");
+ reportRuntimeIssue("error","Runtime",r+"；背景工作已隔離，AIG 不停止。");
+ e.preventDefault();
+});
+
 const sourceCode={
  "3AX":[
   "O1000","N10 M98 P4","N20 S12000 M3","N30 G0 X0. Y0. Z50.",
