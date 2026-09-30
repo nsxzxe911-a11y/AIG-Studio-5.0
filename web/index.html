@@ -1386,7 +1386,7 @@ function makeRuntime(root){
   if(cmd==="reset"){state.running=false;state.index=0;state.t=0;state.collisionAlarm=null}
   updateUi();renderExec();draw();
  }
- root.addEventListener("click",e=>{
+ root.addEventListener("click",e=>aigGuard(root,axis+" 操作",()=>{
   const c=e.target.closest("[data-cmd]");if(c){command(c.dataset.cmd);return}
   const ec=e.target.closest("[data-editcmd]");if(!ec)return;
   const cmd=ec.dataset.editcmd;
@@ -1406,8 +1406,8 @@ function makeRuntime(root){
   if(cmd==="delete"){const start=ta.selectionStart;const before=ta.value.lastIndexOf("\n",Math.max(0,start-1))+1;let after=ta.value.indexOf("\n",start);if(after<0)after=ta.value.length;else after++;ta.setRangeText("",before,after,"start");remember();parse()}
   if(cmd==="undo"&&state.historyIndex>0){state.historyIndex--;ta.value=state.history[state.historyIndex];parse()}
   if(cmd==="redo"&&state.historyIndex<state.history.length-1){state.historyIndex++;ta.value=state.history[state.historyIndex];parse()}
- });
- let timer;ta.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>{remember();parse()},350)});
+ },null,"warn"));
+ let timer;ta.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>aigGuard(root,axis+" G-code 即時解析",()=>{remember();parse()},null,"warn"),350)});
  [toolInput,cutterInput,holderDiaInput,holderLenInput,safeInput,g73Input,g54x,g54y,g54z,g55x,g55y,g55z,h1,h4,h12].forEach(el=>{
    el.addEventListener("input",()=>aigGuard(root,axis+" 欄位檢查",validateMachineFields,null,"warn"));
    el.addEventListener("change",()=>aigGuard(root,axis+" 參數更新",()=>parse(false),null,"warn"));
@@ -2223,7 +2223,7 @@ function makeMenuRuntime(root){
    else if(key==="HELP")simple("流程：CAD 製圖 → CAM 選策略 → 套用至刀路 → 刀路編輯/驗證 → 產生 NC → 3AX/4AX/5AX 模擬與 G-code 編輯。");
    setTimeout(()=>aigValidateAllFields(detail),0);
  }
- root.addEventListener("click",e=>{
+ root.addEventListener("click",e=>aigGuard(root,"功能選單操作",()=>{
    const card=e.target.closest("[data-menu-key]");if(card){render(card.dataset.menuKey);return}
    const a=e.target.closest("[data-menu-action]");if(!a)return;const msg=detail.querySelector("[data-menu-msg]");
    if(a.dataset.menuAction==="PROJECT_SAVE"){const old=readJson("aig-project-meta-v1",{revision:0}),nameEl=detail.querySelector("[data-menu-project-name]"),name=nameEl.value.trim();if(!name){aigFieldIssue(nameEl,"error","專案名稱不可空白；原專案資料保持不變。");if(msg)msg.textContent="專案名稱空白，沒有覆蓋原資料；AIG 可繼續操作。";return}saveJson("aig-project-meta-v1",{name,revision:Number(old.revision||0)+1,updatedAt:Date.now()});projectView()}
@@ -2238,10 +2238,10 @@ function makeMenuRuntime(root){
    if(a.dataset.menuAction==="REFRESH_MONITOR")monitorView();
    if(a.dataset.menuAction==="SELF_CHECK"){const c=counts();if(msg)msg.textContent="SELF CHECK PASS：CAD "+c.cad+" / CAM "+c.cam+" / NC "+(c.n3+c.n4+c.n5)+" lines。";}
    if(a.dataset.menuAction==="CLEAR_DERIVED"){const now=Date.now();if(now>maintArmedUntil){maintArmedUntil=now+2500;if(msg)msg.textContent="清除待命：2.5 秒內再按一次才會清除 CAM 與 3/4/5AX NC；CAD 保留。";return}maintArmedUntil=0;aigStorageRemove(root,"aig-cam-toolpath-v1","CAM/NC 衍生資料");for(const ax of ["3AX","4AX","5AX"])aigStorageRemove(root,"aig-code-"+ax,ax+" G-code");if(msg)msg.textContent="已清除 CAM/NC 衍生暫存；CAD 未刪除。";}
- });
+ },null,"warn"));
  root.addEventListener("change",e=>{
    const file=e.target.closest("[data-menu-file]");if(!file||!file.files?.[0])return;
-   const reader=new FileReader();reader.onload=()=>{const msg=detail.querySelector("[data-menu-msg]");let data=null;try{data=JSON.parse(String(reader.result||"{}"))}catch{if(msg)msg.textContent="匯入失敗：JSON 格式無法解析；原資料未變更。";aigShowIssue(root,"warn","匯入檔案不是有效 JSON；原資料保持不變。");return}if(data?.schema!=="AIG-WEB-PROJECT-1"){if(msg)msg.textContent="匯入失敗：檔案格式不是 AIG-WEB-PROJECT-1；原資料未變更。";aigShowIssue(root,"warn","匯入格式不相容；原資料保持不變。");return}if(data.project)saveJson("aig-project-meta-v1",data.project);if(data.cad)saveJson("aig-cad-draft-v1",data.cad);if(data.cam)saveJson("aig-cam-toolpath-v1",data.cam);if(data.tools)saveJson("aig-tool-table-v1",data.tools);if(data.wcs)saveJson("aig-wcs-v1",data.wcs);for(const ax of ["3AX","4AX","5AX"])if(data.nc?.[ax])aigStorageSet(root,"aig-code-"+ax,data.nc[ax],ax+" G-code");if(msg)msg.textContent="匯入完成；重新開啟頁面即可載入全部資料。";aigShowIssue(root,"info","專案匯入完成。")};reader.onerror=()=>{const msg=detail.querySelector("[data-menu-msg]");if(msg)msg.textContent="檔案讀取失敗；原資料未變更。";aigShowIssue(root,"warn","檔案讀取失敗；AIG 其他功能可繼續使用。")};reader.readAsText(file.files[0]);
+   const reader=new FileReader();reader.onload=()=>aigGuard(root,"專案匯入",()=>{const msg=detail.querySelector("[data-menu-msg]");let data=null;try{data=JSON.parse(String(reader.result||"{}"))}catch{if(msg)msg.textContent="匯入失敗：JSON 格式無法解析；原資料未變更。";aigShowIssue(root,"warn","匯入檔案不是有效 JSON；原資料保持不變。");return}if(data?.schema!=="AIG-WEB-PROJECT-1"){if(msg)msg.textContent="匯入失敗：檔案格式不是 AIG-WEB-PROJECT-1；原資料未變更。";aigShowIssue(root,"warn","匯入格式不相容；原資料保持不變。");return}if(data.project)saveJson("aig-project-meta-v1",data.project);if(data.cad)saveJson("aig-cad-draft-v1",data.cad);if(data.cam)saveJson("aig-cam-toolpath-v1",data.cam);if(data.tools)saveJson("aig-tool-table-v1",data.tools);if(data.wcs)saveJson("aig-wcs-v1",data.wcs);for(const ax of ["3AX","4AX","5AX"])if(data.nc?.[ax])aigStorageSet(root,"aig-code-"+ax,data.nc[ax],ax+" G-code");if(msg)msg.textContent="匯入完成；重新開啟頁面即可載入全部資料。";aigShowIssue(root,"info","專案匯入完成。")},null,"warn");reader.onerror=()=>{const msg=detail.querySelector("[data-menu-msg]");if(msg)msg.textContent="檔案讀取失敗；原資料未變更。";aigShowIssue(root,"warn","檔案讀取失敗；AIG 其他功能可繼續使用。")};reader.readAsText(file.files[0]);
  });
  render("PROJECT");
 }
