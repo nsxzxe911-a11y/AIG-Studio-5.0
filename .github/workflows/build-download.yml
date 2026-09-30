@@ -139,12 +139,12 @@ jobs:
           grep -Fx "git_sha=$GITHUB_SHA" release/android/RELEASE_MANIFEST.txt
           grep -Fx "version=$VERSION" release/source/RELEASE_MANIFEST.txt
           grep -Fx "git_sha=$GITHUB_SHA" release/source/RELEASE_MANIFEST.txt
-          grep -Fx "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "release_state=PRODUCTION_RUNTIME_CANDIDATE" release/android/RELEASE_MANIFEST.txt
           grep -Fx "release_class=PRODUCTION_RUNTIME" release/android/RELEASE_MANIFEST.txt
           grep -Fx "runtime_evidence=APK_BUILD_SIGN_PACKAGE" release/android/RELEASE_MANIFEST.txt
           grep -Fx "ui_verify_package=$UI_VERIFY_PACKAGE" release/android/RELEASE_MANIFEST.txt
           grep -Fx "ui_verify_runtime=PRODUCTION_RUNTIME_SAME_CODE_DIFFERENT_PACKAGE_ID" release/android/RELEASE_MANIFEST.txt
-          grep -Fx "device_launch_evidence=REQUIRED_FOR_FINAL" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "device_launch_evidence=REQUIRED_FOR_RUNTIME_EVIDENCE" release/android/RELEASE_MANIFEST.txt
       - uses: actions/upload-artifact@v7
         with:
           name: AIG-Studio-Android-and-Source
@@ -182,7 +182,7 @@ jobs:
           $manifest = Get-Content 'release\windows\RELEASE_MANIFEST.txt'
           if ($manifest -notcontains ("version=" + $versionName)) { throw 'Manifest version mismatch' }
           if ($manifest -notcontains ("git_sha=" + $env:GITHUB_SHA)) { throw 'Manifest Git SHA mismatch' }
-          if ($manifest -notcontains 'release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL') { throw 'Production runtime release state missing' }
+          if ($manifest -notcontains 'release_state=PRODUCTION_RUNTIME_CANDIDATE') { throw 'Production runtime release state missing' }
           if ($manifest -notcontains 'release_class=PRODUCTION_RUNTIME') { throw 'Production runtime class missing' }
           if ($manifest -notcontains 'runtime_evidence=WINDOWS_EXECUTABLE_SMOKE_CAPTURED') { throw 'Windows runtime evidence marker missing' }
           $evidence = 'release\windows\runtime-evidence'
