@@ -183,6 +183,12 @@ const required = [
   'heightfield(scene,minX,minY,spanX,spanY,stockTop,stockBottom)',
   'voxelStock(scene,minX,minY,spanX,spanY,stockTop,stockBottom)',
   'stockBottom',
+  'stockTopRaw',
+  'Math.min(from.Z,to.Z)<stockTop',
+  'function validateToolpathFields',
+  'CAM 欄位檢查',
+  '刀路欄位檢查',
+  '只取消這次套用',
   'CNC machine output disabled'
 ];
 
@@ -307,6 +313,13 @@ if (Math.abs(stockExplicit.stockTop - 2) > 1e-9 || Math.abs(stockExplicit.stockB
 }
 const explicitCollision = api.scanRuntimeCollisions(stockParsed, "3AX", {toolDia:10,cutterLen:30,holderDia:25,holderLen:25,safeZ:5,stock:{top:2,thickness:18}});
 if (explicitCollision.envelope.stockTop !== 2 || explicitCollision.envelope.stockBottom !== -16) throw new Error("COLLISION_STOCK_ENVELOPE_NOT_PROPAGATED");
+
+const stockTopCutParsed = api.parseProgram("O4500\nN10 G90 G54\nN20 G0 Z3.\nN30 G1 Z1. F100\nN40 G0 Z3.\nN50 M30", "3AX", {safeZ:5,stock:{top:2,thickness:10}});
+const stockTopMoves = stockTopCutParsed.blocks.filter(b => b.kind === "move");
+const insideStockMove = stockTopMoves.find(b => /G1 Z1/.test(b.raw));
+const aboveStockRapid = stockTopMoves.find(b => /G0 Z3/.test(b.raw));
+if (!insideStockMove?.cutting) throw new Error("STOCK_TOP_RELATIVE_CUTTING_NOT_DETECTED");
+if (aboveStockRapid?.cutting) throw new Error("ABOVE_STOCK_MOVE_FALSE_CUTTING");
 
 const cadRuntimeIndex = scriptMatch[1].indexOf("function makeCadRuntime(root){");
 const camRuntimeIndex = scriptMatch[1].indexOf("function makeCamRuntime(root){");
