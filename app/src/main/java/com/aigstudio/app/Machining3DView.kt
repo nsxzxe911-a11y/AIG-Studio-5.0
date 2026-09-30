@@ -51,29 +51,42 @@ class Machining3DView(
         color = Color.argb(36, 160, 230, 255)
     }
     private val showMaterialMeshEdges = false
+    // TOOLPATH_RGB_GLOW_250: outer glow + saturated core; rendering only.
+    private val rapidGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 7.0f * resources.displayMetrics.density
+        strokeCap = Paint.Cap.ROUND
+        color = Color.argb(40,39,233,255)
+    }
     private val rapidPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 1.35f * resources.displayMetrics.density
+        strokeWidth = 1.55f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
-        color = Color.argb(58,255,70,220)
+        color = Color.argb(220,39,233,255)
+    }
+    private val cutGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 8.0f * resources.displayMetrics.density
+        strokeCap = Paint.Cap.ROUND
+        color = Color.argb(48,51,243,155)
     }
     private val cutPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 1.9f * resources.displayMetrics.density
+        strokeWidth = 2.15f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
-        color = Color.argb(108,63,255,157)
+        color = Color.argb(238,51,243,155)
     }
     private val occludedRapidPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 1.0f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
-        color = Color.argb(18,255,70,220)
+        color = Color.argb(18,39,233,255)
     }
     private val occludedCutPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 1.25f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
-        color = Color.argb(30,63,255,157)
+        color = Color.argb(30,51,243,155)
     }
     private val cutBoundaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -100,13 +113,13 @@ class Machining3DView(
         style = Paint.Style.STROKE
         strokeWidth = 9f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
-        color = Color.argb(66,61,235,255)
+        color = Color.argb(70,255,77,166)
     }
     private val activePathPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 4f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
-        color = StudioProductionTheme.selected
+        color = Color.WHITE
     }
     private val toolHaloPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -641,6 +654,9 @@ class Machining3DView(
                         !move.rapid && occluded -> occludedCutPaint
                         move.rapid -> rapidPaint
                         else -> cutPaint
+                    }
+                    if(!occluded) {
+                        canvas.drawLine(a.x,a.y,b.x,b.y,if(move.rapid) rapidGlowPaint else cutGlowPaint)
                     }
                     canvas.drawLine(a.x, a.y, b.x, b.y, pathPaint)
                 }
