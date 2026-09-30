@@ -374,7 +374,7 @@ function makeRuntime(root){
   });
   const active=box.querySelector(".active");if(active)active.scrollIntoView({block:"nearest"});
  }
- function currentBlock(){return state.parsed.blocks[Math.min(state.index,state.parsed.blocks.length-1)]||null}
+ function currentBlock(){return state.index>=state.parsed.blocks.length?null:(state.parsed.blocks[state.index]||null)}
  function currentLine(){const b=currentBlock();return b?b.line:-1}
  function lerp(a,b,t){return a+(b-a)*t}
  function arcSpec(b){
@@ -409,7 +409,11 @@ function makeRuntime(root){
   return p;
  }
  function currentPos(){
-  const b=currentBlock();if(!b)return {X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0};
+  const b=currentBlock();
+  if(!b){
+    const last=state.parsed?.blocks?.[state.parsed.blocks.length-1];
+    return last?{...last.to}:{X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0};
+  }
   if(b.kind!=="move")return {...b.to};
   return arcPoint(b,state.t);
  }
@@ -444,7 +448,9 @@ function makeRuntime(root){
       state.index++;state.t=0;state.running=false;updateUi();renderExec();draw();requestAnimationFrame(tick);return;
     }
     if(b?.stopCode==="M1"&&!state.optionalStop){
-      state.index++;state.t=0;updateUi();renderExec();b=currentBlock();
+      state.index++;state.t=0;
+      if(state.index>=state.parsed.blocks.length){state.running=false;updateUi();renderExec();draw();requestAnimationFrame(tick);return;}
+      updateUi();renderExec();b=currentBlock();
     }
     const dur=durationFor(b);state.t+=dt/dur;
     if(state.t>=1){
