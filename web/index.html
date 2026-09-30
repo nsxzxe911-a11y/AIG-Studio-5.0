@@ -384,6 +384,9 @@ function aigFieldIssue(el,severity,message){
  if(level==="error")el.setAttribute("aria-invalid","true");
  if(tip){tip.className="fieldIssue show "+level;tip.textContent=message}
 }
+function aigFiniteNumber(value,fallback){
+ const n=Number(value);return Number.isFinite(n)?n:fallback;
+}
 function aigValidateField(el){
  if(!el||el.disabled||el.type==="file"||el.type==="button")return true;
  const label=aigFieldLabel(el),value=String(el.value??"").trim();
@@ -493,7 +496,7 @@ function parseProgram(text,axis,opts={}){
  let machine={T:0,selectedTool:0,H:0,spindle:"M5",coolant:false,wcs:"G54",toolComp:false};
  const blocks=[];const errors=[...compiled.errors];const warnings=[...compiled.warnings];
  let currentMeta={subprogram:compiled.mainKey,subCall:null,subReturn:false,callDepth:0,callRepeat:1};
- const g73Retract=Math.max(0,Number(opts.g73Retract)||0.5);
+ const g73Raw=Number(opts.g73Retract),g73Retract=Number.isFinite(g73Raw)?Math.max(0,g73Raw):0.5;
 
  function moveTo(line,raw,to,motionName,extra={}){
    const from={...pos},dest={...pos,...to};
@@ -520,7 +523,8 @@ function parseProgram(text,axis,opts={}){
      if(Number.isFinite(out.Z))cycleZ=absolute?out.Z:(cycleR??initialZ)+out.Z;
    }
    if(Number.isFinite(out.Q))cycleQ=Math.abs(out.Q);
-   const r=Number.isFinite(cycleR)?cycleR:Math.min(initialZ,Number(opts.safeZ)||5);
+   const safeRaw=Number(opts.safeZ),safeFallback=Number.isFinite(safeRaw)?safeRaw:5;
+   const r=Number.isFinite(cycleR)?cycleR:Math.min(initialZ,safeFallback);
    const z=Number.isFinite(cycleZ)?cycleZ:pos.Z;
    if(pos.Z!==r)moveTo(line,raw,{Z:r},"G0",{cycle,cyclePhase:"rapid-r",cutting:false,synthetic:true,...patternMeta});
    const feed=Number.isFinite(out.F)?out.F:pos.F;
@@ -1085,17 +1089,17 @@ function makeRuntime(root){
  }
  function settings(){
   return {
-    toolDia:Math.max(.1,Number(toolInput.value)||10),
-    cutterLen:Math.max(1,Number(cutterInput.value)||30),
-    holderDia:Math.max(1,Number(holderDiaInput.value)||25),
-    holderLen:Math.max(1,Number(holderLenInput.value)||25),
-    safeZ:Number(safeInput.value)||5,
-    g73Retract:Math.max(0,Number(g73Input.value)||.5),
+    toolDia:Math.max(.1,aigFiniteNumber(toolInput.value,10)),
+    cutterLen:Math.max(1,aigFiniteNumber(cutterInput.value,30)),
+    holderDia:Math.max(1,aigFiniteNumber(holderDiaInput.value,25)),
+    holderLen:Math.max(1,aigFiniteNumber(holderLenInput.value,25)),
+    safeZ:aigFiniteNumber(safeInput.value,5),
+    g73Retract:Math.max(0,aigFiniteNumber(g73Input.value,.5)),
     offsets:{
-      G54:{X:Number(g54x.value)||0,Y:Number(g54y.value)||0,Z:Number(g54z.value)||0},
-      G55:{X:Number(g55x.value)||0,Y:Number(g55y.value)||0,Z:Number(g55z.value)||0}
+      G54:{X:aigFiniteNumber(g54x.value,0),Y:aigFiniteNumber(g54y.value,0),Z:aigFiniteNumber(g54z.value,0)},
+      G55:{X:aigFiniteNumber(g55x.value,0),Y:aigFiniteNumber(g55y.value,0),Z:aigFiniteNumber(g55z.value,0)}
     },
-    toolLengths:{1:Number(h1.value)||0,4:Number(h4.value)||0,12:Number(h12.value)||0}
+    toolLengths:{1:aigFiniteNumber(h1.value,0),4:aigFiniteNumber(h4.value,0),12:aigFiniteNumber(h12.value,0)}
   };
  }
  runtimes[axis]=state;
@@ -1613,7 +1617,7 @@ function makeCadRuntime(root){
  function offsetSelected(){
    validateCadFields();
    if(offsetInput.classList.contains("aigError")){msgEl.textContent="OFFSET 欄位有錯誤；只取消這次 OFFSET，CAD 繼續使用。";return}
-   const d=Number(offsetInput.value)||0;
+   const d=aigFiniteNumber(offsetInput.value,0);
    const sh=currentSelected();if(!sh){msgEl.textContent="請先 Select 幾何。";return}
    let cp=clone(sh);cp.id=newId();
    if(sh.type==="line"){const dx=sh.b.x-sh.a.x,dy=sh.b.y-sh.a.y,len=Math.hypot(dx,dy)||1,n={x:-dy/len*d,y:dx/len*d};cp.a.x+=n.x;cp.a.y+=n.y;cp.b.x+=n.x;cp.b.y+=n.y}
@@ -1626,7 +1630,7 @@ function makeCadRuntime(root){
    validateCadFields();
    if(arrayCountInput.classList.contains("aigError")||arraySpacingInput.classList.contains("aigError")){msgEl.textContent="ARRAY 欄位有錯誤；只取消這次 ARRAY。";return}
    const sh=currentSelected();if(!sh){msgEl.textContent="請先 Select 幾何。";return}
-   const count=Math.max(2,Math.min(99,Math.trunc(Number(arrayCountInput.value)||3))),spacing=Number(arraySpacingInput.value)||10;
+   const count=Math.max(2,Math.min(99,Math.trunc(aigFiniteNumber(arrayCountInput.value,3)))),spacing=aigFiniteNumber(arraySpacingInput.value,10);
    for(let i=1;i<count;i++)state.shapes.push(translateShape(sh,spacing*i,0));
    pushHistory();msgEl.textContent="ARRAY "+count+" 個，X 間距 "+spacing.toFixed(3)+" mm。";
  }
@@ -1786,7 +1790,7 @@ function makeCamRuntime(root){
    if(Number.isFinite(depth)&&Number.isFinite(safe)&&safe<=depth)aigFieldIssue(safeInput,"error","Safe-Z 必須高於加工深度。");
    if(state.strategy==="TAP"&&!(Number(pitchInput.value)>0))aigFieldIssue(pitchInput,"error","攻牙需要輸入螺距 mm/rev。");
  }
- function params(){validateCamFields();return{toolDia:Math.max(.1,Number(toolInput.value)||10),depth:Number(depthInput.value)||-10,feed:Math.max(1,Number(feedInput.value)||1200),rpm:Math.max(1,Number(rpmInput.value)||12000),safeZ:Number(safeInput.value)||5,tapPitch:Number(pitchInput.value)||0,stepover:Math.max(.05,Math.min(.95,(Number(stepInput.value)||50)/100)),direction:dirInput.value}}
+ function params(){validateCamFields();return{toolDia:Math.max(.1,aigFiniteNumber(toolInput.value,10)),depth:aigFiniteNumber(depthInput.value,-10),feed:Math.max(1,aigFiniteNumber(feedInput.value,1200)),rpm:Math.max(1,aigFiniteNumber(rpmInput.value,12000)),safeZ:aigFiniteNumber(safeInput.value,5),tapPitch:aigFiniteNumber(pitchInput.value,0),stepover:Math.max(.05,Math.min(.95,aigFiniteNumber(stepInput.value,50)/100)),direction:dirInput.value}}
  function loadCad(){
    try{const v=JSON.parse(localStorage.getItem("aig-cad-draft-v1")||"null");state.cad=Array.isArray(v?.shapes)?v.shapes:[]}catch{state.cad=[]}
    cadCountEl.textContent="CAD "+state.cad.length;msgEl.textContent=state.cad.length?"已讀取 "+state.cad.length+" 個 CAD 幾何。":"CAD 尚無幾何；先到 CAD 頁畫圖。";fit();draw();
@@ -1950,7 +1954,7 @@ function makeToolpathRuntime(root){
  }
  function save(){
    if(!state.payload)state.payload={version:1,createdAt:Date.now(),strategy:"EDITED",params:{},cadEntityCount:0};
-   state.payload.paths=state.paths;state.payload.postGeometry={toolDia:Math.max(.1,Number(toolDiaInput.value)||10),cutterLen:Math.max(1,Number(cutterLenInput.value)||30),holderDia:Math.max(1,Number(holderDiaInput.value)||25),holderLen:Math.max(1,Number(holderLenInput.value)||25)};state.payload.updatedAt=Date.now();localStorage.setItem("aig-cam-toolpath-v1",JSON.stringify(state.payload));statusEl.textContent="已儲存";msgEl.textContent="刀路修改已儲存到本機。";
+   state.payload.paths=state.paths;state.payload.postGeometry={toolDia:Math.max(.1,aigFiniteNumber(toolDiaInput.value,10)),cutterLen:Math.max(1,aigFiniteNumber(cutterLenInput.value,30)),holderDia:Math.max(1,aigFiniteNumber(holderDiaInput.value,25)),holderLen:Math.max(1,aigFiniteNumber(holderLenInput.value,25))};state.payload.updatedAt=Date.now();localStorage.setItem("aig-cam-toolpath-v1",JSON.stringify(state.payload));statusEl.textContent="已儲存";msgEl.textContent="刀路修改已儲存到本機。";
  }
  function resize(){const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}ctx.setTransform(dpr,0,0,dpr,0,0);return{w:r.width,h:r.height}}
  function w2s(p,w,h){return{x:w/2+state.view.panX+p.x*state.view.scale,y:h/2+state.view.panY-p.y*state.view.scale}}
@@ -1993,9 +1997,9 @@ function makeToolpathRuntime(root){
  }
  function applyInputs(path=selected()){
    if(!path)return;
-   path.safeZ=Number(safeInput.value)||5;path.depth=Number(depthInput.value)||-10;path.feed=Math.max(1,Number(feedInput.value)||1200);path.rpm=Math.max(1,Number(rpmInput.value)||12000);path.leadIn=Math.max(0,Number(leadInInput.value)||0);path.leadOut=Math.max(0,Number(leadOutInput.value)||0);if(path.kind==="tap"){path.pitch=Number(pitchInput.value)||0;if(path.pitch>0)path.feed=path.rpm*path.pitch;}
+   path.safeZ=aigFiniteNumber(safeInput.value,5);path.depth=aigFiniteNumber(depthInput.value,-10);path.feed=Math.max(1,aigFiniteNumber(feedInput.value,1200));path.rpm=Math.max(1,aigFiniteNumber(rpmInput.value,12000));path.leadIn=Math.max(0,aigFiniteNumber(leadInInput.value,0));path.leadOut=Math.max(0,aigFiniteNumber(leadOutInput.value,0));if(path.kind==="tap"){path.pitch=aigFiniteNumber(pitchInput.value,0);if(path.pitch>0)path.feed=path.rpm*path.pitch;}
    path.rotMode=rotModeInput.value==="SIMULTANEOUS"?"SIMULTANEOUS":"INDEXED";
-   path.aStart=Number(a0Input.value)||0;path.aEnd=Number(a1Input.value)||0;path.bStart=Number(b0Input.value)||0;path.bEnd=Number(b1Input.value)||0;
+   path.aStart=aigFiniteNumber(a0Input.value,0);path.aEnd=aigFiniteNumber(a1Input.value,0);path.bStart=aigFiniteNumber(b0Input.value,0);path.bEnd=aigFiniteNumber(b1Input.value,0);
    if(path.rotMode==="INDEXED"){path.aEnd=path.aStart;path.bEnd=path.bStart;a1Input.value=path.aEnd;b1Input.value=path.bEnd}
  }
  function verify(){
@@ -2039,7 +2043,7 @@ function makeToolpathRuntime(root){
    const simultaneousTap=state.paths.find(p=>p.kind==="tap"&&p.rotMode==="SIMULTANEOUS"&&(Math.abs(Number(p.aEnd||0)-Number(p.aStart||0))>1e-9||Math.abs(Number(p.bEnd||0)-Number(p.bStart||0))>1e-9));
    if(simultaneousTap){msgEl.textContent="G84 攻牙目前只允許 3AX 或 INDEXED 定角；SIMULTANEOUS A/B 已阻擋。";statusEl.textContent="此次未輸出";return null}
    const target=targetInput.value||"3AX",wcs=wcsInput.value||"G54",tool=Math.max(1,Math.trunc(Number(toolNoInput.value)||1)),hno=Math.max(1,Math.trunc(Number(hNoInput.value)||1));
-   const rpm=Math.max(1,Math.trunc(Number(rpmInput.value)||12000)),defaultFeed=Math.max(1,Math.trunc(Number(feedInput.value)||1200)),defaultSafe=Number(safeInput.value)||5;
+   const rpm=Math.max(1,Math.trunc(aigFiniteNumber(rpmInput.value,12000))),defaultFeed=Math.max(1,Math.trunc(aigFiniteNumber(feedInput.value,1200))),defaultSafe=aigFiniteNumber(safeInput.value,5);
    const lines=[];let n=10;const push=line=>{lines.push("N"+n+" "+line);n+=10};
    const mainO=target==="3AX"?"O1000":target==="4AX"?"O2000":"O3000";
    lines.push(mainO);push("M98 P4");push("S"+rpm+" M3");
@@ -2079,10 +2083,10 @@ function makeToolpathRuntime(root){
    lines.push("O5");lines.push("N10 M9");lines.push("N20 M5");lines.push("N30 G0 Z100.");lines.push("N40 M99");
    const code=lines.join("\n");
    const collisionCfg={
-     toolDia:Math.max(.1,Number(toolDiaInput.value)||10),
-     cutterLen:Math.max(1,Number(cutterLenInput.value)||30),
-     holderDia:Math.max(1,Number(holderDiaInput.value)||25),
-     holderLen:Math.max(1,Number(holderLenInput.value)||25),
+     toolDia:Math.max(.1,aigFiniteNumber(toolDiaInput.value,10)),
+     cutterLen:Math.max(1,aigFiniteNumber(cutterLenInput.value,30)),
+     holderDia:Math.max(1,aigFiniteNumber(holderDiaInput.value,25)),
+     holderLen:Math.max(1,aigFiniteNumber(holderLenInput.value,25)),
      safeZ:defaultSafe,g73Retract:.5
    };
    const preParsed=parseProgram(code,target,collisionCfg);
