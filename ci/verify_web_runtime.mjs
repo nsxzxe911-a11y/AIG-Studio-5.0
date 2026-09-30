@@ -196,8 +196,6 @@ const required = [
   '["自適應粗加工","ADAPTIVE",true]',
   'data-cam-adaptive-load',
   '自適應粗加工目前是 2.5D 封閉區域核心',
-  'function adaptiveRingRect',
-  'function adaptiveRingCircle',
   'function adaptivePaths',
   'radialEngagement',
   'adaptiveRing',
