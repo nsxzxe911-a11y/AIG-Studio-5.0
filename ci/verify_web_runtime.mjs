@@ -101,7 +101,6 @@ const required = [
   'SIMULTANEOUS 同步',
   'A/B 由使用者明示',
   '產生 NC',
-  '攻牙刀路存在',
   'localStorage.setItem("aig-code-"+target',
   'function makeMenuRuntime',
   'AIG-WEB-PROJECT-1',
