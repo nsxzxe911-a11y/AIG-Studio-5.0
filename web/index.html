@@ -2478,6 +2478,7 @@ function makeMenuRuntime(root){
      toolLengths:{1:Number(tools.H1||0),4:Number(tools.H4||0),12:Number(tools.H12||0)}
    };
    const esc=v=>String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));
+   const fixtureLabel=id=>{if(!id)return"";const item=(Array.isArray(assembly?.items)?assembly.items:[]).find(x=>String(x?.id)===String(id));return item?(String(item.name||item.type||"夾治具")+" #"+String(id)):("夾治具 #"+String(id))};
    const rows=[];
    for(const axis of ["3AX","4AX","5AX"]){
      const code=aigStorageGet(root,"aig-code-"+axis,null,axis+" G-code");
@@ -2487,15 +2488,15 @@ function makeMenuRuntime(root){
      const scan=scanRuntimeCollisions(parsed,axis,cfgBase),clear=evaluateSetupClearance(parsed,axis,cfgBase);
      if(scan.collisions.length){
        const hit=scan.collisions[0];
-       rows.push({axis,state:"COLLISION",detail:"第 "+(hit.line+1)+" 行 "+hit.message+" ["+hit.type+"]",tone:"error",line:hit.line});continue
+       rows.push({axis,state:"COLLISION",detail:"第 "+(hit.line+1)+" 行 "+hit.message+" ["+hit.type+"]"+(hit.fixtureId?("；"+fixtureLabel(hit.fixtureId)):""),tone:"error",line:hit.line,fixtureId:hit.fixtureId||null});continue
      }
      const min=Number(clear.minimum),minText=Number.isFinite(min)?min.toFixed(3):"∞";
      if(min<required){
-       rows.push({axis,state:"CLEARANCE",detail:minText+" mm < 要求 "+required.toFixed(3)+" mm；限制 "+String(clear.limitingType||"UNKNOWN")+(clear.line>=0?"；第 "+(clear.line+1)+" 行":""),tone:"error",line:clear.line});continue
+       rows.push({axis,state:"CLEARANCE",detail:minText+" mm < 要求 "+required.toFixed(3)+" mm；限制 "+String(clear.limitingType||"UNKNOWN")+(clear.line>=0?"；第 "+(clear.line+1)+" 行":"")+(clear.fixtureId?("；"+fixtureLabel(clear.fixtureId)):""),tone:"error",line:clear.line,fixtureId:clear.fixtureId||null});continue
      }
      rows.push({axis,state:"PASS",detail:"最小間隙 "+minText+" mm；要求 ≥ "+required.toFixed(3)+" mm；限制 "+String(clear.limitingType||"NONE"),tone:"pass"});
    }
-   target.innerHTML=rows.map(r=>'<div class="field"><b>'+esc(r.axis)+' Setup</b><span style="color:'+(r.tone==="pass"?"#33f39b":r.tone==="error"?"#ff465f":"#ffb326")+'">'+esc(r.state)+'</span><small>'+esc(r.detail)+'</small>'+(Number.isInteger(r.line)&&r.line>=0?'<button class="btn warn" data-setup-jump-axis="'+esc(r.axis)+'" data-setup-jump-line="'+r.line+'">跳到第 '+(r.line+1)+' 行</button>':'')+'</div>').join("");
+   target.innerHTML=rows.map(r=>'<div class="field"><b>'+esc(r.axis)+' Setup</b><span style="color:'+(r.tone==="pass"?"#33f39b":r.tone==="error"?"#ff465f":"#ffb326")+'">'+esc(r.state)+'</span><small>'+esc(r.detail)+'</small>'+(Number.isInteger(r.line)&&r.line>=0?'<button class="btn warn" data-setup-jump-axis="'+esc(r.axis)+'" data-setup-jump-line="'+r.line+'">跳到第 '+(r.line+1)+' 行</button>':'')+(r.fixtureId?'<button class="btn warn" data-setup-jump-fixture="'+esc(r.fixtureId)+'">定位夾具</button>':'')+'</div>').join("");
    const fail=rows.filter(r=>r.tone==="error").length,missing=rows.filter(r=>r.state==="NO NC").length;
    const msg=detail.querySelector("[data-menu-msg]");
    if(msg)msg.textContent=fail?("Setup 檢查完成："+fail+" 軸需修正；只顯示問題，不停止 AIG。"):missing?("Setup 檢查完成；"+missing+" 軸尚無 NC，其餘已檢查。"):"3AX / 4AX / 5AX Setup 檢查全部 PASS。";
@@ -2579,6 +2580,14 @@ function makeMenuRuntime(root){
      const axis=setupJump.dataset.setupJumpAxis,line=Math.max(0,Math.trunc(Number(setupJump.dataset.setupJumpLine)||0));
      show(axis);
      setTimeout(()=>aigGuard(document.querySelector('.screen[data-page="'+axis+'"]')||document.body,axis+" 問題定位",()=>runtimes[axis]?.focusSourceLine?.(line),null,"warn"),40);
+     return;
+   }
+   const setupFixture=e.target.closest("[data-setup-jump-fixture]");
+   if(setupFixture){
+     const id=String(setupFixture.dataset.setupJumpFixture||"");
+     const row=[...detail.querySelectorAll("[data-assembly-row]")].find(x=>String(x.dataset.assemblyRow)===id);
+     if(row){row.scrollIntoView({block:"center"});const old=row.style.boxShadow;row.style.boxShadow="0 0 0 2px #ffb326,0 0 24px rgba(255,179,38,.45)";setTimeout(()=>row.style.boxShadow=old,2200);const msg=detail.querySelector("[data-menu-msg]");if(msg)msg.textContent="已定位夾治具 "+id+"；可直接修改尺寸/位置或暫時隱藏。"}
+     else{const msg=detail.querySelector("[data-menu-msg]");if(msg)msg.textContent="找不到夾治具 "+id+"；資料可能已更新，請重新執行 Setup 檢查。"}
      return;
    }
    const a=e.target.closest("[data-menu-action]");if(!a)return;const msg=detail.querySelector("[data-menu-msg]");
