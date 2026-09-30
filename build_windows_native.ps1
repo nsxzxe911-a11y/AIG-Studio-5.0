@@ -106,7 +106,7 @@ $Hash = (Get-FileHash $FinalExe -Algorithm SHA256).Hash.ToLowerInvariant()
   "git_sha=$GitSha"
   ('artifact=' + (Split-Path -Leaf $FinalExe))
   "sha256=$Hash"
-  'release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL'
+  'release_state=PRODUCTION_RUNTIME_CANDIDATE'
   'release_class=PRODUCTION_RUNTIME'
   'runtime_evidence=WINDOWS_EXECUTABLE_SMOKE_CAPTURED'
 ) | Out-File $ManifestFile -Encoding ascii
