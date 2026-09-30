@@ -7,6 +7,14 @@ if (-not (Test-Path (Join-Path $RepoRoot 'settings.gradle.kts'))) { throw 'AIG S
 $Version = ConvertFrom-StringData (Get-Content $VersionFile -Raw)
 $VersionName = $Version.versionName
 if (-not $VersionName) { throw 'Release version metadata is incomplete.' }
+$VersionParts = $VersionName.Split('.')
+if ($VersionParts.Count -ne 3) { throw 'Release version must be MAJOR.MINOR.PATCH.' }
+$RollingMajor = [int]$VersionParts[0]
+$WindowsMajor = [int][Math]::Floor($RollingMajor / 100)
+$WindowsMinor = $RollingMajor % 100
+$WindowsBuild = ([int]$VersionParts[1] * 1000) + [int]$VersionParts[2]
+if ($WindowsMajor -lt 1 -or $WindowsMajor -gt 255 -or $WindowsBuild -gt 65535) { throw 'Release version cannot be mapped to Windows ProductVersion.' }
+$WindowsAppVersion = "$WindowsMajor.$WindowsMinor.$WindowsBuild"
 
 $GitSha = (& git -C $RepoRoot rev-parse HEAD).Trim()
 if (-not $GitSha) { throw 'Unable to resolve Git commit SHA.' }
@@ -88,7 +96,7 @@ foreach ($name in $RequiredSmokeEvidence) {
   Copy-Item (Join-Path $SmokeDir $name) (Join-Path $EvidenceOut $name) -Force
 }
 
-& jpackage --type exe --name $Product --dest $PackageOut --input $LibDir --main-jar 'AIG_Studio_PC.jar' --main-class com.aigstudio.desktop.DesktopAppKt --app-version $VersionName --java-options "-Daigstudio.version=$VersionName" --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-per-user-install --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
+& jpackage --type exe --name $Product --dest $PackageOut --input $LibDir --main-jar 'AIG_Studio_PC.jar' --main-class com.aigstudio.desktop.DesktopAppKt --app-version $WindowsAppVersion --java-options "-Daigstudio.version=$VersionName" --vendor 'AIG' --description 'AIG Studio RGB CNC Workstation' --win-upgrade-uuid $UpgradeUuid --win-per-user-install --win-dir-chooser --win-shortcut --win-menu --win-menu-group 'AIG'
 if ($LASTEXITCODE -ne 0) { throw 'Studio jpackage EXE build failed.' }
 
 $Installer = Get-ChildItem $PackageOut -Filter '*.exe' | Select-Object -First 1
@@ -103,6 +111,7 @@ $Hash = (Get-FileHash $FinalExe -Algorithm SHA256).Hash.ToLowerInvariant()
 @(
   'product=AIG-Studio'
   "version=$VersionName"
+  "windows_app_version=$WindowsAppVersion"
   "git_sha=$GitSha"
   ('artifact=' + (Split-Path -Leaf $FinalExe))
   "sha256=$Hash"
@@ -112,6 +121,7 @@ $Hash = (Get-FileHash $FinalExe -Algorithm SHA256).Hash.ToLowerInvariant()
 ) | Out-File $ManifestFile -Encoding ascii
 
 Write-Host ('AIG_STUDIO_VERSION=' + $VersionName)
+Write-Host ('AIG_STUDIO_WINDOWS_APP_VERSION=' + $WindowsAppVersion)
 Write-Host ('AIG_STUDIO_GIT_SHA=' + $GitSha)
 Write-Host ('AIG_STUDIO_EXE_SHA256=' + $Hash)
 Write-Host 'STUDIO_WINDOWS_SELF_CONTAINED_BUILD=PASS'
