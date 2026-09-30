@@ -516,6 +516,8 @@ class MainActivity : Activity() {
     private var ncCoordinateMode = NcCoordinateMode.ABSOLUTE_G90
     private var ncOriginTransformMode = NcOriginTransformMode.WORK_OFFSET_ONLY
     private var ncCutterCompensation = CutterCompensationMode.CAM_GEOMETRY_G40
+    private var ncCutterCompRegister = 1
+    private var ncCutterCompValueMm = 0.0
     private var drillCycleBlock = ""
     private var stockMarginMm = 10.0
     private var stockThicknessMm = 20.0
@@ -1549,6 +1551,8 @@ class MainActivity : Activity() {
             append(ncCoordinateMode.name).append('|')
             append(ncOriginTransformMode.name).append('|')
             append(ncCutterCompensation.name).append('|')
+            append(ncCutterCompRegister).append('|')
+            append(java.lang.Double.doubleToLongBits(ncCutterCompValueMm)).append('|')
             append(drillCycleBlock)
         }
         val digest = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray(Charsets.UTF_8))
@@ -1997,6 +2001,8 @@ class MainActivity : Activity() {
             coordinateMode = ncCoordinateMode,
             originTransformMode = ncOriginTransformMode,
             cutterCompensation = ncCutterCompensation,
+            cutterCompRegister = ncCutterCompRegister,
+            cutterCompValueMm = ncCutterCompValueMm,
             rotaryMode = currentRotaryOperationMode(),
             rotaryClampProfile = rotaryClampProfile
         )
@@ -2205,6 +2211,8 @@ class MainActivity : Activity() {
                     coordinateMode=ncCoordinateMode,
                     originTransformMode=ncOriginTransformMode,
                     cutterCompensation=ncCutterCompensation,
+                    cutterCompRegister=ncCutterCompRegister,
+                    cutterCompValueMm=ncCutterCompValueMm,
                     rotaryMode=currentRotaryOperationMode(),
                     rotaryClampProfile=rotaryClampProfile
                 )
@@ -2890,6 +2898,18 @@ class MainActivity : Activity() {
         val coordinateSpinner = spinner(coordinates,{it.displayName},ncCoordinateMode)
         val originSpinner = spinner(origins,{it.displayName},ncOriginTransformMode)
         val compensationSpinner = spinner(compensations,{it.displayName},ncCutterCompensation)
+        val cutterDRegister = EditText(this).apply {
+            hint = "D 補正號碼 1..999"
+            inputType = InputType.TYPE_CLASS_NUMBER
+            setText(ncCutterCompRegister.toString())
+            box.addView(this)
+        }
+        val cutterDValue = EditText(this).apply {
+            hint = "D 補正值 mm，例如 5.000 / -0.010"
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            setText(DisplayFormat.mm(ncCutterCompValueMm))
+            box.addView(this)
+        }
 
         val clampModes = arrayOf(
             "ROTARY CLAMP UNCONFIGURED / BLOCK",
@@ -2945,9 +2965,12 @@ class MainActivity : Activity() {
                     val coordinate = coordinates[coordinateSpinner.selectedItemPosition]
                     val origin = origins[originSpinner.selectedItemPosition]
                     val comp = compensations[compensationSpinner.selectedItemPosition]
-                    require(comp == CutterCompensationMode.CAM_GEOMETRY_G40) {
-                        comp.code + " BLOCKED：目前CAM已做刀半徑幾何補償，禁止雙重補償"
-                    }
+                    val dRegister = cutterDRegister.text.toString().trim().toIntOrNull()
+                        ?: error("D 補正號碼需為 1..999")
+                    require(dRegister in 1..999) { "D 補正號碼需為 1..999" }
+                    val dValue = cutterDValue.text.toString().trim().toDoubleOrNull()
+                        ?: error("D 補正值需為有效 mm")
+                    require(dValue.isFinite()) { "D 補正值需為有效 mm" }
                     val clampProfile = when (clampModeSpinner.selectedItemPosition) {
                         0 -> RotaryAxisClampProfile.unconfigured()
                         1 -> RotaryAxisClampProfile.controllerAutomatic(clampIndexedCut.isChecked)
@@ -2963,21 +2986,26 @@ class MainActivity : Activity() {
                             )
                         }
                     }
-                    arrayOf(profile,coordinate,origin,comp,clampProfile)
+                    arrayOf(profile,coordinate,origin,comp,clampProfile,dRegister,dValue)
                 }.onSuccess { values ->
                     controllerProfile = values[0] as CncControllerProfile
                     ncCoordinateMode = values[1] as NcCoordinateMode
                     ncOriginTransformMode = values[2] as NcOriginTransformMode
                     ncCutterCompensation = values[3] as CutterCompensationMode
                     rotaryClampProfile = values[4] as RotaryAxisClampProfile
+                    ncCutterCompRegister = values[5] as Int
+                    ncCutterCompValueMm = values[6] as Double
                     saveRotaryMachineProfile(rotaryClampProfile)
                     drillCycleBlock = ""
                     if(!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
                     Toast.makeText(
                         this,
                         "POST " + controllerProfile.displayName + " • " + ncCoordinateMode.displayName +
-                            " • " + ncOriginTransformMode.displayName + " • " + rotaryClampStatusText() +
-                            " • NC DRAFT STALE",
+                            " • " + ncOriginTransformMode.displayName +
+                            " • "+ncCutterCompensation.code+" D"+ncCutterCompRegister+"="+DisplayFormat.mm(ncCutterCompValueMm)+" mm" +
+                            (if(ncCutterCompensation==CutterCompensationMode.CAM_GEOMETRY_G40) " • G40 audit-only"
+                             else " • G41/G42 SAVED • POST FAIL-CLOSED UNTIL RAW-CONTOUR SIM") +
+                            " • " + rotaryClampStatusText() + " • NC DRAFT STALE",
                         Toast.LENGTH_LONG
                     ).show()
                 }.onFailure { error ->
