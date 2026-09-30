@@ -251,16 +251,16 @@ private class RgbGlyphIcon(private val kind:String, private val accent:Color) : 
 }
 
 private object StudioDesktopProductionTheme {
-    const val ID="official_rgb_original"
-    val background=Color(8,12,22)
-    val panel=Color(16,28,42)
-    val text=Color(225,240,255)
-    val accent=Color(61,235,255)
-    val selected=Color(0,229,255)
-    val cutting=Color(0,230,118)
-    val rapid=Color(213,0,249)
-    val warning=Color(255,152,0)
-    val alarm=Color(255,23,68)
+    const val ID="aigii_rgb_neon_v2"
+    val background=Color(2,4,7)
+    val panel=Color(7,17,27)
+    val text=Color(244,251,255)
+    val accent=Color(39,233,255)
+    val selected=Color(39,233,255)
+    val cutting=Color(51,243,155)
+    val rapid=Color(255,77,166)
+    val warning=Color(255,179,38)
+    val alarm=Color(255,70,95)
 }
 
 private object LibraryFiveAxisSkin208 {
@@ -1173,7 +1173,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
     fun freshRemovalSourceFrame():Int? = previousProgressiveFrame?.index
     private var machineMode="3AX"
     init{
-        background=Color(5,10,17)
+        background=Color(2,7,14)
         preferredSize=Dimension(860,620)
         addMouseWheelListener { zoom=(zoom*if(it.wheelRotation<0)1.1 else 0.9).coerceIn(0.3,5.0);repaint() }
     }
@@ -1661,7 +1661,7 @@ private fun runSmoke() {
     val smokeCad=CadPanel(doc) { cadStatus.text=it }
     lateinit var smokeDeck:JTabbedPane
     val smokeRoot = JPanel(BorderLayout()).apply {
-        background = Color(5,10,17)
+        background = Color(2,7,14)
         val navBar=AdaptiveGlassToolbar().apply {
             listOf("CAD","CAM","SIM","NC_EDIT","AI").forEachIndexed { i,assetId ->
                 val colors=listOf(Color(61,235,255),Color(63,255,157),Color(139,92,246),Color(80,170,255),Color(139,92,246))
@@ -1673,7 +1673,7 @@ private fun runSmoke() {
             }
         }
         val header = JPanel(BorderLayout()).apply {
-            background=Color(8,18,30)
+            background=Color(7,17,27)
             border=BorderFactory.createMatteBorder(0,0,1,0,Color(61,235,255,105))
             add(JLabel("AIG CNC • CAD / 2D").apply {
                 foreground=Color(61,235,255)
@@ -1711,7 +1711,7 @@ private fun runSmoke() {
         }
         val viewPanel=JPanel().apply {
             layout=BoxLayout(this,BoxLayout.Y_AXIS)
-            background=Color(8,18,30)
+            background=Color(7,17,27)
             border=BorderFactory.createEmptyBorder(10,10,10,10)
             add(JLabel("中鍵 / 右鍵拖曳 = 視圖平移").apply{foreground=Color(143,179,201)})
             add(Box.createVerticalStrut(8))
@@ -1722,7 +1722,7 @@ private fun runSmoke() {
             add(JLabel("顯示精度 0.001 mm").apply{foreground=Color(245,158,11)})
         }
         smokeDeck=JTabbedPane(JTabbedPane.LEFT).apply {
-            background=Color(8,18,30)
+            background=Color(7,17,27)
             foreground=Color(232,241,250)
             preferredSize=Dimension(250,0)
             addTab("繪圖",drawBar)
@@ -1732,7 +1732,7 @@ private fun runSmoke() {
         }
         val infoRail=JPanel().apply {
             layout=BoxLayout(this,BoxLayout.Y_AXIS)
-            background=Color(5,10,17)
+            background=Color(2,7,14)
             preferredSize=Dimension(158,0)
             border=BorderFactory.createEmptyBorder(6,6,6,6)
             listOf(
@@ -1743,7 +1743,7 @@ private fun runSmoke() {
                 "LINKS" to doc.links().size.toString()
             ).forEach { (title,value) ->
                 add(JPanel(BorderLayout()).apply {
-                    background=Color(8,18,30)
+                    background=Color(7,17,27)
                     border=BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(Color(61,235,255,100),1,true),
                         BorderFactory.createEmptyBorder(7,9,7,9)
@@ -1757,7 +1757,7 @@ private fun runSmoke() {
         }
         add(header,BorderLayout.NORTH)
         add(JPanel(BorderLayout()).apply {
-            background=Color(5,10,17)
+            background=Color(2,7,14)
             add(smokeDeck,BorderLayout.WEST)
             add(smokeCad,BorderLayout.CENTER)
             add(infoRail,BorderLayout.EAST)
@@ -2386,14 +2386,14 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
     JDialog(frame, "AIG CNC • NC EDIT • CONTROLLER", false).apply {
         layout = BorderLayout()
         add(JPanel(BorderLayout()).apply {
-            background = Color(8,18,30)
+            background = Color(7,17,27)
             add(JLabel(MasterRuntimeChainContract.uiLabel()).apply {
                 foreground=Color(99,255,157)
                 font=font.deriveFont(Font.BOLD,12f)
                 border=BorderFactory.createEmptyBorder(4,8,2,8)
             },BorderLayout.NORTH)
             add(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-                background = Color(8,18,30)
+                background = Color(7,17,27)
                 add(JLabel("CONTROL").apply { foreground = Color(61,235,255) })
                 add(controller)
                 add(coordinate)
@@ -2408,7 +2408,7 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
                 add(resume)
             }, BorderLayout.CENTER)
             add(JPanel(GridLayout(0,1)).apply {
-                background = Color(8,18,30)
+                background = Color(7,17,27)
                 add(modalStatus)
                 add(lineHelp)
             }, BorderLayout.SOUTH)
@@ -2499,13 +2499,13 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         font=Font(Font.MONOSPACED,Font.PLAIN,14);lineWrap=false;tabSize=4
     }
     val editorPanel=JPanel(BorderLayout()).apply{
-        background=Color(8,18,30)
+        background=Color(7,17,27)
         border=BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color(61,235,255,130),1,true),EmptyBorder(8,8,8,8))
         add(JLabel("可編輯 G-code • EDITABLE NC • FANUC").apply{foreground=Color(255,210,90);font=font.deriveFont(Font.BOLD,14f)},BorderLayout.NORTH)
         add(JScrollPane(editor),BorderLayout.CENTER)
     }
     val card=CardLayout()
-    val visual=JPanel(card).apply{background=Color(5,10,17)}
+    val visual=JPanel(card).apply{background=Color(2,7,14)}
     val mesh=Mesh3DPanel(result)
     val axes=AxisMachiningPanel(result)
     var simulationMoves=result.cam.toolpaths.flatMap{it.moves}
@@ -2736,7 +2736,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         override fun windowClosed(e:WindowEvent?){playbackTimer.stop()}
     })
     dlg.add(JPanel(BorderLayout()).apply{
-        background=Color(8,18,30)
+        background=Color(7,17,27)
         add(JLabel(MasterRuntimeChainContract.uiLabel()).apply{
             foreground=Color(99,255,157)
             font=font.deriveFont(Font.BOLD,12f)
@@ -2799,7 +2799,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         background=StudioDesktopProductionTheme.background
     }
     val masterRootBar=JPanel(BorderLayout()).apply {
-        background=Color(4,12,20)
+        background=Color(2,6,12)
         border=BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(0,0,1,0,Color(61,235,255,150)),
             BorderFactory.createEmptyBorder(5,12,5,12)
@@ -2841,7 +2841,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     val linkTools=CadToolGrid()
     val viewTools=JPanel().apply{
         layout=BoxLayout(this,BoxLayout.Y_AXIS)
-        background=Color(8,18,30)
+        background=Color(7,17,27)
         border=BorderFactory.createEmptyBorder(10,10,10,10)
         add(JLabel("中鍵 / 右鍵拖曳 = 視圖平移").apply{foreground=Color(143,179,201)})
         add(Box.createVerticalStrut(8))
