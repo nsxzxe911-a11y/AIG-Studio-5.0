@@ -279,7 +279,7 @@ private object LibraryFiveAxisSkin208 {
 }
 
 private object ProductionRgbAssets {
-    private const val ROOT="/aig-generated-rgb/approved/184"
+    private val ROOT=UiAssetContract.DESKTOP_ROOT
     private val hashes:Map<String,String> by lazy {
         val props=Properties()
         val stream=ProductionRgbAssets::class.java.getResourceAsStream("$ROOT/sha256.properties")
