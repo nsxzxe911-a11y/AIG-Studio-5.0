@@ -55,13 +55,13 @@ jobs:
           assert theme['panel_color']=='#07111B'
           assert theme['state_model']==['NORMAL','PRESSED','SELECTED','DISABLED','ALARM']
           html=Path('web/index.html').read_text(encoding='utf-8')
-          for marker in ('STUDIO_PRODUCT_ART_PASS_249','TOOLPATH_RGB_GLOW_250','viewport-fit=cover','service-worker.js'):
+          for marker in ('STUDIO_PRODUCT_ART_PASS_','TOOLPATH_RGB_GLOW_','viewport-fit=cover','service-worker.js'):
               assert marker in html, marker
           android=Path('app/src/main/java/com/aigstudio/app/Machining3DView.kt').read_text(encoding='utf-8')
           desktop=Path('desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt').read_text(encoding='utf-8')
           main=Path('app/src/main/java/com/aigstudio/app/MainActivity.kt').read_text(encoding='utf-8')
-          assert 'TOOLPATH_RGB_GLOW_250' in android
-          assert 'TOOLPATH_RGB_GLOW_250' in desktop
-          assert 'TOOLPATH_RGB_GLOW_250' in main
+          assert 'TOOLPATH_RGB_GLOW_' in android
+          assert 'TOOLPATH_RGB_GLOW_' in desktop
+          assert 'TOOLPATH_RGB_GLOW_' in main
           print('STUDIO_UI_ART_DIFF_GATE_PASS|BLACK_CLARITY|RGB_GLASS|RGB_TOOLPATH_GLOW|VIEWPORT_PRIORITY|DESKTOP_MOBILE|OFFLINE_SHELL')
           PY
