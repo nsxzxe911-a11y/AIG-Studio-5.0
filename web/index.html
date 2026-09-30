@@ -138,9 +138,9 @@ function simPage(axis){
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
  '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 加工模擬<small>已執行刀路以綠色顯示；未執行刀路以藍色顯示</small></div></div>'+
  '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button></div>'+
- '<div class="runtimeStatus"><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div></div></div></section>';
+ '<div class="runtimeStatus"><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
- '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label></div>'+
+ '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label><label class="param">G54 X<input data-g54-x type="number" value="0" step="0.001"></label><label class="param">G54 Y<input data-g54-y type="number" value="0" step="0.001"></label><label class="param">G54 Z<input data-g54-z type="number" value="0" step="0.001"></label><label class="param">G55 X<input data-g55-x type="number" value="0" step="0.001"></label><label class="param">G55 Y<input data-g55-y type="number" value="0" step="0.001"></label><label class="param">G55 Z<input data-g55-z type="number" value="0" step="0.001"></label><label class="param">H1<input data-h1 type="number" value="0" step="0.001"></label><label class="param">H4<input data-h4 type="number" value="0" step="0.001"></label><label class="param">H12<input data-h12 type="number" value="0" step="0.001"></label></div>'+
  '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+sourceCode[axis]+'</textarea></div>'+
  '<div class="body" style="padding-top:0"><div class="execView" data-exec></div></div>'+
  '<div class="body editactions"><button class="btn" data-editcmd="insert">插入行</button><button class="btn danger" data-editcmd="delete">刪除行</button><button class="btn" data-editcmd="undo">復原</button><button class="btn" data-editcmd="redo">重做</button><button class="btn play" data-editcmd="save">儲存</button></div>'+
@@ -244,7 +244,7 @@ function parseProgram(text,axis,opts={}){
  const executionLines=compiled.executionLines;
  let pos={X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0},absolute=true,motion="G0",plane="G17",returnMode="G98";
  let cycle=null,cycleZ=null,cycleR=null,cycleQ=null;
- let machine={T:0,H:0,spindle:"M5",coolant:false};
+ let machine={T:0,H:0,spindle:"M5",coolant:false,wcs:"G54",toolComp:false};
  const blocks=[];const errors=[...compiled.errors];const warnings=[...compiled.warnings];
  let currentMeta={subprogram:compiled.mainKey,subCall:null,subReturn:false,callDepth:0,callRepeat:1};
  const g73Retract=Math.max(0,Number(opts.g73Retract)||0.5);
@@ -317,6 +317,9 @@ function parseProgram(text,axis,opts={}){
   const mMatches=[...clean.matchAll(/M\s*0*(\d+)/g)].map(m=>"M"+Number(m[1]));
   if(Number.isFinite(out.T))machine.T=Math.trunc(out.T);
   if(Number.isFinite(out.H))machine.H=Math.trunc(out.H);
+  for(const code of ["G54","G55","G56","G57","G58","G59"])if(gMatches.includes(code))machine.wcs=code;
+  if(gMatches.includes("G43"))machine.toolComp=true;
+  if(gMatches.includes("G49"))machine.toolComp=false;
   if(mMatches.includes("M3"))machine.spindle="M3";
   if(mMatches.includes("M4"))machine.spindle="M4";
   if(mMatches.includes("M5"))machine.spindle="M5";
@@ -419,8 +422,22 @@ function parseProgram(text,axis,opts={}){
 function makeRuntime(root){
  const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d");
  const toolInput=root.querySelector("[data-tool-dia]"),safeInput=root.querySelector("[data-safe-z]"),g73Input=root.querySelector("[data-g73-retract]");
+ const g54x=root.querySelector("[data-g54-x]"),g54y=root.querySelector("[data-g54-y]"),g54z=root.querySelector("[data-g54-z]");
+ const g55x=root.querySelector("[data-g55-x]"),g55y=root.querySelector("[data-g55-y]"),g55z=root.querySelector("[data-g55-z]");
+ const h1=root.querySelector("[data-h1]"),h4=root.querySelector("[data-h4]"),h12=root.querySelector("[data-h12]");
  const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,optionalStop:false,blockSkip:false,last:performance.now(),history:[],historyIndex:-1};
- function settings(){return {toolDia:Math.max(.1,Number(toolInput.value)||10),safeZ:Number(safeInput.value)||5,g73Retract:Math.max(0,Number(g73Input.value)||.5)}}
+ function settings(){
+  return {
+    toolDia:Math.max(.1,Number(toolInput.value)||10),
+    safeZ:Number(safeInput.value)||5,
+    g73Retract:Math.max(0,Number(g73Input.value)||.5),
+    offsets:{
+      G54:{X:Number(g54x.value)||0,Y:Number(g54y.value)||0,Z:Number(g54z.value)||0},
+      G55:{X:Number(g55x.value)||0,Y:Number(g55y.value)||0,Z:Number(g55z.value)||0}
+    },
+    toolLengths:{1:Number(h1.value)||0,4:Number(h4.value)||0,12:Number(h12.value)||0}
+  };
+ }
  runtimes[axis]=state;
 
  function remember(){
@@ -437,9 +454,12 @@ function makeRuntime(root){
  }
  function renderExec(){
   const box=root.querySelector("[data-exec]");box.innerHTML="";
+  const doneLines=new Set(state.parsed.blocks.slice(0,state.index).map(b=>b.line));
+  const activeLine=currentLine();
   state.parsed.lines.forEach((line,i)=>{
     const div=document.createElement("div");div.className="execLine";
-    if(i<currentLine())div.classList.add("done");if(i===currentLine())div.classList.add("active");
+    if(doneLines.has(i))div.classList.add("done");
+    if(i===activeLine)div.classList.add("active");
     div.textContent=String(i+1).padStart(3,"0")+"  "+line;box.appendChild(div);
   });
   const active=box.querySelector(".active");if(active)active.scrollIntoView({block:"nearest"});
@@ -564,9 +584,26 @@ function makeRuntime(root){
   });
   return Math.max(0,-minZ);
  }
+ function activeMachine(){
+  const b=currentBlock()||state.parsed?.blocks?.[state.parsed.blocks.length-1];
+  return b?.machine||{T:0,H:0,spindle:"M5",coolant:false,wcs:"G54",toolComp:false};
+ }
+ function workOffsetFor(mc,cfg){
+  return cfg.offsets[mc?.wcs]||{X:0,Y:0,Z:0};
+ }
+ function machinePosition(work,mc,cfg){
+  const o=workOffsetFor(mc,cfg);
+  return {X:(work.X||0)+o.X,Y:(work.Y||0)+o.Y,Z:(work.Z||0)+o.Z,A:work.A||0,B:work.B||0,C:work.C||0};
+ }
+ function toolLengthFor(mc,cfg){
+  return mc?.toolComp?(cfg.toolLengths[mc.H]??0):0;
+ }
  function safetyWarnings(){
-  const safe=settings().safeZ,seen=new Set();
+  const cfg=settings(),safe=cfg.safeZ,seen=new Set();
   for(const bl of state.parsed.blocks){
+    const mc=bl.machine||{};
+    if(mc.wcs && !cfg.offsets[mc.wcs])seen.add(mc.wcs+" 尚未設定偏移；目前明確以 0.000 mm 計算");
+    if(mc.toolComp && mc.H>0 && !(mc.H in cfg.toolLengths))seen.add("G43 H"+mc.H+" 尚未設定刀長；目前明確以 0.000 mm 顯示");
     if(bl.kind!=="move"||bl.motion!=="G0")continue;
     const xy=Math.abs(bl.to.X-bl.from.X)>1e-9||Math.abs(bl.to.Y-bl.from.Y)>1e-9;
     if(xy && Math.min(bl.from.Z,bl.to.Z)<safe-1e-9)seen.add("快速 XY 移動低於 Safe-Z "+safe.toFixed(3)+" mm");
@@ -623,8 +660,9 @@ function makeRuntime(root){
     }
   });
   // current tool
-  const p=currentPos(),q=project(p,b,w,h),tiltX=(p.B||0)*.22,tiltY=(p.A||0)*.22;
-  c.strokeStyle="#eefbff";c.lineWidth=3;c.beginPath();c.moveTo(q.x-tiltX,q.y-55+tiltY);c.lineTo(q.x,q.y);c.stroke();
+  const p=currentPos(),q=project(p,b,w,h),tiltX=(p.B||0)*.22,tiltY=(p.A||0)*.22,mc=activeMachine(),cfg=settings();
+  const hVisual=Math.min(65,Math.abs(toolLengthFor(mc,cfg))*.22),toolVisual=55+hVisual;
+  c.strokeStyle="#eefbff";c.lineWidth=3;c.beginPath();c.moveTo(q.x-tiltX,q.y-toolVisual+tiltY);c.lineTo(q.x,q.y);c.stroke();
   c.fillStyle="#27e9ff";c.beginPath();c.arc(q.x,q.y,5,0,Math.PI*2);c.fill();
   if(axis!=="3AX"){
     const rad=(p.A||0)*Math.PI/180;c.strokeStyle=axis==="4AX"?"#ffb326":"#ff4da6";c.lineWidth=2;c.beginPath();c.arc(w-74,h-76,32,0,Math.PI*2);c.stroke();c.beginPath();c.moveTo(w-74,h-76);c.lineTo(w-74+Math.cos(rad)*30,h-76-Math.sin(rad)*30);c.stroke();
@@ -635,21 +673,33 @@ function makeRuntime(root){
   updateHud();
  }
  function updateHud(){
-  const p=currentPos(),bl=currentBlock(),cfg=settings(),mc=bl?.machine||{T:0,H:0,spindle:"M5",coolant:false};
-  root.querySelector("[data-hud]").innerHTML=["X","Y","Z"].concat(axis==="4AX"?["A"]:axis==="5AX"?["A","B"]:[]).map(a=>a+" "+(p[a]||0).toFixed(3)).join("<br>")+"<br>F "+Math.round(p.F||0)+"<br>S "+Math.round(p.S||0)+"<br>T "+mc.T+" / H "+mc.H+"<br>"+mc.spindle+" / "+(mc.coolant?"M8":"M9")+"<br>Ø "+cfg.toolDia.toFixed(3)+(bl?.cycle?"<br>"+bl.cycle+(bl.pattern?"/"+bl.pattern:""):"");
+  const p=currentPos(),bl=currentBlock(),cfg=settings(),mc=activeMachine(),mp=machinePosition(p,mc,cfg),hLen=toolLengthFor(mc,cfg);
+  const workAxes=["X","Y","Z"].concat(axis==="4AX"?["A"]:axis==="5AX"?["A","B"]:[]);
+  root.querySelector("[data-hud]").innerHTML=
+    "<b>WORK "+(mc.wcs||"G54")+"</b><br>"+
+    workAxes.map(a=>a+" "+(p[a]||0).toFixed(3)).join("<br>")+
+    "<br><b>MACHINE</b><br>MX "+mp.X.toFixed(3)+"<br>MY "+mp.Y.toFixed(3)+"<br>MZ "+mp.Z.toFixed(3)+
+    "<br>F "+Math.round(p.F||0)+" / S "+Math.round(p.S||0)+
+    "<br>T "+mc.T+" / "+(mc.toolComp?("G43 H"+mc.H+" "+hLen.toFixed(3)+"mm"):"G49")+
+    "<br>"+mc.spindle+" / "+(mc.coolant?"M8":"M9")+
+    "<br>SUB "+(bl?.subprogram||state.parsed.mainProgram)+
+    "<br>Ø "+cfg.toolDia.toFixed(3)+(bl?.cycle?"<br>"+bl.cycle+(bl.pattern?"/"+bl.pattern:""):"");
   ["X","Y","Z","A","B","C"].forEach(a=>{const e=root.querySelector('[data-axis-read="'+a+'"]');if(e)e.textContent=a+"　"+(p[a]||0).toFixed(3)});
  }
  function updateUi(){
-  const p=currentPos(),len=state.parsed.blocks.length,progress=len?Math.min(100,((state.index+state.t)/len)*100):0,b=currentBlock(),cfg=settings();
+  const p=currentPos(),len=state.parsed.blocks.length,progress=len?Math.min(100,((state.index+state.t)/len)*100):0,b=currentBlock(),cfg=settings(),mc=activeMachine();
   root.querySelector("[data-spindle]").textContent=Math.round(p.S||0)+" RPM";
   root.querySelector("[data-feed]").textContent=Math.round(p.F||0)+" mm/min";
-  root.querySelector("[data-block]").textContent=b?((b.raw.match(/N\s*\d+/i)?.[0]||("LINE "+(b.line+1)))+(b.stopCode?" "+b.stopCode:"")):"—";
+  root.querySelector("[data-block]").textContent=b?("["+(b.subprogram||state.parsed.mainProgram)+"] "+(b.raw.match(/N\s*\d+/i)?.[0]||("LINE "+(b.line+1)))+(b.subCall?(" →O"+b.subCall):"")+(b.stopCode?(" "+b.stopCode):"")):"—";
   root.querySelector("[data-progress-text]").textContent=progress.toFixed(1)+"%";root.querySelector("[data-progress]").style.width=progress+"%";
   root.querySelector("[data-mode]").textContent=b?(b.absolute?"G90":"G91"):"G90";
   root.querySelector("[data-cycle]").textContent=b?.cycle?(b.cycle+(b.pattern?"/"+b.pattern+" "+b.holeIndex+"/"+b.holeCount:"")):(b?.pattern||"—");
   root.querySelector("[data-cycle]").classList.toggle("cycleTag",Boolean(b?.cycle));
   root.querySelector("[data-toolmetric]").textContent="Ø"+cfg.toolDia.toFixed(3)+" mm";
   root.querySelector("[data-removal]").textContent=materialRemovalDepth().toFixed(3)+" mm";
+  root.querySelector("[data-wcsmetric]").textContent=mc.wcs||"G54";
+  root.querySelector("[data-hmetric]").textContent=mc.toolComp?("G43 H"+mc.H+" "+toolLengthFor(mc,cfg).toFixed(3)+" mm"):"G49";
+  root.querySelector("[data-subprogram]").textContent=b?.subprogram||state.parsed.mainProgram||"MAIN";
   root.querySelector("[data-run-badge]").textContent=state.running?"RUN":state.index>=len&&len?"DONE":"READY";
  }
  function command(cmd){
@@ -683,7 +733,7 @@ function makeRuntime(root){
   if(cmd==="redo"&&state.historyIndex<state.history.length-1){state.historyIndex++;ta.value=state.history[state.historyIndex];parse()}
  });
  let timer;ta.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>{remember();parse()},350)});
- [toolInput,safeInput,g73Input].forEach(el=>el.addEventListener("change",()=>parse(false)));
+ [toolInput,safeInput,g73Input,g54x,g54y,g54z,g55x,g55y,g55z,h1,h4,h12].forEach(el=>el.addEventListener("change",()=>parse(false)));
  const saved=localStorage.getItem("aig-code-"+axis);if(saved!=null)ta.value=saved;remember();parse();requestAnimationFrame(tick);
 }
 pages.forEach(([name,color])=>{
