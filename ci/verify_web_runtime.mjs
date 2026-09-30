@@ -95,7 +95,6 @@ const required = [
   'function makeCamRuntime',
   'data-cam-runtime',
   'aig-cam-toolpath-v1',
-  '待 3D/自適應核心接入',
   'function makeToolpathRuntime',
   'data-tp-runtime',
   'function generateFanucNC',
@@ -194,6 +193,16 @@ const required = [
   'explicitXY:hasXY',
   'stockMarginX',
   'stockMarginY',
+  '["自適應粗加工","ADAPTIVE",true]',
+  'data-cam-adaptive-load',
+  '自適應粗加工目前是 2.5D 封閉區域核心',
+  'function adaptiveRingRect',
+  'function adaptiveRingCircle',
+  'function adaptivePaths',
+  'radialEngagement',
+  'adaptiveRing',
+  'state.strategy==="ADAPTIVE"',
+  '只對封閉 RECT/CIRCLE/HOLE 產生真 2.5D 分層刀路',
   'CNC machine output disabled'
 ];
 
