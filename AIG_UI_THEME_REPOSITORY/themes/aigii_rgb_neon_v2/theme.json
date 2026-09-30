@@ -1,34 +1,326 @@
-﻿{
-    "theme_id":  "aigii_rgb_neon_v2",
-    "theme_name":  "AIG II RGB Neon V2",
-    "theme_version":  "2.0.0",
-    "target_apps":  [
-                        "AIG-II",
-                        "AIG-CNC"
-                    ],
-    "min_app_version":  "104.0.0",
-    "embedded_trusted":  true,
-    "background_color":  "#050A12",
-    "panel_color":  "#0B1726",
-    "text_color":  "#E8F4FF",
-    "accent_color":  "#3DEBFF",
-    "corner_radius_dp":  16,
-    "idle_alpha":  0.86,
-    "glow_stroke_dp":  3.5,
-    "active_elevation_dp":  9,
-    "startup_skin":  "rgb_grid_neon",
-    "asset_policy":  {
-                         "engineering_authority":  "FULL",
-                         "preserve_existing_rgb_assets":  true,
-                         "delete_stock_assets":  false,
-                         "appearance_changes_block_upgrade":  false,
-                         "manual_approval_required":  false,
-                         "asset_signature_required":  false,
-                         "asset_locking_enabled":  false,
-                         "fixed_allowlist_required":  false,
-                         "unregistered_images_allowed":  true,
-                         "replacement_without_preapproval_allowed":  true,
-                         "preview_build_blocked_by_unregistered_assets":  false,
-                         "release_integrity_required":  true
-                     }
+{
+  "theme_id": "aigii_rgb_neon_v2",
+  "theme_name": "AIG RGB Glass Product UI",
+  "theme_version": "4.9.0",
+  "theme_family": "aigii_rgb_neon",
+  "platform_profile": "adaptive_touch_spen_desktop",
+  "color_contract": {
+    "mode": "REFERENCE_ONLY",
+    "physical_color_equality_required": false,
+    "device_display_adaptive": true,
+    "brightness_adaptive": true,
+    "display_mode_adaptive": true
+  },
+  "asset_engineering_policy": {
+    "official_baseline_policy_zh_tw": "官方核准原始資產只保留原檔與來源血統，不得覆蓋或刪除；正式 Runtime 美術層可持續升級。",
+    "ui_layout_editable": true,
+    "images_editable": true,
+    "buttons_editable": true,
+    "animations_editable": true,
+    "themes_editable": true,
+    "new_assets_allowed": true,
+    "replacement_after_validation_allowed": true,
+    "release_gate_required": true
+  },
+  "target_apps": [
+    "AIG-II",
+    "AIG-CNC"
+  ],
+  "min_app_version": "249.0.0",
+  "embedded_trusted": true,
+  "remote_signature_required": true,
+  "style_profile": "AIG_II_FULL_RGB_GLASS",
+  "palette_policy": "PLATFORM_ADAPTIVE",
+  "interaction_profile": {
+    "input": "touch_spen_mouse_keyboard",
+    "min_touch_target_dp": 44,
+    "selected_breathing": "balanced",
+    "glass_depth": "product_balanced"
+  },
+  "background_color": "#020407",
+  "panel_color": "#07111B",
+  "text_color": "#F4FBFF",
+  "accent_color": "#27E9FF",
+  "corner_radius_dp": 16,
+  "idle_alpha": 0.92,
+  "glow_stroke_dp": 3.2,
+  "active_elevation_dp": 10,
+  "rgb_breathing": true,
+  "button_style": {
+    "shape": "rounded_square",
+    "corner_radius_dp": 16,
+    "transparency": 0.08,
+    "glass_effect": true,
+    "border_glow": true,
+    "elevation_dp": 10
+  },
+  "rgb_glow": {
+    "enabled": true,
+    "idle_color": "#27E9FF",
+    "selected_color": "#27E9FF",
+    "cutting_color": "#33F39B",
+    "rapid_color": "#FF4DA6",
+    "warning_color": "#FFB326",
+    "error_color": "#FF465F",
+    "glow_strength": 0.88
+  },
+  "state_model": [
+    "NORMAL",
+    "PRESSED",
+    "SELECTED",
+    "DISABLED",
+    "ALARM"
+  ],
+  "state_semantics": {
+    "NORMAL": "idle_ready",
+    "PRESSED": "input_feedback",
+    "SELECTED": "active_selection",
+    "DISABLED": "unavailable",
+    "ALARM": "priority_warning"
+  },
+  "effect_profile": {
+    "glow": "adaptive",
+    "breathing": "adaptive",
+    "pulse": "semantic_only",
+    "glass": "surface_adaptive"
+  },
+  "background_texture": {
+    "mode": "rgb_machining_grid",
+    "grid_color_role": "selected",
+    "secondary_color_role": "rapid",
+    "alpha": 38,
+    "grid_step_dp": 38,
+    "major_every": 4,
+    "vignette_alpha": 108
+  },
+  "background_skin_contract": {
+    "default_skin_id": "neon_grid",
+    "skin_ids": [
+      "neon_grid",
+      "blueprint",
+      "carbon",
+      "matrix",
+      "midnight"
+    ],
+    "surface_ids": [
+      "CAD",
+      "CAM",
+      "SIM",
+      "AXIS",
+      "NC"
+    ],
+    "surface_defaults": {
+      "CAD": "neon_grid",
+      "CAM": "blueprint",
+      "SIM": "midnight",
+      "AXIS": "matrix",
+      "NC": "carbon"
+    },
+    "surface_independent": true,
+    "data_only": true,
+    "machining_fingerprint_isolated": true
+  },
+  "cad_draft_preview": {
+    "color_role": "selected",
+    "alpha": 236,
+    "stroke_dp": 2,
+    "dash_on_dp": 8,
+    "dash_off_dp": 5,
+    "endpoint_radius_dp": 3.5,
+    "hud_text_sp": 12,
+    "hud_padding_dp": 5,
+    "snap_ring_dp": 7,
+    "snap_ring_stroke_dp": 1.8
+  },
+  "corner_preview": {
+    "result_color_role": "selected",
+    "removed_color_role": "alarm",
+    "tangent_color_role": "warning",
+    "result_alpha": 240,
+    "removed_alpha": 145,
+    "stroke_dp": 2.3,
+    "marker_radius_dp": 4,
+    "center_radius_dp": 3
+  },
+  "widget_roles": {
+    "NAV": {
+      "glow_scale": 0.74,
+      "glass_scale": 0.86,
+      "pulse_scale": 1.1,
+      "elevation_scale": 0.76,
+      "glyph_scale": 0.94,
+      "border_scale": 0.82,
+      "fill_scale": 0.76,
+      "text_scale": 0.96,
+      "corner_scale": 0.94,
+      "padding_x_scale": 0.92,
+      "padding_y_scale": 0.88,
+      "size_scale": 0.96
+    },
+    "TOOL": {
+      "glow_scale": 0.88,
+      "glass_scale": 0.94,
+      "pulse_scale": 1.02,
+      "elevation_scale": 0.86,
+      "glyph_scale": 1,
+      "border_scale": 0.92,
+      "fill_scale": 0.88,
+      "text_scale": 1,
+      "corner_scale": 1,
+      "padding_x_scale": 1,
+      "padding_y_scale": 0.96,
+      "size_scale": 1
+    },
+    "PRIMARY": {
+      "glow_scale": 1.12,
+      "glass_scale": 1.02,
+      "pulse_scale": 0.92,
+      "elevation_scale": 1.06,
+      "glyph_scale": 1.14,
+      "border_scale": 1.08,
+      "fill_scale": 1.04,
+      "text_scale": 1.06,
+      "corner_scale": 1.04,
+      "padding_x_scale": 1.06,
+      "padding_y_scale": 1.02,
+      "size_scale": 1.06
+    },
+    "STATUS": {
+      "glow_scale": 0.64,
+      "glass_scale": 0.8,
+      "pulse_scale": 1.24,
+      "elevation_scale": 0.66,
+      "glyph_scale": 0.84,
+      "border_scale": 0.72,
+      "fill_scale": 0.66,
+      "text_scale": 0.94,
+      "corner_scale": 0.9,
+      "padding_x_scale": 0.88,
+      "padding_y_scale": 0.84,
+      "size_scale": 0.9
+    },
+    "WARNING": {
+      "glow_scale": 1.18,
+      "glass_scale": 1,
+      "pulse_scale": 0.82,
+      "elevation_scale": 1.02,
+      "glyph_scale": 1.16,
+      "border_scale": 1.14,
+      "fill_scale": 1.06,
+      "text_scale": 1.08,
+      "corner_scale": 1.02,
+      "padding_x_scale": 1.02,
+      "padding_y_scale": 1,
+      "size_scale": 1.04
+    }
+  },
+  "state_effects": {
+    "NORMAL": {
+      "glow_scale": 0.5,
+      "fill_scale": 0.68,
+      "elevation_scale": 0.68
+    },
+    "PRESSED": {
+      "glow_scale": 1.02,
+      "fill_scale": 1.14,
+      "elevation_scale": 0.7
+    },
+    "SELECTED": {
+      "glow_scale": 1.12,
+      "fill_scale": 1.04,
+      "elevation_scale": 1.08
+    },
+    "DISABLED": {
+      "glow_scale": 0.12,
+      "fill_scale": 0.32,
+      "elevation_scale": 0
+    },
+    "ALARM": {
+      "glow_scale": 1.26,
+      "fill_scale": 1.18,
+      "elevation_scale": 1.1
+    }
+  },
+  "surface_profiles": {
+    "CAD": {
+      "role": "geometry_creation",
+      "accent_role": "selected",
+      "animation": "short_breathe",
+      "pulse_period_ms": 1040,
+      "glass": "light",
+      "glass_strength": 0.48
+    },
+    "CAM": {
+      "role": "toolpath_generation",
+      "accent_role": "cutting",
+      "animation": "flow",
+      "pulse_period_ms": 880,
+      "glass": "balanced",
+      "glass_strength": 0.62
+    },
+    "SIM": {
+      "role": "material_removal",
+      "accent_role": "cutting",
+      "animation": "motion",
+      "pulse_period_ms": 760,
+      "glass": "balanced",
+      "glass_strength": 0.66
+    },
+    "AXIS": {
+      "role": "multi_axis_motion",
+      "accent_role": "rapid",
+      "animation": "axis_pulse",
+      "pulse_period_ms": 680,
+      "glass": "deep",
+      "glass_strength": 0.78
+    },
+    "NC": {
+      "role": "program_execution",
+      "accent_role": "warning",
+      "animation": "status_pulse",
+      "pulse_period_ms": 1160,
+      "glass": "precision",
+      "glass_strength": 0.68
+    }
+  },
+  "machine_material_skins": {
+    "profile": "AIG_PRODUCT_MACHINE_MATERIAL_SKINS_249",
+    "skin_ids": [
+      "factory_metal",
+      "titanium_rgb",
+      "analysis_heat",
+      "carbon_neon",
+      "ceramic_ice"
+    ],
+    "default_skin_id": "factory_metal",
+    "true_machine_mesh_required": true,
+    "material_animation_visual_only": true,
+    "machining_fingerprint_isolated": true
+  },
+  "product_ui_art_pass": {
+    "id": "STUDIO_PRODUCT_ART_PASS_249",
+    "black_clarity": true,
+    "rgb_glass_depth": true,
+    "stable_tool_group_hierarchy": true,
+    "cad_cam_viewport_priority": true,
+    "axis_3_4_5_machine_skin_quality": "HIGH",
+    "material_surface_quality": "MACHINED_METAL",
+    "core_logic_unchanged": true
+  },
+  "resource_modes": [
+    "FULL",
+    "NORMAL",
+    "REDUCED_ANIMATION",
+    "STATIC_MINIMAL"
+  ],
+  "startup_skin": "rgb_grid_neon",
+  "startup_sequence": [
+    "RGB_LOGO",
+    "INITIALIZING_CORE",
+    "CHECKING_CONFIGURATION",
+    "CHECKING_PROJECT_DATA",
+    "LOADING_UI",
+    "HEALTH_CHECK",
+    "READY"
+  ]
 }
