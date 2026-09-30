@@ -130,15 +130,20 @@ jobs:
         shell: bash
         run: |
           APK=release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
+          UI_VERIFY_APK=release/android/AIG_Studio_5_0_RGB_UI_VERIFY_SIDELOAD.apk
           test -s "$APK"
+          test -s "$UI_VERIFY_APK"
           BUILD_TOOLS_DIR="$ANDROID_HOME/build-tools/${LATEST_BUILD_TOOLS#build-tools;}"
           test -x "$BUILD_TOOLS_DIR/zipalign"
           test -x "$BUILD_TOOLS_DIR/apksigner"
           test -x "$BUILD_TOOLS_DIR/aapt"
           "$BUILD_TOOLS_DIR/zipalign" -c -P 16 4 "$APK"
           "$BUILD_TOOLS_DIR/apksigner" verify --verbose "$APK"
+          "$BUILD_TOOLS_DIR/apksigner" verify --verbose "$UI_VERIFY_APK"
           "$BUILD_TOOLS_DIR/aapt" dump badging "$APK" | grep -F "package: name='com.aigstudio.app'"
+          "$BUILD_TOOLS_DIR/aapt" dump badging "$UI_VERIFY_APK" | grep -F "package: name='com.aigstudio.app.uiverify'"
           "$BUILD_TOOLS_DIR/aapt" dump badging "$APK" | grep -F "targetSdkVersion:'36'"
+          "$BUILD_TOOLS_DIR/aapt" dump badging "$UI_VERIFY_APK" | grep -F "targetSdkVersion:'36'"
           (cd release/android && sha256sum -c SHA256SUMS.txt)
           (cd release/source && sha256sum -c SHA256SUMS.txt)
           VERSION="$(awk -F= '$1=="versionName"{print $2}' release-version.properties)"
@@ -149,8 +154,10 @@ jobs:
           grep -Fx "release_state=PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL" release/android/RELEASE_MANIFEST.txt
           grep -Fx "release_class=PRODUCTION_RUNTIME" release/android/RELEASE_MANIFEST.txt
           grep -Fx "runtime_evidence=APK_BUILD_SIGN_PACKAGE" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "ui_verify_package=com.aigstudio.app.uiverify" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "ui_verify_runtime=PRODUCTION_RUNTIME_SAME_CODE_DIFFERENT_PACKAGE_ID" release/android/RELEASE_MANIFEST.txt
           grep -Fx "device_launch_evidence=REQUIRED_FOR_FINAL" release/android/RELEASE_MANIFEST.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: AIG-Studio-Android-and-Source
           path: |
@@ -195,7 +202,7 @@ jobs:
             if (-not (Test-Path $path)) { throw "Production runtime evidence missing: $name" }
             if ((Get-Item $path).Length -le 0) { throw "Production runtime evidence empty: $name" }
           }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: AIG-Studio-Windows-EXE
           path: release/windows/
