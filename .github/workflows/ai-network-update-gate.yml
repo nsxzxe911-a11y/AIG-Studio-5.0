@@ -1,0 +1,44 @@
+name: Studio AI Network Update Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'release-version.properties'
+      - 'app/src/main/java/com/aigstudio/app/SecureServices.kt'
+      - 'core/src/main/kotlin/com/aigstudio/core/PackageBundle.kt'
+      - 'core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt'
+      - 'ci/verify_ai_network_update.py'
+      - '.github/workflows/ai-network-update-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ai-network-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android SDK 36 compile surface
+        shell: bash
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          LATEST_BUILD_TOOLS="$("$SDKMANAGER" --list | sed -nE 's/^[[:space:]]*(build-tools;[0-9]+(\.[0-9]+){2})[[:space:]]+.*/\1/p' | sort -V | tail -1)"
+          test -n "$LATEST_BUILD_TOOLS"
+          "$SDKMANAGER" "platform-tools" "platforms;android-36" "$LATEST_BUILD_TOOLS"
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Verify focused AI/network contract
+        run: python3 ci/verify_ai_network_update.py
+      - name: Compile changed update surfaces only
+        run: gradle --no-daemon :core:compileKotlin :app:compileDebugKotlin
+      - name: Gate result
+        run: echo 'STUDIO_254_AI_NETWORK_RELEVANT_GATE_PASS|NO_CNC_HEAVY_REGRESSION|ROLLING_BASELINE_CANDIDATE'
