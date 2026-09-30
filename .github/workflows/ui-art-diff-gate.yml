@@ -4,12 +4,14 @@ on:
   push:
     branches: [main, 'studio-*']
     paths:
-      - 'release-version.properties'
       - 'web/**'
       - 'AIG_UI_THEME_REPOSITORY/themes/**'
       - 'AIG_UI_THEME_REPOSITORY/repository-index.json'
       - 'app/src/main/assets/aig-themes/themes/**'
       - 'app/src/main/assets/aig-themes/repository-index.json'
+      - 'app/src/main/java/com/aigstudio/app/MainActivity.kt'
+      - 'app/src/main/java/com/aigstudio/app/Machining3DView.kt'
+      - 'desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'
       - 'ci/verify_runtime_surfaces.py'
       - 'core/src/main/kotlin/com/aigstudio/core/UiAssetContract.kt'
       - '.github/workflows/ui-art-diff-gate.yml'
