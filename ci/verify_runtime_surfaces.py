@@ -1108,7 +1108,9 @@ for needle in (
     'const val SOURCE_LANDSCAPE="image-gen-2(1).png"',
     'background=LibraryFiveAxisSkin208.panel',
     'parameter("SAFE-Z",DisplayFormat.mm(settings.safeZ)+" mm",LibraryFiveAxisSkin208.safe)',
-    'camAction("5AX",LibraryFiveAxisSkin208.magenta)',
+    'camAction("軸模式",LibraryFiveAxisSkin208.cyan)',
+    'arrayOf("3AX","4AX","5AX")',
+    'showUnifiedMachiningEditor(frame,doc,status,choice)',
     'toolTipText=LibraryFiveAxisSkin208.SOURCE_MOBILE+" + "+LibraryFiveAxisSkin208.SOURCE_LANDSCAPE',
 ):
     require(desktop, needle, "STUDIO_WINDOWS_LIBRARY_5X_REAL_CAM_SKIN_208")
@@ -1369,3 +1371,5 @@ for needle in (
 print("SHARED_SYNC_RUNTIME_WATCHER_GATE_PASS|STUDIO_234|ANDROID|WINDOWS|POLL_1500MS|NO_AUTO_APPLY|NO_SILENT_OVERWRITE|VISIBLE_STATUS|OFFLINE_FIRST")
 
 print("STUDIO_STABLE_ANDROID_BASELINE_GATE_PASS|238|ANDROID_16|API_36|ANDROID_17_API_37_PREVIEW_TRACK_ONLY|NO_PREVIEW_IN_RELEASE")
+
+print("STUDIO_CAM_AXIS_SELECTOR_GATE_PASS|239|AXIS_MODE_SELECTOR|3AX|4AX|5AX|NO_DUPLICATE_5AX_PRIMARY_BUTTON")
