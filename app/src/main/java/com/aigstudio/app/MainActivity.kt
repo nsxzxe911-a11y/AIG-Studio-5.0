@@ -718,6 +718,7 @@ class MainActivity : Activity() {
                 gravity=Gravity.END
             })
         }
+        masterRootBar.visibility=View.GONE
         root.addView(masterRootBar,LinearLayout.LayoutParams(-1,-2).apply {
             setMargins(dp(5),dp(5),dp(5),dp(2))
         })
@@ -751,6 +752,7 @@ class MainActivity : Activity() {
             0xFFA0BED2.toInt(), 9f
         ).apply { gravity = Gravity.END })
         brandBar.addView(brandState, LinearLayout.LayoutParams(0, -2, 1f))
+        brandBar.visibility=View.GONE
         root.addView(brandBar, LinearLayout.LayoutParams(-1, -2).apply {
             setMargins(dp(5), dp(5), dp(5), dp(3))
         })
@@ -888,7 +890,9 @@ class MainActivity : Activity() {
             setOnClickListener { showRuntimeHome?.invoke() }
         })
         selectProductionUi(ProductionUiSwitchContract.initialMode)
+        productionUiSwitch.visibility=View.GONE
         root.addView(productionUiSwitch,LinearLayout.LayoutParams(-1,-2))
+        visibleModeTitle.visibility=View.GONE
         root.addView(visibleModeTitle,LinearLayout.LayoutParams(-1,-2))
         networkStateBadge=chromeText(
             "網路 • 本機就緒 • 網路可選",
@@ -896,6 +900,7 @@ class MainActivity : Activity() {
         ).apply{
             contentDescription="NETWORK OPTIONAL STATUS"
         }
+        networkStateBadge.visibility=View.GONE
         root.addView(networkStateBadge,LinearLayout.LayoutParams(-1,-2))
         val maintenanceStrip=FlowLayout(this).apply {
             contentDescription="MAINTENANCE SYSTEM STRIP"
@@ -911,7 +916,9 @@ class MainActivity : Activity() {
                 setOnClickListener { showMaintenanceCenter() }
             })
         }
+        maintenanceStrip.visibility=View.GONE
         root.addView(maintenanceStrip,LinearLayout.LayoutParams(-1,-2))
+        visibleModeActions.visibility=View.GONE
         root.addView(visibleModeActions,LinearLayout.LayoutParams(-1,-2))
 
         cad = CadView(this) {
@@ -923,7 +930,7 @@ class MainActivity : Activity() {
             setPadding(dp(3), dp(2), dp(3), dp(3))
         }
         workspaceColumn.addView(chromeText(
-            WorkstationChromeContract.WORKSPACE,
+            "CAD 繪圖區",
             0xFF3DEBFF.toInt(), 10.5f
         ))
 
@@ -1065,12 +1072,32 @@ class MainActivity : Activity() {
                 width = 0; height = -1; weight = 1f
             }
         })
-        workspaceFrame.addView(
-            machineRail,
-            if(workstationLayout==WorkstationChromeContract.Layout.COMPACT)
-                LinearLayout.LayoutParams(-1, dp(62))
-            else LinearLayout.LayoutParams(dp(132), -1)
-        )
+        machineRail.visibility=View.GONE
+        val cadFormalHeader=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            gravity=Gravity.CENTER_VERTICAL
+            background=panel(0x663DEBFF)
+            setPadding(dp(8),dp(4),dp(8),dp(4))
+            contentDescription="FORMAL CAD PAGE HEADER"
+        }
+        cadFormalHeader.addView(chromeText(
+            "CAD 製圖",
+            0xFF3DEBFF.toInt(),12f
+        ).apply {
+            setTypeface(typeface,android.graphics.Typeface.BOLD)
+        },LinearLayout.LayoutParams(0,-2,1f))
+        cadFormalHeader.addView(RgbGlowButton(this).apply {
+            text="首頁"
+            contentDescription="CAD RETURN HOME"
+            textSize=StudioDisplayPolicy.sp(this,9.5f)
+            minWidth=dp(72)
+            minHeight=dp(42)
+            setRgbState(0xFF3DEBFF.toInt(),false)
+            setOnClickListener { showRuntimeHome?.invoke() }
+        })
+        root.addView(cadFormalHeader,LinearLayout.LayoutParams(-1,-2).apply {
+            setMargins(dp(5),dp(5),dp(5),dp(2))
+        })
         root.addView(workspaceFrame, LinearLayout.LayoutParams(-1, 0, 1f))
 
         // Tool controls now float over the CAD stage; they no longer consume workspace height.
@@ -1095,6 +1122,7 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             background = panel(0x334D7189)
         }
+        workstationFooter.visibility=View.GONE
         root.addView(workstationFooter, LinearLayout.LayoutParams(-1, -2).apply {
             setMargins(dp(5), dp(2), dp(5), dp(2))
         })
@@ -1168,20 +1196,11 @@ class MainActivity : Activity() {
             contentDescription="FORMAL RGB HOME MODES"
             setPadding(dp(4),dp(4),dp(4),dp(4))
         }
-        fun enterWorkstation(mode:String,open:()->Unit={}) {
-            val normalized=mode.trim().uppercase(Locale.US)
-            require(normalized in VisibleFunctionUiContract.requiredModes){"Unsupported HOME mode: $mode"}
+        fun enterCadRuntime() {
             homeRoot.visibility=View.GONE
             root.visibility=View.VISIBLE
-            if(normalized in ProductionUiSwitchContract.modes) {
-                selectProductionUi(normalized)
-            } else {
-                productionUiButtons.forEach { (key,button) ->
-                    button.setRgbState(productionUiColors[key] ?: StudioProductionTheme.accent,false)
-                }
-            }
-            refreshVisibleMode(normalized)
-            open()
+            selectProductionUi("CAD")
+            refreshVisibleMode("CAD")
         }
         fun homeAction(label:String,color:Int,run:()->Unit) {
             homeModes.addView(RgbGlowButton(this).apply {
@@ -1195,13 +1214,13 @@ class MainActivity : Activity() {
                 setOnClickListener { run() }
             })
         }
-        homeAction("CAD",0xFF3DEBFF.toInt()){enterWorkstation("CAD")}
-        homeAction("CAM",0xFF22C55E.toInt()){enterWorkstation("CAM"){showCamWorkstation()}}
-        homeAction("SIM",0xFF8B5CF6.toInt()){enterWorkstation("SIM"){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}}
-        homeAction("3AX",0xFF3B82F6.toInt()){enterWorkstation("3AX"){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}}
-        homeAction("4AX",0xFFF59E0B.toInt()){enterWorkstation("4AX"){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}}
-        homeAction("5AX",0xFFEC4899.toInt()){enterWorkstation("5AX"){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}}
-        homeAction("NC",0xFF50AAFF.toInt()){enterWorkstation("NC"){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}}
+        homeAction("CAD",0xFF3DEBFF.toInt()){enterCadRuntime()}
+        homeAction("CAM",0xFF22C55E.toInt()){showCamWorkstation()}
+        homeAction("SIM",0xFF8B5CF6.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
+        homeAction("3AX",0xFF3B82F6.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
+        homeAction("4AX",0xFFF59E0B.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}
+        homeAction("5AX",0xFFEC4899.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
+        homeAction("NC",0xFF50AAFF.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}
         homeAction("AI",0xFF8B5CF6.toInt()){showAiSystemSuiteDialog()}
         homeContent.addView(homeModes,LinearLayout.LayoutParams(-1,0,1f))
 
@@ -2202,7 +2221,7 @@ class MainActivity : Activity() {
             setPadding(dp(6),dp(6),dp(6),dp(6))
         }
         root.addView(TextView(this).apply {
-            text="AIG CNC • 3D / 3AX / 4AX / 5AX + NC • 智慧排版"
+            text="AIG CNC • 加工模擬 / 多軸控制"
             setTextColor(0xFF3DEBFF.toInt())
             textSize=StudioDisplayPolicy.sp(this,11.5f)
             setTypeface(typeface,android.graphics.Typeface.BOLD)
@@ -2731,8 +2750,13 @@ class MainActivity : Activity() {
         action("BACK",0xFFF59E0B.toInt(),"返回"){ dialog.dismiss() }
         root.addView(actionScroll,LinearLayout.LayoutParams(-1,-2))
 
+        val formalModeTitle=when(initialMode){
+            "3D" -> "SIM"
+            "NC_EDIT" -> "NC"
+            else -> initialMode
+        }
         dialog=AlertDialog.Builder(this)
-            .setTitle("AIG CNC • UNIFIED MACHINING WORKSPACE")
+            .setTitle("AIG CNC • "+formalModeTitle)
             .setView(root)
             .create()
         dialog.setOnDismissListener {

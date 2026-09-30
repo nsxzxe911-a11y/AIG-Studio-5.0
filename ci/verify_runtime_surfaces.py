@@ -298,9 +298,9 @@ for needle in (
     'bootShell.addView(runtimeHost, 0',
     'contentDescription="RETURN TO FORMAL RGB HOME"',
 ):
-    require(android, needle, "STUDIO_FORMAL_RGB_HOME_FIRST_244")
+    require(android, needle, "STUDIO_FORMAL_RGB_HOME_FIRST_245")
 if 'bootShell.addView(root, 0' in android:
-    raise SystemExit("STUDIO_CAD_WORKSTATION_DIRECT_BOOT_244")
+    raise SystemExit("STUDIO_CAD_WORKSTATION_DIRECT_BOOT_245")
 home_start=android.index('contentDescription="AIG CNC FORMAL RGB HOME"')
 home_end=android.index('runtimeHost.addView(homeRoot',home_start)
 home_source=android[home_start:home_end]
@@ -313,8 +313,8 @@ for forbidden in (
     "2D CAD • LIVE WORKSPACE",
 ):
     if forbidden in home_source:
-        raise SystemExit("STUDIO_HOME_ENGINEERING_CHROME_244: "+forbidden)
-print("STUDIO_FORMAL_RGB_HOME_FIRST_GATE_PASS|244|RGB_HOME|CAD_CAM_SIM_3AX_4AX_5AX_NC_AI|WORK_MAINTENANCE_NESTED|CAD_WORKSTATION_NOT_BOOT")
+        raise SystemExit("STUDIO_HOME_ENGINEERING_CHROME_245: "+forbidden)
+print("STUDIO_FORMAL_RGB_HOME_FIRST_GATE_PASS|245|RGB_HOME|CAD_CAM_SIM_3AX_4AX_5AX_NC_AI|WORK_MAINTENANCE_NESTED|CAD_WORKSTATION_NOT_BOOT")
 print("PRODUCTION_SHELL_EVIDENCE_RUNTIME_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY")
 for needle in (
     'const val BACKGROUND_AUTO_DOWNLOAD = false',
@@ -1409,14 +1409,25 @@ print("STUDIO_STABLE_ANDROID_BASELINE_GATE_PASS|238|ANDROID_16|API_36|ANDROID_17
 
 print("STUDIO_CAM_AXIS_SELECTOR_GATE_PASS|239|AXIS_MODE_SELECTOR|3AX|4AX|5AX|NO_DUPLICATE_5AX_PRIMARY_BUTTON")
 
-print("STUDIO_UI_VERIFY_SIDELOAD_ID_GATE_PASS|244|VERSION_SCOPED_PACKAGE|NO_DEBUG_SIGNATURE_COLLISION_WITH_PRIOR_UI_VERIFY")
+print("STUDIO_UI_VERIFY_SIDELOAD_ID_GATE_PASS|245|VERSION_SCOPED_PACKAGE|NO_DEBUG_SIGNATURE_COLLISION_WITH_PRIOR_UI_VERIFY")
 for needle in (
-    'val mode=id.trim().uppercase(Locale.US)',
-    'require(mode in VisibleFunctionUiContract.requiredModes)',
-    'if(normalized in ProductionUiSwitchContract.modes)',
-    'homeAction("3AX"',
-    'homeAction("4AX"',
-    'homeAction("5AX"',
+    'fun enterCadRuntime()',
+    'homeAction("CAD",0xFF3DEBFF.toInt()){enterCadRuntime()}',
+    'homeAction("SIM",0xFF8B5CF6.toInt()){showUnifiedMachiningWorkspace',
+    'homeAction("3AX",0xFF3B82F6.toInt()){showUnifiedMachiningWorkspace',
+    'homeAction("4AX",0xFFF59E0B.toInt()){showUnifiedMachiningWorkspace',
+    'homeAction("5AX",0xFFEC4899.toInt()){showUnifiedMachiningWorkspace',
+    'homeAction("NC",0xFF50AAFF.toInt()){showUnifiedMachiningWorkspace',
+    'contentDescription="FORMAL CAD PAGE HEADER"',
+    '"CAD 製圖",',
+    'masterRootBar.visibility=View.GONE',
+    'brandBar.visibility=View.GONE',
+    'networkStateBadge.visibility=View.GONE',
+    'maintenanceStrip.visibility=View.GONE',
+    'machineRail.visibility=View.GONE',
+    'workstationFooter.visibility=View.GONE',
 ):
-    require(android, needle, "STUDIO_HOME_AXIS_ENTRY_244")
-print("STUDIO_HOME_AXIS_ENTRY_GATE_PASS|244|3AX|4AX|5AX|NO_NORMALIZE_CRASH")
+    require(android, needle, "STUDIO_FORMAL_INNER_RUNTIME_245")
+if 'fun enterWorkstation(' in android:
+    raise SystemExit("STUDIO_OLD_ROOT_FIRST_ENTRY_245")
+print("STUDIO_FORMAL_INNER_RUNTIME_GATE_PASS|245|CAD_CLEAN_PAGE|CAM_SIM_3AX_4AX_5AX_NC_DIRECT|NO_ENGINEERING_ROOT_FIRST")
