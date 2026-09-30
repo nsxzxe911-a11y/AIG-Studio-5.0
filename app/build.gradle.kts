@@ -11,8 +11,8 @@ val releaseVersionName = releaseVersion.getProperty("versionName")
     ?: error("versionName is required")
 val releaseMajor = releaseVersionName.substringBefore('.').toInt()
 val releaseVersionCode = releaseMajor * 10000
-val androidCompileSdk = 37
-val androidTargetSdk = 37
+val androidCompileSdk = 36
+val androidTargetSdk = 36
 
 android {
     namespace = "com.aigstudio.app"
@@ -34,8 +34,8 @@ dependencies { implementation(project(":core")) }
 
 tasks.register("verifyAndroidPlatform") {
     doLast {
-        check(androidCompileSdk == 37) { "compileSdk must track current stable Android API 37: $androidCompileSdk" }
-        check(androidTargetSdk == 37) { "targetSdk must track current stable Android API 37: $androidTargetSdk" }
-        println("STUDIO_ANDROID_PLATFORM_BASELINE_PASS|API_37|AGP_9_4_0|BUILT_IN_KOTLIN|NO_BUILD_TOOLS_PIN")
+        check(androidCompileSdk == 36) { "compileSdk must track current stable Android API 36: $androidCompileSdk" }
+        check(androidTargetSdk == 36) { "targetSdk must track current stable Android API 36: $androidTargetSdk" }
+        println("STUDIO_ANDROID_PLATFORM_BASELINE_PASS|API_36_STABLE|AGP_9_4_0|BUILT_IN_KOTLIN|NO_BUILD_TOOLS_PIN|API_37_PREVIEW_NOT_RELEASE_BASELINE")
     }
 }

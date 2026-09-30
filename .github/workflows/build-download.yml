@@ -29,7 +29,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Install stable Android SDK 37
+      - name: Install latest stable Android SDK 36 + track Android 17 preview
         shell: bash
         run: |
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
@@ -37,7 +37,12 @@ jobs:
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           LATEST_BUILD_TOOLS="$("$SDKMANAGER" --list | sed -nE 's/^[[:space:]]*(build-tools;[0-9]+(\.[0-9]+){2})[[:space:]]+.*/\1/p' | sort -V | tail -1)"
           test -n "$LATEST_BUILD_TOOLS"
-          "$SDKMANAGER" "platform-tools" "platforms;android-37" "$LATEST_BUILD_TOOLS"
+          "$SDKMANAGER" "platform-tools" "platforms;android-36" "$LATEST_BUILD_TOOLS"
+          if "$SDKMANAGER" --list | grep -Fq "platforms;android-37"; then
+            echo "ANDROID_17_API37_STABLE_PACKAGE=AVAILABLE"
+          else
+            echo "ANDROID_17_API37_STABLE_PACKAGE=NOT_AVAILABLE_PREVIEW_TRACK_ONLY"
+          fi
           echo "LATEST_BUILD_TOOLS=$LATEST_BUILD_TOOLS" >> "$GITHUB_ENV"
       - uses: gradle/actions/setup-gradle@v6
         with:
@@ -62,7 +67,7 @@ jobs:
           grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
           grep -Fq 'PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED_3AX_4AX_5AX|STABLE_ORDER' runtime-surfaces.log
           grep -Fq 'SHARED_SYNC_RUNTIME_WATCHER_GATE_PASS|STUDIO_234|ANDROID|WINDOWS|POLL_1500MS|NO_AUTO_APPLY|NO_SILENT_OVERWRITE|VISIBLE_STATUS|OFFLINE_FIRST' runtime-surfaces.log
-          echo 'STUDIO_TOOLCHAIN_237=AGP_9.4.0|KOTLIN_2.4.20|GRADLE_9.7.0|JDK_17|API_37|LATEST_BUILD_TOOLS|AXIS_NESTED_GATE|CHECKOUT_V7|SETUP_GRADLE_V6'
+          echo 'STUDIO_TOOLCHAIN_238=AGP_9.4.0|KOTLIN_2.4.20|GRADLE_9.7.0|JDK_17|API_36_STABLE|API_37_PREVIEW_TRACKED|LATEST_BUILD_TOOLS|AXIS_NESTED_GATE|CHECKOUT_V7|SETUP_GRADLE_V6'
           grep -Fq 'VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' runtime-surfaces.log
           grep -Fq 'OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' runtime-surfaces.log
           grep -Fq 'NETWORK_RESUME_UI_RUNTIME_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY' runtime-surfaces.log
@@ -133,7 +138,7 @@ jobs:
           "$BUILD_TOOLS_DIR/zipalign" -c -P 16 4 "$APK"
           "$BUILD_TOOLS_DIR/apksigner" verify --verbose "$APK"
           "$BUILD_TOOLS_DIR/aapt" dump badging "$APK" | grep -F "package: name='com.aigstudio.app'"
-          "$BUILD_TOOLS_DIR/aapt" dump badging "$APK" | grep -F "targetSdkVersion:'37'"
+          "$BUILD_TOOLS_DIR/aapt" dump badging "$APK" | grep -F "targetSdkVersion:'36'"
           (cd release/android && sha256sum -c SHA256SUMS.txt)
           (cd release/source && sha256sum -c SHA256SUMS.txt)
           VERSION="$(awk -F= '$1=="versionName"{print $2}' release-version.properties)"

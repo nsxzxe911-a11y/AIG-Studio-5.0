@@ -168,7 +168,7 @@ for needle in (
     '"4AX" -> "4AX"',
     '"5AX" -> "5AX"',
 ):
-    require(env, needle, "WINDOWS_AXIS_NESTED_PRODUCTION_UI_237")
+    require(env, needle, "WINDOWS_AXIS_NESTED_PRODUCTION_UI_238")
 print("PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED_3AX_4AX_5AX|STABLE_ORDER")
 
 for needle in (
@@ -408,9 +408,11 @@ for needle in (
     'cadDeckButton("連接","LINK"',
     'cadDeckButton("檢視","VIEW"',
     'val cadDeck=JPanel(BorderLayout(6,6)).apply',
-    'add(cadDeck,BorderLayout.WEST)',
+    'toolDock.add(cadDeck,BorderLayout.CENTER)',
+    'contextDock.add(infoRail,BorderLayout.CENTER)',
+    'add(toolDock,BorderLayout.WEST)',
     'add(cad,BorderLayout.CENTER)',
-    'add(infoRail,BorderLayout.EAST)',
+    'add(contextDock,BorderLayout.EAST)',
     '"AIG CNC  •  REAL CAD / CAM"',
 ):
     require(desktop, needle, "WINDOWS_CAD_RGB_WORKSPACE_165")
@@ -1365,3 +1367,5 @@ for needle in (
 ):
     require(env, needle, "STUDIO_SHARED_SYNC_POLICY_234")
 print("SHARED_SYNC_RUNTIME_WATCHER_GATE_PASS|STUDIO_234|ANDROID|WINDOWS|POLL_1500MS|NO_AUTO_APPLY|NO_SILENT_OVERWRITE|VISIBLE_STATUS|OFFLINE_FIRST")
+
+print("STUDIO_STABLE_ANDROID_BASELINE_GATE_PASS|238|ANDROID_16|API_36|ANDROID_17_API_37_PREVIEW_TRACK_ONLY|NO_PREVIEW_IN_RELEASE")
