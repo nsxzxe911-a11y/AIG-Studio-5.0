@@ -63,6 +63,11 @@ button,textarea,input,select{font:inherit}button{color:inherit}
 .editactions{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.editactions .btn{min-height:34px}
 .runtimeStatus{display:grid;grid-template-columns:repeat(6,minmax(90px,1fr));gap:6px;margin-top:8px}
 .metric{padding:8px;border:1px solid #173344;border-radius:9px;background:#04080b}.metric b{display:block;font-size:9px;color:var(--muted);margin-bottom:2px}.metric span{font-size:12px}
+.aigIssueCenter{display:none;margin:7px 0;padding:8px 10px;border-radius:9px;border:1px solid #31414b;background:#05090c;font-size:11px;line-height:1.5}
+.aigIssueCenter.show{display:block}.aigIssueCenter.info{border-color:#24546b;color:#bfefff}.aigIssueCenter.warn{border-color:#806119;color:#ffd888;background:rgba(255,179,38,.06)}.aigIssueCenter.error{border-color:#7e2634;color:#ffbdc6;background:rgba(255,70,95,.07)}
+.fieldIssue{display:none;margin-top:4px;font-size:9px;line-height:1.35}.fieldIssue.show{display:block}.fieldIssue.warn{color:#ffcf70}.fieldIssue.error{color:#ff8fa1}
+input.aigWarn,select.aigWarn,textarea.aigWarn{border-color:#9b731d!important;box-shadow:0 0 0 1px rgba(255,179,38,.15)!important}
+input.aigError,select.aigError,textarea.aigError{border-color:#a82d43!important;box-shadow:0 0 0 1px rgba(255,70,95,.18)!important}
 .progress{height:7px;background:#101820;border-radius:99px;overflow:hidden;margin-top:7px}.progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));box-shadow:0 0 12px rgba(39,233,255,.35)}
 .workgrid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:9px;min-height:690px}
 .canvas{min-height:580px;background:
@@ -254,6 +259,69 @@ function menuPage(){
  '<section class="panel" style="margin-top:9px;border-color:rgba(255,70,95,.35)"><div class="body" style="color:#ffbdc6">Reset / Disconnect / 清除資料 / 維修診斷：只從功能選單明確進入，破壞性操作需二次確認。</div></section></div>';
 }
 const runtimes={};
+
+const AIG_ISSUES={last:null};
+function aigFieldLabel(el){
+ const label=el?.closest?.("label");if(label){const b=label.querySelector("b");if(b?.textContent)return b.textContent.trim();const txt=[...label.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join(" ").trim();if(txt)return txt}
+ return el?.getAttribute?.("aria-label")||el?.dataset?.label||el?.name||el?.dataset?.axis||el?.placeholder||"欄位";
+}
+function aigEnsureIssueCenter(root){
+ if(!root)return null;let box=root.querySelector(":scope > .aigIssueCenter");
+ if(!box){box=document.createElement("div");box.className="aigIssueCenter";box.setAttribute("role","status");box.setAttribute("aria-live","polite");root.prepend(box)}
+ return box;
+}
+function aigShowIssue(root,severity,message){
+ const box=aigEnsureIssueCenter(root);if(!box)return;
+ const level=severity==="error"?"error":severity==="warn"?"warn":"info";
+ box.className="aigIssueCenter show "+level;
+ box.textContent=(level==="error"?"錯誤：":level==="warn"?"提醒：":"訊息：")+message;
+ AIG_ISSUES.last={severity:level,message,time:Date.now()};
+}
+function aigClearIssue(root){
+ const box=root?.querySelector?.(":scope > .aigIssueCenter");if(box){box.className="aigIssueCenter";box.textContent=""}
+}
+function aigFieldIssue(el,severity,message){
+ if(!el)return;
+ el.classList.remove("aigWarn","aigError");el.removeAttribute("aria-invalid");
+ let tip=el.parentElement?.querySelector?.(":scope > .fieldIssue");
+ if(!tip&&el.parentElement){tip=document.createElement("small");tip.className="fieldIssue";el.insertAdjacentElement("afterend",tip)}
+ if(!severity||!message){if(tip){tip.className="fieldIssue";tip.textContent=""}return}
+ const level=severity==="error"?"error":"warn";el.classList.add(level==="error"?"aigError":"aigWarn");
+ if(level==="error")el.setAttribute("aria-invalid","true");
+ if(tip){tip.className="fieldIssue show "+level;tip.textContent=message}
+}
+function aigValidateField(el){
+ if(!el||el.disabled||el.type==="file"||el.type==="button")return true;
+ const label=aigFieldLabel(el),value=String(el.value??"").trim();
+ if(el.required&&!value){aigFieldIssue(el,"error",label+"：必填。");return false}
+ if(el.type==="number"&&value!==""){
+   const n=Number(value);
+   if(!Number.isFinite(n)){aigFieldIssue(el,"error",label+"：請輸入有效數字。");return false}
+   if(el.min!==""&&n<Number(el.min)){aigFieldIssue(el,"error",label+"：不可小於 "+el.min+"。");return false}
+   if(el.max!==""&&n>Number(el.max)){aigFieldIssue(el,"error",label+"：不可大於 "+el.max+"。");return false}
+   if(el.validity?.stepMismatch){aigFieldIssue(el,"warn",label+"：建議依步進 "+el.step+" 輸入。");return true}
+ }
+ aigFieldIssue(el,null,"");return true;
+}
+function aigValidateAllFields(root){
+ let ok=true;root?.querySelectorAll?.("input,select,textarea").forEach(el=>{if(!aigValidateField(el))ok=false});return ok;
+}
+function aigBindFieldFeedback(root){
+ if(!root||root.dataset.aigFieldFeedback==="1")return;root.dataset.aigFieldFeedback="1";aigEnsureIssueCenter(root);
+ root.addEventListener("input",e=>{const el=e.target.closest?.("input,select,textarea");if(el)aigValidateField(el)});
+ root.addEventListener("change",e=>{const el=e.target.closest?.("input,select,textarea");if(el)aigValidateField(el)});
+ root.querySelectorAll("input,select,textarea").forEach(aigValidateField);
+}
+function aigGuard(root,label,fn,fallback=null){
+ try{return fn()}catch(err){
+   const detail=err&&err.message?err.message:String(err||"未知錯誤");
+   aigShowIssue(root,"error",label+"： "+detail+"。AIG 已保留目前資料並繼續運作。");
+   return fallback;
+ }
+}
+window.addEventListener("error",e=>{const active=document.querySelector(".screen.active");aigShowIssue(active||document.body,"error","Runtime 發生可恢復錯誤："+(e.message||"未知錯誤")+"；其他功能可繼續使用。");e.preventDefault()});
+window.addEventListener("unhandledrejection",e=>{const active=document.querySelector(".screen.active");const m=e.reason?.message||String(e.reason||"未知錯誤");aigShowIssue(active||document.body,"error","非同步作業失敗："+m+"；其他功能可繼續使用。");e.preventDefault()});
+
 function parseWords(line){
  const clean=line.replace(/\([^)]*\)/g," ").replace(/;.*$/," ").trim().toUpperCase();
  const out={};
