@@ -1658,7 +1658,7 @@ class MainActivity : Activity() {
             setTextColor(0xFFE1EFFF.toInt())
             textSize=12.5f
             text=buildString{
-                appendLine("AIG CNC 223.0.0 • 正式 Runtime UI 內建維修")
+                appendLine("AIG CNC "+BuildConfig.VERSION_NAME+" • 正式 Runtime UI 內建維修")
                 appendLine("BOOT="+IntegratedMaintenanceUiContract.DEFAULT_BOOT_TARGET+" • separate engineering shell=OFF")
                 appendLine(networkText+" • 維修可離線")
                 appendLine("RECOVERY="+if(!checkpoint.isNullOrBlank())"CAD READY" else "NONE"+
