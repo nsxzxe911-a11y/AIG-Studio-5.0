@@ -7,6 +7,7 @@ on:
       - 'release-version.properties'
       - 'web/**'
       - 'AIG_UI_THEME_REPOSITORY/themes/**'
+      - 'AIG_UI_THEME_REPOSITORY/repository-index.json'
       - 'app/src/main/assets/aig-themes/themes/**'
       - 'app/src/main/assets/aig-themes/repository-index.json'
       - 'ci/verify_runtime_surfaces.py'
@@ -39,7 +40,7 @@ jobs:
               'app/src/main/assets/aig-themes/themes/',
               '.github/workflows/ui-art-diff-gate.yml',
           )
-          allowed_exact={'release-version.properties','ci/verify_web_runtime.mjs','ci/verify_runtime_surfaces.py','core/src/main/kotlin/com/aigstudio/core/UiAssetContract.kt','app/src/main/assets/aig-themes/repository-index.json','app/src/main/java/com/aigstudio/app/MainActivity.kt','app/src/main/java/com/aigstudio/app/Machining3DView.kt','desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'}
+          allowed_exact={'release-version.properties','ci/verify_web_runtime.mjs','ci/verify_runtime_surfaces.py','core/src/main/kotlin/com/aigstudio/core/UiAssetContract.kt','AIG_UI_THEME_REPOSITORY/repository-index.json','app/src/main/assets/aig-themes/repository-index.json','app/src/main/java/com/aigstudio/app/MainActivity.kt','app/src/main/java/com/aigstudio/app/Machining3DView.kt','desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'}
           blocked=[p for p in changed if p not in allowed_exact and not p.startswith(allowed_prefixes)]
           if blocked:
               raise SystemExit('UI_ART_DIFF_BLOCKED_CORE_CHANGE: '+','.join(blocked))
@@ -54,7 +55,11 @@ jobs:
           from pathlib import Path
           theme=json.loads(Path('app/src/main/assets/aig-themes/themes/aigii_rgb_neon_v2/theme.json').read_text(encoding='utf-8-sig'))
           index=json.loads(Path('app/src/main/assets/aig-themes/repository-index.json').read_text(encoding='utf-8-sig'))
+          root_index=json.loads(Path('AIG_UI_THEME_REPOSITORY/repository-index.json').read_text(encoding='utf-8-sig'))
           assert index['default_theme_id']=='aigii_rgb_neon_v2'
+          assert root_index['default_theme_id']=='aigii_rgb_neon_v2'
+          assert next(x for x in index['themes'] if x['theme_id']=='aigii_rgb_neon_v2')['version']==theme['theme_version']
+          assert next(x for x in root_index['themes'] if x['theme_id']=='aigii_rgb_neon_v2')['version']==theme['theme_version']
           assert theme['style_profile']=='AIG_II_FULL_RGB_GLASS'
           assert theme['background_color']=='#020407'
           assert theme['panel_color']=='#07111B'
