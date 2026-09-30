@@ -659,6 +659,18 @@ function runtimeStockEnvelope(parsed,cfg={}){
  const spanX=outMaxX-outMinX,spanY=outMaxY-outMinY,cx=(outMinX+outMaxX)/2,cy=(outMinY+outMaxY)/2,tableR=Math.max(spanX,spanY)*.72;
  return{minX:outMinX,maxX:outMaxX,minY:outMinY,maxY:outMaxY,minZ:stockBottom,maxZ:stockTop,stockTop,stockBottom,stockH,spanX,spanY,cx,cy,tableR,tableBottom:stockBottom-12,tableTop:stockBottom-4,explicit:hasExplicit,explicitXY:hasXY};
 }
+function runtimeAssemblyBoxes(cfg={}){
+ const items=Array.isArray(cfg?.assembly?.items)?cfg.assembly.items:[];
+ return items.filter(item=>item&&item.enabled!==false).map(item=>{
+   const x=Number(item.x),y=Number(item.y),z=Number(item.z),w=Number(item.w),d=Number(item.d),h=Number(item.h);
+   if(![x,y,z,w,d,h].every(Number.isFinite)||w<=0||d<=0||h<=0)return null;
+   return{
+     id:String(item.id??"fixture"),type:String(item.type||"FIXTURE"),name:String(item.name||item.type||"夾治具"),
+     x,y,z,w,d,h,
+     minX:x-w/2,maxX:x+w/2,minY:y-d/2,maxY:y+d/2,minZ:z,maxZ:z+h
+   };
+ }).filter(Boolean);
+}
 function sphereHitsBox(p,r,b){
  const dx=p.x<b.minX?b.minX-p.x:p.x>b.maxX?p.x-b.maxX:0;
  const dy=p.y<b.minY?b.minY-p.y:p.y>b.maxY?p.y-b.maxY:0;
@@ -670,6 +682,7 @@ function scanRuntimeCollisions(parsed,axis,cfg={}){
  const toolR=Math.max(.05,Number(cfg.toolDia)||10)/2,cutterLen=Math.max(1,Number(cfg.cutterLen)||30);
  const holderR=Math.max(toolR,Math.max(1,Number(cfg.holderDia)||25)/2),holderLen=Math.max(1,Number(cfg.holderLen)||25);
  const stockBox={minX:env.minX,maxX:env.maxX,minY:env.minY,maxY:env.maxY,minZ:env.minZ,maxZ:env.maxZ};
+ const fixtureBoxes=runtimeAssemblyBoxes(cfg);
  function localCenter(p,d){
    const a=axis==="3AX"?0:Number(p.A||0),b=axis==="5AX"?Number(p.B||0):0;
    return inverseRuntimeABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b);
@@ -684,6 +697,13 @@ function scanRuntimeCollisions(parsed,axis,cfg={}){
  function segmentHitsTable(p,d0,d1,r,steps){
    for(let k=0;k<=steps;k++){const q=localCenter(p,d0+(d1-d0)*k/steps);if(tableHit(q,r))return q}return null;
  }
+ function segmentHitsFixture(p,d0,d1,r,steps){
+   for(let k=0;k<=steps;k++){
+     const q=localCenter(p,d0+(d1-d0)*k/steps);
+     for(const fixture of fixtureBoxes)if(sphereHitsBox(q,r,fixture))return{point:q,fixture};
+   }
+   return null;
+ }
  for(let bi=0;bi<blocks.length;bi++){
    const bl=blocks[bi];if(bl.kind!=="move")continue;
    const dx=Number(bl.to.X||0)-Number(bl.from.X||0),dy=Number(bl.to.Y||0)-Number(bl.from.Y||0),dz=Number(bl.to.Z||0)-Number(bl.from.Z||0);
@@ -695,6 +715,10 @@ function scanRuntimeCollisions(parsed,axis,cfg={}){
      const t=j/samples,p=sampleRuntimeBlock(bl,t);
      const holderStock=segmentHitsStock(p,cutterLen,cutterLen+holderLen,holderR,8);
      if(holderStock){hit={type:"HOLDER_STOCK",message:"刀柄碰工件",point:holderStock,t};break}
+     const toolFixture=segmentHitsFixture(p,0,cutterLen,toolR,8);
+     if(toolFixture){hit={type:"TOOL_FIXTURE",message:"刀具碰夾治具 "+toolFixture.fixture.name,point:toolFixture.point,fixtureId:toolFixture.fixture.id,fixtureType:toolFixture.fixture.type,t};break}
+     const holderFixture=segmentHitsFixture(p,cutterLen,cutterLen+holderLen,holderR,8);
+     if(holderFixture){hit={type:"HOLDER_FIXTURE",message:"刀柄碰夾治具 "+holderFixture.fixture.name,point:holderFixture.point,fixtureId:holderFixture.fixture.id,fixtureType:holderFixture.fixture.type,t};break}
      const toolTable=segmentHitsTable(p,0,cutterLen,toolR,8);
      if(toolTable){hit={type:"TOOL_TABLE",message:"刀具碰工作台",point:toolTable,t};break}
      const holderTable=segmentHitsTable(p,cutterLen,cutterLen+holderLen,holderR,8);
@@ -706,7 +730,7 @@ function scanRuntimeCollisions(parsed,axis,cfg={}){
    }
    if(hit)collisions.push({...hit,blockIndex:bi,line:bl.line,raw:bl.raw,subprogram:bl.subprogram||parsed.mainProgram||"MAIN"});
  }
- return{collisions,envelope:env,config:{toolR,cutterLen,holderR,holderLen}};
+ return{collisions,envelope:env,fixtures:fixtureBoxes,config:{toolR,cutterLen,holderR,holderLen}};
 }
 
 function makeGlScene(canvas,axis){
@@ -1005,6 +1029,12 @@ function makeGlScene(canvas,axis){
      if(axis!=="3AX"){
        drawMesh(cube,T(-tableR-7,0,stockBottom-7),rgb("#24394b"),vp);drawMesh(cube,T(tableR+7,0,stockBottom-7),rgb("#24394b"),vp);
      }
+     const fixtureBoxes=runtimeAssemblyBoxes({assembly:scene.assembly});
+     for(const fixture of fixtureBoxes){
+       const model=M(R,M(T(fixture.x,fixture.y,fixture.z+fixture.h/2),S(fixture.w,fixture.d,fixture.h)));
+       const color=fixture.type==="VISE_JAW"?rgb("#9a6d45"):fixture.type==="CLAMP"?rgb("#7b5ca8"):rgb("#506878");
+       drawMesh(cube,model,color,vp);
+     }
 
      const sampleBlock=scene.sampleBlock;
      for(let i=0;i<moves.length;i++){
@@ -1074,9 +1104,12 @@ function makeRuntime(root){
  const g55x=root.querySelector("[data-g55-x]"),g55y=root.querySelector("[data-g55-y]"),g55z=root.querySelector("[data-g55-z]");
  const h1=root.querySelector("[data-h1]"),h4=root.querySelector("[data-h4]"),h12=root.querySelector("[data-h12]");
  let stockConfig=aigJsonRead(root,"aig-stock-v1",null,"毛坯資料");
+ let assemblyConfig=aigJsonRead(root,"aig-assembly-v1",{version:1,items:[]},"工件組裝");
  const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,optionalStop:false,blockSkip:false,last:performance.now(),history:[],historyIndex:-1,collisions:[],collisionAlarm:null};
  const onStockUpdated=e=>{stockConfig=e?.detail||aigJsonRead(root,"aig-stock-v1",null,"毛坯資料");aigGuard(root,axis+" 毛坯更新",()=>parse(false),null,"warn")};
+ const onAssemblyUpdated=e=>{assemblyConfig=e?.detail||aigJsonRead(root,"aig-assembly-v1",{version:1,items:[]},"工件組裝");aigGuard(root,axis+" 組裝更新",()=>parse(false),null,"warn")};
  window.addEventListener("aig-stock-updated",onStockUpdated);
+ window.addEventListener("aig-assembly-updated",onAssemblyUpdated);
  function validateMachineFields(){
   [toolInput,cutterInput,holderDiaInput,holderLenInput,safeInput,g73Input,g54x,g54y,g54z,g55x,g55y,g55z,h1,h4,h12].forEach(aigValidateField);
   const tool=Number(toolInput.value),cutter=Number(cutterInput.value),holderDia=Number(holderDiaInput.value),holderLen=Number(holderLenInput.value),safe=Number(safeInput.value),g73=Number(g73Input.value);
@@ -1097,6 +1130,7 @@ function makeRuntime(root){
     safeZ:aigFiniteNumber(safeInput.value,5),
     g73Retract:Math.max(0,aigFiniteNumber(g73Input.value,.5)),
     stock:stockConfig,
+    assembly:assemblyConfig,
     offsets:{
       G54:{X:aigFiniteNumber(g54x.value,0),Y:aigFiniteNumber(g54y.value,0),Z:aigFiniteNumber(g54z.value,0)},
       G55:{X:aigFiniteNumber(g55x.value,0),Y:aigFiniteNumber(g55y.value,0),Z:aigFiniteNumber(g55z.value,0)}
@@ -1296,7 +1330,7 @@ function makeRuntime(root){
  function draw(){
   if(!state.parsed)return;
   const webglOk=glScene?.render({
-    parsed:state.parsed,index:state.index,t:state.t,pos:currentPos(),toolDia:settings().toolDia,cutterLen:settings().cutterLen,holderDia:settings().holderDia,holderLen:settings().holderLen,stock:stockConfig,collisionAlarm:state.collisionAlarm,dry:state.dry,
+    parsed:state.parsed,index:state.index,t:state.t,pos:currentPos(),toolDia:settings().toolDia,cutterLen:settings().cutterLen,holderDia:settings().holderDia,holderLen:settings().holderLen,stock:stockConfig,assembly:assemblyConfig,collisionAlarm:state.collisionAlarm,dry:state.dry,
     sampleBlock:(bl,t)=>{
       if(bl.motion==="G2"||bl.motion==="G3")return arcPoint(bl,t);
       const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(bl.from[k]||0,bl.to[k]||0,t);return p;
@@ -2175,7 +2209,8 @@ function makeToolpathRuntime(root){
      holderDia:Math.max(1,aigFiniteNumber(holderDiaInput.value,25)),
      holderLen:Math.max(1,aigFiniteNumber(holderLenInput.value,25)),
      safeZ:defaultSafe,g73Retract:.5,
-     stock:state.payload?.stock||aigJsonRead(root,"aig-stock-v1",null,"毛坯資料")
+     stock:state.payload?.stock||aigJsonRead(root,"aig-stock-v1",null,"毛坯資料"),
+     assembly:aigJsonRead(root,"aig-assembly-v1",{version:1,items:[]},"工件組裝")
    };
    const preParsed=parseProgram(code,target,collisionCfg);
    if(preParsed.errors.length){statusEl.textContent="此次未輸出";msgEl.textContent="NC Preflight parser FAIL："+preParsed.errors.slice(0,3).join("；");return null}
