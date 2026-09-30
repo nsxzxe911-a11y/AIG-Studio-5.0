@@ -266,6 +266,7 @@ function parseProgram(text,axis,opts={}){
   if(cycleStart)cycle=cycleStart;
   if(cycle && (cycleStart || Number.isFinite(out.X) || Number.isFinite(out.Y))){
     if(plane!=="G17")warnings.push(cycle+" 目前以 Z 軸鑽孔方式模擬；非 G17 鑽孔循環需再核對機台設定。");
+    if(!absolute)warnings.push(cycle+" + G91 已按增量 R/Z 規則展開，實機前仍需依 Fanuc 參數核對。");
     invokeCycle(index,raw,out,Boolean(cycleStart));
     return;
   }
@@ -408,6 +409,31 @@ function makeRuntime(root){
   const cx=(b.minX+b.maxX)/2,cy=(b.minY+b.maxY)/2;
   return {x:w/2+(p.X-cx)*s,y:h/2-(p.Y-cy)*s,z:p.Z};
  }
+ function pixelsPerMm(b,w,h){
+  const pad=46,sx=(w-pad*2)/(b.maxX-b.minX),sy=(h-pad*2)/(b.maxY-b.minY);
+  return Math.max(.05,Math.min(sx,sy));
+ }
+ function materialRemovalDepth(){
+  if(state.dry||!state.parsed)return 0;
+  let minZ=0;
+  state.parsed.blocks.forEach((bl,i)=>{
+    if(!bl.cutting||i>state.index)return;
+    if(i<state.index)minZ=Math.min(minZ,bl.from.Z,bl.to.Z);
+    else {
+      const p=currentPos();minZ=Math.min(minZ,bl.from.Z,p.Z);
+    }
+  });
+  return Math.max(0,-minZ);
+ }
+ function safetyWarnings(){
+  const safe=settings().safeZ,seen=new Set();
+  for(const bl of state.parsed.blocks){
+    if(bl.kind!=="move"||bl.motion!=="G0")continue;
+    const xy=Math.abs(bl.to.X-bl.from.X)>1e-9||Math.abs(bl.to.Y-bl.from.Y)>1e-9;
+    if(xy && Math.min(bl.from.Z,bl.to.Z)<safe-1e-9)seen.add("快速 XY 移動低於 Safe-Z "+safe.toFixed(3)+" mm");
+  }
+  return [...seen];
+ }
  function draw(){
   if(!state.parsed)return;
   const {w,h}=resize(),c=ctx,b=bounds();c.clearRect(0,0,w,h);c.fillStyle="#010306";c.fillRect(0,0,w,h);
@@ -436,11 +462,26 @@ function makeRuntime(root){
   }
   // full path: G2/G3 use sampled arcs instead of straight chords.
   state.parsed.blocks.forEach(bl=>strokeBlock(bl,1,"rgba(54,148,255,.65)",1.5));
-  // executed material-removal trace.
+  // Executed trace. Cutting blocks use tool diameter; rapid/non-cut moves stay thin.
+  const ppm=pixelsPerMm(b,w,h),toolPx=Math.max(2,Math.min(20,settings().toolDia*ppm));
   state.parsed.blocks.forEach((bl,i)=>{
     if(bl.kind!=="move"||i>state.index)return;
     const tEnd=i<state.index?1:state.t;
-    strokeBlock(bl,tEnd,state.dry?"rgba(255,179,38,.85)":"rgba(51,243,155,.78)",state.dry?2:5);
+    const isCut=Boolean(bl.cutting)&&!state.dry;
+    const stroke=state.dry?"rgba(255,179,38,.86)":isCut?"rgba(51,243,155,.58)":"rgba(210,238,250,.42)";
+    strokeBlock(bl,tEnd,stroke,isCut?toolPx:(state.dry?2:1.6));
+
+    // Z-axis drilling has no XY line in top view, so show actual removed hole diameter.
+    if(isCut && bl.cycle && (bl.cyclePhase==="feed"||bl.cyclePhase==="peck-feed")){
+      const pEnd=i<state.index?bl.to:currentPos();
+      if(pEnd.Z<0){
+        const q=project(pEnd,b,w,h);
+        c.fillStyle="rgba(51,243,155,.18)";
+        c.strokeStyle="rgba(51,243,155,.8)";
+        c.lineWidth=1.2;
+        c.beginPath();c.arc(q.x,q.y,toolPx/2,0,Math.PI*2);c.fill();c.stroke();
+      }
+    }
   });
   // current tool
   const p=currentPos(),q=project(p,b,w,h),tiltX=(p.B||0)*.22,tiltY=(p.A||0)*.22;
@@ -455,17 +496,21 @@ function makeRuntime(root){
   updateHud();
  }
  function updateHud(){
-  const p=currentPos();root.querySelector("[data-hud]").innerHTML=["X","Y","Z"].concat(axis==="4AX"?["A"]:axis==="5AX"?["A","B"]:[]).map(a=>a+" "+(p[a]||0).toFixed(3)).join("<br>")+"<br>F "+Math.round(p.F||0)+"<br>S "+Math.round(p.S||0);
+  const p=currentPos(),bl=currentBlock(),cfg=settings();
+  root.querySelector("[data-hud]").innerHTML=["X","Y","Z"].concat(axis==="4AX"?["A"]:axis==="5AX"?["A","B"]:[]).map(a=>a+" "+(p[a]||0).toFixed(3)).join("<br>")+"<br>F "+Math.round(p.F||0)+"<br>S "+Math.round(p.S||0)+"<br>Ø "+cfg.toolDia.toFixed(3)+(bl?.cycle?"<br>"+bl.cycle:"");
   ["X","Y","Z","A","B","C"].forEach(a=>{const e=root.querySelector('[data-axis-read="'+a+'"]');if(e)e.textContent=a+"　"+(p[a]||0).toFixed(3)});
  }
  function updateUi(){
-  const p=currentPos(),len=state.parsed.blocks.length,progress=len?Math.min(100,((state.index+state.t)/len)*100):0,b=currentBlock();
+  const p=currentPos(),len=state.parsed.blocks.length,progress=len?Math.min(100,((state.index+state.t)/len)*100):0,b=currentBlock(),cfg=settings();
   root.querySelector("[data-spindle]").textContent=Math.round(p.S||0)+" RPM";
   root.querySelector("[data-feed]").textContent=Math.round(p.F||0)+" mm/min";
   root.querySelector("[data-block]").textContent=b?(b.raw.match(/N\s*\d+/i)?.[0]||("LINE "+(b.line+1))):"—";
   root.querySelector("[data-progress-text]").textContent=progress.toFixed(1)+"%";root.querySelector("[data-progress]").style.width=progress+"%";
   root.querySelector("[data-mode]").textContent=b?(b.absolute?"G90":"G91"):"G90";
-  root.querySelector("[data-simstate]").textContent=state.running?"執行中":state.index>=len&&len?"完成":"停止";
+  root.querySelector("[data-cycle]").textContent=b?.cycle||"—";
+  root.querySelector("[data-cycle]").classList.toggle("cycleTag",Boolean(b?.cycle));
+  root.querySelector("[data-toolmetric]").textContent="Ø"+cfg.toolDia.toFixed(3)+" mm";
+  root.querySelector("[data-removal]").textContent=materialRemovalDepth().toFixed(3)+" mm";
   root.querySelector("[data-run-badge]").textContent=state.running?"RUN":state.index>=len&&len?"DONE":"READY";
  }
  function command(cmd){
@@ -475,14 +520,19 @@ function makeRuntime(root){
   if(cmd==="dry"){state.dry=!state.dry;root.querySelector('[data-cmd="dry"]').classList.toggle("warn",state.dry)}
   if(cmd==="single"){state.single=!state.single;root.querySelector('[data-cmd="single"]').classList.toggle("warn",state.single)}
   if(cmd==="reset"){state.running=false;state.index=0;state.t=0}
-  updateUi();renderExec();
+  updateUi();renderExec();draw();
  }
  root.addEventListener("click",e=>{
   const c=e.target.closest("[data-cmd]");if(c){command(c.dataset.cmd);return}
   const ec=e.target.closest("[data-editcmd]");if(!ec)return;
   const cmd=ec.dataset.editcmd;
   if(cmd==="parse"){remember();parse()}
-  if(cmd==="verify"){parse(false);const msg=state.parsed.errors.length?state.parsed.errors.join(" "):"驗證：語法可解析；共 "+state.parsed.blocks.length+" 個區塊。";root.querySelector("[data-verify]").textContent=msg}
+  if(cmd==="verify"){
+    parse(false);
+    const sw=safetyWarnings(),cycles=state.parsed.blocks.filter(b=>b.cycle&&b.cyclePhase==="feed"||b.cycle&&b.cyclePhase==="peck-feed").length;
+    const msg=state.parsed.errors.length?state.parsed.errors.join(" "):sw.length?("驗證完成；Safe-Z 提醒："+sw.join("；")):"驗證：語法可解析；共 "+state.parsed.blocks.length+" 個模擬區塊，鑽孔進給 "+cycles+" 段。";
+    root.querySelector("[data-verify]").textContent=msg
+  }
   if(cmd==="save"){remember();localStorage.setItem("aig-code-"+axis,ta.value);root.querySelector("[data-verify]").textContent="已儲存到本機瀏覽器。"}
   if(cmd==="load"){const v=localStorage.getItem("aig-code-"+axis);if(v!=null){ta.value=v;remember();parse();root.querySelector("[data-verify]").textContent="已讀取本機暫存。"}}
   if(cmd==="clear"){localStorage.removeItem("aig-code-"+axis);root.querySelector("[data-verify]").textContent="已清除本機暫存；目前編輯內容未刪除。"}
