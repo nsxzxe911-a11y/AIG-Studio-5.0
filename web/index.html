@@ -128,7 +128,7 @@ function simPage(axis){
  const axisHtml=axes.map(a=>'<span class="axis '+a.toLowerCase()+'" data-axis-read="'+a+'">'+a+'　0.000</span>').join("");
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
  '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 加工模擬<small>已執行刀路以綠色顯示；未執行刀路以藍色顯示</small></div></div>'+
- '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn danger" data-cmd="reset">重設</button></div>'+
+ '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button></div>'+
  '<div class="runtimeStatus"><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
  '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label></div>'+
@@ -178,6 +178,7 @@ function parseProgram(text,axis,opts={}){
  const lines=text.split(/\r?\n/);
  let pos={X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0},absolute=true,motion="G0",plane="G17",returnMode="G98";
  let cycle=null,cycleZ=null,cycleR=null,cycleQ=null;
+ let machine={T:0,H:0,spindle:"M5",coolant:false};
  const blocks=[];const errors=[];const warnings=[];
  const g73Retract=Math.max(0,Number(opts.g73Retract)||0.5);
 
@@ -186,7 +187,7 @@ function parseProgram(text,axis,opts={}){
    dest.F=Number.isFinite(to.F)?to.F:pos.F;dest.S=Number.isFinite(to.S)?to.S:pos.S;
    blocks.push({
      line,raw,kind:"move",motion:motionName,absolute,plane,from,to:dest,n:null,
-     arc:{I:null,J:null,K:null,R:null},cutting:false,...extra
+     arc:{I:null,J:null,K:null,R:null},cutting:false,machine:{...machine},skipEligible:/^\s*\//.test(raw),...extra
    });
    pos={...dest};
  }
@@ -243,6 +244,15 @@ function parseProgram(text,axis,opts={}){
   const {clean,out}=parseWords(raw);
   if(!clean)return;
   const gMatches=[...clean.matchAll(/G\s*0*(\d+(?:\.\d+)?)/g)].map(m=>"G"+Number(m[1]));
+  const mMatches=[...clean.matchAll(/M\s*0*(\d+)/g)].map(m=>"M"+Number(m[1]));
+  if(Number.isFinite(out.T))machine.T=Math.trunc(out.T);
+  if(Number.isFinite(out.H))machine.H=Math.trunc(out.H);
+  if(mMatches.includes("M3"))machine.spindle="M3";
+  if(mMatches.includes("M4"))machine.spindle="M4";
+  if(mMatches.includes("M5"))machine.spindle="M5";
+  if(mMatches.includes("M8"))machine.coolant=true;
+  if(mMatches.includes("M9"))machine.coolant=false;
+  const stopCode=mMatches.includes("M30")?"M30":mMatches.includes("M0")?"M0":mMatches.includes("M1")?"M1":null;
   if(gMatches.includes("G90"))absolute=true;
   if(gMatches.includes("G91"))absolute=false;
   if(gMatches.includes("G17"))plane="G17";
@@ -259,7 +269,7 @@ function parseProgram(text,axis,opts={}){
 
   if(gMatches.includes("G80")){
     cycle=null;cycleZ=null;cycleR=null;cycleQ=null;
-    blocks.push({line:index,raw,kind:"modal",motion:"G80",absolute,plane,from:{...pos},to:{...pos},cycle:null});
+    blocks.push({line:index,raw,kind:"modal",motion:"G80",absolute,plane,from:{...pos},to:{...pos},cycle:null,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw)});
     return;
   }
 
@@ -272,7 +282,7 @@ function parseProgram(text,axis,opts={}){
     if(Number.isFinite(out.R))cycleR=absolute?out.R:initialZ+out.R;
     if(Number.isFinite(out.Z))cycleZ=absolute?out.Z:(cycleR??initialZ)+out.Z;
     if(Number.isFinite(out.Q))cycleQ=Math.abs(out.Q);
-    blocks.push({line:index,raw,kind:"modal",motion:cycleStart,absolute,plane,from:{...pos},to:{...pos},cycle,cyclePhase:"preset",presetOnly:true});
+    blocks.push({line:index,raw,kind:"modal",motion:cycleStart,absolute,plane,from:{...pos},to:{...pos},cycle,cyclePhase:"preset",presetOnly:true,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw)});
     return;
   }
 
@@ -311,7 +321,7 @@ function parseProgram(text,axis,opts={}){
 
   if(gMatches.includes("G92")){
     for(const a of ["X","Y","Z","A","B","C"]) if(Number.isFinite(out[a])) pos[a]=out[a];
-    blocks.push({line:index,raw,kind:"set",motion:"G92",absolute,plane,from:{...pos},to:{...pos},cycle:null});
+    blocks.push({line:index,raw,kind:"set",motion:"G92",absolute,plane,from:{...pos},to:{...pos},cycle:null,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw)});
     return;
   }
 
@@ -324,12 +334,12 @@ function parseProgram(text,axis,opts={}){
   if(moved){
     const cutting=motion!=="G0" && Math.min(from.Z,to.Z)<0;
     blocks.push({
-      line:index,raw,kind:"move",motion,absolute,plane,from,to,n,cycle:null,cutting,
+      line:index,raw,kind:"move",motion,absolute,plane,from,to,n,cycle:null,cutting,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw),
       arc:{I:Number.isFinite(out.I)?out.I:null,J:Number.isFinite(out.J)?out.J:null,K:Number.isFinite(out.K)?out.K:null,R:Number.isFinite(out.R)?out.R:null}
     });
     pos={...to};
   }else{
-    blocks.push({line:index,raw,kind:"modal",motion,absolute,plane,from:{...pos},to:{...pos},n,cycle:null});
+    blocks.push({line:index,raw,kind:"modal",motion,absolute,plane,from:{...pos},to:{...pos},n,cycle:null,machine:{...machine},stopCode,skipEligible:/^\s*\//.test(raw)});
   }
  });
  if(axis==="3AX" && blocks.some(b=>Math.abs(b.to.A)>1e-9||Math.abs(b.to.B)>1e-9||Math.abs(b.to.C)>1e-9))errors.push("3AX 程式含旋轉軸指令。");
@@ -339,7 +349,7 @@ function parseProgram(text,axis,opts={}){
 function makeRuntime(root){
  const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d");
  const toolInput=root.querySelector("[data-tool-dia]"),safeInput=root.querySelector("[data-safe-z]"),g73Input=root.querySelector("[data-g73-retract]");
- const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,last:performance.now(),history:[],historyIndex:-1};
+ const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,optionalStop:false,blockSkip:false,last:performance.now(),history:[],historyIndex:-1};
  function settings(){return {toolDia:Math.max(.1,Number(toolInput.value)||10),safeZ:Number(safeInput.value)||5,g73Retract:Math.max(0,Number(g73Input.value)||.5)}}
  runtimes[axis]=state;
 
@@ -421,7 +431,22 @@ function makeRuntime(root){
  function tick(now){
   const dt=Math.min(60,now-state.last);state.last=now;
   if(state.running&&state.parsed.blocks.length){
-    const b=currentBlock(),dur=durationFor(b);state.t+=dt/dur;
+    let b=currentBlock();
+    while(b && state.blockSkip && b.skipEligible && state.index<state.parsed.blocks.length){
+      state.index++;state.t=0;b=currentBlock();
+    }
+    if(state.index>=state.parsed.blocks.length){state.running=false;updateUi();renderExec();draw();requestAnimationFrame(tick);return;}
+    b=currentBlock();
+    if(b?.stopCode==="M30"){
+      state.index=state.parsed.blocks.length;state.t=0;state.running=false;updateUi();renderExec();draw();requestAnimationFrame(tick);return;
+    }
+    if(b?.stopCode==="M0" || (b?.stopCode==="M1"&&state.optionalStop)){
+      state.index++;state.t=0;state.running=false;updateUi();renderExec();draw();requestAnimationFrame(tick);return;
+    }
+    if(b?.stopCode==="M1"&&!state.optionalStop){
+      state.index++;state.t=0;updateUi();renderExec();b=currentBlock();
+    }
+    const dur=durationFor(b);state.t+=dt/dur;
     if(state.t>=1){
       state.t=0;state.index++;
       if(state.index>=state.parsed.blocks.length){state.index=state.parsed.blocks.length;state.running=false;}
@@ -534,15 +559,15 @@ function makeRuntime(root){
   updateHud();
  }
  function updateHud(){
-  const p=currentPos(),bl=currentBlock(),cfg=settings();
-  root.querySelector("[data-hud]").innerHTML=["X","Y","Z"].concat(axis==="4AX"?["A"]:axis==="5AX"?["A","B"]:[]).map(a=>a+" "+(p[a]||0).toFixed(3)).join("<br>")+"<br>F "+Math.round(p.F||0)+"<br>S "+Math.round(p.S||0)+"<br>Ø "+cfg.toolDia.toFixed(3)+(bl?.cycle?"<br>"+bl.cycle+(bl.pattern?"/"+bl.pattern:""):"");
+  const p=currentPos(),bl=currentBlock(),cfg=settings(),mc=bl?.machine||{T:0,H:0,spindle:"M5",coolant:false};
+  root.querySelector("[data-hud]").innerHTML=["X","Y","Z"].concat(axis==="4AX"?["A"]:axis==="5AX"?["A","B"]:[]).map(a=>a+" "+(p[a]||0).toFixed(3)).join("<br>")+"<br>F "+Math.round(p.F||0)+"<br>S "+Math.round(p.S||0)+"<br>T "+mc.T+" / H "+mc.H+"<br>"+mc.spindle+" / "+(mc.coolant?"M8":"M9")+"<br>Ø "+cfg.toolDia.toFixed(3)+(bl?.cycle?"<br>"+bl.cycle+(bl.pattern?"/"+bl.pattern:""):"");
   ["X","Y","Z","A","B","C"].forEach(a=>{const e=root.querySelector('[data-axis-read="'+a+'"]');if(e)e.textContent=a+"　"+(p[a]||0).toFixed(3)});
  }
  function updateUi(){
   const p=currentPos(),len=state.parsed.blocks.length,progress=len?Math.min(100,((state.index+state.t)/len)*100):0,b=currentBlock(),cfg=settings();
   root.querySelector("[data-spindle]").textContent=Math.round(p.S||0)+" RPM";
   root.querySelector("[data-feed]").textContent=Math.round(p.F||0)+" mm/min";
-  root.querySelector("[data-block]").textContent=b?(b.raw.match(/N\s*\d+/i)?.[0]||("LINE "+(b.line+1))):"—";
+  root.querySelector("[data-block]").textContent=b?((b.raw.match(/N\s*\d+/i)?.[0]||("LINE "+(b.line+1)))+(b.stopCode?" "+b.stopCode:"")):"—";
   root.querySelector("[data-progress-text]").textContent=progress.toFixed(1)+"%";root.querySelector("[data-progress]").style.width=progress+"%";
   root.querySelector("[data-mode]").textContent=b?(b.absolute?"G90":"G91"):"G90";
   root.querySelector("[data-cycle]").textContent=b?.cycle?(b.cycle+(b.pattern?"/"+b.pattern+" "+b.holeIndex+"/"+b.holeCount:"")):(b?.pattern||"—");
@@ -557,6 +582,8 @@ function makeRuntime(root){
   if(cmd==="step"){if(state.index<state.parsed.blocks.length){state.single=true;state.running=true}}
   if(cmd==="dry"){state.dry=!state.dry;root.querySelector('[data-cmd="dry"]').classList.toggle("warn",state.dry)}
   if(cmd==="single"){state.single=!state.single;root.querySelector('[data-cmd="single"]').classList.toggle("warn",state.single)}
+  if(cmd==="optional"){state.optionalStop=!state.optionalStop;root.querySelector('[data-cmd="optional"]').classList.toggle("warn",state.optionalStop)}
+  if(cmd==="blockskip"){state.blockSkip=!state.blockSkip;root.querySelector('[data-cmd="blockskip"]').classList.toggle("warn",state.blockSkip)}
   if(cmd==="reset"){state.running=false;state.index=0;state.t=0}
   updateUi();renderExec();draw();
  }
@@ -568,7 +595,7 @@ function makeRuntime(root){
   if(cmd==="verify"){
     parse(false);
     const sw=safetyWarnings(),cycles=state.parsed.blocks.filter(b=>b.cycle&&b.cyclePhase==="feed"||b.cycle&&b.cyclePhase==="peck-feed").length;
-    const msg=state.parsed.errors.length?state.parsed.errors.join(" "):sw.length?("驗證完成；Safe-Z 提醒："+sw.join("；")):"驗證：語法可解析；共 "+state.parsed.blocks.length+" 個模擬區塊，鑽孔進給 "+cycles+" 段。";
+    const msg=state.parsed.errors.length?state.parsed.errors.join(" "):sw.length?("驗證完成；Safe-Z 提醒："+sw.join("；")):"驗證：語法可解析；共 "+state.parsed.blocks.length+" 個模擬區塊，鑽孔進給 "+cycles+" 段；M00/M01/M30、選擇停、跳段已啟用。";
     root.querySelector("[data-verify]").textContent=msg
   }
   if(cmd==="save"){remember();localStorage.setItem("aig-code-"+axis,ta.value);root.querySelector("[data-verify]").textContent="已儲存到本機瀏覽器。"}
