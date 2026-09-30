@@ -520,6 +520,12 @@ function makeGlScene(canvas,axis){
  function look(eye,center,up){const z=norm(sub(eye,center)),x=norm(cross(up,z)),y=cross(z,x),m=I();m[0]=x[0];m[1]=y[0];m[2]=z[0];m[4]=x[1];m[5]=y[1];m[6]=z[1];m[8]=x[2];m[9]=y[2];m[10]=z[2];m[12]=-(x[0]*eye[0]+x[1]*eye[1]+x[2]*eye[2]);m[13]=-(y[0]*eye[0]+y[1]*eye[1]+y[2]*eye[2]);m[14]=-(z[0]*eye[0]+z[1]*eye[1]+z[2]*eye[2]);return m}
  function rgb(hex){const n=parseInt(hex.slice(1),16);return[((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255]}
  function rotABPoint(p,aDeg,bDeg){const a=aDeg*Math.PI/180,b=bDeg*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b);const y=p.y*ca-p.z*sa,z=p.y*sa+p.z*ca;return{x:p.x*cb+z*sb,y,z:-p.x*sb+z*cb}}
+ function inverseRotABPoint(p,aDeg,bDeg){
+   const a=aDeg*Math.PI/180,b=bDeg*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b);
+   const x1=p.x*cb-p.z*sb,z1=p.x*sb+p.z*cb;
+   return{x:x1,y:p.y*ca+z1*sa,z:-p.y*sa+z1*ca};
+ }
+ function inverseRotABVector(v,aDeg,bDeg){return inverseRotABPoint(v,aDeg,bDeg)}
  function rotMat(aDeg,bDeg){return M(RY(bDeg*Math.PI/180),RX(aDeg*Math.PI/180))}
 
  function mesh(data){
@@ -635,6 +641,88 @@ function makeGlScene(canvas,axis){
    const model=I();gl.uniformMatrix4fv(loc.mp.mvp,false,M(vp,model));gl.uniformMatrix4fv(loc.mp.m,false,model);gl.uniform3fv(loc.mp.c,color);gl.drawArrays(gl.TRIANGLES,0,hf.count);
  }
 
+ const voxelPb=gl.createBuffer(),voxelNb=gl.createBuffer();
+ const voxelCache={parsed:null,key:"",nx:24,ny:24,nz:14,base:null,completed:0,minX:0,minY:0,minZ:0,sx:1,sy:1,sz:1,stockH:1,toolDia:0,initialCount:0};
+
+ function resetVoxel(scene,minX,minY,spanX,spanY,stockH){
+   const v=voxelCache;
+   v.parsed=scene.parsed;
+   v.key=[minX.toFixed(4),minY.toFixed(4),spanX.toFixed(4),spanY.toFixed(4),stockH.toFixed(4),Number(scene.toolDia||10).toFixed(4)].join("|");
+   v.minX=minX;v.minY=minY;v.minZ=-stockH;v.stockH=stockH;v.toolDia=Math.max(.1,Number(scene.toolDia)||10);
+   v.sx=spanX/v.nx;v.sy=spanY/v.ny;v.sz=stockH/v.nz;
+   v.base=new Uint8Array(v.nx*v.ny*v.nz);v.base.fill(1);v.initialCount=v.base.length;v.completed=0;
+ }
+ function voxelIndex(ix,iy,iz){return iz*voxelCache.nx*voxelCache.ny+iy*voxelCache.nx+ix}
+ function voxelCenter(ix,iy,iz){
+   const v=voxelCache;
+   return{x:v.minX+(ix+.5)*v.sx,y:v.minY+(iy+.5)*v.sy,z:v.minZ+(iz+.5)*v.sz};
+ }
+ function voxelCutSample(occ,p,scene){
+   if(!p||!Number.isFinite(p.X)||!Number.isFinite(p.Y)||!Number.isFinite(p.Z))return;
+   const a=axis==="3AX"?0:(p.A||0),b=axis==="5AX"?(p.B||0):0;
+   const tip=inverseRotABPoint({x:p.X,y:p.Y,z:p.Z},a,b);
+   let ax=inverseRotABVector({x:0,y:0,z:1},a,b),alen=Math.hypot(ax.x,ax.y,ax.z)||1;ax={x:ax.x/alen,y:ax.y/alen,z:ax.z/alen};
+   const r=Math.max(.05,(Number(scene.toolDia)||10)/2),r2=r*r,flute=Math.max(30,voxelCache.stockH*2.2);
+   for(let iz=0;iz<voxelCache.nz;iz++)for(let iy=0;iy<voxelCache.ny;iy++)for(let ix=0;ix<voxelCache.nx;ix++){
+     const k=voxelIndex(ix,iy,iz);if(!occ[k])continue;
+     const c=voxelCenter(ix,iy,iz),rx=c.x-tip.x,ry=c.y-tip.y,rz=c.z-tip.z;
+     const q=rx*ax.x+ry*ax.y+rz*ax.z;
+     if(q<0||q>flute)continue;
+     const radial2=rx*rx+ry*ry+rz*rz-q*q;
+     if(radial2<=r2)occ[k]=0;
+   }
+ }
+ function voxelCutBlock(occ,bl,tEnd,scene){
+   if(!bl?.cutting||tEnd<=0)return;
+   const dx=(bl.to.X||0)-(bl.from.X||0),dy=(bl.to.Y||0)-(bl.from.Y||0),dz=(bl.to.Z||0)-(bl.from.Z||0);
+   const drot=Math.abs((bl.to.A||0)-(bl.from.A||0))+Math.abs((bl.to.B||0)-(bl.from.B||0));
+   const travel=Math.hypot(dx,dy,dz)+drot*Math.max(voxelCache.sx,voxelCache.sy)*.15;
+   const spacing=Math.max(.6,Math.min(voxelCache.sx,voxelCache.sy,voxelCache.sz,Math.max(.2,(Number(scene.toolDia)||10)*.3)));
+   const steps=Math.max(1,Math.min(48,Math.ceil(travel*Math.max(.02,tEnd)/spacing)));
+   for(let i=0;i<=steps;i++)voxelCutSample(occ,scene.sampleBlock(bl,tEnd*i/steps),scene);
+ }
+ function voxelStock(scene,minX,minY,spanX,spanY,stockH){
+   const v=voxelCache,key=[minX.toFixed(4),minY.toFixed(4),spanX.toFixed(4),spanY.toFixed(4),stockH.toFixed(4),Number(scene.toolDia||10).toFixed(4)].join("|");
+   if(v.parsed!==scene.parsed||v.key!==key||scene.index<v.completed)resetVoxel(scene,minX,minY,spanX,spanY,stockH);
+   const target=Math.min(scene.index,scene.parsed.blocks.length);
+   while(v.completed<target){
+     const bl=scene.parsed.blocks[v.completed];
+     if(!scene.dry)voxelCutBlock(v.base,bl,1,scene);
+     v.completed++;
+   }
+   const occ=new Uint8Array(v.base);
+   if(!scene.dry&&scene.index<scene.parsed.blocks.length)voxelCutBlock(occ,scene.parsed.blocks[scene.index],scene.t,scene);
+
+   const verts=[],norms=[];
+   const faces=[
+     {d:[-1,0,0],n:[-1,0,0],c:(x0,x1,y0,y1,z0,z1)=>[[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]]},
+     {d:[1,0,0],n:[1,0,0],c:(x0,x1,y0,y1,z0,z1)=>[[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[x1,y0,z1]]},
+     {d:[0,-1,0],n:[0,-1,0],c:(x0,x1,y0,y1,z0,z1)=>[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]]},
+     {d:[0,1,0],n:[0,1,0],c:(x0,x1,y0,y1,z0,z1)=>[[x0,y1,z0],[x0,y1,z1],[x1,y1,z1],[x1,y1,z0]]},
+     {d:[0,0,-1],n:[0,0,-1],c:(x0,x1,y0,y1,z0,z1)=>[[x0,y0,z0],[x0,y1,z0],[x1,y1,z0],[x1,y0,z0]]},
+     {d:[0,0,1],n:[0,0,1],c:(x0,x1,y0,y1,z0,z1)=>[[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]]}
+   ];
+   let remain=0,deepest=0;
+   function occupied(ix,iy,iz){return ix>=0&&iy>=0&&iz>=0&&ix<v.nx&&iy<v.ny&&iz<v.nz&&occ[voxelIndex(ix,iy,iz)]}
+   function emit(q,no){for(const idx of [0,1,2,0,2,3]){verts.push(...q[idx]);norms.push(...no)}}
+   for(let iz=0;iz<v.nz;iz++)for(let iy=0;iy<v.ny;iy++)for(let ix=0;ix<v.nx;ix++){
+     const k=voxelIndex(ix,iy,iz);if(!occ[k]){const c=voxelCenter(ix,iy,iz);deepest=Math.max(deepest,-c.z+v.sz/2);continue}
+     remain++;
+     const x0=v.minX+ix*v.sx,x1=x0+v.sx,y0=v.minY+iy*v.sy,y1=y0+v.sy,z0=v.minZ+iz*v.sz,z1=z0+v.sz;
+     for(const f of faces){const nx=ix+f.d[0],ny=iy+f.d[1],nz=iz+f.d[2];if(!occupied(nx,ny,nz))emit(f.c(x0,x1,y0,y1,z0,z1),f.n)}
+   }
+   const removed=v.initialCount-remain;
+   lastRemoval={depth:Math.min(v.stockH,deepest),volume:removed*v.sx*v.sy*v.sz};
+   return{p:verts,n:norms,count:verts.length/3};
+ }
+ function drawVoxelStock(vm,color,vp,model){
+   gl.useProgram(meshProg);
+   gl.bindBuffer(gl.ARRAY_BUFFER,voxelPb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vm.p),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(loc.mp.p);gl.vertexAttribPointer(loc.mp.p,3,gl.FLOAT,false,0,0);
+   gl.bindBuffer(gl.ARRAY_BUFFER,voxelNb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vm.n),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(loc.mp.n);gl.vertexAttribPointer(loc.mp.n,3,gl.FLOAT,false,0,0);
+   gl.uniformMatrix4fv(loc.mp.mvp,false,M(vp,model));gl.uniformMatrix4fv(loc.mp.m,false,model);gl.uniform3fv(loc.mp.c,color);gl.drawArrays(gl.TRIANGLES,0,vm.count);
+ }
+
+
 
  function drawMesh(me,model,color,vp){
    gl.useProgram(meshProg);gl.bindBuffer(gl.ARRAY_BUFFER,me.pb);gl.enableVertexAttribArray(loc.mp.p);gl.vertexAttribPointer(loc.mp.p,3,gl.FLOAT,false,0,0);
@@ -663,15 +751,14 @@ function makeGlScene(canvas,axis){
 
      const A=axis==="3AX"?0:(pos.A||0),B=axis==="5AX"?(pos.B||0):0,R=rotMat(A,B),tableR=Math.max(spanX,spanY)*.72;
      drawMesh(cyl,M(R,M(T(0,0,-stockH-8),S(tableR*2,tableR*2,8))),rgb("#182532"),vp);
+     const stockMinX=cx-spanX/2,stockMinY=cy-spanY/2;
      if(axis==="3AX"){
-       const stockMinX=cx-spanX/2,stockMinY=cy-spanY/2;
        drawMesh(stockShell,M(T(cx,cy,-stockH/2),S(spanX,spanY,stockH)),rgb("#465f70"),vp);
        const hf=heightfield(scene,stockMinX,stockMinY,spanX,spanY,stockH);
        drawHeightfield(hf,rgb("#7292a4"),vp);
      }else{
-       // Rotary/tilted material removal is intentionally gated until volumetric/boolean stock is available.
-       lastRemoval={depth:0,volume:0};
-       drawMesh(cube,M(R,M(T(cx,cy,-stockH/2),S(spanX,spanY,stockH))),rgb("#577080"),vp);
+       const vm=voxelStock(scene,stockMinX,stockMinY,spanX,spanY,stockH);
+       drawVoxelStock(vm,rgb("#6d8797"),vp,R);
      }
      if(axis!=="3AX"){
        drawMesh(cube,T(-tableR-7,0,-stockH-7),rgb("#24394b"),vp);drawMesh(cube,T(tableR+7,0,-stockH-7),rgb("#24394b"),vp);
@@ -680,17 +767,17 @@ function makeGlScene(canvas,axis){
      const sampleBlock=scene.sampleBlock;
      for(let i=0;i<moves.length;i++){
        const bl=moves[i],samples=(bl.motion==="G2"||bl.motion==="G3"||Math.abs((bl.to.A||0)-(bl.from.A||0))>1e-6||Math.abs((bl.to.B||0)-(bl.from.B||0))>1e-6)?16:2,arr=[];
-       for(let j=0;j<samples;j++){const t=samples===1?1:j/(samples-1),p=sampleBlock(bl,t),q=rotABPoint({x:p.X,y:p.Y,z:p.Z},axis==="3AX"?0:(p.A||0),axis==="5AX"?(p.B||0):0);arr.push(q)}
+       for(let j=0;j<samples;j++){const t=samples===1?1:j/(samples-1),p=sampleBlock(bl,t),q={x:p.X,y:p.Y,z:p.Z};arr.push(q)}
        drawLine(arr,bl.motion==="G0"?rgb("#3b82f6"):rgb("#18a9c9"),vp);
      }
      const execBlocks=scene.parsed.blocks;
      for(let i=0;i<execBlocks.length&&i<=scene.index;i++){
        const bl=execBlocks[i];if(bl.kind!=="move")continue;const end=i<scene.index?1:scene.t;if(end<=0)continue;const samples=16,arr=[];
-       for(let j=0;j<=samples;j++){const t=Math.min(end,j/samples);if(t>end+1e-9)break;const p=sampleBlock(bl,t),q=rotABPoint({x:p.X,y:p.Y,z:p.Z},axis==="3AX"?0:(p.A||0),axis==="5AX"?(p.B||0):0);arr.push(q)}
+       for(let j=0;j<=samples;j++){const t=Math.min(end,j/samples);if(t>end+1e-9)break;const p=sampleBlock(bl,t),q={x:p.X,y:p.Y,z:p.Z};arr.push(q)}
        drawLine(arr,bl.cutting&&!scene.dry?rgb("#33f39b"):rgb("#ffb326"),vp);
      }
 
-     const tp=rotABPoint({x:pos.X||0,y:pos.Y||0,z:pos.Z||0},axis==="3AX"?0:(pos.A||0),axis==="5AX"?(pos.B||0):0),dia=Math.max(.5,scene.toolDia||10);
+     const tp={x:pos.X||0,y:pos.Y||0,z:pos.Z||0},dia=Math.max(.5,scene.toolDia||10);
      drawMesh(cyl,M(T(tp.x,tp.y,tp.z+18),S(dia,dia,36)),rgb("#d8f5ff"),vp);
      drawMesh(cyl,M(T(tp.x,tp.y,tp.z+48),S(dia*2.5,dia*2.5,25)),rgb("#29465c"),vp);
 
@@ -903,11 +990,11 @@ function makeRuntime(root){
       const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(bl.from[k]||0,bl.to[k]||0,t);return p;
     }
   });
-  const rendererEl=root.querySelector("[data-renderer]");if(rendererEl)rendererEl.textContent=webglOk?(axis==="3AX"?"WEBGL 3D + NUM REMOVE":"WEBGL 3D • 4/5X REMOVE GATED"):"2D FALLBACK";
+  const rendererEl=root.querySelector("[data-renderer]");if(rendererEl)rendererEl.textContent=webglOk?(axis==="3AX"?"WEBGL 3D + HEIGHTFIELD":"WEBGL 3D + ROTARY VOXEL"):"2D FALLBACK";
   const removalVolumeEl=root.querySelector("[data-removal-volume]");
   if(removalVolumeEl){
     const ev=glScene?.getRemoval?.()||{volume:0};
-    removalVolumeEl.textContent=(webglOk&&axis==="3AX"&&!state.dry?ev.volume:0).toFixed(3)+" mm³";
+    removalVolumeEl.textContent=(webglOk&&!state.dry?ev.volume:0).toFixed(3)+" mm³";
   }
   if(webglOk){const {w,h}=resize();ctx.clearRect(0,0,w,h);updateHud();return}
   const {w,h}=resize(),c=ctx,b=bounds();c.clearRect(0,0,w,h);c.fillStyle="#010306";c.fillRect(0,0,w,h);
