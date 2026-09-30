@@ -1196,7 +1196,8 @@ class MainActivity : Activity() {
         homeAction("AI",0xFF8B5CF6.toInt()){showAiSystemSuiteDialog()}
         homeContent.addView(homeModes,LinearLayout.LayoutParams(-1,0,1f))
 
-        val homeUtility=FlowLayout(this).apply {
+        val homeUtility=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
             gravity=Gravity.CENTER
             setPadding(dp(4),dp(8),dp(4),dp(2))
             addView(RgbGlowButton(this@MainActivity).apply {
