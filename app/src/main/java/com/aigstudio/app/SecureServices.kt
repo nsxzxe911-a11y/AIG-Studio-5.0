@@ -362,7 +362,12 @@ object SecureUpdateManager {
         val dir = File(context.filesDir, "verified-updates").apply { mkdirs() }
         val temp = File(dir, "update-" + manifest.versionCode + ".apk.part")
         val target = File(dir, "update-" + manifest.versionCode + ".apk")
-        if (temp.exists()) temp.delete()
+
+        var resumeFrom = if (temp.isFile) temp.length() else 0L
+        if (resumeFrom < 0L || resumeFrom > MAX_APK_BYTES) {
+            temp.delete()
+            resumeFrom = 0L
+        }
 
         val uri = NetworkSecurity.requireHttps(manifest.apkUrl)
         val conn = (URL(uri.toString()).openConnection() as HttpURLConnection).apply {
@@ -371,16 +376,41 @@ object SecureUpdateManager {
             instanceFollowRedirects = false
             requestMethod = "GET"
             setRequestProperty("Accept", "application/vnd.android.package-archive,application/octet-stream")
+            if (resumeFrom > 0L) setRequestProperty("Range", "bytes=$resumeFrom-")
         }
 
         try {
-            require(conn.responseCode == HttpURLConnection.HTTP_OK) { "APK HTTP " + conn.responseCode }
-            val length = conn.contentLengthLong
-            require(length <= 0 || length <= MAX_APK_BYTES) { "APK too large" }
+            val code = conn.responseCode
+            if (code == 416 && resumeFrom > 0L) {
+                val actual = AppSecurityScanner.sha256(temp)
+                require(actual.equals(manifest.sha256, ignoreCase = true)) {
+                    temp.delete()
+                    "Range checkpoint is incomplete"
+                }
+                require(apkPackageName(context, temp) == context.packageName) { "Downloaded APK package mismatch" }
+                require(installedSignerDigests(context) == archiveSignerDigests(context, temp)) {
+                    "APK signing certificate mismatch"
+                }
+                if (target.exists()) require(target.delete()) { "Unable to replace prior verified update" }
+                require(temp.renameTo(target)) { "Unable to finalize verified update" }
+                return target
+            }
 
-            val md = MessageDigest.getInstance("SHA-256")
-            var total = 0L
-            temp.outputStream().use { out ->
+            require(code == HttpURLConnection.HTTP_OK || code == 206) { "APK HTTP " + code }
+            val append = resumeFrom > 0L && code == 206
+            if (append) {
+                val range = conn.getHeaderField("Content-Range").orEmpty()
+                require(range.startsWith("bytes $resumeFrom-")) { "Resume range mismatch" }
+            } else if (resumeFrom > 0L) {
+                temp.delete()
+                resumeFrom = 0L
+            }
+
+            val length = conn.contentLengthLong
+            require(length <= 0 || resumeFrom + length <= MAX_APK_BYTES) { "APK too large" }
+
+            var total = resumeFrom
+            java.io.FileOutputStream(temp, append).use { out ->
                 conn.inputStream.use { input ->
                     val buffer = ByteArray(64 * 1024)
                     while (true) {
@@ -388,25 +418,33 @@ object SecureUpdateManager {
                         if (n <= 0) break
                         total += n
                         require(total <= MAX_APK_BYTES) { "APK too large" }
-                        md.update(buffer, 0, n)
                         out.write(buffer, 0, n)
                     }
                 }
+                out.flush()
+                out.fd.sync()
             }
 
-            val actual = md.digest().joinToString("") { "%02x".format(it) }
+            val actual = AppSecurityScanner.sha256(temp)
             require(actual.equals(manifest.sha256, ignoreCase = true)) { "APK SHA-256 mismatch" }
             require(apkPackageName(context, temp) == context.packageName) { "Downloaded APK package mismatch" }
             require(installedSignerDigests(context) == archiveSignerDigests(context, temp)) {
                 "APK signing certificate mismatch"
             }
 
-            if (target.exists()) target.delete()
+            if (target.exists()) require(target.delete()) { "Unable to replace prior verified update" }
             require(temp.renameTo(target)) { "Unable to finalize verified update" }
+            require(target.length() == total) { "Verified update finalize length mismatch" }
             return target
+        } catch (io: java.io.IOException) {
+            // Keep the .part file as the durable checkpoint; the next validated connection resumes by Range.
+            throw io
+        } catch (fatal: Throwable) {
+            // Integrity/provenance failures are not resumable. Discard the untrusted working copy.
+            if (temp.exists()) temp.delete()
+            throw fatal
         } finally {
             conn.disconnect()
-            if (temp.exists()) temp.delete()
         }
     }
 
