@@ -171,7 +171,7 @@ function parseWords(line){
 }
 function parseProgram(text,axis){
  const lines=text.split(/\r?\n/);
- let pos={X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0},absolute=true,motion="G0";
+ let pos={X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0},absolute=true,motion="G0",plane="G17";
  const blocks=[];const errors=[];
  lines.forEach((raw,index)=>{
   const {clean,out}=parseWords(raw);
@@ -179,6 +179,9 @@ function parseProgram(text,axis){
   const gMatches=[...clean.matchAll(/G\s*0*(\d+(?:\.\d+)?)/g)].map(m=>"G"+Number(m[1]));
   if(gMatches.includes("G90"))absolute=true;
   if(gMatches.includes("G91"))absolute=false;
+  if(gMatches.includes("G17"))plane="G17";
+  if(gMatches.includes("G18"))plane="G18";
+  if(gMatches.includes("G19"))plane="G19";
   if(gMatches.includes("G0"))motion="G0";
   if(gMatches.includes("G1"))motion="G1";
   if(gMatches.includes("G2"))motion="G2";
@@ -198,12 +201,12 @@ function parseProgram(text,axis){
   const n=Number.isFinite(out.N)?out.N:null;
   if(moved){
     blocks.push({
-      line:index,raw,kind:"move",motion,absolute,from,to,n,
+      line:index,raw,kind:"move",motion,absolute,plane,from,to,n,
       arc:{I:Number.isFinite(out.I)?out.I:null,J:Number.isFinite(out.J)?out.J:null,K:Number.isFinite(out.K)?out.K:null,R:Number.isFinite(out.R)?out.R:null}
     });
     pos={...to};
   }else{
-    blocks.push({line:index,raw,kind:"modal",motion,absolute,from:{...pos},to:{...pos},n});
+    blocks.push({line:index,raw,kind:"modal",motion,absolute,plane,from:{...pos},to:{...pos},n});
   }
  });
  if(axis==="3AX" && blocks.some(b=>Math.abs(b.to.A)>1e-9||Math.abs(b.to.B)>1e-9||Math.abs(b.to.C)>1e-9))errors.push("3AX 程式含旋轉軸指令。");
@@ -239,24 +242,36 @@ function makeRuntime(root){
  function currentBlock(){return state.parsed.blocks[Math.min(state.index,state.parsed.blocks.length-1)]||null}
  function currentLine(){const b=currentBlock();return b?b.line:-1}
  function lerp(a,b,t){return a+(b-a)*t}
+ function arcSpec(b){
+  if(!b||b.kind!=="move"||(b.motion!=="G2"&&b.motion!=="G3"))return null;
+  if(b.plane==="G18"){
+    if(b.arc.I===null||b.arc.K===null)return null;
+    return {u:"X",v:"Z",w:"Y",du:b.arc.I,dv:b.arc.K};
+  }
+  if(b.plane==="G19"){
+    if(b.arc.J===null||b.arc.K===null)return null;
+    return {u:"Y",v:"Z",w:"X",du:b.arc.J,dv:b.arc.K};
+  }
+  if(b.arc.I===null||b.arc.J===null)return null;
+  return {u:"X",v:"Y",w:"Z",du:b.arc.I,dv:b.arc.J};
+ }
  function arcPoint(b,t){
-  if(!b||b.kind!=="move"||(b.motion!=="G2"&&b.motion!=="G3")||b.arc.I===null||b.arc.J===null){
+  const sp=arcSpec(b);
+  if(!sp){
     const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(b?.from?.[k]||0,b?.to?.[k]||0,t);return p;
   }
-  const cx=b.from.X+b.arc.I,cy=b.from.Y+b.arc.J;
-  const r=Math.hypot(b.from.X-cx,b.from.Y-cy);
+  const cu=b.from[sp.u]+sp.du,cv=b.from[sp.v]+sp.dv;
+  const r=Math.hypot(b.from[sp.u]-cu,b.from[sp.v]-cv);
   if(r<1e-9){
     const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(b.from[k]||0,b.to[k]||0,t);return p;
   }
-  let a0=Math.atan2(b.from.Y-cy,b.from.X-cx),a1=Math.atan2(b.to.Y-cy,b.to.X-cx),d=a1-a0;
+  let a0=Math.atan2(b.from[sp.v]-cv,b.from[sp.u]-cu),a1=Math.atan2(b.to[sp.v]-cv,b.to[sp.u]-cu),d=a1-a0;
   if(b.motion==="G2"&&d>=0)d-=Math.PI*2;
   if(b.motion==="G3"&&d<=0)d+=Math.PI*2;
-  const a=a0+d*t;
-  return {
-    X:cx+Math.cos(a)*r,Y:cy+Math.sin(a)*r,
-    Z:lerp(b.from.Z,b.to.Z,t),A:lerp(b.from.A,b.to.A,t),B:lerp(b.from.B,b.to.B,t),C:lerp(b.from.C,b.to.C,t),
-    F:lerp(b.from.F||0,b.to.F||0,t),S:lerp(b.from.S||0,b.to.S||0,t)
-  };
+  const a=a0+d*t,p={};
+  for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(b.from[k]||0,b.to[k]||0,t);
+  p[sp.u]=cu+Math.cos(a)*r;p[sp.v]=cv+Math.sin(a)*r;
+  return p;
  }
  function currentPos(){
   const b=currentBlock();if(!b)return {X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0};
@@ -267,11 +282,12 @@ function makeRuntime(root){
   if(!b||b.kind!=="move")return 150;
   const dx=b.to.X-b.from.X,dy=b.to.Y-b.from.Y,dz=b.to.Z-b.from.Z;
   let linear=Math.hypot(dx,dy,dz);
-  if((b.motion==="G2"||b.motion==="G3")&&b.arc.I!==null&&b.arc.J!==null){
-    const cx=b.from.X+b.arc.I,cy=b.from.Y+b.arc.J,r=Math.hypot(b.from.X-cx,b.from.Y-cy);
-    let a0=Math.atan2(b.from.Y-cy,b.from.X-cx),a1=Math.atan2(b.to.Y-cy,b.to.X-cx),d=a1-a0;
+  const sp=arcSpec(b);
+  if(sp){
+    const cu=b.from[sp.u]+sp.du,cv=b.from[sp.v]+sp.dv,r=Math.hypot(b.from[sp.u]-cu,b.from[sp.v]-cv);
+    let a0=Math.atan2(b.from[sp.v]-cv,b.from[sp.u]-cu),a1=Math.atan2(b.to[sp.v]-cv,b.to[sp.u]-cu),d=a1-a0;
     if(b.motion==="G2"&&d>=0)d-=Math.PI*2;if(b.motion==="G3"&&d<=0)d+=Math.PI*2;
-    linear=Math.hypot(Math.abs(d)*r,dz);
+    linear=Math.hypot(Math.abs(d)*r,b.to[sp.w]-b.from[sp.w]);
   }
   const rot=Math.abs(b.to.A-b.from.A)+Math.abs(b.to.B-b.from.B)+Math.abs(b.to.C-b.from.C);
   const base=b.motion==="G0"?260:Math.max(350,Math.min(1900,(linear*26)+(rot*8)+280));
