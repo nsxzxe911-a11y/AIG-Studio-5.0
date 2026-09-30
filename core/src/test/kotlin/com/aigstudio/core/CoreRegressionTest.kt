@@ -2007,20 +2007,36 @@ private fun testControllerCutterCompensationDoubleApplyBlocked() {
         CamSettings(toolDiameter=10.0, depth=-2.0, safeZ=5.0, feedMmMin=120.0)
     )
     val canonical = cam.toolpaths.flatMap { it.moves }.map { Triple(it.to.x,it.to.y,it.z) }
-    check(runCatching {
+    val g41=runCatching {
         CncPost.generate(
             cam,
-            FanucPostSettings(cutterCompensation=CutterCompensationMode.CONTROLLER_LEFT_G41)
+            FanucPostSettings(
+                cutterCompensation=CutterCompensationMode.CONTROLLER_LEFT_G41,
+                cutterCompRegister=7,
+                cutterCompValueMm=5.125
+            )
         )
-    }.isFailure)
-    check(runCatching {
+    }
+    check(g41.isFailure)
+    check(g41.exceptionOrNull()?.message?.contains("G41 D7") == true)
+    check(g41.exceptionOrNull()?.message?.contains("5.125") == true)
+    val g42=runCatching {
         CncPost.generate(
             cam,
-            FanucPostSettings(cutterCompensation=CutterCompensationMode.CONTROLLER_RIGHT_G42)
+            FanucPostSettings(
+                cutterCompensation=CutterCompensationMode.CONTROLLER_RIGHT_G42,
+                cutterCompRegister=7,
+                cutterCompValueMm=-0.125
+            )
         )
-    }.isFailure)
+    }
+    check(g42.isFailure)
+    check(g42.exceptionOrNull()?.message?.contains("G42 D7") == true)
+    check(g42.exceptionOrNull()?.message?.contains("-0.125") == true)
+    val g40=CncPost.generate(cam,FanucPostSettings(cutterCompRegister=7,cutterCompValueMm=-0.125))
+    check("(CUTTER D REGISTER D7 • EXPECTED OFFSET -0.125 MM • G40 MODE DOES NOT APPLY D)" in g40)
     check(canonical == cam.toolpaths.flatMap { it.moves }.map { Triple(it.to.x,it.to.y,it.z) })
-    println("✓ G41_G42_DOUBLE_COMP_BLOCK_PASS canonical CAM path preserved")
+    println("✓ G41_G42_D_OFFSET_VALUE_GATE_PASS D_REGISTER_7 SIGNED_MM CAM_XYZ_UNCHANGED DOUBLE_COMP_FAIL_CLOSED")
 }
 
 
