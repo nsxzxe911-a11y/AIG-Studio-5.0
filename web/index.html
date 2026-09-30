@@ -721,12 +721,13 @@ function evaluateSetupClearance(parsed,axis,cfg={}){
    }
  }
  const highestFixture=fixtures.length?Math.max(...fixtures.map(f=>f.maxZ)):env.tableTop;
- const safeZ=Number(cfg.safeZ),safeZMargin=Number.isFinite(safeZ)?safeZ-highestFixture:Infinity;
+ const highestObstacle=Math.max(env.stockTop,highestFixture);
+ const safeZ=Number(cfg.safeZ),safeZMargin=Number.isFinite(safeZ)?safeZ-highestObstacle:Infinity;
  const fixtureClearance=Number.isFinite(minFixture)?minFixture:Infinity;
  const holderStockClearance=Number.isFinite(minHolderStock)?minHolderStock:Infinity;
  const minimum=Math.min(fixtureClearance,holderStockClearance,safeZMargin);
  return{
-   minimum,fixtureClearance,holderStockClearance,safeZMargin,highestFixture,
+   minimum,fixtureClearance,holderStockClearance,safeZMargin,highestFixture,highestObstacle,
    limitingType:minimum===safeZMargin?"SAFE_Z":minimum===holderStockClearance?"HOLDER_STOCK":minType,
    fixtureId:minFixtureId,line:minLine,blockIndex:minBlock,envelope:env,fixtureCount:fixtures.length
  };
