@@ -232,7 +232,7 @@ function camPage(){
 }
 function toolpathPage(){
  return '<div data-tp-runtime><div class="toolstrip">'+
- '<button class="btn" data-tp-action="TOGGLE">顯示/隱藏</button><button class="btn play" data-tp-action="RECALC">重新計算</button><button class="btn" data-tp-action="EDIT">編輯節點</button><button class="btn" data-tp-action="FIT">Fit</button><button class="btn play" data-tp-action="VERIFY">驗證</button><button class="btn danger" data-tp-action="DELETE">刪除</button><button class="btn play" data-tp-action="SAVE">儲存</button><button class="btn play" data-tp-action="POST">產生 NC</button>'+
+ '<button class="btn" data-tp-action="TOGGLE">顯示/隱藏</button><button class="btn" data-tp-action="UP">OP 上移</button><button class="btn" data-tp-action="DOWN">OP 下移</button><button class="btn" data-tp-action="ENABLE">啟用/停用 OP</button><button class="btn play" data-tp-action="RECALC">重新計算</button><button class="btn" data-tp-action="EDIT">編輯節點</button><button class="btn" data-tp-action="FIT">Fit</button><button class="btn play" data-tp-action="VERIFY">驗證</button><button class="btn danger" data-tp-action="DELETE">刪除</button><button class="btn play" data-tp-action="SAVE">儲存</button><button class="btn play" data-tp-action="POST">產生 NC</button>'+
  '</div><div class="camgrid" style="grid-template-columns:260px minmax(0,1fr) 300px;margin-top:9px">'+
  '<section class="panel"><div class="head"><h3>刀路列表</h3></div><div class="body"><div class="tpList" data-tp-list></div><div class="notice" style="margin-top:8px" data-tp-msg>從 CAM 套用刀路後，會出現在這裡。</div></div></section>'+
  '<section class="panel"><div class="head"><div><h2>刀路 2D/3D 編輯基底</h2><small>節點可拖動 • G-code 產生前驗證</small></div><span class="spacer"></span><span class="badge" data-tp-count>0 paths</span></div><div class="body"><canvas class="tpCanvas" data-tp-canvas></canvas></div></section>'+
@@ -2068,12 +2068,12 @@ function makeToolpathRuntime(root){
    state.view.scale=Math.max(.2,Math.min(60,Math.min((w-80)/ww,(h-80)/hh)));state.view.panX=-((minX+maxX)/2)*state.view.scale;state.view.panY=((minY+maxY)/2)*state.view.scale;draw();
  }
  function renderList(){
-   listEl.innerHTML="";state.paths.forEach((p,i)=>{const b=document.createElement("button");b.className="btn"+(i===state.selected?" cadSelected":"");b.dataset.tpIndex=i;const adaptiveMeta=p.kind==="adaptive"?("  L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" R"+Number(p.adaptiveRing||0)+" Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"):"";
-   b.textContent="OP"+String(i+1).padStart(2,"0")+"  "+String(p.kind||"path").toUpperCase()+"  "+(p.points?.length||0)+" pts  Z"+Number(p.depth??0).toFixed(3)+adaptiveMeta+"  A"+Number(p.aStart||0).toFixed(1)+"→"+Number(p.aEnd??p.aStart??0).toFixed(1)+" B"+Number(p.bStart||0).toFixed(1)+"→"+Number(p.bEnd??p.bStart??0).toFixed(1);listEl.appendChild(b)});
+   listEl.innerHTML="";state.paths.forEach((p,i)=>{if(p.enabled===false)return;const b=document.createElement("button");b.className="btn"+(i===state.selected?" cadSelected":"");b.dataset.tpIndex=i;const adaptiveMeta=p.kind==="adaptive"?("  L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" R"+Number(p.adaptiveRing||0)+" Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"):"";
+   b.textContent=(p.enabled===false?"[OFF] ":"")+"OP"+String(i+1).padStart(2,"0")+"  "+String(p.kind||"path").toUpperCase()+"  "+(p.points?.length||0)+" pts  Z"+Number(p.depth??0).toFixed(3)+adaptiveMeta+"  A"+Number(p.aStart||0).toFixed(1)+"→"+Number(p.aEnd??p.aStart??0).toFixed(1)+" B"+Number(p.bStart||0).toFixed(1)+"→"+Number(p.bEnd??p.bStart??0).toFixed(1);b.style.opacity=p.enabled===false?".42":"1";listEl.appendChild(b)});
  }
  function updateInfo(){
-   countEl.textContent=state.paths.length+" paths";const p=selected();selectedEl.textContent=p?("OP"+String(state.selected+1).padStart(2,"0")+" "+String(p.kind||"path").toUpperCase()+(p.kind==="adaptive"?(" • Z L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" • R"+Number(p.adaptiveRing||0)+" • Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"):"")):"無";
-   statusEl.textContent=state.edit?"節點編輯":state.visible?"顯示":"隱藏";
+   const enabledCount=state.paths.filter(p=>p.enabled!==false).length;countEl.textContent=enabledCount+"/"+state.paths.length+" enabled";const p=selected();selectedEl.textContent=p?("OP"+String(state.selected+1).padStart(2,"0")+" "+String(p.kind||"path").toUpperCase()+(p.kind==="adaptive"?(" • Z L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" • R"+Number(p.adaptiveRing||0)+" • Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"):"")):"無";
+   statusEl.textContent=p?.enabled===false?"OP 停用":state.edit?"節點編輯":state.visible?"顯示":"隱藏";
  }
  function leadPoint(path,which){
    if(!path?.points?.length)return null;const len=Number(which==="in"?path.leadIn:path.leadOut)||0;if(len<=0||path.points.length<2)return null;
@@ -2085,8 +2085,9 @@ function makeToolpathRuntime(root){
    c.strokeStyle="rgba(39,233,255,.05)";c.lineWidth=1;for(let x=0;x<w;x+=36){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke()}for(let y=0;y<h;y+=36){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke()}
    if(!state.visible)return;
    state.paths.forEach((p,i)=>{
-     if(!p.points?.length)return;const sel=i===state.selected;c.strokeStyle=sel?"#ff4da6":"#33f39b";c.lineWidth=sel?2.6:1.5;c.beginPath();
-     p.points.forEach((pt,j)=>{const q=w2s(pt,w,h);if(j===0)c.moveTo(q.x,q.y);else c.lineTo(q.x,q.y)});c.stroke();
+     if(!p.points?.length)return;const sel=i===state.selected,disabled=p.enabled===false;c.strokeStyle=disabled?"rgba(130,145,155,.35)":sel?"#ff4da6":"#33f39b";c.lineWidth=sel?2.6:1.5;c.setLineDash(disabled?[6,5]:[]);c.beginPath();
+     p.points.forEach((pt,j)=>{const q=w2s(pt,w,h);if(j===0)c.moveTo(q.x,q.y);else c.lineTo(q.x,q.y)});c.stroke();c.setLineDash([]);
+     if(disabled)return;
      const li=leadPoint(p,"in"),lo=leadPoint(p,"out");c.strokeStyle="#ffb326";c.setLineDash([5,4]);
      if(li){const a=w2s(li,w,h),b=w2s(p.points[0],w,h);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()}
      if(lo){const a=w2s(p.points[p.points.length-1],w,h),b=w2s(lo,w,h);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()}
@@ -2168,17 +2169,18 @@ function makeToolpathRuntime(root){
    return{A,B,text:" A"+fmt(A)+(target==="5AX"?" B"+fmt(B):"")};
  }
  function generateFanucNC(){
-   if(!state.paths.length){msgEl.textContent="沒有刀路，不能產生 NC。";return null}
-   const invalidTap=state.paths.find(p=>p.kind==="tap"&&(!(Number(p.pitch)>0)||!(Number(p.rpm)>0)));
+   const enabledPaths=state.paths.filter(p=>p.enabled!==false);
+   if(!enabledPaths.length){msgEl.textContent="沒有啟用中的刀路，不能產生 NC。";statusEl.textContent="此次未輸出";return null}
+   const invalidTap=enabledPaths.find(p=>p.kind==="tap"&&(!(Number(p.pitch)>0)||!(Number(p.rpm)>0)));
    if(invalidTap){msgEl.textContent="攻牙缺少有效螺距或轉速；此次不輸出 NC，其他功能仍可繼續使用。";statusEl.textContent="此次未輸出";return null}
-   const simultaneousTap=state.paths.find(p=>p.kind==="tap"&&p.rotMode==="SIMULTANEOUS"&&(Math.abs(Number(p.aEnd||0)-Number(p.aStart||0))>1e-9||Math.abs(Number(p.bEnd||0)-Number(p.bStart||0))>1e-9));
+   const simultaneousTap=enabledPaths.find(p=>p.kind==="tap"&&p.rotMode==="SIMULTANEOUS"&&(Math.abs(Number(p.aEnd||0)-Number(p.aStart||0))>1e-9||Math.abs(Number(p.bEnd||0)-Number(p.bStart||0))>1e-9));
    if(simultaneousTap){msgEl.textContent="G84 攻牙目前只允許 3AX 或 INDEXED 定角；SIMULTANEOUS A/B 已阻擋。";statusEl.textContent="此次未輸出";return null}
    const target=targetInput.value||"3AX",wcs=wcsInput.value||"G54",tool=Math.max(1,Math.trunc(Number(toolNoInput.value)||1)),hno=Math.max(1,Math.trunc(Number(hNoInput.value)||1));
    const rpm=Math.max(1,Math.trunc(aigFiniteNumber(rpmInput.value,12000))),defaultFeed=Math.max(1,Math.trunc(aigFiniteNumber(feedInput.value,1200))),defaultSafe=aigFiniteNumber(safeInput.value,5);
    const lines=[];let n=10;const push=line=>{lines.push("N"+n+" "+line);n+=10};
    const mainO=target==="3AX"?"O1000":target==="4AX"?"O2000":"O3000";
    lines.push(mainO);push("M98 P4");push("S"+rpm+" M3");
-   for(const path of state.paths){
+   for(const path of enabledPaths){
      if(!path.points?.length)continue;
      const safe=Number(path.safeZ??defaultSafe),depth=Number(path.depth??depthInput.value??-10),feed=Math.max(1,Math.trunc(Number(path.feed)||defaultFeed));
      const mode=path.rotMode==="SIMULTANEOUS"?"SIMULTANEOUS":"INDEXED",r0=rotaryAt(path,0,target);
@@ -2238,11 +2240,20 @@ function makeToolpathRuntime(root){
    const ta=document.querySelector('textarea[data-axis="'+target+'"]');
    if(ta){ta.value=code;ta.dispatchEvent(new Event("input",{bubbles:true}))}
    statusEl.textContent="POST "+target+" READY";
-   msgEl.textContent="Fanuc NC 已使用同一份 CAM 毛坯 XYZ 通過刀具/刀柄碰撞 Preflight 並送到 "+target+"；Adaptive OP 保留 Z 層 / Ring / Load% 註解。";
+   msgEl.textContent="Fanuc NC 已使用同一份 CAM 毛坯 XYZ 通過刀具/刀柄碰撞 Preflight 並送到 "+target+"；Adaptive OP 保留 Z 層 / Ring / Load% 註解；只輸出啟用 OP，順序依刀路列表。";
    return code;
  }
  function action(name){
    if(name==="TOGGLE"){state.visible=!state.visible;updateInfo();draw();return}
+   if(name==="UP"){
+     if(state.selected>0){const i=state.selected,[state.paths[i-1],state.paths[i]]=[state.paths[i],state.paths[i-1]];state.selected=i-1;save();renderList();updateInfo();draw();msgEl.textContent="OP 已上移；POST 將依目前順序輸出。"}return
+   }
+   if(name==="DOWN"){
+     if(state.selected<state.paths.length-1){const i=state.selected,[state.paths[i],state.paths[i+1]]=[state.paths[i+1],state.paths[i]];state.selected=i+1;save();renderList();updateInfo();draw();msgEl.textContent="OP 已下移；POST 將依目前順序輸出。"}return
+   }
+   if(name==="ENABLE"){
+     const p=selected();if(!p)return;p.enabled=p.enabled===false;save();renderList();updateInfo();draw();msgEl.textContent=p.enabled===false?"此 OP 已停用；不會輸出 NC。":"此 OP 已啟用。";return
+   }
    if(name==="EDIT"){state.edit=!state.edit;root.querySelector('[data-tp-action="EDIT"]').classList.toggle("tpNodeEdit",state.edit);updateInfo();draw();return}
    if(name==="FIT"){fit();return}
    if(name==="VERIFY"){verify();return}
