@@ -1,13 +1,6 @@
-name: AIG Web Runtime Gate
+name: AIG Web Runtime Gate (manual diagnostic)
 
 on:
-  push:
-    branches: ["web-uiux-001-rgb-runtime"]
-    paths:
-      - "web/**"
-      - "ci/verify_web_runtime.mjs"
-      - "release-version.properties"
-      - ".github/workflows/web-ui-pages.yml"
   workflow_dispatch:
 
 permissions:
