@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   semantic-timeline:
-    if: ${{ github.event_name == 'workflow_dispatch' || (!contains(github.event.head_commit.message, '[ui-art]') && !contains(github.event.head_commit.message, '[nc-check]')) }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (!contains(github.event.head_commit.message, '[ui-art]') && !contains(github.event.head_commit.message, '[nc-check]') && !contains(github.event.head_commit.message, '[infra-only]')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
