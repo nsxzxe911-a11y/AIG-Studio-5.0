@@ -493,6 +493,91 @@ function parseProgram(text,axis,opts={}){
  return {lines,blocks,errors,warnings,mainProgram:compiled.mainKey,programCount:compiled.programs.size};
 }
 
+
+function sampleRuntimeBlock(bl,t){
+ const mix=(a,b)=>Number(a||0)+(Number(b||0)-Number(a||0))*t;
+ if(!bl||bl.kind!=="move")return bl?.to?{...bl.to}:{X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0};
+ let spec=null;
+ if(bl.motion==="G2"||bl.motion==="G3"){
+   if(bl.plane==="G18"&&bl.arc?.I!=null&&bl.arc?.K!=null)spec={u:"X",v:"Z",w:"Y",du:bl.arc.I,dv:bl.arc.K};
+   else if(bl.plane==="G19"&&bl.arc?.J!=null&&bl.arc?.K!=null)spec={u:"Y",v:"Z",w:"X",du:bl.arc.J,dv:bl.arc.K};
+   else if(bl.arc?.I!=null&&bl.arc?.J!=null)spec={u:"X",v:"Y",w:"Z",du:bl.arc.I,dv:bl.arc.J};
+ }
+ const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=mix(bl.from?.[k],bl.to?.[k]);
+ if(!spec)return p;
+ const cu=Number(bl.from[spec.u]||0)+Number(spec.du||0),cv=Number(bl.from[spec.v]||0)+Number(spec.dv||0);
+ const r=Math.hypot(Number(bl.from[spec.u]||0)-cu,Number(bl.from[spec.v]||0)-cv);
+ if(r<1e-9)return p;
+ let a0=Math.atan2(Number(bl.from[spec.v]||0)-cv,Number(bl.from[spec.u]||0)-cu);
+ let a1=Math.atan2(Number(bl.to[spec.v]||0)-cv,Number(bl.to[spec.u]||0)-cu),d=a1-a0;
+ if(bl.motion==="G2"&&d>=0)d-=Math.PI*2;
+ if(bl.motion==="G3"&&d<=0)d+=Math.PI*2;
+ const a=a0+d*t;p[spec.u]=cu+Math.cos(a)*r;p[spec.v]=cv+Math.sin(a)*r;return p;
+}
+function inverseRuntimeABPoint(p,aDeg,bDeg){
+ const a=Number(aDeg||0)*Math.PI/180,b=Number(bDeg||0)*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b);
+ const x1=Number(p.x||0)*cb-Number(p.z||0)*sb,z1=Number(p.x||0)*sb+Number(p.z||0)*cb;
+ return{x:x1,y:Number(p.y||0)*ca+z1*sa,z:-Number(p.y||0)*sa+z1*ca};
+}
+function runtimeStockEnvelope(parsed){
+ const moves=(parsed?.blocks||[]).filter(b=>b.kind==="move"),pts=moves.flatMap(b=>[b.from,b.to]);
+ const minX=pts.length?Math.min(...pts.map(p=>Number(p.X||0))):-20,maxX=pts.length?Math.max(...pts.map(p=>Number(p.X||0))):20;
+ const minY=pts.length?Math.min(...pts.map(p=>Number(p.Y||0))):-20,maxY=pts.length?Math.max(...pts.map(p=>Number(p.Y||0))):20;
+ const minZ=pts.length?Math.min(...pts.map(p=>Number(p.Z||0))):-10;
+ const spanX=Math.max(40,maxX-minX+20),spanY=Math.max(40,maxY-minY+20),stockH=Math.max(12,Math.min(35,Math.abs(Math.min(0,minZ))+8));
+ const cx=(minX+maxX)/2,cy=(minY+maxY)/2,tableR=Math.max(spanX,spanY)*.72;
+ return{minX:cx-spanX/2,maxX:cx+spanX/2,minY:cy-spanY/2,maxY:cy+spanY/2,minZ:-stockH,maxZ:0,stockH,spanX,spanY,cx,cy,tableR,tableBottom:-stockH-12,tableTop:-stockH-4};
+}
+function sphereHitsBox(p,r,b){
+ const dx=p.x<b.minX?b.minX-p.x:p.x>b.maxX?p.x-b.maxX:0;
+ const dy=p.y<b.minY?b.minY-p.y:p.y>b.maxY?p.y-b.maxY:0;
+ const dz=p.z<b.minZ?b.minZ-p.z:p.z>b.maxZ?p.z-b.maxZ:0;
+ return dx*dx+dy*dy+dz*dz<=r*r;
+}
+function scanRuntimeCollisions(parsed,axis,cfg={}){
+ const blocks=parsed?.blocks||[],env=runtimeStockEnvelope(parsed),collisions=[];
+ const toolR=Math.max(.05,Number(cfg.toolDia)||10)/2,cutterLen=Math.max(1,Number(cfg.cutterLen)||30);
+ const holderR=Math.max(toolR,Math.max(1,Number(cfg.holderDia)||25)/2),holderLen=Math.max(1,Number(cfg.holderLen)||25);
+ const stockBox={minX:env.minX,maxX:env.maxX,minY:env.minY,maxY:env.maxY,minZ:env.minZ,maxZ:env.maxZ};
+ function localCenter(p,d){
+   const a=axis==="3AX"?0:Number(p.A||0),b=axis==="5AX"?Number(p.B||0):0;
+   return inverseRuntimeABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b);
+ }
+ function tableHit(q,r){
+   const radial=Math.hypot(q.x,q.y);
+   return radial<=env.tableR+r && q.z>=env.tableBottom-r && q.z<=env.tableTop+r;
+ }
+ function segmentHitsStock(p,d0,d1,r,steps){
+   for(let k=0;k<=steps;k++){const q=localCenter(p,d0+(d1-d0)*k/steps);if(sphereHitsBox(q,r,stockBox))return q}return null;
+ }
+ function segmentHitsTable(p,d0,d1,r,steps){
+   for(let k=0;k<=steps;k++){const q=localCenter(p,d0+(d1-d0)*k/steps);if(tableHit(q,r))return q}return null;
+ }
+ for(let bi=0;bi<blocks.length;bi++){
+   const bl=blocks[bi];if(bl.kind!=="move")continue;
+   const dx=Number(bl.to.X||0)-Number(bl.from.X||0),dy=Number(bl.to.Y||0)-Number(bl.from.Y||0),dz=Number(bl.to.Z||0)-Number(bl.from.Z||0);
+   const da=Math.abs(Number(bl.to.A||0)-Number(bl.from.A||0)),db=Math.abs(Number(bl.to.B||0)-Number(bl.from.B||0));
+   const samples=Math.max(8,Math.min(72,Math.ceil(Math.hypot(dx,dy,dz)/3+(da+db)/8)));
+   const p0=sampleRuntimeBlock(bl,0),startToolInside=Boolean(segmentHitsStock(p0,0,cutterLen,toolR,8));
+   let hit=null;
+   for(let j=0;j<=samples&&!hit;j++){
+     const t=j/samples,p=sampleRuntimeBlock(bl,t);
+     const holderStock=segmentHitsStock(p,cutterLen,cutterLen+holderLen,holderR,8);
+     if(holderStock){hit={type:"HOLDER_STOCK",message:"刀柄碰工件",point:holderStock,t};break}
+     const toolTable=segmentHitsTable(p,0,cutterLen,toolR,8);
+     if(toolTable){hit={type:"TOOL_TABLE",message:"刀具碰工作台",point:toolTable,t};break}
+     const holderTable=segmentHitsTable(p,cutterLen,cutterLen+holderLen,holderR,8);
+     if(holderTable){hit={type:"HOLDER_TABLE",message:"刀柄碰工作台",point:holderTable,t};break}
+     if(!bl.cutting&&!startToolInside){
+       const rapidStock=segmentHitsStock(p,0,cutterLen,toolR,8);
+       if(rapidStock){hit={type:"RAPID_TOOL_STOCK",message:"快速移動刀具進入工件",point:rapidStock,t};break}
+     }
+   }
+   if(hit)collisions.push({...hit,blockIndex:bi,line:bl.line,raw:bl.raw,subprogram:bl.subprogram||parsed.mainProgram||"MAIN"});
+ }
+ return{collisions,envelope:env,config:{toolR,cutterLen,holderR,holderLen}};
+}
+
 function makeGlScene(canvas,axis){
  const gl=canvas.getContext("webgl",{antialias:true,alpha:false,preserveDrawingBuffer:false});
  if(!gl)return null;
@@ -670,7 +755,7 @@ function makeGlScene(canvas,axis){
    const a=axis==="3AX"?0:(p.A||0),b=axis==="5AX"?(p.B||0):0;
    const tip=inverseRotABPoint({x:p.X,y:p.Y,z:p.Z},a,b);
    let ax=inverseRotABVector({x:0,y:0,z:1},a,b),alen=Math.hypot(ax.x,ax.y,ax.z)||1;ax={x:ax.x/alen,y:ax.y/alen,z:ax.z/alen};
-   const r=Math.max(.05,(Number(scene.toolDia)||10)/2),r2=r*r,flute=Math.max(30,voxelCache.stockH*2.2);
+   const r=Math.max(.05,(Number(scene.toolDia)||10)/2),r2=r*r,flute=Math.max(1,Number(scene.cutterLen)||30);
    for(let iz=0;iz<voxelCache.nz;iz++)for(let iy=0;iy<voxelCache.ny;iy++)for(let ix=0;ix<voxelCache.nx;ix++){
      const k=voxelIndex(ix,iy,iz);if(!occ[k])continue;
      const c=voxelCenter(ix,iy,iz),rx=c.x-tip.x,ry=c.y-tip.y,rz=c.z-tip.z;
@@ -785,9 +870,10 @@ function makeGlScene(canvas,axis){
        drawLine(arr,bl.cutting&&!scene.dry?rgb("#33f39b"):rgb("#ffb326"),vp);
      }
 
-     const tp={x:pos.X||0,y:pos.Y||0,z:pos.Z||0},dia=Math.max(.5,scene.toolDia||10);
-     drawMesh(cyl,M(T(tp.x,tp.y,tp.z+18),S(dia,dia,36)),rgb("#d8f5ff"),vp);
-     drawMesh(cyl,M(T(tp.x,tp.y,tp.z+48),S(dia*2.5,dia*2.5,25)),rgb("#29465c"),vp);
+     const tp={x:pos.X||0,y:pos.Y||0,z:pos.Z||0},dia=Math.max(.5,Number(scene.toolDia)||10),cutterLen=Math.max(1,Number(scene.cutterLen)||30),holderDia=Math.max(dia,Number(scene.holderDia)||25),holderLen=Math.max(1,Number(scene.holderLen)||25);
+     const alarm=Boolean(scene.collisionAlarm);
+     drawMesh(cyl,M(T(tp.x,tp.y,tp.z+cutterLen/2),S(dia,dia,cutterLen)),rgb(alarm?"#ff465f":"#d8f5ff"),vp);
+     drawMesh(cyl,M(T(tp.x,tp.y,tp.z+cutterLen+holderLen/2),S(holderDia,holderDia,holderLen)),rgb(alarm?"#8d1828":"#29465c"),vp);
 
      drawLine([{x:0,y:0,z:0},{x:25,y:0,z:0}],rgb("#ff4f70"),vp);
      drawLine([{x:0,y:0,z:0},{x:0,y:25,z:0}],rgb("#33f39b"),vp);
