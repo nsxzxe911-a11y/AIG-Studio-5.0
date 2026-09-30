@@ -402,9 +402,15 @@ function aigValidateAllFields(root){
 }
 function aigBindFieldFeedback(root){
  if(!root||root.dataset.aigFieldFeedback==="1")return;root.dataset.aigFieldFeedback="1";aigEnsureIssueCenter(root);
- root.addEventListener("input",e=>{const el=e.target.closest?.("input,select,textarea");if(el)aigValidateField(el)});
- root.addEventListener("change",e=>{const el=e.target.closest?.("input,select,textarea");if(el)aigValidateField(el)});
- root.querySelectorAll("input,select,textarea").forEach(aigValidateField);
+ const check=el=>{
+   if(!el)return;const ok=aigValidateField(el),tip=el.parentElement?.querySelector?.(":scope > .fieldIssue");
+   if(el.classList.contains("aigError"))aigShowIssue(root,"error",tip?.textContent||aigFieldLabel(el)+" 輸入有誤。");
+   else if(el.classList.contains("aigWarn"))aigShowIssue(root,"warn",tip?.textContent||aigFieldLabel(el)+" 請確認。");
+   else if(ok&&!root.querySelector(".aigError,.aigWarn"))aigClearIssue(root);
+ };
+ root.addEventListener("input",e=>check(e.target.closest?.("input,select,textarea")));
+ root.addEventListener("change",e=>check(e.target.closest?.("input,select,textarea")));
+ root.querySelectorAll("input,select,textarea").forEach(check);
 }
 function aigGuard(root,label,fn,fallback=null,severity="error"){
  try{return fn()}catch(err){
@@ -1078,7 +1084,6 @@ function makeRuntime(root){
   if(/\bG73\b/i.test(ta.value)&&Number.isFinite(g73)&&g73<=0)aigFieldIssue(g73Input,"warn","程式使用 G73，退屑量建議大於 0。");
  }
  function settings(){
-  validateMachineFields();
   return {
     toolDia:Math.max(.1,Number(toolInput.value)||10),
     cutterLen:Math.max(1,Number(cutterInput.value)||30),
@@ -1100,6 +1105,7 @@ function makeRuntime(root){
   state.history=state.history.slice(0,state.historyIndex+1);state.history.push(v);state.historyIndex=state.history.length-1;
  }
  function parse(resetIndex=true){
+  validateMachineFields();
   const cfg=settings();
   const parsed=aigGuard(root,axis+" G-code 解析",()=>parseProgram(ta.value,axis,cfg),null,"error");
   if(!parsed){
@@ -2112,7 +2118,7 @@ function makeMenuRuntime(root){
  }
  function projectView(){
    const p=readJson("aig-project-meta-v1",{name:"AIG CNC Project",revision:1});
-   detail.innerHTML='<div class="menuDetailGrid"><label class="field"><b>專案名稱</b><input data-menu-project-name value="'+String(p.name||"").replace(/"/g,"&quot;")+'"></label><div class="field"><b>Revision</b><span>'+Number(p.revision||1)+'</span></div><div class="field"><b>儲存位置</b><span>Browser Local / Offline-first</span></div></div><div class="controls"><button class="btn play" data-menu-action="PROJECT_SAVE">儲存專案資訊</button><button class="btn" data-menu-action="PROJECT_NEW">新建空專案</button></div><div class="notice" data-menu-msg>專案資料不會自動覆蓋另一台裝置。</div>';
+   detail.innerHTML='<div class="menuDetailGrid"><label class="field"><b>專案名稱</b><input data-menu-project-name required maxlength="80" value="'+String(p.name||"").replace(/"/g,"&quot;")+'"></label><div class="field"><b>Revision</b><span>'+Number(p.revision||1)+'</span></div><div class="field"><b>儲存位置</b><span>Browser Local / Offline-first</span></div></div><div class="controls"><button class="btn play" data-menu-action="PROJECT_SAVE">儲存專案資訊</button><button class="btn" data-menu-action="PROJECT_NEW">新建空專案</button></div><div class="notice" data-menu-msg>專案資料不會自動覆蓋另一台裝置。</div>';
  }
  function fileView(){
    detail.innerHTML='<div class="notice">匯出會包含 CAD、CAM/刀路、3AX/4AX/5AX G-code 與專案資訊；匯入只寫入本機瀏覽器。</div><div class="controls"><button class="btn play" data-menu-action="EXPORT">匯出 AIG JSON</button><button class="btn" data-menu-action="IMPORT">匯入 AIG JSON</button><input type="file" accept=".json,application/json" data-menu-file hidden></div><div class="notice" data-menu-msg></div>';
@@ -2120,9 +2126,9 @@ function makeMenuRuntime(root){
  function toolsView(){
    const t=readJson("aig-tool-table-v1",{T1:10,T4:6,T12:12,H1:0,H4:0,H12:0});
    detail.innerHTML='<div class="menuDetailGrid">'+
-    '<label class="field"><b>T1 Ø mm</b><input data-toolkey="T1" type="number" step="0.001" value="'+t.T1+'"></label>'+
-    '<label class="field"><b>T4 Ø mm</b><input data-toolkey="T4" type="number" step="0.001" value="'+t.T4+'"></label>'+
-    '<label class="field"><b>T12 Ø mm</b><input data-toolkey="T12" type="number" step="0.001" value="'+t.T12+'"></label>'+
+    '<label class="field"><b>T1 Ø mm</b><input data-toolkey="T1" type="number" min="0.001" step="0.001" value="'+t.T1+'"></label>'+
+    '<label class="field"><b>T4 Ø mm</b><input data-toolkey="T4" type="number" min="0.001" step="0.001" value="'+t.T4+'"></label>'+
+    '<label class="field"><b>T12 Ø mm</b><input data-toolkey="T12" type="number" min="0.001" step="0.001" value="'+t.T12+'"></label>'+
     '<label class="field"><b>H1 mm</b><input data-toolkey="H1" type="number" step="0.001" value="'+t.H1+'"></label>'+
     '<label class="field"><b>H4 mm</b><input data-toolkey="H4" type="number" step="0.001" value="'+t.H4+'"></label>'+
     '<label class="field"><b>H12 mm</b><input data-toolkey="H12" type="number" step="0.001" value="'+t.H12+'"></label>'+
@@ -2161,7 +2167,7 @@ function makeMenuRuntime(root){
  root.addEventListener("click",e=>{
    const card=e.target.closest("[data-menu-key]");if(card){render(card.dataset.menuKey);return}
    const a=e.target.closest("[data-menu-action]");if(!a)return;const msg=detail.querySelector("[data-menu-msg]");
-   if(a.dataset.menuAction==="PROJECT_SAVE"){const old=readJson("aig-project-meta-v1",{revision:0}),name=detail.querySelector("[data-menu-project-name]").value.trim()||"AIG CNC Project";saveJson("aig-project-meta-v1",{name,revision:Number(old.revision||0)+1,updatedAt:Date.now()});projectView()}
+   if(a.dataset.menuAction==="PROJECT_SAVE"){const old=readJson("aig-project-meta-v1",{revision:0}),nameEl=detail.querySelector("[data-menu-project-name]"),name=nameEl.value.trim();if(!name){aigFieldIssue(nameEl,"error","專案名稱不可空白；原專案資料保持不變。");if(msg)msg.textContent="專案名稱空白，沒有覆蓋原資料；AIG 可繼續操作。";return}saveJson("aig-project-meta-v1",{name,revision:Number(old.revision||0)+1,updatedAt:Date.now()});projectView()}
    if(a.dataset.menuAction==="PROJECT_NEW"){saveJson("aig-project-meta-v1",{name:"AIG CNC Project",revision:1,updatedAt:Date.now()});projectView()}
    if(a.dataset.menuAction==="EXPORT"){
      const data={schema:"AIG-WEB-PROJECT-1",exportedAt:new Date().toISOString(),project:readJson("aig-project-meta-v1",{}),cad:readJson("aig-cad-draft-v1",null),cam:readJson("aig-cam-toolpath-v1",null),tools:readJson("aig-tool-table-v1",null),wcs:readJson("aig-wcs-v1",null),nc:{"3AX":localStorage.getItem("aig-code-3AX"),"4AX":localStorage.getItem("aig-code-4AX"),"5AX":localStorage.getItem("aig-code-5AX")}};
