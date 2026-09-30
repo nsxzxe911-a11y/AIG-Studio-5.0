@@ -2489,6 +2489,10 @@ function makeMenuRuntime(root){
    const sy=stock&&Number.isFinite(Number(stock.minY))&&Number.isFinite(Number(stock.maxY))?Number(stock.maxY)-Number(stock.minY):0;
    const cx=stock&&sx>0?(Number(stock.minX)+Number(stock.maxX))/2:0,cy=stock&&sy>0?(Number(stock.minY)+Number(stock.maxY))/2:0;
    const bottom=Number.isFinite(Number(stock?.bottom))?Number(stock.bottom):-20;
+   const clearanceCfg=readJson("aig-cam-toolpath-v1",{}),requiredClearance=Math.max(0,Number(clearanceCfg?.postGeometry?.clearance??2)||0);
+   const fixtureBoxes=runtimeAssemblyBoxes({assembly}),highestFixture=fixtureBoxes.length?Math.max(...fixtureBoxes.map(f=>f.maxZ)):-Infinity;
+   const stockTop=Number.isFinite(Number(stock?.top))?Number(stock.top):0,staticHighest=Math.max(stockTop,highestFixture);
+   const staticSafeZ=Number.isFinite(staticHighest)?staticHighest+requiredClearance:null;
    const stockInfo=stock&&sx>0&&sy>0
      ?("X "+Number(stock.minX).toFixed(3)+" ~ "+Number(stock.maxX).toFixed(3)+" / Y "+Number(stock.minY).toFixed(3)+" ~ "+Number(stock.maxY).toFixed(3)+" / Z "+Number(stock.bottom).toFixed(3)+" ~ "+Number(stock.top).toFixed(3))
      :"尚未建立 CAM 毛坯；可先手動建立夾治具，或到 CAM 套用毛坯。";
@@ -2508,7 +2512,7 @@ function makeMenuRuntime(root){
        '</div><div class="controls"><button class="btn play" data-menu-action="ASSEMBLY_SAVE_ITEM" data-id="'+id+'">儲存模組</button><button class="btn" data-menu-action="ASSEMBLY_TOGGLE_ITEM" data-id="'+id+'">'+(enabled?'隱藏':'顯示')+'</button><button class="btn danger" data-menu-action="ASSEMBLY_DELETE_ITEM" data-id="'+id+'">刪除</button></div></div>';
    }).join("");
    detail.innerHTML=
-     '<div class="notice"><b>目前毛坯：</b>'+esc(stockInfo)+'<br>夾治具採工作台局部座標；4AX/5AX 會與 A/B 工作台一起旋轉並參與碰撞。</div>'+
+     '<div class="notice"><b>目前毛坯：</b>'+esc(stockInfo)+'<br><b>3AX 靜態 Safe-Z 建議：</b>'+(Number.isFinite(staticSafeZ)?staticSafeZ.toFixed(3)+" mm":"—")+'（最高障礙 '+(Number.isFinite(staticHighest)?staticHighest.toFixed(3):"—")+' + 間隙 '+requiredClearance.toFixed(3)+'）<br>4AX/5AX 不用這個靜態值冒充安全結果，仍以 A/B 旋轉後的完整路徑碰撞與 Clearance 為準。</div>'+
      '<div class="menuDetailGrid">'+
        '<label class="field"><b>新模組類型</b><select data-assembly-new="type">'+options("CLAMP")+'</select></label>'+
        '<label class="field"><b>名稱</b><input data-assembly-new="name" maxlength="40" value="壓板"></label>'+
