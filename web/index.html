@@ -2017,10 +2017,11 @@ function makeToolpathRuntime(root){
    state.view.scale=Math.max(.2,Math.min(60,Math.min((w-80)/ww,(h-80)/hh)));state.view.panX=-((minX+maxX)/2)*state.view.scale;state.view.panY=((minY+maxY)/2)*state.view.scale;draw();
  }
  function renderList(){
-   listEl.innerHTML="";state.paths.forEach((p,i)=>{const b=document.createElement("button");b.className="btn"+(i===state.selected?" cadSelected":"");b.dataset.tpIndex=i;b.textContent="OP"+String(i+1).padStart(2,"0")+"  "+String(p.kind||"path").toUpperCase()+"  "+(p.points?.length||0)+" pts  Z"+Number(p.depth??0).toFixed(3)+"  A"+Number(p.aStart||0).toFixed(1)+"→"+Number(p.aEnd??p.aStart??0).toFixed(1)+" B"+Number(p.bStart||0).toFixed(1)+"→"+Number(p.bEnd??p.bStart??0).toFixed(1);listEl.appendChild(b)});
+   listEl.innerHTML="";state.paths.forEach((p,i)=>{const b=document.createElement("button");b.className="btn"+(i===state.selected?" cadSelected":"");b.dataset.tpIndex=i;const adaptiveMeta=p.kind==="adaptive"?("  L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" R"+Number(p.adaptiveRing||0)+" Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"):"";
+   b.textContent="OP"+String(i+1).padStart(2,"0")+"  "+String(p.kind||"path").toUpperCase()+"  "+(p.points?.length||0)+" pts  Z"+Number(p.depth??0).toFixed(3)+adaptiveMeta+"  A"+Number(p.aStart||0).toFixed(1)+"→"+Number(p.aEnd??p.aStart??0).toFixed(1)+" B"+Number(p.bStart||0).toFixed(1)+"→"+Number(p.bEnd??p.bStart??0).toFixed(1);listEl.appendChild(b)});
  }
  function updateInfo(){
-   countEl.textContent=state.paths.length+" paths";const p=selected();selectedEl.textContent=p?("OP"+String(state.selected+1).padStart(2,"0")+" "+String(p.kind||"path").toUpperCase()):"無";
+   countEl.textContent=state.paths.length+" paths";const p=selected();selectedEl.textContent=p?("OP"+String(state.selected+1).padStart(2,"0")+" "+String(p.kind||"path").toUpperCase()+(p.kind==="adaptive"?(" • Z L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" • R"+Number(p.adaptiveRing||0)+" • Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"):"")):"無";
    statusEl.textContent=state.edit?"節點編輯":state.visible?"顯示":"隱藏";
  }
  function leadPoint(path,which){
@@ -2090,6 +2091,11 @@ function makeToolpathRuntime(root){
    if(target==="4AX"&&(Math.abs(b0)+Math.abs(b1)>1e-9)){errors.push("4AX 不支援 B 軸");aigFieldIssue(b0Input,"error","4AX 只能使用 A 軸；B 必須為 0。");aigFieldIssue(b1Input,"error","4AX 只能使用 A 軸；B 必須為 0。")}
    state.paths.forEach((p,i)=>{
      if(!Array.isArray(p.points)||!p.points.length)errors.push("OP"+(i+1)+" 無節點");
+     if(p.kind==="adaptive"){
+       const load=Number(p.radialEngagement),ring=Number(p.adaptiveRing),li=Number(p.zLevelIndex),lc=Number(p.zLevelCount);
+       if(!(load>0&&load<=.45))errors.push("OP"+(i+1)+" 自適應負載超界");
+       if(!(ring>=1&&li>=1&&lc>=li))errors.push("OP"+(i+1)+" 自適應層級資料錯誤");
+     }
      for(const pt of p.points||[])if(!Number.isFinite(pt.x)||!Number.isFinite(pt.y))errors.push("OP"+(i+1)+" 有非法座標");
      if(!(Number(p.feed)>0))errors.push("OP"+(i+1)+" 進給錯誤");
      if(!(Number(p.rpm)>0))errors.push("OP"+(i+1)+" 轉速錯誤");
