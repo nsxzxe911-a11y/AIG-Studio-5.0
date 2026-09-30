@@ -1066,7 +1066,19 @@ function makeRuntime(root){
  const g55x=root.querySelector("[data-g55-x]"),g55y=root.querySelector("[data-g55-y]"),g55z=root.querySelector("[data-g55-z]");
  const h1=root.querySelector("[data-h1]"),h4=root.querySelector("[data-h4]"),h12=root.querySelector("[data-h12]");
  const state={axis,root,ta,canvas,ctx,parsed:null,index:0,t:0,running:false,dry:false,single:false,optionalStop:false,blockSkip:false,last:performance.now(),history:[],historyIndex:-1,collisions:[],collisionAlarm:null};
+ function validateMachineFields(){
+  [toolInput,cutterInput,holderDiaInput,holderLenInput,safeInput,g73Input,g54x,g54y,g54z,g55x,g55y,g55z,h1,h4,h12].forEach(aigValidateField);
+  const tool=Number(toolInput.value),cutter=Number(cutterInput.value),holderDia=Number(holderDiaInput.value),holderLen=Number(holderLenInput.value),safe=Number(safeInput.value),g73=Number(g73Input.value);
+  if(Number.isFinite(tool)&&tool<=0)aigFieldIssue(toolInput,"error","刀徑 Ø 必須大於 0 mm。");
+  if(Number.isFinite(cutter)&&cutter<=0)aigFieldIssue(cutterInput,"error","刃長必須大於 0 mm。");
+  if(Number.isFinite(holderDia)&&holderDia<=0)aigFieldIssue(holderDiaInput,"error","刀柄 Ø 必須大於 0 mm。");
+  else if(Number.isFinite(holderDia)&&Number.isFinite(tool)&&holderDia<tool)aigFieldIssue(holderDiaInput,"warn","刀柄 Ø 小於刀徑，請確認刀具模型是否正確。");
+  if(Number.isFinite(holderLen)&&holderLen<=0)aigFieldIssue(holderLenInput,"error","刀柄長必須大於 0 mm。");
+  if(Number.isFinite(safe)&&safe<=0)aigFieldIssue(safeInput,"warn","Safe-Z ≤ 0，請確認工件零面與夾治具高度。");
+  if(/\bG73\b/i.test(ta.value)&&Number.isFinite(g73)&&g73<=0)aigFieldIssue(g73Input,"warn","程式使用 G73，退屑量建議大於 0。");
+ }
  function settings(){
+  validateMachineFields();
   return {
     toolDia:Math.max(.1,Number(toolInput.value)||10),
     cutterLen:Math.max(1,Number(cutterInput.value)||30),
@@ -1104,6 +1116,10 @@ function makeRuntime(root){
   const v=root.querySelector("[data-verify]");
   v.textContent=state.parsed.errors.length?state.parsed.errors.join(" "):state.collisions.length?("解析完成，但碰撞預檢發現 "+state.collisions.length+" 個風險；按「驗證」查看。"):state.parsed.warnings.length?("解析完成："+state.parsed.blocks.length+" 個區塊。提醒："+state.parsed.warnings.join(" ")):"解析完成："+state.parsed.blocks.length+" 個區塊。G81/G73/G83/G84 已展開為實際模擬動作。";
   v.style.color=state.parsed.errors.length?"#ffbdc6":state.collisions.length?"#ffcf70":"#b7c8d1";
+  if(state.parsed.errors.length)aigFieldIssue(ta,"error","G-code："+state.parsed.errors[0]);
+  else if(state.collisions.length){const c=state.collisions[0];aigFieldIssue(ta,"warn","碰撞預檢：第 "+(c.line+1)+" 行 "+c.message+"；AIG 可繼續編輯。")}
+  else if(state.parsed.warnings.length)aigFieldIssue(ta,"warn",state.parsed.warnings[0]);
+  else aigFieldIssue(ta,null,"");
  }
  function renderExec(){
   const box=root.querySelector("[data-exec]");box.innerHTML="";
@@ -1186,6 +1202,7 @@ function makeRuntime(root){
     const collision=state.collisions.find(c=>c.blockIndex===state.index);
     if(collision&&state.t>=collision.t){
       state.t=Math.max(0,Math.min(1,collision.t));state.running=false;state.collisionAlarm=collision;
+      aigShowIssue(root,"warn","模擬在第 "+(collision.line+1)+" 行偵測到 "+collision.message+"，只暫停加工播放；AIG、G-code 與其他頁面仍可繼續操作。");
       renderExec();updateUi();draw();requestAnimationFrame(tick);return;
     }
     if(state.t>=1){
@@ -1732,7 +1749,14 @@ function makeCamRuntime(root){
  const toolInput=root.querySelector("[data-cam-tool]"),depthInput=root.querySelector("[data-cam-depth]"),feedInput=root.querySelector("[data-cam-feed]"),rpmInput=root.querySelector("[data-cam-rpm]"),safeInput=root.querySelector("[data-cam-safez]"),pitchInput=root.querySelector("[data-cam-pitch]"),stepInput=root.querySelector("[data-cam-stepover]"),dirInput=root.querySelector("[data-cam-direction]");
  const state={cad:[],strategy:null,paths:[],view:{scale:4,panX:0,panY:0}};
  const clone=x=>JSON.parse(JSON.stringify(x));
- function params(){return{toolDia:Math.max(.1,Number(toolInput.value)||10),depth:Number(depthInput.value)||-10,feed:Math.max(1,Number(feedInput.value)||1200),rpm:Math.max(1,Number(rpmInput.value)||12000),safeZ:Number(safeInput.value)||5,tapPitch:Number(pitchInput.value)||0,stepover:Math.max(.05,Math.min(.95,(Number(stepInput.value)||50)/100)),direction:dirInput.value}}
+ function validateCamFields(){
+   [toolInput,depthInput,feedInput,rpmInput,safeInput,pitchInput,stepInput,dirInput].forEach(aigValidateField);
+   const depth=Number(depthInput.value),safe=Number(safeInput.value);
+   if(Number.isFinite(depth)&&depth>=0)aigFieldIssue(depthInput,"warn","加工深度目前 ≥ 0；若要切入材料，通常應使用負 Z。");
+   if(Number.isFinite(depth)&&Number.isFinite(safe)&&safe<=depth)aigFieldIssue(safeInput,"error","Safe-Z 必須高於加工深度。");
+   if(state.strategy==="TAP"&&!(Number(pitchInput.value)>0))aigFieldIssue(pitchInput,"error","攻牙需要輸入螺距 mm/rev。");
+ }
+ function params(){validateCamFields();return{toolDia:Math.max(.1,Number(toolInput.value)||10),depth:Number(depthInput.value)||-10,feed:Math.max(1,Number(feedInput.value)||1200),rpm:Math.max(1,Number(rpmInput.value)||12000),safeZ:Number(safeInput.value)||5,tapPitch:Number(pitchInput.value)||0,stepover:Math.max(.05,Math.min(.95,(Number(stepInput.value)||50)/100)),direction:dirInput.value}}
  function loadCad(){
    try{const v=JSON.parse(localStorage.getItem("aig-cad-draft-v1")||"null");state.cad=Array.isArray(v?.shapes)?v.shapes:[]}catch{state.cad=[]}
    cadCountEl.textContent="CAD "+state.cad.length;msgEl.textContent=state.cad.length?"已讀取 "+state.cad.length+" 個 CAD 幾何。":"CAD 尚無幾何；先到 CAD 頁畫圖。";fit();draw();
@@ -1945,18 +1969,27 @@ function makeToolpathRuntime(root){
    if(path.rotMode==="INDEXED"){path.aEnd=path.aStart;path.bEnd=path.bStart;a1Input.value=path.aEnd;b1Input.value=path.bEnd}
  }
  function verify(){
+   [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,targetInput,wcsInput,toolNoInput,hNoInput,rotModeInput,a0Input,a1Input,b0Input,b1Input].forEach(aigValidateField);
+   [safeInput,depthInput,feedInput,rpmInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>{if(!el.classList.contains("aigError")&&!el.classList.contains("aigWarn"))aigFieldIssue(el,null,"")});
    const errors=[];
-   for(const [label,v] of [["刀具 Ø",toolDiaInput.value],["刃長",cutterLenInput.value],["刀柄 Ø",holderDiaInput.value],["刀柄長",holderLenInput.value]])if(!(Number(v)>0))errors.push(label+" 必須大於 0");
+   for(const [label,el] of [["刀具 Ø",toolDiaInput],["刃長",cutterLenInput],["刀柄 Ø",holderDiaInput],["刀柄長",holderLenInput]]){
+     if(!(Number(el.value)>0)){errors.push(label+" 必須大於 0");aigFieldIssue(el,"error",label+" 必須大於 0。")}
+   }
+   const depth=Number(depthInput.value),safe=Number(safeInput.value);
+   if(Number.isFinite(depth)&&Number.isFinite(safe)&&safe<=depth){errors.push("Safe-Z 不高於加工深度");aigFieldIssue(safeInput,"error","Safe-Z 必須高於加工深度。")}
+   const target=targetInput.value,a0=Number(a0Input.value)||0,a1=Number(a1Input.value)||0,b0=Number(b0Input.value)||0,b1=Number(b1Input.value)||0;
+   if(target==="3AX"&&(Math.abs(a0)+Math.abs(a1)+Math.abs(b0)+Math.abs(b1)>1e-9)){aigFieldIssue(a0Input,"warn","3AX 不使用 A/B；這些值不會輸出。");aigFieldIssue(b0Input,"warn","3AX 不使用 A/B；這些值不會輸出。")}
+   if(target==="4AX"&&(Math.abs(b0)+Math.abs(b1)>1e-9)){errors.push("4AX 不支援 B 軸");aigFieldIssue(b0Input,"error","4AX 只能使用 A 軸；B 必須為 0。");aigFieldIssue(b1Input,"error","4AX 只能使用 A 軸；B 必須為 0。")}
    state.paths.forEach((p,i)=>{
      if(!Array.isArray(p.points)||!p.points.length)errors.push("OP"+(i+1)+" 無節點");
      for(const pt of p.points||[])if(!Number.isFinite(pt.x)||!Number.isFinite(pt.y))errors.push("OP"+(i+1)+" 有非法座標");
      if(!(Number(p.feed)>0))errors.push("OP"+(i+1)+" 進給錯誤");
      if(!(Number(p.rpm)>0))errors.push("OP"+(i+1)+" 轉速錯誤");
      if(Number(p.safeZ)<=Number(p.depth))errors.push("OP"+(i+1)+" Safe-Z 不高於加工深度");
-     if(p.kind==="tap"&&!(Number(p.pitch)>0))errors.push("OP"+(i+1)+" 攻牙缺少螺距");
+     if(p.kind==="tap"&&!(Number(p.pitch)>0)){errors.push("OP"+(i+1)+" 攻牙缺少螺距");aigFieldIssue(pitchInput,"error","攻牙刀路需要有效螺距 mm/rev。")}
      for(const [label,v] of [["A0",p.aStart??0],["A1",p.aEnd??p.aStart??0],["B0",p.bStart??0],["B1",p.bEnd??p.bStart??0]])if(!Number.isFinite(Number(v)))errors.push("OP"+(i+1)+" "+label+" 非法");
    });
-   if(errors.length){statusEl.textContent="VERIFY FAIL";msgEl.textContent=errors.slice(0,4).join("；");return false}
+   if(errors.length){statusEl.textContent="需修正";msgEl.textContent=errors.slice(0,4).join("；");return false}
    statusEl.textContent="VERIFY PASS";msgEl.textContent="刀路基礎驗證 PASS；產生 NC 前會再跑刀具/刀柄幾何碰撞 Preflight。";return true;
  }
 
@@ -1972,9 +2005,9 @@ function makeToolpathRuntime(root){
  function generateFanucNC(){
    if(!state.paths.length){msgEl.textContent="沒有刀路，不能產生 NC。";return null}
    const invalidTap=state.paths.find(p=>p.kind==="tap"&&(!(Number(p.pitch)>0)||!(Number(p.rpm)>0)));
-   if(invalidTap){msgEl.textContent="攻牙缺少有效螺距或轉速，POST BLOCK。";statusEl.textContent="POST BLOCK";return null}
+   if(invalidTap){msgEl.textContent="攻牙缺少有效螺距或轉速，POST BLOCK。";statusEl.textContent="此次未輸出";return null}
    const simultaneousTap=state.paths.find(p=>p.kind==="tap"&&p.rotMode==="SIMULTANEOUS"&&(Math.abs(Number(p.aEnd||0)-Number(p.aStart||0))>1e-9||Math.abs(Number(p.bEnd||0)-Number(p.bStart||0))>1e-9));
-   if(simultaneousTap){msgEl.textContent="G84 攻牙目前只允許 3AX 或 INDEXED 定角；SIMULTANEOUS A/B 已阻擋。";statusEl.textContent="POST BLOCK";return null}
+   if(simultaneousTap){msgEl.textContent="G84 攻牙目前只允許 3AX 或 INDEXED 定角；SIMULTANEOUS A/B 已阻擋。";statusEl.textContent="此次未輸出";return null}
    const target=targetInput.value||"3AX",wcs=wcsInput.value||"G54",tool=Math.max(1,Math.trunc(Number(toolNoInput.value)||1)),hno=Math.max(1,Math.trunc(Number(hNoInput.value)||1));
    const rpm=Math.max(1,Math.trunc(Number(rpmInput.value)||12000)),defaultFeed=Math.max(1,Math.trunc(Number(feedInput.value)||1200)),defaultSafe=Number(safeInput.value)||5;
    const lines=[];let n=10;const push=line=>{lines.push("N"+n+" "+line);n+=10};
@@ -2023,10 +2056,10 @@ function makeToolpathRuntime(root){
      safeZ:defaultSafe,g73Retract:.5
    };
    const preParsed=parseProgram(code,target,collisionCfg);
-   if(preParsed.errors.length){statusEl.textContent="POST BLOCK";msgEl.textContent="NC Preflight parser FAIL："+preParsed.errors.slice(0,3).join("；");return null}
+   if(preParsed.errors.length){statusEl.textContent="此次未輸出";msgEl.textContent="NC Preflight parser FAIL："+preParsed.errors.slice(0,3).join("；");return null}
    const preCollision=scanRuntimeCollisions(preParsed,target,collisionCfg);
    if(preCollision.collisions.length){
-     const c=preCollision.collisions[0];statusEl.textContent="POST BLOCK";
+     const c=preCollision.collisions[0];statusEl.textContent="此次未輸出";
      msgEl.textContent="NC 碰撞 Preflight FAIL：第 "+(c.line+1)+" 行 "+c.message+" ["+c.type+"]；未寫入 "+target+"。";return null
    }
    localStorage.setItem("aig-code-"+target,code);
@@ -2123,6 +2156,7 @@ function makeMenuRuntime(root){
    else if(key==="SETTINGS")simple("正式基準：BLACK RGB、高對比、繁中優先、0.001 mm、AUTO 120/60/30。尚未生效的設定不提供假開關。");
    else if(key==="MAINT")detail.innerHTML='<div class="notice">維修只處理 Web Prototype 暫存，不碰系統防毒或裝置安全。</div><button class="btn" data-menu-action="SELF_CHECK">Runtime 自我檢查</button><button class="btn danger" data-menu-action="CLEAR_DERIVED">清除 CAM/NC 衍生暫存</button><div class="notice" data-menu-msg></div>';
    else if(key==="HELP")simple("流程：CAD 製圖 → CAM 選策略 → 套用至刀路 → 刀路編輯/驗證 → 產生 NC → 3AX/4AX/5AX 模擬與 G-code 編輯。");
+   setTimeout(()=>aigValidateAllFields(detail),0);
  }
  root.addEventListener("click",e=>{
    const card=e.target.closest("[data-menu-key]");if(card){render(card.dataset.menuKey);return}
