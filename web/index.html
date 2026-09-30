@@ -228,6 +228,10 @@ function toolpathPage(){
  '<div class="field"><b>工作座標</b><select data-tp-wcs style="width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px"><option>G54</option><option>G55</option></select></div>'+
  '<label class="param">刀具 T<input data-tp-tool type="number" value="1" min="1" step="1"></label>'+
  '<label class="param">刀長 H<input data-tp-h type="number" value="1" min="1" step="1"></label>'+
+ '<label class="param">刀具 Ø<input data-tp-tooldia type="number" value="10" min="0.1" step="0.001"></label>'+
+ '<label class="param">刃長<input data-tp-cutterlen type="number" value="30" min="1" step="0.1"></label>'+
+ '<label class="param">刀柄 Ø<input data-tp-holderdia type="number" value="25" min="1" step="0.1"></label>'+
+ '<label class="param">刀柄長<input data-tp-holderlen type="number" value="25" min="1" step="0.1"></label>'+
  '<div class="field"><b>旋轉模式</b><select data-tp-rotmode style="width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px"><option value="INDEXED">INDEXED 定角</option><option value="SIMULTANEOUS">SIMULTANEOUS 同步</option></select></div>'+
  '<label class="param">A 起點<input data-tp-a0 type="number" value="0" step="0.001"></label>'+
  '<label class="param">A 終點<input data-tp-a1 type="number" value="0" step="0.001"></label>'+
@@ -1699,7 +1703,7 @@ function makeCamRuntime(root){
 function makeToolpathRuntime(root){
  const canvas=root.querySelector("[data-tp-canvas]"),ctx=canvas.getContext("2d"),listEl=root.querySelector("[data-tp-list]"),msgEl=root.querySelector("[data-tp-msg]"),countEl=root.querySelector("[data-tp-count]"),selectedEl=root.querySelector("[data-tp-selected]"),statusEl=root.querySelector("[data-tp-status]");
  const safeInput=root.querySelector("[data-tp-safez]"),depthInput=root.querySelector("[data-tp-depth]"),feedInput=root.querySelector("[data-tp-feed]"),rpmInput=root.querySelector("[data-tp-rpm]"),leadInInput=root.querySelector("[data-tp-leadin]"),leadOutInput=root.querySelector("[data-tp-leadout]"),pitchInput=root.querySelector("[data-tp-pitch]");
- const targetInput=root.querySelector("[data-tp-target]"),wcsInput=root.querySelector("[data-tp-wcs]"),toolNoInput=root.querySelector("[data-tp-tool]"),hNoInput=root.querySelector("[data-tp-h]");
+ const targetInput=root.querySelector("[data-tp-target]"),wcsInput=root.querySelector("[data-tp-wcs]"),toolNoInput=root.querySelector("[data-tp-tool]"),hNoInput=root.querySelector("[data-tp-h]"),toolDiaInput=root.querySelector("[data-tp-tooldia]"),cutterLenInput=root.querySelector("[data-tp-cutterlen]"),holderDiaInput=root.querySelector("[data-tp-holderdia]"),holderLenInput=root.querySelector("[data-tp-holderlen]");
  const rotModeInput=root.querySelector("[data-tp-rotmode]"),a0Input=root.querySelector("[data-tp-a0]"),a1Input=root.querySelector("[data-tp-a1]"),b0Input=root.querySelector("[data-tp-b0]"),b1Input=root.querySelector("[data-tp-b1]");
  const state={payload:null,paths:[],selected:0,visible:true,edit:false,view:{scale:4,panX:0,panY:0},dragNode:null,deleteArmedUntil:0};
  function load(){
@@ -1716,10 +1720,12 @@ function makeToolpathRuntime(root){
    rotModeInput.value=p?.rotMode??"INDEXED";
    a0Input.value=p?.aStart??0;a1Input.value=p?.aEnd??(p?.aStart??0);
    b0Input.value=p?.bStart??0;b1Input.value=p?.bEnd??(p?.bStart??0);
+   const pg=state.payload?.postGeometry||{};
+   toolDiaInput.value=pg.toolDia??base.toolDia??10;cutterLenInput.value=pg.cutterLen??30;holderDiaInput.value=pg.holderDia??25;holderLenInput.value=pg.holderLen??25;
  }
  function save(){
    if(!state.payload)state.payload={version:1,createdAt:Date.now(),strategy:"EDITED",params:{},cadEntityCount:0};
-   state.payload.paths=state.paths;state.payload.updatedAt=Date.now();localStorage.setItem("aig-cam-toolpath-v1",JSON.stringify(state.payload));statusEl.textContent="已儲存";msgEl.textContent="刀路修改已儲存到本機。";
+   state.payload.paths=state.paths;state.payload.postGeometry={toolDia:Math.max(.1,Number(toolDiaInput.value)||10),cutterLen:Math.max(1,Number(cutterLenInput.value)||30),holderDia:Math.max(1,Number(holderDiaInput.value)||25),holderLen:Math.max(1,Number(holderLenInput.value)||25)};state.payload.updatedAt=Date.now();localStorage.setItem("aig-cam-toolpath-v1",JSON.stringify(state.payload));statusEl.textContent="已儲存";msgEl.textContent="刀路修改已儲存到本機。";
  }
  function resize(){const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}ctx.setTransform(dpr,0,0,dpr,0,0);return{w:r.width,h:r.height}}
  function w2s(p,w,h){return{x:w/2+state.view.panX+p.x*state.view.scale,y:h/2+state.view.panY-p.y*state.view.scale}}
@@ -1768,7 +1774,9 @@ function makeToolpathRuntime(root){
    if(path.rotMode==="INDEXED"){path.aEnd=path.aStart;path.bEnd=path.bStart;a1Input.value=path.aEnd;b1Input.value=path.bEnd}
  }
  function verify(){
-   const errors=[];state.paths.forEach((p,i)=>{
+   const errors=[];
+   for(const [label,v] of [["刀具 Ø",toolDiaInput.value],["刃長",cutterLenInput.value],["刀柄 Ø",holderDiaInput.value],["刀柄長",holderLenInput.value]])if(!(Number(v)>0))errors.push(label+" 必須大於 0");
+   state.paths.forEach((p,i)=>{
      if(!Array.isArray(p.points)||!p.points.length)errors.push("OP"+(i+1)+" 無節點");
      for(const pt of p.points||[])if(!Number.isFinite(pt.x)||!Number.isFinite(pt.y))errors.push("OP"+(i+1)+" 有非法座標");
      if(!(Number(p.feed)>0))errors.push("OP"+(i+1)+" 進給錯誤");
@@ -1778,7 +1786,7 @@ function makeToolpathRuntime(root){
      for(const [label,v] of [["A0",p.aStart??0],["A1",p.aEnd??p.aStart??0],["B0",p.bStart??0],["B1",p.bEnd??p.bStart??0]])if(!Number.isFinite(Number(v)))errors.push("OP"+(i+1)+" "+label+" 非法");
    });
    if(errors.length){statusEl.textContent="VERIFY FAIL";msgEl.textContent=errors.slice(0,4).join("；");return false}
-   statusEl.textContent="VERIFY PASS";msgEl.textContent="幾何/座標/進給/轉速/Safe-Z 基礎驗證 PASS；此處不冒充碰撞驗證。";return true;
+   statusEl.textContent="VERIFY PASS";msgEl.textContent="刀路基礎驗證 PASS；產生 NC 前會再跑刀具/刀柄幾何碰撞 Preflight。";return true;
  }
 
  function fmt(v){const n=Number(v)||0;return n.toFixed(3).replace(/0+$/,"").replace(/\.$/,".") }
@@ -1836,11 +1844,25 @@ function makeToolpathRuntime(root){
    lines.push("O4");lines.push("N10 T"+tool+" M6");lines.push("N20 G90 "+wcs+" G17 G40 G49 G80");lines.push("N30 G43 Z30. H"+hno+" M8");lines.push("N40 M99");
    lines.push("O5");lines.push("N10 M9");lines.push("N20 M5");lines.push("N30 G0 Z100.");lines.push("N40 M99");
    const code=lines.join("\n");
+   const collisionCfg={
+     toolDia:Math.max(.1,Number(toolDiaInput.value)||10),
+     cutterLen:Math.max(1,Number(cutterLenInput.value)||30),
+     holderDia:Math.max(1,Number(holderDiaInput.value)||25),
+     holderLen:Math.max(1,Number(holderLenInput.value)||25),
+     safeZ:defaultSafe,g73Retract:.5
+   };
+   const preParsed=parseProgram(code,target,collisionCfg);
+   if(preParsed.errors.length){statusEl.textContent="POST BLOCK";msgEl.textContent="NC Preflight parser FAIL："+preParsed.errors.slice(0,3).join("；");return null}
+   const preCollision=scanRuntimeCollisions(preParsed,target,collisionCfg);
+   if(preCollision.collisions.length){
+     const c=preCollision.collisions[0];statusEl.textContent="POST BLOCK";
+     msgEl.textContent="NC 碰撞 Preflight FAIL：第 "+(c.line+1)+" 行 "+c.message+" ["+c.type+"]；未寫入 "+target+"。";return null
+   }
    localStorage.setItem("aig-code-"+target,code);
    const ta=document.querySelector('textarea[data-axis="'+target+'"]');
    if(ta){ta.value=code;ta.dispatchEvent(new Event("input",{bubbles:true}))}
    statusEl.textContent="POST "+target+" READY";
-   msgEl.textContent="Fanuc NC 已送到 "+target+"；旋轉軸在 Safe-Z 先定位，SIMULTANEOUS 模式再把 A/B 寫入每段 G1。";
+   msgEl.textContent="Fanuc NC 已通過刀具/刀柄碰撞 Preflight 並送到 "+target+"；旋轉軸在 Safe-Z 先定位，SIMULTANEOUS 模式再把 A/B 寫入每段 G1。";
    return code;
  }
  function action(name){
@@ -1863,7 +1885,7 @@ function makeToolpathRuntime(root){
    const li=e.target.closest("[data-tp-index]");if(li){state.selected=Number(li.dataset.tpIndex)||0;renderList();syncInputs();updateInfo();draw();return}
    const ac=e.target.closest("[data-tp-action]");if(ac)action(ac.dataset.tpAction);
  });
- [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,pitchInput,rotModeInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>el.addEventListener("change",()=>{applyInputs();renderList();draw()}));
+ [safeInput,depthInput,feedInput,rpmInput,leadInInput,leadOutInput,pitchInput,toolDiaInput,cutterLenInput,holderDiaInput,holderLenInput,rotModeInput,a0Input,a1Input,b0Input,b1Input].forEach(el=>el.addEventListener("change",()=>{applyInputs();renderList();draw()}));
  canvas.addEventListener("pointerdown",e=>{if(!state.edit)return;const r=canvas.getBoundingClientRect(),sp={x:e.clientX-r.left,y:e.clientY-r.top},i=nearestNode(sp);if(i===null)return;state.dragNode=i;canvas.setPointerCapture(e.pointerId)});
  canvas.addEventListener("pointermove",e=>{if(state.dragNode===null)return;const r=canvas.getBoundingClientRect(),sp={x:e.clientX-r.left,y:e.clientY-r.top},{w,h}=resize(),wp=s2w(sp,w,h),p=selected();if(p?.points?.[state.dragNode]){p.points[state.dragNode]={x:Number(wp.x.toFixed(3)),y:Number(wp.y.toFixed(3))};draw()}});
  canvas.addEventListener("pointerup",e=>{if(state.dragNode!==null){state.dragNode=null;save();renderList()}});
