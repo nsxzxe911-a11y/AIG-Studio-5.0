@@ -84,7 +84,7 @@ object LibraryFiveAxisSkin208 {
 }
 
 object ProductionRgbAssets {
-    private const val ROOT="aig-generated-rgb/approved/184"
+    private val ROOT=UiAssetContract.ANDROID_ROOT
     @Volatile private var expectedHashes:Map<String,String>?=null
     private val cache=mutableMapOf<String,ByteArray>()
 
