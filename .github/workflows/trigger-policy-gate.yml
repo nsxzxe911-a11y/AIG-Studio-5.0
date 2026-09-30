@@ -1,0 +1,28 @@
+name: Studio Trigger Policy Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-download.yml'
+      - '.github/workflows/nc-coordinate-drift-gate.yml'
+      - '.github/workflows/nc-semantic-timeline-gate.yml'
+      - '.github/workflows/ai-network-update-gate.yml'
+      - '.github/workflows/ui-art-diff-gate.yml'
+      - 'build_android_release.sh'
+      - 'build_windows_native.ps1'
+      - 'ci/verify_production_runtime.py'
+      - 'ci/verify_trigger_policy.py'
+      - '.github/workflows/trigger-policy-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trigger-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify rolling-baseline trigger policy
+        run: python3 ci/verify_trigger_policy.py
