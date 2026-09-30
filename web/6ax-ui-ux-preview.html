@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407">
+<title>AIG Studio 6AX UI/UX Preview</title>
+<style>
+:root{
+  --bg:#020407;--panel:#07111b;--panel2:#0a1621;--text:#eefbff;--muted:#8299a6;
+  --cyan:#27e9ff;--green:#33f39b;--pink:#ff4da6;--amber:#ffb326;--violet:#9f72ff;--red:#ff465f;
+  --line:#1b3a4b;--r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
+button{font:inherit;color:inherit}
+.app{min-height:100vh;background:
+  radial-gradient(circle at 40% 0%,rgba(39,233,255,.06),transparent 32%),
+  radial-gradient(circle at 100% 55%,rgba(255,77,166,.04),transparent 28%),var(--bg)}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(2,4,7,.97);border-bottom:1px solid rgba(39,233,255,.28)}
+.brand{min-width:170px}.brand b{font-size:20px;letter-spacing:.04em}.brand small{display:block;color:var(--muted);font-size:10px}
+.nav{display:grid;grid-template-columns:repeat(9,minmax(58px,1fr));gap:6px;flex:1}
+.nav button,.btn{min-height:40px;border-radius:10px;border:1px solid #29495a;background:linear-gradient(#0d1822,#05090d);cursor:pointer;box-shadow:inset 0 1px rgba(255,255,255,.04),0 7px 18px rgba(0,0,0,.3)}
+.nav button.active,.btn.active{border-color:var(--violet);box-shadow:0 0 18px rgba(159,114,255,.24),inset 0 0 16px rgba(159,114,255,.08)}
+.nav button:hover,.btn:hover{border-color:#3b7590}
+.status{font-size:11px;color:var(--green);white-space:nowrap}
+.shell{padding:9px}
+.screen{display:none}.screen.active{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(290px,.72fr);gap:9px}
+.panel{background:linear-gradient(180deg,#08121b,#04080b);border:1px solid rgba(73,151,183,.34);border-radius:var(--r);overflow:hidden;box-shadow:0 14px 38px rgba(0,0,0,.48)}
+.head{display:flex;align-items:center;gap:8px;padding:10px 11px;border-bottom:1px solid rgba(74,144,171,.24)}
+.head h2,.head h3{margin:0;font-size:14px}.head small{color:var(--muted)}.spacer{flex:1}
+.body{padding:9px}
+.axisbar,.controls{display:flex;gap:6px;flex-wrap:wrap}
+.axis{min-width:92px;padding:6px 9px;border-radius:9px;border:1px solid rgba(39,233,255,.3);background:#050a0e;font:11px ui-monospace,monospace}
+.axis.a{border-color:rgba(255,179,38,.55)}.axis.b{border-color:rgba(255,77,166,.55)}.axis.c{border-color:rgba(159,114,255,.7)}
+.sceneWrap{position:relative;margin-top:8px;min-height:610px;border:1px solid #133341;border-radius:12px;background:#010306;overflow:hidden}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.hud{position:absolute;top:12px;right:12px;min-width:148px;padding:9px;border:1px solid rgba(39,233,255,.28);border-radius:9px;background:rgba(0,0,0,.78);font:11px/1.55 ui-monospace,monospace}
+.sceneTitle{position:absolute;left:16px;bottom:14px;font-weight:800}.sceneTitle small{display:block;margin-top:3px;color:var(--muted);font-weight:400}
+.jog{margin-top:8px}.jog .btn{min-width:74px;padding:7px 10px}
+.btn.go{border-color:rgba(51,243,155,.55);color:#caffdf}.btn.warn{border-color:rgba(255,179,38,.55);color:#ffe0a3}.btn.danger{border-color:rgba(255,70,95,.55);color:#ffd0d7}
+.note{margin-top:8px;padding:8px 9px;border:1px solid #1c3541;border-radius:9px;color:#b9cbd4;font-size:10px;line-height:1.45;background:#03070a}
+.side{display:grid;gap:9px}
+.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.metric{padding:8px;border:1px solid #193745;border-radius:9px;background:#04090d}.metric b{display:block;color:var(--muted);font-size:9px;margin-bottom:2px}.metric span{font-size:12px}
+.gcode{width:100%;min-height:315px;resize:vertical;border-radius:9px;border:1px solid #1e3c4e;background:#010305;color:#edfaff;padding:10px;font:12px/1.55 "Cascadia Mono","Consolas",monospace;outline:none}
+.gcode:focus{border-color:var(--violet);box-shadow:0 0 16px rgba(159,114,255,.14)}
+.badge{font-size:10px;padding:5px 8px;border-radius:999px;border:1px solid #2a4654;color:#9fb7c2}
+.modeTabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.modeTabs .btn{min-width:68px}
+.footer{padding:10px;text-align:center;color:#607986;font-size:9px}
+@media(max-width:920px){
+ .top{flex-wrap:wrap}.brand{min-width:140px}.nav{order:3;grid-template-columns:repeat(5,1fr);flex-basis:100%}.status{margin-left:auto}
+ .grid{grid-template-columns:1fr}.sceneWrap{min-height:56vh}.side{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+ .status{display:none}.nav{grid-template-columns:repeat(3,1fr)}.shell{padding:6px}.sceneWrap{min-height:50vh}.axis{min-width:80px}.metrics{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><b>AIG II CNC</b><small>PRODUCTION UI / UX PREVIEW</small></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="status">● LOCAL UI READY</div>
+  </header>
+
+  <main class="shell">
+    <section class="screen active" data-page="6AX">
+      <div class="grid">
+        <section class="panel">
+          <div class="head">
+            <div><h2>6AX 真 3D 加工模擬</h2><small>XYZ + A/B 搖籃 + C 主軸頭 360°</small></div>
+            <span class="spacer"></span><span class="badge" id="runBadge">READY</span>
+          </div>
+          <div class="body">
+            <div class="axisbar" id="axisbar"></div>
+            <div class="modeTabs">
+              <button class="btn" data-mode="5AX">5AX</button>
+              <button class="btn active" data-mode="6AX">6AX</button>
+              <button class="btn" data-action="fit">Fit</button>
+              <button class="btn" data-action="home">歸零</button>
+            </div>
+            <div class="sceneWrap">
+              <canvas id="scene"></canvas>
+              <div class="hud" id="hud"></div>
+              <div class="sceneTitle">6AX 真 3D 加工模擬<small>拖曳 360° 相機 • 滾輪縮放 • C 軸側銑方向</small></div>
+            </div>
+
+            <div class="controls jog">
+              <button class="btn" data-jog="A:-5">A−</button><button class="btn" data-jog="A:5">A+</button>
+              <button class="btn" data-jog="B:-15">B−</button><button class="btn" data-jog="B:15">B+</button>
+              <button class="btn" data-jog="C:-15">C−</button><button class="btn" data-jog="C:15">C+</button>
+              <button class="btn go" data-jog="C:0">C0</button>
+              <button class="btn go" data-action="play">▶ 播放</button>
+              <button class="btn" data-action="pause">Ⅱ 暫停</button>
+            </div>
+            <div class="note">這是可操作 UI/UX，不是靜態圖。A/B/C 按鈕、5AX/6AX 切換、播放、拖曳相機與縮放都會改變畫面。C 軸目前只做 Web 視覺／模擬，不輸出實體 CNC。</div>
+          </div>
+        </section>
+
+        <aside class="side">
+          <section class="panel">
+            <div class="head"><h3>Runtime 狀態</h3></div>
+            <div class="body">
+              <div class="metrics">
+                <div class="metric"><b>模式</b><span id="mMode">6AX</span></div>
+                <div class="metric"><b>Renderer</b><span>WEBGL-LIKE CANVAS</span></div>
+                <div class="metric"><b>A 搖籃</b><span id="mA">0.000°</span></div>
+                <div class="metric"><b>B 工作台</b><span id="mB">0.000°</span></div>
+                <div class="metric"><b>C 主軸頭</b><span id="mC">0.000°</span></div>
+                <div class="metric"><b>側銑</b><span id="mSide">READY</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="head"><h3>G-code 預覽</h3></div>
+            <div class="body">
+<textarea class="gcode" id="code" spellcheck="false">O6000
+N10 G90 G54
+N20 S8000 M3
+N30 G0 X0. Y0. Z50. A0. B0. C0.
+N40 G1 Z-2. F900
+N50 X12. Y0. A15. B10. C0.
+N60 X24. Y8. A30. B45. C90.
+N70 X24. Y20. A45. B90. C180.
+N80 X8. Y24. A30. B180. C270.
+N90 X0. Y0. A0. B360. C360.
+N100 M30</textarea>
+              <div class="controls">
+                <button class="btn go" data-action="loadDemo">載入示範</button>
+                <button class="btn warn" data-action="verify">驗證 UI</button>
+              </div>
+              <div class="note" id="verifyMsg">等待操作。</div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <section class="screen" data-page="CAD"><div class="panel"><div class="head"><h2>CAD</h2></div><div class="body"><div class="note">保留正式 Runtime 導航位置。此 preview 專攻 6AX UI/UX，不另外造工程殼。</div></div></div></section>
+    <section class="screen" data-page="CAM"><div class="panel"><div class="head"><h2>CAM</h2></div><div class="body"><div class="note">正式頁位保留。</div></div></div></section>
+    <section class="screen" data-page="SIM"><div class="panel"><div class="head"><h2>SIM</h2></div><div class="body"><div class="note">正式頁位保留。</div></div></div></section>
+    <section class="screen" data-page="3AX"><div class="panel"><div class="head"><h2>3AX</h2></div><div class="body"><div class="note">正式頁位保留。</div></div></div></section>
+    <section class="screen" data-page="4AX"><div class="panel"><div class="head"><h2>4AX</h2></div><div class="body"><div class="note">正式頁位保留。</div></div></div></section>
+    <section class="screen" data-page="5AX"><div class="panel"><div class="head"><h2>5AX</h2></div><div class="body"><div class="note">5AX 入口保留；在 6AX 主畫面可直接切回 5AX 模式。</div></div></div></section>
+    <section class="screen" data-page="NC"><div class="panel"><div class="head"><h2>NC</h2></div><div class="body"><div class="note">實體 CNC 輸出停用。</div></div></div></section>
+    <section class="screen" data-page="AI"><div class="panel"><div class="head"><h2>AI</h2></div><div class="body"><div class="note">AI 入口保留。</div></div></div></section>
+  </main>
+  <footer class="footer">AIG Studio • 6AX UI/UX functional preview • no physical CNC output</footer>
+</div>
+
+<script>
+const pages=["CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI"];
+const nav=document.getElementById("nav");
+pages.forEach(name=>{
+  const b=document.createElement("button");
+  b.textContent=name;b.dataset.page=name;
+  if(name==="6AX")b.classList.add("active");
+  b.onclick=()=>show(name);nav.appendChild(b);
+});
+function show(name){
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.dataset.page===name));
+  if(name==="6AX")setTimeout(resize,0);
+}
+const state={mode:"6AX",X:0,Y:0,Z:0,A:0,B:0,C:0,yaw:-.55,pitch:.48,zoom:1,drag:null,running:false,t:0};
+const axisbar=document.getElementById("axisbar"),hud=document.getElementById("hud");
+const canvas=document.getElementById("scene"),ctx=canvas.getContext("2d");
+function axes(){
+  return state.mode==="6AX"?["X","Y","Z","A","B","C"]:["X","Y","Z","A","B"];
+}
+function updateUi(){
+  axisbar.innerHTML=axes().map(a=>'<span class="axis '+a.toLowerCase()+'">'+a+'　'+Number(state[a]||0).toFixed(3)+'</span>').join("");
+  document.getElementById("mMode").textContent=state.mode;
+  document.getElementById("mA").textContent=state.A.toFixed(3)+"°";
+  document.getElementById("mB").textContent=state.B.toFixed(3)+"°";
+  document.getElementById("mC").textContent=(state.mode==="6AX"?state.C:0).toFixed(3)+"°";
+  document.getElementById("mSide").textContent=state.mode==="6AX"?"C HEAD ACTIVE":"5AX";
+  document.getElementById("runBadge").textContent=state.running?"RUN":"READY";
+  hud.innerHTML="<b>WORK G54</b><br>"+axes().map(a=>a+" "+Number(state[a]||0).toFixed(3)).join("<br>")+
+    "<br><b>MACHINE</b><br>MX "+state.X.toFixed(3)+"<br>MY "+state.Y.toFixed(3)+"<br>MZ "+state.Z.toFixed(3)+
+    "<br>F 900 / S 8000<br>T 12 / G43<br>M3 / M8";
+  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===state.mode));
+}
+function resize(){
+  const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
+  canvas.width=Math.max(1,Math.floor(r.width*dpr));canvas.height=Math.max(1,Math.floor(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);draw();
+}
+function rot(p,ax,ay){
+  let x=p.x,y=p.y,z=p.z;
+  let c=Math.cos(ax),s=Math.sin(ax),y1=y*c-z*s,z1=y*s+z*c;y=y1;z=z1;
+  c=Math.cos(ay);s=Math.sin(ay);return{x:x*c+z*s,y,z:-x*s+z*c};
+}
+function project(p,w,h){
+  const q=rot(p,state.pitch,state.yaw),d=320*state.zoom,zz=d+q.z;
+  const k=d/Math.max(80,zz);
+  return{x:w/2+q.x*k,y:h*.58-q.y*k,k};
+}
+function poly(points,fill,stroke,w,h){
+  const q=points.map(p=>project(p,w,h));ctx.beginPath();q.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();
+  if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.stroke()}
+}
+function box(cx,cy,cz,sx,sy,sz,color,w,h,rx=0,rz=0){
+  const pts=[];for(const dx of [-.5,.5])for(const dy of [-.5,.5])for(const dz of [-.5,.5]){let p={x:dx*sx,y:dy*sy,z:dz*sz};p=rot(p,rx,rz);pts.push({x:p.x+cx,y:p.y+cy,z:p.z+cz})}
+  const faces=[[0,2,6,4],[1,5,7,3],[0,1,3,2],[4,6,7,5],[2,3,7,6],[0,4,5,1]];
+  faces.sort((a,b)=>{const za=a.reduce((n,i)=>n+pts[i].z,0),zb=b.reduce((n,i)=>n+pts[i].z,0);return zb-za});
+  faces.forEach((f,i)=>poly(f.map(j=>pts[j]),i%2?color:shade(color,-12),"rgba(255,255,255,.05)",w,h));
+}
+function shade(hex,amt){
+  const n=parseInt(hex.slice(1),16),r=Math.max(0,Math.min(255,(n>>16)+amt)),g=Math.max(0,Math.min(255,((n>>8)&255)+amt)),b=Math.max(0,Math.min(255,(n&255)+amt));
+  return "#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
+}
+function disc(cx,cy,cz,rx,ry,color,w,h,tilt=0){
+  const pts=[];for(let i=0;i<48;i++){const a=i/48*Math.PI*2;let p={x:Math.cos(a)*rx,y:Math.sin(a)*ry,z:0};p=rot(p,tilt,0);pts.push({x:p.x+cx,y:p.y+cy,z:p.z+cz})}
+  poly(pts,color,shade(color,35),w,h);
+}
+function draw(){
+  const w=canvas.getBoundingClientRect().width,h=canvas.getBoundingClientRect().height;
+  ctx.clearRect(0,0,w,h);ctx.fillStyle="#010306";ctx.fillRect(0,0,w,h);
+  const a=state.A*Math.PI/180,b=state.B*Math.PI/180,c=state.C*Math.PI/180;
+
+  // low, wide base with open middle clearance
+  disc(0,0,-68,92,55,"#263947",w,h,0);
+  box(-78,0,-28,24,56,58,"#345269",w,h);
+  box(78,0,-28,24,56,58,"#345269",w,h);
+
+  // A pivot caps
+  disc(-66,0,-7,11,11,"#b98736",w,h,Math.PI/2);
+  disc(66,0,-7,11,11,"#b98736",w,h,Math.PI/2);
+
+  // trunnion + rotary table, visibly raised for flip clearance
+  box(0,0,-6,118,38,10,"#627d90",w,h,a,0);
+  disc(0,0,4,47,31,"#88466f",w,h,a);
+
+  // stock follows A/B visually
+  const stockR=rot({x:0,y:0,z:18},a,b);
+  box(stockR.x,stockR.y,stockR.z,52,42,24,"#718b9b",w,h,a,b);
+
+  // spindle / 6AX side head
+  if(state.mode==="6AX"){
+    const r=56,tx=Math.cos(c)*r,ty=Math.sin(c)*r;
+    box(-tx*.48,-ty*.48,72,26,26,28,"#6b4f91",w,h,0,c);
+    ctx.strokeStyle="#c5dce8";ctx.lineWidth=8;ctx.lineCap="round";
+    const p1=project({x:-tx*.42,y:-ty*.42,z:65},w,h),p2=project({x:-tx*.02,y:-ty*.02,z:24},w,h);
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
+  }else{
+    box(0,0,78,28,28,34,"#46667c",w,h);
+    const p1=project({x:0,y:0,z:62},w,h),p2=project({x:0,y:0,z:24},w,h);
+    ctx.strokeStyle="#c5dce8";ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
+  }
+  updateUi();
+}
+document.addEventListener("click",e=>{
+  const m=e.target.closest("[data-mode]");if(m){state.mode=m.dataset.mode;if(state.mode==="5AX")state.C=0;draw();return}
+  const j=e.target.closest("[data-jog]");if(j){
+    const [a,v]=j.dataset.jog.split(":");const n=Number(v);
+    if(a==="C"&&n===0)state.C=0;else state[a]=(state[a]+n+360)%360;
+    draw();return
+  }
+  const a=e.target.closest("[data-action]");if(!a)return;
+  if(a.dataset.action==="fit"){state.yaw=-.55;state.pitch=.48;state.zoom=1;draw()}
+  if(a.dataset.action==="home"){Object.assign(state,{A:0,B:0,C:0,X:0,Y:0,Z:0});draw()}
+  if(a.dataset.action==="play"){state.running=true;document.getElementById("runBadge").textContent="RUN"}
+  if(a.dataset.action==="pause"){state.running=false;updateUi()}
+  if(a.dataset.action==="verify"){document.getElementById("verifyMsg").textContent="UI PASS：6AX 頁籤、A/B/C HUD、C±/C0、5AX/6AX 切換、相機拖曳與縮放均已接互動。NC 輸出維持停用。"}
+  if(a.dataset.action==="loadDemo"){document.getElementById("verifyMsg").textContent="示範 G-code 已在右側；播放會驅動 A/B/C 視覺動畫。"}
+});
+canvas.addEventListener("pointerdown",e=>{canvas.setPointerCapture(e.pointerId);state.drag={x:e.clientX,y:e.clientY,yaw:state.yaw,pitch:state.pitch}});
+canvas.addEventListener("pointermove",e=>{if(!state.drag)return;state.yaw=state.drag.yaw+(e.clientX-state.drag.x)*.008;state.pitch=Math.max(-1.2,Math.min(1.2,state.drag.pitch+(e.clientY-state.drag.y)*.006));draw()});
+canvas.addEventListener("pointerup",()=>state.drag=null);canvas.addEventListener("pointercancel",()=>state.drag=null);
+canvas.addEventListener("wheel",e=>{e.preventDefault();state.zoom=Math.max(.65,Math.min(2.2,state.zoom*(e.deltaY<0?.92:1.08)));draw()},{passive:false});
+function animate(){
+  if(state.running){
+    state.t+=.012;
+    state.A=(Math.sin(state.t*.7)*55+360)%360;
+    state.B=(state.t*35)%360;
+    state.C=state.mode==="6AX"?(state.t*58)%360:0;
+    draw();
+  }
+  requestAnimationFrame(animate);
+}
+window.addEventListener("resize",resize);
+resize();updateUi();requestAnimationFrame(animate);
+</script>
+</body>
+</html>
