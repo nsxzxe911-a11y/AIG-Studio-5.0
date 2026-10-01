@@ -471,50 +471,34 @@ class MainActivity : Activity() {
         Thread(task,"aig-studio-shared-sync").apply { isDaemon=true }
     }
     private val sharedProjectScanRunning = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val sharedLocalDirty = java.util.concurrent.atomic.AtomicBoolean(false)
     private var sharedLocalRevisionMeta = ProjectRevisionMeta()
-    private var sharedProjectBaselineDigest = ""
     private var sharedProjectLastMessage = ""
     private val sharedProjectRunnable = object : Runnable {
         override fun run() {
             val sharedFile=File(filesDir,"shared-sync/current.aigp")
             if(sharedFile.isFile && ::cad.isInitialized &&
                 sharedProjectScanRunning.compareAndSet(false,true)) {
-                val snapshotResult=runCatching {
-                    cad.capturePortableProject(
-                        camSettings,axisA,axisB,machiningAxisMode,unifiedNcDraft.orEmpty()
-                    ).copy(revisionMeta=sharedLocalRevisionMeta)
-                }
-                if(snapshotResult.isFailure) {
-                    sharedProjectScanRunning.set(false)
-                    if(::networkStateBadge.isInitialized) {
-                        networkStateBadge.text="SYNC SNAPSHOT BLOCKED • "+
-                            (snapshotResult.exceptionOrNull()?.message?:"error")
+                val localDirty=sharedLocalDirty.get()
+                val localMeta=sharedLocalRevisionMeta
+                sharedProjectExecutor.execute {
+                    val result=runCatching {
+                        SharedProjectFolderSync.inspect(
+                            sharedFile,localMeta,localDirty
+                        ){StudioProjectRepository.load(it).revisionMeta}
                     }
-                } else {
-                    val snapshot=snapshotResult.getOrThrow()
-                    val baseline=sharedProjectBaselineDigest
-                    val localMeta=sharedLocalRevisionMeta
-                    sharedProjectExecutor.execute {
-                        val result=runCatching {
-                            val digest=StudioProjectRepository.canonicalDigest(snapshot)
-                            val localDirty=baseline.isNotBlank() && digest!=baseline
-                            SharedProjectFolderSync.inspect(
-                                sharedFile,localMeta,localDirty
-                            ){StudioProjectRepository.load(it).revisionMeta}
-                        }
-                        sharedProjectHandler.post {
-                            sharedProjectScanRunning.set(false)
-                            result.onSuccess { observation ->
-                                if(observation.state!=ProjectSyncState.CLEAN &&
-                                    observation.message!=sharedProjectLastMessage &&
-                                    ::networkStateBadge.isInitialized) {
-                                    sharedProjectLastMessage=observation.message
-                                    networkStateBadge.text="SYNC • "+observation.message
-                                }
-                            }.onFailure {
-                                if(::networkStateBadge.isInitialized) {
-                                    networkStateBadge.text="SYNC BLOCKED • "+(it.message?:"error")
-                                }
+                    sharedProjectHandler.post {
+                        sharedProjectScanRunning.set(false)
+                        result.onSuccess { observation ->
+                            if(observation.state!=ProjectSyncState.CLEAN &&
+                                observation.message!=sharedProjectLastMessage &&
+                                ::networkStateBadge.isInitialized) {
+                                sharedProjectLastMessage=observation.message
+                                networkStateBadge.text="SYNC • "+observation.message
+                            }
+                        }.onFailure {
+                            if(::networkStateBadge.isInitialized) {
+                                networkStateBadge.text="SYNC BLOCKED • "+(it.message?:"error")
                             }
                         }
                     }
@@ -961,6 +945,7 @@ class MainActivity : Activity() {
         root.addView(visibleModeActions,LinearLayout.LayoutParams(-1,-2))
 
         cad = CadView(this) {
+            sharedLocalDirty.set(true)
             if (!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
         }
         val workspaceColumn = LinearLayout(this).apply {
@@ -1347,13 +1332,7 @@ class MainActivity : Activity() {
 
     private fun startSharedProjectWatcher() {
         File(filesDir,"shared-sync").mkdirs()
-        if(::cad.isInitialized) {
-            sharedProjectBaselineDigest=StudioProjectRepository.canonicalDigest(
-                cad.capturePortableProject(
-                    camSettings,axisA,axisB,machiningAxisMode,unifiedNcDraft.orEmpty()
-                ).copy(revisionMeta=sharedLocalRevisionMeta)
-            )
-        }
+        sharedLocalDirty.set(false)
         sharedProjectHandler.removeCallbacks(sharedProjectRunnable)
         sharedProjectHandler.postDelayed(sharedProjectRunnable,SharedProjectFolderSync.POLL_INTERVAL_MS)
     }
