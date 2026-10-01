@@ -53,7 +53,7 @@ button{font:inherit;color:inherit}.app{min-height:100vh;background:radial-gradie
         <button class="btn" data-c="-15">C−</button><button class="btn" data-c="15">C+</button>
         <button class="btn play" id="play">▶ 播放</button><button class="btn" id="zero">歸零</button>
       </div>
-      <div class="note">這是可操作的瀏覽器 UI/UX，不是靜態圖片。左右支撐是同高度、同尺寸、同方向的垂直平行柱；A/B/C 按鈕、拖曳相機、縮放與播放都直接驅動 3D 場景。實體 CNC / Post 輸出停用。</div>
+      <div class="note">這是可操作的瀏覽器 UI/UX，不是靜態圖片。左右支撐共用同一份幾何規格，只鏡像 X 位置；兩側固定沿 Z 軸垂直、同高度、同深度且互相平行。底座與工作台也已統一校正到 Z 垂直座標系。A/B/C 只驅動搖籃、工作台與主軸頭，不會帶歪左右支撐。實體 CNC / Post 輸出停用。</div>
     </div>
   </section>
   <aside class="side">
@@ -84,33 +84,49 @@ scene.add(new THREE.HemisphereLight(0x9edbff,0x091018,1.45));const key=new THREE
 const mat=(c,metal=.35,rough=.58)=>new THREE.MeshStandardMaterial({color:c,metalness:metal,roughness:rough});
 const M={base:mat(0x273d4d,.55,.58),support:mat(0x35566b,.5,.52),pivot:mat(0xb88935,.55,.46),cradle:mat(0x607d91,.55,.5),table:mat(0x8b496f,.45,.52),stock:mat(0x718b9b,.25,.72),spindle:mat(0x526f83,.55,.46),tool:mat(0xdcebf2,.65,.32),head:mat(0x75559d,.4,.48)};
 function box(w,d,h,m){const o=new THREE.Mesh(new THREE.BoxGeometry(w,d,h),m);o.castShadow=o.receiveShadow=true;return o}
-function cyl(r,h,m,s=48){const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,s),m);o.castShadow=o.receiveShadow=true;return o}
+function cylY(r,h,m,s=48){const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,s),m);o.castShadow=o.receiveShadow=true;return o}
+function cylZ(r,h,m,s=48){const o=cylY(r,h,m,s);o.rotation.x=Math.PI/2;return o}
+function cylX(r,h,m,s=48){const o=cylY(r,h,m,s);o.rotation.z=Math.PI/2;return o}
 
 // low wide base
-const base=cyl(4.8,.65,M.base);base.position.z=.325;scene.add(base);
+const base=cylZ(4.8,.65,M.base);base.position.z=.325;scene.add(base);
 
-// L/R supports: identical transforms except mirrored X => vertical and parallel.
+// L/R supports: one shared geometry spec, mirrored only on X.
+ // Both uprights use world Z as their vertical axis and are never parented to A/B/C motion.
 const supportGroup=new THREE.Group();scene.add(supportGroup);
-const supportH=3.8,supportW=1.05,supportD=2.8,supportZ=.65+supportH/2,supportX=3.85;
-const left=box(supportW,supportD,supportH,M.support);left.position.set(-supportX,0,supportZ);left.rotation.set(0,0,0);
-const right=box(supportW,supportD,supportH,M.support);right.position.set(supportX,0,supportZ);right.rotation.set(0,0,0);
+const SUPPORT=Object.freeze({h:4.35,w:1.05,d:2.8,z0:.65,x:3.85});
+function makeSupport(x){
+  const o=box(SUPPORT.w,SUPPORT.d,SUPPORT.h,M.support);
+  o.position.set(x,0,SUPPORT.z0+SUPPORT.h/2);
+  o.rotation.set(0,0,0);
+  return o;
+}
+const left=makeSupport(-SUPPORT.x);
+const right=makeSupport(SUPPORT.x);
 supportGroup.add(left,right);
+const supportsVerticalParallel=
+  left.rotation.x===right.rotation.x &&
+  left.rotation.y===right.rotation.y &&
+  left.rotation.z===right.rotation.z &&
+  left.position.y===right.position.y &&
+  left.position.z===right.position.z &&
+  Math.abs(left.position.x+right.position.x)<1e-9;
 
 const pivotZ=3.2;
-for(const x of [-3.2,3.2]){const p=cyl(.58,.42,M.pivot);p.rotation.z=Math.PI/2;p.position.set(x,0,pivotZ);supportGroup.add(p)}
+for(const x of [-3.2,3.2]){const p=cylX(.58,.42,M.pivot);p.position.set(x,0,pivotZ);supportGroup.add(p)}
 
 const aPivot=new THREE.Group();aPivot.position.set(0,0,pivotZ);scene.add(aPivot);
 const cradle=box(6.25,2.35,.42,M.cradle);aPivot.add(cradle);
 const bPivot=new THREE.Group();bPivot.position.z=.36;aPivot.add(bPivot);
-const table=cyl(2.25,.44,M.table);table.position.z=.22;bPivot.add(table);
+const table=cylZ(2.25,.44,M.table);table.position.z=.22;bPivot.add(table);
 const stock=box(2.8,2.0,1.0,M.stock);stock.position.z=1.0;bPivot.add(stock);
 
 const spindleRoot=new THREE.Group();spindleRoot.position.set(0,0,7.2);scene.add(spindleRoot);
-const head=cyl(1.05,1.4,M.spindle);head.position.z=.7;spindleRoot.add(head);
+const head=cylZ(1.05,1.4,M.spindle);head.position.z=.7;spindleRoot.add(head);
 const cPivot=new THREE.Group();spindleRoot.add(cPivot);
 const elbow=box(1.7,.9,.9,M.head);elbow.position.x=.85;cPivot.add(elbow);
-const holder=cyl(.34,1.7,M.spindle);holder.rotation.z=Math.PI/2;holder.position.set(1.75,0,0);cPivot.add(holder);
-const tool=cyl(.13,2.4,M.tool);tool.rotation.z=Math.PI/2;tool.position.set(3.2,0,0);cPivot.add(tool);
+const holder=cylX(.34,1.7,M.spindle);holder.position.set(1.75,0,0);cPivot.add(holder);
+const tool=cylX(.13,2.4,M.tool);tool.position.set(3.2,0,0);cPivot.add(tool);
 
 const grid=new THREE.GridHelper(16,16,0x123449,0x07151f);grid.rotation.x=Math.PI/2;grid.position.z=.01;scene.add(grid);
 const state={mode:"6AX",A:0,B:0,C:0,playing:false,supports:true,t:0};
@@ -120,7 +136,7 @@ function apply(){
   aPivot.rotation.x=THREE.MathUtils.degToRad(state.A);bPivot.rotation.z=THREE.MathUtils.degToRad(state.B);cPivot.rotation.z=THREE.MathUtils.degToRad(state.mode==="6AX"?state.C:0);
   els.a.textContent=fmt(state.A);els.b.textContent=fmt(state.B);els.c.textContent=fmt(state.mode==="6AX"?state.C:0);
   els.ma.textContent=fmt(state.A)+"°";els.mb.textContent=fmt(state.B)+"°";els.mc.textContent=fmt(state.mode==="6AX"?state.C:0)+"°";els.side.textContent=state.mode==="6AX"?"ON":"OFF";els.badge.textContent=state.playing?"RUN":"READY";
-  els.hud.innerHTML="<b>"+state.mode+"</b><br>X 0.000<br>Y 0.000<br>Z 0.000<br>A "+fmt(state.A)+"<br>B "+fmt(state.B)+(state.mode==="6AX"?"<br>C "+fmt(state.C):"")+"<br><b>MACHINE</b><br>SUPPORT L/R: VERTICAL<br>SUPPORT L/R: PARALLEL<br>BASE: CLEAR<br>NC OUTPUT: OFF";
+  els.hud.innerHTML="<b>"+state.mode+"</b><br>X 0.000<br>Y 0.000<br>Z 0.000<br>A "+fmt(state.A)+"<br>B "+fmt(state.B)+(state.mode==="6AX"?"<br>C "+fmt(state.C):"")+"<br><b>MACHINE</b><br>SUPPORT L/R: "+(supportsVerticalParallel?"VERTICAL / PARALLEL":"CHECK")+"<br>WORLD UP: Z<br>BASE/TABLE: Z-ALIGNED<br>NC OUTPUT: OFF";
 }
 document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{state.mode=b.dataset.mode;state.playing=false;document.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("active",x===b));apply()});
 document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{state.playing=false;state.A=Math.max(-110,Math.min(110,state.A+Number(b.dataset.a)));apply()});
@@ -128,9 +144,17 @@ document.querySelectorAll("[data-b]").forEach(b=>b.onclick=()=>{state.playing=fa
 document.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{state.playing=false;state.C=norm360(state.C+Number(b.dataset.c));apply()});
 document.getElementById("zero").onclick=()=>{state.playing=false;state.A=state.B=state.C=0;apply()};
 document.getElementById("play").onclick=()=>{state.playing=!state.playing;apply()};
-document.querySelector("[data-view='fit']").onclick=()=>{camera.position.set(10,-14,9);controls.target.set(0,0,2.2);controls.update()};
+function setCameraPreset(kind){
+  if(kind==="front")camera.position.set(0,-18,5.2);
+  else if(kind==="side")camera.position.set(18,0,5.2);
+  else if(kind==="back")camera.position.set(0,18,5.2);
+  else if(kind==="clearance")camera.position.set(12,-12,10);
+  else camera.position.set(10,-14,9);
+  controls.target.set(0,0,3.1);controls.update();
+}
+document.querySelector("[data-view='fit']").onclick=()=>setCameraPreset("fit");
 document.getElementById("toggleSupports").onclick=()=>{state.supports=!state.supports;supportGroup.visible=state.supports};
-document.querySelectorAll("[data-preset]").forEach(b=>b.onclick=()=>{state.playing=false;const k=b.dataset.preset;if(k==="front"){state.A=0;state.B=0;state.C=0}if(k==="side"){state.A=0;state.B=90;state.C=90}if(k==="back"){state.A=90;state.B=180;state.C=180}if(k==="clearance"){state.A=72;state.B=130;state.C=270}apply()});
+document.querySelectorAll("[data-preset]").forEach(b=>b.onclick=()=>{state.playing=false;const k=b.dataset.preset;if(k==="front"){state.A=0;state.B=0;state.C=0}if(k==="side"){state.A=0;state.B=90;state.C=90}if(k==="back"){state.A=90;state.B=180;state.C=180}if(k==="clearance"){state.A=72;state.B=130;state.C=270}setCameraPreset(k);apply()});
 function resize(){const r=canvas.getBoundingClientRect(),w=Math.max(1,r.width),h=Math.max(1,r.height);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
 new ResizeObserver(resize).observe(canvas);
 let last=performance.now();function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(state.playing){state.t+=dt;state.A=55*Math.sin(state.t*.65);state.B=norm360(state.B+dt*28);if(state.mode==="6AX")state.C=norm360(state.C+dt*42);apply()}controls.update();renderer.render(scene,camera);requestAnimationFrame(frame)}
