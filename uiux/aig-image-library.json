@@ -1,7 +1,7 @@
 {
   "schema": "aig-uiux-image-library-v2",
   "product": "AIG Studio 5.0",
-  "version": "270.0.0",
+  "version": "271.0.0",
   "status": "UIUX_VISUAL_LIBRARY_COMPLETE_INDEXED",
   "canonical_root": "uiux/",
   "rule": "No runtime or review page reads engineering-assets directly. engineering-assets remains immutable provenance/history only.",
@@ -238,7 +238,7 @@
     "Windows desktop"
   ],
   "note": "UI/UX visual library and mapping only; CNC geometry/G-code/coordinate truth remains owned by runtime core.",
-  "build_note": "270 adds parallel FAST REVIEW, Android/Windows concurrent heavy jobs, local Android SDK cache-first setup, precise failed-owner rework, and preserves XML/digest/safety/integrity gates.",
+  "build_note": "271 requires actual Android/Windows Runtime screenshots; default engineering shell is a hard FAIL.",
   "continuity": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "checkpoint_scope": [
