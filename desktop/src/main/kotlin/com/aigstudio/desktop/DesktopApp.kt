@@ -707,6 +707,22 @@ private class CadPanel(
         status("DISCONNECT PASS • TOPOLOGY ONLY • GEOMETRY UNCHANGED")
     }.onFailure { status("DISCONNECT BLOCKED • "+(it.message?:"error")) }
 
+    fun disconnectAllTopology() {
+        val before=doc.links().size
+        if(before==0){
+            status("DISCONNECT ALL • no topology links")
+            return
+        }
+        runCatching {
+            history.run(CadEditEngine.disconnectAllCommand())
+            repaint()
+        }.onSuccess {
+            status("DISCONNECT ALL PASS • links="+before+" • GEOMETRY UNCHANGED • CAM/NC TOPOLOGY OPTIONAL")
+        }.onFailure {
+            status("DISCONNECT ALL BLOCKED • "+(it.message?:"error"))
+        }
+    }
+
     private fun nearest(p:Vec2):Entity? {
         val tolerance=18.0/pxPerMm
         return CadSelectionEngine.nearest(doc,p,tolerance)
@@ -3404,6 +3420,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     editTools.add(button("重做", Color(125,112,255)) { cad.redoEdit() })
     linkTools.add(button("連接", Color(63,255,157)) { cad.connectSelected() })
     linkTools.add(button("斷開", Color(255,176,32)) { cad.disconnectSelected() })
+    linkTools.add(button("全部斷開", Color(239,68,68)) { cad.disconnectAllTopology() })
     val productionUiButtons=linkedMapOf<String,GlassActionButton>()
     fun productionUiButton(id:String,color:Color,action:()->Unit):GlassActionButton {
         val normalized=ProductionUiSwitchContract.normalize(id)
