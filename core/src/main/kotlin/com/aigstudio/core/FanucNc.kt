@@ -2148,13 +2148,7 @@ object FanucNc {
         return before + "\n" + block.trim() + "\n" + after
     }
 
-    fun fmt(v: Double): String {
-        var s = String.format(Locale.US, "%.3f", v)
-        while (s.contains('.') && s.endsWith('0')) s = s.dropLast(1)
-        if (s.endsWith('.')) return s
-        if (!s.contains('.')) s += "."
-        return s
-    }
+    fun fmt(v: Double): String = CoordinatePrecisionRuntime.formatNc(v)
 }
 
 data class MachiningRiskReport(val collisionCount: Int, val overcutCount: Int, val warnings: List<String>) {
