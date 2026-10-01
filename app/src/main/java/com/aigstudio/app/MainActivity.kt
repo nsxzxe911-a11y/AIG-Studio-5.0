@@ -675,13 +675,8 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         applyCoordinatePrecisionPreference()
-        val bootShell = android.widget.FrameLayout(this)
-        val bootOverlay = AigStartupOverlay(this)
-        bootShell.addView(bootOverlay, android.widget.FrameLayout.LayoutParams(
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-        ))
-        setContentView(bootShell)
+        // System launch window stays visible until the first Production Runtime frame.
+        // Do not install a custom engineering/startup shell as the app content view.
         val previousStartupCrashStage=StudioStartupBootGuard.begin(this)
         val startupMemoryClass=(getSystemService(ACTIVITY_SERVICE) as ActivityManager).memoryClass
         val startupQuality=StudioStartupEngineContract.qualityMode(
@@ -690,16 +685,15 @@ class MainActivity : Activity() {
             preferHq=startupMemoryClass>=512 && !RuntimeDeviceProfile.isEmulator
         )
         val startupSafeBoot=StudioStartupEngineContract.safeBootRequired(previousStartupCrashStage)
-        bootOverlay.setRuntimeProfile(startupQuality,startupSafeBoot)
-        bootOverlay.advance(StartupMilestone.SAFE_THEME)
-        bootOverlay.advance(StartupMilestone.INITIALIZING_CORE)
+        StudioStartupBootGuard.mark(this,StudioStartupStage.SAFE_THEME)
+        StudioStartupBootGuard.mark(this,StudioStartupStage.CORE)
         val environmentPrefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
         environmentRestartApplied = environmentPrefs.getBoolean("restart_required", false)
         if (environmentRestartApplied) {
             environmentPrefs.edit().putBoolean("restart_required", false).remove("restart_reason").apply()
         }
         adaptiveRefreshController = AdaptiveRefreshController(this).also { it.start() }
-        bootOverlay.advance(StartupMilestone.CHECKING_CONFIGURATION)
+        StudioStartupBootGuard.mark(this,StudioStartupStage.CONFIGURATION)
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(StudioProductionTheme.background)
@@ -1320,15 +1314,12 @@ class MainActivity : Activity() {
             FrameLayout.LayoutParams.MATCH_PARENT
         ))
 
-        bootOverlay.advance(StartupMilestone.LOADING_UI)
-        bootShell.addView(runtimeHost, 0, android.widget.FrameLayout.LayoutParams(
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-        ))
+        StudioStartupBootGuard.mark(this,StudioStartupStage.UI_RENDERER)
+        setContentView(runtimeHost)
         if (environmentRestartApplied) {
             Toast.makeText(this, "重開套用完成 • 3D/SIM 畫質核心已重新載入", Toast.LENGTH_SHORT).show()
         }
-        bootOverlay.advance(StartupMilestone.CHECKING_PROJECT_DATA)
+        StudioStartupBootGuard.mark(this,StudioStartupStage.PROJECT_DATA)
         loadRotaryMachineProfile()
         restoreCadCheckpointIfAvailable()
         autosaveHandler.postDelayed(autosaveRunnable, 15000L)
@@ -1340,17 +1331,18 @@ class MainActivity : Activity() {
         }
         selectTool(Tool.LINE)
         refreshVisibleMode(ProductionUiSwitchContract.initialMode)
-        bootOverlay.advance(StartupMilestone.HEALTH_CHECK)
+        StudioStartupBootGuard.mark(this,StudioStartupStage.HEALTH)
         root.post {
             if (root.isAttachedToWindow) {
-                bootOverlay.advance(StartupMilestone.WRAPPING_UP)
-                bootOverlay.advance(StartupMilestone.READY)
-                bootOverlay.completeAndDetach(bootShell)
+                StudioStartupBootGuard.mark(this,StudioStartupStage.WRAP_UP)
+                StudioStartupBootGuard.mark(this,StudioStartupStage.HOME)
+                StudioStartupBootGuard.complete(this)
                 runDualPlatformProjectSmokeIfPresent()
                 startSharedProjectWatcher()
                 scheduleBackgroundOnlineServices()
             } else {
-                bootOverlay.fail("UI ATTACH BLOCKED")
+                StudioStartupBootGuard.mark(this,StudioStartupStage.HEALTH)
+                Toast.makeText(this,"PRODUCTION UI ATTACH BLOCKED • SAFE STATE • RETRY APP",Toast.LENGTH_LONG).show()
             }
         }
         // Network never participates in startup. Online services run only after READY/UI attach.
