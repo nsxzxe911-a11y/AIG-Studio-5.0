@@ -5,6 +5,8 @@ ROOT=Path(__file__).resolve().parents[1]
 is_aigii=(ROOT/"shared/aigii/EnvironmentSettings.kt").is_file()
 env=(ROOT/("shared/aigii/EnvironmentSettings.kt" if is_aigii else "core/src/main/kotlin/com/aigstudio/core/EnvironmentSettings.kt")).read_text(encoding="utf-8")
 main=(ROOT/("app/src/main/java/com/aigii/app/MainActivity.kt" if is_aigii else "app/src/main/java/com/aigstudio/app/MainActivity.kt")).read_text(encoding="utf-8")
+desktop_path=("desktop/aigii/DesktopApp.kt" if is_aigii else "desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
+desktop=(ROOT/desktop_path).read_text(encoding="utf-8")
 secure=(ROOT/("app/src/main/java/com/aigii/app/SecureServices.kt" if is_aigii else "app/src/main/java/com/aigstudio/app/SecureServices.kt")).read_text(encoding="utf-8")
 
 def need(cond,code):
@@ -49,9 +51,18 @@ need("Handler(Looper.getMainLooper())" in main,"UI_HANDLER_PRESENT")
 need("sharedProjectExecutor.shutdownNow()" in main,"EXECUTOR_SHUTDOWN")
 need("sharedProjectHandler.removeCallbacks(sharedProjectRunnable)" in main,"WATCHER_STOP")
 
+for marker in (
+    "sharedSyncExecutor",
+    "sharedSyncRunning",
+    "sharedSyncExecutor.execute",
+    "SwingUtilities.invokeLater",
+    "shutdownNow()",
+):
+    need(marker in desktop,"DESKTOP_"+marker)
+
 if is_aigii:
     theme=(ROOT/"app/src/main/java/com/aigii/app/ThemeServices.kt").read_text(encoding="utf-8")
     need("THEME NETWORK OFFLINE FAST-FAIL" in theme,"THEME_FAST_FAIL")
     need("NetworkSecurity.isValidated(context)" in theme,"THEME_VALIDATED_NETWORK")
 
-print("NETWORK_RESILIENCE_GATE_PASS|OFF_MAIN_SYNC_IO|120MS_DEBOUNCE|STALE_RESULT_SUPPRESSION|VALIDATED_RECONNECT_RESET|OFFLINE_FAST_FAIL|RANGE_ETAG_IF_RANGE|CHECKPOINT_RETAINED")
+print("NETWORK_RESILIENCE_GATE_PASS|ANDROID_WINDOWS_OFF_MAIN_SYNC_IO|120MS_DEBOUNCE|STALE_RESULT_SUPPRESSION|VALIDATED_RECONNECT_RESET|OFFLINE_FAST_FAIL|RANGE_ETAG_IF_RANGE|CHECKPOINT_RETAINED")
