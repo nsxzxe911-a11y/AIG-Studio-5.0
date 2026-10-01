@@ -4006,7 +4006,8 @@ private fun applyCoordinatePrecisionPreference() {
             .setMessage(
                 "NETWORK: " + NetworkSecurity.status(this) +
                     "\nHTTPS ONLY: ENABLED" +
-                    "\nCLEAR-TEXT HTTP: BLOCKED"
+                    "\nCLEAR-TEXT HTTP: BLOCKED" +
+                    "\nREMOTE CIRCUIT: " + UpdateNetworkCircuitBreaker.status()
             )
             .setPositiveButton("OK", null)
             .show()
