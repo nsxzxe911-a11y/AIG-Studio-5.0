@@ -73,8 +73,8 @@ button{font:inherit;color:inherit}.app{min-height:100vh;background:radial-gradie
 </div>
 
 <script type="module">
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js";
-import {OrbitControls} from "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/controls/OrbitControls.js";
+import * as THREE from "https://esm.sh/three@0.169.0";
+import {OrbitControls} from "https://esm.sh/three@0.169.0/examples/jsm/controls/OrbitControls.js";
 
 const canvas=document.getElementById("view");
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setClearColor(0x010306,1);renderer.shadowMap.enabled=true;
