@@ -69,6 +69,14 @@ object StudioProjectRepository {
         val c=project.camSettings
         appendLine("CAM|${c.toolDiameter}|${c.depth}|${c.safeZ}|${c.feedMmMin}|${if(c.climb)1 else 0}|${c.leadInMm}|${c.leadOutMm}")
         appendLine("CONTOUR|${c.contourSide.name}|${c.contourDirection.name}")
+        appendLine("CAMPATHMODE|${c.pathMode.name}")
+        c.manualPath.forEach { p ->
+            appendLine(
+                "MANUALTP|${p.x}|${p.y}|${p.z}|${if(p.rapid)1 else 0}|"+
+                    "${p.arcI?.toString() ?: "-"}|${p.arcJ?.toString() ?: "-"}|"+
+                    "${when(p.clockwise){true->"CW";false->"CCW";null->"-"}}|${p.axisA}|${p.axisB}"
+            )
+        }
         appendLine("AXIS|${project.axisMode}|${project.axisA}|${project.axisB}")
         val nc64=if(project.ncText.isEmpty()) "-" else Base64.getEncoder().encodeToString(project.ncText.toByteArray(Charsets.UTF_8))
         appendLine("NC64|$nc64")
@@ -143,6 +151,8 @@ object StudioProjectRepository {
         var cam=CamSettings()
         var contourSide=cam.contourSide
         var contourDirection=cam.contourDirection
+        var camPathMode=cam.pathMode
+        val manualPath=mutableListOf<ManualCamPoint>()
         var axisMode="3AX"
         var axisA=0.0
         var axisB=0.0
@@ -183,6 +193,39 @@ object StudioProjectRepository {
                         contourSide=contourSide,
                         contourDirection=contourDirection
                     )
+                }
+                "CAMPATHMODE" -> {
+                    require(p.size==2)
+                    camPathMode=CamPathMode.valueOf(p[1])
+                }
+                "MANUALTP" -> {
+                    require(p.size==10)
+                    fun optionalDouble(index:Int):Double? =
+                        if(p[index]=="-") null else finite(p[index].toDouble(),"manual CAM optional")
+                    val rapid=when(p[4]) {
+                        "1" -> true
+                        "0" -> false
+                        else -> error("manual CAM rapid flag invalid")
+                    }
+                    val clockwise=when(p[7]) {
+                        "-" -> null
+                        "CW" -> true
+                        "CCW" -> false
+                        else -> error("manual CAM arc direction invalid")
+                    }
+                    val point=ManualCamPoint(
+                        x=finite(p[1].toDouble(),"manual CAM X"),
+                        y=finite(p[2].toDouble(),"manual CAM Y"),
+                        z=finite(p[3].toDouble(),"manual CAM Z"),
+                        rapid=rapid,
+                        arcI=optionalDouble(5),
+                        arcJ=optionalDouble(6),
+                        clockwise=clockwise,
+                        axisA=finite(p[8].toDouble(),"manual CAM A"),
+                        axisB=finite(p[9].toDouble(),"manual CAM B")
+                    )
+                    require(abs(point.axisA)<=360.0 && abs(point.axisB)<=360.0){"manual CAM axis angle out of range"}
+                    manualPath += point
                 }
                 "AXIS" -> {
                     require(p.size==4 && p[1] in setOf("3AX","4AX","5AX"))
@@ -237,6 +280,10 @@ object StudioProjectRepository {
             require(entities.size<=MAX_ENTITIES) { "Too many project entities" }
         }
         require(masterSeen) { "Master origin record missing" }
+        if(camPathMode==CamPathMode.MANUAL) require(manualPath.size>=2) {
+            "Manual CAM project requires at least two points"
+        }
+        cam=cam.copy(pathMode=camPathMode,manualPath=manualPath.toList())
         val revisionMeta=if(header==HEADER) {
             val meta=pendingRevision ?: error("Project V2 REVISION missing")
             val nonBlank=lines.filter{it.isNotBlank()}
