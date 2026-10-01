@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407">
+<title>AIG II / AIG Studio 正式圖片介面驗證</title>
+<style>
+:root{--bg:#020407;--panel:#07121d;--panel2:#0a1825;--text:#effbff;--muted:#8da7b5;--cyan:#28e8ff;--blue:#3a92ff;--green:#35f59c;--pink:#ff4da6;--violet:#a36dff;--amber:#ffb62a;--red:#ff495f}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
+body{background:radial-gradient(circle at 18% -10%,rgba(40,232,255,.10),transparent 30%),radial-gradient(circle at 95% 30%,rgba(163,109,255,.08),transparent 32%),#020407}
+button{font:inherit;color:inherit}
+.top{position:sticky;top:0;z-index:20;padding:8px 10px;background:rgba(2,4,7,.97);border-bottom:1px solid rgba(40,232,255,.3);backdrop-filter:blur(14px)}
+.brandrow{display:flex;align-items:center;gap:9px}.logo{font-weight:1000;font-size:19px;letter-spacing:.04em}.sub{font-size:9px;color:var(--muted);letter-spacing:.1em}.ready{margin-left:auto;font-size:10px;color:var(--green)}
+.scroller{display:flex;gap:6px;overflow:auto;padding-top:7px;scrollbar-width:none}.scroller::-webkit-scrollbar{display:none}
+.tab{min-height:40px;padding:7px 11px;border:1px solid #24495c;border-radius:10px;background:linear-gradient(180deg,#0e1a25,#04080c);white-space:nowrap;box-shadow:inset 0 1px rgba(255,255,255,.04)}
+.tab.active{border-color:var(--accent,var(--cyan));box-shadow:0 0 18px color-mix(in srgb,var(--accent,var(--cyan)) 28%,transparent),inset 0 0 17px color-mix(in srgb,var(--accent,var(--cyan)) 8%,transparent)}
+.wrap{max-width:1560px;margin:auto;padding:9px}
+.notice{font-size:11px;line-height:1.55;padding:8px 10px;border:1px solid rgba(255,182,42,.35);background:rgba(255,182,42,.05);border-radius:10px;color:#ffe3a5}
+.review{display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:9px;margin-top:9px}
+.frame{background:linear-gradient(180deg,#06101a,#020508);border:1px solid rgba(53,151,194,.34);border-radius:15px;overflow:hidden;box-shadow:0 20px 55px rgba(0,0,0,.55)}
+.frame.mobile{max-width:520px;margin:auto}.frame.desktop{max-width:none}
+.runtimeTop{display:flex;align-items:center;gap:7px;padding:8px;border-bottom:1px solid rgba(39,233,255,.22);background:linear-gradient(90deg,rgba(39,233,255,.07),transparent 40%)}
+.brandBadge{display:flex;align-items:center;gap:7px;min-width:150px}.brandMark{width:34px;height:34px;border:1px solid var(--cyan);border-radius:10px;display:grid;place-items:center;box-shadow:0 0 15px rgba(39,233,255,.22),inset 0 0 14px rgba(159,114,255,.1);font-weight:900}
+.brandText b{display:block;font-size:13px}.brandText small{display:block;color:var(--muted);font-size:8px}
+.telemetry{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.chip{padding:5px 7px;border:1px solid #214457;border-radius:7px;background:#03080c;font-size:9px}.chip strong{color:var(--green)}
+.runtimeNav{display:grid;grid-template-columns:repeat(8,minmax(72px,1fr));gap:6px;padding:7px;border-bottom:1px solid #102b3a;background:#03070b}
+.navbtn{min-height:58px;border:1px solid #214a60;border-radius:10px;background:linear-gradient(#0c1721,#04080c);display:grid;place-items:center;align-content:center;gap:3px;font-size:9px;box-shadow:inset 0 1px rgba(255,255,255,.03)}
+.navbtn img{width:28px;height:28px}.navbtn.selected{border-color:var(--pageAccent);box-shadow:0 0 18px color-mix(in srgb,var(--pageAccent) 32%,transparent),inset 0 0 17px color-mix(in srgb,var(--pageAccent) 10%,transparent)}
+.canvasArea{padding:7px;min-height:640px}
+.grid3{display:grid;grid-template-columns:220px minmax(0,1fr) 270px;gap:7px;min-height:620px}.panel{border:1px solid rgba(45,122,157,.36);border-radius:11px;background:linear-gradient(180deg,#07131f,#03070a);overflow:hidden}
+.ph{padding:7px 9px;border-bottom:1px solid rgba(39,233,255,.18);font-size:10px;font-weight:800}.pb{padding:7px}
+.list{display:grid;gap:5px}.li{padding:7px;border:1px solid #15384a;border-radius:8px;background:#03080c;font-size:9px}.li.sel{border-color:var(--pageAccent);box-shadow:0 0 12px color-mix(in srgb,var(--pageAccent) 18%,transparent)}
+.viewport{position:relative;min-height:515px;border:1px solid #123548;border-radius:9px;overflow:hidden;background:#010306}
+.gridbg{position:absolute;inset:0;background-image:linear-gradient(rgba(39,233,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(39,233,255,.035) 1px,transparent 1px);background-size:30px 30px}
+.workpiece{position:absolute;left:50%;top:52%;width:52%;height:42%;transform:translate(-50%,-50%) perspective(600px) rotateX(58deg) rotateZ(-12deg);border:3px solid #7b9aaa;border-radius:20px;background:linear-gradient(145deg,#d9e4e9,#708692 35%,#263b48 58%,#9fb3bd);box-shadow:0 20px 35px #000,inset 0 0 0 10px rgba(255,255,255,.035)}
+.workpiece:before{content:"";position:absolute;left:32%;top:24%;width:36%;height:42%;border-radius:50%;background:#061019;border:7px solid #afc1c8;box-shadow:inset 0 0 22px #000}
+.pathline{position:absolute;height:3px;border-radius:99px;transform-origin:left center;box-shadow:0 0 12px currentColor}.p1{left:28%;top:44%;width:44%;color:var(--cyan);background:currentColor;transform:rotate(8deg)}.p2{left:34%;top:52%;width:36%;color:var(--amber);background:currentColor;transform:rotate(-7deg)}.p3{left:36%;top:60%;width:31%;color:var(--green);background:currentColor;transform:rotate(12deg)}.p4{left:42%;top:68%;width:25%;color:var(--pink);background:currentColor;transform:rotate(-16deg)}
+.spindle{position:absolute;left:50%;top:7%;width:74px;height:145px;transform:translateX(-50%);background:linear-gradient(90deg,#263844,#dbe4e8 25%,#4e6571 54%,#cdd7dc 76%,#1b2d38);border-radius:16px 16px 8px 8px;box-shadow:0 12px 20px #000}.spindle:after{content:"";position:absolute;left:32px;bottom:-95px;width:11px;height:100px;background:linear-gradient(#d8a23a,#6f4711);border-radius:4px;box-shadow:0 0 13px rgba(255,182,42,.28)}
+.hud{position:absolute;left:9px;top:9px;padding:6px 8px;background:rgba(0,0,0,.74);border:1px solid rgba(39,233,255,.34);border-radius:8px;font:9px/1.5 ui-monospace,monospace}
+.param{display:grid;grid-template-columns:1fr auto;gap:5px;padding:6px 0;border-bottom:1px solid #112a37;font-size:9px}.value{color:#fff}.good{color:var(--green)}.warn{color:var(--amber)}
+.toolbar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px}.tool{padding:7px 9px;border:1px solid #23485c;background:#04090d;border-radius:8px;font-size:9px}.tool.sel{border-color:var(--pageAccent);box-shadow:0 0 13px color-mix(in srgb,var(--pageAccent) 23%,transparent)}
+.cadShape{position:absolute;border:2px solid var(--cyan)}.cadRect{left:22%;top:27%;width:42%;height:32%}.cadCircle{left:55%;top:52%;width:92px;height:92px;border-radius:50%;border-color:var(--pink)}.cadLine{left:18%;top:72%;width:58%;height:2px;background:var(--green);border:0;transform:rotate(-11deg);box-shadow:0 0 10px rgba(51,243,155,.45)}
+.axisModel{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);width:68%;height:52%}.base{position:absolute;left:12%;right:12%;bottom:5%;height:20%;background:linear-gradient(#6e8795,#253947);border-radius:50%;box-shadow:0 20px 25px #000}.upr{position:absolute;bottom:20%;width:16%;height:65%;background:linear-gradient(90deg,#324c5d,#89a2ad,#2e4657);border-radius:10px}.upr.l{left:7%}.upr.r{right:7%}.bridge{position:absolute;left:20%;right:20%;bottom:38%;height:15%;background:linear-gradient(#7c95a2,#2e4654);border-radius:14px}.table{position:absolute;left:35%;right:35%;bottom:48%;height:18%;background:radial-gradient(circle at 50% 45%,#cfdae0,#526c7b 52%,#263945);border-radius:50%;box-shadow:0 0 20px color-mix(in srgb,var(--pageAccent) 25%,transparent)}.head3d{position:absolute;left:46%;top:0;width:12%;height:38%;background:linear-gradient(90deg,#405b6c,#d4dde2,#374f5f);border-radius:12px}.axisGlow{position:absolute;inset:15% 23%;border:2px dashed var(--pageAccent);border-radius:50%;box-shadow:0 0 20px color-mix(in srgb,var(--pageAccent) 20%,transparent)}
+.codebox{height:455px;background:#010305;border:1px solid #173649;border-radius:9px;padding:10px;overflow:auto;font:10px/1.58 ui-monospace,monospace;color:#dff6ff;white-space:pre}.codebox .active{display:block;background:rgba(39,233,255,.10);border-left:2px solid var(--cyan);padding-left:7px;color:#fff}.keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:7px}.key{padding:9px 4px;text-align:center;border:1px solid #21485d;border-radius:8px;background:#04090d;font-size:10px}.key.danger{border-color:rgba(255,70,95,.55)}
+.bottomActions{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:7px;border-top:1px solid #102b3a;background:#02070a}.action{min-height:44px;border:1px solid #21485d;border-radius:9px;display:grid;place-items:center;font-size:9px;background:linear-gradient(#0b1620,#03070a)}.action.green{border-color:rgba(51,243,155,.52)}.action.pink{border-color:rgba(255,77,166,.52)}.action.amber{border-color:rgba(255,179,38,.52)}
+.side{display:grid;gap:8px}.status{padding:8px;border:1px solid #18394a;border-radius:10px;background:#03080c;font-size:10px}.status b{display:block;margin-bottom:3px}.ok{color:#b9ffd7}.pending{color:#ffe0a0}.assetGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.asset{padding:7px;border:1px solid #17394a;border-radius:9px;background:#03080c;text-align:center;font-size:8px}.asset img{width:38px;height:38px;display:block;margin:auto auto 3px}
+.approve{display:grid;grid-template-columns:1fr 1fr;gap:6px}.approve button{min-height:42px;border-radius:9px;border:1px solid #24495d;background:#06101a}.approve .yes{border-color:rgba(51,243,155,.55)}.approve .no{border-color:rgba(255,179,38,.55)}
+.localmsg{font-size:9px;color:var(--muted);line-height:1.45}
+@media(max-width:980px){.review{grid-template-columns:1fr}.grid3{grid-template-columns:1fr}.grid3>.panel:first-child,.grid3>.panel:last-child{display:none}.canvasArea{min-height:0}.viewport{min-height:56vh}.runtimeNav{grid-template-columns:repeat(4,1fr)}.frame.mobile .runtimeNav{grid-template-columns:repeat(4,1fr)}.bottomActions{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.wrap{padding:5px}.notice{font-size:10px}.runtimeTop{padding:6px}.brandBadge{min-width:128px}.telemetry .chip:nth-child(n+3){display:none}.runtimeNav{gap:4px;padding:5px}.navbtn{min-height:54px}.canvasArea{padding:5px}.viewport{min-height:52vh}.assetGrid{grid-template-columns:repeat(4,1fr)}.side{gap:5px}.review{gap:5px}.spindle{width:58px;height:115px}.spindle:after{left:25px}.codebox{height:44vh}.frame.mobile{max-width:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brandrow"><div><div class="logo">AIG 雙專案圖片介面驗證</div><div class="sub">AIG II + AIG STUDIO 5.0 • APPROVED ASSETS ONLY</div></div><div class="ready">● VISUAL REVIEW</div></div>
+  <div class="scroller" id="projectTabs"></div>
+  <div class="scroller" id="pageTabs"></div>
+  <div class="scroller" id="deviceTabs"></div>
+</header>
+<div class="wrap">
+  <div class="notice"><b>這不是工程殼，也不是假裝完成的 Runtime。</b> 這是一個只用兩案 main / approved/184 正式 RGB 資產建立的「圖片介面核准頁」。CAM 依照目前兩張使用者核准整頁圖的結構與 RGB 語言；其他頁面是同一視覺系統的候選版，請你先看圖、確認版面，再回主專案實作。</div>
+  <div class="review">
+    <main class="frame" id="frame"></main>
+    <aside class="side">
+      <div class="status"><b>目前專案</b><span id="projectInfo"></span></div>
+      <div class="status"><b>頁面狀態</b><span id="approvalInfo"></span></div>
+      <div class="status"><b>來源規則</b><span class="ok">approved/184 正式 RGB 元件</span><br><span class="pending">engineering-assets：未使用</span></div>
+      <div class="status"><b>你可以這樣驗證</b><span class="localmsg">依序看首頁 → CAD → CAM → SIM → 3AX → 4AX → 5AX → NC。按「可以」或「要改」只會記在你這台手機瀏覽器，方便你來回比較。</span></div>
+      <div class="approve"><button class="yes" id="yesBtn">✓ 這頁可以</button><button class="no" id="noBtn">△ 這頁要改</button></div>
+      <div class="status"><b>本機標記</b><span id="localDecision">尚未標記</span></div>
+      <div class="assetGrid" id="assetGrid"></div>
+    </aside>
+  </div>
+</div>
+<script>
+const pageDefs=[
+ ["首頁","HOME","workspace.png","#9f72ff"],
+ ["CAD","CAD","cad.png","#27e9ff"],
+ ["CAM","CAM","cam.png","#33f39b"],
+ ["SIM","SIM","sim.png","#33f39b"],
+ ["3AX","3AX","3ax.png","#3694ff"],
+ ["4AX","4AX","4ax.png","#ffb326"],
+ ["5AX","5AX","5ax.png","#ff4da6"],
+ ["NC EDIT","NC","nc.png","#ffb326"]
+];
+const projectDefs=[
+ ["AIG II","AIG-II","https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-II/main/app/src/main/assets/aig-generated-rgb/approved/184/"],
+ ["AIG Studio","AIG-Studio-5.0","https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-Studio-5.0/main/app/src/main/assets/aig-generated-rgb/approved/184/"]
+];
+let project="AIG-II",page="CAM",device="mobile";
+const frame=document.getElementById("frame");
+function projectDef(){return projectDefs.find(x=>x[1]===project)||projectDefs[0]}
+function pageDef(){return pageDefs.find(x=>x[1]===page)||pageDefs[0]}
+function icon(file){return projectDef()[2]+file}
+function nav(){
+ return '<div class="runtimeTop"><div class="brandBadge"><div class="brandMark">A</div><div class="brandText"><b>'+projectDef()[0]+'</b><small>RGB PRODUCTION VISUAL TARGET</small></div></div><div class="telemetry"><div class="chip"><strong>● READY</strong></div><div class="chip">0.001 mm</div><div class="chip">G54</div><div class="chip">SAFE-Z 50.000</div></div></div>'+
+ '<div class="runtimeNav">'+pageDefs.map(x=>'<div class="navbtn '+(x[1]===page?'selected':'')+'"><img src="'+icon(x[2])+'"><span>'+x[0]+'</span></div>').join('')+'</div>';
+}
+function leftList(title,items){return '<section class="panel"><div class="ph">'+title+'</div><div class="pb"><div class="list">'+items.map((x,i)=>'<div class="li '+(i===1?'sel':'')+'">'+x+'</div>').join('')+'</div></div></section>'}
+function params(title,items){return '<section class="panel"><div class="ph">'+title+'</div><div class="pb">'+items.map(x=>'<div class="param"><span>'+x[0]+'</span><span class="value">'+x[1]+'</span></div>').join('')+'</div></section>'}
+function vp(inner,hud=''){return '<div class="viewport"><div class="gridbg"></div>'+inner+(hud?'<div class="hud">'+hud+'</div>':'')+'</div>'}
+function camView(){
+ const center=vp('<div class="spindle"></div><div class="workpiece"></div><i class="pathline p1"></i><i class="pathline p2"></i><i class="pathline p3"></i><i class="pathline p4"></i>','CAM READY<br>G0 CYAN / CUT GREEN<br>SELECTED MAGENTA<br>SAFE-Z +50.000');
+ return '<div class="grid3">'+leftList('刀路工序',['01 面銑 Facing','02 口袋 Pocket','03 輪廓 Contour','04 鑽孔 Drill','05 倒角 Chamfer','06 精修 Finish'])+'<section class="panel"><div class="ph">CAM 真實刀路視覺基準</div><div class="pb">'+center+'</div></section>'+params('加工參數',[['刀具','T1 Ø10 End Mill'],['刀半徑','5.000 mm'],['深度','-8.000 mm'],['進給','1200 mm/min'],['主軸','8000 RPM'],['補償','G41'],['方向','順銑']])+'</div>';
+}
+function cadView(){
+ const tools='<div class="toolbar">'+['LINE','RECT','CIRCLE','ARC','HOLE','TRIM','EXTEND','OFFSET','ARRAY','DIM'].map((x,i)=>'<div class="tool '+(i===1?'sel':'')+'">'+x+'</div>').join('')+'</div>';
+ const center=vp('<div class="cadShape cadRect"></div><div class="cadShape cadCircle"></div><div class="cadShape cadLine"></div>','X 125.000 Y 88.000<br>SNAP END/MID/CENTER<br>0.001 mm');
+ return '<div class="grid3">'+leftList('製圖工具',['LINE 線','RECT 矩形','CIRCLE 圓','ARC 圓弧','HOLE 孔','CORNER 倒角/圓角'])+'<section class="panel"><div class="ph">2D CAD 製圖</div><div class="pb">'+tools+center+'</div></section>'+params('製圖屬性',[['SNAP','ON'],['圖層','WORK'],['座標','X0 Y0'],['尺寸','20.000'],['拓樸','CONNECTED'],['AutoSave','READY']])+'</div>';
+}
+function simView(){
+ const center=vp('<div class="spindle"></div><div class="workpiece"></div><i class="pathline p1"></i><i class="pathline p3"></i>','SIMULATION<br>MATERIAL REMOVAL<br>ABS G90 / G54');
+ return '<div class="grid3">'+leftList('模擬模式',['3D VIEW','材料移除','刀具顯示','工件顯示','碰撞檢查','單節/空跑'])+'<section class="panel"><div class="ph">3D 走刀模擬</div><div class="pb">'+center+'</div></section>'+params('SIM 狀態',[['進度','42.6%'],['Z','-8.000'],['材料移除','58.3 cm³'],['碰撞','CLEAR'],['FPS','AUTO'],['座標','G90']])+'</div>';
+}
+function axisView(ax){
+ const center=vp('<div class="axisModel"><div class="base"></div><div class="upr l"></div><div class="upr r"></div><div class="bridge"></div><div class="table"></div><div class="head3d"></div><div class="axisGlow"></div></div>',ax+' MACHINE<br>X/Y/Z'+(ax==='4AX'?'/A':ax==='5AX'?'/A/B':'')+'<br>CAM + SIM SYNC');
+ return '<div class="grid3">'+leftList(ax+' 控制',['回零','Fit','正面','側面','反面','相機 360°'])+'<section class="panel"><div class="ph">'+ax+' 真實機械視覺候選</div><div class="pb">'+center+'</div></section>'+params('軸狀態',[['X','0.000'],['Y','0.000'],['Z','30.000'],['A',ax==='3AX'?'—':'0.000°'],['B',ax==='5AX'?'0.000°':'—'],['安全','CLEAR']])+'</div>';
+}
+function ncView(){
+ const code='O1000\nN10 M98 P4\nN20 G90 G54 X0. Y0. S2300 M3\nN30 G43 Z30. H1 M8\n<span class="active">N40 G1 Z-10. F150</span>\nN50 G41 D01 X25. Y0.\nN60 G2 X50. Y25. I0. J25.\nN70 G40 G0 Z30.\nN80 M98 P5\nN90 M30';
+ return '<div class="grid3">'+leftList('NC 功能',['主程式','O4 換刀','O5 結束','單節','空跑','Block Skip'])+'<section class="panel"><div class="ph">NC EDIT</div><div class="pb"><div class="codebox">'+code+'</div><div class="keypad">'+['G','M','X','Y','Z','F','S','T','INSERT','DELETE','/','EOB'].map(x=>'<div class="key '+(x==='DELETE'?'danger':'')+'">'+x+'</div>').join('')+'</div></div></section>'+params('NC 狀態',[['模式','G90'],['WCS','G54'],['刀補','G41 D01'],['刀長','G43 H1'],['主軸','2300 RPM'],['冷卻','M8']])+'</div>';
+}
+function homeView(){
+ const cards=pageDefs.slice(1).map(x=>'<div class="navbtn '+(x[1]==='CAM'?'selected':'')+'" style="min-height:110px"><img src="'+icon(x[2])+'" style="width:46px;height:46px"><b>'+x[0]+'</b><small style="color:var(--muted)">正式 RGB</small></div>').join('');
+ return '<section class="panel"><div class="ph">首頁 / 工作中心</div><div class="pb"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'+cards+'</div></div></section>';
+}
+function content(){
+ if(page==='HOME')return homeView();
+ if(page==='CAD')return cadView();
+ if(page==='CAM')return camView();
+ if(page==='SIM')return simView();
+ if(page==='3AX'||page==='4AX'||page==='5AX')return axisView(page);
+ return ncView();
+}
+function bottom(){
+ return '<div class="bottomActions"><div class="action">Undo</div><div class="action">Redo</div><div class="action green">Save</div><div class="action pink">SIM</div><div class="action amber">Verify</div><div class="action green">AI</div></div>';
+}
+function draw(){
+ const pd=pageDef();document.documentElement.style.setProperty('--pageAccent',pd[3]);
+ frame.className='frame '+device;frame.innerHTML=nav()+'<div class="canvasArea">'+content()+'</div>'+bottom();
+ document.getElementById('projectInfo').textContent=projectDef()[0]+' / main / approved 184';
+ document.getElementById('approvalInfo').innerHTML=page==='CAM'?'<span class="ok">CAM：依使用者已核准手機＋桌面整頁圖收斂</span>':'<span class="pending">'+pd[0]+'：候選整頁，等你看圖核准</span>';
+ document.getElementById('assetGrid').innerHTML=pageDefs.map(x=>'<div class="asset"><img src="'+icon(x[2])+'">'+x[0]+'</div>').join('');
+ const key='aig-review-'+project+'-'+page+'-'+device;document.getElementById('localDecision').textContent=localStorage.getItem(key)||'尚未標記';
+ renderTop();
+ history.replaceState(null,'','#'+project+'/'+page+'/'+device);
+}
+function renderTop(){
+ const pt=document.getElementById('projectTabs');pt.innerHTML=projectDefs.map(x=>'<button class="tab '+(x[1]===project?'active':'')+'" style="--accent:#27e9ff" data-p="'+x[1]+'">'+x[0]+'</button>').join('');
+ pt.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{project=b.dataset.p;draw()});
+ const pg=document.getElementById('pageTabs');pg.innerHTML=pageDefs.map(x=>'<button class="tab '+(x[1]===page?'active':'')+'" style="--accent:'+x[3]+'" data-page="'+x[1]+'">'+x[0]+'</button>').join('');
+ pg.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{page=b.dataset.page;draw()});
+ const dt=document.getElementById('deviceTabs');dt.innerHTML=['mobile','desktop'].map(x=>'<button class="tab '+(x===device?'active':'')+'" style="--accent:#9f72ff" data-d="'+x+'">'+(x==='mobile'?'手機':'Windows')+'</button>').join('');
+ dt.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{device=b.dataset.d;draw()});
+}
+document.getElementById('yesBtn').onclick=()=>{const k='aig-review-'+project+'-'+page+'-'+device;localStorage.setItem(k,'✓ 這頁可以');draw()};
+document.getElementById('noBtn').onclick=()=>{const k='aig-review-'+project+'-'+page+'-'+device;localStorage.setItem(k,'△ 這頁要改');draw()};
+const h=decodeURIComponent(location.hash.slice(1)).split('/');if(h[0])project=h[0];if(h[1])page=h[1];if(h[2])device=h[2];draw();
+</script>
+</body></html>
