@@ -248,6 +248,34 @@ for needle in (
 print("FIXED_CAD_REACH_RUNTIME_GATE_PASS|ANDROID|WINDOWS|SELECT|PAN|FIT|UNDO|REDO|LIVE_CALLBACKS")
 
 for needle in (
+    "enum class CadControlPointKind",
+    "data class CadControlPoint(",
+    "object CadControlPointEngine",
+    "fun editCommand(doc:DrawingDocument,control:CadControlPoint,target:Vec2):Command",
+):
+    require(document, needle, "CAD_CONTROL_POINT_CORE")
+for needle in (
+    "private fun promptControlPointEdit(control:CadControlPoint)",
+    "private fun drawSelectedControlPoints(canvas:Canvas)",
+    "CadControlPointEngine.nearest(doc,selectedIds,p",
+    'pendingPickOperation="TRIM"',
+    'pendingPickOperation="EXTEND"',
+    "private fun handlePendingPick(p:Vec2):Boolean",
+):
+    require(android, needle, "ANDROID_CAD_CONTROL_POINT_PICK_EDIT")
+for needle in (
+    "private fun editControlPoint(control:CadControlPoint)",
+    "CadControlPointEngine.nearest(doc,selectedIds,p",
+    'pendingPickOperation="TRIM"',
+    'pendingPickOperation="EXTEND"',
+    "private fun handlePendingPick(p:Vec2):Boolean",
+):
+    require(desktop, needle, "WINDOWS_CAD_CONTROL_POINT_PICK_EDIT")
+require(regression, "CAD_CONTROL_POINT_EDIT_GATE_PASS", "CAD_CONTROL_POINT_REGRESSION")
+print("CAD_CONTROL_POINT_RUNTIME_GATE_PASS|ANDROID|WINDOWS|ENDPOINT|CENTER|RADIUS|ARC_POINT|TWO_PICK_TRIM|TWO_PICK_EXTEND|UNDO_REDO")
+
+
+for needle in (
     'const val POLICY = "OFFLINE_FIRST_UI_BOOT"',
     'const val NETWORK_REQUIRED_FOR_STARTUP = false',
     'fun startupAllowed(networkAvailable:Boolean):Boolean = true',
