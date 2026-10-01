@@ -796,7 +796,7 @@ object WorkstationChromeContract {
 object MasterRuntimeChainContract {
     const val POLICY = "MASTER_ORIGIN_CAD_GEOMETRY_ROOT_SINGLE_TRUTH"
     val pipeline = listOf("CAD","CAM","SIM","NC")
-    val axisCapabilities = listOf("3AX","4AX","5AX")
+    val axisCapabilities = listOf("3AX","4AX","5AX","6AX")
 
     fun masterOriginLabel():String = "MASTER " + SoftwareCoordinateContract.masterOriginData()
     fun uiLabel():String =
@@ -828,6 +828,7 @@ object ProductionUiSwitchContract {
         "3AX" -> "3AX"
         "4AX" -> "4AX"
         "5AX" -> "5AX"
+        "6AX" -> "6AX"
         "NC" -> "NC_EDIT"
         "AI" -> "AI"
         else -> error("unreachable")
@@ -913,7 +914,8 @@ object RuntimeUxFlowContract {
         "AI" to RuntimeUxStep("AI","AI 檢查","CAD","輔助，不阻塞加工流程"),
         "3AX" to RuntimeUxStep("3AX","機台模型","SIM","XYZ 加工能力"),
         "4AX" to RuntimeUxStep("4AX","機台模型","SIM","XYZ + A 加工能力"),
-        "5AX" to RuntimeUxStep("5AX","機台模型","SIM","XYZ + A/B 加工能力")
+        "5AX" to RuntimeUxStep("5AX","機台模型","SIM","XYZ + A/B 加工能力"),
+        "6AX" to RuntimeUxStep("6AX","姿態驗證","SIM","XYZ + A/B/C 姿態；NC 尚需機台專屬驗證")
     )
 
     fun step(mode:String):RuntimeUxStep =
@@ -928,6 +930,7 @@ object RuntimeUxFlowContract {
         "3AX" -> listOf("3AX 模型","SIM","NC")
         "4AX" -> listOf("4AX 模型","SIM","控制","NC")
         "5AX" -> listOf("5AX 模型","SIM","控制","NC")
+        "6AX" -> listOf("6AX 姿態","SIM","A/B/C","NC鎖定")
         else -> listOf("CAD")
     }
 
@@ -1178,7 +1181,7 @@ object UiTextPolicy {
 
     private val technical=mapOf(
         "CAD" to "CAD", "CAM" to "CAM", "SIM" to "SIM", "3D" to "3D",
-        "3AX" to "3AX", "4AX" to "4AX", "5AX" to "5AX",
+        "3AX" to "3AX", "4AX" to "4AX", "5AX" to "5AX", "6AX" to "6AX",
         "NC" to "NC", "NC_EDIT" to "NC", "AI" to "AI", "FIT" to "FIT"
     )
     private val fullZh=mapOf(
@@ -1258,6 +1261,7 @@ object UnifiedMachiningWorkspaceContract {
         RgbImageButtonSpec("3AX","三軸","3 AXIS","ic_rgb_3ax",92),
         RgbImageButtonSpec("4AX","四軸","4 AXIS","ic_rgb_4ax",91),
         RgbImageButtonSpec("5AX","五軸","5 AXIS","ic_rgb_5ax",90),
+        RgbImageButtonSpec("6AX","六軸","6 AXIS","ic_rgb_6ax",89),
         RgbImageButtonSpec("NC_EDIT","程式","NC EDIT","rgb_nc",98,true)
     )
 
@@ -1358,6 +1362,58 @@ object MachiningAxisRuntimeContract {
             mode=MultiAxisInterpolationMode.LINEAR_SYNC
         )
     }
+}
+
+
+data class SixAxisRuntimeState(
+    val axisA:Double,
+    val axisB:Double,
+    val axisC:Double
+)
+
+object SixAxisRuntimeContract {
+    const val POLICY = "XYZABC_SIMULATION_FIRST_NC_INTERLOCK"
+    const val NC_POST_VERIFIED = false
+
+    private fun clampTilt(v:Double):Double {
+        require(v.isFinite()) { "6AX tilt must be finite" }
+        return v.coerceIn(-360.0,360.0)
+    }
+
+    private fun normalizeC(v:Double):Double {
+        require(v.isFinite()) { "6AX C angle must be finite" }
+        var n=v%360.0
+        if(n>180.0)n-=360.0
+        if(n<=-180.0)n+=360.0
+        return n
+    }
+
+    fun state(axisA:Double,axisB:Double,axisC:Double)=
+        SixAxisRuntimeState(clampTilt(axisA),clampTilt(axisB),normalizeC(axisC))
+
+    fun step(state:SixAxisRuntimeState,axis:Char,delta:Double):SixAxisRuntimeState {
+        require(delta.isFinite()) { "6AX step must be finite" }
+        return when(axis.uppercaseChar()) {
+            'A' -> state(state.axisA+delta,state.axisB,state.axisC)
+            'B' -> state(state.axisA,state.axisB+delta,state.axisC)
+            'C' -> state(state.axisA,state.axisB,state.axisC+delta)
+            else -> error("Unsupported 6AX rotary axis: "+axis)
+        }
+    }
+
+    fun toolVector(length:Double,state:SixAxisRuntimeState):Vec3 {
+        require(length.isFinite() && length>0.0) { "Tool vector length must be positive" }
+        val ab=MachineKinematics3D.transform(Vec3(0.0,0.0,length),state.axisA,state.axisB)
+        val c=Math.toRadians(state.axisC)
+        return Vec3(
+            ab.x*kotlin.math.cos(c)-ab.y*kotlin.math.sin(c),
+            ab.x*kotlin.math.sin(c)+ab.y*kotlin.math.cos(c),
+            ab.z
+        )
+    }
+
+    fun ncInterlockReason():String =
+        if(NC_POST_VERIFIED) "VERIFIED" else "6AX machine-specific kinematics/post not verified"
 }
 
 
