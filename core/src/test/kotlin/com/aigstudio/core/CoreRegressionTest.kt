@@ -2243,9 +2243,9 @@ private fun testCamWorkstationContract() {
     check(colors["CUTTING"]!=colors["WARNING"])
     println("✓ CAM_PATH_VISUAL_GATE_PASS G0 CUTTING REGION TOOL SELECTED WARNING")
 
-    val required=setOf("TOOL DIA","TOOL RADIUS","DEPTH","SAFE-Z","FEED","SPINDLE","WORK OFFSET","LEAD-IN","LEAD-OUT","TOOL DIRECTION","TOOLPATH STATUS")
+    val required=setOf("TOOL DIA","TOOL RADIUS","DEPTH","SAFE-Z","FEED","SPINDLE","WORK OFFSET","LEAD-IN","LEAD-OUT","CONTOUR SIDE","PATH DIRECTION","TOOLPATH STATUS")
     check(CamWorkstationContract.parameterKeys.toSet().containsAll(required))
-    println("✓ CAM_PARAMETER_PANEL_GATE_PASS DIA RADIUS DEPTH SAFE_Z FEED SPINDLE OFFSET LEAD DIRECTION STATUS")
+    println("✓ CAM_PARAMETER_PANEL_GATE_PASS DIA RADIUS DEPTH SAFE_Z FEED SPINDLE OFFSET LEAD CONTOUR_SIDE PATH_DIRECTION STATUS")
 
     check(CamWorkstationContract.layout(360)==CamWorkstationContract.Layout.MOBILE_COMPACT)
     check(CamWorkstationContract.layout(720)==CamWorkstationContract.Layout.MOBILE_COMPACT)
@@ -2479,7 +2479,13 @@ private fun testDualPlatformProjectPackage() {
     check(DualPlatformProjectContract.valid())
     check(DualPlatformProjectContract.platforms==listOf("ANDROID","WINDOWS"))
     check(DualPlatformProjectContract.continuity==listOf("CAD","CAM","SIM","NC"))
-    val project=StudioProjectRepository.referenceProject()
+    val project=StudioProjectRepository.referenceProject().copy(
+        camSettings=StudioProjectRepository.referenceProject().camSettings.copy(
+            climb=false,
+            contourSide=ContourSide.INSIDE,
+            contourDirection=ContourDirection.CW
+        )
+    )
     System.getenv("AIG_DUAL_PROJECT_EVIDENCE")?.takeIf { it.isNotBlank() }?.let { path ->
         StudioProjectRepository.saveRevisioned(project,java.io.File(path),"WINDOWS","DESKTOP")
     }
@@ -2494,6 +2500,9 @@ private fun testDualPlatformProjectPackage() {
         check(loaded.axisMode=="5AX")
         check(abs(loaded.axisA-30.0)<EPS && abs(loaded.axisB+15.0)<EPS)
         check(abs(loaded.camSettings.toolDiameter-6.0)<EPS)
+        check(loaded.camSettings.contourSide==ContourSide.INSIDE)
+        check(loaded.camSettings.contourDirection==ContourDirection.CW)
+        check(first.readLines().any{it=="CONTOUR|INSIDE|CW"})
         check("X25.000 Y20.000" in loaded.ncText)
         val doc=DrawingDocument()
         StudioProjectRepository.applyTo(loaded,doc)
@@ -2508,7 +2517,7 @@ private fun testDualPlatformProjectPackage() {
         check(moves.all { abs(it.axisA-30.0)<EPS && abs(it.axisB+15.0)<EPS })
         StudioProjectRepository.save(loaded,second)
         check(first.readBytes().contentEquals(second.readBytes())) { "Android/Windows Studio project bytes drifted" }
-        println("✓ DUAL_PLATFORM_PROJECT_GATE_PASS ANDROID_WINDOWS SAME_PROJECT_BYTES MASTER_XYZ 0.001 CAD_CAM_SIM_NC RECT100x60 CIRCLE_D20 HOLE_D8")
+        println("✓ DUAL_PLATFORM_PROJECT_GATE_PASS ANDROID_WINDOWS SAME_PROJECT_BYTES MASTER_XYZ 0.001 CAD_CAM_SIM_NC CONTOUR_SIDE_DIRECTION RECT100x60 CIRCLE_D20 HOLE_D8")
     } finally {
         first.delete()
         second.delete()
