@@ -1,0 +1,87 @@
+{
+  "schema": "aig-uiux-zh-tw-baseline-v1",
+  "product": "AIG Studio 5.0",
+  "status": "ACTIVE_UIUX_BASELINE",
+  "source": {
+    "repository_path": "uiux/assets/cam.jpg",
+    "provenance_path": "engineering-assets/visuals/cam_visual.jpg",
+    "rule": "uiux runtime reads the promoted uiux asset; engineering-assets is provenance/history only"
+  },
+  "language_policy": {
+    "primary": "zh-TW",
+    "preserve_tokens": [
+      "AIG",
+      "CAD",
+      "CAM",
+      "SIM",
+      "NC",
+      "3D",
+      "3AX",
+      "4AX",
+      "5AX",
+      "RGB",
+      "AI",
+      "Fanuc",
+      "G54",
+      "G90",
+      "G41",
+      "G42",
+      "G/M/X/Y/Z/F/S/T"
+    ],
+    "fallback_order": [
+      "short_zh-TW",
+      "abbreviation",
+      "symbol",
+      "short_English"
+    ],
+    "no_overlap": true,
+    "no_tiny_text": true
+  },
+  "visual_contract": {
+    "family": "AIG_RGB_GLASS",
+    "dark_metallic": true,
+    "cyan": "rapid/navigation",
+    "green": "ready/cutting/safe",
+    "magenta": "selected/5AX",
+    "violet": "secondary/AI",
+    "amber": "warning/safe-z/work-offset",
+    "red": "alarm/collision",
+    "states": [
+      "Normal",
+      "Pressed",
+      "Selected",
+      "Disabled",
+      "Alarm"
+    ]
+  },
+  "layout_contract": {
+    "derive_from_baseline": true,
+    "adaptive": [
+      "Android portrait",
+      "Android landscape",
+      "Windows"
+    ],
+    "screens": [
+      "HOME",
+      "CAD",
+      "CAM",
+      "SIM",
+      "3AX",
+      "4AX",
+      "5AX",
+      "NC_EDIT"
+    ],
+    "engineering_shell_visible": false,
+    "production_ui_first": true
+  },
+  "development_order": [
+    "HOME",
+    "CAD",
+    "CAM",
+    "SIM",
+    "3AX",
+    "4AX",
+    "5AX",
+    "NC_EDIT"
+  ]
+}
