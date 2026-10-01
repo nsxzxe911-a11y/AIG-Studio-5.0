@@ -1,7 +1,7 @@
 {
   "schema": "aig-ai-responsibility-routing-v1",
   "product": "AIG Studio 5.0",
-  "version": "269.0.0",
+  "version": "270.0.0",
   "detector": "AI",
   "principle": "AI_DETECTS_CLASSIFIES_RETURNS_REWORK_REVERIFIES; OWNER_DEPARTMENT_FIXES",
   "lifecycle": [
@@ -89,5 +89,11 @@
     "violation_code": "CACHE_MTIME_ONLY_DECISION",
     "owner_rule": "RETURN_TO_DEPARTMENT_USING_TIME_ONLY_DECISION",
     "network_is_owner": false
+  },
+  "review_acceleration": {
+    "fast_review": "ci/fast_review.py",
+    "concurrent_checks": true,
+    "failed_owner_only": true,
+    "other_departments_continue": true
   }
 }
