@@ -56,16 +56,16 @@ import com.aigstudio.core.*
 import kotlin.math.*
 
 object StudioProductionTheme {
-    const val ID="aigii_rgb_neon_v2"
-    val background=Color.rgb(2,4,7)
-    val panel=Color.rgb(7,17,27)
-    val text=Color.rgb(244,251,255)
-    val accent=Color.rgb(39,233,255)
-    val selected=Color.rgb(39,233,255)
-    val cutting=Color.rgb(51,243,155)
-    val rapid=Color.rgb(255,77,166)
-    val warning=Color.rgb(255,179,38)
-    val alarm=Color.rgb(255,70,95)
+    val ID:String get()=StudioThemePackRuntime.current.id
+    val background:Int get()=StudioThemePackRuntime.current.background
+    val panel:Int get()=StudioThemePackRuntime.current.panel
+    val text:Int get()=StudioThemePackRuntime.current.text
+    val accent:Int get()=StudioThemePackRuntime.current.accent
+    val selected:Int get()=StudioThemePackRuntime.current.selected
+    val cutting:Int get()=StudioThemePackRuntime.current.cutting
+    val rapid:Int get()=StudioThemePackRuntime.current.rapid
+    val warning:Int get()=StudioThemePackRuntime.current.warning
+    val alarm:Int get()=StudioThemePackRuntime.current.alarm
 }
 
 object LibraryFiveAxisSkin208 {
@@ -204,6 +204,9 @@ class RgbGlowButton(context: Context) : Button(context) {
         }
 
         fun globalBrightness():Int = globalBrightnessPercent
+        fun refreshThemeAll() {
+            instances.toList().forEach { it.refreshTheme() }
+        }
     }
 
     private var accent = Color.rgb(61,235,255)
@@ -251,6 +254,12 @@ class RgbGlowButton(context: Context) : Button(context) {
         pulseHandler.removeCallbacks(pulseRunnable)
         render()
         if(selectedGlow && isAttachedToWindow) pulseHandler.post(pulseRunnable)
+    }
+
+    fun refreshTheme() {
+        setTextColor(StudioProductionTheme.text)
+        render()
+        invalidate()
     }
 
     override fun onDetachedFromWindow() {
@@ -1646,6 +1655,56 @@ class MainActivity : Activity() {
             }
     }
 
+    private fun showThemePackDialog() {
+        val plan=AiLayoutComposerContract.compose(
+            resources.configuration.screenWidthDp.coerceAtLeast(1),
+            resources.configuration.screenHeightDp.coerceAtLeast(1),
+            getSharedPreferences("aig_environment",MODE_PRIVATE).getBoolean("left_handed_ui",false)
+        )
+        val box=LinearLayout(this).apply{
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(14),dp(10),dp(14),dp(8))
+        }
+        box.addView(TextView(this).apply{
+            setTextColor(StudioProductionTheme.text)
+            text="AI Layout Composer • "+plan.deviceClass+" • minTouch="+plan.minTouchDp+"dp\nTheme Pack 可熱切換；CAD/CAM/SIM/NC/座標/CNC安全核心不變。"
+            textSize=12f
+        })
+        StudioThemePackRuntime.ids().forEach { id ->
+            box.addView(Button(this).apply{
+                text=(if(id==StudioThemePackRuntime.current.id)"✓ " else "")+StudioThemePackRuntime.name(id)
+                isAllCaps=false
+                setOnClickListener {
+                    runCatching {
+                        val applied=StudioThemePackRuntime.switchTo(id)
+                        RgbGlowButton.refreshThemeAll()
+                        window.decorView.setBackgroundColor(applied.background)
+                        window.decorView.invalidate()
+                        status.text="THEME HOT SWAP • "+applied.name+" • NO RESTART"
+                    }.onFailure {
+                        val restored=StudioThemePackRuntime.rollback()
+                        RgbGlowButton.refreshThemeAll()
+                        status.text="THEME ROLLBACK • "+restored.name+" • RUNTIME CONTINUES"
+                    }
+                }
+            })
+        }
+        box.addView(Button(this).apply{
+            text="AI 自動編排：啟用"
+            isAllCaps=false
+            setOnClickListener{
+                getSharedPreferences("aig_environment",MODE_PRIVATE).edit()
+                    .putBoolean("ai_layout_enabled",true).apply()
+                status.text="AI LAYOUT ENABLED • "+plan.deviceClass+" • STABLE ORDER • NO CORE MUTATION"
+            }
+        })
+        AlertDialog.Builder(this)
+            .setTitle("UI 套裝 / AI 編排")
+            .setView(box)
+            .setPositiveButton("關閉",null)
+            .show()
+    }
+
     private fun showMaintenanceCenter() {
         val runtimeVersionName=runCatching {
             packageManager.getPackageInfo(packageName,0).versionName ?: "UNKNOWN"
@@ -1681,6 +1740,7 @@ class MainActivity : Activity() {
         action("Recovery / AutoSave"){ restoreCadCheckpointIfAvailable() }
         action("系統監控 HUD"){ applySystemHudPreference(true); showExpandedSystemHud() }
         action("環境 / FPS / 溫度"){ showEnvironmentSettings() }
+        action("UI 套裝 / AI 編排"){ showThemePackDialog() }
         action("Security"){ openCategory("安全"){showSecurityBranch()} }
         action("AI SYSTEM SUITE"){ showAiSystemSuiteDialog() }
         action("ChatGPT AI 更新"){ runSecureUpdateCheck() }
