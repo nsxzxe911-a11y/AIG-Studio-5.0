@@ -168,6 +168,18 @@ class DisconnectTopologyCommand(private val link: CadTopologyLink) : Command {
     override fun undo(doc: DrawingDocument) { doc.connect(link) }
 }
 
+class DisconnectAllTopologyCommand : Command {
+    override val geometryMutation: Boolean = false
+    private var removed:Set<CadTopologyLink> = emptySet()
+    override fun execute(doc:DrawingDocument) {
+        removed=doc.links()
+        removed.forEach(doc::disconnect)
+    }
+    override fun undo(doc:DrawingDocument) {
+        doc.restoreLinks(removed)
+    }
+}
+
 object CadEditEngine {
     private fun endpoints(entity: Entity): List<Vec2> = when (entity) {
         is Line -> listOf(entity.a, entity.b)
@@ -367,6 +379,16 @@ object CadEditEngine {
         require(pair.size == 2) { "DISCONNECT requires exactly two selected entities" }
         return DisconnectTopologyCommand(CadTopologyLink.of(pair[0],pair[1]))
     }
+
+    fun disconnectAllCommand():Command = DisconnectAllTopologyCommand()
+}
+
+object CadCamTopologyPolicy {
+    const val POLICY="TOPOLOGY_OPTIONAL_FOR_CAM_NC"
+    const val TOPOLOGY_REQUIRED_FOR_CAM=false
+    const val TOPOLOGY_REQUIRED_FOR_NC=false
+    const val GEOMETRY_REMAINS_AUTHORITATIVE=true
+    const val POST_VALIDATES_TOOLPATH_AND_NC=true
 }
 
 enum class SnapMode { ENDPOINT, MIDPOINT, CENTER, INTERSECTION, TANGENT, HORIZONTAL, VERTICAL }
