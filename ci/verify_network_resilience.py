@@ -55,6 +55,8 @@ for marker in (
     "sharedSyncExecutor",
     "sharedSyncRunning",
     "sharedSyncExecutor.execute",
+    "sharedSyncLastFileStamp",
+    "fileStamp!=sharedSyncLastFileStamp",
     "SwingUtilities.invokeLater",
     "shutdownNow()",
 ):
