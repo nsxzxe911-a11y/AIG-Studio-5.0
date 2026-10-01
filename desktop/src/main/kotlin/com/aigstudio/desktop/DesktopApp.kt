@@ -945,6 +945,9 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
     private var lastY = 0
     private var progressiveFrame:ProgressiveMachining3DFrame?=null
     private var previousProgressiveFrame:ProgressiveMachining3DFrame?=null
+    private var machineModeOverride:String?=null
+    private var postureA=0.0
+    private var postureB=0.0
     private val materialDepthGrid=DoubleArray(MATERIAL_DEPTH_GRID_W*MATERIAL_DEPTH_GRID_H){Double.NEGATIVE_INFINITY}
     private var lastOccludedPathSegments=0
     private var lastForegroundPathSegments=0
@@ -977,6 +980,22 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         ry += 24.0
         rx = (rx + 12.0).coerceIn(-89.0, 89.0)
         zoom = (zoom * 1.20).coerceIn(0.3, 6.0)
+        repaint()
+    }
+
+    fun setMachineMode(mode:String){
+        val normalized=mode.uppercase()
+        require(normalized in setOf("3AX","4AX","5AX","6AX"))
+        machineModeOverride=normalized
+        if(normalized=="3AX"){postureA=0.0;postureB=0.0}
+        if(normalized=="4AX")postureB=0.0
+        repaint()
+    }
+
+    fun setAngles(a:Double,b:Double){
+        require(a.isFinite() && b.isFinite())
+        postureA=a.coerceIn(-360.0,360.0)
+        postureB=b.coerceIn(-360.0,360.0)
         repaint()
     }
 
@@ -1033,8 +1052,9 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         val live=frame?.toolPoint ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
         val model=MachineModel3DBuilder.build(
             result,
-            axisAOverride=live?.axisA,
-            axisBOverride=live?.axisB,
+            modeOverride=machineModeOverride,
+            axisAOverride=machineModeOverride?.let{postureA} ?: live?.axisA,
+            axisBOverride=machineModeOverride?.let{postureB} ?: live?.axisB,
             toolPointOverride=live
         )
         val prepared=model.components.map { component ->
