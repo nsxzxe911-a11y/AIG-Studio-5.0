@@ -3296,6 +3296,8 @@ class MainActivity : Activity() {
                         climb = direction.selectedItemPosition==0,
                         contourSide = if(side.selectedItemPosition==0) ContourSide.OUTSIDE else ContourSide.INSIDE,
                         contourDirection = if(direction.selectedItemPosition==0) ContourDirection.CCW else ContourDirection.CW,
+                        pathMode = camSettings.pathMode,
+                        manualPath = camSettings.manualPath,
                         leadInMm = leadIn.text.toString().toDouble(),
                         leadOutMm = leadOut.text.toString().toDouble()
                     )
