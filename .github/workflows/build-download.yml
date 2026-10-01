@@ -2,12 +2,19 @@ name: AIG Studio direct release validation
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'uiux/**'
+      - 'release-version.properties'
+      - '.github/workflows/build-download.yml'
 
 permissions:
   contents: read
 
 jobs:
   android-and-source:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-build]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -155,6 +162,7 @@ jobs:
           retention-days: 3
 
   windows-exe:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-build]') }}
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@v7

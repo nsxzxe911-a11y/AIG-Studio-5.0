@@ -1,0 +1,233 @@
+{
+  "schema": "aig-uiux-image-library-v2",
+  "product": "AIG Studio 5.0",
+  "version": "258.0.0",
+  "status": "UIUX_VISUAL_LIBRARY_COMPLETE",
+  "canonical_root": "uiux/",
+  "rule": "No runtime or review page reads engineering-assets directly. engineering-assets remains immutable provenance/history only.",
+  "source_policy": {
+    "preserve_original_paths": true,
+    "delete_existing_assets": false,
+    "duplicate_binary_payload": false,
+    "canonical_full_page_assets": "uiux/assets/",
+    "reusable_icon_source": "app/src/main/assets/aig-generated-rgb/approved/184/",
+    "production_ui_first": true,
+    "engineering_shell_visible": false
+  },
+  "language": {
+    "primary": "zh-TW",
+    "preserve": [
+      "AIG",
+      "CAD",
+      "CAM",
+      "SIM",
+      "NC",
+      "3D",
+      "3AX",
+      "4AX",
+      "5AX",
+      "RGB",
+      "AI",
+      "Fanuc",
+      "G54",
+      "G90",
+      "G41",
+      "G42",
+      "G/M/X/Y/Z/F/S/T",
+      "MPG",
+      "JOG",
+      "ATC",
+      "RPM"
+    ],
+    "fallback": [
+      "short_zh-TW",
+      "abbreviation",
+      "symbol",
+      "short_English"
+    ],
+    "no_overlap": true,
+    "no_tiny_text": true
+  },
+  "state_model": [
+    "NORMAL",
+    "PRESSED",
+    "SELECTED",
+    "DISABLED",
+    "ALARM"
+  ],
+  "visual_family": "AIG_RGB_GLASS_DARK_METALLIC",
+  "departments": [
+    {
+      "id": "HOME",
+      "label": "首頁",
+      "visual": "assets/home.png",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/workspace.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "CAD",
+      "label": "2D 製圖",
+      "visual": "assets/cad.png",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/cad.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "CAM",
+      "label": "CAM 刀路",
+      "visual": "assets/cam.jpg",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/cam.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "SIM",
+      "label": "3D 模擬",
+      "visual": "assets/sim.jpg",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/sim.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "3AX",
+      "label": "3AX",
+      "visual": "assets/axis3.jpg",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/3ax.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "4AX",
+      "label": "4AX",
+      "visual": "assets/axis4.png",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/4ax.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "5AX",
+      "label": "5AX",
+      "visual": "assets/axis5.jpg",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/5ax.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "MACHINE",
+      "label": "機台",
+      "visual": "assets/machine.jpg",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/machine_model.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "NC",
+      "label": "NC 程式",
+      "visual": "assets/machine.jpg",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/nc.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "AI",
+      "label": "AI 智慧",
+      "visual": "assets/home.png",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/ai.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "FILE",
+      "label": "檔案",
+      "visual": "assets/home.png",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/save.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "SKETCH",
+      "label": "製圖",
+      "visual": "assets/cad.png",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/line.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "SOLID",
+      "label": "實體",
+      "visual": "assets/cad.png",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/rect.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "SURFACE",
+      "label": "曲面",
+      "visual": "assets/cad.png",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/arc.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "ASSEMBLY",
+      "label": "組立",
+      "visual": "assets/machine.jpg",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/machine_model.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "TOOLPATH",
+      "label": "刀路",
+      "visual": "assets/cam.jpg",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/tool_group.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "POST",
+      "label": "後處理",
+      "visual": "assets/machine.jpg",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/nc.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "UTILITY",
+      "label": "工具",
+      "visual": "assets/home.png",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/verify.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    },
+    {
+      "id": "STARTUP",
+      "label": "啟動",
+      "visual": "assets/startup.png",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/rgb_wallpaper.png",
+      "uiux_status": "BOUND_TO_BASELINE"
+    }
+  ],
+  "controls": [
+    "MOVE",
+    "JOG",
+    "MPG",
+    "HOME",
+    "E_STOP",
+    "TOOL",
+    "WORK",
+    "PROBE",
+    "MACRO",
+    "COOLANT",
+    "SPINDLE",
+    "ATC",
+    "LUBRICATE",
+    "CYCLE_START",
+    "FEED_HOLD",
+    "RESET",
+    "SINGLE_BLOCK",
+    "DRY_RUN",
+    "OPTIONAL_STOP",
+    "BLOCK_DELETE"
+  ],
+  "runtime_surfaces": [
+    "HOME",
+    "CAD",
+    "CAM",
+    "SIM",
+    "3AX",
+    "4AX",
+    "5AX",
+    "NC",
+    "AI"
+  ],
+  "platform_targets": [
+    "Android portrait",
+    "Android landscape",
+    "Windows desktop"
+  ],
+  "note": "UI/UX visual library and mapping only; CNC geometry/G-code/coordinate truth remains owned by runtime core."
+}
