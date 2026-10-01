@@ -21,13 +21,23 @@ build_on=build.split("permissions:",1)[0]
 assert "push:" not in build_on, "full release validation must be manual-only"
 assert "workflow_dispatch:" in build_on
 
-# CNC gates only run when the change is explicitly classified as CNC safety work.
+# CNC regression gates may auto-run on push, but only for explicit NC/runtime source paths.
+# Full APK/EXE release validation remains manual-only above.
 for name,text in (("semantic",semantic),("coordinate",coord)):
     head=text.split("permissions:",1)[0]
+    assert "push:" in head, f"{name}: scoped NC regression must run on relevant pushes"
+    assert "paths:" in head, f"{name}: NC push trigger must be path-scoped"
     assert "'release-version.properties'" not in head, f"{name}: version bump must not trigger CNC"
     assert "'core/**'" not in head, f"{name}: broad core glob would trigger unrelated AI/UI work"
     assert "'ci/**'" not in head, f"{name}: broad CI glob would trigger CNC"
-    assert "contains(github.event.head_commit.message, '[nc-check]')" in text, f"{name}: explicit nc-check required"
+    required_paths=(
+        "core/src/main/kotlin/com/aigstudio/core/FanucNc.kt",
+        "core/src/test/**",
+        "app/src/main/java/com/aigstudio/app/MainActivity.kt",
+        "desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt",
+    )
+    for marker in required_paths:
+        assert marker in head, f"{name}: missing scoped NC path {marker}"
 
 # AI and UI gates trigger from their real scopes, not merely from rolling the version.
 ai_head=ai.split("permissions:",1)[0]
@@ -51,4 +61,4 @@ assert "release_state=PRODUCTION_RUNTIME_CANDIDATE" in android
 assert "device_launch_evidence=REQUIRED_FOR_RUNTIME_EVIDENCE" in android
 assert "release_state=PRODUCTION_RUNTIME_CANDIDATE" in windows
 
-print("STUDIO_TRIGGER_POLICY_GATE_PASS|FULL_BUILD_MANUAL_ONLY|NC_EXPLICIT_SCOPE|NO_VERSION_BUMP_HEAVY_GATE|AI_UI_REAL_PATHS|DYNAMIC_VERSION_EVIDENCE|NO_FINAL_RELEASE_STATE")
+print("STUDIO_TRIGGER_POLICY_GATE_PASS|FULL_BUILD_MANUAL_ONLY|NC_SCOPED_AUTO_REGRESSION|NC_EXPLICIT_SCOPE|NO_VERSION_BUMP_HEAVY_GATE|AI_UI_REAL_PATHS|DYNAMIC_VERSION_EVIDENCE|NO_FINAL_RELEASE_STATE")
