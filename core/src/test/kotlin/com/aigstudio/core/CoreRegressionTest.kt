@@ -1245,7 +1245,7 @@ fun main() {
     check(DesktopUxContract.KEYBOARD_SHORTCUTS)
     check(DesktopUxContract.WORKSPACE_FIRST)
     check(listOf("CAD","CAM","SIM","NC","AI").all(DesktopUxContract::valid))
-    check(DesktopUxContract.quickActions("CAD")==listOf("LINE","SELECT","SNAP","UNDO","REDO","更多"))
+    check(DesktopUxContract.quickActions("CAD")==listOf("SELECT","PAN","FIT","UNDO","REDO","更多"))
     println("✓ WINDOWS_UX_GATE_PASS WORKSPACE_FIRST MAX_VISIBLE_ACTIONS=6 COLLAPSIBLE_TOOL_DOCK CONTEXT_DOCK SINGLE_AXIS_SELECTOR CTRL_Z_CTRL_Y")
     check(OfflineFirstRuntimeContract.POST_READY_NETWORK_OBSERVER)
     check(OfflineFirstRuntimeContract.NETWORK_STATUS_MUST_NOT_OVERRIDE_OPERATION)
@@ -1437,6 +1437,27 @@ private fun testCadPrecisionEditing() {
     array.put(Circle(id="SRC",center=Vec2(0.0,0.0),radius=2.0))
     CadEditEngine.linearArrayCommand(array,listOf("SRC"),4,10.0,0.0).execute(array)
     check(array.all().filterIsInstance<Circle>().map{it.center.x}.sorted()==listOf(0.0,10.0,20.0,30.0))
+
+    val controlDoc=DrawingDocument()
+    controlDoc.put(Line(id="CP-L",a=Vec2(0.0,0.0),b=Vec2(10.0,0.0)))
+    controlDoc.put(Circle(id="CP-C",center=Vec2(20.0,20.0),radius=5.0))
+    controlDoc.put(Arc(id="CP-A",center=Vec2(40.0,20.0),radius=5.0,start=Vec2(45.0,20.0),end=Vec2(40.0,25.0),clockwise=false))
+    val controlHistory=History(controlDoc)
+    val lineEnd=CadControlPointEngine.points(controlDoc.get("CP-L")!!).first{it.kind==CadControlPointKind.LINE_END}
+    controlHistory.run(CadControlPointEngine.editCommand(controlDoc,lineEnd,Vec2(15.0,5.0)))
+    assertPoint((controlDoc.get("CP-L") as Line).b,Vec2(15.0,5.0),"control line end")
+    check(controlHistory.undoWithEffect()==true)
+    assertPoint((controlDoc.get("CP-L") as Line).b,Vec2(10.0,0.0),"control line undo")
+    val center=CadControlPointEngine.points(controlDoc.get("CP-C")!!).first{it.kind==CadControlPointKind.CENTER}
+    controlHistory.run(CadControlPointEngine.editCommand(controlDoc,center,Vec2(22.0,23.0)))
+    assertPoint((controlDoc.get("CP-C") as Circle).center,Vec2(22.0,23.0),"control center")
+    val radius=CadControlPointEngine.points(controlDoc.get("CP-C")!!).first{it.kind==CadControlPointKind.RADIUS}
+    controlHistory.run(CadControlPointEngine.editCommand(controlDoc,radius,Vec2(30.0,23.0)))
+    assertNear((controlDoc.get("CP-C") as Circle).radius,8.0,msg="control radius")
+    val arcEnd=CadControlPointEngine.points(controlDoc.get("CP-A")!!).first{it.kind==CadControlPointKind.ARC_END}
+    controlHistory.run(CadControlPointEngine.editCommand(controlDoc,arcEnd,Vec2(35.0,20.0)))
+    assertNear((controlDoc.get("CP-A") as Arc).center.distanceTo((controlDoc.get("CP-A") as Arc).end),5.0,msg="control arc radius")
+    println("✓ CAD_CONTROL_POINT_EDIT_GATE_PASS ENDPOINT CENTER RADIUS ARC_POINT UNDO_REDO TOL=0.001")
 
     println("✓ CAD_PRECISION_EDIT_GATE_PASS SNAP_ENDPOINT MIDPOINT CENTER INTERSECTION TANGENT HORIZONTAL VERTICAL DIM_DRIVE TRIM EXTEND OFFSET ARRAY SELECTION_LINE_RECT_CIRCLE_ARC_HOLE GROUP_PRESERVED TOL=0.001")
 }
