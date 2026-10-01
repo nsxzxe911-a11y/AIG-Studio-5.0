@@ -1,54 +1,27 @@
 <!doctype html>
-<html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#020407">
-<title>AIG Studio 5.0 繁中 UI/UX</title>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#020407"><title>AIG CNC 繁中 UI/UX</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#020407;color:#fff;font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;overflow:hidden}
-body{display:grid;grid-template-rows:auto 1fr}
-.bar{display:flex;align-items:center;gap:7px;padding:7px 8px;background:rgba(2,4,7,.97);border-bottom:1px solid rgba(39,233,255,.24);overflow:auto;white-space:nowrap;scrollbar-width:none}
-.bar::-webkit-scrollbar{display:none}
-.brand{font-weight:900;letter-spacing:.04em;margin-right:4px}
-.tab{min-height:38px;padding:7px 11px;border-radius:10px;border:1px solid #24495b;background:linear-gradient(#0d1720,#03070a);color:#dff7ff;box-shadow:inset 0 1px rgba(255,255,255,.035)}
-.tab.active{border-color:#27e9ff;box-shadow:0 0 18px rgba(39,233,255,.24),inset 0 0 14px rgba(39,233,255,.06)}
-.stage{position:relative;width:100%;height:100%;overflow:auto;background:#010204;display:grid;place-items:center}
-.stage img{display:block;max-width:none;width:auto;height:auto}
-.fit img{max-width:100%;max-height:100%;object-fit:contain}
-.desktop img{min-width:100%;min-height:100%;object-fit:contain}
-.mobile img{width:100%;height:auto}
-.note{position:fixed;right:8px;bottom:8px;z-index:5;padding:6px 9px;border-radius:9px;background:rgba(0,0,0,.72);border:1px solid rgba(39,233,255,.28);font-size:10px;color:#bfefff;backdrop-filter:blur(8px)}
-@media(max-width:700px){.brand{font-size:12px}.tab{font-size:11px;padding:7px 9px}.bar{gap:5px}.note{font-size:9px}.stage{place-items:start center}}
-</style>
-</head>
-<body>
-<nav class="bar">
-  <span class="brand">AIG Studio 5.0 繁中 UI/UX</span>
-  <button class="tab" data-page="home">首頁</button>
-  <button class="tab" data-page="cad">CAD 製圖</button>
-  <button class="tab active" data-page="cam">CAM 刀路</button>
-  <button class="tab" data-page="sim">SIM 模擬</button>
-  <button class="tab" data-page="startup">啟動</button>
-  <button class="tab" data-fit="fit">Fit</button>
-  <button class="tab" data-fit="full">原尺寸</button>
-</nav>
-<div data-baseline="zh-tw" style="position:fixed;left:8px;bottom:8px;z-index:6;padding:6px 9px;border:1px solid rgba(51,243,155,.34);border-radius:9px;background:rgba(0,0,0,.72);font-size:10px;color:#c9ffe4;backdrop-filter:blur(8px)">基礎母版：AIG RGB • 繁中優先 • CAD / CAM / SIM / 3AX / 4AX / 5AX / NC</div><main id="stage" class="stage fit"><img id="screen" src="./assets/cam.jpg" alt="AIG original UI"></main>
-<div class="note">繁中 UI/UX 基礎母版 • 正式介面開發 • 非工程殼</div>
-<script>
-const files={home:"home.png",cad:"cad.png",cam:"cam.jpg",sim:"sim.jpg",startup:"startup.png"};
-const stage=document.getElementById("stage"),screen=document.getElementById("screen");
-function show(p){
-  if(!files[p])p="cam";
-  screen.src="./assets/"+files[p];
-  document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
-  history.replaceState(null,"","#"+p);
-}
-document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>show(b.dataset.page));
-document.querySelectorAll("[data-fit]").forEach(b=>b.onclick=()=>{
-  stage.classList.remove("fit","desktop","mobile");
-  if(b.dataset.fit==="fit") stage.classList.add("fit");
-});
-show((location.hash||"#cam").slice(1));
-</script>
-</body></html>
+:root{--bg:#020407;--panel:#06111c;--text:#f2fbff;--muted:#86a6b7;--cyan:#27e9ff;--green:#33f39b;--pink:#ff4da6;--violet:#9f72ff;--amber:#ffb326;--red:#ff465f}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}body{min-height:100vh}
+.top{position:sticky;top:0;z-index:20;background:rgba(2,4,7,.98);border-bottom:1px solid rgba(39,233,255,.32)}
+.brandrow{display:flex;align-items:center;gap:10px;padding:8px 10px}.brandmark{width:38px;height:38px;border:1px solid var(--cyan);border-radius:11px;display:grid;place-items:center;font-weight:900;font-size:20px;box-shadow:0 0 18px rgba(39,233,255,.22)}.brand b{display:block;font-size:16px}.brand small{display:block;color:var(--muted);font-size:9px}.headstats{margin-left:auto;display:flex;gap:6px;overflow:auto}.chip{padding:6px 8px;border:1px solid #1d475d;border-radius:8px;background:#03080c;font-size:9px;white-space:nowrap}.chip.ok{color:#baffd6;border-color:rgba(51,243,155,.42)}
+.nav{display:grid;grid-template-columns:repeat(8,minmax(70px,1fr));gap:6px;padding:6px 8px 8px}.navbtn{min-height:64px;border:1px solid #1d4b63;border-radius:11px;background:linear-gradient(180deg,#0c1924,#04080c);display:grid;place-items:center;align-content:center;gap:3px;color:#ecfbff;font-size:10px}.navbtn img{width:30px;height:30px}.navbtn.selected{border-color:var(--green);box-shadow:0 0 20px rgba(51,243,155,.26),inset 0 0 18px rgba(51,243,155,.08)}
+.shell{padding:8px;display:grid;grid-template-columns:255px minmax(0,1fr) 300px;gap:8px;min-height:calc(100vh - 132px)}.panel{background:linear-gradient(180deg,#07131f,#03070a);border:1px solid rgba(45,138,177,.38);border-radius:13px;overflow:hidden}.ph{padding:8px 10px;border-bottom:1px solid rgba(39,233,255,.20);font-size:11px;font-weight:800;display:flex;align-items:center;gap:6px}.ph span{margin-left:auto;color:var(--muted);font-size:9px;font-weight:400}.pb{padding:8px}
+.ops{display:grid;gap:5px}.op{padding:8px;border:1px solid #16394b;border-radius:8px;background:#03080c;font-size:10px;display:flex;align-items:center;gap:7px}.op.sel{border-color:var(--cyan);box-shadow:0 0 14px rgba(39,233,255,.16)}.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(51,243,155,.5)}
+.summary{margin-top:7px}.row{display:grid;grid-template-columns:1fr auto;gap:7px;padding:6px 0;border-bottom:1px solid #102a38;font-size:9px}.row b{font-weight:500;color:var(--muted)}
+.workspace{display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-width:0}.tools{display:flex;gap:5px;overflow:auto;padding:7px;border-bottom:1px solid #112d3b}.tool{min-height:36px;padding:6px 9px;border:1px solid #20465a;border-radius:8px;background:#03080c;font-size:9px;white-space:nowrap;color:#fff}.tool.active{border-color:var(--cyan);box-shadow:0 0 12px rgba(39,233,255,.17)}
+.viewport{position:relative;min-height:620px;background:#010306;overflow:hidden}.viewport img.scene{width:100%;height:100%;object-fit:cover;display:block}.legend{position:absolute;left:10px;top:10px;z-index:2;padding:8px 9px;border:1px solid rgba(39,233,255,.32);border-radius:9px;background:rgba(0,0,0,.74);font-size:9px;line-height:1.55}.legend i{display:inline-block;width:16px;height:3px;margin-right:6px}.rapid{background:var(--cyan)}.cut{background:var(--green)}.lead{background:var(--amber)}.selpath{background:var(--pink)}
+.playbar{display:grid;grid-template-columns:auto auto auto 1fr auto;gap:6px;align-items:center;padding:7px;border-top:1px solid #112c3a}.pbbtn{min-width:38px;min-height:36px;border:1px solid #21495e;border-radius:8px;background:#04090d;color:#fff}.track{height:7px;border-radius:99px;background:#0d1b25;overflow:hidden}.track i{display:block;width:42%;height:100%;background:linear-gradient(90deg,var(--cyan),var(--green),var(--amber))}
+.paramgrp{display:grid;gap:6px}.param{padding:7px;border:1px solid #163a4c;border-radius:8px;background:#03080c}.param b{display:block;color:var(--muted);font-size:9px;margin-bottom:3px}.param span{font-size:11px}.param.safe{border-color:rgba(51,243,155,.40)}.param.warn{border-color:rgba(255,179,38,.42)}
+.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:7px}.act{min-height:42px;border:1px solid #21475b;border-radius:9px;background:linear-gradient(#0a151e,#03070a);font-size:9px;color:#fff}.act.green{border-color:rgba(51,243,155,.54)}.act.pink{border-color:rgba(255,77,166,.54)}.act.amber{border-color:rgba(255,179,38,.54)}
+.footer{position:fixed;right:8px;bottom:8px;z-index:25;padding:6px 9px;border-radius:9px;border:1px solid rgba(39,233,255,.26);background:rgba(0,0,0,.68);color:#bfefff;font-size:9px}
+@media(max-width:980px){.nav{grid-template-columns:repeat(4,1fr)}.shell{grid-template-columns:1fr}.shell>.panel:first-child,.shell>.panel:last-child{display:none}.viewport{min-height:58vh}}@media(max-width:560px){.brandrow{padding:6px}.headstats .chip:nth-child(n+3){display:none}.nav{padding:5px;gap:4px}.navbtn{min-height:56px;font-size:9px}.navbtn img{width:26px;height:26px}.shell{padding:5px}.viewport{min-height:60vh}.footer{display:none}}
+</style></head><body>
+<header class="top"><div class="brandrow"><div class="brandmark">A</div><div class="brand"><b>AIG CNC</b><small>繁中 RGB UI/UX • 從設計到真實加工</small></div><div class="headstats"><div class="chip ok">● CAM 已就緒</div><div class="chip">安全高度 50.000 mm</div><div class="chip">刀具半徑 5.000 mm</div><div class="chip">工作座標 G54</div></div></div>
+<nav class="nav"><button class="navbtn " data-mode="home"><img src="https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-Studio-5.0/main/app/src/main/assets/aig-generated-rgb/approved/184/home.png"><span>首頁</span></button><button class="navbtn " data-mode="cad"><img src="https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-Studio-5.0/main/app/src/main/assets/aig-generated-rgb/approved/184/cad.png"><span>2D 製圖</span></button><button class="navbtn " data-mode="sim"><img src="https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-Studio-5.0/main/app/src/main/assets/aig-generated-rgb/approved/184/sim.png"><span>3D 模擬</span></button><button class="navbtn " data-mode="4ax"><img src="https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-Studio-5.0/main/app/src/main/assets/aig-generated-rgb/approved/184/4ax.png"><span>4AX</span></button><button class="navbtn " data-mode="5ax"><img src="https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-Studio-5.0/main/app/src/main/assets/aig-generated-rgb/approved/184/5ax.png"><span>5AX</span></button><button class="navbtn selected" data-mode="cam"><img src="https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-Studio-5.0/main/app/src/main/assets/aig-generated-rgb/approved/184/cam.png"><span>CAM 刀路</span></button><button class="navbtn " data-mode="nc"><img src="https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-Studio-5.0/main/app/src/main/assets/aig-generated-rgb/approved/184/nc.png"><span>NC 程式</span></button><button class="navbtn " data-mode="ai"><img src="https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-Studio-5.0/main/app/src/main/assets/aig-generated-rgb/approved/184/ai.png"><span>AI 智慧</span></button></nav></header>
+<main class="shell">
+<section class="panel"><div class="ph">刀路工序 <span>Toolpath Operations</span></div><div class="pb"><div class="ops"><div class="op"><i class="dot"></i>01 面銑 Facing</div><div class="op sel"><i class="dot"></i>02 口袋 Pocket</div><div class="op"><i class="dot"></i>03 輪廓 Contour</div><div class="op"><i class="dot"></i>04 鑽孔 Drill</div><div class="op"><i class="dot"></i>05 倒角 Chamfer</div><div class="op"><i class="dot"></i>06 精修 Finish</div></div><div class="summary"><div class="row"><b>加工時間</b><span>00:18:24</span></div><div class="row"><b>刀路長度</b><span>12,458.6 mm</span></div><div class="row"><b>快速移動</b><span>4,236.2 mm</span></div><div class="row"><b>切削移動</b><span>8,222.4 mm</span></div></div></div></section>
+<section class="panel workspace"><div class="tools"><button class="tool active">3D 視圖</button><button class="tool">2D 視圖</button><button class="tool">機台模擬</button><button class="tool">材料移除</button><button class="tool">刀路分析</button><button class="tool">Fit</button></div><div class="viewport"><img class="scene" src="./assets/cam.jpg" alt="AIG CAM 基礎母版"><div class="legend"><div><i class="rapid"></i>快速移動 G0</div><div><i class="cut"></i>切削路徑</div><div><i class="lead"></i>進退刀</div><div><i class="selpath"></i>選取刀路</div><div>座標：G90 / G54</div></div></div><div class="playbar"><button class="pbbtn">◀</button><button class="pbbtn">▶</button><button class="pbbtn">■</button><div class="track"><i></i></div><span style="font-size:10px">1256 / 3200</span></div></section>
+<section class="panel"><div class="ph">加工參數 <span>Machining Parameters</span></div><div class="pb"><div class="paramgrp"><div class="param"><b>刀具</b><span>T1 Ø10.000 End Mill</span></div><div class="param"><b>刀具半徑</b><span>5.000 mm</span></div><div class="param"><b>加工深度</b><span>-8.000 mm</span></div><div class="param safe"><b>安全高度 Safe-Z</b><span>50.000 mm</span></div><div class="param"><b>進給速度</b><span>1200 mm/min</span></div><div class="param"><b>主軸轉速</b><span>8000 RPM</span></div><div class="param"><b>工作座標</b><span>G54</span></div><div class="param warn"><b>刀具補償</b><span>G41 左補</span></div><div class="param"><b>切削方向</b><span>順銑 Climb</span></div></div><div class="actions"><button class="act">刀具庫</button><button class="act">更換刀具</button><button class="act pink">重建刀路</button><button class="act green">模擬</button><button class="act amber">碰撞檢查</button><button class="act green">安全檢查</button><button class="act">產生 NC</button><button class="act">Post NC</button></div></div></section>
+</main><div class="footer">繁中 UI/UX 基礎母版 • 非工程殼 • AIG CNC</div>
+<script>document.querySelectorAll(".tool").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tool").forEach(x=>x.classList.toggle("active",x===b))});document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{if(b.dataset.mode==="cam")return;location.href="./visual.html#"+({home:"home",cad:"cad",sim:"sim","4ax":"home","5ax":"sim",nc:"home",ai:"home"}[b.dataset.mode]||"cam")});</script></body></html>
