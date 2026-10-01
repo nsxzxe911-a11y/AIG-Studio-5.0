@@ -30,6 +30,8 @@ desktop = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
 machining3d_core = read("core/src/main/kotlin/com/aigstudio/core/Machining3D.kt")
 env = read("core/src/main/kotlin/com/aigstudio/core/EnvironmentSettings.kt")
 document = read("core/src/main/kotlin/com/aigstudio/core/Document.kt")
+cam_core = read("core/src/main/kotlin/com/aigstudio/core/Cam.kt")
+project_repo = read("core/src/main/kotlin/com/aigstudio/core/ProjectRepository.kt")
 regression = read("core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt")
 hashes = read("design/theme/official_rgb/android-drawable.sha256")
 workflow = read(".github/workflows/build-download.yml")
@@ -299,6 +301,45 @@ for needle in (
     require(desktop, needle, "WINDOWS_DISCONNECT_ALL")
 require(regression, "CAD_TOPOLOGY_OPTIONAL_GATE_PASS DISCONNECT_ALL GEOMETRY_UNCHANGED CAM_NC_TOPOLOGY_OPTIONAL POST_VALIDATES", "CAD_TOPOLOGY_OPTIONAL_REGRESSION")
 print("CAD_TOPOLOGY_OPTIONAL_RUNTIME_GATE_PASS|DISCONNECT_ALL|GEOMETRY_AUTHORITATIVE|CAM_NC_TOPOLOGY_OPTIONAL|POST_VALIDATES|ANDROID|WINDOWS")
+
+for needle in (
+    "enum class ContourSide { OUTSIDE, INSIDE }",
+    "enum class ContourDirection { CCW, CW }",
+    "val contourSide: ContourSide = ContourSide.OUTSIDE",
+    "val contourDirection: ContourDirection = if (climb) ContourDirection.CCW else ContourDirection.CW",
+    "val radialSign = if (settings.contourSide == ContourSide.OUTSIDE) 1.0 else -1.0",
+    "val lineNormalSign = if (settings.contourSide == ContourSide.OUTSIDE) -1.0 else 1.0",
+    "settings.contourDirection == ContourDirection.CCW",
+    'it.id.startsWith("RECT:")',
+    "INSIDE contour collapses RECT after tool-radius compensation",
+    "INSIDE contour collapses CIRCLE after tool-radius compensation",
+):
+    require(cam_core, needle, "CAM_CONTOUR_SIDE_DIRECTION_CORE")
+for needle in (
+    'appendLine("CONTOUR|${c.contourSide.name}|${c.contourDirection.name}")',
+    '"CONTOUR" -> {',
+):
+    require(project_repo, needle, "CAM_CONTOUR_SIDE_DIRECTION_PROJECT")
+for needle in (
+    'param("CONTOUR SIDE"',
+    'param("PATH DIRECTION"',
+    'contourChoice("外徑"',
+    'contourChoice("內徑"',
+    'contourChoice("CCW"',
+    'contourChoice("CW"',
+):
+    require(android, needle, "ANDROID_CAM_CONTOUR_SIDE_DIRECTION")
+for needle in (
+    "var productionCamSettings=CamSettings()",
+    'parameter("CONTOUR SIDE"',
+    'parameter("PATH DIRECTION"',
+    'productionCamSettings=productionCamSettings.copy(',
+    'showUnifiedMachiningEditor(frame,doc,status,"3D",productionCamSettings)',
+    'showNcEditor(frame,doc,productionCamSettings)',
+):
+    require(desktop, needle, "WINDOWS_CAM_CONTOUR_SIDE_DIRECTION")
+require(regression, "CAM_CONTOUR_SIDE_DIRECTION_GATE_PASS OUTSIDE INSIDE CCW CW RADIUS_COMP 3D_REMOVAL NC_G2_G3", "CAM_CONTOUR_SIDE_DIRECTION_REGRESSION")
+print("CAM_CONTOUR_SIDE_DIRECTION_RUNTIME_GATE_PASS|ANDROID|WINDOWS|OUTSIDE|INSIDE|CCW|CW|RADIUS_COMP|3D_SIM|NC_G2_G3|PROJECT_PERSISTENCE")
 for needle in (
     "private val onProjectChanged: () -> Unit = {}",
     "onProjectChanged()",
