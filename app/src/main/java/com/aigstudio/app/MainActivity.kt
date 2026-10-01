@@ -4372,6 +4372,7 @@ class CadView(
     private var snapEnabled = true
     private var gridVisible = true
     private var geometryVisible = true
+    private var pendingPickOperation:String? = null
 
     private val scaleDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
@@ -4442,6 +4443,7 @@ class CadView(
     }
     fun setTool(t: Tool) {
         tool = t
+        pendingPickOperation = null
         firstPoint = null
         arcCenter = null
         arcStart = null
@@ -4642,17 +4644,70 @@ class CadView(
     }
 
     fun trimSelected() {
-        if (!ensureSelection("TRIM")) return
-        runCatching { runGeometryCommand(CadEditEngine.trimCommand(doc,selectedIds)) }
-            .onSuccess { Toast.makeText(context,"TRIM PASS • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show() }
-            .onFailure { Toast.makeText(context,"TRIM BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+        if(selectedIds.size==2) {
+            runCatching { runGeometryCommand(CadEditEngine.trimCommand(doc,selectedIds)) }
+                .onSuccess { Toast.makeText(context,"TRIM PASS • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show() }
+                .onFailure { Toast.makeText(context,"TRIM BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+            return
+        }
+        tool=Tool.SELECT
+        selectedIds.clear()
+        pendingPickOperation="TRIM"
+        sceneRevision++
+        invalidate()
+        Toast.makeText(context,"TRIM • 先點目標 LINE，再點邊界 LINE",Toast.LENGTH_SHORT).show()
     }
 
     fun extendSelected() {
-        if (!ensureSelection("EXTEND")) return
-        runCatching { runGeometryCommand(CadEditEngine.extendCommand(doc,selectedIds)) }
-            .onSuccess { Toast.makeText(context,"EXTEND PASS • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show() }
-            .onFailure { Toast.makeText(context,"EXTEND BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+        if(selectedIds.size==2) {
+            runCatching { runGeometryCommand(CadEditEngine.extendCommand(doc,selectedIds)) }
+                .onSuccess { Toast.makeText(context,"EXTEND PASS • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show() }
+                .onFailure { Toast.makeText(context,"EXTEND BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+            return
+        }
+        tool=Tool.SELECT
+        selectedIds.clear()
+        pendingPickOperation="EXTEND"
+        sceneRevision++
+        invalidate()
+        Toast.makeText(context,"EXTEND • 先點目標 LINE，再點邊界 LINE",Toast.LENGTH_SHORT).show()
+    }
+
+    private fun handlePendingPick(p:Vec2):Boolean {
+        val operation=pendingPickOperation ?: return false
+        val line=nearest(p) as? Line
+        if(line==null) {
+            Toast.makeText(context,"$operation • 請點 LINE",Toast.LENGTH_SHORT).show()
+            return true
+        }
+        if(line.id in selectedIds) {
+            Toast.makeText(context,"$operation • 請點另一條邊界 LINE",Toast.LENGTH_SHORT).show()
+            return true
+        }
+        selectedIds.add(line.id)
+        sceneRevision++
+        invalidate()
+        if(selectedIds.size==1) {
+            Toast.makeText(context,"$operation • 目標已選，請點邊界 LINE",Toast.LENGTH_SHORT).show()
+            return true
+        }
+        val ids=selectedIds.toList()
+        val result=runCatching {
+            val command=if(operation=="TRIM")
+                CadEditEngine.trimCommand(doc,ids)
+            else CadEditEngine.extendCommand(doc,ids)
+            runGeometryCommand(command)
+        }
+        selectedIds.clear()
+        pendingPickOperation=null
+        result.onSuccess {
+            Toast.makeText(context,"$operation PASS • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show()
+        }.onFailure {
+            Toast.makeText(context,"$operation BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+        }
+        sceneRevision++
+        invalidate()
+        return true
     }
 
     fun promptOffset() {
@@ -5030,6 +5085,7 @@ class CadView(
                 }
             }
             Tool.SELECT -> {
+                if(handlePendingPick(p)) return
                 val control=if(selectedIds.isNotEmpty())
                     CadControlPointEngine.nearest(doc,selectedIds,p,24.0/transform.pixelsPerUnit)
                 else null
