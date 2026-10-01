@@ -160,25 +160,25 @@ object CncControllerCapabilityMatrix {
         "G40","G43","G49",
         "G54","G55","G56","G57","G58","G59",
         "G73","G80","G81","G83","G84",
-        "G90","G91","G94","G97","G98",
+        "G90","G91","G91.1","G94","G97","G98",
         "M3","M5","M6","M8","M9","M98","M99","M30"
     )
 
     private val trackedReview = setOf(
-        "G4","G9","G18","G19","G20",
+        "G4","G5.1","G9","G10","G15","G16","G18","G19","G20",
         "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6",
         "G31","G31.1","G31.2","G31.3",
-        "G40.1","G41","G41.1","G41.2","G42","G42.1","G42.2",
+        "G40.1","G41","G41.1","G41.2","G42","G42.1","G42.2","G44",
         "G43.1","G43.4","G43.5","G43.7",
         "G50","G50.1","G51","G51.1","G52","G53","G53.1","G53.6",
         "G54.1","G54.2","G54.4",
         "G61","G61.1","G61.2","G61.4","G64",
         "G65","G66","G66.1","G67",
         "G68","G68.2","G68.3","G69",
-        "G82","G85","G86","G87","G88","G89",
-        "G92","G92.1","G93","G95","G96","G99",
+        "G74","G76","G82","G85","G86","G87","G88","G89",
+        "G90.1","G92","G92.1","G93","G95","G96","G99",
         "G150","G151","G152",
-        "M0","M1","M2","M4","M7","M19"
+        "M0","M1","M2","M4","M7","M19","M29","M48","M49"
     )
 
     fun classify(controller: CncControllerProfile, code: String): ControllerCapabilityDecision {
@@ -237,7 +237,11 @@ object NcCodeCatalog {
             "G2" -> NcCodeDescriptor(code,"ARC-CW","MOTION","Clockwise circular interpolation")
             "G3" -> NcCodeDescriptor(code,"ARC-CCW","MOTION","Counter-clockwise circular interpolation")
             "G4" -> NcCodeDescriptor(code,"DWELL","TIMING","Dwell")
+            "G5.1" -> NcCodeDescriptor(code,"AI-CONTOUR","PATH","High-precision contour / AI contour control")
             "G9" -> NcCodeDescriptor(code,"EXACT","PATH","Exact stop")
+            "G10" -> NcCodeDescriptor(code,"DATA-SET","CONTROLLER_DATA","Programmable data input / offset setting")
+            "G15" -> NcCodeDescriptor(code,"POLAR-OFF","COORD_XFORM","Polar coordinate command cancel")
+            "G16" -> NcCodeDescriptor(code,"POLAR-ON","COORD_XFORM","Polar coordinate command")
             "G17" -> NcCodeDescriptor(code,"XY","PLANE","XY plane")
             "G18" -> NcCodeDescriptor(code,"XZ","PLANE","XZ plane")
             "G19" -> NcCodeDescriptor(code,"YZ","PLANE","YZ plane")
@@ -264,6 +268,7 @@ object NcCodeCatalog {
             "G43.4" -> NcCodeDescriptor(code,"TCP","5X_TCP","Tool center point control")
             "G43.5" -> NcCodeDescriptor(code,"TCP-V","5X_TCP","Vector/tool center point control")
             "G43.7" -> NcCodeDescriptor(code,"TCP-X","5X_TCP","Extended tool center control")
+            "G44" -> NcCodeDescriptor(code,"TLEN-NEG","TOOL_LENGTH","Tool length compensation negative")
             "G49" -> NcCodeDescriptor(code,"TLEN-OFF","TOOL_LENGTH","Tool length compensation cancel")
             "G50" -> NcCodeDescriptor(code,"SCALE-OFF","GEOMETRY_XFORM","Scaling cancel")
             "G51" -> NcCodeDescriptor(code,"SCALE","GEOMETRY_XFORM","Scaling")
@@ -287,6 +292,8 @@ object NcCodeCatalog {
             "G69" -> NcCodeDescriptor(code,"ROT-OFF","COORD_XFORM","Coordinate rotation cancel")
             "G68.2","G68.3" -> NcCodeDescriptor(code,"TILT-PLANE","5X_XFORM","Inclined-surface coordinate transform")
             "G73" -> NcCodeDescriptor(code,"PECK-HS","CYCLE","High-speed peck drilling")
+            "G74" -> NcCodeDescriptor(code,"TAP-LH","CYCLE","Left-hand / reverse tapping cycle")
+            "G76" -> NcCodeDescriptor(code,"BORE-FINE","CYCLE","Fine boring cycle")
             "G80" -> NcCodeDescriptor(code,"CYCLE-OFF","CYCLE","Fixed cycle cancel")
             "G81" -> NcCodeDescriptor(code,"DRILL","CYCLE","Drilling cycle")
             "G82" -> NcCodeDescriptor(code,"DRILL-DWELL","CYCLE","Drilling with dwell")
@@ -298,7 +305,9 @@ object NcCodeCatalog {
             "G88" -> NcCodeDescriptor(code,"BORE-MAN","CYCLE","Boring/manual return")
             "G89" -> NcCodeDescriptor(code,"BORE-DWELL","CYCLE","Boring with dwell")
             "G90" -> NcCodeDescriptor(code,"ABS","PROGRAM_MODE","Absolute coordinate programming")
+            "G90.1" -> NcCodeDescriptor(code,"ARC-CENTER-ABS","ARC_CENTER_MODE","Absolute arc-center programming")
             "G91" -> NcCodeDescriptor(code,"INC","PROGRAM_MODE","Incremental coordinate programming")
+            "G91.1" -> NcCodeDescriptor(code,"ARC-CENTER-INC","ARC_CENTER_MODE","Incremental arc-center programming")
             "G92" -> NcCodeDescriptor(code,"TEMP-ORG","COORD_XFORM","Temporary coordinate/origin definition")
             "G92.1" -> NcCodeDescriptor(code,"WCS-PRESET","COORD_XFORM","Work coordinate preset/state change")
             "G93" -> NcCodeDescriptor(code,"INV-TIME","FEED_MODE","Inverse-time feed")
@@ -319,7 +328,10 @@ object NcCodeCatalog {
             "M8" -> NcCodeDescriptor(code,"COOL-ON","COOLANT","Flood coolant on")
             "M9" -> NcCodeDescriptor(code,"COOL-OFF","COOLANT","Coolant off")
             "M19" -> NcCodeDescriptor(code,"SP-ORIENT","SPINDLE","Spindle orientation")
+            "M29" -> NcCodeDescriptor(code,"RIGID-TAP","SPINDLE_SYNC","Rigid tapping synchronization")
             "M30" -> NcCodeDescriptor(code,"END-RESET","PROGRAM_CONTROL","Program end and reset")
+            "M48" -> NcCodeDescriptor(code,"OVR-ON","OVERRIDE","Feed/spindle override enable")
+            "M49" -> NcCodeDescriptor(code,"OVR-OFF","OVERRIDE","Feed/spindle override disable")
             "M98" -> NcCodeDescriptor(code,"SUB-CALL","SUBPROGRAM","Subprogram call")
             "M99" -> NcCodeDescriptor(code,"SUB-RET","SUBPROGRAM","Subprogram return")
             else -> NcCodeDescriptor(code,"UNKNOWN","UNKNOWN","Unclassified CNC code")
@@ -403,6 +415,9 @@ object NcAnimationBridge {
             "M8" -> "COOLANT_FLOOD"
             "M9" -> "COOLANT_OFF"
             "M19" -> "SPINDLE_ORIENT"
+            "M29" -> "RIGID_TAP_SYNC"
+            "M48" -> "OVERRIDE_ENABLE"
+            "M49" -> "OVERRIDE_DISABLE"
             "M0","M1" -> "PROGRAM_PAUSE"
             "M2","M30" -> "PROGRAM_END"
             "M98" -> "SUBPROGRAM_CALL"
@@ -1208,6 +1223,8 @@ data class NcModalState(
     val temporaryOriginActive: Boolean = false,
     val units: String = "G21",
     val feedMode: String = "G94",
+    val arcCenterMode: String = "G91.1",
+    val polarMode: String = "G15",
     val cutterCompensation: String = "G40",
     val toolLengthCompensation: String = "G49",
     val plane: String = "G17",
@@ -1233,6 +1250,8 @@ data class NcModalState(
         "|G92=" + (if (temporaryOriginActive) "ACTIVE" else "OFF") +
         "|UNITS=" + units +
         "|FEED_MODE=" + feedMode +
+        "|ARC_CENTER=" + arcCenterMode +
+        "|POLAR=" + polarMode +
         "|CUTTER_COMP=" + cutterCompensation +
         "|TOOL_LENGTH=" + toolLengthCompensation +
         "|PLANE=" + plane +
@@ -1292,13 +1311,17 @@ object NcModalTracker {
                 val group: String?
                 state = when (code) {
                     "G90" -> { group = "PROGRAM_MODE"; state.copy(coordinateMode = "G90") }
+                    "G90.1" -> { group = "ARC_CENTER_MODE"; state.copy(arcCenterMode = "G90.1") }
                     "G91" -> { group = "PROGRAM_MODE"; state.copy(coordinateMode = "G91") }
+                    "G91.1" -> { group = "ARC_CENTER_MODE"; state.copy(arcCenterMode = "G91.1") }
                     "G54","G55","G56","G57","G58","G59" -> { group = "WORK_OFFSET"; state.copy(workOffset = code) }
                     "G92" -> { group = "TEMP_ORIGIN"; state.copy(temporaryOriginActive = true) }
+                    "G15","G16" -> { group = "POLAR_COORD"; state.copy(polarMode = code) }
                     "G20","G21" -> { group = "UNITS"; state.copy(units = code) }
                     "G93","G94","G95" -> { group = "FEED_MODE"; state.copy(feedMode = code) }
                     "G40","G41","G42" -> { group = "CUTTER_COMP"; state.copy(cutterCompensation = code) }
                     "G43" -> { group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G43") }
+                    "G44" -> { group = "TOOL_LENGTH"; state.copy(toolLengthCompensation = "G44") }
                     "G43.1","G43.4","G43.5","G43.7" -> {
                         group = "FIVE_AXIS_TOOL_CONTROL"; state.copy(fiveAxisToolControl = code)
                     }
@@ -1308,7 +1331,7 @@ object NcModalTracker {
                     "G17","G18","G19" -> { group = "PLANE"; state.copy(plane = code) }
                     "G68" -> { group = "COORD_ROTATION"; state.copy(coordinateRotation = "G68") }
                     "G69" -> { group = "COORD_ROTATION"; state.copy(coordinateRotation = "G69") }
-                    "G80","G81","G82","G83","G84","G85","G86","G87","G88","G89" -> {
+                    "G74","G76","G80","G81","G82","G83","G84","G85","G86","G87","G88","G89" -> {
                         group = "FIXED_CYCLE"; state.copy(fixedCycle = code)
                     }
                     "G98","G99" -> { group = "CYCLE_RETURN"; state.copy(cycleReturn = code) }
@@ -1317,6 +1340,8 @@ object NcModalTracker {
                     "G66","G66.1" -> { group = "MACRO_MODE"; state.copy(macroMode = code) }
                     "G67" -> { group = "MACRO_MODE"; state.copy(macroMode = "G67") }
                     "G4" -> { group = "DWELL_NONMODAL"; state }
+                    "G5.1" -> { group = "HIGH_ACCURACY_PATH"; state.copy(highAccuracyMode = "G5.1") }
+                    "G10" -> { group = "CONTROLLER_DATA_NONMODAL"; state }
                     "G9" -> { group = "EXACT_STOP_NONMODAL"; state }
                     "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6" -> {
                         group = "REFERENCE_RETURN_NONMODAL"; state
@@ -1398,6 +1423,8 @@ object NcAuxiliaryTracker {
                 "M3","M4","M5" -> { group = "SPINDLE"; state.copy(spindle = code) }
                 "M7","M8","M9" -> { group = "COOLANT"; state.copy(coolant = code) }
                 "M19" -> { group = "SPINDLE_ORIENT"; state.copy(spindleOrientation = "M19") }
+                "M29" -> { group = "RIGID_TAP_SYNC"; state }
+                "M48","M49" -> { group = "OVERRIDE_CONTROL"; state }
                 "M0" -> { group = "PROGRAM_STOP"; state.copy(programControl = "M0") }
                 "M1" -> { group = "OPTIONAL_STOP"; state.copy(programControl = "M1") }
                 "M2","M30" -> { group = "PROGRAM_END"; state.copy(programControl = code) }
@@ -1425,19 +1452,19 @@ data class NcModalSafetyFinding(
 
 object NcModalSafetyPolicy {
     private val knownExecutionCodes = setOf(
-        "G0","G1","G2","G3","G4","G9",
+        "G0","G1","G2","G3","G4","G5.1","G9","G10","G15","G16",
         "G17","G18","G19","G20","G21",
         "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6",
         "G31","G31.1","G31.2","G31.3",
         "G34",
-        "G40","G40.1","G41","G41.1","G41.2","G42","G42.1","G42.2",
+        "G40","G40.1","G41","G41.1","G41.2","G42","G42.1","G42.2","G44",
         "G43","G43.1","G43.4","G43.5","G43.7","G49",
         "G50","G50.1","G51","G51.1","G52","G53","G53.1","G53.6",
         "G54","G54.1","G54.2","G54.4","G55","G56","G57","G58","G59",
         "G61","G61.1","G61.2","G61.4","G64","G65","G66","G66.1","G67",
         "G68","G68.2","G68.3","G69",
-        "G73","G80","G81","G82","G83","G84","G85","G86","G87","G88","G89",
-        "G90","G91","G92","G92.1","G93","G94","G95","G96","G97","G98","G99",
+        "G73","G74","G76","G80","G81","G82","G83","G84","G85","G86","G87","G88","G89",
+        "G90","G90.1","G91","G91.1","G92","G92.1","G93","G94","G95","G96","G97","G98","G99",
         "G150","G151","G152"
     )
 
@@ -1450,6 +1477,9 @@ object NcModalSafetyPolicy {
 
         events.forEach { e ->
             when (e.code) {
+                "G5.1" -> add(e,"G5_1_HIGH_ACCURACY_UNVERIFIED","Controller high-precision contour behavior is recognized but not yet reproduced by canonical CAM/SIM.")
+                "G10" -> add(e,"G10_DATA_SETTING_BLOCKED","Programmable offset/data writes are controller state changes and are blocked until an explicit verified controller-data model is selected.")
+                "G15","G16" -> add(e,"POLAR_COORD_UNSIMULATED","Polar-coordinate programming is recognized but not yet transformed into canonical CAM/SIM coordinates.")
                 "G20" -> add(e,"G20_INCH_MODE","Canonical AIG CAD/CAM/SIM data is millimetre based; inch execution is not verified.")
                 "G93" -> add(e,"G93_INVERSE_TIME_UNVERIFIED","Inverse-time feed is not yet represented by the current CAM/SIM feed model.")
                 "G95" -> add(e,"G95_FEED_PER_REV_UNVERIFIED","Feed-per-revolution is not yet represented by the current CAM/SIM feed model.")
@@ -1457,6 +1487,9 @@ object NcModalSafetyPolicy {
                 "G68" -> add(e,"G68_ROTATION_UNSIMULATED","Coordinate rotation is tracked but not yet applied by canonical CAM/SIM.")
                 "G92" -> add(e,"G92_ORIGIN_UNVERIFIED","Temporary origin transform is tracked but controller-specific execution semantics are not yet verified.")
                 "G41","G42" -> add(e,"G41_G42_DOUBLE_COMP_RISK","Controller cutter compensation is blocked while the current CAM path already contains geometric radius compensation.")
+                "G44" -> add(e,"G44_NEGATIVE_TOOL_LENGTH_UNVERIFIED","Negative tool-length compensation is recognized but not represented by the current positive-H CAM/SIM tool-length model.")
+                "G74","G76" -> add(e,"CYCLE_VARIANT_UNVERIFIED","This fixed-cycle variant is recognized but its controller-specific motion/return behavior is not yet simulated.")
+                "G90.1" -> add(e,"G90_1_ARC_CENTER_ABSOLUTE_UNVERIFIED","Absolute arc-center mode is recognized; canonical arc execution currently verifies incremental I/J semantics.")
                 "G99" -> add(e,"G99_RETURN_UNSIMULATED","R-point canned-cycle return is not yet represented by the current SIM return-path model; generated cycles use explicit G98.")
                 "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6" ->
                     add(e,"REFERENCE_RETURN_UNSIMULATED","Reference/start/tool-change position return is tracked but not represented by canonical CAM/SIM machine-coordinate motion.")
@@ -1527,7 +1560,7 @@ object NcModalSafetyPolicy {
 
 object NcAuxiliarySafetyPolicy {
     private val known = setOf(
-        "M0","M1","M2","M3","M4","M5","M6","M7","M8","M9","M19","M30","M98","M99"
+        "M0","M1","M2","M3","M4","M5","M6","M7","M8","M9","M19","M29","M30","M48","M49","M98","M99"
     )
 
     fun blocking(program: String, machineSpecificAllowed: Set<String> = emptySet()): List<NcModalSafetyFinding> {
@@ -1546,6 +1579,8 @@ object NcAuxiliarySafetyPolicy {
                     e.lineNumber,"M19_SPINDLE_ORIENT_UNVERIFIED",
                     "Spindle orientation is controller-managed and not yet represented by canonical CAM/SIM execution."
                 )
+                "M29" -> findings += NcModalSafetyFinding(e.lineNumber,"M29_RIGID_TAP_SYNC_UNVERIFIED","Rigid-tap synchronization is recognized but requires controller/spindle synchronization validation before execution.")
+                "M48","M49" -> findings += NcModalSafetyFinding(e.lineNumber,"M48_M49_OVERRIDE_UNVERIFIED","Override enable/disable is controller/operator-panel state and is blocked until machine-profile semantics are verified.")
             }
         }
         NcAuxiliaryTracker.codes(program).forEach { (line, code) ->
