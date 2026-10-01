@@ -2145,8 +2145,8 @@ class MainActivity : Activity() {
 
     private fun showCamWorkstation() {
         val snapshot = cad.snapshot()
-        if (snapshot.entities.isEmpty()) {
-            Toast.makeText(this, "REAL CAM BLOCKED • 請先建立 2D 幾何", Toast.LENGTH_LONG).show()
+        if (snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
+            Toast.makeText(this, "REAL CAM BLOCKED • AUTO 模式需要 CAD；可切 MANUAL 直接編走刀", Toast.LENGTH_LONG).show()
             return
         }
         val cam = runCatching { CamModel.fromCad(System.currentTimeMillis(), snapshot, camSettings, axisA, axisB) }
@@ -2154,7 +2154,10 @@ class MainActivity : Activity() {
                 Toast.makeText(this, "REAL CAM BLOCKED • " + (it.message ?: "CAM build error"), Toast.LENGTH_LONG).show()
                 return
             }
-        val stock = Stock3D.fromSnapshot(snapshot, stockMarginMm, stockThicknessMm)
+        val stock = Stock3D.fromSnapshot(
+            snapshot,stockMarginMm,stockThicknessMm,
+            if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
+        )
         val risk = MachiningRiskScanner.inspect(cam, stock)
         val post = FanucPostSettings(
             workOffset = workOffset,
@@ -2289,6 +2292,7 @@ class MainActivity : Activity() {
         param("WORK OFFSET",workOffset,LibraryFiveAxisSkin208.warning)
         param("LEAD-IN",DisplayFormat.mm(cam.settings.leadInMm)+" mm")
         param("LEAD-OUT",DisplayFormat.mm(cam.settings.leadOutMm)+" mm")
+        param("CAM SOURCE",cam.settings.pathMode.name,if(cam.settings.pathMode==CamPathMode.MANUAL)LibraryFiveAxisSkin208.warning else LibraryFiveAxisSkin208.cyan)
         param("CONTOUR SIDE",if(cam.settings.contourSide==ContourSide.OUTSIDE)"外徑 / OUTSIDE" else "內徑 / INSIDE",LibraryFiveAxisSkin208.warning)
         param("PATH DIRECTION",cam.settings.contourDirection.name,LibraryFiveAxisSkin208.cyan)
         param("TOOLPATH STATUS","FRESH • paths="+cam.toolpaths.size)
@@ -2320,6 +2324,56 @@ class MainActivity : Activity() {
         ).apply { background=glass(if(risk.ok)0x5563FF9D else 0x88FF5252.toInt()) })
 
         lateinit var dialog:AlertDialog
+        val sourceControls=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+        fun sourceChoice(label:String,selected:Boolean,run:()->Unit) {
+            sourceControls.addView(RgbGlowButton(this).apply {
+                text=label
+                contentDescription="CAM SOURCE "+label
+                setRgbState(if(selected)LibraryFiveAxisSkin208.safe else LibraryFiveAxisSkin208.cyan,selected)
+                minHeight=dp(44)
+                minimumWidth=dp(88)
+                setOnClickListener {
+                    runCatching{run()}.onSuccess{
+                        dialog.dismiss()
+                        showCamWorkstation()
+                    }.onFailure{
+                        Toast.makeText(this@MainActivity,"CAM SOURCE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+                    }
+                }
+            },LinearLayout.LayoutParams(0,-2,1f))
+        }
+        sourceChoice("AUTO",camSettings.pathMode==CamPathMode.AUTO) {
+            camSettings=ManualCamPathEngine.useAuto(camSettings)
+        }
+        sourceChoice("手動",camSettings.pathMode==CamPathMode.MANUAL) {
+            if(camSettings.manualPath.isEmpty()) {
+                val snap=cad.snapshot()
+                camSettings=if(snap.entities.isNotEmpty()) {
+                    val auto=CamModel.fromCad(
+                        System.currentTimeMillis(),snap,
+                        camSettings.copy(pathMode=CamPathMode.AUTO)
+                    )
+                    ManualCamPathEngine.adoptAuto(auto)
+                } else {
+                    ManualCamPathEngine.startBlank(camSettings,0.0,0.0)
+                }
+            } else {
+                camSettings=ManualCamPathEngine.useManual(camSettings)
+            }
+        }
+        sourceControls.addView(RgbGlowButton(this).apply {
+            text="路徑編輯"
+            contentDescription="CAM MANUAL PATH EDIT"
+            setRgbState(LibraryFiveAxisSkin208.warning,camSettings.pathMode==CamPathMode.MANUAL)
+            minHeight=dp(44)
+            minimumWidth=dp(104)
+            setOnClickListener {
+                dialog.dismiss()
+                showManualCamPathEditor()
+            }
+        },LinearLayout.LayoutParams(0,-2,1f))
+        root.addView(sourceControls,LinearLayout.LayoutParams(-1,-2))
+
         val contourControls=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
         fun contourChoice(label:String,selected:Boolean,accent:Int,run:()->Unit) {
             contourControls.addView(RgbGlowButton(this).apply {
@@ -2391,14 +2445,170 @@ class MainActivity : Activity() {
         dialog.show()
     }
 
+    private fun showManualCamPathEditor() {
+        runCatching {
+            if(camSettings.manualPath.isEmpty()) {
+                val snapshot=cad.snapshot()
+                camSettings=if(snapshot.entities.isNotEmpty()) {
+                    val auto=CamModel.fromCad(
+                        System.currentTimeMillis(),snapshot,
+                        camSettings.copy(pathMode=CamPathMode.AUTO)
+                    )
+                    ManualCamPathEngine.adoptAuto(auto)
+                } else {
+                    ManualCamPathEngine.startBlank(camSettings,0.0,0.0)
+                }
+            } else {
+                camSettings=ManualCamPathEngine.useManual(camSettings)
+            }
+        }.onFailure {
+            Toast.makeText(this,"MANUAL CAM BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val root=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(12),dp(8),dp(12),dp(6))
+        }
+        val selector=Spinner(this)
+        fun label(index:Int,p:ManualCamPoint)=
+            "P"+(index+1)+" • "+(if(p.rapid)"G0" else if(p.arcI!=null)"ARC" else "G1")+
+                " • X"+DisplayFormat.mm(p.x)+" Y"+DisplayFormat.mm(p.y)+" Z"+DisplayFormat.mm(p.z)
+        fun refresh(select:Int=0) {
+            selector.adapter=ArrayAdapter(
+                this,android.R.layout.simple_spinner_dropdown_item,
+                camSettings.manualPath.mapIndexed(::label)
+            )
+            if(camSettings.manualPath.isNotEmpty()) {
+                selector.setSelection(select.coerceIn(0,camSettings.manualPath.lastIndex))
+            }
+        }
+        refresh()
+        root.addView(selector)
+
+        fun field(title:String):EditText=EditText(this).apply {
+            hint=title
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            root.addView(this)
+        }
+        val x=field("X mm")
+        val y=field("Y mm")
+        val z=field("Z mm")
+        val rapid=CheckBox(this).apply { text="G0 / 抬刀或快速移動"; root.addView(this) }
+
+        fun load() {
+            val p=camSettings.manualPath.getOrNull(selector.selectedItemPosition) ?: return
+            x.setText(DisplayFormat.mm(p.x));y.setText(DisplayFormat.mm(p.y));z.setText(DisplayFormat.mm(p.z))
+            rapid.isChecked=p.rapid
+        }
+        selector.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,id:Long){load()}
+            override fun onNothingSelected(parent:android.widget.AdapterView<*>?){}
+        }
+        load()
+
+        root.addView(TextView(this).apply{
+            text="MANUAL 優先 • 節點 X/Y/Z 不綁 CAD • G0 必須 ≥ Safe-Z • 用抬刀/落刀避開夾具與壓板"
+            setTextColor(LibraryFiveAxisSkin208.warning);textSize=11f
+        })
+
+        lateinit var dialog:AlertDialog
+        val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
+        fun action(label:String,run:()->Unit){
+            row.addView(RgbGlowButton(this).apply{
+                text=label;setRgbState(LibraryFiveAxisSkin208.cyan,false);minHeight=dp(44)
+                setOnClickListener{run()}
+            },LinearLayout.LayoutParams(0,-2,1f))
+        }
+        action("套用節點"){
+            val i=selector.selectedItemPosition
+            runCatching{
+                camSettings=ManualCamPathEngine.replacePoint(
+                    camSettings,i,x.text.toString().toDouble(),y.text.toString().toDouble(),
+                    z.text.toString().toDouble(),rapid.isChecked
+                )
+                CamModel.fromCad(System.currentTimeMillis(),cad.snapshot(),camSettings)
+            }.onSuccess{
+                Toast.makeText(this,"MANUAL CAM POINT PASS • P"+(i+1),Toast.LENGTH_SHORT).show()
+                refresh(i);load()
+            }.onFailure{Toast.makeText(this,"POINT BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+        }
+        action("新增切削點"){
+            val i=selector.selectedItemPosition
+            val p=camSettings.manualPath.getOrNull(i) ?: return@action
+            runCatching{
+                camSettings=ManualCamPathEngine.insertPoint(
+                    camSettings,i+1,
+                    ManualCamPoint(p.x,p.y,camSettings.depth,false,axisA=p.axisA,axisB=p.axisB)
+                )
+            }.onSuccess{refresh(i+1);load()}
+                .onFailure{Toast.makeText(this,"INSERT BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+        }
+        action("插入避讓"){
+            val i=selector.selectedItemPosition
+            val current=camSettings.manualPath.getOrNull(i) ?: return@action
+            val next=camSettings.manualPath.getOrNull(i+1) ?: current
+            val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(12),dp(6),dp(12),dp(4))}
+            fun f(title:String,value:Double)=EditText(this).apply{
+                hint=title;setText(DisplayFormat.mm(value))
+                inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+                box.addView(this)
+            }
+            val lift=f("抬刀 Z / Safe-Z",camSettings.safeZ)
+            val lx=f("落刀 X",next.x)
+            val ly=f("落刀 Y",next.y)
+            val lz=f("落刀 Z",if(next.rapid)camSettings.depth else next.z)
+            AlertDialog.Builder(this)
+                .setTitle("夾具／壓板避讓")
+                .setMessage("原位抬刀 → Safe-Z 快移 → 指定 XY 落刀")
+                .setView(box)
+                .setPositiveButton("插入"){_,_->
+                    runCatching{
+                        camSettings=ManualCamPathEngine.insertAvoidance(
+                            camSettings,i,lift.text.toString().toDouble(),
+                            lx.text.toString().toDouble(),ly.text.toString().toDouble(),lz.text.toString().toDouble()
+                        )
+                    }.onSuccess{refresh(i+3);load()}
+                        .onFailure{Toast.makeText(this,"AVOIDANCE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+                }
+                .setNegativeButton("取消",null)
+                .show()
+        }
+        action("刪除"){
+            val i=selector.selectedItemPosition
+            runCatching{camSettings=ManualCamPathEngine.deletePoint(camSettings,i)}
+                .onSuccess{refresh(i.coerceAtMost(camSettings.manualPath.lastIndex));load()}
+                .onFailure{Toast.makeText(this,"DELETE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+        }
+        action("3D SIM"){
+            dialog.dismiss()
+            showMachining3D()
+        }
+        root.addView(row)
+
+        dialog=AlertDialog.Builder(this)
+            .setTitle("CAM 手動走刀 • 夾治具避讓")
+            .setView(root)
+            .setNegativeButton("關閉",null)
+            .create()
+        dialog.show()
+    }
+
     private fun showUnifiedMachiningWorkspace(initialMode:String) {
         val snapshot=cad.snapshot()
-        if(snapshot.entities.isEmpty()){
-            Toast.makeText(this,"整合加工工作站：請先建立 2D 幾何",Toast.LENGTH_LONG).show()
+        if(snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO){
+            Toast.makeText(this,"整合加工工作站：AUTO 需要 CAD；MANUAL 可直接走刀",Toast.LENGTH_LONG).show()
             return
         }
         val result=runCatching {
-            Machining3DEngine.build(snapshot,camSettings,Stock3D.fromSnapshot(snapshot,stockMarginMm,stockThicknessMm),axisA,axisB)
+            Machining3DEngine.build(
+                snapshot,camSettings,
+                Stock3D.fromSnapshot(
+                    snapshot,stockMarginMm,stockThicknessMm,
+                    if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
+                ),
+                axisA,axisB
+            )
         }.getOrElse {
             Toast.makeText(this,"整合工作站 BLOCKED: "+(it.message?:"3D/CAM build error"),Toast.LENGTH_LONG).show()
             return
@@ -2732,7 +2942,11 @@ class MainActivity : Activity() {
                 else -> null
             }
             simulationResult=Machining3DEngine.build(
-                snapshot,camSettings,Stock3D.fromSnapshot(snapshot,stockMarginMm,stockThicknessMm),
+                snapshot,camSettings,
+                Stock3D.fromSnapshot(
+                    snapshot,stockMarginMm,stockThicknessMm,
+                    if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
+                ),
                 target.axisA,target.axisB,schedule
             )
             activeAxisMode=m
@@ -3395,8 +3609,8 @@ class MainActivity : Activity() {
 
     private fun showNcEditDialog() {
         val snapshot = cad.snapshot()
-        if (snapshot.entities.isEmpty()) {
-            Toast.makeText(this, "NC EDIT：請先建立 2D 幾何", Toast.LENGTH_LONG).show()
+        if (snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
+            Toast.makeText(this, "NC EDIT：AUTO 需要 CAD；MANUAL 可直接 Post", Toast.LENGTH_LONG).show()
             return
         }
         val cam = runCatching { CamModel.fromCad(System.currentTimeMillis(), snapshot, camSettings) }
@@ -3404,7 +3618,10 @@ class MainActivity : Activity() {
                 Toast.makeText(this, "CAM 產生失敗: " + it.message, Toast.LENGTH_LONG).show()
                 return
             }
-        val stock = Stock3D.fromSnapshot(snapshot, stockMarginMm, stockThicknessMm)
+        val stock = Stock3D.fromSnapshot(
+            snapshot,stockMarginMm,stockThicknessMm,
+            if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
+        )
         val risk = MachiningRiskScanner.inspect(cam, stock)
         val baseNc = runCatching {
             CncPost.generate(
@@ -3661,12 +3878,21 @@ class MainActivity : Activity() {
 
     private fun showMachining3D() {
         val snapshot = cad.snapshot()
-        if (snapshot.entities.isEmpty()) {
-            Toast.makeText(this, "3D 加工 BLOCKED：請先建立真 2D 幾何", Toast.LENGTH_LONG).show()
+        if (snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
+            Toast.makeText(this, "3D 加工 BLOCKED：AUTO 需要 CAD；MANUAL 可直接模擬", Toast.LENGTH_LONG).show()
             return
         }
 
-        runCatching { Machining3DEngine.build(snapshot, camSettings, Stock3D.fromSnapshot(snapshot, stockMarginMm, stockThicknessMm), axisA, axisB) }
+        runCatching {
+            Machining3DEngine.build(
+                snapshot,camSettings,
+                Stock3D.fromSnapshot(
+                    snapshot,stockMarginMm,stockThicknessMm,
+                    if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
+                ),
+                axisA,axisB
+            )
+        }
             .onSuccess { result ->
                 val box = LinearLayout(this).apply {
                     orientation = LinearLayout.VERTICAL
