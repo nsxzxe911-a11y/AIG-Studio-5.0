@@ -1,7 +1,7 @@
 {
   "schema": "aig-release-command-v1",
   "product": "AIG Studio 5.0",
-  "version": "273.0.0",
+  "version": "274.0.0",
   "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
   "command_scope": "ALL_DEPARTMENTS",
   "dispatch_mode": "IMMEDIATE_LOCAL_FIRST",
@@ -126,8 +126,8 @@
     "on_fail": "QUEUE_OWNER_REWORK",
     "unrelated_departments_continue": true
   },
-  "dispatch_generation": 15,
-  "dispatch_reason": "STUDIO_273_FORCE_FULL_VISIBLE_REVALIDATION",
+  "dispatch_generation": 16,
+  "dispatch_reason": "STUDIO_274_SECOND_IMAGE_VISUAL_REFERENCE_CORRECTION",
   "command_state": "EXECUTE_NOW_UNTIL_ALL_DEPARTMENTS_PASS",
   "cache_update_standard": {
     "authority": "continuity/cache-update-standard.xml",
@@ -166,5 +166,19 @@
     "windows": "VISIBLE_RUNTIME_SCREENSHOT_REQUIRED",
     "engineering_shell_default": "HARD_FAIL",
     "evidence_root": "release/*/runtime-evidence"
+  },
+  "visual_reference_gate": {
+    "authority": "continuity/visual-reference-baseline.json",
+    "approved_second_image_sha256": "c86e6c24927fffb67231ec7e17cd962dc67c5a3fd615b794499f5f595a5ebc9d",
+    "rejected_engineering_example_sha256": "05f53ba5e1c751a0b75aa2b390eafe3260b82f0f0ef036d08a173333a2461f69",
+    "order": "VISIBLE_FIRST_FRAME_BEFORE_DEEP_GATES",
+    "default_engineering_or_simplified_shell": "HARD_FAIL",
+    "fail_owners": [
+      "HOME",
+      "UIUX",
+      "ANDROID_BUILD",
+      "WINDOWS_BUILD"
+    ],
+    "all_departments_continue": true
   }
 }
