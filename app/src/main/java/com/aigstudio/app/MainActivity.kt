@@ -1968,52 +1968,28 @@ class MainActivity : Activity() {
                 val value = voiceNumber(cmd)
                 if (value == null || value <= 0.0) speakVoice("刀徑數值無效")
                 else confirmVoiceAction("刀徑 " + DisplayFormat.mm(value) + " mm") {
-                    camSettings = CamSettings(
-                        toolDiameter = value,
-                        depth = camSettings.depth,
-                        safeZ = camSettings.safeZ,
-                        feedMmMin = camSettings.feedMmMin,
-                        climb = camSettings.climb
-                    )
+                    camSettings = camSettings.copy(toolDiameter = value)
                 }
             }
             cmd.contains("safe-z") || cmd.contains("safe z") || cmd.contains("安全高度") -> {
                 val value = voiceNumber(cmd)
                 if (value == null) speakVoice("Safe-Z 數值無效")
                 else confirmVoiceAction("Safe-Z " + DisplayFormat.mm(value) + " mm") {
-                    camSettings = CamSettings(
-                        toolDiameter = camSettings.toolDiameter,
-                        depth = camSettings.depth,
-                        safeZ = value,
-                        feedMmMin = camSettings.feedMmMin,
-                        climb = camSettings.climb
-                    )
+                    camSettings = camSettings.copy(safeZ = value)
                 }
             }
             cmd.contains("深度") || cmd.contains("depth") -> {
                 val value = voiceNumber(cmd)
                 if (value == null) speakVoice("加工深度數值無效")
                 else confirmVoiceAction("加工深度 " + DisplayFormat.mm(value) + " mm") {
-                    camSettings = CamSettings(
-                        toolDiameter = camSettings.toolDiameter,
-                        depth = value,
-                        safeZ = camSettings.safeZ,
-                        feedMmMin = camSettings.feedMmMin,
-                        climb = camSettings.climb
-                    )
+                    camSettings = camSettings.copy(depth = value)
                 }
             }
             cmd.contains("進給") || cmd.contains("feed") -> {
                 val value = voiceNumber(cmd)
                 if (value == null || value <= 0.0) speakVoice("Feed 數值無效")
                 else confirmVoiceAction("Feed " + String.format("%.1f", value) + " mm/min") {
-                    camSettings = CamSettings(
-                        toolDiameter = camSettings.toolDiameter,
-                        depth = camSettings.depth,
-                        safeZ = camSettings.safeZ,
-                        feedMmMin = value,
-                        climb = camSettings.climb
-                    )
+                    camSettings = camSettings.copy(feedMmMin = value)
                 }
             }
             cmd.contains("fps") || cmd.contains("幀率") -> {
