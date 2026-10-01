@@ -106,6 +106,7 @@ object ProductionRgbAssets {
             n.contains("3AX") || n.contains("3 AXIS") -> "3ax"
             n.contains("4AX") || n.contains("4 AXIS") -> "4ax"
             n.contains("5AX") || n.contains("5 AXIS") || n=="5X" -> "5ax"
+            n.contains("6AX") || n.contains("6 AXIS") || n=="6X" -> "5ax"
             n=="NC" || n.contains("NC_EDIT") || n.contains("NC EDIT") -> "nc"
             n=="AI" || n.contains("AI ") -> "ai"
             n.contains("SAVE") || name=="儲存" -> "save"
@@ -529,6 +530,7 @@ class MainActivity : Activity() {
     private var ncBlockSkip = false
     private var axisA = 0.0
     private var axisB = 0.0
+    private var axisC = 0.0
     private var machiningAxisMode = "3AX"
     private var rotaryClampProfile = RotaryAxisClampProfile.unconfigured()
     private var workOffset = "G54"
@@ -819,13 +821,13 @@ class MainActivity : Activity() {
                 "CAM" -> {
                     action("AUTO",3){showCamWorkstation()}
                     action("參數",2){showCamWorkstation()}
-                    action("3/4/5AX",5){openCategory("加工"){showMachiningBranch()}}
+                    action("3/4/5/6AX",5){openCategory("加工"){showMachiningBranch()}}
                     action("→ SIM",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
                 }
                 "SIM" -> {
                     action("模擬",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
                     action("風險",4){openCategory("安全"){showSecurityBranch()}}
-                    action("3/4/5AX",2){openCategory("加工"){showMachiningBranch()}}
+                    action("3/4/5/6AX",2){openCategory("加工"){showMachiningBranch()}}
                     action("→ NC",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}
                 }
                 "3AX" -> {
@@ -2141,7 +2143,7 @@ class MainActivity : Activity() {
         addActionTo(branchFlow, "REAL CAM", 5) { showCamWorkstation() }
         addActionTo(branchFlow, "CAM 設定", 5) { showCamSettingsDialog() }
         addActionTo(branchFlow, "STOCK", 4) { showStockDialog() }
-        addActionTo(branchFlow, "3D/3AX/4AX/5AX + NC", 0) { showUnifiedMachiningWorkspace("3D") }
+        addActionTo(branchFlow, "3D/3AX/4AX/5AX/6AX + NC", 0) { showUnifiedMachiningWorkspace("3D") }
         addActionTo(branchFlow, "NC EDIT", 0) { showUnifiedMachiningWorkspace("NC_EDIT") }
         addActionTo(branchFlow, "G54–G59", 3) { showWorkOffsetDialog() }
         addActionTo(branchFlow, "CONTROL", 5) { showControllerDialog() }
@@ -2149,7 +2151,126 @@ class MainActivity : Activity() {
         addActionTo(branchFlow, "3 AXIS", 3) { showUnifiedMachiningWorkspace("3AX") }
         addActionTo(branchFlow, "4 AXIS", 2) { showUnifiedMachiningWorkspace("4AX") }
         addActionTo(branchFlow, "5X A/B", 1) { showUnifiedMachiningWorkspace("5AX") }
+        addActionTo(branchFlow, "6X A/B/C", 5) { showSixAxisRuntimeStage() }
         addActionTo(branchFlow, "3D 加工", 4) { showUnifiedMachiningWorkspace("3D") }
+    }
+
+    private fun showSixAxisRuntimeStage() {
+        val snapshot=cad.snapshot()
+        if(snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
+            Toast.makeText(this,"6AX BLOCKED • AUTO 需要 CAD；MANUAL 可直接建立刀路",Toast.LENGTH_LONG).show()
+            return
+        }
+        val stock=runCatching {
+            Stock3D.fromSnapshot(
+                snapshot,stockMarginMm,stockThicknessMm,
+                if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
+            )
+        }.getOrElse {
+            Toast.makeText(this,"6AX STOCK BLOCKED • "+(it.message?:"stock error"),Toast.LENGTH_LONG).show()
+            return
+        }
+        var six=SixAxisRuntimeContract.state(axisA,axisB,axisC)
+        val root=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setBackgroundColor(0xFF040A11.toInt())
+            setPadding(dp(8),dp(8),dp(8),dp(8))
+        }
+        val status=TextView(this).apply {
+            setTextColor(0xFF63FF9D.toInt())
+            textSize=StudioDisplayPolicy.sp(this,10.5f)
+            setPadding(dp(8),dp(6),dp(8),dp(6))
+        }
+        val stage=FrameLayout(this).apply { setBackgroundColor(0xFF06101A.toInt()) }
+        root.addView(status,LinearLayout.LayoutParams(-1,-2))
+        root.addView(stage,LinearLayout.LayoutParams(-1,dp(360)))
+
+        fun rebuild() {
+            val result=runCatching {
+                Machining3DEngine.build(snapshot,camSettings,stock,six.axisA,six.axisB)
+            }.getOrElse {
+                status.setTextColor(0xFFFF6E6E.toInt())
+                status.text="6AX SIM BLOCKED • "+(it.message?:"build error")
+                return
+            }
+            stage.removeAllViews()
+            stage.addView(Machining3DView(this,result,"5AX"),FrameLayout.LayoutParams(-1,-1))
+            stage.addView(object:View(this) {
+                private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color=0xFF9F72FF.toInt()
+                    style=Paint.Style.STROKE
+                    strokeWidth=dp(3).toFloat()
+                    strokeCap=Paint.Cap.ROUND
+                }
+                private val dot=Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color=0xFF27E9FF.toInt()
+                    style=Paint.Style.FILL
+                }
+                override fun onDraw(canvas:Canvas) {
+                    super.onDraw(canvas)
+                    val c=Math.toRadians(six.axisC)
+                    val cx=width*0.82f
+                    val cy=height*0.18f
+                    val r=dp(42).toFloat()
+                    canvas.drawCircle(cx,cy,r,p)
+                    val ex=cx+(kotlin.math.cos(c)*r).toFloat()
+                    val ey=cy+(kotlin.math.sin(c)*r).toFloat()
+                    canvas.drawLine(cx,cy,ex,ey,p)
+                    canvas.drawCircle(ex,ey,dp(5).toFloat(),dot)
+                }
+            },FrameLayout.LayoutParams(-1,-1))
+            val vector=SixAxisRuntimeContract.toolVector(1.0,six)
+            status.setTextColor(0xFF63FF9D.toInt())
+            status.text="6AX 姿態層 • A="+DisplayFormat.mm(six.axisA)+
+                "° B="+DisplayFormat.mm(six.axisB)+"° C="+DisplayFormat.mm(six.axisC)+
+                "° • TOOL VECTOR="+String.format(Locale.US,"%.3f,%.3f,%.3f",vector.x,vector.y,vector.z)+
+                " • SIM=ACTIVE • NC="+SixAxisRuntimeContract.ncInterlockReason()
+        }
+
+        val controls=FlowLayout(this).apply { setPadding(dp(4),dp(6),dp(4),dp(4)) }
+        fun axisButton(label:String,axis:Char,delta:Double) {
+            controls.addView(RgbGlowButton(this).apply {
+                text=label
+                contentDescription="6AX "+label
+                minHeight=dp(44)
+                minimumWidth=dp(76)
+                setRgbState(if(axis=='C')0xFF9F72FF.toInt() else 0xFF3DEBFF.toInt(),false)
+                setOnClickListener {
+                    six=SixAxisRuntimeContract.step(six,axis,delta)
+                    axisA=six.axisA;axisB=six.axisB;axisC=six.axisC
+                    rebuild()
+                }
+            })
+        }
+        axisButton("A−",'A',-5.0);axisButton("A+",'A',5.0)
+        axisButton("B−",'B',-5.0);axisButton("B+",'B',5.0)
+        axisButton("C−",'C',-15.0);axisButton("C+",'C',15.0)
+        controls.addView(RgbGlowButton(this).apply {
+            text="C0"
+            contentDescription="6AX C ZERO"
+            minHeight=dp(44);minimumWidth=dp(76)
+            setRgbState(0xFF9F72FF.toInt(),false)
+            setOnClickListener {
+                six=SixAxisRuntimeContract.state(six.axisA,six.axisB,0.0)
+                axisC=0.0
+                rebuild()
+            }
+        })
+        controls.addView(RgbGlowButton(this).apply {
+            text="NC LOCK"
+            contentDescription="6AX NC INTERLOCK"
+            minHeight=dp(44);minimumWidth=dp(92)
+            isEnabled=false
+            setRgbState(0xFFFF465F.toInt(),false,true)
+        })
+        root.addView(controls,LinearLayout.LayoutParams(-1,-2))
+        rebuild()
+        AlertDialog.Builder(this)
+            .setTitle("6AX • XYZ + A/B/C 姿態驗證")
+            .setMessage("C 軸已進正式 Runtime 姿態層；未完成機台專屬 6AX kinematics / Post 驗證前，NC 輸出保持鎖定。")
+            .setView(root)
+            .setNegativeButton("關閉",null)
+            .show()
     }
 
     private fun showCamWorkstation() {
@@ -2930,6 +3051,7 @@ class MainActivity : Activity() {
             "3AX" -> R.drawable.ic_rgb_3ax
             "4AX" -> R.drawable.ic_rgb_4ax
             "5AX" -> R.drawable.ic_rgb_5ax
+            "6AX" -> R.drawable.ic_rgb_5ax
             "NC_EDIT" -> R.drawable.ic_rgb_nc
             else -> R.drawable.ic_rgb_3d
         }
@@ -3084,6 +3206,9 @@ class MainActivity : Activity() {
                     } else if(spec.id=="CAM"){
                         dialog.dismiss()
                         showCamWorkstation()
+                    } else if(spec.id=="6AX") {
+                        dialog.dismiss()
+                        showSixAxisRuntimeStage()
                     } else renderMode(spec.id)
                 }
             }
