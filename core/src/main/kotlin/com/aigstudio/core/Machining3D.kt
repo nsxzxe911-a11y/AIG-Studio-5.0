@@ -42,6 +42,52 @@ data class Stock3D(
     }
 }
 
+enum class FixtureKind { FIXTURE, CLAMP, VISE, MACHINE_ENVELOPE }
+
+data class FixtureObstacle(
+    val id:Long,
+    val kind:FixtureKind,
+    val minX:Double,
+    val minY:Double,
+    val minZ:Double,
+    val maxX:Double,
+    val maxY:Double,
+    val maxZ:Double,
+    val clearanceMm:Double=1.0,
+    val enabled:Boolean=true
+) {
+    init {
+        require(id>0L){"Fixture id must be positive"}
+        require(listOf(minX,minY,minZ,maxX,maxY,maxZ,clearanceMm).all{it.isFinite()}){"Fixture bounds must be finite"}
+        require(maxX-minX>=CNC_RESOLUTION_MM && maxY-minY>=CNC_RESOLUTION_MM && maxZ-minZ>=CNC_RESOLUTION_MM){"Fixture bounds are degenerate"}
+        require(clearanceMm in 0.0..1000.0){"Fixture clearance out of range"}
+    }
+    fun label():String=kind.name+" #"+id
+}
+
+data class ToolAssemblyConfig(
+    val holderDiameter:Double=32.0,
+    val holderLength:Double=50.0,
+    val stickout:Double=35.0
+) {
+    init {
+        require(holderDiameter.isFinite() && holderDiameter in CNC_RESOLUTION_MM..1000.0){"Unsafe holder diameter"}
+        require(holderLength.isFinite() && holderLength in CNC_RESOLUTION_MM..5000.0){"Unsafe holder length"}
+        require(stickout.isFinite() && stickout in CNC_RESOLUTION_MM..5000.0){"Unsafe tool stickout"}
+    }
+}
+
+data class MachiningRiskReport(
+    val collisionCount:Int,
+    val overcutCount:Int,
+    val warnings:List<String>,
+    val fixtureCoverageKnown:Boolean
+) {
+    val ok:Boolean get()=collisionCount==0 && overcutCount==0
+    val preflightReady:Boolean get()=ok && fixtureCoverageKnown
+    val fixtureCoverageWord:String get()=if(fixtureCoverageKnown)"MODELED" else "UNMODELED"
+}
+
 private data class Extents2D(val minX: Double, val minY: Double, val maxX: Double, val maxY: Double)
 
 private fun extents(snapshot: DrawingSnapshot): Extents2D {
@@ -152,6 +198,129 @@ object MaterialRemoval3D {
                 field[ix, iy] = min(field[ix, iy], z)
             }
         }
+    }
+}
+
+object MachiningRiskScanner {
+    private fun interpolatedMove(a:Move,b:Move,t:Double):Move =
+        if(b.rapid) Rapid(
+            Vec2(a.to.x+(b.to.x-a.to.x)*t,a.to.y+(b.to.y-a.to.y)*t),
+            a.z+(b.z-a.z)*t,
+            a.axisA+(b.axisA-a.axisA)*t,
+            a.axisB+(b.axisB-a.axisB)*t
+        ) else Feed(
+            Vec2(a.to.x+(b.to.x-a.to.x)*t,a.to.y+(b.to.y-a.to.y)*t),
+            1.0,
+            a.z+(b.z-a.z)*t,
+            a.axisA+(b.axisA-a.axisA)*t,
+            a.axisB+(b.axisB-a.axisB)*t
+        )
+
+    private fun samples(a:Move,b:Move,stepMm:Double):List<Move> {
+        if(b is ArcFeed) {
+            val center=a.to+b.centerOffset
+            val radius=a.to.distanceTo(center)
+            if(radius>EPS) {
+                val a0=atan2(a.to.y-center.y,a.to.x-center.x)
+                val a1=atan2(b.to.y-center.y,b.to.x-center.x)
+                var sweep=a1-a0
+                if(b.clockwise){while(sweep>=0)sweep-=2*PI}else{while(sweep<=0)sweep+=2*PI}
+                val n=max(1,ceil(abs(sweep)*radius/stepMm).toInt())
+                return (1..n).map { i ->
+                    val t=i.toDouble()/n
+                    val angle=a0+sweep*t
+                    Feed(
+                        Vec2(center.x+radius*cos(angle),center.y+radius*sin(angle)),
+                        b.feedMmMin,
+                        a.z+(b.z-a.z)*t,
+                        a.axisA+(b.axisA-a.axisA)*t,
+                        a.axisB+(b.axisB-a.axisB)*t
+                    )
+                }
+            }
+        }
+        val len=hypot(hypot(b.to.x-a.to.x,b.to.y-a.to.y),b.z-a.z)
+        val n=max(1,ceil(len/stepMm).toInt())
+        return (1..n).map{interpolatedMove(a,b,it.toDouble()/n)}
+    }
+
+    private fun zOverlap(minA:Double,maxA:Double,minB:Double,maxB:Double)=
+        maxA+EPS>=minB && maxB+EPS>=minA
+
+    private fun collisionPart(
+        move:Move,
+        settings:CamSettings,
+        assembly:ToolAssemblyConfig,
+        fixture:FixtureObstacle
+    ):String? {
+        if(!fixture.enabled) return null
+        val tilt=Math.toRadians(min(80.0,hypot(move.axisA,move.axisB)))
+        val toolRadius=settings.toolDiameter/2.0
+        val holderRadius=assembly.holderDiameter/2.0
+        val shaftTop=move.z+assembly.stickout*cos(tilt)
+        val holderTop=move.z+(assembly.stickout+assembly.holderLength)*cos(tilt)
+        val shaftXY=toolRadius+assembly.stickout*sin(tilt)
+        val holderXY=holderRadius+(assembly.stickout+assembly.holderLength)*sin(tilt)
+        fun xy(radius:Double)=
+            move.to.x>=fixture.minX-radius-fixture.clearanceMm &&
+            move.to.x<=fixture.maxX+radius+fixture.clearanceMm &&
+            move.to.y>=fixture.minY-radius-fixture.clearanceMm &&
+            move.to.y<=fixture.maxY+radius+fixture.clearanceMm
+
+        if(fixture.kind==FixtureKind.MACHINE_ENVELOPE) {
+            val radius=max(shaftXY,holderXY)
+            val outside=move.to.x-radius<fixture.minX || move.to.x+radius>fixture.maxX ||
+                move.to.y-radius<fixture.minY || move.to.y+radius>fixture.maxY ||
+                move.z<fixture.minZ || holderTop>fixture.maxZ
+            return if(outside)"MACHINE_ENVELOPE" else null
+        }
+        if(xy(shaftXY) && zOverlap(min(move.z,shaftTop),max(move.z,shaftTop),fixture.minZ,fixture.maxZ)) return "TOOL"
+        if(xy(holderXY) && zOverlap(min(shaftTop,holderTop),max(shaftTop,holderTop),fixture.minZ,fixture.maxZ)) return "HOLDER"
+        return null
+    }
+
+    fun inspect(
+        cam:CamModel,
+        stock:Stock3D,
+        fixtures:List<FixtureObstacle>,
+        toolAssembly:ToolAssemblyConfig=ToolAssemblyConfig()
+    ):MachiningRiskReport {
+        val warnings=mutableListOf<String>()
+        val collisionKeys=linkedSetOf<String>()
+        var overcuts=0
+        val enabled=fixtures.filter{it.enabled}
+        val coverage=enabled.any{it.kind!=FixtureKind.MACHINE_ENVELOPE}
+        if(!coverage) warnings+="Fixture/clamp model not configured; real-world fixture collision coverage is UNMODELED"
+        val moves=cam.toolpaths.flatMap{it.moves}
+        moves.forEachIndexed { index,m ->
+            if(m.rapid && m.z+EPS<cam.settings.safeZ){
+                collisionKeys+="SAFE_Z:"+index
+                warnings+="Rapid below Safe-Z at move "+index
+            }
+            if(!m.rapid && m.z < -stock.thickness-CNC_RESOLUTION_MM){
+                overcuts++;warnings+="Cut below stock bottom at move "+index
+            }
+            if(!m.rapid && (m.to.x<stock.minX || m.to.x>stock.maxX || m.to.y<stock.minY || m.to.y>stock.maxY)){
+                overcuts++;warnings+="Cut outside stock XY at move "+index
+            }
+        }
+        if(moves.isNotEmpty() && enabled.isNotEmpty()){
+            val step=max(0.25,min(cam.settings.toolDiameter/4.0,2.0))
+            fun inspectSample(segment:Int,m:Move){
+                enabled.forEach { fixture ->
+                    val part=collisionPart(m,cam.settings,toolAssembly,fixture)
+                    if(part!=null){
+                        val key="SEG"+segment+":F"+fixture.id+":"+part
+                        if(collisionKeys.add(key)) warnings+=part+" collision with "+fixture.label()+" near segment "+segment
+                    }
+                }
+            }
+            inspectSample(0,moves.first())
+            moves.zipWithNext().forEachIndexed { index,(a,b) ->
+                samples(a,b,step).forEach{inspectSample(index+1,it)}
+            }
+        }
+        return MachiningRiskReport(collisionKeys.size,overcuts,warnings.distinct(),coverage)
     }
 }
 
@@ -343,6 +512,16 @@ object MachineModel3DBuilder {
         val fixtureR=box(stock.maxX+2.0,stock.minY-5.0,stock.maxX+10.0,stock.maxY+5.0,floorZ-3.0,3.0)
         out+=MachineComponent3D("fixture_l",MachineComponentRole.FIXTURE,MachineKinematics3D.transform(fixtureL,a,b),mode!="3AX")
         out+=MachineComponent3D("fixture_r",MachineComponentRole.FIXTURE,MachineKinematics3D.transform(fixtureR,a,b),mode!="3AX")
+        result.fixtures.filter{it.enabled && it.kind!=FixtureKind.MACHINE_ENVELOPE}.forEach { fixture ->
+            val mesh=box(fixture.minX,fixture.minY,fixture.maxX,fixture.maxY,fixture.minZ,fixture.maxZ)
+            out+=MachineComponent3D(
+                "user_fixture_"+fixture.id,
+                MachineComponentRole.FIXTURE,
+                MachineKinematics3D.transform(mesh,a,b),
+                mode!="3AX",
+                if(mode=="5AX")"A+B" else if(mode=="4AX")"A" else ""
+            )
+        }
 
         if(mode=="4AX" || mode=="5AX"){
             out+=MachineComponent3D("trunnion_l",MachineComponentRole.TRUNNION,
@@ -369,12 +548,15 @@ object MachineModel3DBuilder {
         val ty=machineToolPoint.y
         val tz=machineToolPoint.z
         val toolRadius=max(.5,result.cam.settings.toolDiameter/2.0)
+        val assembly=result.toolAssembly
+        val holderRadius=max(toolRadius,assembly.holderDiameter/2.0)
+        val stickout=assembly.stickout
         out+=MachineComponent3D("spindle",MachineComponentRole.SPINDLE,
-            cylinder(tx,ty,max(8.0,toolRadius*2.8),tz+24.0,tz+62.0,32),true,"XYZ")
+            cylinder(tx,ty,max(holderRadius*1.25,8.0),tz+stickout+assembly.holderLength,tz+stickout+assembly.holderLength+38.0,32),true,"XYZ")
         out+=MachineComponent3D("holder",MachineComponentRole.HOLDER,
-            cylinder(tx,ty,max(4.0,toolRadius*1.5),tz+12.0,tz+28.0,28),true,"XYZ")
+            cylinder(tx,ty,holderRadius,tz+stickout,tz+stickout+assembly.holderLength,28),true,"XYZ")
         out+=MachineComponent3D("tool",MachineComponentRole.TOOL,
-            cylinder(tx,ty,toolRadius,tz,tz+16.0,24),true,"XYZ")
+            cylinder(tx,ty,toolRadius,tz,tz+stickout,24),true,"XYZ")
         return MachineModel3D(mode,out,result.cam.sourceRevision)
     }
 }
@@ -384,7 +566,9 @@ data class Machining3DResult(
     val cam: CamModel,
     val stock: Stock3D,
     val removal: RemovalField3D,
-    val mesh: Mesh3D
+    val mesh: Mesh3D,
+    val fixtures:List<FixtureObstacle> = emptyList(),
+    val toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
 )
 
 data class ProgressiveMachining3DFrame(
@@ -443,7 +627,9 @@ object Machining3DEngine {
         stock: Stock3D? = null,
         axisA: Double = 0.0,
         axisB: Double = 0.0,
-        axisSchedule: MultiAxisOrientationSchedule? = null
+        axisSchedule: MultiAxisOrientationSchedule? = null,
+        fixtures:List<FixtureObstacle> = emptyList(),
+        toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
     ): Machining3DResult {
         val cam = CamModel.fromCad(0L, snapshot, settings, axisA, axisB, axisSchedule)
         require(cam.toolpaths.isNotEmpty()) { "CAM generated no toolpaths" }
@@ -454,6 +640,6 @@ object Machining3DEngine {
         val removal = MaterialRemoval3D.simulate(cam.toolpaths, settings, resolvedStock)
         val mesh = SurfaceMesh3D.fromRemoval(removal)
         require(mesh.vertices.isNotEmpty() && mesh.triangles.isNotEmpty()) { "3D mesh generation failed" }
-        return Machining3DResult(cam, resolvedStock, removal, mesh)
+        return Machining3DResult(cam, resolvedStock, removal, mesh, fixtures.toList(), toolAssembly)
     }
 }
