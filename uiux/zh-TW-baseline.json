@@ -91,7 +91,7 @@
     "CONTINUITY"
   ],
   "library_manifest": "uiux/aig-image-library.json",
-  "release_version": "265.0.0",
+  "release_version": "266.0.0",
   "continuity_contract": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "red_status_nonblocking_for": [
@@ -110,5 +110,11 @@
     "scope": "ALL_DEPARTMENTS",
     "network_blocks_command": false,
     "offline_local_execution": true
+  },
+  "ai_responsibility_contract": {
+    "detector": "AI",
+    "route": "OWNER_REWORK",
+    "reverify": true,
+    "network_default_owner": false
   }
 }
