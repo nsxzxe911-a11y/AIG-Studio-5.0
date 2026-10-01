@@ -31,8 +31,10 @@ windows_build = (ROOT / "build_windows_native.ps1").read_text(encoding="utf-8")
 secure_services = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" / "app" / "SecureServices.kt").read_text(encoding="utf-8")
 
 required_android = [
-    "AigStartupOverlay(this)",
-    "CadView(this)",
+    "StudioStartupBootGuard.begin(this)",
+    "StudioStartupBootGuard.mark(this,StudioStartupStage.UI_RENDERER)",
+    "setContentView(runtimeHost)",
+    "cad = CadView(",
     "Machining3DView",
     "UnifiedMachiningWorkspaceContract",
 ]
@@ -208,8 +210,8 @@ print("INTEGRATED_MAINTENANCE_UI_GATE_PASS|ANDROID|WINDOWS|PRODUCTION_UI_BOOT|NO
 print("PRODUCTION_SHELL_EVIDENCE_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY")
 for marker in [
     'const val BACKGROUND_AUTO_DOWNLOAD = false',
-    'const val BACKGROUND_NETWORK_DELAY_MS = 180L',
-    'const val BACKGROUND_NETWORK_RETRY_DELAY_MS = 350L',
+    'const val BACKGROUND_NETWORK_DELAY_MS = 40L',
+    'const val BACKGROUND_NETWORK_RETRY_DELAY_MS = 120L',
     'const val BACKGROUND_NETWORK_MAX_ATTEMPTS = 2',
 ]:
     if marker not in env:
@@ -232,5 +234,5 @@ for marker in [
 ]:
     if marker not in secure_services:
         raise SystemExit(f"secure update latency marker missing: {marker}")
-print("LOW_LATENCY_NETWORK_GATE_PASS|START_180MS|MANIFEST_1200_2000|APK_IDLE_2500_5000|RETRY_350MS_X2|BACKGROUND_CHECK_ONLY|UI_NEVER_WAIT")
+print("LOW_LATENCY_NETWORK_GATE_PASS|START_40MS|MANIFEST_1200_2000|APK_IDLE_2500_5000|RETRY_120MS_X2|BACKGROUND_CHECK_ONLY|UI_NEVER_WAIT")
 print("PRODUCTION_RUNTIME_ONLY_GATE_PASS|ANDROID_RUNTIME|WINDOWS_RUNTIME|ENGINEERING_ASSETS_NOT_RELEASE_EVIDENCE")
