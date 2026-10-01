@@ -1,7 +1,7 @@
 {
   "schema": "aig-uiux-image-library-v2",
   "product": "AIG Studio 5.0",
-  "version": "261.0.0",
+  "version": "262.0.0",
   "status": "UIUX_VISUAL_LIBRARY_COMPLETE",
   "canonical_root": "uiux/",
   "rule": "No runtime or review page reads engineering-assets directly. engineering-assets remains immutable provenance/history only.",
@@ -230,5 +230,5 @@
     "Windows desktop"
   ],
   "note": "UI/UX visual library and mapping only; CNC geometry/G-code/coordinate truth remains owned by runtime core.",
-  "build_note": "Verifier aligned with current HOME LayerDrawable wallpaper implementation; runtime code unchanged."
+  "build_note": "Visual verification aligned to TOOLPATH_RGB_GLOW_250 and current 5X CAM safe/cutting palette; CNC runtime core unchanged."
 }

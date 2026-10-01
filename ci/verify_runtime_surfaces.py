@@ -754,25 +754,28 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_MATERIAL_SURFACE_READABILITY_181")
 print("MATERIAL_SURFACE_READABILITY_GATE_PASS|ANDROID|WINDOWS|FILLED_REMOVAL_SURFACE|SPARSE_MESH_EDGES|5AX_MACHINE_PRIORITY|VISUAL_ONLY")
 for needle in (
-    "strokeWidth = 1.35f * resources.displayMetrics.density",
-    "color = Color.argb(58,255,70,220)",
-    "strokeWidth = 1.9f * resources.displayMetrics.density",
-    "color = Color.argb(108,63,255,157)",
+    "// TOOLPATH_RGB_GLOW_250: outer glow + saturated core; rendering only.",
+    "private val rapidGlowPaint",
+    "private val rapidPaint",
+    "private val cutGlowPaint",
+    "private val cutPaint",
+    "private val activeTrailPaint",
     "private val activePathGlowPaint",
     "private val activePathPaint",
+    "canvas.drawLine(a.x,a.y,b.x,b.y,if(move.rapid) rapidGlowPaint else cutGlowPaint)",
+    "activeTrailPaint.strokeWidth=(3.4f-age*0.45f).coerceAtLeast(1.5f)*resources.displayMetrics.density",
 ):
-    require(machining3d, needle, "STUDIO_ANDROID_TOOLPATH_HIERARCHY_182")
+    require(machining3d, needle, "STUDIO_ANDROID_TOOLPATH_HIERARCHY_250")
 for needle in (
-    "g2.stroke=BasicStroke(1.15f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)",
-    "Color(255,70,220,40)",
-    "Color(63,255,157,82)",
-    "Color(61,235,255,36)",
-    "Color(255,176,32,78)",
-    "BasicStroke(if(m.rapid)1.05f else 1.5f",
+    "// TOOLPATH_RGB_GLOW_250: desktop dual-pass neon path, no CAM mutation.",
+    "val rgb=if(move.rapid) Color(39,233,255) else Color(51,243,155)",
+    "g2.stroke=BasicStroke(if(move.rapid)7f else 8f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)",
+    "g2.stroke=BasicStroke(if(move.rapid)1.6f else 2.2f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)",
+    "g2.stroke=BasicStroke((3.4f-age*0.45f).coerceAtLeast(1.5f),BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)",
     "BasicStroke(10f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)",
     "BasicStroke(4f,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND)",
 ):
-    require(desktop, needle, "STUDIO_WINDOWS_TOOLPATH_HIERARCHY_182")
+    require(desktop, needle, "STUDIO_WINDOWS_TOOLPATH_HIERARCHY_250")
 print("TOOLPATH_VISUAL_HIERARCHY_GATE_PASS|ANDROID|WINDOWS|COMPLETED_PATH_FADED|ACTIVE_SEGMENT_BRIGHT|TOOL_HALO|MATERIAL_REMOVAL_UNCHANGED|VISUAL_ONLY")
 for needle in (
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 180",
@@ -1150,7 +1153,7 @@ for needle in (
     'const val SOURCE_MOBILE="image-gen-1(1).png"',
     'const val SOURCE_LANDSCAPE="image-gen-2(1).png"',
     'setBackgroundColor(LibraryFiveAxisSkin208.background)',
-    'linePaint.color=if(b.rapid)LibraryFiveAxisSkin208.cyan else LibraryFiveAxisSkin208.warning',
+    'val rgb=if(b.rapid)LibraryFiveAxisSkin208.cyan else LibraryFiveAxisSkin208.safe',
     'param("SAFE-Z",DisplayFormat.mm(cam.settings.safeZ)+" mm",LibraryFiveAxisSkin208.safe)',
     'param("WORK OFFSET",workOffset,LibraryFiveAxisSkin208.warning)',
 ):
