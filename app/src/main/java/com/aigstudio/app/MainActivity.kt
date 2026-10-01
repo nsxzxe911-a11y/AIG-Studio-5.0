@@ -530,6 +530,7 @@ class MainActivity : Activity() {
     private val onlineAutoRetryCount = java.util.concurrent.atomic.AtomicInteger(0)
     private val onlineNetworkGeneration = java.util.concurrent.atomic.AtomicInteger(0)
     private val onlineCapabilityDebounceToken = java.util.concurrent.atomic.AtomicInteger(0)
+    private val onlineNetworkValidated = java.util.concurrent.atomic.AtomicBoolean(false)
     private var voiceTts: TextToSpeech? = null
     private var speechRecognizer: SpeechRecognizer? = null
     private var voiceListening = false
@@ -1471,8 +1472,15 @@ class MainActivity : Activity() {
             ) {
                 val validated=networkUsable(caps)
                 if(!validated){
+                    onlineNetworkValidated.set(false)
                     renderNetworkState(false)
                     return
+                }
+                if(onlineNetworkValidated.compareAndSet(false,true)) {
+                    UpdateNetworkCircuitBreaker.onValidatedReconnect()
+                    onlineAutoCheckCompleted.set(false)
+                    onlineAutoRetryScheduled.set(false)
+                    onlineAutoRetryCount.set(0)
                 }
                 renderNetworkState(true)
                 if(generation!=onlineNetworkGeneration.get()) return
@@ -1546,6 +1554,7 @@ class MainActivity : Activity() {
                 override fun onLost(network:android.net.Network){
                     onlineNetworkGeneration.incrementAndGet()
                     onlineCapabilityDebounceToken.incrementAndGet()
+                    onlineNetworkValidated.set(false)
                     onlineAutoCheckRunning.set(false)
                     onlineAutoCheckCompleted.set(false)
                     onlineAutoRetryScheduled.set(false)
