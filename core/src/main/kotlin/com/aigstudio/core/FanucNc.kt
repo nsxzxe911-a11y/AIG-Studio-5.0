@@ -347,6 +347,17 @@ object NcCodeCatalog {
         return if (codes.size <= limit) shown else shown + " | +" + (codes.size-limit)
     }
 
+    fun operatorPalette(): List<Pair<String,List<String>>> = listOf(
+        "運動 / 平面" to listOf("G0","G1","G2","G3","G4","G9","G17","G18","G19"),
+        "單位 / 座標" to listOf("G20","G21","G52","G53","G54","G55","G56","G57","G58","G59","G54.1","G54.2","G54.4","G90","G91","G90.1","G91.1","G92","G92.1"),
+        "補償 / 5X" to listOf("G40","G41","G42","G43","G44","G49","G40.1","G41.1","G42.1","G41.2","G42.2","G43.1","G43.4","G43.5","G43.7","G53.1","G53.6","G150","G151","G152"),
+        "鑽孔 / 循環" to listOf("G34","G73","G74","G76","G80","G81","G82","G83","G84","G85","G86","G87","G88","G89","G98","G99"),
+        "路徑 / 轉換 / 巨集" to listOf("G5.1","G10","G15","G16","G50","G50.1","G51","G51.1","G61","G61.1","G61.2","G61.4","G64","G65","G66","G66.1","G67","G68","G68.2","G68.3","G69","G93","G94","G95","G96","G97"),
+        "M 碼" to listOf("M0","M1","M2","M3","M4","M5","M6","M7","M8","M9","M19","M29","M30","M48","M49","M98","M99")
+    )
+
+    fun operatorPaletteCodes(): Set<String> = operatorPalette().flatMap { it.second }.toSet()
+
     fun layerOf(code: String): String = describe(code).layer
 
     fun codesInLine(line: String): List<String> =
