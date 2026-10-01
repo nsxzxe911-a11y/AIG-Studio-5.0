@@ -127,6 +127,20 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check("M98=SUB-CALL" in codeLegend)
     check("M99=SUB-RET" in codeLegend)
     println("✓ NC_CODE_CATALOG_PASS G/M aliases locked")
+    check(NcCodeCatalog.describe("G5.1").compact()=="G5.1=AI-CONTOUR")
+    check(NcCodeCatalog.describe("G90.1").compact()=="G90.1=ARC-CENTER-ABS")
+    check(NcCodeCatalog.describe("G91.1").compact()=="G91.1=ARC-CENTER-INC")
+    check(NcCodeCatalog.describe("M29").compact()=="M29=RIGID-TAP")
+    check(NcCodeCatalog.describe("M48").compact()=="M48=OVR-ON")
+    check(CncControllerCapabilityMatrix.classify(CncControllerProfile.FANUC,"G91.1").status == ControllerCapabilityStatus.MODELED_ALLOWED)
+    check(CncControllerCapabilityMatrix.classify(CncControllerProfile.FANUC,"G90.1").status == ControllerCapabilityStatus.TRACKED_REVIEW)
+    check(CncControllerCapabilityMatrix.classify(CncControllerProfile.FANUC,"M29").status == ControllerCapabilityStatus.TRACKED_REVIEW)
+    check(NcProgramSafetyPolicy.status("G21 G94 G97 G90 G54 G91.1")=="PASS")
+    val extendedGmBlocked = NcProgramSafetyPolicy.status("G21 G94 G97 G90 G54\nG90.1\nM29\nM48")
+    check("G90_1_ARC_CENTER_ABSOLUTE_UNVERIFIED" in extendedGmBlocked)
+    check("M29_RIGID_TAP_SYNC_UNVERIFIED" in extendedGmBlocked)
+    check("M48_M49_OVERRIDE_UNVERIFIED" in extendedGmBlocked)
+    println("✓ NC_EXTENDED_GM_COVERAGE_PASS G5.1/G10/G15/G16/G44/G74/G76/G90.1/G91.1/M29/M48/M49")
 
     val lineProgram = """
         G21 G94 G97
