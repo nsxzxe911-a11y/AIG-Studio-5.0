@@ -10,11 +10,11 @@ args=parser.parse_args()
 EXPECTED={
  "ci/trigger_mine_detector.py":(
    "ci/guardian_canonical/ci/trigger_mine_detector.py",
-   "a9fff13f5567782d60c5a49bab26474a8eebb3ff",
+   "bf4f7da080686efd82e40cd1a11ccb7e85052d79",
  ),
  "ci/verify_trigger_policy.py":(
    "ci/guardian_canonical/ci/verify_trigger_policy.py",
-   "6a042be4b67f5fd0cfab20e41c2fc7880acd24e1",
+   "4f70a683d882a1a8a36e6d32f7722bfb8a1655ed",
  ),
  "ci/prebaseline_trigger_clean.py":(
    "ci/guardian_canonical/ci/prebaseline_trigger_clean.py",
