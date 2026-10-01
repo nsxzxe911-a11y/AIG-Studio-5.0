@@ -374,7 +374,7 @@ private object ProductionRgbAssets {
     }
 }
 
-private enum class DrawMode { LINE, RECT, CIRCLE, ARC, HOLE, SELECT }
+private enum class DrawMode { LINE, RECT, CIRCLE, ARC, HOLE, SELECT, PAN }
 
 private class CadPanel(
     private val doc: DrawingDocument,
@@ -407,7 +407,8 @@ private class CadPanel(
         }
         addMouseMotionListener(object : MouseMotionAdapter() {
             override fun mouseDragged(e: MouseEvent) {
-                if (SwingUtilities.isMiddleMouseButton(e) || SwingUtilities.isRightMouseButton(e)) {
+                if (SwingUtilities.isMiddleMouseButton(e) || SwingUtilities.isRightMouseButton(e) ||
+                    (mode==DrawMode.PAN && (e.modifiersEx and InputEvent.BUTTON1_DOWN_MASK)!=0)) {
                     dragPoint?.let { p -> panX += e.x - p.x; panY += e.y - p.y }
                     dragPoint = e.point; repaint()
                 }
@@ -415,7 +416,11 @@ private class CadPanel(
         })
         addMouseListener(object : MouseAdapter() {
             override fun mousePressed(e: MouseEvent) {
-                if (SwingUtilities.isMiddleMouseButton(e) || SwingUtilities.isRightMouseButton(e)) { dragPoint = e.point; return }
+                if (SwingUtilities.isMiddleMouseButton(e) || SwingUtilities.isRightMouseButton(e) || mode==DrawMode.PAN) {
+                    dragPoint = e.point
+                    if(mode==DrawMode.PAN) status("CAD PAN")
+                    return
+                }
                 val raw = screenToWorld(e.x, e.y)
                 val p = if(snapEnabled) CadSnapEngine.snapTo(doc,raw,18.0/pxPerMm,reference=first) ?: raw else raw
                 if(mode==DrawMode.SELECT){
@@ -489,7 +494,7 @@ private class CadPanel(
                             if(r>=CNC_RESOLUTION_MM)
                                 history.run(AddEntitiesCommand(listOf(Circle(id=CadSemanticIdentity.newHoleId(),center=a,radius=r))))
                         }
-                        DrawMode.ARC, DrawMode.SELECT -> Unit
+                        DrawMode.ARC, DrawMode.SELECT, DrawMode.PAN -> Unit
                     }
                     first = null
                     status("CAD entities=" + doc.size() + " • 原點 X0.000 Y0.000 • 精度 0.001 mm")
@@ -501,6 +506,50 @@ private class CadPanel(
     }
 
     fun selectedCount():Int = selectedIds.size
+
+    fun fitView() {
+        val entities=doc.all()
+        if(width<=0 || height<=0 || entities.isEmpty()) {
+            pxPerMm=5.0
+            panX=0.0
+            panY=0.0
+            repaint()
+            status("VIEW FIT PASS")
+            return
+        }
+        var minX=Double.POSITIVE_INFINITY
+        var minY=Double.POSITIVE_INFINITY
+        var maxX=Double.NEGATIVE_INFINITY
+        var maxY=Double.NEGATIVE_INFINITY
+        fun include(x:Double,y:Double) {
+            minX=min(minX,x); minY=min(minY,y)
+            maxX=max(maxX,x); maxY=max(maxY,y)
+        }
+        entities.forEach { entity ->
+            when(entity) {
+                is Line -> { include(entity.a.x,entity.a.y); include(entity.b.x,entity.b.y) }
+                is Circle -> {
+                    include(entity.center.x-entity.radius,entity.center.y-entity.radius)
+                    include(entity.center.x+entity.radius,entity.center.y+entity.radius)
+                }
+                is Arc -> {
+                    include(entity.center.x-entity.radius,entity.center.y-entity.radius)
+                    include(entity.center.x+entity.radius,entity.center.y+entity.radius)
+                }
+            }
+        }
+        val spanX=(maxX-minX).coerceAtLeast(1.0)
+        val spanY=(maxY-minY).coerceAtLeast(1.0)
+        val usableW=(width-96.0).coerceAtLeast(1.0)
+        val usableH=(height-96.0).coerceAtLeast(1.0)
+        pxPerMm=min(usableW/spanX,usableH/spanY).coerceIn(0.5,80.0)
+        val cx=(minX+maxX)/2.0
+        val cy=(minY+maxY)/2.0
+        panX=-cx*pxPerMm
+        panY=cy*pxPerMm
+        repaint()
+        status("VIEW FIT PASS")
+    }
 
     fun clearCad() {
         doc.clear()
@@ -3324,12 +3373,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     contextDock.add(infoRail,BorderLayout.CENTER)
 
     val desktopQuickBar=AdaptiveGlassToolbar().apply{
-        add(GlassActionButton("LINE",Color(61,235,255)).apply{addActionListener{cad.mode=DrawMode.LINE;status.text="CAD LINE"}})
         add(GlassActionButton("SELECT",Color(80,170,255)).apply{addActionListener{cad.mode=DrawMode.SELECT;status.text="CAD SELECT"}})
-        add(GlassActionButton("SNAP",Color(63,255,157)).apply{addActionListener{
-            cad.snapEnabled=!cad.snapEnabled
-            status.text="SNAP "+if(cad.snapEnabled)"ON • END/MID/CENTER/INTERSECTION/TANGENT/H/V" else "OFF"
-        }})
+        add(GlassActionButton("PAN",Color(61,235,255)).apply{addActionListener{cad.mode=DrawMode.PAN;status.text="CAD PAN"}})
+        add(GlassActionButton("FIT",Color(63,255,157)).apply{addActionListener{cad.fitView()}})
         add(GlassActionButton("UNDO",Color(125,112,255)).apply{addActionListener{cad.undoEdit();status.text="UNDO"}})
         add(GlassActionButton("REDO",Color(125,112,255)).apply{addActionListener{cad.redoEdit();status.text="REDO"}})
         add(GlassActionButton("更多",Color(139,92,246)).apply{addActionListener{if(!cadDeck.isVisible)toolDockToggle.doClick()}})
