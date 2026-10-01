@@ -1443,10 +1443,10 @@ class MainActivity : Activity() {
         networkStateBadge.postDelayed({
             val cm=getSystemService(CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
 
-            fun renderNetworkState(validated:Boolean,message:String?=null){
+            fun renderNetworkState(validated:Boolean,message:String?=null) {
                 runOnUiThread {
                     if(!::networkStateBadge.isInitialized) return@runOnUiThread
-                    networkStateBadge.text=when{
+                    networkStateBadge.text=when {
                         message!=null -> "網路 • "+message
                         validated -> "網路 • ONLINE / VALIDATED"
                         else -> "網路 • 離線可用 • 本機功能正常"
@@ -1454,15 +1454,28 @@ class MainActivity : Activity() {
                 }
             }
 
-            fun maybeStartOnlineServices(caps:android.net.NetworkCapabilities?){
-                val validated=caps?.hasCapability(
+            fun networkUsable(caps:android.net.NetworkCapabilities?):Boolean {
+                if(caps==null) return false
+                val validated=caps.hasCapability(
                     android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
-                ) == true
+                )
+                val notSuspended=if(android.os.Build.VERSION.SDK_INT>=android.os.Build.VERSION_CODES.P) {
+                    caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)
+                } else true
+                return validated && notSuspended
+            }
+
+            fun maybeStartOnlineServices(
+                caps:android.net.NetworkCapabilities?,
+                generation:Int=onlineNetworkGeneration.get()
+            ) {
+                val validated=networkUsable(caps)
                 if(!validated){
                     renderNetworkState(false)
                     return
                 }
                 renderNetworkState(true)
+                if(generation!=onlineNetworkGeneration.get()) return
                 if(onlineAutoCheckCompleted.get()) return
                 if(onlineAutoRetryScheduled.get()) return
                 if(onlineAutoRetryCount.get()>=OfflineFirstRuntimeContract.BACKGROUND_NETWORK_MAX_ATTEMPTS){
@@ -1476,10 +1489,14 @@ class MainActivity : Activity() {
                 }
                 if(!OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)) return
                 if(!onlineAutoCheckRunning.compareAndSet(false,true)) return
+                val requestGeneration=generation
                 val backgroundConfig=updateConfig.copy(
                     autoDownload=OfflineFirstRuntimeContract.BACKGROUND_AUTO_DOWNLOAD
                 )
                 SecureUpdateManager.autoCheck(this,backgroundConfig){result->
+                    if(requestGeneration!=onlineNetworkGeneration.get()) {
+                        return@autoCheck
+                    }
                     onlineAutoCheckRunning.set(false)
                     if(result.ok){
                         onlineAutoCheckCompleted.set(true)
@@ -1492,10 +1509,15 @@ class MainActivity : Activity() {
                         if(attempt<OfflineFirstRuntimeContract.BACKGROUND_NETWORK_MAX_ATTEMPTS &&
                             onlineAutoRetryScheduled.compareAndSet(false,true)){
                             renderNetworkState(true,"更新快速重試")
+                            val retryGeneration=onlineNetworkGeneration.get()
                             networkStateBadge.postDelayed({
+                                if(retryGeneration!=onlineNetworkGeneration.get()) return@postDelayed
                                 onlineAutoRetryScheduled.set(false)
                                 val active=cm.activeNetwork
-                                maybeStartOnlineServices(active?.let{cm.getNetworkCapabilities(it)})
+                                maybeStartOnlineServices(
+                                    active?.let{cm.getNetworkCapabilities(it)},
+                                    retryGeneration
+                                )
                             },OfflineFirstRuntimeContract.BACKGROUND_NETWORK_RETRY_DELAY_MS)
                         }else{
                             renderNetworkState(true,"更新待手動重試")
@@ -1504,14 +1526,26 @@ class MainActivity : Activity() {
                 }
             }
 
+            fun debounceCapabilities(caps:android.net.NetworkCapabilities?) {
+                val token=onlineCapabilityDebounceToken.incrementAndGet()
+                val generation=onlineNetworkGeneration.get()
+                networkStateBadge.postDelayed({
+                    if(token!=onlineCapabilityDebounceToken.get()) return@postDelayed
+                    if(generation!=onlineNetworkGeneration.get()) return@postDelayed
+                    maybeStartOnlineServices(caps,generation)
+                },OfflineFirstRuntimeContract.NETWORK_CAPABILITY_DEBOUNCE_MS)
+            }
+
             val callback=object:android.net.ConnectivityManager.NetworkCallback(){
                 override fun onCapabilitiesChanged(
                     network:android.net.Network,
                     caps:android.net.NetworkCapabilities
                 ){
-                    maybeStartOnlineServices(caps)
+                    debounceCapabilities(caps)
                 }
                 override fun onLost(network:android.net.Network){
+                    onlineNetworkGeneration.incrementAndGet()
+                    onlineCapabilityDebounceToken.incrementAndGet()
                     onlineAutoCheckRunning.set(false)
                     onlineAutoCheckCompleted.set(false)
                     onlineAutoRetryScheduled.set(false)
@@ -1524,11 +1558,11 @@ class MainActivity : Activity() {
                 runCatching { cm.unregisterNetworkCallback(old) }
             }
             onlineNetworkCallback=callback
-            runCatching{
+            runCatching {
                 cm.registerDefaultNetworkCallback(callback)
                 val active=cm.activeNetwork
                 maybeStartOnlineServices(active?.let { cm.getNetworkCapabilities(it) })
-            }.onFailure{
+            }.onFailure {
                 renderNetworkState(false,"狀態未知 • 本機功能正常")
             }
         },OfflineFirstRuntimeContract.BACKGROUND_NETWORK_DELAY_MS)
