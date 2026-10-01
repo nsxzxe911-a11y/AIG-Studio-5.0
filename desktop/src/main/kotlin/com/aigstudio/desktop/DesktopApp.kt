@@ -85,7 +85,7 @@ private fun desktopVersionName():String =
 private class StudioDesktopStartupWindow {
     private val window=JWindow()
     private val title=JLabel("AIG CNC",SwingConstants.CENTER)
-    private val detail=JLabel("MASTER XYZ • CAD • CAM • SIM • NC • AI • 3/4/5AX IN CAM/SIM • OFFLINE-FIRST",SwingConstants.CENTER)
+    private val detail=JLabel("MASTER XYZ • CAD • CAM • SIM • NC • AI • 3/4/5/6AX IN CAM/SIM • OFFLINE-FIRST",SwingConstants.CENTER)
     private val status=JLabel("啟動中…",SwingConstants.CENTER)
     private val progress=JProgressBar(0,100)
     private var stage=StudioStartupStage.BOOTSTRAP
@@ -282,6 +282,7 @@ private class RgbGlyphIcon(private val kind:String, private val accent:Color) : 
             "3AX" -> { g.drawLine(x+5,y+19,x+19,y+19);g.drawLine(x+5,y+19,x+5,y+5);g.drawLine(x+5,y+19,x+16,y+8) }
             "4AX" -> { g.drawOval(x+4,y+6,16,12);g.drawArc(x+7,y+3,12,18,210,220);g.drawLine(x+18,y+5,x+21,y+7) }
             "5AX" -> { g.drawOval(x+5,y+5,14,14);g.drawArc(x+2,y+7,20,10,200,200);g.drawArc(x+7,y+2,10,20,20,200) }
+            "6AX" -> { g.drawOval(x+5,y+5,14,14);g.drawArc(x+2,y+7,20,10,200,200);g.drawArc(x+7,y+2,10,20,20,200);g.drawLine(x+12,y+2,x+12,y+22) }
             "NC_EDIT" -> { g.drawRect(x+5,y+3,14,18);for(i in 0..3)g.drawLine(x+8,y+8+i*3,x+16,y+8+i*3) }
             else -> g.drawOval(x+5,y+5,14,14)
         }
@@ -344,6 +345,7 @@ private object ProductionRgbAssets {
             n.contains("3AX") || n.contains("3 AXIS") -> "3ax"
             n.contains("4AX") || n.contains("4 AXIS") || name.contains("四軸") -> "4ax"
             n.contains("5AX") || n.contains("5 AXIS") || n=="5X" || name.contains("五軸") -> "5ax"
+            n.contains("6AX") || n.contains("6 AXIS") || n=="6X" || name.contains("六軸") -> "5ax"
             n=="NC" || n.contains("NC_EDIT") || n.contains("NC EDIT") -> "nc"
             n=="AI" || n.contains("AI ") -> "ai"
             else -> null
@@ -3423,6 +3425,102 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         dlg.pack();dlg.setLocationRelativeTo(frame);dlg.isVisible=true
     }
 
+    fun showSixAxisRuntimeStage() {
+        val snapshot=doc.snapshot()
+        if(snapshot.entities.isEmpty() && productionCamSettings.pathMode==CamPathMode.AUTO) {
+            status.text="6AX BLOCKED • AUTO requires CAD; MANUAL path is allowed"
+            return
+        }
+        val stock=Stock3D.fromSnapshot(
+            snapshot,10.0,20.0,
+            if(productionCamSettings.pathMode==CamPathMode.MANUAL)productionCamSettings.manualPath else emptyList()
+        )
+        var six=SixAxisRuntimeContract.state(0.0,0.0,0.0)
+        val initial=Machining3DEngine.build(snapshot,productionCamSettings,stock,six.axisA,six.axisB)
+        val machine=Mesh3DPanel(initial).apply{
+            setMachineMode("5AX")
+            setAngles(six.axisA,six.axisB)
+        }
+        val hud=JLabel().apply{
+            foreground=Color(99,255,157)
+            font=Font(Font.MONOSPACED,Font.BOLD,12)
+            border=BorderFactory.createEmptyBorder(8,10,8,10)
+        }
+        val cHead=object:JPanel(){
+            var cAngle=0.0
+            init{
+                background=Color(4,9,18)
+                preferredSize=Dimension(180,180)
+                border=BorderFactory.createTitledBorder(
+                    BorderFactory.createLineBorder(Color(159,114,255),1,true),
+                    "C HEAD 360°"
+                )
+            }
+            fun setC(v:Double){cAngle=v;repaint()}
+            override fun paintComponent(g0:Graphics){
+                super.paintComponent(g0)
+                val g=g0.create() as Graphics2D
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)
+                val cx=width/2;val cy=height/2;val r=min(width,height)/3
+                g.color=Color(159,114,255);g.stroke=BasicStroke(3f)
+                g.drawOval(cx-r,cy-r,r*2,r*2)
+                val a=Math.toRadians(cAngle)
+                val ex=cx+(cos(a)*r).roundToInt();val ey=cy+(sin(a)*r).roundToInt()
+                g.drawLine(cx,cy,ex,ey)
+                g.color=Color(39,233,255);g.fillOval(ex-6,ey-6,12,12)
+                g.dispose()
+            }
+        }
+        fun refresh() {
+            val result=Machining3DEngine.build(snapshot,productionCamSettings,stock,six.axisA,six.axisB)
+            machine.setResult(result)
+            machine.setMachineMode("5AX")
+            machine.setAngles(six.axisA,six.axisB)
+            cHead.setC(six.axisC)
+            val v=SixAxisRuntimeContract.toolVector(1.0,six)
+            hud.text="6AX A="+DisplayFormat.mm(six.axisA)+"°  B="+DisplayFormat.mm(six.axisB)+
+                "°  C="+DisplayFormat.mm(six.axisC)+"°  VECTOR="+
+                String.format(java.util.Locale.US,"%.3f,%.3f,%.3f",v.x,v.y,v.z)+
+                "  NC="+SixAxisRuntimeContract.ncInterlockReason()
+        }
+        val controls=JPanel(FlowLayout(FlowLayout.LEFT,6,6)).apply{background=StudioDesktopProductionTheme.background}
+        fun axisButton(label:String,axis:Char,delta:Double,color:Color){
+            controls.add(GlassActionButton(label,color).apply{
+                addActionListener{
+                    six=SixAxisRuntimeContract.step(six,axis,delta)
+                    refresh()
+                }
+            })
+        }
+        axisButton("A−",'A',-5.0,Color(245,158,11));axisButton("A+",'A',5.0,Color(245,158,11))
+        axisButton("B−",'B',-5.0,Color(39,233,255));axisButton("B+",'B',5.0,Color(39,233,255))
+        axisButton("C−",'C',-15.0,Color(159,114,255));axisButton("C+",'C',15.0,Color(159,114,255))
+        controls.add(GlassActionButton("C0",Color(159,114,255)).apply{
+            addActionListener{six=SixAxisRuntimeContract.state(six.axisA,six.axisB,0.0);refresh()}
+        })
+        controls.add(GlassActionButton("NC LOCK",Color(255,70,95)).apply{isEnabled=false})
+        val center=JPanel(BorderLayout(6,6)).apply{
+            background=StudioDesktopProductionTheme.background
+            add(machine,BorderLayout.CENTER)
+            add(cHead,BorderLayout.EAST)
+        }
+        val root=JPanel(BorderLayout(6,6)).apply{
+            background=StudioDesktopProductionTheme.background
+            border=BorderFactory.createEmptyBorder(8,8,8,8)
+            add(hud,BorderLayout.NORTH)
+            add(center,BorderLayout.CENTER)
+            add(controls,BorderLayout.SOUTH)
+        }
+        refresh()
+        JDialog(frame,"6AX • XYZ + A/B/C 姿態驗證",true).apply{
+            contentPane=root
+            minimumSize=Dimension(980,680)
+            size=Dimension(1180,760)
+            setLocationRelativeTo(frame)
+            isVisible=true
+        }
+    }
+
     fun buildProductionCamPanel():JPanel {
         val snapshot=doc.snapshot()
         if(snapshot.entities.isEmpty() && productionCamSettings.pathMode==CamPathMode.AUTO){
@@ -3557,11 +3655,12 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 "軸模式",
                 JOptionPane.QUESTION_MESSAGE,
                 null,
-                arrayOf("3AX","4AX","5AX"),
+                arrayOf("3AX","4AX","5AX","6AX"),
                 "3AX"
             ) as? String
             if(choice!=null){
-                runCatching{showUnifiedMachiningEditor(frame,doc,status,choice,productionCamSettings)}
+                if(choice=="6AX") showSixAxisRuntimeStage()
+                else runCatching{showUnifiedMachiningEditor(frame,doc,status,choice,productionCamSettings)}
                     .onFailure{status.text=choice+" BLOCKED • "+(it.message?:"error")}
             }
         }
@@ -3575,7 +3674,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             border=BorderFactory.createEmptyBorder(7,7,7,7)
             add(JPanel(BorderLayout()).apply{
                 isOpaque=false
-                add(JLabel("AIG CNC • REAL CAM 真實刀路 • 5AX RGB").apply{
+                add(JLabel("AIG CNC • REAL CAM 真實刀路 • 5AX/6AX RGB").apply{
                     foreground=LibraryFiveAxisSkin208.cyan
                     font=font.deriveFont(Font.BOLD,15f)
                     toolTipText=LibraryFiveAxisSkin208.SOURCE_MOBILE+" + "+LibraryFiveAxisSkin208.SOURCE_LANDSCAPE
