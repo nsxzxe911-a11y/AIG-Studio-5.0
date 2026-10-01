@@ -3,7 +3,7 @@
   "product": "AIG Studio 5.0",
   "version": "266.0.0",
   "branch": "main",
-  "recorded_source_head": "caf392ced7a82a285c2deb80d710a24cb5f1fd5f",
+  "recorded_source_head": "c72a8076138d056c8ac88441c1c1d63419e087af",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "EXECUTE_UNTIL_PASS",
   "departments": {
@@ -46,13 +46,14 @@
     ]
   },
   "next_action": "Continue every department. AI auto-checks each result, assigns the responsible owner on failure, returns it for rework, and re-verifies. Network/infra defer only their own substep and never stop unrelated departments.",
-  "note": "Version, UIUX library, zh-TW baseline, and continuity verifier are aligned on Studio 264.0.0. This checkpoint records resumability only; binary/device PASS must come from executed validation.",
+  "note": "Studio 266.0.0 responsibility routing, all-department execute-until-pass command, UIUX metadata, and continuity state machine are aligned. Binary/device PASS still requires executed validation.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
     "scope": "ALL_DEPARTMENTS",
     "network_blocks_command": false,
-    "local_first": true
+    "local_first": true,
+    "remote_network_substep": "DEFER_AND_RESUME"
   },
   "ai_responsibility": {
     "contract": "continuity/ai-responsibility-routing.json",
