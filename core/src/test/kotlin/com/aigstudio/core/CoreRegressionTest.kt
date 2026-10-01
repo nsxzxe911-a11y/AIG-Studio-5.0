@@ -1261,10 +1261,10 @@ fun main() {
     check(IntegratedMaintenanceUiContract.valid())
     println("INTEGRATED_MAINTENANCE_UI_CORE_GATE_PASS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|RECOVERY|HUD|SYSTEM|SECURITY|AI_SUITE|AI_UPDATE")
     check(!OfflineFirstRuntimeContract.BACKGROUND_AUTO_DOWNLOAD)
-    check(OfflineFirstRuntimeContract.BACKGROUND_NETWORK_DELAY_MS==180L)
-    check(OfflineFirstRuntimeContract.BACKGROUND_NETWORK_RETRY_DELAY_MS==350L)
+    check(OfflineFirstRuntimeContract.BACKGROUND_NETWORK_DELAY_MS==40L)
+    check(OfflineFirstRuntimeContract.BACKGROUND_NETWORK_RETRY_DELAY_MS==120L)
     check(OfflineFirstRuntimeContract.BACKGROUND_NETWORK_MAX_ATTEMPTS==2)
-    println("LOW_LATENCY_NETWORK_CORE_GATE_PASS|START_180MS|RETRY_350MS|MAX_2|BACKGROUND_CHECK_ONLY|NO_AUTO_APK_DOWNLOAD|FAST_FAIL")
+    println("LOW_LATENCY_NETWORK_CORE_GATE_PASS|START_40MS|RETRY_120MS|MAX_2|BACKGROUND_CHECK_ONLY|NO_AUTO_APK_DOWNLOAD|FAST_FAIL")
     println("ALL TESTS PASSED")
 }
 
@@ -2488,7 +2488,7 @@ private fun testProjectRevisionSync() {
             check(published.revision==remote2.revisionMeta.revision)
             check(StudioProjectRepository.load(shared).revisionMeta.contentDigest==remote2.revisionMeta.contentDigest)
         } finally { shared.delete() }
-        println("✓ SHARED_PROJECT_FOLDER_SYNC_GATE_PASS POLL_1500MS NO_AUTO_APPLY OFFLINE_FIRST REMOTE_NEWER_VISIBLE CONFLICT_VISIBLE EXPLICIT_CONFIRM RACE_GUARD")
+        println("✓ SHARED_PROJECT_FOLDER_SYNC_GATE_PASS POLL_3000MS NO_AUTO_APPLY OFFLINE_FIRST REMOTE_NEWER_VISIBLE CONFLICT_VISIBLE EXPLICIT_CONFIRM RACE_GUARD")
     } finally {
         f1.delete();f2.delete();f3.delete()
     }
