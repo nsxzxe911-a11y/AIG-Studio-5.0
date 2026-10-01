@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "273.0.0",
+  "version": "274.0.0",
   "branch": "main",
   "recorded_source_head": "c72a8076138d056c8ac88441c1c1d63419e087af",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -45,7 +45,7 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue every department. AI auto-checks each result, assigns the responsible owner on failure, returns it for rework, and re-verifies. Network/infra defer only their own substep and never stop unrelated departments.",
+  "next_action": "All 13 departments continue. Second user-provided image is the visual comparison reference. First-frame engineering/simplified shell fails immediately and returns HOME/UIUX/platform build for correction; unrelated departments continue.",
   "note": "Studio 270.0.0 runs parallel FAST REVIEW with Android/Windows heavy jobs concurrently. Failed checks route only to the responsible owner; XML cache and product safety/integrity gates remain enforced.",
   "release_command": {
     "path": "continuity/release-command.json",
@@ -87,5 +87,11 @@
     "android": "REQUIRED",
     "windows": "REQUIRED",
     "engineering_shell_default": "FAIL"
+  },
+  "visual_reference": {
+    "canonical": "continuity/visual-reference-baseline.json",
+    "approved_sha256": "c86e6c24927fffb67231ec7e17cd962dc67c5a3fd615b794499f5f595a5ebc9d",
+    "engineering_shell_default": "FAIL",
+    "visible_screenshot_required": true
   }
 }
