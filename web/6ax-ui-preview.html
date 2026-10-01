@@ -89,12 +89,12 @@ function cylZ(r,h,m,s=48){const o=cylY(r,h,m,s);o.rotation.x=Math.PI/2;return o}
 function cylX(r,h,m,s=48){const o=cylY(r,h,m,s);o.rotation.z=Math.PI/2;return o}
 
 // low wide base
-const base=cylZ(4.8,.65,M.base);base.position.z=.325;scene.add(base);
+const base=cylZ(5.6,.65,M.base);base.position.z=.325;scene.add(base);
 
 // L/R supports: one shared geometry spec, mirrored only on X.
  // Both uprights use world Z as their vertical axis and are never parented to A/B/C motion.
 const supportGroup=new THREE.Group();scene.add(supportGroup);
-const SUPPORT=Object.freeze({h:4.35,w:1.05,d:2.8,z0:.65,x:3.85});
+const SUPPORT=Object.freeze({h:4.35,w:1.15,d:2.95,z0:.65,x:4.55});
 function makeSupport(x){
   const o=box(SUPPORT.w,SUPPORT.d,SUPPORT.h,M.support);
   o.position.set(x,0,SUPPORT.z0+SUPPORT.h/2);
@@ -113,13 +113,13 @@ const supportsVerticalParallel=
   Math.abs(left.position.x+right.position.x)<1e-9;
 
 const pivotZ=3.2;
-for(const x of [-3.2,3.2]){const p=cylX(.58,.42,M.pivot);p.position.set(x,0,pivotZ);supportGroup.add(p)}
+for(const x of [-3.9,3.9]){const p=cylX(.58,.42,M.pivot);p.position.set(x,0,pivotZ);supportGroup.add(p)}
 
 const aPivot=new THREE.Group();aPivot.position.set(0,0,pivotZ);scene.add(aPivot);
-const cradle=box(6.25,2.35,.42,M.cradle);aPivot.add(cradle);
+const cradle=box(7.6,2.45,.42,M.cradle);aPivot.add(cradle);
 const bPivot=new THREE.Group();bPivot.position.z=.36;aPivot.add(bPivot);
-const table=cylZ(2.25,.44,M.table);table.position.z=.22;bPivot.add(table);
-const stock=box(2.8,2.0,1.0,M.stock);stock.position.z=1.0;bPivot.add(stock);
+const table=cylZ(2.45,.44,M.table);table.position.z=.22;bPivot.add(table);
+const stock=box(3.15,2.1,1.0,M.stock);stock.position.z=1.0;bPivot.add(stock);
 
 const spindleRoot=new THREE.Group();spindleRoot.position.set(0,0,7.2);scene.add(spindleRoot);
 const head=cylZ(1.05,1.4,M.spindle);head.position.z=.7;spindleRoot.add(head);
