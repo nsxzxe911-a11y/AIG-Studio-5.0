@@ -91,7 +91,7 @@
     "CONTINUITY"
   ],
   "library_manifest": "uiux/aig-image-library.json",
-  "release_version": "278.0.0",
+  "release_version": "279.0.0",
   "continuity_contract": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "red_status_nonblocking_for": [
@@ -143,5 +143,5 @@
     "visible_runtime_required": true
   },
   "theme_pack_notice": "UI 套裝可不停機熱切換；AI 可依手機直向/橫向/Windows 自動編排，但不得改功能順序、CNC安全、座標、刀路與核心邏輯；失敗回上一個已驗證套裝，不回工程殼。",
-  "network_resilience_notice": "網路斷線不阻塞 Runtime；共享同步重 I/O 不在 UI thread；Wi‑Fi/行動網路切換 120ms 去抖；舊 callback 作廢；已驗證重連立即解除 circuit breaker；離線更新快速失敗；APK 續傳使用 ETag + If-Range + SHA-256。"
+  "network_resilience_notice": "Android/Windows 共享同步重 I/O 都離開 UI thread/EDT；120ms 去抖、舊 callback 作廢、重連解除 circuit breaker、離線 fast-fail、ETag/If-Range 續傳持續生效。"
 }
