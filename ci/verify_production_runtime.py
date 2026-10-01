@@ -77,7 +77,7 @@ for marker in [
     'addProductionUi("SIM")',
     'addProductionUi("NC")',
     'addProductionUi("AI")',
-    'action("3/4/5AX"',
+    'action("3/4/5/6AX"',
     'openCategory("加工")',
 ]:
     if marker not in android_main:
@@ -111,6 +111,31 @@ for marker in [
     if marker not in desktop:
         raise SystemExit(f"Windows visible-function UI marker missing: {marker}")
 print("VISIBLE_FUNCTION_UI_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
+for marker in [
+    'const val POLICY = "XYZABC_SIMULATION_FIRST_NC_INTERLOCK"',
+    'const val NC_POST_VERIFIED = false',
+    'RgbImageButtonSpec("6AX","六軸","6 AXIS","ic_rgb_6ax",89)',
+]:
+    if marker not in env:
+        raise SystemExit(f"6AX core posture marker missing: {marker}")
+for marker in [
+    'private fun showSixAxisRuntimeStage()',
+    'contentDescription="6AX NC INTERLOCK"',
+    'SixAxisRuntimeContract.step',
+    '"6X A/B/C"',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android 6AX posture runtime marker missing: {marker}")
+for marker in [
+    'fun showSixAxisRuntimeStage()',
+    'arrayOf("3AX","4AX","5AX","6AX")',
+    '"6AX • XYZ + A/B/C 姿態驗證"',
+    'GlassActionButton("NC LOCK"',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Windows 6AX posture runtime marker missing: {marker}")
+print("SIX_AXIS_POSTURE_GATE_PASS|ANDROID|WINDOWS|ABC_DYNAMIC|SIMULATION_FIRST|NC_INTERLOCKED|POST_NOT_CLAIMED")
+
 for marker in [
     'const val POLICY = "OFFLINE_FIRST_UI_BOOT"',
     'const val NETWORK_REQUIRED_FOR_STARTUP = false',
