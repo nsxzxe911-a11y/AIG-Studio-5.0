@@ -944,10 +944,15 @@ class MainActivity : Activity() {
         visibleModeActions.visibility=View.GONE
         root.addView(visibleModeActions,LinearLayout.LayoutParams(-1,-2))
 
-        cad = CadView(this) {
-            sharedLocalDirty.set(true)
-            if (!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
-        }
+        cad = CadView(
+            this,
+            onGeometryChanged = {
+                if (!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
+            },
+            onProjectChanged = {
+                sharedLocalDirty.set(true)
+            }
+        )
         val workspaceColumn = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             background = panel(0x663DEBFF)
@@ -4343,7 +4348,8 @@ class FlowLayout(context: Context) : ViewGroup(context) {
 
 class CadView(
     context: Context,
-    private val onGeometryChanged: () -> Unit = {}
+    private val onGeometryChanged: () -> Unit = {},
+    private val onProjectChanged: () -> Unit = {}
 ) : View(context) {
     private val doc = DrawingDocument()
     private val history = History(doc)
@@ -4455,12 +4461,14 @@ class CadView(
     fun undo() {
         val geometryChanged = history.undoWithEffect() ?: return
         firstPoint = null; arcCenter=null; arcStart=null; selectedIds.clear(); sceneRevision++
+        onProjectChanged()
         if (geometryChanged) onGeometryChanged()
         invalidate()
     }
     fun redo() {
         val geometryChanged = history.redoWithEffect() ?: return
         firstPoint = null; arcCenter=null; arcStart=null; selectedIds.clear(); sceneRevision++
+        onProjectChanged()
         if (geometryChanged) onGeometryChanged()
         invalidate()
     }
@@ -4524,6 +4532,7 @@ class CadView(
     private fun runGeometryCommand(command: Command) {
         history.run(command)
         sceneRevision++
+        onProjectChanged()
         onGeometryChanged()
         invalidate()
     }
@@ -4531,6 +4540,7 @@ class CadView(
     private fun runTopologyCommand(command: Command) {
         history.run(command)
         sceneRevision++
+        onProjectChanged()
         invalidate()
     }
 
