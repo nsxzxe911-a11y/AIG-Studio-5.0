@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "268.0.0",
+  "version": "269.0.0",
   "branch": "main",
   "recorded_source_head": "c72a8076138d056c8ac88441c1c1d63419e087af",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -46,7 +46,7 @@
     ]
   },
   "next_action": "Continue every department. AI auto-checks each result, assigns the responsible owner on failure, returns it for rework, and re-verifies. Network/infra defer only their own substep and never stop unrelated departments.",
-  "note": "Studio 268.0.0 removes stale hard-coded UIUX version labels and protects them with full-department autocheck. Binary/device PASS still requires executed build/runtime evidence.",
+  "note": "Studio 269.0.0 adopts XML content/revision/SHA-256/source-exact-SHA as the cache update authority for all departments. File processing time and mtime are diagnostic only, never sole update authority. Binary/device PASS still requires executed evidence.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -67,5 +67,13 @@
     "last_source_review": "PASS_13_OF_13_AFTER_UIUX_STALE_VERSION_FIX",
     "no_early_exit": true,
     "output": "build/department-autocheck.json"
+  },
+  "cache_update_standard": {
+    "canonical": "continuity/cache-update-standard.xml",
+    "verifier": "ci/verify_xml_cache_update_standard.py",
+    "authority": "XML_CONTENT_AND_DIGEST",
+    "mtime_only_forbidden": true,
+    "last_modified_only_forbidden": true,
+    "processing_time_only_forbidden": true
   }
 }
