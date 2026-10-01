@@ -3823,12 +3823,35 @@ class MainActivity : Activity() {
             refreshLineHelp()
             editor.post { editor.bringPointIntoView(p) }
         }
+        fun showNcOperatorPalette() {
+            val groups=NcCodeCatalog.operatorPalette()
+            val groupLabels=groups.map { it.first+" • "+it.second.size+" codes" }.toTypedArray()
+            AlertDialog.Builder(this)
+                .setTitle("G/M 功能 • FANUC")
+                .setItems(groupLabels) { _, groupIndex ->
+                    val group=groups[groupIndex]
+                    val codeLabels=group.second.map { code ->
+                        val d=NcCodeCatalog.describe(code)
+                        code+" • "+d.shortName+" • "+d.layer
+                    }.toTypedArray()
+                    AlertDialog.Builder(this)
+                        .setTitle(group.first)
+                        .setItems(codeLabels) { _, codeIndex ->
+                            insertNcToken(group.second[codeIndex]+" ")
+                        }
+                        .setNegativeButton("返回",null)
+                        .show()
+                }
+                .setNegativeButton("關閉",null)
+                .show()
+        }
 
         val keyboard = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(4),dp(4),dp(4),dp(4))
         }
         val rows = listOf(
+            listOf("G/M 功能","G90","G54","G43","M98"),
             listOf("G","M","X","Y","Z"),
             listOf("F","S","T","A","B"),
             listOf("7","8","9","-","."),
@@ -3844,6 +3867,7 @@ class MainActivity : Activity() {
                     setRgbState(Color.rgb(61,235,255), false)
                     setOnClickListener {
                         when (key) {
+                            "G/M 功能" -> showNcOperatorPalette()
                             "DELETE" -> deleteNcToken()
                             "INSERT" -> insertNcToken("\n")
                             "TOP" -> jumpNc(0)
