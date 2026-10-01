@@ -4350,6 +4350,8 @@ class CadView(
     private val axisPaint = Paint(2).apply { color = 0xFF00B8D4.toInt() }
     private val geoPaint = Paint(3).apply { color = 0xFFE8F1FA.toInt(); style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
     private val accentPaint = Paint(3).apply { color = 0xFFFFB020.toInt(); style = Paint.Style.STROKE }
+    private val controlFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF3DEBFF.toInt(); style = Paint.Style.FILL }
+    private val controlStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFFFB020.toInt(); style = Paint.Style.STROKE; strokeWidth = 2f * resources.displayMetrics.density }
     private val textPaint = Paint(1).apply { color = 0xFF8FB3C9.toInt(); textSize = 14 * resources.displayMetrics.scaledDensity; isDither = true }
     private val gridPath = Path()
     private val normalLinePath = Path()
@@ -4717,6 +4719,69 @@ class CadView(
             .show()
     }
 
+    private fun promptControlPointEdit(control:CadControlPoint) {
+        val entity=doc.get(control.entityId) ?: return
+        val box=LinearLayout(context).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(24,12,24,4)
+        }
+        fun field(label:String,value:String)=EditText(context).apply {
+            hint=label
+            setText(value)
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            box.addView(this)
+        }
+        if(control.kind==CadControlPointKind.RADIUS) {
+            val current=(entity as? Circle)?.radius ?: return
+            val radius=field("R mm",DisplayFormat.mm(current))
+            AlertDialog.Builder(context)
+                .setTitle("控制點 • 半徑")
+                .setView(box)
+                .setPositiveButton("套用"){_,_->
+                    val r=radius.text.toString().toDoubleOrNull()
+                    if(r==null || r<CNC_RESOLUTION_MM) {
+                        Toast.makeText(context,"R BLOCKED：半徑需 >= 0.001 mm",Toast.LENGTH_SHORT).show()
+                    } else {
+                        val circle=doc.get(control.entityId) as? Circle ?: return@setPositiveButton
+                        runCatching {
+                            runGeometryCommand(
+                                CadControlPointEngine.editCommand(
+                                    doc,control,circle.center+Vec2(r,0.0)
+                                )
+                            )
+                        }.onSuccess {
+                            Toast.makeText(context,"控制點 PASS • R="+DisplayFormat.mm(r),Toast.LENGTH_SHORT).show()
+                        }.onFailure {
+                            Toast.makeText(context,"控制點 BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                .setNegativeButton("取消",null)
+                .show()
+            return
+        }
+        val x=field("X mm",DisplayFormat.mm(control.point.x))
+        val y=field("Y mm",DisplayFormat.mm(control.point.y))
+        AlertDialog.Builder(context)
+            .setTitle("控制點 • "+control.kind.name)
+            .setView(box)
+            .setPositiveButton("套用"){_,_->
+                val px=x.text.toString().toDoubleOrNull()
+                val py=y.text.toString().toDoubleOrNull()
+                if(px==null || py==null) {
+                    Toast.makeText(context,"控制點 BLOCKED：X/Y 格式錯誤",Toast.LENGTH_SHORT).show()
+                } else runCatching {
+                    runGeometryCommand(CadControlPointEngine.editCommand(doc,control,Vec2(px,py)))
+                }.onSuccess {
+                    Toast.makeText(context,"控制點 PASS • X="+DisplayFormat.mm(px)+" Y="+DisplayFormat.mm(py),Toast.LENGTH_SHORT).show()
+                }.onFailure {
+                    Toast.makeText(context,"控制點 BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("取消",null)
+            .show()
+    }
+
     fun aiInspect() {
         val result = AiCadInspector.inspect(doc.snapshot())
         val message = if (result.issues.isEmpty()) "未發現明顯幾何異常。CAM 前仍需人工確認刀具、座標與 Z 高度。"
@@ -4854,6 +4919,25 @@ class CadView(
                 }
             }
         }
+        drawSelectedControlPoints(canvas)
+    }
+
+    private fun drawSelectedControlPoints(canvas:Canvas) {
+        if(selectedIds.isEmpty()) return
+        val density=resources.displayMetrics.density
+        val outer=7f*density
+        val inner=3.2f*density
+        CadControlPointEngine.points(doc,selectedIds).forEach { control ->
+            val p=transform.worldToScreen(control.point)
+            controlStroke.color=if(control.kind==CadControlPointKind.CENTER) 0xFFFFB020.toInt() else 0xFF3DEBFF.toInt()
+            canvas.drawCircle(p.x.toFloat(),p.y.toFloat(),outer,controlStroke)
+            controlFill.color=if(control.kind==CadControlPointKind.CENTER) 0xFFFFB020.toInt() else 0xFF3DEBFF.toInt()
+            canvas.drawCircle(p.x.toFloat(),p.y.toFloat(),inner,controlFill)
+            if(control.kind==CadControlPointKind.CENTER) {
+                canvas.drawLine(p.x.toFloat()-outer,p.y.toFloat(),p.x.toFloat()+outer,p.y.toFloat(),controlStroke)
+                canvas.drawLine(p.x.toFloat(),p.y.toFloat()-outer,p.x.toFloat(),p.y.toFloat()+outer,controlStroke)
+            }
+        }
     }
 
     private fun drawArcPolyline(canvas: Canvas, arc: Arc, paint: Paint = geoPaint) {
@@ -4946,6 +5030,13 @@ class CadView(
                 }
             }
             Tool.SELECT -> {
+                val control=if(selectedIds.isNotEmpty())
+                    CadControlPointEngine.nearest(doc,selectedIds,p,24.0/transform.pixelsPerUnit)
+                else null
+                if(control!=null) {
+                    promptControlPointEdit(control)
+                    return
+                }
                 nearest(p)?.let { e ->
                     val group=CadSelectionEngine.selectionIds(doc,e)
                     if(group.all{it in selectedIds}) selectedIds.removeAll(group) else selectedIds.addAll(group)
