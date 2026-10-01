@@ -141,6 +141,11 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check("M29_RIGID_TAP_SYNC_UNVERIFIED" in extendedGmBlocked)
     check("M48_M49_OVERRIDE_UNVERIFIED" in extendedGmBlocked)
     println("✓ NC_EXTENDED_GM_COVERAGE_PASS G5.1/G10/G15/G16/G44/G74/G76/G90.1/G91.1/M29/M48/M49")
+    val paletteCodes = NcCodeCatalog.operatorPaletteCodes()
+    check(listOf("G0","G34","G41","G43.4","G54.4","G68.2","G81","G90.1","G91.1","M6","M29","M98","M99").all { it in paletteCodes })
+    check(paletteCodes.all { NcCodeCatalog.describe(it).layer != "UNKNOWN" })
+    check(NcCodeCatalog.operatorPalette().map { it.first }.toSet().size == NcCodeCatalog.operatorPalette().size)
+    println("✓ NC_GM_OPERATOR_PALETTE_PASS categories="+NcCodeCatalog.operatorPalette().size+" codes="+paletteCodes.size)
 
     val lineProgram = """
         G21 G94 G97
