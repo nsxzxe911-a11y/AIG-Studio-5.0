@@ -1,0 +1,72 @@
+{
+  "schema": "aig-mobile-rgb-reference-pack-v1",
+  "pack_id": "aig_mobile_rgb_v1",
+  "role": "DESIGN_REFERENCE_FOR_AI_LAYOUT_COMPOSER_NOT_RUNTIME_EVIDENCE",
+  "source": "USER_APPROVED_GENERATED_MOBILE_UI_SERIES",
+  "orientation": "portrait",
+  "aspect_ratio": "9:16",
+  "screens": {
+    "2D_CAD": {
+      "file": "2d-cad.webp",
+      "sha256": "7fbfe46ff623cc7da7de2e9e3f5387adb8833e6965668f500752905d6b150dae"
+    },
+    "3D_SIM": {
+      "file": "3d-sim.webp",
+      "sha256": "d6e2d018e27f5a5e6b77646c00f144f9f84a716b2278fba3a6f4d20afc7a77a7"
+    },
+    "4AX": {
+      "file": "4ax.webp",
+      "sha256": "18e0116f63fb17917d899d1d4cec4da95e1a6a251eedf4ae5fc201e200d32b67"
+    },
+    "5AX": {
+      "file": "5ax.webp",
+      "sha256": "3d1deecdf4578b2c5ef6ef2968c9803265f221c1470388dea4b452a5ce80b40e"
+    },
+    "CAM": {
+      "file": "cam.webp",
+      "sha256": "201c47e8a94d5e324b1f09174b8efd8f743e89802c6d10e4a036ba9159671cf1"
+    },
+    "SIM": {
+      "file": "sim.webp",
+      "sha256": "39ec92f9271bc346cf548fd896f25e7bcb2b1b92752d2fc71784718021fc5cfb"
+    },
+    "NC": {
+      "file": "nc.webp",
+      "sha256": "a834dab4a63ab90e89bf2cba2bcbf96ceb086fd70a6ad9994075d201ebccaab2"
+    },
+    "AI": {
+      "file": "ai.webp",
+      "sha256": "8e9c3baffc8e53690fe03ab3ed37cec9e5b4cdb2c94ff5ce510a56b19d0c4131"
+    }
+  },
+  "layout_contract": {
+    "ai_auto_layout": true,
+    "hot_swap": true,
+    "runtime_restart_required": false,
+    "mode_order": [
+      "CAD",
+      "CAM",
+      "SIM",
+      "3AX",
+      "4AX",
+      "5AX",
+      "NC",
+      "AI"
+    ],
+    "cad_tool_order": [
+      "LINE",
+      "RECT",
+      "CIRCLE",
+      "ARC",
+      "HOLE"
+    ],
+    "destructive_actions_isolated": true,
+    "mobile_min_touch_dp": 48,
+    "desktop_min_touch_dp": 44,
+    "left_handed_supported": true,
+    "responsive_reflow": true,
+    "core_logic_mutation": false,
+    "engineering_shell_fallback": false,
+    "failure_fallback": "LAST_VERIFIED_THEME_PACK"
+  }
+}
