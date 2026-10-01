@@ -1,0 +1,83 @@
+package com.aigstudio.app
+
+import android.graphics.Color
+import java.util.concurrent.CopyOnWriteArraySet
+
+data class StudioThemePalette(
+    val id:String,
+    val name:String,
+    val background:Int,
+    val panel:Int,
+    val text:Int,
+    val accent:Int,
+    val selected:Int,
+    val cutting:Int,
+    val rapid:Int,
+    val warning:Int,
+    val alarm:Int
+)
+
+object StudioThemePackRuntime {
+    const val PROFILE="AIG_STUDIO_THEME_PACK_HOT_SWAP_V1"
+    const val RESTART_REQUIRED=false
+    const val ENGINEERING_SHELL_FALLBACK=false
+
+    private val packs=linkedMapOf(
+        "aigii_rgb_neon_v2" to StudioThemePalette(
+            id="aigii_rgb_neon_v2",name="AIG II RGB Neon V2",
+            background=Color.rgb(2,4,7),panel=Color.rgb(7,17,27),text=Color.rgb(244,251,255),
+            accent=Color.rgb(39,233,255),selected=Color.rgb(39,233,255),
+            cutting=Color.rgb(51,243,155),rapid=Color.rgb(255,77,166),
+            warning=Color.rgb(255,179,38),alarm=Color.rgb(255,70,95)
+        ),
+        "aig_mobile_rgb_v1" to StudioThemePalette(
+            id="aig_mobile_rgb_v1",name="AIG Mobile RGB V1",
+            background=Color.rgb(1,5,10),panel=Color.rgb(6,18,31),text=Color.rgb(238,249,255),
+            accent=Color.rgb(30,216,255),selected=Color.rgb(20,221,255),
+            cutting=Color.rgb(45,245,165),rapid=Color.rgb(180,78,255),
+            warning=Color.rgb(255,177,42),alarm=Color.rgb(255,61,94)
+        )
+    )
+
+    @Volatile private var currentId="aigii_rgb_neon_v2"
+    @Volatile private var lastVerifiedId=currentId
+    private val listeners=CopyOnWriteArraySet<(StudioThemePalette)->Unit>()
+
+    val current:StudioThemePalette get()=packs.getValue(currentId)
+    fun ids():List<String> = packs.keys.toList()
+    fun name(id:String):String = packs[id]?.name ?: id
+    fun addListener(listener:(StudioThemePalette)->Unit){listeners.add(listener)}
+    fun removeListener(listener:(StudioThemePalette)->Unit){listeners.remove(listener)}
+
+    @Synchronized
+    fun switchTo(id:String):StudioThemePalette {
+        val next=packs[id] ?: error("Unknown theme pack: $id")
+        val previous=currentId
+        return runCatching {
+            currentId=id
+            listeners.forEach { it(next) }
+            lastVerifiedId=id
+            next
+        }.getOrElse { error ->
+            currentId=previous.takeIf{packs.containsKey(it)} ?: lastVerifiedId
+            val restored=current
+            runCatching { listeners.forEach { it(restored) } }
+            throw error
+        }
+    }
+
+    @Synchronized
+    fun rollback():StudioThemePalette {
+        currentId=lastVerifiedId.takeIf{packs.containsKey(it)} ?: "aigii_rgb_neon_v2"
+        val restored=current
+        listeners.forEach { it(restored) }
+        return restored
+    }
+
+    @Synchronized
+    fun cycle():StudioThemePalette {
+        val ids=ids()
+        val index=ids.indexOf(currentId).coerceAtLeast(0)
+        return switchTo(ids[(index+1)%ids.size])
+    }
+}
