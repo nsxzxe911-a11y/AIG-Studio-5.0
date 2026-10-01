@@ -716,7 +716,7 @@ for needle in (
     'editTools.add(button("OFFSET"',
     'editTools.add(button("ARRAY"',
     'viewTools.add(button("尺寸驅動"',
-    'private enum class DrawMode { LINE, RECT, CIRCLE, ARC, HOLE, SELECT }',
+    'private enum class DrawMode { LINE, RECT, CIRCLE, ARC, HOLE, SELECT, PAN }',
     'drawTools.add(button("圓弧"',
     'drawTools.add(button("孔"',
     "CadSnapEngine.snapTo(doc,raw,18.0/pxPerMm,reference=first)",
