@@ -91,7 +91,7 @@
     "CONTINUITY"
   ],
   "library_manifest": "uiux/aig-image-library.json",
-  "release_version": "271.0.0",
+  "release_version": "272.0.0",
   "continuity_contract": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "red_status_nonblocking_for": [
