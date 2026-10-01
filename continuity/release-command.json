@@ -1,7 +1,7 @@
 {
   "schema": "aig-release-command-v1",
   "product": "AIG Studio 5.0",
-  "version": "266.0.0",
+  "version": "267.0.0",
   "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
   "command_scope": "ALL_DEPARTMENTS",
   "dispatch_mode": "IMMEDIATE_LOCAL_FIRST",
@@ -118,5 +118,15 @@
     "on_fail": "ASSIGN_OWNER_AND_RETURN_FOR_REWORK",
     "after_rework": "AI_REVERIFY",
     "stop_condition": "ALL_DEPARTMENTS_PASS"
-  }
+  },
+  "autocheck": {
+    "script": "ci/department_autocheck.py",
+    "mode": "SCAN_ALL_DEPARTMENTS_NO_EARLY_EXIT",
+    "report": "build/department-autocheck.json",
+    "on_fail": "QUEUE_OWNER_REWORK",
+    "unrelated_departments_continue": true
+  },
+  "dispatch_generation": 2,
+  "dispatch_reason": "STUDIO_267_FULL_DEPARTMENT_PRECISION_AUTOCHECK",
+  "command_state": "EXECUTE_NOW_UNTIL_ALL_DEPARTMENTS_PASS"
 }
