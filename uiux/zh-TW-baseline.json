@@ -91,7 +91,7 @@
     "CONTINUITY"
   ],
   "library_manifest": "uiux/aig-image-library.json",
-  "release_version": "268.0.0",
+  "release_version": "269.0.0",
   "continuity_contract": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "red_status_nonblocking_for": [
@@ -122,5 +122,10 @@
     "finding": "部門 / owner / 錯誤碼 / 路徑 / 證據 / 修復提示",
     "rework": "只退回責任部門，其餘部門繼續"
   },
-  "version_display_policy": "UI/UX 頁面禁止硬編碼數字版本；release-version.properties 為唯一版本權威"
+  "version_display_policy": "UI/UX 頁面禁止硬編碼數字版本；release-version.properties 為唯一版本權威",
+  "cache_update_notice": {
+    "announcement": "所有部門快取更新以 XML 內容、revision、SHA-256 digest、source exact SHA 為標準；禁止只看加工時間/mtime/lastModified 判斷。",
+    "canonical": "continuity/cache-update-standard.xml",
+    "time_fields": "僅供顯示與診斷，不具更新決策權"
+  }
 }
