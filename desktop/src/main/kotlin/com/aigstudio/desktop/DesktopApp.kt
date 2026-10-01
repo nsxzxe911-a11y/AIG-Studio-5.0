@@ -424,10 +424,17 @@ private class CadPanel(
                 val raw = screenToWorld(e.x, e.y)
                 val p = if(snapEnabled) CadSnapEngine.snapTo(doc,raw,18.0/pxPerMm,reference=first) ?: raw else raw
                 if(mode==DrawMode.SELECT){
+                    val control=if(selectedIds.isNotEmpty())
+                        CadControlPointEngine.nearest(doc,selectedIds,p,24.0/pxPerMm)
+                    else null
+                    if(control!=null){
+                        editControlPoint(control)
+                        return
+                    }
                     nearest(p)?.let { entity ->
                         val group=CadSelectionEngine.selectionIds(doc,entity)
                         if(group.all{it in selectedIds}) selectedIds.removeAll(group) else selectedIds.addAll(group)
-                        status("SELECT • kind="+CadSelectionEngine.semanticKind(entity)+" • count="+selectedIds.size)
+                        status("SELECT • kind="+CadSelectionEngine.semanticKind(entity)+" • count="+selectedIds.size+" • click handle to edit")
                         repaint()
                     }
                     return
@@ -647,6 +654,52 @@ private class CadPanel(
         return CadSelectionEngine.nearest(doc,p,tolerance)
     }
 
+    private fun editControlPoint(control:CadControlPoint) {
+        val entity=doc.get(control.entityId) ?: return
+        if(control.kind==CadControlPointKind.RADIUS) {
+            val current=(entity as? Circle)?.radius ?: return
+            val input=JTextField(DisplayFormat.mm(current),10)
+            if(JOptionPane.showConfirmDialog(
+                    this,input,"控制點 • 半徑 R mm",JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE
+                )==JOptionPane.OK_OPTION) {
+                val radius=input.text.trim().toDoubleOrNull()
+                if(radius==null || radius<CNC_RESOLUTION_MM){
+                    status("CONTROL POINT BLOCKED • R must be >= 0.001 mm")
+                    return
+                }
+                val live=doc.get(control.entityId) as? Circle ?: return
+                runCatching {
+                    applyGeometry("CONTROL POINT",CadControlPointEngine.editCommand(
+                        doc,control,live.center+Vec2(radius,0.0)
+                    ))
+                }.onSuccess {
+                    status("CONTROL POINT PASS • R="+DisplayFormat.mm(radius)+" • CAM/SIM/NC REBUILD")
+                }.onFailure { status("CONTROL POINT BLOCKED • "+(it.message?:"error")) }
+            }
+            return
+        }
+        val panel=JPanel(GridLayout(0,2,6,6))
+        val x=JTextField(DisplayFormat.mm(control.point.x),10)
+        val y=JTextField(DisplayFormat.mm(control.point.y),10)
+        panel.add(JLabel("X mm"));panel.add(x)
+        panel.add(JLabel("Y mm"));panel.add(y)
+        if(JOptionPane.showConfirmDialog(
+                this,panel,"控制點 • "+control.kind.name,JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE
+            )==JOptionPane.OK_OPTION) {
+            val px=x.text.trim().toDoubleOrNull()
+            val py=y.text.trim().toDoubleOrNull()
+            if(px==null || py==null){
+                status("CONTROL POINT BLOCKED • invalid X/Y")
+                return
+            }
+            runCatching {
+                applyGeometry("CONTROL POINT",CadControlPointEngine.editCommand(doc,control,Vec2(px,py)))
+            }.onSuccess {
+                status("CONTROL POINT PASS • X="+DisplayFormat.mm(px)+" Y="+DisplayFormat.mm(py)+" • CAM/SIM/NC REBUILD")
+            }.onFailure { status("CONTROL POINT BLOCKED • "+(it.message?:"error")) }
+        }
+    }
+
     private fun screenToWorld(x: Int, y: Int) =
         Vec2((x - width / 2.0 - panX) / pxPerMm, (height / 2.0 + panY - y) / pxPerMm)
 
@@ -691,6 +744,20 @@ private class CadPanel(
                     var sweep = end - start
                     if (entity.clockwise) while (sweep >= 0.0) sweep -= 360.0 else while (sweep <= 0.0) sweep += 360.0
                     g2.drawArc(c.x - r, c.y - r, r * 2, r * 2, start.roundToInt(), sweep.roundToInt())
+                }
+            }
+        }
+
+        if(selectedIds.isNotEmpty()){
+            g2.stroke=BasicStroke(2f)
+            CadControlPointEngine.points(doc,selectedIds).forEach { control ->
+                val p=worldToScreen(control.point)
+                g2.color=if(control.kind==CadControlPointKind.CENTER) Color(255,176,32) else Color(61,235,255)
+                g2.drawOval(p.x-7,p.y-7,14,14)
+                g2.fillOval(p.x-3,p.y-3,6,6)
+                if(control.kind==CadControlPointKind.CENTER){
+                    g2.drawLine(p.x-8,p.y,p.x+8,p.y)
+                    g2.drawLine(p.x,p.y-8,p.x,p.y+8)
                 }
             }
         }
