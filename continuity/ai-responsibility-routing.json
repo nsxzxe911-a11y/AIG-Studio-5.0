@@ -1,7 +1,7 @@
 {
   "schema": "aig-ai-responsibility-routing-v1",
   "product": "AIG Studio 5.0",
-  "version": "274.0.0",
+  "version": "275.0.0",
   "detector": "AI",
   "principle": "AI_DETECTS_CLASSIFIES_RETURNS_REWORK_REVERIFIES; OWNER_DEPARTMENT_FIXES",
   "lifecycle": [
@@ -113,5 +113,13 @@
     "first_frame_fail_action": "RETURN_FOR_REWORK",
     "unrelated_departments_continue": true,
     "no_production_pass_from_text_markers_only": true
+  },
+  "theme_pack_hot_swap": {
+    "owner": "UIUX",
+    "ai_layout_owner": "AI",
+    "failure_action": "ROLLBACK_LAST_VERIFIED_PACK_AND_RETURN_UIUX",
+    "unrelated_departments_continue": true,
+    "no_runtime_restart": true,
+    "no_engineering_shell_fallback": true
   }
 }
