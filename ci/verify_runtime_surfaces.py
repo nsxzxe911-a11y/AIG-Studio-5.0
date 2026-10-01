@@ -340,6 +340,50 @@ for needle in (
     require(desktop, needle, "WINDOWS_CAM_CONTOUR_SIDE_DIRECTION")
 require(regression, "CAM_CONTOUR_SIDE_DIRECTION_GATE_PASS OUTSIDE INSIDE CCW CW RADIUS_COMP 3D_REMOVAL NC_G2_G3", "CAM_CONTOUR_SIDE_DIRECTION_REGRESSION")
 print("CAM_CONTOUR_SIDE_DIRECTION_RUNTIME_GATE_PASS|ANDROID|WINDOWS|OUTSIDE|INSIDE|CCW|CW|RADIUS_COMP|3D_SIM|NC_G2_G3|PROJECT_PERSISTENCE")
+
+for needle in (
+    "enum class CamPathMode { AUTO, MANUAL }",
+    "data class ManualCamPoint(",
+    'const val POLICY="CAM_MANUAL_PATH_INDEPENDENT_FROM_CAD"',
+    "fun startBlank(settings:CamSettings",
+    "fun insertAvoidance(",
+    "fun generateManual(",
+    "if(settings.pathMode==CamPathMode.MANUAL)",
+):
+    require(cam_core, needle, "CAM_MANUAL_ROUTE_CORE")
+for needle in (
+    "manualPath:List<ManualCamPoint> = emptyList()",
+    'require(manualPath.isNotEmpty()) { "No CAD geometry or manual CAM path for stock bounds" }',
+    "if(settings.pathMode==CamPathMode.MANUAL)settings.manualPath else emptyList()",
+):
+    require(machining3d_core, needle, "CAM_MANUAL_ROUTE_3D")
+for needle in (
+    'appendLine("CAMPATHMODE|${c.pathMode.name}")',
+    '"MANUALTP|${p.x}|${p.y}|${p.z}',
+    '"CAMPATHMODE" -> {',
+    '"MANUALTP" -> {',
+):
+    require(project_repo, needle, "CAM_MANUAL_ROUTE_PROJECT")
+for needle in (
+    'param("CAM SOURCE"',
+    'sourceChoice("手動"',
+    "private fun showManualCamPathEditor()",
+    'action("新增切削點")',
+    'action("插入避讓")',
+    "ManualCamPathEngine.insertAvoidance(",
+):
+    require(android, needle, "ANDROID_CAM_MANUAL_ROUTE")
+for needle in (
+    "fun showProductionManualCamEditor()",
+    'camAction("路徑編輯"',
+    'action("新增切削點")',
+    'action("插入避讓")',
+    "ManualCamPathEngine.insertAvoidance(",
+):
+    require(desktop, needle, "WINDOWS_CAM_MANUAL_ROUTE")
+require(regression, "CAM_MANUAL_ROUTE_GATE_PASS NO_CAD_REQUIRED MANUAL_FIRST EDIT_XYZ RETRACT RAPID_AVOIDANCE LANDING CAD_INDEPENDENT 3D_REMOVAL NC_POST SAFE_Z_FAIL_CLOSED PERSISTENCE", "CAM_MANUAL_ROUTE_REGRESSION")
+print("CAM_MANUAL_ROUTE_RUNTIME_GATE_PASS|ANDROID|WINDOWS|AUTO_MANUAL|NO_CAD_REQUIRED|EDIT_XYZ|RETRACT|RAPID_AVOIDANCE|LANDING|CAD_INDEPENDENT|3D_SIM|NC_POST|SAFE_Z_FAIL_CLOSED|PROJECT_PERSISTENCE")
+
 for needle in (
     "private val onProjectChanged: () -> Unit = {}",
     "onProjectChanged()",
