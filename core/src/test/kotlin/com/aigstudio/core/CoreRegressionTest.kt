@@ -1173,6 +1173,7 @@ fun main() {
     testEnvironmentSettingsContract()
     testRealCamToolpath()
     testContourSideDirectionCam3D()
+    testManualCamRouteIndependentFromCad()
     testWorkOffsetDoesNotShiftAbsoluteCoordinates()
     testControllerProfilesDoNotShiftAbsoluteCoordinates()
     testG91PostPreservesCanonicalAbsoluteCoordinates()
@@ -1873,6 +1874,67 @@ private fun testContourSideDirectionCam3D() {
     assertNear(inCcw.first,15.0,msg="inside radius")
     assertNear(inCw.first,15.0,msg="inside radius CW")
     println("✓ CAM_CONTOUR_SIDE_DIRECTION_GATE_PASS OUTSIDE INSIDE CCW CW RADIUS_COMP 3D_REMOVAL NC_G2_G3")
+}
+
+private fun testManualCamRouteIndependentFromCad() {
+    val empty=DrawingSnapshot(emptyList())
+    var settings=ManualCamPathEngine.startBlank(
+        CamSettings(toolDiameter=6.0,depth=-2.0,safeZ=8.0,feedMmMin=160.0),
+        0.0,0.0
+    )
+    settings=ManualCamPathEngine.replacePoint(settings,1,0.0,0.0,-2.0,false)
+    settings=ManualCamPathEngine.insertPoint(
+        settings,2,ManualCamPoint(20.0,0.0,-2.0,false)
+    )
+
+    val base=CamModel.fromCad(3000L,empty,settings)
+    check(base.toolpaths.isNotEmpty())
+    val baseMoves=base.toolpaths.flatMap{it.moves}
+    check(baseMoves.first().rapid)
+    val stock=Stock3D.fromSnapshot(empty,margin=8.0,thickness=20.0,manualPath=settings.manualPath)
+    val removal=MaterialRemoval3D.simulate(base.toolpaths,settings,stock)
+    check(removal.depth.any{it<0.0}){"Manual CAM without CAD must remove material"}
+    val nc=CncPost.generate(base,FanucPostSettings())
+    check("G0" in nc && "G1" in nc)
+
+    val unrelatedCad=DrawingSnapshot(listOf(Line(id="IGNORED",a=Vec2(100.0,100.0),b=Vec2(120.0,100.0))))
+    val withCad=CamModel.fromCad(3001L,unrelatedCad,settings)
+    check(
+        withCad.toolpaths.flatMap{it.moves}.map{Triple(it.to.x,it.to.y,it.z)} ==
+            baseMoves.map{Triple(it.to.x,it.to.y,it.z)}
+    ){"MANUAL CAM must ignore CAD geometry"}
+
+    settings=ManualCamPathEngine.insertAvoidance(settings,1,12.0,30.0,20.0,-2.0)
+    val avoided=CamModel.fromCad(3002L,empty,settings)
+    val moves=avoided.toolpaths.flatMap{it.moves}
+    check(moves[2].rapid && abs(moves[2].z-12.0)<EPS)
+    check(moves[3].rapid && moves[3].to==Vec2(30.0,20.0) && abs(moves[3].z-12.0)<EPS)
+    check(!moves[4].rapid && moves[4].to==Vec2(30.0,20.0) && abs(moves[4].z+2.0)<EPS)
+    val result=Machining3DEngine.build(empty,settings)
+    check(result.removal.depth.any{it<0.0})
+    val avoidedNc=CncPost.generate(avoided,FanucPostSettings())
+    check("G0" in avoidedNc && "G1" in avoidedNc)
+
+    check(runCatching{
+        ManualCamPathEngine.replacePoint(settings,2,0.0,0.0,settings.safeZ-0.001,true)
+    }.isFailure){"Manual G0 below Safe-Z must fail"}
+
+    val doc=DrawingDocument()
+    val project=StudioProjectRepository.capture(doc,settings,ncText=avoidedNc)
+    val file=kotlin.io.path.createTempFile("studio-manual-cam-",StudioProjectRepository.EXTENSION).toFile()
+    try {
+        StudioProjectRepository.save(project,file)
+        val loaded=StudioProjectRepository.load(file)
+        check(loaded.entities.isEmpty())
+        check(loaded.camSettings.pathMode==CamPathMode.MANUAL)
+        check(loaded.camSettings.manualPath==settings.manualPath)
+        check(file.readLines().any{it=="CAMPATHMODE|MANUAL"})
+        check(file.readLines().count{it.startsWith("MANUALTP|")}==settings.manualPath.size)
+    } finally {
+        file.delete()
+    }
+
+    println("✓ CAM_MANUAL_ROUTE_GATE_PASS NO_CAD_REQUIRED MANUAL_FIRST EDIT_XYZ RETRACT RAPID_AVOIDANCE LANDING CAD_INDEPENDENT 3D_REMOVAL NC_POST SAFE_Z_FAIL_CLOSED PERSISTENCE")
 }
 
 private fun testMaterialRemoval3D() {
