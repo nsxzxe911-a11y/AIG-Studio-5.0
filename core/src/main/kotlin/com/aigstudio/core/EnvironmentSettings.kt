@@ -992,7 +992,7 @@ object ProjectSyncUxContract {
 object SharedProjectSyncContract {
     const val POLICY="SHARED_FOLDER_BACKGROUND_REVISION_WATCH"
     const val TRANSPORT="FOLDER"
-    const val POLL_INTERVAL_MS=1500L
+    const val POLL_INTERVAL_MS=3000L
     const val AUTO_APPLY=false
     const val NETWORK_REQUIRED=false
     const val NO_SILENT_OVERWRITE=true
