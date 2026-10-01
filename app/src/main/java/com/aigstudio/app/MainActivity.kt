@@ -654,6 +654,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyCoordinatePrecisionPreference()
         val bootShell = android.widget.FrameLayout(this)
         val bootOverlay = AigStartupOverlay(this)
         bootShell.addView(bootOverlay, android.widget.FrameLayout.LayoutParams(
@@ -1050,7 +1051,7 @@ class MainActivity : Activity() {
         val railCells = listOf(
             railCell("MACHINE","READY",0xFF63FF9D.toInt()),
             railCell("ORIGIN","X0.000 Y0.000 Z0.000",0xFF3DEBFF.toInt()),
-            railCell("PRECISION","0.001 mm",0xFFF59E0B.toInt()),
+            railCell("PRECISION",CoordinatePrecisionRuntime.display().storageValue+" mm",0xFFF59E0B.toInt()),
             railCell("RGB","LIVE",0xFF8B5CF6.toInt())
         )
         railCells.forEach {
@@ -3824,7 +3825,18 @@ class MainActivity : Activity() {
         refreshHandler.post(refresh)
     }
 
-private fun showEnvironmentSettings() {
+private fun applyCoordinatePrecisionPreference() {
+        val prefs=getSharedPreferences("aig_environment", MODE_PRIVATE)
+        val display=CoordinatePrecisionMode.fromStorage(
+            prefs.getString("coordinate_precision","0.001")
+        )
+        val nc=CoordinatePrecisionMode.fromStorage(
+            prefs.getString("nc_output_precision","0.001")
+        )
+        CoordinatePrecisionRuntime.configure(display=display,input=display,ncOutput=nc)
+    }
+
+    private fun showEnvironmentSettings() {
         val prefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -3855,6 +3867,24 @@ private fun showEnvironmentSettings() {
             val current = prefs.getString("render_quality", "High") ?: "High"
             setSelection(qualityValues.indexOf(current).coerceAtLeast(0))
             box.addView(TextView(this@MainActivity).apply { text = "3D / SIM 畫質" })
+            box.addView(this)
+        }
+
+        val coordinatePrecisionValues = arrayOf("0.001","0.01","0.1")
+        val coordinatePrecisionLabels = arrayOf("0.001 mm","0.01 mm","0.1 mm")
+        val coordinatePrecision = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, coordinatePrecisionLabels)
+            val current = prefs.getString("coordinate_precision","0.001") ?: "0.001"
+            setSelection(coordinatePrecisionValues.indexOf(current).coerceAtLeast(0))
+            box.addView(TextView(this@MainActivity).apply { text = "座標顯示 / 輸入步進" })
+            box.addView(this)
+        }
+
+        val ncPrecision = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, coordinatePrecisionLabels)
+            val current = prefs.getString("nc_output_precision","0.001") ?: "0.001"
+            setSelection(coordinatePrecisionValues.indexOf(current).coerceAtLeast(0))
+            box.addView(TextView(this@MainActivity).apply { text = "NC 輸出精度（獨立設定）" })
             box.addView(this)
         }
 
@@ -3928,6 +3958,8 @@ private fun showEnvironmentSettings() {
                     .putString("fps_mode", selectedFps)
                     .putString("power_mode", powerValues[power.selectedItemPosition])
                     .putString("render_quality", selectedQuality)
+                    .putString("coordinate_precision", coordinatePrecisionValues[coordinatePrecision.selectedItemPosition])
+                    .putString("nc_output_precision", coordinatePrecisionValues[ncPrecision.selectedItemPosition])
                     .putBoolean("restart_required", restartRequired)
                     .putString("restart_reason", if (restartRequired) "3D_SIM_RENDER_QUALITY" else "")
                     .putInt("rgb_brightness", rgb.progress)
@@ -3941,6 +3973,17 @@ private fun showEnvironmentSettings() {
                     .putBoolean("thermal_auto", autoThermal.isChecked)
                     .putBoolean("idle_throttle", idleThrottle.isChecked)
                     .apply()
+                val selectedCoordinatePrecision=CoordinatePrecisionMode.fromStorage(
+                    coordinatePrecisionValues[coordinatePrecision.selectedItemPosition]
+                )
+                val selectedNcPrecision=CoordinatePrecisionMode.fromStorage(
+                    coordinatePrecisionValues[ncPrecision.selectedItemPosition]
+                )
+                CoordinatePrecisionRuntime.configure(
+                    display=selectedCoordinatePrecision,
+                    input=selectedCoordinatePrecision,
+                    ncOutput=selectedNcPrecision
+                )
 
                 applySystemHudPreference(systemHud.isChecked)
                 applyFpsDisplayPreference(fpsDisplay.isChecked)
