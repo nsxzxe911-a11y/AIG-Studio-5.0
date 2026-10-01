@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#020407">
-<title>AIG Studio 5.0 UI/UX 原版視覺</title>
+<title>AIG Studio 5.0 繁中 UI/UX</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#020407;color:#fff;font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;overflow:hidden}
 body{display:grid;grid-template-rows:auto 1fr}
@@ -24,17 +24,17 @@ body{display:grid;grid-template-rows:auto 1fr}
 </head>
 <body>
 <nav class="bar">
-  <span class="brand">AIG Studio 5.0 UI/UX</span>
-  <button class="tab" data-page="home">首頁原版</button>
-  <button class="tab" data-page="cad">CAD 原版</button>
-  <button class="tab active" data-page="cam">CAM 原版</button>
-  <button class="tab" data-page="sim">SIM 原版</button>
-  <button class="tab" data-page="startup">啟動畫面</button>
+  <span class="brand">AIG Studio 5.0 繁中 UI/UX</span>
+  <button class="tab" data-page="home">首頁</button>
+  <button class="tab" data-page="cad">CAD 製圖</button>
+  <button class="tab active" data-page="cam">CAM 刀路</button>
+  <button class="tab" data-page="sim">SIM 模擬</button>
+  <button class="tab" data-page="startup">啟動</button>
   <button class="tab" data-fit="fit">Fit</button>
   <button class="tab" data-fit="full">原尺寸</button>
 </nav>
-<main id="stage" class="stage fit"><img id="screen" src="./assets/cam.jpg" alt="AIG original UI"></main>
-<div class="note">UI/UX 原版視覺基準 • 非工程殼</div>
+<div data-baseline="zh-tw" style="position:fixed;left:8px;bottom:8px;z-index:6;padding:6px 9px;border:1px solid rgba(51,243,155,.34);border-radius:9px;background:rgba(0,0,0,.72);font-size:10px;color:#c9ffe4;backdrop-filter:blur(8px)">基礎母版：AIG RGB • 繁中優先 • CAD / CAM / SIM / 3AX / 4AX / 5AX / NC</div><main id="stage" class="stage fit"><img id="screen" src="./assets/cam.jpg" alt="AIG original UI"></main>
+<div class="note">繁中 UI/UX 基礎母版 • 正式介面開發 • 非工程殼</div>
 <script>
 const files={home:"home.png",cad:"cad.png",cam:"cam.jpg",sim:"sim.jpg",startup:"startup.png"};
 const stage=document.getElementById("stage"),screen=document.getElementById("screen");
