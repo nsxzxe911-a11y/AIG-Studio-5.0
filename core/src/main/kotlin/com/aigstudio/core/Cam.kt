@@ -2,12 +2,17 @@ package com.aigstudio.core
 
 import kotlin.math.*
 
+enum class ContourSide { OUTSIDE, INSIDE }
+enum class ContourDirection { CCW, CW }
+
 data class CamSettings(
     val toolDiameter: Double = 10.0,
     val depth: Double = -2.0,
     val safeZ: Double = 5.0,
     val feedMmMin: Double = 150.0,
     val climb: Boolean = true,
+    val contourSide: ContourSide = ContourSide.OUTSIDE,
+    val contourDirection: ContourDirection = if (climb) ContourDirection.CCW else ContourDirection.CW,
     val leadInMm: Double = 2.0,
     val leadOutMm: Double = 2.0
 ) {
@@ -124,13 +129,16 @@ object CamEngine {
         }
         if (snapshot.entities.isEmpty()) return emptyList()
         val radiusComp = settings.toolDiameter / 2.0
-        val side = if (settings.climb) 1.0 else -1.0
+        val radialSign = if (settings.contourSide == ContourSide.OUTSIDE) 1.0 else -1.0
+        val lineNormalSign = if (settings.contourSide == ContourSide.OUTSIDE) -1.0 else 1.0
         val output = mutableListOf<Toolpath>()
 
         fun arcPath(center: Vec2, radius: Double, startAngle: Double, sweep: Double) {
             if (radius <= CNC_RESOLUTION_MM || abs(sweep) <= 1e-12) return
-            val directionSweep = if (settings.climb) sweep else -sweep
-            val actualStart = if (settings.climb) startAngle else startAngle + sweep
+            val sourceCcw = sweep >= 0.0
+            val wantCcw = settings.contourDirection == ContourDirection.CCW
+            val directionSweep = if (sourceCcw == wantCcw) sweep else -sweep
+            val actualStart = if (sourceCcw == wantCcw) startAngle else startAngle + sweep
             val start = Vec2(center.x + radius * cos(actualStart), center.y + radius * sin(actualStart))
             val leadStartAngle = actualStart
             val tangent = Vec2(-sin(leadStartAngle), cos(leadStartAngle)) * if (directionSweep >= 0.0) 1.0 else -1.0
@@ -176,7 +184,7 @@ object CamEngine {
 
         fun pathFrom(points: List<Vec2>) {
             if (points.size < 2) return
-            val ordered = if (settings.climb) points else points.reversed()
+            val ordered = if (settings.contourDirection == ContourDirection.CCW) points else points.reversed()
             val moves = mutableListOf<Move>()
             val first = ordered.first()
             val second = ordered.getOrElse(1) { first }
@@ -207,25 +215,51 @@ object CamEngine {
             output += Toolpath(moves)
         }
 
+        val rectGroups=snapshot.entities.filterIsInstance<Line>()
+            .filter { it.id.startsWith("RECT:") }
+            .groupBy { it.id.substringBeforeLast(':') }
+        val processedRectRoots=mutableSetOf<String>()
+
         for (entity in snapshot.entities) {
             when (entity) {
                 is Line -> {
-                    val d = entity.b - entity.a
-                    val len = d.length()
-                    if (len < CNC_RESOLUTION_MM) continue
-                    val nx = -d.y / len * radiusComp * side
-                    val ny = d.x / len * radiusComp * side
-                    pathFrom(listOf(
-                        Vec2(entity.a.x + nx, entity.a.y + ny),
-                        Vec2(entity.b.x + nx, entity.b.y + ny)
-                    ))
+                    val rectRoot=entity.id.takeIf { it.startsWith("RECT:") }?.substringBeforeLast(':')
+                    if(rectRoot!=null) {
+                        if(!processedRectRoots.add(rectRoot)) continue
+                        val lines=rectGroups[rectRoot].orEmpty()
+                        require(lines.size==4) { "RECT contour requires four edges" }
+                        val pts=lines.flatMap { listOf(it.a,it.b) }
+                        val minX=pts.minOf{it.x}; val maxX=pts.maxOf{it.x}
+                        val minY=pts.minOf{it.y}; val maxY=pts.maxOf{it.y}
+                        val comp=radiusComp*radialSign
+                        val x0=minX-comp; val y0=minY-comp
+                        val x1=maxX+comp; val y1=maxY+comp
+                        require(x1-x0>=CNC_RESOLUTION_MM && y1-y0>=CNC_RESOLUTION_MM) {
+                            "INSIDE contour collapses RECT after tool-radius compensation"
+                        }
+                        pathFrom(listOf(
+                            Vec2(x0,y0),Vec2(x1,y0),Vec2(x1,y1),Vec2(x0,y1),Vec2(x0,y0)
+                        ))
+                    } else {
+                        val d = entity.b - entity.a
+                        val len = d.length()
+                        if (len < CNC_RESOLUTION_MM) continue
+                        val nx = -d.y / len * radiusComp * lineNormalSign
+                        val ny = d.x / len * radiusComp * lineNormalSign
+                        pathFrom(listOf(
+                            Vec2(entity.a.x + nx, entity.a.y + ny),
+                            Vec2(entity.b.x + nx, entity.b.y + ny)
+                        ))
+                    }
                 }
                 is Circle -> {
-                    val r = entity.radius + radiusComp
+                    val r = entity.radius + radiusComp*radialSign
+                    require(r>=CNC_RESOLUTION_MM) { "INSIDE contour collapses CIRCLE after tool-radius compensation" }
                     arcPath(entity.center, r, 0.0, 2.0 * Math.PI)
                 }
                 is Arc -> {
-                    val r = entity.radius + radiusComp
+                    val r = entity.radius + radiusComp*radialSign
+                    require(r>=CNC_RESOLUTION_MM) { "INSIDE contour collapses ARC after tool-radius compensation" }
                     val startA = atan2(entity.start.y - entity.center.y, entity.start.x - entity.center.x)
                     val endA = atan2(entity.end.y - entity.center.y, entity.end.x - entity.center.x)
                     var sweep = endA - startA
