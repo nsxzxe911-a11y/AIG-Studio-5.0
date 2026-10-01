@@ -91,7 +91,7 @@
     "CONTINUITY"
   ],
   "library_manifest": "uiux/aig-image-library.json",
-  "release_version": "264.0.0",
+  "release_version": "265.0.0",
   "continuity_contract": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "red_status_nonblocking_for": [
@@ -104,5 +104,11 @@
       "COMPILE_RUNTIME",
       "INTEGRITY"
     ]
+  },
+  "release_command_contract": {
+    "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
+    "scope": "ALL_DEPARTMENTS",
+    "network_blocks_command": false,
+    "offline_local_execution": true
   }
 }
