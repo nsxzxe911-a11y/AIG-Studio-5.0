@@ -1,0 +1,11 @@
+{
+  "name": "aig-cnc-6ax-ui-preview",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --open /6ax-ui-preview.html"
+  },
+  "devDependencies": {
+    "vite": "^6.1.0"
+  }
+}
