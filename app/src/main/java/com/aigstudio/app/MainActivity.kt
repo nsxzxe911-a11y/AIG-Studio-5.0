@@ -3992,7 +3992,7 @@ private fun applyCoordinatePrecisionPreference() {
                 RgbGlowButton.setGlobalBrightness(rgb.progress)
                 Toast.makeText(
                     this,
-                    "ENV APPLIED • " + selectedFps + " • RGB " + rgb.progress + "% • CNC 精度仍為 0.001 mm" +
+                    "ENV APPLIED • " + selectedFps + " • RGB " + rgb.progress + "% • " + CoordinatePrecisionRuntime.summary() +
                         if (restartRequired) " • 3D/SIM 畫質：重開後完整生效" else "",
                     Toast.LENGTH_LONG
                 ).show()
