@@ -91,7 +91,7 @@
     "CONTINUITY"
   ],
   "library_manifest": "uiux/aig-image-library.json",
-  "release_version": "270.0.0",
+  "release_version": "271.0.0",
   "continuity_contract": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "red_status_nonblocking_for": [
@@ -133,5 +133,6 @@
     "cache": "Android SDK 本機快取優先，缺少才使用網路補齊",
     "failure": "只打回失敗責任部門，其餘部門繼續",
     "standard": "不降低 CNC 安全、完整性、編譯與 exact SHA 驗證"
-  }
+  },
+  "visual_evidence_notice": "看不到不算 PASS；Android/Windows 第一畫面必須提供實際 Runtime 截圖，工程殼為預設畫面直接 FAIL。"
 }
