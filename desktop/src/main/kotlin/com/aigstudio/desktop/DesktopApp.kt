@@ -2808,9 +2808,12 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         Thread(task,"aig-studio-desktop-shared-sync").apply { isDaemon=true }
     }
     val sharedSyncRunning=java.util.concurrent.atomic.AtomicBoolean(false)
+    var sharedSyncLastFileStamp=Long.MIN_VALUE
     val sharedSyncTimer:Timer?=sharedProjectFile?.let { shared ->
         Timer(SharedProjectFolderSync.POLL_INTERVAL_MS.toInt()) {
-            if(sharedSyncRunning.compareAndSet(false,true)) {
+            val fileStamp=if(shared.isFile) shared.lastModified() xor (shared.length() shl 1) else Long.MIN_VALUE
+            if(fileStamp!=sharedSyncLastFileStamp && sharedSyncRunning.compareAndSet(false,true)) {
+                sharedSyncLastFileStamp=fileStamp
                 val localDirty=(doc.all().hashCode()*31+doc.links().hashCode())!=sharedBaselineSignature
                 val fallbackMeta=sharedLocalMeta
                 sharedSyncExecutor.execute {
@@ -2831,6 +2834,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                                 status.text="共享 • "+observation.message
                             }
                         }.onFailure {
+                            sharedSyncLastFileStamp=Long.MIN_VALUE
                             status.text="共享同步檢查 BLOCKED • "+(it.message?:"error")
                         }
                     }
