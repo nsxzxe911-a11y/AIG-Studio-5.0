@@ -2607,12 +2607,37 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument, camSettings:CamSet
     val applyD = GlassActionButton("APPLY D", Color(80,170,255)).apply {
         addActionListener { refreshNcFromPostSelection() }
     }
-    val keys = listOf("G","M","X","Y","Z","F","S","T","A","B","7","8","9","-",".","4","5","6","0","/","1","2","3","INSERT","DELETE","BLOCK SKIP")
+    fun showNcOperatorPalette() {
+        val groups=NcCodeCatalog.operatorPalette()
+        val groupNames=groups.map { it.first+" • "+it.second.size+" codes" }
+        val pickedGroup=JOptionPane.showInputDialog(
+            frame,"選擇 G/M 功能分類","G/M 功能 • FANUC",
+            JOptionPane.PLAIN_MESSAGE,null,groupNames.toTypedArray(),groupNames.firstOrNull()
+        ) as? String ?: return
+        val groupIndex=groupNames.indexOf(pickedGroup)
+        if(groupIndex<0) return
+        val group=groups[groupIndex]
+        val codeLabels=group.second.map { code ->
+            val d=NcCodeCatalog.describe(code)
+            code+" • "+d.shortName+" • "+d.layer
+        }
+        val picked=JOptionPane.showInputDialog(
+            frame,"選擇要插入的代碼","G/M 功能 • "+group.first,
+            JOptionPane.PLAIN_MESSAGE,null,codeLabels.toTypedArray(),codeLabels.firstOrNull()
+        ) as? String ?: return
+        val codeIndex=codeLabels.indexOf(picked)
+        if(codeIndex>=0) {
+            area.insert(group.second[codeIndex]+" ",area.caretPosition)
+            area.requestFocusInWindow()
+        }
+    }
+    val keys = listOf("G/M 功能","G90","G54","G43","M98","G","M","X","Y","Z","F","S","T","A","B","7","8","9","-",".","4","5","6","0","/","1","2","3","INSERT","DELETE","BLOCK SKIP")
     val keypad = AdaptiveGlassToolbar()
     keys.forEach { key ->
         keypad.add(GlassActionButton(key, Color(80,170,255)).apply {
             addActionListener {
                 when (key) {
+                    "G/M 功能" -> showNcOperatorPalette()
                     "DELETE" -> {
                         val s = area.selectionStart
                         val e = area.selectionEnd
