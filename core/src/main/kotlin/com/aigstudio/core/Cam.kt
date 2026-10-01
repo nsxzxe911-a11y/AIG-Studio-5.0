@@ -4,6 +4,19 @@ import kotlin.math.*
 
 enum class ContourSide { OUTSIDE, INSIDE }
 enum class ContourDirection { CCW, CW }
+enum class CamPathMode { AUTO, MANUAL }
+
+data class ManualCamPoint(
+    val x:Double,
+    val y:Double,
+    val z:Double,
+    val rapid:Boolean,
+    val arcI:Double?=null,
+    val arcJ:Double?=null,
+    val clockwise:Boolean?=null,
+    val axisA:Double=0.0,
+    val axisB:Double=0.0
+)
 
 data class CamSettings(
     val toolDiameter: Double = 10.0,
@@ -13,6 +26,8 @@ data class CamSettings(
     val climb: Boolean = true,
     val contourSide: ContourSide = ContourSide.OUTSIDE,
     val contourDirection: ContourDirection = if (climb) ContourDirection.CCW else ContourDirection.CW,
+    val pathMode: CamPathMode = CamPathMode.AUTO,
+    val manualPath: List<ManualCamPoint> = emptyList(),
     val leadInMm: Double = 2.0,
     val leadOutMm: Double = 2.0
 ) {
@@ -22,6 +37,9 @@ data class CamSettings(
         require(safeZ > 0.0) { "Safe-Z must be positive" }
         require(feedMmMin > 0.0) { "Feed must be positive" }
         require(leadInMm >= 0.0 && leadOutMm >= 0.0) { "Lead-in/out must be non-negative" }
+        if(pathMode==CamPathMode.MANUAL) require(manualPath.size>=2) {
+            "Manual CAM path requires at least two points"
+        }
     }
 }
 
@@ -68,7 +86,10 @@ class CamModel private constructor(
             revision,
             snapshot,
             settings,
-            CamEngine.generate(snapshot, settings, axisA, axisB, axisSchedule)
+            if(settings.pathMode==CamPathMode.MANUAL)
+                CamEngine.generateManual(settings,axisA,axisB,axisSchedule)
+            else
+                CamEngine.generate(snapshot, settings, axisA, axisB, axisSchedule)
         )
     }
 }
@@ -116,7 +137,136 @@ data class ArcFeed(
     override val rapid: Boolean = false
 }
 
+object ManualCamPathEngine {
+    const val POLICY="CAM_MANUAL_PATH_INDEPENDENT_FROM_CAD"
+
+    fun startBlank(settings:CamSettings,x:Double=0.0,y:Double=0.0):CamSettings {
+        val z=settings.safeZ
+        return settings.copy(
+            pathMode=CamPathMode.MANUAL,
+            manualPath=listOf(
+                ManualCamPoint(x,y,z,true),
+                ManualCamPoint(x,y,z,true)
+            )
+        )
+    }
+
+    fun adoptAuto(cam:CamModel):CamSettings {
+        val manual=cam.toolpaths.flatMap { path ->
+            path.moves.map { move ->
+                when(move) {
+                    is Rapid -> ManualCamPoint(move.to.x,move.to.y,move.z,true,axisA=move.axisA,axisB=move.axisB)
+                    is Feed -> ManualCamPoint(move.to.x,move.to.y,move.z,false,axisA=move.axisA,axisB=move.axisB)
+                    is ArcFeed -> ManualCamPoint(
+                        move.to.x,move.to.y,move.z,false,
+                        move.centerOffset.x,move.centerOffset.y,move.clockwise,
+                        move.axisA,move.axisB
+                    )
+                }
+            }
+        }
+        require(manual.size>=2){"AUTO CAM path required before manual adoption"}
+        return cam.settings.copy(pathMode=CamPathMode.MANUAL,manualPath=manual)
+    }
+
+    fun useAuto(settings:CamSettings):CamSettings =
+        settings.copy(pathMode=CamPathMode.AUTO)
+
+    fun useManual(settings:CamSettings):CamSettings {
+        require(settings.manualPath.size>=2){"Manual CAM path requires at least two points"}
+        return settings.copy(pathMode=CamPathMode.MANUAL)
+    }
+
+    fun replacePoint(
+        settings:CamSettings,index:Int,x:Double,y:Double,z:Double,rapid:Boolean
+    ):CamSettings {
+        require(index in settings.manualPath.indices){"Manual CAM point index out of range"}
+        require(x.isFinite() && y.isFinite() && z.isFinite()){"Manual CAM point must be finite"}
+        if(rapid) require(z+EPS>=settings.safeZ){"Rapid point must be at or above Safe-Z"}
+        else require(z<=EPS){"Cut/plunge point must be at or below Z0"}
+        val list=settings.manualPath.toMutableList()
+        val old=list[index]
+        list[index]=old.copy(x=x,y=y,z=z,rapid=rapid,arcI=null,arcJ=null,clockwise=null)
+        return settings.copy(pathMode=CamPathMode.MANUAL,manualPath=list)
+    }
+
+    fun insertPoint(settings:CamSettings,index:Int,point:ManualCamPoint):CamSettings {
+        require(index in 0..settings.manualPath.size){"Manual CAM insert index out of range"}
+        if(point.rapid) require(point.z+EPS>=settings.safeZ){"Rapid point must be at or above Safe-Z"}
+        else require(point.z<=EPS){"Cut/plunge point must be at or below Z0"}
+        val list=settings.manualPath.toMutableList()
+        list.add(index,point)
+        return settings.copy(pathMode=CamPathMode.MANUAL,manualPath=list)
+    }
+
+    fun deletePoint(settings:CamSettings,index:Int):CamSettings {
+        require(index in settings.manualPath.indices){"Manual CAM point index out of range"}
+        require(settings.manualPath.size>2){"Manual CAM path must keep at least two points"}
+        val list=settings.manualPath.toMutableList()
+        list.removeAt(index)
+        return settings.copy(pathMode=CamPathMode.MANUAL,manualPath=list)
+    }
+
+    fun insertAvoidance(
+        settings:CamSettings,
+        afterIndex:Int,
+        liftZ:Double,
+        landingX:Double,
+        landingY:Double,
+        landingZ:Double
+    ):CamSettings {
+        require(afterIndex in settings.manualPath.indices){"Avoidance insertion point out of range"}
+        require(liftZ.isFinite() && liftZ+EPS>=settings.safeZ){"Avoidance lift Z must be at or above Safe-Z"}
+        require(landingX.isFinite() && landingY.isFinite() && landingZ.isFinite() && landingZ<=EPS) {
+            "Avoidance landing point invalid"
+        }
+        val from=settings.manualPath[afterIndex]
+        val list=settings.manualPath.toMutableList()
+        val at=afterIndex+1
+        list.add(at,ManualCamPoint(from.x,from.y,liftZ,true,axisA=from.axisA,axisB=from.axisB))
+        list.add(at+1,ManualCamPoint(landingX,landingY,liftZ,true,axisA=from.axisA,axisB=from.axisB))
+        list.add(at+2,ManualCamPoint(landingX,landingY,landingZ,false,axisA=from.axisA,axisB=from.axisB))
+        return settings.copy(pathMode=CamPathMode.MANUAL,manualPath=list)
+    }
+}
+
 object CamEngine {
+    fun generateManual(
+        settings:CamSettings,
+        axisA:Double=0.0,
+        axisB:Double=0.0,
+        axisSchedule:MultiAxisOrientationSchedule?=null
+    ):List<Toolpath> {
+        require(settings.pathMode==CamPathMode.MANUAL){"Manual CAM mode not active"}
+        require(settings.manualPath.size>=2){"Manual CAM path requires at least two points"}
+        val total=settings.manualPath.size.coerceAtLeast(1)
+        val moves=settings.manualPath.mapIndexed { index,p ->
+            require(p.x.isFinite() && p.y.isFinite() && p.z.isFinite()){"Manual CAM point must be finite"}
+            require(p.axisA.isFinite() && p.axisB.isFinite() && abs(p.axisA)<=360.0 && abs(p.axisB)<=360.0) {
+                "Manual CAM A/B out of range"
+            }
+            if(p.rapid) {
+                require(p.z+EPS>=settings.safeZ){"Manual G0 below Safe-Z"}
+                require(p.arcI==null && p.arcJ==null && p.clockwise==null){"Rapid point cannot carry arc metadata"}
+            } else require(p.z<=EPS){"Manual cutting move above Z0"}
+            val progress=if(total<=1)1.0 else index.toDouble()/(total-1).toDouble()
+            val orientation=axisSchedule?.at(progress) ?: (p.axisA to p.axisB)
+            if(p.rapid) {
+                Rapid(Vec2(p.x,p.y),p.z,orientation.first,orientation.second)
+            } else if(p.arcI!=null || p.arcJ!=null || p.clockwise!=null) {
+                require(p.arcI!=null && p.arcJ!=null && p.clockwise!=null){"Incomplete manual arc metadata"}
+                ArcFeed(
+                    Vec2(p.x,p.y),Vec2(p.arcI,p.arcJ),p.clockwise,
+                    settings.feedMmMin,p.z,orientation.first,orientation.second
+                )
+            } else {
+                Feed(Vec2(p.x,p.y),settings.feedMmMin,p.z,orientation.first,orientation.second)
+            }
+        }
+        require(moves.first().rapid){"Manual CAM path must start with a Safe-Z rapid point"}
+        return listOf(Toolpath(moves))
+    }
+
     fun generate(
         snapshot: DrawingSnapshot,
         settings: CamSettings = CamSettings(),
