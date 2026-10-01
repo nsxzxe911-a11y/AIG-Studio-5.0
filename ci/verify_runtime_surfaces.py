@@ -255,6 +255,7 @@ for needle in (
 ):
     require(document, needle, "CAD_CONTROL_POINT_CORE")
 for needle in (
+    "private fun promptSelectedCenterEdit(center:Vec2)",
     "private fun promptControlPointEdit(control:CadControlPoint)",
     "private fun drawSelectedControlPoints(canvas:Canvas)",
     "CadControlPointEngine.nearest(doc,selectedIds,p",
@@ -264,6 +265,7 @@ for needle in (
 ):
     require(android, needle, "ANDROID_CAD_CONTROL_POINT_PICK_EDIT")
 for needle in (
+    "private fun editSelectionCenter(center:Vec2)",
     "private fun editControlPoint(control:CadControlPoint)",
     "CadControlPointEngine.nearest(doc,selectedIds,p",
     'pendingPickOperation="TRIM"',
@@ -271,8 +273,8 @@ for needle in (
     "private fun handlePendingPick(p:Vec2):Boolean",
 ):
     require(desktop, needle, "WINDOWS_CAD_CONTROL_POINT_PICK_EDIT")
-require(regression, "CAD_CONTROL_POINT_EDIT_GATE_PASS", "CAD_CONTROL_POINT_REGRESSION")
-print("CAD_CONTROL_POINT_RUNTIME_GATE_PASS|ANDROID|WINDOWS|ENDPOINT|CENTER|RADIUS|ARC_POINT|TWO_PICK_TRIM|TWO_PICK_EXTEND|UNDO_REDO")
+require(regression, "CAD_CONTROL_POINT_EDIT_GATE_PASS ENDPOINT CENTER RADIUS ARC_POINT SELECTION_CENTER_XY UNDO_REDO TOL=0.001", "CAD_CONTROL_POINT_REGRESSION")
+print("CAD_CONTROL_POINT_RUNTIME_GATE_PASS|ANDROID|WINDOWS|ENDPOINT|CENTER|RADIUS|ARC_POINT|SELECTION_CENTER_XY|TWO_PICK_TRIM|TWO_PICK_EXTEND|UNDO_REDO")
 
 
 for needle in (
