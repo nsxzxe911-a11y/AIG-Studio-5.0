@@ -2470,6 +2470,7 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument, camSettings:CamSet
         lineWrap = false
     }
     val machineInterlockSession = NcMachineInterlockSession()
+    val ncRotaryProfile = loadDesktopRotaryMachineProfile()
     val modalStatus = JLabel("MODAL • " + NcModalTracker.evidence(area.text)).apply {
         foreground = Color(255,210,90)
     }
@@ -2478,16 +2479,19 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument, camSettings:CamSet
     }
     fun refreshLineHelp() {
         val line = NcCodeCatalog.lineNumberAt(area.text, area.caretPosition)
-        lineHelp.text = "LINE HELP • " + NcCodeCatalog.lineHelp(area.text, line) + " • " + NcSemanticAuthority.lineEvidence(area.text, line, controllerProfile) + " • " + NcExecutionTimeline.lineEvidence(area.text, line, controllerProfile)
+        lineHelp.text = "LINE HELP • " +
+            NcCodeCatalog.lineHelp(area.text,line,ncRotaryProfile,RotaryAxisOperationMode.NONE) + " • " +
+            NcSemanticAuthority.lineEvidence(area.text,line,controllerProfile,ncRotaryProfile,RotaryAxisOperationMode.NONE) + " • " +
+            NcExecutionTimeline.lineEvidence(area.text,line,controllerProfile,rotaryClampProfile=ncRotaryProfile,rotaryMode=RotaryAxisOperationMode.NONE)
     }
     fun refreshModalStatus() {
-        val blocked = NcProgramSafetyPolicy.blocking(area.text)
+        val blocked = NcProgramSafetyPolicy.blocking(area.text,ncRotaryProfile,RotaryAxisOperationMode.NONE)
         val machine = machineInterlockSession.inspect(area.text)
         modalStatus.foreground = if (blocked.isEmpty() && machine.canExecute) Color(255,210,90) else Color(255,110,110)
         modalStatus.text = "MODAL • " + NcModalTracker.evidence(area.text) +
             " • AUX=" + NcAuxiliaryTracker.evidence(area.text) +
-            " • CODE=" + NcCodeCatalog.programLegend(area.text,12) +
-            " • " + CncControllerCapabilityMatrix.summary(controllerProfile, area.text) +
+            " • CODE=" + NcCodeCatalog.programLegend(area.text,12,ncRotaryProfile.allowedMCodes()) +
+            " • " + CncControllerCapabilityMatrix.summary(controllerProfile,area.text,ncRotaryProfile.allowedMCodes()) +
             (if (blocked.isEmpty()) " • SAFETY=PASS"
             else " • BLOCKED=" + blocked.take(4).joinToString(",") {
                 (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code
