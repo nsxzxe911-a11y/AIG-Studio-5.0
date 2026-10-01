@@ -37,6 +37,14 @@ data class RotaryAxisClampProfile(
     val explicit: Boolean get() = clampM != null && unclampM != null
     val configured: Boolean get() = controllerAutomatic || explicit
     fun allowedMCodes(): Set<String> = if (explicit) setOf("M" + clampM, "M" + unclampM) else emptySet()
+    fun actionFor(code: String): String? {
+        if (!explicit) return null
+        return when (code.uppercase()) {
+            "M" + clampM -> "ROTARY_CLAMP"
+            "M" + unclampM -> "ROTARY_UNCLAMP"
+            else -> null
+        }
+    }
 
     companion object {
         fun unconfigured(): RotaryAxisClampProfile = RotaryAxisClampProfile()
@@ -165,14 +173,14 @@ object CncControllerCapabilityMatrix {
     )
 
     private val trackedReview = setOf(
-        "G4","G5.1","G9","G10","G15","G16","G18","G19","G20",
+        "G4","G5.1","G9","G10","G15","G16","G18","G19","G20","G22","G23","G27",
         "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6",
         "G31","G31.1","G31.2","G31.3",
-        "G40.1","G41","G41.1","G41.2","G42","G42.1","G42.2","G44",
+        "G40.1","G41","G41.1","G41.2","G42","G42.1","G42.2","G44","G45","G46","G47","G48",
         "G43.1","G43.4","G43.5","G43.7",
         "G50","G50.1","G51","G51.1","G52","G53","G53.1","G53.6",
         "G54.1","G54.2","G54.4",
-        "G61","G61.1","G61.2","G61.4","G64",
+        "G60","G61","G61.1","G61.2","G61.4","G63","G64",
         "G65","G66","G66.1","G67",
         "G68","G68.2","G68.3","G69",
         "G74","G76","G82","G85","G86","G87","G88","G89",
@@ -181,9 +189,19 @@ object CncControllerCapabilityMatrix {
         "M0","M1","M2","M4","M7","M19","M29","M48","M49"
     )
 
-    fun classify(controller: CncControllerProfile, code: String): ControllerCapabilityDecision {
+    fun classify(
+        controller: CncControllerProfile,
+        code: String,
+        machineSpecificAllowed: Set<String> = emptySet()
+    ): ControllerCapabilityDecision {
         val normalized = code.uppercase()
         return when {
+            normalized in machineSpecificAllowed -> ControllerCapabilityDecision(
+                controller,
+                normalized,
+                ControllerCapabilityStatus.MODELED_ALLOWED,
+                "Machine-profile M-code is explicitly configured for this runtime; machine/controller profile remains authoritative."
+            )
             normalized in modeledAllowed -> ControllerCapabilityDecision(
                 controller,
                 normalized,
@@ -205,9 +223,13 @@ object CncControllerCapabilityMatrix {
         }
     }
 
-    fun summary(controller: CncControllerProfile, program: String): String {
+    fun summary(
+        controller: CncControllerProfile,
+        program: String,
+        machineSpecificAllowed: Set<String> = emptySet()
+    ): String {
         val decisions = (NcModalTracker.codes(program) + NcAuxiliaryTracker.codes(program))
-            .map { classify(controller,it.second) }
+            .map { classify(controller,it.second,machineSpecificAllowed) }
         val allowed = decisions.count { it.status == ControllerCapabilityStatus.MODELED_ALLOWED }
         val tracked = decisions.count { it.status == ControllerCapabilityStatus.TRACKED_REVIEW }
         val unknown = decisions.count { it.status == ControllerCapabilityStatus.UNKNOWN_FAIL_CLOSED }
@@ -229,8 +251,11 @@ data class NcCodeDescriptor(
 }
 
 object NcCodeCatalog {
-    fun describe(rawCode: String): NcCodeDescriptor {
+    fun describe(rawCode: String, machineSpecificAllowed: Set<String> = emptySet()): NcCodeDescriptor {
         val code = rawCode.uppercase()
+        if (code in machineSpecificAllowed && code.startsWith("M")) {
+            return NcCodeDescriptor(code,"MACH-AUX","MACHINE_AUX","Machine-profile configured auxiliary M-code")
+        }
         return when (code) {
             "G0" -> NcCodeDescriptor(code,"RAPID","MOTION","Rapid positioning")
             "G1" -> NcCodeDescriptor(code,"LINE","MOTION","Linear interpolation")
@@ -247,6 +272,9 @@ object NcCodeCatalog {
             "G19" -> NcCodeDescriptor(code,"YZ","PLANE","YZ plane")
             "G20" -> NcCodeDescriptor(code,"INCH","UNITS","Inch units")
             "G21" -> NcCodeDescriptor(code,"MM","UNITS","Millimetre units")
+            "G22" -> NcCodeDescriptor(code,"STROKE-ON","MACHINE_LIMIT","Stored-stroke check on")
+            "G23" -> NcCodeDescriptor(code,"STROKE-OFF","MACHINE_LIMIT","Stored-stroke check off")
+            "G27" -> NcCodeDescriptor(code,"REF-CHECK","REFERENCE","Reference-position return check")
             "G28" -> NcCodeDescriptor(code,"REF-1","REFERENCE","Reference return")
             "G29" -> NcCodeDescriptor(code,"REF-FROM","REFERENCE","Return from reference position")
             "G30" -> NcCodeDescriptor(code,"REF-2","REFERENCE","Second reference return")
@@ -269,6 +297,10 @@ object NcCodeCatalog {
             "G43.5" -> NcCodeDescriptor(code,"TCP-V","5X_TCP","Vector/tool center point control")
             "G43.7" -> NcCodeDescriptor(code,"TCP-X","5X_TCP","Extended tool center control")
             "G44" -> NcCodeDescriptor(code,"TLEN-NEG","TOOL_LENGTH","Tool length compensation negative")
+            "G45" -> NcCodeDescriptor(code,"OFF+","LEGACY_OFFSET","Increase tool offset")
+            "G46" -> NcCodeDescriptor(code,"OFF-","LEGACY_OFFSET","Decrease tool offset")
+            "G47" -> NcCodeDescriptor(code,"OFF++","LEGACY_OFFSET","Double increase tool offset")
+            "G48" -> NcCodeDescriptor(code,"OFF--","LEGACY_OFFSET","Double decrease tool offset")
             "G49" -> NcCodeDescriptor(code,"TLEN-OFF","TOOL_LENGTH","Tool length compensation cancel")
             "G50" -> NcCodeDescriptor(code,"SCALE-OFF","GEOMETRY_XFORM","Scaling cancel")
             "G51" -> NcCodeDescriptor(code,"SCALE","GEOMETRY_XFORM","Scaling")
@@ -282,8 +314,10 @@ object NcCodeCatalog {
             "G54.1" -> NcCodeDescriptor(code,"WCS-EXT","WORK_OFFSET","Extended work coordinate system")
             "G54.2" -> NcCodeDescriptor(code,"ROT-WCS","5X_OFFSET","Rotary-axis workpiece offset")
             "G54.4" -> NcCodeDescriptor(code,"INSTALL-COMP","5X_OFFSET","Workpiece installation error compensation")
+            "G60" -> NcCodeDescriptor(code,"UNI-POS","PATH","Single-direction positioning")
             "G61" -> NcCodeDescriptor(code,"EXACT-MODE","PATH","Exact stop mode")
             "G61.1","G61.2","G61.4" -> NcCodeDescriptor(code,"HI-ACC","PATH","Controller high-accuracy path mode")
+            "G63" -> NcCodeDescriptor(code,"TAP-MODE","PATH","Tapping mode")
             "G64" -> NcCodeDescriptor(code,"CONT","PATH","Continuous cutting mode")
             "G65" -> NcCodeDescriptor(code,"MACRO-CALL","MACRO","Non-modal macro call")
             "G66","G66.1" -> NcCodeDescriptor(code,"MACRO-MOD","MACRO","Modal macro call")
@@ -338,21 +372,21 @@ object NcCodeCatalog {
         }
     }
 
-    fun programLegend(program: String, limit: Int = 18): String {
+    fun programLegend(program: String, limit: Int = 18, machineSpecificAllowed: Set<String> = emptySet()): String {
         val codes = (NcModalTracker.codes(program) + NcAuxiliaryTracker.codes(program))
             .sortedBy { it.first }
             .map { it.second }
             .distinct()
-        val shown = codes.take(limit).joinToString(" | ") { describe(it).compact() }
+        val shown = codes.take(limit).joinToString(" | ") { describe(it,machineSpecificAllowed).compact() }
         return if (codes.size <= limit) shown else shown + " | +" + (codes.size-limit)
     }
 
     fun operatorPalette(): List<Pair<String,List<String>>> = listOf(
         "運動 / 平面" to listOf("G0","G1","G2","G3","G4","G9","G17","G18","G19"),
-        "單位 / 座標" to listOf("G20","G21","G52","G53","G54","G55","G56","G57","G58","G59","G54.1","G54.2","G54.4","G90","G91","G90.1","G91.1","G92","G92.1"),
-        "補償 / 5X" to listOf("G40","G41","G42","G43","G44","G49","G40.1","G41.1","G42.1","G41.2","G42.2","G43.1","G43.4","G43.5","G43.7","G53.1","G53.6","G150","G151","G152"),
+        "單位 / 座標" to listOf("G20","G21","G22","G23","G27","G52","G53","G54","G55","G56","G57","G58","G59","G54.1","G54.2","G54.4","G90","G91","G90.1","G91.1","G92","G92.1"),
+        "補償 / 5X" to listOf("G40","G41","G42","G43","G44","G45","G46","G47","G48","G49","G40.1","G41.1","G42.1","G41.2","G42.2","G43.1","G43.4","G43.5","G43.7","G53.1","G53.6","G150","G151","G152"),
         "鑽孔 / 循環" to listOf("G34","G73","G74","G76","G80","G81","G82","G83","G84","G85","G86","G87","G88","G89","G98","G99"),
-        "路徑 / 轉換 / 巨集" to listOf("G5.1","G10","G15","G16","G50","G50.1","G51","G51.1","G61","G61.1","G61.2","G61.4","G64","G65","G66","G66.1","G67","G68","G68.2","G68.3","G69","G93","G94","G95","G96","G97"),
+        "路徑 / 轉換 / 巨集" to listOf("G5.1","G10","G15","G16","G50","G50.1","G51","G51.1","G60","G61","G61.1","G61.2","G61.4","G63","G64","G65","G66","G66.1","G67","G68","G68.2","G68.3","G69","G93","G94","G95","G96","G97"),
         "M 碼" to listOf("M0","M1","M2","M3","M4","M5","M6","M7","M8","M9","M19","M29","M30","M48","M49","M98","M99")
     )
 
@@ -366,7 +400,12 @@ object NcCodeCatalog {
             .map { it.second }
             .distinct()
 
-    fun lineHelp(program: String, lineNumber: Int): String {
+    fun lineHelp(
+        program: String,
+        lineNumber: Int,
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
+    ): String {
         val lines = program.split("\n")
         if (lineNumber !in 1..lines.size) return "LINE " + lineNumber + " • OUT OF RANGE"
         val raw = lines[lineNumber - 1]
@@ -375,11 +414,11 @@ object NcCodeCatalog {
             "NO G/M CODE"
         } else {
             codes.joinToString(" • ") { code ->
-                val d = describe(code)
+                val d = describe(code,rotaryClampProfile.allowedMCodes())
                 d.compact() + " [" + d.layer + "] " + d.meaning
             }
         }
-        val blocked = NcProgramSafetyPolicy.blocking(program).filter { it.lineNumber == lineNumber }
+        val blocked = NcProgramSafetyPolicy.blocking(program,rotaryClampProfile,rotaryMode).filter { it.lineNumber == lineNumber }
         val safety = if (blocked.isEmpty()) {
             "SAFETY=PASS"
         } else {
@@ -408,8 +447,12 @@ data class NcAnimationCue(
 }
 
 object NcAnimationBridge {
-    fun actionFor(rawCode: String): String {
+    fun actionFor(
+        rawCode: String,
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured()
+    ): String {
         val code = rawCode.uppercase()
+        rotaryClampProfile.actionFor(code)?.let { return it }
         return when (code) {
             "G0" -> "RAPID_MOVE"
             "G1" -> "CUT_LINEAR"
@@ -433,25 +476,35 @@ object NcAnimationBridge {
             "M2","M30" -> "PROGRAM_END"
             "M98" -> "SUBPROGRAM_CALL"
             "M99" -> "SUBPROGRAM_RETURN"
-            else -> if (NcCodeCatalog.describe(code).layer == "UNKNOWN") "UNSUPPORTED" else "STATE_SYNC"
+            else -> if (NcCodeCatalog.describe(code,rotaryClampProfile.allowedMCodes()).layer == "UNKNOWN") "UNSUPPORTED" else "STATE_SYNC"
         }
     }
 
-    fun cuesForLine(program: String, lineNumber: Int): List<NcAnimationCue> {
+    fun cuesForLine(
+        program: String,
+        lineNumber: Int,
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
+    ): List<NcAnimationCue> {
         val lines = program.split("\n")
         if (lineNumber !in 1..lines.size) return emptyList()
-        val safety = NcProgramSafetyPolicy.blocking(program)
+        val safety = NcProgramSafetyPolicy.blocking(program,rotaryClampProfile,rotaryMode)
             .filter { it.lineNumber == lineNumber }
             .map { it.code }
             .distinct()
         return NcCodeCatalog.codesInLine(lines[lineNumber - 1]).map { code ->
-            val d = NcCodeCatalog.describe(code)
-            NcAnimationCue(lineNumber, code, actionFor(code), d.layer, safety.isNotEmpty(), safety)
+            val d = NcCodeCatalog.describe(code,rotaryClampProfile.allowedMCodes())
+            NcAnimationCue(lineNumber, code, actionFor(code,rotaryClampProfile), d.layer, safety.isNotEmpty(), safety)
         }
     }
 
-    fun lineEvidence(program: String, lineNumber: Int): String {
-        val cues = cuesForLine(program, lineNumber)
+    fun lineEvidence(
+        program: String,
+        lineNumber: Int,
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
+    ): String {
+        val cues = cuesForLine(program,lineNumber,rotaryClampProfile,rotaryMode)
         if (cues.isEmpty()) return "ANIM L" + lineNumber + " • NO G/M EVENT"
         val blocked = cues.flatMap { it.safetyCodes }.distinct()
         if (blocked.isNotEmpty()) {
@@ -460,15 +513,20 @@ object NcAnimationBridge {
         return "ANIM L" + lineNumber + " • " + cues.joinToString(" | ") { it.compact() }
     }
 
-    fun programSummary(program: String, limit: Int = 12): String {
-        val blocked = NcProgramSafetyPolicy.blocking(program)
+    fun programSummary(
+        program: String,
+        limit: Int = 12,
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
+    ): String {
+        val blocked = NcProgramSafetyPolicy.blocking(program,rotaryClampProfile,rotaryMode)
         if (blocked.isNotEmpty()) {
             return "NC→3D ANIM BLOCKED • " + blocked.take(4).joinToString(",") {
                 (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code
             }
         }
         val cues = program.split("\n").indices
-            .flatMap { index -> cuesForLine(program, index + 1) }
+            .flatMap { index -> cuesForLine(program,index + 1,rotaryClampProfile,rotaryMode) }
             .filter { it.action != "STATE_SYNC" }
             .distinctBy { it.code + "|" + it.action }
         if (cues.isEmpty()) return "NC→3D ANIM READY • STATE_SYNC_ONLY"
@@ -504,9 +562,10 @@ object NcSemanticAuthority {
         code: String,
         safetyCodes: List<String>,
         capabilityStatus: ControllerCapabilityStatus,
-        animationAction: String
+        animationAction: String,
+        machineSpecificAllowed: Set<String> = emptySet()
     ): List<String> {
-        val descriptor = NcCodeCatalog.describe(code)
+        val descriptor = NcCodeCatalog.describe(code,machineSpecificAllowed)
         val issues = mutableListOf<String>()
         val unknown = descriptor.layer == "UNKNOWN"
         val unknownSafety = safetyCodes.any { it.startsWith("UNKNOWN_") }
@@ -532,14 +591,15 @@ object NcSemanticAuthority {
     private fun animationEvidence(
         lineNumber: Int,
         codes: List<String>,
-        safetyCodes: List<String>
+        safetyCodes: List<String>,
+        rotaryClampProfile: RotaryAxisClampProfile
     ): String {
         if (codes.isEmpty()) return "ANIM L" + lineNumber + " • NO G/M EVENT"
         if (safetyCodes.isNotEmpty()) {
             return "ANIM L" + lineNumber + " • BLOCKED=" + safetyCodes.joinToString(",")
         }
         return "ANIM L" + lineNumber + " • " + codes.joinToString(" | ") { code ->
-            code + "=>" + NcAnimationBridge.actionFor(code)
+            code + "=>" + NcAnimationBridge.actionFor(code,rotaryClampProfile)
         }
     }
 
@@ -547,7 +607,8 @@ object NcSemanticAuthority {
         lines: List<String>,
         lineNumber: Int,
         controller: CncControllerProfile,
-        safetyByLine: Map<Int,List<String>>
+        safetyByLine: Map<Int,List<String>>,
+        rotaryClampProfile: RotaryAxisClampProfile
     ): NcSemanticAuthorityResult {
         if (lineNumber !in 1..lines.size) {
             return NcSemanticAuthorityResult(
@@ -565,8 +626,9 @@ object NcSemanticAuthority {
             consistencyIssues(
                 code,
                 safetyCodes,
-                CncControllerCapabilityMatrix.classify(controller, code).status,
-                NcAnimationBridge.actionFor(code)
+                CncControllerCapabilityMatrix.classify(controller,code,rotaryClampProfile.allowedMCodes()).status,
+                NcAnimationBridge.actionFor(code,rotaryClampProfile),
+                rotaryClampProfile.allowedMCodes()
             )
         }.distinct()
 
@@ -575,46 +637,54 @@ object NcSemanticAuthority {
             codes,
             safetyCodes,
             conflicts,
-            animationEvidence(lineNumber, codes, safetyCodes)
+            animationEvidence(lineNumber,codes,safetyCodes,rotaryClampProfile)
         )
     }
 
     fun resolveLine(
         program: String,
         lineNumber: Int,
-        controller: CncControllerProfile
+        controller: CncControllerProfile,
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
     ): NcSemanticAuthorityResult {
         val lines = program.split("\n")
-        val safetyByLine = NcProgramSafetyPolicy.blocking(program)
+        val safetyByLine = NcProgramSafetyPolicy.blocking(program,rotaryClampProfile,rotaryMode)
             .groupBy { it.lineNumber }
             .mapValues { (_, findings) -> findings.map { it.code }.distinct() }
-        return resolvePrepared(lines, lineNumber, controller, safetyByLine)
+        return resolvePrepared(lines,lineNumber,controller,safetyByLine,rotaryClampProfile)
     }
 
     fun resolveProgram(
         program: String,
-        controller: CncControllerProfile
+        controller: CncControllerProfile,
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
     ): List<NcSemanticAuthorityResult> {
         val lines = program.split("\n")
-        val safetyByLine = NcProgramSafetyPolicy.blocking(program)
+        val safetyByLine = NcProgramSafetyPolicy.blocking(program,rotaryClampProfile,rotaryMode)
             .groupBy { it.lineNumber }
             .mapValues { (_, findings) -> findings.map { it.code }.distinct() }
         return lines.indices.map { index ->
-            resolvePrepared(lines, index + 1, controller, safetyByLine)
+            resolvePrepared(lines,index + 1,controller,safetyByLine,rotaryClampProfile)
         }
     }
 
     fun lineEvidence(
         program: String,
         lineNumber: Int,
-        controller: CncControllerProfile
-    ): String = resolveLine(program, lineNumber, controller).evidence()
+        controller: CncControllerProfile,
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
+    ): String = resolveLine(program,lineNumber,controller,rotaryClampProfile,rotaryMode).evidence()
 
     fun programSummary(
         program: String,
-        controller: CncControllerProfile
+        controller: CncControllerProfile,
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
     ): String {
-        val results = resolveProgram(program, controller)
+        val results = resolveProgram(program,controller,rotaryClampProfile,rotaryMode)
         val conflicts = results.flatMap { it.conflictCodes }.distinct()
         if (conflicts.isNotEmpty()) {
             return "NC SEMANTIC AUTHORITY • CONFLICT BLOCKED • " + conflicts.take(6).joinToString(",")
@@ -626,7 +696,7 @@ object NcSemanticAuthority {
             return "NC SEMANTIC AUTHORITY • SAFETY BLOCKED • " + safety.take(6).joinToString(",")
         }
         val activeCodes = results.flatMap { it.codes }.distinct()
-        val animations = activeCodes.map { code -> code + "=>" + NcAnimationBridge.actionFor(code) }
+        val animations = activeCodes.map { code -> code + "=>" + NcAnimationBridge.actionFor(code,rotaryClampProfile) }
             .filterNot { it.endsWith("=>STATE_SYNC") }
         return "NC SEMANTIC AUTHORITY • CONSENSUS PASS • " +
             if (animations.isEmpty()) "STATE_SYNC_ONLY" else animations.take(12).joinToString(" | ")
@@ -1110,6 +1180,8 @@ object NcExecutionTimeline {
             setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.COOLANT)
         "TOOL_CHANGE" ->
             setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.TOOL_CHANGE)
+        "ROTARY_CLAMP","ROTARY_UNCLAMP" ->
+            setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.AXIS_5X, NcExecutionDomain.PROGRAM_CONTROL)
         "PROGRAM_PAUSE","PROGRAM_END","SUBPROGRAM_CALL","SUBPROGRAM_RETURN" ->
             setOf(NcExecutionDomain.NC_CURSOR, NcExecutionDomain.PROGRAM_CONTROL)
         "INTERLOCK_HALT" -> setOf(
@@ -1128,12 +1200,14 @@ object NcExecutionTimeline {
     fun build(
         program: String,
         controller: CncControllerProfile,
-        machineLimits: NcMachineTravelLimits = NcMachineTravelLimits()
+        machineLimits: NcMachineTravelLimits = NcMachineTravelLimits(),
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
     ): List<NcExecutionEvent> {
         val lines = program.split("\n")
         val out = mutableListOf<NcExecutionEvent>()
         val runtimeInterlocks = NcRuntimeInterlock.findings(program, machineLimits).groupBy { it.lineNumber }
-        val authorityByLine = NcSemanticAuthority.resolveProgram(program, controller).associateBy { it.lineNumber }
+        val authorityByLine = NcSemanticAuthority.resolveProgram(program,controller,rotaryClampProfile,rotaryMode).associateBy { it.lineNumber }
         var halted = false
         var sequence = 1
 
@@ -1149,7 +1223,7 @@ object NcExecutionTimeline {
             val blockedHere = reasons.isNotEmpty()
 
             effectiveCodes.forEach { code ->
-                val action = if (code == "INPUT") "INTERLOCK_HALT" else NcAnimationBridge.actionFor(code)
+                val action = if (code == "INPUT") "INTERLOCK_HALT" else NcAnimationBridge.actionFor(code,rotaryClampProfile)
                 val status = when {
                     halted -> "SKIPPED_AFTER_BLOCK"
                     blockedHere -> "BLOCKED"
@@ -1176,16 +1250,20 @@ object NcExecutionTimeline {
         program: String,
         lineNumber: Int,
         controller: CncControllerProfile,
-        machineLimits: NcMachineTravelLimits = NcMachineTravelLimits()
-    ): List<NcExecutionEvent> = build(program, controller, machineLimits).filter { it.lineNumber == lineNumber }
+        machineLimits: NcMachineTravelLimits = NcMachineTravelLimits(),
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
+    ): List<NcExecutionEvent> = build(program,controller,machineLimits,rotaryClampProfile,rotaryMode).filter { it.lineNumber == lineNumber }
 
     fun lineEvidence(
         program: String,
         lineNumber: Int,
         controller: CncControllerProfile,
-        machineLimits: NcMachineTravelLimits = NcMachineTravelLimits()
+        machineLimits: NcMachineTravelLimits = NcMachineTravelLimits(),
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
     ): String {
-        val events = lineEvents(program, lineNumber, controller, machineLimits)
+        val events = lineEvents(program,lineNumber,controller,machineLimits,rotaryClampProfile,rotaryMode)
         if (events.isEmpty()) return "TIMELINE L" + lineNumber + " • NO EVENT"
         return "TIMELINE L" + lineNumber + " • " + events.joinToString(" | ") { it.compact() }
     }
@@ -1193,9 +1271,11 @@ object NcExecutionTimeline {
     fun programSummary(
         program: String,
         controller: CncControllerProfile,
-        machineLimits: NcMachineTravelLimits = NcMachineTravelLimits()
+        machineLimits: NcMachineTravelLimits = NcMachineTravelLimits(),
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
+        rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
     ): String {
-        val events = build(program, controller, machineLimits)
+        val events = build(program,controller,machineLimits,rotaryClampProfile,rotaryMode)
         val blocked = events.firstOrNull { it.status == "BLOCKED" }
         if (blocked != null) {
             val skipped = events.count { it.status == "SKIPPED_AFTER_BLOCK" }
@@ -1353,6 +1433,8 @@ object NcModalTracker {
                     "G4" -> { group = "DWELL_NONMODAL"; state }
                     "G5.1" -> { group = "HIGH_ACCURACY_PATH"; state.copy(highAccuracyMode = "G5.1") }
                     "G10" -> { group = "CONTROLLER_DATA_NONMODAL"; state }
+                    "G22","G23" -> { group = "STORED_STROKE_CHECK"; state }
+                    "G27" -> { group = "REFERENCE_CHECK_NONMODAL"; state }
                     "G9" -> { group = "EXACT_STOP_NONMODAL"; state }
                     "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6" -> {
                         group = "REFERENCE_RETURN_NONMODAL"; state
@@ -1372,7 +1454,10 @@ object NcModalTracker {
                     "G51" -> { group = "SCALING"; state.copy(scalingMode = "G51") }
                     "G50.1" -> { group = "MIRROR"; state.copy(mirrorMode = "G50.1") }
                     "G51.1" -> { group = "MIRROR"; state.copy(mirrorMode = "G51.1") }
+                    "G45","G46","G47","G48" -> { group = "LEGACY_OFFSET_SHIFT"; state }
+                    "G60" -> { group = "SINGLE_DIRECTION_POSITIONING"; state }
                     "G61.1","G61.2","G61.4" -> { group = "HIGH_ACCURACY_PATH"; state.copy(highAccuracyMode = code) }
+                    "G63" -> { group = "TAPPING_MODE"; state }
                     "G65" -> { group = "MACRO_CALL_NONMODAL"; state }
                     "G68.2","G68.3" -> { group = "INCLINED_SURFACE_TRANSFORM"; state }
                     "G92.1" -> { group = "WORK_COORD_PRESET_NONMODAL"; state }
@@ -1464,15 +1549,15 @@ data class NcModalSafetyFinding(
 object NcModalSafetyPolicy {
     private val knownExecutionCodes = setOf(
         "G0","G1","G2","G3","G4","G5.1","G9","G10","G15","G16",
-        "G17","G18","G19","G20","G21",
+        "G17","G18","G19","G20","G21","G22","G23","G27",
         "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6",
         "G31","G31.1","G31.2","G31.3",
         "G34",
-        "G40","G40.1","G41","G41.1","G41.2","G42","G42.1","G42.2","G44",
+        "G40","G40.1","G41","G41.1","G41.2","G42","G42.1","G42.2","G44","G45","G46","G47","G48",
         "G43","G43.1","G43.4","G43.5","G43.7","G49",
         "G50","G50.1","G51","G51.1","G52","G53","G53.1","G53.6",
         "G54","G54.1","G54.2","G54.4","G55","G56","G57","G58","G59",
-        "G61","G61.1","G61.2","G61.4","G64","G65","G66","G66.1","G67",
+        "G60","G61","G61.1","G61.2","G61.4","G63","G64","G65","G66","G66.1","G67",
         "G68","G68.2","G68.3","G69",
         "G73","G74","G76","G80","G81","G82","G83","G84","G85","G86","G87","G88","G89",
         "G90","G90.1","G91","G91.1","G92","G92.1","G93","G94","G95","G96","G97","G98","G99",
@@ -1492,6 +1577,8 @@ object NcModalSafetyPolicy {
                 "G10" -> add(e,"G10_DATA_SETTING_BLOCKED","Programmable offset/data writes are controller state changes and are blocked until an explicit verified controller-data model is selected.")
                 "G15","G16" -> add(e,"POLAR_COORD_UNSIMULATED","Polar-coordinate programming is recognized but not yet transformed into canonical CAM/SIM coordinates.")
                 "G20" -> add(e,"G20_INCH_MODE","Canonical AIG CAD/CAM/SIM data is millimetre based; inch execution is not verified.")
+                "G22","G23" -> add(e,"STORED_STROKE_CHECK_UNVERIFIED","Stored-stroke-check control is machine/controller specific and is not modeled by the current verified machine-envelope runtime.")
+                "G27" -> add(e,"G27_REFERENCE_CHECK_UNSIMULATED","Reference-position check depends on verified machine coordinates and is not represented by canonical CAM/SIM.")
                 "G93" -> add(e,"G93_INVERSE_TIME_UNVERIFIED","Inverse-time feed is not yet represented by the current CAM/SIM feed model.")
                 "G95" -> add(e,"G95_FEED_PER_REV_UNVERIFIED","Feed-per-revolution is not yet represented by the current CAM/SIM feed model.")
                 "G53" -> add(e,"G53_MACHINE_COORD_UNSIMULATED","Machine-coordinate motion bypasses work offsets and is not represented by current CAM/SIM.")
@@ -1499,6 +1586,9 @@ object NcModalSafetyPolicy {
                 "G92" -> add(e,"G92_ORIGIN_UNVERIFIED","Temporary origin transform is tracked but controller-specific execution semantics are not yet verified.")
                 "G41","G42" -> add(e,"G41_G42_DOUBLE_COMP_RISK","Controller cutter compensation is blocked while the current CAM path already contains geometric radius compensation.")
                 "G44" -> add(e,"G44_NEGATIVE_TOOL_LENGTH_UNVERIFIED","Negative tool-length compensation is recognized but not represented by the current positive-H CAM/SIM tool-length model.")
+                "G45","G46","G47","G48" -> add(e,"LEGACY_TOOL_OFFSET_SHIFT_UNSIMULATED","Legacy tool-offset shift modes change effective motion and are not represented by canonical CAM/SIM.")
+                "G60" -> add(e,"G60_SINGLE_DIRECTION_UNSIMULATED","Single-direction positioning can alter approach/backlash behavior and is not represented by canonical CAM/SIM.")
+                "G63" -> add(e,"G63_TAPPING_MODE_UNVERIFIED","Tapping mode is controller specific and is not represented by the current feed/spindle synchronization model.")
                 "G74","G76" -> add(e,"CYCLE_VARIANT_UNVERIFIED","This fixed-cycle variant is recognized but its controller-specific motion/return behavior is not yet simulated.")
                 "G90.1" -> add(e,"G90_1_ARC_CENTER_ABSOLUTE_UNVERIFIED","Absolute arc-center mode is recognized; canonical arc execution currently verifies incremental I/J semantics.")
                 "G99" -> add(e,"G99_RETURN_UNSIMULATED","R-point canned-cycle return is not yet represented by the current SIM return-path model; generated cycles use explicit G98.")
@@ -1624,7 +1714,11 @@ object NcControlEffectPolicy {
         return if (hasEffect) emptyList() else listOf("NO_EFFECT_CONTROL_CODE:" + code)
     }
 
-    fun blocking(program: String, machineSpecificAllowed: Set<String> = emptySet()): List<NcModalSafetyFinding> {
+    fun blocking(
+        program: String,
+        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured()
+    ): List<NcModalSafetyFinding> {
+        val machineSpecificAllowed = rotaryClampProfile.allowedMCodes()
         val baseSafety =
             (NcModalSafetyPolicy.blocking(program) + NcAuxiliarySafetyPolicy.blocking(program,machineSpecificAllowed))
                 .distinctBy { Triple(it.lineNumber,it.code,it.message) }
@@ -1639,7 +1733,7 @@ object NcControlEffectPolicy {
             NcCodeCatalog.codesInLine(raw).forEach { code ->
                 val modalGroup = modal[lineNumber to code]?.group
                 val auxiliaryGroup = auxiliary[lineNumber to code]?.group
-                val action = NcAnimationBridge.actionFor(code)
+                val action = NcAnimationBridge.actionFor(code,rotaryClampProfile)
                 consistencyIssues(code, blockedBySafety, modalGroup, auxiliaryGroup, action)
                     .forEach { issue ->
                         findings += NcModalSafetyFinding(
@@ -1672,7 +1766,7 @@ object NcProgramSafetyPolicy {
         return (
             NcModalSafetyPolicy.blocking(program) +
             NcAuxiliarySafetyPolicy.blocking(program,allowed) +
-            NcControlEffectPolicy.blocking(program,allowed) +
+            NcControlEffectPolicy.blocking(program,rotaryClampProfile) +
             RotaryAxisClampPolicy.blocking(program,rotaryMode,rotaryClampProfile)
         ).distinctBy { Triple(it.lineNumber,it.code,it.message) }
     }
