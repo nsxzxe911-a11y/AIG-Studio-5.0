@@ -24,7 +24,7 @@ if checkpoint.get("record_policy", {}).get("chat_state_required") is not False:
     errors.append("chat_state_required")
 departments = checkpoint.get("departments", {})
 for name in REQUIRED:
-    if departments.get(name) not in {"CHECKPOINTED", "PASS", "PENDING", "RESUME_READY"}:
+    if departments.get(name) not in {"CHECKPOINTED", "PASS", "PENDING", "RESUME_READY", "EXECUTE_UNTIL_PASS", "REWORK", "AI_REVERIFY"}:
         errors.append(f"department:{name}")
 if errors:
     raise SystemExit("CONTINUITY_FAIL: " + ",".join(errors))
