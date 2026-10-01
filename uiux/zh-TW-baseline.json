@@ -91,7 +91,7 @@
     "CONTINUITY"
   ],
   "library_manifest": "uiux/aig-image-library.json",
-  "release_version": "269.0.0",
+  "release_version": "270.0.0",
   "continuity_contract": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "red_status_nonblocking_for": [
@@ -127,5 +127,11 @@
     "announcement": "所有部門快取更新以 XML 內容、revision、SHA-256 digest、source exact SHA 為標準；禁止只看加工時間/mtime/lastModified 判斷。",
     "canonical": "continuity/cache-update-standard.xml",
     "time_fields": "僅供顯示與診斷，不具更新決策權"
+  },
+  "review_acceleration_notice": {
+    "mode": "快審核 / Android / Windows 三線平行",
+    "cache": "Android SDK 本機快取優先，缺少才使用網路補齊",
+    "failure": "只打回失敗責任部門，其餘部門繼續",
+    "standard": "不降低 CNC 安全、完整性、編譯與 exact SHA 驗證"
   }
 }
