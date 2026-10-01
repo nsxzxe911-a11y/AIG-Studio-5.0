@@ -2752,7 +2752,7 @@ class MainActivity : Activity() {
             inlineNcStatus.text=
                 (if(ncDryRun)"DRY RUN" else "SINGLE BLOCK")+
                 " • LINE "+(inlinePreviewLine+1)+" • "+lines[inlinePreviewLine].trim()+"\n"+
-                NcExecutionTimeline.lineEvidence(program,inlinePreviewLine+1,controllerProfile)
+                NcExecutionTimeline.lineEvidence(program,inlinePreviewLine+1,controllerProfile,rotaryClampProfile=rotaryClampProfile,rotaryMode=currentRotaryOperationMode())
             inlinePreviewLine++
         }
 
@@ -3675,8 +3675,8 @@ class MainActivity : Activity() {
             modalStatus.setTextColor(if (blocked.isEmpty() && machine.canExecute) Color.rgb(255,210,90) else Color.rgb(255,110,110))
             modalStatus.text = "MODAL • " + NcModalTracker.evidence(program) +
                 "\nAUX • " + NcAuxiliaryTracker.evidence(program) +
-                "\nCODE • " + NcCodeCatalog.programLegend(program) +
-                "\n" + CncControllerCapabilityMatrix.summary(controllerProfile, program) +
+                "\nCODE • " + NcCodeCatalog.programLegend(program,machineSpecificAllowed=rotaryClampProfile.allowedMCodes()) +
+                "\n" + CncControllerCapabilityMatrix.summary(controllerProfile,program,rotaryClampProfile.allowedMCodes()) +
                 (if (blocked.isEmpty()) " • SAFETY=PASS"
                 else "\nBLOCKED • " + blocked.take(4).joinToString(" • ") {
                     (if (it.lineNumber > 0) "L" + it.lineNumber + " " else "") + it.code
@@ -3691,7 +3691,10 @@ class MainActivity : Activity() {
         fun refreshLineHelp() {
             val program = editor.text.toString()
             val line = NcCodeCatalog.lineNumberAt(program, editor.selectionStart.coerceAtLeast(0))
-            lineHelp.text = "LINE HELP • " + NcCodeCatalog.lineHelp(program, line) + "\n" + NcSemanticAuthority.lineEvidence(program, line, controllerProfile) + "\n" + NcExecutionTimeline.lineEvidence(program, line, controllerProfile)
+            lineHelp.text = "LINE HELP • " +
+                NcCodeCatalog.lineHelp(program,line,rotaryClampProfile,currentRotaryOperationMode()) + "\n" +
+                NcSemanticAuthority.lineEvidence(program,line,controllerProfile,rotaryClampProfile,currentRotaryOperationMode()) + "\n" +
+                NcExecutionTimeline.lineEvidence(program,line,controllerProfile,rotaryClampProfile=rotaryClampProfile,rotaryMode=currentRotaryOperationMode())
         }
         editor.setOnClickListener { editor.post { refreshLineHelp() } }
         refreshLineHelp()
@@ -3750,7 +3753,7 @@ class MainActivity : Activity() {
             refreshLineHelp()
             editor.post { editor.bringPointIntoView(start.coerceAtMost(editor.length())) }
             previewStatus.text = (if (ncDryRun) "DRY RUN" else "NC PREVIEW") +
-                " • BLOCK " + (previewLine + 1) + " • " + lines[previewLine].trim() + "\n" + NcExecutionTimeline.lineEvidence(editor.text.toString(), previewLine + 1, controllerProfile)
+                " • BLOCK " + (previewLine + 1) + " • " + lines[previewLine].trim() + "\n" + NcExecutionTimeline.lineEvidence(editor.text.toString(),previewLine + 1,controllerProfile,rotaryClampProfile=rotaryClampProfile,rotaryMode=currentRotaryOperationMode())
             previewLine++
         }
         box.addView(previewStatus)
@@ -3947,7 +3950,7 @@ class MainActivity : Activity() {
                             cutterCompensation = ncCutterCompensation
                         )
                     )
-                    NcExecutionTimeline.programSummary(program, controllerProfile)
+                    NcExecutionTimeline.programSummary(program,controllerProfile,rotaryClampProfile=rotaryClampProfile,rotaryMode=currentRotaryOperationMode())
                 }.getOrElse { error ->
                     "NC→3D ANIM BLOCKED • NC_POST=" + (error.message ?: "error")
                 }
