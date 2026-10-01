@@ -65,7 +65,7 @@ data class SharedProjectObservation(
 
 object SharedProjectFolderSync {
     const val POLICY="FOLDER_TRANSPORT_REVISION_WATCH_NO_AUTO_APPLY"
-    const val POLL_INTERVAL_MS=1500L
+    const val POLL_INTERVAL_MS=3000L
     const val AUTO_APPLY=false
     const val NETWORK_REQUIRED=false
 
