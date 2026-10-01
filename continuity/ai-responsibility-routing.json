@@ -1,0 +1,73 @@
+{
+  "schema": "aig-ai-responsibility-routing-v1",
+  "product": "AIG Studio 5.0",
+  "version": "266.0.0",
+  "detector": "AI",
+  "principle": "AI_DETECTS_CLASSIFIES_RETURNS_REWORK_REVERIFIES; OWNER_DEPARTMENT_FIXES",
+  "lifecycle": [
+    "EXECUTE",
+    "AI_AUTOCHECK",
+    "ASSIGN_OWNER",
+    "RETURN_FOR_REWORK",
+    "OWNER_REDO",
+    "AI_REVERIFY",
+    "PASS_COMPLETE"
+  ],
+  "close_rule": "ONLY_AI_REVERIFY_PASS_CAN_MARK_COMPLETE",
+  "ownership": {
+    "HOME_ROUTING": "HOME",
+    "STARTUP_RUNTIME_ENTRY": "HOME",
+    "CAD_GEOMETRY": "CAD",
+    "CAD_SNAP_DIM_EDIT": "CAD",
+    "CAM_TOOLPATH": "CAM",
+    "CAM_SAFE_Z_TOOLING": "CAM",
+    "SIM_MATERIAL_REMOVAL": "SIM",
+    "SIM_COLLISION_PLAYBACK": "SIM",
+    "AXIS3_KINEMATICS": "3AX",
+    "AXIS4_A_ROTATION": "4AX",
+    "AXIS5_AB_TCP": "5AX",
+    "NC_FANUC_POST": "NC",
+    "NC_GCODE_SAFETY": "NC",
+    "AI_UPDATE_RECOVERY": "AI",
+    "UI_LAYOUT_THEME_LANGUAGE": "UIUX",
+    "ANDROID_COMPILE_PACKAGE_LAUNCH": "ANDROID_BUILD",
+    "WINDOWS_COMPILE_PACKAGE_LAUNCH": "WINDOWS_BUILD",
+    "WEB_RUNTIME_PREVIEW": "WEB"
+  },
+  "external_conditions": {
+    "NETWORK": {
+      "owner": null,
+      "action": "DEFER_ONLY_NETWORK_SUBSTEP",
+      "product_failure": false,
+      "other_departments_continue": true
+    },
+    "INFRASTRUCTURE": {
+      "owner": null,
+      "action": "DEFER_ONLY_INFRA_SUBSTEP",
+      "product_failure": false,
+      "other_departments_continue": true
+    },
+    "UI_STATUS": {
+      "owner": "UIUX",
+      "action": "RETURN_FOR_REWORK",
+      "product_failure": false,
+      "other_departments_continue": true
+    }
+  },
+  "rework_policy": {
+    "return_to_owner": true,
+    "include_reason": true,
+    "include_evidence": true,
+    "include_failed_check": true,
+    "resume_from_last_checkpoint": true,
+    "unrelated_departments_continue": true,
+    "max_attempts": "UNTIL_PASS_OR_EXPLICIT_PRODUCT_BLOCKER",
+    "network_is_never_default_owner": true
+  },
+  "completion_policy": {
+    "department_complete_requires_pass": true,
+    "all_departments_complete_requires_all_pass": true,
+    "command_stays_active_until_complete": true,
+    "no_chat_state_dependency": true
+  }
+}
