@@ -1656,6 +1656,10 @@ class MainActivity : Activity() {
     }
 
     private fun showThemePackDialog() {
+        fun themeStatus(message:String) {
+            if(::networkStateBadge.isInitialized) networkStateBadge.text=message
+            else Toast.makeText(this,message,Toast.LENGTH_SHORT).show()
+        }
         val plan=AiLayoutComposerContract.compose(
             resources.configuration.screenWidthDp.coerceAtLeast(1),
             resources.configuration.screenHeightDp.coerceAtLeast(1),
@@ -1680,11 +1684,11 @@ class MainActivity : Activity() {
                         RgbGlowButton.refreshThemeAll()
                         window.decorView.setBackgroundColor(applied.background)
                         window.decorView.invalidate()
-                        status.text="THEME HOT SWAP • "+applied.name+" • NO RESTART"
+                        themeStatus("THEME HOT SWAP • "+applied.name+" • NO RESTART")
                     }.onFailure {
                         val restored=StudioThemePackRuntime.rollback()
                         RgbGlowButton.refreshThemeAll()
-                        status.text="THEME ROLLBACK • "+restored.name+" • RUNTIME CONTINUES"
+                        themeStatus("THEME ROLLBACK • "+restored.name+" • RUNTIME CONTINUES")
                     }
                 }
             })
@@ -1695,7 +1699,7 @@ class MainActivity : Activity() {
             setOnClickListener{
                 getSharedPreferences("aig_environment",MODE_PRIVATE).edit()
                     .putBoolean("ai_layout_enabled",true).apply()
-                status.text="AI LAYOUT ENABLED • "+plan.deviceClass+" • STABLE ORDER • NO CORE MUTATION"
+                themeStatus("AI LAYOUT ENABLED • "+plan.deviceClass+" • STABLE ORDER • NO CORE MUTATION")
             }
         })
         AlertDialog.Builder(this)
