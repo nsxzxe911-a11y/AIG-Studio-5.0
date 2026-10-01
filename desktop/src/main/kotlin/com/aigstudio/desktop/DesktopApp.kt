@@ -3396,7 +3396,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 actions.add(GlassActionButton("MANUAL / 手動",LibraryFiveAxisSkin208.warning).apply{
                     addActionListener{
                         productionCamSettings=ManualCamPathEngine.startBlank(productionCamSettings,0.0,0.0)
-                        showProductionCam()
+                        showProductionManualCamEditor()
                     }
                 })
                 actions.add(GlassActionButton("EDIT PATH / 路徑編輯",LibraryFiveAxisSkin208.cyan).apply{
