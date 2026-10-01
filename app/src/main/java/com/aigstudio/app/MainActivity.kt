@@ -2313,7 +2313,8 @@ class MainActivity : Activity() {
         param("WORK OFFSET",workOffset,LibraryFiveAxisSkin208.warning)
         param("LEAD-IN",DisplayFormat.mm(cam.settings.leadInMm)+" mm")
         param("LEAD-OUT",DisplayFormat.mm(cam.settings.leadOutMm)+" mm")
-        param("TOOL DIRECTION",if(cam.settings.climb)"CLIMB" else "CONVENTIONAL")
+        param("CONTOUR SIDE",if(cam.settings.contourSide==ContourSide.OUTSIDE)"外徑 / OUTSIDE" else "內徑 / INSIDE",LibraryFiveAxisSkin208.warning)
+        param("PATH DIRECTION",cam.settings.contourDirection.name,LibraryFiveAxisSkin208.cyan)
         param("TOOLPATH STATUS","FRESH • paths="+cam.toolpaths.size)
         param("MACHINING REGION","STOCK XY")
 
@@ -2342,8 +2343,44 @@ class MainActivity : Activity() {
             if(risk.ok)LibraryFiveAxisSkin208.safe else StudioProductionTheme.alarm,10f
         ).apply { background=glass(if(risk.ok)0x5563FF9D else 0x88FF5252.toInt()) })
 
-        val actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
         lateinit var dialog:AlertDialog
+        val contourControls=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+        fun contourChoice(label:String,selected:Boolean,accent:Int,run:()->Unit) {
+            contourControls.addView(RgbGlowButton(this).apply {
+                text=label
+                contentDescription="CAM "+label
+                setRgbState(accent,selected)
+                minHeight=dp(44)
+                minimumWidth=dp(76)
+                maxLines=1
+                setOnClickListener {
+                    run()
+                    dialog.dismiss()
+                    showCamWorkstation()
+                }
+            },LinearLayout.LayoutParams(0,-2,1f))
+        }
+        contourChoice("外徑",camSettings.contourSide==ContourSide.OUTSIDE,LibraryFiveAxisSkin208.warning) {
+            camSettings=camSettings.copy(contourSide=ContourSide.OUTSIDE)
+        }
+        contourChoice("內徑",camSettings.contourSide==ContourSide.INSIDE,LibraryFiveAxisSkin208.warning) {
+            camSettings=camSettings.copy(contourSide=ContourSide.INSIDE)
+        }
+        contourChoice("CCW",camSettings.contourDirection==ContourDirection.CCW,LibraryFiveAxisSkin208.cyan) {
+            camSettings=camSettings.copy(
+                climb=true,
+                contourDirection=ContourDirection.CCW
+            )
+        }
+        contourChoice("CW",camSettings.contourDirection==ContourDirection.CW,LibraryFiveAxisSkin208.cyan) {
+            camSettings=camSettings.copy(
+                climb=false,
+                contourDirection=ContourDirection.CW
+            )
+        }
+        root.addView(contourControls,LinearLayout.LayoutParams(-1,-2))
+
+        val actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
         fun action(label:String,accent:Int,block:()->Unit) {
             val b=RgbGlowButton(this).apply {
                 text=label
@@ -3037,6 +3074,24 @@ class MainActivity : Activity() {
         val feed = numeric("Feed mm/min", camSettings.feedMmMin)
         val leadIn = numeric("Lead-in mm", camSettings.leadInMm)
         val leadOut = numeric("Lead-out mm", camSettings.leadOutMm)
+        val side = Spinner(this).apply {
+            adapter=ArrayAdapter(
+                this@MainActivity,
+                android.R.layout.simple_spinner_dropdown_item,
+                listOf("外徑 / OUTSIDE","內徑 / INSIDE")
+            )
+            setSelection(if(camSettings.contourSide==ContourSide.OUTSIDE)0 else 1)
+            box.addView(this)
+        }
+        val direction = Spinner(this).apply {
+            adapter=ArrayAdapter(
+                this@MainActivity,
+                android.R.layout.simple_spinner_dropdown_item,
+                listOf("CCW","CW")
+            )
+            setSelection(if(camSettings.contourDirection==ContourDirection.CCW)0 else 1)
+            box.addView(this)
+        }
 
         AlertDialog.Builder(this)
             .setTitle("真 CAM 設定")
@@ -3048,7 +3103,9 @@ class MainActivity : Activity() {
                         depth = depth.text.toString().toDouble(),
                         safeZ = safeZ.text.toString().toDouble(),
                         feedMmMin = feed.text.toString().toDouble(),
-                        climb = camSettings.climb,
+                        climb = direction.selectedItemPosition==0,
+                        contourSide = if(side.selectedItemPosition==0) ContourSide.OUTSIDE else ContourSide.INSIDE,
+                        contourDirection = if(direction.selectedItemPosition==0) ContourDirection.CCW else ContourDirection.CW,
                         leadInMm = leadIn.text.toString().toDouble(),
                         leadOutMm = leadOut.text.toString().toDouble()
                     )
