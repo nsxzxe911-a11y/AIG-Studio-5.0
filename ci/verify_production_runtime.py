@@ -116,14 +116,18 @@ for marker in [
     if marker not in env:
         raise SystemExit(f"offline-first contract missing: {marker}")
 for marker in [
-    'bootOverlay.completeAndDetach(bootShell)',
+    'setContentView(runtimeHost)',
+    'StudioStartupBootGuard.complete(this)',
     'scheduleBackgroundOnlineServices()',
     'cm.registerDefaultNetworkCallback(callback)',
 ]:
     if marker not in android_main:
         raise SystemExit(f"Android offline-first marker missing: {marker}")
-if android_main.index('bootOverlay.completeAndDetach(bootShell)') > android_main.index('scheduleBackgroundOnlineServices()'):
-    raise SystemExit("online services must be scheduled after UI detach")
+for forbidden in ['val bootShell =', 'val bootOverlay = AigStartupOverlay(', 'setContentView(bootShell)']:
+    if forbidden in android_main:
+        raise SystemExit(f"custom boot shell returned: {forbidden}")
+if android_main.index('setContentView(runtimeHost)') > android_main.index('scheduleBackgroundOnlineServices()'):
+    raise SystemExit("online services must be scheduled after production Runtime is visible")
 for marker in [
     'LOCAL READY • NETWORK OPTIONAL',
     'OFFLINE-FIRST',
