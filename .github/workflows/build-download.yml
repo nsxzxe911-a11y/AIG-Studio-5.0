@@ -85,7 +85,7 @@ jobs:
           python3 ci/verify_xml_cache_update_standard.py | tee xml-cache-standard.log
           python3 ci/verify_theme_pack_hot_swap.py | tee theme-hot-swap.log
           python3 ci/verify_network_resilience.py | tee network-resilience.log
-          grep -Fq 'NETWORK_RESILIENCE_GATE_PASS|OFF_MAIN_SYNC_IO|120MS_DEBOUNCE|STALE_RESULT_SUPPRESSION|VALIDATED_RECONNECT_RESET|OFFLINE_FAST_FAIL|RANGE_ETAG_IF_RANGE|CHECKPOINT_RETAINED' network-resilience.log
+          grep -Fq 'NETWORK_RESILIENCE_GATE_PASS|ANDROID_WINDOWS_OFF_MAIN_SYNC_IO|120MS_DEBOUNCE|STALE_RESULT_SUPPRESSION|VALIDATED_RECONNECT_RESET|OFFLINE_FAST_FAIL|RANGE_ETAG_IF_RANGE|CHECKPOINT_RETAINED' network-resilience.log
           grep -Fq 'THEME_PACK_HOT_SWAP_GATE_PASS|AI_LAYOUT|8_MOBILE_SCREENS|NO_RESTART|LAST_VERIFIED_ROLLBACK|NO_ENGINEERING_SHELL|CORE_IMMUTABLE' theme-hot-swap.log
           python3 ci/department_autocheck.py | tee department-autocheck.log
           grep -Fq 'ALL_DEPARTMENT_RELEASE_COMMAND_PASS|' release-command.log
