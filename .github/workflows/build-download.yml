@@ -15,6 +15,7 @@ on:
       - 'ci/verify_release_command_dispatch.py'
       - 'ci/verify_ai_responsibility_routing.py'
       - 'ci/verify_continuity_checkpoint.py'
+      - 'ci/department_autocheck.py'
 
 permissions:
   contents: read
@@ -54,10 +55,12 @@ jobs:
           python3 ci/verify_release_command_dispatch.py | tee release-command.log
           python3 ci/verify_ai_responsibility_routing.py | tee ai-responsibility.log
           python3 ci/verify_continuity_checkpoint.py | tee continuity.log
+          python3 ci/department_autocheck.py | tee department-autocheck.log
           grep -Fq 'ALL_DEPARTMENT_RELEASE_COMMAND_PASS|' release-command.log
           grep -Fq 'AI_RESPONSIBILITY_ROUTING_PASS|' ai-responsibility.log
           grep -Fq 'AI_NETWORK_NOT_OWNER_PASS|' ai-responsibility.log
           grep -Fq 'CONTINUITY_PASS' continuity.log
+          grep -Fq 'ALL_DEPARTMENTS_SOURCE_AUTOCHECK_PASS' department-autocheck.log
       - name: Verify production runtime boundary
         shell: bash
         run: |
