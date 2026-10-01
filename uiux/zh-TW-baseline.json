@@ -91,7 +91,7 @@
     "CONTINUITY"
   ],
   "library_manifest": "uiux/aig-image-library.json",
-  "release_version": "266.0.0",
+  "release_version": "267.0.0",
   "continuity_contract": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "red_status_nonblocking_for": [
@@ -116,5 +116,10 @@
     "route": "OWNER_REWORK",
     "reverify": true,
     "network_default_owner": false
+  },
+  "department_autocheck": {
+    "mode": "全 13 部門一次掃描，不因第一個錯誤提前停止",
+    "finding": "部門 / owner / 錯誤碼 / 路徑 / 證據 / 修復提示",
+    "rework": "只退回責任部門，其餘部門繼續"
   }
 }
