@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "278.0.0",
+  "version": "279.0.0",
   "branch": "main",
   "recorded_source_head": "c72a8076138d056c8ac88441c1c1d63419e087af",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -45,7 +45,7 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Revalidate Studio 278 network resilience. Shared sync heavy IO is off the UI thread; reconnect invalidates stale callbacks and resets the circuit breaker; resumable APK download uses ETag/If-Range.",
+  "next_action": "Revalidate Studio 279. Android and Windows shared-sync heavy IO are both off UI threads; reconnect and Range/ETag resilience remain enforced.",
   "note": "Studio 270.0.0 runs parallel FAST REVIEW with Android/Windows heavy jobs concurrently. Failed checks route only to the responsible owner; XML cache and product safety/integrity gates remain enforced.",
   "release_command": {
     "path": "continuity/release-command.json",
@@ -108,6 +108,8 @@
     "stale_callback_suppression": true,
     "reconnect_circuit_reset": true,
     "offline_fast_fail": true,
-    "etag_if_range": true
+    "etag_if_range": true,
+    "android_off_main_sync_io": true,
+    "windows_off_edt_sync_io": true
   }
 }
