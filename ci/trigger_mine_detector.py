@@ -40,7 +40,8 @@ if t:
             t=re.sub(r"on:\n(?:.|\n)*?\npermissions:", "on:\n  workflow_dispatch:\n\npermissions:", t, count=1)
             write(rel,t)
 
-# Rule 2: NC gates may never trigger from generic version/CI/core changes.
+# Rule 2: NC regression may auto-run, but only from explicit NC/runtime source paths.
+# Never broaden this into a release/version/whole-core trigger.
 for rel in (".github/workflows/nc-coordinate-drift-gate.yml",".github/workflows/nc-semantic-timeline-gate.yml"):
     t=read(rel)
     if not t: continue
@@ -50,8 +51,17 @@ for rel in (".github/workflows/nc-coordinate-drift-gate.yml",".github/workflows/
             add("NC_BROAD_TRIGGER",AUTO_FIX,rel,bad.strip())
             if args.apply:
                 t=t.replace(bad,"")
-    if "push:" in head and "contains(github.event.head_commit.message, '[nc-check]')" not in t:
-        add("NC_PUSH_WITHOUT_EXPLICIT_TAG",REVIEW,rel,"Push-triggered NC gate lacks explicit [nc-check] classifier")
+    required=(
+        "core/src/main/kotlin/com/aigstudio/core/FanucNc.kt",
+        "core/src/test/**",
+        "app/src/main/java/com/aigstudio/app/MainActivity.kt",
+        "desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt",
+    )
+    if "push:" not in head or "paths:" not in head:
+        add("NC_SCOPE_MISSING",REVIEW,rel,"NC regression push trigger is missing explicit path scoping")
+    for marker in required:
+        if marker not in head:
+            add("NC_SCOPE_MISSING",REVIEW,rel,"Missing required NC path: "+marker)
     write(rel,t) if args.apply else None
 
 # Rule 3: AI/UI gates must not run merely because the version moved.
