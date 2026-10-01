@@ -276,6 +276,31 @@ for needle in (
 require(regression, "CAD_CONTROL_POINT_EDIT_GATE_PASS ENDPOINT CENTER RADIUS ARC_POINT SELECTION_CENTER_XY UNDO_REDO TOL=0.001", "CAD_CONTROL_POINT_REGRESSION")
 print("CAD_CONTROL_POINT_RUNTIME_GATE_PASS|ANDROID|WINDOWS|ENDPOINT|CENTER|RADIUS|ARC_POINT|SELECTION_CENTER_XY|TWO_PICK_TRIM|TWO_PICK_EXTEND|UNDO_REDO")
 
+for needle in (
+    'object CadCamTopologyPolicy',
+    'const val POLICY="TOPOLOGY_OPTIONAL_FOR_CAM_NC"',
+    'const val TOPOLOGY_REQUIRED_FOR_CAM=false',
+    'const val TOPOLOGY_REQUIRED_FOR_NC=false',
+    'const val POST_VALIDATES_TOOLPATH_AND_NC=true',
+    'fun disconnectAllCommand():Command',
+):
+    require(document, needle, "CAD_TOPOLOGY_OPTIONAL_CORE")
+for needle in (
+    'fun disconnectAllTopology()',
+    '"全部斷開"',
+    'CAM/NC 不受 topology 阻擋',
+):
+    require(android, needle, "ANDROID_DISCONNECT_ALL")
+for needle in (
+    'fun disconnectAllTopology()',
+    'button("全部斷開"',
+    'CAM/NC TOPOLOGY OPTIONAL',
+):
+    require(desktop, needle, "WINDOWS_DISCONNECT_ALL")
+require(regression, "CAD_TOPOLOGY_OPTIONAL_GATE_PASS DISCONNECT_ALL GEOMETRY_UNCHANGED CAM_NC_TOPOLOGY_OPTIONAL POST_VALIDATES", "CAD_TOPOLOGY_OPTIONAL_REGRESSION")
+print("CAD_TOPOLOGY_OPTIONAL_RUNTIME_GATE_PASS|DISCONNECT_ALL|GEOMETRY_AUTHORITATIVE|CAM_NC_TOPOLOGY_OPTIONAL|POST_VALIDATES|ANDROID|WINDOWS")
+
+
 
 for needle in (
     'const val POLICY = "OFFLINE_FIRST_UI_BOOT"',
