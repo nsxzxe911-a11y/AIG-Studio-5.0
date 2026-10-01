@@ -22,7 +22,6 @@ permissions:
 
 jobs:
   nc-coordinate-drift:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nc-check]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
