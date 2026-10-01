@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "aig-studio-runtime-";
-const CACHE_NAME = CACHE_PREFIX + "253-shell-v1";
-const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest"];
+const CACHE_NAME = CACHE_PREFIX + "rgb-full-runtime-254-v1";
+const APP_SHELL = ["./", "./index.html", "./6ax-ui.html", "./manifest.webmanifest"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -30,29 +30,21 @@ self.addEventListener("fetch", event => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === "navigate") {
-    const update = fetch(request).then(async response => {
-      if (response && response.ok) {
-        const cache = await caches.open(CACHE_NAME);
-        await cache.put("./index.html", response.clone());
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      try {
+        const response = await fetch(request);
+        if (response && response.ok) await cache.put(request, response.clone());
+        return response;
+      } catch {
+        return (await cache.match(request)) ||
+               (await cache.match("./index.html")) ||
+               new Response("AIG Runtime offline cache is not ready yet.", {
+                 status: 503,
+                 headers: {"Content-Type": "text/plain; charset=utf-8"}
+               });
       }
-      return response;
-    });
-
-    event.waitUntil(update.then(() => undefined).catch(() => undefined));
-    event.respondWith(
-      caches.open(CACHE_NAME).then(async cache => {
-        const cached = await cache.match("./index.html");
-        if (cached) return cached;
-        try {
-          return await update;
-        } catch {
-          return new Response("AIG Runtime offline cache is not ready yet.", {
-            status: 503,
-            headers: {"Content-Type": "text/plain; charset=utf-8"}
-          });
-        }
-      })
-    );
+    })());
     return;
   }
 
