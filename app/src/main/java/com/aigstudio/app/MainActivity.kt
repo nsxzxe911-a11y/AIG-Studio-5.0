@@ -2684,10 +2684,10 @@ class MainActivity : Activity() {
                 if(blocked.isEmpty() && machine.canExecute) 0xFF63FF9D.toInt() else 0xFFFF6E6E.toInt()
             )
             inlineNcStatus.text=
-                "LINE "+line+" • "+NcCodeCatalog.lineHelp(program,line)+"\n"+
-                NcSemanticAuthority.lineEvidence(program,line,controllerProfile)+"\n"+
-                NcExecutionTimeline.lineEvidence(program,line,controllerProfile)+"\n"+
-                CncControllerCapabilityMatrix.summary(controllerProfile,program)+
+                "LINE "+line+" • "+NcCodeCatalog.lineHelp(program,line,rotaryClampProfile,currentRotaryOperationMode())+"\n"+
+                NcSemanticAuthority.lineEvidence(program,line,controllerProfile,rotaryClampProfile,currentRotaryOperationMode())+"\n"+
+                NcExecutionTimeline.lineEvidence(program,line,controllerProfile,rotaryClampProfile=rotaryClampProfile,rotaryMode=currentRotaryOperationMode())+"\n"+
+                CncControllerCapabilityMatrix.summary(controllerProfile,program,rotaryClampProfile.allowedMCodes())+
                 (if(blocked.isEmpty() && machine.canExecute) " • SAFETY=PASS • SESSION ACTIVE"
                 else " • WARNING • SESSION ACTIVE • EDITING ENABLED • EXECUTION INTERLOCK="+(
                     blocked.take(2).map{it.code} +
