@@ -276,6 +276,12 @@ object UpdateNetworkCircuitBreaker {
     }
 
     @Synchronized
+    fun onValidatedReconnect(){
+        failures=0
+        openedUntilMs=0L
+    }
+
+    @Synchronized
     fun failure(nowMs:Long=System.currentTimeMillis()){
         failures++
         if(failures>=FAILURE_THRESHOLD) openedUntilMs=nowMs+OPEN_MS
