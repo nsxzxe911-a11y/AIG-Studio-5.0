@@ -1,0 +1,45 @@
+{
+  "schema": "aig-production-visual-reference-v1",
+  "product": "AIG Studio 5.0",
+  "version": "274.0.0",
+  "authority": "USER_APPROVED_SECOND_IMAGE_COMPARISON_REFERENCE",
+  "reference_image": {
+    "source_name": "1000010706.png",
+    "sha256": "c86e6c24927fffb67231ec7e17cd962dc67c5a3fd615b794499f5f595a5ebc9d",
+    "role": "VISUAL_COMPARISON_REFERENCE"
+  },
+  "rejected_example": {
+    "source_name": "1000010711.png",
+    "sha256": "05f53ba5e1c751a0b75aa2b390eafe3260b82f0f0ef036d08a173333a2461f69",
+    "reason": "SIMPLIFIED_ENGINEERING_WORKSTATION_STYLE_MUST_NOT_BE_DEFAULT_PRODUCTION_UI"
+  },
+  "acceptance": {
+    "first_frame": "MUST_VISIBLY_MATCH_APPROVED_PRODUCTION_VISUAL_LANGUAGE",
+    "shell": [
+      "AIG_BRANDED_PRODUCT_FRAME",
+      "BLACK_RGB_GLASS",
+      "LARGE_PRIMARY_WORKSPACE",
+      "PRODUCTION_CONTROL_DENSITY",
+      "TOP_MODE_RIBBON",
+      "SIDE_CONTROL_GROUPS",
+      "BOTTOM_STATUS_OR_OPERATION_AREA"
+    ],
+    "modes": [
+      "CAD",
+      "CAM",
+      "SIM",
+      "3AX",
+      "4AX",
+      "5AX",
+      "NC",
+      "AI"
+    ],
+    "adaptive_layout": true,
+    "pixel_identical_required": false,
+    "content_values_may_differ": true,
+    "engineering_shell_default": "HARD_FAIL",
+    "simplified_workstation_default": "HARD_FAIL",
+    "actual_runtime_screenshot_required": true
+  },
+  "review": "VISIBLE_SCREENSHOT_FIRST; IF VISUAL SHELL FAILS RETURN HOME+UIUX+PLATFORM BUILD BEFORE DEEP GATES"
+}
