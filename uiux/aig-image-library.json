@@ -1,7 +1,7 @@
 {
   "schema": "aig-uiux-image-library-v2",
   "product": "AIG Studio 5.0",
-  "version": "277.0.0",
+  "version": "278.0.0",
   "status": "UIUX_VISUAL_LIBRARY_COMPLETE_INDEXED",
   "canonical_root": "uiux/",
   "rule": "No runtime or review page reads engineering-assets directly. engineering-assets remains immutable provenance/history only.",
@@ -238,7 +238,7 @@
     "Windows desktop"
   ],
   "note": "UI/UX visual library and mapping only; CNC geometry/G-code/coordinate truth remains owned by runtime core.",
-  "build_note": "277 fixes Android theme hot-swap status reporting compile path; Mobile RGB V1 and AI Layout Composer unchanged.",
+  "build_note": "278 removes shared-sync IO from the UI thread, suppresses stale reconnect callbacks, resets circuit breaker on validated reconnect, fast-fails offline checks and hardens Range resume with ETag/If-Range.",
   "continuity": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "checkpoint_scope": [
