@@ -35,6 +35,7 @@ jobs:
       - name: Verify all runtime pages and callbacks
         shell: bash
         run: |
+          echo 'NC_SCOPED_AUTO_REGRESSION=ENABLED'
           python3 ci/verify_runtime_surfaces.py | tee runtime-surfaces.log
           grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
           grep -Fq 'AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS' runtime-surfaces.log
