@@ -1,7 +1,7 @@
 {
   "schema": "aig-release-command-v1",
   "product": "AIG Studio 5.0",
-  "version": "270.0.0",
+  "version": "271.0.0",
   "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
   "command_scope": "ALL_DEPARTMENTS",
   "dispatch_mode": "IMMEDIATE_LOCAL_FIRST",
@@ -126,8 +126,8 @@
     "on_fail": "QUEUE_OWNER_REWORK",
     "unrelated_departments_continue": true
   },
-  "dispatch_generation": 9,
-  "dispatch_reason": "STUDIO_270_FINAL_PARALLEL_REVIEW_REISSUE",
+  "dispatch_generation": 10,
+  "dispatch_reason": "STUDIO_271_VISIBLE_RUNTIME_EVIDENCE",
   "command_state": "EXECUTE_NOW_UNTIL_ALL_DEPARTMENTS_PASS",
   "cache_update_standard": {
     "authority": "continuity/cache-update-standard.xml",
@@ -160,5 +160,11 @@
     "failure_routing": "RETURN_ONLY_FAILED_OWNER_TO_REWORK",
     "unrelated_departments_continue": true,
     "safety_integrity_compile_gates_preserved": true
+  },
+  "visual_runtime_evidence": {
+    "android": "EMULATOR_OFFLINE_FORMAL_RGB_HOME_SCREENSHOT_REQUIRED",
+    "windows": "VISIBLE_RUNTIME_SCREENSHOT_REQUIRED",
+    "engineering_shell_default": "HARD_FAIL",
+    "evidence_root": "release/*/runtime-evidence"
   }
 }
