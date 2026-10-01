@@ -126,8 +126,8 @@
     "on_fail": "QUEUE_OWNER_REWORK",
     "unrelated_departments_continue": true
   },
-  "dispatch_generation": 24,
-  "dispatch_reason": "STUDIO_278_NETWORK_RESILIENCE",
+  "dispatch_generation": 25,
+  "dispatch_reason": "STUDIO_278_FORCE_NETWORK_REVALIDATION",
   "command_state": "EXECUTE_NOW_UNTIL_ALL_DEPARTMENTS_PASS",
   "cache_update_standard": {
     "authority": "continuity/cache-update-standard.xml",
