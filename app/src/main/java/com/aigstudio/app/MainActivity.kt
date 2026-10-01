@@ -4774,6 +4774,44 @@ class CadView(
             .show()
     }
 
+    private fun selectedCenterPoint():Vec2? =
+        if(selectedIds.isEmpty()) null else runCatching { CadEditEngine.selectionCenter(doc,selectedIds) }.getOrNull()
+
+    private fun promptSelectedCenterEdit(center:Vec2) {
+        val box=LinearLayout(context).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(24,12,24,4)
+        }
+        fun field(label:String,value:String)=EditText(context).apply {
+            hint=label
+            setText(value)
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            box.addView(this)
+        }
+        val x=field("中心 X mm",DisplayFormat.mm(center.x))
+        val y=field("中心 Y mm",DisplayFormat.mm(center.y))
+        AlertDialog.Builder(context)
+            .setTitle("選取中心點 • 整體移動")
+            .setView(box)
+            .setPositiveButton("套用"){_,_->
+                val px=x.text.toString().toDoubleOrNull()
+                val py=y.text.toString().toDoubleOrNull()
+                if(px==null || py==null) {
+                    Toast.makeText(context,"中心點 BLOCKED：X/Y 格式錯誤",Toast.LENGTH_SHORT).show()
+                } else runCatching {
+                    runGeometryCommand(
+                        CadEditEngine.moveCommand(doc,selectedIds,px-center.x,py-center.y)
+                    )
+                }.onSuccess {
+                    Toast.makeText(context,"中心點 PASS • X="+DisplayFormat.mm(px)+" Y="+DisplayFormat.mm(py),Toast.LENGTH_SHORT).show()
+                }.onFailure {
+                    Toast.makeText(context,"中心點 BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("取消",null)
+            .show()
+    }
+
     private fun promptControlPointEdit(control:CadControlPoint) {
         val entity=doc.get(control.entityId) ?: return
         val box=LinearLayout(context).apply {
@@ -4993,6 +5031,14 @@ class CadView(
                 canvas.drawLine(p.x.toFloat(),p.y.toFloat()-outer,p.x.toFloat(),p.y.toFloat()+outer,controlStroke)
             }
         }
+        selectedCenterPoint()?.let { center ->
+            val p=transform.worldToScreen(center)
+            val r=9f*density
+            controlStroke.color=0xFF63FF9D.toInt()
+            controlFill.color=0xFF63FF9D.toInt()
+            canvas.drawRect(p.x.toFloat()-r,p.y.toFloat()-r,p.x.toFloat()+r,p.y.toFloat()+r,controlStroke)
+            canvas.drawCircle(p.x.toFloat(),p.y.toFloat(),3.5f*density,controlFill)
+        }
     }
 
     private fun drawArcPolyline(canvas: Canvas, arc: Arc, paint: Paint = geoPaint) {
@@ -5086,6 +5132,11 @@ class CadView(
             }
             Tool.SELECT -> {
                 if(handlePendingPick(p)) return
+                val selectedCenter=selectedCenterPoint()
+                if(selectedCenter!=null && selectedCenter.distanceTo(p)<=24.0/transform.pixelsPerUnit) {
+                    promptSelectedCenterEdit(selectedCenter)
+                    return
+                }
                 val control=if(selectedIds.isNotEmpty())
                     CadControlPointEngine.nearest(doc,selectedIds,p,24.0/transform.pixelsPerUnit)
                 else null
