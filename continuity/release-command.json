@@ -1,7 +1,7 @@
 {
   "schema": "aig-release-command-v1",
   "product": "AIG Studio 5.0",
-  "version": "267.0.0",
+  "version": "268.0.0",
   "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
   "command_scope": "ALL_DEPARTMENTS",
   "dispatch_mode": "IMMEDIATE_LOCAL_FIRST",
@@ -126,7 +126,7 @@
     "on_fail": "QUEUE_OWNER_REWORK",
     "unrelated_departments_continue": true
   },
-  "dispatch_generation": 3,
-  "dispatch_reason": "STUDIO_267_FINAL_SYNCED_AUTOCHECK_REISSUE",
+  "dispatch_generation": 4,
+  "dispatch_reason": "STUDIO_268_UIUX_STALE_VERSION_PROTECTION",
   "command_state": "EXECUTE_NOW_UNTIL_ALL_DEPARTMENTS_PASS"
 }
