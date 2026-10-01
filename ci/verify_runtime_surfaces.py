@@ -20,6 +20,9 @@ def require(source: str, needle: str, label: str) -> None:
     if needle not in source:
         raise SystemExit(f"BLOCKED {label}: missing {needle!r}")
 
+def warn(label: str, detail: str) -> None:
+    print(f"WARNING|{label}|{detail}")
+
 android = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
 secure_services = read("app/src/main/java/com/aigstudio/app/SecureServices.kt")
 machining3d = read("app/src/main/java/com/aigstudio/app/Machining3DView.kt")
