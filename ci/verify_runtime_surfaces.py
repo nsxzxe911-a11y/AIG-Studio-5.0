@@ -1373,7 +1373,7 @@ for needle in (
     'parameter("SAFE-Z",DisplayFormat.mm(settings.safeZ)+" mm",LibraryFiveAxisSkin208.safe)',
     'camAction("軸模式",LibraryFiveAxisSkin208.cyan)',
     'arrayOf("3AX","4AX","5AX")',
-    'showUnifiedMachiningEditor(frame,doc,status,choice)',
+    'showUnifiedMachiningEditor(frame,doc,status,choice,productionCamSettings)',
     'toolTipText=LibraryFiveAxisSkin208.SOURCE_MOBILE+" + "+LibraryFiveAxisSkin208.SOURCE_LANDSCAPE',
 ):
     require(desktop, needle, "STUDIO_WINDOWS_LIBRARY_5X_REAL_CAM_SKIN_208")
