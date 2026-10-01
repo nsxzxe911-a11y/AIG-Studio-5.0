@@ -40,6 +40,45 @@ private object StudioDesktopOriginalVisuals {
 }
 
 
+
+private val coordinatePrecisionPrefs = java.util.prefs.Preferences.userRoot().node("com/aigstudio/coordinate-precision")
+
+private fun applyDesktopCoordinatePrecision() {
+    val display=CoordinatePrecisionMode.fromStorage(coordinatePrecisionPrefs.get("display","0.001"))
+    val nc=CoordinatePrecisionMode.fromStorage(coordinatePrecisionPrefs.get("nc","0.001"))
+    CoordinatePrecisionRuntime.configure(display=display,input=display,ncOutput=nc)
+}
+
+private fun showDesktopCoordinatePrecisionDialog(owner:java.awt.Component?, status:javax.swing.JLabel) {
+    val values=arrayOf("0.001","0.01","0.1")
+    val displayBox=javax.swing.JComboBox(values).apply {
+        selectedItem=CoordinatePrecisionRuntime.display().storageValue
+    }
+    val ncBox=javax.swing.JComboBox(values).apply {
+        selectedItem=CoordinatePrecisionRuntime.ncOutput().storageValue
+    }
+    val panel=javax.swing.JPanel(java.awt.GridLayout(0,2,6,6)).apply {
+        add(javax.swing.JLabel("座標顯示 / 輸入步進 mm"))
+        add(displayBox)
+        add(javax.swing.JLabel("NC 輸出精度 mm"))
+        add(ncBox)
+        add(javax.swing.JLabel("內部幾何 / 安全解析度"))
+        add(javax.swing.JLabel("0.001 mm"))
+    }
+    val ok=javax.swing.JOptionPane.showConfirmDialog(
+        owner,panel,"座標 / 精度",javax.swing.JOptionPane.OK_CANCEL_OPTION,javax.swing.JOptionPane.PLAIN_MESSAGE
+    )
+    if(ok==javax.swing.JOptionPane.OK_OPTION) {
+        val display=CoordinatePrecisionMode.fromStorage(displayBox.selectedItem?.toString())
+        val nc=CoordinatePrecisionMode.fromStorage(ncBox.selectedItem?.toString())
+        coordinatePrecisionPrefs.put("display",display.storageValue)
+        coordinatePrecisionPrefs.put("nc",nc.storageValue)
+        runCatching { coordinatePrecisionPrefs.flush() }
+        CoordinatePrecisionRuntime.configure(display=display,input=display,ncOutput=nc)
+        status.text="PRECISION • "+CoordinatePrecisionRuntime.summary()+" • CORE SAFETY UNCHANGED"
+    }
+}
+
 private fun desktopVersionName():String =
     System.getProperty("aigstudio.version")?.takeIf { it.matches(Regex("""\d+\.\d+\.\d+""")) } ?: "DEV"
 
@@ -2752,6 +2791,7 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
 }
 
 private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean=true):JFrame {
+    applyDesktopCoordinatePrecision()
     startup?.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
     val doc = DrawingDocument()
     val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • "+MasterRuntimeChainContract.uiLabel())
@@ -3082,13 +3122,14 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 appendLine("BOOT="+IntegratedMaintenanceUiContract.DEFAULT_BOOT_TARGET+" • separate engineering shell=OFF")
                 appendLine("NETWORK OPTIONAL • OFFLINE MAINTENANCE=ON")
                 appendLine("ENTITIES="+doc.size()+" • LINKS="+doc.links().size)
-                append("MASTER X0.000 Y0.000 Z0.000 • 0.001 mm")
+                append("MASTER X0.000 Y0.000 Z0.000 • "+CoordinatePrecisionRuntime.summary())
             }
         }
         val actions=JPanel(GridLayout(0,2,6,6)).apply{background=StudioDesktopProductionTheme.background}
         fun action(label:String,run:()->Unit){
             actions.add(GlassActionButton(label,Color(139,92,246)).apply{addActionListener{run()}})
         }
+        action("座標 / 精度"){showDesktopCoordinatePrecisionDialog(frame,status)}
         action("AI 診斷"){mainCardLayout.show(mainCardHost,"AI");status.text="MAINT • AI LOCAL ASSIST"}
         action("CAM 檢查"){showProductionCam()}
         action("NC 安全"){runCatching{showNcEditor(frame,doc)}.onFailure{status.text="MAINT NC BLOCKED • "+(it.message?:"error")}}
