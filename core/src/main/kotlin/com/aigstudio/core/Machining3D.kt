@@ -19,8 +19,24 @@ data class Stock3D(
     }
 
     companion object {
-        fun fromSnapshot(snapshot: DrawingSnapshot, margin: Double = 10.0, thickness: Double = 20.0): Stock3D {
-            val e = extents(snapshot)
+        fun fromSnapshot(
+            snapshot: DrawingSnapshot,
+            margin: Double = 10.0,
+            thickness: Double = 20.0,
+            manualPath:List<ManualCamPoint> = emptyList()
+        ): Stock3D {
+            val e = if(snapshot.entities.isNotEmpty()) {
+                extents(snapshot)
+            } else {
+                require(manualPath.isNotEmpty()) { "No CAD geometry or manual CAM path for stock bounds" }
+                val minX=manualPath.minOf{it.x}
+                val maxX=manualPath.maxOf{it.x}
+                val minY=manualPath.minOf{it.y}
+                val maxY=manualPath.maxOf{it.y}
+                val padX=if(maxX-minX<CNC_RESOLUTION_MM) max(1.0,margin) else 0.0
+                val padY=if(maxY-minY<CNC_RESOLUTION_MM) max(1.0,margin) else 0.0
+                Extents2D(minX-padX,minY-padY,maxX+padX,maxY+padY)
+            }
             return Stock3D(e.minX - margin, e.minY - margin, e.maxX + margin, e.maxY + margin, thickness)
         }
     }
@@ -424,16 +440,20 @@ object Machining3DEngine {
     fun build(
         snapshot: DrawingSnapshot,
         settings: CamSettings = CamSettings(),
-        stock: Stock3D = Stock3D.fromSnapshot(snapshot),
+        stock: Stock3D? = null,
         axisA: Double = 0.0,
         axisB: Double = 0.0,
         axisSchedule: MultiAxisOrientationSchedule? = null
     ): Machining3DResult {
         val cam = CamModel.fromCad(0L, snapshot, settings, axisA, axisB, axisSchedule)
         require(cam.toolpaths.isNotEmpty()) { "CAM generated no toolpaths" }
-        val removal = MaterialRemoval3D.simulate(cam.toolpaths, settings, stock)
+        val resolvedStock=stock ?: Stock3D.fromSnapshot(
+            snapshot,
+            manualPath=if(settings.pathMode==CamPathMode.MANUAL)settings.manualPath else emptyList()
+        )
+        val removal = MaterialRemoval3D.simulate(cam.toolpaths, settings, resolvedStock)
         val mesh = SurfaceMesh3D.fromRemoval(removal)
         require(mesh.vertices.isNotEmpty() && mesh.triangles.isNotEmpty()) { "3D mesh generation failed" }
-        return Machining3DResult(cam, stock, removal, mesh)
+        return Machining3DResult(cam, resolvedStock, removal, mesh)
     }
 }
