@@ -301,7 +301,7 @@ for needle in (
 require(regression, "INTEGRATED_MAINTENANCE_UI_CORE_GATE_PASS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|RECOVERY|HUD|SYSTEM|SECURITY|AI_SUITE|AI_UPDATE", "INTEGRATED_MAINTENANCE_REGRESSION_221")
 print("INTEGRATED_MAINTENANCE_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|REAL_ACTIONS")
 for needle in (
-    'contentDescription="AIG CNC FORMAL RGB HOME"',
+    'contentDescription="AIG CNC FORMAL RGB HOME',
     'contentDescription="AIG CNC PRODUCTION RUNTIME HOST"',
     'background=ProductionRgbAssets.drawable(this@MainActivity,"HOME")',
     'root.visibility=View.GONE',
@@ -321,7 +321,7 @@ for needle in (
     require(android, needle, "STUDIO_FORMAL_RGB_HOME_FIRST_246")
 if 'bootShell.addView(root, 0' in android:
     raise SystemExit("STUDIO_CAD_WORKSTATION_DIRECT_BOOT_246")
-home_start=android.index('contentDescription="AIG CNC FORMAL RGB HOME"')
+home_start=android.index('contentDescription="AIG CNC FORMAL RGB HOME')
 home_end=android.index('runtimeHost.addView(homeRoot',home_start)
 home_source=android[home_start:home_end]
 for forbidden in (
