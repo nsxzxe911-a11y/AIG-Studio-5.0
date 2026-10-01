@@ -154,17 +154,134 @@ html,body{background:#020407}
  .panel{border-radius:12px}
 }
 
+
+/* RGB_GLASS_CAD_CAM_SIM_EDIT_V1 */
+.screen[data-page="功能"]{--rgb:159,114,255;--screenAccent:var(--violet)}
+.screen[data-page="CAD"]{--rgb:39,233,255;--screenAccent:var(--cyan)}
+.screen[data-page="CAM"]{--rgb:51,243,155;--screenAccent:var(--green)}
+.screen[data-page="刀路"]{--rgb:255,77,166;--screenAccent:var(--pink)}
+.screen[data-page="3AX"]{--rgb:54,148,255;--screenAccent:var(--blue)}
+.screen[data-page="4AX"]{--rgb:255,179,38;--screenAccent:var(--amber)}
+.screen[data-page="5AX"]{--rgb:255,77,166;--screenAccent:var(--pink)}
+.screen[data-page="6AX"]{--rgb:159,114,255;--screenAccent:var(--violet)}
+
+.screen.active .panel{
+ border-color:rgba(var(--rgb),.38);
+ box-shadow:0 16px 42px rgba(0,0,0,.62),0 0 24px rgba(var(--rgb),.07),inset 0 1px rgba(255,255,255,.025)
+}
+.screen.active .head{
+ background:linear-gradient(90deg,rgba(var(--rgb),.085),rgba(4,8,12,.15) 46%,transparent 78%);
+ border-bottom-color:rgba(var(--rgb),.25)
+}
+.screen.active .badge{border-color:rgba(var(--rgb),.42);color:#dff8ff;box-shadow:inset 0 0 14px rgba(var(--rgb),.07)}
+.screen.active .btn{
+ position:relative;
+ border-color:rgba(var(--rgb),.30);
+ background:
+  linear-gradient(180deg,rgba(18,31,44,.96),rgba(3,7,11,.98)),
+  radial-gradient(circle at 50% 0%,rgba(var(--rgb),.10),transparent 70%);
+ box-shadow:inset 0 1px rgba(255,255,255,.055),inset 0 -12px 24px rgba(0,0,0,.22),0 7px 18px rgba(0,0,0,.34);
+ transition:border-color .13s ease,box-shadow .13s ease,transform .08s ease,background .13s ease
+}
+.screen.active .btn:hover{border-color:rgba(var(--rgb),.62);box-shadow:inset 0 1px rgba(255,255,255,.07),0 0 17px rgba(var(--rgb),.12),0 7px 18px rgba(0,0,0,.34)}
+.screen.active .btn:active{
+ transform:translateY(1px) scale(.985);
+ border-color:rgba(var(--rgb),.96);
+ background:linear-gradient(180deg,rgba(var(--rgb),.13),rgba(3,7,11,.98));
+ box-shadow:inset 0 0 22px rgba(var(--rgb),.18),0 0 18px rgba(var(--rgb),.24)
+}
+.screen.active .btn:focus-visible{outline:none;border-color:rgba(var(--rgb),.92);box-shadow:0 0 0 2px rgba(var(--rgb),.16),0 0 22px rgba(var(--rgb),.18)}
+.screen.active .btn:disabled{opacity:.34!important;border-color:#26323a!important;box-shadow:none!important;background:#05080b!important;color:#70818b!important;transform:none!important}
+
+.screen.active .cadSelected,
+.screen.active .tpNodeEdit{
+ color:#fff!important;
+ border-color:rgba(var(--rgb),.98)!important;
+ background:linear-gradient(180deg,rgba(var(--rgb),.18),rgba(3,8,12,.98))!important;
+ box-shadow:0 0 24px rgba(var(--rgb),.30),inset 0 0 22px rgba(var(--rgb),.15)!important;
+ animation:aigRgbSelectedPulse 1.9s ease-in-out infinite
+}
+@keyframes aigRgbSelectedPulse{
+ 0%,100%{filter:brightness(1);box-shadow:0 0 17px rgba(var(--rgb),.20),inset 0 0 18px rgba(var(--rgb),.11)}
+ 50%{filter:brightness(1.08);box-shadow:0 0 30px rgba(var(--rgb),.38),inset 0 0 26px rgba(var(--rgb),.18)}
+}
+
+.screen.active .cadCanvasWrap,
+.screen.active .camCanvas,
+.screen.active .tpCanvas,
+.screen.active .sceneWrap{
+ border-color:rgba(var(--rgb),.46)!important;
+ box-shadow:inset 0 0 42px rgba(0,0,0,.62),inset 0 0 34px rgba(var(--rgb),.045),0 0 24px rgba(var(--rgb),.09)!important
+}
+.screen[data-page="CAD"].active .cadCanvas{
+ background:
+  linear-gradient(rgba(39,233,255,.038) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(39,233,255,.038) 1px,transparent 1px),
+  radial-gradient(circle at 50% 45%,rgba(39,233,255,.035),transparent 60%),#010306;
+ background-size:24px 24px,24px 24px,auto,auto
+}
+.screen[data-page="刀路"].active .tpCanvas{
+ background:
+  radial-gradient(circle at 50% 50%,rgba(255,77,166,.045),transparent 58%),
+  linear-gradient(rgba(255,77,166,.025) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(159,114,255,.022) 1px,transparent 1px),#010306;
+ background-size:auto,28px 28px,28px 28px,auto
+}
+.screen[data-page="CAM"].active .camCanvas{
+ background:radial-gradient(circle at 50% 48%,rgba(51,243,155,.055),transparent 58%),#010306
+}
+.screen.active .cadHud span,
+.screen.active .sceneHud{
+ border-color:rgba(var(--rgb),.42)!important;
+ box-shadow:0 0 16px rgba(var(--rgb),.08),inset 0 0 14px rgba(var(--rgb),.05)
+}
+.screen.active .field,
+.screen.active .param,
+.screen.active .notice,
+.screen.active .metric{
+ border-color:rgba(var(--rgb),.22);
+ background:linear-gradient(180deg,rgba(var(--rgb),.025),rgba(3,7,10,.96))
+}
+.screen.active input,
+.screen.active select,
+.screen.active textarea{
+ transition:border-color .13s ease,box-shadow .13s ease,background .13s ease
+}
+.screen.active input:focus,
+.screen.active select:focus,
+.screen.active textarea:focus{
+ outline:none;
+ border-color:rgba(var(--rgb),.78)!important;
+ box-shadow:0 0 0 1px rgba(var(--rgb),.12),0 0 20px rgba(var(--rgb),.11)!important;
+ background:#010407
+}
+.screen.active .code{
+ border-color:rgba(var(--rgb),.30);
+ box-shadow:inset 0 0 30px rgba(0,0,0,.56),0 0 18px rgba(var(--rgb),.045)
+}
+.screen.active .execLine.active{
+ border-left-color:rgb(var(--rgb));
+ background:rgba(var(--rgb),.10);
+ box-shadow:inset 14px 0 24px rgba(var(--rgb),.035)
+}
+.screen.active .play{border-color:rgba(51,243,155,.72)!important;box-shadow:0 0 14px rgba(51,243,155,.08),inset 0 0 16px rgba(51,243,155,.035)}
+.screen.active .warn{border-color:rgba(255,179,38,.72)!important;box-shadow:0 0 14px rgba(255,179,38,.07)}
+.screen.active .danger{border-color:rgba(255,70,95,.75)!important;box-shadow:0 0 14px rgba(255,70,95,.07)}
+.aigIssueCenter.error,.execLine.alarm,input.aigError,select.aigError,textarea.aigError{
+ box-shadow:0 0 22px rgba(255,70,95,.20),inset 0 0 18px rgba(255,70,95,.07)!important
+}
+
 </style>
 </head>
 <body>
 <div class="app">
 <header class="top">
- <div class="brand"><div><div class="logo">AIG II CNC</div><small>BLACK RGB RUNTIME</small></div></div>
+ <div class="brand"><div><div class="logo">AIG II CNC</div><small>FULL RGB RUNTIME • CAD / CAM / SIM / NC</small></div></div>
  <nav class="nav" id="nav"></nav>
  <div class="status">● LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
-<footer class="footer">AIG II CNC • 6AX UI/UX Runtime • WebGL preview • CNC machine output disabled</footer>
+<footer class="footer">AIG II CNC • Full RGB Runtime • CAD / CAM / Toolpath / 3AX / 4AX / 5AX / 6AX • CNC machine output disabled</footer>
 </div>
 <script>
 const pages=[
