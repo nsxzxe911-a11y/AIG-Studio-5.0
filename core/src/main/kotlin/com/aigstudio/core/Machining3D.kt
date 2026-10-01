@@ -279,6 +279,9 @@ object MachiningRiskScanner {
         return null
     }
 
+    fun inspect(cam:CamModel,stock:Stock3D):MachiningRiskReport =
+        inspect(cam,stock,emptyList(),ToolAssemblyConfig())
+
     fun inspect(
         cam:CamModel,
         stock:Stock3D,
