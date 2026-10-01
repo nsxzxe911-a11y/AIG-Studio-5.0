@@ -2804,23 +2804,37 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         ?.takeIf{it.isNotBlank()}?.let(::File)
     val sharedBaselineSignature=doc.all().hashCode()*31+doc.links().hashCode()
     var sharedLastMessage=""
+    val sharedSyncExecutor=java.util.concurrent.Executors.newSingleThreadExecutor { task ->
+        Thread(task,"aig-studio-desktop-shared-sync").apply { isDaemon=true }
+    }
+    val sharedSyncRunning=java.util.concurrent.atomic.AtomicBoolean(false)
     val sharedSyncTimer:Timer?=sharedProjectFile?.let { shared ->
         Timer(SharedProjectFolderSync.POLL_INTERVAL_MS.toInt()) {
-            runCatching {
-                val localMeta=sharedLocalProjectFile?.takeIf{it.isFile}
-                    ?.let{StudioProjectRepository.load(it).revisionMeta}
-                    ?: sharedLocalMeta
+            if(sharedSyncRunning.compareAndSet(false,true)) {
                 val localDirty=(doc.all().hashCode()*31+doc.links().hashCode())!=sharedBaselineSignature
-                val observation=SharedProjectFolderSync.inspect(
-                    shared,localMeta,localDirty
-                ){StudioProjectRepository.load(it).revisionMeta}
-                if(observation.state!=ProjectSyncState.CLEAN &&
-                    observation.message!=sharedLastMessage) {
-                    sharedLastMessage=observation.message
-                    status.text="共享 • "+observation.message
+                val fallbackMeta=sharedLocalMeta
+                sharedSyncExecutor.execute {
+                    val result=runCatching {
+                        val localMeta=sharedLocalProjectFile?.takeIf{it.isFile}
+                            ?.let{StudioProjectRepository.load(it).revisionMeta}
+                            ?: fallbackMeta
+                        SharedProjectFolderSync.inspect(
+                            shared,localMeta,localDirty
+                        ){StudioProjectRepository.load(it).revisionMeta}
+                    }
+                    SwingUtilities.invokeLater {
+                        sharedSyncRunning.set(false)
+                        result.onSuccess { observation ->
+                            if(observation.state!=ProjectSyncState.CLEAN &&
+                                observation.message!=sharedLastMessage) {
+                                sharedLastMessage=observation.message
+                                status.text="共享 • "+observation.message
+                            }
+                        }.onFailure {
+                            status.text="共享同步檢查 BLOCKED • "+(it.message?:"error")
+                        }
+                    }
                 }
-            }.onFailure {
-                status.text="共享同步檢查 BLOCKED • "+(it.message?:"error")
             }
         }.apply{isRepeats=true;start()}
     }
@@ -2829,7 +2843,11 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     startup?.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")
     frame.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     frame.addWindowListener(object:java.awt.event.WindowAdapter(){
-        override fun windowClosed(e:java.awt.event.WindowEvent?) { sharedSyncTimer?.stop() }
+        override fun windowClosed(e:java.awt.event.WindowEvent?) {
+            sharedSyncTimer?.stop()
+            sharedSyncRunning.set(false)
+            sharedSyncExecutor.shutdownNow()
+        }
     })
     frame.layout = BorderLayout()
     frame.contentPane.background = StudioDesktopProductionTheme.background
