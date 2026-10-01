@@ -9,13 +9,19 @@ on:
       - 'release-version.properties'
       - '.github/workflows/build-download.yml'
       - 'ci/verify_runtime_surfaces.py'
+      - 'continuity/release-command.json'
+      - 'continuity/ai-responsibility-routing.json'
+      - 'continuity/latest-checkpoint.json'
+      - 'ci/verify_release_command_dispatch.py'
+      - 'ci/verify_ai_responsibility_routing.py'
+      - 'ci/verify_continuity_checkpoint.py'
 
 permissions:
   contents: read
 
 jobs:
   android-and-source:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-build]') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-build]') || contains(github.event.head_commit.modified, 'continuity/release-command.json') || contains(github.event.head_commit.added, 'continuity/release-command.json') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -41,6 +47,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '9.7.0'
+      - name: Verify release command, responsibility routing, and continuity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/verify_release_command_dispatch.py | tee release-command.log
+          python3 ci/verify_ai_responsibility_routing.py | tee ai-responsibility.log
+          python3 ci/verify_continuity_checkpoint.py | tee continuity.log
+          grep -Fq 'ALL_DEPARTMENT_RELEASE_COMMAND_PASS|' release-command.log
+          grep -Fq 'AI_RESPONSIBILITY_ROUTING_PASS|' ai-responsibility.log
+          grep -Fq 'AI_NETWORK_NOT_OWNER_PASS|' ai-responsibility.log
+          grep -Fq 'CONTINUITY_PASS' continuity.log
       - name: Verify production runtime boundary
         shell: bash
         run: |
@@ -163,7 +180,7 @@ jobs:
           retention-days: 3
 
   windows-exe:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-build]') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-build]') || contains(github.event.head_commit.modified, 'continuity/release-command.json') || contains(github.event.head_commit.added, 'continuity/release-command.json') }}
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@v7
