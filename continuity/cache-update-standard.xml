@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<aigCacheUpdateStandard schema="aig-cache-update-xml-v1" product="AIG Studio 5.0" version="273.0.0">
+<aigCacheUpdateStandard schema="aig-cache-update-xml-v1" product="AIG Studio 5.0" version="274.0.0">
   <announcement language="zh-TW">
     所有部門快取更新一律以 XML 結構內容、revision、contentDigest/SHA-256 與 sourceExactSha 為判斷標準。
     禁止只依檔案加工時間、mtime、lastModified、timestamp 判斷新舊、是否更新、是否覆蓋或責任歸屬。
