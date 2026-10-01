@@ -44,6 +44,8 @@ windows_build=read("build_windows_native.ps1","WINDOWS_BUILD","WINDOWS_BUILD_SCR
 runtime_verify=read("ci/verify_runtime_surfaces.py","UIUX","RUNTIME_VERIFY_MISSING")
 web_verify=read("ci/verify_web_runtime.mjs","WEB","WEB_VERIFY_MISSING")
 web_html=read("web/index.html","WEB","WEB_RUNTIME_MISSING")
+uiux_index=read("uiux/index.html","UIUX","UIUX_INDEX_MISSING")
+uiux_visual=read("uiux/visual.html","UIUX","UIUX_VISUAL_MISSING")
 cmd_text=read("continuity/release-command.json","AI","RELEASE_COMMAND_MISSING")
 route_text=read("continuity/ai-responsibility-routing.json","AI","RESPONSIBILITY_ROUTE_MISSING")
 
@@ -74,6 +76,9 @@ need("AI","AI_RELEASE_COMMAND","continuity/release-command.json",cmd_text,['"com
 need("UIUX","UIUX_RUNTIME_THEME","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["aigii_rgb_neon_v2","pressedNow -> 0.54f","selectedGlow -> 0.42f"],"restore production RGB glass theme states")
 need("UIUX","UIUX_WARNING_HELPER","ci/verify_runtime_surfaces.py",runtime_verify,["def warn(label: str, detail: str) -> None:"],"define the nonblocking warning helper so metadata warnings do not crash verification")
 forbid("UIUX","UIUX_ENGINEERING_SHELL","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["engineering-assets/"],"remove engineering-asset binding from production runtime")
+for rel,text in (("uiux/index.html",uiux_index),("uiux/visual.html",uiux_visual)):
+    if re.search(r"正式 UI 基礎 • 非工程殼 • \\d+\\.0\\.0",text):
+        add("UIUX","UIUX_STALE_VERSION_LABEL",rel,"hard-coded numeric UI library version","use release-version.properties as the single version authority")
 
 need("ANDROID_BUILD","ANDROID_PACKAGE","build_android_release.sh",android_build,[":app:assembleDebug","AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk","release-version.properties","SHA256SUMS.txt"],"restore Android compile/package/hash pipeline")
 need("WINDOWS_BUILD","WINDOWS_PACKAGE","build_windows_native.ps1",windows_build,["jpackage","AIG_Studio_PC.jar","WINDOWS_EXECUTABLE_SMOKE_CAPTURED","release-version.properties"],"restore Windows app-image/EXE/runtime-evidence pipeline")
