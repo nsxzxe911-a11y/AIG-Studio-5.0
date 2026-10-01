@@ -48,7 +48,7 @@ object DepartmentContinuityPolicy {
     const val NETWORK_DISCONNECT_RESUMABLE=true
     const val INFRA_FAILURE_RESUMABLE=true
     const val PRODUCT_SAFETY_FAILURE_BLOCKS_RELEASE=true
-    val departments=setOf("HOME","CAD","CAM","SIM","3AX","4AX","5AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","WEB")
+    val departments=setOf("HOME","CAD","CAM","SIM","3AX","4AX","5AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","ANDROID_COMPILE","WINDOWS_COMPILE","PACKAGE_VERIFY","WEB","WEB_DEPLOY")
 
     fun resumeAllowed(failureClass:ContinuityFailureClass):Boolean =
         failureClass==ContinuityFailureClass.NETWORK ||
@@ -103,6 +103,27 @@ object DepartmentContinuityPolicy {
             lastError=props.getProperty("lastError")?.takeIf{it.isNotBlank()}
         )
     }
+}
+
+object NetworkResiliencePolicy {
+    const val MODE="OFFLINE_FIRST_CIRCUIT_BREAKER"
+    const val UI_THREAD_NETWORK_WAIT_ALLOWED=false
+    const val MAX_RETRY_ATTEMPTS=2
+    const val BASE_RETRY_DELAY_MS=350L
+    const val CIRCUIT_OPEN_AFTER_FAILURES=3
+    const val CIRCUIT_COOLDOWN_MS=30_000L
+    const val PEER_DISRUPTION_ACTION="ISOLATE_LOCAL_CONNECTION_ONLY"
+
+    fun retryDelayMs(attempt:Int):Long {
+        require(attempt>=0){"attempt must be >= 0"}
+        return (BASE_RETRY_DELAY_MS*(attempt+1L)).coerceAtMost(1_500L)
+    }
+
+    fun shouldOpenCircuit(consecutiveFailures:Int):Boolean =
+        consecutiveFailures>=CIRCUIT_OPEN_AFTER_FAILURES
+
+    fun networkFailureBlocksRuntime():Boolean=false
+    fun defensiveOnly():Boolean=true
 }
 
 object RollingUpdatePolicy {
