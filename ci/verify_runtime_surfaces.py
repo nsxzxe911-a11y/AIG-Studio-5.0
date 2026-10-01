@@ -385,6 +385,31 @@ require(regression, "CAM_MANUAL_ROUTE_GATE_PASS NO_CAD_REQUIRED MANUAL_FIRST EDI
 print("CAM_MANUAL_ROUTE_RUNTIME_GATE_PASS|ANDROID|WINDOWS|AUTO_MANUAL|NO_CAD_REQUIRED|EDIT_XYZ|RETRACT|RAPID_AVOIDANCE|LANDING|CAD_INDEPENDENT|3D_SIM|NC_POST|SAFE_Z_FAIL_CLOSED|PROJECT_PERSISTENCE")
 
 for needle in (
+    'fun operatorPalette(): List<Pair<String,List<String>>>',
+    '"G5.1"',
+    '"G90.1"',
+    '"G91.1"',
+    '"M29"',
+    '"M48"',
+    '"M49"',
+):
+    require(core, needle, "STUDIO_NC_GM_CORE")
+for needle in (
+    '"G/M 功能"',
+    'NcCodeCatalog.operatorPalette()',
+    'listOf("G/M 功能","G90","G54","G43","M98")',
+):
+    require(android, needle, "STUDIO_NC_GM_ANDROID")
+for needle in (
+    '"G/M 功能"',
+    'NcCodeCatalog.operatorPalette()',
+    'listOf("G/M 功能","G90","G54","G43","M98"',
+):
+    require(desktop, needle, "STUDIO_NC_GM_WINDOWS")
+require(regression, "NC_GM_OPERATOR_PALETTE_PASS", "STUDIO_NC_GM_REGRESSION")
+print("STUDIO_NC_GM_OPERATOR_UI_GATE_PASS|ANDROID|WINDOWS|CATEGORIZED|FAIL_CLOSED")
+
+for needle in (
     "private val onProjectChanged: () -> Unit = {}",
     "onProjectChanged()",
     "private fun runTopologyCommand(command: Command)",
@@ -402,12 +427,16 @@ for needle in (
 ):
     require(env, needle, "OFFLINE_FIRST_CONTRACT_221")
 for needle in (
-    'bootOverlay.completeAndDetach(bootShell)',
+    'setContentView(runtimeHost)',
+    'StudioStartupBootGuard.complete(this)',
     'scheduleBackgroundOnlineServices()',
     'cm.registerDefaultNetworkCallback(callback)',
     'OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)',
 ):
     require(android, needle, "ANDROID_OFFLINE_FIRST_UI_221")
+for forbidden in ('val bootShell =', 'val bootOverlay = AigStartupOverlay(', 'setContentView(bootShell)'):
+    if forbidden in android:
+        raise SystemExit("BLOCKED STUDIO_CUSTOM_BOOT_SHELL: "+forbidden)
 for needle in (
     'LOCAL READY • NETWORK OPTIONAL',
     'OFFLINE-FIRST',
@@ -488,12 +517,14 @@ for needle in (
     'homeAction("AI"',
     'text="工作/維修"',
     'runtimeHost.addView(homeRoot',
-    'bootShell.addView(runtimeHost, 0',
+    'setContentView(runtimeHost)',
     'contentDescription="RETURN TO FORMAL RGB HOME"',
 ):
     require(android, needle, "STUDIO_FORMAL_RGB_HOME_FIRST_246")
-if 'bootShell.addView(root, 0' in android:
-    raise SystemExit("STUDIO_CAD_WORKSTATION_DIRECT_BOOT_246")
+if 'setContentView(bootShell)' in android or 'bootShell.addView(runtimeHost' in android:
+    raise SystemExit("STUDIO_CUSTOM_BOOT_SHELL_RETURNED_246")
+if android.index('setContentView(runtimeHost)') > android.index('scheduleBackgroundOnlineServices()'):
+    raise SystemExit("STUDIO_RUNTIME_MUST_BE_VISIBLE_BEFORE_ONLINE_SERVICES_246")
 home_start=android.index('contentDescription="AIG CNC FORMAL RGB HOME')
 home_end=android.index('runtimeHost.addView(homeRoot',home_start)
 home_source=android[home_start:home_end]
