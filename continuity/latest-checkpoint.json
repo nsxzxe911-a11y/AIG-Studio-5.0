@@ -3,7 +3,7 @@
   "product": "AIG Studio 5.0",
   "version": "264.0.0",
   "branch": "main",
-  "recorded_source_head": "3ba64f0ee546d5d467d9c5d4680241fc2dfcd89b",
+  "recorded_source_head": "caf392ced7a82a285c2deb80d710a24cb5f1fd5f",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "RESUME_READY",
   "departments": {
@@ -45,5 +45,6 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue from current main HEAD. Never restart from chat history, never downgrade, and preserve exact-SHA evidence."
+  "next_action": "Continue from current main HEAD. Never restart from chat history, never downgrade, and preserve exact-SHA evidence.",
+  "note": "Version, UIUX library, zh-TW baseline, and continuity verifier are aligned on Studio 264.0.0. This checkpoint records resumability only; binary/device PASS must come from executed validation."
 }
