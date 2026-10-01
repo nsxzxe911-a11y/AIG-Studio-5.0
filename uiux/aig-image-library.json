@@ -1,7 +1,7 @@
 {
   "schema": "aig-uiux-image-library-v2",
   "product": "AIG Studio 5.0",
-  "version": "262.0.0",
+  "version": "263.0.0",
   "status": "UIUX_VISUAL_LIBRARY_COMPLETE",
   "canonical_root": "uiux/",
   "rule": "No runtime or review page reads engineering-assets directly. engineering-assets remains immutable provenance/history only.",
@@ -184,6 +184,13 @@
       "uiux_status": "BOUND_TO_BASELINE"
     },
     {
+      "id": "CONTINUITY",
+      "label": "斷線續接",
+      "visual": "assets/home.png",
+      "icon_source": "../app/src/main/assets/aig-generated-rgb/approved/184/ai_resume.png",
+      "uiux_status": "BOUND_TO_CONTINUITY_POLICY"
+    },
+    {
       "id": "STARTUP",
       "label": "啟動",
       "visual": "assets/startup.png",
@@ -222,7 +229,8 @@
     "4AX",
     "5AX",
     "NC",
-    "AI"
+    "AI",
+    "CONTINUITY"
   ],
   "platform_targets": [
     "Android portrait",
@@ -230,5 +238,34 @@
     "Windows desktop"
   ],
   "note": "UI/UX visual library and mapping only; CNC geometry/G-code/coordinate truth remains owned by runtime core.",
-  "build_note": "Visual verification aligned to TOOLPATH_RGB_GLOW_250 and current 5X CAM safe/cutting palette; CNC runtime core unchanged."
+  "build_note": "263 adds cross-department disconnect continuity checkpoints without weakening CNC/safety/integrity blockers.",
+  "continuity": {
+    "mode": "RESUME_FROM_LAST_CHECKPOINT",
+    "checkpoint_scope": [
+      "HOME",
+      "CAD",
+      "CAM",
+      "SIM",
+      "3AX",
+      "4AX",
+      "5AX",
+      "NC",
+      "AI",
+      "UIUX",
+      "ANDROID_BUILD",
+      "WINDOWS_BUILD",
+      "WEB"
+    ],
+    "non_blocking_status": [
+      "NETWORK",
+      "INFRASTRUCTURE",
+      "UI_STATUS"
+    ],
+    "release_blocking": [
+      "PRODUCT_SAFETY",
+      "COMPILE_RUNTIME",
+      "INTEGRITY"
+    ],
+    "red_text_behavior": "SHOW_REASON_AND_CONTINUE_FROM_CHECKPOINT_WHEN_RESUMABLE"
+  }
 }

@@ -4,6 +4,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
+import java.util.Properties
 
 enum class UpdateSafetyScope { UI_AI_NETWORK, GCODE, COORDINATE, CUTTER_COMP, COLLISION }
 
@@ -28,6 +29,81 @@ data class UpdateCheckpoint(
     val downloadedBytes:Long,
     val totalBytes:Long?=null
 )
+
+enum class ContinuityFailureClass { NETWORK, INFRASTRUCTURE, UI_STATUS, PRODUCT_SAFETY, COMPILE_RUNTIME, INTEGRITY }
+
+data class DepartmentCheckpoint(
+    val department:String,
+    val phase:String,
+    val version:String,
+    val exactSha:String?=null,
+    val completedUnits:Int=0,
+    val totalUnits:Int?=null,
+    val lastError:String?=null
+)
+
+object DepartmentContinuityPolicy {
+    const val MODE="RESUME_FROM_LAST_CHECKPOINT"
+    const val RED_TEXT_IS_STATUS_NOT_STOP=true
+    const val NETWORK_DISCONNECT_RESUMABLE=true
+    const val INFRA_FAILURE_RESUMABLE=true
+    const val PRODUCT_SAFETY_FAILURE_BLOCKS_RELEASE=true
+    val departments=setOf("HOME","CAD","CAM","SIM","3AX","4AX","5AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","WEB")
+
+    fun resumeAllowed(failureClass:ContinuityFailureClass):Boolean =
+        failureClass==ContinuityFailureClass.NETWORK ||
+            failureClass==ContinuityFailureClass.INFRASTRUCTURE ||
+            failureClass==ContinuityFailureClass.UI_STATUS
+
+    fun blocksRelease(failureClass:ContinuityFailureClass):Boolean =
+        failureClass==ContinuityFailureClass.PRODUCT_SAFETY ||
+            failureClass==ContinuityFailureClass.COMPILE_RUNTIME ||
+            failureClass==ContinuityFailureClass.INTEGRITY
+
+    private fun safeDepartment(value:String):String = value.trim().uppercase().also {
+        require(it in departments){"Unknown continuity department: $value"}
+    }
+
+    fun checkpointFile(root:File,department:String):File =
+        File(root,"continuity/"+safeDepartment(department).lowercase()+".checkpoint.properties")
+
+    fun save(file:File,checkpoint:DepartmentCheckpoint) {
+        val department=safeDepartment(checkpoint.department)
+        require(checkpoint.completedUnits>=0){"Negative completedUnits"}
+        checkpoint.totalUnits?.let { require(it>=checkpoint.completedUnits){"completedUnits beyond totalUnits"} }
+        file.parentFile?.mkdirs()
+        val props=Properties().apply {
+            setProperty("department",department)
+            setProperty("phase",checkpoint.phase)
+            setProperty("version",checkpoint.version)
+            setProperty("exactSha",checkpoint.exactSha.orEmpty())
+            setProperty("completedUnits",checkpoint.completedUnits.toString())
+            setProperty("totalUnits",checkpoint.totalUnits?.toString().orEmpty())
+            setProperty("lastError",checkpoint.lastError.orEmpty())
+        }
+        val temp=File(file.parentFile,file.name+".tmp")
+        temp.outputStream().use { props.store(it,"AIG department continuity checkpoint") }
+        val moved=runCatching {
+            Files.move(temp.toPath(),file.toPath(),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE)
+        }.isSuccess
+        if(!moved) Files.move(temp.toPath(),file.toPath(),StandardCopyOption.REPLACE_EXISTING)
+    }
+
+    fun load(file:File):DepartmentCheckpoint? {
+        if(!file.isFile) return null
+        val props=Properties().apply { file.inputStream().use(::load) }
+        val department=props.getProperty("department")?.takeIf{it.isNotBlank()} ?: return null
+        return DepartmentCheckpoint(
+            department=safeDepartment(department),
+            phase=props.getProperty("phase").orEmpty(),
+            version=props.getProperty("version").orEmpty(),
+            exactSha=props.getProperty("exactSha")?.takeIf{it.isNotBlank()},
+            completedUnits=props.getProperty("completedUnits")?.toIntOrNull() ?: 0,
+            totalUnits=props.getProperty("totalUnits")?.toIntOrNull(),
+            lastError=props.getProperty("lastError")?.takeIf{it.isNotBlank()}
+        )
+    }
+}
 
 object RollingUpdatePolicy {
     const val MODE="FORWARD_ONLY_AFTER_VERIFIED_PASS"

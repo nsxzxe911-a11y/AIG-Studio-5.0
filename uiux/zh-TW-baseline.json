@@ -71,7 +71,8 @@
       "5AX",
       "MACHINE",
       "NC_EDIT",
-      "AI"
+      "AI",
+      "CONTINUITY"
     ],
     "engineering_shell_visible": false,
     "production_ui_first": true
@@ -86,8 +87,22 @@
     "5AX",
     "MACHINE",
     "NC_EDIT",
-    "AI"
+    "AI",
+    "CONTINUITY"
   ],
   "library_manifest": "uiux/aig-image-library.json",
-  "release_version": "262.0.0"
+  "release_version": "263.0.0",
+  "continuity_contract": {
+    "mode": "RESUME_FROM_LAST_CHECKPOINT",
+    "red_status_nonblocking_for": [
+      "NETWORK",
+      "INFRASTRUCTURE",
+      "UI_STATUS"
+    ],
+    "release_blocking_for": [
+      "PRODUCT_SAFETY",
+      "COMPILE_RUNTIME",
+      "INTEGRITY"
+    ]
+  }
 }

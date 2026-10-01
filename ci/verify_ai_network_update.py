@@ -35,6 +35,17 @@ for marker in (
     'WORKING_COPY_BEFORE_PROMOTE=true',
     'fun requiresCncRegression',
     'fun canPromote',
+    'object DepartmentContinuityPolicy',
+    'MODE="RESUME_FROM_LAST_CHECKPOINT"',
+    'RED_TEXT_IS_STATUS_NOT_STOP=true',
+    'NETWORK_DISCONNECT_RESUMABLE=true',
+    'INFRA_FAILURE_RESUMABLE=true',
+    'PRODUCT_SAFETY_FAILURE_BLOCKS_RELEASE=true',
+    'fun resumeAllowed',
+    'fun blocksRelease',
+    'fun checkpointFile',
+    'fun save(file:File,checkpoint:DepartmentCheckpoint)',
+    'fun load(file:File):DepartmentCheckpoint?',
 ):
     assert marker in policy, marker
 for package in (
@@ -46,3 +57,5 @@ m=re.fullmatch(r"versionName=(\d+)\.0\.0",version)
 assert m and int(m.group(1))>=254, version
 print("STUDIO_AI_NETWORK_UPDATE_GATE_PASS|RESUME_RANGE|PART_CHECKPOINT|SHA256|SIGNER|CHANGED_PACKAGES_ONLY|WORKING_COPY|ROLLING_BASELINE")
 print("STUDIO_AI_UPDATE_CNC_SCOPE_GATE_PASS|UI_AI_NETWORK_NO_HEAVY_CNC|GCODE_COORD_COMP_COLLISION_REQUIRE_REGRESSION")
+
+print("STUDIO_AI_DEPARTMENT_CONTINUITY_GATE_PASS|HOME|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|UIUX|ANDROID_BUILD|WINDOWS_BUILD|WEB|CHECKPOINT_RESUME|RED_STATUS_NONBLOCKING|SAFETY_BLOCKING")
