@@ -1,0 +1,88 @@
+{
+  "schema": "aig-release-command-v1",
+  "product": "AIG Studio 5.0",
+  "version": "265.0.0",
+  "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
+  "command_scope": "ALL_DEPARTMENTS",
+  "dispatch_mode": "IMMEDIATE_LOCAL_FIRST",
+  "network_policy": {
+    "command_dispatch_requires_network": false,
+    "network_may_block_command": false,
+    "remote_network_substep_behavior": "DEFER_SUBSTEP_AND_RESUME_FROM_CHECKPOINT",
+    "local_work_continues_when_offline": true,
+    "ui_waits_for_network": false
+  },
+  "departments": {
+    "HOME": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    },
+    "CAD": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    },
+    "CAM": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    },
+    "SIM": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    },
+    "3AX": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    },
+    "4AX": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    },
+    "5AX": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    },
+    "NC": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    },
+    "AI": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    },
+    "UIUX": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    },
+    "ANDROID_BUILD": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    },
+    "WINDOWS_BUILD": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    },
+    "WEB": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT"
+    }
+  },
+  "promotion_policy": {
+    "command_dispatch_is_not_release_pass": true,
+    "executed_product_safety_failure_blocks_promotion": true,
+    "compile_runtime_failure_blocks_promotion": true,
+    "integrity_failure_blocks_promotion": true
+  }
+}
