@@ -1172,6 +1172,7 @@ fun main() {
     testPackageBundleContract()
     testEnvironmentSettingsContract()
     testRealCamToolpath()
+    testContourSideDirectionCam3D()
     testWorkOffsetDoesNotShiftAbsoluteCoordinates()
     testControllerProfilesDoNotShiftAbsoluteCoordinates()
     testG91PostPreservesCanonicalAbsoluteCoordinates()
@@ -1830,6 +1831,48 @@ private fun testRealCamToolpath() {
     check(moves.any { !it.rapid && it.z < 0.0 }) { "CAM must contain cutting moves below Z0" }
     check(moves.filter { it.rapid }.all { it.z >= settings.safeZ }) { "All rapid moves must stay at safe-Z" }
     println("✓ real CAM toolpath + safe-Z")
+}
+
+private fun testContourSideDirectionCam3D() {
+    val center=Vec2(0.0,0.0)
+    val snap=DrawingSnapshot(listOf(Circle(id="C",center=center,radius=20.0)))
+    fun run(side:ContourSide,direction:ContourDirection):Triple<Double,Boolean,String> {
+        val settings=CamSettings(
+            toolDiameter=10.0,
+            depth=-3.0,
+            safeZ=8.0,
+            feedMmMin=180.0,
+            climb=direction==ContourDirection.CCW,
+            contourSide=side,
+            contourDirection=direction,
+            leadInMm=0.0,
+            leadOutMm=0.0
+        )
+        val cam=CamModel.fromCad(2000L+side.ordinal*10+direction.ordinal,snap,settings)
+        val arcs=cam.toolpaths.flatMap{it.moves}.filterIsInstance<ArcFeed>()
+        check(arcs.isNotEmpty()){"Contour CAM must emit arc moves"}
+        val radius=arcs.first().to.distanceTo(center)
+        check(arcs.all{it.clockwise==(direction==ContourDirection.CW)}) {
+            "CW/CCW must control arc direction only"
+        }
+        val removal=MaterialRemoval3D.simulate(
+            cam.toolpaths,settings,Stock3D.fromSnapshot(snap,margin=10.0,thickness=20.0)
+        )
+        check(removal.depth.any{it<0.0}){"3D material removal must follow contour toolpath"}
+        val nc=CncPost.generate(cam,FanucPostSettings())
+        val expected=if(direction==ContourDirection.CW)"G2" else "G3"
+        check(expected in nc){"NC must preserve requested contour direction"}
+        return Triple(radius,direction==ContourDirection.CW,nc)
+    }
+    val outCcw=run(ContourSide.OUTSIDE,ContourDirection.CCW)
+    val outCw=run(ContourSide.OUTSIDE,ContourDirection.CW)
+    val inCcw=run(ContourSide.INSIDE,ContourDirection.CCW)
+    val inCw=run(ContourSide.INSIDE,ContourDirection.CW)
+    assertNear(outCcw.first,25.0,msg="outside radius")
+    assertNear(outCw.first,25.0,msg="outside radius CW")
+    assertNear(inCcw.first,15.0,msg="inside radius")
+    assertNear(inCw.first,15.0,msg="inside radius CW")
+    println("✓ CAM_CONTOUR_SIDE_DIRECTION_GATE_PASS OUTSIDE INSIDE CCW CW RADIUS_COMP 3D_REMOVAL NC_G2_G3")
 }
 
 private fun testMaterialRemoval3D() {
