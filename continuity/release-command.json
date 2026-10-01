@@ -1,7 +1,7 @@
 {
   "schema": "aig-release-command-v1",
   "product": "AIG Studio 5.0",
-  "version": "274.0.0",
+  "version": "275.0.0",
   "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
   "command_scope": "ALL_DEPARTMENTS",
   "dispatch_mode": "IMMEDIATE_LOCAL_FIRST",
@@ -126,8 +126,8 @@
     "on_fail": "QUEUE_OWNER_REWORK",
     "unrelated_departments_continue": true
   },
-  "dispatch_generation": 17,
-  "dispatch_reason": "STUDIO_274_ALL_DEPARTMENTS_CONTINUE_SECOND_IMAGE_REFERENCE",
+  "dispatch_generation": 18,
+  "dispatch_reason": "STUDIO_275_THEME_PACK_HOT_SWAP_AI_LAYOUT",
   "command_state": "EXECUTE_NOW_UNTIL_ALL_DEPARTMENTS_PASS",
   "cache_update_standard": {
     "authority": "continuity/cache-update-standard.xml",
@@ -180,5 +180,16 @@
       "WINDOWS_BUILD"
     ],
     "all_departments_continue": true
+  },
+  "theme_pack_hot_swap": {
+    "pack": "aig_mobile_rgb_v1",
+    "contract": "AIG_THEME_PACK_HOT_SWAP_V1",
+    "ai_layout": "AIG_AI_LAYOUT_COMPOSER_V1",
+    "runtime_restart_required": false,
+    "failure_fallback": "LAST_VERIFIED_THEME_PACK",
+    "engineering_shell_fallback": false,
+    "reference_manifest": "design/reference-packs/mobile-rgb-pack-v1/manifest.json",
+    "verifier": "ci/verify_theme_pack_hot_swap.py",
+    "core_logic_mutation": false
   }
 }
