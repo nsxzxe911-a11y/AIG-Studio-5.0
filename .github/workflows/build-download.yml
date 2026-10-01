@@ -12,6 +12,7 @@ on:
       - 'continuity/release-command.json'
       - 'continuity/ai-responsibility-routing.json'
       - 'continuity/latest-checkpoint.json'
+      - 'continuity/visual-reference-baseline.json'
       - 'ci/verify_release_command_dispatch.py'
       - 'ci/verify_ai_responsibility_routing.py'
       - 'ci/verify_continuity_checkpoint.py'
