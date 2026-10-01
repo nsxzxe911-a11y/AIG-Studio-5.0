@@ -1,7 +1,7 @@
 {
   "schema": "aig-ai-responsibility-routing-v1",
   "product": "AIG Studio 5.0",
-  "version": "277.0.0",
+  "version": "278.0.0",
   "detector": "AI",
   "principle": "AI_DETECTS_CLASSIFIES_RETURNS_REWORK_REVERIFIES; OWNER_DEPARTMENT_FIXES",
   "lifecycle": [
@@ -121,5 +121,12 @@
     "unrelated_departments_continue": true,
     "no_runtime_restart": true,
     "no_engineering_shell_fallback": true
+  },
+  "network_resilience": {
+    "owner": "UIUX",
+    "ai_update_owner": "AI",
+    "build_owner": "ANDROID_BUILD",
+    "failure_action": "RETURN_ONLY_FAILED_OWNER",
+    "unrelated_departments_continue": true
   }
 }
