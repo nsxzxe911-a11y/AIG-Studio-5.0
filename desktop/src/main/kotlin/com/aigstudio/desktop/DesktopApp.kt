@@ -2724,7 +2724,9 @@ private fun saveDesktopRotaryMachineProfile(profile:RotaryAxisClampProfile){
 private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:JLabel,initialMode:String="3AX",camSettings:CamSettings=CamSettings()){
     require(initialMode in setOf("3D","3AX","4AX","5AX")){"Unsupported initial mode: $initialMode"}
     val snapshot=doc.snapshot()
-    require(snapshot.entities.isNotEmpty()){"UNIFIED WORKSPACE BLOCKED: no CAD geometry"}
+    require(snapshot.entities.isNotEmpty() || camSettings.pathMode==CamPathMode.MANUAL){
+        "UNIFIED WORKSPACE BLOCKED: AUTO needs CAD; MANUAL may run without CAD"
+    }
     var result=Machining3DEngine.build(snapshot,camSettings)
     var axisA=0.0
     var axisB=0.0
@@ -3229,17 +3231,157 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
 
     var productionCamSettings=CamSettings()
 
+    fun showProductionManualCamEditor(){
+        runCatching{
+            if(productionCamSettings.manualPath.isEmpty()){
+                val snapshot=doc.snapshot()
+                productionCamSettings=if(snapshot.entities.isNotEmpty()){
+                    val auto=CamModel.fromCad(
+                        System.currentTimeMillis(),snapshot,
+                        productionCamSettings.copy(pathMode=CamPathMode.AUTO)
+                    )
+                    ManualCamPathEngine.adoptAuto(auto)
+                }else{
+                    ManualCamPathEngine.startBlank(productionCamSettings,0.0,0.0)
+                }
+            }else{
+                productionCamSettings=ManualCamPathEngine.useManual(productionCamSettings)
+            }
+        }.onFailure{
+            status.text="MANUAL CAM BLOCKED • "+(it.message?:"error")
+            return
+        }
+
+        val dlg=JDialog(frame,"CAM 手動走刀 • 夾治具避讓",false).apply{
+            layout=BorderLayout(8,8);minimumSize=Dimension(760,520)
+        }
+        val model=DefaultComboBoxModel<String>()
+        val selector=JComboBox(model)
+        val x=JTextField(12);val y=JTextField(12);val z=JTextField(12)
+        val rapid=JCheckBox("G0 / 抬刀或快速移動")
+        fun label(i:Int,p:ManualCamPoint)=
+            "P"+(i+1)+" • "+(if(p.rapid)"G0" else if(p.arcI!=null)"ARC" else "G1")+
+                " • X"+DisplayFormat.mm(p.x)+" Y"+DisplayFormat.mm(p.y)+" Z"+DisplayFormat.mm(p.z)
+        fun refresh(select:Int=0){
+            model.removeAllElements()
+            productionCamSettings.manualPath.forEachIndexed{i,p->model.addElement(label(i,p))}
+            if(model.size>0)selector.selectedIndex=select.coerceIn(0,model.size-1)
+        }
+        fun load(){
+            val p=productionCamSettings.manualPath.getOrNull(selector.selectedIndex) ?: return
+            x.text=DisplayFormat.mm(p.x);y.text=DisplayFormat.mm(p.y);z.text=DisplayFormat.mm(p.z)
+            rapid.isSelected=p.rapid
+        }
+        selector.addActionListener{load()}
+        refresh();load()
+        val form=JPanel(GridLayout(0,2,6,6)).apply{
+            background=LibraryFiveAxisSkin208.panel;border=EmptyBorder(10,10,10,10)
+            add(JLabel("節點"));add(selector)
+            add(JLabel("X mm"));add(x)
+            add(JLabel("Y mm"));add(y)
+            add(JLabel("Z mm"));add(z)
+            add(JLabel("類型"));add(rapid)
+            add(JLabel("規則"));add(JLabel("位置不綁 CAD；G0 必須 ≥ Safe-Z"))
+        }
+        dlg.add(form,BorderLayout.CENTER)
+
+        val actions=AdaptiveGlassToolbar()
+        fun action(label:String,run:()->Unit){
+            actions.add(GlassActionButton(label,LibraryFiveAxisSkin208.cyan).apply{addActionListener{run()}})
+        }
+        action("套用節點"){
+            val i=selector.selectedIndex
+            runCatching{
+                productionCamSettings=ManualCamPathEngine.replacePoint(
+                    productionCamSettings,i,x.text.toDouble(),y.text.toDouble(),z.text.toDouble(),rapid.isSelected
+                )
+                CamModel.fromCad(System.currentTimeMillis(),doc.snapshot(),productionCamSettings)
+            }.onSuccess{
+                status.text="MANUAL CAM POINT PASS • P"+(i+1)+" • 3D/NC READY"
+                refresh(i);load()
+            }.onFailure{status.text="MANUAL CAM POINT BLOCKED • "+(it.message?:"error")}
+        }
+        action("新增切削點"){
+            val i=selector.selectedIndex
+            val p=productionCamSettings.manualPath.getOrNull(i) ?: return@action
+            runCatching{
+                productionCamSettings=ManualCamPathEngine.insertPoint(
+                    productionCamSettings,i+1,
+                    ManualCamPoint(p.x,p.y,productionCamSettings.depth,false,axisA=p.axisA,axisB=p.axisB)
+                )
+            }.onSuccess{refresh(i+1);load()}
+                .onFailure{status.text="MANUAL CAM INSERT BLOCKED • "+(it.message?:"error")}
+        }
+        action("插入避讓"){
+            val i=selector.selectedIndex
+            val current=productionCamSettings.manualPath.getOrNull(i) ?: return@action
+            val next=productionCamSettings.manualPath.getOrNull(i+1) ?: current
+            val p=JPanel(GridLayout(0,2,6,6))
+            val lift=JTextField(DisplayFormat.mm(productionCamSettings.safeZ),10)
+            val lx=JTextField(DisplayFormat.mm(next.x),10)
+            val ly=JTextField(DisplayFormat.mm(next.y),10)
+            val lz=JTextField(DisplayFormat.mm(if(next.rapid)productionCamSettings.depth else next.z),10)
+            p.add(JLabel("抬刀 Z"));p.add(lift)
+            p.add(JLabel("落刀 X"));p.add(lx)
+            p.add(JLabel("落刀 Y"));p.add(ly)
+            p.add(JLabel("落刀 Z"));p.add(lz)
+            if(JOptionPane.showConfirmDialog(
+                    dlg,p,"夾具／壓板避讓：抬刀 → Safe-Z 快移 → 落刀",
+                    JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE
+                )==JOptionPane.OK_OPTION){
+                runCatching{
+                    productionCamSettings=ManualCamPathEngine.insertAvoidance(
+                        productionCamSettings,i,lift.text.toDouble(),lx.text.toDouble(),ly.text.toDouble(),lz.text.toDouble()
+                    )
+                }.onSuccess{
+                    status.text="AVOIDANCE PASS • RETRACT / RAPID / PLUNGE"
+                    refresh(i+3);load()
+                }.onFailure{status.text="AVOIDANCE BLOCKED • "+(it.message?:"error")}
+            }
+        }
+        action("刪除節點"){
+            val i=selector.selectedIndex
+            runCatching{
+                productionCamSettings=ManualCamPathEngine.deletePoint(productionCamSettings,i)
+            }.onSuccess{
+                refresh(i.coerceAtMost(productionCamSettings.manualPath.lastIndex));load()
+            }.onFailure{status.text="MANUAL CAM DELETE BLOCKED • "+(it.message?:"error")}
+        }
+        action("3D SIM"){
+            runCatching{showUnifiedMachiningEditor(frame,doc,status,"3D",productionCamSettings)}
+                .onSuccess{dlg.dispose()}
+                .onFailure{status.text="MANUAL 3D SIM BLOCKED • "+(it.message?:"error")}
+        }
+        dlg.add(actions,BorderLayout.SOUTH)
+        dlg.pack();dlg.setLocationRelativeTo(frame);dlg.isVisible=true
+    }
+
     fun buildProductionCamPanel():JPanel {
         val snapshot=doc.snapshot()
-        if(snapshot.entities.isEmpty()){
+        if(snapshot.entities.isEmpty() && productionCamSettings.pathMode==CamPathMode.AUTO){
             return JPanel(BorderLayout()).apply{
+                name="CAM_CARD"
                 background=StudioDesktopProductionTheme.background
                 border=BorderFactory.createEmptyBorder(18,18,18,18)
-                add(JLabel("CAM 尚未建立 • 請先完成 CAD 幾何").apply{
+                val actions=AdaptiveGlassToolbar()
+                actions.add(GlassActionButton("MANUAL / 手動",LibraryFiveAxisSkin208.warning).apply{
+                    addActionListener{
+                        productionCamSettings=ManualCamPathEngine.startBlank(productionCamSettings,0.0,0.0)
+                        showProductionCam()
+                    }
+                })
+                actions.add(GlassActionButton("EDIT PATH / 路徑編輯",LibraryFiveAxisSkin208.cyan).apply{
+                    addActionListener{
+                        productionCamSettings=ManualCamPathEngine.startBlank(productionCamSettings,0.0,0.0)
+                        showProductionManualCamEditor()
+                    }
+                })
+                add(JLabel("AUTO 尚無 CAD • 可直接切 MANUAL 建立手動刀路").apply{
                     foreground=StudioDesktopProductionTheme.warning
                     font=font.deriveFont(Font.BOLD,18f)
                     horizontalAlignment=SwingConstants.CENTER
                 },BorderLayout.CENTER)
+                add(actions,BorderLayout.SOUTH)
             }
         }
         val result=Machining3DEngine.build(snapshot,productionCamSettings)
@@ -3292,6 +3434,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         parameter("DEPTH",DisplayFormat.mm(settings.depth)+" mm",LibraryFiveAxisSkin208.magenta)
         parameter("SAFE-Z",DisplayFormat.mm(settings.safeZ)+" mm",LibraryFiveAxisSkin208.safe)
         parameter("FEED",DisplayFormat.mm(settings.feedMmMin)+" mm/min",LibraryFiveAxisSkin208.cyan)
+        parameter("CAM SOURCE",settings.pathMode.name,if(settings.pathMode==CamPathMode.MANUAL)LibraryFiveAxisSkin208.warning else LibraryFiveAxisSkin208.cyan)
         parameter("CONTOUR SIDE",if(settings.contourSide==ContourSide.OUTSIDE)"外徑 / OUTSIDE" else "內徑 / INSIDE",LibraryFiveAxisSkin208.warning)
         parameter("PATH DIRECTION",settings.contourDirection.name,LibraryFiveAxisSkin208.cyan)
         val actions=AdaptiveGlassToolbar()
@@ -3304,6 +3447,21 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             mainCardLayout.show(mainCardHost,"CAM")
             mainCardHost.revalidate()
             mainCardHost.repaint()
+        }
+        camAction(if(settings.pathMode==CamPathMode.AUTO)"AUTO" else "MANUAL",LibraryFiveAxisSkin208.safe){
+            productionCamSettings=if(settings.pathMode==CamPathMode.AUTO){
+                if(settings.manualPath.isEmpty()){
+                    val auto=CamModel.fromCad(System.currentTimeMillis(),snapshot,settings)
+                    ManualCamPathEngine.adoptAuto(auto)
+                }else ManualCamPathEngine.useManual(settings)
+            }else{
+                ManualCamPathEngine.useAuto(settings)
+            }
+            status.text="CAM SOURCE • "+productionCamSettings.pathMode.name
+            rebuildCamCard()
+        }
+        camAction("路徑編輯",LibraryFiveAxisSkin208.warning){
+            showProductionManualCamEditor()
         }
         camAction(if(settings.contourSide==ContourSide.OUTSIDE)"外徑" else "內徑",LibraryFiveAxisSkin208.warning){
             productionCamSettings=productionCamSettings.copy(
