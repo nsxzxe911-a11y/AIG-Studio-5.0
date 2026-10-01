@@ -1,5 +1,77 @@
 package com.aigstudio.core
 
+enum class CoordinatePrecisionMode(val stepMm:Double,val decimals:Int,val storageValue:String) {
+    MM_0_001(0.001,3,"0.001"),
+    MM_0_01(0.010,2,"0.01"),
+    MM_0_1(0.100,1,"0.1");
+
+    companion object {
+        fun fromStorage(value:String?):CoordinatePrecisionMode =
+            entries.firstOrNull { it.storageValue==value?.trim() } ?: MM_0_001
+    }
+}
+
+object CoordinatePrecisionRuntime {
+    const val ENGINE_RESOLUTION_MM=0.001
+
+    @Volatile private var displayMode=CoordinatePrecisionMode.MM_0_001
+    @Volatile private var inputMode=CoordinatePrecisionMode.MM_0_001
+    @Volatile private var ncOutputMode=CoordinatePrecisionMode.MM_0_001
+
+    @Synchronized
+    fun configure(
+        display:CoordinatePrecisionMode=CoordinatePrecisionMode.MM_0_001,
+        input:CoordinatePrecisionMode=display,
+        ncOutput:CoordinatePrecisionMode=CoordinatePrecisionMode.MM_0_001
+    ) {
+        displayMode=display
+        inputMode=input
+        ncOutputMode=ncOutput
+    }
+
+    fun display():CoordinatePrecisionMode=displayMode
+    fun input():CoordinatePrecisionMode=inputMode
+    fun ncOutput():CoordinatePrecisionMode=ncOutputMode
+    fun displayStepMm():Double=displayMode.stepMm
+    fun inputStepMm():Double=inputMode.stepMm
+    fun ncOutputStepMm():Double=ncOutputMode.stepMm
+
+    fun formatDisplay(value:Double):String {
+        require(value.isFinite()){"Coordinate display value must be finite"}
+        return java.lang.String.format(
+            java.util.Locale.US,
+            "%."+displayMode.decimals+"f",
+            value
+        )
+    }
+
+    fun quantizeInput(value:Double):Double {
+        require(value.isFinite()){"Coordinate input value must be finite"}
+        val step=inputMode.stepMm
+        val quantized=kotlin.math.round(value/step)*step
+        return if(kotlin.math.abs(quantized)<ENGINE_RESOLUTION_MM/2.0)0.0 else quantized
+    }
+
+    fun formatNc(value:Double):String {
+        require(value.isFinite()){"NC coordinate value must be finite"}
+        var s=java.lang.String.format(
+            java.util.Locale.US,
+            "%."+ncOutputMode.decimals+"f",
+            value
+        )
+        while(s.contains('.') && s.endsWith('0')) s=s.dropLast(1)
+        if(s.endsWith('.')) return s
+        if(!s.contains('.')) s+="."
+        return s
+    }
+
+    fun summary():String =
+        "DISPLAY="+displayMode.storageValue+
+            " • INPUT="+inputMode.storageValue+
+            " • NC="+ncOutputMode.storageValue+
+            " • ENGINE=0.001"
+}
+
 enum class FpsMode(val fps:Int){ FPS_30(30), FPS_60(60), FPS_120(120), AUTO(0) }
 enum class GlowLevel{ OFF, LOW, MEDIUM, HIGH }
 enum class PowerMode{ PERFORMANCE, BALANCED, ECO, AUTO }
