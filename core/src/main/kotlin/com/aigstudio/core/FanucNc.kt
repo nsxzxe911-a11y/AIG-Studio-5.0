@@ -2291,63 +2291,6 @@ object FanucNc {
     fun fmt(v: Double): String = CoordinatePrecisionRuntime.formatNc(v)
 }
 
-data class MachiningRiskReport(val collisionCount: Int, val overcutCount: Int, val warnings: List<String>) {
-    val ok: Boolean get() = collisionCount == 0 && overcutCount == 0
-}
-
-object MachiningRiskScanner {
-    fun inspect(cam: CamModel, stock: Stock3D): MachiningRiskReport {
-        var collisions = 0
-        var overcuts = 0
-        val warnings = mutableListOf<String>()
-        val bottom = -stock.thickness
-        cam.toolpaths.forEachIndexed { pathIndex, path ->
-            var previous: Move? = null
-            path.moves.forEachIndexed { moveIndex, move ->
-                if (move.rapid && move.z + 1e-9 < cam.settings.safeZ) {
-                    collisions++
-                    warnings += "Rapid below Safe-Z at path=" + pathIndex + " move=" + moveIndex
-                }
-                if (!move.rapid && move.z < bottom - CNC_RESOLUTION_MM) {
-                    overcuts++
-                    warnings += "Cut below stock bottom at path=" + pathIndex + " move=" + moveIndex
-                }
-
-                fun outside(x: Double, y: Double): Boolean =
-                    x < stock.minX || x > stock.maxX || y < stock.minY || y > stock.maxY
-
-                var pathOutside = !move.rapid && outside(move.to.x, move.to.y)
-                val prev = previous
-                if (!move.rapid && move is ArcFeed && prev != null) {
-                    val center = prev.to + move.centerOffset
-                    val radius = prev.to.distanceTo(center)
-                    if (radius > EPS) {
-                        val a0 = kotlin.math.atan2(prev.to.y - center.y, prev.to.x - center.x)
-                        val a1 = kotlin.math.atan2(move.to.y - center.y, move.to.x - center.x)
-                        var sweep = a1 - a0
-                        if (move.clockwise) while (sweep >= 0.0) sweep -= 2.0 * Math.PI
-                        else while (sweep <= 0.0) sweep += 2.0 * Math.PI
-                        val steps = kotlin.math.max(8, kotlin.math.ceil(kotlin.math.abs(sweep) / Math.toRadians(10.0)).toInt())
-                        for (i in 0..steps) {
-                            val a = a0 + sweep * i / steps
-                            if (outside(center.x + radius * kotlin.math.cos(a), center.y + radius * kotlin.math.sin(a))) {
-                                pathOutside = true
-                                break
-                            }
-                        }
-                    }
-                }
-                if (pathOutside) {
-                    overcuts++
-                    warnings += "Cut outside stock XY at path=" + pathIndex + " move=" + moveIndex
-                }
-                previous = move
-            }
-        }
-        return MachiningRiskReport(collisions, overcuts, warnings.distinct())
-    }
-}
-
 object CncPost {
     fun generate(cam: CamModel, post: FanucPostSettings = FanucPostSettings()): String =
         FanucNc.generate(cam, post)
