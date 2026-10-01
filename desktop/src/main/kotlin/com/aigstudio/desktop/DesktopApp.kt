@@ -427,6 +427,12 @@ private class CadPanel(
                 val p = if(snapEnabled) CadSnapEngine.snapTo(doc,raw,18.0/pxPerMm,reference=first) ?: raw else raw
                 if(mode==DrawMode.SELECT){
                     if(handlePendingPick(p)) return
+                    val selectedCenter=if(selectedIds.isEmpty()) null else
+                        runCatching{CadEditEngine.selectionCenter(doc,selectedIds)}.getOrNull()
+                    if(selectedCenter!=null && selectedCenter.distanceTo(p)<=24.0/pxPerMm){
+                        editSelectionCenter(selectedCenter)
+                        return
+                    }
                     val control=if(selectedIds.isNotEmpty())
                         CadControlPointEngine.nearest(doc,selectedIds,p,24.0/pxPerMm)
                     else null
@@ -706,6 +712,29 @@ private class CadPanel(
         return CadSelectionEngine.nearest(doc,p,tolerance)
     }
 
+    private fun editSelectionCenter(center:Vec2) {
+        val panel=JPanel(GridLayout(0,2,6,6))
+        val x=JTextField(DisplayFormat.mm(center.x),10)
+        val y=JTextField(DisplayFormat.mm(center.y),10)
+        panel.add(JLabel("中心 X mm"));panel.add(x)
+        panel.add(JLabel("中心 Y mm"));panel.add(y)
+        if(JOptionPane.showConfirmDialog(
+                this,panel,"選取中心點 • 整體移動",JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE
+            )==JOptionPane.OK_OPTION) {
+            val px=x.text.trim().toDoubleOrNull()
+            val py=y.text.trim().toDoubleOrNull()
+            if(px==null || py==null){
+                status("CENTER BLOCKED • invalid X/Y")
+                return
+            }
+            runCatching {
+                applyGeometry("CENTER",CadEditEngine.moveCommand(doc,selectedIds,px-center.x,py-center.y))
+            }.onSuccess {
+                status("CENTER PASS • X="+DisplayFormat.mm(px)+" Y="+DisplayFormat.mm(py)+" • CAM/SIM/NC REBUILD")
+            }.onFailure { status("CENTER BLOCKED • "+(it.message?:"error")) }
+        }
+    }
+
     private fun editControlPoint(control:CadControlPoint) {
         val entity=doc.get(control.entityId) ?: return
         if(control.kind==CadControlPointKind.RADIUS) {
@@ -811,6 +840,12 @@ private class CadPanel(
                     g2.drawLine(p.x-8,p.y,p.x+8,p.y)
                     g2.drawLine(p.x,p.y-8,p.x,p.y+8)
                 }
+            }
+            runCatching{CadEditEngine.selectionCenter(doc,selectedIds)}.getOrNull()?.let { center ->
+                val p=worldToScreen(center)
+                g2.color=Color(99,255,157)
+                g2.drawRect(p.x-9,p.y-9,18,18)
+                g2.fillOval(p.x-3,p.y-3,6,6)
             }
         }
 
