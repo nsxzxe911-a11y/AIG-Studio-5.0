@@ -1,25 +1,25 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "264.0.0",
+  "version": "265.0.0",
   "branch": "main",
   "recorded_source_head": "caf392ced7a82a285c2deb80d710a24cb5f1fd5f",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "RESUME_READY",
+  "status": "COMMAND_DISPATCH_READY",
   "departments": {
-    "HOME": "CHECKPOINTED",
-    "CAD": "CHECKPOINTED",
-    "CAM": "CHECKPOINTED",
-    "SIM": "CHECKPOINTED",
-    "3AX": "CHECKPOINTED",
-    "4AX": "CHECKPOINTED",
-    "5AX": "CHECKPOINTED",
-    "NC": "CHECKPOINTED",
-    "AI": "CHECKPOINTED",
-    "UIUX": "CHECKPOINTED",
-    "ANDROID_BUILD": "CHECKPOINTED",
-    "WINDOWS_BUILD": "CHECKPOINTED",
-    "WEB": "CHECKPOINTED"
+    "HOME": "RESUME_READY",
+    "CAD": "RESUME_READY",
+    "CAM": "RESUME_READY",
+    "SIM": "RESUME_READY",
+    "3AX": "RESUME_READY",
+    "4AX": "RESUME_READY",
+    "5AX": "RESUME_READY",
+    "NC": "RESUME_READY",
+    "AI": "RESUME_READY",
+    "UIUX": "RESUME_READY",
+    "ANDROID_BUILD": "RESUME_READY",
+    "WINDOWS_BUILD": "RESUME_READY",
+    "WEB": "RESUME_READY"
   },
   "record_policy": {
     "authoritative": [
@@ -45,6 +45,13 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue from current main HEAD. Never restart from chat history, never downgrade, and preserve exact-SHA evidence.",
-  "note": "Version, UIUX library, zh-TW baseline, and continuity verifier are aligned on Studio 264.0.0. This checkpoint records resumability only; binary/device PASS must come from executed validation."
+  "next_action": "Execute the all-department release command locally from the latest checkpoint. Network failure may defer only remote/network substeps and must never stop command dispatch or unrelated departments.",
+  "note": "Version, UIUX library, zh-TW baseline, and continuity verifier are aligned on Studio 264.0.0. This checkpoint records resumability only; binary/device PASS must come from executed validation.",
+  "release_command": {
+    "path": "continuity/release-command.json",
+    "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
+    "scope": "ALL_DEPARTMENTS",
+    "network_blocks_command": false,
+    "local_first": true
+  }
 }
