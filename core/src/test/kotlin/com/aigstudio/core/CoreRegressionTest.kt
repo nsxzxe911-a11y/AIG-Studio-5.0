@@ -1457,7 +1457,18 @@ private fun testCadPrecisionEditing() {
     val arcEnd=CadControlPointEngine.points(controlDoc.get("CP-A")!!).first{it.kind==CadControlPointKind.ARC_END}
     controlHistory.run(CadControlPointEngine.editCommand(controlDoc,arcEnd,Vec2(35.0,20.0)))
     assertNear((controlDoc.get("CP-A") as Arc).center.distanceTo((controlDoc.get("CP-A") as Arc).end),5.0,msg="control arc radius")
-    println("✓ CAD_CONTROL_POINT_EDIT_GATE_PASS ENDPOINT CENTER RADIUS ARC_POINT UNDO_REDO TOL=0.001")
+    val groupDoc=DrawingDocument()
+    groupDoc.put(Line(id="G1",a=Vec2(0.0,0.0),b=Vec2(10.0,0.0)))
+    groupDoc.put(Line(id="G2",a=Vec2(0.0,10.0),b=Vec2(10.0,10.0)))
+    val groupHistory=History(groupDoc)
+    val groupIds=listOf("G1","G2")
+    val groupCenter=CadEditEngine.selectionCenter(groupDoc,groupIds)
+    assertPoint(groupCenter,Vec2(5.0,5.0),"selection center")
+    groupHistory.run(CadEditEngine.moveCommand(groupDoc,groupIds,15.0-groupCenter.x,20.0-groupCenter.y))
+    assertPoint(CadEditEngine.selectionCenter(groupDoc,groupIds),Vec2(15.0,20.0),"selection center moved")
+    check(groupHistory.undoWithEffect()==true)
+    assertPoint(CadEditEngine.selectionCenter(groupDoc,groupIds),Vec2(5.0,5.0),"selection center undo")
+    println("✓ CAD_CONTROL_POINT_EDIT_GATE_PASS ENDPOINT CENTER RADIUS ARC_POINT SELECTION_CENTER_XY UNDO_REDO TOL=0.001")
 
     println("✓ CAD_PRECISION_EDIT_GATE_PASS SNAP_ENDPOINT MIDPOINT CENTER INTERSECTION TANGENT HORIZONTAL VERTICAL DIM_DRIVE TRIM EXTEND OFFSET ARRAY SELECTION_LINE_RECT_CIRCLE_ARC_HOLE GROUP_PRESERVED TOL=0.001")
 }
