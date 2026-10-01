@@ -1041,6 +1041,10 @@ object OfflineFirstRuntimeContract {
     const val BACKGROUND_NETWORK_DELAY_MS = 180L
     const val BACKGROUND_NETWORK_RETRY_DELAY_MS = 350L
     const val BACKGROUND_NETWORK_MAX_ATTEMPTS = 2
+    const val NETWORK_CAPABILITY_DEBOUNCE_MS = 120L
+    const val STALE_NETWORK_RESULT_SUPPRESSION = true
+    const val VALIDATED_RECONNECT_RESETS_CIRCUIT_BREAKER = true
+    const val SHARED_SYNC_HEAVY_IO_OFF_MAIN = true
     val localModes = listOf("CAD","CAM","SIM","NC","AI")
 
     fun startupAllowed(networkAvailable:Boolean):Boolean = true
