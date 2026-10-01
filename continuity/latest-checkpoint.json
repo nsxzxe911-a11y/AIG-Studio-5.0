@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "274.0.0",
+  "version": "275.0.0",
   "branch": "main",
   "recorded_source_head": "c72a8076138d056c8ac88441c1c1d63419e087af",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -45,7 +45,7 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "All 13 departments continue. Second user-provided image is the visual comparison reference. First-frame engineering/simplified shell fails immediately and returns HOME/UIUX/platform build for correction; unrelated departments continue.",
+  "next_action": "Continue all departments. AI may design/reflow UI within stable order and safety constraints. Theme packs hot-swap without Runtime restart; failure rolls back to last verified pack.",
   "note": "Studio 270.0.0 runs parallel FAST REVIEW with Android/Windows heavy jobs concurrently. Failed checks route only to the responsible owner; XML cache and product safety/integrity gates remain enforced.",
   "release_command": {
     "path": "continuity/release-command.json",
@@ -93,5 +93,13 @@
     "approved_sha256": "c86e6c24927fffb67231ec7e17cd962dc67c5a3fd615b794499f5f595a5ebc9d",
     "engineering_shell_default": "FAIL",
     "visible_screenshot_required": true
+  },
+  "theme_pack_hot_swap": {
+    "pack": "aig_mobile_rgb_v1",
+    "screens": 8,
+    "ai_auto_layout": true,
+    "no_restart": true,
+    "rollback": "LAST_VERIFIED_THEME_PACK",
+    "engineering_shell_fallback": false
   }
 }
