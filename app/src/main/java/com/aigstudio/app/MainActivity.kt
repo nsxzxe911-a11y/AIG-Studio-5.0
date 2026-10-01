@@ -1579,38 +1579,47 @@ class MainActivity : Activity() {
     private fun rotaryMachinePrefs() = getSharedPreferences("aig_rotary_machine_profile", MODE_PRIVATE)
 
     private fun loadRotaryMachineProfile() {
-        val prefs = rotaryMachinePrefs()
-        rotaryClampProfile = when (prefs.getString("mode", "UNCONFIGURED")) {
-            "PMC_AUTO" -> RotaryAxisClampProfile.controllerAutomatic(
-                prefs.getBoolean("require_indexed_cut_lock", false)
-            )
+        val prefs=rotaryMachinePrefs()
+        fun readAxis(prefix:String):RotaryAxisMCodePair=when(prefs.getString(prefix+"_mode","UNCONFIGURED")){
+            "PMC_AUTO" -> RotaryAxisMCodePair.controllerAutomatic(prefs.getBoolean(prefix+"_require_indexed_cut_lock",false))
             "EXPLICIT" -> {
-                val lock = prefs.getInt("lock_m", -1)
-                val unlock = prefs.getInt("unlock_m", -1)
-                if (lock in 0..999 && unlock in 0..999 && lock != unlock) {
-                    RotaryAxisClampProfile.explicit(
-                        clampM = lock,
-                        unclampM = unlock,
-                        requireClampForIndexedCutting = prefs.getBoolean("require_indexed_cut_lock", false)
-                    )
-                } else RotaryAxisClampProfile.unconfigured()
+                val lock=prefs.getInt(prefix+"_lock_m",-1)
+                val unlock=prefs.getInt(prefix+"_unlock_m",-1)
+                if(lock in 0..999 && unlock in 0..999 && lock!=unlock)
+                    RotaryAxisMCodePair.explicit(lock,unlock,prefs.getBoolean(prefix+"_require_indexed_cut_lock",false))
+                else RotaryAxisMCodePair.unconfigured()
             }
-            else -> RotaryAxisClampProfile.unconfigured()
+            else -> RotaryAxisMCodePair.unconfigured()
         }
+        val g34Template=runCatching{
+            G34VendorTemplate.valueOf(prefs.getString("g34_template","UNCONFIGURED") ?: "UNCONFIGURED")
+        }.getOrDefault(G34VendorTemplate.UNCONFIGURED)
+        val g34DefaultAngle=prefs.getString("g34_default_angle","90.0")?.toDoubleOrNull()?.takeIf{it.isFinite()} ?: 90.0
+        rotaryClampProfile=RotaryAxisClampProfile.configured(
+            axis4=readAxis("axis4"),
+            axis5=readAxis("axis5"),
+            installedOptionalCodes=RotaryAxisClampProfile.parseOptionalCodes(prefs.getString("optional_codes","").orEmpty()),
+            g34VendorProfile=G34VendorProfile(g34Template,g34DefaultAngle)
+        )
     }
 
-    private fun saveRotaryMachineProfile(profile: RotaryAxisClampProfile) {
-        val editor = rotaryMachinePrefs().edit()
-            .clear()
-            .putBoolean("require_indexed_cut_lock", profile.requireClampForIndexedCutting)
-        when {
-            profile.controllerAutomatic -> editor.putString("mode", "PMC_AUTO")
-            profile.explicit -> editor
-                .putString("mode", "EXPLICIT")
-                .putInt("lock_m", profile.clampM!!)
-                .putInt("unlock_m", profile.unclampM!!)
-            else -> editor.putString("mode", "UNCONFIGURED")
+    private fun saveRotaryMachineProfile(profile:RotaryAxisClampProfile) {
+        val editor=rotaryMachinePrefs().edit().clear()
+        fun writeAxis(prefix:String,axis:RotaryAxisMCodePair){
+            editor.putBoolean(prefix+"_require_indexed_cut_lock",axis.requireClampForIndexedCutting)
+            when {
+                axis.controllerAutomatic -> editor.putString(prefix+"_mode","PMC_AUTO")
+                axis.explicit -> editor.putString(prefix+"_mode","EXPLICIT")
+                    .putInt(prefix+"_lock_m",axis.clampM!!)
+                    .putInt(prefix+"_unlock_m",axis.unclampM!!)
+                else -> editor.putString(prefix+"_mode","UNCONFIGURED")
+            }
         }
+        writeAxis("axis4",profile.axis4)
+        writeAxis("axis5",profile.axis5)
+        editor.putString("optional_codes",profile.optionalCodesCsv())
+        editor.putString("g34_template",profile.g34VendorProfile.template.name)
+        editor.putString("g34_default_angle",profile.g34VendorProfile.defaultStartAngleDeg.toString())
         editor.apply()
     }
 
@@ -1620,12 +1629,15 @@ class MainActivity : Activity() {
         else -> RotaryAxisOperationMode.NONE
     }
 
-    private fun rotaryClampStatusText(): String = when {
-        rotaryClampProfile.controllerAutomatic -> "PMC AUTO • VERIFIED MACHINE ONLY"
-        rotaryClampProfile.explicit ->
-            "EXPLICIT M" + rotaryClampProfile.unclampM + " UNLOCK / M" + rotaryClampProfile.clampM + " LOCK" +
-                if (rotaryClampProfile.requireClampForIndexedCutting) " • INDEXED CUT LOCK" else " • CUT LOCK NOT FORCED"
-        else -> "UNCONFIGURED • 4/5AX ROTARY DRILL BLOCKED"
+    private fun rotaryClampStatusText():String {
+        fun axis(label:String,p:RotaryAxisMCodePair)=label+"="+when{
+            p.controllerAutomatic -> "PMC_AUTO"
+            p.explicit -> "M"+p.unclampM+" OPEN / M"+p.clampM+" LOCK"
+            else -> "UNCONFIGURED"
+        }
+        return axis("4AX",rotaryClampProfile.axis4)+" • "+axis("5AX",rotaryClampProfile.axis5)+
+            " • OPTIONS="+rotaryClampProfile.optionalCodesCsv().ifBlank{"NONE"}+
+            " • G34="+rotaryClampProfile.g34VendorProfile.template.name
     }
 
     private fun currentUnifiedNcSourceSignature(): String {
@@ -1635,10 +1647,15 @@ class MainActivity : Activity() {
             append(workOffset).append('|')
             append(axisA).append('|').append(axisB).append('|')
             append(machiningAxisMode).append('|')
-            append(rotaryClampProfile.controllerAutomatic).append('|')
-            append(rotaryClampProfile.clampM ?: -1).append('|')
-            append(rotaryClampProfile.unclampM ?: -1).append('|')
-            append(rotaryClampProfile.requireClampForIndexedCutting).append('|')
+            listOf(rotaryClampProfile.axis4,rotaryClampProfile.axis5).forEach{axis->
+                append(axis.controllerAutomatic).append('|')
+                append(axis.clampM ?: -1).append('|')
+                append(axis.unclampM ?: -1).append('|')
+                append(axis.requireClampForIndexedCutting).append('|')
+            }
+            append(rotaryClampProfile.optionalCodesCsv()).append('|')
+            append(rotaryClampProfile.g34VendorProfile.template.name).append('|')
+            append(java.lang.Double.doubleToLongBits(rotaryClampProfile.g34VendorProfile.defaultStartAngleDeg)).append('|')
             append(controllerProfile.name).append('|')
             append(ncCoordinateMode.name).append('|')
             append(ncOriginTransformMode.name).append('|')
@@ -2687,7 +2704,7 @@ class MainActivity : Activity() {
                 "LINE "+line+" • "+NcCodeCatalog.lineHelp(program,line,rotaryClampProfile,currentRotaryOperationMode())+"\n"+
                 NcSemanticAuthority.lineEvidence(program,line,controllerProfile,rotaryClampProfile,currentRotaryOperationMode())+"\n"+
                 NcExecutionTimeline.lineEvidence(program,line,controllerProfile,rotaryClampProfile=rotaryClampProfile,rotaryMode=currentRotaryOperationMode())+"\n"+
-                CncControllerCapabilityMatrix.summary(controllerProfile,program,rotaryClampProfile.allowedMCodes())+
+                CncControllerCapabilityMatrix.summary(controllerProfile,program,rotaryClampProfile.allowedMachineCodes())+
                 (if(blocked.isEmpty() && machine.canExecute) " • SAFETY=PASS • SESSION ACTIVE"
                 else " • WARNING • SESSION ACTIVE • EDITING ENABLED • EXECUTION INTERLOCK="+(
                     blocked.take(2).map{it.code} +
@@ -3342,41 +3359,78 @@ class MainActivity : Activity() {
             box.addView(this)
         }
 
-        val clampModes = arrayOf(
-            "ROTARY CLAMP UNCONFIGURED / BLOCK",
+        val clampModes=arrayOf(
+            "UNCONFIGURED / NC BLOCK",
             "CONTROLLER / PMC AUTO • VERIFIED MACHINE ONLY",
             "EXPLICIT MACHINE M-CODES"
         )
-        val selectedClampMode = when {
-            rotaryClampProfile.controllerAutomatic -> clampModes[1]
-            rotaryClampProfile.explicit -> clampModes[2]
-            else -> clampModes[0]
+        fun modeIndex(axis:RotaryAxisMCodePair)=when{axis.controllerAutomatic->1;axis.explicit->2;else->0}
+
+        box.addView(TextView(this).apply {
+            text="4AX M碼設定 • 每台機器依廠商/PMC不同，可留空"
+            setTextColor(Color.rgb(80,210,255));textSize=12f
+        })
+        val clamp4ModeSpinner=spinner(clampModes,{it},clampModes[modeIndex(rotaryClampProfile.axis4)])
+        val unlock4M=EditText(this).apply {
+            hint="4AX 開鎖 M(   )";setText(rotaryClampProfile.axis4.unclampM?.toString().orEmpty())
+            inputType=InputType.TYPE_CLASS_NUMBER;box.addView(this)
         }
-        val clampModeSpinner = spinner(clampModes,{it},selectedClampMode)
-        val unlockM = EditText(this).apply {
-            hint = "ROTARY UNLOCK M number • machine builder manual"
-            setText(rotaryClampProfile.unclampM?.toString().orEmpty())
-            inputType = InputType.TYPE_CLASS_NUMBER
-            box.addView(this)
+        val clamp4M=EditText(this).apply {
+            hint="4AX 鎖定 M(   )";setText(rotaryClampProfile.axis4.clampM?.toString().orEmpty())
+            inputType=InputType.TYPE_CLASS_NUMBER;box.addView(this)
         }
-        val clampM = EditText(this).apply {
-            hint = "ROTARY LOCK M number • machine builder manual"
-            setText(rotaryClampProfile.clampM?.toString().orEmpty())
-            inputType = InputType.TYPE_CLASS_NUMBER
-            box.addView(this)
-        }
-        val clampIndexedCut = CheckBox(this).apply {
-            text = "Indexed 4/5AX cutting also requires LOCK • only if this machine requires it"
-            isChecked = rotaryClampProfile.requireClampForIndexedCutting
-            box.addView(this)
+        val clamp4IndexedCut=CheckBox(this).apply {
+            text="4AX indexed cutting requires LOCK";isChecked=rotaryClampProfile.axis4.requireClampForIndexedCutting;box.addView(this)
         }
 
         box.addView(TextView(this).apply {
-            text = "ROTARY SAFETY • 4/5軸鑽孔/攻牙：Safe-Z → UNLOCK → A/B定位 → LOCK → cycle。M42/M44 等僅可作機台範例，不是通用預設。" +
-                " 同步4/5軸切削時A/B必須可動，不可鎖死。UNLOCK/LOCK不是通用G-code；" +
-                "請選PMC AUTO或輸入這台機器製造商確認的M-code。未設定時4/5軸鑽孔直接BLOCK。"
-            setTextColor(Color.rgb(255,190,90))
-            textSize = 11f
+            text="5AX M碼設定 • 可與4AX完全不同"
+            setTextColor(Color.rgb(180,120,255));textSize=12f
+        })
+        val clamp5ModeSpinner=spinner(clampModes,{it},clampModes[modeIndex(rotaryClampProfile.axis5)])
+        val unlock5M=EditText(this).apply {
+            hint="5AX 開鎖 M(   )";setText(rotaryClampProfile.axis5.unclampM?.toString().orEmpty())
+            inputType=InputType.TYPE_CLASS_NUMBER;box.addView(this)
+        }
+        val clamp5M=EditText(this).apply {
+            hint="5AX 鎖定 M(   )";setText(rotaryClampProfile.axis5.clampM?.toString().orEmpty())
+            inputType=InputType.TYPE_CLASS_NUMBER;box.addView(this)
+        }
+        val clamp5IndexedCut=CheckBox(this).apply {
+            text="5AX indexed cutting requires LOCK";isChecked=rotaryClampProfile.axis5.requireClampForIndexedCutting;box.addView(this)
+        }
+
+        val machineOptionalCodes=EditText(this).apply {
+            hint="廠商已安裝選配 G/M；多個用逗號分隔，留空=未確認"
+            setText(rotaryClampProfile.optionalCodesCsv());inputType=InputType.TYPE_CLASS_TEXT;box.addView(this)
+        }
+        val g34Templates=G34VendorTemplate.entries.toTypedArray()
+        box.addView(TextView(this).apply {
+            text="G34 廠商格式模板"
+            setTextColor(Color.rgb(255,190,90));textSize=12f
+        })
+        val g34TemplateSpinner=spinner(
+            g34Templates,
+            {
+                when(it){
+                    G34VendorTemplate.UNCONFIGURED -> "未設定 / 依廠商"
+                    G34VendorTemplate.XY_J0_I_DIAMETER_K_COUNT -> "X/Y中心 • J0=預設角 • I=節圓直徑 • K=孔數"
+                }
+            },
+            rotaryClampProfile.g34VendorProfile.template
+        )
+        val g34DefaultAngle=EditText(this).apply {
+            hint="G34 J0 預設起始角度，例如 90"
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            setText(rotaryClampProfile.g34VendorProfile.defaultStartAngleDeg.toString());box.addView(this)
+        }
+        box.addView(TextView(this).apply {
+            text="此模板只代表目前機台/廠商：J0採預設角；I為節圓直徑（I30→R15）；K為孔數。別台機器可不選此模板。"
+            setTextColor(Color.rgb(255,170,80));textSize=11f
+        })
+        box.addView(TextView(this).apply {
+            text="G/M屬機台/廠商設定。未配置或未安裝只會在NC欄WARNING/BLOCK送機；CAD/CAM/SIM/正式Runtime照常使用，不閃退、不切工程版。"
+            setTextColor(Color.rgb(255,190,90));textSize=11f
             setPadding(dp(4),dp(10),dp(4),dp(4))
         })
 
@@ -3402,21 +3456,24 @@ class MainActivity : Activity() {
                     val dValue = cutterDValue.text.toString().trim().toDoubleOrNull()
                         ?: error("D 補正值需為有效 mm")
                     require(dValue.isFinite()) { "D 補正值需為有效 mm" }
-                    val clampProfile = when (clampModeSpinner.selectedItemPosition) {
-                        0 -> RotaryAxisClampProfile.unconfigured()
-                        1 -> RotaryAxisClampProfile.controllerAutomatic(clampIndexedCut.isChecked)
-                        else -> {
-                            val unlock = unlockM.text.toString().trim().toIntOrNull()
-                                ?: error("請輸入這台機器確認的 ROTARY UNLOCK M number")
-                            val lock = clampM.text.toString().trim().toIntOrNull()
-                                ?: error("請輸入這台機器確認的 ROTARY LOCK M number")
-                            RotaryAxisClampProfile.explicit(
-                                clampM = lock,
-                                unclampM = unlock,
-                                requireClampForIndexedCutting = clampIndexedCut.isChecked
+                    fun axisProfile(mode:Spinner,lock:EditText,unlock:EditText,cut:CheckBox):RotaryAxisMCodePair =
+                        when(mode.selectedItemPosition){
+                            0 -> RotaryAxisMCodePair.unconfigured()
+                            1 -> RotaryAxisMCodePair.controllerAutomatic(cut.isChecked)
+                            else -> RotaryAxisMCodePair.explicit(
+                                clampM=lock.text.toString().trim().toIntOrNull() ?: error("鎖定 M碼需 0..999"),
+                                unclampM=unlock.text.toString().trim().toIntOrNull() ?: error("開鎖 M碼需 0..999"),
+                                requireClampForIndexedCutting=cut.isChecked
                             )
                         }
-                    }
+                    val g34Angle=g34DefaultAngle.text.toString().trim().toDoubleOrNull()
+                        ?: error("G34 預設角度需為數值")
+                    val clampProfile=RotaryAxisClampProfile.configured(
+                        axis4=axisProfile(clamp4ModeSpinner,clamp4M,unlock4M,clamp4IndexedCut),
+                        axis5=axisProfile(clamp5ModeSpinner,clamp5M,unlock5M,clamp5IndexedCut),
+                        installedOptionalCodes=RotaryAxisClampProfile.parseOptionalCodes(machineOptionalCodes.text.toString()),
+                        g34VendorProfile=G34VendorProfile(g34Templates[g34TemplateSpinner.selectedItemPosition],g34Angle)
+                    )
                     arrayOf(profile,coordinate,origin,comp,clampProfile,dRegister,dValue)
                 }.onSuccess { values ->
                     controllerProfile = values[0] as CncControllerProfile
@@ -3467,7 +3524,7 @@ class MainActivity : Activity() {
         }
         box.addView(TextView(this).apply {
             text = "AXIS MODE " + machiningAxisMode + " • " + rotaryClampStatusText()
-            setTextColor(if(currentRotaryOperationMode()==RotaryAxisOperationMode.NONE || rotaryClampProfile.configured)
+            setTextColor(if(currentRotaryOperationMode()==RotaryAxisOperationMode.NONE || rotaryClampProfile.pairFor(currentRotaryOperationMode())?.configured==true)
                 Color.rgb(99,255,157) else Color.rgb(255,110,110))
             textSize = 11f
             setPadding(dp(4),dp(4),dp(4),dp(8))
@@ -3675,8 +3732,8 @@ class MainActivity : Activity() {
             modalStatus.setTextColor(if (blocked.isEmpty() && machine.canExecute) Color.rgb(255,210,90) else Color.rgb(255,110,110))
             modalStatus.text = "MODAL • " + NcModalTracker.evidence(program) +
                 "\nAUX • " + NcAuxiliaryTracker.evidence(program) +
-                "\nCODE • " + NcCodeCatalog.programLegend(program,machineSpecificAllowed=rotaryClampProfile.allowedMCodes()) +
-                "\n" + CncControllerCapabilityMatrix.summary(controllerProfile,program,rotaryClampProfile.allowedMCodes()) +
+                "\nCODE • " + NcCodeCatalog.programLegend(program,machineSpecificAllowed=rotaryClampProfile.allowedMachineCodes()) +
+                "\n" + CncControllerCapabilityMatrix.summary(controllerProfile,program,rotaryClampProfile.allowedMachineCodes()) +
                 (if (blocked.isEmpty()) " • SAFETY=PASS"
                 else "\nBLOCKED • " + blocked.take(4).joinToString(" • ") {
                     (if (it.lineNumber > 0) "L" + it.lineNumber + " " else "") + it.code

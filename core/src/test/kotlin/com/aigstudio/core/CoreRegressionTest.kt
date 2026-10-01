@@ -80,6 +80,9 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     ).status == ControllerCapabilityStatus.MODELED_ALLOWED)
     check(CncControllerCapabilityMatrix.classify(
         CncControllerProfile.MITSUBISHI_M800_M80,"G34"
+    ).status == ControllerCapabilityStatus.TRACKED_REVIEW)
+    check(CncControllerCapabilityMatrix.classify(
+        CncControllerProfile.MITSUBISHI_M800_M80,"G34",setOf("G34")
     ).status == ControllerCapabilityStatus.MODELED_ALLOWED)
     check(CncControllerCapabilityMatrix.classify(
         CncControllerProfile.FANUC,"G43.4"
@@ -93,8 +96,8 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     val fanucCapability = CncControllerCapabilityMatrix.summary(CncControllerProfile.FANUC,capabilityProgram)
     val mitsubishiCapability = CncControllerCapabilityMatrix.summary(CncControllerProfile.MITSUBISHI_M800_M80,capabilityProgram)
     check("CTRL=FANUC" in fanucCapability)
-    check("MODELED=6" in fanucCapability)
-    check("TRACKED_REVIEW=2" in fanucCapability)
+    check("MODELED=5" in fanucCapability)
+    check("TRACKED_REVIEW=3" in fanucCapability)
     check("UNKNOWN_BLOCK=1" in fanucCapability)
     check("CTRL=MITSUBISHI M800/M80" in mitsubishiCapability)
     println("✓ CONTROLLER_CAPABILITY_MATRIX_PASS FANUC/MITSUBISHI modeled/review/unknown")
@@ -158,41 +161,69 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check("G63_TAPPING_MODE_UNVERIFIED" in extendedCommonBlocked)
     println("✓ NC_COMMON_MILLING_VOCAB_PASS G22/G23/G27/G45-G48/G60/G63 TRACKED_FAIL_CLOSED")
 
-    val rotaryProfile = RotaryAxisClampProfile.explicit(
-        clampM=44,
-        unclampM=42,
-        requireClampForIndexedCutting=true
+    val rotaryProfile=RotaryAxisClampProfile.configured(
+        axis4=RotaryAxisMCodePair.explicit(clampM=142,unclampM=143,requireClampForIndexedCutting=true),
+        axis5=RotaryAxisMCodePair.explicit(clampM=242,unclampM=243,requireClampForIndexedCutting=true),
+        installedOptionalCodes=setOf("G34","G777.7","M777")
     )
-    val rotaryProgram = """
+    val rotary4Program="""
         G21 G94 G97 G90 G54
-        M42
+        M143
         G0 A90.000
-        M44
+        M142
         G81 X0.000 Y0.000 Z-5.000 R2.000 F100.000
         G80
     """.trimIndent()
-    check(NcCodeCatalog.describe("M42",rotaryProfile.allowedMCodes()).compact()=="M42=MACH-AUX")
+    check(NcCodeCatalog.describe("M143",rotaryProfile.allowedMachineCodes()).compact()=="M143=MACH-AUX")
     check(CncControllerCapabilityMatrix.classify(
-        CncControllerProfile.FANUC,"M42",rotaryProfile.allowedMCodes()
-    ).status == ControllerCapabilityStatus.MODELED_ALLOWED)
+        CncControllerProfile.FANUC,"M143",rotaryProfile.allowedMachineCodes()
+    ).status==ControllerCapabilityStatus.MODELED_ALLOWED)
     check(NcProgramSafetyPolicy.status(
-        rotaryProgram,rotaryProfile,RotaryAxisOperationMode.INDEXED_4AX
+        rotary4Program,rotaryProfile,RotaryAxisOperationMode.INDEXED_4AX
     )=="PASS")
     check("CONSENSUS PASS" in NcSemanticAuthority.programSummary(
-        rotaryProgram,CncControllerProfile.FANUC,rotaryProfile,RotaryAxisOperationMode.INDEXED_4AX
+        rotary4Program,CncControllerProfile.FANUC,rotaryProfile,RotaryAxisOperationMode.INDEXED_4AX
     ))
-    val rotaryTimeline = NcExecutionTimeline.build(
-        rotaryProgram,
-        CncControllerProfile.FANUC,
-        rotaryClampProfile=rotaryProfile,
-        rotaryMode=RotaryAxisOperationMode.INDEXED_4AX
+    val rotary4Timeline=NcExecutionTimeline.build(
+        rotary4Program,CncControllerProfile.FANUC,
+        rotaryClampProfile=rotaryProfile,rotaryMode=RotaryAxisOperationMode.INDEXED_4AX
     )
-    check(rotaryTimeline.any { it.code=="M42" && it.action=="ROTARY_UNCLAMP" && it.status=="READY" })
-    check(rotaryTimeline.any { it.code=="M44" && it.action=="ROTARY_CLAMP" && it.status=="READY" })
-    check("M42=MACH-AUX" in NcCodeCatalog.lineHelp(
-        rotaryProgram,2,rotaryProfile,RotaryAxisOperationMode.INDEXED_4AX
+    check(rotary4Timeline.any{it.code=="M143"&&it.action=="ROTARY_UNCLAMP"&&it.status=="READY"})
+    check(rotary4Timeline.any{it.code=="M142"&&it.action=="ROTARY_CLAMP"&&it.status=="READY"})
+
+    val rotary5Program="""
+        G21 G94 G97 G90 G54
+        M243
+        G0 A20.000 B15.000
+        M242
+        G1 X5.000 Y2.000 F100.000
+    """.trimIndent()
+    check(NcProgramSafetyPolicy.status(
+        rotary5Program,rotaryProfile,RotaryAxisOperationMode.INDEXED_5AX
+    )=="PASS")
+    val rotary5Timeline=NcExecutionTimeline.build(
+        rotary5Program,CncControllerProfile.FANUC,
+        rotaryClampProfile=rotaryProfile,rotaryMode=RotaryAxisOperationMode.INDEXED_5AX
+    )
+    check(rotary5Timeline.any{it.code=="M243"&&it.action=="ROTARY_UNCLAMP"&&it.status=="READY"})
+    check(rotary5Timeline.any{it.code=="M242"&&it.action=="ROTARY_CLAMP"&&it.status=="READY"})
+    check("ROTARY_4AX_PROFILE_UNCONFIGURED" in NcProgramSafetyPolicy.status(
+        rotary4Program,RotaryAxisClampProfile.unconfigured(),RotaryAxisOperationMode.INDEXED_4AX
     ))
-    println("✓ NC_MACHINE_M_PROFILE_PASS M42_UNLOCK M44_LOCK SEMANTIC_TIMELINE_PROFILED")
+    check("ROTARY_5AX_PROFILE_UNCONFIGURED" in NcProgramSafetyPolicy.status(
+        rotary5Program,RotaryAxisClampProfile.unconfigured(),RotaryAxisOperationMode.INDEXED_5AX
+    ))
+
+    val g34Program="""G21 G94 G97 G90 G54
+G34 I15.000 J6 K50.000"""
+    check("MACHINE_OPTION_G34_UNCONFIRMED" in NcProgramSafetyPolicy.status(g34Program))
+    check("MACHINE_OPTION_G34_UNCONFIRMED" !in NcProgramSafetyPolicy.status(g34Program,rotaryProfile))
+    check(CncControllerCapabilityMatrix.classify(CncControllerProfile.FANUC,"G34").status==ControllerCapabilityStatus.TRACKED_REVIEW)
+    check(CncControllerCapabilityMatrix.classify(CncControllerProfile.FANUC,"G34",rotaryProfile.allowedMachineCodes()).status==ControllerCapabilityStatus.MODELED_ALLOWED)
+    check(NcCodeCatalog.describe("G777.7",rotaryProfile.allowedMachineCodes()).shortName=="MACH-G")
+    check("UNKNOWN_GCODE_FAIL_CLOSED" !in NcProgramSafetyPolicy.status("G21 G94 G97 G90 G54\nG777.7",rotaryProfile))
+    check("UNKNOWN_MCODE_FAIL_CLOSED" !in NcProgramSafetyPolicy.status("G21 G94 G97 G90 G54\nM777",rotaryProfile))
+    println("✓ NC_MACHINE_GM_PROFILE_PASS 4AX_SEPARATE 5AX_SEPARATE NO_FIXED_M_CODES G34_VENDOR_OPTION CUSTOM_GM NC_ONLY_FAIL_CLOSED RUNTIME_STAYS_AVAILABLE")
 
     val paletteCodes = NcCodeCatalog.operatorPaletteCodes()
     check(listOf("G0","G34","G41","G43.4","G54.4","G68.2","G81","G90.1","G91.1","M6","M29","M98","M99").all { it in paletteCodes })
@@ -749,9 +780,17 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     val parameterIntegrityCases = listOf(
         "N10.5 G0 X0.000" to "INVALID_INTEGER_WORD_N",
         "O100.5" to "INVALID_INTEGER_WORD_O",
-        "G34 I0.000 J0 K50.000" to "G34_INVALID_HOLE_COUNT_J",
-        "G34 I0.000 J4 K0.000" to "G34_INVALID_RADIUS_K",
-        "G83 X0.000 Y0.000 Z-10.000 Q0.000 F100.000" to "PECK_Q_NONPOSITIVE",
+        "G83 X0.000 Y0.000 Z-10.000 R3.000 Q0.000 F100.000" to "G83_FORMAT_Q_NONPOSITIVE",
+        "G83 X0.000 Y0.000 Z-10.000 R3.000 F100.000" to "G83_FORMAT_MISSING_Q",
+        "G83 X0.000 Y0.000 Z-10.000 Q2.000 F100.000" to "G83_FORMAT_MISSING_R",
+        "G83 X0.000 Y0.000 R3.000 Q2.000 F100.000" to "G83_FORMAT_MISSING_Z",
+        "G73 X0.000 Y0.000 Z-10.000 R3.000 F100.000" to "G73_FORMAT_MISSING_Q",
+        "G81 X0.000 Y0.000 Z-10.000 F100.000" to "G81_FORMAT_MISSING_R",
+        "G43 Z30.000" to "G43_FORMAT_MISSING_H",
+        "M98" to "M98_FORMAT_MISSING_P",
+        "G65 A1.000" to "G65_FORMAT_MISSING_P",
+        "G54.1 X0.000" to "G54.1_FORMAT_MISSING_P",
+        "G4" to "G4_FORMAT_MISSING_ANY_0",
         "G2 X10.000 Y0.000 R5.000 I5.000" to "ARC_CENTER_FORMAT_CONFLICT",
         "G3 X10.000 Y0.000 F100.000" to "ARC_CENTER_MISSING",
         "G1 X0.000 (BROKEN" to "MALFORMED_COMMENT",
@@ -770,8 +809,14 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     val validParameterPrograms = listOf(
         "G21 G94 G97 G90 G54\nN10 G0 X0.000 Y0.000 Z5.000",
         "O1000\nG21 G94 G97 G90 G54",
-        "G21 G94 G97 G90 G54\nG34 I15.000 J6 K50.000",
-        "G21 G94 G97 G90 G54\nG83 X0.000 Y0.000 Z-10.000 Q1.000 F100.000",
+        "G21 G94 G97 G90 G54\nG34 X0. Y0. J0. I30. K6 G83 R3. Z-20. Q2. F150;",
+        "G21 G94 G97 G90 G54\nG83 X0.000 Y0.000 Z-10.000 R3.000 Q1.000 F100.000",
+        "G21 G94 G97 G90 G54\nG81 X0.000 Y0.000 Z-10.000 R3.000 F100.000",
+        "G21 G94 G97 G90 G54\nG43 Z30.000 H1",
+        "G21 G94 G97 G90 G54\nM98 P4",
+        "G21 G94 G97 G90 G54\nG65 P9001 A1.000",
+        "G21 G94 G97 G90 G54\nG54.1 P1",
+        "G21 G94 G97 G90 G54\nG4 P500",
         "G21 G94 G97 G90 G54\nG2 X10.000 Y0.000 I5.000 J0.000 F100.000",
         "G21 G94 G97 G90 G54\nG3 X10.000 Y0.000 R5.000 F100.000",
         "G21 G94 G97 G90 G54\nG1 X0.000 (SAFE COMMENT) Y0.000 Z0.000"
@@ -787,7 +832,13 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check(repairSession.reset().state==NcMachineInterlockState.REVALIDATE_REQUIRED)
     check(repairSession.revalidate(repairedComment).state==NcMachineInterlockState.RESUME_ALLOWED)
     check(repairSession.resume().state==NcMachineInterlockState.READY)
-    println("✓ NC_PARAMETER_INTEGRITY_PASS labels/comments/G34/peck/arc/recovery")
+
+    val vendorG34Example="G21 G94 G97 G90 G54\nG34 X0. Y0. J0. I30. K6 G83 R3. Z-20. Q2. F150;"
+    check(NcRuntimeInterlock.status(vendorG34Example,verifiedTravel)=="PASS")
+    check("FORMAT=MACHINE_PROFILE" in NcCodeCatalog.lineHelp(vendorG34Example,2))
+    check("FORMAT=X/Y optional; Z/R/Q required" in NcCodeCatalog.lineHelp(vendorG34Example,2))
+    println("NC_BLOCK_FORMAT_SCHEMA_PASS|G34_VENDOR_PROFILE|G83_Z_R_Q|G43_H|M98_P|G65_P|G54_1_P|G4_P_OR_X|CURSOR_FORMAT_HELP")
+    println("NC_PARAMETER_INTEGRITY_PASS|LABELS|COMMENTS|BLOCK_FORMAT|ARC|RECOVERY")
 
     check(SoftwareCoordinateContract.machineAuxiliaryResponsibilityLayers() == listOf(
         "SPINDLE=M3_M4_M5_EXECUTION_LAYER",
@@ -999,14 +1050,30 @@ private fun testCannedCycleReturnMode() {
         "G21 G94 G97 G90 G54 G17 G40 G49\nG43 Z30.000 H1\n" + cycle
     ).isEmpty())
     println("✓ CANNED_CYCLE_RETURN_PASS G98 explicit / G81 / G80")
-    val pattern = FanucNc.circularHolePattern(15.0,6,50.0)
-    check(pattern=="G34 I15. J6 K50.")
-    check(NcRuntimeInterlock.status(
-        "G21 G94 G97 G90 G54\n"+pattern
-    )=="PASS")
-    check(runCatching { FanucNc.circularHolePattern(0.0,0,50.0) }.isFailure)
-    check(runCatching { FanucNc.circularHolePattern(0.0,6,0.0) }.isFailure)
-    println("✓ NC_G34_PATTERN_SEMANTICS_PASS I-angle/J-count/K-radius")
+    val vendorG34Profile=RotaryAxisClampProfile.configured(installedOptionalCodes=setOf("G34"))
+    val vendorG34Program="G21 G94 G97 G90 G54\nG34 X0. Y0. J0. I30. K6 G83 R3. Z-20. Q2. F150;"
+    check(NcProgramSafetyPolicy.status(vendorG34Program,vendorG34Profile)=="PASS")
+    check("MACHINE_OPTION_G34_UNCONFIRMED" in NcProgramSafetyPolicy.status(vendorG34Program))
+    println("NC_G34_VENDOR_OPTION_PASS|NO_GLOBAL_IJK_SEMANTICS|MACHINE_PROFILE_REQUIRED|USER_FORMAT_ACCEPTED")
+
+    val g34ShopProfile=RotaryAxisClampProfile.configured(
+        g34VendorProfile=G34VendorProfile.xyJ0IDiameterKCount(90.0)
+    )
+    val g34ShopLine="G34 X0. Y0. J0. I30. K6 G83 R3. Z-20. Q2. F150;"
+    val g34Shop=G34VendorInterpreter.interpret(g34ShopLine,g34ShopProfile.g34VendorProfile)!!
+    check(g34Shop.centerX==0.0 && g34Shop.centerY==0.0)
+    check(g34Shop.programmedJ==0.0 && g34Shop.startAngleDeg==90.0)
+    check(g34Shop.pitchCircleDiameterMm==30.0 && g34Shop.radiusMm==15.0)
+    check(g34Shop.holeCount==6)
+    check(g34Shop.cycleCode=="G83" && g34Shop.retractR==3.0 && g34Shop.depthZ==-20.0 && g34Shop.peckQ==2.0 && g34Shop.feedF==150.0)
+    check(G34VendorInterpreter.interpret("G34 X0 Y0 J45 I30 K6",g34ShopProfile.g34VendorProfile)!!.startAngleDeg==45.0)
+    val g34ShopProgram="G21 G94 G97 G90 G54\n"+g34ShopLine
+    check(NcProgramSafetyPolicy.status(g34ShopProgram,g34ShopProfile)=="PASS")
+    check("I=PCD diameter" in NcCodeCatalog.lineHelp(g34ShopProgram,2,g34ShopProfile))
+    check("G34_VENDOR_FORMAT_BLOCKED" in NcProgramSafetyPolicy.status("G21 G94 G97 G90 G54\nG34 X0 Y0 J0 I0 K6",g34ShopProfile))
+    check("G34_VENDOR_FORMAT_BLOCKED" in NcProgramSafetyPolicy.status("G21 G94 G97 G90 G54\nG34 X0 Y0 J0 I30 K0",g34ShopProfile))
+    println("NC_G34_VENDOR_TEMPLATE_PASS|J0_DEFAULT_90|I_DIAMETER_30|RADIUS_15|K6_COUNT|G83_R3_Z-20_Q2_F150|MACHINE_SPECIFIC")
+
     val safeGeneratedProcess = """
         %
         O1000

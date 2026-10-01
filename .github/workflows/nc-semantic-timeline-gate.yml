@@ -70,7 +70,7 @@ jobs:
           grep -Fq 'NC_MULTI_TOOL_CYCLE_SAFETY_PASS' semantic-timeline.log
           grep -Fq 'NC_CONTROL_EFFECT_GATE_PASS' semantic-timeline.log
           grep -Fq 'NC_COMMON_MILLING_VOCAB_PASS' semantic-timeline.log
-          grep -Fq 'NC_MACHINE_M_PROFILE_PASS' semantic-timeline.log
+          grep -Fq 'NC_MACHINE_GM_PROFILE_PASS' semantic-timeline.log
           grep -Fq 'RENDER_SURFACE_FPS_GATE_PASS' semantic-timeline.log
           grep -Fq 'CPU_THERMAL_AUTO_FPS_PASS' semantic-timeline.log
           grep -Fq 'RENDER_STRESS_TIER_GATE_PASS' semantic-timeline.log
@@ -81,13 +81,17 @@ jobs:
           test "$(grep -Fc 'RENDER_SURFACE_FPS_GATE_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_CONTROL_EFFECT_GATE_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_COMMON_MILLING_VOCAB_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_MACHINE_M_PROFILE_PASS' semantic-timeline.log)" -eq 3
+          test "$(grep -Fc 'NC_MACHINE_GM_PROFILE_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_MULTI_TOOL_CYCLE_SAFETY_PASS' semantic-timeline.log)" -eq 3
-          grep -Fq 'NC_G34_PATTERN_SEMANTICS_PASS' semantic-timeline.log
+          grep -Fq 'NC_G34_VENDOR_OPTION_PASS' semantic-timeline.log
+          grep -Fq 'NC_G34_VENDOR_TEMPLATE_PASS' semantic-timeline.log
+          grep -Fq 'NC_BLOCK_FORMAT_SCHEMA_PASS' semantic-timeline.log
           grep -Fq 'NC_GENERATED_PROCESS_GATE_PASS' semantic-timeline.log
           grep -Fq 'NC_5X_PROCESS_ORDER_PASS' semantic-timeline.log
           test "$(grep -Fc 'NC_5X_PROCESS_ORDER_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_G34_PATTERN_SEMANTICS_PASS' semantic-timeline.log)" -eq 3
+          test "$(grep -Fc 'NC_G34_VENDOR_OPTION_PASS' semantic-timeline.log)" -eq 3
+          test "$(grep -Fc 'NC_G34_VENDOR_TEMPLATE_PASS' semantic-timeline.log)" -eq 3
+          test "$(grep -Fc 'NC_BLOCK_FORMAT_SCHEMA_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_GENERATED_PROCESS_GATE_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_PARAMETER_INTEGRITY_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_CONTROLLER_VALUE_DOMAIN_PASS' semantic-timeline.log)" -eq 3

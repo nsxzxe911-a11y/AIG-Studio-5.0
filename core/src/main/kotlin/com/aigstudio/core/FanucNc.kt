@@ -15,43 +15,183 @@ enum class RotaryAxisOperationMode {
     NONE, INDEXED_4AX, INDEXED_5AX, SIMULTANEOUS_4AX, SIMULTANEOUS_5AX
 }
 
-data class RotaryAxisClampProfile(
-    val clampM: Int? = null,
-    val unclampM: Int? = null,
-    val controllerAutomatic: Boolean = false,
-    val requireClampForIndexedCutting: Boolean = false
+data class RotaryAxisMCodePair(
+    val clampM:Int?=null,
+    val unclampM:Int?=null,
+    val controllerAutomatic:Boolean=false,
+    val requireClampForIndexedCutting:Boolean=false
 ) {
     init {
-        require((clampM == null) == (unclampM == null)) {
-            "Rotary clamp/unclamp M-codes must be configured as a pair"
-        }
-        require(!(controllerAutomatic && clampM != null)) {
-            "Controller-automatic clamp mode must not also define explicit M-codes"
-        }
-        if (clampM != null && unclampM != null) {
-            require(clampM in 0..999 && unclampM in 0..999) { "Rotary clamp M-code out of range" }
-            require(clampM != unclampM) { "Rotary clamp and unclamp M-codes must differ" }
+        require((clampM==null)==(unclampM==null)){"Rotary clamp/unclamp M-codes must be configured as a pair"}
+        require(!(controllerAutomatic && clampM!=null)){"Controller-automatic mode must not also define explicit M-codes"}
+        if(clampM!=null && unclampM!=null){
+            require(clampM in 0..999 && unclampM in 0..999){"Rotary M-code must be 0..999"}
+            require(clampM!=unclampM){"Clamp and unclamp M-codes must differ"}
         }
     }
-
-    val explicit: Boolean get() = clampM != null && unclampM != null
-    val configured: Boolean get() = controllerAutomatic || explicit
-    fun allowedMCodes(): Set<String> = if (explicit) setOf("M" + clampM, "M" + unclampM) else emptySet()
-    fun actionFor(code: String): String? {
-        if (!explicit) return null
-        return when (code.uppercase()) {
-            "M" + clampM -> "ROTARY_CLAMP"
-            "M" + unclampM -> "ROTARY_UNCLAMP"
+    val explicit:Boolean get()=clampM!=null && unclampM!=null
+    val configured:Boolean get()=controllerAutomatic || explicit
+    fun allowedMCodes():Set<String> = if(explicit) setOf("M"+clampM,"M"+unclampM) else emptySet()
+    fun actionFor(code:String):String? {
+        if(!explicit) return null
+        return when(code.uppercase()){
+            "M"+clampM -> "ROTARY_CLAMP"
+            "M"+unclampM -> "ROTARY_UNCLAMP"
             else -> null
         }
     }
-
     companion object {
-        fun unconfigured(): RotaryAxisClampProfile = RotaryAxisClampProfile()
-        fun explicit(clampM: Int, unclampM: Int, requireClampForIndexedCutting: Boolean = false): RotaryAxisClampProfile =
-            RotaryAxisClampProfile(clampM, unclampM, false, requireClampForIndexedCutting)
-        fun controllerAutomatic(requireClampForIndexedCutting: Boolean = false): RotaryAxisClampProfile =
-            RotaryAxisClampProfile(null, null, true, requireClampForIndexedCutting)
+        fun unconfigured()=RotaryAxisMCodePair()
+        fun explicit(clampM:Int,unclampM:Int,requireClampForIndexedCutting:Boolean=false)=RotaryAxisMCodePair(clampM,unclampM,false,requireClampForIndexedCutting)
+        fun controllerAutomatic(requireClampForIndexedCutting:Boolean=false)=RotaryAxisMCodePair(null,null,true,requireClampForIndexedCutting)
+    }
+}
+
+enum class G34VendorTemplate {
+    UNCONFIGURED,
+    XY_J0_I_DIAMETER_K_COUNT
+}
+
+data class G34VendorProfile(
+    val template:G34VendorTemplate=G34VendorTemplate.UNCONFIGURED,
+    val defaultStartAngleDeg:Double=90.0
+) {
+    init {
+        require(defaultStartAngleDeg.isFinite()){"G34 default start angle must be finite"}
+    }
+    val configured:Boolean get()=template!=G34VendorTemplate.UNCONFIGURED
+    companion object {
+        fun unconfigured()=G34VendorProfile()
+        fun xyJ0IDiameterKCount(defaultStartAngleDeg:Double=90.0)=
+            G34VendorProfile(G34VendorTemplate.XY_J0_I_DIAMETER_K_COUNT,defaultStartAngleDeg)
+    }
+}
+
+data class G34VendorInterpretation(
+    val centerX:Double?,
+    val centerY:Double?,
+    val programmedJ:Double?,
+    val startAngleDeg:Double,
+    val pitchCircleDiameterMm:Double,
+    val radiusMm:Double,
+    val holeCount:Int,
+    val cycleCode:String?,
+    val retractR:Double?,
+    val depthZ:Double?,
+    val peckQ:Double?,
+    val feedF:Double?
+)
+
+object G34VendorInterpreter {
+    private val word=Regex("""(?i)([A-Z])\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))(?=\s|[A-Z]|;|$)""")
+    private fun clean(raw:String)=raw.replace(Regex("""\([^)]*\)""")," ").substringBefore(';').trim().uppercase()
+    private fun gCode(value:Double):String =
+        "G"+if(kotlin.math.abs(value-kotlin.math.round(value))<=1e-9)
+            kotlin.math.round(value).toLong().toString()
+        else java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
+    private fun fmt(value:Double):String =
+        java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
+
+    fun interpret(raw:String,profile:G34VendorProfile):G34VendorInterpretation? {
+        if(!profile.configured) return null
+        val words=word.findAll(clean(raw)).mapNotNull{m->
+            m.groupValues[2].toDoubleOrNull()?.takeIf{it.isFinite()}?.let{m.groupValues[1].uppercase()[0] to it}
+        }.toList()
+        if(words.none{it.first=='G' && kotlin.math.abs(it.second-34.0)<=1e-9}) return null
+        return when(profile.template){
+            G34VendorTemplate.XY_J0_I_DIAMETER_K_COUNT -> {
+                fun last(a:Char)=words.lastOrNull{it.first==a}?.second
+                val i=last('I') ?: error("G34 vendor format requires I pitch-circle diameter")
+                val k=last('K') ?: error("G34 vendor format requires K hole count")
+                require(i>0.0){"G34 I diameter must be > 0"}
+                require(k>=1.0 && kotlin.math.abs(k-kotlin.math.round(k))<=1e-9){"G34 K hole count must be integer >= 1"}
+                val j=last('J')
+                val start=if(j==null || kotlin.math.abs(j)<=1e-9) profile.defaultStartAngleDeg else j
+                val cycle=words.filter{it.first=='G'}.map{gCode(it.second)}
+                    .firstOrNull{it in setOf("G73","G81","G82","G83","G84","G85","G86","G87","G88","G89")}
+                G34VendorInterpretation(
+                    centerX=last('X'),
+                    centerY=last('Y'),
+                    programmedJ=j,
+                    startAngleDeg=start,
+                    pitchCircleDiameterMm=i,
+                    radiusMm=i/2.0,
+                    holeCount=kotlin.math.round(k).toInt(),
+                    cycleCode=cycle,
+                    retractR=last('R'),
+                    depthZ=last('Z'),
+                    peckQ=last('Q'),
+                    feedF=last('F')
+                )
+            }
+            G34VendorTemplate.UNCONFIGURED -> null
+        }
+    }
+
+    fun formatHint(profile:G34VendorProfile):String = when(profile.template){
+        G34VendorTemplate.UNCONFIGURED -> "FORMAT=MACHINE_PROFILE / vendor-defined"
+        G34VendorTemplate.XY_J0_I_DIAMETER_K_COUNT ->
+            "FORMAT=X/Y center • J0=default "+fmt(profile.defaultStartAngleDeg)+"deg • I=PCD diameter • K=hole count"
+    }
+}
+
+object G34VendorPolicy {
+    fun blocking(program:String,profile:G34VendorProfile):List<NcModalSafetyFinding>{
+        if(!profile.configured) return emptyList()
+        val out=mutableListOf<NcModalSafetyFinding>()
+        program.split("\n").forEachIndexed{index,raw->
+            val hasG34=Regex("""(?i)(?:^|\s)G\s*34(?:\.0+)?(?=\s|[A-Z]|;|$)""").containsMatchIn(raw)
+            if(!hasG34) return@forEachIndexed
+            runCatching{G34VendorInterpreter.interpret(raw,profile)}.exceptionOrNull()?.let{
+                out+=NcModalSafetyFinding(
+                    index+1,
+                    "G34_VENDOR_FORMAT_BLOCKED",
+                    (it.message?:"G34 vendor format invalid")+". NC execution is blocked; AIG Runtime remains available."
+                )
+            }
+        }
+        return out
+    }
+}
+
+data class RotaryAxisClampProfile(
+    val axis4:RotaryAxisMCodePair=RotaryAxisMCodePair.unconfigured(),
+    val axis5:RotaryAxisMCodePair=RotaryAxisMCodePair.unconfigured(),
+    val installedOptionalCodes:Set<String> = emptySet(),
+    val g34VendorProfile:G34VendorProfile=G34VendorProfile.unconfigured()
+) {
+    private val normalizedOptionalCodes:Set<String> =
+        installedOptionalCodes.map{it.trim().uppercase()}.filter{it.isNotBlank()}.toSet()
+    init {
+        val codePattern=Regex("""^[GM]\d+(?:\.\d+)?$""")
+        require(normalizedOptionalCodes.all{codePattern.matches(it)}){
+            "Machine optional codes must look like G34, G65, M120, G54.1"
+        }
+    }
+    fun pairFor(mode:RotaryAxisOperationMode):RotaryAxisMCodePair?=when(mode){
+        RotaryAxisOperationMode.INDEXED_4AX,RotaryAxisOperationMode.SIMULTANEOUS_4AX->axis4
+        RotaryAxisOperationMode.INDEXED_5AX,RotaryAxisOperationMode.SIMULTANEOUS_5AX->axis5
+        RotaryAxisOperationMode.NONE->null
+    }
+    fun allowedMCodes():Set<String> = axis4.allowedMCodes()+axis5.allowedMCodes()
+    fun allowedMachineCodes():Set<String> =
+        allowedMCodes()+normalizedOptionalCodes+(if(g34VendorProfile.configured) setOf("G34") else emptySet())
+    fun actionFor(code:String,mode:RotaryAxisOperationMode=RotaryAxisOperationMode.NONE):String? {
+        pairFor(mode)?.actionFor(code)?.let{return it}
+        val actions=listOfNotNull(axis4.actionFor(code),axis5.actionFor(code)).distinct()
+        return if(actions.size==1)actions.first() else null
+    }
+    fun optionalCodesCsv():String=normalizedOptionalCodes.sorted().joinToString(",")
+    companion object {
+        fun unconfigured()=RotaryAxisClampProfile()
+        fun configured(
+            axis4:RotaryAxisMCodePair=RotaryAxisMCodePair.unconfigured(),
+            axis5:RotaryAxisMCodePair=RotaryAxisMCodePair.unconfigured(),
+            installedOptionalCodes:Set<String> = emptySet(),
+            g34VendorProfile:G34VendorProfile=G34VendorProfile.unconfigured()
+        )=RotaryAxisClampProfile(axis4,axis5,installedOptionalCodes,g34VendorProfile)
+        fun parseOptionalCodes(raw:String):Set<String> =
+            raw.split(',', ';', ' ', '\n', '\t').map{it.trim().uppercase()}.filter{it.isNotBlank()}.toSet()
     }
 }
 
@@ -65,12 +205,14 @@ object RotaryAxisClampPolicy {
         mode: RotaryAxisOperationMode,
         profile: RotaryAxisClampProfile
     ): List<NcModalSafetyFinding> {
-        if (mode == RotaryAxisOperationMode.NONE) return emptyList()
-        if (!profile.configured) {
+        if(mode==RotaryAxisOperationMode.NONE) return emptyList()
+        val axisProfile=profile.pairFor(mode) ?: return emptyList()
+        val axisLabel=if(mode==RotaryAxisOperationMode.INDEXED_4AX || mode==RotaryAxisOperationMode.SIMULTANEOUS_4AX)"4AX" else "5AX"
+        if(!axisProfile.configured) {
             return listOf(NcModalSafetyFinding(
                 0,
-                "ROTARY_CLAMP_PROFILE_UNCONFIGURED",
-                "4/5-axis drilling/indexing requires a machine-specific clamp profile or verified controller-automatic clamp mode."
+                "ROTARY_"+axisLabel+"_PROFILE_UNCONFIGURED",
+                axisLabel+" clamp/unclamp M-code profile is not configured for this machine. NC execution is blocked; AIG Runtime remains available."
             ))
         }
         val simultaneous = mode == RotaryAxisOperationMode.SIMULTANEOUS_4AX ||
@@ -78,7 +220,7 @@ object RotaryAxisClampPolicy {
         val fourAxis = mode == RotaryAxisOperationMode.INDEXED_4AX ||
             mode == RotaryAxisOperationMode.SIMULTANEOUS_4AX
         val findings = mutableListOf<NcModalSafetyFinding>()
-        if (profile.controllerAutomatic) {
+        if (axisProfile.controllerAutomatic) {
             if (simultaneous && program.contains(Regex("""(?i)G(?:73|81|82|83|84|85|86|87|88|89)"""))) {
                 findings += NcModalSafetyFinding(
                     0,"SIMULTANEOUS_ROTARY_CANNED_CYCLE_UNSUPPORTED",
@@ -105,8 +247,8 @@ object RotaryAxisClampPolicy {
             val isCut = gCodes.any { g -> kotlin.math.abs(g-1.0)<=1e-9 || kotlin.math.abs(g-2.0)<=1e-9 || kotlin.math.abs(g-3.0)<=1e-9 }
             val isCycle = gCodes.any { g -> listOf(73.0,81.0,82.0,83.0,84.0,85.0,86.0,87.0,88.0,89.0).any { kotlin.math.abs(g-it)<=1e-9 } }
 
-            if (profile.unclampM in mCodes) clamped = false
-            if (profile.clampM in mCodes) clamped = true
+            if (axisProfile.unclampM in mCodes) clamped = false
+            if (axisProfile.clampM in mCodes) clamped = true
 
             if (fourAxis && hasB) {
                 findings += NcModalSafetyFinding(lineNumber,"4AX_B_MOTION_FORBIDDEN","4-axis mode permits A motion only; B must remain zero/uncommanded.")
@@ -136,7 +278,7 @@ object RotaryAxisClampPolicy {
                     "Simultaneous 4/5-axis cutting requires rotary axes free to interpolate; clamp must not be active during A/B cutting motion."
                 )
             }
-            if (!simultaneous && isCut && profile.requireClampForIndexedCutting && clamped != true) {
+            if (!simultaneous && isCut && axisProfile.requireClampForIndexedCutting && clamped != true) {
                 findings += NcModalSafetyFinding(
                     lineNumber,"INDEXED_ROTARY_CUT_WITHOUT_CLAMP",
                     "This machine profile requires the indexed rotary axis clamped during cutting."
@@ -164,7 +306,7 @@ data class ControllerCapabilityDecision(
 object CncControllerCapabilityMatrix {
     private val modeledAllowed = setOf(
         "G0","G1","G2","G3",
-        "G17","G21","G34",
+        "G17","G21",
         "G40","G43","G49",
         "G54","G55","G56","G57","G58","G59",
         "G73","G80","G81","G83","G84",
@@ -175,7 +317,7 @@ object CncControllerCapabilityMatrix {
     private val trackedReview = setOf(
         "G4","G5.1","G9","G10","G15","G16","G18","G19","G20","G22","G23","G27",
         "G28","G29","G30","G30.1","G30.2","G30.3","G30.4","G30.5","G30.6",
-        "G31","G31.1","G31.2","G31.3",
+        "G31","G31.1","G31.2","G31.3","G34",
         "G40.1","G41","G41.1","G41.2","G42","G42.1","G42.2","G44","G45","G46","G47","G48",
         "G43.1","G43.4","G43.5","G43.7",
         "G50","G50.1","G51","G51.1","G52","G53","G53.1","G53.6",
@@ -200,7 +342,7 @@ object CncControllerCapabilityMatrix {
                 controller,
                 normalized,
                 ControllerCapabilityStatus.MODELED_ALLOWED,
-                "Machine-profile M-code is explicitly configured for this runtime; machine/controller profile remains authoritative."
+                "Machine-profile G/M code is explicitly configured for this machine; controller/PMC/vendor option remains authoritative."
             )
             normalized in modeledAllowed -> ControllerCapabilityDecision(
                 controller,
@@ -255,6 +397,9 @@ object NcCodeCatalog {
         val code = rawCode.uppercase()
         if (code in machineSpecificAllowed && code.startsWith("M")) {
             return NcCodeDescriptor(code,"MACH-AUX","MACHINE_AUX","Machine-profile configured auxiliary M-code")
+        }
+        if(code in machineSpecificAllowed && code.startsWith("G") && code!="G34") {
+            return NcCodeDescriptor(code,"MACH-G","MACHINE_OPTION","Machine-profile installed vendor/controller G-code")
         }
         return when (code) {
             "G0" -> NcCodeDescriptor(code,"RAPID","MOTION","Rapid positioning")
@@ -414,8 +559,11 @@ object NcCodeCatalog {
             "NO G/M CODE"
         } else {
             codes.joinToString(" • ") { code ->
-                val d = describe(code,rotaryClampProfile.allowedMCodes())
-                d.compact() + " [" + d.layer + "] " + d.meaning
+                val d = describe(code,rotaryClampProfile.allowedMachineCodes())
+                val formatHint=if(code=="G34" && rotaryClampProfile.g34VendorProfile.configured)
+                    G34VendorInterpreter.formatHint(rotaryClampProfile.g34VendorProfile)
+                else NcBlockFormatCatalog.formatHint(code)
+                d.compact() + " [" + d.layer + "] " + d.meaning + (formatHint?.let{" • "+it} ?: "")
             }
         }
         val blocked = NcProgramSafetyPolicy.blocking(program,rotaryClampProfile,rotaryMode).filter { it.lineNumber == lineNumber }
@@ -448,12 +596,14 @@ data class NcAnimationCue(
 
 object NcAnimationBridge {
     fun actionFor(
-        rawCode: String,
-        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured()
-    ): String {
-        val code = rawCode.uppercase()
-        rotaryClampProfile.actionFor(code)?.let { return it }
-        return when (code) {
+        rawCode:String,
+        rotaryClampProfile:RotaryAxisClampProfile=RotaryAxisClampProfile.unconfigured(),
+        rotaryMode:RotaryAxisOperationMode=RotaryAxisOperationMode.NONE
+    ):String {
+        val code=rawCode.uppercase()
+        rotaryClampProfile.actionFor(code,rotaryMode)?.let{return it}
+        if(code in rotaryClampProfile.allowedMachineCodes()) return "MACHINE_AUX"
+        return when(code) {
             "G0" -> "RAPID_MOVE"
             "G1" -> "CUT_LINEAR"
             "G2" -> "CUT_ARC_CW"
@@ -476,7 +626,7 @@ object NcAnimationBridge {
             "M2","M30" -> "PROGRAM_END"
             "M98" -> "SUBPROGRAM_CALL"
             "M99" -> "SUBPROGRAM_RETURN"
-            else -> if (NcCodeCatalog.describe(code,rotaryClampProfile.allowedMCodes()).layer == "UNKNOWN") "UNSUPPORTED" else "STATE_SYNC"
+            else -> if (NcCodeCatalog.describe(code,rotaryClampProfile.allowedMachineCodes()).layer == "UNKNOWN") "UNSUPPORTED" else "STATE_SYNC"
         }
     }
 
@@ -493,8 +643,8 @@ object NcAnimationBridge {
             .map { it.code }
             .distinct()
         return NcCodeCatalog.codesInLine(lines[lineNumber - 1]).map { code ->
-            val d = NcCodeCatalog.describe(code,rotaryClampProfile.allowedMCodes())
-            NcAnimationCue(lineNumber, code, actionFor(code,rotaryClampProfile), d.layer, safety.isNotEmpty(), safety)
+            val d = NcCodeCatalog.describe(code,rotaryClampProfile.allowedMachineCodes())
+            NcAnimationCue(lineNumber,code,actionFor(code,rotaryClampProfile,rotaryMode),d.layer,safety.isNotEmpty(),safety)
         }
     }
 
@@ -589,17 +739,18 @@ object NcSemanticAuthority {
     }
 
     private fun animationEvidence(
-        lineNumber: Int,
-        codes: List<String>,
-        safetyCodes: List<String>,
-        rotaryClampProfile: RotaryAxisClampProfile
-    ): String {
+        lineNumber:Int,
+        codes:List<String>,
+        safetyCodes:List<String>,
+        rotaryClampProfile:RotaryAxisClampProfile,
+        rotaryMode:RotaryAxisOperationMode
+    ):String {
         if (codes.isEmpty()) return "ANIM L" + lineNumber + " • NO G/M EVENT"
         if (safetyCodes.isNotEmpty()) {
             return "ANIM L" + lineNumber + " • BLOCKED=" + safetyCodes.joinToString(",")
         }
         return "ANIM L" + lineNumber + " • " + codes.joinToString(" | ") { code ->
-            code + "=>" + NcAnimationBridge.actionFor(code,rotaryClampProfile)
+            code+"=>"+NcAnimationBridge.actionFor(code,rotaryClampProfile,rotaryMode)
         }
     }
 
@@ -607,9 +758,10 @@ object NcSemanticAuthority {
         lines: List<String>,
         lineNumber: Int,
         controller: CncControllerProfile,
-        safetyByLine: Map<Int,List<String>>,
-        rotaryClampProfile: RotaryAxisClampProfile
-    ): NcSemanticAuthorityResult {
+        safetyByLine:Map<Int,List<String>>,
+        rotaryClampProfile:RotaryAxisClampProfile,
+        rotaryMode:RotaryAxisOperationMode
+    ):NcSemanticAuthorityResult {
         if (lineNumber !in 1..lines.size) {
             return NcSemanticAuthorityResult(
                 lineNumber,
@@ -626,9 +778,9 @@ object NcSemanticAuthority {
             consistencyIssues(
                 code,
                 safetyCodes,
-                CncControllerCapabilityMatrix.classify(controller,code,rotaryClampProfile.allowedMCodes()).status,
-                NcAnimationBridge.actionFor(code,rotaryClampProfile),
-                rotaryClampProfile.allowedMCodes()
+                CncControllerCapabilityMatrix.classify(controller,code,rotaryClampProfile.allowedMachineCodes()).status,
+                NcAnimationBridge.actionFor(code,rotaryClampProfile,rotaryMode),
+                rotaryClampProfile.allowedMachineCodes()
             )
         }.distinct()
 
@@ -637,7 +789,7 @@ object NcSemanticAuthority {
             codes,
             safetyCodes,
             conflicts,
-            animationEvidence(lineNumber,codes,safetyCodes,rotaryClampProfile)
+            animationEvidence(lineNumber,codes,safetyCodes,rotaryClampProfile,rotaryMode)
         )
     }
 
@@ -652,7 +804,7 @@ object NcSemanticAuthority {
         val safetyByLine = NcProgramSafetyPolicy.blocking(program,rotaryClampProfile,rotaryMode)
             .groupBy { it.lineNumber }
             .mapValues { (_, findings) -> findings.map { it.code }.distinct() }
-        return resolvePrepared(lines,lineNumber,controller,safetyByLine,rotaryClampProfile)
+        return resolvePrepared(lines,lineNumber,controller,safetyByLine,rotaryClampProfile,rotaryMode)
     }
 
     fun resolveProgram(
@@ -666,7 +818,7 @@ object NcSemanticAuthority {
             .groupBy { it.lineNumber }
             .mapValues { (_, findings) -> findings.map { it.code }.distinct() }
         return lines.indices.map { index ->
-            resolvePrepared(lines,index + 1,controller,safetyByLine,rotaryClampProfile)
+            resolvePrepared(lines,index + 1,controller,safetyByLine,rotaryClampProfile,rotaryMode)
         }
     }
 
@@ -696,7 +848,7 @@ object NcSemanticAuthority {
             return "NC SEMANTIC AUTHORITY • SAFETY BLOCKED • " + safety.take(6).joinToString(",")
         }
         val activeCodes = results.flatMap { it.codes }.distinct()
-        val animations = activeCodes.map { code -> code + "=>" + NcAnimationBridge.actionFor(code,rotaryClampProfile) }
+        val animations=activeCodes.map{code->code+"=>"+NcAnimationBridge.actionFor(code,rotaryClampProfile,rotaryMode)}
             .filterNot { it.endsWith("=>STATE_SYNC") }
         return "NC SEMANTIC AUTHORITY • CONSENSUS PASS • " +
             if (animations.isEmpty()) "STATE_SYNC_ONLY" else animations.take(12).joinToString(" | ")
@@ -778,6 +930,97 @@ data class NcRuntimeInterlockFinding(
     val code: String,
     val message: String
 )
+
+data class NcBlockFormatRule(
+    val code:String,
+    val requiredAll:Set<Char> = emptySet(),
+    val requiredAny:List<Set<Char>> = emptyList(),
+    val positive:Set<Char> = emptySet(),
+    val nonNegative:Set<Char> = emptySet(),
+    val integer:Set<Char> = emptySet(),
+    val hint:String
+)
+
+object NcBlockFormatCatalog {
+    private val rules=mapOf(
+        "G4" to NcBlockFormatRule("G4",requiredAny=listOf(setOf('P','X')),nonNegative=setOf('P','X'),hint="P dwell or X dwell"),
+        "G43" to NcBlockFormatRule("G43",requiredAll=setOf('H'),integer=setOf('H'),nonNegative=setOf('H'),hint="H tool-length register"),
+        "G54.1" to NcBlockFormatRule("G54.1",requiredAll=setOf('P'),integer=setOf('P'),positive=setOf('P'),hint="P extended work-offset number"),
+        "G65" to NcBlockFormatRule("G65",requiredAll=setOf('P'),integer=setOf('P'),positive=setOf('P'),hint="P macro program number + arguments"),
+        "G73" to NcBlockFormatRule("G73",requiredAll=setOf('Z','R','Q'),positive=setOf('Q'),hint="X/Y optional; Z/R/Q required; F may be modal"),
+        "G81" to NcBlockFormatRule("G81",requiredAll=setOf('Z','R'),hint="X/Y optional; Z/R required; F may be modal"),
+        "G82" to NcBlockFormatRule("G82",requiredAll=setOf('Z','R','P'),nonNegative=setOf('P'),hint="X/Y optional; Z/R/P required"),
+        "G83" to NcBlockFormatRule("G83",requiredAll=setOf('Z','R','Q'),positive=setOf('Q'),hint="X/Y optional; Z/R/Q required; F may be modal"),
+        "G84" to NcBlockFormatRule("G84",requiredAll=setOf('Z','R'),hint="X/Y optional; Z/R required; F/sync depends on machine"),
+        "G92" to NcBlockFormatRule("G92",requiredAny=listOf(setOf('X','Y','Z','A','B')),hint="at least one axis address"),
+        "M98" to NcBlockFormatRule("M98",requiredAll=setOf('P'),integer=setOf('P'),positive=setOf('P'),hint="P subprogram number; L repeat optional"),
+        "G34" to NcBlockFormatRule("G34",hint="MACHINE_PROFILE / vendor-installed option; parameter meaning is machine-specific")
+    )
+
+    fun rule(code:String):NcBlockFormatRule?=rules[code.uppercase()]
+    fun formatHint(code:String):String?=rule(code)?.let{"FORMAT="+it.hint}
+}
+
+object NcBlockFormatPolicy {
+    private fun normalizeCode(prefix:Char,value:Double):String {
+        val numeric=if(kotlin.math.abs(value-kotlin.math.round(value))<=1e-9)
+            kotlin.math.round(value).toLong().toString()
+        else java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
+        return prefix.uppercaseChar()+numeric
+    }
+
+    fun findings(lineNumber:Int,words:List<Pair<Char,Double>>):List<NcRuntimeInterlockFinding>{
+        val addresses=words.groupBy{it.first}
+        val codes=words.filter{it.first=='G'||it.first=='M'}
+            .map{normalizeCode(it.first,it.second)}
+            .distinct()
+        val out=mutableListOf<NcRuntimeInterlockFinding>()
+        codes.mapNotNull{NcBlockFormatCatalog.rule(it)}.forEach{rule->
+            rule.requiredAll.filter{it !in addresses}.forEach{address->
+                out+=NcRuntimeInterlockFinding(
+                    lineNumber,
+                    rule.code+"_FORMAT_MISSING_"+address,
+                    rule.code+" requires address "+address+" in its activation block. "+rule.hint
+                )
+            }
+            rule.requiredAny.forEachIndexed{idx,group->
+                if(group.none{it in addresses}) out+=NcRuntimeInterlockFinding(
+                    lineNumber,
+                    rule.code+"_FORMAT_MISSING_ANY_"+idx,
+                    rule.code+" requires at least one of "+group.sorted().joinToString("/")+". "+rule.hint
+                )
+            }
+            rule.positive.forEach{address->
+                addresses[address]?.forEach{(_,value)->
+                    if(value<=0.0) out+=NcRuntimeInterlockFinding(
+                        lineNumber,
+                        rule.code+"_FORMAT_"+address+"_NONPOSITIVE",
+                        rule.code+" requires "+address+" > 0. "+rule.hint
+                    )
+                }
+            }
+            rule.nonNegative.forEach{address->
+                addresses[address]?.forEach{(_,value)->
+                    if(value<0.0) out+=NcRuntimeInterlockFinding(
+                        lineNumber,
+                        rule.code+"_FORMAT_"+address+"_NEGATIVE",
+                        rule.code+" requires "+address+" >= 0. "+rule.hint
+                    )
+                }
+            }
+            rule.integer.forEach{address->
+                addresses[address]?.forEach{(_,value)->
+                    if(kotlin.math.abs(value-kotlin.math.round(value))>1e-9) out+=NcRuntimeInterlockFinding(
+                        lineNumber,
+                        rule.code+"_FORMAT_"+address+"_NOT_INTEGER",
+                        rule.code+" requires integer "+address+". "+rule.hint
+                    )
+                }
+            }
+        }
+        return out
+    }
+}
 
 object NcRuntimeInterlock {
     private val numericWord = Regex("""(?i)([A-Z])\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))(?=\s|[A-Z]|$)""")
@@ -970,28 +1213,7 @@ object NcRuntimeInterlock {
                 }
             }
 
-            if (hasG(34.0)) {
-                val j = words.lastOrNull { it.first == 'J' }?.second
-                val k = words.lastOrNull { it.first == 'K' }?.second
-                if (j == null || j < 1.0 || kotlin.math.abs(j-kotlin.math.round(j)) > 1e-9) {
-                    findings += NcRuntimeInterlockFinding(
-                        lineNumber,"G34_INVALID_HOLE_COUNT_J","G34 requires integer J >= 1."
-                    )
-                }
-                if (k == null || k <= 0.0) {
-                    findings += NcRuntimeInterlockFinding(
-                        lineNumber,"G34_INVALID_RADIUS_K","G34 requires K > 0."
-                    )
-                }
-            }
-
-            if (hasG(73.0) || hasG(83.0)) {
-                words.filter { it.first == 'Q' && it.second <= 0.0 }.forEach {
-                    findings += NcRuntimeInterlockFinding(
-                        lineNumber,"PECK_Q_NONPOSITIVE","G73/G83 Q must be > 0 when provided."
-                    )
-                }
-            }
+            findings += NcBlockFormatPolicy.findings(lineNumber,words)
 
             if (hasG(2.0) || hasG(3.0)) {
                 val hasR = words.any { it.first == 'R' }
@@ -1223,7 +1445,7 @@ object NcExecutionTimeline {
             val blockedHere = reasons.isNotEmpty()
 
             effectiveCodes.forEach { code ->
-                val action = if (code == "INPUT") "INTERLOCK_HALT" else NcAnimationBridge.actionFor(code,rotaryClampProfile)
+                val action=if(code=="INPUT")"INTERLOCK_HALT" else NcAnimationBridge.actionFor(code,rotaryClampProfile,rotaryMode)
                 val status = when {
                     halted -> "SKIPPED_AFTER_BLOCK"
                     blockedHere -> "BLOCKED"
@@ -1564,8 +1786,8 @@ object NcModalSafetyPolicy {
         "G150","G151","G152"
     )
 
-    fun blocking(program: String): List<NcModalSafetyFinding> {
-        val events = NcModalTracker.trace(program)
+    fun blocking(program:String,machineSpecificAllowed:Set<String> = emptySet()):List<NcModalSafetyFinding> {
+        val events=NcModalTracker.trace(program)
         val findings = mutableListOf<NcModalSafetyFinding>()
         fun add(e: NcModalEvent, code: String, message: String) {
             findings += NcModalSafetyFinding(e.lineNumber, code, message)
@@ -1640,19 +1862,26 @@ object NcModalSafetyPolicy {
         }
 
         NcModalTracker.codes(program).forEach { (line, code) ->
-            if (code !in knownExecutionCodes) {
-                findings += NcModalSafetyFinding(
-                    line,
-                    "UNKNOWN_GCODE_FAIL_CLOSED",
-                    code + " is not in the current AIG verified/tracked CNC vocabulary; execution is blocked until controller semantics are classified."
-                )
+            when {
+                code=="G34" && code !in machineSpecificAllowed ->
+                    findings += NcModalSafetyFinding(
+                        line,
+                        "MACHINE_OPTION_G34_UNCONFIRMED",
+                        "G34 syntax is recognized by AIG, but this machine profile does not confirm the vendor/controller G34 option is installed. NC execution is blocked; CAD/CAM/SIM and the production Runtime remain available."
+                    )
+                code !in knownExecutionCodes && code !in machineSpecificAllowed ->
+                    findings += NcModalSafetyFinding(
+                        line,
+                        "UNKNOWN_GCODE_FAIL_CLOSED",
+                        code + " is not classified for this machine profile. NC execution is blocked; AIG Runtime remains available."
+                    )
             }
         }
         return findings.distinctBy { Triple(it.lineNumber,it.code,it.message) }
     }
 
-    fun status(program: String): String {
-        val blocked = blocking(program)
+    fun status(program:String,machineSpecificAllowed:Set<String> = emptySet()):String {
+        val blocked=blocking(program,machineSpecificAllowed)
         return if (blocked.isEmpty()) "PASS"
         else "BLOCKED:" + blocked.joinToString(",") { (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code }
     }
@@ -1702,10 +1931,12 @@ object NcControlEffectPolicy {
         blockedBySafety: Boolean,
         modalGroup: String?,
         auxiliaryGroup: String?,
-        animationAction: String
-    ): List<String> {
-        if (blockedBySafety) return emptyList()
-        val known = NcCodeCatalog.describe(code).layer != "UNKNOWN"
+        animationAction:String,
+        machineSpecificAllowed:Set<String> = emptySet()
+    ):List<String> {
+        if(blockedBySafety) return emptyList()
+        if(code.uppercase() in machineSpecificAllowed) return emptyList()
+        val known=NcCodeCatalog.describe(code,machineSpecificAllowed).layer!="UNKNOWN"
         if (!known) return emptyList()
         val hasEffect =
             modalGroup != null ||
@@ -1715,12 +1946,13 @@ object NcControlEffectPolicy {
     }
 
     fun blocking(
-        program: String,
-        rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured()
-    ): List<NcModalSafetyFinding> {
-        val machineSpecificAllowed = rotaryClampProfile.allowedMCodes()
-        val baseSafety =
-            (NcModalSafetyPolicy.blocking(program) + NcAuxiliarySafetyPolicy.blocking(program,machineSpecificAllowed))
+        program:String,
+        rotaryClampProfile:RotaryAxisClampProfile=RotaryAxisClampProfile.unconfigured(),
+        rotaryMode:RotaryAxisOperationMode=RotaryAxisOperationMode.NONE
+    ):List<NcModalSafetyFinding> {
+        val machineSpecificAllowed=rotaryClampProfile.allowedMachineCodes()
+        val baseSafety=
+            (NcModalSafetyPolicy.blocking(program,machineSpecificAllowed)+NcAuxiliarySafetyPolicy.blocking(program,machineSpecificAllowed))
                 .distinctBy { Triple(it.lineNumber,it.code,it.message) }
         val blockedLines = baseSafety.filter { it.lineNumber > 0 }.map { it.lineNumber }.toSet()
         val modal = NcModalTracker.trace(program).associateBy { it.lineNumber to it.code }
@@ -1733,8 +1965,8 @@ object NcControlEffectPolicy {
             NcCodeCatalog.codesInLine(raw).forEach { code ->
                 val modalGroup = modal[lineNumber to code]?.group
                 val auxiliaryGroup = auxiliary[lineNumber to code]?.group
-                val action = NcAnimationBridge.actionFor(code,rotaryClampProfile)
-                consistencyIssues(code, blockedBySafety, modalGroup, auxiliaryGroup, action)
+                val action=NcAnimationBridge.actionFor(code,rotaryClampProfile,rotaryMode)
+                consistencyIssues(code,blockedBySafety,modalGroup,auxiliaryGroup,action,machineSpecificAllowed)
                     .forEach { issue ->
                         findings += NcModalSafetyFinding(
                             lineNumber,
@@ -1762,12 +1994,13 @@ object NcProgramSafetyPolicy {
         rotaryClampProfile: RotaryAxisClampProfile = RotaryAxisClampProfile.unconfigured(),
         rotaryMode: RotaryAxisOperationMode = RotaryAxisOperationMode.NONE
     ): List<NcModalSafetyFinding> {
-        val allowed = rotaryClampProfile.allowedMCodes()
+        val allowed=rotaryClampProfile.allowedMachineCodes()
         return (
-            NcModalSafetyPolicy.blocking(program) +
+            NcModalSafetyPolicy.blocking(program,allowed) +
             NcAuxiliarySafetyPolicy.blocking(program,allowed) +
-            NcControlEffectPolicy.blocking(program,rotaryClampProfile) +
-            RotaryAxisClampPolicy.blocking(program,rotaryMode,rotaryClampProfile)
+            NcControlEffectPolicy.blocking(program,rotaryClampProfile,rotaryMode) +
+            RotaryAxisClampPolicy.blocking(program,rotaryMode,rotaryClampProfile) +
+            G34VendorPolicy.blocking(program,rotaryClampProfile.g34VendorProfile)
         ).distinctBy { Triple(it.lineNumber,it.code,it.message) }
     }
 
@@ -2057,11 +2290,12 @@ object FanucNc {
         val camHasAxisProvenance = moves.any { abs(it.axisA) > 1e-9 || abs(it.axisB) > 1e-9 }
         fun effectiveA(move:Move):Double = if(camHasAxisProvenance) move.axisA else post.axisA
         fun effectiveB(move:Move):Double = if(camHasAxisProvenance) move.axisB else post.axisB
-        val hasRotaryOrientation = moves.any { abs(effectiveA(it)) > EPS || abs(effectiveB(it)) > EPS }
-        val explicitRotaryMode = post.rotaryMode != RotaryAxisOperationMode.NONE
-        if (explicitRotaryMode && hasRotaryOrientation) {
-            require(post.rotaryClampProfile.configured) {
-                "4/5-axis NC requires a machine-specific rotary clamp profile or verified controller/PMC automatic clamp mode"
+        val hasRotaryOrientation=moves.any{abs(effectiveA(it))>EPS || abs(effectiveB(it))>EPS}
+        val explicitRotaryMode=post.rotaryMode!=RotaryAxisOperationMode.NONE
+        val activeRotaryPair=post.rotaryClampProfile.pairFor(post.rotaryMode)
+        if(explicitRotaryMode && hasRotaryOrientation){
+            require(activeRotaryPair?.configured==true){
+                "Current "+post.rotaryMode.name+" NC requires its own machine-specific clamp/unclamp M-code profile or verified controller/PMC automatic mode"
             }
         }
         if (post.rotaryMode == RotaryAxisOperationMode.INDEXED_4AX ||
@@ -2089,12 +2323,12 @@ object FanucNc {
         out.appendLine("(PROGRAM MODE " + post.coordinateMode.displayName + " • ORIGIN " + post.originTransformMode.displayName + " • CUTTER COMP " + post.cutterCompensation.displayName + ")")
         out.appendLine("(CUTTER D REGISTER D" + post.cutterCompRegister + " • EXPECTED OFFSET " + fmt(post.cutterCompValueMm) + " MM • G40 MODE DOES NOT APPLY D)")
         out.appendLine("(MULTIAXIS TOOLPOINT A/B SOURCE " + (if(camHasAxisProvenance) "CAM_TOOLPOINTS" else "POST_COMPAT_FALLBACK") + ")")
-        out.appendLine("(ROTARY MODE " + post.rotaryMode.name + " • CLAMP " +
+        out.appendLine("(ROTARY MODE "+post.rotaryMode.name+" • CLAMP "+
             when {
-                post.rotaryClampProfile.controllerAutomatic -> "CONTROLLER_PMC_AUTO"
-                post.rotaryClampProfile.explicit -> "MACHINE_MCODE_PROFILE"
+                activeRotaryPair?.controllerAutomatic==true -> "CONTROLLER_PMC_AUTO"
+                activeRotaryPair?.explicit==true -> "MACHINE_MCODE_PROFILE"
                 else -> "UNCONFIGURED_COMPAT"
-            } + ")")
+            }+")")
         out.appendLine("G21 G94 G97")
         out.appendLine("G90 " + post.workOffset + " G17 G40 G49 G80")
         out.appendLine("T" + post.tool)
@@ -2104,16 +2338,16 @@ object FanucNc {
         var lastA=effectiveA(firstMove)
         var lastB=effectiveB(firstMove)
         if (kotlin.math.abs(lastA) > 1e-9 || kotlin.math.abs(lastB) > 1e-9) {
-            if (explicitRotaryMode && post.rotaryClampProfile.explicit) {
-                out.appendLine("M" + post.rotaryClampProfile.unclampM)
+            if(explicitRotaryMode && activeRotaryPair?.explicit==true){
+                out.appendLine("M"+activeRotaryPair.unclampM)
             }
             out.append("G0 A").append(fmt(lastA)).append(" B").append(fmt(lastB)).appendLine()
-            if (explicitRotaryMode &&
-                post.rotaryClampProfile.explicit &&
-                post.rotaryClampProfile.requireClampForIndexedCutting &&
-                (post.rotaryMode == RotaryAxisOperationMode.INDEXED_4AX ||
-                    post.rotaryMode == RotaryAxisOperationMode.INDEXED_5AX)) {
-                out.appendLine("M" + post.rotaryClampProfile.clampM)
+            if(explicitRotaryMode &&
+                activeRotaryPair?.explicit==true &&
+                activeRotaryPair.requireClampForIndexedCutting &&
+                (post.rotaryMode==RotaryAxisOperationMode.INDEXED_4AX ||
+                    post.rotaryMode==RotaryAxisOperationMode.INDEXED_5AX)){
+                out.appendLine("M"+activeRotaryPair.clampM)
             }
         }
         out.appendLine("S" + post.spindle + " M3")
@@ -2204,13 +2438,6 @@ object FanucNc {
         return program
     }
 
-    fun circularHolePattern(startAngleDeg: Double, holeCount: Int, radius: Double): String {
-        require(startAngleDeg.isFinite())
-        require(holeCount in 1..99999)
-        require(radius.isFinite() && radius > 0.0)
-        return "G34 I" + fmt(startAngleDeg) + " J" + holeCount + " K" + fmt(radius)
-    }
-
     fun cannedCycle(
         cycle: DrillCycle,
         holes: List<DrillHole>,
@@ -2227,22 +2454,23 @@ object FanucNc {
         require(!(rotaryMode == RotaryAxisOperationMode.INDEXED_4AX && abs(axisB) > EPS)) {
             "4AX drilling permits A orientation only; B must remain zero"
         }
-        if (rotaryMode != RotaryAxisOperationMode.NONE) {
-            require(clampProfile.configured) {
-                "4/5-axis drilling requires a configured machine clamp/unclamp profile or verified controller-automatic clamp mode"
+        val activePair=clampProfile.pairFor(rotaryMode)
+        if(rotaryMode!=RotaryAxisOperationMode.NONE){
+            require(activePair?.configured==true){
+                "Current "+rotaryMode.name+" drilling requires its own configured machine clamp/unclamp profile or verified controller-automatic mode"
             }
-            require(rotaryMode == RotaryAxisOperationMode.INDEXED_4AX || rotaryMode == RotaryAxisOperationMode.INDEXED_5AX) {
+            require(rotaryMode==RotaryAxisOperationMode.INDEXED_4AX || rotaryMode==RotaryAxisOperationMode.INDEXED_5AX){
                 "Canned drilling/tapping requires indexed 4/5-axis orientation; simultaneous rotary canned cycles are blocked"
             }
         }
-        val out = StringBuilder()
+        val out=StringBuilder()
         out.appendLine("G0 Z" + fmt(safeZ))
-        if (rotaryMode != RotaryAxisOperationMode.NONE) {
-            if (clampProfile.explicit) out.appendLine("M" + clampProfile.unclampM)
+        if(rotaryMode!=RotaryAxisOperationMode.NONE){
+            if(activePair?.explicit==true) out.appendLine("M"+activePair.unclampM)
             out.append("G0 A").append(fmt(axisA))
-            if (rotaryMode == RotaryAxisOperationMode.INDEXED_5AX) out.append(" B").append(fmt(axisB))
+            if(rotaryMode==RotaryAxisOperationMode.INDEXED_5AX) out.append(" B").append(fmt(axisB))
             out.appendLine()
-            if (clampProfile.explicit) out.appendLine("M" + clampProfile.clampM)
+            if(activePair?.explicit==true) out.appendLine("M"+activePair.clampM)
         }
         holes.forEachIndexed { index, h ->
             require(h.z < 0.0 && h.feed > 0.0)

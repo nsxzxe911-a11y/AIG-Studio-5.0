@@ -408,6 +408,18 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_NC_GM_WINDOWS")
 require(regression, "NC_GM_OPERATOR_PALETTE_PASS", "STUDIO_NC_GM_REGRESSION")
+for needle in ("data class NcBlockFormatRule(", "object NcBlockFormatCatalog", "object NcBlockFormatPolicy"):
+    require(core, needle, "STUDIO_NC_BLOCK_FORMAT_CORE")
+for needle in ("enum class G34VendorTemplate", "data class G34VendorProfile(", "object G34VendorInterpreter", "object G34VendorPolicy"):
+    require(core, needle, "STUDIO_G34_VENDOR_TEMPLATE_CORE")
+for needle in ("g34TemplateSpinner", "G34 J0 預設起始角度", "I30→R15"):
+    require(android, needle, "STUDIO_G34_VENDOR_TEMPLATE_ANDROID")
+for needle in ("G34 vendor format template", "G34 J0 default start angle", "I30→R15"):
+    require(desktop, needle, "STUDIO_G34_VENDOR_TEMPLATE_WINDOWS")
+require(regression, "NC_BLOCK_FORMAT_SCHEMA_PASS|G34_VENDOR_PROFILE|G83_Z_R_Q|G43_H|M98_P|G65_P|G54_1_P|G4_P_OR_X|CURSOR_FORMAT_HELP", "STUDIO_NC_BLOCK_FORMAT_REGRESSION")
+require(regression, "NC_G34_VENDOR_TEMPLATE_PASS|J0_DEFAULT_90|I_DIAMETER_30|RADIUS_15|K6_COUNT|G83_R3_Z-20_Q2_F150|MACHINE_SPECIFIC", "STUDIO_G34_VENDOR_TEMPLATE_REGRESSION")
+print("STUDIO_NC_BLOCK_FORMAT_GATE_PASS|G34_VENDOR_PROFILE|G83_Z_R_Q|G43_H|M98_P|G65_P|CURSOR_FORMAT_HELP")
+print("STUDIO_G34_VENDOR_TEMPLATE_GATE_PASS|J0_DEFAULT_90|I30_R15|K6_COUNT|ANDROID|WINDOWS|MACHINE_SPECIFIC")
 print("STUDIO_NC_GM_OPERATOR_UI_GATE_PASS|ANDROID|WINDOWS|CATEGORIZED|FAIL_CLOSED")
 
 for needle in (
@@ -1469,7 +1481,9 @@ for needle in (
     'saveRotaryMachineProfile(rotaryClampProfile)',
     'getSharedPreferences("aig_rotary_machine_profile", MODE_PRIVATE)',
     '"EXPLICIT MACHINE M-CODES"',
-    'M42/M44 等僅可作機台範例，不是通用預設',
+    '4AX M碼設定 • 每台機器依廠商/PMC不同，可留空',
+    '5AX M碼設定 • 可與4AX完全不同',
+    'machineOptionalCodes',
 ):
     require(android, needle, "ROTARY_MACHINE_PROFILE_PERSISTENCE")
 

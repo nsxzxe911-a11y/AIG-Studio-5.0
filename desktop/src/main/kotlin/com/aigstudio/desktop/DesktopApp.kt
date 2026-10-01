@@ -2490,8 +2490,8 @@ private fun showNcEditor(frame: JFrame, doc: DrawingDocument, camSettings:CamSet
         modalStatus.foreground = if (blocked.isEmpty() && machine.canExecute) Color(255,210,90) else Color(255,110,110)
         modalStatus.text = "MODAL • " + NcModalTracker.evidence(area.text) +
             " • AUX=" + NcAuxiliaryTracker.evidence(area.text) +
-            " • CODE=" + NcCodeCatalog.programLegend(area.text,12,ncRotaryProfile.allowedMCodes()) +
-            " • " + CncControllerCapabilityMatrix.summary(controllerProfile,area.text,ncRotaryProfile.allowedMCodes()) +
+            " • CODE=" + NcCodeCatalog.programLegend(area.text,12,ncRotaryProfile.allowedMachineCodes()) +
+            " • " + CncControllerCapabilityMatrix.summary(controllerProfile,area.text,ncRotaryProfile.allowedMachineCodes()) +
             (if (blocked.isEmpty()) " • SAFETY=PASS"
             else " • BLOCKED=" + blocked.take(4).joinToString(",") {
                 (if (it.lineNumber > 0) "L" + it.lineNumber + ":" else "") + it.code
@@ -2715,38 +2715,49 @@ private val ncPostPrefs: Preferences =
 private val rotaryMachinePrefs: Preferences =
     Preferences.userRoot().node("com/aigstudio/rotary-machine-profile")
 
-private fun loadDesktopRotaryMachineProfile(): RotaryAxisClampProfile {
-    return when (rotaryMachinePrefs.get("mode","UNCONFIGURED")) {
-        "PMC_AUTO" -> RotaryAxisClampProfile.controllerAutomatic(
-            rotaryMachinePrefs.getBoolean("require_indexed_cut_lock",false)
-        )
+private fun loadDesktopRotaryMachineProfile():RotaryAxisClampProfile {
+    fun readAxis(prefix:String):RotaryAxisMCodePair=when(rotaryMachinePrefs.get(prefix+"_mode","UNCONFIGURED")){
+        "PMC_AUTO" -> RotaryAxisMCodePair.controllerAutomatic(rotaryMachinePrefs.getBoolean(prefix+"_require_indexed_cut_lock",false))
         "EXPLICIT" -> {
-            val lock=rotaryMachinePrefs.getInt("lock_m",-1)
-            val unlock=rotaryMachinePrefs.getInt("unlock_m",-1)
-            if(lock in 0..999 && unlock in 0..999 && lock!=unlock) {
-                RotaryAxisClampProfile.explicit(
-                    clampM=lock,
-                    unclampM=unlock,
-                    requireClampForIndexedCutting=rotaryMachinePrefs.getBoolean("require_indexed_cut_lock",false)
-                )
-            } else RotaryAxisClampProfile.unconfigured()
+            val lock=rotaryMachinePrefs.getInt(prefix+"_lock_m",-1)
+            val unlock=rotaryMachinePrefs.getInt(prefix+"_unlock_m",-1)
+            if(lock in 0..999 && unlock in 0..999 && lock!=unlock)
+                RotaryAxisMCodePair.explicit(lock,unlock,rotaryMachinePrefs.getBoolean(prefix+"_require_indexed_cut_lock",false))
+            else RotaryAxisMCodePair.unconfigured()
         }
-        else -> RotaryAxisClampProfile.unconfigured()
+        else -> RotaryAxisMCodePair.unconfigured()
     }
+    val g34Template=runCatching{
+        G34VendorTemplate.valueOf(rotaryMachinePrefs.get("g34_template","UNCONFIGURED"))
+    }.getOrDefault(G34VendorTemplate.UNCONFIGURED)
+    val g34DefaultAngle=rotaryMachinePrefs.get("g34_default_angle","90.0").toDoubleOrNull()?.takeIf{it.isFinite()} ?: 90.0
+    return RotaryAxisClampProfile.configured(
+        axis4=readAxis("axis4"),
+        axis5=readAxis("axis5"),
+        installedOptionalCodes=RotaryAxisClampProfile.parseOptionalCodes(rotaryMachinePrefs.get("optional_codes","")),
+        g34VendorProfile=G34VendorProfile(g34Template,g34DefaultAngle)
+    )
 }
 
 private fun saveDesktopRotaryMachineProfile(profile:RotaryAxisClampProfile){
     rotaryMachinePrefs.clear()
-    rotaryMachinePrefs.putBoolean("require_indexed_cut_lock",profile.requireClampForIndexedCutting)
-    when {
-        profile.controllerAutomatic -> rotaryMachinePrefs.put("mode","PMC_AUTO")
-        profile.explicit -> {
-            rotaryMachinePrefs.put("mode","EXPLICIT")
-            rotaryMachinePrefs.putInt("lock_m",profile.clampM!!)
-            rotaryMachinePrefs.putInt("unlock_m",profile.unclampM!!)
+    fun writeAxis(prefix:String,axis:RotaryAxisMCodePair){
+        rotaryMachinePrefs.putBoolean(prefix+"_require_indexed_cut_lock",axis.requireClampForIndexedCutting)
+        when {
+            axis.controllerAutomatic -> rotaryMachinePrefs.put(prefix+"_mode","PMC_AUTO")
+            axis.explicit -> {
+                rotaryMachinePrefs.put(prefix+"_mode","EXPLICIT")
+                rotaryMachinePrefs.putInt(prefix+"_lock_m",axis.clampM!!)
+                rotaryMachinePrefs.putInt(prefix+"_unlock_m",axis.unclampM!!)
+            }
+            else -> rotaryMachinePrefs.put(prefix+"_mode","UNCONFIGURED")
         }
-        else -> rotaryMachinePrefs.put("mode","UNCONFIGURED")
     }
+    writeAxis("axis4",profile.axis4)
+    writeAxis("axis5",profile.axis5)
+    rotaryMachinePrefs.put("optional_codes",profile.optionalCodesCsv())
+    rotaryMachinePrefs.put("g34_template",profile.g34VendorProfile.template.name)
+    rotaryMachinePrefs.put("g34_default_angle",profile.g34VendorProfile.defaultStartAngleDeg.toString())
     rotaryMachinePrefs.flush()
 }
 
@@ -2766,11 +2777,15 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         "5AX" -> RotaryAxisOperationMode.SIMULTANEOUS_5AX
         else -> RotaryAxisOperationMode.NONE
     }
-    fun clampStatus():String=when{
-        rotaryClampProfile.controllerAutomatic -> "PMC AUTO"
-        rotaryClampProfile.explicit ->
-            "M"+rotaryClampProfile.unclampM+" UNLOCK / M"+rotaryClampProfile.clampM+" LOCK"
-        else -> "UNCONFIGURED"
+    fun clampStatus():String {
+        fun axis(label:String,p:RotaryAxisMCodePair)=label+"="+when{
+            p.controllerAutomatic -> "PMC_AUTO"
+            p.explicit -> "M"+p.unclampM+" OPEN/M"+p.clampM+" LOCK"
+            else -> "UNCONFIGURED"
+        }
+        return axis("4AX",rotaryClampProfile.axis4)+" • "+axis("5AX",rotaryClampProfile.axis5)+
+            " • OPTIONS="+rotaryClampProfile.optionalCodesCsv().ifBlank{"NONE"}+
+            " • G34="+rotaryClampProfile.g34VendorProfile.template.name
     }
     fun generateNc():String {
         return CncPost.generate(
@@ -2962,39 +2977,62 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
         rebuildMachiningForMode();card.show(visual,"AXIS")
     }
     action(UiTextPolicy.display("ROTARY_CLAMP",118),Color(125,112,255),"4AX"){
-        val mode=JComboBox(arrayOf(
-            "UNCONFIGURED / BLOCK",
+        val modes=arrayOf(
+            "UNCONFIGURED / NC BLOCK",
             "CONTROLLER / PMC AUTO • VERIFIED MACHINE ONLY",
             "EXPLICIT MACHINE M-CODES"
-        ))
-        mode.selectedIndex=when{
-            rotaryClampProfile.controllerAutomatic -> 1
-            rotaryClampProfile.explicit -> 2
-            else -> 0
+        )
+        fun modeIndex(axis:RotaryAxisMCodePair)=when{axis.controllerAutomatic->1;axis.explicit->2;else->0}
+        val mode4=JComboBox(modes).apply{selectedIndex=modeIndex(rotaryClampProfile.axis4)}
+        val unlock4=JTextField(rotaryClampProfile.axis4.unclampM?.toString().orEmpty(),8)
+        val lock4=JTextField(rotaryClampProfile.axis4.clampM?.toString().orEmpty(),8)
+        val cutLock4=JCheckBox("4AX indexed cutting requires LOCK",rotaryClampProfile.axis4.requireClampForIndexedCutting)
+        val mode5=JComboBox(modes).apply{selectedIndex=modeIndex(rotaryClampProfile.axis5)}
+        val unlock5=JTextField(rotaryClampProfile.axis5.unclampM?.toString().orEmpty(),8)
+        val lock5=JTextField(rotaryClampProfile.axis5.clampM?.toString().orEmpty(),8)
+        val cutLock5=JCheckBox("5AX indexed cutting requires LOCK",rotaryClampProfile.axis5.requireClampForIndexedCutting)
+        val optionalCodes=JTextField(rotaryClampProfile.optionalCodesCsv(),18)
+        val g34Templates=G34VendorTemplate.entries.toTypedArray()
+        val g34Template=JComboBox(g34Templates.map{
+            when(it){
+                G34VendorTemplate.UNCONFIGURED -> "UNCONFIGURED / vendor-defined"
+                G34VendorTemplate.XY_J0_I_DIAMETER_K_COUNT -> "X/Y center • J0 default angle • I PCD diameter • K hole count"
+            }
+        }.toTypedArray()).apply{
+            selectedIndex=g34Templates.indexOf(rotaryClampProfile.g34VendorProfile.template).coerceAtLeast(0)
         }
-        val unlock=JTextField(rotaryClampProfile.unclampM?.toString().orEmpty(),8)
-        val lock=JTextField(rotaryClampProfile.clampM?.toString().orEmpty(),8)
-        val cutLock=JCheckBox("Indexed cutting also requires LOCK",rotaryClampProfile.requireClampForIndexedCutting)
+        val g34DefaultAngle=JTextField(rotaryClampProfile.g34VendorProfile.defaultStartAngleDeg.toString(),8)
         val panel=JPanel(GridLayout(0,1,4,4)).apply{
-            add(JLabel("Machine-specific rotary clamp profile • never assume universal M-codes • M42/M44 is example only"))
-            add(mode)
-            add(JLabel("UNLOCK M number"));add(unlock)
-            add(JLabel("LOCK M number"));add(lock)
-            add(cutLock)
+            add(JLabel("4AX machine M profile • vendor/PMC specific • blank is allowed"))
+            add(mode4);add(JLabel("4AX OPEN M(   )"));add(unlock4);add(JLabel("4AX LOCK M(   )"));add(lock4);add(cutLock4)
+            add(JLabel("5AX machine M profile • may differ completely from 4AX"))
+            add(mode5);add(JLabel("5AX OPEN M(   )"));add(unlock5);add(JLabel("5AX LOCK M(   )"));add(lock5);add(cutLock5)
+            add(JLabel("Vendor-installed optional G/M codes; blank=unconfirmed"));add(optionalCodes)
+            add(JLabel("G34 vendor format template"));add(g34Template)
+            add(JLabel("G34 J0 default start angle"));add(g34DefaultAngle)
+            add(JLabel("Template: J0=default angle; I=PCD diameter (I30→R15); K=hole count. Machine-specific only."))
+            add(JLabel("NC warning/block never disables CAD/CAM/SIM or the production Runtime UI."))
         }
         if(JOptionPane.showConfirmDialog(
             dlg,panel,"ROTARY CLAMP / MACHINE PROFILE",JOptionPane.OK_CANCEL_OPTION,JOptionPane.WARNING_MESSAGE
         )==JOptionPane.OK_OPTION){
             runCatching{
-                when(mode.selectedIndex){
-                    0 -> RotaryAxisClampProfile.unconfigured()
-                    1 -> RotaryAxisClampProfile.controllerAutomatic(cutLock.isSelected)
-                    else -> RotaryAxisClampProfile.explicit(
-                        clampM=lock.text.trim().toIntOrNull() ?: error("LOCK M number required"),
-                        unclampM=unlock.text.trim().toIntOrNull() ?: error("UNLOCK M number required"),
-                        requireClampForIndexedCutting=cutLock.isSelected
-                    )
-                }
+                fun axis(mode:JComboBox<String>,lock:JTextField,unlock:JTextField,cut:JCheckBox)=
+                    when(mode.selectedIndex){
+                        0 -> RotaryAxisMCodePair.unconfigured()
+                        1 -> RotaryAxisMCodePair.controllerAutomatic(cut.isSelected)
+                        else -> RotaryAxisMCodePair.explicit(
+                            lock.text.trim().toInt(),unlock.text.trim().toInt(),cut.isSelected
+                        )
+                    }
+                val g34Angle=g34DefaultAngle.text.trim().toDoubleOrNull()
+                    ?: error("G34 default angle must be numeric")
+                RotaryAxisClampProfile.configured(
+                    axis4=axis(mode4,lock4,unlock4,cutLock4),
+                    axis5=axis(mode5,lock5,unlock5,cutLock5),
+                    installedOptionalCodes=RotaryAxisClampProfile.parseOptionalCodes(optionalCodes.text),
+                    g34VendorProfile=G34VendorProfile(g34Templates[g34Template.selectedIndex],g34Angle)
+                )
             }.onSuccess{
                 rotaryClampProfile=it
                 saveDesktopRotaryMachineProfile(rotaryClampProfile)
