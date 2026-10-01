@@ -48,6 +48,7 @@ uiux_index=read("uiux/index.html","UIUX","UIUX_INDEX_MISSING")
 uiux_visual=read("uiux/visual.html","UIUX","UIUX_VISUAL_MISSING")
 cmd_text=read("continuity/release-command.json","AI","RELEASE_COMMAND_MISSING")
 route_text=read("continuity/ai-responsibility-routing.json","AI","RESPONSIBILITY_ROUTE_MISSING")
+cache_xml=read("continuity/cache-update-standard.xml","AI","CACHE_XML_STANDARD_MISSING")
 
 need("HOME","HOME_RUNTIME_ENTRY","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["AigStartupOverlay(this)",'contentDescription = "PRODUCTION UI SWITCH"',"scheduleBackgroundOnlineServices()"],"restore direct production HOME boot and schedule network only after UI is ready")
 need("HOME","HOME_DESKTOP_ENTRY","desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt",desktop,['JFrame("AIG CNC — OFFICIAL RGB ORIGINAL — v"',"LOCAL READY • NETWORK OPTIONAL"],"restore production desktop frame and offline-first status")
