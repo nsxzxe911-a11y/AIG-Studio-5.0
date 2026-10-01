@@ -88,5 +88,6 @@
     "NC_EDIT",
     "AI"
   ],
-  "library_manifest": "uiux/aig-image-library.json"
+  "library_manifest": "uiux/aig-image-library.json",
+  "release_version": "259.0.0"
 }

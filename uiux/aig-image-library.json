@@ -1,7 +1,7 @@
 {
   "schema": "aig-uiux-image-library-v2",
   "product": "AIG Studio 5.0",
-  "version": "258.0.0",
+  "version": "259.0.0",
   "status": "UIUX_VISUAL_LIBRARY_COMPLETE",
   "canonical_root": "uiux/",
   "rule": "No runtime or review page reads engineering-assets directly. engineering-assets remains immutable provenance/history only.",
@@ -229,5 +229,6 @@
     "Android landscape",
     "Windows desktop"
   ],
-  "note": "UI/UX visual library and mapping only; CNC geometry/G-code/coordinate truth remains owned by runtime core."
+  "note": "UI/UX visual library and mapping only; CNC geometry/G-code/coordinate truth remains owned by runtime core.",
+  "build_note": "CI runtime-surface verifier fixed: added missing Python re import; no CNC/runtime geometry logic changed."
 }
