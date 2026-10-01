@@ -141,6 +141,59 @@ private fun testSoftwareAbsoluteCoordinateContract() {
     check("M29_RIGID_TAP_SYNC_UNVERIFIED" in extendedGmBlocked)
     check("M48_M49_OVERRIDE_UNVERIFIED" in extendedGmBlocked)
     println("✓ NC_EXTENDED_GM_COVERAGE_PASS G5.1/G10/G15/G16/G44/G74/G76/G90.1/G91.1/M29/M48/M49")
+
+    val extendedCommonCodes = listOf("G22","G23","G27","G45","G46","G47","G48","G60","G63")
+    check(extendedCommonCodes.all { NcCodeCatalog.describe(it).layer != "UNKNOWN" })
+    check(extendedCommonCodes.all {
+        CncControllerCapabilityMatrix.classify(CncControllerProfile.FANUC,it).status ==
+            ControllerCapabilityStatus.TRACKED_REVIEW
+    })
+    val extendedCommonBlocked = NcProgramSafetyPolicy.status(
+        "G21 G94 G97 G90 G54\nG22\nG23\nG27\nG45\nG60\nG63"
+    )
+    check("STORED_STROKE_CHECK_UNVERIFIED" in extendedCommonBlocked)
+    check("G27_REFERENCE_CHECK_UNSIMULATED" in extendedCommonBlocked)
+    check("LEGACY_TOOL_OFFSET_SHIFT_UNSIMULATED" in extendedCommonBlocked)
+    check("G60_SINGLE_DIRECTION_UNSIMULATED" in extendedCommonBlocked)
+    check("G63_TAPPING_MODE_UNVERIFIED" in extendedCommonBlocked)
+    println("✓ NC_COMMON_MILLING_VOCAB_PASS G22/G23/G27/G45-G48/G60/G63 TRACKED_FAIL_CLOSED")
+
+    val rotaryProfile = RotaryAxisClampProfile.explicit(
+        clampM=44,
+        unclampM=42,
+        requireClampForIndexedCutting=true
+    )
+    val rotaryProgram = """
+        G21 G94 G97 G90 G54
+        M42
+        G0 A90.000
+        M44
+        G81 X0.000 Y0.000 Z-5.000 R2.000 F100.000
+        G80
+    """.trimIndent()
+    check(NcCodeCatalog.describe("M42",rotaryProfile.allowedMCodes()).compact()=="M42=MACH-AUX")
+    check(CncControllerCapabilityMatrix.classify(
+        CncControllerProfile.FANUC,"M42",rotaryProfile.allowedMCodes()
+    ).status == ControllerCapabilityStatus.MODELED_ALLOWED)
+    check(NcProgramSafetyPolicy.status(
+        rotaryProgram,rotaryProfile,RotaryAxisOperationMode.INDEXED_4AX
+    )=="PASS")
+    check("CONSENSUS PASS" in NcSemanticAuthority.programSummary(
+        rotaryProgram,CncControllerProfile.FANUC,rotaryProfile,RotaryAxisOperationMode.INDEXED_4AX
+    ))
+    val rotaryTimeline = NcExecutionTimeline.build(
+        rotaryProgram,
+        CncControllerProfile.FANUC,
+        rotaryClampProfile=rotaryProfile,
+        rotaryMode=RotaryAxisOperationMode.INDEXED_4AX
+    )
+    check(rotaryTimeline.any { it.code=="M42" && it.action=="ROTARY_UNCLAMP" && it.status=="READY" })
+    check(rotaryTimeline.any { it.code=="M44" && it.action=="ROTARY_CLAMP" && it.status=="READY" })
+    check("M42=MACH-AUX" in NcCodeCatalog.lineHelp(
+        rotaryProgram,2,rotaryProfile,RotaryAxisOperationMode.INDEXED_4AX
+    ))
+    println("✓ NC_MACHINE_M_PROFILE_PASS M42_UNLOCK M44_LOCK SEMANTIC_TIMELINE_PROFILED")
+
     val paletteCodes = NcCodeCatalog.operatorPaletteCodes()
     check(listOf("G0","G34","G41","G43.4","G54.4","G68.2","G81","G90.1","G91.1","M6","M29","M98","M99").all { it in paletteCodes })
     check(paletteCodes.all { NcCodeCatalog.describe(it).layer != "UNKNOWN" })
