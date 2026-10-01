@@ -91,7 +91,7 @@
     "CONTINUITY"
   ],
   "library_manifest": "uiux/aig-image-library.json",
-  "release_version": "274.0.0",
+  "release_version": "275.0.0",
   "continuity_contract": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "red_status_nonblocking_for": [
@@ -141,5 +141,6 @@
     "reference_sha256": "c86e6c24927fffb67231ec7e17cd962dc67c5a3fd615b794499f5f595a5ebc9d",
     "first_frame_engineering_shell": "FAIL",
     "visible_runtime_required": true
-  }
+  },
+  "theme_pack_notice": "UI 套裝可不停機熱切換；AI 可依手機直向/橫向/Windows 自動編排，但不得改功能順序、CNC安全、座標、刀路與核心邏輯；失敗回上一個已驗證套裝，不回工程殼。"
 }
