@@ -1,7 +1,7 @@
 {
   "schema": "aig-uiux-image-library-v2",
   "product": "AIG Studio 5.0",
-  "version": "266.0.0",
+  "version": "267.0.0",
   "status": "UIUX_VISUAL_LIBRARY_COMPLETE_INDEXED",
   "canonical_root": "uiux/",
   "rule": "No runtime or review page reads engineering-assets directly. engineering-assets remains immutable provenance/history only.",
@@ -238,7 +238,7 @@
     "Windows desktop"
   ],
   "note": "UI/UX visual library and mapping only; CNC geometry/G-code/coordinate truth remains owned by runtime core.",
-  "build_note": "266 adds AI auto-check responsibility routing: classify failure, return it to the owning department for rework, then AI re-verifies until PASS. Network/infra are deferred external substeps, never default product owners.",
+  "build_note": "267 adds no-early-exit scanning across all 13 departments, precise owner/error-code/path/repair-hint findings, and fixes Studio verifier warning handling plus stale WEB version pinning.",
   "continuity": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "checkpoint_scope": [
