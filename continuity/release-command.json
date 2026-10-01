@@ -1,7 +1,7 @@
 {
   "schema": "aig-release-command-v1",
   "product": "AIG Studio 5.0",
-  "version": "265.0.0",
+  "version": "266.0.0",
   "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
   "command_scope": "ALL_DEPARTMENTS",
   "dispatch_mode": "IMMEDIATE_LOCAL_FIRST",
@@ -16,67 +16,93 @@
     "HOME": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     },
     "CAD": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     },
     "CAM": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     },
     "SIM": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     },
     "3AX": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     },
     "4AX": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     },
     "5AX": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     },
     "NC": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     },
     "AI": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     },
     "UIUX": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     },
     "ANDROID_BUILD": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     },
     "WINDOWS_BUILD": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     },
     "WEB": {
       "directive": "EXECUTE_NOW",
       "network_gate": "NONE",
-      "resume": "LAST_CHECKPOINT"
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     }
   },
   "promotion_policy": {
@@ -84,5 +110,13 @@
     "executed_product_safety_failure_blocks_promotion": true,
     "compile_runtime_failure_blocks_promotion": true,
     "integrity_failure_blocks_promotion": true
+  },
+  "completion_loop": {
+    "mode": "EXECUTE_UNTIL_PASS",
+    "detector": "AI",
+    "responsibility_contract": "continuity/ai-responsibility-routing.json",
+    "on_fail": "ASSIGN_OWNER_AND_RETURN_FOR_REWORK",
+    "after_rework": "AI_REVERIFY",
+    "stop_condition": "ALL_DEPARTMENTS_PASS"
   }
 }
