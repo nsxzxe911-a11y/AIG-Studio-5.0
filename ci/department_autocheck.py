@@ -51,10 +51,10 @@ need("HOME","HOME_RUNTIME_ENTRY","app/src/main/java/com/aigstudio/app/MainActivi
 need("HOME","HOME_DESKTOP_ENTRY","desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt",desktop,['JFrame("AIG CNC — OFFICIAL RGB ORIGINAL — v"',"LOCAL READY • NETWORK OPTIONAL"],"restore production desktop frame and offline-first status")
 
 need("CAD","CAD_EDIT_CORE","core/src/main/kotlin/com/aigstudio/core/Document.kt",doc,["object CadEditEngine","object CadSnapEngine","object DimensionDriveEngine","TRIM","EXTEND","OFFSET","ARRAY","connect(","disconnect("],"restore CAD edit/snap/dimension/topology implementation at 0.001 mm")
-need("CAD","CAD_UI_BINDING","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["SnapMode","TRIM","EXTEND","OFFSET","ARRAY"],"rebind CAD production controls to live CAD callbacks")
+need("CAD","CAD_UI_BINDING","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["cad.toggleSnap()","CadSnapEngine.snapTo","DimensionDriveEngine.command","TRIM","EXTEND","OFFSET","ARRAY"],"rebind CAD production controls to live CAD callbacks")
 
 need("CAM","CAM_GENERATION","core/src/main/kotlin/com/aigstudio/core/Machining3D.kt",machining,["CamModel.fromCad","toolpaths","settings.safeZ","settings.toolDiameter"],"restore CAM generation, tooling and Safe-Z data flow")
-need("CAM","CAM_REGRESSION","core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt",reg,["CAM_QUICK_OPERATION_GATE_PASS","CAM_OPERATION_PERSISTENCE_GATE_PASS"],"restore CAM quick-operation and persistence regression coverage")
+need("CAM","CAM_REGRESSION","core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt",reg,["CAM_WORKSTATION_UI_GATE_PASS","CAM_RUNTIME_NO_FAKE_GATE_PASS"],"restore CAM quick-operation and persistence regression coverage")
 
 need("SIM","SIM_REMOVAL","core/src/main/kotlin/com/aigstudio/core/Machining3D.kt",machining,["object MaterialRemoval3D","class RemovalField3D","MaterialRemoval3D.simulate"],"restore real material-removal simulation")
 need("SIM","SIM_REGRESSION","core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt",reg,["MATERIAL_REMOVAL","CONTINUOUS_MULTIAXIS_CAM_SIM_GATE_PASS"],"restore numeric material-removal and CAM/SIM regression evidence")
@@ -71,7 +71,7 @@ need("AI","AI_UPDATE_SECURITY","app/src/main/java/com/aigstudio/app/SecureServic
 need("AI","AI_COMMAND_ROUTING","continuity/ai-responsibility-routing.json",route_text,['"detector": "AI"','"network_is_never_default_owner": true','"RETURN_FOR_REWORK"'],"restore AI detect→owner→rework→reverify routing")
 need("AI","AI_RELEASE_COMMAND","continuity/release-command.json",cmd_text,['"command_scope": "ALL_DEPARTMENTS"','"network_may_block_command": false','"mode": "EXECUTE_UNTIL_PASS"'],"restore all-department local-first release command")
 
-need("UIUX","UIUX_RUNTIME_THEME","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["aigii_rgb_neon_v2","PRESSED","SELECTED"],"restore production RGB glass theme states")
+need("UIUX","UIUX_RUNTIME_THEME","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["aigii_rgb_neon_v2","pressedNow -> 0.54f","selectedGlow -> 0.42f"],"restore production RGB glass theme states")
 need("UIUX","UIUX_WARNING_HELPER","ci/verify_runtime_surfaces.py",runtime_verify,["def warn(label: str, detail: str) -> None:"],"define the nonblocking warning helper so metadata warnings do not crash verification")
 forbid("UIUX","UIUX_ENGINEERING_SHELL","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["engineering-assets/"],"remove engineering-asset binding from production runtime")
 
