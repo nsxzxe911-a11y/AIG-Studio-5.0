@@ -303,7 +303,7 @@ print("INTEGRATED_MAINTENANCE_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|PRODUCTION_UI
 for needle in (
     'contentDescription="AIG CNC FORMAL RGB HOME',
     'contentDescription="AIG CNC PRODUCTION RUNTIME HOST"',
-    'background=ProductionRgbAssets.drawable(this@MainActivity,"HOME")',
+    'val wallpaper=ProductionRgbAssets.drawable(this@MainActivity,"HOME")',
     'root.visibility=View.GONE',
     'homeAction("CAD"',
     'homeAction("CAM"',
