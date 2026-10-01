@@ -401,7 +401,7 @@ object SurfaceMesh3D {
 
 
 enum class MachineComponentRole {
-    BASE, COLUMN, TABLE, TRUNNION, ROTARY_A, ROTARY_B, FIXTURE, SPINDLE, HOLDER, TOOL
+    BASE, COLUMN, TABLE, TRUNNION, ROTARY_A, ROTARY_B, ROTARY_C, FIXTURE, SPINDLE, HOLDER, TOOL
 }
 
 data class MachineComponent3D(
@@ -423,20 +423,29 @@ data class MachineModel3D(
 }
 
 object MachineKinematics3D {
-    fun transform(v:Vec3,axisA:Double,axisB:Double):Vec3 {
-        require(axisA.isFinite() && axisB.isFinite()){"Non-finite machine axis"}
+    fun transform(v:Vec3,axisA:Double,axisB:Double):Vec3 =
+        transform(v,axisA,axisB,0.0)
+
+    fun transform(v:Vec3,axisA:Double,axisB:Double,axisC:Double):Vec3 {
+        require(axisA.isFinite() && axisB.isFinite() && axisC.isFinite()){"Non-finite machine axis"}
         val a=Math.toRadians(axisA)
         val b=Math.toRadians(axisB)
+        val c=Math.toRadians(axisC)
         val y1=v.y*cos(a)-v.z*sin(a)
         val z1=v.y*sin(a)+v.z*cos(a)
         val x2=v.x*cos(b)+z1*sin(b)
         val z2=-v.x*sin(b)+z1*cos(b)
-        return Vec3(x2,y1,z2)
+        val x3=x2*cos(c)-y1*sin(c)
+        val y3=x2*sin(c)+y1*cos(c)
+        return Vec3(x3,y3,z2)
     }
 
     fun transform(mesh:Mesh3D,axisA:Double,axisB:Double):Mesh3D =
-        if(abs(axisA)<=EPS && abs(axisB)<=EPS) mesh
-        else Mesh3D(mesh.vertices.map{transform(it,axisA,axisB)},mesh.triangles)
+        transform(mesh,axisA,axisB,0.0)
+
+    fun transform(mesh:Mesh3D,axisA:Double,axisB:Double,axisC:Double):Mesh3D =
+        if(abs(axisA)<=EPS && abs(axisB)<=EPS && abs(axisC)<=EPS) mesh
+        else Mesh3D(mesh.vertices.map{transform(it,axisA,axisB,axisC)},mesh.triangles)
 }
 
 object MachineModel3DBuilder {
@@ -481,10 +490,11 @@ object MachineModel3DBuilder {
         modeOverride:String?=null,
         axisAOverride:Double?=null,
         axisBOverride:Double?=null,
-        toolPointOverride:Move?=null
+        toolPointOverride:Move?=null,
+        axisCOverride:Double?=null
     ):MachineModel3D {
         val mode=(modeOverride ?: inferMode(result)).uppercase()
-        require(mode in setOf("3AX","4AX","5AX")){"Unsupported machine model mode: $mode"}
+        require(mode in setOf("3AX","4AX","5AX","6AX")){"Unsupported machine model mode: $mode"}
         val stock=result.stock
         val cx=(stock.minX+stock.maxX)/2.0
         val cy=(stock.minY+stock.maxY)/2.0
@@ -493,8 +503,10 @@ object MachineModel3DBuilder {
         val live=toolPointOverride ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
         val requestedA=axisAOverride ?: live?.axisA ?: 0.0
         val requestedB=axisBOverride ?: live?.axisB ?: 0.0
+        val requestedC=axisCOverride ?: 0.0
         val a=if(mode=="3AX")0.0 else requestedA
-        val b=if(mode=="5AX")requestedB else 0.0
+        val b=if(mode=="5AX" || mode=="6AX")requestedB else 0.0
+        val c=if(mode=="6AX")requestedC else 0.0
         val out=mutableListOf<MachineComponent3D>()
 
         out+=MachineComponent3D("base",MachineComponentRole.BASE,
@@ -509,24 +521,24 @@ object MachineModel3DBuilder {
             box(cx-span*.24,cy+span*.34,cx+span*.24,cy+span*.54,span*.28,span*.48))
 
         val table=box(stock.minX-8.0,stock.minY-8.0,stock.maxX+8.0,stock.maxY+8.0,floorZ-10.0,floorZ-3.0)
-        out+=MachineComponent3D("table",MachineComponentRole.TABLE,MachineKinematics3D.transform(table,a,b),mode!="3AX",
-            if(mode=="5AX")"A+B" else if(mode=="4AX")"A" else "")
+        out+=MachineComponent3D("table",MachineComponentRole.TABLE,MachineKinematics3D.transform(table,a,b,c),mode!="3AX",
+            when(mode){"6AX"->"A+B+C";"5AX"->"A+B";"4AX"->"A";else->""})
         val fixtureL=box(stock.minX-10.0,stock.minY-5.0,stock.minX-2.0,stock.maxY+5.0,floorZ-3.0,3.0)
         val fixtureR=box(stock.maxX+2.0,stock.minY-5.0,stock.maxX+10.0,stock.maxY+5.0,floorZ-3.0,3.0)
-        out+=MachineComponent3D("fixture_l",MachineComponentRole.FIXTURE,MachineKinematics3D.transform(fixtureL,a,b),mode!="3AX")
-        out+=MachineComponent3D("fixture_r",MachineComponentRole.FIXTURE,MachineKinematics3D.transform(fixtureR,a,b),mode!="3AX")
+        out+=MachineComponent3D("fixture_l",MachineComponentRole.FIXTURE,MachineKinematics3D.transform(fixtureL,a,b,c),mode!="3AX")
+        out+=MachineComponent3D("fixture_r",MachineComponentRole.FIXTURE,MachineKinematics3D.transform(fixtureR,a,b,c),mode!="3AX")
         result.fixtures.filter{it.enabled && it.kind!=FixtureKind.MACHINE_ENVELOPE}.forEach { fixture ->
             val mesh=box(fixture.minX,fixture.minY,fixture.maxX,fixture.maxY,fixture.minZ,fixture.maxZ)
             out+=MachineComponent3D(
                 "user_fixture_"+fixture.id,
                 MachineComponentRole.FIXTURE,
-                MachineKinematics3D.transform(mesh,a,b),
+                MachineKinematics3D.transform(mesh,a,b,c),
                 mode!="3AX",
-                if(mode=="5AX")"A+B" else if(mode=="4AX")"A" else ""
+                when(mode){"6AX"->"A+B+C";"5AX"->"A+B";"4AX"->"A";else->""}
             )
         }
 
-        if(mode=="4AX" || mode=="5AX"){
+        if(mode=="4AX" || mode=="5AX" || mode=="6AX"){
             out+=MachineComponent3D("trunnion_l",MachineComponentRole.TRUNNION,
                 box(cx-span*.60,cy-span*.18,cx-span*.42,cy+span*.18,floorZ-20.0,floorZ+10.0))
             out+=MachineComponent3D("trunnion_r",MachineComponentRole.TRUNNION,
@@ -536,9 +548,16 @@ object MachineModel3DBuilder {
             val rotaryA=cylinder(cx,cy,span*.40,floorZ-15.0,floorZ-8.0,32)
             out+=MachineComponent3D("rotary_a",MachineComponentRole.ROTARY_A,MachineKinematics3D.transform(rotaryA,a,0.0),true,"A")
         }
-        if(mode=="5AX"){
+        if(mode=="5AX" || mode=="6AX"){
             val rotaryB=cylinder(cx,cy,span*.30,floorZ-8.0,floorZ-2.0,32)
-            out+=MachineComponent3D("rotary_b",MachineComponentRole.ROTARY_B,MachineKinematics3D.transform(rotaryB,a,b),true,"B")
+            out+=MachineComponent3D("rotary_b",MachineComponentRole.ROTARY_B,MachineKinematics3D.transform(rotaryB,a,b,0.0),true,"B")
+        }
+
+        if(mode=="6AX"){
+            val rotaryC=cylinder(cx,cy,span*.23,floorZ-2.0,floorZ+3.0,32)
+            out+=MachineComponent3D("rotary_c",MachineComponentRole.ROTARY_C,MachineKinematics3D.transform(rotaryC,a,b,c),true,"C")
+            val cMarker=box(cx+span*.12,cy-span*.025,cx+span*.24,cy+span*.025,floorZ+3.0,floorZ+5.5)
+            out+=MachineComponent3D("rotary_c_marker",MachineComponentRole.ROTARY_C,MachineKinematics3D.transform(cMarker,a,b,c),true,"C")
         }
 
         val rawToolPoint=Vec3(
@@ -546,7 +565,7 @@ object MachineModel3DBuilder {
             live?.to?.y ?: cy,
             live?.z ?: result.cam.settings.safeZ
         )
-        val machineToolPoint=MachineKinematics3D.transform(rawToolPoint,a,b)
+        val machineToolPoint=MachineKinematics3D.transform(rawToolPoint,a,b,c)
         val tx=machineToolPoint.x
         val ty=machineToolPoint.y
         val tz=machineToolPoint.z
