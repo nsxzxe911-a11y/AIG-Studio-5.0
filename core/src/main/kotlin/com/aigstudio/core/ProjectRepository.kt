@@ -68,6 +68,7 @@ object StudioProjectRepository {
         appendLine("MASTER|0.0|0.0|0.0")
         val c=project.camSettings
         appendLine("CAM|${c.toolDiameter}|${c.depth}|${c.safeZ}|${c.feedMmMin}|${if(c.climb)1 else 0}|${c.leadInMm}|${c.leadOutMm}")
+        appendLine("CONTOUR|${c.contourSide.name}|${c.contourDirection.name}")
         appendLine("AXIS|${project.axisMode}|${project.axisA}|${project.axisB}")
         val nc64=if(project.ncText.isEmpty()) "-" else Base64.getEncoder().encodeToString(project.ncText.toByteArray(Charsets.UTF_8))
         appendLine("NC64|$nc64")
@@ -140,6 +141,8 @@ object StudioProjectRepository {
         val entities=mutableListOf<Entity>()
         val links=linkedSetOf<CadTopologyLink>()
         var cam=CamSettings()
+        var contourSide=cam.contourSide
+        var contourDirection=cam.contourDirection
         var axisMode="3AX"
         var axisA=0.0
         var axisB=0.0
@@ -164,8 +167,21 @@ object StudioProjectRepository {
                         safeZ=finite(p[3].toDouble(),"safe Z"),
                         feedMmMin=finite(p[4].toDouble(),"feed"),
                         climb=p[5]=="1",
+                        contourSide=contourSide,
+                        contourDirection=if(p[5]=="1") ContourDirection.CCW else ContourDirection.CW,
                         leadInMm=finite(p[6].toDouble(),"lead in"),
                         leadOutMm=finite(p[7].toDouble(),"lead out")
+                    )
+                    contourDirection=cam.contourDirection
+                }
+                "CONTOUR" -> {
+                    require(p.size==3)
+                    contourSide=ContourSide.valueOf(p[1])
+                    contourDirection=ContourDirection.valueOf(p[2])
+                    cam=cam.copy(
+                        climb=contourDirection==ContourDirection.CCW,
+                        contourSide=contourSide,
+                        contourDirection=contourDirection
                     )
                 }
                 "AXIS" -> {
