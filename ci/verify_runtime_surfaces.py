@@ -226,6 +226,28 @@ for needle in (
 print("VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
 
 for needle in (
+    'contentDescription = "CAD FIXED QUICK REACH"',
+    'quickReach("選取"',
+    'quickReach("平移"',
+    'quickReach("FIT"',
+    'quickReach("↶"',
+    'quickReach("↷"',
+    'fun fitView()',
+):
+    require(android, needle, "ANDROID_FIXED_CAD_REACH")
+for needle in (
+    'private enum class DrawMode { LINE, RECT, CIRCLE, ARC, HOLE, SELECT, PAN }',
+    'fun fitView()',
+    'GlassActionButton("SELECT"',
+    'GlassActionButton("PAN"',
+    'GlassActionButton("FIT"',
+    'GlassActionButton("UNDO"',
+    'GlassActionButton("REDO"',
+):
+    require(desktop, needle, "WINDOWS_FIXED_CAD_REACH")
+print("FIXED_CAD_REACH_RUNTIME_GATE_PASS|ANDROID|WINDOWS|SELECT|PAN|FIT|UNDO|REDO|LIVE_CALLBACKS")
+
+for needle in (
     'const val POLICY = "OFFLINE_FIRST_UI_BOOT"',
     'const val NETWORK_REQUIRED_FOR_STARTUP = false',
     'fun startupAllowed(networkAvailable:Boolean):Boolean = true',
