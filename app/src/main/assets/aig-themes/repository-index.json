@@ -1,9 +1,9 @@
 {
   "repository_name": "AIG UI Theme Repository",
-  "repository_version": "5.0.0",
+  "repository_version": "6.0.0",
   "format_version": 1,
   "default_theme_id": "aigii_rgb_neon_v2",
-  "runtime_binding": "android_windows_shared_tokens",
+  "runtime_binding": "hot_swap_ai_layout_shared_tokens",
   "asset_policy": {
     "engineering_authority": "FULL",
     "preserve_existing_rgb_assets": true,
@@ -16,7 +16,10 @@
     "unregistered_images_allowed": true,
     "replacement_without_preapproval_allowed": true,
     "preview_build_blocked_by_unregistered_assets": false,
-    "release_integrity_required": true
+    "release_integrity_required": true,
+    "ai_layout_allowed": true,
+    "hot_swap_without_restart": true,
+    "engineering_shell_fallback": false
   },
   "themes": [
     {
@@ -32,6 +35,13 @@
       "version": "5.0.0",
       "embedded_trusted": true,
       "path": "aig-themes/themes/aigii_rgb_neon_v2/theme.json"
+    },
+    {
+      "theme_id": "aig_mobile_rgb_v1",
+      "theme_name": "AIG Mobile RGB V1",
+      "version": "1.0.0",
+      "embedded_trusted": true,
+      "path": "aig-themes/themes/aig_mobile_rgb_v1/theme.json"
     }
   ]
 }
