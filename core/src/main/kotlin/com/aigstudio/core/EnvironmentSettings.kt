@@ -1140,7 +1140,7 @@ object CamWorkstationContract {
 
     val parameterKeys = listOf(
         "TOOL DIA","TOOL RADIUS","DEPTH","SAFE-Z","FEED","SPINDLE","WORK OFFSET",
-        "LEAD-IN","LEAD-OUT","TOOL DIRECTION","TOOLPATH STATUS"
+        "LEAD-IN","LEAD-OUT","CONTOUR SIDE","PATH DIRECTION","TOOLPATH STATUS"
     )
 
     val pathColorsArgb = linkedMapOf(
