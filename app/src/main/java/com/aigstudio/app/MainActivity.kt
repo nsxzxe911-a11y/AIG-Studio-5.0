@@ -2135,6 +2135,7 @@ class MainActivity : Activity() {
         addToolToBranch("選取", Tool.SELECT, 1)
         addActionTo(branchFlow, "連接", 1) { cad.connectSelected() }
         addActionTo(branchFlow, "斷開", 4) { cad.disconnectSelected() }
+        addActionTo(branchFlow, "全部斷開", 4) { cad.disconnectAllTopology() }
     }
     private fun showCornerBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
@@ -4630,6 +4631,25 @@ class CadView(
             Toast.makeText(context,"DISCONNECT PASS • TOPOLOGY ONLY",Toast.LENGTH_SHORT).show()
         }.onFailure {
             Toast.makeText(context,"DISCONNECT BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun disconnectAllTopology() {
+        val before=doc.links().size
+        if(before==0) {
+            Toast.makeText(context,"全部斷開：目前沒有連接關係",Toast.LENGTH_SHORT).show()
+            return
+        }
+        runCatching {
+            runTopologyCommand(CadEditEngine.disconnectAllCommand())
+        }.onSuccess {
+            Toast.makeText(
+                context,
+                "全部斷開 PASS • links=$before • 幾何不變 • CAM/NC 不受 topology 阻擋",
+                Toast.LENGTH_SHORT
+            ).show()
+        }.onFailure {
+            Toast.makeText(context,"全部斷開 BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
         }
     }
 
