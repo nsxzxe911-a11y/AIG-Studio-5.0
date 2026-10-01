@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "270.0.0",
+  "version": "271.0.0",
   "branch": "main",
   "recorded_source_head": "c72a8076138d056c8ac88441c1c1d63419e087af",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -82,5 +82,10 @@
     "android_windows_parallel": true,
     "local_sdk_cache_first": true,
     "failed_owner_only": true
+  },
+  "visual_runtime_evidence": {
+    "android": "REQUIRED",
+    "windows": "REQUIRED",
+    "engineering_shell_default": "FAIL"
   }
 }
