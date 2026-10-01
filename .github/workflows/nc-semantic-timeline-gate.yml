@@ -22,7 +22,6 @@ permissions:
 
 jobs:
   semantic-timeline:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nc-check]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -67,6 +66,8 @@ jobs:
           grep -Fq 'NC_PARAMETER_INTEGRITY_PASS' semantic-timeline.log
           grep -Fq 'NC_MULTI_TOOL_CYCLE_SAFETY_PASS' semantic-timeline.log
           grep -Fq 'NC_CONTROL_EFFECT_GATE_PASS' semantic-timeline.log
+          grep -Fq 'NC_COMMON_MILLING_VOCAB_PASS' semantic-timeline.log
+          grep -Fq 'NC_MACHINE_M_PROFILE_PASS' semantic-timeline.log
           grep -Fq 'RENDER_SURFACE_FPS_GATE_PASS' semantic-timeline.log
           grep -Fq 'CPU_THERMAL_AUTO_FPS_PASS' semantic-timeline.log
           grep -Fq 'RENDER_STRESS_TIER_GATE_PASS' semantic-timeline.log
@@ -76,6 +77,8 @@ jobs:
           test "$(grep -Fc 'CPU_THERMAL_AUTO_FPS_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'RENDER_SURFACE_FPS_GATE_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_CONTROL_EFFECT_GATE_PASS' semantic-timeline.log)" -eq 3
+          test "$(grep -Fc 'NC_COMMON_MILLING_VOCAB_PASS' semantic-timeline.log)" -eq 3
+          test "$(grep -Fc 'NC_MACHINE_M_PROFILE_PASS' semantic-timeline.log)" -eq 3
           test "$(grep -Fc 'NC_MULTI_TOOL_CYCLE_SAFETY_PASS' semantic-timeline.log)" -eq 3
           grep -Fq 'NC_G34_PATTERN_SEMANTICS_PASS' semantic-timeline.log
           grep -Fq 'NC_GENERATED_PROCESS_GATE_PASS' semantic-timeline.log
