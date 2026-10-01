@@ -131,6 +131,9 @@ for marker in [
     'arrayOf("3AX","4AX","5AX","6AX")',
     '"6AX • XYZ + A/B/C 姿態驗證"',
     'GlassActionButton("NC LOCK"',
+    'private var machineModeOverride:String?=null',
+    'require(normalized in setOf("3AX","4AX","5AX","6AX"))',
+    'axisAOverride=machineModeOverride?.let{postureA} ?: live?.axisA',
 ]:
     if marker not in desktop:
         raise SystemExit(f"Windows 6AX posture runtime marker missing: {marker}")
