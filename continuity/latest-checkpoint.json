@@ -1,25 +1,25 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "265.0.0",
+  "version": "266.0.0",
   "branch": "main",
   "recorded_source_head": "caf392ced7a82a285c2deb80d710a24cb5f1fd5f",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "COMMAND_DISPATCH_READY",
+  "status": "EXECUTE_UNTIL_PASS",
   "departments": {
-    "HOME": "RESUME_READY",
-    "CAD": "RESUME_READY",
-    "CAM": "RESUME_READY",
-    "SIM": "RESUME_READY",
-    "3AX": "RESUME_READY",
-    "4AX": "RESUME_READY",
-    "5AX": "RESUME_READY",
-    "NC": "RESUME_READY",
-    "AI": "RESUME_READY",
-    "UIUX": "RESUME_READY",
-    "ANDROID_BUILD": "RESUME_READY",
-    "WINDOWS_BUILD": "RESUME_READY",
-    "WEB": "RESUME_READY"
+    "HOME": "EXECUTE_UNTIL_PASS",
+    "CAD": "EXECUTE_UNTIL_PASS",
+    "CAM": "EXECUTE_UNTIL_PASS",
+    "SIM": "EXECUTE_UNTIL_PASS",
+    "3AX": "EXECUTE_UNTIL_PASS",
+    "4AX": "EXECUTE_UNTIL_PASS",
+    "5AX": "EXECUTE_UNTIL_PASS",
+    "NC": "EXECUTE_UNTIL_PASS",
+    "AI": "EXECUTE_UNTIL_PASS",
+    "UIUX": "EXECUTE_UNTIL_PASS",
+    "ANDROID_BUILD": "EXECUTE_UNTIL_PASS",
+    "WINDOWS_BUILD": "EXECUTE_UNTIL_PASS",
+    "WEB": "EXECUTE_UNTIL_PASS"
   },
   "record_policy": {
     "authoritative": [
@@ -45,7 +45,7 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Execute the all-department release command locally from the latest checkpoint. Network failure may defer only remote/network substeps and must never stop command dispatch or unrelated departments.",
+  "next_action": "Continue every department. AI auto-checks each result, assigns the responsible owner on failure, returns it for rework, and re-verifies. Network/infra defer only their own substep and never stop unrelated departments.",
   "note": "Version, UIUX library, zh-TW baseline, and continuity verifier are aligned on Studio 264.0.0. This checkpoint records resumability only; binary/device PASS must come from executed validation.",
   "release_command": {
     "path": "continuity/release-command.json",
@@ -53,5 +53,12 @@
     "scope": "ALL_DEPARTMENTS",
     "network_blocks_command": false,
     "local_first": true
+  },
+  "ai_responsibility": {
+    "contract": "continuity/ai-responsibility-routing.json",
+    "detector": "AI",
+    "on_fail": "ASSIGN_OWNER_AND_RETURN_FOR_REWORK",
+    "after_rework": "AI_REVERIFY",
+    "complete_when": "ALL_DEPARTMENTS_PASS"
   }
 }
