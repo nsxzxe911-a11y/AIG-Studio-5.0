@@ -2,7 +2,7 @@ import fs from "node:fs";
 
 const html = fs.readFileSync("web/index.html","utf8");
 const releaseVersion = fs.readFileSync("release-version.properties","utf8").trim();
-if (!/^versionName=\\d+\\.0\\.0$/.test(releaseVersion)) throw new Error("WEB_RUNTIME_VERSION_INVALID_" + releaseVersion);
+if (!/^versionName=\d+\.0\.0$/.test(releaseVersion)) throw new Error("WEB_RUNTIME_VERSION_INVALID_" + releaseVersion);
 const releaseMajor = Number(releaseVersion.slice("versionName=".length).split(".")[0]);
 if (!Number.isInteger(releaseMajor) || releaseMajor < 253) throw new Error("WEB_RUNTIME_VERSION_TOO_OLD_" + releaseVersion);
 const scriptMatch = html.match(/<script>([\s\S]*)<\/script>/i);
