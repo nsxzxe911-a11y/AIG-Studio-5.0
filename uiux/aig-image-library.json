@@ -1,7 +1,7 @@
 {
   "schema": "aig-uiux-image-library-v2",
   "product": "AIG Studio 5.0",
-  "version": "275.0.0",
+  "version": "276.0.0",
   "status": "UIUX_VISUAL_LIBRARY_COMPLETE_INDEXED",
   "canonical_root": "uiux/",
   "rule": "No runtime or review page reads engineering-assets directly. engineering-assets remains immutable provenance/history only.",
@@ -238,7 +238,7 @@
     "Windows desktop"
   ],
   "note": "UI/UX visual library and mapping only; CNC geometry/G-code/coordinate truth remains owned by runtime core.",
-  "build_note": "275 adds AIG Mobile RGB V1, AI Layout Composer and no-restart Theme Pack hot swap with last-verified rollback. Eight mobile screens are design references, not runtime evidence.",
+  "build_note": "276 preserves AIG Mobile RGB V1 hot-swap/AI layout and repairs CI verifier log routing; no CNC core change.",
   "continuity": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "checkpoint_scope": [
