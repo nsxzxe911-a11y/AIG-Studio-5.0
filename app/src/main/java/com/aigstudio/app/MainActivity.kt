@@ -1011,6 +1011,29 @@ class MainActivity : Activity() {
         floatingHeader.addView(backButton)
         floatingHeader.addView(closeButton)
         floatingToolCard.addView(floatingHeader, LinearLayout.LayoutParams(-1, -2))
+
+        val quickReachFlow = FlowLayout(this).apply {
+            contentDescription = "CAD FIXED QUICK REACH"
+            setPadding(dp(2), dp(2), dp(2), dp(2))
+        }
+        fun quickReach(label:String,accent:Int,run:()->Unit) {
+            quickReachFlow.addView(RgbGlowButton(this).apply {
+                text=label
+                contentDescription="CAD QUICK "+label
+                textSize=StudioDisplayPolicy.sp(this,9f)
+                minWidth=dp(56)
+                minHeight=dp(42)
+                maxLines=1
+                setRgbState(accent,false)
+                setOnClickListener { run() }
+            })
+        }
+        quickReach("選取",0xFF50AAFF.toInt()) { selectTool(Tool.SELECT) }
+        quickReach("平移",0xFF3DEBFF.toInt()) { selectTool(Tool.PAN) }
+        quickReach("FIT",0xFF63FF9D.toInt()) { cad.fitView() }
+        quickReach("↶",0xFF8B5CF6.toInt()) { cad.undo() }
+        quickReach("↷",0xFF8B5CF6.toInt()) { cad.redo() }
+        floatingToolCard.addView(quickReachFlow, LinearLayout.LayoutParams(-1, -2))
         floatingToolCard.addView(categoryFlow, LinearLayout.LayoutParams(-1, -2))
         floatingToolCard.addView(branchFlow, LinearLayout.LayoutParams(-1, -2))
 
@@ -4447,6 +4470,51 @@ class CadView(
     }
     fun toggleGrid() { gridVisible = !gridVisible; sceneRevision++; invalidate() }
     fun toggleGeometry() { geometryVisible = !geometryVisible; sceneRevision++; invalidate() }
+
+    fun fitView() {
+        val entities=doc.all()
+        if(width<=0 || height<=0 || entities.isEmpty()) {
+            transform.originScreenX=width.coerceAtLeast(1)/2.0
+            transform.originScreenY=height.coerceAtLeast(1)/2.0
+            transform.pixelsPerUnit=5.0
+            sceneRevision++
+            invalidate()
+            return
+        }
+        var minX=Double.POSITIVE_INFINITY
+        var minY=Double.POSITIVE_INFINITY
+        var maxX=Double.NEGATIVE_INFINITY
+        var maxY=Double.NEGATIVE_INFINITY
+        fun include(x:Double,y:Double) {
+            minX=min(minX,x); minY=min(minY,y)
+            maxX=max(maxX,x); maxY=max(maxY,y)
+        }
+        entities.forEach { e ->
+            when(e) {
+                is Line -> { include(e.a.x,e.a.y); include(e.b.x,e.b.y) }
+                is Circle -> {
+                    include(e.center.x-e.radius,e.center.y-e.radius)
+                    include(e.center.x+e.radius,e.center.y+e.radius)
+                }
+                is Arc -> {
+                    include(e.center.x-e.radius,e.center.y-e.radius)
+                    include(e.center.x+e.radius,e.center.y+e.radius)
+                }
+            }
+        }
+        val spanX=(maxX-minX).coerceAtLeast(1.0)
+        val spanY=(maxY-minY).coerceAtLeast(1.0)
+        val marginPx=48.0*resources.displayMetrics.density
+        val usableW=(width-2.0*marginPx).coerceAtLeast(1.0)
+        val usableH=(height-2.0*marginPx).coerceAtLeast(1.0)
+        transform.pixelsPerUnit=min(usableW/spanX,usableH/spanY).coerceIn(0.2,200.0)
+        val cx=(minX+maxX)/2.0
+        val cy=(minY+maxY)/2.0
+        transform.originScreenX=width/2.0-cx*transform.pixelsPerUnit
+        transform.originScreenY=height/2.0+cy*transform.pixelsPerUnit
+        sceneRevision++
+        invalidate()
+    }
 
     private fun runGeometryCommand(command: Command) {
         history.run(command)
