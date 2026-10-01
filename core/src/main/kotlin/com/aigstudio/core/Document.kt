@@ -409,6 +409,85 @@ object CadSemanticIdentity {
     }
 }
 
+enum class CadControlPointKind { LINE_START, LINE_END, CENTER, RADIUS, ARC_START, ARC_END }
+
+data class CadControlPoint(
+    val entityId:EntityId,
+    val kind:CadControlPointKind,
+    val point:Vec2
+)
+
+object CadControlPointEngine {
+    fun points(entity:Entity):List<CadControlPoint> = when(entity) {
+        is Line -> listOf(
+            CadControlPoint(entity.id,CadControlPointKind.LINE_START,entity.a),
+            CadControlPoint(entity.id,CadControlPointKind.LINE_END,entity.b)
+        )
+        is Circle -> listOf(
+            CadControlPoint(entity.id,CadControlPointKind.CENTER,entity.center),
+            CadControlPoint(entity.id,CadControlPointKind.RADIUS,entity.center+Vec2(entity.radius,0.0))
+        )
+        is Arc -> listOf(
+            CadControlPoint(entity.id,CadControlPointKind.CENTER,entity.center),
+            CadControlPoint(entity.id,CadControlPointKind.ARC_START,entity.start),
+            CadControlPoint(entity.id,CadControlPointKind.ARC_END,entity.end)
+        )
+    }
+
+    fun points(doc:DrawingDocument,ids:Collection<EntityId>):List<CadControlPoint> =
+        ids.distinct().mapNotNull(doc::get).flatMap(::points)
+
+    fun nearest(
+        doc:DrawingDocument,
+        ids:Collection<EntityId>,
+        p:Vec2,
+        tolerance:Double
+    ):CadControlPoint? {
+        require(tolerance.isFinite() && tolerance>0.0) { "Control-point tolerance must be positive" }
+        return points(doc,ids).minByOrNull { it.point.distanceTo(p) }
+            ?.takeIf { it.point.distanceTo(p)<=tolerance }
+    }
+
+    fun editCommand(doc:DrawingDocument,control:CadControlPoint,target:Vec2):Command {
+        require(target.x.isFinite() && target.y.isFinite()) { "Control-point target must be finite" }
+        val before=doc.get(control.entityId) ?: error("Control-point entity missing")
+        val after:Entity=when(before) {
+            is Line -> when(control.kind) {
+                CadControlPointKind.LINE_START -> before.copy(a=target)
+                CadControlPointKind.LINE_END -> before.copy(b=target)
+                else -> error("Unsupported LINE control point")
+            }.also { require(it.length>=CNC_RESOLUTION_MM) { "LINE must remain >= 0.001 mm" } }
+            is Circle -> when(control.kind) {
+                CadControlPointKind.CENTER -> before.copy(center=target)
+                CadControlPointKind.RADIUS -> {
+                    val radius=before.center.distanceTo(target)
+                    require(radius>=CNC_RESOLUTION_MM) { "CIRCLE radius must remain >= 0.001 mm" }
+                    before.copy(radius=radius)
+                }
+                else -> error("Unsupported CIRCLE control point")
+            }
+            is Arc -> when(control.kind) {
+                CadControlPointKind.CENTER -> {
+                    val delta=target-before.center
+                    before.copy(center=target,start=before.start+delta,end=before.end+delta)
+                }
+                CadControlPointKind.ARC_START -> {
+                    val dir=target-before.center
+                    require(dir.length()>=CNC_RESOLUTION_MM) { "ARC start cannot equal center" }
+                    before.copy(start=before.center+dir.normalized()*before.radius)
+                }
+                CadControlPointKind.ARC_END -> {
+                    val dir=target-before.center
+                    require(dir.length()>=CNC_RESOLUTION_MM) { "ARC end cannot equal center" }
+                    before.copy(end=before.center+dir.normalized()*before.radius)
+                }
+                else -> error("Unsupported ARC control point")
+            }
+        }
+        return ReplaceEntitiesCommand(listOf(before),listOf(after))
+    }
+}
+
 object CadSnapEngine {
     private fun tangentPoints(p:Vec2,c:Vec2,r:Double):List<Vec2> {
         val d=p-c
