@@ -383,6 +383,7 @@ private class CadPanel(
     var mode = DrawMode.LINE
         set(value) {
             field=value
+            pendingPickOperation=null
             first=null
             arcCenter=null
             arcStart=null
@@ -397,6 +398,7 @@ private class CadPanel(
     var snapEnabled = true
     private val history = History(doc)
     private val selectedIds = linkedSetOf<EntityId>()
+    private var pendingPickOperation:String? = null
 
     init {
         background = StudioDesktopProductionTheme.background
@@ -424,6 +426,7 @@ private class CadPanel(
                 val raw = screenToWorld(e.x, e.y)
                 val p = if(snapEnabled) CadSnapEngine.snapTo(doc,raw,18.0/pxPerMm,reference=first) ?: raw else raw
                 if(mode==DrawMode.SELECT){
+                    if(handlePendingPick(p)) return
                     val control=if(selectedIds.isNotEmpty())
                         CadControlPointEngine.nearest(doc,selectedIds,p,24.0/pxPerMm)
                     else null
@@ -613,13 +616,62 @@ private class CadPanel(
         selectedIds.clear();repaint()
     }.onFailure { status("DELETE BLOCKED • "+(it.message?:"error")) }
 
-    fun trimSelected() = runCatching {
-        applyGeometry("TRIM",CadEditEngine.trimCommand(doc,selectedIds))
-    }.onFailure { status("TRIM BLOCKED • "+(it.message?:"error")) }
+    fun trimSelected() {
+        if(selectedIds.size==2){
+            runCatching { applyGeometry("TRIM",CadEditEngine.trimCommand(doc,selectedIds)) }
+                .onFailure { status("TRIM BLOCKED • "+(it.message?:"error")) }
+            return
+        }
+        mode=DrawMode.SELECT
+        pendingPickOperation="TRIM"
+        selectedIds.clear()
+        repaint()
+        status("TRIM • 先點目標 LINE，再點邊界 LINE")
+    }
 
-    fun extendSelected() = runCatching {
-        applyGeometry("EXTEND",CadEditEngine.extendCommand(doc,selectedIds))
-    }.onFailure { status("EXTEND BLOCKED • "+(it.message?:"error")) }
+    fun extendSelected() {
+        if(selectedIds.size==2){
+            runCatching { applyGeometry("EXTEND",CadEditEngine.extendCommand(doc,selectedIds)) }
+                .onFailure { status("EXTEND BLOCKED • "+(it.message?:"error")) }
+            return
+        }
+        mode=DrawMode.SELECT
+        pendingPickOperation="EXTEND"
+        selectedIds.clear()
+        repaint()
+        status("EXTEND • 先點目標 LINE，再點邊界 LINE")
+    }
+
+    private fun handlePendingPick(p:Vec2):Boolean {
+        val operation=pendingPickOperation ?: return false
+        val line=nearest(p) as? Line
+        if(line==null){
+            status("$operation • 請點 LINE")
+            return true
+        }
+        if(line.id in selectedIds){
+            status("$operation • 請點另一條邊界 LINE")
+            return true
+        }
+        selectedIds.add(line.id)
+        repaint()
+        if(selectedIds.size==1){
+            status("$operation • 目標已選，請點邊界 LINE")
+            return true
+        }
+        val ids=selectedIds.toList()
+        val result=runCatching{
+            val command=if(operation=="TRIM") CadEditEngine.trimCommand(doc,ids)
+            else CadEditEngine.extendCommand(doc,ids)
+            applyGeometry(operation,command)
+        }
+        selectedIds.clear()
+        pendingPickOperation=null
+        result.onSuccess{status("$operation PASS • CAM/SIM/NC REBUILD")}
+            .onFailure{status("$operation BLOCKED • "+(it.message?:"error"))}
+        repaint()
+        return true
+    }
 
     fun offsetSelected(distance:Double) = runCatching {
         applyGeometry("OFFSET",CadEditEngine.offsetCommand(doc,selectedIds,distance))
