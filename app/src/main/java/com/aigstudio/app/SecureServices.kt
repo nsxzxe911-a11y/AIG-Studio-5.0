@@ -236,6 +236,53 @@ class UpdateInstallReceiver : BroadcastReceiver() {
     }
 }
 
+object UpdateNetworkCircuitBreaker {
+    private const val FAILURE_THRESHOLD=3
+    private const val OPEN_MS=30_000L
+    @Volatile private var failures=0
+    @Volatile private var openedUntilMs=0L
+
+    @Synchronized
+    fun allow(nowMs:Long=System.currentTimeMillis()):Boolean {
+        if(openedUntilMs==0L) return true
+        if(nowMs>=openedUntilMs){
+            openedUntilMs=0L
+            failures=0
+            return true
+        }
+        return false
+    }
+
+    @Synchronized
+    fun success(){
+        failures=0
+        openedUntilMs=0L
+    }
+
+    @Synchronized
+    fun failure(nowMs:Long=System.currentTimeMillis()){
+        failures++
+        if(failures>=FAILURE_THRESHOLD) openedUntilMs=nowMs+OPEN_MS
+    }
+
+    fun isNetworkFailure(error:Throwable):Boolean {
+        if(error is java.io.IOException) return true
+        val m=error.message.orEmpty()
+        return m.startsWith("Manifest HTTP ") ||
+            m.startsWith("APK HTTP ") ||
+            m.contains("timed out",ignoreCase=true) ||
+            m.contains("connection",ignoreCase=true) ||
+            m.contains("network",ignoreCase=true)
+    }
+
+    fun status(nowMs:Long=System.currentTimeMillis()):String {
+        val remaining=(openedUntilMs-nowMs).coerceAtLeast(0L)
+        return if(remaining>0L)
+            "ISOLATED • retry="+((remaining+999L)/1000L)+"s • CHECKPOINT RETAINED"
+        else "READY • failures="+failures
+    }
+}
+
 object SecureUpdateManager {
     private const val MAX_MANIFEST_BYTES = 64 * 1024
     private const val MAX_APK_BYTES = 300L * 1024L * 1024L
@@ -250,6 +297,13 @@ object SecureUpdateManager {
         config: UpdateConfig,
         onResult: (UpdateOutcome) -> Unit
     ) {
+        if(!UpdateNetworkCircuitBreaker.allow()){
+            onResult(UpdateOutcome(
+                false,false,
+                "NETWORK ISOLATED • checkpoint retained • "+UpdateNetworkCircuitBreaker.status()
+            ))
+            return
+        }
         if (!config.configured) {
             onResult(UpdateOutcome(false, false, "UPDATE BLOCKED: HTTPS manifest/public key not configured"))
             return
@@ -276,8 +330,19 @@ object SecureUpdateManager {
                     )
                 }
             }.getOrElse { error ->
-                UpdateOutcome(false, false, "UPDATE BLOCKED: " + (error.message ?: "verification error"))
+                if(UpdateNetworkCircuitBreaker.isNetworkFailure(error)){
+                    UpdateNetworkCircuitBreaker.failure()
+                    UpdateOutcome(
+                        false,false,
+                        "NETWORK RETRYABLE • checkpoint retained • "+
+                            (error.message ?: "network error")+" • "+
+                            UpdateNetworkCircuitBreaker.status()
+                    )
+                } else {
+                    UpdateOutcome(false, false, "UPDATE BLOCKED: " + (error.message ?: "verification error"))
+                }
             }
+            if(outcome.ok) UpdateNetworkCircuitBreaker.success()
             main.post { onResult(outcome) }
         }, "SecureUpdate").start()
     }
