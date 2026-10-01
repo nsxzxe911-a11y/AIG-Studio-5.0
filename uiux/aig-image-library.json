@@ -1,7 +1,7 @@
 {
   "schema": "aig-uiux-image-library-v2",
   "product": "AIG Studio 5.0",
-  "version": "273.0.0",
+  "version": "275.0.0",
   "status": "UIUX_VISUAL_LIBRARY_COMPLETE_INDEXED",
   "canonical_root": "uiux/",
   "rule": "No runtime or review page reads engineering-assets directly. engineering-assets remains immutable provenance/history only.",
@@ -238,7 +238,7 @@
     "Windows desktop"
   ],
   "note": "UI/UX visual library and mapping only; CNC geometry/G-code/coordinate truth remains owned by runtime core.",
-  "build_note": "273 fixes WEB verifier script isolation; actual Android/Windows screenshots remain mandatory and engineering-shell default remains hard FAIL.",
+  "build_note": "275 adds AIG Mobile RGB V1, AI Layout Composer and no-restart Theme Pack hot swap with last-verified rollback. Eight mobile screens are design references, not runtime evidence.",
   "continuity": {
     "mode": "RESUME_FROM_LAST_CHECKPOINT",
     "checkpoint_scope": [
@@ -621,5 +621,20 @@
     "logic_binding_authority": "runtime_callback",
     "manifest_source": "../app/src/main/assets/aig-generated-rgb/approved/184/manifest.json",
     "sha_properties_source": "../app/src/main/assets/aig-generated-rgb/approved/184/sha256.properties"
+  },
+  "mobile_rgb_reference_pack": {
+    "id": "aig_mobile_rgb_v1",
+    "manifest": "design/reference-packs/mobile-rgb-pack-v1/manifest.json",
+    "screens": [
+      "2D_CAD",
+      "3D_SIM",
+      "4AX",
+      "5AX",
+      "CAM",
+      "SIM",
+      "NC",
+      "AI"
+    ],
+    "role": "DESIGN_REFERENCE_NOT_RUNTIME_EVIDENCE"
   }
 }
