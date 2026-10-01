@@ -455,13 +455,17 @@ object SecureUpdateManager {
     private fun downloadAndVerify(context: Context, manifest: UpdateManifest): File {
         val dir = File(context.filesDir, "verified-updates").apply { mkdirs() }
         val temp = File(dir, "update-" + manifest.versionCode + ".apk.part")
+        val etagMeta = File(dir, "update-" + manifest.versionCode + ".apk.part.etag")
         val target = File(dir, "update-" + manifest.versionCode + ".apk")
 
         var resumeFrom = if (temp.isFile) temp.length() else 0L
         if (resumeFrom < 0L || resumeFrom > MAX_APK_BYTES) {
             temp.delete()
+            etagMeta.delete()
             resumeFrom = 0L
         }
+        val previousEtag = etagMeta.takeIf { it.isFile }
+            ?.readText(Charsets.UTF_8)?.trim()?.take(512).orEmpty()
 
         val uri = NetworkSecurity.requireHttps(manifest.apkUrl)
         val conn = (URL(uri.toString()).openConnection() as HttpURLConnection).apply {
@@ -470,7 +474,11 @@ object SecureUpdateManager {
             instanceFollowRedirects = false
             requestMethod = "GET"
             setRequestProperty("Accept", "application/vnd.android.package-archive,application/octet-stream")
-            if (resumeFrom > 0L) setRequestProperty("Range", "bytes=$resumeFrom-")
+            setRequestProperty("Accept-Encoding", "identity")
+            if (resumeFrom > 0L) {
+                setRequestProperty("Range", "bytes=$resumeFrom-")
+                if(previousEtag.isNotBlank()) setRequestProperty("If-Range", previousEtag)
+            }
         }
 
         try {
@@ -479,6 +487,7 @@ object SecureUpdateManager {
                 val actual = AppSecurityScanner.sha256(temp)
                 require(actual.equals(manifest.sha256, ignoreCase = true)) {
                     temp.delete()
+                    etagMeta.delete()
                     "Range checkpoint is incomplete"
                 }
                 require(apkPackageName(context, temp) == context.packageName) { "Downloaded APK package mismatch" }
@@ -487,17 +496,27 @@ object SecureUpdateManager {
                 }
                 if (target.exists()) require(target.delete()) { "Unable to replace prior verified update" }
                 require(temp.renameTo(target)) { "Unable to finalize verified update" }
+                etagMeta.delete()
                 return target
+
             }
 
             require(code == HttpURLConnection.HTTP_OK || code == 206) { "APK HTTP " + code }
+            val responseEtag = conn.getHeaderField("ETag").orEmpty().trim().take(512)
             val append = resumeFrom > 0L && code == 206
             if (append) {
                 val range = conn.getHeaderField("Content-Range").orEmpty()
                 require(range.startsWith("bytes $resumeFrom-")) { "Resume range mismatch" }
+                require(previousEtag.isBlank() || responseEtag.isBlank() || previousEtag == responseEtag) {
+                    "Resume ETag changed"
+                }
             } else if (resumeFrom > 0L) {
                 temp.delete()
+                etagMeta.delete()
                 resumeFrom = 0L
+            }
+            if(responseEtag.isNotBlank()) {
+                etagMeta.writeText(responseEtag,Charsets.UTF_8)
             }
 
             val length = conn.contentLengthLong
@@ -529,13 +548,16 @@ object SecureUpdateManager {
             if (target.exists()) require(target.delete()) { "Unable to replace prior verified update" }
             require(temp.renameTo(target)) { "Unable to finalize verified update" }
             require(target.length() == total) { "Verified update finalize length mismatch" }
+            etagMeta.delete()
             return target
+
         } catch (io: java.io.IOException) {
-            // Keep the .part file as the durable checkpoint; the next validated connection resumes by Range.
+            // Preserve .part + ETag as a durable checkpoint; next validated connection resumes safely.
             throw io
         } catch (fatal: Throwable) {
-            // Integrity/provenance failures are not resumable. Discard the untrusted working copy.
+            // Integrity/provenance/changed-resource failures are not resumable.
             if (temp.exists()) temp.delete()
+            if (etagMeta.exists()) etagMeta.delete()
             throw fatal
         } finally {
             conn.disconnect()
