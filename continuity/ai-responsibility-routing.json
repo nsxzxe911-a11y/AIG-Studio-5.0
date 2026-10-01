@@ -1,7 +1,7 @@
 {
   "schema": "aig-ai-responsibility-routing-v1",
   "product": "AIG Studio 5.0",
-  "version": "273.0.0",
+  "version": "274.0.0",
   "detector": "AI",
   "principle": "AI_DETECTS_CLASSIFIES_RETURNS_REWORK_REVERIFIES; OWNER_DEPARTMENT_FIXES",
   "lifecycle": [
@@ -101,5 +101,17 @@
     "UIUX",
     "ANDROID_BUILD",
     "WINDOWS_BUILD"
-  ]
+  ],
+  "visual_reference_routing": {
+    "standard": "continuity/visual-reference-baseline.json",
+    "first_frame_fail_owners": [
+      "HOME",
+      "UIUX",
+      "ANDROID_BUILD",
+      "WINDOWS_BUILD"
+    ],
+    "first_frame_fail_action": "RETURN_FOR_REWORK",
+    "unrelated_departments_continue": true,
+    "no_production_pass_from_text_markers_only": true
+  }
 }
