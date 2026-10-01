@@ -1,7 +1,7 @@
 {
   "schema": "aig-release-command-v1",
   "product": "AIG Studio 5.0",
-  "version": "268.0.0",
+  "version": "269.0.0",
   "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
   "command_scope": "ALL_DEPARTMENTS",
   "dispatch_mode": "IMMEDIATE_LOCAL_FIRST",
@@ -126,7 +126,25 @@
     "on_fail": "QUEUE_OWNER_REWORK",
     "unrelated_departments_continue": true
   },
-  "dispatch_generation": 5,
-  "dispatch_reason": "STUDIO_268_FINAL_SYNCED_REISSUE",
-  "command_state": "EXECUTE_NOW_UNTIL_ALL_DEPARTMENTS_PASS"
+  "dispatch_generation": 6,
+  "dispatch_reason": "STUDIO_269_XML_CACHE_STANDARD",
+  "command_state": "EXECUTE_NOW_UNTIL_ALL_DEPARTMENTS_PASS",
+  "cache_update_standard": {
+    "authority": "continuity/cache-update-standard.xml",
+    "verifier": "ci/verify_xml_cache_update_standard.py",
+    "primary": "XML_CONTENT_AND_DIGEST",
+    "required": [
+      "revision",
+      "contentDigest:SHA-256",
+      "sourceExactSha",
+      "xmlStructuralIdentity"
+    ],
+    "forbidden_as_sole_authority": [
+      "mtime",
+      "lastModified",
+      "processing_time",
+      "timestamp",
+      "file_date"
+    ]
+  }
 }
