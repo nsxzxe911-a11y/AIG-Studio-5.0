@@ -18,11 +18,29 @@ on:
       - 'ci/department_autocheck.py'
       - 'continuity/cache-update-standard.xml'
       - 'ci/verify_xml_cache_update_standard.py'
+      - 'ci/fast_review.py'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  fast-review:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-build]') || contains(github.event.head_commit.modified, 'continuity/release-command.json') || contains(github.event.head_commit.added, 'continuity/release-command.json') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Parallel department fast review
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/fast_review.py | tee fast-review.log
+          grep -Fq 'FAST_REVIEW_PASS|' fast-review.log
+
   android-and-source:
     if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-build]') || contains(github.event.head_commit.modified, 'continuity/release-command.json') || contains(github.event.head_commit.added, 'continuity/release-command.json') }}
     runs-on: ubuntu-latest
@@ -32,21 +50,24 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Install latest stable Android SDK 36 + track Android 17 preview
+      - name: Android SDK local-cache fast path
         shell: bash
         run: |
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
-          test -x "$SDKMANAGER"
-          yes | "$SDKMANAGER" --licenses >/dev/null || true
-          LATEST_BUILD_TOOLS="$("$SDKMANAGER" --list | sed -nE 's/^[[:space:]]*(build-tools;[0-9]+(\.[0-9]+){2})[[:space:]]+.*/\1/p' | sort -V | tail -1)"
-          test -n "$LATEST_BUILD_TOOLS"
-          "$SDKMANAGER" "platform-tools" "platforms;android-36" "$LATEST_BUILD_TOOLS"
-          if "$SDKMANAGER" --list | grep -Fq "platforms;android-37"; then
-            echo "ANDROID_17_API37_STABLE_PACKAGE=AVAILABLE"
+          set -euo pipefail
+          INSTALLED_BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | sort -V | tail -1 || true)"
+          if [ -d "$ANDROID_HOME/platforms/android-36" ] && [ -n "$INSTALLED_BUILD_TOOLS" ] && [ -x "$ANDROID_HOME/build-tools/$INSTALLED_BUILD_TOOLS/apksigner" ]; then
+            echo "ANDROID_SDK_CACHE_FAST_PATH=PASS"
+            echo "LATEST_BUILD_TOOLS=build-tools;$INSTALLED_BUILD_TOOLS" >> "$GITHUB_ENV"
           else
-            echo "ANDROID_17_API37_STABLE_PACKAGE=NOT_AVAILABLE_PREVIEW_TRACK_ONLY"
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+            test -x "$SDKMANAGER"
+            yes | "$SDKMANAGER" --licenses >/dev/null || true
+            LATEST_BUILD_TOOLS="$("$SDKMANAGER" --list | sed -nE 's/^[[:space:]]*(build-tools;[0-9]+(\.[0-9]+){2})[[:space:]]+.*/\1/p' | sort -V | tail -1)"
+            test -n "$LATEST_BUILD_TOOLS"
+            "$SDKMANAGER" "platform-tools" "platforms;android-36" "$LATEST_BUILD_TOOLS"
+            echo "ANDROID_SDK_CACHE_FAST_PATH=MISS_INSTALL_REQUIRED"
+            echo "LATEST_BUILD_TOOLS=$LATEST_BUILD_TOOLS" >> "$GITHUB_ENV"
           fi
-          echo "LATEST_BUILD_TOOLS=$LATEST_BUILD_TOOLS" >> "$GITHUB_ENV"
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '9.7.0'
