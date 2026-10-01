@@ -1,7 +1,7 @@
 {
   "schema": "aig-release-command-v1",
   "product": "AIG Studio 5.0",
-  "version": "271.0.0",
+  "version": "272.0.0",
   "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
   "command_scope": "ALL_DEPARTMENTS",
   "dispatch_mode": "IMMEDIATE_LOCAL_FIRST",
@@ -126,8 +126,8 @@
     "on_fail": "QUEUE_OWNER_REWORK",
     "unrelated_departments_continue": true
   },
-  "dispatch_generation": 11,
-  "dispatch_reason": "STUDIO_271_FORCE_VISIBLE_RUNTIME_REVALIDATION",
+  "dispatch_generation": 12,
+  "dispatch_reason": "STUDIO_272_WEB_GATE_REPAIR_REVALIDATION",
   "command_state": "EXECUTE_NOW_UNTIL_ALL_DEPARTMENTS_PASS",
   "cache_update_standard": {
     "authority": "continuity/cache-update-standard.xml",
