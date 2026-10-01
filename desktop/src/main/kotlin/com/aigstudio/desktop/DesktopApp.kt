@@ -2433,8 +2433,8 @@ private fun fanucFromCam(cam: CamModel): String {
     return out.joinToString("\n")
 }
 
-private fun showNcEditor(frame: JFrame, doc: DrawingDocument) {
-    val cam = CamModel.fromCad(1L, doc.snapshot())
+private fun showNcEditor(frame: JFrame, doc: DrawingDocument, camSettings:CamSettings=CamSettings()) {
+    val cam = CamModel.fromCad(1L, doc.snapshot(), camSettings)
     require(cam.toolpaths.isNotEmpty()) { "NC BLOCKED: no CAM toolpath" }
     var controllerProfile = runCatching {
         CncControllerProfile.valueOf(ncPostPrefs.get("controller", CncControllerProfile.FANUC.name))
@@ -2721,11 +2721,11 @@ private fun saveDesktopRotaryMachineProfile(profile:RotaryAxisClampProfile){
     rotaryMachinePrefs.flush()
 }
 
-private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:JLabel,initialMode:String="3AX"){
+private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:JLabel,initialMode:String="3AX",camSettings:CamSettings=CamSettings()){
     require(initialMode in setOf("3D","3AX","4AX","5AX")){"Unsupported initial mode: $initialMode"}
     val snapshot=doc.snapshot()
     require(snapshot.entities.isNotEmpty()){"UNIFIED WORKSPACE BLOCKED: no CAD geometry"}
-    var result=Machining3DEngine.build(snapshot)
+    var result=Machining3DEngine.build(snapshot,camSettings)
     var axisA=0.0
     var axisB=0.0
     var axisMode="3AX"
@@ -3227,6 +3227,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         }
     }
 
+    var productionCamSettings=CamSettings()
+
     fun buildProductionCamPanel():JPanel {
         val snapshot=doc.snapshot()
         if(snapshot.entities.isEmpty()){
@@ -3240,7 +3242,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 },BorderLayout.CENTER)
             }
         }
-        val result=Machining3DEngine.build(snapshot)
+        val result=Machining3DEngine.build(snapshot,productionCamSettings)
         val cam=result.cam
         val settings=cam.settings
         val left=JPanel(BorderLayout(6,6)).apply{
@@ -3290,13 +3292,37 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         parameter("DEPTH",DisplayFormat.mm(settings.depth)+" mm",LibraryFiveAxisSkin208.magenta)
         parameter("SAFE-Z",DisplayFormat.mm(settings.safeZ)+" mm",LibraryFiveAxisSkin208.safe)
         parameter("FEED",DisplayFormat.mm(settings.feedMmMin)+" mm/min",LibraryFiveAxisSkin208.cyan)
-        parameter("DIRECTION",if(settings.climb)"CLIMB" else "CONVENTIONAL",LibraryFiveAxisSkin208.warning)
+        parameter("CONTOUR SIDE",if(settings.contourSide==ContourSide.OUTSIDE)"外徑 / OUTSIDE" else "內徑 / INSIDE",LibraryFiveAxisSkin208.warning)
+        parameter("PATH DIRECTION",settings.contourDirection.name,LibraryFiveAxisSkin208.cyan)
         val actions=AdaptiveGlassToolbar()
         fun camAction(label:String,color:Color,run:()->Unit){
             actions.add(GlassActionButton(label,color).apply{addActionListener{run()}})
         }
+        fun rebuildCamCard(){
+            mainCardHost.components.filter{it.name=="CAM_CARD"}.forEach{mainCardHost.remove(it)}
+            mainCardHost.add(buildProductionCamPanel(),"CAM")
+            mainCardLayout.show(mainCardHost,"CAM")
+            mainCardHost.revalidate()
+            mainCardHost.repaint()
+        }
+        camAction(if(settings.contourSide==ContourSide.OUTSIDE)"外徑" else "內徑",LibraryFiveAxisSkin208.warning){
+            productionCamSettings=productionCamSettings.copy(
+                contourSide=if(settings.contourSide==ContourSide.OUTSIDE)ContourSide.INSIDE else ContourSide.OUTSIDE
+            )
+            status.text="CAM SIDE • "+productionCamSettings.contourSide.name+" • REBUILD"
+            rebuildCamCard()
+        }
+        camAction(settings.contourDirection.name,LibraryFiveAxisSkin208.cyan){
+            val next=if(settings.contourDirection==ContourDirection.CCW)ContourDirection.CW else ContourDirection.CCW
+            productionCamSettings=productionCamSettings.copy(
+                climb=next==ContourDirection.CCW,
+                contourDirection=next
+            )
+            status.text="CAM DIRECTION • "+next.name+" • REBUILD"
+            rebuildCamCard()
+        }
         camAction("3D SIM",LibraryFiveAxisSkin208.violet){
-            runCatching{showUnifiedMachiningEditor(frame,doc,status,"3D")}
+            runCatching{showUnifiedMachiningEditor(frame,doc,status,"3D",productionCamSettings)}
                 .onFailure{status.text="3D SIM BLOCKED • "+(it.message?:"error")}
         }
         camAction("軸模式",LibraryFiveAxisSkin208.cyan){
@@ -3310,12 +3336,12 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 "3AX"
             ) as? String
             if(choice!=null){
-                runCatching{showUnifiedMachiningEditor(frame,doc,status,choice)}
+                runCatching{showUnifiedMachiningEditor(frame,doc,status,choice,productionCamSettings)}
                     .onFailure{status.text=choice+" BLOCKED • "+(it.message?:"error")}
             }
         }
         camAction("NC",Color(80,170,255)){
-            runCatching{showNcEditor(frame,doc)}
+            runCatching{showNcEditor(frame,doc,productionCamSettings)}
                 .onFailure{status.text="NC EDIT BLOCKED • "+(it.message?:"error")}
         }
         return JPanel(BorderLayout(7,7)).apply{
@@ -3441,12 +3467,12 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         showProductionCam()
     })
     moduleButtons.add(productionUiButton("SIM", Color(139,92,246)) {
-        runCatching { showUnifiedMachiningEditor(frame,doc,status,ProductionUiSwitchContract.runtimeTarget("SIM")) }
+        runCatching { showUnifiedMachiningEditor(frame,doc,status,ProductionUiSwitchContract.runtimeTarget("SIM"),productionCamSettings) }
             .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("SIM")+" • "+MasterRuntimeChainContract.uiLabel() }
             .onFailure { status.text="SIM BLOCKED • "+(it.message?:"error") }
     })
     moduleButtons.add(productionUiButton("NC", Color(80,170,255)) {
-        runCatching { showNcEditor(frame,doc) }
+        runCatching { showNcEditor(frame,doc,productionCamSettings) }
             .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("NC")+" • "+MasterRuntimeChainContract.masterOriginLabel()+" • FANUC / MITSUBISHI" }
             .onFailure { status.text="NC EDIT BLOCKED • "+(it.message?:"error") }
     })
