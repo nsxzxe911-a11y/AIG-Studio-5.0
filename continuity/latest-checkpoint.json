@@ -1,0 +1,49 @@
+{
+  "schema": "aig-continuity-checkpoint-v1",
+  "product": "AIG Studio 5.0",
+  "version": "264.0.0",
+  "branch": "main",
+  "recorded_source_head": "3ba64f0ee546d5d467d9c5d4680241fc2dfcd89b",
+  "mode": "RESUME_FROM_LAST_CHECKPOINT",
+  "status": "RESUME_READY",
+  "departments": {
+    "HOME": "CHECKPOINTED",
+    "CAD": "CHECKPOINTED",
+    "CAM": "CHECKPOINTED",
+    "SIM": "CHECKPOINTED",
+    "3AX": "CHECKPOINTED",
+    "4AX": "CHECKPOINTED",
+    "5AX": "CHECKPOINTED",
+    "NC": "CHECKPOINTED",
+    "AI": "CHECKPOINTED",
+    "UIUX": "CHECKPOINTED",
+    "ANDROID_BUILD": "CHECKPOINTED",
+    "WINDOWS_BUILD": "CHECKPOINTED",
+    "WEB": "CHECKPOINTED"
+  },
+  "record_policy": {
+    "authoritative": [
+      "git_head",
+      "release-version.properties",
+      "continuity/latest-checkpoint.json"
+    ],
+    "chat_state_required": false,
+    "network_disconnect_resumable": true,
+    "infra_failure_resumable": true,
+    "version_forward_only": true,
+    "overwrite_newer_version": false
+  },
+  "blocking_policy": {
+    "resumable_status": [
+      "NETWORK",
+      "INFRASTRUCTURE",
+      "UI_STATUS"
+    ],
+    "release_blocking": [
+      "PRODUCT_SAFETY",
+      "COMPILE_RUNTIME",
+      "INTEGRITY"
+    ]
+  },
+  "next_action": "Continue from current main HEAD. Never restart from chat history, never downgrade, and preserve exact-SHA evidence."
+}
