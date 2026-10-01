@@ -1017,7 +1017,7 @@ object DesktopUxContract {
     const val WORKSPACE_FIRST = true
 
     fun quickActions(mode:String):List<String> = when(mode.trim().uppercase()) {
-        "CAD" -> listOf("LINE","SELECT","SNAP","UNDO","REDO","更多")
+        "CAD" -> listOf("SELECT","PAN","FIT","UNDO","REDO","更多")
         "CAM" -> listOf("GENERATE","PARAM","AXIS MODE","SIM")
         "SIM" -> listOf("RUN","RISK","AXIS MODE","NC")
         "NC" -> listOf("EDIT","SAFETY","SIM")
