@@ -1309,6 +1309,16 @@ private fun testCadEditIntegrity() {
     check(h.redoWithEffect()==false)
     check(d.links().size==1)
 
+    check(CadCamTopologyPolicy.POLICY=="TOPOLOGY_OPTIONAL_FOR_CAM_NC")
+    check(!CadCamTopologyPolicy.TOPOLOGY_REQUIRED_FOR_CAM)
+    check(!CadCamTopologyPolicy.TOPOLOGY_REQUIRED_FOR_NC)
+    val beforeDisconnectAll=d.snapshot()
+    h.run(CadEditEngine.disconnectAllCommand())
+    check(d.links().isEmpty() && d.snapshot()==beforeDisconnectAll)
+    check(h.undoWithEffect()==false)
+    check(d.links().size==1 && d.snapshot()==beforeDisconnectAll)
+    println("✓ CAD_TOPOLOGY_OPTIONAL_GATE_PASS DISCONNECT_ALL GEOMETRY_UNCHANGED CAM_NC_TOPOLOGY_OPTIONAL POST_VALIDATES")
+    
     h.run(CadEditEngine.moveCommand(d,listOf("A","B"),5.0,-2.0))
     assertPoint((d.get("A") as Line).a,Vec2(5.0,-2.0),"MOVE A")
     assertPoint((d.get("B") as Line).a,Vec2(15.0005,-2.0),"MOVE B")
