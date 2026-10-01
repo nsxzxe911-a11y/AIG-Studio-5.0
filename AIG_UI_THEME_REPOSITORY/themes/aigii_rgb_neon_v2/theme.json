@@ -337,5 +337,25 @@
     "active_core": "#FFFFFF",
     "glow_layers": 2,
     "occluded_alpha_reduced": true
+  },
+  "ai_generated_button_assets": {
+    "profile": "AIG_II_OFFICIAL_DERIVED_RGB_BUTTONS_184",
+    "version": "184.0.0",
+    "approval_state": "VALIDATED_DERIVED",
+    "runtime_layer": "compound_icon_only",
+    "logic_binding_authority": "runtime_callback",
+    "official_original_overwritten": false,
+    "engineering_assets_editable": true,
+    "engineering_images_editable": true,
+    "engineering_buttons_editable": true,
+    "engineering_animations_editable": true,
+    "engineering_themes_editable": true,
+    "engineering_layout_editable": true,
+    "engineering_new_assets_allowed": true,
+    "engineering_replacement_after_validation_allowed": true,
+    "release_gate_required": true,
+    "asset_count": 32,
+    "manifest_path": "aig-generated-rgb/approved/184/manifest.json",
+    "sha256_properties_path": "aig-generated-rgb/approved/184/sha256.properties"
   }
 }
