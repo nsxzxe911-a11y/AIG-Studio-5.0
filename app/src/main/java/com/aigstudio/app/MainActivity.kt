@@ -467,32 +467,56 @@ class MainActivity : Activity() {
     private lateinit var cad: CadView
     private lateinit var networkStateBadge: TextView
     private val sharedProjectHandler = Handler(Looper.getMainLooper())
+    private val sharedProjectExecutor = java.util.concurrent.Executors.newSingleThreadExecutor { task ->
+        Thread(task,"aig-studio-shared-sync").apply { isDaemon=true }
+    }
+    private val sharedProjectScanRunning = java.util.concurrent.atomic.AtomicBoolean(false)
     private var sharedLocalRevisionMeta = ProjectRevisionMeta()
     private var sharedProjectBaselineDigest = ""
     private var sharedProjectLastMessage = ""
     private val sharedProjectRunnable = object : Runnable {
         override fun run() {
             val sharedFile=File(filesDir,"shared-sync/current.aigp")
-            if(sharedFile.isFile && ::cad.isInitialized) {
-                runCatching {
-                    val current=cad.capturePortableProject(
+            if(sharedFile.isFile && ::cad.isInitialized &&
+                sharedProjectScanRunning.compareAndSet(false,true)) {
+                val snapshotResult=runCatching {
+                    cad.capturePortableProject(
                         camSettings,axisA,axisB,machiningAxisMode,unifiedNcDraft.orEmpty()
                     ).copy(revisionMeta=sharedLocalRevisionMeta)
-                    val digest=StudioProjectRepository.canonicalDigest(current)
-                    val localDirty=sharedProjectBaselineDigest.isNotBlank() &&
-                        digest!=sharedProjectBaselineDigest
-                    val observation=SharedProjectFolderSync.inspect(
-                        sharedFile,sharedLocalRevisionMeta,localDirty
-                    ){StudioProjectRepository.load(it).revisionMeta}
-                    if(observation.state!=ProjectSyncState.CLEAN &&
-                        observation.message!=sharedProjectLastMessage &&
-                        ::networkStateBadge.isInitialized) {
-                        sharedProjectLastMessage=observation.message
-                        networkStateBadge.text="SYNC • "+observation.message
-                    }
-                }.onFailure {
+                }
+                if(snapshotResult.isFailure) {
+                    sharedProjectScanRunning.set(false)
                     if(::networkStateBadge.isInitialized) {
-                        networkStateBadge.text="SYNC BLOCKED • "+(it.message?:"error")
+                        networkStateBadge.text="SYNC SNAPSHOT BLOCKED • "+
+                            (snapshotResult.exceptionOrNull()?.message?:"error")
+                    }
+                } else {
+                    val snapshot=snapshotResult.getOrThrow()
+                    val baseline=sharedProjectBaselineDigest
+                    val localMeta=sharedLocalRevisionMeta
+                    sharedProjectExecutor.execute {
+                        val result=runCatching {
+                            val digest=StudioProjectRepository.canonicalDigest(snapshot)
+                            val localDirty=baseline.isNotBlank() && digest!=baseline
+                            SharedProjectFolderSync.inspect(
+                                sharedFile,localMeta,localDirty
+                            ){StudioProjectRepository.load(it).revisionMeta}
+                        }
+                        sharedProjectHandler.post {
+                            sharedProjectScanRunning.set(false)
+                            result.onSuccess { observation ->
+                                if(observation.state!=ProjectSyncState.CLEAN &&
+                                    observation.message!=sharedProjectLastMessage &&
+                                    ::networkStateBadge.isInitialized) {
+                                    sharedProjectLastMessage=observation.message
+                                    networkStateBadge.text="SYNC • "+observation.message
+                                }
+                            }.onFailure {
+                                if(::networkStateBadge.isInitialized) {
+                                    networkStateBadge.text="SYNC BLOCKED • "+(it.message?:"error")
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -504,6 +528,8 @@ class MainActivity : Activity() {
     private val onlineAutoCheckCompleted = java.util.concurrent.atomic.AtomicBoolean(false)
     private val onlineAutoRetryScheduled = java.util.concurrent.atomic.AtomicBoolean(false)
     private val onlineAutoRetryCount = java.util.concurrent.atomic.AtomicInteger(0)
+    private val onlineNetworkGeneration = java.util.concurrent.atomic.AtomicInteger(0)
+    private val onlineCapabilityDebounceToken = java.util.concurrent.atomic.AtomicInteger(0)
     private var voiceTts: TextToSpeech? = null
     private var speechRecognizer: SpeechRecognizer? = null
     private var voiceListening = false
@@ -2012,6 +2038,10 @@ class MainActivity : Activity() {
         adaptiveRefreshController = null
         autosaveHandler.removeCallbacks(autosaveRunnable)
         sharedProjectHandler.removeCallbacks(sharedProjectRunnable)
+        sharedProjectScanRunning.set(false)
+        sharedProjectExecutor.shutdownNow()
+        onlineNetworkGeneration.incrementAndGet()
+        onlineCapabilityDebounceToken.incrementAndGet()
         speechRecognizer?.cancel()
         speechRecognizer?.destroy()
         speechRecognizer = null
