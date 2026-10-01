@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "275.0.0",
+  "version": "276.0.0",
   "branch": "main",
   "recorded_source_head": "c72a8076138d056c8ac88441c1c1d63419e087af",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -45,7 +45,7 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue all departments. AI may design/reflow UI within stable order and safety constraints. Theme packs hot-swap without Runtime restart; failure rolls back to last verified pack.",
+  "next_action": "Revalidate Studio 276 after XML/theme verifier log routing repair. Theme hot-swap and AI layout contracts unchanged.",
   "note": "Studio 270.0.0 runs parallel FAST REVIEW with Android/Windows heavy jobs concurrently. Failed checks route only to the responsible owner; XML cache and product safety/integrity gates remain enforced.",
   "release_command": {
     "path": "continuity/release-command.json",
