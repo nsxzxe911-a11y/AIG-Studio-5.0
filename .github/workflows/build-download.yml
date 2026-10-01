@@ -2,27 +2,6 @@ name: AIG Studio direct release validation
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'uiux/**'
-      - 'release-version.properties'
-      - '.github/workflows/build-download.yml'
-      - 'ci/verify_runtime_surfaces.py'
-      - 'continuity/release-command.json'
-      - 'continuity/ai-responsibility-routing.json'
-      - 'continuity/latest-checkpoint.json'
-      - 'continuity/visual-reference-baseline.json'
-      - 'ci/verify_release_command_dispatch.py'
-      - 'ci/verify_ai_responsibility_routing.py'
-      - 'ci/verify_continuity_checkpoint.py'
-      - 'ci/department_autocheck.py'
-      - 'continuity/cache-update-standard.xml'
-      - 'ci/verify_xml_cache_update_standard.py'
-      - 'ci/verify_theme_pack_hot_swap.py'
-      - 'ci/verify_network_resilience.py'
-      - 'design/reference-packs/mobile-rgb-pack-v1/manifest.json'
-      - 'ci/fast_review.py'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
