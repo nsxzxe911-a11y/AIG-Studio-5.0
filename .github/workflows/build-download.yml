@@ -19,6 +19,8 @@ on:
       - 'ci/department_autocheck.py'
       - 'continuity/cache-update-standard.xml'
       - 'ci/verify_xml_cache_update_standard.py'
+      - 'ci/verify_theme_pack_hot_swap.py'
+      - 'design/reference-packs/mobile-rgb-pack-v1/manifest.json'
       - 'ci/fast_review.py'
 
 concurrency:
@@ -79,7 +81,9 @@ jobs:
           python3 ci/verify_release_command_dispatch.py | tee release-command.log
           python3 ci/verify_ai_responsibility_routing.py | tee ai-responsibility.log
           python3 ci/verify_continuity_checkpoint.py | tee continuity.log
-          python3 ci/verify_xml_cache_update_standard.py | tee xml-cache-standard.log
+          python3 ci/verify_xml_cache_update_standard.py
+          python3 ci/verify_theme_pack_hot_swap.py | tee theme-hot-swap.log
+          grep -Fq 'THEME_PACK_HOT_SWAP_GATE_PASS|AI_LAYOUT|8_MOBILE_SCREENS|NO_RESTART|LAST_VERIFIED_ROLLBACK|NO_ENGINEERING_SHELL|CORE_IMMUTABLE' theme-hot-swap.log | tee xml-cache-standard.log
           python3 ci/department_autocheck.py | tee department-autocheck.log
           grep -Fq 'ALL_DEPARTMENT_RELEASE_COMMAND_PASS|' release-command.log
           grep -Fq 'AI_RESPONSIBILITY_ROUTING_PASS|' ai-responsibility.log
