@@ -94,14 +94,30 @@ object UpdateConfigStore {
 }
 
 object NetworkSecurity {
+    fun isValidated(context: Context): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        val internet = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        val validated = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        val notSuspended = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)
+        } else true
+        return internet && validated && notSuspended
+    }
+
     fun status(context: Context): String {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = cm.activeNetwork ?: return "OFFLINE"
         val caps = cm.getNetworkCapabilities(network) ?: return "OFFLINE"
         val internet = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
         val validated = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        val notSuspended = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)
+        } else true
         return when {
-            internet && validated -> "ONLINE / VALIDATED"
+            internet && validated && notSuspended -> "ONLINE / VALIDATED"
+            internet && !notSuspended -> "ONLINE / SUSPENDED"
             internet -> "ONLINE / UNVALIDATED"
             else -> "OFFLINE"
         }
@@ -297,6 +313,13 @@ object SecureUpdateManager {
         config: UpdateConfig,
         onResult: (UpdateOutcome) -> Unit
     ) {
+        if(!NetworkSecurity.isValidated(context)){
+            onResult(UpdateOutcome(
+                false,false,
+                "NETWORK OFFLINE FAST-FAIL • checkpoint retained • local Runtime continues"
+            ))
+            return
+        }
         if(!UpdateNetworkCircuitBreaker.allow()){
             onResult(UpdateOutcome(
                 false,false,
