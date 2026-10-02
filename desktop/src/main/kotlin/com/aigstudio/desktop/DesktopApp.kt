@@ -3369,6 +3369,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     val productionFixtures=mutableListOf<FixtureObstacle>()
     var productionToolAssembly=ToolAssemblyConfig()
     var nextProductionFixtureId=1L
+    fun markProductionProjectDirty(){sharedProjectExtraDirty.set(true)}
 
     fun productionLocalProjectFile():File = sharedLocalProjectFile ?:
         File(System.getProperty("user.home"),".aig-studio/projects/current.aigp")
@@ -3658,6 +3659,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             status.text="MANUAL CAM BLOCKED • "+(it.message?:"error")
             return
         }
+        markProductionProjectDirty()
 
         val dlg=JDialog(frame,"CAM 手動走刀 • 夾治具避讓",false).apply{
             layout=BorderLayout(8,8);minimumSize=Dimension(760,520)
@@ -3704,6 +3706,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 )
                 CamModel.fromCad(System.currentTimeMillis(),doc.snapshot(),productionCamSettings)
             }.onSuccess{
+                markProductionProjectDirty()
                 status.text="MANUAL CAM POINT PASS • P"+(i+1)+" • 3D/NC READY"
                 refresh(i);load()
             }.onFailure{status.text="MANUAL CAM POINT BLOCKED • "+(it.message?:"error")}
@@ -3716,7 +3719,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                     productionCamSettings,i+1,
                     ManualCamPoint(p.x,p.y,productionCamSettings.depth,false,axisA=p.axisA,axisB=p.axisB)
                 )
-            }.onSuccess{refresh(i+1);load()}
+            }.onSuccess{markProductionProjectDirty();refresh(i+1);load()}
                 .onFailure{status.text="MANUAL CAM INSERT BLOCKED • "+(it.message?:"error")}
         }
         action("插入避讓"){
@@ -3741,6 +3744,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                         productionCamSettings,i,lift.text.toDouble(),lx.text.toDouble(),ly.text.toDouble(),lz.text.toDouble()
                     )
                 }.onSuccess{
+                    markProductionProjectDirty()
                     status.text="AVOIDANCE PASS • RETRACT / RAPID / PLUNGE"
                     refresh(i+3);load()
                 }.onFailure{status.text="AVOIDANCE BLOCKED • "+(it.message?:"error")}
@@ -3751,6 +3755,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             runCatching{
                 productionCamSettings=ManualCamPathEngine.deletePoint(productionCamSettings,i)
             }.onSuccess{
+                markProductionProjectDirty()
                 refresh(i.coerceAtMost(productionCamSettings.manualPath.lastIndex));load()
             }.onFailure{status.text="MANUAL CAM DELETE BLOCKED • "+(it.message?:"error")}
         }
@@ -3981,6 +3986,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             }else{
                 ManualCamPathEngine.useAuto(settings)
             }
+            markProductionProjectDirty()
             status.text="CAM SOURCE • "+productionCamSettings.pathMode.name
             rebuildCamCard()
         }
@@ -3997,6 +4003,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             productionCamSettings=productionCamSettings.copy(
                 contourSide=if(settings.contourSide==ContourSide.OUTSIDE)ContourSide.INSIDE else ContourSide.OUTSIDE
             )
+            markProductionProjectDirty()
             status.text="CAM SIDE • "+productionCamSettings.contourSide.name+" • REBUILD"
             rebuildCamCard()
         }
@@ -4006,6 +4013,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 climb=next==ContourDirection.CCW,
                 contourDirection=next
             )
+            markProductionProjectDirty()
             status.text="CAM DIRECTION • "+next.name+" • REBUILD"
             rebuildCamCard()
         }
