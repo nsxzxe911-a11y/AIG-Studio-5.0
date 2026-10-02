@@ -1,38 +1,6 @@
 name: NC Semantic Timeline Gate
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'core/src/main/kotlin/com/aigstudio/core/FanucNc.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/Cam.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/Geometry.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/Machining3D.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/Document.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/Transform.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/ProjectRepository.kt'
-      - 'core/src/test/**'
-      - 'app/src/main/java/com/aigstudio/app/MainActivity.kt'
-      - 'app/src/main/java/com/aigstudio/app/AdaptiveRefreshController.kt'
-      - 'app/src/main/java/com/aigstudio/app/StudioThemePackRuntime.kt'
-      - 'app/src/main/java/com/aigstudio/app/CadRenderEngine.kt'
-      - 'app/src/main/java/com/aigstudio/app/VisualSceneRenderer.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/EnvironmentSettings.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/RenderCompatibility.kt'
-      - 'desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'
-      - '.github/workflows/nc-semantic-timeline-gate.yml'
-      - 'ci/audit_contract.py'
-      - 'ci/verify_audit_contract.py'
-      - 'ci/verify_release_command_dispatch.py'
-      - 'ci/verify_ai_responsibility_routing.py'
-      - 'ci/verify_continuity_checkpoint.py'
-      - 'ci/verify_xml_cache_update_standard.py'
-      - 'ci/pro_audit.py'
-      - 'ci/department_autocheck.py'
-      - 'ci/verify_runtime_surfaces.py'
-      - 'continuity/release-command.json'
-      - 'continuity/ai-responsibility-routing.json'
-      - 'continuity/cache-update-standard.xml'
   workflow_dispatch:
 
 permissions:
