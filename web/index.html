@@ -171,7 +171,7 @@ html,body{background:#020407}
 <header class="top">
  <div class="brand"><div><div class="logo">AIG CNC</div><small>BLACK RGB RUNTIME</small></div></div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● STUDIO 344 • LOCAL READY　0.001 mm</div>
+ <div class="status">● STUDIO 345 • LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
 <footer class="footer">AIG CNC • 黑色高對比 Runtime • Web Runtime • CNC machine output disabled</footer>
@@ -221,7 +221,7 @@ function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div cl
 
 function homePage(){
  return '<div data-home-runtime><div class="workgrid">'+
- '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 344 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
+ '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 345 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
  '<div class="menuGrid"><button class="menuCard" data-open-page="CAD">CAD 製圖</button><button class="menuCard" data-open-page="CAM">CAM 刀路</button><button class="menuCard" data-open-page="SIM">SIM 模擬</button><button class="menuCard" data-open-page="NC">NC 編輯</button><button class="menuCard" data-open-page="刀路">刀路工作頁</button><button class="menuCard" data-open-page="功能">設定 / 工具</button></div>'+
  '<div class="runtimeStatus" style="margin-top:9px"><div class="metric"><b>CAD</b><span data-home-cad>0 entities</span></div><div class="metric"><b>CAM</b><span data-home-cam>0 paths</span></div><div class="metric"><b>NC</b><span data-home-nc>0 lines</span></div><div class="metric"><b>Runtime</b><span>LOCAL READY</span></div></div>'+
  '<div class="notice" style="margin-top:9px">正式 Web Runtime 直接進 HOME；工程維修與設定收在功能頁。CNC machine output disabled。</div></div></section>'+
@@ -252,8 +252,8 @@ function simPage(axis){
  const axisHtml=axes.map(a=>'<span class="axis '+a.toLowerCase()+'" data-axis-read="'+a+'">'+a+'　0.000</span>').join("");
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":axis==="6AX"?"/A/B/C":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
  '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 真 3D 加工模擬<small>WebGL 機械模型 • A/B/C 真旋轉 • 拖曳 360° 相機</small></div></div>'+
- '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button></div>'+
- '<div class="runtimeStatus"><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric"><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric"><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
+ '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button></div><div class="notice" data-motion-legend>RAPID 快移 • ENTRY 進刀 • CUT 切削 • EXIT 退刀 • RETRACT 抬刀 • AVOID 夾具閃避</div>'+
+ '<div class="runtimeStatus"><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric"><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric"><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
  '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label><label class="param">刃長<input data-cutter-len type="number" value="30" min="1" step="0.1"></label><label class="param">刀柄 Ø<input data-holder-dia type="number" value="25" min="1" step="0.1"></label><label class="param">刀柄長<input data-holder-len type="number" value="25" min="1" step="0.1"></label><label class="param">G54 X<input data-g54-x type="number" value="0" step="0.001"></label><label class="param">G54 Y<input data-g54-y type="number" value="0" step="0.001"></label><label class="param">G54 Z<input data-g54-z type="number" value="0" step="0.001"></label><label class="param">G55 X<input data-g55-x type="number" value="0" step="0.001"></label><label class="param">G55 Y<input data-g55-y type="number" value="0" step="0.001"></label><label class="param">G55 Z<input data-g55-z type="number" value="0" step="0.001"></label><label class="param">H1<input data-h1 type="number" value="0" step="0.001"></label><label class="param">H4<input data-h4 type="number" value="0" step="0.001"></label><label class="param">H12<input data-h12 type="number" value="0" step="0.001"></label></div>'+
  '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+sourceCode[axis]+'</textarea></div>'+
@@ -721,6 +721,23 @@ function parseProgram(text,axis,opts={}){
  return {lines,blocks,errors,warnings,mainProgram:compiled.mainKey,programCount:compiled.programs.size};
 }
 
+
+function runtimeMotionRole(bl){
+ if(!bl||bl.kind!=="move")return"IDLE";
+ const raw=String(bl.raw||"").toUpperCase();
+ if(raw.includes("AIG AVOID"))return"AVOID";
+ if(raw.includes("AIG MANUAL ENTRY")||raw.includes("AIG ENTRY"))return"ENTRY";
+ if(raw.includes("AIG EXIT"))return"EXIT";
+ if(raw.includes("AIG RETRACT"))return"RETRACT";
+ const dx=Number(bl.to?.X||0)-Number(bl.from?.X||0),dy=Number(bl.to?.Y||0)-Number(bl.from?.Y||0),dz=Number(bl.to?.Z||0)-Number(bl.from?.Z||0),xy=Math.hypot(dx,dy);
+ if(bl.motion==="G0")return dz>1e-9&&xy<1e-9?"RETRACT":"RAPID";
+ if(bl.cutting)return xy<1e-9&&dz<0?"ENTRY":"CUT";
+ return"FEED";
+}
+function runtimeMotionColor(role,dry=false){
+ if(dry)return"#ffb326";
+ return({RAPID:"#3694ff",ENTRY:"#ffb326",CUT:"#33f39b",EXIT:"#ff4da6",RETRACT:"#27e9ff",AVOID:"#9f72ff",FEED:"#b7c8d1",IDLE:"#66808f"})[role]||"#b7c8d1";
+}
 
 function sampleRuntimeBlock(bl,t){
  const mix=(a,b)=>Number(a||0)+(Number(b||0)-Number(a||0))*t;
@@ -1240,13 +1257,13 @@ function makeGlScene(canvas,axis){
      for(let i=0;i<moves.length;i++){
        const bl=moves[i],samples=(bl.motion==="G2"||bl.motion==="G3"||Math.abs((bl.to.A||0)-(bl.from.A||0))>1e-6||Math.abs((bl.to.B||0)-(bl.from.B||0))>1e-6||Math.abs((bl.to.C||0)-(bl.from.C||0))>1e-6)?16:2,arr=[];
        for(let j=0;j<samples;j++){const t=samples===1?1:j/(samples-1),p=sampleBlock(bl,t),q={x:p.X,y:p.Y,z:p.Z};arr.push(q)}
-       drawLine(arr,bl.motion==="G0"?rgb("#3b82f6"):rgb("#18a9c9"),vp);
+       drawLine(arr,rgb(runtimeMotionColor(runtimeMotionRole(bl),false)),vp);
      }
      const execBlocks=scene.parsed.blocks;
      for(let i=0;i<execBlocks.length&&i<=scene.index;i++){
        const bl=execBlocks[i];if(bl.kind!=="move")continue;const end=i<scene.index?1:scene.t;if(end<=0)continue;const samples=16,arr=[];
        for(let j=0;j<=samples;j++){const t=Math.min(end,j/samples);if(t>end+1e-9)break;const p=sampleBlock(bl,t),q={x:p.X,y:p.Y,z:p.Z};arr.push(q)}
-       drawLine(arr,bl.cutting&&!scene.dry?rgb("#33f39b"):rgb("#ffb326"),vp);
+       drawLine(arr,rgb(runtimeMotionColor(runtimeMotionRole(bl),scene.dry)),vp);
      }
 
      const sceneBlock=scene.parsed.blocks[Math.min(scene.index,Math.max(0,scene.parsed.blocks.length-1))]||null;
@@ -1567,7 +1584,7 @@ function makeRuntime(root){
   if(!state.parsed)return;
   const renderCfg=settings(),renderBlock=currentBlock()||state.parsed?.blocks?.[state.parsed.blocks.length-1]||null;
   const webglOk=glScene?.render({
-    parsed:state.parsed,index:state.index,t:state.t,pos:currentPos(),toolDia:runtimeToolDiameter(renderCfg,renderBlock),toolDiameters:renderCfg.toolDiameters,activeTool:runtimeToolNumber(renderBlock),cutterLen:renderCfg.cutterLen,holderDia:renderCfg.holderDia,holderLen:renderCfg.holderLen,stock:stockConfig,assembly:assemblyConfig,collisionAlarm:state.collisionAlarm,setupClearance:state.setupClearance,requiredClearance:state.requiredClearance,dry:state.dry,
+    parsed:state.parsed,index:state.index,t:state.t,pos:currentPos(),motionRole:runtimeMotionRole,toolDia:runtimeToolDiameter(renderCfg,renderBlock),toolDiameters:renderCfg.toolDiameters,activeTool:runtimeToolNumber(renderBlock),cutterLen:renderCfg.cutterLen,holderDia:renderCfg.holderDia,holderLen:renderCfg.holderLen,stock:stockConfig,assembly:assemblyConfig,collisionAlarm:state.collisionAlarm,setupClearance:state.setupClearance,requiredClearance:state.requiredClearance,dry:state.dry,
     sampleBlock:(bl,t)=>{
       if(bl.motion==="G2"||bl.motion==="G3")return arcPoint(bl,t);
       const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(bl.from[k]||0,bl.to[k]||0,t);return p;
@@ -1618,9 +1635,9 @@ function makeRuntime(root){
   state.parsed.blocks.forEach((bl,i)=>{
     if(bl.kind!=="move"||i>state.index)return;
     const tEnd=i<state.index?1:state.t,toolPx=Math.max(2,Math.min(20,runtimeToolDiameter(cfgTrace,bl)*ppm));
-    const isCut=Boolean(bl.cutting)&&!state.dry;
-    const stroke=state.dry?"rgba(255,179,38,.90)":isCut?"rgba(51,243,155,.72)":"rgba(39,233,255,.66)";
-    strokeBlock(bl,tEnd,stroke,isCut?toolPx:(state.dry?2:1.6),isCut?10:7);
+    const isCut=Boolean(bl.cutting)&&!state.dry,role=runtimeMotionRole(bl);
+    const stroke=runtimeMotionColor(role,state.dry);
+    strokeBlock(bl,tEnd,stroke,isCut?toolPx:(role==="AVOID"?2.8:role==="ENTRY"||role==="EXIT"?2.4:1.8),isCut?10:8);
 
     // Z-axis drilling has no XY line in top view, so show actual removed hole diameter.
     if(isCut && bl.cycle && (bl.cyclePhase==="feed"||bl.cyclePhase==="peck-feed")){
@@ -1667,6 +1684,7 @@ function makeRuntime(root){
  }
  function updateUi(){
   const p=currentPos(),len=state.parsed.blocks.length,progress=len?Math.min(100,((state.index+state.t)/len)*100):0,b=currentBlock(),cfg=settings(),mc=activeMachine(),uiToolDia=runtimeToolDiameter(cfg,b||{machine:mc});
+  const role=runtimeMotionRole(b),motionEl=root.querySelector("[data-motion-role]");if(motionEl){motionEl.textContent=role;motionEl.style.color=runtimeMotionColor(role,state.dry)}
   root.querySelector("[data-spindle]").textContent=Math.round(p.S||0)+" RPM";
   root.querySelector("[data-feed]").textContent=Math.round(p.F||0)+" mm/min";
   root.querySelector("[data-block]").textContent=b?("["+(b.subprogram||state.parsed.mainProgram)+"] "+(b.raw.match(/N\s*\d+/i)?.[0]||("LINE "+(b.line+1)))+(b.subCall?(" →O"+b.subCall):"")+(b.stopCode?(" "+b.stopCode):"")):"—";
@@ -2530,16 +2548,16 @@ function makeToolpathRuntime(root){
      }
      const first=path.points[0],li=leadPoint(path,"in"),lo=leadPoint(path,"out");
      const avoid=path.avoidance?.enabled?path.avoidance:null;
-     if(avoid){push("G0 Z"+fmt(Math.max(safe,Number(avoid.z)||safe)));push("G0 X"+fmt(avoid.x)+" Y"+fmt(avoid.y));}
+     if(avoid){push("G0 Z"+fmt(Math.max(safe,Number(avoid.z)||safe))+" (AIG RETRACT)");push("G0 X"+fmt(avoid.x)+" Y"+fmt(avoid.y)+" (AIG AVOID)");}
      const rampLoop=path.kind==="adaptive"&&path.entry==="RAMP_LOOP"&&path.closed&&path.points.length>=3;
      const start=rampLoop?first:(li||first);
-     push("G0 X"+fmt(start.x)+" Y"+fmt(start.y));
+     push("G0 X"+fmt(start.x)+" Y"+fmt(start.y)+(path.routeMode==="MANUAL"&&li?" (AIG MANUAL ENTRY)":""));
      const denom=Math.max(1,path.points.length-1);
      if(rampLoop){
        const entryZ=Math.min(safe,Number.isFinite(Number(path.entryZStart))?Number(path.entryZStart):Number(state.payload?.stock?.top??0));
        const rampFeed=Math.max(1,Math.trunc(feed*.45)),rampPasses=Math.max(1,Math.trunc(Number(path.rampPasses)||1)),totalRampSegments=Math.max(1,denom*rampPasses);
        push("(AIG RAMP LOOP P"+rampPasses+" ANG"+Number(path.rampAngleDeg||0).toFixed(2)+" Z"+fmt(entryZ)+" TO Z"+fmt(depth)+")");
-       push("G1 Z"+fmt(entryZ)+" F"+rampFeed);
+       push("G1 Z"+fmt(entryZ)+" F"+rampFeed+" (AIG ENTRY)");
        for(let pass=0;pass<rampPasses;pass++){
          for(let i=1;i<path.points.length;i++){
            const pt=path.points[i],rampFrac=(pass*denom+i)/totalRampSegments,z=entryZ+(depth-entryZ)*rampFrac;
@@ -2547,15 +2565,15 @@ function makeToolpathRuntime(root){
          }
        }
      }else{
-       push("G1 Z"+fmt(depth)+" F"+Math.max(1,Math.trunc(feed*.35)));
-       if(li)push("G1 X"+fmt(first.x)+" Y"+fmt(first.y)+(mode==="SIMULTANEOUS"?rotaryAt(path,0,target).text:"")+" F"+feed);
+       push("G1 Z"+fmt(depth)+" F"+Math.max(1,Math.trunc(feed*.35))+" (AIG ENTRY)");
+       if(li)push("G1 X"+fmt(first.x)+" Y"+fmt(first.y)+(mode==="SIMULTANEOUS"?rotaryAt(path,0,target).text:"")+" F"+feed+" (AIG ENTRY)");
      }
      for(let i=1;i<path.points.length;i++){
        const pt=path.points[i],frac=i/denom;
        push("G1 X"+fmt(pt.x)+" Y"+fmt(pt.y)+(mode==="SIMULTANEOUS"?rotaryAt(path,frac,target).text:"")+" F"+feed);
      }
-     if(lo)push("G1 X"+fmt(lo.x)+" Y"+fmt(lo.y)+(mode==="SIMULTANEOUS"?rotaryAt(path,1,target).text:"")+" F"+feed);
-     push("G0 Z"+fmt(safe));
+     if(lo)push("G1 X"+fmt(lo.x)+" Y"+fmt(lo.y)+(mode==="SIMULTANEOUS"?rotaryAt(path,1,target).text:"")+" F"+feed+" (AIG EXIT)");
+     push("G0 Z"+fmt(safe)+" (AIG RETRACT)");
      if(path.kind==="adaptive")push("(AIG OP END)");
    }
    push("M98 P5");push("M30");

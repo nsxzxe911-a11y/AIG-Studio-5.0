@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "344.0.0",
+  "version": "345.0.0",
   "branch": "main",
-  "recorded_source_head": "456e7f3c6e38fe646b0f710883c9a6f462e81955",
+  "recorded_source_head": "90a7d2c9b9d8b63e778fd2be821174797c8caf45",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate Studio 344 CAM → toolpath → SIM flow from the exact commit, then bind AIG-II 380 to that SHA. Preserve formal Web navigation, NC EDIT, and Web machine-output-disabled policy.",
-  "note": "Studio 344: Web CAM now carries true OUTSIDE/INSIDE tool-radius compensated profile geometry, CW/CCW direction, AUTO/MANUAL route control, manual entry/exit points and an optional fixture-avoidance waypoint into the same persisted toolpath payload. Toolpath uses those points in preview/POST, keeps node editing and Safe-Z validation, and adds verified POST → SIM handoff. Web machine output remains disabled.",
+  "next_action": "Validate Studio 345 SIM motion semantics from the exact commit, then bind AIG-II 381 to that SHA. Preserve the true material-removal engine, CAM route payload, NC EDIT, and Web machine-output-disabled policy.",
+  "note": "Studio 345: Web SIM now classifies and highlights the same parsed G-code motion as RAPID / ENTRY / CUT / EXIT / RETRACT / AVOID across WebGL and 2D fallback. CAM manual routing is preserved into POST with inline AIG motion-role markers that the parser keeps in raw source while stripping them from command decoding. 3AX heightfield and rotary voxel material-removal calculations remain authoritative, with live removal volume, percent and remaining volume evidence.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
