@@ -299,6 +299,23 @@ for marker in [
 if "PROJECT_RUNTIME_SYNC_UI_POLICY_GATE_PASS" not in core_regression:
     raise SystemExit("Project Runtime sync UI policy regression marker missing")
 print("PROJECT_RUNTIME_SYNC_UI_PRODUCTION_GATE_PASS|ANDROID|WINDOWS|SAVE|OPEN|SHARE_STATUS|SHARE_PUBLISH|NO_AUTO_OVERWRITE|EXPLICIT_CONFIRM|REMOTE_DIGEST_RACE_BLOCK")
+for marker in [
+    "private fun recoveryProjectFile():File",
+    "StudioProjectRepository.save(captureCurrentProject(),recovery)",
+    "AUTO RECOVERY • PROJECT V3",
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android Project V3 recovery marker missing: {marker}")
+for marker in [
+    "fun productionRecoveryProjectFile():File",
+    "val productionRecoveryTimer=Timer(15_000)",
+    "StudioProjectRepository.save(captureProductionProject(),recovery)",
+    "AUTO RECOVERY • PROJECT V3",
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Windows Project V3 recovery marker missing: {marker}")
+print("FULL_PROJECT_RECOVERY_PRODUCTION_GATE_PASS|ANDROID|WINDOWS|V3_ATOMIC_SAVE|15S|CAD_CAM_ABC_FIXTURE_TOOL_NC|NONFATAL_CORRUPT_FALLBACK")
+
 
 
 
