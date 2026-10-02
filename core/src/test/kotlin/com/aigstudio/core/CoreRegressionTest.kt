@@ -1335,6 +1335,7 @@ fun main() {
     testAxis345RuntimeContract()
     testContinuousMultiAxisToolpointSchedule()
     testContinuousSixAxisToolpointSchedule()
+    testSixAxisFixtureEnvelopeCollision()
     testAxisMode345RuntimeMatrix()
     testNcDraftRecoveryContract()
     testPixelLayoutPrecheckContract()
@@ -2179,6 +2180,43 @@ private fun testContinuousSixAxisToolpointSchedule() {
     check(nc.isFailure){"C-axis provenance must never fall through the unverified Fanuc Post"}
     check("6AX_C_AXIS_NC_POST_BLOCKED" in nc.exceptionOrNull()?.message.orEmpty())
     println("✓ CONTINUOUS_6AX_CAM_SIM_GATE_PASS PER_POINT_ABC LINEAR_SYNC PROGRESSIVE_SIM ROTARY_C NC_C_FAIL_CLOSED")
+}
+
+private fun testSixAxisFixtureEnvelopeCollision() {
+    val snapshot=DrawingSnapshot(listOf(Line("ENV-C",Vec2(0.0,0.0),Vec2(1.0,0.0))))
+    val settings=CamSettings(toolDiameter=1.0,depth=-1.0,safeZ=2.0,feedMmMin=100.0,leadInMm=0.0,leadOutMm=0.0)
+    val schedule=MultiAxisOrientationSchedule(
+        startA=0.0,startB=0.0,endA=0.0,endB=0.0,
+        mode=MultiAxisInterpolationMode.LINEAR_SYNC,
+        startC=0.0,endC=90.0
+    )
+    val cam=CamModel.fromCad(29500L,snapshot,settings,axisSchedule=schedule)
+    val stock=Stock3D.fromSnapshot(snapshot,margin=2.0,thickness=5.0)
+    val fixture=FixtureObstacle(
+        id=1L,kind=FixtureKind.CLAMP,
+        minX=4.0,minY=-1.0,minZ=-1.0,
+        maxX=6.0,maxY=1.0,maxZ=1.0,
+        clearanceMm=0.1
+    )
+    val tightEnvelope=FixtureObstacle(
+        id=2L,kind=FixtureKind.MACHINE_ENVELOPE,
+        minX=-10.0,minY=-5.0,minZ=-10.0,
+        maxX=10.0,maxY=5.0,maxZ=10.0,
+        clearanceMm=0.1
+    )
+    val looseEnvelope=tightEnvelope.copy(
+        id=3L,minX=-20.0,minY=-20.0,maxX=20.0,maxY=20.0
+    )
+    val assembly=ToolAssemblyConfig(holderDiameter=1.0,holderLength=1.0,stickout=1.0)
+    val tight=MachiningRiskScanner.inspect(cam,stock,listOf(fixture,tightEnvelope),assembly)
+    check(tight.collisionCount>0)
+    check(tight.warnings.any{"ROTARY_FIXTURE_ENVELOPE" in it && "A/B/C posture" in it})
+    val loose=MachiningRiskScanner.inspect(cam,stock,listOf(fixture,looseEnvelope),assembly)
+    check(loose.warnings.none{"ROTARY_FIXTURE_ENVELOPE" in it})
+    val endMove=cam.toolpaths.flatMap{it.moves}.last()
+    val p=MachineKinematics3D.transform(Vec3(5.0,0.0,0.0),endMove.axisA,endMove.axisB,endMove.axisC)
+    check(abs(p.x)<1e-9 && abs(p.y-5.0)<1e-9)
+    println("✓ SIX_AXIS_FIXTURE_ENVELOPE_GATE_PASS ABC_MACHINE_SPACE ROTATING_FIXTURE CLAMP MACHINE_ENVELOPE C90 COLLISION")
 }
 
 private fun testWorkOffsetDoesNotShiftAbsoluteCoordinates() {
