@@ -1377,37 +1377,68 @@ class MainActivity : Activity() {
         ))
 
         StudioStartupBootGuard.mark(this,StudioStartupStage.UI_RENDERER)
+        // Formal RGB HOME is explicitly the first visible Runtime surface.
+        root.visibility=View.GONE
+        homeRoot.visibility=View.VISIBLE
+        homeRoot.contentDescription="AIG CNC PRODUCTION HOME RUNTIME • FIRST FRAME"
         setContentView(runtimeHost)
-        if (environmentRestartApplied) {
-            Toast.makeText(this, "重開套用完成 • 3D/SIM 畫質核心已重新載入", Toast.LENGTH_SHORT).show()
-        }
-        StudioStartupBootGuard.mark(this,StudioStartupStage.PROJECT_DATA)
-        loadRotaryMachineProfile()
-        restoreCadCheckpointIfAvailable()
-        autosaveHandler.postDelayed(autosaveRunnable, 15000L)
-        if(workstationLayout==WorkstationChromeContract.Layout.COMPACT &&
-            AndroidUxContract.CLEAN_START_TOOL_DECK_COLLAPSED) {
-            closeBranches()
-        } else {
-            openCategory("繪圖") { showDrawingBranch() }
-        }
-        selectTool(Tool.LINE)
-        refreshVisibleMode(ProductionUiSwitchContract.initialMode)
-        StudioStartupBootGuard.mark(this,StudioStartupStage.HEALTH)
-        root.post {
-            if (root.isAttachedToWindow) {
-                StudioStartupBootGuard.mark(this,StudioStartupStage.WRAP_UP)
-                StudioStartupBootGuard.mark(this,StudioStartupStage.HOME)
-                StudioStartupBootGuard.complete(this)
-                runDualPlatformProjectSmokeIfPresent()
-                startSharedProjectWatcher()
-                scheduleBackgroundOnlineServices()
-            } else {
-                StudioStartupBootGuard.mark(this,StudioStartupStage.HEALTH)
-                Toast.makeText(this,"PRODUCTION UI ATTACH BLOCKED • SAFE STATE • RETRY APP",Toast.LENGTH_LONG).show()
+
+        // Project recovery, shared storage and network are all post-first-frame work.
+        // The user sees the real HOME controls before any of those paths can execute.
+        var firstProductionHomeDrawHandled=false
+        val firstHomeDrawListener=object:android.view.ViewTreeObserver.OnDrawListener {
+            override fun onDraw() {
+                if(firstProductionHomeDrawHandled) return
+                firstProductionHomeDrawHandled=true
+                homeRoot.post {
+                    if(homeRoot.viewTreeObserver.isAlive) {
+                        runCatching { homeRoot.viewTreeObserver.removeOnDrawListener(this) }
+                    }
+                    if(!homeRoot.isAttachedToWindow || homeRoot.visibility!=View.VISIBLE) {
+                        StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.HEALTH)
+                        Toast.makeText(
+                            this@MainActivity,
+                            "PRODUCTION HOME DRAW BLOCKED • SAFE STATE • RETRY APP",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        return@post
+                    }
+
+                    StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.PROJECT_DATA)
+                    loadRotaryMachineProfile()
+                    restoreCadCheckpointIfAvailable()
+                    autosaveHandler.postDelayed(autosaveRunnable,15000L)
+
+                    if(workstationLayout==WorkstationChromeContract.Layout.COMPACT &&
+                        AndroidUxContract.CLEAN_START_TOOL_DECK_COLLAPSED) {
+                        closeBranches()
+                    } else {
+                        openCategory("繪圖") { showDrawingBranch() }
+                    }
+                    selectTool(Tool.LINE)
+                    refreshVisibleMode(ProductionUiSwitchContract.initialMode)
+
+                    StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.HEALTH)
+                    StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.WRAP_UP)
+                    StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.HOME)
+                    StudioStartupBootGuard.complete(this@MainActivity)
+
+                    if(environmentRestartApplied) {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "重開套用完成 • 3D/SIM 畫質核心已重新載入",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                    runDualPlatformProjectSmokeIfPresent()
+                    startSharedProjectWatcher()
+                    scheduleBackgroundOnlineServices()
+                }
             }
         }
-        // Network never participates in startup. Online services run only after READY/UI attach.
+        homeRoot.viewTreeObserver.addOnDrawListener(firstHomeDrawListener)
+        // Network never participates in startup. Online services run only after the HOME first frame.
     }
 
 

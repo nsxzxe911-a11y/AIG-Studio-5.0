@@ -1986,3 +1986,34 @@ for needle in (
     require(desktop_311, needle, "STUDIO_311_WINDOWS_FPS_SETTINGS")
 print("STUDIO_WINDOWS_FPS_RUNTIME_GATE_PASS|311|AUTO|30|60|90|120|SAFE_DEFAULT_60|DEVICE_CLAMPED|RGB_SELECTED_TIMER_BOUND")
 
+# Studio 312 Production Runtime first-surface contract
+desktop_312 = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
+android_312 = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
+main_312 = desktop_312.split("fun main(args: Array<String>) {",1)[1]
+if "StudioDesktopStartupWindow()" in main_312 or ".show()" in main_312.split("showApp()",1)[0]:
+    raise SystemExit("BLOCKED STUDIO_312_WINDOWS_STARTUP: production main still opens startup shell")
+for needle in (
+    'Production Runtime is the first and only visible application surface.',
+    'showApp()',
+    'if(showWindow) frame.isVisible = true',
+):
+    require(desktop_312, needle, "STUDIO_312_WINDOWS_DIRECT_RUNTIME")
+for needle in (
+    'homeRoot.contentDescription="AIG CNC PRODUCTION HOME RUNTIME • FIRST FRAME"',
+    'var firstProductionHomeDrawHandled=false',
+    'homeRoot.viewTreeObserver.addOnDrawListener(firstHomeDrawListener)',
+    'StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.PROJECT_DATA)',
+    'restoreCadCheckpointIfAvailable()',
+    'startSharedProjectWatcher()',
+    'scheduleBackgroundOnlineServices()',
+):
+    require(android_312, needle, "STUDIO_312_ANDROID_HOME_FIRST_FRAME")
+set_pos=android_312.index('setContentView(runtimeHost)')
+draw_pos=android_312.index('var firstProductionHomeDrawHandled=false')
+draw_listener_pos=android_312.index('homeRoot.viewTreeObserver.addOnDrawListener(firstHomeDrawListener)')
+restore_pos=android_312.index('restoreCadCheckpointIfAvailable()', draw_pos)
+network_pos=android_312.index('scheduleBackgroundOnlineServices()', draw_pos)
+if min(set_pos,draw_pos,draw_listener_pos,restore_pos,network_pos) < 0 or not (set_pos < draw_pos < restore_pos < network_pos):
+    raise SystemExit("BLOCKED STUDIO_312_ANDROID_BOOT_ORDER")
+print("STUDIO_PRODUCTION_STARTUP_GATE_PASS|312|ANDROID_HOME_FIRST_FRAME|WINDOWS_DIRECT_RUNTIME|STARTUP_JWINDOW_SMOKE_ONLY|RECOVERY_POST_DRAW|NETWORK_POST_DRAW|OFFLINE_FIRST")
+

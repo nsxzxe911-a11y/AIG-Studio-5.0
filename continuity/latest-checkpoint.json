@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "311.0.0",
+  "version": "312.0.0",
   "branch": "main",
-  "recorded_source_head": "a6498549f0413bd2fb10bb0c612fbb1514004110",
+  "recorded_source_head": "62aa8d314708298b449527084c7c73de389f421f",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 311. Windows Settings Center now exposes Auto/30/60/90/120 FPS with safe 60 FPS default and device-clamped effective rate; RGB selected animation timer binds to the chosen effective FPS. Next proof remains manual Windows build/launch and screenshot capture when an execution host is online.",
-  "note": "Studio 311 source checkpoint: Windows FPS is now a real persisted user setting (Auto/30/60/90/120), safe default 60, clamped to detected display capability. RGB selected repaint cadence and animation target use the effective setting. No EXE/APK/device PASS or Runtime screenshot claimed.",
+  "next_action": "Continue forward-only from Studio 312. Windows production main now opens the Production Runtime directly; StudioDesktopStartupWindow is retained only for smoke/evidence generation. Android explicitly presents the formal RGB HOME as the first frame and defers recovery/shared-project/network work until after that frame is drawn. Next proof remains manual APK/EXE launch screenshots when an execution host is available.",
+  "note": "Studio 312 source checkpoint: production startup is UI-first. Windows startup shell is smoke-only, never production main. Android HOME-first draw is explicit; recovery, shared sync and network are post-first-frame. No binary/device PASS or Runtime screenshot is claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -226,7 +226,7 @@
     "app/src/main/assets/aig-generated-rgb/approved/184/tool_group.png"
   ],
   "manual_only_checkpoint": {
-    "source_head": "a6498549f0413bd2fb10bb0c612fbb1514004110",
+    "source_head": "62aa8d314708298b449527084c7c73de389f421f",
     "automatic_push_triggers": 0,
     "automatic_schedule_triggers": 0,
     "one_key_multifunction": "IMPLEMENTED_ANDROID_WINDOWS",
@@ -243,7 +243,12 @@
     "all_embedded_themes_user_selectable": true,
     "binary_device_release_proof": "NOT_CLAIMED",
     "desktop_settings_action_integrity": "DEDUPED_MAINTENANCE_RESTORED",
-    "windows_fps_runtime": "AUTO_30_60_90_120_SAFE60_DEVICE_CLAMPED"
+    "windows_fps_runtime": "AUTO_30_60_90_120_SAFE60_DEVICE_CLAMPED",
+    "production_startup": "ANDROID_HOME_FIRST_FRAME_WINDOWS_DIRECT_RUNTIME",
+    "windows_startup_jwindow": "SMOKE_EVIDENCE_ONLY",
+    "engineering_shell_first_surface": false,
+    "recovery_before_first_frame": false,
+    "network_before_first_frame": false
   },
   "user_settings_center": {
     "status": "SOURCE_IMPLEMENTED",

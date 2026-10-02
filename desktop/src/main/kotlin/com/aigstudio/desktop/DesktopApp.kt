@@ -2157,7 +2157,7 @@ private fun runSmoke() {
     }
     val launchFile = File("desktop_launch.png")
     writePanel(smokeRoot, launchFile)
-    val productionFrame=showApp(startup=null,showWindow=false)
+    val productionFrame=showApp(showWindow=false)
     productionFrame.setSize(1280,800)
     productionFrame.addNotify()
     productionFrame.validate()
@@ -3236,9 +3236,8 @@ private fun showUnifiedMachiningEditor(
     dlg.isVisible=true
 }
 
-private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean=true):JFrame {
+private fun showApp(showWindow:Boolean=true):JFrame {
     applyDesktopCoordinatePrecision()
-    startup?.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
     val doc = DrawingDocument()
     val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • "+MasterRuntimeChainContract.uiLabel())
     status.foreground = Color(99, 255, 157)
@@ -3292,7 +3291,6 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     }
 
     val frame = JFrame("AIG CNC — OFFICIAL RGB ORIGINAL — v"+desktopVersionName())
-    startup?.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")
     frame.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     frame.addWindowListener(object:java.awt.event.WindowAdapter(){
         override fun windowClosed(e:java.awt.event.WindowEvent?) {
@@ -4632,11 +4630,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     frame.add(northChrome, BorderLayout.NORTH)
     frame.add(mainCardHost, BorderLayout.CENTER)
     frame.add(status, BorderLayout.SOUTH)
-    startup?.advance(StudioStartupStage.PROJECT_DATA,"檢查專案 / Recovery")
-    startup?.advance(StudioStartupStage.HEALTH,"Runtime 健康檢查")
     frame.size = desktopAdaptiveSize(1280, 820)
     frame.setLocationRelativeTo(null)
-    startup?.advance(StudioStartupStage.WRAP_UP,"完成啟動收尾")
     if(showWindow) frame.isVisible = true
     if(System.getProperty("aig.dual.project.smoke")=="true"){
         val input=System.getProperty("aig.dual.project.import")?.let(::File) ?: error("dual project import missing")
@@ -4713,8 +4708,6 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             frame.dispose();System.exit(2)
         }
     }
-    startup?.advance(StudioStartupStage.HOME,WorkstationChromeContract.MASTER_ORIGIN+" • CAD READY")
-    startup?.close()
     return frame
 }
 
@@ -4728,10 +4721,8 @@ fun main(args: Array<String>) {
     }
     if (GraphicsEnvironment.isHeadless()) error("Desktop UI requires a graphical Windows session")
     SwingUtilities.invokeLater {
-        val startup=StudioDesktopStartupWindow()
-        startup.show()
-        startup.advance(StudioStartupStage.SAFE_THEME,"載入原版 RGB 啟動圖")
-        startup.advance(StudioStartupStage.CORE,"初始化 CAD / CAM 核心")
-        showApp(startup)
+        // Production Runtime is the first and only visible application surface.
+        // StudioDesktopStartupWindow is smoke/evidence-only and must never own production startup.
+        showApp()
     }
 }
