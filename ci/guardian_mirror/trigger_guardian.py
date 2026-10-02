@@ -22,7 +22,7 @@ EXPECTED={
  ),
  ".github/workflows/trigger-mine-auto-clean.yml":(
    "ci/guardian_canonical/github/workflows/trigger-mine-auto-clean.yml",
-   "7e4ed3a3b5f965a6a96caa0aef308c6b6635d00c",
+   "594056767959fa7c1790226bdfd86165092bb47c",
  ),
  ".github/workflows/prebaseline-trigger-clean.yml":(
    "ci/guardian_canonical/github/workflows/prebaseline-trigger-clean.yml",
