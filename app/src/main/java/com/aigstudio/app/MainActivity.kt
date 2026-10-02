@@ -1967,7 +1967,7 @@ class MainActivity : Activity() {
             setPadding(dp(16),dp(10),dp(16),dp(8))
         }
         box.addView(TextView(this).apply {
-            text="使用者設定中心 • 佈景 / FPS / 解析度 / 效能 / RGB / 回歸驗證 / 維修。\n預設 60Hz；90/120Hz 由使用者與裝置能力決定。"
+            text="使用者設定中心 • 佈景 / FPS / 解析度 / 效能 / RGB / 驗證 / 維修。\nRegression：OFF / LOCKED；CNC 安全核心：ON / LOCKED；變更需使用者明確允許。"
             setTextColor(StudioProductionTheme.text)
             textSize=12.5f
             setPadding(dp(4),dp(4),dp(4),dp(10))
@@ -1982,6 +1982,14 @@ class MainActivity : Activity() {
         }
         action("佈景主題 / UI 套裝"){ showThemePackDialog() }
         action("FPS / 解析度 / 效能 / RGB"){ showEnvironmentSettings() }
+        action("Regression • OFF（鎖定）"){
+            AlertDialog.Builder(this)
+                .setTitle("Regression 設定")
+                .setMessage("Regression 執行目前為 OFF / LOCKED。\n沒有使用者明確允許，不提供重新啟用入口。")
+                .setPositiveButton("關閉",null)
+                .show()
+        }
+        action("CNC 安全設定（核心 ON）"){ openCategory("安全"){showSecurityBranch()} }
         action("驗證中心"){ showManualRegressionCenter() }
         action("AI / 更新設定"){ showAiSystemSuiteDialog() }
         action("工作 / 維修"){ showMaintenanceCenter() }
