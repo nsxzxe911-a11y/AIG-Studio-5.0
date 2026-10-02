@@ -89,7 +89,7 @@ data class AnimationToggles(
 )
 
 data class RuntimeEnvironmentSettings(
-    val fpsMode:FpsMode=FpsMode.AUTO,
+    val fpsMode:FpsMode=FpsMode.FPS_60,
     val maxFps:Int=120,
     val rgbBrightness:Int=65,
     val glowLevel:GlowLevel=GlowLevel.MEDIUM,
