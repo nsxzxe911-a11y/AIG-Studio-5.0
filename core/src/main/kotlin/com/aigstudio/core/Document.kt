@@ -594,6 +594,56 @@ object CadSelectionEngine {
         CadSemanticIdentity.selectionIds(doc,entity)
 }
 
+data class RectDrivenSize(val width:Double,val height:Double)
+
+object RectDimensionDriveEngine {
+    private fun rectLines(doc:DrawingDocument,ids:Collection<EntityId>):List<Line> {
+        val unique=ids.distinct()
+        require(unique.size==4) { "RECT dimension requires one complete rectangle" }
+        val lines=unique.map { id -> doc.get(id) as? Line ?: error("RECT dimension requires LINE members") }
+        val roots=lines.map { it.id.substringBeforeLast(':') }.toSet()
+        require(roots.size==1 && lines.all { it.id.startsWith("RECT:") }) { "RECT semantic group is incomplete" }
+        require(lines.all { line ->
+            val dx=abs(line.b.x-line.a.x)
+            val dy=abs(line.b.y-line.a.y)
+            (dx<=EPS && dy>=CNC_RESOLUTION_MM) || (dy<=EPS && dx>=CNC_RESOLUTION_MM)
+        }) { "RECT dimension supports axis-aligned rectangles only; rotate back to 0/90° first" }
+        val suffixes=lines.map { it.id.substringAfterLast(':') }.toSet()
+        require(suffixes==setOf("0","1","2","3")) { "RECT semantic edge IDs are incomplete" }
+        return lines
+    }
+
+    fun current(doc:DrawingDocument,ids:Collection<EntityId>):RectDrivenSize {
+        val lines=rectLines(doc,ids)
+        val points=lines.flatMap { listOf(it.a,it.b) }
+        val width=points.maxOf{it.x}-points.minOf{it.x}
+        val height=points.maxOf{it.y}-points.minOf{it.y}
+        require(width>=CNC_RESOLUTION_MM && height>=CNC_RESOLUTION_MM) { "RECT dimension is below 0.001 mm" }
+        return RectDrivenSize(width,height)
+    }
+
+    fun command(doc:DrawingDocument,ids:Collection<EntityId>,width:Double,height:Double):Command {
+        require(width.isFinite() && height.isFinite() &&
+            width>=CNC_RESOLUTION_MM && height>=CNC_RESOLUTION_MM) {
+            "RECT width/height must be finite and >= 0.001 mm"
+        }
+        val before=rectLines(doc,ids)
+        val points=before.flatMap { listOf(it.a,it.b) }
+        val cx=(points.minOf{it.x}+points.maxOf{it.x})/2.0
+        val cy=(points.minOf{it.y}+points.maxOf{it.y})/2.0
+        val minX=cx-width/2.0; val maxX=cx+width/2.0
+        val minY=cy-height/2.0; val maxY=cy+height/2.0
+        val bySuffix=before.associateBy { it.id.substringAfterLast(':') }
+        val after=listOf(
+            Line(id=bySuffix.getValue("0").id,a=Vec2(minX,minY),b=Vec2(maxX,minY)),
+            Line(id=bySuffix.getValue("1").id,a=Vec2(maxX,minY),b=Vec2(maxX,maxY)),
+            Line(id=bySuffix.getValue("2").id,a=Vec2(maxX,maxY),b=Vec2(minX,maxY)),
+            Line(id=bySuffix.getValue("3").id,a=Vec2(minX,maxY),b=Vec2(minX,minY))
+        )
+        return ReplaceEntitiesCommand(before,after)
+    }
+}
+
 enum class DrivenDimensionKind { LENGTH, DIAMETER, RADIUS }
 
 object DimensionDriveEngine {

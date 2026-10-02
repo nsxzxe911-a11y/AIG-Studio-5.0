@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "323.0.0",
+  "version": "324.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 323. CAD interaction parity repaired: empty-workspace tap/click clears stale selection, and OFFSET/ARRAY select generated geometry on both Android and Windows. Continue CAD control-point and dimension consistency before CAM work.",
-  "note": "Studio 323 CAD repair: selection lifecycle and generated-geometry selection are aligned across Android/Windows. COPY/OFFSET/ARRAY now continue editing on the newly created geometry. No APK/EXE launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 324. CAD dimension repair now treats semantic RECT as one object with width+height while preserving center; non-RECT driven dimensions require exactly one geometry. Continue control-point/group semantics before CAM.",
+  "note": "Studio 324: fixed RECT driven-dimension corruption risk. Axis-aligned semantic RECT groups resize by W/H as a group, retain RECT IDs and center, and reject arbitrary-angle groups instead of silently deforming them. Regression source coverage added; no APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -363,5 +363,13 @@
     "center_control_point_edit": true,
     "snap_modes": "END/MID/CENTER/INTERSECTION/TANGENT/H/V",
     "topology_connect_disconnect": "NON_DESTRUCTIVE"
+  },
+  "cad_dimension_324": {
+    "semantic_rect_width_height": true,
+    "preserve_rect_center": true,
+    "preserve_rect_group_ids": true,
+    "rotated_non_axis_rect": "BLOCK",
+    "non_rect_multi_select_dimension": "BLOCK",
+    "min_dimension_mm": 0.001
   }
 }

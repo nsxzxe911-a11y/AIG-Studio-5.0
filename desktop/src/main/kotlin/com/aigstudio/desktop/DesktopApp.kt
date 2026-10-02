@@ -795,13 +795,57 @@ private class CadPanel(
         status("ARRAY PASS • generated selected="+selectedIds.size+" • CAM/SIM/NC REBUILD")
     }.onFailure { status("ARRAY BLOCKED • "+(it.message?:"error")) }
 
-    fun selectedDimensionValue():Double? =
-        selectedIds.firstOrNull()?.let(doc::get)?.let { DimensionDriveEngine.currentValue(it) }
-
-    fun driveDimension(value:Double) = runCatching {
-        val id=selectedIds.firstOrNull() ?: error("DIM requires selected geometry")
-        applyGeometry("DIM",DimensionDriveEngine.command(doc,id,value))
-    }.onFailure { status("DIM BLOCKED • "+(it.message?:"error")) }
+    fun promptDrivenDimension() {
+        if(selectedIds.isEmpty()) {
+            status("DIM BLOCKED • select geometry first")
+            return
+        }
+        val selected=selectedIds.mapNotNull(doc::get)
+        val isRectGroup=selected.size==4 &&
+            selected.all { CadSemanticIdentity.semanticKind(it)=="RECT" } &&
+            selected.map { it.id.substringBeforeLast(':') }.toSet().size==1
+        if(isRectGroup) {
+            val current=runCatching { RectDimensionDriveEngine.current(doc,selectedIds) }
+                .getOrElse { status("RECT DIM BLOCKED • "+(it.message?:"error"));return }
+            val panel=JPanel(GridLayout(0,2,6,6))
+            val width=JTextField(DisplayFormat.mm(current.width),10)
+            val height=JTextField(DisplayFormat.mm(current.height),10)
+            panel.add(JLabel("寬 W mm"));panel.add(width)
+            panel.add(JLabel("高 H mm"));panel.add(height)
+            if(JOptionPane.showConfirmDialog(
+                    this,panel,"RECT 尺寸驅動 • 保持中心",JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE
+                )==JOptionPane.OK_OPTION) {
+                val w=width.text.trim().toDoubleOrNull()
+                val h=height.text.trim().toDoubleOrNull()
+                if(w==null || h==null) {
+                    status("RECT DIM BLOCKED • invalid W/H")
+                } else runCatching {
+                    applyGeometry("RECT DIM",RectDimensionDriveEngine.command(doc,selectedIds,w,h))
+                }.onSuccess {
+                    status("RECT DIM PASS • W="+DisplayFormat.mm(w)+" H="+DisplayFormat.mm(h)+" • CAM/SIM/NC REBUILD")
+                }.onFailure { status("RECT DIM BLOCKED • "+(it.message?:"error")) }
+            }
+            return
+        }
+        if(selectedIds.size!=1) {
+            status("DIM BLOCKED • non-RECT dimension requires exactly one selected geometry")
+            return
+        }
+        val id=selectedIds.first()
+        val entity=doc.get(id) ?: return
+        val kind=DimensionDriveEngine.defaultKind(entity)
+        val current=DimensionDriveEngine.currentValue(entity,kind)
+        val input=JTextField(DisplayFormat.mm(current),10)
+        if(JOptionPane.showConfirmDialog(
+                this,input,"尺寸驅動 • "+kind.name,JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE
+            )==JOptionPane.OK_OPTION) {
+            val value=input.text.trim().toDoubleOrNull()
+            if(value==null) status("DIM BLOCKED • invalid value")
+            else runCatching { applyGeometry("DIM",DimensionDriveEngine.command(doc,id,value,kind)) }
+                .onSuccess { status("DIM PASS • "+kind.name+"="+DisplayFormat.mm(value)+" • CAM/SIM/NC REBUILD") }
+                .onFailure { status("DIM BLOCKED • "+(it.message?:"error")) }
+        }
+    }
 
     fun connectSelected() = runCatching {
         history.run(CadEditEngine.connectCommand(doc,selectedIds,JOIN_TOLERANCE_MM))
@@ -4445,7 +4489,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     })
     viewTools.add(Box.createVerticalStrut(8))
     viewTools.add(button("尺寸驅動",Color(245,158,11)) {
-        askSingle("尺寸驅動 mm",cad.selectedDimensionValue()?.let(DisplayFormat::mm)?:"10.000",cad::driveDimension)
+        cad.promptDrivenDimension()
     })
 
     drawTools.add(button("線", Color(61, 235, 255)) { cad.mode = DrawMode.LINE; status.text = "LINE" })

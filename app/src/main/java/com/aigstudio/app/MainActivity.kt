@@ -6015,12 +6015,61 @@ class CadView(
     }
 
     fun promptDrivenDimension() {
-        val id=selectedIds.firstOrNull()
-        val entity=id?.let(doc::get)
-        if(entity==null){Toast.makeText(context,"尺寸驅動：請先選取幾何",Toast.LENGTH_SHORT).show();return}
+        if(selectedIds.isEmpty()) {
+            Toast.makeText(context,"尺寸驅動：請先選取幾何",Toast.LENGTH_SHORT).show()
+            return
+        }
+        val selected=selectedIds.mapNotNull(doc::get)
+        val isRectGroup=selected.size==4 &&
+            selected.all { CadSemanticIdentity.semanticKind(it)=="RECT" } &&
+            selected.map { it.id.substringBeforeLast(':') }.toSet().size==1
+        if(isRectGroup) {
+            val current=runCatching { RectDimensionDriveEngine.current(doc,selectedIds) }
+                .getOrElse {
+                    Toast.makeText(context,"RECT DIM BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()
+                    return
+                }
+            val box=LinearLayout(context).apply {
+                orientation=LinearLayout.VERTICAL
+                setPadding(24,12,24,4)
+            }
+            fun field(label:String,value:String)=EditText(context).apply {
+                hint=label
+                setText(value)
+                inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+                box.addView(this)
+            }
+            val width=field("寬 W mm",DisplayFormat.mm(current.width))
+            val height=field("高 H mm",DisplayFormat.mm(current.height))
+            AlertDialog.Builder(context)
+                .setTitle("RECT 尺寸驅動 • 保持中心")
+                .setView(box)
+                .setPositiveButton("套用"){_,_->
+                    val w=width.text.toString().toDoubleOrNull()
+                    val h=height.text.toString().toDoubleOrNull()
+                    if(w==null || h==null) {
+                        Toast.makeText(context,"RECT DIM BLOCKED：W/H 格式錯誤",Toast.LENGTH_SHORT).show()
+                    } else runCatching {
+                        runGeometryCommand(RectDimensionDriveEngine.command(doc,selectedIds,w,h))
+                    }.onSuccess {
+                        Toast.makeText(context,"RECT DIM PASS • W="+DisplayFormat.mm(w)+" H="+DisplayFormat.mm(h),Toast.LENGTH_SHORT).show()
+                    }.onFailure {
+                        Toast.makeText(context,"RECT DIM BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setNegativeButton("取消",null)
+                .show()
+            return
+        }
+        if(selectedIds.size!=1) {
+            Toast.makeText(context,"DIM BLOCKED：非 RECT 尺寸一次只能選 1 個幾何",Toast.LENGTH_SHORT).show()
+            return
+        }
+        val id=selectedIds.first()
+        val entity=doc.get(id) ?: return
         val kind=DimensionDriveEngine.defaultKind(entity)
         val current=DimensionDriveEngine.currentValue(entity,kind)
-        val input=EditText(context).apply{
+        val input=EditText(context).apply {
             setText(DisplayFormat.mm(current))
             inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
@@ -6031,6 +6080,7 @@ class CadView(
                 val value=input.text.toString().toDoubleOrNull()
                 if(value==null) Toast.makeText(context,"DIM BLOCKED：格式錯誤",Toast.LENGTH_SHORT).show()
                 else runCatching { runGeometryCommand(DimensionDriveEngine.command(doc,id,value,kind)) }
+                    .onSuccess { Toast.makeText(context,"DIM PASS • "+kind.name+"="+DisplayFormat.mm(value),Toast.LENGTH_SHORT).show() }
                     .onFailure { Toast.makeText(context,"DIM BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
             }
             .setNegativeButton("取消",null)
