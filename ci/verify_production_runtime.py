@@ -32,6 +32,8 @@ secure_services = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" 
 machining3d_core = (ROOT / "core" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "core" / "Machining3D.kt").read_text(encoding="utf-8")
 machining3d_android = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" / "app" / "Machining3DView.kt").read_text(encoding="utf-8")
 core_regression = (ROOT / "core" / "src" / "test" / "kotlin" / "com" / "aigstudio" / "core" / "CoreRegressionTest.kt").read_text(encoding="utf-8")
+cam_core = (ROOT / "core" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "core" / "Cam.kt").read_text(encoding="utf-8")
+fanuc_nc = (ROOT / "core" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "core" / "FanucNc.kt").read_text(encoding="utf-8")
 
 required_android = [
     "StudioStartupBootGuard.begin(this)",
@@ -175,6 +177,27 @@ for marker in [
     if marker not in core_regression:
         raise SystemExit(f"6AX ABC regression marker missing: {marker}")
 print("SIX_AXIS_TRUE_ABC_GATE_PASS|CORE|ANDROID|WINDOWS|ROTARY_C|MATERIAL_POSTURE|MACHINE_MODEL|REGRESSION_SOURCE|NC_STILL_INTERLOCKED")
+for marker in [
+    'val axisC: Double',
+    'fun atABC(progress:Double):Triple<Double,Double,Double>',
+    'axisSchedule?.atABC(progress)',
+    'axisC=orientation.third',
+]:
+    if marker not in cam_core:
+        raise SystemExit(f"continuous 6AX CAM marker missing: {marker}")
+for marker in [
+    'a.axisC+(b.axisC-a.axisC)*t',
+    'moves.any{abs(it.axisC)>EPS} -> "6AX"',
+    'val requestedC=axisCOverride ?: live?.axisC ?: 0.0',
+]:
+    if marker not in machining3d_core:
+        raise SystemExit(f"continuous 6AX SIM marker missing: {marker}")
+if '6AX_C_AXIS_NC_POST_BLOCKED' not in fanuc_nc:
+    raise SystemExit("6AX C-axis NC fail-closed marker missing")
+if 'CONTINUOUS_6AX_CAM_SIM_GATE_PASS' not in core_regression:
+    raise SystemExit("continuous 6AX regression marker missing")
+print("CONTINUOUS_6AX_PRODUCTION_GATE_PASS|ABC_TOOLPOINTS|SIM|ROTARY_C|NC_C_FAIL_CLOSED")
+
 
 
 for marker in [
