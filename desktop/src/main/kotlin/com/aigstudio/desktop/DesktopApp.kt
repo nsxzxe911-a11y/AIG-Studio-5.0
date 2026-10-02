@@ -3205,7 +3205,6 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     frame.addWindowListener(object:java.awt.event.WindowAdapter(){
         override fun windowClosed(e:java.awt.event.WindowEvent?) {
             sharedSyncTimer?.stop()
-            productionRecoveryTimer.stop()
             sharedSyncRunning.set(false)
             sharedSyncExecutor.shutdownNow()
         }
@@ -3529,6 +3528,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             status.text="AUTO SAVE WARNING • "+(it.message?:"error")+" • RUNTIME CONTINUES"
         }
     }.apply{isRepeats=true;start()}
+    frame.addWindowListener(object:java.awt.event.WindowAdapter(){
+        override fun windowClosed(e:java.awt.event.WindowEvent?){ productionRecoveryTimer.stop() }
+    })
 
     fun showProductionFixtureEditor(){
         val model=DefaultListModel<String>()
