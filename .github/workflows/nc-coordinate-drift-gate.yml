@@ -1,20 +1,6 @@
 name: Studio NC Coordinate Drift Gate
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'core/src/main/kotlin/com/aigstudio/core/FanucNc.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/Cam.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/Geometry.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/Machining3D.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/Document.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/Transform.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/ProjectRepository.kt'
-      - 'core/src/test/**'
-      - 'app/src/main/java/com/aigstudio/app/MainActivity.kt'
-      - 'desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'
-      - '.github/workflows/nc-coordinate-drift-gate.yml'
   workflow_dispatch:
 
 permissions:
