@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "310.0.0",
+  "version": "311.0.0",
   "branch": "main",
-  "recorded_source_head": "c7133e38fdeb799e964703dba810175327556398",
+  "recorded_source_head": "a6498549f0413bd2fb10bb0c612fbb1514004110",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 310. Windows Settings Center action duplication is removed and maintenance access is restored without local-function forward-reference risk. Next evidence step remains manual APK/EXE build and Production Runtime launch capture when an execution host is available.",
-  "note": "Studio 310 source checkpoint: Windows Settings Center no longer contains duplicate regression or self-recursive settings actions; 工作 / 維修 is restored through a deferred callback bridge after maintenance initialization; CAD / AI direct actions remain available. Automatic push/schedule regression stays disabled. No latest APK/EXE/device PASS or Runtime screenshot is claimed.",
+  "next_action": "Continue forward-only from Studio 311. Windows Settings Center now exposes Auto/30/60/90/120 FPS with safe 60 FPS default and device-clamped effective rate; RGB selected animation timer binds to the chosen effective FPS. Next proof remains manual Windows build/launch and screenshot capture when an execution host is online.",
+  "note": "Studio 311 source checkpoint: Windows FPS is now a real persisted user setting (Auto/30/60/90/120), safe default 60, clamped to detected display capability. RGB selected repaint cadence and animation target use the effective setting. No EXE/APK/device PASS or Runtime screenshot claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -226,7 +226,7 @@
     "app/src/main/assets/aig-generated-rgb/approved/184/tool_group.png"
   ],
   "manual_only_checkpoint": {
-    "source_head": "c7133e38fdeb799e964703dba810175327556398",
+    "source_head": "a6498549f0413bd2fb10bb0c612fbb1514004110",
     "automatic_push_triggers": 0,
     "automatic_schedule_triggers": 0,
     "one_key_multifunction": "IMPLEMENTED_ANDROID_WINDOWS",
@@ -242,7 +242,8 @@
     "regression_hub": "SINGLE_MANUAL_ENTRY",
     "all_embedded_themes_user_selectable": true,
     "binary_device_release_proof": "NOT_CLAIMED",
-    "desktop_settings_action_integrity": "DEDUPED_MAINTENANCE_RESTORED"
+    "desktop_settings_action_integrity": "DEDUPED_MAINTENANCE_RESTORED",
+    "windows_fps_runtime": "AUTO_30_60_90_120_SAFE60_DEVICE_CLAMPED"
   },
   "user_settings_center": {
     "status": "SOURCE_IMPLEMENTED",
@@ -263,6 +264,15 @@
     "regression_entry": "SINGLE_MANUAL_OPTION",
     "automatic_regression_triggers": false,
     "cnc_safety_integrity_disable_allowed": false,
-    "windows_action_integrity": "REGRESSION_SINGLE_MAINT_RESTORED_NO_SELF_RECURSION"
+    "windows_action_integrity": "REGRESSION_SINGLE_MAINT_RESTORED_NO_SELF_RECURSION",
+    "windows_refresh_selection": [
+      30,
+      60,
+      90,
+      120
+    ],
+    "windows_refresh_auto": true,
+    "windows_default_hz": 60,
+    "windows_effective_rate": "DEVICE_CLAMPED"
   }
 }

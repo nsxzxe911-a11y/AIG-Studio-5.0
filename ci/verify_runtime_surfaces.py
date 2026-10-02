@@ -1970,3 +1970,19 @@ if 'action("設定中心"){showUserSettingsCenter()}' in desktop_310:
     raise SystemExit("BLOCKED STUDIO_310_WINDOWS_SETTINGS_RECURSIVE_ENTRY")
 print("STUDIO_SETTINGS_ACTION_INTEGRITY_GATE_PASS|310|WINDOWS|REGRESSION_SINGLE|MAINT_RESTORED|NO_SELF_RECURSION|AI_DIRECT")
 
+# Studio 311 Windows user-selectable FPS binding
+desktop_311 = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
+for needle in (
+    'private object StudioDesktopRefreshSettings',
+    'private val supported=listOf("Auto","120 FPS","90 FPS","60 FPS","30 FPS")',
+    'prefs.get("fps_mode","60 FPS")',
+    'fun targetFps():Int = min(requestedFps(),displayBucket()).coerceIn(30,120)',
+    'Timer(StudioDesktopRefreshSettings.timerDelayMs())',
+    'pulseTimer.delay=StudioDesktopRefreshSettings.timerDelayMs()',
+    'val targetFps=StudioDesktopRefreshSettings.targetFps()',
+    'val fpsChoice=JComboBox(StudioDesktopRefreshSettings.modes().toTypedArray())',
+    'action("套用 FPS")',
+):
+    require(desktop_311, needle, "STUDIO_311_WINDOWS_FPS_SETTINGS")
+print("STUDIO_WINDOWS_FPS_RUNTIME_GATE_PASS|311|AUTO|30|60|90|120|SAFE_DEFAULT_60|DEVICE_CLAMPED|RGB_SELECTED_TIMER_BOUND")
+

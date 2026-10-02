@@ -203,11 +203,15 @@ private class CadToolGrid : JPanel(FlowLayout(FlowLayout.LEFT,8,8)) {
 private class GlassActionButton(label: String, accentInput: Color) : JButton(label) {
     private val actionLabel=label
     private val accent=Color(RenderColorCompatibility.harmonizeNearestSemantic(accentInput.rgb),true)
-    private val pulseTimer=Timer(90) { if(active && isShowing) repaint() }.apply { isRepeats=true }
+    private val pulseTimer=Timer(StudioDesktopRefreshSettings.timerDelayMs()) { if(active && isShowing) repaint() }.apply { isRepeats=true }
     var active = false
         set(value) {
             field = value
-            if(value) pulseTimer.start() else pulseTimer.stop()
+            if(value) {
+                pulseTimer.delay=StudioDesktopRefreshSettings.timerDelayMs()
+                pulseTimer.initialDelay=pulseTimer.delay
+                pulseTimer.start()
+            } else pulseTimer.stop()
             repaint()
         }
     init {
@@ -243,7 +247,7 @@ private class GlassActionButton(label: String, accentInput: Color) : JButton(lab
         val rawHz=runCatching { GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.displayMode.refreshRate }.getOrDefault(60)
         val renderProfile=RenderCompatibilityContract.profile(screen.width,screen.height,if(rawHz>0)rawHz.toDouble() else 60.0)
         val depthScale=RgbButtonVisualContract.depthScale(renderProfile.tier)
-        val targetFps=RenderCompatibilityContract.refreshBucket(if(rawHz>0)rawHz.toDouble() else 60.0)
+        val targetFps=StudioDesktopRefreshSettings.targetFps()
         val periodNs=RenderColorCompatibility.animationPeriodMs(targetFps)*1_000_000L
         val phase01=(System.nanoTime()%periodNs).toDouble()/periodNs.toDouble()
         val pulse=if(active) RenderColorCompatibility.pulseMultiplier(phase01) else 1.0
@@ -352,6 +356,36 @@ private object StudioDesktopProductionTheme {
         require(packs.containsKey(id)){"Unknown theme pack: $id"}
         activeId=id
         prefs.put("theme_id",id)
+    }
+}
+
+
+private object StudioDesktopRefreshSettings {
+    private val prefs=java.util.prefs.Preferences.userRoot().node("aigstudio/runtime")
+    private val supported=listOf("Auto","120 FPS","90 FPS","60 FPS","30 FPS")
+    @Volatile private var selected=prefs.get("fps_mode","60 FPS").takeIf{supported.contains(it)} ?: "60 FPS"
+    fun modes():List<String> = supported
+    fun mode():String = selected
+    private fun displayBucket():Int {
+        val rawHz=runCatching {
+            GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.displayMode.refreshRate
+        }.getOrDefault(60)
+        return RenderCompatibilityContract.refreshBucket(if(rawHz>0)rawHz.toDouble() else 60.0)
+    }
+    fun requestedFps():Int = when(selected) {
+        "120 FPS" -> 120
+        "90 FPS" -> 90
+        "30 FPS" -> 30
+        "Auto" -> displayBucket()
+        else -> 60
+    }
+    fun targetFps():Int = min(requestedFps(),displayBucket()).coerceIn(30,120)
+    fun timerDelayMs():Int = (1000.0/targetFps().toDouble()).roundToInt().coerceIn(8,34)
+    @Synchronized fun select(mode:String) {
+        require(supported.contains(mode)){"Unsupported desktop FPS mode: $mode"}
+        selected=mode
+        prefs.put("fps_mode",mode)
+        runCatching{prefs.flush()}
     }
 }
 
@@ -4240,6 +4274,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         val names=StudioDesktopProductionTheme.ids().map{StudioDesktopProductionTheme.name(it)}.toTypedArray()
         val currentIndex=StudioDesktopProductionTheme.ids().indexOf(StudioDesktopProductionTheme.ID).coerceAtLeast(0)
         val themeChoice=JComboBox(names).apply{selectedIndex=currentIndex}
+        val fpsChoice=JComboBox(StudioDesktopRefreshSettings.modes().toTypedArray()).apply{
+            selectedItem=StudioDesktopRefreshSettings.mode()
+        }
         val actions=JPanel(GridLayout(0,2,6,6)).apply{background=StudioDesktopProductionTheme.background}
         fun action(label:String,run:()->Unit){
             actions.add(GlassActionButton(label,StudioDesktopProductionTheme.accent).apply{addActionListener{run()}})
@@ -4250,6 +4287,12 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             status.text="THEME SAVED • "+StudioDesktopProductionTheme.name(id)+" • 重新開啟視窗完整套用"
             frame.repaint()
         }
+        action("套用 FPS"){
+            val mode=fpsChoice.selectedItem?.toString() ?: "60 FPS"
+            StudioDesktopRefreshSettings.select(mode)
+            status.text="FPS SAVED • "+mode+" • EFFECTIVE "+StudioDesktopRefreshSettings.targetFps()+" FPS • SAFE DEFAULT 60"
+            frame.repaint()
+        }
         action("回歸 / 驗證"){showManualRegressionCenter()}
         action("座標 / 精度"){showDesktopCoordinatePrecisionDialog(frame,status)}
         action("工作 / 維修"){maintenanceCenterAction?.invoke() ?: run { status.text="SETTINGS • MAINTENANCE INITIALIZING" }}
@@ -4258,10 +4301,14 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         val panel=JPanel(BorderLayout(8,8)).apply{
             background=StudioDesktopProductionTheme.background
             border=BorderFactory.createEmptyBorder(10,10,10,10)
-            add(JPanel(BorderLayout(6,6)).apply{
+            add(JPanel(GridLayout(0,2,6,6)).apply{
                 background=StudioDesktopProductionTheme.background
-                add(JLabel("佈景主題").apply{foreground=StudioDesktopProductionTheme.text},BorderLayout.WEST)
-                add(themeChoice,BorderLayout.CENTER)
+                add(JLabel("佈景主題").apply{foreground=StudioDesktopProductionTheme.text})
+                add(themeChoice)
+                add(JLabel("FPS 模式").apply{foreground=StudioDesktopProductionTheme.text})
+                add(fpsChoice)
+                add(JLabel("目前有效").apply{foreground=StudioDesktopProductionTheme.text})
+                add(JLabel(StudioDesktopRefreshSettings.targetFps().toString()+" FPS").apply{foreground=StudioDesktopProductionTheme.text})
             },BorderLayout.NORTH)
             add(actions,BorderLayout.CENTER)
         }
