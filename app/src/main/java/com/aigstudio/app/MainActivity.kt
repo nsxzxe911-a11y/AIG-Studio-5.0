@@ -3069,9 +3069,7 @@ class MainActivity : Activity() {
         action("偏置",LibraryFiveAxisSkin208.warning) { showWorkOffsetDialog() }
         action("3D",0xFF22C55E.toInt()) { showMachining3D() }
         action("NC",0xFF3B82F6.toInt()) {
-            if(camDerivedStale) {
-                Toast.makeText(this,"NC BLOCKED • CAM STALE • 請先按「重算」",Toast.LENGTH_LONG).show()
-            } else showNcEditDialog()
+            showNcEditDialog()
         }
         action("←",0xFF7894A8.toInt()) { dialog.dismiss() }
         root.addView(actions,LinearLayout.LayoutParams(-1,-2))
@@ -3468,9 +3466,12 @@ class MainActivity : Activity() {
     }
 
     private fun showUnifiedMachiningWorkspace(initialMode:String) {
-        if(camDerivedStale || camDerivedCache==null) {
-            Toast.makeText(this,"SIM / 3AX / 4AX / 5AX BLOCKED • CAM STALE • 請先按 CAM「重算」",Toast.LENGTH_LONG).show()
+        if(camDerivedCache==null) {
+            Toast.makeText(this,"尚無 CAM 刀路資料 • 可直接使用 CAD / CAM / NC EDIT；建立刀路後顯示真 3D/SIM",Toast.LENGTH_LONG).show()
             return
+        }
+        if(camDerivedStale) {
+            Toast.makeText(this,"CAM STALE • 顯示最後一次真實預覽 • 按「重算」後更新",Toast.LENGTH_SHORT).show()
         }
         val result=camDerivedCache ?: return
         val generatedNc=unifiedNcDraft.orEmpty()
@@ -4532,9 +4533,47 @@ class MainActivity : Activity() {
             .show()
     }
 
+    private fun showNcDraftOnlyDialog(reason:String) {
+        val editor=EditText(this).apply {
+            setText(unifiedNcDraft.orEmpty())
+            setTextColor(Color.rgb(225,240,255))
+            setBackgroundColor(Color.rgb(5,12,20))
+            textSize=13f
+            gravity=Gravity.TOP or Gravity.START
+            minLines=18
+            inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            isVerticalScrollBarEnabled=true
+            isHorizontalScrollBarEnabled=true
+            setHorizontallyScrolling(true)
+            setPadding(dp(12),dp(10),dp(12),dp(10))
+        }
+        val box=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(10),dp(8),dp(10),dp(6))
+            addView(TextView(this@MainActivity).apply {
+                text="NC EDIT • 編輯不鎖定 • "+reason+"\n目前僅限制產生/送機驗證，不限制手動編輯。"
+                setTextColor(Color.rgb(255,210,90))
+                textSize=11f
+                setPadding(dp(2),dp(4),dp(2),dp(8))
+            })
+            addView(editor,LinearLayout.LayoutParams(-1,dp(420)))
+        }
+        AlertDialog.Builder(this)
+            .setTitle("AIG CNC NC EDIT • 草稿")
+            .setView(box)
+            .setPositiveButton("儲存") { _, _ ->
+                unifiedNcDraft=editor.text.toString()
+                unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
+                unifiedNcDraftStale=true
+                Toast.makeText(this,"NC DRAFT SAVED • 編輯完成 • 產生/送機前再驗證",Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("關閉",null)
+            .show()
+    }
+
     private fun showNcEditDialog() {
         if(camDerivedStale || camDerivedCache==null) {
-            Toast.makeText(this,"NC BLOCKED • CAM STALE • 請先在 CAM 按「重算」",Toast.LENGTH_LONG).show()
+            showNcDraftOnlyDialog(if(camDerivedCache==null) "尚無 CAM 刀路來源" else "CAM STALE • 使用草稿模式")
             return
         }
         val derived=camDerivedCache ?: return
@@ -4542,12 +4581,7 @@ class MainActivity : Activity() {
         val stock=derived.stock
         val risk = MachiningRiskScanner.inspect(cam, stock, derived.fixtures, derived.toolAssembly)
         if(!risk.ok) {
-            Toast.makeText(
-                this,
-                "NC BLOCKED • MODELED COLLISION="+risk.collisionCount+
-                    " • OVERCUT="+risk.overcutCount+" • 先修 CAM/SIM 再輸出",
-                Toast.LENGTH_LONG
-            ).show()
+            showNcDraftOnlyDialog("碰撞/過切警告 • COLLISION="+risk.collisionCount+" • OVERCUT="+risk.overcutCount)
             return
         }
         val baseNc = runCatching {
@@ -4831,9 +4865,12 @@ class MainActivity : Activity() {
     }
 
     private fun showMachining3D() {
-        if(camDerivedStale || camDerivedCache==null) {
-            Toast.makeText(this,"3D / SIM BLOCKED • CAM STALE • 請先在 CAM 按「重算」",Toast.LENGTH_LONG).show()
+        if(camDerivedCache==null) {
+            Toast.makeText(this,"尚無 CAM 刀路資料 • 建立刀路後顯示真 3D/SIM",Toast.LENGTH_LONG).show()
             return
+        }
+        if(camDerivedStale) {
+            Toast.makeText(this,"CAM STALE • 顯示最後一次真實 3D/SIM 預覽",Toast.LENGTH_SHORT).show()
         }
 
         runCatching {

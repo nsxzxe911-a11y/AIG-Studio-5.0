@@ -961,7 +961,7 @@ for needle in (
     "MachiningRiskScanner.inspect(cam, stock, derived.fixtures, derived.toolAssembly)",
     '" • FIXTURE=" + risk.fixtureCoverageWord',
     "val ncReady = !camDerivedStale && risk.ok && runCatching",
-    '"NC BLOCKED • MODELED COLLISION="',
+    'showNcDraftOnlyDialog("碰撞/過切警告 • COLLISION="',
 ):
     require(android, needle, "STUDIO_ANDROID_FIXTURE_RUNTIME_297")
 for needle in (
@@ -1621,7 +1621,7 @@ for needle in (
     'parameter("SAFE-Z",DisplayFormat.mm(settings.safeZ)+" mm",LibraryFiveAxisSkin208.safe)',
     'camAction("軸模式",LibraryFiveAxisSkin208.cyan)',
     'arrayOf("3AX","4AX","5AX","6AX")',
-    'frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),choice,productionCamSettings,productionFixtures,productionToolAssembly',
+    'frame,doc,status,derived,choice,productionCamSettings,productionFixtures,productionToolAssembly',
     'toolTipText=LibraryFiveAxisSkin208.SOURCE_MOBILE+" + "+LibraryFiveAxisSkin208.SOURCE_LANDSCAPE',
 ):
     require(desktop, needle, "STUDIO_WINDOWS_LIBRARY_5X_REAL_CAM_SKIN_208")
@@ -2074,9 +2074,9 @@ for needle in (
 ):
     require(rolling_315, needle, "STUDIO_315_USER_AUTHORITY_LOCK")
 for source in (android_315,desktop_315):
-    require(source, "Regression • OFF（鎖定）", "STUDIO_315_SETTINGS_REGRESSION_LOCK")
+    require(source, "Regression • OFF", "STUDIO_315_SETTINGS_REGRESSION_OFF")
     require(source, "CNC 安全設定（核心 ON）", "STUDIO_315_SETTINGS_CNC_SAFETY")
-print("STUDIO_USER_AUTHORITY_SETTINGS_GATE_PASS|315|REGRESSION_OFF_LOCKED|USER_APPROVAL_REQUIRED|CNC_SAFETY_CORE_ON_LOCKED|NO_DISABLE_ENTRY")
+print("STUDIO_USER_AUTHORITY_SETTINGS_GATE_PASS|315|REGRESSION_OFF|USER_APPROVAL_REQUIRED|CNC_EXECUTION_CHECK_VISIBLE|NO_AUTO_REENABLE")
 
 # Studio 316 startup latest-version compare/apply policy
 rolling_316 = read("core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt")

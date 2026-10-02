@@ -2653,6 +2653,40 @@ private fun fanucFromCam(cam: CamModel): String {
     return out.joinToString("\n")
 }
 
+private fun showNcDraftEditor(frame:JFrame, reason:String) {
+    val area=JTextArea(ncPostPrefs.get("manual_nc_draft", "")).apply {
+        background=Color(5,8,12)
+        foreground=Color(99,255,157)
+        font=Font(Font.MONOSPACED,Font.PLAIN,15)
+        lineWrap=false
+    }
+    val note=JLabel("NC EDIT • 編輯不鎖定 • "+reason+" • 產生/送機前再驗證").apply {
+        foreground=Color(255,210,90)
+    }
+    val root=JPanel(BorderLayout(6,6)).apply {
+        background=StudioDesktopProductionTheme.background
+        border=BorderFactory.createEmptyBorder(8,8,8,8)
+        add(note,BorderLayout.NORTH)
+        add(JScrollPane(area),BorderLayout.CENTER)
+        add(JPanel(FlowLayout(FlowLayout.RIGHT,6,4)).apply {
+            isOpaque=false
+            add(GlassActionButton("儲存草稿",Color(61,235,255)).apply {
+                addActionListener {
+                    ncPostPrefs.put("manual_nc_draft",area.text)
+                    note.text="NC DRAFT SAVED • 編輯完成 • 產生/送機前再驗證"
+                }
+            })
+        },BorderLayout.SOUTH)
+    }
+    JDialog(frame,"AIG CNC • NC EDIT • 草稿",false).apply {
+        contentPane=root
+        minimumSize=Dimension(760,560)
+        size=Dimension(980,700)
+        setLocationRelativeTo(frame)
+        isVisible=true
+    }
+}
+
 private fun showNcEditor(
     frame:JFrame,
     derived:Machining3DResult
@@ -2794,7 +2828,7 @@ private fun showNcEditor(
         toolTipText = "Fanuc D register 1..999"
     }
     val cutterDValue = JTextField(DisplayFormat.mm(cutterCompValueMm),7).apply {
-        toolTipText = "Expected D register value in mm; AIG stores/audits it, but G41/G42 machine output remains fail-closed until raw-contour simulation passes"
+        toolTipText = "Expected D register value in mm; AIG stores/audits it, but G41/G42 machine output remains 執行前確認 until raw-contour simulation passes"
     }
 
     fun refreshNcFromPostSelection() {
@@ -4128,7 +4162,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         controls.add(GlassActionButton("C0",Color(159,114,255)).apply{
             addActionListener{six=SixAxisRuntimeContract.state(six.axisA,six.axisB,0.0);refresh()}
         })
-        controls.add(GlassActionButton("NC LOCK",Color(255,70,95)).apply{isEnabled=false})
+        controls.add(GlassActionButton("NC EDIT",Color(80,170,255)).apply{addActionListener{showNcDraftEditor(frame,"6AX 預覽模式")}})
         val center=JPanel(BorderLayout(6,6)).apply{
             background=StudioDesktopProductionTheme.background
             add(machine,BorderLayout.CENTER)
@@ -4348,20 +4382,15 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 .onFailure{status.text="CAM RECALC BLOCKED • "+(it.message?:"error")}
         }
         camAction("3D SIM",LibraryFiveAxisSkin208.violet){
-            if(productionCamIsStale()){
-                status.text="3D SIM BLOCKED • CAM STALE • PRESS 重算"
-                return@camAction
-            }
+            if(productionCamIsStale()) status.text="3D SIM • CAM STALE • 顯示最後一次真實預覽 • 重算後更新"
+            val derived=productionCamDerivedCache
+            if(derived==null){status.text="3D SIM • 尚無刀路資料 • 先建立 CAM";return@camAction}
             runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"3D",productionCamSettings,productionFixtures,productionToolAssembly
-            )}
-                .onFailure{status.text="3D SIM BLOCKED • "+(it.message?:"error")}
+                frame,doc,status,derived,"3D",productionCamSettings,productionFixtures,productionToolAssembly
+            )}.onFailure{status.text="3D SIM • "+(it.message?:"error")}
         }
         camAction("軸模式",LibraryFiveAxisSkin208.cyan){
-            if(productionCamIsStale()){
-                status.text="AXIS SIM BLOCKED • CAM STALE • PRESS 重算"
-                return@camAction
-            }
+            if(productionCamIsStale()) status.text="AXIS SIM • CAM STALE • 顯示最後一次真實預覽 • 重算後更新"
             val choice=JOptionPane.showInputDialog(
                 frame,
                 "選擇 CAM / SIM 軸模式",
@@ -4373,21 +4402,24 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             ) as? String
             if(choice!=null){
                 if(choice=="6AX") showSixAxisRuntimeStage()
-                else runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),choice,productionCamSettings,productionFixtures,productionToolAssembly
-                )}
-                    .onFailure{status.text=choice+" BLOCKED • "+(it.message?:"error")}
+                else {
+                    val derived=productionCamDerivedCache
+                    if(derived==null) status.text=choice+" • 尚無刀路資料 • 先建立 CAM"
+                    else runCatching{showUnifiedMachiningEditor(
+                        frame,doc,status,derived,choice,productionCamSettings,productionFixtures,productionToolAssembly
+                    )}.onFailure{status.text=choice+" • "+(it.message?:"error")}
+                }
             }
         }
         camAction("NC",Color(80,170,255)){
-            if(productionCamIsStale()){
-                status.text="NC BLOCKED • CAM STALE • PRESS 重算"
-                return@camAction
+            val derived=productionCamDerivedCache
+            if(productionCamIsStale() || derived==null) {
+                showNcDraftEditor(frame,if(derived==null) "尚無 CAM 刀路來源" else "CAM STALE • 草稿模式")
+                status.text="NC EDIT • EDITABLE • 執行/POST 另行驗證"
+            } else {
+                runCatching{showNcEditor(frame,derived)}
+                    .onFailure{showNcDraftEditor(frame,"驗證警告 • "+(it.message?:"error"))}
             }
-            runCatching{showNcEditor(
-                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
-            )}
-                .onFailure{status.text="NC EDIT BLOCKED • "+(it.message?:"error")}
         }
         return JPanel(BorderLayout(7,7)).apply{
             name="CAM_CARD"
@@ -4472,7 +4504,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             status.text="FPS SAVED • "+mode+" • EFFECTIVE "+StudioDesktopRefreshSettings.targetFps()+" FPS • SAFE DEFAULT 60"
             frame.repaint()
         }
-        action("Regression • OFF（鎖定）"){
+        action("Regression • OFF"){
             JOptionPane.showMessageDialog(
                 frame,
                 "Regression 執行目前為 OFF / LOCKED。\n沒有使用者明確允許，不提供重新啟用入口。",
@@ -4545,7 +4577,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             )))
             add(statusGroup("NC / 安全",listOf(
                 Triple("NC-only 變更","G54/G90/G92/G41/G42 → 只 NC STALE • CAM/SIM 保持",StudioDesktopProductionTheme.text),
-                Triple("CNC 安全核心（鎖定｜固定：ON）","ON",StudioDesktopProductionTheme.warning)
+                Triple("CNC 執行檢查","ON",StudioDesktopProductionTheme.warning)
             )))
             add(statusGroup("更新 / 驗證",listOf(
                 Triple("版本更新","正常 • 背景比對 • NEWER ONLY",StudioDesktopProductionTheme.accent),
@@ -4651,7 +4683,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
             )}.onFailure{status.text="NC BLOCKED • "+(it.message?:"error")}}
                 item("AI"){mainCardLayout.show(mainCardHost,"AI");status.text="AI • PRODUCTION UI"}
-                item("工作/維修"){showMaintenanceCenter()}
+                item("設定/維護"){showMaintenanceCenter()}
                 item("設定中心"){showUserSettingsCenter()}
                 menu.show(this,0,height)
             }
@@ -4922,7 +4954,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     }
     val homeUtilities=JPanel(FlowLayout(FlowLayout.CENTER,10,8)).apply {
         isOpaque=false
-        add(homeLaunch("工作/維修",Color(139,92,246)){showMaintenanceCenter()}.apply{preferredSize=Dimension(150,54)})
+        add(homeLaunch("設定/維護",Color(139,92,246)){showMaintenanceCenter()}.apply{preferredSize=Dimension(150,54)})
         add(homeLaunch("設定",Color(39,233,255)){showUserSettingsCenter()}.apply{preferredSize=Dimension(120,54)})
         add(homeLaunch("專案",Color(125,112,255)){showProductionProjectManager()}.apply{preferredSize=Dimension(120,54)})
     }

@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "338.0.0",
+  "version": "339.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 338. Android and Windows Kotlin compile both pass with Gradle 9.7.0 / JDK 17 / Android API 36. Next exact-bind AIG-II to this compile-clean Studio checkpoint and continue device launch evidence separately.",
-  "note": "Studio 338 compile repair: enabled Android BuildConfig generation, restored ScrollView import, bound simulation rebuild to current CAD snapshot, fixed Windows productionUiButtons forward capture, and reused StudioDesktopOriginalVisuals for HOME. Android + Windows Kotlin compile BUILD SUCCESSFUL; APK/EXE device launch PASS is still separate.",
+  "next_action": "Continue forward-only from Studio 339. Production pages and NC editing are no longer engineering-locked by stale CAM/SIM; stale states are visible warnings and may show only the last real cached preview. Machine/post execution validation remains a separate pre-execution step.",
+  "note": "Studio 339 production interaction unlock: removed disabled NC LOCK UI, added always-available NC draft editor, changed stale CAM/SIM from page-navigation blockade to warning/last-real-preview behavior, nested maintenance under settings, and removed LOCKED/fail-closed engineering wording from primary Runtime UI. Android + Windows Kotlin compile PASS and full fast_review PASS before version bump.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -516,5 +516,14 @@
     "android_compile": "PASS",
     "windows_compile": "PASS",
     "device_launch_evidence": "PENDING"
+  },
+  "runtime_unlock_339": {
+    "navigation_locked_by_stale": false,
+    "nc_edit_always_available": true,
+    "stale_preview_policy": "LAST_REAL_PREVIEW_ONLY",
+    "fake_3d_on_missing_data": false,
+    "machine_execution_validation": "SEPARATE_PRE_EXECUTION_CHECK",
+    "android_compile": "PASS",
+    "windows_compile": "PASS"
   }
 }

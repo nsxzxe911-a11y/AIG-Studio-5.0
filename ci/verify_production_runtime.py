@@ -136,7 +136,7 @@ for marker in [
     'fun showSixAxisRuntimeStage()',
     'arrayOf("3AX","4AX","5AX","6AX")',
     '"6AX • XYZ + A/B/C 姿態驗證"',
-    'GlassActionButton("NC LOCK"',
+    'GlassActionButton("NC EDIT"',
     'private var machineModeOverride:String?=null',
     'require(normalized in setOf("3AX","4AX","5AX","6AX"))',
     'axisAOverride=machineModeOverride?.let{postureA} ?: live?.axisA',
@@ -229,7 +229,7 @@ for marker in [
     'contentDescription="CAM FIXTURE MODEL EDITOR"',
     'contentDescription="CAM COLLISION LOOKAHEAD"',
     'val ncReady = !camDerivedStale && risk.ok && runCatching',
-    '"NC BLOCKED • MODELED COLLISION="',
+    'showNcDraftOnlyDialog("碰撞/過切警告 • COLLISION="',
 ]:
     if marker not in android_main:
         raise SystemExit(f"Android fixture/NC-interlock marker missing: {marker}")
