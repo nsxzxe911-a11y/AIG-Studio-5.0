@@ -1405,12 +1405,17 @@ class MainActivity : Activity() {
             camSettings=working.camSettings
             axisA=working.axisA
             axisB=working.axisB
+            axisC=working.axisC
             machiningAxisMode=working.axisMode
+            camFixtures.clear();camFixtures.addAll(working.fixtures)
+            camToolAssembly=working.toolAssembly
+            nextCamFixtureId=(camFixtures.maxOfOrNull{it.id} ?: 0L)+1L
             unifiedNcDraft=working.ncText.takeIf { it.isNotBlank() }
             unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
             unifiedNcDraftStale=false
             val exported=cad.capturePortableProject(
-                camSettings,axisA,axisB,machiningAxisMode,unifiedNcDraft.orEmpty()
+                camSettings,axisA,axisB,machiningAxisMode,unifiedNcDraft.orEmpty(),
+                axisC,camFixtures,camToolAssembly
             ).copy(revisionMeta=working.revisionMeta)
             if(editRequested) {
                 StudioProjectRepository.saveRevisioned(exported,output,"ANDROID","EMULATOR")
@@ -1423,6 +1428,8 @@ class MainActivity : Activity() {
                 "PASS\nMASTER="+SoftwareCoordinateContract.masterOriginData()+
                     "\nDIGEST="+StudioProjectRepository.canonicalDigest(saved)+
                     "\nENTITIES="+saved.entities.size+
+                    "\nFIXTURES="+saved.fixtures.size+
+                    "\nAXIS_C="+DisplayFormat.mm(saved.axisC)+
                     "\nREVISION="+saved.revisionMeta.revision+
                     "\nBASE="+saved.revisionMeta.baseRevision+
                     "\nSOURCE="+saved.revisionMeta.sourcePlatform+
@@ -2679,6 +2686,7 @@ class MainActivity : Activity() {
             runCatching{
                 val f=buildFixture(nextCamFixtureId++)
                 camFixtures.add(f)
+                sharedLocalDirty.set(true)
                 refresh(camFixtures.lastIndex);load(camFixtures.lastIndex)
             }.onFailure{Toast.makeText(this,"FIXTURE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
         }
@@ -2688,6 +2696,7 @@ class MainActivity : Activity() {
             if(old==null) Toast.makeText(this,"尚無治具可更新",Toast.LENGTH_SHORT).show()
             else runCatching{
                 camFixtures[i]=buildFixture(old.id)
+                sharedLocalDirty.set(true)
                 refresh(i);load(i)
             }.onFailure{Toast.makeText(this,"FIXTURE UPDATE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
         }
@@ -2695,6 +2704,7 @@ class MainActivity : Activity() {
             val i=selector.selectedItemPosition
             if(i in camFixtures.indices) {
                 camFixtures.removeAt(i)
+                sharedLocalDirty.set(true)
                 refresh(i.coerceAtMost((camFixtures.size-1).coerceAtLeast(0)))
                 Toast.makeText(this,"FIXTURE REMOVED • 剩餘 "+camFixtures.size,Toast.LENGTH_SHORT).show()
             }
@@ -5068,8 +5078,14 @@ class CadView(
     }
 
     fun snapshot(): DrawingSnapshot = doc.snapshot()
-    fun capturePortableProject(settings:CamSettings,axisA:Double,axisB:Double,axisMode:String,ncText:String):StudioProjectPackage =
-        StudioProjectRepository.capture(doc,settings,axisA,axisB,axisMode,ncText)
+    fun capturePortableProject(
+        settings:CamSettings,axisA:Double,axisB:Double,axisMode:String,ncText:String,
+        axisC:Double=0.0,fixtures:List<FixtureObstacle> = emptyList(),
+        toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
+    ):StudioProjectPackage =
+        StudioProjectRepository.capture(
+            doc,settings,axisA,axisB,axisMode,ncText,axisC,fixtures,toolAssembly
+        )
     fun applyPortableProject(project:StudioProjectPackage) {
         StudioProjectRepository.applyTo(project,doc)
         firstPoint=null; arcCenter=null; arcStart=null; selectedIds.clear(); sceneRevision++; invalidate()
