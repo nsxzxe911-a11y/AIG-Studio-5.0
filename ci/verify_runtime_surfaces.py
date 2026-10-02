@@ -2078,3 +2078,33 @@ for source in (android_315,desktop_315):
     require(source, "CNC 安全設定（核心 ON）", "STUDIO_315_SETTINGS_CNC_SAFETY")
 print("STUDIO_USER_AUTHORITY_SETTINGS_GATE_PASS|315|REGRESSION_OFF_LOCKED|USER_APPROVAL_REQUIRED|CNC_SAFETY_CORE_ON_LOCKED|NO_DISABLE_ENTRY")
 
+# Studio 316 startup latest-version compare/apply policy
+rolling_316 = read("core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt")
+android_316 = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
+desktop_316 = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
+for needle in (
+    "STARTUP_VERSION_COMPARE_ENABLED=true",
+    "STARTUP_VERSION_COMPARE_AFTER_HOME_FIRST_FRAME=true",
+    "STARTUP_APPLY_ONLY_VERIFIED_NEWER=true",
+    "STARTUP_NETWORK_MAY_BLOCK_UI=false",
+    "STARTUP_OFFLINE_USES_INSTALLED_VERSION=true",
+    "STARTUP_BACKGROUND_DOWNLOAD_FOLLOWS_USER_SETTING=true",
+    "STARTUP_BINARY_INSTALL_REQUIRES_USER_CONFIRMATION=true",
+):
+    require(rolling_316, needle, "STUDIO_316_STARTUP_VERSION_POLICY")
+for needle in (
+    'renderNetworkState(true,"版本比對中 • v"+BuildConfig.VERSION_NAME)',
+    'autoDownload=updateConfig.autoDownload',
+    '"新版已驗證 • 待安裝"',
+    '"已是最新 • v"+BuildConfig.VERSION_NAME',
+    'action("啟動版本更新 • ON")',
+):
+    require(android_316, needle, "STUDIO_316_ANDROID_STARTUP_VERSION")
+for needle in (
+    'action("啟動版本更新 • ON")',
+    'ON • HOME FIRST • NEWER ONLY',
+    'STARTUP VERSION • HOME FIRST • VERIFIED NEWER ONLY',
+):
+    require(desktop_316, needle, "STUDIO_316_WINDOWS_STARTUP_VERSION")
+print("STUDIO_STARTUP_VERSION_POLICY_PASS|316|HOME_FIRST|BACKGROUND_COMPARE|VERIFIED_NEWER_ONLY|OFFLINE_INSTALLED_VERSION|USER_CONFIRM_INSTALL|NO_DOWNGRADE")
+
