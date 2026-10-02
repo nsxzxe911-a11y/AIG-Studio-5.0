@@ -276,6 +276,29 @@ for marker in ["PROJECT_FIXTURE_PERSISTENCE_GATE_PASS","PROJECT_FIXTURE_SYNC_DIG
         raise SystemExit(f"Project V3 fixture regression marker missing: {marker}")
 print("PROJECT_FIXTURE_PERSISTENCE_PRODUCTION_GATE_PASS|V3|V1_V2_COMPAT|AXIS_C|FIXTURE|TOOL_ASSEMBLY|ANDROID_WINDOWS")
 print("PROJECT_FIXTURE_DIGEST_PRODUCTION_GATE_PASS|0.001_FIXTURE_SHA|REVISION_SYNC|NO_SILENT_OVERWRITE")
+for marker in [
+    'addCategory("檔案", 1) { showProjectFileBranch() }',
+    "private fun saveCurrentProjectRevision()",
+    "private fun showProjectSyncResolution()",
+    "private fun publishCurrentProjectConfirmed()",
+    'setPositiveButton("採用新版")',
+    'setNegativeButton("保留本機")',
+    'setNeutralButton("另存副本")',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android project sync UI marker missing: {marker}")
+for marker in [
+    "fun showProductionProjectManager()",
+    "fun showProductionProjectSyncResolution()",
+    "fun publishProductionProjectConfirmed()",
+    'val options=arrayOf("採用新版","保留本機","另存副本")',
+    'GlassActionButton("專案",Color(125,112,255))',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Windows project sync UI marker missing: {marker}")
+if "PROJECT_RUNTIME_SYNC_UI_POLICY_GATE_PASS" not in core_regression:
+    raise SystemExit("Project Runtime sync UI policy regression marker missing")
+print("PROJECT_RUNTIME_SYNC_UI_PRODUCTION_GATE_PASS|ANDROID|WINDOWS|SAVE|OPEN|SHARE_STATUS|SHARE_PUBLISH|NO_AUTO_OVERWRITE|EXPLICIT_CONFIRM|REMOTE_DIGEST_RACE_BLOCK")
 
 
 
