@@ -51,6 +51,7 @@ import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.ProgressBar
 import android.widget.Toast
 import com.aigstudio.core.*
 import kotlin.math.*
@@ -492,6 +493,8 @@ class MainActivity : Activity() {
     }
     private lateinit var cad: CadView
     private lateinit var networkStateBadge: TextView
+    private lateinit var startupUpdateProgress: ProgressBar
+    private lateinit var startupUpdateMessage: TextView
     private val sharedProjectHandler = Handler(Looper.getMainLooper())
     private val sharedProjectExecutor = java.util.concurrent.Executors.newSingleThreadExecutor { task ->
         Thread(task,"aig-studio-shared-sync").apply { isDaemon=true }
@@ -1281,6 +1284,29 @@ class MainActivity : Activity() {
             setTypeface(typeface,android.graphics.Typeface.BOLD)
         },LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(2),0,dp(18)) })
 
+        startupUpdateProgress=ProgressBar(
+            this,null,android.R.attr.progressBarStyleHorizontal
+        ).apply {
+            max=100
+            progress=0
+            visibility=View.GONE
+            contentDescription="STARTUP UPDATE PROGRESS"
+        }
+        homeContent.addView(startupUpdateProgress,LinearLayout.LayoutParams(-1,dp(5)).apply {
+            setMargins(dp(18),0,dp(18),dp(4))
+        })
+        startupUpdateMessage=chromeText(
+            "版本更新待命",
+            0xFFA0BED2.toInt(),9.5f
+        ).apply {
+            gravity=Gravity.CENTER
+            visibility=View.GONE
+            contentDescription="STARTUP UPDATE EXPLANATION"
+        }
+        homeContent.addView(startupUpdateMessage,LinearLayout.LayoutParams(-1,-2).apply {
+            setMargins(dp(12),0,dp(12),dp(8))
+        })
+
         val homeModes=FlowLayout(this).apply {
             contentDescription="FORMAL RGB HOME MODES"
             setPadding(dp(4),dp(4),dp(4),dp(4))
@@ -1556,6 +1582,26 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun showStartupUpdateProgress(progress:Int,message:String) {
+        if(::startupUpdateProgress.isInitialized) {
+            startupUpdateProgress.visibility=View.VISIBLE
+            startupUpdateProgress.isIndeterminate=false
+            startupUpdateProgress.progress=progress.coerceIn(0,100)
+        }
+        if(::startupUpdateMessage.isInitialized) {
+            startupUpdateMessage.visibility=View.VISIBLE
+            startupUpdateMessage.text=message
+        }
+    }
+
+    private fun hideStartupUpdateProgress(delayMs:Long=1400L) {
+        if(!::startupUpdateProgress.isInitialized || !::startupUpdateMessage.isInitialized) return
+        startupUpdateMessage.postDelayed({
+            if(::startupUpdateProgress.isInitialized) startupUpdateProgress.visibility=View.GONE
+            if(::startupUpdateMessage.isInitialized) startupUpdateMessage.visibility=View.GONE
+        },delayMs)
+    }
+
     private fun scheduleBackgroundOnlineServices() {
         if(!::networkStateBadge.isInitialized) return
         networkStateBadge.postDelayed({
@@ -1591,6 +1637,8 @@ class MainActivity : Activity() {
                 if(!validated){
                     onlineNetworkValidated.set(false)
                     renderNetworkState(false)
+                    if(::startupUpdateProgress.isInitialized) startupUpdateProgress.visibility=View.GONE
+                    if(::startupUpdateMessage.isInitialized) startupUpdateMessage.visibility=View.GONE
                     return
                 }
                 if(onlineNetworkValidated.compareAndSet(false,true)) {
@@ -1610,14 +1658,30 @@ class MainActivity : Activity() {
                 val updateConfig=UpdateConfigStore.load(this)
                 if(!updateConfig.configured){
                     renderNetworkState(true,"更新設定未完成")
+                    showStartupUpdateProgress(
+                        100,
+                        "目前使用 v"+BuildConfig.VERSION_NAME+" • 更新來源未設定 • 本機 UI 正常"
+                    )
+                    hideStartupUpdateProgress()
                     return
                 }
                 if(!OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)) return
                 if(!onlineAutoCheckRunning.compareAndSet(false,true)) return
                 val requestGeneration=generation
                 renderNetworkState(true,"版本比對中 • v"+BuildConfig.VERSION_NAME)
+                showStartupUpdateProgress(
+                    25,
+                    "有網路 • 正在對照 v"+BuildConfig.VERSION_NAME+" 與最新版本 • UI 可直接使用"
+                )
                 val backgroundConfig=updateConfig.copy(
                     autoDownload=updateConfig.autoDownload
+                )
+                showStartupUpdateProgress(
+                    45,
+                    if(backgroundConfig.autoDownload)
+                        "正在讀取版本、驗證簽章與準備新版介面"
+                    else
+                        "正在讀取版本與驗證簽章 • 自動下載已關閉"
                 )
                 SecureUpdateManager.autoCheck(this,backgroundConfig){result->
                     if(requestGeneration!=onlineNetworkGeneration.get()) {
@@ -1631,6 +1695,10 @@ class MainActivity : Activity() {
                             val verified=result.verifiedApk
                             if(verified!=null){
                                 renderNetworkState(true,"新版已驗證 • 待安裝")
+                                showStartupUpdateProgress(
+                                    100,
+                                    "新版 "+result.message+" • 驗證完成 • 安裝後自動使用新版介面"
+                                )
                                 AlertDialog.Builder(this@MainActivity)
                                     .setTitle("啟動版本更新")
                                     .setMessage(result.message+"\n\n已完成新版驗證；是否套用？")
@@ -1648,12 +1716,25 @@ class MainActivity : Activity() {
                                     .show()
                             }else{
                                 renderNetworkState(true,"新版可用 • 點更新套用")
+                                showStartupUpdateProgress(
+                                    70,
+                                    "發現較新版本 • 已驗證版本資訊 • 點更新後套用新版介面"
+                                )
                             }
                         }else{
                             renderNetworkState(true,"已是最新 • v"+BuildConfig.VERSION_NAME)
+                            showStartupUpdateProgress(
+                                100,
+                                "目前 v"+BuildConfig.VERSION_NAME+" 已是最新 • 沿用目前介面與設定"
+                            )
+                            hideStartupUpdateProgress()
                         }
                     }else{
                         onlineAutoCheckCompleted.set(false)
+                        showStartupUpdateProgress(
+                            20,
+                            "更新比對暫停 • "+result.message+" • 目前 UI/設定繼續使用"
+                        )
                         val attempt=onlineAutoRetryCount.incrementAndGet()
                         if(attempt<OfflineFirstRuntimeContract.BACKGROUND_NETWORK_MAX_ATTEMPTS &&
                             onlineAutoRetryScheduled.compareAndSet(false,true)){
