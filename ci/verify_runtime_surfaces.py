@@ -1109,7 +1109,7 @@ for needle in (
 print("MACHINE_MATERIAL_SEPARATION_GATE_PASS|ANDROID|WINDOWS|NO_STATIC_MACHINE_IMAGE|ROLE_FILL_COLOR|EDGE_RESTORE|FIXTURE|TABLE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL")
 for needle in (
     "val drawRoleEdges=when(component.role){",
-    "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
+    "component.role==MachineComponentRole.ROTARY_C",
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96",
     "if(drawRoleEdges && index%edgeStep==0)",
 ):
@@ -1201,7 +1201,7 @@ for needle in (
     "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 128",
     "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 96",
     "val drawRoleEdges=when(component.role){",
-    "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
+    "component.role==MachineComponentRole.ROTARY_C",
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96",
     "if(drawRoleEdges && index%edgeStep==0)",
 ):
@@ -1225,7 +1225,7 @@ for needle in (
     "MachineComponentRole.SPINDLE,",
     "MachineComponentRole.HOLDER -> true",
     "MachineComponentRole.ROTARY_A,",
-    "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
+    "component.role==MachineComponentRole.ROTARY_C",
     "else -> false",
     "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96",
