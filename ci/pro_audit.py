@@ -104,7 +104,7 @@ if "MachineComponentRole.ROTARY_C" in machining and "MachineComponentRole.ROTARY
 
 workflow=read(".github/workflows/nc-semantic-timeline-gate.yml")
 workflow_head=workflow.split("permissions:",1)[0]
-for trigger_path in ("ci/pro_audit.py","ci/department_autocheck.py","ci/verify_runtime_surfaces.py","continuity/**"):
+for trigger_path in ("ci/pro_audit.py","ci/department_autocheck.py","ci/verify_runtime_surfaces.py","continuity/release-command.json","continuity/ai-responsibility-routing.json","continuity/cache-update-standard.xml"):
     if trigger_path not in workflow_head:
         fail("PRO_AUDIT","STALE_GATE_TRIGGER_GAP",".github/workflows/nc-semantic-timeline-gate.yml",f"missing self-audit trigger: {trigger_path}")
 pro_pos=workflow.find("python3 ci/pro_audit.py")

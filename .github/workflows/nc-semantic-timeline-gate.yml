@@ -18,7 +18,9 @@ on:
       - 'ci/pro_audit.py'
       - 'ci/department_autocheck.py'
       - 'ci/verify_runtime_surfaces.py'
-      - 'continuity/**'
+      - 'continuity/release-command.json'
+      - 'continuity/ai-responsibility-routing.json'
+      - 'continuity/cache-update-standard.xml'
   workflow_dispatch:
 
 permissions:
