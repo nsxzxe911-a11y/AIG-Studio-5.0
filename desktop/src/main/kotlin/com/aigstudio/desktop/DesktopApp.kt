@@ -4182,6 +4182,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         mainCardLayout.show(mainCardHost,"AI")
         status.text="UX • "+RuntimeUxFlowContract.title("AI")+" • LOCAL ASSIST"
     })
+    moduleButtons.add(GlassActionButton("專案",Color(125,112,255)).apply{
+        toolTipText="Project V3 • SAVE / OPEN / SHARED • NO SILENT OVERWRITE"
+        addActionListener{showProductionProjectManager()}
+    })
     check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))
     productionUiButtons[ProductionUiSwitchContract.initialMode]?.active=true
     status.text="UX • "+RuntimeUxFlowContract.title(ProductionUiSwitchContract.initialMode)+" • "+MasterRuntimeChainContract.uiLabel()
