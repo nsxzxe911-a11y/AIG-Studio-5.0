@@ -4447,6 +4447,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     }
 
     var maintenanceCenterAction: (() -> Unit)? = null
+    val productionUiButtons=linkedMapOf<String,GlassActionButton>()
 
     fun showUserSettingsCenter(){
         val names=StudioDesktopProductionTheme.ids().map{StudioDesktopProductionTheme.name(it)}.toTypedArray()
@@ -4693,7 +4694,6 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     linkTools.add(button("連接", Color(63,255,157)) { cad.connectSelected() })
     linkTools.add(button("斷開", Color(255,176,32)) { cad.disconnectSelected() })
     linkTools.add(button("全部斷開", Color(239,68,68)) { cad.disconnectAllTopology() })
-    val productionUiButtons=linkedMapOf<String,GlassActionButton>()
     fun productionUiButton(id:String,color:Color,action:()->Unit):GlassActionButton {
         val normalized=ProductionUiSwitchContract.normalize(id)
         return GlassActionButton(normalized,color).apply {
@@ -4930,7 +4930,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         override fun paintComponent(g0:Graphics){
             super.paintComponent(g0)
             val g=g0.create() as Graphics2D
-            DesktopOriginalVisuals.paintCover(g,width,height,DesktopOriginalVisuals.page("HOME"),0.34f,1.0,0.0)
+            StudioDesktopOriginalVisuals.paintCover(g,width,height,StudioDesktopOriginalVisuals.startup,0.34f,1.0,0.0)
             g.color=Color(2,7,14,176);g.fillRect(0,0,width,height)
             g.dispose()
         }

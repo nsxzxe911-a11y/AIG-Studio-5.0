@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "337.0.0",
+  "version": "338.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 337. Cross-platform CI now uses the active Python interpreter, Runtime gates validate current semantic flow instead of stale exact implementation strings, and disabled regression workflows remain manual-only. Next exact-bind AIG-II 373 and continue NC-only freshness parity.",
-  "note": "Studio 337: CI/CD integration repair only; production Runtime behavior from 336 is preserved. fast_review is Windows-safe, HOME/6AX/pro-audit markers follow current Runtime semantics, and manual-disabled regression workflows are audited as manual-disabled rather than required to self-execute. No APK/EXE device launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 338. Android and Windows Kotlin compile both pass with Gradle 9.7.0 / JDK 17 / Android API 36. Next exact-bind AIG-II to this compile-clean Studio checkpoint and continue device launch evidence separately.",
+  "note": "Studio 338 compile repair: enabled Android BuildConfig generation, restored ScrollView import, bound simulation rebuild to current CAD snapshot, fixed Windows productionUiButtons forward capture, and reused StudioDesktopOriginalVisuals for HOME. Android + Windows Kotlin compile BUILD SUCCESSFUL; APK/EXE device launch PASS is still separate.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -508,5 +508,13 @@
     "runtime_surface_semantic_gate": true,
     "manual_regression_workflow_preserved": true,
     "binary_launch_evidence": "PENDING"
+  },
+  "compile_338": {
+    "gradle": "9.7.0",
+    "jdk": "17",
+    "android_sdk": "API_36",
+    "android_compile": "PASS",
+    "windows_compile": "PASS",
+    "device_launch_evidence": "PENDING"
   }
 }

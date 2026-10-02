@@ -3,12 +3,18 @@ import subprocess, sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+try:
+    sys.stdout.reconfigure(encoding="utf-8",errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8",errors="replace")
+except Exception:
+    pass
+
 ROOT=Path(__file__).resolve().parents[1]
 CHECKS=[["audit-contract","PRO_AUDIT",[sys.executable,"ci/verify_audit_contract.py"]],["release-command","AI",[sys.executable,"ci/verify_release_command_dispatch.py"]],["responsibility","AI",[sys.executable,"ci/verify_ai_responsibility_routing.py"]],["continuity","AI",[sys.executable,"ci/verify_continuity_checkpoint.py"]],["xml-cache","AI",[sys.executable,"ci/verify_xml_cache_update_standard.py"]],["theme-hot-swap","UIUX",[sys.executable,"ci/verify_theme_pack_hot_swap.py"]],["network-resilience","UIUX",[sys.executable,"ci/verify_network_resilience.py"]],["departments","AI",[sys.executable,"ci/department_autocheck.py"]],["professional-audit","PRO_AUDIT",[sys.executable,"ci/pro_audit.py"]],["production-runtime","HOME",[sys.executable,"ci/verify_production_runtime.py"]],["runtime-surfaces","UIUX",[sys.executable,"ci/verify_runtime_surfaces.py"]],["web-runtime","WEB",["node","ci/verify_web_runtime.mjs"]]]
 
 def run_one(item):
     name, owner, command = item
-    p=subprocess.run(command,cwd=ROOT,text=True,capture_output=True)
+    p=subprocess.run(command,cwd=ROOT,text=True,capture_output=True,encoding="utf-8",errors="replace")
     return name, owner, command, p.returncode, p.stdout, p.stderr
 
 results=[]

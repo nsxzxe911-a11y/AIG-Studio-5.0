@@ -50,6 +50,7 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.ProgressBar
 import android.widget.Toast
@@ -3768,6 +3769,7 @@ class MainActivity : Activity() {
             ProductionRgbAssets.drawable(this,id) ?: getDrawable(fallbackIconRes(id))
 
         fun rebuildSimulationResult(mode:String) {
+            val snapshot=cad.snapshot()
             val m=simulationMode(mode)
             val target=MachiningAxisRuntimeContract.state(m,draftA,draftB)
             val schedule=when(m){
