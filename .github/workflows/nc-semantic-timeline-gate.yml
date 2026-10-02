@@ -36,6 +36,8 @@ jobs:
         shell: bash
         run: |
           echo 'NC_SCOPED_AUTO_REGRESSION=ENABLED_AFTER_RUNTIME_GATE_SYNC'
+          python3 ci/pro_audit.py | tee pro-audit.log
+          grep -Fq 'PRO_AUDIT_PASS|TOP_TIER_PROFESSIONAL_SOFTWARE|15_DEPARTMENTS|' pro-audit.log
           python3 ci/verify_runtime_surfaces.py | tee runtime-surfaces.log
           grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
           grep -Fq 'AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS' runtime-surfaces.log
