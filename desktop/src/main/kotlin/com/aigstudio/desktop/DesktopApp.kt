@@ -4249,21 +4249,21 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         fun action(label:String,run:()->Unit){
             actions.add(GlassActionButton(label,StudioDesktopProductionTheme.accent).apply{addActionListener{run()}})
         }
-        action("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="REGRESSION HUB • CAD"}
-        action("CAM / SIM"){showProductionCam();status.text="REGRESSION HUB • CAM / SIM"}
+        action("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="VERIFY HUB • REGRESSION OFF • CAD"}
+        action("CAM / SIM"){showProductionCam();status.text="VERIFY HUB • REGRESSION OFF • CAM / SIM"}
         action("NC 安全"){runCatching{showNcEditor(
             frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
-        )}.onFailure{status.text="REGRESSION HUB • NC BLOCKED • "+(it.message?:"error")}}
-        action("AI"){mainCardLayout.show(mainCardHost,"AI");status.text="REGRESSION HUB • AI"}
+        )}.onFailure{status.text="VERIFY HUB • REGRESSION OFF • NC BLOCKED • "+(it.message?:"error")}}
+        action("AI"){mainCardLayout.show(mainCardHost,"AI");status.text="VERIFY HUB • REGRESSION OFF • AI"}
         val panel=JPanel(BorderLayout(8,8)).apply{
             background=StudioDesktopProductionTheme.background
             border=BorderFactory.createEmptyBorder(10,10,10,10)
-            add(JLabel("<html>回歸 / 驗證集中入口。GitHub Actions 維持 workflow_dispatch 手動模式；push / schedule 不會自動連鎖。<br/>CNC 安全、完整性與座標檢查不提供關閉。</html>").apply{
+            add(JLabel("<html>驗證中心集中入口。GitHub Actions 維持 workflow_dispatch 手動模式；push / schedule 不會自動連鎖。<br/>CNC 安全、完整性與座標檢查不提供關閉。</html>").apply{
                 foreground=StudioDesktopProductionTheme.text
             },BorderLayout.NORTH)
             add(actions,BorderLayout.CENTER)
         }
-        JOptionPane.showMessageDialog(frame,panel,"回歸 / 驗證 • 單一入口",JOptionPane.INFORMATION_MESSAGE)
+        JOptionPane.showMessageDialog(frame,panel,"驗證中心 • 單一入口",JOptionPane.INFORMATION_MESSAGE)
     }
 
     var maintenanceCenterAction: (() -> Unit)? = null
@@ -4291,7 +4291,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             status.text="FPS SAVED • "+mode+" • EFFECTIVE "+StudioDesktopRefreshSettings.targetFps()+" FPS • SAFE DEFAULT 60"
             frame.repaint()
         }
-        action("回歸 / 驗證"){showManualRegressionCenter()}
+        action("驗證中心"){showManualRegressionCenter()}
         action("座標 / 精度"){showDesktopCoordinatePrecisionDialog(frame,status)}
         action("工作 / 維修"){maintenanceCenterAction?.invoke() ?: run { status.text="SETTINGS • MAINTENANCE INITIALIZING" }}
         action("CAD / 首頁"){mainCardLayout.show(mainCardHost,"CAD");status.text="SETTINGS • CAD"}
