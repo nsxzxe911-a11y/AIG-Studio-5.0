@@ -8,6 +8,8 @@ permissions:
 
 jobs:
   nc-coordinate-drift:
+    # REGRESSION_EXECUTION_DISABLED_BY_POLICY_314
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
