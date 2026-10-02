@@ -1866,6 +1866,7 @@ private fun testEnvironmentSettingsContract() {
     val pulseSamples=(0..16).map { RenderColorCompatibility.pulseMultiplier(it/16.0) }
     check((pulseSamples.maxOrNull() ?: 1.0)-(pulseSamples.minOrNull() ?: 1.0)<=RenderColorCompatibility.MAX_ANIMATION_LUMA_SWING+1e-9)
     println("RENDER_COMPATIBILITY_GATE_PASS|1080P|2K|3K|4K|30|60|90|120|RGB_DELTA_24|LUMA_DELTA_0.12|ANIMATION_SWING_0.12|ADAPTIVE_UI_MESH_GLOW")
+    check(RuntimeEnvironmentSettings().fpsMode==FpsMode.FPS_60)
     check(RenderCompatibilityContract.STARTUP_SAFE_HZ==60)
     check(RenderCompatibilityContract.STARTUP_PROMOTION_DELAY_MS>=1_000L)
     check(RgbButtonVisualContract.CALLBACK_STABLE)
