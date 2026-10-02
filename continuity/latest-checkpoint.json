@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "304.0.0",
+  "version": "305.0.0",
   "branch": "main",
-  "recorded_source_head": "dbe3850230f87c6deba13eb02311d08449125b3c",
+  "recorded_source_head": "115653d0263c1df15af901b3223a851a89376773",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "EXECUTE_UNTIL_PASS",
   "departments": {
@@ -20,7 +20,8 @@
     "ANDROID_BUILD": "EXECUTE_UNTIL_PASS",
     "WINDOWS_BUILD": "EXECUTE_UNTIL_PASS",
     "WEB": "EXECUTE_UNTIL_PASS",
-    "6AX": "EXECUTE_UNTIL_PASS"
+    "6AX": "EXECUTE_UNTIL_PASS",
+    "PRO_AUDIT": "EXECUTE_UNTIL_PASS"
   },
   "record_policy": {
     "authoritative": [
@@ -46,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Keep Studio 304 as the forward-only source checkpoint. Scoped NC hosted gates may verify this source; APK/EXE release remains manual and requires separate artifact/runtime evidence.",
-  "note": "Studio 304 repairs stale 279 continuity metadata, promotes 6AX into the all-department loop, aligns HOME checks to the production runtimeHost boot path, and keeps 6AX NC Post fail-closed until machine-specific verification.",
+  "next_action": "Run 15-department source review with PRO_AUDIT. Repair only actual findings; preserve product-safety, integrity, compile/runtime, NC fail-closed, and manual-only heavy release gates.",
+  "note": "Studio 305 adds PRO_AUDIT as the fifteenth department for top-tier professional cross-department audit, repair routing, and re-verification. It does not override safety or evidence gates.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -65,7 +66,7 @@
   },
   "department_autocheck": {
     "script": "ci/department_autocheck.py",
-    "last_source_review": "PASS_14_OF_14_SOURCE_MARKER_REVIEW_STUDIO304_GATE_RECOVERY",
+    "last_source_review": "PENDING_15_OF_15_SOURCE_REVIEW_STUDIO305_PRO_AUDIT",
     "no_early_exit": true,
     "output": "build/department-autocheck.json"
   },
@@ -112,5 +113,11 @@
     "etag_if_range": true,
     "android_off_main_sync_io": true,
     "windows_off_edt_sync_io": true
+  },
+  "professional_audit": {
+    "script": "ci/pro_audit.py",
+    "display_name": "頂級專業軟體極速審核修建部門",
+    "mode": "CROSS_DEPARTMENT_AUDIT_REPAIR_REVERIFY",
+    "status": "PENDING_SOURCE_REVIEW"
   }
 }
