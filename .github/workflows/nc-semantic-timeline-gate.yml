@@ -15,6 +15,11 @@ on:
       - 'app/src/main/java/com/aigstudio/app/MainActivity.kt'
       - 'desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'
       - '.github/workflows/nc-semantic-timeline-gate.yml'
+      - 'ci/pro_audit.py'
+      - 'ci/department_autocheck.py'
+      - 'ci/verify_runtime_surfaces.py'
+      - 'continuity/**'
+      - 'release-version.properties'
   workflow_dispatch:
 
 permissions:
@@ -37,7 +42,10 @@ jobs:
         run: |
           echo 'NC_SCOPED_AUTO_REGRESSION=ENABLED_AFTER_RUNTIME_GATE_SYNC'
           python3 ci/pro_audit.py | tee pro-audit.log
+          grep -Fq 'PRO_AUDIT_REPORT_WRITTEN|SCHEMA=aig-pro-audit-report-v2|' pro-audit.log
+          grep -Fq 'PRO_AUDIT_STALE_GATE_DETECTOR_PASS|' pro-audit.log
           grep -Fq 'PRO_AUDIT_PASS|TOP_TIER_PROFESSIONAL_SOFTWARE|15_DEPARTMENTS|' pro-audit.log
+          test -s build/pro-audit-report.json
           python3 ci/verify_runtime_surfaces.py | tee runtime-surfaces.log
           grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
           grep -Fq 'TRUE_MACHINE_MODEL_RUNTIME_PARITY_GATE_PASS|ANDROID|WINDOWS|3AX|4AX|5AX|6AX|' runtime-surfaces.log

@@ -1,7 +1,7 @@
 {
   "schema": "aig-ai-responsibility-routing-v1",
   "product": "AIG Studio 5.0",
-  "version": "305.0.0",
+  "version": "306.0.0",
   "detector": "AI",
   "principle": "AI_DETECTS_CLASSIFIES_RETURNS_REWORK_REVERIFIES; OWNER_DEPARTMENT_FIXES",
   "lifecycle": [
@@ -40,7 +40,9 @@
     "AXIS6_MANUAL_CAM_ORIENTATION_EDIT": "6AX",
     "AXIS6_MACHINE_POST": "NC",
     "PROFESSIONAL_CROSS_AUDIT": "PRO_AUDIT",
-    "PROFESSIONAL_REPAIR_ORCHESTRATION": "PRO_AUDIT"
+    "PROFESSIONAL_REPAIR_ORCHESTRATION": "PRO_AUDIT",
+    "STALE_GATE_DETECTION": "PRO_AUDIT",
+    "AUDIT_REPORT_EVIDENCE_CLASSIFICATION": "PRO_AUDIT"
   },
   "external_conditions": {
     "NETWORK": {

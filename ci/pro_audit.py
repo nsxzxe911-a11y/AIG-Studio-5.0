@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-import json, re
+import json, os, re, subprocess
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
 ROOT=Path(__file__).resolve().parents[1]
+OUT=ROOT/"build"/"pro-audit-report.json"
 DEPARTMENTS=["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","WEB","PRO_AUDIT"]
 findings=[]
 
@@ -11,8 +12,17 @@ def read(rel):
     p=ROOT/rel
     return p.read_text(encoding="utf-8",errors="replace") if p.is_file() else ""
 
-def fail(owner,code,path,detail):
-    findings.append((owner,code,path,detail))
+def fail(owner,code,path,detail,gate_class="SOURCE_SEMANTIC"):
+    findings.append({"owner":owner,"department":owner,"code":code,"path":path,"detail":detail,"gate_class":gate_class,"action":"REPAIR_THEN_REVERIFY"})
+
+def source_sha():
+    env=os.environ.get("GITHUB_SHA","").strip()
+    if env:
+        return env
+    try:
+        return subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True,stderr=subprocess.DEVNULL).strip()
+    except Exception:
+        return "UNKNOWN"
 
 version_text=read("release-version.properties").strip()
 m=re.fullmatch(r"versionName=(\d+)\.0\.0",version_text)
@@ -36,21 +46,21 @@ for d in DEPARTMENTS:
         fail("PRO_AUDIT","DEPARTMENT_COMMAND_MISSING","continuity/release-command.json",d)
     if d not in checkpoint.get("departments",{}):
         fail("PRO_AUDIT","DEPARTMENT_CHECKPOINT_MISSING","continuity/latest-checkpoint.json",d)
-xml_deps={e.attrib.get("id") for e in xml.find("departments").findall("department")}
+deps_node=xml.find("departments")
+xml_deps={e.attrib.get("id") for e in deps_node.findall("department")} if deps_node is not None else set()
 for d in DEPARTMENTS:
     if d not in xml_deps:
         fail("PRO_AUDIT","DEPARTMENT_XML_MISSING","continuity/cache-update-standard.xml",d)
 
 ownership=route.get("ownership",{})
-if ownership.get("PROFESSIONAL_CROSS_AUDIT")!="PRO_AUDIT":
-    fail("PRO_AUDIT","PRO_AUDIT_OWNER_MISSING","continuity/ai-responsibility-routing.json","PROFESSIONAL_CROSS_AUDIT")
-if ownership.get("PROFESSIONAL_REPAIR_ORCHESTRATION")!="PRO_AUDIT":
-    fail("PRO_AUDIT","PRO_REPAIR_OWNER_MISSING","continuity/ai-responsibility-routing.json","PROFESSIONAL_REPAIR_ORCHESTRATION")
+for key in ("PROFESSIONAL_CROSS_AUDIT","PROFESSIONAL_REPAIR_ORCHESTRATION","STALE_GATE_DETECTION","AUDIT_REPORT_EVIDENCE_CLASSIFICATION"):
+    if ownership.get(key)!="PRO_AUDIT":
+        fail("PRO_AUDIT","PRO_AUDIT_OWNER_MISSING","continuity/ai-responsibility-routing.json",key)
 
 build=read(".github/workflows/build-download.yml")
 head=build.split("permissions:",1)[0]
 if "workflow_dispatch:" not in head or "push:" in head:
-    fail("PRO_AUDIT","HEAVY_RELEASE_TRIGGER",".github/workflows/build-download.yml","APK/EXE heavy release must remain manual-only")
+    fail("PRO_AUDIT","HEAVY_RELEASE_TRIGGER",".github/workflows/build-download.yml","APK/EXE heavy release must remain manual-only","BINARY_DEVICE")
 
 android=read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
 for marker in ("setContentView(runtimeHost)","StudioStartupBootGuard.complete(this)","scheduleBackgroundOnlineServices()"):
@@ -58,7 +68,8 @@ for marker in ("setContentView(runtimeHost)","StudioStartupBootGuard.complete(th
         fail("HOME","PRODUCTION_HOME_BOOT","app/src/main/java/com/aigstudio/app/MainActivity.kt",marker)
 
 machining=read("app/src/main/java/com/aigstudio/app/Machining3DView.kt")
-if 'val c=if(mode=="6AX")live?.axisC ?: machineAxisC else 0.0' not in machining:
+live_c='val c=if(mode=="6AX")live?.axisC ?: machineAxisC else 0.0'
+if live_c not in machining:
     fail("6AX","LIVE_C_MACHINE_SPACE","app/src/main/java/com/aigstudio/app/Machining3DView.kt","live C fallback missing")
 
 cam=read("core/src/main/kotlin/com/aigstudio/core/Cam.kt")
@@ -71,24 +82,62 @@ if 'axisCapabilities = listOf("3AX","4AX","5AX","6AX")' not in core:
     fail("PRO_AUDIT","MASTER_AXIS_INVENTORY","core/src/main/kotlin/com/aigstudio/core/EnvironmentSettings.kt","3AX/4AX/5AX/6AX")
 
 reg=read("core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt")
-for marker in ("MANUAL_6AX_AXIS_EDIT_GATE_PASS","MASTER_RUNTIME_CHAIN_GATE_PASS MASTER_XYZ CAD_ROOT CAD>CAM>SIM>NC 3AX_4AX_5AX_6AX_CAPABILITY","6AX_C_AXIS_NC_POST_BLOCKED"):
+for marker in ("MANUAL_6AX_AXIS_EDIT_GATE_PASS","MASTER_RUNTIME_CHAIN_GATE_PASS MASTER_XYZ CAD_ROOT CAD>CAM>SIM>NC 3AX_4AX_5AX_6AX_CAPABILITY","6AX_C_AXIS_NC_POST_BLOCKED","PRO_AUDIT_MASTER_AXIS_INVENTORY_GATE_PASS 3AX 4AX 5AX 6AX UNIQUE ORDERED"):
     if marker not in reg:
         fail("PRO_AUDIT","REGRESSION_COVERAGE","core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt",marker)
 
 runtime=read("ci/verify_runtime_surfaces.py")
 for marker in (
-    'val c=if(mode=="6AX")live?.axisC ?: machineAxisC else 0.0',
+    live_c,
     'frame,doc,status,"3D",productionCamSettings,productionFixtures,productionToolAssembly',
     'frame,doc,productionCamSettings,productionFixtures,productionToolAssembly',
 ):
     if marker not in runtime:
         fail("UIUX","RUNTIME_GATE_DRIFT","ci/verify_runtime_surfaces.py",marker)
 
+# STALE_GATE_DETECTOR
+old_live_c='val c=if(mode=="6AX")machineAxisC else 0.0'
+if live_c in machining and old_live_c in runtime:
+    fail("UIUX","STALE_GATE_LIVE_C","ci/verify_runtime_surfaces.py",f"forbidden stale verifier marker: {old_live_c}")
+if "MachineComponentRole.ROTARY_C" in machining and "MachineComponentRole.ROTARY_C" not in runtime:
+    fail("UIUX","STALE_GATE_ROTARY_C","ci/verify_runtime_surfaces.py","production 6AX ROTARY_C exists but runtime verifier has no ROTARY_C evidence")
+
+workflow=read(".github/workflows/nc-semantic-timeline-gate.yml")
+workflow_head=workflow.split("permissions:",1)[0]
+for trigger_path in ("ci/pro_audit.py","ci/department_autocheck.py","ci/verify_runtime_surfaces.py","continuity/**","release-version.properties"):
+    if trigger_path not in workflow_head:
+        fail("PRO_AUDIT","STALE_GATE_TRIGGER_GAP",".github/workflows/nc-semantic-timeline-gate.yml",f"missing self-audit trigger: {trigger_path}")
+pro_pos=workflow.find("python3 ci/pro_audit.py")
+runtime_pos=workflow.find("python3 ci/verify_runtime_surfaces.py")
+if pro_pos < 0 or runtime_pos < 0 or pro_pos > runtime_pos:
+    fail("PRO_AUDIT","AUDIT_ORDER_DRIFT",".github/workflows/nc-semantic-timeline-gate.yml","PRO_AUDIT must execute before runtime-surface verification")
+
+by_dept={d:[] for d in DEPARTMENTS}
+for f in findings:
+    by_dept.setdefault(f["department"],[]).append(f)
+report={
+    "schema":"aig-pro-audit-report-v2",
+    "product":"AIG Studio 5.0",
+    "version":version or "UNKNOWN",
+    "source_sha":source_sha(),
+    "github_run_id":os.environ.get("GITHUB_RUN_ID"),
+    "evidence_scope":"SOURCE_SEMANTIC_ONLY",
+    "binary_device_release_proof":"NOT_CLAIMED",
+    "stale_gate_detector":True,
+    "departments":{d:{"status":"FAIL" if by_dept.get(d) else "PASS","finding_count":len(by_dept.get(d,[]))} for d in DEPARTMENTS},
+    "findings":findings,
+    "gate_classes":{"source_semantic":"FAIL" if findings else "PASS","hosted_semantic":"RUN_CONTEXT_ONLY","apk_exe_device":"NOT_CLAIMED"}
+}
+OUT.parent.mkdir(parents=True,exist_ok=True)
+OUT.write_text(json.dumps(report,ensure_ascii=False,indent=2,sort_keys=True)+"\n",encoding="utf-8")
+print(f"PRO_AUDIT_REPORT_WRITTEN|SCHEMA=aig-pro-audit-report-v2|PATH={OUT.relative_to(ROOT)}|SOURCE_SHA={report['source_sha']}|BINARY_DEVICE=NOT_CLAIMED")
+
 if findings:
     print("PRO_AUDIT_REWORK_QUEUE_BEGIN")
-    for owner,code,path,detail in findings:
-        print(f"PRO_AUDIT_REWORK|OWNER={owner}|CODE={code}|PATH={path}|DETAIL={detail}|ACTION=REPAIR_THEN_REVERIFY")
+    for f in findings:
+        print(f"PRO_AUDIT_REWORK|OWNER={f['owner']}|CODE={f['code']}|PATH={f['path']}|DETAIL={f['detail']}|GATE_CLASS={f['gate_class']}|ACTION=REPAIR_THEN_REVERIFY")
     print("PRO_AUDIT_REWORK_QUEUE_END")
     raise SystemExit(1)
 
-print("PRO_AUDIT_PASS|TOP_TIER_PROFESSIONAL_SOFTWARE|15_DEPARTMENTS|ARCHITECTURE|RUNTIME|UIUX|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|BUILD|WEB|VERSION_SYNC|MANUAL_HEAVY_RELEASE|REPAIR_ROUTING")
+print("PRO_AUDIT_STALE_GATE_DETECTOR_PASS|LIVE_C|ROTARY_C|WORKFLOW_SELF_TRIGGER|AUDIT_ORDER")
+print("PRO_AUDIT_PASS|TOP_TIER_PROFESSIONAL_SOFTWARE|15_DEPARTMENTS|ARCHITECTURE|RUNTIME|UIUX|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|BUILD|WEB|VERSION_SYNC|MANUAL_HEAVY_RELEASE|REPAIR_ROUTING|STALE_GATE_DETECTOR|MACHINE_READABLE_REPORT")

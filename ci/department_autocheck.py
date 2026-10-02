@@ -91,7 +91,7 @@ need("WEB","WEB_RUNTIME","web/index.html",web_html,["BLACK RGB Runtime","functio
 need("WEB","WEB_VERIFY_DYNAMIC_VERSION","ci/verify_web_runtime.mjs",web_verify,["releaseMajor","WEB_RUNTIME_VERSION_TOO_OLD","console.log(`AIG_WEB_RUNTIME_","_GATE_PASS|VERSION_"],"bind web verification to the current forward-only release major")
 forbid("WEB","WEB_STALE_VERSION_PIN","ci/verify_web_runtime.mjs",web_verify,["versionName=253.0.0","AIG_WEB_RUNTIME_253_GATE_PASS|VERSION_253|"],"remove stale hard-coded WEB release version")
 
-need("PRO_AUDIT","PRO_AUDIT_CONTRACT","ci/pro_audit.py",pro_audit,["PRO_AUDIT_PASS","PRO_AUDIT_REWORK|OWNER=","15_DEPARTMENTS","HEAVY_RELEASE_TRIGGER","LIVE_C_MACHINE_SPACE"],"restore top-tier professional cross-department audit/rebuild script and repair routing")
+need("PRO_AUDIT","PRO_AUDIT_CONTRACT","ci/pro_audit.py",pro_audit,["PRO_AUDIT_PASS","PRO_AUDIT_REWORK|OWNER=","15_DEPARTMENTS","HEAVY_RELEASE_TRIGGER","LIVE_C_MACHINE_SPACE","STALE_GATE_DETECTOR","PRO_AUDIT_REPORT_WRITTEN","aig-pro-audit-report-v2"],"restore top-tier professional cross-department audit/rebuild script, stale-gate detection, machine-readable evidence report and repair routing")
 
 by_dept={d:[] for d in DEPARTMENTS}
 for finding in findings:
