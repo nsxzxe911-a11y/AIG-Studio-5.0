@@ -150,6 +150,9 @@ object RollingUpdatePolicy {
     const val STARTUP_UPDATE_PROGRESS_ONLINE_ONLY=true
     const val STARTUP_UPDATE_PROGRESS_EXPLANATION_REQUIRED=true
     const val VERIFIED_UI_APPLIES_ON_NEXT_RUNTIME_AFTER_BINARY_INSTALL=true
+    const val STARTUP_VERSION_COMPARE_NORMAL_TARGET_MS=1500L
+    const val STARTUP_VERSION_COMPARE_DEGRADED_REFERENCE_MS=6500L
+    const val STARTUP_VERSION_COMPARE_ELAPSED_VISIBLE=true
 
     private fun parts(v:String)=v.trim().split('.').map { it.toIntOrNull() ?: 0 }
     fun compareVersions(a:String,b:String):Int {
