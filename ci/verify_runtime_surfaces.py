@@ -975,6 +975,33 @@ require(regression, "PROJECT_FIXTURE_PERSISTENCE_GATE_PASS", "STUDIO_PROJECT_FIX
 require(regression, "PROJECT_FIXTURE_SYNC_DIGEST_GATE_PASS", "STUDIO_PROJECT_FIXTURE_SYNC_DIGEST_REGRESSION_298")
 print("PROJECT_FIXTURE_PERSISTENCE_RUNTIME_GATE_PASS|PROJECT_V3|AXIS_C|MANUAL_C|FIXTURE|TOOL_ASSEMBLY|V1_V2_BACKWARD_COMPAT|ANDROID_WINDOWS_RESTORE")
 print("PROJECT_FIXTURE_SYNC_RUNTIME_GATE_PASS|FIXTURE_0.001_CHANGES_SHA|REVISION|REMOTE_NEWER|DIRTY_TRACKING|NO_SILENT_OVERWRITE")
+for needle in (
+    'addCategory("檔案", 1) { showProjectFileBranch() }',
+    "private fun saveCurrentProjectRevision()",
+    "private fun showProjectSyncResolution()",
+    "private fun publishCurrentProjectConfirmed()",
+    'addActionTo(branchFlow,"專案儲存",1)',
+    'addActionTo(branchFlow,"專案開啟",0)',
+    'addActionTo(branchFlow,"共享狀態",2)',
+    'addActionTo(branchFlow,"共享發布",5)',
+    'setPositiveButton("採用新版")',
+    'setNegativeButton("保留本機")',
+    'setNeutralButton("另存副本")',
+    "SharedProjectFolderSync.publishConfirmed(",
+):
+    require(android, needle, "STUDIO_ANDROID_PROJECT_SYNC_UI_299")
+for needle in (
+    "fun showProductionProjectManager()",
+    "fun showProductionProjectSyncResolution()",
+    "fun publishProductionProjectConfirmed()",
+    'val actions=arrayOf("專案儲存","專案開啟","共享狀態","共享發布")',
+    'val options=arrayOf("採用新版","保留本機","另存副本")',
+    'GlassActionButton("專案",Color(125,112,255))',
+    "SharedProjectFolderSync.publishConfirmed(",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_PROJECT_SYNC_UI_299")
+require(regression, "PROJECT_RUNTIME_SYNC_UI_POLICY_GATE_PASS", "STUDIO_PROJECT_SYNC_UI_POLICY_299")
+print("PROJECT_RUNTIME_SYNC_UI_GATE_PASS|ANDROID|WINDOWS|SAVE|OPEN|SHARE_STATUS|SHARE_PUBLISH|ADOPT_REMOTE|KEEP_LOCAL|SAVE_COPY|EXPLICIT_CONFIRM|RACE_GUARD")
 
 
 
