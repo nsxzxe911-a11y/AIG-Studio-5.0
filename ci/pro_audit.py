@@ -74,6 +74,8 @@ for marker in (
     live_c,
     'frame,doc,status,"3D",productionCamSettings,productionFixtures,productionToolAssembly',
     'frame,doc,productionCamSettings,productionFixtures,productionToolAssembly',
+    'RENDER_COMPATIBILITY_RUNTIME_GATE_PASS|ANDROID|WINDOWS|1080P|2K|3K|4K|30|60|90|120',
+    'RENDER_SAFE_START_BUTTON_SKIN_RUNTIME_GATE_PASS|60HZ_START|ADAPTIVE_120|ANDROID|WINDOWS|HOT_REPLACE|CALLBACK_STABLE|DEPTH_4',
 ):
     if marker not in runtime:
         fail("UIUX","RUNTIME_GATE_DRIFT","ci/verify_runtime_surfaces.py",marker)
