@@ -525,6 +525,9 @@ class MainActivity : Activity() {
     private val categoryButtons = mutableMapOf<String, Button>()
     private var activeCategory: String? = null
     private var camSettings = CamSettings()
+    private val camFixtures = mutableListOf<FixtureObstacle>()
+    private var camToolAssembly = ToolAssemblyConfig()
+    private var nextCamFixtureId = 1L
     private var ncSingleBlock = false
     private var ncDryRun = false
     private var ncBlockSkip = false
@@ -2187,7 +2190,10 @@ class MainActivity : Activity() {
 
         fun rebuild() {
             val result=runCatching {
-                Machining3DEngine.build(snapshot,camSettings,stock,six.axisA,six.axisB,axisC=six.axisC)
+                Machining3DEngine.build(
+                    snapshot,camSettings,stock,six.axisA,six.axisB,
+                    fixtures=camFixtures,toolAssembly=camToolAssembly,axisC=six.axisC
+                )
             }.getOrElse {
                 status.setTextColor(0xFFFF6E6E.toInt())
                 status.text="6AX SIM BLOCKED • "+(it.message?:"build error")
@@ -2288,7 +2294,7 @@ class MainActivity : Activity() {
             snapshot,stockMarginMm,stockThicknessMm,
             if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
         )
-        val risk = MachiningRiskScanner.inspect(cam, stock)
+        val risk = MachiningRiskScanner.inspect(cam, stock, camFixtures, camToolAssembly)
         val post = FanucPostSettings(
             workOffset = workOffset,
             tool = 1,
@@ -2504,6 +2510,26 @@ class MainActivity : Activity() {
         },LinearLayout.LayoutParams(0,-2,1f))
         root.addView(sourceControls,LinearLayout.LayoutParams(-1,-2))
 
+        val safetyControls=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+        safetyControls.addView(RgbGlowButton(this).apply {
+            text="治具模型"
+            contentDescription="CAM FIXTURE MODEL EDITOR"
+            setRgbState(LibraryFiveAxisSkin208.warning,camFixtures.isNotEmpty())
+            minHeight=dp(44);minimumWidth=dp(112)
+            setOnClickListener {
+                dialog.dismiss()
+                showFixtureModelEditor()
+            }
+        },LinearLayout.LayoutParams(0,-2,1f))
+        safetyControls.addView(RgbGlowButton(this).apply {
+            text="碰撞預測"
+            contentDescription="CAM COLLISION LOOKAHEAD"
+            setRgbState(0xFFFF6E6E.toInt(),false)
+            minHeight=dp(44);minimumWidth=dp(112)
+            setOnClickListener { showCollisionLookAheadDialog() }
+        },LinearLayout.LayoutParams(0,-2,1f))
+        root.addView(safetyControls,LinearLayout.LayoutParams(-1,-2))
+
         val contourControls=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
         fun contourChoice(label:String,selected:Boolean,accent:Int,run:()->Unit) {
             contourControls.addView(RgbGlowButton(this).apply {
@@ -2573,6 +2599,162 @@ class MainActivity : Activity() {
             .setView(root)
             .create()
         dialog.show()
+    }
+
+    private fun showFixtureModelEditor() {
+        val root=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(12),dp(8),dp(12),dp(6))
+        }
+        val selector=Spinner(this)
+        val kinds=FixtureKind.values().map{it.name}
+        val kind=Spinner(this).apply {
+            adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,kinds)
+        }
+        root.addView(TextView(this).apply{
+            text="夾具 / 壓板 / 虎鉗 / 機台包絡 • XYZ 為 Master Origin 絕對座標"
+            setTextColor(LibraryFiveAxisSkin208.warning);textSize=11f
+        })
+        root.addView(selector)
+        root.addView(kind)
+
+        fun field(title:String,initial:String="0.000")=EditText(this).apply{
+            hint=title;setText(initial)
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            root.addView(this)
+        }
+        val minX=field("min X")
+        val minY=field("min Y")
+        val minZ=field("min Z")
+        val maxX=field("max X","10.000")
+        val maxY=field("max Y","10.000")
+        val maxZ=field("max Z","10.000")
+        val clearance=field("clearance mm","1.000")
+
+        fun label(f:FixtureObstacle)=f.label()+" • X["+DisplayFormat.mm(f.minX)+","+DisplayFormat.mm(f.maxX)+
+            "] Y["+DisplayFormat.mm(f.minY)+","+DisplayFormat.mm(f.maxY)+"] Z["+
+            DisplayFormat.mm(f.minZ)+","+DisplayFormat.mm(f.maxZ)+"]"
+
+        fun refresh(select:Int=0) {
+            selector.adapter=ArrayAdapter(
+                this,android.R.layout.simple_spinner_dropdown_item,
+                if(camFixtures.isEmpty()) listOf("尚未建立治具模型") else camFixtures.map(::label)
+            )
+            if(camFixtures.isNotEmpty()) selector.setSelection(select.coerceIn(0,camFixtures.lastIndex))
+        }
+
+        fun load(index:Int) {
+            val f=camFixtures.getOrNull(index) ?: return
+            kind.setSelection(FixtureKind.values().indexOf(f.kind).coerceAtLeast(0))
+            minX.setText(DisplayFormat.mm(f.minX));minY.setText(DisplayFormat.mm(f.minY));minZ.setText(DisplayFormat.mm(f.minZ))
+            maxX.setText(DisplayFormat.mm(f.maxX));maxY.setText(DisplayFormat.mm(f.maxY));maxZ.setText(DisplayFormat.mm(f.maxZ))
+            clearance.setText(DisplayFormat.mm(f.clearanceMm))
+        }
+
+        selector.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent:android.widget.AdapterView<*>?,view:View?,position:Int,id:Long){load(position)}
+            override fun onNothingSelected(parent:android.widget.AdapterView<*>?){}
+        }
+        refresh()
+        if(camFixtures.isNotEmpty()) load(0)
+
+        val buttons=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
+        fun action(label:String,run:()->Unit){
+            buttons.addView(RgbGlowButton(this).apply{
+                text=label;minHeight=dp(44);setRgbState(LibraryFiveAxisSkin208.cyan,false)
+                setOnClickListener{run()}
+            },LinearLayout.LayoutParams(0,-2,1f))
+        }
+        fun buildFixture(id:Long)=FixtureObstacle(
+            id=id,
+            kind=FixtureKind.valueOf(kind.selectedItem.toString()),
+            minX=minX.text.toString().toDouble(),minY=minY.text.toString().toDouble(),minZ=minZ.text.toString().toDouble(),
+            maxX=maxX.text.toString().toDouble(),maxY=maxY.text.toString().toDouble(),maxZ=maxZ.text.toString().toDouble(),
+            clearanceMm=clearance.text.toString().toDouble()
+        )
+        action("新增"){
+            runCatching{
+                val f=buildFixture(nextCamFixtureId++)
+                camFixtures.add(f)
+                refresh(camFixtures.lastIndex);load(camFixtures.lastIndex)
+            }.onFailure{Toast.makeText(this,"FIXTURE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+        }
+        action("更新"){
+            val i=selector.selectedItemPosition
+            val old=camFixtures.getOrNull(i)
+            if(old==null) Toast.makeText(this,"尚無治具可更新",Toast.LENGTH_SHORT).show()
+            else runCatching{
+                camFixtures[i]=buildFixture(old.id)
+                refresh(i);load(i)
+            }.onFailure{Toast.makeText(this,"FIXTURE UPDATE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+        }
+        action("刪除"){
+            val i=selector.selectedItemPosition
+            if(i in camFixtures.indices) {
+                camFixtures.removeAt(i)
+                refresh(i.coerceAtMost((camFixtures.size-1).coerceAtLeast(0)))
+                Toast.makeText(this,"FIXTURE REMOVED • 剩餘 "+camFixtures.size,Toast.LENGTH_SHORT).show()
+            }
+        }
+        root.addView(buttons)
+
+        AlertDialog.Builder(this)
+            .setTitle("CAM • 治具 / 機台包絡")
+            .setMessage("模型資料會進 CAM/SIM/6AX 碰撞檢查；不會自動修改 NC。")
+            .setView(root)
+            .setPositiveButton("碰撞預測"){_,_->showCollisionLookAheadDialog()}
+            .setNegativeButton("關閉",null)
+            .show()
+    }
+
+    private fun showCollisionLookAheadDialog() {
+        if(camFixtures.isEmpty()) {
+            Toast.makeText(this,"碰撞預測：請先建立治具或 MACHINE_ENVELOPE",Toast.LENGTH_LONG).show()
+            return
+        }
+        val snapshot=cad.snapshot()
+        if(snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
+            Toast.makeText(this,"碰撞預測 BLOCKED • AUTO 需要 CAD；MANUAL 可直接預測",Toast.LENGTH_LONG).show()
+            return
+        }
+        val cam=runCatching {
+            CamModel.fromCad(System.currentTimeMillis(),snapshot,camSettings,axisA,axisB,axisC=axisC)
+        }.getOrElse {
+            Toast.makeText(this,"LOOKAHEAD BLOCKED • "+(it.message?:"CAM error"),Toast.LENGTH_LONG).show()
+            return
+        }
+        val stock=runCatching {
+            Stock3D.fromSnapshot(
+                snapshot,stockMarginMm,stockThicknessMm,
+                if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
+            )
+        }.getOrElse {
+            Toast.makeText(this,"LOOKAHEAD STOCK BLOCKED • "+(it.message?:"stock error"),Toast.LENGTH_LONG).show()
+            return
+        }
+        val report=MachiningRiskScanner.predictLookAhead(
+            cam,stock,camFixtures,camToolAssembly,lookAheadSegments=8
+        )
+        val message=if(report.clear) {
+            "未在前 "+report.horizonSegments+" 段偵測到已建模碰撞 • 仍需完整 SIM / 實機單節驗證"
+        } else buildString {
+            append("第一風險段 S").append((report.firstRiskSegment ?: 0)+1)
+            append(" • 候選必須手動確認並重驗\n\n")
+            report.predictions.take(12).forEach { p ->
+                append("S").append(p.segmentIndex+1).append(" • ").append(p.action.name)
+                p.suggestedLiftZ?.let{append(" • Z≥").append(DisplayFormat.mm(it))}
+                append("\n").append(p.reason)
+                append(" • A").append(DisplayFormat.mm(p.axisA))
+                append(" B").append(DisplayFormat.mm(p.axisB))
+                append(" C").append(DisplayFormat.mm(p.axisC)).append("\n\n")
+            }
+        }
+        AlertDialog.Builder(this)
+            .setTitle("CAM • 碰撞 Look-Ahead")
+            .setMessage(message)
+            .setPositiveButton("路徑編輯"){_,_->showManualCamPathEditor()}
+            .setNegativeButton("關閉",null)
+            .show()
     }
 
     private fun showManualCamPathEditor() {
@@ -2737,7 +2919,9 @@ class MainActivity : Activity() {
                     snapshot,stockMarginMm,stockThicknessMm,
                     if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
                 ),
-                axisA,axisB
+                axisA,axisB,
+                fixtures=camFixtures,
+                toolAssembly=camToolAssembly
             )
         }.getOrElse {
             Toast.makeText(this,"整合工作站 BLOCKED: "+(it.message?:"3D/CAM build error"),Toast.LENGTH_LONG).show()
@@ -3798,7 +3982,7 @@ class MainActivity : Activity() {
             snapshot,stockMarginMm,stockThicknessMm,
             if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
         )
-        val risk = MachiningRiskScanner.inspect(cam, stock)
+        val risk = MachiningRiskScanner.inspect(cam, stock, camFixtures, camToolAssembly)
         val baseNc = runCatching {
             CncPost.generate(
                 cam,
@@ -4093,7 +4277,9 @@ class MainActivity : Activity() {
                     snapshot,stockMarginMm,stockThicknessMm,
                     if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
                 ),
-                axisA,axisB
+                axisA,axisB,
+                fixtures=camFixtures,
+                toolAssembly=camToolAssembly
             )
         }
             .onSuccess { result ->
