@@ -2471,9 +2471,25 @@ private fun fanucFromCam(cam: CamModel): String {
     return out.joinToString("\n")
 }
 
-private fun showNcEditor(frame: JFrame, doc: DrawingDocument, camSettings:CamSettings=CamSettings()) {
-    val cam = CamModel.fromCad(1L, doc.snapshot(), camSettings)
+private fun showNcEditor(
+    frame:JFrame,
+    doc:DrawingDocument,
+    camSettings:CamSettings=CamSettings(),
+    fixtures:List<FixtureObstacle> = emptyList(),
+    toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
+) {
+    val snapshot=doc.snapshot()
+    val cam = CamModel.fromCad(1L, snapshot, camSettings)
     require(cam.toolpaths.isNotEmpty()) { "NC BLOCKED: no CAM toolpath" }
+    val stock=Stock3D.fromSnapshot(
+        snapshot,
+        manualPath=if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
+    )
+    val modeledRisk=MachiningRiskScanner.inspect(cam,stock,fixtures,toolAssembly)
+    require(modeledRisk.ok) {
+        "NC BLOCKED: MODELED COLLISION="+modeledRisk.collisionCount+
+            " OVERCUT="+modeledRisk.overcutCount+" • repair CAM/SIM first"
+    }
     var controllerProfile = runCatching {
         CncControllerProfile.valueOf(ncPostPrefs.get("controller", CncControllerProfile.FANUC.name))
     }.getOrDefault(CncControllerProfile.FANUC)
@@ -3867,7 +3883,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             }
         }
         camAction("NC",Color(80,170,255)){
-            runCatching{showNcEditor(frame,doc,productionCamSettings)}
+            runCatching{showNcEditor(
+                frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
+            )}
                 .onFailure{status.text="NC EDIT BLOCKED • "+(it.message?:"error")}
         }
         return JPanel(BorderLayout(7,7)).apply{
@@ -3925,7 +3943,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         action("座標 / 精度"){showDesktopCoordinatePrecisionDialog(frame,status)}
         action("AI 診斷"){mainCardLayout.show(mainCardHost,"AI");status.text="MAINT • AI LOCAL ASSIST"}
         action("CAM 檢查"){showProductionCam()}
-        action("NC 安全"){runCatching{showNcEditor(frame,doc)}.onFailure{status.text="MAINT NC BLOCKED • "+(it.message?:"error")}}
+        action("NC 安全"){runCatching{showNcEditor(
+            frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
+        )}.onFailure{status.text="MAINT NC BLOCKED • "+(it.message?:"error")}}
         action("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="CAD • PRODUCTION UI"}
         val panel=JPanel(BorderLayout(8,8)).apply{
             background=StudioDesktopProductionTheme.background
@@ -3993,12 +4013,17 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         showProductionCam()
     })
     moduleButtons.add(productionUiButton("SIM", Color(139,92,246)) {
-        runCatching { showUnifiedMachiningEditor(frame,doc,status,ProductionUiSwitchContract.runtimeTarget("SIM"),productionCamSettings) }
+        runCatching { showUnifiedMachiningEditor(
+            frame,doc,status,ProductionUiSwitchContract.runtimeTarget("SIM"),
+            productionCamSettings,productionFixtures,productionToolAssembly
+        ) }
             .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("SIM")+" • "+MasterRuntimeChainContract.uiLabel() }
             .onFailure { status.text="SIM BLOCKED • "+(it.message?:"error") }
     })
     moduleButtons.add(productionUiButton("NC", Color(80,170,255)) {
-        runCatching { showNcEditor(frame,doc,productionCamSettings) }
+        runCatching { showNcEditor(
+            frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
+        ) }
             .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("NC")+" • "+MasterRuntimeChainContract.masterOriginLabel()+" • FANUC / MITSUBISHI" }
             .onFailure { status.text="NC EDIT BLOCKED • "+(it.message?:"error") }
     })
@@ -4139,7 +4164,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         })
         add(button("CAM 檢查",StudioDesktopProductionTheme.cutting){showProductionCam()})
         add(button("NC 安全",Color(80,170,255)){
-            runCatching{showNcEditor(frame,doc)}
+            runCatching{showNcEditor(
+                frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
+            )}
                 .onFailure{status.text="AI NC CHECK BLOCKED • "+(it.message?:"error")}
         })
         add(button("返回 CAD",StudioDesktopProductionTheme.accent){
