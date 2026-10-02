@@ -2062,3 +2062,19 @@ for workflow in (nc_coordinate_314,nc_semantic_314):
     require(workflow, "if: ${{ false }}", "STUDIO_314_REGRESSION_WORKFLOW_OFF")
 print("STUDIO_REGRESSION_DOWNGRADE_POLICY_PASS|314|REGRESSION_OFF|BUILD_NO_REGRESSION|DOWNGRADE_OFF|EQUAL_REINSTALL_OFF|SAFETY_SCOPE_FAIL_CLOSED")
 
+# Studio 315 user-authority settings lock
+rolling_315 = read("core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt")
+android_315 = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
+desktop_315 = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
+for needle in (
+    "REGRESSION_REENABLE_REQUIRES_EXPLICIT_USER_APPROVAL=true",
+    "CNC_SAFETY_POLICY_CHANGES_REQUIRE_EXPLICIT_USER_APPROVAL=true",
+    "CNC_SAFETY_CORE_LOCKED=true",
+    "CNC_SAFETY_DISABLE_ALLOWED=false",
+):
+    require(rolling_315, needle, "STUDIO_315_USER_AUTHORITY_LOCK")
+for source in (android_315,desktop_315):
+    require(source, "Regression • OFF（鎖定）", "STUDIO_315_SETTINGS_REGRESSION_LOCK")
+    require(source, "CNC 安全設定（核心 ON）", "STUDIO_315_SETTINGS_CNC_SAFETY")
+print("STUDIO_USER_AUTHORITY_SETTINGS_GATE_PASS|315|REGRESSION_OFF_LOCKED|USER_APPROVAL_REQUIRED|CNC_SAFETY_CORE_ON_LOCKED|NO_DISABLE_ENTRY")
+
