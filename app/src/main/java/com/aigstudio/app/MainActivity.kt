@@ -5893,9 +5893,17 @@ class CadView(
 
     fun trimSelected() {
         if(selectedIds.size==2) {
+            val target=selectedIds.first()
             runCatching { runGeometryCommand(CadEditEngine.trimCommand(doc,selectedIds)) }
-                .onSuccess { Toast.makeText(context,"TRIM PASS • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show() }
-                .onFailure { Toast.makeText(context,"TRIM BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+                .onSuccess {
+                    selectedIds.clear();selectedIds.add(target)
+                    Toast.makeText(context,"TRIM PASS • 目標保持選取 • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show()
+                }
+                .onFailure {
+                    selectedIds.clear()
+                    Toast.makeText(context,"TRIM BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+                }
+            sceneRevision++;invalidate()
             return
         }
         tool=Tool.SELECT
@@ -5908,9 +5916,17 @@ class CadView(
 
     fun extendSelected() {
         if(selectedIds.size==2) {
+            val target=selectedIds.first()
             runCatching { runGeometryCommand(CadEditEngine.extendCommand(doc,selectedIds)) }
-                .onSuccess { Toast.makeText(context,"EXTEND PASS • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show() }
-                .onFailure { Toast.makeText(context,"EXTEND BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+                .onSuccess {
+                    selectedIds.clear();selectedIds.add(target)
+                    Toast.makeText(context,"EXTEND PASS • 目標保持選取 • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show()
+                }
+                .onFailure {
+                    selectedIds.clear()
+                    Toast.makeText(context,"EXTEND BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+                }
+            sceneRevision++;invalidate()
             return
         }
         tool=Tool.SELECT
@@ -5949,7 +5965,8 @@ class CadView(
         selectedIds.clear()
         pendingPickOperation=null
         result.onSuccess {
-            Toast.makeText(context,"$operation PASS • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show()
+            selectedIds.add(ids.first())
+            Toast.makeText(context,"$operation PASS • 目標保持選取 • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show()
         }.onFailure {
             Toast.makeText(context,"$operation BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
         }

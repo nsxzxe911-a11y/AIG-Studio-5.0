@@ -1593,6 +1593,18 @@ private fun testCadPrecisionEditing() {
     assertPoint(trimmed.a,Vec2(0.0,0.0),"trim a")
     assertPoint(trimmed.b,Vec2(6.0,0.0),"trim b")
 
+    val trimTopology=DrawingDocument()
+    trimTopology.put(Line(id="TT",a=Vec2(0.0,0.0),b=Vec2(10.0,0.0)))
+    trimTopology.put(Line(id="JOIN",a=Vec2(10.0,0.0),b=Vec2(14.0,0.0)))
+    trimTopology.put(Line(id="BOUND",a=Vec2(6.0,-5.0),b=Vec2(6.0,5.0)))
+    val trimTopologyHistory=History(trimTopology)
+    trimTopologyHistory.run(CadEditEngine.connectCommand(trimTopology,listOf("TT","JOIN"),JOIN_TOLERANCE_MM))
+    check(trimTopology.links().size==1)
+    trimTopologyHistory.run(CadEditEngine.trimCommand(trimTopology,listOf("TT","BOUND")))
+    check(trimTopology.links().isEmpty()) { "TRIM must prune stale CONNECT topology" }
+    check(trimTopologyHistory.undoWithEffect()==true)
+    check(trimTopology.links().size==1) { "TRIM undo must restore valid CONNECT topology" }
+
     val extend=DrawingDocument()
     extend.put(Line(id="T",a=Vec2(0.0,0.0),b=Vec2(5.0,0.0)))
     extend.put(Line(id="B",a=Vec2(10.0,-5.0),b=Vec2(10.0,5.0)))

@@ -722,8 +722,17 @@ private class CadPanel(
 
     fun trimSelected() {
         if(selectedIds.size==2){
+            val target=selectedIds.first()
             runCatching { applyGeometry("TRIM",CadEditEngine.trimCommand(doc,selectedIds)) }
-                .onFailure { status("TRIM BLOCKED • "+(it.message?:"error")) }
+                .onSuccess {
+                    selectedIds.clear();selectedIds.add(target)
+                    status("TRIM PASS • target selected • CAM/SIM/NC REBUILD")
+                }
+                .onFailure {
+                    selectedIds.clear()
+                    status("TRIM BLOCKED • "+(it.message?:"error"))
+                }
+            repaint()
             return
         }
         mode=DrawMode.SELECT
@@ -735,8 +744,17 @@ private class CadPanel(
 
     fun extendSelected() {
         if(selectedIds.size==2){
+            val target=selectedIds.first()
             runCatching { applyGeometry("EXTEND",CadEditEngine.extendCommand(doc,selectedIds)) }
-                .onFailure { status("EXTEND BLOCKED • "+(it.message?:"error")) }
+                .onSuccess {
+                    selectedIds.clear();selectedIds.add(target)
+                    status("EXTEND PASS • target selected • CAM/SIM/NC REBUILD")
+                }
+                .onFailure {
+                    selectedIds.clear()
+                    status("EXTEND BLOCKED • "+(it.message?:"error"))
+                }
+            repaint()
             return
         }
         mode=DrawMode.SELECT
@@ -771,8 +789,10 @@ private class CadPanel(
         }
         selectedIds.clear()
         pendingPickOperation=null
-        result.onSuccess{status("$operation PASS • CAM/SIM/NC REBUILD")}
-            .onFailure{status("$operation BLOCKED • "+(it.message?:"error"))}
+        result.onSuccess{
+            selectedIds.add(ids.first())
+            status("$operation PASS • target selected • CAM/SIM/NC REBUILD")
+        }.onFailure{status("$operation BLOCKED • "+(it.message?:"error"))}
         repaint()
         return true
     }

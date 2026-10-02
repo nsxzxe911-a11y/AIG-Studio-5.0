@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "325.0.0",
+  "version": "326.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 325. Semantic RECT control points now edit four corners as one rectangle, keeping adjacent edges closed. Continue CAD geometry/group consistency before CAM expansion.",
-  "note": "Studio 325: repaired semantic RECT control-point behavior. Complete RECT groups expose four RECT_CORNER handles instead of independent line endpoints; corner edits rebuild all four edges with stable IDs and preserve >=0.001 mm width/height. Arbitrary-angle RECT corner edits remain blocked. Regression source coverage added; automatic regression remains OFF/LOCKED. No APK/EXE launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 326. TRIM/EXTEND selection lifecycle is now deterministic: success keeps only the edited target selected; failure clears the two-line operation selection. Continue CAD edge-case repair before CAM.",
+  "note": "Studio 326: aligned TRIM/EXTEND direct-selection and two-pick flows on Android/Windows. Success keeps edited target selected; failure clears operation selection. ReplaceEntitiesCommand already prunes invalid CONNECT topology and undo restores valid links; source coverage added. Automatic regression remains OFF/LOCKED. No APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -379,5 +379,12 @@
     "min_width_height_mm": 0.001,
     "rotated_non_axis_rect": "BLOCK",
     "undo_redo_source_coverage": true
+  },
+  "cad_trim_extend_326": {
+    "success_selection": "EDITED_TARGET_ONLY",
+    "failure_selection": "CLEAR",
+    "stale_connect_after_geometry_change": "PRUNED",
+    "undo_valid_connect": "RESTORED",
+    "two_pick_order": "TARGET_THEN_BOUNDARY"
   }
 }
