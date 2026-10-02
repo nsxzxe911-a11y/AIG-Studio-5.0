@@ -34,6 +34,7 @@ machining3d_android = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstud
 core_regression = (ROOT / "core" / "src" / "test" / "kotlin" / "com" / "aigstudio" / "core" / "CoreRegressionTest.kt").read_text(encoding="utf-8")
 cam_core = (ROOT / "core" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "core" / "Cam.kt").read_text(encoding="utf-8")
 fanuc_nc = (ROOT / "core" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "core" / "FanucNc.kt").read_text(encoding="utf-8")
+project_repo = (ROOT / "core" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "core" / "ProjectRepository.kt").read_text(encoding="utf-8")
 
 required_android = [
     "StudioStartupBootGuard.begin(this)",
@@ -246,6 +247,35 @@ if 'FIXTURE_COVERAGE_POLICY_GATE_PASS' not in core_regression:
     raise SystemExit("Fixture coverage policy regression marker missing")
 print("FIXTURE_MODEL_PRODUCTION_UI_GATE_PASS|ANDROID|WINDOWS|MASTER_ORIGIN_BOUNDS|LOOKAHEAD_VISIBLE|NO_AUTO_NC")
 print("MODELED_COLLISION_NC_INTERLOCK_PRODUCTION_GATE_PASS|COLLISION|OVERCUT|UNMODELED_WARNING_ONLY|PREFLIGHT_MODEL_REQUIRED")
+for marker in [
+    'const val HEADER = "AIGSTUDIO_PROJECT|3"',
+    'const val LEGACY_V2_HEADER = "AIGSTUDIO_PROJECT|2"',
+    'const val LEGACY_HEADER = "AIGSTUDIO_PROJECT|1"',
+    "val axisC:Double=0.0",
+    "val fixtures:List<FixtureObstacle> = emptyList()",
+    "val toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()",
+]:
+    if marker not in project_repo:
+        raise SystemExit(f"Project V3 fixture persistence marker missing: {marker}")
+for marker in [
+    "axisC=working.axisC",
+    "camFixtures.clear();camFixtures.addAll(working.fixtures)",
+    "axisC,camFixtures,camToolAssembly",
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android V3 fixture restore marker missing: {marker}")
+for marker in [
+    "productionFixtures.clear();productionFixtures.addAll(working.fixtures)",
+    "productionToolAssembly=working.toolAssembly",
+    "sharedProjectExtraDirty.get()",
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Windows V3 fixture restore marker missing: {marker}")
+for marker in ["PROJECT_FIXTURE_PERSISTENCE_GATE_PASS","PROJECT_FIXTURE_SYNC_DIGEST_GATE_PASS"]:
+    if marker not in core_regression:
+        raise SystemExit(f"Project V3 fixture regression marker missing: {marker}")
+print("PROJECT_FIXTURE_PERSISTENCE_PRODUCTION_GATE_PASS|V3|V1_V2_COMPAT|AXIS_C|FIXTURE|TOOL_ASSEMBLY|ANDROID_WINDOWS")
+print("PROJECT_FIXTURE_DIGEST_PRODUCTION_GATE_PASS|0.001_FIXTURE_SHA|REVISION_SYNC|NO_SILENT_OVERWRITE")
 
 
 
