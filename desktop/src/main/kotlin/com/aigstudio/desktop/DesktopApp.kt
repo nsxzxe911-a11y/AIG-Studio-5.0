@@ -3365,10 +3365,146 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     }
 
     var productionCamSettings=CamSettings()
+    var productionProjectState:StudioProjectPackage?=null
     val productionFixtures=mutableListOf<FixtureObstacle>()
     var productionToolAssembly=ToolAssemblyConfig()
     var nextProductionFixtureId=1L
 
+    fun productionLocalProjectFile():File = sharedLocalProjectFile ?:
+        File(System.getProperty("user.home"),".aig-studio/projects/current.aigp")
+    fun productionSharedProjectFile():File = sharedProjectFile ?:
+        File(System.getProperty("user.home"),".aig-studio/shared/current.aigp")
+
+    fun captureProductionProject():StudioProjectPackage {
+        val local=productionLocalProjectFile()
+        val base=productionProjectState ?: runCatching{
+            if(local.isFile)StudioProjectRepository.load(local) else null
+        }.getOrNull()
+        return if(base!=null) {
+            base.copy(
+                entities=doc.all(),links=doc.links(),camSettings=productionCamSettings,
+                fixtures=productionFixtures.toList(),toolAssembly=productionToolAssembly
+            )
+        } else {
+            StudioProjectRepository.capture(
+                doc,productionCamSettings,fixtures=productionFixtures,toolAssembly=productionToolAssembly
+            ).copy(revisionMeta=sharedLocalMeta)
+        }
+    }
+
+    fun applyProductionProject(project:StudioProjectPackage){
+        StudioProjectRepository.applyTo(project,doc)
+        productionProjectState=project
+        productionCamSettings=project.camSettings
+        productionFixtures.clear();productionFixtures.addAll(project.fixtures)
+        productionToolAssembly=project.toolAssembly
+        nextProductionFixtureId=(productionFixtures.maxOfOrNull{it.id} ?: 0L)+1L
+        sharedLocalMeta=project.revisionMeta
+        sharedProjectExtraDirty.set(false)
+        cad.repaint()
+    }
+
+    fun saveProductionProjectRevision():StudioProjectPackage {
+        val local=productionLocalProjectFile().apply{parentFile?.mkdirs()}
+        val meta=StudioProjectRepository.saveRevisioned(
+            captureProductionProject(),local,"WINDOWS",
+            (System.getenv("COMPUTERNAME") ?: "DESKTOP").take(64)
+        )
+        val saved=StudioProjectRepository.load(local)
+        require(saved.revisionMeta==meta)
+        productionProjectState=saved
+        sharedLocalMeta=saved.revisionMeta
+        sharedProjectExtraDirty.set(false)
+        return saved
+    }
+
+    fun showProductionProjectSyncResolution(){
+        val shared=productionSharedProjectFile()
+        if(!shared.isFile){status.text="共享專案尚不存在";return}
+        val remote=runCatching{StudioProjectRepository.load(shared)}.getOrElse{
+            status.text="共享專案 BLOCKED • "+(it.message?:"error");return
+        }
+        val localFile=productionLocalProjectFile()
+        val local=runCatching{
+            if(localFile.isFile)StudioProjectRepository.load(localFile) else captureProductionProject()
+        }.getOrElse{
+            status.text="本機專案 BLOCKED • "+(it.message?:"error");return
+        }
+        val geometryDirty=(doc.all().hashCode()*31+doc.links().hashCode())!=sharedBaselineSignature
+        val state=ProjectRevisionSync.classify(
+            local.revisionMeta,remote.revisionMeta,geometryDirty||sharedProjectExtraDirty.get()
+        )
+        val options=arrayOf("採用新版","保留本機","另存副本")
+        val choice=JOptionPane.showOptionDialog(
+            frame,ProjectRevisionSync.statusLabel(state,remote.revisionMeta)+
+                "\n遠端 R"+remote.revisionMeta.revision+" • 本機 R"+local.revisionMeta.revision+
+                "\n不會自動覆蓋。",
+            "共享專案 • "+state.name,JOptionPane.DEFAULT_OPTION,JOptionPane.WARNING_MESSAGE,
+            null,options,options[0]
+        )
+        when(choice){
+            0 -> runCatching{
+                applyProductionProject(remote)
+                localFile.parentFile?.mkdirs()
+                StudioProjectRepository.save(remote,localFile)
+            }.onSuccess{status.text="已採用共享新版 • R"+remote.revisionMeta.revision}
+             .onFailure{status.text="採用 BLOCKED • "+(it.message?:"error")}
+            1 -> {sharedProjectExtraDirty.set(true);status.text="保留本機 • 未覆蓋共享檔"}
+            2 -> runCatching{
+                val dir=File(System.getProperty("user.home"),".aig-studio/projects").apply{mkdirs()}
+                val copy=File(dir,"local-copy-R"+local.revisionMeta.revision+"-"+System.currentTimeMillis()+".aigp")
+                StudioProjectRepository.save(local,copy)
+                copy
+            }.onSuccess{status.text="本機副本已保留 • "+it.name}
+             .onFailure{status.text="另存 BLOCKED • "+(it.message?:"error")}
+        }
+    }
+
+    fun publishProductionProjectConfirmed(){
+        val local=runCatching{saveProductionProjectRevision();productionLocalProjectFile()}.getOrElse{
+            status.text="專案儲存 BLOCKED • "+(it.message?:"error");return
+        }
+        val shared=productionSharedProjectFile().apply{parentFile?.mkdirs()}
+        val expected=runCatching{
+            if(shared.isFile)StudioProjectRepository.load(shared).revisionMeta.contentDigest else null
+        }.getOrNull()
+        val meta=StudioProjectRepository.load(local).revisionMeta
+        if(JOptionPane.showConfirmDialog(
+            frame,"本機 R"+meta.revision+" → 共享專案\n共享檔若在確認後改變，發布會 BLOCKED。",
+            "共享發布確認",JOptionPane.OK_CANCEL_OPTION
+        )!=JOptionPane.OK_OPTION)return
+        runCatching{
+            SharedProjectFolderSync.publishConfirmed(
+                local,shared,expected,{StudioProjectRepository.load(it).revisionMeta},true
+            )
+        }.onSuccess{published->
+            sharedLocalMeta=published
+            sharedProjectExtraDirty.set(false)
+            status.text="共享發布完成 • R"+published.revision
+        }.onFailure{status.text="共享發布 BLOCKED • "+(it.message?:"error")}
+    }
+
+    fun showProductionProjectManager(){
+        val actions=arrayOf("專案儲存","專案開啟","共享狀態","共享發布")
+        val choice=JOptionPane.showOptionDialog(
+            frame,"Project V3 • CAD/CAM/ABC/Fixture/Tool/NC • no silent overwrite",
+            "AIG CNC • 專案 / 同步",JOptionPane.DEFAULT_OPTION,JOptionPane.PLAIN_MESSAGE,
+            null,actions,actions[0]
+        )
+        when(choice){
+            0 -> runCatching{saveProductionProjectRevision()}
+                .onSuccess{status.text="專案已儲存 • R"+it.revisionMeta.revision+" • V3"}
+                .onFailure{status.text="專案儲存 BLOCKED • "+(it.message?:"error")}
+            1 -> {
+                val file=productionLocalProjectFile()
+                runCatching{require(file.isFile){"尚無本機專案"};StudioProjectRepository.load(file)}
+                    .onSuccess{applyProductionProject(it);status.text="專案已開啟 • R"+it.revisionMeta.revision+" • FIXTURE "+it.fixtures.size}
+                    .onFailure{status.text="專案開啟 BLOCKED • "+(it.message?:"error")}
+            }
+            2 -> showProductionProjectSyncResolution()
+            3 -> publishProductionProjectConfirmed()
+        }
+    }
     fun showProductionFixtureEditor(){
         val model=DefaultListModel<String>()
         val list=JList(model)
@@ -4255,6 +4391,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 )
             } else remote
             StudioProjectRepository.applyTo(working,doc)
+            productionProjectState=working
             productionCamSettings=working.camSettings
             productionFixtures.clear();productionFixtures.addAll(working.fixtures)
             productionToolAssembly=working.toolAssembly
