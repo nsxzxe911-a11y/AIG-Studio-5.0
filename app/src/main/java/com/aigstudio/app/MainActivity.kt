@@ -2101,9 +2101,9 @@ class MainActivity : Activity() {
                 .setTitle("啟動版本更新")
                 .setMessage(
                     "目前版本："+BuildConfig.VERSION_NAME+
-                        "\n流程：正版 HOME → 背景比對 → 只接受已驗證更高版本。"+
-                        "\n離線：直接使用目前已安裝版本。"+
-                        "\nAndroid 安裝仍需系統確認。"
+                        "\n流程：正版 HOME → 線上讀取條＋說明 → 背景比對 → 只接受已驗證更高版本。"+
+                        "\n離線：不顯示讀取條，直接使用目前已安裝版本與設定。"+
+                        "\nAndroid 安裝仍需系統確認；安裝完成後自動使用新版介面。"
                 )
                 .setPositiveButton("立即比對"){_,_->runSecureUpdateCheck()}
                 .setNegativeButton("關閉",null)
