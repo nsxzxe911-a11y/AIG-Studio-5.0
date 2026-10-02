@@ -239,6 +239,10 @@ private class GlassActionButton(label: String, accentInput: Color) : JButton(lab
         g2.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY)
         val pressed=model.isPressed
         val hover=model.isRollover
+        val screen=Toolkit.getDefaultToolkit().screenSize
+        val rawHz=runCatching { GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.displayMode.refreshRate }.getOrDefault(60)
+        val renderProfile=RenderCompatibilityContract.profile(screen.width,screen.height,if(rawHz>0)rawHz.toDouble() else 60.0)
+        val depthScale=RgbButtonVisualContract.depthScale(renderProfile.tier)
         val rawHz=runCatching { GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.displayMode.refreshRate }.getOrDefault(60)
         val targetFps=RenderCompatibilityContract.refreshBucket(if(rawHz>0)rawHz.toDouble() else 60.0)
         val periodNs=RenderColorCompatibility.animationPeriodMs(targetFps)*1_000_000L
@@ -249,6 +253,9 @@ private class GlassActionButton(label: String, accentInput: Color) : JButton(lab
             fun m(x:Int,y:Int)=(x+(y-x)*a).roundToInt().coerceIn(0,255)
             return Color(m(base.red,tint.red),m(base.green,tint.green),m(base.blue,tint.blue),alpha.coerceIn(0,255))
         }
+        g2.color=Color(0,0,0,(70*depthScale).roundToInt().coerceIn(48,96))
+        val shadowY=(5*depthScale).roundToInt().coerceAtLeast(4)
+        g2.fillRoundRect(3,shadowY,max(0,width-7),max(0,height-shadowY-2),20,20)
         val glowAlpha=when {
             active -> (92*pulse).roundToInt().coerceIn(68,112)
             pressed -> 82
