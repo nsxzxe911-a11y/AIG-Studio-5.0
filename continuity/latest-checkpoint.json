@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "328.0.0",
+  "version": "329.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 328. MOVE/COPY reject zero displacement, ROTATE rejects effective 0/360-degree no-op, and MOVE/COPY/ROTATE/MIRROR reject non-finite results before command execution. Continue CAD selection/control continuity before CAM.",
-  "note": "Studio 328: transform preflight tightened. MOVE/COPY require >=0.001 mm displacement on X or Y; ROTATE normalizes angle and blocks no-op rotations; all transform outputs are checked finite before mutation. Source regression coverage added; automatic regression remains OFF/LOCKED. No APK/EXE launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 329. Important runtime/release state is now visible directly in Android and Windows Settings: version, HOME-first, engineering-shell-first OFF, offline mode, update policy, FPS, precision, regression lock, CNC safety core, CAD edit guards, array cap, and current device-evidence status.",
+  "note": "Studio 329: Settings Center reorganized as status-first UI. Android Settings is scrollable. Important operational state is shown explicitly instead of being hidden in checkpoint text. Current binary/device evidence remains PENDING and is displayed as such; no APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -404,5 +404,20 @@
     "preflight_before_mutation": true,
     "generated_copy_selection": "RETAINED_BY_UI",
     "auto_regression": "OFF_LOCKED"
+  },
+  "settings_status_329": {
+    "version": true,
+    "production_home_first": true,
+    "engineering_shell_first_off": true,
+    "offline_available": true,
+    "verified_newer_only": true,
+    "fps_visible": true,
+    "precision_visible": true,
+    "regression_off_locked": true,
+    "cnc_safety_on_locked": true,
+    "cad_edit_guards_visible": true,
+    "array_limit_visible": true,
+    "current_binary_evidence": "PENDING",
+    "android_scrollable": true
   }
 }

@@ -4400,27 +4400,55 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             status.text="STARTUP VERSION • HOME FIRST • VERIFIED NEWER ONLY"
         }
         action("AI 智能"){mainCardLayout.show(mainCardHost,"AI");status.text="SETTINGS • AI"}
-        val panel=JPanel(BorderLayout(8,8)).apply{
+
+        val important=JPanel(GridLayout(0,2,6,5)).apply{
+            background=StudioDesktopProductionTheme.background
+            fun row(label:String,value:String,color:Color=StudioDesktopProductionTheme.text){
+                add(JLabel(label).apply{foreground=Color(160,190,210)})
+                add(JLabel(value).apply{foreground=color})
+            }
+            row("目前版本",desktopVersionName(),StudioDesktopProductionTheme.accent)
+            row("啟動介面","Production HOME FIRST",Color(99,255,157))
+            row("工程殼首畫面","OFF",Color(99,255,157))
+            row("離線使用","ON • 已安裝版本",Color(99,255,157))
+            row("版本更新","背景比對 • NEWER ONLY",StudioDesktopProductionTheme.accent)
+            row("FPS",StudioDesktopRefreshSettings.mode()+" • 預設 60")
+            row("座標 / 精度","0.001 mm • Master 0.000")
+            row("Regression","OFF / LOCKED",StudioDesktopProductionTheme.warning)
+            row("CNC 安全核心","ON / LOCKED",StudioDesktopProductionTheme.warning)
+            row("CAD 編輯防護","0.001 • 原子預檢 • RECT 群組")
+            row("ARRAY 上限","10,000 新幾何")
+            row("本版真機證據","PENDING • 未宣告 APK/EXE PASS",StudioDesktopProductionTheme.warning)
+        }
+
+        val selectors=JPanel(GridLayout(0,2,6,6)).apply{
+            background=StudioDesktopProductionTheme.background
+            add(JLabel("佈景主題").apply{foreground=StudioDesktopProductionTheme.text});add(themeChoice)
+            add(JLabel("FPS 模式").apply{foreground=StudioDesktopProductionTheme.text});add(fpsChoice)
+            add(JLabel("目前有效").apply{foreground=StudioDesktopProductionTheme.text})
+            add(JLabel(StudioDesktopRefreshSettings.targetFps().toString()+" FPS").apply{foreground=StudioDesktopProductionTheme.text})
+        }
+
+        val content=JPanel(BorderLayout(8,8)).apply{
             background=StudioDesktopProductionTheme.background
             border=BorderFactory.createEmptyBorder(10,10,10,10)
-            add(JPanel(GridLayout(0,2,6,6)).apply{
+            add(JPanel(BorderLayout(6,8)).apply{
                 background=StudioDesktopProductionTheme.background
-                add(JLabel("佈景主題").apply{foreground=StudioDesktopProductionTheme.text})
-                add(themeChoice)
-                add(JLabel("FPS 模式").apply{foreground=StudioDesktopProductionTheme.text})
-                add(fpsChoice)
-                add(JLabel("目前有效").apply{foreground=StudioDesktopProductionTheme.text})
-                add(JLabel(StudioDesktopRefreshSettings.targetFps().toString()+" FPS").apply{foreground=StudioDesktopProductionTheme.text})
-                add(JLabel("Regression").apply{foreground=StudioDesktopProductionTheme.text})
-                add(JLabel("OFF / LOCKED").apply{foreground=StudioDesktopProductionTheme.warning})
-                add(JLabel("CNC 安全核心").apply{foreground=StudioDesktopProductionTheme.text})
-                add(JLabel("ON / LOCKED").apply{foreground=StudioDesktopProductionTheme.warning})
-                add(JLabel("啟動版本比對").apply{foreground=StudioDesktopProductionTheme.text})
-                add(JLabel("ON • HOME FIRST • NEWER ONLY").apply{foreground=StudioDesktopProductionTheme.accent})
+                add(JLabel("重要狀態").apply{
+                    foreground=StudioDesktopProductionTheme.accent
+                    font=font.deriveFont(Font.BOLD,15f)
+                },BorderLayout.NORTH)
+                add(important,BorderLayout.CENTER)
+                add(selectors,BorderLayout.SOUTH)
             },BorderLayout.NORTH)
             add(actions,BorderLayout.CENTER)
         }
-        JOptionPane.showMessageDialog(frame,panel,"AIG CNC • 設定中心",JOptionPane.INFORMATION_MESSAGE)
+        val scroll=JScrollPane(content).apply{
+            border=null
+            preferredSize=Dimension(720,640)
+            verticalScrollBar.unitIncrement=18
+        }
+        JOptionPane.showMessageDialog(frame,scroll,"AIG CNC • 設定中心",JOptionPane.INFORMATION_MESSAGE)
     }
 
     fun showMaintenanceCenter(){

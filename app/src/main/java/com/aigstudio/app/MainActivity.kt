@@ -2076,15 +2076,58 @@ class MainActivity : Activity() {
     }
 
     private fun showUserSettingsCenter() {
+        val prefs=getSharedPreferences("aig_environment",MODE_PRIVATE)
+        val fpsMode=prefs.getString("fps_mode","60 FPS") ?: "60 FPS"
+        val precision=prefs.getString("coordinate_precision","0.001") ?: "0.001"
+        val ncPrecision=prefs.getString("nc_output_precision","0.001") ?: "0.001"
+
         val box=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             setPadding(dp(16),dp(10),dp(16),dp(8))
         }
         box.addView(TextView(this).apply {
-            text="使用者設定中心 • 佈景 / FPS / 解析度 / 效能 / RGB / 驗證 / 維修。\n啟動版本：HOME FIRST → 背景比對 → VERIFIED NEWER ONLY；Regression OFF / LOCKED；CNC 安全核心 ON / LOCKED。"
-            setTextColor(StudioProductionTheme.text)
-            textSize=12.5f
-            setPadding(dp(4),dp(4),dp(4),dp(10))
+            text="重要狀態"
+            setTextColor(StudioProductionTheme.accent)
+            textSize=15f
+            setPadding(dp(4),dp(2),dp(4),dp(8))
+        })
+        fun importantRow(label:String,value:String,color:Int=StudioProductionTheme.text) {
+            box.addView(LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                gravity=Gravity.CENTER_VERTICAL
+                setPadding(dp(4),dp(5),dp(4),dp(5))
+                addView(TextView(this@MainActivity).apply {
+                    text=label
+                    setTextColor(0xFFA0BED2.toInt())
+                    textSize=11.5f
+                },LinearLayout.LayoutParams(0,-2,0.46f))
+                addView(TextView(this@MainActivity).apply {
+                    text=value
+                    setTextColor(color)
+                    textSize=11.5f
+                    gravity=Gravity.END
+                },LinearLayout.LayoutParams(0,-2,0.54f))
+            })
+        }
+        importantRow("目前版本",BuildConfig.VERSION_NAME,StudioProductionTheme.accent)
+        importantRow("啟動介面","Production HOME FIRST",0xFF63FF9D.toInt())
+        importantRow("工程殼首畫面","OFF",0xFF63FF9D.toInt())
+        importantRow("離線使用","ON • 直接用已安裝版本",0xFF63FF9D.toInt())
+        importantRow("版本更新","背景比對 • NEWER ONLY",StudioProductionTheme.accent)
+        importantRow("FPS",fpsMode+" • 預設 60",StudioProductionTheme.text)
+        importantRow("座標精度",precision+" mm • Master 0.000",StudioProductionTheme.text)
+        importantRow("NC 輸出精度",ncPrecision+" mm",StudioProductionTheme.text)
+        importantRow("Regression","OFF / LOCKED",StudioProductionTheme.warning)
+        importantRow("CNC 安全核心","ON / LOCKED",StudioProductionTheme.warning)
+        importantRow("CAD 編輯防護","0.001 • 原子預檢 • RECT 群組",StudioProductionTheme.text)
+        importantRow("ARRAY 上限","10,000 新幾何",StudioProductionTheme.text)
+        importantRow("本版真機證據","PENDING • 尚未宣告 APK/EXE PASS",StudioProductionTheme.warning)
+
+        box.addView(TextView(this).apply {
+            text="設定功能"
+            setTextColor(StudioProductionTheme.accent)
+            textSize=14f
+            setPadding(dp(4),dp(14),dp(4),dp(6))
         })
         fun action(label:String,run:()->Unit){
             box.addView(RgbGlowButton(this).apply {
@@ -2120,9 +2163,14 @@ class MainActivity : Activity() {
         }
         action("AI / 更新設定"){ showAiSystemSuiteDialog() }
         action("工作 / 維修"){ showMaintenanceCenter() }
+
+        val scroll=ScrollView(this).apply {
+            isFillViewport=true
+            addView(box)
+        }
         AlertDialog.Builder(this)
             .setTitle("AIG CNC • 設定中心")
-            .setView(box)
+            .setView(scroll)
             .setPositiveButton("關閉",null)
             .show()
     }
