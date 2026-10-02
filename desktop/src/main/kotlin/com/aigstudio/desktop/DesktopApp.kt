@@ -358,6 +358,7 @@ private object ProductionRgbAssets {
             n=="ARC" || name=="圓弧" -> "arc"
             n=="HOLE" || name=="孔" -> "hole"
             n=="SELECT" || name=="選取" -> "select"
+            name=="多功能" || name.contains("一鍵多功能") || n.contains("MULTI FUNCTION") -> "tool_group"
             n.contains("2D CAD") || n=="CAD" -> "cad"
             n=="CAM" || n.contains("CAM ") -> "cam"
             n=="SIM" || n.contains("3D SIM") -> "sim"
