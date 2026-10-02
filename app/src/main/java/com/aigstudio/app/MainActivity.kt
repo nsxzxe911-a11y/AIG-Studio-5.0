@@ -2875,7 +2875,8 @@ class MainActivity : Activity() {
         val selector=Spinner(this)
         fun label(index:Int,p:ManualCamPoint)=
             "P"+(index+1)+" • "+(if(p.rapid)"G0" else if(p.arcI!=null)"ARC" else "G1")+
-                " • X"+DisplayFormat.mm(p.x)+" Y"+DisplayFormat.mm(p.y)+" Z"+DisplayFormat.mm(p.z)
+                " • X"+DisplayFormat.mm(p.x)+" Y"+DisplayFormat.mm(p.y)+" Z"+DisplayFormat.mm(p.z)+
+                " • A"+DisplayFormat.mm(p.axisA)+" B"+DisplayFormat.mm(p.axisB)+" C"+DisplayFormat.mm(p.axisC)
         fun refresh(select:Int=0) {
             selector.adapter=ArrayAdapter(
                 this,android.R.layout.simple_spinner_dropdown_item,
@@ -2942,7 +2943,7 @@ class MainActivity : Activity() {
             runCatching{
                 camSettings=ManualCamPathEngine.insertPoint(
                     camSettings,i+1,
-                    ManualCamPoint(p.x,p.y,camSettings.depth,false,axisA=p.axisA,axisB=p.axisB)
+                    ManualCamPoint(p.x,p.y,camSettings.depth,false,axisA=p.axisA,axisB=p.axisB,axisC=p.axisC)
                 )
             }.onSuccess{markProjectDirty();refresh(i+1);load()}
                 .onFailure{Toast.makeText(this,"INSERT BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
