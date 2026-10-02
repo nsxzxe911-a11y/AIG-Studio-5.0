@@ -1,15 +1,6 @@
 name: Studio Trigger Guardian Recovery Self-Test
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'ci/trigger_guardian.py'
-      - 'ci/guardian_canonical/**'
-      - 'ci/guardian_mirror/**'
-      - '.github/workflows/trigger-guardian-a.yml'
-      - '.github/workflows/trigger-guardian-b.yml'
-      - '.github/workflows/guardian-recovery-selftest.yml'
   workflow_dispatch:
 
 permissions:
