@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "279.0.0",
+  "version": "304.0.0",
   "branch": "main",
-  "recorded_source_head": "c72a8076138d056c8ac88441c1c1d63419e087af",
+  "recorded_source_head": "565ed8f04f80f6fb0792e9a9b098bd8ae5ced758",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "EXECUTE_UNTIL_PASS",
   "departments": {
@@ -19,7 +19,8 @@
     "UIUX": "EXECUTE_UNTIL_PASS",
     "ANDROID_BUILD": "EXECUTE_UNTIL_PASS",
     "WINDOWS_BUILD": "EXECUTE_UNTIL_PASS",
-    "WEB": "EXECUTE_UNTIL_PASS"
+    "WEB": "EXECUTE_UNTIL_PASS",
+    "6AX": "EXECUTE_UNTIL_PASS"
   },
   "record_policy": {
     "authoritative": [
@@ -45,8 +46,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Revalidate Studio 279. Android and Windows shared-sync heavy IO are both off UI threads; reconnect and Range/ETag resilience remain enforced.",
-  "note": "Studio 270.0.0 runs parallel FAST REVIEW with Android/Windows heavy jobs concurrently. Failed checks route only to the responsible owner; XML cache and product safety/integrity gates remain enforced.",
+  "next_action": "Revalidate Studio 304 with 14 departments including 6AX; runtimeHost direct HOME, manual-only heavy release, and current CAM/SIM call signatures are authoritative.",
+  "note": "Studio 304 repairs stale 279 continuity metadata, promotes 6AX into the all-department loop, aligns HOME checks to the production runtimeHost boot path, and keeps 6AX NC Post fail-closed until machine-specific verification.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -64,7 +65,7 @@
   },
   "department_autocheck": {
     "script": "ci/department_autocheck.py",
-    "last_source_review": "PASS_13_OF_13_AFTER_UIUX_STALE_VERSION_FIX",
+    "last_source_review": "PENDING_14_OF_14_SOURCE_REVIEW_STUDIO304_GATE_RECOVERY",
     "no_early_exit": true,
     "output": "build/department-autocheck.json"
   },
