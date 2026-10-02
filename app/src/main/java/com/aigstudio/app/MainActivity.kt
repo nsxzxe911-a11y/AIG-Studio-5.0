@@ -1301,6 +1301,26 @@ class MainActivity : Activity() {
                 setOnClickListener { run() }
             })
         }
+        fun showOneKeyMultiFunction() {
+            val labels=arrayOf("CAD 工具","CAM 刀路","SIM 模擬","3AX","4AX","5AX","NC 編輯","AI 智能","工作/維修")
+            AlertDialog.Builder(this)
+                .setTitle("一鍵多功能")
+                .setItems(labels) { dialog,which ->
+                    dialog.dismiss()
+                    when(which) {
+                        0 -> enterCadRuntime()
+                        1 -> showCamWorkstation()
+                        2 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))
+                        3 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))
+                        4 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))
+                        5 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))
+                        6 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))
+                        7 -> showAiSystemSuiteDialog()
+                        8 -> showMaintenanceCenter()
+                    }
+                }
+                .show()
+        }
         homeAction("CAD",0xFF3DEBFF.toInt()){enterCadRuntime()}
         homeAction("CAM",0xFF22C55E.toInt()){showCamWorkstation()}
         homeAction("SIM",0xFF8B5CF6.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
@@ -1309,6 +1329,7 @@ class MainActivity : Activity() {
         homeAction("5AX",0xFFEC4899.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
         homeAction("NC",0xFF50AAFF.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}
         homeAction("AI",0xFF8B5CF6.toInt()){showAiSystemSuiteDialog()}
+        homeAction("多功能",0xFF27E9FF.toInt()){showOneKeyMultiFunction()}
         homeContent.addView(homeModes,LinearLayout.LayoutParams(-1,0,1f))
 
         val homeUtility=LinearLayout(this).apply {
