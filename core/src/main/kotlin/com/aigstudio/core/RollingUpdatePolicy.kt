@@ -133,6 +133,9 @@ object RollingUpdatePolicy {
     const val PARTIAL_CHECKPOINT_PERSIST=true
     const val CHANGED_PACKAGES_ONLY=true
     const val WORKING_COPY_BEFORE_PROMOTE=true
+    const val REGRESSION_EXECUTION_ENABLED=false
+    const val ALLOW_DOWNGRADE=false
+    const val ALLOW_EQUAL_VERSION_REINSTALL=false
 
     private fun parts(v:String)=v.trim().split('.').map { it.toIntOrNull() ?: 0 }
     fun compareVersions(a:String,b:String):Int {
@@ -160,6 +163,7 @@ object RollingUpdatePolicy {
         return checkpoint.downloadedBytes
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun canPromote(
         currentBaseline:String,
         candidateVersion:String,
@@ -170,7 +174,7 @@ object RollingUpdatePolicy {
     ):Boolean =
         compareVersions(candidateVersion,currentBaseline)>0 &&
             relevantGatePass && allDigestsVerified &&
-            (!cncRegressionRequired || cncRegressionPass)
+            !cncRegressionRequired
 }
 
 object VerifiedWorkingCopy {
