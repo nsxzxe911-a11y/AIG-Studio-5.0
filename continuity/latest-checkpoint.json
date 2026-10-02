@@ -3,7 +3,7 @@
   "product": "AIG Studio 5.0",
   "version": "308.0.0",
   "branch": "main",
-  "recorded_source_head": "PENDING_308_MANUAL_ONLY_UI_CHECKPOINT",
+  "recorded_source_head": "c07349dd795c6e6bfc2913a7e1fabe9935273d79",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "EXECUTE_UNTIL_PASS",
   "departments": {
@@ -47,7 +47,7 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate Studio 308 adaptive 1080P/2K/3K/4K + 30/60/90/120Hz + RGB color-tolerance rendering on Hosted Semantic/UI compile before rebinding AIG-II.",
+  "next_action": "Continue forward-only from this manual-only checkpoint. Automatic push/schedule regression triggers are disabled; use workflow_dispatch only when explicit validation is wanted.",
   "note": "Studio 308 UI/render source checkpoint: automatic regression triggers disabled; workflows remain manual-only. One-key multifunction and verified RGB visual replacement are implemented on Android/Windows. 60Hz is safe default; 30/60/90/120 and 1080P/2K/3K/4K remain adaptive. No binary/device PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
@@ -224,5 +224,20 @@
     "uiux/assets/cam.jpg",
     "uiux/assets/sim.jpg",
     "app/src/main/assets/aig-generated-rgb/approved/184/tool_group.png"
-  ]
+  ],
+  "manual_only_checkpoint": {
+    "source_head": "c07349dd795c6e6bfc2913a7e1fabe9935273d79",
+    "automatic_push_triggers": 0,
+    "automatic_schedule_triggers": 0,
+    "one_key_multifunction": "IMPLEMENTED_ANDROID_WINDOWS",
+    "verified_rgb_tool_group_asset": true,
+    "default_refresh_hz": 60,
+    "adaptive_refresh_hz": [
+      30,
+      60,
+      90,
+      120
+    ],
+    "binary_device_release_proof": "NOT_CLAIMED"
+  }
 }
