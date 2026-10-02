@@ -907,6 +907,19 @@ for needle in (
     require(machining3d_core, needle, "STUDIO_6AX_COLLISION_SPACE_295")
 require(regression, "SIX_AXIS_FIXTURE_ENVELOPE_GATE_PASS", "STUDIO_6AX_FIXTURE_ENVELOPE_REGRESSION_295")
 print("SIX_AXIS_COLLISION_SPACE_GATE_PASS|ABC_MACHINE_SPACE|FIXTURE|CLAMP|MACHINE_ENVELOPE|ROTATING_FIXTURE|C90")
+for needle in (
+    "enum class CollisionAvoidanceAction { RETRACT_Z, PATH_REROUTE, POSTURE_CHANGE_REQUIRED }",
+    "data class CollisionLookAheadPrediction(",
+    "data class CollisionLookAheadReport(",
+    "fun predictLookAhead(",
+    'const val POLICY="PREDICT_SUGGEST_MANUAL_CONFIRM_REVALIDATE"',
+    "fun applyRetractCandidate(",
+    "fun revalidate(",
+):
+    require(machining3d_core, needle, "STUDIO_6AX_COLLISION_LOOKAHEAD_296")
+require(regression, "COLLISION_LOOKAHEAD_GATE_PASS", "STUDIO_6AX_COLLISION_LOOKAHEAD_REGRESSION_296")
+print("COLLISION_LOOKAHEAD_RUNTIME_GATE_PASS|BOUNDED_HORIZON|RETRACT_Z|PATH_REROUTE|POSTURE_CHANGE_REQUIRED|MANUAL_CONFIRM|REVALIDATE|NO_AUTO_NC")
+
 
 
 for needle in (
