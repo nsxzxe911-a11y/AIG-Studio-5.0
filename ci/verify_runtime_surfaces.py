@@ -1198,7 +1198,7 @@ for needle in (
 print("TOOLPATH_VISUAL_HIERARCHY_GATE_PASS|ANDROID|WINDOWS|COMPLETED_PATH_FADED|ACTIVE_SEGMENT_BRIGHT|TOOL_HALO|MATERIAL_REMOVAL_UNCHANGED|VISUAL_ONLY")
 for needle in (
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 180",
-    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 128",
+    "MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B,MachineComponentRole.ROTARY_C -> 128",
     "MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 96",
     "val drawRoleEdges=when(component.role){",
     "component.role==MachineComponentRole.ROTARY_C",
@@ -1227,7 +1227,7 @@ for needle in (
     "MachineComponentRole.ROTARY_A,",
     "component.role==MachineComponentRole.ROTARY_C",
     "else -> false",
-    "val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B",
+    "component.role==MachineComponentRole.ROTARY_C",
     "MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 96",
 ):
     require(machining3d, needle, "STUDIO_ANDROID_SOLID_SURFACE_PRIORITY_184")
