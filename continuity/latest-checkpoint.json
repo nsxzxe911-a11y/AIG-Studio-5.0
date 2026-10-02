@@ -3,7 +3,7 @@
   "product": "AIG Studio 5.0",
   "version": "304.0.0",
   "branch": "main",
-  "recorded_source_head": "565ed8f04f80f6fb0792e9a9b098bd8ae5ced758",
+  "recorded_source_head": "dbe3850230f87c6deba13eb02311d08449125b3c",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "EXECUTE_UNTIL_PASS",
   "departments": {
@@ -46,7 +46,7 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Revalidate Studio 304 with 14 departments including 6AX; runtimeHost direct HOME, manual-only heavy release, and current CAM/SIM call signatures are authoritative.",
+  "next_action": "Keep Studio 304 as the forward-only source checkpoint. Scoped NC hosted gates may verify this source; APK/EXE release remains manual and requires separate artifact/runtime evidence.",
   "note": "Studio 304 repairs stale 279 continuity metadata, promotes 6AX into the all-department loop, aligns HOME checks to the production runtimeHost boot path, and keeps 6AX NC Post fail-closed until machine-specific verification.",
   "release_command": {
     "path": "continuity/release-command.json",
@@ -65,7 +65,7 @@
   },
   "department_autocheck": {
     "script": "ci/department_autocheck.py",
-    "last_source_review": "PENDING_14_OF_14_SOURCE_REVIEW_STUDIO304_GATE_RECOVERY",
+    "last_source_review": "PASS_14_OF_14_SOURCE_MARKER_REVIEW_STUDIO304_GATE_RECOVERY",
     "no_early_exit": true,
     "output": "build/department-autocheck.json"
   },
