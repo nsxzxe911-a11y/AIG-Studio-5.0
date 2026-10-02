@@ -154,7 +154,7 @@ for marker in [
         raise SystemExit(f"6AX ABC machine core marker missing: {marker}")
 for marker in [
     'private val machineAxisC: Double = 0.0',
-    'val c=if(mode=="6AX")machineAxisC else 0.0',
+    'val c=if(mode=="6AX")live?.axisC ?: machineAxisC else 0.0',
     'MachineKinematics3D.transform(v,a,b,c)',
     'MachineComponentRole.ROTARY_C',
 ]:
@@ -197,6 +197,18 @@ if '6AX_C_AXIS_NC_POST_BLOCKED' not in fanuc_nc:
 if 'CONTINUOUS_6AX_CAM_SIM_GATE_PASS' not in core_regression:
     raise SystemExit("continuous 6AX regression marker missing")
 print("CONTINUOUS_6AX_PRODUCTION_GATE_PASS|ABC_TOOLPOINTS|SIM|ROTARY_C|NC_C_FAIL_CLOSED")
+for marker in [
+    'private fun machinePoint(move:Move):Vec3',
+    'private fun rotatingFixtureEnvelopeCollision(',
+    'ROTARY_FIXTURE_ENVELOPE collision:',
+    'val envelopes=enabled.filter{it.kind==FixtureKind.MACHINE_ENVELOPE}',
+]:
+    if marker not in machining3d_core:
+        raise SystemExit(f"6AX collision-space marker missing: {marker}")
+if 'SIX_AXIS_FIXTURE_ENVELOPE_GATE_PASS' not in core_regression:
+    raise SystemExit("6AX fixture-envelope regression marker missing")
+print("SIX_AXIS_COLLISION_SPACE_PRODUCTION_GATE_PASS|ABC_MACHINE_SPACE|ROTATING_FIXTURE|MACHINE_ENVELOPE|NC_INTERLOCK_UNCHANGED")
+
 
 
 
