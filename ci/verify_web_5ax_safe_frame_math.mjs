@@ -1,0 +1,24 @@
+import fs from "node:fs";
+import vm from "node:vm";
+const html=fs.readFileSync(new URL("../web/index.html",import.meta.url),"utf8");
+function extract(name){const start=html.indexOf("function "+name+"(");if(start<0)throw new Error("MISSING:"+name);let brace=html.indexOf("{",start),depth=0,end=-1;for(let i=brace;i<html.length;i++){if(html[i]==="{")depth++;else if(html[i]==="}"){depth--;if(depth===0){end=i+1;break}}}return html.slice(start,end)}
+const names=["I","M","P","sub","cross","norm","look","runtimeProjectNdc","runtimeSafeFramePlan"],ctx={};
+vm.createContext(ctx);vm.runInContext(names.map(extract).join("\n"),ctx);
+const target=[0,0,0],eye=[0,-12,6],forward=ctx.norm(ctx.sub(target,eye)),right=ctx.norm(ctx.cross(forward,[0,0,1])),up=ctx.norm(ctx.cross(right,forward)),aspect=1.6,rr=Math.hypot(...ctx.sub(eye,target)),vp=ctx.M(ctx.P(Math.PI/4,aspect,.1,500),ctx.look(eye,target,[0,0,1]));
+const zero={x:0,y:0,z:0},now=2000,plan=(pts,held=zero,hold=0,manual=false)=>ctx.runtimeSafeFramePlan(pts,vp,70,rr,aspect,right,up,held,now,hold,manual,.18,420);
+let r=plan([{label:"TOOL TIP",p:{x:0,y:0,z:0},priority:3}]);
+if(r.mode!=="SAFE CENTER"||Math.hypot(r.target.x,r.target.y,r.target.z)>1e-9)throw new Error("CENTER_FAIL:"+JSON.stringify(r));
+const edge={x:8,y:0,z:0},q0=ctx.runtimeProjectNdc(vp,edge);
+r=plan([{label:"TOOL TIP",p:edge,priority:3}]);
+if(r.mode!=="SAFE SHIFT"||r.target.x<=0)throw new Error("RIGHT_SHIFT_FAIL:"+JSON.stringify({q0,r}));
+const shiftedTarget=[r.target.x,r.target.y,r.target.z],shiftedEye=[eye[0]+r.target.x,eye[1]+r.target.y,eye[2]+r.target.z],vp2=ctx.M(ctx.P(Math.PI/4,aspect,.1,500),ctx.look(shiftedEye,shiftedTarget,[0,0,1])),q1=ctx.runtimeProjectNdc(vp2,edge);
+const v0=Math.max(0,q0.x-r.safeRight),v1=Math.max(0,q1.x-r.safeRight);if(!(v1<v0))throw new Error("PROJECTION_NOT_IMPROVED:"+JSON.stringify({q0,q1,r}));
+r=plan([{label:"TOOL TIP",p:edge,priority:1},{label:"FIXTURE ALERT",p:{x:9,y:0,z:0},priority:4}]);
+if(r.mode!=="ALERT FRAME"||r.source!=="FIXTURE ALERT")throw new Error("ALERT_PRIORITY_FAIL:"+JSON.stringify(r));
+r=plan([{label:"TOOL TIP",p:edge,priority:3}],{x:1,y:0,z:0},now+300,false);
+if(r.mode!=="SAFE HOLD"||Math.abs(r.target.x-1)>1e-9)throw new Error("HOLD_FAIL:"+JSON.stringify(r));
+r=plan([{label:"TOOL TIP",p:edge,priority:3}],{x:1,y:0,z:0},0,true);
+if(r.mode!=="MANUAL HOLD"||Math.hypot(r.target.x,r.target.y,r.target.z)>1e-9)throw new Error("MANUAL_FAIL:"+JSON.stringify(r));
+const huge={x:100,y:0,z:0};r=plan([{label:"TOOL TIP",p:huge,priority:3}]);
+if(Math.hypot(r.target.x,r.target.y,r.target.z)>r.maxSafeOffset+1e-9)throw new Error("MAX_OFFSET_FAIL:"+JSON.stringify(r));
+console.log("WEB_5AX_SAFE_FRAME_MATH_PASS|CENTER|RIGHT_EDGE_CORRECTION|REPROJECT_IMPROVES|FIXTURE_ALERT_PRIORITY|HOLD|MANUAL_ZERO|MAX_OFFSET");

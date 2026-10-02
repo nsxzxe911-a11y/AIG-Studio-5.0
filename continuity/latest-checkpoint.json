@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "352.0.0",
+  "version": "353.0.0",
   "branch": "main",
-  "recorded_source_head": "c835a16938aae574da2abf548d0bfd3fc61735cd",
+  "recorded_source_head": "6c79a2caa6c7e30d89274a873c9ab2a6e135a950",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate Studio 352 5AX next-block view composition from the exact commit, then bind AIG-II 388 to that SHA. Preserve motion-aware focus/zoom, occlusion hysteresis, manual camera authority, true material removal, CAM/NC data flow, and Web machine-output-disabled policy.",
-  "note": "Studio 352: Web 5AX/6AX now adds visual-only next-block composition using only the already parsed scene.blocks[index+1]. During the late phase of a current ENTRY/CUT, a nearby next ENTRY/CUT can contribute a small bounded focus offset. RAPID/RETRACT/AVOID, distant blocks and turns above 135 degrees are rejected; deadband/hold and manual priority prevent view snapping. No future motion is predicted.",
+  "next_action": "Validate Studio 353 5AX Safe Frame composition from the exact commit, then bind AIG-II 389 to that SHA. Preserve toolpoint/lookahead semantics, motion-aware focus/zoom, occlusion hysteresis, manual camera authority, true material removal, CAM/NC data flow, and Web machine-output-disabled policy.",
+  "note": "Studio 353: Web 5AX/6AX now adds a true NDC Safe Frame over tool-follow/lookahead. Tool tip, next-view point and nearest fixture alert point are projected into the WebGL view; only boundary overflow creates a bounded screen-plane camera correction. Right-side HUD margin, edge margin, deadband, hold and rate limits prevent clipping and breathing; manual orbit/zoom clears the correction. No path, CAM, NC, kinematics or material-removal geometry is mutated.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
