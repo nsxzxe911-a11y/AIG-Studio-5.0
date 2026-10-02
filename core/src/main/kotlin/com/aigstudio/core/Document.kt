@@ -305,16 +305,64 @@ object CadEditEngine {
         return ReplaceEntitiesCommand(listOf(target),listOf(after))
     }
 
+    private const val MAX_ARRAY_GENERATED_ENTITIES = 10000
+
     fun offsetCommand(doc: DrawingDocument, ids: Collection<EntityId>, distance: Double): Command {
         require(distance.isFinite() && abs(distance)>=CNC_RESOLUTION_MM) {
             "OFFSET distance must be finite and >= 0.001 mm"
         }
         val selected=ids.distinct().mapNotNull(doc::get)
         require(selected.isNotEmpty()) { "OFFSET requires selected geometry" }
+
+        val selectedIdSet=selected.map{it.id}.toSet()
+        val rectRoots=selected.mapNotNull { entity ->
+            entity.id.takeIf { it.startsWith("RECT:") }?.substringBeforeLast(':')
+        }.toSet()
+        val rectGroups=rectRoots.associateWith { root ->
+            doc.all().filterIsInstance<Line>().filter { it.id.startsWith("$root:") }
+        }
+        rectGroups.forEach { (root,lines) ->
+            require(lines.size==4 && lines.all{it.id in selectedIdSet}) {
+                "OFFSET requires complete RECT group: $root"
+            }
+            require(lines.map{it.id.substringAfterLast(':')}.toSet()==setOf("0","1","2","3")) {
+                "OFFSET RECT semantic edges are incomplete"
+            }
+            require(lines.all { line ->
+                val dx=abs(line.b.x-line.a.x)
+                val dy=abs(line.b.y-line.a.y)
+                (dx<=EPS && dy>=CNC_RESOLUTION_MM) || (dy<=EPS && dx>=CNC_RESOLUTION_MM)
+            }) { "OFFSET RECT supports axis-aligned rectangles only; rotate back to 0/90° first" }
+        }
+
         val idMap=CadSemanticIdentity.copiedIdMap(selected)
-        val created=selected.map { entity ->
+        val created=mutableListOf<Entity>()
+
+        rectGroups.forEach { (_,lines) ->
+            val pts=lines.flatMap { listOf(it.a,it.b) }
+            val minX=pts.minOf{it.x}-distance
+            val maxX=pts.maxOf{it.x}+distance
+            val minY=pts.minOf{it.y}-distance
+            val maxY=pts.maxOf{it.y}+distance
+            require(listOf(minX,maxX,minY,maxY).all{it.isFinite()}) { "OFFSET RECT result is non-finite" }
+            require(maxX-minX>=CNC_RESOLUTION_MM && maxY-minY>=CNC_RESOLUTION_MM) {
+                "OFFSET collapses rectangle"
+            }
+            val bySuffix=lines.associateBy { it.id.substringAfterLast(':') }
+            created += listOf(
+                Line(id=idMap.getValue(bySuffix.getValue("0").id),a=Vec2(minX,minY),b=Vec2(maxX,minY)),
+                Line(id=idMap.getValue(bySuffix.getValue("1").id),a=Vec2(maxX,minY),b=Vec2(maxX,maxY)),
+                Line(id=idMap.getValue(bySuffix.getValue("2").id),a=Vec2(maxX,maxY),b=Vec2(minX,maxY)),
+                Line(id=idMap.getValue(bySuffix.getValue("3").id),a=Vec2(minX,maxY),b=Vec2(minX,minY))
+            )
+        }
+
+        selected.filterNot { entity ->
+            val root=entity.id.takeIf { it.startsWith("RECT:") }?.substringBeforeLast(':')
+            root!=null && root in rectRoots
+        }.forEach { entity ->
             val newId=idMap.getValue(entity.id)
-            when(entity) {
+            val shifted:Entity=when(entity) {
                 is Line -> {
                     val d=entity.b-entity.a
                     val len=d.length()
@@ -324,17 +372,19 @@ object CadEditEngine {
                 }
                 is Circle -> {
                     val r=entity.radius+distance
-                    require(r>=CNC_RESOLUTION_MM) { "OFFSET collapses circle" }
+                    require(r.isFinite() && r>=CNC_RESOLUTION_MM) { "OFFSET collapses circle" }
                     Circle(id=newId,center=entity.center,radius=r)
                 }
                 is Arc -> {
                     val r=entity.radius+distance
-                    require(r>=CNC_RESOLUTION_MM) { "OFFSET collapses arc" }
+                    require(r.isFinite() && r>=CNC_RESOLUTION_MM) { "OFFSET collapses arc" }
                     val su=(entity.start-entity.center).normalized()
                     val eu=(entity.end-entity.center).normalized()
                     Arc(id=newId,center=entity.center,radius=r,start=entity.center+su*r,end=entity.center+eu*r,clockwise=entity.clockwise)
                 }
             }
+            require(bounds(shifted).all{it.isFinite()}) { "OFFSET result is non-finite" }
+            created += shifted
         }
         return AddEntitiesCommand(created)
     }
@@ -346,10 +396,22 @@ object CadEditEngine {
         }
         val originals=ids.distinct().mapNotNull(doc::get)
         require(originals.isNotEmpty()) { "ARRAY requires selected geometry" }
+        val generatedCount=originals.size.toLong()*(count-1L)
+        require(generatedCount<=MAX_ARRAY_GENERATED_ENTITIES) {
+            "ARRAY would generate $generatedCount entities; limit is $MAX_ARRAY_GENERATED_ENTITIES"
+        }
+        val maxDx=dx*(count-1)
+        val maxDy=dy*(count-1)
+        require(maxDx.isFinite() && maxDy.isFinite()) { "ARRAY final step is non-finite" }
+
         val created=buildList {
             for(k in 1 until count) {
                 val idMap=CadSemanticIdentity.copiedIdMap(originals)
-                originals.forEach { add(moved(it,dx*k,dy*k,false,idMap.getValue(it.id))) }
+                originals.forEach { original ->
+                    val copy=moved(original,dx*k,dy*k,false,idMap.getValue(original.id))
+                    require(bounds(copy).all{it.isFinite()}) { "ARRAY result is non-finite" }
+                    add(copy)
+                }
             }
         }
         return AddEntitiesCommand(created)

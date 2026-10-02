@@ -1619,10 +1619,34 @@ private fun testCadPrecisionEditing() {
     assertPoint(shifted.a,Vec2(0.0,2.0),"offset a")
     assertPoint(shifted.b,Vec2(10.0,2.0),"offset b")
 
+    val rectOffset=DrawingDocument()
+    val rectOffsetIds=CadSemanticIdentity.newRectIds()
+    rectOffset.put(Line(id=rectOffsetIds[0],a=Vec2(0.0,0.0),b=Vec2(20.0,0.0)))
+    rectOffset.put(Line(id=rectOffsetIds[1],a=Vec2(20.0,0.0),b=Vec2(20.0,10.0)))
+    rectOffset.put(Line(id=rectOffsetIds[2],a=Vec2(20.0,10.0),b=Vec2(0.0,10.0)))
+    rectOffset.put(Line(id=rectOffsetIds[3],a=Vec2(0.0,10.0),b=Vec2(0.0,0.0)))
+    CadEditEngine.offsetCommand(rectOffset,rectOffsetIds,2.0).execute(rectOffset)
+    val grownRect=rectOffset.all().filter{it.id !in rectOffsetIds}.filterIsInstance<Line>()
+    check(grownRect.size==4)
+    val grownRoot=grownRect.first().id.substringBeforeLast(':')
+    check(grownRect.all{it.id.substringBeforeLast(':')==grownRoot})
+    val grownPts=grownRect.flatMap{listOf(it.a,it.b)}
+    assertNear(grownPts.minOf{it.x},-2.0);assertNear(grownPts.maxOf{it.x},22.0)
+    assertNear(grownPts.minOf{it.y},-2.0);assertNear(grownPts.maxOf{it.y},12.0)
+    check(runCatching { CadEditEngine.offsetCommand(rectOffset,listOf(rectOffsetIds[0]),2.0) }.isFailure)
+    check(runCatching { CadEditEngine.offsetCommand(rectOffset,rectOffsetIds,-5.0) }.isFailure)
+
     val array=DrawingDocument()
     array.put(Circle(id="SRC",center=Vec2(0.0,0.0),radius=2.0))
     CadEditEngine.linearArrayCommand(array,listOf("SRC"),4,10.0,0.0).execute(array)
     check(array.all().filterIsInstance<Circle>().map{it.center.x}.sorted()==listOf(0.0,10.0,20.0,30.0))
+    check(runCatching { CadEditEngine.linearArrayCommand(array,listOf("SRC"),2,0.0005,0.0) }.isFailure)
+
+    val arrayLimit=DrawingDocument()
+    repeat(11){i->arrayLimit.put(Line(id="AL$i",a=Vec2(i.toDouble(),0.0),b=Vec2(i.toDouble()+1.0,0.0)))}
+    check(runCatching {
+        CadEditEngine.linearArrayCommand(arrayLimit,arrayLimit.all().map{it.id},1000,1.0,0.0)
+    }.isFailure)
 
     val controlDoc=DrawingDocument()
     controlDoc.put(Line(id="CP-L",a=Vec2(0.0,0.0),b=Vec2(10.0,0.0)))
