@@ -2150,3 +2150,23 @@ for needle in (
     require(android_318, needle, "STUDIO_318_VISIBLE_STARTUP_TIMING")
 print("STUDIO_STARTUP_UPDATE_TIMING_PASS|318|NORMAL_TARGET_1500MS|DEGRADED_REFERENCE_6500MS|ELAPSED_VISIBLE|UI_NEVER_WAITS")
 
+# Studio 319 web main-runtime mirror + regression task hard-disable
+web_319 = read("web/main-runtime-preview.html")
+gradle_319 = read("core/build.gradle.kts")
+for needle in (
+    "AIG II 354 / Studio 319",
+    "HOME FIRST",
+    "Regression",
+    "OFF / LOCKED",
+    "STARTUP UPDATE PROGRESS",
+    "Web Preview",
+):
+    require(web_319, needle, "STUDIO_319_WEB_MAIN_RUNTIME")
+for needle in (
+    'tasks.register<JavaExec>("coreRegression")',
+    'enabled = false',
+    'DISABLED BY USER POLICY: regression execution requires explicit user approval',
+):
+    require(gradle_319, needle, "STUDIO_319_REGRESSION_TASK_DISABLED")
+print("STUDIO_WEB_MAIN_RUNTIME_GATE_PASS|319|HOME|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|SETTINGS|REGRESSION_TASK_OFF")
+
