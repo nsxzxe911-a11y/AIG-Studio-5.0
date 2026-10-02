@@ -15,15 +15,20 @@ data class StudioProjectPackage(
     val axisB: Double,
     val axisMode: String,
     val ncText: String,
-    val revisionMeta:ProjectRevisionMeta=ProjectRevisionMeta()
+    val revisionMeta:ProjectRevisionMeta=ProjectRevisionMeta(),
+    val axisC:Double=0.0,
+    val fixtures:List<FixtureObstacle> = emptyList(),
+    val toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
 )
 
 object StudioProjectRepository {
-    const val HEADER = "AIGSTUDIO_PROJECT|2"
+    const val HEADER = "AIGSTUDIO_PROJECT|3"
+    const val LEGACY_V2_HEADER = "AIGSTUDIO_PROJECT|2"
     const val LEGACY_HEADER = "AIGSTUDIO_PROJECT|1"
     const val EXTENSION = ".aigp"
     private const val MAX_BYTES = 16L * 1024L * 1024L
     private const val MAX_ENTITIES = 50_000
+    private const val MAX_FIXTURES = 1_000
 
     private fun enc(value:String):String =
         Base64.getUrlEncoder().withoutPadding().encodeToString(value.toByteArray(Charsets.UTF_8))
@@ -41,10 +46,15 @@ object StudioProjectRepository {
         axisA:Double=0.0,
         axisB:Double=0.0,
         axisMode:String="3AX",
-        ncText:String=""
+        ncText:String="",
+        axisC:Double=0.0,
+        fixtures:List<FixtureObstacle> = emptyList(),
+        toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
     ):StudioProjectPackage {
-        require(axisMode in setOf("3AX","4AX","5AX")) { "Unsupported axis mode" }
-        require(abs(axisA)<=360.0 && abs(axisB)<=360.0) { "Unsafe axis angle" }
+        require(axisMode in setOf("3AX","4AX","5AX","6AX")) { "Unsupported axis mode" }
+        require(abs(axisA)<=360.0 && abs(axisB)<=360.0 && abs(axisC)<=360.0) { "Unsafe axis angle" }
+        require(fixtures.size<=MAX_FIXTURES) { "Too many fixture models" }
+        require(fixtures.map{it.id}.distinct().size==fixtures.size) { "Fixture ids must be unique" }
         return StudioProjectPackage(
             entities=doc.all(),
             links=doc.links(),
@@ -52,7 +62,10 @@ object StudioProjectRepository {
             axisA=axisA,
             axisB=axisB,
             axisMode=axisMode,
-            ncText=ncText
+            ncText=ncText,
+            axisC=axisC,
+            fixtures=fixtures.toList(),
+            toolAssembly=toolAssembly
         )
     }
 
@@ -74,10 +87,16 @@ object StudioProjectRepository {
             appendLine(
                 "MANUALTP|${p.x}|${p.y}|${p.z}|${if(p.rapid)1 else 0}|"+
                     "${p.arcI?.toString() ?: "-"}|${p.arcJ?.toString() ?: "-"}|"+
-                    "${when(p.clockwise){true->"CW";false->"CCW";null->"-"}}|${p.axisA}|${p.axisB}"
+                    "${when(p.clockwise){true->"CW";false->"CCW";null->"-"}}|${p.axisA}|${p.axisB}|${p.axisC}"
             )
         }
-        appendLine("AXIS|${project.axisMode}|${project.axisA}|${project.axisB}")
+        appendLine("AXIS|${project.axisMode}|${project.axisA}|${project.axisB}|${project.axisC}")
+        appendLine("TOOLASSEMBLY|${project.toolAssembly.holderDiameter}|${project.toolAssembly.holderLength}|${project.toolAssembly.stickout}")
+        require(project.fixtures.size<=MAX_FIXTURES) { "Too many fixture models" }
+        require(project.fixtures.map{it.id}.distinct().size==project.fixtures.size) { "Fixture ids must be unique" }
+        project.fixtures.sortedBy{it.id}.forEach { f ->
+            appendLine("FIXTURE|${f.id}|${f.kind.name}|${f.minX}|${f.minY}|${f.minZ}|${f.maxX}|${f.maxY}|${f.maxZ}|${f.clearanceMm}|${if(f.enabled)1 else 0}")
+        }
         val nc64=if(project.ncText.isEmpty()) "-" else Base64.getEncoder().encodeToString(project.ncText.toByteArray(Charsets.UTF_8))
         appendLine("NC64|$nc64")
         project.entities.forEach { e ->
