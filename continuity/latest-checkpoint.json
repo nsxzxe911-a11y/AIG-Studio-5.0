@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "330.0.0",
+  "version": "331.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 330. Undo/Redo selection continuity is repaired and Settings now classifies status into pending issues, startup/runtime, CAD/geometry, NC/safety, and update/verification. Next priority is actual binary launch evidence, then CAM/SIM field continuity.",
-  "note": "Studio 330: History now returns valid selection outcomes. DELETE undo reselects restored geometry; COPY/OFFSET/ARRAY redo selects generated geometry; Replace commands retain affected live IDs; topology-only history preserves live selection. Settings is categorized so pending device evidence is immediately visible. Automatic regression remains OFF/LOCKED. No APK/EXE launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 331. Editable Settings now distinguish current value from default value, and labels state which options are configurable versus locked. Next target: CAM/SIM setting changes must deterministically mark derived machining stale and rebuild only on explicit recalculate.",
+  "note": "Studio 331: Settings usability repair. FPS, power mode, render quality, coordinate precision, NC output precision, RGB brightness and HUD/thermal options show explicit defaults; configurable entries are marked as editable, while CNC safety/internal geometry floor/regression remain locked. No APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -434,5 +434,21 @@
     "CAD_GEOMETRY",
     "NC_SAFETY",
     "UPDATE_VERIFICATION"
-  ]
+  ],
+  "settings_defaults_331": {
+    "fps": "60 FPS",
+    "power_mode": "Auto",
+    "render_quality": "High",
+    "coordinate_precision_mm": "0.001",
+    "nc_output_precision_mm": "0.001",
+    "rgb_brightness_percent": 65,
+    "system_hud": false,
+    "fps_display": false,
+    "overheat_warning": true,
+    "thermal_auto": true,
+    "idle_throttle": true,
+    "locked_core_geometry_mm": "0.001",
+    "locked_regression": "OFF",
+    "locked_cnc_safety": "ON"
+  }
 }

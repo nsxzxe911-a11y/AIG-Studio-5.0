@@ -58,12 +58,12 @@ private fun showDesktopCoordinatePrecisionDialog(owner:java.awt.Component?, stat
         selectedItem=CoordinatePrecisionRuntime.ncOutput().storageValue
     }
     val panel=javax.swing.JPanel(java.awt.GridLayout(0,2,6,6)).apply {
-        add(javax.swing.JLabel("座標顯示 / 輸入步進 mm"))
+        add(javax.swing.JLabel("座標顯示 / 輸入步進 mm（預設 0.001）"))
         add(displayBox)
-        add(javax.swing.JLabel("NC 輸出精度 mm"))
+        add(javax.swing.JLabel("NC 輸出精度 mm（預設 0.001）"))
         add(ncBox)
-        add(javax.swing.JLabel("內部幾何 / 安全解析度"))
-        add(javax.swing.JLabel("0.001 mm"))
+        add(javax.swing.JLabel("內部幾何 / 安全解析度（鎖定）"))
+        add(javax.swing.JLabel("0.001 mm（不可低於）"))
     }
     val ok=javax.swing.JOptionPane.showConfirmDialog(
         owner,panel,"座標 / 精度",javax.swing.JOptionPane.OK_CANCEL_OPTION,javax.swing.JOptionPane.PLAIN_MESSAGE
@@ -4444,7 +4444,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             )))
             add(statusGroup("CAD / 幾何",listOf(
                 Triple("Undo / Redo 選取","正常 • selection 跟隨歷史",Color(99,255,157)),
-                Triple("座標 / 精度","0.001 mm • Master 0.000",StudioDesktopProductionTheme.text),
+                Triple("座標 / 精度（預設 0.001）","目前 0.001 mm • Master 0.000",StudioDesktopProductionTheme.text),
                 Triple("編輯防護","原子預檢 • RECT 群組 • 無幽靈 ID",StudioDesktopProductionTheme.text),
                 Triple("ARRAY 上限","10,000 新幾何",StudioDesktopProductionTheme.text)
             )))
@@ -4453,15 +4453,15 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             )))
             add(statusGroup("更新 / 驗證",listOf(
                 Triple("版本更新","正常 • 背景比對 • NEWER ONLY",StudioDesktopProductionTheme.accent),
-                Triple("FPS",StudioDesktopRefreshSettings.mode()+" • 預設 60",StudioDesktopProductionTheme.text),
+                Triple("FPS（預設 60）","目前 "+StudioDesktopRefreshSettings.mode(),StudioDesktopProductionTheme.text),
                 Triple("Regression","鎖定 • OFF",StudioDesktopProductionTheme.warning)
             )))
         }
 
         val selectors=JPanel(GridLayout(0,2,6,6)).apply{
             background=StudioDesktopProductionTheme.background
-            add(JLabel("佈景主題").apply{foreground=StudioDesktopProductionTheme.text});add(themeChoice)
-            add(JLabel("FPS 模式").apply{foreground=StudioDesktopProductionTheme.text});add(fpsChoice)
+            add(JLabel("佈景主題（可改）").apply{foreground=StudioDesktopProductionTheme.text});add(themeChoice)
+            add(JLabel("FPS 模式（預設 60 FPS）").apply{foreground=StudioDesktopProductionTheme.text});add(fpsChoice)
             add(JLabel("目前有效").apply{foreground=StudioDesktopProductionTheme.text})
             add(JLabel(StudioDesktopRefreshSettings.targetFps().toString()+" FPS").apply{foreground=StudioDesktopProductionTheme.text})
         }
