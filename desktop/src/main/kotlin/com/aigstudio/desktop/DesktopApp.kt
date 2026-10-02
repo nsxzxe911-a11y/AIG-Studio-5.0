@@ -2655,19 +2655,11 @@ private fun fanucFromCam(cam: CamModel): String {
 
 private fun showNcEditor(
     frame:JFrame,
-    doc:DrawingDocument,
-    camSettings:CamSettings=CamSettings(),
-    fixtures:List<FixtureObstacle> = emptyList(),
-    toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
+    derived:Machining3DResult
 ) {
-    val snapshot=doc.snapshot()
-    val cam = CamModel.fromCad(1L, snapshot, camSettings)
-    require(cam.toolpaths.isNotEmpty()) { "NC BLOCKED: no CAM toolpath" }
-    val stock=Stock3D.fromSnapshot(
-        snapshot,
-        manualPath=if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
-    )
-    val modeledRisk=MachiningRiskScanner.inspect(cam,stock,fixtures,toolAssembly)
+    val cam=derived.cam
+    require(cam.toolpaths.isNotEmpty()) { "NC BLOCKED: no rebuilt CAM toolpath" }
+    val modeledRisk=MachiningRiskScanner.inspect(cam,derived.stock,derived.fixtures,derived.toolAssembly)
     require(modeledRisk.ok) {
         "NC BLOCKED: MODELED COLLISION="+modeledRisk.collisionCount+
             " OVERCUT="+modeledRisk.overcutCount+" • repair CAM/SIM first"
@@ -4393,7 +4385,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 return@camAction
             }
             runCatching{showNcEditor(
-                frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
+                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
             )}
                 .onFailure{status.text="NC EDIT BLOCKED • "+(it.message?:"error")}
         }
@@ -4440,8 +4432,8 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         action("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="VERIFY HUB • REGRESSION OFF • CAD"}
         action("CAM / SIM"){showProductionCam();status.text="VERIFY HUB • REGRESSION OFF • CAM / SIM"}
         action("NC 安全"){runCatching{showNcEditor(
-            frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
-        )}.onFailure{status.text="VERIFY HUB • REGRESSION OFF • NC BLOCKED • "+(it.message?:"error")}}
+                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
+            )}.onFailure{status.text="VERIFY HUB • REGRESSION OFF • NC BLOCKED • "+(it.message?:"error")}}
         action("AI"){mainCardLayout.show(mainCardHost,"AI");status.text="VERIFY HUB • REGRESSION OFF • AI"}
         val panel=JPanel(BorderLayout(8,8)).apply{
             background=StudioDesktopProductionTheme.background
@@ -4490,7 +4482,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         action("CNC 安全設定（核心 ON）"){
             status.text="SETTINGS • CNC SAFETY CORE ON / LOCKED • USER APPROVAL REQUIRED FOR POLICY CHANGE"
             runCatching{showNcEditor(
-                frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
+                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
             )}.onFailure{status.text="SETTINGS • CNC SAFETY VIEW BLOCKED • "+(it.message?:"error")}
         }
         action("驗證中心"){showManualRegressionCenter()}
@@ -4551,6 +4543,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 Triple("重算規則","切頁不重算 • CAM 參數/材料/軸設定改動→STALE • 明確重算",StudioDesktopProductionTheme.text)
             )))
             add(statusGroup("NC / 安全",listOf(
+                Triple("NC-only 變更","G54/G90/G92/G41/G42 → 只 NC STALE • CAM/SIM 保持",StudioDesktopProductionTheme.text),
                 Triple("CNC 安全核心（鎖定｜固定：ON）","ON",StudioDesktopProductionTheme.warning)
             )))
             add(statusGroup("更新 / 驗證",listOf(
@@ -4612,8 +4605,8 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         action("AI 診斷"){mainCardLayout.show(mainCardHost,"AI");status.text="MAINT • AI LOCAL ASSIST"}
         action("CAM 檢查"){showProductionCam()}
         action("NC 安全"){runCatching{showNcEditor(
-            frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
-        )}.onFailure{status.text="MAINT NC BLOCKED • "+(it.message?:"error")}}
+                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
+            )}.onFailure{status.text="MAINT NC BLOCKED • "+(it.message?:"error")}}
         action("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="CAD • PRODUCTION UI"}
         val panel=JPanel(BorderLayout(8,8)).apply{
             background=StudioDesktopProductionTheme.background
@@ -4654,8 +4647,8 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"5AX",productionCamSettings,productionFixtures,productionToolAssembly
                 )}.onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}}
                 item("NC"){runCatching{showNcEditor(
-                    frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
-                )}.onFailure{status.text="NC BLOCKED • "+(it.message?:"error")}}
+                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
+            )}.onFailure{status.text="NC BLOCKED • "+(it.message?:"error")}}
                 item("AI"){mainCardLayout.show(mainCardHost,"AI");status.text="AI • PRODUCTION UI"}
                 item("工作/維修"){showMaintenanceCenter()}
                 item("設定中心"){showUserSettingsCenter()}
@@ -4739,8 +4732,8 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     })
     moduleButtons.add(productionUiButton("NC", Color(80,170,255)) {
         runCatching { showNcEditor(
-            frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
-        ) }
+                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
+            ) }
             .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("NC")+" • "+MasterRuntimeChainContract.masterOriginLabel()+" • FANUC / MITSUBISHI" }
             .onFailure { status.text="NC EDIT BLOCKED • "+(it.message?:"error") }
     })
@@ -4886,7 +4879,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         add(button("CAM 檢查",StudioDesktopProductionTheme.cutting){showProductionCam()})
         add(button("NC 安全",Color(80,170,255)){
             runCatching{showNcEditor(
-                frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
+                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
             )}
                 .onFailure{status.text="AI NC CHECK BLOCKED • "+(it.message?:"error")}
         })

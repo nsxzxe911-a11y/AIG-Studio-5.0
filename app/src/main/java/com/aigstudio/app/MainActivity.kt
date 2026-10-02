@@ -2146,6 +2146,7 @@ class MainActivity : Activity() {
 
         section("NC / 安全")
         importantRow("NC 輸出精度（可改｜預設：0.001 mm）","目前 "+ncPrecision+" mm")
+        importantRow("NC-only 變更","G54/G90/G92/G41/G42 → 只 NC STALE • CAM/SIM 保持")
         importantRow("CNC 安全核心（鎖定｜固定：ON）","ON",StudioProductionTheme.warning)
 
         section("更新 / 驗證")
@@ -4366,8 +4367,16 @@ class MainActivity : Activity() {
         AlertDialog.Builder(this)
             .setTitle("工件座標 • " + workOffset)
             .setSingleChoiceItems(offsets, offsets.indexOf(workOffset).coerceAtLeast(0)) { dialog, which ->
-                workOffset = offsets[which]
-                Toast.makeText(this, "WORK OFFSET " + workOffset, Toast.LENGTH_SHORT).show()
+                val next=offsets[which]
+                val changed=workOffset!=next
+                workOffset = next
+                if(changed && !unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale=true
+                if(changed) markProjectDirty()
+                Toast.makeText(
+                    this,
+                    "WORK OFFSET " + workOffset + if(changed)" • NC DRAFT STALE • CAM/SIM unchanged" else " • UNCHANGED",
+                    Toast.LENGTH_LONG
+                ).show()
                 dialog.dismiss()
             }
             .setNegativeButton("取消", null)

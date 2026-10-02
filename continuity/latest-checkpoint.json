@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "335.0.0",
+  "version": "336.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 335. Axis A/B, machining axis mode, and STOCK changes now stale cached CAM/SIM/NC instead of leaving old derived data marked fresh. Same-value applies remain unchanged/no-op. Next bind AIG-II and audit NC-only selectors versus CAM-affecting selectors.",
-  "note": "Studio 335: fixed stale-state leakage in Android production Runtime. 5X A/B apply, unified APPLY_AXIS, and STOCK margin/thickness changes call markCamDerivedStale only when values actually change. Settings explains that page navigation does not recalculate and CAM/axis/stock changes require explicit recalculation. Windows Settings carries the same diagnostic rule. No APK/EXE launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 336. NC-only post settings now stale only NC draft, while CAM/SIM remain valid; Windows NC Editor consumes the explicitly rebuilt Machining3DResult instead of rebuilding CAM from CAD. Next exact-bind AIG-II and audit remaining direct tool parameter mutation paths.",
+  "note": "Studio 336: Android WORK OFFSET G54-G59 changes now mark NC draft stale only. Windows showNcEditor now accepts Machining3DResult and uses derived.cam/stock/fixtures/toolAssembly; all seven production callers pass productionCamDerivedCache, eliminating hidden CamModel.fromCad on NC open. Settings explains NC-only vs CAM-affecting invalidation. No APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -493,6 +493,14 @@
     "same_value_apply": "UNCHANGED_NO_RECALC",
     "page_navigation_auto_recalc": false,
     "explicit_recalc_required": true,
+    "binary_launch_evidence": "PENDING"
+  },
+  "nc_freshness_336": {
+    "work_offset_changes_nc_only": true,
+    "work_offset_keeps_cam_sim": true,
+    "windows_nc_editor_rebuilds_cam": false,
+    "windows_nc_editor_uses_derived_cache": true,
+    "nc_only_rule": "G54/G90/G92/G41/G42 -> NC STALE ONLY",
     "binary_launch_evidence": "PENDING"
   }
 }
