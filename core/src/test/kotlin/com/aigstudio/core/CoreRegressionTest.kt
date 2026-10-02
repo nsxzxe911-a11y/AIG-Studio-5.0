@@ -1334,6 +1334,7 @@ fun main() {
     testMultiAxisToolpointProvenance()
     testAxis345RuntimeContract()
     testContinuousMultiAxisToolpointSchedule()
+    testContinuousSixAxisToolpointSchedule()
     testAxisMode345RuntimeMatrix()
     testNcDraftRecoveryContract()
     testPixelLayoutPrecheckContract()
@@ -2147,6 +2148,37 @@ private fun testRealMachineModel3D() {
     check(abs(c90.x)<1e-9 && abs(c90.y-10.0)<1e-9 && abs(c90.z)<1e-9)
     println("? REAL_MACHINE_MODEL_3_4_5_6AX_GATE_PASS BASE COLUMN TABLE FIXTURE TRUNNION ROTARY_A ROTARY_B ROTARY_C SPINDLE HOLDER TOOL TRUE_MESH DYNAMIC_ABC SOURCE_REVISION MASTER_ORIGIN")
     println("? MACHINE_KINEMATICS_RUNTIME_PARITY_PASS MASTER_ORIGIN A_THEN_B_THEN_C ANDROID_WINDOWS_SHARED")
+}
+
+private fun testContinuousSixAxisToolpointSchedule() {
+    val snapshot=DrawingSnapshot(listOf(Line("SYNC-C",Vec2(-25.0,-8.0),Vec2(25.0,8.0))))
+    val settings=CamSettings(toolDiameter=6.0,depth=-2.0,safeZ=5.0,feedMmMin=120.0)
+    val schedule=MultiAxisOrientationSchedule(
+        startA=0.0,startB=0.0,endA=30.0,endB=-20.0,
+        mode=MultiAxisInterpolationMode.LINEAR_SYNC,
+        startC=0.0,endC=90.0
+    )
+    check(schedule.at(0.5)==(15.0 to -10.0)) { "Legacy A/B schedule API changed" }
+    val mid=schedule.atABC(0.5)
+    check(abs(mid.first-15.0)<1e-12 && abs(mid.second+10.0)<1e-12 && abs(mid.third-45.0)<1e-12)
+    val result=Machining3DEngine.build(snapshot,settings,axisSchedule=schedule)
+    val moves=result.cam.toolpaths.flatMap{it.moves}
+    check(moves.size>=4)
+    check(abs(moves.first().axisC)<1e-12)
+    check(abs(moves.last().axisC-90.0)<1e-12)
+    check(moves.zipWithNext().any{(a,b)->abs(a.axisC-b.axisC)>1e-9})
+    check(moves.all{it.axisC in 0.0..90.0})
+    val lastFrame=ProgressiveMachining3D.frame(result,moves.lastIndex)
+    check(abs(lastFrame.toolPoint.axisC-90.0)<1e-12)
+    check(lastFrame.removal.depth.any{it<0.0})
+    val sixModel=MachineModel3DBuilder.build(result,"6AX",toolPointOverride=lastFrame.toolPoint)
+    check(MachineComponentRole.ROTARY_C in sixModel.roles())
+    val cMarker=sixModel.components.first{it.id=="rotary_c_marker"}
+    check(cMarker.moving && cMarker.axisBinding=="C")
+    val nc=runCatching{CncPost.generate(result.cam,FanucPostSettings())}
+    check(nc.isFailure){"C-axis provenance must never fall through the unverified Fanuc Post"}
+    check("6AX_C_AXIS_NC_POST_BLOCKED" in nc.exceptionOrNull()?.message.orEmpty())
+    println("✓ CONTINUOUS_6AX_CAM_SIM_GATE_PASS PER_POINT_ABC LINEAR_SYNC PROGRESSIVE_SIM ROTARY_C NC_C_FAIL_CLOSED")
 }
 
 private fun testWorkOffsetDoesNotShiftAbsoluteCoordinates() {
