@@ -2563,6 +2563,8 @@ private fun testHomeWorkstationChromeContract() {
     check(MasterRuntimeChainContract.pipeline==listOf("CAD","CAM","SIM","NC"))
     check(MasterRuntimeChainContract.axisCapabilities==listOf("3AX","4AX","5AX","6AX"))
     check("AXIS=3AX/4AX/5AX/6AX" in MasterRuntimeChainContract.evidence())
+    check(MasterRuntimeChainContract.axisCapabilities.distinct().size==4)
+    println("✓ PRO_AUDIT_MASTER_AXIS_INVENTORY_GATE_PASS 3AX 4AX 5AX 6AX UNIQUE ORDERED")
     check(MasterRuntimeChainContract.masterOriginLabel()==WorkstationChromeContract.MASTER_ORIGIN)
     check(MasterRuntimeChainContract.pipeline.all(MasterRuntimeChainContract::stageUsesCanonicalGeometry))
     check(WorkstationChromeContract.PRECISION=="0.001 mm")
