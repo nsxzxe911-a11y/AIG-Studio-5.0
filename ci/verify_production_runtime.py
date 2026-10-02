@@ -222,6 +222,31 @@ for marker in [
 if 'COLLISION_LOOKAHEAD_GATE_PASS' not in core_regression:
     raise SystemExit("6AX collision look-ahead regression marker missing")
 print("COLLISION_LOOKAHEAD_PRODUCTION_GATE_PASS|PREDICT|SUGGEST|MANUAL_CONFIRM|REVALIDATE|NC_INTERLOCK_UNCHANGED")
+for marker in [
+    'private val camFixtures = mutableListOf<FixtureObstacle>()',
+    'private fun showFixtureModelEditor()',
+    'contentDescription="CAM FIXTURE MODEL EDITOR"',
+    'contentDescription="CAM COLLISION LOOKAHEAD"',
+    'val ncReady = risk.ok && runCatching',
+    '"NC BLOCKED • MODELED COLLISION="',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android fixture/NC-interlock marker missing: {marker}")
+for marker in [
+    'val productionFixtures=mutableListOf<FixtureObstacle>()',
+    'fun showProductionFixtureEditor()',
+    'fun showProductionCollisionLookAhead()',
+    'camAction("治具模型"',
+    'camAction("碰撞預測"',
+    '"NC BLOCKED: MODELED COLLISION="+modeledRisk.collisionCount',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Windows fixture/NC-interlock marker missing: {marker}")
+if 'FIXTURE_COVERAGE_POLICY_GATE_PASS' not in core_regression:
+    raise SystemExit("Fixture coverage policy regression marker missing")
+print("FIXTURE_MODEL_PRODUCTION_UI_GATE_PASS|ANDROID|WINDOWS|MASTER_ORIGIN_BOUNDS|LOOKAHEAD_VISIBLE|NO_AUTO_NC")
+print("MODELED_COLLISION_NC_INTERLOCK_PRODUCTION_GATE_PASS|COLLISION|OVERCUT|UNMODELED_WARNING_ONLY|PREFLIGHT_MODEL_REQUIRED")
+
 
 
 
