@@ -46,7 +46,9 @@
     "RENDER_COMPATIBILITY": "UIUX",
     "RGB_COLOR_HARMONIZATION": "UIUX",
     "ANDROID_RENDER_BINDING": "ANDROID_BUILD",
-    "WINDOWS_RENDER_BINDING": "WINDOWS_BUILD"
+    "WINDOWS_RENDER_BINDING": "WINDOWS_BUILD",
+    "RGB_BUTTON_VISUAL_REPLACEMENT": "UIUX",
+    "RENDER_STARTUP_SAFE_HZ": "PRO_AUDIT"
   },
   "external_conditions": {
     "NETWORK": {
@@ -171,5 +173,30 @@
     "authority": "ci/audit_contract.py",
     "pro_ownership_keys": "CENTRALIZED",
     "verifier": "ci/verify_audit_contract.py"
+  },
+  "render_compatibility": {
+    "resolutions": [
+      "1080P/FHD+",
+      "2K-class",
+      "3K-class",
+      "UHD/4K+"
+    ],
+    "refresh_hz": [
+      30,
+      60,
+      90,
+      120
+    ],
+    "default_startup_hz": 60,
+    "startup_promotion_delay_ms": 1800,
+    "adaptive_high_refresh_opt_in": true,
+    "rgb_max_channel_delta": 24,
+    "rgb_max_relative_luma_delta": 0.12,
+    "animation_luma_swing_max": 0.12,
+    "full_color_dither": true,
+    "button_visual_hot_replace": true,
+    "button_callback_stable": true,
+    "button_verified_asset_fallback": true,
+    "glass_depth_layers": 4
   }
 }
