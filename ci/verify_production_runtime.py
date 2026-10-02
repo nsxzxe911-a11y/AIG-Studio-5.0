@@ -332,6 +332,18 @@ for marker in [
 if "TOOL_ASSEMBLY_COLLISION_GATE_PASS" not in core_regression:
     raise SystemExit("Tool-assembly collision regression marker missing")
 print("TOOL_ASSEMBLY_PRODUCTION_GATE_PASS|ANDROID|WINDOWS|HOLDER_COLLISION_EFFECT|PROJECT_V3_DIGEST|NC_INTERLOCK_MODEL")
+for marker in [
+    "axisC=p.axisC",
+    '" • A"+DisplayFormat.mm(p.axisA)+" B"+DisplayFormat.mm(p.axisB)+" C"+DisplayFormat.mm(p.axisC)',
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android manual 6AX edit marker missing: {marker}")
+    if marker not in desktop:
+        raise SystemExit(f"Windows manual 6AX edit marker missing: {marker}")
+if "MANUAL_6AX_EDIT_CONTINUITY_GATE_PASS" not in core_regression:
+    raise SystemExit("Manual 6AX edit continuity regression marker missing")
+print("MANUAL_6AX_EDIT_PRODUCTION_GATE_PASS|INSERT|REPLACE|AVOIDANCE|ABC_CONTINUITY|C_AXIS_NC_FAIL_CLOSED")
+
 
 
 
