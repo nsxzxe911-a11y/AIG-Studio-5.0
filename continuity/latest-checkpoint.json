@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "316.0.0",
+  "version": "317.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 316. Startup opens the installed Production HOME first, then compares the configured verified update channel in background. Only a verified higher version can be prepared; offline uses the installed version; Android install still requires confirmation.",
-  "note": "Studio 316 startup version checkpoint: HOME first, background version compare, verified newer-only, no downgrade/equal reinstall. User update setting controls background verified download. No binary/device PASS claimed.",
+  "next_action": "Continue forward-only from Studio 317. Offline startup enters the installed Production UI immediately and keeps that version's settings. When online, a real update progress bar appears inside the Production HOME with explanatory text below while the signed latest-version check runs. Verified higher APK updates apply their new UI on the next Runtime after Android install confirmation.",
+  "note": "Studio 317 startup UX checkpoint: no-network direct UI, online-only progress/explanation, verified newer-only. No engineering shell/loading mock is introduced. No binary/device PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -306,5 +306,13 @@
     "offline_uses_installed_version": true,
     "background_download_follows_user_setting": true,
     "binary_install_requires_user_confirmation": true
+  },
+  "startup_update_ux": {
+    "offline_direct_ui": true,
+    "offline_keep_installed_version_settings": true,
+    "online_progress_bar": true,
+    "explanation_below_progress": true,
+    "verified_newer_only": true,
+    "new_ui_after_binary_install": true
   }
 }
