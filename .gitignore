@@ -46,3 +46,6 @@ desktop.ini
 *.bak
 *.swp
 *.log
+
+# Web / Replit
+node_modules/

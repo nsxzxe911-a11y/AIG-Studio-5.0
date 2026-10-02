@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "340.0.0",
+  "version": "341.0.0",
   "branch": "main",
-  "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
+  "recorded_source_head": "270b2446934290eed289aac1d44908863a4f09ad",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate actual Windows HOME and NC screenshots, then bind AIG-II 376 to this exact Studio commit. Do not treat old packaged screenshots as evidence for these source changes.",
-  "note": "Studio 340: live workpiece HOME, RGB glass machining panels, settings-only maintenance navigation, NC editor available without CAM, explicit POST validation preserves drafts. Android and Windows compilation and fast_review verified locally. Reference-image visual parity is not yet accepted.",
+  "next_action": "Validate Studio 341 Replit/Web Runtime from the exact commit, then bind AIG-II 377 to that SHA. Preserve native Android/Windows Runtime and use Web as the same functional product surface, not a mock.",
+  "note": "Studio 341: Replit-ready Vite Web Runtime added around the existing real web/index.html. Main Web Runtime now exposes CAD/CAM/toolpath plus 3AX/4AX/5AX/6AX, with 6AX A/B/C parser, collision/removal transforms and WebGL C rotation. Vite build and Chrome headless #6AX smoke test verified locally; native runtime remains authoritative for machine execution.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",

@@ -3,7 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#020407">\n<link rel="manifest" href="./manifest.webmanifest">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#020407">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>AIG Studio • BLACK RGB Runtime</title>
 <style>
 :root{
@@ -23,7 +27,7 @@ button,textarea,input,select{font:inherit}button{color:inherit}
 .brand{display:flex;align-items:center;gap:9px;min-width:190px}.logo{font-weight:900;font-size:21px;letter-spacing:.04em}
 .brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:.12em}
 .status{margin-left:auto;color:var(--green);font-size:11px;white-space:nowrap}
-.nav{display:grid;grid-template-columns:repeat(7,minmax(72px,1fr));gap:6px;flex:1;max-width:850px}
+.nav{display:grid;grid-template-columns:repeat(8,minmax(72px,1fr));gap:6px;flex:1;max-width:850px}
 .nav button,.btn{border:1px solid #223846;background:linear-gradient(#0d141c,#05080c);border-radius:10px;min-height:40px;cursor:pointer;
  box-shadow:inset 0 1px rgba(255,255,255,.045),0 7px 18px rgba(0,0,0,.35)}
 .nav button:hover,.btn:hover{border-color:#2e6681}
@@ -157,14 +161,14 @@ html,body{background:#020407}
 <header class="top">
  <div class="brand"><div><div class="logo">AIG II CNC</div><small>BLACK RGB RUNTIME</small></div></div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● LOCAL READY　0.001 mm</div>
+ <div class="status">● STUDIO 341 • LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
 <footer class="footer">AIG II CNC • 黑色高對比 Runtime • Web motion prototype • CNC machine output disabled</footer>
 </div>
 <script>
 const pages=[
- ["功能","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["刀路","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"]
+ ["功能","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["刀路","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"],["6AX","#27e9ff"]
 ];
 const nav=document.getElementById("nav"),screens=document.getElementById("screens");
 
@@ -191,15 +195,23 @@ const sourceCode={
   "N110 M98 P5","N120 M30",
   "O4","N10 T12 M6","N20 G90 G54 G40 G49 G80","N30 G43 Z30. H12 M8","N40 M99",
   "O5","N10 M9","N20 M5","N30 G0 Z100.","N40 M99"
+ ].join("\n"),
+ "6AX":[
+  "O6000","N10 M98 P4","N20 S8000 M3","N30 G0 X0. Y0. Z50. A0. B0. C0.","N40 G1 Z-2. F1200",
+  "N50 X12.430 Y-5.210 A15. B10. C20.","N60 G1 X25.680 Y8.430 A30. B-12. C60.","N70 G1 X36.000 Y18.000 A45. B18. C120.",
+  "N80 G1 X22.000 Y32.000 A60. B-20. C180.","N90 G1 X0. Y24.000 A35. B8. C270.","N100 G1 X0. Y0. A0. B0. C360.",
+  "N110 M98 P5","N120 M30",
+  "O4","N10 T12 M6","N20 G90 G54 G40 G49 G80","N30 G43 Z30. H12 M8","N40 M99",
+  "O5","N10 M9","N20 M5","N30 G0 Z100.","N40 M99"
  ].join("\n")
 };
 
 function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div class="head"><h3>'+title+'</h3></div><div class="body">'+body+'</div></section>'}
 function simPage(axis){
- const axes=axis==="3AX"?["X","Y","Z"]:axis==="4AX"?["X","Y","Z","A"]:["X","Y","Z","A","B"];
+ const axes=axis==="3AX"?["X","Y","Z"]:axis==="4AX"?["X","Y","Z","A"]:axis==="5AX"?["X","Y","Z","A","B"]:["X","Y","Z","A","B","C"];
  const axisHtml=axes.map(a=>'<span class="axis '+a.toLowerCase()+'" data-axis-read="'+a+'">'+a+'　0.000</span>').join("");
- const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
- '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 真 3D 加工模擬<small>WebGL 機械模型 • A/B 真旋轉 • 拖曳 360° 相機</small></div></div>'+
+ const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":axis==="6AX"?"/A/B/C":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
+ '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 真 3D 加工模擬<small>WebGL 機械模型 • A/B/C 真旋轉 • 拖曳 360° 相機</small></div></div>'+
  '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button></div>'+
  '<div class="runtimeStatus"><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric"><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric"><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
@@ -652,7 +664,8 @@ function parseProgram(text,axis,opts={}){
   }
  });
  if(axis==="3AX" && blocks.some(b=>Math.abs(b.to.A)>1e-9||Math.abs(b.to.B)>1e-9||Math.abs(b.to.C)>1e-9))errors.push("3AX 程式含旋轉軸指令。");
- if(axis==="4AX" && blocks.some(b=>Math.abs(b.to.B)>1e-9))errors.push("4AX 程式含 B 軸指令。");
+ if(axis==="4AX" && blocks.some(b=>Math.abs(b.to.B)>1e-9||Math.abs(b.to.C)>1e-9))errors.push("4AX 程式含 B/C 軸指令。");
+ if(axis==="5AX" && blocks.some(b=>Math.abs(b.to.C)>1e-9))errors.push("5AX 程式含 C 軸指令。");
  return {lines,blocks,errors,warnings,mainProgram:compiled.mainKey,programCount:compiled.programs.size};
 }
 
@@ -677,10 +690,12 @@ function sampleRuntimeBlock(bl,t){
  if(bl.motion==="G3"&&d<=0)d+=Math.PI*2;
  const a=a0+d*t;p[spec.u]=cu+Math.cos(a)*r;p[spec.v]=cv+Math.sin(a)*r;return p;
 }
-function inverseRuntimeABPoint(p,aDeg,bDeg){
- const a=Number(aDeg||0)*Math.PI/180,b=Number(bDeg||0)*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b);
- const x1=Number(p.x||0)*cb-Number(p.z||0)*sb,z1=Number(p.x||0)*sb+Number(p.z||0)*cb;
- return{x:x1,y:Number(p.y||0)*ca+z1*sa,z:-Number(p.y||0)*sa+z1*ca};
+function inverseRuntimeABPoint(p,aDeg,bDeg,cDeg=0){
+ const a=Number(aDeg||0)*Math.PI/180,b=Number(bDeg||0)*Math.PI/180,c=Number(cDeg||0)*Math.PI/180;
+ const ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b),cc=Math.cos(c),sc=Math.sin(c);
+ const x0=Number(p.x||0)*cc+Number(p.y||0)*sc,y0=-Number(p.x||0)*sc+Number(p.y||0)*cc;
+ const x1=x0*cb-Number(p.z||0)*sb,z1=x0*sb+Number(p.z||0)*cb;
+ return{x:x1,y:y0*ca+z1*sa,z:-y0*sa+z1*ca};
 }
 function runtimeStockEnvelope(parsed,cfg={}){
  const moves=(parsed?.blocks||[]).filter(b=>b.kind==="move"),pts=moves.flatMap(b=>[b.from,b.to]);
@@ -744,8 +759,8 @@ function evaluateSetupClearance(parsed,axis,cfg={}){
  let minFixture=Infinity,minHolderStock=Infinity,minType="NONE",minFixtureId=null,fixtureLine=-1,fixtureBlock=-1,holderStockLine=-1,holderStockBlock=-1;
  let fixtureToolNo=0,fixtureToolDia=0,holderStockToolNo=0,holderStockToolDia=0;
  function localCenter(p,d){
-   const a=axis==="3AX"?0:Number(p.A||0),b=axis==="5AX"?Number(p.B||0):0;
-   return inverseRuntimeABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b);
+   const a=axis==="3AX"?0:Number(p.A||0),b=(axis==="5AX"||axis==="6AX")?Number(p.B||0):0,c=axis==="6AX"?Number(p.C||0):0;
+   return inverseRuntimeABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b,c);
  }
  function inspectSegment(p,d0,d1,r,kind,bi,line,toolNo,toolDia){
    for(let k=0;k<=8;k++){
@@ -763,8 +778,8 @@ function evaluateSetupClearance(parsed,axis,cfg={}){
  for(let bi=0;bi<blocks.length;bi++){
    const bl=blocks[bi];if(bl.kind!=="move")continue;
    const dx=Number(bl.to.X||0)-Number(bl.from.X||0),dy=Number(bl.to.Y||0)-Number(bl.from.Y||0),dz=Number(bl.to.Z||0)-Number(bl.from.Z||0);
-   const da=Math.abs(Number(bl.to.A||0)-Number(bl.from.A||0)),db=Math.abs(Number(bl.to.B||0)-Number(bl.from.B||0));
-   const samples=Math.max(8,Math.min(72,Math.ceil(Math.hypot(dx,dy,dz)/3+(da+db)/8)));
+   const da=Math.abs(Number(bl.to.A||0)-Number(bl.from.A||0)),db=Math.abs(Number(bl.to.B||0)-Number(bl.from.B||0)),dc=Math.abs(Number(bl.to.C||0)-Number(bl.from.C||0));
+   const samples=Math.max(8,Math.min(72,Math.ceil(Math.hypot(dx,dy,dz)/3+(da+db+dc)/8)));
    const toolNo=runtimeToolNumber(bl),toolDia=runtimeToolDiameter(cfg,bl),toolR=Math.max(.05,toolDia/2),holderR=Math.max(toolR,holderDiaBase/2);
    for(let j=0;j<=samples;j++){
      const p=sampleRuntimeBlock(bl,j/samples);
@@ -803,8 +818,8 @@ function scanRuntimeCollisions(parsed,axis,cfg={}){
  const stockBox={minX:env.minX,maxX:env.maxX,minY:env.minY,maxY:env.maxY,minZ:env.minZ,maxZ:env.maxZ};
  const fixtureBoxes=runtimeAssemblyBoxes(cfg);
  function localCenter(p,d){
-   const a=axis==="3AX"?0:Number(p.A||0),b=axis==="5AX"?Number(p.B||0):0;
-   return inverseRuntimeABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b);
+   const a=axis==="3AX"?0:Number(p.A||0),b=(axis==="5AX"||axis==="6AX")?Number(p.B||0):0,c=axis==="6AX"?Number(p.C||0):0;
+   return inverseRuntimeABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b,c);
  }
  function tableHit(q,r){
    const radial=Math.hypot(q.x,q.y);
@@ -826,8 +841,8 @@ function scanRuntimeCollisions(parsed,axis,cfg={}){
  for(let bi=0;bi<blocks.length;bi++){
    const bl=blocks[bi];if(bl.kind!=="move")continue;
    const dx=Number(bl.to.X||0)-Number(bl.from.X||0),dy=Number(bl.to.Y||0)-Number(bl.from.Y||0),dz=Number(bl.to.Z||0)-Number(bl.from.Z||0);
-   const da=Math.abs(Number(bl.to.A||0)-Number(bl.from.A||0)),db=Math.abs(Number(bl.to.B||0)-Number(bl.from.B||0));
-   const samples=Math.max(8,Math.min(72,Math.ceil(Math.hypot(dx,dy,dz)/3+(da+db)/8)));
+   const da=Math.abs(Number(bl.to.A||0)-Number(bl.from.A||0)),db=Math.abs(Number(bl.to.B||0)-Number(bl.from.B||0)),dc=Math.abs(Number(bl.to.C||0)-Number(bl.from.C||0));
+   const samples=Math.max(8,Math.min(72,Math.ceil(Math.hypot(dx,dy,dz)/3+(da+db+dc)/8)));
    const toolNo=runtimeToolNumber(bl),toolDia=runtimeToolDiameter(cfg,bl),toolR=Math.max(.05,toolDia/2),holderR=Math.max(toolR,holderDiaBase/2);
    const p0=sampleRuntimeBlock(bl,0),startToolInside=Boolean(segmentHitsStock(p0,0,cutterLen,toolR,8));
    let hit=null;
@@ -893,6 +908,7 @@ function makeGlScene(canvas,axis){
  function S(x,y,z){const m=I();m[0]=x;m[5]=y;m[10]=z;return m}
  function RX(a){const m=I(),c=Math.cos(a),q=Math.sin(a);m[5]=c;m[6]=q;m[9]=-q;m[10]=c;return m}
  function RY(a){const m=I(),c=Math.cos(a),q=Math.sin(a);m[0]=c;m[2]=-q;m[8]=q;m[10]=c;return m}
+ function RZ(a){const m=I(),c=Math.cos(a),q=Math.sin(a);m[0]=c;m[1]=q;m[4]=-q;m[5]=c;return m}
  function P(fov,asp,n,f){const t=1/Math.tan(fov/2),m=new Float32Array(16);m[0]=t/asp;m[5]=t;m[10]=(f+n)/(n-f);m[11]=-1;m[14]=2*f*n/(n-f);return m}
  function sub(a,b){return[a[0]-b[0],a[1]-b[1],a[2]-b[2]]}
  function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}
@@ -900,13 +916,14 @@ function makeGlScene(canvas,axis){
  function look(eye,center,up){const z=norm(sub(eye,center)),x=norm(cross(up,z)),y=cross(z,x),m=I();m[0]=x[0];m[1]=y[0];m[2]=z[0];m[4]=x[1];m[5]=y[1];m[6]=z[1];m[8]=x[2];m[9]=y[2];m[10]=z[2];m[12]=-(x[0]*eye[0]+x[1]*eye[1]+x[2]*eye[2]);m[13]=-(y[0]*eye[0]+y[1]*eye[1]+y[2]*eye[2]);m[14]=-(z[0]*eye[0]+z[1]*eye[1]+z[2]*eye[2]);return m}
  function rgb(hex){const n=parseInt(hex.slice(1),16);return[((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255]}
  function rotABPoint(p,aDeg,bDeg){const a=aDeg*Math.PI/180,b=bDeg*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b);const y=p.y*ca-p.z*sa,z=p.y*sa+p.z*ca;return{x:p.x*cb+z*sb,y,z:-p.x*sb+z*cb}}
- function inverseRotABPoint(p,aDeg,bDeg){
-   const a=aDeg*Math.PI/180,b=bDeg*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b);
-   const x1=p.x*cb-p.z*sb,z1=p.x*sb+p.z*cb;
-   return{x:x1,y:p.y*ca+z1*sa,z:-p.y*sa+z1*ca};
+ function inverseRotABPoint(p,aDeg,bDeg,cDeg=0){
+   const a=aDeg*Math.PI/180,b=bDeg*Math.PI/180,c=cDeg*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b),cc=Math.cos(c),sc=Math.sin(c);
+   const x0=p.x*cc+p.y*sc,y0=-p.x*sc+p.y*cc;
+   const x1=x0*cb-p.z*sb,z1=x0*sb+p.z*cb;
+   return{x:x1,y:y0*ca+z1*sa,z:-y0*sa+z1*ca};
  }
- function inverseRotABVector(v,aDeg,bDeg){return inverseRotABPoint(v,aDeg,bDeg)}
- function rotMat(aDeg,bDeg){return M(RY(bDeg*Math.PI/180),RX(aDeg*Math.PI/180))}
+ function inverseRotABVector(v,aDeg,bDeg,cDeg=0){return inverseRotABPoint(v,aDeg,bDeg,cDeg)}
+ function rotMat(aDeg,bDeg,cDeg=0){return M(RZ(cDeg*Math.PI/180),M(RY(bDeg*Math.PI/180),RX(aDeg*Math.PI/180)))}
 
  function mesh(data){
    const pb=gl.createBuffer(),nb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,pb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data.p),gl.STATIC_DRAW);gl.bindBuffer(gl.ARRAY_BUFFER,nb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data.n),gl.STATIC_DRAW);return{pb,nb,count:data.p.length/3}
@@ -1047,9 +1064,9 @@ function makeGlScene(canvas,axis){
  }
  function voxelCutSample(occ,p,scene,bl){
    if(!p||!Number.isFinite(p.X)||!Number.isFinite(p.Y)||!Number.isFinite(p.Z))return;
-   const a=axis==="3AX"?0:(p.A||0),b=axis==="5AX"?(p.B||0):0;
-   const tip=inverseRotABPoint({x:p.X,y:p.Y,z:p.Z},a,b);
-   let ax=inverseRotABVector({x:0,y:0,z:1},a,b),alen=Math.hypot(ax.x,ax.y,ax.z)||1;ax={x:ax.x/alen,y:ax.y/alen,z:ax.z/alen};
+   const a=axis==="3AX"?0:(p.A||0),b=(axis==="5AX"||axis==="6AX")?(p.B||0):0,c=axis==="6AX"?(p.C||0):0;
+   const tip=inverseRotABPoint({x:p.X,y:p.Y,z:p.Z},a,b,c);
+   let ax=inverseRotABVector({x:0,y:0,z:1},a,b,c),alen=Math.hypot(ax.x,ax.y,ax.z)||1;ax={x:ax.x/alen,y:ax.y/alen,z:ax.z/alen};
    const r=Math.max(.05,sceneBlockToolDia(scene,bl)/2),r2=r*r,flute=Math.max(1,Number(scene.cutterLen)||30);
    for(let iz=0;iz<voxelCache.nz;iz++)for(let iy=0;iy<voxelCache.ny;iy++)for(let ix=0;ix<voxelCache.nx;ix++){
      const k=voxelIndex(ix,iy,iz);if(!occ[k])continue;
@@ -1063,7 +1080,7 @@ function makeGlScene(canvas,axis){
  function voxelCutBlock(occ,bl,tEnd,scene){
    if(!bl?.cutting||tEnd<=0)return;
    const dx=(bl.to.X||0)-(bl.from.X||0),dy=(bl.to.Y||0)-(bl.from.Y||0),dz=(bl.to.Z||0)-(bl.from.Z||0);
-   const drot=Math.abs((bl.to.A||0)-(bl.from.A||0))+Math.abs((bl.to.B||0)-(bl.from.B||0));
+   const drot=Math.abs((bl.to.A||0)-(bl.from.A||0))+Math.abs((bl.to.B||0)-(bl.from.B||0))+Math.abs((bl.to.C||0)-(bl.from.C||0));
    const travel=Math.hypot(dx,dy,dz)+drot*Math.max(voxelCache.sx,voxelCache.sy)*.15;
    const blockToolDia=sceneBlockToolDia(scene,bl),spacing=Math.max(.6,Math.min(voxelCache.sx,voxelCache.sy,voxelCache.sz,Math.max(.2,blockToolDia*.3)));
    const steps=Math.max(1,Math.min(48,Math.ceil(travel*Math.max(.02,tEnd)/spacing)));
@@ -1142,7 +1159,7 @@ function makeGlScene(canvas,axis){
      const vp=M(P(Math.PI/4,aspect,.1,sceneR*20),look(eye,target,[0,0,1]));
      gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.clearColor(.003,.008,.012,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
-     const A=axis==="3AX"?0:(pos.A||0),B=axis==="5AX"?(pos.B||0):0,R=rotMat(A,B),tableR=Math.max(spanX,spanY)*.72;
+     const A=axis==="3AX"?0:(pos.A||0),B=(axis==="5AX"||axis==="6AX")?(pos.B||0):0,C=axis==="6AX"?(pos.C||0):0,R=rotMat(A,B,C),tableR=Math.max(spanX,spanY)*.72;
      drawMesh(cyl,M(R,M(T(0,0,stockBottom-8),S(tableR*2,tableR*2,8))),rgb("#182532"),vp);
      if(axis==="3AX"){
        drawMesh(stockShell,M(T(cx,cy,stockCenter),S(spanX,spanY,stockH)),rgb("#465f70"),vp);
@@ -1155,6 +1172,9 @@ function makeGlScene(canvas,axis){
      if(axis!=="3AX"){
        drawMesh(cube,T(-tableR-7,0,stockBottom-7),rgb("#24394b"),vp);drawMesh(cube,T(tableR+7,0,stockBottom-7),rgb("#24394b"),vp);
      }
+     if(axis==="6AX"){
+       drawMesh(cube,M(R,M(T(cx+tableR*.45,cy,stockBottom-1),S(tableR*.32,2.5,3))),rgb("#33f39b"),vp);
+     }
      const fixtureBoxes=runtimeAssemblyBoxes({assembly:scene.assembly});
      for(const fixture of fixtureBoxes){
        const model=M(R,M(T(fixture.x,fixture.y,fixture.z+fixture.h/2),S(fixture.w,fixture.d,fixture.h)));
@@ -1166,7 +1186,7 @@ function makeGlScene(canvas,axis){
 
      const sampleBlock=scene.sampleBlock;
      for(let i=0;i<moves.length;i++){
-       const bl=moves[i],samples=(bl.motion==="G2"||bl.motion==="G3"||Math.abs((bl.to.A||0)-(bl.from.A||0))>1e-6||Math.abs((bl.to.B||0)-(bl.from.B||0))>1e-6)?16:2,arr=[];
+       const bl=moves[i],samples=(bl.motion==="G2"||bl.motion==="G3"||Math.abs((bl.to.A||0)-(bl.from.A||0))>1e-6||Math.abs((bl.to.B||0)-(bl.from.B||0))>1e-6||Math.abs((bl.to.C||0)-(bl.from.C||0))>1e-6)?16:2,arr=[];
        for(let j=0;j<samples;j++){const t=samples===1?1:j/(samples-1),p=sampleBlock(bl,t),q={x:p.X,y:p.Y,z:p.Z};arr.push(q)}
        drawLine(arr,bl.motion==="G0"?rgb("#3b82f6"):rgb("#18a9c9"),vp);
      }
@@ -1570,14 +1590,17 @@ function makeRuntime(root){
   if(axis!=="3AX"){
     const rad=(p.A||0)*Math.PI/180;c.strokeStyle=axis==="4AX"?"#ffb326":"#ff4da6";c.lineWidth=2;c.beginPath();c.arc(w-74,h-76,32,0,Math.PI*2);c.stroke();c.beginPath();c.moveTo(w-74,h-76);c.lineTo(w-74+Math.cos(rad)*30,h-76-Math.sin(rad)*30);c.stroke();
   }
-  if(axis==="5AX"){
+  if(axis==="5AX"||axis==="6AX"){
     const rad=(p.B||0)*Math.PI/180;c.strokeStyle="#27e9ff";c.beginPath();c.arc(w-74,h-76,21,0,Math.PI*2);c.stroke();c.beginPath();c.moveTo(w-74,h-76);c.lineTo(w-74+Math.cos(rad)*19,h-76-Math.sin(rad)*19);c.stroke();
+  }
+  if(axis==="6AX"){
+    const rad=(p.C||0)*Math.PI/180;c.strokeStyle="#33f39b";c.beginPath();c.arc(w-74,h-76,12,0,Math.PI*2);c.stroke();c.beginPath();c.moveTo(w-74,h-76);c.lineTo(w-74+Math.cos(rad)*10,h-76-Math.sin(rad)*10);c.stroke();
   }
   updateHud();
  }
  function updateHud(){
   const p=currentPos(),bl=currentBlock(),cfg=settings(),mc=activeMachine(),mp=machinePosition(p,mc,cfg),hLen=toolLengthFor(mc,cfg),activeDia=runtimeToolDiameter(cfg,bl||{machine:mc});
-  const workAxes=["X","Y","Z"].concat(axis==="4AX"?["A"]:axis==="5AX"?["A","B"]:[]);
+  const workAxes=["X","Y","Z"].concat(axis==="4AX"?["A"]:axis==="5AX"?["A","B"]:axis==="6AX"?["A","B","C"]:[]);
   root.querySelector("[data-hud]").innerHTML=
     "<b>WORK "+(mc.wcs||"G54")+"</b><br>"+
     workAxes.map(a=>a+" "+(p[a]||0).toFixed(3)).join("<br>")+
@@ -2736,5 +2759,16 @@ function show(name){
 }
 aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash||"#5AX").slice(1))),null,"error");
 </script>
-\n<script>\n(function(){\n  if (!("serviceWorker" in navigator)) return;\n  window.addEventListener("load", function(){\n    navigator.serviceWorker.register("./service-worker.js", {scope:"./"})\n      .then(function(reg){ window.AIG_OFFLINE_RUNTIME={ready:true,scope:reg.scope}; })\n      .catch(function(err){ window.AIG_OFFLINE_RUNTIME={ready:false,error:String(err)}; });\n  });\n})();\n</script>\n</body>
+
+<script>
+(function(){
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("./service-worker.js", {scope:"./"})
+      .then(function(reg){ window.AIG_OFFLINE_RUNTIME={ready:true,scope:reg.scope}; })
+      .catch(function(err){ window.AIG_OFFLINE_RUNTIME={ready:false,error:String(err)}; });
+  });
+})();
+</script>
+</body>
 </html>

@@ -1,0 +1,14 @@
+{
+  "name": "aig-studio-web-runtime",
+  "private": true,
+  "version": "341.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 4173"
+  },
+  "devDependencies": {
+    "vite": "8.3.2"
+  }
+}
