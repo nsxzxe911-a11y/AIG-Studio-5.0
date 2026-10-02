@@ -155,12 +155,6 @@ private class AdaptiveGlassToolbar : JPanel() {
             }
         })
     }
-    fun replaceVisualAsset(assetId:String?) {
-        icon=assetId?.let { ProductionRgbAssets.iconById(RgbButtonVisualContract.requireAssetId(it)) }
-            ?: ProductionRgbAssets.icon(actionLabel)
-        repaint()
-    }
-
     override fun paintComponent(g: Graphics) {
         val g2 = g.create() as Graphics2D
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
@@ -233,6 +227,12 @@ private class GlassActionButton(label: String, accentInput: Color) : JButton(lab
             horizontalTextPosition=SwingConstants.RIGHT
         }
     }
+    fun replaceVisualAsset(assetId:String?) {
+        icon=assetId?.let { ProductionRgbAssets.iconById(RgbButtonVisualContract.requireAssetId(it)) }
+            ?: ProductionRgbAssets.icon(actionLabel)
+        repaint()
+    }
+
     override fun paintComponent(g: Graphics) {
         val g2 = g.create() as Graphics2D
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
