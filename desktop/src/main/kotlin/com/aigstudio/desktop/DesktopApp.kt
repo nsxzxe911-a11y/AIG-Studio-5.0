@@ -3760,6 +3760,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         )
         val cam=result.cam
         val settings=cam.settings
+        val stock=result.stock
+        val modeledRisk=MachiningRiskScanner.inspect(
+            cam,stock,productionFixtures,productionToolAssembly
+        )
         val left=JPanel(BorderLayout(6,6)).apply{
             background=LibraryFiveAxisSkin208.panel
             preferredSize=Dimension(190,0)
@@ -3810,6 +3814,12 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         parameter("CAM SOURCE",settings.pathMode.name,if(settings.pathMode==CamPathMode.MANUAL)LibraryFiveAxisSkin208.warning else LibraryFiveAxisSkin208.cyan)
         parameter("CONTOUR SIDE",if(settings.contourSide==ContourSide.OUTSIDE)"外徑 / OUTSIDE" else "內徑 / INSIDE",LibraryFiveAxisSkin208.warning)
         parameter("PATH DIRECTION",settings.contourDirection.name,LibraryFiveAxisSkin208.cyan)
+        parameter("FIXTURE",modeledRisk.fixtureCoverageWord,
+            if(modeledRisk.fixtureCoverageKnown)LibraryFiveAxisSkin208.safe else LibraryFiveAxisSkin208.warning)
+        parameter("COLLISION",modeledRisk.collisionCount.toString(),
+            if(modeledRisk.collisionCount==0)LibraryFiveAxisSkin208.safe else Color(255,90,90))
+        parameter("OVERCUT",modeledRisk.overcutCount.toString(),
+            if(modeledRisk.overcutCount==0)LibraryFiveAxisSkin208.safe else Color(255,90,90))
         val actions=AdaptiveGlassToolbar()
         fun camAction(label:String,color:Color,run:()->Unit){
             actions.add(GlassActionButton(label,color).apply{addActionListener{run()}})
