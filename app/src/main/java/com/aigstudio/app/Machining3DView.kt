@@ -457,7 +457,7 @@ class Machining3DView(
     private fun machineSpace(v:Vec3,mode:String,live:Move?):Vec3 {
         val a=if(mode=="3AX")0.0 else live?.axisA ?: 0.0
         val b=if(mode=="5AX" || mode=="6AX")live?.axisB ?: 0.0 else 0.0
-        val c=if(mode=="6AX")machineAxisC else 0.0
+        val c=if(mode=="6AX")live?.axisC ?: machineAxisC else 0.0
         return MachineKinematics3D.transform(v,a,b,c)
     }
 
@@ -565,7 +565,7 @@ class Machining3DView(
             liveMove?.axisA,
             liveMove?.axisB,
             liveMove,
-            machineAxisC
+            liveMove?.axisC ?: machineAxisC
         )
         drawMachineModel(canvas,machineModel,scale)
         val activeMesh = activeFrame?.mesh ?: result.mesh
