@@ -15,7 +15,8 @@ data class ManualCamPoint(
     val arcJ:Double?=null,
     val clockwise:Boolean?=null,
     val axisA:Double=0.0,
-    val axisB:Double=0.0
+    val axisB:Double=0.0,
+    val axisC:Double=0.0
 )
 
 data class CamSettings(
@@ -50,21 +51,31 @@ data class MultiAxisOrientationSchedule(
     val startB: Double,
     val endA: Double,
     val endB: Double,
-    val mode: MultiAxisInterpolationMode = MultiAxisInterpolationMode.LINEAR_SYNC
+    val mode: MultiAxisInterpolationMode = MultiAxisInterpolationMode.LINEAR_SYNC,
+    val startC: Double = 0.0,
+    val endC: Double = 0.0
 ) {
     init {
-        listOf(startA,startB,endA,endB).forEach {
+        listOf(startA,startB,endA,endB,startC,endC).forEach {
             require(it.isFinite() && abs(it)<=360.0) { "Unsafe multi-axis schedule angle" }
         }
     }
     fun at(progress:Double):Pair<Double,Double> {
+        val abc=atABC(progress)
+        return abc.first to abc.second
+    }
+    fun atABC(progress:Double):Triple<Double,Double,Double> {
         val p=progress.coerceIn(0.0,1.0)
-        return if(mode==MultiAxisInterpolationMode.INDEXED) endA to endB
-        else (startA+(endA-startA)*p) to (startB+(endB-startB)*p)
+        return if(mode==MultiAxisInterpolationMode.INDEXED) Triple(endA,endB,endC)
+        else Triple(
+            startA+(endA-startA)*p,
+            startB+(endB-startB)*p,
+            startC+(endC-startC)*p
+        )
     }
     fun isContinuous():Boolean =
         mode==MultiAxisInterpolationMode.LINEAR_SYNC &&
-            (abs(endA-startA)>EPS || abs(endB-startB)>EPS)
+            (abs(endA-startA)>EPS || abs(endB-startB)>EPS || abs(endC-startC)>EPS)
 }
 
 /** CAM receives a read-only geometry snapshot. It never receives DrawingDocument itself. */
@@ -81,15 +92,16 @@ class CamModel private constructor(
             settings: CamSettings = CamSettings(),
             axisA: Double = 0.0,
             axisB: Double = 0.0,
-            axisSchedule: MultiAxisOrientationSchedule? = null
+            axisSchedule: MultiAxisOrientationSchedule? = null,
+            axisC: Double = 0.0
         ): CamModel = CamModel(
             revision,
             snapshot,
             settings,
             if(settings.pathMode==CamPathMode.MANUAL)
-                CamEngine.generateManual(settings,axisA,axisB,axisSchedule)
+                CamEngine.generateManual(settings,axisA,axisB,axisSchedule,axisC)
             else
-                CamEngine.generate(snapshot, settings, axisA, axisB, axisSchedule)
+                CamEngine.generate(snapshot, settings, axisA, axisB, axisSchedule,axisC)
         )
     }
 }
@@ -104,13 +116,15 @@ sealed interface Move {
     val rapid: Boolean
     val axisA: Double
     val axisB: Double
+    val axisC: Double
 }
 
 data class Rapid(
     override val to: Vec2,
     override val z: Double = 5.0,
     override val axisA: Double = 0.0,
-    override val axisB: Double = 0.0
+    override val axisB: Double = 0.0,
+    override val axisC: Double = 0.0
 ) : Move {
     override val rapid: Boolean = true
 }
@@ -120,7 +134,8 @@ data class Feed(
     val feedMmMin: Double,
     override val z: Double = -2.0,
     override val axisA: Double = 0.0,
-    override val axisB: Double = 0.0
+    override val axisB: Double = 0.0,
+    override val axisC: Double = 0.0
 ) : Move {
     override val rapid: Boolean = false
 }
@@ -132,7 +147,8 @@ data class ArcFeed(
     val feedMmMin: Double,
     override val z: Double = -2.0,
     override val axisA: Double = 0.0,
-    override val axisB: Double = 0.0
+    override val axisB: Double = 0.0,
+    override val axisC: Double = 0.0
 ) : Move {
     override val rapid: Boolean = false
 }
