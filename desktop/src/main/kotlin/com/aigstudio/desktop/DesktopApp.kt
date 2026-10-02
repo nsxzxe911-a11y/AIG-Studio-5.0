@@ -3545,11 +3545,43 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     }
 
     var productionCamSettings=CamSettings()
+    var productionCamDerivedCache:Machining3DResult?=null
+    var productionCamDerivedSignature:Int?=null
+    var productionCamStaleReason="NOT CALCULATED"
     var productionProjectState:StudioProjectPackage?=null
     val productionFixtures=mutableListOf<FixtureObstacle>()
     var productionToolAssembly=ToolAssemblyConfig()
     var nextProductionFixtureId=1L
     fun markProductionProjectDirty(){sharedProjectExtraDirty.set(true)}
+    fun productionCamSignature():Int {
+        var h=doc.snapshot().hashCode()
+        h=31*h+productionCamSettings.hashCode()
+        h=31*h+productionFixtures.hashCode()
+        h=31*h+productionToolAssembly.hashCode()
+        return h
+    }
+    fun productionCamIsStale():Boolean =
+        productionCamDerivedCache==null || productionCamDerivedSignature!=productionCamSignature()
+    fun productionCamStaleLabel():String =
+        productionCamStaleReason.ifBlank { "CAD / CAM INPUT CHANGED" }
+    fun markProductionCamStale(reason:String){
+        productionCamStaleReason=reason
+        markProductionProjectDirty()
+    }
+    fun rebuildProductionCamDerived():Machining3DResult {
+        val snapshot=doc.snapshot()
+        require(snapshot.entities.isNotEmpty() || productionCamSettings.pathMode==CamPathMode.MANUAL) {
+            "AUTO CAM requires CAD geometry"
+        }
+        val result=Machining3DEngine.build(
+            snapshot,productionCamSettings,
+            fixtures=productionFixtures,toolAssembly=productionToolAssembly
+        )
+        productionCamDerivedCache=result
+        productionCamDerivedSignature=productionCamSignature()
+        productionCamStaleReason=""
+        return result
+    }
 
     fun productionLocalProjectFile():File = sharedLocalProjectFile ?:
         File(System.getProperty("user.home"),".aig-studio/projects/current.aigp")
@@ -3582,6 +3614,9 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         productionFixtures.clear();productionFixtures.addAll(project.fixtures)
         productionToolAssembly=project.toolAssembly
         nextProductionFixtureId=(productionFixtures.maxOfOrNull{it.id} ?: 0L)+1L
+        productionCamDerivedCache=null
+        productionCamDerivedSignature=null
+        productionCamStaleReason="PROJECT LOADED • RECALCULATE REQUIRED"
         sharedLocalMeta=project.revisionMeta
         sharedProjectExtraDirty.set(false)
         cad.repaint()
@@ -3734,7 +3769,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 )
             }.onSuccess{
                 productionToolAssembly=it
-                markProductionProjectDirty()
+                markProductionCamStale("TOOL ASSEMBLY")
                 status.text="TOOL ASSEMBLY • Ø"+DisplayFormat.mm(it.holderDiameter)+
                     " L"+DisplayFormat.mm(it.holderLength)+
                     " STICKOUT "+DisplayFormat.mm(it.stickout)+" • REVALIDATE REQUIRED"
@@ -3831,6 +3866,10 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     }
 
     fun showProductionCollisionLookAhead(){
+        if(productionCamIsStale()){
+            status.text="COLLISION LOOKAHEAD BLOCKED • CAM STALE • PRESS 重算"
+            return
+        }
         if(productionFixtures.isEmpty()){
             status.text="LOOKAHEAD • 請先建立治具或 MACHINE_ENVELOPE"
             return
@@ -3897,7 +3936,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             status.text="MANUAL CAM BLOCKED • "+(it.message?:"error")
             return
         }
-        markProductionProjectDirty()
+        markProductionCamStale("MANUAL CAM PATH")
 
         val dlg=JDialog(frame,"CAM 手動走刀 • 夾治具避讓",false).apply{
             layout=BorderLayout(8,8);minimumSize=Dimension(760,520)
@@ -3955,7 +3994,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 )
                 CamModel.fromCad(System.currentTimeMillis(),doc.snapshot(),productionCamSettings)
             }.onSuccess{
-                markProductionProjectDirty()
+                markProductionCamStale("MANUAL CAM PATH")
                 status.text="MANUAL CAM POINT PASS • P"+(i+1)+" • 3D/NC READY"
                 refresh(i);load()
             }.onFailure{status.text="MANUAL CAM POINT BLOCKED • "+(it.message?:"error")}
@@ -3968,7 +4007,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                     productionCamSettings,i+1,
                     ManualCamPoint(p.x,p.y,productionCamSettings.depth,false,axisA=p.axisA,axisB=p.axisB,axisC=p.axisC)
                 )
-            }.onSuccess{markProductionProjectDirty();refresh(i+1);load()}
+            }.onSuccess{markProductionCamStale("MANUAL CAM PATH");refresh(i+1);load()}
                 .onFailure{status.text="MANUAL CAM INSERT BLOCKED • "+(it.message?:"error")}
         }
         action("插入避讓"){
@@ -3993,7 +4032,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                         productionCamSettings,i,lift.text.toDouble(),lx.text.toDouble(),ly.text.toDouble(),lz.text.toDouble()
                     )
                 }.onSuccess{
-                    markProductionProjectDirty()
+                    markProductionCamStale("MANUAL CAM PATH")
                     status.text="AVOIDANCE PASS • RETRACT / RAPID / PLUNGE"
                     refresh(i+3);load()
                 }.onFailure{status.text="AVOIDANCE BLOCKED • "+(it.message?:"error")}
@@ -4004,7 +4043,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             runCatching{
                 productionCamSettings=ManualCamPathEngine.deletePoint(productionCamSettings,i)
             }.onSuccess{
-                markProductionProjectDirty()
+                markProductionCamStale("MANUAL CAM PATH")
                 refresh(i.coerceAtMost(productionCamSettings.manualPath.lastIndex));load()
             }.onFailure{status.text="MANUAL CAM DELETE BLOCKED • "+(it.message?:"error")}
         }
@@ -4121,7 +4160,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         }
     }
 
-    fun buildProductionCamPanel():JPanel {
+    fun buildProductionCamPanel(forceRecalculate:Boolean=false):JPanel {
         val snapshot=doc.snapshot()
         if(snapshot.entities.isEmpty() && productionCamSettings.pathMode==CamPathMode.AUTO){
             return JPanel(BorderLayout()).apply{
@@ -4149,15 +4188,18 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 add(actions,BorderLayout.SOUTH)
             }
         }
-        val result=Machining3DEngine.build(
-            snapshot,productionCamSettings,
-            fixtures=productionFixtures,toolAssembly=productionToolAssembly
-        )
+        val wasStale=productionCamIsStale()
+        val result=if(forceRecalculate || productionCamDerivedCache==null) {
+            rebuildProductionCamDerived()
+        } else {
+            productionCamDerivedCache ?: error("CAM derived cache missing")
+        }
+        val stale=productionCamIsStale()
         val cam=result.cam
         val settings=cam.settings
         val stock=result.stock
         val modeledRisk=MachiningRiskScanner.inspect(
-            cam,stock,productionFixtures,productionToolAssembly
+            cam,stock,result.fixtures,result.toolAssembly
         )
         val left=JPanel(BorderLayout(6,6)).apply{
             background=LibraryFiveAxisSkin208.panel
@@ -4172,7 +4214,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 font=font.deriveFont(Font.BOLD,14f)
             },BorderLayout.NORTH)
             add(JTextArea(buildString{
-                append("CAM READY\n")
+                append(if(stale)"CAM STALE • "+productionCamStaleLabel()+"\n" else "CAM READY • FRESH\n")
                 append("PATHS  ").append(cam.toolpaths.size).append("\n")
                 append("MOVES  ").append(cam.toolpaths.sumOf{it.moves.size}).append("\n\n")
                 cam.toolpaths.take(18).forEachIndexed{i,path->
@@ -4209,6 +4251,12 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         parameter("CAM SOURCE",settings.pathMode.name,if(settings.pathMode==CamPathMode.MANUAL)LibraryFiveAxisSkin208.warning else LibraryFiveAxisSkin208.cyan)
         parameter("CONTOUR SIDE",if(settings.contourSide==ContourSide.OUTSIDE)"外徑 / OUTSIDE" else "內徑 / INSIDE",LibraryFiveAxisSkin208.warning)
         parameter("PATH DIRECTION",settings.contourDirection.name,LibraryFiveAxisSkin208.cyan)
+        parameter("TOOLPATH STATUS",
+            if(stale)"STALE • "+productionCamStaleLabel()+" • OLD RESULT" else "FRESH",
+            if(stale)LibraryFiveAxisSkin208.warning else LibraryFiveAxisSkin208.safe)
+        parameter("PENDING SETTINGS",
+            productionCamSettings.pathMode.name+" • "+productionCamSettings.contourSide.name+" • "+productionCamSettings.contourDirection.name,
+            if(stale)LibraryFiveAxisSkin208.warning else LibraryFiveAxisSkin208.cyan)
         parameter("FIXTURE",modeledRisk.fixtureCoverageWord,
             if(modeledRisk.fixtureCoverageKnown)LibraryFiveAxisSkin208.safe else LibraryFiveAxisSkin208.warning)
         parameter("COLLISION",modeledRisk.collisionCount.toString(),
@@ -4219,25 +4267,26 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         fun camAction(label:String,color:Color,run:()->Unit){
             actions.add(GlassActionButton(label,color).apply{addActionListener{run()}})
         }
-        fun rebuildCamCard(){
+        fun rebuildCamCard(forceRecalculate:Boolean=false){
             mainCardHost.components.filter{it.name=="CAM_CARD"}.forEach{mainCardHost.remove(it)}
-            mainCardHost.add(buildProductionCamPanel(),"CAM")
+            mainCardHost.add(buildProductionCamPanel(forceRecalculate),"CAM")
             mainCardLayout.show(mainCardHost,"CAM")
             mainCardHost.revalidate()
             mainCardHost.repaint()
         }
-        camAction(if(settings.pathMode==CamPathMode.AUTO)"AUTO" else "MANUAL",LibraryFiveAxisSkin208.safe){
-            productionCamSettings=if(settings.pathMode==CamPathMode.AUTO){
-                if(settings.manualPath.isEmpty()){
-                    val auto=CamModel.fromCad(System.currentTimeMillis(),snapshot,settings)
+        camAction(if(productionCamSettings.pathMode==CamPathMode.AUTO)"AUTO" else "MANUAL",LibraryFiveAxisSkin208.safe){
+            val pending=productionCamSettings
+            productionCamSettings=if(pending.pathMode==CamPathMode.AUTO){
+                if(pending.manualPath.isEmpty()){
+                    val auto=CamModel.fromCad(System.currentTimeMillis(),doc.snapshot(),pending)
                     ManualCamPathEngine.adoptAuto(auto)
-                }else ManualCamPathEngine.useManual(settings)
+                }else ManualCamPathEngine.useManual(pending)
             }else{
-                ManualCamPathEngine.useAuto(settings)
+                ManualCamPathEngine.useAuto(pending)
             }
-            markProductionProjectDirty()
-            status.text="CAM SOURCE • "+productionCamSettings.pathMode.name
-            rebuildCamCard()
+            markProductionCamStale("CAM SOURCE")
+            status.text="CAM SOURCE • "+productionCamSettings.pathMode.name+" • STALE • PRESS 重算"
+            rebuildCamCard(false)
         }
         camAction("路徑編輯",LibraryFiveAxisSkin208.warning){
             showProductionManualCamEditor()
@@ -4251,31 +4300,44 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         camAction("碰撞預測",Color(255,110,110)){
             showProductionCollisionLookAhead()
         }
-        camAction(if(settings.contourSide==ContourSide.OUTSIDE)"外徑" else "內徑",LibraryFiveAxisSkin208.warning){
+        camAction(if(productionCamSettings.contourSide==ContourSide.OUTSIDE)"外徑" else "內徑",LibraryFiveAxisSkin208.warning){
             productionCamSettings=productionCamSettings.copy(
-                contourSide=if(settings.contourSide==ContourSide.OUTSIDE)ContourSide.INSIDE else ContourSide.OUTSIDE
+                contourSide=if(productionCamSettings.contourSide==ContourSide.OUTSIDE)ContourSide.INSIDE else ContourSide.OUTSIDE
             )
-            markProductionProjectDirty()
-            status.text="CAM SIDE • "+productionCamSettings.contourSide.name+" • REBUILD"
-            rebuildCamCard()
+            markProductionCamStale("CAM CONTOUR SIDE")
+            status.text="CAM SIDE • "+productionCamSettings.contourSide.name+" • STALE • PRESS 重算"
+            rebuildCamCard(false)
         }
-        camAction(settings.contourDirection.name,LibraryFiveAxisSkin208.cyan){
-            val next=if(settings.contourDirection==ContourDirection.CCW)ContourDirection.CW else ContourDirection.CCW
+        camAction(productionCamSettings.contourDirection.name,LibraryFiveAxisSkin208.cyan){
+            val next=if(productionCamSettings.contourDirection==ContourDirection.CCW)ContourDirection.CW else ContourDirection.CCW
             productionCamSettings=productionCamSettings.copy(
                 climb=next==ContourDirection.CCW,
                 contourDirection=next
             )
-            markProductionProjectDirty()
-            status.text="CAM DIRECTION • "+next.name+" • REBUILD"
-            rebuildCamCard()
+            markProductionCamStale("CAM DIRECTION")
+            status.text="CAM DIRECTION • "+next.name+" • STALE • PRESS 重算"
+            rebuildCamCard(false)
+        }
+        camAction("重算",LibraryFiveAxisSkin208.cyan){
+            runCatching{rebuildCamCard(true)}
+                .onSuccess{status.text="CAM RECALCULATED • FRESH • SIM/NC READY FOR REVALIDATION"}
+                .onFailure{status.text="CAM RECALC BLOCKED • "+(it.message?:"error")}
         }
         camAction("3D SIM",LibraryFiveAxisSkin208.violet){
+            if(productionCamIsStale()){
+                status.text="3D SIM BLOCKED • CAM STALE • PRESS 重算"
+                return@camAction
+            }
             runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,"3D",productionCamSettings,productionFixtures,productionToolAssembly
             )}
                 .onFailure{status.text="3D SIM BLOCKED • "+(it.message?:"error")}
         }
         camAction("軸模式",LibraryFiveAxisSkin208.cyan){
+            if(productionCamIsStale()){
+                status.text="AXIS SIM BLOCKED • CAM STALE • PRESS 重算"
+                return@camAction
+            }
             val choice=JOptionPane.showInputDialog(
                 frame,
                 "選擇 CAM / SIM 軸模式",
@@ -4294,6 +4356,10 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             }
         }
         camAction("NC",Color(80,170,255)){
+            if(productionCamIsStale()){
+                status.text="NC BLOCKED • CAM STALE • PRESS 重算"
+                return@camAction
+            }
             runCatching{showNcEditor(
                 frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
             )}
@@ -4447,6 +4513,10 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 Triple("座標 / 精度（預設 0.001）","目前 0.001 mm • Master 0.000",StudioDesktopProductionTheme.text),
                 Triple("編輯防護","原子預檢 • RECT 群組 • 無幽靈 ID",StudioDesktopProductionTheme.text),
                 Triple("ARRAY 上限","10,000 新幾何",StudioDesktopProductionTheme.text)
+            )))
+            add(statusGroup("CAM / SIM",listOf(
+                Triple("衍生結果",if(productionCamIsStale())"STALE • "+productionCamStaleLabel()+" • 按重算" else "FRESH",if(productionCamIsStale())StudioDesktopProductionTheme.warning else Color(99,255,157)),
+                Triple("重算規則","設定可改 • 不自動重算",StudioDesktopProductionTheme.text)
             )))
             add(statusGroup("NC / 安全",listOf(
                 Triple("CNC 安全核心","鎖定 • ON",StudioDesktopProductionTheme.warning)

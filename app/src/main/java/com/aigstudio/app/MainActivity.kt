@@ -554,9 +554,18 @@ class MainActivity : Activity() {
     private val categoryButtons = mutableMapOf<String, Button>()
     private var activeCategory: String? = null
     private var camSettings = CamSettings()
+    private var camDerivedCache: Machining3DResult? = null
+    private var camDerivedStale = true
+    private var camDerivedStaleReason = "NOT CALCULATED"
     private val camFixtures = mutableListOf<FixtureObstacle>()
     private var camToolAssembly = ToolAssemblyConfig()
     private var nextCamFixtureId = 1L
+
+    private fun markCamDerivedStale(reason:String) {
+        camDerivedStale = true
+        camDerivedStaleReason = reason
+        if (!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
+    }
     private var ncSingleBlock = false
     private var ncDryRun = false
     private var ncBlockSkip = false
@@ -976,7 +985,7 @@ class MainActivity : Activity() {
         cad = CadView(
             this,
             onGeometryChanged = {
-                if (!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
+                markCamDerivedStale("CAD GEOMETRY")
             },
             onProjectChanged = {
                 sharedLocalDirty.set(true)
@@ -2129,6 +2138,12 @@ class MainActivity : Activity() {
         importantRow("編輯防護","原子預檢 • RECT 群組 • 無幽靈 ID")
         importantRow("ARRAY 上限","10,000 新幾何")
 
+        section("CAM / SIM")
+        importantRow("衍生結果",
+            if(camDerivedStale)"STALE • "+camDerivedStaleReason+" • 按重算" else "FRESH",
+            if(camDerivedStale)StudioProductionTheme.warning else 0xFF63FF9D.toInt())
+        importantRow("重算規則","設定可改 • 不自動重算")
+
         section("NC / 安全")
         importantRow("NC 輸出精度（預設 0.001）","目前 "+ncPrecision+" mm")
         importantRow("CNC 安全核心","鎖定 • ON",StudioProductionTheme.warning)
@@ -2376,6 +2391,8 @@ class MainActivity : Activity() {
                 if (value == null || value <= 0.0) speakVoice("刀徑數值無效")
                 else confirmVoiceAction("刀徑 " + DisplayFormat.mm(value) + " mm") {
                     camSettings = camSettings.copy(toolDiameter = value)
+                    markCamDerivedStale("CAM VOICE SETTING")
+                    markProjectDirty()
                 }
             }
             cmd.contains("safe-z") || cmd.contains("safe z") || cmd.contains("安全高度") -> {
@@ -2383,6 +2400,8 @@ class MainActivity : Activity() {
                 if (value == null) speakVoice("Safe-Z 數值無效")
                 else confirmVoiceAction("Safe-Z " + DisplayFormat.mm(value) + " mm") {
                     camSettings = camSettings.copy(safeZ = value)
+                    markCamDerivedStale("CAM VOICE SETTING")
+                    markProjectDirty()
                 }
             }
             cmd.contains("深度") || cmd.contains("depth") -> {
@@ -2390,6 +2409,8 @@ class MainActivity : Activity() {
                 if (value == null) speakVoice("加工深度數值無效")
                 else confirmVoiceAction("加工深度 " + DisplayFormat.mm(value) + " mm") {
                     camSettings = camSettings.copy(depth = value)
+                    markCamDerivedStale("CAM VOICE SETTING")
+                    markProjectDirty()
                 }
             }
             cmd.contains("進給") || cmd.contains("feed") -> {
@@ -2397,6 +2418,8 @@ class MainActivity : Activity() {
                 if (value == null || value <= 0.0) speakVoice("Feed 數值無效")
                 else confirmVoiceAction("Feed " + String.format("%.1f", value) + " mm/min") {
                     camSettings = camSettings.copy(feedMmMin = value)
+                    markCamDerivedStale("CAM VOICE SETTING")
+                    markProjectDirty()
                 }
             }
             cmd.contains("fps") || cmd.contains("幀率") -> {
@@ -2672,24 +2695,43 @@ class MainActivity : Activity() {
             .show()
     }
 
-    private fun showCamWorkstation() {
-        val snapshot = cad.snapshot()
-        if (snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
+    private fun showCamWorkstation(forceRecalculate:Boolean=false) {
+        val currentSnapshot = cad.snapshot()
+        if ((forceRecalculate || camDerivedCache==null) &&
+            currentSnapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
             Toast.makeText(this, "REAL CAM BLOCKED • AUTO 模式需要 CAD；可切 MANUAL 直接編走刀", Toast.LENGTH_LONG).show()
             return
         }
-        val cam = runCatching {
-            CamModel.fromCad(System.currentTimeMillis(), snapshot, camSettings, axisA, axisB, axisC=axisC)
-        }
-            .getOrElse {
+
+        if(forceRecalculate || camDerivedCache==null) {
+            val stockForBuild=runCatching {
+                Stock3D.fromSnapshot(
+                    currentSnapshot,stockMarginMm,stockThicknessMm,
+                    if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
+                )
+            }.getOrElse {
+                Toast.makeText(this,"CAM STOCK BLOCKED • "+(it.message?:"stock error"),Toast.LENGTH_LONG).show()
+                return
+            }
+            val built=runCatching {
+                Machining3DEngine.build(
+                    currentSnapshot,camSettings,stock=stockForBuild,
+                    axisA=axisA,axisB=axisB,
+                    fixtures=camFixtures,toolAssembly=camToolAssembly,axisC=axisC
+                )
+            }.getOrElse {
                 Toast.makeText(this, "REAL CAM BLOCKED • " + (it.message ?: "CAM build error"), Toast.LENGTH_LONG).show()
                 return
             }
-        val stock = Stock3D.fromSnapshot(
-            snapshot,stockMarginMm,stockThicknessMm,
-            if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
-        )
-        val risk = MachiningRiskScanner.inspect(cam, stock, camFixtures, camToolAssembly)
+            camDerivedCache=built
+            camDerivedStale=false
+            camDerivedStaleReason=""
+        }
+
+        val derived=camDerivedCache ?: return
+        val cam=derived.cam
+        val stock=derived.stock
+        val risk = MachiningRiskScanner.inspect(cam, stock, derived.fixtures, derived.toolAssembly)
         val post = FanucPostSettings(
             workOffset = workOffset,
             tool = 1,
@@ -2706,7 +2748,7 @@ class MainActivity : Activity() {
             rotaryMode = currentRotaryOperationMode(),
             rotaryClampProfile = rotaryClampProfile
         )
-        val ncReady = risk.ok && runCatching { CncPost.generate(cam, post) }.isSuccess
+        val ncReady = !camDerivedStale && risk.ok && runCatching { CncPost.generate(cam, post) }.isSuccess
         val screenWidthDp = resources.configuration.screenWidthDp.coerceAtLeast(1)
         val layoutMode = CamWorkstationContract.layout(screenWidthDp)
 
@@ -2741,9 +2783,12 @@ class MainActivity : Activity() {
             background=glass(LibraryFiveAxisSkin208.cyan)
         })
         root.addView(textLine(
-            CamWorkstationContract.CAM_READY + " • " + CamWorkstationContract.TOOLPATH_FRESH +
-                " • NC " + (if(ncReady)"READY" else "BLOCKED"),
-            if(ncReady)LibraryFiveAxisSkin208.safe else LibraryFiveAxisSkin208.warning,10.5f
+            if(camDerivedStale)
+                "CAM STALE • "+camDerivedStaleReason+" • 舊刀路僅供檢視 • 請按重算 • NC BLOCKED"
+            else
+                CamWorkstationContract.CAM_READY + " • " + CamWorkstationContract.TOOLPATH_FRESH +
+                    " • NC " + (if(ncReady)"READY" else "BLOCKED"),
+            if(!camDerivedStale && ncReady)LibraryFiveAxisSkin208.safe else LibraryFiveAxisSkin208.warning,10.5f
         ))
 
         val body = LinearLayout(this).apply {
@@ -2826,7 +2871,13 @@ class MainActivity : Activity() {
         param("CAM SOURCE",cam.settings.pathMode.name,if(cam.settings.pathMode==CamPathMode.MANUAL)LibraryFiveAxisSkin208.warning else LibraryFiveAxisSkin208.cyan)
         param("CONTOUR SIDE",if(cam.settings.contourSide==ContourSide.OUTSIDE)"外徑 / OUTSIDE" else "內徑 / INSIDE",LibraryFiveAxisSkin208.warning)
         param("PATH DIRECTION",cam.settings.contourDirection.name,LibraryFiveAxisSkin208.cyan)
-        param("TOOLPATH STATUS","FRESH • paths="+cam.toolpaths.size)
+        param("TOOLPATH STATUS",
+            if(camDerivedStale)"STALE • "+camDerivedStaleReason+" • old paths="+cam.toolpaths.size
+            else "FRESH • paths="+cam.toolpaths.size,
+            if(camDerivedStale)LibraryFiveAxisSkin208.warning else LibraryFiveAxisSkin208.safe)
+        param("PENDING SETTINGS",
+            camSettings.pathMode.name+" • "+camSettings.contourSide.name+" • "+camSettings.contourDirection.name,
+            if(camDerivedStale)LibraryFiveAxisSkin208.warning else LibraryFiveAxisSkin208.cyan)
         param("MACHINING REGION","STOCK XY")
 
         val legend=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
@@ -2847,12 +2898,12 @@ class MainActivity : Activity() {
         root.addView(body,LinearLayout.LayoutParams(-1,-2))
 
         root.addView(textLine(
-            "CAM " + (if(risk.ok)"SAFE" else "WARNING") +
+            (if(camDerivedStale)"CAM STALE" else "CAM " + (if(risk.ok)"SAFE" else "WARNING")) +
                 " • COLLISION " + risk.collisionCount +
                 " • OVERCUT " + risk.overcutCount +
                 " • FIXTURE=" + risk.fixtureCoverageWord +
                 " • " + CamWorkstationContract.MAKE_IT_REAL,
-            if(risk.ok)LibraryFiveAxisSkin208.safe else StudioProductionTheme.alarm,10f
+            if(!camDerivedStale && risk.ok)LibraryFiveAxisSkin208.safe else StudioProductionTheme.alarm,10f
         ).apply { background=glass(if(risk.ok)0x5563FF9D else 0x88FF5252.toInt()) })
 
         lateinit var dialog:AlertDialog
@@ -2866,6 +2917,7 @@ class MainActivity : Activity() {
                 minimumWidth=dp(88)
                 setOnClickListener {
                     runCatching{run()}.onSuccess{
+                        markCamDerivedStale("CAM SOURCE")
                         markProjectDirty()
                         dialog.dismiss()
                         showCamWorkstation()
@@ -2948,6 +3000,7 @@ class MainActivity : Activity() {
                 maxLines=1
                 setOnClickListener {
                     run()
+                    markCamDerivedStale("CAM CONTOUR")
                     markProjectDirty()
                     dialog.dismiss()
                     showCamWorkstation()
@@ -2993,12 +3046,16 @@ class MainActivity : Activity() {
         }
         action("重算",LibraryFiveAxisSkin208.cyan) {
             dialog.dismiss()
-            showCamWorkstation()
+            showCamWorkstation(forceRecalculate=true)
         }
         action("設定",LibraryFiveAxisSkin208.violet) { showCamSettingsDialog() }
         action("偏置",LibraryFiveAxisSkin208.warning) { showWorkOffsetDialog() }
         action("3D",0xFF22C55E.toInt()) { showMachining3D() }
-        action("NC",0xFF3B82F6.toInt()) { showNcEditDialog() }
+        action("NC",0xFF3B82F6.toInt()) {
+            if(camDerivedStale) {
+                Toast.makeText(this,"NC BLOCKED • CAM STALE • 請先按「重算」",Toast.LENGTH_LONG).show()
+            } else showNcEditDialog()
+        }
         action("←",0xFF7894A8.toInt()) { dialog.dismiss() }
         root.addView(actions,LinearLayout.LayoutParams(-1,-2))
 
@@ -3039,6 +3096,7 @@ class MainActivity : Activity() {
                     )
                 }.onSuccess{
                     camToolAssembly=it
+                    markCamDerivedStale("TOOL ASSEMBLY")
                     sharedLocalDirty.set(true)
                     Toast.makeText(
                         this,
@@ -3130,6 +3188,7 @@ class MainActivity : Activity() {
             runCatching{
                 val f=buildFixture(nextCamFixtureId++)
                 camFixtures.add(f)
+                markCamDerivedStale("FIXTURE MODEL")
                 sharedLocalDirty.set(true)
                 refresh(camFixtures.lastIndex);load(camFixtures.lastIndex)
             }.onFailure{Toast.makeText(this,"FIXTURE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
@@ -3140,6 +3199,7 @@ class MainActivity : Activity() {
             if(old==null) Toast.makeText(this,"尚無治具可更新",Toast.LENGTH_SHORT).show()
             else runCatching{
                 camFixtures[i]=buildFixture(old.id)
+                markCamDerivedStale("FIXTURE MODEL")
                 sharedLocalDirty.set(true)
                 refresh(i);load(i)
             }.onFailure{Toast.makeText(this,"FIXTURE UPDATE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
@@ -3148,6 +3208,7 @@ class MainActivity : Activity() {
             val i=selector.selectedItemPosition
             if(i in camFixtures.indices) {
                 camFixtures.removeAt(i)
+                markCamDerivedStale("FIXTURE MODEL")
                 sharedLocalDirty.set(true)
                 refresh(i.coerceAtMost((camFixtures.size-1).coerceAtLeast(0)))
                 Toast.makeText(this,"FIXTURE REMOVED • 剩餘 "+camFixtures.size,Toast.LENGTH_SHORT).show()
@@ -3165,6 +3226,10 @@ class MainActivity : Activity() {
     }
 
     private fun showCollisionLookAheadDialog() {
+        if(camDerivedStale) {
+            Toast.makeText(this,"碰撞預測 BLOCKED • CAM STALE • 請先在 CAM 按「重算」",Toast.LENGTH_LONG).show()
+            return
+        }
         if(camFixtures.isEmpty()) {
             Toast.makeText(this,"碰撞預測：請先建立治具或 MACHINE_ENVELOPE",Toast.LENGTH_LONG).show()
             return
@@ -3234,6 +3299,7 @@ class MainActivity : Activity() {
             Toast.makeText(this,"MANUAL CAM BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
             return
         }
+        markCamDerivedStale("MANUAL CAM PATH")
         markProjectDirty()
 
         val root=LinearLayout(this).apply {
@@ -3317,6 +3383,7 @@ class MainActivity : Activity() {
                 )
                 CamModel.fromCad(System.currentTimeMillis(),cad.snapshot(),camSettings)
             }.onSuccess{
+                markCamDerivedStale("MANUAL CAM PATH")
                 markProjectDirty()
                 Toast.makeText(this,"MANUAL CAM POINT PASS • P"+(i+1),Toast.LENGTH_SHORT).show()
                 refresh(i);load()
@@ -3330,7 +3397,7 @@ class MainActivity : Activity() {
                     camSettings,i+1,
                     ManualCamPoint(p.x,p.y,camSettings.depth,false,axisA=p.axisA,axisB=p.axisB,axisC=p.axisC)
                 )
-            }.onSuccess{markProjectDirty();refresh(i+1);load()}
+            }.onSuccess{markCamDerivedStale("MANUAL CAM PATH");markProjectDirty();refresh(i+1);load()}
                 .onFailure{Toast.makeText(this,"INSERT BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
         }
         action("插入避讓"){
@@ -3357,7 +3424,7 @@ class MainActivity : Activity() {
                             camSettings,i,lift.text.toString().toDouble(),
                             lx.text.toString().toDouble(),ly.text.toString().toDouble(),lz.text.toString().toDouble()
                         )
-                    }.onSuccess{markProjectDirty();refresh(i+3);load()}
+                    }.onSuccess{markCamDerivedStale("MANUAL CAM PATH");markProjectDirty();refresh(i+3);load()}
                         .onFailure{Toast.makeText(this,"AVOIDANCE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
                 }
                 .setNegativeButton("取消",null)
@@ -3366,7 +3433,7 @@ class MainActivity : Activity() {
         action("刪除"){
             val i=selector.selectedItemPosition
             runCatching{camSettings=ManualCamPathEngine.deletePoint(camSettings,i)}
-                .onSuccess{markProjectDirty();refresh(i.coerceAtMost(camSettings.manualPath.lastIndex));load()}
+                .onSuccess{markCamDerivedStale("MANUAL CAM PATH");markProjectDirty();refresh(i.coerceAtMost(camSettings.manualPath.lastIndex));load()}
                 .onFailure{Toast.makeText(this,"DELETE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
         }
         action("3D SIM"){
@@ -3384,6 +3451,10 @@ class MainActivity : Activity() {
     }
 
     private fun showUnifiedMachiningWorkspace(initialMode:String) {
+        if(camDerivedCache!=null && camDerivedStale) {
+            Toast.makeText(this,"SIM / 3AX / 4AX / 5AX BLOCKED • CAM STALE • 請先按 CAM「重算」",Toast.LENGTH_LONG).show()
+            return
+        }
         val snapshot=cad.snapshot()
         if(snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO){
             Toast.makeText(this,"整合加工工作站：AUTO 需要 CAD；MANUAL 可直接走刀",Toast.LENGTH_LONG).show()
@@ -4102,7 +4173,9 @@ class MainActivity : Activity() {
                     )
                 }.onSuccess {
                     camSettings = it
-                    Toast.makeText(this, "CAM 設定已套用", Toast.LENGTH_SHORT).show()
+                    markCamDerivedStale("CAM SETTINGS")
+                    markProjectDirty()
+                    Toast.makeText(this, "CAM 設定已套用 • CAM/SIM/NC STALE • 請按重算", Toast.LENGTH_LONG).show()
                 }.onFailure { error ->
                     Toast.makeText(this, "CAM 設定無效: " + error.message, Toast.LENGTH_LONG).show()
                 }
@@ -4449,6 +4522,10 @@ class MainActivity : Activity() {
     }
 
     private fun showNcEditDialog() {
+        if(camDerivedCache!=null && camDerivedStale) {
+            Toast.makeText(this,"NC BLOCKED • CAM STALE • 請先在 CAM 按「重算」",Toast.LENGTH_LONG).show()
+            return
+        }
         val snapshot = cad.snapshot()
         if (snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
             Toast.makeText(this, "NC EDIT：AUTO 需要 CAD；MANUAL 可直接 Post", Toast.LENGTH_LONG).show()
@@ -4756,24 +4833,13 @@ class MainActivity : Activity() {
     }
 
     private fun showMachining3D() {
-        val snapshot = cad.snapshot()
-        if (snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
-            Toast.makeText(this, "3D 加工 BLOCKED：AUTO 需要 CAD；MANUAL 可直接模擬", Toast.LENGTH_LONG).show()
+        if(camDerivedStale || camDerivedCache==null) {
+            Toast.makeText(this,"3D / SIM BLOCKED • CAM STALE • 請先在 CAM 按「重算」",Toast.LENGTH_LONG).show()
             return
         }
 
         runCatching {
-            Machining3DEngine.build(
-                snapshot,camSettings,
-                Stock3D.fromSnapshot(
-                    snapshot,stockMarginMm,stockThicknessMm,
-                    if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
-                ),
-                axisA,axisB,
-                fixtures=camFixtures,
-                toolAssembly=camToolAssembly,
-                axisC=axisC
-            )
+            camDerivedCache ?: error("CAM derived cache missing")
         }
             .onSuccess { result ->
                 val box = LinearLayout(this).apply {

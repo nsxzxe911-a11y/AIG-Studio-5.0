@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "331.0.0",
+  "version": "332.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 331. Editable Settings now distinguish current value from default value, and labels state which options are configurable versus locked. Next target: CAM/SIM setting changes must deterministically mark derived machining stale and rebuild only on explicit recalculate.",
-  "note": "Studio 331: Settings usability repair. FPS, power mode, render quality, coordinate precision, NC output precision, RGB brightness and HUD/thermal options show explicit defaults; configurable entries are marked as editable, while CNC safety/internal geometry floor/regression remain locked. No APK/EXE launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 332. CAM/SIM derived results are now explicitly FRESH or STALE. User CAM/source/contour/manual-path/fixture/tool-assembly changes mark derived output stale without silently recalculating; explicit 重算 is required before SIM/NC use. Continue AIG-II UI parity and actual binary evidence.",
+  "note": "Studio 332: separated CAM settings from recalculation on Android and Windows. Old derived toolpath may remain visible while STALE, but cannot be treated as NC/SIM ready. Only explicit 重算 refreshes CAM/SIM derived cache. Settings shows live CAM/SIM freshness. Automatic regression remains OFF/LOCKED. No APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -450,5 +450,18 @@
     "locked_core_geometry_mm": "0.001",
     "locked_regression": "OFF",
     "locked_cnc_safety": "ON"
+  },
+  "cam_sim_freshness_332": {
+    "settings_editable_without_auto_recalc": true,
+    "explicit_recalculate_only": true,
+    "stale_old_toolpath_view": true,
+    "stale_nc_blocked": true,
+    "stale_sim_blocked": true,
+    "cad_geometry_marks_stale": true,
+    "manual_path_marks_stale": true,
+    "fixture_marks_stale": true,
+    "tool_assembly_marks_stale": true,
+    "settings_live_freshness": true,
+    "auto_regression": "OFF_LOCKED"
   }
 }
