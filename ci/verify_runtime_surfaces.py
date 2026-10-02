@@ -336,7 +336,7 @@ for needle in (
     'parameter("PATH DIRECTION"',
     'productionCamSettings=productionCamSettings.copy(',
     'frame,doc,status,"3D",productionCamSettings,productionFixtures,productionToolAssembly',
-    'showNcEditor(frame,doc,productionCamSettings)',
+    'frame,doc,productionCamSettings,productionFixtures,productionToolAssembly',
 ):
     require(desktop, needle, "WINDOWS_CAM_CONTOUR_SIDE_DIRECTION")
 require(regression, "CAM_CONTOUR_SIDE_DIRECTION_GATE_PASS OUTSIDE INSIDE CCW CW RADIUS_COMP 3D_REMOVAL NC_G2_G3", "CAM_CONTOUR_SIDE_DIRECTION_REGRESSION")
