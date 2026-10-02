@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "319.0.0",
+  "version": "320.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 319. Main Runtime now has a standalone web translation at web/main-runtime-preview.html covering HOME/CAD/CAM/SIM/3AX/4AX/5AX/NC/AI/Settings and online/offline update UX. coreRegression task and dormant NC regression workflow bodies are hard-disabled.",
-  "note": "Studio 319 web visibility checkpoint: current main-program UI/UX is viewable as an interactive web mirror. It is not APK/EXE runtime evidence. Regression execution remains OFF/LOCKED, including Gradle coreRegression.",
+  "next_action": "Continue forward-only from Studio 320. Main Runtime web mirror remains at web/main-runtime-preview.html. NC regression workflows are minimal disabled stubs only; Gradle coreRegression is disabled.",
+  "note": "Studio 320: regression workflow command bodies removed and replaced by disabled stubs; web mirror version label updated. No regression execution and no binary/device PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -327,6 +327,6 @@
     "path": "web/main-runtime-preview.html",
     "purpose": "CURRENT_MAIN_UI_TRANSLATION",
     "runtime_evidence": false,
-    "version": "319.0.0"
+    "version": "320.0.0"
   }
 }
