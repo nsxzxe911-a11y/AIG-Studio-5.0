@@ -2187,7 +2187,7 @@ class MainActivity : Activity() {
 
         fun rebuild() {
             val result=runCatching {
-                Machining3DEngine.build(snapshot,camSettings,stock,six.axisA,six.axisB)
+                Machining3DEngine.build(snapshot,camSettings,stock,six.axisA,six.axisB,axisC=six.axisC)
             }.getOrElse {
                 status.setTextColor(0xFFFF6E6E.toInt())
                 status.text="6AX SIM BLOCKED • "+(it.message?:"build error")
