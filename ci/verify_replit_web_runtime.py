@@ -15,7 +15,7 @@ assert data['scripts']['build']=='vite build', "VITE_BUILD_SCRIPT_MISSING"
 html=index.read_text(encoding='utf-8')
 assert r'\n<script>\n' not in html, "LITERAL_ESCAPED_SCRIPT_NEWLINES"
 assert r'\n<link rel=' not in html, "LITERAL_ESCAPED_HEAD_NEWLINES"
-for needle in ('CAD','CAM','SIM','3AX','4AX','5AX','6AX','NC','cadCanvas','camCanvas','sim3dCanvas'):
+for needle in ('HOME','CAD','CAM','SIM','3AX','4AX','5AX','6AX','NC','cadCanvas','camCanvas','sim3dCanvas'):
     assert needle in html, f"RUNTIME_SURFACE_MISSING:{needle}"
 
 cfg=replit.read_text(encoding='utf-8')

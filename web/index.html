@@ -27,7 +27,7 @@ button,textarea,input,select{font:inherit}button{color:inherit}
 .brand{display:flex;align-items:center;gap:9px;min-width:190px}.logo{font-weight:900;font-size:21px;letter-spacing:.04em}
 .brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:.12em}
 .status{margin-left:auto;color:var(--green);font-size:11px;white-space:nowrap}
-.nav{display:grid;grid-template-columns:repeat(8,minmax(72px,1fr));gap:6px;flex:1;max-width:850px}
+.nav{display:grid;grid-template-columns:repeat(9,minmax(72px,1fr));gap:6px;flex:1;max-width:850px}
 .nav button,.btn{border:1px solid #223846;background:linear-gradient(#0d141c,#05080c);border-radius:10px;min-height:40px;cursor:pointer;
  box-shadow:inset 0 1px rgba(255,255,255,.045),0 7px 18px rgba(0,0,0,.35)}
 .nav button:hover,.btn:hover{border-color:#2e6681}
@@ -159,17 +159,18 @@ html,body{background:#020407}
 <body>
 <div class="app">
 <header class="top">
- <div class="brand"><div><div class="logo">AIG II CNC</div><small>BLACK RGB RUNTIME</small></div></div>
+ <div class="brand"><div><div class="logo">AIG CNC</div><small>BLACK RGB RUNTIME</small></div></div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● STUDIO 341 • LOCAL READY　0.001 mm</div>
+ <div class="status">● STUDIO 342 • LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
-<footer class="footer">AIG II CNC • 黑色高對比 Runtime • Web motion prototype • CNC machine output disabled</footer>
+<footer class="footer">AIG CNC • 黑色高對比 Runtime • Web Runtime • CNC machine output disabled</footer>
 </div>
 <script>
 const pages=[
- ["功能","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["刀路","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"],["6AX","#27e9ff"]
+ ["HOME","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["SIM","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"],["6AX","#27e9ff"],["NC","#33f39b"]
 ];
+const utilityPages=[["刀路","#ff4da6"],["功能","#9f72ff"]];
 const nav=document.getElementById("nav"),screens=document.getElementById("screens");
 
 const sourceCode={
@@ -207,6 +208,28 @@ const sourceCode={
 };
 
 function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div class="head"><h3>'+title+'</h3></div><div class="body">'+body+'</div></section>'}
+
+function homePage(){
+ return '<div data-home-runtime><div class="workgrid">'+
+ '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 342 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
+ '<div class="menuGrid"><button class="menuCard" data-open-page="CAD">CAD 製圖</button><button class="menuCard" data-open-page="CAM">CAM 刀路</button><button class="menuCard" data-open-page="SIM">SIM 模擬</button><button class="menuCard" data-open-page="NC">NC 編輯</button><button class="menuCard" data-open-page="刀路">刀路工作頁</button><button class="menuCard" data-open-page="功能">設定 / 工具</button></div>'+
+ '<div class="runtimeStatus" style="margin-top:9px"><div class="metric"><b>CAD</b><span data-home-cad>0 entities</span></div><div class="metric"><b>CAM</b><span data-home-cam>0 paths</span></div><div class="metric"><b>NC</b><span data-home-nc>0 lines</span></div><div class="metric"><b>Runtime</b><span>LOCAL READY</span></div></div>'+
+ '<div class="notice" style="margin-top:9px">正式 Web Runtime 直接進 HOME；工程維修與設定收在功能頁。CNC machine output disabled。</div></div></section>'+
+ '<section class="panel"><div class="head"><h3>快速進入真模擬</h3></div><div class="body controls"><button class="btn" data-open-page="3AX">3AX</button><button class="btn" data-open-page="4AX">4AX</button><button class="btn" data-open-page="5AX">5AX</button><button class="btn" data-open-page="6AX">6AX</button></div></section>'+
+ '</div></div>';
+}
+function simHubPage(){
+ return '<div data-sim-hub><section class="panel"><div class="head"><div><h2>SIM 模擬中心</h2><small>共用現有真 3D / 材料移除 Runtime，不建立假模擬</small></div></div><div class="body">'+
+ '<div class="menuGrid">'+["3AX","4AX","5AX","6AX"].map(a=>'<button class="menuCard" data-open-page="'+a+'" data-sim-axis="'+a+'"><b>'+a+'</b><span data-sim-state="'+a+'">READY</span></button>').join("")+'</div>'+
+ '<div class="notice" style="margin-top:9px">選擇軸數後進入同一套 G-code / WebGL / 碰撞 / 材料移除 Runtime。</div></div></section></div>';
+}
+function ncPage(){
+ return '<div data-nc-runtime><div class="workgrid"><section class="panel"><div class="head"><div><h2>NC EDIT</h2><small>Fanuc 編輯 • 只寫瀏覽器專案，不送實體 CNC</small></div><span class="spacer"></span><span class="badge" data-nc-state>READY</span></div>'+
+ '<div class="body editorbar"><label class="param">目標<select data-nc-axis><option>3AX</option><option>4AX</option><option>5AX</option><option>6AX</option></select></label><button class="btn" data-nc-action="LOAD">讀取</button><button class="btn play" data-nc-action="SAVE">儲存</button><button class="btn play" data-nc-action="VERIFY">驗證</button><button class="btn" data-nc-action="SIM">到 SIM</button></div>'+
+ '<div class="body" style="padding-top:0"><textarea class="code" data-nc-code spellcheck="false"></textarea><div class="controls" data-nc-keypad>'+["G","M","X","Y","Z","A","B","C","F","S","T","H","I","J","K","N"].map(k=>'<button class="btn" data-nc-key="'+k+'">'+k+'</button>').join("")+'</div><div class="notice" style="margin-top:8px" data-nc-msg>讀取目前軸別 G-code 後可直接編輯。</div></div></section>'+
+ '<section class="panel"><div class="head"><h3>NC 狀態</h3></div><div class="body"><div class="field"><b>解析區塊</b><span data-nc-blocks>0</span></div><div class="field"><b>碰撞</b><span data-nc-collision>未驗證</span></div><div class="field"><b>Setup 間隙</b><span data-nc-clearance>未驗證</span></div><div class="notice" style="margin-top:8px">M00 / M01 / Block Skip / Dry Run 在軸模擬頁執行；此頁負責編輯、儲存與 Preflight。</div></div></section></div></div>';
+}
+
 function simPage(axis){
  const axes=axis==="3AX"?["X","Y","Z"]:axis==="4AX"?["X","Y","Z","A"]:axis==="5AX"?["X","Y","Z","A","B"]:["X","Y","Z","A","B","C"];
  const axisHtml=axes.map(a=>'<span class="axis '+a.toLowerCase()+'" data-axis-read="'+a+'">'+a+'　0.000</span>').join("");
@@ -249,7 +272,7 @@ function camPage(){
  const ops=strategies.map(([label,key,ready])=>'<button class="btn" data-cam-strategy="'+key+'" '+(ready?'':'disabled title="待完整 3D 曲面核心接入"')+'>'+label+'</button>').join("");
  return '<div data-cam-runtime><div class="camgrid">'+
  '<section class="panel"><div class="head"><h3>快速刀路</h3></div><div class="body"><div class="ops">'+ops+'</div><div class="notice" style="margin-top:8px" data-cam-msg>先選策略；CAM 會直接讀取 CAD AutoSave 幾何。</div></div></section>'+
- '<section class="panel"><div class="head"><div><h2>CAM 加工預覽</h2><small>CAD 幾何 → 真刀路資料</small></div><span class="spacer"></span><span class="badge" data-cam-cad-count>CAD 0</span></div><div class="body"><canvas class="camCanvas" data-cam-canvas></canvas><div class="controls"><button class="btn" data-cam-action="RELOAD">重讀 CAD</button><button class="btn play" data-cam-action="CALC">計算刀路</button><button class="btn" data-cam-action="FIT">Fit</button><button class="btn play" data-cam-action="APPLY">套用至刀路</button></div></div></section>'+
+ '<section class="panel"><div class="head"><div><h2>CAM 加工預覽</h2><small>CAD 幾何 → 真刀路資料</small></div><span class="spacer"></span><span class="badge" data-cam-cad-count>CAD 0</span></div><div class="body"><canvas class="camCanvas" data-cam-canvas></canvas><div class="controls"><button class="btn" data-cam-action="RELOAD">重讀 CAD</button><button class="btn play" data-cam-action="CALC">計算刀路</button><button class="btn" data-cam-action="FIT">Fit</button><button class="btn play" data-cam-action="APPLY">套用至刀路</button><button class="btn" data-open-page="刀路">刀路編輯</button></div></div></section>'+
  '<section class="panel"><div class="head"><h3>刀具與參數</h3></div><div class="body form">'+
  '<label class="param">刀具 Ø<input data-cam-tool type="number" value="10" min="0.1" step="0.001"></label>'+
  '<label class="param">深度<input data-cam-depth type="number" value="-10" step="0.001"></label>'+
@@ -1692,7 +1715,55 @@ function makeRuntime(root){
    const toolTable=aigJsonRead(root,"aig-tool-table-v1",null,"刀具表");
    if(toolTable){h1.value=toolTable.H1??h1.value;h4.value=toolTable.H4??h4.value;h12.value=toolTable.H12??h12.value}
  }catch{}
+ state.reloadCode=code=>{ta.value=String(code??"");remember();parse()};
  const saved=aigStorageGet(root,"aig-code-"+axis,null,axis+" G-code");if(saved!=null)ta.value=saved;remember();parse();requestAnimationFrame(tick);
+}
+
+
+
+function makeHomeRuntime(root){
+ function refresh(){
+  const cad=aigJsonRead(root,"aig-cad-draft-v1",{shapes:[]},"CAD HOME"),cam=aigJsonRead(root,"aig-cam-toolpath-v1",{paths:[]},"CAM HOME");
+  const nc=["3AX","4AX","5AX","6AX"].reduce((n,a)=>n+String(aigStorageGet(root,"aig-code-"+a,"",a+" NC")||"").split(/\r?\n/).filter(Boolean).length,0);
+  root.querySelector("[data-home-cad]").textContent=(cad?.shapes?.length||0)+" entities";
+  root.querySelector("[data-home-cam]").textContent=(cam?.paths?.length||0)+" paths";
+  root.querySelector("[data-home-nc]").textContent=nc+" lines";
+  root.querySelector("[data-home-network]").textContent=navigator.onLine?"ONLINE / LOCAL READY":"OFFLINE / LOCAL READY";
+ }
+ refresh();window.addEventListener("online",refresh);window.addEventListener("offline",refresh);
+ root.refresh=refresh;
+}
+function makeSimHubRuntime(root){
+ function refresh(){["3AX","4AX","5AX","6AX"].forEach(a=>{const s=runtimes[a],e=root.querySelector('[data-sim-state="'+a+'"]');if(e)e.textContent=s?(s.running?"RUN":s.collisionAlarm?"ALARM":"READY"):"READY"})}
+ refresh();setInterval(refresh,700);
+}
+function makeNcRuntime(root){
+ const axisEl=root.querySelector("[data-nc-axis]"),ta=root.querySelector("[data-nc-code]"),msg=root.querySelector("[data-nc-msg]");
+ const blocksEl=root.querySelector("[data-nc-blocks]"),collisionEl=root.querySelector("[data-nc-collision]"),clearanceEl=root.querySelector("[data-nc-clearance]"),stateEl=root.querySelector("[data-nc-state]");
+ function axis(){return axisEl.value}
+ function cfg(){
+  const table=aigJsonRead(root,"aig-tool-table-v1",{T1:10,T4:6,T12:12},"刀具表"),stock=aigJsonRead(root,"aig-stock-v1",null,"毛坯"),assembly=aigJsonRead(root,"aig-assembly-v1",{version:1,items:[]},"工件組裝");
+  return{toolDia:10,cutterLen:30,holderDia:25,holderLen:25,safeZ:5,g73Retract:.5,stock,assembly,toolDiameters:toolDiametersFromTable(table)};
+ }
+ function load(){ta.value=aigStorageGet(root,"aig-code-"+axis(),null,axis()+" G-code")??sourceCode[axis()]??"";stateEl.textContent=axis()+" READY";msg.textContent="已載入 "+axis()+" G-code。"}
+ function save(){aigStorageSet(root,"aig-code-"+axis(),ta.value,axis()+" G-code");const rt=runtimes[axis()];if(rt?.reloadCode)rt.reloadCode(ta.value);stateEl.textContent="SAVED";msg.textContent="已儲存並同步到 "+axis()+" 模擬 Runtime。"}
+ function verify(){
+  const parsed=aigGuard(root,axis()+" NC 解析",()=>parseProgram(ta.value,axis(),cfg()),null,"error");if(!parsed)return;
+  const collisions=aigGuard(root,axis()+" NC 碰撞",()=>scanRuntimeCollisions(parsed,axis(),cfg()),{collisions:[]},"warn");
+  const clearance=aigGuard(root,axis()+" NC Clearance",()=>evaluateSetupClearance(parsed,axis(),cfg()),null,"warn");
+  blocksEl.textContent=parsed.blocks.length;collisionEl.textContent=collisions.collisions.length?("CHECK "+collisions.collisions.length):"CLEAR";
+  const cv=Number(clearance?.minimum);clearanceEl.textContent=Number.isFinite(cv)?cv.toFixed(3)+" mm":"—";
+  const fail=parsed.errors.length||collisions.collisions.length;stateEl.textContent=fail?"CHECK":"PASS";msg.textContent=parsed.errors.length?parsed.errors.join(" "):collisions.collisions.length?("碰撞 Preflight："+collisions.collisions[0].message):"驗證 PASS：語法、碰撞與 Setup Clearance 已完成。";
+ }
+  root.addEventListener("click",e=>aigGuard(root,"NC 操作",()=>{
+   const key=e.target.closest("[data-nc-key]");if(key){const t=key.dataset.ncKey+" ";ta.setRangeText(t,ta.selectionStart,ta.selectionEnd,"end");ta.focus();return}
+   const b=e.target.closest("[data-nc-action]");if(!b)return;
+   if(b.dataset.ncAction==="LOAD")load();
+   if(b.dataset.ncAction==="SAVE")save();
+   if(b.dataset.ncAction==="VERIFY")verify();
+   if(b.dataset.ncAction==="SIM"){save();show(axis())}
+  },null,"warn"));
+ axisEl.addEventListener("change",load);load();
 }
 
 function makeCadRuntime(root){
@@ -2742,22 +2813,27 @@ function makeMenuRuntime(root){
 pages.forEach(([name,color])=>{
  const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>aigGuard(document.body,"頁面切換",()=>show(name),null,"warn");nav.appendChild(b);
  const s=document.createElement("section");s.className="screen";s.dataset.page=name;
- s.innerHTML=name==="功能"?menuPage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="刀路"?toolpathPage():simPage(name);
+ s.innerHTML=name==="HOME"?homePage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="SIM"?simHubPage():name==="NC"?ncPage():simPage(name);
  screens.appendChild(s);
 });
+utilityPages.forEach(([name])=>{const s=document.createElement("section");s.className="screen";s.dataset.page=name;s.innerHTML=name==="刀路"?toolpathPage():menuPage();screens.appendChild(s)});
 document.querySelectorAll("[data-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,(el.dataset.runtime||"NC")+" Runtime 初始化",()=>makeRuntime(el),null,"error")});
+document.querySelectorAll("[data-home-runtime]").forEach(el=>aigGuard(el,"HOME Runtime 初始化",()=>makeHomeRuntime(el),null,"warn"));
+document.querySelectorAll("[data-sim-hub]").forEach(el=>aigGuard(el,"SIM 中心初始化",()=>makeSimHubRuntime(el),null,"warn"));
+document.querySelectorAll("[data-nc-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"NC Runtime 初始化",()=>makeNcRuntime(el),null,"error")});
 document.querySelectorAll("[data-cad-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"CAD Runtime 初始化",()=>makeCadRuntime(el),null,"error")});
 document.querySelectorAll("[data-cam-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"CAM Runtime 初始化",()=>makeCamRuntime(el),null,"error")});
 document.querySelectorAll("[data-tp-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"刀路 Runtime 初始化",()=>makeToolpathRuntime(el),null,"error")});
 document.querySelectorAll("[data-menu-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"功能選單初始化",()=>makeMenuRuntime(el),null,"error")});
 function show(name){
- if(!pages.some(p=>p[0]===name))name="5AX";
+ if(!pages.concat(utilityPages).some(p=>p[0]===name))name="HOME";
  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.dataset.page===name));
  history.replaceState(null,"","#"+encodeURIComponent(name));
  setTimeout(()=>window.dispatchEvent(new Event("resize")),0);
 }
-aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash||"#5AX").slice(1))),null,"error");
+document.addEventListener("click",e=>{const a=e.target.closest("[data-open-page]");if(a)aigGuard(document.body,"頁面切換",()=>show(a.dataset.openPage),null,"warn")});
+aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash||"#HOME").slice(1))),null,"error");
 </script>
 
 <script>
