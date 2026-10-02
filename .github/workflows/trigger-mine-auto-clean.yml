@@ -30,6 +30,7 @@ jobs:
       - name: Scan and safely auto-clean trigger mines
         run: |
           python3 -m py_compile ci/trigger_mine_detector.py
+          rm -rf ci/__pycache__
           python3 ci/trigger_mine_detector.py --apply | tee trigger-mine-apply.log
       - name: Verify policy after cleanup
         run: |
@@ -38,7 +39,8 @@ jobs:
       - name: Commit safe auto-fixes only
         shell: bash
         run: |
-          if git diff --quiet; then
+          rm -rf ci/__pycache__
+          if git diff --quiet && test -z "$(git ls-files --others --exclude-standard)"; then
             echo 'TRIGGER_MINE_AUTO_CLEAN_NO_CHANGES'
             exit 0
           fi

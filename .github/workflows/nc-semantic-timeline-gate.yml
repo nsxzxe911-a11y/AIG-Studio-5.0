@@ -19,7 +19,6 @@ on:
       - 'ci/department_autocheck.py'
       - 'ci/verify_runtime_surfaces.py'
       - 'continuity/**'
-      - 'release-version.properties'
   workflow_dispatch:
 
 permissions:
