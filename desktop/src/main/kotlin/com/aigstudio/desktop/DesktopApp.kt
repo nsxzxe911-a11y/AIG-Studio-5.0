@@ -4308,7 +4308,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         action("驗證中心"){showManualRegressionCenter()}
         action("座標 / 精度"){showDesktopCoordinatePrecisionDialog(frame,status)}
         action("工作 / 維修"){maintenanceCenterAction?.invoke() ?: run { status.text="SETTINGS • MAINTENANCE INITIALIZING" }}
-        action("CAD / 首頁"){mainCardLayout.show(mainCardHost,"CAD");status.text="SETTINGS • CAD"}
+        action("首頁"){productionUiButtons.forEach { (_,button) -> button.active=false };mainCardLayout.show(mainCardHost,"HOME");status.text="SETTINGS • HOME"}
         action("啟動版本更新 • ON"){
             JOptionPane.showMessageDialog(
                 frame,
@@ -4392,6 +4392,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 fun item(label:String,run:()->Unit){
                     menu.add(JMenuItem(label).apply{addActionListener{run()}})
                 }
+                item("首頁"){productionUiButtons.forEach { (_,button) -> button.active=false };mainCardLayout.show(mainCardHost,"HOME");status.text="HOME • PRODUCTION RUNTIME"}
                 item("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="CAD • PRODUCTION UI"}
                 item("CAM"){showProductionCam()}
                 item("SIM"){runCatching{showUnifiedMachiningEditor(
@@ -4466,6 +4467,16 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             }
         }
     }
+    val productionHomeButton=GlassActionButton("首頁",Color(39,233,255)).apply {
+        toolTipText="正式 Runtime HOME • first surface"
+        preferredSize=Dimension(96,48)
+        addActionListener {
+            productionUiButtons.forEach { (_,button) -> button.active=false }
+            mainCardLayout.show(mainCardHost,"HOME")
+            status.text="HOME • PRODUCTION RUNTIME • OFFLINE READY • "+MasterRuntimeChainContract.masterOriginLabel()
+        }
+    }
+    moduleButtons.add(productionHomeButton)
     moduleButtons.add(productionUiButton("CAD", StudioDesktopProductionTheme.accent) {
         mainCardLayout.show(mainCardHost,"CAD")
         status.text="UX • "+RuntimeUxFlowContract.title("CAD")+" • "+MasterRuntimeChainContract.uiLabel()
@@ -4651,9 +4662,63 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         add(aiActions,BorderLayout.SOUTH)
     }
 
+    fun homeLaunch(label:String,color:Color,run:()->Unit)=GlassActionButton(label,color).apply {
+        preferredSize=Dimension(168,76)
+        font=font.deriveFont(Font.BOLD,15f)
+        addActionListener { run() }
+    }
+    val homeActions=JPanel(GridLayout(0,4,12,12)).apply {
+        isOpaque=false
+        border=BorderFactory.createEmptyBorder(18,28,18,28)
+        add(homeLaunch("CAD",StudioDesktopProductionTheme.accent){productionUiButtons["CAD"]?.doClick()})
+        add(homeLaunch("CAM",StudioDesktopProductionTheme.cutting){productionUiButtons["CAM"]?.doClick()})
+        add(homeLaunch("SIM",Color(139,92,246)){productionUiButtons["SIM"]?.doClick()})
+        add(homeLaunch("3AX",Color(59,130,246)){runCatching{showUnifiedMachiningEditor(frame,doc,status,"3AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}})
+        add(homeLaunch("4AX",Color(245,158,11)){runCatching{showUnifiedMachiningEditor(frame,doc,status,"4AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}})
+        add(homeLaunch("5AX",Color(236,72,153)){runCatching{showUnifiedMachiningEditor(frame,doc,status,"5AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}})
+        add(homeLaunch("NC",Color(80,170,255)){productionUiButtons["NC"]?.doClick()})
+        add(homeLaunch("AI",Color(139,92,246)){productionUiButtons["AI"]?.doClick()})
+    }
+    val homeUtilities=JPanel(FlowLayout(FlowLayout.CENTER,10,8)).apply {
+        isOpaque=false
+        add(homeLaunch("工作/維修",Color(139,92,246)){showMaintenanceCenter()}.apply{preferredSize=Dimension(150,54)})
+        add(homeLaunch("設定",Color(39,233,255)){showUserSettingsCenter()}.apply{preferredSize=Dimension(120,54)})
+        add(homeLaunch("專案",Color(125,112,255)){showProductionProjectManager()}.apply{preferredSize=Dimension(120,54)})
+    }
+    val homePanel=object:JPanel(BorderLayout(12,12)){
+        override fun paintComponent(g0:Graphics){
+            super.paintComponent(g0)
+            val g=g0.create() as Graphics2D
+            DesktopOriginalVisuals.paintCover(g,width,height,DesktopOriginalVisuals.page("HOME"),0.34f,1.0,0.0)
+            g.color=Color(2,7,14,176);g.fillRect(0,0,width,height)
+            g.dispose()
+        }
+    }.apply {
+        name="HOME_CARD"
+        background=StudioDesktopProductionTheme.background
+        border=BorderFactory.createEmptyBorder(28,36,28,36)
+        add(JPanel(BorderLayout()).apply{
+            isOpaque=false
+            add(JLabel("AIG CNC • PRODUCTION RUNTIME HOME").apply{
+                foreground=Color.WHITE
+                font=font.deriveFont(Font.BOLD,30f)
+            },BorderLayout.NORTH)
+            add(JLabel("Studio "+desktopVersionName()+" • OFFLINE FIRST • 0.001 mm • 60 Hz SAFE DEFAULT").apply{
+                foreground=Color(99,255,157)
+                font=font.deriveFont(Font.BOLD,13f)
+                border=BorderFactory.createEmptyBorder(8,0,0,0)
+            },BorderLayout.SOUTH)
+        },BorderLayout.NORTH)
+        add(homeActions,BorderLayout.CENTER)
+        add(homeUtilities,BorderLayout.SOUTH)
+    }
+
+    mainCardHost.add(homePanel,"HOME")
     mainCardHost.add(workspace,"CAD")
     mainCardHost.add(aiPanel,"AI")
-    mainCardLayout.show(mainCardHost,"CAD")
+    productionUiButtons.forEach { (_,button) -> button.active=false }
+    mainCardLayout.show(mainCardHost,"HOME")
+    status.text="HOME • PRODUCTION RUNTIME • FIRST VISIBLE SURFACE • OFFLINE READY"
     val northChrome=JPanel(BorderLayout()).apply{
         background=StudioDesktopProductionTheme.background
         add(masterRootBar,BorderLayout.NORTH)

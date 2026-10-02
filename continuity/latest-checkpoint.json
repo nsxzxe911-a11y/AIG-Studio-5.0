@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "321.0.0",
+  "version": "322.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 321. Web Direct Runtime now maps / directly to web/main-runtime-preview.html, bypassing engineering/verification shells for browser UI viewing. APK/EXE startup chain remains unchanged.",
-  "note": "Studio 321: browser deployment entry now serves the current Main Runtime UI mirror directly at /. This is a web UI mirror only, not APK/EXE device evidence; Android/Windows runtime startup behavior is unchanged.",
+  "next_action": "Continue forward-only from Studio 322. Windows production startup now has a real HOME card as the first visible surface; Android already used formal RGB HOME first. Continue only after current APK/EXE launch evidence is available.",
+  "note": "Studio 322: fixed Windows true startup. showApp() no longer opens CAD first; it displays HOME first with real callbacks to CAD/CAM/SIM/3AX/4AX/5AX/NC/AI, maintenance, settings and project manager. No device launch PASS claimed yet.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -345,5 +345,13 @@
     "bypass_verification_shell": true,
     "android_windows_startup_unchanged": true,
     "runtime_evidence": false
+  },
+  "true_startup": {
+    "android_first_surface": "HOME",
+    "windows_first_surface": "HOME",
+    "engineering_shell_first": false,
+    "network_before_first_frame": false,
+    "windows_home_real_callbacks": true,
+    "binary_launch_evidence": "PENDING"
   }
 }
