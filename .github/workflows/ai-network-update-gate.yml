@@ -1,14 +1,6 @@
 name: Studio AI Network Update Gate
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'app/src/main/java/com/aigstudio/app/SecureServices.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/PackageBundle.kt'
-      - 'core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt'
-      - 'ci/verify_ai_network_update.py'
-      - '.github/workflows/ai-network-update-gate.yml'
   workflow_dispatch:
 
 permissions:
