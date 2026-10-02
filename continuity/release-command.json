@@ -1,7 +1,7 @@
 {
   "schema": "aig-release-command-v1",
   "product": "AIG Studio 5.0",
-  "version": "306.0.0",
+  "version": "307.0.0",
   "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
   "command_scope": "ALL_DEPARTMENTS",
   "dispatch_mode": "IMMEDIATE_LOCAL_FIRST",
@@ -225,5 +225,11 @@
     "mode": "CROSS_DEPARTMENT_AUDIT_REPAIR_REVERIFY",
     "safety_gates_preserved": true,
     "no_fake_pass": true
+  },
+  "clean_code_contract": {
+    "authority": "ci/audit_contract.py",
+    "departments": 15,
+    "rule": "SINGLE_DEPARTMENT_AUTHORITY_NO_DUPLICATE_LISTS",
+    "verifier": "ci/verify_audit_contract.py"
   }
 }
