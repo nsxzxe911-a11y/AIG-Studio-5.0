@@ -79,7 +79,8 @@ for needle in (
     "pressedNow -> 0.54f",
     "selectedGlow -> 0.42f",
     "else -> 0.24f",
-    "SystemClock.uptimeMillis() % 1180L",
+    "RenderColorCompatibility.animationPeriodMs",
+    "RenderColorCompatibility.pulseMultiplier",
 ):
     require(android, needle, "ANDROID_RGB_PRODUCTION_GLASS_RUNTIME_GATE")
 print("ANDROID_RGB_PRODUCTION_GLASS_RUNTIME_GATE_PASS|NORMAL_TINT|PRESSED|SELECTED|BREATHING|LAYERED_GLASS")
