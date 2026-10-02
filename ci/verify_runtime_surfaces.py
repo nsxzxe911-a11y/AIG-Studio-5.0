@@ -1002,6 +1002,21 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_PROJECT_SYNC_UI_299")
 require(regression, "PROJECT_RUNTIME_SYNC_UI_POLICY_GATE_PASS", "STUDIO_PROJECT_SYNC_UI_POLICY_299")
 print("PROJECT_RUNTIME_SYNC_UI_GATE_PASS|ANDROID|WINDOWS|SAVE|OPEN|SHARE_STATUS|SHARE_PUBLISH|ADOPT_REMOTE|KEEP_LOCAL|SAVE_COPY|EXPLICIT_CONFIRM|RACE_GUARD")
+for needle in (
+    "private fun recoveryProjectFile():File",
+    "StudioProjectRepository.save(captureCurrentProject(),recovery)",
+    "AUTO RECOVERY • PROJECT V3",
+):
+    require(android, needle, "STUDIO_ANDROID_FULL_PROJECT_RECOVERY_300")
+for needle in (
+    "fun productionRecoveryProjectFile():File",
+    "val productionRecoveryTimer=Timer(15_000)",
+    "StudioProjectRepository.save(captureProductionProject(),recovery)",
+    "AUTO RECOVERY • PROJECT V3",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_FULL_PROJECT_RECOVERY_300")
+print("FULL_PROJECT_RECOVERY_RUNTIME_GATE_PASS|ANDROID|WINDOWS|PROJECT_V3|CAD|CAM|ABC|FIXTURE|TOOL_ASSEMBLY|NC|15S|CORRUPT_RECOVERY_IGNORED")
+
 
 
 
