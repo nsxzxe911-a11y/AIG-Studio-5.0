@@ -4291,6 +4291,20 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             status.text="FPS SAVED • "+mode+" • EFFECTIVE "+StudioDesktopRefreshSettings.targetFps()+" FPS • SAFE DEFAULT 60"
             frame.repaint()
         }
+        action("Regression • OFF（鎖定）"){
+            JOptionPane.showMessageDialog(
+                frame,
+                "Regression 執行目前為 OFF / LOCKED。\n沒有使用者明確允許，不提供重新啟用入口。",
+                "Regression 設定",
+                JOptionPane.INFORMATION_MESSAGE
+            )
+        }
+        action("CNC 安全設定（核心 ON）"){
+            status.text="SETTINGS • CNC SAFETY CORE ON / LOCKED • USER APPROVAL REQUIRED FOR POLICY CHANGE"
+            runCatching{showNcEditor(
+                frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
+            )}.onFailure{status.text="SETTINGS • CNC SAFETY VIEW BLOCKED • "+(it.message?:"error")}
+        }
         action("驗證中心"){showManualRegressionCenter()}
         action("座標 / 精度"){showDesktopCoordinatePrecisionDialog(frame,status)}
         action("工作 / 維修"){maintenanceCenterAction?.invoke() ?: run { status.text="SETTINGS • MAINTENANCE INITIALIZING" }}
@@ -4307,6 +4321,10 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 add(fpsChoice)
                 add(JLabel("目前有效").apply{foreground=StudioDesktopProductionTheme.text})
                 add(JLabel(StudioDesktopRefreshSettings.targetFps().toString()+" FPS").apply{foreground=StudioDesktopProductionTheme.text})
+                add(JLabel("Regression").apply{foreground=StudioDesktopProductionTheme.text})
+                add(JLabel("OFF / LOCKED").apply{foreground=StudioDesktopProductionTheme.warning})
+                add(JLabel("CNC 安全核心").apply{foreground=StudioDesktopProductionTheme.text})
+                add(JLabel("ON / LOCKED").apply{foreground=StudioDesktopProductionTheme.warning})
             },BorderLayout.NORTH)
             add(actions,BorderLayout.CENTER)
         }
