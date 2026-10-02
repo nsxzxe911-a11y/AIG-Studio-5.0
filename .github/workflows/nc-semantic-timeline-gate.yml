@@ -8,6 +8,13 @@ permissions:
 
 jobs:
   semantic-timeline:
+    # REGRESSION_EXECUTION_DISABLED_BY_USER_POLICY_319
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Regression disabled
+        run: echo "REGRESSION DISABLED • explicit user approval required"
+
     # REGRESSION_EXECUTION_DISABLED_BY_POLICY_314
     if: ${{ false }}
     runs-on: ubuntu-latest
