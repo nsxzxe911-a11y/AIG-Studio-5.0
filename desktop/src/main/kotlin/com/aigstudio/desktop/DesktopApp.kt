@@ -243,7 +243,6 @@ private class GlassActionButton(label: String, accentInput: Color) : JButton(lab
         val rawHz=runCatching { GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.displayMode.refreshRate }.getOrDefault(60)
         val renderProfile=RenderCompatibilityContract.profile(screen.width,screen.height,if(rawHz>0)rawHz.toDouble() else 60.0)
         val depthScale=RgbButtonVisualContract.depthScale(renderProfile.tier)
-        val rawHz=runCatching { GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.displayMode.refreshRate }.getOrDefault(60)
         val targetFps=RenderCompatibilityContract.refreshBucket(if(rawHz>0)rawHz.toDouble() else 60.0)
         val periodNs=RenderColorCompatibility.animationPeriodMs(targetFps)*1_000_000L
         val phase01=(System.nanoTime()%periodNs).toDouble()/periodNs.toDouble()
