@@ -1160,6 +1160,7 @@ class MainActivity : Activity() {
         addCategory("CAM", 5) { showCamWorkstation() }
         addCategory("加工", 5) { showMachiningBranch() }
         addCategory("安全", 4) { showSecurityBranch() }
+        addCategory("檔案", 1) { showProjectFileBranch() }
         addCategory("AI", 1) { showAiBranch() }
         addActionTo(categoryFlow, "AI VOICE", 0) { startVoiceAssistant() }
         addActionTo(categoryFlow, "AI SUITE", 2) { showAiSystemSuiteDialog() }
@@ -4906,6 +4907,137 @@ private fun applyCoordinatePrecisionPreference() {
             .show()
     }
 
+    private fun localProjectFile():File = File(filesDir,"projects/current.aigp")
+    private fun sharedProjectFile():File = File(filesDir,"shared-sync/current.aigp")
+
+    private fun captureCurrentProject():StudioProjectPackage {
+        val local=localProjectFile()
+        val baseMeta=runCatching {
+            if(local.isFile) StudioProjectRepository.load(local).revisionMeta else sharedLocalRevisionMeta
+        }.getOrDefault(sharedLocalRevisionMeta)
+        return cad.capturePortableProject(
+            camSettings,axisA,axisB,machiningAxisMode,unifiedNcDraft.orEmpty(),
+            axisC,camFixtures,camToolAssembly
+        ).copy(revisionMeta=baseMeta)
+    }
+
+    private fun applyProjectPackage(project:StudioProjectPackage) {
+        cad.applyPortableProject(project)
+        camSettings=project.camSettings
+        axisA=project.axisA;axisB=project.axisB;axisC=project.axisC
+        machiningAxisMode=project.axisMode
+        camFixtures.clear();camFixtures.addAll(project.fixtures)
+        camToolAssembly=project.toolAssembly
+        nextCamFixtureId=(camFixtures.maxOfOrNull{it.id} ?: 0L)+1L
+        unifiedNcDraft=project.ncText.takeIf{it.isNotBlank()}
+        unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
+        unifiedNcDraftStale=false
+        sharedLocalRevisionMeta=project.revisionMeta
+        sharedLocalDirty.set(false)
+    }
+
+    private fun saveCurrentProjectRevision():StudioProjectPackage {
+        val local=localProjectFile()
+        local.parentFile?.mkdirs()
+        val savedMeta=StudioProjectRepository.saveRevisioned(
+            captureCurrentProject(),local,"ANDROID",android.os.Build.MODEL.take(64)
+        )
+        val saved=StudioProjectRepository.load(local)
+        require(saved.revisionMeta==savedMeta)
+        sharedLocalRevisionMeta=saved.revisionMeta
+        sharedLocalDirty.set(false)
+        return saved
+    }
+
+    private fun showProjectSyncResolution() {
+        val shared=sharedProjectFile()
+        if(!shared.isFile){
+            Toast.makeText(this,"共享專案尚不存在",Toast.LENGTH_LONG).show()
+            return
+        }
+        val remote=runCatching{StudioProjectRepository.load(shared)}.getOrElse{
+            Toast.makeText(this,"共享專案 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+            return
+        }
+        val local=localProjectFile()
+        val localPackage=runCatching{if(local.isFile)StudioProjectRepository.load(local) else captureCurrentProject()}.getOrElse{
+            Toast.makeText(this,"本機專案 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+            return
+        }
+        val state=ProjectRevisionSync.classify(localPackage.revisionMeta,remote.revisionMeta,sharedLocalDirty.get())
+        AlertDialog.Builder(this)
+            .setTitle("共享專案 • "+state.name)
+            .setMessage(ProjectRevisionSync.statusLabel(state,remote.revisionMeta)+"\n"+
+                "遠端 R"+remote.revisionMeta.revision+" • 本機 R"+localPackage.revisionMeta.revision+"\n"+
+                "不會自動覆蓋；請明確選擇。")
+            .setPositiveButton("採用新版"){_,_->
+                runCatching{
+                    applyProjectPackage(remote)
+                    local.parentFile?.mkdirs()
+                    StudioProjectRepository.save(remote,local)
+                }.onSuccess{Toast.makeText(this,"已採用共享新版 • R"+remote.revisionMeta.revision,Toast.LENGTH_LONG).show()}
+                 .onFailure{Toast.makeText(this,"採用 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+            }
+            .setNegativeButton("保留本機"){_,_->
+                sharedLocalDirty.set(true)
+                Toast.makeText(this,"保留本機 • 未覆蓋共享檔",Toast.LENGTH_LONG).show()
+            }
+            .setNeutralButton("另存副本"){_,_->
+                runCatching{
+                    val dir=File(filesDir,"projects").apply{mkdirs()}
+                    val copy=File(dir,"local-copy-R"+localPackage.revisionMeta.revision+"-"+System.currentTimeMillis()+".aigp")
+                    StudioProjectRepository.save(localPackage,copy)
+                    copy
+                }.onSuccess{Toast.makeText(this,"本機副本已保留 • "+it.name,Toast.LENGTH_LONG).show()}
+                 .onFailure{Toast.makeText(this,"另存 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+            }
+            .show()
+    }
+
+    private fun publishCurrentProjectConfirmed() {
+        val local=runCatching{
+            saveCurrentProjectRevision()
+            localProjectFile()
+        }.getOrElse{
+            Toast.makeText(this,"專案儲存 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+            return
+        }
+        val shared=sharedProjectFile().apply{parentFile?.mkdirs()}
+        val expected=runCatching{if(shared.isFile)StudioProjectRepository.load(shared).revisionMeta.contentDigest else null}.getOrNull()
+        val localMeta=StudioProjectRepository.load(local).revisionMeta
+        AlertDialog.Builder(this)
+            .setTitle("共享發布確認")
+            .setMessage("本機 R"+localMeta.revision+" → 共享專案\n若共享檔在確認後改變，發布會自動 BLOCKED。")
+            .setPositiveButton("確認發布"){_,_->
+                runCatching{
+                    SharedProjectFolderSync.publishConfirmed(
+                        local,shared,expected,{StudioProjectRepository.load(it).revisionMeta},true
+                    )
+                }.onSuccess{meta->
+                    sharedLocalRevisionMeta=meta;sharedLocalDirty.set(false)
+                    Toast.makeText(this,"共享發布完成 • R"+meta.revision,Toast.LENGTH_LONG).show()
+                }.onFailure{Toast.makeText(this,"共享發布 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+            }
+            .setNegativeButton("取消",null)
+            .show()
+    }
+
+    private fun showProjectFileBranch() {
+        branchFlow.removeAllViews();toolButtons.clear()
+        addActionTo(branchFlow,"專案儲存",1){
+            runCatching{saveCurrentProjectRevision()}
+                .onSuccess{Toast.makeText(this,"專案已儲存 • R"+it.revisionMeta.revision+" • V3",Toast.LENGTH_LONG).show()}
+                .onFailure{Toast.makeText(this,"專案儲存 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+        }
+        addActionTo(branchFlow,"專案開啟",0){
+            val file=localProjectFile()
+            runCatching{require(file.isFile){"尚無本機專案"};StudioProjectRepository.load(file)}
+                .onSuccess{applyProjectPackage(it);Toast.makeText(this,"專案已開啟 • R"+it.revisionMeta.revision+" • FIXTURE "+it.fixtures.size,Toast.LENGTH_LONG).show()}
+                .onFailure{Toast.makeText(this,"專案開啟 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+        }
+        addActionTo(branchFlow,"共享狀態",2){showProjectSyncResolution()}
+        addActionTo(branchFlow,"共享發布",5){publishCurrentProjectConfirmed()}
+    }
     private fun showAiBranch() {
         branchFlow.removeAllViews(); toolButtons.clear()
         addActionTo(branchFlow, "AI CAD 檢查", 3) { cad.aiInspect() }
@@ -4934,7 +5066,7 @@ private fun applyCoordinatePrecisionPreference() {
     }
 
     private fun categoryColor(name: String): Int = when(name) {
-        "繪圖" -> colors[0]; "修改" -> colors[3]; "角部" -> colors[2]; "加工" -> colors[5]; "安全" -> colors[4]; else -> colors[1]
+        "繪圖" -> colors[0]; "修改" -> colors[3]; "角部" -> colors[2]; "加工" -> colors[5]; "安全" -> colors[4]; "檔案" -> colors[1]; else -> colors[1]
     }
 
     private fun selectTool(tool: Tool) {
