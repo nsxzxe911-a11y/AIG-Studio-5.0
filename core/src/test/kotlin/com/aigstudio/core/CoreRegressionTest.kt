@@ -2562,6 +2562,7 @@ private fun testHomeWorkstationChromeContract() {
     check(MasterRuntimeChainContract.POLICY=="MASTER_ORIGIN_CAD_GEOMETRY_ROOT_SINGLE_TRUTH")
     check(MasterRuntimeChainContract.pipeline==listOf("CAD","CAM","SIM","NC"))
     check(MasterRuntimeChainContract.axisCapabilities==listOf("3AX","4AX","5AX","6AX"))
+    check("AXIS=3AX/4AX/5AX/6AX" in MasterRuntimeChainContract.evidence())
     check(MasterRuntimeChainContract.masterOriginLabel()==WorkstationChromeContract.MASTER_ORIGIN)
     check(MasterRuntimeChainContract.pipeline.all(MasterRuntimeChainContract::stageUsesCanonicalGeometry))
     check(WorkstationChromeContract.PRECISION=="0.001 mm")
