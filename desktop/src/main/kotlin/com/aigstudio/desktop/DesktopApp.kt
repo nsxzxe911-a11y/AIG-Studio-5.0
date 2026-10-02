@@ -310,17 +310,49 @@ private class RgbGlyphIcon(private val kind:String, private val accent:Color) : 
     }
 }
 
+private data class StudioDesktopPalette(
+    val id:String,val name:String,val background:Color,val panel:Color,val text:Color,
+    val accent:Color,val selected:Color,val cutting:Color,val rapid:Color,val warning:Color,val alarm:Color
+)
+
 private object StudioDesktopProductionTheme {
-    const val ID="aigii_rgb_neon_v2"
-    val background=Color(RenderColorCompatibility.BACKGROUND_RGB)
-    val panel=Color(RenderColorCompatibility.PANEL_RGB)
-    val text=Color(RenderColorCompatibility.TEXT_RGB)
-    val accent=Color(RenderColorCompatibility.ACCENT_RGB)
-    val selected=Color(RenderColorCompatibility.ACCENT_RGB)
-    val cutting=Color(RenderColorCompatibility.CUTTING_RGB)
-    val rapid=Color(RenderColorCompatibility.RAPID_RGB)
-    val warning=Color(RenderColorCompatibility.WARNING_RGB)
-    val alarm=Color(RenderColorCompatibility.ALARM_RGB)
+    private val packs=linkedMapOf(
+        "official_rgb_original" to StudioDesktopPalette(
+            "official_rgb_original","Official RGB Original",Color(8,16,26),Color(16,32,51),Color(244,251,255),
+            Color(61,235,255),Color(0,229,255),Color(0,230,118),Color(213,0,249),Color(255,152,0),Color(255,23,68)
+        ),
+        "aigii_rgb_neon_v2" to StudioDesktopPalette(
+            "aigii_rgb_neon_v2","AIG RGB Glass Product UI",Color(RenderColorCompatibility.BACKGROUND_RGB),
+            Color(RenderColorCompatibility.PANEL_RGB),Color(RenderColorCompatibility.TEXT_RGB),
+            Color(RenderColorCompatibility.ACCENT_RGB),Color(RenderColorCompatibility.ACCENT_RGB),
+            Color(RenderColorCompatibility.CUTTING_RGB),Color(RenderColorCompatibility.RAPID_RGB),
+            Color(RenderColorCompatibility.WARNING_RGB),Color(RenderColorCompatibility.ALARM_RGB)
+        ),
+        "aig_mobile_rgb_v1" to StudioDesktopPalette(
+            "aig_mobile_rgb_v1","AIG Mobile RGB V1",Color(1,5,10),Color(6,18,31),Color(238,249,255),
+            Color(30,216,255),Color(20,221,255),Color(45,245,165),Color(180,78,255),Color(255,177,42),Color(255,61,94)
+        )
+    )
+    private val prefs=java.util.prefs.Preferences.userRoot().node("aigstudio/runtime")
+    @Volatile private var activeId=prefs.get("theme_id","aigii_rgb_neon_v2").takeIf{packs.containsKey(it)} ?: "aigii_rgb_neon_v2"
+    private val current:StudioDesktopPalette get()=packs.getValue(activeId)
+    val ID:String get()=current.id
+    val background:Color get()=current.background
+    val panel:Color get()=current.panel
+    val text:Color get()=current.text
+    val accent:Color get()=current.accent
+    val selected:Color get()=current.selected
+    val cutting:Color get()=current.cutting
+    val rapid:Color get()=current.rapid
+    val warning:Color get()=current.warning
+    val alarm:Color get()=current.alarm
+    fun ids():List<String> = packs.keys.toList()
+    fun name(id:String):String = packs[id]?.name ?: id
+    @Synchronized fun switchTo(id:String){
+        require(packs.containsKey(id)){"Unknown theme pack: $id"}
+        activeId=id
+        prefs.put("theme_id",id)
+    }
 }
 
 private object LibraryFiveAxisSkin208 {
@@ -4179,6 +4211,61 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         status.text=if(doc.size()>0)"UX • "+RuntimeUxFlowContract.title("CAM")+" • "+MasterRuntimeChainContract.masterOriginLabel() else "UX • CAM • CAD geometry required • "+MasterRuntimeChainContract.masterOriginLabel()
     }
 
+
+    fun showManualRegressionCenter(){
+        val actions=JPanel(GridLayout(0,2,6,6)).apply{background=StudioDesktopProductionTheme.background}
+        fun action(label:String,run:()->Unit){
+            actions.add(GlassActionButton(label,StudioDesktopProductionTheme.accent).apply{addActionListener{run()}})
+        }
+        action("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="REGRESSION HUB • CAD"}
+        action("CAM / SIM"){showProductionCam();status.text="REGRESSION HUB • CAM / SIM"}
+        action("NC 安全"){runCatching{showNcEditor(
+            frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
+        )}.onFailure{status.text="REGRESSION HUB • NC BLOCKED • "+(it.message?:"error")}}
+        action("AI"){mainCardLayout.show(mainCardHost,"AI");status.text="REGRESSION HUB • AI"}
+        val panel=JPanel(BorderLayout(8,8)).apply{
+            background=StudioDesktopProductionTheme.background
+            border=BorderFactory.createEmptyBorder(10,10,10,10)
+            add(JLabel("<html>回歸 / 驗證集中入口。GitHub Actions 維持 workflow_dispatch 手動模式；push / schedule 不會自動連鎖。<br/>CNC 安全、完整性與座標檢查不提供關閉。</html>").apply{
+                foreground=StudioDesktopProductionTheme.text
+            },BorderLayout.NORTH)
+            add(actions,BorderLayout.CENTER)
+        }
+        JOptionPane.showMessageDialog(frame,panel,"回歸 / 驗證 • 單一入口",JOptionPane.INFORMATION_MESSAGE)
+    }
+
+    fun showUserSettingsCenter(){
+        val names=StudioDesktopProductionTheme.ids().map{StudioDesktopProductionTheme.name(it)}.toTypedArray()
+        val currentIndex=StudioDesktopProductionTheme.ids().indexOf(StudioDesktopProductionTheme.ID).coerceAtLeast(0)
+        val themeChoice=JComboBox(names).apply{selectedIndex=currentIndex}
+        val actions=JPanel(GridLayout(0,2,6,6)).apply{background=StudioDesktopProductionTheme.background}
+        fun action(label:String,run:()->Unit){
+            actions.add(GlassActionButton(label,StudioDesktopProductionTheme.accent).apply{addActionListener{run()}})
+        }
+        action("套用佈景"){
+            val id=StudioDesktopProductionTheme.ids()[themeChoice.selectedIndex]
+            StudioDesktopProductionTheme.switchTo(id)
+            status.text="THEME SAVED • "+StudioDesktopProductionTheme.name(id)+" • 重新開啟視窗完整套用"
+            frame.repaint()
+        }
+        action("設定中心"){showUserSettingsCenter()}
+        action("回歸 / 驗證"){showManualRegressionCenter()}
+        action("座標 / 精度"){showDesktopCoordinatePrecisionDialog(frame,status)}
+        action("回歸 / 驗證"){showManualRegressionCenter()}
+        action("工作 / 維修"){showMaintenanceCenter()}
+        val panel=JPanel(BorderLayout(8,8)).apply{
+            background=StudioDesktopProductionTheme.background
+            border=BorderFactory.createEmptyBorder(10,10,10,10)
+            add(JPanel(BorderLayout(6,6)).apply{
+                background=StudioDesktopProductionTheme.background
+                add(JLabel("佈景主題").apply{foreground=StudioDesktopProductionTheme.text},BorderLayout.WEST)
+                add(themeChoice,BorderLayout.CENTER)
+            },BorderLayout.NORTH)
+            add(actions,BorderLayout.CENTER)
+        }
+        JOptionPane.showMessageDialog(frame,panel,"AIG CNC • 設定中心",JOptionPane.INFORMATION_MESSAGE)
+    }
+
     fun showMaintenanceCenter(){
         val summary=JTextArea().apply{
             isEditable=false
@@ -4244,6 +4331,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 )}.onFailure{status.text="NC BLOCKED • "+(it.message?:"error")}}
                 item("AI"){mainCardLayout.show(mainCardHost,"AI");status.text="AI • PRODUCTION UI"}
                 item("工作/維修"){showMaintenanceCenter()}
+                item("設定中心"){showUserSettingsCenter()}
                 menu.show(this,0,height)
             }
         })

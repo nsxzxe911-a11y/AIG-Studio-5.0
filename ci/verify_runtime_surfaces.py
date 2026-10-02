@@ -1922,3 +1922,35 @@ require(desktop, 'item("CAM")', "WINDOWS_ONE_KEY_MULTI_CAM")
 require(desktop, 'item("SIM")', "WINDOWS_ONE_KEY_MULTI_SIM")
 require(desktop, 'item("NC")', "WINDOWS_ONE_KEY_MULTI_NC")
 print("ONE_KEY_MULTI_FUNCTION_RUNTIME_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|MAINT|REAL_CALLBACKS")
+
+
+# Studio 309 user settings / manual regression hub
+theme_runtime = read("app/src/main/java/com/aigstudio/app/StudioThemePackRuntime.kt")
+for needle in (
+    'FPS_90(90)',
+    'FpsMode.FPS_90->90',
+):
+    require(env, needle, "STUDIO_309_FPS90_CORE")
+require(refresh_controller, '"90 FPS" -> 90f', "STUDIO_309_FPS90_ANDROID")
+for needle in (
+    'arrayOf("Auto", "120 FPS", "90 FPS", "60 FPS", "30 FPS")',
+    'private fun showUserSettingsCenter()',
+    'private fun showManualRegressionCenter()',
+    '"回歸 / 驗證 • 單一入口"',
+    '"設定中心"',
+):
+    require(android, needle, "STUDIO_309_ANDROID_SETTINGS_HUB")
+for needle in (
+    '"official_rgb_original" to StudioThemePalette(',
+    '"aigii_rgb_neon_v2" to StudioThemePalette(',
+    '"aig_mobile_rgb_v1" to StudioThemePalette(',
+):
+    require(theme_runtime, needle, "STUDIO_309_ALL_EMBEDDED_THEMES")
+for needle in (
+    'fun showUserSettingsCenter()',
+    'fun showManualRegressionCenter()',
+    'item("設定中心"){showUserSettingsCenter()}',
+    '"official_rgb_original" to StudioDesktopPalette(',
+):
+    require(desktop, needle, "STUDIO_309_WINDOWS_SETTINGS_HUB")
+print("STUDIO_USER_SETTINGS_CENTER_GATE_PASS|309|ANDROID|WINDOWS|THEMES_ALL|FPS_30_60_90_120|DEFAULT_60|REGRESSION_SINGLE_ENTRY|MANUAL_ACTIONS_ONLY")

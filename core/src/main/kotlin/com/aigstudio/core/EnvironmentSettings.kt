@@ -72,7 +72,7 @@ object CoordinatePrecisionRuntime {
             " • ENGINE=0.001"
 }
 
-enum class FpsMode(val fps:Int){ FPS_30(30), FPS_60(60), FPS_120(120), AUTO(0) }
+enum class FpsMode(val fps:Int){ FPS_30(30), FPS_60(60), FPS_90(90), FPS_120(120), AUTO(0) }
 enum class GlowLevel{ OFF, LOW, MEDIUM, HIGH }
 enum class PowerMode{ PERFORMANCE, BALANCED, ECO, AUTO }
 enum class RenderQuality{ ULTRA, HIGH, BALANCED, ECO }
@@ -138,6 +138,7 @@ data class RuntimeEnvironmentSettings(
         val base=when(fpsMode){
             FpsMode.FPS_30->30
             FpsMode.FPS_60->60
+            FpsMode.FPS_90->90
             FpsMode.FPS_120->120
             FpsMode.AUTO->when(powerMode){
                 PowerMode.PERFORMANCE->120

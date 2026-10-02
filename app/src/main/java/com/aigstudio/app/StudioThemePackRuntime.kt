@@ -29,6 +29,13 @@ object StudioThemePackRuntime {
     const val SAFE_DEFAULT_REFRESH_HZ=60
 
     private val packs=linkedMapOf(
+        "official_rgb_original" to StudioThemePalette(
+            id="official_rgb_original",name="Official RGB Original",
+            background=Color.rgb(8,16,26),panel=Color.rgb(16,32,51),text=Color.rgb(244,251,255),
+            accent=Color.rgb(61,235,255),selected=Color.rgb(0,229,255),
+            cutting=Color.rgb(0,230,118),rapid=Color.rgb(213,0,249),
+            warning=Color.rgb(255,152,0),alarm=Color.rgb(255,23,68)
+        ),
         "aigii_rgb_neon_v2" to StudioThemePalette(
             id="aigii_rgb_neon_v2",name="AIG II RGB Neon V2",
             background=Color.rgb(2,4,7),panel=Color.rgb(7,17,27),text=Color.rgb(244,251,255),

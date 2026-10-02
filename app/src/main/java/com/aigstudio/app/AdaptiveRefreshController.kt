@@ -90,6 +90,7 @@ class AdaptiveRefreshController(
         var requested = when (fpsMode) {
             "120 FPS" -> 120f
             "60 FPS" -> 60f
+            "90 FPS" -> 90f
             "30 FPS" -> 30f
             else -> when (powerMode) {
                 "Performance" -> 120f

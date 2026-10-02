@@ -1303,7 +1303,7 @@ class MainActivity : Activity() {
             })
         }
         fun showOneKeyMultiFunction() {
-            val labels=arrayOf("CAD 工具","CAM 刀路","SIM 模擬","3AX","4AX","5AX","NC 編輯","AI 智能","工作/維修")
+            val labels=arrayOf("CAD 工具","CAM 刀路","SIM 模擬","3AX","4AX","5AX","NC 編輯","AI 智能","工作/維修","設定中心")
             AlertDialog.Builder(this)
                 .setTitle("一鍵多功能")
                 .setItems(labels) { dialog,which ->
@@ -1318,6 +1318,7 @@ class MainActivity : Activity() {
                         6 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))
                         7 -> showAiSystemSuiteDialog()
                         8 -> showMaintenanceCenter()
+                        9 -> showUserSettingsCenter()
                     }
                 }
                 .show()
@@ -1345,6 +1346,15 @@ class MainActivity : Activity() {
                 minHeight=dp(44)
                 setRgbState(0xFF8B5CF6.toInt(),false)
                 setOnClickListener { showMaintenanceCenter() }
+            })
+            addView(RgbGlowButton(this@MainActivity).apply {
+                text="設定"
+                contentDescription="HOME USER SETTINGS CENTER"
+                textSize=StudioDisplayPolicy.sp(this,10f)
+                minWidth=dp(92)
+                minHeight=dp(44)
+                setRgbState(0xFF27E9FF.toInt(),false)
+                setOnClickListener { showUserSettingsCenter() }
             })
         }
         homeContent.addView(homeUtility,LinearLayout.LayoutParams(-1,-2))
@@ -1870,6 +1880,69 @@ class MainActivity : Activity() {
             .show()
     }
 
+
+    private fun showManualRegressionCenter() {
+        val box=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(16),dp(10),dp(16),dp(8))
+        }
+        box.addView(TextView(this).apply {
+            text="回歸 / 驗證已集中在這一個入口。GitHub Actions 仍維持 workflow_dispatch 手動模式；不會因 push / schedule 自動連鎖執行。\n核心 CNC 安全、完整性與座標檢查不提供關閉。"
+            setTextColor(0xFFA0BED2.toInt())
+            textSize=12f
+            setPadding(dp(4),dp(4),dp(4),dp(10))
+        })
+        fun action(label:String,run:()->Unit){
+            box.addView(RgbGlowButton(this).apply {
+                text=label
+                minHeight=dp(48)
+                setRgbState(0xFF27E9FF.toInt(),false)
+                setOnClickListener { run() }
+            })
+        }
+        action("AI / Runtime 檢查"){ showAiSystemSuiteDialog() }
+        action("CAD 檢查"){ cad.aiInspect() }
+        action("CAM / SIM 檢查"){ showCamWorkstation() }
+        action("NC / 安全檢查"){ openCategory("安全"){showSecurityBranch()} }
+        action("5AX Runtime 檢查"){ showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX")) }
+        AlertDialog.Builder(this)
+            .setTitle("回歸 / 驗證 • 單一入口")
+            .setView(box)
+            .setPositiveButton("關閉",null)
+            .show()
+    }
+
+    private fun showUserSettingsCenter() {
+        val box=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(16),dp(10),dp(16),dp(8))
+        }
+        box.addView(TextView(this).apply {
+            text="使用者設定中心 • 佈景 / FPS / 解析度 / 效能 / RGB / 回歸驗證 / 維修。\n預設 60Hz；90/120Hz 由使用者與裝置能力決定。"
+            setTextColor(StudioProductionTheme.text)
+            textSize=12.5f
+            setPadding(dp(4),dp(4),dp(4),dp(10))
+        })
+        fun action(label:String,run:()->Unit){
+            box.addView(RgbGlowButton(this).apply {
+                text=label
+                minHeight=dp(48)
+                setRgbState(StudioProductionTheme.accent,false)
+                setOnClickListener { run() }
+            })
+        }
+        action("佈景主題 / UI 套裝"){ showThemePackDialog() }
+        action("FPS / 解析度 / 效能 / RGB"){ showEnvironmentSettings() }
+        action("回歸 / 驗證"){ showManualRegressionCenter() }
+        action("AI / 更新設定"){ showAiSystemSuiteDialog() }
+        action("工作 / 維修"){ showMaintenanceCenter() }
+        AlertDialog.Builder(this)
+            .setTitle("AIG CNC • 設定中心")
+            .setView(box)
+            .setPositiveButton("關閉",null)
+            .show()
+    }
+
     private fun showMaintenanceCenter() {
         val runtimeVersionName=runCatching {
             packageManager.getPackageInfo(packageName,0).versionName ?: "UNKNOWN"
@@ -1904,6 +1977,8 @@ class MainActivity : Activity() {
         }
         action("Recovery / AutoSave"){ restoreCadCheckpointIfAvailable() }
         action("系統監控 HUD"){ applySystemHudPreference(true); showExpandedSystemHud() }
+        action("設定中心"){ showUserSettingsCenter() }
+        action("回歸 / 驗證"){ showManualRegressionCenter() }
         action("環境 / FPS / 溫度"){ showEnvironmentSettings() }
         action("UI 套裝 / AI 編排"){ showThemePackDialog() }
         action("Security"){ openCategory("安全"){showSecurityBranch()} }
@@ -4807,10 +4882,10 @@ private fun applyCoordinatePrecisionPreference() {
             setPadding(dp(16), dp(10), dp(16), dp(8))
         }
 
-        val fpsValues = arrayOf("Auto", "120 FPS", "60 FPS", "30 FPS")
+        val fpsValues = arrayOf("Auto", "120 FPS", "90 FPS", "60 FPS", "30 FPS")
         val fps = Spinner(this).apply {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, fpsValues)
-            val current = prefs.getString("fps_mode", "Auto") ?: "Auto"
+            val current = prefs.getString("fps_mode", "60 FPS") ?: "60 FPS"
             setSelection(fpsValues.indexOf(current).coerceAtLeast(0))
             box.addView(TextView(this@MainActivity).apply { text = "FPS 模式" })
             box.addView(this)
