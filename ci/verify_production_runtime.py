@@ -29,6 +29,9 @@ env = (ROOT / "core" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "core" 
 android_build = (ROOT / "build_android_release.sh").read_text(encoding="utf-8")
 windows_build = (ROOT / "build_windows_native.ps1").read_text(encoding="utf-8")
 secure_services = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" / "app" / "SecureServices.kt").read_text(encoding="utf-8")
+machining3d_core = (ROOT / "core" / "src" / "main" / "kotlin" / "com" / "aigstudio" / "core" / "Machining3D.kt").read_text(encoding="utf-8")
+machining3d_android = (ROOT / "app" / "src" / "main" / "java" / "com" / "aigstudio" / "app" / "Machining3DView.kt").read_text(encoding="utf-8")
+core_regression = (ROOT / "core" / "src" / "test" / "kotlin" / "com" / "aigstudio" / "core" / "CoreRegressionTest.kt").read_text(encoding="utf-8")
 
 required_android = [
     "StudioStartupBootGuard.begin(this)",
@@ -138,6 +141,41 @@ for marker in [
     if marker not in desktop:
         raise SystemExit(f"Windows 6AX posture runtime marker missing: {marker}")
 print("SIX_AXIS_POSTURE_GATE_PASS|ANDROID|WINDOWS|ABC_DYNAMIC|SIMULATION_FIRST|NC_INTERLOCKED|POST_NOT_CLAIMED")
+for marker in [
+    'fun transform(v:Vec3,axisA:Double,axisB:Double,axisC:Double):Vec3',
+    'require(mode in setOf("3AX","4AX","5AX","6AX"))',
+    'MachineComponentRole.ROTARY_C',
+    'MachineKinematics3D.transform(table,a,b,c)',
+    'val machineToolPoint=MachineKinematics3D.transform(rawToolPoint,a,b,c)',
+]:
+    if marker not in machining3d_core:
+        raise SystemExit(f"6AX ABC machine core marker missing: {marker}")
+for marker in [
+    'private val machineAxisC: Double = 0.0',
+    'val c=if(mode=="6AX")machineAxisC else 0.0',
+    'MachineKinematics3D.transform(v,a,b,c)',
+    'MachineComponentRole.ROTARY_C',
+]:
+    if marker not in machining3d_android:
+        raise SystemExit(f"Android true 6AX ABC renderer marker missing: {marker}")
+for marker in [
+    'var axisC=0.0',
+    'fun setAngles(a:Double,b:Double,c:Double)',
+    'val c=if(machineMode=="6AX")axisC else 0.0',
+    'result,machineMode,axisA,axisB,live,axisC',
+    'setMachineMode("6AX")',
+    'setAngles(six.axisA,six.axisB,six.axisC)',
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Windows true 6AX ABC renderer marker missing: {marker}")
+for marker in [
+    'REAL_MACHINE_MODEL_3_4_5_6AX_GATE_PASS',
+    'A_THEN_B_THEN_C',
+]:
+    if marker not in core_regression:
+        raise SystemExit(f"6AX ABC regression marker missing: {marker}")
+print("SIX_AXIS_TRUE_ABC_GATE_PASS|CORE|ANDROID|WINDOWS|ROTARY_C|MATERIAL_POSTURE|MACHINE_MODEL|REGRESSION_SOURCE|NC_STILL_INTERLOCKED")
+
 
 for marker in [
     'const val POLICY = "OFFLINE_FIRST_UI_BOOT"',
