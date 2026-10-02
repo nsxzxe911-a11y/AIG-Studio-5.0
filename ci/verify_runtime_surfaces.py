@@ -1911,3 +1911,14 @@ for needle in (
 if 'fun enterWorkstation(' in android:
     raise SystemExit("STUDIO_OLD_ROOT_FIRST_ENTRY_246")
 print("STUDIO_FORMAL_INNER_RUNTIME_GATE_PASS|246|CAD_CLEAN_PAGE|CAM_SIM_3AX_4AX_5AX_NC_DIRECT|NO_ENGINEERING_ROOT_FIRST")
+
+# Studio 308 one-key multi-function source parity
+require(android, 'homeAction("多功能"', "ANDROID_ONE_KEY_MULTI_BUTTON")
+require(android, 'fun showOneKeyMultiFunction()', "ANDROID_ONE_KEY_MULTI_MENU")
+require(android, '"CAD 工具","CAM 刀路","SIM 模擬","3AX","4AX","5AX","NC 編輯","AI 智能","工作/維修"', "ANDROID_ONE_KEY_MULTI_CALLBACKS")
+require(desktop, 'GlassActionButton("多功能"', "WINDOWS_ONE_KEY_MULTI_BUTTON")
+require(desktop, 'item("CAD")', "WINDOWS_ONE_KEY_MULTI_CAD")
+require(desktop, 'item("CAM")', "WINDOWS_ONE_KEY_MULTI_CAM")
+require(desktop, 'item("SIM")', "WINDOWS_ONE_KEY_MULTI_SIM")
+require(desktop, 'item("NC")', "WINDOWS_ONE_KEY_MULTI_NC")
+print("ONE_KEY_MULTI_FUNCTION_RUNTIME_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|MAINT|REAL_CALLBACKS")
