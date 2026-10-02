@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/"build"/"department-autocheck.json"
-DEPARTMENTS=["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","WEB"]
+DEPARTMENTS=["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","WEB","PRO_AUDIT"]
 findings=[]
 
 def add(dept,code,path,detail,hint,severity="BLOCKING"):
@@ -49,6 +49,7 @@ uiux_visual=read("uiux/visual.html","UIUX","UIUX_VISUAL_MISSING")
 cmd_text=read("continuity/release-command.json","AI","RELEASE_COMMAND_MISSING")
 route_text=read("continuity/ai-responsibility-routing.json","AI","RESPONSIBILITY_ROUTE_MISSING")
 cache_xml=read("continuity/cache-update-standard.xml","AI","CACHE_XML_STANDARD_MISSING")
+pro_audit=read("ci/pro_audit.py","PRO_AUDIT","PRO_AUDIT_SCRIPT_MISSING")
 
 need("HOME","HOME_RUNTIME_ENTRY","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["setContentView(runtimeHost)",'contentDescription = "PRODUCTION UI SWITCH"',"StudioStartupBootGuard.complete(this)","scheduleBackgroundOnlineServices()"],"restore direct production runtimeHost HOME boot; complete StartupBootGuard before post-ready network services")
 need("HOME","HOME_DESKTOP_ENTRY","desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt",desktop,['JFrame("AIG CNC — OFFICIAL RGB ORIGINAL — v"',"LOCAL READY • NETWORK OPTIONAL"],"restore production desktop frame and offline-first status")
@@ -89,6 +90,8 @@ need("WINDOWS_BUILD","WINDOWS_PACKAGE","build_windows_native.ps1",windows_build,
 need("WEB","WEB_RUNTIME","web/index.html",web_html,["BLACK RGB Runtime","function parseProgram","function generateFanucNC","TRIM","EXTEND","OFFSET","ARRAY","materialRemovalDepth"],"restore live web CAD/CAM/SIM/NC runtime")
 need("WEB","WEB_VERIFY_DYNAMIC_VERSION","ci/verify_web_runtime.mjs",web_verify,["releaseMajor","WEB_RUNTIME_VERSION_TOO_OLD","console.log(`AIG_WEB_RUNTIME_","_GATE_PASS|VERSION_"],"bind web verification to the current forward-only release major")
 forbid("WEB","WEB_STALE_VERSION_PIN","ci/verify_web_runtime.mjs",web_verify,["versionName=253.0.0","AIG_WEB_RUNTIME_253_GATE_PASS|VERSION_253|"],"remove stale hard-coded WEB release version")
+
+need("PRO_AUDIT","PRO_AUDIT_CONTRACT","ci/pro_audit.py",pro_audit,["PRO_AUDIT_PASS","PRO_AUDIT_REWORK|OWNER=","15_DEPARTMENTS","HEAVY_RELEASE_TRIGGER","LIVE_C_MACHINE_SPACE"],"restore top-tier professional cross-department audit/rebuild script and repair routing")
 
 by_dept={d:[] for d in DEPARTMENTS}
 for finding in findings:
