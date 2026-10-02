@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "354.0.0",
+  "version": "355.0.0",
   "branch": "main",
-  "recorded_source_head": "f59d63549f60a16b38c998f0c6289443710898d5",
+  "recorded_source_head": "6fc92e90738022dbd36738455f4cea9c2536aef0",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Build and verify Studio 354 current-head Android debug APK with ci/local_android_build.py using process-scoped SDK auto-discovery, verify Windows installDist launcher smoke, then bind AIG-II 390 to the exact Studio 354 SHA. Keep device launch and release signing as separate evidence.",
-  "note": "Studio 354: local Android build orchestration now auto-discovers an existing SDK from ANDROID_HOME / ANDROID_SDK_ROOT or standard per-user locations, validates API 36 + Build Tools 36.0.0 + apksigner, and sets SDK paths only in the Gradle child-process environment. It never writes local.properties or persistent system environment. APK SHA-256 and signature verification are emitted as runtime evidence; device launch and release signing remain separate.",
+  "next_action": "Validate Studio 355 neutral AI guidance UI/UX across Web, Android and Windows from the exact commit, then bind AIG-II 391 to that SHA. Ordinary errors must use message guidance instead of red fields; true CNC/Runtime ALARM and destructive controls remain distinct. Keep device launch and release signing as separate evidence.",
+  "note": "Studio 355: UI/UX ordinary errors now use neutral AI message guidance across Web, Android and Windows. Guidance explains where the problem is, why it happened, suggested values and impact, supports 帶我去調整 navigation and persistent 教學模式, and does not stop Runtime or overwrite working data. True CNC/Runtime ALARM and destructive confirmations remain visually distinct; no CAM/NC geometry or machine semantics are changed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",

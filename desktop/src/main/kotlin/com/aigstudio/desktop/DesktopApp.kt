@@ -15,6 +15,20 @@ import javax.swing.border.EmptyBorder
 import kotlin.math.*
 
 
+private const val AIG_GUIDANCE_DIALOG="AIG_GUIDANCE_DIALOG"
+private val guidancePrefs=Preferences.userRoot().node("com/aigstudio/guidance")
+private fun showGuidanceDialog(parent:Component?,where:String,reason:String,suggestedValue:String,impact:String,onNavigate:(()->Unit)?=null){
+ var tutorialMode=guidancePrefs.getBoolean("tutorialMode",true)
+ while(true){
+  val text=buildString{append("哪裡：").append(where).append("\n原因：").append(reason);if(tutorialMode){append("\n建議值：").append(suggestedValue).append("\n影響：").append(impact)}}
+  val options=if(onNavigate!=null) arrayOf("帶我去調整","教學模式："+if(tutorialMode)"ON" else "OFF","關閉") else arrayOf("帶我去調整","教學模式："+if(tutorialMode)"ON" else "OFF","關閉")
+  val choice=JOptionPane.showOptionDialog(parent,text,"AI 訊息導覽",JOptionPane.DEFAULT_OPTION,JOptionPane.INFORMATION_MESSAGE,null,options,options[0])
+  if(choice==0){onNavigate?.invoke();parent?.requestFocus();return}
+  if(choice==1){tutorialMode=!tutorialMode;guidancePrefs.putBoolean("tutorialMode",tutorialMode);continue}
+  return
+ }
+}
+
 private object StudioDesktopOriginalVisuals {
     val startup:BufferedImage? by lazy {
         runCatching {
@@ -2860,7 +2874,8 @@ private fun showNcEditor(
         val nextDRegister = cutterDRegister.text.trim().toIntOrNull()
         val nextDValue = cutterDValue.text.trim().toDoubleOrNull()
         if(nextDRegister==null || nextDRegister !in 1..999 || nextDValue==null || !nextDValue.isFinite()){
-            JOptionPane.showMessageDialog(frame,"D register must be 1..999 and D value must be a finite mm value.","CUTTER COMP",JOptionPane.WARNING_MESSAGE)
+            val target=if(nextDRegister==null || nextDRegister !in 1..999)cutterDRegister else cutterDValue
+            showGuidanceDialog(frame,"NC / Cutter Compensation","D register 或 D 值格式需要調整。","D register：1..999；D value：有限 mm 數值。","不會套用無效補償；CAD/CAM/SIM 目前資料保留。"){target.requestFocusInWindow()}
             return
         }
         controllerProfile = nextController
@@ -2878,12 +2893,7 @@ private fun showNcEditor(
         runCatching { generateNc() }
             .onSuccess { area.text = it }
             .onFailure {
-                JOptionPane.showMessageDialog(
-                    frame,
-                    (it.message ?: "unsupported post mode") + "\nCAD/CAM/SIM canonical ABS XYZ remains unchanged.",
-                    "NC POST BLOCKED",
-                    JOptionPane.WARNING_MESSAGE
-                )
+                showGuidanceDialog(frame,"NC / POST",it.message ?: "unsupported post mode","確認 Controller / G90 / Origin / Cutter Comp 組合是否受支援。","NC 不會產生；CAD/CAM/SIM canonical ABS XYZ 保持不變。"){controller.requestFocusInWindow()}
             }
     }
     val applyD = GlassActionButton("POST / 套用設定", Color(80,170,255)).apply {

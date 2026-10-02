@@ -485,6 +485,14 @@ class Axis5xPreview(
     }
 }
 
+private const val AIG_GUIDANCE_MESSAGE="AIG_GUIDANCE_MESSAGE"
+private fun Context.showGuidanceMessage(guidanceTarget:String,reason:String,suggestedValue:String="依畫面提示調整",impact:String="目前資料保留，Runtime 繼續運作。",targetView:View?=null){
+ val prefs=getSharedPreferences("aig_guidance",Context.MODE_PRIVATE);val tutorialMode=prefs.getBoolean("tutorialMode",true)
+ val message=buildString{append("哪裡：").append(guidanceTarget).append("\n原因：").append(reason);if(tutorialMode){append("\n建議值：").append(suggestedValue).append("\n影響：").append(impact)}}
+ val focusView=targetView?:((this as? Activity)?.currentFocus)
+ runCatching{AlertDialog.Builder(this).setTitle("AI 訊息導覽").setMessage(message).setPositiveButton("帶我去調整"){_,_->focusView?.requestFocus()}.setNeutralButton("教學模式："+if(tutorialMode)"ON" else "OFF"){_,_->prefs.edit().putBoolean("tutorialMode",!tutorialMode).apply();showGuidanceMessage(guidanceTarget,reason,suggestedValue,impact,focusView)}.setNegativeButton("關閉",null).show()}.onFailure{Toast.makeText(this,"AI 訊息導覽 • "+guidanceTarget+" • "+reason,Toast.LENGTH_LONG).show()}
+}
+
 class MainActivity : Activity() {
     private var environmentRestartApplied = false
     private var adaptiveRefreshController: AdaptiveRefreshController? = null
@@ -1449,11 +1457,12 @@ class MainActivity : Activity() {
                     }
                     if(!homeRoot.isAttachedToWindow || homeRoot.visibility!=View.VISIBLE) {
                         StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.HEALTH)
-                        Toast.makeText(
-                            this@MainActivity,
-                            "PRODUCTION HOME DRAW BLOCKED • SAFE STATE • RETRY APP",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        this@MainActivity.showGuidanceMessage(
+                            guidanceTarget="HOME / 正式 Runtime",
+                            reason="PRODUCTION HOME DRAW BLOCKED • SAFE STATE • RETRY APP",
+                            suggestedValue="重新進入 HOME；若持續出現，從設定 / 維修查看啟動訊息。",
+                            impact="目前資料保留；AIG 不以紅色欄位判錯。"
+                        )
                         return@post
                     }
 
@@ -1597,7 +1606,7 @@ class MainActivity : Activity() {
             ).show()
         }.onFailure { error ->
             result.writeText("FAIL\n"+error.javaClass.name+"\n"+(error.message?:"unknown")+"\n",Charsets.UTF_8)
-            Toast.makeText(this,"DUAL PROJECT BLOCKED • "+(error.message?:"error"),Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="DUAL PROJECT BLOCKED • "+(error.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
         }
     }
 
@@ -1733,11 +1742,7 @@ class MainActivity : Activity() {
                                         val install=runCatching{
                                             SecureUpdateManager.installVerifiedUpdate(this@MainActivity,verified)
                                         }
-                                        Toast.makeText(
-                                            this@MainActivity,
-                                            install.getOrElse{"UPDATE BLOCKED: "+(it.message?:"installer error")},
-                                            Toast.LENGTH_LONG
-                                        ).show()
+                                        this@MainActivity.showGuidanceMessage(guidanceTarget="目前操作",reason=install.getOrElse{"UPDATE BLOCKED: "+(it.message?:"installer error")},suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                                     }
                                     .setNegativeButton("稍後",null)
                                     .show()
@@ -2587,7 +2592,7 @@ class MainActivity : Activity() {
     private fun showSixAxisRuntimeStage() {
         val snapshot=cad.snapshot()
         if(snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
-            Toast.makeText(this,"6AX BLOCKED • AUTO 需要 CAD；MANUAL 可直接建立刀路",Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="6AX BLOCKED • AUTO 需要 CAD；MANUAL 可直接建立刀路",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         val stock=runCatching {
@@ -2596,7 +2601,7 @@ class MainActivity : Activity() {
                 if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
             )
         }.getOrElse {
-            Toast.makeText(this,"6AX STOCK BLOCKED • "+(it.message?:"stock error"),Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="6AX STOCK BLOCKED • "+(it.message?:"stock error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         var six=SixAxisRuntimeContract.state(axisA,axisB,axisC)
@@ -2709,7 +2714,7 @@ class MainActivity : Activity() {
         val currentSnapshot = cad.snapshot()
         if (forceRecalculate &&
             currentSnapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
-            Toast.makeText(this, "REAL CAM BLOCKED • AUTO 模式需要 CAD；可切 MANUAL 直接編走刀", Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="REAL CAM BLOCKED • AUTO 模式需要 CAD；可切 MANUAL 直接編走刀",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
 
@@ -2735,7 +2740,7 @@ class MainActivity : Activity() {
                     if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
                 )
             }.getOrElse {
-                Toast.makeText(this,"CAM STOCK BLOCKED • "+(it.message?:"stock error"),Toast.LENGTH_LONG).show()
+                this.showGuidanceMessage(guidanceTarget="目前操作",reason="CAM STOCK BLOCKED • "+(it.message?:"stock error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 return
             }
             val built=runCatching {
@@ -2745,7 +2750,7 @@ class MainActivity : Activity() {
                     fixtures=camFixtures,toolAssembly=camToolAssembly,axisC=axisC
                 )
             }.getOrElse {
-                Toast.makeText(this, "REAL CAM BLOCKED • " + (it.message ?: "CAM build error"), Toast.LENGTH_LONG).show()
+                this.showGuidanceMessage(guidanceTarget="目前操作",reason="REAL CAM BLOCKED • " + (it.message ?: "CAM build error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 return
             }
             camDerivedCache=built
@@ -2947,7 +2952,7 @@ class MainActivity : Activity() {
                         dialog.dismiss()
                         showCamWorkstation()
                     }.onFailure{
-                        Toast.makeText(this@MainActivity,"CAM SOURCE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+                        this@MainActivity.showGuidanceMessage(guidanceTarget="目前操作",reason="CAM SOURCE BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                     }
                 }
             },LinearLayout.LayoutParams(0,-2,1f))
@@ -3129,7 +3134,7 @@ class MainActivity : Activity() {
                         Toast.LENGTH_LONG
                     ).show()
                 }.onFailure{
-                    Toast.makeText(this,"TOOL ASSEMBLY BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+                    this.showGuidanceMessage(guidanceTarget="目前操作",reason="TOOL ASSEMBLY BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 }
             }
             .setNegativeButton("取消",null)
@@ -3214,7 +3219,7 @@ class MainActivity : Activity() {
                 markCamDerivedStale("FIXTURE MODEL")
                 sharedLocalDirty.set(true)
                 refresh(camFixtures.lastIndex);load(camFixtures.lastIndex)
-            }.onFailure{Toast.makeText(this,"FIXTURE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+            }.onFailure{this.showGuidanceMessage(guidanceTarget="目前操作",reason="FIXTURE BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")}
         }
         action("更新"){
             val i=selector.selectedItemPosition
@@ -3225,7 +3230,7 @@ class MainActivity : Activity() {
                 markCamDerivedStale("FIXTURE MODEL")
                 sharedLocalDirty.set(true)
                 refresh(i);load(i)
-            }.onFailure{Toast.makeText(this,"FIXTURE UPDATE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+            }.onFailure{this.showGuidanceMessage(guidanceTarget="目前操作",reason="FIXTURE UPDATE BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")}
         }
         action("刪除"){
             val i=selector.selectedItemPosition
@@ -3250,22 +3255,22 @@ class MainActivity : Activity() {
 
     private fun showCollisionLookAheadDialog() {
         if(camDerivedStale) {
-            Toast.makeText(this,"碰撞預測 BLOCKED • CAM STALE • 請先在 CAM 按「重算」",Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="碰撞預測 BLOCKED • CAM STALE • 請先在 CAM 按「重算」",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         if(camFixtures.isEmpty()) {
-            Toast.makeText(this,"碰撞預測：請先建立治具或 MACHINE_ENVELOPE",Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="碰撞預測：請先建立治具或 MACHINE_ENVELOPE",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         val snapshot=cad.snapshot()
         if(snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
-            Toast.makeText(this,"碰撞預測 BLOCKED • AUTO 需要 CAD；MANUAL 可直接預測",Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="碰撞預測 BLOCKED • AUTO 需要 CAD；MANUAL 可直接預測",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         val cam=runCatching {
             CamModel.fromCad(System.currentTimeMillis(),snapshot,camSettings,axisA,axisB,axisC=axisC)
         }.getOrElse {
-            Toast.makeText(this,"LOOKAHEAD BLOCKED • "+(it.message?:"CAM error"),Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="LOOKAHEAD BLOCKED • "+(it.message?:"CAM error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         val stock=runCatching {
@@ -3274,7 +3279,7 @@ class MainActivity : Activity() {
                 if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
             )
         }.getOrElse {
-            Toast.makeText(this,"LOOKAHEAD STOCK BLOCKED • "+(it.message?:"stock error"),Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="LOOKAHEAD STOCK BLOCKED • "+(it.message?:"stock error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         val report=MachiningRiskScanner.predictLookAhead(
@@ -3319,7 +3324,7 @@ class MainActivity : Activity() {
                 camSettings=ManualCamPathEngine.useManual(camSettings)
             }
         }.onFailure {
-            Toast.makeText(this,"MANUAL CAM BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="MANUAL CAM BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         markCamDerivedStale("MANUAL CAM PATH")
@@ -3410,7 +3415,7 @@ class MainActivity : Activity() {
                 markProjectDirty()
                 Toast.makeText(this,"MANUAL CAM POINT PASS • P"+(i+1),Toast.LENGTH_SHORT).show()
                 refresh(i);load()
-            }.onFailure{Toast.makeText(this,"POINT BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+            }.onFailure{this.showGuidanceMessage(guidanceTarget="目前操作",reason="POINT BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")}
         }
         action("新增切削點"){
             val i=selector.selectedItemPosition
@@ -3421,7 +3426,7 @@ class MainActivity : Activity() {
                     ManualCamPoint(p.x,p.y,camSettings.depth,false,axisA=p.axisA,axisB=p.axisB,axisC=p.axisC)
                 )
             }.onSuccess{markCamDerivedStale("MANUAL CAM PATH");markProjectDirty();refresh(i+1);load()}
-                .onFailure{Toast.makeText(this,"INSERT BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+                .onFailure{this.showGuidanceMessage(guidanceTarget="目前操作",reason="INSERT BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")}
         }
         action("插入避讓"){
             val i=selector.selectedItemPosition
@@ -3448,7 +3453,7 @@ class MainActivity : Activity() {
                             lx.text.toString().toDouble(),ly.text.toString().toDouble(),lz.text.toString().toDouble()
                         )
                     }.onSuccess{markCamDerivedStale("MANUAL CAM PATH");markProjectDirty();refresh(i+3);load()}
-                        .onFailure{Toast.makeText(this,"AVOIDANCE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+                        .onFailure{this.showGuidanceMessage(guidanceTarget="目前操作",reason="AVOIDANCE BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")}
                 }
                 .setNegativeButton("取消",null)
                 .show()
@@ -3457,7 +3462,7 @@ class MainActivity : Activity() {
             val i=selector.selectedItemPosition
             runCatching{camSettings=ManualCamPathEngine.deletePoint(camSettings,i)}
                 .onSuccess{markCamDerivedStale("MANUAL CAM PATH");markProjectDirty();refresh(i.coerceAtMost(camSettings.manualPath.lastIndex));load()}
-                .onFailure{Toast.makeText(this,"DELETE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+                .onFailure{this.showGuidanceMessage(guidanceTarget="目前操作",reason="DELETE BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")}
         }
         action("3D SIM"){
             dialog.dismiss()
@@ -4118,7 +4123,7 @@ class MainActivity : Activity() {
                         Toast.LENGTH_LONG
                     ).show()
                 }.onFailure {
-                    Toast.makeText(this, "STOCK 設定無效", Toast.LENGTH_LONG).show()
+                    this.showGuidanceMessage(guidanceTarget="目前操作",reason="STOCK 設定無效",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 }
             }
             .setNegativeButton("取消", null)
@@ -4189,7 +4194,7 @@ class MainActivity : Activity() {
                     markProjectDirty()
                     Toast.makeText(this, "CAM 設定已套用 • CAM/SIM/NC STALE • 請按重算", Toast.LENGTH_LONG).show()
                 }.onFailure { error ->
-                    Toast.makeText(this, "CAM 設定無效: " + error.message, Toast.LENGTH_LONG).show()
+                    this.showGuidanceMessage(guidanceTarget="目前操作",reason="CAM 設定無效: " + error.message,suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 }
             }
             .setNegativeButton("取消", null)
@@ -4372,7 +4377,7 @@ class MainActivity : Activity() {
                         Toast.LENGTH_LONG
                     ).show()
                 }.onFailure { error ->
-                    Toast.makeText(this,"CONTROL BLOCKED • "+(error.message?:"invalid rotary/post profile"),Toast.LENGTH_LONG).show()
+                    this.showGuidanceMessage(guidanceTarget="目前操作",reason="CONTROL BLOCKED • "+(error.message?:"invalid rotary/post profile"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 }
             }
             .setNegativeButton("取消", null)
@@ -4472,7 +4477,7 @@ class MainActivity : Activity() {
                     if(!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
                     Toast.makeText(this, "DRILL CYCLE READY • "+machiningAxisMode+" • "+rotaryClampStatusText(), Toast.LENGTH_LONG).show()
                 }.onFailure {
-                    Toast.makeText(this, "DRILL CYCLE BLOCKED: " + it.message, Toast.LENGTH_LONG).show()
+                    this.showGuidanceMessage(guidanceTarget="目前操作",reason="DRILL CYCLE BLOCKED: " + it.message,suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 }
             }
             .setNegativeButton("取消", null)
@@ -4526,7 +4531,7 @@ class MainActivity : Activity() {
                 val a = aInput.text.toString().toDoubleOrNull()
                 val b = bInput.text.toString().toDoubleOrNull()
                 if (a == null || b == null || a !in -360.0..360.0 || b !in -360.0..360.0) {
-                    Toast.makeText(this, "A/B 軸角度無效", Toast.LENGTH_LONG).show()
+                    this.showGuidanceMessage(guidanceTarget="目前操作",reason="A/B 軸角度無效",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 } else {
                     val changed=kotlin.math.abs(axisA-a)>1e-9 || kotlin.math.abs(axisB-b)>1e-9 || machiningAxisMode!="5AX"
                     axisA = a
@@ -4612,17 +4617,13 @@ class MainActivity : Activity() {
                 )
             )
         }.getOrElse { error ->
-            Toast.makeText(
-                this,
-                "NC POST BLOCKED • CAD/CAM/SIM ABS XYZ不變 • " + (error.message ?: "unsupported post mode"),
-                Toast.LENGTH_LONG
-            ).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="NC POST BLOCKED • CAD/CAM/SIM ABS XYZ不變 • " + (error.message ?: "unsupported post mode"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         val ncProgram = if (drillCycleBlock.isBlank()) baseNc else
             runCatching { FanucNc.insertBeforeProgramEnd(baseNc, drillCycleBlock) }
                 .getOrElse { error ->
-                    Toast.makeText(this,"NC INSERT BLOCKED: "+(error.message?:"invalid block"),Toast.LENGTH_LONG).show()
+                    this.showGuidanceMessage(guidanceTarget="目前操作",reason="NC INSERT BLOCKED: "+(error.message?:"invalid block"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                     return
                 }
         val editor = EditText(this).apply {
@@ -4959,7 +4960,7 @@ class MainActivity : Activity() {
                     .show()
             }
             .onFailure { error ->
-                Toast.makeText(this, "3D 加工 BLOCKED: " + error.message, Toast.LENGTH_LONG).show()
+                this.showGuidanceMessage(guidanceTarget="目前操作",reason="3D 加工 BLOCKED: " + error.message,suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             }
     }
 
@@ -5474,13 +5475,10 @@ private fun applyCoordinatePrecisionPreference() {
                 }.isSuccess
                 if (valid) {
                     UpdateConfigStore.save(this, next)
-                    Toast.makeText(
-                        this,
-                        if (next.configured) "安全更新設定完成" else "設定未完整：更新保持 BLOCKED",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    if(next.configured) Toast.makeText(this,"安全更新設定完成",Toast.LENGTH_LONG).show()
+                    else this.showGuidanceMessage("設定 / AI 更新","更新設定尚未完整。","請補齊 HTTPS manifest URL 與 RSA public key。","更新維持 BLOCKED，但 Runtime 可繼續使用。",url)
                 } else {
-                    Toast.makeText(this, "只允許 HTTPS 更新網址", Toast.LENGTH_LONG).show()
+                    this.showGuidanceMessage("設定 / AI 更新 / Manifest URL","只允許 HTTPS 更新網址。","請使用 https:// 開頭的 manifest URL。","不會套用不安全網址；目前設定保留。",url)
                 }
             }
             .setNegativeButton("取消", null)
@@ -5539,12 +5537,12 @@ private fun applyCoordinatePrecisionPreference() {
             return
         }
         val remote=runCatching{StudioProjectRepository.load(shared)}.getOrElse{
-            Toast.makeText(this,"共享專案 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="共享專案 BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         val local=localProjectFile()
         val localPackage=runCatching{if(local.isFile)StudioProjectRepository.load(local) else captureCurrentProject()}.getOrElse{
-            Toast.makeText(this,"本機專案 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="本機專案 BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         val state=ProjectRevisionSync.classify(localPackage.revisionMeta,remote.revisionMeta,sharedLocalDirty.get())
@@ -5559,7 +5557,7 @@ private fun applyCoordinatePrecisionPreference() {
                     local.parentFile?.mkdirs()
                     StudioProjectRepository.save(remote,local)
                 }.onSuccess{Toast.makeText(this,"已採用共享新版 • R"+remote.revisionMeta.revision,Toast.LENGTH_LONG).show()}
-                 .onFailure{Toast.makeText(this,"採用 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+                 .onFailure{this.showGuidanceMessage(guidanceTarget="目前操作",reason="採用 BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")}
             }
             .setNegativeButton("保留本機"){_,_->
                 sharedLocalDirty.set(true)
@@ -5572,7 +5570,7 @@ private fun applyCoordinatePrecisionPreference() {
                     StudioProjectRepository.save(localPackage,copy)
                     copy
                 }.onSuccess{Toast.makeText(this,"本機副本已保留 • "+it.name,Toast.LENGTH_LONG).show()}
-                 .onFailure{Toast.makeText(this,"另存 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+                 .onFailure{this.showGuidanceMessage(guidanceTarget="目前操作",reason="另存 BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")}
             }
             .show()
     }
@@ -5582,7 +5580,7 @@ private fun applyCoordinatePrecisionPreference() {
             saveCurrentProjectRevision()
             localProjectFile()
         }.getOrElse{
-            Toast.makeText(this,"專案儲存 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+            this.showGuidanceMessage(guidanceTarget="目前操作",reason="專案儲存 BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         val shared=sharedProjectFile().apply{parentFile?.mkdirs()}
@@ -5599,7 +5597,7 @@ private fun applyCoordinatePrecisionPreference() {
                 }.onSuccess{meta->
                     sharedLocalRevisionMeta=meta;sharedLocalDirty.set(false)
                     Toast.makeText(this,"共享發布完成 • R"+meta.revision,Toast.LENGTH_LONG).show()
-                }.onFailure{Toast.makeText(this,"共享發布 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+                }.onFailure{this.showGuidanceMessage(guidanceTarget="目前操作",reason="共享發布 BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")}
             }
             .setNegativeButton("取消",null)
             .show()
@@ -5610,13 +5608,13 @@ private fun applyCoordinatePrecisionPreference() {
         addActionTo(branchFlow,"專案儲存",1){
             runCatching{saveCurrentProjectRevision()}
                 .onSuccess{Toast.makeText(this,"專案已儲存 • R"+it.revisionMeta.revision+" • V3",Toast.LENGTH_LONG).show()}
-                .onFailure{Toast.makeText(this,"專案儲存 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+                .onFailure{this.showGuidanceMessage(guidanceTarget="目前操作",reason="專案儲存 BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")}
         }
         addActionTo(branchFlow,"專案開啟",0){
             val file=localProjectFile()
             runCatching{require(file.isFile){"尚無本機專案"};StudioProjectRepository.load(file)}
                 .onSuccess{applyProjectPackage(it);Toast.makeText(this,"專案已開啟 • R"+it.revisionMeta.revision+" • FIXTURE "+it.fixtures.size,Toast.LENGTH_LONG).show()}
-                .onFailure{Toast.makeText(this,"專案開啟 BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
+                .onFailure{this.showGuidanceMessage(guidanceTarget="目前操作",reason="專案開啟 BLOCKED • "+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")}
         }
         addActionTo(branchFlow,"共享狀態",2){showProjectSyncResolution()}
         addActionTo(branchFlow,"共享發布",5){publishCurrentProjectConfirmed()}
@@ -5955,7 +5953,7 @@ class CadView(
 
     private fun ensureSelection(action: String): Boolean {
         if (selectedIds.isNotEmpty()) return true
-        Toast.makeText(context, "$action：請先用「選取」點選幾何", Toast.LENGTH_SHORT).show()
+        context.showGuidanceMessage(guidanceTarget="目前操作",reason="$action：請先用「選取」點選幾何",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
         return false
     }
 
@@ -5981,7 +5979,7 @@ class CadView(
                 val x=dx.text.toString().toDoubleOrNull()
                 val y=dy.text.toString().toDoubleOrNull()
                 if(x==null || y==null) {
-                    Toast.makeText(context,"$action BLOCKED：ΔX/ΔY 格式錯誤",Toast.LENGTH_SHORT).show()
+                    context.showGuidanceMessage(guidanceTarget="目前操作",reason="$action BLOCKED：ΔX/ΔY 格式錯誤",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 } else runCatching {
                     if(copy) {
                         val before=doc.all().map{it.id}.toSet()
@@ -5992,7 +5990,7 @@ class CadView(
                         runGeometryCommand(CadEditEngine.moveCommand(doc,selectedIds,x,y))
                     }
                 }.onFailure {
-                    Toast.makeText(context,"$action BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+                    context.showGuidanceMessage(guidanceTarget="目前操作",reason="$action BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 }
             }
             .setNegativeButton("取消",null)
@@ -6010,11 +6008,11 @@ class CadView(
             .setView(input)
             .setPositiveButton("套用") { _, _ ->
                 val angle=input.text.toString().toDoubleOrNull()
-                if(angle==null) Toast.makeText(context,"旋轉 BLOCKED：角度格式錯誤",Toast.LENGTH_SHORT).show()
+                if(angle==null) context.showGuidanceMessage(guidanceTarget="目前操作",reason="旋轉 BLOCKED：角度格式錯誤",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 else runCatching {
                     runGeometryCommand(CadEditEngine.rotateCommand(doc,selectedIds,angle))
                 }.onFailure {
-                    Toast.makeText(context,"旋轉 BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+                    context.showGuidanceMessage(guidanceTarget="目前操作",reason="旋轉 BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 }
             }
             .setNegativeButton("取消",null)
@@ -6029,7 +6027,7 @@ class CadView(
             else CadEditEngine.mirrorHorizontalCommand(doc,selectedIds)
             runGeometryCommand(command)
         }.onFailure {
-            Toast.makeText(context,"鏡射 BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+            context.showGuidanceMessage(guidanceTarget="目前操作",reason="鏡射 BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
         }
     }
 
@@ -6039,7 +6037,7 @@ class CadView(
             runTopologyCommand(CadEditEngine.connectCommand(doc,selectedIds,JOIN_TOLERANCE_MM))
             Toast.makeText(context,"CONNECT PASS • TOPOLOGY ONLY • 0.001 mm",Toast.LENGTH_SHORT).show()
         }.onFailure {
-            Toast.makeText(context,"CONNECT BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+            context.showGuidanceMessage(guidanceTarget="目前操作",reason="CONNECT BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
         }
     }
 
@@ -6049,7 +6047,7 @@ class CadView(
             runTopologyCommand(CadEditEngine.disconnectCommand(doc,selectedIds))
             Toast.makeText(context,"DISCONNECT PASS • TOPOLOGY ONLY",Toast.LENGTH_SHORT).show()
         }.onFailure {
-            Toast.makeText(context,"DISCONNECT BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+            context.showGuidanceMessage(guidanceTarget="目前操作",reason="DISCONNECT BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
         }
     }
 
@@ -6068,7 +6066,7 @@ class CadView(
                 Toast.LENGTH_SHORT
             ).show()
         }.onFailure {
-            Toast.makeText(context,"全部斷開 BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+            context.showGuidanceMessage(guidanceTarget="目前操作",reason="全部斷開 BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
         }
     }
 
@@ -6078,7 +6076,7 @@ class CadView(
             runGeometryCommand(CadEditEngine.deleteCommand(selectedIds))
             selectedIds.clear()
         }.onFailure {
-            Toast.makeText(context,"刪除 BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+            context.showGuidanceMessage(guidanceTarget="目前操作",reason="刪除 BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
         }
     }
 
@@ -6092,7 +6090,7 @@ class CadView(
                 }
                 .onFailure {
                     selectedIds.clear()
-                    Toast.makeText(context,"TRIM BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+                    context.showGuidanceMessage(guidanceTarget="目前操作",reason="TRIM BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 }
             sceneRevision++;invalidate()
             return
@@ -6115,7 +6113,7 @@ class CadView(
                 }
                 .onFailure {
                     selectedIds.clear()
-                    Toast.makeText(context,"EXTEND BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+                    context.showGuidanceMessage(guidanceTarget="目前操作",reason="EXTEND BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 }
             sceneRevision++;invalidate()
             return
@@ -6159,7 +6157,7 @@ class CadView(
             selectedIds.add(ids.first())
             Toast.makeText(context,"$operation PASS • 目標保持選取 • CAM/SIM/NC REBUILD",Toast.LENGTH_SHORT).show()
         }.onFailure {
-            Toast.makeText(context,"$operation BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show()
+            context.showGuidanceMessage(guidanceTarget="目前操作",reason="$operation BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
         }
         sceneRevision++
         invalidate()
@@ -6177,7 +6175,7 @@ class CadView(
             .setView(input)
             .setPositiveButton("套用") { _, _ ->
                 val value=input.text.toString().toDoubleOrNull()
-                if(value==null) Toast.makeText(context,"OFFSET BLOCKED：格式錯誤",Toast.LENGTH_SHORT).show()
+                if(value==null) context.showGuidanceMessage(guidanceTarget="目前操作",reason="OFFSET BLOCKED：格式錯誤",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 else runCatching {
                     val before=doc.all().map{it.id}.toSet()
                     runGeometryCommand(CadEditEngine.offsetCommand(doc,selectedIds,value))
@@ -6187,7 +6185,7 @@ class CadView(
                     sceneRevision++
                     invalidate()
                     Toast.makeText(context,"OFFSET PASS • 新幾何已選取 "+created.size,Toast.LENGTH_SHORT).show()
-                }.onFailure { Toast.makeText(context,"OFFSET BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+                }.onFailure { context.showGuidanceMessage(guidanceTarget="目前操作",reason="OFFSET BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。") }
             }
             .setNegativeButton("取消",null)
             .show()
@@ -6216,7 +6214,7 @@ class CadView(
                     sceneRevision++
                     invalidate()
                     Toast.makeText(context,"ARRAY PASS • 新幾何已選取 "+created.size,Toast.LENGTH_SHORT).show()
-                }.onFailure { Toast.makeText(context,"ARRAY BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+                }.onFailure { context.showGuidanceMessage(guidanceTarget="目前操作",reason="ARRAY BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。") }
             }
             .setNegativeButton("取消",null)
             .show()
@@ -6224,7 +6222,7 @@ class CadView(
 
     fun promptDrivenDimension() {
         if(selectedIds.isEmpty()) {
-            Toast.makeText(context,"尺寸驅動：請先選取幾何",Toast.LENGTH_SHORT).show()
+            context.showGuidanceMessage(guidanceTarget="目前操作",reason="尺寸驅動：請先選取幾何",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         val selected=selectedIds.mapNotNull(doc::get)
@@ -6234,7 +6232,7 @@ class CadView(
         if(isRectGroup) {
             val current=runCatching { RectDimensionDriveEngine.current(doc,selectedIds) }
                 .getOrElse {
-                    Toast.makeText(context,"RECT DIM BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()
+                    context.showGuidanceMessage(guidanceTarget="目前操作",reason="RECT DIM BLOCKED："+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                     return
                 }
             val box=LinearLayout(context).apply {
@@ -6256,13 +6254,13 @@ class CadView(
                     val w=width.text.toString().toDoubleOrNull()
                     val h=height.text.toString().toDoubleOrNull()
                     if(w==null || h==null) {
-                        Toast.makeText(context,"RECT DIM BLOCKED：W/H 格式錯誤",Toast.LENGTH_SHORT).show()
+                        context.showGuidanceMessage(guidanceTarget="目前操作",reason="RECT DIM BLOCKED：W/H 格式錯誤",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                     } else runCatching {
                         runGeometryCommand(RectDimensionDriveEngine.command(doc,selectedIds,w,h))
                     }.onSuccess {
                         Toast.makeText(context,"RECT DIM PASS • W="+DisplayFormat.mm(w)+" H="+DisplayFormat.mm(h),Toast.LENGTH_SHORT).show()
                     }.onFailure {
-                        Toast.makeText(context,"RECT DIM BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()
+                        context.showGuidanceMessage(guidanceTarget="目前操作",reason="RECT DIM BLOCKED："+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                     }
                 }
                 .setNegativeButton("取消",null)
@@ -6270,7 +6268,7 @@ class CadView(
             return
         }
         if(selectedIds.size!=1) {
-            Toast.makeText(context,"DIM BLOCKED：非 RECT 尺寸一次只能選 1 個幾何",Toast.LENGTH_SHORT).show()
+            context.showGuidanceMessage(guidanceTarget="目前操作",reason="DIM BLOCKED：非 RECT 尺寸一次只能選 1 個幾何",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             return
         }
         val id=selectedIds.first()
@@ -6286,10 +6284,10 @@ class CadView(
             .setView(input)
             .setPositiveButton("套用") { _, _ ->
                 val value=input.text.toString().toDoubleOrNull()
-                if(value==null) Toast.makeText(context,"DIM BLOCKED：格式錯誤",Toast.LENGTH_SHORT).show()
+                if(value==null) context.showGuidanceMessage(guidanceTarget="目前操作",reason="DIM BLOCKED：格式錯誤",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 else runCatching { runGeometryCommand(DimensionDriveEngine.command(doc,id,value,kind)) }
                     .onSuccess { Toast.makeText(context,"DIM PASS • "+kind.name+"="+DisplayFormat.mm(value),Toast.LENGTH_SHORT).show() }
-                    .onFailure { Toast.makeText(context,"DIM BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+                    .onFailure { context.showGuidanceMessage(guidanceTarget="目前操作",reason="DIM BLOCKED：" + (it.message ?: "error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。") }
             }
             .setNegativeButton("取消",null)
             .show()
@@ -6318,7 +6316,7 @@ class CadView(
                 val px=x.text.toString().toDoubleOrNull()
                 val py=y.text.toString().toDoubleOrNull()
                 if(px==null || py==null) {
-                    Toast.makeText(context,"中心點 BLOCKED：X/Y 格式錯誤",Toast.LENGTH_SHORT).show()
+                    context.showGuidanceMessage(guidanceTarget="目前操作",reason="中心點 BLOCKED：X/Y 格式錯誤",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 } else runCatching {
                     runGeometryCommand(
                         CadEditEngine.moveCommand(doc,selectedIds,px-center.x,py-center.y)
@@ -6326,7 +6324,7 @@ class CadView(
                 }.onSuccess {
                     Toast.makeText(context,"中心點 PASS • X="+DisplayFormat.mm(px)+" Y="+DisplayFormat.mm(py),Toast.LENGTH_SHORT).show()
                 }.onFailure {
-                    Toast.makeText(context,"中心點 BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()
+                    context.showGuidanceMessage(guidanceTarget="目前操作",reason="中心點 BLOCKED："+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 }
             }
             .setNegativeButton("取消",null)
@@ -6354,7 +6352,7 @@ class CadView(
                 .setPositiveButton("套用"){_,_->
                     val r=radius.text.toString().toDoubleOrNull()
                     if(r==null || r<CNC_RESOLUTION_MM) {
-                        Toast.makeText(context,"R BLOCKED：半徑需 >= 0.001 mm",Toast.LENGTH_SHORT).show()
+                        context.showGuidanceMessage(guidanceTarget="目前操作",reason="R BLOCKED：半徑需 >= 0.001 mm",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                     } else {
                         val circle=doc.get(control.entityId) as? Circle ?: return@setPositiveButton
                         runCatching {
@@ -6366,7 +6364,7 @@ class CadView(
                         }.onSuccess {
                             Toast.makeText(context,"控制點 PASS • R="+DisplayFormat.mm(r),Toast.LENGTH_SHORT).show()
                         }.onFailure {
-                            Toast.makeText(context,"控制點 BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()
+                            context.showGuidanceMessage(guidanceTarget="目前操作",reason="控制點 BLOCKED："+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                         }
                     }
                 }
@@ -6383,13 +6381,13 @@ class CadView(
                 val px=x.text.toString().toDoubleOrNull()
                 val py=y.text.toString().toDoubleOrNull()
                 if(px==null || py==null) {
-                    Toast.makeText(context,"控制點 BLOCKED：X/Y 格式錯誤",Toast.LENGTH_SHORT).show()
+                    context.showGuidanceMessage(guidanceTarget="目前操作",reason="控制點 BLOCKED：X/Y 格式錯誤",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 } else runCatching {
                     runGeometryCommand(CadControlPointEngine.editCommand(doc,control,Vec2(px,py)))
                 }.onSuccess {
                     Toast.makeText(context,"控制點 PASS • X="+DisplayFormat.mm(px)+" Y="+DisplayFormat.mm(py),Toast.LENGTH_SHORT).show()
                 }.onFailure {
-                    Toast.makeText(context,"控制點 BLOCKED："+(it.message?:"error"),Toast.LENGTH_SHORT).show()
+                    context.showGuidanceMessage(guidanceTarget="目前操作",reason="控制點 BLOCKED："+(it.message?:"error"),suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
                 }
             }
             .setNegativeButton("取消",null)
@@ -6728,7 +6726,7 @@ class CadView(
                 else filletCommand(doc, pair[0], pair[1], filletValue)
                 runGeometryCommand(command)
             } catch (ex: Exception) {
-                Toast.makeText(context, ex.message ?: "幾何運算失敗", Toast.LENGTH_SHORT).show()
+                context.showGuidanceMessage(guidanceTarget="目前操作",reason=ex.message ?: "幾何運算失敗",suggestedValue="依訊息提示調整",impact="目前資料保留，Runtime 繼續運作。")
             }
             selectedIds.clear()
         }

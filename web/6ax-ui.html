@@ -68,10 +68,10 @@ button,textarea,input,select{font:inherit}button{color:inherit}
 .runtimeStatus{display:grid;grid-template-columns:repeat(6,minmax(90px,1fr));gap:6px;margin-top:8px}
 .metric{padding:8px;border:1px solid #173344;border-radius:9px;background:#04080b}.metric b{display:block;font-size:9px;color:var(--muted);margin-bottom:2px}.metric span{font-size:12px}
 .aigIssueCenter{display:none;margin:7px 0;padding:8px 10px;border-radius:9px;border:1px solid #31414b;background:#05090c;font-size:11px;line-height:1.5}
-.aigIssueCenter.show{display:block}.aigIssueCenter.info{border-color:#24546b;color:#bfefff}.aigIssueCenter.warn{border-color:#806119;color:#ffd888;background:rgba(255,179,38,.06)}.aigIssueCenter.error{border-color:#7e2634;color:#ffbdc6;background:rgba(255,70,95,.07)}
-.fieldIssue{display:none;margin-top:4px;font-size:9px;line-height:1.35}.fieldIssue.show{display:block}.fieldIssue.warn{color:#ffcf70}.fieldIssue.error{color:#ff8fa1}
+.aigIssueCenter.show{display:block}.aigIssueCenter.info{border-color:#24546b;color:#bfefff}.aigIssueCenter.warn{border-color:#806119;color:#ffd888;background:rgba(255,179,38,.06)}.aigIssueCenter.error{border-color:#315b6e;color:#d9f7ff;background:rgba(39,233,255,.05)}
+.fieldIssue{display:none;margin-top:4px;font-size:9px;line-height:1.35}.fieldIssue.show{display:block}.fieldIssue.warn{color:#ffcf70}.fieldIssue.error{color:#d9f7ff}
 input.aigWarn,select.aigWarn,textarea.aigWarn{border-color:#9b731d!important;box-shadow:0 0 0 1px rgba(255,179,38,.15)!important}
-input.aigError,select.aigError,textarea.aigError{border-color:#a82d43!important;box-shadow:0 0 0 1px rgba(255,70,95,.18)!important}
+input.aigError,select.aigError,textarea.aigError{border-color:#3f6d82!important;box-shadow:0 0 0 1px rgba(39,233,255,.14)!important}
 .progress{height:7px;background:#101820;border-radius:99px;overflow:hidden;margin-top:7px}.progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));box-shadow:0 0 12px rgba(39,233,255,.35)}
 .workgrid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:9px;min-height:690px}
 .canvas{min-height:580px;background:
@@ -111,11 +111,12 @@ input.aigError,select.aigError,textarea.aigError{border-color:#a82d43!important;
 .param input:focus{border-color:var(--cyan)}
 .fieldIssue{display:none;width:100%;font-size:9px;line-height:1.35;margin-top:3px;padding:3px 6px;border-radius:6px}
 .fieldIssue.show{display:block}
-.fieldIssue.error{color:#ffd6dc;background:rgba(255,70,95,.12);border:1px solid rgba(255,70,95,.34)}
+.fieldIssue.error{color:#d9f7ff;background:rgba(39,233,255,.07);border:1px solid rgba(39,233,255,.22)}
 .fieldIssue.warn{color:#ffe6b4;background:rgba(255,179,38,.10);border:1px solid rgba(255,179,38,.30)}
 .fieldIssue.info{color:#bfefff;background:rgba(39,233,255,.08);border:1px solid rgba(39,233,255,.22)}
-.field-invalid{border-color:var(--red)!important;box-shadow:0 0 0 1px rgba(255,70,95,.22)!important}
+.field-invalid{border-color:#3f6d82!important;box-shadow:0 0 0 1px rgba(39,233,255,.14)!important}
 .field-warning{border-color:var(--amber)!important;box-shadow:0 0 0 1px rgba(255,179,38,.18)!important}
+.guidanceTitle{font-weight:800;color:#dff9ff;margin-bottom:5px}.guidanceRow{display:grid;grid-template-columns:58px 1fr;gap:6px;margin-top:3px}.guidanceRow b{color:#8fc8d8}.guidanceActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.guidanceActions button{min-height:34px;padding:6px 9px;border:1px solid #315b6e;border-radius:8px;background:#07131a;color:#dff9ff}.guidanceFocus{outline:2px solid rgba(39,233,255,.55)!important;box-shadow:0 0 18px rgba(39,233,255,.18)!important}
 .cycleTag{color:var(--amber)!important}
 @media(max-width:920px){
  .top{height:auto;flex-wrap:wrap}.brand{min-width:140px}.nav{order:3;grid-template-columns:repeat(8,minmax(54px,1fr));max-width:none;flex-basis:100%}
@@ -321,6 +322,25 @@ function menuPage(){
 const runtimes={};
 
 const AIG_ISSUES={last:null};
+const AIG_GUIDANCE_TUTORIAL_MODE="AIG_GUIDANCE_TUTORIAL_MODE";
+let AIG_GUIDANCE_SEQ=0;
+function aigTutorialMode(){try{return localStorage.getItem(AIG_GUIDANCE_TUTORIAL_MODE)!=="0"}catch{return true}}
+function aigSetTutorialMode(enabled){try{localStorage.setItem(AIG_GUIDANCE_TUTORIAL_MODE,enabled?"1":"0")}catch{}return Boolean(enabled)}
+function aigGuidanceKey(el){if(!el)return"";if(!el.dataset.guidanceTarget)el.dataset.guidanceTarget="aig-guidance-"+(++AIG_GUIDANCE_SEQ);return el.dataset.guidanceTarget}
+function aigSuggestedValue(el){if(!el)return"依目前頁面說明調整";if(el.type==="number"){const a=[];if(el.min!=="")a.push("最小 "+el.min);if(el.max!=="")a.push("最大 "+el.max);if(el.step&&el.step!=="any")a.push("步進 "+el.step);if(a.length)return a.join(" / ")}return el.required?"此欄位需要有效值":"依欄位格式與目前設定調整"}
+function aigNavigateGuidance(root,target){if(!root||!target)return false;const el=[...root.querySelectorAll("[data-guidance-target]")].find(x=>x.dataset.guidanceTarget===target);if(!el)return false;el.scrollIntoView({block:"center",behavior:"smooth"});el.focus?.({preventScroll:true});el.classList.add("guidanceFocus");setTimeout(()=>el.classList.remove("guidanceFocus"),2200);return true}
+
+function aigGuidanceRow(box,label,value){const row=document.createElement("div");row.className="guidanceRow";const b=document.createElement("b");b.textContent=label;const v=document.createElement("span");v.textContent=String(value||"-");row.append(b,v);box.append(row)}
+function aigShowGuidance(root,opts={}){
+ const box=aigEnsureIssueCenter(root);if(!box)return;const tutorialMode=aigTutorialMode();box.className="aigIssueCenter show guidance";box.innerHTML="";
+ const title=document.createElement("div");title.className="guidanceTitle";title.textContent=opts.title||"AI 訊息導覽";box.append(title);
+ aigGuidanceRow(box,"哪裡",opts.where||"目前頁面");aigGuidanceRow(box,"原因",opts.reason||opts.message||"需要確認設定");
+ if(tutorialMode){aigGuidanceRow(box,"建議值",opts.suggested||"依目前頁面說明調整");aigGuidanceRow(box,"影響",opts.impact||"目前資料保留，AIG Runtime 繼續運作")};
+ const actions=document.createElement("div");actions.className="guidanceActions";
+ if(opts.target){const go=document.createElement("button");go.type="button";go.textContent="帶我去調整";go.onclick=()=>aigNavigateGuidance(root,opts.target);actions.append(go)}
+ const teach=document.createElement("button");teach.type="button";teach.textContent="教學模式："+(tutorialMode?"ON":"OFF");teach.onclick=()=>{aigSetTutorialMode(!tutorialMode);aigShowGuidance(root,opts)};actions.append(teach);box.append(actions);
+ AIG_ISSUES.last={...opts,tutorialMode,time:Date.now()};
+}
 function aigFieldLabel(el){
  const label=el?.closest?.("label");if(label){const b=label.querySelector("b");if(b?.textContent)return b.textContent.trim();const txt=[...label.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join(" ").trim();if(txt)return txt}
  return el?.getAttribute?.("aria-label")||el?.dataset?.label||el?.name||el?.dataset?.axis||el?.placeholder||"欄位";
@@ -331,11 +351,8 @@ function aigEnsureIssueCenter(root){
  return box;
 }
 function aigShowIssue(root,severity,message){
- const box=aigEnsureIssueCenter(root);if(!box)return;
  const level=severity==="error"?"error":severity==="warn"?"warn":"info";
- box.className="aigIssueCenter show "+level;
- box.textContent=(level==="error"?"錯誤：":level==="warn"?"提醒：":"訊息：")+message;
- AIG_ISSUES.last={severity:level,message,time:Date.now()};
+ aigShowGuidance(root,{title:"AI 訊息導覽",where:"目前頁面",reason:message,suggested:"依提示內容調整；不確定時可開啟教學模式",impact:"目前資料保留，AIG Runtime 繼續運作",severity:level});
 }
 function aigClearIssue(root){
  const box=root?.querySelector?.(":scope > .aigIssueCenter");if(box){box.className="aigIssueCenter";box.textContent=""}
@@ -372,9 +389,9 @@ function aigValidateAllFields(root){
 function aigBindFieldFeedback(root){
  if(!root||root.dataset.aigFieldFeedback==="1")return;root.dataset.aigFieldFeedback="1";aigEnsureIssueCenter(root);
  const check=el=>{
-   if(!el)return;const ok=aigValidateField(el),tip=el.parentElement?.querySelector?.(":scope > .fieldIssue");
-   if(el.classList.contains("aigError"))aigShowIssue(root,"error",tip?.textContent||aigFieldLabel(el)+" 輸入有誤。");
-   else if(el.classList.contains("aigWarn"))aigShowIssue(root,"warn",tip?.textContent||aigFieldLabel(el)+" 請確認。");
+   if(!el)return;const ok=aigValidateField(el),tip=el.parentElement?.querySelector?.(":scope > .fieldIssue"),where=aigFieldLabel(el),target=aigGuidanceKey(el);
+   if(el.classList.contains("aigError"))aigShowGuidance(root,{title:"AI 訊息導覽",where,reason:tip?.textContent||where+" 輸入需要調整。",suggested:aigSuggestedValue(el),impact:"目前值不會套用；其他資料保留，Runtime 不停擺。",target,severity:"error"});
+   else if(el.classList.contains("aigWarn"))aigShowGuidance(root,{title:"AI 訊息導覽",where,reason:tip?.textContent||where+" 請確認。",suggested:aigSuggestedValue(el),impact:"可繼續操作；建議確認後再套用。",target,severity:"warn"});
    else if(ok&&!root.querySelector(".aigError,.aigWarn"))aigClearIssue(root);
  };
  root.addEventListener("input",e=>check(e.target.closest?.("input,select,textarea")));
@@ -2670,16 +2687,17 @@ function makeMenuRuntime(root){
    else if(key==="ASSEMBLY")assemblyView();
    else if(key==="MONITOR")monitorView();
    else if(key==="SYSTEM")systemView();
-   else if(key==="AI")simple("Web Runtime 的 AI 網路服務尚未接線；目前不顯示假 AI 成功狀態。正式接入時再由 ChatGPT AI 更新/修復服務處理。");
+   else if(key==="AI")simple("內建 AI 訊息導覽可離線說明哪裡需要調整、建議值與影響；網路 ChatGPT AI 更新服務尚未接線時，不顯示假成功狀態。");
    else if(key==="SYNC")simple("同步目前維持 Offline-first。Shared Folder / LAN transport 尚未接到此 Web Prototype，因此不自動覆蓋其他裝置。");
    else if(key==="UPDATE")simple("此 Web Prototype 不執行網路自動更新；更新仍由版本分支、Gate 與驗證流程控制。");
-   else if(key==="SETTINGS")simple("正式基準：BLACK RGB、高對比、繁中優先、0.001 mm、AUTO 120/60/30。尚未生效的設定不提供假開關。");
+   else if(key==="SETTINGS"){const on=aigTutorialMode();detail.innerHTML='<div class="menuDetailGrid"><div class="field"><b>教學模式</b><span>'+(on?'ON：訊息顯示原因、建議值與影響':'OFF：訊息維持精簡導覽')+'</span></div><div class="field"><b>設定說明</b><span>教學模式只影響說明內容，不會自動變更 CAD/CAM/SIM/NC 參數。</span></div><div class="field"><b>錯誤呈現</b><span>普通錯誤使用中性訊息導覽；真 CNC / Runtime ALARM 才保留警報色。</span></div></div><button class="btn" data-guidance-tutorial-toggle>教學模式：'+(on?'ON':'OFF')+'</button>';}
    else if(key==="MAINT")detail.innerHTML='<div class="notice">維修只處理 Web Prototype 暫存，不碰系統防毒或裝置安全。</div><button class="btn" data-menu-action="SELF_CHECK">Runtime 自我檢查</button><button class="btn danger" data-menu-action="CLEAR_DERIVED">清除 CAM/NC 衍生暫存</button><div class="notice" data-menu-msg></div>';
    else if(key==="HELP")simple("流程：CAD 製圖 → CAM 選策略 → 套用至刀路 → 刀路編輯/驗證 → 產生 NC → 3AX/4AX/5AX 模擬與 G-code 編輯。");
    setTimeout(()=>aigValidateAllFields(detail),0);
  }
  root.addEventListener("click",e=>aigGuard(root,"功能選單操作",()=>{
    const card=e.target.closest("[data-menu-key]");if(card){render(card.dataset.menuKey);return}
+   const tutorialToggle=e.target.closest("[data-guidance-tutorial-toggle]");if(tutorialToggle){const enabled=aigSetTutorialMode(!aigTutorialMode());render("SETTINGS");aigShowGuidance(root,{title:"AI 訊息導覽",where:"設定 / 教學模式",reason:"教學模式已切換。",suggested:enabled?"ON：顯示原因、建議值與影響":"OFF：只保留精簡導覽",impact:"只改說明密度，不會自動修改加工設定。"});return}
    const setupJump=e.target.closest("[data-setup-jump-axis]");
    if(setupJump){
      const axis=setupJump.dataset.setupJumpAxis,line=Math.max(0,Math.trunc(Number(setupJump.dataset.setupJumpLine)||0));
