@@ -944,6 +944,37 @@ for needle in (
 require(regression, "FIXTURE_COVERAGE_POLICY_GATE_PASS", "STUDIO_FIXTURE_COVERAGE_POLICY_297")
 print("FIXTURE_MODEL_RUNTIME_UI_GATE_PASS|ANDROID|WINDOWS|CLAMP|VISE|FIXTURE|MACHINE_ENVELOPE|LOOKAHEAD_VISIBLE|SHARED_RISK_MODEL")
 print("MODELED_COLLISION_NC_INTERLOCK_RUNTIME_GATE_PASS|MODELED_COLLISION_BLOCK|OVERCUT_BLOCK|UNMODELED_WARNING_ONLY|PREFLIGHT_REQUIRES_MODEL")
+for needle in (
+    'const val HEADER = "AIGSTUDIO_PROJECT|3"',
+    'const val LEGACY_V2_HEADER = "AIGSTUDIO_PROJECT|2"',
+    'const val LEGACY_HEADER = "AIGSTUDIO_PROJECT|1"',
+    "val axisC:Double=0.0",
+    "val fixtures:List<FixtureObstacle> = emptyList()",
+    "val toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()",
+    '"TOOLASSEMBLY|${project.toolAssembly.holderDiameter}|',
+    '"FIXTURE|${f.id}|${f.kind.name}|',
+    '"AXIS|${project.axisMode}|${project.axisA}|${project.axisB}|${project.axisC}"',
+):
+    require(project_repo, needle, "STUDIO_PROJECT_V3_FIXTURE_PERSISTENCE_298")
+for needle in (
+    "axisC=working.axisC",
+    "camFixtures.clear();camFixtures.addAll(working.fixtures)",
+    "camToolAssembly=working.toolAssembly",
+    "axisC,camFixtures,camToolAssembly",
+    "sharedLocalDirty.set(true)",
+):
+    require(android, needle, "STUDIO_ANDROID_PROJECT_FIXTURE_RESTORE_298")
+for needle in (
+    "val sharedProjectExtraDirty=java.util.concurrent.atomic.AtomicBoolean(false)",
+    "sharedProjectExtraDirty.get()",
+    "productionFixtures.clear();productionFixtures.addAll(working.fixtures)",
+    "productionToolAssembly=working.toolAssembly",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_PROJECT_FIXTURE_RESTORE_298")
+require(regression, "PROJECT_FIXTURE_PERSISTENCE_GATE_PASS", "STUDIO_PROJECT_FIXTURE_PERSISTENCE_REGRESSION_298")
+require(regression, "PROJECT_FIXTURE_SYNC_DIGEST_GATE_PASS", "STUDIO_PROJECT_FIXTURE_SYNC_DIGEST_REGRESSION_298")
+print("PROJECT_FIXTURE_PERSISTENCE_RUNTIME_GATE_PASS|PROJECT_V3|AXIS_C|MANUAL_C|FIXTURE|TOOL_ASSEMBLY|V1_V2_BACKWARD_COMPAT|ANDROID_WINDOWS_RESTORE")
+print("PROJECT_FIXTURE_SYNC_RUNTIME_GATE_PASS|FIXTURE_0.001_CHANGES_SHA|REVISION|REMOTE_NEWER|DIRTY_TRACKING|NO_SILENT_OVERWRITE")
 
 
 
