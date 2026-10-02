@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "332.0.0",
+  "version": "333.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 332. CAM/SIM derived results are now explicitly FRESH or STALE. User CAM/source/contour/manual-path/fixture/tool-assembly changes mark derived output stale without silently recalculating; explicit 重算 is required before SIM/NC use. Continue AIG-II UI parity and actual binary evidence.",
-  "note": "Studio 332: separated CAM settings from recalculation on Android and Windows. Old derived toolpath may remain visible while STALE, but cannot be treated as NC/SIM ready. Only explicit 重算 refreshes CAM/SIM derived cache. Settings shows live CAM/SIM freshness. Automatic regression remains OFF/LOCKED. No APK/EXE launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 333. Settings now labels every adjustable option with 可改 and an explicit default value; locked controls show fixed values. Continue CAM/SIM/NC freshness navigation so stale derived results cannot be mistaken for usable output.",
+  "note": "Studio 333: completed settings affordance labeling on Android/Windows. Editable theme/FPS/precision/performance/RGB options show explicit defaults; Regression and CNC Safety display locked fixed values. AIG-II Windows parity will bind this runtime. No APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -463,5 +463,18 @@
     "tool_assembly_marks_stale": true,
     "settings_live_freshness": true,
     "auto_regression": "OFF_LOCKED"
+  },
+  "settings_defaults_333": {
+    "editable_label": "可改｜預設：<value>",
+    "locked_label": "鎖定｜固定：<value>",
+    "theme_default": "AIG RGB Glass",
+    "fps_default": "60 FPS",
+    "coordinate_precision_default_mm": 0.001,
+    "nc_output_precision_default_mm": 0.001,
+    "power_default": "Auto",
+    "render_quality_default": "High",
+    "rgb_brightness_default_percent": 65,
+    "regression_fixed": "OFF",
+    "cnc_safety_fixed": "ON"
   }
 }

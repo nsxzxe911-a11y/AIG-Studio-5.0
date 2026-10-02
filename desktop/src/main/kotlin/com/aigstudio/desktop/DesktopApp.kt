@@ -4462,7 +4462,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             )}.onFailure{status.text="SETTINGS • CNC SAFETY VIEW BLOCKED • "+(it.message?:"error")}
         }
         action("驗證中心"){showManualRegressionCenter()}
-        action("座標 / 精度"){showDesktopCoordinatePrecisionDialog(frame,status)}
+        action("座標 / 精度（可改｜預設：0.001 mm）"){showDesktopCoordinatePrecisionDialog(frame,status)}
         action("工作 / 維修"){maintenanceCenterAction?.invoke() ?: run { status.text="SETTINGS • MAINTENANCE INITIALIZING" }}
         action("首頁"){productionUiButtons.forEach { (_,button) -> button.active=false };mainCardLayout.show(mainCardHost,"HOME");status.text="SETTINGS • HOME"}
         action("啟動版本更新 • ON"){
@@ -4510,7 +4510,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             )))
             add(statusGroup("CAD / 幾何",listOf(
                 Triple("Undo / Redo 選取","正常 • selection 跟隨歷史",Color(99,255,157)),
-                Triple("座標 / 精度（預設 0.001）","目前 0.001 mm • Master 0.000",StudioDesktopProductionTheme.text),
+                Triple("座標 / 精度（可改｜預設：0.001 mm）","目前 0.001 mm • Master 0.000",StudioDesktopProductionTheme.text),
                 Triple("編輯防護","原子預檢 • RECT 群組 • 無幽靈 ID",StudioDesktopProductionTheme.text),
                 Triple("ARRAY 上限","10,000 新幾何",StudioDesktopProductionTheme.text)
             )))
@@ -4519,19 +4519,19 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 Triple("重算規則","設定可改 • 不自動重算",StudioDesktopProductionTheme.text)
             )))
             add(statusGroup("NC / 安全",listOf(
-                Triple("CNC 安全核心","鎖定 • ON",StudioDesktopProductionTheme.warning)
+                Triple("CNC 安全核心（鎖定｜固定：ON）","ON",StudioDesktopProductionTheme.warning)
             )))
             add(statusGroup("更新 / 驗證",listOf(
                 Triple("版本更新","正常 • 背景比對 • NEWER ONLY",StudioDesktopProductionTheme.accent),
-                Triple("FPS（預設 60）","目前 "+StudioDesktopRefreshSettings.mode(),StudioDesktopProductionTheme.text),
-                Triple("Regression","鎖定 • OFF",StudioDesktopProductionTheme.warning)
+                Triple("FPS（可改｜預設：60 FPS）","目前 "+StudioDesktopRefreshSettings.mode(),StudioDesktopProductionTheme.text),
+                Triple("Regression（鎖定｜固定：OFF）","OFF",StudioDesktopProductionTheme.warning)
             )))
         }
 
         val selectors=JPanel(GridLayout(0,2,6,6)).apply{
             background=StudioDesktopProductionTheme.background
-            add(JLabel("佈景主題（可改）").apply{foreground=StudioDesktopProductionTheme.text});add(themeChoice)
-            add(JLabel("FPS 模式（預設 60 FPS）").apply{foreground=StudioDesktopProductionTheme.text});add(fpsChoice)
+            add(JLabel("佈景主題（可改｜預設：AIG RGB Glass）").apply{foreground=StudioDesktopProductionTheme.text});add(themeChoice)
+            add(JLabel("FPS 模式（可改｜預設：60 FPS）").apply{foreground=StudioDesktopProductionTheme.text});add(fpsChoice)
             add(JLabel("目前有效").apply{foreground=StudioDesktopProductionTheme.text})
             add(JLabel(StudioDesktopRefreshSettings.targetFps().toString()+" FPS").apply{foreground=StudioDesktopProductionTheme.text})
         }
@@ -4576,7 +4576,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         fun action(label:String,run:()->Unit){
             actions.add(GlassActionButton(label,Color(139,92,246)).apply{addActionListener{run()}})
         }
-        action("座標 / 精度"){showDesktopCoordinatePrecisionDialog(frame,status)}
+        action("座標 / 精度（可改｜預設：0.001 mm）"){showDesktopCoordinatePrecisionDialog(frame,status)}
         action("AI 診斷"){mainCardLayout.show(mainCardHost,"AI");status.text="MAINT • AI LOCAL ASSIST"}
         action("CAM 檢查"){showProductionCam()}
         action("NC 安全"){runCatching{showNcEditor(

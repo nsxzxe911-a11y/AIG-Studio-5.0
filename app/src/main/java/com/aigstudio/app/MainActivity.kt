@@ -2134,7 +2134,7 @@ class MainActivity : Activity() {
 
         section("CAD / 幾何")
         importantRow("Undo / Redo 選取","正常 • selection 跟隨歷史",0xFF63FF9D.toInt())
-        importantRow("座標精度（預設 0.001）","目前 "+precision+" mm • Master 0.000")
+        importantRow("座標精度（可改｜預設：0.001 mm）","目前 "+precision+" mm • Master 0.000")
         importantRow("編輯防護","原子預檢 • RECT 群組 • 無幽靈 ID")
         importantRow("ARRAY 上限","10,000 新幾何")
 
@@ -2145,13 +2145,13 @@ class MainActivity : Activity() {
         importantRow("重算規則","設定可改 • 不自動重算")
 
         section("NC / 安全")
-        importantRow("NC 輸出精度（預設 0.001）","目前 "+ncPrecision+" mm")
-        importantRow("CNC 安全核心","鎖定 • ON",StudioProductionTheme.warning)
+        importantRow("NC 輸出精度（可改｜預設：0.001 mm）","目前 "+ncPrecision+" mm")
+        importantRow("CNC 安全核心（鎖定｜固定：ON）","ON",StudioProductionTheme.warning)
 
         section("更新 / 驗證")
         importantRow("版本更新","正常 • 背景比對 • NEWER ONLY",StudioProductionTheme.accent)
-        importantRow("FPS（預設 60）","目前 "+fpsMode)
-        importantRow("Regression","鎖定 • OFF",StudioProductionTheme.warning)
+        importantRow("FPS（可改｜預設：60 FPS）","目前 "+fpsMode)
+        importantRow("Regression（鎖定｜固定：OFF）","OFF",StudioProductionTheme.warning)
 
         box.addView(TextView(this).apply {
             text="設定功能"
@@ -2167,8 +2167,8 @@ class MainActivity : Activity() {
                 setOnClickListener { run() }
             })
         }
-        action("佈景主題 / UI 套裝（可改）"){ showThemePackDialog() }
-        action("FPS / 精度 / 效能 / RGB（可改）"){ showEnvironmentSettings() }
+        action("佈景主題 / UI 套裝（可改｜預設：AIG RGB Glass）"){ showThemePackDialog() }
+        action("FPS / 精度 / 效能 / RGB（可改｜預設值已標示）"){ showEnvironmentSettings() }
         action("Regression • OFF（鎖定）"){
             AlertDialog.Builder(this)
                 .setTitle("Regression 設定")
@@ -5200,7 +5200,7 @@ private fun applyCoordinatePrecisionPreference() {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, fpsValues)
             val current = prefs.getString("fps_mode", "60 FPS") ?: "60 FPS"
             setSelection(fpsValues.indexOf(current).coerceAtLeast(0))
-            box.addView(TextView(this@MainActivity).apply { text = "FPS 模式（預設 60 FPS）" })
+            box.addView(TextView(this@MainActivity).apply { text = "FPS 模式（可改｜預設：60 FPS）" })
             box.addView(this)
         }
 
@@ -5209,7 +5209,7 @@ private fun applyCoordinatePrecisionPreference() {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, powerValues)
             val current = prefs.getString("power_mode", "Auto") ?: "Auto"
             setSelection(powerValues.indexOf(current).coerceAtLeast(0))
-            box.addView(TextView(this@MainActivity).apply { text = "省電 / 效能模式（預設 Auto）" })
+            box.addView(TextView(this@MainActivity).apply { text = "省電 / 效能模式（可改｜預設：Auto）" })
             box.addView(this)
         }
 
@@ -5218,7 +5218,7 @@ private fun applyCoordinatePrecisionPreference() {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, qualityValues)
             val current = prefs.getString("render_quality", "High") ?: "High"
             setSelection(qualityValues.indexOf(current).coerceAtLeast(0))
-            box.addView(TextView(this@MainActivity).apply { text = "3D / SIM 畫質（預設 High）" })
+            box.addView(TextView(this@MainActivity).apply { text = "3D / SIM 畫質（可改｜預設：High）" })
             box.addView(this)
         }
 
@@ -5228,7 +5228,7 @@ private fun applyCoordinatePrecisionPreference() {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, coordinatePrecisionLabels)
             val current = prefs.getString("coordinate_precision","0.001") ?: "0.001"
             setSelection(coordinatePrecisionValues.indexOf(current).coerceAtLeast(0))
-            box.addView(TextView(this@MainActivity).apply { text = "座標顯示 / 輸入步進（預設 0.001 mm）" })
+            box.addView(TextView(this@MainActivity).apply { text = "座標顯示 / 輸入步進（可改｜預設：0.001 mm）" })
             box.addView(this)
         }
 
@@ -5236,25 +5236,25 @@ private fun applyCoordinatePrecisionPreference() {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, coordinatePrecisionLabels)
             val current = prefs.getString("nc_output_precision","0.001") ?: "0.001"
             setSelection(coordinatePrecisionValues.indexOf(current).coerceAtLeast(0))
-            box.addView(TextView(this@MainActivity).apply { text = "NC 輸出精度（預設 0.001 mm）" })
+            box.addView(TextView(this@MainActivity).apply { text = "NC 輸出精度（可改｜預設：0.001 mm）" })
             box.addView(this)
         }
 
         val rgb = SeekBar(this).apply {
             max = 100
             progress = prefs.getInt("rgb_brightness", 65)
-            box.addView(TextView(this@MainActivity).apply { text = "RGB 亮度 0–100%（預設 65%）" })
+            box.addView(TextView(this@MainActivity).apply { text = "RGB 亮度 0–100%（可改｜預設：65%）" })
             box.addView(this)
         }
 
         val systemHud = CheckBox(this).apply {
-            text = "系統監控 HUD（預設 OFF）：精簡列 / 點擊展開"
+            text = "系統監控 HUD（可改｜預設：OFF）：精簡列 / 點擊展開"
             isChecked = prefs.getBoolean("system_hud_enabled", false)
             box.addView(this)
         }
 
         val fpsDisplay = CheckBox(this).apply {
-            text = "FPS 顯示（預設 OFF）：開啟即時實測 FPS"
+            text = "FPS 顯示（可改｜預設：OFF）：開啟即時實測 FPS"
             isChecked = prefs.getBoolean("fps_display_enabled", false)
             box.addView(this)
         }
@@ -5266,25 +5266,25 @@ private fun applyCoordinatePrecisionPreference() {
         }
 
         val overheatWarning = CheckBox(this).apply {
-            text = "過熱提醒（預設 ON）：CPU/GPU 75°C 警告 / 85°C 高溫"
+            text = "過熱提醒（可改｜預設：ON）：CPU/GPU 75°C 警告 / 85°C 高溫"
             isChecked = prefs.getBoolean("overheat_warning_enabled", true)
             box.addView(this)
         }
 
         val hud = CheckBox(this).apply {
-            text = "效能 HUD（預設 OFF）：FPS / Frame Time / Battery / Thermal"
+            text = "效能 HUD（可改｜預設：OFF）：FPS / Frame Time / Battery / Thermal"
             isChecked = prefs.getBoolean("hud_enabled", false)
             box.addView(this)
         }
 
         val autoThermal = CheckBox(this).apply {
-            text = "自動溫度降頻（預設 ON）：120 → 60 → 30"
+            text = "自動溫度降頻（可改｜預設：ON）：120 → 60 → 30"
             isChecked = prefs.getBoolean("thermal_auto", true)
             box.addView(this)
         }
 
         val idleThrottle = CheckBox(this).apply {
-            text = "Idle redraw throttling（預設 ON）"
+            text = "Idle redraw throttling（可改｜預設：ON）"
             isChecked = prefs.getBoolean("idle_throttle", true)
             box.addView(this)
         }
