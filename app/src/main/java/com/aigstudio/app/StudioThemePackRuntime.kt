@@ -21,6 +21,12 @@ object StudioThemePackRuntime {
     const val PROFILE="AIG_STUDIO_THEME_PACK_HOT_SWAP_V1"
     const val RESTART_REQUIRED=false
     const val ENGINEERING_SHELL_FALLBACK=false
+    const val BUTTON_VISUAL_HOT_REPLACE=true
+    const val BUTTON_CALLBACK_STABLE=true
+    const val GLASS_DEPTH_LAYERS=4
+    const val RGB_MAX_CHANNEL_DELTA=24
+    const val RGB_MAX_RELATIVE_LUMA_DELTA=0.12
+    const val SAFE_DEFAULT_REFRESH_HZ=60
 
     private val packs=linkedMapOf(
         "aigii_rgb_neon_v2" to StudioThemePalette(
