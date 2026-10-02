@@ -171,7 +171,7 @@ html,body{background:#020407}
 <header class="top">
  <div class="brand"><div><div class="logo">AIG CNC</div><small>BLACK RGB RUNTIME</small></div></div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● STUDIO 345 • LOCAL READY　0.001 mm</div>
+ <div class="status">● STUDIO 346 • LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
 <footer class="footer">AIG CNC • 黑色高對比 Runtime • Web Runtime • CNC machine output disabled</footer>
@@ -221,7 +221,7 @@ function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div cl
 
 function homePage(){
  return '<div data-home-runtime><div class="workgrid">'+
- '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 345 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
+ '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 346 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
  '<div class="menuGrid"><button class="menuCard" data-open-page="CAD">CAD 製圖</button><button class="menuCard" data-open-page="CAM">CAM 刀路</button><button class="menuCard" data-open-page="SIM">SIM 模擬</button><button class="menuCard" data-open-page="NC">NC 編輯</button><button class="menuCard" data-open-page="刀路">刀路工作頁</button><button class="menuCard" data-open-page="功能">設定 / 工具</button></div>'+
  '<div class="runtimeStatus" style="margin-top:9px"><div class="metric"><b>CAD</b><span data-home-cad>0 entities</span></div><div class="metric"><b>CAM</b><span data-home-cam>0 paths</span></div><div class="metric"><b>NC</b><span data-home-nc>0 lines</span></div><div class="metric"><b>Runtime</b><span>LOCAL READY</span></div></div>'+
  '<div class="notice" style="margin-top:9px">正式 Web Runtime 直接進 HOME；工程維修與設定收在功能頁。CNC machine output disabled。</div></div></section>'+
@@ -253,7 +253,7 @@ function simPage(axis){
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":axis==="6AX"?"/A/B/C":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
  '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 真 3D 加工模擬<small>WebGL 機械模型 • A/B/C 真旋轉 • 拖曳 360° 相機</small></div></div>'+
  '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button></div><div class="notice" data-motion-legend>RAPID 快移 • ENTRY 進刀 • CUT 切削 • EXIT 退刀 • RETRACT 抬刀 • AVOID 夾具閃避</div>'+
- '<div class="runtimeStatus"><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric"><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric"><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
+ '<div class="runtimeStatus"><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>RECENT CUT</b><span data-cut-trail>0 / last 3</span></div><div class="metric"><b>TOOL CONTACT</b><span data-contact-state>OPEN</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric"><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric"><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
  '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label><label class="param">刃長<input data-cutter-len type="number" value="30" min="1" step="0.1"></label><label class="param">刀柄 Ø<input data-holder-dia type="number" value="25" min="1" step="0.1"></label><label class="param">刀柄長<input data-holder-len type="number" value="25" min="1" step="0.1"></label><label class="param">G54 X<input data-g54-x type="number" value="0" step="0.001"></label><label class="param">G54 Y<input data-g54-y type="number" value="0" step="0.001"></label><label class="param">G54 Z<input data-g54-z type="number" value="0" step="0.001"></label><label class="param">G55 X<input data-g55-x type="number" value="0" step="0.001"></label><label class="param">G55 Y<input data-g55-y type="number" value="0" step="0.001"></label><label class="param">G55 Z<input data-g55-z type="number" value="0" step="0.001"></label><label class="param">H1<input data-h1 type="number" value="0" step="0.001"></label><label class="param">H4<input data-h4 type="number" value="0" step="0.001"></label><label class="param">H12<input data-h12 type="number" value="0" step="0.001"></label></div>'+
  '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+sourceCode[axis]+'</textarea></div>'+
@@ -739,6 +739,16 @@ function runtimeMotionColor(role,dry=false){
  return({RAPID:"#3694ff",ENTRY:"#ffb326",CUT:"#33f39b",EXIT:"#ff4da6",RETRACT:"#27e9ff",AVOID:"#9f72ff",FEED:"#b7c8d1",IDLE:"#66808f"})[role]||"#b7c8d1";
 }
 
+function runtimeRecentCutBlocks(parsed,index,limit=3){
+ const ids=[];if(!parsed?.blocks)return ids;
+ for(let i=0;i<=Math.min(index,parsed.blocks.length-1);i++){const bl=parsed.blocks[i];if(bl?.kind==="move"&&bl.cutting)ids.push(i)}
+ return ids.slice(-Math.max(1,limit));
+}
+function runtimeToolContact(bl,pos,toolDia,dry=false,stockTop=0){
+ const active=Boolean(!dry&&bl?.kind==="move"&&bl.cutting&&Number(pos?.Z)<Number(stockTop)+1e-9);
+ return{active,radius:Math.max(.05,Number(toolDia||0)/2),point:{X:Number(pos?.X||0),Y:Number(pos?.Y||0),Z:Number(pos?.Z||0)}};
+}
+
 function sampleRuntimeBlock(bl,t){
  const mix=(a,b)=>Number(a||0)+(Number(b||0)-Number(a||0))*t;
  if(!bl||bl.kind!=="move")return bl?.to?{...bl.to}:{X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0};
@@ -1203,8 +1213,8 @@ function makeGlScene(canvas,axis){
    gl.bindBuffer(gl.ARRAY_BUFFER,me.nb);gl.enableVertexAttribArray(loc.mp.n);gl.vertexAttribPointer(loc.mp.n,3,gl.FLOAT,false,0,0);
    gl.uniformMatrix4fv(loc.mp.mvp,false,M(vp,model));gl.uniformMatrix4fv(loc.mp.m,false,model);gl.uniform3fv(loc.mp.c,color);gl.drawArrays(gl.TRIANGLES,0,me.count);
  }
- function drawLine(points,color,vp){
-   if(points.length<2)return;const a=[];for(const p of points)a.push(p.x,p.y,p.z);gl.useProgram(lineProg);gl.bindBuffer(gl.ARRAY_BUFFER,lineBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(loc.lp.p);gl.vertexAttribPointer(loc.lp.p,3,gl.FLOAT,false,0,0);gl.uniformMatrix4fv(loc.lp.vp,false,vp);gl.uniform3fv(loc.lp.c,color);gl.drawArrays(gl.LINE_STRIP,0,points.length);
+ function drawLine(points,color,vp,width=1){
+   if(points.length<2)return;const a=[];for(const p of points)a.push(p.x,p.y,p.z);gl.useProgram(lineProg);gl.lineWidth(Math.max(1,width));gl.bindBuffer(gl.ARRAY_BUFFER,lineBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(loc.lp.p);gl.vertexAttribPointer(loc.lp.p,3,gl.FLOAT,false,0,0);gl.uniformMatrix4fv(loc.lp.vp,false,vp);gl.uniform3fv(loc.lp.c,color);gl.drawArrays(gl.LINE_STRIP,0,points.length);
  }
  function resize(){const dpr=Math.min(devicePixelRatio||1,2),r=canvas.getBoundingClientRect(),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);return{w,h,aspect:w/h}}
 
@@ -1253,24 +1263,25 @@ function makeGlScene(canvas,axis){
        drawMesh(cube,model,color,vp);
      }
 
-     const sampleBlock=scene.sampleBlock;
-     for(let i=0;i<moves.length;i++){
-       const bl=moves[i],samples=(bl.motion==="G2"||bl.motion==="G3"||Math.abs((bl.to.A||0)-(bl.from.A||0))>1e-6||Math.abs((bl.to.B||0)-(bl.from.B||0))>1e-6||Math.abs((bl.to.C||0)-(bl.from.C||0))>1e-6)?16:2,arr=[];
+     const sampleBlock=scene.sampleBlock,recentCutSet=new Set(runtimeRecentCutBlocks(scene.parsed,scene.index,3));
+     scene.parsed.blocks.forEach((bl,i)=>{
+       if(bl.kind!=="move")return;const samples=(bl.motion==="G2"||bl.motion==="G3"||Math.abs((bl.to.A||0)-(bl.from.A||0))>1e-6||Math.abs((bl.to.B||0)-(bl.from.B||0))>1e-6||Math.abs((bl.to.C||0)-(bl.from.C||0))>1e-6)?16:2,arr=[];
        for(let j=0;j<samples;j++){const t=samples===1?1:j/(samples-1),p=sampleBlock(bl,t),q={x:p.X,y:p.Y,z:p.Z};arr.push(q)}
-       drawLine(arr,rgb(runtimeMotionColor(runtimeMotionRole(bl),false)),vp);
-     }
+       drawLine(arr,rgb(recentCutSet.has(i)?runtimeMotionColor(runtimeMotionRole(bl),false):"#24485a"),vp,recentCutSet.has(i)?2:1);
+     });
      const execBlocks=scene.parsed.blocks;
      for(let i=0;i<execBlocks.length&&i<=scene.index;i++){
        const bl=execBlocks[i];if(bl.kind!=="move")continue;const end=i<scene.index?1:scene.t;if(end<=0)continue;const samples=16,arr=[];
        for(let j=0;j<=samples;j++){const t=Math.min(end,j/samples);if(t>end+1e-9)break;const p=sampleBlock(bl,t),q={x:p.X,y:p.Y,z:p.Z};arr.push(q)}
-       drawLine(arr,rgb(runtimeMotionColor(runtimeMotionRole(bl),scene.dry)),vp);
+       drawLine(arr,rgb(runtimeMotionColor(runtimeMotionRole(bl),scene.dry)),vp,recentCutSet.has(i)?3:(i===scene.index?2:1));
      }
 
      const sceneBlock=scene.parsed.blocks[Math.min(scene.index,Math.max(0,scene.parsed.blocks.length-1))]||null;
      const tp={x:pos.X||0,y:pos.Y||0,z:pos.Z||0},dia=Math.max(.5,runtimeToolDiameter({toolDia:scene.toolDia,toolDiameters:scene.toolDiameters},sceneBlock)),cutterLen=Math.max(1,Number(scene.cutterLen)||30),holderDia=Math.max(dia,Number(scene.holderDia)||25),holderLen=Math.max(1,Number(scene.holderLen)||25);
-     const alarm=Boolean(scene.collisionAlarm);
+     const alarm=Boolean(scene.collisionAlarm),contact=runtimeToolContact(sceneBlock,pos,dia,scene.dry,stockTop);
      drawMesh(cyl,M(T(tp.x,tp.y,tp.z+cutterLen/2),S(dia,dia,cutterLen)),rgb(alarm?"#ff465f":"#d8f5ff"),vp);
      drawMesh(cyl,M(T(tp.x,tp.y,tp.z+cutterLen+holderLen/2),S(holderDia,holderDia,holderLen)),rgb(alarm?"#8d1828":"#29465c"),vp);
+     if(contact.active){const cc=runtimeMotionColor("CUT",false);drawMesh(cyl,M(T(tp.x,tp.y,tp.z+.18),S(contact.radius*2.8,contact.radius*2.8,.36)),rgb(cc),vp)}
 
      drawLine([{x:0,y:0,z:0},{x:25,y:0,z:0}],rgb("#ff4f70"),vp);
      drawLine([{x:0,y:0,z:0},{x:0,y:25,z:0}],rgb("#33f39b"),vp);
@@ -1631,13 +1642,13 @@ function makeRuntime(root){
   // full path: G2/G3 use sampled arcs instead of straight chords.
   state.parsed.blocks.forEach(bl=>strokeBlock(bl,1,"rgba(39,233,255,.62)",1.5,5));
   // Executed trace. Cutting blocks use tool diameter; rapid/non-cut moves stay thin.
-  const ppm=pixelsPerMm(b,w,h),cfgTrace=settings();
+  const ppm=pixelsPerMm(b,w,h),cfgTrace=settings(),recentCutSet=new Set(runtimeRecentCutBlocks(state.parsed,state.index,3));
   state.parsed.blocks.forEach((bl,i)=>{
     if(bl.kind!=="move"||i>state.index)return;
     const tEnd=i<state.index?1:state.t,toolPx=Math.max(2,Math.min(20,runtimeToolDiameter(cfgTrace,bl)*ppm));
     const isCut=Boolean(bl.cutting)&&!state.dry,role=runtimeMotionRole(bl);
-    const stroke=runtimeMotionColor(role,state.dry);
-    strokeBlock(bl,tEnd,stroke,isCut?toolPx:(role==="AVOID"?2.8:role==="ENTRY"||role==="EXIT"?2.4:1.8),isCut?10:8);
+    const stroke=runtimeMotionColor(role,state.dry),recent=recentCutSet.has(i);
+    strokeBlock(bl,tEnd,stroke,isCut?(recent?Math.min(24,toolPx+4):toolPx):(role==="AVOID"?2.8:role==="ENTRY"||role==="EXIT"?2.4:1.8),recent?16:(isCut?10:8));
 
     // Z-axis drilling has no XY line in top view, so show actual removed hole diameter.
     if(isCut && bl.cycle && (bl.cyclePhase==="feed"||bl.cyclePhase==="peck-feed")){
@@ -1656,6 +1667,8 @@ function makeRuntime(root){
   const hVisual=Math.min(65,Math.abs(toolLengthFor(mc,cfg))*.22),toolVisual=55+hVisual;
   c.strokeStyle="#eefbff";c.lineWidth=3;c.beginPath();c.moveTo(q.x-tiltX,q.y-toolVisual+tiltY);c.lineTo(q.x,q.y);c.stroke();
   c.fillStyle="#27e9ff";c.beginPath();c.arc(q.x,q.y,5,0,Math.PI*2);c.fill();
+  const activeBl=currentBlock(),contact=runtimeToolContact(activeBl,p,runtimeToolDiameter(cfg,activeBl||{machine:mc}),state.dry,Number.isFinite(Number(stockConfig?.top))?Number(stockConfig.top):0);
+  if(contact.active){const rr=Math.max(8,Math.min(26,contact.radius*pixelsPerMm(b,w,h)+5));c.save();c.strokeStyle=runtimeMotionColor("CUT",false);c.shadowColor=runtimeMotionColor("CUT",false);c.shadowBlur=16;c.lineWidth=3;c.beginPath();c.arc(q.x,q.y,rr,0,Math.PI*2);c.stroke();c.restore()}
   if(axis!=="3AX"){
     const rad=(p.A||0)*Math.PI/180;c.strokeStyle=axis==="4AX"?"#ffb326":"#ff4da6";c.lineWidth=2;c.beginPath();c.arc(w-74,h-76,32,0,Math.PI*2);c.stroke();c.beginPath();c.moveTo(w-74,h-76);c.lineTo(w-74+Math.cos(rad)*30,h-76-Math.sin(rad)*30);c.stroke();
   }
@@ -1685,6 +1698,8 @@ function makeRuntime(root){
  function updateUi(){
   const p=currentPos(),len=state.parsed.blocks.length,progress=len?Math.min(100,((state.index+state.t)/len)*100):0,b=currentBlock(),cfg=settings(),mc=activeMachine(),uiToolDia=runtimeToolDiameter(cfg,b||{machine:mc});
   const role=runtimeMotionRole(b),motionEl=root.querySelector("[data-motion-role]");if(motionEl){motionEl.textContent=role;motionEl.style.color=runtimeMotionColor(role,state.dry)}
+  const recentCuts=runtimeRecentCutBlocks(state.parsed,state.index,3),cutTrailEl=root.querySelector("[data-cut-trail]");if(cutTrailEl)cutTrailEl.textContent=recentCuts.length+" / last 3";
+  const contact=runtimeToolContact(b,p,uiToolDia,state.dry,Number.isFinite(Number(stockConfig?.top))?Number(stockConfig.top):0),contactEl=root.querySelector("[data-contact-state]");if(contactEl){contactEl.textContent=contact.active?"CONTACT Ø"+(contact.radius*2).toFixed(3):"OPEN";contactEl.style.color=contact.active?runtimeMotionColor("CUT",false):"#8fa7b4"}
   root.querySelector("[data-spindle]").textContent=Math.round(p.S||0)+" RPM";
   root.querySelector("[data-feed]").textContent=Math.round(p.F||0)+" mm/min";
   root.querySelector("[data-block]").textContent=b?("["+(b.subprogram||state.parsed.mainProgram)+"] "+(b.raw.match(/N\s*\d+/i)?.[0]||("LINE "+(b.line+1)))+(b.subCall?(" →O"+b.subCall):"")+(b.stopCode?(" "+b.stopCode):"")):"—";
