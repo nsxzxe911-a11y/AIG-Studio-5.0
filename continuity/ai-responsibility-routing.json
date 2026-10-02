@@ -1,7 +1,7 @@
 {
   "schema": "aig-ai-responsibility-routing-v1",
   "product": "AIG Studio 5.0",
-  "version": "349.0.0",
+  "version": "350.0.0",
   "detector": "AI",
   "principle": "AI_DETECTS_CLASSIFIES_RETURNS_REWORK_REVERIFIES; OWNER_DEPARTMENT_FIXES",
   "lifecycle": [

@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "349.0.0",
+  "version": "350.0.0",
   "branch": "main",
-  "recorded_source_head": "eae0d38bd69a822311ec7c9beacd65a9b45ec745",
+  "recorded_source_head": "904931764ac2e3c395e86f80e347f3d68f4a2a24",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate Studio 349 5AX camera hysteresis from the exact commit, then bind AIG-II 385 to that SHA. Preserve auto-occlusion, manual camera authority, true material removal, CAM/NC data flow, and Web machine-output-disabled policy.",
-  "note": "Studio 349: Web 5AX/6AX auto-occlusion now holds the current avoidance candidate with a minimum dwell and score hysteresis. Symmetric or marginally better candidates do not replace a stable view; a blocked held view can escape immediately to a clear challenger, and a clear center view is restored only after the hold window when materially better. Manual pointer/wheel authority remains higher priority.",
+  "next_action": "Validate Studio 350 5AX camera response adaptation from the exact commit, then bind AIG-II 386 to that SHA. Preserve occlusion hysteresis, manual camera authority, true material removal, CAM/NC data flow, and Web machine-output-disabled policy.",
+  "note": "Studio 350: Web 5AX/6AX tool-follow now uses delta-time camera response instead of fixed per-frame smoothing. Long RAPID/G0 moves use a slower time constant, ENTRY and CUT tighten focus, active tool contact uses the strongest CUT LOCK, and occlusion-shift smoothing follows the same motion-aware response while blocked-view escape stays fast. The response is stable across 30/60/120 Hz and manual camera authority remains higher priority.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
