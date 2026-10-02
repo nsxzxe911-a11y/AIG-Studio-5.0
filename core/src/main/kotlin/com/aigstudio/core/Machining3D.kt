@@ -207,13 +207,15 @@ object MachiningRiskScanner {
             Vec2(a.to.x+(b.to.x-a.to.x)*t,a.to.y+(b.to.y-a.to.y)*t),
             a.z+(b.z-a.z)*t,
             a.axisA+(b.axisA-a.axisA)*t,
-            a.axisB+(b.axisB-a.axisB)*t
+            a.axisB+(b.axisB-a.axisB)*t,
+            a.axisC+(b.axisC-a.axisC)*t
         ) else Feed(
             Vec2(a.to.x+(b.to.x-a.to.x)*t,a.to.y+(b.to.y-a.to.y)*t),
             1.0,
             a.z+(b.z-a.z)*t,
             a.axisA+(b.axisA-a.axisA)*t,
-            a.axisB+(b.axisB-a.axisB)*t
+            a.axisB+(b.axisB-a.axisB)*t,
+            a.axisC+(b.axisC-a.axisC)*t
         )
 
     private fun samples(a:Move,b:Move,stepMm:Double):List<Move> {
@@ -234,7 +236,8 @@ object MachiningRiskScanner {
                         b.feedMmMin,
                         a.z+(b.z-a.z)*t,
                         a.axisA+(b.axisA-a.axisA)*t,
-                        a.axisB+(b.axisB-a.axisB)*t
+                        a.axisB+(b.axisB-a.axisB)*t,
+                        a.axisC+(b.axisC-a.axisC)*t
                     )
                 }
             }
@@ -479,6 +482,7 @@ object MachineModel3DBuilder {
     private fun inferMode(result:Machining3DResult):String {
         val moves=result.cam.toolpaths.flatMap{it.moves}
         return when {
+            moves.any{abs(it.axisC)>EPS} -> "6AX"
             moves.any{abs(it.axisB)>EPS} -> "5AX"
             moves.any{abs(it.axisA)>EPS} -> "4AX"
             else -> "3AX"
@@ -503,7 +507,7 @@ object MachineModel3DBuilder {
         val live=toolPointOverride ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
         val requestedA=axisAOverride ?: live?.axisA ?: 0.0
         val requestedB=axisBOverride ?: live?.axisB ?: 0.0
-        val requestedC=axisCOverride ?: 0.0
+        val requestedC=axisCOverride ?: live?.axisC ?: 0.0
         val a=if(mode=="3AX")0.0 else requestedA
         val b=if(mode=="5AX" || mode=="6AX")requestedB else 0.0
         val c=if(mode=="6AX")requestedC else 0.0
@@ -651,9 +655,10 @@ object Machining3DEngine {
         axisB: Double = 0.0,
         axisSchedule: MultiAxisOrientationSchedule? = null,
         fixtures:List<FixtureObstacle> = emptyList(),
-        toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
+        toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig(),
+        axisC:Double = 0.0
     ): Machining3DResult {
-        val cam = CamModel.fromCad(0L, snapshot, settings, axisA, axisB, axisSchedule)
+        val cam = CamModel.fromCad(0L, snapshot, settings, axisA, axisB, axisSchedule,axisC)
         require(cam.toolpaths.isNotEmpty()) { "CAM generated no toolpaths" }
         val resolvedStock=stock ?: Stock3D.fromSnapshot(
             snapshot,
