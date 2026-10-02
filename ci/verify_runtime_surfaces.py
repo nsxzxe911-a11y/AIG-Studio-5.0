@@ -869,6 +869,36 @@ require(regression, "REAL_MACHINE_MODEL_3_4_5_6AX_GATE_PASS", "STUDIO_TRUE_MACHI
 require(regression, "MACHINE_KINEMATICS_RUNTIME_PARITY_PASS", "STUDIO_MACHINE_KINEMATICS_REGRESSION_174")
 print("TRUE_MACHINE_MODEL_RUNTIME_PARITY_GATE_PASS|ANDROID|WINDOWS|3AX|4AX|5AX|6AX|BASE|COLUMN|TABLE|FIXTURE|TRUNNION|ROTARY_A|ROTARY_B|ROTARY_C|SPINDLE|HOLDER|TOOL|DYNAMIC_ABC|MASTER_ORIGIN|SHARED_KINEMATICS")
 for needle in (
+    "val axisC: Double",
+    "fun atABC(progress:Double):Triple<Double,Double,Double>",
+    "override val axisC: Double = 0.0",
+    "axisSchedule?.atABC(progress)",
+    "axisC=orientation.third",
+):
+    require(cam_core, needle, "STUDIO_CONTINUOUS_6AX_CAM_294")
+for needle in (
+    "a.axisC+(b.axisC-a.axisC)*t",
+    "moves.any{abs(it.axisC)>EPS} -> \"6AX\"",
+    "val requestedC=axisCOverride ?: live?.axisC ?: 0.0",
+    "axisC:Double = 0.0",
+):
+    require(machining3d_core, needle, "STUDIO_CONTINUOUS_6AX_SIM_294")
+for needle in (
+    'live?.axisC ?: machineAxisC',
+    'liveMove?.axisC ?: machineAxisC',
+):
+    require(machining3d, needle, "STUDIO_ANDROID_LIVE_C_294")
+for needle in (
+    "axisC=frame.toolPoint.axisC",
+    'setMachineMode("6AX")',
+    "setAngles(six.axisA,six.axisB,six.axisC)",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_LIVE_C_294")
+require(core, "6AX_C_AXIS_NC_POST_BLOCKED", "STUDIO_6AX_NC_FAIL_CLOSED_294")
+require(regression, "CONTINUOUS_6AX_CAM_SIM_GATE_PASS", "STUDIO_CONTINUOUS_6AX_REGRESSION_294")
+print("CONTINUOUS_6AX_RUNTIME_GATE_PASS|CAM_PER_TOOLPOINT_ABC|PROGRESSIVE_SIM|ANDROID_LIVE_C|WINDOWS_LIVE_C|NC_C_FAIL_CLOSED")
+
+for needle in (
     "Color.argb(if(moving) 246 else 236, 56, 104, 138)",
     "Color.argb(if(moving) 250 else 244, 82, 132, 184)",
     "Color.argb(250, 38, 210, 230)",
