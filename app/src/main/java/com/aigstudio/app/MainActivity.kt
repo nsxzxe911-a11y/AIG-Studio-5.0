@@ -2285,7 +2285,9 @@ class MainActivity : Activity() {
             Toast.makeText(this, "REAL CAM BLOCKED • AUTO 模式需要 CAD；可切 MANUAL 直接編走刀", Toast.LENGTH_LONG).show()
             return
         }
-        val cam = runCatching { CamModel.fromCad(System.currentTimeMillis(), snapshot, camSettings, axisA, axisB) }
+        val cam = runCatching {
+            CamModel.fromCad(System.currentTimeMillis(), snapshot, camSettings, axisA, axisB, axisC=axisC)
+        }
             .getOrElse {
                 Toast.makeText(this, "REAL CAM BLOCKED • " + (it.message ?: "CAM build error"), Toast.LENGTH_LONG).show()
                 return
@@ -3263,7 +3265,9 @@ class MainActivity : Activity() {
                     snapshot,stockMarginMm,stockThicknessMm,
                     if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
                 ),
-                target.axisA,target.axisB,schedule
+                target.axisA,target.axisB,schedule,
+                fixtures=camFixtures,
+                toolAssembly=camToolAssembly
             )
             activeAxisMode=m
             simulationIndex=0
@@ -3974,7 +3978,9 @@ class MainActivity : Activity() {
             Toast.makeText(this, "NC EDIT：AUTO 需要 CAD；MANUAL 可直接 Post", Toast.LENGTH_LONG).show()
             return
         }
-        val cam = runCatching { CamModel.fromCad(System.currentTimeMillis(), snapshot, camSettings) }
+        val cam = runCatching {
+            CamModel.fromCad(System.currentTimeMillis(), snapshot, camSettings, axisA, axisB, axisC=axisC)
+        }
             .getOrElse {
                 Toast.makeText(this, "CAM 產生失敗: " + it.message, Toast.LENGTH_LONG).show()
                 return
@@ -4289,7 +4295,8 @@ class MainActivity : Activity() {
                 ),
                 axisA,axisB,
                 fixtures=camFixtures,
-                toolAssembly=camToolAssembly
+                toolAssembly=camToolAssembly,
+                axisC=axisC
             )
         }
             .onSuccess { result ->
