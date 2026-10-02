@@ -33,6 +33,8 @@ data class RenderCompatibilityProfile(
 )
 
 object RenderCompatibilityContract {
+    const val STARTUP_SAFE_HZ=60
+    const val STARTUP_PROMOTION_DELAY_MS=1800L
     const val MAX_REFRESH_HZ=120
     const val MIN_REFRESH_HZ=30
     val SUPPORTED_REFRESH_HZ=listOf(30,60,90,120)
@@ -154,5 +156,29 @@ object RenderColorCompatibility {
         targetFps>=90 -> 1000L
         targetFps>=60 -> 1080L
         else -> 1160L
+    }
+}
+
+
+object RgbButtonVisualContract {
+    const val CALLBACK_STABLE=true
+    const val HOT_REPLACE_ALLOWED=true
+    const val RESTART_REQUIRED=false
+    const val FALLBACK_TO_VERIFIED_DEFAULT=true
+    const val DEPTH_LAYERS=4
+    const val PRESS_SCALE=0.965
+    val verifiedAssetId=Regex("[a-z0-9_\\-]{2,64}")
+
+    fun requireAssetId(id:String):String {
+        val normalized=id.trim().lowercase()
+        require(verifiedAssetId.matches(normalized)){"Invalid RGB button asset id"}
+        return normalized
+    }
+
+    fun depthScale(tier:RenderResolutionTier):Double=when(tier){
+        RenderResolutionTier.UHD_4K->1.12
+        RenderResolutionTier.THREE_K->1.08
+        RenderResolutionTier.QHD_2K->1.04
+        RenderResolutionTier.FHD_1080->1.00
     }
 }
