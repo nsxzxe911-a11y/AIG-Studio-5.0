@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from audit_contract import DEPARTMENTS
 
 ROOT=Path(__file__).resolve().parents[1]
 xml_path=ROOT/"continuity/cache-update-standard.xml"
 root=ET.fromstring(xml_path.read_text(encoding="utf-8"))
 version=(ROOT/"release-version.properties").read_text(encoding="utf-8").strip().split("=",1)[1]
-required=["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","WEB","PRO_AUDIT"]
+required=DEPARTMENTS
 
 assert root.tag=="aigCacheUpdateStandard"
 assert root.attrib["schema"]=="aig-cache-update-xml-v1"
