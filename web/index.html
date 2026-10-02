@@ -171,7 +171,7 @@ html,body{background:#020407}
 <header class="top">
  <div class="brand"><div><div class="logo">AIG CNC</div><small>BLACK RGB RUNTIME</small></div></div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● STUDIO 343 • LOCAL READY　0.001 mm</div>
+ <div class="status">● STUDIO 344 • LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
 <footer class="footer">AIG CNC • 黑色高對比 Runtime • Web Runtime • CNC machine output disabled</footer>
@@ -221,7 +221,7 @@ function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div cl
 
 function homePage(){
  return '<div data-home-runtime><div class="workgrid">'+
- '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 343 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
+ '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 344 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
  '<div class="menuGrid"><button class="menuCard" data-open-page="CAD">CAD 製圖</button><button class="menuCard" data-open-page="CAM">CAM 刀路</button><button class="menuCard" data-open-page="SIM">SIM 模擬</button><button class="menuCard" data-open-page="NC">NC 編輯</button><button class="menuCard" data-open-page="刀路">刀路工作頁</button><button class="menuCard" data-open-page="功能">設定 / 工具</button></div>'+
  '<div class="runtimeStatus" style="margin-top:9px"><div class="metric"><b>CAD</b><span data-home-cad>0 entities</span></div><div class="metric"><b>CAM</b><span data-home-cam>0 paths</span></div><div class="metric"><b>NC</b><span data-home-nc>0 lines</span></div><div class="metric"><b>Runtime</b><span>LOCAL READY</span></div></div>'+
  '<div class="notice" style="margin-top:9px">正式 Web Runtime 直接進 HOME；工程維修與設定收在功能頁。CNC machine output disabled。</div></div></section>'+
@@ -289,7 +289,7 @@ function camPage(){
  const ops=strategies.map(([label,key,ready])=>'<button class="btn" data-cam-strategy="'+key+'" '+(ready?'':'disabled title="待完整 3D 曲面核心接入"')+'>'+label+'</button>').join("");
  return '<div data-cam-runtime><div class="camgrid">'+
  '<section class="panel"><div class="head"><h3>快速刀路</h3></div><div class="body"><div class="ops">'+ops+'</div><div class="notice" style="margin-top:8px" data-cam-msg>先選策略；CAM 會直接讀取 CAD AutoSave 幾何。</div></div></section>'+
- '<section class="panel"><div class="head"><div><h2>CAM 加工預覽</h2><small>CAD 幾何 → 真刀路資料</small></div><span class="spacer"></span><span class="badge" data-cam-cad-count>CAD 0</span></div><div class="body"><canvas class="camCanvas" data-cam-canvas></canvas><div class="controls"><button class="btn" data-cam-action="RELOAD">重讀 CAD</button><button class="btn play" data-cam-action="CALC">計算刀路</button><button class="btn" data-cam-action="FIT">Fit</button><button class="btn play" data-cam-action="APPLY">套用至刀路</button><button class="btn" data-open-page="刀路">刀路編輯</button></div></div></section>'+
+ '<section class="panel"><div class="head"><div><h2>CAM 加工預覽</h2><small>CAD 幾何 → 真刀路資料</small></div><span class="spacer"></span><span class="badge" data-cam-cad-count>CAD 0</span></div><div class="body"><canvas class="camCanvas" data-cam-canvas></canvas><div class="controls"><button class="btn" data-cam-action="RELOAD">重讀 CAD</button><button class="btn play" data-cam-action="CALC">計算刀路</button><button class="btn" data-cam-action="FIT">Fit</button><button class="btn play" data-cam-action="APPLY">套用至刀路</button><button class="btn play" data-cam-action="FLOW">套用 → 刀路</button><button class="btn" data-open-page="刀路">刀路編輯</button></div></div></section>'+
  '<section class="panel"><div class="head"><h3>刀具與參數</h3></div><div class="body form">'+
  '<label class="param">刀具 Ø<input data-cam-tool type="number" value="10" min="0.1" step="0.001"></label>'+
  '<label class="param">深度<input data-cam-depth type="number" value="-10" step="0.001"></label>'+
@@ -307,12 +307,24 @@ function camPage(){
  '<label class="param">Ramp 最大角度 °<input data-cam-ramp-angle type="number" value="5" min="0.5" max="15" step="0.1"></label>'+
  '<div class="notice">自適應粗加工目前是 2.5D 封閉區域核心：RECT / CIRCLE / HOLE，多 Z 層、限制徑向負載；不冒充自由曲面 3D Adaptive。</div>'+
  '<div class="field"><b>方向</b><select data-cam-direction style="width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px"><option value="CW">順銑 CW</option><option value="CCW">逆銑 CCW</option></select></div>'+
+ '<div class="field"><b>輪廓側</b><select data-cam-contour-side style="width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px"><option value="OUTSIDE">外徑 OUTSIDE</option><option value="INSIDE">內徑 INSIDE</option></select></div>'+
+ '<div class="field"><b>走刀控制</b><select data-cam-route-mode style="width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px"><option value="AUTO">AUTO</option><option value="MANUAL">MANUAL</option></select></div>'+
+ '<label class="param">進刀長<input data-cam-leadin type="number" value="5" min="0" step="0.001"></label>'+
+ '<label class="param">退刀長<input data-cam-leadout type="number" value="5" min="0" step="0.001"></label>'+
+ '<label class="param">起刀 X<input data-cam-entry-x type="number" value="0" step="0.001"></label>'+
+ '<label class="param">起刀 Y<input data-cam-entry-y type="number" value="0" step="0.001"></label>'+
+ '<label class="param">落刀/退刀 X<input data-cam-exit-x type="number" value="0" step="0.001"></label>'+
+ '<label class="param">落刀/退刀 Y<input data-cam-exit-y type="number" value="0" step="0.001"></label>'+
+ '<label class="param"><input data-cam-avoid-enabled type="checkbox"> 夾具閃避點</label>'+
+ '<label class="param">閃避 X<input data-cam-avoid-x type="number" value="0" step="0.001"></label>'+
+ '<label class="param">閃避 Y<input data-cam-avoid-y type="number" value="0" step="0.001"></label>'+
+ '<label class="param">閃避 Z<input data-cam-avoid-z type="number" value="20" step="0.001"></label>'+
  '<div class="camStats"><div class="field"><b>策略</b><span data-cam-strategy-name>未選</span></div><div class="field"><b>刀路</b><span data-cam-path-count>0</span></div><div class="field"><b>Z 層數</b><span data-cam-layer-count>0</span></div><div class="field"><b>估算長度</b><span data-cam-length>0.000 mm</span></div><div class="field"><b>來源</b><span data-cam-source>CAD AutoSave</span></div></div>'+
  '</div></section></div></div>';
 }
 function toolpathPage(){
  return '<div data-tp-runtime><div class="toolstrip">'+
- '<button class="btn" data-tp-action="TOGGLE">顯示/隱藏</button><button class="btn" data-tp-action="UP">OP 上移</button><button class="btn" data-tp-action="DOWN">OP 下移</button><button class="btn" data-tp-action="ENABLE">啟用/停用 OP</button><button class="btn play" data-tp-action="RECALC">重新計算</button><button class="btn" data-tp-action="EDIT">編輯節點</button><button class="btn" data-tp-action="FIT">Fit</button><button class="btn play" data-tp-action="VERIFY">驗證</button><button class="btn danger" data-tp-action="DELETE">刪除</button><button class="btn play" data-tp-action="SAVE">儲存</button><button class="btn play" data-tp-action="POST">產生 NC</button>'+
+ '<button class="btn" data-tp-action="TOGGLE">顯示/隱藏</button><button class="btn" data-tp-action="UP">OP 上移</button><button class="btn" data-tp-action="DOWN">OP 下移</button><button class="btn" data-tp-action="ENABLE">啟用/停用 OP</button><button class="btn play" data-tp-action="RECALC">重新計算</button><button class="btn" data-tp-action="EDIT">編輯節點</button><button class="btn" data-tp-action="FIT">Fit</button><button class="btn play" data-tp-action="VERIFY">驗證</button><button class="btn danger" data-tp-action="DELETE">刪除</button><button class="btn play" data-tp-action="SAVE">儲存</button><button class="btn play" data-tp-action="POST">產生 NC</button><button class="btn play" data-tp-action="SIM">驗證 → SIM</button>'+
  '</div><div class="camgrid" style="grid-template-columns:260px minmax(0,1fr) 300px;margin-top:9px">'+
  '<section class="panel"><div class="head"><h3>刀路列表</h3></div><div class="body"><div class="tpList" data-tp-list></div><div class="notice" style="margin-top:8px" data-tp-msg>從 CAM 套用刀路後，會出現在這裡。</div></div></section>'+
  '<section class="panel"><div class="head"><div><h2>刀路 2D/3D 編輯基底</h2><small>節點可拖動 • G-code 產生前驗證</small></div><span class="spacer"></span><span class="badge" data-tp-count>0 paths</span></div><div class="body"><canvas class="tpCanvas" data-tp-canvas></canvas></div></section>'+
@@ -2121,11 +2133,11 @@ function makeCadRuntime(root){
 function makeCamRuntime(root){
  const canvas=root.querySelector("[data-cam-canvas]"),ctx=canvas.getContext("2d");
  const cadCountEl=root.querySelector("[data-cam-cad-count]"),msgEl=root.querySelector("[data-cam-msg]"),strategyEl=root.querySelector("[data-cam-strategy-name]"),pathCountEl=root.querySelector("[data-cam-path-count]"),layerCountEl=root.querySelector("[data-cam-layer-count]"),lengthEl=root.querySelector("[data-cam-length]");
- const toolInput=root.querySelector("[data-cam-tool]"),depthInput=root.querySelector("[data-cam-depth]"),feedInput=root.querySelector("[data-cam-feed]"),rpmInput=root.querySelector("[data-cam-rpm]"),safeInput=root.querySelector("[data-cam-safez]"),stockTopInput=root.querySelector("[data-cam-stocktop]"),stockThicknessInput=root.querySelector("[data-cam-stockthickness]"),stepDownInput=root.querySelector("[data-cam-stepdown]"),marginXInput=root.querySelector("[data-cam-marginx]"),marginYInput=root.querySelector("[data-cam-marginy]"),adaptiveLoadInput=root.querySelector("[data-cam-adaptive-load]"),adaptiveRampAngleInput=root.querySelector("[data-cam-ramp-angle]"),pitchInput=root.querySelector("[data-cam-pitch]"),stepInput=root.querySelector("[data-cam-stepover]"),dirInput=root.querySelector("[data-cam-direction]");
+ const toolInput=root.querySelector("[data-cam-tool]"),depthInput=root.querySelector("[data-cam-depth]"),feedInput=root.querySelector("[data-cam-feed]"),rpmInput=root.querySelector("[data-cam-rpm]"),safeInput=root.querySelector("[data-cam-safez]"),stockTopInput=root.querySelector("[data-cam-stocktop]"),stockThicknessInput=root.querySelector("[data-cam-stockthickness]"),stepDownInput=root.querySelector("[data-cam-stepdown]"),marginXInput=root.querySelector("[data-cam-marginx]"),marginYInput=root.querySelector("[data-cam-marginy]"),adaptiveLoadInput=root.querySelector("[data-cam-adaptive-load]"),adaptiveRampAngleInput=root.querySelector("[data-cam-ramp-angle]"),pitchInput=root.querySelector("[data-cam-pitch]"),stepInput=root.querySelector("[data-cam-stepover]"),dirInput=root.querySelector("[data-cam-direction]"),sideInput=root.querySelector("[data-cam-contour-side]"),routeModeInput=root.querySelector("[data-cam-route-mode]"),camLeadInInput=root.querySelector("[data-cam-leadin]"),camLeadOutInput=root.querySelector("[data-cam-leadout]"),entryXInput=root.querySelector("[data-cam-entry-x]"),entryYInput=root.querySelector("[data-cam-entry-y]"),exitXInput=root.querySelector("[data-cam-exit-x]"),exitYInput=root.querySelector("[data-cam-exit-y]"),avoidEnabledInput=root.querySelector("[data-cam-avoid-enabled]"),avoidXInput=root.querySelector("[data-cam-avoid-x]"),avoidYInput=root.querySelector("[data-cam-avoid-y]"),avoidZInput=root.querySelector("[data-cam-avoid-z]");
  const state={cad:[],strategy:null,paths:[],view:{scale:4,panX:0,panY:0}};
  const clone=x=>JSON.parse(JSON.stringify(x));
  function validateCamFields(){
-   [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,marginXInput,marginYInput,adaptiveLoadInput,adaptiveRampAngleInput,pitchInput,stepInput,dirInput].forEach(aigValidateField);
+   [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,marginXInput,marginYInput,adaptiveLoadInput,adaptiveRampAngleInput,pitchInput,stepInput,dirInput,sideInput,routeModeInput,camLeadInInput,camLeadOutInput,entryXInput,entryYInput,exitXInput,exitYInput,avoidXInput,avoidYInput,avoidZInput].forEach(aigValidateField);
    const depth=Number(depthInput.value),safe=Number(safeInput.value),top=Number(stockTopInput.value),thick=Number(stockThicknessInput.value),stepDown=Number(stepDownInput.value),marginX=Number(marginXInput.value),marginY=Number(marginYInput.value),adaptiveLoad=Number(adaptiveLoadInput.value),adaptiveRampAngle=Number(adaptiveRampAngleInput.value);
    if(Number.isFinite(depth)&&depth>=0)aigFieldIssue(depthInput,"warn","加工深度目前 ≥ 0；若要切入材料，通常應使用負 Z。");
    if(Number.isFinite(safe)&&Number.isFinite(top)&&safe<=top)aigFieldIssue(safeInput,"error","Safe-Z 必須高於毛坯頂面 Z "+top.toFixed(3)+"。");
@@ -2137,9 +2149,10 @@ function makeCamRuntime(root){
    if(Number.isFinite(adaptiveRampAngle)&&(adaptiveRampAngle<.5||adaptiveRampAngle>15))aigFieldIssue(adaptiveRampAngleInput,"error","Ramp 最大角度必須介於 0.5°–15°。");
    if(Number.isFinite(depth)&&Number.isFinite(top)&&Number.isFinite(thick)&&depth<top-thick-1e-9)aigFieldIssue(depthInput,"error","加工深度 "+depth.toFixed(3)+" 超過毛坯底面 "+(top-thick).toFixed(3)+" mm。");
    if(state.strategy==="TAP"&&!(Number(pitchInput.value)>0))aigFieldIssue(pitchInput,"error","攻牙需要輸入螺距 mm/rev。");
+   if(routeModeInput.value==="MANUAL"&&avoidEnabledInput.checked&&Number(avoidZInput.value)<Number(safeInput.value))aigFieldIssue(avoidZInput,"error","閃避 Z 不可低於 Safe-Z。");
    return root.querySelectorAll("input.aigError,select.aigError,textarea.aigError").length;
  }
- function params(){validateCamFields();return{toolDia:Math.max(.1,aigFiniteNumber(toolInput.value,10)),depth:aigFiniteNumber(depthInput.value,-10),feed:Math.max(1,aigFiniteNumber(feedInput.value,1200)),rpm:Math.max(1,aigFiniteNumber(rpmInput.value,12000)),safeZ:aigFiniteNumber(safeInput.value,5),stockTop:aigFiniteNumber(stockTopInput.value,0),stockThickness:Math.max(.001,aigFiniteNumber(stockThicknessInput.value,20)),stepDown:Math.max(.001,aigFiniteNumber(stepDownInput.value,2)),stockMarginX:Math.max(0,aigFiniteNumber(marginXInput.value,5)),stockMarginY:Math.max(0,aigFiniteNumber(marginYInput.value,5)),adaptiveLoad:Math.max(.10,Math.min(.45,aigFiniteNumber(adaptiveLoadInput.value,35)/100)),adaptiveRampAngleDeg:Math.max(.5,Math.min(15,aigFiniteNumber(adaptiveRampAngleInput.value,5))),tapPitch:aigFiniteNumber(pitchInput.value,0),stepover:Math.max(.05,Math.min(.95,aigFiniteNumber(stepInput.value,50)/100)),direction:dirInput.value}}
+ function params(){validateCamFields();const routeMode=routeModeInput.value==="MANUAL"?"MANUAL":"AUTO";return{toolDia:Math.max(.1,aigFiniteNumber(toolInput.value,10)),depth:aigFiniteNumber(depthInput.value,-10),feed:Math.max(1,aigFiniteNumber(feedInput.value,1200)),rpm:Math.max(1,aigFiniteNumber(rpmInput.value,12000)),safeZ:aigFiniteNumber(safeInput.value,5),stockTop:aigFiniteNumber(stockTopInput.value,0),stockThickness:Math.max(.001,aigFiniteNumber(stockThicknessInput.value,20)),stepDown:Math.max(.001,aigFiniteNumber(stepDownInput.value,2)),stockMarginX:Math.max(0,aigFiniteNumber(marginXInput.value,5)),stockMarginY:Math.max(0,aigFiniteNumber(marginYInput.value,5)),adaptiveLoad:Math.max(.10,Math.min(.45,aigFiniteNumber(adaptiveLoadInput.value,35)/100)),adaptiveRampAngleDeg:Math.max(.5,Math.min(15,aigFiniteNumber(adaptiveRampAngleInput.value,5))),tapPitch:aigFiniteNumber(pitchInput.value,0),stepover:Math.max(.05,Math.min(.95,aigFiniteNumber(stepInput.value,50)/100)),direction:dirInput.value,contourSide:sideInput.value==="INSIDE"?"INSIDE":"OUTSIDE",routeMode,leadIn:Math.max(0,aigFiniteNumber(camLeadInInput.value,0)),leadOut:Math.max(0,aigFiniteNumber(camLeadOutInput.value,0)),manualEntry:routeMode==="MANUAL"?{x:aigFiniteNumber(entryXInput.value,0),y:aigFiniteNumber(entryYInput.value,0)}:null,manualExit:routeMode==="MANUAL"?{x:aigFiniteNumber(exitXInput.value,0),y:aigFiniteNumber(exitYInput.value,0)}:null,avoidance:routeMode==="MANUAL"&&avoidEnabledInput.checked?{enabled:true,x:aigFiniteNumber(avoidXInput.value,0),y:aigFiniteNumber(avoidYInput.value,0),z:aigFiniteNumber(avoidZInput.value,20)}:{enabled:false}}}
  function loadCad(){
    const v=aigJsonRead(root,"aig-cad-draft-v1",null,"CAD AutoSave");state.cad=Array.isArray(v?.shapes)?v.shapes:[]
    cadCountEl.textContent="CAD "+state.cad.length;msgEl.textContent=state.cad.length?"已讀取 "+state.cad.length+" 個 CAD 幾何。":"CAD 尚無幾何；先到 CAD 頁畫圖。";fit();draw();
@@ -2168,7 +2181,16 @@ function makeCamRuntime(root){
    const ww=Math.max(1,b.maxX-b.minX),hh=Math.max(1,b.maxY-b.minY);state.view.scale=Math.max(.2,Math.min(50,Math.min((w-70)/ww,(h-70)/hh)));
    state.view.panX=-((b.minX+b.maxX)/2)*state.view.scale;state.view.panY=((b.minY+b.maxY)/2)*state.view.scale;draw();
  }
- function normalizeClosed(points,direction){
+ function offsetClosedProfile(sh,p){
+ const r=p.toolDia/2,sign=p.contourSide==="INSIDE"?-1:1;
+ if(sh.type==="rect"){let minX=Math.min(sh.a.x,sh.b.x)-sign*r,maxX=Math.max(sh.a.x,sh.b.x)+sign*r,minY=Math.min(sh.a.y,sh.b.y)-sign*r,maxY=Math.max(sh.a.y,sh.b.y)+sign*r;if(maxX<=minX||maxY<=minY)return null;return[{x:minX,y:minY},{x:maxX,y:minY},{x:maxX,y:maxY},{x:minX,y:maxY},{x:minX,y:minY}]}
+ if(sh.type==="circle"||sh.type==="hole"){const rr=sh.r+sign*r;if(rr<=0)return null;return sampleCircle(sh.c,rr)}
+ if(sh.type==="arc"){const rr=sh.r+sign*r;if(rr<=0)return null;return sampleArc({...sh,r:rr})}
+ if(sh.type==="line"){const dx=sh.b.x-sh.a.x,dy=sh.b.y-sh.a.y,d=Math.hypot(dx,dy)||1,nx=-dy/d*sign*r,ny=dx/d*sign*r;return[{x:sh.a.x+nx,y:sh.a.y+ny},{x:sh.b.x+nx,y:sh.b.y+ny}]}
+ return null;
+}
+function decorateCamPath(path,p){return{...path,contourSide:p.contourSide,direction:p.direction,routeMode:p.routeMode,leadIn:p.leadIn,leadOut:p.leadOut,manualEntry:p.manualEntry,manualExit:p.manualExit,avoidance:p.avoidance}}
+function normalizeClosed(points,direction){
    if(points.length<3)return points;let area=0;for(let i=0;i<points.length-1;i++)area+=points[i].x*points[i+1].y-points[i+1].x*points[i].y;
    const ccw=area>0,wantCcw=direction==="CCW";return ccw===wantCcw?points:[...points].reverse();
  }
@@ -2176,11 +2198,14 @@ function makeCamRuntime(root){
    const out=[];
    for(const sh of state.cad){
      let pts=null,closed=false;
-     if(sh.type==="line")pts=[clone(sh.a),clone(sh.b)];
-     if(sh.type==="rect"){pts=rectCorners(sh);pts.push(clone(pts[0]));closed=true}
-     if(sh.type==="circle"||sh.type==="hole"){pts=sampleCircle(sh.c,sh.r);closed=true}
-     if(sh.type==="arc")pts=sampleArc(sh);
-     if(pts){if(closed)pts=normalizeClosed(pts,p.direction);out.push({kind,points:pts,closed,depth:p.depth,feed:p.feed,rpm:p.rpm,safeZ:p.safeZ,sourceId:sh.id})}
+     if(kind==="profile"){pts=offsetClosedProfile(sh,p);closed=sh.type==="rect"||sh.type==="circle"||sh.type==="hole"}
+    else{
+      if(sh.type==="line")pts=[clone(sh.a),clone(sh.b)];
+      if(sh.type==="rect"){pts=rectCorners(sh);pts.push(clone(pts[0]));closed=true}
+      if(sh.type==="circle"||sh.type==="hole"){pts=sampleCircle(sh.c,sh.r);closed=true}
+      if(sh.type==="arc")pts=sampleArc(sh);
+    }
+    if(pts){if(closed)pts=normalizeClosed(pts,p.direction);out.push({kind,points:pts,closed,depth:p.depth,feed:p.feed,rpm:p.rpm,safeZ:p.safeZ,sourceId:sh.id})}
    }
    return out;
  }
@@ -2245,6 +2270,7 @@ function makeCamRuntime(root){
      state.paths=drillPaths(p,"tap").map(x=>({...x,pitch:p.tapPitch,feed:p.rpm*p.tapPitch}));
    }
    else state.paths=[];
+   state.paths=state.paths.map(path=>decorateCamPath(path,p));
    updateStats();draw();
    if(!(state.strategy==="ADAPTIVE"&&state.cad.some(sh=>!["rect","circle","hole"].includes(sh.type)))){
      msgEl.textContent=state.paths.length?("刀路完成："+state.paths.length+" 條。"):"目前 CAD 幾何不適用此策略。";
@@ -2296,8 +2322,9 @@ function makeCamRuntime(root){
    if(ac.dataset.camAction==="CALC")calc();
    if(ac.dataset.camAction==="FIT")fit();
    if(ac.dataset.camAction==="APPLY"){if(validateCamFields()>0){msgEl.textContent="CAM 欄位有錯誤；只取消這次套用，AIG 繼續使用。";return}apply()}
+   if(ac.dataset.camAction==="FLOW"){if(validateCamFields()>0){msgEl.textContent="CAM 欄位有錯誤；只取消這次套用。";return}apply();show("刀路")}
  },null,"warn"));
- [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,marginXInput,marginYInput,adaptiveLoadInput,adaptiveRampAngleInput,pitchInput,stepInput,dirInput].forEach(el=>{
+ [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,marginXInput,marginYInput,adaptiveLoadInput,adaptiveRampAngleInput,pitchInput,stepInput,dirInput,sideInput,routeModeInput,camLeadInInput,camLeadOutInput,entryXInput,entryYInput,exitXInput,exitYInput,avoidEnabledInput,avoidXInput,avoidYInput,avoidZInput].forEach(el=>{
    el.addEventListener("input",()=>aigGuard(root,"CAM 欄位檢查",validateCamFields,null,"warn"));
    el.addEventListener("change",()=>aigGuard(root,"CAM 參數更新",()=>{validateCamFields();if(state.paths.length||state.strategy==="TAP")calc()},null,"warn"));
  });
@@ -2307,7 +2334,7 @@ function makeCamRuntime(root){
      state.strategy=saved.strategy;state.paths=Array.isArray(saved.paths)?saved.paths:[];
      if(saved.params){
        toolInput.value=saved.params.toolDia??toolInput.value;depthInput.value=saved.params.depth??depthInput.value;feedInput.value=saved.params.feed??feedInput.value;
-       rpmInput.value=saved.params.rpm??rpmInput.value;safeInput.value=saved.params.safeZ??safeInput.value;stockTopInput.value=saved.params.stockTop??saved.stock?.top??stockTopInput.value;stockThicknessInput.value=saved.params.stockThickness??saved.stock?.thickness??stockThicknessInput.value;stepDownInput.value=saved.params.stepDown??stepDownInput.value;marginXInput.value=saved.params.stockMarginX??saved.stock?.marginX??marginXInput.value;marginYInput.value=saved.params.stockMarginY??saved.stock?.marginY??marginYInput.value;adaptiveLoadInput.value=(saved.params.adaptiveLoad??.35)*100;adaptiveRampAngleInput.value=saved.params.adaptiveRampAngleDeg??5;pitchInput.value=saved.params.tapPitch||"";stepInput.value=(saved.params.stepover??.5)*100;dirInput.value=saved.params.direction||dirInput.value;
+       rpmInput.value=saved.params.rpm??rpmInput.value;safeInput.value=saved.params.safeZ??safeInput.value;stockTopInput.value=saved.params.stockTop??saved.stock?.top??stockTopInput.value;stockThicknessInput.value=saved.params.stockThickness??saved.stock?.thickness??stockThicknessInput.value;stepDownInput.value=saved.params.stepDown??stepDownInput.value;marginXInput.value=saved.params.stockMarginX??saved.stock?.marginX??marginXInput.value;marginYInput.value=saved.params.stockMarginY??saved.stock?.marginY??marginYInput.value;adaptiveLoadInput.value=(saved.params.adaptiveLoad??.35)*100;adaptiveRampAngleInput.value=saved.params.adaptiveRampAngleDeg??5;pitchInput.value=saved.params.tapPitch||"";stepInput.value=(saved.params.stepover??.5)*100;dirInput.value=saved.params.direction||dirInput.value;sideInput.value=saved.params.contourSide||"OUTSIDE";routeModeInput.value=saved.params.routeMode||"AUTO";camLeadInInput.value=saved.params.leadIn??5;camLeadOutInput.value=saved.params.leadOut??5;entryXInput.value=saved.params.manualEntry?.x??0;entryYInput.value=saved.params.manualEntry?.y??0;exitXInput.value=saved.params.manualExit?.x??0;exitYInput.value=saved.params.manualExit?.y??0;avoidEnabledInput.checked=Boolean(saved.params.avoidance?.enabled);avoidXInput.value=saved.params.avoidance?.x??0;avoidYInput.value=saved.params.avoidance?.y??0;avoidZInput.value=saved.params.avoidance?.z??20;
      }
      root.querySelectorAll("[data-cam-strategy]").forEach(b=>b.classList.toggle("cadSelected",b.dataset.camStrategy===state.strategy));
    }
@@ -2357,14 +2384,15 @@ function makeToolpathRuntime(root){
  }
  function renderList(){
    listEl.innerHTML="";state.paths.forEach((p,i)=>{const b=document.createElement("button");b.className="btn"+(i===state.selected?" cadSelected":"");b.dataset.tpIndex=i;const adaptiveMeta=p.kind==="adaptive"?("  L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" R"+Number(p.adaptiveRing||0)+" Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"+(p.entry==="RAMP_LOOP"?(" Ramp×"+Number(p.rampPasses||1)+" "+Number(p.rampAngleDeg||0).toFixed(1)+"°"):"")):"";
-   b.textContent=(p.enabled===false?"[OFF] ":"")+"OP"+String(i+1).padStart(2,"0")+"  "+String(p.kind||"path").toUpperCase()+"  "+(p.points?.length||0)+" pts  Z"+Number(p.depth??0).toFixed(3)+adaptiveMeta+"  A"+Number(p.aStart||0).toFixed(1)+"→"+Number(p.aEnd??p.aStart??0).toFixed(1)+" B"+Number(p.bStart||0).toFixed(1)+"→"+Number(p.bEnd??p.bStart??0).toFixed(1);b.style.opacity=p.enabled===false?".42":"1";listEl.appendChild(b)});
+   const routeMeta="  "+String(p.contourSide||"")+" "+String(p.direction||"")+" "+String(p.routeMode||"AUTO")+(p.avoidance?.enabled?" AVOID":"");
+   b.textContent=(p.enabled===false?"[OFF] ":"")+"OP"+String(i+1).padStart(2,"0")+"  "+String(p.kind||"path").toUpperCase()+"  "+(p.points?.length||0)+" pts  Z"+Number(p.depth??0).toFixed(3)+adaptiveMeta+routeMeta+"  A"+Number(p.aStart||0).toFixed(1)+"→"+Number(p.aEnd??p.aStart??0).toFixed(1)+" B"+Number(p.bStart||0).toFixed(1)+"→"+Number(p.bEnd??p.bStart??0).toFixed(1);b.style.opacity=p.enabled===false?".42":"1";listEl.appendChild(b)});
  }
  function updateInfo(){
    const enabledCount=state.paths.filter(p=>p.enabled!==false).length;countEl.textContent=enabledCount+"/"+state.paths.length+" enabled";const p=selected();selectedEl.textContent=p?("OP"+String(state.selected+1).padStart(2,"0")+" "+String(p.kind||"path").toUpperCase()+(p.kind==="adaptive"?(" • Z L"+Number(p.zLevelIndex||0)+"/"+Number(p.zLevelCount||0)+" • R"+Number(p.adaptiveRing||0)+" • Load "+(Number(p.radialEngagement||0)*100).toFixed(0)+"%"+(p.entry==="RAMP_LOOP"?(" • Ramp Z"+Number(p.entryZStart??0).toFixed(3)+"→"+Number(p.depth??0).toFixed(3)):"")):"")):"無";
-   statusEl.textContent=p?.enabled===false?"OP 停用":state.edit?"節點編輯":state.visible?"顯示":"隱藏";
+   statusEl.textContent=p?.enabled===false?"OP 停用":state.edit?"節點編輯":p?((p.contourSide||"")+" "+(p.direction||"")+" "+(p.routeMode||"AUTO")+(p.avoidance?.enabled?" • AVOID":"")):state.visible?"顯示":"隱藏";
  }
  function leadPoint(path,which){
-   if(!path?.points?.length)return null;const len=Number(which==="in"?path.leadIn:path.leadOut)||0;if(len<=0||path.points.length<2)return null;
+   if(!path?.points?.length)return null;if(path.routeMode==="MANUAL"){const q=which==="in"?path.manualEntry:path.manualExit;if(q&&Number.isFinite(Number(q.x))&&Number.isFinite(Number(q.y)))return{x:Number(q.x),y:Number(q.y)}}const len=Number(which==="in"?path.leadIn:path.leadOut)||0;if(len<=0||path.points.length<2)return null;
    const a=which==="in"?path.points[0]:path.points[path.points.length-1],b=which==="in"?path.points[1]:path.points[path.points.length-2],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy)||1;
    return{x:a.x+dx/d*len,y:a.y+dy/d*len};
  }
@@ -2379,6 +2407,7 @@ function makeToolpathRuntime(root){
      const li=leadPoint(p,"in"),lo=leadPoint(p,"out");c.save();c.strokeStyle="#ffb326";c.shadowColor="#ffb326";c.shadowBlur=7;c.setLineDash([5,4]);
      if(li){const a=w2s(li,w,h),b=w2s(p.points[0],w,h);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()}
      if(lo){const a=w2s(p.points[p.points.length-1],w,h),b=w2s(lo,w,h);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()}
+     if(p.avoidance?.enabled){const av=w2s(p.avoidance,w,h),to=w2s(li||p.points[0],w,h);c.strokeStyle="#27e9ff";c.beginPath();c.moveTo(av.x,av.y);c.lineTo(to.x,to.y);c.stroke();c.fillStyle="#27e9ff";c.beginPath();c.arc(av.x,av.y,5,0,Math.PI*2);c.fill()}
      c.restore();c.setLineDash([]);
      if(sel&&state.edit){c.fillStyle="#27e9ff";for(const pt of p.points){const q=w2s(pt,w,h);c.beginPath();c.arc(q.x,q.y,4,0,Math.PI*2);c.fill()}}
    });
@@ -2500,6 +2529,8 @@ function makeToolpathRuntime(root){
        push("G80");continue;
      }
      const first=path.points[0],li=leadPoint(path,"in"),lo=leadPoint(path,"out");
+     const avoid=path.avoidance?.enabled?path.avoidance:null;
+     if(avoid){push("G0 Z"+fmt(Math.max(safe,Number(avoid.z)||safe)));push("G0 X"+fmt(avoid.x)+" Y"+fmt(avoid.y));}
      const rampLoop=path.kind==="adaptive"&&path.entry==="RAMP_LOOP"&&path.closed&&path.points.length>=3;
      const start=rampLoop?first:(li||first);
      push("G0 X"+fmt(start.x)+" Y"+fmt(start.y));
@@ -2583,6 +2614,7 @@ function makeToolpathRuntime(root){
    if(name==="VERIFY"){verify();return}
    if(name==="SAVE"){applyInputs();save();renderList();draw();return}
    if(name==="POST"){applyInputs();save();if(verify())generateFanucNC();return}
+   if(name==="SIM"){applyInputs();save();if(verify()){const code=generateFanucNC();if(code)show(targetInput.value)}return}
    if(name==="APPLYALL"){for(const p of state.paths)applyInputs(p);save();msgEl.textContent="參數已套用全部刀路。";draw();return}
    if(name==="RECALC"){
      const cam=document.querySelector("[data-cam-runtime]");if(cam?.aigCamApi){const n=cam.aigCamApi.recalc();load();msgEl.textContent="CAM 已重新計算並回載 "+n+" 條刀路。"}else{load();msgEl.textContent="已重新載入 CAM 刀路。"}return

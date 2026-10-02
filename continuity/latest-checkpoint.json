@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "343.0.0",
+  "version": "344.0.0",
   "branch": "main",
-  "recorded_source_head": "363b6a7486aeffb6aedee6266ef43f6f65aed153",
+  "recorded_source_head": "456e7f3c6e38fe646b0f710883c9a6f462e81955",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate Studio 343 Web NC EDIT from the exact commit, then bind AIG-II 379 to that SHA. Preserve formal HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC navigation and keep Web machine output disabled.",
-  "note": "Studio 343: Web NC EDIT now adds the CNC keyboard and edit controls required by the production interaction model: INSERT, DELETE, line-start BLOCK SKIP toggle, TOP/BOTTOM, G/M and XYZ/FST/ABC/HIJK/numeric keys, cursor-line help, and keyboard shortcuts. NC still shares the same saved axis G-code, parser, collision and setup-clearance preflight, and Web machine output remains disabled.",
+  "next_action": "Validate Studio 344 CAM → toolpath → SIM flow from the exact commit, then bind AIG-II 380 to that SHA. Preserve formal Web navigation, NC EDIT, and Web machine-output-disabled policy.",
+  "note": "Studio 344: Web CAM now carries true OUTSIDE/INSIDE tool-radius compensated profile geometry, CW/CCW direction, AUTO/MANUAL route control, manual entry/exit points and an optional fixture-avoidance waypoint into the same persisted toolpath payload. Toolpath uses those points in preview/POST, keeps node editing and Safe-Z validation, and adds verified POST → SIM handoff. Web machine output remains disabled.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
