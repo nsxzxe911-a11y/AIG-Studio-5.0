@@ -79,6 +79,23 @@ private fun showDesktopCoordinatePrecisionDialog(owner:java.awt.Component?, stat
     }
 }
 
+
+private class RuntimeGlassPanel(layout:java.awt.LayoutManager=BorderLayout()):JPanel(layout) {
+    init { isOpaque=false; border=javax.swing.BorderFactory.createEmptyBorder(10,12,10,12) }
+    override fun paintComponent(g0:Graphics) {
+        val g=g0.create() as Graphics2D
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON)
+        g.paint=GradientPaint(0f,0f,Color(15,34,49,245),0f,height.toFloat(),Color(3,10,19,248))
+        g.fillRoundRect(2,2,width-5,height-5,16,16)
+        val colors=arrayOf(Color(30,225,255),Color(74,113,255),Color(224,68,255),Color(75,255,177))
+        g.paint=LinearGradientPaint(0f,0f,width.coerceAtLeast(1).toFloat(),height.coerceAtLeast(1).toFloat(),floatArrayOf(0f,.35f,.7f,1f),colors)
+        g.stroke=BasicStroke(1.5f)
+        g.drawRoundRect(2,2,width-5,height-5,16,16)
+        g.dispose()
+        super.paintComponent(g0)
+    }
+}
+
 private fun desktopVersionName():String =
     System.getProperty("aigstudio.version")?.takeIf { it.matches(Regex("""\d+\.\d+\.\d+""")) } ?: "DEV"
 
@@ -2687,17 +2704,13 @@ private fun showNcDraftEditor(frame:JFrame, reason:String) {
     }
 }
 
+private var runtimeNcDraft:String?=null
+
 private fun showNcEditor(
     frame:JFrame,
-    derived:Machining3DResult
+    derived:Machining3DResult?,
+    sourceFresh:Boolean=true
 ) {
-    val cam=derived.cam
-    require(cam.toolpaths.isNotEmpty()) { "NC BLOCKED: no rebuilt CAM toolpath" }
-    val modeledRisk=MachiningRiskScanner.inspect(cam,derived.stock,derived.fixtures,derived.toolAssembly)
-    require(modeledRisk.ok) {
-        "NC BLOCKED: MODELED COLLISION="+modeledRisk.collisionCount+
-            " OVERCUT="+modeledRisk.overcutCount+" • repair CAM/SIM first"
-    }
     var controllerProfile = runCatching {
         CncControllerProfile.valueOf(ncPostPrefs.get("controller", CncControllerProfile.FANUC.name))
     }.getOrDefault(CncControllerProfile.FANUC)
@@ -2714,8 +2727,14 @@ private fun showNcEditor(
     var cutterCompValueMm = java.lang.Double.longBitsToDouble(
         ncPostPrefs.getLong("cutter_d_value_bits", java.lang.Double.doubleToLongBits(0.0))
     ).takeIf { it.isFinite() } ?: 0.0
-    fun generateNc(): String = CncPost.generate(
-        cam,
+    fun generateNc(): String {
+        require(sourceFresh) { "刀路已變更，請重算後再 POST" }
+        val current=requireNotNull(derived) { "尚無刀路，仍可手動編輯 NC" }
+        require(current.cam.toolpaths.isNotEmpty()) { "尚無刀路，請先建立 CAM" }
+        val risk=MachiningRiskScanner.inspect(current.cam,current.stock,current.fixtures,current.toolAssembly)
+        require(risk.ok) { "碰撞或過切警告，請檢查模擬後再 POST" }
+        return CncPost.generate(
+        current.cam,
         FanucPostSettings(
             controller = controllerProfile,
             coordinateMode = coordinateMode,
@@ -2725,7 +2744,8 @@ private fun showNcEditor(
             cutterCompValueMm = cutterCompValueMm
         )
     )
-    val area = JTextArea(generateNc()).apply {
+    }
+    val area = JTextArea(runtimeNcDraft ?: runCatching { generateNc() }.getOrDefault("")).apply {
         background = Color(5,8,12)
         foreground = Color(99,255,157)
         font = Font(Font.MONOSPACED, Font.PLAIN, 15)
@@ -2747,6 +2767,7 @@ private fun showNcEditor(
             NcExecutionTimeline.lineEvidence(area.text,line,controllerProfile,rotaryClampProfile=ncRotaryProfile,rotaryMode=RotaryAxisOperationMode.NONE)
     }
     fun refreshModalStatus() {
+        runtimeNcDraft=area.text
         val blocked = NcProgramSafetyPolicy.blocking(area.text,ncRotaryProfile,RotaryAxisOperationMode.NONE)
         val machine = machineInterlockSession.inspect(area.text)
         modalStatus.foreground = if (blocked.isEmpty() && machine.canExecute) Color(255,210,90) else Color(255,110,110)
@@ -2857,7 +2878,6 @@ private fun showNcEditor(
         runCatching { generateNc() }
             .onSuccess { area.text = it }
             .onFailure {
-                area.text = ""
                 JOptionPane.showMessageDialog(
                     frame,
                     (it.message ?: "unsupported post mode") + "\nCAD/CAM/SIM canonical ABS XYZ remains unchanged.",
@@ -2866,11 +2886,7 @@ private fun showNcEditor(
                 )
             }
     }
-    controller.addActionListener { refreshNcFromPostSelection() }
-    coordinate.addActionListener { refreshNcFromPostSelection() }
-    origin.addActionListener { refreshNcFromPostSelection() }
-    compensation.addActionListener { refreshNcFromPostSelection() }
-    val applyD = GlassActionButton("APPLY D", Color(80,170,255)).apply {
+    val applyD = GlassActionButton("POST / 套用設定", Color(80,170,255)).apply {
         addActionListener { refreshNcFromPostSelection() }
     }
     fun showNcOperatorPalette() {
@@ -2936,7 +2952,7 @@ private fun showNcEditor(
         layout = BorderLayout()
         add(JPanel(BorderLayout()).apply {
             background = Color(7,17,27)
-            add(JLabel(MasterRuntimeChainContract.uiLabel()).apply {
+            add(JLabel(MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION).apply {
                 foreground=Color(99,255,157)
                 font=font.deriveFont(Font.BOLD,12f)
                 border=BorderFactory.createEmptyBorder(4,8,2,8)
@@ -3027,18 +3043,27 @@ private fun showUnifiedMachiningEditor(
     frame:JFrame,
     doc:DrawingDocument,
     status:JLabel,
-    initialResult:Machining3DResult,
+    initialResult:Machining3DResult?,
     initialMode:String="3AX",
     camSettings:CamSettings=CamSettings(),
     fixtures:List<FixtureObstacle> = emptyList(),
     toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
 ){
     require(initialMode in setOf("3D","3AX","4AX","5AX")){"Unsupported initial mode: $initialMode"}
-    val snapshot=doc.snapshot()
-    require(snapshot.entities.isNotEmpty() || camSettings.pathMode==CamPathMode.MANUAL){
-        "UNIFIED WORKSPACE BLOCKED: AUTO needs CAD; MANUAL may run without CAD"
+    if(initialResult==null) {
+        JDialog(frame,"$initialMode • 加工工作區",false).apply {
+            layout=BorderLayout(12,12)
+            add(JLabel(MasterRuntimeChainContract.masterOriginLabel()+" • 0.001 mm"),BorderLayout.NORTH)
+            add(JLabel("尚無刀路資料。請在 CAM 建立刀路後執行模擬。",SwingConstants.CENTER),BorderLayout.CENTER)
+            add(GlassActionButton("NC 編輯",Color(80,170,255)).apply {
+                addActionListener { showNcEditor(frame,null) }
+            },BorderLayout.SOUTH)
+            size=Dimension(800,500);setLocationRelativeTo(frame);isVisible=true
+        }
+        return
     }
-    var result=initialResult
+    val snapshot=doc.snapshot()
+    var result:Machining3DResult=initialResult
     var axisA=0.0
     var axisB=0.0
     var axisMode="3AX"
@@ -3337,7 +3362,7 @@ private fun showUnifiedMachiningEditor(
     })
     dlg.add(JPanel(BorderLayout()).apply{
         background=Color(7,17,27)
-        add(JLabel(MasterRuntimeChainContract.uiLabel()).apply{
+        add(JLabel(MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION).apply{
             foreground=Color(99,255,157)
             font=font.deriveFont(Font.BOLD,12f)
             border=BorderFactory.createEmptyBorder(4,8,2,8)
@@ -3354,7 +3379,7 @@ private fun showUnifiedMachiningEditor(
 private fun showApp(showWindow:Boolean=true):JFrame {
     applyDesktopCoordinatePrecision()
     val doc = DrawingDocument()
-    val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • "+MasterRuntimeChainContract.uiLabel())
+    val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • "+MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION)
     status.foreground = Color(99, 255, 157)
     val cad = CadPanel(doc) { status.text = it }
     var sharedLocalMeta=ProjectRevisionMeta()
@@ -3405,7 +3430,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         }.apply{isRepeats=true}
     }
 
-    val frame = JFrame("AIG CNC — OFFICIAL RGB ORIGINAL — v"+desktopVersionName())
+    val frame = JFrame("AIG Studio • CNC 加工控制 • v"+desktopVersionName())
     frame.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     frame.addWindowListener(object:java.awt.event.WindowAdapter(){
         override fun windowClosed(e:java.awt.event.WindowEvent?) {
@@ -3428,17 +3453,17 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             BorderFactory.createEmptyBorder(5,12,5,12)
         )
         add(JLabel(
-            MasterRuntimeChainContract.uiLabel()
+            MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION
         ).apply{
             foreground=Color(99,255,157)
             font=font.deriveFont(Font.BOLD,13f)
         },BorderLayout.WEST)
-        add(JLabel("ROOT → CAD → CAM → SIM → NC").apply{
+        add(JLabel("AIG Studio • 加工控制").apply{
             foreground=Color(143,179,201)
             font=font.deriveFont(Font.PLAIN,12f)
             horizontalAlignment=SwingConstants.CENTER
         },BorderLayout.CENTER)
-        add(JLabel(OfflineFirstModuleContract.uiBadge()).apply{
+        add(JLabel("本機就緒").apply{
             foreground=Color(61,235,255)
             font=font.deriveFont(Font.BOLD,11f)
         },BorderLayout.EAST)
@@ -4074,7 +4099,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         }
         action("3D SIM"){
             runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"3D",productionCamSettings,productionFixtures,productionToolAssembly
+                frame,doc,status,productionCamDerivedCache,"3D",productionCamSettings,productionFixtures,productionToolAssembly
             )}
                 .onSuccess{dlg.dispose()}
                 .onFailure{status.text="MANUAL 3D SIM BLOCKED • "+(it.message?:"error")}
@@ -4250,7 +4275,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         val result=if(forceRecalculate) {
             rebuildProductionCamDerived()
         } else {
-            productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
+            requireNotNull(productionCamDerivedCache) { "請先建立 CAM 刀路" }
         }
         val stale=productionCamIsStale()
         val cam=result.cam
@@ -4464,7 +4489,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         action("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="VERIFY HUB • REGRESSION OFF • CAD"}
         action("CAM / SIM"){showProductionCam();status.text="VERIFY HUB • REGRESSION OFF • CAM / SIM"}
         action("NC 安全"){runCatching{showNcEditor(
-                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
+                frame,productionCamDerivedCache,!productionCamIsStale()
             )}.onFailure{status.text="VERIFY HUB • REGRESSION OFF • NC BLOCKED • "+(it.message?:"error")}}
         action("AI"){mainCardLayout.show(mainCardHost,"AI");status.text="VERIFY HUB • REGRESSION OFF • AI"}
         val panel=JPanel(BorderLayout(8,8)).apply{
@@ -4515,7 +4540,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         action("CNC 安全設定（核心 ON）"){
             status.text="SETTINGS • CNC SAFETY CORE ON / LOCKED • USER APPROVAL REQUIRED FOR POLICY CHANGE"
             runCatching{showNcEditor(
-                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
+                frame,productionCamDerivedCache,!productionCamIsStale()
             )}.onFailure{status.text="SETTINGS • CNC SAFETY VIEW BLOCKED • "+(it.message?:"error")}
         }
         action("驗證中心"){showManualRegressionCenter()}
@@ -4638,7 +4663,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         action("AI 診斷"){mainCardLayout.show(mainCardHost,"AI");status.text="MAINT • AI LOCAL ASSIST"}
         action("CAM 檢查"){showProductionCam()}
         action("NC 安全"){runCatching{showNcEditor(
-                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
+                frame,productionCamDerivedCache,!productionCamIsStale()
             )}.onFailure{status.text="MAINT NC BLOCKED • "+(it.message?:"error")}}
         action("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="CAD • PRODUCTION UI"}
         val panel=JPanel(BorderLayout(8,8)).apply{
@@ -4667,31 +4692,31 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 item("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="CAD • PRODUCTION UI"}
                 item("CAM"){showProductionCam()}
                 item("SIM"){runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),ProductionUiSwitchContract.runtimeTarget("SIM"),
+                frame,doc,status,productionCamDerivedCache,ProductionUiSwitchContract.runtimeTarget("SIM"),
                     productionCamSettings,productionFixtures,productionToolAssembly
                 )}.onFailure{status.text="SIM BLOCKED • "+(it.message?:"error")}}
                 item("3AX"){runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"3AX",productionCamSettings,productionFixtures,productionToolAssembly
+                frame,doc,status,productionCamDerivedCache,"3AX",productionCamSettings,productionFixtures,productionToolAssembly
                 )}.onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}}
                 item("4AX"){runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"4AX",productionCamSettings,productionFixtures,productionToolAssembly
+                frame,doc,status,productionCamDerivedCache,"4AX",productionCamSettings,productionFixtures,productionToolAssembly
                 )}.onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}}
                 item("5AX"){runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"5AX",productionCamSettings,productionFixtures,productionToolAssembly
+                frame,doc,status,productionCamDerivedCache,"5AX",productionCamSettings,productionFixtures,productionToolAssembly
                 )}.onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}}
                 item("NC"){runCatching{showNcEditor(
-                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
+                frame,productionCamDerivedCache,!productionCamIsStale()
             )}.onFailure{status.text="NC BLOCKED • "+(it.message?:"error")}}
                 item("AI"){mainCardLayout.show(mainCardHost,"AI");status.text="AI • PRODUCTION UI"}
-                item("設定/維護"){showMaintenanceCenter()}
+                item("設定"){showUserSettingsCenter()}
                 item("設定中心"){showUserSettingsCenter()}
                 menu.show(this,0,height)
             }
         })
-        add(GlassActionButton("維修",Color(139,92,246)).apply{
-            toolTipText="正式 Runtime UI 內建維修 / 診斷"
+        add(GlassActionButton("設定",Color(139,92,246)).apply{
+            toolTipText="操作偏好與維護設定"
             preferredSize=Dimension(92,48)
-            addActionListener{showMaintenanceCenter()}
+            addActionListener{showUserSettingsCenter()}
         })
     }
     toolbar.add(toolbarUtilities,BorderLayout.EAST)
@@ -4749,22 +4774,22 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     moduleButtons.add(productionHomeButton)
     moduleButtons.add(productionUiButton("CAD", StudioDesktopProductionTheme.accent) {
         mainCardLayout.show(mainCardHost,"CAD")
-        status.text="UX • "+RuntimeUxFlowContract.title("CAD")+" • "+MasterRuntimeChainContract.uiLabel()
+        status.text="UX • "+RuntimeUxFlowContract.title("CAD")+" • "+MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION
     })
     moduleButtons.add(productionUiButton("CAM", StudioDesktopProductionTheme.cutting) {
         showProductionCam()
     })
     moduleButtons.add(productionUiButton("SIM", Color(139,92,246)) {
         runCatching { showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),ProductionUiSwitchContract.runtimeTarget("SIM"),
+                frame,doc,status,productionCamDerivedCache,ProductionUiSwitchContract.runtimeTarget("SIM"),
             productionCamSettings,productionFixtures,productionToolAssembly
         ) }
-            .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("SIM")+" • "+MasterRuntimeChainContract.uiLabel() }
+            .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("SIM")+" • "+MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION }
             .onFailure { status.text="SIM BLOCKED • "+(it.message?:"error") }
     })
     moduleButtons.add(productionUiButton("NC", Color(80,170,255)) {
         runCatching { showNcEditor(
-                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
+                frame,productionCamDerivedCache,!productionCamIsStale()
             ) }
             .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("NC")+" • "+MasterRuntimeChainContract.masterOriginLabel()+" • FANUC / MITSUBISHI" }
             .onFailure { status.text="NC EDIT BLOCKED • "+(it.message?:"error") }
@@ -4779,7 +4804,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     })
     check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))
     productionUiButtons[ProductionUiSwitchContract.initialMode]?.active=true
-    status.text="UX • "+RuntimeUxFlowContract.title(ProductionUiSwitchContract.initialMode)+" • "+MasterRuntimeChainContract.uiLabel()
+    status.text="UX • "+RuntimeUxFlowContract.title(ProductionUiSwitchContract.initialMode)+" • "+MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION
     editTools.add(button("清除", Color(239, 68, 68)) { cad.clearCad() })
 
     status.border = BorderFactory.createCompoundBorder(
@@ -4792,7 +4817,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     val selectedValue=JLabel("0")
     val entityValue=JLabel(doc.size().toString())
     val linkValue=JLabel(doc.links().size.toString())
-    fun railCell(title:String,value:JLabel,color:Color)=JPanel(BorderLayout()).apply{
+    fun railCell(title:String,value:JLabel,color:Color)=RuntimeGlassPanel().apply{
         background=StudioDesktopProductionTheme.panel
         border=BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(Color(color.red,color.green,color.blue,110),1,true),
@@ -4809,7 +4834,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         preferredSize=Dimension(182,0)
         minimumSize=Dimension(174,0)
         border=BorderFactory.createEmptyBorder(4,4,4,4)
-        add(railCell("MACHINE",JLabel("READY"),Color(99,255,157)))
+        add(railCell("機台",JLabel("未連接"),Color(99,255,157)))
         add(Box.createVerticalStrut(6))
         add(railCell("ORIGIN",JLabel("X0.000 Y0.000 Z0.000"),Color(61,235,255)))
         add(Box.createVerticalStrut(6))
@@ -4900,18 +4925,18 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         background=Color(7,16,28)
         foreground=Color(220,235,250)
         font=Font(Font.MONOSPACED,Font.PLAIN,13)
-        text="AI LOCAL ASSIST\nVisible UI required for every production function.\nNetwork AI update is intentionally not claimed here."
+        text="加工助理\n\n選擇專案摘要、NC 檢查或加工建議。\nAI 建議由操作人員確認後套用。"
     }
     val aiActions=JPanel(FlowLayout(FlowLayout.LEFT,8,8)).apply{
         background=StudioDesktopProductionTheme.background
         add(button("專案摘要",Color(139,92,246)){
-            aiSummary.text="AI LOCAL ASSIST\nENTITIES="+doc.size()+"\nLINKS="+doc.links().size+"\n"+MasterRuntimeChainContract.uiLabel()
+            aiSummary.text="AI LOCAL ASSIST\nENTITIES="+doc.size()+"\nLINKS="+doc.links().size+"\n"+MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION
             status.text="AI 專案摘要 • entities="+doc.size()+" • links="+doc.links().size
         })
         add(button("CAM 檢查",StudioDesktopProductionTheme.cutting){showProductionCam()})
         add(button("NC 安全",Color(80,170,255)){
             runCatching{showNcEditor(
-                frame,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
+                frame,productionCamDerivedCache,!productionCamIsStale()
             )}
                 .onFailure{status.text="AI NC CHECK BLOCKED • "+(it.message?:"error")}
         })
@@ -4924,7 +4949,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         name="AI_CARD"
         background=StudioDesktopProductionTheme.background
         border=BorderFactory.createEmptyBorder(12,12,12,12)
-        add(JLabel("AIG CNC • AI LOCAL ASSIST • 真 UI").apply{
+        add(JLabel("AI • 加工助理").apply{
             foreground=Color(139,92,246)
             font=font.deriveFont(Font.BOLD,18f)
         },BorderLayout.NORTH)
@@ -4944,54 +4969,72 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         add(homeLaunch("CAM",StudioDesktopProductionTheme.cutting){productionUiButtons["CAM"]?.doClick()})
         add(homeLaunch("SIM",Color(139,92,246)){productionUiButtons["SIM"]?.doClick()})
         add(homeLaunch("3AX",Color(59,130,246)){runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"3AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}})
+                frame,doc,status,productionCamDerivedCache,"3AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}})
         add(homeLaunch("4AX",Color(245,158,11)){runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"4AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}})
+                frame,doc,status,productionCamDerivedCache,"4AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}})
         add(homeLaunch("5AX",Color(236,72,153)){runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"5AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}})
+                frame,doc,status,productionCamDerivedCache,"5AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}})
+        add(homeLaunch("6AX",Color(34,211,238)){runCatching{showUnifiedMachiningEditor(
+                frame,doc,status,productionCamDerivedCache,"6AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="6AX BLOCKED • "+(it.message?:"error")}})
         add(homeLaunch("NC",Color(80,170,255)){productionUiButtons["NC"]?.doClick()})
         add(homeLaunch("AI",Color(139,92,246)){productionUiButtons["AI"]?.doClick()})
     }
     val homeUtilities=JPanel(FlowLayout(FlowLayout.CENTER,10,8)).apply {
         isOpaque=false
-        add(homeLaunch("設定/維護",Color(139,92,246)){showMaintenanceCenter()}.apply{preferredSize=Dimension(150,54)})
         add(homeLaunch("設定",Color(39,233,255)){showUserSettingsCenter()}.apply{preferredSize=Dimension(120,54)})
         add(homeLaunch("專案",Color(125,112,255)){showProductionProjectManager()}.apply{preferredSize=Dimension(120,54)})
     }
-    val homePanel=object:JPanel(BorderLayout(12,12)){
-        override fun paintComponent(g0:Graphics){
-            super.paintComponent(g0)
-            val g=g0.create() as Graphics2D
-            StudioDesktopOriginalVisuals.paintCover(g,width,height,StudioDesktopOriginalVisuals.startup,0.34f,1.0,0.0)
-            g.color=Color(2,7,14,176);g.fillRect(0,0,width,height)
-            g.dispose()
-        }
-    }.apply {
+    val homeViewport=RuntimeGlassPanel().apply {
+        background=Color(5,12,20)
+        border=BorderFactory.createLineBorder(Color(28,75,96))
+    }
+    val homeMachine=JLabel("未連接機台")
+    val homePath=JLabel("尚無刀路")
+    val homeGeometry=JLabel(doc.size().toString())
+    val homeCutting=JLabel()
+    val homeAxes=JLabel()
+    fun refreshControlHome() {
+        homeViewport.removeAll()
+        val derived=productionCamDerivedCache
+        if(derived!=null) homeViewport.add(Mesh3DPanel(derived),BorderLayout.CENTER)
+        else homeViewport.add(CadPanel(doc) { status.text=it }.apply { mode=DrawMode.PAN; fitView() },BorderLayout.CENTER)
+        homePath.text=if(derived==null) "尚無刀路" else "${derived.cam.toolpaths.sumOf{it.moves.size}} 點"+(if(productionCamIsStale()) " • 待重算" else " • 已更新")
+        homeGeometry.text="${doc.size()} 個圖元"
+        homeCutting.text="<html>刀具 Ø ${DisplayFormat.mm(productionCamSettings.toolDiameter)} mm</html>"
+        homeAxes.text="<html>Master X 0.000<br>Master Y 0.000<br>Master Z 0.000<br><br>機台位置：未連接</html>"
+        homeViewport.revalidate();homeViewport.repaint()
+    }
+    val homeData=JPanel(GridLayout(0,1,0,10)).apply {
+        background=StudioDesktopProductionTheme.background
+        preferredSize=Dimension(230,0)
+        add(railCell("機台狀態",homeMachine,Color(255,190,85)))
+        add(railCell("座標 / mm",homeAxes,Color(61,235,255)))
+        add(railCell("刀路",homePath,Color(99,255,157)))
+        add(railCell("加工設定",homeCutting,Color(61,235,255)))
+        add(railCell("目前圖面",homeGeometry,Color(180,160,255)))
+    }
+    homeActions.layout=GridLayout(1,8,6,0)
+    homeActions.border=BorderFactory.createEmptyBorder(0,0,10,0)
+    homeActions.preferredSize=Dimension(1000,62)
+    homeActions.components.forEach { it.preferredSize=Dimension(95,48) }
+    val homePanel=RuntimeGlassPanel(BorderLayout(12,12)).apply {
         name="HOME_CARD"
         background=StudioDesktopProductionTheme.background
-        border=BorderFactory.createEmptyBorder(28,36,28,36)
-        add(JPanel(BorderLayout()).apply{
-            isOpaque=false
-            add(JLabel("AIG CNC • PRODUCTION RUNTIME HOME").apply{
-                foreground=Color.WHITE
-                font=font.deriveFont(Font.BOLD,30f)
-            },BorderLayout.NORTH)
-            add(JLabel("Studio "+desktopVersionName()+" • OFFLINE FIRST • 0.001 mm • 60 Hz SAFE DEFAULT").apply{
-                foreground=Color(99,255,157)
-                font=font.deriveFont(Font.BOLD,13f)
-                border=BorderFactory.createEmptyBorder(8,0,0,0)
-            },BorderLayout.SOUTH)
-        },BorderLayout.NORTH)
-        add(homeActions,BorderLayout.CENTER)
+        border=BorderFactory.createEmptyBorder(12,14,12,14)
+        add(homeActions,BorderLayout.NORTH)
+        add(homeViewport,BorderLayout.CENTER)
+        add(homeData,BorderLayout.EAST)
         add(homeUtilities,BorderLayout.SOUTH)
+        addHierarchyListener { if(isShowing) refreshControlHome() }
     }
+    refreshControlHome()
 
     mainCardHost.add(homePanel,"HOME")
     mainCardHost.add(workspace,"CAD")
     mainCardHost.add(aiPanel,"AI")
     productionUiButtons.forEach { (_,button) -> button.active=false }
     mainCardLayout.show(mainCardHost,"HOME")
-    status.text="HOME • PRODUCTION RUNTIME • FIRST VISIBLE SURFACE • OFFLINE READY"
+    status.text="首頁 • 本機就緒 • 選擇加工功能"
     val northChrome=JPanel(BorderLayout()).apply{
         background=StudioDesktopProductionTheme.background
         add(masterRootBar,BorderLayout.NORTH)

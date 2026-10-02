@@ -52,7 +52,7 @@ cache_xml=read("continuity/cache-update-standard.xml","AI","CACHE_XML_STANDARD_M
 pro_audit=read("ci/pro_audit.py","PRO_AUDIT","PRO_AUDIT_SCRIPT_MISSING")
 
 need("HOME","HOME_RUNTIME_ENTRY","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["setContentView(runtimeHost)",'contentDescription = "PRODUCTION UI SWITCH"',"StudioStartupBootGuard.complete(this@MainActivity)","scheduleBackgroundOnlineServices()"],"restore direct production runtimeHost HOME boot; complete StartupBootGuard before post-ready network services")
-need("HOME","HOME_DESKTOP_ENTRY","desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt",desktop,['JFrame("AIG CNC — OFFICIAL RGB ORIGINAL — v"',"LOCAL READY • NETWORK OPTIONAL"],"restore production desktop frame and offline-first status")
+need("HOME","HOME_DESKTOP_ENTRY","desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt",desktop,['JFrame("AIG Studio • CNC 加工控制 • v"',"LOCAL READY • NETWORK OPTIONAL"],"restore production desktop frame and offline-first status")
 
 need("CAD","CAD_EDIT_CORE","core/src/main/kotlin/com/aigstudio/core/Document.kt",doc,["object CadEditEngine","object CadSnapEngine","object DimensionDriveEngine","TRIM","EXTEND","OFFSET","ARRAY","connect(","disconnect("],"restore CAD edit/snap/dimension/topology implementation at 0.001 mm")
 need("CAD","CAD_UI_BINDING","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["cad.toggleSnap()","CadSnapEngine.snapTo","DimensionDriveEngine.command","TRIM","EXTEND","OFFSET","ARRAY"],"rebind CAD production controls to live CAD callbacks")

@@ -841,7 +841,7 @@ object ProductionUiSwitchContract {
 
 object VisibleFunctionUiContract {
     const val POLICY = "NO_UI_NO_FUNCTION"
-    val requiredModes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")
+    val requiredModes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI")
     val requiredActions = linkedMapOf(
         "CAD" to listOf("LINE","RECT","CIRCLE","ARC","HOLE","SELECT"),
         "CAM" to listOf("CAM","MACHINING"),
@@ -849,6 +849,7 @@ object VisibleFunctionUiContract {
         "3AX" to listOf("OPEN","MACHINING"),
         "4AX" to listOf("OPEN","MACHINING"),
         "5AX" to listOf("OPEN","MACHINING"),
+        "6AX" to listOf("OPEN","MACHINING","A/B/C","NC LOCK"),
         "NC" to listOf("EDIT","SAFETY"),
         "AI" to listOf("INSPECT","VOICE","SUITE","UPDATE")
     )
@@ -924,8 +925,8 @@ object RuntimeUxFlowContract {
 
     fun visibleActions(mode:String):List<String> = when(step(mode).mode) {
         "CAD" -> listOf("LINE","SELECT","SNAP","→ CAM")
-        "CAM" -> listOf("AUTO","參數","3/4/5AX","→ SIM")
-        "SIM" -> listOf("模擬","風險","3/4/5AX","→ NC")
+        "CAM" -> listOf("AUTO","參數","3/4/5/6AX","→ SIM")
+        "SIM" -> listOf("模擬","風險","3/4/5/6AX","→ NC")
         "NC" -> listOf("EDIT","安全","← SIM")
         "AI" -> listOf("AI 檢查","維修","更新","← CAD")
         "3AX" -> listOf("3AX 模型","SIM","NC")

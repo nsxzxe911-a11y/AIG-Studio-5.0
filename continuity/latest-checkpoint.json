@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "339.0.0",
+  "version": "340.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 339. Production pages and NC editing are no longer engineering-locked by stale CAM/SIM; stale states are visible warnings and may show only the last real cached preview. Machine/post execution validation remains a separate pre-execution step.",
-  "note": "Studio 339 production interaction unlock: removed disabled NC LOCK UI, added always-available NC draft editor, changed stale CAM/SIM from page-navigation blockade to warning/last-real-preview behavior, nested maintenance under settings, and removed LOCKED/fail-closed engineering wording from primary Runtime UI. Android + Windows Kotlin compile PASS and full fast_review PASS before version bump.",
+  "next_action": "Validate actual Windows HOME and NC screenshots, then bind AIG-II 376 to this exact Studio commit. Do not treat old packaged screenshots as evidence for these source changes.",
+  "note": "Studio 340: live workpiece HOME, RGB glass machining panels, settings-only maintenance navigation, NC editor available without CAM, explicit POST validation preserves drafts. Android and Windows compilation and fast_review verified locally. Reference-image visual parity is not yet accepted.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -525,5 +525,16 @@
     "machine_execution_validation": "SEPARATE_PRE_EXECUTION_CHECK",
     "android_compile": "PASS",
     "windows_compile": "PASS"
+  },
+  "production_home_340": {
+    "repo_sync_status_on_home": false,
+    "root_pipeline_on_home": false,
+    "master_origin_visible": true,
+    "precision_visible": true,
+    "offline_ready_visible": true,
+    "maintenance_location": "SETTINGS_ONLY",
+    "compile_android": "PASS",
+    "compile_windows": "PASS",
+    "visual_acceptance": "PENDING_ACTUAL_LAUNCH_REVIEW"
   }
 }

@@ -227,13 +227,14 @@ for needle in (
     '"3AX" -> "3AX"',
     '"4AX" -> "4AX"',
     '"5AX" -> "5AX"',
+    '"6AX" -> "6AX"',
 ):
     require(env, needle, "WINDOWS_AXIS_NESTED_PRODUCTION_UI_238")
-print("PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED_3AX_4AX_5AX|STABLE_ORDER")
+print("PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED_3AX_4AX_5AX_6AX|STABLE_ORDER")
 
 for needle in (
     'const val POLICY = "NO_UI_NO_FUNCTION"',
-    'val requiredModes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")',
+    'val requiredModes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI")',
 ):
     require(env, needle, "VISIBLE_FUNCTION_UI_CONTRACT_212")
 for needle in (
@@ -541,7 +542,7 @@ for needle in (
 ):
     require(android, needle, "ANDROID_INTEGRATED_MAINTENANCE_221")
 for needle in (
-    'GlassActionButton("維修"',
+    'GlassActionButton("設定"',
     'fun showMaintenanceCenter()',
     'showApp(showWindow=false)',
     'productionFrame.contentPane',
@@ -562,7 +563,7 @@ for needle in (
     'homeAction("5AX"',
     'homeAction("NC"',
     'homeAction("AI"',
-    'text="工作/維修"',
+    'text="設定"',
     'runtimeHost.addView(homeRoot',
     'setContentView(runtimeHost)',
     'contentDescription="RETURN TO FORMAL RGB HOME"',
@@ -972,7 +973,7 @@ for needle in (
     'camAction("碰撞預測"',
     "productionCamSettings,productionFixtures,productionToolAssembly",
     "val modeledRisk=MachiningRiskScanner.inspect(",
-    '"NC BLOCKED: MODELED COLLISION="+modeledRisk.collisionCount',
+    'require(risk.ok) { "碰撞或過切警告，請檢查模擬後再 POST" }',
 ):
     require(desktop, needle, "STUDIO_WINDOWS_FIXTURE_RUNTIME_297")
 require(regression, "FIXTURE_COVERAGE_POLICY_GATE_PASS", "STUDIO_FIXTURE_COVERAGE_POLICY_297")
@@ -1686,8 +1687,12 @@ end = android.find("private fun showStockDialog", start)
 if start < 0 or end <= start:
     raise SystemExit("BLOCKED UNIFIED_WORKSPACE_SECTION_NOT_FOUND")
 unified = android[start:end]
-if "showNcEditDialog()" in unified:
-    raise SystemExit("BLOCKED INLINE_NC_REGRESSION_SECOND_DIALOG")
+require(unified, 'if(initialMode=="NC_EDIT") { showNcEditDialog(); return }', "NC_EDITOR_INDEPENDENT_ENTRY")
+if unified.index('if(initialMode=="NC_EDIT")') > unified.index('if(camDerivedCache==null)'):
+    raise SystemExit("NC_EDITOR_MUST_OPEN_WITHOUT_CAM")
+inline_controls = unified[unified.index('val modeFlow='):]
+if "showNcEditDialog()" in inline_controls:
+    raise SystemExit("INLINE_NC_CONTROLS_MUST_STAY_INLINE")
 for needle in (
     'listOf("G","M","X","Y","Z")',
     'listOf("A","B","F","S","T")',
@@ -1915,13 +1920,13 @@ print("STUDIO_FORMAL_INNER_RUNTIME_GATE_PASS|246|CAD_CLEAN_PAGE|CAM_SIM_3AX_4AX_
 # Studio 308 one-key multi-function source parity
 require(android, 'homeAction("多功能"', "ANDROID_ONE_KEY_MULTI_BUTTON")
 require(android, 'fun showOneKeyMultiFunction()', "ANDROID_ONE_KEY_MULTI_MENU")
-require(android, '"CAD 工具","CAM 刀路","SIM 模擬","3AX","4AX","5AX","NC 編輯","AI 智能","工作/維修"', "ANDROID_ONE_KEY_MULTI_CALLBACKS")
+require(android, '"CAD 工具","CAM 刀路","SIM 模擬","3AX","4AX","5AX","6AX","NC 編輯","AI 智能","設定中心"', "ANDROID_ONE_KEY_MULTI_CALLBACKS")
 require(desktop, 'GlassActionButton("多功能"', "WINDOWS_ONE_KEY_MULTI_BUTTON")
 require(desktop, 'item("CAD")', "WINDOWS_ONE_KEY_MULTI_CAD")
 require(desktop, 'item("CAM")', "WINDOWS_ONE_KEY_MULTI_CAM")
 require(desktop, 'item("SIM")', "WINDOWS_ONE_KEY_MULTI_SIM")
 require(desktop, 'item("NC")', "WINDOWS_ONE_KEY_MULTI_NC")
-print("ONE_KEY_MULTI_FUNCTION_RUNTIME_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|MAINT|REAL_CALLBACKS")
+print("ONE_KEY_MULTI_FUNCTION_RUNTIME_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|SETTINGS|REAL_CALLBACKS")
 
 
 # Studio 309 user settings / manual regression hub
@@ -2182,4 +2187,3 @@ for workflow in (coord_320,semantic_320):
     require(workflow, "if: ${{ false }}", "STUDIO_320_REGRESSION_WORKFLOW_OFF")
     require(workflow, 'run: echo "REGRESSION DISABLED', "STUDIO_320_REGRESSION_WORKFLOW_OFF")
 print("STUDIO_REGRESSION_CLEAN_GATE_PASS|320|TASK_OFF|WORKFLOWS_STUB_ONLY|WEB_MAIN_RUNTIME")
-

@@ -52,7 +52,7 @@ if 'context.assets.open("visuals/studio_startup_original.png")' not in startup:
     raise SystemExit("Android production startup asset binding missing")
 
 required_desktop = [
-    'JFrame("AIG CNC — OFFICIAL RGB ORIGINAL — v"+desktopVersionName())',
+    'JFrame("AIG Studio • CNC 加工控制 • v"+desktopVersionName())',
     "buildProductionCamPanel",
     "--smoke",
     "desktop_launch.png",
@@ -239,7 +239,7 @@ for marker in [
     'fun showProductionCollisionLookAhead()',
     'camAction("治具模型"',
     'camAction("碰撞預測"',
-    '"NC BLOCKED: MODELED COLLISION="+modeledRisk.collisionCount',
+    'require(risk.ok) { "碰撞或過切警告，請檢查模擬後再 POST" }',
 ]:
     if marker not in desktop:
         raise SystemExit(f"Windows fixture/NC-interlock marker missing: {marker}")
@@ -460,7 +460,7 @@ for marker in [
     if marker not in android_main:
         raise SystemExit(f"Android integrated maintenance marker missing: {marker}")
 for marker in [
-    'GlassActionButton("維修"',
+    'GlassActionButton("設定"',
     'fun showMaintenanceCenter()',
     '"AIG CNC • 維修 / 診斷"',
     'showApp(showWindow=false)',

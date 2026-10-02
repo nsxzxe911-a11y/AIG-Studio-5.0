@@ -772,11 +772,11 @@ class MainActivity : Activity() {
             setPadding(dp(8),dp(3),dp(8),dp(3))
             contentDescription="MASTER COORDINATE ROOT"
             addView(chromeText(
-                MasterRuntimeChainContract.uiLabel(),
+                MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION,
                 0xFF63FF9D.toInt(),10f
             ).apply { setTypeface(typeface,android.graphics.Typeface.BOLD) },
                 LinearLayout.LayoutParams(0,-2,1f))
-            addView(chromeText(if(workstationLayout==WorkstationChromeContract.Layout.COMPACT) "LOCAL • SYNC IDLE" else OfflineFirstModuleContract.uiBadge(),0xFF3DEBFF.toInt(),9f).apply {
+            addView(chromeText("本機就緒",0xFF3DEBFF.toInt(),9f).apply {
                 gravity=Gravity.END
             })
         }
@@ -1261,7 +1261,7 @@ class MainActivity : Activity() {
                     Color.rgb(2,7,14)
                 )
             )
-            val wallpaper=ProductionRgbAssets.drawable(this@MainActivity,"HOME")?.apply { alpha=72 }
+            val wallpaper=ProductionRgbAssets.drawable(this@MainActivity,"HOME")?.apply { alpha=0 }
             background=if(wallpaper!=null)
                 android.graphics.drawable.LayerDrawable(arrayOf(base,wallpaper))
             else base
@@ -1288,7 +1288,7 @@ class MainActivity : Activity() {
             letterSpacing=0.10f
         },LinearLayout.LayoutParams(-1,-2))
         homeContent.addView(chromeText(
-            "RGB 智慧製造",
+            "加工控制 • Master X0.000 Y0.000 Z0.000 • 0.001 mm",
             StudioProductionTheme.accent,12f
         ).apply {
             gravity=Gravity.CENTER
@@ -1318,6 +1318,13 @@ class MainActivity : Activity() {
             setMargins(dp(12),0,dp(12),dp(8))
         })
 
+        val homePreview=CadView(this).apply {
+            contentDescription="目前圖面預覽"
+            setOnTouchListener { _,_ -> true }
+        }
+        homeContent.addView(homePreview,LinearLayout.LayoutParams(-1,0,1f))
+        val homeMachiningInfo=chromeText("機台：未連接 • 刀路：尚無資料",0xFF63FF9D.toInt(),11f)
+        homeContent.addView(homeMachiningInfo,LinearLayout.LayoutParams(-1,-2))
         val homeModes=FlowLayout(this).apply {
             contentDescription="FORMAL RGB HOME MODES"
             setPadding(dp(4),dp(4),dp(4),dp(4))
@@ -1333,15 +1340,15 @@ class MainActivity : Activity() {
                 text=label
                 contentDescription="HOME $label"
                 textSize=StudioDisplayPolicy.sp(this,12f)
-                minWidth=dp(104)
-                minHeight=dp(64)
+                minWidth=dp(80)
+                minHeight=dp(48)
                 maxLines=1
                 setRgbState(color,false)
                 setOnClickListener { run() }
             })
         }
         fun showOneKeyMultiFunction() {
-            val labels=arrayOf("CAD 工具","CAM 刀路","SIM 模擬","3AX","4AX","5AX","NC 編輯","AI 智能","工作/維修","設定中心")
+            val labels=arrayOf("CAD 工具","CAM 刀路","SIM 模擬","3AX","4AX","5AX","6AX","NC 編輯","AI 智能","設定中心")
             AlertDialog.Builder(this)
                 .setTitle("一鍵多功能")
                 .setItems(labels) { dialog,which ->
@@ -1353,9 +1360,9 @@ class MainActivity : Activity() {
                         3 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))
                         4 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))
                         5 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))
-                        6 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))
-                        7 -> showAiSystemSuiteDialog()
-                        8 -> showMaintenanceCenter()
+                        6 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("6AX"))
+                        7 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))
+                        8 -> showAiSystemSuiteDialog()
                         9 -> showUserSettingsCenter()
                     }
                 }
@@ -1367,24 +1374,16 @@ class MainActivity : Activity() {
         homeAction("3AX",0xFF3B82F6.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
         homeAction("4AX",0xFFF59E0B.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}
         homeAction("5AX",0xFFEC4899.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
+        homeAction("6AX",0xFF22D3EE.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("6AX"))}
         homeAction("NC",0xFF50AAFF.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}
         homeAction("AI",0xFF8B5CF6.toInt()){showAiSystemSuiteDialog()}
         homeAction("多功能",0xFF27E9FF.toInt()){showOneKeyMultiFunction()}
-        homeContent.addView(homeModes,LinearLayout.LayoutParams(-1,0,1f))
+        homeContent.addView(homeModes,LinearLayout.LayoutParams(-1,-2))
 
         val homeUtility=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL
             gravity=Gravity.CENTER
             setPadding(dp(4),dp(8),dp(4),dp(2))
-            addView(RgbGlowButton(this@MainActivity).apply {
-                text="工作/維修"
-                contentDescription="HOME WORK MAINTENANCE"
-                textSize=StudioDisplayPolicy.sp(this,10f)
-                minWidth=dp(112)
-                minHeight=dp(44)
-                setRgbState(0xFF8B5CF6.toInt(),false)
-                setOnClickListener { showMaintenanceCenter() }
-            })
             addView(RgbGlowButton(this@MainActivity).apply {
                 text="設定"
                 contentDescription="HOME USER SETTINGS CENTER"
@@ -1405,7 +1404,16 @@ class MainActivity : Activity() {
             FrameLayout.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.MATCH_PARENT
         ))
+        fun refreshHomePreview() {
+            homePreview.importState(cad.exportState())
+            homePreview.post { homePreview.fitView() }
+            homeMachiningInfo.text="機台：未連接 • 圖元：${cad.snapshot().entities.size} • 刀路："+
+                (camDerivedCache?.cam?.toolpaths?.sumOf{it.moves.size}?.toString() ?: "尚無資料")+
+                (if(camDerivedStale) " • 待重算" else "")
+        }
+        refreshHomePreview()
         showRuntimeHome={
+            refreshHomePreview()
             root.visibility=View.GONE
             homeRoot.visibility=View.VISIBLE
         }
@@ -3466,8 +3474,14 @@ class MainActivity : Activity() {
     }
 
     private fun showUnifiedMachiningWorkspace(initialMode:String) {
+        if(initialMode=="NC_EDIT") { showNcEditDialog(); return }
         if(camDerivedCache==null) {
-            Toast.makeText(this,"尚無 CAM 刀路資料 • 可直接使用 CAD / CAM / NC EDIT；建立刀路後顯示真 3D/SIM",Toast.LENGTH_LONG).show()
+            AlertDialog.Builder(this)
+                .setTitle("$initialMode • 加工工作區")
+                .setMessage(MasterRuntimeChainContract.masterOriginLabel()+" • 0.001 mm\n尚無刀路資料。可先設定加工條件，建立刀路後再執行模擬。")
+                .setPositiveButton("CAM 加工設定") { _,_ -> showCamWorkstation() }
+                .setNeutralButton("NC 編輯") { _,_ -> showNcEditDialog() }
+                .setNegativeButton("關閉",null).show()
             return
         }
         if(camDerivedStale) {
