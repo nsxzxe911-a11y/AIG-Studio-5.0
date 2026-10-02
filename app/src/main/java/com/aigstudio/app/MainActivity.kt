@@ -145,14 +145,19 @@ object ProductionRgbAssets {
         return bytes
     }
 
-    fun drawable(context:Context,name:String):Drawable? {
-        val id=assetId(name) ?: return null
+    fun drawableById(context:Context,id:String):Drawable? {
+        val safe=RgbButtonVisualContract.requireAssetId(id)
         return runCatching {
             Drawable.createFromStream(
-                java.io.ByteArrayInputStream(verifiedBytes(context,id)),
-                "$id.png"
+                java.io.ByteArrayInputStream(verifiedBytes(context,safe)),
+                "$safe.png"
             )
         }.getOrNull()
+    }
+
+    fun drawable(context:Context,name:String):Drawable? {
+        val id=assetId(name) ?: return null
+        return drawableById(context,id)
     }
 }
 
@@ -203,6 +208,7 @@ class RgbGlowButton(context: Context) : Button(context) {
     private var accent = Color.rgb(61,235,255)
     private var selectedGlow = false
     private var alarmGlow = false
+    private var replacementAssetId:String?=null
     private val density = resources.displayMetrics.density
     private val pulseRunnable = object : Runnable {
         override fun run() {
@@ -221,21 +227,31 @@ class RgbGlowButton(context: Context) : Button(context) {
         render()
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        if (compoundDrawables.none { it != null }) {
+    private fun applyVisualAsset() {
+        val drawable=replacementAssetId?.let { ProductionRgbAssets.drawableById(context,it) } ?: run {
             val candidates=listOfNotNull(
                 contentDescription?.toString()?.takeIf{it.isNotBlank()},
                 text?.toString()?.takeIf{it.isNotBlank()}
             )
-            val drawable=candidates.firstNotNullOfOrNull { ProductionRgbAssets.drawable(context,it) }
-            drawable?.let {
-                val size=StudioDisplayPolicy.dp(this,22f).coerceAtLeast(18)
-                it.setBounds(0,0,size,size)
-                setCompoundDrawables(it,null,null,null)
-                compoundDrawablePadding=StudioDisplayPolicy.dp(this,6f)
-            }
+            candidates.firstNotNullOfOrNull { ProductionRgbAssets.drawable(context,it) }
         }
+        drawable?.let {
+            val size=StudioDisplayPolicy.dp(this,22f).coerceAtLeast(18)
+            it.setBounds(0,0,size,size)
+            setCompoundDrawables(it,null,null,null)
+            compoundDrawablePadding=StudioDisplayPolicy.dp(this,6f)
+        }
+    }
+
+    fun replaceVisualAsset(assetId:String?) {
+        replacementAssetId=assetId?.let(RgbButtonVisualContract::requireAssetId)
+        applyVisualAsset()
+        render()
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (compoundDrawables.none { it != null } || replacementAssetId!=null) applyVisualAsset()
     }
 
     fun setRgbState(color: Int, selected: Boolean, alarm: Boolean = false) {
