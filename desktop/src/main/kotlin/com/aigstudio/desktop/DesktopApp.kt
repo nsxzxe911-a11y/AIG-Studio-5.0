@@ -4213,11 +4213,46 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         status.text="MAINTENANCE CENTER • PRODUCTION UI • OFFLINE CAPABLE"
     }
 
-    toolbar.add(GlassActionButton("維修",Color(139,92,246)).apply{
-        toolTipText="正式 Runtime UI 內建維修 / 診斷"
-        preferredSize=Dimension(92,48)
-        addActionListener{showMaintenanceCenter()}
-    },BorderLayout.EAST)
+    val toolbarUtilities=JPanel(FlowLayout(FlowLayout.RIGHT,6,0)).apply{
+        isOpaque=false
+        add(GlassActionButton("多功能",Color(39,233,255)).apply{
+            toolTipText="一鍵多功能 • 真實 Runtime callback"
+            preferredSize=Dimension(98,48)
+            addActionListener{
+                val menu=JPopupMenu()
+                fun item(label:String,run:()->Unit){
+                    menu.add(JMenuItem(label).apply{addActionListener{run()}})
+                }
+                item("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="CAD • PRODUCTION UI"}
+                item("CAM"){showProductionCam()}
+                item("SIM"){runCatching{showUnifiedMachiningEditor(
+                    frame,doc,status,ProductionUiSwitchContract.runtimeTarget("SIM"),
+                    productionCamSettings,productionFixtures,productionToolAssembly
+                )}.onFailure{status.text="SIM BLOCKED • "+(it.message?:"error")}}
+                item("3AX"){runCatching{showUnifiedMachiningEditor(
+                    frame,doc,status,"3AX",productionCamSettings,productionFixtures,productionToolAssembly
+                )}.onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}}
+                item("4AX"){runCatching{showUnifiedMachiningEditor(
+                    frame,doc,status,"4AX",productionCamSettings,productionFixtures,productionToolAssembly
+                )}.onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}}
+                item("5AX"){runCatching{showUnifiedMachiningEditor(
+                    frame,doc,status,"5AX",productionCamSettings,productionFixtures,productionToolAssembly
+                )}.onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}}
+                item("NC"){runCatching{showNcEditor(
+                    frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
+                )}.onFailure{status.text="NC BLOCKED • "+(it.message?:"error")}}
+                item("AI"){mainCardLayout.show(mainCardHost,"AI");status.text="AI • PRODUCTION UI"}
+                item("工作/維修"){showMaintenanceCenter()}
+                menu.show(this,0,height)
+            }
+        })
+        add(GlassActionButton("維修",Color(139,92,246)).apply{
+            toolTipText="正式 Runtime UI 內建維修 / 診斷"
+            preferredSize=Dimension(92,48)
+            addActionListener{showMaintenanceCenter()}
+        })
+    }
+    toolbar.add(toolbarUtilities,BorderLayout.EAST)
 
     viewTools.add(button("SNAP",Color(61,235,255)) {
         cad.snapEnabled=!cad.snapEnabled
