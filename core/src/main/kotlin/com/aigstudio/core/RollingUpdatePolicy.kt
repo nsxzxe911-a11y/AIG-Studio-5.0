@@ -136,6 +136,10 @@ object RollingUpdatePolicy {
     const val REGRESSION_EXECUTION_ENABLED=false
     const val ALLOW_DOWNGRADE=false
     const val ALLOW_EQUAL_VERSION_REINSTALL=false
+    const val REGRESSION_REENABLE_REQUIRES_EXPLICIT_USER_APPROVAL=true
+    const val CNC_SAFETY_POLICY_CHANGES_REQUIRE_EXPLICIT_USER_APPROVAL=true
+    const val CNC_SAFETY_CORE_LOCKED=true
+    const val CNC_SAFETY_DISABLE_ALLOWED=false
 
     private fun parts(v:String)=v.trim().split('.').map { it.toIntOrNull() ?: 0 }
     fun compareVersions(a:String,b:String):Int {
