@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "320.0.0",
+  "version": "321.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 320. Main Runtime web mirror remains at web/main-runtime-preview.html. NC regression workflows are minimal disabled stubs only; Gradle coreRegression is disabled.",
-  "note": "Studio 320: regression workflow command bodies removed and replaced by disabled stubs; web mirror version label updated. No regression execution and no binary/device PASS claimed.",
+  "next_action": "Continue forward-only from Studio 321. Web Direct Runtime now maps / directly to web/main-runtime-preview.html, bypassing engineering/verification shells for browser UI viewing. APK/EXE startup chain remains unchanged.",
+  "note": "Studio 321: browser deployment entry now serves the current Main Runtime UI mirror directly at /. This is a web UI mirror only, not APK/EXE device evidence; Android/Windows runtime startup behavior is unchanged.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -327,6 +327,23 @@
     "path": "web/main-runtime-preview.html",
     "purpose": "CURRENT_MAIN_UI_TRANSLATION",
     "runtime_evidence": false,
-    "version": "320.0.0"
+    "version": "320.0.0",
+    "controller_version": "356.0.0",
+    "studio_version": "321.0.0",
+    "direct_root": true
+  },
+  "web_runtime_direct": {
+    "status": "SOURCE_IMPLEMENTED",
+    "route": "/",
+    "source": "web/main-runtime-preview.html",
+    "dockerfiles": [
+      "Dockerfile",
+      "Dockerfile.web-runtime",
+      "Dockerfile.web-direct"
+    ],
+    "bypass_engineering_shell": true,
+    "bypass_verification_shell": true,
+    "android_windows_startup_unchanged": true,
+    "runtime_evidence": false
   }
 }
