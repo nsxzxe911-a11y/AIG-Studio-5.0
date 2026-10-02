@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "347.0.0",
+  "version": "348.0.0",
   "branch": "main",
-  "recorded_source_head": "a328a8fd066ceaed4903ceb4117db6028f50c01f",
+  "recorded_source_head": "3da695b48c0e9fca5c70bb89010ad4678e5d366f",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate Studio 347 5AX camera/depth cues from the exact commit, then bind AIG-II 383 to that SHA. Preserve true material removal, SIM focus visuals, motion semantics, CAM/NC data flow, and Web machine-output-disabled policy.",
-  "note": "Studio 347: Web 5AX/6AX now defaults the WebGL camera focus to the true current toolpoint with smooth follow while preserving manual 360-degree orbit and an explicit stock-center reset. A workpiece-relative A/B(/C) tool-axis cue is compared against the real view vector to report NEAR / FLAT / FAR depth polarity without changing machine geometry, G-code, CAM, or material-removal calculations.",
+  "next_action": "Validate Studio 348 5AX auto-occlusion camera from the exact commit, then bind AIG-II 384 to that SHA. Preserve true material removal, tool-follow/depth cues, CAM/NC data flow, manual camera authority, and Web machine-output-disabled policy.",
+  "note": "Studio 348: Web 5AX/6AX now adds visual-only auto-occlusion avoidance around the current tool-follow view. Camera-to-tool visibility is tested against stock, fixture and table AABBs in the true A/B(/C) workpiece frame; the smallest nearby yaw/pitch candidate is blended in, while manual pointer/wheel input temporarily holds automation and returns control to the operator. No CAM, G-code, kinematics or material-removal geometry is changed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",

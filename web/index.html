@@ -171,7 +171,7 @@ html,body{background:#020407}
 <header class="top">
  <div class="brand"><div><div class="logo">AIG CNC</div><small>BLACK RGB RUNTIME</small></div></div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● STUDIO 347 • LOCAL READY　0.001 mm</div>
+ <div class="status">● STUDIO 348 • LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
 <footer class="footer">AIG CNC • 黑色高對比 Runtime • Web Runtime • CNC machine output disabled</footer>
@@ -221,7 +221,7 @@ function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div cl
 
 function homePage(){
  return '<div data-home-runtime><div class="workgrid">'+
- '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 347 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
+ '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 348 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
  '<div class="menuGrid"><button class="menuCard" data-open-page="CAD">CAD 製圖</button><button class="menuCard" data-open-page="CAM">CAM 刀路</button><button class="menuCard" data-open-page="SIM">SIM 模擬</button><button class="menuCard" data-open-page="NC">NC 編輯</button><button class="menuCard" data-open-page="刀路">刀路工作頁</button><button class="menuCard" data-open-page="功能">設定 / 工具</button></div>'+
  '<div class="runtimeStatus" style="margin-top:9px"><div class="metric"><b>CAD</b><span data-home-cad>0 entities</span></div><div class="metric"><b>CAM</b><span data-home-cam>0 paths</span></div><div class="metric"><b>NC</b><span data-home-nc>0 lines</span></div><div class="metric"><b>Runtime</b><span>LOCAL READY</span></div></div>'+
  '<div class="notice" style="margin-top:9px">正式 Web Runtime 直接進 HOME；工程維修與設定收在功能頁。CNC machine output disabled。</div></div></section>'+
@@ -250,11 +250,11 @@ function ncPage(){
 function simPage(axis){
  const axes=axis==="3AX"?["X","Y","Z"]:axis==="4AX"?["X","Y","Z","A"]:axis==="5AX"?["X","Y","Z","A","B"]:["X","Y","Z","A","B","C"];
  const axisHtml=axes.map(a=>'<span class="axis '+a.toLowerCase()+'" data-axis-read="'+a+'">'+a+'　0.000</span>').join("");
- const cameraControls=(axis==="5AX"||axis==="6AX")?'<button class="btn selected" data-cmd="follow">跟刀 AUTO</button><button class="btn" data-cmd="center">毛坯中心</button>':"";
+ const cameraControls=(axis==="5AX"||axis==="6AX")?'<button class="btn selected" data-cmd="follow">跟刀 AUTO</button><button class="btn selected" data-cmd="occlusion">防遮擋 AUTO</button><button class="btn" data-cmd="center">毛坯中心</button>':"";
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":axis==="6AX"?"/A/B/C":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
  '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 真 3D 加工模擬<small>WebGL 機械模型 • A/B/C 真旋轉 • 拖曳 360° 相機</small></div></div>'+
  '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button>'+cameraControls+'</div><div class="notice" data-motion-legend>RAPID 快移 • ENTRY 進刀 • CUT 切削 • EXIT 退刀 • RETRACT 抬刀 • AVOID 夾具閃避</div>'+
- '<div class="runtimeStatus"><div class="metric"><b>CAMERA</b><span data-camera-mode>STOCK CENTER</span></div><div class="metric"><b>VIEW DEPTH</b><span data-depth-cue>FLAT</span></div><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>RECENT CUT</b><span data-cut-trail>0 / last 3</span></div><div class="metric"><b>TOOL CONTACT</b><span data-contact-state>OPEN</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric"><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric"><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
+ '<div class="runtimeStatus"><div class="metric"><b>CAMERA</b><span data-camera-mode>STOCK CENTER</span></div><div class="metric"><b>VISIBILITY</b><span data-occlusion-state>CLEAR</span></div><div class="metric"><b>VIEW DEPTH</b><span data-depth-cue>FLAT</span></div><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>RECENT CUT</b><span data-cut-trail>0 / last 3</span></div><div class="metric"><b>TOOL CONTACT</b><span data-contact-state>OPEN</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric"><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric"><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
  '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label><label class="param">刃長<input data-cutter-len type="number" value="30" min="1" step="0.1"></label><label class="param">刀柄 Ø<input data-holder-dia type="number" value="25" min="1" step="0.1"></label><label class="param">刀柄長<input data-holder-len type="number" value="25" min="1" step="0.1"></label><label class="param">G54 X<input data-g54-x type="number" value="0" step="0.001"></label><label class="param">G54 Y<input data-g54-y type="number" value="0" step="0.001"></label><label class="param">G54 Z<input data-g54-z type="number" value="0" step="0.001"></label><label class="param">G55 X<input data-g55-x type="number" value="0" step="0.001"></label><label class="param">G55 Y<input data-g55-y type="number" value="0" step="0.001"></label><label class="param">G55 Z<input data-g55-z type="number" value="0" step="0.001"></label><label class="param">H1<input data-h1 type="number" value="0" step="0.001"></label><label class="param">H4<input data-h4 type="number" value="0" step="0.001"></label><label class="param">H12<input data-h12 type="number" value="0" step="0.001"></label></div>'+
  '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+sourceCode[axis]+'</textarea></div>'+
@@ -964,7 +964,7 @@ function makeGlScene(canvas,axis){
  const gl=canvas.getContext("webgl",{antialias:true,alpha:false,preserveDrawingBuffer:false});
  if(!gl)return null;
  let lost=false;canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();lost=true});canvas.addEventListener("webglcontextrestored",()=>{lost=false});
- const camera={yaw:-.72,pitch:.58,zoom:2.55,drag:null,follow:(axis==="5AX"||axis==="6AX"),focus:null,lastDepthCue:"FLAT",lastDepthDot:0};
+ const camera={yaw:-.72,pitch:.58,zoom:2.55,drag:null,follow:(axis==="5AX"||axis==="6AX"),avoid:(axis==="5AX"||axis==="6AX"),focus:null,lastDepthCue:"FLAT",lastDepthDot:0,manualUntil:0,avoidYaw:0,avoidPitch:0,lastOcclusion:{blocked:false,count:0,reason:"CLEAR"},lastVisibility:"CLEAR"};
 
  function shader(type,src){
   const sh=gl.createShader(type);if(!sh)return null;
@@ -1016,6 +1016,30 @@ function makeGlScene(canvas,axis){
  }
  function inverseRotABVector(v,aDeg,bDeg,cDeg=0){return inverseRotABPoint(v,aDeg,bDeg,cDeg)}
  function rotMat(aDeg,bDeg,cDeg=0){return M(RZ(cDeg*Math.PI/180),M(RY(bDeg*Math.PI/180),RX(aDeg*Math.PI/180)))}
+
+ function runtimeSegmentAabbHit(a,b,box,pad=0){
+   let t0=0,t1=1;
+   for(const k of ["x","y","z"]){
+     const av=Number(a[k]||0),bv=Number(b[k]||0),d=bv-av,min=Number(box["min"+k.toUpperCase()])-pad,max=Number(box["max"+k.toUpperCase()])+pad;
+     if(Math.abs(d)<1e-9){if(av<min||av>max)return null;continue}
+     let q0=(min-av)/d,q1=(max-av)/d;if(q0>q1){const q=q0;q0=q1;q1=q}
+     t0=Math.max(t0,q0);t1=Math.min(t1,q1);if(t0>t1)return null;
+   }
+   return t1>=0&&t0<=1?{enter:Math.max(0,t0),exit:Math.min(1,t1)}:null;
+ }
+ function runtimeCameraOcclusion(eye,probe,pos,stockBox,fixtures,tableBox){
+   const a=Number(pos?.A||0),b=Number(pos?.B||0),c=Number(pos?.C||0);
+   const le=inverseRotABPoint({x:eye[0],y:eye[1],z:eye[2]},a,b,c),lp=inverseRotABPoint({x:probe[0],y:probe[1],z:probe[2]},a,b,c);
+   const items=[{reason:"STOCK",box:stockBox},{reason:"TABLE",box:tableBox},...(fixtures||[]).map(f=>({reason:"FIXTURE",box:{minX:f.x-f.w/2,maxX:f.x+f.w/2,minY:f.y-f.d/2,maxY:f.y+f.d/2,minZ:f.z,maxZ:f.z+f.h}}))],hits=[];
+   for(const item of items){const h=runtimeSegmentAabbHit(le,lp,item.box,.35);if(h&&h.enter>.015&&h.enter<.94)hits.push({reason:item.reason,enter:h.enter})}
+   hits.sort((x,y)=>x.enter-y.enter);return{blocked:hits.length>0,count:hits.length,reason:hits[0]?.reason||"CLEAR",hits};
+ }
+ function runtimeOcclusionCandidate(target,rr,probe,pos,stockBox,fixtures,tableBox){
+   const candidates=[[0,0],[.12,.06],[-.12,.06],[.22,.10],[-.22,.10],[.30,.16],[-.30,.16],[.16,.20],[-.16,.20]];
+   let best=null;
+   for(const [dy,dp] of candidates){const py=Math.max(.12,Math.min(1.38,camera.pitch+dp)),cp=Math.cos(py),yaw=camera.yaw+dy,eye=[target[0]+Math.cos(yaw)*cp*rr,target[1]+Math.sin(yaw)*cp*rr,target[2]+Math.sin(py)*rr],occlusion=runtimeCameraOcclusion(eye,probe,pos,stockBox,fixtures,tableBox),score=occlusion.count*100+dy*dy+dp*dp;if(!best||score<best.score)best={yaw:dy,pitch:dp,eye,occlusion,score};if(!occlusion.blocked&&dy===0&&dp===0)break}
+   return best;
+ }
 
  function mesh(data){
    const pb=gl.createBuffer(),nb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,pb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data.p),gl.STATIC_DRAW);gl.bindBuffer(gl.ARRAY_BUFFER,nb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data.n),gl.STATIC_DRAW);return{pb,nb,count:data.p.length/3}
@@ -1231,10 +1255,10 @@ function makeGlScene(canvas,axis){
  }
  function resize(){const dpr=Math.min(devicePixelRatio||1,2),r=canvas.getBoundingClientRect(),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);return{w,h,aspect:w/h}}
 
- canvas.addEventListener("pointerdown",e=>{canvas.setPointerCapture(e.pointerId);camera.drag={x:e.clientX,y:e.clientY,yaw:camera.yaw,pitch:camera.pitch}});
- canvas.addEventListener("pointermove",e=>{if(!camera.drag)return;camera.yaw=camera.drag.yaw+(e.clientX-camera.drag.x)*.008;camera.pitch=Math.max(.12,Math.min(1.38,camera.drag.pitch+(e.clientY-camera.drag.y)*.006))});
+ canvas.addEventListener("pointerdown",e=>{canvas.setPointerCapture(e.pointerId);camera.manualUntil=performance.now()+2600;camera.drag={x:e.clientX,y:e.clientY,yaw:camera.yaw,pitch:camera.pitch}});
+ canvas.addEventListener("pointermove",e=>{if(!camera.drag)return;camera.manualUntil=performance.now()+2600;camera.yaw=camera.drag.yaw+(e.clientX-camera.drag.x)*.008;camera.pitch=Math.max(.12,Math.min(1.38,camera.drag.pitch+(e.clientY-camera.drag.y)*.006))});
  canvas.addEventListener("pointerup",()=>camera.drag=null);canvas.addEventListener("pointercancel",()=>camera.drag=null);
- canvas.addEventListener("wheel",e=>{e.preventDefault();camera.zoom=Math.max(1.1,Math.min(6,camera.zoom*(e.deltaY<0?.90:1.11)))},{passive:false});
+ canvas.addEventListener("wheel",e=>{e.preventDefault();camera.manualUntil=performance.now()+1800;camera.zoom=Math.max(1.1,Math.min(6,camera.zoom*(e.deltaY<0?.90:1.11)))},{passive:false});
 
  function render(scene){
    if(lost||!scene?.parsed)return false;
@@ -1247,15 +1271,19 @@ function makeGlScene(canvas,axis){
      const stockTop=hasStock?explicitTop:0,stockH=hasStock?explicitThickness:derivedH,stockBottom=stockTop-stockH,stockCenter=(stockTop+stockBottom)/2;
      const stockMinX=hasXY?sx0:(minX+maxX)/2-fallbackSpanX/2,stockMaxX=hasXY?sx1:(minX+maxX)/2+fallbackSpanX/2,stockMinY=hasXY?sy0:(minY+maxY)/2-fallbackSpanY/2,stockMaxY=hasXY?sy1:(minY+maxY)/2+fallbackSpanY/2;
      const spanX=stockMaxX-stockMinX,spanY=stockMaxY-stockMinY,cx=(stockMinX+stockMaxX)/2,cy=(stockMinY+stockMaxY)/2,sceneR=Math.max(spanX,spanY,70);
+     const A=axis==="3AX"?0:(pos.A||0),B=(axis==="5AX"||axis==="6AX")?(pos.B||0):0,C=axis==="6AX"?(pos.C||0):0,R=rotMat(A,B,C),tableR=Math.max(spanX,spanY)*.72,fixtureBoxes=runtimeAssemblyBoxes({assembly:scene.assembly});
+     const stockBox={minX:stockMinX,maxX:stockMaxX,minY:stockMinY,maxY:stockMaxY,minZ:stockBottom,maxZ:stockTop},tableBox={minX:cx-tableR,maxX:cx+tableR,minY:cy-tableR,maxY:cy+tableR,minZ:stockBottom-12,maxZ:stockBottom-4};
      const stockTarget=[cx,cy,stockCenter],followEligible=(axis==="5AX"||axis==="6AX")&&camera.follow,focusTarget=followEligible?[Number(pos.X||0),Number(pos.Y||0),Number(pos.Z||0)]:stockTarget;
      if(!camera.focus)camera.focus=[...focusTarget];
      camera.focus[0]+=(focusTarget[0]-camera.focus[0])*(followEligible?.18:.28);camera.focus[1]+=(focusTarget[1]-camera.focus[1])*(followEligible?.18:.28);camera.focus[2]+=(focusTarget[2]-camera.focus[2])*(followEligible?.18:.28);
-     const target=camera.focus,rr=sceneR*camera.zoom,cp=Math.cos(camera.pitch),eye=[target[0]+Math.cos(camera.yaw)*cp*rr,target[1]+Math.sin(camera.yaw)*cp*rr,target[2]+Math.sin(camera.pitch)*rr];
+     const target=camera.focus,rr=sceneR*camera.zoom,probe=[Number(pos.X||0),Number(pos.Y||0),Number(pos.Z||0)+Math.max(6,Math.min(Number(scene.cutterLen||30)*.55,sceneR*.18))],manualHold=performance.now()<camera.manualUntil,autoEligible=followEligible&&camera.avoid&&!manualHold;
+     const candidate=autoEligible?runtimeOcclusionCandidate(target,rr,probe,pos,stockBox,fixtureBoxes,tableBox):null,targetYaw=candidate?.yaw||0,targetPitch=candidate?.pitch||0;
+     camera.avoidYaw+=(targetYaw-camera.avoidYaw)*(autoEligible?.18:.28);camera.avoidPitch+=(targetPitch-camera.avoidPitch)*(autoEligible?.18:.28);
+     const effectiveYaw=camera.yaw+camera.avoidYaw,effectivePitch=Math.max(.12,Math.min(1.38,camera.pitch+camera.avoidPitch)),cp=Math.cos(effectivePitch),eye=[target[0]+Math.cos(effectiveYaw)*cp*rr,target[1]+Math.sin(effectiveYaw)*cp*rr,target[2]+Math.sin(effectivePitch)*rr];
+     const occlusion=runtimeCameraOcclusion(eye,probe,pos,stockBox,fixtureBoxes,tableBox);camera.lastOcclusion=occlusion;camera.lastVisibility=manualHold&&camera.avoid?"MANUAL HOLD":!camera.avoid?"OFF":Math.hypot(camera.avoidYaw,camera.avoidPitch)>.025?"AUTO SHIFT":occlusion.blocked?("LIMITED "+occlusion.reason):"CLEAR";
      const viewDir=norm(sub(eye,target)),depthCue=runtimeDepthCue(runtimeToolAxisVector(pos,axis),viewDir);camera.lastDepthCue=depthCue.label;camera.lastDepthDot=depthCue.dot;
      const vp=M(P(Math.PI/4,aspect,.1,sceneR*20),look(eye,target,[0,0,1]));
      gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.clearColor(.003,.008,.012,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-
-     const A=axis==="3AX"?0:(pos.A||0),B=(axis==="5AX"||axis==="6AX")?(pos.B||0):0,C=axis==="6AX"?(pos.C||0):0,R=rotMat(A,B,C),tableR=Math.max(spanX,spanY)*.72;
      drawMesh(cyl,M(R,M(T(0,0,stockBottom-8),S(tableR*2,tableR*2,8))),rgb("#182532"),vp);
      if(axis==="3AX"){
        drawMesh(stockShell,M(T(cx,cy,stockCenter),S(spanX,spanY,stockH)),rgb("#465f70"),vp);
@@ -1271,7 +1299,6 @@ function makeGlScene(canvas,axis){
      if(axis==="6AX"){
        drawMesh(cube,M(R,M(T(cx+tableR*.45,cy,stockBottom-1),S(tableR*.32,2.5,3))),rgb("#33f39b"),vp);
      }
-     const fixtureBoxes=runtimeAssemblyBoxes({assembly:scene.assembly});
      for(const fixture of fixtureBoxes){
        const model=M(R,M(T(fixture.x,fixture.y,fixture.z+fixture.h/2),S(fixture.w,fixture.d,fixture.h)));
        const fixtureAlarm=String(scene.collisionAlarm?.fixtureId||"")===fixture.id;
@@ -1715,8 +1742,9 @@ function makeRuntime(root){
  }
  function updateUi(){
   const p=currentPos(),len=state.parsed.blocks.length,progress=len?Math.min(100,((state.index+state.t)/len)*100):0,b=currentBlock(),cfg=settings(),mc=activeMachine(),uiToolDia=runtimeToolDiameter(cfg,b||{machine:mc});
-  const cameraModeEl=root.querySelector("[data-camera-mode]"),depthCueEl=root.querySelector("[data-depth-cue]"),followActive=Boolean((axis==="5AX"||axis==="6AX")&&glScene?.camera?.follow);
+  const cameraModeEl=root.querySelector("[data-camera-mode]"),occlusionEl=root.querySelector("[data-occlusion-state]"),depthCueEl=root.querySelector("[data-depth-cue]"),followActive=Boolean((axis==="5AX"||axis==="6AX")&&glScene?.camera?.follow);
   if(cameraModeEl){cameraModeEl.textContent=followActive?"FOLLOW TOOL":"STOCK CENTER";cameraModeEl.style.color=followActive?"#27e9ff":"#8fa7b4"}
+  if(occlusionEl){const vis=glScene?.camera?.lastVisibility||"CLEAR";occlusionEl.textContent=vis;occlusionEl.style.color=vis==="CLEAR"?"#33f39b":vis==="AUTO SHIFT"?"#27e9ff":vis==="MANUAL HOLD"?"#ffb326":vis==="OFF"?"#8fa7b4":"#ff4da6"}
   if(depthCueEl){const cue=glScene?.camera?.lastDepthCue||"FLAT";depthCueEl.textContent=cue;depthCueEl.style.color=cue==="NEAR"?"#33f39b":cue==="FAR"?"#ff4da6":"#ffb326"}
   const role=runtimeMotionRole(b),motionEl=root.querySelector("[data-motion-role]");if(motionEl){motionEl.textContent=role;motionEl.style.color=runtimeMotionColor(role,state.dry)}
   const recentCuts=runtimeRecentCutBlocks(state.parsed,state.index,3),cutTrailEl=root.querySelector("[data-cut-trail]");if(cutTrailEl)cutTrailEl.textContent=recentCuts.length+" / last 3";
@@ -1765,6 +1793,7 @@ function makeRuntime(root){
   if(cmd==="blockskip"){state.blockSkip=!state.blockSkip;root.querySelector('[data-cmd="blockskip"]').classList.toggle("warn",state.blockSkip)}
   if(cmd==="reset"){state.running=false;state.index=0;state.t=0;state.collisionAlarm=null}
   if(cmd==="follow"&&glScene){glScene.camera.follow=!glScene.camera.follow;glScene.camera.focus=null;const b=root.querySelector('[data-cmd="follow"]');if(b)b.classList.toggle("selected",glScene.camera.follow)}
+  if(cmd==="occlusion"&&glScene){glScene.camera.avoid=!glScene.camera.avoid;glScene.camera.avoidYaw=0;glScene.camera.avoidPitch=0;const b=root.querySelector('[data-cmd="occlusion"]');if(b)b.classList.toggle("selected",glScene.camera.avoid)}
   if(cmd==="center"&&glScene){glScene.camera.follow=false;glScene.camera.focus=null;const b=root.querySelector('[data-cmd="follow"]');if(b)b.classList.remove("selected")}
   updateUi();renderExec();draw();
  }
