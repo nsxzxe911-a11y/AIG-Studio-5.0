@@ -315,6 +315,24 @@ for marker in [
     if marker not in desktop:
         raise SystemExit(f"Windows Project V3 recovery marker missing: {marker}")
 print("FULL_PROJECT_RECOVERY_PRODUCTION_GATE_PASS|ANDROID|WINDOWS|V3_ATOMIC_SAVE|15S|CAD_CAM_ABC_FIXTURE_TOOL_NC|NONFATAL_CORRUPT_FALLBACK")
+for marker in [
+    'contentDescription="CAM TOOL ASSEMBLY EDITOR"',
+    "private fun showToolAssemblyEditor()",
+    "camToolAssembly=it",
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android tool-assembly marker missing: {marker}")
+for marker in [
+    "fun showProductionToolAssemblyEditor()",
+    'camAction("刀具總成"',
+    "productionToolAssembly=it",
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Windows tool-assembly marker missing: {marker}")
+if "TOOL_ASSEMBLY_COLLISION_GATE_PASS" not in core_regression:
+    raise SystemExit("Tool-assembly collision regression marker missing")
+print("TOOL_ASSEMBLY_PRODUCTION_GATE_PASS|ANDROID|WINDOWS|HOLDER_COLLISION_EFFECT|PROJECT_V3_DIGEST|NC_INTERLOCK_MODEL")
+
 
 
 
