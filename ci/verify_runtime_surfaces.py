@@ -897,6 +897,17 @@ for needle in (
 require(core, "6AX_C_AXIS_NC_POST_BLOCKED", "STUDIO_6AX_NC_FAIL_CLOSED_294")
 require(regression, "CONTINUOUS_6AX_CAM_SIM_GATE_PASS", "STUDIO_CONTINUOUS_6AX_REGRESSION_294")
 print("CONTINUOUS_6AX_RUNTIME_GATE_PASS|CAM_PER_TOOLPOINT_ABC|PROGRESSIVE_SIM|ANDROID_LIVE_C|WINDOWS_LIVE_C|NC_C_FAIL_CLOSED")
+for needle in (
+    "private fun machinePoint(move:Move):Vec3",
+    "MachineKinematics3D.transform(",
+    "private fun rotatingFixtureEnvelopeCollision(",
+    "ROTARY_FIXTURE_ENVELOPE collision:",
+    "val envelopes=enabled.filter{it.kind==FixtureKind.MACHINE_ENVELOPE}",
+):
+    require(machining3d_core, needle, "STUDIO_6AX_COLLISION_SPACE_295")
+require(regression, "SIX_AXIS_FIXTURE_ENVELOPE_GATE_PASS", "STUDIO_6AX_FIXTURE_ENVELOPE_REGRESSION_295")
+print("SIX_AXIS_COLLISION_SPACE_GATE_PASS|ABC_MACHINE_SPACE|FIXTURE|CLAMP|MACHINE_ENVELOPE|ROTATING_FIXTURE|C90")
+
 
 for needle in (
     "Color.argb(if(moving) 246 else 236, 56, 104, 138)",
