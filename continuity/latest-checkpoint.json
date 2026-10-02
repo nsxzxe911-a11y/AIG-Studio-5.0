@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "309.0.0",
+  "version": "310.0.0",
   "branch": "main",
-  "recorded_source_head": "168221eff04f3cec769e719e1046bfadb7cad33b",
+  "recorded_source_head": "c7133e38fdeb799e964703dba810175327556398",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 309 settings/UI checkpoint. User settings center owns theme/FPS/visual preferences; regression/verification is one manual entry. Automatic push/schedule workflows remain disabled.",
-  "note": "Studio 309 source checkpoint: Settings Center added to production Runtime; all three embedded themes are selectable; 90 FPS is now an explicit user option while startup/default remains 60Hz; regression/verification controls are consolidated under one manual entry. No binary/device PASS claimed.",
+  "next_action": "Continue forward-only from Studio 310. Windows Settings Center action duplication is removed and maintenance access is restored without local-function forward-reference risk. Next evidence step remains manual APK/EXE build and Production Runtime launch capture when an execution host is available.",
+  "note": "Studio 310 source checkpoint: Windows Settings Center no longer contains duplicate regression or self-recursive settings actions; 工作 / 維修 is restored through a deferred callback bridge after maintenance initialization; CAD / AI direct actions remain available. Automatic push/schedule regression stays disabled. No latest APK/EXE/device PASS or Runtime screenshot is claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -226,7 +226,7 @@
     "app/src/main/assets/aig-generated-rgb/approved/184/tool_group.png"
   ],
   "manual_only_checkpoint": {
-    "source_head": "168221eff04f3cec769e719e1046bfadb7cad33b",
+    "source_head": "c7133e38fdeb799e964703dba810175327556398",
     "automatic_push_triggers": 0,
     "automatic_schedule_triggers": 0,
     "one_key_multifunction": "IMPLEMENTED_ANDROID_WINDOWS",
@@ -241,7 +241,8 @@
     "settings_center": "IMPLEMENTED_ANDROID_WINDOWS",
     "regression_hub": "SINGLE_MANUAL_ENTRY",
     "all_embedded_themes_user_selectable": true,
-    "binary_device_release_proof": "NOT_CLAIMED"
+    "binary_device_release_proof": "NOT_CLAIMED",
+    "desktop_settings_action_integrity": "DEDUPED_MAINTENANCE_RESTORED"
   },
   "user_settings_center": {
     "status": "SOURCE_IMPLEMENTED",
@@ -261,6 +262,7 @@
     "default_startup_hz": 60,
     "regression_entry": "SINGLE_MANUAL_OPTION",
     "automatic_regression_triggers": false,
-    "cnc_safety_integrity_disable_allowed": false
+    "cnc_safety_integrity_disable_allowed": false,
+    "windows_action_integrity": "REGRESSION_SINGLE_MAINT_RESTORED_NO_SELF_RECURSION"
   }
 }

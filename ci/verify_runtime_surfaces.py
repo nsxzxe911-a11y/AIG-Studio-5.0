@@ -1954,3 +1954,19 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_309_WINDOWS_SETTINGS_HUB")
 print("STUDIO_USER_SETTINGS_CENTER_GATE_PASS|309|ANDROID|WINDOWS|THEMES_ALL|FPS_30_60_90_120|DEFAULT_60|REGRESSION_SINGLE_ENTRY|MANUAL_ACTIONS_ONLY")
+
+# Studio 310 desktop settings action integrity
+desktop_310 = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
+for needle in (
+    'var maintenanceCenterAction: (() -> Unit)? = null',
+    'action("工作 / 維修"){maintenanceCenterAction?.invoke()',
+    'maintenanceCenterAction={showMaintenanceCenter()}',
+    'action("AI 智能"){mainCardLayout.show(mainCardHost,"AI");status.text="SETTINGS • AI"}',
+):
+    require(desktop_310, needle, "STUDIO_310_WINDOWS_SETTINGS_ACTIONS")
+if desktop_310.count('action("回歸 / 驗證"){showManualRegressionCenter()}') != 1:
+    raise SystemExit("BLOCKED STUDIO_310_WINDOWS_SETTINGS_DUPLICATE_REGRESSION")
+if 'action("設定中心"){showUserSettingsCenter()}' in desktop_310:
+    raise SystemExit("BLOCKED STUDIO_310_WINDOWS_SETTINGS_RECURSIVE_ENTRY")
+print("STUDIO_SETTINGS_ACTION_INTEGRITY_GATE_PASS|310|WINDOWS|REGRESSION_SINGLE|MAINT_RESTORED|NO_SELF_RECURSION|AI_DIRECT")
+

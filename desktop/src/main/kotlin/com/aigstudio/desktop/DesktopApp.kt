@@ -4234,6 +4234,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         JOptionPane.showMessageDialog(frame,panel,"回歸 / 驗證 • 單一入口",JOptionPane.INFORMATION_MESSAGE)
     }
 
+    var maintenanceCenterAction: (() -> Unit)? = null
+
     fun showUserSettingsCenter(){
         val names=StudioDesktopProductionTheme.ids().map{StudioDesktopProductionTheme.name(it)}.toTypedArray()
         val currentIndex=StudioDesktopProductionTheme.ids().indexOf(StudioDesktopProductionTheme.ID).coerceAtLeast(0)
@@ -4248,11 +4250,11 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             status.text="THEME SAVED • "+StudioDesktopProductionTheme.name(id)+" • 重新開啟視窗完整套用"
             frame.repaint()
         }
-        action("設定中心"){showUserSettingsCenter()}
         action("回歸 / 驗證"){showManualRegressionCenter()}
         action("座標 / 精度"){showDesktopCoordinatePrecisionDialog(frame,status)}
-        action("回歸 / 驗證"){showManualRegressionCenter()}
+        action("工作 / 維修"){maintenanceCenterAction?.invoke() ?: run { status.text="SETTINGS • MAINTENANCE INITIALIZING" }}
         action("CAD / 首頁"){mainCardLayout.show(mainCardHost,"CAD");status.text="SETTINGS • CAD"}
+        action("AI 智能"){mainCardLayout.show(mainCardHost,"AI");status.text="SETTINGS • AI"}
         val panel=JPanel(BorderLayout(8,8)).apply{
             background=StudioDesktopProductionTheme.background
             border=BorderFactory.createEmptyBorder(10,10,10,10)
@@ -4300,6 +4302,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         JOptionPane.showMessageDialog(frame,panel,"AIG CNC • 維修 / 診斷",JOptionPane.INFORMATION_MESSAGE)
         status.text="MAINTENANCE CENTER • PRODUCTION UI • OFFLINE CAPABLE"
     }
+
+    maintenanceCenterAction={showMaintenanceCenter()}
 
     val toolbarUtilities=JPanel(FlowLayout(FlowLayout.RIGHT,6,0)).apply{
         isOpaque=false
