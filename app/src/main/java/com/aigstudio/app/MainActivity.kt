@@ -316,6 +316,10 @@ class RgbGlowButton(context: Context) : Button(context) {
             selectedGlow -> 210
             else -> (70 + 100 * brightness).roundToInt().coerceIn(70,170)
         }
+        val renderProfile=RenderCompatibilityContract.profile(
+            width.coerceAtLeast(1),height.coerceAtLeast(1),display?.refreshRate?.toDouble() ?: 60.0
+        )
+        val depthScale=RgbButtonVisualContract.depthScale(renderProfile.tier).toFloat()
         val outer = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
             intArrayOf(
@@ -325,6 +329,15 @@ class RgbGlowButton(context: Context) : Button(context) {
         ).apply {
             cornerRadius = 18f * density
             setStroke(strokePx, Color.argb(glowAlpha, Color.red(edge), Color.green(edge), Color.blue(edge)))
+        }
+        val depth = GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(
+                Color.argb(18,255,255,255),
+                Color.argb((72*depthScale).roundToInt().coerceIn(40,96),0,0,0)
+            )
+        ).apply {
+            cornerRadius = 16f * density
         }
         val body = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
@@ -353,11 +366,14 @@ class RgbGlowButton(context: Context) : Button(context) {
         ).apply {
             cornerRadius = 13f*density
         }
-        background = LayerDrawable(arrayOf(outer,body,highlight)).apply {
-            val inset=(2f*density).roundToInt().coerceAtLeast(1)
+        background = LayerDrawable(arrayOf(outer,depth,body,highlight)).apply {
+            val depthInset=(1f*density).roundToInt().coerceAtLeast(1)
+            val inset=(2f*density).roundToInt().coerceAtLeast(depthInset)
             val hiInset=(3f*density).roundToInt().coerceAtLeast(inset)
-            setLayerInset(1,inset,inset,inset,inset)
-            setLayerInset(2,hiInset,hiInset,hiInset,hiInset)
+            val bottomDepth=(5f*density*depthScale).roundToInt().coerceAtLeast(depthInset)
+            setLayerInset(1,depthInset,depthInset,depthInset,bottomDepth)
+            setLayerInset(2,inset,inset,inset,inset)
+            setLayerInset(3,hiInset,hiInset,hiInset,hiInset)
         }
         alpha = when {
             disabled -> 0.42f
