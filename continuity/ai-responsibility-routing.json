@@ -1,7 +1,7 @@
 {
   "schema": "aig-ai-responsibility-routing-v1",
   "product": "AIG Studio 5.0",
-  "version": "304.0.0",
+  "version": "305.0.0",
   "detector": "AI",
   "principle": "AI_DETECTS_CLASSIFIES_RETURNS_REWORK_REVERIFIES; OWNER_DEPARTMENT_FIXES",
   "lifecycle": [
@@ -38,7 +38,9 @@
     "AXIS6_COLLISION_LOOKAHEAD": "6AX",
     "AXIS6_MANUAL_CAM_EDIT_CONTINUITY": "6AX",
     "AXIS6_MANUAL_CAM_ORIENTATION_EDIT": "6AX",
-    "AXIS6_MACHINE_POST": "NC"
+    "AXIS6_MACHINE_POST": "NC",
+    "PROFESSIONAL_CROSS_AUDIT": "PRO_AUDIT",
+    "PROFESSIONAL_REPAIR_ORCHESTRATION": "PRO_AUDIT"
   },
   "external_conditions": {
     "NETWORK": {
@@ -134,5 +136,29 @@
     "build_owner": "ANDROID_BUILD",
     "failure_action": "RETURN_ONLY_FAILED_OWNER",
     "unrelated_departments_continue": true
+  },
+  "professional_audit_policy": {
+    "department": "PRO_AUDIT",
+    "scope": [
+      "ARCHITECTURE",
+      "RUNTIME",
+      "UIUX",
+      "CAD",
+      "CAM",
+      "SIM",
+      "3AX",
+      "4AX",
+      "5AX",
+      "6AX",
+      "NC",
+      "AI",
+      "ANDROID_BUILD",
+      "WINDOWS_BUILD",
+      "WEB"
+    ],
+    "action": "AUDIT_CLASSIFY_RETURN_OWNER_REPAIR_REVERIFY",
+    "may_override_product_safety_gate": false,
+    "may_override_integrity_gate": false,
+    "may_claim_binary_device_pass_without_evidence": false
   }
 }
