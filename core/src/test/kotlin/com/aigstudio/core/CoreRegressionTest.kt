@@ -1642,7 +1642,26 @@ private fun testCadPrecisionEditing() {
     assertPoint(CadEditEngine.selectionCenter(groupDoc,groupIds),Vec2(15.0,20.0),"selection center moved")
     check(groupHistory.undoWithEffect()==true)
     assertPoint(CadEditEngine.selectionCenter(groupDoc,groupIds),Vec2(5.0,5.0),"selection center undo")
-    println("✓ CAD_CONTROL_POINT_EDIT_GATE_PASS ENDPOINT CENTER RADIUS ARC_POINT SELECTION_CENTER_XY UNDO_REDO TOL=0.001")
+
+    val rectControl=DrawingDocument()
+    val rectControlIds=CadSemanticIdentity.newRectIds()
+    rectControl.put(Line(id=rectControlIds[0],a=Vec2(0.0,0.0),b=Vec2(20.0,0.0)))
+    rectControl.put(Line(id=rectControlIds[1],a=Vec2(20.0,0.0),b=Vec2(20.0,10.0)))
+    rectControl.put(Line(id=rectControlIds[2],a=Vec2(20.0,10.0),b=Vec2(0.0,10.0)))
+    rectControl.put(Line(id=rectControlIds[3],a=Vec2(0.0,10.0),b=Vec2(0.0,0.0)))
+    val rectHandles=CadControlPointEngine.points(rectControl,rectControlIds)
+    check(rectHandles.size==4 && rectHandles.all{it.kind==CadControlPointKind.RECT_CORNER})
+    val lowerLeft=rectHandles.first{it.point==Vec2(0.0,0.0)}
+    val rectControlHistory=History(rectControl)
+    rectControlHistory.run(CadControlPointEngine.editCommand(rectControl,lowerLeft,Vec2(-5.0,-3.0)))
+    val rectControlSize=RectDimensionDriveEngine.current(rectControl,rectControlIds)
+    assertNear(rectControlSize.width,25.0);assertNear(rectControlSize.height,13.0)
+    check(rectControlIds.all{rectControl.contains(it)})
+    check(rectControlHistory.undoWithEffect()==true)
+    val rectControlUndo=RectDimensionDriveEngine.current(rectControl,rectControlIds)
+    assertNear(rectControlUndo.width,20.0);assertNear(rectControlUndo.height,10.0)
+
+    println("✓ CAD_CONTROL_POINT_EDIT_GATE_PASS ENDPOINT CENTER RADIUS ARC_POINT RECT_CORNER_GROUP SELECTION_CENTER_XY UNDO_REDO TOL=0.001")
 
     println("✓ CAD_PRECISION_EDIT_GATE_PASS SNAP_ENDPOINT MIDPOINT CENTER INTERSECTION TANGENT HORIZONTAL VERTICAL DIM_DRIVE TRIM EXTEND OFFSET ARRAY SELECTION_LINE_RECT_CIRCLE_ARC_HOLE GROUP_PRESERVED TOL=0.001")
 }

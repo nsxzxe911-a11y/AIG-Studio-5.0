@@ -431,7 +431,7 @@ object CadSemanticIdentity {
     }
 }
 
-enum class CadControlPointKind { LINE_START, LINE_END, CENTER, RADIUS, ARC_START, ARC_END }
+enum class CadControlPointKind { LINE_START, LINE_END, CENTER, RADIUS, ARC_START, ARC_END, RECT_CORNER }
 
 data class CadControlPoint(
     val entityId:EntityId,
@@ -456,8 +456,49 @@ object CadControlPointEngine {
         )
     }
 
-    fun points(doc:DrawingDocument,ids:Collection<EntityId>):List<CadControlPoint> =
-        ids.distinct().mapNotNull(doc::get).flatMap(::points)
+    private fun rectRoot(id:EntityId):String? =
+        id.takeIf { it.startsWith("RECT:") }?.substringBeforeLast(':')
+
+    private fun completeRectLines(doc:DrawingDocument,root:String):List<Line> {
+        val lines=doc.all().filterIsInstance<Line>().filter { rectRoot(it.id)==root }
+        require(lines.size==4) { "RECT control requires one complete rectangle" }
+        val suffixes=lines.map { it.id.substringAfterLast(':') }.toSet()
+        require(suffixes==setOf("0","1","2","3")) { "RECT semantic edge IDs are incomplete" }
+        require(lines.all { line ->
+            val dx=abs(line.b.x-line.a.x)
+            val dy=abs(line.b.y-line.a.y)
+            (dx<=EPS && dy>=CNC_RESOLUTION_MM) || (dy<=EPS && dx>=CNC_RESOLUTION_MM)
+        }) { "RECT corner edit supports axis-aligned rectangles only; rotate back to 0/90° first" }
+        return lines
+    }
+
+    private fun rectControls(doc:DrawingDocument,root:String):List<CadControlPoint> {
+        val lines=completeRectLines(doc,root)
+        val points=lines.flatMap { listOf(it.a,it.b) }
+        val minX=points.minOf{it.x};val maxX=points.maxOf{it.x}
+        val minY=points.minOf{it.y};val maxY=points.maxOf{it.y}
+        val representative=lines.minBy { it.id }.id
+        return listOf(
+            CadControlPoint(representative,CadControlPointKind.RECT_CORNER,Vec2(minX,minY)),
+            CadControlPoint(representative,CadControlPointKind.RECT_CORNER,Vec2(maxX,minY)),
+            CadControlPoint(representative,CadControlPointKind.RECT_CORNER,Vec2(maxX,maxY)),
+            CadControlPoint(representative,CadControlPointKind.RECT_CORNER,Vec2(minX,maxY))
+        )
+    }
+
+    fun points(doc:DrawingDocument,ids:Collection<EntityId>):List<CadControlPoint> {
+        val selected=ids.distinct().mapNotNull(doc::get)
+        val rectGroups=selected.filterIsInstance<Line>()
+            .mapNotNull { line -> rectRoot(line.id)?.let { it to line } }
+            .groupBy({it.first},{it.second})
+        val completeRoots=rectGroups.filterValues { it.size==4 }.keys
+        val rectPoints=completeRoots.flatMap { root -> rectControls(doc,root) }
+        val regular=selected.filter { entity ->
+            val root=rectRoot(entity.id)
+            root==null || root !in completeRoots
+        }.flatMap(::points)
+        return rectPoints+regular
+    }
 
     fun nearest(
         doc:DrawingDocument,
@@ -472,6 +513,33 @@ object CadControlPointEngine {
 
     fun editCommand(doc:DrawingDocument,control:CadControlPoint,target:Vec2):Command {
         require(target.x.isFinite() && target.y.isFinite()) { "Control-point target must be finite" }
+        if(control.kind==CadControlPointKind.RECT_CORNER) {
+            val root=rectRoot(control.entityId) ?: error("RECT control identity missing")
+            val before=completeRectLines(doc,root)
+            val points=before.flatMap { listOf(it.a,it.b) }
+            val minX=points.minOf{it.x};val maxX=points.maxOf{it.x}
+            val minY=points.minOf{it.y};val maxY=points.maxOf{it.y}
+            val left=abs(control.point.x-minX)<=EPS
+            val right=abs(control.point.x-maxX)<=EPS
+            val bottom=abs(control.point.y-minY)<=EPS
+            val top=abs(control.point.y-maxY)<=EPS
+            require((left||right)&&(bottom||top)) { "RECT corner no longer matches live geometry" }
+            val nextMinX=if(left)target.x else minX
+            val nextMaxX=if(right)target.x else maxX
+            val nextMinY=if(bottom)target.y else minY
+            val nextMaxY=if(top)target.y else maxY
+            require(nextMaxX-nextMinX>=CNC_RESOLUTION_MM &&
+                nextMaxY-nextMinY>=CNC_RESOLUTION_MM) { "RECT corner edit must keep width/height >= 0.001 mm" }
+            val bySuffix=before.associateBy { it.id.substringAfterLast(':') }
+            val after=listOf(
+                Line(id=bySuffix.getValue("0").id,a=Vec2(nextMinX,nextMinY),b=Vec2(nextMaxX,nextMinY)),
+                Line(id=bySuffix.getValue("1").id,a=Vec2(nextMaxX,nextMinY),b=Vec2(nextMaxX,nextMaxY)),
+                Line(id=bySuffix.getValue("2").id,a=Vec2(nextMaxX,nextMaxY),b=Vec2(nextMinX,nextMaxY)),
+                Line(id=bySuffix.getValue("3").id,a=Vec2(nextMinX,nextMaxY),b=Vec2(nextMinX,nextMinY))
+            )
+            return ReplaceEntitiesCommand(before,after)
+        }
+
         val before=doc.get(control.entityId) ?: error("Control-point entity missing")
         val after:Entity=when(before) {
             is Line -> when(control.kind) {

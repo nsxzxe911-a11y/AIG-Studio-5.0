@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "324.0.0",
+  "version": "325.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 324. CAD dimension repair now treats semantic RECT as one object with width+height while preserving center; non-RECT driven dimensions require exactly one geometry. Continue control-point/group semantics before CAM.",
-  "note": "Studio 324: fixed RECT driven-dimension corruption risk. Axis-aligned semantic RECT groups resize by W/H as a group, retain RECT IDs and center, and reject arbitrary-angle groups instead of silently deforming them. Regression source coverage added; no APK/EXE launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 325. Semantic RECT control points now edit four corners as one rectangle, keeping adjacent edges closed. Continue CAD geometry/group consistency before CAM expansion.",
+  "note": "Studio 325: repaired semantic RECT control-point behavior. Complete RECT groups expose four RECT_CORNER handles instead of independent line endpoints; corner edits rebuild all four edges with stable IDs and preserve >=0.001 mm width/height. Arbitrary-angle RECT corner edits remain blocked. Regression source coverage added; automatic regression remains OFF/LOCKED. No APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -371,5 +371,13 @@
     "rotated_non_axis_rect": "BLOCK",
     "non_rect_multi_select_dimension": "BLOCK",
     "min_dimension_mm": 0.001
+  },
+  "cad_rect_control_325": {
+    "semantic_rect_corner_handles": 4,
+    "independent_edge_breakage": "BLOCKED",
+    "stable_rect_ids": true,
+    "min_width_height_mm": 0.001,
+    "rotated_non_axis_rect": "BLOCK",
+    "undo_redo_source_coverage": true
   }
 }

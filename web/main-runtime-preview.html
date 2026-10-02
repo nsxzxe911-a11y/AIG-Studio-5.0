@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>AIG II 356 / Studio 324 • Main Runtime Web Preview</title>
+<title>AIG II 356 / Studio 325 • Main Runtime Web Preview</title>
 <style>
 :root{--bg:#020407;--panel:#071018;--panel2:#0b1621;--text:#eefbff;--muted:#87a0ad;--cyan:#27e9ff;--green:#39f39a;--amber:#ffb326;--pink:#ff4da6;--violet:#9f72ff;--red:#ff5268}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
@@ -21,7 +21,7 @@ main{padding:10px}.page{display:none}.page.active{display:block}.panel{backgroun
  <div class="brand">
   <b>AIG II CNC</b>
   <span class="chip ok">AIG-II 356</span>
-  <span class="chip ok">Studio 324</span>
+  <span class="chip ok">Studio 325</span>
   <span class="chip">WEB RUNTIME PREVIEW</span>
   <span class="chip warn">不是 APK/EXE 實機證據</span>
  </div>
@@ -35,7 +35,7 @@ const nav=document.getElementById("nav"),pages=document.getElementById("pages");
 const state={online:true,progress:0,timer:null,axis:"5AX",fps:"60",theme:"Official RGB Original"};
 function panel(title,body){return '<section class="panel"><div class="head"><b>'+title+'</b><span class="small">Production UI mirror</span></div><div class="body">'+body+'</div></section>'}
 function home(){
- return panel("正式 HOME",' <div class="grid">  <div class="card"><b>啟動</b><div class="big safe">HOME FIRST</div><div class="small">無網路也直接進目前安裝版本 UI</div></div>  <div class="card"><b>版本</b><div class="big">AIG-II 356 / Studio 324</div><div class="small">只升不退 • newer only</div></div>  <div class="card"><b>Regression</b><div class="big lock">OFF / LOCKED</div><div class="small">沒有使用者明確允許不得重新啟用</div></div>  <div class="card"><b>CNC 安全核心</b><div class="big safe">ON / LOCKED</div><div class="small">設定列可查看</div></div>  <div class="card"><b>FPS</b><div class="big">60 Hz</div><div class="small">Auto / 30 / 60 / 90 / 120</div></div>  <div class="card"><b>精度</b><div class="big">0.001 mm</div><div class="small">Master X0.000 Y0.000 Z0.000</div></div> </div>')+
+ return panel("正式 HOME",' <div class="grid">  <div class="card"><b>啟動</b><div class="big safe">HOME FIRST</div><div class="small">無網路也直接進目前安裝版本 UI</div></div>  <div class="card"><b>版本</b><div class="big">AIG-II 356 / Studio 325</div><div class="small">只升不退 • newer only</div></div>  <div class="card"><b>Regression</b><div class="big lock">OFF / LOCKED</div><div class="small">沒有使用者明確允許不得重新啟用</div></div>  <div class="card"><b>CNC 安全核心</b><div class="big safe">ON / LOCKED</div><div class="small">設定列可查看</div></div>  <div class="card"><b>FPS</b><div class="big">60 Hz</div><div class="small">Auto / 30 / 60 / 90 / 120</div></div>  <div class="card"><b>精度</b><div class="big">0.001 mm</div><div class="small">Master X0.000 Y0.000 Z0.000</div></div> </div>')+
  panel("啟動版本更新",' <div class="btns"><button class="btn sel" id="netOn">有網路</button><button class="btn" id="netOff">無網路</button><button class="btn" id="runUpdate">重新比對</button></div> <div class="progressWrap" id="upWrap"><div class="progress"><i id="upBar"></i></div><div class="explain" id="upText"></div></div> <div class="notice" style="margin-top:10px">無網路：讀取條不出現，直接使用目前版本與設定。有網路：HOME 先可用，再背景比對、驗證；只有已驗證較新版本才套用。</div>');
 }
 function cad(){return panel("CAD",' <div class="btns"><button class="btn">LINE</button><button class="btn">RECT</button><button class="btn">CIRCLE</button><button class="btn">ARC</button><button class="btn">HOLE</button><button class="btn">SNAP</button><button class="btn">Trim</button><button class="btn">Extend</button><button class="btn">Offset</button><button class="btn">Array</button><button class="btn">CONNECT</button><button class="btn">DISCONNECT</button></div> <div class="stage" style="margin-top:10px"><div class="shape rect"></div><div class="shape circle"></div></div>');
