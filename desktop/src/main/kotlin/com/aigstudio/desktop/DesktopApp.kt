@@ -3532,6 +3532,38 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         override fun windowClosed(e:java.awt.event.WindowEvent?){ productionRecoveryTimer.stop() }
     })
 
+    fun showProductionToolAssemblyEditor(){
+        val holderDiameter=JTextField(DisplayFormat.mm(productionToolAssembly.holderDiameter),10)
+        val holderLength=JTextField(DisplayFormat.mm(productionToolAssembly.holderLength),10)
+        val stickout=JTextField(DisplayFormat.mm(productionToolAssembly.stickout),10)
+        val panel=JPanel(GridLayout(0,2,6,6)).apply{
+            add(JLabel("刀把直徑 mm"));add(holderDiameter)
+            add(JLabel("刀把長度 mm"));add(holderLength)
+            add(JLabel("刀具伸出量 mm"));add(stickout)
+        }
+        if(JOptionPane.showConfirmDialog(
+            frame,panel,
+            "CAM • 刀具總成 • 進入 5AX/6AX 碰撞模型",
+            JOptionPane.OK_CANCEL_OPTION
+        )==JOptionPane.OK_OPTION){
+            runCatching{
+                ToolAssemblyConfig(
+                    holderDiameter=holderDiameter.text.toDouble(),
+                    holderLength=holderLength.text.toDouble(),
+                    stickout=stickout.text.toDouble()
+                )
+            }.onSuccess{
+                productionToolAssembly=it
+                markProductionProjectDirty()
+                status.text="TOOL ASSEMBLY • Ø"+DisplayFormat.mm(it.holderDiameter)+
+                    " L"+DisplayFormat.mm(it.holderLength)+
+                    " STICKOUT "+DisplayFormat.mm(it.stickout)+" • REVALIDATE REQUIRED"
+            }.onFailure{
+                status.text="TOOL ASSEMBLY BLOCKED • "+(it.message?:"error")
+            }
+        }
+    }
+
     fun showProductionFixtureEditor(){
         val model=DefaultListModel<String>()
         val list=JList(model)
@@ -4021,6 +4053,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         }
         camAction("治具模型",LibraryFiveAxisSkin208.warning){
             showProductionFixtureEditor()
+        }
+        camAction("刀具總成",LibraryFiveAxisSkin208.violet){
+            showProductionToolAssemblyEditor()
         }
         camAction("碰撞預測",Color(255,110,110)){
             showProductionCollisionLookAhead()
