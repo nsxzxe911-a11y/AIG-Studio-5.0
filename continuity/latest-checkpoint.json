@@ -3,7 +3,7 @@
   "product": "AIG Studio 5.0",
   "version": "307.0.0",
   "branch": "main",
-  "recorded_source_head": "PENDING_307_SOURCE_COMMIT",
+  "recorded_source_head": "be0c071674e148a3bdef0d0d93ae297ac995af01",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "EXECUTE_UNTIL_PASS",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Studio 307 clean-code consolidation: one 15-department audit authority, additive ownership verification, no CNC core behavior change. Revalidate hosted Semantic before rebinding AIG-II.",
-  "note": "Studio 307 centralizes the 15-department audit contract in ci/audit_contract.py and removes duplicated department lists from PRO/continuity verifiers.",
+  "next_action": "AIG-II 342 must bind this Studio 307 checkpoint exact SHA. Keep APK/EXE install and physical-device launch evidence separate and manual.",
+  "note": "Studio 307 clean-code consolidation passed Hosted Semantic: 15 departments share ci/audit_contract.py; continuity verifiers are additive/self-triggering; CNC runtime behavior was not changed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -66,7 +66,7 @@
   },
   "department_autocheck": {
     "script": "ci/department_autocheck.py",
-    "last_source_review": "PENDING_STUDIO307_CLEAN_CODE_REVIEW",
+    "last_source_review": "PASS_15_DEPARTMENT_CLEAN_CODE_STUDIO307",
     "no_early_exit": true,
     "output": "build/department-autocheck.json"
   },
@@ -126,8 +126,8 @@
     "script": "ci/pro_audit.py",
     "display_name": "頂級專業軟體極速審核修建部門",
     "mode": "CROSS_DEPARTMENT_AUDIT_REPAIR_REVERIFY",
-    "status": "STUDIO307_SOURCE_PENDING_HOSTED_REVERIFY",
-    "source_review": "15_DEPARTMENT_PRO_AUDIT_COVERAGE",
+    "status": "SOURCE_AND_HOSTED_SEMANTIC_PASS",
+    "source_review": "15_DEPARTMENT_CLEAN_CODE_PASS",
     "previous_hosted_evidence": {
       "source_sha": "a55c5092324ef644e07e59bf3bd6260ff9c2933f",
       "workflow": "NC Semantic Timeline Gate",
@@ -140,12 +140,28 @@
       "android_windows_ui_compile": "PASS",
       "binary_device_release_proof": "NOT_CLAIMED",
       "note": "Hosted source/Semantic/UI-compile evidence only; no APK/EXE install or physical-device launch claim."
+    },
+    "hosted_evidence": {
+      "source_sha": "be0c071674e148a3bdef0d0d93ae297ac995af01",
+      "workflow": "NC Semantic Timeline Gate",
+      "run_id": 36957897000,
+      "whole_workflow": "SUCCESS",
+      "audit_contract_gate": "PASS",
+      "continuity_verifiers": "PASS",
+      "pro_audit": "PASS",
+      "stale_gate_detector": "PASS",
+      "core_regression_three_passes": "PASS",
+      "android_windows_ui_compile": "PASS",
+      "trigger_policy": "PASS",
+      "trigger_mine_cleaner": "PASS",
+      "binary_device_release_proof": "NOT_CLAIMED"
     }
   },
   "clean_code_contract": {
     "authority": "ci/audit_contract.py",
     "verifier": "ci/verify_audit_contract.py",
     "departments": 15,
-    "duplicate_lists_forbidden": true
+    "duplicate_lists_forbidden": true,
+    "status": "HOSTED_PASS"
   }
 }
