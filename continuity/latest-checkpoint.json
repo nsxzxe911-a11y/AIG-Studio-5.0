@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "313.0.0",
+  "version": "314.0.0",
   "branch": "main",
-  "recorded_source_head": "5bc86a7b91259d08439138e564f6d7e64e2f4e86",
+  "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 313. Production HOME remains first surface. Android refresh, rotary profile, recovery, autosave, shared sync and network now start after HOME first draw as independent non-fatal steps. Windows shared-folder polling starts only after the Production JFrame is visible. Next proof remains manual APK/EXE launch and first-frame screenshots.",
-  "note": "Studio 313 startup resilience checkpoint: non-critical initialization cannot own or block the first Production HOME surface. Post-draw failures become visible warnings while Runtime remains alive. CNC safety/precision/integrity rules are unchanged. No binary/device PASS claimed.",
+  "next_action": "Continue forward-only from Studio 314. Regression execution is disabled in build scripts and NC regression workflows. Downgrade and equal-version reinstall are disabled. Safety-scope updates that would require CNC regression fail closed instead of bypassing safety.",
+  "note": "Studio 314 policy checkpoint: no push/PR/schedule regression triggers, build does not invoke coreRegression, NC regression workflows are hard-disabled, and versions remain strictly forward-only. Verification/safety source checks remain available. No binary/device PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -196,10 +196,11 @@
   },
   "automatic_regression_triggers": {
     "status": "DISABLED",
-    "policy": "MANUAL_WORKFLOW_DISPATCH_ONLY",
-    "push_triggers": 0,
-    "schedule_triggers": 0,
-    "gate_code_preserved": true
+    "push": false,
+    "pull_request": false,
+    "schedule": false,
+    "manual_regression_execution": false,
+    "build_invokes_regression": false
   },
   "one_key_multifunction": {
     "status": "SOURCE_IMPLEMENTED",
@@ -282,5 +283,12 @@
     "windows_refresh_auto": true,
     "windows_default_hz": 60,
     "windows_effective_rate": "DEVICE_CLAMPED"
+  },
+  "version_policy": {
+    "forward_only": true,
+    "downgrade_allowed": false,
+    "equal_version_reinstall_allowed": false,
+    "overwrite_newer_version": false,
+    "safety_scope_without_regression": "BLOCK_PROMOTION"
   }
 }
