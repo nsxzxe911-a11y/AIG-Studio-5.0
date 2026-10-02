@@ -2142,7 +2142,7 @@ class MainActivity : Activity() {
         importantRow("衍生結果",
             if(camDerivedStale)"STALE • "+camDerivedStaleReason+" • 按重算" else "FRESH",
             if(camDerivedStale)StudioProductionTheme.warning else 0xFF63FF9D.toInt())
-        importantRow("重算規則","設定可改 • 不自動重算")
+        importantRow("重算規則","切頁不重算 • CAM參數/A-B/STOCK 改動→STALE • 明確重算")
 
         section("NC / 安全")
         importantRow("NC 輸出精度（可改｜預設：0.001 mm）","目前 "+ncPrecision+" mm")
@@ -3999,17 +3999,25 @@ class MainActivity : Activity() {
             simulationStatus.text="真走刀速度 ×"+simulationSpeed+" • "+activeAxisMode
         }
         action("APPLY_AXIS",0xFF8B5CF6.toInt(),"套用軸向"){
-            machiningAxisMode=activeAxisMode
-            axisA=if(activeAxisMode=="3AX")0.0 else draftA
-            axisB=if(activeAxisMode=="5AX")draftB else 0.0
+            val nextMode=activeAxisMode
+            val nextA=if(activeAxisMode=="3AX")0.0 else draftA
+            val nextB=if(activeAxisMode=="5AX")draftB else 0.0
+            val changed=machiningAxisMode!=nextMode ||
+                kotlin.math.abs(axisA-nextA)>1e-9 || kotlin.math.abs(axisB-nextB)>1e-9
+            machiningAxisMode=nextMode
+            axisA=nextA
+            axisB=nextB
             drillCycleBlock=""
+            if(changed) markCamDerivedStale("AXIS MODE / A/B")
             if(!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale=true
             markProjectDirty()
             saveCadCheckpoint()
             Toast.makeText(
                 this,
                 "AXIS APPLIED • "+machiningAxisMode+" • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+
-                    " • "+rotaryClampStatusText()+" • DRILL BLOCK RESET • NC DRAFT STALE",
+                    " • "+rotaryClampStatusText()+" • "+if(changed)
+                        "CAM/SIM/NC STALE • 請按重算"
+                    else "UNCHANGED",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -4076,10 +4084,21 @@ class MainActivity : Activity() {
                     val m = margin.text.toString().toDouble()
                     val t = thickness.text.toString().toDouble()
                     require(m >= 0.0 && t > 0.0)
+                    val changed=kotlin.math.abs(stockMarginMm-m)>1e-9 || kotlin.math.abs(stockThicknessMm-t)>1e-9
                     stockMarginMm = m
                     stockThicknessMm = t
-                }.onSuccess {
-                    Toast.makeText(this, "STOCK 已套用 • margin=" + DisplayFormat.mm(stockMarginMm) + " • T=" + DisplayFormat.mm(stockThicknessMm), Toast.LENGTH_SHORT).show()
+                    if(changed) {
+                        markCamDerivedStale("STOCK")
+                        markProjectDirty()
+                    }
+                    changed
+                }.onSuccess { changed ->
+                    Toast.makeText(
+                        this,
+                        "STOCK 已套用 • margin=" + DisplayFormat.mm(stockMarginMm) + " • T=" + DisplayFormat.mm(stockThicknessMm) +
+                            if(changed)" • CAM/SIM/NC STALE • 請按重算" else " • UNCHANGED",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }.onFailure {
                     Toast.makeText(this, "STOCK 設定無效", Toast.LENGTH_LONG).show()
                 }
@@ -4483,13 +4502,19 @@ class MainActivity : Activity() {
                 if (a == null || b == null || a !in -360.0..360.0 || b !in -360.0..360.0) {
                     Toast.makeText(this, "A/B 軸角度無效", Toast.LENGTH_LONG).show()
                 } else {
+                    val changed=kotlin.math.abs(axisA-a)>1e-9 || kotlin.math.abs(axisB-b)>1e-9 || machiningAxisMode!="5AX"
                     axisA = a
                     axisB = b
                     machiningAxisMode = "5AX"
                     drillCycleBlock = ""
+                    if(changed) markCamDerivedStale("AXIS A/B")
                     if(!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale = true
                     val ncPreview = "G0 A" + FanucNc.fmt(axisA) + " B" + FanucNc.fmt(axisB)
-                    Toast.makeText(this, "5X " + ncPreview, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        "5X " + ncPreview + if(changed)" • CAM/SIM/NC STALE • 請按重算" else " • UNCHANGED",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
             .setNegativeButton("取消", null)

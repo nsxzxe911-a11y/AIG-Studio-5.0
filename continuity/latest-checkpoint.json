@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "334.0.0",
+  "version": "335.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 334. CAM/SIM/AXIS/NC navigation no longer performs hidden CAM rebuilds: CAM first-open shows STALE until explicit 重算, unified machining consumes explicit rebuilt cache, and NC editor consumes the same rebuilt CAM cache. Next bind AIG-II and remove its remaining hidden buildCam/simulate/post paths.",
-  "note": "Studio 334: removed hidden CAM recalculation from Android/Windows navigation. Android CAM first-open shows STALE and explicit 重算; unified SIM/3AX/4AX/5AX requires a fresh cached CAM result; NC edit consumes that cache instead of recreating CamModel. Windows CAM card no longer builds on first open, and unified editor now requires the explicitly rebuilt productionCamDerivedCache. No APK/EXE launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 335. Axis A/B, machining axis mode, and STOCK changes now stale cached CAM/SIM/NC instead of leaving old derived data marked fresh. Same-value applies remain unchanged/no-op. Next bind AIG-II and audit NC-only selectors versus CAM-affecting selectors.",
+  "note": "Studio 335: fixed stale-state leakage in Android production Runtime. 5X A/B apply, unified APPLY_AXIS, and STOCK margin/thickness changes call markCamDerivedStale only when values actually change. Settings explains that page navigation does not recalculate and CAM/axis/stock changes require explicit recalculation. Windows Settings carries the same diagnostic rule. No APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -485,5 +485,14 @@
     "windows_unified_requires_cached_result": true,
     "android_unified_requires_cached_result": true,
     "regression_auto": "OFF_LOCKED"
+  },
+  "derived_freshness_335": {
+    "axis_ab_change_marks_stale": true,
+    "axis_mode_change_marks_stale": true,
+    "stock_change_marks_stale": true,
+    "same_value_apply": "UNCHANGED_NO_RECALC",
+    "page_navigation_auto_recalc": false,
+    "explicit_recalc_required": true,
+    "binary_launch_evidence": "PENDING"
   }
 }

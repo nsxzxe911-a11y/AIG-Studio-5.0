@@ -4548,7 +4548,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             )))
             add(statusGroup("CAM / SIM",listOf(
                 Triple("衍生結果",if(productionCamIsStale())"STALE • "+productionCamStaleLabel()+" • 按重算" else "FRESH",if(productionCamIsStale())StudioDesktopProductionTheme.warning else Color(99,255,157)),
-                Triple("重算規則","設定可改 • 不自動重算",StudioDesktopProductionTheme.text)
+                Triple("重算規則","切頁不重算 • CAM 參數/材料/軸設定改動→STALE • 明確重算",StudioDesktopProductionTheme.text)
             )))
             add(statusGroup("NC / 安全",listOf(
                 Triple("CNC 安全核心（鎖定｜固定：ON）","ON",StudioDesktopProductionTheme.warning)
