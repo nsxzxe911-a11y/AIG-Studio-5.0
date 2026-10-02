@@ -1,7 +1,7 @@
 {
   "schema": "aig-release-command-v1",
   "product": "AIG Studio 5.0",
-  "version": "304.0.0",
+  "version": "305.0.0",
   "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
   "command_scope": "ALL_DEPARTMENTS",
   "dispatch_mode": "IMMEDIATE_LOCAL_FIRST",
@@ -110,6 +110,13 @@
       "resume": "LAST_CHECKPOINT",
       "completion_rule": "AI_REVERIFY_PASS",
       "on_fail": "RETURN_TO_OWNER_REWORK"
+    },
+    "PRO_AUDIT": {
+      "directive": "EXECUTE_NOW",
+      "network_gate": "NONE",
+      "resume": "LAST_CHECKPOINT",
+      "completion_rule": "AI_REVERIFY_PASS",
+      "on_fail": "RETURN_TO_OWNER_REWORK"
     }
   },
   "promotion_policy": {
@@ -133,8 +140,8 @@
     "on_fail": "QUEUE_OWNER_REWORK",
     "unrelated_departments_continue": true
   },
-  "dispatch_generation": 28,
-  "dispatch_reason": "STUDIO_304_6AX_CONTINUITY_GATE_RECOVERY",
+  "dispatch_generation": 29,
+  "dispatch_reason": "STUDIO_305_PRO_AUDIT_15_DEPARTMENT_ACCELERATED_REVIEW",
   "command_state": "EXECUTE_NOW_UNTIL_ALL_DEPARTMENTS_PASS",
   "cache_update_standard": {
     "authority": "continuity/cache-update-standard.xml",
@@ -210,5 +217,13 @@
     "checkpoint_retained_on_io_failure": true,
     "ui_thread_network_wait": false,
     "windows_edt_heavy_io": false
+  },
+  "professional_audit": {
+    "department": "PRO_AUDIT",
+    "display_name": "頂級專業軟體極速審核修建部門",
+    "script": "ci/pro_audit.py",
+    "mode": "CROSS_DEPARTMENT_AUDIT_REPAIR_REVERIFY",
+    "safety_gates_preserved": true,
+    "no_fake_pass": true
   }
 }
