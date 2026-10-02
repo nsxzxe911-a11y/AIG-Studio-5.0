@@ -171,12 +171,12 @@ object ManualCamPathEngine {
         val manual=cam.toolpaths.flatMap { path ->
             path.moves.map { move ->
                 when(move) {
-                    is Rapid -> ManualCamPoint(move.to.x,move.to.y,move.z,true,axisA=move.axisA,axisB=move.axisB)
-                    is Feed -> ManualCamPoint(move.to.x,move.to.y,move.z,false,axisA=move.axisA,axisB=move.axisB)
+                    is Rapid -> ManualCamPoint(move.to.x,move.to.y,move.z,true,axisA=move.axisA,axisB=move.axisB,axisC=move.axisC)
+                    is Feed -> ManualCamPoint(move.to.x,move.to.y,move.z,false,axisA=move.axisA,axisB=move.axisB,axisC=move.axisC)
                     is ArcFeed -> ManualCamPoint(
                         move.to.x,move.to.y,move.z,false,
                         move.centerOffset.x,move.centerOffset.y,move.clockwise,
-                        move.axisA,move.axisB
+                        move.axisA,move.axisB,move.axisC
                     )
                 }
             }
@@ -239,9 +239,9 @@ object ManualCamPathEngine {
         val from=settings.manualPath[afterIndex]
         val list=settings.manualPath.toMutableList()
         val at=afterIndex+1
-        list.add(at,ManualCamPoint(from.x,from.y,liftZ,true,axisA=from.axisA,axisB=from.axisB))
-        list.add(at+1,ManualCamPoint(landingX,landingY,liftZ,true,axisA=from.axisA,axisB=from.axisB))
-        list.add(at+2,ManualCamPoint(landingX,landingY,landingZ,false,axisA=from.axisA,axisB=from.axisB))
+        list.add(at,ManualCamPoint(from.x,from.y,liftZ,true,axisA=from.axisA,axisB=from.axisB,axisC=from.axisC))
+        list.add(at+1,ManualCamPoint(landingX,landingY,liftZ,true,axisA=from.axisA,axisB=from.axisB,axisC=from.axisC))
+        list.add(at+2,ManualCamPoint(landingX,landingY,landingZ,false,axisA=from.axisA,axisB=from.axisB,axisC=from.axisC))
         return settings.copy(pathMode=CamPathMode.MANUAL,manualPath=list)
     }
 }
@@ -251,32 +251,37 @@ object CamEngine {
         settings:CamSettings,
         axisA:Double=0.0,
         axisB:Double=0.0,
-        axisSchedule:MultiAxisOrientationSchedule?=null
+        axisSchedule:MultiAxisOrientationSchedule?=null,
+        axisC:Double=0.0
     ):List<Toolpath> {
         require(settings.pathMode==CamPathMode.MANUAL){"Manual CAM mode not active"}
         require(settings.manualPath.size>=2){"Manual CAM path requires at least two points"}
         val total=settings.manualPath.size.coerceAtLeast(1)
+        val manualHasC=settings.manualPath.any{abs(it.axisC)>EPS}
         val moves=settings.manualPath.mapIndexed { index,p ->
             require(p.x.isFinite() && p.y.isFinite() && p.z.isFinite()){"Manual CAM point must be finite"}
-            require(p.axisA.isFinite() && p.axisB.isFinite() && abs(p.axisA)<=360.0 && abs(p.axisB)<=360.0) {
-                "Manual CAM A/B out of range"
+            require(p.axisA.isFinite() && p.axisB.isFinite() && p.axisC.isFinite() &&
+                abs(p.axisA)<=360.0 && abs(p.axisB)<=360.0 && abs(p.axisC)<=360.0) {
+                "Manual CAM A/B/C out of range"
             }
             if(p.rapid) {
                 require(p.z+EPS>=settings.safeZ){"Manual G0 below Safe-Z"}
                 require(p.arcI==null && p.arcJ==null && p.clockwise==null){"Rapid point cannot carry arc metadata"}
             } else require(p.z<=EPS){"Manual cutting move above Z0"}
             val progress=if(total<=1)1.0 else index.toDouble()/(total-1).toDouble()
-            val orientation=axisSchedule?.at(progress) ?: (p.axisA to p.axisB)
+            val orientation=axisSchedule?.atABC(progress) ?: Triple(
+                p.axisA,p.axisB,if(manualHasC)p.axisC else axisC
+            )
             if(p.rapid) {
-                Rapid(Vec2(p.x,p.y),p.z,orientation.first,orientation.second)
+                Rapid(Vec2(p.x,p.y),p.z,orientation.first,orientation.second,orientation.third)
             } else if(p.arcI!=null || p.arcJ!=null || p.clockwise!=null) {
                 require(p.arcI!=null && p.arcJ!=null && p.clockwise!=null){"Incomplete manual arc metadata"}
                 ArcFeed(
                     Vec2(p.x,p.y),Vec2(p.arcI,p.arcJ),p.clockwise,
-                    settings.feedMmMin,p.z,orientation.first,orientation.second
+                    settings.feedMmMin,p.z,orientation.first,orientation.second,orientation.third
                 )
             } else {
-                Feed(Vec2(p.x,p.y),settings.feedMmMin,p.z,orientation.first,orientation.second)
+                Feed(Vec2(p.x,p.y),settings.feedMmMin,p.z,orientation.first,orientation.second,orientation.third)
             }
         }
         require(moves.first().rapid){"Manual CAM path must start with a Safe-Z rapid point"}
@@ -288,10 +293,12 @@ object CamEngine {
         settings: CamSettings = CamSettings(),
         axisA: Double = 0.0,
         axisB: Double = 0.0,
-        axisSchedule: MultiAxisOrientationSchedule? = null
+        axisSchedule: MultiAxisOrientationSchedule? = null,
+        axisC: Double = 0.0
     ): List<Toolpath> {
-        require(axisA.isFinite() && axisB.isFinite() && abs(axisA) <= 360.0 && abs(axisB) <= 360.0) {
-            "Unsafe CAM A/B orientation"
+        require(axisA.isFinite() && axisB.isFinite() && axisC.isFinite() &&
+            abs(axisA) <= 360.0 && abs(axisB) <= 360.0 && abs(axisC) <= 360.0) {
+            "Unsafe CAM A/B/C orientation"
         }
         if (snapshot.entities.isEmpty()) return emptyList()
         val radiusComp = settings.toolDiameter / 2.0
@@ -440,12 +447,12 @@ object CamEngine {
         return output.map { path ->
             Toolpath(path.moves.map { move ->
                 val progress=if(totalMoves<=1) 1.0 else moveIndex.toDouble()/(totalMoves-1).toDouble()
-                val orientation=axisSchedule?.at(progress) ?: (axisA to axisB)
+                val orientation=axisSchedule?.atABC(progress) ?: Triple(axisA,axisB,axisC)
                 moveIndex++
                 when (move) {
-                    is Rapid -> move.copy(axisA=orientation.first,axisB=orientation.second)
-                    is Feed -> move.copy(axisA=orientation.first,axisB=orientation.second)
-                    is ArcFeed -> move.copy(axisA=orientation.first,axisB=orientation.second)
+                    is Rapid -> move.copy(axisA=orientation.first,axisB=orientation.second,axisC=orientation.third)
+                    is Feed -> move.copy(axisA=orientation.first,axisB=orientation.second,axisC=orientation.third)
+                    is ArcFeed -> move.copy(axisA=orientation.first,axisB=orientation.second,axisC=orientation.third)
                 }
             })
         }
