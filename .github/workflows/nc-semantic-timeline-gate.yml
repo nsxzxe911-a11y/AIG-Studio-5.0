@@ -1,4 +1,4 @@
-name: NC Semantic Timeline Gate
+name: AIG Studio NC Semantic Regression Disabled
 
 on:
   workflow_dispatch:
@@ -7,121 +7,10 @@ permissions:
   contents: read
 
 jobs:
-  semantic-timeline:
-    # REGRESSION_EXECUTION_DISABLED_BY_USER_POLICY_319
+  regression-disabled:
+    # REGRESSION_EXECUTION_DISABLED_BY_USER_POLICY
     if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - name: Regression disabled
         run: echo "REGRESSION DISABLED • explicit user approval required"
-
-    # REGRESSION_EXECUTION_DISABLED_BY_POLICY_314
-    if: ${{ false }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: '9.7.0'
-      - name: Verify all runtime pages and callbacks
-        shell: bash
-        run: |
-          echo 'NC_SCOPED_AUTO_REGRESSION=ENABLED_AFTER_RUNTIME_GATE_SYNC'
-          python3 ci/verify_audit_contract.py | tee audit-contract.log
-          grep -Fq 'AUDIT_CONTRACT_GATE_PASS|15_DEPARTMENTS|SINGLE_AUTHORITY|' audit-contract.log
-          python3 ci/verify_release_command_dispatch.py | tee release-command.log
-          python3 ci/verify_ai_responsibility_routing.py | tee ai-routing.log
-          python3 ci/verify_continuity_checkpoint.py | tee continuity.log
-          python3 ci/verify_xml_cache_update_standard.py | tee xml-cache.log
-          python3 ci/pro_audit.py | tee pro-audit.log
-          grep -Fq 'PRO_AUDIT_REPORT_WRITTEN|SCHEMA=aig-pro-audit-report-v2|' pro-audit.log
-          grep -Fq 'PRO_AUDIT_STALE_GATE_DETECTOR_PASS|' pro-audit.log
-          grep -Fq 'PRO_AUDIT_PASS|TOP_TIER_PROFESSIONAL_SOFTWARE|15_DEPARTMENTS|' pro-audit.log
-          test -s build/pro-audit-report.json
-          python3 ci/verify_runtime_surfaces.py | tee runtime-surfaces.log
-          grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
-          grep -Fq 'TRUE_MACHINE_MODEL_RUNTIME_PARITY_GATE_PASS|ANDROID|WINDOWS|3AX|4AX|5AX|6AX|' runtime-surfaces.log
-          grep -Fq 'MACHINE_SURFACE_CLEANUP_GATE_PASS|ANDROID|WINDOWS|TRUE_MESH_FILL|SPARSE_INTERNAL_EDGES|TOOL_FULL_EDGE|NO_STATIC_IMAGE' runtime-surfaces.log
-          grep -Fq 'MACHINE_EDGE_CLEANUP_GATE_PASS|ANDROID|WINDOWS|SOLID_FILL_PRIORITY|SPARSE_INTERNAL_EDGES|TOOL_OUTLINE_PRESERVED|ROTARY_READABLE|VISUAL_ONLY' runtime-surfaces.log
-          grep -Fq 'SOLID_SURFACE_PRIORITY_GATE_PASS|ANDROID|WINDOWS|FIXED_COMPONENT_INTERNAL_EDGES_OFF|ROTARY_MINIMAL_GUIDES|SPINDLE_SPARSE|TOOL_OUTLINE_FULL|VISUAL_ONLY' runtime-surfaces.log
-          grep -Fq 'AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS' runtime-surfaces.log
-          grep -Fq 'INLINE_NC_PAGE_CLOSURE_GATE_PASS' runtime-surfaces.log
-          grep -Fq 'STUDIO_NC_GM_OPERATOR_UI_GATE_PASS|ANDROID|WINDOWS|CATEGORIZED|FAIL_CLOSED' runtime-surfaces.log
-          grep -Fq 'CAM_MANUAL_ROUTE_RUNTIME_GATE_PASS|ANDROID|WINDOWS|AUTO_MANUAL|NO_CAD_REQUIRED|EDIT_XYZ|RETRACT|RAPID_AVOIDANCE|LANDING|CAD_INDEPENDENT|3D_SIM|NC_POST|SAFE_Z_FAIL_CLOSED|PROJECT_PERSISTENCE' runtime-surfaces.log
-      - name: Compile and run core regression three times
-        shell: bash
-        run: |
-          : > semantic-timeline.log
-          for pass in 1 2 3; do
-            echo "=== CORE REGRESSION PASS $pass/3 ===" | tee -a semantic-timeline.log
-            gradle :core:coreRegression --no-daemon --stacktrace | tee semantic-pass-$pass.log
-            cat semantic-pass-$pass.log >> semantic-timeline.log
-          done
-      - name: Verify semantic authority and execution timeline
-        shell: bash
-        run: |
-          grep -Fq 'NC_SEMANTIC_AUTHORITY_PASS' semantic-timeline.log
-          grep -Fq 'NC_EXECUTION_TIMELINE_PASS' semantic-timeline.log
-          grep -Fq 'NC_3D_ANIMATION_BRIDGE_PASS' semantic-timeline.log
-          grep -Fq 'ALL TESTS PASSED' semantic-timeline.log
-          grep -Fq 'NC_MODAL_EVIDENCE_NO_TRUNCATION_PASS' semantic-timeline.log
-          grep -Fq 'NC_RUNTIME_INTERLOCK_PASS' semantic-timeline.log
-          grep -Fq 'NC_MACHINE_ALARM_RECOVERY_PASS' semantic-timeline.log
-          grep -Fq 'NC_MACHINE_BOUNDARY_MATRIX_PASS' semantic-timeline.log
-          grep -Fq 'NC_MACHINE_STABILITY_STRESS_PASS' semantic-timeline.log
-          grep -Fq 'NC_PARSER_CONFLICT_STRESS_PASS' semantic-timeline.log
-          grep -Fq 'NC_TIMELINE_LINEAR_PRECOMPUTE_PASS' semantic-timeline.log
-          grep -Fq 'NC_CONTROLLER_VALUE_DOMAIN_PASS' semantic-timeline.log
-          grep -Fq 'NC_PARAMETER_INTEGRITY_PASS' semantic-timeline.log
-          grep -Fq 'NC_MULTI_TOOL_CYCLE_SAFETY_PASS' semantic-timeline.log
-          grep -Fq 'NC_CONTROL_EFFECT_GATE_PASS' semantic-timeline.log
-          grep -Fq 'NC_COMMON_MILLING_VOCAB_PASS' semantic-timeline.log
-          grep -Fq 'NC_MACHINE_GM_PROFILE_PASS' semantic-timeline.log
-          grep -Fq 'RENDER_SURFACE_FPS_GATE_PASS' semantic-timeline.log
-          grep -Fq 'CPU_THERMAL_AUTO_FPS_PASS' semantic-timeline.log
-          grep -Fq 'RENDER_STRESS_TIER_GATE_PASS' semantic-timeline.log
-          grep -Fq 'MULTIAXIS_TOOLPOINT_PROVENANCE_GATE_PASS' semantic-timeline.log
-          test "$(grep -Fc 'MULTIAXIS_TOOLPOINT_PROVENANCE_GATE_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'RENDER_STRESS_TIER_GATE_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'CPU_THERMAL_AUTO_FPS_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'RENDER_SURFACE_FPS_GATE_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_CONTROL_EFFECT_GATE_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_COMMON_MILLING_VOCAB_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_MACHINE_GM_PROFILE_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_MULTI_TOOL_CYCLE_SAFETY_PASS' semantic-timeline.log)" -eq 3
-          grep -Fq 'NC_G34_VENDOR_OPTION_PASS' semantic-timeline.log
-          grep -Fq 'NC_G34_VENDOR_TEMPLATE_PASS' semantic-timeline.log
-          grep -Fq 'NC_BLOCK_FORMAT_SCHEMA_PASS' semantic-timeline.log
-          grep -Fq 'NC_GENERATED_PROCESS_GATE_PASS' semantic-timeline.log
-          grep -Fq 'NC_5X_PROCESS_ORDER_PASS' semantic-timeline.log
-          test "$(grep -Fc 'NC_5X_PROCESS_ORDER_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_G34_VENDOR_OPTION_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_G34_VENDOR_TEMPLATE_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_BLOCK_FORMAT_SCHEMA_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_GENERATED_PROCESS_GATE_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_PARAMETER_INTEGRITY_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_CONTROLLER_VALUE_DOMAIN_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_TIMELINE_LINEAR_PRECOMPUTE_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_PARSER_CONFLICT_STRESS_PASS' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'ALL TESTS PASSED' semantic-timeline.log)" -eq 3
-          test "$(grep -Fc 'NC_MACHINE_STABILITY_STRESS_PASS' semantic-timeline.log)" -eq 3
-          echo 'STUDIO_NC_SEMANTIC_TIMELINE_GATE=PASS'
-      - name: Install stable Android SDK 36 for UI compile
-        shell: bash
-        run: |
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
-          test -x "$SDKMANAGER"
-          yes | "$SDKMANAGER" --licenses >/dev/null || true
-          LATEST_BUILD_TOOLS="$("$SDKMANAGER" --list | sed -nE 's/^[[:space:]]*(build-tools;[0-9]+(\.[0-9]+){2})[[:space:]]+.*/\1/p' | sort -V | tail -1)"
-          test -n "$LATEST_BUILD_TOOLS"
-          "$SDKMANAGER" "platform-tools" "platforms;android-36" "$LATEST_BUILD_TOOLS"
-      - name: Compile Android and Windows UI surfaces
-        shell: bash
-        run: |
-          gradle :app:assembleDebug :desktop:compileKotlin --no-daemon --stacktrace | tee ui-compile.log
-          test -s app/build/outputs/apk/debug/app-debug.apk
-          echo 'STUDIO_NC_UI_COMPILE_GATE=PASS'
