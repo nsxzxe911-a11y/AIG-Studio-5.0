@@ -495,6 +495,7 @@ class MainActivity : Activity() {
     private lateinit var networkStateBadge: TextView
     private lateinit var startupUpdateProgress: ProgressBar
     private lateinit var startupUpdateMessage: TextView
+    private var startupUpdateStartedAtMs: Long = 0L
     private val sharedProjectHandler = Handler(Looper.getMainLooper())
     private val sharedProjectExecutor = java.util.concurrent.Executors.newSingleThreadExecutor { task ->
         Thread(task,"aig-studio-shared-sync").apply { isDaemon=true }
@@ -1582,6 +1583,13 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun startupUpdateElapsedLabel():String {
+        val started=startupUpdateStartedAtMs
+        if(started<=0L) return "0.00s"
+        val elapsed=(SystemClock.elapsedRealtime()-started).coerceAtLeast(0L)
+        return String.format(Locale.US,"%.2fs",elapsed/1000.0)
+    }
+
     private fun showStartupUpdateProgress(progress:Int,message:String) {
         if(::startupUpdateProgress.isInitialized) {
             startupUpdateProgress.visibility=View.VISIBLE
@@ -1668,10 +1676,11 @@ class MainActivity : Activity() {
                 if(!OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)) return
                 if(!onlineAutoCheckRunning.compareAndSet(false,true)) return
                 val requestGeneration=generation
+                startupUpdateStartedAtMs=SystemClock.elapsedRealtime()
                 renderNetworkState(true,"版本比對中 • v"+BuildConfig.VERSION_NAME)
                 showStartupUpdateProgress(
                     25,
-                    "有網路 • 正在對照 v"+BuildConfig.VERSION_NAME+" 與最新版本 • UI 可直接使用"
+                    "有網路 • 正在對照 v"+BuildConfig.VERSION_NAME+" 與最新版本 • "+startupUpdateElapsedLabel()+" • UI 可直接使用"
                 )
                 val backgroundConfig=updateConfig.copy(
                     autoDownload=updateConfig.autoDownload
@@ -1679,9 +1688,9 @@ class MainActivity : Activity() {
                 showStartupUpdateProgress(
                     45,
                     if(backgroundConfig.autoDownload)
-                        "正在讀取版本、驗證簽章與準備新版介面"
+                        "正在讀取版本、驗證簽章與準備新版介面 • "+startupUpdateElapsedLabel()
                     else
-                        "正在讀取版本與驗證簽章 • 自動下載已關閉"
+                        "正在讀取版本與驗證簽章 • "+startupUpdateElapsedLabel()+" • 自動下載已關閉"
                 )
                 SecureUpdateManager.autoCheck(this,backgroundConfig){result->
                     if(requestGeneration!=onlineNetworkGeneration.get()) {
@@ -1697,7 +1706,7 @@ class MainActivity : Activity() {
                                 renderNetworkState(true,"新版已驗證 • 待安裝")
                                 showStartupUpdateProgress(
                                     100,
-                                    "新版 "+result.message+" • 驗證完成 • 安裝後自動使用新版介面"
+                                    "新版 "+result.message+" • 驗證完成 • "+startupUpdateElapsedLabel()+" • 安裝後自動使用新版介面"
                                 )
                                 AlertDialog.Builder(this@MainActivity)
                                     .setTitle("啟動版本更新")
@@ -1718,14 +1727,14 @@ class MainActivity : Activity() {
                                 renderNetworkState(true,"新版可用 • 點更新套用")
                                 showStartupUpdateProgress(
                                     70,
-                                    "發現較新版本 • 已驗證版本資訊 • 點更新後套用新版介面"
+                                    "發現較新版本 • 已驗證版本資訊 • "+startupUpdateElapsedLabel()+" • 點更新後套用新版介面"
                                 )
                             }
                         }else{
                             renderNetworkState(true,"已是最新 • v"+BuildConfig.VERSION_NAME)
                             showStartupUpdateProgress(
                                 100,
-                                "目前 v"+BuildConfig.VERSION_NAME+" 已是最新 • 沿用目前介面與設定"
+                                "目前 v"+BuildConfig.VERSION_NAME+" 已是最新 • "+startupUpdateElapsedLabel()+" • 沿用目前介面與設定"
                             )
                             hideStartupUpdateProgress()
                         }
@@ -1733,7 +1742,7 @@ class MainActivity : Activity() {
                         onlineAutoCheckCompleted.set(false)
                         showStartupUpdateProgress(
                             20,
-                            "更新比對暫停 • "+result.message+" • 目前 UI/設定繼續使用"
+                            "更新比對暫停 • "+startupUpdateElapsedLabel()+" • "+result.message+" • 目前 UI/設定繼續使用"
                         )
                         val attempt=onlineAutoRetryCount.incrementAndGet()
                         if(attempt<OfflineFirstRuntimeContract.BACKGROUND_NETWORK_MAX_ATTEMPTS &&
