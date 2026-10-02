@@ -1336,6 +1336,7 @@ fun main() {
     testAxis345RuntimeContract()
     testContinuousMultiAxisToolpointSchedule()
     testContinuousSixAxisToolpointSchedule()
+    testManualSixAxisEditContinuity()
     testSixAxisFixtureEnvelopeCollision()
     testCollisionLookAheadPlanner()
     testToolAssemblyCollisionSensitivity()
@@ -3089,4 +3090,33 @@ private fun testToolAssemblyCollisionSensitivity() {
     val base=changed.copy(toolAssembly=small)
     check(StudioProjectRepository.canonicalDigest(changed)!=StudioProjectRepository.canonicalDigest(base))
     println("✓ TOOL_ASSEMBLY_COLLISION_GATE_PASS HOLDER_DIAMETER HOLDER_LENGTH STICKOUT CHANGES_COLLISION PROJECT_V3_DIGEST")
+}
+
+private fun testManualSixAxisEditContinuity() {
+    val settings=CamSettings(
+        toolDiameter=4.0,depth=-2.0,safeZ=5.0,feedMmMin=120.0,
+        pathMode=CamPathMode.MANUAL,
+        manualPath=listOf(
+            ManualCamPoint(0.0,0.0,5.0,true,axisA=10.0,axisB=20.0,axisC=30.0),
+            ManualCamPoint(10.0,0.0,-2.0,false,axisA=15.0,axisB=25.0,axisC=35.0)
+        )
+    )
+    val source=settings.manualPath[1]
+    val inserted=ManualCamPathEngine.insertPoint(
+        settings,2,
+        ManualCamPoint(source.x,source.y,-2.0,false,axisA=source.axisA,axisB=source.axisB,axisC=source.axisC)
+    )
+    check(abs(inserted.manualPath[2].axisC-35.0)<EPS)
+    val replaced=ManualCamPathEngine.replacePoint(inserted,2,12.0,1.0,-2.0,false)
+    check(abs(replaced.manualPath[2].axisA-15.0)<EPS)
+    check(abs(replaced.manualPath[2].axisB-25.0)<EPS)
+    check(abs(replaced.manualPath[2].axisC-35.0)<EPS)
+    val avoided=ManualCamPathEngine.insertAvoidance(replaced,1,5.0,12.0,1.0,-2.0)
+    check(avoided.manualPath.subList(2,5).all{abs(it.axisC-35.0)<EPS})
+    val cam=CamModel.fromCad(30200L,DrawingSnapshot(emptyList()),avoided)
+    val moves=cam.toolpaths.flatMap{it.moves}
+    check(moves.any{abs(it.axisC-35.0)<EPS})
+    val blocked=runCatching{CncPost.generate(cam,FanucPostSettings())}
+    check(blocked.isFailure && "6AX_C_AXIS_NC_POST_BLOCKED" in blocked.exceptionOrNull()?.message.orEmpty())
+    println("✓ MANUAL_6AX_EDIT_CONTINUITY_GATE_PASS INSERT_REPLACE_AVOIDANCE ABC_PRESERVED C_VISIBLE NC_C_FAIL_CLOSED")
 }
