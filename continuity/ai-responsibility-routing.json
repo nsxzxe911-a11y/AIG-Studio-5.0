@@ -1,7 +1,7 @@
 {
   "schema": "aig-ai-responsibility-routing-v1",
   "product": "AIG Studio 5.0",
-  "version": "306.0.0",
+  "version": "307.0.0",
   "detector": "AI",
   "principle": "AI_DETECTS_CLASSIFIES_RETURNS_REWORK_REVERIFIES; OWNER_DEPARTMENT_FIXES",
   "lifecycle": [
@@ -162,5 +162,10 @@
     "may_override_product_safety_gate": false,
     "may_override_integrity_gate": false,
     "may_claim_binary_device_pass_without_evidence": false
+  },
+  "clean_code_contract": {
+    "authority": "ci/audit_contract.py",
+    "pro_ownership_keys": "CENTRALIZED",
+    "verifier": "ci/verify_audit_contract.py"
   }
 }
