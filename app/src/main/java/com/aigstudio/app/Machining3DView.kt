@@ -15,7 +15,8 @@ import kotlin.math.*
 class Machining3DView(
     context: Context,
     private val result: Machining3DResult,
-    private val machineMode: String? = null
+    private val machineMode: String? = null,
+    private val machineAxisC: Double = 0.0
 ) : View(context) {
     private data class ScreenPoint(val x: Float, val y: Float, val depth: Double)
 
@@ -323,6 +324,8 @@ class Machining3DView(
             Color.argb(250, 38, 210, 230)
         MachineComponentRole.ROTARY_B ->
             Color.argb(250, 236, 72, 192)
+        MachineComponentRole.ROTARY_C ->
+            Color.argb(250, 159, 114, 255)
         MachineComponentRole.SPINDLE ->
             Color.argb(252, 188, 226, 255)
         MachineComponentRole.HOLDER ->
@@ -362,7 +365,7 @@ class Machining3DView(
                 when(component.role){
                     MachineComponentRole.TOOL -> 255
                     MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 180
-                    MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 128
+                    MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B,MachineComponentRole.ROTARY_C -> 128
                     MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 96
                     else -> 72
                 },
@@ -371,11 +374,13 @@ class Machining3DView(
             machineEdgePaint.strokeWidth=when(component.role){
                 MachineComponentRole.TOOL -> 1.9f*resources.displayMetrics.density
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 1.3f*resources.displayMetrics.density
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 1.0f*resources.displayMetrics.density
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B,MachineComponentRole.ROTARY_C -> 1.0f*resources.displayMetrics.density
                 MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 0.85f*resources.displayMetrics.density
                 else -> 0.75f*resources.displayMetrics.density
             }
-            val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B
+            val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A ||
+                component.role==MachineComponentRole.ROTARY_B ||
+                component.role==MachineComponentRole.ROTARY_C
             val drawRoleEdges=when(component.role){
                 MachineComponentRole.TOOL,
                 MachineComponentRole.SPINDLE,
@@ -451,8 +456,9 @@ class Machining3DView(
 
     private fun machineSpace(v:Vec3,mode:String,live:Move?):Vec3 {
         val a=if(mode=="3AX")0.0 else live?.axisA ?: 0.0
-        val b=if(mode=="5AX")live?.axisB ?: 0.0 else 0.0
-        return MachineKinematics3D.transform(v,a,b)
+        val b=if(mode=="5AX" || mode=="6AX")live?.axisB ?: 0.0 else 0.0
+        val c=if(mode=="6AX")machineAxisC else 0.0
+        return MachineKinematics3D.transform(v,a,b,c)
     }
 
     private fun dynamicTriangleBudget(currentFps: Double): Int {
@@ -558,7 +564,8 @@ class Machining3DView(
             resolvedMode,
             liveMove?.axisA,
             liveMove?.axisB,
-            liveMove
+            liveMove,
+            machineAxisC
         )
         drawMachineModel(canvas,machineModel,scale)
         val activeMesh = activeFrame?.mesh ?: result.mesh
