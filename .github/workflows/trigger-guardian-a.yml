@@ -1,20 +1,6 @@
 name: Studio Trigger Guardian A
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'ci/trigger_guardian.py'
-      - 'ci/guardian_canonical/**'
-      - 'ci/guardian_mirror/**'
-      - 'ci/trigger_mine_detector.py'
-      - 'ci/verify_trigger_policy.py'
-      - 'ci/prebaseline_trigger_clean.py'
-      - '.github/workflows/trigger-mine-auto-clean.yml'
-      - '.github/workflows/prebaseline-trigger-clean.yml'
-      - '.github/workflows/trigger-guardian-a.yml'
-      - '.github/workflows/trigger-guardian-b.yml'
-      - '.github/workflows/rolling-version-gate.yml'
   workflow_dispatch:
 
 permissions:
