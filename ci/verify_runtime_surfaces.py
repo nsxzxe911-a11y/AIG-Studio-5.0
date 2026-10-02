@@ -919,6 +919,32 @@ for needle in (
     require(machining3d_core, needle, "STUDIO_6AX_COLLISION_LOOKAHEAD_296")
 require(regression, "COLLISION_LOOKAHEAD_GATE_PASS", "STUDIO_6AX_COLLISION_LOOKAHEAD_REGRESSION_296")
 print("COLLISION_LOOKAHEAD_RUNTIME_GATE_PASS|BOUNDED_HORIZON|RETRACT_Z|PATH_REROUTE|POSTURE_CHANGE_REQUIRED|MANUAL_CONFIRM|REVALIDATE|NO_AUTO_NC")
+for needle in (
+    "private val camFixtures = mutableListOf<FixtureObstacle>()",
+    "private fun showFixtureModelEditor()",
+    'contentDescription="CAM FIXTURE MODEL EDITOR"',
+    'contentDescription="CAM COLLISION LOOKAHEAD"',
+    "MachiningRiskScanner.inspect(cam, stock, camFixtures, camToolAssembly)",
+    '" • FIXTURE=" + risk.fixtureCoverageWord',
+    "val ncReady = risk.ok && runCatching",
+    '"NC BLOCKED • MODELED COLLISION="',
+):
+    require(android, needle, "STUDIO_ANDROID_FIXTURE_RUNTIME_297")
+for needle in (
+    "val productionFixtures=mutableListOf<FixtureObstacle>()",
+    "fun showProductionFixtureEditor()",
+    "fun showProductionCollisionLookAhead()",
+    'camAction("治具模型"',
+    'camAction("碰撞預測"',
+    "productionCamSettings,productionFixtures,productionToolAssembly",
+    "val modeledRisk=MachiningRiskScanner.inspect(",
+    '"NC BLOCKED: MODELED COLLISION="+modeledRisk.collisionCount',
+):
+    require(desktop, needle, "STUDIO_WINDOWS_FIXTURE_RUNTIME_297")
+require(regression, "FIXTURE_COVERAGE_POLICY_GATE_PASS", "STUDIO_FIXTURE_COVERAGE_POLICY_297")
+print("FIXTURE_MODEL_RUNTIME_UI_GATE_PASS|ANDROID|WINDOWS|CLAMP|VISE|FIXTURE|MACHINE_ENVELOPE|LOOKAHEAD_VISIBLE|SHARED_RISK_MODEL")
+print("MODELED_COLLISION_NC_INTERLOCK_RUNTIME_GATE_PASS|MODELED_COLLISION_BLOCK|OVERCUT_BLOCK|UNMODELED_WARNING_ONLY|PREFLIGHT_REQUIRES_MODEL")
+
 
 
 
