@@ -2799,13 +2799,23 @@ private fun saveDesktopRotaryMachineProfile(profile:RotaryAxisClampProfile){
     rotaryMachinePrefs.flush()
 }
 
-private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:JLabel,initialMode:String="3AX",camSettings:CamSettings=CamSettings()){
+private fun showUnifiedMachiningEditor(
+    frame:JFrame,
+    doc:DrawingDocument,
+    status:JLabel,
+    initialMode:String="3AX",
+    camSettings:CamSettings=CamSettings(),
+    fixtures:List<FixtureObstacle> = emptyList(),
+    toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
+){
     require(initialMode in setOf("3D","3AX","4AX","5AX")){"Unsupported initial mode: $initialMode"}
     val snapshot=doc.snapshot()
     require(snapshot.entities.isNotEmpty() || camSettings.pathMode==CamPathMode.MANUAL){
         "UNIFIED WORKSPACE BLOCKED: AUTO needs CAD; MANUAL may run without CAD"
     }
-    var result=Machining3DEngine.build(snapshot,camSettings)
+    var result=Machining3DEngine.build(
+        snapshot,camSettings,fixtures=fixtures,toolAssembly=toolAssembly
+    )
     var axisA=0.0
     var axisB=0.0
     var axisMode="3AX"
@@ -2872,7 +2882,9 @@ private fun showUnifiedMachiningEditor(frame:JFrame,doc:DrawingDocument,status:J
             result.cam.settings,
             axisA=if(axisMode=="3AX")0.0 else axisA,
             axisB=if(axisMode=="5AX")axisB else 0.0,
-            axisSchedule=schedule
+            axisSchedule=schedule,
+            fixtures=fixtures,
+            toolAssembly=toolAssembly
         )
         mesh.setResult(result)
         axes.setResult(result)
@@ -3335,6 +3347,139 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     }
 
     var productionCamSettings=CamSettings()
+    val productionFixtures=mutableListOf<FixtureObstacle>()
+    var productionToolAssembly=ToolAssemblyConfig()
+    var nextProductionFixtureId=1L
+
+    fun showProductionFixtureEditor(){
+        val model=DefaultListModel<String>()
+        val list=JList(model)
+        val kind=JComboBox(FixtureKind.values())
+        val minX=JTextField("0.000",9);val minY=JTextField("0.000",9);val minZ=JTextField("0.000",9)
+        val maxX=JTextField("10.000",9);val maxY=JTextField("10.000",9);val maxZ=JTextField("10.000",9)
+        val clearance=JTextField("1.000",9)
+
+        fun label(f:FixtureObstacle)=f.label()+" • X["+DisplayFormat.mm(f.minX)+","+DisplayFormat.mm(f.maxX)+
+            "] Y["+DisplayFormat.mm(f.minY)+","+DisplayFormat.mm(f.maxY)+"] Z["+
+            DisplayFormat.mm(f.minZ)+","+DisplayFormat.mm(f.maxZ)+"]"
+        fun refresh(select:Int=0){
+            model.removeAllElements()
+            productionFixtures.forEach{model.addElement(label(it))}
+            if(model.size>0)list.selectedIndex=select.coerceIn(0,model.size-1)
+        }
+        fun load(index:Int){
+            val f=productionFixtures.getOrNull(index) ?: return
+            kind.selectedItem=f.kind
+            minX.text=DisplayFormat.mm(f.minX);minY.text=DisplayFormat.mm(f.minY);minZ.text=DisplayFormat.mm(f.minZ)
+            maxX.text=DisplayFormat.mm(f.maxX);maxY.text=DisplayFormat.mm(f.maxY);maxZ.text=DisplayFormat.mm(f.maxZ)
+            clearance.text=DisplayFormat.mm(f.clearanceMm)
+        }
+        list.addListSelectionListener{if(!it.valueIsAdjusting)load(list.selectedIndex)}
+        refresh()
+
+        fun buildFixture(id:Long)=FixtureObstacle(
+            id=id,kind=kind.selectedItem as FixtureKind,
+            minX=minX.text.toDouble(),minY=minY.text.toDouble(),minZ=minZ.text.toDouble(),
+            maxX=maxX.text.toDouble(),maxY=maxY.text.toDouble(),maxZ=maxZ.text.toDouble(),
+            clearanceMm=clearance.text.toDouble()
+        )
+
+        val form=JPanel(GridLayout(0,2,6,6)).apply{
+            add(JLabel("類型"));add(kind)
+            add(JLabel("min X"));add(minX);add(JLabel("min Y"));add(minY);add(JLabel("min Z"));add(minZ)
+            add(JLabel("max X"));add(maxX);add(JLabel("max Y"));add(maxY);add(JLabel("max Z"));add(maxZ)
+            add(JLabel("clearance mm"));add(clearance)
+        }
+        val buttons=AdaptiveGlassToolbar()
+        fun action(label:String,run:()->Unit){
+            buttons.add(GlassActionButton(label,LibraryFiveAxisSkin208.cyan).apply{addActionListener{run()}})
+        }
+        action("新增"){
+            runCatching{
+                productionFixtures+=buildFixture(nextProductionFixtureId++)
+                refresh(productionFixtures.lastIndex)
+                load(productionFixtures.lastIndex)
+                status.text="FIXTURE MODEL • "+productionFixtures.size+" • REVALIDATE REQUIRED"
+            }.onFailure{status.text="FIXTURE BLOCKED • "+(it.message?:"error")}
+        }
+        action("更新"){
+            val i=list.selectedIndex
+            val old=productionFixtures.getOrNull(i)
+            if(old==null)status.text="FIXTURE UPDATE • no selection"
+            else runCatching{
+                productionFixtures[i]=buildFixture(old.id)
+                refresh(i);load(i)
+                status.text="FIXTURE UPDATED • "+old.id+" • REVALIDATE REQUIRED"
+            }.onFailure{status.text="FIXTURE UPDATE BLOCKED • "+(it.message?:"error")}
+        }
+        action("刪除"){
+            val i=list.selectedIndex
+            if(i in productionFixtures.indices){
+                productionFixtures.removeAt(i)
+                refresh(i.coerceAtMost((productionFixtures.size-1).coerceAtLeast(0)))
+                status.text="FIXTURE REMOVED • remaining="+productionFixtures.size
+            }
+        }
+
+        JDialog(frame,"CAM • 治具 / 機台包絡",false).apply{
+            layout=BorderLayout(8,8)
+            minimumSize=Dimension(780,560)
+            add(JLabel("模型資料進 CAM/SIM/6AX 碰撞檢查 • 不自動修改 NC").apply{
+                foreground=LibraryFiveAxisSkin208.warning
+                border=EmptyBorder(8,10,4,10)
+            },BorderLayout.NORTH)
+            add(JSplitPane(JSplitPane.HORIZONTAL_SPLIT,JScrollPane(list),form).apply{resizeWeight=.45},BorderLayout.CENTER)
+            add(buttons,BorderLayout.SOUTH)
+            pack();setLocationRelativeTo(frame);isVisible=true
+        }
+    }
+
+    fun showProductionCollisionLookAhead(){
+        if(productionFixtures.isEmpty()){
+            status.text="LOOKAHEAD • 請先建立治具或 MACHINE_ENVELOPE"
+            return
+        }
+        val snapshot=doc.snapshot()
+        if(snapshot.entities.isEmpty() && productionCamSettings.pathMode==CamPathMode.AUTO){
+            status.text="LOOKAHEAD BLOCKED • AUTO needs CAD"
+            return
+        }
+        val cam=runCatching{
+            CamModel.fromCad(System.currentTimeMillis(),snapshot,productionCamSettings)
+        }.getOrElse{
+            status.text="LOOKAHEAD BLOCKED • "+(it.message?:"CAM error")
+            return
+        }
+        val stock=runCatching{
+            Stock3D.fromSnapshot(
+                snapshot,10.0,20.0,
+                if(productionCamSettings.pathMode==CamPathMode.MANUAL)productionCamSettings.manualPath else emptyList()
+            )
+        }.getOrElse{
+            status.text="LOOKAHEAD STOCK BLOCKED • "+(it.message?:"stock error")
+            return
+        }
+        val report=MachiningRiskScanner.predictLookAhead(
+            cam,stock,productionFixtures,productionToolAssembly,lookAheadSegments=8
+        )
+        val message=if(report.clear){
+            "前 "+report.horizonSegments+" 段未偵測到已建模碰撞。仍需完整 SIM / 單節驗證。"
+        }else buildString{
+            append("第一風險段 S").append((report.firstRiskSegment?:0)+1)
+            append(" • 候選需手動確認 + 重驗\n\n")
+            report.predictions.take(16).forEach{p->
+                append("S").append(p.segmentIndex+1).append(" • ").append(p.action.name)
+                p.suggestedLiftZ?.let{append(" • Z≥").append(DisplayFormat.mm(it))}
+                append("\n").append(p.reason)
+                append(" • A").append(DisplayFormat.mm(p.axisA))
+                append(" B").append(DisplayFormat.mm(p.axisB))
+                append(" C").append(DisplayFormat.mm(p.axisC)).append("\n\n")
+            }
+        }
+        JOptionPane.showMessageDialog(frame,message,"CAM • 碰撞 Look-Ahead",JOptionPane.WARNING_MESSAGE)
+        status.text=if(report.clear)"LOOKAHEAD • CLEAR MODELED HORIZON" else
+            "LOOKAHEAD • RISK S"+((report.firstRiskSegment?:0)+1)+" • MANUAL CONFIRM / REVALIDATE"
+    }
 
     fun showProductionManualCamEditor(){
         runCatching{
@@ -3453,7 +3598,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             }.onFailure{status.text="MANUAL CAM DELETE BLOCKED • "+(it.message?:"error")}
         }
         action("3D SIM"){
-            runCatching{showUnifiedMachiningEditor(frame,doc,status,"3D",productionCamSettings)}
+            runCatching{showUnifiedMachiningEditor(
+                frame,doc,status,"3D",productionCamSettings,productionFixtures,productionToolAssembly
+            )}
                 .onSuccess{dlg.dispose()}
                 .onFailure{status.text="MANUAL 3D SIM BLOCKED • "+(it.message?:"error")}
         }
@@ -3472,7 +3619,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             if(productionCamSettings.pathMode==CamPathMode.MANUAL)productionCamSettings.manualPath else emptyList()
         )
         var six=SixAxisRuntimeContract.state(0.0,0.0,0.0)
-        val initial=Machining3DEngine.build(snapshot,productionCamSettings,stock,six.axisA,six.axisB,axisC=six.axisC)
+        val initial=Machining3DEngine.build(
+            snapshot,productionCamSettings,stock,six.axisA,six.axisB,
+            fixtures=productionFixtures,toolAssembly=productionToolAssembly,axisC=six.axisC
+        )
         val machine=AxisMachiningPanel(initial).apply{
             setMachineMode("6AX")
             setAngles(six.axisA,six.axisB,six.axisC)
@@ -3508,7 +3658,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             }
         }
         fun refresh() {
-            val result=Machining3DEngine.build(snapshot,productionCamSettings,stock,six.axisA,six.axisB,axisC=six.axisC)
+            val result=Machining3DEngine.build(
+            snapshot,productionCamSettings,stock,six.axisA,six.axisB,
+            fixtures=productionFixtures,toolAssembly=productionToolAssembly,axisC=six.axisC
+        )
             machine.setResult(result)
             machine.setMachineMode("6AX")
             machine.setAngles(six.axisA,six.axisB,six.axisC)
@@ -3585,7 +3738,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 add(actions,BorderLayout.SOUTH)
             }
         }
-        val result=Machining3DEngine.build(snapshot,productionCamSettings)
+        val result=Machining3DEngine.build(
+            snapshot,productionCamSettings,
+            fixtures=productionFixtures,toolAssembly=productionToolAssembly
+        )
         val cam=result.cam
         val settings=cam.settings
         val left=JPanel(BorderLayout(6,6)).apply{
@@ -3664,6 +3820,12 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         camAction("路徑編輯",LibraryFiveAxisSkin208.warning){
             showProductionManualCamEditor()
         }
+        camAction("治具模型",LibraryFiveAxisSkin208.warning){
+            showProductionFixtureEditor()
+        }
+        camAction("碰撞預測",Color(255,110,110)){
+            showProductionCollisionLookAhead()
+        }
         camAction(if(settings.contourSide==ContourSide.OUTSIDE)"外徑" else "內徑",LibraryFiveAxisSkin208.warning){
             productionCamSettings=productionCamSettings.copy(
                 contourSide=if(settings.contourSide==ContourSide.OUTSIDE)ContourSide.INSIDE else ContourSide.OUTSIDE
@@ -3681,7 +3843,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             rebuildCamCard()
         }
         camAction("3D SIM",LibraryFiveAxisSkin208.violet){
-            runCatching{showUnifiedMachiningEditor(frame,doc,status,"3D",productionCamSettings)}
+            runCatching{showUnifiedMachiningEditor(
+                frame,doc,status,"3D",productionCamSettings,productionFixtures,productionToolAssembly
+            )}
                 .onFailure{status.text="3D SIM BLOCKED • "+(it.message?:"error")}
         }
         camAction("軸模式",LibraryFiveAxisSkin208.cyan){
@@ -3696,7 +3860,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             ) as? String
             if(choice!=null){
                 if(choice=="6AX") showSixAxisRuntimeStage()
-                else runCatching{showUnifiedMachiningEditor(frame,doc,status,choice,productionCamSettings)}
+                else runCatching{showUnifiedMachiningEditor(
+                    frame,doc,status,choice,productionCamSettings,productionFixtures,productionToolAssembly
+                )}
                     .onFailure{status.text=choice+" BLOCKED • "+(it.message?:"error")}
             }
         }
