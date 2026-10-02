@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "350.0.0",
+  "version": "351.0.0",
   "branch": "main",
-  "recorded_source_head": "904931764ac2e3c395e86f80e347f3d68f4a2a24",
+  "recorded_source_head": "ae4e54389ceba0bed7833bbf2c236851a52dba05",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate Studio 350 5AX camera response adaptation from the exact commit, then bind AIG-II 386 to that SHA. Preserve occlusion hysteresis, manual camera authority, true material removal, CAM/NC data flow, and Web machine-output-disabled policy.",
-  "note": "Studio 350: Web 5AX/6AX tool-follow now uses delta-time camera response instead of fixed per-frame smoothing. Long RAPID/G0 moves use a slower time constant, ENTRY and CUT tighten focus, active tool contact uses the strongest CUT LOCK, and occlusion-shift smoothing follows the same motion-aware response while blocked-view escape stays fast. The response is stable across 30/60/120 Hz and manual camera authority remains higher priority.",
+  "next_action": "Validate Studio 351 5AX auto-zoom response from the exact commit, then bind AIG-II 387 to that SHA. Preserve motion-aware camera response, occlusion hysteresis, manual camera authority, true material removal, CAM/NC data flow, and Web machine-output-disabled policy.",
+  "note": "Studio 351: Web 5AX/6AX now adds motion-aware auto zoom on top of the delta-time camera response. RAPID widens the view, ENTRY/CUT move closer, active contact uses the closest bounded target, and user wheel zoom becomes the persistent base view. Zoom targets use deadband, minimum hold and rate limits so transitions do not breathe or snap; manual input temporarily freezes automation.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",

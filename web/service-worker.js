@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "aig-studio-runtime-";
-const CACHE_NAME = CACHE_PREFIX + "350-shell-v1";
+const CACHE_NAME = CACHE_PREFIX + "351-shell-v1";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest"];
 
 self.addEventListener("install", event => {
