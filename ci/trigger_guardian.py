@@ -10,11 +10,11 @@ args=parser.parse_args()
 EXPECTED={
  "ci/trigger_mine_detector.py":(
    "ci/guardian_canonical/ci/trigger_mine_detector.py",
-   "bf4f7da080686efd82e40cd1a11ccb7e85052d79",
+   "9b48c6a696d7430f5825e7d302e87b07367a7b59",
  ),
  "ci/verify_trigger_policy.py":(
    "ci/guardian_canonical/ci/verify_trigger_policy.py",
-   "4f70a683d882a1a8a36e6d32f7722bfb8a1655ed",
+   "8b92e89209d8cf2f85a1ab1f3eae89993790c9ce",
  ),
  "ci/prebaseline_trigger_clean.py":(
    "ci/guardian_canonical/ci/prebaseline_trigger_clean.py",
@@ -22,11 +22,11 @@ EXPECTED={
  ),
  ".github/workflows/trigger-mine-auto-clean.yml":(
    "ci/guardian_canonical/github/workflows/trigger-mine-auto-clean.yml",
-   "594056767959fa7c1790226bdfd86165092bb47c",
+   "c24e54f7b4616f18c48ad29f4d7b402ec7c06a59",
  ),
  ".github/workflows/prebaseline-trigger-clean.yml":(
    "ci/guardian_canonical/github/workflows/prebaseline-trigger-clean.yml",
-   "b5c5baf2f982f2407fee8caa8dc651699dbc1a1f",
+   "fe0492c472ae86ef861e6b2a5261291fcf878770",
  ),
 }
 
