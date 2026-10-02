@@ -2194,7 +2194,7 @@ class MainActivity : Activity() {
                 return
             }
             stage.removeAllViews()
-            stage.addView(Machining3DView(this,result,"5AX"),FrameLayout.LayoutParams(-1,-1))
+            stage.addView(Machining3DView(this,result,"6AX",six.axisC),FrameLayout.LayoutParams(-1,-1))
             stage.addView(object:View(this) {
                 private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     color=0xFF9F72FF.toInt()
