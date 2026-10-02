@@ -200,7 +200,8 @@ private class CadToolGrid : JPanel(FlowLayout(FlowLayout.LEFT,8,8)) {
     }
 }
 
-private class GlassActionButton(label: String, private val accent: Color) : JButton(label) {
+private class GlassActionButton(label: String, accentInput: Color) : JButton(label) {
+    private val accent=Color(RenderColorCompatibility.harmonizeNearestSemantic(accentInput.rgb),true)
     private val pulseTimer=Timer(90) { if(active && isShowing) repaint() }.apply { isRepeats=true }
     var active = false
         set(value) {
@@ -215,7 +216,10 @@ private class GlassActionButton(label: String, private val accent: Color) : JBut
         isFocusPainted = false
         isRolloverEnabled = true
         border = BorderFactory.createEmptyBorder(8, 10, 8, 10)
-        preferredSize = Dimension(118, 48)
+        val screen=Toolkit.getDefaultToolkit().screenSize
+        val rawHz=runCatching { GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.displayMode.refreshRate }.getOrDefault(60)
+        val profile=RenderCompatibilityContract.profile(screen.width,screen.height,if(rawHz>0)rawHz.toDouble() else 60.0)
+        preferredSize = Dimension((118*profile.uiScale).roundToInt(),(48*profile.uiScale).roundToInt())
         ProductionRgbAssets.icon(label)?.let {
             icon=it
             iconTextGap=7
@@ -228,8 +232,11 @@ private class GlassActionButton(label: String, private val accent: Color) : JBut
         g2.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY)
         val pressed=model.isPressed
         val hover=model.isRollover
-        val phase=2.0*Math.PI*((System.nanoTime()%1_180_000_000L).toDouble()/1_180_000_000.0)
-        val pulse=if(active) 0.84+0.16*((sin(phase)+1.0)*0.5) else 1.0
+        val rawHz=runCatching { GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.displayMode.refreshRate }.getOrDefault(60)
+        val targetFps=RenderCompatibilityContract.refreshBucket(if(rawHz>0)rawHz.toDouble() else 60.0)
+        val periodNs=RenderColorCompatibility.animationPeriodMs(targetFps)*1_000_000L
+        val phase01=(System.nanoTime()%periodNs).toDouble()/periodNs.toDouble()
+        val pulse=if(active) RenderColorCompatibility.pulseMultiplier(phase01) else 1.0
         fun mix(base:Color,tint:Color,amount:Float,alpha:Int):Color {
             val a=amount.coerceIn(0f,1f)
             fun m(x:Int,y:Int)=(x+(y-x)*a).roundToInt().coerceIn(0,255)
@@ -292,15 +299,15 @@ private class RgbGlyphIcon(private val kind:String, private val accent:Color) : 
 
 private object StudioDesktopProductionTheme {
     const val ID="aigii_rgb_neon_v2"
-    val background=Color(2,4,7)
-    val panel=Color(7,17,27)
-    val text=Color(244,251,255)
-    val accent=Color(39,233,255)
-    val selected=Color(39,233,255)
-    val cutting=Color(51,243,155)
-    val rapid=Color(255,77,166)
-    val warning=Color(255,179,38)
-    val alarm=Color(255,70,95)
+    val background=Color(RenderColorCompatibility.BACKGROUND_RGB)
+    val panel=Color(RenderColorCompatibility.PANEL_RGB)
+    val text=Color(RenderColorCompatibility.TEXT_RGB)
+    val accent=Color(RenderColorCompatibility.ACCENT_RGB)
+    val selected=Color(RenderColorCompatibility.ACCENT_RGB)
+    val cutting=Color(RenderColorCompatibility.CUTTING_RGB)
+    val rapid=Color(RenderColorCompatibility.RAPID_RGB)
+    val warning=Color(RenderColorCompatibility.WARNING_RGB)
+    val alarm=Color(RenderColorCompatibility.ALARM_RGB)
 }
 
 private object LibraryFiveAxisSkin208 {
