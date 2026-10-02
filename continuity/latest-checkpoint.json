@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "353.0.0",
+  "version": "354.0.0",
   "branch": "main",
-  "recorded_source_head": "6c79a2caa6c7e30d89274a873c9ab2a6e135a950",
+  "recorded_source_head": "f59d63549f60a16b38c998f0c6289443710898d5",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate Studio 353 5AX Safe Frame composition from the exact commit, then bind AIG-II 389 to that SHA. Preserve toolpoint/lookahead semantics, motion-aware focus/zoom, occlusion hysteresis, manual camera authority, true material removal, CAM/NC data flow, and Web machine-output-disabled policy.",
-  "note": "Studio 353: Web 5AX/6AX now adds a true NDC Safe Frame over tool-follow/lookahead. Tool tip, next-view point and nearest fixture alert point are projected into the WebGL view; only boundary overflow creates a bounded screen-plane camera correction. Right-side HUD margin, edge margin, deadband, hold and rate limits prevent clipping and breathing; manual orbit/zoom clears the correction. No path, CAM, NC, kinematics or material-removal geometry is mutated.",
+  "next_action": "Build and verify Studio 354 current-head Android debug APK with ci/local_android_build.py using process-scoped SDK auto-discovery, verify Windows installDist launcher smoke, then bind AIG-II 390 to the exact Studio 354 SHA. Keep device launch and release signing as separate evidence.",
+  "note": "Studio 354: local Android build orchestration now auto-discovers an existing SDK from ANDROID_HOME / ANDROID_SDK_ROOT or standard per-user locations, validates API 36 + Build Tools 36.0.0 + apksigner, and sets SDK paths only in the Gradle child-process environment. It never writes local.properties or persistent system environment. APK SHA-256 and signature verification are emitted as runtime evidence; device launch and release signing remain separate.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
