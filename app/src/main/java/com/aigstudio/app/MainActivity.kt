@@ -99,6 +99,7 @@ object ProductionRgbAssets {
             n=="HOLE" || name=="孔" -> "hole"
             n=="SELECT" || name=="選取" -> "select"
             n=="HOME" || n=="RGB WALLPAPER" || name=="首頁" -> "rgb_wallpaper"
+            name=="多功能" || name.contains("一鍵多功能") || n.contains("MULTI FUNCTION") -> "tool_group"
             n.contains("MAINT") || name=="工作/維修" || name=="維修" -> "tool_group"
             n.contains("2D CAD") || n=="CAD" -> "cad"
             n=="CAM" || n.contains("CAM ") -> "cam"
