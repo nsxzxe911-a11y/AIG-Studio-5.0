@@ -3152,6 +3152,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     status.foreground = Color(99, 255, 157)
     val cad = CadPanel(doc) { status.text = it }
     var sharedLocalMeta=ProjectRevisionMeta()
+    val sharedProjectExtraDirty=java.util.concurrent.atomic.AtomicBoolean(false)
     val sharedProjectFile=System.getProperty("aig.shared.project.file")
         ?.takeIf{it.isNotBlank()}?.let(::File)
     val sharedLocalProjectFile=System.getProperty("aig.shared.local.project.file")
@@ -3168,7 +3169,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             val fileStamp=if(shared.isFile) shared.lastModified() xor (shared.length() shl 1) else Long.MIN_VALUE
             if(fileStamp!=sharedSyncLastFileStamp && sharedSyncRunning.compareAndSet(false,true)) {
                 sharedSyncLastFileStamp=fileStamp
-                val localDirty=(doc.all().hashCode()*31+doc.links().hashCode())!=sharedBaselineSignature
+                val localDirty=(doc.all().hashCode()*31+doc.links().hashCode())!=sharedBaselineSignature ||
+                    sharedProjectExtraDirty.get()
                 val fallbackMeta=sharedLocalMeta
                 sharedSyncExecutor.execute {
                     val result=runCatching {
@@ -3413,6 +3415,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         action("新增"){
             runCatching{
                 productionFixtures+=buildFixture(nextProductionFixtureId++)
+                sharedProjectExtraDirty.set(true)
                 refresh(productionFixtures.lastIndex)
                 load(productionFixtures.lastIndex)
                 status.text="FIXTURE MODEL • "+productionFixtures.size+" • REVALIDATE REQUIRED"
@@ -3424,6 +3427,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             if(old==null)status.text="FIXTURE UPDATE • no selection"
             else runCatching{
                 productionFixtures[i]=buildFixture(old.id)
+                sharedProjectExtraDirty.set(true)
                 refresh(i);load(i)
                 status.text="FIXTURE UPDATED • "+old.id+" • REVALIDATE REQUIRED"
             }.onFailure{status.text="FIXTURE UPDATE BLOCKED • "+(it.message?:"error")}
@@ -3432,6 +3436,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             val i=list.selectedIndex
             if(i in productionFixtures.indices){
                 productionFixtures.removeAt(i)
+                sharedProjectExtraDirty.set(true)
                 refresh(i.coerceAtMost((productionFixtures.size-1).coerceAtLeast(0)))
                 status.text="FIXTURE REMOVED • remaining="+productionFixtures.size
             }
@@ -4250,6 +4255,11 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 )
             } else remote
             StudioProjectRepository.applyTo(working,doc)
+            productionCamSettings=working.camSettings
+            productionFixtures.clear();productionFixtures.addAll(working.fixtures)
+            productionToolAssembly=working.toolAssembly
+            nextProductionFixtureId=(productionFixtures.maxOfOrNull{it.id} ?: 0L)+1L
+            sharedProjectExtraDirty.set(false)
             cad.repaint()
             if(editRequested) {
                 StudioProjectRepository.saveRevisioned(working,output,"WINDOWS","DESKTOP")
@@ -4263,6 +4273,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
                 "PASS\nMASTER="+SoftwareCoordinateContract.masterOriginData()+
                     "\nDIGEST="+StudioProjectRepository.canonicalDigest(exported)+
                     "\nENTITIES="+exported.entities.size+
+                    "\nFIXTURES="+exported.fixtures.size+
+                    "\nAXIS_C="+DisplayFormat.mm(exported.axisC)+
                     "\nREVISION="+exported.revisionMeta.revision+
                     "\nBASE="+exported.revisionMeta.baseRevision+
                     "\nSOURCE="+exported.revisionMeta.sourcePlatform+
