@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 cmd=json.loads((ROOT/"continuity/release-command.json").read_text(encoding="utf-8"))
 version=(ROOT/"release-version.properties").read_text(encoding="utf-8").strip().split("=",1)[1]
-required=["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","WEB"]
+required=["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","WEB","PRO_AUDIT"]
 assert cmd["version"]==version
 assert cmd["command"]=="RELEASE_ALL_DEPARTMENTS_EXECUTE"
 assert cmd["command_scope"]=="ALL_DEPARTMENTS"
