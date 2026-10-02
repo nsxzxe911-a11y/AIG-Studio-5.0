@@ -252,6 +252,13 @@
     "animation_luma_swing_max": 0.12,
     "adaptive_ui_mesh_glow": true,
     "full_color_dither": true,
-    "cad_render_engine": "CAD_RENDER_V3_4K_120HZ"
+    "cad_render_engine": "CAD_RENDER_V3_4K_120HZ",
+    "default_startup_hz": 60,
+    "startup_promotion_delay_ms": 1800,
+    "adaptive_high_refresh_opt_in": true,
+    "button_visual_hot_replace": true,
+    "button_callback_stable": true,
+    "button_verified_asset_fallback": true,
+    "glass_depth_layers": 4
   }
 }
