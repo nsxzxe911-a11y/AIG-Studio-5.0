@@ -171,7 +171,7 @@ html,body{background:#020407}
 <header class="top">
  <div class="brand"><div><div class="logo">AIG CNC</div><small>BLACK RGB RUNTIME</small></div></div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● STUDIO 346 • LOCAL READY　0.001 mm</div>
+ <div class="status">● STUDIO 347 • LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
 <footer class="footer">AIG CNC • 黑色高對比 Runtime • Web Runtime • CNC machine output disabled</footer>
@@ -221,7 +221,7 @@ function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div cl
 
 function homePage(){
  return '<div data-home-runtime><div class="workgrid">'+
- '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 346 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
+ '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 347 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
  '<div class="menuGrid"><button class="menuCard" data-open-page="CAD">CAD 製圖</button><button class="menuCard" data-open-page="CAM">CAM 刀路</button><button class="menuCard" data-open-page="SIM">SIM 模擬</button><button class="menuCard" data-open-page="NC">NC 編輯</button><button class="menuCard" data-open-page="刀路">刀路工作頁</button><button class="menuCard" data-open-page="功能">設定 / 工具</button></div>'+
  '<div class="runtimeStatus" style="margin-top:9px"><div class="metric"><b>CAD</b><span data-home-cad>0 entities</span></div><div class="metric"><b>CAM</b><span data-home-cam>0 paths</span></div><div class="metric"><b>NC</b><span data-home-nc>0 lines</span></div><div class="metric"><b>Runtime</b><span>LOCAL READY</span></div></div>'+
  '<div class="notice" style="margin-top:9px">正式 Web Runtime 直接進 HOME；工程維修與設定收在功能頁。CNC machine output disabled。</div></div></section>'+
@@ -250,10 +250,11 @@ function ncPage(){
 function simPage(axis){
  const axes=axis==="3AX"?["X","Y","Z"]:axis==="4AX"?["X","Y","Z","A"]:axis==="5AX"?["X","Y","Z","A","B"]:["X","Y","Z","A","B","C"];
  const axisHtml=axes.map(a=>'<span class="axis '+a.toLowerCase()+'" data-axis-read="'+a+'">'+a+'　0.000</span>').join("");
+ const cameraControls=(axis==="5AX"||axis==="6AX")?'<button class="btn selected" data-cmd="follow">跟刀 AUTO</button><button class="btn" data-cmd="center">毛坯中心</button>':"";
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":axis==="6AX"?"/A/B/C":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
  '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 真 3D 加工模擬<small>WebGL 機械模型 • A/B/C 真旋轉 • 拖曳 360° 相機</small></div></div>'+
- '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button></div><div class="notice" data-motion-legend>RAPID 快移 • ENTRY 進刀 • CUT 切削 • EXIT 退刀 • RETRACT 抬刀 • AVOID 夾具閃避</div>'+
- '<div class="runtimeStatus"><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>RECENT CUT</b><span data-cut-trail>0 / last 3</span></div><div class="metric"><b>TOOL CONTACT</b><span data-contact-state>OPEN</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric"><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric"><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
+ '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button>'+cameraControls+'</div><div class="notice" data-motion-legend>RAPID 快移 • ENTRY 進刀 • CUT 切削 • EXIT 退刀 • RETRACT 抬刀 • AVOID 夾具閃避</div>'+
+ '<div class="runtimeStatus"><div class="metric"><b>CAMERA</b><span data-camera-mode>STOCK CENTER</span></div><div class="metric"><b>VIEW DEPTH</b><span data-depth-cue>FLAT</span></div><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>RECENT CUT</b><span data-cut-trail>0 / last 3</span></div><div class="metric"><b>TOOL CONTACT</b><span data-contact-state>OPEN</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric"><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric"><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
  '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label><label class="param">刃長<input data-cutter-len type="number" value="30" min="1" step="0.1"></label><label class="param">刀柄 Ø<input data-holder-dia type="number" value="25" min="1" step="0.1"></label><label class="param">刀柄長<input data-holder-len type="number" value="25" min="1" step="0.1"></label><label class="param">G54 X<input data-g54-x type="number" value="0" step="0.001"></label><label class="param">G54 Y<input data-g54-y type="number" value="0" step="0.001"></label><label class="param">G54 Z<input data-g54-z type="number" value="0" step="0.001"></label><label class="param">G55 X<input data-g55-x type="number" value="0" step="0.001"></label><label class="param">G55 Y<input data-g55-y type="number" value="0" step="0.001"></label><label class="param">G55 Z<input data-g55-z type="number" value="0" step="0.001"></label><label class="param">H1<input data-h1 type="number" value="0" step="0.001"></label><label class="param">H4<input data-h4 type="number" value="0" step="0.001"></label><label class="param">H12<input data-h12 type="number" value="0" step="0.001"></label></div>'+
  '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+sourceCode[axis]+'</textarea></div>'+
@@ -749,6 +750,18 @@ function runtimeToolContact(bl,pos,toolDia,dry=false,stockTop=0){
  return{active,radius:Math.max(.05,Number(toolDia||0)/2),point:{X:Number(pos?.X||0),Y:Number(pos?.Y||0),Z:Number(pos?.Z||0)}};
 }
 
+function runtimeToolAxisVector(pos,axis){
+ const a=(axis==="3AX"?0:Number(pos?.A||0))*Math.PI/180,b=((axis==="5AX"||axis==="6AX")?Number(pos?.B||0):0)*Math.PI/180,c=(axis==="6AX"?Number(pos?.C||0):0)*Math.PI/180;
+ const cc=Math.cos(c),sc=Math.sin(c),cb=Math.cos(b),sb=Math.sin(b),ca=Math.cos(a),sa=Math.sin(a);
+ const x0=0*cc+0*sc,y0=-0*sc+0*cc,x1=x0*cb-1*sb,z1=x0*sb+1*cb;
+ const v={x:x1,y:y0*ca+z1*sa,z:-y0*sa+z1*ca},d=Math.hypot(v.x,v.y,v.z)||1;
+ return{x:v.x/d,y:v.y/d,z:v.z/d};
+}
+function runtimeDepthCue(axisVec,viewDir){
+ const dot=axisVec.x*viewDir[0]+axisVec.y*viewDir[1]+axisVec.z*viewDir[2];
+ return{label:dot>.18?"NEAR":dot<-.18?"FAR":"FLAT",dot};
+}
+
 function sampleRuntimeBlock(bl,t){
  const mix=(a,b)=>Number(a||0)+(Number(b||0)-Number(a||0))*t;
  if(!bl||bl.kind!=="move")return bl?.to?{...bl.to}:{X:0,Y:0,Z:0,A:0,B:0,C:0,F:0,S:0};
@@ -951,7 +964,7 @@ function makeGlScene(canvas,axis){
  const gl=canvas.getContext("webgl",{antialias:true,alpha:false,preserveDrawingBuffer:false});
  if(!gl)return null;
  let lost=false;canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();lost=true});canvas.addEventListener("webglcontextrestored",()=>{lost=false});
- const camera={yaw:-.72,pitch:.58,zoom:2.55,drag:null};
+ const camera={yaw:-.72,pitch:.58,zoom:2.55,drag:null,follow:(axis==="5AX"||axis==="6AX"),focus:null,lastDepthCue:"FLAT",lastDepthDot:0};
 
  function shader(type,src){
   const sh=gl.createShader(type);if(!sh)return null;
@@ -1234,7 +1247,11 @@ function makeGlScene(canvas,axis){
      const stockTop=hasStock?explicitTop:0,stockH=hasStock?explicitThickness:derivedH,stockBottom=stockTop-stockH,stockCenter=(stockTop+stockBottom)/2;
      const stockMinX=hasXY?sx0:(minX+maxX)/2-fallbackSpanX/2,stockMaxX=hasXY?sx1:(minX+maxX)/2+fallbackSpanX/2,stockMinY=hasXY?sy0:(minY+maxY)/2-fallbackSpanY/2,stockMaxY=hasXY?sy1:(minY+maxY)/2+fallbackSpanY/2;
      const spanX=stockMaxX-stockMinX,spanY=stockMaxY-stockMinY,cx=(stockMinX+stockMaxX)/2,cy=(stockMinY+stockMaxY)/2,sceneR=Math.max(spanX,spanY,70);
-     const target=[cx,cy,stockCenter],rr=sceneR*camera.zoom,cp=Math.cos(camera.pitch),eye=[target[0]+Math.cos(camera.yaw)*cp*rr,target[1]+Math.sin(camera.yaw)*cp*rr,target[2]+Math.sin(camera.pitch)*rr];
+     const stockTarget=[cx,cy,stockCenter],followEligible=(axis==="5AX"||axis==="6AX")&&camera.follow,focusTarget=followEligible?[Number(pos.X||0),Number(pos.Y||0),Number(pos.Z||0)]:stockTarget;
+     if(!camera.focus)camera.focus=[...focusTarget];
+     camera.focus[0]+=(focusTarget[0]-camera.focus[0])*(followEligible?.18:.28);camera.focus[1]+=(focusTarget[1]-camera.focus[1])*(followEligible?.18:.28);camera.focus[2]+=(focusTarget[2]-camera.focus[2])*(followEligible?.18:.28);
+     const target=camera.focus,rr=sceneR*camera.zoom,cp=Math.cos(camera.pitch),eye=[target[0]+Math.cos(camera.yaw)*cp*rr,target[1]+Math.sin(camera.yaw)*cp*rr,target[2]+Math.sin(camera.pitch)*rr];
+     const viewDir=norm(sub(eye,target)),depthCue=runtimeDepthCue(runtimeToolAxisVector(pos,axis),viewDir);camera.lastDepthCue=depthCue.label;camera.lastDepthDot=depthCue.dot;
      const vp=M(P(Math.PI/4,aspect,.1,sceneR*20),look(eye,target,[0,0,1]));
      gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.clearColor(.003,.008,.012,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
@@ -1278,10 +1295,11 @@ function makeGlScene(canvas,axis){
 
      const sceneBlock=scene.parsed.blocks[Math.min(scene.index,Math.max(0,scene.parsed.blocks.length-1))]||null;
      const tp={x:pos.X||0,y:pos.Y||0,z:pos.Z||0},dia=Math.max(.5,runtimeToolDiameter({toolDia:scene.toolDia,toolDiameters:scene.toolDiameters},sceneBlock)),cutterLen=Math.max(1,Number(scene.cutterLen)||30),holderDia=Math.max(dia,Number(scene.holderDia)||25),holderLen=Math.max(1,Number(scene.holderLen)||25);
-     const alarm=Boolean(scene.collisionAlarm),contact=runtimeToolContact(sceneBlock,pos,dia,scene.dry,stockTop);
+     const alarm=Boolean(scene.collisionAlarm),contact=runtimeToolContact(sceneBlock,pos,dia,scene.dry,stockTop),axisVec=runtimeToolAxisVector(pos,axis),depthColor=camera.lastDepthCue==="NEAR"?"#33f39b":camera.lastDepthCue==="FAR"?"#ff4da6":"#ffb326";
      drawMesh(cyl,M(T(tp.x,tp.y,tp.z+cutterLen/2),S(dia,dia,cutterLen)),rgb(alarm?"#ff465f":"#d8f5ff"),vp);
      drawMesh(cyl,M(T(tp.x,tp.y,tp.z+cutterLen+holderLen/2),S(holderDia,holderDia,holderLen)),rgb(alarm?"#8d1828":"#29465c"),vp);
      if(contact.active){const cc=runtimeMotionColor("CUT",false);drawMesh(cyl,M(T(tp.x,tp.y,tp.z+.18),S(contact.radius*2.8,contact.radius*2.8,.36)),rgb(cc),vp)}
+     if(axis==="5AX"||axis==="6AX"){drawLine([{x:tp.x,y:tp.y,z:tp.z},{x:tp.x+axisVec.x*sceneR*.28,y:tp.y+axisVec.y*sceneR*.28,z:tp.z+axisVec.z*sceneR*.28}],rgb(depthColor),vp,3)}
 
      drawLine([{x:0,y:0,z:0},{x:25,y:0,z:0}],rgb("#ff4f70"),vp);
      drawLine([{x:0,y:0,z:0},{x:0,y:25,z:0}],rgb("#33f39b"),vp);
@@ -1697,6 +1715,9 @@ function makeRuntime(root){
  }
  function updateUi(){
   const p=currentPos(),len=state.parsed.blocks.length,progress=len?Math.min(100,((state.index+state.t)/len)*100):0,b=currentBlock(),cfg=settings(),mc=activeMachine(),uiToolDia=runtimeToolDiameter(cfg,b||{machine:mc});
+  const cameraModeEl=root.querySelector("[data-camera-mode]"),depthCueEl=root.querySelector("[data-depth-cue]"),followActive=Boolean((axis==="5AX"||axis==="6AX")&&glScene?.camera?.follow);
+  if(cameraModeEl){cameraModeEl.textContent=followActive?"FOLLOW TOOL":"STOCK CENTER";cameraModeEl.style.color=followActive?"#27e9ff":"#8fa7b4"}
+  if(depthCueEl){const cue=glScene?.camera?.lastDepthCue||"FLAT";depthCueEl.textContent=cue;depthCueEl.style.color=cue==="NEAR"?"#33f39b":cue==="FAR"?"#ff4da6":"#ffb326"}
   const role=runtimeMotionRole(b),motionEl=root.querySelector("[data-motion-role]");if(motionEl){motionEl.textContent=role;motionEl.style.color=runtimeMotionColor(role,state.dry)}
   const recentCuts=runtimeRecentCutBlocks(state.parsed,state.index,3),cutTrailEl=root.querySelector("[data-cut-trail]");if(cutTrailEl)cutTrailEl.textContent=recentCuts.length+" / last 3";
   const contact=runtimeToolContact(b,p,uiToolDia,state.dry,Number.isFinite(Number(stockConfig?.top))?Number(stockConfig.top):0),contactEl=root.querySelector("[data-contact-state]");if(contactEl){contactEl.textContent=contact.active?"CONTACT Ø"+(contact.radius*2).toFixed(3):"OPEN";contactEl.style.color=contact.active?runtimeMotionColor("CUT",false):"#8fa7b4"}
@@ -1743,6 +1764,8 @@ function makeRuntime(root){
   if(cmd==="optional"){state.optionalStop=!state.optionalStop;root.querySelector('[data-cmd="optional"]').classList.toggle("warn",state.optionalStop)}
   if(cmd==="blockskip"){state.blockSkip=!state.blockSkip;root.querySelector('[data-cmd="blockskip"]').classList.toggle("warn",state.blockSkip)}
   if(cmd==="reset"){state.running=false;state.index=0;state.t=0;state.collisionAlarm=null}
+  if(cmd==="follow"&&glScene){glScene.camera.follow=!glScene.camera.follow;glScene.camera.focus=null;const b=root.querySelector('[data-cmd="follow"]');if(b)b.classList.toggle("selected",glScene.camera.follow)}
+  if(cmd==="center"&&glScene){glScene.camera.follow=false;glScene.camera.focus=null;const b=root.querySelector('[data-cmd="follow"]');if(b)b.classList.remove("selected")}
   updateUi();renderExec();draw();
  }
  root.addEventListener("click",e=>aigGuard(root,axis+" 操作",()=>{
