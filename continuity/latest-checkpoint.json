@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "314.0.0",
+  "version": "315.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 314. Regression execution is disabled in build scripts and NC regression workflows. Downgrade and equal-version reinstall are disabled. Safety-scope updates that would require CNC regression fail closed instead of bypassing safety.",
-  "note": "Studio 314 policy checkpoint: no push/PR/schedule regression triggers, build does not invoke coreRegression, NC regression workflows are hard-disabled, and versions remain strictly forward-only. Verification/safety source checks remain available. No binary/device PASS claimed.",
+  "next_action": "Continue forward-only from Studio 315. Regression stays OFF/LOCKED and has no re-enable UI. CNC safety core stays ON/LOCKED; only non-destructive inspection/settings are exposed. Policy changes require explicit user approval.",
+  "note": "Studio 315 settings authority checkpoint: Settings Center visibly shows Regression OFF/LOCKED and CNC safety core ON/LOCKED. No automatic/background process may re-enable regression or alter CNC safety policy. Critical CNC safety disable remains unavailable.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -290,5 +290,12 @@
     "equal_version_reinstall_allowed": false,
     "overwrite_newer_version": false,
     "safety_scope_without_regression": "BLOCK_PROMOTION"
+  },
+  "user_authority_policy": {
+    "regression_reenable_requires_explicit_user_approval": true,
+    "cnc_safety_policy_change_requires_explicit_user_approval": true,
+    "regression_state": "OFF_LOCKED",
+    "cnc_safety_core_state": "ON_LOCKED",
+    "cnc_safety_disable_allowed": false
   }
 }
