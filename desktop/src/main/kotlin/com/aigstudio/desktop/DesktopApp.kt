@@ -3728,7 +3728,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         val rapid=JCheckBox("G0 / 抬刀或快速移動")
         fun label(i:Int,p:ManualCamPoint)=
             "P"+(i+1)+" • "+(if(p.rapid)"G0" else if(p.arcI!=null)"ARC" else "G1")+
-                " • X"+DisplayFormat.mm(p.x)+" Y"+DisplayFormat.mm(p.y)+" Z"+DisplayFormat.mm(p.z)
+                " • X"+DisplayFormat.mm(p.x)+" Y"+DisplayFormat.mm(p.y)+" Z"+DisplayFormat.mm(p.z)+
+                " • A"+DisplayFormat.mm(p.axisA)+" B"+DisplayFormat.mm(p.axisB)+" C"+DisplayFormat.mm(p.axisC)
         fun refresh(select:Int=0){
             model.removeAllElements()
             productionCamSettings.manualPath.forEachIndexed{i,p->model.addElement(label(i,p))}
@@ -3775,7 +3776,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             runCatching{
                 productionCamSettings=ManualCamPathEngine.insertPoint(
                     productionCamSettings,i+1,
-                    ManualCamPoint(p.x,p.y,productionCamSettings.depth,false,axisA=p.axisA,axisB=p.axisB)
+                    ManualCamPoint(p.x,p.y,productionCamSettings.depth,false,axisA=p.axisA,axisB=p.axisB,axisC=p.axisC)
                 )
             }.onSuccess{markProductionProjectDirty();refresh(i+1);load()}
                 .onFailure{status.text="MANUAL CAM INSERT BLOCKED • "+(it.message?:"error")}
