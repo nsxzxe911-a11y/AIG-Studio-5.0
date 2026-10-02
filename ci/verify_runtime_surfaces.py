@@ -820,13 +820,16 @@ for needle in (
     "data class MachineModel3D(",
     "object MachineKinematics3D",
     "object MachineModel3DBuilder",
-    "MachineKinematics3D.transform(table,a,b)",
+    'require(mode in setOf("3AX","4AX","5AX","6AX"))',
+    "fun transform(v:Vec3,axisA:Double,axisB:Double,axisC:Double):Vec3",
+    "MachineKinematics3D.transform(table,a,b,c)",
     "MachineKinematics3D.transform(rotaryA,a,0.0)",
-    "MachineKinematics3D.transform(rotaryB,a,b)",
-    "val machineToolPoint=MachineKinematics3D.transform(rawToolPoint,a,b)",
+    "MachineKinematics3D.transform(rotaryB,a,b,0.0)",
+    "val machineToolPoint=MachineKinematics3D.transform(rawToolPoint,a,b,c)",
     "MachineComponentRole.TRUNNION",
     "MachineComponentRole.ROTARY_A",
     "MachineComponentRole.ROTARY_B",
+    "MachineComponentRole.ROTARY_C",
     "MachineComponentRole.SPINDLE",
     "MachineComponentRole.HOLDER",
     "MachineComponentRole.TOOL",
@@ -835,7 +838,9 @@ for needle in (
 for needle in (
     "private fun drawMachineModel(canvas: Canvas, model: MachineModel3D, scale: Double) {",
     "private fun machineSpace(v:Vec3,mode:String,live:Move?):Vec3",
-    "return MachineKinematics3D.transform(v,a,b)",
+    'val c=if(mode=="6AX")machineAxisC else 0.0',
+    "private val machineAxisC: Double = 0.0",
+    "return MachineKinematics3D.transform(v,a,b,c)",
     "val machineModel=MachineModel3DBuilder.build(",
     "liveMove?.axisA",
     "liveMove?.axisB",
@@ -853,14 +858,16 @@ for needle in (
     "private fun projectMachine(v:Vec3,scale:Double):Point",
     "val machineModel=drawMachineModel(g2,scale,activeFrame)",
     "private fun kinematicTransform(v:Vec3):Vec3",
-    "return MachineKinematics3D.transform(v,a,b)",
+    'val c=if(machineMode=="6AX")axisC else 0.0',
+    'require(normalized in setOf("3AX","4AX","5AX","6AX"))',
+    "return MachineKinematics3D.transform(v,a,b,c)",
     "val machineModel=drawMachineModel(g,scale,activeFrame)",
-    "result,machineMode,axisA,axisB,live",
+    "result,machineMode,axisA,axisB,live,axisC",
 ):
     require(desktop, needle, "STUDIO_WINDOWS_TRUE_MACHINE_MODEL_174")
-require(regression, "REAL_MACHINE_MODEL_3_4_5AX_GATE_PASS", "STUDIO_TRUE_MACHINE_MODEL_REGRESSION_174")
+require(regression, "REAL_MACHINE_MODEL_3_4_5_6AX_GATE_PASS", "STUDIO_TRUE_MACHINE_MODEL_REGRESSION_174")
 require(regression, "MACHINE_KINEMATICS_RUNTIME_PARITY_PASS", "STUDIO_MACHINE_KINEMATICS_REGRESSION_174")
-print("TRUE_MACHINE_MODEL_RUNTIME_PARITY_GATE_PASS|ANDROID|WINDOWS|3AX|4AX|5AX|BASE|COLUMN|TABLE|FIXTURE|TRUNNION|ROTARY_A|ROTARY_B|SPINDLE|HOLDER|TOOL|DYNAMIC_AB|MASTER_ORIGIN|SHARED_KINEMATICS")
+print("TRUE_MACHINE_MODEL_RUNTIME_PARITY_GATE_PASS|ANDROID|WINDOWS|3AX|4AX|5AX|6AX|BASE|COLUMN|TABLE|FIXTURE|TRUNNION|ROTARY_A|ROTARY_B|ROTARY_C|SPINDLE|HOLDER|TOOL|DYNAMIC_ABC|MASTER_ORIGIN|SHARED_KINEMATICS")
 for needle in (
     "Color.argb(if(moving) 246 else 236, 56, 104, 138)",
     "Color.argb(if(moving) 250 else 244, 82, 132, 184)",
