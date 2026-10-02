@@ -1936,7 +1936,7 @@ class MainActivity : Activity() {
             setPadding(dp(16),dp(10),dp(16),dp(8))
         }
         box.addView(TextView(this).apply {
-            text="回歸 / 驗證已集中在這一個入口。GitHub Actions 仍維持 workflow_dispatch 手動模式；不會因 push / schedule 自動連鎖執行。\n核心 CNC 安全、完整性與座標檢查不提供關閉。"
+            text="驗證中心已集中在這一個入口。GitHub Actions 仍維持 workflow_dispatch 手動模式；不會因 push / schedule 自動連鎖執行。\n核心 CNC 安全、完整性與座標檢查不提供關閉。"
             setTextColor(0xFFA0BED2.toInt())
             textSize=12f
             setPadding(dp(4),dp(4),dp(4),dp(10))
@@ -1955,7 +1955,7 @@ class MainActivity : Activity() {
         action("NC / 安全檢查"){ openCategory("安全"){showSecurityBranch()} }
         action("5AX Runtime 檢查"){ showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX")) }
         AlertDialog.Builder(this)
-            .setTitle("回歸 / 驗證 • 單一入口")
+            .setTitle("驗證中心 • 單一入口")
             .setView(box)
             .setPositiveButton("關閉",null)
             .show()
@@ -1982,7 +1982,7 @@ class MainActivity : Activity() {
         }
         action("佈景主題 / UI 套裝"){ showThemePackDialog() }
         action("FPS / 解析度 / 效能 / RGB"){ showEnvironmentSettings() }
-        action("回歸 / 驗證"){ showManualRegressionCenter() }
+        action("驗證中心"){ showManualRegressionCenter() }
         action("AI / 更新設定"){ showAiSystemSuiteDialog() }
         action("工作 / 維修"){ showMaintenanceCenter() }
         AlertDialog.Builder(this)
@@ -2027,7 +2027,7 @@ class MainActivity : Activity() {
         action("Recovery / AutoSave"){ restoreCadCheckpointIfAvailable() }
         action("系統監控 HUD"){ applySystemHudPreference(true); showExpandedSystemHud() }
         action("設定中心"){ showUserSettingsCenter() }
-        action("回歸 / 驗證"){ showManualRegressionCenter() }
+        action("驗證中心"){ showManualRegressionCenter() }
         action("環境 / FPS / 溫度"){ showEnvironmentSettings() }
         action("UI 套裝 / AI 編排"){ showThemePackDialog() }
         action("Security"){ openCategory("安全"){showSecurityBranch()} }
