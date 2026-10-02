@@ -4252,7 +4252,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         action("回歸 / 驗證"){showManualRegressionCenter()}
         action("座標 / 精度"){showDesktopCoordinatePrecisionDialog(frame,status)}
         action("回歸 / 驗證"){showManualRegressionCenter()}
-        action("工作 / 維修"){showMaintenanceCenter()}
+        action("CAD / 首頁"){mainCardLayout.show(mainCardHost,"CAD");status.text="SETTINGS • CAD"}
         val panel=JPanel(BorderLayout(8,8)).apply{
             background=StudioDesktopProductionTheme.background
             border=BorderFactory.createEmptyBorder(10,10,10,10)
