@@ -103,6 +103,16 @@ input.aigError,select.aigError,textarea.aigError{border-color:#a82d43!important;
 .menuDetail{display:grid;gap:9px}.menuDetailGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .menuDetail .field input,.menuDetail .field select{width:100%;margin-top:5px;background:#010305;color:#eefbff;border:1px solid #24485a;border-radius:6px;padding:6px}
 @media(max-width:700px){.menuDetailGrid{grid-template-columns:1fr}}
+
+.ncEditGrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:9px;min-height:690px}
+.ncEditorMain{display:grid;grid-template-rows:auto 1fr auto auto;min-width:0}
+.ncKeypad{display:grid;grid-template-columns:repeat(5,minmax(48px,1fr));gap:6px}
+.ncKeypad .btn{min-height:42px;padding:6px 5px;font:11px/1.1 "Cascadia Mono","Consolas",monospace}
+.ncCursor{display:grid;gap:7px}.ncCursor .field{min-height:50px}
+.ncShortcut{font:10px/1.5 "Cascadia Mono","Consolas",monospace;color:#8fa7b4}
+@media(max-width:920px){.ncEditGrid{grid-template-columns:1fr}.ncKeypad{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:560px){.ncKeypad{grid-template-columns:repeat(4,1fr)}.ncKeypad .btn{min-height:44px}}
+
 .footer{padding:6px 10px 10px;color:#66808f;font-size:9px;text-align:center}
 .badge{font-size:10px;color:var(--muted);border:1px solid #233846;border-radius:999px;padding:5px 8px}
 .notice{font-size:10px;color:#b7c8d1;padding:6px 8px;border:1px solid #172b36;border-radius:8px;background:#03070a}
@@ -161,7 +171,7 @@ html,body{background:#020407}
 <header class="top">
  <div class="brand"><div><div class="logo">AIG CNC</div><small>BLACK RGB RUNTIME</small></div></div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● STUDIO 342 • LOCAL READY　0.001 mm</div>
+ <div class="status">● STUDIO 343 • LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
 <footer class="footer">AIG CNC • 黑色高對比 Runtime • Web Runtime • CNC machine output disabled</footer>
@@ -211,7 +221,7 @@ function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div cl
 
 function homePage(){
  return '<div data-home-runtime><div class="workgrid">'+
- '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 342 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
+ '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 343 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
  '<div class="menuGrid"><button class="menuCard" data-open-page="CAD">CAD 製圖</button><button class="menuCard" data-open-page="CAM">CAM 刀路</button><button class="menuCard" data-open-page="SIM">SIM 模擬</button><button class="menuCard" data-open-page="NC">NC 編輯</button><button class="menuCard" data-open-page="刀路">刀路工作頁</button><button class="menuCard" data-open-page="功能">設定 / 工具</button></div>'+
  '<div class="runtimeStatus" style="margin-top:9px"><div class="metric"><b>CAD</b><span data-home-cad>0 entities</span></div><div class="metric"><b>CAM</b><span data-home-cam>0 paths</span></div><div class="metric"><b>NC</b><span data-home-nc>0 lines</span></div><div class="metric"><b>Runtime</b><span>LOCAL READY</span></div></div>'+
  '<div class="notice" style="margin-top:9px">正式 Web Runtime 直接進 HOME；工程維修與設定收在功能頁。CNC machine output disabled。</div></div></section>'+
@@ -224,10 +234,17 @@ function simHubPage(){
  '<div class="notice" style="margin-top:9px">選擇軸數後進入同一套 G-code / WebGL / 碰撞 / 材料移除 Runtime。</div></div></section></div>';
 }
 function ncPage(){
- return '<div data-nc-runtime><div class="workgrid"><section class="panel"><div class="head"><div><h2>NC EDIT</h2><small>Fanuc 編輯 • 只寫瀏覽器專案，不送實體 CNC</small></div><span class="spacer"></span><span class="badge" data-nc-state>READY</span></div>'+
- '<div class="body editorbar"><label class="param">目標<select data-nc-axis><option>3AX</option><option>4AX</option><option>5AX</option><option>6AX</option></select></label><button class="btn" data-nc-action="LOAD">讀取</button><button class="btn play" data-nc-action="SAVE">儲存</button><button class="btn play" data-nc-action="VERIFY">驗證</button><button class="btn" data-nc-action="SIM">到 SIM</button></div>'+
- '<div class="body" style="padding-top:0"><textarea class="code" data-nc-code spellcheck="false"></textarea><div class="controls" data-nc-keypad>'+["G","M","X","Y","Z","A","B","C","F","S","T","H","I","J","K","N"].map(k=>'<button class="btn" data-nc-key="'+k+'">'+k+'</button>').join("")+'</div><div class="notice" style="margin-top:8px" data-nc-msg>讀取目前軸別 G-code 後可直接編輯。</div></div></section>'+
- '<section class="panel"><div class="head"><h3>NC 狀態</h3></div><div class="body"><div class="field"><b>解析區塊</b><span data-nc-blocks>0</span></div><div class="field"><b>碰撞</b><span data-nc-collision>未驗證</span></div><div class="field"><b>Setup 間隙</b><span data-nc-clearance>未驗證</span></div><div class="notice" style="margin-top:8px">M00 / M01 / Block Skip / Dry Run 在軸模擬頁執行；此頁負責編輯、儲存與 Preflight。</div></div></section></div></div>';
+ const keyRows=[
+  ["G/M 功能","G90","G54","G43","M98"],["G","M","X","Y","Z"],["F","S","T","A","B"],
+  ["C","H","I","J","K"],["7","8","9","-","."],["4","5","6","0","/"],["1","2","3","(",")"]
+ ];
+ const keypad=keyRows.flat().map(k=>'<button class="btn" data-nc-key="'+k+'">'+k+'</button>').join("");
+ return '<div data-nc-runtime><div class="ncEditGrid"><section class="panel ncEditorMain"><div class="head"><div><h2>NC EDIT</h2><small>Fanuc 編輯 • Web 不送實體 CNC</small></div><span class="spacer"></span><span class="badge" data-nc-state>READY</span></div>'+
+ '<div class="body editorbar"><label class="param">目標<select data-nc-axis><option>3AX</option><option>4AX</option><option>5AX</option><option>6AX</option></select></label><button class="btn" data-nc-action="LOAD">讀取</button><button class="btn play" data-nc-action="SAVE">儲存</button><button class="btn play" data-nc-action="VERIFY">驗證</button><button class="btn" data-nc-action="SIM">到 SIM</button><button class="btn" data-nc-action="INSERT">INSERT</button><button class="btn danger" data-nc-action="DELETE">DELETE</button><button class="btn" data-nc-action="BLOCKSKIP">BLOCK SKIP</button><button class="btn" data-nc-action="TOP">TOP</button><button class="btn" data-nc-action="BOTTOM">BOTTOM</button></div>'+
+ '<div class="body" style="padding-top:0"><textarea class="code" data-nc-code spellcheck="false"></textarea></div>'+
+ '<div class="body" style="padding-top:0"><div class="ncKeypad" data-nc-keypad>'+keypad+'</div></div>'+
+ '<div class="body" style="padding-top:0"><div class="notice" data-nc-msg>讀取目前軸別 G-code 後可直接編輯。</div></div></section>'+
+ '<section class="panel"><div class="head"><h3>NC 狀態 / 游標說明</h3></div><div class="body ncCursor"><div class="field"><b>游標</b><span data-nc-cursor>LINE 1</span></div><div class="field"><b>Cursor-Line CNC Help</b><span data-nc-help>移動游標即可查看目前行 G/M 說明。</span></div><div class="field"><b>解析區塊</b><span data-nc-blocks>0</span></div><div class="field"><b>碰撞</b><span data-nc-collision>未驗證</span></div><div class="field"><b>Setup 間隙</b><span data-nc-clearance>未驗證</span></div><div class="notice">Block Skip 會切換目前行行首 /；M00 / M01 / Dry Run / Single Block 於 SIM 執行。</div><div class="ncShortcut">快捷：Ctrl+S 儲存 • Ctrl+Enter 驗證 • Alt+I INSERT • Alt+D DELETE • Alt+B BLOCK SKIP</div></div></section></div></div>';
 }
 
 function simPage(axis){
@@ -1737,32 +1754,39 @@ function makeSimHubRuntime(root){
  function refresh(){["3AX","4AX","5AX","6AX"].forEach(a=>{const s=runtimes[a],e=root.querySelector('[data-sim-state="'+a+'"]');if(e)e.textContent=s?(s.running?"RUN":s.collisionAlarm?"ALARM":"READY"):"READY"})}
  refresh();setInterval(refresh,700);
 }
+function ncHelpForLine(line){
+ const u=String(line||"").toUpperCase(),tips=[];
+ const rules=[[/\bG90\b/,"G90 絕對座標"],[/\bG91\b/,"G91 增量座標"],[/\bG54\b/,"G54 工作座標"],[/\bG55\b/,"G55 工作座標"],[/\bG43\b/,"G43 刀長補償 +H"],[/\bG49\b/,"G49 取消刀長補償"],[/\bG41\b/,"G41 左刀補"],[/\bG42\b/,"G42 右刀補"],[/\bG40\b/,"G40 取消刀補"],[/\bG0\b/,"G0 快速定位"],[/\bG1\b/,"G1 直線進給"],[/\bG2\b/,"G2 順時針圓弧"],[/\bG3\b/,"G3 逆時針圓弧"],[/\bG8[134]\b/,"G81/G83/G84 固定循環"],[/\bG73\b/,"G73 高速啄鑽"],[/\bG92\b/,"G92 座標設定"],[/\bM6\b/,"M6 換刀"],[/\bM8\b/,"M8 冷卻液 ON"],[/\bM9\b/,"M9 冷卻液 OFF"],[/\bM98\b/,"M98 呼叫子程式 P"],[/\bM99\b/,"M99 子程式返回"],[/\bM0\b|\bM00\b/,"M00 程式停止"],[/\bM1\b|\bM01\b/,"M01 選擇停止"],[/^\s*\//,"/ Block Skip 行"]];
+ for(const [re,msg] of rules)if(re.test(u))tips.push(msg);
+ return tips.length?tips.join(" • "):"目前行無已知 G/M 說明；X/Y/Z/A/B/C/F/S/T/H/I/J/K 為位址字。";
+}
+function ncCursorInfo(ta){
+ const pos=ta.selectionStart||0,lineNo=ta.value.slice(0,pos).split(/\r?\n/).length,lines=ta.value.split(/\r?\n/);
+ return{lineNo,total:lines.length,line:lines[Math.max(0,lineNo-1)]||""};
+}
 function makeNcRuntime(root){
  const axisEl=root.querySelector("[data-nc-axis]"),ta=root.querySelector("[data-nc-code]"),msg=root.querySelector("[data-nc-msg]");
- const blocksEl=root.querySelector("[data-nc-blocks]"),collisionEl=root.querySelector("[data-nc-collision]"),clearanceEl=root.querySelector("[data-nc-clearance]"),stateEl=root.querySelector("[data-nc-state]");
+ const blocksEl=root.querySelector("[data-nc-blocks]"),collisionEl=root.querySelector("[data-nc-collision]"),clearanceEl=root.querySelector("[data-nc-clearance]"),stateEl=root.querySelector("[data-nc-state]"),cursorEl=root.querySelector("[data-nc-cursor]"),helpEl=root.querySelector("[data-nc-help]");
  function axis(){return axisEl.value}
- function cfg(){
-  const table=aigJsonRead(root,"aig-tool-table-v1",{T1:10,T4:6,T12:12},"刀具表"),stock=aigJsonRead(root,"aig-stock-v1",null,"毛坯"),assembly=aigJsonRead(root,"aig-assembly-v1",{version:1,items:[]},"工件組裝");
-  return{toolDia:10,cutterLen:30,holderDia:25,holderLen:25,safeZ:5,g73Retract:.5,stock,assembly,toolDiameters:toolDiametersFromTable(table)};
- }
- function load(){ta.value=aigStorageGet(root,"aig-code-"+axis(),null,axis()+" G-code")??sourceCode[axis()]??"";stateEl.textContent=axis()+" READY";msg.textContent="已載入 "+axis()+" G-code。"}
- function save(){aigStorageSet(root,"aig-code-"+axis(),ta.value,axis()+" G-code");const rt=runtimes[axis()];if(rt?.reloadCode)rt.reloadCode(ta.value);stateEl.textContent="SAVED";msg.textContent="已儲存並同步到 "+axis()+" 模擬 Runtime。"}
- function verify(){
-  const parsed=aigGuard(root,axis()+" NC 解析",()=>parseProgram(ta.value,axis(),cfg()),null,"error");if(!parsed)return;
-  const collisions=aigGuard(root,axis()+" NC 碰撞",()=>scanRuntimeCollisions(parsed,axis(),cfg()),{collisions:[]},"warn");
-  const clearance=aigGuard(root,axis()+" NC Clearance",()=>evaluateSetupClearance(parsed,axis(),cfg()),null,"warn");
-  blocksEl.textContent=parsed.blocks.length;collisionEl.textContent=collisions.collisions.length?("CHECK "+collisions.collisions.length):"CLEAR";
-  const cv=Number(clearance?.minimum);clearanceEl.textContent=Number.isFinite(cv)?cv.toFixed(3)+" mm":"—";
-  const fail=parsed.errors.length||collisions.collisions.length;stateEl.textContent=fail?"CHECK":"PASS";msg.textContent=parsed.errors.length?parsed.errors.join(" "):collisions.collisions.length?("碰撞 Preflight："+collisions.collisions[0].message):"驗證 PASS：語法、碰撞與 Setup Clearance 已完成。";
- }
-  root.addEventListener("click",e=>aigGuard(root,"NC 操作",()=>{
-   const key=e.target.closest("[data-nc-key]");if(key){const t=key.dataset.ncKey+" ";ta.setRangeText(t,ta.selectionStart,ta.selectionEnd,"end");ta.focus();return}
-   const b=e.target.closest("[data-nc-action]");if(!b)return;
-   if(b.dataset.ncAction==="LOAD")load();
-   if(b.dataset.ncAction==="SAVE")save();
-   if(b.dataset.ncAction==="VERIFY")verify();
-   if(b.dataset.ncAction==="SIM"){save();show(axis())}
+ function cfg(){const table=aigJsonRead(root,"aig-tool-table-v1",{T1:10,T4:6,T12:12},"刀具表"),stock=aigJsonRead(root,"aig-stock-v1",null,"毛坯"),assembly=aigJsonRead(root,"aig-assembly-v1",{version:1,items:[]},"工件組裝");return{toolDia:10,cutterLen:30,holderDia:25,holderLen:25,safeZ:5,g73Retract:.5,stock,assembly,toolDiameters:toolDiametersFromTable(table)}}
+ function refreshCursor(){const c=ncCursorInfo(ta);cursorEl.textContent="LINE "+c.lineNo+" / "+c.total;helpEl.textContent=ncHelpForLine(c.line)}
+ function insertText(t){ta.setRangeText(t,ta.selectionStart,ta.selectionEnd,"end");ta.focus();refreshCursor()}
+ function load(){ta.value=aigStorageGet(root,"aig-code-"+axis(),null,axis()+" G-code")??sourceCode[axis()]??"";stateEl.textContent=axis()+" READY";msg.textContent="已載入 "+axis()+" G-code。";refreshCursor()}
+ function save(){aigStorageSet(root,"aig-code-"+axis(),ta.value,axis()+" G-code");const rt=runtimes[axis()];if(rt?.reloadCode)rt.reloadCode(ta.value);stateEl.textContent="SAVED";msg.textContent="已儲存並同步到 "+axis()+" 模擬 Runtime。";refreshCursor()}
+ function verify(){const parsed=aigGuard(root,axis()+" NC 解析",()=>parseProgram(ta.value,axis(),cfg()),null,"error");if(!parsed)return;const collisions=aigGuard(root,axis()+" NC 碰撞",()=>scanRuntimeCollisions(parsed,axis(),cfg()),{collisions:[]},"warn");const clearance=aigGuard(root,axis()+" NC Clearance",()=>evaluateSetupClearance(parsed,axis(),cfg()),null,"warn");blocksEl.textContent=parsed.blocks.length;collisionEl.textContent=collisions.collisions.length?("CHECK "+collisions.collisions.length):"CLEAR";const cv=Number(clearance?.minimum);clearanceEl.textContent=Number.isFinite(cv)?cv.toFixed(3)+" mm":"—";const fail=parsed.errors.length||collisions.collisions.length;stateEl.textContent=fail?"CHECK":"PASS";msg.textContent=parsed.errors.length?parsed.errors.join(" "):collisions.collisions.length?("碰撞 Preflight："+collisions.collisions[0].message):"驗證 PASS：語法、碰撞與 Setup Clearance 已完成。";refreshCursor()}
+ function lineBounds(){const pos=ta.selectionStart||0,lineStart=ta.value.lastIndexOf("\n",Math.max(0,pos-1))+1;let lineEnd=ta.value.indexOf("\n",pos);if(lineEnd<0)lineEnd=ta.value.length;return{lineStart,lineEnd}}
+ function insertLine(){insertText("\n")}
+ function deleteToken(){const a=ta.selectionStart,b=ta.selectionEnd;if(b>a)ta.setRangeText("",a,b,"end");else if(a>0)ta.setRangeText("",a-1,a,"end");refreshCursor()}
+ function toggleBlockSkip(){const {lineStart,lineEnd}=lineBounds(),line=ta.value.slice(lineStart,lineEnd),m=line.match(/^\s*/)[0],i=lineStart+m.length;if(ta.value[i]==="/")ta.setRangeText("",i,i+1,"end");else ta.setRangeText("/",i,i,"end");ta.focus();refreshCursor()}
+ function jump(where){const p=where==="TOP"?0:ta.value.length;ta.setSelectionRange(p,p);ta.focus();refreshCursor()}
+ root.addEventListener("click",e=>aigGuard(root,"NC 操作",()=>{
+   const key=e.target.closest("[data-nc-key]");if(key){const k=key.dataset.ncKey;if(k==="G/M 功能"){msg.textContent="常用：G90 G54 G43 H1 M8 • M98 P4 • M98 P5 • M99";return}insertText(k+" ");return}
+   const b=e.target.closest("[data-nc-action]");if(!b)return;const cmd=b.dataset.ncAction;
+   if(cmd==="LOAD")load();if(cmd==="SAVE")save();if(cmd==="VERIFY")verify();if(cmd==="SIM"){save();show(axis())}
+   if(cmd==="INSERT")insertLine();if(cmd==="DELETE")deleteToken();if(cmd==="BLOCKSKIP")toggleBlockSkip();if(cmd==="TOP"||cmd==="BOTTOM")jump(cmd);
   },null,"warn"));
+ ta.addEventListener("keydown",e=>{const k=e.key.toLowerCase();if(e.ctrlKey&&k==="s"){e.preventDefault();save()}else if(e.ctrlKey&&e.key==="Enter"){e.preventDefault();verify()}else if(e.altKey&&k==="i"){e.preventDefault();insertLine()}else if(e.altKey&&k==="d"){e.preventDefault();deleteToken()}else if(e.altKey&&k==="b"){e.preventDefault();toggleBlockSkip()}});
+ ["click","keyup","select","input"].forEach(ev=>ta.addEventListener(ev,refreshCursor));
  axisEl.addEventListener("change",load);load();
 }
 

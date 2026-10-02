@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "342.0.0",
+  "version": "343.0.0",
   "branch": "main",
-  "recorded_source_head": "772f1acdb1fa0145ed971bac9320710b732e5b3a",
+  "recorded_source_head": "363b6a7486aeffb6aedee6266ef43f6f65aed153",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate Studio 342 formal Web Runtime navigation from the exact commit, then bind AIG-II 378 to that SHA. Keep HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC as the primary nav and keep toolpath/settings as nested utility pages.",
-  "note": "Studio 342: formal Web Runtime navigation now opens HOME first and exposes CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC as the primary product tabs. Toolpath and settings remain nested utilities. NC EDIT reads/writes the same axis G-code storage, runs parser/collision/setup-clearance preflight, and can hand the edited program to the existing axis simulation Runtime. CNC machine output remains disabled in Web.",
+  "next_action": "Validate Studio 343 Web NC EDIT from the exact commit, then bind AIG-II 379 to that SHA. Preserve formal HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC navigation and keep Web machine output disabled.",
+  "note": "Studio 343: Web NC EDIT now adds the CNC keyboard and edit controls required by the production interaction model: INSERT, DELETE, line-start BLOCK SKIP toggle, TOP/BOTTOM, G/M and XYZ/FST/ABC/HIJK/numeric keys, cursor-line help, and keyboard shortcuts. NC still shares the same saved axis G-code, parser, collision and setup-clearance preflight, and Web machine output remains disabled.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
