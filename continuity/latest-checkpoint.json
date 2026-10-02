@@ -3,7 +3,7 @@
   "product": "AIG Studio 5.0",
   "version": "305.0.0",
   "branch": "main",
-  "recorded_source_head": "8c86eef73f108837551509521e98ff57bb86149b",
+  "recorded_source_head": "42c2dc3662570fbda35eb90951b28fa3375fe23e",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "EXECUTE_UNTIL_PASS",
   "departments": {
@@ -47,7 +47,7 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Bind AIG-II 340 to the Studio 305 checkpoint exact SHA, add PRO_AUDIT as the fifteenth controller-side department, and keep APK/EXE/device proof separate.",
+  "next_action": "AIG-II 340 must bind the Studio 305 checkpoint exact SHA while retaining tested source 42c2dc... as hosted Semantic evidence. Heavy APK/EXE/device release proof remains separate and manual.",
   "note": "Studio 305 adds PRO_AUDIT as the fifteenth department for top-tier professional cross-department audit, repair routing, and re-verification. It does not override safety or evidence gates.",
   "release_command": {
     "path": "continuity/release-command.json",
@@ -118,14 +118,16 @@
     "script": "ci/pro_audit.py",
     "display_name": "頂級專業軟體極速審核修建部門",
     "mode": "CROSS_DEPARTMENT_AUDIT_REPAIR_REVERIFY",
-    "status": "SOURCE_REVIEW_PASS",
+    "status": "SOURCE_AND_HOSTED_SEMANTIC_PASS",
     "source_review": "15_OF_15",
     "hosted_evidence": {
-      "source_sha": "773e12e552f92f8b456e344665ceb2ccc284f883",
+      "source_sha": "42c2dc3662570fbda35eb90951b28fa3375fe23e",
       "workflow": "NC Semantic Timeline Gate",
-      "run_id": 36953595432,
+      "run_id": 36954106963,
+      "whole_workflow": "SUCCESS",
       "pro_audit_step": "PASS",
-      "whole_workflow": "FAIL_LATER_RUNTIME_VERIFIER_DRIFT"
+      "runtime_surface_gate": "PASS",
+      "note": "This proves hosted Semantic scope for source 42c2dc...; it is not APK/EXE/device release proof."
     }
   }
 }
