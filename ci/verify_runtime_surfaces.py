@@ -2017,3 +2017,27 @@ if min(set_pos,draw_pos,draw_listener_pos,restore_pos,network_pos) < 0 or not (s
     raise SystemExit("BLOCKED STUDIO_312_ANDROID_BOOT_ORDER")
 print("STUDIO_PRODUCTION_STARTUP_GATE_PASS|312|ANDROID_HOME_FIRST_FRAME|WINDOWS_DIRECT_RUNTIME|STARTUP_JWINDOW_SMOKE_ONLY|RECOVERY_POST_DRAW|NETWORK_POST_DRAW|OFFLINE_FIRST")
 
+# Studio 313 resilient Production startup
+android_313 = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
+desktop_313 = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
+for needle in (
+    'val previousStartupCrashStage=runCatching { StudioStartupBootGuard.begin(this) }.getOrNull()',
+    'adaptiveRefreshController = runCatching { AdaptiveRefreshController(this) }.getOrNull()',
+    'fun postHomeStartupStep(label:String, block:()->Unit)',
+    'postHomeStartupStep("REFRESH") { adaptiveRefreshController?.start() }',
+    'postHomeStartupStep("ROTARY PROFILE") { loadRotaryMachineProfile() }',
+    'postHomeStartupStep("RECOVERY") { restoreCadCheckpointIfAvailable() }',
+    'postHomeStartupStep("SHARED SYNC") { startSharedProjectWatcher() }',
+    'postHomeStartupStep("NETWORK") { scheduleBackgroundOnlineServices() }',
+):
+    require(android_313, needle, "STUDIO_313_ANDROID_STARTUP_RESILIENCE")
+timer_anchor=desktop_313.index('val sharedSyncTimer:Timer?')
+visible_anchor=desktop_313.index('if(showWindow) {')
+if timer_anchor < 0 or visible_anchor < 0:
+    raise SystemExit("BLOCKED STUDIO_313_WINDOWS_STARTUP_ORDER")
+timer_region=desktop_313[timer_anchor:visible_anchor]
+if '.apply{isRepeats=true;start()}' in timer_region:
+    raise SystemExit("BLOCKED STUDIO_313_WINDOWS_PREVISIBLE_SHARED_SYNC")
+require(desktop_313, 'sharedSyncTimer?.start()', "STUDIO_313_WINDOWS_POSTVISIBLE_SHARED_SYNC")
+print("STUDIO_STARTUP_RESILIENCE_GATE_PASS|313|HOME_FIRST|REFRESH_POST_DRAW|RECOVERY_NON_FATAL|ROTARY_NON_FATAL|SYNC_POST_VISIBLE|NETWORK_NON_FATAL")
+

@@ -704,10 +704,10 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        applyCoordinatePrecisionPreference()
+        runCatching { applyCoordinatePrecisionPreference() }
         // System launch window stays visible until the first Production Runtime frame.
         // Do not install a custom engineering/startup shell as the app content view.
-        val previousStartupCrashStage=StudioStartupBootGuard.begin(this)
+        val previousStartupCrashStage=runCatching { StudioStartupBootGuard.begin(this) }.getOrNull()
         val startupMemoryClass=(getSystemService(ACTIVITY_SERVICE) as ActivityManager).memoryClass
         val startupQuality=StudioStartupEngineContract.qualityMode(
             lowMemory=startupMemoryClass<256,
@@ -715,15 +715,16 @@ class MainActivity : Activity() {
             preferHq=startupMemoryClass>=512 && !RuntimeDeviceProfile.isEmulator
         )
         val startupSafeBoot=StudioStartupEngineContract.safeBootRequired(previousStartupCrashStage)
-        StudioStartupBootGuard.mark(this,StudioStartupStage.SAFE_THEME)
-        StudioStartupBootGuard.mark(this,StudioStartupStage.CORE)
+        runCatching { StudioStartupBootGuard.mark(this,StudioStartupStage.SAFE_THEME) }
+        runCatching { StudioStartupBootGuard.mark(this,StudioStartupStage.CORE) }
         val environmentPrefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
         environmentRestartApplied = environmentPrefs.getBoolean("restart_required", false)
         if (environmentRestartApplied) {
             environmentPrefs.edit().putBoolean("restart_required", false).remove("restart_reason").apply()
         }
-        adaptiveRefreshController = AdaptiveRefreshController(this).also { it.start() }
-        StudioStartupBootGuard.mark(this,StudioStartupStage.CONFIGURATION)
+        // Instantiate only. The refresh governor starts after the real HOME first frame.
+        adaptiveRefreshController = runCatching { AdaptiveRefreshController(this) }.getOrNull()
+        runCatching { StudioStartupBootGuard.mark(this,StudioStartupStage.CONFIGURATION) }
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(StudioProductionTheme.background)
@@ -1385,6 +1386,13 @@ class MainActivity : Activity() {
 
         // Project recovery, shared storage and network are all post-first-frame work.
         // The user sees the real HOME controls before any of those paths can execute.
+        fun postHomeStartupStep(label:String, block:()->Unit) {
+            runCatching(block).onFailure { error ->
+                if(::networkStateBadge.isInitialized) {
+                    networkStateBadge.text="啟動 WARNING • "+label+" • "+(error.message ?: error.javaClass.simpleName)
+                }
+            }
+        }
         var firstProductionHomeDrawHandled=false
         val firstHomeDrawListener=object:android.view.ViewTreeObserver.OnDrawListener {
             override fun onDraw() {
@@ -1404,24 +1412,34 @@ class MainActivity : Activity() {
                         return@post
                     }
 
-                    StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.PROJECT_DATA)
-                    loadRotaryMachineProfile()
-                    restoreCadCheckpointIfAvailable()
-                    autosaveHandler.postDelayed(autosaveRunnable,15000L)
-
-                    if(workstationLayout==WorkstationChromeContract.Layout.COMPACT &&
-                        AndroidUxContract.CLEAN_START_TOOL_DECK_COLLAPSED) {
-                        closeBranches()
-                    } else {
-                        openCategory("繪圖") { showDrawingBranch() }
+                    postHomeStartupStep("REFRESH") { adaptiveRefreshController?.start() }
+                    postHomeStartupStep("BOOT GUARD") {
+                        StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.PROJECT_DATA)
                     }
-                    selectTool(Tool.LINE)
-                    refreshVisibleMode(ProductionUiSwitchContract.initialMode)
+                    postHomeStartupStep("ROTARY PROFILE") { loadRotaryMachineProfile() }
+                    postHomeStartupStep("RECOVERY") { restoreCadCheckpointIfAvailable() }
+                    postHomeStartupStep("AUTOSAVE") {
+                        autosaveHandler.removeCallbacks(autosaveRunnable)
+                        autosaveHandler.postDelayed(autosaveRunnable,15000L)
+                    }
 
-                    StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.HEALTH)
-                    StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.WRAP_UP)
-                    StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.HOME)
-                    StudioStartupBootGuard.complete(this@MainActivity)
+                    postHomeStartupStep("CAD READY") {
+                        if(workstationLayout==WorkstationChromeContract.Layout.COMPACT &&
+                            AndroidUxContract.CLEAN_START_TOOL_DECK_COLLAPSED) {
+                            closeBranches()
+                        } else {
+                            openCategory("繪圖") { showDrawingBranch() }
+                        }
+                        selectTool(Tool.LINE)
+                        refreshVisibleMode(ProductionUiSwitchContract.initialMode)
+                    }
+
+                    postHomeStartupStep("BOOT COMPLETE") {
+                        StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.HEALTH)
+                        StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.WRAP_UP)
+                        StudioStartupBootGuard.mark(this@MainActivity,StudioStartupStage.HOME)
+                        StudioStartupBootGuard.complete(this@MainActivity)
+                    }
 
                     if(environmentRestartApplied) {
                         Toast.makeText(
@@ -1431,9 +1449,9 @@ class MainActivity : Activity() {
                         ).show()
                     }
 
-                    runDualPlatformProjectSmokeIfPresent()
-                    startSharedProjectWatcher()
-                    scheduleBackgroundOnlineServices()
+                    postHomeStartupStep("DUAL PROJECT") { runDualPlatformProjectSmokeIfPresent() }
+                    postHomeStartupStep("SHARED SYNC") { startSharedProjectWatcher() }
+                    postHomeStartupStep("NETWORK") { scheduleBackgroundOnlineServices() }
                 }
             }
         }

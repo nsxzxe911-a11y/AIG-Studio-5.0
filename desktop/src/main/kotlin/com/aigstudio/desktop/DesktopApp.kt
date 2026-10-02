@@ -3287,7 +3287,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                     }
                 }
             }
-        }.apply{isRepeats=true;start()}
+        }.apply{isRepeats=true}
     }
 
     val frame = JFrame("AIG CNC — OFFICIAL RGB ORIGINAL — v"+desktopVersionName())
@@ -4632,7 +4632,11 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     frame.add(status, BorderLayout.SOUTH)
     frame.size = desktopAdaptiveSize(1280, 820)
     frame.setLocationRelativeTo(null)
-    if(showWindow) frame.isVisible = true
+    if(showWindow) {
+        frame.isVisible = true
+        // Background shared-folder polling starts only after Production Runtime is visible.
+        sharedSyncTimer?.start()
+    }
     if(System.getProperty("aig.dual.project.smoke")=="true"){
         val input=System.getProperty("aig.dual.project.import")?.let(::File) ?: error("dual project import missing")
         val output=System.getProperty("aig.dual.project.export")?.let(::File) ?: error("dual project export missing")

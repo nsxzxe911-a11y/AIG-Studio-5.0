@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "312.0.0",
+  "version": "313.0.0",
   "branch": "main",
-  "recorded_source_head": "62aa8d314708298b449527084c7c73de389f421f",
+  "recorded_source_head": "5bc86a7b91259d08439138e564f6d7e64e2f4e86",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 312. Windows production main now opens the Production Runtime directly; StudioDesktopStartupWindow is retained only for smoke/evidence generation. Android explicitly presents the formal RGB HOME as the first frame and defers recovery/shared-project/network work until after that frame is drawn. Next proof remains manual APK/EXE launch screenshots when an execution host is available.",
-  "note": "Studio 312 source checkpoint: production startup is UI-first. Windows startup shell is smoke-only, never production main. Android HOME-first draw is explicit; recovery, shared sync and network are post-first-frame. No binary/device PASS or Runtime screenshot is claimed.",
+  "next_action": "Continue forward-only from Studio 313. Production HOME remains first surface. Android refresh, rotary profile, recovery, autosave, shared sync and network now start after HOME first draw as independent non-fatal steps. Windows shared-folder polling starts only after the Production JFrame is visible. Next proof remains manual APK/EXE launch and first-frame screenshots.",
+  "note": "Studio 313 startup resilience checkpoint: non-critical initialization cannot own or block the first Production HOME surface. Post-draw failures become visible warnings while Runtime remains alive. CNC safety/precision/integrity rules are unchanged. No binary/device PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -226,7 +226,7 @@
     "app/src/main/assets/aig-generated-rgb/approved/184/tool_group.png"
   ],
   "manual_only_checkpoint": {
-    "source_head": "62aa8d314708298b449527084c7c73de389f421f",
+    "source_head": "5bc86a7b91259d08439138e564f6d7e64e2f4e86",
     "automatic_push_triggers": 0,
     "automatic_schedule_triggers": 0,
     "one_key_multifunction": "IMPLEMENTED_ANDROID_WINDOWS",
@@ -248,7 +248,10 @@
     "windows_startup_jwindow": "SMOKE_EVIDENCE_ONLY",
     "engineering_shell_first_surface": false,
     "recovery_before_first_frame": false,
-    "network_before_first_frame": false
+    "network_before_first_frame": false,
+    "startup_resilience": "POST_HOME_NONCRITICAL_FAIL_OPEN",
+    "windows_shared_sync": "POST_VISIBLE_ONLY",
+    "android_refresh": "POST_FIRST_DRAW"
   },
   "user_settings_center": {
     "status": "SOURCE_IMPLEMENTED",
