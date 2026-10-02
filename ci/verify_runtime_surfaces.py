@@ -2108,3 +2108,27 @@ for needle in (
     require(desktop_316, needle, "STUDIO_316_WINDOWS_STARTUP_VERSION")
 print("STUDIO_STARTUP_VERSION_POLICY_PASS|316|HOME_FIRST|BACKGROUND_COMPARE|VERIFIED_NEWER_ONLY|OFFLINE_INSTALLED_VERSION|USER_CONFIRM_INSTALL|NO_DOWNGRADE")
 
+# Studio 317 online-only update progress + offline direct Runtime
+rolling_317 = read("core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt")
+android_317 = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
+for needle in (
+    "STARTUP_UPDATE_PROGRESS_ONLINE_ONLY=true",
+    "STARTUP_UPDATE_PROGRESS_EXPLANATION_REQUIRED=true",
+    "VERIFIED_UI_APPLIES_ON_NEXT_RUNTIME_AFTER_BINARY_INSTALL=true",
+):
+    require(rolling_317, needle, "STUDIO_317_UPDATE_PROGRESS_POLICY")
+for needle in (
+    'private lateinit var startupUpdateProgress: ProgressBar',
+    'private lateinit var startupUpdateMessage: TextView',
+    'contentDescription="STARTUP UPDATE PROGRESS"',
+    'contentDescription="STARTUP UPDATE EXPLANATION"',
+    'showStartupUpdateProgress(',
+    '"有網路 • 正在對照 v"+BuildConfig.VERSION_NAME+" 與最新版本 • UI 可直接使用"',
+    '"目前 v"+BuildConfig.VERSION_NAME+" 已是最新 • 沿用目前介面與設定"',
+    '"安裝後自動使用新版介面"',
+):
+    require(android_317, needle, "STUDIO_317_ANDROID_UPDATE_PROGRESS")
+if 'if(::startupUpdateProgress.isInitialized) startupUpdateProgress.visibility=View.GONE' not in android_317:
+    raise SystemExit("BLOCKED STUDIO_317_OFFLINE_PROGRESS")
+print("STUDIO_STARTUP_UPDATE_UX_PASS|317|OFFLINE_DIRECT_UI|ONLINE_PROGRESS_BAR|EXPLANATION_BELOW|VERIFIED_NEWER_ONLY|NEW_UI_AFTER_INSTALL")
+
