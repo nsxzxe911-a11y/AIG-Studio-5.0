@@ -1016,6 +1016,22 @@ for needle in (
 ):
     require(desktop, needle, "STUDIO_WINDOWS_FULL_PROJECT_RECOVERY_300")
 print("FULL_PROJECT_RECOVERY_RUNTIME_GATE_PASS|ANDROID|WINDOWS|PROJECT_V3|CAD|CAM|ABC|FIXTURE|TOOL_ASSEMBLY|NC|15S|CORRUPT_RECOVERY_IGNORED")
+for needle in (
+    'contentDescription="CAM TOOL ASSEMBLY EDITOR"',
+    "private fun showToolAssemblyEditor()",
+    "ToolAssemblyConfig(",
+    "camToolAssembly=it",
+):
+    require(android, needle, "STUDIO_ANDROID_TOOL_ASSEMBLY_UI_301")
+for needle in (
+    "fun showProductionToolAssemblyEditor()",
+    'camAction("刀具總成"',
+    "productionToolAssembly=it",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_TOOL_ASSEMBLY_UI_301")
+require(regression, "TOOL_ASSEMBLY_COLLISION_GATE_PASS", "STUDIO_TOOL_ASSEMBLY_COLLISION_REGRESSION_301")
+print("TOOL_ASSEMBLY_RUNTIME_GATE_PASS|ANDROID|WINDOWS|HOLDER_DIAMETER|HOLDER_LENGTH|STICKOUT|CAM_SIM_5AX_6AX_COLLISION|PROJECT_V3|REVALIDATE")
+
 
 
 
