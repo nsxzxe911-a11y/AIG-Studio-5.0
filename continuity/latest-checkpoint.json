@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "306.0.0",
+  "version": "307.0.0",
   "branch": "main",
-  "recorded_source_head": "a55c5092324ef644e07e59bf3bd6260ff9c2933f",
+  "recorded_source_head": "PENDING_307_SOURCE_COMMIT",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "EXECUTE_UNTIL_PASS",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "AIG-II 341 must bind this Studio 306 checkpoint exact SHA. Keep heavy APK/EXE/device validation manual and separate from source/hosted Semantic evidence.",
-  "note": "Studio 306 keeps all 15 departments active and upgrades PRO_AUDIT with stale-gate detection, machine-readable audit reporting, workflow self-trigger coverage, and clean evidence-class separation.",
+  "next_action": "Studio 307 clean-code consolidation: one 15-department audit authority, additive ownership verification, no CNC core behavior change. Revalidate hosted Semantic before rebinding AIG-II.",
+  "note": "Studio 307 centralizes the 15-department audit contract in ci/audit_contract.py and removes duplicated department lists from PRO/continuity verifiers.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -66,7 +66,7 @@
   },
   "department_autocheck": {
     "script": "ci/department_autocheck.py",
-    "last_source_review": "HOSTED_SEMANTIC_PRO_AUDIT_15_DEPARTMENT_COVERAGE_STUDIO306",
+    "last_source_review": "PENDING_STUDIO307_CLEAN_CODE_REVIEW",
     "no_early_exit": true,
     "output": "build/department-autocheck.json"
   },
@@ -126,9 +126,9 @@
     "script": "ci/pro_audit.py",
     "display_name": "頂級專業軟體極速審核修建部門",
     "mode": "CROSS_DEPARTMENT_AUDIT_REPAIR_REVERIFY",
-    "status": "SOURCE_AND_HOSTED_SEMANTIC_PASS",
+    "status": "STUDIO307_SOURCE_PENDING_HOSTED_REVERIFY",
     "source_review": "15_DEPARTMENT_PRO_AUDIT_COVERAGE",
-    "hosted_evidence": {
+    "previous_hosted_evidence": {
       "source_sha": "a55c5092324ef644e07e59bf3bd6260ff9c2933f",
       "workflow": "NC Semantic Timeline Gate",
       "run_id": 36956026627,
@@ -141,5 +141,11 @@
       "binary_device_release_proof": "NOT_CLAIMED",
       "note": "Hosted source/Semantic/UI-compile evidence only; no APK/EXE install or physical-device launch claim."
     }
+  },
+  "clean_code_contract": {
+    "authority": "ci/audit_contract.py",
+    "verifier": "ci/verify_audit_contract.py",
+    "departments": 15,
+    "duplicate_lists_forbidden": true
   }
 }
