@@ -4309,6 +4309,18 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         action("座標 / 精度"){showDesktopCoordinatePrecisionDialog(frame,status)}
         action("工作 / 維修"){maintenanceCenterAction?.invoke() ?: run { status.text="SETTINGS • MAINTENANCE INITIALIZING" }}
         action("CAD / 首頁"){mainCardLayout.show(mainCardHost,"CAD");status.text="SETTINGS • CAD"}
+        action("啟動版本更新 • ON"){
+            JOptionPane.showMessageDialog(
+                frame,
+                "目前版本："+desktopVersionName()+"\n"+
+                    "啟動：Production Runtime HOME FIRST\n"+
+                    "更新：背景比對 / VERIFIED NEWER ONLY / 不降版\n"+
+                    "套用新版仍走更新通道與使用者確認。",
+                "啟動版本更新",
+                JOptionPane.INFORMATION_MESSAGE
+            )
+            status.text="STARTUP VERSION • HOME FIRST • VERIFIED NEWER ONLY"
+        }
         action("AI 智能"){mainCardLayout.show(mainCardHost,"AI");status.text="SETTINGS • AI"}
         val panel=JPanel(BorderLayout(8,8)).apply{
             background=StudioDesktopProductionTheme.background
@@ -4325,6 +4337,8 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 add(JLabel("OFF / LOCKED").apply{foreground=StudioDesktopProductionTheme.warning})
                 add(JLabel("CNC 安全核心").apply{foreground=StudioDesktopProductionTheme.text})
                 add(JLabel("ON / LOCKED").apply{foreground=StudioDesktopProductionTheme.warning})
+                add(JLabel("啟動版本比對").apply{foreground=StudioDesktopProductionTheme.text})
+                add(JLabel("ON • HOME FIRST • NEWER ONLY").apply{foreground=StudioDesktopProductionTheme.accent})
             },BorderLayout.NORTH)
             add(actions,BorderLayout.CENTER)
         }
