@@ -2242,6 +2242,12 @@ private fun testCollisionLookAheadPlanner() {
         clearanceMm=0.2
     )
     val assembly=ToolAssemblyConfig(holderDiameter=2.0,holderLength=1.0,stickout=1.0)
+    val unmodeled=MachiningRiskScanner.inspect(cam,stock)
+    check(unmodeled.ok && !unmodeled.fixtureCoverageKnown && !unmodeled.preflightReady)
+    val modeledBefore=MachiningRiskScanner.inspect(cam,stock,listOf(clamp),assembly)
+    check(!modeledBefore.ok && modeledBefore.fixtureCoverageKnown)
+    println("✓ FIXTURE_COVERAGE_POLICY_GATE_PASS UNMODELED_WARNING_ONLY MODELED_COLLISION_BLOCK PREFLIGHT_REQUIRES_MODEL")
+
     val look=MachiningRiskScanner.predictLookAhead(
         cam,stock,listOf(clamp),assembly,lookAheadSegments=4,extraClearanceMm=3.0
     )
