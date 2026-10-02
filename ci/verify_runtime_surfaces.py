@@ -335,7 +335,7 @@ for needle in (
     'parameter("CONTOUR SIDE"',
     'parameter("PATH DIRECTION"',
     'productionCamSettings=productionCamSettings.copy(',
-    'showUnifiedMachiningEditor(frame,doc,status,"3D",productionCamSettings)',
+    'frame,doc,status,"3D",productionCamSettings,productionFixtures,productionToolAssembly',
     'showNcEditor(frame,doc,productionCamSettings)',
 ):
     require(desktop, needle, "WINDOWS_CAM_CONTOUR_SIDE_DIRECTION")
@@ -1586,8 +1586,8 @@ for needle in (
     'background=LibraryFiveAxisSkin208.panel',
     'parameter("SAFE-Z",DisplayFormat.mm(settings.safeZ)+" mm",LibraryFiveAxisSkin208.safe)',
     'camAction("軸模式",LibraryFiveAxisSkin208.cyan)',
-    'arrayOf("3AX","4AX","5AX")',
-    'showUnifiedMachiningEditor(frame,doc,status,choice,productionCamSettings)',
+    'arrayOf("3AX","4AX","5AX","6AX")',
+    'frame,doc,status,choice,productionCamSettings,productionFixtures,productionToolAssembly',
     'toolTipText=LibraryFiveAxisSkin208.SOURCE_MOBILE+" + "+LibraryFiveAxisSkin208.SOURCE_LANDSCAPE',
 ):
     require(desktop, needle, "STUDIO_WINDOWS_LIBRARY_5X_REAL_CAM_SKIN_208")
