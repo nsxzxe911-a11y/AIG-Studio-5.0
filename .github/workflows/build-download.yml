@@ -2,6 +2,11 @@ name: AIG Studio direct release validation
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - release-version.properties
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,7 +17,7 @@ permissions:
 
 jobs:
   fast-review:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-build]') || contains(github.event.head_commit.modified, 'continuity/release-command.json') || contains(github.event.head_commit.added, 'continuity/release-command.json') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -25,7 +30,7 @@ jobs:
           grep -Fq 'FAST_REVIEW_PASS|' fast-review.log
 
   android-and-source:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-build]') || contains(github.event.head_commit.modified, 'continuity/release-command.json') || contains(github.event.head_commit.added, 'continuity/release-command.json') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -80,6 +85,8 @@ jobs:
           grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|' production-runtime.log
           grep -Fq 'PRODUCTION_UI_SWITCH_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED|STABLE_ORDER|LIVE_RUNTIME' production-runtime.log
           grep -Fq 'VISIBLE_FUNCTION_UI_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' production-runtime.log
+          grep -Fq 'CONTINUOUS_6AX_PRODUCTION_GATE_PASS|ABC_TOOLPOINTS|SIM|ROTARY_C|NC_C_FAIL_CLOSED' production-runtime.log
+          grep -Fq 'SIX_AXIS_COLLISION_SPACE_PRODUCTION_GATE_PASS|ABC_MACHINE_SPACE|ROTATING_FIXTURE|MACHINE_ENVELOPE|NC_INTERLOCK_UNCHANGED' production-runtime.log
           grep -Fq 'OFFLINE_FIRST_UI_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' production-runtime.log
           grep -Fq 'NETWORK_RESUME_UI_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY' production-runtime.log
           grep -Fq 'NETWORK_RETRY_UI_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE' production-runtime.log
@@ -95,6 +102,8 @@ jobs:
           grep -Fq 'SHARED_SYNC_RUNTIME_WATCHER_GATE_PASS|' runtime-surfaces.log
           echo 'STUDIO_TOOLCHAIN_238=AGP_9.4.0|KOTLIN_2.4.20|GRADLE_9.7.0|JDK_17|API_36_STABLE|API_37_PREVIEW_TRACKED|LATEST_BUILD_TOOLS|AXIS_NESTED_GATE|CHECKOUT_V7|SETUP_GRADLE_V6'
           grep -Fq 'VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' runtime-surfaces.log
+          grep -Fq 'CONTINUOUS_6AX_RUNTIME_GATE_PASS|CAM_PER_TOOLPOINT_ABC|PROGRESSIVE_SIM|ANDROID_LIVE_C|WINDOWS_LIVE_C|NC_C_FAIL_CLOSED' runtime-surfaces.log
+          grep -Fq 'SIX_AXIS_COLLISION_SPACE_GATE_PASS|ABC_MACHINE_SPACE|FIXTURE|CLAMP|MACHINE_ENVELOPE|ROTATING_FIXTURE|C90' runtime-surfaces.log
           grep -Fq 'OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' runtime-surfaces.log
           grep -Fq 'NETWORK_RESUME_UI_RUNTIME_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY' runtime-surfaces.log
           grep -Fq 'NETWORK_RETRY_UI_RUNTIME_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE' runtime-surfaces.log
@@ -134,6 +143,8 @@ jobs:
           grep -Fq 'RGB_3_4_5_SKIN_BINDING_GATE_PASS' release-validation.log
           grep -Fq 'AXIS_3_4_5_RUNTIME_GATE_PASS' release-validation.log
           grep -Fq 'CONTINUOUS_MULTIAXIS_CAM_SIM_GATE_PASS' release-validation.log
+          grep -Fq 'CONTINUOUS_6AX_CAM_SIM_GATE_PASS' release-validation.log
+          grep -Fq 'SIX_AXIS_FIXTURE_ENVELOPE_GATE_PASS' release-validation.log
           grep -Fq 'AXIS_MODE_3_4_5_GATE_PASS' release-validation.log
           grep -Fq 'VISIBLE_FUNCTION_UI_CORE_GATE_PASS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' release-validation.log
           grep -Fq 'OFFLINE_FIRST_UI_CORE_GATE_PASS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' release-validation.log
@@ -230,7 +241,7 @@ jobs:
           retention-days: 3
 
   windows-exe:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-build]') || contains(github.event.head_commit.modified, 'continuity/release-command.json') || contains(github.event.head_commit.added, 'continuity/release-command.json') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@v7
