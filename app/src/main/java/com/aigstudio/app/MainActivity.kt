@@ -2481,6 +2481,7 @@ class MainActivity : Activity() {
                 minimumWidth=dp(88)
                 setOnClickListener {
                     runCatching{run()}.onSuccess{
+                        markProjectDirty()
                         dialog.dismiss()
                         showCamWorkstation()
                     }.onFailure{
@@ -2552,6 +2553,7 @@ class MainActivity : Activity() {
                 maxLines=1
                 setOnClickListener {
                     run()
+                    markProjectDirty()
                     dialog.dismiss()
                     showCamWorkstation()
                 }
@@ -2791,6 +2793,7 @@ class MainActivity : Activity() {
             Toast.makeText(this,"MANUAL CAM BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
             return
         }
+        markProjectDirty()
 
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
@@ -2855,6 +2858,7 @@ class MainActivity : Activity() {
                 )
                 CamModel.fromCad(System.currentTimeMillis(),cad.snapshot(),camSettings)
             }.onSuccess{
+                markProjectDirty()
                 Toast.makeText(this,"MANUAL CAM POINT PASS • P"+(i+1),Toast.LENGTH_SHORT).show()
                 refresh(i);load()
             }.onFailure{Toast.makeText(this,"POINT BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
@@ -2867,7 +2871,7 @@ class MainActivity : Activity() {
                     camSettings,i+1,
                     ManualCamPoint(p.x,p.y,camSettings.depth,false,axisA=p.axisA,axisB=p.axisB)
                 )
-            }.onSuccess{refresh(i+1);load()}
+            }.onSuccess{markProjectDirty();refresh(i+1);load()}
                 .onFailure{Toast.makeText(this,"INSERT BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
         }
         action("插入避讓"){
@@ -2894,7 +2898,7 @@ class MainActivity : Activity() {
                             camSettings,i,lift.text.toString().toDouble(),
                             lx.text.toString().toDouble(),ly.text.toString().toDouble(),lz.text.toString().toDouble()
                         )
-                    }.onSuccess{refresh(i+3);load()}
+                    }.onSuccess{markProjectDirty();refresh(i+3);load()}
                         .onFailure{Toast.makeText(this,"AVOIDANCE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
                 }
                 .setNegativeButton("取消",null)
@@ -2903,7 +2907,7 @@ class MainActivity : Activity() {
         action("刪除"){
             val i=selector.selectedItemPosition
             runCatching{camSettings=ManualCamPathEngine.deletePoint(camSettings,i)}
-                .onSuccess{refresh(i.coerceAtMost(camSettings.manualPath.lastIndex));load()}
+                .onSuccess{markProjectDirty();refresh(i.coerceAtMost(camSettings.manualPath.lastIndex));load()}
                 .onFailure{Toast.makeText(this,"DELETE BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()}
         }
         action("3D SIM"){
@@ -3103,6 +3107,7 @@ class MainActivity : Activity() {
             unifiedNcDraft=candidate
             unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
             unifiedNcDraftStale=hasExecutionWarning
+            markProjectDirty()
             saveCadCheckpoint()
             refreshInlineNcStatus()
 
@@ -3494,6 +3499,7 @@ class MainActivity : Activity() {
             axisB=if(activeAxisMode=="5AX")draftB else 0.0
             drillCycleBlock=""
             if(!unifiedNcDraft.isNullOrBlank()) unifiedNcDraftStale=true
+            markProjectDirty()
             saveCadCheckpoint()
             Toast.makeText(
                 this,
@@ -4906,6 +4912,8 @@ private fun applyCoordinatePrecisionPreference() {
             .setNegativeButton("取消", null)
             .show()
     }
+
+    private fun markProjectDirty() { sharedLocalDirty.set(true) }
 
     private fun localProjectFile():File = File(filesDir,"projects/current.aigp")
     private fun sharedProjectFile():File = File(filesDir,"shared-sync/current.aigp")
