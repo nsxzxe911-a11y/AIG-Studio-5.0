@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AIG II 354 / Studio 319 • Main Runtime Web Preview</title>
+<style>
+:root{--bg:#020407;--panel:#071018;--panel2:#0b1621;--text:#eefbff;--muted:#87a0ad;--cyan:#27e9ff;--green:#39f39a;--amber:#ffb326;--pink:#ff4da6;--violet:#9f72ff;--red:#ff5268}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
+body{min-height:100vh;background:radial-gradient(circle at 18% 0%,rgba(39,233,255,.09),transparent 28%),radial-gradient(circle at 90% 10%,rgba(159,114,255,.08),transparent 28%),#020407}
+header{position:sticky;top:0;z-index:10;background:rgba(2,4,7,.96);border-bottom:1px solid rgba(39,233,255,.34);padding:10px;display:grid;gap:8px}
+.brand{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.brand b{font-size:20px;letter-spacing:.06em}.chip{font-size:10px;padding:5px 8px;border-radius:999px;border:1px solid #244b61;color:#bfefff}.chip.ok{border-color:#25694d;color:#a8ffd0}.chip.warn{border-color:#7e5c16;color:#ffd98f}
+nav{display:grid;grid-template-columns:repeat(10,minmax(64px,1fr));gap:5px}.tab{min-height:40px;border:1px solid #24485a;border-radius:9px;background:linear-gradient(#0b1621,#05090d);color:#dff8ff}.tab.active{border-color:var(--cyan);box-shadow:0 0 18px rgba(39,233,255,.2)}
+main{padding:10px}.page{display:none}.page.active{display:block}.panel{background:linear-gradient(180deg,rgba(9,17,25,.97),rgba(3,7,10,.98));border:1px solid rgba(61,153,193,.32);border-radius:14px;margin-bottom:10px;box-shadow:0 14px 36px rgba(0,0,0,.45)}.head{padding:10px 12px;border-bottom:1px solid rgba(61,153,193,.22);display:flex;justify-content:space-between;gap:8px}.body{padding:12px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.card{padding:11px;border:1px solid #1d3b4c;border-radius:11px;background:#04090d}.card b{display:block;color:#8aa4b0;font-size:10px;margin-bottom:5px}.big{font-size:18px;font-weight:800}.btns{display:flex;flex-wrap:wrap;gap:6px}.btn{border:1px solid #28536a;background:linear-gradient(#0d1a25,#05090d);color:#ecfbff;border-radius:9px;min-height:38px;padding:7px 10px}.btn.sel{border-color:var(--cyan);box-shadow:0 0 15px rgba(39,233,255,.22)}.btn.danger{border-color:#7f2a3d;color:#ffc8d1}.stage{min-height:330px;border:1px solid #173647;border-radius:12px;position:relative;overflow:hidden;background:linear-gradient(rgba(39,233,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(39,233,255,.035) 1px,transparent 1px),#010407;background-size:28px 28px}.shape{position:absolute;border:2px solid var(--cyan);box-shadow:0 0 18px rgba(39,233,255,.18)}.rect{left:18%;top:25%;width:35%;height:35%;border-radius:4px}.circle{right:17%;top:28%;width:120px;height:120px;border-radius:50%;border-color:var(--pink)}.tool{position:absolute;left:50%;top:10%;width:10px;height:110px;background:linear-gradient(#dffcff,#35d7ff);box-shadow:0 0 18px rgba(39,233,255,.7);transform-origin:50% 100%}.stock{position:absolute;left:24%;right:24%;bottom:14%;height:95px;border:1px solid #3c7391;background:linear-gradient(135deg,#263845,#111d25);transform:perspective(380px) rotateX(55deg)}.progressWrap{display:none;margin-top:10px}.progressWrap.show{display:block}.progress{height:8px;border-radius:999px;background:#101820;overflow:hidden}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .22s}.explain{font-size:11px;color:#b6cad4;margin-top:6px}.two{display:grid;grid-template-columns:1.4fr .8fr;gap:10px}.code{width:100%;min-height:330px;background:#010305;color:#effcff;border:1px solid #20465b;border-radius:10px;padding:10px;font-family:Consolas,monospace}.lock{color:#ffd98f}.safe{color:#a8ffd0}.small{font-size:11px;color:#8fa8b4}.notice{padding:8px 10px;border:1px solid #24485a;border-radius:9px;color:#bfefff;background:rgba(39,233,255,.05)}.footer{padding:10px;text-align:center;color:#65808f;font-size:9px}
+@media(max-width:920px){nav{grid-template-columns:repeat(5,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}
+@media(max-width:560px){nav{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}.stage{min-height:280px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="brand">
+  <b>AIG II CNC</b>
+  <span class="chip ok">AIG-II 354</span>
+  <span class="chip ok">Studio 319</span>
+  <span class="chip">WEB RUNTIME PREVIEW</span>
+  <span class="chip warn">不是 APK/EXE 實機證據</span>
+ </div>
+ <nav id="nav"></nav>
+</header>
+<main id="pages"></main>
+<div class="footer">主程式 UI/UX 網頁翻譯鏡像 • CNC 真機輸出停用 • 0.001 mm 顯示規則保留</div>
+<script>
+const names=["HOME","CAD","CAM","SIM","3AX","4AX","5AX","NC","AI","設定"];
+const nav=document.getElementById("nav"),pages=document.getElementById("pages");
+const state={online:true,progress:0,timer:null,axis:"5AX",fps:"60",theme:"Official RGB Original"};
+function panel(title,body){return '<section class="panel"><div class="head"><b>'+title+'</b><span class="small">Production UI mirror</span></div><div class="body">'+body+'</div></section>'}
+function home(){
+ return panel("正式 HOME",' <div class="grid">  <div class="card"><b>啟動</b><div class="big safe">HOME FIRST</div><div class="small">無網路也直接進目前安裝版本 UI</div></div>  <div class="card"><b>版本</b><div class="big">AIG-II 354 / Studio 319</div><div class="small">只升不退 • newer only</div></div>  <div class="card"><b>Regression</b><div class="big lock">OFF / LOCKED</div><div class="small">沒有使用者明確允許不得重新啟用</div></div>  <div class="card"><b>CNC 安全核心</b><div class="big safe">ON / LOCKED</div><div class="small">設定列可查看</div></div>  <div class="card"><b>FPS</b><div class="big">60 Hz</div><div class="small">Auto / 30 / 60 / 90 / 120</div></div>  <div class="card"><b>精度</b><div class="big">0.001 mm</div><div class="small">Master X0.000 Y0.000 Z0.000</div></div> </div>')+
+ panel("啟動版本更新",' <div class="btns"><button class="btn sel" id="netOn">有網路</button><button class="btn" id="netOff">無網路</button><button class="btn" id="runUpdate">重新比對</button></div> <div class="progressWrap" id="upWrap"><div class="progress"><i id="upBar"></i></div><div class="explain" id="upText"></div></div> <div class="notice" style="margin-top:10px">無網路：讀取條不出現，直接使用目前版本與設定。有網路：HOME 先可用，再背景比對、驗證；只有已驗證較新版本才套用。</div>');
+}
+function cad(){return panel("CAD",' <div class="btns"><button class="btn">LINE</button><button class="btn">RECT</button><button class="btn">CIRCLE</button><button class="btn">ARC</button><button class="btn">HOLE</button><button class="btn">SNAP</button><button class="btn">Trim</button><button class="btn">Extend</button><button class="btn">Offset</button><button class="btn">Array</button><button class="btn">CONNECT</button><button class="btn">DISCONNECT</button></div> <div class="stage" style="margin-top:10px"><div class="shape rect"></div><div class="shape circle"></div></div>');
+}
+function cam(){return panel("CAM 刀路",' <div class="grid"><div class="card"><b>輪廓側</b><div class="btns"><button class="btn sel">外徑</button><button class="btn">內徑</button></div></div><div class="card"><b>方向</b><div class="btns"><button class="btn sel">CCW</button><button class="btn">CW</button></div></div><div class="card"><b>Safe-Z</b><div class="big">5.000 mm</div></div><div class="card"><b>起刀 / 落刀點</b><div class="small">可手動修改</div></div><div class="card"><b>夾具閃避</b><div class="small">手動優先 / Auto 可選</div></div><div class="card"><b>CAD 依賴</b><div class="small">可獨立修改 CAM 線</div></div></div> <div class="stage" style="margin-top:10px"><div class="stock"></div><div class="tool"></div></div>');
+}
+function sim(axis){
+ return panel(axis+" 真 3D / 材料移除",' <div class="btns"><button class="btn" data-play>▶ 播放</button><button class="btn">暫停</button><button class="btn">單節</button><button class="btn">空跑</button><button class="btn">FIT</button></div> <div class="stage" style="margin-top:10px"><div class="stock"></div><div class="tool" id="tool_'+axis+'"></div></div> <div class="grid" style="margin-top:10px"><div class="card"><b>X</b><div class="big">0.000</div></div><div class="card"><b>Y</b><div class="big">0.000</div></div><div class="card"><b>Z</b><div class="big">0.000</div></div><div class="card"><b>A</b><div class="big">'+(axis==="3AX"?"—":"0.000°")+'</div></div><div class="card"><b>B</b><div class="big">'+(axis==="5AX"?"0.000°":"—")+'</div></div><div class="card"><b>材料移除</b><div class="big safe">ACTIVE</div></div></div>');
+}
+function nc(){return panel("NC / Fanuc",' <div class="two"><textarea class="code">O1000\nN10 M98 P4\nN20 G90 G54 X0. Y0. S2300 M3\nN30 G43 Z30. H1 M8\nN40 Z3.\nN50 G1 Z-10. F150\nN60 G80\nN70 M98 P5\nN80 M30\n\nO4\nT9 M6\nM99\n\nO5\nM9\nM5\nM99</textarea> <div><div class="card"><b>模式</b><div class="big">G90 / G54</div></div><div class="card"><b>功能</b><div class="small">G0/G1/G2/G3 • G81/G73/G83 • M98 P4/P5 • Block Skip • 單節 • 空跑</div></div><div class="card"><b>狀態</b><div class="safe">Web Preview 不輸出真機</div></div></div></div>');
+}
+function ai(){return panel("AI / 更新",' <div class="grid"><div class="card"><b>ChatGPT AI 更新</b><div class="big safe">READY</div></div><div class="card"><b>UI Theme Hot Swap</b><div class="big safe">VERIFIED ONLY</div></div><div class="card"><b>網路</b><div class="big">OFFLINE FIRST</div></div></div> <div class="notice" style="margin-top:10px">新版 UI/Theme 驗證成功可直接 Hot Swap；APK/EXE 主程式更新完成後，下次啟動自動進新版介面。</div>');
+}
+function settings(){return panel("設定中心",' <div class="grid"><div class="card"><b>Regression</b><div class="big lock">OFF / LOCKED</div></div><div class="card"><b>CNC 安全核心</b><div class="big safe">ON / LOCKED</div></div><div class="card"><b>啟動版本比對</b><div class="big safe">ON</div><div class="small">HOME FIRST / NEWER ONLY</div></div><div class="card"><b>FPS</b><div class="big">60</div><div class="small">Auto / 30 / 60 / 90 / 120</div></div><div class="card"><b>Theme</b><div class="big">RGB Glass</div></div><div class="card"><b>解析度</b><div class="big">1080 / 2K / 3K / 4K+</div></div></div>');
+}
+function render(){
+ pages.innerHTML="";
+ names.forEach(n=>{const s=document.createElement("section");s.className="page";s.dataset.page=n;s.innerHTML=n==="HOME"?home():n==="CAD"?cad():n==="CAM"?cam():n==="SIM"?sim("SIM"):["3AX","4AX","5AX"].includes(n)?sim(n):n==="NC"?nc():n==="AI"?ai():settings();pages.appendChild(s)});
+ bind();
+ show(location.hash.slice(1)||"HOME");
+}
+function show(n){if(!names.includes(n))n="HOME";document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.dataset.page===n));document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.page===n));history.replaceState(null,"","#"+n)}
+names.forEach(n=>{const b=document.createElement("button");b.className="tab";b.dataset.page=n;b.textContent=n;b.onclick=()=>show(n);nav.appendChild(b)});
+function updateDemo(){
+ const wrap=document.getElementById("upWrap"),bar=document.getElementById("upBar"),txt=document.getElementById("upText");if(!wrap)return;
+ if(!state.online){wrap.classList.remove("show");return}
+ clearInterval(state.timer);state.progress=8;wrap.classList.add("show");bar.style.width=state.progress+"%";const start=performance.now();
+ state.timer=setInterval(()=>{state.progress=Math.min(100,state.progress+Math.ceil(Math.random()*15));bar.style.width=state.progress+"%";const sec=((performance.now()-start)/1000).toFixed(2);txt.textContent=state.progress<35?"版本比對中 • "+sec+"s":state.progress<75?"簽章 / SHA 驗證中 • "+sec+"s":state.progress<100?"準備新版介面 • "+sec+"s":"Web Preview：已驗證較新版本才會套用 • "+sec+"s";if(state.progress>=100)clearInterval(state.timer)},220);
+}
+function bind(){
+ const on=document.getElementById("netOn"),off=document.getElementById("netOff"),run=document.getElementById("runUpdate");
+ if(on)on.onclick=()=>{state.online=true;on.classList.add("sel");off.classList.remove("sel");updateDemo()};
+ if(off)off.onclick=()=>{state.online=false;off.classList.add("sel");on.classList.remove("sel");document.getElementById("upWrap")?.classList.remove("show")};
+ if(run)run.onclick=updateDemo;
+ document.querySelectorAll("[data-play]").forEach(b=>b.onclick=()=>{const t=b.closest(".panel").querySelector(".tool");let a=0;const timer=setInterval(()=>{a+=4;t.style.transform="translate("+Math.sin(a/18)*70+"px,"+(a%110)+"px) rotate("+Math.sin(a/22)*18+"deg)";if(a>360){clearInterval(timer);t.style.transform=""}},16)});
+}
+render();setTimeout(updateDemo,500);
+</script>
+</body></html>
