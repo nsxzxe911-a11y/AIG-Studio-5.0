@@ -1,7 +1,7 @@
 {
   "schema": "aig-ai-responsibility-routing-v1",
   "product": "AIG Studio 5.0",
-  "version": "279.0.0",
+  "version": "304.0.0",
   "detector": "AI",
   "principle": "AI_DETECTS_CLASSIFIES_RETURNS_REWORK_REVERIFIES; OWNER_DEPARTMENT_FIXES",
   "lifecycle": [
@@ -32,7 +32,13 @@
     "UI_LAYOUT_THEME_LANGUAGE": "UIUX",
     "ANDROID_COMPILE_PACKAGE_LAUNCH": "ANDROID_BUILD",
     "WINDOWS_COMPILE_PACKAGE_LAUNCH": "WINDOWS_BUILD",
-    "WEB_RUNTIME_PREVIEW": "WEB"
+    "WEB_RUNTIME_PREVIEW": "WEB",
+    "AXIS6_ABC_POSTURE": "6AX",
+    "AXIS6_COLLISION_SPACE": "6AX",
+    "AXIS6_COLLISION_LOOKAHEAD": "6AX",
+    "AXIS6_MANUAL_CAM_EDIT_CONTINUITY": "6AX",
+    "AXIS6_MANUAL_CAM_ORIENTATION_EDIT": "6AX",
+    "AXIS6_MACHINE_POST": "NC"
   },
   "external_conditions": {
     "NETWORK": {
