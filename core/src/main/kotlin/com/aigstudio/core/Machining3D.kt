@@ -111,6 +111,39 @@ data class CollisionLookAheadReport(
     val manualConfirmationRequired:Boolean get()=predictions.isNotEmpty()
 }
 
+object CollisionAvoidancePlanner {
+    const val POLICY="PREDICT_SUGGEST_MANUAL_CONFIRM_REVALIDATE"
+
+    fun applyRetractCandidate(
+        settings:CamSettings,
+        afterIndex:Int,
+        prediction:CollisionLookAheadPrediction,
+        landingX:Double,
+        landingY:Double,
+        landingZ:Double
+    ):CamSettings {
+        require(settings.pathMode==CamPathMode.MANUAL){"Avoidance candidate requires MANUAL CAM mode"}
+        require(prediction.action==CollisionAvoidanceAction.RETRACT_Z){"Only RETRACT_Z candidate can be inserted automatically"}
+        require(prediction.requiresRevalidation){"Candidate must remain revalidation-gated"}
+        val lift=prediction.suggestedLiftZ ?: error("RETRACT_Z candidate missing lift Z")
+        return ManualCamPathEngine.insertAvoidance(
+            settings,afterIndex,lift,landingX,landingY,landingZ
+        )
+    }
+
+    fun revalidate(
+        snapshot:DrawingSnapshot,
+        settings:CamSettings,
+        stock:Stock3D,
+        fixtures:List<FixtureObstacle>,
+        toolAssembly:ToolAssemblyConfig=ToolAssemblyConfig()
+    ):MachiningRiskReport {
+        require(settings.pathMode==CamPathMode.MANUAL){"Avoidance revalidation requires MANUAL CAM"}
+        val cam=CamModel.fromCad(0L,snapshot,settings)
+        return MachiningRiskScanner.inspect(cam,stock,fixtures,toolAssembly)
+    }
+}
+
 private data class Extents2D(val minX: Double, val minY: Double, val maxX: Double, val maxY: Double)
 
 private fun extents(snapshot: DrawingSnapshot): Extents2D {
