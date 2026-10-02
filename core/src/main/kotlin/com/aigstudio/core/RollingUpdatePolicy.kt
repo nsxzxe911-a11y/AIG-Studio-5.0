@@ -140,6 +140,13 @@ object RollingUpdatePolicy {
     const val CNC_SAFETY_POLICY_CHANGES_REQUIRE_EXPLICIT_USER_APPROVAL=true
     const val CNC_SAFETY_CORE_LOCKED=true
     const val CNC_SAFETY_DISABLE_ALLOWED=false
+    const val STARTUP_VERSION_COMPARE_ENABLED=true
+    const val STARTUP_VERSION_COMPARE_AFTER_HOME_FIRST_FRAME=true
+    const val STARTUP_APPLY_ONLY_VERIFIED_NEWER=true
+    const val STARTUP_NETWORK_MAY_BLOCK_UI=false
+    const val STARTUP_OFFLINE_USES_INSTALLED_VERSION=true
+    const val STARTUP_BACKGROUND_DOWNLOAD_FOLLOWS_USER_SETTING=true
+    const val STARTUP_BINARY_INSTALL_REQUIRES_USER_CONFIRMATION=true
 
     private fun parts(v:String)=v.trim().split('.').map { it.toIntOrNull() ?: 0 }
     fun compareVersions(a:String,b:String):Int {
