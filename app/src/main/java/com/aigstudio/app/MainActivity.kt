@@ -2897,11 +2897,25 @@ class MainActivity : Activity() {
         val x=field("X mm")
         val y=field("Y mm")
         val z=field("Z mm")
+        val axisRow=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+        fun axisField(title:String)=EditText(this).apply {
+            hint=title
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+            setSingleLine(true)
+            axisRow.addView(this,LinearLayout.LayoutParams(0,-2,1f))
+        }
+        val axisAField=axisField("A °")
+        val axisBField=axisField("B °")
+        val axisCField=axisField("C °")
+        root.addView(axisRow)
         val rapid=CheckBox(this).apply { text="G0 / 抬刀或快速移動"; root.addView(this) }
 
         fun load() {
             val p=camSettings.manualPath.getOrNull(selector.selectedItemPosition) ?: return
             x.setText(DisplayFormat.mm(p.x));y.setText(DisplayFormat.mm(p.y));z.setText(DisplayFormat.mm(p.z))
+            axisAField.setText(DisplayFormat.mm(p.axisA))
+            axisBField.setText(DisplayFormat.mm(p.axisB))
+            axisCField.setText(DisplayFormat.mm(p.axisC))
             rapid.isChecked=p.rapid
         }
         selector.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
@@ -2911,7 +2925,7 @@ class MainActivity : Activity() {
         load()
 
         root.addView(TextView(this).apply{
-            text="MANUAL 優先 • 節點 X/Y/Z 不綁 CAD • G0 必須 ≥ Safe-Z • 用抬刀/落刀避開夾具與壓板"
+            text="MANUAL 優先 • X/Y/Z 與 A/B/C 可獨立修改 • A/B/C 限 ±360° • G0 必須 ≥ Safe-Z • 用抬刀/落刀避開夾具與壓板"
             setTextColor(LibraryFiveAxisSkin208.warning);textSize=11f
         })
 
@@ -2928,7 +2942,10 @@ class MainActivity : Activity() {
             runCatching{
                 camSettings=ManualCamPathEngine.replacePoint(
                     camSettings,i,x.text.toString().toDouble(),y.text.toString().toDouble(),
-                    z.text.toString().toDouble(),rapid.isChecked
+                    z.text.toString().toDouble(),rapid.isChecked,
+                    axisA=axisAField.text.toString().toDouble(),
+                    axisB=axisBField.text.toString().toDouble(),
+                    axisC=axisCField.text.toString().toDouble()
                 )
                 CamModel.fromCad(System.currentTimeMillis(),cad.snapshot(),camSettings)
             }.onSuccess{

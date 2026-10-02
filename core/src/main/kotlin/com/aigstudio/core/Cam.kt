@@ -194,7 +194,8 @@ object ManualCamPathEngine {
     }
 
     fun replacePoint(
-        settings:CamSettings,index:Int,x:Double,y:Double,z:Double,rapid:Boolean
+        settings:CamSettings,index:Int,x:Double,y:Double,z:Double,rapid:Boolean,
+        axisA:Double?=null,axisB:Double?=null,axisC:Double?=null
     ):CamSettings {
         require(index in settings.manualPath.indices){"Manual CAM point index out of range"}
         require(x.isFinite() && y.isFinite() && z.isFinite()){"Manual CAM point must be finite"}
@@ -202,7 +203,16 @@ object ManualCamPathEngine {
         else require(z<=EPS){"Cut/plunge point must be at or below Z0"}
         val list=settings.manualPath.toMutableList()
         val old=list[index]
-        list[index]=old.copy(x=x,y=y,z=z,rapid=rapid,arcI=null,arcJ=null,clockwise=null)
+        val nextA=axisA ?: old.axisA
+        val nextB=axisB ?: old.axisB
+        val nextC=axisC ?: old.axisC
+        require(listOf(nextA,nextB,nextC).all{it.isFinite() && abs(it)<=360.0}) {
+            "Manual CAM A/B/C out of range"
+        }
+        list[index]=old.copy(
+            x=x,y=y,z=z,rapid=rapid,arcI=null,arcJ=null,clockwise=null,
+            axisA=nextA,axisB=nextB,axisC=nextC
+        )
         return settings.copy(pathMode=CamPathMode.MANUAL,manualPath=list)
     }
 

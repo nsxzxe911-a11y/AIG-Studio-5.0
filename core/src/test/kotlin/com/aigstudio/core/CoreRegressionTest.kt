@@ -3111,12 +3111,30 @@ private fun testManualSixAxisEditContinuity() {
     check(abs(replaced.manualPath[2].axisA-15.0)<EPS)
     check(abs(replaced.manualPath[2].axisB-25.0)<EPS)
     check(abs(replaced.manualPath[2].axisC-35.0)<EPS)
-    val avoided=ManualCamPathEngine.insertAvoidance(replaced,1,5.0,12.0,1.0,-2.0)
-    check(avoided.manualPath.subList(2,5).all{abs(it.axisC-35.0)<EPS})
-    val cam=CamModel.fromCad(30200L,DrawingSnapshot(emptyList()),avoided)
+    val reoriented=ManualCamPathEngine.replacePoint(
+        replaced,2,12.0,1.0,-2.0,false,
+        axisA=45.0,axisB=-30.0,axisC=120.0
+    )
+    check(abs(reoriented.manualPath[2].axisA-45.0)<EPS)
+    check(abs(reoriented.manualPath[2].axisB+30.0)<EPS)
+    check(abs(reoriented.manualPath[2].axisC-120.0)<EPS)
+    val axisRangeRejected=runCatching {
+        ManualCamPathEngine.replacePoint(
+            reoriented,2,12.0,1.0,-2.0,false,axisC=360.001
+        )
+    }
+    check(axisRangeRejected.isFailure)
+    val avoided=ManualCamPathEngine.insertAvoidance(reoriented,2,5.0,12.0,1.0,-2.0)
+    check(avoided.manualPath.subList(3,6).all{
+        abs(it.axisA-45.0)<EPS && abs(it.axisB+30.0)<EPS && abs(it.axisC-120.0)<EPS
+    })
+    val cam=CamModel.fromCad(30300L,DrawingSnapshot(emptyList()),avoided)
     val moves=cam.toolpaths.flatMap{it.moves}
-    check(moves.any{abs(it.axisC-35.0)<EPS})
+    check(moves.any{
+        abs(it.axisA-45.0)<EPS && abs(it.axisB+30.0)<EPS && abs(it.axisC-120.0)<EPS
+    })
     val blocked=runCatching{CncPost.generate(cam,FanucPostSettings())}
     check(blocked.isFailure && "6AX_C_AXIS_NC_POST_BLOCKED" in blocked.exceptionOrNull()?.message.orEmpty())
     println("✓ MANUAL_6AX_EDIT_CONTINUITY_GATE_PASS INSERT_REPLACE_AVOIDANCE ABC_PRESERVED C_VISIBLE NC_C_FAIL_CLOSED")
+    println("✓ MANUAL_6AX_AXIS_EDIT_GATE_PASS ABC_EDITABLE RANGE_GUARD SIM_CONTINUITY NC_C_FAIL_CLOSED")
 }

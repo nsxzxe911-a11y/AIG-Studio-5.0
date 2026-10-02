@@ -1039,6 +1039,23 @@ for needle in (
     require(desktop, needle, "STUDIO_WINDOWS_MANUAL_6AX_EDIT_302")
 require(regression, "MANUAL_6AX_EDIT_CONTINUITY_GATE_PASS", "STUDIO_MANUAL_6AX_EDIT_REGRESSION_302")
 print("MANUAL_6AX_EDIT_RUNTIME_GATE_PASS|ANDROID|WINDOWS|INSERT|REPLACE|AVOIDANCE|ABC_PRESERVED|C_VISIBLE|NC_C_FAIL_CLOSED")
+for needle in (
+    "axisA:Double?=null,axisB:Double?=null,axisC:Double?=null",
+    '"Manual CAM A/B/C out of range"',
+):
+    require(cam_core, needle, "STUDIO_CORE_MANUAL_6AX_AXIS_EDIT_303")
+for needle in (
+    'val axisAField=axisField("A °")',
+    "axisC=axisCField.text.toString().toDouble()",
+):
+    require(android, needle, "STUDIO_ANDROID_MANUAL_6AX_AXIS_EDIT_303")
+for needle in (
+    "val axisAField=JTextField(12);val axisBField=JTextField(12);val axisCField=JTextField(12)",
+    "axisC=axisCField.text.toDouble()",
+):
+    require(desktop, needle, "STUDIO_WINDOWS_MANUAL_6AX_AXIS_EDIT_303")
+require(regression, "MANUAL_6AX_AXIS_EDIT_GATE_PASS", "STUDIO_MANUAL_6AX_AXIS_EDIT_REGRESSION_303")
+print("MANUAL_6AX_AXIS_EDIT_RUNTIME_GATE_PASS|ANDROID|WINDOWS|ABC_EDITABLE|RANGE_GUARD|SIM_CONTINUITY|NC_C_FAIL_CLOSED")
 
 
 

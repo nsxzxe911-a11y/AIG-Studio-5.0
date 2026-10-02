@@ -3725,6 +3725,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         val model=DefaultComboBoxModel<String>()
         val selector=JComboBox(model)
         val x=JTextField(12);val y=JTextField(12);val z=JTextField(12)
+        val axisAField=JTextField(12);val axisBField=JTextField(12);val axisCField=JTextField(12)
         val rapid=JCheckBox("G0 / 抬刀或快速移動")
         fun label(i:Int,p:ManualCamPoint)=
             "P"+(i+1)+" • "+(if(p.rapid)"G0" else if(p.arcI!=null)"ARC" else "G1")+
@@ -3738,6 +3739,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         fun load(){
             val p=productionCamSettings.manualPath.getOrNull(selector.selectedIndex) ?: return
             x.text=DisplayFormat.mm(p.x);y.text=DisplayFormat.mm(p.y);z.text=DisplayFormat.mm(p.z)
+            axisAField.text=DisplayFormat.mm(p.axisA)
+            axisBField.text=DisplayFormat.mm(p.axisB)
+            axisCField.text=DisplayFormat.mm(p.axisC)
             rapid.isSelected=p.rapid
         }
         selector.addActionListener{load()}
@@ -3748,8 +3752,11 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             add(JLabel("X mm"));add(x)
             add(JLabel("Y mm"));add(y)
             add(JLabel("Z mm"));add(z)
+            add(JLabel("A °"));add(axisAField)
+            add(JLabel("B °"));add(axisBField)
+            add(JLabel("C °"));add(axisCField)
             add(JLabel("類型"));add(rapid)
-            add(JLabel("規則"));add(JLabel("位置不綁 CAD；G0 必須 ≥ Safe-Z"))
+            add(JLabel("規則"));add(JLabel("XYZ/ABC 可獨立修改；ABC 限 ±360°；G0 必須 ≥ Safe-Z"))
         }
         dlg.add(form,BorderLayout.CENTER)
 
@@ -3761,7 +3768,10 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             val i=selector.selectedIndex
             runCatching{
                 productionCamSettings=ManualCamPathEngine.replacePoint(
-                    productionCamSettings,i,x.text.toDouble(),y.text.toDouble(),z.text.toDouble(),rapid.isSelected
+                    productionCamSettings,i,x.text.toDouble(),y.text.toDouble(),z.text.toDouble(),rapid.isSelected,
+                    axisA=axisAField.text.toDouble(),
+                    axisB=axisBField.text.toDouble(),
+                    axisC=axisCField.text.toDouble()
                 )
                 CamModel.fromCad(System.currentTimeMillis(),doc.snapshot(),productionCamSettings)
             }.onSuccess{

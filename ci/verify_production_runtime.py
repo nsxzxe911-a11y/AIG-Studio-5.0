@@ -343,6 +343,27 @@ for marker in [
 if "MANUAL_6AX_EDIT_CONTINUITY_GATE_PASS" not in core_regression:
     raise SystemExit("Manual 6AX edit continuity regression marker missing")
 print("MANUAL_6AX_EDIT_PRODUCTION_GATE_PASS|INSERT|REPLACE|AVOIDANCE|ABC_CONTINUITY|C_AXIS_NC_FAIL_CLOSED")
+for marker in [
+    "axisA:Double?=null,axisB:Double?=null,axisC:Double?=null",
+    '"Manual CAM A/B/C out of range"',
+]:
+    if marker not in cam_core:
+        raise SystemExit(f"Core manual 6AX axis-edit marker missing: {marker}")
+for marker in [
+    'val axisAField=axisField("A °")',
+    "axisC=axisCField.text.toString().toDouble()",
+]:
+    if marker not in android_main:
+        raise SystemExit(f"Android manual 6AX axis-edit marker missing: {marker}")
+for marker in [
+    "val axisAField=JTextField(12);val axisBField=JTextField(12);val axisCField=JTextField(12)",
+    "axisC=axisCField.text.toDouble()",
+]:
+    if marker not in desktop:
+        raise SystemExit(f"Windows manual 6AX axis-edit marker missing: {marker}")
+if "MANUAL_6AX_AXIS_EDIT_GATE_PASS" not in core_regression:
+    raise SystemExit("Manual 6AX axis-edit regression marker missing")
+print("MANUAL_6AX_AXIS_EDIT_PRODUCTION_GATE_PASS|ABC_EDITABLE|RANGE_GUARD|SIM_CONTINUITY|C_AXIS_NC_FAIL_CLOSED")
 
 
 
