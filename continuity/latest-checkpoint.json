@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "315.0.0",
+  "version": "316.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 315. Regression stays OFF/LOCKED and has no re-enable UI. CNC safety core stays ON/LOCKED; only non-destructive inspection/settings are exposed. Policy changes require explicit user approval.",
-  "note": "Studio 315 settings authority checkpoint: Settings Center visibly shows Regression OFF/LOCKED and CNC safety core ON/LOCKED. No automatic/background process may re-enable regression or alter CNC safety policy. Critical CNC safety disable remains unavailable.",
+  "next_action": "Continue forward-only from Studio 316. Startup opens the installed Production HOME first, then compares the configured verified update channel in background. Only a verified higher version can be prepared; offline uses the installed version; Android install still requires confirmation.",
+  "note": "Studio 316 startup version checkpoint: HOME first, background version compare, verified newer-only, no downgrade/equal reinstall. User update setting controls background verified download. No binary/device PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -297,5 +297,14 @@
     "regression_state": "OFF_LOCKED",
     "cnc_safety_core_state": "ON_LOCKED",
     "cnc_safety_disable_allowed": false
+  },
+  "startup_version_policy": {
+    "enabled": true,
+    "home_first": true,
+    "background_compare": true,
+    "verified_newer_only": true,
+    "offline_uses_installed_version": true,
+    "background_download_follows_user_setting": true,
+    "binary_install_requires_user_confirmation": true
   }
 }
