@@ -1466,6 +1466,11 @@ private fun testCadEditIntegrity() {
     check(d.links().size==1 && d.snapshot()==beforeDisconnectAll)
     println("✓ CAD_TOPOLOGY_OPTIONAL_GATE_PASS DISCONNECT_ALL GEOMETRY_UNCHANGED CAM_NC_TOPOLOGY_OPTIONAL POST_VALIDATES")
     
+    check(runCatching { CadEditEngine.moveCommand(d,listOf("A"),0.0,0.0) }.isFailure)
+    check(runCatching { CadEditEngine.copyCommand(d,listOf("A"),0.0,0.0) }.isFailure)
+    check(runCatching { CadEditEngine.rotateCommand(d,listOf("A"),0.0) }.isFailure)
+    check(runCatching { CadEditEngine.rotateCommand(d,listOf("A"),360.0) }.isFailure)
+
     h.run(CadEditEngine.moveCommand(d,listOf("A","B"),5.0,-2.0))
     assertPoint((d.get("A") as Line).a,Vec2(5.0,-2.0),"MOVE A")
     assertPoint((d.get("B") as Line).a,Vec2(15.0005,-2.0),"MOVE B")
@@ -1480,6 +1485,9 @@ private fun testCadEditIntegrity() {
     check(d.links().size==1) { "Undo must restore valid topology" }
 
     val beforeCopy=d.size()
+    val beforeBadMove=d.snapshot()
+    check(runCatching { CadEditEngine.moveCommand(d,listOf("A"),Double.MAX_VALUE,Double.MAX_VALUE) }.isFailure)
+    check(d.snapshot()==beforeBadMove) { "MOVE preflight failure must not mutate document" }
     h.run(CadEditEngine.copyCommand(d,listOf("A"),25.0,0.0))
     check(d.size()==beforeCopy+1)
     check(h.undoWithEffect()==true && d.size()==beforeCopy)

@@ -242,39 +242,68 @@ object CadEditEngine {
         )
     }
 
+    private fun requireFiniteEntity(entity:Entity,label:String) {
+        require(bounds(entity).all{it.isFinite()}) { "$label result is non-finite" }
+    }
+
+    private fun nonZeroTranslation(dx:Double,dy:Double,label:String) {
+        require(dx.isFinite() && dy.isFinite()) { "$label delta must be finite" }
+        require(abs(dx)>=CNC_RESOLUTION_MM || abs(dy)>=CNC_RESOLUTION_MM) {
+            "$label delta must move at least 0.001 mm on X or Y"
+        }
+    }
+
+    private fun effectiveRotation(angleDeg:Double):Double {
+        require(angleDeg.isFinite()) { "ROTATE angle must be finite" }
+        var normalized=angleDeg%360.0
+        if(normalized>180.0) normalized-=360.0
+        if(normalized<=-180.0) normalized+=360.0
+        require(abs(normalized)>EPS) { "ROTATE angle produces no geometry change" }
+        return normalized
+    }
+
     fun moveCommand(doc: DrawingDocument, ids: Collection<EntityId>, dx: Double, dy: Double): Command {
-        require(dx.isFinite() && dy.isFinite()) { "MOVE delta must be finite" }
+        nonZeroTranslation(dx,dy,"MOVE")
         val before = ids.distinct().mapNotNull(doc::get)
         require(before.isNotEmpty()) { "MOVE requires selected geometry" }
-        return ReplaceEntitiesCommand(before, before.map { moved(it,dx,dy,true) })
+        val after=before.map { moved(it,dx,dy,true).also { movedEntity -> requireFiniteEntity(movedEntity,"MOVE") } }
+        return ReplaceEntitiesCommand(before,after)
     }
+
     fun copyCommand(doc: DrawingDocument, ids: Collection<EntityId>, dx: Double, dy: Double): Command {
-        require(dx.isFinite() && dy.isFinite()) { "COPY delta must be finite" }
+        nonZeroTranslation(dx,dy,"COPY")
         val before = ids.distinct().mapNotNull(doc::get)
         require(before.isNotEmpty()) { "COPY requires selected geometry" }
         val idMap=CadSemanticIdentity.copiedIdMap(before)
-        return AddEntitiesCommand(before.map { moved(it,dx,dy,false,idMap.getValue(it.id)) })
+        val copies=before.map {
+            moved(it,dx,dy,false,idMap.getValue(it.id)).also { copy -> requireFiniteEntity(copy,"COPY") }
+        }
+        return AddEntitiesCommand(copies)
     }
 
     fun rotateCommand(doc: DrawingDocument, ids: Collection<EntityId>, angleDeg: Double, pivot: Vec2 = selectionCenter(doc,ids)): Command {
-        require(angleDeg.isFinite()) { "ROTATE angle must be finite" }
+        require(pivot.x.isFinite() && pivot.y.isFinite()) { "ROTATE pivot must be finite" }
+        val angle=effectiveRotation(angleDeg)
         val before = ids.distinct().mapNotNull(doc::get)
         require(before.isNotEmpty()) { "ROTATE requires selected geometry" }
-        return ReplaceEntitiesCommand(before, before.map { rotated(it,pivot,angleDeg) })
+        val after=before.map { rotated(it,pivot,angle).also { rotatedEntity -> requireFiniteEntity(rotatedEntity,"ROTATE") } }
+        return ReplaceEntitiesCommand(before,after)
     }
 
     fun mirrorVerticalCommand(doc: DrawingDocument, ids: Collection<EntityId>, axisX: Double = selectionCenter(doc,ids).x): Command {
         require(axisX.isFinite()) { "MIRROR X axis must be finite" }
         val before = ids.distinct().mapNotNull(doc::get)
         require(before.isNotEmpty()) { "MIRROR requires selected geometry" }
-        return ReplaceEntitiesCommand(before, before.map { mirrored(it,true,axisX) })
+        val after=before.map { mirrored(it,true,axisX).also { mirroredEntity -> requireFiniteEntity(mirroredEntity,"MIRROR X") } }
+        return ReplaceEntitiesCommand(before,after)
     }
 
     fun mirrorHorizontalCommand(doc: DrawingDocument, ids: Collection<EntityId>, axisY: Double = selectionCenter(doc,ids).y): Command {
         require(axisY.isFinite()) { "MIRROR Y axis must be finite" }
         val before = ids.distinct().mapNotNull(doc::get)
         require(before.isNotEmpty()) { "MIRROR requires selected geometry" }
-        return ReplaceEntitiesCommand(before, before.map { mirrored(it,false,axisY) })
+        val after=before.map { mirrored(it,false,axisY).also { mirroredEntity -> requireFiniteEntity(mirroredEntity,"MIRROR Y") } }
+        return ReplaceEntitiesCommand(before,after)
     }
 
     fun trimCommand(doc: DrawingDocument, ids: Collection<EntityId>): Command {

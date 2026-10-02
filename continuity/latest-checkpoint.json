@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "327.0.0",
+  "version": "328.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 327. OFFSET/ARRAY are now bounded and geometry-safe: semantic RECT OFFSET stays closed, positive distance expands outward, incomplete RECT selection is blocked, ARRAY total generated entities are capped, and non-finite results are rejected. Continue CAD continuity/selection edge cases before CAM.",
-  "note": "Studio 327: repaired semantic RECT OFFSET and ARRAY preflight limits. RECT offset is a whole-group operation with stable rectangle semantics; ARRAY max generated entities is 10000 and coordinate overflow is blocked. Test source coverage added; automatic regression remains OFF/LOCKED. No APK/EXE launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 328. MOVE/COPY reject zero displacement, ROTATE rejects effective 0/360-degree no-op, and MOVE/COPY/ROTATE/MIRROR reject non-finite results before command execution. Continue CAD selection/control continuity before CAM.",
+  "note": "Studio 328: transform preflight tightened. MOVE/COPY require >=0.001 mm displacement on X or Y; ROTATE normalizes angle and blocks no-op rotations; all transform outputs are checked finite before mutation. Source regression coverage added; automatic regression remains OFF/LOCKED. No APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -394,6 +394,15 @@
     "incomplete_rect_offset": "BLOCK",
     "array_total_generated_limit": 10000,
     "non_finite_geometry": "BLOCK",
+    "auto_regression": "OFF_LOCKED"
+  },
+  "cad_transform_328": {
+    "move_zero": "BLOCK",
+    "copy_zero": "BLOCK",
+    "rotate_zero_360": "BLOCK",
+    "non_finite_transform": "BLOCK",
+    "preflight_before_mutation": true,
+    "generated_copy_selection": "RETAINED_BY_UI",
     "auto_regression": "OFF_LOCKED"
   }
 }
