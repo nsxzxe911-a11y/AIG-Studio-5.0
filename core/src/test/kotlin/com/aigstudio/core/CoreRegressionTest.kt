@@ -2111,6 +2111,8 @@ private fun testRealMachineModel3D() {
     val four=MachineModel3DBuilder.build(result,"4AX",30.0,0.0,live)
     val five0=MachineModel3DBuilder.build(result,"5AX",0.0,0.0,live)
     val five=MachineModel3DBuilder.build(result,"5AX",30.0,-20.0,live)
+    val six0=MachineModel3DBuilder.build(result,"6AX",30.0,-20.0,live,0.0)
+    val six=MachineModel3DBuilder.build(result,"6AX",30.0,-20.0,live,45.0)
     val baseRoles=setOf(
         MachineComponentRole.BASE,MachineComponentRole.COLUMN,MachineComponentRole.TABLE,
         MachineComponentRole.FIXTURE,MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER,
@@ -2123,18 +2125,28 @@ private fun testRealMachineModel3D() {
     check(five.roles().containsAll(baseRoles+setOf(
         MachineComponentRole.TRUNNION,MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B
     )))
-    check(three.triangleCount()>0 && four.triangleCount()>three.triangleCount() && five.triangleCount()>four.triangleCount())
+    check(six.roles().containsAll(baseRoles+setOf(
+        MachineComponentRole.TRUNNION,MachineComponentRole.ROTARY_A,
+        MachineComponentRole.ROTARY_B,MachineComponentRole.ROTARY_C
+    )))
+    check(three.triangleCount()>0 && four.triangleCount()>three.triangleCount() &&
+        five.triangleCount()>four.triangleCount() && six.triangleCount()>five.triangleCount())
     fun signature(model:MachineModel3D,role:MachineComponentRole)=
         model.component(role)!!.mesh.vertices.take(8).joinToString("|"){"%.4f,%.4f,%.4f".format(it.x,it.y,it.z)}
     check(signature(four0,MachineComponentRole.ROTARY_A)!=signature(four,MachineComponentRole.ROTARY_A))
     check(signature(five0,MachineComponentRole.ROTARY_B)!=signature(five,MachineComponentRole.ROTARY_B))
-    check(five.sourceRevision==result.cam.sourceRevision)
-    check(MachineKinematics3D.transform(Vec3(0.0,0.0,0.0),30.0,-20.0)==Vec3(0.0,0.0,0.0))
+    fun idSignature(model:MachineModel3D,id:String)=
+        model.components.first{it.id==id}.mesh.vertices.take(8).joinToString("|"){"%.4f,%.4f,%.4f".format(it.x,it.y,it.z)}
+    check(idSignature(six0,"rotary_c_marker")!=idSignature(six,"rotary_c_marker"))
+    check(five.sourceRevision==result.cam.sourceRevision && six.sourceRevision==result.cam.sourceRevision)
+    check(MachineKinematics3D.transform(Vec3(0.0,0.0,0.0),30.0,-20.0,45.0)==Vec3(0.0,0.0,0.0))
     val sample=Vec3(12.0,-7.0,-3.0)
     check(MachineKinematics3D.transform(sample,0.0,0.0)==sample)
     check(MachineKinematics3D.transform(sample,30.0,-20.0)!=sample)
-    println("? REAL_MACHINE_MODEL_3_4_5AX_GATE_PASS BASE COLUMN TABLE FIXTURE TRUNNION ROTARY_A ROTARY_B SPINDLE HOLDER TOOL TRUE_MESH DYNAMIC_AB SOURCE_REVISION MASTER_ORIGIN")
-    println("? MACHINE_KINEMATICS_RUNTIME_PARITY_PASS MASTER_ORIGIN A_THEN_B ANDROID_WINDOWS_SHARED")
+    val c90=MachineKinematics3D.transform(Vec3(10.0,0.0,0.0),0.0,0.0,90.0)
+    check(abs(c90.x)<1e-9 && abs(c90.y-10.0)<1e-9 && abs(c90.z)<1e-9)
+    println("? REAL_MACHINE_MODEL_3_4_5_6AX_GATE_PASS BASE COLUMN TABLE FIXTURE TRUNNION ROTARY_A ROTARY_B ROTARY_C SPINDLE HOLDER TOOL TRUE_MESH DYNAMIC_ABC SOURCE_REVISION MASTER_ORIGIN")
+    println("? MACHINE_KINEMATICS_RUNTIME_PARITY_PASS MASTER_ORIGIN A_THEN_B_THEN_C ANDROID_WINDOWS_SHARED")
 }
 
 private fun testWorkOffsetDoesNotShiftAbsoluteCoordinates() {
