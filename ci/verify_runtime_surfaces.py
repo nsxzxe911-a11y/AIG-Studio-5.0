@@ -2132,3 +2132,21 @@ if 'if(::startupUpdateProgress.isInitialized) startupUpdateProgress.visibility=V
     raise SystemExit("BLOCKED STUDIO_317_OFFLINE_PROGRESS")
 print("STUDIO_STARTUP_UPDATE_UX_PASS|317|OFFLINE_DIRECT_UI|ONLINE_PROGRESS_BAR|EXPLANATION_BELOW|VERIFIED_NEWER_ONLY|NEW_UI_AFTER_INSTALL")
 
+# Studio 318 visible startup update elapsed-time policy
+rolling_318 = read("core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt")
+android_318 = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
+for needle in (
+    "STARTUP_VERSION_COMPARE_NORMAL_TARGET_MS=1500L",
+    "STARTUP_VERSION_COMPARE_DEGRADED_REFERENCE_MS=6500L",
+    "STARTUP_VERSION_COMPARE_ELAPSED_VISIBLE=true",
+):
+    require(rolling_318, needle, "STUDIO_318_STARTUP_TIMING_POLICY")
+for needle in (
+    "private var startupUpdateStartedAtMs: Long = 0L",
+    "private fun startupUpdateElapsedLabel():String",
+    "startupUpdateStartedAtMs=SystemClock.elapsedRealtime()",
+    'String.format(Locale.US,"%.2fs",elapsed/1000.0)',
+):
+    require(android_318, needle, "STUDIO_318_VISIBLE_STARTUP_TIMING")
+print("STUDIO_STARTUP_UPDATE_TIMING_PASS|318|NORMAL_TARGET_1500MS|DEGRADED_REFERENCE_6500MS|ELAPSED_VISIBLE|UI_NEVER_WAITS")
+
