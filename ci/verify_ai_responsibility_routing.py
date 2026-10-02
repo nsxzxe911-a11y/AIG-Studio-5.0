@@ -11,7 +11,9 @@ expected={"HOME_ROUTING":"HOME","STARTUP_RUNTIME_ENTRY":"HOME","CAD_GEOMETRY":"C
 assert routing["version"]==version
 assert routing["detector"]=="AI"
 assert routing["close_rule"]=="ONLY_AI_REVERIFY_PASS_CAN_MARK_COMPLETE"
-for key,owner in expected.items():\n    assert routing["ownership"].get(key)==owner, key\nassert all(owner in DEPARTMENTS for owner in routing["ownership"].values())
+for key,owner in expected.items():
+    assert routing["ownership"].get(key)==owner, key
+assert all(owner in DEPARTMENTS for owner in routing["ownership"].values())
 assert routing["external_conditions"]["NETWORK"]["owner"] is None
 assert routing["external_conditions"]["NETWORK"]["product_failure"] is False
 assert routing["external_conditions"]["INFRASTRUCTURE"]["owner"] is None
