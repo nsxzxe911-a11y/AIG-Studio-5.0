@@ -2455,6 +2455,7 @@ class MainActivity : Activity() {
             "CAM " + (if(risk.ok)"SAFE" else "WARNING") +
                 " • COLLISION " + risk.collisionCount +
                 " • OVERCUT " + risk.overcutCount +
+                " • FIXTURE=" + risk.fixtureCoverageWord +
                 " • " + CamWorkstationContract.MAKE_IT_REAL,
             if(risk.ok)LibraryFiveAxisSkin208.safe else StudioProductionTheme.alarm,10f
         ).apply { background=glass(if(risk.ok)0x5563FF9D else 0x88FF5252.toInt()) })
