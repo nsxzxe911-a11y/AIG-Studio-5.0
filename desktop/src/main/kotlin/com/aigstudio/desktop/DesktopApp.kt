@@ -1488,6 +1488,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         progressiveFrame=frame
         axisA=frame.toolPoint.axisA
         axisB=frame.toolPoint.axisB
+        axisC=frame.toolPoint.axisC
         repaint()
     }
     fun clearProgressiveFrame(){previousProgressiveFrame=null;progressiveFrame=null;lastFreshRemovalCells=0;repaint()}
@@ -3471,7 +3472,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             if(productionCamSettings.pathMode==CamPathMode.MANUAL)productionCamSettings.manualPath else emptyList()
         )
         var six=SixAxisRuntimeContract.state(0.0,0.0,0.0)
-        val initial=Machining3DEngine.build(snapshot,productionCamSettings,stock,six.axisA,six.axisB)
+        val initial=Machining3DEngine.build(snapshot,productionCamSettings,stock,six.axisA,six.axisB,axisC=six.axisC)
         val machine=AxisMachiningPanel(initial).apply{
             setMachineMode("6AX")
             setAngles(six.axisA,six.axisB,six.axisC)
@@ -3507,7 +3508,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             }
         }
         fun refresh() {
-            val result=Machining3DEngine.build(snapshot,productionCamSettings,stock,six.axisA,six.axisB)
+            val result=Machining3DEngine.build(snapshot,productionCamSettings,stock,six.axisA,six.axisB,axisC=six.axisC)
             machine.setResult(result)
             machine.setMachineMode("6AX")
             machine.setAngles(six.axisA,six.axisB,six.axisC)
