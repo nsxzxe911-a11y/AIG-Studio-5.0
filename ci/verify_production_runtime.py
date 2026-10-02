@@ -208,6 +208,21 @@ for marker in [
 if 'SIX_AXIS_FIXTURE_ENVELOPE_GATE_PASS' not in core_regression:
     raise SystemExit("6AX fixture-envelope regression marker missing")
 print("SIX_AXIS_COLLISION_SPACE_PRODUCTION_GATE_PASS|ABC_MACHINE_SPACE|ROTATING_FIXTURE|MACHINE_ENVELOPE|NC_INTERLOCK_UNCHANGED")
+for marker in [
+    'enum class CollisionAvoidanceAction { RETRACT_Z, PATH_REROUTE, POSTURE_CHANGE_REQUIRED }',
+    'data class CollisionLookAheadPrediction(',
+    'data class CollisionLookAheadReport(',
+    'fun predictLookAhead(',
+    'const val POLICY="PREDICT_SUGGEST_MANUAL_CONFIRM_REVALIDATE"',
+    'fun applyRetractCandidate(',
+    'fun revalidate(',
+]:
+    if marker not in machining3d_core:
+        raise SystemExit(f"6AX look-ahead marker missing: {marker}")
+if 'COLLISION_LOOKAHEAD_GATE_PASS' not in core_regression:
+    raise SystemExit("6AX collision look-ahead regression marker missing")
+print("COLLISION_LOOKAHEAD_PRODUCTION_GATE_PASS|PREDICT|SUGGEST|MANUAL_CONFIRM|REVALIDATE|NC_INTERLOCK_UNCHANGED")
+
 
 
 
