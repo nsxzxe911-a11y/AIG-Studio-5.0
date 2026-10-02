@@ -3472,9 +3472,9 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         )
         var six=SixAxisRuntimeContract.state(0.0,0.0,0.0)
         val initial=Machining3DEngine.build(snapshot,productionCamSettings,stock,six.axisA,six.axisB)
-        val machine=Mesh3DPanel(initial).apply{
-            setMachineMode("5AX")
-            setAngles(six.axisA,six.axisB)
+        val machine=AxisMachiningPanel(initial).apply{
+            setMachineMode("6AX")
+            setAngles(six.axisA,six.axisB,six.axisC)
         }
         val hud=JLabel().apply{
             foreground=Color(99,255,157)
@@ -3509,8 +3509,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         fun refresh() {
             val result=Machining3DEngine.build(snapshot,productionCamSettings,stock,six.axisA,six.axisB)
             machine.setResult(result)
-            machine.setMachineMode("5AX")
-            machine.setAngles(six.axisA,six.axisB)
+            machine.setMachineMode("6AX")
+            machine.setAngles(six.axisA,six.axisB,six.axisC)
             cHead.setC(six.axisC)
             val v=SixAxisRuntimeContract.toolVector(1.0,six)
             hud.text="6AX A="+DisplayFormat.mm(six.axisA)+"°  B="+DisplayFormat.mm(six.axisB)+
