@@ -1,16 +1,6 @@
 name: Studio Trigger Mine Auto Cleaner
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/**'
-      - 'build_android_release.sh'
-      - 'build_windows_native.ps1'
-      - 'ci/verify_production_runtime.py'
-      - 'ci/verify_trigger_policy.py'
-      - 'ci/verify_rolling_version.py'
-      - 'ci/trigger_mine_detector.py'
   workflow_dispatch:
 
 permissions:
