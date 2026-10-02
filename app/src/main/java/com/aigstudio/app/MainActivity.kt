@@ -1615,8 +1615,9 @@ class MainActivity : Activity() {
                 if(!OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)) return
                 if(!onlineAutoCheckRunning.compareAndSet(false,true)) return
                 val requestGeneration=generation
+                renderNetworkState(true,"版本比對中 • v"+BuildConfig.VERSION_NAME)
                 val backgroundConfig=updateConfig.copy(
-                    autoDownload=OfflineFirstRuntimeContract.BACKGROUND_AUTO_DOWNLOAD
+                    autoDownload=updateConfig.autoDownload
                 )
                 SecureUpdateManager.autoCheck(this,backgroundConfig){result->
                     if(requestGeneration!=onlineNetworkGeneration.get()) {
@@ -1626,8 +1627,31 @@ class MainActivity : Activity() {
                     if(result.ok){
                         onlineAutoCheckCompleted.set(true)
                         onlineAutoRetryCount.set(0)
-                        if(result.available) renderNetworkState(true,"更新可用")
-                        else renderNetworkState(true)
+                        if(result.available){
+                            val verified=result.verifiedApk
+                            if(verified!=null){
+                                renderNetworkState(true,"新版已驗證 • 待安裝")
+                                AlertDialog.Builder(this@MainActivity)
+                                    .setTitle("啟動版本更新")
+                                    .setMessage(result.message+"\n\n已完成新版驗證；是否套用？")
+                                    .setPositiveButton("安裝新版"){_,_->
+                                        val install=runCatching{
+                                            SecureUpdateManager.installVerifiedUpdate(this@MainActivity,verified)
+                                        }
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            install.getOrElse{"UPDATE BLOCKED: "+(it.message?:"installer error")},
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                    .setNegativeButton("稍後",null)
+                                    .show()
+                            }else{
+                                renderNetworkState(true,"新版可用 • 點更新套用")
+                            }
+                        }else{
+                            renderNetworkState(true,"已是最新 • v"+BuildConfig.VERSION_NAME)
+                        }
                     }else{
                         onlineAutoCheckCompleted.set(false)
                         val attempt=onlineAutoRetryCount.incrementAndGet()
@@ -1967,7 +1991,7 @@ class MainActivity : Activity() {
             setPadding(dp(16),dp(10),dp(16),dp(8))
         }
         box.addView(TextView(this).apply {
-            text="使用者設定中心 • 佈景 / FPS / 解析度 / 效能 / RGB / 驗證 / 維修。\nRegression：OFF / LOCKED；CNC 安全核心：ON / LOCKED；變更需使用者明確允許。"
+            text="使用者設定中心 • 佈景 / FPS / 解析度 / 效能 / RGB / 驗證 / 維修。\n啟動版本：HOME FIRST → 背景比對 → VERIFIED NEWER ONLY；Regression OFF / LOCKED；CNC 安全核心 ON / LOCKED。"
             setTextColor(StudioProductionTheme.text)
             textSize=12.5f
             setPadding(dp(4),dp(4),dp(4),dp(10))
@@ -1991,6 +2015,19 @@ class MainActivity : Activity() {
         }
         action("CNC 安全設定（核心 ON）"){ openCategory("安全"){showSecurityBranch()} }
         action("驗證中心"){ showManualRegressionCenter() }
+        action("啟動版本更新 • ON"){
+            AlertDialog.Builder(this)
+                .setTitle("啟動版本更新")
+                .setMessage(
+                    "目前版本："+BuildConfig.VERSION_NAME+
+                        "\n流程：正版 HOME → 背景比對 → 只接受已驗證更高版本。"+
+                        "\n離線：直接使用目前已安裝版本。"+
+                        "\nAndroid 安裝仍需系統確認。"
+                )
+                .setPositiveButton("立即比對"){_,_->runSecureUpdateCheck()}
+                .setNegativeButton("關閉",null)
+                .show()
+        }
         action("AI / 更新設定"){ showAiSystemSuiteDialog() }
         action("工作 / 維修"){ showMaintenanceCenter() }
         AlertDialog.Builder(this)
