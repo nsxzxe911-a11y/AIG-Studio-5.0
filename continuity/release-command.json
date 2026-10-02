@@ -1,7 +1,7 @@
 {
   "schema": "aig-release-command-v1",
   "product": "AIG Studio 5.0",
-  "version": "307.0.0",
+  "version": "308.0.0",
   "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
   "command_scope": "ALL_DEPARTMENTS",
   "dispatch_mode": "IMMEDIATE_LOCAL_FIRST",
@@ -231,5 +231,27 @@
     "departments": 15,
     "rule": "SINGLE_DEPARTMENT_AUTHORITY_NO_DUPLICATE_LISTS",
     "verifier": "ci/verify_audit_contract.py"
+  },
+  "render_compatibility": {
+    "authority": "core/src/main/kotlin/com/aigstudio/core/RenderCompatibility.kt",
+    "resolutions": [
+      "1080P/FHD+",
+      "2K-class",
+      "3K-class",
+      "UHD/4K+"
+    ],
+    "refresh_hz": [
+      30,
+      60,
+      90,
+      120
+    ],
+    "max_refresh_hz": 120,
+    "rgb_max_channel_delta": 24,
+    "rgb_max_relative_luma_delta": 0.12,
+    "animation_luma_swing_max": 0.12,
+    "adaptive_ui_mesh_glow": true,
+    "full_color_dither": true,
+    "cad_render_engine": "CAD_RENDER_V3_4K_120HZ"
   }
 }
