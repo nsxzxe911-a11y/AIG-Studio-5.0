@@ -56,16 +56,17 @@ import com.aigstudio.core.*
 import kotlin.math.*
 
 object StudioProductionTheme {
+    private fun harmonize(value:Int,reference:Int)=RenderColorCompatibility.harmonizeRgb(value,reference)
     val ID:String get()=StudioThemePackRuntime.current.id
-    val background:Int get()=StudioThemePackRuntime.current.background
-    val panel:Int get()=StudioThemePackRuntime.current.panel
-    val text:Int get()=StudioThemePackRuntime.current.text
-    val accent:Int get()=StudioThemePackRuntime.current.accent
-    val selected:Int get()=StudioThemePackRuntime.current.selected
-    val cutting:Int get()=StudioThemePackRuntime.current.cutting
-    val rapid:Int get()=StudioThemePackRuntime.current.rapid
-    val warning:Int get()=StudioThemePackRuntime.current.warning
-    val alarm:Int get()=StudioThemePackRuntime.current.alarm
+    val background:Int get()=harmonize(StudioThemePackRuntime.current.background,RenderColorCompatibility.BACKGROUND_RGB)
+    val panel:Int get()=harmonize(StudioThemePackRuntime.current.panel,RenderColorCompatibility.PANEL_RGB)
+    val text:Int get()=harmonize(StudioThemePackRuntime.current.text,RenderColorCompatibility.TEXT_RGB)
+    val accent:Int get()=harmonize(StudioThemePackRuntime.current.accent,RenderColorCompatibility.ACCENT_RGB)
+    val selected:Int get()=harmonize(StudioThemePackRuntime.current.selected,RenderColorCompatibility.ACCENT_RGB)
+    val cutting:Int get()=harmonize(StudioThemePackRuntime.current.cutting,RenderColorCompatibility.CUTTING_RGB)
+    val rapid:Int get()=harmonize(StudioThemePackRuntime.current.rapid,RenderColorCompatibility.RAPID_RGB)
+    val warning:Int get()=harmonize(StudioThemePackRuntime.current.warning,RenderColorCompatibility.WARNING_RGB)
+    val alarm:Int get()=harmonize(StudioThemePackRuntime.current.alarm,RenderColorCompatibility.ALARM_RGB)
 }
 
 object LibraryFiveAxisSkin208 {
@@ -170,21 +171,10 @@ object StudioDisplayPolicy {
         val m = view.resources.displayMetrics
         val width = max(view.width, m.widthPixels)
         val height = max(view.height, m.heightPixels)
-        val shortEdge = min(width, height)
-        val longEdge = max(width, height)
-        val tier = when {
-            shortEdge >= 2160 && longEdge >= 3800 -> "UHD/4K+"
-            shortEdge >= 1440 && longEdge >= 2880 -> "3K-class"
-            shortEdge >= 1440 && longEdge >= 2400 -> "2K-class"
-            else -> "1080P/FHD+"
-        }
-        val uiScale = when (tier) {
-            "UHD/4K+" -> 1.18f
-            "3K-class" -> 1.12f
-            "2K-class" -> 1.07f
-            else -> 1.0f
-        }
-        return StudioDisplayProfile(tier, uiScale, width, height)
+        val compat=RenderCompatibilityContract.profile(
+            width,height,view.display?.refreshRate?.toDouble() ?: 60.0
+        )
+        return StudioDisplayProfile(compat.tier.label,compat.uiScale.toFloat(),width,height)
     }
 
     fun dp(view: View, value: Float): Int =
@@ -249,7 +239,7 @@ class RgbGlowButton(context: Context) : Button(context) {
     }
 
     fun setRgbState(color: Int, selected: Boolean, alarm: Boolean = false) {
-        accent = color
+        accent = RenderColorCompatibility.harmonizeNearestSemantic(color)
         selectedGlow = selected
         alarmGlow = alarm
         pulseHandler.removeCallbacks(pulseRunnable)
@@ -285,8 +275,10 @@ class RgbGlowButton(context: Context) : Button(context) {
         val rawEdge = if (alarmGlow) StudioProductionTheme.alarm else accent
         val base = StudioProductionTheme.panel
         val baseBrightness = if (alarmGlow) 1f else globalBrightnessPercent / 100f
-        val phase = 2.0 * Math.PI * ((SystemClock.uptimeMillis() % 1180L).toDouble() / 1180.0)
-        val pulse = if(selectedGlow) (0.84 + 0.16 * ((sin(phase) + 1.0) * 0.5)).toFloat() else 1f
+        val targetFps=RenderCompatibilityContract.refreshBucket(display?.refreshRate?.toDouble() ?: 60.0)
+        val pulsePeriod=RenderColorCompatibility.animationPeriodMs(targetFps)
+        val phase01=(SystemClock.uptimeMillis()%pulsePeriod).toDouble()/pulsePeriod.toDouble()
+        val pulse=if(selectedGlow) RenderColorCompatibility.pulseMultiplier(phase01).toFloat() else 1f
         val brightness = (baseBrightness * pulse).coerceIn(0f,1f)
         val edge = mix(base, rawEdge, brightness)
         val baseAmount = when {
