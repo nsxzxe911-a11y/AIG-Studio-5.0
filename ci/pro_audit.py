@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import json
+import json, os
 import xml.etree.ElementTree as ET
 from audit_contract import DEPARTMENTS, PRO_OWNERSHIP_KEYS, ROOT, load_json, read_text, release_version, source_sha
 
