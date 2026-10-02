@@ -3,7 +3,7 @@
   "product": "AIG Studio 5.0",
   "version": "308.0.0",
   "branch": "main",
-  "recorded_source_head": "PENDING_308_RENDER_HOSTED_SOURCE",
+  "recorded_source_head": "PENDING_308_MANUAL_ONLY_UI_CHECKPOINT",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "EXECUTE_UNTIL_PASS",
   "departments": {
@@ -48,7 +48,7 @@
     ]
   },
   "next_action": "Validate Studio 308 adaptive 1080P/2K/3K/4K + 30/60/90/120Hz + RGB color-tolerance rendering on Hosted Semantic/UI compile before rebinding AIG-II.",
-  "note": "Studio 308 rendering upgrade: safe default 60Hz, adaptive 30/60/90/120Hz, 1080P/2K/3K/4K, RGB cross-platform tolerance, verified button visual hot replacement with callback stability, four-layer glass depth. CNC geometry/precision/safety unchanged.",
+  "note": "Studio 308 UI/render source checkpoint: automatic regression triggers disabled; workflows remain manual-only. One-key multifunction and verified RGB visual replacement are implemented on Android/Windows. 60Hz is safe default; 30/60/90/120 and 1080P/2K/3K/4K remain adaptive. No binary/device PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -126,7 +126,7 @@
     "script": "ci/pro_audit.py",
     "display_name": "頂級專業軟體極速審核修建部門",
     "mode": "CROSS_DEPARTMENT_AUDIT_REPAIR_REVERIFY",
-    "status": "STUDIO308_RENDER_PENDING_HOSTED_REVERIFY",
+    "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
     "source_review": "15_DEPARTMENT_CLEAN_CODE_PASS",
     "previous_hosted_evidence": {
       "source_sha": "a55c5092324ef644e07e59bf3bd6260ff9c2933f",
@@ -155,7 +155,8 @@
       "trigger_policy": "PASS",
       "trigger_mine_cleaner": "PASS",
       "binary_device_release_proof": "NOT_CLAIMED"
-    }
+    },
+    "binary_device_release_proof": "NOT_CLAIMED"
   },
   "clean_code_contract": {
     "authority": "ci/audit_contract.py",
@@ -190,6 +191,38 @@
     "button_visual_hot_replace": true,
     "button_callback_stable": true,
     "button_verified_asset_fallback": true,
-    "glass_depth_layers": 4
-  }
+    "glass_depth_layers": 4,
+    "adaptive_high_refresh": true
+  },
+  "automatic_regression_triggers": {
+    "status": "DISABLED",
+    "policy": "MANUAL_WORKFLOW_DISPATCH_ONLY",
+    "push_triggers": 0,
+    "schedule_triggers": 0,
+    "gate_code_preserved": true
+  },
+  "one_key_multifunction": {
+    "status": "SOURCE_IMPLEMENTED",
+    "android": true,
+    "windows": true,
+    "callbacks": [
+      "CAD",
+      "CAM",
+      "SIM",
+      "3AX",
+      "4AX",
+      "5AX",
+      "NC",
+      "AI",
+      "MAINT"
+    ],
+    "verified_rgb_asset": "tool_group.png",
+    "callback_stable_on_visual_replace": true
+  },
+  "visual_evidence_assets": [
+    "uiux/assets/axis3.jpg",
+    "uiux/assets/cam.jpg",
+    "uiux/assets/sim.jpg",
+    "app/src/main/assets/aig-generated-rgb/approved/184/tool_group.png"
+  ]
 }
