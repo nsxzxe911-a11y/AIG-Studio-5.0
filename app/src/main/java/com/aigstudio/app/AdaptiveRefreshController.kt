@@ -8,6 +8,7 @@ import android.os.PowerManager
 import android.view.Display
 import com.aigstudio.core.PlatformRefreshPolicy
 import com.aigstudio.core.CpuThermalFpsPolicy
+import com.aigstudio.core.RenderCompatibilityContract
 
 class AdaptiveRefreshController(
     private val activity: Activity
@@ -18,6 +19,7 @@ class AdaptiveRefreshController(
     private var started = false
     private var latestCpuC: Double? = null
     private var cpuThermalCap = 120
+    private var startupSettled = false
 
     private val cpuThermalRunnable = object : Runnable {
         override fun run() {
@@ -34,6 +36,11 @@ class AdaptiveRefreshController(
         applyFromPreferences()
     }
 
+    private val startupPromotionRunnable = Runnable {
+        startupSettled = true
+        applyFromPreferences()
+    }
+
     private val thermalListener =
         if (Build.VERSION.SDK_INT >= 29) {
             PowerManager.OnThermalStatusChangedListener { applyFromPreferences() }
@@ -45,6 +52,10 @@ class AdaptiveRefreshController(
         if (Build.VERSION.SDK_INT >= 29 && thermalListener != null) {
             powerManager.addThermalStatusListener(activity.mainExecutor, thermalListener)
         }
+        startupSettled = false
+        applyRefreshRate(activity.display ?: return, RenderCompatibilityContract.STARTUP_SAFE_HZ.toFloat())
+        handler.removeCallbacks(startupPromotionRunnable)
+        handler.postDelayed(startupPromotionRunnable, RenderCompatibilityContract.STARTUP_PROMOTION_DELAY_MS)
         markInteractive()
         handler.removeCallbacks(cpuThermalRunnable)
         handler.post(cpuThermalRunnable)
@@ -52,6 +63,7 @@ class AdaptiveRefreshController(
 
     fun stop() {
         handler.removeCallbacks(idleRunnable)
+        handler.removeCallbacks(startupPromotionRunnable)
         handler.removeCallbacks(cpuThermalRunnable)
         val listener = thermalListener
         if (Build.VERSION.SDK_INT >= 29 && listener != null) {
@@ -110,6 +122,7 @@ class AdaptiveRefreshController(
             }
         }
 
+        if (!startupSettled) requested = minOf(requested, RenderCompatibilityContract.STARTUP_SAFE_HZ.toFloat())
         requested = PlatformRefreshPolicy.capForRuntime(requested.toInt(), RuntimeDeviceProfile.isEmulator).toFloat()
         applyRefreshRate(display, requested)
     }
