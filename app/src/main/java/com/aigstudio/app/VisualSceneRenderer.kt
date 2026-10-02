@@ -10,7 +10,7 @@ import android.view.View
 
 object StudioVisualSceneRenderer {
     private val cache=mutableMapOf<String,Bitmap?>()
-    private val paint=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val paint=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG)
 
     private fun fileFor(surface:String):String = when(surface.uppercase()) {
         "CAD" -> "visuals/cad_visual.png"
