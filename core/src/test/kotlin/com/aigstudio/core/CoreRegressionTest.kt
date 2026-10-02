@@ -1338,6 +1338,7 @@ fun main() {
     testContinuousSixAxisToolpointSchedule()
     testSixAxisFixtureEnvelopeCollision()
     testCollisionLookAheadPlanner()
+    testToolAssemblyCollisionSensitivity()
     testAxisMode345RuntimeMatrix()
     testNcDraftRecoveryContract()
     testPixelLayoutPrecheckContract()
@@ -3054,4 +3055,38 @@ private fun testProjectFixturePersistenceV3() {
     } finally {
         first.delete();second.delete();legacyV2.delete();legacyV1.delete()
     }
+}
+
+private fun testToolAssemblyCollisionSensitivity() {
+    val snapshot=DrawingSnapshot(emptyList())
+    val settings=CamSettings(
+        toolDiameter=2.0,depth=-1.0,safeZ=5.0,feedMmMin=100.0,
+        pathMode=CamPathMode.MANUAL,
+        manualPath=listOf(
+            ManualCamPoint(-5.0,0.0,5.0,true),
+            ManualCamPoint(-5.0,0.0,-1.0,false),
+            ManualCamPoint(5.0,0.0,-1.0,false),
+            ManualCamPoint(5.0,0.0,5.0,true)
+        ),
+        leadInMm=0.0,leadOutMm=0.0
+    )
+    val cam=CamModel.fromCad(30100L,snapshot,settings)
+    val stock=Stock3D.fromSnapshot(snapshot,margin=2.0,thickness=5.0,manualPath=settings.manualPath)
+    val clamp=FixtureObstacle(
+        id=301L,kind=FixtureKind.CLAMP,
+        minX=-1.0,minY=3.0,minZ=0.0,
+        maxX=1.0,maxY=4.0,maxZ=2.0,
+        clearanceMm=0.0
+    )
+    val small=ToolAssemblyConfig(holderDiameter=2.0,holderLength=1.0,stickout=1.0)
+    val large=ToolAssemblyConfig(holderDiameter=10.0,holderLength=1.0,stickout=1.0)
+    val smallRisk=MachiningRiskScanner.inspect(cam,stock,listOf(clamp),small)
+    val largeRisk=MachiningRiskScanner.inspect(cam,stock,listOf(clamp),large)
+    check(smallRisk.warnings.none{"HOLDER collision" in it})
+    check(largeRisk.warnings.any{"HOLDER collision" in it})
+    check(largeRisk.collisionCount>smallRisk.collisionCount)
+    val changed=StudioProjectRepository.referenceProject().copy(toolAssembly=large)
+    val base=changed.copy(toolAssembly=small)
+    check(StudioProjectRepository.canonicalDigest(changed)!=StudioProjectRepository.canonicalDigest(base))
+    println("✓ TOOL_ASSEMBLY_COLLISION_GATE_PASS HOLDER_DIAMETER HOLDER_LENGTH STICKOUT CHANGES_COLLISION PROJECT_V3_DIGEST")
 }
