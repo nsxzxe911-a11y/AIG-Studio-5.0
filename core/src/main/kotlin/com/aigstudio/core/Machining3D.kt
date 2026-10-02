@@ -250,6 +250,12 @@ object MachiningRiskScanner {
     private fun zOverlap(minA:Double,maxA:Double,minB:Double,maxB:Double)=
         maxA+EPS>=minB && maxB+EPS>=minA
 
+    private fun machinePoint(move:Move):Vec3 =
+        MachineKinematics3D.transform(
+            Vec3(move.to.x,move.to.y,move.z),
+            move.axisA,move.axisB,move.axisC
+        )
+
     private fun collisionPart(
         move:Move,
         settings:CamSettings,
@@ -260,26 +266,52 @@ object MachiningRiskScanner {
         val tilt=Math.toRadians(min(80.0,hypot(move.axisA,move.axisB)))
         val toolRadius=settings.toolDiameter/2.0
         val holderRadius=assembly.holderDiameter/2.0
-        val shaftTop=move.z+assembly.stickout*cos(tilt)
-        val holderTop=move.z+(assembly.stickout+assembly.holderLength)*cos(tilt)
         val shaftXY=toolRadius+assembly.stickout*sin(tilt)
         val holderXY=holderRadius+(assembly.stickout+assembly.holderLength)*sin(tilt)
+
+        if(fixture.kind==FixtureKind.MACHINE_ENVELOPE) {
+            val machine=machinePoint(move)
+            val shaftTop=machine.z+assembly.stickout*cos(tilt)
+            val holderTop=machine.z+(assembly.stickout+assembly.holderLength)*cos(tilt)
+            val radius=max(shaftXY,holderXY)
+            val outside=machine.x-radius<fixture.minX || machine.x+radius>fixture.maxX ||
+                machine.y-radius<fixture.minY || machine.y+radius>fixture.maxY ||
+                min(machine.z,holderTop)<fixture.minZ || max(machine.z,holderTop)>fixture.maxZ
+            return if(outside)"MACHINE_ENVELOPE" else null
+        }
+
+        val shaftTop=move.z+assembly.stickout*cos(tilt)
+        val holderTop=move.z+(assembly.stickout+assembly.holderLength)*cos(tilt)
         fun xy(radius:Double)=
             move.to.x>=fixture.minX-radius-fixture.clearanceMm &&
             move.to.x<=fixture.maxX+radius+fixture.clearanceMm &&
             move.to.y>=fixture.minY-radius-fixture.clearanceMm &&
             move.to.y<=fixture.maxY+radius+fixture.clearanceMm
-
-        if(fixture.kind==FixtureKind.MACHINE_ENVELOPE) {
-            val radius=max(shaftXY,holderXY)
-            val outside=move.to.x-radius<fixture.minX || move.to.x+radius>fixture.maxX ||
-                move.to.y-radius<fixture.minY || move.to.y+radius>fixture.maxY ||
-                move.z<fixture.minZ || holderTop>fixture.maxZ
-            return if(outside)"MACHINE_ENVELOPE" else null
-        }
         if(xy(shaftXY) && zOverlap(min(move.z,shaftTop),max(move.z,shaftTop),fixture.minZ,fixture.maxZ)) return "TOOL"
         if(xy(holderXY) && zOverlap(min(shaftTop,holderTop),max(shaftTop,holderTop),fixture.minZ,fixture.maxZ)) return "HOLDER"
         return null
+    }
+
+    private fun rotatingFixtureEnvelopeCollision(
+        move:Move,
+        fixture:FixtureObstacle,
+        envelope:FixtureObstacle
+    ):Boolean {
+        if(!fixture.enabled || !envelope.enabled || fixture.kind==FixtureKind.MACHINE_ENVELOPE ||
+            envelope.kind!=FixtureKind.MACHINE_ENVELOPE) return false
+        val corners=listOf(
+            Vec3(fixture.minX,fixture.minY,fixture.minZ),Vec3(fixture.maxX,fixture.minY,fixture.minZ),
+            Vec3(fixture.minX,fixture.maxY,fixture.minZ),Vec3(fixture.maxX,fixture.maxY,fixture.minZ),
+            Vec3(fixture.minX,fixture.minY,fixture.maxZ),Vec3(fixture.maxX,fixture.minY,fixture.maxZ),
+            Vec3(fixture.minX,fixture.maxY,fixture.maxZ),Vec3(fixture.maxX,fixture.maxY,fixture.maxZ)
+        ).map{MachineKinematics3D.transform(it,move.axisA,move.axisB,move.axisC)}
+        val clearance=max(fixture.clearanceMm,envelope.clearanceMm)
+        return corners.minOf{it.x}<envelope.minX+clearance ||
+            corners.maxOf{it.x}>envelope.maxX-clearance ||
+            corners.minOf{it.y}<envelope.minY+clearance ||
+            corners.maxOf{it.y}>envelope.maxY-clearance ||
+            corners.minOf{it.z}<envelope.minZ+clearance ||
+            corners.maxOf{it.z}>envelope.maxZ-clearance
     }
 
     fun inspect(cam:CamModel,stock:Stock3D):MachiningRiskReport =
@@ -312,12 +344,23 @@ object MachiningRiskScanner {
         }
         if(moves.isNotEmpty() && enabled.isNotEmpty()){
             val step=max(0.25,min(cam.settings.toolDiameter/4.0,2.0))
+            val envelopes=enabled.filter{it.kind==FixtureKind.MACHINE_ENVELOPE}
+            val rotatingFixtures=enabled.filter{it.kind!=FixtureKind.MACHINE_ENVELOPE}
             fun inspectSample(segment:Int,m:Move){
                 enabled.forEach { fixture ->
                     val part=collisionPart(m,cam.settings,toolAssembly,fixture)
                     if(part!=null){
                         val key="SEG"+segment+":F"+fixture.id+":"+part
                         if(collisionKeys.add(key)) warnings+=part+" collision with "+fixture.label()+" near segment "+segment
+                    }
+                }
+                rotatingFixtures.forEach { fixture ->
+                    envelopes.forEach { envelope ->
+                        if(rotatingFixtureEnvelopeCollision(m,fixture,envelope)){
+                            val key="SEG"+segment+":F"+fixture.id+":ENV"+envelope.id+":ROTARY_FIXTURE_ENVELOPE"
+                            if(collisionKeys.add(key)) warnings+="ROTARY_FIXTURE_ENVELOPE collision: "+
+                                fixture.label()+" exceeds "+envelope.label()+" after A/B/C posture near segment "+segment
+                        }
                     }
                 }
             }
