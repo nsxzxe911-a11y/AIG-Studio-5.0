@@ -8,13 +8,14 @@ import android.os.Build
 import com.aigstudio.core.RenderCachePolicy
 
 /**
- * CAD drawing engine v2.
+ * CAD drawing engine v3 — 1080P/2K/3K/4K + 30/60/90/120Hz compatible.
  *
  * API 29+ uses RenderNode display lists so static CAD/grid geometry is recorded once
  * and replayed by the hardware renderer. Older supported devices fall back to Picture.
  * Dynamic overlays (cursor, coordinates, selection interaction) remain outside the cache.
  */
 internal class CadRenderEngine(private val nodeName: String) {
+    val compatibilityVersion:String="CAD_RENDER_V3_4K_120HZ"
     private var nodeHolder: Any? = null
     private var nodeKey = Long.MIN_VALUE
     private var nodeWidth = -1
