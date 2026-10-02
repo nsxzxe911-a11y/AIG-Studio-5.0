@@ -2951,13 +2951,27 @@ private fun testProjectRevisionSync() {
         }.isFailure)
         val shared=java.io.File(f1.parentFile,"studio-shared-"+System.nanoTime()+StudioProjectRepository.EXTENSION)
         try {
+            check(runCatching{
+                SharedProjectFolderSync.publishConfirmed(
+                    f2,shared,null,{StudioProjectRepository.load(it).revisionMeta},false
+                )
+            }.isFailure){"Shared publish must require explicit user confirmation"}
             val published=SharedProjectFolderSync.publishConfirmed(
                 f2,shared,null,{StudioProjectRepository.load(it).revisionMeta},true
             )
             check(published.revision==remote2.revisionMeta.revision)
             check(StudioProjectRepository.load(shared).revisionMeta.contentDigest==remote2.revisionMeta.contentDigest)
+
+            val expected=published.contentDigest
+            f3.copyTo(shared,overwrite=true)
+            check(runCatching{
+                SharedProjectFolderSync.publishConfirmed(
+                    f2,shared,expected,{StudioProjectRepository.load(it).revisionMeta},true
+                )
+            }.isFailure){"Shared publish race guard must reject changed remote digest"}
         } finally { shared.delete() }
         println("✓ SHARED_PROJECT_FOLDER_SYNC_GATE_PASS POLL_3000MS NO_AUTO_APPLY OFFLINE_FIRST REMOTE_NEWER_VISIBLE CONFLICT_VISIBLE EXPLICIT_CONFIRM RACE_GUARD")
+        println("✓ PROJECT_RUNTIME_SYNC_UI_POLICY_GATE_PASS SAVE OPEN SHARE_STATUS SHARE_PUBLISH ADOPT_REMOTE KEEP_LOCAL SAVE_COPY EXPLICIT_CONFIRM REMOTE_DIGEST_RACE_BLOCK")
     } finally {
         f1.delete();f2.delete();f3.delete()
     }
