@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "322.0.0",
+  "version": "323.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 322. Windows production startup now has a real HOME card as the first visible surface; Android already used formal RGB HOME first. Continue only after current APK/EXE launch evidence is available.",
-  "note": "Studio 322: fixed Windows true startup. showApp() no longer opens CAD first; it displays HOME first with real callbacks to CAD/CAM/SIM/3AX/4AX/5AX/NC/AI, maintenance, settings and project manager. No device launch PASS claimed yet.",
+  "next_action": "Continue forward-only from Studio 323. CAD interaction parity repaired: empty-workspace tap/click clears stale selection, and OFFSET/ARRAY select generated geometry on both Android and Windows. Continue CAD control-point and dimension consistency before CAM work.",
+  "note": "Studio 323 CAD repair: selection lifecycle and generated-geometry selection are aligned across Android/Windows. COPY/OFFSET/ARRAY now continue editing on the newly created geometry. No APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -353,5 +353,15 @@
     "network_before_first_frame": false,
     "windows_home_real_callbacks": true,
     "binary_launch_evidence": "PENDING"
+  },
+  "cad_repair_323": {
+    "empty_workspace_clears_selection": true,
+    "copy_selects_generated": true,
+    "offset_selects_generated": true,
+    "array_selects_generated": true,
+    "trim_extend_two_pick": true,
+    "center_control_point_edit": true,
+    "snap_modes": "END/MID/CENTER/INTERSECTION/TANGENT/H/V",
+    "topology_connect_disconnect": "NON_DESTRUCTIVE"
   }
 }

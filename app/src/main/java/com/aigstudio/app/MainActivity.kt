@@ -5970,8 +5970,16 @@ class CadView(
             .setPositiveButton("套用") { _, _ ->
                 val value=input.text.toString().toDoubleOrNull()
                 if(value==null) Toast.makeText(context,"OFFSET BLOCKED：格式錯誤",Toast.LENGTH_SHORT).show()
-                else runCatching { runGeometryCommand(CadEditEngine.offsetCommand(doc,selectedIds,value)) }
-                    .onFailure { Toast.makeText(context,"OFFSET BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
+                else runCatching {
+                    val before=doc.all().map{it.id}.toSet()
+                    runGeometryCommand(CadEditEngine.offsetCommand(doc,selectedIds,value))
+                    val created=doc.all().map{it.id}.filter{it !in before}
+                    selectedIds.clear()
+                    selectedIds.addAll(created)
+                    sceneRevision++
+                    invalidate()
+                    Toast.makeText(context,"OFFSET PASS • 新幾何已選取 "+created.size,Toast.LENGTH_SHORT).show()
+                }.onFailure { Toast.makeText(context,"OFFSET BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
             }
             .setNegativeButton("取消",null)
             .show()
@@ -5992,7 +6000,14 @@ class CadView(
                     val n=count.text.toString().toInt()
                     val x=dx.text.toString().toDouble()
                     val y=dy.text.toString().toDouble()
+                    val before=doc.all().map{it.id}.toSet()
                     runGeometryCommand(CadEditEngine.linearArrayCommand(doc,selectedIds,n,x,y))
+                    val created=doc.all().map{it.id}.filter{it !in before}
+                    selectedIds.clear()
+                    selectedIds.addAll(created)
+                    sceneRevision++
+                    invalidate()
+                    Toast.makeText(context,"ARRAY PASS • 新幾何已選取 "+created.size,Toast.LENGTH_SHORT).show()
                 }.onFailure { Toast.makeText(context,"ARRAY BLOCKED：" + (it.message ?: "error"),Toast.LENGTH_SHORT).show() }
             }
             .setNegativeButton("取消",null)
@@ -6392,12 +6407,16 @@ class CadView(
                     promptControlPointEdit(control)
                     return
                 }
-                nearest(p)?.let { e ->
-                    val group=CadSelectionEngine.selectionIds(doc,e)
+                val hit=nearest(p)
+                if(hit!=null) {
+                    val group=CadSelectionEngine.selectionIds(doc,hit)
                     if(group.all{it in selectedIds}) selectedIds.removeAll(group) else selectedIds.addAll(group)
-                    sceneRevision++
-                    invalidate()
+                } else if(selectedIds.isNotEmpty()) {
+                    selectedIds.clear()
+                    Toast.makeText(context,"選取已清除",Toast.LENGTH_SHORT).show()
                 }
+                sceneRevision++
+                invalidate()
             }
             Tool.DELETE -> nearest(p)?.let { e ->
                 runGeometryCommand(DeleteEntitiesCommand(CadSelectionEngine.selectionIds(doc,e)))

@@ -534,12 +534,16 @@ private class CadPanel(
                         editControlPoint(control)
                         return
                     }
-                    nearest(p)?.let { entity ->
-                        val group=CadSelectionEngine.selectionIds(doc,entity)
+                    val hit=nearest(p)
+                    if(hit!=null) {
+                        val group=CadSelectionEngine.selectionIds(doc,hit)
                         if(group.all{it in selectedIds}) selectedIds.removeAll(group) else selectedIds.addAll(group)
-                        status("SELECT • kind="+CadSelectionEngine.semanticKind(entity)+" • count="+selectedIds.size+" • click handle to edit")
-                        repaint()
+                        status("SELECT • kind="+CadSelectionEngine.semanticKind(hit)+" • count="+selectedIds.size+" • click handle to edit")
+                    } else if(selectedIds.isNotEmpty()) {
+                        selectedIds.clear()
+                        status("SELECT CLEAR • empty workspace")
                     }
+                    repaint()
                     return
                 }
                 if(mode==DrawMode.ARC){
@@ -774,11 +778,21 @@ private class CadPanel(
     }
 
     fun offsetSelected(distance:Double) = runCatching {
+        val before=doc.all().map{it.id}.toSet()
         applyGeometry("OFFSET",CadEditEngine.offsetCommand(doc,selectedIds,distance))
+        selectedIds.clear()
+        selectedIds.addAll(doc.all().map{it.id}.filter{it !in before})
+        repaint()
+        status("OFFSET PASS • generated selected="+selectedIds.size+" • CAM/SIM/NC REBUILD")
     }.onFailure { status("OFFSET BLOCKED • "+(it.message?:"error")) }
 
     fun arraySelected(count:Int,dx:Double,dy:Double) = runCatching {
+        val before=doc.all().map{it.id}.toSet()
         applyGeometry("ARRAY",CadEditEngine.linearArrayCommand(doc,selectedIds,count,dx,dy))
+        selectedIds.clear()
+        selectedIds.addAll(doc.all().map{it.id}.filter{it !in before})
+        repaint()
+        status("ARRAY PASS • generated selected="+selectedIds.size+" • CAM/SIM/NC REBUILD")
     }.onFailure { status("ARRAY BLOCKED • "+(it.message?:"error")) }
 
     fun selectedDimensionValue():Double? =
