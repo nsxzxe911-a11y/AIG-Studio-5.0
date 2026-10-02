@@ -2551,6 +2551,16 @@ class MainActivity : Activity() {
             }
         },LinearLayout.LayoutParams(0,-2,1f))
         safetyControls.addView(RgbGlowButton(this).apply {
+            text="刀具總成"
+            contentDescription="CAM TOOL ASSEMBLY EDITOR"
+            setRgbState(LibraryFiveAxisSkin208.violet,true)
+            minHeight=dp(44);minimumWidth=dp(112)
+            setOnClickListener {
+                dialog.dismiss()
+                showToolAssemblyEditor()
+            }
+        },LinearLayout.LayoutParams(0,-2,1f))
+        safetyControls.addView(RgbGlowButton(this).apply {
             text="碰撞預測"
             contentDescription="CAM COLLISION LOOKAHEAD"
             setRgbState(0xFFFF6E6E.toInt(),false)
@@ -2629,6 +2639,52 @@ class MainActivity : Activity() {
             .setView(root)
             .create()
         dialog.show()
+    }
+
+    private fun showToolAssemblyEditor() {
+        val root=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(12),dp(8),dp(12),dp(6))
+        }
+        fun field(title:String,value:Double)=EditText(this).apply{
+            hint=title
+            setText(DisplayFormat.mm(value))
+            inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            root.addView(this)
+        }
+        root.addView(TextView(this).apply{
+            text="刀具總成尺寸會直接進 CAM/SIM/5AX/6AX 刀把碰撞判定；單位 mm"
+            setTextColor(LibraryFiveAxisSkin208.warning);textSize=11f
+        })
+        val holderDiameter=field("刀把直徑",camToolAssembly.holderDiameter)
+        val holderLength=field("刀把長度",camToolAssembly.holderLength)
+        val stickout=field("刀具伸出量",camToolAssembly.stickout)
+        AlertDialog.Builder(this)
+            .setTitle("CAM • 刀具總成")
+            .setView(root)
+            .setPositiveButton("套用"){_,_->
+                runCatching{
+                    ToolAssemblyConfig(
+                        holderDiameter=holderDiameter.text.toString().toDouble(),
+                        holderLength=holderLength.text.toString().toDouble(),
+                        stickout=stickout.text.toString().toDouble()
+                    )
+                }.onSuccess{
+                    camToolAssembly=it
+                    sharedLocalDirty.set(true)
+                    Toast.makeText(
+                        this,
+                        "TOOL ASSEMBLY • Ø"+DisplayFormat.mm(it.holderDiameter)+
+                            " L"+DisplayFormat.mm(it.holderLength)+
+                            " STICKOUT "+DisplayFormat.mm(it.stickout)+" • REVALIDATE REQUIRED",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }.onFailure{
+                    Toast.makeText(this,"TOOL ASSEMBLY BLOCKED • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("取消",null)
+            .show()
     }
 
     private fun showFixtureModelEditor() {
