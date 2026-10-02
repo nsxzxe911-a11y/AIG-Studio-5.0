@@ -1336,6 +1336,7 @@ fun main() {
     testContinuousMultiAxisToolpointSchedule()
     testContinuousSixAxisToolpointSchedule()
     testSixAxisFixtureEnvelopeCollision()
+    testCollisionLookAheadPlanner()
     testAxisMode345RuntimeMatrix()
     testNcDraftRecoveryContract()
     testPixelLayoutPrecheckContract()
@@ -2217,6 +2218,90 @@ private fun testSixAxisFixtureEnvelopeCollision() {
     val p=MachineKinematics3D.transform(Vec3(5.0,0.0,0.0),endMove.axisA,endMove.axisB,endMove.axisC)
     check(abs(p.x)<1e-9 && abs(p.y-5.0)<1e-9)
     println("✓ SIX_AXIS_FIXTURE_ENVELOPE_GATE_PASS ABC_MACHINE_SPACE ROTATING_FIXTURE CLAMP MACHINE_ENVELOPE C90 COLLISION")
+}
+
+private fun testCollisionLookAheadPlanner() {
+    val snapshot=DrawingSnapshot(emptyList())
+    val manual=CamSettings(
+        toolDiameter=2.0,depth=-1.0,safeZ=5.0,feedMmMin=100.0,
+        pathMode=CamPathMode.MANUAL,
+        manualPath=listOf(
+            ManualCamPoint(-5.0,0.0,5.0,true),
+            ManualCamPoint(-5.0,0.0,-1.0,false),
+            ManualCamPoint(5.0,0.0,-1.0,false),
+            ManualCamPoint(5.0,0.0,5.0,true)
+        ),
+        leadInMm=0.0,leadOutMm=0.0
+    )
+    val cam=CamModel.fromCad(29600L,snapshot,manual)
+    val stock=Stock3D.fromSnapshot(snapshot,margin=2.0,thickness=5.0,manualPath=manual.manualPath)
+    val clamp=FixtureObstacle(
+        id=10L,kind=FixtureKind.CLAMP,
+        minX=-1.0,minY=-1.0,minZ=-2.0,
+        maxX=1.0,maxY=1.0,maxZ=2.0,
+        clearanceMm=0.2
+    )
+    val assembly=ToolAssemblyConfig(holderDiameter=2.0,holderLength=1.0,stickout=1.0)
+    val look=MachiningRiskScanner.predictLookAhead(
+        cam,stock,listOf(clamp),assembly,lookAheadSegments=4,extraClearanceMm=3.0
+    )
+    check(!look.clear && look.manualConfirmationRequired)
+    val retract=look.predictions.firstOrNull{it.action==CollisionAvoidanceAction.RETRACT_Z}
+        ?: error("Expected RETRACT_Z look-ahead candidate")
+    check(retract.requiresRevalidation)
+    check(retract.suggestedLiftZ!=null && retract.suggestedLiftZ!!>=5.2-EPS)
+
+    val adopted=CollisionAvoidancePlanner.applyRetractCandidate(
+        manual,afterIndex=1,prediction=retract,
+        landingX=5.0,landingY=0.0,landingZ=-1.0
+    )
+    check(adopted.pathMode==CamPathMode.MANUAL)
+    check(adopted.manualPath.size==manual.manualPath.size+3)
+    check(adopted.manualPath[2].rapid && adopted.manualPath[3].rapid)
+    check(adopted.manualPath[2].z>=5.2-EPS && adopted.manualPath[3].z>=5.2-EPS)
+    val revalidated=CollisionAvoidancePlanner.revalidate(
+        snapshot,adopted,
+        Stock3D.fromSnapshot(snapshot,margin=2.0,thickness=5.0,manualPath=adopted.manualPath),
+        listOf(clamp),assembly
+    )
+    check(revalidated.collisionCount==0){"Adopted retract candidate must remove modeled clamp collision"}
+
+    val postureSnapshot=DrawingSnapshot(listOf(Line("LOOK-C",Vec2(0.0,0.0),Vec2(1.0,0.0))))
+    val postureSettings=CamSettings(toolDiameter=1.0,depth=-1.0,safeZ=2.0,feedMmMin=100.0,leadInMm=0.0,leadOutMm=0.0)
+    val postureSchedule=MultiAxisOrientationSchedule(
+        startA=0.0,startB=0.0,endA=0.0,endB=0.0,
+        mode=MultiAxisInterpolationMode.LINEAR_SYNC,startC=0.0,endC=90.0
+    )
+    val postureCam=CamModel.fromCad(29601L,postureSnapshot,postureSettings,axisSchedule=postureSchedule)
+    val postureStock=Stock3D.fromSnapshot(postureSnapshot,margin=2.0,thickness=5.0)
+    val rotatingClamp=FixtureObstacle(
+        id=11L,kind=FixtureKind.CLAMP,
+        minX=4.0,minY=-1.0,minZ=-1.0,
+        maxX=6.0,maxY=1.0,maxZ=1.0,
+        clearanceMm=0.1
+    )
+    val envelope=FixtureObstacle(
+        id=12L,kind=FixtureKind.MACHINE_ENVELOPE,
+        minX=-10.0,minY=-5.0,minZ=-10.0,
+        maxX=10.0,maxY=5.0,maxZ=10.0,
+        clearanceMm=0.1
+    )
+    val postureLook=MachiningRiskScanner.predictLookAhead(
+        postureCam,postureStock,listOf(rotatingClamp,envelope),assembly,lookAheadSegments=64
+    )
+    val postureRisk=postureLook.predictions.firstOrNull{
+        it.action==CollisionAvoidanceAction.POSTURE_CHANGE_REQUIRED
+    } ?: error("Rotating fixture envelope must require posture change")
+    check("ROTARY_FIXTURE_ENVELOPE" in postureRisk.reason)
+    check(postureRisk.suggestedLiftZ==null)
+    val rejectWrongApply=runCatching{
+        CollisionAvoidancePlanner.applyRetractCandidate(
+            manual,1,postureRisk,5.0,0.0,-1.0
+        )
+    }
+    check(rejectWrongApply.isFailure){"POSTURE_CHANGE_REQUIRED must never auto-convert into Z retract"}
+
+    println("✓ COLLISION_LOOKAHEAD_GATE_PASS BOUNDED_HORIZON RETRACT_Z MANUAL_CONFIRM REVALIDATE POSTURE_CHANGE_REQUIRED NO_AUTO_NC")
 }
 
 private fun testWorkOffsetDoesNotShiftAbsoluteCoordinates() {
