@@ -1294,6 +1294,7 @@ fun main() {
     testSoftwareAbsoluteCoordinateContract()
     testDualPlatformProjectPackage()
     testProjectRevisionSync()
+    testProjectFixturePersistenceV3()
     testNcModalTracker()
     testCannedCycleReturnMode()
     testDeleteDoesNotInventTriangle()
@@ -2959,5 +2960,84 @@ private fun testProjectRevisionSync() {
         println("✓ SHARED_PROJECT_FOLDER_SYNC_GATE_PASS POLL_3000MS NO_AUTO_APPLY OFFLINE_FIRST REMOTE_NEWER_VISIBLE CONFLICT_VISIBLE EXPLICIT_CONFIRM RACE_GUARD")
     } finally {
         f1.delete();f2.delete();f3.delete()
+    }
+}
+
+private fun testProjectFixturePersistenceV3() {
+    val fixture=FixtureObstacle(
+        id=77L,kind=FixtureKind.CLAMP,
+        minX=12.000,minY=-8.000,minZ=-2.000,
+        maxX=24.000,maxY=8.000,maxZ=6.000,
+        clearanceMm=1.250
+    )
+    val assembly=ToolAssemblyConfig(holderDiameter=28.0,holderLength=42.0,stickout=36.0)
+    val reference=StudioProjectRepository.referenceProject()
+    val manual=reference.camSettings.copy(
+        pathMode=CamPathMode.MANUAL,
+        manualPath=listOf(
+            ManualCamPoint(0.0,0.0,5.0,true,axisA=0.0,axisB=0.0,axisC=0.0),
+            ManualCamPoint(20.0,10.0,-3.0,false,axisA=15.0,axisB=-10.0,axisC=45.0)
+        )
+    )
+    val project=reference.copy(
+        camSettings=manual,axisMode="6AX",axisC=90.0,
+        fixtures=listOf(fixture),toolAssembly=assembly
+    )
+    val first=kotlin.io.path.createTempFile("studio-v3-fixture-",StudioProjectRepository.EXTENSION).toFile()
+    val second=kotlin.io.path.createTempFile("studio-v3-fixture-r2-",StudioProjectRepository.EXTENSION).toFile()
+    val legacyV2=kotlin.io.path.createTempFile("studio-v2-legacy-",StudioProjectRepository.EXTENSION).toFile()
+    val legacyV1=kotlin.io.path.createTempFile("studio-v1-legacy-",StudioProjectRepository.EXTENSION).toFile()
+    try {
+        StudioProjectRepository.saveRevisioned(project,first,"ANDROID","PHONE")
+        val loaded=StudioProjectRepository.load(first)
+        check(first.readLines().first()=="AIGSTUDIO_PROJECT|3")
+        check(loaded.axisMode=="6AX" && abs(loaded.axisC-90.0)<EPS)
+        check(loaded.fixtures==listOf(fixture))
+        check(loaded.toolAssembly==assembly)
+        check(loaded.camSettings.manualPath.size==2)
+        check(abs(loaded.camSettings.manualPath.last().axisC-45.0)<EPS)
+        check(first.readLines().any{it.startsWith("TOOLASSEMBLY|")})
+        check(first.readLines().any{it.startsWith("FIXTURE|77|CLAMP|")})
+
+        val digest1=StudioProjectRepository.canonicalDigest(loaded)
+        val moved=loaded.copy(fixtures=listOf(fixture.copy(
+            minX=fixture.minX+0.001,maxX=fixture.maxX+0.001
+        )))
+        val digest2=StudioProjectRepository.canonicalDigest(moved)
+        check(digest1!=digest2){"0.001 mm fixture edit must change project digest"}
+        StudioProjectRepository.saveRevisioned(moved,second,"WINDOWS","DESKTOP")
+        val movedLoaded=StudioProjectRepository.load(second)
+        check(movedLoaded.revisionMeta.revision==loaded.revisionMeta.revision+1L)
+        check(movedLoaded.revisionMeta.contentDigest!=loaded.revisionMeta.contentDigest)
+        check(ProjectRevisionSync.classify(loaded.revisionMeta,movedLoaded.revisionMeta,false)==ProjectSyncState.REMOTE_NEWER)
+
+        fun enc(v:String)=java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(v.toByteArray(Charsets.UTF_8))
+        fun sha(text:String)=java.security.MessageDigest.getInstance("SHA-256")
+            .digest(text.toByteArray(Charsets.UTF_8)).joinToString(""){"%02x".format(it)}
+        val common=listOf(
+            "MASTER|0.0|0.0|0.0",
+            "CAM|6.0|-3.0|5.0|150.0|1|2.0|2.0",
+            "CONTOUR|OUTSIDE|CCW",
+            "CAMPATHMODE|AUTO",
+            "AXIS|3AX|0.0|0.0",
+            "NC64|-",
+            "LINE|"+enc("LEGACY-L")+"|0.0|0.0|10.0|0.0"
+        )
+        val v2Payload=(listOf("AIGSTUDIO_PROJECT|2")+common).joinToString("\n",postfix="\n")
+        legacyV2.writeText(v2Payload+"REVISION|1|0|WINDOWS|"+enc("LEGACY")+"|"+sha(v2Payload)+"\n")
+        val old2=StudioProjectRepository.load(legacyV2)
+        check(old2.fixtures.isEmpty() && abs(old2.axisC)<EPS && old2.toolAssembly==ToolAssemblyConfig())
+        check(old2.revisionMeta.revision==1L)
+
+        val v1=(listOf("AIGSTUDIO_PROJECT|1")+common).joinToString("\n",postfix="\n")
+        legacyV1.writeText(v1)
+        val old1=StudioProjectRepository.load(legacyV1)
+        check(old1.fixtures.isEmpty() && abs(old1.axisC)<EPS && old1.toolAssembly==ToolAssemblyConfig())
+        check(old1.revisionMeta==ProjectRevisionMeta())
+
+        println("✓ PROJECT_FIXTURE_PERSISTENCE_GATE_PASS V3 AXIS_C MANUAL_C FIXTURE TOOL_ASSEMBLY V1_V2_BACKWARD_COMPAT")
+        println("✓ PROJECT_FIXTURE_SYNC_DIGEST_GATE_PASS FIXTURE_0.001_CHANGES_SHA REVISION_REMOTE_NEWER NO_SILENT_OVERWRITE")
+    } finally {
+        first.delete();second.delete();legacyV2.delete();legacyV1.delete()
     }
 }
