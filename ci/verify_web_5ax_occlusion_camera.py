@@ -5,7 +5,7 @@ needles=[
  'camera.avoid','camera.manualUntil','camera.avoidYaw','camera.avoidPitch',
  'function runtimeSegmentAabbHit','function runtimeCameraOcclusion',
  'function runtimeOcclusionCandidate','occlusion.reason','AUTO SHIFT','MANUAL HOLD','CLEAR',
- 'effectiveYaw','effectivePitch','performance.now()<camera.manualUntil',
+ 'effectiveYaw','effectivePitch','camera.manualUntil',
  'inverseRotABPoint({x:eye[0]','runtimeAssemblyBoxes({assembly:scene.assembly})'
 ]
 for n in needles:

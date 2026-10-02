@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "348.0.0",
+  "version": "349.0.0",
   "branch": "main",
-  "recorded_source_head": "3da695b48c0e9fca5c70bb89010ad4678e5d366f",
+  "recorded_source_head": "eae0d38bd69a822311ec7c9beacd65a9b45ec745",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate Studio 348 5AX auto-occlusion camera from the exact commit, then bind AIG-II 384 to that SHA. Preserve true material removal, tool-follow/depth cues, CAM/NC data flow, manual camera authority, and Web machine-output-disabled policy.",
-  "note": "Studio 348: Web 5AX/6AX now adds visual-only auto-occlusion avoidance around the current tool-follow view. Camera-to-tool visibility is tested against stock, fixture and table AABBs in the true A/B(/C) workpiece frame; the smallest nearby yaw/pitch candidate is blended in, while manual pointer/wheel input temporarily holds automation and returns control to the operator. No CAM, G-code, kinematics or material-removal geometry is changed.",
+  "next_action": "Validate Studio 349 5AX camera hysteresis from the exact commit, then bind AIG-II 385 to that SHA. Preserve auto-occlusion, manual camera authority, true material removal, CAM/NC data flow, and Web machine-output-disabled policy.",
+  "note": "Studio 349: Web 5AX/6AX auto-occlusion now holds the current avoidance candidate with a minimum dwell and score hysteresis. Symmetric or marginally better candidates do not replace a stable view; a blocked held view can escape immediately to a clear challenger, and a clear center view is restored only after the hold window when materially better. Manual pointer/wheel authority remains higher priority.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",

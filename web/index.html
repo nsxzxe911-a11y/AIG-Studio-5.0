@@ -171,7 +171,7 @@ html,body{background:#020407}
 <header class="top">
  <div class="brand"><div><div class="logo">AIG CNC</div><small>BLACK RGB RUNTIME</small></div></div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● STUDIO 348 • LOCAL READY　0.001 mm</div>
+ <div class="status">● STUDIO 349 • LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
 <footer class="footer">AIG CNC • 黑色高對比 Runtime • Web Runtime • CNC machine output disabled</footer>
@@ -221,7 +221,7 @@ function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div cl
 
 function homePage(){
  return '<div data-home-runtime><div class="workgrid">'+
- '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 348 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
+ '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 349 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
  '<div class="menuGrid"><button class="menuCard" data-open-page="CAD">CAD 製圖</button><button class="menuCard" data-open-page="CAM">CAM 刀路</button><button class="menuCard" data-open-page="SIM">SIM 模擬</button><button class="menuCard" data-open-page="NC">NC 編輯</button><button class="menuCard" data-open-page="刀路">刀路工作頁</button><button class="menuCard" data-open-page="功能">設定 / 工具</button></div>'+
  '<div class="runtimeStatus" style="margin-top:9px"><div class="metric"><b>CAD</b><span data-home-cad>0 entities</span></div><div class="metric"><b>CAM</b><span data-home-cam>0 paths</span></div><div class="metric"><b>NC</b><span data-home-nc>0 lines</span></div><div class="metric"><b>Runtime</b><span>LOCAL READY</span></div></div>'+
  '<div class="notice" style="margin-top:9px">正式 Web Runtime 直接進 HOME；工程維修與設定收在功能頁。CNC machine output disabled。</div></div></section>'+
@@ -964,7 +964,7 @@ function makeGlScene(canvas,axis){
  const gl=canvas.getContext("webgl",{antialias:true,alpha:false,preserveDrawingBuffer:false});
  if(!gl)return null;
  let lost=false;canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();lost=true});canvas.addEventListener("webglcontextrestored",()=>{lost=false});
- const camera={yaw:-.72,pitch:.58,zoom:2.55,drag:null,follow:(axis==="5AX"||axis==="6AX"),avoid:(axis==="5AX"||axis==="6AX"),focus:null,lastDepthCue:"FLAT",lastDepthDot:0,manualUntil:0,avoidYaw:0,avoidPitch:0,lastOcclusion:{blocked:false,count:0,reason:"CLEAR"},lastVisibility:"CLEAR"};
+ const camera={yaw:-.72,pitch:.58,zoom:2.55,drag:null,follow:(axis==="5AX"||axis==="6AX"),avoid:(axis==="5AX"||axis==="6AX"),focus:null,lastDepthCue:"FLAT",lastDepthDot:0,manualUntil:0,avoidYaw:0,avoidPitch:0,avoidTargetYaw:0,avoidTargetPitch:0,avoidTargetValid:false,avoidHoldUntil:0,avoidSwitchCount:0,lastAvoidDecision:"CLEAR",lastOcclusion:{blocked:false,count:0,reason:"CLEAR"},lastVisibility:"CLEAR"};
 
  function shader(type,src){
   const sh=gl.createShader(type);if(!sh)return null;
@@ -1039,6 +1039,21 @@ function makeGlScene(canvas,axis){
    let best=null;
    for(const [dy,dp] of candidates){const py=Math.max(.12,Math.min(1.38,camera.pitch+dp)),cp=Math.cos(py),yaw=camera.yaw+dy,eye=[target[0]+Math.cos(yaw)*cp*rr,target[1]+Math.sin(yaw)*cp*rr,target[2]+Math.sin(py)*rr],occlusion=runtimeCameraOcclusion(eye,probe,pos,stockBox,fixtures,tableBox),score=occlusion.count*100+dy*dy+dp*dp;if(!best||score<best.score)best={yaw:dy,pitch:dp,eye,occlusion,score};if(!occlusion.blocked&&dy===0&&dp===0)break}
    return best;
+ }
+
+ function runtimeOcclusionEvaluateOffset(target,rr,probe,pos,stockBox,fixtures,tableBox,dy,dp){
+   const py=Math.max(.12,Math.min(1.38,camera.pitch+Number(dp||0))),cp=Math.cos(py),yaw=camera.yaw+Number(dy||0),eye=[target[0]+Math.cos(yaw)*cp*rr,target[1]+Math.sin(yaw)*cp*rr,target[2]+Math.sin(py)*rr],occlusion=runtimeCameraOcclusion(eye,probe,pos,stockBox,fixtures,tableBox),score=occlusion.count*100+Number(dy||0)**2+Number(dp||0)**2;
+   return{yaw:Number(dy||0),pitch:Number(dp||0),eye,occlusion,score};
+ }
+ function runtimeOcclusionHysteresis(candidate,heldEval,now,hysteresisMargin=.008,minimumHoldMs=720){
+   const challengerClear=Boolean(candidate&&!candidate.occlusion?.blocked),heldBlocked=Boolean(heldEval?.occlusion?.blocked),fewerBlockers=Boolean(candidate&&heldEval&&candidate.occlusion.count<heldEval.occlusion.count),meaningfullyBetter=Boolean(candidate&&heldEval&&candidate.score+hysteresisMargin<heldEval.score),holdExpired=now>=Number(camera.avoidHoldUntil||0);
+   let shouldSwitch=!camera.avoidTargetValid||!heldEval;
+   if(!shouldSwitch&&heldBlocked&&challengerClear)shouldSwitch=true;
+   if(!shouldSwitch&&holdExpired&&fewerBlockers)shouldSwitch=true;
+   if(!shouldSwitch&&holdExpired&&meaningfullyBetter)shouldSwitch=true;
+   if(shouldSwitch&&candidate){camera.avoidTargetYaw=candidate.yaw;camera.avoidTargetPitch=candidate.pitch;camera.avoidTargetValid=true;camera.avoidHoldUntil=now+minimumHoldMs;camera.avoidSwitchCount++;camera.lastAvoidDecision="AUTO SHIFT"}
+   else camera.lastAvoidDecision=Math.hypot(camera.avoidTargetYaw,camera.avoidTargetPitch)>.025?"STABLE HOLD":"CLEAR";
+   return{yaw:camera.avoidTargetYaw,pitch:camera.avoidTargetPitch,switched:shouldSwitch,decision:camera.lastAvoidDecision,challengerClear,heldBlocked,meaningfullyBetter};
  }
 
  function mesh(data){
@@ -1276,11 +1291,13 @@ function makeGlScene(canvas,axis){
      const stockTarget=[cx,cy,stockCenter],followEligible=(axis==="5AX"||axis==="6AX")&&camera.follow,focusTarget=followEligible?[Number(pos.X||0),Number(pos.Y||0),Number(pos.Z||0)]:stockTarget;
      if(!camera.focus)camera.focus=[...focusTarget];
      camera.focus[0]+=(focusTarget[0]-camera.focus[0])*(followEligible?.18:.28);camera.focus[1]+=(focusTarget[1]-camera.focus[1])*(followEligible?.18:.28);camera.focus[2]+=(focusTarget[2]-camera.focus[2])*(followEligible?.18:.28);
-     const target=camera.focus,rr=sceneR*camera.zoom,probe=[Number(pos.X||0),Number(pos.Y||0),Number(pos.Z||0)+Math.max(6,Math.min(Number(scene.cutterLen||30)*.55,sceneR*.18))],manualHold=performance.now()<camera.manualUntil,autoEligible=followEligible&&camera.avoid&&!manualHold;
-     const candidate=autoEligible?runtimeOcclusionCandidate(target,rr,probe,pos,stockBox,fixtureBoxes,tableBox):null,targetYaw=candidate?.yaw||0,targetPitch=candidate?.pitch||0;
-     camera.avoidYaw+=(targetYaw-camera.avoidYaw)*(autoEligible?.18:.28);camera.avoidPitch+=(targetPitch-camera.avoidPitch)*(autoEligible?.18:.28);
+     const target=camera.focus,rr=sceneR*camera.zoom,probe=[Number(pos.X||0),Number(pos.Y||0),Number(pos.Z||0)+Math.max(6,Math.min(Number(scene.cutterLen||30)*.55,sceneR*.18))],now=performance.now(),manualHold=now<camera.manualUntil,autoEligible=followEligible&&camera.avoid&&!manualHold;
+     const candidate=autoEligible?runtimeOcclusionCandidate(target,rr,probe,pos,stockBox,fixtureBoxes,tableBox):null,heldEval=autoEligible&&camera.avoidTargetValid?runtimeOcclusionEvaluateOffset(target,rr,probe,pos,stockBox,fixtureBoxes,tableBox,camera.avoidTargetYaw,camera.avoidTargetPitch):null;
+     const decision=autoEligible?runtimeOcclusionHysteresis(candidate,heldEval,now,.008,720):null;
+     if(!autoEligible){camera.avoidTargetYaw=0;camera.avoidTargetPitch=0;camera.avoidTargetValid=false;camera.lastAvoidDecision=manualHold&&camera.avoid?"MANUAL HOLD":camera.avoid?"CLEAR":"OFF"}
+     camera.avoidYaw+=(camera.avoidTargetYaw-camera.avoidYaw)*(autoEligible?.16:.20);camera.avoidPitch+=(camera.avoidTargetPitch-camera.avoidPitch)*(autoEligible?.16:.20);
      const effectiveYaw=camera.yaw+camera.avoidYaw,effectivePitch=Math.max(.12,Math.min(1.38,camera.pitch+camera.avoidPitch)),cp=Math.cos(effectivePitch),eye=[target[0]+Math.cos(effectiveYaw)*cp*rr,target[1]+Math.sin(effectiveYaw)*cp*rr,target[2]+Math.sin(effectivePitch)*rr];
-     const occlusion=runtimeCameraOcclusion(eye,probe,pos,stockBox,fixtureBoxes,tableBox);camera.lastOcclusion=occlusion;camera.lastVisibility=manualHold&&camera.avoid?"MANUAL HOLD":!camera.avoid?"OFF":Math.hypot(camera.avoidYaw,camera.avoidPitch)>.025?"AUTO SHIFT":occlusion.blocked?("LIMITED "+occlusion.reason):"CLEAR";
+     const occlusion=runtimeCameraOcclusion(eye,probe,pos,stockBox,fixtureBoxes,tableBox);camera.lastOcclusion=occlusion;camera.lastVisibility=manualHold&&camera.avoid?"MANUAL HOLD":!camera.avoid?"OFF":camera.lastAvoidDecision==="AUTO SHIFT"?"AUTO SHIFT":camera.lastAvoidDecision==="STABLE HOLD"?"STABLE HOLD":occlusion.blocked?("LIMITED "+occlusion.reason):"CLEAR";
      const viewDir=norm(sub(eye,target)),depthCue=runtimeDepthCue(runtimeToolAxisVector(pos,axis),viewDir);camera.lastDepthCue=depthCue.label;camera.lastDepthDot=depthCue.dot;
      const vp=M(P(Math.PI/4,aspect,.1,sceneR*20),look(eye,target,[0,0,1]));
      gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.clearColor(.003,.008,.012,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
@@ -1744,7 +1761,7 @@ function makeRuntime(root){
   const p=currentPos(),len=state.parsed.blocks.length,progress=len?Math.min(100,((state.index+state.t)/len)*100):0,b=currentBlock(),cfg=settings(),mc=activeMachine(),uiToolDia=runtimeToolDiameter(cfg,b||{machine:mc});
   const cameraModeEl=root.querySelector("[data-camera-mode]"),occlusionEl=root.querySelector("[data-occlusion-state]"),depthCueEl=root.querySelector("[data-depth-cue]"),followActive=Boolean((axis==="5AX"||axis==="6AX")&&glScene?.camera?.follow);
   if(cameraModeEl){cameraModeEl.textContent=followActive?"FOLLOW TOOL":"STOCK CENTER";cameraModeEl.style.color=followActive?"#27e9ff":"#8fa7b4"}
-  if(occlusionEl){const vis=glScene?.camera?.lastVisibility||"CLEAR";occlusionEl.textContent=vis;occlusionEl.style.color=vis==="CLEAR"?"#33f39b":vis==="AUTO SHIFT"?"#27e9ff":vis==="MANUAL HOLD"?"#ffb326":vis==="OFF"?"#8fa7b4":"#ff4da6"}
+  if(occlusionEl){const vis=glScene?.camera?.lastVisibility||"CLEAR";occlusionEl.textContent=vis;occlusionEl.style.color=vis==="CLEAR"?"#33f39b":vis==="AUTO SHIFT"?"#27e9ff":vis==="STABLE HOLD"?"#78d7ff":vis==="MANUAL HOLD"?"#ffb326":vis==="OFF"?"#8fa7b4":"#ff4da6"}
   if(depthCueEl){const cue=glScene?.camera?.lastDepthCue||"FLAT";depthCueEl.textContent=cue;depthCueEl.style.color=cue==="NEAR"?"#33f39b":cue==="FAR"?"#ff4da6":"#ffb326"}
   const role=runtimeMotionRole(b),motionEl=root.querySelector("[data-motion-role]");if(motionEl){motionEl.textContent=role;motionEl.style.color=runtimeMotionColor(role,state.dry)}
   const recentCuts=runtimeRecentCutBlocks(state.parsed,state.index,3),cutTrailEl=root.querySelector("[data-cut-trail]");if(cutTrailEl)cutTrailEl.textContent=recentCuts.length+" / last 3";
@@ -1793,8 +1810,8 @@ function makeRuntime(root){
   if(cmd==="blockskip"){state.blockSkip=!state.blockSkip;root.querySelector('[data-cmd="blockskip"]').classList.toggle("warn",state.blockSkip)}
   if(cmd==="reset"){state.running=false;state.index=0;state.t=0;state.collisionAlarm=null}
   if(cmd==="follow"&&glScene){glScene.camera.follow=!glScene.camera.follow;glScene.camera.focus=null;const b=root.querySelector('[data-cmd="follow"]');if(b)b.classList.toggle("selected",glScene.camera.follow)}
-  if(cmd==="occlusion"&&glScene){glScene.camera.avoid=!glScene.camera.avoid;glScene.camera.avoidYaw=0;glScene.camera.avoidPitch=0;const b=root.querySelector('[data-cmd="occlusion"]');if(b)b.classList.toggle("selected",glScene.camera.avoid)}
-  if(cmd==="center"&&glScene){glScene.camera.follow=false;glScene.camera.focus=null;const b=root.querySelector('[data-cmd="follow"]');if(b)b.classList.remove("selected")}
+  if(cmd==="occlusion"&&glScene){glScene.camera.avoid=!glScene.camera.avoid;glScene.camera.avoidYaw=0;glScene.camera.avoidPitch=0;glScene.camera.avoidTargetYaw=0;glScene.camera.avoidTargetPitch=0;glScene.camera.avoidTargetValid=false;glScene.camera.avoidHoldUntil=0;const b=root.querySelector('[data-cmd="occlusion"]');if(b)b.classList.toggle("selected",glScene.camera.avoid)}
+  if(cmd==="center"&&glScene){glScene.camera.follow=false;glScene.camera.focus=null;glScene.camera.avoidTargetYaw=0;glScene.camera.avoidTargetPitch=0;glScene.camera.avoidTargetValid=false;const b=root.querySelector('[data-cmd="follow"]');if(b)b.classList.remove("selected")}
   updateUi();renderExec();draw();
  }
  root.addEventListener("click",e=>aigGuard(root,axis+" 操作",()=>{
