@@ -2170,3 +2170,16 @@ for needle in (
     require(gradle_319, needle, "STUDIO_319_REGRESSION_TASK_DISABLED")
 print("STUDIO_WEB_MAIN_RUNTIME_GATE_PASS|319|HOME|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|SETTINGS|REGRESSION_TASK_OFF")
 
+# Studio 320 web mirror and disabled regression entry checks
+web_320 = read("web/main-runtime-preview.html")
+gradle_320 = read("core/build.gradle.kts")
+coord_320 = read(".github/workflows/nc-coordinate-drift-gate.yml")
+semantic_320 = read(".github/workflows/nc-semantic-timeline-gate.yml")
+require(web_320, "AIG II 355 / Studio 320", "STUDIO_320_WEB_VERSION")
+require(gradle_320, 'enabled = false', "STUDIO_320_REGRESSION_TASK_OFF")
+for workflow in (coord_320,semantic_320):
+    require(workflow, "REGRESSION_EXECUTION_DISABLED_BY_USER_POLICY", "STUDIO_320_REGRESSION_WORKFLOW_OFF")
+    require(workflow, "if: ${{ false }}", "STUDIO_320_REGRESSION_WORKFLOW_OFF")
+    require(workflow, 'run: echo "REGRESSION DISABLED', "STUDIO_320_REGRESSION_WORKFLOW_OFF")
+print("STUDIO_REGRESSION_CLEAN_GATE_PASS|320|TASK_OFF|WORKFLOWS_STUB_ONLY|WEB_MAIN_RUNTIME")
+
