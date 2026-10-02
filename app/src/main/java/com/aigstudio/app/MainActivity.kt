@@ -1706,10 +1706,27 @@ class MainActivity : Activity() {
                     .putBoolean("nc_stale", unifiedNcDraftStale)
             }
             editor.apply()
+            val recovery=recoveryProjectFile()
+            recovery.parentFile?.mkdirs()
+            StudioProjectRepository.save(captureCurrentProject(),recovery)
         }
     }
 
     private fun restoreCadCheckpointIfAvailable() {
+        val recovery=recoveryProjectFile()
+        val local=localProjectFile()
+        if(recovery.isFile && (!local.isFile || recovery.lastModified()>=local.lastModified())) {
+            val restored=runCatching{StudioProjectRepository.load(recovery)}
+            if(restored.isSuccess) {
+                applyProjectPackage(restored.getOrThrow())
+                Toast.makeText(
+                    this,
+                    "AUTO RECOVERY • PROJECT V3 • FIXTURE "+camFixtures.size+" • ABC RESTORED",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return
+            }
+        }
         val prefs = getSharedPreferences("aig_cad_autosave", MODE_PRIVATE)
         val raw = prefs.getString("cad_state", null) ?: return
         if (raw.isBlank()) return
@@ -4916,6 +4933,7 @@ private fun applyCoordinatePrecisionPreference() {
     private fun markProjectDirty() { sharedLocalDirty.set(true) }
 
     private fun localProjectFile():File = File(filesDir,"projects/current.aigp")
+    private fun recoveryProjectFile():File = File(filesDir,"recovery/current-recovery.aigp")
     private fun sharedProjectFile():File = File(filesDir,"shared-sync/current.aigp")
 
     private fun captureCurrentProject():StudioProjectPackage {
