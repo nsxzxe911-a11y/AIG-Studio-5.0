@@ -2287,6 +2287,9 @@ object FanucNc {
                 " offset="+fmt(post.cutterCompValueMm)+" mm SAVED BUT NC POST BLOCKED: current CAM toolpath already includes geometric tool-radius compensation; raw contour + controller-comp simulation must pass before machine output to prevent double compensation"
         }
         val moves = cam.toolpaths.flatMap { it.moves }
+        require(moves.none { abs(it.axisC) > EPS }) {
+            "6AX_C_AXIS_NC_POST_BLOCKED: CAM contains C-axis toolpoint provenance, but machine-specific 6AX kinematics/TCP/Post has not been verified"
+        }
         val camHasAxisProvenance = moves.any { abs(it.axisA) > 1e-9 || abs(it.axisB) > 1e-9 }
         fun effectiveA(move:Move):Double = if(camHasAxisProvenance) move.axisA else post.axisA
         fun effectiveB(move:Move):Double = if(camHasAxisProvenance) move.axisB else post.axisB
