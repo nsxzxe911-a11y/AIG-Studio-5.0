@@ -21,6 +21,17 @@ for path in workflow_files:
 build=read(".github/workflows/build-download.yml")
 android=read("build_android_release.sh")
 windows=read("build_windows_native.ps1")
+rolling=read("core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt")
+nc_coordinate=read(".github/workflows/nc-coordinate-drift-gate.yml")
+nc_semantic=read(".github/workflows/nc-semantic-timeline-gate.yml")
+assert ":core:coreRegression" not in android
+assert ":core:coreRegression" not in windows
+assert "REGRESSION_EXECUTION_DISABLED_BY_POLICY_314" in nc_coordinate and "if: ${{ false }}" in nc_coordinate
+assert "REGRESSION_EXECUTION_DISABLED_BY_POLICY_314" in nc_semantic and "if: ${{ false }}" in nc_semantic
+assert "REGRESSION_EXECUTION_ENABLED=false" in rolling
+assert "ALLOW_DOWNGRADE=false" in rolling
+assert "ALLOW_EQUAL_VERSION_REINSTALL=false" in rolling
+
 prod=read("ci/verify_production_runtime.py")
 assert "workflow_dispatch:" in build.split("permissions:",1)[0]
 assert "release_state=PRODUCTION_RUNTIME_CANDIDATE" in android
@@ -30,4 +41,4 @@ for name,text in (("android",android),("windows",windows),("production_verify",p
     for token in ("PRODUCTION_RUNTIME_CANDIDATE_NOT_FINAL","REQUIRED_FOR_FINAL","BUILD_ARTIFACT_ONLY_NOT_FINAL"):
         assert token not in text, f"{name}: obsolete token {token}"
 
-print("STUDIO_TRIGGER_POLICY_GATE_PASS|MANUAL_ONLY_ALL_WORKFLOWS|NO_PUSH|NO_PR|NO_SCHEDULE|FULL_BUILD_MANUAL_ONLY|NO_FINAL_RELEASE_STATE")
+print("STUDIO_TRIGGER_POLICY_GATE_PASS|NO_PUSH|NO_PR|NO_SCHEDULE|REGRESSION_EXECUTION_OFF|BUILD_NO_REGRESSION|DOWNGRADE_OFF|EQUAL_REINSTALL_OFF")
