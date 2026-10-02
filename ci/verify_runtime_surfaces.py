@@ -1712,7 +1712,8 @@ for needle in (
     "unifiedNcDraftStale=hasExecutionWarning",
     "NC DRAFT SAVED • WARNING ONLY • EDITING ENABLED • EXECUTION INTERLOCK",
     "NC 草稿已儲存 • 警告不鎖編輯 • 執行前需修正/確認",
-    "WARNING • SESSION ACTIVE • EDITING ENABLED • EXECUTION INTERLOCK",
+    "refreshNcEditorAlarm",
+    "RuntimeIssueRoutingPolicy.owner(RuntimeIssueDomain.NC)",
 ):
     require(unified, needle, "NC_EDITOR_WARNING_ONLY")
 

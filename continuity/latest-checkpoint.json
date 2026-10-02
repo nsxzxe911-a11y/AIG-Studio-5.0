@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "355.0.0",
+  "version": "356.0.0",
   "branch": "main",
-  "recorded_source_head": "6fc92e90738022dbd36738455f4cea9c2536aef0",
+  "recorded_source_head": "e22ef1627f1dcc5a60399a220d82518780bca81f",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate Studio 355 neutral AI guidance UI/UX across Web, Android and Windows from the exact commit, then bind AIG-II 391 to that SHA. Ordinary errors must use message guidance instead of red fields; true CNC/Runtime ALARM and destructive controls remain distinct. Keep device launch and release signing as separate evidence.",
-  "note": "Studio 355: UI/UX ordinary errors now use neutral AI message guidance across Web, Android and Windows. Guidance explains where the problem is, why it happened, suggested values and impact, supports 帶我去調整 navigation and persistent 教學模式, and does not stop Runtime or overwrite working data. True CNC/Runtime ALARM and destructive confirmations remain visually distinct; no CAM/NC geometry or machine semantics are changed.",
+  "next_action": "Validate Studio 356 domain-owned issue routing and NC inline ALARM across Web, Android and Windows, then bind AIG-II 392 to the exact Studio 356 SHA. CAD/CAM/SIM/NC remain independently usable; detailed 3D collision/stability diagnostics are Advanced-mode presentation while execution interlocks remain active.",
+  "note": "Studio 356: NC ALARM now stays inside the G-code editor with line/raw block/reason/suggestion and direct line focus. CAD, CAM, 3D/SIM and NC own their own messages; CONNECT/DISCONNECT is status, not an error. Detailed collision/interference/3D stability views are Advanced mode. When CAD-CAM-SIM-NC are all connected, AI acts as a cross-module teacher only and does not replace local validators.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -536,5 +536,30 @@
     "compile_android": "PASS",
     "compile_windows": "PASS",
     "visual_acceptance": "PENDING_ACTUAL_LAUNCH_REVIEW"
+  },
+  "nc_inline_alarm_356": {
+    "line_focus": true,
+    "raw_gcode": true,
+    "reason": true,
+    "suggestion": true,
+    "nc_editor_only": true,
+    "general_ai_popup": false
+  },
+  "domain_issue_routing_356": {
+    "local_owners": [
+      "CAD",
+      "CAM",
+      "3D/SIM",
+      "NC/G-code"
+    ],
+    "connect_disconnect": "STATUS_NOT_ERROR",
+    "advanced_diagnostics": [
+      "3D_STABILITY",
+      "COLLISION",
+      "INTERFERENCE",
+      "FULL_SIM_TRACE"
+    ],
+    "ai_teacher": "ALL_CONNECTED_ONLY",
+    "execution_interlocks_remain_active": true
   }
 }

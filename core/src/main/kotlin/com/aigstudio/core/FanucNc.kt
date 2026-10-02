@@ -1513,6 +1513,45 @@ object NcExecutionTimeline {
 }
 
 
+data class NcEditorAlarm(
+    val lineNumber:Int,
+    val rawLine:String,
+    val code:String,
+    val reason:String,
+    val suggestion:String
+) {
+    fun compact():String = "NC ALARM • L"+lineNumber+" • "+reason+" • 修正："+suggestion
+}
+
+object NcEditorAlarmRouter {
+    private fun suggestionFor(code:String,reasons:List<String>):String {
+        val text=(listOf(code)+reasons).joinToString(" ").uppercase()
+        return when {
+            "UNKNOWN" in text || "UNSUPPORTED" in text -> "此控制器無此 G/M 功能；改用已支援指令或確認控制器設定"
+            "TRAVEL" in text || "LIMIT" in text || "OVERTRAVEL" in text -> "修正該軸數值至已驗證的機台行程範圍"
+            "DUPLICATE" in text || "MODAL" in text || "CONFLICT" in text -> "同一 Block 僅保留一個有效位址或同一 modal group 指令"
+            "G34" in text || "FORMAT" in text || "MISSING" in text -> "依 LINE HELP 補齊此循環必要參數與正確數值格式"
+            "G92" in text -> "確認臨時原點意圖；若不需要 G92，改用已驗證的 G54–G59"
+            else -> "依 LINE HELP 修正此 Block 的指令或數值後重新驗證"
+        }
+    }
+
+    fun firstAlarm(
+        program:String,
+        controller:CncControllerProfile,
+        machineLimits:NcMachineTravelLimits=NcMachineTravelLimits(),
+        rotaryClampProfile:RotaryAxisClampProfile=RotaryAxisClampProfile.unconfigured(),
+        rotaryMode:RotaryAxisOperationMode=RotaryAxisOperationMode.NONE
+    ):NcEditorAlarm? {
+        val event=NcExecutionTimeline.build(program,controller,machineLimits,rotaryClampProfile,rotaryMode)
+            .firstOrNull { it.status=="BLOCKED" } ?: return null
+        val raw=program.split("\n").getOrNull(event.lineNumber-1)?.trimEnd().orEmpty()
+        val reason=event.reasons.joinToString(" / ").ifBlank { "NC_BLOCKED" }
+        return NcEditorAlarm(event.lineNumber,raw,event.code,reason,suggestionFor(event.code,event.reasons))
+    }
+}
+
+
 
 enum class NcCoordinateMode(val code: String, val displayName: String) {
     ABSOLUTE_G90("G90", "G90 ABSOLUTE"),

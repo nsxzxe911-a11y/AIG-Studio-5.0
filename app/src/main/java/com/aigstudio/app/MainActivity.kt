@@ -3542,25 +3542,24 @@ class MainActivity : Activity() {
         }
         var inlinePreviewLine=0
 
+        fun refreshNcEditorAlarm(focus:Boolean=false):Boolean {
+            val program=ncEditor.text.toString()
+            val alarm=NcEditorAlarmRouter.firstAlarm(program,controllerProfile,rotaryClampProfile=rotaryClampProfile,rotaryMode=currentRotaryOperationMode()) ?: return false
+            inlineNcStatus.setTextColor(0xFFFF6E6E.toInt())
+            inlineNcStatus.text=RuntimeIssueRoutingPolicy.owner(RuntimeIssueDomain.NC)+" ALARM • L"+alarm.lineNumber+"\nGCODE: "+alarm.rawLine+"\n原因："+alarm.reason+"\n修正："+alarm.suggestion
+            if(focus){val lines=program.split("\n");val start=lines.take(alarm.lineNumber-1).sumOf{it.length+1};val end=(start+alarm.rawLine.length).coerceAtMost(program.length);ncEditor.setSelection(start.coerceAtMost(program.length),end)}
+            return true
+        }
         fun refreshInlineNcStatus() {
+            if(refreshNcEditorAlarm(false)) return
             val program=ncEditor.text.toString()
             val line=NcCodeCatalog.lineNumberAt(program,ncEditor.selectionStart.coerceAtLeast(0))
-            val blocked=NcProgramSafetyPolicy.blocking(program,rotaryClampProfile,currentRotaryOperationMode())
             val machine=inlineInterlock.inspect(program)
-            inlineNcStatus.setTextColor(
-                if(blocked.isEmpty() && machine.canExecute) 0xFF63FF9D.toInt() else 0xFFFF6E6E.toInt()
-            )
-            inlineNcStatus.text=
-                "LINE "+line+" • "+NcCodeCatalog.lineHelp(program,line,rotaryClampProfile,currentRotaryOperationMode())+"\n"+
-                NcSemanticAuthority.lineEvidence(program,line,controllerProfile,rotaryClampProfile,currentRotaryOperationMode())+"\n"+
-                NcExecutionTimeline.lineEvidence(program,line,controllerProfile,rotaryClampProfile=rotaryClampProfile,rotaryMode=currentRotaryOperationMode())+"\n"+
-                CncControllerCapabilityMatrix.summary(controllerProfile,program,rotaryClampProfile.allowedMachineCodes())+
-                (if(blocked.isEmpty() && machine.canExecute) " • SAFETY=PASS • SESSION ACTIVE"
-                else " • WARNING • SESSION ACTIVE • EDITING ENABLED • EXECUTION INTERLOCK="+(
-                    blocked.take(2).map{it.code} +
-                        (if(machine.canExecute) emptyList() else listOf(machine.evidence()))
-                ).joinToString(","))
+            inlineNcStatus.setTextColor(0xFF63FF9D.toInt())
+            inlineNcStatus.text="LINE "+line+" • "+NcCodeCatalog.lineHelp(program,line,rotaryClampProfile,currentRotaryOperationMode())+"\n"+NcSemanticAuthority.lineEvidence(program,line,controllerProfile,rotaryClampProfile,currentRotaryOperationMode())+"\n"+NcExecutionTimeline.lineEvidence(program,line,controllerProfile,rotaryClampProfile=rotaryClampProfile,rotaryMode=currentRotaryOperationMode())+" • SAFETY=PASS • "+machine.evidence()
         }
+
+        inlineNcStatus.setOnClickListener { refreshNcEditorAlarm(true) }
 
         fun inlineInsert(token:String) {
             val start=ncEditor.selectionStart.coerceAtLeast(0)
@@ -4670,14 +4669,22 @@ class MainActivity : Activity() {
             textSize = 10.5f
             setPadding(dp(2),dp(4),dp(2),dp(4))
         }
-        fun refreshLineHelp() {
-            val program = editor.text.toString()
-            val line = NcCodeCatalog.lineNumberAt(program, editor.selectionStart.coerceAtLeast(0))
-            lineHelp.text = "LINE HELP • " +
-                NcCodeCatalog.lineHelp(program,line,rotaryClampProfile,currentRotaryOperationMode()) + "\n" +
-                NcSemanticAuthority.lineEvidence(program,line,controllerProfile,rotaryClampProfile,currentRotaryOperationMode()) + "\n" +
-                NcExecutionTimeline.lineEvidence(program,line,controllerProfile,rotaryClampProfile=rotaryClampProfile,rotaryMode=currentRotaryOperationMode())
+        fun refreshNcEditorAlarm(focus:Boolean=false):Boolean {
+            val program=editor.text.toString()
+            val alarm=NcEditorAlarmRouter.firstAlarm(program,controllerProfile,rotaryClampProfile=rotaryClampProfile,rotaryMode=currentRotaryOperationMode()) ?: return false
+            lineHelp.setTextColor(Color.rgb(255,110,110))
+            lineHelp.text=RuntimeIssueRoutingPolicy.owner(RuntimeIssueDomain.NC)+" ALARM • L"+alarm.lineNumber+"\nGCODE: "+alarm.rawLine+"\n原因："+alarm.reason+"\n修正："+alarm.suggestion
+            if(focus){val lines=program.split("\n");val pos=lines.take(alarm.lineNumber-1).sumOf{it.length+1};val stop=(pos+alarm.rawLine.length).coerceAtMost(program.length);editor.setSelection(pos.coerceAtMost(program.length),stop);editor.requestFocus()}
+            return true
         }
+        fun refreshLineHelp() {
+            if(refreshNcEditorAlarm(false)) return
+            val program=editor.text.toString()
+            val line=NcCodeCatalog.lineNumberAt(program,editor.selectionStart.coerceAtLeast(0))
+            lineHelp.setTextColor(Color.rgb(190,220,255))
+            lineHelp.text="LINE HELP • "+NcCodeCatalog.lineHelp(program,line,rotaryClampProfile,currentRotaryOperationMode())+"\n"+NcSemanticAuthority.lineEvidence(program,line,controllerProfile,rotaryClampProfile,currentRotaryOperationMode())+"\n"+NcExecutionTimeline.lineEvidence(program,line,controllerProfile,rotaryClampProfile=rotaryClampProfile,rotaryMode=currentRotaryOperationMode())
+        }
+        lineHelp.setOnClickListener { refreshNcEditorAlarm(true) }
         editor.setOnClickListener { editor.post { refreshLineHelp() } }
         refreshLineHelp()
         val mode = TextView(this).apply {

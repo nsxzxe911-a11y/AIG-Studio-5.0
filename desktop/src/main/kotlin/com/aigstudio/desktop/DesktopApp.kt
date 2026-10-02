@@ -2773,13 +2773,20 @@ private fun showNcEditor(
     val lineHelp = JLabel().apply {
         foreground = Color(190,220,255)
     }
-    fun refreshLineHelp() {
-        val line = NcCodeCatalog.lineNumberAt(area.text, area.caretPosition)
-        lineHelp.text = "LINE HELP • " +
-            NcCodeCatalog.lineHelp(area.text,line,ncRotaryProfile,RotaryAxisOperationMode.NONE) + " • " +
-            NcSemanticAuthority.lineEvidence(area.text,line,controllerProfile,ncRotaryProfile,RotaryAxisOperationMode.NONE) + " • " +
-            NcExecutionTimeline.lineEvidence(area.text,line,controllerProfile,rotaryClampProfile=ncRotaryProfile,rotaryMode=RotaryAxisOperationMode.NONE)
+    fun refreshNcEditorAlarm(focus:Boolean=false):Boolean {
+        val alarm=NcEditorAlarmRouter.firstAlarm(area.text,controllerProfile,rotaryClampProfile=ncRotaryProfile,rotaryMode=RotaryAxisOperationMode.NONE) ?: return false
+        lineHelp.foreground=Color(255,110,110)
+        lineHelp.text=RuntimeIssueRoutingPolicy.owner(RuntimeIssueDomain.NC)+" ALARM • L"+alarm.lineNumber+" • "+alarm.rawLine+" • 原因："+alarm.reason+" • 修正："+alarm.suggestion
+        if(focus){val lines=area.text.split("\n");val start=lines.take(alarm.lineNumber-1).sumOf{it.length+1};val end=(start+alarm.rawLine.length).coerceAtMost(area.text.length);area.select(start.coerceAtMost(area.text.length),end);area.requestFocusInWindow()}
+        return true
     }
+    fun refreshLineHelp() {
+        if(refreshNcEditorAlarm(false)) return
+        val line=NcCodeCatalog.lineNumberAt(area.text,area.caretPosition)
+        lineHelp.foreground=Color(190,220,255)
+        lineHelp.text="LINE HELP • "+NcCodeCatalog.lineHelp(area.text,line,ncRotaryProfile,RotaryAxisOperationMode.NONE)+" • "+NcSemanticAuthority.lineEvidence(area.text,line,controllerProfile,ncRotaryProfile,RotaryAxisOperationMode.NONE)+" • "+NcExecutionTimeline.lineEvidence(area.text,line,controllerProfile,rotaryClampProfile=ncRotaryProfile,rotaryMode=RotaryAxisOperationMode.NONE)
+    }
+    lineHelp.addMouseListener(object:java.awt.event.MouseAdapter(){override fun mouseClicked(e:java.awt.event.MouseEvent?){refreshNcEditorAlarm(true)}})
     fun refreshModalStatus() {
         runtimeNcDraft=area.text
         val blocked = NcProgramSafetyPolicy.blocking(area.text,ncRotaryProfile,RotaryAxisOperationMode.NONE)
