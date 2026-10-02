@@ -164,7 +164,9 @@ object StudioProjectRepository {
         val text=file.readText(Charsets.UTF_8)
         val lines=text.lineSequence().toList()
         val header=lines.firstOrNull()?.trim()
-        require(header==HEADER || header==LEGACY_HEADER) { "Unsupported Studio project header" }
+        require(header in setOf(HEADER,LEGACY_V2_HEADER,LEGACY_HEADER)) { "Unsupported Studio project header" }
+        val isV3=header==HEADER
+        val hasRevision=header==HEADER || header==LEGACY_V2_HEADER
         val entities=mutableListOf<Entity>()
         val links=linkedSetOf<CadTopologyLink>()
         var cam=CamSettings()
@@ -175,6 +177,9 @@ object StudioProjectRepository {
         var axisMode="3AX"
         var axisA=0.0
         var axisB=0.0
+        var axisC=0.0
+        val fixtures=mutableListOf<FixtureObstacle>()
+        var toolAssembly=ToolAssemblyConfig()
         var nc=""
         var masterSeen=false
         var pendingRevision:ProjectRevisionMeta?=null
@@ -218,7 +223,7 @@ object StudioProjectRepository {
                     camPathMode=CamPathMode.valueOf(p[1])
                 }
                 "MANUALTP" -> {
-                    require(p.size==10)
+                    require(p.size==if(isV3)11 else 10)
                     fun optionalDouble(index:Int):Double? =
                         if(p[index]=="-") null else finite(p[index].toDouble(),"manual CAM optional")
                     val rapid=when(p[4]) {
@@ -241,24 +246,54 @@ object StudioProjectRepository {
                         arcJ=optionalDouble(6),
                         clockwise=clockwise,
                         axisA=finite(p[8].toDouble(),"manual CAM A"),
-                        axisB=finite(p[9].toDouble(),"manual CAM B")
+                        axisB=finite(p[9].toDouble(),"manual CAM B"),
+                        axisC=if(isV3)finite(p[10].toDouble(),"manual CAM C") else 0.0
                     )
-                    require(abs(point.axisA)<=360.0 && abs(point.axisB)<=360.0){"manual CAM axis angle out of range"}
+                    require(abs(point.axisA)<=360.0 && abs(point.axisB)<=360.0 && abs(point.axisC)<=360.0){"manual CAM axis angle out of range"}
                     manualPath += point
                 }
                 "AXIS" -> {
-                    require(p.size==4 && p[1] in setOf("3AX","4AX","5AX"))
+                    require(p.size==if(isV3)5 else 4)
+                    require(p[1] in if(isV3)setOf("3AX","4AX","5AX","6AX") else setOf("3AX","4AX","5AX"))
                     axisMode=p[1]
                     axisA=finite(p[2].toDouble(),"axis A")
                     axisB=finite(p[3].toDouble(),"axis B")
-                    require(abs(axisA)<=360.0 && abs(axisB)<=360.0)
+                    axisC=if(isV3)finite(p[4].toDouble(),"axis C") else 0.0
+                    require(abs(axisA)<=360.0 && abs(axisB)<=360.0 && abs(axisC)<=360.0)
+                }
+                "TOOLASSEMBLY" -> {
+                    require(isV3) { "TOOLASSEMBLY requires project V3" }
+                    require(p.size==4)
+                    toolAssembly=ToolAssemblyConfig(
+                        holderDiameter=finite(p[1].toDouble(),"holder diameter"),
+                        holderLength=finite(p[2].toDouble(),"holder length"),
+                        stickout=finite(p[3].toDouble(),"tool stickout")
+                    )
+                }
+                "FIXTURE" -> {
+                    require(isV3) { "FIXTURE requires project V3" }
+                    require(p.size==11)
+                    val enabled=when(p[10]){"1"->true;"0"->false;else->error("fixture enabled flag invalid")}
+                    fixtures+=FixtureObstacle(
+                        id=p[1].toLongOrNull() ?: error("fixture id invalid"),
+                        kind=FixtureKind.valueOf(p[2]),
+                        minX=finite(p[3].toDouble(),"fixture minX"),
+                        minY=finite(p[4].toDouble(),"fixture minY"),
+                        minZ=finite(p[5].toDouble(),"fixture minZ"),
+                        maxX=finite(p[6].toDouble(),"fixture maxX"),
+                        maxY=finite(p[7].toDouble(),"fixture maxY"),
+                        maxZ=finite(p[8].toDouble(),"fixture maxZ"),
+                        clearanceMm=finite(p[9].toDouble(),"fixture clearance"),
+                        enabled=enabled
+                    )
+                    require(fixtures.size<=MAX_FIXTURES) { "Too many fixture models" }
                 }
                 "NC64" -> {
                     require(p.size==2)
                     nc=if(p[1]=="-") "" else String(Base64.getDecoder().decode(p[1]),Charsets.UTF_8)
                 }
                 "REVISION" -> {
-                    require(header==HEADER) { "REVISION not allowed in legacy Studio project" }
+                    require(hasRevision) { "REVISION not allowed in project V1" }
                     require(p.size==6) { "REVISION field count" }
                     val revision=p[1].toLongOrNull() ?: error("REVISION number invalid")
                     val baseRevision=p[2].toLongOrNull() ?: error("REVISION base invalid")
@@ -303,18 +338,31 @@ object StudioProjectRepository {
             "Manual CAM project requires at least two points"
         }
         cam=cam.copy(pathMode=camPathMode,manualPath=manualPath.toList())
-        val revisionMeta=if(header==HEADER) {
-            val meta=pendingRevision ?: error("Project V2 REVISION missing")
+        require(fixtures.map{it.id}.distinct().size==fixtures.size) { "Fixture ids must be unique" }
+        val revisionMeta=if(hasRevision) {
+            val meta=pendingRevision ?: error("Project REVISION missing")
             val nonBlank=lines.filter{it.isNotBlank()}
-            require(nonBlank.last().startsWith("REVISION|")) { "Project V2 REVISION must be final record" }
+            require(nonBlank.last().startsWith("REVISION|")) { "Project REVISION must be final record" }
             val marker="\nREVISION|"
             val markerIndex=text.lastIndexOf(marker)
-            require(markerIndex>0) { "Project V2 REVISION marker missing" }
+            require(markerIndex>0) { "Project REVISION marker missing" }
             val payload=text.substring(0,markerIndex+1)
-            require(sha256(payload)==meta.contentDigest) { "Project V2 content digest mismatch" }
+            require(sha256(payload)==meta.contentDigest) { "Project content digest mismatch" }
             meta
         } else ProjectRevisionMeta()
-        val project=StudioProjectPackage(entities,links,cam,axisA,axisB,axisMode,nc,revisionMeta)
+        val project=StudioProjectPackage(
+            entities=entities,
+            links=links,
+            camSettings=cam,
+            axisA=axisA,
+            axisB=axisB,
+            axisMode=axisMode,
+            ncText=nc,
+            revisionMeta=revisionMeta,
+            axisC=axisC,
+            fixtures=fixtures.toList(),
+            toolAssembly=toolAssembly
+        )
         val doc=DrawingDocument()
         project.entities.forEach(doc::put)
         project.links.forEach { require(doc.contains(it.aId) && doc.contains(it.bId)) { "Project link entity missing" } }
