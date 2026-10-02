@@ -88,6 +88,29 @@ data class MachiningRiskReport(
     val fixtureCoverageWord:String get()=if(fixtureCoverageKnown)"MODELED" else "UNMODELED"
 }
 
+
+enum class CollisionAvoidanceAction { RETRACT_Z, PATH_REROUTE, POSTURE_CHANGE_REQUIRED }
+
+data class CollisionLookAheadPrediction(
+    val segmentIndex:Int,
+    val reason:String,
+    val action:CollisionAvoidanceAction,
+    val suggestedLiftZ:Double?,
+    val axisA:Double,
+    val axisB:Double,
+    val axisC:Double,
+    val requiresRevalidation:Boolean=true
+)
+
+data class CollisionLookAheadReport(
+    val horizonSegments:Int,
+    val predictions:List<CollisionLookAheadPrediction>
+) {
+    val clear:Boolean get()=predictions.isEmpty()
+    val firstRiskSegment:Int? get()=predictions.minOfOrNull{it.segmentIndex}
+    val manualConfirmationRequired:Boolean get()=predictions.isNotEmpty()
+}
+
 private data class Extents2D(val minX: Double, val minY: Double, val maxX: Double, val maxY: Double)
 
 private fun extents(snapshot: DrawingSnapshot): Extents2D {
@@ -312,6 +335,73 @@ object MachiningRiskScanner {
             corners.maxOf{it.y}>envelope.maxY-clearance ||
             corners.minOf{it.z}<envelope.minZ+clearance ||
             corners.maxOf{it.z}>envelope.maxZ-clearance
+    }
+
+    fun predictLookAhead(
+        cam:CamModel,
+        stock:Stock3D,
+        fixtures:List<FixtureObstacle>,
+        toolAssembly:ToolAssemblyConfig=ToolAssemblyConfig(),
+        lookAheadSegments:Int=4,
+        extraClearanceMm:Double=3.0
+    ):CollisionLookAheadReport {
+        require(lookAheadSegments in 1..64){"Look-ahead segments out of range"}
+        require(extraClearanceMm.isFinite() && extraClearanceMm in 0.0..1000.0){"Look-ahead clearance out of range"}
+        val enabled=fixtures.filter{it.enabled}
+        val envelopes=enabled.filter{it.kind==FixtureKind.MACHINE_ENVELOPE}
+        val rotatingFixtures=enabled.filter{it.kind!=FixtureKind.MACHINE_ENVELOPE}
+        val moves=cam.toolpaths.flatMap{it.moves}
+        if(moves.size<2 || enabled.isEmpty()) return CollisionLookAheadReport(lookAheadSegments,emptyList())
+        val predictions=mutableListOf<CollisionLookAheadPrediction>()
+        val seen=mutableSetOf<String>()
+        val step=max(0.25,min(cam.settings.toolDiameter/4.0,2.0))
+        val lastSegment=min(moves.lastIndex-1,lookAheadSegments-1)
+        for(segment in 0..lastSegment){
+            val a=moves[segment]
+            val b=moves[segment+1]
+            val segmentSamples=listOf(a)+samples(a,b,step)
+            for(sample in segmentSamples){
+                enabled.forEach { fixture ->
+                    val part=collisionPart(sample,cam.settings,toolAssembly,fixture)
+                    if(part!=null){
+                        val action=when(part){
+                            "TOOL","HOLDER" -> CollisionAvoidanceAction.RETRACT_Z
+                            "MACHINE_ENVELOPE" -> CollisionAvoidanceAction.PATH_REROUTE
+                            else -> CollisionAvoidanceAction.PATH_REROUTE
+                        }
+                        val lift=if(action==CollisionAvoidanceAction.RETRACT_Z){
+                            max(
+                                cam.settings.safeZ,
+                                enabled.filter{it.kind!=FixtureKind.MACHINE_ENVELOPE}
+                                    .maxOfOrNull{it.maxZ+it.clearanceMm+extraClearanceMm}
+                                    ?: cam.settings.safeZ
+                            )
+                        } else null
+                        val key=segment.toString()+":"+fixture.id+":"+part+":"+
+                            sample.axisA+":"+sample.axisB+":"+sample.axisC
+                        if(seen.add(key)) predictions+=CollisionLookAheadPrediction(
+                            segment,part+" collision with "+fixture.label(),action,lift,
+                            sample.axisA,sample.axisB,sample.axisC
+                        )
+                    }
+                }
+                rotatingFixtures.forEach { fixture ->
+                    envelopes.forEach { envelope ->
+                        if(rotatingFixtureEnvelopeCollision(sample,fixture,envelope)){
+                            val key=segment.toString()+":"+fixture.id+":"+envelope.id+":ROTARY_FIXTURE_ENVELOPE"
+                            if(seen.add(key)) predictions+=CollisionLookAheadPrediction(
+                                segment,
+                                "ROTARY_FIXTURE_ENVELOPE "+fixture.label()+" exceeds "+envelope.label(),
+                                CollisionAvoidanceAction.POSTURE_CHANGE_REQUIRED,
+                                null,
+                                sample.axisA,sample.axisB,sample.axisC
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        return CollisionLookAheadReport(lookAheadSegments,predictions.sortedBy{it.segmentIndex})
     }
 
     fun inspect(cam:CamModel,stock:Stock3D):MachiningRiskReport =
