@@ -3205,6 +3205,7 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
     frame.addWindowListener(object:java.awt.event.WindowAdapter(){
         override fun windowClosed(e:java.awt.event.WindowEvent?) {
             sharedSyncTimer?.stop()
+            productionRecoveryTimer.stop()
             sharedSyncRunning.set(false)
             sharedSyncExecutor.shutdownNow()
         }
@@ -3375,6 +3376,8 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
         File(System.getProperty("user.home"),".aig-studio/projects/current.aigp")
     fun productionSharedProjectFile():File = sharedProjectFile ?:
         File(System.getProperty("user.home"),".aig-studio/shared/current.aigp")
+    fun productionRecoveryProjectFile():File =
+        File(System.getProperty("user.home"),".aig-studio/recovery/current-recovery.aigp")
 
     fun captureProductionProject():StudioProjectPackage {
         val local=productionLocalProjectFile()
@@ -3506,6 +3509,27 @@ private fun showApp(startup:StudioDesktopStartupWindow?=null, showWindow:Boolean
             3 -> publishProductionProjectConfirmed()
         }
     }
+    run {
+        val recovery=productionRecoveryProjectFile()
+        val local=productionLocalProjectFile()
+        if(recovery.isFile && (!local.isFile || recovery.lastModified()>=local.lastModified())) {
+            runCatching{StudioProjectRepository.load(recovery)}
+                .onSuccess{
+                    applyProductionProject(it)
+                    status.text="AUTO RECOVERY • PROJECT V3 • FIXTURE "+it.fixtures.size+" • ABC RESTORED"
+                }
+                .onFailure{status.text="AUTO RECOVERY WARNING • invalid recovery ignored • "+(it.message?:"error")}
+        }
+    }
+    val productionRecoveryTimer=Timer(15_000){
+        runCatching{
+            val recovery=productionRecoveryProjectFile().apply{parentFile?.mkdirs()}
+            StudioProjectRepository.save(captureProductionProject(),recovery)
+        }.onFailure{
+            status.text="AUTO SAVE WARNING • "+(it.message?:"error")+" • RUNTIME CONTINUES"
+        }
+    }.apply{isRepeats=true;start()}
+
     fun showProductionFixtureEditor(){
         val model=DefaultListModel<String>()
         val list=JList(model)
