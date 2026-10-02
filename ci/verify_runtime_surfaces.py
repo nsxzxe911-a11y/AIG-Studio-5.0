@@ -838,7 +838,7 @@ for needle in (
 for needle in (
     "private fun drawMachineModel(canvas: Canvas, model: MachineModel3D, scale: Double) {",
     "private fun machineSpace(v:Vec3,mode:String,live:Move?):Vec3",
-    'val c=if(mode=="6AX")machineAxisC else 0.0',
+    'val c=if(mode=="6AX")live?.axisC ?: machineAxisC else 0.0',
     "private val machineAxisC: Double = 0.0",
     "return MachineKinematics3D.transform(v,a,b,c)",
     "val machineModel=MachineModel3DBuilder.build(",
