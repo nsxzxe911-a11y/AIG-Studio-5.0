@@ -155,6 +155,12 @@ private class AdaptiveGlassToolbar : JPanel() {
             }
         })
     }
+    fun replaceVisualAsset(assetId:String?) {
+        icon=assetId?.let { ProductionRgbAssets.iconById(RgbButtonVisualContract.requireAssetId(it)) }
+            ?: ProductionRgbAssets.icon(actionLabel)
+        repaint()
+    }
+
     override fun paintComponent(g: Graphics) {
         val g2 = g.create() as Graphics2D
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
@@ -201,6 +207,7 @@ private class CadToolGrid : JPanel(FlowLayout(FlowLayout.LEFT,8,8)) {
 }
 
 private class GlassActionButton(label: String, accentInput: Color) : JButton(label) {
+    private val actionLabel=label
     private val accent=Color(RenderColorCompatibility.harmonizeNearestSemantic(accentInput.rgb),true)
     private val pulseTimer=Timer(90) { if(active && isShowing) repaint() }.apply { isRepeats=true }
     var active = false
@@ -373,13 +380,18 @@ private object ProductionRgbAssets {
         return bytes
     }
 
-    fun icon(name:String):Icon? {
-        val id=assetId(name) ?: return null
+    fun iconById(id:String):Icon? {
+        val safe=RgbButtonVisualContract.requireAssetId(id)
         return runCatching {
-            val image=ImageIO.read(java.io.ByteArrayInputStream(verifiedBytes(id)))
-                ?: error("Production RGB decode failed: $id")
+            val image=ImageIO.read(java.io.ByteArrayInputStream(verifiedBytes(safe)))
+                ?: error("Production RGB decode failed: $safe")
             ImageIcon(image.getScaledInstance(24,24,Image.SCALE_SMOOTH))
         }.getOrNull()
+    }
+
+    fun icon(name:String):Icon? {
+        val id=assetId(name) ?: return null
+        return iconById(id)
     }
 }
 
