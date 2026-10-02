@@ -53,7 +53,7 @@ class AdaptiveRefreshController(
             powerManager.addThermalStatusListener(activity.mainExecutor, thermalListener)
         }
         startupSettled = false
-        applyRefreshRate(activity.display ?: return, RenderCompatibilityContract.STARTUP_SAFE_HZ.toFloat())
+        activity.display?.let { applyRefreshRate(it, RenderCompatibilityContract.STARTUP_SAFE_HZ.toFloat()) }
         handler.removeCallbacks(startupPromotionRunnable)
         handler.postDelayed(startupPromotionRunnable, RenderCompatibilityContract.STARTUP_PROMOTION_DELAY_MS)
         markInteractive()
@@ -82,7 +82,7 @@ class AdaptiveRefreshController(
     fun applyFromPreferences() {
         val display = activity.display ?: return
         val prefs = activity.getSharedPreferences("aig_environment", Activity.MODE_PRIVATE)
-        val fpsMode = prefs.getString("fps_mode", "Auto") ?: "Auto"
+        val fpsMode = prefs.getString("fps_mode", "60 FPS") ?: "60 FPS"
         val powerMode = prefs.getString("power_mode", "Auto") ?: "Auto"
         val idleThrottle = prefs.getBoolean("idle_throttle", true)
         val thermalAuto = prefs.getBoolean("thermal_auto", true)
