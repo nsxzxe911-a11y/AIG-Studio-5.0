@@ -51,7 +51,7 @@ route_text=read("continuity/ai-responsibility-routing.json","AI","RESPONSIBILITY
 cache_xml=read("continuity/cache-update-standard.xml","AI","CACHE_XML_STANDARD_MISSING")
 pro_audit=read("ci/pro_audit.py","PRO_AUDIT","PRO_AUDIT_SCRIPT_MISSING")
 
-need("HOME","HOME_RUNTIME_ENTRY","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["setContentView(runtimeHost)",'contentDescription = "PRODUCTION UI SWITCH"',"StudioStartupBootGuard.complete(this)","scheduleBackgroundOnlineServices()"],"restore direct production runtimeHost HOME boot; complete StartupBootGuard before post-ready network services")
+need("HOME","HOME_RUNTIME_ENTRY","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["setContentView(runtimeHost)",'contentDescription = "PRODUCTION UI SWITCH"',"StudioStartupBootGuard.complete(this@MainActivity)","scheduleBackgroundOnlineServices()"],"restore direct production runtimeHost HOME boot; complete StartupBootGuard before post-ready network services")
 need("HOME","HOME_DESKTOP_ENTRY","desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt",desktop,['JFrame("AIG CNC — OFFICIAL RGB ORIGINAL — v"',"LOCAL READY • NETWORK OPTIONAL"],"restore production desktop frame and offline-first status")
 
 need("CAD","CAD_EDIT_CORE","core/src/main/kotlin/com/aigstudio/core/Document.kt",doc,["object CadEditEngine","object CadSnapEngine","object DimensionDriveEngine","TRIM","EXTEND","OFFSET","ARRAY","connect(","disconnect("],"restore CAD edit/snap/dimension/topology implementation at 0.001 mm")
@@ -67,7 +67,7 @@ need("3AX","AXIS3_RUNTIME","core/src/main/kotlin/com/aigstudio/core/Machining3D.
 need("4AX","AXIS4_RUNTIME","core/src/main/kotlin/com/aigstudio/core/Machining3D.kt",machining,['"4AX"',"axisA"],"restore A-axis 4AX transformation")
 need("5AX","AXIS5_RUNTIME","core/src/main/kotlin/com/aigstudio/core/Machining3D.kt",machining,['"5AX"',"axisA","axisB"],"restore A/B 5AX transformation and synchronized tool orientation")
 need("5AX","AXIS5_REGRESSION","core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt",reg,["5AX","axisA","axisB","CONTINUOUS_MULTIAXIS_CAM_SIM_GATE_PASS"],"restore 5AX A/B provenance and synchronized regression")
-need("6AX","AXIS6_RUNTIME","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["showSixAxisRuntimeStage()",'setMachineMode("6AX")',"axisC"],"restore 6AX A/B/C production runtime stage")
+need("6AX","AXIS6_RUNTIME","app/src/main/java/com/aigstudio/app/MainActivity.kt",android,["showSixAxisRuntimeStage()",'Machining3DView(this,result,"6AX",six.axisC)','contentDescription="6AX NC INTERLOCK"',"axisC"],"restore 6AX A/B/C production runtime stage")
 need("6AX","AXIS6_REGRESSION","core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt",reg,["MANUAL_6AX_AXIS_EDIT_GATE_PASS","6AX_C_AXIS_NC_POST_BLOCKED"],"restore 6AX editable ABC continuity and NC fail-closed regression")
 
 need("NC","NC_FANUC","core/src/test/kotlin/com/aigstudio/core/CoreRegressionTest.kt",reg,["Fanuc","G90","G54","G43","G41","G42","M98","G34","G81","G83"],"restore Fanuc post/semantic coverage and compensation/cycle checks")

@@ -1,24 +1,24 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<aigCacheUpdateStandard schema="aig-cache-update-xml-v1" product="AIG Studio 5.0" version="308.0.0">
+<?xml version='1.0' encoding='utf-8'?>
+<aigCacheUpdateStandard schema="aig-cache-update-xml-v1" product="AIG Studio 5.0" version="337.0.0">
   <announcement language="zh-TW">
     所有部門快取更新一律以 XML 結構內容、revision、contentDigest/SHA-256 與 sourceExactSha 為判斷標準。
     禁止只依檔案加工時間、mtime、lastModified、timestamp 判斷新舊、是否更新、是否覆蓋或責任歸屬。
   </announcement>
-  <authority primary="XML_CONTENT_AND_DIGEST" networkRequired="false" chatStateRequired="false"/>
+  <authority primary="XML_CONTENT_AND_DIGEST" networkRequired="false" chatStateRequired="false" />
   <decision>
-    <requiredField name="revision"/>
-    <requiredField name="contentDigest" algorithm="SHA-256"/>
-    <requiredField name="sourceExactSha"/>
-    <requiredField name="xmlStructuralIdentity"/>
-    <optionalField name="observedTimestamp" decisionAuthority="false"/>
-    <optionalField name="fileMtime" decisionAuthority="false"/>
+    <requiredField name="revision" />
+    <requiredField name="contentDigest" algorithm="SHA-256" />
+    <requiredField name="sourceExactSha" />
+    <requiredField name="xmlStructuralIdentity" />
+    <optionalField name="observedTimestamp" decisionAuthority="false" />
+    <optionalField name="fileMtime" decisionAuthority="false" />
   </decision>
   <forbidden>
-    <criterion id="MTIME_ONLY"/>
-    <criterion id="LAST_MODIFIED_ONLY"/>
-    <criterion id="PROCESSING_TIME_ONLY"/>
-    <criterion id="TIMESTAMP_ONLY"/>
-    <criterion id="FILE_DATE_ONLY"/>
+    <criterion id="MTIME_ONLY" />
+    <criterion id="LAST_MODIFIED_ONLY" />
+    <criterion id="PROCESSING_TIME_ONLY" />
+    <criterion id="TIMESTAMP_ONLY" />
+    <criterion id="FILE_DATE_ONLY" />
   </forbidden>
   <updateRule>
     <when>revision differs OR contentDigest differs OR sourceExactSha differs OR XML structural identity differs</when>
@@ -32,20 +32,20 @@
     <rule>UNRELATED_DEPARTMENTS_CONTINUE</rule>
   </conflictRule>
   <departments>
-    <department id="HOME" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="CAD" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="CAM" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="SIM" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="3AX" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="4AX" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="5AX" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="6AX" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="NC" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="AI" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="UIUX" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="ANDROID_BUILD" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="WINDOWS_BUILD" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="WEB" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
-    <department id="PRO_AUDIT" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true"/>
+    <department id="HOME" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="CAD" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="CAM" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="SIM" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="3AX" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="4AX" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="5AX" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="6AX" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="NC" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="AI" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="UIUX" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="ANDROID_BUILD" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="WINDOWS_BUILD" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="WEB" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
+    <department id="PRO_AUDIT" mode="XML_CACHE_STANDARD" mtimeAuthority="false" digestRequired="true" revisionRequired="true" sourceExactShaRequired="true" />
   </departments>
 </aigCacheUpdateStandard>

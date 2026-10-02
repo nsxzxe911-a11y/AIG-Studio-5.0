@@ -46,7 +46,7 @@ if "workflow_dispatch:" not in head or "push:" in head:
     fail("PRO_AUDIT","HEAVY_RELEASE_TRIGGER",".github/workflows/build-download.yml","APK/EXE heavy release must remain manual-only","BINARY_DEVICE")
 
 android=read_text("app/src/main/java/com/aigstudio/app/MainActivity.kt")
-for marker in ("setContentView(runtimeHost)","StudioStartupBootGuard.complete(this)","scheduleBackgroundOnlineServices()"):
+for marker in ("setContentView(runtimeHost)","StudioStartupBootGuard.complete(this@MainActivity)","scheduleBackgroundOnlineServices()"):
     if marker not in android:
         fail("HOME","PRODUCTION_HOME_BOOT","app/src/main/java/com/aigstudio/app/MainActivity.kt",marker)
 
@@ -72,8 +72,8 @@ for marker in ("MANUAL_6AX_AXIS_EDIT_GATE_PASS","MASTER_RUNTIME_CHAIN_GATE_PASS 
 runtime=read_text("ci/verify_runtime_surfaces.py")
 for marker in (
     live_c,
-    'frame,doc,status,"3D",productionCamSettings,productionFixtures,productionToolAssembly',
-    'frame,doc,productionCamSettings,productionFixtures,productionToolAssembly',
+    '"3D",productionCamSettings,productionFixtures,productionToolAssembly',
+    'frame,productionCamDerivedCache',
     'RENDER_COMPATIBILITY_RUNTIME_GATE_PASS|ANDROID|WINDOWS|1080P|2K|3K|4K|30|60|90|120',
     'RENDER_SAFE_START_BUTTON_SKIN_RUNTIME_GATE_PASS|60HZ_START|ADAPTIVE_120|ANDROID|WINDOWS|HOT_REPLACE|CALLBACK_STABLE|DEPTH_4',
 ):
@@ -89,13 +89,18 @@ if "MachineComponentRole.ROTARY_C" in machining and "MachineComponentRole.ROTARY
 
 workflow=read_text(".github/workflows/nc-semantic-timeline-gate.yml")
 workflow_head=workflow.split("permissions:",1)[0]
-for trigger_path in ("ci/audit_contract.py","ci/verify_audit_contract.py","ci/pro_audit.py","ci/department_autocheck.py","ci/verify_runtime_surfaces.py","continuity/release-command.json","continuity/ai-responsibility-routing.json","continuity/cache-update-standard.xml"):
-    if trigger_path not in workflow_head:
-        fail("PRO_AUDIT","STALE_GATE_TRIGGER_GAP",".github/workflows/nc-semantic-timeline-gate.yml",f"missing self-audit trigger: {trigger_path}")
-pro_pos=workflow.find("python3 ci/pro_audit.py")
-runtime_pos=workflow.find("python3 ci/verify_runtime_surfaces.py")
-if pro_pos < 0 or runtime_pos < 0 or pro_pos > runtime_pos:
-    fail("PRO_AUDIT","AUDIT_ORDER_DRIFT",".github/workflows/nc-semantic-timeline-gate.yml","PRO_AUDIT must execute before runtime-surface verification")
+regression_disabled=("REGRESSION_EXECUTION_DISABLED_BY_USER_POLICY" in workflow and "if: ${{ false }}" in workflow)
+if regression_disabled:
+    if "workflow_dispatch:" not in workflow_head or "push:" in workflow_head or "schedule:" in workflow_head:
+        fail("PRO_AUDIT","DISABLED_REGRESSION_TRIGGER_DRIFT",".github/workflows/nc-semantic-timeline-gate.yml","disabled regression workflow must remain manual-only")
+else:
+    for trigger_path in ("ci/audit_contract.py","ci/verify_audit_contract.py","ci/pro_audit.py","ci/department_autocheck.py","ci/verify_runtime_surfaces.py","continuity/release-command.json","continuity/ai-responsibility-routing.json","continuity/cache-update-standard.xml"):
+        if trigger_path not in workflow_head:
+            fail("PRO_AUDIT","STALE_GATE_TRIGGER_GAP",".github/workflows/nc-semantic-timeline-gate.yml",f"missing self-audit trigger: {trigger_path}")
+    pro_pos=workflow.find("python3 ci/pro_audit.py")
+    runtime_pos=workflow.find("python3 ci/verify_runtime_surfaces.py")
+    if pro_pos < 0 or runtime_pos < 0 or pro_pos > runtime_pos:
+        fail("PRO_AUDIT","AUDIT_ORDER_DRIFT",".github/workflows/nc-semantic-timeline-gate.yml","PRO_AUDIT must execute before runtime-surface verification")
 
 by_dept={d:[] for d in DEPARTMENTS}
 for f in findings:

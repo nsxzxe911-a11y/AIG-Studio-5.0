@@ -228,7 +228,7 @@ for marker in [
     'private fun showFixtureModelEditor()',
     'contentDescription="CAM FIXTURE MODEL EDITOR"',
     'contentDescription="CAM COLLISION LOOKAHEAD"',
-    'val ncReady = risk.ok && runCatching',
+    'val ncReady = !camDerivedStale && risk.ok && runCatching',
     '"NC BLOCKED • MODELED COLLISION="',
 ]:
     if marker not in android_main:
@@ -381,7 +381,7 @@ for marker in [
         raise SystemExit(f"offline-first contract missing: {marker}")
 for marker in [
     'setContentView(runtimeHost)',
-    'StudioStartupBootGuard.complete(this)',
+    'StudioStartupBootGuard.complete(this@MainActivity)',
     'scheduleBackgroundOnlineServices()',
     'cm.registerDefaultNetworkCallback(callback)',
 ]:
@@ -429,7 +429,7 @@ for marker in [
     'java.util.concurrent.atomic.AtomicBoolean(false)',
     'onlineAutoCheckRunning.compareAndSet(false,true)',
     'onlineAutoCheckCompleted.set(false)',
-    'renderNetworkState(true,"更新可用")',
+    'renderNetworkState(true,"新版可用 • 點更新套用")',
     'renderNetworkState(true,"更新快速重試")',
     'renderNetworkState(true,"更新待手動重試")',
 ]:
@@ -463,7 +463,7 @@ for marker in [
     'GlassActionButton("維修"',
     'fun showMaintenanceCenter()',
     '"AIG CNC • 維修 / 診斷"',
-    'showApp(startup=null,showWindow=false)',
+    'showApp(showWindow=false)',
     'productionFrame.contentPane',
 ]:
     if marker not in desktop:
@@ -482,7 +482,7 @@ for marker in [
     'onlineAutoRetryScheduled',
     'onlineAutoRetryCount',
     'updateConfig.copy(',
-    'autoDownload=OfflineFirstRuntimeContract.BACKGROUND_AUTO_DOWNLOAD',
+    'autoDownload=updateConfig.autoDownload',
     '"更新快速重試"',
     '"更新待手動重試"',
 ]:

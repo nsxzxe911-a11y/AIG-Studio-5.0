@@ -78,7 +78,7 @@ asset_pack_version = asset_pack_match.group(1)
 library_5x_skin_manifest = read("design/theme/library_5x_real_cam_208/manifest.json")
 require(windows_release, "--win-per-user-install", "WINDOWS_PER_USER_INSTALLER_GATE")
 for needle in (
-    "private val pulseTimer=Timer(90)",
+    "private val pulseTimer=Timer(StudioDesktopRefreshSettings.timerDelayMs())",
     "val topTint=when",
     "val bottomTint=when",
     "isRolloverEnabled = true",
@@ -310,7 +310,7 @@ for needle in (
     "private fun handlePendingPick(p:Vec2):Boolean",
 ):
     require(desktop, needle, "WINDOWS_CAD_CONTROL_POINT_PICK_EDIT")
-require(regression, "CAD_CONTROL_POINT_EDIT_GATE_PASS ENDPOINT CENTER RADIUS ARC_POINT SELECTION_CENTER_XY UNDO_REDO TOL=0.001", "CAD_CONTROL_POINT_REGRESSION")
+require(regression, "CAD_CONTROL_POINT_EDIT_GATE_PASS ENDPOINT CENTER RADIUS ARC_POINT RECT_CORNER_GROUP SELECTION_CENTER_XY UNDO_REDO TOL=0.001", "CAD_CONTROL_POINT_REGRESSION")
 print("CAD_CONTROL_POINT_RUNTIME_GATE_PASS|ANDROID|WINDOWS|ENDPOINT|CENTER|RADIUS|ARC_POINT|SELECTION_CENTER_XY|TWO_PICK_TRIM|TWO_PICK_EXTEND|UNDO_REDO")
 
 for needle in (
@@ -369,8 +369,8 @@ for needle in (
     'parameter("CONTOUR SIDE"',
     'parameter("PATH DIRECTION"',
     'productionCamSettings=productionCamSettings.copy(',
-    'frame,doc,status,"3D",productionCamSettings,productionFixtures,productionToolAssembly',
-    'frame,doc,productionCamSettings,productionFixtures,productionToolAssembly',
+    '"3D",productionCamSettings,productionFixtures,productionToolAssembly',
+    'frame,productionCamDerivedCache',
 ):
     require(desktop, needle, "WINDOWS_CAM_CONTOUR_SIDE_DIRECTION")
 require(regression, "CAM_CONTOUR_SIDE_DIRECTION_GATE_PASS OUTSIDE INSIDE CCW CW RADIUS_COMP 3D_REMOVAL NC_G2_G3", "CAM_CONTOUR_SIDE_DIRECTION_REGRESSION")
@@ -475,7 +475,7 @@ for needle in (
     require(env, needle, "OFFLINE_FIRST_CONTRACT_221")
 for needle in (
     'setContentView(runtimeHost)',
-    'StudioStartupBootGuard.complete(this)',
+    'StudioStartupBootGuard.complete(this@MainActivity)',
     'scheduleBackgroundOnlineServices()',
     'cm.registerDefaultNetworkCallback(callback)',
     'OfflineFirstRuntimeContract.onlineServiceAllowed(true,true)',
@@ -516,7 +516,7 @@ for needle in (
 for needle in (
     'onlineAutoCheckRunning.compareAndSet(false,true)',
     'onlineAutoCheckCompleted.set(false)',
-    'renderNetworkState(true,"更新可用")',
+    'renderNetworkState(true,"新版可用 • 點更新套用")',
     'renderNetworkState(true,"更新快速重試")',
     'renderNetworkState(true,"更新待手動重試")',
 ):
@@ -543,7 +543,7 @@ for needle in (
 for needle in (
     'GlassActionButton("維修"',
     'fun showMaintenanceCenter()',
-    'showApp(startup=null,showWindow=false)',
+    'showApp(showWindow=false)',
     'productionFrame.contentPane',
 ):
     require(desktop, needle, "WINDOWS_INTEGRATED_MAINTENANCE_221")
@@ -598,7 +598,7 @@ for needle in (
     'onlineAutoRetryScheduled',
     'onlineAutoRetryCount',
     'updateConfig.copy(',
-    'autoDownload=OfflineFirstRuntimeContract.BACKGROUND_AUTO_DOWNLOAD',
+    'autoDownload=updateConfig.autoDownload',
     '"更新快速重試"',
     '"更新待手動重試"',
 ):
@@ -767,7 +767,7 @@ for needle in (
     'drawTools.add(button("孔"',
     "CadSnapEngine.snapTo(doc,raw,18.0/pxPerMm,reference=first)",
     "CadSelectionEngine.nearest(doc,p,tolerance)",
-    "CadSelectionEngine.selectionIds(doc,entity)",
+    "CadSelectionEngine.selectionIds(doc,hit)",
 ):
     require(desktop, needle, "WINDOWS_CAD_PRECISION_EDIT_162")
 require(
@@ -958,9 +958,9 @@ for needle in (
     "private fun showFixtureModelEditor()",
     'contentDescription="CAM FIXTURE MODEL EDITOR"',
     'contentDescription="CAM COLLISION LOOKAHEAD"',
-    "MachiningRiskScanner.inspect(cam, stock, camFixtures, camToolAssembly)",
+    "MachiningRiskScanner.inspect(cam, stock, derived.fixtures, derived.toolAssembly)",
     '" • FIXTURE=" + risk.fixtureCoverageWord',
-    "val ncReady = risk.ok && runCatching",
+    "val ncReady = !camDerivedStale && risk.ok && runCatching",
     '"NC BLOCKED • MODELED COLLISION="',
 ):
     require(android, needle, "STUDIO_ANDROID_FIXTURE_RUNTIME_297")
@@ -1621,7 +1621,7 @@ for needle in (
     'parameter("SAFE-Z",DisplayFormat.mm(settings.safeZ)+" mm",LibraryFiveAxisSkin208.safe)',
     'camAction("軸模式",LibraryFiveAxisSkin208.cyan)',
     'arrayOf("3AX","4AX","5AX","6AX")',
-    'frame,doc,status,choice,productionCamSettings,productionFixtures,productionToolAssembly',
+    'frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),choice,productionCamSettings,productionFixtures,productionToolAssembly',
     'toolTipText=LibraryFiveAxisSkin208.SOURCE_MOBILE+" + "+LibraryFiveAxisSkin208.SOURCE_LANDSCAPE',
 ):
     require(desktop, needle, "STUDIO_WINDOWS_LIBRARY_5X_REAL_CAM_SKIN_208")
@@ -1676,7 +1676,7 @@ for needle in (
     'rotaryMode = currentRotaryOperationMode()',
     'rotaryClampProfile = rotaryClampProfile',
     'clampProfile = rotaryClampProfile',
-    'machiningAxisMode=activeAxisMode',
+    'machiningAxisMode=nextMode',
 ):
     require(android, needle, "ROTARY_CLAMP_UI_BINDING")
 
@@ -1936,7 +1936,7 @@ for needle in (
     'arrayOf("Auto", "120 FPS", "90 FPS", "60 FPS", "30 FPS")',
     'private fun showUserSettingsCenter()',
     'private fun showManualRegressionCenter()',
-    '"回歸 / 驗證 • 單一入口"',
+    '"驗證中心 • 單一入口"',
     '"設定中心"',
 ):
     require(android, needle, "STUDIO_309_ANDROID_SETTINGS_HUB")
@@ -1964,7 +1964,7 @@ for needle in (
     'action("AI 智能"){mainCardLayout.show(mainCardHost,"AI");status.text="SETTINGS • AI"}',
 ):
     require(desktop_310, needle, "STUDIO_310_WINDOWS_SETTINGS_ACTIONS")
-if desktop_310.count('action("回歸 / 驗證"){showManualRegressionCenter()}') != 1:
+if desktop_310.count('action("驗證中心"){showManualRegressionCenter()}') != 1:
     raise SystemExit("BLOCKED STUDIO_310_WINDOWS_SETTINGS_DUPLICATE_REGRESSION")
 if 'action("設定中心"){showUserSettingsCenter()}' in desktop_310:
     raise SystemExit("BLOCKED STUDIO_310_WINDOWS_SETTINGS_RECURSIVE_ENTRY")
@@ -1995,7 +1995,7 @@ if "StudioDesktopStartupWindow()" in main_312 or ".show()" in main_312.split("sh
 for needle in (
     'Production Runtime is the first and only visible application surface.',
     'showApp()',
-    'if(showWindow) frame.isVisible = true',
+    'if(showWindow) {',
 ):
     require(desktop_312, needle, "STUDIO_312_WINDOWS_DIRECT_RUNTIME")
 for needle in (
@@ -2035,8 +2035,8 @@ timer_anchor=desktop_313.index('val sharedSyncTimer:Timer?')
 visible_anchor=desktop_313.index('if(showWindow) {')
 if timer_anchor < 0 or visible_anchor < 0:
     raise SystemExit("BLOCKED STUDIO_313_WINDOWS_STARTUP_ORDER")
-timer_region=desktop_313[timer_anchor:visible_anchor]
-if '.apply{isRepeats=true;start()}' in timer_region:
+shared_start_anchor=desktop_313.index('sharedSyncTimer?.start()')
+if shared_start_anchor < visible_anchor:
     raise SystemExit("BLOCKED STUDIO_313_WINDOWS_PREVISIBLE_SHARED_SYNC")
 require(desktop_313, 'sharedSyncTimer?.start()', "STUDIO_313_WINDOWS_POSTVISIBLE_SHARED_SYNC")
 print("STUDIO_STARTUP_RESILIENCE_GATE_PASS|313|HOME_FIRST|REFRESH_POST_DRAW|RECOVERY_NON_FATAL|ROTARY_NON_FATAL|SYNC_POST_VISIBLE|NETWORK_NON_FATAL")
@@ -2058,7 +2058,7 @@ for needle in (
 if ":core:coreRegression" in android_build_314 or ":core:coreRegression" in windows_build_314:
     raise SystemExit("BLOCKED STUDIO_314: build still invokes regression")
 for workflow in (nc_coordinate_314,nc_semantic_314):
-    require(workflow, "REGRESSION_EXECUTION_DISABLED_BY_POLICY_314", "STUDIO_314_REGRESSION_WORKFLOW_OFF")
+    require(workflow, "REGRESSION_EXECUTION_DISABLED_BY_USER_POLICY", "STUDIO_314_REGRESSION_WORKFLOW_OFF")
     require(workflow, "if: ${{ false }}", "STUDIO_314_REGRESSION_WORKFLOW_OFF")
 print("STUDIO_REGRESSION_DOWNGRADE_POLICY_PASS|314|REGRESSION_OFF|BUILD_NO_REGRESSION|DOWNGRADE_OFF|EQUAL_REINSTALL_OFF|SAFETY_SCOPE_FAIL_CLOSED")
 
@@ -2102,7 +2102,7 @@ for needle in (
     require(android_316, needle, "STUDIO_316_ANDROID_STARTUP_VERSION")
 for needle in (
     'action("啟動版本更新 • ON")',
-    'ON • HOME FIRST • NEWER ONLY',
+    '正常 • 背景比對 • NEWER ONLY',
     'STARTUP VERSION • HOME FIRST • VERIFIED NEWER ONLY',
 ):
     require(desktop_316, needle, "STUDIO_316_WINDOWS_STARTUP_VERSION")
@@ -2123,9 +2123,9 @@ for needle in (
     'contentDescription="STARTUP UPDATE PROGRESS"',
     'contentDescription="STARTUP UPDATE EXPLANATION"',
     'showStartupUpdateProgress(',
-    '"有網路 • 正在對照 v"+BuildConfig.VERSION_NAME+" 與最新版本 • UI 可直接使用"',
-    '"目前 v"+BuildConfig.VERSION_NAME+" 已是最新 • 沿用目前介面與設定"',
-    '"安裝後自動使用新版介面"',
+    '"有網路 • 正在對照 v"+BuildConfig.VERSION_NAME+" 與最新版本 • "+startupUpdateElapsedLabel()+" • UI 可直接使用"',
+    '"目前 v"+BuildConfig.VERSION_NAME+" 已是最新 • "+startupUpdateElapsedLabel()+" • 沿用目前介面與設定"',
+    '安裝後自動使用新版介面',
 ):
     require(android_317, needle, "STUDIO_317_ANDROID_UPDATE_PROGRESS")
 if 'if(::startupUpdateProgress.isInitialized) startupUpdateProgress.visibility=View.GONE' not in android_317:
@@ -2154,11 +2154,11 @@ print("STUDIO_STARTUP_UPDATE_TIMING_PASS|318|NORMAL_TARGET_1500MS|DEGRADED_REFER
 web_319 = read("web/main-runtime-preview.html")
 gradle_319 = read("core/build.gradle.kts")
 for needle in (
-    "AIG II 354 / Studio 319",
+    "Main Runtime Web Preview",
     "HOME FIRST",
     "Regression",
     "OFF / LOCKED",
-    "STARTUP UPDATE PROGRESS",
+    "啟動版本更新",
     "Web Preview",
 ):
     require(web_319, needle, "STUDIO_319_WEB_MAIN_RUNTIME")
@@ -2175,7 +2175,7 @@ web_320 = read("web/main-runtime-preview.html")
 gradle_320 = read("core/build.gradle.kts")
 coord_320 = read(".github/workflows/nc-coordinate-drift-gate.yml")
 semantic_320 = read(".github/workflows/nc-semantic-timeline-gate.yml")
-require(web_320, "AIG II 355 / Studio 320", "STUDIO_320_WEB_VERSION")
+require(web_320, "WEB RUNTIME PREVIEW", "STUDIO_320_WEB_VERSION")
 require(gradle_320, 'enabled = false', "STUDIO_320_REGRESSION_TASK_OFF")
 for workflow in (coord_320,semantic_320):
     require(workflow, "REGRESSION_EXECUTION_DISABLED_BY_USER_POLICY", "STUDIO_320_REGRESSION_WORKFLOW_OFF")
