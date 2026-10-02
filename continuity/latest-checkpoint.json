@@ -3,7 +3,7 @@
   "product": "AIG Studio 5.0",
   "version": "308.0.0",
   "branch": "main",
-  "recorded_source_head": "PENDING_308_RENDER_SOURCE",
+  "recorded_source_head": "PENDING_308_RENDER_HOSTED_SOURCE",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "EXECUTE_UNTIL_PASS",
   "departments": {
@@ -48,7 +48,7 @@
     ]
   },
   "next_action": "Validate Studio 308 adaptive 1080P/2K/3K/4K + 30/60/90/120Hz + RGB color-tolerance rendering on Hosted Semantic/UI compile before rebinding AIG-II.",
-  "note": "Studio 308 upgrades the drawing/rendering compatibility layer only; CAD/CAM/SIM/NC geometry, 0.001 mm precision and CNC safety semantics remain unchanged.",
+  "note": "Studio 308 rendering upgrade: safe default 60Hz, adaptive 30/60/90/120Hz, 1080P/2K/3K/4K, RGB cross-platform tolerance, verified button visual hot replacement with callback stability, four-layer glass depth. CNC geometry/precision/safety unchanged.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -183,6 +183,13 @@
     "animation_luma_swing_max": 0.12,
     "android_windows_shared_contract": true,
     "full_color_dither": true,
-    "cad_render_engine": "CAD_RENDER_V3_4K_120HZ"
+    "cad_render_engine": "CAD_RENDER_V3_4K_120HZ",
+    "default_startup_hz": 60,
+    "startup_promotion_delay_ms": 1800,
+    "adaptive_high_refresh_opt_in": true,
+    "button_visual_hot_replace": true,
+    "button_callback_stable": true,
+    "button_verified_asset_fallback": true,
+    "glass_depth_layers": 4
   }
 }
