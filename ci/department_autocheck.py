@@ -2,10 +2,10 @@
 import json
 import re
 from pathlib import Path
+from audit_contract import DEPARTMENTS
 
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/"build"/"department-autocheck.json"
-DEPARTMENTS=["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","WEB","PRO_AUDIT"]
 findings=[]
 
 def add(dept,code,path,detail,hint,severity="BLOCKING"):
