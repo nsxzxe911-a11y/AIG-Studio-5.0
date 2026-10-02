@@ -3001,6 +3001,7 @@ private fun showUnifiedMachiningEditor(
     frame:JFrame,
     doc:DrawingDocument,
     status:JLabel,
+    initialResult:Machining3DResult,
     initialMode:String="3AX",
     camSettings:CamSettings=CamSettings(),
     fixtures:List<FixtureObstacle> = emptyList(),
@@ -3011,9 +3012,7 @@ private fun showUnifiedMachiningEditor(
     require(snapshot.entities.isNotEmpty() || camSettings.pathMode==CamPathMode.MANUAL){
         "UNIFIED WORKSPACE BLOCKED: AUTO needs CAD; MANUAL may run without CAD"
     }
-    var result=Machining3DEngine.build(
-        snapshot,camSettings,fixtures=fixtures,toolAssembly=toolAssembly
-    )
+    var result=initialResult
     var axisA=0.0
     var axisB=0.0
     var axisMode="3AX"
@@ -4049,7 +4048,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         }
         action("3D SIM"){
             runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,"3D",productionCamSettings,productionFixtures,productionToolAssembly
+                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"3D",productionCamSettings,productionFixtures,productionToolAssembly
             )}
                 .onSuccess{dlg.dispose()}
                 .onFailure{status.text="MANUAL 3D SIM BLOCKED • "+(it.message?:"error")}
@@ -4189,10 +4188,43 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             }
         }
         val wasStale=productionCamIsStale()
-        val result=if(forceRecalculate || productionCamDerivedCache==null) {
+        if(!forceRecalculate && productionCamDerivedCache==null) {
+            return JPanel(BorderLayout(8,8)).apply {
+                name="CAM_CARD"
+                background=StudioDesktopProductionTheme.background
+                border=BorderFactory.createEmptyBorder(24,24,24,24)
+                add(JLabel("CAM STALE • 尚未建立刀路 • 開啟 CAM 不會自動重算").apply {
+                    foreground=StudioDesktopProductionTheme.warning
+                    font=font.deriveFont(Font.BOLD,18f)
+                    horizontalAlignment=SwingConstants.CENTER
+                },BorderLayout.CENTER)
+                add(AdaptiveGlassToolbar().apply {
+                    add(GlassActionButton("重算",StudioDesktopProductionTheme.accent).apply {
+                        addActionListener {
+                            runCatching {
+                                mainCardHost.components.filter{it.name=="CAM_CARD"}.forEach{mainCardHost.remove(it)}
+                                mainCardHost.add(buildProductionCamPanel(true),"CAM")
+                                mainCardLayout.show(mainCardHost,"CAM")
+                                mainCardHost.revalidate();mainCardHost.repaint()
+                            }.onSuccess {
+                                status.text="CAM RECALCULATED • FRESH • SIM/NC READY FOR REVALIDATION"
+                            }.onFailure {
+                                status.text="CAM RECALC BLOCKED • "+(it.message?:"error")
+                            }
+                        }
+                    })
+                    add(GlassActionButton("設定",StudioDesktopProductionTheme.cutting).apply {
+                        addActionListener {
+                            status.text="CAM SETTINGS • 可修改 • 修改後仍需按重算"
+                        }
+                    })
+                },BorderLayout.SOUTH)
+            }
+        }
+        val result=if(forceRecalculate) {
             rebuildProductionCamDerived()
         } else {
-            productionCamDerivedCache ?: error("CAM derived cache missing")
+            productionCamDerivedCache ?: error("CAM STALE • PRESS 重算")
         }
         val stale=productionCamIsStale()
         val cam=result.cam
@@ -4329,7 +4361,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 return@camAction
             }
             runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,"3D",productionCamSettings,productionFixtures,productionToolAssembly
+                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"3D",productionCamSettings,productionFixtures,productionToolAssembly
             )}
                 .onFailure{status.text="3D SIM BLOCKED • "+(it.message?:"error")}
         }
@@ -4350,7 +4382,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             if(choice!=null){
                 if(choice=="6AX") showSixAxisRuntimeStage()
                 else runCatching{showUnifiedMachiningEditor(
-                    frame,doc,status,choice,productionCamSettings,productionFixtures,productionToolAssembly
+                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),choice,productionCamSettings,productionFixtures,productionToolAssembly
                 )}
                     .onFailure{status.text=choice+" BLOCKED • "+(it.message?:"error")}
             }
@@ -4609,17 +4641,17 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 item("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="CAD • PRODUCTION UI"}
                 item("CAM"){showProductionCam()}
                 item("SIM"){runCatching{showUnifiedMachiningEditor(
-                    frame,doc,status,ProductionUiSwitchContract.runtimeTarget("SIM"),
+                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),ProductionUiSwitchContract.runtimeTarget("SIM"),
                     productionCamSettings,productionFixtures,productionToolAssembly
                 )}.onFailure{status.text="SIM BLOCKED • "+(it.message?:"error")}}
                 item("3AX"){runCatching{showUnifiedMachiningEditor(
-                    frame,doc,status,"3AX",productionCamSettings,productionFixtures,productionToolAssembly
+                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"3AX",productionCamSettings,productionFixtures,productionToolAssembly
                 )}.onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}}
                 item("4AX"){runCatching{showUnifiedMachiningEditor(
-                    frame,doc,status,"4AX",productionCamSettings,productionFixtures,productionToolAssembly
+                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"4AX",productionCamSettings,productionFixtures,productionToolAssembly
                 )}.onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}}
                 item("5AX"){runCatching{showUnifiedMachiningEditor(
-                    frame,doc,status,"5AX",productionCamSettings,productionFixtures,productionToolAssembly
+                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"5AX",productionCamSettings,productionFixtures,productionToolAssembly
                 )}.onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}}
                 item("NC"){runCatching{showNcEditor(
                     frame,doc,productionCamSettings,productionFixtures,productionToolAssembly
@@ -4699,7 +4731,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     })
     moduleButtons.add(productionUiButton("SIM", Color(139,92,246)) {
         runCatching { showUnifiedMachiningEditor(
-            frame,doc,status,ProductionUiSwitchContract.runtimeTarget("SIM"),
+                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),ProductionUiSwitchContract.runtimeTarget("SIM"),
             productionCamSettings,productionFixtures,productionToolAssembly
         ) }
             .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("SIM")+" • "+MasterRuntimeChainContract.uiLabel() }
@@ -4886,9 +4918,12 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         add(homeLaunch("CAD",StudioDesktopProductionTheme.accent){productionUiButtons["CAD"]?.doClick()})
         add(homeLaunch("CAM",StudioDesktopProductionTheme.cutting){productionUiButtons["CAM"]?.doClick()})
         add(homeLaunch("SIM",Color(139,92,246)){productionUiButtons["SIM"]?.doClick()})
-        add(homeLaunch("3AX",Color(59,130,246)){runCatching{showUnifiedMachiningEditor(frame,doc,status,"3AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}})
-        add(homeLaunch("4AX",Color(245,158,11)){runCatching{showUnifiedMachiningEditor(frame,doc,status,"4AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}})
-        add(homeLaunch("5AX",Color(236,72,153)){runCatching{showUnifiedMachiningEditor(frame,doc,status,"5AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}})
+        add(homeLaunch("3AX",Color(59,130,246)){runCatching{showUnifiedMachiningEditor(
+                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"3AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}})
+        add(homeLaunch("4AX",Color(245,158,11)){runCatching{showUnifiedMachiningEditor(
+                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"4AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}})
+        add(homeLaunch("5AX",Color(236,72,153)){runCatching{showUnifiedMachiningEditor(
+                frame,doc,status,productionCamDerivedCache ?: error("CAM STALE • PRESS 重算"),"5AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}})
         add(homeLaunch("NC",Color(80,170,255)){productionUiButtons["NC"]?.doClick()})
         add(homeLaunch("AI",Color(139,92,246)){productionUiButtons["AI"]?.doClick()})
     }

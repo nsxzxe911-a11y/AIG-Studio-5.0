@@ -2697,13 +2697,28 @@ class MainActivity : Activity() {
 
     private fun showCamWorkstation(forceRecalculate:Boolean=false) {
         val currentSnapshot = cad.snapshot()
-        if ((forceRecalculate || camDerivedCache==null) &&
+        if (forceRecalculate &&
             currentSnapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
             Toast.makeText(this, "REAL CAM BLOCKED • AUTO 模式需要 CAD；可切 MANUAL 直接編走刀", Toast.LENGTH_LONG).show()
             return
         }
 
-        if(forceRecalculate || camDerivedCache==null) {
+        if(!forceRecalculate && camDerivedCache==null) {
+            AlertDialog.Builder(this)
+                .setTitle("AIG CNC • CAM")
+                .setMessage(
+                    "CAM STALE • 尚未建立刀路\n"+
+                    "開啟 CAM 不會自動重算。\n"+
+                    "請按「重算」建立目前 CAD / CAM 設定對應的刀路。"
+                )
+                .setPositiveButton("重算"){_,_->showCamWorkstation(forceRecalculate=true)}
+                .setNeutralButton("設定"){_,_->showCamSettingsDialog()}
+                .setNegativeButton("關閉",null)
+                .show()
+            return
+        }
+
+        if(forceRecalculate) {
             val stockForBuild=runCatching {
                 Stock3D.fromSnapshot(
                     currentSnapshot,stockMarginMm,stockThicknessMm,
@@ -3451,52 +3466,12 @@ class MainActivity : Activity() {
     }
 
     private fun showUnifiedMachiningWorkspace(initialMode:String) {
-        if(camDerivedCache!=null && camDerivedStale) {
+        if(camDerivedStale || camDerivedCache==null) {
             Toast.makeText(this,"SIM / 3AX / 4AX / 5AX BLOCKED • CAM STALE • 請先按 CAM「重算」",Toast.LENGTH_LONG).show()
             return
         }
-        val snapshot=cad.snapshot()
-        if(snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO){
-            Toast.makeText(this,"整合加工工作站：AUTO 需要 CAD；MANUAL 可直接走刀",Toast.LENGTH_LONG).show()
-            return
-        }
-        val result=runCatching {
-            Machining3DEngine.build(
-                snapshot,camSettings,
-                Stock3D.fromSnapshot(
-                    snapshot,stockMarginMm,stockThicknessMm,
-                    if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
-                ),
-                axisA,axisB,
-                fixtures=camFixtures,
-                toolAssembly=camToolAssembly
-            )
-        }.getOrElse {
-            Toast.makeText(this,"整合工作站 BLOCKED: "+(it.message?:"3D/CAM build error"),Toast.LENGTH_LONG).show()
-            return
-        }
-        val generatedNc=runCatching {
-            val base=CncPost.generate(
-                result.cam,
-                FanucPostSettings(
-                    workOffset=workOffset,
-                    axisA=axisA,
-                    axisB=axisB,
-                    controller=controllerProfile,
-                    coordinateMode=ncCoordinateMode,
-                    originTransformMode=ncOriginTransformMode,
-                    cutterCompensation=ncCutterCompensation,
-                    cutterCompRegister=ncCutterCompRegister,
-                    cutterCompValueMm=ncCutterCompValueMm,
-                    rotaryMode=currentRotaryOperationMode(),
-                    rotaryClampProfile=rotaryClampProfile
-                )
-            )
-            if(drillCycleBlock.isBlank()) base else FanucNc.insertBeforeProgramEnd(base,drillCycleBlock)
-        }.getOrElse {
-            Toast.makeText(this,"NC POST BLOCKED • 同頁 3D/軸向仍可檢視 • "+(it.message?:"error"),Toast.LENGTH_LONG).show()
-            ""
-        }
+        val result=camDerivedCache ?: return
+        val generatedNc=unifiedNcDraft.orEmpty()
 
         val widthDp=resources.configuration.screenWidthDp.coerceAtLeast(1)
         val heightDp=resources.configuration.screenHeightDp.coerceAtLeast(1)
@@ -4522,27 +4497,14 @@ class MainActivity : Activity() {
     }
 
     private fun showNcEditDialog() {
-        if(camDerivedCache!=null && camDerivedStale) {
+        if(camDerivedStale || camDerivedCache==null) {
             Toast.makeText(this,"NC BLOCKED • CAM STALE • 請先在 CAM 按「重算」",Toast.LENGTH_LONG).show()
             return
         }
-        val snapshot = cad.snapshot()
-        if (snapshot.entities.isEmpty() && camSettings.pathMode==CamPathMode.AUTO) {
-            Toast.makeText(this, "NC EDIT：AUTO 需要 CAD；MANUAL 可直接 Post", Toast.LENGTH_LONG).show()
-            return
-        }
-        val cam = runCatching {
-            CamModel.fromCad(System.currentTimeMillis(), snapshot, camSettings, axisA, axisB, axisC=axisC)
-        }
-            .getOrElse {
-                Toast.makeText(this, "CAM 產生失敗: " + it.message, Toast.LENGTH_LONG).show()
-                return
-            }
-        val stock = Stock3D.fromSnapshot(
-            snapshot,stockMarginMm,stockThicknessMm,
-            if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
-        )
-        val risk = MachiningRiskScanner.inspect(cam, stock, camFixtures, camToolAssembly)
+        val derived=camDerivedCache ?: return
+        val cam=derived.cam
+        val stock=derived.stock
+        val risk = MachiningRiskScanner.inspect(cam, stock, derived.fixtures, derived.toolAssembly)
         if(!risk.ok) {
             Toast.makeText(
                 this,

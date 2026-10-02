@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "333.0.0",
+  "version": "334.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 333. Settings now labels every adjustable option with 可改 and an explicit default value; locked controls show fixed values. Continue CAM/SIM/NC freshness navigation so stale derived results cannot be mistaken for usable output.",
-  "note": "Studio 333: completed settings affordance labeling on Android/Windows. Editable theme/FPS/precision/performance/RGB options show explicit defaults; Regression and CNC Safety display locked fixed values. AIG-II Windows parity will bind this runtime. No APK/EXE launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 334. CAM/SIM/AXIS/NC navigation no longer performs hidden CAM rebuilds: CAM first-open shows STALE until explicit 重算, unified machining consumes explicit rebuilt cache, and NC editor consumes the same rebuilt CAM cache. Next bind AIG-II and remove its remaining hidden buildCam/simulate/post paths.",
+  "note": "Studio 334: removed hidden CAM recalculation from Android/Windows navigation. Android CAM first-open shows STALE and explicit 重算; unified SIM/3AX/4AX/5AX requires a fresh cached CAM result; NC edit consumes that cache instead of recreating CamModel. Windows CAM card no longer builds on first open, and unified editor now requires the explicitly rebuilt productionCamDerivedCache. No APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -476,5 +476,14 @@
     "rgb_brightness_default_percent": 65,
     "regression_fixed": "OFF",
     "cnc_safety_fixed": "ON"
+  },
+  "derived_recalc_334": {
+    "cam_page_open_auto_rebuild": false,
+    "unified_page_open_auto_cam": false,
+    "nc_open_auto_cam": false,
+    "explicit_cam_rebuild_only": true,
+    "windows_unified_requires_cached_result": true,
+    "android_unified_requires_cached_result": true,
+    "regression_auto": "OFF_LOCKED"
   }
 }
