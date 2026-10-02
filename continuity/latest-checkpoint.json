@@ -3,7 +3,7 @@
   "product": "AIG Studio 5.0",
   "version": "306.0.0",
   "branch": "main",
-  "recorded_source_head": "PENDING_306_SOURCE_COMMIT",
+  "recorded_source_head": "a55c5092324ef644e07e59bf3bd6260ff9c2933f",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "EXECUTE_UNTIL_PASS",
   "departments": {
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "AIG-II 340 must bind the Studio 305 checkpoint exact SHA while retaining tested source 42c2dc... as hosted Semantic evidence. Heavy APK/EXE/device release proof remains separate and manual.",
-  "note": "Studio 305 adds PRO_AUDIT as the fifteenth department for top-tier professional cross-department audit, repair routing, and re-verification. It does not override safety or evidence gates.",
+  "next_action": "AIG-II 341 must bind this Studio 306 checkpoint exact SHA. Keep heavy APK/EXE/device validation manual and separate from source/hosted Semantic evidence.",
+  "note": "Studio 306 keeps all 15 departments active and upgrades PRO_AUDIT with stale-gate detection, machine-readable audit reporting, workflow self-trigger coverage, and clean evidence-class separation.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -66,7 +66,7 @@
   },
   "department_autocheck": {
     "script": "ci/department_autocheck.py",
-    "last_source_review": "PENDING_STUDIO306_HOSTED_SOURCE_REVIEW",
+    "last_source_review": "HOSTED_SEMANTIC_PRO_AUDIT_15_DEPARTMENT_COVERAGE_STUDIO306",
     "no_early_exit": true,
     "output": "build/department-autocheck.json"
   },
@@ -119,23 +119,27 @@
     "report": "build/pro-audit-report.json",
     "report_schema": "aig-pro-audit-report-v2",
     "workflow_trigger_self_audit": true,
-    "evidence_scope": "SOURCE_SEMANTIC_ONLY_UNTIL_HOSTED_RUN_COMPLETES",
+    "evidence_scope": "HOSTED_SOURCE_SEMANTIC_PASS",
     "binary_device_release_proof": "NOT_CLAIMED"
   },
   "professional_audit": {
     "script": "ci/pro_audit.py",
     "display_name": "頂級專業軟體極速審核修建部門",
     "mode": "CROSS_DEPARTMENT_AUDIT_REPAIR_REVERIFY",
-    "status": "STUDIO305_PRIOR_HOSTED_BASELINE_306_PENDING",
-    "source_review": "15_OF_15",
+    "status": "SOURCE_AND_HOSTED_SEMANTIC_PASS",
+    "source_review": "15_DEPARTMENT_PRO_AUDIT_COVERAGE",
     "hosted_evidence": {
-      "source_sha": "42c2dc3662570fbda35eb90951b28fa3375fe23e",
+      "source_sha": "a55c5092324ef644e07e59bf3bd6260ff9c2933f",
       "workflow": "NC Semantic Timeline Gate",
-      "run_id": 36954106963,
+      "run_id": 36956026627,
       "whole_workflow": "SUCCESS",
       "pro_audit_step": "PASS",
-      "runtime_surface_gate": "PASS",
-      "note": "This proves hosted Semantic scope for source 42c2dc...; it is not APK/EXE/device release proof."
+      "stale_gate_detector": "PASS",
+      "machine_readable_report": "PASS",
+      "core_regression_three_passes": "PASS",
+      "android_windows_ui_compile": "PASS",
+      "binary_device_release_proof": "NOT_CLAIMED",
+      "note": "Hosted source/Semantic/UI-compile evidence only; no APK/EXE install or physical-device launch claim."
     }
   }
 }
