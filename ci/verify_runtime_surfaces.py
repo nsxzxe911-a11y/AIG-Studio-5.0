@@ -2041,3 +2041,24 @@ if '.apply{isRepeats=true;start()}' in timer_region:
 require(desktop_313, 'sharedSyncTimer?.start()', "STUDIO_313_WINDOWS_POSTVISIBLE_SHARED_SYNC")
 print("STUDIO_STARTUP_RESILIENCE_GATE_PASS|313|HOME_FIRST|REFRESH_POST_DRAW|RECOVERY_NON_FATAL|ROTARY_NON_FATAL|SYNC_POST_VISIBLE|NETWORK_NON_FATAL")
 
+# Studio 314 regression-off + downgrade-off policy
+rolling_314 = read("core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt")
+android_build_314 = read("build_android_release.sh")
+windows_build_314 = read("build_windows_native.ps1")
+nc_coordinate_314 = read(".github/workflows/nc-coordinate-drift-gate.yml")
+nc_semantic_314 = read(".github/workflows/nc-semantic-timeline-gate.yml")
+for needle in (
+    "REGRESSION_EXECUTION_ENABLED=false",
+    "ALLOW_DOWNGRADE=false",
+    "ALLOW_EQUAL_VERSION_REINSTALL=false",
+    "compareVersions(candidateVersion,currentBaseline)>0",
+    "!cncRegressionRequired",
+):
+    require(rolling_314, needle, "STUDIO_314_FORWARD_ONLY_NO_REGRESSION")
+if ":core:coreRegression" in android_build_314 or ":core:coreRegression" in windows_build_314:
+    raise SystemExit("BLOCKED STUDIO_314: build still invokes regression")
+for workflow in (nc_coordinate_314,nc_semantic_314):
+    require(workflow, "REGRESSION_EXECUTION_DISABLED_BY_POLICY_314", "STUDIO_314_REGRESSION_WORKFLOW_OFF")
+    require(workflow, "if: ${{ false }}", "STUDIO_314_REGRESSION_WORKFLOW_OFF")
+print("STUDIO_REGRESSION_DOWNGRADE_POLICY_PASS|314|REGRESSION_OFF|BUILD_NO_REGRESSION|DOWNGRADE_OFF|EQUAL_REINSTALL_OFF|SAFETY_SCOPE_FAIL_CLOSED")
+
