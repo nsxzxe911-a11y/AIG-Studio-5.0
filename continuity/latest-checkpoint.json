@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "329.0.0",
+  "version": "330.0.0",
   "branch": "main",
   "recorded_source_head": "e1211cb2fb8dfda403d8a965dfda97310ab2bb2d",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Continue forward-only from Studio 329. Important runtime/release state is now visible directly in Android and Windows Settings: version, HOME-first, engineering-shell-first OFF, offline mode, update policy, FPS, precision, regression lock, CNC safety core, CAD edit guards, array cap, and current device-evidence status.",
-  "note": "Studio 329: Settings Center reorganized as status-first UI. Android Settings is scrollable. Important operational state is shown explicitly instead of being hidden in checkpoint text. Current binary/device evidence remains PENDING and is displayed as such; no APK/EXE launch PASS claimed.",
+  "next_action": "Continue forward-only from Studio 330. Undo/Redo selection continuity is repaired and Settings now classifies status into pending issues, startup/runtime, CAD/geometry, NC/safety, and update/verification. Next priority is actual binary launch evidence, then CAM/SIM field continuity.",
+  "note": "Studio 330: History now returns valid selection outcomes. DELETE undo reselects restored geometry; COPY/OFFSET/ARRAY redo selects generated geometry; Replace commands retain affected live IDs; topology-only history preserves live selection. Settings is categorized so pending device evidence is immediately visible. Automatic regression remains OFF/LOCKED. No APK/EXE launch PASS claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -419,5 +419,20 @@
     "array_limit_visible": true,
     "current_binary_evidence": "PENDING",
     "android_scrollable": true
-  }
+  },
+  "cad_history_330": {
+    "delete_undo_reselects": true,
+    "delete_redo_clears": true,
+    "add_redo_selects_generated": true,
+    "replace_history_selects_live_targets": true,
+    "topology_history_preserves_live_selection": true,
+    "ghost_selection_ids": "FILTERED"
+  },
+  "settings_categories_330": [
+    "ISSUES_PENDING",
+    "STARTUP_RUNTIME",
+    "CAD_GEOMETRY",
+    "NC_SAFETY",
+    "UPDATE_VERIFICATION"
+  ]
 }

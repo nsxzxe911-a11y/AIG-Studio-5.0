@@ -2085,12 +2085,14 @@ class MainActivity : Activity() {
             orientation=LinearLayout.VERTICAL
             setPadding(dp(16),dp(10),dp(16),dp(8))
         }
-        box.addView(TextView(this).apply {
-            text="重要狀態"
-            setTextColor(StudioProductionTheme.accent)
-            textSize=15f
-            setPadding(dp(4),dp(2),dp(4),dp(8))
-        })
+        fun section(title:String) {
+            box.addView(TextView(this).apply {
+                text=title
+                setTextColor(StudioProductionTheme.accent)
+                textSize=14f
+                setPadding(dp(4),dp(12),dp(4),dp(5))
+            })
+        }
         fun importantRow(label:String,value:String,color:Int=StudioProductionTheme.text) {
             box.addView(LinearLayout(this).apply {
                 orientation=LinearLayout.HORIZONTAL
@@ -2100,28 +2102,41 @@ class MainActivity : Activity() {
                     text=label
                     setTextColor(0xFFA0BED2.toInt())
                     textSize=11.5f
-                },LinearLayout.LayoutParams(0,-2,0.46f))
+                },LinearLayout.LayoutParams(0,-2,0.42f))
                 addView(TextView(this@MainActivity).apply {
                     text=value
                     setTextColor(color)
                     textSize=11.5f
                     gravity=Gravity.END
-                },LinearLayout.LayoutParams(0,-2,0.54f))
+                },LinearLayout.LayoutParams(0,-2,0.58f))
             })
         }
+
+        section("⚠ 問題 / 待驗證")
+        importantRow("APK / EXE 真啟動","待驗證 • 尚未宣告 PASS",StudioProductionTheme.warning)
+        importantRow("Android / Windows 實機一致","待驗證",StudioProductionTheme.warning)
+        importantRow("CAM / SIM / 3AX~5AX 動態證據","待真機驗證",StudioProductionTheme.warning)
+
+        section("啟動 / Runtime")
         importantRow("目前版本",BuildConfig.VERSION_NAME,StudioProductionTheme.accent)
-        importantRow("啟動介面","Production HOME FIRST",0xFF63FF9D.toInt())
-        importantRow("工程殼首畫面","OFF",0xFF63FF9D.toInt())
-        importantRow("離線使用","ON • 直接用已安裝版本",0xFF63FF9D.toInt())
-        importantRow("版本更新","背景比對 • NEWER ONLY",StudioProductionTheme.accent)
-        importantRow("FPS",fpsMode+" • 預設 60",StudioProductionTheme.text)
-        importantRow("座標精度",precision+" mm • Master 0.000",StudioProductionTheme.text)
-        importantRow("NC 輸出精度",ncPrecision+" mm",StudioProductionTheme.text)
-        importantRow("Regression","OFF / LOCKED",StudioProductionTheme.warning)
-        importantRow("CNC 安全核心","ON / LOCKED",StudioProductionTheme.warning)
-        importantRow("CAD 編輯防護","0.001 • 原子預檢 • RECT 群組",StudioProductionTheme.text)
-        importantRow("ARRAY 上限","10,000 新幾何",StudioProductionTheme.text)
-        importantRow("本版真機證據","PENDING • 尚未宣告 APK/EXE PASS",StudioProductionTheme.warning)
+        importantRow("首畫面","正常 • Production HOME FIRST",0xFF63FF9D.toInt())
+        importantRow("工程殼首畫面","正常 • OFF",0xFF63FF9D.toInt())
+        importantRow("離線使用","正常 • 已安裝版本直入",0xFF63FF9D.toInt())
+
+        section("CAD / 幾何")
+        importantRow("Undo / Redo 選取","正常 • selection 跟隨歷史",0xFF63FF9D.toInt())
+        importantRow("座標精度",precision+" mm • Master 0.000")
+        importantRow("編輯防護","原子預檢 • RECT 群組 • 無幽靈 ID")
+        importantRow("ARRAY 上限","10,000 新幾何")
+
+        section("NC / 安全")
+        importantRow("NC 輸出精度",ncPrecision+" mm")
+        importantRow("CNC 安全核心","鎖定 • ON",StudioProductionTheme.warning)
+
+        section("更新 / 驗證")
+        importantRow("版本更新","正常 • 背景比對 • NEWER ONLY",StudioProductionTheme.accent)
+        importantRow("FPS",fpsMode+" • 預設 60")
+        importantRow("Regression","鎖定 • OFF",StudioProductionTheme.warning)
 
         box.addView(TextView(this).apply {
             text="設定功能"
@@ -5724,18 +5739,31 @@ class CadView(
         sceneRevision++
         invalidate()
     }
+    private fun applyHistorySelection(ids:Set<EntityId>?) {
+        val live=doc.all().map{it.id}.toSet()
+        if(ids!=null) {
+            selectedIds.clear()
+            selectedIds.addAll(ids.filter{it in live})
+        } else {
+            selectedIds.retainAll(live)
+        }
+    }
     fun undo() {
-        val geometryChanged = history.undoWithEffect() ?: return
-        firstPoint = null; arcCenter=null; arcStart=null; selectedIds.clear(); sceneRevision++
+        val outcome = history.undoOutcome() ?: return
+        firstPoint = null; arcCenter=null; arcStart=null
+        applyHistorySelection(outcome.selectionIds)
+        sceneRevision++
         onProjectChanged()
-        if (geometryChanged) onGeometryChanged()
+        if (outcome.geometryMutation) onGeometryChanged()
         invalidate()
     }
     fun redo() {
-        val geometryChanged = history.redoWithEffect() ?: return
-        firstPoint = null; arcCenter=null; arcStart=null; selectedIds.clear(); sceneRevision++
+        val outcome = history.redoOutcome() ?: return
+        firstPoint = null; arcCenter=null; arcStart=null
+        applyHistorySelection(outcome.selectionIds)
+        sceneRevision++
         onProjectChanged()
-        if (geometryChanged) onGeometryChanged()
+        if (outcome.geometryMutation) onGeometryChanged()
         invalidate()
     }
     fun toggleSnap() {

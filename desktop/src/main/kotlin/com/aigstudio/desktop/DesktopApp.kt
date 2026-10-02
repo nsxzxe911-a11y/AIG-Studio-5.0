@@ -675,16 +675,28 @@ private class CadPanel(
         status("CAD cleared")
     }
 
+    private fun applyHistorySelection(ids:Set<EntityId>?) {
+        val live=doc.all().map{it.id}.toSet()
+        if(ids!=null) {
+            selectedIds.clear()
+            selectedIds.addAll(ids.filter{it in live})
+        } else {
+            selectedIds.retainAll(live)
+        }
+    }
+
     fun undoEdit() {
-        val effect=history.undoWithEffect() ?: return
-        selectedIds.clear();first=null;arcCenter=null;arcStart=null;repaint()
-        status("UNDO • "+if(effect)"GEOMETRY • CAM/SIM/NC REBUILD" else "TOPOLOGY ONLY")
+        val outcome=history.undoOutcome() ?: return
+        applyHistorySelection(outcome.selectionIds)
+        first=null;arcCenter=null;arcStart=null;repaint()
+        status("UNDO • "+if(outcome.geometryMutation)"GEOMETRY • selected="+selectedIds.size+" • CAM/SIM/NC REBUILD" else "TOPOLOGY ONLY • selected="+selectedIds.size)
     }
 
     fun redoEdit() {
-        val effect=history.redoWithEffect() ?: return
-        selectedIds.clear();first=null;arcCenter=null;arcStart=null;repaint()
-        status("REDO • "+if(effect)"GEOMETRY • CAM/SIM/NC REBUILD" else "TOPOLOGY ONLY")
+        val outcome=history.redoOutcome() ?: return
+        applyHistorySelection(outcome.selectionIds)
+        first=null;arcCenter=null;arcStart=null;repaint()
+        status("REDO • "+if(outcome.geometryMutation)"GEOMETRY • selected="+selectedIds.size+" • CAM/SIM/NC REBUILD" else "TOPOLOGY ONLY • selected="+selectedIds.size)
     }
 
     private fun applyGeometry(label:String, command:Command) {
@@ -4401,24 +4413,49 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         }
         action("AI 智能"){mainCardLayout.show(mainCardHost,"AI");status.text="SETTINGS • AI"}
 
-        val important=JPanel(GridLayout(0,2,6,5)).apply{
+        fun statusGroup(title:String,rows:List<Triple<String,String,Color>>)=JPanel(BorderLayout(4,4)).apply{
             background=StudioDesktopProductionTheme.background
-            fun row(label:String,value:String,color:Color=StudioDesktopProductionTheme.text){
-                add(JLabel(label).apply{foreground=Color(160,190,210)})
-                add(JLabel(value).apply{foreground=color})
-            }
-            row("目前版本",desktopVersionName(),StudioDesktopProductionTheme.accent)
-            row("啟動介面","Production HOME FIRST",Color(99,255,157))
-            row("工程殼首畫面","OFF",Color(99,255,157))
-            row("離線使用","ON • 已安裝版本",Color(99,255,157))
-            row("版本更新","背景比對 • NEWER ONLY",StudioDesktopProductionTheme.accent)
-            row("FPS",StudioDesktopRefreshSettings.mode()+" • 預設 60")
-            row("座標 / 精度","0.001 mm • Master 0.000")
-            row("Regression","OFF / LOCKED",StudioDesktopProductionTheme.warning)
-            row("CNC 安全核心","ON / LOCKED",StudioDesktopProductionTheme.warning)
-            row("CAD 編輯防護","0.001 • 原子預檢 • RECT 群組")
-            row("ARRAY 上限","10,000 新幾何")
-            row("本版真機證據","PENDING • 未宣告 APK/EXE PASS",StudioDesktopProductionTheme.warning)
+            border=BorderFactory.createEmptyBorder(4,0,6,0)
+            add(JLabel(title).apply{
+                foreground=StudioDesktopProductionTheme.accent
+                font=font.deriveFont(Font.BOLD,13f)
+            },BorderLayout.NORTH)
+            add(JPanel(GridLayout(0,2,6,4)).apply{
+                background=StudioDesktopProductionTheme.background
+                rows.forEach{(label,value,color)->
+                    add(JLabel(label).apply{foreground=Color(160,190,210)})
+                    add(JLabel(value).apply{foreground=color})
+                }
+            },BorderLayout.CENTER)
+        }
+        val important=JPanel().apply{
+            layout=BoxLayout(this,BoxLayout.Y_AXIS)
+            background=StudioDesktopProductionTheme.background
+            add(statusGroup("⚠ 問題 / 待驗證",listOf(
+                Triple("APK / EXE 真啟動","待驗證 • 未宣告 PASS",StudioDesktopProductionTheme.warning),
+                Triple("Android / Windows 實機一致","待驗證",StudioDesktopProductionTheme.warning),
+                Triple("CAM / SIM / 3AX~5AX 動態證據","待真機驗證",StudioDesktopProductionTheme.warning)
+            )))
+            add(statusGroup("啟動 / Runtime",listOf(
+                Triple("目前版本",desktopVersionName(),StudioDesktopProductionTheme.accent),
+                Triple("首畫面","正常 • Production HOME FIRST",Color(99,255,157)),
+                Triple("工程殼首畫面","正常 • OFF",Color(99,255,157)),
+                Triple("離線使用","正常 • 已安裝版本直入",Color(99,255,157))
+            )))
+            add(statusGroup("CAD / 幾何",listOf(
+                Triple("Undo / Redo 選取","正常 • selection 跟隨歷史",Color(99,255,157)),
+                Triple("座標 / 精度","0.001 mm • Master 0.000",StudioDesktopProductionTheme.text),
+                Triple("編輯防護","原子預檢 • RECT 群組 • 無幽靈 ID",StudioDesktopProductionTheme.text),
+                Triple("ARRAY 上限","10,000 新幾何",StudioDesktopProductionTheme.text)
+            )))
+            add(statusGroup("NC / 安全",listOf(
+                Triple("CNC 安全核心","鎖定 • ON",StudioDesktopProductionTheme.warning)
+            )))
+            add(statusGroup("更新 / 驗證",listOf(
+                Triple("版本更新","正常 • 背景比對 • NEWER ONLY",StudioDesktopProductionTheme.accent),
+                Triple("FPS",StudioDesktopRefreshSettings.mode()+" • 預設 60",StudioDesktopProductionTheme.text),
+                Triple("Regression","鎖定 • OFF",StudioDesktopProductionTheme.warning)
+            )))
         }
 
         val selectors=JPanel(GridLayout(0,2,6,6)).apply{

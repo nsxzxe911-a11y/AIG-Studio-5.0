@@ -63,10 +63,17 @@ private fun Entity.copyEntity(): Entity = when (this) {
     is Arc -> copy()
 }
 
+data class HistoryOutcome(
+    val geometryMutation:Boolean,
+    val selectionIds:Set<EntityId>?
+)
+
 interface Command {
     val geometryMutation: Boolean get() = true
     fun execute(doc: DrawingDocument)
     fun undo(doc: DrawingDocument)
+    fun selectionAfterExecute(doc:DrawingDocument):Set<EntityId>? = null
+    fun selectionAfterUndo(doc:DrawingDocument):Set<EntityId>? = null
 }
 
 class History(private val doc: DrawingDocument) {
@@ -78,27 +85,32 @@ class History(private val doc: DrawingDocument) {
         undoStack.addLast(command)
         redoStack.clear()
     }
-    fun undoWithEffect(): Boolean? {
-        val c = undoStack.pollLast() ?: return null
+
+    fun undoOutcome():HistoryOutcome? {
+        val c=undoStack.pollLast() ?: return null
         c.undo(doc)
         redoStack.addLast(c)
-        return c.geometryMutation
+        return HistoryOutcome(c.geometryMutation,c.selectionAfterUndo(doc))
     }
 
-    fun redoWithEffect(): Boolean? {
-        val c = redoStack.pollLast() ?: return null
+    fun redoOutcome():HistoryOutcome? {
+        val c=redoStack.pollLast() ?: return null
         c.execute(doc)
         undoStack.addLast(c)
-        return c.geometryMutation
+        return HistoryOutcome(c.geometryMutation,c.selectionAfterExecute(doc))
     }
 
-    fun undo(): Boolean = undoWithEffect() != null
-    fun redo(): Boolean = redoWithEffect() != null
+    fun undoWithEffect(): Boolean? = undoOutcome()?.geometryMutation
+    fun redoWithEffect(): Boolean? = redoOutcome()?.geometryMutation
+    fun undo(): Boolean = undoOutcome()!=null
+    fun redo(): Boolean = redoOutcome()!=null
 }
 
 class AddEntitiesCommand(private val entities: List<Entity>) : Command {
     override fun execute(doc: DrawingDocument) = entities.forEach(doc::put)
     override fun undo(doc: DrawingDocument) { entities.forEach { doc.remove(it.id) } }
+    override fun selectionAfterExecute(doc:DrawingDocument)=entities.map{it.id}.filter(doc::contains).toSet()
+    override fun selectionAfterUndo(doc:DrawingDocument)=emptySet<EntityId>()
 }
 
 class DeleteEntityCommand(private val id: EntityId) : Command {
@@ -112,6 +124,8 @@ class DeleteEntityCommand(private val id: EntityId) : Command {
         deleted?.let(doc::put)
         doc.restoreLinks(deletedLinks)
     }
+    override fun selectionAfterExecute(doc:DrawingDocument)=emptySet<EntityId>()
+    override fun selectionAfterUndo(doc:DrawingDocument)=setOf(id).filter(doc::contains).toSet()
 }
 
 class DeleteEntitiesCommand(private val ids: Set<EntityId>) : Command {
@@ -128,6 +142,8 @@ class DeleteEntitiesCommand(private val ids: Set<EntityId>) : Command {
         deleted.forEach(doc::put)
         doc.restoreLinks(deletedLinks)
     }
+    override fun selectionAfterExecute(doc:DrawingDocument)=emptySet<EntityId>()
+    override fun selectionAfterUndo(doc:DrawingDocument)=deleted.map{it.id}.filter(doc::contains).toSet()
 }
 
 class ReplaceEntitiesCommand(
@@ -150,6 +166,8 @@ class ReplaceEntitiesCommand(
         doc.restoreLinks(preservedLinks)
         doc.pruneTopology()
     }
+    override fun selectionAfterExecute(doc:DrawingDocument)=after.map{it.id}.filter(doc::contains).toSet()
+    override fun selectionAfterUndo(doc:DrawingDocument)=before.map{it.id}.filter(doc::contains).toSet()
 }
 
 class ConnectTopologyCommand(private val link: CadTopologyLink) : Command {

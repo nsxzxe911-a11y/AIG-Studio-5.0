@@ -1436,9 +1436,25 @@ private fun testUndoRedo() {
     val d = DrawingDocument(); rectangle().forEach(d::put)
     val h = History(d)
     h.run(DeleteEntityCommand("L2")); check(d.size()==3)
-    check(h.undo()); check(d.size()==4 && d.get("L2") != null)
-    check(h.redo()); check(d.size()==3 && d.get("L2") == null)
-    println("✓ undo/redo")
+    val undo=h.undoOutcome() ?: error("UNDO outcome missing")
+    check(undo.geometryMutation)
+    check(undo.selectionIds==setOf("L2"))
+    check(d.size()==4 && d.get("L2") != null)
+    val redo=h.redoOutcome() ?: error("REDO outcome missing")
+    check(redo.geometryMutation)
+    check(redo.selectionIds==emptySet<EntityId>())
+    check(d.size()==3 && d.get("L2") == null)
+
+    val add=DrawingDocument()
+    add.put(Line(id="BASE",a=Vec2(0.0,0.0),b=Vec2(10.0,0.0)))
+    val ah=History(add)
+    ah.run(CadEditEngine.copyCommand(add,listOf("BASE"),20.0,0.0))
+    val copied=add.all().first{it.id!="BASE"}.id
+    val copyUndo=ah.undoOutcome() ?: error("COPY undo missing")
+    check(copyUndo.selectionIds==emptySet<EntityId>() && add.get(copied)==null)
+    val copyRedo=ah.redoOutcome() ?: error("COPY redo missing")
+    check(copyRedo.selectionIds==setOf(copied) && add.get(copied)!=null)
+    println("✓ undo/redo selection continuity")
 }
 
 private fun testCadEditIntegrity() {
