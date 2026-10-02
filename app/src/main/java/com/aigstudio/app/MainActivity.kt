@@ -2311,7 +2311,7 @@ class MainActivity : Activity() {
             rotaryMode = currentRotaryOperationMode(),
             rotaryClampProfile = rotaryClampProfile
         )
-        val ncReady = runCatching { CncPost.generate(cam, post) }.isSuccess
+        val ncReady = risk.ok && runCatching { CncPost.generate(cam, post) }.isSuccess
         val screenWidthDp = resources.configuration.screenWidthDp.coerceAtLeast(1)
         val layoutMode = CamWorkstationContract.layout(screenWidthDp)
 
@@ -3983,6 +3983,15 @@ class MainActivity : Activity() {
             if(camSettings.pathMode==CamPathMode.MANUAL)camSettings.manualPath else emptyList()
         )
         val risk = MachiningRiskScanner.inspect(cam, stock, camFixtures, camToolAssembly)
+        if(!risk.ok) {
+            Toast.makeText(
+                this,
+                "NC BLOCKED • MODELED COLLISION="+risk.collisionCount+
+                    " • OVERCUT="+risk.overcutCount+" • 先修 CAM/SIM 再輸出",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
         val baseNc = runCatching {
             CncPost.generate(
                 cam,
