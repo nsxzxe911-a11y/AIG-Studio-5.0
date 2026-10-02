@@ -1441,6 +1441,8 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         private set
     var axisB=0.0
         private set
+    var axisC=0.0
+        private set
     private var zoom=1.0
     private var progressiveFrame:ProgressiveMachining3DFrame?=null
     private var previousProgressiveFrame:ProgressiveMachining3DFrame?=null
@@ -1457,13 +1459,21 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         preferredSize=Dimension(860,620)
         addMouseWheelListener { zoom=(zoom*if(it.wheelRotation<0)1.1 else 0.9).coerceIn(0.3,5.0);repaint() }
     }
-    fun setAngles(a:Double,b:Double){axisA=a;axisB=b;repaint()}
+    fun setAngles(a:Double,b:Double){setAngles(a,b,axisC)}
+    fun setAngles(a:Double,b:Double,c:Double){
+        require(a.isFinite() && b.isFinite() && c.isFinite())
+        axisA=a.coerceIn(-360.0,360.0)
+        axisB=b.coerceIn(-360.0,360.0)
+        axisC=SixAxisRuntimeContract.state(axisA,axisB,c).axisC
+        repaint()
+    }
     fun setMachineMode(mode:String){
         val normalized=mode.uppercase()
-        require(normalized in setOf("3AX","4AX","5AX"))
+        require(normalized in setOf("3AX","4AX","5AX","6AX"))
         machineMode=normalized
-        if(machineMode=="3AX"){axisA=0.0;axisB=0.0}
-        if(machineMode=="4AX")axisB=0.0
+        if(machineMode=="3AX"){axisA=0.0;axisB=0.0;axisC=0.0}
+        if(machineMode=="4AX"){axisB=0.0;axisC=0.0}
+        if(machineMode=="5AX")axisC=0.0
         repaint()
     }
     fun setResult(next:Machining3DResult){
@@ -1483,8 +1493,9 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
     fun clearProgressiveFrame(){previousProgressiveFrame=null;progressiveFrame=null;lastFreshRemovalCells=0;repaint()}
     private fun kinematicTransform(v:Vec3):Vec3 {
         val a=if(machineMode=="3AX")0.0 else axisA
-        val b=if(machineMode=="5AX")axisB else 0.0
-        return MachineKinematics3D.transform(v,a,b)
+        val b=if(machineMode=="5AX" || machineMode=="6AX")axisB else 0.0
+        val c=if(machineMode=="6AX")axisC else 0.0
+        return MachineKinematics3D.transform(v,a,b,c)
     }
     private fun axisTransform(v:Vec3):Vec3{
         val cx=(result.stock.minX+result.stock.maxX)/2.0
@@ -1514,7 +1525,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
     private fun drawMachineModel(g:Graphics2D,scale:Double,frame:ProgressiveMachining3DFrame?):MachineModel3D{
         val live=frame?.toolPoint ?: result.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()
         val model=MachineModel3DBuilder.build(
-            result,machineMode,axisA,axisB,live
+            result,machineMode,axisA,axisB,live,axisC
         )
         val prepared=model.components.map { component ->
             val pts=component.mesh.vertices.map{projectMachine(it,scale)}
@@ -1529,7 +1540,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                 MachineComponentRole.TOOL -> 255
                 MachineComponentRole.SPINDLE -> 250
                 MachineComponentRole.HOLDER -> 246
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 244
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B,MachineComponentRole.ROTARY_C -> 244
                 MachineComponentRole.TRUNNION -> 236
                 MachineComponentRole.TABLE -> 232
                 MachineComponentRole.FIXTURE -> 228
@@ -1542,6 +1553,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
                 MachineComponentRole.HOLDER -> Color(92,186,232,alpha)
                 MachineComponentRole.ROTARY_A -> Color(61,235,255,alpha)
                 MachineComponentRole.ROTARY_B -> Color(255,78,205,alpha)
+                MachineComponentRole.ROTARY_C -> Color(159,114,255,alpha)
                 MachineComponentRole.TRUNNION -> Color(126,92,208,alpha)
                 MachineComponentRole.TABLE -> Color(82,132,184,alpha)
                 MachineComponentRole.FIXTURE -> Color(112,132,150,alpha)
@@ -1556,12 +1568,14 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             val edgeAlpha=when(component.role){
                 MachineComponentRole.TOOL -> 255
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 180
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 128
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B,MachineComponentRole.ROTARY_C -> 128
                 MachineComponentRole.TRUNNION,MachineComponentRole.TABLE -> 96
                 MachineComponentRole.FIXTURE -> 84
                 else -> 72
             }
-            val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A || component.role==MachineComponentRole.ROTARY_B
+            val rotarySurfaceSolid=component.role==MachineComponentRole.ROTARY_A ||
+                component.role==MachineComponentRole.ROTARY_B ||
+                component.role==MachineComponentRole.ROTARY_C
             val drawInternalEdges=when(component.role){
                 MachineComponentRole.TOOL,
                 MachineComponentRole.SPINDLE,
@@ -1576,7 +1590,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             val roleEdgeWidth=when(component.role){
                 MachineComponentRole.TOOL -> 2.1f
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 1.35f
-                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B -> 1.05f
+                MachineComponentRole.ROTARY_A,MachineComponentRole.ROTARY_B,MachineComponentRole.ROTARY_C -> 1.05f
                 else -> 0.8f
             }
             if(rotarySurfaceSolid){
@@ -1855,6 +1869,7 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
         g.drawString(
             "TRUE AXIS VIEW • MACHINE="+machineModel.mode+" • PARTS="+machineModel.components.size+
                 " • A="+DisplayFormat.mm(axisA)+"° • B="+DisplayFormat.mm(axisB)+"°"+
+                (if(machineMode=="6AX")" • C="+DisplayFormat.mm(axisC)+"°" else "")+
                 (activeFrame?.let{" • frame=${it.index+1}/${it.total} • removed=${it.removedCells}"} ?: "")+
                 " • material-first",
             14,22
