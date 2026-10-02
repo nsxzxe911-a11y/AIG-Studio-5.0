@@ -147,6 +147,9 @@ object RollingUpdatePolicy {
     const val STARTUP_OFFLINE_USES_INSTALLED_VERSION=true
     const val STARTUP_BACKGROUND_DOWNLOAD_FOLLOWS_USER_SETTING=true
     const val STARTUP_BINARY_INSTALL_REQUIRES_USER_CONFIRMATION=true
+    const val STARTUP_UPDATE_PROGRESS_ONLINE_ONLY=true
+    const val STARTUP_UPDATE_PROGRESS_EXPLANATION_REQUIRED=true
+    const val VERIFIED_UI_APPLIES_ON_NEXT_RUNTIME_AFTER_BINARY_INSTALL=true
 
     private fun parts(v:String)=v.trim().split('.').map { it.toIntOrNull() ?: 0 }
     fun compareVersions(a:String,b:String):Int {
