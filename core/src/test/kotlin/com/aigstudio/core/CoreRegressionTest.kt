@@ -1846,6 +1846,28 @@ private fun testEnvironmentSettingsContract() {
     check(dropMeter.current().droppedFrames>=2)
     println("✓ RENDER_SURFACE_FPS_GATE_PASS 30/60/90/120 budgets + per-surface meter + drop detection")
 
+    val render1080=RenderCompatibilityContract.profile(1080,1920,60.0)
+    val render2k=RenderCompatibilityContract.profile(1440,2560,90.0)
+    val render3k=RenderCompatibilityContract.profile(1800,3200,120.0)
+    val render4k=RenderCompatibilityContract.profile(2160,3840,120.0)
+    check(render1080.tier==RenderResolutionTier.FHD_1080 && render1080.targetFps==60)
+    check(render2k.tier==RenderResolutionTier.QHD_2K && render2k.targetFps==90)
+    check(render3k.tier==RenderResolutionTier.THREE_K && render3k.targetFps==120)
+    check(render4k.tier==RenderResolutionTier.UHD_4K && render4k.targetFps==120)
+    check(RenderCompatibilityContract.SUPPORTED_REFRESH_HZ==listOf(30,60,90,120))
+    check(RenderCompatibilityContract.refreshBucket(30.0)==30)
+    check(RenderCompatibilityContract.refreshBucket(60.0)==60)
+    check(RenderCompatibilityContract.refreshBucket(90.0)==90)
+    check(RenderCompatibilityContract.refreshBucket(120.0)==120)
+    check(kotlin.math.abs(render4k.frameBudgetMs-8.3333333333)<1e-6)
+    val harmonizedAccent=RenderColorCompatibility.harmonizeRgb(0xFF00AAFF.toInt(),RenderColorCompatibility.ACCENT_RGB)
+    check(RenderColorCompatibility.withinTolerance(harmonizedAccent,RenderColorCompatibility.ACCENT_RGB))
+    check(RenderColorCompatibility.maxChannelDelta(harmonizedAccent,RenderColorCompatibility.ACCENT_RGB)<=RenderColorCompatibility.MAX_CHANNEL_DELTA)
+    val pulseSamples=(0..16).map { RenderColorCompatibility.pulseMultiplier(it/16.0) }
+    check((pulseSamples.maxOrNull() ?: 1.0)-(pulseSamples.minOrNull() ?: 1.0)<=RenderColorCompatibility.MAX_ANIMATION_LUMA_SWING+1e-9)
+    println("RENDER_COMPATIBILITY_GATE_PASS|1080P|2K|3K|4K|30|60|90|120|RGB_DELTA_24|LUMA_DELTA_0.12|ANIMATION_SWING_0.12|ADAPTIVE_UI_MESH_GLOW")
+
+
     check(CpuThermalFpsPolicy.capForTemperature(null)==120)
     check(CpuThermalFpsPolicy.capForTemperature(64.999)==120)
     check(CpuThermalFpsPolicy.capForTemperature(65.0)==90)
