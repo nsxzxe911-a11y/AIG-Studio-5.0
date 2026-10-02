@@ -3,7 +3,7 @@
   "product": "AIG Studio 5.0",
   "version": "305.0.0",
   "branch": "main",
-  "recorded_source_head": "115653d0263c1df15af901b3223a851a89376773",
+  "recorded_source_head": "8c86eef73f108837551509521e98ff57bb86149b",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "EXECUTE_UNTIL_PASS",
   "departments": {
@@ -47,7 +47,7 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Run 15-department source review with PRO_AUDIT. Repair only actual findings; preserve product-safety, integrity, compile/runtime, NC fail-closed, and manual-only heavy release gates.",
+  "next_action": "Bind AIG-II 340 to the Studio 305 checkpoint exact SHA, add PRO_AUDIT as the fifteenth controller-side department, and keep APK/EXE/device proof separate.",
   "note": "Studio 305 adds PRO_AUDIT as the fifteenth department for top-tier professional cross-department audit, repair routing, and re-verification. It does not override safety or evidence gates.",
   "release_command": {
     "path": "continuity/release-command.json",
@@ -66,7 +66,7 @@
   },
   "department_autocheck": {
     "script": "ci/department_autocheck.py",
-    "last_source_review": "PENDING_15_OF_15_SOURCE_REVIEW_STUDIO305_PRO_AUDIT",
+    "last_source_review": "PASS_15_OF_15_SOURCE_MARKER_REVIEW_STUDIO305_PRO_AUDIT",
     "no_early_exit": true,
     "output": "build/department-autocheck.json"
   },
@@ -118,6 +118,14 @@
     "script": "ci/pro_audit.py",
     "display_name": "頂級專業軟體極速審核修建部門",
     "mode": "CROSS_DEPARTMENT_AUDIT_REPAIR_REVERIFY",
-    "status": "PENDING_SOURCE_REVIEW"
+    "status": "SOURCE_REVIEW_PASS",
+    "source_review": "15_OF_15",
+    "hosted_evidence": {
+      "source_sha": "773e12e552f92f8b456e344665ceb2ccc284f883",
+      "workflow": "NC Semantic Timeline Gate",
+      "run_id": 36953595432,
+      "pro_audit_step": "PASS",
+      "whole_workflow": "FAIL_LATER_RUNTIME_VERIFIER_DRIFT"
+    }
   }
 }
