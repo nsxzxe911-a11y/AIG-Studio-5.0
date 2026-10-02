@@ -15,6 +15,8 @@ on:
       - 'app/src/main/java/com/aigstudio/app/MainActivity.kt'
       - 'desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt'
       - '.github/workflows/nc-semantic-timeline-gate.yml'
+      - 'ci/audit_contract.py'
+      - 'ci/verify_audit_contract.py'
       - 'ci/pro_audit.py'
       - 'ci/department_autocheck.py'
       - 'ci/verify_runtime_surfaces.py'
@@ -42,6 +44,8 @@ jobs:
         shell: bash
         run: |
           echo 'NC_SCOPED_AUTO_REGRESSION=ENABLED_AFTER_RUNTIME_GATE_SYNC'
+          python3 ci/verify_audit_contract.py | tee audit-contract.log
+          grep -Fq 'AUDIT_CONTRACT_GATE_PASS|15_DEPARTMENTS|SINGLE_AUTHORITY|' audit-contract.log
           python3 ci/pro_audit.py | tee pro-audit.log
           grep -Fq 'PRO_AUDIT_REPORT_WRITTEN|SCHEMA=aig-pro-audit-report-v2|' pro-audit.log
           grep -Fq 'PRO_AUDIT_STALE_GATE_DETECTOR_PASS|' pro-audit.log
