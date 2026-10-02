@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]
 xml_path=ROOT/"continuity/cache-update-standard.xml"
 root=ET.fromstring(xml_path.read_text(encoding="utf-8"))
 version=(ROOT/"release-version.properties").read_text(encoding="utf-8").strip().split("=",1)[1]
-required=["HOME","CAD","CAM","SIM","3AX","4AX","5AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","WEB"]
+required=["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","WEB"]
 
 assert root.tag=="aigCacheUpdateStandard"
 assert root.attrib["schema"]=="aig-cache-update-xml-v1"
