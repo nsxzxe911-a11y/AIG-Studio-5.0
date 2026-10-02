@@ -1,14 +1,6 @@
 name: Studio Prebaseline Trigger Clean
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'ci/prebaseline_trigger_clean.py'
-      - 'ci/trigger_mine_detector.py'
-      - 'ci/verify_trigger_policy.py'
-      - 'ci/verify_rolling_version.py'
-      - '.github/workflows/prebaseline-trigger-clean.yml'
   workflow_dispatch:
 
 permissions:
