@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "357.0.0",
+  "version": "358.0.0",
   "branch": "main",
   "recorded_source_head": "e22ef1627f1dcc5a60399a220d82518780bca81f",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -328,7 +328,7 @@
     "purpose": "CURRENT_MAIN_UI_TRANSLATION",
     "runtime_evidence": false,
     "version": "320.0.0",
-    "controller_version": "357.0.0",
+    "controller_version": "358.0.0",
     "studio_version": "321.0.0",
     "direct_root": true
   },

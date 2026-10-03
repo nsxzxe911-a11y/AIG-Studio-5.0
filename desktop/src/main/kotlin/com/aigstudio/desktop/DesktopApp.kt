@@ -3066,7 +3066,7 @@ private fun showUnifiedMachiningEditor(
     fixtures:List<FixtureObstacle> = emptyList(),
     toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
 ){
-    require(initialMode in setOf("3D","3AX","4AX","5AX")){"Unsupported initial mode: $initialMode"}
+    require(initialMode in setOf("3D","3AX","4AX","5AX","6AX")){"Unsupported initial mode: $initialMode"}
     if(initialResult==null) {
         JDialog(frame,"$initialMode • 加工工作區",false).apply {
             layout=BorderLayout(12,12)
@@ -3083,7 +3083,8 @@ private fun showUnifiedMachiningEditor(
     var result:Machining3DResult=initialResult
     var axisA=0.0
     var axisB=0.0
-    var axisMode="3AX"
+    var axisC=initialResult.cam.toolpaths.lastOrNull()?.moves?.lastOrNull()?.axisC ?: 0.0
+    var axisMode=if(initialMode=="3D") "3AX" else initialMode
     var rotaryClampProfile=loadDesktopRotaryMachineProfile()
     fun currentRotaryMode():RotaryAxisOperationMode=when(axisMode){
         "4AX" -> RotaryAxisOperationMode.SIMULTANEOUS_4AX
@@ -3101,6 +3102,7 @@ private fun showUnifiedMachiningEditor(
             " • G34="+rotaryClampProfile.g34VendorProfile.template.name
     }
     fun generateNc():String {
+        if(axisMode=="6AX") error("6AX_C_AXIS_NC_POST_BLOCKED • machine-specific C-axis post not verified")
         return CncPost.generate(
             result.cam,
             FanucPostSettings(
@@ -3111,7 +3113,9 @@ private fun showUnifiedMachiningEditor(
             )
         )
     }
-    val editor=JTextArea(generateNc()).apply{
+    val editor=JTextArea(runCatching{generateNc()}.getOrElse{ error ->
+        "(6AX NC LOCK)\n"+(error.message ?: "NC generation blocked")+"\nSIM/CAM remain available."
+    }).apply{
         background=Color(5,8,12);foreground=Color(99,255,157)
         font=Font(Font.MONOSPACED,Font.PLAIN,14);lineWrap=false;tabSize=4
     }
@@ -3140,28 +3144,34 @@ private fun showUnifiedMachiningEditor(
                 startA=0.0,startB=0.0,endA=axisA,endB=axisB,
                 mode=MultiAxisInterpolationMode.LINEAR_SYNC
             )
+            "6AX" -> MultiAxisOrientationSchedule(
+                startA=0.0,startB=0.0,endA=axisA,endB=axisB,
+                mode=MultiAxisInterpolationMode.LINEAR_SYNC,startC=0.0,endC=axisC
+            )
             else -> null
         }
         result=Machining3DEngine.build(
             snapshot,
             result.cam.settings,
             axisA=if(axisMode=="3AX")0.0 else axisA,
-            axisB=if(axisMode=="5AX")axisB else 0.0,
+            axisB=if(axisMode=="5AX" || axisMode=="6AX")axisB else 0.0,
             axisSchedule=schedule,
             fixtures=fixtures,
-            toolAssembly=toolAssembly
+            toolAssembly=toolAssembly,
+            axisC=if(axisMode=="6AX")axisC else 0.0
         )
         mesh.setResult(result)
         axes.setResult(result)
         axes.setMachineMode(axisMode)
         axes.setAngles(
             if(axisMode=="3AX")0.0 else axisA,
-            if(axisMode=="5AX")axisB else 0.0
+            if(axisMode=="5AX" || axisMode=="6AX")axisB else 0.0,
+            if(axisMode=="6AX")axisC else 0.0
         )
         simulationMoves=result.cam.toolpaths.flatMap{it.moves}
         simulationIndex=0
         status.text="CAM "+axisMode+" REBUILT • moves="+simulationMoves.size+
-            " • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+
+            " • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+" C="+DisplayFormat.mm(axisC)+
             " • NC STALE / REBUILD REQUIRED"
     }
 
@@ -3184,7 +3194,7 @@ private fun showUnifiedMachiningEditor(
         editorPanel.minimumSize=Dimension(330,0)
         SwingUtilities.invokeLater { split.setDividerLocation(.76) }
     }
-    val dlg=JDialog(frame,"AIG CNC • 3D / 3AX / 4AX / 5AX + EDITABLE G-CODE",false).apply{
+    val dlg=JDialog(frame,"AIG CNC • 3D / 3AX / 4AX / 5AX / 6AX + EDITABLE G-CODE",false).apply{
         layout=BorderLayout();minimumSize=Dimension(1100,720)
     }
     val modeBar=AdaptiveGlassToolbar()
@@ -3210,12 +3220,16 @@ private fun showUnifiedMachiningEditor(
         maximizeVisualWorkspace();axisMode="4AX";axisB=0.0;rebuildMachiningForMode();card.show(visual,"AXIS")
     }
     mode("5AX","五軸","5 AXIS",Color(236,72,153),"5AX"){
-        maximizeVisualWorkspace();axisMode="5AX";rebuildMachiningForMode();card.show(visual,"AXIS")
+        maximizeVisualWorkspace();axisMode="5AX";axisC=0.0;rebuildMachiningForMode();card.show(visual,"AXIS")
+    }
+    mode("6AX","六軸","6 AXIS",Color(34,211,238),"6AX"){
+        maximizeVisualWorkspace();axisMode="6AX";rebuildMachiningForMode();card.show(visual,"AXIS")
     }
     mode("NC_EDIT","程式","NC EDIT",Color(80,170,255),"NC_EDIT"){showNcWorkspace();editor.requestFocusInWindow()}
     when(initialMode){
         "4AX" -> modeButtons.getOrNull(2)?.doClick()
         "5AX" -> modeButtons.getOrNull(3)?.doClick()
+        "6AX" -> modeButtons.getOrNull(4)?.doClick()
         "3AX" -> modeButtons.getOrNull(1)?.doClick()
         else -> modeButtons.getOrNull(0)?.doClick()
     }
@@ -3231,7 +3245,8 @@ private fun showUnifiedMachiningEditor(
         axes.showProgressiveFrame(frameState)
         axisA=frameState.toolPoint.axisA
         axisB=frameState.toolPoint.axisB
-        if(axisMode=="4AX" || axisMode=="5AX") card.show(visual,"AXIS")
+        axisC=frameState.toolPoint.axisC
+        if(axisMode=="4AX" || axisMode=="5AX" || axisMode=="6AX") card.show(visual,"AXIS")
         else card.show(visual,"3D")
         status.text=
             "SIM • frame="+(frameState.index+1)+"/"+frameState.total+
@@ -3240,7 +3255,8 @@ private fun showUnifiedMachiningEditor(
             " Y="+DisplayFormat.mm(frameState.toolPoint.to.y)+
             " Z="+DisplayFormat.mm(frameState.toolPoint.z)+
             " • A="+DisplayFormat.mm(frameState.toolPoint.axisA)+
-            " B="+DisplayFormat.mm(frameState.toolPoint.axisB)
+            " B="+DisplayFormat.mm(frameState.toolPoint.axisB)+
+            " C="+DisplayFormat.mm(frameState.toolPoint.axisC)
     }
 
     playbackTimer.addActionListener{
@@ -3276,19 +3292,27 @@ private fun showUnifiedMachiningEditor(
         if(simulationMoves.isNotEmpty())showPlaybackFrame(0)
     }
     action("A−",Color(139,92,246),"4AX"){
-        playbackTimer.stop();if(axisMode!="5AX")axisMode="4AX"
+        playbackTimer.stop();if(axisMode !in setOf("5AX","6AX"))axisMode="4AX"
         axisA=(axisA-15.0).coerceAtLeast(-360.0);rebuildMachiningForMode();card.show(visual,"AXIS")
     }
     action("A+",Color(139,92,246),"4AX"){
-        playbackTimer.stop();if(axisMode!="5AX")axisMode="4AX"
+        playbackTimer.stop();if(axisMode !in setOf("5AX","6AX"))axisMode="4AX"
         axisA=(axisA+15.0).coerceAtMost(360.0);rebuildMachiningForMode();card.show(visual,"AXIS")
     }
     action("B−",Color(236,72,153),"5AX"){
-        playbackTimer.stop();axisMode="5AX";axisB=(axisB-15.0).coerceAtLeast(-360.0)
+        playbackTimer.stop();if(axisMode!="6AX")axisMode="5AX";axisB=(axisB-15.0).coerceAtLeast(-360.0)
         rebuildMachiningForMode();card.show(visual,"AXIS")
     }
     action("B+",Color(236,72,153),"5AX"){
-        playbackTimer.stop();axisMode="5AX";axisB=(axisB+15.0).coerceAtMost(360.0)
+        playbackTimer.stop();if(axisMode!="6AX")axisMode="5AX";axisB=(axisB+15.0).coerceAtMost(360.0)
+        rebuildMachiningForMode();card.show(visual,"AXIS")
+    }
+    action("C−",Color(34,211,238),"6AX"){
+        playbackTimer.stop();axisMode="6AX";axisC=SixAxisRuntimeContract.step(SixAxisRuntimeContract.state(axisA,axisB,axisC),'C',-15.0).axisC
+        rebuildMachiningForMode();card.show(visual,"AXIS")
+    }
+    action("C+",Color(34,211,238),"6AX"){
+        playbackTimer.stop();axisMode="6AX";axisC=SixAxisRuntimeContract.step(SixAxisRuntimeContract.state(axisA,axisB,axisC),'C',15.0).axisC
         rebuildMachiningForMode();card.show(visual,"AXIS")
     }
     action(UiTextPolicy.display("ROTARY_CLAMP",118),Color(125,112,255),"4AX"){
@@ -3360,7 +3384,7 @@ private fun showUnifiedMachiningEditor(
     action("重建 NC",Color(34,197,94),"NC_EDIT"){
         runCatching{generateNc()}.onSuccess{
             editor.text=it
-            status.text="UNIFIED NC REBUILT • "+axisMode+" • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+" • "+clampStatus()
+            status.text="UNIFIED NC REBUILT • "+axisMode+" • A="+DisplayFormat.mm(axisA)+" B="+DisplayFormat.mm(axisB)+" C="+DisplayFormat.mm(axisC)+" • "+clampStatus()
         }
             .onFailure{status.text="NC REBUILD WARNING • existing editor preserved • "+(it.message?:"error")}
     }
@@ -4721,6 +4745,9 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 item("5AX"){runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,productionCamDerivedCache,"5AX",productionCamSettings,productionFixtures,productionToolAssembly
                 )}.onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}}
+                item("6AX"){runCatching{showUnifiedMachiningEditor(
+                frame,doc,status,productionCamDerivedCache,"6AX",productionCamSettings,productionFixtures,productionToolAssembly
+                )}.onFailure{status.text="6AX BLOCKED • "+(it.message?:"error")}}
                 item("NC"){runCatching{showNcEditor(
                 frame,productionCamDerivedCache,!productionCamIsStale()
             )}.onFailure{status.text="NC BLOCKED • "+(it.message?:"error")}}
