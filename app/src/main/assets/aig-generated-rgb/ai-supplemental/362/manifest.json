@@ -1,0 +1,29 @@
+{
+  "schema": "AIG_AI_RGB_ASSET_V1",
+  "version": "362.0.0",
+  "generated": true,
+  "approved_for_runtime": true,
+  "assets": {
+    "HOME_MOBILE": {
+      "file": "home_mobile.jpg",
+      "layout": "portrait",
+      "source": "AI_GENERATED_AIG_RGB",
+      "source_original_sha256": "8c55956f9ea6693b34d78395d6336ea7bf1a0ec4eeece824c22396b18bb854af",
+      "runtime_sha256": "a6df39d8195bd71c37b41648d6f3e2c30713893ebc47c7b7f743759a2ab9f62f"
+    },
+    "HOME_DESKTOP": {
+      "file": "home_desktop.jpg",
+      "layout": "landscape",
+      "source": "AI_GENERATED_AIG_RGB",
+      "source_original_sha256": "9b0d4c983d8b69d9e1735036842567e5082101976bd17335cd9c3ec7c4494a80",
+      "runtime_sha256": "028311df6f288dc1fb70fd4c48a13b5760565709e412503cd103de4fea70681d"
+    }
+  },
+  "policy": {
+    "missing_asset_ai_generation": true,
+    "auto_replace_existing": false,
+    "preserve_historical_packs": true,
+    "runtime_load_requires_manifest_sha_match": true,
+    "failure_action": "WARN_AND_FALLBACK_PACK_184"
+  }
+}
