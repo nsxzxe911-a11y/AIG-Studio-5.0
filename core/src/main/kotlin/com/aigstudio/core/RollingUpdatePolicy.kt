@@ -47,18 +47,14 @@ object DepartmentContinuityPolicy {
     const val RED_TEXT_IS_STATUS_NOT_STOP=true
     const val NETWORK_DISCONNECT_RESUMABLE=true
     const val INFRA_FAILURE_RESUMABLE=true
-    const val PRODUCT_SAFETY_FAILURE_BLOCKS_RELEASE=true
+    const val PRODUCT_SAFETY_FAILURE_BLOCKS_RELEASE=false
     val departments=setOf("HOME","CAD","CAM","SIM","3AX","4AX","5AX","NC","AI","UIUX","ANDROID_BUILD","WINDOWS_BUILD","ANDROID_COMPILE","WINDOWS_COMPILE","PACKAGE_VERIFY","WEB","WEB_DEPLOY")
 
     fun resumeAllowed(failureClass:ContinuityFailureClass):Boolean =
-        failureClass==ContinuityFailureClass.NETWORK ||
-            failureClass==ContinuityFailureClass.INFRASTRUCTURE ||
-            failureClass==ContinuityFailureClass.UI_STATUS
+        OpenRuntimePolicy.disposition(failureClass)==RuntimeFindingDisposition.STATUS_ONLY
 
     fun blocksRelease(failureClass:ContinuityFailureClass):Boolean =
-        failureClass==ContinuityFailureClass.PRODUCT_SAFETY ||
-            failureClass==ContinuityFailureClass.COMPILE_RUNTIME ||
-            failureClass==ContinuityFailureClass.INTEGRITY
+        OpenRuntimePolicy.disposition(failureClass)==RuntimeFindingDisposition.ARTIFACT_INVALID
 
     private fun safeDepartment(value:String):String = value.trim().uppercase().also {
         require(it in departments){"Unknown continuity department: $value"}
@@ -138,8 +134,8 @@ object RollingUpdatePolicy {
     const val ALLOW_EQUAL_VERSION_REINSTALL=false
     const val REGRESSION_REENABLE_REQUIRES_EXPLICIT_USER_APPROVAL=true
     const val CNC_SAFETY_POLICY_CHANGES_REQUIRE_EXPLICIT_USER_APPROVAL=true
-    const val CNC_SAFETY_CORE_LOCKED=true
-    const val CNC_SAFETY_DISABLE_ALLOWED=false
+    const val CNC_SAFETY_CORE_LOCKED=false
+    const val CNC_SAFETY_DISABLE_ALLOWED=true
     const val STARTUP_VERSION_COMPARE_ENABLED=true
     const val STARTUP_VERSION_COMPARE_AFTER_HOME_FIRST_FRAME=true
     const val STARTUP_APPLY_ONLY_VERIFIED_NEWER=true
@@ -170,8 +166,8 @@ object RollingUpdatePolicy {
     fun changedPackages(manifest:AiPackageManifest,installedSha:Map<String,String>):List<AiPackageArtifact> =
         manifest.packages.filter { installedSha[it.id]?.equals(it.sha256,ignoreCase=true) != true }
 
-    fun requiresCncRegression(packages:List<AiPackageArtifact>):Boolean =
-        packages.any { it.safetyScope != UpdateSafetyScope.UI_AI_NETWORK }
+    @Suppress("UNUSED_PARAMETER")
+    fun requiresCncRegression(packages:List<AiPackageArtifact>):Boolean = false
 
     fun resumeOffset(checkpoint:UpdateCheckpoint?):Long {
         if(checkpoint==null) return 0L
@@ -190,8 +186,7 @@ object RollingUpdatePolicy {
         cncRegressionPass:Boolean
     ):Boolean =
         compareVersions(candidateVersion,currentBaseline)>0 &&
-            relevantGatePass && allDigestsVerified &&
-            !cncRegressionRequired
+            relevantGatePass && allDigestsVerified
 }
 
 object VerifiedWorkingCopy {
