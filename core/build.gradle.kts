@@ -13,3 +13,11 @@ tasks.register<JavaExec>("coreRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.CoreRegressionTestKt")
 }
+
+tasks.register<JavaExec>("runtimeLinkRegression") {
+    group = "verification"
+    description = "Runs the focused HOME/Cockpit runtime-link synchronization gate"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.RuntimeLinkRegressionKt")
+}

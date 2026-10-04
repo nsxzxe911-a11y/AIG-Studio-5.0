@@ -1259,6 +1259,48 @@ class MainActivity : Activity() {
             FrameLayout.LayoutParams.MATCH_PARENT
         ))
 
+        val runtimeLinkStore=RuntimeLinkStore()
+        val homeLinkQuickButtons=linkedMapOf<RuntimeLinkId,RgbGlowButton>()
+        val homeLinkManagerButtons=linkedMapOf<RuntimeLinkId,RgbGlowButton>()
+        fun runtimeLinkColor(linkStatus:RuntimeLinkStatus):Int=when(linkStatus) {
+            RuntimeLinkStatus.CONNECTED -> 0xFF3DEBFF.toInt()
+            RuntimeLinkStatus.DISCONNECTED -> 0xFF66727D.toInt()
+            RuntimeLinkStatus.WARNING -> StudioProductionTheme.warning
+            RuntimeLinkStatus.ALARM -> StudioProductionTheme.alarm
+        }
+        fun runtimeLinkSymbol(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
+            RuntimeLinkStatus.CONNECTED -> "🔗"
+            RuntimeLinkStatus.DISCONNECTED -> "⛓"
+            RuntimeLinkStatus.WARNING -> "⚠"
+            RuntimeLinkStatus.ALARM -> "ALARM"
+        }
+        fun runtimeLinkLabel(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
+            RuntimeLinkStatus.CONNECTED -> "連接"
+            RuntimeLinkStatus.DISCONNECTED -> "斷開"
+            RuntimeLinkStatus.WARNING -> "警告"
+            RuntimeLinkStatus.ALARM -> "Alarm"
+        }
+        fun renderRuntimeLinks(snapshot:RuntimeLinkSnapshot) {
+            homeLinkQuickButtons.forEach { (id,button) ->
+                val s=snapshot.status(id)
+                button.text="${id.cockpitLeft} ${runtimeLinkSymbol(s)} ${id.cockpitRight}"
+                button.setRgbState(runtimeLinkColor(s),s==RuntimeLinkStatus.CONNECTED,s==RuntimeLinkStatus.ALARM)
+            }
+            homeLinkManagerButtons.forEach { (id,button) ->
+                val s=snapshot.status(id)
+                button.text="${id.displayName} • ${runtimeLinkLabel(s)}"
+                button.setRgbState(runtimeLinkColor(s),s==RuntimeLinkStatus.CONNECTED,s==RuntimeLinkStatus.ALARM)
+            }
+        }
+        fun runtimeLinkButton(id:RuntimeLinkId,cockpit:Boolean)=RgbGlowButton(this).apply {
+            textSize=StudioDisplayPolicy.sp(this,9.5f)
+            minHeight=dp(40)
+            maxLines=1
+            contentDescription=(if(cockpit) "COCKPIT LINK " else "LINK MANAGER ")+id.name
+            setOnClickListener { runtimeLinkStore.toggle(id) }
+            if(cockpit) homeLinkQuickButtons[id]=this else homeLinkManagerButtons[id]=this
+        }
+
         val homeRoot=FrameLayout(this).apply {
             contentDescription="AIG CNC FORMAL RGB HOME • aigii_rgb_neon_v2"
             val base=GradientDrawable(
@@ -1301,7 +1343,13 @@ class MainActivity : Activity() {
         ).apply {
             gravity=Gravity.CENTER
             setTypeface(typeface,android.graphics.Typeface.BOLD)
-        },LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(2),0,dp(18)) })
+        },LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(2),0,dp(8)) })
+        val homeLinkCockpit=FlowLayout(this).apply {
+            contentDescription="HOME COCKPIT LINK SHORTCUTS"
+            setPadding(dp(4),dp(2),dp(4),dp(4))
+            RuntimeLinkContract.cockpitLinks.forEach { addView(runtimeLinkButton(it,true)) }
+        }
+        homeContent.addView(homeLinkCockpit,LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,dp(6)) })
 
         startupUpdateProgress=ProgressBar(
             this,null,android.R.attr.progressBarStyleHorizontal
@@ -1388,6 +1436,24 @@ class MainActivity : Activity() {
         homeAction("多功能",0xFF27E9FF.toInt()){showOneKeyMultiFunction()}
         homeContent.addView(homeModes,LinearLayout.LayoutParams(-1,-2))
 
+        val homeLinkManagerBody=FlowLayout(this).apply {
+            contentDescription="HOME LINK MANAGER BODY"
+            visibility=View.GONE
+            RuntimeLinkContract.managedLinks.forEach { addView(runtimeLinkButton(it,false)) }
+        }
+        val homeLinkManagerToggle=RgbGlowButton(this).apply {
+            text="連結管理 ▸"
+            contentDescription="HOME LINK MANAGER TOGGLE"
+            textSize=StudioDisplayPolicy.sp(this,10f)
+            minWidth=dp(108)
+            minHeight=dp(44)
+            setRgbState(0xFF27E9FF.toInt(),false)
+            setOnClickListener {
+                val open=homeLinkManagerBody.visibility!=View.VISIBLE
+                homeLinkManagerBody.visibility=if(open) View.VISIBLE else View.GONE
+                text=if(open) "連結管理 ▾" else "連結管理 ▸"
+            }
+        }
         val homeUtility=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL
             gravity=Gravity.CENTER
@@ -1401,8 +1467,15 @@ class MainActivity : Activity() {
                 setRgbState(0xFF27E9FF.toInt(),false)
                 setOnClickListener { showUserSettingsCenter() }
             })
+            addView(homeLinkManagerToggle)
         }
         homeContent.addView(homeUtility,LinearLayout.LayoutParams(-1,-2))
+        homeContent.addView(homeLinkManagerBody,LinearLayout.LayoutParams(-1,-2))
+        homeContent.addView(chromeText(
+            "斷開只切資料流 • CAD / CAM / G-code / SIM 資料保留",
+            0xFFA0BED2.toInt(),8.5f
+        ).apply { gravity=Gravity.CENTER },LinearLayout.LayoutParams(-1,-2))
+        runtimeLinkStore.observe { renderRuntimeLinks(it) }
         homeContent.addView(chromeText(
             "CAD • CAM • SIM • 3AX • 4AX • 5AX • NC • AI",
             0xFFA0BED2.toInt(),9f

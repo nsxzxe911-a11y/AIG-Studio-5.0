@@ -5001,6 +5001,47 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         add(aiActions,BorderLayout.SOUTH)
     }
 
+    val runtimeLinkStore=RuntimeLinkStore()
+    val desktopLinkQuickButtons=linkedMapOf<RuntimeLinkId,JButton>()
+    val desktopLinkManagerButtons=linkedMapOf<RuntimeLinkId,JButton>()
+    fun desktopRuntimeLinkColor(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
+        RuntimeLinkStatus.CONNECTED -> Color(61,235,255)
+        RuntimeLinkStatus.DISCONNECTED -> Color(102,114,125)
+        RuntimeLinkStatus.WARNING -> StudioDesktopProductionTheme.warning
+        RuntimeLinkStatus.ALARM -> StudioDesktopProductionTheme.alarm
+    }
+    fun desktopRuntimeLinkSymbol(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
+        RuntimeLinkStatus.CONNECTED -> "🔗"
+        RuntimeLinkStatus.DISCONNECTED -> "⛓"
+        RuntimeLinkStatus.WARNING -> "⚠"
+        RuntimeLinkStatus.ALARM -> "ALARM"
+    }
+    fun desktopRuntimeLinkLabel(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
+        RuntimeLinkStatus.CONNECTED -> "連接"
+        RuntimeLinkStatus.DISCONNECTED -> "斷開"
+        RuntimeLinkStatus.WARNING -> "警告"
+        RuntimeLinkStatus.ALARM -> "Alarm"
+    }
+    fun desktopRuntimeLinkButton(id:RuntimeLinkId,cockpit:Boolean)=JButton().apply {
+        isFocusPainted=false;isOpaque=true;cursor=Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+        background=Color(8,18,30);font=font.deriveFont(Font.BOLD,12f)
+        addActionListener { runtimeLinkStore.toggle(id) }
+        if(cockpit) desktopLinkQuickButtons[id]=this else desktopLinkManagerButtons[id]=this
+    }
+    fun renderDesktopRuntimeLinks(snapshot:RuntimeLinkSnapshot) {
+        fun render(button:JButton,id:RuntimeLinkId,cockpit:Boolean) {
+            val s=snapshot.status(id); val c=desktopRuntimeLinkColor(s)
+            button.text=if(cockpit) "${id.cockpitLeft} ${desktopRuntimeLinkSymbol(s)} ${id.cockpitRight}" else "${id.displayName} • ${desktopRuntimeLinkLabel(s)}"
+            button.foreground=c
+            button.border=BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(c,if(s==RuntimeLinkStatus.CONNECTED)2 else 1,true),
+                EmptyBorder(7,10,7,10)
+            )
+        }
+        desktopLinkQuickButtons.forEach { (id,b) -> render(b,id,true) }
+        desktopLinkManagerButtons.forEach { (id,b) -> render(b,id,false) }
+    }
+
     fun homeLaunch(label:String,color:Color,run:()->Unit)=GlassActionButton(label,color).apply {
         preferredSize=Dimension(168,76)
         font=font.deriveFont(Font.BOLD,15f)
@@ -5023,10 +5064,22 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         add(homeLaunch("NC",Color(80,170,255)){productionUiButtons["NC"]?.doClick()})
         add(homeLaunch("AI",Color(139,92,246)){productionUiButtons["AI"]?.doClick()})
     }
+    val homeLinkCockpit=JPanel(FlowLayout(FlowLayout.CENTER,8,6)).apply {
+        isOpaque=false
+        RuntimeLinkContract.cockpitLinks.forEach { add(desktopRuntimeLinkButton(it,true)) }
+    }
+    val homeLinkManagerBody=JPanel(FlowLayout(FlowLayout.CENTER,8,6)).apply {
+        isOpaque=false;isVisible=false
+        RuntimeLinkContract.managedLinks.forEach { add(desktopRuntimeLinkButton(it,false)) }
+    }
     val homeUtilities=JPanel(FlowLayout(FlowLayout.CENTER,10,8)).apply {
         isOpaque=false
         add(homeLaunch("設定",Color(39,233,255)){showUserSettingsCenter()}.apply{preferredSize=Dimension(120,54)})
         add(homeLaunch("專案",Color(125,112,255)){showProductionProjectManager()}.apply{preferredSize=Dimension(120,54)})
+        add(JButton("連結管理 ▸").apply {
+            preferredSize=Dimension(132,54);foreground=Color(39,233,255);background=Color(8,18,30);isFocusPainted=false
+            addActionListener { homeLinkManagerBody.isVisible=!homeLinkManagerBody.isVisible; text=if(homeLinkManagerBody.isVisible) "連結管理 ▾" else "連結管理 ▸"; homeLinkManagerBody.parent?.revalidate() }
+        })
     }
     val homeViewport=RuntimeGlassPanel().apply {
         background=Color(5,12,20)
@@ -5061,14 +5114,24 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     homeActions.border=BorderFactory.createEmptyBorder(0,0,10,0)
     homeActions.preferredSize=Dimension(1000,62)
     homeActions.components.forEach { it.preferredSize=Dimension(95,48) }
+    val homeNorth=JPanel(BorderLayout()).apply {
+        isOpaque=false;add(homeLinkCockpit,BorderLayout.NORTH);add(homeActions,BorderLayout.CENTER)
+    }
+    val homeSouth=JPanel(BorderLayout()).apply {
+        isOpaque=false
+        add(homeUtilities,BorderLayout.NORTH)
+        add(homeLinkManagerBody,BorderLayout.CENTER)
+        add(JLabel("斷開只切資料流 • CAD / CAM / G-code / SIM 資料保留",SwingConstants.CENTER).apply { foreground=Color(160,190,210) },BorderLayout.SOUTH)
+    }
+    runtimeLinkStore.observe { renderDesktopRuntimeLinks(it) }
     val homePanel=RuntimeGlassPanel(BorderLayout(12,12)).apply {
         name="HOME_CARD"
         background=StudioDesktopProductionTheme.background
         border=BorderFactory.createEmptyBorder(12,14,12,14)
-        add(homeActions,BorderLayout.NORTH)
+        add(homeNorth,BorderLayout.NORTH)
         add(homeViewport,BorderLayout.CENTER)
         add(homeData,BorderLayout.EAST)
-        add(homeUtilities,BorderLayout.SOUTH)
+        add(homeSouth,BorderLayout.SOUTH)
         addHierarchyListener { if(isShowing) refreshControlHome() }
     }
     refreshControlHome()

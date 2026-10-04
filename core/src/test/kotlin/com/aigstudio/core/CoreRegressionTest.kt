@@ -1289,7 +1289,46 @@ private fun assertPoint(actual: Vec2, expected: Vec2, msg: String = "") {
     assertNear(actual.y, expected.y, msg = "$msg y")
 }
 
+internal fun testRuntimeLinkStateSyncContract() {
+    val state=RuntimeLinkStore()
+    check(RuntimeLinkContract.managedLinks==listOf(
+        RuntimeLinkId.CAD_CAM,RuntimeLinkId.CAM_SIM,RuntimeLinkId.SIM_NC,
+        RuntimeLinkId.GPU_3D,RuntimeLinkId.MACHINE
+    ))
+    check(RuntimeLinkContract.cockpitLinks==listOf(
+        RuntimeLinkId.CAD_CAM,RuntimeLinkId.CAM_SIM,RuntimeLinkId.SIM_NC
+    ))
+    check(RuntimeLinkContract.DISCONNECT_POLICY=="DATA_FLOW_ONLY_PRESERVE_RUNTIME_DATA")
+    check(setOf("CAD_GEOMETRY","CAM_TOOLPATH","SIM_STATE","NC_GCODE").all{
+        it in RuntimeLinkContract.PRESERVED_DOMAINS
+    })
+    check(RuntimeLinkStatus.CONNECTED.colorToken=="CYAN_GREEN")
+    check(RuntimeLinkStatus.DISCONNECTED.colorToken=="GRAY")
+    check(RuntimeLinkStatus.WARNING.colorToken=="YELLOW")
+    check(RuntimeLinkStatus.ALARM.colorToken=="RED")
+    check(RuntimeLinkContract.managedLinks.all{state.status(it)==RuntimeLinkStatus.CONNECTED})
+    val cockpit=mutableListOf<RuntimeLinkSnapshot>()
+    val manager=mutableListOf<RuntimeLinkSnapshot>()
+    state.observe{cockpit+=it}
+    state.observe{manager+=it}
+    state.toggle(RuntimeLinkId.CAD_CAM)
+    check(state.status(RuntimeLinkId.CAD_CAM)==RuntimeLinkStatus.DISCONNECTED)
+    check(cockpit.last()==manager.last())
+    check(cockpit.last().status(RuntimeLinkId.CAD_CAM)==RuntimeLinkStatus.DISCONNECTED)
+    state.set(RuntimeLinkId.CAD_CAM,RuntimeLinkStatus.CONNECTED)
+    check(cockpit.last()==manager.last())
+    check(cockpit.last().status(RuntimeLinkId.CAD_CAM)==RuntimeLinkStatus.CONNECTED)
+    state.set(RuntimeLinkId.MACHINE,RuntimeLinkStatus.WARNING)
+    check(cockpit.last().status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.WARNING)
+    state.set(RuntimeLinkId.MACHINE,RuntimeLinkStatus.ALARM)
+    check(manager.last().status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.ALARM)
+    val preserved=RuntimeLinkContract.PRESERVED_DOMAINS.toSet()
+    state.toggle(RuntimeLinkId.SIM_NC)
+    check(RuntimeLinkContract.PRESERVED_DOMAINS.toSet()==preserved)
+    println("RUNTIME_LINK_STATE_SYNC_GATE_PASS|COCKPIT_MANAGER_SHARED_STATE|DATA_FLOW_ONLY|PRESERVE_CAD_CAM_SIM_NC|4_STATE_COLORS")
+}
 fun main() {
+    testRuntimeLinkStateSyncContract()
     println("AIG Studio core regression tests")
     testSoftwareAbsoluteCoordinateContract()
     testDualPlatformProjectPackage()
