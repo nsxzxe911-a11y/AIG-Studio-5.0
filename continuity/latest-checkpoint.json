@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "359.0.0",
+  "version": "360.0.0",
   "branch": "main",
   "recorded_source_head": "e22ef1627f1dcc5a60399a220d82518780bca81f",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",

@@ -192,6 +192,11 @@ object StudioDisplayPolicy {
 }
 
 class RgbGlowButton(context: Context) : Button(context) {
+    init {
+        val abi=android.os.Build.SUPPORTED_ABIS.firstOrNull()?.lowercase().orEmpty()
+        val software=abi in setOf("x86_64","x86","armeabi-v7a","armeabi")
+        if(software) setLayerType(View.LAYER_TYPE_SOFTWARE,null)
+    }
     companion object {
         private val instances = java.util.Collections.newSetFromMap(java.util.WeakHashMap<RgbGlowButton, Boolean>())
         private val pulseHandler = Handler(Looper.getMainLooper())
@@ -212,6 +217,7 @@ class RgbGlowButton(context: Context) : Button(context) {
     private var selectedGlow = false
     private var alarmGlow = false
     private var replacementAssetId:String?=null
+    private var generatedAssetsEnabled=true
     private val density = resources.displayMetrics.density
     private val pulseRunnable = object : Runnable {
         override fun run() {
@@ -230,7 +236,19 @@ class RgbGlowButton(context: Context) : Button(context) {
         render()
     }
 
+    fun setGeneratedAssetEnabled(enabled:Boolean) {
+        generatedAssetsEnabled=enabled
+        if(!enabled) {
+            replacementAssetId=null
+            setCompoundDrawables(null,null,null,null)
+            compoundDrawablePadding=0
+            if(android.os.Build.VERSION.SDK_INT>=23) compoundDrawableTintList=null
+            render()
+        }
+    }
+
     private fun applyVisualAsset() {
+        if(!generatedAssetsEnabled) return
         val drawable=replacementAssetId?.let { ProductionRgbAssets.drawableById(context,it) } ?: run {
             val candidates=listOfNotNull(
                 contentDescription?.toString()?.takeIf{it.isNotBlank()},
@@ -254,7 +272,7 @@ class RgbGlowButton(context: Context) : Button(context) {
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        if (compoundDrawables.none { it != null } || replacementAssetId!=null) applyVisualAsset()
+        if (generatedAssetsEnabled && (compoundDrawables.none { it != null } || replacementAssetId!=null)) applyVisualAsset()
     }
 
     fun setRgbState(color: Int, selected: Boolean, alarm: Boolean = false) {
@@ -1294,6 +1312,7 @@ class MainActivity : Activity() {
         }
         fun runtimeLinkButton(id:RuntimeLinkId,cockpit:Boolean)=RgbGlowButton(this).apply {
             textSize=StudioDisplayPolicy.sp(this,9.5f)
+            setGeneratedAssetEnabled(false)
             minHeight=dp(40)
             maxLines=1
             contentDescription=(if(cockpit) "COCKPIT LINK " else "LINK MANAGER ")+id.name
@@ -1374,8 +1393,8 @@ class MainActivity : Activity() {
             setMargins(dp(12),0,dp(12),dp(8))
         })
 
-        val homePreview=CadView(this).apply {
-            contentDescription="目前圖面預覽"
+        val homePreview=HomeCadPreviewView(this).apply {
+            contentDescription="目前圖面預覽 • 輕量縮圖"
             setOnTouchListener { _,_ -> true }
         }
         homeContent.addView(homePreview,LinearLayout.LayoutParams(-1,0,1f))
@@ -1395,6 +1414,7 @@ class MainActivity : Activity() {
             homeModes.addView(RgbGlowButton(this).apply {
                 text=label
                 contentDescription="HOME $label"
+                setGeneratedAssetEnabled(false)
                 textSize=StudioDisplayPolicy.sp(this,12f)
                 minWidth=dp(80)
                 minHeight=dp(48)
@@ -1427,13 +1447,11 @@ class MainActivity : Activity() {
         homeAction("CAD",0xFF3DEBFF.toInt()){enterCadRuntime()}
         homeAction("CAM",0xFF22C55E.toInt()){showCamWorkstation()}
         homeAction("SIM",0xFF8B5CF6.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
-        homeAction("3AX",0xFF3B82F6.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
-        homeAction("4AX",0xFFF59E0B.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}
-        homeAction("5AX",0xFFEC4899.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
-        homeAction("6AX",0xFF22D3EE.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("6AX"))}
-        homeAction("NC",0xFF50AAFF.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}
-        homeAction("AI",0xFF8B5CF6.toInt()){showAiSystemSuiteDialog()}
         homeAction("多功能",0xFF27E9FF.toInt()){showOneKeyMultiFunction()}
+        homeContent.addView(chromeText(
+            "3D / 3AX / 4AX / 5AX / 6AX / NC / AI",
+            0xFFA8C9DB.toInt(),9f
+        ).apply { gravity=Gravity.CENTER },LinearLayout.LayoutParams(-1,-2))
         homeContent.addView(homeModes,LinearLayout.LayoutParams(-1,-2))
 
         val homeLinkManagerBody=FlowLayout(this).apply {
@@ -1444,6 +1462,7 @@ class MainActivity : Activity() {
         val homeLinkManagerToggle=RgbGlowButton(this).apply {
             text="連結管理 ▸"
             contentDescription="HOME LINK MANAGER TOGGLE"
+            setGeneratedAssetEnabled(false)
             textSize=StudioDisplayPolicy.sp(this,10f)
             minWidth=dp(108)
             minHeight=dp(44)
@@ -1461,6 +1480,7 @@ class MainActivity : Activity() {
             addView(RgbGlowButton(this@MainActivity).apply {
                 text="設定"
                 contentDescription="HOME USER SETTINGS CENTER"
+                setGeneratedAssetEnabled(false)
                 textSize=StudioDisplayPolicy.sp(this,10f)
                 minWidth=dp(92)
                 minHeight=dp(44)
@@ -1477,7 +1497,7 @@ class MainActivity : Activity() {
         ).apply { gravity=Gravity.CENTER },LinearLayout.LayoutParams(-1,-2))
         runtimeLinkStore.observe { renderRuntimeLinks(it) }
         homeContent.addView(chromeText(
-            "CAD • CAM • SIM • 3AX • 4AX • 5AX • NC • AI",
+            "CAD • CAM • SIM • 多功能（3D / 3AX / 4AX / 5AX / 6AX / NC / AI）",
             0xFFA0BED2.toInt(),9f
         ).apply { gravity=Gravity.CENTER },LinearLayout.LayoutParams(-1,-2))
 
@@ -1486,8 +1506,7 @@ class MainActivity : Activity() {
             FrameLayout.LayoutParams.MATCH_PARENT
         ))
         fun refreshHomePreview() {
-            homePreview.importState(cad.exportState())
-            homePreview.post { homePreview.fitView() }
+            homePreview.update(cad.snapshot())
             homeMachiningInfo.text="機台：未連接 • 圖元：${cad.snapshot().entities.size} • 刀路："+
                 (camDerivedCache?.cam?.toolpaths?.sumOf{it.moves.size}?.toString() ?: "尚無資料")+
                 (if(camDerivedStale) " • 待重算" else "")
@@ -1509,6 +1528,16 @@ class MainActivity : Activity() {
         homeRoot.visibility=View.VISIBLE
         homeRoot.contentDescription="AIG CNC PRODUCTION HOME RUNTIME • FIRST FRAME"
         setContentView(runtimeHost)
+
+        // AIG-II one-key multi-function may hand off real 6AX work to Studio.
+        intent.getStringExtra("AIG_TARGET_MODE")
+            ?.trim()?.uppercase()
+            ?.takeIf { it=="6AX" }
+            ?.let { requested ->
+                runtimeHost.post {
+                    showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget(requested))
+                }
+            }
 
         // Project recovery, shared storage and network are all post-first-frame work.
         // The user sees the real HOME controls before any of those paths can execute.
@@ -5811,6 +5840,101 @@ class FlowLayout(context: Context) : ViewGroup(context) {
             x += child.measuredWidth + gap
             rowH = max(rowH, child.measuredHeight)
         }
+    }
+}
+
+class HomeCadPreviewView(context: Context) : View(context) {
+    private var snapshot=DrawingSnapshot(emptyList())
+    private val geometryPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color=0xFFE8F1FA.toInt(); style=Paint.Style.STROKE
+        strokeWidth=2f*resources.displayMetrics.density
+        strokeCap=Paint.Cap.ROUND; strokeJoin=Paint.Join.ROUND
+    }
+    private val axisPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color=0x553DEBFF; style=Paint.Style.STROKE
+        strokeWidth=1f*resources.displayMetrics.density
+    }
+    private val textPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color=0xFF8FB3C9.toInt(); textSize=11f*resources.displayMetrics.scaledDensity
+    }
+    private val emptyPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color=0xFF63FF9D.toInt(); textSize=12f*resources.displayMetrics.scaledDensity
+        textAlign=Paint.Align.CENTER
+    }
+    private val arcPath=Path()
+
+    init {
+        setBackgroundColor(0xFF081622.toInt())
+        isClickable=false
+    }
+
+    fun update(next:DrawingSnapshot) {
+        snapshot=DrawingSnapshot(next.entities.toList())
+        invalidate()
+    }
+
+    override fun onDraw(canvas:Canvas) {
+        super.onDraw(canvas)
+        val entities=snapshot.entities
+        canvas.save()
+        canvas.clipRect(0f,0f,width.toFloat(),height.toFloat())
+        if(width<=0 || height<=0) { canvas.restore(); return }
+        if(entities.isEmpty()) {
+            canvas.drawText("目前無 CAD 圖形 • 可直接進 CAD",width/2f,height/2f,emptyPaint)
+            canvas.restore(); return
+        }
+
+        var minX=Double.POSITIVE_INFINITY; var minY=Double.POSITIVE_INFINITY
+        var maxX=Double.NEGATIVE_INFINITY; var maxY=Double.NEGATIVE_INFINITY
+        fun include(x:Double,y:Double) {
+            minX=min(minX,x); minY=min(minY,y); maxX=max(maxX,x); maxY=max(maxY,y)
+        }
+        entities.forEach { e -> when(e) {
+            is Line -> { include(e.a.x,e.a.y); include(e.b.x,e.b.y) }
+            is Circle -> {
+                include(e.center.x-e.radius,e.center.y-e.radius)
+                include(e.center.x+e.radius,e.center.y+e.radius)
+            }
+            is Arc -> {
+                include(e.center.x-e.radius,e.center.y-e.radius)
+                include(e.center.x+e.radius,e.center.y+e.radius)
+            }
+        } }
+        val margin=24.0*resources.displayMetrics.density
+        val spanX=(maxX-minX).coerceAtLeast(1.0)
+        val spanY=(maxY-minY).coerceAtLeast(1.0)
+        val scale=min(
+            (width-2.0*margin).coerceAtLeast(1.0)/spanX,
+            (height-2.0*margin).coerceAtLeast(1.0)/spanY
+        ).coerceIn(0.05,80.0)
+        val cx=(minX+maxX)/2.0; val cy=(minY+maxY)/2.0
+        fun sx(x:Double)=(width/2.0+(x-cx)*scale).toFloat()
+        fun sy(y:Double)=(height/2.0-(y-cy)*scale).toFloat()
+
+        val ox=sx(0.0); val oy=sy(0.0)
+        if(ox in 0f..width.toFloat()) canvas.drawLine(ox,0f,ox,height.toFloat(),axisPaint)
+        if(oy in 0f..height.toFloat()) canvas.drawLine(0f,oy,width.toFloat(),oy,axisPaint)
+
+        entities.forEach { e -> when(e) {
+            is Line -> canvas.drawLine(sx(e.a.x),sy(e.a.y),sx(e.b.x),sy(e.b.y),geometryPaint)
+            is Circle -> canvas.drawCircle(sx(e.center.x),sy(e.center.y),(e.radius*scale).toFloat(),geometryPaint)
+            is Arc -> {
+                val startA=atan2(e.start.y-e.center.y,e.start.x-e.center.x)
+                val endA=atan2(e.end.y-e.center.y,e.end.x-e.center.x)
+                var delta=endA-startA
+                if(e.clockwise) while(delta>0) delta-=2*Math.PI else while(delta<0) delta+=2*Math.PI
+                if(abs(delta)>Math.PI) delta+=if(delta>0) -2*Math.PI else 2*Math.PI
+                arcPath.reset()
+                for(i in 0..32) {
+                    val a=startA+delta*i/32.0
+                    val x=sx(e.center.x+cos(a)*e.radius); val y=sy(e.center.y+sin(a)*e.radius)
+                    if(i==0) arcPath.moveTo(x,y) else arcPath.lineTo(x,y)
+                }
+                canvas.drawPath(arcPath,geometryPaint)
+            }
+        } }
+        canvas.drawText("CAD 預覽 • 圖元 ${entities.size}",12f*resources.displayMetrics.density,20f*resources.displayMetrics.density,textPaint)
+        canvas.restore()
     }
 }
 
