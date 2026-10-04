@@ -26,11 +26,13 @@ nc_coordinate=read(".github/workflows/nc-coordinate-drift-gate.yml")
 nc_semantic=read(".github/workflows/nc-semantic-timeline-gate.yml")
 assert ":core:coreRegression" not in android
 assert ":core:coreRegression" not in windows
-assert "REGRESSION_EXECUTION_DISABLED_BY_POLICY_314" in nc_coordinate and "if: ${{ false }}" in nc_coordinate
-assert "REGRESSION_EXECUTION_DISABLED_BY_POLICY_314" in nc_semantic and "if: ${{ false }}" in nc_semantic
+assert "REGRESSION_EXECUTION_DISABLED_BY_USER_POLICY" in nc_coordinate and "if: ${{ false }}" in nc_coordinate
+assert "REGRESSION_EXECUTION_DISABLED_BY_USER_POLICY" in nc_semantic and "if: ${{ false }}" in nc_semantic
 assert "REGRESSION_EXECUTION_ENABLED=false" in rolling
 assert "ALLOW_DOWNGRADE=false" in rolling
 assert "ALLOW_EQUAL_VERSION_REINSTALL=false" in rolling
+assert "CNC_SAFETY_CORE_LOCKED=false" in rolling
+assert "CNC_SAFETY_DISABLE_ALLOWED=true" in rolling
 
 prod=read("ci/verify_production_runtime.py")
 assert "workflow_dispatch:" in build.split("permissions:",1)[0]

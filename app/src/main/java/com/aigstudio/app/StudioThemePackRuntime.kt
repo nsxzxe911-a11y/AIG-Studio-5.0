@@ -53,7 +53,6 @@ object StudioThemePackRuntime {
     )
 
     @Volatile private var currentId="aigii_rgb_neon_v2"
-    @Volatile private var lastVerifiedId=currentId
     private val listeners=CopyOnWriteArraySet<(StudioThemePalette)->Unit>()
 
     val current:StudioThemePalette get()=packs.getValue(currentId)
@@ -69,22 +68,13 @@ object StudioThemePackRuntime {
         return runCatching {
             currentId=id
             listeners.forEach { it(next) }
-            lastVerifiedId=id
             next
         }.getOrElse { error ->
-            currentId=previous.takeIf{packs.containsKey(it)} ?: lastVerifiedId
+            currentId=previous
             val restored=current
             runCatching { listeners.forEach { it(restored) } }
             throw error
         }
-    }
-
-    @Synchronized
-    fun rollback():StudioThemePalette {
-        currentId=lastVerifiedId.takeIf{packs.containsKey(it)} ?: "aigii_rgb_neon_v2"
-        val restored=current
-        listeners.forEach { it(restored) }
-        return restored
     }
 
     @Synchronized

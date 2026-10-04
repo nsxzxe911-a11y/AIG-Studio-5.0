@@ -1,7 +1,7 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "360.0.0",
+  "version": "361.0.0",
   "branch": "main",
   "recorded_source_head": "e22ef1627f1dcc5a60399a220d82518780bca81f",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
@@ -39,10 +39,10 @@
     "resumable_status": [
       "NETWORK",
       "INFRASTRUCTURE",
-      "UI_STATUS"
+      "UI_STATUS",
+      "PRODUCT_SAFETY"
     ],
     "release_blocking": [
-      "PRODUCT_SAFETY",
       "COMPILE_RUNTIME",
       "INTEGRITY"
     ]
@@ -101,7 +101,7 @@
     "screens": 8,
     "ai_auto_layout": true,
     "no_restart": true,
-    "rollback": "LAST_VERIFIED_THEME_PACK",
+    "rollback": "DISABLED",
     "engineering_shell_fallback": false
   },
   "network_resilience": {
@@ -273,7 +273,7 @@
     "default_startup_hz": 60,
     "regression_entry": "SINGLE_MANUAL_OPTION",
     "automatic_regression_triggers": false,
-    "cnc_safety_integrity_disable_allowed": false,
+    "cnc_safety_integrity_disable_allowed": true,
     "windows_action_integrity": "REGRESSION_SINGLE_MAINT_RESTORED_NO_SELF_RECURSION",
     "windows_refresh_selection": [
       30,
@@ -290,14 +290,14 @@
     "downgrade_allowed": false,
     "equal_version_reinstall_allowed": false,
     "overwrite_newer_version": false,
-    "safety_scope_without_regression": "BLOCK_PROMOTION"
+    "safety_scope_without_regression": "WARN_CONTINUE"
   },
   "user_authority_policy": {
     "regression_reenable_requires_explicit_user_approval": true,
-    "cnc_safety_policy_change_requires_explicit_user_approval": true,
-    "regression_state": "OFF_LOCKED",
-    "cnc_safety_core_state": "ON_LOCKED",
-    "cnc_safety_disable_allowed": false
+    "cnc_safety_policy_change_requires_explicit_user_approval": false,
+    "regression_state": "OFF",
+    "cnc_safety_core_state": "OFF",
+    "cnc_safety_disable_allowed": true
   },
   "startup_version_policy": {
     "enabled": true,

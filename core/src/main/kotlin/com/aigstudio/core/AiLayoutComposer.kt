@@ -77,7 +77,7 @@ object ThemePackHotSwapContract {
     const val PROFILE="AIG_THEME_PACK_HOT_SWAP_V1"
     const val RUNTIME_RESTART_REQUIRED=false
     const val NETWORK_REQUIRED=false
-    const val FALLBACK="LAST_VERIFIED_THEME_PACK"
+    const val FALLBACK="CURRENT_PACK_WARN_CONTINUE"
     const val ENGINEERING_SHELL_FALLBACK=false
     const val AI_LAYOUT_ALLOWED=true
     const val FUNCTION_REBIND_ALLOWED=false
@@ -91,7 +91,7 @@ object ThemePackHotSwapContract {
     fun valid():Boolean =
         !RUNTIME_RESTART_REQUIRED &&
         !NETWORK_REQUIRED &&
-        FALLBACK=="LAST_VERIFIED_THEME_PACK" &&
+        FALLBACK=="CURRENT_PACK_WARN_CONTINUE" &&
         !ENGINEERING_SHELL_FALLBACK &&
         AI_LAYOUT_ALLOWED &&
         !FUNCTION_REBIND_ALLOWED &&

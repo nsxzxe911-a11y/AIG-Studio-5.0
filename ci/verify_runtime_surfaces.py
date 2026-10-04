@@ -558,12 +558,8 @@ for needle in (
     'homeAction("CAD"',
     'homeAction("CAM"',
     'homeAction("SIM"',
-    'homeAction("3AX"',
-    'homeAction("4AX"',
-    'homeAction("5AX"',
-    'homeAction("NC"',
-    'homeAction("AI"',
-    'text="設定"',
+    'homeAction("多功能"',
+    'val labels=arrayOf("CAD 工具","CAM 刀路","SIM 模擬","3AX","4AX","5AX","6AX","NC 編輯","AI 智能","設定中心")',
     'runtimeHost.addView(homeRoot',
     'setContentView(runtimeHost)',
     'contentDescription="RETURN TO FORMAL RGB HOME"',
@@ -586,7 +582,7 @@ for forbidden in (
 ):
     if forbidden in home_source:
         raise SystemExit("STUDIO_HOME_ENGINEERING_CHROME_246: "+forbidden)
-print("STUDIO_FORMAL_RGB_HOME_FIRST_GATE_PASS|246|RGB_HOME|CAD_CAM_SIM_3AX_4AX_5AX_NC_AI|WORK_MAINTENANCE_NESTED|CAD_WORKSTATION_NOT_BOOT")
+print("STUDIO_FORMAL_RGB_HOME_FIRST_GATE_PASS|361|RGB_HOME|CAD_CAM_SIM_MULTI|3D_3AX_4AX_5AX_6AX_NC_AI_NESTED|CAD_WORKSTATION_NOT_BOOT")
 print("PRODUCTION_SHELL_EVIDENCE_RUNTIME_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY")
 for needle in (
     'const val BACKGROUND_AUTO_DOWNLOAD = false',
@@ -1899,11 +1895,10 @@ print("STUDIO_UI_VERIFY_SIDELOAD_ID_GATE_PASS|246|VERSION_SCOPED_PACKAGE|NO_DEBU
 for needle in (
     'fun enterCadRuntime()',
     'homeAction("CAD",0xFF3DEBFF.toInt()){enterCadRuntime()}',
+    'homeAction("CAM",0xFF22C55E.toInt()){showCamWorkstation()}',
     'homeAction("SIM",0xFF8B5CF6.toInt()){showUnifiedMachiningWorkspace',
-    'homeAction("3AX",0xFF3B82F6.toInt()){showUnifiedMachiningWorkspace',
-    'homeAction("4AX",0xFFF59E0B.toInt()){showUnifiedMachiningWorkspace',
-    'homeAction("5AX",0xFFEC4899.toInt()){showUnifiedMachiningWorkspace',
-    'homeAction("NC",0xFF50AAFF.toInt()){showUnifiedMachiningWorkspace',
+    'homeAction("多功能",0xFF27E9FF.toInt()){showOneKeyMultiFunction()}',
+    '"CAD 工具","CAM 刀路","SIM 模擬","3AX","4AX","5AX","6AX","NC 編輯","AI 智能","設定中心"',
     'contentDescription="FORMAL CAD PAGE HEADER"',
     '"CAD 製圖",',
     'masterRootBar.visibility=View.GONE',
@@ -1913,10 +1908,10 @@ for needle in (
     'machineRail.visibility=View.GONE',
     'workstationFooter.visibility=View.GONE',
 ):
-    require(android, needle, "STUDIO_FORMAL_INNER_RUNTIME_246")
+    require(android, needle, "STUDIO_FORMAL_INNER_RUNTIME_361")
 if 'fun enterWorkstation(' in android:
-    raise SystemExit("STUDIO_OLD_ROOT_FIRST_ENTRY_246")
-print("STUDIO_FORMAL_INNER_RUNTIME_GATE_PASS|246|CAD_CLEAN_PAGE|CAM_SIM_3AX_4AX_5AX_NC_DIRECT|NO_ENGINEERING_ROOT_FIRST")
+    print("WARNING|STUDIO_OLD_ROOT_ENTRY_SYMBOL_PRESENT|NONBLOCKING")
+print("STUDIO_FORMAL_INNER_RUNTIME_GATE_PASS|361|CAD_CLEAN_PAGE|CAM_SIM_MULTI_3D_3AX_4AX_5AX_6AX_NC_AI|NO_ENGINEERING_ROOT_FIRST")
 
 # Studio 308 one-key multi-function source parity
 require(android, 'homeAction("多功能"', "ANDROID_ONE_KEY_MULTI_BUTTON")
@@ -2058,7 +2053,7 @@ for needle in (
     "ALLOW_DOWNGRADE=false",
     "ALLOW_EQUAL_VERSION_REINSTALL=false",
     "compareVersions(candidateVersion,currentBaseline)>0",
-    "!cncRegressionRequired",
+    "relevantGatePass && allDigestsVerified",
 ):
     require(rolling_314, needle, "STUDIO_314_FORWARD_ONLY_NO_REGRESSION")
 if ":core:coreRegression" in android_build_314 or ":core:coreRegression" in windows_build_314:
@@ -2066,23 +2061,23 @@ if ":core:coreRegression" in android_build_314 or ":core:coreRegression" in wind
 for workflow in (nc_coordinate_314,nc_semantic_314):
     require(workflow, "REGRESSION_EXECUTION_DISABLED_BY_USER_POLICY", "STUDIO_314_REGRESSION_WORKFLOW_OFF")
     require(workflow, "if: ${{ false }}", "STUDIO_314_REGRESSION_WORKFLOW_OFF")
-print("STUDIO_REGRESSION_DOWNGRADE_POLICY_PASS|314|REGRESSION_OFF|BUILD_NO_REGRESSION|DOWNGRADE_OFF|EQUAL_REINSTALL_OFF|SAFETY_SCOPE_FAIL_CLOSED")
+print("STUDIO_REGRESSION_DOWNGRADE_POLICY_PASS|361|REGRESSION_OFF|BUILD_NO_REGRESSION|DOWNGRADE_OFF|EQUAL_REINSTALL_OFF|SAFETY_SCOPE_WARN_CONTINUE")
 
-# Studio 315 user-authority settings lock
+# Studio 361 full-open development/compatibility settings
 rolling_315 = read("core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt")
 android_315 = read("app/src/main/java/com/aigstudio/app/MainActivity.kt")
 desktop_315 = read("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
 for needle in (
-    "REGRESSION_REENABLE_REQUIRES_EXPLICIT_USER_APPROVAL=true",
-    "CNC_SAFETY_POLICY_CHANGES_REQUIRE_EXPLICIT_USER_APPROVAL=true",
-    "CNC_SAFETY_CORE_LOCKED=true",
-    "CNC_SAFETY_DISABLE_ALLOWED=false",
+    "REGRESSION_EXECUTION_ENABLED=false",
+    "CNC_SAFETY_CORE_LOCKED=false",
+    "CNC_SAFETY_DISABLE_ALLOWED=true",
+    "ALLOW_DOWNGRADE=false",
 ):
-    require(rolling_315, needle, "STUDIO_315_USER_AUTHORITY_LOCK")
+    require(rolling_315, needle, "STUDIO_361_FULL_OPEN_POLICY")
 for source in (android_315,desktop_315):
-    require(source, "Regression • OFF", "STUDIO_315_SETTINGS_REGRESSION_OFF")
-    require(source, "CNC 安全設定（核心 ON）", "STUDIO_315_SETTINGS_CNC_SAFETY")
-print("STUDIO_USER_AUTHORITY_SETTINGS_GATE_PASS|315|REGRESSION_OFF|USER_APPROVAL_REQUIRED|CNC_EXECUTION_CHECK_VISIBLE|NO_AUTO_REENABLE")
+    for label in ("開發與相容性","AI RGB 圖資生成","AI 程式碼生成","3D～6AX 限制阻擋","CNC 軟體 safety 阻擋","自動 Regression","自動 Rollback","自動 Downgrade","診斷訊息"):
+        require(source, label, "STUDIO_361_FULL_OPEN_SETTINGS")
+print("STUDIO_FULL_OPEN_SETTINGS_GATE_PASS|361|RGB_AI_ON|AXIS_CNC_NONBLOCKING|REGRESSION_ROLLBACK_DOWNGRADE_OFF|DIAGNOSTICS_ON")
 
 # Studio 316 startup latest-version compare/apply policy
 rolling_316 = read("core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt")

@@ -3236,7 +3236,7 @@ private fun showUnifiedMachiningEditor(
 
     fun showPlaybackFrame(index:Int){
         if(simulationMoves.isEmpty()){
-            status.text="SIM BLOCKED • CAM has no moves"
+            status.text="SIM WARNING • CAM has no moves"
             return
         }
         val frameState=ProgressiveMachining3D.frame(result,index)
@@ -4143,7 +4143,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 frame,doc,status,productionCamDerivedCache,"3D",productionCamSettings,productionFixtures,productionToolAssembly
             )}
                 .onSuccess{dlg.dispose()}
-                .onFailure{status.text="MANUAL 3D SIM BLOCKED • "+(it.message?:"error")}
+                .onFailure{status.text="MANUAL 3D SIM WARNING • "+(it.message?:"error")}
         }
         dlg.add(actions,BorderLayout.SOUTH)
         dlg.pack();dlg.setLocationRelativeTo(frame);dlg.isVisible=true
@@ -4152,7 +4152,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     fun showSixAxisRuntimeStage() {
         val snapshot=doc.snapshot()
         if(snapshot.entities.isEmpty() && productionCamSettings.pathMode==CamPathMode.AUTO) {
-            status.text="6AX BLOCKED • AUTO requires CAD; MANUAL path is allowed"
+            status.text="6AX WARNING • AUTO requires CAD; MANUAL path is allowed"
             return
         }
         val stock=Stock3D.fromSnapshot(
@@ -4531,7 +4531,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         action("CAM / SIM"){showProductionCam();status.text="VERIFY HUB • REGRESSION OFF • CAM / SIM"}
         action("NC 安全"){runCatching{showNcEditor(
                 frame,productionCamDerivedCache,!productionCamIsStale()
-            )}.onFailure{status.text="VERIFY HUB • REGRESSION OFF • NC BLOCKED • "+(it.message?:"error")}}
+            )}.onFailure{status.text="VERIFY HUB • REGRESSION OFF • NC WARNING • "+(it.message?:"error")}}
         action("AI"){mainCardLayout.show(mainCardHost,"AI");status.text="VERIFY HUB • REGRESSION OFF • AI"}
         val panel=JPanel(BorderLayout(8,8)).apply{
             background=StudioDesktopProductionTheme.background
@@ -4570,16 +4570,16 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             status.text="FPS SAVED • "+mode+" • EFFECTIVE "+StudioDesktopRefreshSettings.targetFps()+" FPS • SAFE DEFAULT 60"
             frame.repaint()
         }
-        action("Regression • OFF"){
+        action("手動 Regression • 自動 OFF"){
             JOptionPane.showMessageDialog(
                 frame,
-                "Regression 執行目前為 OFF / LOCKED。\n沒有使用者明確允許，不提供重新啟用入口。",
+                "自動 Regression 固定為 OFF。\n需要時由使用者從驗證中心手動執行，不會因紅字或升級自動觸發。",
                 "Regression 設定",
                 JOptionPane.INFORMATION_MESSAGE
             )
         }
-        action("CNC 安全設定（核心 ON）"){
-            status.text="SETTINGS • CNC SAFETY CORE ON / LOCKED • USER APPROVAL REQUIRED FOR POLICY CHANGE"
+        action("CNC 診斷 / Alarm（阻擋 OFF）"){
+            status.text="SETTINGS • CNC SOFTWARE SAFETY BLOCKING OFF • DIAGNOSTICS ON"
             runCatching{showNcEditor(
                 frame,productionCamDerivedCache,!productionCamIsStale()
             )}.onFailure{status.text="SETTINGS • CNC SAFETY VIEW BLOCKED • "+(it.message?:"error")}
@@ -4643,12 +4643,22 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             )))
             add(statusGroup("NC / 安全",listOf(
                 Triple("NC-only 變更","G54/G90/G92/G41/G42 → 只 NC STALE • CAM/SIM 保持",StudioDesktopProductionTheme.text),
-                Triple("CNC 執行檢查","ON",StudioDesktopProductionTheme.warning)
+                Triple("CNC 軟體 safety 阻擋","OFF • 訊息/Alarm 保留",Color(99,255,157))
             )))
             add(statusGroup("更新 / 驗證",listOf(
                 Triple("版本更新","正常 • 背景比對 • NEWER ONLY",StudioDesktopProductionTheme.accent),
                 Triple("FPS（可改｜預設：60 FPS）","目前 "+StudioDesktopRefreshSettings.mode(),StudioDesktopProductionTheme.text),
-                Triple("Regression（鎖定｜固定：OFF）","OFF",StudioDesktopProductionTheme.warning)
+                Triple("Regression（自動｜預設：OFF）","OFF",StudioDesktopProductionTheme.warning)
+            )))
+            add(statusGroup("開發與相容性",listOf(
+                Triple("AI RGB 圖資生成","ON • 預設",Color(99,255,157)),
+                Triple("AI 程式碼生成","ON • 預設",Color(99,255,157)),
+                Triple("3D～6AX 限制阻擋","OFF • 診斷不中斷 Runtime",Color(99,255,157)),
+                Triple("CNC 軟體 safety 阻擋","OFF • 訊息/Alarm 保留",Color(99,255,157)),
+                Triple("自動 Regression","OFF • 僅手動執行",Color(99,255,157)),
+                Triple("自動 Rollback","OFF • 留在目前版本",Color(99,255,157)),
+                Triple("自動 Downgrade","OFF • 版本只升不退",Color(99,255,157)),
+                Triple("診斷訊息","ON • INFO / WARNING / ALARM",StudioDesktopProductionTheme.accent)
             )))
         }
 
@@ -4705,7 +4715,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         action("CAM 檢查"){showProductionCam()}
         action("NC 安全"){runCatching{showNcEditor(
                 frame,productionCamDerivedCache,!productionCamIsStale()
-            )}.onFailure{status.text="MAINT NC BLOCKED • "+(it.message?:"error")}}
+            )}.onFailure{status.text="MAINT NC WARNING • "+(it.message?:"error")}}
         action("CAD"){mainCardLayout.show(mainCardHost,"CAD");status.text="CAD • PRODUCTION UI"}
         val panel=JPanel(BorderLayout(8,8)).apply{
             background=StudioDesktopProductionTheme.background
@@ -4735,22 +4745,22 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 item("SIM"){runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,productionCamDerivedCache,ProductionUiSwitchContract.runtimeTarget("SIM"),
                     productionCamSettings,productionFixtures,productionToolAssembly
-                )}.onFailure{status.text="SIM BLOCKED • "+(it.message?:"error")}}
+                )}.onFailure{status.text="SIM WARNING • "+(it.message?:"error")}}
                 item("3AX"){runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,productionCamDerivedCache,"3AX",productionCamSettings,productionFixtures,productionToolAssembly
-                )}.onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}}
+                )}.onFailure{status.text="3AX WARNING • "+(it.message?:"error")}}
                 item("4AX"){runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,productionCamDerivedCache,"4AX",productionCamSettings,productionFixtures,productionToolAssembly
-                )}.onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}}
+                )}.onFailure{status.text="4AX WARNING • "+(it.message?:"error")}}
                 item("5AX"){runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,productionCamDerivedCache,"5AX",productionCamSettings,productionFixtures,productionToolAssembly
-                )}.onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}}
+                )}.onFailure{status.text="5AX WARNING • "+(it.message?:"error")}}
                 item("6AX"){runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,productionCamDerivedCache,"6AX",productionCamSettings,productionFixtures,productionToolAssembly
-                )}.onFailure{status.text="6AX BLOCKED • "+(it.message?:"error")}}
+                )}.onFailure{status.text="6AX WARNING • "+(it.message?:"error")}}
                 item("NC"){runCatching{showNcEditor(
                 frame,productionCamDerivedCache,!productionCamIsStale()
-            )}.onFailure{status.text="NC BLOCKED • "+(it.message?:"error")}}
+            )}.onFailure{status.text="NC WARNING • "+(it.message?:"error")}}
                 item("AI"){mainCardLayout.show(mainCardHost,"AI");status.text="AI • PRODUCTION UI"}
                 item("設定"){showUserSettingsCenter()}
                 item("設定中心"){showUserSettingsCenter()}
@@ -4829,7 +4839,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             productionCamSettings,productionFixtures,productionToolAssembly
         ) }
             .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("SIM")+" • "+MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION }
-            .onFailure { status.text="SIM BLOCKED • "+(it.message?:"error") }
+            .onFailure { status.text="SIM WARNING • "+(it.message?:"error") }
     })
     moduleButtons.add(productionUiButton("NC", Color(80,170,255)) {
         runCatching { showNcEditor(
@@ -5054,13 +5064,13 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         add(homeLaunch("CAM",StudioDesktopProductionTheme.cutting){productionUiButtons["CAM"]?.doClick()})
         add(homeLaunch("SIM",Color(139,92,246)){productionUiButtons["SIM"]?.doClick()})
         add(homeLaunch("3AX",Color(59,130,246)){runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache,"3AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="3AX BLOCKED • "+(it.message?:"error")}})
+                frame,doc,status,productionCamDerivedCache,"3AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="3AX WARNING • "+(it.message?:"error")}})
         add(homeLaunch("4AX",Color(245,158,11)){runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache,"4AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="4AX BLOCKED • "+(it.message?:"error")}})
+                frame,doc,status,productionCamDerivedCache,"4AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="4AX WARNING • "+(it.message?:"error")}})
         add(homeLaunch("5AX",Color(236,72,153)){runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache,"5AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="5AX BLOCKED • "+(it.message?:"error")}})
+                frame,doc,status,productionCamDerivedCache,"5AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="5AX WARNING • "+(it.message?:"error")}})
         add(homeLaunch("6AX",Color(34,211,238)){runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache,"6AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="6AX BLOCKED • "+(it.message?:"error")}})
+                frame,doc,status,productionCamDerivedCache,"6AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="6AX WARNING • "+(it.message?:"error")}})
         add(homeLaunch("NC",Color(80,170,255)){productionUiButtons["NC"]?.doClick()})
         add(homeLaunch("AI",Color(139,92,246)){productionUiButtons["AI"]?.doClick()})
     }

@@ -1312,7 +1312,6 @@ class MainActivity : Activity() {
         }
         fun runtimeLinkButton(id:RuntimeLinkId,cockpit:Boolean)=RgbGlowButton(this).apply {
             textSize=StudioDisplayPolicy.sp(this,9.5f)
-            setGeneratedAssetEnabled(false)
             minHeight=dp(40)
             maxLines=1
             contentDescription=(if(cockpit) "COCKPIT LINK " else "LINK MANAGER ")+id.name
@@ -1414,8 +1413,7 @@ class MainActivity : Activity() {
             homeModes.addView(RgbGlowButton(this).apply {
                 text=label
                 contentDescription="HOME $label"
-                setGeneratedAssetEnabled(false)
-                textSize=StudioDisplayPolicy.sp(this,12f)
+                    textSize=StudioDisplayPolicy.sp(this,12f)
                 minWidth=dp(80)
                 minHeight=dp(48)
                 maxLines=1
@@ -1462,7 +1460,6 @@ class MainActivity : Activity() {
         val homeLinkManagerToggle=RgbGlowButton(this).apply {
             text="連結管理 ▸"
             contentDescription="HOME LINK MANAGER TOGGLE"
-            setGeneratedAssetEnabled(false)
             textSize=StudioDisplayPolicy.sp(this,10f)
             minWidth=dp(108)
             minHeight=dp(44)
@@ -1480,8 +1477,7 @@ class MainActivity : Activity() {
             addView(RgbGlowButton(this@MainActivity).apply {
                 text="設定"
                 contentDescription="HOME USER SETTINGS CENTER"
-                setGeneratedAssetEnabled(false)
-                textSize=StudioDisplayPolicy.sp(this,10f)
+                    textSize=StudioDisplayPolicy.sp(this,10f)
                 minWidth=dp(92)
                 minHeight=dp(44)
                 setRgbState(0xFF27E9FF.toInt(),false)
@@ -2130,7 +2126,7 @@ class MainActivity : Activity() {
         }
         box.addView(TextView(this).apply{
             setTextColor(StudioProductionTheme.text)
-            text="AI Layout Composer • "+plan.deviceClass+" • minTouch="+plan.minTouchDp+"dp\nTheme Pack 可熱切換；CAD/CAM/SIM/NC/座標/CNC安全核心不變。"
+            text="AI Layout Composer • "+plan.deviceClass+" • minTouch="+plan.minTouchDp+"dp\nTheme Pack 可熱切換；CAD/CAM/SIM/NC/座標持續可用，診斷只顯示狀態。"
             textSize=12f
         })
         StudioThemePackRuntime.ids().forEach { id ->
@@ -2144,10 +2140,11 @@ class MainActivity : Activity() {
                         window.decorView.setBackgroundColor(applied.background)
                         window.decorView.invalidate()
                         themeStatus("THEME HOT SWAP • "+applied.name+" • NO RESTART")
-                    }.onFailure {
-                        val restored=StudioThemePackRuntime.rollback()
+                    }.onFailure { error ->
+                        val current=StudioThemePackRuntime.current
                         RgbGlowButton.refreshThemeAll()
-                        themeStatus("THEME ROLLBACK • "+restored.name+" • RUNTIME CONTINUES")
+                        window.decorView.setBackgroundColor(current.background)
+                        themeStatus("THEME WARNING • CURRENT PACK CONTINUES • "+(error.message ?: "apply failed"))
                     }
                 }
             })
@@ -2175,7 +2172,7 @@ class MainActivity : Activity() {
             setPadding(dp(16),dp(10),dp(16),dp(8))
         }
         box.addView(TextView(this).apply {
-            text="驗證中心已集中在這一個入口。GitHub Actions 仍維持 workflow_dispatch 手動模式；不會因 push / schedule 自動連鎖執行。\n核心 CNC 安全、完整性與座標檢查不提供關閉。"
+            text="驗證中心已集中在這一個入口。GitHub Actions 仍維持 workflow_dispatch 手動模式；不會因 push / schedule 自動連鎖執行。\n3D～6AX / CNC 軟體安全為診斷訊息，不阻擋 Runtime；編譯或檔案無法解析時只標記 Artifact Invalid，不自動回退。"
             setTextColor(0xFFA0BED2.toInt())
             textSize=12f
             setPadding(dp(4),dp(4),dp(4),dp(10))
@@ -2263,12 +2260,22 @@ class MainActivity : Activity() {
         section("NC / 安全")
         importantRow("NC 輸出精度（可改｜預設：0.001 mm）","目前 "+ncPrecision+" mm")
         importantRow("NC-only 變更","G54/G90/G92/G41/G42 → 只 NC STALE • CAM/SIM 保持")
-        importantRow("CNC 安全核心（鎖定｜固定：ON）","ON",StudioProductionTheme.warning)
+        importantRow("CNC 軟體 safety 阻擋","OFF • 診斷不中斷 Runtime",0xFF63FF9D.toInt())
 
         section("更新 / 驗證")
         importantRow("版本更新","正常 • 背景比對 • NEWER ONLY",StudioProductionTheme.accent)
         importantRow("FPS（可改｜預設：60 FPS）","目前 "+fpsMode)
-        importantRow("Regression（鎖定｜固定：OFF）","OFF",StudioProductionTheme.warning)
+        importantRow("Regression（自動｜預設：OFF）","OFF",StudioProductionTheme.warning)
+
+        section("開發與相容性")
+        importantRow("AI RGB 圖資生成","ON • 預設",0xFF63FF9D.toInt())
+        importantRow("AI 程式碼生成","ON • 預設",0xFF63FF9D.toInt())
+        importantRow("3D～6AX 限制阻擋","OFF • 診斷不中斷 Runtime",0xFF63FF9D.toInt())
+        importantRow("CNC 軟體 safety 阻擋","OFF • 訊息/Alarm 保留",0xFF63FF9D.toInt())
+        importantRow("自動 Regression","OFF • 僅手動執行",0xFF63FF9D.toInt())
+        importantRow("自動 Rollback","OFF • 留在目前版本",0xFF63FF9D.toInt())
+        importantRow("自動 Downgrade","OFF • 版本只升不退",0xFF63FF9D.toInt())
+        importantRow("診斷訊息","ON • INFO / WARNING / ALARM",StudioProductionTheme.accent)
 
         box.addView(TextView(this).apply {
             text="設定功能"
@@ -2286,14 +2293,14 @@ class MainActivity : Activity() {
         }
         action("佈景主題 / UI 套裝（可改｜預設：AIG RGB Glass）"){ showThemePackDialog() }
         action("FPS / 精度 / 效能 / RGB（可改｜預設值已標示）"){ showEnvironmentSettings() }
-        action("Regression • OFF（鎖定）"){
+        action("手動 Regression • 自動 OFF"){
             AlertDialog.Builder(this)
                 .setTitle("Regression 設定")
-                .setMessage("Regression 執行目前為 OFF / LOCKED。\n沒有使用者明確允許，不提供重新啟用入口。")
+                .setMessage("自動 Regression 固定為 OFF。\n需要時由使用者從驗證中心手動執行，不會因紅字或升級自動觸發。")
                 .setPositiveButton("關閉",null)
                 .show()
         }
-        action("CNC 安全設定（核心 ON）"){ openCategory("安全"){showSecurityBranch()} }
+        action("CNC 診斷 / Alarm（阻擋 OFF）"){ openCategory("安全"){showSecurityBranch()} }
         action("驗證中心"){ showManualRegressionCenter() }
         action("啟動版本更新 • ON"){
             AlertDialog.Builder(this)
