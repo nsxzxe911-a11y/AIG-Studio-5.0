@@ -8,6 +8,13 @@ fun main() {
     check(!OpenRuntimePolicy.AUTO_REGRESSION_ENABLED)
     check(!OpenRuntimePolicy.AUTO_ROLLBACK_ENABLED)
     check(!OpenRuntimePolicy.AUTO_DOWNGRADE_ENABLED)
+    check(!OpenRuntimePolicy.AI_VERSION_CONTROL_WRITE_ENABLED)
+    check(!OpenRuntimePolicy.RED_CONTROL_CALLBACK_ENABLED)
+    check(!OpenRuntimePolicy.MANUAL_ROLLBACK_ENABLED)
+    check(!OpenRuntimePolicy.MANUAL_DOWNGRADE_ENABLED)
+    check(!OpenRuntimePolicy.aiMayEnableVersionControlAction("ROLLBACK"))
+    check(!OpenRuntimePolicy.aiMayEnableVersionControlAction("DOWNGRADE"))
+    check(!OpenRuntimePolicy.redControlMayChangeVersion())
     check(OpenRuntimePolicy.DIAGNOSTICS_ENABLED)
 
     check(OpenRuntimePolicy.disposition(ContinuityFailureClass.PRODUCT_SAFETY) == RuntimeFindingDisposition.STATUS_ONLY)
@@ -41,5 +48,5 @@ fun main() {
     check(!RollingUpdatePolicy.updateAllowed("360.0.0", "360.0.0", "359.0.0"))
     check(!RollingUpdatePolicy.ALLOW_DOWNGRADE)
 
-    println("OPEN_RUNTIME_POLICY_GATE_PASS|STATUS_ONLY|ARTIFACT_INVALID|NO_AUTO_REGRESSION|NO_AUTO_ROLLBACK|NO_DOWNGRADE")
+    println("OPEN_RUNTIME_POLICY_GATE_PASS|STATUS_ONLY|ARTIFACT_INVALID|NO_AUTO_REGRESSION|NO_AUTO_ROLLBACK|NO_DOWNGRADE|AI_VERSION_WRITE_HARDLOCK|RED_CONTROL_NO_CALLBACK")
 }
