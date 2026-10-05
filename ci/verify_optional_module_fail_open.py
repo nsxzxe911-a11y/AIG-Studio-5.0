@@ -13,6 +13,15 @@ def read(rel:str)->str:
     return p.read_text(encoding='utf-8')
 
 def main()->None:
+    policy=read('config/optional-modules.properties')
+    for token in (
+        'TUTORIAL_V1=OPTIONAL_FAIL_OPEN',
+        'ON_RED=REPAIR_THEN_UNINSTALL_MODULE',
+        'MAIN_RUNTIME_BLOCK=OFF',
+        'AUTO_ROLLBACK=OFF',
+        'RUNTIME_FAILURE=STATUS_WARNING_ONLY',
+    ):
+        if token not in policy: fail('POLICY|'+token)
     android=read('app/src/main/java/com/aigstudio/app/AigStudioApplication.kt')
     desktop=read('desktop/src/main/kotlin/com/aigstudio/desktop/DesktopBootstrap.kt')
     forbidden=(
@@ -31,6 +40,6 @@ def main()->None:
     )
     for token in required:
         if token not in joined: fail('MISSING_POLICY|'+token)
-    print('OPTIONAL_MODULE_FAIL_OPEN_PASS|TUTORIAL_V1|NO_COMPILE_TIME_BIND|REFLECTION|WARNING_ONLY|NO_ROLLBACK')
+    print('OPTIONAL_MODULE_FAIL_OPEN_PASS|TUTORIAL_V1|NO_COMPILE_TIME_BIND|REFLECTION|WARNING_ONLY|MAIN_RUNTIME_BLOCK_OFF|NO_ROLLBACK')
 
 if __name__=='__main__': main()
