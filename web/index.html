@@ -130,6 +130,15 @@ input.aigError,select.aigError,textarea.aigError{border-color:#3f6d82!important;
 .field-warning{border-color:var(--amber)!important;box-shadow:0 0 0 1px rgba(255,179,38,.18)!important}
 .guidanceTitle{font-weight:800;color:#dff9ff;margin-bottom:5px}.guidanceRow{display:grid;grid-template-columns:58px 1fr;gap:6px;margin-top:3px}.guidanceRow b{color:#8fc8d8}.guidanceActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.guidanceActions button{min-height:34px;padding:6px 9px;border:1px solid #315b6e;border-radius:8px;background:#07131a;color:#dff9ff}.guidanceFocus{outline:2px solid rgba(39,233,255,.55)!important;box-shadow:0 0 18px rgba(39,233,255,.18)!important}
 .cycleTag{color:var(--amber)!important}
+:root[data-rgb-skin="aig-rgb-glass"]{--panel:#060b11;--panel2:#08131f;--panel3:#0b1723;--line:#17394b;--cyan:#27e9ff;--shadow:0 16px 42px rgba(0,0,0,.62),0 0 0 1px rgba(39,233,255,.025)}
+:root[data-rgb-skin="aig-neon"]{--panel:#0b0913;--panel2:#12101f;--panel3:#1b1427;--line:#4a3c67;--cyan:#62f2ff;--shadow:0 16px 42px rgba(0,0,0,.62),0 0 24px rgba(98,242,255,.08)}
+:root[data-rgb-skin="aig-dark-ice"]{--panel:#061018;--panel2:#0a1923;--panel3:#102633;--line:#205366;--cyan:#8af6ff;--shadow:0 16px 42px rgba(0,0,0,.62),0 0 22px rgba(138,246,255,.09)}
+.panel{background:linear-gradient(180deg,var(--panel),var(--bg));border-color:color-mix(in srgb,var(--line) 76%,transparent);box-shadow:var(--shadow)}
+.nav button,.btn{border-color:var(--line);background:linear-gradient(180deg,var(--panel3),var(--bg))}
+.metric,.field{background:var(--panel2);border-color:var(--line)}
+.rgbSkinPicker{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:10px;white-space:nowrap}
+.rgbSkinPicker select{max-width:148px;min-height:34px;padding:5px 8px;border:1px solid var(--line);border-radius:9px;background:linear-gradient(180deg,var(--panel3),var(--bg));color:var(--text)}
+.sceneTitle small{color:var(--muted)}
 @media(max-width:920px){
  .top{height:auto;flex-wrap:wrap}.brand{min-width:140px}.nav{order:3;grid-template-columns:repeat(7,minmax(58px,1fr));max-width:none;flex-basis:100%}
  .simgrid,.workgrid,.camgrid{grid-template-columns:1fr}.editor{min-height:560px}.code{min-height:330px}
@@ -174,17 +183,29 @@ html,body{background:#020407}
 <header class="top">
  <div class="brand"><div><div class="logo">AIG CNC</div><small>BLACK RGB RUNTIME</small></div></div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● STUDIO 356 • LOCAL READY　0.001 mm</div>
+ <label class="rgbSkinPicker"><span>RGB Skin</span><select data-rgb-skin-select aria-label="RGB 皮膚套裝"><option value="aig-rgb-glass" data-rgb-skin="aig-rgb-glass">AIG RGB Glass</option><option value="aig-neon" data-rgb-skin="aig-neon">AIG Neon</option><option value="aig-dark-ice" data-rgb-skin="aig-dark-ice">AIG Dark Ice</option></select></label>
+ <div class="status">● STUDIO 370.0.0 • LOCAL READY　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
 <footer class="footer">AIG CNC • 黑色高對比 Runtime • Web Runtime • CNC machine output disabled</footer>
 </div>
+<script src="./axis-machine-model.js"></script>
 <script>
 const pages=[
  ["HOME","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["SIM","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"],["6AX","#27e9ff"],["NC","#33f39b"]
 ];
 const utilityPages=[["刀路","#ff4da6"],["功能","#9f72ff"]];
 const nav=document.getElementById("nav"),screens=document.getElementById("screens");
+function applyRgbSkin(value,persist=true){
+ const allowed=["aig-rgb-glass","aig-neon","aig-dark-ice"],skin=allowed.includes(value)?value:"aig-rgb-glass";
+ document.documentElement.dataset.rgbSkin=skin;
+ const select=document.querySelector("[data-rgb-skin-select]");if(select&&select.value!==skin)select.value=skin;
+ if(persist){try{localStorage.setItem("aig-rgb-skin-v1",skin)}catch{}}
+ return skin;
+}
+const rgbSkinSelect=document.querySelector("[data-rgb-skin-select]");
+try{applyRgbSkin(localStorage.getItem("aig-rgb-skin-v1")||"aig-rgb-glass",false)}catch{applyRgbSkin("aig-rgb-glass",false)}
+rgbSkinSelect?.addEventListener("change",()=>applyRgbSkin(rgbSkinSelect.value));
 
 const sourceCode={
  "3AX":[
@@ -1379,7 +1400,7 @@ function makeGlScene(canvas,axis){
      const stockTop=hasStock?explicitTop:0,stockH=hasStock?explicitThickness:derivedH,stockBottom=stockTop-stockH,stockCenter=(stockTop+stockBottom)/2;
      const stockMinX=hasXY?sx0:(minX+maxX)/2-fallbackSpanX/2,stockMaxX=hasXY?sx1:(minX+maxX)/2+fallbackSpanX/2,stockMinY=hasXY?sy0:(minY+maxY)/2-fallbackSpanY/2,stockMaxY=hasXY?sy1:(minY+maxY)/2+fallbackSpanY/2;
      const spanX=stockMaxX-stockMinX,spanY=stockMaxY-stockMinY,cx=(stockMinX+stockMaxX)/2,cy=(stockMinY+stockMaxY)/2,sceneR=Math.max(spanX,spanY,70);
-     const A=axis==="3AX"?0:(pos.A||0),B=(axis==="5AX"||axis==="6AX")?(pos.B||0):0,C=axis==="6AX"?(pos.C||0):0,R=rotMat(A,B,C),tableR=Math.max(spanX,spanY)*.72,fixtureBoxes=runtimeAssemblyBoxes({assembly:scene.assembly});
+     const machinePose=AigAxisModel.rotaryPose(pos,axis),A=machinePose.A,B=(axis==="5AX"||axis==="6AX")?(pos.B||0):0,C=machinePose.C,R=rotMat(machinePose.A,machinePose.B,machinePose.C),tableR=Math.max(spanX,spanY)*.72,fixtureBoxes=runtimeAssemblyBoxes({assembly:scene.assembly});
      const stockBox={minX:stockMinX,maxX:stockMaxX,minY:stockMinY,maxY:stockMaxY,minZ:stockBottom,maxZ:stockTop},tableBox={minX:cx-tableR,maxX:cx+tableR,minY:cy-tableR,maxY:cy+tableR,minZ:stockBottom-12,maxZ:stockBottom-4};
      const stockTarget=[cx,cy,stockCenter],followEligible=(axis==="5AX"||axis==="6AX")&&camera.follow,cameraBlock=scene.parsed.blocks[Math.min(scene.index,Math.max(0,scene.parsed.blocks.length-1))]||null,nextCameraBlock=scene.parsed.blocks[scene.index+1]||null,cameraToolDia=Math.max(.5,runtimeToolDiameter({toolDia:scene.toolDia,toolDiameters:scene.toolDiameters},cameraBlock)),cameraContact=runtimeToolContact(cameraBlock,pos,cameraToolDia,scene.dry,stockTop),now=performance.now(),dtMs=Math.max(4,Math.min(80,camera.lastFrameMs?now-camera.lastFrameMs:16.667)),response=runtimeCameraResponse(cameraBlock,cameraContact.active,dtMs),focusTarget=followEligible?[Number(pos.X||0),Number(pos.Y||0),Number(pos.Z||0)]:stockTarget;
      camera.lastFrameMs=now;camera.lastResponse=response;camera.lastResponseLabel=followEligible?response.label:"CENTER";
@@ -1410,7 +1431,7 @@ function makeGlScene(canvas,axis){
      const viewDir=norm(sub(eye,target)),depthCue=runtimeDepthCue(runtimeToolAxisVector(pos,axis),viewDir);camera.lastDepthCue=depthCue.label;camera.lastDepthDot=depthCue.dot;
      const vp=M(P(Math.PI/4,aspect,.1,sceneR*20),look(eye,target,[0,0,1]));
      gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.clearColor(.003,.008,.012,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-     drawMesh(cyl,M(R,M(T(0,0,stockBottom-8),S(tableR*2,tableR*2,8))),rgb("#182532"),vp);
+     drawMesh(cyl,M(R,M(T(cx,cy,stockBottom-4),S(tableR*2,tableR*2,8))),rgb("#182532"),vp);
      if(axis==="3AX"){
        drawMesh(stockShell,M(T(cx,cy,stockCenter),S(spanX,spanY,stockH)),rgb("#465f70"),vp);
        const hf=heightfield(scene,stockMinX,stockMinY,spanX,spanY,stockTop,stockBottom);
@@ -1420,7 +1441,12 @@ function makeGlScene(canvas,axis){
        drawVoxelStock(vm,rgb("#6d8797"),vp,R);
      }
      if(axis!=="3AX"){
-       drawMesh(cube,T(-tableR-7,0,stockBottom-7),rgb("#24394b"),vp);drawMesh(cube,T(tableR+7,0,stockBottom-7),rgb("#24394b"),vp);
+       const supportHeight=Math.max(18,Math.min(48,stockH+18)),supportCenterZ=stockBottom-4+supportHeight/2;
+       for(const side of [-1,1]){
+         const supportX=cx+side*(tableR+6);
+         drawMesh(cube,M(T(supportX,cy,supportCenterZ),S(10,Math.max(18,spanY*.82),supportHeight)),rgb("#24394b"),vp);
+         drawMesh(cyl,AigAxisModel.axisCylinderMatrix({x:1,y:0,z:0},{x:cx+side*(tableR+1),y:cy,z:stockCenter},12,10),rgb("#4c748c"),vp);
+       }
      }
      if(axis==="6AX"){
        drawMesh(cube,M(R,M(T(cx+tableR*.45,cy,stockBottom-1),S(tableR*.32,2.5,3))),rgb("#33f39b"),vp);
@@ -1448,10 +1474,14 @@ function makeGlScene(canvas,axis){
 
      const sceneBlock=scene.parsed.blocks[Math.min(scene.index,Math.max(0,scene.parsed.blocks.length-1))]||null;
      const tp={x:pos.X||0,y:pos.Y||0,z:pos.Z||0},dia=Math.max(.5,runtimeToolDiameter({toolDia:scene.toolDia,toolDiameters:scene.toolDiameters},sceneBlock)),cutterLen=Math.max(1,Number(scene.cutterLen)||30),holderDia=Math.max(dia,Number(scene.holderDia)||25),holderLen=Math.max(1,Number(scene.holderLen)||25);
-     const alarm=Boolean(scene.collisionAlarm),contact=runtimeToolContact(sceneBlock,pos,dia,scene.dry,stockTop),axisVec=runtimeToolAxisVector(pos,axis),depthColor=camera.lastDepthCue==="NEAR"?"#33f39b":camera.lastDepthCue==="FAR"?"#ff4da6":"#ffb326";
-     drawMesh(cyl,M(T(tp.x,tp.y,tp.z+cutterLen/2),S(dia,dia,cutterLen)),rgb(alarm?"#ff465f":"#d8f5ff"),vp);
-     drawMesh(cyl,M(T(tp.x,tp.y,tp.z+cutterLen+holderLen/2),S(holderDia,holderDia,holderLen)),rgb(alarm?"#8d1828":"#29465c"),vp);
-     if(contact.active){const cc=runtimeMotionColor("CUT",false);drawMesh(cyl,M(T(tp.x,tp.y,tp.z+.18),S(contact.radius*2.8,contact.radius*2.8,.36)),rgb(cc),vp)}
+     const alarm=Boolean(scene.collisionAlarm),contact=runtimeToolContact(sceneBlock,pos,dia,scene.dry,stockTop),axisVec=AigAxisModel.spindleAxis(pos,axis),depthColor=camera.lastDepthCue==="NEAR"?"#33f39b":camera.lastDepthCue==="FAR"?"#ff4da6":"#ffb326";
+     const alongSpindle=distance=>({x:tp.x+axisVec.x*distance,y:tp.y+axisVec.y*distance,z:tp.z+axisVec.z*distance});
+     drawMesh(cyl,AigAxisModel.axisCylinderMatrix(axisVec,alongSpindle(cutterLen/2),dia,cutterLen),rgb(alarm?"#ff465f":"#d8f5ff"),vp);
+     drawMesh(cyl,AigAxisModel.axisCylinderMatrix(axisVec,alongSpindle(cutterLen+holderLen/2),holderDia,holderLen),rgb(alarm?"#8d1828":"#29465c"),vp);
+     const housingLen=Math.max(14,Math.min(28,holderDia)),housingDia=Math.max(holderDia*1.65,dia*2.2);
+     drawMesh(cyl,AigAxisModel.axisCylinderMatrix(axisVec,alongSpindle(cutterLen+holderLen+housingLen/2),housingDia,housingLen),rgb("#36566d"),vp);
+     drawMesh(cyl,AigAxisModel.axisCylinderMatrix(axisVec,alongSpindle(cutterLen+holderLen+housingLen+2),housingDia*.78,4),rgb("#27e9ff"),vp);
+     if(contact.active){const cc=runtimeMotionColor("CUT",false);drawMesh(cyl,AigAxisModel.axisCylinderMatrix(axisVec,alongSpindle(.18),contact.radius*2.8,.36),rgb(cc),vp)}
      if(axis==="5AX"||axis==="6AX"){drawLine([{x:tp.x,y:tp.y,z:tp.z},{x:tp.x+axisVec.x*sceneR*.28,y:tp.y+axisVec.y*sceneR*.28,z:tp.z+axisVec.z*sceneR*.28}],rgb(depthColor),vp,3)}
 
      drawLine([{x:0,y:0,z:0},{x:25,y:0,z:0}],rgb("#ff4f70"),vp);
