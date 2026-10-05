@@ -41,6 +41,8 @@ object AigRgbGlobalSkinV1 {
     const val MOBILE_DESKTOP_ASSET_SPLIT=true
     const val ENGINEERING_SHELL_FALLBACK=false
     const val RED_STATUS_ONLY=true
+    const val MULTI_AXIS_MODEL_MUTABLE=true
+    const val MODEL_BINDING_POLICY="EXTERNAL_TO_SKIN"
 
     private val ordered=listOf(
         AigRgbSurfaceId.HOME,AigRgbSurfaceId.CAD,AigRgbSurfaceId.CAM,AigRgbSurfaceId.SIM,
