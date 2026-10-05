@@ -46,4 +46,10 @@ for token in ('object AigRgbAndroidSkinAdapter','surfaceAccent','stateColor','bu
 for token in ('performClick(', 'setOnClickListener(', 'rollback(', 'downgrade('):
     if token in adapter: fail('ANDROID_ADAPTER_FORBIDDEN_'+token)
 
-print('AIG_RGB_GLOBAL_SKIN_STATIC_PASS|22_SURFACES|NO_VERSION_CALLBACK|MORNING_ASSET_PRIORITY|MOBILE_WINDOWS_SPLIT|ANDROID_THEME_BOUND')
+desktop=read('desktop/src/main/kotlin/com/aigstudio/desktop/AigRgbDesktopSkinAdapter.kt')
+for token in ('object AigRgbDesktopSkinAdapter','surfaceAccent','stateColor','panelSpec','buttonSpec','AigRgbGlobalSkinV1.surface'):
+    if token not in desktop: fail('DESKTOP_ADAPTER_'+token)
+for token in ('android.', 'dp(', 'sp(', 'performClick(', 'doClick(', 'rollback(', 'downgrade('):
+    if token in desktop: fail('DESKTOP_ADAPTER_FORBIDDEN_'+token)
+
+print('AIG_RGB_GLOBAL_SKIN_STATIC_PASS|22_SURFACES|NO_VERSION_CALLBACK|MORNING_ASSET_PRIORITY|MOBILE_WINDOWS_SPLIT|ANDROID_THEME_BOUND|DESKTOP_ADAPTER_READY')
