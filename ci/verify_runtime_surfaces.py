@@ -2155,12 +2155,12 @@ print("STUDIO_STARTUP_UPDATE_TIMING_PASS|318|NORMAL_TARGET_1500MS|DEGRADED_REFER
 web_319 = read("web/main-runtime-preview.html")
 gradle_319 = read("core/build.gradle.kts")
 for needle in (
-    "Main Runtime Web Preview",
-    "HOME FIRST",
-    "Regression",
-    "OFF / LOCKED",
-    "啟動版本更新",
-    "Web Preview",
+    "BLACK RGB • WEB RUNTIME PREVIEW",
+    "data-rgb-skin-select",
+    "aig-rgb-skin-v1",
+    '<canvas class="sim3dCanvas" data-glcanvas>',
+    'getContext("webgl"',
+    "AigAxisModel.axisCylinderMatrix(",
 ):
     require(web_319, needle, "STUDIO_319_WEB_MAIN_RUNTIME")
 for needle in (
