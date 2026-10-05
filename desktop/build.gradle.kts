@@ -20,6 +20,12 @@ kotlin {
     jvmToolchain(17)
 }
 
+sourceSets {
+    named("main") {
+        resources.srcDir(rootProject.file("shared/tutorial"))
+    }
+}
+
 application {
     mainClass.set("com.aigstudio.bootstrap.DesktopBootstrapKt")
     applicationDefaultJvmArgs = listOf("-Dfile.encoding=UTF-8", "-Daigstudio.version=$releaseVersionName")
