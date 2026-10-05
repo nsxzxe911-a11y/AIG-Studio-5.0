@@ -45,7 +45,7 @@ object CamWorkflowOverlayInstaller {
 
     private fun isCamActive(activity:Activity):Boolean = runCatching {
         val f=activity.javaClass.getDeclaredField("activeCategory");f.isAccessible=true
-        (f.get(activity) as? String)?.uppercase()=="CAM"
+        CamWorkflowUiContract.isStudioCamCategory(f.get(activity) as? String)
     }.getOrDefault(false)
 
     private fun showMenu(activity:Activity) {
