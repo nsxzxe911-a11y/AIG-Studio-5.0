@@ -14,7 +14,14 @@ object OpenRuntimePolicy {
     const val AUTO_REGRESSION_ENABLED = false
     const val AUTO_ROLLBACK_ENABLED = false
     const val AUTO_DOWNGRADE_ENABLED = false
+    const val AI_VERSION_CONTROL_WRITE_ENABLED = false
+    const val RED_CONTROL_CALLBACK_ENABLED = false
+    const val MANUAL_ROLLBACK_ENABLED = false
+    const val MANUAL_DOWNGRADE_ENABLED = false
     const val DIAGNOSTICS_ENABLED = true
+
+    fun aiMayEnableVersionControlAction(action:String):Boolean = false
+    fun redControlMayChangeVersion():Boolean = false
 
     fun disposition(failureClass: ContinuityFailureClass): RuntimeFindingDisposition = when (failureClass) {
         ContinuityFailureClass.COMPILE_RUNTIME,
