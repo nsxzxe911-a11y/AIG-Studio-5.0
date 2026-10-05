@@ -1,10 +1,12 @@
 package com.aigstudio.bootstrap
 
+import com.aigstudio.desktop.AigRgbDesktopSkinRuntime
 import com.aigstudio.desktop.HomeRgbDesktopInstaller
 
-/** Installs validated HOME/tutorial visual layers, then delegates to the existing production runtime. */
+/** Installs validated RGB skin/HOME/tutorial visual layers, then delegates to the existing production runtime. */
 fun main(args:Array<String>) {
     if(!args.contains("--smoke")) {
+        AigRgbDesktopSkinRuntime.install()
         HomeRgbDesktopInstaller.install()
         installOptionalTutorial()
     }
