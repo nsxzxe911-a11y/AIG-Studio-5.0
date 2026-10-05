@@ -33,5 +33,13 @@ fun main() {
     check(SixAxisToolDirectionContract.preset(SixAxisToolPreset.SIDE_90).tiltDeg == 90.0)
     check(SixAxisToolDirectionContract.preset(SixAxisToolPreset.FLIP_180).tiltDeg == 180.0)
 
-    println("STUDIO_6AX_TOOL_DIRECTION_PASS|0|45|90|180|VECTOR|CONTACT|Z_LINEAR")
+    val camera0=SixAxisToolDirectionContract.cameraAnglesAlongTool(0.0,0.0)
+    check(near(camera0.first,0.0) && near(camera0.second,0.0))
+    val cameraB90=SixAxisToolDirectionContract.cameraAnglesAlongTool(0.0,90.0)
+    check(near(cameraB90.first,0.0,1e-8))
+    check(near(cameraB90.second,-90.0,1e-8))
+    val cameraA45=SixAxisToolDirectionContract.cameraAnglesAlongTool(45.0,0.0)
+    check(near(cameraA45.first,-45.0,1e-8))
+
+    println("STUDIO_6AX_TOOL_DIRECTION_PASS|0|45|90|180|VECTOR|CONTACT|TOOL_CAMERA|Z_LINEAR")
 }
