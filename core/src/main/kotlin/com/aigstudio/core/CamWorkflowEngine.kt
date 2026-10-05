@@ -1,5 +1,11 @@
 package com.aigstudio.core
 
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.sin
+
 enum class CamMachiningIntent {
     WORKPIECE_OUTER,
     INNER_CONTOUR,
@@ -31,6 +37,104 @@ object CamWorkflowEngine {
 
     fun applyIntent(settings:CamSettings,intent:CamMachiningIntent):CamSettings =
         settings.copy(contourSide=profile(intent).side)
+
+    /**
+     * Real pocket clearing for the common primitive cases used most often on the
+     * shop floor: a single circle or an axis-aligned four-line rectangle.
+     * The result is an ordinary MANUAL path, so SIM/NC consume the same points.
+     */
+    fun buildCommonPocket(entities:List<Entity>,settings:CamSettings):CamSettings {
+        val circle=entities.filterIsInstance<Circle>().singleOrNull()
+        if(circle!=null) return circlePocket(circle,settings)
+
+        val lines=entities.filterIsInstance<Line>()
+        require(lines.size==4 && entities.size==4){
+            "Pocket clearing currently requires one Circle or one 4-line rectangular contour"
+        }
+        val xs=lines.flatMap{listOf(it.a.x,it.b.x)}
+        val ys=lines.flatMap{listOf(it.a.y,it.b.y)}
+        val minX=xs.minOrNull() ?: error("Rectangle pocket missing X")
+        val maxX=xs.maxOrNull() ?: error("Rectangle pocket missing X")
+        val minY=ys.minOrNull() ?: error("Rectangle pocket missing Y")
+        val maxY=ys.maxOrNull() ?: error("Rectangle pocket missing Y")
+        require(lines.all { line ->
+            val horizontal=abs(line.a.y-line.b.y)<=EPS &&
+                (abs(line.a.y-minY)<=EPS || abs(line.a.y-maxY)<=EPS)
+            val vertical=abs(line.a.x-line.b.x)<=EPS &&
+                (abs(line.a.x-minX)<=EPS || abs(line.a.x-maxX)<=EPS)
+            horizontal || vertical
+        }){"Pocket rectangle must be axis-aligned and closed"}
+        return rectanglePocket(minX,minY,maxX,maxY,settings)
+    }
+
+    private fun circlePocket(circle:Circle,settings:CamSettings):CamSettings {
+        val toolR=settings.toolDiameter/2.0
+        val outer=circle.radius-toolR
+        require(outer>=CNC_RESOLUTION_MM){"Tool is too large for circle pocket"}
+        val step=max(settings.toolDiameter*0.60,CNC_RESOLUTION_MM)
+        val points=mutableListOf<ManualCamPoint>()
+        var radius=outer
+        var first=true
+        while(radius>CNC_RESOLUTION_MM) {
+            val startX=circle.center.x+radius
+            val startY=circle.center.y
+            if(first) {
+                points+=ManualCamPoint(startX,startY,settings.safeZ,true)
+                points+=ManualCamPoint(startX,startY,settings.depth,false)
+                first=false
+            } else {
+                points+=ManualCamPoint(startX,startY,settings.depth,false)
+            }
+            val segments=48
+            for(i in 1..segments) {
+                val a=2.0*PI*i/segments.toDouble()
+                points+=ManualCamPoint(
+                    circle.center.x+radius*cos(a),
+                    circle.center.y+radius*sin(a),
+                    settings.depth,false
+                )
+            }
+            radius-=step
+        }
+        points+=ManualCamPoint(circle.center.x,circle.center.y,settings.depth,false)
+        require(points.size>=2)
+        return settings.copy(
+            contourSide=ContourSide.INSIDE,
+            pathMode=CamPathMode.MANUAL,
+            manualPath=points
+        )
+    }
+
+    private fun rectanglePocket(
+        minX:Double,minY:Double,maxX:Double,maxY:Double,settings:CamSettings
+    ):CamSettings {
+        val toolR=settings.toolDiameter/2.0
+        val left=minX+toolR; val right=maxX-toolR
+        val bottom=minY+toolR; val top=maxY-toolR
+        require(right-left>=CNC_RESOLUTION_MM && top-bottom>=CNC_RESOLUTION_MM){
+            "Tool is too large for rectangle pocket"
+        }
+        val step=max(settings.toolDiameter*0.60,CNC_RESOLUTION_MM)
+        val points=mutableListOf<ManualCamPoint>()
+        var y=bottom
+        var leftToRight=true
+        points+=ManualCamPoint(left,bottom,settings.safeZ,true)
+        points+=ManualCamPoint(left,bottom,settings.depth,false)
+        while(y<=top+EPS) {
+            val x=if(leftToRight) right else left
+            points+=ManualCamPoint(x,y.coerceAtMost(top),settings.depth,false)
+            val nextY=(y+step).coerceAtMost(top)
+            if(nextY-y>EPS) points+=ManualCamPoint(x,nextY,settings.depth,false)
+            if(nextY>=top-EPS) break
+            y=nextY
+            leftToRight=!leftToRight
+        }
+        return settings.copy(
+            contourSide=ContourSide.INSIDE,
+            pathMode=CamPathMode.MANUAL,
+            manualPath=points
+        )
+    }
 
     fun insertFixtureBypass(
         settings:CamSettings,
