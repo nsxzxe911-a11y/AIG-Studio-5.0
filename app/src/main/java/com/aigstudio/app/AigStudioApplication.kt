@@ -39,6 +39,7 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
         installGlobalSkinChrome(activity)
         OptionalTutorialModule.install(activity)
         CadAssistOverlayInstaller.install(activity)
+        CadProfileOverlayInstaller.install(activity)
         val decor = activity.window.decorView
         val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
