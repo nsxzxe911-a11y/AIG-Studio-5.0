@@ -36,6 +36,7 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+        installGlobalSkinChrome(activity)
         OptionalTutorialModule.install(activity)
         val decor = activity.window.decorView
         val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
@@ -49,6 +50,17 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
         }
         decor.viewTreeObserver.addOnGlobalLayoutListener(listener)
         decor.post { listener.onGlobalLayout() }
+    }
+
+    private fun installGlobalSkinChrome(activity:Activity) {
+        runCatching {
+            StudioThemePackRuntime.switchTo("aig_rgb_global_v1")
+            activity.window.statusBarColor=Color.rgb(2,4,7)
+            activity.window.navigationBarColor=Color.rgb(2,4,7)
+            activity.window.decorView.setBackgroundColor(Color.rgb(2,4,7))
+        }.onFailure {
+            Log.w("AIG-RGB-SKIN","GLOBAL_SKIN_CHROME_SKIP|STATUS_ONLY|NO_ROLLBACK",it)
+        }
     }
 
     private fun findFormalHome(view: View): View? {
