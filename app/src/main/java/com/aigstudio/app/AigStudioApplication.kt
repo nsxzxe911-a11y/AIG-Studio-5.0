@@ -16,6 +16,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import com.aigstudio.app.tutorial.TutorialOverlayInstaller
 import com.aigstudio.core.UiAssetContract
 import java.security.MessageDigest
 import java.util.Collections
@@ -36,6 +37,7 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+        TutorialOverlayInstaller.install(activity)
         val decor = activity.window.decorView
         val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
