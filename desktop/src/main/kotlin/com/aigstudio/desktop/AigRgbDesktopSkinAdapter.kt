@@ -4,6 +4,7 @@ import com.aigstudio.core.AigRgbGlobalSkinV1
 import com.aigstudio.core.AigRgbVisualState
 import com.aigstudio.core.AigRgbWidgetRole
 import java.awt.Color
+import javax.swing.UIManager
 
 data class AigRgbDesktopPanelSpec(
     val surfaceId:String,
@@ -42,10 +43,7 @@ object AigRgbDesktopSkinAdapter {
 
     fun stateColor(state:AigRgbVisualState):Color = color(AigRgbGlobalSkinV1.stateColor(state))
 
-    fun panelSpec(
-        surface:String,
-        role:AigRgbWidgetRole=AigRgbWidgetRole.GROUP
-    ):AigRgbDesktopPanelSpec {
+    fun panelSpec(surface:String,role:AigRgbWidgetRole=AigRgbWidgetRole.GROUP):AigRgbDesktopPanelSpec {
         val spec=AigRgbGlobalSkinV1.surface(surface)
         return AigRgbDesktopPanelSpec(
             surfaceId=spec.surfaceId.id,
@@ -77,4 +75,35 @@ object AigRgbDesktopSkinAdapter {
     fun approvedAssetStatus(surface:String,assetPresent:Boolean):String =
         if(assetPresent) "MORNING_APPROVED_RGB_READY|WINDOWS|"+AigRgbGlobalSkinV1.surface(surface).surfaceId.id
         else "APPROVED_ASSET_PENDING_INGEST|WINDOWS|"+AigRgbGlobalSkinV1.surface(surface).surfaceId.id+"|PROCEDURAL_RGB_GLASS"
+}
+
+object AigRgbDesktopSkinRuntime {
+    fun install() {
+        val background=AigRgbDesktopSkinAdapter.color(AigRgbGlobalSkinV1.BACKGROUND_RGB)
+        val panel=AigRgbDesktopSkinAdapter.color(AigRgbGlobalSkinV1.PANEL_RGB)
+        val text=AigRgbDesktopSkinAdapter.color(AigRgbGlobalSkinV1.TEXT_RGB)
+        val accent=AigRgbDesktopSkinAdapter.color(AigRgbGlobalSkinV1.ACCENT_RGB)
+        val selected=AigRgbDesktopSkinAdapter.color(AigRgbGlobalSkinV1.SELECTED_RGB)
+        UIManager.put("Panel.background",panel)
+        UIManager.put("Viewport.background",background)
+        UIManager.put("ScrollPane.background",background)
+        UIManager.put("Button.background",panel)
+        UIManager.put("Button.foreground",text)
+        UIManager.put("ToggleButton.background",panel)
+        UIManager.put("ToggleButton.foreground",text)
+        UIManager.put("Label.foreground",text)
+        UIManager.put("TextField.background",background)
+        UIManager.put("TextField.foreground",text)
+        UIManager.put("TextArea.background",background)
+        UIManager.put("TextArea.foreground",text)
+        UIManager.put("ComboBox.background",panel)
+        UIManager.put("ComboBox.foreground",text)
+        UIManager.put("TabbedPane.background",background)
+        UIManager.put("TabbedPane.foreground",text)
+        UIManager.put("TabbedPane.selected",selected)
+        UIManager.put("ProgressBar.background",panel)
+        UIManager.put("ProgressBar.foreground",accent)
+        UIManager.put("ToolTip.background",panel)
+        UIManager.put("ToolTip.foreground",text)
+    }
 }
