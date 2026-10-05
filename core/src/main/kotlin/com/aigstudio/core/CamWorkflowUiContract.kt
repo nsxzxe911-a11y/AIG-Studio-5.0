@@ -5,4 +5,5 @@ object CamWorkflowUiContract {
     val actions=listOf("外銑","內銑","型腔","方向","起/落刀","避讓壓板","Safe-Z")
     const val maxTopLevelButtons=1
     const val manualFirst=true
+    fun isStudioCamCategory(value:String?):Boolean = value?.trim()?.uppercase() in setOf("CAM","加工")
 }
