@@ -16,7 +16,31 @@ Ruling: Morning Approved RGB Asset Pack has priority. Android uses approved mobi
 Task 1 Studio shared semantic skin contract:
 - RED observed: unresolved `AigRgbGlobalSkinV1` under `kotlinc`.
 - GREEN observed: `AIG_RGB_GLOBAL_SKIN_PASS|22_SURFACES|BLACK_020407|PANEL_07111B|RED_STATUS_ONLY`.
-- Static gate observed locally: `AIG_RGB_GLOBAL_SKIN_STATIC_PASS|22_SURFACES|NO_VERSION_CALLBACK|MORNING_ASSET_PRIORITY|MOBILE_WINDOWS_SPLIT`.
-- Gradle verification: PENDING_DEVICE.
+- Focused Gradle task `rgbGlobalSkinRegression` is registered.
+- Gradle execution: PENDING_DEVICE.
 
-Next: Studio adapters + AIG-II mirror contract/adapters. Button regrouping and project-name changes remain deferred.
+Task 2 Studio Android skin adapter:
+- RED observed: static gate required missing `aig_rgb_global_v1` palette / Android adapter.
+- `StudioThemePackRuntime` now contains `aig_rgb_global_v1` and defaults to it.
+- `AigRgbAndroidSkinAdapter` resolves surface accent/state/art status without click or version-control callbacks.
+- Morning asset absence returns `APPROVED_ASSET_PENDING_INGEST|...|PROCEDURAL_RGB_GLASS`.
+- Android Gradle compile: PENDING_DEVICE.
+
+Task 3 Studio Windows skin adapter:
+- RED observed: static gate required missing Desktop adapter.
+- `AigRgbDesktopSkinAdapter` exists with java.awt colors and no Android geometry/callback dependencies.
+- Existing Desktop chrome already uses the same black/RGB semantic palette through `RenderColorCompatibility`; explicit large-file semantic bridge remains PENDING_DEVICE surgical edit.
+- Windows Gradle compile: PENDING_DEVICE.
+
+Task 6 dual parity / maintenance:
+- `AGENTS.md` now points Global Skin issues to shared contract + platform adapters + focused gate.
+- AIG-II dual-project verifier confirms 22-surface/palette/alias/hard-lock parity and reports drift as `STATUS_ONLY|NO_ROLLBACK`.
+- Button regrouping / one-button-multi-function / project-name changes remain deferred next phase.
+
+Current evidence classes:
+- SOURCE/STATIC: GREEN for shared contract, Android adapter, Desktop adapter and dual parity.
+- COMPILE: PENDING_DEVICE.
+- ACTUAL RUNTIME LAUNCH/SCREENSHOT: PENDING_DEVICE.
+- MORNING APPROVED RGB BINARY INGEST: PENDING_DEVICE unless each platform-specific file is actually present and SHA-verified.
+
+Next: when DESKTOP-6KOFHUK reconnects, pull this feature branch, perform minimal DesktopApp bridge, run focused Gradle tasks, ingest platform-specific approved morning assets if present, and launch Android/Windows representative surfaces. Do not touch button regrouping or project naming in this phase.
