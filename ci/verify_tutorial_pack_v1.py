@@ -43,6 +43,16 @@ def read_json(path: Path):
         fail(f"JSON|{path.relative_to(ROOT).as_posix()}|{exc.msg}")
 
 
+def canonical_file_bytes(path: Path) -> bytes:
+    if path.suffix.lower() == ".json":
+        value = read_json(path)
+        return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    if path.suffix.lower() in {".properties", ".md", ".txt"}:
+        normalized = path.read_text(encoding="utf-8").replace("\r\n", "\n").strip() + "\n"
+        return normalized.encode("utf-8")
+    return path.read_bytes()
+
+
 def canonical_digest() -> str:
     if not PACK.is_dir():
         fail("PACK_DIR_MISSING")
@@ -52,7 +62,7 @@ def canonical_digest() -> str:
         rel = path.relative_to(PACK).as_posix().encode("utf-8")
         h.update(rel)
         h.update(b"\0")
-        h.update(path.read_bytes())
+        h.update(canonical_file_bytes(path))
         h.update(b"\0")
     return h.hexdigest()
 
