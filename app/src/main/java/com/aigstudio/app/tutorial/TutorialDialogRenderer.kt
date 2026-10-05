@@ -104,7 +104,7 @@ object TutorialOverlayInstaller {
             }
             if(root is FrameLayout) {
                 root.addView(button,FrameLayout.LayoutParams(dp(activity,104),dp(activity,46),Gravity.TOP or Gravity.END).apply {
-                    topMargin=dp(activity,54);marginEnd=dp(activity,8)
+                    topMargin=dp(activity,54);marginEnd=dp(activity,116)
                 })
             } else root.addView(button,ViewGroup.LayoutParams(dp(activity,104),dp(activity,46)))
         }
