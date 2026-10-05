@@ -17,5 +17,8 @@ Task 1 Ruling: BANTER is a presentation mode declared in index; no fake dedicate
 Task 1 Ruling: canonical digest normalizes JSON formatting/line endings but still changes on semantic content drift.
 Task 2: complete. RED unresolved TutorialFact/BanterLevel/AiExpression; GREEN `TUTORIAL_PRESENTATION_PASS|FACT_IMMUTABLE|BANTER_4_LEVELS|EXPRESSIONS_7`.
 Task 3: complete. RED `AI_MAINTENANCE_INDEX_FAIL|MISSING|AGENTS.md`; GREEN `AI_MAINTENANCE_INDEX_PASS|CATEGORIES=15|LOOKUPS=16`. Root AGENTS is a short first-hop index; detailed guide carries repo-specific paths/symbols.
+Task 4: source/static GREEN. RED verifier existed before adapters; GREEN `STUDIO_TUTORIAL_RUNTIME_PASS|OFFLINE_PACK|3_ENTRY_POINTS|UNKNOWN_TARGET_FALSE|ANDROID|WINDOWS|BANTER_DEFAULT_OFF`. Core loader and Android/Windows adapter sources passed local Kotlin syntax compilation. Real Gradle Android/Windows compilation remains `PENDING_DEVICE_GRADLE` because Remote Desktop is offline.
+Task 5: AIG-II source/static GREEN is tracked in the AIG-II ledger; real Gradle remains pending device.
+Task 6: canonical pack digest matches AIG-II at `5fa69fa49050f6e60538587b890f6e1c116173882fd8efcc9251f810050b4cc3`. Git blob/tree SHA differences caused only by JSON formatting are explicitly non-blocking; semantic parity uses canonical JSON/digest. Drift reports STATUS_ONLY/NO_ROLLBACK.
 
-Current: Task 4 in progress; device compile evidence pending because Remote Desktop is offline.
+Current: waiting only for real device Gradle compile + dual-checkout parity run + runtime visual verification. Product warning/red surfaces remain non-blocking; TDD/build failures remain development evidence only.
