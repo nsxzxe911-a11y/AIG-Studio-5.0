@@ -25,6 +25,7 @@ android {
         versionCode = releaseVersionCode
         versionName = releaseVersionName
     }
+    sourceSets.getByName("main").assets.srcDir(rootProject.file("shared/tutorial"))
     buildFeatures {
         buildConfig = true
     }
