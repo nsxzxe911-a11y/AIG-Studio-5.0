@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "pack_id": "MORNING_APPROVED_RGB_2026_10_05",
+  "approval": "USER_APPROVED_VISUAL_BASELINE",
+  "binary_ingest": "PENDING_BINARY_INGEST",
+  "skin_priority": "MORNING_APPROVED_RGB_FIRST",
+  "mobile_desktop_split": true,
+  "runtime_callback_authority": "EXISTING_RUNTIME_CALLBACKS_ONLY",
+  "static_status_text_policy": "VISUAL_REFERENCE_ONLY_DO_NOT_FAKE_MACHINE_STATE",
+  "multi_axis_model_policy": "DEFERRED_MODEL_MUTABLE",
+  "model_binding_policy": "EXTERNAL_TO_SKIN",
+  "assets": [
+    {
+      "id": "morning_mobile_home",
+      "source_name": "aig_ii_cnc_智慧製造儀表板.png",
+      "source_sha256": "eb24590daed56d303489976474fd9e06a02057f8d219437575c2c4a46e5fae74",
+      "source_width": 941,
+      "source_height": 1672,
+      "platform": "android",
+      "surface": "HOME",
+      "target_file": "home_mobile.jpg",
+      "target_width": 720,
+      "target_height": 1280,
+      "prepared_sha256": "93cc3f46b81588cf85f7be12f6d2513352d44cb67c084cad6138d452056a4b83",
+      "status": "PENDING_BINARY_INGEST"
+    },
+    {
+      "id": "morning_desktop_home",
+      "source_name": "aig_ii_cnc_智慧加工控制台.png",
+      "source_sha256": "5953c8eefd4331069d121946bd52e2c27af176f96b805ece0845ab788b06a8e2",
+      "source_width": 1672,
+      "source_height": 941,
+      "platform": "windows",
+      "surface": "HOME",
+      "target_file": "home_desktop.jpg",
+      "target_width": 1280,
+      "target_height": 720,
+      "prepared_sha256": "e61a0c7a65a1509bf74eb17398d95bb9261796080ff755b1fd3ae1e1f453595b",
+      "status": "PENDING_BINARY_INGEST"
+    },
+    {
+      "id": "morning_mobile_nc",
+      "source_name": "aig_ii_cnc_智慧加工介面.png",
+      "source_sha256": "6a30ba4ac9570770d2c0e4007594220d9bfa84c29adc34b9cf3d78068d83d56c",
+      "source_width": 941,
+      "source_height": 1672,
+      "platform": "android",
+      "surface": "NC",
+      "status": "APPROVED_REFERENCE_PENDING_SURFACE_INGEST"
+    },
+    {
+      "id": "morning_mobile_link",
+      "source_name": "霓虹科幻_cnc_智慧控制中心.png",
+      "source_sha256": "60fc5fe4b335a0139da1480c3b772c2fce51bab5ea6ad30b14d21e67ef49b094",
+      "source_width": 941,
+      "source_height": 1672,
+      "platform": "android",
+      "surface": "LINK",
+      "status": "APPROVED_REFERENCE_PENDING_SURFACE_INGEST"
+    },
+    {
+      "id": "morning_contact_sheet",
+      "source_name": "contact_all_rgb.png",
+      "source_sha256": "defed4f94b7543d93d7b8fc0a76a27c4d5448c7ca1d949522d85868a9ce391f2",
+      "source_width": 1200,
+      "source_height": 2580,
+      "platform": "reference",
+      "surface": "MULTI",
+      "status": "REFERENCE_ONLY"
+    }
+  ]
+}
