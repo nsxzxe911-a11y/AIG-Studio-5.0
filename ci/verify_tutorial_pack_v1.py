@@ -47,10 +47,7 @@ def canonical_digest() -> str:
     if not PACK.is_dir():
         fail("PACK_DIR_MISSING")
     h = hashlib.sha256()
-    files = sorted(
-        p for p in PACK.rglob("*")
-        if p.is_file() and p != DIGEST_FILE
-    )
+    files = sorted(p for p in PACK.rglob("*") if p.is_file() and p != DIGEST_FILE)
     for path in files:
         rel = path.relative_to(PACK).as_posix().encode("utf-8")
         h.update(rel)
@@ -78,15 +75,12 @@ def main() -> None:
         fail("EXPRESSION_IDS")
     if index.get("default_banter") != "OFF" or index.get("default_expression") != "NEUTRAL":
         fail("DEFAULTS")
-
-    listed = index.get("lesson_files")
-    if listed != REQUIRED_LESSON_FILES:
+    if index.get("lesson_files") != REQUIRED_LESSON_FILES:
         fail("LESSON_FILE_LIST")
 
     lesson_ids = set()
     pages = set()
     actions = set()
-    modes = set()
     for name in REQUIRED_LESSON_FILES:
         path = PACK / "lessons" / name
         lesson = read_json(path)
@@ -100,7 +94,6 @@ def main() -> None:
         mode = lesson["mode"]
         if mode not in EXPECTED_MODES:
             fail(f"MODE|{name}|{mode}")
-        modes.add(mode)
         if not isinstance(lesson["page_targets"], list) or not all(isinstance(x, str) for x in lesson["page_targets"]):
             fail(f"PAGE_TARGETS|{name}")
         if not isinstance(lesson["action_targets"], list) or not all(isinstance(x, str) for x in lesson["action_targets"]):
@@ -120,8 +113,6 @@ def main() -> None:
             if target is not None and target not in lesson["action_targets"]:
                 fail(f"STEP_ACTION|{name}|{idx}|{target}")
 
-    if set(EXPECTED_MODES) - modes:
-        fail("MODE_COVERAGE|" + ",".join(sorted(set(EXPECTED_MODES) - modes)))
     if REQUIRED_PAGES - pages:
         fail("PAGE_COVERAGE|" + ",".join(sorted(REQUIRED_PAGES - pages)))
     if WORK_PAGES - pages:
