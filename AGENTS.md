@@ -22,6 +22,7 @@
 - Full-open：`core/src/main/kotlin/com/aigstudio/core/OpenRuntimePolicy.kt`
 - RGB HOME：`core/src/main/kotlin/com/aigstudio/core/UiAssetContract.kt` + `ci/verify_home_rgb_pack_416.py`
 - Tutorial：`shared/tutorial/` + `ci/verify_tutorial_pack_v1.py`
+- 可選模組 RED / 先不裝：`docs/ai/OPTIONAL_MODULE_FAIL_OPEN_POLICY.md` + `config/optional-modules.properties`
 - AI 維護索引：`docs/ai/AI_MAINTENANCE_QUICK_GUIDE.md`
 
 ## 斷線續接
@@ -34,4 +35,5 @@
 - 3D～6AX / CNC 診斷訊息不阻擋 Runtime。
 - AI RGB 圖資與程式生成允許；缺圖可走 AI RGB pipeline。
 - Banter / emoji 只改呈現；不得改數值、G/M code、刀路、action target 或 callback。
+- 可選 Tutorial / AI 顯示模組若修不過 RED，撤出安裝並回 STATUS/WARNING；不得拖死主 Runtime、不得 rollback。
 - AIG-II 是雙專案 exact-bind 的主控制端；Studio 版本變更後要由 AIG-II 更新 exact SHA。
