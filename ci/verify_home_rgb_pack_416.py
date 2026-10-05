@@ -29,7 +29,7 @@ for token in ('homeAction("CAD"','homeAction("CAM"','homeAction("SIM"','homeActi
     need(token in main,'ANDROID_HOME_CALLBACK_'+token)
 need('HOME_CARD' in desktop,'WINDOWS_FORMAL_HOME_TARGET')
 need(EXPECTED['home_desktop.jpg'] in desktop,'WINDOWS_SHA_CALLBACK')
-for token in ('AIG HOME CAD','AIG HOME CAM','AIG HOME SIM','HOME LINK MANAGER','runtimeLinkStore.observe'):
+for token in ('homeLaunch("CAD"','homeLaunch("CAM"','homeLaunch("SIM"','homeLaunch("設定"','連結管理 ▸','runtimeLinkStore.observe'):
     need(token in desktop_main,'WINDOWS_HOME_CALLBACK_'+token)
 need('com.aigstudio.bootstrap.DesktopBootstrapKt' in build,'WINDOWS_BOOTSTRAP')
 for root in (ANDROID,WINDOWS):
