@@ -3,9 +3,32 @@
     <style name="Theme.AIGStudio" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:windowActionModeOverlay">true</item>
-        <item name="android:colorAccent">#00E5FF</item>
-        <item name="android:navigationBarColor">#07111B</item>
-        <item name="android:statusBarColor">#07111B</item>
+        <item name="android:windowBackground">#020407</item>
+        <item name="android:colorAccent">#27E9FF</item>
+        <item name="android:navigationBarColor">#020407</item>
+        <item name="android:statusBarColor">#020407</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:buttonStyle">@style/Widget.AIG.RgbButton</item>
+        <item name="android:editTextStyle">@style/Widget.AIG.RgbInput</item>
+    </style>
+
+    <style name="Widget.AIG.RgbButton" parent="@android:style/Widget.Material.Button">
+        <item name="android:background">@drawable/aig_rgb_glass_button</item>
+        <item name="android:textColor">#F4FBFF</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">72dp</item>
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:paddingRight">12dp</item>
+    </style>
+
+    <style name="Widget.AIG.RgbInput" parent="@android:style/Widget.Material.EditText">
+        <item name="android:background">@drawable/aig_rgb_glass_input</item>
+        <item name="android:textColor">#F4FBFF</item>
+        <item name="android:textColorHint">#8FA9B8C6</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:paddingRight">12dp</item>
     </style>
 </resources>
