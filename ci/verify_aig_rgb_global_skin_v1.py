@@ -16,7 +16,7 @@ skin=read('core/src/main/kotlin/com/aigstudio/core/AigRgbGlobalSkin.kt')
 expected=['HOME','CAD','CAM','SIM','3AX','4AX','5AX','6AX','NC','AI','SETTINGS','VIEW','PHOTO','CORNER','EDIT','FILE','TOOL','WORK','ALARM','MONITOR','SYNC','LINK']
 for value in expected:
     if f'"{value}"' not in skin: fail('SURFACE_'+value)
-for token in ('BACKGROUND_RGB=0x020407','PANEL_RGB=0x07111B','MORNING_APPROVED_RGB_FIRST','MOBILE_DESKTOP_ASSET_SPLIT=true','ENGINEERING_SHELL_FALLBACK=false','RED_STATUS_ONLY=true','STATUS_ONLY_NO_VERSION_ACTION','versionControlActionAllowed'):
+for token in ('BACKGROUND_RGB=0x020407','PANEL_RGB=0x07111B','MORNING_APPROVED_RGB_FIRST','MOBILE_DESKTOP_ASSET_SPLIT=true','ENGINEERING_SHELL_FALLBACK=false','RED_STATUS_ONLY=true','MULTI_AXIS_MODEL_MUTABLE=true','MODEL_BINDING_POLICY="EXTERNAL_TO_SKIN"','STATUS_ONLY_NO_VERSION_ACTION','versionControlActionAllowed'):
     if token not in skin: fail('TOKEN_'+token)
 for token in ('rollback(', 'downgrade(', 'performClick(', 'AI_VERSION_CONTROL_WRITE_ENABLED = true', 'RED_CONTROL_CALLBACK_ENABLED = true'):
     if token in skin: fail('FORBIDDEN_'+token)
@@ -39,4 +39,4 @@ for token in ('android.', 'performClick(', 'doClick(', 'rollback(', 'downgrade('
 bootstrap=read('desktop/src/main/kotlin/com/aigstudio/desktop/DesktopBootstrap.kt')
 if 'AigRgbDesktopSkinRuntime.install()' not in bootstrap: fail('DESKTOP_BOOTSTRAP_BINDING')
 
-print('AIG_RGB_GLOBAL_SKIN_STATIC_PASS|22_SURFACES|NO_VERSION_CALLBACK|MORNING_ASSET_PRIORITY|MOBILE_WINDOWS_SPLIT|ANDROID_THEME_BOUND|DESKTOP_BOOTSTRAP_BOUND')
+print('AIG_RGB_GLOBAL_SKIN_STATIC_PASS|22_SURFACES|NO_VERSION_CALLBACK|MORNING_ASSET_PRIORITY|MOBILE_WINDOWS_SPLIT|MULTI_AXIS_MODEL_MUTABLE|ANDROID_THEME_BOUND|DESKTOP_BOOTSTRAP_BOUND')
