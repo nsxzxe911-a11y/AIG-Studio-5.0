@@ -16,7 +16,6 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
-import com.aigstudio.app.tutorial.TutorialOverlayInstaller
 import com.aigstudio.core.UiAssetContract
 import java.security.MessageDigest
 import java.util.Collections
@@ -37,7 +36,7 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        TutorialOverlayInstaller.install(activity)
+        OptionalTutorialModule.install(activity)
         val decor = activity.window.decorView
         val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
@@ -66,6 +65,19 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
     override fun onActivityStopped(activity: Activity) = Unit
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
     override fun onActivityDestroyed(activity: Activity) = Unit
+}
+
+private object OptionalTutorialModule {
+    private const val TAG="AIG-OPTIONAL-MODULE"
+    fun install(activity:Activity) {
+        runCatching {
+            val type=Class.forName("com.aigstudio.app.tutorial.TutorialOverlayInstaller")
+            val instance=type.getField("INSTANCE").get(null)
+            type.getMethod("install",Activity::class.java).invoke(instance,activity)
+        }.onFailure {
+            Log.w(TAG,"OPTIONAL_MODULE_SKIP|TUTORIAL_V1|ANDROID|STATUS_ONLY|NO_ROLLBACK",it)
+        }
+    }
 }
 
 private object HomeRgbAsset {
