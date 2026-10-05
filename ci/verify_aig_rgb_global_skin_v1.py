@@ -31,6 +31,20 @@ for token in ('object AigRgbAndroidSkinAdapter','surfaceAccent','stateColor','bu
 for token in ('performClick(', 'setOnClickListener(', 'rollback(', 'downgrade('):
     if token in adapter: fail('ANDROID_ADAPTER_FORBIDDEN_'+token)
 
+styles=read('app/src/main/res/values/styles.xml')
+for token in ('android:windowBackground">#020407','android:colorAccent">#27E9FF','android:navigationBarColor">#020407','android:statusBarColor">#020407','android:buttonStyle">@style/Widget.AIG.RgbButton','android:editTextStyle">@style/Widget.AIG.RgbInput','@drawable/aig_rgb_glass_button','@drawable/aig_rgb_glass_input'):
+    if token not in styles: fail('ANDROID_STYLE_'+token)
+
+resource_checks={
+    'app/src/main/res/drawable/aig_rgb_glass_button.xml':('#020407','#07111B','#27E9FF','state_pressed','state_enabled'),
+    'app/src/main/res/drawable/aig_rgb_glass_input.xml':('#07111B','#27E9FF','corners','padding'),
+    'app/src/main/res/drawable/aig_rgb_glass_panel.xml':('#07111B','#27E9FF','corners','padding'),
+}
+for rel,tokens in resource_checks.items():
+    text=read(rel)
+    for token in tokens:
+        if token not in text: fail('ANDROID_RESOURCE_'+rel+'|'+token)
+
 desktop=read('desktop/src/main/kotlin/com/aigstudio/desktop/AigRgbDesktopSkinAdapter.kt')
 for token in ('object AigRgbDesktopSkinAdapter','object AigRgbDesktopSkinRuntime','fun install()','UIManager.put','surfaceAccent','stateColor','panelSpec','buttonSpec','AigRgbGlobalSkinV1.surface'):
     if token not in desktop: fail('DESKTOP_ADAPTER_'+token)
@@ -39,4 +53,4 @@ for token in ('android.', 'performClick(', 'doClick(', 'rollback(', 'downgrade('
 bootstrap=read('desktop/src/main/kotlin/com/aigstudio/desktop/DesktopBootstrap.kt')
 if 'AigRgbDesktopSkinRuntime.install()' not in bootstrap: fail('DESKTOP_BOOTSTRAP_BINDING')
 
-print('AIG_RGB_GLOBAL_SKIN_STATIC_PASS|22_SURFACES|NO_VERSION_CALLBACK|MORNING_ASSET_PRIORITY|MOBILE_WINDOWS_SPLIT|MULTI_AXIS_MODEL_MUTABLE|ANDROID_THEME_BOUND|DESKTOP_BOOTSTRAP_BOUND')
+print('AIG_RGB_GLOBAL_SKIN_STATIC_PASS|22_SURFACES|NO_VERSION_CALLBACK|MORNING_ASSET_PRIORITY|MOBILE_WINDOWS_SPLIT|MULTI_AXIS_MODEL_MUTABLE|ANDROID_RGB_GLASS_RESOURCES|ANDROID_THEME_BOUND|DESKTOP_BOOTSTRAP_BOUND')
