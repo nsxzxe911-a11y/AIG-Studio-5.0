@@ -2,7 +2,6 @@ package com.aigstudio.app
 
 import android.app.Activity
 import android.content.Context
-import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
@@ -87,7 +86,8 @@ object AxisCockpitSkinInstaller {
 
         val modelHost=FrameLayout(activity).apply {
             setBackgroundColor(Color.rgb(3,8,16))
-            setPadding(0,dp(activity,3),0,dp(activity,3))
+            val externalHudClearance=if(mode=="6AX") dp(activity,3) else dp(activity,30)
+            setPadding(0,externalHudClearance,0,dp(activity,3))
         }
         modelHost.addView(view,FrameLayout.LayoutParams(-1,-1))
         wrapper.addView(modelHost,LinearLayout.LayoutParams(-1,0,1f))
