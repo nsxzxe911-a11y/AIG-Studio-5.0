@@ -42,6 +42,7 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
         CadProfileOverlayInstaller.install(activity)
         CadAdvancedOverlayInstaller.install(activity)
         AxisCockpitSkinInstaller.install(activity)
+        CamWorkflowOverlayInstaller.install(activity)
         val decor = activity.window.decorView
         val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
