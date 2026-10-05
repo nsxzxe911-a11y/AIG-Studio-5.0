@@ -29,6 +29,12 @@ for token in (
     "AUTO_REGRESSION_ENABLED = false",
     "AUTO_ROLLBACK_ENABLED = false",
     "AUTO_DOWNGRADE_ENABLED = false",
+    "AI_VERSION_CONTROL_WRITE_ENABLED = false",
+    "RED_CONTROL_CALLBACK_ENABLED = false",
+    "MANUAL_ROLLBACK_ENABLED = false",
+    "MANUAL_DOWNGRADE_ENABLED = false",
+    "fun aiMayEnableVersionControlAction(action:String):Boolean = false",
+    "fun redControlMayChangeVersion():Boolean = false",
     "DIAGNOSTICS_ENABLED = true",
 ):
     need(token in policy, "CORE_POLICY_" + token.split("=")[0].strip())
@@ -71,4 +77,4 @@ for forbidden in ("ROLLBACK_LAST_VERIFIED", "LAST_VERIFIED_THEME_PACK", "BLOCK_P
     need(forbidden not in read("continuity/ai-responsibility-routing.json"), "ROUTING_" + forbidden)
     need(forbidden not in read("continuity/latest-checkpoint.json"), "CHECKPOINT_" + forbidden)
 
-print("FULL_OPEN_RUNTIME_POLICY_PASS|STUDIO_361|RGB_AI_ON|AXIS_CNC_NONBLOCKING|REGRESSION_OFF|ROLLBACK_OFF|DOWNGRADE_OFF|DIAGNOSTICS_ON|NOX_COMPAT")
+print("FULL_OPEN_RUNTIME_POLICY_PASS|STUDIO_361|RGB_AI_ON|AXIS_CNC_NONBLOCKING|REGRESSION_OFF|ROLLBACK_OFF|DOWNGRADE_OFF|AI_VERSION_WRITE_HARDLOCK|RED_CONTROL_NO_CALLBACK|DIAGNOSTICS_ON|NOX_COMPAT")
