@@ -1,0 +1,8 @@
+{
+  "lesson_id": "axis.5ax",
+  "mode": "AXIS",
+  "page_targets": ["5AX"],
+  "action_targets": ["AXIS.5AX", "AXIS.A", "AXIS.B", "AXIS.ZERO", "AXIS.FIT", "AXIS.PLAY"],
+  "title_zh_tw": "5AX A/B 軸加工",
+  "steps": [{"fact": "5AX 使用 A/B 姿態控制並同步刀具方向。", "action_target": "AXIS.5AX", "expression_id": "TEACHER"}]
+}

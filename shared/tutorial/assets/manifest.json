@@ -1,0 +1,10 @@
+{
+  "pack_version": "1.0.0",
+  "style": "AIG_RGB_BLACK_ZH_TW",
+  "platforms": [
+    "ANDROID",
+    "WINDOWS"
+  ],
+  "missing_art_policy": "AI_RGB_OPTIONAL_NON_BLOCKING",
+  "assets": []
+}

@@ -1,0 +1,8 @@
+{
+  "lesson_id": "quick.next",
+  "mode": "QUICK",
+  "page_targets": ["HOME", "CAD", "CAM", "SIM", "NC", "AI"],
+  "action_targets": ["NAV.NEXT"],
+  "title_zh_tw": "快速下一步",
+  "steps": [{"fact": "只顯示目前流程的下一個主要動作。", "action_target": "NAV.NEXT", "expression_id": "NEUTRAL"}]
+}

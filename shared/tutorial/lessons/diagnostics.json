@@ -1,0 +1,11 @@
+{
+  "lesson_id": "diagnostics.messages",
+  "mode": "DIAGNOSTICS",
+  "page_targets": ["ALARM", "CAD", "CAM", "SIM", "NC"],
+  "action_targets": ["DIAG.EXPLAIN", "DIAG.CONTINUE"],
+  "title_zh_tw": "錯誤與警告說明",
+  "steps": [
+    {"fact": "CAD、CAM、SIM、NC 各自顯示自己的 WARNING / ALARM 訊息。", "action_target": "DIAG.EXPLAIN", "expression_id": "WARN"},
+    {"fact": "診斷訊息不自動回退版本，也不替使用者執行加工。", "action_target": "DIAG.CONTINUE", "expression_id": "NEUTRAL"}
+  ]
+}

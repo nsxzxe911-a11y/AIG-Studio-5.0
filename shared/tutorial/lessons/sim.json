@@ -1,0 +1,11 @@
+{
+  "lesson_id": "sim.material",
+  "mode": "SIM",
+  "page_targets": ["SIM", "VIEW", "MONITOR"],
+  "action_targets": ["SIM.RUN", "SIM.MATERIAL_REMOVAL", "SIM.SHOW_HIDE", "SIM.RECALCULATE"],
+  "title_zh_tw": "SIM 真材料移除",
+  "steps": [
+    {"fact": "SIM 顯示真 3D 刀路與材料移除結果。", "action_target": "SIM.MATERIAL_REMOVAL", "expression_id": "TEACHER"},
+    {"fact": "顯示/隱藏與重新計算是兩個獨立動作。", "action_target": "SIM.RECALCULATE", "expression_id": "NEUTRAL"}
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "lesson_id": "beginner.workflow",
+  "mode": "BEGINNER",
+  "page_targets": ["HOME", "CAD", "CAM", "SIM", "NC"],
+  "action_targets": ["CAD.OPEN", "CAM.AUTO", "SIM.RUN", "NC.EDIT"],
+  "title_zh_tw": "新手完整流程",
+  "steps": [
+    {"fact": "從 HOME 進入 CAD，先建立或開啟幾何。", "action_target": "CAD.OPEN", "expression_id": "TEACHER"},
+    {"fact": "CAD 完成後進入 CAM，建立或選擇刀路。", "action_target": "CAM.AUTO", "expression_id": "SMILE"},
+    {"fact": "刀路完成後先進 SIM 檢查，再到 NC 編輯與輸出。", "action_target": "SIM.RUN", "expression_id": "TEACHER"}
+  ]
+}

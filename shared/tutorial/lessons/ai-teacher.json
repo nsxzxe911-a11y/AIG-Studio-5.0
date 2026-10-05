@@ -1,0 +1,11 @@
+{
+  "lesson_id": "ai.teacher",
+  "mode": "AI_TEACHER",
+  "page_targets": ["AI", "HOME", "SETTINGS"],
+  "action_targets": ["AI.EXPLAIN_PAGE", "SETTINGS.UPDATE"],
+  "title_zh_tw": "AI 老師",
+  "steps": [
+    {"fact": "AI 老師依目前頁面與狀態說明功能，不自動執行加工。", "action_target": "AI.EXPLAIN_PAGE", "expression_id": "TEACHER"},
+    {"fact": "更新與設定由使用者明確選擇後才執行。", "action_target": "SETTINGS.UPDATE", "expression_id": "THINK"}
+  ]
+}

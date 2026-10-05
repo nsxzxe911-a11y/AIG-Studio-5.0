@@ -1,0 +1,11 @@
+{
+  "lesson_id": "cam.manual",
+  "mode": "CAM",
+  "page_targets": ["CAM", "TOOL", "WORK"],
+  "action_targets": ["CAM.AUTO", "CAM.MANUAL_PATH", "CAM.SAFE_Z", "CAM.LEAD", "CAM.G41_G42", "CAM.AVOIDANCE"],
+  "title_zh_tw": "CAM 自動與手動刀路",
+  "steps": [
+    {"fact": "AUTO 可由 CAD 產生刀路；MANUAL 可直接建立與修改刀路。", "action_target": "CAM.MANUAL_PATH", "expression_id": "TEACHER"},
+    {"fact": "Safe-Z、起落刀、內外徑、方向與避讓都可獨立調整。", "action_target": "CAM.SAFE_Z", "expression_id": "THINK"}
+  ]
+}

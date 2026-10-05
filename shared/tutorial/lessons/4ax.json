@@ -1,0 +1,8 @@
+{
+  "lesson_id": "axis.4ax",
+  "mode": "AXIS",
+  "page_targets": ["4AX"],
+  "action_targets": ["AXIS.4AX", "AXIS.A", "AXIS.ZERO", "AXIS.FIT", "AXIS.PLAY"],
+  "title_zh_tw": "4AX A 軸加工",
+  "steps": [{"fact": "4AX 在 XYZ 基礎加入 A 軸旋轉。", "action_target": "AXIS.4AX", "expression_id": "TEACHER"}]
+}

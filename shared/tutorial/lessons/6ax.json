@@ -1,0 +1,11 @@
+{
+  "lesson_id": "axis.6ax",
+  "mode": "AXIS",
+  "page_targets": ["6AX"],
+  "action_targets": ["AXIS.6AX", "AXIS.A", "AXIS.B", "AXIS.C", "AXIS.ZERO", "AXIS.FIT", "AXIS.PLAY"],
+  "title_zh_tw": "6AX A/B/C 軸加工",
+  "steps": [
+    {"fact": "6AX 使用 A/B/C 姿態控制，支援 360° 與翻轉視角。", "action_target": "AXIS.6AX", "expression_id": "TEACHER"},
+    {"fact": "A/B/C 顯示與控制互相獨立，教程不改寫加工資料。", "action_target": "AXIS.C", "expression_id": "NEUTRAL"}
+  ]
+}

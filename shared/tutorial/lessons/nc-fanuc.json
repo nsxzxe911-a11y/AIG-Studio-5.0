@@ -1,0 +1,11 @@
+{
+  "lesson_id": "nc.fanuc",
+  "mode": "NC_FANUC",
+  "page_targets": ["NC"],
+  "action_targets": ["NC.G54", "NC.G90", "NC.G43", "NC.G0_G1", "NC.G2_G3", "NC.DRILL", "NC.SUBPROGRAM", "NC.CUSTOM_M"],
+  "title_zh_tw": "NC / Fanuc",
+  "steps": [
+    {"fact": "先確認 G90、工件座標 G54 與刀長補正 G43/H。", "action_target": "NC.G54", "expression_id": "WARN"},
+    {"fact": "可學習 G0/G1/G2/G3、鑽孔循環、子程式與自訂 M-code。", "action_target": "NC.DRILL", "expression_id": "TEACHER"}
+  ]
+}

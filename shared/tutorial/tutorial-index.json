@@ -1,0 +1,18 @@
+{
+  "pack_version": "1.0.0",
+  "locale": "zh-TW",
+  "offline_first": true,
+  "modes": ["BEGINNER", "QUICK", "STEP_BY_STEP", "AI_TEACHER", "CAD", "CAM", "SIM", "AXIS", "NC_FANUC", "DIAGNOSTICS", "WORK_PAGES", "AI_MAINTENANCE", "BANTER"],
+  "banter_levels": ["OFF", "LIGHT", "NORMAL", "MAX"],
+  "expression_ids": ["NEUTRAL", "SMILE", "LAUGH", "THINK", "TEACHER", "WARN", "BANTER"],
+  "default_banter": "OFF",
+  "default_expression": "NEUTRAL",
+  "lesson_files": ["beginner.json", "quick.json", "step-by-step.json", "ai-teacher.json", "cad.json", "cam.json", "sim.json", "3ax.json", "4ax.json", "5ax.json", "6ax.json", "nc-fanuc.json", "work-pages.json", "diagnostics.json", "maintenance.json"],
+  "page_defaults": {
+    "HOME": "beginner.workflow", "CAD": "cad.basics", "CAM": "cam.manual", "SIM": "sim.material",
+    "3AX": "axis.3ax", "4AX": "axis.4ax", "5AX": "axis.5ax", "6AX": "axis.6ax", "NC": "nc.fanuc",
+    "AI": "ai.teacher", "SETTINGS": "ai.teacher", "VIEW": "work.pages", "PHOTO": "work.pages",
+    "CORNER": "cad.basics", "EDIT": "cad.basics", "FILE": "work.pages", "TOOL": "cam.manual",
+    "WORK": "work.pages", "ALARM": "diagnostics.messages", "MONITOR": "work.pages", "SYNC": "work.pages"
+  }
+}

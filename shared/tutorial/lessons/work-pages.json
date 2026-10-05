@@ -1,0 +1,12 @@
+{
+  "lesson_id": "work.pages",
+  "mode": "WORK_PAGES",
+  "page_targets": ["VIEW", "PHOTO", "CORNER", "EDIT", "FILE", "TOOL", "WORK", "ALARM", "MONITOR", "SYNC"],
+  "action_targets": ["WORK.VIEW", "WORK.PHOTO_ALIGN", "WORK.PHOTO_SCALE", "WORK.CORNER", "WORK.EDIT", "WORK.FILE", "WORK.TOOL", "WORK.ORIGIN", "WORK.ALARM", "WORK.MONITOR", "WORK.SYNC"],
+  "title_zh_tw": "工作頁導覽",
+  "steps": [
+    {"fact": "工作頁依 VIEW、PHOTO、CORNER、EDIT、FILE、TOOL、WORK 分組。", "action_target": "WORK.VIEW", "expression_id": "TEACHER"},
+    {"fact": "PHOTO ALIGN 與 PHOTO SCALE 用於照片對正與 mm 校正。", "action_target": "WORK.PHOTO_ALIGN", "expression_id": "THINK"},
+    {"fact": "MONITOR 顯示 FPS、GPU、RAM、Thermal 與 Dropped Frames。", "action_target": "WORK.MONITOR", "expression_id": "NEUTRAL"}
+  ]
+}

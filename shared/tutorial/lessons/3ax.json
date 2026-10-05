@@ -1,0 +1,8 @@
+{
+  "lesson_id": "axis.3ax",
+  "mode": "AXIS",
+  "page_targets": ["3AX"],
+  "action_targets": ["AXIS.3AX", "AXIS.ZERO", "AXIS.FIT", "AXIS.PLAY"],
+  "title_zh_tw": "3AX XYZ 加工",
+  "steps": [{"fact": "3AX 使用 X/Y/Z，支援歸零、播放與 Fit。", "action_target": "AXIS.3AX", "expression_id": "TEACHER"}]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "step.workflow",
+  "mode": "STEP_BY_STEP",
+  "page_targets": ["CAD", "CAM", "SIM", "NC"],
+  "action_targets": ["CAD.OPEN", "CAM.AUTO", "SIM.RUN", "NC.EDIT"],
+  "title_zh_tw": "逐步教學",
+  "steps": [
+    {"fact": "一次完成一個步驟，再前往下一步。", "expression_id": "TEACHER"},
+    {"fact": "使用上一頁與下一頁控制教學節奏。", "expression_id": "NEUTRAL"}
+  ]
+}

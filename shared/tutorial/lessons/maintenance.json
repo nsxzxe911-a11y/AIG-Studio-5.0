@@ -1,0 +1,11 @@
+{
+  "lesson_id": "maintenance.lookup",
+  "mode": "AI_MAINTENANCE",
+  "page_targets": ["AI", "SETTINGS", "MONITOR"],
+  "action_targets": ["MAINT.FILE_LOOKUP", "MAINT.CALLBACK_LOOKUP", "MAINT.ASSET_LOOKUP", "MAINT.GATE_LOOKUP", "MAINT.VERSION", "MAINT.CHECKPOINT"],
+  "title_zh_tw": "AI 快速維護",
+  "steps": [
+    {"fact": "先查 AGENTS.md 與快速維護索引，再定位檔案與 symbol。", "action_target": "MAINT.FILE_LOOKUP", "expression_id": "THINK"},
+    {"fact": "斷點續接先找最後可信 checkpoint、diff、未完成項與驗證證據。", "action_target": "MAINT.CHECKPOINT", "expression_id": "TEACHER"}
+  ]
+}

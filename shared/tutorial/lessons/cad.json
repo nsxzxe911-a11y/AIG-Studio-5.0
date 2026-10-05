@@ -1,0 +1,11 @@
+{
+  "lesson_id": "cad.basics",
+  "mode": "CAD",
+  "page_targets": ["CAD", "CORNER", "EDIT", "VIEW"],
+  "action_targets": ["CAD.LINE", "CAD.RECT", "CAD.CIRCLE", "CAD.ARC", "CAD.HOLE", "CAD.CHAMFER", "CAD.FILLET", "CAD.SNAP", "CAD.DIMENSION", "CAD.TRIM", "CAD.EXTEND", "CAD.OFFSET", "CAD.ARRAY"],
+  "title_zh_tw": "CAD 製圖與編輯",
+  "steps": [
+    {"fact": "使用 Line、Rect、Circle、Arc、Hole 建立幾何。", "action_target": "CAD.LINE", "expression_id": "TEACHER"},
+    {"fact": "使用 Snap、Dimension、Trim、Extend、Offset、Array 完成精修。", "action_target": "CAD.SNAP", "expression_id": "SMILE"}
+  ]
+}
