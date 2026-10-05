@@ -32,7 +32,15 @@ for token in ('performClick(', 'setOnClickListener(', 'rollback(', 'downgrade(')
     if token in adapter: fail('ANDROID_ADAPTER_FORBIDDEN_'+token)
 
 styles=read('app/src/main/res/values/styles.xml')
-for token in ('android:windowBackground">#020407','android:colorAccent">#27E9FF','android:navigationBarColor">#020407','android:statusBarColor">#020407','android:buttonStyle">@style/Widget.AIG.RgbButton','android:editTextStyle">@style/Widget.AIG.RgbInput','@drawable/aig_rgb_glass_button','@drawable/aig_rgb_glass_input'):
+for token in (
+    'android:windowBackground">#020407','android:colorAccent">#27E9FF',
+    'android:navigationBarColor">#020407','android:statusBarColor">#020407',
+    'android:buttonStyle">@style/Widget.AIG.RgbButton','android:editTextStyle">@style/Widget.AIG.RgbInput',
+    'android:spinnerStyle">@style/Widget.AIG.RgbSpinner','android:checkboxStyle">@style/Widget.AIG.RgbCheckBox',
+    'android:seekBarStyle">@style/Widget.AIG.RgbSeekBar',
+    'name="Widget.AIG.RgbSpinner"','name="Widget.AIG.RgbCheckBox"','name="Widget.AIG.RgbSeekBar"',
+    '@drawable/aig_rgb_glass_button','@drawable/aig_rgb_glass_input','@drawable/aig_rgb_glass_panel'
+):
     if token not in styles: fail('ANDROID_STYLE_'+token)
 
 resource_checks={
@@ -57,4 +65,4 @@ for token in ('android.', 'performClick(', 'doClick(', 'rollback(', 'downgrade('
 bootstrap=read('desktop/src/main/kotlin/com/aigstudio/desktop/DesktopBootstrap.kt')
 if 'AigRgbDesktopSkinRuntime.install()' not in bootstrap: fail('DESKTOP_BOOTSTRAP_BINDING')
 
-print('AIG_RGB_GLOBAL_SKIN_STATIC_PASS|22_SURFACES|NO_VERSION_CALLBACK|MORNING_ASSET_PRIORITY|MOBILE_WINDOWS_SPLIT|MULTI_AXIS_MODEL_MUTABLE|ANDROID_RGB_GLASS_RESOURCES|ANDROID_RUNTIME_BOUND|ANDROID_THEME_BOUND|DESKTOP_BOOTSTRAP_BOUND')
+print('AIG_RGB_GLOBAL_SKIN_STATIC_PASS|22_SURFACES|NO_VERSION_CALLBACK|MORNING_ASSET_PRIORITY|MOBILE_WINDOWS_SPLIT|MULTI_AXIS_MODEL_MUTABLE|ANDROID_RGB_GLASS_RESOURCES|ANDROID_ALL_STANDARD_CONTROLS|ANDROID_RUNTIME_BOUND|ANDROID_THEME_BOUND|DESKTOP_BOOTSTRAP_BOUND')
