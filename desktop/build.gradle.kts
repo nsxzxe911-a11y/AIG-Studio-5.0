@@ -21,7 +21,7 @@ kotlin {
 }
 
 application {
-    mainClass.set("com.aigstudio.desktop.DesktopAppKt")
+    mainClass.set("com.aigstudio.desktop.DesktopBootstrapKt")
     applicationDefaultJvmArgs = listOf("-Dfile.encoding=UTF-8", "-Daigstudio.version=$releaseVersionName")
 }
 
