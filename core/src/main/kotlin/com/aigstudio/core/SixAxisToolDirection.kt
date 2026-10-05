@@ -88,4 +88,14 @@ object SixAxisToolDirectionContract {
         val tilt=tiltFromVector(vector)
         return SixAxisToolDirectionHud(axisA,axisB,axisC,tilt,vector,nearestPreset(tilt))
     }
+
+    /** Camera rotations that make the tool shank point into screen depth. */
+    fun cameraAnglesAlongTool(axisA:Double,axisB:Double):Pair<Double,Double> {
+        val cut=fromRotaryAB(axisA,axisB)
+        val shank=ToolDirectionVector(-cut.x,-cut.y,-cut.z)
+        val rotateX=Math.toDegrees(atan2(shank.y,shank.z))
+        val zAfterX=hypot(shank.y,shank.z)
+        val rotateY=Math.toDegrees(atan2(-shank.x,zAfterX))
+        return rotateX to rotateY
+    }
 }
