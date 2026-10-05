@@ -36,6 +36,13 @@ object StudioThemePackRuntime {
             cutting=Color.rgb(0,230,118),rapid=Color.rgb(213,0,249),
             warning=Color.rgb(255,152,0),alarm=Color.rgb(255,23,68)
         ),
+        "aig_rgb_global_v1" to StudioThemePalette(
+            id="aig_rgb_global_v1",name="AIG RGB Global V1",
+            background=Color.rgb(2,4,7),panel=Color.rgb(7,17,27),text=Color.rgb(244,251,255),
+            accent=Color.rgb(39,233,255),selected=Color.rgb(39,233,255),
+            cutting=Color.rgb(51,243,155),rapid=Color.rgb(255,77,166),
+            warning=Color.rgb(255,179,38),alarm=Color.rgb(255,70,95)
+        ),
         "aigii_rgb_neon_v2" to StudioThemePalette(
             id="aigii_rgb_neon_v2",name="AIG II RGB Neon V2",
             background=Color.rgb(2,4,7),panel=Color.rgb(7,17,27),text=Color.rgb(244,251,255),
@@ -52,7 +59,7 @@ object StudioThemePackRuntime {
         )
     )
 
-    @Volatile private var currentId="aigii_rgb_neon_v2"
+    @Volatile private var currentId="aig_rgb_global_v1"
     private val listeners=CopyOnWriteArraySet<(StudioThemePalette)->Unit>()
 
     val current:StudioThemePalette get()=packs.getValue(currentId)
