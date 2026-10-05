@@ -11,6 +11,9 @@
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:buttonStyle">@style/Widget.AIG.RgbButton</item>
         <item name="android:editTextStyle">@style/Widget.AIG.RgbInput</item>
+        <item name="android:spinnerStyle">@style/Widget.AIG.RgbSpinner</item>
+        <item name="android:checkboxStyle">@style/Widget.AIG.RgbCheckBox</item>
+        <item name="android:seekBarStyle">@style/Widget.AIG.RgbSeekBar</item>
     </style>
 
     <style name="Widget.AIG.RgbButton" parent="@android:style/Widget.Material.Button">
@@ -30,5 +33,25 @@
         <item name="android:minHeight">48dp</item>
         <item name="android:paddingLeft">12dp</item>
         <item name="android:paddingRight">12dp</item>
+    </style>
+
+    <style name="Widget.AIG.RgbSpinner" parent="@android:style/Widget.Material.Spinner.Underlined">
+        <item name="android:background">@drawable/aig_rgb_glass_input</item>
+        <item name="android:popupBackground">@drawable/aig_rgb_glass_panel</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingLeft">10dp</item>
+        <item name="android:paddingRight">10dp</item>
+    </style>
+
+    <style name="Widget.AIG.RgbCheckBox" parent="@android:style/Widget.Material.CompoundButton.CheckBox">
+        <item name="android:textColor">#F4FBFF</item>
+        <item name="android:buttonTint">#27E9FF</item>
+        <item name="android:minHeight">44dp</item>
+    </style>
+
+    <style name="Widget.AIG.RgbSeekBar" parent="@android:style/Widget.Material.SeekBar">
+        <item name="android:progressTint">#27E9FF</item>
+        <item name="android:secondaryProgressTint">#33F39B</item>
+        <item name="android:thumbTint">#FF4DA6</item>
     </style>
 </resources>
