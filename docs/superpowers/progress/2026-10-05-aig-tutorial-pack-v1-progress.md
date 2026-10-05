@@ -12,4 +12,10 @@ Pre-flight interfaces:
 - Task 3 produces AI maintenance index; acceptance depends on it but runtime adapters do not.
 - Task 4/5 consume only shared semantic targets and existing product callbacks; tutorial code must not duplicate CAD/CAM/SIM/NC logic.
 
-Current: Task 1 in progress.
+Task 1: complete. RED `TUTORIAL_PACK_V1_FAIL|VERSION_MISSING`; invalid JSON and invalid expression both RED. Canonical digest `5fa69fa49050f6e60538587b890f6e1c116173882fd8efcc9251f810050b4cc3`.
+Task 1 Ruling: BANTER is a presentation mode declared in index; no fake dedicated lesson is required.
+Task 1 Ruling: canonical digest normalizes JSON formatting/line endings but still changes on semantic content drift.
+Task 2: complete. RED unresolved TutorialFact/BanterLevel/AiExpression; GREEN `TUTORIAL_PRESENTATION_PASS|FACT_IMMUTABLE|BANTER_4_LEVELS|EXPRESSIONS_7`.
+Task 3: complete. RED `AI_MAINTENANCE_INDEX_FAIL|MISSING|AGENTS.md`; GREEN `AI_MAINTENANCE_INDEX_PASS|CATEGORIES=15|LOOKUPS=16`. Root AGENTS is a short first-hop index; detailed guide carries repo-specific paths/symbols.
+
+Current: Task 4 in progress; device compile evidence pending because Remote Desktop is offline.
