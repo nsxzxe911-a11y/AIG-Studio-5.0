@@ -97,6 +97,8 @@ object CamWorkflowEngine {
             radius-=step
         }
         points+=ManualCamPoint(circle.center.x,circle.center.y,settings.depth,false)
+        val finish=points.last()
+        points+=ManualCamPoint(finish.x,finish.y,settings.safeZ,true)
         require(points.size>=2)
         return settings.copy(
             contourSide=ContourSide.INSIDE,
@@ -129,6 +131,8 @@ object CamWorkflowEngine {
             y=nextY
             leftToRight=!leftToRight
         }
+        val finish=points.last()
+        points+=ManualCamPoint(finish.x,finish.y,settings.safeZ,true)
         return settings.copy(
             contourSide=ContourSide.INSIDE,
             pathMode=CamPathMode.MANUAL,
