@@ -45,6 +45,10 @@ for rel,tokens in resource_checks.items():
     for token in tokens:
         if token not in text: fail('ANDROID_RESOURCE_'+rel+'|'+token)
 
+application=read('app/src/main/java/com/aigstudio/app/AigStudioApplication.kt')
+for token in ('installGlobalSkinChrome(activity)','StudioThemePackRuntime.switchTo("aig_rgb_global_v1")','activity.window.statusBarColor=Color.rgb(2,4,7)','activity.window.navigationBarColor=Color.rgb(2,4,7)','activity.window.decorView.setBackgroundColor(Color.rgb(2,4,7))','STATUS_ONLY|NO_ROLLBACK'):
+    if token not in application: fail('ANDROID_RUNTIME_'+token)
+
 desktop=read('desktop/src/main/kotlin/com/aigstudio/desktop/AigRgbDesktopSkinAdapter.kt')
 for token in ('object AigRgbDesktopSkinAdapter','object AigRgbDesktopSkinRuntime','fun install()','UIManager.put','surfaceAccent','stateColor','panelSpec','buttonSpec','AigRgbGlobalSkinV1.surface'):
     if token not in desktop: fail('DESKTOP_ADAPTER_'+token)
@@ -53,4 +57,4 @@ for token in ('android.', 'performClick(', 'doClick(', 'rollback(', 'downgrade('
 bootstrap=read('desktop/src/main/kotlin/com/aigstudio/desktop/DesktopBootstrap.kt')
 if 'AigRgbDesktopSkinRuntime.install()' not in bootstrap: fail('DESKTOP_BOOTSTRAP_BINDING')
 
-print('AIG_RGB_GLOBAL_SKIN_STATIC_PASS|22_SURFACES|NO_VERSION_CALLBACK|MORNING_ASSET_PRIORITY|MOBILE_WINDOWS_SPLIT|MULTI_AXIS_MODEL_MUTABLE|ANDROID_RGB_GLASS_RESOURCES|ANDROID_THEME_BOUND|DESKTOP_BOOTSTRAP_BOUND')
+print('AIG_RGB_GLOBAL_SKIN_STATIC_PASS|22_SURFACES|NO_VERSION_CALLBACK|MORNING_ASSET_PRIORITY|MOBILE_WINDOWS_SPLIT|MULTI_AXIS_MODEL_MUTABLE|ANDROID_RGB_GLASS_RESOURCES|ANDROID_RUNTIME_BOUND|ANDROID_THEME_BOUND|DESKTOP_BOOTSTRAP_BOUND')
