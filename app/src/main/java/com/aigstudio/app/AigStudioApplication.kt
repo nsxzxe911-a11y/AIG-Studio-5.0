@@ -40,6 +40,7 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
         OptionalTutorialModule.install(activity)
         CadAssistOverlayInstaller.install(activity)
         CadProfileOverlayInstaller.install(activity)
+        CadAdvancedOverlayInstaller.install(activity)
         val decor = activity.window.decorView
         val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
