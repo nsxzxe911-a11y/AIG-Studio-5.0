@@ -1,7 +1,7 @@
 # AIG Tutorial Pack V1 — Shared Tutorial / AI Navigation / Banter Design
 
 Date: 2026-10-05
-Status: Design approved in chat; written-spec review pending
+Status: Written spec approved in chat
 Scope: AIG-II + AIG Studio 5.0 / AIG CNC
 
 ## 1. Goal
@@ -19,6 +19,7 @@ The user should be able to enter a tutorial from the current page without return
 5. Tutorial code never mutates CAD/CAM/SIM/NC results unless the user explicitly invokes an existing product callback.
 6. Warnings and alarms remain informational according to the current full-open runtime policy; tutorial UI must not reintroduce rollback/regression blocking.
 7. Banter Mode changes wording only. It never changes numeric values, G-code, machine state, toolpath, coordinates, callbacks, or safety logic.
+8. Both projects may render AI mascot expressions and emoji. Expression metadata is presentation-only and must never alter factual payloads, values, target actions, or machine state.
 
 ## 3. Shared pack structure
 
@@ -110,6 +111,28 @@ Example:
 - Fact: `CAM 刀路已變更，請重新計算。`
 - NORMAL: `CAM 刀路已變更，請重新計算。刀路改了還不重算，機台可不會替你猜。`
 
+### 7.1 AI expressions / emoji
+
+Both projects may display a mascot expression and/or emoji alongside tutorial, navigation, maintenance, or Banter output.
+
+Stable expression IDs for V1:
+
+- `NEUTRAL`
+- `SMILE`
+- `LAUGH`
+- `THINK`
+- `TEACHER`
+- `WARN`
+- `BANTER`
+
+Rules:
+
+1. Expression metadata is optional and defaults to `NEUTRAL`.
+2. Renderers may map an expression ID to a mascot face, animation, or Unicode emoji such as `🙂`, `🤣`, `🤔`, or `⚠️`.
+3. Accessibility text must still contain the factual message without depending on the emoji.
+4. ALARM / artifact-invalid output must use factual text first; an expression is secondary decoration only.
+5. Changing expression ID must not change message facts, numeric values, G/M codes, action target, lesson ID, or callback behavior.
+
 ## 8. AI quick-maintenance index
 
 Both repos receive:
@@ -167,8 +190,9 @@ Focused verification must cover:
 5. Current Page Help resolves correctly for HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC/AI/settings/work pages;
 6. Banter OFF/LIGHT/NORMAL/MAX renders while preserving the same factual payload and action target;
 7. Banter cannot change numeric/G-code payloads;
-8. AI Maintenance index resolves representative problems without scanning full large runtime files;
-9. Android and Windows compile after adapter integration.
+8. expression/emoji changes preserve the same factual payload, lesson ID, and action target;
+9. AI Maintenance index resolves representative problems without scanning full large runtime files;
+10. Android and Windows compile after adapter integration.
 
 ## 11. Non-goals for V1
 
@@ -181,4 +205,4 @@ Focused verification must cover:
 
 ## 12. Acceptance
 
-V1 is accepted when both projects load the same pack digest offline, open the correct lesson from the current Runtime page on Android and Windows, expose Banter Mode as a tone-only setting, and provide the root AI maintenance index that routes future maintenance to the correct files/symbols before large-file scanning.
+V1 is accepted when both projects load the same pack digest offline, open the correct lesson from the current Runtime page on Android and Windows, expose Banter Mode as a tone-only setting, allow presentation-only AI expressions/emoji, and provide the root AI maintenance index that routes future maintenance to the correct files/symbols before large-file scanning.
