@@ -19,7 +19,7 @@
 - SIM / 3D / 多軸：`core/src/main/kotlin/com/aigstudio/core/Machining3D.kt`
 - NC / Fanuc：`core/src/main/kotlin/com/aigstudio/core/FanucNc.kt`
 - RuntimeLink：`core/src/main/kotlin/com/aigstudio/core/RuntimeLinks.kt`
-- Full-open：`core/src/main/kotlin/com/aigstudio/core/OpenRuntimePolicy.kt`
+- Full-open / version hard-lock：`core/src/main/kotlin/com/aigstudio/core/OpenRuntimePolicy.kt`
 - RGB HOME：`core/src/main/kotlin/com/aigstudio/core/UiAssetContract.kt` + `ci/verify_home_rgb_pack_416.py`
 - Tutorial：`shared/tutorial/` + `ci/verify_tutorial_pack_v1.py`
 - 可選模組 RED / 先不裝：`docs/ai/OPTIONAL_MODULE_FAIL_OPEN_POLICY.md` + `config/optional-modules.properties`
@@ -36,4 +36,5 @@
 - AI RGB 圖資與程式生成允許；缺圖可走 AI RGB pipeline。
 - Banter / emoji 只改呈現；不得改數值、G/M code、刀路、action target 或 callback。
 - 可選 Tutorial / AI 顯示模組若修不過 RED，撤出安裝並回 STATUS/WARNING；不得拖死主 Runtime、不得 rollback。
+- **版本控制 hard-lock：AI 不得啟用 Regression / Rollback / Downgrade。`AI_VERSION_CONTROL_WRITE_ENABLED`、`RED_CONTROL_CALLBACK_ENABLED`、`MANUAL_ROLLBACK_ENABLED`、`MANUAL_DOWNGRADE_ENABLED` 必須保持 `false`。紅色僅為 STATUS/WARNING 顯示，不得綁版本變更 callback。**
 - AIG-II 是雙專案 exact-bind 的主控制端；Studio 版本變更後要由 AIG-II 更新 exact SHA。
