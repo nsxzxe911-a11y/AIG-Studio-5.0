@@ -37,3 +37,11 @@ tasks.register<JavaExec>("tutorialPresentationRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.tutorial.TutorialPresentationRegressionKt")
 }
+
+tasks.register<JavaExec>("rgbGlobalSkinRegression") {
+    group = "verification"
+    description = "Runs the focused AIG RGB Global Skin V1 semantic contract gate"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.AigRgbGlobalSkinRegressionKt")
+}
