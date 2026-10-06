@@ -847,6 +847,7 @@ class MainActivity : Activity() {
         })
 
         var showRuntimeHome:(()->Unit)?=null
+        var showRuntimeCad:(()->Unit)?=null
         val productionUiSwitch = FlowLayout(this).apply {
             setPadding(dp(5), dp(2), dp(5), dp(3))
             contentDescription = "PRODUCTION UI SWITCH"
@@ -1402,10 +1403,7 @@ class MainActivity : Activity() {
             setPadding(dp(4),dp(4),dp(4),dp(4))
         }
         fun enterCadRuntime() {
-            homeRoot.visibility=View.GONE; homePageSlot.visibility=View.GONE
-            root.visibility=View.VISIBLE
-            selectProductionUi("CAD")
-            refreshVisibleMode("CAD")
+            showRuntimeCad?.invoke()
         }
         fun homeAction(label:String,color:Int,run:()->Unit) {
             homeModes.addView(RgbGlowButton(this).apply {
@@ -1519,10 +1517,7 @@ class MainActivity : Activity() {
             navigate={ surface ->
                 when(surface) {
                     com.aigstudio.core.ui.RuntimeSurface.HOME -> showRuntimeHome?.invoke()
-                    com.aigstudio.core.ui.RuntimeSurface.CAD -> {
-                        homeRoot.visibility=View.GONE; homePageSlot.visibility=View.GONE
-                        root.visibility=View.VISIBLE
-                    }
+                    com.aigstudio.core.ui.RuntimeSurface.CAD -> showRuntimeCad?.invoke()
                     com.aigstudio.core.ui.RuntimeSurface.CAM -> {
                         homeRoot.visibility=View.GONE; homePageSlot.visibility=View.GONE
                         showCamWorkstation()
@@ -1532,13 +1527,50 @@ class MainActivity : Activity() {
             },
             settings={ showEnvironmentSettings() }
         )
+        val cadActions=com.aigstudio.app.ui.bridge.CadCallbackBridge(
+            tool={ actionId ->
+                runCatching { Tool.valueOf(actionId.trim().uppercase(Locale.US)) }
+                    .getOrNull()?.let(cad::setTool)
+            },
+            edit={ actionId ->
+                runCatching { Tool.valueOf(actionId.trim().uppercase(Locale.US)) }
+                    .getOrNull()?.let(cad::setTool)
+            },
+            command={ actionId ->
+                when(actionId.trim().uppercase(Locale.US)) {
+                    "UNDO" -> cad.undo()
+                    "REDO" -> cad.redo()
+                    "SELECT" -> cad.setTool(Tool.SELECT)
+                    "PAN" -> cad.setTool(Tool.PAN)
+                    "FIT" -> cad.fitView()
+                    "SNAP_TOGGLE" -> cad.toggleSnap()
+                    "GRID_TOGGLE" -> cad.toggleGrid()
+                    "GEOMETRY_TOGGLE" -> cad.toggleGeometry()
+                    "SAVE" -> saveCadCheckpoint()
+                    "RECOVER" -> restoreCadCheckpointIfAvailable()
+                }
+            }
+        )
+        val runtimeActions=com.aigstudio.core.ui.RuntimeActionSink { action ->
+            when(action.kind) {
+                com.aigstudio.core.ui.RuntimeActionKind.NAVIGATE,
+                com.aigstudio.core.ui.RuntimeActionKind.SETTINGS -> homeActions.dispatch(action)
+                else -> cadActions.dispatch(action)
+            }
+        }
         val homeRegistry=com.aigstudio.app.ui.AndroidRuntimeUiRegistry(
-            listOf(com.aigstudio.app.ui.pages.home.HomePageModule { homeRoot })
+            listOf(
+                com.aigstudio.app.ui.pages.home.HomePageModule { homeRoot },
+                com.aigstudio.app.ui.pages.cad.CadPageModule(
+                    contentFactory={ cad },
+                    callbackBridge=cadActions
+                )
+            )
         )
         val rgbRuntimePageHost=com.aigstudio.app.ui.host.RuntimePageHost(
             this,
             homeRegistry,
-            homeActions
+            runtimeActions
         )
         fun renderRgbHomeMountError(error:Throwable) {
             homePageSlot.removeAllViews()
@@ -1556,6 +1588,22 @@ class MainActivity : Activity() {
                 homePageSlot.removeAllViews()
                 homePageSlot.addView(page,FrameLayout.LayoutParams(-1,-1))
             }
+        fun mountFormalRgbCad():Result<View> = rgbRuntimePageHost
+            .show(RuntimeSurface.CAD,runtimeViewport())
+            .onSuccess { page ->
+                homePageSlot.removeAllViews()
+                homePageSlot.addView(page,FrameLayout.LayoutParams(-1,-1))
+            }
+        showRuntimeCad={
+            homeRoot.visibility=View.GONE
+            root.visibility=View.GONE
+            homePageSlot.visibility=View.VISIBLE
+            rgbRuntimePageHost.preload(RuntimeSurface.CAD) { preload ->
+                preload.onSuccess {
+                    mountFormalRgbCad().onFailure(::renderRgbHomeMountError)
+                }.onFailure(::renderRgbHomeMountError)
+            }
+        }
         showRuntimeHome={
             refreshHomePreview()
             root.visibility=View.GONE
