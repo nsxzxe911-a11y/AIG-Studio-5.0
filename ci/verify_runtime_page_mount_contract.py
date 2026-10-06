@@ -25,8 +25,6 @@ for token in [
     "data class RuntimePageMountSpec",
     "class RuntimePageMountState",
     "object RuntimePageMountCatalog",
-    "assetFirst = true",
-    "lazyFunctionGroups = true",
     "RuntimeSurface.HOME", "RuntimeSurface.CAD", "RuntimeSurface.CAM", "RuntimeSurface.SIM",
     "RuntimeSurface.AXIS3", "RuntimeSurface.AXIS4", "RuntimeSurface.AXIS5", "RuntimeSurface.AXIS6",
     "RuntimeSurface.NC", "RuntimeSurface.AI",
@@ -34,6 +32,11 @@ for token in [
     '"axis3.jpg"', '"axis4.png"', '"axis5.jpg"', '"machine.jpg"'
 ]:
     need(token in contract, "CONTRACT_TOKEN_" + token.replace(" ", "_"))
+
+need("val assetFirst: Boolean = true" in contract, "ASSET_FIRST_DEFAULT_TRUE")
+need("val lazyFunctionGroups: Boolean = true" in contract, "LAZY_FUNCTION_GROUPS_DEFAULT_TRUE")
+need("require(specs.all { it.assetFirst })" in contract, "ASSET_FIRST_ENFORCED")
+need("require(specs.all { it.lazyFunctionGroups })" in contract, "LAZY_FUNCTION_GROUPS_ENFORCED")
 
 for source, label in [(android, "ANDROID"), (desktop, "DESKTOP")]:
     for token in [
@@ -49,6 +52,8 @@ for source, label in [(android, "ANDROID"), (desktop, "DESKTOP")]:
 
 need("AndroidRuntimePageMountCoordinator" in android, "ANDROID_MOUNT_COORDINATOR")
 need("DesktopRuntimePageMountCoordinator" in desktop, "DESKTOP_MOUNT_COORDINATOR")
+need("preloadAsync" in android and "requireBitmap" in android, "ANDROID_RGB_PRELOAD_CACHE")
+need("preloadAsync" in desktop and "requireImage" in desktop, "DESKTOP_RGB_PRELOAD_CACHE")
 need("ENGINEERING_SHELL" not in contract + android + desktop, "ENGINEERING_SHELL_FORBIDDEN")
 
-print("RUNTIME_PAGE_MOUNT_PASS|STUDIO|RGB_FIRST|SURFACES_10|ASSET_SKIN_VIEW_CALLBACK_READY|ANDROID|WINDOWS|LAZY_FUNCTION_GROUPS")
+print("RUNTIME_PAGE_MOUNT_PASS|STUDIO|RGB_FIRST|SURFACES_10|ASSET_SKIN_VIEW_CALLBACK_READY|ANDROID|WINDOWS|LAZY_FUNCTION_GROUPS|PRELOAD_CACHE")
