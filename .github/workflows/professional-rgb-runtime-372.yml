@@ -1,0 +1,17 @@
+name: Studio 372 professional RGB runtime
+
+on:
+  push:
+    branches:
+      - professional-rgb-runtime-372
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Professional RGB RED/GREEN gate
+        run: python3 ci/verify_professional_rgb_runtime.py
