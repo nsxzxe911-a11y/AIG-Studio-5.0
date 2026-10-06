@@ -40,11 +40,11 @@ fun main(args:Array<String>) {
         .onFailure { System.err.println("STARTUP_PAGE_WARNING|WINDOWS|"+it.javaClass.simpleName) }
         .getOrNull()
 
-    startup?.let {
+    if(startup!=null) {
         SwingUtilities.invokeAndWait {
-            it.show()
-            it.advance(StudioStartupStage.SAFE_THEME,"載入原版 RGB 啟動圖")
-            it.advance(StudioStartupStage.CORE,"初始化 CAD / CAM 核心")
+            startup.show()
+            startup.advance(StudioStartupStage.SAFE_THEME,"載入原版 RGB 啟動圖")
+            startup.advance(StudioStartupStage.CORE,"初始化 CAD / CAM 核心")
         }
     }
 
@@ -53,19 +53,19 @@ fun main(args:Array<String>) {
     try {
         entry.invoke(null,args as Any)
     } catch(error:Throwable) {
-        startup?.let { splash ->
+        if(startup!=null) {
             runCatching {
-                if(SwingUtilities.isEventDispatchThread()) splash.close()
-                else SwingUtilities.invokeAndWait { splash.close() }
+                if(SwingUtilities.isEventDispatchThread()) startup.close()
+                else SwingUtilities.invokeAndWait { startup.close() }
             }
         }
         throw error
     }
 
-    startup?.let { splash ->
+    if(startup!=null) {
         SwingUtilities.invokeLater {
-            splash.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
-            splash.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")
+            startup.advance(StudioStartupStage.CONFIGURATION,"載入環境設定")
+            startup.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")
             var ticks=0
             val readyTimer=Timer(50,null)
             readyTimer.addActionListener {
@@ -74,15 +74,15 @@ fun main(args:Array<String>) {
                     .filterIsInstance<JFrame>()
                     .any { it.isVisible && it.title.startsWith("AIG Studio • CNC 加工控制") }
                 if(runtimeVisible) {
-                    splash.advance(StudioStartupStage.PROJECT_DATA,"檢查專案 / Recovery")
-                    splash.advance(StudioStartupStage.HEALTH,"執行 Runtime 健康檢查")
-                    splash.advance(StudioStartupStage.WRAP_UP,"完成啟動收尾")
-                    splash.advance(StudioStartupStage.HOME,"AIG CNC READY")
-                    splash.close()
+                    startup.advance(StudioStartupStage.PROJECT_DATA,"檢查專案 / Recovery")
+                    startup.advance(StudioStartupStage.HEALTH,"執行 Runtime 健康檢查")
+                    startup.advance(StudioStartupStage.WRAP_UP,"完成啟動收尾")
+                    startup.advance(StudioStartupStage.HOME,"AIG CNC READY")
+                    startup.close()
                     readyTimer.stop()
                 } else if(ticks>=300) {
                     System.err.println("STARTUP_PAGE_WARNING|WINDOWS|RUNTIME_VISIBILITY_TIMEOUT")
-                    splash.close()
+                    startup.close()
                     readyTimer.stop()
                 }
             }
