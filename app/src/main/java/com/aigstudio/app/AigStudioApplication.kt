@@ -22,11 +22,7 @@ import java.util.Collections
 import java.util.WeakHashMap
 import kotlin.math.max
 
-/**
- * Installs the approved AI RGB HOME background without changing MainActivity's
- * machining callbacks. Failure is warning-only: the current Production HOME
- * remains usable and no rollback/downgrade is attempted.
- */
+/** Installs the approved Studio-owned HOME visual without changing machining callbacks. */
 class AigStudioApplication : Application(), Application.ActivityLifecycleCallbacks {
     private val applied = Collections.newSetFromMap(WeakHashMap<View, Boolean>())
 
@@ -105,15 +101,11 @@ private object HomeRgbAsset {
         val bytes = activity.assets.open(path).use { it.readBytes() }
         val digest = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
         require(digest == UiAssetContract.ANDROID_HOME_SHA256) { "HOME asset SHA mismatch" }
-        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: error("HOME JPEG decode failed")
-        require(bitmap.width == 720 && bitmap.height == 1280) { "HOME mobile dimensions invalid" }
+        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: error("HOME PNG decode failed")
+        require(bitmap.width > 0 && bitmap.height > 0) { "HOME image dimensions invalid" }
         HomeCoverDrawable(bitmap)
     }.onFailure {
-        Log.w(
-            TAG,
-            "HOME ${UiAssetContract.HOME_PACK_VERSION} warning; verified local fallback continues",
-            it
-        )
+        Log.w(TAG,"HOME ${UiAssetContract.HOME_PACK_VERSION} warning; verified local fallback continues",it)
     }.getOrNull()
 }
 
