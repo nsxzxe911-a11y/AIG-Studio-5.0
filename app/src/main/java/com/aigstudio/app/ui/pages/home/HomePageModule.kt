@@ -2,6 +2,7 @@ package com.aigstudio.app.ui.pages.home
 
 import android.content.Context
 import android.view.View
+import android.view.ViewGroup
 import com.aigstudio.app.ui.AndroidRuntimeUiModule
 import com.aigstudio.core.ui.RuntimeActionSink
 import com.aigstudio.core.ui.RuntimeSurface
@@ -20,5 +21,9 @@ class HomePageModule(
         context: Context,
         viewport: RuntimeViewport,
         actions: RuntimeActionSink
-    ): View = contentFactory()
+    ): View {
+        val content = contentFactory()
+        (content.parent as? ViewGroup)?.removeView(content)
+        return content
+    }
 }
