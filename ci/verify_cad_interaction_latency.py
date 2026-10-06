@@ -52,11 +52,15 @@ need("CadPageModule(" in main, "CAD_PAGE_NOT_REGISTERED_IN_RUNTIME_HOST")
 need("CadCallbackBridge(" in main, "CAD_BRIDGE_NOT_REGISTERED_IN_RUNTIME_HOST")
 need("preload(RuntimeSurface.CAD)" in main, "CAD_RGB_ASSET_NOT_PRELOADED_BEFORE_MOUNT")
 
-# Pointer hot-path guard: ACTION_MOVE may update pan/draft/snap lookup, but it must not
+# Pointer hot-path guard: inspect only CadView.onTouchEvent, never following helper
+# definitions such as handleTap. ACTION_MOVE may pan/draft/lookup, but must not
 # call authoritative mutation or rebuild pairwise intersections directly.
-move_idx = main.find("MotionEvent.ACTION_MOVE ->", main.find("class CadView"))
+cad_idx = main.find("class CadView")
+move_idx = main.find("MotionEvent.ACTION_MOVE ->", cad_idx)
 need(move_idx >= 0, "CAD_ACTION_MOVE_NOT_FOUND")
-move_tail = main[move_idx:move_idx + 1400]
+touch_end = main.find("\n    private fun handleTap", move_idx)
+need(touch_end > move_idx, "CAD_ON_TOUCH_END_NOT_FOUND")
+move_tail = main[move_idx:touch_end]
 for forbidden in ["handleTap(", "pairwise", "intersections(", "CadSnapEngine.snapTo(doc"]:
     need(forbidden not in move_tail, "ACTION_MOVE_FORBIDDEN_" + forbidden.replace("(", "").replace(".", "_"))
 
