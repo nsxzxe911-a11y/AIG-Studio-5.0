@@ -16,9 +16,32 @@ on:
 jobs:
   contract:
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Android SDK API 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -d "$ANDROID_HOME/platforms/android-36" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+            test -x "$SDKMANAGER"
+            yes | "$SDKMANAGER" --licenses >/dev/null || true
+            "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          fi
       - name: Verify modular Runtime UI contract
         run: python3 ci/verify_modular_runtime_ui.py
       - name: Verify RGB-first page mount contract
         run: python3 ci/verify_runtime_page_mount_contract.py
+      - name: Compile modular Runtime UI on Android and Windows
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon :core:compileKotlin :app:compileDebugKotlin :desktop:compileKotlin
