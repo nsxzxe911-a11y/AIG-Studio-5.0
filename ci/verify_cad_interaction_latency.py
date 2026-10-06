@@ -44,7 +44,13 @@ for token in ["class CadCallbackBridge", "RuntimeActionSink"]:
     need(token in bridge, "CAD_BRIDGE_TOKEN_" + token.replace(" ", "_"))
 for token in ["class CadSnapCandidateCache", "revision", "modeKey", "cachedRevision", "cachedModeKey"]:
     need(token in cache, "CAD_CACHE_TOKEN_" + token.replace(" ", "_"))
+
+# Formal CAD must enter through the RGB-first Runtime host and register both its
+# page module and callback bridge. Legacy root visibility is not sufficient.
 need("show(RuntimeSurface.CAD" in main, "CAD_NOT_MOUNTED_THROUGH_RUNTIME_HOST")
+need("CadPageModule(" in main, "CAD_PAGE_NOT_REGISTERED_IN_RUNTIME_HOST")
+need("CadCallbackBridge(" in main, "CAD_BRIDGE_NOT_REGISTERED_IN_RUNTIME_HOST")
+need("preload(RuntimeSurface.CAD)" in main, "CAD_RGB_ASSET_NOT_PRELOADED_BEFORE_MOUNT")
 
 # Pointer hot-path guard: ACTION_MOVE may update pan/draft/snap lookup, but it must not
 # call authoritative mutation or rebuild pairwise intersections directly.
