@@ -8,6 +8,7 @@ on:
       - 'core/src/main/kotlin/com/aigstudio/core/ui/**'
       - 'core/src/test/kotlin/com/aigstudio/core/ui/**'
       - 'core/build.gradle.kts'
+      - 'app/src/main/java/com/aigstudio/app/MainActivity.kt'
       - 'app/src/main/java/com/aigstudio/app/ui/**'
       - 'desktop/**/ui/**'
       - 'ci/verify_modular_runtime_ui.py'
