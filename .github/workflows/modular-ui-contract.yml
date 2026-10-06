@@ -6,6 +6,8 @@ on:
       - professional-rgb-runtime-372
     paths:
       - 'core/src/main/kotlin/com/aigstudio/core/ui/**'
+      - 'core/src/test/kotlin/com/aigstudio/core/ui/**'
+      - 'core/build.gradle.kts'
       - 'app/src/main/java/com/aigstudio/app/ui/**'
       - 'desktop/**/ui/**'
       - 'ci/verify_modular_runtime_ui.py'
@@ -40,6 +42,8 @@ jobs:
         run: python3 ci/verify_modular_runtime_ui.py
       - name: Verify RGB-first page mount contract
         run: python3 ci/verify_runtime_page_mount_contract.py
+      - name: Runtime page UI state regression
+        run: gradle --no-daemon :core:runtimePageUiStateRegression
       - name: Compile modular Runtime UI on Android and Windows
         shell: bash
         run: |
