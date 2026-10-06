@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Verification checkpoint for compiled snap-cache commit 2f361ea970c8d4a7b5bf3d8df21b36c224230e63.
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
