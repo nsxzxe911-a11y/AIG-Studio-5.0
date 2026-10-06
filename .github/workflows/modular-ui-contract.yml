@@ -1,0 +1,21 @@
+name: Modular UI contract
+
+on:
+  push:
+    branches:
+      - professional-rgb-runtime-372
+    paths:
+      - 'core/src/main/kotlin/com/aigstudio/core/ui/**'
+      - 'app/src/main/java/com/aigstudio/app/ui/**'
+      - 'desktop/**/ui/**'
+      - 'ci/verify_modular_runtime_ui.py'
+      - '.github/workflows/modular-ui-contract.yml'
+  workflow_dispatch:
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify modular Runtime UI contract
+        run: python3 ci/verify_modular_runtime_ui.py
