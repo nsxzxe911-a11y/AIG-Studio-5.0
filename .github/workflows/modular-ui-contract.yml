@@ -9,6 +9,7 @@ on:
       - 'app/src/main/java/com/aigstudio/app/ui/**'
       - 'desktop/**/ui/**'
       - 'ci/verify_modular_runtime_ui.py'
+      - 'ci/verify_runtime_page_mount_contract.py'
       - '.github/workflows/modular-ui-contract.yml'
   workflow_dispatch:
 
@@ -19,3 +20,5 @@ jobs:
       - uses: actions/checkout@v7
       - name: Verify modular Runtime UI contract
         run: python3 ci/verify_modular_runtime_ui.py
+      - name: Verify RGB-first page mount contract
+        run: python3 ci/verify_runtime_page_mount_contract.py
