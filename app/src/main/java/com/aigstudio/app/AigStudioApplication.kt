@@ -99,17 +99,22 @@ private object OptionalTutorialModule {
 
 private object HomeRgbAsset {
     private const val TAG = "AIG-RGB-HOME"
-    private const val EXPECTED_SHA256 = "8c55956f9ea6693b34d78395d6336ea7bf1a0ec4eeece824c22396b18bb854af"
 
     fun load(activity: Activity): Drawable? = runCatching {
         val path = "${UiAssetContract.ANDROID_HOME_ROOT}/${UiAssetContract.ANDROID_HOME_FILE}"
         val bytes = activity.assets.open(path).use { it.readBytes() }
         val digest = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-        require(digest == EXPECTED_SHA256) { "HOME asset SHA mismatch" }
+        require(digest == UiAssetContract.ANDROID_HOME_SHA256) { "HOME asset SHA mismatch" }
         val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: error("HOME JPEG decode failed")
         require(bitmap.width == 720 && bitmap.height == 1280) { "HOME mobile dimensions invalid" }
         HomeCoverDrawable(bitmap)
-    }.onFailure { Log.w(TAG, "HOME 416 warning; current HOME continues", it) }.getOrNull()
+    }.onFailure {
+        Log.w(
+            TAG,
+            "HOME ${UiAssetContract.HOME_PACK_VERSION} warning; verified local fallback continues",
+            it
+        )
+    }.getOrNull()
 }
 
 private class HomeCoverDrawable(private val bitmap: Bitmap) : Drawable() {
