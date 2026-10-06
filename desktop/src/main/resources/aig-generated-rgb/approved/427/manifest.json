@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "pack_id": "AIG_RGB_HOME_427",
+  "version": "371.0.0",
+  "approval_state": "USER_APPROVED_VISUAL_BASELINE",
+  "approval_authority": "MORNING_APPROVED_RGB_2026_10_05",
+  "binary_ingest": "BUILD_TIME_EXACT_SHA_VERIFIED",
+  "source_repo": "nsxzxe911-a11y/AIG-II",
+  "source_exact_sha": "221dd38fd4c24d9bb291f2d29ad9a54f324fc39a",
+  "assets": {
+    "home_mobile": {
+      "file": "home_mobile.jpg",
+      "sha256": "8835cded863074b4de9b848e12eb037254119b5a7f21e135b66657f764fbd652",
+      "width": 720,
+      "height": 1280
+    },
+    "home_desktop": {
+      "file": "home_desktop.jpg",
+      "sha256": "02185fbd1dd8026ad17bf6cb1994bcd5a03d03e46b68bb45135d911d809ff9da",
+      "width": 1280,
+      "height": 720
+    }
+  }
+}
