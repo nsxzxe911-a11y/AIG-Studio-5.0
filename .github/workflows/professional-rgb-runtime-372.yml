@@ -76,6 +76,25 @@ jobs:
           test -s release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
           cp release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk release/android/AIG_Studio_372_PROFESSIONAL_RGB.apk
           sha256sum release/android/AIG_Studio_372_PROFESSIONAL_RGB.apk | tee release/android/AIG_Studio_372_PROFESSIONAL_RGB.sha256
+      - name: Publish APK before runtime evidence
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
+            release/android/AIG_Studio_372_PROFESSIONAL_RGB.apk \
+            release/android/AIG_Studio_372_PROFESSIONAL_RGB.sha256
+      - name: Upload APK artifact immediately
+        uses: actions/upload-artifact@v7
+        with:
+          name: AIG-Studio-372-APK
+          path: |
+            release/android/AIG_Studio_372_PROFESSIONAL_RGB.apk
+            release/android/AIG_Studio_372_PROFESSIONAL_RGB.sha256
+            studio-372-android-build.log
+          if-no-files-found: error
+          retention-days: 14
       - name: Enable emulator KVM access
         shell: bash
         run: |
@@ -91,7 +110,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
-            set -euo pipefail
+            set -eu
             APK='release/android/AIG_Studio_372_PROFESSIONAL_RGB.apk'
             PKG='com.aigstudio.app'
             EVIDENCE='release/android/runtime-evidence'
@@ -128,7 +147,8 @@ jobs:
             print(x,y)
             PY
             )"
-              read -r x y <<< "$coords"
+              x="$(printf '%s\n' "$coords" | awk '{print $1}')"
+              y="$(printf '%s\n' "$coords" | awk '{print $2}')"
               adb shell input tap "$x" "$y"
               sleep 1
             }
@@ -152,7 +172,7 @@ jobs:
             i=2
             for page in CAD CAM SIM 3AX 4AX 5AX 6AX NC AI; do
               tap_label "$page"
-              printf -v n '%02d' "$i"
+              n="$(printf '%02d' "$i")"
               adb exec-out screencap -p > "$EVIDENCE/${n}_${page}.png"
               verify_png "$EVIDENCE/${n}_${page}.png"
               adb shell uiautomator dump "/sdcard/${page}.xml" >/dev/null
@@ -161,18 +181,23 @@ jobs:
               i=$((i+1))
             done
             printf 'version=372.0.0\noffline=TRUE\ncallbacks=LIVE_RUNTIME\nmodels=LIVE_RUNTIME\n6ax=PROCEDURAL_RGB_GLASS_LIVE_ABC\nengineering_shell_default=FALSE\n' > "$EVIDENCE/PROFESSIONAL_RUNTIME_EVIDENCE.txt"
-      - name: Publish APK and Android evidence to prerelease
+      - name: Publish Android evidence to prerelease
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
           gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
-            release/android/AIG_Studio_372_PROFESSIONAL_RGB.apk \
-            release/android/AIG_Studio_372_PROFESSIONAL_RGB.sha256 \
             release/android/runtime-evidence/*.png \
             release/android/runtime-evidence/*.xml \
             release/android/runtime-evidence/*.txt
+      - name: Upload Android page evidence artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: AIG-Studio-372-Android-Evidence
+          path: release/android/runtime-evidence/
+          if-no-files-found: error
+          retention-days: 14
 
   windows-exe:
     needs: release-init
@@ -209,3 +234,10 @@ jobs:
             release/windows/runtime-evidence/desktop_launch.png `
             release/windows/runtime-evidence/desktop_smoke.txt `
             release/windows/runtime-evidence/REMOVED_CELLS.txt
+      - name: Upload Windows professional artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: AIG-Studio-372-Windows
+          path: release/windows/
+          if-no-files-found: error
+          retention-days: 14
