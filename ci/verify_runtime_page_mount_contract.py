@@ -6,6 +6,9 @@ CONTRACT = ROOT / "core/src/main/kotlin/com/aigstudio/core/ui/RuntimePageMountCo
 ANDROID = ROOT / "app/src/main/java/com/aigstudio/app/ui/AndroidRuntimeUiRegistry.kt"
 ANDROID_HOST = ROOT / "app/src/main/java/com/aigstudio/app/ui/host/RuntimePageHost.kt"
 ANDROID_COORD = ROOT / "app/src/main/java/com/aigstudio/app/ui/host/RuntimePageMountCoordinator.kt"
+HOME_MODULE = ROOT / "app/src/main/java/com/aigstudio/app/ui/pages/home/HomePageModule.kt"
+HOME_BRIDGE = ROOT / "app/src/main/java/com/aigstudio/app/ui/bridge/HomeCallbackBridge.kt"
+MAIN = ROOT / "app/src/main/java/com/aigstudio/app/MainActivity.kt"
 DESKTOP = ROOT / "desktop/src/main/kotlin/com/aigstudio/desktop/ui/DesktopRuntimeUiRegistry.kt"
 
 
@@ -88,4 +91,19 @@ need("DesktopRuntimePageMountCoordinator" in desktop, "DESKTOP_MOUNT_COORDINATOR
 need("preloadAsync" in desktop and "requireImage" in desktop, "DESKTOP_RGB_PRELOAD_CACHE")
 need("ENGINEERING_SHELL" not in contract + android + host + coord + desktop, "ENGINEERING_SHELL_FORBIDDEN")
 
-print("RUNTIME_PAGE_MOUNT_PASS|STUDIO|RGB_FIRST|SURFACES_10|ANDROID_HOST_OWNS_MOUNT|ASSET_FAILURE_NOT_READY|WINDOWS|LAZY_FUNCTION_GROUPS|PRELOAD_CACHE")
+# Wave 1 HOME must be a real module and the formal Android HOME path must pass through RuntimePageHost.
+need(HOME_MODULE.is_file(), "MISSING_HOME_PAGE_MODULE")
+need(HOME_BRIDGE.is_file(), "MISSING_HOME_CALLBACK_BRIDGE")
+need(MAIN.is_file(), "MISSING_MAIN_ACTIVITY")
+home_module = HOME_MODULE.read_text(encoding="utf-8")
+home_bridge = HOME_BRIDGE.read_text(encoding="utf-8")
+main = MAIN.read_text(encoding="utf-8", errors="replace")
+for token in ["class HomePageModule", "AndroidRuntimeUiModule", "RuntimeSurface.HOME", "contentFactory"]:
+    need(token in home_module, "HOME_MODULE_TOKEN_" + token.replace(" ", "_"))
+for token in ["class HomeCallbackBridge", "RuntimeActionSink", "NAVIGATE", "SETTINGS"]:
+    need(token in home_bridge, "HOME_BRIDGE_TOKEN_" + token.replace(" ", "_"))
+need("RuntimePageHost" in main, "MAIN_MISSING_RUNTIME_PAGE_HOST")
+need("show(RuntimeSurface.HOME" in main, "MAIN_HOME_BYPASSES_RUNTIME_PAGE_HOST")
+need("runtimeHost.addView(homeRoot" not in main, "LEGACY_HOME_DIRECT_ADD_FORBIDDEN")
+
+print("RUNTIME_PAGE_MOUNT_PASS|STUDIO|RGB_FIRST|SURFACES_10|ANDROID_HOST_OWNS_MOUNT|HOME_VIA_HOST|ASSET_FAILURE_NOT_READY|WINDOWS|LAZY_FUNCTION_GROUPS|PRELOAD_CACHE")
