@@ -6069,6 +6069,8 @@ class CadView(
     private val selectedLinePath = Path()
     private val arcPath = Path()
     private val renderEngine = CadRenderEngine("AIG-Studio-CAD2D")
+    private val snapCandidateCache = com.aigstudio.app.ui.pages.cad.CadSnapCandidateCache()
+    private var geometryRevision = 1L
     private var sceneRevision = 1L
     private var tool = Tool.LINE
     private var firstPoint: Vec2? = null
@@ -6117,6 +6119,7 @@ class CadView(
         )
     fun applyPortableProject(project:StudioProjectPackage) {
         StudioProjectRepository.applyTo(project,doc)
+        geometryRevision++
         firstPoint=null; arcCenter=null; arcStart=null; selectedIds.clear(); sceneRevision++; invalidate()
     }
     fun exportState(): String = buildString {
@@ -6150,6 +6153,7 @@ class CadView(
             doc.clear()
             restored.forEach(doc::put)
             doc.restoreLinks(restoredLinks)
+            geometryRevision++
             firstPoint = null
             arcCenter = null
             arcStart = null
@@ -6183,7 +6187,10 @@ class CadView(
         applyHistorySelection(outcome.selectionIds)
         sceneRevision++
         onProjectChanged()
-        if (outcome.geometryMutation) onGeometryChanged()
+        if (outcome.geometryMutation) {
+            geometryRevision++
+            onGeometryChanged()
+        }
         invalidate()
     }
     fun redo() {
@@ -6192,7 +6199,10 @@ class CadView(
         applyHistorySelection(outcome.selectionIds)
         sceneRevision++
         onProjectChanged()
-        if (outcome.geometryMutation) onGeometryChanged()
+        if (outcome.geometryMutation) {
+            geometryRevision++
+            onGeometryChanged()
+        }
         invalidate()
     }
     fun toggleSnap() {
@@ -6254,6 +6264,7 @@ class CadView(
 
     private fun runGeometryCommand(command: Command) {
         history.run(command)
+        geometryRevision++
         sceneRevision++
         onProjectChanged()
         onGeometryChanged()
@@ -7006,7 +7017,13 @@ class CadView(
 
     private fun snapPoint(p: Vec2): Vec2 {
         val tolerance = 18.0 / transform.pixelsPerUnit
-        return CadSnapEngine.snapTo(doc,p,tolerance,reference=firstPoint) ?: p
+        return snapCandidateCache.snap(
+            doc=doc,
+            p=p,
+            tolerance=tolerance,
+            revision=geometryRevision,
+            reference=firstPoint
+        ) ?: p
     }
 
     private fun showMeasurement(p: Vec2) {
