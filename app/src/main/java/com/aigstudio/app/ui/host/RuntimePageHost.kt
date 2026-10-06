@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.View
 import com.aigstudio.app.ui.AndroidRuntimeUiRegistry
 import com.aigstudio.core.ui.RuntimeActionSink
+import com.aigstudio.core.ui.RuntimePageMountCatalog
 import com.aigstudio.core.ui.RuntimeSurface
 import com.aigstudio.core.ui.RuntimeViewport
 import java.util.concurrent.Executor
@@ -21,12 +22,17 @@ class RuntimePageHost(
     private val coordinator = AndroidRuntimePageMountCoordinator(registry, visualCache, applySkin)
     private var current: RuntimeSurface? = null
 
+    fun preload(surface: RuntimeSurface, onComplete: (Result<Unit>) -> Unit) {
+        visualCache.preloadSurfaceAsync(context, surface, preloadExecutor, onComplete)
+    }
+
     fun preload(onComplete: (Result<Unit>) -> Unit) {
         visualCache.preloadAsync(context, preloadExecutor, onComplete)
     }
 
     fun show(surface: RuntimeSurface, viewport: RuntimeViewport): Result<View> = runCatching {
-        check(visualCache.isReady()) { "AIG RGB visual cache not ready" }
+        val spec = RuntimePageMountCatalog.spec(surface)
+        check(visualCache.isReady(spec.visualAsset)) { "AIG RGB visual cache not ready: ${spec.visualAsset}" }
         val mounted = coordinator.mount(context, surface, viewport, actions)
         check(mounted.state.ready) { "Runtime page did not reach READY: $surface" }
         current = surface
