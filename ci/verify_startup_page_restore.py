@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import hashlib
 
 ROOT = Path(__file__).resolve().parents[1]
 manifest = (ROOT / "app/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
@@ -15,22 +16,35 @@ def require(source: str, marker: str, label: str) -> None:
         raise SystemExit(f"STARTUP_RESTORE_FAIL|{label}|missing={marker}")
 
 
+approved_sha="a2e7b24d32fb9c852b83ee176480f59cb43559fe152ac3e05e0aa2c52f0a82ac"
 require(overlay, 'context.assets.open("visuals/studio_startup_original.png")', "ANDROID_STARTUP_ASSET")
 require(version, "versionName=371.0.0", "VERSION_BUMP")
 for marker in (
-    'HOME_PACK_VERSION = "427"',
-    'HOME_PACK_ID = "AIG_RGB_HOME_427"',
-    'HOME_AUTHORITY_SHA = "221dd38fd4c24d9bb291f2d29ad9a54f324fc39a"',
-    'ANDROID_HOME_SHA256 = "8835cded863074b4de9b848e12eb037254119b5a7f21e135b66657f764fbd652"',
-    'DESKTOP_HOME_SHA256 = "02185fbd1dd8026ad17bf6cb1994bcd5a03d03e46b68bb45135d911d809ff9da"',
+    'HOME_PACK_VERSION = "371"',
+    'HOME_PACK_ID = "STUDIO_APPROVED_STARTUP_HOME"',
+    'ANDROID_HOME_ROOT = "visuals"',
+    'DESKTOP_HOME_ROOT = "/visuals"',
+    'ANDROID_HOME_FILE = "studio_startup_original.png"',
+    'DESKTOP_HOME_FILE = "studio_startup_original.png"',
+    f'HOME_AUTHORITY_SHA256 = "{approved_sha}"',
 ):
-    require(asset_contract, marker, "SHARED_HOME_427")
+    require(asset_contract, marker, "STUDIO_APPROVED_HOME")
+
+for relative in (
+    "app/src/main/assets/visuals/studio_startup_original.png",
+    "desktop/src/main/resources/visuals/studio_startup_original.png",
+):
+    path=ROOT/relative
+    if not path.is_file():
+        raise SystemExit(f"STARTUP_RESTORE_FAIL|APPROVED_VISUAL_MISSING|{relative}")
+    actual=hashlib.sha256(path.read_bytes()).hexdigest()
+    if actual != approved_sha:
+        raise SystemExit(f"STARTUP_RESTORE_FAIL|APPROVED_VISUAL_SHA|{relative}|{actual}")
 
 if not android_startup_path.is_file():
     raise SystemExit("STARTUP_RESTORE_FAIL|ANDROID_STARTUP_ACTIVITY|missing file")
 android_startup = android_startup_path.read_text(encoding="utf-8")
 
-# Android launcher must restore the approved startup overlay before MainActivity/RGB HOME.
 for marker in (
     'android:name=".StartupActivity"',
     '<action android:name="android.intent.action.MAIN" />',
@@ -52,7 +66,6 @@ for marker in (
 ):
     require(android_startup, marker, "ANDROID_VISIBLE_STARTUP")
 
-# Windows Bootstrap must reuse the historical StudioDesktopStartupWindow and close it only after Runtime becomes visible.
 for marker in (
     'Class.forName("com.aigstudio.desktop.StudioDesktopStartupWindow")',
     "fun show()",
@@ -68,4 +81,4 @@ for marker in (
 ):
     require(desktop_bootstrap, marker, "WINDOWS_VISIBLE_STARTUP")
 
-print("STUDIO_STARTUP_PAGE_RESTORE_PASS|ANDROID_APPROVED_STARTUP_THEN_RGB_HOME|WINDOWS_HISTORICAL_STARTUP_THEN_RUNTIME|SHARED_HOME_427|OFFLINE_LOCAL_ASSET|NO_ENGINEERING_SHELL|VERSION_371")
+print("STUDIO_STARTUP_PAGE_RESTORE_PASS|ANDROID_APPROVED_STARTUP_THEN_RGB_HOME|WINDOWS_HISTORICAL_STARTUP_THEN_RUNTIME|STUDIO_LOCAL_APPROVED_HOME|SHA_VERIFIED|OFFLINE_LOCAL_ASSET|NO_ENGINEERING_SHELL|VERSION_371")
