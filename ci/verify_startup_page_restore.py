@@ -7,6 +7,7 @@ android_startup_path = ROOT / "app/src/main/java/com/aigstudio/app/StartupActivi
 desktop_bootstrap = (ROOT / "desktop/src/main/kotlin/com/aigstudio/desktop/DesktopBootstrap.kt").read_text(encoding="utf-8")
 overlay = (ROOT / "app/src/main/java/com/aigstudio/app/StartupOverlay.kt").read_text(encoding="utf-8")
 version = (ROOT / "release-version.properties").read_text(encoding="utf-8")
+asset_contract = (ROOT / "core/src/main/kotlin/com/aigstudio/core/UiAssetContract.kt").read_text(encoding="utf-8")
 
 
 def require(source: str, marker: str, label: str) -> None:
@@ -15,7 +16,15 @@ def require(source: str, marker: str, label: str) -> None:
 
 
 require(overlay, 'context.assets.open("visuals/studio_startup_original.png")', "ANDROID_STARTUP_ASSET")
-require(version, "versionName=370.0.0", "VERSION_BUMP")
+require(version, "versionName=371.0.0", "VERSION_BUMP")
+for marker in (
+    'HOME_PACK_VERSION = "427"',
+    'HOME_PACK_ID = "AIG_RGB_HOME_427"',
+    'HOME_AUTHORITY_SHA = "221dd38fd4c24d9bb291f2d29ad9a54f324fc39a"',
+    'ANDROID_HOME_SHA256 = "8835cded863074b4de9b848e12eb037254119b5a7f21e135b66657f764fbd652"',
+    'DESKTOP_HOME_SHA256 = "02185fbd1dd8026ad17bf6cb1994bcd5a03d03e46b68bb45135d911d809ff9da"',
+):
+    require(asset_contract, marker, "SHARED_HOME_427")
 
 if not android_startup_path.is_file():
     raise SystemExit("STARTUP_RESTORE_FAIL|ANDROID_STARTUP_ACTIVITY|missing file")
@@ -59,4 +68,4 @@ for marker in (
 ):
     require(desktop_bootstrap, marker, "WINDOWS_VISIBLE_STARTUP")
 
-print("STUDIO_STARTUP_PAGE_RESTORE_PASS|ANDROID_APPROVED_STARTUP_THEN_RGB_HOME|WINDOWS_HISTORICAL_STARTUP_THEN_RUNTIME|OFFLINE_LOCAL_ASSET|NO_ENGINEERING_SHELL|VERSION_370")
+print("STUDIO_STARTUP_PAGE_RESTORE_PASS|ANDROID_APPROVED_STARTUP_THEN_RGB_HOME|WINDOWS_HISTORICAL_STARTUP_THEN_RUNTIME|SHARED_HOME_427|OFFLINE_LOCAL_ASSET|NO_ENGINEERING_SHELL|VERSION_371")
