@@ -23,3 +23,14 @@ Task 3 Ruling: MainActivity is ~350 KB, so use a strict one-shot source transfor
 Task 3 intermediate compile: run 37415847531 passed mount/state gates but failed Android compile on homePageSlot declaration order and one malformed escaped newline; both were repaired without reverting the host.
 Task 3 GREEN: bot MainActivity repair commit 7d0b0e39e82a6362a0917ffb1fbed7c898196a9b, user verification checkpoint 4a32fa1f2abf1b88cf277ef117c4bf5ff39a682e; run 37416276950 passed modular contract, RGB-first HOME mount gate, Runtime page state regression, and Android/Windows Kotlin compile.
 Task 3 status: COMPLETE.
+
+Task 4 RED-1: run 37418563797 failed exactly with CAD_INTERACTION_FAIL|STUDIO|MISSING_CAD_PAGE_MODULE.
+Task 4 modules: CadSnapCandidateCache/CadToolGroups/CadDescriptionPane/CadCallbackBridge/CadPageModule were added as isolated files before legacy MainActivity wiring was touched.
+Task 4 RED-2: after module creation, gate advanced to CAD_NOT_MOUNTED_THROUGH_RUNTIME_HOST.
+Task 4 host GREEN: safe transformer run 37420912567 required exact-anchor patch plus Android compile before committing; compiled MainActivity commit c891996a5440d0e51700dc6de750bed4ac3f1590 mounts CAD through RuntimePageHost and reuses the existing authoritative CadView/callbacks.
+Task 4 Ruling: first MOVE gate used a fixed character window and falsely included the later handleTap helper; actual handleTap call was ACTION_DOWN only. Verifier was scoped to CadView.onTouchEvent body before continuing.
+Task 4 RED-3: run 37421583591 then failed exactly with MAIN_NOT_USING_CAD_SNAP_CACHE.
+Task 4 RED-4: strengthened geometry-revision verifier run 37421750323 again failed exactly with MAIN_NOT_USING_CAD_SNAP_CACHE, proving cache wiring was still absent.
+Task 4 cache GREEN intermediate: safe run 37421918045 passed exact geometry-revision snap-cache transformer, CAD interaction contract, and Android compile before committing MainActivity as 2f361ea970c8d4a7b5bf3d8df21b36c224230e63.
+Task 4 Ruling: snap candidate cache uses a dedicated geometryRevision rather than sceneRevision so PAN/zoom/view invalidation cannot trigger O(n^2) intersection rebuilds; geometryRevision changes only on authoritative geometry mutation/import/restore/geometry undo-redo.
+Task 4 status: IN_PROGRESS — latest bot-produced cache commit still requires a user-triggered full Modular Gate with Android+Windows compile before Studio CAD can be called GREEN.
