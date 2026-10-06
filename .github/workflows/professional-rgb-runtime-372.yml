@@ -13,5 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Professional RGB RED/GREEN gate
+      - name: Professional RGB contract gate
         run: python3 ci/verify_professional_rgb_runtime.py
+      - name: Professional live surface binding gate
+        run: python3 ci/verify_professional_surface_binding.py
