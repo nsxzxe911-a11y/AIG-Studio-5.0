@@ -1,0 +1,33 @@
+name: Apply Wave1 HOME host patch
+
+on:
+  push:
+    branches:
+      - professional-rgb-runtime-372
+    paths:
+      - 'ci/apply_wave1_home_host.py'
+      - '.github/workflows/apply-wave1-home-host.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: professional-rgb-runtime-372
+          fetch-depth: 0
+      - name: Apply exact HOME host patch
+        run: python3 ci/apply_wave1_home_host.py
+      - name: Commit patched MainActivity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/aigstudio/app/MainActivity.kt
+          git diff --cached --exit-code && { echo 'PATCH_NO_CHANGE'; exit 1; } || true
+          git commit -m "refactor: mount formal Studio HOME through RuntimePageHost"
+          git push origin HEAD:professional-rgb-runtime-372
