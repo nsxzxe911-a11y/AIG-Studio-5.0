@@ -52,38 +52,24 @@ need("class AndroidRuntimeUiRegistry" in android, "ANDROID_REGISTRY")
 need("class AndroidRuntimePageMountCoordinator" not in android, "ANDROID_COORDINATOR_MUST_BE_EXTRACTED")
 need("class AndroidRuntimePageMountCoordinator" in coord, "ANDROID_MOUNT_COORDINATOR")
 for token in [
-    "RuntimePageMountCatalog",
-    "RuntimePageMountState",
-    "RuntimeMountStage.ASSET",
-    "RuntimeMountStage.SKIN",
-    "RuntimeMountStage.VIEW",
-    "RuntimeMountStage.CALLBACK",
-    "RuntimeMountStage.READY",
-    "requireBitmap",
+    "RuntimePageMountCatalog", "RuntimePageMountState",
+    "RuntimeMountStage.ASSET", "RuntimeMountStage.SKIN", "RuntimeMountStage.VIEW",
+    "RuntimeMountStage.CALLBACK", "RuntimeMountStage.READY", "requireBitmap",
 ]:
     need(token in coord, "ANDROID_COORD_TOKEN_" + token.replace(" ", "_"))
 need(coord.index("requireBitmap") < coord.index("RuntimeMountStage.ASSET"), "ANDROID_ASSET_REQUIRED_BEFORE_ASSET_STAGE")
 
 for token in [
-    "class RuntimePageHost",
-    "fun preload(",
-    "fun show(",
-    "fun currentSurface(",
-    "AndroidRgbVisualCache",
-    "AndroidRuntimePageMountCoordinator",
-    "runCatching",
+    "class RuntimePageHost", "fun preload(", "fun show(", "fun currentSurface(",
+    "AndroidRgbVisualCache", "AndroidRuntimePageMountCoordinator", "runCatching",
 ]:
     need(token in host, "ANDROID_HOST_TOKEN_" + token.replace(" ", "_"))
 need("current = surface" in host, "ANDROID_HOST_TRACKS_SUCCESSFUL_SURFACE")
 need("onComplete" in host and "preloadAsync" in host, "ANDROID_HOST_PRELOAD_OWNS_CACHE")
 
 for token in [
-    "RuntimePageMountCatalog",
-    "RuntimePageMountState",
-    "RuntimeMountStage.ASSET",
-    "RuntimeMountStage.SKIN",
-    "RuntimeMountStage.VIEW",
-    "RuntimeMountStage.CALLBACK",
+    "RuntimePageMountCatalog", "RuntimePageMountState", "RuntimeMountStage.ASSET",
+    "RuntimeMountStage.SKIN", "RuntimeMountStage.VIEW", "RuntimeMountStage.CALLBACK",
     "RuntimeMountStage.READY",
 ]:
     need(token in desktop, "DESKTOP_TOKEN_" + token.replace(" ", "_"))
@@ -91,7 +77,6 @@ need("DesktopRuntimePageMountCoordinator" in desktop, "DESKTOP_MOUNT_COORDINATOR
 need("preloadAsync" in desktop and "requireImage" in desktop, "DESKTOP_RGB_PRELOAD_CACHE")
 need("ENGINEERING_SHELL" not in contract + android + host + coord + desktop, "ENGINEERING_SHELL_FORBIDDEN")
 
-# Wave 1 HOME must be a real module and the formal Android HOME path must pass through RuntimePageHost.
 need(HOME_MODULE.is_file(), "MISSING_HOME_PAGE_MODULE")
 need(HOME_BRIDGE.is_file(), "MISSING_HOME_CALLBACK_BRIDGE")
 need(MAIN.is_file(), "MISSING_MAIN_ACTIVITY")
@@ -107,3 +92,4 @@ need("show(RuntimeSurface.HOME" in main, "MAIN_HOME_BYPASSES_RUNTIME_PAGE_HOST")
 need("runtimeHost.addView(homeRoot" not in main, "LEGACY_HOME_DIRECT_ADD_FORBIDDEN")
 
 print("RUNTIME_PAGE_MOUNT_PASS|STUDIO|RGB_FIRST|SURFACES_10|ANDROID_HOST_OWNS_MOUNT|HOME_VIA_HOST|ASSET_FAILURE_NOT_READY|WINDOWS|LAZY_FUNCTION_GROUPS|PRELOAD_CACHE")
+# Task 3 compile trigger after bot-applied HOME host repair.
