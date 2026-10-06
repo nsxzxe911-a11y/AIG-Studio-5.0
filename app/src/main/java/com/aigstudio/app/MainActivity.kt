@@ -1320,20 +1320,17 @@ class MainActivity : Activity() {
         }
 
         val homeRoot=FrameLayout(this).apply {
-            contentDescription="AIG CNC FORMAL RGB HOME • aigii_rgb_neon_v2"
-            val base=GradientDrawable(
-                GradientDrawable.Orientation.TL_BR,
-                intArrayOf(
-                    StudioProductionTheme.background,
-                    StudioProductionTheme.panel,
-                    Color.rgb(2,7,14)
-                )
-            )
-            val wallpaper=ProductionRgbAssets.drawable(this@MainActivity,"HOME")?.apply { alpha=0 }
-            background=if(wallpaper!=null)
-                android.graphics.drawable.LayerDrawable(arrayOf(base,wallpaper))
-            else base
+            contentDescription="AIG CNC FORMAL RGB HOME • FUNCTION LAYER"
+            setBackgroundColor(Color.TRANSPARENT)
         }
+        val homePageSlot=FrameLayout(this).apply {
+            contentDescription="AIG CNC RGB-FIRST HOME SLOT"
+            visibility=View.VISIBLE
+        }
+        runtimeHost.addView(homePageSlot,FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
         val homeContent=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             gravity=Gravity.CENTER_HORIZONTAL
@@ -1404,7 +1401,7 @@ class MainActivity : Activity() {
             setPadding(dp(4),dp(4),dp(4),dp(4))
         }
         fun enterCadRuntime() {
-            homeRoot.visibility=View.GONE
+            homeRoot.visibility=View.GONE; homePageSlot.visibility=View.GONE
             root.visibility=View.VISIBLE
             selectProductionUi("CAD")
             refreshVisibleMode("CAD")
@@ -1508,22 +1505,84 @@ class MainActivity : Activity() {
                 (if(camDerivedStale) " • 待重算" else "")
         }
         refreshHomePreview()
+        fun runtimeViewport():com.aigstudio.core.ui.RuntimeViewport {
+            val metrics=resources.displayMetrics
+            val density=metrics.density.coerceAtLeast(0.5f)
+            return com.aigstudio.core.ui.RuntimeResponsivePolicy.classify(
+                (metrics.widthPixels/density).toInt().coerceAtLeast(1),
+                (metrics.heightPixels/density).toInt().coerceAtLeast(1),
+                density
+            )
+        }
+        val homeActions=com.aigstudio.app.ui.bridge.HomeCallbackBridge(
+            navigate={ surface ->
+                when(surface) {
+                    com.aigstudio.core.ui.RuntimeSurface.HOME -> showRuntimeHome?.invoke()
+                    com.aigstudio.core.ui.RuntimeSurface.CAD -> {
+                        homePageSlot.visibility=View.GONE
+                        homeRoot.visibility=View.GONE; homePageSlot.visibility=View.GONE
+                        root.visibility=View.VISIBLE
+                    }
+                    com.aigstudio.core.ui.RuntimeSurface.CAM -> {
+                        homePageSlot.visibility=View.GONE
+                        homeRoot.visibility=View.GONE; homePageSlot.visibility=View.GONE
+                        showCamWorkstation()
+                    }
+                    else -> Unit
+                }
+            },
+            settings={ showEnvironmentSettings() }
+        )
+        val homeRegistry=com.aigstudio.app.ui.AndroidRuntimeUiRegistry(
+            listOf(com.aigstudio.app.ui.pages.home.HomePageModule { homeRoot })
+        )
+        val rgbRuntimePageHost=com.aigstudio.app.ui.host.RuntimePageHost(
+            this,
+            homeRegistry,
+            homeActions
+        )
+        fun renderRgbHomeMountError(error:Throwable) {
+            homePageSlot.removeAllViews()
+            homePageSlot.addView(TextView(this).apply {
+                setBackgroundColor(StudioProductionTheme.background)
+                setTextColor(StudioProductionTheme.warning)
+                gravity=Gravity.CENTER
+                textSize=12f
+                text="AIG RGB HOME 掛載失敗 • "+(error.message ?: error.javaClass.simpleName)+"
+正式 Runtime 保持可恢復，不切工程殼"
+            },FrameLayout.LayoutParams(-1,-1))
+        }
+        fun mountFormalRgbHome():Result<View> = rgbRuntimePageHost
+            .show(com.aigstudio.core.ui.RuntimeSurface.HOME,runtimeViewport())
+            .onSuccess { page ->
+                homePageSlot.removeAllViews()
+                homePageSlot.addView(page,FrameLayout.LayoutParams(-1,-1))
+            }
         showRuntimeHome={
             refreshHomePreview()
             root.visibility=View.GONE
             homeRoot.visibility=View.VISIBLE
+            homePageSlot.visibility=View.VISIBLE
+            mountFormalRgbHome().onFailure(::renderRgbHomeMountError)
         }
-        runtimeHost.addView(homeRoot,FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        ))
+        val startRgbHomeMount:()->Unit = {
+            rgbRuntimePageHost.preload(com.aigstudio.core.ui.RuntimeSurface.HOME) { preload ->
+                preload.onSuccess {
+                    showRuntimeHome?.invoke()
+                    setContentView(runtimeHost)
+                }.onFailure { error ->
+                    renderRgbHomeMountError(error)
+                    setContentView(runtimeHost)
+                }
+            }
+        }
 
         StudioStartupBootGuard.mark(this,StudioStartupStage.UI_RENDERER)
-        // Formal RGB HOME is explicitly the first visible Runtime surface.
+        // Formal RGB HOME is mounted by RuntimePageHost after its approved RGB asset is decoded.
         root.visibility=View.GONE
         homeRoot.visibility=View.VISIBLE
+        homePageSlot.visibility=View.VISIBLE
         homeRoot.contentDescription="AIG CNC PRODUCTION HOME RUNTIME • FIRST FRAME"
-        setContentView(runtimeHost)
 
         // AIG-II one-key multi-function may hand off real 6AX work to Studio.
         intent.getStringExtra("AIG_TARGET_MODE")
@@ -1608,6 +1667,7 @@ class MainActivity : Activity() {
             }
         }
         homeRoot.viewTreeObserver.addOnDrawListener(firstHomeDrawListener)
+        startRgbHomeMount()
         // Network never participates in startup. Online services run only after the HOME first frame.
     }
 
