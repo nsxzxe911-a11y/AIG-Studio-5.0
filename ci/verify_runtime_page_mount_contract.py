@@ -92,4 +92,4 @@ need("show(RuntimeSurface.HOME" in main, "MAIN_HOME_BYPASSES_RUNTIME_PAGE_HOST")
 need("runtimeHost.addView(homeRoot" not in main, "LEGACY_HOME_DIRECT_ADD_FORBIDDEN")
 
 print("RUNTIME_PAGE_MOUNT_PASS|STUDIO|RGB_FIRST|SURFACES_10|ANDROID_HOST_OWNS_MOUNT|HOME_VIA_HOST|ASSET_FAILURE_NOT_READY|WINDOWS|LAZY_FUNCTION_GROUPS|PRELOAD_CACHE")
-# Task 3 compile trigger after bot-applied HOME host repair.
+# Task 3 compile recheck after homePageSlot placement and Kotlin string escape repair.
