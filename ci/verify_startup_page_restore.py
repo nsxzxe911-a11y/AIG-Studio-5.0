@@ -2,9 +2,11 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-android = (ROOT / "app/src/main/java/com/aigstudio/app/MainActivity.kt").read_text(encoding="utf-8")
-desktop = (ROOT / "desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt").read_text(encoding="utf-8")
-startup = (ROOT / "app/src/main/java/com/aigstudio/app/StartupOverlay.kt").read_text(encoding="utf-8")
+manifest = (ROOT / "app/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
+android_startup_path = ROOT / "app/src/main/java/com/aigstudio/app/StartupActivity.kt"
+desktop_bootstrap = (ROOT / "desktop/src/main/kotlin/com/aigstudio/desktop/DesktopBootstrap.kt").read_text(encoding="utf-8")
+overlay = (ROOT / "app/src/main/java/com/aigstudio/app/StartupOverlay.kt").read_text(encoding="utf-8")
+version = (ROOT / "release-version.properties").read_text(encoding="utf-8")
 
 
 def require(source: str, marker: str, label: str) -> None:
@@ -12,38 +14,49 @@ def require(source: str, marker: str, label: str) -> None:
         raise SystemExit(f"STARTUP_RESTORE_FAIL|{label}|missing={marker}")
 
 
-# The approved startup artwork must remain the real local startup source.
-require(startup, 'context.assets.open("visuals/studio_startup_original.png")', "ANDROID_STARTUP_ASSET")
+require(overlay, 'context.assets.open("visuals/studio_startup_original.png")', "ANDROID_STARTUP_ASSET")
+require(version, "versionName=370.0.0", "VERSION_BUMP")
 
-# Android: visible startup overlay first, then local formal RGB HOME.
+if not android_startup_path.is_file():
+    raise SystemExit("STARTUP_RESTORE_FAIL|ANDROID_STARTUP_ACTIVITY|missing file")
+android_startup = android_startup_path.read_text(encoding="utf-8")
+
+# Android launcher must restore the approved startup overlay before MainActivity/RGB HOME.
 for marker in (
-    "val bootShell = FrameLayout(this)",
-    "val bootOverlay = AigStartupOverlay(this)",
-    "bootOverlay.setRuntimeProfile(startupQuality,startupSafeBoot)",
+    'android:name=".StartupActivity"',
+    '<action android:name="android.intent.action.MAIN" />',
+    '<category android:name="android.intent.category.LAUNCHER" />',
+):
+    require(manifest, marker, "ANDROID_LAUNCHER")
+if manifest.index('android:name=".StartupActivity"') > manifest.index('<action android:name="android.intent.action.MAIN" />'):
+    raise SystemExit("STARTUP_RESTORE_FAIL|ANDROID_LAUNCHER|MAIN filter must belong to StartupActivity")
+for marker in (
+    "class StartupActivity : Activity()",
+    "val bootOverlay=AigStartupOverlay(this)",
+    "bootOverlay.setRuntimeProfile(startupQuality,false)",
     "setContentView(bootShell)",
+    "bootOverlay.advance(StartupMilestone.SAFE_THEME)",
+    "bootOverlay.advance(StartupMilestone.INITIALIZING_CORE)",
+    "bootOverlay.advance(StartupMilestone.CHECKING_CONFIGURATION)",
     "bootOverlay.advance(StartupMilestone.LOADING_UI)",
-    "bootShell.addView(runtimeHost,0,FrameLayout.LayoutParams(",
-    "bootOverlay.advance(StartupMilestone.READY)",
-    "bootOverlay.completeAndDetach(bootShell)",
+    "startActivity(Intent(this,MainActivity::class.java))",
 ):
-    require(android, marker, "ANDROID_VISIBLE_STARTUP")
+    require(android_startup, marker, "ANDROID_VISIBLE_STARTUP")
 
-if android.index("setContentView(bootShell)") > android.index("bootShell.addView(runtimeHost,0,FrameLayout.LayoutParams("):
-    raise SystemExit("STARTUP_RESTORE_FAIL|ANDROID_ORDER|startup shell must own the content view before Runtime is attached")
-if android.index("bootShell.addView(runtimeHost,0,FrameLayout.LayoutParams(") > android.index("bootOverlay.completeAndDetach(bootShell)"):
-    raise SystemExit("STARTUP_RESTORE_FAIL|ANDROID_ORDER|Runtime must be attached before startup overlay detaches")
-
-# Windows: the existing official startup window must be visible before showApp().
+# Windows Bootstrap must reuse the historical StudioDesktopStartupWindow and close it only after Runtime becomes visible.
 for marker in (
-    "private fun showApp(startup:StudioDesktopStartupWindow?=null,showWindow:Boolean=true):JFrame",
-    "startup?.advance(StudioStartupStage.UI_RENDERER,\"載入 RGB UI / Renderer\")",
-    "val startup=StudioDesktopStartupWindow()",
+    'Class.forName("com.aigstudio.desktop.StudioDesktopStartupWindow")',
+    "fun show()",
+    "fun advance(stage:StudioStartupStage,message:String)",
+    "fun close()",
     "startup.show()",
-    "startup.advance(StudioStartupStage.SAFE_THEME,\"載入原版 RGB 啟動圖\")",
-    "showApp(startup)",
-    "startup?.advance(StudioStartupStage.HOME,WorkstationChromeContract.MASTER_ORIGIN+\" • CAD READY\")",
-    "startup?.close()",
+    'startup.advance(StudioStartupStage.SAFE_THEME,"載入原版 RGB 啟動圖")',
+    'startup.advance(StudioStartupStage.CORE,"初始化 CAD / CAM 核心")',
+    'startup.advance(StudioStartupStage.UI_RENDERER,"載入 RGB UI / Renderer")',
+    'it.title.startsWith("AIG Studio • CNC 加工控制")',
+    "startup.advance(StudioStartupStage.HOME,\"AIG CNC READY\")",
+    "startup.close()",
 ):
-    require(desktop, marker, "WINDOWS_VISIBLE_STARTUP")
+    require(desktop_bootstrap, marker, "WINDOWS_VISIBLE_STARTUP")
 
-print("STUDIO_STARTUP_PAGE_RESTORE_PASS|ANDROID_STARTUP_OVERLAY_THEN_RGB_HOME|WINDOWS_STARTUP_WINDOW_THEN_RUNTIME|OFFLINE_LOCAL_ASSET|NO_ENGINEERING_SHELL")
+print("STUDIO_STARTUP_PAGE_RESTORE_PASS|ANDROID_APPROVED_STARTUP_THEN_RGB_HOME|WINDOWS_HISTORICAL_STARTUP_THEN_RUNTIME|OFFLINE_LOCAL_ASSET|NO_ENGINEERING_SHELL|VERSION_370")
