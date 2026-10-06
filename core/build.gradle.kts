@@ -45,3 +45,11 @@ tasks.register<JavaExec>("rgbGlobalSkinRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.AigRgbGlobalSkinRegressionKt")
 }
+
+tasks.register<JavaExec>("runtimePageUiStateRegression") {
+    group = "verification"
+    description = "Runs the focused immutable Runtime page editor-side state regression"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.ui.RuntimePageUiStateRegressionKt")
+}
