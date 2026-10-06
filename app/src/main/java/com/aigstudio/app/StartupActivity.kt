@@ -40,18 +40,24 @@ class StartupActivity : Activity() {
         )
         setContentView(bootShell)
 
+        // Normal users see the fast 720 ms hand-off. CI may explicitly request
+        // a longer hold so the real startup page can be captured as evidence.
+        val handoffMs=intent.getLongExtra("AIG_STARTUP_EVIDENCE_HOLD_MS",720L)
+            .coerceIn(720L,5000L)
+        fun at(base:Long):Long=(base.toDouble()/720.0*handoffMs).toLong().coerceAtLeast(1L)
+
         // Keep this page deterministic and offline. These are bootstrap visual
         // milestones only; MainActivity performs the real Runtime initialization.
-        handler.postDelayed({ bootOverlay.advance(StartupMilestone.SAFE_THEME) },80L)
-        handler.postDelayed({ bootOverlay.advance(StartupMilestone.INITIALIZING_CORE) },220L)
-        handler.postDelayed({ bootOverlay.advance(StartupMilestone.CHECKING_CONFIGURATION) },380L)
-        handler.postDelayed({ bootOverlay.advance(StartupMilestone.LOADING_UI) },540L)
+        handler.postDelayed({ bootOverlay.advance(StartupMilestone.SAFE_THEME) },at(80L))
+        handler.postDelayed({ bootOverlay.advance(StartupMilestone.INITIALIZING_CORE) },at(220L))
+        handler.postDelayed({ bootOverlay.advance(StartupMilestone.CHECKING_CONFIGURATION) },at(380L))
+        handler.postDelayed({ bootOverlay.advance(StartupMilestone.LOADING_UI) },at(540L))
         handler.postDelayed({
             startActivity(Intent(this,MainActivity::class.java))
             @Suppress("DEPRECATION")
             overridePendingTransition(0,0)
             finish()
-        },720L)
+        },handoffMs)
     }
 
     override fun onDestroy() {
