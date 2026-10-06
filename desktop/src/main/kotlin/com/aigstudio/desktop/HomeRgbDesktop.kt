@@ -24,7 +24,6 @@ import kotlin.math.roundToInt
 
 /** Warning-only HOME skin installer. Existing HOME buttons and callbacks stay authoritative. */
 object HomeRgbDesktopInstaller {
-    private const val EXPECTED_SHA256 = "9b0d4c983d8b69d9e1735036842567e5082101976bd17335cd9c3ec7c4494a80"
     private val applied = Collections.newSetFromMap(WeakHashMap<JComponent, Boolean>())
     private val image: BufferedImage? by lazy { loadVerified() }
 
@@ -41,11 +40,15 @@ object HomeRgbDesktopInstaller {
             .getResourceAsStream("$root/${UiAssetContract.DESKTOP_HOME_FILE}")
             ?.use { it.readBytes() } ?: error("HOME desktop asset missing")
         val digest = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-        require(digest == EXPECTED_SHA256) { "HOME desktop SHA mismatch" }
+        require(digest == UiAssetContract.DESKTOP_HOME_SHA256) { "HOME desktop SHA mismatch" }
         val decoded = ImageIO.read(bytes.inputStream()) ?: error("HOME desktop JPEG decode failed")
         require(decoded.width == 1280 && decoded.height == 720) { "HOME desktop dimensions invalid" }
         decoded
-    }.onFailure { System.err.println("AIG RGB HOME 416 WARNING • ${it.message} • CURRENT HOME CONTINUES") }.getOrNull()
+    }.onFailure {
+        System.err.println(
+            "AIG RGB HOME ${UiAssetContract.HOME_PACK_VERSION} WARNING • ${it.message} • CURRENT HOME CONTINUES"
+        )
+    }.getOrNull()
 
     private fun applyTo(window: Window) {
         val target = findHome(window) ?: return
