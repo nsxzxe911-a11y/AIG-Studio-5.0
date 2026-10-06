@@ -33,4 +33,5 @@ Task 4 RED-3: run 37421583591 then failed exactly with MAIN_NOT_USING_CAD_SNAP_C
 Task 4 RED-4: strengthened geometry-revision verifier run 37421750323 again failed exactly with MAIN_NOT_USING_CAD_SNAP_CACHE, proving cache wiring was still absent.
 Task 4 cache GREEN intermediate: safe run 37421918045 passed exact geometry-revision snap-cache transformer, CAD interaction contract, and Android compile before committing MainActivity as 2f361ea970c8d4a7b5bf3d8df21b36c224230e63.
 Task 4 Ruling: snap candidate cache uses a dedicated geometryRevision rather than sceneRevision so PAN/zoom/view invalidation cannot trigger O(n^2) intersection rebuilds; geometryRevision changes only on authoritative geometry mutation/import/restore/geometry undo-redo.
-Task 4 status: IN_PROGRESS — latest bot-produced cache commit still requires a user-triggered full Modular Gate with Android+Windows compile before Studio CAD can be called GREEN.
+Task 4 Studio GREEN: user checkpoint be4d43047354c90dc2ea9ab8e2d621f3b7bc0984; run 37422238199 passed modular Runtime contract, RGB-first page mount, CAD interaction latency gate, Runtime page UI state regression, and Android+Windows Kotlin compile.
+Task 4 status: STUDIO_GREEN / AIGII_PENDING — dual-project Task 4 remains IN_PROGRESS until AIG-II reaches the same verified contract.
