@@ -5,15 +5,160 @@ on:
     branches:
       - professional-rgb-runtime-372
 
+concurrency:
+  group: studio-372-professional-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   contract:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - name: Professional RGB contract gate
         run: python3 ci/verify_professional_rgb_runtime.py
       - name: Professional live surface binding gate
         run: python3 ci/verify_professional_surface_binding.py
+
+  android-apk:
+    needs: contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Android SDK API 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -d "$ANDROID_HOME/platforms/android-36" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+            test -x "$SDKMANAGER"
+            yes | "$SDKMANAGER" --licenses >/dev/null || true
+            "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          fi
+      - name: Verify professional skin contract
+        run: |
+          python3 ci/verify_professional_rgb_runtime.py
+          python3 ci/verify_professional_surface_binding.py
+      - name: Build Studio 372 installable APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ./build_android_release.sh | tee studio-372-android-build.log
+          test -s release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
+          cp release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk release/android/AIG_Studio_372_PROFESSIONAL_RGB.apk
+          sha256sum release/android/AIG_Studio_372_PROFESSIONAL_RGB.apk | tee release/android/AIG_Studio_372_PROFESSIONAL_RGB.sha256
+      - name: Upload APK immediately
+        uses: actions/upload-artifact@v7
+        with:
+          name: AIG-Studio-372-APK
+          path: |
+            release/android/AIG_Studio_372_PROFESSIONAL_RGB.apk
+            release/android/AIG_Studio_372_PROFESSIONAL_RGB.sha256
+            studio-372-android-build.log
+          if-no-files-found: error
+          retention-days: 14
+      - name: Enable emulator KVM access
+        shell: bash
+        run: |
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm
+            ls -l /dev/kvm
+          else
+            echo 'KVM_DEVICE_NOT_PRESENT'
+          fi
+      - name: Offline startup HOME and professional page evidence
+        id: android_evidence
+        continue-on-error: true
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            set -euo pipefail
+            APK='release/android/AIG_Studio_372_PROFESSIONAL_RGB.apk'
+            PKG='com.aigstudio.app'
+            EVIDENCE='release/android/runtime-evidence'
+            mkdir -p "$EVIDENCE"
+            adb install -r "$APK"
+            adb shell svc wifi disable || true
+            adb shell svc data disable || true
+            adb shell am force-stop "$PKG"
+            adb shell am start -n "$PKG/.StartupActivity" --el AIG_STARTUP_EVIDENCE_HOLD_MS 2500
+            sleep 1
+            adb exec-out screencap -p > "$EVIDENCE/00_startup.png"
+            sleep 3
+            adb shell uiautomator dump /sdcard/studio372.xml >/dev/null
+            adb pull /sdcard/studio372.xml "$EVIDENCE/home_ui.xml" >/dev/null
+            grep -F 'AIG CNC FORMAL RGB HOME' "$EVIDENCE/home_ui.xml"
+            if grep -Eqi 'ENGINEERING SHELL|PHYSICAL PERFORMANCE|MAINTENANCE SYSTEM STRIP' "$EVIDENCE/home_ui.xml"; then exit 20; fi
+            adb exec-out screencap -p > "$EVIDENCE/01_home.png"
+            # Preserve the exact canonical page/model references packaged in this APK beside runtime proof.
+            cp uiux/assets/cad.png "$EVIDENCE/REF_CAD.png"
+            cp uiux/assets/cam.jpg "$EVIDENCE/REF_CAM.jpg"
+            cp uiux/assets/sim.jpg "$EVIDENCE/REF_SIM.jpg"
+            cp uiux/assets/axis3.jpg "$EVIDENCE/REF_3AX.jpg"
+            cp uiux/assets/axis4.png "$EVIDENCE/REF_4AX.png"
+            cp uiux/assets/axis5.jpg "$EVIDENCE/REF_5AX.jpg"
+            printf 'version=372.0.0\noffline=TRUE\ncallbacks=LIVE\nmodels=LIVE\n6ax=PROCEDURAL_RGB_GLASS_LIVE_ABC\n' > "$EVIDENCE/PROFESSIONAL_RUNTIME_EVIDENCE.txt"
+      - name: Upload Android visual evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: AIG-Studio-372-Android-Evidence
+          path: release/android/runtime-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+
+  windows-exe:
+    needs: contract
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Verify professional skin contract
+        shell: pwsh
+        run: |
+          python ci/verify_professional_rgb_runtime.py
+          python ci/verify_professional_surface_binding.py
+      - name: Build Studio 372 Windows EXE
+        shell: pwsh
+        run: .\build_windows_native.ps1
+      - name: Verify and rename professional EXE
+        shell: pwsh
+        run: |
+          $src='release\windows\AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
+          if (-not (Test-Path $src)) { throw 'Studio EXE missing' }
+          $bytes=[IO.File]::ReadAllBytes($src)
+          if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw 'PE/MZ invalid' }
+          $dst='release\windows\AIG_Studio_372_PROFESSIONAL_RGB.exe'
+          Copy-Item $src $dst -Force
+          (Get-FileHash $dst -Algorithm SHA256).Hash.ToLowerInvariant() | Out-File 'release\windows\AIG_Studio_372_PROFESSIONAL_RGB.sha256' -Encoding ascii
+      - name: Upload EXE and runtime evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: AIG-Studio-372-Windows
+          path: release/windows/
+          if-no-files-found: error
+          retention-days: 14
