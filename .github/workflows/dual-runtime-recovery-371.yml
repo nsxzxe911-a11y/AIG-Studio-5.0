@@ -18,8 +18,6 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - name: Materialize exact approved Morning HOME assets
-        run: python3 ci/materialize_shared_home_427.py
       - name: Startup and department source gates
         shell: bash
         run: |
@@ -52,9 +50,7 @@ jobs:
             yes | "$SDKMANAGER" --licenses >/dev/null || true
             "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
           fi
-      - name: Materialize exact approved Morning HOME assets
-        run: python3 ci/materialize_shared_home_427.py
-      - name: Verify startup source contract
+      - name: Verify approved local startup HOME asset
         run: python3 ci/verify_startup_page_restore.py
       - name: Build installable APK
         shell: bash
@@ -123,10 +119,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '9.7.0'
-      - name: Materialize exact approved Morning HOME assets
-        shell: pwsh
-        run: python ci/materialize_shared_home_427.py
-      - name: Verify startup source contract
+      - name: Verify approved local startup HOME asset
         shell: pwsh
         run: python ci/verify_startup_page_restore.py
       - name: Build Windows EXE and runtime evidence
