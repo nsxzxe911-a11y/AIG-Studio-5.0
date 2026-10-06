@@ -21,25 +21,40 @@ import java.util.concurrent.Executor
 class AndroidRgbVisualCache {
     private val bitmaps = ConcurrentHashMap<String, Bitmap>()
 
+    private fun decodeAsset(context: Context, assetName: String) {
+        val appContext = context.applicationContext
+        bitmaps.computeIfAbsent(assetName) {
+            appContext.assets.open(assetName).use { input ->
+                BitmapFactory.decodeStream(input)
+                    ?: error("Unable to decode packaged AIG RGB visual: $assetName")
+            }
+        }
+    }
+
+    fun preloadSurfaceAsync(
+        context: Context,
+        surface: RuntimeSurface,
+        executor: Executor,
+        onReady: (Result<Unit>) -> Unit
+    ) {
+        val assetName = RuntimePageMountCatalog.spec(surface).visualAsset
+        executor.execute {
+            val result = runCatching { decodeAsset(context, assetName) }
+            Handler(Looper.getMainLooper()).post { onReady(result) }
+        }
+    }
+
     fun preloadAsync(
         context: Context,
         executor: Executor,
         onReady: (Result<Unit>) -> Unit
     ) {
-        val appContext = context.applicationContext
         executor.execute {
             val result = runCatching {
                 RuntimePageMountCatalog.specs
                     .map { it.visualAsset }
                     .distinct()
-                    .forEach { assetName ->
-                        bitmaps.computeIfAbsent(assetName) {
-                            appContext.assets.open(assetName).use { input ->
-                                BitmapFactory.decodeStream(input)
-                                    ?: error("Unable to decode packaged AIG RGB visual: $assetName")
-                            }
-                        }
-                    }
+                    .forEach { decodeAsset(context, it) }
             }
             Handler(Looper.getMainLooper()).post { onReady(result) }
         }
@@ -49,6 +64,8 @@ class AndroidRgbVisualCache {
         bitmaps[assetName] ?: error(
             "AIG RGB visual not preloaded: $assetName. Preload assets before mounting Runtime pages."
         )
+
+    fun isReady(assetName: String): Boolean = bitmaps.containsKey(assetName)
 
     fun isReady(): Boolean = RuntimePageMountCatalog.specs
         .map { it.visualAsset }
