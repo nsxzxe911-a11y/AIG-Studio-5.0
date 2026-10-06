@@ -25,7 +25,11 @@ android {
         versionCode = releaseVersionCode
         versionName = releaseVersionName
     }
-    sourceSets.getByName("main").assets.srcDir(rootProject.file("shared/tutorial"))
+    sourceSets.getByName("main").apply {
+        assets.srcDir(rootProject.file("shared/tutorial"))
+        // Canonical full-page AIG visuals. They remain a single source of truth in uiux/assets.
+        assets.srcDir(rootProject.file("uiux/assets"))
+    }
     buildFeatures {
         buildConfig = true
     }

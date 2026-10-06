@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "authority": "MORNING_APPROVED_RGB_2026_10_05",
+  "skin_only": true,
+  "runtime_truth": "EXISTING_RUNTIME_CALLBACKS_AND_MODELS",
+  "surfaces": {
+    "STARTUP": {"visual":"startup.png","model_policy":"NONE","callback_policy":"LIVE_RUNTIME","platforms":["android","windows"]},
+    "HOME": {"visual":"home.png","model_policy":"NONE","callback_policy":"LIVE_RUNTIME","platforms":["android","windows"]},
+    "CAD": {"visual":"cad.png","model_policy":"LIVE_RUNTIME","callback_policy":"LIVE_RUNTIME","platforms":["android","windows"]},
+    "CAM": {"visual":"cam.jpg","model_policy":"LIVE_RUNTIME","callback_policy":"LIVE_RUNTIME","platforms":["android","windows"]},
+    "SIM": {"visual":"sim.jpg","model_policy":"LIVE_RUNTIME","callback_policy":"LIVE_RUNTIME","platforms":["android","windows"]},
+    "3AX": {"visual":"axis3.jpg","model_policy":"LIVE_RUNTIME","callback_policy":"LIVE_RUNTIME","axes":[],"platforms":["android","windows"]},
+    "4AX": {"visual":"axis4.png","model_policy":"LIVE_RUNTIME","callback_policy":"LIVE_RUNTIME","axes":["A"],"platforms":["android","windows"]},
+    "5AX": {"visual":"axis5.jpg","model_policy":"LIVE_RUNTIME","callback_policy":"LIVE_RUNTIME","axes":["A","B"],"platforms":["android","windows"]},
+    "6AX": {"visual":"PROCEDURAL_RGB_GLASS","model_policy":"LIVE_RUNTIME","callback_policy":"LIVE_RUNTIME","axes":["A","B","C"],"platforms":["android","windows"]},
+    "NC": {"visual":"PROCEDURAL_RGB_GLASS","model_policy":"NONE","callback_policy":"LIVE_RUNTIME","platforms":["android","windows"],"approved_reference":"aig_ii_cnc_智慧加工介面.png"},
+    "AI": {"visual":"PROCEDURAL_RGB_GLASS","model_policy":"NONE","callback_policy":"LIVE_RUNTIME","platforms":["android","windows"]},
+    "LINK": {"visual":"PROCEDURAL_RGB_GLASS","model_policy":"NONE","callback_policy":"LIVE_RUNTIME","platforms":["android","windows"],"approved_reference":"霓虹科幻_cnc_智慧控制中心.png"}
+  }
+}

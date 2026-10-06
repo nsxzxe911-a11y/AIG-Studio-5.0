@@ -6,10 +6,25 @@ object UiAssetContract {
     const val ANDROID_ROOT = "aig-generated-rgb/approved/" + RGB_PACK_VERSION
     const val DESKTOP_ROOT = "/aig-generated-rgb/approved/" + RGB_PACK_VERSION
 
-    // Studio-owned approved startup/HOME visual. Android and Windows contain the
-    // same binary and design/theme/startup-visual.sha256 is the authority file.
-    const val HOME_PACK_VERSION = "371"
-    const val HOME_PACK_ID = "STUDIO_APPROVED_STARTUP_HOME"
+    // Studio 372 canonical professional page visuals. app/desktop Gradle package
+    // uiux/assets directly, so Android and Windows resolve the same binaries.
+    const val HOME_PACK_VERSION = "372"
+    const val HOME_PACK_ID = "MORNING_APPROVED_RGB_PLUS_CANONICAL_UIUX"
+    const val CANONICAL_UI_ROOT = ""
+    const val STARTUP_VISUAL = "startup.png"
+    const val HOME_VISUAL = "home.png"
+    const val CAD_VISUAL = "cad.png"
+    const val CAM_VISUAL = "cam.jpg"
+    const val SIM_VISUAL = "sim.jpg"
+    const val MACHINE_VISUAL = "machine.jpg"
+    const val AXIS3_VISUAL = "axis3.jpg"
+    const val AXIS4_VISUAL = "axis4.png"
+    const val AXIS5_VISUAL = "axis5.jpg"
+    const val SIX_AXIS_VISUAL_POLICY = "PROCEDURAL_RGB_GLASS"
+    const val SURFACE_MAP = "../uiux/professional-surface-map.json"
+
+    // Startup retains its separately verified Studio-owned binary until the
+    // final Morning binary import task replaces it with an exact approved copy.
     const val ANDROID_HOME_ROOT = "visuals"
     const val DESKTOP_HOME_ROOT = "/visuals"
     const val ANDROID_HOME_FILE = "studio_startup_original.png"

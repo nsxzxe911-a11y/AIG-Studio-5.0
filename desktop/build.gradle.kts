@@ -23,6 +23,8 @@ kotlin {
 sourceSets {
     named("main") {
         resources.srcDir(rootProject.file("shared/tutorial"))
+        // Canonical full-page AIG visuals; desktop reads the same source files as Android.
+        resources.srcDir(rootProject.file("uiux/assets"))
     }
 }
 
