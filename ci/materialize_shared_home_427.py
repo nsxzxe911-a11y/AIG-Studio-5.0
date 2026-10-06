@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import base64
 import hashlib
+import json
+import os
 import pathlib
+import urllib.parse
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -28,10 +32,28 @@ ASSETS = {
 
 
 def fetch_exact(path: str) -> bytes:
-    url = f"https://raw.githubusercontent.com/{AUTHORITY_REPO}/{AUTHORITY_SHA}/{path}"
-    request = urllib.request.Request(url, headers={"User-Agent": "AIG-Studio-release-builder"})
+    encoded_path = urllib.parse.quote(path, safe="/")
+    url = (
+        f"https://api.github.com/repos/{AUTHORITY_REPO}/contents/{encoded_path}"
+        f"?ref={AUTHORITY_SHA}"
+    )
+    headers = {
+        "User-Agent": "AIG-Studio-release-builder",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    request = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(request, timeout=60) as response:
-        return response.read()
+        payload = json.loads(response.read().decode("utf-8"))
+    if payload.get("type") != "file" or payload.get("encoding") != "base64":
+        raise SystemExit(f"SHARED_HOME_FAIL|API_PAYLOAD|{path}|type={payload.get('type')}|encoding={payload.get('encoding')}")
+    content = payload.get("content", "").replace("\n", "")
+    if not content:
+        raise SystemExit(f"SHARED_HOME_FAIL|EMPTY_API_CONTENT|{path}")
+    return base64.b64decode(content, validate=True)
 
 
 def main() -> None:
@@ -54,7 +76,7 @@ def main() -> None:
     print(
         "SHARED_HOME_427_PASS|"
         f"authority={AUTHORITY_REPO}@{AUTHORITY_SHA}|"
-        "ANDROID_LOCAL|DESKTOP_LOCAL|OFFLINE_RUNTIME"
+        "GITHUB_CONTENTS_API|ANDROID_LOCAL|DESKTOP_LOCAL|OFFLINE_RUNTIME"
     )
 
 
