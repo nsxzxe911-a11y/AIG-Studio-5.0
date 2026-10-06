@@ -17,3 +17,9 @@ Task 1 status: COMPLETE.
 Task 2 RED: run 37413900653 failed after the mount verifier required a real RuntimePageHost/RuntimePageMountCoordinator.
 Task 2 GREEN: commit 6bbee820e044bf2b153ddb857318a5a19868fb2f; run 37414022272 passed RGB-first mount contract, Runtime page state regression, and Android/Windows modular compile.
 Task 2 status: COMPLETE.
+
+Task 3 RED: run 37414561890 failed with MAIN_MISSING_RUNTIME_PAGE_HOST after HOME module/bridge existed.
+Task 3 Ruling: MainActivity is ~350 KB, so use a strict one-shot source transformer with unique-string anchors rather than replacing the whole file through Contents API; cost if wrong: transformer must be compile-gated before acceptance.
+Task 3 intermediate compile: run 37415847531 passed mount/state gates but failed Android compile on homePageSlot declaration order and one malformed escaped newline; both were repaired without reverting the host.
+Task 3 GREEN: bot MainActivity repair commit 7d0b0e39e82a6362a0917ffb1fbed7c898196a9b, user verification checkpoint 4a32fa1f2abf1b88cf277ef117c4bf5ff39a682e; run 37416276950 passed modular contract, RGB-first HOME mount gate, Runtime page state regression, and Android/Windows Kotlin compile.
+Task 3 status: COMPLETE.
