@@ -4,6 +4,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "core/src/main/kotlin/com/aigstudio/core/ui/RuntimePageMountContract.kt"
 ANDROID = ROOT / "app/src/main/java/com/aigstudio/app/ui/AndroidRuntimeUiRegistry.kt"
+ANDROID_HOST = ROOT / "app/src/main/java/com/aigstudio/app/ui/host/RuntimePageHost.kt"
+ANDROID_COORD = ROOT / "app/src/main/java/com/aigstudio/app/ui/host/RuntimePageMountCoordinator.kt"
 DESKTOP = ROOT / "desktop/src/main/kotlin/com/aigstudio/desktop/ui/DesktopRuntimeUiRegistry.kt"
 
 
@@ -13,10 +15,14 @@ def need(ok: bool, code: str) -> None:
 
 need(CONTRACT.is_file(), "MISSING_MOUNT_CONTRACT")
 need(ANDROID.is_file(), "MISSING_ANDROID_REGISTRY")
+need(ANDROID_HOST.is_file(), "MISSING_ANDROID_RUNTIME_PAGE_HOST")
+need(ANDROID_COORD.is_file(), "MISSING_ANDROID_MOUNT_COORDINATOR_FILE")
 need(DESKTOP.is_file(), "MISSING_DESKTOP_REGISTRY")
 
 contract = CONTRACT.read_text(encoding="utf-8")
 android = ANDROID.read_text(encoding="utf-8")
+host = ANDROID_HOST.read_text(encoding="utf-8")
+coord = ANDROID_COORD.read_text(encoding="utf-8")
 desktop = DESKTOP.read_text(encoding="utf-8")
 
 for token in [
@@ -38,22 +44,48 @@ need("val lazyFunctionGroups: Boolean = true" in contract, "LAZY_FUNCTION_GROUPS
 need("require(specs.all { it.assetFirst })" in contract, "ASSET_FIRST_ENFORCED")
 need("require(specs.all { it.lazyFunctionGroups })" in contract, "LAZY_FUNCTION_GROUPS_ENFORCED")
 
-for source, label in [(android, "ANDROID"), (desktop, "DESKTOP")]:
-    for token in [
-        "RuntimePageMountCatalog",
-        "RuntimePageMountState",
-        "RuntimeMountStage.ASSET",
-        "RuntimeMountStage.SKIN",
-        "RuntimeMountStage.VIEW",
-        "RuntimeMountStage.CALLBACK",
-        "RuntimeMountStage.READY",
-    ]:
-        need(token in source, f"{label}_TOKEN_" + token.replace(" ", "_"))
+need("interface AndroidRuntimeUiModule" in android, "ANDROID_MODULE_INTERFACE")
+need("class AndroidRuntimeUiRegistry" in android, "ANDROID_REGISTRY")
+need("class AndroidRuntimePageMountCoordinator" not in android, "ANDROID_COORDINATOR_MUST_BE_EXTRACTED")
+need("class AndroidRuntimePageMountCoordinator" in coord, "ANDROID_MOUNT_COORDINATOR")
+for token in [
+    "RuntimePageMountCatalog",
+    "RuntimePageMountState",
+    "RuntimeMountStage.ASSET",
+    "RuntimeMountStage.SKIN",
+    "RuntimeMountStage.VIEW",
+    "RuntimeMountStage.CALLBACK",
+    "RuntimeMountStage.READY",
+    "requireBitmap",
+]:
+    need(token in coord, "ANDROID_COORD_TOKEN_" + token.replace(" ", "_"))
+need(coord.index("requireBitmap") < coord.index("RuntimeMountStage.ASSET"), "ANDROID_ASSET_REQUIRED_BEFORE_ASSET_STAGE")
 
-need("AndroidRuntimePageMountCoordinator" in android, "ANDROID_MOUNT_COORDINATOR")
+for token in [
+    "class RuntimePageHost",
+    "fun preload(",
+    "fun show(",
+    "fun currentSurface(",
+    "AndroidRgbVisualCache",
+    "AndroidRuntimePageMountCoordinator",
+    "runCatching",
+]:
+    need(token in host, "ANDROID_HOST_TOKEN_" + token.replace(" ", "_"))
+need("current = surface" in host, "ANDROID_HOST_TRACKS_SUCCESSFUL_SURFACE")
+need("onComplete" in host and "preloadAsync" in host, "ANDROID_HOST_PRELOAD_OWNS_CACHE")
+
+for token in [
+    "RuntimePageMountCatalog",
+    "RuntimePageMountState",
+    "RuntimeMountStage.ASSET",
+    "RuntimeMountStage.SKIN",
+    "RuntimeMountStage.VIEW",
+    "RuntimeMountStage.CALLBACK",
+    "RuntimeMountStage.READY",
+]:
+    need(token in desktop, "DESKTOP_TOKEN_" + token.replace(" ", "_"))
 need("DesktopRuntimePageMountCoordinator" in desktop, "DESKTOP_MOUNT_COORDINATOR")
-need("preloadAsync" in android and "requireBitmap" in android, "ANDROID_RGB_PRELOAD_CACHE")
 need("preloadAsync" in desktop and "requireImage" in desktop, "DESKTOP_RGB_PRELOAD_CACHE")
-need("ENGINEERING_SHELL" not in contract + android + desktop, "ENGINEERING_SHELL_FORBIDDEN")
+need("ENGINEERING_SHELL" not in contract + android + host + coord + desktop, "ENGINEERING_SHELL_FORBIDDEN")
 
-print("RUNTIME_PAGE_MOUNT_PASS|STUDIO|RGB_FIRST|SURFACES_10|ASSET_SKIN_VIEW_CALLBACK_READY|ANDROID|WINDOWS|LAZY_FUNCTION_GROUPS|PRELOAD_CACHE")
+print("RUNTIME_PAGE_MOUNT_PASS|STUDIO|RGB_FIRST|SURFACES_10|ANDROID_HOST_OWNS_MOUNT|ASSET_FAILURE_NOT_READY|WINDOWS|LAZY_FUNCTION_GROUPS|PRELOAD_CACHE")
