@@ -1,0 +1,152 @@
+name: Studio 371 dual-runtime recovery build
+
+on:
+  push:
+    branches:
+      - dual-runtime-recovery-371
+
+concurrency:
+  group: studio-371-recovery-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  department-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Materialize exact approved Morning HOME assets
+        run: python3 ci/materialize_shared_home_427.py
+      - name: Startup and department source gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/verify_startup_page_restore.py
+          python3 ci/fast_review.py | tee fast-review.log
+          grep -Fq 'FAST_REVIEW_PASS|' fast-review.log
+          python3 ci/department_autocheck.py | tee department-autocheck.log
+          grep -Fq 'ALL_DEPARTMENTS_SOURCE_AUTOCHECK_PASS' department-autocheck.log
+
+  android-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Android SDK API 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -d "$ANDROID_HOME/platforms/android-36" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+            test -x "$SDKMANAGER"
+            yes | "$SDKMANAGER" --licenses >/dev/null || true
+            "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          fi
+      - name: Materialize exact approved Morning HOME assets
+        run: python3 ci/materialize_shared_home_427.py
+      - name: Verify startup source contract
+        run: python3 ci/verify_startup_page_restore.py
+      - name: Build installable APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ./build_android_release.sh | tee studio-371-android-build.log
+          test -s release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
+      - name: Offline startup and formal HOME evidence
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            APK='release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk'
+            PKG='com.aigstudio.app'
+            EVIDENCE='release/android/runtime-evidence'
+            mkdir -p "$EVIDENCE"
+            adb install -r "$APK"
+            adb shell svc wifi disable || true
+            adb shell svc data disable || true
+            adb shell am force-stop "$PKG"
+            adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tee "$EVIDENCE/launcher.txt"
+            grep -F "$PKG/.StartupActivity" "$EVIDENCE/launcher.txt"
+            adb shell am start -n "$PKG/.StartupActivity" --el AIG_STARTUP_EVIDENCE_HOLD_MS 2500 | tee "$EVIDENCE/startup_launch.txt"
+            sleep 1
+            adb shell dumpsys activity activities > "$EVIDENCE/startup_activity.txt"
+            grep -F "$PKG/.StartupActivity" "$EVIDENCE/startup_activity.txt"
+            adb exec-out screencap -p > "$EVIDENCE/android_startup_page.png"
+            test "$(stat -c%s "$EVIDENCE/android_startup_page.png")" -gt 20000
+            sleep 3
+            adb shell dumpsys activity activities > "$EVIDENCE/home_activity.txt"
+            grep -F "$PKG/.MainActivity" "$EVIDENCE/home_activity.txt"
+            adb shell uiautomator dump /sdcard/aig-studio-home.xml >/dev/null
+            adb pull /sdcard/aig-studio-home.xml "$EVIDENCE/android_home_ui.xml" >/dev/null
+            grep -F 'AIG CNC FORMAL RGB HOME' "$EVIDENCE/android_home_ui.xml"
+            if grep -Eqi 'ENGINEERING SHELL|PHYSICAL PERFORMANCE|MAINTENANCE SYSTEM STRIP' "$EVIDENCE/android_home_ui.xml"; then
+              echo 'ENGINEERING_SHELL_DEFAULT=FAIL'
+              exit 1
+            fi
+            adb exec-out screencap -p > "$EVIDENCE/android_rgb_home.png"
+            test "$(stat -c%s "$EVIDENCE/android_rgb_home.png")" -gt 20000
+            printf 'version=371.0.0\nstartup=StartupActivity\nhome=FORMAL_RGB_HOME\noffline=TRUE\nengineering_shell_default=FALSE\n' > "$EVIDENCE/DUAL_RUNTIME_EVIDENCE.txt"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: AIG-Studio-371-Android
+          path: |
+            release/android/
+            release/source/
+            studio-371-android-build.log
+          if-no-files-found: error
+          retention-days: 7
+
+  windows-exe:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Materialize exact approved Morning HOME assets
+        shell: pwsh
+        run: python ci/materialize_shared_home_427.py
+      - name: Verify startup source contract
+        shell: pwsh
+        run: python ci/verify_startup_page_restore.py
+      - name: Build Windows EXE and runtime evidence
+        shell: pwsh
+        run: .\build_windows_native.ps1
+      - name: Verify EXE and evidence
+        shell: pwsh
+        run: |
+          $exe='release\windows\AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
+          if (-not (Test-Path $exe)) { throw 'EXE missing' }
+          $bytes=[IO.File]::ReadAllBytes($exe)
+          if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw 'PE/MZ invalid' }
+          foreach ($name in @('desktop_launch.png','desktop_smoke.txt')) {
+            $path=Join-Path 'release\windows\runtime-evidence' $name
+            if (-not (Test-Path $path)) { throw "Runtime evidence missing: $name" }
+            if ((Get-Item $path).Length -le 0) { throw "Runtime evidence empty: $name" }
+          }
+      - uses: actions/upload-artifact@v7
+        with:
+          name: AIG-Studio-371-Windows
+          path: release/windows/
+          if-no-files-found: error
+          retention-days: 7
