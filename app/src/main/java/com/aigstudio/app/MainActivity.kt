@@ -1272,10 +1272,6 @@ class MainActivity : Activity() {
             setBackgroundColor(StudioProductionTheme.background)
             contentDescription="AIG CNC PRODUCTION RUNTIME HOST"
         }
-        runtimeHost.addView(homePageSlot,FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        ))
         root.visibility=View.GONE
         runtimeHost.addView(root,FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
@@ -1332,6 +1328,10 @@ class MainActivity : Activity() {
             contentDescription="AIG CNC RGB-FIRST HOME SLOT"
             visibility=View.VISIBLE
         }
+        runtimeHost.addView(homePageSlot,FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
         val homeContent=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             gravity=Gravity.CENTER_HORIZONTAL
@@ -1547,8 +1547,7 @@ class MainActivity : Activity() {
                 setTextColor(StudioProductionTheme.warning)
                 gravity=Gravity.CENTER
                 textSize=12f
-                text="AIG RGB HOME 掛載失敗 • "+(error.message ?: error.javaClass.simpleName)+"
-正式 Runtime 保持可恢復，不切工程殼"
+                text="AIG RGB HOME 掛載失敗 • "+(error.message ?: error.javaClass.simpleName)+"\n正式 Runtime 保持可恢復，不切工程殼"
             },FrameLayout.LayoutParams(-1,-1))
         }
         fun mountFormalRgbHome():Result<View> = rgbRuntimePageHost
