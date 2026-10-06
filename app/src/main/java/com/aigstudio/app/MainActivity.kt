@@ -55,6 +55,7 @@ import android.widget.TextView
 import android.widget.ProgressBar
 import android.widget.Toast
 import com.aigstudio.core.*
+import com.aigstudio.core.ui.RuntimeSurface
 import kotlin.math.*
 
 object StudioProductionTheme {
@@ -1271,6 +1272,10 @@ class MainActivity : Activity() {
             setBackgroundColor(StudioProductionTheme.background)
             contentDescription="AIG CNC PRODUCTION RUNTIME HOST"
         }
+        runtimeHost.addView(homePageSlot,FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
         root.visibility=View.GONE
         runtimeHost.addView(root,FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
@@ -1327,10 +1332,6 @@ class MainActivity : Activity() {
             contentDescription="AIG CNC RGB-FIRST HOME SLOT"
             visibility=View.VISIBLE
         }
-        runtimeHost.addView(homePageSlot,FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        ))
         val homeContent=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             gravity=Gravity.CENTER_HORIZONTAL
@@ -1519,12 +1520,10 @@ class MainActivity : Activity() {
                 when(surface) {
                     com.aigstudio.core.ui.RuntimeSurface.HOME -> showRuntimeHome?.invoke()
                     com.aigstudio.core.ui.RuntimeSurface.CAD -> {
-                        homePageSlot.visibility=View.GONE
                         homeRoot.visibility=View.GONE; homePageSlot.visibility=View.GONE
                         root.visibility=View.VISIBLE
                     }
                     com.aigstudio.core.ui.RuntimeSurface.CAM -> {
-                        homePageSlot.visibility=View.GONE
                         homeRoot.visibility=View.GONE; homePageSlot.visibility=View.GONE
                         showCamWorkstation()
                     }
@@ -1553,7 +1552,7 @@ class MainActivity : Activity() {
             },FrameLayout.LayoutParams(-1,-1))
         }
         fun mountFormalRgbHome():Result<View> = rgbRuntimePageHost
-            .show(com.aigstudio.core.ui.RuntimeSurface.HOME,runtimeViewport())
+            .show(RuntimeSurface.HOME,runtimeViewport())
             .onSuccess { page ->
                 homePageSlot.removeAllViews()
                 homePageSlot.addView(page,FrameLayout.LayoutParams(-1,-1))
@@ -1566,13 +1565,12 @@ class MainActivity : Activity() {
             mountFormalRgbHome().onFailure(::renderRgbHomeMountError)
         }
         val startRgbHomeMount:()->Unit = {
-            rgbRuntimePageHost.preload(com.aigstudio.core.ui.RuntimeSurface.HOME) { preload ->
+            setContentView(runtimeHost)
+            rgbRuntimePageHost.preload { preload ->
                 preload.onSuccess {
                     showRuntimeHome?.invoke()
-                    setContentView(runtimeHost)
                 }.onFailure { error ->
                     renderRgbHomeMountError(error)
-                    setContentView(runtimeHost)
                 }
             }
         }
