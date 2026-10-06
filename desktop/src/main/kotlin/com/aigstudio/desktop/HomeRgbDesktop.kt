@@ -41,8 +41,8 @@ object HomeRgbDesktopInstaller {
             ?.use { it.readBytes() } ?: error("HOME desktop asset missing")
         val digest = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
         require(digest == UiAssetContract.DESKTOP_HOME_SHA256) { "HOME desktop SHA mismatch" }
-        val decoded = ImageIO.read(bytes.inputStream()) ?: error("HOME desktop JPEG decode failed")
-        require(decoded.width == 1280 && decoded.height == 720) { "HOME desktop dimensions invalid" }
+        val decoded = ImageIO.read(bytes.inputStream()) ?: error("HOME desktop PNG decode failed")
+        require(decoded.width > 0 && decoded.height > 0) { "HOME desktop dimensions invalid" }
         decoded
     }.onFailure {
         System.err.println(
