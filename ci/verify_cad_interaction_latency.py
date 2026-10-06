@@ -64,9 +64,24 @@ move_tail = main[move_idx:touch_end]
 for forbidden in ["handleTap(", "pairwise", "intersections(", "CadSnapEngine.snapTo(doc"]:
     need(forbidden not in move_tail, "ACTION_MOVE_FORBIDDEN_" + forbidden.replace("(", "").replace(".", "_"))
 
-# snapPoint must consume revision-keyed cached candidates instead of rebuilding
-# intersection candidates on every MotionEvent.
+# snapPoint must consume revision-keyed cached candidates. Geometry revision is
+# deliberately separate from sceneRevision because pan/zoom/view invalidation must
+# never force O(n^2) intersection candidate rebuilds.
 need("CadSnapCandidateCache" in main, "MAIN_NOT_USING_CAD_SNAP_CACHE")
-need("sceneRevision" in main, "CAD_REVISION_MISSING")
+need("private var geometryRevision" in main, "CAD_GEOMETRY_REVISION_MISSING")
+snap_idx = main.find("private fun snapPoint", cad_idx)
+need(snap_idx >= 0, "CAD_SNAP_POINT_MISSING")
+snap_end = main.find("\n    private fun ", snap_idx + 1)
+need(snap_end > snap_idx, "CAD_SNAP_POINT_END_MISSING")
+snap_body = main[snap_idx:snap_end]
+need("snapCandidateCache.snap(" in snap_body, "SNAP_POINT_NOT_USING_CACHE")
+need("geometryRevision" in snap_body, "SNAP_CACHE_NOT_KEYED_BY_GEOMETRY_REVISION")
+need("CadSnapEngine.snapTo" not in snap_body, "SNAP_POINT_STILL_REBUILDS_CANDIDATES")
 
-print("CAD_INTERACTION_PASS|STUDIO|ONE_EDITOR|ONE_DESCRIPTION|ATOMIC_SIDE|LAZY_GROUPS|REVISION_CACHE|MOVE_DRAFT_ONLY")
+run_geometry_idx = main.find("private fun runGeometryCommand", cad_idx)
+need(run_geometry_idx >= 0, "RUN_GEOMETRY_COMMAND_MISSING")
+run_geometry_end = main.find("\n    private fun ", run_geometry_idx + 1)
+need(run_geometry_end > run_geometry_idx, "RUN_GEOMETRY_COMMAND_END_MISSING")
+need("geometryRevision++" in main[run_geometry_idx:run_geometry_end], "GEOMETRY_COMMAND_DOES_NOT_INVALIDATE_CACHE")
+
+print("CAD_INTERACTION_PASS|STUDIO|ONE_EDITOR|ONE_DESCRIPTION|ATOMIC_SIDE|LAZY_GROUPS|GEOMETRY_REVISION_CACHE|MOVE_DRAFT_ONLY")
