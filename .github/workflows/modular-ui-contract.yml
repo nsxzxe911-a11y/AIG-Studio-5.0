@@ -1,4 +1,5 @@
 name: Modular UI contract
+# checkpoint: re-run after CAD RuntimePageHost mount
 
 on:
   push:
