@@ -57,15 +57,28 @@ replace_once(
         )
 ''',
 '''        val cadActions=com.aigstudio.app.ui.bridge.CadCallbackBridge(
-            onTool={ actionId ->
+            tool={ actionId ->
                 runCatching { Tool.valueOf(actionId.trim().uppercase(Locale.US)) }
                     .getOrNull()?.let(cad::setTool)
             },
-            onUndo={ cad.undo() },
-            onRedo={ cad.redo() },
-            onFit={ cad.fitView() },
-            onSnap={ cad.toggleSnap() },
-            onSave={ saveCadCheckpoint() }
+            edit={ actionId ->
+                runCatching { Tool.valueOf(actionId.trim().uppercase(Locale.US)) }
+                    .getOrNull()?.let(cad::setTool)
+            },
+            command={ actionId ->
+                when(actionId.trim().uppercase(Locale.US)) {
+                    "UNDO" -> cad.undo()
+                    "REDO" -> cad.redo()
+                    "SELECT" -> cad.setTool(Tool.SELECT)
+                    "PAN" -> cad.setTool(Tool.PAN)
+                    "FIT" -> cad.fitView()
+                    "SNAP_TOGGLE" -> cad.toggleSnap()
+                    "GRID_TOGGLE" -> cad.toggleGrid()
+                    "GEOMETRY_TOGGLE" -> cad.toggleGeometry()
+                    "SAVE" -> saveCadCheckpoint()
+                    "RECOVER" -> restoreCadCheckpointIfAvailable()
+                }
+            }
         )
         val runtimeActions=com.aigstudio.core.ui.RuntimeActionSink { action ->
             when(action.kind) {
@@ -77,7 +90,10 @@ replace_once(
         val homeRegistry=com.aigstudio.app.ui.AndroidRuntimeUiRegistry(
             listOf(
                 com.aigstudio.app.ui.pages.home.HomePageModule { homeRoot },
-                com.aigstudio.app.ui.pages.cad.CadPageModule { cad }
+                com.aigstudio.app.ui.pages.cad.CadPageModule(
+                    contentFactory={ cad },
+                    callbackBridge=cadActions
+                )
             )
         )
         val rgbRuntimePageHost=com.aigstudio.app.ui.host.RuntimePageHost(
@@ -127,7 +143,7 @@ replace_once(
 
 checks = {
     'CAD_HOST_SHOW_MISSING': 'show(RuntimeSurface.CAD',
-    'CAD_MODULE_REGISTRATION_MISSING': 'CadPageModule { cad }',
+    'CAD_MODULE_REGISTRATION_MISSING': 'CadPageModule(',
     'CAD_BRIDGE_MISSING': 'CadCallbackBridge(',
     'CAD_PRELOAD_MISSING': 'preload(RuntimeSurface.CAD)',
 }
