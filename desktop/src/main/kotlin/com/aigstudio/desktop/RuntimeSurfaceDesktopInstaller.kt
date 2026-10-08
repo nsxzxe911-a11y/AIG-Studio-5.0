@@ -5,6 +5,7 @@ import com.aigstudio.core.UiAssetContract
 import java.awt.AWTEvent
 import java.awt.AlphaComposite
 import java.awt.Component
+import java.awt.Container
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Insets
@@ -17,7 +18,11 @@ import java.util.Collections
 import java.util.Properties
 import java.util.WeakHashMap
 import javax.imageio.ImageIO
+import javax.swing.AbstractButton
 import javax.swing.JComponent
+import javax.swing.JDialog
+import javax.swing.JLabel
+import javax.swing.JScrollBar
 import javax.swing.JTabbedPane
 import javax.swing.SwingUtilities
 import javax.swing.border.AbstractBorder
@@ -32,6 +37,8 @@ import kotlin.math.roundToInt
  */
 object RuntimeSurfaceDesktopInstaller {
     private val installedTabs=Collections.newSetFromMap(WeakHashMap<JTabbedPane,Boolean>())
+    private val installedButtons=Collections.newSetFromMap(WeakHashMap<AbstractButton,Boolean>())
+    private val mountedRoots=WeakHashMap<Window,JComponent>()
     private val originalBorders=WeakHashMap<JComponent,Border?>()
 
     fun install() {
@@ -47,20 +54,71 @@ object RuntimeSurfaceDesktopInstaller {
                 component.addChangeListener { mountSelected(component) }
                 mountSelected(component)
             }
+            if(component is AbstractButton && installedButtons.add(component)) {
+                recognizedSurface(component.text)?.let { surface ->
+                    component.addActionListener {
+                        SwingUtilities.invokeLater { mountWindowSurface(window,surface) }
+                    }
+                }
+            }
         }
+        if(window !is JDialog) SwingUtilities.invokeLater { mountWindowSurface(window,"HOME") }
+    }
+
+    private fun recognizedSurface(raw:String?):String? {
+        val value=raw?.trim().orEmpty()
+        val upper=value.uppercase()
+        val recognized=
+            value=="首頁" || upper=="HOME" || upper=="CAD" || upper.contains("2D CAD") ||
+            upper=="CAM" || upper=="SIM" || upper.contains("3D SIM") ||
+            upper=="3AX" || upper=="4AX" || upper=="5AX" || upper=="5X" ||
+            upper=="6AX" || upper=="6X" || upper=="NC" || upper.contains("NC EDIT") ||
+            upper=="AI" || upper.contains("AI 智能")
+        return if(recognized) RuntimeSurfaceVisualContract.normalize(value) else null
     }
 
     private fun mountSelected(tabs:JTabbedPane) {
         val index=tabs.selectedIndex
         if(index<0) return
         val component=tabs.getComponentAt(index) as? JComponent ?: return
-        val surface=RuntimeSurfaceVisualContract.normalize(tabs.getTitleAt(index))
-        if(surface !in RuntimeSurfaceVisualContract.surfaces) return
-        val image=RuntimeSurfaceDesktopAssets.image(surface) ?: return
+        val surface=recognizedSurface(tabs.getTitleAt(index)) ?: return
+        applySurface(component,surface)
+    }
+
+    /**
+     * AIG CNC production desktop uses CardLayout for its primary Runtime, not
+     * only JTabbedPane.  Mount the selected surface on the largest visible
+     * content component so real CAD/CAM/SIM/axis pages receive the full art.
+     */
+    private fun mountWindowSurface(window:Window,surface:String) {
+        val root=largestVisibleContent(window) ?: return
+        val previous=mountedRoots.put(window,root)
+        if(previous!=null && previous!==root) {
+            previous.border=originalBorders[previous]
+            previous.repaint()
+        }
+        applySurface(root,surface)
+    }
+
+    private fun largestVisibleContent(window:Window):JComponent? {
+        var best:JComponent?=null
+        var bestArea=0L
+        walk(window) { component ->
+            val jc=component as? JComponent ?: return@walk
+            if(!jc.isVisible || jc is AbstractButton || jc is JLabel || jc is JScrollBar || jc is JTabbedPane) return@walk
+            val area=jc.width.toLong().coerceAtLeast(0L)*jc.height.toLong().coerceAtLeast(0L)
+            if(area>bestArea) { best=jc;bestArea=area }
+        }
+        return best
+    }
+
+    private fun applySurface(component:JComponent,surface:String) {
         val original=originalBorders.getOrPut(component){component.border}
-        component.border=CompoundBorder(
-            RuntimeSurfaceImageBorder(image,RuntimeSurfaceVisualContract.SURFACE_ALPHA),
-            original
+        val image=RuntimeSurfaceDesktopAssets.image(surface)
+        component.border=if(image!=null) CompoundBorder(
+            RuntimeSurfaceImageBorder(image,RuntimeSurfaceVisualContract.SURFACE_ALPHA),original
+        ) else CompoundBorder(
+            ProceduralRgbSurfaceBorder(surface),original
         )
         component.revalidate()
         component.repaint()
@@ -68,7 +126,7 @@ object RuntimeSurfaceDesktopInstaller {
 
     private fun walk(component:Component,visit:(Component)->Unit) {
         visit(component)
-        if(component is java.awt.Container) component.components.forEach { walk(it,visit) }
+        if(component is Container) component.components.forEach { walk(it,visit) }
     }
 }
 
@@ -119,6 +177,21 @@ private class RuntimeSurfaceImageBorder(
         val dy=y+(height-dh)/2
         g.composite=AlphaComposite.SrcOver.derive(opacity)
         g.drawImage(image,dx,dy,dw,dh,null)
+        g.dispose()
+    }
+}
+
+private class ProceduralRgbSurfaceBorder(private val surface:String):AbstractBorder() {
+    override fun getBorderInsets(c:Component?):Insets=Insets(0,0,0,0)
+    override fun paintBorder(c:Component,g0:Graphics,x:Int,y:Int,width:Int,height:Int) {
+        if(width<=0 || height<=0) return
+        val g=g0.create() as Graphics2D
+        g.color=java.awt.Color(2,4,7,205)
+        g.fillRect(x,y,width,height)
+        g.color=java.awt.Color(39,233,255,175)
+        g.drawRoundRect(x+2,y+2,max(0,width-5),max(0,height-5),20,20)
+        g.color=java.awt.Color(244,251,255,90)
+        g.drawString(surface,x+16,y+24)
         g.dispose()
     }
 }
