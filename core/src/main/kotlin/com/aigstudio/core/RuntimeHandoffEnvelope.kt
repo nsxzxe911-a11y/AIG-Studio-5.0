@@ -1,7 +1,7 @@
 package com.aigstudio.core
 
 /**
- * Cross-project handoff metadata.  AIG CNC remains authoritative for machining
+ * Cross-project handoff metadata. AIG CNC remains authoritative for machining
  * truth; AIG-II passes references/snapshots and requested surface only.
  */
 data class RuntimeHandoffEnvelope(
@@ -36,6 +36,53 @@ data class RuntimeHandoffEnvelope(
         if(runtimeSha.isNotBlank() && !runtimeSha.matches(Regex("[a-fA-F0-9]{40,64}"))) add("RUNTIME_SHA_FORMAT")
     }
 
-    /** Ordinary findings never erase or lock the local project. */
     fun localProjectRemainsUsable():Boolean=true
+}
+
+enum class RuntimeHandoffStatus {
+    READY,
+    PROJECT_REVIEW,
+    CONTENT_DIFFERENT,
+    RUNTIME_VERSION_DIFFERENT,
+    RUNTIME_UNAVAILABLE
+}
+
+object RuntimeHandoffPolicy {
+    const val TRANSPORT="LOCAL_PROJECT_HANDOFF"
+    const val NETWORK_REQUIRED=false
+    const val SILENT_OVERWRITE=false
+    const val GLOBAL_RUNTIME_LOCK=false
+    const val AUTO_ROLLBACK=false
+    const val AUTO_DOWNGRADE=false
+
+    fun classify(
+        envelope:RuntimeHandoffEnvelope,
+        localContentDigest:String?,
+        expectedRuntimeSha:String?,
+        runtimeAvailable:Boolean
+    ):RuntimeHandoffStatus {
+        if(!runtimeAvailable) return RuntimeHandoffStatus.RUNTIME_UNAVAILABLE
+        if(envelope.findings().isNotEmpty()) return RuntimeHandoffStatus.PROJECT_REVIEW
+        if(!localContentDigest.isNullOrBlank() && envelope.contentDigest.isNotBlank() &&
+            localContentDigest!=envelope.contentDigest) return RuntimeHandoffStatus.CONTENT_DIFFERENT
+        if(!expectedRuntimeSha.isNullOrBlank() && envelope.runtimeSha.isNotBlank() &&
+            expectedRuntimeSha!=envelope.runtimeSha) return RuntimeHandoffStatus.RUNTIME_VERSION_DIFFERENT
+        return RuntimeHandoffStatus.READY
+    }
+
+    fun messageZhTw(state:RuntimeHandoffStatus):String=when(state) {
+        RuntimeHandoffStatus.READY -> "AIG 專案續接就緒"
+        RuntimeHandoffStatus.PROJECT_REVIEW -> "專案資料需確認 • 本機 Runtime 可繼續使用"
+        RuntimeHandoffStatus.CONTENT_DIFFERENT -> "專案內容已有變更 • 可比較 / 保留本機 / 另存副本"
+        RuntimeHandoffStatus.RUNTIME_VERSION_DIFFERENT -> "Runtime 版本不同 • 可繼續本機工作並重新續接"
+        RuntimeHandoffStatus.RUNTIME_UNAVAILABLE -> "AIG-II 尚未連線 • AIG CNC 可繼續本機加工工作"
+    }
+
+    fun connectivityPolicyAligned():Boolean =
+        !NETWORK_REQUIRED &&
+        !GLOBAL_RUNTIME_LOCK &&
+        !AUTO_ROLLBACK &&
+        !AUTO_DOWNGRADE &&
+        AigProjectConnectivityPolicy.OFFLINE_FIRST &&
+        !AigProjectConnectivityPolicy.NETWORK_REQUIRED_FOR_LOCAL_RUNTIME
 }
