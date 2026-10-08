@@ -17,6 +17,8 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import com.aigstudio.core.MorningBaselineVisualContract
+import com.aigstudio.core.RuntimeVisualModuleRegistry
 import com.aigstudio.core.UiAssetContract
 import java.security.MessageDigest
 import java.util.Collections
@@ -26,8 +28,7 @@ import kotlin.math.max
 
 /**
  * Installs AIG RGB visuals on the real production Runtime without changing
- * machining callbacks. Missing exact HOME art falls forward to the separately
- * ingested full-page Runtime surface; it never rolls the product back.
+ * machining callbacks. Visual skin, layout and actions remain independent.
  */
 class AigStudioApplication : Application(), Application.ActivityLifecycleCallbacks {
     private val applied = Collections.newSetFromMap(WeakHashMap<View, Boolean>())
@@ -106,9 +107,19 @@ private object HomeRgbAsset {
     private const val EXPECTED_SHA256 = "8c55956f9ea6693b34d78395d6336ea7bf1a0ec4eeece824c22396b18bb854af"
 
     fun load(activity: Activity): Drawable? {
+        loadMorningBaseline(activity)?.let { return it }
         loadExact(activity)?.let { return it }
         return loadRuntimeSurfaceFallback(activity)
     }
+
+    private fun loadMorningBaseline(activity:Activity):Drawable? = runCatching {
+        val file=RuntimeVisualModuleRegistry.require("HOME").visualAsset
+        val bytes=activity.assets.open("aig-morning-baseline/20261006/$file").use{it.readBytes()}
+        require(bytes.size>=MorningBaselineVisualContract.minimumFullSurfaceBytes){"Morning HOME baseline is icon-sized"}
+        val bitmap=BitmapFactory.decodeByteArray(bytes,0,bytes.size) ?: error("Morning HOME baseline decode failed")
+        require(bitmap.width>=640 && bitmap.height>=360){"Morning HOME baseline dimensions invalid"}
+        HomeCoverDrawable(bitmap)
+    }.onFailure { Log.w(TAG,"Morning HOME unavailable; trying approved HOME",it) }.getOrNull()
 
     private fun loadExact(activity:Activity):Drawable? = runCatching {
         val path = "${UiAssetContract.ANDROID_HOME_ROOT}/${UiAssetContract.ANDROID_HOME_FILE}"
