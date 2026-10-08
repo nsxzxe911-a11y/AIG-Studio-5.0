@@ -81,3 +81,11 @@ tasks.register<JavaExec>("sharedSettingsContractRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.SharedSettingsContractRegressionKt")
 }
+
+tasks.register<JavaExec>("settingsLocalizationContractRegression") {
+    group = "verification"
+    description = "Checks Settings zh-TW/en-US keys and production locale state synchronization"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.SettingsLocalizationContractRegressionKt")
+}

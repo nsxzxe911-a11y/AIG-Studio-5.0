@@ -119,6 +119,14 @@ class SharedSettingsStore(
         return next
     }
 
+    fun selectLocale(localeId:String):Boolean {
+        if(localeId !in UiLocalizationRegistry.supportedLocales) return false
+        UiLocalizationRegistry.requireLocale(localeId)
+        val next=update { it.copy(localeId=localeId) }
+        UiPresentationState.selectLocale(next.localeId)
+        return true
+    }
+
     fun selectRenderer(selection:RendererSelection):Boolean {
         if(!SharedSettingsContract.selectable(selection,platform,rendererCapabilities)) return false
         update { it.copy(rendererSelection=selection) }
