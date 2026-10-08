@@ -1,9 +1,9 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "361.0.0",
-  "branch": "main",
-  "recorded_source_head": "e22ef1627f1dcc5a60399a220d82518780bca81f",
+  "version": "370.0.0",
+  "branch": "impl/runtime-ui-recovery-20261008",
+  "recorded_source_head": "2804bc1d0e500e647865577b13ec90e246906489",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
   "departments": {
