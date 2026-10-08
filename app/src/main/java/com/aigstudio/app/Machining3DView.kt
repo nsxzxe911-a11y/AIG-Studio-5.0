@@ -465,13 +465,14 @@ class Machining3DView(
         val target = (display?.refreshRate ?: 60f).coerceIn(30f, 120f).toDouble()
         val base = if (target >= 90.0) 4600 else 5500
         val ratio = if (currentFps <= 1.0) 1.0 else currentFps / target
-        val scale = when {
+        val frameScale = when {
             ratio < 0.55 -> 0.55
             ratio < 0.72 -> 0.68
             ratio < 0.86 -> 0.82
             else -> 1.0
         }
-        return (base * scale).roundToInt().coerceAtLeast(700)
+        val visualScale = VisualQualityRuntime.current().resolutionScale
+        return (base * frameScale * visualScale).roundToInt().coerceAtLeast(450)
     }
 
     private fun triangleVisible(a: ScreenPoint, b: ScreenPoint, c: ScreenPoint): Boolean {
@@ -546,6 +547,7 @@ class Machining3DView(
             canvas.drawColor(Color.argb(52,2,7,14))
         }
         val fpsStats = fpsMeter.record(System.nanoTime())
+        val visualBudget = VisualQualityRuntime.current()
 
         val stockW = result.stock.maxX - result.stock.minX
         val stockH = result.stock.maxY - result.stock.minY
@@ -598,7 +600,7 @@ class Machining3DView(
             val a=projected[triangle.a]; val b=projected[triangle.b]; val c=projected[triangle.c]
             trianglePath.reset(); trianglePath.moveTo(a.x,a.y); trianglePath.lineTo(b.x,b.y); trianglePath.lineTo(c.x,c.y); trianglePath.close()
             canvas.drawPath(trianglePath,surfacePaint)
-            canvas.drawPath(trianglePath,surfaceSeamPaint)
+            if(visualBudget.shadowMode != ShadowMode.OFF) canvas.drawPath(trianglePath,surfaceSeamPaint)
             if(showMaterialMeshEdges && visibleIndex % 18 == 0) { canvas.drawPath(trianglePath,edgePaint) }
         }
         val previousFrame=previousProgressiveFrame
@@ -607,7 +609,8 @@ class Machining3DView(
             val currentDepth=activeFrame.removal.depth; val previousDepth=previousFrame.removal.depth
             var freshCount=0
             for(i in currentDepth.indices) if(currentDepth[i]<previousDepth[i]-1e-9) freshCount++
-            val freshStride=max(1,ceil(freshCount/700.0).toInt())
+            val baseFreshStride=max(1,ceil(freshCount/700.0).toInt())
+            val freshStride=baseFreshStride*visualBudget.materialRemovalDisplayStride
             var freshSeen=0
             for(i in currentDepth.indices){
                 if(currentDepth[i]<previousDepth[i]-1e-9){
@@ -646,28 +649,32 @@ class Machining3DView(
         drawToolStackForeground(canvas,machineModel,scale)
 
         var remainingMoves = activeFrame?.index?.plus(1) ?: Int.MAX_VALUE
+        val toolpathDisplayStride = visualBudget.toolpathDisplayStride
         result.cam.toolpaths.forEach { toolpath ->
             if (remainingMoves <= 0) return@forEach
-            var previous: Move? = null
+            var previousDisplayed: Move? = null
             val takeCount = min(remainingMoves, toolpath.moves.size)
-            toolpath.moves.take(takeCount).forEach { move ->
-                val prev = previous
-                if (prev != null) {
-                    val a = project(machineSpace(Vec3(prev.to.x, prev.to.y, prev.z),resolvedMode,liveMove), scale)
-                    val b = project(machineSpace(Vec3(move.to.x, move.to.y, move.z),resolvedMode,liveMove), scale)
-                    val occluded=materialOccludesSegment(a,b)
-                    val pathPaint=when {
-                        move.rapid && occluded -> occludedRapidPaint
-                        !move.rapid && occluded -> occludedCutPaint
-                        move.rapid -> rapidPaint
-                        else -> cutPaint
+            toolpath.moves.take(takeCount).forEachIndexed { localIndex, move ->
+                val shouldDisplay = localIndex % toolpathDisplayStride == 0 || localIndex == takeCount - 1
+                if(shouldDisplay){
+                    val prev = previousDisplayed
+                    if (prev != null) {
+                        val a = project(machineSpace(Vec3(prev.to.x, prev.to.y, prev.z),resolvedMode,liveMove), scale)
+                        val b = project(machineSpace(Vec3(move.to.x, move.to.y, move.z),resolvedMode,liveMove), scale)
+                        val occluded=materialOccludesSegment(a,b)
+                        val pathPaint=when {
+                            move.rapid && occluded -> occludedRapidPaint
+                            !move.rapid && occluded -> occludedCutPaint
+                            move.rapid -> rapidPaint
+                            else -> cutPaint
+                        }
+                        if(!occluded) {
+                            canvas.drawLine(a.x,a.y,b.x,b.y,if(move.rapid) rapidGlowPaint else cutGlowPaint)
+                        }
+                        canvas.drawLine(a.x, a.y, b.x, b.y, pathPaint)
                     }
-                    if(!occluded) {
-                        canvas.drawLine(a.x,a.y,b.x,b.y,if(move.rapid) rapidGlowPaint else cutGlowPaint)
-                    }
-                    canvas.drawLine(a.x, a.y, b.x, b.y, pathPaint)
+                    previousDisplayed = move
                 }
-                previous = move
             }
             if (activeFrame != null) remainingMoves -= takeCount
         }
@@ -717,7 +724,6 @@ class Machining3DView(
             val radius = max(4f, (result.cam.settings.toolDiameter * scale * 0.12).toFloat())
             canvas.drawCircle(tip.x,tip.y,radius+4f*resources.displayMetrics.density,toolHaloPaint)
             canvas.drawLine(tip.x, tip.y, top.x, top.y, toolPaint)
-            // Draw the bright current axis after the previous-pose ghost so current attitude stays dominant.
             val axisDepthDelta=rawAxisCueTop.depth-tip.depth
             val depthPolarity=when {
                 axisDepthDelta>1e-6 -> "近"
