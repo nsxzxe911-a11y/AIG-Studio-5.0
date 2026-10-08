@@ -31,6 +31,7 @@ object RuntimeSurfaceAndroidInstaller {
         val decor=activity.window.decorView
         decor.post { bindTree(activity,decor) }
         decor.viewTreeObserver.addOnGlobalLayoutListener { bindTree(activity,decor) }
+        RuntimeLocalizationAndroidInstaller.install(activity)
     }
 
     private fun bindTree(activity:Activity,view:View) {
