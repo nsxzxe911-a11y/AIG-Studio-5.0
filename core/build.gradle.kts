@@ -45,3 +45,11 @@ tasks.register<JavaExec>("rgbGlobalSkinRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.AigRgbGlobalSkinRegressionKt")
 }
+
+tasks.register<JavaExec>("rendererCapabilityNegotiationRegression") {
+    group = "verification"
+    description = "Checks AUTO renderer ordering and no-fake GPU backend selection"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.RendererCapabilityNegotiationRegressionKt")
+}
