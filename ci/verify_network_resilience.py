@@ -9,7 +9,9 @@ desktop_path=("desktop/aigii/DesktopApp.kt" if is_aigii else "desktop/src/main/k
 desktop=(ROOT/desktop_path).read_text(encoding="utf-8")
 secure=(ROOT/("app/src/main/java/com/aigii/app/SecureServices.kt" if is_aigii else "app/src/main/java/com/aigstudio/app/SecureServices.kt")).read_text(encoding="utf-8")
 policy_path=("shared/aigii/ProjectConnectivityPolicy.kt" if is_aigii else "core/src/main/kotlin/com/aigstudio/core/ProjectConnectivityPolicy.kt")
+handoff_path=("shared/aigii/RuntimeHandoffEnvelope.kt" if is_aigii else "core/src/main/kotlin/com/aigstudio/core/RuntimeHandoffEnvelope.kt")
 policy=(ROOT/policy_path).read_text(encoding="utf-8")
+handoff=(ROOT/handoff_path).read_text(encoding="utf-8")
 
 def need(cond,code):
     if not cond:
@@ -28,6 +30,19 @@ for marker in (
     "RECONNECT_DEBOUNCE_MS=40L",
 ):
     need(marker in policy,"PROJECT_POLICY_"+marker)
+
+for marker in (
+    "object RuntimeHandoffPolicy",
+    'TRANSPORT="LOCAL_PROJECT_HANDOFF"',
+    "NETWORK_REQUIRED=false",
+    "SILENT_OVERWRITE=false",
+    "GLOBAL_RUNTIME_LOCK=false",
+    "AUTO_ROLLBACK=false",
+    "AUTO_DOWNGRADE=false",
+    "fun localProjectRemainsUsable():Boolean=true",
+    "fun connectivityPolicyAligned():Boolean",
+):
+    need(marker in handoff,"HANDOFF_POLICY_"+marker)
 
 for marker in (
     "NETWORK_CAPABILITY_DEBOUNCE_MS = 40L",
@@ -78,4 +93,4 @@ for marker in (
 ):
     need(marker in desktop,"DESKTOP_"+marker)
 
-print("AIG_PROJECT_CONNECTIVITY_VERIFY_PASS|LOCAL_FIRST|RUNTIME_NON_BLOCKING|ANDROID_WINDOWS_OFF_MAIN_SYNC_IO|40MS_DEBOUNCE|LATEST_WINS|STALE_RESULT_SUPPRESSION|VALIDATED_RECONNECT|OFFLINE_FAST_FAIL|RANGE_ETAG_IF_RANGE|NO_AUTO_ROLLBACK|NO_AUTO_DOWNGRADE")
+print("AIG_PROJECT_CONNECTIVITY_VERIFY_PASS|LOCAL_FIRST|RUNTIME_NON_BLOCKING|PROJECT_HANDOFF|ANDROID_WINDOWS_OFF_MAIN_SYNC_IO|40MS_DEBOUNCE|LATEST_WINS|STALE_RESULT_SUPPRESSION|VALIDATED_RECONNECT|OFFLINE_FAST_FAIL|RANGE_ETAG_IF_RANGE|NO_GLOBAL_LOCK|NO_AUTO_ROLLBACK|NO_AUTO_DOWNGRADE")
