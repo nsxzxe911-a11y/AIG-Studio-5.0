@@ -8,10 +8,26 @@ main=(ROOT/("app/src/main/java/com/aigii/app/MainActivity.kt" if is_aigii else "
 desktop_path=("desktop/aigii/DesktopApp.kt" if is_aigii else "desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt")
 desktop=(ROOT/desktop_path).read_text(encoding="utf-8")
 secure=(ROOT/("app/src/main/java/com/aigii/app/SecureServices.kt" if is_aigii else "app/src/main/java/com/aigstudio/app/SecureServices.kt")).read_text(encoding="utf-8")
+policy_path=("shared/aigii/ProjectConnectivityPolicy.kt" if is_aigii else "core/src/main/kotlin/com/aigstudio/core/ProjectConnectivityPolicy.kt")
+policy=(ROOT/policy_path).read_text(encoding="utf-8")
 
 def need(cond,code):
     if not cond:
-        raise SystemExit("NETWORK_RESILIENCE_BLOCKED|"+code)
+        raise SystemExit("PROJECT_CONNECTIVITY_VERIFY_FAIL|"+code)
+
+for marker in (
+    'POLICY="AIG_PROJECT_LOCAL_FIRST_LATEST_WINS"',
+    "OFFLINE_FIRST=true",
+    "NETWORK_REQUIRED_FOR_LOCAL_RUNTIME=false",
+    "UI_THREAD_BLOCKING_ALLOWED=false",
+    "AUTO_APPLY_REMOTE=false",
+    "AUTO_ROLLBACK=false",
+    "AUTO_DOWNGRADE=false",
+    "STALE_RESULT_SUPPRESSION=true",
+    "MAX_IN_FLIGHT_REQUESTS=1",
+    "RECONNECT_DEBOUNCE_MS=40L",
+):
+    need(marker in policy,"PROJECT_POLICY_"+marker)
 
 for marker in (
     "NETWORK_CAPABILITY_DEBOUNCE_MS = 40L",
@@ -62,9 +78,4 @@ for marker in (
 ):
     need(marker in desktop,"DESKTOP_"+marker)
 
-if is_aigii:
-    theme=(ROOT/"app/src/main/java/com/aigii/app/ThemeServices.kt").read_text(encoding="utf-8")
-    need("THEME NETWORK OFFLINE FAST-FAIL" in theme,"THEME_FAST_FAIL")
-    need("NetworkSecurity.isValidated(context)" in theme,"THEME_VALIDATED_NETWORK")
-
-print("NETWORK_RESILIENCE_GATE_PASS|ANDROID_WINDOWS_OFF_MAIN_SYNC_IO|40MS_DEBOUNCE|STALE_RESULT_SUPPRESSION|VALIDATED_RECONNECT_RESET|OFFLINE_FAST_FAIL|RANGE_ETAG_IF_RANGE|CHECKPOINT_RETAINED")
+print("AIG_PROJECT_CONNECTIVITY_VERIFY_PASS|LOCAL_FIRST|RUNTIME_NON_BLOCKING|ANDROID_WINDOWS_OFF_MAIN_SYNC_IO|40MS_DEBOUNCE|LATEST_WINS|STALE_RESULT_SUPPRESSION|VALIDATED_RECONNECT|OFFLINE_FAST_FAIL|RANGE_ETAG_IF_RANGE|NO_AUTO_ROLLBACK|NO_AUTO_DOWNGRADE")
