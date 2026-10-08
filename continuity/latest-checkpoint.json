@@ -1,11 +1,11 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "372.0.0",
-  "branch": "impl/runtime-ui-recovery-20261008",
-  "recorded_source_head": "2804bc1d0e500e647865577b13ec90e246906489",
+  "version": "373.0.0",
+  "branch": "feat/aig-cnc-373-runtime-link-repair",
+  "recorded_source_head": "7b9cb0aca06117f5132209441c1fc5df0344bccf",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "FULL_PAGE_ENTRIES_RESTORED_VISUAL_ANDROID_ACCEPTANCE_PENDING",
+  "status": "FULL_RUNTIME_LINK_REPAIR_SOURCE_PASS_BINARY_UI_ACCEPTANCE_PENDING",
   "departments": {
     "HOME": "EXECUTE_UNTIL_PASS",
     "CAD": "EXECUTE_UNTIL_PASS",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Finish approved RGB product visuals and recover Android visible UI evidence; Windows ten page entries have screenshot evidence.",
-  "note": "No-UI product bypass removed. Five reference images restored and checked. Windows ten page navigation observed. Android APK installed, but emulator automation returned null root and timeouts; not UI PASS.",
+  "next_action": "Exact-bind AIG-II 453 to this AIG CNC 373 line, then capture fresh APK/EXE launch and RGB HOME interaction evidence.",
+  "note": "373 repairs shared Settings/localization/renderer links and product action links. Focused source/compile gates pass; fresh APK/EXE install-launch interaction evidence is not yet claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
