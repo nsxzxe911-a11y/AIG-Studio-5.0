@@ -10,7 +10,7 @@
         android:hardwareAccelerated="true"
         android:usesCleartextTraffic="false"
         android:icon="@drawable/ic_launcher"
-        android:label="AIG Studio 5.0"
+        android:label="AIG CNC"
         android:supportsRtl="true"
         android:theme="@style/Theme.AIGStudio">
         <receiver
