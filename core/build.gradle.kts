@@ -89,3 +89,11 @@ tasks.register<JavaExec>("settingsLocalizationContractRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.SettingsLocalizationContractRegressionKt")
 }
+
+tasks.register<JavaExec>("settingsAndroidWiringRegression") {
+    group = "verification"
+    description = "Checks Android shared Settings, truthful renderer and dialog localization wiring"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.SettingsAndroidWiringRegressionKt")
+}

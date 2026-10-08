@@ -4,6 +4,7 @@ import android.app.Activity
 import android.graphics.Typeface
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
 import android.widget.EditText
 import android.widget.TextView
 import com.aigstudio.core.UiPresentationState
@@ -41,16 +42,25 @@ object RuntimeLocalizationAndroidInstaller {
         "RUNNING" to "status.running", "運轉中" to "status.running",
         "CONNECTED" to "status.connected", "已連線" to "status.connected",
         "OFFLINE" to "status.offline", "離線" to "status.offline",
-        "AI ASSISTANT" to "ai.assistant", "AI 智慧助手" to "ai.assistant"
+        "AI ASSISTANT" to "ai.assistant", "AI 智慧助手" to "ai.assistant",
+        "DISPLAY & PERFORMANCE" to "settings.displayPerformance", "顯示與效能" to "settings.displayPerformance",
+        "LANGUAGE" to "settings.language", "語言" to "settings.language",
+        "RENDERER BACKEND" to "settings.renderer", "RENDERER 後端" to "settings.renderer"
     )
 
     fun install(activity:Activity) {
-        val decor=activity.window.decorView
-        decor.post { bindTree(decor) }
+        bindWindow(activity.window)
     }
 
     fun refresh(activity:Activity) {
         bindTree(activity.window.decorView)
+    }
+
+    /** AlertDialog and other dynamic surfaces own separate Windows. */
+    fun bindWindow(window:Window?) {
+        if(window==null) return
+        val decor=window.decorView
+        decor.post { bindTree(decor) }
     }
 
     private fun bindTree(view:View) {

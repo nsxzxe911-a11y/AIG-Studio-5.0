@@ -744,6 +744,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        SharedSettingsAndroidBridge.load(this)
         runCatching { applyCoordinatePrecisionPreference() }
         // System launch window stays visible until the first Production Runtime frame.
         // Do not install a custom engineering/startup shell as the app content view.
@@ -5355,169 +5356,199 @@ private fun applyCoordinatePrecisionPreference() {
     }
 
     private fun showEnvironmentSettings() {
-        val prefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
-        val box = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(10), dp(16), dp(8))
+        val prefs=getSharedPreferences("aig_environment",MODE_PRIVATE)
+        val sharedSettings=SharedSettingsAndroidBridge.store(this)
+        val current=sharedSettings.snapshot()
+        val box=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(16),dp(10),dp(16),dp(8))
+        }
+        fun label(key:String,detail:String="") {
+            box.addView(TextView(this).apply {
+                text=UiPresentationState.text(key)+(if(detail.isBlank()) "" else " • $detail")
+                setTextColor(StudioProductionTheme.text)
+                textSize=12f
+                setPadding(dp(2),dp(7),dp(2),dp(3))
+            })
         }
 
-        val fpsValues = arrayOf("Auto", "120 FPS", "90 FPS", "60 FPS", "30 FPS")
-        val fps = Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, fpsValues)
-            val current = prefs.getString("fps_mode", "60 FPS") ?: "60 FPS"
-            setSelection(fpsValues.indexOf(current).coerceAtLeast(0))
-            box.addView(TextView(this@MainActivity).apply { text = "FPS 模式（可改｜預設：60 FPS）" })
-            box.addView(this)
+        val languageIds=arrayOf("zh-TW","en-US")
+        val languageLabels=arrayOf(
+            UiLocalizationRegistry.text("zh-TW","settings.language.zhTw"),
+            UiLocalizationRegistry.text("en-US","settings.language.enUs")
+        )
+        label("settings.language")
+        val languageSpinner=Spinner(this).apply {
+            adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,languageLabels)
+            setSelection(languageIds.indexOf(current.localeId).coerceAtLeast(0))
         }
+        box.addView(languageSpinner)
 
-        val powerValues = arrayOf("Auto", "Performance", "Balanced", "Eco")
-        val power = Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, powerValues)
-            val current = prefs.getString("power_mode", "Auto") ?: "Auto"
-            setSelection(powerValues.indexOf(current).coerceAtLeast(0))
-            box.addView(TextView(this@MainActivity).apply { text = "省電 / 效能模式（可改｜預設：Auto）" })
-            box.addView(this)
+        val rendererOptions=sharedSettings.rendererOptions()
+        val rendererLabels=rendererOptions.map(SharedSettingsAndroidBridge::rendererLabel)
+        label("settings.renderer")
+        val rendererSpinner=Spinner(this).apply {
+            adapter=object:ArrayAdapter<String>(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,rendererLabels) {
+                override fun isEnabled(position:Int):Boolean=rendererOptions[position].selectable
+                override fun getDropDownView(position:Int,convertView:View?,parent:ViewGroup):View {
+                    return super.getDropDownView(position,convertView,parent).apply {
+                        isEnabled=rendererOptions[position].selectable
+                        alpha=if(rendererOptions[position].selectable)1f else 0.45f
+                    }
+                }
+            }
+            setSelection(rendererOptions.indexOfFirst{it.selection==current.rendererSelection}.coerceAtLeast(0))
         }
+        box.addView(rendererSpinner)
 
-        val qualityValues = arrayOf("High", "Ultra", "Balanced", "Eco")
-        val quality = Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, qualityValues)
-            val current = prefs.getString("render_quality", "High") ?: "High"
-            setSelection(qualityValues.indexOf(current).coerceAtLeast(0))
-            box.addView(TextView(this@MainActivity).apply { text = "3D / SIM 畫質（可改｜預設：High）" })
-            box.addView(this)
+        val gpu3d=CheckBox(this).apply {
+            text=UiPresentationState.text("settings.gpu3d")
+            isChecked=current.gpu3dEnabled
         }
+        box.addView(gpu3d)
 
-        val coordinatePrecisionValues = arrayOf("0.001","0.01","0.1")
-        val coordinatePrecisionLabels = arrayOf("0.001 mm","0.01 mm","0.1 mm")
-        val coordinatePrecision = Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, coordinatePrecisionLabels)
-            val current = prefs.getString("coordinate_precision","0.001") ?: "0.001"
-            setSelection(coordinatePrecisionValues.indexOf(current).coerceAtLeast(0))
-            box.addView(TextView(this@MainActivity).apply { text = "座標顯示 / 輸入步進（可改｜預設：0.001 mm）" })
-            box.addView(this)
+        val fpsValues=arrayOf("Auto","120 FPS","90 FPS","60 FPS","30 FPS")
+        val fps=Spinner(this).apply {
+            adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,fpsValues)
+            val stored=prefs.getString("fps_mode","60 FPS") ?: "60 FPS"
+            setSelection(fpsValues.indexOf(stored).coerceAtLeast(0))
         }
+        label("settings.fps","60 FPS default");box.addView(fps)
 
-        val ncPrecision = Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, coordinatePrecisionLabels)
-            val current = prefs.getString("nc_output_precision","0.001") ?: "0.001"
-            setSelection(coordinatePrecisionValues.indexOf(current).coerceAtLeast(0))
-            box.addView(TextView(this@MainActivity).apply { text = "NC 輸出精度（可改｜預設：0.001 mm）" })
-            box.addView(this)
+        val powerValues=arrayOf("Auto","Performance","Balanced","Eco")
+        val power=Spinner(this).apply {
+            adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,powerValues)
+            val stored=prefs.getString("power_mode","Auto") ?: "Auto"
+            setSelection(powerValues.indexOf(stored).coerceAtLeast(0))
         }
+        label("settings.power","Auto default");box.addView(power)
 
-        val rgb = SeekBar(this).apply {
-            max = 100
-            progress = prefs.getInt("rgb_brightness", 65)
-            box.addView(TextView(this@MainActivity).apply { text = "RGB 亮度 0–100%（可改｜預設：65%）" })
-            box.addView(this)
+        val qualityValues=arrayOf("High","Ultra","Balanced","Eco")
+        val quality=Spinner(this).apply {
+            adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,qualityValues)
+            val stored=prefs.getString("render_quality","High") ?: "High"
+            setSelection(qualityValues.indexOf(stored).coerceAtLeast(0))
         }
+        label("settings.quality","High default");box.addView(quality)
 
-        val systemHud = CheckBox(this).apply {
-            text = "系統監控 HUD（可改｜預設：OFF）：精簡列 / 點擊展開"
-            isChecked = prefs.getBoolean("system_hud_enabled", false)
-            box.addView(this)
+        val precisionValues=arrayOf("0.001","0.01","0.1")
+        val precisionLabels=arrayOf("0.001 mm","0.01 mm","0.1 mm")
+        val coordinatePrecision=Spinner(this).apply {
+            adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,precisionLabels)
+            setSelection(precisionValues.indexOf(current.coordinatePrecision.storageValue).coerceAtLeast(0))
         }
+        label("settings.precision","Display / Input");box.addView(coordinatePrecision)
+        val ncPrecision=Spinner(this).apply {
+            adapter=ArrayAdapter(this@MainActivity,android.R.layout.simple_spinner_dropdown_item,precisionLabels)
+            setSelection(precisionValues.indexOf(current.ncPrecision.storageValue).coerceAtLeast(0))
+        }
+        label("settings.precision","NC • engine 0.001 mm");box.addView(ncPrecision)
 
-        val fpsDisplay = CheckBox(this).apply {
-            text = "FPS 顯示（可改｜預設：OFF）：開啟即時實測 FPS"
-            isChecked = prefs.getBoolean("fps_display_enabled", false)
-            box.addView(this)
-        }
+        val rgb=SeekBar(this).apply { max=100;progress=current.rgbBrightness }
+        label("settings.rgb","0–100% • 65% default");box.addView(rgb)
 
-        val temperatureDisplay = CheckBox(this).apply {
-            text = "溫度顯示：CPU °C / GPU °C"
-            isChecked = prefs.getBoolean("temperature_display_enabled", RuntimeDeviceProfile.defaultTemperatureDisplayEnabled)
-            box.addView(this)
+        val systemHud=CheckBox(this).apply {
+            text=UiPresentationState.text("settings.hud")+" • SYSTEM"
+            isChecked=current.systemHudEnabled
         }
-
-        val overheatWarning = CheckBox(this).apply {
-            text = "過熱提醒（可改｜預設：ON）：CPU/GPU 75°C 警告 / 85°C 高溫"
-            isChecked = prefs.getBoolean("overheat_warning_enabled", true)
-            box.addView(this)
+        val fpsDisplay=CheckBox(this).apply {
+            text=UiPresentationState.text("settings.fps")+" • DISPLAY"
+            isChecked=current.fpsDisplayEnabled
         }
-
-        val hud = CheckBox(this).apply {
-            text = "效能 HUD（可改｜預設：OFF）：FPS / Frame Time / Battery / Thermal"
-            isChecked = prefs.getBoolean("hud_enabled", false)
-            box.addView(this)
+        val temperatureDisplay=CheckBox(this).apply {
+            text="CPU / GPU °C"
+            isChecked=current.temperatureDisplayEnabled
         }
-
-        val autoThermal = CheckBox(this).apply {
-            text = "自動溫度降頻（可改｜預設：ON）：120 → 60 → 30"
-            isChecked = prefs.getBoolean("thermal_auto", true)
-            box.addView(this)
+        val overheatWarning=CheckBox(this).apply {
+            text="75°C WARNING / 85°C HIGH"
+            isChecked=prefs.getBoolean("overheat_warning_enabled",true)
         }
-
-        val idleThrottle = CheckBox(this).apply {
-            text = "Idle redraw throttling（可改｜預設：ON）"
-            isChecked = prefs.getBoolean("idle_throttle", true)
-            box.addView(this)
+        val hud=CheckBox(this).apply {
+            text=UiPresentationState.text("settings.hud")+" • PERFORMANCE"
+            isChecked=current.hudEnabled
         }
+        val autoThermal=CheckBox(this).apply {
+            text="THERMAL AUTO • 120 → 60 → 30"
+            isChecked=current.thermalAuto
+        }
+        val idleThrottle=CheckBox(this).apply {
+            text="IDLE REDRAW THROTTLE"
+            isChecked=current.idleRedrawThrottle
+        }
+        box.addView(systemHud);box.addView(fpsDisplay);box.addView(temperatureDisplay)
+        box.addView(overheatWarning);box.addView(hud);box.addView(autoThermal);box.addView(idleThrottle)
 
         box.addView(TextView(this).apply {
-            text = "即時套用：FPS / 120Hz / CPU/GPU 溫度 / HUD / RGB / 熱控\nRGB A/B：設 0% 或 100% 會自動記錄真機 FPS / CPU / 溫度\n重開套用：3D / SIM 畫質核心"
+            val backend=SharedSettingsAndroidBridge.effectiveBackend(this@MainActivity)?.name ?: "NONE"
+            text="Runtime Renderer: $backend • 0.001 mm engine truth"
             setTextColor(0xFFA0BED2.toInt())
-            textSize = 11f
-            setPadding(dp(4), dp(10), dp(4), dp(4))
+            textSize=11f
+            setPadding(dp(4),dp(10),dp(4),dp(4))
         })
 
-        AlertDialog.Builder(this)
-            .setTitle("AIG CNC 系統環境設定")
+        val settingsDialog=AlertDialog.Builder(this)
+            .setTitle(UiPresentationState.text("settings.displayPerformance"))
             .setView(box)
-            .setPositiveButton("套用") { _, _ ->
-                val selectedFps = fpsValues[fps.selectedItemPosition]
-                val selectedQuality = qualityValues[quality.selectedItemPosition]
-                val previousQuality = prefs.getString("render_quality", "High") ?: "High"
-                val restartRequired =
-                    prefs.getBoolean("restart_required", false) ||
-                    SettingsApplyPolicy.requiresRestart(previousQuality, selectedQuality)
+            .setPositiveButton(UiPresentationState.text("settings.apply")) { _,_->
+                val selectedFps=fpsValues[fps.selectedItemPosition]
+                val selectedQuality=qualityValues[quality.selectedItemPosition]
+                val previousQuality=prefs.getString("render_quality","High") ?: "High"
+                val restartRequired=prefs.getBoolean("restart_required",false) ||
+                    SettingsApplyPolicy.requiresRestart(previousQuality,selectedQuality)
+                val requested=current.copy(
+                    localeId=languageIds[languageSpinner.selectedItemPosition],
+                    rendererSelection=rendererOptions[rendererSpinner.selectedItemPosition].selection,
+                    gpu3dEnabled=gpu3d.isChecked,
+                    fpsMode=when(selectedFps){
+                        "Auto"->FpsMode.AUTO;"120 FPS"->FpsMode.FPS_120;"90 FPS"->FpsMode.FPS_90
+                        "30 FPS"->FpsMode.FPS_30;else->FpsMode.FPS_60
+                    },
+                    renderQuality=RenderQuality.valueOf(selectedQuality.uppercase()),
+                    powerMode=PowerMode.valueOf(powerValues[power.selectedItemPosition].uppercase()),
+                    rgbBrightness=rgb.progress,
+                    hudEnabled=hud.isChecked,
+                    systemHudEnabled=systemHud.isChecked,
+                    fpsDisplayEnabled=fpsDisplay.isChecked,
+                    temperatureDisplayEnabled=temperatureDisplay.isChecked,
+                    thermalAuto=autoThermal.isChecked,
+                    idleRedrawThrottle=idleThrottle.isChecked,
+                    coordinatePrecision=CoordinatePrecisionMode.fromStorage(precisionValues[coordinatePrecision.selectedItemPosition]),
+                    ncPrecision=CoordinatePrecisionMode.fromStorage(precisionValues[ncPrecision.selectedItemPosition])
+                )
+                val applied=SharedSettingsAndroidBridge.apply(this,requested).getOrElse { error->
+                    Toast.makeText(this,"SETTINGS NOT APPLIED • "+(error.message ?: "invalid setting"),Toast.LENGTH_LONG).show()
+                    return@setPositiveButton
+                }
                 prefs.edit()
-                    .putString("fps_mode", selectedFps)
-                    .putString("power_mode", powerValues[power.selectedItemPosition])
-                    .putString("render_quality", selectedQuality)
-                    .putString("coordinate_precision", coordinatePrecisionValues[coordinatePrecision.selectedItemPosition])
-                    .putString("nc_output_precision", coordinatePrecisionValues[ncPrecision.selectedItemPosition])
-                    .putBoolean("restart_required", restartRequired)
-                    .putString("restart_reason", if (restartRequired) "3D_SIM_RENDER_QUALITY" else "")
-                    .putInt("rgb_brightness", rgb.progress)
-                    .putBoolean("system_hud_enabled", systemHud.isChecked)
-                    .putBoolean("fps_display_enabled", fpsDisplay.isChecked)
-                    .putBoolean("temperature_display_enabled", temperatureDisplay.isChecked)
-                    .putBoolean("overheat_warning_enabled", overheatWarning.isChecked)
-                    .putInt("temperature_warn_c", 75)
-                    .putInt("temperature_high_c", 85)
-                    .putBoolean("hud_enabled", hud.isChecked)
-                    .putBoolean("thermal_auto", autoThermal.isChecked)
-                    .putBoolean("idle_throttle", idleThrottle.isChecked)
-                    .apply()
-                val selectedCoordinatePrecision=CoordinatePrecisionMode.fromStorage(
-                    coordinatePrecisionValues[coordinatePrecision.selectedItemPosition]
-                )
-                val selectedNcPrecision=CoordinatePrecisionMode.fromStorage(
-                    coordinatePrecisionValues[ncPrecision.selectedItemPosition]
-                )
+                    .putBoolean("restart_required",restartRequired)
+                    .putString("restart_reason",if(restartRequired)"3D_SIM_RENDER_QUALITY" else "")
+                    .putBoolean("overheat_warning_enabled",overheatWarning.isChecked)
+                    .putInt("temperature_warn_c",75)
+                    .putInt("temperature_high_c",85)
+                    .commit()
                 CoordinatePrecisionRuntime.configure(
-                    display=selectedCoordinatePrecision,
-                    input=selectedCoordinatePrecision,
-                    ncOutput=selectedNcPrecision
+                    display=applied.coordinatePrecision,input=applied.coordinatePrecision,ncOutput=applied.ncPrecision
                 )
-
-                applySystemHudPreference(systemHud.isChecked)
-                applyFpsDisplayPreference(fpsDisplay.isChecked)
-                applyTemperatureDisplayPreference(temperatureDisplay.isChecked)
+                applySystemHudPreference(applied.systemHudEnabled)
+                applyFpsDisplayPreference(applied.fpsDisplayEnabled)
+                applyTemperatureDisplayPreference(applied.temperatureDisplayEnabled)
                 adaptiveRefreshController?.applyFromPreferences()
-                RgbGlowButton.setGlobalBrightness(rgb.progress)
+                RgbGlowButton.setGlobalBrightness(applied.rgbBrightness)
+                RuntimeLocalizationAndroidInstaller.refresh(this)
                 Toast.makeText(
                     this,
-                    "ENV APPLIED • " + selectedFps + " • RGB " + rgb.progress + "% • " + CoordinatePrecisionRuntime.summary() +
-                        if (restartRequired) " • 3D/SIM 畫質：重開後完整生效" else "",
+                    "SETTINGS APPLIED • "+selectedFps+" • "+SharedSettingsAndroidBridge.effectiveBackend(this)?.name+
+                        " • "+CoordinatePrecisionRuntime.summary()+
+                        if(restartRequired)" • 3D/SIM quality completes after restart" else "",
                     Toast.LENGTH_LONG
                 ).show()
             }
-            .setNegativeButton("取消", null)
-            .show()
+            .setNegativeButton(UiPresentationState.text("settings.cancel"),null)
+            .create()
+        settingsDialog.show()
+        RuntimeLocalizationAndroidInstaller.bindWindow(settingsDialog.window)
     }
+
     private fun showNetworkStatus() {
         AlertDialog.Builder(this)
             .setTitle("NETWORK SECURITY")
