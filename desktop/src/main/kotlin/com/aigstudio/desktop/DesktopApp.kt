@@ -509,6 +509,7 @@ private class CadPanel(
         set(value) {
             field=value
             pendingPickOperation=null
+            pendingPickValue=null
             first=null
             arcCenter=null
             arcStart=null
@@ -524,6 +525,7 @@ private class CadPanel(
     private val history = History(doc)
     private val selectedIds = linkedSetOf<EntityId>()
     private var pendingPickOperation:String? = null
+    private var pendingPickValue:Double? = null
 
     init {
         background = StudioDesktopProductionTheme.background
@@ -807,6 +809,41 @@ private class CadPanel(
         status("EXTEND • 先點目標 LINE，再點邊界 LINE")
     }
 
+    fun chamferSelected(distance:Double) {
+        startPairGeometry("CHAMFER",distance)
+    }
+
+    fun filletSelected(radius:Double) {
+        startPairGeometry("FILLET",radius)
+    }
+
+    private fun startPairGeometry(operation:String,value:Double) {
+        if(!value.isFinite() || value<CNC_RESOLUTION_MM){
+            status("$operation BLOCKED • value must be >= 0.001 mm")
+            return
+        }
+        if(selectedIds.size==2){
+            val ids=selectedIds.toList()
+            val result=runCatching {
+                val command=if(operation=="CHAMFER")
+                    chamferCommand(doc,ids[0],ids[1],value)
+                else filletCommand(doc,ids[0],ids[1],value)
+                applyGeometry(operation,command)
+            }
+            selectedIds.clear()
+            result.onSuccess { status("$operation PASS • CAM/SIM/NC REBUILD") }
+                .onFailure { status("$operation BLOCKED • "+(it.message?:"error")) }
+            repaint()
+            return
+        }
+        mode=DrawMode.SELECT
+        pendingPickOperation=operation
+        pendingPickValue=value
+        selectedIds.clear()
+        repaint()
+        status("$operation • value="+DisplayFormat.mm(value)+" mm • 點兩條 LINE")
+    }
+
     private fun handlePendingPick(p:Vec2):Boolean {
         val operation=pendingPickOperation ?: return false
         val line=nearest(p) as? Line
@@ -826,12 +863,18 @@ private class CadPanel(
         }
         val ids=selectedIds.toList()
         val result=runCatching{
-            val command=if(operation=="TRIM") CadEditEngine.trimCommand(doc,ids)
-            else CadEditEngine.extendCommand(doc,ids)
+            val command=when(operation){
+                "TRIM" -> CadEditEngine.trimCommand(doc,ids)
+                "EXTEND" -> CadEditEngine.extendCommand(doc,ids)
+                "CHAMFER" -> chamferCommand(doc,ids[0],ids[1],requireNotNull(pendingPickValue))
+                "FILLET" -> filletCommand(doc,ids[0],ids[1],requireNotNull(pendingPickValue))
+                else -> error("Unsupported pair operation: $operation")
+            }
             applyGeometry(operation,command)
         }
         selectedIds.clear()
         pendingPickOperation=null
+        pendingPickValue=null
         result.onSuccess{
             selectedIds.add(ids.first())
             status("$operation PASS • target selected • CAM/SIM/NC REBUILD")
@@ -2767,6 +2810,39 @@ private fun showNcEditor(
     }
     val machineInterlockSession = NcMachineInterlockSession()
     val ncRotaryProfile = loadDesktopRotaryMachineProfile()
+    var ncSingleBlock=false
+    var ncDryRun=false
+    var ncPreviewIndex=0
+    val previewStatus=JLabel("NC PREVIEW • READY • LOCAL ONLY").apply {
+        foreground=Color(99,255,157)
+    }
+    fun refreshExecutionPreview(step:Boolean=false) {
+        val events=runCatching {
+            NcExecutionTimeline.build(
+                area.text,controllerProfile,rotaryClampProfile=ncRotaryProfile,rotaryMode=RotaryAxisOperationMode.NONE
+            )
+        }.getOrElse { error ->
+            previewStatus.text="NC PREVIEW WARNING • "+(error.message?:"invalid program")+" • LOCAL ONLY"
+            return
+        }
+        val executable=events.filter{it.executable}
+        if(executable.isEmpty()){
+            ncPreviewIndex=0
+            previewStatus.text="NC PREVIEW • NO EXECUTABLE EVENT • LOCAL ONLY"
+            return
+        }
+        if(step) ncPreviewIndex=(ncPreviewIndex+1)%executable.size
+        else ncPreviewIndex=ncPreviewIndex.coerceIn(0,executable.lastIndex)
+        val event=executable[ncPreviewIndex]
+        if(ncSingleBlock){
+            val lines=area.text.split("\n")
+            val start=lines.take(event.lineNumber-1).sumOf{it.length+1}.coerceAtMost(area.text.length)
+            val end=(start+(lines.getOrNull(event.lineNumber-1)?.length ?: 0)).coerceAtMost(area.text.length)
+            area.select(start,end)
+        }
+        val mode=when { ncDryRun && ncSingleBlock -> "DRY RUN / SINGLE BLOCK"; ncDryRun -> "DRY RUN"; ncSingleBlock -> "SINGLE BLOCK"; else -> "PREVIEW" }
+        previewStatus.text="$mode • L${event.lineNumber} • ${event.code} • ${event.action} • LOCAL PREVIEW ONLY"
+    }
     val modalStatus = JLabel("MODAL • " + NcModalTracker.evidence(area.text)).apply {
         foreground = Color(255,210,90)
     }
@@ -2950,6 +3026,23 @@ private fun showNcEditor(
             }
         })
     }
+    val singleBlockButton=GlassActionButton("SINGLE BLOCK",Color(255,210,90)).apply {
+        addActionListener {
+            ncSingleBlock=!ncSingleBlock
+            ncPreviewIndex=0
+            refreshExecutionPreview(false)
+        }
+    }
+    val dryRunButton=GlassActionButton("DRY RUN",Color(139,92,246)).apply {
+        addActionListener {
+            ncDryRun=!ncDryRun
+            ncPreviewIndex=0
+            refreshExecutionPreview(false)
+        }
+    }
+    val stepPreviewButton=GlassActionButton("STEP",Color(61,235,255)).apply {
+        addActionListener { refreshExecutionPreview(true) }
+    }
     val alarmReset = GlassActionButton("ALARM RESET", Color(255,110,110)).apply {
         addActionListener {
             val reset = machineInterlockSession.reset()
@@ -2986,6 +3079,9 @@ private fun showNcEditor(
                 add(JLabel("mm").apply { foreground=Color(190,220,255) })
                 add(cutterDValue)
                 add(applyD)
+                add(singleBlockButton)
+                add(dryRunButton)
+                add(stepPreviewButton)
                 add(alarmReset)
                 add(resume)
             }, BorderLayout.CENTER)
@@ -2993,6 +3089,7 @@ private fun showNcEditor(
                 background = Color(7,17,27)
                 add(modalStatus)
                 add(lineHelp)
+                add(previewStatus)
             }, BorderLayout.SOUTH)
         }, BorderLayout.NORTH)
         add(JScrollPane(area), BorderLayout.CENTER)
@@ -4843,6 +4940,8 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     editTools.add(button("鏡射 Y", Color(245,158,11)) { cad.mirrorSelected(false) })
     editTools.add(button("TRIM", Color(61,235,255)) { cad.trimSelected() })
     editTools.add(button("EXTEND", Color(63,255,157)) { cad.extendSelected() })
+    editTools.add(button("CHAMFER", Color(245,158,11)) { askSingle("CHAMFER C mm","1.000",cad::chamferSelected) })
+    editTools.add(button("FILLET", Color(236,72,153)) { askSingle("FILLET R mm","1.000",cad::filletSelected) })
     editTools.add(button("OFFSET", Color(139,92,246)) { askSingle("OFFSET mm","1.000",cad::offsetSelected) })
     editTools.add(button("ARRAY", Color(59,130,246)) { askArray(cad::arraySelected) })
     editTools.add(button("刪除", Color(239,68,68)) { cad.deleteSelected() })

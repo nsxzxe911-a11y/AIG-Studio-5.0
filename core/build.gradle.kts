@@ -105,3 +105,11 @@ tasks.register<JavaExec>("settingsDesktopWiringRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.SettingsDesktopWiringRegressionKt")
 }
+
+tasks.register<JavaExec>("productionActionLinkRegression") {
+    group = "verification"
+    description = "Checks enabled product actions are linked and unavailable actions are explicitly disabled"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.ProductionActionLinkRegressionKt")
+}
