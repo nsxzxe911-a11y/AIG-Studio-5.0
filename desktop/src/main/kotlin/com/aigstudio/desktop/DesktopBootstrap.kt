@@ -4,6 +4,7 @@ import com.aigstudio.core.StudioStartupStage
 import com.aigstudio.desktop.AigRgbDesktopSkinRuntime
 import com.aigstudio.desktop.HomeRgbDesktopInstaller
 import com.aigstudio.desktop.RuntimeSurfaceDesktopInstaller
+import com.aigstudio.desktop.RuntimeLocalizationDesktopInstaller
 import java.awt.Frame
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
@@ -28,13 +29,14 @@ private class RestoredDesktopStartup {
     fun close(){closeMethod.invoke(instance)}
 }
 
-/** Installs validated RGB skin/HOME/surface/tutorial layers, then delegates to the existing production runtime. */
+/** Installs validated RGB skin/HOME/surface/localization/tutorial layers, then delegates to the existing production runtime. */
 fun main(args:Array<String>) {
     val smoke=args.contains("--smoke")
     if(!smoke) {
         AigRgbDesktopSkinRuntime.install()
         HomeRgbDesktopInstaller.install()
         RuntimeSurfaceDesktopInstaller.install()
+        RuntimeLocalizationDesktopInstaller.install()
         installOptionalTutorial()
     }
 
