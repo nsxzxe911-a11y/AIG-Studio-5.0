@@ -1,11 +1,11 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "371.0.0",
+  "version": "372.0.0",
   "branch": "impl/runtime-ui-recovery-20261008",
   "recorded_source_head": "2804bc1d0e500e647865577b13ec90e246906489",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "RGB_ENTRY_REPAIRED_FULL_PAGE_RESTORATION_PENDING",
+  "status": "FULL_PAGE_ENTRIES_RESTORED_VISUAL_ANDROID_ACCEPTANCE_PENDING",
   "departments": {
     "HOME": "EXECUTE_UNTIL_PASS",
     "CAD": "EXECUTE_UNTIL_PASS",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Restore approved morning full page assets, repair remaining engineering presentation, and verify page callbacks on Android and Windows.",
-  "note": "Default startup restored to full RGB product; Windows launched and inspected. Existing presentation still fails full approved RGB UI acceptance. Android launch pending.",
+  "next_action": "Finish approved RGB product visuals and recover Android visible UI evidence; Windows ten page entries have screenshot evidence.",
+  "note": "No-UI product bypass removed. Five reference images restored and checked. Windows ten page navigation observed. Android APK installed, but emulator automation returned null root and timeouts; not UI PASS.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",

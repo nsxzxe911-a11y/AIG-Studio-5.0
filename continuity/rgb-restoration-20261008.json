@@ -1,30 +1,37 @@
 {
-  "time_utc": "2026-10-08T14:53:18.466245+00:00",
-  "version": "371.0.0",
-  "scope": "Restore 2026-10-06 morning RGB pages and remove engineering shell",
+  "time_utc": "2026-10-08T15:19:13.896708+00:00",
+  "version": "372.0.0",
+  "scope": "Remove tonight no-UI bypass and restore all production page entries",
   "implemented": [
-    "Android launcher MainActivity",
-    "Windows full product first visible entry"
+    "Android MainActivity launcher",
+    "Windows full product startup",
+    "Five original morning reference images restored with SHA256",
+    "Reference registry missing 4AX and AI filenames repaired",
+    "Main visible technical labels cleaned"
   ],
   "verified": [
-    "Android compile",
-    "Windows compile",
-    "debug APK build",
-    "Windows installDist build",
-    "Windows launched and screenshot inspected"
+    "Android debug APK built and installed in Nox",
+    "Windows packaged distribution built and launched",
+    "Windows HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC/AI navigation observed in screenshots"
   ],
   "not_verified": [
-    "Android device launch (ADB unavailable)",
-    "all pages callbacks",
-    "all engineering UI removed",
-    "approved morning full page art mounted"
+    "All CAD/CAM/SIM/NC features and machining correctness",
+    "Final approved RGB visual equivalence",
+    "Android visible UI and page operations"
   ],
+  "android_evidence": {
+    "aigii_cold_launch_ms": 951,
+    "ui_automation": "NULL_ROOT_NODE",
+    "followup_adb": "TIMEOUT",
+    "ui_acceptance": "NOT_PASSED"
+  },
+  "windows_evidence": "evidence/ui-pages-20261008/",
+  "reference_role": "Visual reference and RGB palette only; not substitute machining scene or fake buttons",
   "remaining": [
-    "Restore approved full page assets from AIG_MORNING_BASELINE_MODULE_PACK_20261006.zip libfile_d2b80a8e02d48191b6a679c9a99ca8e1",
-    "Replace technical presentation with approved functional RGB pages; no engineering shell with pasted art",
-    "Repair AIG CNC stale 362-only home verifier and RGB resource validation",
-    "Verify HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC/AI on both platforms"
+    "Restore full approved RGB production layouts and artwork",
+    "Verify Android visible HOME and all page actions after emulator UI/ADB recovery",
+    "Verify changed UI callbacks without unrelated deep regression"
   ],
-  "release_status": "PARTIAL_ENTRY_REPAIR_NOT_FULL_UI_ACCEPTANCE",
+  "release_status": "FUNCTIONAL_PAGE_ENTRY_RESTORED_FULL_UI_ACCEPTANCE_PENDING",
   "automatic_regression": "OFF"
 }

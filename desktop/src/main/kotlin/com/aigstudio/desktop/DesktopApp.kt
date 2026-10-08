@@ -1088,7 +1088,7 @@ private class CadPanel(
 
         g2.color = Color(143, 179, 201)
         g2.font = Font(Font.SANS_SERIF, Font.PLAIN, 14)
-        g2.drawString("AIG CNC • OFFICIAL RGB ORIGINAL • 1080P/2K/3K/4K+ • 2D CAD • 原點 X0.000 Y0.000 • 精度 0.001 mm", 14, 22)
+        g2.drawString("CAD 製圖 • 原點 X0.000 Y0.000 • 精度 0.001 mm", 14, 22)
     }
 }
 
@@ -2332,7 +2332,7 @@ private fun runSmoke() {
     val renderRoot = JPanel(BorderLayout()).apply {
         background = Color(5, 10, 17)
         add(AdaptiveGlassToolbar().apply {
-            add(JLabel("AIG CNC • OFFICIAL RGB ORIGINAL • 3D SIM • HQ RENDER ENGINE").apply {
+            add(JLabel("3D 模擬 • 材料移除").apply {
                 foreground = Color(61,235,255)
                 font = font.deriveFont(Font.BOLD,18f)
             })
@@ -3471,7 +3471,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         }.apply{isRepeats=true}
     }
 
-    val frame = JFrame("AIG Studio • CNC 加工控制 • v"+desktopVersionName())
+    val frame = JFrame("AIG CNC • CNC 加工控制 • v"+desktopVersionName())
     frame.defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     frame.addWindowListener(object:java.awt.event.WindowAdapter(){
         override fun windowClosed(e:java.awt.event.WindowEvent?) {
@@ -3499,7 +3499,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             foreground=Color(99,255,157)
             font=font.deriveFont(Font.BOLD,13f)
         },BorderLayout.WEST)
-        add(JLabel("AIG Studio • 加工控制").apply{
+        add(JLabel("AIG CNC • 加工控制").apply{
             foreground=Color(143,179,201)
             font=font.deriveFont(Font.PLAIN,12f)
             horizontalAlignment=SwingConstants.CENTER

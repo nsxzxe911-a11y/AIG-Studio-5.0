@@ -1,0 +1,110 @@
+{
+  "pack_id": "AIG_MORNING_BASELINE_20261006",
+  "role": "visual_skin_reference_only",
+  "separation": {
+    "visual": "replaceable",
+    "layout": "separate",
+    "actions": "separate",
+    "scene": "separate",
+    "cnc_truth": "untouched"
+  },
+  "modules": {
+    "HOME": {
+      "visual": "AIG_Home_Multifunction_Baseline.png",
+      "layout": "HOME_ADAPTIVE",
+      "actions": "HOME_ACTIONS"
+    },
+    "CAD": {
+      "visual": "AIG_CAD_CAM_Desktop_Baseline.png",
+      "layout": "CAD_ADAPTIVE",
+      "actions": "CAD_ACTIONS"
+    },
+    "CAM": {
+      "visual": "AIG_CAD_CAM_Desktop_Baseline.png",
+      "layout": "CAM_ADAPTIVE",
+      "actions": "CAM_ACTIONS"
+    },
+    "SIM": {
+      "visual": "AIG_CNC_Desktop_Baseline.png",
+      "layout": "SIM_ADAPTIVE",
+      "actions": "SIM_ACTIONS",
+      "scene": "SIM_SCENE"
+    },
+    "3AX": {
+      "visual": "AIG_CNC_Desktop_Baseline.png",
+      "layout": "AXIS_ADAPTIVE",
+      "actions": "AXIS_3_ACTIONS",
+      "scene": "3AX_SCENE"
+    },
+    "4AX": {
+      "visual": "AIG_CNC_Desktop_Baseline.png",
+      "layout": "AXIS_ADAPTIVE",
+      "actions": "AXIS_4_ACTIONS",
+      "scene": "4AX_SCENE"
+    },
+    "5AX": {
+      "visual": "AIG_CNC_Desktop_Baseline.png",
+      "layout": "AXIS_ADAPTIVE",
+      "actions": "AXIS_5_ACTIONS",
+      "scene": "5AX_SCENE"
+    },
+    "6AX": {
+      "visual": "AIG_6AX_Baseline.png",
+      "layout": "AXIS_ADAPTIVE",
+      "actions": "AXIS_6_ACTIONS",
+      "scene": "6AX_SCENE"
+    },
+    "NC": {
+      "visual": "AIG_CNC_Desktop_Baseline.png",
+      "layout": "NC_ADAPTIVE",
+      "actions": "NC_ACTIONS"
+    },
+    "AI": {
+      "visual": "AIG_CNC_Desktop_Baseline.png",
+      "layout": "AI_ADAPTIVE",
+      "actions": "AI_ACTIONS"
+    }
+  },
+  "assets": [
+    {
+      "surface": "HOME / 一鍵多功能",
+      "file": "AIG_Home_Multifunction_Baseline.png",
+      "width": 1671,
+      "height": 941,
+      "bytes": 2242429,
+      "sha256": "719a520b8fde49caf4031e54fdcd421cc1fe46a5b2894322e0f7900e4a252d29"
+    },
+    {
+      "surface": "AIG CNC 總介面",
+      "file": "AIG_CNC_Desktop_Baseline.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2137800,
+      "sha256": "a153d76e82f9d9d7605627c9915c428b57f6481dced468910c793dd8bd7c2531"
+    },
+    {
+      "surface": "CAD / CAM",
+      "file": "AIG_CAD_CAM_Desktop_Baseline.png",
+      "width": 1671,
+      "height": 941,
+      "bytes": 2251040,
+      "sha256": "d38caaf42319551ac169be0acb5ec06cb84b789841cd3cb93c3c349826203294"
+    },
+    {
+      "surface": "啟動畫面",
+      "file": "AIG_CNC_Startup_Baseline.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1671356,
+      "sha256": "7937bdd31422112bd3306053dace8b68b4a816f4dd6d40ebc7705b7ea32c32dd"
+    },
+    {
+      "surface": "6AX",
+      "file": "AIG_6AX_Baseline.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2138818,
+      "sha256": "6e165cb8c2d57604ac961a8ef92b056e4370afcfe64ff87b2140db83e6f00987"
+    }
+  ]
+}

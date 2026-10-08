@@ -20,11 +20,11 @@ object RuntimeVisualModuleRegistry {
         RuntimeVisualModule("CAM", MorningBaselineVisualContract.cadCam, "CAM_ADAPTIVE", "CAM_ACTIONS"),
         RuntimeVisualModule("SIM", MorningBaselineVisualContract.desktopRuntime, "SIM_ADAPTIVE", "SIM_ACTIONS", sceneProfile="SIM_SCENE"),
         RuntimeVisualModule("3AX", MorningBaselineVisualContract.desktopRuntime, "AXIS_ADAPTIVE", "AXIS_3_ACTIONS", sceneProfile="3AX_SCENE"),
-        RuntimeVisualModule("4AX", "AIG_4AX_Baseline.png", "AXIS_ADAPTIVE", "AXIS_4_ACTIONS", sceneProfile="4AX_SCENE"),
+        RuntimeVisualModule("4AX", "AIG_CNC_Desktop_Baseline.png", "AXIS_ADAPTIVE", "AXIS_4_ACTIONS", sceneProfile="4AX_SCENE"),
         RuntimeVisualModule("5AX", MorningBaselineVisualContract.desktopRuntime, "AXIS_ADAPTIVE", "AXIS_5_ACTIONS", sceneProfile="5AX_SCENE"),
         RuntimeVisualModule("6AX", MorningBaselineVisualContract.sixAxis, "AXIS_ADAPTIVE", "AXIS_6_ACTIONS", sceneProfile="6AX_SCENE"),
         RuntimeVisualModule("NC", MorningBaselineVisualContract.desktopRuntime, "NC_ADAPTIVE", "NC_ACTIONS"),
-        RuntimeVisualModule("AI", "AI_Console_Baseline.png", "AI_ADAPTIVE", "AI_ACTIONS")
+        RuntimeVisualModule("AI", "AIG_CNC_Desktop_Baseline.png", "AI_ADAPTIVE", "AI_ACTIONS")
     )
 
     fun require(surface:String):RuntimeVisualModule {

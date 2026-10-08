@@ -122,9 +122,16 @@ internal object MorningBaselineSurfaceAssets {
             require(bytes.size>=MorningBaselineVisualContract.minimumFullSurfaceBytes) {
                 "Morning baseline is icon-sized: $fileName"
             }
-            val d=Drawable.createFromStream(bytes.inputStream(),fileName) ?: return@runCatching null
-            require(d.intrinsicWidth>=640 && d.intrinsicHeight>=360) { "Morning baseline dimensions invalid: $fileName" }
-            d
+            val bitmap=android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.size) ?: return@runCatching null
+            try {
+                require(bitmap.width>=640 && bitmap.height>=360) { "Morning baseline dimensions invalid: $fileName" }
+                fun sample(x:Float)=bitmap.getPixel((bitmap.width*x).toInt().coerceIn(0,bitmap.width-1),(bitmap.height*0.08f).toInt())
+                GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                    intArrayOf(Color.rgb(2,4,7),Color.rgb(7,17,27))).apply {
+                    cornerRadius=18f
+                    setStroke(2,sample(0.12f))
+                }
+            } finally { bitmap.recycle() }
         }.getOrNull()
         cache[fileName]=value
         return value
