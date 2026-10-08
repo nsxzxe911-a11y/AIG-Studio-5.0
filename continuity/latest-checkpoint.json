@@ -5,7 +5,7 @@
   "branch": "feat/aig-cnc-374-runtime-link-completion",
   "recorded_source_head": "bcaa848290e21a4e021cdb333abdc4503c60aac4",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "FULL_RUNTIME_LINK_COMPLETION_SOURCE_PASS_BINARY_PENDING",
+  "status": "FULL_RUNTIME_LINK_COMPLETION_BINARY_INSTALLER_PASS",
   "departments": {
     "HOME": "EXECUTE_UNTIL_PASS",
     "CAD": "EXECUTE_UNTIL_PASS",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Build/install AIG CNC 374 APK and Windows x86-64 portable/Setup, launch production RGB HOME, verify Settings visual runtime, AI Working Copy and CAD Layers, then exact-bind AIG-II 454 to the 374 release source SHA.",
-  "note": "AIG CNC 374 source completion PASS: all ProductionActionContract items are connected on Android and Windows. Windows Quality/Power/RGB/HUD now have real runtime consumers; AI program edits use Immutable Main -> Working Copy -> NC Authority Verify -> explicit Promote; CAD Layers use separate metadata, hidden-layer hit-test isolation, Undo/Redo preservation, Project V4 persistence with V1/V2/V3 backward compatibility, and Android autosave format 5. Binary install/launch evidence is pending and not claimed.",
+  "next_action": "AIG CNC 374 binary release is verified across Nox APK, portable x86-64 Runtime and Setup install/launch/uninstall. Continue forward-only product work from this checkpoint.",
+  "note": "AIG CNC 374 full binary validation PASS. Nox cold launch enters visible AIG CNC RGB HOME. Windows portable x86-64 launcher and Setup are PE 0x8664; installed Runtime reproduced official RGB UI, true material removal and 5AX dynamic evidence; uninstall removed install directory and registry entry. Native Android GLES/Vulkan is not falsely claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -563,7 +563,7 @@
     "execution_interlocks_remain_active": true
   },
   "rgb_restoration_record": "continuity/rgb-restoration-20261008.json",
-  "validated_release_sha": "7058f51bd26445f06beecc65e574f72033a4f44c",
+  "validated_release_sha": "c0b969240bdc6081350934a46d3bf33a416063ba",
   "binary_runtime_evidence_373": {
     "android": {
       "status": "PASS_NOX_INSTALL_COLD_LAUNCH_RGB_HOME",
@@ -613,13 +613,58 @@
     }
   },
   "binary_runtime_evidence_374": {
-    "status": "SOURCE_PASS_BINARY_PENDING",
+    "status": "PASS_APK_PORTABLE_SETUP_INSTALL_LAUNCH_UNINSTALL",
     "feature_source_sha": "bcaa848290e21a4e021cdb333abdc4503c60aac4",
+    "release_source_sha": "c0b969240bdc6081350934a46d3bf33a416063ba",
     "all_production_actions_connected": true,
     "project_format": "AIGSTUDIO_PROJECT|4",
     "android_autosave_format": 5,
-    "apk": "PENDING",
-    "windows_portable": "PENDING",
-    "windows_setup": "PENDING"
+    "android": {
+      "status": "PASS_NOX_INSTALL_COLD_LAUNCH_RGB_HOME",
+      "apk": "release/android/AIG_CNC_374_FULL_INSTALLABLE.apk",
+      "apk_sha256": "2513b88381948f96ed3f855dcfd4cc528b421753b2c3a69f5fdc1d2de92b78f9",
+      "package": "com.aigstudio.app",
+      "version_name": "374.0.0",
+      "version_code": 3740000,
+      "nox_device": "Nox_1",
+      "nox_abi": "x86_64",
+      "adb_serial": "127.0.0.1:52025",
+      "cold_launch_ms": 691,
+      "visible_product": "AIG CNC",
+      "rgb_home": "PASS",
+      "engineering_shell_default": "OFF",
+      "native_gles_vulkan_claimed": false,
+      "renderer_truth": "NO_FAKE_NATIVE_GPU_BACKEND"
+    },
+    "windows": {
+      "status": "PASS_PORTABLE_64BIT_PACKAGED_LAUNCHER",
+      "portable_exe": "release/windows/portable/AIG_CNC_Runtime.exe",
+      "portable_exe_sha256": "21b12f8c317548a69854f25279e0f255c09e779b54061a7d25ae57f901e59988",
+      "portable_zip": "release/windows/AIG_CNC_374_PORTABLE.zip",
+      "portable_zip_sha256": "cc3822b7c817d541ae85cf2c70a88fa261fcebb2f154ef16836f636388cf895f",
+      "pe_machine": "0x8664",
+      "architecture": "x86_64",
+      "packaged_launcher_smoke": "PASS",
+      "official_rgb_ui": "PASS",
+      "material_removal": "PASS",
+      "removed_cells": 7500,
+      "five_axis_dynamic_tool": "PASS",
+      "five_axis_dynamic_axis": "PASS",
+      "five_axis_progressive_material_removal": "PASS",
+      "absolute_mode": "G90",
+      "master_origin": "X0.000 Y0.000 Z0.000",
+      "setup_exe": "release/windows/AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe",
+      "setup_exe_sha256": "0d8c00c397f1ddfef47cbc76f7020c4ffd9a67504709bba8d40d04ba093b04e2",
+      "setup_pe_machine": "0x8664",
+      "setup_build": "PASS_PORTABLE_WIX_3_14_1",
+      "setup_install": "PASS_EXIT_0",
+      "installed_version": "3.74.0",
+      "installed_runtime_smoke": "PASS",
+      "installed_removed_cells": 7500,
+      "installed_5x_dynamic": "PASS",
+      "uninstall": "PASS_EXIT_0",
+      "uninstall_install_dir_removed": true,
+      "uninstall_registry_removed": true
+    }
   }
 }
