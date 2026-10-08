@@ -49,7 +49,14 @@ object RuntimeSurfaceAndroidInstaller {
             label.uppercase() in RuntimeSurfaceVisualContract.surfaces -> RuntimeSurfaceVisualContract.normalize(label)
             else -> return
         }
-        button.replaceVisualAsset(RuntimeSurfaceVisualContract.assetId(surface))
+        val assetId=RuntimeSurfaceVisualContract.assetId(surface)
+        val distinctAsset=ProductionRgbAssets.drawableById(button.context,assetId)
+        if(surface=="6AX" && distinctAsset==null) {
+            // Never keep the historical 5AX icon on 6AX. Procedural RGB glass is the safe visual fallback.
+            button.setGeneratedAssetEnabled(false)
+        } else {
+            button.replaceVisualAsset(assetId)
+        }
         button.setOnTouchListener { _,event ->
             if(event.actionMasked==MotionEvent.ACTION_UP) {
                 button.postDelayed({
