@@ -234,11 +234,11 @@ private class CadToolGrid : JPanel(FlowLayout(FlowLayout.LEFT,8,8)) {
 private class GlassActionButton(label: String, accentInput: Color) : JButton(label) {
     private val actionLabel=label
     private val accent=Color(RenderColorCompatibility.harmonizeNearestSemantic(accentInput.rgb),true)
-    private val pulseTimer=Timer(StudioDesktopRefreshSettings.timerDelayMs()) { if(active && isShowing) repaint() }.apply { isRepeats=true }
+    private val pulseTimer=Timer(StudioDesktopRefreshSettings.timerDelayMs()) { if(active && isShowing && DesktopVisualSettingsRuntime.rgbBreathingEnabled()) repaint() }.apply { isRepeats=true }
     var active = false
         set(value) {
             field = value
-            if(value) {
+            if(value && DesktopVisualSettingsRuntime.rgbBreathingEnabled()) {
                 pulseTimer.delay=StudioDesktopRefreshSettings.timerDelayMs()
                 pulseTimer.initialDelay=pulseTimer.delay
                 pulseTimer.start()
@@ -281,7 +281,8 @@ private class GlassActionButton(label: String, accentInput: Color) : JButton(lab
         val targetFps=StudioDesktopRefreshSettings.targetFps()
         val periodNs=RenderColorCompatibility.animationPeriodMs(targetFps)*1_000_000L
         val phase01=(System.nanoTime()%periodNs).toDouble()/periodNs.toDouble()
-        val pulse=if(active) RenderColorCompatibility.pulseMultiplier(phase01) else 1.0
+        val pulse=if(active && DesktopVisualSettingsRuntime.rgbBreathingEnabled()) RenderColorCompatibility.pulseMultiplier(phase01) else 1.0
+        val runtimeAccent=Color(DesktopVisualSettingsRuntime.rgbChannel(accent.red),DesktopVisualSettingsRuntime.rgbChannel(accent.green),DesktopVisualSettingsRuntime.rgbChannel(accent.blue))
         fun mix(base:Color,tint:Color,amount:Float,alpha:Int):Color {
             val a=amount.coerceIn(0f,1f)
             fun m(x:Int,y:Int)=(x+(y-x)*a).roundToInt().coerceIn(0,255)
@@ -296,20 +297,20 @@ private class GlassActionButton(label: String, accentInput: Color) : JButton(lab
             hover -> 62
             else -> 30
         }
-        g2.color=Color(accent.red,accent.green,accent.blue,glowAlpha)
+        g2.color=Color(runtimeAccent.red,runtimeAccent.green,runtimeAccent.blue,glowAlpha)
         g2.fillRoundRect(0,0,max(0,width-1),max(0,height-1),20,20)
         val topTint=when{pressed->0.54f;active->0.46f;hover->0.36f;else->0.27f}
         val bottomTint=when{pressed->0.22f;active->0.18f;hover->0.14f;else->0.10f}
-        val top=mix(Color(30,45,65),accent,topTint,238)
-        val bottom=mix(Color(6,14,26),accent,bottomTint,226)
+        val top=mix(Color(30,45,65),runtimeAccent,topTint,238)
+        val bottom=mix(Color(6,14,26),runtimeAccent,bottomTint,226)
         g2.paint=GradientPaint(0f,4f,top,0f,height.toFloat(),bottom)
         g2.fillRoundRect(4,4,max(0,width-8),max(0,height-8),18,18)
         g2.color=Color(255,255,255,if(active || hover || pressed)62 else 44)
         g2.stroke=BasicStroke(1.0f)
         g2.drawLine(12,8,max(12,width-12),8)
-        g2.color=Color(accent.red,accent.green,accent.blue,if(active)78 else if(hover)58 else 38)
+        g2.color=Color(runtimeAccent.red,runtimeAccent.green,runtimeAccent.blue,if(active)78 else if(hover)58 else 38)
         g2.drawLine(12,max(9,height-9),max(12,width-12),max(9,height-9))
-        g2.color = Color(accent.red, accent.green, accent.blue, when{active->248;pressed->235;hover->218;else->190})
+        g2.color = Color(runtimeAccent.red, runtimeAccent.green, runtimeAccent.blue, when{active->248;pressed->235;hover->218;else->190})
         g2.stroke = BasicStroke(when{active->3.0f;pressed->2.7f;hover->2.1f;else->1.6f})
         g2.drawRoundRect(4,4,max(0,width-9),max(0,height-9),18,18)
         g2.dispose()
@@ -410,7 +411,7 @@ private object StudioDesktopRefreshSettings {
         "Auto" -> displayBucket()
         else -> 60
     }
-    fun targetFps():Int = min(requestedFps(),displayBucket()).coerceIn(30,120)
+    fun targetFps():Int = min(min(requestedFps(),displayBucket()),DesktopVisualSettingsRuntime.fpsCap()).coerceIn(30,120)
     fun timerDelayMs():Int = (1000.0/targetFps().toDouble()).roundToInt().coerceIn(8,34)
     @Synchronized fun select(mode:String) {
         require(supported.contains(mode)){"Unsupported desktop FPS mode: $mode"}
@@ -1349,7 +1350,8 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
             }.sortedBy { it.first }
             val minDepth=ordered.firstOrNull()?.first ?: 0.0
             val maxDepth=ordered.lastOrNull()?.first ?: minDepth
-            val stride=max(1,ceil(component.mesh.triangles.size/900.0).toInt())
+            val triangleBudget=DesktopVisualSettingsRuntime.geometryBudget(900)
+            val stride=max(1,ceil(component.mesh.triangles.size/triangleBudget.toDouble()).toInt())
             val edgeAlpha=when(component.role){
                 MachineComponentRole.TOOL -> 255
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 180
@@ -1436,7 +1438,8 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         val machineModel=drawMachineModel(g2,scale,activeFrame)
         val activeMesh=activeFrame?.mesh ?: result.mesh
         val projected = activeMesh.vertices.map { project(it, scale) }
-        val stride = max(1, ceil(activeMesh.triangles.size / 5500.0).toInt())
+        val materialTriangleBudget=DesktopVisualSettingsRuntime.geometryBudget(5500)
+        val stride = max(1, ceil(activeMesh.triangles.size / materialTriangleBudget.toDouble()).toInt())
 
         val rotated = activeMesh.vertices.map { rotate(it) }
         val showMaterialMeshEdges=false
@@ -1670,24 +1673,26 @@ private class Mesh3DPanel(private var result: Machining3DResult) : JPanel() {
         val maxY = absoluteMoves.maxOfOrNull { it.to.y } ?: 0.0
         val minZ = absoluteMoves.minOfOrNull { it.z } ?: 0.0
         val maxZ = absoluteMoves.maxOfOrNull { it.z } ?: 0.0
-        g2.color = Color(220, 240, 255)
-        g2.font = Font(Font.SANS_SERIF, Font.PLAIN, 14)
-        g2.drawString(
-            "HQ 3D RENDER ENGINE • MACHINE=" + machineModel.mode + " • PARTS=" + machineModel.components.size +
-                " • TRUE MESH • CAM=" + result.cam.toolpaths.size + " • removed=" + removed +
-                (activeFrame?.let{" • frame=${it.index+1}/${it.total} • ${String.format(java.util.Locale.US,"%.1f",it.progress*100.0)}%"} ?: "") +
-                " • 精度 0.001 mm",
-            14, 22
-        )
-        g2.drawString(
-            "ABS " + SoftwareCoordinateContract.coordinateMode() +
-                " • MASTER " + SoftwareCoordinateContract.masterOriginData() +
-                " • X[" + DisplayFormat.mm(minX) + ".." + DisplayFormat.mm(maxX) + "]" +
-                " • Y[" + DisplayFormat.mm(minY) + ".." + DisplayFormat.mm(maxY) + "]" +
-                " • Z[" + DisplayFormat.mm(minZ) + ".." + DisplayFormat.mm(maxZ) + "]" +
-                " • OFFSET SHIFT=OFF • TOLERANCE SHIFT=OFF",
-            14, 42
-        )
+        if(DesktopVisualSettingsRuntime.hudEnabled()){
+            g2.color = Color(220, 240, 255)
+            g2.font = Font(Font.SANS_SERIF, Font.PLAIN, 14)
+            g2.drawString(
+                "HQ 3D RENDER ENGINE • MACHINE=" + machineModel.mode + " • PARTS=" + machineModel.components.size +
+                    " • TRUE MESH • CAM=" + result.cam.toolpaths.size + " • removed=" + removed +
+                    (activeFrame?.let{" • frame=${it.index+1}/${it.total} • ${String.format(java.util.Locale.US,"%.1f",it.progress*100.0)}%"} ?: "") +
+                    " • 精度 0.001 mm",
+                14, 22
+            )
+            g2.drawString(
+                "ABS " + SoftwareCoordinateContract.coordinateMode() +
+                    " • MASTER " + SoftwareCoordinateContract.masterOriginData() +
+                    " • X[" + DisplayFormat.mm(minX) + ".." + DisplayFormat.mm(maxX) + "]" +
+                    " • Y[" + DisplayFormat.mm(minY) + ".." + DisplayFormat.mm(maxY) + "]" +
+                    " • Z[" + DisplayFormat.mm(minZ) + ".." + DisplayFormat.mm(maxZ) + "]" +
+                    " • OFFSET SHIFT=OFF • TOLERANCE SHIFT=OFF",
+                14, 42
+            )
+        }
     }
 }
 
@@ -1821,7 +1826,8 @@ private class AxisMachiningPanel(private var result:Machining3DResult) : JPanel(
             }.sortedBy { it.first }
             val minDepth=ordered.firstOrNull()?.first ?: 0.0
             val maxDepth=ordered.lastOrNull()?.first ?: minDepth
-            val stride=max(1,ceil(component.mesh.triangles.size/900.0).toInt())
+            val triangleBudget=DesktopVisualSettingsRuntime.geometryBudget(900)
+            val stride=max(1,ceil(component.mesh.triangles.size/triangleBudget.toDouble()).toInt())
             val edgeAlpha=when(component.role){
                 MachineComponentRole.TOOL -> 255
                 MachineComponentRole.SPINDLE,MachineComponentRole.HOLDER -> 180
@@ -4306,6 +4312,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             machine.setAngles(six.axisA,six.axisB,six.axisC)
             cHead.setC(six.axisC)
             val v=SixAxisRuntimeContract.toolVector(1.0,six)
+            hud.isVisible=DesktopVisualSettingsRuntime.hudEnabled()
             hud.text="6AX A="+DisplayFormat.mm(six.axisA)+"°  B="+DisplayFormat.mm(six.axisB)+
                 "°  C="+DisplayFormat.mm(six.axisC)+"°  VECTOR="+
                 String.format(java.util.Locale.US,"%.3f,%.3f,%.3f",v.x,v.y,v.z)+
@@ -4681,6 +4688,11 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         val fpsChoice=JComboBox(StudioDesktopRefreshSettings.modes().toTypedArray()).apply{
             selectedItem=StudioDesktopRefreshSettings.mode()
         }
+        val qualityChoice=JComboBox(RenderQuality.entries.map{it.name}.toTypedArray()).apply{selectedItem=sharedCurrent.renderQuality.name}
+        val powerChoice=JComboBox(PowerMode.entries.map{it.name}.toTypedArray()).apply{selectedItem=sharedCurrent.powerMode.name}
+        val rgbBrightness=JSlider(0,100,sharedCurrent.rgbBrightness).apply{majorTickSpacing=25;paintTicks=true}
+        val rgbBreathing=JCheckBox(UiPresentationState.text("settings.rgb"),sharedCurrent.rgbBreathingEnabled).apply{background=StudioDesktopProductionTheme.background;foreground=StudioDesktopProductionTheme.text}
+        val hudChoice=JCheckBox(UiPresentationState.text("settings.hud"),sharedCurrent.hudEnabled).apply{background=StudioDesktopProductionTheme.background;foreground=StudioDesktopProductionTheme.text}
         fun selectedFpsMode():FpsMode=when(fpsChoice.selectedItem?.toString()){
             "Auto"->FpsMode.AUTO;"120 FPS"->FpsMode.FPS_120;"90 FPS"->FpsMode.FPS_90;"30 FPS"->FpsMode.FPS_30;else->FpsMode.FPS_60
         }
@@ -4688,7 +4700,12 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             val requested=sharedSettings.snapshot().copy(
                 localeId=languageIds[languageChoice.selectedIndex],
                 rendererSelection=rendererOptions[rendererChoice.selectedIndex].selection,
-                fpsMode=selectedFpsMode()
+                fpsMode=selectedFpsMode(),
+                renderQuality=RenderQuality.valueOf(qualityChoice.selectedItem.toString()),
+                powerMode=PowerMode.valueOf(powerChoice.selectedItem.toString()),
+                rgbBrightness=rgbBrightness.value,
+                rgbBreathingEnabled=rgbBreathing.isSelected,
+                hudEnabled=hudChoice.isSelected
             )
             SharedSettingsDesktopBridge.apply(requested).onSuccess { applied->
                 StudioDesktopRefreshSettings.select(fpsChoice.selectedItem?.toString() ?: "60 FPS")
@@ -4809,6 +4826,10 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             add(JLabel(UiPresentationState.text("settings.renderer")).apply{foreground=StudioDesktopProductionTheme.text});add(rendererChoice)
             add(JLabel("佈景主題（可改｜預設：AIG RGB Glass）").apply{foreground=StudioDesktopProductionTheme.text});add(themeChoice)
             add(JLabel(UiPresentationState.text("settings.fps")+"（60 FPS default）").apply{foreground=StudioDesktopProductionTheme.text});add(fpsChoice)
+            add(JLabel(UiPresentationState.text("settings.quality")).apply{foreground=StudioDesktopProductionTheme.text});add(qualityChoice)
+            add(JLabel(UiPresentationState.text("settings.power")).apply{foreground=StudioDesktopProductionTheme.text});add(powerChoice)
+            add(JLabel(UiPresentationState.text("settings.rgb")+" %").apply{foreground=StudioDesktopProductionTheme.text});add(rgbBrightness)
+            add(rgbBreathing);add(hudChoice)
             add(JLabel("目前有效").apply{foreground=StudioDesktopProductionTheme.text})
             add(JLabel(StudioDesktopRefreshSettings.targetFps().toString()+" FPS").apply{foreground=StudioDesktopProductionTheme.text})
         }

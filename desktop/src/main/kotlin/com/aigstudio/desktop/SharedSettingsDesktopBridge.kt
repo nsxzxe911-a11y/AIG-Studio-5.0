@@ -37,6 +37,7 @@ object SharedSettingsDesktopBridge {
         val store=SharedSettingsStore(RendererPlatform.WINDOWS,caps,snapshot)
         liveStore=store
         store.selectLocale(locale)
+        DesktopVisualSettingsRuntime.apply(snapshot)
         return store
     }
 
@@ -51,6 +52,7 @@ object SharedSettingsDesktopBridge {
                 "Renderer unavailable: ${requested.rendererSelection}"
             }
             val next=store.update { requested }
+            DesktopVisualSettingsRuntime.apply(next)
             UiPresentationState.selectLocale(next.localeId)
             prefs.put("locale_id",next.localeId)
             prefs.put("renderer_selection",next.rendererSelection.name)
@@ -72,6 +74,7 @@ object SharedSettingsDesktopBridge {
             Result.success(next)
         } catch(error:Throwable) {
             runCatching { store.update { before } }
+            runCatching { DesktopVisualSettingsRuntime.apply(before) }
             runCatching { UiPresentationState.selectLocale(before.localeId) }
             Result.failure(error)
         }

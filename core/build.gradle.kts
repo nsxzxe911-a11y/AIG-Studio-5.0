@@ -121,3 +121,12 @@ tasks.register<JavaExec>("release373Regression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.Release373RegressionKt")
 }
+
+
+tasks.register<JavaExec>("desktopVisualSettings374Regression") {
+    group = "verification"
+    description = "Checks AIG CNC Windows quality/power/RGB/HUD runtime consumers"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.DesktopVisualSettings374RegressionKt")
+}

@@ -69,10 +69,7 @@ object ProductionActionContract {
         ),
 
         both("SETTINGS_LANGUAGE_RENDERER_FPS",ProductionPage.SETTINGS),
-        ProductionActionSpec(
-            "SETTINGS_VISUAL_RUNTIME",ProductionPage.SETTINGS,
-            connected,disabled("action.disabled.desktopVisualRuntime")
-        )
+        both("SETTINGS_VISUAL_RUNTIME",ProductionPage.SETTINGS)
     )
 
     private val byId=actions.associateBy { it.id }

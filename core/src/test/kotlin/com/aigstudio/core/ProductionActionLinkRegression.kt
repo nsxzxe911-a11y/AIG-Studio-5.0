@@ -75,7 +75,7 @@ fun main() {
     check(ProductionActionContract.spec("CAD_LAYER").windows.availability==ProductionActionAvailability.DISABLED)
     check(ProductionActionContract.spec("AI_WORKING_COPY").android.availability==ProductionActionAvailability.DISABLED)
     check(ProductionActionContract.spec("AI_WORKING_COPY").windows.availability==ProductionActionAvailability.DISABLED)
-    check(ProductionActionContract.spec("SETTINGS_VISUAL_RUNTIME").windows.availability==ProductionActionAvailability.DISABLED)
+    check(ProductionActionContract.spec("SETTINGS_VISUAL_RUNTIME").windows.availability==ProductionActionAvailability.CONNECTED)
 
     println("AIGCNC_PRODUCTION_ACTION_LINK_PASS|HOME_CAD_CAM_SIM_AXIS_NC_AI_SETTINGS|NO_ENABLED_NOOP|DISABLED_REASONED")
 }
