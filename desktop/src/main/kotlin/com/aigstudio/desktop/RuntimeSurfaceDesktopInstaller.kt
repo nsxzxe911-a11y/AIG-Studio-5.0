@@ -1,0 +1,124 @@
+package com.aigstudio.desktop
+
+import com.aigstudio.core.RuntimeSurfaceVisualContract
+import com.aigstudio.core.UiAssetContract
+import java.awt.AWTEvent
+import java.awt.AlphaComposite
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Toolkit
+import java.awt.Window
+import java.awt.event.WindowEvent
+import java.awt.image.BufferedImage
+import java.security.MessageDigest
+import java.util.Collections
+import java.util.Properties
+import java.util.WeakHashMap
+import javax.imageio.ImageIO
+import javax.swing.JComponent
+import javax.swing.JTabbedPane
+import javax.swing.SwingUtilities
+import javax.swing.border.AbstractBorder
+import javax.swing.border.Border
+import javax.swing.border.CompoundBorder
+import kotlin.math.max
+import kotlin.math.roundToInt
+
+/**
+ * Runtime-only RGB surface mounting.  It works against the actual visible
+ * Swing tree and never creates a hidden evidence JFrame.
+ */
+object RuntimeSurfaceDesktopInstaller {
+    private val installedTabs=Collections.newSetFromMap(WeakHashMap<JTabbedPane,Boolean>())
+    private val originalBorders=WeakHashMap<JComponent,Border?>()
+
+    fun install() {
+        Toolkit.getDefaultToolkit().addAWTEventListener({ event ->
+            if(event is WindowEvent && event.id==WindowEvent.WINDOW_OPENED) bindWindow(event.window)
+        },AWTEvent.WINDOW_EVENT_MASK)
+        SwingUtilities.invokeLater { Window.getWindows().forEach(::bindWindow) }
+    }
+
+    private fun bindWindow(window:Window) {
+        walk(window) { component ->
+            if(component is JTabbedPane && installedTabs.add(component)) {
+                component.addChangeListener { mountSelected(component) }
+                mountSelected(component)
+            }
+        }
+    }
+
+    private fun mountSelected(tabs:JTabbedPane) {
+        val index=tabs.selectedIndex
+        if(index<0) return
+        val component=tabs.getComponentAt(index) as? JComponent ?: return
+        val surface=RuntimeSurfaceVisualContract.normalize(tabs.getTitleAt(index))
+        if(surface !in RuntimeSurfaceVisualContract.surfaces) return
+        val image=RuntimeSurfaceDesktopAssets.image(surface) ?: return
+        val original=originalBorders.getOrPut(component){component.border}
+        component.border=CompoundBorder(
+            RuntimeSurfaceImageBorder(image,RuntimeSurfaceVisualContract.SURFACE_ALPHA),
+            original
+        )
+        component.revalidate()
+        component.repaint()
+    }
+
+    private fun walk(component:Component,visit:(Component)->Unit) {
+        visit(component)
+        if(component is java.awt.Container) component.components.forEach { walk(it,visit) }
+    }
+}
+
+private object RuntimeSurfaceDesktopAssets {
+    private val root=UiAssetContract.DESKTOP_ROOT
+    private val hashes:Map<String,String> by lazy {
+        val props=Properties()
+        val stream=RuntimeSurfaceDesktopAssets::class.java.getResourceAsStream("$root/sha256.properties")
+            ?: return@lazy emptyMap()
+        stream.use(props::load)
+        props.stringPropertyNames().associateWith { props.getProperty(it).trim().lowercase() }
+    }
+    private val cache=mutableMapOf<String,BufferedImage?>()
+
+    @Synchronized
+    fun image(surface:String):BufferedImage? {
+        val id=RuntimeSurfaceVisualContract.assetId(surface)
+        if(cache.containsKey(id)) return cache[id]
+        val loaded=runCatching {
+            val bytes=RuntimeSurfaceDesktopAssets::class.java.getResourceAsStream("$root/$id.png")
+                ?.use{it.readBytes()} ?: return@runCatching null
+            val expected=hashes[id] ?: hashes["$id.png"]
+            if(expected!=null) {
+                val actual=MessageDigest.getInstance("SHA-256").digest(bytes)
+                    .joinToString(""){"%02x".format(it)}
+                require(actual==expected){"RGB surface hash mismatch: $id"}
+            }
+            ImageIO.read(bytes.inputStream())
+        }.getOrNull()
+        cache[id]=loaded
+        return loaded
+    }
+}
+
+private class RuntimeSurfaceImageBorder(
+    private val image:BufferedImage,
+    alpha:Int
+):AbstractBorder() {
+    private val opacity=(alpha.coerceIn(0,255)/255f)
+    override fun getBorderInsets(c:Component?):Insets=Insets(0,0,0,0)
+    override fun paintBorder(c:Component,g0:Graphics,x:Int,y:Int,width:Int,height:Int) {
+        if(width<=0 || height<=0) return
+        val g=g0.create() as Graphics2D
+        val scale=max(width.toDouble()/image.width,height.toDouble()/image.height)
+        val dw=(image.width*scale).roundToInt()
+        val dh=(image.height*scale).roundToInt()
+        val dx=x+(width-dw)/2
+        val dy=y+(height-dh)/2
+        g.composite=AlphaComposite.SrcOver.derive(opacity)
+        g.drawImage(image,dx,dy,dw,dh,null)
+        g.dispose()
+    }
+}
