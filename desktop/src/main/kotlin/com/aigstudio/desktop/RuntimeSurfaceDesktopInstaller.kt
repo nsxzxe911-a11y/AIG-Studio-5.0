@@ -32,8 +32,8 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
- * Runtime-only RGB surface mounting.  It works against the actual visible
- * Swing tree and never creates a hidden evidence JFrame.
+ * Runtime-only RGB surface mounting. Button icons and full-page artwork stay
+ * separate; icon-sized generated assets are never stretched into page skins.
  */
 object RuntimeSurfaceDesktopInstaller {
     private val installedTabs=Collections.newSetFromMap(WeakHashMap<JTabbedPane,Boolean>())
@@ -56,9 +56,7 @@ object RuntimeSurfaceDesktopInstaller {
             }
             if(component is AbstractButton && installedButtons.add(component)) {
                 recognizedSurface(component.text)?.let { surface ->
-                    component.addActionListener {
-                        SwingUtilities.invokeLater { mountWindowSurface(window,surface) }
-                    }
+                    component.addActionListener { SwingUtilities.invokeLater { mountWindowSurface(window,surface) } }
                 }
             }
         }
@@ -85,12 +83,8 @@ object RuntimeSurfaceDesktopInstaller {
         applySurface(component,surface)
     }
 
-    /**
-     * AIG CNC production desktop uses CardLayout for its primary Runtime, not
-     * only JTabbedPane.  Mount the selected surface on the largest visible
-     * content component so real CAD/CAM/SIM/axis pages receive the full art.
-     */
     private fun mountWindowSurface(window:Window,surface:String) {
+        if(surface=="HOME") return // HOME is mounted by the verified full-page HOME installer.
         val root=largestVisibleContent(window) ?: return
         val previous=mountedRoots.put(window,root)
         if(previous!=null && previous!==root) {
@@ -130,8 +124,9 @@ object RuntimeSurfaceDesktopInstaller {
     }
 }
 
+/** Full interface art only. Small generated button images remain in the parent asset directory. */
 private object RuntimeSurfaceDesktopAssets {
-    private val root=UiAssetContract.DESKTOP_ROOT
+    private val root=UiAssetContract.DESKTOP_ROOT+"/runtime-surfaces"
     private val hashes:Map<String,String> by lazy {
         val props=Properties()
         val stream=RuntimeSurfaceDesktopAssets::class.java.getResourceAsStream("$root/sha256.properties")
@@ -146,15 +141,15 @@ private object RuntimeSurfaceDesktopAssets {
         val id=RuntimeSurfaceVisualContract.assetId(surface)
         if(cache.containsKey(id)) return cache[id]
         val loaded=runCatching {
+            val expected=hashes[id] ?: hashes["$id.png"] ?: return@runCatching null
             val bytes=RuntimeSurfaceDesktopAssets::class.java.getResourceAsStream("$root/$id.png")
                 ?.use{it.readBytes()} ?: return@runCatching null
-            val expected=hashes[id] ?: hashes["$id.png"]
-            if(expected!=null) {
-                val actual=MessageDigest.getInstance("SHA-256").digest(bytes)
-                    .joinToString(""){"%02x".format(it)}
-                require(actual==expected){"RGB surface hash mismatch: $id"}
-            }
-            ImageIO.read(bytes.inputStream())
+            val actual=MessageDigest.getInstance("SHA-256").digest(bytes)
+                .joinToString(""){"%02x".format(it)}
+            require(actual==expected){"Full RGB surface hash mismatch: $id"}
+            val image=ImageIO.read(bytes.inputStream()) ?: return@runCatching null
+            require(image.width>=640 && image.height>=360){"Full RGB surface is icon-sized: $id"}
+            image
         }.getOrNull()
         cache[id]=loaded
         return loaded
@@ -188,7 +183,13 @@ private class ProceduralRgbSurfaceBorder(private val surface:String):AbstractBor
         val g=g0.create() as Graphics2D
         g.color=java.awt.Color(2,4,7,205)
         g.fillRect(x,y,width,height)
-        g.color=java.awt.Color(39,233,255,175)
+        val accent=when(surface) {
+            "CAM","SIM" -> java.awt.Color(51,243,155,170)
+            "3AX","4AX","5AX","6AX" -> java.awt.Color(255,77,166,170)
+            "NC" -> java.awt.Color(255,179,38,170)
+            else -> java.awt.Color(39,233,255,170)
+        }
+        g.color=accent
         g.drawRoundRect(x+2,y+2,max(0,width-5),max(0,height-5),20,20)
         g.color=java.awt.Color(244,251,255,90)
         g.drawString(surface,x+16,y+24)
