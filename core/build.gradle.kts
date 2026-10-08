@@ -97,3 +97,11 @@ tasks.register<JavaExec>("settingsAndroidWiringRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.SettingsAndroidWiringRegressionKt")
 }
+
+tasks.register<JavaExec>("settingsDesktopWiringRegression") {
+    group = "verification"
+    description = "Checks Windows shared Settings, renderer truth, locale and FPS runtime wiring"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.SettingsDesktopWiringRegressionKt")
+}

@@ -3418,6 +3418,7 @@ private fun showUnifiedMachiningEditor(
 }
 
 private fun showApp(showWindow:Boolean=true):JFrame {
+    SharedSettingsDesktopBridge.load()
     applyDesktopCoordinatePrecision()
     val doc = DrawingDocument()
     val status = JLabel("LOCAL READY • NETWORK OPTIONAL • AIG CNC • "+MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION)
@@ -4548,11 +4549,58 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     val productionUiButtons=linkedMapOf<String,GlassActionButton>()
 
     fun showUserSettingsCenter(){
+        val sharedSettings=SharedSettingsDesktopBridge.store()
+        val sharedCurrent=sharedSettings.snapshot()
         val names=StudioDesktopProductionTheme.ids().map{StudioDesktopProductionTheme.name(it)}.toTypedArray()
         val currentIndex=StudioDesktopProductionTheme.ids().indexOf(StudioDesktopProductionTheme.ID).coerceAtLeast(0)
         val themeChoice=JComboBox(names).apply{selectedIndex=currentIndex}
+        val languageIds=arrayOf("zh-TW","en-US")
+        val languageChoice=JComboBox(arrayOf(
+            UiLocalizationRegistry.text("zh-TW","settings.language.zhTw"),
+            UiLocalizationRegistry.text("en-US","settings.language.enUs")
+        )).apply { selectedIndex=languageIds.indexOf(sharedCurrent.localeId).coerceAtLeast(0) }
+        val rendererOptions=sharedSettings.rendererOptions()
+        val rendererChoice=JComboBox(rendererOptions.map(SharedSettingsDesktopBridge::rendererLabel).toTypedArray()).apply {
+            selectedIndex=rendererOptions.indexOfFirst{it.selection==sharedCurrent.rendererSelection}.coerceAtLeast(0)
+            renderer=object:DefaultListCellRenderer(){
+                override fun getListCellRendererComponent(list:JList<*>?,value:Any?,index:Int,isSelected:Boolean,cellHasFocus:Boolean):Component {
+                    val c=super.getListCellRendererComponent(list,value,index,isSelected,cellHasFocus)
+                    val optionIndex=if(index>=0)index else selectedIndex
+                    if(optionIndex in rendererOptions.indices && !rendererOptions[optionIndex].selectable) c.foreground=Color.GRAY
+                    return c
+                }
+            }
+        }
+        var lastRendererIndex=rendererChoice.selectedIndex
+        var rendererGuard=false
+        rendererChoice.addActionListener {
+            if(rendererGuard)return@addActionListener
+            val index=rendererChoice.selectedIndex
+            if(index in rendererOptions.indices && !rendererOptions[index].selectable){
+                status.text="RENDERER • "+SharedSettingsDesktopBridge.rendererLabel(rendererOptions[index])
+                rendererGuard=true;rendererChoice.selectedIndex=lastRendererIndex;rendererGuard=false
+            }else lastRendererIndex=index
+        }
         val fpsChoice=JComboBox(StudioDesktopRefreshSettings.modes().toTypedArray()).apply{
             selectedItem=StudioDesktopRefreshSettings.mode()
+        }
+        fun selectedFpsMode():FpsMode=when(fpsChoice.selectedItem?.toString()){
+            "Auto"->FpsMode.AUTO;"120 FPS"->FpsMode.FPS_120;"90 FPS"->FpsMode.FPS_90;"30 FPS"->FpsMode.FPS_30;else->FpsMode.FPS_60
+        }
+        fun applySharedSettings(){
+            val requested=sharedSettings.snapshot().copy(
+                localeId=languageIds[languageChoice.selectedIndex],
+                rendererSelection=rendererOptions[rendererChoice.selectedIndex].selection,
+                fpsMode=selectedFpsMode()
+            )
+            SharedSettingsDesktopBridge.apply(requested).onSuccess { applied->
+                StudioDesktopRefreshSettings.select(fpsChoice.selectedItem?.toString() ?: "60 FPS")
+                RuntimeLocalizationDesktopInstaller.refresh()
+                status.text="SETTINGS APPLIED • "+applied.localeId+" • RENDERER "+(SharedSettingsDesktopBridge.effectiveBackend()?.name ?: "NONE")+" • "+StudioDesktopRefreshSettings.targetFps()+" FPS"
+                frame.repaint()
+            }.onFailure { error->
+                status.text="SETTINGS NOT APPLIED • "+(error.message ?: "invalid setting")
+            }
         }
         val actions=JPanel(GridLayout(0,2,6,6)).apply{background=StudioDesktopProductionTheme.background}
         fun action(label:String,run:()->Unit){
@@ -4564,12 +4612,8 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             status.text="THEME SAVED • "+StudioDesktopProductionTheme.name(id)+" • 重新開啟視窗完整套用"
             frame.repaint()
         }
-        action("套用 FPS"){
-            val mode=fpsChoice.selectedItem?.toString() ?: "60 FPS"
-            StudioDesktopRefreshSettings.select(mode)
-            status.text="FPS SAVED • "+mode+" • EFFECTIVE "+StudioDesktopRefreshSettings.targetFps()+" FPS • SAFE DEFAULT 60"
-            frame.repaint()
-        }
+        action(UiPresentationState.text("settings.apply")){ applySharedSettings() }
+        action("套用 FPS"){ applySharedSettings() }
         action("手動 Regression • 自動 OFF"){
             JOptionPane.showMessageDialog(
                 frame,
@@ -4664,8 +4708,10 @@ private fun showApp(showWindow:Boolean=true):JFrame {
 
         val selectors=JPanel(GridLayout(0,2,6,6)).apply{
             background=StudioDesktopProductionTheme.background
+            add(JLabel(UiPresentationState.text("settings.language")).apply{foreground=StudioDesktopProductionTheme.text});add(languageChoice)
+            add(JLabel(UiPresentationState.text("settings.renderer")).apply{foreground=StudioDesktopProductionTheme.text});add(rendererChoice)
             add(JLabel("佈景主題（可改｜預設：AIG RGB Glass）").apply{foreground=StudioDesktopProductionTheme.text});add(themeChoice)
-            add(JLabel("FPS 模式（可改｜預設：60 FPS）").apply{foreground=StudioDesktopProductionTheme.text});add(fpsChoice)
+            add(JLabel(UiPresentationState.text("settings.fps")+"（60 FPS default）").apply{foreground=StudioDesktopProductionTheme.text});add(fpsChoice)
             add(JLabel("目前有效").apply{foreground=StudioDesktopProductionTheme.text})
             add(JLabel(StudioDesktopRefreshSettings.targetFps().toString()+" FPS").apply{foreground=StudioDesktopProductionTheme.text})
         }
