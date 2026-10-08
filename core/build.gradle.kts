@@ -130,3 +130,21 @@ tasks.register<JavaExec>("desktopVisualSettings374Regression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.DesktopVisualSettings374RegressionKt")
 }
+
+
+tasks.register<JavaExec>("aiProgramWorkingCopy374Regression") {
+    group = "verification"
+    description = "Checks immutable NC main -> AI working copy -> verify -> explicit promote"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.AiProgramWorkingCopy374RegressionKt")
+}
+
+
+tasks.register<JavaExec>("aiProgramWorkingCopyWiring374Regression") {
+    group = "verification"
+    description = "Checks AIG CNC Android/Windows AI program working-copy production wiring"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.AiProgramWorkingCopyWiring374RegressionKt")
+}

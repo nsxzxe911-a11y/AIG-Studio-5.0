@@ -2769,6 +2769,39 @@ private fun showNcDraftEditor(frame:JFrame, reason:String) {
 
 private var runtimeNcDraft:String?=null
 
+private fun showAiProgramWorkingCopy(frame:JFrame,status:JLabel) {
+    val main=(runtimeNcDraft ?: ncPostPrefs.get("manual_nc_draft","")).orEmpty()
+    if(main.isBlank()){status.text="AI WORKING COPY • NO NC DRAFT";return}
+    val controller=runCatching{CncControllerProfile.valueOf(ncPostPrefs.get("controller",CncControllerProfile.FANUC.name))}.getOrDefault(CncControllerProfile.FANUC)
+    val profile=loadDesktopRotaryMachineProfile()
+    val vault=AiProgramWorkingCopyVault()
+    val opened=vault.open(main)
+    val editor=JTextArea(main,24,88).apply{background=Color(5,8,12);foreground=Color(220,235,250);caretColor=Color(61,235,255);font=Font(Font.MONOSPACED,Font.PLAIN,14)}
+    val copyStatus=JLabel("IMMUTABLE MAIN • "+opened.immutableMainDigest!!.take(12)+" • WORKING").apply{foreground=Color(61,235,255)}
+    val verify=GlassActionButton("VERIFY WORKING COPY",Color(61,235,255))
+    val promote=GlassActionButton("PROMOTE VERIFIED MAIN",Color(245,158,11)).apply{isEnabled=false}
+    val actions=JPanel(FlowLayout(FlowLayout.LEFT,8,6)).apply{background=StudioDesktopProductionTheme.background;add(verify);add(promote)}
+    val panel=JPanel(BorderLayout(6,6)).apply{background=StudioDesktopProductionTheme.background;border=BorderFactory.createEmptyBorder(10,10,10,10);add(copyStatus,BorderLayout.NORTH);add(JScrollPane(editor),BorderLayout.CENTER);add(actions,BorderLayout.SOUTH)}
+    val dialog=JDialog(frame,"AI PROGRAM WORKING COPY",true).apply{contentPane=panel;pack();setLocationRelativeTo(frame)}
+    verify.addActionListener{
+        runCatching{vault.stage(editor.text);vault.verify{program->AiProgramNcVerifier.verify(program,controller,profile,RotaryAxisOperationMode.NONE)}}
+            .onSuccess{result->promote.isEnabled=result.ok;copyStatus.text=if(result.ok)"VERIFIED • "+vault.snapshot().verifiedDigest!!.take(12)+" • EXPLICIT PROMOTE REQUIRED" else "BLOCKED • "+result.issues.take(4).joinToString(" | ");status.text=if(result.ok)"AI WORKING COPY VERIFIED • MAIN UNCHANGED" else "AI WORKING COPY BLOCKED • MAIN UNCHANGED"}
+            .onFailure{error->promote.isEnabled=false;copyStatus.text="VERIFY ERROR • "+(error.message?:"error")}
+    }
+    promote.addActionListener{
+        val verified=vault.verified()
+        if(verified==null || verified!=editor.text){promote.isEnabled=false;copyStatus.text="CHANGED AFTER VERIFY • VERIFY AGAIN";return@addActionListener}
+        runCatching{
+            val promoted=vault.promote()
+            runtimeNcDraft=promoted
+            ncPostPrefs.put("manual_nc_draft",promoted);ncPostPrefs.flush()
+            promoted
+        }.onSuccess{copyStatus.text="PROMOTED • VERIFIED NC DRAFT";status.text="AI VERIFIED MAIN PROMOTED • NC DRAFT • LOCAL SAVE";promote.isEnabled=false}
+            .onFailure{error->copyStatus.text="PROMOTE BLOCKED • "+(error.message?:"error")}
+    }
+    dialog.isVisible=true
+}
+
 private fun showNcEditor(
     frame:JFrame,
     derived:Machining3DResult?,
@@ -5154,6 +5187,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             status.text="AI 專案摘要 • entities="+doc.size()+" • links="+doc.links().size
         })
         add(button("CAM 檢查",StudioDesktopProductionTheme.cutting){showProductionCam()})
+        add(button("AI WORKING COPY",Color(139,92,246)){showAiProgramWorkingCopy(frame,status)})
         add(button("NC 安全",Color(80,170,255)){
             runCatching{showNcEditor(
                 frame,productionCamDerivedCache,!productionCamIsStale()

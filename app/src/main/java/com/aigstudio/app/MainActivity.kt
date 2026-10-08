@@ -2380,6 +2380,41 @@ class MainActivity : Activity() {
     }
 
 
+
+    private fun showAiProgramWorkingCopyDialog() {
+        val main=unifiedNcDraft.orEmpty()
+        if(main.isBlank()){Toast.makeText(this,"AI WORKING COPY • NO NC DRAFT",Toast.LENGTH_SHORT).show();return}
+        val vault=AiProgramWorkingCopyVault()
+        val opened=vault.open(main)
+        val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(14),dp(10),dp(14),dp(8))}
+        val copyStatus=TextView(this).apply{setTextColor(0xFF3DEBFF.toInt());textSize=12f;text="IMMUTABLE MAIN • "+opened.immutableMainDigest!!.take(12)+" • WORKING"}
+        val editor=EditText(this).apply{setText(main);setTextColor(0xFFE1EFFF.toInt());setBackgroundColor(0xFF05080C.toInt());typeface=android.graphics.Typeface.MONOSPACE;minLines=14;gravity=Gravity.TOP or Gravity.START}
+        val verify=Button(this).apply{text="VERIFY WORKING COPY";isAllCaps=false}
+        val promote=Button(this).apply{text="PROMOTE VERIFIED MAIN";isAllCaps=false;isEnabled=false}
+        box.addView(copyStatus);box.addView(editor,LinearLayout.LayoutParams(-1,dp(420)));box.addView(verify);box.addView(promote)
+        verify.setOnClickListener{
+            runCatching{vault.stage(editor.text.toString());vault.verify{program->AiProgramNcVerifier.verify(program,controllerProfile,rotaryClampProfile,currentRotaryOperationMode())}}
+                .onSuccess{result->promote.isEnabled=result.ok;copyStatus.text=if(result.ok)"VERIFIED • "+vault.snapshot().verifiedDigest!!.take(12)+" • EXPLICIT PROMOTE REQUIRED" else "BLOCKED • "+result.issues.take(4).joinToString(" | ")}
+                .onFailure{error->promote.isEnabled=false;copyStatus.text="VERIFY ERROR • "+(error.message?:"error")}
+        }
+        promote.setOnClickListener{
+            val verified=vault.verified()
+            if(verified==null || verified!=editor.text.toString()){promote.isEnabled=false;copyStatus.text="CHANGED AFTER VERIFY • VERIFY AGAIN";return@setOnClickListener}
+            runCatching{
+                val promoted=vault.promote()
+                unifiedNcDraft=promoted
+                unifiedNcDraftSourceSignature=currentUnifiedNcSourceSignature()
+                unifiedNcDraftStale=false
+                markProjectDirty();saveCadCheckpoint()
+                promoted
+            }.onSuccess{copyStatus.text="PROMOTED • VERIFIED NC DRAFT • RECOVERY SAVED";Toast.makeText(this,"AI VERIFIED MAIN PROMOTED • NC DRAFT",Toast.LENGTH_SHORT).show();promote.isEnabled=false}
+                .onFailure{error->copyStatus.text="PROMOTE BLOCKED • "+(error.message?:"error")}
+        }
+        val dialog=AlertDialog.Builder(this).setTitle("AI PROGRAM WORKING COPY").setView(box).setNegativeButton("關閉",null).create()
+        dialog.setOnShowListener{RuntimeLocalizationAndroidInstaller.bindWindow(dialog.window)}
+        dialog.show()
+    }
+
     private fun showAiSystemSuiteDialog() {
         val prefs = getSharedPreferences("aig_environment", MODE_PRIVATE)
         val box = LinearLayout(this).apply {
@@ -2400,6 +2435,7 @@ class MainActivity : Activity() {
             setPadding(dp(4),dp(4),dp(4),dp(10))
         })
         action("AI VOICE") { startVoiceAssistant() }
+        action("AI WORKING COPY") { showAiProgramWorkingCopyDialog() }
         action("系統監控 HUD") { applySystemHudPreference(true); showExpandedSystemHud() }
         action("環境 / FPS / 溫度設定") { showEnvironmentSettings() }
         action("ChatGPT AI 更新") { runSecureUpdateCheck() }

@@ -63,10 +63,7 @@ object ProductionActionContract {
         both("NC_BLOCK_SKIP_ALARM",ProductionPage.NC),
 
         both("AI_LOCAL_ASSIST",ProductionPage.AI),
-        ProductionActionSpec(
-            "AI_WORKING_COPY",ProductionPage.AI,
-            disabled("action.disabled.aiWorkingCopy"),disabled("action.disabled.aiWorkingCopy")
-        ),
+        both("AI_WORKING_COPY",ProductionPage.AI),
 
         both("SETTINGS_LANGUAGE_RENDERER_FPS",ProductionPage.SETTINGS),
         both("SETTINGS_VISUAL_RUNTIME",ProductionPage.SETTINGS)
