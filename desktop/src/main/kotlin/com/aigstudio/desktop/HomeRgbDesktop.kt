@@ -14,6 +14,7 @@ import java.awt.event.WindowEvent
 import java.awt.image.BufferedImage
 import java.security.MessageDigest
 import java.util.Collections
+import java.util.Properties
 import java.util.WeakHashMap
 import javax.imageio.ImageIO
 import javax.swing.JComponent
@@ -26,7 +27,7 @@ import kotlin.math.roundToInt
 object HomeRgbDesktopInstaller {
     private const val EXPECTED_SHA256 = "9b0d4c983d8b69d9e1735036842567e5082101976bd17335cd9c3ec7c4494a80"
     private val applied = Collections.newSetFromMap(WeakHashMap<JComponent, Boolean>())
-    private val image: BufferedImage? by lazy { loadVerified() }
+    private val image: BufferedImage? by lazy { loadExact() ?: loadRuntimeSurfaceFallback() }
 
     fun install() {
         Toolkit.getDefaultToolkit().addAWTEventListener({ event ->
@@ -35,17 +36,34 @@ object HomeRgbDesktopInstaller {
         SwingUtilities.invokeLater { Window.getWindows().forEach(::applyTo) }
     }
 
-    private fun loadVerified(): BufferedImage? = runCatching {
+    private fun loadExact(): BufferedImage? = runCatching {
         val root = UiAssetContract.DESKTOP_HOME_ROOT
         val bytes = HomeRgbDesktopInstaller::class.java
             .getResourceAsStream("$root/${UiAssetContract.DESKTOP_HOME_FILE}")
             ?.use { it.readBytes() } ?: error("HOME desktop asset missing")
-        val digest = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+        val digest = sha256(bytes)
         require(digest == EXPECTED_SHA256) { "HOME desktop SHA mismatch" }
         val decoded = ImageIO.read(bytes.inputStream()) ?: error("HOME desktop JPEG decode failed")
         require(decoded.width == 1280 && decoded.height == 720) { "HOME desktop dimensions invalid" }
         decoded
-    }.onFailure { System.err.println("AIG RGB HOME 416 WARNING • ${it.message} • CURRENT HOME CONTINUES") }.getOrNull()
+    }.onFailure { System.err.println("AIG RGB HOME 416 NOTICE • exact asset unavailable • trying runtime surface") }.getOrNull()
+
+    private fun loadRuntimeSurfaceFallback():BufferedImage? = runCatching {
+        val root="${UiAssetContract.DESKTOP_ROOT}/runtime-surfaces"
+        val props=Properties()
+        HomeRgbDesktopInstaller::class.java.getResourceAsStream("$root/sha256.properties")?.use(props::load)
+            ?: error("runtime surface hashes missing")
+        val expected=(props.getProperty("home") ?: props.getProperty("home.png"))?.trim()?.lowercase()
+            ?: error("HOME runtime surface hash missing")
+        val bytes=HomeRgbDesktopInstaller::class.java.getResourceAsStream("$root/home.png")?.use{it.readBytes()}
+            ?: error("HOME runtime surface missing")
+        require(sha256(bytes)==expected){"HOME runtime surface SHA mismatch"}
+        val decoded=ImageIO.read(bytes.inputStream()) ?: error("HOME runtime surface decode failed")
+        require(decoded.width>=640 && decoded.height>=360){"HOME runtime surface too small"}
+        decoded
+    }.onFailure { System.err.println("AIG RGB HOME NOTICE • full-page image unavailable • Runtime continues") }.getOrNull()
+
+    private fun sha256(bytes:ByteArray)=MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
 
     private fun applyTo(window: Window) {
         val target = findHome(window) ?: return
