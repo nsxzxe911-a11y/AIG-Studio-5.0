@@ -88,3 +88,34 @@ object VisualQualityPolicy {
     private fun minPreset(a:VisualQualityPreset,b:VisualQualityPreset):VisualQualityPreset =
         if(a.ordinal<=b.ordinal)a else b
 }
+
+object VisualQualityRuntime {
+    @Volatile private var requestedPreset=VisualQualityPreset.BALANCED
+    @Volatile private var currentBudget=VisualQualityPolicy.budget(VisualQualityPreset.BALANCED)
+
+    @Synchronized
+    fun setRequested(preset:VisualQualityPreset){
+        requestedPreset=preset
+        currentBudget=VisualQualityPolicy.budget(preset)
+    }
+
+    fun requested():VisualQualityPreset=requestedPreset
+    fun current():VisualQualityBudget=currentBudget
+
+    @Synchronized
+    fun updateFromHardware(
+        ramGb:Int,
+        hardwareAccelerated:Boolean,
+        memoryPressure:VisualMemoryPressure=VisualMemoryPressure.NORMAL,
+        thermalLevel:Int=0
+    ):VisualQualityBudget{
+        val effective=VisualQualityPolicy.adapt(
+            requested=requestedPreset,
+            ramGb=ramGb,
+            hardwareAccelerated=hardwareAccelerated,
+            memoryPressure=memoryPressure,
+            thermalLevel=thermalLevel
+        )
+        return VisualQualityPolicy.budget(effective).also { currentBudget=it }
+    }
+}
