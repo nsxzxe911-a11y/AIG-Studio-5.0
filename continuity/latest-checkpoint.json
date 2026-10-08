@@ -5,7 +5,7 @@
   "branch": "feat/aig-cnc-373-runtime-link-repair",
   "recorded_source_head": "7b9cb0aca06117f5132209441c1fc5df0344bccf",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "FULL_RUNTIME_LINK_REPAIR_BINARY_PASS_SETUP_INSTALLER_PENDING",
+  "status": "FULL_RUNTIME_LINK_REPAIR_BINARY_INSTALLER_PASS",
   "departments": {
     "HOME": "EXECUTE_UNTIL_PASS",
     "CAD": "EXECUTE_UNTIL_PASS",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "AIG CNC 373 APK and Windows portable x86-64 Runtime are binary-launch verified and exact-bound by AIG-II 453. Build Setup EXE only after WiX is available; keep Android native GLES/Vulkan disabled until a real backend is implemented.",
-  "note": "AIG CNC 373 source and binary Runtime validation PASS: Nox install/cold launch enters visible AIG CNC RGB HOME; Windows x86-64 packaged launcher reproduces official RGB UI, true material removal (7500 cells), 5AX dynamic tool/axis/progressive removal, G90 and Master Origin. Setup EXE remains pending because WiX light.exe is not installed.",
+  "next_action": "AIG CNC 373 binary release is verified across APK, portable x86-64 Runtime and Setup install/launch/uninstall. Continue forward-only product work from this checkpoint; keep native Android GLES/Vulkan disabled until a real backend exists.",
+  "note": "AIG CNC 373 full binary validation PASS. Nox APK cold launch enters visible AIG CNC RGB HOME. Windows portable x86-64 packaged launcher PASS. Setup EXE built with portable WiX 3.14.1, installed per-user, installed Runtime reproduced official RGB UI, true material removal and 5AX dynamic evidence, and uninstall removed install directory and registry entry.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -599,7 +599,17 @@
       "five_axis_progressive_material_removal": "PASS",
       "absolute_mode": "G90",
       "master_origin": "X0.000 Y0.000 Z0.000",
-      "setup_exe": "PENDING_WIX_NOT_FOUND"
+      "setup_exe": "release/windows/AIG_CNC_373_SETUP.exe",
+      "setup_exe_sha256": "060dbd9fbb208974f101e4b6e1dc7801aa76dd4d62cbf72d31ea28f24fbe23af",
+      "setup_build": "PASS_PORTABLE_WIX_3_14_1",
+      "setup_install": "PASS_EXIT_0",
+      "installed_version": "3.73.0",
+      "installed_runtime_smoke": "PASS",
+      "installed_removed_cells": 7500,
+      "installed_5x_dynamic": "PASS",
+      "uninstall": "PASS_EXIT_0",
+      "uninstall_install_dir_removed": true,
+      "uninstall_registry_removed": true
     }
   }
 }

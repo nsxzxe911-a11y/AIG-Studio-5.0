@@ -77,4 +77,9 @@ No broad automatic regression or external workflow was triggered.
 - `5X_DYNAMIC_AXIS_CHANGE=PASS`
 - `5X_PROGRESSIVE_MATERIAL_REMOVAL=PASS`
 - `ABS_MODE=G90`, `MASTER_ORIGIN=X0.000 Y0.000 Z0.000`
-- Setup installer: **PENDING** because WiX `light.exe` is not installed.
+- Setup installer: `release/windows/AIG_CNC_373_SETUP.exe`
+- Setup SHA-256: `060dbd9fbb208974f101e4b6e1dc7801aa76dd4d62cbf72d31ea28f24fbe23af`
+- Installer build: PASS using official portable WiX 3.14.1 binaries
+- Per-user install: PASS, version `3.73.0`
+- Installed Runtime smoke: PASS; `OFFICIAL_RGB_UI=PASS`, `REMOVED_CELLS=7500`, 5AX dynamic tool/axis/progressive material removal PASS
+- Uninstall: PASS; install directory and uninstall registry entry removed.
