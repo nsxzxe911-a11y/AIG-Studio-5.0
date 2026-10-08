@@ -1,6 +1,7 @@
 package com.aigstudio.app
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -9,6 +10,9 @@ import android.view.Display
 import com.aigstudio.core.PlatformRefreshPolicy
 import com.aigstudio.core.CpuThermalFpsPolicy
 import com.aigstudio.core.RenderCompatibilityContract
+import com.aigstudio.core.VisualMemoryPressure
+import com.aigstudio.core.VisualQualityPreset
+import com.aigstudio.core.VisualQualityRuntime
 
 class AdaptiveRefreshController(
     private val activity: Activity
@@ -86,6 +90,7 @@ class AdaptiveRefreshController(
         val powerMode = prefs.getString("power_mode", "Auto") ?: "Auto"
         val idleThrottle = prefs.getBoolean("idle_throttle", true)
         val thermalAuto = prefs.getBoolean("thermal_auto", true)
+        val visualBudget = updateVisualQuality()
 
         var requested = when (fpsMode) {
             "120 FPS" -> 120f
@@ -116,16 +121,56 @@ class AdaptiveRefreshController(
                 }
             }
         } else if (thermalAuto && Build.VERSION.SDK_INT >= 29) {
-            // Manual FPS remains user-selected unless Android reports a severe thermal state.
             requested = when {
                 powerManager.currentThermalStatus >= PowerManager.THERMAL_STATUS_SEVERE -> minOf(requested, 30f)
                 else -> requested
             }
         }
 
+        if (fpsMode == "Auto") requested = minOf(requested, visualBudget.maxFps.toFloat())
         if (!startupSettled) requested = minOf(requested, RenderCompatibilityContract.STARTUP_SAFE_HZ.toFloat())
         requested = PlatformRefreshPolicy.capForRuntime(requested.toInt(), RuntimeDeviceProfile.isEmulator).toFloat()
         applyRefreshRate(display, requested)
+    }
+
+    private fun updateVisualQuality() = run {
+        val prefs = activity.getSharedPreferences("aig_environment", Activity.MODE_PRIVATE)
+        val requested = when ((prefs.getString("visual_quality", "Balanced") ?: "Balanced").trim().uppercase()) {
+            "LOW", "ECO", "低負載" -> VisualQualityPreset.LOW
+            "HIGH", "高畫質" -> VisualQualityPreset.HIGH
+            "ULTRA", "極致" -> VisualQualityPreset.ULTRA
+            else -> VisualQualityPreset.BALANCED
+        }
+        VisualQualityRuntime.setRequested(requested)
+
+        val manager = activity.getSystemService(ActivityManager::class.java)
+        val memory = ActivityManager.MemoryInfo().also(manager::getMemoryInfo)
+        val gib = 1024L * 1024L * 1024L
+        val ramGb = ((memory.totalMem + gib - 1L) / gib).toInt().coerceAtLeast(1)
+        val availableRatio = if (memory.totalMem > 0L) memory.availMem.toDouble() / memory.totalMem.toDouble() else 1.0
+        val pressure = when {
+            memory.lowMemory || availableRatio <= 0.10 -> VisualMemoryPressure.CRITICAL
+            availableRatio <= 0.20 -> VisualMemoryPressure.HIGH
+            availableRatio <= 0.35 -> VisualMemoryPressure.MODERATE
+            else -> VisualMemoryPressure.NORMAL
+        }
+        val decor = activity.window.decorView
+        val hardwareAccelerated = decor.isHardwareAccelerated || !decor.isAttachedToWindow
+        val thermalLevel = if (Build.VERSION.SDK_INT >= 29) {
+            powerManager.currentThermalStatus
+        } else {
+            when {
+                (latestCpuC ?: 0.0) >= 85.0 -> 4
+                (latestCpuC ?: 0.0) >= 75.0 -> 2
+                else -> 0
+            }
+        }
+        VisualQualityRuntime.updateFromHardware(
+            ramGb = ramGb,
+            hardwareAccelerated = hardwareAccelerated,
+            memoryPressure = pressure,
+            thermalLevel = thermalLevel
+        )
     }
 
     fun currentCpuTemperatureC(): Double? = latestCpuC
