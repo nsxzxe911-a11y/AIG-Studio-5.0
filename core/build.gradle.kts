@@ -53,3 +53,19 @@ tasks.register<JavaExec>("rendererCapabilityNegotiationRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.RendererCapabilityNegotiationRegressionKt")
 }
+
+tasks.register<JavaExec>("rendererVisualQualityRegression") {
+    group = "verification"
+    description = "Checks visual quality presets, hardware downgrade, and machining precision isolation"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.RendererVisualQualityRegressionKt")
+}
+
+tasks.register<JavaExec>("rendererVisualQualityWiringRegression") {
+    group = "verification"
+    description = "Checks AIG CNC Android visual quality runtime wiring"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.RendererVisualQualityWiringRegressionKt")
+}
