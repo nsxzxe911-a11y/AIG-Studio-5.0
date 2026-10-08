@@ -10,16 +10,18 @@ import android.graphics.drawable.LayerDrawable
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import com.aigstudio.core.MorningBaselineVisualContract
 import com.aigstudio.core.RuntimeSurfaceVisualContract
+import com.aigstudio.core.RuntimeVisualModuleRegistry
 import com.aigstudio.core.UiAssetContract
 import java.security.MessageDigest
 import java.util.Properties
 import java.util.WeakHashMap
 
 /**
- * Binds RGB artwork to the actual production view tree. Button icons and
- * full-page interface artwork are deliberately separate: small generated
- * button PNGs must never be stretched and presented as a completed surface.
+ * Binds RGB artwork to the actual production view tree. Visual skin, layout,
+ * actions and 3D scene remain separate modules. Missing artwork is status-only
+ * and never changes machining callbacks or CNC truth.
  */
 object RuntimeSurfaceAndroidInstaller {
     private val originalBackgrounds=WeakHashMap<View,Drawable?>()
@@ -54,7 +56,6 @@ object RuntimeSurfaceAndroidInstaller {
         val iconId=RuntimeSurfaceVisualContract.assetId(surface)
         val distinctIcon=ProductionRgbAssets.drawableById(button.context,iconId)
         if(surface=="6AX" && distinctIcon==null) {
-            // Historical code pointed 6AX at 5AX. Never repeat that substitution.
             button.setGeneratedAssetEnabled(false)
         } else {
             button.replaceVisualAsset(iconId)
@@ -78,11 +79,13 @@ object RuntimeSurfaceAndroidInstaller {
     }
 
     private fun mountOn(target:View,surface:String) {
-        if(surface=="HOME") return // Formal HOME has its own verified approved full-page installer.
+        if(surface=="HOME") return
+        val module=RuntimeVisualModuleRegistry.require(surface)
         val original=originalBackgrounds.getOrPut(target){target.background}
         val base=original ?: ColorDrawable(Color.rgb(2,4,7))
-        val fullArt=RuntimeFullSurfaceAssets.drawable(target.context,surface)
-        val visual=fullArt ?: proceduralSurface(surface)
+        val visual=MorningBaselineSurfaceAssets.drawable(target.context,module.visualAsset)
+            ?: RuntimeFullSurfaceAssets.drawable(target.context,surface)
+            ?: proceduralSurface(surface)
         visual.alpha=RuntimeSurfaceVisualContract.SURFACE_ALPHA
         target.background=LayerDrawable(arrayOf(base,visual))
         target.invalidate()
@@ -105,11 +108,31 @@ object RuntimeSurfaceAndroidInstaller {
     }
 }
 
+/** Full-size 2026-10-06 visual baseline pack; never used as a button icon. */
+internal object MorningBaselineSurfaceAssets {
+    private const val ROOT="aig-morning-baseline/20261006"
+    private val cache=mutableMapOf<String,Drawable?>()
+
+    @Synchronized
+    fun drawable(context:Context,fileName:String):Drawable? {
+        if(cache.containsKey(fileName)) return cache[fileName]
+        val value=runCatching {
+            val bytes=context.assets.open("$ROOT/$fileName").use { it.readBytes() }
+            require(bytes.size>=MorningBaselineVisualContract.minimumFullSurfaceBytes) {
+                "Morning baseline is icon-sized: $fileName"
+            }
+            val d=Drawable.createFromStream(bytes.inputStream(),fileName) ?: return@runCatching null
+            require(d.intrinsicWidth>=640 && d.intrinsicHeight>=360) { "Morning baseline dimensions invalid: $fileName" }
+            d
+        }.getOrNull()
+        cache[fileName]=value
+        return value
+    }
+}
+
 /**
- * Full-page surface pack lives below runtime-surfaces/. It is intentionally
- * separate from UiAssetContract's small generated button images. A surface
- * image is accepted only when a matching hash is present and its dimensions
- * are large enough to be interface artwork.
+ * Full-page fallback surface pack below runtime-surfaces/. It is intentionally
+ * separate from UiAssetContract's small generated button images.
  */
 private object RuntimeFullSurfaceAssets {
     private val ROOT=UiAssetContract.ANDROID_ROOT+"/runtime-surfaces"
