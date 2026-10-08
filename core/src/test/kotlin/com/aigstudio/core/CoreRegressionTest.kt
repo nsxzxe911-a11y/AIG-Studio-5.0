@@ -3177,7 +3177,7 @@ private fun testProjectFixturePersistenceV3() {
     try {
         StudioProjectRepository.saveRevisioned(project,first,"ANDROID","PHONE")
         val loaded=StudioProjectRepository.load(first)
-        check(first.readLines().first()=="AIGSTUDIO_PROJECT|3")
+        check(first.readLines().first()=="AIGSTUDIO_PROJECT|4")
         check(loaded.axisMode=="6AX" && abs(loaded.axisC-90.0)<EPS)
         check(loaded.fixtures==listOf(fixture))
         check(loaded.toolAssembly==assembly)
@@ -3222,7 +3222,7 @@ private fun testProjectFixturePersistenceV3() {
         check(old1.fixtures.isEmpty() && abs(old1.axisC)<EPS && old1.toolAssembly==ToolAssemblyConfig())
         check(old1.revisionMeta==ProjectRevisionMeta())
 
-        println("✓ PROJECT_FIXTURE_PERSISTENCE_GATE_PASS V3 AXIS_C MANUAL_C FIXTURE TOOL_ASSEMBLY V1_V2_BACKWARD_COMPAT")
+        println("✓ PROJECT_FIXTURE_PERSISTENCE_GATE_PASS V4 AXIS_C MANUAL_C FIXTURE TOOL_ASSEMBLY V1_V2_BACKWARD_COMPAT")
         println("✓ PROJECT_FIXTURE_SYNC_DIGEST_GATE_PASS FIXTURE_0.001_CHANGES_SHA REVISION_REMOTE_NEWER NO_SILENT_OVERWRITE")
     } finally {
         first.delete();second.delete();legacyV2.delete();legacyV1.delete()

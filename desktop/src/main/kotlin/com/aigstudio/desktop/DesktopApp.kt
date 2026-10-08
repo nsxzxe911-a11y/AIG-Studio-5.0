@@ -655,6 +655,35 @@ private class CadPanel(
 
     fun selectedCount():Int = selectedIds.size
 
+    fun showLayersDialog(owner:Component?=this) {
+        val layers=CadLayerId.entries
+        val panel=JPanel().apply{
+            layout=BoxLayout(this,BoxLayout.Y_AXIS)
+            background=StudioDesktopProductionTheme.background
+            border=BorderFactory.createEmptyBorder(10,10,10,10)
+        }
+        val activeChoice=JComboBox(layers.map{it.name}.toTypedArray()).apply{selectedItem=doc.activeLayer().name}
+        panel.add(JLabel("ACTIVE LAYER • new geometry").apply{foreground=StudioDesktopProductionTheme.text})
+        panel.add(activeChoice)
+        panel.add(Box.createVerticalStrut(8))
+        val checks=layers.associateWith{layer->JCheckBox(layer.name,doc.isLayerVisible(layer)).apply{
+            foreground=StudioDesktopProductionTheme.text;background=StudioDesktopProductionTheme.background;panel.add(this)
+        }}
+        panel.add(Box.createVerticalStrut(8))
+        panel.add(JLabel(if(selectedIds.isEmpty())"No selection • active layer only" else "Selected ${selectedIds.size} entities → active layer on APPLY").apply{foreground=Color(143,179,201)})
+        if(JOptionPane.showConfirmDialog(owner,panel,"LAYERS / DISPLAY",JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE)==JOptionPane.OK_OPTION){
+            val active=CadLayerId.valueOf(activeChoice.selectedItem.toString())
+            doc.setActiveLayer(active)
+            checks.forEach{(layer,check)->doc.setLayerVisible(layer,check.isSelected)}
+            if(selectedIds.isNotEmpty())doc.assignLayer(selectedIds,active)
+            val visibleIds=doc.visibleEntities().map{it.id}.toSet()
+            selectedIds.retainAll(visibleIds)
+            repaint()
+            status("LAYERS PASS • ACTIVE=${active.name} • SELECTED=${selectedIds.size} • VIS="+layers.count{doc.isLayerVisible(it)})
+        }
+    }
+
+
     fun fitView() {
         val entities=doc.all()
         if(width<=0 || height<=0 || entities.isEmpty()) {
@@ -1079,7 +1108,7 @@ private class CadPanel(
         g2.drawLine(width / 2, 0, width / 2, height)
 
         g2.stroke = BasicStroke(2.2f)
-        doc.all().forEach { entity ->
+        doc.visibleEntities().forEach { entity ->
             g2.color = if(entity.id in selectedIds) Color(255,176,32) else Color(232,241,250)
             when (entity) {
                 is Line -> {
@@ -3933,7 +3962,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     fun showProductionProjectManager(){
         val actions=arrayOf("專案儲存","專案開啟","共享狀態","共享發布")
         val choice=JOptionPane.showOptionDialog(
-            frame,"Project V3 • CAD/CAM/ABC/Fixture/Tool/NC • no silent overwrite",
+            frame,"Project V4 • Layers • CAD/CAM/ABC/Fixture/Tool/NC • no silent overwrite",
             "AIG CNC • 專案 / 同步",JOptionPane.DEFAULT_OPTION,JOptionPane.PLAIN_MESSAGE,
             null,actions,actions[0]
         )
@@ -3958,7 +3987,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             runCatching{StudioProjectRepository.load(recovery)}
                 .onSuccess{
                     applyProductionProject(it)
-                    status.text="AUTO RECOVERY • PROJECT V3 • FIXTURE "+it.fixtures.size+" • ABC RESTORED"
+                    status.text="AUTO RECOVERY • PROJECT V4 • LAYERS • FIXTURE "+it.fixtures.size+" • ABC RESTORED"
                 }
                 .onFailure{status.text="AUTO RECOVERY WARNING • invalid recovery ignored • "+(it.message?:"error")}
         }
@@ -4998,6 +5027,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     editTools.add(button("FILLET", Color(236,72,153)) { askSingle("FILLET R mm","1.000",cad::filletSelected) })
     editTools.add(button("OFFSET", Color(139,92,246)) { askSingle("OFFSET mm","1.000",cad::offsetSelected) })
     editTools.add(button("ARRAY", Color(59,130,246)) { askArray(cad::arraySelected) })
+    editTools.add(button("LAYERS", Color(99,102,241)) { cad.showLayersDialog() })
     editTools.add(button("刪除", Color(239,68,68)) { cad.deleteSelected() })
     editTools.add(button("復原", Color(125,112,255)) { cad.undoEdit() })
     editTools.add(button("重做", Color(125,112,255)) { cad.redoEdit() })
@@ -5052,7 +5082,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         status.text="UX • "+RuntimeUxFlowContract.title("AI")+" • LOCAL ASSIST"
     })
     moduleButtons.add(GlassActionButton("專案",Color(125,112,255)).apply{
-        toolTipText="Project V3 • SAVE / OPEN / SHARED • NO SILENT OVERWRITE"
+        toolTipText="Project V4 • SAVE / OPEN / SHARED • LAYERS • NO SILENT OVERWRITE"
         addActionListener{showProductionProjectManager()}
     })
     check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))

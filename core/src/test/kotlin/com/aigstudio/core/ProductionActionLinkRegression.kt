@@ -72,7 +72,7 @@ fun main() {
     check("showUnifiedMachiningEditor(" in desktop && "\"6AX\"" in desktop)
     check("MachiningRiskScanner" in android && "RuntimeLinkStore()" in android)
 
-    check(ProductionActionContract.spec("CAD_LAYER").windows.availability==ProductionActionAvailability.DISABLED)
+    check(ProductionActionContract.spec("CAD_LAYER").windows.availability==ProductionActionAvailability.CONNECTED)
     check(ProductionActionContract.spec("AI_WORKING_COPY").android.availability==ProductionActionAvailability.CONNECTED)
     check(ProductionActionContract.spec("AI_WORKING_COPY").windows.availability==ProductionActionAvailability.CONNECTED)
     check(ProductionActionContract.spec("SETTINGS_VISUAL_RUNTIME").windows.availability==ProductionActionAvailability.CONNECTED)

@@ -148,3 +148,12 @@ tasks.register<JavaExec>("aiProgramWorkingCopyWiring374Regression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.AiProgramWorkingCopyWiring374RegressionKt")
 }
+
+
+tasks.register<JavaExec>("cadLayerRuntime374Regression") {
+    group = "verification"
+    description = "Checks AIG CNC CAD layer metadata, V4 persistence, compatibility, and Android/Windows wiring"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.CadLayerRuntime374RegressionKt")
+}

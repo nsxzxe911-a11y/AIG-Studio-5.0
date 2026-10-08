@@ -18,11 +18,13 @@ data class StudioProjectPackage(
     val revisionMeta:ProjectRevisionMeta=ProjectRevisionMeta(),
     val axisC:Double=0.0,
     val fixtures:List<FixtureObstacle> = emptyList(),
-    val toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
+    val toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig(),
+    val layerSnapshot:CadLayerSnapshot = CadLayerSnapshot()
 )
 
 object StudioProjectRepository {
-    const val HEADER = "AIGSTUDIO_PROJECT|3"
+    const val HEADER = "AIGSTUDIO_PROJECT|4"
+    const val LEGACY_V3_HEADER = "AIGSTUDIO_PROJECT|3"
     const val LEGACY_V2_HEADER = "AIGSTUDIO_PROJECT|2"
     const val LEGACY_HEADER = "AIGSTUDIO_PROJECT|1"
     const val EXTENSION = ".aigp"
@@ -65,7 +67,8 @@ object StudioProjectRepository {
             ncText=ncText,
             axisC=axisC,
             fixtures=fixtures.toList(),
-            toolAssembly=toolAssembly
+            toolAssembly=toolAssembly,
+            layerSnapshot=doc.layerSnapshot()
         )
     }
 
@@ -74,6 +77,7 @@ object StudioProjectRepository {
         project.entities.forEach(doc::put)
         doc.restoreLinks(project.links)
         doc.pruneTopology()
+        doc.restoreLayers(project.layerSnapshot)
     }
 
     private fun canonicalPayload(project:StudioProjectPackage):String = buildString {
@@ -99,6 +103,16 @@ object StudioProjectRepository {
         }
         val nc64=if(project.ncText.isEmpty()) "-" else Base64.getEncoder().encodeToString(project.ncText.toByteArray(Charsets.UTF_8))
         appendLine("NC64|$nc64")
+        val entityIds=project.entities.map{it.id}.toSet()
+        require(project.layerSnapshot.entityLayers.keys.all{it in entityIds}) { "Layer metadata entity missing" }
+        appendLine("LAYERACTIVE|${project.layerSnapshot.activeLayer.name}")
+        CadLayerId.entries.forEach { layer ->
+            appendLine("LAYERVIS|${layer.name}|${if(project.layerSnapshot.visibility[layer]!=false)1 else 0}")
+        }
+        project.entities.sortedBy{it.id}.forEach { e ->
+            val layer=project.layerSnapshot.entityLayers[e.id] ?: CadLayerId.WORKPIECE
+            appendLine("LAYER|${enc(e.id)}|${layer.name}")
+        }
         project.entities.forEach { e ->
             when(e) {
                 is Line -> appendLine("LINE|${enc(e.id)}|${e.a.x}|${e.a.y}|${e.b.x}|${e.b.y}")
@@ -164,9 +178,10 @@ object StudioProjectRepository {
         val text=file.readText(Charsets.UTF_8)
         val lines=text.lineSequence().toList()
         val header=lines.firstOrNull()?.trim()
-        require(header in setOf(HEADER,LEGACY_V2_HEADER,LEGACY_HEADER)) { "Unsupported Studio project header" }
-        val isV3=header==HEADER
-        val hasRevision=header==HEADER || header==LEGACY_V2_HEADER
+        require(header in setOf(HEADER,LEGACY_V3_HEADER,LEGACY_V2_HEADER,LEGACY_HEADER)) { "Unsupported Studio project header" }
+        val isV4=header==HEADER
+        val hasV3Features=isV4 || header==LEGACY_V3_HEADER
+        val hasRevision=hasV3Features || header==LEGACY_V2_HEADER
         val entities=mutableListOf<Entity>()
         val links=linkedSetOf<CadTopologyLink>()
         var cam=CamSettings()
@@ -181,6 +196,9 @@ object StudioProjectRepository {
         val fixtures=mutableListOf<FixtureObstacle>()
         var toolAssembly=ToolAssemblyConfig()
         var nc=""
+        var layerActive=CadLayerId.WORKPIECE
+        val layerVisibility=CadLayerId.entries.associateWith{true}.toMutableMap()
+        val entityLayers=linkedMapOf<EntityId,CadLayerId>()
         var masterSeen=false
         var pendingRevision:ProjectRevisionMeta?=null
         lines.drop(1).filter{it.isNotBlank()}.forEach { line ->
@@ -223,7 +241,7 @@ object StudioProjectRepository {
                     camPathMode=CamPathMode.valueOf(p[1])
                 }
                 "MANUALTP" -> {
-                    require(p.size==if(isV3)11 else 10)
+                    require(p.size==if(hasV3Features)11 else 10)
                     fun optionalDouble(index:Int):Double? =
                         if(p[index]=="-") null else finite(p[index].toDouble(),"manual CAM optional")
                     val rapid=when(p[4]) {
@@ -247,22 +265,22 @@ object StudioProjectRepository {
                         clockwise=clockwise,
                         axisA=finite(p[8].toDouble(),"manual CAM A"),
                         axisB=finite(p[9].toDouble(),"manual CAM B"),
-                        axisC=if(isV3)finite(p[10].toDouble(),"manual CAM C") else 0.0
+                        axisC=if(hasV3Features)finite(p[10].toDouble(),"manual CAM C") else 0.0
                     )
                     require(abs(point.axisA)<=360.0 && abs(point.axisB)<=360.0 && abs(point.axisC)<=360.0){"manual CAM axis angle out of range"}
                     manualPath += point
                 }
                 "AXIS" -> {
-                    require(p.size==if(isV3)5 else 4)
-                    require(p[1] in if(isV3)setOf("3AX","4AX","5AX","6AX") else setOf("3AX","4AX","5AX"))
+                    require(p.size==if(hasV3Features)5 else 4)
+                    require(p[1] in if(hasV3Features)setOf("3AX","4AX","5AX","6AX") else setOf("3AX","4AX","5AX"))
                     axisMode=p[1]
                     axisA=finite(p[2].toDouble(),"axis A")
                     axisB=finite(p[3].toDouble(),"axis B")
-                    axisC=if(isV3)finite(p[4].toDouble(),"axis C") else 0.0
+                    axisC=if(hasV3Features)finite(p[4].toDouble(),"axis C") else 0.0
                     require(abs(axisA)<=360.0 && abs(axisB)<=360.0 && abs(axisC)<=360.0)
                 }
                 "TOOLASSEMBLY" -> {
-                    require(isV3) { "TOOLASSEMBLY requires project V3" }
+                    require(hasV3Features) { "TOOLASSEMBLY requires project V3+" }
                     require(p.size==4)
                     toolAssembly=ToolAssemblyConfig(
                         holderDiameter=finite(p[1].toDouble(),"holder diameter"),
@@ -271,7 +289,7 @@ object StudioProjectRepository {
                     )
                 }
                 "FIXTURE" -> {
-                    require(isV3) { "FIXTURE requires project V3" }
+                    require(hasV3Features) { "FIXTURE requires project V3+" }
                     require(p.size==11)
                     val enabled=when(p[10]){"1"->true;"0"->false;else->error("fixture enabled flag invalid")}
                     fixtures+=FixtureObstacle(
@@ -291,6 +309,22 @@ object StudioProjectRepository {
                 "NC64" -> {
                     require(p.size==2)
                     nc=if(p[1]=="-") "" else String(Base64.getDecoder().decode(p[1]),Charsets.UTF_8)
+                }
+                "LAYERACTIVE" -> {
+                    require(isV4) { "LAYERACTIVE requires project V4" }
+                    require(p.size==2)
+                    layerActive=CadLayerId.valueOf(p[1])
+                }
+                "LAYERVIS" -> {
+                    require(isV4) { "LAYERVIS requires project V4" }
+                    require(p.size==3)
+                    val layer=CadLayerId.valueOf(p[1])
+                    layerVisibility[layer]=when(p[2]){"1"->true;"0"->false;else->error("layer visibility invalid")}
+                }
+                "LAYER" -> {
+                    require(isV4) { "LAYER requires project V4" }
+                    require(p.size==3)
+                    entityLayers[dec(p[1])]=CadLayerId.valueOf(p[2])
                 }
                 "REVISION" -> {
                     require(hasRevision) { "REVISION not allowed in project V1" }
@@ -350,6 +384,14 @@ object StudioProjectRepository {
             require(sha256(payload)==meta.contentDigest) { "Project content digest mismatch" }
             meta
         } else ProjectRevisionMeta()
+        val entityIds=entities.map{it.id}.toSet()
+        if(isV4) require(entityLayers.keys.all{it in entityIds}) { "Layer metadata entity missing" }
+        val normalizedEntityLayers=entityIds.associateWith{id->if(isV4) entityLayers[id] ?: CadLayerId.WORKPIECE else CadLayerId.WORKPIECE}
+        val layerSnapshot=CadLayerSnapshot(
+            activeLayer=if(isV4)layerActive else CadLayerId.WORKPIECE,
+            visibility=CadLayerId.entries.associateWith{layer->if(isV4)layerVisibility[layer]!=false else true},
+            entityLayers=normalizedEntityLayers
+        )
         val project=StudioProjectPackage(
             entities=entities,
             links=links,
@@ -361,7 +403,8 @@ object StudioProjectRepository {
             revisionMeta=revisionMeta,
             axisC=axisC,
             fixtures=fixtures.toList(),
-            toolAssembly=toolAssembly
+            toolAssembly=toolAssembly,
+            layerSnapshot=layerSnapshot
         )
         val doc=DrawingDocument()
         project.entities.forEach(doc::put)

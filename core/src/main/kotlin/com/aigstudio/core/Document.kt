@@ -18,23 +18,52 @@ data class CadTopologyLink(val aId: EntityId, val bId: EntityId) {
 class DrawingDocument {
     private val entities = LinkedHashMap<EntityId, Entity>()
     private val topologyLinks = linkedSetOf<CadTopologyLink>()
+    private val layers = CadLayerState()
 
     fun all(): List<Entity> = entities.values.toList()
     fun get(id: EntityId): Entity? = entities[id]
     fun contains(id: EntityId): Boolean = entities.containsKey(id)
-    fun put(entity: Entity) { entities[entity.id] = entity }
+    fun put(entity: Entity) {
+        entities[entity.id] = entity
+        layers.onPut(entity.id)
+    }
     fun remove(id: EntityId): Entity? {
         val removed = entities.remove(id)
-        if (removed != null) topologyLinks.removeAll { it.contains(id) }
+        if (removed != null) {
+            topologyLinks.removeAll { it.contains(id) }
+            layers.onRemove(id)
+        }
         return removed
     }
     fun clear() {
         entities.clear()
         topologyLinks.clear()
+        layers.clear()
     }
     fun size(): Int = entities.size
     fun snapshot(): DrawingSnapshot = DrawingSnapshot(all().map { it.copyEntity() })
     fun links(): Set<CadTopologyLink> = topologyLinks.toSet()
+    fun activeLayer():CadLayerId=layers.activeLayer()
+    fun setActiveLayer(layer:CadLayerId)=layers.setActiveLayer(layer)
+    fun layerOf(id:EntityId):CadLayerId=layers.layerOf(id)
+    fun assignLayer(ids:Collection<EntityId>,layer:CadLayerId){
+        require(ids.all(::contains)){"Layer assignment entity missing"}
+        layers.assign(ids,layer)
+    }
+    fun isLayerVisible(layer:CadLayerId):Boolean=layers.isVisible(layer)
+    fun setLayerVisible(layer:CadLayerId,visible:Boolean)=layers.setVisible(layer,visible)
+    fun visibleEntities():List<Entity> = entities.values.filter{layers.isVisible(layers.layerOf(it.id))}
+    fun layerSnapshot():CadLayerSnapshot=layers.snapshot(entities.keys)
+    fun restoreLayers(snapshot:CadLayerSnapshot){
+        require(snapshot.entityLayers.keys.all(::contains)){"Layer metadata entity missing"}
+        layers.restore(snapshot,entities.keys)
+    }
+    fun layerAssignments(ids:Collection<EntityId>):Map<EntityId,CadLayerId> =
+        ids.filter(::contains).associateWith(::layerOf)
+    fun restoreLayerAssignments(assignments:Map<EntityId,CadLayerId>){
+        require(assignments.keys.all(::contains)){"Layer assignment entity missing"}
+        assignments.forEach{(id,layer)->layers.assign(listOf(id),layer)}
+    }
 
     fun connect(link: CadTopologyLink): Boolean {
         require(contains(link.aId) && contains(link.bId)) { "Topology entity missing" }
@@ -116,12 +145,15 @@ class AddEntitiesCommand(private val entities: List<Entity>) : Command {
 class DeleteEntityCommand(private val id: EntityId) : Command {
     private var deleted: Entity? = null
     private var deletedLinks: Set<CadTopologyLink> = emptySet()
+    private var deletedLayer:CadLayerId=CadLayerId.WORKPIECE
     override fun execute(doc: DrawingDocument) {
         deletedLinks = doc.links().filter { it.contains(id) }.toSet()
+        deletedLayer=doc.layerOf(id)
         deleted = doc.remove(id) ?: error("Entity not found: $id")
     }
     override fun undo(doc: DrawingDocument) {
         deleted?.let(doc::put)
+        if(doc.contains(id))doc.assignLayer(listOf(id),deletedLayer)
         doc.restoreLinks(deletedLinks)
     }
     override fun selectionAfterExecute(doc:DrawingDocument)=emptySet<EntityId>()
@@ -131,15 +163,18 @@ class DeleteEntityCommand(private val id: EntityId) : Command {
 class DeleteEntitiesCommand(private val ids: Set<EntityId>) : Command {
     private var deleted: List<Entity> = emptyList()
     private var deletedLinks: Set<CadTopologyLink> = emptySet()
+    private var deletedLayers:Map<EntityId,CadLayerId> = emptyMap()
     override fun execute(doc: DrawingDocument) {
         require(ids.isNotEmpty()) { "DELETE requires selected geometry" }
         deleted = ids.mapNotNull(doc::get)
         require(deleted.isNotEmpty()) { "Selected geometry not found" }
         deletedLinks = doc.links().filter { it.aId in ids || it.bId in ids }.toSet()
+        deletedLayers=doc.layerAssignments(deleted.map{it.id})
         deleted.forEach { doc.remove(it.id) }
     }
     override fun undo(doc: DrawingDocument) {
         deleted.forEach(doc::put)
+        doc.restoreLayerAssignments(deletedLayers)
         doc.restoreLinks(deletedLinks)
     }
     override fun selectionAfterExecute(doc:DrawingDocument)=emptySet<EntityId>()
@@ -151,18 +186,31 @@ class ReplaceEntitiesCommand(
     private val after: List<Entity>
 ) : Command {
     private var preservedLinks: Set<CadTopologyLink> = emptySet()
+    private var beforeLayers:Map<EntityId,CadLayerId> = emptyMap()
+    private var afterLayers:Map<EntityId,CadLayerId> = emptyMap()
+    private var initialized=false
 
     override fun execute(doc: DrawingDocument) {
         val ids=before.map{it.id}.toSet()
         preservedLinks=doc.links().filter{it.aId in ids || it.bId in ids}.toSet()
+        if(!initialized)beforeLayers=doc.layerAssignments(ids)
         before.forEach { doc.remove(it.id) }
         after.forEach(doc::put)
+        if(initialized && afterLayers.isNotEmpty()) {
+            doc.restoreLayerAssignments(afterLayers.filterKeys(doc::contains))
+        } else {
+            val sameIdLayers=after.map{it.id}.mapNotNull{id->beforeLayers[id]?.let{id to it}}.toMap()
+            if(sameIdLayers.isNotEmpty())doc.restoreLayerAssignments(sameIdLayers)
+            afterLayers=doc.layerAssignments(after.map{it.id})
+            initialized=true
+        }
         doc.restoreLinks(preservedLinks)
         doc.pruneTopology()
     }
     override fun undo(doc: DrawingDocument) {
         after.forEach { doc.remove(it.id) }
         before.forEach(doc::put)
+        doc.restoreLayerAssignments(beforeLayers.filterKeys(doc::contains))
         doc.restoreLinks(preservedLinks)
         doc.pruneTopology()
     }
@@ -763,12 +811,13 @@ object CadSelectionEngine {
             else min(p.distanceTo(entity.start),p.distanceTo(entity.end))
     }
     fun nearest(doc:DrawingDocument,p:Vec2,tolerance:Double):Entity? =
-        doc.all().map{distanceTo(it,p) to it}.filter{it.first<=tolerance}.minByOrNull{it.first}?.second
+        doc.visibleEntities().map{distanceTo(it,p) to it}.filter{it.first<=tolerance}.minByOrNull{it.first}?.second
 
     fun semanticKind(entity:Entity):String = CadSemanticIdentity.semanticKind(entity)
 
     fun selectionIds(doc:DrawingDocument,entity:Entity):Set<EntityId> =
         CadSemanticIdentity.selectionIds(doc,entity)
+            .filter{doc.isLayerVisible(doc.layerOf(it))}.toSet()
 }
 
 data class RectDrivenSize(val width:Double,val height:Double)

@@ -42,10 +42,7 @@ object ProductionActionContract {
         both("CAD_TRIM_EXTEND",ProductionPage.CAD),
         both("CAD_OFFSET_ARRAY",ProductionPage.CAD),
         both("CAD_SNAP_UNDO_REDO_DIM",ProductionPage.CAD),
-        ProductionActionSpec(
-            "CAD_LAYER",ProductionPage.CAD,
-            disabled("action.disabled.layers"),disabled("action.disabled.layers")
-        ),
+        both("CAD_LAYER",ProductionPage.CAD),
 
         both("CAM_AUTO_MANUAL",ProductionPage.CAM),
         both("CAM_SAFE_Z_ENTRY_EXIT",ProductionPage.CAM),

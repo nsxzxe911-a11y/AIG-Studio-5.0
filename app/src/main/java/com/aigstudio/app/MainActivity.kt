@@ -2028,7 +2028,7 @@ class MainActivity : Activity() {
                 .edit()
                 .putString("cad_state", cad.exportState())
                 .putLong("saved_at", System.currentTimeMillis())
-                .putInt("format_version", 4)
+                .putInt("format_version", 5)
                 .putString("nc_controller", controllerProfile.name)
                 .putString("nc_coordinate_mode", ncCoordinateMode.name)
                 .putString("nc_origin_mode", ncOriginTransformMode.name)
@@ -2062,7 +2062,7 @@ class MainActivity : Activity() {
                 applyProjectPackage(restored.getOrThrow())
                 Toast.makeText(
                     this,
-                    "AUTO RECOVERY • PROJECT V3 • FIXTURE "+camFixtures.size+" • ABC RESTORED",
+                    "AUTO RECOVERY • PROJECT V4 • LAYERS • FIXTURE "+camFixtures.size+" • ABC RESTORED",
                     Toast.LENGTH_SHORT
                 ).show()
                 return
@@ -2072,7 +2072,7 @@ class MainActivity : Activity() {
         val raw = prefs.getString("cad_state", null) ?: return
         if (raw.isBlank()) return
         val formatVersion = prefs.getInt("format_version", 1)
-        if (formatVersion !in 1..4) return
+        if (formatVersion !in 1..5) return
         runCatching { cad.importState(raw) }
             .onSuccess {
                 if (formatVersion >= 4) {
@@ -2698,6 +2698,7 @@ class MainActivity : Activity() {
         addActionTo(branchFlow, "EXTEND", 1) { cad.extendSelected() }
         addActionTo(branchFlow, "OFFSET", 2) { cad.promptOffset() }
         addActionTo(branchFlow, "ARRAY", 3) { cad.promptArray() }
+        addActionTo(branchFlow, "LAYERS", 3) { cad.showLayersDialog() }
         addActionTo(branchFlow, "尺寸驅動", 5) { cad.promptDrivenDimension() }
         addActionTo(branchFlow, "刪除選取", 4) { cad.deleteSelected() }
         addToolToBranch("單點刪除", Tool.DELETE, 4)
@@ -6082,6 +6083,13 @@ class CadView(
         firstPoint=null; arcCenter=null; arcStart=null; selectedIds.clear(); sceneRevision++; invalidate()
     }
     fun exportState(): String = buildString {
+        append("LA|").append(doc.activeLayer().name).append('\n')
+        CadLayerId.entries.forEach { layer ->
+            append("LV|").append(layer.name).append('|').append(if(doc.isLayerVisible(layer))1 else 0).append('\n')
+        }
+        doc.all().forEach { e ->
+            append("LY|").append(e.id).append('|').append(doc.layerOf(e.id).name).append('\n')
+        }
         doc.all().forEach { e ->
             when (e) {
                 is Line -> append("L|").append(e.id).append('|').append(e.a.x).append('|').append(e.a.y).append('|').append(e.b.x).append('|').append(e.b.y).append('\n')
@@ -6096,9 +6104,15 @@ class CadView(
     fun importState(raw: String) {
         val restored = mutableListOf<Entity>()
         val restoredLinks = mutableListOf<CadTopologyLink>()
+        var restoredActive=CadLayerId.WORKPIECE
+        val restoredVisibility=CadLayerId.entries.associateWith{true}.toMutableMap()
+        val restoredLayers=linkedMapOf<EntityId,CadLayerId>()
         raw.lineSequence().filter { it.isNotBlank() }.forEach { line ->
             val p = line.split('|')
             when (p.firstOrNull()) {
+                "LA" -> if(p.size==2) restoredActive=CadLayerId.valueOf(p[1])
+                "LV" -> if(p.size==3) restoredVisibility[CadLayerId.valueOf(p[1])]=p[2]=="1"
+                "LY" -> if(p.size==3) restoredLayers[p[1]]=CadLayerId.valueOf(p[2])
                 "L" -> if (p.size == 6) restored += Line(p[1], Vec2(p[2].toDouble(), p[3].toDouble()), Vec2(p[4].toDouble(), p[5].toDouble()))
                 "C" -> if (p.size == 5) restored += Circle(p[1], Vec2(p[2].toDouble(), p[3].toDouble()), p[4].toDouble())
                 "A" -> if (p.size == 10) restored += Arc(
@@ -6112,6 +6126,12 @@ class CadView(
             doc.clear()
             restored.forEach(doc::put)
             doc.restoreLinks(restoredLinks)
+            val live=restored.map{it.id}.toSet()
+            doc.restoreLayers(CadLayerSnapshot(
+                activeLayer=restoredActive,
+                visibility=CadLayerId.entries.associateWith{restoredVisibility[it]!=false},
+                entityLayers=live.associateWith{id->restoredLayers[id] ?: CadLayerId.WORKPIECE}
+            ))
             firstPoint = null
             arcCenter = null
             arcStart = null
@@ -6120,6 +6140,34 @@ class CadView(
             invalidate()
         }
     }
+
+    fun showLayersDialog() {
+        val layers=CadLayerId.entries
+        val box=LinearLayout(context).apply{orientation=LinearLayout.VERTICAL;setPadding(24,12,24,8)}
+        val activeChoice=Spinner(context).apply{
+            adapter=ArrayAdapter(context,android.R.layout.simple_spinner_dropdown_item,layers.map{it.name})
+            setSelection(layers.indexOf(doc.activeLayer()).coerceAtLeast(0))
+        }
+        box.addView(TextView(context).apply{text="ACTIVE LAYER • new geometry"})
+        box.addView(activeChoice)
+        val checks=layers.associateWith{layer->CheckBox(context).apply{text=layer.name;isChecked=doc.isLayerVisible(layer);box.addView(this)}}
+        box.addView(TextView(context).apply{text=if(selectedIds.isEmpty())"No selection • active layer only" else "Selected ${selectedIds.size} entities → active layer on APPLY"})
+        AlertDialog.Builder(context)
+            .setTitle("LAYERS / DISPLAY")
+            .setView(box)
+            .setPositiveButton("APPLY"){_,_->
+                val active=layers[activeChoice.selectedItemPosition.coerceIn(0,layers.lastIndex)]
+                doc.setActiveLayer(active)
+                checks.forEach{(layer,check)->doc.setLayerVisible(layer,check.isChecked)}
+                if(selectedIds.isNotEmpty())doc.assignLayer(selectedIds,active)
+                selectedIds.retainAll(doc.visibleEntities().map{it.id}.toSet())
+                sceneRevision++;onProjectChanged();invalidate()
+                Toast.makeText(context,"LAYERS PASS • ACTIVE=${active.name}",Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("CANCEL",null)
+            .show()
+    }
+
     fun setTool(t: Tool) {
         tool = t
         pendingPickOperation = null
@@ -6774,7 +6822,7 @@ class CadView(
     private fun drawEntities(canvas: Canvas) {
         normalLinePath.reset()
         selectedLinePath.reset()
-        doc.all().forEach { e -> when (e) {
+        doc.visibleEntities().forEach { e -> when (e) {
             is Line -> {
                 val a = transform.worldToScreen(e.a); val b = transform.worldToScreen(e.b)
                 val path = if (e.id in selectedIds) selectedLinePath else normalLinePath
