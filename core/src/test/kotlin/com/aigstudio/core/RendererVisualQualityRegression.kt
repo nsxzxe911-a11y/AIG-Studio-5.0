@@ -11,6 +11,8 @@ fun main(){
     val balanced=VisualQualityPolicy.budget(VisualQualityPreset.BALANCED)
     check(balanced.maxFps==60)
     check(balanced.trueMaterialRemoval)
+    check(VisualQualityPolicy.scaleGeometryBudget(3000,VisualQualityPreset.LOW)==1950)
+    check(VisualQualityPolicy.scaleGeometryBudget(3000,VisualQualityPreset.BALANCED)==2550)
 
     check(VisualQualityPolicy.adapt(VisualQualityPreset.ULTRA,ramGb=4,hardwareAccelerated=true,memoryPressure=VisualMemoryPressure.HIGH,thermalLevel=0)==VisualQualityPreset.LOW)
     check(VisualQualityPolicy.adapt(VisualQualityPreset.HIGH,ramGb=6,hardwareAccelerated=true,memoryPressure=VisualMemoryPressure.NORMAL,thermalLevel=0)==VisualQualityPreset.BALANCED)
@@ -23,5 +25,5 @@ fun main(){
     check(runtime.preset==VisualQualityPreset.LOW)
     check(runtime.trueMaterialRemoval && runtime.simulationPrecisionMm==0.001)
 
-    println("AIGCNC_VISUAL_QUALITY_POLICY_PASS|LOW_BALANCED_HIGH_ULTRA|TRUE_REMOVAL_PRESERVED|0.001_MM_PRESERVED|RUNTIME_DEFAULT_BALANCED")
+    println("AIGCNC_VISUAL_QUALITY_POLICY_PASS|LOW_BALANCED_HIGH_ULTRA|TRUE_REMOVAL_PRESERVED|0.001_MM_PRESERVED|RUNTIME_DEFAULT_BALANCED|GEOMETRY_BUDGET_SCALING")
 }
