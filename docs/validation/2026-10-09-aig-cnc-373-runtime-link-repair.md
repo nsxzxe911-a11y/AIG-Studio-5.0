@@ -24,7 +24,7 @@ Scope: focused source/runtime-link validation only; broad automatic regression r
 - AI main-program Working Copy / Verified Main: not connected. `VerifiedWorkingCopy` currently belongs to update-package staging and is not reused as a fake NC-main vault.
 - Windows visual quality / power / RGB / HUD runtime settings: no complete Desktop runtime consumer yet; action contract marks this link disabled rather than pretending persistence equals runtime application.
 - Windows D3D11/D3D12 and Android Vulkan/GLES are not claimed active without a real production backend and activation evidence.
-- Fresh APK/EXE install, launch, RGB HOME and interactive device evidence are still pending and are not represented by compile PASS.
+- Native Android GLES/Vulkan still remain disabled in this line; binary validation does not relabel HWUI as a native GPU backend.
 
 ## Fresh focused acceptance
 
@@ -51,3 +51,30 @@ Observed non-blocking compiler warnings:
 - Desktop has an existing redundant `else` on an exhaustive `when`.
 
 No broad automatic regression or external workflow was triggered.
+
+## Binary validation PASS
+
+### Android / Nox
+
+- APK: `release/android/AIG_CNC_373_FULL_INSTALLABLE.apk`
+- SHA-256: `47494f2df4c7ec6385b1edbc28fec32413828933e43d8e9946bb38caed0fe48f`
+- Package: `com.aigstudio.app`, versionName `373.0.0`, versionCode `3730000`, targetSdk 36
+- Nox_1 ABI: `x86_64`, ADB serial `127.0.0.1:52025`
+- Cold launch: 631 ms; MainActivity focused
+- Visible surface: **AIG CNC** black/RGB HOME, not an engineering shell
+- Renderer claim remains truthful: no native GLES/Vulkan activation is claimed for this line.
+
+### Windows / x86-64 portable Runtime
+
+- Portable launcher: `release/windows/portable/AIG_CNC_Runtime.exe`
+- PE machine: `0x8664` (x86-64)
+- EXE SHA-256: `8019af92b163cfd29bce9e5d2c1bde5a50b49f7f74e08e0f1858577c104eb92a`
+- Portable ZIP SHA-256: `17a2ece5664fe48a739bdffb7166b63169269fbeae05f045d83a6fe13aac6072`
+- Packaged launcher smoke: PASS
+- `OFFICIAL_RGB_UI=PASS`
+- `MATERIAL_REMOVAL=PASS`, `REMOVED_CELLS=7500`
+- `5X_DYNAMIC_TOOL_CHANGE=PASS`
+- `5X_DYNAMIC_AXIS_CHANGE=PASS`
+- `5X_PROGRESSIVE_MATERIAL_REMOVAL=PASS`
+- `ABS_MODE=G90`, `MASTER_ORIGIN=X0.000 Y0.000 Z0.000`
+- Setup installer: **PENDING** because WiX `light.exe` is not installed.

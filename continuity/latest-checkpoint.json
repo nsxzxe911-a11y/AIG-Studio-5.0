@@ -5,7 +5,7 @@
   "branch": "feat/aig-cnc-373-runtime-link-repair",
   "recorded_source_head": "7b9cb0aca06117f5132209441c1fc5df0344bccf",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "FULL_RUNTIME_LINK_REPAIR_SOURCE_PASS_BINARY_UI_ACCEPTANCE_PENDING",
+  "status": "FULL_RUNTIME_LINK_REPAIR_BINARY_PASS_SETUP_INSTALLER_PENDING",
   "departments": {
     "HOME": "EXECUTE_UNTIL_PASS",
     "CAD": "EXECUTE_UNTIL_PASS",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Exact-bind AIG-II 453 to this AIG CNC 373 line, then capture fresh APK/EXE launch and RGB HOME interaction evidence.",
-  "note": "373 repairs shared Settings/localization/renderer links and product action links. Focused source/compile gates pass; fresh APK/EXE install-launch interaction evidence is not yet claimed.",
+  "next_action": "AIG CNC 373 APK and Windows portable x86-64 Runtime are binary-launch verified and exact-bound by AIG-II 453. Build Setup EXE only after WiX is available; keep Android native GLES/Vulkan disabled until a real backend is implemented.",
+  "note": "AIG CNC 373 source and binary Runtime validation PASS: Nox install/cold launch enters visible AIG CNC RGB HOME; Windows x86-64 packaged launcher reproduces official RGB UI, true material removal (7500 cells), 5AX dynamic tool/axis/progressive removal, G90 and Master Origin. Setup EXE remains pending because WiX light.exe is not installed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -562,5 +562,44 @@
     "ai_teacher": "ALL_CONNECTED_ONLY",
     "execution_interlocks_remain_active": true
   },
-  "rgb_restoration_record": "continuity/rgb-restoration-20261008.json"
+  "rgb_restoration_record": "continuity/rgb-restoration-20261008.json",
+  "validated_release_sha": "7058f51bd26445f06beecc65e574f72033a4f44c",
+  "binary_runtime_evidence_373": {
+    "android": {
+      "status": "PASS_NOX_INSTALL_COLD_LAUNCH_RGB_HOME",
+      "apk": "release/android/AIG_CNC_373_FULL_INSTALLABLE.apk",
+      "apk_sha256": "47494f2df4c7ec6385b1edbc28fec32413828933e43d8e9946bb38caed0fe48f",
+      "package": "com.aigstudio.app",
+      "version_name": "373.0.0",
+      "version_code": 3730000,
+      "nox_device": "Nox_1",
+      "nox_abi": "x86_64",
+      "adb_serial": "127.0.0.1:52025",
+      "cold_launch_ms": 631,
+      "visible_product": "AIG CNC",
+      "rgb_home": "PASS",
+      "engineering_shell_default": "OFF",
+      "native_gles_vulkan_claimed": false,
+      "renderer_truth": "NO_FAKE_NATIVE_GPU_BACKEND"
+    },
+    "windows": {
+      "status": "PASS_PORTABLE_64BIT_PACKAGED_LAUNCHER",
+      "portable_exe": "release/windows/portable/AIG_CNC_Runtime.exe",
+      "portable_exe_sha256": "8019af92b163cfd29bce9e5d2c1bde5a50b49f7f74e08e0f1858577c104eb92a",
+      "portable_zip": "release/windows/AIG_CNC_373_PORTABLE.zip",
+      "portable_zip_sha256": "17a2ece5664fe48a739bdffb7166b63169269fbeae05f045d83a6fe13aac6072",
+      "pe_machine": "0x8664",
+      "architecture": "x86_64",
+      "packaged_launcher_smoke": "PASS",
+      "official_rgb_ui": "PASS",
+      "material_removal": "PASS",
+      "removed_cells": 7500,
+      "five_axis_dynamic_tool": "PASS",
+      "five_axis_dynamic_axis": "PASS",
+      "five_axis_progressive_material_removal": "PASS",
+      "absolute_mode": "G90",
+      "master_origin": "X0.000 Y0.000 Z0.000",
+      "setup_exe": "PENDING_WIX_NOT_FOUND"
+    }
+  }
 }
