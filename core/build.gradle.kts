@@ -73,3 +73,11 @@ tasks.register<JavaExec>("rendererVisualQualityWiringRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.RendererVisualQualityWiringRegressionKt")
 }
+
+tasks.register<JavaExec>("sharedSettingsContractRegression") {
+    group = "verification"
+    description = "Checks shared Settings defaults, validation and truthful renderer options"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.SharedSettingsContractRegressionKt")
+}
