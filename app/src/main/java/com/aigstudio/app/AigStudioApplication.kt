@@ -11,6 +11,7 @@ import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -19,13 +20,14 @@ import android.view.ViewTreeObserver
 import com.aigstudio.core.UiAssetContract
 import java.security.MessageDigest
 import java.util.Collections
+import java.util.Properties
 import java.util.WeakHashMap
 import kotlin.math.max
 
 /**
- * Installs approved AIG RGB visuals on the real production Runtime without
- * changing machining callbacks.  Missing art remains warning-only and never
- * triggers rollback/downgrade.
+ * Installs AIG RGB visuals on the real production Runtime without changing
+ * machining callbacks. Missing exact HOME art falls forward to the separately
+ * ingested full-page Runtime surface; it never rolls the product back.
  */
 class AigStudioApplication : Application(), Application.ActivityLifecycleCallbacks {
     private val applied = Collections.newSetFromMap(WeakHashMap<View, Boolean>())
@@ -49,7 +51,8 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
             override fun onGlobalLayout() {
                 val home = findFormalHome(decor) ?: return
                 if (applied.add(home)) {
-                    HomeRgbAsset.load(activity)?.let { home.background = it; home.invalidate() }
+                    home.background = HomeRgbAsset.load(activity) ?: ProceduralHomeDrawable()
+                    home.invalidate()
                 }
                 if (decor.viewTreeObserver.isAlive) decor.viewTreeObserver.removeOnGlobalLayoutListener(this)
             }
@@ -102,15 +105,35 @@ private object HomeRgbAsset {
     private const val TAG = "AIG-RGB-HOME"
     private const val EXPECTED_SHA256 = "8c55956f9ea6693b34d78395d6336ea7bf1a0ec4eeece824c22396b18bb854af"
 
-    fun load(activity: Activity): Drawable? = runCatching {
+    fun load(activity: Activity): Drawable? {
+        loadExact(activity)?.let { return it }
+        return loadRuntimeSurfaceFallback(activity)
+    }
+
+    private fun loadExact(activity:Activity):Drawable? = runCatching {
         val path = "${UiAssetContract.ANDROID_HOME_ROOT}/${UiAssetContract.ANDROID_HOME_FILE}"
         val bytes = activity.assets.open(path).use { it.readBytes() }
-        val digest = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+        val digest = sha256(bytes)
         require(digest == EXPECTED_SHA256) { "HOME asset SHA mismatch" }
         val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: error("HOME JPEG decode failed")
         require(bitmap.width == 720 && bitmap.height == 1280) { "HOME mobile dimensions invalid" }
         HomeCoverDrawable(bitmap)
-    }.onFailure { Log.w(TAG, "HOME 416 warning; current HOME continues", it) }.getOrNull()
+    }.onFailure { Log.w(TAG, "HOME 416 unavailable; trying full-surface fallback", it) }.getOrNull()
+
+    private fun loadRuntimeSurfaceFallback(activity:Activity):Drawable? = runCatching {
+        val root="${UiAssetContract.ANDROID_ROOT}/runtime-surfaces"
+        val props=Properties()
+        activity.assets.open("$root/sha256.properties").use(props::load)
+        val expected=(props.getProperty("home") ?: props.getProperty("home.png"))?.trim()?.lowercase()
+            ?: error("HOME full-surface hash missing")
+        val bytes=activity.assets.open("$root/home.png").use{it.readBytes()}
+        require(sha256(bytes)==expected){"HOME full-surface SHA mismatch"}
+        val bitmap=BitmapFactory.decodeByteArray(bytes,0,bytes.size) ?: error("HOME full-surface decode failed")
+        require(bitmap.width>=640 && bitmap.height>=360){"HOME full-surface too small"}
+        HomeCoverDrawable(bitmap)
+    }.onFailure { Log.w(TAG,"HOME full-surface unavailable • procedural RGB remains • STATUS_ONLY",it) }.getOrNull()
+
+    private fun sha256(bytes:ByteArray)=MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
 }
 
 private class HomeCoverDrawable(private val bitmap: Bitmap) : Drawable() {
@@ -132,6 +155,12 @@ private class HomeCoverDrawable(private val bitmap: Bitmap) : Drawable() {
 
     override fun setAlpha(alpha: Int) { imagePaint.alpha = alpha.coerceIn(0, 255) }
     override fun setColorFilter(colorFilter: ColorFilter?) { imagePaint.colorFilter = colorFilter }
-    @Deprecated("Deprecated in Android")
-    override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
+    @Deprecated("Deprecated in Android") override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
+}
+
+private class ProceduralHomeDrawable:GradientDrawable(
+    GradientDrawable.Orientation.TL_BR,
+    intArrayOf(Color.rgb(2,4,7),Color.rgb(7,17,27),Color.rgb(39,90,120))
+) {
+    init { cornerRadius=18f;setStroke(2,Color.rgb(39,233,255)) }
 }
