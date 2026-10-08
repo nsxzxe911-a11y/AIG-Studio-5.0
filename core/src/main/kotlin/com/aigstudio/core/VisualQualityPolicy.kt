@@ -78,6 +78,11 @@ object VisualQualityPolicy {
         )
     }
 
+    fun scaleGeometryBudget(base:Int,preset:VisualQualityPreset):Int{
+        require(base>0)
+        return kotlin.math.max(1,(base*budget(preset).resolutionScale).toInt())
+    }
+
     fun productLabelZhTw(preset:VisualQualityPreset):String=when(preset){
         VisualQualityPreset.LOW->"低負載"
         VisualQualityPreset.BALANCED->"平衡"
