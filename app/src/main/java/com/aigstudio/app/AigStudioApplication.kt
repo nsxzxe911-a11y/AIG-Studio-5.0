@@ -23,9 +23,9 @@ import java.util.WeakHashMap
 import kotlin.math.max
 
 /**
- * Installs the approved AI RGB HOME background without changing MainActivity's
- * machining callbacks. Failure is warning-only: the current Production HOME
- * remains usable and no rollback/downgrade is attempted.
+ * Installs approved AIG RGB visuals on the real production Runtime without
+ * changing machining callbacks.  Missing art remains warning-only and never
+ * triggers rollback/downgrade.
  */
 class AigStudioApplication : Application(), Application.ActivityLifecycleCallbacks {
     private val applied = Collections.newSetFromMap(WeakHashMap<View, Boolean>())
@@ -37,6 +37,7 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         installGlobalSkinChrome(activity)
+        RuntimeSurfaceAndroidInstaller.install(activity)
         OptionalTutorialModule.install(activity)
         CadAssistOverlayInstaller.install(activity)
         CadProfileOverlayInstaller.install(activity)
