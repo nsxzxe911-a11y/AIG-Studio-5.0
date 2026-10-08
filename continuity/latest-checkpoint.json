@@ -1,11 +1,11 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG Studio 5.0",
-  "version": "370.0.0",
+  "version": "371.0.0",
   "branch": "impl/runtime-ui-recovery-20261008",
   "recorded_source_head": "2804bc1d0e500e647865577b13ec90e246906489",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "SOURCE_UPDATED_MANUAL_GATES_ONLY",
+  "status": "RGB_ENTRY_REPAIRED_FULL_PAGE_RESTORATION_PENDING",
   "departments": {
     "HOME": "EXECUTE_UNTIL_PASS",
     "CAD": "EXECUTE_UNTIL_PASS",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "Validate Studio 356 domain-owned issue routing and NC inline ALARM across Web, Android and Windows, then bind AIG-II 392 to the exact Studio 356 SHA. CAD/CAM/SIM/NC remain independently usable; detailed 3D collision/stability diagnostics are Advanced-mode presentation while execution interlocks remain active.",
-  "note": "Studio 356: NC ALARM now stays inside the G-code editor with line/raw block/reason/suggestion and direct line focus. CAD, CAM, 3D/SIM and NC own their own messages; CONNECT/DISCONNECT is status, not an error. Detailed collision/interference/3D stability views are Advanced mode. When CAD-CAM-SIM-NC are all connected, AI acts as a cross-module teacher only and does not replace local validators.",
+  "next_action": "Restore approved morning full page assets, repair remaining engineering presentation, and verify page callbacks on Android and Windows.",
+  "note": "Default startup restored to full RGB product; Windows launched and inspected. Existing presentation still fails full approved RGB UI acceptance. Android launch pending.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -561,5 +561,6 @@
     ],
     "ai_teacher": "ALL_CONNECTED_ONLY",
     "execution_interlocks_remain_active": true
-  }
+  },
+  "rgb_restoration_record": "continuity/rgb-restoration-20261008.json"
 }

@@ -1,0 +1,30 @@
+{
+  "time_utc": "2026-10-08T14:53:18.466245+00:00",
+  "version": "371.0.0",
+  "scope": "Restore 2026-10-06 morning RGB pages and remove engineering shell",
+  "implemented": [
+    "Android launcher MainActivity",
+    "Windows full product first visible entry"
+  ],
+  "verified": [
+    "Android compile",
+    "Windows compile",
+    "debug APK build",
+    "Windows installDist build",
+    "Windows launched and screenshot inspected"
+  ],
+  "not_verified": [
+    "Android device launch (ADB unavailable)",
+    "all pages callbacks",
+    "all engineering UI removed",
+    "approved morning full page art mounted"
+  ],
+  "remaining": [
+    "Restore approved full page assets from AIG_MORNING_BASELINE_MODULE_PACK_20261006.zip libfile_d2b80a8e02d48191b6a679c9a99ca8e1",
+    "Replace technical presentation with approved functional RGB pages; no engineering shell with pasted art",
+    "Repair AIG CNC stale 362-only home verifier and RGB resource validation",
+    "Verify HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC/AI on both platforms"
+  ],
+  "release_status": "PARTIAL_ENTRY_REPAIR_NOT_FULL_UI_ACCEPTANCE",
+  "automatic_regression": "OFF"
+}
