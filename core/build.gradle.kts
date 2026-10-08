@@ -6,6 +6,10 @@ kotlin {
     jvmToolchain(17)
 }
 
+dependencies {
+    testImplementation(kotlin("test"))
+}
+
 tasks.register<JavaExec>("coreRegression") {
     enabled = false
     description = "DISABLED BY USER POLICY: regression execution requires explicit user approval"
