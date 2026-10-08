@@ -1,11 +1,11 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
-  "product": "AIG Studio 5.0",
-  "version": "373.0.0",
-  "branch": "feat/aig-cnc-373-runtime-link-repair",
-  "recorded_source_head": "7b9cb0aca06117f5132209441c1fc5df0344bccf",
+  "product": "AIG CNC",
+  "version": "374.0.0",
+  "branch": "feat/aig-cnc-374-runtime-link-completion",
+  "recorded_source_head": "bcaa848290e21a4e021cdb333abdc4503c60aac4",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "FULL_RUNTIME_LINK_REPAIR_BINARY_INSTALLER_PASS",
+  "status": "FULL_RUNTIME_LINK_COMPLETION_SOURCE_PASS_BINARY_PENDING",
   "departments": {
     "HOME": "EXECUTE_UNTIL_PASS",
     "CAD": "EXECUTE_UNTIL_PASS",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "AIG CNC 373 binary release is verified across APK, portable x86-64 Runtime and Setup install/launch/uninstall. Continue forward-only product work from this checkpoint; keep native Android GLES/Vulkan disabled until a real backend exists.",
-  "note": "AIG CNC 373 full binary validation PASS. Nox APK cold launch enters visible AIG CNC RGB HOME. Windows portable x86-64 packaged launcher PASS. Setup EXE built with portable WiX 3.14.1, installed per-user, installed Runtime reproduced official RGB UI, true material removal and 5AX dynamic evidence, and uninstall removed install directory and registry entry.",
+  "next_action": "Build/install AIG CNC 374 APK and Windows x86-64 portable/Setup, launch production RGB HOME, verify Settings visual runtime, AI Working Copy and CAD Layers, then exact-bind AIG-II 454 to the 374 release source SHA.",
+  "note": "AIG CNC 374 source completion PASS: all ProductionActionContract items are connected on Android and Windows. Windows Quality/Power/RGB/HUD now have real runtime consumers; AI program edits use Immutable Main -> Working Copy -> NC Authority Verify -> explicit Promote; CAD Layers use separate metadata, hidden-layer hit-test isolation, Undo/Redo preservation, Project V4 persistence with V1/V2/V3 backward compatibility, and Android autosave format 5. Binary install/launch evidence is pending and not claimed.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -611,5 +611,15 @@
       "uninstall_install_dir_removed": true,
       "uninstall_registry_removed": true
     }
+  },
+  "binary_runtime_evidence_374": {
+    "status": "SOURCE_PASS_BINARY_PENDING",
+    "feature_source_sha": "bcaa848290e21a4e021cdb333abdc4503c60aac4",
+    "all_production_actions_connected": true,
+    "project_format": "AIGSTUDIO_PROJECT|4",
+    "android_autosave_format": 5,
+    "apk": "PENDING",
+    "windows_portable": "PENDING",
+    "windows_setup": "PENDING"
   }
 }

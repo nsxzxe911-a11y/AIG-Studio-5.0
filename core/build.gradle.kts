@@ -157,3 +157,12 @@ tasks.register<JavaExec>("cadLayerRuntime374Regression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.CadLayerRuntime374RegressionKt")
 }
+
+
+tasks.register<JavaExec>("release374Regression") {
+    group = "verification"
+    description = "Checks forward-only AIG CNC 374 promotion and source-complete action contract"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.Release374RegressionKt")
+}
