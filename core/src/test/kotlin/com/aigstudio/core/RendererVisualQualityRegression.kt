@@ -17,5 +17,11 @@ fun main(){
     check(VisualQualityPolicy.adapt(VisualQualityPreset.ULTRA,ramGb=12,hardwareAccelerated=true,memoryPressure=VisualMemoryPressure.NORMAL,thermalLevel=0)==VisualQualityPreset.ULTRA)
     check(VisualQualityPolicy.adapt(VisualQualityPreset.HIGH,ramGb=12,hardwareAccelerated=false,memoryPressure=VisualMemoryPressure.NORMAL,thermalLevel=0)==VisualQualityPreset.LOW)
 
-    println("AIGCNC_VISUAL_QUALITY_POLICY_PASS|LOW_BALANCED_HIGH_ULTRA|TRUE_REMOVAL_PRESERVED|0.001_MM_PRESERVED")
+    check(VisualQualityRuntime.current().preset==VisualQualityPreset.BALANCED)
+    VisualQualityRuntime.setRequested(VisualQualityPreset.ULTRA)
+    val runtime=VisualQualityRuntime.updateFromHardware(ramGb=4,hardwareAccelerated=true,memoryPressure=VisualMemoryPressure.HIGH,thermalLevel=0)
+    check(runtime.preset==VisualQualityPreset.LOW)
+    check(runtime.trueMaterialRemoval && runtime.simulationPrecisionMm==0.001)
+
+    println("AIGCNC_VISUAL_QUALITY_POLICY_PASS|LOW_BALANCED_HIGH_ULTRA|TRUE_REMOVAL_PRESERVED|0.001_MM_PRESERVED|RUNTIME_DEFAULT_BALANCED")
 }
