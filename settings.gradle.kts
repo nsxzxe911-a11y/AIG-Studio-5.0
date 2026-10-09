@@ -17,3 +17,5 @@ include(":app", ":core", ":desktop")
 include(":app-production")
 include(":production-runtime")
 include(":runtime-contract")
+
+include(":renderer-android")

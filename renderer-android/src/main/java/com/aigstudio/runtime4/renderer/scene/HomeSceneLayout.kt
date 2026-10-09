@@ -1,0 +1,13 @@
+﻿package com.aigstudio.runtime4.renderer
+
+object HomeSceneLayout {
+    fun nodes(widthPx: Float, heightPx: Float, density: Float): List<SceneNode> {
+        val touch = 48f * density
+        val gap = 8f * density
+        val y = heightPx - touch - gap
+        return listOf(
+            RgbGlassButtonNode("NAV.HOME", UiBounds(gap, y, gap + touch, y + touch), 20, "HOME", null, null, VisualState.SELECTED),
+            RgbGlassButtonNode("NAV.CAD", UiBounds(gap * 2 + touch, y, gap * 2 + touch * 2, y + touch), 20, "CAD", null, null),
+        )
+    }
+}
