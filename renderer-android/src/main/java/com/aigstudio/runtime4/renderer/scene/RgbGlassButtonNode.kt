@@ -1,6 +1,7 @@
 ﻿package com.aigstudio.runtime4.renderer
 
 import com.aigstudio.runtime4.contract.CadCommand
+import com.aigstudio.runtime4.contract.CamCommand
 
 class RgbGlassButtonNode(
     id: String,
@@ -12,6 +13,7 @@ class RgbGlassButtonNode(
     visualState: VisualState = VisualState.NORMAL,
     enabled: Boolean = true,
     visible: Boolean = true,
+    val camCommandBinding: CamCommand? = null,
 ) : SceneNode(id, bounds, z, visualState, enabled, visible) {
     val usesFallback: Boolean get() = textureRef.isNullOrBlank()
 }
