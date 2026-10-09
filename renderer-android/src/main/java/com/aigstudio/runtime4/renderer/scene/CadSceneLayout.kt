@@ -1,10 +1,10 @@
-﻿package com.aigstudio.runtime4.renderer
+package com.aigstudio.runtime4.renderer
 
 import com.aigstudio.runtime4.contract.*
 import kotlin.math.max
 
 object CadSceneLayout {
-    private val primary = listOf("CAD.LINE","CAD.RECT","CAD.CIRCLE","CAD.HOLE","CAD.SELECT","CAD.UNDO","CAD.REDO","CAD.SNAP","CAD.TOOL_GROUP")
+    private val primary = listOf("CAD.LINE","CAD.RECT","CAD.CIRCLE","CAD.ARC","CAD.ARC_DIR","CAD.HOLE","CAD.SELECT","CAD.UNDO","CAD.REDO","CAD.SNAP","CAD.TOOL_GROUP")
     private val advanced = listOf("CAD.TRIM","CAD.EXTEND","CAD.OFFSET","CAD.ARRAY","CAD.CHAMFER","CAD.FILLET","CAD.TOPOLOGY")
 
     fun nodes(widthPx: Float, heightPx: Float, density: Float, toolGroupExpanded: Boolean): List<SceneNode> {
@@ -47,6 +47,8 @@ object CadSceneLayout {
         "CAD.LINE" -> CadCommand.SelectTool(CadTool.LINE)
         "CAD.RECT" -> CadCommand.SelectTool(CadTool.RECT)
         "CAD.CIRCLE" -> CadCommand.SelectTool(CadTool.CIRCLE)
+        "CAD.ARC" -> CadCommand.SelectTool(CadTool.ARC)
+        "CAD.ARC_DIR" -> CadCommand.ToggleArcDirection
         "CAD.HOLE" -> CadCommand.SelectTool(CadTool.HOLE)
         "CAD.SELECT" -> CadCommand.SelectTool(CadTool.SELECT)
         "CAD.UNDO" -> CadCommand.Undo

@@ -18,7 +18,9 @@ import com.aigstudio.core.chamferCommand
 import com.aigstudio.core.filletCommand
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.hypot
+import kotlin.math.sin
 
 enum class CleanCadSnapMode { ENDPOINT, MIDPOINT, CENTER, INTERSECTION, TANGENT, HORIZONTAL, VERTICAL }
 data class CleanCadSnapPoint(val x:Double,val y:Double)
@@ -53,6 +55,18 @@ class CleanCadSession {
         requireFinite(cx,cy,radius)
         require(radius>=CNC_RESOLUTION_MM) { "CIRCLE radius must be at least 0.001 mm" }
         history.run(AddEntitiesCommand(listOf(Circle(center=Vec2(cx,cy),radius=radius))))
+    }
+
+    fun addArc(cx:Double,cy:Double,radius:Double,startDeg:Double,sweepDeg:Double) {
+        requireFinite(cx,cy,radius,startDeg,sweepDeg)
+        require(radius>=CNC_RESOLUTION_MM) { "ARC radius must be at least 0.001 mm" }
+        require(abs(sweepDeg)>1e-9) { "ARC sweep must be non-zero" }
+        val sr=Math.toRadians(startDeg)
+        val er=Math.toRadians(startDeg+sweepDeg)
+        val center=Vec2(cx,cy)
+        val start=Vec2(cx+cos(sr)*radius,cy+sin(sr)*radius)
+        val end=Vec2(cx+cos(er)*radius,cy+sin(er)*radius)
+        history.run(AddEntitiesCommand(listOf(Arc(center=center,radius=radius,start=start,end=end,clockwise=sweepDeg<0.0))))
     }
 
     fun addHole(cx:Double,cy:Double,diameter:Double) {

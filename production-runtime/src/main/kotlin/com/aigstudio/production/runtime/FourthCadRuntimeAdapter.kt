@@ -1,6 +1,8 @@
-﻿package com.aigstudio.production.runtime
+package com.aigstudio.production.runtime
 
 import com.aigstudio.runtime4.contract.*
+import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.hypot
 
 class FourthCadRuntimeAdapter(
@@ -8,6 +10,8 @@ class FourthCadRuntimeAdapter(
 ) : CadRuntimePort {
     private var state: CadState = CadState.initial()
     private var gestureStart: CadPoint? = null
+    private var arcCenter: CadPoint? = null
+    private var arcStart: CadPoint? = null
 
     override fun snapshot(): CadState = synced()
 
@@ -15,7 +19,10 @@ class FourthCadRuntimeAdapter(
         when (command) {
             is CadCommand.SelectTool -> {
                 if (command.tool != CadTool.SELECT) session.clearSelection()
-                state = synced().copy(activeTool = command.tool, message = null)
+                gestureStart = null
+                arcCenter = null
+                arcStart = null
+                state = synced().copy(activeTool = command.tool, arcStage = 0, message = null)
                 accepted()
             }
             CadCommand.CycleSnap -> {
@@ -24,12 +31,18 @@ class FourthCadRuntimeAdapter(
                 state = synced().copy(snapMode = next, message = null)
                 accepted()
             }
+            CadCommand.ToggleArcDirection -> {
+                state = synced().copy(arcClockwise = !state.arcClockwise, message = null)
+                accepted()
+            }
             is CadCommand.PointerDown -> {
-                gestureStart = if (state.activeTool == CadTool.SELECT) command.point else snap(command.point, null)
+                if (state.activeTool != CadTool.ARC) {
+                    gestureStart = if (state.activeTool == CadTool.SELECT) command.point else snap(command.point, null)
+                }
                 state = synced().copy(message = null)
                 accepted()
             }
-            is CadCommand.PointerUp -> finishGesture(command.point)
+            is CadCommand.PointerUp -> if (state.activeTool == CadTool.ARC) finishArcTap(command.point) else finishGesture(command.point)
             CadCommand.Undo -> historyMutation(session.undo(), "Nothing to undo")
             CadCommand.Redo -> historyMutation(session.redo(), "Nothing to redo")
             CadCommand.Trim -> editMutation { session.trimSelected() }
@@ -52,6 +65,42 @@ class FourthCadRuntimeAdapter(
         rejected(e.message ?: e::class.simpleName.orEmpty(), MessageSeverity.ALARM)
     }
 
+    private fun finishArcTap(rawPoint: CadPoint): CadDispatchResult {
+        val point = snap(rawPoint, arcCenter)
+        return when (state.arcStage) {
+            0 -> {
+                arcCenter = point
+                arcStart = null
+                state = synced().copy(arcStage = 1, message = null)
+                accepted()
+            }
+            1 -> {
+                val center = arcCenter ?: error("ARC center missing")
+                val radius = hypot(point.x - center.x, point.y - center.y)
+                require(radius >= 0.001) { "ARC radius must be at least 0.001 mm" }
+                arcStart = point
+                state = synced().copy(arcStage = 2, message = null)
+                accepted()
+            }
+            else -> {
+                val center = arcCenter ?: error("ARC center missing")
+                val start = arcStart ?: error("ARC start missing")
+                val radius = hypot(start.x - center.x, start.y - center.y)
+                val startDeg = Math.toDegrees(atan2(start.y - center.y, start.x - center.x))
+                val endDeg = Math.toDegrees(atan2(point.y - center.y, point.x - center.x))
+                var ccw = (endDeg - startDeg) % 360.0
+                if (ccw < 0.0) ccw += 360.0
+                require(abs(ccw) > 1e-9) { "ARC sweep must be non-zero" }
+                val sweep = if (state.arcClockwise) ccw - 360.0 else ccw
+                session.addArc(center.x, center.y, radius, startDeg, sweep)
+                arcCenter = null
+                arcStart = null
+                state = synced().copy(revision = state.revision + 1L, arcStage = 0, message = null)
+                accepted()
+            }
+        }
+    }
+
     private fun finishGesture(rawEnd: CadPoint): CadDispatchResult {
         val start = gestureStart ?: return rejected("CAD gesture missing start", MessageSeverity.WARNING)
         gestureStart = null
@@ -67,6 +116,7 @@ class FourthCadRuntimeAdapter(
             CadTool.RECT -> session.addRect(start.x, start.y, end.x, end.y)
             CadTool.CIRCLE -> session.addCircle(start.x, start.y, hypot(end.x - start.x, end.y - start.y))
             CadTool.HOLE -> session.addHole(start.x, start.y, hypot(end.x - start.x, end.y - start.y) * 2.0)
+            CadTool.ARC -> error("ARC handled by three-tap state machine")
             CadTool.SELECT -> error("SELECT handled above")
         }
         state = synced().copy(revision = state.revision + 1L, message = null)
@@ -105,7 +155,6 @@ class FourthCadRuntimeAdapter(
         primitives = session.primitives().map { p ->
             when (p) {
                 is CleanCadPrimitive.Segment -> CadPrimitiveSnapshot.Segment(p.ax,p.ay,p.bx,p.by,p.selected)
-
                 is CleanCadPrimitive.CircleShape -> CadPrimitiveSnapshot.Circle(p.cx,p.cy,p.radius,p.selected)
                 is CleanCadPrimitive.HoleShape -> CadPrimitiveSnapshot.Hole(p.cx,p.cy,p.radius,p.selected)
                 is CleanCadPrimitive.ArcShape -> CadPrimitiveSnapshot.Arc(p.cx,p.cy,p.radius,p.startDeg,p.sweepDeg,p.selected)

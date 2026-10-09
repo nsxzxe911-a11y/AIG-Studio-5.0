@@ -1,8 +1,8 @@
-﻿package com.aigstudio.runtime4.contract
+package com.aigstudio.runtime4.contract
 
 enum class SceneId { HOME, CAD, CAM, SIM, AXIS3, AXIS4, AXIS5, AXIS6, NC, AI }
 
-enum class CadTool { LINE, RECT, CIRCLE, HOLE, SELECT }
+enum class CadTool { LINE, RECT, CIRCLE, ARC, HOLE, SELECT }
 
 enum class CadSnapMode { OFF, ENDPOINT, MIDPOINT, CENTER, INTERSECTION, TANGENT, HORIZONTAL, VERTICAL }
 
@@ -67,6 +67,8 @@ data class CadState(
     val topologyCount: Int,
     val originX: Double = 0.0,
     val originY: Double = 0.0,
+    val arcClockwise: Boolean = false,
+    val arcStage: Int = 0,
     val message: RuntimeMessage? = null,
 ) {
     companion object {
@@ -84,6 +86,7 @@ data class CadState(
 sealed interface CadCommand {
     data class SelectTool(val tool: CadTool) : CadCommand
     data object CycleSnap : CadCommand
+    data object ToggleArcDirection : CadCommand
     data class PointerDown(val point: CadPoint) : CadCommand
     data class PointerUp(val point: CadPoint) : CadCommand
     data object Undo : CadCommand
