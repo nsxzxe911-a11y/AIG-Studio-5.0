@@ -53,6 +53,7 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
         toolButton("CHAMFER 5","CAD CHAMFER 5MM"){editAction("CHAMFER 5"){session.chamferSelected(5.0)}}
         toolButton("FILLET R5","CAD FILLET R5MM"){editAction("FILLET R5"){session.filletSelected(5.0)}}
         snapButton=toolButton("SNAP OFF","CAD SNAP CYCLE"){cycleSnapMode()}
+        toolButton("🔗/⛓","CAD CONNECT DISCONNECT"){topologyAction()}
         addView(tools,LayoutParams(-1,-2))
         addView(canvasView,LayoutParams(-1,0,1f))
         report("READY")
@@ -77,6 +78,16 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
         Log.i("AIG-CLEAN-CAD","CLEAN_CAD_SNAP_MODE|$name")
     }
 
+    private fun topologyAction() {
+        runCatching { session.toggleTopologySelected() }.onSuccess { action ->
+            canvasView.invalidate(); report(action)
+            Log.i("AIG-CLEAN-CAD","CLEAN_CAD_TOPOLOGY|$action|PASS|links=${session.topologyCount()}|entities=${session.entityCount()}")
+        }.onFailure {
+            onStatus("CAD TOPOLOGY • ${it.message}")
+            Log.i("AIG-CLEAN-CAD","CLEAN_CAD_TOPOLOGY|BLOCKED|${it.message}")
+        }
+    }
+
     private fun editAction(label:String,action:()->Unit) {
         runCatching(action).onSuccess {
             canvasView.invalidate(); report(label)
@@ -88,7 +99,7 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
     }
 
     private fun report(event:String) {
-        val text="CAD $event • ENTITIES=${session.entityCount()} • SELECTED=${session.selectedCount()} • 0.001 mm"
+        val text="CAD $event • ENTITIES=${session.entityCount()} • LINKS=${session.topologyCount()} • SELECTED=${session.selectedCount()} • 0.001 mm"
         onStatus(text)
         Log.i("AIG-CLEAN-CAD","CLEAN_CAD_STATUS|$event|entities=${session.entityCount()}|selected=${session.selectedCount()}")
     }

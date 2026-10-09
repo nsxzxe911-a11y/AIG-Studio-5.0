@@ -6,6 +6,7 @@ import com.aigstudio.core.CNC_RESOLUTION_MM
 import com.aigstudio.core.CadEditEngine
 import com.aigstudio.core.CadSemanticIdentity
 import com.aigstudio.core.CadSnapEngine
+import com.aigstudio.core.CadTopologyLink
 import com.aigstudio.core.SnapMode
 import com.aigstudio.core.Circle
 import com.aigstudio.core.DrawingDocument
@@ -84,6 +85,18 @@ class CleanCadSession {
     fun extendSelected(){ history.run(CadEditEngine.extendCommand(document,selectedIds.toList())); selectedIds.clear() }
     fun offsetSelected(distance:Double){ history.run(CadEditEngine.offsetCommand(document,selectedIds,distance)); selectedIds.clear() }
     fun arraySelected(count:Int,dx:Double,dy:Double){ history.run(CadEditEngine.linearArrayCommand(document,selectedIds,count,dx,dy)); selectedIds.clear() }
+    fun connectSelected(){ history.run(CadEditEngine.connectCommand(document,selectedIds)); selectedIds.clear() }
+    fun disconnectSelected(){ history.run(CadEditEngine.disconnectCommand(document,selectedIds)); selectedIds.clear() }
+    fun topologyCount():Int=document.links().size
+    fun selectedPairConnected():Boolean {
+        val ids=selectedIds.toList()
+        return ids.size==2 && CadTopologyLink.of(ids[0],ids[1]) in document.links()
+    }
+    fun toggleTopologySelected():String {
+        val action=if(selectedPairConnected()) "DISCONNECT" else "CONNECT"
+        if(action=="CONNECT") connectSelected() else disconnectSelected()
+        return action
+    }
     fun chamferSelected(distance:Double) {
         val ids=selectedIds.toList(); require(ids.size==2){"CHAMFER requires two selected lines"}
         history.run(chamferCommand(document,ids[0],ids[1],distance)); selectedIds.clear()

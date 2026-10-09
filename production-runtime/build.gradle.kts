@@ -70,3 +70,10 @@ tasks.register<JavaExec>("cleanCadSnapRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("CleanCadSnapRegressionKt")
 }
+
+
+tasks.register<JavaExec>("cleanCadTopologyRegression") {
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("CleanCadTopologyRegressionKt")
+}
