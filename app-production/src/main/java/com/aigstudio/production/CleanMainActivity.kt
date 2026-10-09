@@ -21,6 +21,8 @@ import com.aigstudio.production.runtime.CleanAxisSession
 import com.aigstudio.production.runtime.CleanNcSession
 import com.aigstudio.production.runtime.CleanAiSession
 import com.aigstudio.production.runtime.CleanAiUpdateSession
+import com.aigstudio.production.runtime.CleanAiContinuitySession
+import java.io.File
 
 class CleanMainActivity : Activity() {
     private val surfaces = listOf("HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI")
@@ -37,9 +39,11 @@ class CleanMainActivity : Activity() {
     private val ncSession = CleanNcSession()
     private val aiSession = CleanAiSession()
     private val aiUpdateSession = CleanAiUpdateSession("389.0.0")
+    private lateinit var aiContinuitySession: CleanAiContinuitySession
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        aiContinuitySession = CleanAiContinuitySession(File(filesDir,"ai-continuity"))
         window.statusBarColor = Color.rgb(2,4,7)
         window.navigationBarColor = Color.rgb(2,4,7)
         val root = buildRoot()
@@ -91,7 +95,7 @@ class CleanMainActivity : Activity() {
             "5AX" -> { contentHost.addView(CleanAxisPanel(this,axis5){status.text=it},FrameLayout.LayoutParams(-1,-1)); Log.i("AIG-CLEAN-AXIS","CLEAN_AXIS_PANEL_MOUNT|5AX|PASS|ONE_SCENE_ONE_RENDERER") }
             "6AX" -> { contentHost.addView(CleanAxisPanel(this,axis6){status.text=it},FrameLayout.LayoutParams(-1,-1)); Log.i("AIG-CLEAN-AXIS","CLEAN_AXIS_PANEL_MOUNT|6AX|PASS|ONE_SCENE_ONE_RENDERER") }
             "NC" -> { contentHost.addView(CleanNcPanel(this,ncSession){status.text=it},FrameLayout.LayoutParams(-1,-1)); Log.i("AIG-CLEAN-NC","CLEAN_NC_PANEL_MOUNT|PASS|REAL_FANUC_RUNTIME") }
-            "AI" -> { contentHost.addView(CleanAiPanel(this,aiSession,aiUpdateSession){status.text=it},FrameLayout.LayoutParams(-1,-1)); Log.i("AIG-CLEAN-AI","CLEAN_AI_PANEL_MOUNT|PASS|IMMUTABLE_WORKING_VERIFIED|UPDATE_REPAIR_POLICY") }
+            "AI" -> { contentHost.addView(CleanAiPanel(this,aiSession,aiUpdateSession,aiContinuitySession){status.text=it},FrameLayout.LayoutParams(-1,-1)); Log.i("AIG-CLEAN-AI","CLEAN_AI_PANEL_MOUNT|PASS|IMMUTABLE_WORKING_VERIFIED|UPDATE_REPAIR_POLICY|CONTINUITY") }
         }
         if(surface=="HOME") status.text="RGB HOME | 0.001 mm | GPU READY"
         else if(surface !in setOf("CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI")) status.text="$surface | CLEAN PRODUCTION SURFACE"
