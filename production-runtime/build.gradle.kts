@@ -1,6 +1,10 @@
-plugins { kotlin("jvm") }
+﻿plugins { kotlin("jvm") }
 
-dependencies { implementation(project(":core")) }
+dependencies {
+    implementation(project(":core"))
+    implementation(project(":runtime-contract"))
+    testImplementation(kotlin("test-junit5"))
+}
 
 kotlin { jvmToolchain(17) }
 
@@ -77,3 +81,5 @@ tasks.register<JavaExec>("cleanCadTopologyRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("CleanCadTopologyRegressionKt")
 }
+
+tasks.test { useJUnitPlatform() }
