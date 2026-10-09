@@ -1,22 +1,28 @@
 package com.aigstudio.production.runtime
 
 import com.aigstudio.core.AddEntitiesCommand
+import com.aigstudio.core.Arc
 import com.aigstudio.core.CNC_RESOLUTION_MM
 import com.aigstudio.core.CadEditEngine
+import com.aigstudio.core.CadSemanticIdentity
 import com.aigstudio.core.Circle
 import com.aigstudio.core.DrawingDocument
 import com.aigstudio.core.Entity
 import com.aigstudio.core.History
 import com.aigstudio.core.Line
 import com.aigstudio.core.Vec2
+import com.aigstudio.core.chamferCommand
+import com.aigstudio.core.filletCommand
 import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.hypot
-import kotlin.math.min
 
 sealed interface CleanCadPrimitive {
     val selected:Boolean
     data class Segment(val ax:Double,val ay:Double,val bx:Double,val by:Double,override val selected:Boolean=false):CleanCadPrimitive
     data class CircleShape(val cx:Double,val cy:Double,val radius:Double,override val selected:Boolean=false):CleanCadPrimitive
+    data class HoleShape(val cx:Double,val cy:Double,val radius:Double,override val selected:Boolean=false):CleanCadPrimitive
+    data class ArcShape(val cx:Double,val cy:Double,val radius:Double,val startDeg:Double,val sweepDeg:Double,override val selected:Boolean=false):CleanCadPrimitive
 }
 
 class CleanCadSession {
@@ -43,6 +49,12 @@ class CleanCadSession {
         history.run(AddEntitiesCommand(listOf(Circle(center=Vec2(cx,cy),radius=radius))))
     }
 
+    fun addHole(cx:Double,cy:Double,diameter:Double) {
+        requireFinite(cx,cy,diameter)
+        require(diameter>=CNC_RESOLUTION_MM*2.0) { "HOLE diameter must be at least 0.002 mm" }
+        history.run(AddEntitiesCommand(listOf(Circle(id=CadSemanticIdentity.newHoleId(),center=Vec2(cx,cy),radius=diameter/2.0))))
+    }
+
     fun selectNearest(x:Double,y:Double,multiSelect:Boolean=false,toleranceMm:Double=3.0):Boolean {
         requireFinite(x,y,toleranceMm); require(toleranceMm>=CNC_RESOLUTION_MM)
         val hit=document.all().map { it to distanceTo(it,x,y) }.minByOrNull { it.second }
@@ -59,14 +71,33 @@ class CleanCadSession {
     fun extendSelected(){ history.run(CadEditEngine.extendCommand(document,selectedIds.toList())); selectedIds.clear() }
     fun offsetSelected(distance:Double){ history.run(CadEditEngine.offsetCommand(document,selectedIds,distance)); selectedIds.clear() }
     fun arraySelected(count:Int,dx:Double,dy:Double){ history.run(CadEditEngine.linearArrayCommand(document,selectedIds,count,dx,dy)); selectedIds.clear() }
+    fun chamferSelected(distance:Double) {
+        val ids=selectedIds.toList(); require(ids.size==2){"CHAMFER requires two selected lines"}
+        history.run(chamferCommand(document,ids[0],ids[1],distance)); selectedIds.clear()
+    }
+    fun filletSelected(radius:Double) {
+        val ids=selectedIds.toList(); require(ids.size==2){"FILLET requires two selected lines"}
+        history.run(filletCommand(document,ids[0],ids[1],radius)); selectedIds.clear()
+    }
 
     fun undo():Boolean { selectedIds.clear(); return history.undo() }
     fun redo():Boolean { selectedIds.clear(); return history.redo() }
     fun entityCount():Int=document.size()
+    fun holeCount():Int=document.all().count { it.id.startsWith("HOLE:") }
+    fun arcCount():Int=document.all().count { it is Arc }
+
     fun primitives():List<CleanCadPrimitive> = document.all().mapNotNull { e ->
         when(e) {
             is Line -> CleanCadPrimitive.Segment(e.a.x,e.a.y,e.b.x,e.b.y,e.id in selectedIds)
-            is Circle -> CleanCadPrimitive.CircleShape(e.center.x,e.center.y,e.radius,e.id in selectedIds)
+            is Circle -> if(e.id.startsWith("HOLE:")) CleanCadPrimitive.HoleShape(e.center.x,e.center.y,e.radius,e.id in selectedIds)
+                else CleanCadPrimitive.CircleShape(e.center.x,e.center.y,e.radius,e.id in selectedIds)
+            is Arc -> {
+                val start=Math.toDegrees(atan2(e.start.y-e.center.y,e.start.x-e.center.x))
+                val end=Math.toDegrees(atan2(e.end.y-e.center.y,e.end.x-e.center.x))
+                var sweep=end-start
+                if(e.clockwise){ while(sweep>=0.0)sweep-=360.0 } else { while(sweep<=0.0)sweep+=360.0 }
+                CleanCadPrimitive.ArcShape(e.center.x,e.center.y,e.radius,start,sweep,e.id in selectedIds)
+            }
             else -> null
         }
     }
@@ -74,6 +105,7 @@ class CleanCadSession {
     private fun distanceTo(e:Entity,x:Double,y:Double):Double = when(e) {
         is Line -> pointSegmentDistance(x,y,e.a.x,e.a.y,e.b.x,e.b.y)
         is Circle -> abs(hypot(x-e.center.x,y-e.center.y)-e.radius)
+        is Arc -> abs(hypot(x-e.center.x,y-e.center.y)-e.radius)
         else -> Double.POSITIVE_INFINITY
     }
 

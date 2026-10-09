@@ -3,11 +3,11 @@ android {
     namespace = "com.aigstudio.production"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.aigstudio.production.clean391"
+        applicationId = "com.aigstudio.production.clean392"
         minSdk = 26
         targetSdk = 36
-        versionCode = 391001
-        versionName = "391-cad-tools"
+        versionCode = 392001
+        versionName = "392-cad-corners"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

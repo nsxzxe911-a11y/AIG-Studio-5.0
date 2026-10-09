@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.drawable.GradientDrawable
 import android.util.Log
 import android.view.MotionEvent
@@ -17,7 +18,7 @@ import kotlin.math.hypot
 import kotlin.math.min
 
 class CleanCadPanel(context:Context, private val session:CleanCadSession, private val onStatus:(String)->Unit):LinearLayout(context) {
-    private enum class Tool { LINE, RECT, CIRCLE, SELECT }
+    private enum class Tool { LINE, RECT, CIRCLE, HOLE, SELECT }
     private val canvasView=CadCanvas(context)
 
     init {
@@ -35,6 +36,7 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
         toolButton("LINE","CAD TOOL LINE"){session.clearSelection();canvasView.tool=Tool.LINE;report("LINE READY")}
         toolButton("RECT","CAD TOOL RECT"){session.clearSelection();canvasView.tool=Tool.RECT;report("RECT READY")}
         toolButton("CIRCLE","CAD TOOL CIRCLE"){session.clearSelection();canvasView.tool=Tool.CIRCLE;report("CIRCLE READY")}
+        toolButton("HOLE","CAD TOOL HOLE"){session.clearSelection();canvasView.tool=Tool.HOLE;report("HOLE READY")}
         toolButton("SELECT","CAD TOOL SELECT"){session.clearSelection();canvasView.tool=Tool.SELECT;canvasView.invalidate();report("SELECT READY")}
         toolButton("UNDO","CAD UNDO"){if(session.undo()){canvasView.invalidate();report("UNDO")}}
         toolButton("REDO","CAD REDO"){if(session.redo()){canvasView.invalidate();report("REDO")}}
@@ -42,6 +44,8 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
         toolButton("EXTEND","CAD EXTEND"){editAction("EXTEND"){session.extendSelected()}}
         toolButton("OFFSET 5","CAD OFFSET 5MM"){editAction("OFFSET 5"){session.offsetSelected(5.0)}}
         toolButton("ARRAY×3","CAD ARRAY 3X"){editAction("ARRAY 3X"){session.arraySelected(3,10.0,0.0)}}
+        toolButton("CHAMFER 5","CAD CHAMFER 5MM"){editAction("CHAMFER 5"){session.chamferSelected(5.0)}}
+        toolButton("FILLET R5","CAD FILLET R5MM"){editAction("FILLET R5"){session.filletSelected(5.0)}}
         addView(tools,LayoutParams(-1,-2))
         addView(canvasView,LayoutParams(-1,0,1f))
         report("READY")
@@ -85,6 +89,14 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
                 when(p) {
                     is CleanCadPrimitive.Segment -> { val a=screen(p.ax,p.ay,scale); val b=screen(p.bx,p.by,scale); c.drawLine(a.first,a.second,b.first,b.second,paint) }
                     is CleanCadPrimitive.CircleShape -> { val q=screen(p.cx,p.cy,scale); c.drawCircle(q.first,q.second,(p.radius*scale).toFloat(),paint) }
+                    is CleanCadPrimitive.HoleShape -> {
+                        val q=screen(p.cx,p.cy,scale); val r=(p.radius*scale).toFloat(); c.drawCircle(q.first,q.second,r,paint)
+                        c.drawLine(q.first-r*0.35f,q.second,q.first+r*0.35f,q.second,paint); c.drawLine(q.first,q.second-r*0.35f,q.first,q.second+r*0.35f,paint)
+                    }
+                    is CleanCadPrimitive.ArcShape -> {
+                        val q=screen(p.cx,p.cy,scale); val r=(p.radius*scale).toFloat(); val box=RectF(q.first-r,q.second-r,q.first+r,q.second+r)
+                        c.drawArc(box,(-p.startDeg).toFloat(),(-p.sweepDeg).toFloat(),false,paint)
+                    }
                 }
             }
             paint.style=Paint.Style.FILL
@@ -107,6 +119,7 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
                             Tool.LINE -> session.addLine(a.x,a.y,b.x,b.y)
                             Tool.RECT -> session.addRect(a.x,a.y,b.x,b.y)
                             Tool.CIRCLE -> session.addCircle(a.x,a.y,hypot(b.x-a.x,b.y-a.y))
+                            Tool.HOLE -> session.addHole(a.x,a.y,hypot(b.x-a.x,b.y-a.y)*2.0)
                             Tool.SELECT -> Unit
                         }
                     }.onSuccess {
