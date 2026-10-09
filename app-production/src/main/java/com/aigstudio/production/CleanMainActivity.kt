@@ -17,6 +17,7 @@ import android.widget.TextView
 import com.aigstudio.production.runtime.CleanCadSession
 import com.aigstudio.production.runtime.CleanCamSession
 import com.aigstudio.production.runtime.CleanSimSession
+import com.aigstudio.production.runtime.CleanAxisSession
 
 class CleanMainActivity : Activity() {
     private val surfaces = listOf("HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI")
@@ -27,6 +28,9 @@ class CleanMainActivity : Activity() {
     private val cadSession = CleanCadSession()
     private val camSession = CleanCamSession()
     private val simSession = CleanSimSession(camSession)
+    private val axis4 = CleanAxisSession("4AX")
+    private val axis5 = CleanAxisSession("5AX")
+    private val axis6 = CleanAxisSession("6AX")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,9 +81,12 @@ class CleanMainActivity : Activity() {
             "CAM" -> { contentHost.addView(CleanCamPanel(this,camSession){status.text=it},FrameLayout.LayoutParams(-1,-1)); Log.i("AIG-CLEAN-CAM","CLEAN_CAM_PANEL_MOUNT|PASS|REAL_RUNTIME") }
             "SIM" -> { contentHost.addView(CleanSimPanel(this,simSession){status.text=it},FrameLayout.LayoutParams(-1,-1)); Log.i("AIG-CLEAN-SIM","CLEAN_SIM_PANEL_MOUNT|PASS|TRUE_MATERIAL_REMOVAL") }
             "3AX" -> { contentHost.addView(Clean3AxPanel(this),FrameLayout.LayoutParams(-1,-1)); status.text="3AX | OPENGL ES GPU MOUNTING"; Log.i("AIG-CLEAN-3AX","CLEAN_3AX_PANEL_MOUNT|PASS|GLSURFACEVIEW") }
+            "4AX" -> { contentHost.addView(CleanAxisPanel(this,axis4){status.text=it},FrameLayout.LayoutParams(-1,-1)); Log.i("AIG-CLEAN-AXIS","CLEAN_AXIS_PANEL_MOUNT|4AX|PASS|ONE_SCENE_ONE_RENDERER") }
+            "5AX" -> { contentHost.addView(CleanAxisPanel(this,axis5){status.text=it},FrameLayout.LayoutParams(-1,-1)); Log.i("AIG-CLEAN-AXIS","CLEAN_AXIS_PANEL_MOUNT|5AX|PASS|ONE_SCENE_ONE_RENDERER") }
+            "6AX" -> { contentHost.addView(CleanAxisPanel(this,axis6){status.text=it},FrameLayout.LayoutParams(-1,-1)); Log.i("AIG-CLEAN-AXIS","CLEAN_AXIS_PANEL_MOUNT|6AX|PASS|ONE_SCENE_ONE_RENDERER") }
         }
         if(surface=="HOME") status.text="RGB HOME | 0.001 mm | GPU READY"
-        else if(surface !in setOf("CAD","CAM","SIM","3AX")) status.text="$surface | CLEAN PRODUCTION SURFACE"
+        else if(surface !in setOf("CAD","CAM","SIM","3AX","4AX","5AX","6AX")) status.text="$surface | CLEAN PRODUCTION SURFACE"
         navButtons.forEach { (id,button) ->
             val active=id==surface
             button.background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,if(active) intArrayOf(0xCC0D6E8A.toInt(),0xCC7C3AED.toInt()) else intArrayOf(0xAA07111B.toInt(),0xAA102538.toInt())).apply { cornerRadius=dp(10).toFloat(); setStroke(dp(1),if(active) Color.rgb(99,255,157) else Color.rgb(61,235,255)) }
