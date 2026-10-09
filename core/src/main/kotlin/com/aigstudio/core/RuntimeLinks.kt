@@ -11,11 +11,11 @@ enum class RuntimeLinkId(
     val cockpitLeft:String?=null,
     val cockpitRight:String?=null
 ) {
-    CAD_CAM("CAD ? CAM","CAD","CAM"),
-    CAM_SIM("CAM ? 3D SIM","CAM","3D SIM"),
-    SIM_NC("3D SIM ? NC","3D SIM","NC"),
+    CAD_CAM("CAD \u2194 CAM","CAD","CAM"),
+    CAM_SIM("CAM \u2194 3D SIM","CAM","3D SIM"),
+    SIM_NC("3D SIM \u2194 NC","3D SIM","NC"),
     GPU_3D("3D GPU"),
-    MACHINE("????")
+    MACHINE("\u6A5F\u53F0\u9023\u7DDA")
 }
 
 data class RuntimeLinkSnapshot(

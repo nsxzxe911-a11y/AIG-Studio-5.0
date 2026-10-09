@@ -5250,14 +5250,14 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         RuntimeLinkStatus.DISCONNECTED -> Color(102,114,125)
     }
     fun desktopRuntimeLinkSymbol(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
-        RuntimeLinkStatus.CONNECTED -> "??"
-        RuntimeLinkStatus.DEGRADED -> "?"
-        RuntimeLinkStatus.DISCONNECTED -> "?"
+        RuntimeLinkStatus.CONNECTED -> "\uD83D\uDD17"
+        RuntimeLinkStatus.DEGRADED -> "\u26A0"
+        RuntimeLinkStatus.DISCONNECTED -> "\u26D3"
     }
     fun desktopRuntimeLinkLabel(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
-        RuntimeLinkStatus.CONNECTED -> "???"
-        RuntimeLinkStatus.DEGRADED -> "??"
-        RuntimeLinkStatus.DISCONNECTED -> "??"
+        RuntimeLinkStatus.CONNECTED -> "\u5DF2\u9023\u7DDA"
+        RuntimeLinkStatus.DEGRADED -> "\u964D\u7D1A"
+        RuntimeLinkStatus.DISCONNECTED -> "\u96E2\u7DDA"
     }
     fun desktopRuntimeLinkButton(id:RuntimeLinkId,cockpit:Boolean)=JButton().apply {
         isFocusPainted=false;isOpaque=true
@@ -5267,7 +5267,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             addActionListener { runtimeLinkStore.toggle(id) }
         } else {
             cursor=Cursor.getDefaultCursor()
-            toolTipText="Runtime ????"
+            toolTipText="Runtime-owned link"
         }
         if(cockpit) desktopLinkQuickButtons[id]=this else desktopLinkManagerButtons[id]=this
     }

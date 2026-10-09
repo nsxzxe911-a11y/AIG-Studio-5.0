@@ -26,8 +26,8 @@ object RuntimeIssueRoutingPolicy {
         !AI_TEACHER_REQUIRES_NO_DISCONNECTED || links.allAvailable(RuntimeLinkContract.cockpitLinks)
 
     fun connectionMessage(links:RuntimeLinkSnapshot):String = when {
-        !links.allAvailable(RuntimeLinkContract.cockpitLinks) -> "???? ? ????????AI ???????????"
-        links.anyDegraded(RuntimeLinkContract.cockpitLinks) -> "???? ? ???????????AI ??????????????"
-        else -> "???? ? AI ?????????????????????"
+        !links.allAvailable(RuntimeLinkContract.cockpitLinks) -> "\u90E8\u5206\u65B7\u958B \u2022 \u5404\u6A21\u7D44\u7368\u7ACB\u5DE5\u4F5C\uFF1BAI \u8001\u5E2B\u53EA\u8AAA\u660E\u76EE\u524D\u53EF\u898B\u6A21\u7D44"
+        links.anyDegraded(RuntimeLinkContract.cockpitLinks) -> "\u90E8\u5206\u964D\u7D1A \u2022 \u8CC7\u6599\u6D41\u4ECD\u9023\u63A5\uFF1BAI \u8001\u5E2B\u53EF\u8DE8\u6A21\u7D44\uFF0C\u4F46\u61C9\u63D0\u793A\u54C1\u8CEA\u7570\u5E38"
+        else -> "\u5168\u90E8\u9023\u63A5 \u2022 AI \u8001\u5E2B\u53EF\u505A\u8DE8\u6A21\u7D44\u6559\u5B78\uFF1B\u932F\u8AA4\u4ECD\u7531\u5404\u6A21\u7D44\u81EA\u884C\u8655\u7406"
     }
 }
