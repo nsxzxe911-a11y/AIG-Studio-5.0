@@ -19,3 +19,5 @@ include(":production-runtime")
 include(":runtime-contract")
 
 include(":renderer-android")
+
+include(":product-host-android")

@@ -1,0 +1,23 @@
+﻿plugins { id("com.android.application") }
+
+android {
+    namespace = "com.aigstudio.runtime4.host"
+    compileSdk = 36
+    defaultConfig {
+        applicationId = "com.aigstudio.production.fourth395"
+        minSdk = 26
+        targetSdk = 36
+        versionCode = 395001
+        versionName = "395-fourth-cad"
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation(project(":runtime-contract"))
+    implementation(project(":production-runtime"))
+    implementation(project(":renderer-android"))
+}
