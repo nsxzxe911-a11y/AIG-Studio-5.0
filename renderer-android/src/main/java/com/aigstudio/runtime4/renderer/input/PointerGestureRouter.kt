@@ -1,4 +1,4 @@
-﻿package com.aigstudio.runtime4.renderer
+package com.aigstudio.runtime4.renderer
 
 import com.aigstudio.runtime4.contract.*
 
@@ -10,6 +10,8 @@ class PointerGestureRouter(private val runtime: CadRuntimePort) {
         active = true
         return runtime.dispatch(CadCommand.PointerDown(point))
     }
+
+    fun onMove(point: CadPoint): CadDispatchResult? = if (active) runtime.dispatch(CadCommand.PointerMove(point)) else null
 
     fun onUp(point: CadPoint): CadDispatchResult? {
         if (!active) return null

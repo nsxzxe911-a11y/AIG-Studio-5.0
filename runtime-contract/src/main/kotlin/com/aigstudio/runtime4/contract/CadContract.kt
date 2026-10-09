@@ -26,6 +26,7 @@ data class CadState(
     val revision: Long,
     val activeTool: CadTool,
     val snapMode: CadSnapMode,
+    val snapPreview: CadPoint? = null,
     val primitives: List<CadPrimitiveSnapshot>,
     val selectedCount: Int,
     val topologyCount: Int,
@@ -55,6 +56,7 @@ sealed interface CadCommand {
     data class AssignSelectionToLayer(val layer:CadLayer) : CadCommand
     data class ApplySelectedDimension(val kind:CadDimensionKind,val valueMm:Double) : CadCommand
     data class PointerDown(val point: CadPoint) : CadCommand
+    data class PointerMove(val point: CadPoint) : CadCommand
     data class PointerUp(val point: CadPoint) : CadCommand
     data object Undo : CadCommand
     data object Redo : CadCommand

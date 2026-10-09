@@ -66,6 +66,7 @@ class AigGlesRenderer(
         val viewport = CadViewportNode(viewportNode.bounds)
         drawGrid(p, viewportNode.bounds, viewport)
         drawCadGeometry(p, viewport)
+        drawSnapFeedback(p, viewport, viewportNode.bounds)
         nodes.filter { it.id != "CAD.VIEWPORT" }.forEach { drawNode(p,it) }
     }
 
@@ -113,6 +114,18 @@ class AigGlesRenderer(
                 }
             }
         }
+    }
+
+    private fun drawSnapFeedback(p:GlesProgram, viewport:CadViewportNode, viewportBounds:UiBounds) {
+        val presentation=CadSnapPresentation.from(stateSource.snapshotForFrame(),viewport,8f*density)
+        presentation.marker?.let { marker ->
+            p.draw(GlesGeometryBuffer.polyline(marker.diamond),GLES30.GL_LINE_STRIP,widthPx,heightPx,floatArrayOf(0.2f,1f,1f,1f),lineWidth=2.5f)
+            p.draw(GlesGeometryBuffer.polyline(marker.cross),GLES30.GL_LINES,widthPx,heightPx,floatArrayOf(1f,0.35f,0.95f,1f),lineWidth=2f)
+        }
+        val hudWidth=132f*density; val hudHeight=26f*density; val inset=8f*density
+        val hud=UiBounds(viewportBounds.right-hudWidth-inset,viewportBounds.top+inset,viewportBounds.right-inset,viewportBounds.top+inset+hudHeight)
+        p.draw(GlesGeometryBuffer.quad(hud),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.02f,0.12f,0.18f,0.88f))
+        textures?.labelTexture(presentation.hudLabel)?.let { tex -> p.draw(GlesGeometryBuffer.quad(hud),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex) }
     }
 
     private fun drawNode(p: GlesProgram, node: SceneNode) {

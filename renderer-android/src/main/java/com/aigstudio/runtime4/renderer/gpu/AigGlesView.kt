@@ -45,6 +45,16 @@ class AigGlesView(
                 requestRender()
                 return true
             }
+            MotionEvent.ACTION_MOVE -> {
+                if (pressedNode == "CAD.VIEWPORT") {
+                    val viewport = nodes.firstOrNull { it.id == "CAD.VIEWPORT" }
+                    if (viewport != null) {
+                        pointerRouter.onMove(CadViewportNode(viewport.bounds).screenToWorld(event.x, event.y))
+                        requestRender()
+                    }
+                }
+                return true
+            }
             MotionEvent.ACTION_UP -> {
                 val downId = pressedNode
                 pressedNode = null

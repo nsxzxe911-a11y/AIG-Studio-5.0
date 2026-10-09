@@ -17,3 +17,25 @@ class CadViewportNode(val viewport: UiBounds) {
 
     fun mmScale(): Float = scale
 }
+
+
+data class CadSnapMarker(
+    val centerX:Float, val centerY:Float,
+    val diamond:List<Pair<Float,Float>>,
+    val cross:List<Pair<Float,Float>>,
+)
+
+data class CadSnapPresentation(val hudLabel:String,val marker:CadSnapMarker?) {
+    companion object {
+        fun from(state:com.aigstudio.runtime4.contract.CadState,viewport:CadViewportNode,radiusPx:Float=8f):CadSnapPresentation {
+            val preview=state.snapPreview
+            val marker=if(state.snapMode==com.aigstudio.runtime4.contract.CadSnapMode.OFF || preview==null) null else {
+                val (x,y)=viewport.worldToScreen(preview.x,preview.y)
+                CadSnapMarker(x,y,
+                    listOf(x to y-radiusPx,x+radiusPx to y,x to y+radiusPx,x-radiusPx to y,x to y-radiusPx),
+                    listOf(x-radiusPx to y,x+radiusPx to y,x to y-radiusPx,x to y+radiusPx))
+            }
+            return CadSnapPresentation("SNAP=${state.snapMode.name}",marker)
+        }
+    }
+}

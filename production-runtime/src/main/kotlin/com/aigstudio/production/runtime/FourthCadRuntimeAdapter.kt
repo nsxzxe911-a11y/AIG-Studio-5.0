@@ -26,7 +26,7 @@ class FourthCadRuntimeAdapter(
             gestureStart = null
             arcCenter = null
             arcStart = null
-            state = synced().copy(revision = data.revision, arcStage = 0, message = null)
+            state = synced().copy(revision = data.revision, arcStage = 0, snapPreview = null, message = null)
             CadDispatchResult(true, state)
         } catch (e: Exception) {
             state = before.copy(message = RuntimeMessage(MessageSeverity.WARNING, e.message ?: "CAD checkpoint rejected"))
@@ -41,13 +41,13 @@ class FourthCadRuntimeAdapter(
                 gestureStart = null
                 arcCenter = null
                 arcStart = null
-                state = synced().copy(activeTool = command.tool, arcStage = 0, message = null)
+                state = synced().copy(activeTool = command.tool, arcStage = 0, snapPreview = null, message = null)
                 accepted()
             }
             CadCommand.CycleSnap -> {
                 val modes = CadSnapMode.entries
                 val next = modes[(modes.indexOf(state.snapMode) + 1) % modes.size]
-                state = synced().copy(snapMode = next, message = null)
+                state = synced().copy(snapMode = next, snapPreview = null, message = null)
                 accepted()
             }
             CadCommand.ToggleArcDirection -> {
@@ -71,10 +71,18 @@ class FourthCadRuntimeAdapter(
                 session.applySelectedDimension(CleanCadDimensionKind.valueOf(command.kind.name),command.valueMm)
             }
             is CadCommand.PointerDown -> {
+                val reference = if (state.activeTool == CadTool.ARC) arcCenter else null
+                val preview = if (state.activeTool == CadTool.SELECT) null else snapCandidate(command.point, reference)
                 if (state.activeTool != CadTool.ARC) {
-                    gestureStart = if (state.activeTool == CadTool.SELECT) command.point else snap(command.point, null)
+                    gestureStart = if (state.activeTool == CadTool.SELECT) command.point else preview ?: command.point
                 }
-                state = synced().copy(message = null)
+                state = synced().copy(snapPreview = preview, message = null)
+                accepted()
+            }
+            is CadCommand.PointerMove -> {
+                val reference = if (state.activeTool == CadTool.ARC) arcCenter else gestureStart
+                val preview = if (state.activeTool == CadTool.SELECT) null else snapCandidate(command.point, reference)
+                state = synced().copy(snapPreview = preview, message = null)
                 accepted()
             }
             is CadCommand.PointerUp -> if (state.activeTool == CadTool.ARC) finishArcTap(command.point) else finishGesture(command.point)
@@ -101,12 +109,13 @@ class FourthCadRuntimeAdapter(
     }
 
     private fun finishArcTap(rawPoint: CadPoint): CadDispatchResult {
-        val point = snap(rawPoint, arcCenter)
+        val preview = snapCandidate(rawPoint, arcCenter)
+        val point = preview ?: rawPoint
         return when (state.arcStage) {
             0 -> {
                 arcCenter = point
                 arcStart = null
-                state = synced().copy(arcStage = 1, message = null)
+                state = synced().copy(arcStage = 1, snapPreview = preview, message = null)
                 accepted()
             }
             1 -> {
@@ -114,7 +123,7 @@ class FourthCadRuntimeAdapter(
                 val radius = hypot(point.x - center.x, point.y - center.y)
                 require(radius >= 0.001) { "ARC radius must be at least 0.001 mm" }
                 arcStart = point
-                state = synced().copy(arcStage = 2, message = null)
+                state = synced().copy(arcStage = 2, snapPreview = preview, message = null)
                 accepted()
             }
             else -> {
@@ -130,7 +139,7 @@ class FourthCadRuntimeAdapter(
                 session.addArc(center.x, center.y, radius, startDeg, sweep)
                 arcCenter = null
                 arcStart = null
-                state = synced().copy(revision = state.revision + 1L, arcStage = 0, message = null)
+                state = synced().copy(revision = state.revision + 1L, arcStage = 0, snapPreview = null, message = null)
                 accepted()
             }
         }
@@ -142,10 +151,10 @@ class FourthCadRuntimeAdapter(
         if (state.activeTool == CadTool.SELECT) {
             if (session.selectedCount() >= 2) session.clearSelection()
             val ok = session.selectNearest(rawEnd.x, rawEnd.y, session.selectedCount() > 0, 3.0)
-            state = synced().copy(message = if (ok) null else RuntimeMessage(MessageSeverity.INFO, "SELECT MISS"))
+            state = synced().copy(snapPreview = null, message = if (ok) null else RuntimeMessage(MessageSeverity.INFO, "SELECT MISS"))
             return CadDispatchResult(ok, state)
         }
-        val end = snap(rawEnd, start)
+        val end = snapCandidate(rawEnd, start) ?: rawEnd
         when (state.activeTool) {
             CadTool.LINE -> session.addLine(start.x, start.y, end.x, end.y)
             CadTool.RECT -> session.addRect(start.x, start.y, end.x, end.y)
@@ -154,28 +163,28 @@ class FourthCadRuntimeAdapter(
             CadTool.ARC -> error("ARC handled by three-tap state machine")
             CadTool.SELECT -> error("SELECT handled above")
         }
-        state = synced().copy(revision = state.revision + 1L, message = null)
+        state = synced().copy(revision = state.revision + 1L, snapPreview = null, message = null)
         return accepted()
     }
 
     private fun historyMutation(changed: Boolean, emptyMessage: String): CadDispatchResult {
         if (!changed) return rejected(emptyMessage, MessageSeverity.INFO)
-        state = synced().copy(revision = state.revision + 1L, message = null)
+        state = synced().copy(revision = state.revision + 1L, snapPreview = null, message = null)
         return accepted()
     }
 
     private inline fun editMutation(block: () -> Unit): CadDispatchResult {
         block()
-        state = synced().copy(revision = state.revision + 1L, message = null)
+        state = synced().copy(revision = state.revision + 1L, snapPreview = null, message = null)
         return accepted()
     }
 
-    private fun snap(point: CadPoint, reference: CadPoint?): CadPoint {
+    private fun snapCandidate(point: CadPoint, reference: CadPoint?): CadPoint? {
         val mode = state.snapMode
-        if (mode == CadSnapMode.OFF) return point
-        if ((mode == CadSnapMode.HORIZONTAL || mode == CadSnapMode.VERTICAL) && reference == null) return point
+        if (mode == CadSnapMode.OFF) return null
+        if ((mode == CadSnapMode.HORIZONTAL || mode == CadSnapMode.VERTICAL) && reference == null) return null
         val cleanMode = CleanCadSnapMode.valueOf(mode.name)
-        val snapped = session.snapPoint(point.x, point.y, 3.0, cleanMode, reference?.x, reference?.y) ?: return point
+        val snapped = session.snapPoint(point.x, point.y, 3.0, cleanMode, reference?.x, reference?.y) ?: return null
         return CadPoint(snapped.x, snapped.y)
     }
 
