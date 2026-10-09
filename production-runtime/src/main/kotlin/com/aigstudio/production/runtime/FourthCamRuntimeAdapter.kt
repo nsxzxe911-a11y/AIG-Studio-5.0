@@ -2,6 +2,7 @@ package com.aigstudio.production.runtime
 
 import com.aigstudio.runtime4.contract.*
 import java.security.MessageDigest
+import kotlin.math.abs
 
 class FourthCamRuntimeAdapter(
     private val session:CleanCamSession=CleanCamSession(),
@@ -56,6 +57,33 @@ class FourthCamRuntimeAdapter(
             CamCommand.KeepActiveToolpath -> { state=state.copy(previewCandidateId=null,message=null); accepted() }
             CamCommand.AdoptCandidate -> adoptCandidate()
             CamCommand.SaveCandidateAsNewVersion -> saveCandidate()
+            is CamCommand.AddPoint -> editActive { points ->
+                require(command.index in 0..points.size){"CAM point insert index out of range"}
+                val p=manualPoint(command.x,command.y,command.z,command.a,command.b,command.c,command.motion)
+                points.toMutableList().apply { add(command.index,p) }
+            }
+            is CamCommand.DeletePoint -> editActive { points ->
+                require(points.size>2){"Active toolpath must keep at least two points"}
+                require(command.index in points.indices){"CAM point index out of range"}
+                points.toMutableList().apply { removeAt(command.index) }
+            }
+            is CamCommand.ReplacePointXYZABC -> editActive { points ->
+                require(command.index in points.indices){"CAM point index out of range"}
+                val old=points[command.index]
+                val p=manualPoint(command.x,command.y,command.z,command.a,command.b,command.c,command.motion).copy(avoidance=old.avoidance)
+                points.toMutableList().apply { this[command.index]=p }
+            }
+            is CamCommand.SetMotionKind -> editActive { points ->
+                require(command.index in points.indices){"CAM point index out of range"}
+                val old=points[command.index]
+                val p=old.copy(motion=command.motion,arcI=null,arcJ=null,manualOverride=true)
+                validatePoint(p)
+                points.toMutableList().apply { this[command.index]=p }
+            }
+            is CamCommand.InsertAvoidance -> insertAvoidance(command)
+            is CamCommand.AddZone -> addZone(command.zone)
+            is CamCommand.RemoveZone -> removeZone(command.id)
+            is CamCommand.SetSafeClearance -> setSafeClearance(command.id,command.valueMm)
             CamCommand.FreezeActive -> setFrozen(true)
             CamCommand.UnfreezeActive -> setFrozen(false)
             CamCommand.ClearLocalMessage -> { state=state.copy(message=null); accepted() }
@@ -119,6 +147,73 @@ class FourthCamRuntimeAdapter(
         val record=CamSaveRecord(saveRevision,"CANDIDATE",candidate.id,candidate.digest,"Candidate ${candidate.id} saved")
         state=state.copy(savedCandidates=state.savedCandidates+candidate,saveHistory=state.saveHistory+record,message=null)
         return accepted()
+    }
+
+    private inline fun editActive(transform:(List<CamPointSnapshot>)->List<CamPointSnapshot>):CamDispatchResult {
+        val active=state.active ?: return rejected("No active toolpath")
+        if(active.frozen) return rejected("Active toolpath is frozen")
+        val points=transform(active.points)
+        require(points.size>=2){"Active toolpath must keep at least two points"}
+        activeRevision++
+        state=state.copy(active=active.copy(revision=activeRevision,digest=pathDigest(points),points=points),message=null)
+        return accepted()
+    }
+
+    private fun manualPoint(x:Double,y:Double,z:Double,a:Double,b:Double,c:Double,motion:CamMotionKind):CamPointSnapshot {
+        val point=CamPointSnapshot(x,y,z,a,b,c,motion,manualOverride=true)
+        validatePoint(point)
+        return point
+    }
+
+    private fun validatePoint(p:CamPointSnapshot) {
+        require(listOf(p.x,p.y,p.z,p.a,p.b,p.c).all{it.isFinite()}){"CAM point must be finite"}
+        require(abs(p.a)<=360.0 && abs(p.b)<=360.0 && abs(p.c)<=360.0){"CAM A/B/C out of range"}
+        when(p.motion) {
+            CamMotionKind.G0 -> require(p.z+1e-9>=state.strategy.safeZMm){"G0 point must be at or above Safe-Z"}
+            CamMotionKind.G1 -> require(p.z<=1e-9){"G1 point must be at or below Z0"}
+            CamMotionKind.G2, CamMotionKind.G3 -> {
+                require(p.z<=1e-9){"Arc cut must be at or below Z0"}
+                require(p.arcI!=null && p.arcJ!=null){"G2/G3 point requires arc center data"}
+            }
+        }
+    }
+
+    private fun insertAvoidance(command:CamCommand.InsertAvoidance):CamDispatchResult = editActive { points ->
+        require(command.afterIndex in points.indices){"Avoidance insertion index out of range"}
+        require(listOf(command.landingX,command.landingY,command.landingZ).all{it.isFinite()}){"Avoidance point must be finite"}
+        require(command.landingZ<=1e-9){"Avoidance landing Z must be at or below Z0"}
+        val from=points[command.afterIndex]
+        val lift=CamPointSnapshot(from.x,from.y,state.strategy.safeZMm,from.a,from.b,from.c,CamMotionKind.G0,manualOverride=true,avoidance=true)
+        val traverse=CamPointSnapshot(command.landingX,command.landingY,state.strategy.safeZMm,from.a,from.b,from.c,CamMotionKind.G0,manualOverride=true,avoidance=true)
+        val landing=CamPointSnapshot(command.landingX,command.landingY,command.landingZ,from.a,from.b,from.c,CamMotionKind.G1,manualOverride=true,avoidance=true)
+        points.toMutableList().apply { addAll(command.afterIndex+1,listOf(lift,traverse,landing)) }
+    }
+
+    private fun addZone(zone:CamZoneSnapshot):CamDispatchResult {
+        validateZone(zone)
+        require(state.zones.none{it.id==zone.id}){"CAM zone id already exists"}
+        state=state.copy(zones=state.zones+zone,message=null)
+        return accepted()
+    }
+
+    private fun removeZone(id:String):CamDispatchResult {
+        require(state.zones.any{it.id==id}){"CAM zone not found"}
+        state=state.copy(zones=state.zones.filterNot{it.id==id},message=null)
+        return accepted()
+    }
+
+    private fun setSafeClearance(id:String,value:Double):CamDispatchResult {
+        require(value.isFinite() && value in 0.0..1000.0){"Safe clearance out of range"}
+        require(state.zones.any{it.id==id}){"CAM zone not found"}
+        state=state.copy(zones=state.zones.map{if(it.id==id) it.copy(safeClearanceMm=value) else it},message=null)
+        return accepted()
+    }
+
+    private fun validateZone(zone:CamZoneSnapshot) {
+        require(zone.id.isNotBlank()){"CAM zone id is required"}
+        require(listOf(zone.minX,zone.minY,zone.maxX,zone.maxY,zone.safeClearanceMm).all{it.isFinite()}){"CAM zone values must be finite"}
+        require(zone.maxX-zone.minX>=0.001 && zone.maxY-zone.minY>=0.001){"CAM zone must be at least 0.001 mm"}
+        require(zone.safeClearanceMm in 0.0..1000.0){"Safe clearance out of range"}
     }
 
     private fun setFrozen(value:Boolean):CamDispatchResult {

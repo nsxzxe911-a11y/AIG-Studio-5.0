@@ -108,7 +108,14 @@ sealed interface CamCommand {
     data object KeepActiveToolpath:CamCommand
     data object AdoptCandidate:CamCommand
     data object SaveCandidateAsNewVersion:CamCommand
-    data object FreezeActive:CamCommand
+    data class AddPoint(val index:Int,val x:Double,val y:Double,val z:Double,val a:Double,val b:Double,val c:Double,val motion:CamMotionKind):CamCommand
+    data class DeletePoint(val index:Int):CamCommand
+    data class ReplacePointXYZABC(val index:Int,val x:Double,val y:Double,val z:Double,val a:Double,val b:Double,val c:Double,val motion:CamMotionKind):CamCommand
+    data class SetMotionKind(val index:Int,val motion:CamMotionKind):CamCommand
+    data class InsertAvoidance(val afterIndex:Int,val landingX:Double,val landingY:Double,val landingZ:Double):CamCommand
+    data class AddZone(val zone:CamZoneSnapshot):CamCommand
+    data class RemoveZone(val id:String):CamCommand
+    data class SetSafeClearance(val id:String,val valueMm:Double):CamCommand    data object FreezeActive:CamCommand
     data object UnfreezeActive:CamCommand
     data object ClearLocalMessage:CamCommand
 }

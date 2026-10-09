@@ -93,3 +93,9 @@ tasks.register<JavaExec>("cleanCadTopologyRegression") {
 }
 
 tasks.test { useJUnitPlatform() }
+
+tasks.register<JavaExec>("fourthCamManualEditRegression") {
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("FourthCamManualEditRegressionKt")
+}
