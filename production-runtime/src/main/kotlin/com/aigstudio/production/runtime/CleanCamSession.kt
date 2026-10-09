@@ -6,8 +6,21 @@ import com.aigstudio.core.ContourDirection
 import com.aigstudio.core.ContourSide
 import com.aigstudio.core.ManualCamPathEngine
 import com.aigstudio.core.ManualCamPoint
+import com.aigstudio.runtime4.contract.CamMotionKind
 
-data class CleanCamPoint(val x:Double,val y:Double,val z:Double,val rapid:Boolean)
+data class CleanCamPoint(
+    val x:Double,
+    val y:Double,
+    val z:Double,
+    val rapid:Boolean,
+    val axisA:Double,
+    val axisB:Double,
+    val axisC:Double,
+    val motion:CamMotionKind,
+    val arcI:Double?=null,
+    val arcJ:Double?=null,
+    val clockwise:Boolean?=null,
+)
 
 class CleanCamSession {
     private var settings=CamSettings()
@@ -15,7 +28,15 @@ class CleanCamSession {
     fun side()=settings.contourSide.name
     fun direction()=settings.contourDirection.name
     fun safeZ()=settings.safeZ
-    fun points():List<CleanCamPoint> = settings.manualPath.map{CleanCamPoint(it.x,it.y,it.z,it.rapid)}
+    fun points():List<CleanCamPoint> = settings.manualPath.map { p ->
+        val motion=when {
+            p.rapid -> CamMotionKind.G0
+            p.arcI!=null && p.arcJ!=null && p.clockwise==true -> CamMotionKind.G2
+            p.arcI!=null && p.arcJ!=null -> CamMotionKind.G3
+            else -> CamMotionKind.G1
+        }
+        CleanCamPoint(p.x,p.y,p.z,p.rapid,p.axisA,p.axisB,p.axisC,motion,p.arcI,p.arcJ,p.clockwise)
+    }
     fun startManual(){ settings=ManualCamPathEngine.startBlank(settings) }
     fun useAuto(){ settings=ManualCamPathEngine.useAuto(settings) }
     fun useManual(){ settings=ManualCamPathEngine.useManual(settings) }
@@ -30,8 +51,8 @@ class CleanCamSession {
     fun addRapidPoint(x:Double,y:Double){
         ensureManual(); settings=ManualCamPathEngine.insertPoint(settings,settings.manualPath.size,ManualCamPoint(x,y,settings.safeZ,true))
     }
-    fun replacePoint(index:Int,x:Double,y:Double,z:Double,rapid:Boolean){
-        ensureManual(); settings=ManualCamPathEngine.replacePoint(settings,index,x,y,z,rapid)
+    fun replacePoint(index:Int,x:Double,y:Double,z:Double,rapid:Boolean,axisA:Double?=null,axisB:Double?=null,axisC:Double?=null){
+        ensureManual(); settings=ManualCamPathEngine.replacePoint(settings,index,x,y,z,rapid,axisA,axisB,axisC)
     }
     fun insertAvoidance(afterIndex:Int,landingX:Double,landingY:Double,landingZ:Double){
         ensureManual(); settings=ManualCamPathEngine.insertAvoidance(settings,afterIndex,settings.safeZ,landingX,landingY,landingZ)

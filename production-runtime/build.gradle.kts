@@ -1,4 +1,4 @@
-﻿plugins { kotlin("jvm") }
+plugins { kotlin("jvm") }
 
 dependencies {
     implementation(project(":core"))
@@ -18,6 +18,11 @@ tasks.register<JavaExec>("cleanCamRegression") {
     dependsOn("testClasses")
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("CleanCamSessionRegressionKt")
+}
+tasks.register<JavaExec>("fourthCamAxisParityRegression") {
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("FourthCamAxisParityRegressionKt")
 }
 
 tasks.register<JavaExec>("cleanSimRegression") {
