@@ -3,11 +3,11 @@ android {
     namespace = "com.aigstudio.production"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.aigstudio.production.clean384"
+        applicationId = "com.aigstudio.production.clean385"
         minSdk = 26
         targetSdk = 36
-        versionCode = 384001
-        versionName = "384-rgb-provenance"
+        versionCode = 385001
+        versionName = "385-clean-sim3ax"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

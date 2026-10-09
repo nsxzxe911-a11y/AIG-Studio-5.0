@@ -25,12 +25,10 @@ class CleanCamSession {
         settings=settings.copy(safeZ=z,manualPath=moved)
     }
     fun addCutPoint(x:Double,y:Double,z:Double){
-        ensureManual()
-        settings=ManualCamPathEngine.insertPoint(settings,settings.manualPath.size-1,ManualCamPoint(x,y,z,false))
+        ensureManual(); settings=ManualCamPathEngine.insertPoint(settings,settings.manualPath.size-1,ManualCamPoint(x,y,z,false))
     }
     fun addRapidPoint(x:Double,y:Double){
-        ensureManual()
-        settings=ManualCamPathEngine.insertPoint(settings,settings.manualPath.size,ManualCamPoint(x,y,settings.safeZ,true))
+        ensureManual(); settings=ManualCamPathEngine.insertPoint(settings,settings.manualPath.size,ManualCamPoint(x,y,settings.safeZ,true))
     }
     fun replacePoint(index:Int,x:Double,y:Double,z:Double,rapid:Boolean){
         ensureManual(); settings=ManualCamPathEngine.replacePoint(settings,index,x,y,z,rapid)
@@ -43,5 +41,6 @@ class CleanCamSession {
         val d=if(settings.contourDirection==ContourDirection.CCW)ContourDirection.CW else ContourDirection.CCW
         settings=settings.copy(contourDirection=d,climb=d==ContourDirection.CCW)
     }
+    internal fun coreSettings():CamSettings=settings
     private fun ensureManual(){ if(settings.pathMode!=CamPathMode.MANUAL) startManual() }
 }
