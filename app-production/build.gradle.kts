@@ -3,11 +3,11 @@ android {
     namespace = "com.aigstudio.production"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.aigstudio.production.clean383"
+        applicationId = "com.aigstudio.production.clean384"
         minSdk = 26
         targetSdk = 36
-        versionCode = 383001
-        versionName = "383-clean-cam"
+        versionCode = 384001
+        versionName = "384-rgb-provenance"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

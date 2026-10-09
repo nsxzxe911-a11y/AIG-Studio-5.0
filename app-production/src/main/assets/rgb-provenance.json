@@ -1,0 +1,16 @@
+{
+  "schema": "aig-clean-rgb-provenance/v1",
+  "checkpoint": "384",
+  "assets": [
+    {"surface":"HOME","clean":"app-production/src/main/assets/home.png","source":"app/src/main/assets/aig-generated-rgb/approved/184/runtime-surfaces/mobile/home.png"},
+    {"surface":"CAD","clean":"app-production/src/main/assets/cad.png","source":"app/src/main/assets/aig-generated-rgb/approved/184/runtime-surfaces/mobile/cad.png"},
+    {"surface":"CAM","clean":"app-production/src/main/assets/cam.png","source":"app/src/main/assets/aig-generated-rgb/approved/184/runtime-surfaces/mobile/cam.png"},
+    {"surface":"SIM","clean":"app-production/src/main/assets/sim.png","source":"app/src/main/assets/aig-generated-rgb/approved/184/runtime-surfaces/mobile/sim.png"},
+    {"surface":"3AX","clean":"app-production/src/main/assets/3ax.png","source":"app/src/main/assets/aig-generated-rgb/approved/184/runtime-surfaces/mobile/3ax.png"},
+    {"surface":"4AX","clean":"app-production/src/main/assets/4ax.png","source":"app/src/main/assets/aig-generated-rgb/approved/184/runtime-surfaces/mobile/4ax.png"},
+    {"surface":"5AX","clean":"app-production/src/main/assets/5ax.png","source":"app/src/main/assets/aig-generated-rgb/approved/184/runtime-surfaces/mobile/5ax.png"},
+    {"surface":"6AX","clean":"app-production/src/main/assets/6ax.png","source":"app/src/main/assets/aig-generated-rgb/approved/184/runtime-surfaces/mobile/6ax.png"},
+    {"surface":"NC","clean":"app-production/src/main/assets/nc.png","source":"app/src/main/assets/aig-generated-rgb/approved/184/runtime-surfaces/mobile/nc.png"},
+    {"surface":"AI","clean":"app-production/src/main/assets/ai.png","source":"app/src/main/assets/aig-generated-rgb/approved/184/runtime-surfaces/mobile/ai.png"}
+  ]
+}
