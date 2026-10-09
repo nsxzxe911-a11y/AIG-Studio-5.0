@@ -84,8 +84,7 @@ object RuntimeSurfaceAndroidInstaller {
         val module=RuntimeVisualModuleRegistry.require(surface)
         val original=originalBackgrounds.getOrPut(target){target.background}
         val base=original ?: ColorDrawable(Color.rgb(2,4,7))
-        val visual=MorningBaselineSurfaceAssets.drawable(target.context,module.visualAsset)
-            ?: RuntimeFullSurfaceAssets.drawable(target.context,surface)
+        val visual=RuntimeFullSurfaceAssets.drawable(target.context,surface)
             ?: proceduralSurface(surface)
         visual.alpha=RuntimeSurfaceVisualContract.SURFACE_ALPHA
         target.background=LayerDrawable(arrayOf(base,visual))
@@ -143,7 +142,7 @@ internal object MorningBaselineSurfaceAssets {
  * separate from UiAssetContract's small generated button images.
  */
 private object RuntimeFullSurfaceAssets {
-    private val ROOT=UiAssetContract.ANDROID_ROOT+"/runtime-surfaces"
+    private val ROOT=UiAssetContract.ANDROID_ROOT+"/runtime-surfaces/mobile"
     @Volatile private var hashes:Map<String,String>?=null
     private val cache=mutableMapOf<String,Drawable?>()
 
@@ -164,8 +163,9 @@ private object RuntimeFullSurfaceAssets {
         val id=RuntimeSurfaceVisualContract.assetId(surface)
         if(cache.containsKey(id)) return cache[id]
         val value=runCatching {
-            val exp=expected(context)[id] ?: expected(context)["$id.png"] ?: return@runCatching null
-            val bytes=context.assets.open("$ROOT/$id.png").use{it.readBytes()}
+            val file=listOf("$id.png","$id.jpg","$id.jpeg").firstOrNull { expected(context).containsKey(it) } ?: return@runCatching null
+            val exp=expected(context).getValue(file)
+            val bytes=context.assets.open("$ROOT/$file").use{it.readBytes()}
             val actual=MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
             require(actual==exp){"Full RGB surface hash mismatch: $id"}
             val d=Drawable.createFromStream(bytes.inputStream(),"$id.png") ?: return@runCatching null

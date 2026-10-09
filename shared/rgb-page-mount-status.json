@@ -1,0 +1,28 @@
+{
+    "schema":  "aig-rgb-page-mount-status-v1",
+    "product":  "AIG CNC",
+    "mobile":  {
+                   "HOME":  "WAITING_MOBILE_ART",
+                   "CAD":  "WAITING_MOBILE_ART",
+                   "CAM":  "WAITING_MOBILE_ART",
+                   "SIM":  "WAITING_MOBILE_ART",
+                   "3AX":  "WAITING_MOBILE_ART",
+                   "4AX":  "WAITING_MOBILE_ART",
+                   "5AX":  "WAITING_MOBILE_ART",
+                   "6AX":  "WAITING_MOBILE_ART",
+                   "NC":  "WAITING_MOBILE_ART",
+                   "AI":  "WAITING_MOBILE_ART"
+               },
+    "desktop":  {
+                    "HOME":  "MOUNTED_VERIFIED_HOME",
+                    "CAD":  "MOUNTED_FULL_SURFACE",
+                    "CAM":  "MOUNTED_FULL_SURFACE",
+                    "SIM":  "MOUNTED_FULL_SURFACE",
+                    "3AX":  "MOUNTED_FULL_SURFACE",
+                    "4AX":  "MOUNTED_FULL_SURFACE",
+                    "5AX":  "MOUNTED_FULL_SURFACE",
+                    "6AX":  "MOUNTED_FULL_SURFACE",
+                    "NC":  "WAITING_FULL_SURFACE_ART",
+                    "AI":  "WAITING_FULL_SURFACE_ART"
+                }
+}

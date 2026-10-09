@@ -22,6 +22,7 @@ import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.JDialog
 import javax.swing.JLabel
+import javax.swing.JPanel
 import javax.swing.JScrollBar
 import javax.swing.JTabbedPane
 import javax.swing.SwingUtilities
@@ -49,6 +50,7 @@ object RuntimeSurfaceDesktopInstaller {
     }
 
     private fun bindWindow(window:Window) {
+        if(window is JDialog) SwingUtilities.invokeLater { bindDialogSurface(window) }
         walk(window) { component ->
             if(component is JTabbedPane && installedTabs.add(component)) {
                 component.addChangeListener { mountSelected(component) }
@@ -61,6 +63,13 @@ object RuntimeSurfaceDesktopInstaller {
             }
         }
         if(window !is JDialog) SwingUtilities.invokeLater { mountWindowSurface(window,"HOME") }
+    }
+
+    private fun bindDialogSurface(dialog:JDialog) {
+        val surface=recognizedSurface(dialog.title) ?: return
+        if(surface=="HOME") return
+        val target=dialog.contentPane as? JComponent ?: return
+        applySurface(target,surface)
     }
 
     private fun recognizedSurface(raw:String?):String? {
@@ -85,13 +94,22 @@ object RuntimeSurfaceDesktopInstaller {
 
     private fun mountWindowSurface(window:Window,surface:String) {
         if(surface=="HOME") return // HOME is mounted by the verified full-page HOME installer.
-        val root=largestVisibleContent(window) ?: return
+        val root=findNamedSurfaceTarget(window,surface) ?: largestVisibleContent(window) ?: return
         val previous=mountedRoots.put(window,root)
         if(previous!=null && previous!==root) {
             previous.border=originalBorders[previous]
             previous.repaint()
         }
         applySurface(root,surface)
+    }
+
+    private fun findNamedSurfaceTarget(window:Window,surface:String):JComponent? {
+        val expected="${surface}_CARD"
+        var found:JComponent?=null
+        walk(window) { component ->
+            if(found==null && component is JComponent && component.isVisible && component.name==expected) found=component
+        }
+        return found
     }
 
     private fun largestVisibleContent(window:Window):JComponent? {
@@ -106,9 +124,20 @@ object RuntimeSurfaceDesktopInstaller {
         return best
     }
 
+    private fun prepareVisibleSkin(component:JComponent) {
+        fun visit(node:Component) {
+            if(node is JPanel && node.javaClass==JPanel::class.java) node.isOpaque=false
+            if(node is javax.swing.JScrollPane) { node.isOpaque=false; node.viewport.isOpaque=false }
+            if(node is java.awt.Container) node.components.forEach(::visit)
+        }
+        visit(component)
+    }
+
     private fun applySurface(component:JComponent,surface:String) {
         val original=originalBorders.getOrPut(component){component.border}
         val image=RuntimeSurfaceDesktopAssets.image(surface)
+        if(image!=null) prepareVisibleSkin(component)
+        System.out.println("RGB_PAGE_MOUNT|$surface|"+(if(image!=null)"PASS" else "WAITING_ART")+"|target="+(component.name ?: component.javaClass.simpleName)+"|visible="+(if(image!=null)"STRUCTURAL_TRANSPARENCY" else "PROCEDURAL"))
         component.border=if(image!=null) CompoundBorder(
             RuntimeSurfaceImageBorder(image,RuntimeSurfaceVisualContract.SURFACE_ALPHA),original
         ) else CompoundBorder(
@@ -126,7 +155,7 @@ object RuntimeSurfaceDesktopInstaller {
 
 /** Full interface art only. Small generated button images remain in the parent asset directory. */
 private object RuntimeSurfaceDesktopAssets {
-    private val root=UiAssetContract.DESKTOP_ROOT+"/runtime-surfaces"
+    private val root=UiAssetContract.DESKTOP_ROOT+"/runtime-surfaces/desktop"
     private val hashes:Map<String,String> by lazy {
         val props=Properties()
         val stream=RuntimeSurfaceDesktopAssets::class.java.getResourceAsStream("$root/sha256.properties")
@@ -141,8 +170,9 @@ private object RuntimeSurfaceDesktopAssets {
         val id=RuntimeSurfaceVisualContract.assetId(surface)
         if(cache.containsKey(id)) return cache[id]
         val loaded=runCatching {
-            val expected=hashes[id] ?: hashes["$id.png"] ?: return@runCatching null
-            val bytes=RuntimeSurfaceDesktopAssets::class.java.getResourceAsStream("$root/$id.png")
+            val file=listOf("$id.png","$id.jpg","$id.jpeg").firstOrNull { hashes.containsKey(it) } ?: return@runCatching null
+            val expected=hashes.getValue(file)
+            val bytes=RuntimeSurfaceDesktopAssets::class.java.getResourceAsStream("$root/$file")
                 ?.use{it.readBytes()} ?: return@runCatching null
             val actual=MessageDigest.getInstance("SHA-256").digest(bytes)
                 .joinToString(""){"%02x".format(it)}
