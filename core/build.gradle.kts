@@ -193,3 +193,12 @@ tasks.register<JavaExec>("homeDirectEntries377Regression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.HomeDirectEntries377RegressionKt")
 }
+
+
+tasks.register<JavaExec>("release377DirectEntriesRegression") {
+    group = "verification"
+    description = "Checks AIG CNC 377 direct HOME 3AX and G-code release promotion"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.Release377DirectEntriesRegressionKt")
+}

@@ -1,11 +1,11 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG CNC",
-  "version": "376.0.0",
-  "branch": "feat/aig-cnc-376-link-waiting",
-  "recorded_source_head": "678f5247ddbd042ba33cdf93ae69cfe0f25f0291",
+  "version": "377.0.0",
+  "branch": "feat/aig-cnc-377-direct-3ax-nc",
+  "recorded_source_head": "a572bb7e8e5e914f9f9bbe8482f7856b71fc9f84",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "LINK_WAITING_BINARY_INSTALLER_PASS",
+  "status": "DIRECT_3AX_GCODE_SOURCE_PASS_BINARY_PENDING",
   "departments": {
     "HOME": "EXECUTE_UNTIL_PASS",
     "CAD": "EXECUTE_UNTIL_PASS",
@@ -716,14 +716,18 @@
       "uninstall_install_dir_removed": true,
       "uninstall_registry_removed": true
     }
-  }
-  ,"binary_runtime_evidence_376": {
+  },
+  "binary_runtime_evidence_376": {
     "status": "PASS_APK_SETUP_INSTALL_LAUNCH_UNINSTALL",
     "feature_source_sha": "678f5247ddbd042ba33cdf93ae69cfe0f25f0291",
     "release_source_sha": "0824ab78dd14348c047be3f0f23b5e4da955619c",
-    "internal_link_state_model": ["CONNECTED", "DEGRADED", "DISCONNECTED"],
+    "internal_link_state_model": [
+      "CONNECTED",
+      "DEGRADED",
+      "DISCONNECTED"
+    ],
     "disconnected_presentation": "WAITING",
-    "display_zh_tw": "\u7b49\u5f85",
+    "display_zh_tw": "等待",
     "historical_375_preserved": true,
     "android": {
       "status": "PASS_NOX_INSTALL_COLD_LAUNCH",
@@ -746,5 +750,31 @@
       "uninstall": "PASS_EXIT_0",
       "uninstall_install_dir_removed": true
     }
+  },
+  "direct_home_entries_377": {
+    "status": "PASS_SOURCE",
+    "android_home": [
+      "CAD",
+      "CAM",
+      "SIM",
+      "3AX",
+      "NC/GCODE",
+      "MULTI"
+    ],
+    "windows_home_3ax": "DIRECT_PREVIEW_WITH_CAM_OR_NEUTRAL_SCENE",
+    "android_3ax_no_cam": "THREE_AXIS_PREVIEW_SCENE",
+    "windows_3ax_no_cam": "THREE_AXIS_PREVIEW_SCENE",
+    "nc_editor": "DIRECT_GCODE_EDITOR",
+    "nc_requires_cam": false,
+    "three_axis_requires_cam": false,
+    "preview_toolpaths": "EMPTY_NO_FAKE_TOOLPATH",
+    "preview_material_removal": "NONE",
+    "feature_source_sha": "a572bb7e8e5e914f9f9bbe8482f7856b71fc9f84",
+    "verification_marker": "NO_CAM_PREREQ_FOR_3AX_PREVIEW|DIRECT_GCODE_EDITOR"
+  },
+  "binary_runtime_evidence_377": {
+    "status": "PENDING",
+    "feature_source_sha": "a572bb7e8e5e914f9f9bbe8482f7856b71fc9f84",
+    "historical_376_preserved": true
   }
 }
