@@ -3660,9 +3660,21 @@ class MainActivity : Activity() {
     private fun showUnifiedMachiningWorkspace(initialMode:String) {
         if(initialMode=="NC_EDIT") { showNcEditDialog(); return }
         if(camDerivedCache==null) {
+            val emptySurface=LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL
+                setPadding(dp(18),dp(16),dp(18),dp(16))
+                addView(TextView(this@MainActivity).apply {
+                    text=MasterRuntimeChainContract.masterOriginLabel()+" • 0.001 mm\n尚無刀路資料。可先設定加工條件，建立刀路後再執行模擬。"
+                    setTextColor(0xFFE1F0FF.toInt())
+                    textSize=StudioDisplayPolicy.sp(this,11.5f)
+                    setPadding(dp(8),dp(10),dp(8),dp(10))
+                })
+            }
+            val surface=if(initialMode=="3D") "SIM" else initialMode
+            RuntimeSurfaceAndroidInstaller.mountVisibleSurface(emptySurface,surface)
             AlertDialog.Builder(this)
                 .setTitle("$initialMode • 加工工作區")
-                .setMessage(MasterRuntimeChainContract.masterOriginLabel()+" • 0.001 mm\n尚無刀路資料。可先設定加工條件，建立刀路後再執行模擬。")
+                .setView(emptySurface)
                 .setPositiveButton("CAM 加工設定") { _,_ -> showCamWorkstation() }
                 .setNeutralButton("NC 編輯") { _,_ -> showNcEditDialog() }
                 .setNegativeButton("關閉",null).show()
@@ -4761,6 +4773,7 @@ class MainActivity : Activity() {
             })
             addView(editor,LinearLayout.LayoutParams(-1,dp(420)))
         }
+        RuntimeSurfaceAndroidInstaller.mountVisibleSurface(box,"NC")
         AlertDialog.Builder(this)
             .setTitle("AIG CNC NC EDIT • 草稿")
             .setView(box)
@@ -5063,6 +5076,7 @@ class MainActivity : Activity() {
             content.addView(keyboard, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
         }
         box.addView(content)
+        RuntimeSurfaceAndroidInstaller.mountVisibleSurface(box,"NC")
 
         AlertDialog.Builder(this)
             .setTitle("AIG CNC NC EDIT • FANUC")
