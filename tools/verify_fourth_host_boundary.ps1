@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $module = Join-Path $root 'product-host-android'
 if (-not (Test-Path $module)) { throw 'product-host-android module missing' }
@@ -17,9 +17,14 @@ if ($manifestText -notmatch 'orientation\|screenSize\|keyboardHidden') { throw '
 if ($source -match 'java\.awt|javax\.swing|android\.widget|Clean[A-Za-z]*Panel|CleanMainActivity') { throw 'legacy/platform widget UI found in fourth host' }
 if ($source -notmatch 'AigGlesView') { throw 'fourth host does not mount AigGlesView' }
 if ($source -notmatch 'FourthCadRuntimeAdapter') { throw 'fourth host does not bind headless CAD adapter' }
+if ($source -notmatch 'FourthCamRuntimeAdapter') { throw 'fourth host does not bind headless CAM adapter' }
 if ($buildText -notmatch 'project\(":renderer-android"\)') { throw 'renderer dependency missing' }
 if ($buildText -notmatch 'project\(":production-runtime"\)') { throw 'headless runtime dependency missing' }
 if ($buildText -match 'app-production|desktop') { throw 'legacy UI dependency forbidden' }
-if ($buildText -notmatch 'versionCode\s*=\s*(395001|474001)') { throw 'candidate versionCode missing' }
-if ($buildText -notmatch 'versionName\s*=\s*"(395-fourth-cad|474-fourth-cad)"') { throw 'candidate versionName missing' }
+if ($buildText -notmatch 'com\.aigstudio\.production') { throw 'unexpected fourth host package' }
+$codeMatch=[regex]::Match($buildText,'versionCode\s*=\s*(\d+)')
+if(-not $codeMatch.Success){ throw 'candidate versionCode missing' }
+$code=[int]$codeMatch.Groups[1].Value
+if($code -lt 396001){ throw "candidate versionCode regressed: $code < 396001" }
+if($buildText -notmatch 'versionName\s*=\s*"\d+-fourth-[a-z0-9-]+"'){ throw 'candidate versionName missing' }
 Write-Host 'FOURTH_HOST_BOUNDARY_PASS'

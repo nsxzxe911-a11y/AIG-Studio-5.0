@@ -1,4 +1,4 @@
-﻿package com.aigstudio.runtime4.renderer
+package com.aigstudio.runtime4.renderer
 
 import com.aigstudio.runtime4.contract.*
 import kotlin.math.max
@@ -8,7 +8,7 @@ object CamSceneLayout {
         "CAM.MANUAL","CAM.AUTO","CAM.PREVIEW","CAM.SOURCE_LINK","CAM.TOOLPATH_LINK",
         "CAM.TOOL","CAM.DIAMETER","CAM.DEPTH","CAM.SAFE_Z","CAM.FEED","CAM.SPEED",
         "CAM.SIDE","CAM.DIRECTION","CAM.LEAD_IN","CAM.LEAD_OUT","CAM.REGION",
-        "CAM.ADD","CAM.EDIT","CAM.AVOID","CAM.FREEZE","CAM.KEEP","CAM.ADOPT","CAM.SAVE"
+        "CAM.ADD","CAM.EDIT","CAM.CUT_EDIT","CAM.AVOID","CAM.FIXTURE","CAM.FREEZE","CAM.KEEP","CAM.ADOPT","CAM.SAVE"
     )
 
     fun nodes(widthPx:Float,heightPx:Float,density:Float,state:CamState):List<SceneNode>{
@@ -52,7 +52,9 @@ object CamSceneLayout {
         "CAM.REGION"->CamCommand.SetMachiningRegion(if(state.strategy.machiningRegion==null)CamMachiningRegion(-50.0,-50.0,50.0,50.0) else null)
         "CAM.ADD"->{val last=state.active?.points?.lastOrNull(); CamCommand.AddPoint(state.active?.points?.size?:0,(last?.x?:0.0)+10.0,last?.y?:0.0,state.strategy.safeZMm,last?.a?:0.0,last?.b?:0.0,last?.c?:0.0,CamMotionKind.G0)}
         "CAM.EDIT"->{val p=state.active?.points?.firstOrNull()?:CamPointSnapshot(0.0,0.0,state.strategy.safeZMm,0.0,0.0,0.0,CamMotionKind.G0); CamCommand.ReplacePointXYZABC(0,p.x,p.y,state.strategy.safeZMm,10.0,20.0,30.0,CamMotionKind.G0)}
+        "CAM.CUT_EDIT"->{val index=if((state.active?.points?.size?:0)>1)1 else 0; val p=state.active?.points?.getOrNull(index)?:CamPointSnapshot(10.0,0.0,state.strategy.depthMm,0.0,0.0,0.0,CamMotionKind.G1); CamCommand.ReplacePointXYZABC(index,p.x+10.0,p.y,state.strategy.depthMm,10.0,20.0,30.0,CamMotionKind.G1)}
         "CAM.AVOID"->CamCommand.InsertAvoidance(0,25.0,25.0,state.strategy.depthMm)
+        "CAM.FIXTURE"->CamCommand.AddZone(CamZoneSnapshot("fixture-1",CamZoneKind.FIXTURE,-15.0,-10.0,15.0,10.0,5.0))
         "CAM.FREEZE"->if(state.active?.frozen==true)CamCommand.UnfreezeActive else CamCommand.FreezeActive
         "CAM.KEEP"->CamCommand.KeepActiveToolpath
         "CAM.ADOPT"->CamCommand.AdoptCandidate

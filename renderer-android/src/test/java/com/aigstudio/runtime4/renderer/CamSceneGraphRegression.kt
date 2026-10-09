@@ -1,4 +1,4 @@
-﻿package com.aigstudio.runtime4.renderer
+package com.aigstudio.runtime4.renderer
 
 import com.aigstudio.runtime4.contract.*
 import org.junit.Assert.*
@@ -35,5 +35,19 @@ class CamSceneGraphRegression {
         assertTrue("NAV.CAD" in home); assertTrue("NAV.CAM" in home)
         val cam=CamSceneLayout.nodes(2316f,1080f,3f,CamState.initial()).map{it.id}.toSet()
         assertTrue("NAV.HOME" in cam); assertTrue("NAV.CAD" in cam); assertTrue("NAV.CAM" in cam)
+    }
+
+    @Test fun manualCutAndFixtureControlsUseRealCommands() {
+        val runtime=FakePort(CamState.initial().copy(active=CamToolpathVersion("TP1",1,"x",listOf(
+            CamPointSnapshot(0.0,0.0,5.0,0.0,0.0,0.0,CamMotionKind.G0),
+            CamPointSnapshot(0.0,0.0,5.0,0.0,0.0,0.0,CamMotionKind.G0)
+        ))))
+        val controller=CamSceneController(runtime)
+        controller.activate("CAM.CUT_EDIT")
+        assertTrue(runtime.last is CamCommand.ReplacePointXYZABC)
+        assertEquals(CamMotionKind.G1,(runtime.last as CamCommand.ReplacePointXYZABC).motion)
+        controller.activate("CAM.FIXTURE")
+        assertTrue(runtime.last is CamCommand.AddZone)
+        assertEquals(CamZoneKind.FIXTURE,(runtime.last as CamCommand.AddZone).zone.kind)
     }
 }
