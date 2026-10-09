@@ -792,197 +792,7 @@ class MainActivity : Activity() {
                 setPadding(dp(8), dp(4), dp(8), dp(4))
             }
 
-        val masterRootBar = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            background = panel()
-            setPadding(dp(8),dp(3),dp(8),dp(3))
-            contentDescription="MASTER COORDINATE ROOT"
-            addView(chromeText(
-                MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION,
-                0xFF63FF9D.toInt(),10f
-            ).apply { setTypeface(typeface,android.graphics.Typeface.BOLD) },
-                LinearLayout.LayoutParams(0,-2,1f))
-            addView(chromeText("本機就緒",0xFF3DEBFF.toInt(),9f).apply {
-                gravity=Gravity.END
-            })
-        }
-        masterRootBar.visibility=View.GONE
-        root.addView(masterRootBar,LinearLayout.LayoutParams(-1,-2).apply {
-            setMargins(dp(5),dp(5),dp(5),dp(2))
-        })
-
-        val brandBar = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            background = panel()
-            setPadding(dp(6), dp(4), dp(6), dp(4))
-        }
-        val brandStack = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        brandStack.addView(chromeText(WorkstationChromeContract.BRAND, 0xFFFFFFFF.toInt(), 19f).apply {
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
-            letterSpacing = 0.08f
-        })
-        brandStack.addView(chromeText(
-            WorkstationChromeContract.WORKSTATION + " • " + WorkstationChromeContract.ORIGINAL + " • " + StudioProductionTheme.ID,
-            StudioProductionTheme.accent, 10f
-        ))
-        brandBar.addView(brandStack, LinearLayout.LayoutParams(0, -2, 1f))
-        val brandState = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.END
-        }
-        brandState.addView(chromeText(
-            WorkstationChromeContract.SYSTEM_READY + " • " + RuntimeDeviceProfile.verificationLabel,
-            0xFF63FF9D.toInt(), 9.5f
-        ).apply { gravity = Gravity.END })
-        brandState.addView(chromeText(
-            WorkstationChromeContract.MASTER_ORIGIN + " • " + WorkstationChromeContract.PRECISION,
-            0xFFA0BED2.toInt(), 9f
-        ).apply { gravity = Gravity.END })
-        brandBar.addView(brandState, LinearLayout.LayoutParams(0, -2, 1f))
-        brandBar.visibility=View.GONE
-        root.addView(brandBar, LinearLayout.LayoutParams(-1, -2).apply {
-            setMargins(dp(5), dp(5), dp(5), dp(3))
-        })
-
         var showRuntimeHome:(()->Unit)?=null
-        val productionUiSwitch = FlowLayout(this).apply {
-            setPadding(dp(5), dp(2), dp(5), dp(3))
-            contentDescription = "PRODUCTION UI SWITCH"
-        }
-        val productionUiButtons = linkedMapOf<String,RgbGlowButton>()
-        val productionUiColors = mapOf(
-            "CAD" to 0xFF3DEBFF.toInt(),
-            "CAM" to 0xFF22C55E.toInt(),
-            "SIM" to 0xFF8B5CF6.toInt(),
-            "3AX" to 0xFF3B82F6.toInt(),
-            "4AX" to 0xFFF59E0B.toInt(),
-            "5AX" to 0xFFEC4899.toInt(),
-            "NC" to 0xFF50AAFF.toInt(),
-            "AI" to 0xFF8B5CF6.toInt()
-        )
-        val visibleModeTitle = chromeText(
-            "目前模式 • CAD • 真 UI / LIVE RUNTIME",
-            0xFF63FF9D.toInt(),10.5f
-        ).apply {
-            contentDescription="CURRENT PRODUCTION MODE"
-            setTypeface(typeface,android.graphics.Typeface.BOLD)
-        }
-        val visibleModeActions = FlowLayout(this).apply {
-            contentDescription="VISIBLE FUNCTION ACTIONS"
-            setPadding(dp(5),dp(2),dp(5),dp(3))
-        }
-        fun refreshVisibleMode(id:String) {
-            val mode=id.trim().uppercase(Locale.US)
-            require(mode in VisibleFunctionUiContract.requiredModes){"Unsupported visible UI mode: $id"}
-            visibleModeTitle.text="UX • "+RuntimeUxFlowContract.title(mode)
-            visibleModeActions.removeAllViews()
-            fun action(label:String,colorIndex:Int,run:()->Unit) {
-                addActionTo(visibleModeActions,label,colorIndex,run)
-            }
-            when(mode) {
-                "CAD" -> {
-                    action("LINE",0){selectTool(Tool.LINE)}
-                    action("SELECT",1){selectTool(Tool.SELECT)}
-                    action("更多",2){openCategory("製圖"){showDrawingBranch()}}
-                    action("→ CAM",3){showCamWorkstation()}
-                }
-                "CAM" -> {
-                    action("AUTO",3){showCamWorkstation()}
-                    action("參數",2){showCamWorkstation()}
-                    action("3/4/5/6AX",5){openCategory("加工"){showMachiningBranch()}}
-                    action("→ SIM",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
-                }
-                "SIM" -> {
-                    action("模擬",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
-                    action("風險",4){openCategory("安全"){showSecurityBranch()}}
-                    action("3/4/5/6AX",2){openCategory("加工"){showMachiningBranch()}}
-                    action("→ NC",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}
-                }
-                "3AX" -> {
-                    action("開啟 3AX",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))}
-                    action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
-                }
-                "4AX" -> {
-                    action("開啟 4AX",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))}
-                    action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
-                }
-                "5AX" -> {
-                    action("開啟 5AX",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
-                    action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
-                }
-                "NC" -> {
-                    action("NC EDIT",5){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))}
-                    action("安全",4){openCategory("安全"){showSecurityBranch()}}
-                    action("← SIM",2){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
-                }
-                "AI" -> {
-                    action("AI 檢查",3){cad.aiInspect()}
-                    action("AI SUITE",2){showAiSystemSuiteDialog()}
-                    action("更新",1){runSecureUpdateCheck()}
-                    action("← CAD",0){selectTool(Tool.SELECT)}
-                }
-            }
-            check(visibleModeActions.childCount>0) {
-                "NO_UI_NO_FUNCTION: visible actions missing for "+mode
-            }
-            check(visibleModeActions.childCount<=RuntimeUxFlowContract.MAX_VISIBLE_ACTIONS) {
-                "UX overflow: "+mode+" visible actions="+visibleModeActions.childCount
-            }
-        }
-
-        fun selectProductionUi(id:String) {
-            val normalized=ProductionUiSwitchContract.normalize(id)
-            productionUiButtons.forEach { (key,button) ->
-                button.setRgbState(
-                    productionUiColors[key] ?: StudioProductionTheme.accent,
-                    key==normalized
-                )
-            }
-        }
-        fun addProductionUi(id:String, action:()->Unit) {
-            val normalized=ProductionUiSwitchContract.normalize(id)
-            val button=RgbGlowButton(this).apply {
-                text=normalized
-                contentDescription="UI $normalized"
-                textSize=StudioDisplayPolicy.sp(this,9.5f)
-                minWidth=dp(68)
-                minHeight=dp(42)
-                maxLines=1
-                setRgbState(productionUiColors[normalized] ?: StudioProductionTheme.accent,false)
-                setOnClickListener {
-                    selectProductionUi(normalized)
-                    refreshVisibleMode(normalized)
-                    action()
-                }
-            }
-            productionUiButtons[normalized]=button
-            productionUiSwitch.addView(button)
-        }
-        addProductionUi("CAD") {
-            Toast.makeText(this,"CAD • LIVE WORKSPACE",Toast.LENGTH_SHORT).show()
-        }
-        addProductionUi("CAM") { showCamWorkstation() }
-        addProductionUi("SIM") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM")) }
-        addProductionUi("NC") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC")) }
-        addProductionUi("AI") { showAiSystemSuiteDialog() }
-        check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))
-        productionUiSwitch.addView(RgbGlowButton(this).apply {
-            text="首頁"
-            contentDescription="RETURN TO FORMAL RGB HOME"
-            textSize=StudioDisplayPolicy.sp(this,9.5f)
-            minWidth=dp(68)
-            minHeight=dp(42)
-            maxLines=1
-            setRgbState(0xFF3DEBFF.toInt(),false)
-            setOnClickListener { showRuntimeHome?.invoke() }
-        })
-        selectProductionUi(ProductionUiSwitchContract.initialMode)
-        productionUiSwitch.visibility=View.GONE
-        root.addView(productionUiSwitch,LinearLayout.LayoutParams(-1,-2))
-        visibleModeTitle.visibility=View.GONE
-        root.addView(visibleModeTitle,LinearLayout.LayoutParams(-1,-2))
         networkStateBadge=chromeText(
             "網路 • 本機就緒 • 網路可選",
             0xFFA0B4C3.toInt(),9.5f
@@ -991,24 +801,6 @@ class MainActivity : Activity() {
         }
         networkStateBadge.visibility=View.GONE
         root.addView(networkStateBadge,LinearLayout.LayoutParams(-1,-2))
-        val maintenanceStrip=FlowLayout(this).apply {
-            contentDescription="MAINTENANCE SYSTEM STRIP"
-            setPadding(dp(5),dp(1),dp(5),dp(2))
-            addView(RgbGlowButton(this@MainActivity).apply {
-                text="維修"
-                contentDescription="MAINTENANCE CENTER"
-                textSize=StudioDisplayPolicy.sp(this,9.5f)
-                minWidth=dp(76)
-                minHeight=dp(42)
-                maxLines=1
-                setRgbState(0xFF8B5CF6.toInt(),false)
-                setOnClickListener { showMaintenanceCenter() }
-            })
-        }
-        maintenanceStrip.visibility=View.GONE
-        root.addView(maintenanceStrip,LinearLayout.LayoutParams(-1,-2))
-        visibleModeActions.visibility=View.GONE
-        root.addView(visibleModeActions,LinearLayout.LayoutParams(-1,-2))
 
         cad = CadView(
             this,
@@ -1146,38 +938,6 @@ class MainActivity : Activity() {
         )
         workspaceColumn.addView(cadStage, LinearLayout.LayoutParams(-1, 0, 1f))
 
-        val machineRail = LinearLayout(this).apply {
-            orientation = if(workstationLayout==WorkstationChromeContract.Layout.COMPACT)
-                LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            background = panel(0x4474F7FF)
-            setPadding(dp(4), dp(4), dp(4), dp(4))
-        }
-        fun railCell(title:String,value:String,color:Int): LinearLayout =
-            LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER
-                addView(chromeText(title, 0xFF7894A8.toInt(), 8.5f).apply { gravity = Gravity.CENTER })
-                addView(chromeText(value, color, 10f).apply {
-                    gravity = Gravity.CENTER
-                    setTypeface(typeface, android.graphics.Typeface.BOLD)
-                })
-            }
-        val railCells = listOf(
-            railCell("MACHINE","READY",0xFF63FF9D.toInt()),
-            railCell("ORIGIN","X0.000 Y0.000 Z0.000",0xFF3DEBFF.toInt()),
-            railCell("PRECISION",CoordinatePrecisionRuntime.display().storageValue+" mm",0xFFF59E0B.toInt()),
-            railCell("RGB","LIVE",0xFF8B5CF6.toInt())
-        )
-        railCells.forEach {
-            machineRail.addView(
-                it,
-                if(workstationLayout==WorkstationChromeContract.Layout.COMPACT)
-                    LinearLayout.LayoutParams(0,-2,1f)
-                else LinearLayout.LayoutParams(-1,0,1f)
-            )
-        }
-
         val workspaceFrame = LinearLayout(this).apply {
             orientation = if(workstationLayout==WorkstationChromeContract.Layout.COMPACT)
                 LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
@@ -1190,7 +950,6 @@ class MainActivity : Activity() {
                 width = 0; height = -1; weight = 1f
             }
         })
-        machineRail.visibility=View.GONE
         val cadFormalHeader=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL
             gravity=Gravity.CENTER_VERTICAL
@@ -1234,18 +993,6 @@ class MainActivity : Activity() {
         addActionTo(categoryFlow, "ChatGPT AI 更新 • 一鍵", 1) { runSecureUpdateCheck() }
         addActionTo(categoryFlow, "↶", 3) { cad.undo() }
         addActionTo(categoryFlow, "↷", 5) { cad.redo() }
-        val workstationFooter = chromeText(
-            WorkstationChromeContract.FUNCTION_STRIP + "  •  MAKE IT REAL.",
-            0xFF7894A8.toInt(), 9f
-        ).apply {
-            gravity = Gravity.CENTER
-            background = panel(0x334D7189)
-        }
-        workstationFooter.visibility=View.GONE
-        root.addView(workstationFooter, LinearLayout.LayoutParams(-1, -2).apply {
-            setMargins(dp(5), dp(2), dp(5), dp(2))
-        })
-
         fpsIndicator = TextView(this).apply {
             setTextColor(0xFF3DEBFF.toInt()); textSize = 11f; text = "FPS --"
             setPadding(dp(12), dp(2), dp(12), dp(2)); visibility = View.GONE
@@ -1400,8 +1147,6 @@ class MainActivity : Activity() {
         fun enterCadRuntime() {
             homeRoot.visibility=View.GONE
             root.visibility=View.VISIBLE
-            selectProductionUi("CAD")
-            refreshVisibleMode("CAD")
         }
         fun homeAction(label:String,color:Int,run:()->Unit) {
             homeModes.addView(RgbGlowButton(this).apply {
@@ -1579,7 +1324,6 @@ class MainActivity : Activity() {
                             openCategory("繪圖") { showDrawingBranch() }
                         }
                         selectTool(Tool.LINE)
-                        refreshVisibleMode(ProductionUiSwitchContract.initialMode)
                     }
 
                     postHomeStartupStep("BOOT COMPLETE") {
@@ -2342,7 +2086,7 @@ class MainActivity : Activity() {
             textSize=12.5f
             text=buildString{
                 appendLine("AIG CNC "+runtimeVersionName+" • 正式 Runtime UI 內建維修")
-                appendLine("BOOT="+IntegratedMaintenanceUiContract.DEFAULT_BOOT_TARGET+" • separate engineering shell=OFF")
+                appendLine("BOOT="+IntegratedMaintenanceUiContract.DEFAULT_BOOT_TARGET+" • maintenance=settings only")
                 appendLine(networkText+" • 維修可離線")
                 appendLine("RECOVERY="+if(!checkpoint.isNullOrBlank())"CAD READY" else "NONE"+
                     " • NC="+if(!ncDraftState.isNullOrBlank())"DRAFT" else "NONE")

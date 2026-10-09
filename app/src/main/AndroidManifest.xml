@@ -17,11 +17,6 @@
             android:name=".UpdateInstallReceiver"
             android:exported="false" />
         <activity
-            android:name=".StartupActivity"
-            android:screenOrientation="unspecified"
-            android:exported="false">
-        </activity>
-        <activity
             android:name=".MainActivity"
             android:screenOrientation="unspecified"
             android:exported="true" >
