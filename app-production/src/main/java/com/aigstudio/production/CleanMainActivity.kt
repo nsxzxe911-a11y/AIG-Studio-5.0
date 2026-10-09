@@ -15,6 +15,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.aigstudio.production.runtime.CleanCadSession
+import com.aigstudio.production.runtime.CleanCamSession
 
 class CleanMainActivity : Activity() {
     private val surfaces = listOf("HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI")
@@ -23,6 +24,7 @@ class CleanMainActivity : Activity() {
     private val navButtons = linkedMapOf<String, Button>()
     private lateinit var contentHost: FrameLayout
     private val cadSession = CleanCadSession()
+    private val camSession = CleanCamSession()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,8 +92,12 @@ class CleanMainActivity : Activity() {
         if(surface == "CAD") {
             contentHost.addView(CleanCadPanel(this,cadSession) { status.text=it }, FrameLayout.LayoutParams(-1,-1))
             Log.i("AIG-CLEAN-CAD", "CLEAN_CAD_PANEL_MOUNT|PASS|REAL_RUNTIME")
+        } else if(surface == "CAM") {
+            contentHost.addView(CleanCamPanel(this,camSession) { status.text=it }, FrameLayout.LayoutParams(-1,-1))
+            Log.i("AIG-CLEAN-CAM", "CLEAN_CAM_PANEL_MOUNT|PASS|REAL_RUNTIME")
         }
-        status.text = if(surface == "HOME") "RGB HOME • 0.001 mm • GPU READY" else "$surface • CLEAN PRODUCTION SURFACE"
+        if(surface == "HOME") status.text = "RGB HOME • 0.001 mm • GPU READY"
+        else if(surface != "CAD" && surface != "CAM") status.text = "$surface • CLEAN PRODUCTION SURFACE"
         navButtons.forEach { (id, button) ->
             val active = id == surface
             button.background = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
