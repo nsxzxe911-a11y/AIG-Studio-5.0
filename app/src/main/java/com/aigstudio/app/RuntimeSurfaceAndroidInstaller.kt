@@ -7,6 +7,7 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -84,10 +85,11 @@ object RuntimeSurfaceAndroidInstaller {
         val module=RuntimeVisualModuleRegistry.require(surface)
         val original=originalBackgrounds.getOrPut(target){target.background}
         val base=original ?: ColorDrawable(Color.rgb(2,4,7))
-        val visual=RuntimeFullSurfaceAssets.drawable(target.context,surface)
-            ?: proceduralSurface(surface)
+        val art=RuntimeFullSurfaceAssets.drawable(target.context,surface)
+        val visual=art ?: proceduralSurface(surface)
         visual.alpha=RuntimeSurfaceVisualContract.SURFACE_ALPHA
         target.background=LayerDrawable(arrayOf(base,visual))
+        Log.i("AIG-RGB-SURFACE","RGB_PAGE_MOUNT|$surface|"+(if(art!=null)"PASS" else "WAITING_ART")+"|target="+(target.contentDescription?.toString() ?: target.javaClass.simpleName)+"|visible="+(if(art!=null)"FULL_SURFACE_LAYER" else "PROCEDURAL"))
         target.invalidate()
     }
 
@@ -169,7 +171,7 @@ private object RuntimeFullSurfaceAssets {
             val actual=MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
             require(actual==exp){"Full RGB surface hash mismatch: $id"}
             val d=Drawable.createFromStream(bytes.inputStream(),"$id.png") ?: return@runCatching null
-            require(d.intrinsicWidth>=640 && d.intrinsicHeight>=360){"Full RGB surface is icon-sized: $id"}
+            require(d.intrinsicWidth==720 && d.intrinsicHeight==1280 && d.intrinsicHeight>d.intrinsicWidth){"Mobile RGB surface must be dedicated portrait 720x1280: $id"}
             d
         }.getOrNull()
         cache[id]=value

@@ -19,7 +19,7 @@
         <activity
             android:name=".StartupActivity"
             android:screenOrientation="unspecified"
-            android:exported="true">
+            android:exported="false">
         </activity>
         <activity
             android:name=".MainActivity"

@@ -107,9 +107,9 @@ private object HomeRgbAsset {
     private const val EXPECTED_SHA256 = "8c55956f9ea6693b34d78395d6336ea7bf1a0ec4eeece824c22396b18bb854af"
 
     fun load(activity: Activity): Drawable? {
-        loadMorningBaseline(activity)?.let { return it }
-        loadExact(activity)?.let { return it }
-        return loadRuntimeSurfaceFallback(activity)
+        loadExact(activity)?.let { Log.i(TAG,"RGB_HOME_MOUNT|PASS|source=APPROVED_416|portrait=720x1280"); return it }
+        loadRuntimeSurfaceFallback(activity)?.let { Log.i(TAG,"RGB_HOME_MOUNT|PASS|source=RUNTIME_SURFACE_MOBILE|portrait=720x1280"); return it }
+        return loadMorningBaseline(activity)?.also { Log.i(TAG,"RGB_HOME_MOUNT|PASS|source=MORNING_PORTRAIT_ONLY|portrait=720x1280") }
     }
 
     private fun loadMorningBaseline(activity:Activity):Drawable? = runCatching {
@@ -117,7 +117,7 @@ private object HomeRgbAsset {
         val bytes=activity.assets.open("aig-morning-baseline/20261006/$file").use{it.readBytes()}
         require(bytes.size>=MorningBaselineVisualContract.minimumFullSurfaceBytes){"Morning HOME baseline is icon-sized"}
         val bitmap=BitmapFactory.decodeByteArray(bytes,0,bytes.size) ?: error("Morning HOME baseline decode failed")
-        require(bitmap.width>=640 && bitmap.height>=360){"Morning HOME baseline dimensions invalid"}
+        require(bitmap.width==720 && bitmap.height==1280){"Morning HOME baseline rejected: Android HOME requires dedicated portrait 720x1280"}
         HomeCoverDrawable(bitmap)
     }.onFailure { Log.w(TAG,"Morning HOME unavailable; trying approved HOME",it) }.getOrNull()
 
@@ -132,7 +132,7 @@ private object HomeRgbAsset {
     }.onFailure { Log.w(TAG, "HOME 416 unavailable; trying full-surface fallback", it) }.getOrNull()
 
     private fun loadRuntimeSurfaceFallback(activity:Activity):Drawable? = runCatching {
-        val root="${UiAssetContract.ANDROID_ROOT}/runtime-surfaces"
+        val root="${UiAssetContract.ANDROID_ROOT}/runtime-surfaces/mobile"
         val props=Properties()
         activity.assets.open("$root/sha256.properties").use(props::load)
         val expected=(props.getProperty("home") ?: props.getProperty("home.png"))?.trim()?.lowercase()
@@ -140,7 +140,7 @@ private object HomeRgbAsset {
         val bytes=activity.assets.open("$root/home.png").use{it.readBytes()}
         require(sha256(bytes)==expected){"HOME full-surface SHA mismatch"}
         val bitmap=BitmapFactory.decodeByteArray(bytes,0,bytes.size) ?: error("HOME full-surface decode failed")
-        require(bitmap.width>=640 && bitmap.height>=360){"HOME full-surface too small"}
+        require(bitmap.width==720 && bitmap.height==1280){"HOME full-surface rejected: Android HOME requires dedicated portrait 720x1280"}
         HomeCoverDrawable(bitmap)
     }.onFailure { Log.w(TAG,"HOME full-surface unavailable • procedural RGB remains • STATUS_ONLY",it) }.getOrNull()
 
