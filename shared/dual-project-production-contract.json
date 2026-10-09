@@ -120,5 +120,26 @@
                             "block_if_visual_asset_missing_in_either_project":  true,
                             "block_if_runtime_result_diff_is_unexplained":  true
                         },
-    "completion_rule":  "A page is complete only when AIG-II and AIG CNC deliver the same-round page evidence for Android and Windows, with platform-specific UI art and real runtime behavior."
+    "completion_rule":  "A page is complete only when AIG-II and AIG CNC deliver the same-round page evidence for Android and Windows, with platform-specific UI art and real runtime behavior.",
+    "rgb_image_mount":  {
+                            "required":  true,
+                            "policy":  "FULL_SURFACE_IMAGE_BEHIND_INTERACTIVE_CONTROLS",
+                            "mobile_asset_role":  "ANDROID_ONLY",
+                            "desktop_asset_role":  "WINDOWS_ONLY",
+                            "android_required_chain":  [
+                                                           "asset_bytes",
+                                                           "sha256_verify",
+                                                           "decode_bitmap",
+                                                           "drawBitmap_or_background_drawable"
+                                                       ],
+                            "windows_required_chain":  [
+                                                           "resource_bytes",
+                                                           "sha256_verify",
+                                                           "decode_image",
+                                                           "drawImage"
+                                                       ],
+                            "palette_only":  "BLOCK",
+                            "icon_sized_surface":  "BLOCK",
+                            "missing_art":  "WARN_CONTINUE_RUNTIME_NO_FAKE_SUCCESS"
+                        }
 }
