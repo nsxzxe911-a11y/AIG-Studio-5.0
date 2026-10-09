@@ -5,7 +5,7 @@
   "branch": "feat/aig-cnc-375-link-tristate",
   "recorded_source_head": "3ec0347a027a9c7dee35d6ac011581b588e5c0c1",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "TRISTATE_LINK_SOURCE_PASS_BINARY_PENDING",
+  "status": "TRISTATE_LINK_BINARY_INSTALLER_PASS",
   "departments": {
     "HOME": "EXECUTE_UNTIL_PASS",
     "CAD": "EXECUTE_UNTIL_PASS",
@@ -47,8 +47,8 @@
       "INTEGRITY"
     ]
   },
-  "next_action": "AIG CNC 374 binary release is verified across Nox APK, portable x86-64 Runtime and Setup install/launch/uninstall. Continue forward-only product work from this checkpoint.",
-  "note": "AIG CNC 374 full binary validation PASS. Nox cold launch enters visible AIG CNC RGB HOME. Windows portable x86-64 launcher and Setup are PE 0x8664; installed Runtime reproduced official RGB UI, true material removal and 5AX dynamic evidence; uninstall removed install directory and registry entry. Native Android GLES/Vulkan is not falsely claimed.",
+  "next_action": "AIG CNC 375 tri-state binary release is verified on Nox x86_64 and Windows x86-64 Setup install/runtime-smoke/uninstall. Continue forward-only product work; runtime-owned external links remain disconnected until real transport evidence exists.",
+  "note": "AIG CNC 375 full binary validation PASS for the tri-state link repair. Nox cold launch shows official AIG CNC Runtime with Unicode-safe chain symbols; Windows 64-bit Setup installed, installed Runtime reproduced official RGB UI, material removal and 5AX dynamic evidence, then uninstall removed install directory and registry entry.",
   "release_command": {
     "path": "continuity/release-command.json",
     "command": "RELEASE_ALL_DEPARTMENTS_EXECUTE",
@@ -668,8 +668,9 @@
     }
   },
   "binary_runtime_evidence_375": {
-    "status": "SOURCE_PASS_BINARY_PENDING",
+    "status": "PASS_APK_SETUP_INSTALL_LAUNCH_UNINSTALL",
     "feature_source_sha": "3ec0347a027a9c7dee35d6ac011581b588e5c0c1",
+    "release_source_sha": "22a92177ada30ce392fad9dc2bdfa89be75acad0",
     "link_state_model": [
       "CONNECTED",
       "DEGRADED",
@@ -683,8 +684,37 @@
       "MACHINE"
     ],
     "shared_snapshot_for_ai_routing": true,
-    "apk": "PENDING",
-    "windows_portable": "PENDING",
-    "windows_setup": "PENDING"
+    "android": {
+      "status": "PASS_NOX_INSTALL_COLD_LAUNCH_TRISTATE_HOME",
+      "apk": "release/android/AIG_CNC_375_FULL_INSTALLABLE.apk",
+      "apk_sha256": "9013e7045a94d0e47fc7d520355a4efa4a6286d6f30484712235aa3d44b96c53",
+      "package": "com.aigstudio.app",
+      "version_name": "375.0.0",
+      "version_code": 3750000,
+      "nox_device": "Nox_1",
+      "nox_abi": "x86_64",
+      "adb_serial": "127.0.0.1:52025",
+      "cold_launch_ms": 648,
+      "official_rgb_home": "PASS",
+      "unicode_link_symbols": "PASS",
+      "engineering_shell_default": "OFF",
+      "machine_link_default": "DISCONNECTED_NO_PRODUCTION_TRANSPORT"
+    },
+    "windows": {
+      "status": "PASS_SETUP_64BIT_INSTALL_LAUNCH_UNINSTALL",
+      "setup_exe": "release/windows/AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe",
+      "setup_exe_sha256": "96c61ff476199012c4d4854855122e44c99b7a5cfb2f1f44ed4aeaf6bf9c80bf",
+      "pe_machine": "0x8664",
+      "architecture": "x86_64",
+      "setup_install": "PASS_EXIT_0",
+      "installed_version": "3.75.0",
+      "installed_runtime_smoke": "PASS",
+      "installed_source_sha": "22a92177ada30ce392fad9dc2bdfa89be75acad0",
+      "installed_removed_cells": 7500,
+      "installed_5x_dynamic": "PASS",
+      "uninstall": "PASS_EXIT_0",
+      "uninstall_install_dir_removed": true,
+      "uninstall_registry_removed": true
+    }
   }
 }
