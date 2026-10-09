@@ -1,18 +1,367 @@
 ﻿--------- beginning of main
-10-10 00:36:07.532  5343  5389 I AIG4    : AIG4_GLES|VERSION|OpenGL ES 3.1
-10-10 00:36:07.537  5343  5389 I AIG4    : AIG4_GLES|FIRST_FRAME|PASS
-10-10 00:36:10.631  5343  5343 I AIG4    : AIG4_SCENE|HOME_TO_CAD|PASS
-10-10 00:36:11.305  5343  5343 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=0
-10-10 00:36:11.708  5343  5343 I AIG4    : AIG4_CAD|COMMAND|LINE|REJECTED|LOCAL_MESSAGE
-10-10 00:36:12.467  5343  5343 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=1
-10-10 00:36:13.260  5343  5343 I AIG4    : AIG4_CAD|COMMAND|SELECT|ACCEPTED|REV=1
-10-10 00:36:13.644  5343  5343 I AIG4    : AIG4_CAD|COMMAND|SELECT|ACCEPTED|REV=1
-10-10 00:36:14.072  5343  5343 I AIG4    : AIG4_CAD|COMMAND|UNDO|ACCEPTED|REV=2
-10-10 00:36:14.477  5343  5343 I AIG4    : AIG4_CAD|COMMAND|REDO|ACCEPTED|REV=3
-10-10 00:36:14.874  5343  5343 I AIG4    : AIG4_CAD|COMMAND|SNAP|ACCEPTED|REV=3
-10-10 00:36:15.948  5343  5343 I AIG4    : AIG4_CAD|COMMAND|SELECT|ACCEPTED|REV=3
-10-10 00:36:16.350  5343  5343 I AIG4    : AIG4_CAD|COMMAND|SELECT|ACCEPTED|REV=3
-10-10 00:36:16.755  5343  5343 I AIG4    : AIG4_CAD|COMMAND|OFFSET|ACCEPTED|REV=4
-10-10 00:36:17.155  5343  5343 I AIG4    : AIG4_SCENE|CAD_TO_HOME|PASS
-10-10 00:36:19.435  5556  5579 I AIG4    : AIG4_GLES|VERSION|OpenGL ES 3.1
-10-10 00:36:19.441  5556  5579 I AIG4    : AIG4_GLES|FIRST_FRAME|PASS
+10-10 02:07:12.864  9386  9386 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+--------- beginning of system
+10-10 02:07:12.865  2031  7594 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity} from uid 0
+10-10 02:07:12.866  2031  7594 W ActivityTaskManager: Can't find TaskDisplayArea to determine support for multi window. Task id=960 attached=false
+10-10 02:07:12.867  2031  7594 D CompatibilityChangeReporter: Compat change id reported: 174042980; UID 10061; state: DISABLED
+10-10 02:07:12.868  2031  7594 D CompatibilityChangeReporter: Compat change id reported: 184838306; UID 10061; state: DISABLED
+10-10 02:07:12.868  2031  7594 D CompatibilityChangeReporter: Compat change id reported: 185004937; UID 10061; state: DISABLED
+10-10 02:07:12.868  2031  7594 D CompatibilityChangeReporter: Compat change id reported: 181136395; UID 10061; state: DISABLED
+10-10 02:07:12.868  2031  7594 D CompatibilityChangeReporter: Compat change id reported: 174042936; UID 10061; state: DISABLED
+10-10 02:07:12.869  2031  7594 D CompatibilityChangeReporter: Compat change id reported: 197654537; UID 10061; state: ENABLED
+10-10 02:07:12.872  2206  2329 W StartingSurfaceDrawer: Window background does not exist, using android.graphics.drawable.ColorDrawable@af33751
+10-10 02:07:12.874  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 135634846; UID 10061; state: DISABLED
+10-10 02:07:12.874  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 177438394; UID 10061; state: DISABLED
+10-10 02:07:12.874  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 135772972; UID 10061; state: DISABLED
+10-10 02:07:12.874  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 135754954; UID 10061; state: ENABLED
+10-10 02:07:12.874  2031  2062 D CompatibilityChangeReporter: Compat change id reported: 143937733; UID 10061; state: ENABLED
+10-10 02:07:12.887  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:12.942  1851  1851 D Zygote  : Forked child process 9389
+10-10 02:07:12.942  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:12.942  2031  2062 W ActivityManager: Slow operation: 68ms so far, now at startProcess: returned from zygote!
+10-10 02:07:12.943  2031  2062 W ActivityManager: Slow operation: 69ms so far, now at startProcess: done updating battery stats
+10-10 02:07:12.943  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:12.943  2031  2062 W ActivityManager: Slow operation: 69ms so far, now at startProcess: building log message
+10-10 02:07:12.943  2031  2062 I ActivityManager: Start proc 9389:com.aigstudio.production.fourth395/u0a61 for pre-top-activity {com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity}
+10-10 02:07:12.943  2031  2062 W ActivityManager: Slow operation: 69ms so far, now at startProcess: starting to update pids map
+10-10 02:07:12.943  2031  2062 W ActivityManager: Slow operation: 69ms so far, now at startProcess: done updating pids map
+10-10 02:07:12.947  9389  9389 I Zygote  : seccomp disabled by setenforce 0
+10-10 02:07:12.952  9389  9389 I ction.fourth39: Late-enabling -Xcheck:jni
+10-10 02:07:12.959  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:12.960  9389  9389 W ction.fourth39: Unexpected CPU variant for X86 using defaults: x86_64
+10-10 02:07:12.968  9389  9389 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:12.979  9389  9404 E ashmem  : memfd: ro.vndk.version not defined or invalid (), this is mandated since P.
+10-10 02:07:12.981  9389  9389 D CompatibilityChangeReporter: Compat change id reported: 171979766; UID 10061; state: ENABLED
+10-10 02:07:13.006  9389  9389 V GraphicsEnvironment: ANGLE Developer option for 'com.aigstudio.production.fourth395' set to: 'default'
+10-10 02:07:13.006  9389  9389 V GraphicsEnvironment: ANGLE GameManagerService for com.aigstudio.production.fourth395: false
+10-10 02:07:13.006  9389  9389 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+10-10 02:07:13.007  9389  9389 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+10-10 02:07:13.007  9389  9389 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+10-10 02:07:13.038  9389  9407 D ction.fourth39: createUnique: call
+10-10 02:07:13.039  9389  9407 D ction.fourth39: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:13.040  9389  9407 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:13.067  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:13.083  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:13.103  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:13.105  9389  9407 W OpenGLRenderer: Failed to initialize 101010-2 format, error = EGL_SUCCESS
+10-10 02:07:13.105  9389  9407 D EGL_emulation: rcCreateContext wated version 2.0  rc:4
+10-10 02:07:13.105  9389  9410 D ction.fourth39: createUnique: call
+10-10 02:07:13.107  9389  9410 D ction.fourth39: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:13.110  9389  9410 D EGL_emulation: rcCreateContext wated version 3.0  rc:4
+10-10 02:07:13.111  9389  9407 D EGL_emulation: eglMakeCurrent: 0x746ec1a0b3b0: ver 3 2 (tinfo 0x746e41a1e830) (first time)
+10-10 02:07:13.118  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:13.119  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:13.119  9389  9410 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:13.120  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:13.120  9389  9410 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:13.123  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.allocator@4.0::IAllocator/default in either framework or device VINTF manifest.
+10-10 02:07:13.123  9389  9410 W Gralloc4: allocator 4.x is not supported
+10-10 02:07:13.123  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.allocator@3.0::IAllocator/default in either framework or device VINTF manifest.
+10-10 02:07:13.123  9389  9410 W Gralloc3: allocator 3.x is not supported
+10-10 02:07:13.124  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 7929856
+10-10 02:07:13.124  9389  9410 D ction.fourth39: createUnique: call
+10-10 02:07:13.126  9389  9410 D ction.fourth39: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:13.128  9389  9410 D EGL_emulation: eglMakeCurrent: 0x746ec19fa710: ver 3 2 (tinfo 0x746e41a213b0) (first time)
+10-10 02:07:13.130  1898  2125 E HWComposer: getSupportedContentTypes: getSupportedContentTypes failed for display 0: Unsupported (8)
+10-10 02:07:13.131  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:13.137  9389  9410 I AIG4    : AIG4_GLES|VERSION|OpenGL ES 3.1
+10-10 02:07:13.144  9389  9410 I AIG4    : AIG4_GLES|FIRST_FRAME|PASS
+10-10 02:07:13.144  9389  9407 E libEGL  : called unimplemented OpenGL ES API
+10-10 02:07:13.148  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 7929856
+10-10 02:07:13.151  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:13.153  9389  9389 I AIG4    : AIG4_CAD|RECOVERY|NO_CHECKPOINT
+10-10 02:07:13.155  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 7929856
+10-10 02:07:13.157  2031  2051 I ActivityTaskManager: Displayed com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity: +290ms
+10-10 02:07:13.167  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:13.353  2031  2717 W InputManager-JNI: Input channel object 'ecc42e1 Splash Screen com.aigstudio.production.fourth395 (client)' was disposed without first being removed with the input manager!
+10-10 02:07:13.467  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:13.485  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:13.503  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:13.519  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:13.572  9419  9419 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:14.345  7598  9272 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-10 02:07:14.348  7598  9272 I TapAndPay: NfcAdapter is null while obtaining CardEmulation instance. [CONTEXT service_id=79 ]
+10-10 02:07:14.363  7598  9272 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-10 02:07:14.363  7598  9293 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-10 02:07:14.366  7598  9272 I Pay     : Active account was null, notification task will be cancelled. [CONTEXT service_id=198 ]
+10-10 02:07:14.384  7598  9340 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-10 02:07:14.385  7598  9335 I PlayGamesServices[GamesSyncAdapter]: Starting sync for 466ba96
+10-10 02:07:14.386  7598  9335 I PlayGamesServices[GamesSyncAdapter]: Sync duration for 466ba96: 1
+10-10 02:07:14.388  7598  9293 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-10 02:07:14.388  7598  9272 E Pay     : NfcAdapter is null while obtaining CardEmulation instance. [CONTEXT service_id=198 ]
+10-10 02:07:14.388  7598  9272 E Pay     : CardEmulation is null while checking aid registration. [CONTEXT service_id=198 ]
+10-10 02:07:14.388  7598  9272 I SyntheticOperationsLogg: (REDACTED) SyntheticOperationsLogger unable to log "%s"'s use of "%s" because installOperationsCollector never executed
+10-10 02:07:14.389  7598  9272 I Pay     : (REDACTED) enabling component %s
+10-10 02:07:14.389  7598  9272 E Pay     : NfcAdapter is null while obtaining CardEmulation instance. [CONTEXT service_id=198 ]
+10-10 02:07:14.389  7598  9272 E Pay     : CardEmulation is null while trying to register AIDs. [CONTEXT service_id=198 ]
+10-10 02:07:14.390  7598  9272 I SyntheticOperationsLogg: (REDACTED) SyntheticOperationsLogger unable to log "%s"'s use of "%s" because installOperationsCollector never executed
+10-10 02:07:14.390  7598  9272 E Pay     : HCE service enablement failed: FAILED_CARD_EMULATION [CONTEXT service_id=198 ]
+10-10 02:07:14.391  7598  7807 I GetServiceValidatorImpl: (REDACTED) onGetService() from Client SDK version [%s], Module version [%s], PGA version [%s], Account [%s], Calling package [%s], Game package [%s]
+10-10 02:07:14.394  7598  7807 I GetGamesServiceReqFacto: (REDACTED) Parsing request with ignored arguments. signInOptionsBundle [%s], isRetryingSignIn [%s], skipWelcomePopup [%s], requireGooglePlus [%s]
+10-10 02:07:14.394  7598  9293 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-10 02:07:14.394  7598  7807 I GetGamesServiceReqFacto: Replacing request for `games` scope with `games_lite`
+10-10 02:07:14.395  7598  9422 I SignInPerformer-5: (REDACTED) Handling request [%s], isFirstPartyCaller [%s]
+10-10 02:07:14.396  7598  9422 I SignInPerformer-5: Successfully brokered first-party unauthenticated GamesService [CONTEXT service_id=1 ]
+10-10 02:07:14.396  7598  9422 I GetGamesServiceV2Op: (REDACTED) Successfully brokered GamesService for request %s
+10-10 02:07:15.047  9423  9423 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:15.048  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:15.051  9423  9425 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:15.051  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:15.051  9423  9425 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:15.051  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:15.051  9423  9425 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:15.052  9423  9425 D screencap: createUnique: call
+10-10 02:07:15.053  9423  9425 D screencap: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:15.219  9427  9427 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:15.223  2636  3106 I MediaProvider: Begin Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-home.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:15.226  2636  3106 W MediaProvider: isAppCloneUserPair failed. Users: 0 and 0
+10-10 02:07:15.226  2636  3106 W MediaProvider: isAppCloneUserPair for user 0: false
+10-10 02:07:15.228  2636  3106 I MediaProvider: End Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-home.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:15.370  9435  9435 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:15.372  2031  2072 V DisplayPowerController[0]: Brightness [0.39763778] reason changing to: 'manual', previous reason: 'manual [ dim ]'.
+10-10 02:07:15.373  9389  9389 I AIG4    : AIG4_SCENE|HOME_TO_CAD|PASS
+10-10 02:07:15.382  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.383  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.383  2031  2061 I DropBoxManagerService: add tag=system_server_wtf isTagEnabled=true flags=0x2
+10-10 02:07:15.383  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.384  2031  2061 I DropBoxManagerService: add tag=system_server_wtf isTagEnabled=true flags=0x2
+10-10 02:07:15.390  2031  2051 D CompanionDeviceManagerService: onPackageModified(packageName = com.google.android.gms)
+10-10 02:07:15.396  7250  7293 I PermissionControllerServiceImpl: Updating user sensitive for uid 10046
+10-10 02:07:15.396  2031  2128 I InputReader: Reconfiguring input devices, changes=KEYBOARD_LAYOUTS |
+10-10 02:07:15.400  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.400  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.400  2031  2061 I DropBoxManagerService: add tag=system_server_wtf isTagEnabled=true flags=0x2
+10-10 02:07:15.401  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.401  2031  2061 I DropBoxManagerService: add tag=system_server_wtf isTagEnabled=true flags=0x2
+10-10 02:07:15.405  7598  9315 I FraudProtectUtils: Not in testing population, skipping local test bank apps. [CONTEXT service_id=469 ]
+10-10 02:07:15.405  7598  9315 I FraudProtectUtils: (REDACTED) Latest bank app list size: %d, %s isBankApp: false
+10-10 02:07:15.405  7598  9315 W ComponentChangedIO: No package name in intent data or package is not a bank app [CONTEXT service_id=469 ]
+10-10 02:07:15.407  2031  2060 W Searchables: No global search activity found
+10-10 02:07:15.410  2031  2060 W VoiceInteractionManager: no available voice recognition services found for user 0
+10-10 02:07:15.415  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.416  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.416  2031  2061 I DropBoxManagerService: add tag=system_server_wtf isTagEnabled=true flags=0x2
+10-10 02:07:15.416  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.433  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.433  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.434  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.449  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.449  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.449  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.466  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.466  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.467  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.484  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.484  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.484  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.498  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.499  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.499  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.516  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.517  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.517  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.533  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.534  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.535  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.553  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.553  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.555  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.567  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.567  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.569  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.586  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.587  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.589  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.599  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.600  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.601  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.617  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.617  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.618  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.633  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.633  2031  2201 E DisplayDeviceConfig: requesting nits when no mapping exists.
+10-10 02:07:15.634  2031  2201 E LightsService: Light requested not available on this device. 0
+10-10 02:07:15.663  9443  9443 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:15.664  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:15.666  9443  9445 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:15.666  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:15.666  9443  9445 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:15.666  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:15.666  9443  9445 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:15.667  9443  9445 D screencap: createUnique: call
+10-10 02:07:15.668  9443  9445 D screencap: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:15.795  9449  9449 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:15.799  2636  3106 I MediaProvider: Begin Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:15.802  2636  3106 W MediaProvider: isAppCloneUserPair failed. Users: 0 and 0
+10-10 02:07:15.802  2636  3106 W MediaProvider: isAppCloneUserPair for user 0: false
+10-10 02:07:15.804  2636  3106 I MediaProvider: End Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:15.946  9457  9457 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:15.950  9389  9389 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=0
+10-10 02:07:16.200  9462  9462 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:16.203  9389  9389 I AIG4    : AIG4_CAD|COMMAND|LINE|REJECTED|LOCAL_MESSAGE
+10-10 02:07:16.364  2031  7594 D WifiNl80211Manager: Scan result ready event
+10-10 02:07:16.364  2031  7594 D WifiNative: Scan result ready event
+10-10 02:07:16.366  2031  2051 I EthernetTracker: interfaceLinkStateChanged, iface: wlan0, up: true
+10-10 02:07:16.456  9467  9467 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:16.459  9389  9389 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=0
+10-10 02:07:16.709  9472  9472 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:16.993  9389  9389 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=1
+10-10 02:07:17.344  9475  9475 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:17.345  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:17.347  9475  9477 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:17.348  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:17.348  9475  9477 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:17.348  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:17.348  9475  9477 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:17.349  9475  9477 D screencap: createUnique: call
+10-10 02:07:17.350  9475  9477 D screencap: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:17.385  2031  2061 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.DROPBOX_ENTRY_ADDED flg=0x10 (has extras) } to com.google.android.gms/.stats.service.DropBoxEntryAddedReceiver
+10-10 02:07:17.489  9479  9479 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:17.493  2636  3106 I MediaProvider: Begin Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-line.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:17.496  2636  3106 W MediaProvider: isAppCloneUserPair failed. Users: 0 and 0
+10-10 02:07:17.496  2636  3106 W MediaProvider: isAppCloneUserPair for user 0: false
+10-10 02:07:17.498  2636  3106 I MediaProvider: End Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-line.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:17.607  9487  9487 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:17.836  9492  9492 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:17.838  9389  9389 I AIG4    : AIG4_CAD|COMMAND|LAYER.CENTERLINE|ACCEPTED|REV=1
+10-10 02:07:18.093  9497  9497 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:18.320  9502  9502 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:18.322  9389  9389 I AIG4    : AIG4_CAD|COMMAND|ARC|ACCEPTED|REV=1
+10-10 02:07:18.549  9507  9507 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:18.551  9389  9389 I AIG4    : AIG4_CAD|COMMAND|ARC|ACCEPTED|REV=1
+10-10 02:07:18.790  9512  9512 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:18.792  9389  9389 I AIG4    : AIG4_CAD|COMMAND|ARC|ACCEPTED|REV=1
+10-10 02:07:19.029  9517  9517 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:19.034  9389  9389 I AIG4    : AIG4_CAD|COMMAND|ARC|ACCEPTED|REV=2
+10-10 02:07:19.288  9520  9520 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:19.289  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:19.291  9520  9522 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:19.292  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:19.292  9520  9522 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:19.292  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:19.292  9520  9522 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:19.293  9520  9522 D screencap: createUnique: call
+10-10 02:07:19.293  9520  9522 D screencap: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:19.431  9524  9524 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:19.435  2636  3106 I MediaProvider: Begin Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-arc.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:19.438  2636  3106 W MediaProvider: isAppCloneUserPair failed. Users: 0 and 0
+10-10 02:07:19.438  2636  3106 W MediaProvider: isAppCloneUserPair for user 0: false
+10-10 02:07:19.440  2636  3106 I MediaProvider: End Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-arc.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:19.562  9532  9532 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:19.791  9537  9537 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:19.794  9389  9389 I AIG4    : AIG4_CAD|COMMAND|LAYER_VIS.CENTERLINE|ACCEPTED|REV=2
+10-10 02:07:20.031  9540  9540 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:20.032  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:20.034  9540  9542 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:20.034  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:20.034  9540  9542 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:20.034  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:20.034  9540  9542 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:20.035  9540  9542 D screencap: createUnique: call
+10-10 02:07:20.036  9540  9542 D screencap: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:20.167  9544  9544 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:20.170  2636  3106 I MediaProvider: Begin Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-layer-hidden.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:20.173  2636  3106 W MediaProvider: isAppCloneUserPair failed. Users: 0 and 0
+10-10 02:07:20.173  2636  3106 W MediaProvider: isAppCloneUserPair for user 0: false
+10-10 02:07:20.178  2636  3106 I MediaProvider: End Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-layer-hidden.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:20.346  9552  9552 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:20.348  9389  9389 I AIG4    : AIG4_CAD|COMMAND|LAYER_VIS.CENTERLINE|ACCEPTED|REV=2
+10-10 02:07:20.597  9555  9555 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:20.598  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:20.600  9555  9557 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:20.600  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:20.600  9555  9557 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:20.601  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:20.601  9555  9557 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:20.602  9555  9557 D screencap: createUnique: call
+10-10 02:07:20.602  9555  9557 D screencap: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:20.731  9559  9559 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:20.734  2636  3106 I MediaProvider: Begin Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-layer-restored.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:20.737  2636  3106 W MediaProvider: isAppCloneUserPair failed. Users: 0 and 0
+10-10 02:07:20.737  2636  3106 W MediaProvider: isAppCloneUserPair for user 0: false
+10-10 02:07:20.740  2636  3106 I MediaProvider: End Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-layer-restored.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:20.845  9567  9567 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:20.847  9389  9389 I AIG4    : AIG4_CAD|COMMAND|LAYER.WORKPIECE|ACCEPTED|REV=2
+10-10 02:07:21.063  9572  9572 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:21.284  9577  9577 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:21.286  9389  9389 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=2
+10-10 02:07:21.506  9582  9582 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:21.770  9389  9389 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=3
+10-10 02:07:22.096  9587  9587 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:22.098  9389  9389 I AIG4    : AIG4_CAD|COMMAND|SELECT|ACCEPTED|REV=3
+10-10 02:07:22.353  9592  9592 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:22.355  9389  9389 I AIG4    : AIG4_CAD|COMMAND|SELECT|ACCEPTED|REV=3
+10-10 02:07:22.594  9597  9597 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:22.838  9602  9602 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:23.073  9607  9607 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:23.077  9389  9389 I AIG4    : AIG4_CAD|COMMAND|DIM_VALUE.25|ACCEPTED|REV=4
+10-10 02:07:23.108  1806  9351 I keystore2: keystore2::watchdog: Watchdog thread idle -> terminating. Have a great day.
+10-10 02:07:23.330  9610  9610 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:23.332  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:23.334  9610  9612 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:23.334  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:23.334  9610  9612 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:23.334  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:23.334  9610  9612 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:23.335  9610  9612 D screencap: createUnique: call
+10-10 02:07:23.336  9610  9612 D screencap: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:23.468  9614  9614 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:23.472  2636  3106 I MediaProvider: Begin Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-dimension.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:23.474  2636  3106 W ExifInterface: Invalid image: ExifInterface got an unsupported image format file(ExifInterface supports JPEG and some RAW image formats only) or a corrupted JPEG file to ExifInterface.
+10-10 02:07:23.474  2636  3106 W ExifInterface: java.io.EOFException
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at android.media.ExifInterface$ByteOrderedDataInputStream.readShort(ExifInterface.java:4995)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at android.media.ExifInterface.readByteOrder(ExifInterface.java:3977)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at android.media.ExifInterface.parseTiffHeaders(ExifInterface.java:3997)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at android.media.ExifInterface.getRawAttributes(ExifInterface.java:2963)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at android.media.ExifInterface.loadAttributes(ExifInterface.java:2024)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at android.media.ExifInterface.<init>(ExifInterface.java:1641)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at android.media.ExifInterface.<init>(ExifInterface.java:1592)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.scan.ModernMediaScanner.scanItemImage(ModernMediaScanner.java:1367)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.scan.ModernMediaScanner.scanItem(ModernMediaScanner.java:1003)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.scan.ModernMediaScanner.access$1200(ModernMediaScanner.java:146)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.scan.ModernMediaScanner$Scan.visitFile(ModernMediaScanner.java:801)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.scan.ModernMediaScanner$Scan.visitFile(ModernMediaScanner.java:320)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at java.nio.file.Files.walkFileTree(Files.java:2670)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at java.nio.file.Files.walkFileTree(Files.java:2742)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.scan.ModernMediaScanner$Scan.walkFileTree(ModernMediaScanner.java:439)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.scan.ModernMediaScanner$Scan.runInternal(ModernMediaScanner.java:402)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.scan.ModernMediaScanner$Scan.run(ModernMediaScanner.java:391)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.scan.ModernMediaScanner.scanFile(ModernMediaScanner.java:263)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.MediaProvider.scanFile(MediaProvider.java:1274)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.MediaProvider.scanFile(MediaProvider.java:1270)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.MediaService.onScanFile(MediaService.java:215)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at com.android.providers.media.MediaService.onHandleWork(MediaService.java:85)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at androidx.core.app.JobIntentService$CommandProcessor.doInBackground(JobIntentService.java:396)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at androidx.core.app.JobIntentService$CommandProcessor.doInBackground(JobIntentService.java:387)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at android.os.AsyncTask$3.call(AsyncTask.java:394)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-10 02:07:23.474  2636  3106 W ExifInterface: 	at java.lang.Thread.run(Thread.java:920)
+10-10 02:07:23.474  2636  3106 D skia    : --- Failed to create image decoder with message 'unimplemented'
+10-10 02:07:23.475  2636  3106 W MediaProvider: isAppCloneUserPair failed. Users: 0 and 0
+10-10 02:07:23.475  2636  3106 W MediaProvider: isAppCloneUserPair for user 0: false
+10-10 02:07:23.478  2636  3106 I MediaProvider: End Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-dimension.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:23.595  9622  9622 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:23.818  9627  9627 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:23.820  9389  9389 I AIG4    : AIG4_CAD|COMMAND|SNAP|ACCEPTED|REV=4
+10-10 02:07:24.048  9632  9632 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:24.051  9389  9389 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=4
+10-10 02:07:24.268  9637  9637 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:24.434  9642  9642 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:24.872  9645  9645 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:24.873  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:24.876  9645  9647 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:24.876  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:24.876  9645  9647 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:24.876  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:24.876  9645  9647 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:24.877  9645  9647 D screencap: createUnique: call
+10-10 02:07:24.877  9645  9647 D screencap: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:25.015  9650  9650 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:25.019  2636  3106 I MediaProvider: Begin Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-snap-preview.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:25.022  2636  3106 W MediaProvider: isAppCloneUserPair failed. Users: 0 and 0
+10-10 02:07:25.022  2636  3106 W MediaProvider: isAppCloneUserPair for user 0: false
+10-10 02:07:25.024  2636  3106 I MediaProvider: End Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-snap-preview.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:25.123  9658  9658 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:25.124  9389  9389 I AIG4    : AIG4_CAD|COMMAND|LINE|REJECTED|LOCAL_MESSAGE

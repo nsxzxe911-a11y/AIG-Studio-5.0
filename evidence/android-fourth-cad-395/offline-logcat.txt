@@ -1,0 +1,270 @@
+﻿--------- beginning of main
+10-10 02:07:25.638  9684  9684 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+--------- beginning of system
+10-10 02:07:25.639  2031  2390 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity} from uid 0
+10-10 02:07:25.640  2031  2390 W ActivityTaskManager: Can't find TaskDisplayArea to determine support for multi window. Task id=961 attached=false
+10-10 02:07:25.641  2031  2390 D CompatibilityChangeReporter: Compat change id reported: 174042980; UID 10061; state: DISABLED
+10-10 02:07:25.641  2031  2390 D CompatibilityChangeReporter: Compat change id reported: 184838306; UID 10061; state: DISABLED
+10-10 02:07:25.642  2031  2390 D CompatibilityChangeReporter: Compat change id reported: 185004937; UID 10061; state: DISABLED
+10-10 02:07:25.642  2031  2390 D CompatibilityChangeReporter: Compat change id reported: 181136395; UID 10061; state: DISABLED
+10-10 02:07:25.642  2031  2390 D CompatibilityChangeReporter: Compat change id reported: 174042936; UID 10061; state: DISABLED
+10-10 02:07:25.643  2031  2390 D CompatibilityChangeReporter: Compat change id reported: 197654537; UID 10061; state: ENABLED
+10-10 02:07:25.643  2031  2390 D CompatibilityChangeReporter: Compat change id reported: 168419799; UID 10061; state: DISABLED
+10-10 02:07:25.648  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 135634846; UID 10061; state: DISABLED
+10-10 02:07:25.649  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 177438394; UID 10061; state: DISABLED
+10-10 02:07:25.649  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 135772972; UID 10061; state: DISABLED
+10-10 02:07:25.649  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 135754954; UID 10061; state: ENABLED
+10-10 02:07:25.649  2031  2062 D CompatibilityChangeReporter: Compat change id reported: 143937733; UID 10061; state: ENABLED
+10-10 02:07:25.653  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:25.702  8702  8702 I wpa_supplicant: nl80211: deinit ifname=wlan0 disabled_11b_rates=0
+10-10 02:07:25.702  1851  1851 D Zygote  : Forked child process 9687
+10-10 02:07:25.702  2031  2062 W ActivityManager: Slow operation: 54ms so far, now at startProcess: returned from zygote!
+10-10 02:07:25.702  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:25.702  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:25.703  2031  2062 W ActivityManager: Slow operation: 55ms so far, now at startProcess: done updating battery stats
+10-10 02:07:25.703  2031  2062 W ActivityManager: Slow operation: 55ms so far, now at startProcess: building log message
+10-10 02:07:25.703  2031  2062 I ActivityManager: Start proc 9687:com.aigstudio.production.fourth395/u0a61 for pre-top-activity {com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity}
+10-10 02:07:25.703  2031  2062 W ActivityManager: Slow operation: 55ms so far, now at startProcess: starting to update pids map
+10-10 02:07:25.703  2031  2062 W ActivityManager: Slow operation: 55ms so far, now at startProcess: done updating pids map
+10-10 02:07:25.705  9687  9687 I Zygote  : seccomp disabled by setenforce 0
+10-10 02:07:25.706  9687  9687 I ction.fourth39: Late-enabling -Xcheck:jni
+10-10 02:07:25.710  9687  9687 W ction.fourth39: Unexpected CPU variant for X86 using defaults: x86_64
+10-10 02:07:25.715  9687  9687 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:25.724  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:25.725  9687  9703 E ashmem  : memfd: ro.vndk.version not defined or invalid (), this is mandated since P.
+10-10 02:07:25.726  9687  9687 D CompatibilityChangeReporter: Compat change id reported: 171979766; UID 10061; state: ENABLED
+10-10 02:07:25.742  2031  2387 W system_server: Long monitor contention with owner WifiHandlerThread (2146) at boolean com.android.server.wifi.SupplicantStaIfaceHal.removeIfaceV1_1(java.lang.String)(SupplicantStaIfaceHal.java:619) waiters=0 in void com.android.server.wifi.SupplicantStaIfaceCallbackImpl.onDisconnected(byte[], boolean, int) for 162ms
+10-10 02:07:25.742  2031  2051 I EthernetTracker: interfaceLinkStateChanged, iface: wlan0, up: false
+10-10 02:07:25.742  1958  1958 I wificond: Unsubscribe scan result for interface with index: 4
+10-10 02:07:25.742  2031  2051 I EthernetTracker: interfaceLinkStateChanged, iface: wlan0, up: false
+10-10 02:07:25.743  1958  1958 I wificond: tearDownClientInterface: erasing wiphy_index for iface_name wlan0
+10-10 02:07:25.743  1958  1958 I wificond: remove channel type 0 support at wiphy index 0
+10-10 02:07:25.743  1958  1958 I wificond: remove channel type 1 support at wiphy index 0
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: readPacket error:
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: android.system.ErrnoException: read failed: ENETDOWN (Network is down)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at libcore.io.Linux.readBytes(Native Method)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at libcore.io.Linux.read(Linux.java:190)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at libcore.io.ForwardingOs.read(ForwardingOs.java:617)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at libcore.io.BlockGuardOs.read(BlockGuardOs.java:324)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at libcore.io.ForwardingOs.read(ForwardingOs.java:617)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at android.system.Os.read(Os.java:579)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at com.android.networkstack.util.PacketReader.readPacket(PacketReader.java:57)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at com.android.networkstack.util.PacketReader.readPacket(PacketReader.java:32)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at com.android.networkstack.util.FdEventsReader.handleInput(FdEventsReader.java:224)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at com.android.networkstack.util.FdEventsReader.lambda$createAndRegisterFd$0(FdEventsReader.java:204)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at com.android.networkstack.util.FdEventsReader.$r8$lambda$OgIGPQ7BvCo_znleuT06fluGUjY(Unknown Source:0)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at com.android.networkstack.util.FdEventsReader$$ExternalSyntheticLambda0.onFileDescriptorEvents(Unknown Source:2)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at android.os.MessageQueue.dispatchEvents(MessageQueue.java:293)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at android.os.MessageQueue.nativePollOnce(Native Method)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at android.os.MessageQueue.next(MessageQueue.java:335)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at android.os.Looper.loopOnce(Looper.java:161)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at android.os.Looper.loop(Looper.java:288)
+10-10 02:07:25.743  2366  8708 E ConnectivityPacketTracker.wlan0: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+10-10 02:07:25.744  2031  2146 I SupplicantStaIfaceHal: Terminating supplicant using HIDL
+10-10 02:07:25.744  2031  2146 I android_os_HwBinder: HwBinder: Starting thread pool for getting: android.hardware.wifi.supplicant@1.0::ISupplicant/default
+10-10 02:07:25.744  8702  8702 I wpa_supplicant: Terminating...
+10-10 02:07:25.744  2366  8708 E DhcpClient: readPacket error:
+10-10 02:07:25.744  2366  8708 E DhcpClient: android.system.ErrnoException: read failed: ENETDOWN (Network is down)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at libcore.io.Linux.readBytes(Native Method)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at libcore.io.Linux.read(Linux.java:190)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at libcore.io.ForwardingOs.read(ForwardingOs.java:617)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at libcore.io.BlockGuardOs.read(BlockGuardOs.java:324)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at libcore.io.ForwardingOs.read(ForwardingOs.java:617)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at android.system.Os.read(Os.java:579)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at android.net.dhcp.DhcpClient$DhcpPacketHandler.readPacket(DhcpClient.java:698)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at android.net.dhcp.DhcpClient$DhcpPacketHandler.readPacket(DhcpClient.java:648)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at com.android.networkstack.util.FdEventsReader.handleInput(FdEventsReader.java:224)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at com.android.networkstack.util.FdEventsReader.lambda$createAndRegisterFd$0(FdEventsReader.java:204)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at com.android.networkstack.util.FdEventsReader.$r8$lambda$OgIGPQ7BvCo_znleuT06fluGUjY(Unknown Source:0)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at com.android.networkstack.util.FdEventsReader$$ExternalSyntheticLambda0.onFileDescriptorEvents(Unknown Source:2)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at android.os.MessageQueue.dispatchEvents(MessageQueue.java:293)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at android.os.MessageQueue.nativePollOnce(Native Method)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at android.os.MessageQueue.next(MessageQueue.java:335)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at android.os.Looper.loopOnce(Looper.java:161)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at android.os.Looper.loop(Looper.java:288)
+10-10 02:07:25.744  2366  8708 E DhcpClient: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+10-10 02:07:25.747  2206  2224 W System  : A resource failed to call close.
+10-10 02:07:25.747  2206  2224 W System  : A resource failed to call close.
+10-10 02:07:25.747  2206  2224 W System  : A resource failed to call release.
+10-10 02:07:25.751  9687  9687 V GraphicsEnvironment: ANGLE Developer option for 'com.aigstudio.production.fourth395' set to: 'default'
+10-10 02:07:25.751  9687  9687 V GraphicsEnvironment: ANGLE GameManagerService for com.aigstudio.production.fourth395: false
+10-10 02:07:25.751  9687  9687 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+10-10 02:07:25.752  9687  9687 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+10-10 02:07:25.752  9687  9687 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+10-10 02:07:25.789  9687  9706 D ction.fourth39: createUnique: call
+10-10 02:07:25.790  9687  9706 D ction.fourth39: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:25.791  9687  9706 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:25.798  2031  2146 W SupplicantStaIfaceHal: Timed out waiting for confirmation of supplicant death
+10-10 02:07:25.798  2031  2146 D WifiNl80211Manager: tearing down interfaces in wificond
+10-10 02:07:25.798  2031  2146 I WifiNative: Vendor Hal not supported, ignoring stop.
+10-10 02:07:25.798  2031  2146 I WifiNative: Successfully torn down Iface:{Name=wlan0,Id=4,Type=STA_CONNECTIVITY}
+10-10 02:07:25.798  2031  2146 I WifiNative: Successfully initiated teardown for iface=wlan0
+10-10 02:07:25.798  2031  2146 I WifiClientModeManager[unknown]: StartedState#exit(), setting mRole = null
+10-10 02:07:25.798  2031  2146 D WifiClientModeImpl[wlan0]: ClientModeImpl: Leaving Connected state
+10-10 02:07:25.798  2031  2146 D WifiCountryCode: evaluateAllCmmStateAndApplyIfAllReady: {ConcreteClientModeManager{id=4913489 iface=null role=ROLE_CLIENT_PRIMARY}=true}
+10-10 02:07:25.798  2031  2146 D WifiCountryCode: updateCountryCode to TW
+10-10 02:07:25.798  2031  2146 D WifiCountryCode: Failed to set country code (ConcreteClientModeManager) to TW
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: ISupplicantStaNetwork.disable failed with exception
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: android.os.DeadObjectException: HwBinder Error: (-32)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at android.os.HwRemoteBinder.transact(Native Method)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at com.android.wifi.x.android.hardware.wifi.supplicant.V1_0.ISupplicantStaNetwork$Proxy.disable(ISupplicantStaNetwork.java:3535)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at com.android.server.wifi.SupplicantStaNetworkHal.disable(SupplicantStaNetworkHal.java:3172)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at com.android.server.wifi.SupplicantStaIfaceHal.disableCurrentNetwork(SupplicantStaIfaceHal.java:1174)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at com.android.server.wifi.WifiNative.disableNetwork(WifiNative.java:2644)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at com.android.server.wifi.ClientModeImpl$ConnectingOrConnectedState.exit(ClientModeImpl.java:4243)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at com.android.wifi.x.com.android.internal.util.StateMachine$SmHandler.invokeExitMethods(StateMachine.java:1022)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at com.android.wifi.x.com.android.internal.util.StateMachine$SmHandler.performTransitions(StateMachine.java:878)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at com.android.wifi.x.com.android.internal.util.StateMachine$SmHandler.handleMessage(StateMachine.java:820)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at android.os.Looper.loopOnce(Looper.java:201)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at android.os.Looper.loop(Looper.java:288)
+10-10 02:07:25.800  2031  2146 E SupplicantStaNetworkHal: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+10-10 02:07:25.800  2031  2146 E SupplicantStaIfaceHal: Can't call listNetworks, ISupplicantStaIface is null for iface=wlan0
+10-10 02:07:25.800  2031  2146 E SupplicantStaIfaceHal: removeAllNetworks failed, got null networks
+10-10 02:07:25.800  2031  2146 E WifiClientModeImpl[wlan0]: Failed to remove networks on exiting connect mode
+10-10 02:07:25.800  2031  2146 E SupplicantStaIfaceHal: Can't call setPowerSave, ISupplicantStaIface is null for iface=wlan0
+10-10 02:07:25.800  2031  2146 E SupplicantStaIfaceHal: Can't call setBtCoexistenceMode, ISupplicantStaIface is null for iface=wlan0
+10-10 02:07:25.801  2031  2153 D ConnectivityService: [104 WIFI] EVENT_NETWORK_INFO_CHANGED, going from CONNECTED to DISCONNECTED
+10-10 02:07:25.801  2031  2153 D ConnectivityService: [104 WIFI] disconnected, was satisfying 37
+10-10 02:07:25.803  2031  2146 D WifiDiags: stopLogging() iface list is {} after removing wlan0
+10-10 02:07:25.808  9714  9714 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:25.818  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:25.834  2031  2172 D SupplicantStaIfaceHal: ISupplicant died: cookie=-7366507480949705062
+10-10 02:07:25.837  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:25.838  2366  8708 D DhcpClient: doQuit
+10-10 02:07:25.842  2366  8708 D DhcpClient: DHCP Packet Handler stopped
+10-10 02:07:25.842  2366  8708 D DhcpClient: onQuitting
+10-10 02:07:25.844  7598  8550 V NativeCrypto: Read error: ssl=0x746eb19e4818: I/O error during system call, Software caused connection abort
+10-10 02:07:25.846  7598  9293 V NativeCrypto: SSL shutdown failed: ssl=0x746eb19e4818: I/O error during system call, Broken pipe
+10-10 02:07:25.846  7598  9293 W WakeLock: GCM_HB_ALARM release without a matched acquire! [CONTEXT service_id=259 ]
+10-10 02:07:25.846  7598  9293 W WakeLock: GCM_HB_ALARM counter does not exist
+10-10 02:07:25.847  7598  9293 I AlarmManager: setExactAndAllowWhileIdle [name: GCM_CONN_ALARM type: 2 triggerAtMillis: 6054099]
+10-10 02:07:25.848  7598  9293 W WakeLock: GCM_CONN_ALARM release without a matched acquire! [CONTEXT service_id=259 ]
+10-10 02:07:25.848  7598  9293 W WakeLock: GCM_CONN_ALARM counter does not exist
+10-10 02:07:25.850  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:25.853  2031  2150 I WifiScanningService: Received a request to disable scanning, UID = 1000
+10-10 02:07:25.854  2031  2150 E WifiNl80211Manager: No valid wificond scanner interface handler for iface=wlan0
+10-10 02:07:25.854  2031  2150 I WifiScanningService: Removed an impl for wlan0
+10-10 02:07:25.854  2031  2150 I WifiScanningService: wifi driver unloaded
+10-10 02:07:25.854  2031  2146 D WifiScanRequestProxy: Sending scan available broadcast: false
+10-10 02:07:25.854  2031  2146 I WifiScanRequestProxy: Scanning is disabled
+10-10 02:07:25.854  2031  2146 D WifiCountryCode: evaluateAllCmmStateAndApplyIfAllReady: {}
+10-10 02:07:25.855  2031  2146 D WifiNetworkAgent: NetworkAgent: NetworkAgent channel lost
+10-10 02:07:25.855  2031  2146 W SupplicantStaIfaceHal: ISupplicant died: cookie=5
+10-10 02:07:25.855  2031  2146 D WifiController: STA disabled, return to DisabledState.
+10-10 02:07:25.855  2031  2146 D WifiController: EnabledState.exit()
+10-10 02:07:25.855  2031  2146 D WifiController: DisabledState.enter()
+10-10 02:07:25.857  2031  2390 D WifiMemoryStoreImpl: Set cluster Gd7bc338e1768a425 for W4c51e20ae729f426: SUCCESS
+10-10 02:07:25.862  9687  9706 W OpenGLRenderer: Failed to initialize 101010-2 format, error = EGL_SUCCESS
+10-10 02:07:25.862  9687  9706 D EGL_emulation: rcCreateContext wated version 2.0  rc:4
+10-10 02:07:25.862  9687  9709 D ction.fourth39: createUnique: call
+10-10 02:07:25.863  9687  9709 D ction.fourth39: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:25.863  2031  2390 D WifiMemoryStoreImpl: Set cluster Gd7bc338e1768a425 for Wd7bc338e1768a425: SUCCESS
+10-10 02:07:25.863  9687  9709 D EGL_emulation: rcCreateContext wated version 3.0  rc:4
+10-10 02:07:25.863  9687  9706 D EGL_emulation: eglMakeCurrent: 0x746ec1a0b3b0: ver 3 2 (tinfo 0x746e41a1e980) (first time)
+10-10 02:07:25.866  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:25.866  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:25.866  9687  9709 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:25.866  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:25.866  9687  9709 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:25.867  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.allocator@4.0::IAllocator/default in either framework or device VINTF manifest.
+10-10 02:07:25.867  9687  9709 W Gralloc4: allocator 4.x is not supported
+10-10 02:07:25.867  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.allocator@3.0::IAllocator/default in either framework or device VINTF manifest.
+10-10 02:07:25.867  9687  9709 W Gralloc3: allocator 3.x is not supported
+10-10 02:07:25.868  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 7929856
+10-10 02:07:25.868  9687  9709 D ction.fourth39: createUnique: call
+10-10 02:07:25.869  9687  9709 D ction.fourth39: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:25.869  1898  1946 E HWComposer: getSupportedContentTypes: getSupportedContentTypes failed for display 0: Unsupported (8)
+10-10 02:07:25.870  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:25.870  9687  9709 D EGL_emulation: eglMakeCurrent: 0x746ec19fa710: ver 3 2 (tinfo 0x746e41a20b10) (first time)
+10-10 02:07:25.874  9687  9709 I AIG4    : AIG4_GLES|VERSION|OpenGL ES 3.1
+10-10 02:07:25.876  9687  9706 E libEGL  : called unimplemented OpenGL ES API
+10-10 02:07:25.878  9687  9709 I AIG4    : AIG4_GLES|FIRST_FRAME|PASS
+10-10 02:07:25.881  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 7929856
+10-10 02:07:25.883  2031  2051 I GnssNetworkConnectivityHandler: Network connection lost. Available networks count: 0
+10-10 02:07:25.883  2031  2051 I GnssNetworkConnectivityHandler: updateNetworkState, state=CLOSED, connected=false, network=104, capabilities=[ Transports: WIFI Capabilities: NOT_METERED&INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&VALIDATED&NOT_ROAMING&FOREGROUND&NOT_CONGESTED&NOT_SUSPENDED&NOT_VCN_MANAGED LinkUpBandwidth>=12000Kbps LinkDnBandwidth>=60000Kbps TransportInfo: <SSID: <unknown ssid>, BSSID: 02:00:00:00:00:00, MAC: 02:00:00:00:00:00, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: 0, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: -1Mbps, Rx Link speed: -1Mbps, Max Supported Rx Link speed: -1Mbps, Frequency: 5240MHz, Net ID: -1, Metered hint: false, score: 60, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1> SignalStrength: -50 SSID: "VirtWifi"], availableNetworkCount: 0
+10-10 02:07:25.884  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:25.885  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 7929856
+10-10 02:07:25.885  2366  2459 D UpstreamNetworkMonitor: Lost default Internet network: 104
+10-10 02:07:25.886  7598  7652 I NearbyPresence: (REDACTED) NetworkMonitorImpl onLost %s
+10-10 02:07:25.886  7598  8042 I NearbyMediums: WifiLanConnectivityInfo is changed, should notify.
+10-10 02:07:25.886  7598  8782 I NearbyPresence: (REDACTED) %s: removing devices: %s
+10-10 02:07:25.886  7598  8782 I NearbyPresence: (REDACTED) %s verified [==] new request %s equals to the old request
+10-10 02:07:25.886  7598  8042 I NearbyMediums: [WifiNetworkV2] networkCallback doLost netId:104 wifiStatusChangedCallbacks.size:0
+10-10 02:07:25.886  7598  8782 I NearbyPresence: (REDACTED) %s verified [==] new request %s equals to the old request
+10-10 02:07:25.886  2031  2153 D ConnectivityService: Sending DISCONNECTED broadcast for type 1 [104 WIFI] isDefaultNetwork=true
+10-10 02:07:25.886  2031  2153 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendStickyBroadcast:1568 com.android.server.ConnectivityService.sendStickyBroadcast:2811 com.android.server.ConnectivityService.sendLegacyNetworkBroadcast:8732 com.android.server.ConnectivityService$LegacyTypeTracker.remove:1007 com.android.server.ConnectivityService$LegacyTypeTracker.remove:1024
+10-10 02:07:25.887  2031  2153 D ConnectivityService: NetReassign [no changes]
+10-10 02:07:25.888  7598  8190 I NearbyMediums: (REDACTED) Querying wifi usable channels failed with exception
+10-10 02:07:25.888  7598  8190 I NearbyMediums: java.lang.UnsupportedOperationException
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at android.os.Parcel.createExceptionOrNull(Parcel.java:2437)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at android.os.Parcel.createException(Parcel.java:2409)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at android.os.Parcel.readException(Parcel.java:2392)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at android.os.Parcel.readException(Parcel.java:2334)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at android.net.wifi.IWifiManager$Stub$Proxy.getUsableChannels(IWifiManager.java:5127)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at android.net.wifi.WifiManager.getUsableChannels(WifiManager.java:8157)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at ciq$$ExternalSyntheticApiModelOutline0.m(D8$$SyntheticClass:59)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at dywz.x(:com.google.android.gms@263768032@26.37.68 (190800-995428298):21)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at dywz.t(:com.google.android.gms@263768032@26.37.68 (190800-995428298):22)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at dywz.o(:com.google.android.gms@263768032@26.37.68 (190800-995428298):24)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at dzqm.run(:com.google.android.gms@263768032@26.37.68 (190800-995428298):9)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at bped.d(:com.google.android.gms@263768032@26.37.68 (190800-995428298):50)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at bped.c(:com.google.android.gms@263768032@26.37.68 (190800-995428298):6)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at bped.run(:com.google.android.gms@263768032@26.37.68 (190800-995428298):33)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at bpkc.run(:com.google.android.gms@263768032@26.37.68 (190800-995428298):8)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at java.lang.Thread.run(Thread.java:920)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: Caused by: android.os.RemoteException: Remote stack trace:
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at com.android.server.wifi.WifiServiceImpl.getUsableChannels(WifiServiceImpl.java:5365)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at android.net.wifi.IWifiManager$Stub.onTransact(IWifiManager.java:2001)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at android.os.Binder.execTransactInternal(Binder.java:1184)
+10-10 02:07:25.888  7598  8190 I NearbyMediums: 	at android.os.Binder.execTransact(Binder.java:1143)
+10-10 02:07:25.888  7598  8190 I NearbyMediums:
+10-10 02:07:25.888  7598  8190 I NearbyMediums: [DeviceCapabilities] Skip refreshing cached wifi channels because it is not supported (refreshCacheWifiChannelsRightAfterNetworkCallbackInvoked:true isWifiGetUsableChannelsSupported:false)
+10-10 02:07:25.888  1850  1891 E libnetd_resolv: tcQdiscDelDevClsact(4[wlan0]) failure: Invalid argument
+10-10 02:07:25.891  9687  9687 I AIG4    : AIG4_CAD|RECOVERY|RESTORED
+10-10 02:07:25.894  2031  2051 I ActivityTaskManager: Displayed com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity: +253ms
+10-10 02:07:25.900  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:25.902  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:26.103  2031  2390 W InputManager-JNI: Input channel object 'c922b05 Splash Screen com.aigstudio.production.fourth395 (client)' was disposed without first being removed with the input manager!
+10-10 02:07:26.113  2206  2206 D TileServices: Couldn't find tile for ComponentInfo{com.google.android.gms/com.google.android.gms.nearby.sharing.SharingTileService}
+10-10 02:07:26.113  7598  8190 I NearbySharing: Broadcasting NearbySharing state change.
+10-10 02:07:26.218  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:26.233  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:26.251  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:26.269  2206  2421 E emuglGLESv2_enc: device/MTL/opengl/system/GLESv2_enc/GL2Encoder.cpp:s_glBlendFunc:6960 GL error 0x500 condition [!GLESv2Validation::allowedBlendFunc(sfactor) || !GLESv2Validation::allowedBlendFunc(dfactor)]
+10-10 02:07:26.429  7598  8042 I NearbySharing: Network state changed: NetworkState(isRestricted=false, isOnline=false, isCongested=false, isMetered=false, isWifiConnected=false)
+10-10 02:07:27.574  7598  7598 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.auth.aang.events.services.START dat=chimera-action: cmp=com.google.android.gms/.chimera.PersistentApiService }
+10-10 02:07:27.579  7598  7598 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.feedback.internal.IFeedbackService dat=chimera-action: cmp=com.google.android.gms/.chimera.GmsBoundBrokerService }
+10-10 02:07:27.767  9723  9723 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:27.769  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:27.771  9723  9725 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:27.771  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:27.772  9723  9725 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:27.772  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:27.772  9723  9725 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:27.773  9723  9725 D screencap: createUnique: call
+10-10 02:07:27.773  9723  9725 D screencap: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:27.786  7598  7598 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.backup.GMS_MODULE_RESTORE dat=chimera-action: cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-10 02:07:27.936  9727  9727 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:27.940  2636  3106 I MediaProvider: Begin Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-offline-home.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:27.944  2636  3106 W MediaProvider: isAppCloneUserPair failed. Users: 0 and 0
+10-10 02:07:27.944  2636  3106 W MediaProvider: isAppCloneUserPair for user 0: false
+10-10 02:07:27.946  2636  3106 I MediaProvider: End Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-offline-home.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:28.083  9735  9735 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:28.085  9687  9687 I AIG4    : AIG4_SCENE|HOME_TO_CAD|PASS
+10-10 02:07:28.340  9738  9738 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:28.341  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:28.343  9738  9740 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:28.343  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:28.343  9738  9740 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:28.343  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:28.343  9738  9740 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:28.345  9738  9740 D screencap: createUnique: call
+10-10 02:07:28.345  9738  9740 D screencap: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:28.485  9742  9742 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:28.488  2636  3106 I MediaProvider: Begin Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-recovered.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:28.491  2636  3106 W MediaProvider: isAppCloneUserPair failed. Users: 0 and 0
+10-10 02:07:28.492  2636  3106 W MediaProvider: isAppCloneUserPair for user 0: false
+10-10 02:07:28.494  2636  3106 I MediaProvider: End Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-cad-recovered.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }

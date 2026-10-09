@@ -1,45 +1,45 @@
-# Fourth Runtime CAD Progress — AIG CNC 395-fourth-cad
+# Fourth Runtime CAD Progress - AIG CNC 395-fourth-cad
 
 Date: 2026-10-10
-Branch: `feat/aig-cnc-395-fourth-runtime-cad`
-Pre-Task-6 HEAD: `d3ea35ebf5d141988cb6761e8145b533bd0c6002`
-Verified runtime-code HEAD before evidence refresh: `e7fd79e8681c3153e3eb37247973803f4c16f6bd`
-Plan: `docs/superpowers/plans/2026-10-09-fourth-runtime-foundation-cad-implementation.md`
-Spec: `docs/superpowers/specs/2026-10-09-aig-fourth-runtime-architecture-design.md`
+Branch: feat/aig-cnc-395-fourth-runtime-cad
+Verified runtime-code HEAD: 7940487adc97ae6fa8e9b70d29f1476e140d9749
+Task 6 plan: docs/superpowers/plans/2026-10-10-fourth-runtime-cad-standalone-completion.md
+Architecture spec: docs/superpowers/specs/2026-10-09-aig-fourth-runtime-architecture-design.md
 
-## Completed
+## Completed fourth-runtime CAD standalone
 
-- Added backend-neutral `runtime-contract` and `CadRuntimePort` command/state boundary.
-- Wrapped the proven CAD core with `FourthCadRuntimeAdapter`; Renderer does not call legacy UI panels.
-- Added RGB Scene Graph with deterministic hit testing, adaptive layout, local messages, and one-key `CAD.TOOL_GROUP` popup.
-- AIG RGB textures are direct GPU nodes: LINE, RECT, CIRCLE, HOLE, SELECT, TOOL_GROUP, HOME (`workspace.png`) and CAD (`cad.png`).
-- Texture provenance + SHA-256 are verified against `engineering-assets/images`; HOME/CAD navigation no longer uses fallback color blocks.
-- Advanced CAD controls without approved RGB cut art now render readable labels as generated GLES textures on the same GPU Scene Node; no Android Button/TextView overlay is used.
-- Added one real Android GLES3 surface. Functional CAD is not a full-page `cad.png`, Android Button, ImageView, or legacy shell overlay.
-- Added a separate fourth-architecture launcher APK with no `CleanMainActivity`, `app-production`, Swing, or AWT parent.
-- Nox real runtime verified HOME → CAD → HOME and real CAD commands through touch input.
+- Backend-neutral runtime-contract and authoritative CAD runtime adapter are active; Renderer does not own machining geometry or Snap calculations.
+- Functional Android product UI is one GLES 3.x surface and GPU Scene Graph. No Android Button/TextView/ImageView composition, CleanMainActivity, Engineering Shell, NOUI host, Swing, or AWT is the official runtime path.
+- CAD supports the preserved base inventory plus Task 1-5 completion: ARC, layer visibility, driven dimensions, deterministic autosave/recovery after a real first frame, and authoritative 7-mode Snap preview/HUD.
+- Local invalid CAD input remains a local message only; the next valid command is accepted without a global red lock.
+- RGB controls are GPU nodes with hit testing/callback/state; CAD geometry and Snap markers are rendered from authoritative runtime state rather than a full-page screenshot substrate.
 
-## Runtime evidence
+## Task 6 current-APK Nox acceptance
 
-Nox AIG12: Android 12, SM-S9280 profile, 320 dpi, verified landscape surface 1920×1080; runtime reports `OpenGL ES 3.1`.
-APK: `product-host-android/build/outputs/apk/debug/product-host-android-debug.apk`
-APK size: `1564074` bytes
-APK SHA-256: `6edf0419680bf50924aaa129a02dac1ce5bc89e26faa12ea8b2d6e3ae3ae487e`
-Evidence: `evidence/android-fourth-cad-395`
+Package: com.aigstudio.production.fourth395
+APK: product-host-android/build/outputs/apk/debug/product-host-android-debug.apk
+APK SHA-256: 69b1c44398b19f0b25e46b0c680edf4fe593815d85220728230d4dc456392ee9
+Evidence: evidence/android-fourth-cad-395
+ADB serial: 127.0.0.1:62026 (rediscovered from the current Nox ADB device list and matched to the evidence manifest)
+Nox profile: SM-S9280
+Android API: 32
+Runtime GLES: OpenGL ES 3.1
 
-Fresh evidence for this APK includes `home.png`, `cad.png`, `cad-line.png`, `cad-tool-group.png`, `offline-home.png`, `rotated-cad.png`, `runtime-logcat.txt`, and `rotation-logcat.txt`.
+Fresh evidence contains HOME/CAD, LINE continuation, three-tap ARC, layer hide/show, driven dimension, Snap preview, recovered CAD, offline HOME, rotated CAD, runtime/offline/rotation logcat, rotation state, and a SHA-bound standalone manifest.
 
-Verified runtime sequence:
-`AIG4_GLES|FIRST_FRAME|PASS → HOME_TO_CAD → zero-length LINE REJECTED|LOCAL_MESSAGE → valid LINE REV=1 → SELECT → UNDO REV=2 → REDO REV=3 → SNAP → TOOL_GROUP expanded → OFFSET REV=4 → CAD_TO_HOME`.
+Verified behavior:
+- zero-length LINE -> REJECTED|LOCAL_MESSAGE, followed by a valid LINE -> ACCEPTED;
+- ARC three-tap sequence advances authoritative CAD revision;
+- CENTERLINE hide/show does not delete geometry or advance geometry revision;
+- driven dimension value 25 advances revision;
+- Snap mode/preview is produced by the existing authoritative Snap engine and does not mutate CAD revision;
+- offline relaunch logs real AIG4_GLES|FIRST_FRAME|PASS before AIG4_CAD|RECOVERY|RESTORED;
+- rotation keeps the same process and authoritative state: PID 9687 -> 9687, orientation 1 -> 0 -> 1, revision 5 -> 6.
 
-Offline-first: Wi-Fi was disabled, the process was relaunched, and `AIG4_GLES|FIRST_FRAME|PASS` still appeared. Nox exposes no cellular phone service, so Wi-Fi is the meaningful external network path on this emulator.
+## Final Task 6 gates
 
-Rotation/state isolation was rerun on this APK with the Nox orientation mismatch explicitly normalized: create LINE REV=1 → rotate the surface → restore landscape with the same process PID → create another LINE REV=2. Renderer/surface recreation did not reset authoritative CAD state.
+PASS: runtime-contract:test, production-runtime:test, legacy CAD regressions (base/advanced/corner/snap/topology), renderer-android:testDebugUnitTest, product-host-android:testDebugUnitTest, verify_fourth_gles_cad.ps1, verify_fourth_host_boundary.ps1, verify_fourth_cad_standalone.ps1, and git diff --check.
 
-## No-red-lock result
+## Remaining scope
 
-A zero-length LINE generated only `REJECTED|LOCAL_MESSAGE`. The next valid LINE succeeded immediately. The product stayed usable and `CadState` contains no global lock/fail state.
-
-## Remaining after this milestone
-
-This is Fourth Runtime Foundation + CAD vertical slice, not the complete product. CAD standalone still needs remaining stable inventory/persistence and production polish such as ARC UI, layers, autosave/recovery, dimensions, richer Snap presentation, and optional dedicated RGB art for advanced tools that currently use readable generated GLES label textures. After standalone CAD, continue CAM, 3D SIM, 3AX, 4AX, 5AX, 6AX, NC/G-code, AI/update, Windows D3D11 parity, then Shared Link Graph CONNECT/DISCONNECT.
+CAD Standalone for the fourth architecture is complete for this plan. CAM is intentionally not folded into this milestone and must start as a separate next plan. Remaining product migration after CAD is CAM, 3D SIM, 3AX/4AX/5AX/6AX, NC/G-code, AI/update/sync integration, Windows D3D11 parity, and later cross-module CONNECT/DISCONNECT integration. Optional RGB art polish for advanced controls may continue without moving machining logic back into the renderer.

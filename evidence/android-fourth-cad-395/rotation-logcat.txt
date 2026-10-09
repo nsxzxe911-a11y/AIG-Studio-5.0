@@ -1,7 +1,495 @@
 ﻿--------- beginning of main
-10-10 00:37:50.387  6038  6060 I AIG4    : AIG4_GLES|VERSION|OpenGL ES 3.1
-10-10 00:37:50.392  6038  6060 I AIG4    : AIG4_GLES|FIRST_FRAME|PASS
-10-10 00:37:52.347  6038  6038 I AIG4    : AIG4_SCENE|HOME_TO_CAD|PASS
-10-10 00:37:52.704  6038  6038 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=0
-10-10 00:37:53.418  6038  6038 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=1
-10-10 00:38:01.066  6038  6038 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=2
+10-10 02:07:28.700  9762  9762 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:28.704  9687  9687 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=4
+10-10 02:07:28.743  2031  2146 E SupplicantStaIfaceHal: Can't call setupIface, ISupplicantStaIface is null for iface=wlan0
+10-10 02:07:28.743  2031  2146 I android_os_HwBinder: HwBinder: Starting thread pool for getting: android.hardware.wifi.supplicant@1.0::ISupplicant/default
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: Override interface parameter: ctrl_interface ('(null)' -> '/data/vendor/wifi/wpa/sockets')
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: Initializing interface 'wlan0' conf '/data/vendor/wifi/wpa/wpa_supplicant.conf' driver 'nl80211' ctrl_interface '/data/vendor/wifi/wpa/sockets' bridge 'N/A'
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: Configuration file '/data/vendor/wifi/wpa/wpa_supplicant.conf' -> '/data/vendor/wifi/wpa/wpa_supplicant.conf'
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: Reading configuration file '/data/vendor/wifi/wpa/wpa_supplicant.conf'
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: ctrl_interface='wlan0'
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: update_config=1
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: eapol_version=1
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: ap_scan=1
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: fast_reauth=1
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: Reading configuration file '/vendor/etc/wifi/wpa_supplicant_overlay.conf'
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: p2p_disabled=1
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: key_mgmt=0xd0f enc=0x0 auth=0x7 flags=0x1035080 rrm_flags=0x0 probe_resp_offloads=0x0 max_stations=0 max_remain_on_chan=5000 max_scan_ssids=4
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: interface wlan0 in phy phy0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Set mode ifindex 4 iftype 2 (STATION)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Subscribe to mgmt frames with non-AP handle 0x778415c33960
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=0104 multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 01 04
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=040a multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 04 0a
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=040b multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 04 0b
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=040c multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 04 0c
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=040d multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 04 0d
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=090a multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 09 0a
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=090b multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 09 0b
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=090c multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 09 0c
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=090d multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 09 0d
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=0409506f9a09 multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=6): 04 09 50 6f 9a 09
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=7f506f9a09 multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=5): 7f 50 6f 9a 09
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=0409506f9a1a multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=6): 04 09 50 6f 9a 1a
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=0801 multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 08 01
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=06 multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=1): 06
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=0a07 multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 0a 07
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=0a11 multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 0a 11
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=0a0b multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 0a 0b
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=0a1a multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 0a 1a
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=1101 multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 11 01
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=1102 multicast=0
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 11 02
+10-10 02:07:28.744  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=0505 multicast=0
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 05 05
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=0500 multicast=0
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 05 00
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Register frame type=0xd0 (WLAN_FC_STYPE_ACTION) nl_handle=0x778415c33960 match=1305 multicast=0
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Register frame command failed (type=208): ret=-95 (Operation not supported on transport endpoint)
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Register frame match - hexdump(len=2): 13 05
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Failed to register Action frame processing - ignore for now
+10-10 02:07:28.745  9757  9757 I wpa_supplicant: rfkill: Cannot open RFKILL control device
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: RFKILL status not available
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: netlink: Operstate: ifindex=4 linkmode=1 (userspace-control), operstate=5 (IF_OPER_DORMANT)
+10-10 02:07:28.745  2031  2051 I EthernetTracker: interfaceLinkStateChanged, iface: wlan0, up: false
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: Add interface wlan0 to a new radio phy0
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Regulatory information - country=00
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: 2402-2472 @ 40 MHz 20 mBm
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: 2457-2482 @ 20 MHz 20 mBm (no IR)
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: 2474-2494 @ 20 MHz 20 mBm (no OFDM) (no IR)
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: 5170-5250 @ 80 MHz 20 mBm (no IR)
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: 5250-5330 @ 80 MHz 20 mBm (DFS) (no IR)
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: 5490-5730 @ 160 MHz 20 mBm (DFS) (no IR)
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: 5735-5835 @ 80 MHz 20 mBm (no IR)
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: 57240-63720 @ 2160 MHz 0 mBm
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Added 802.11b mode based on 802.11g information
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Mode IEEE 802.11g: 2432
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Mode IEEE 802.11a: 5240[NO_IR]
+10-10 02:07:28.745  9757  9757 D wpa_supplicant: nl80211: Mode IEEE 802.11b: 2432
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: wlan0: Own MAC address: 08:00:27:21:12:31
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: wpa_driver_nl80211_set_key: ifindex=4 (wlan0) alg=0 addr=0x0 key_idx=0 set_tx=0 seq_len=0 key_len=0 key_flag=0x10
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: DEL_KEY
+10-10 02:07:28.832  9757  9757 D wpa_supplicant:    broadcast key
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: set_key failed; err=-95 Operation not supported on transport endpoint
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: wpa_driver_nl80211_set_key: ifindex=4 (wlan0) alg=0 addr=0x0 key_idx=1 set_tx=0 seq_len=0 key_len=0 key_flag=0x10
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: DEL_KEY
+10-10 02:07:28.832  9757  9757 D wpa_supplicant:    broadcast key
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: set_key failed; err=-95 Operation not supported on transport endpoint
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: wpa_driver_nl80211_set_key: ifindex=4 (wlan0) alg=0 addr=0x0 key_idx=2 set_tx=0 seq_len=0 key_len=0 key_flag=0x10
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: DEL_KEY
+10-10 02:07:28.832  9757  9757 D wpa_supplicant:    broadcast key
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: set_key failed; err=-95 Operation not supported on transport endpoint
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: wpa_driver_nl80211_set_key: ifindex=4 (wlan0) alg=0 addr=0x0 key_idx=3 set_tx=0 seq_len=0 key_len=0 key_flag=0x10
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: DEL_KEY
+10-10 02:07:28.832  9757  9757 D wpa_supplicant:    broadcast key
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: set_key failed; err=-95 Operation not supported on transport endpoint
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: wpa_driver_nl80211_set_key: ifindex=4 (wlan0) alg=0 addr=0x0 key_idx=4 set_tx=0 seq_len=0 key_len=0 key_flag=0x10
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: DEL_KEY
+10-10 02:07:28.832  9757  9757 D wpa_supplicant:    broadcast key
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: set_key failed; err=-95 Operation not supported on transport endpoint
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: wpa_driver_nl80211_set_key: ifindex=4 (wlan0) alg=0 addr=0x0 key_idx=5 set_tx=0 seq_len=0 key_len=0 key_flag=0x10
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: DEL_KEY
+10-10 02:07:28.832  9757  9757 D wpa_supplicant:    broadcast key
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: set_key failed; err=-95 Operation not supported on transport endpoint
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: wlan0: RSN: flushing PMKID list in the driver
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: nl80211: Flush PMKIDs
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: wlan0: State: DISCONNECTED -> INACTIVE
+10-10 02:07:28.832  9757  9757 D wpa_supplicant: Notifying state change event to hidl control: 2
+10-10 02:07:28.881  9757  9757 D wpa_supplicant: TDLS: TDLS operation not supported by driver
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: TDLS: Driver uses internal link setup
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: TDLS: Driver does not support TDLS channel switching
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: wlan0: WPS: UUID based on MAC address: 6a747785-7066-5f79-b7e2-0bf63264877f
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: EAPOL: SUPP_PAE entering state DISCONNECTED
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: EAPOL: Supplicant port status: Unauthorized
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: nl80211: Skip set_supp_port(unauthorized) while not associated
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: EAPOL: KEY_RX entering state NO_KEY_RECEIVE
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: EAPOL: SUPP_BE entering state INITIALIZE
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: EAP: EAP entering state DISABLED
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: MBO: Update non-preferred channels, non_pref_chan=N/A
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: Registering interface to hidl control: wlan0
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: wlan0: Added interface wlan0
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: wlan0: State: INACTIVE -> DISCONNECTED
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: nl80211: Set wlan0 operstate 0->0 (DORMANT)
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: netlink: Operstate: ifindex=4 linkmode=-1 (no change), operstate=5 (IF_OPER_DORMANT)
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: Notifying state change event to hidl control: 0
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: nl80211: Received scan results (1 BSSes)
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: wlan0: BSS: Start scan result update 1
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: wlan0: BSS: Add new id 0 BSSID aa:50:69:b4:e1:47 SSID 'VirtWifi' freq 5240
+10-10 02:07:28.882  9757  9757 D wpa_supplicant: RTM_NEWLINK: ifi_index=4 ifname=wlan0 operstate=2 linkmode=1 ifi_family=0 ifi_flags=0x1003 ([UP])
+10-10 02:07:28.886  2031  2146 D SupplicantStaIfaceHal: Newer HAL is found, skip V1_3 remaining init flow.
+10-10 02:07:28.886  2031  2146 D SupplicantStaIfaceHal: Newer HAL is found, skip V1_2 remaining init flow.
+10-10 02:07:28.886  2031  2146 D SupplicantStaIfaceHal: Newer HAL is found, skip V1_1 remaining init flow.
+10-10 02:07:28.886  2031  2146 D SupplicantStaIfaceHal: Newer HAL is found, skip V1_0 remaining init flow.
+10-10 02:07:28.889  9757  9757 D wpa_supplicant: Driver capability mask: 0xd
+10-10 02:07:28.889  2031  2146 I WifiNative: Successfully switched to connectivity mode on iface=Iface:{Name=wlan0,Id=5,Type=STA_CONNECTIVITY}
+10-10 02:07:28.890  2031  2146 D WifiClientModeManager[wlan0]: entering ConnectModeState, starting ClientModeImpl
+10-10 02:07:28.891  2031  2146 D WifiScoreReport: setShouldReduceNetworkScore=false mNetworkAgent is null? true
+10-10 02:07:28.891  2031  2146 V WifiClientModeManager[wlan0]: ClientModeManager started in role: Role: ROLE_CLIENT_PRIMARY, RequestorWs: WorkSource{0 com.android.shell}, ModeListener: com.android.server.wifi.ActiveModeWarden$ClientListener@64ef71b
+10-10 02:07:28.891  2031  2150 I WifiScanningService: Received a request to enable scanning, UID = 1000
+10-10 02:07:28.891  2031  2146 D WifiScanRequestProxy: Sending scan available broadcast: true
+10-10 02:07:28.892  2031  2146 I WifiScanRequestProxy: Scanning is enabled
+10-10 02:07:28.892  2031  2146 I WifiScanRequestProxy: Scanning for hidden networks is enabled
+10-10 02:07:28.892  2031  2146 D WifiConnectivityHelper: Firmware supported feature set: d8108a0000009
+10-10 02:07:28.892  2031  2146 D WifiConnectivityHelper: Firmware roaming is not supported
+10-10 02:07:28.893  2031  2146 D WifiCountryCode: evaluateAllCmmStateAndApplyIfAllReady: {ConcreteClientModeManager{id=6044890 iface=wlan0 role=ROLE_CLIENT_PRIMARY}=true}
+10-10 02:07:28.893  2031  2146 D WifiCountryCode: updateCountryCode to TW
+10-10 02:07:28.894  2031  2150 I WifiScanningService: Created a new impl for wlan0
+10-10 02:07:28.894  2031  2150 I WifiScanningService: wifi driver loaded with scan capabilities: max buckets=16
+10-10 02:07:28.894  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setCountryCode failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:28.894  2031  2146 D WifiCountryCode: Failed to set country code (ConcreteClientModeManager) to TW
+10-10 02:07:28.896  2031  2146 D WakeupController: onWifiEnabled()
+10-10 02:07:28.896  2031  2146 W WifiClientModeImpl: No cached packet filter to apply
+10-10 02:07:28.897  2031  2031 D WifiP2pService: Wifi enabled=true
+10-10 02:07:28.897  2031  2146 D WifiClientModeImpl[wlan0]: entering ConnectableState: ifaceName = wlan0
+10-10 02:07:28.898  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setSuspendModeEnabled failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:28.898  2031  2146 D WifiClientModeImpl[wlan0]: Start makeIpClient ifaceName = wlan0
+10-10 02:07:28.900  7598  8042 W NearbyMediums: [WIFI_RADIO] State was changed outside of our control. Updating the snapshot to match current radio state.
+10-10 02:07:28.902  2031  2146 I WifiClientModeImpl[wlan0]: disconnectedstate enter
+10-10 02:07:28.902  2206  2206 D TileServices: Couldn't find tile for ComponentInfo{com.google.android.gms/com.google.android.gms.nearby.sharing.SharingTileService}
+10-10 02:07:28.902  2366  9765 E IpClient.wlan0: Failed to set accept_ra to 2
+10-10 02:07:28.903  7598  8190 I NearbySharing: Broadcasting NearbySharing state change.
+10-10 02:07:28.903  2031  2146 E WifiScoringParams: Invalid frequency(-1), using 5G as default rssi array
+10-10 02:07:28.904  2031  2146 D WifiClientModeImpl[wlan0]: setupClientMode() ifacename = wlan0
+10-10 02:07:28.906  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.getMacAddress failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:28.906  2031  2146 W WifiDiags: Failed to start packet fate monitoring
+10-10 02:07:28.906  2031  2146 W WifiDiags: no ring buffers found
+10-10 02:07:28.906  2031  2146 D WifiDiags: startLogging() iface list is {wlan0} after adding wlan0
+10-10 02:07:28.908  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setBtCoexistenceScanModeEnabled failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:28.909  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.stopRxFilter failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:28.909  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.stopRxFilter failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:28.910  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setSuspendModeEnabled failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:28.910  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setPowerSave failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:28.911  2031  2146 W WifiClientModeImpl: Failed to retrieve factory MAC address
+10-10 02:07:28.913  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setSuspendModeEnabled failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:28.946  9768  9768 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:29.223  9687  9687 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=5
+10-10 02:07:29.926  9778  9778 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:29.968  9783  9783 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:29.970  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:29.973  2031  2052 W ImageReader_JNI: Unable to acquire a buffer item, very likely client tried to acquire more than maxImages buffers
+10-10 02:07:29.973  2031  2052 E gralloc_nox: gralloc_lock_ycbcr can only be used with HAL_PIXEL_FORMAT_YCbCr_420_888 or HAL_PIXEL_FORMAT_YV12, got 1 instead. -EINVAL
+10-10 02:07:29.973  2031  2052 W AndroidMediaUtils: lockAsyncYCbCr failed with error 3
+--------- beginning of system
+10-10 02:07:30.045  2031  2054 I ActivityTaskManager: Config changes=20000480 {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w540dp h936dp 320dpi lrg long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 1920) mAppBounds=Rect(0, 0 - 1080, 1920) mMaxBounds=Rect(0, 0 - 1080, 1920) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.222 ?fontWeightAdjustment}
+10-10 02:07:30.048  2031  2054 W ActivityTaskManager: Current config: {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w960dp h516dp 320dpi lrg long land finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1920, 1080) mAppBounds=Rect(0, 0 - 1920, 1080) mMaxBounds=Rect(0, 0 - 1920, 1080) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.2 s.222 ?fontWeightAdjustment} unchanged for IME proc com.android.inputmethod.pinyin
+10-10 02:07:30.048  2031  2054 I WindowManager: Override config changes=20000480 {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w540dp h936dp 320dpi lrg long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 1920) mAppBounds=Rect(0, 0 - 1080, 1920) mMaxBounds=Rect(0, 0 - 1080, 1920) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.222 ?fontWeightAdjustment} for displayId=0
+10-10 02:07:30.050  2031  2054 V ActivityTaskManager: Sending to IME proc com.android.inputmethod.pinyin new config {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w540dp h936dp 320dpi lrg long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 1920) mAppBounds=Rect(0, 0 - 1080, 1920) mMaxBounds=Rect(0, 0 - 1080, 1920) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.222 ?fontWeightAdjustment}
+10-10 02:07:30.051  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 174042980; UID 10064; state: DISABLED
+10-10 02:07:30.051  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 184838306; UID 10064; state: DISABLED
+10-10 02:07:30.052  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 185004937; UID 10064; state: DISABLED
+10-10 02:07:30.053  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 197654537; UID 1000; state: DISABLED
+10-10 02:07:30.053  2031  2054 D CompatibilityChangeReporter: Compat change id reported: 174042980; UID 1000; state: DISABLED
+10-10 02:07:30.056  2031  2054 I InputManager-JNI: Viewport [0] to add: local:0, isActive: true
+10-10 02:07:30.057  2031  2128 I InputReader: Reconfiguring input devices, changes=DISPLAY_INFO |
+10-10 02:07:30.057  2031  2128 I InputReader: Device reconfigured: id=6, name='Android_Input', size 1080x1920, orientation 0, mode 1, display id 0
+10-10 02:07:30.057  2031  2128 I InputReader: Device reconfigured: id=6, name='Android_Input', size 1080x1920, orientation 0, mode 1, display id 0
+10-10 02:07:30.058  2206  2206 D StatusBar: Received new disable state. Old: enaihbcrso.qingr | New: enaihbcrso.qingr
+10-10 02:07:30.065  1872  1924 I gralloc_nox: setOrientation: orientation=0
+10-10 02:07:30.067  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 311296
+10-10 02:07:30.070  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:30.070  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8089600
+10-10 02:07:30.072  2031  2095 D Sensors : Client connection accepted (412)
+10-10 02:07:30.074  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:30.079  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 208896
+10-10 02:07:30.080  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8089600
+10-10 02:07:30.083  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 208896
+10-10 02:07:30.097  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:30.098  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 208896
+10-10 02:07:30.100  2031  2390 I WindowManager: finishDrawing of orientation change: Window{727fc92 u0 StatusBar} 45ms
+10-10 02:07:30.115  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8089600
+10-10 02:07:30.147  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:30.162  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 208896
+10-10 02:07:30.162  2031  2390 I WindowManager: finishDrawing of orientation change: Window{369bdd6 u0 com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity} 106ms
+10-10 02:07:30.167  2031  2055 I WindowManager: Screen frozen for +197ms due to Window{369bdd6 u0 com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity}
+10-10 02:07:30.167  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:30.195  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:30.196  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 208896
+10-10 02:07:30.214  2031  2055 W ImageReader_JNI: Unable to acquire a buffer item, very likely client tried to acquire more than maxImages buffers
+10-10 02:07:30.214  2031  2055 E gralloc_nox: gralloc_lock_ycbcr can only be used with HAL_PIXEL_FORMAT_YCbCr_420_888 or HAL_PIXEL_FORMAT_YV12, got 1 instead. -EINVAL
+10-10 02:07:30.214  2031  2055 W AndroidMediaUtils: lockAsyncYCbCr failed with error 3
+10-10 02:07:30.256  2031  2043 W System  : A resource failed to call close.
+10-10 02:07:30.284  2031  2043 W System  : A resource failed to call release.
+10-10 02:07:30.285  2031  2043 W System  : A resource failed to call close.
+10-10 02:07:30.285  2031  2043 W System  : A resource failed to call release.
+10-10 02:07:30.285  2031  2043 W System  : A resource failed to call close.
+10-10 02:07:30.316  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 208896
+10-10 02:07:30.379  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 208896
+10-10 02:07:30.380  2031  5047 I WindowManager: finishDrawing of orientation change: Window{6bae67 u0 ScreenDecorOverlayBottom} 324ms
+10-10 02:07:30.382  2031  5047 I WindowManager: finishDrawing of orientation change: Window{6eb32aa u0 ScreenDecorOverlay} 326ms
+10-10 02:07:30.414  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 208896
+10-10 02:07:30.429  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 208896
+10-10 02:07:30.807  9788  9788 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:30.922  9757  9757 I wpa_supplicant: wlan0: CTRL-EVENT-REGDOM-CHANGE init=BEACON_HINT type=UNKNOWN
+10-10 02:07:30.922  2031  2388 D WifiNl80211Manager: Scan result ready event
+10-10 02:07:30.922  2031  2388 D WifiNative: Scan result ready event
+10-10 02:07:30.923  2031  2051 I EthernetTracker: interfaceLinkStateChanged, iface: wlan0, up: false
+10-10 02:07:30.927  2031  2146 D WifiScoreReport: setShouldReduceNetworkScore=false mNetworkAgent is null? true
+10-10 02:07:30.927  2031  2146 D WifiClientModeImpl[wlan0]: CMD_START_CONNECT  my state DisconnectedState nid=0 roam=false
+10-10 02:07:30.928  2031  2146 W LastMileLogger: Failed to open free_buffer pseudo-file: /sys/kernel/debug/tracing/instances/wifi/free_buffer: open failed: ENOENT (No such file or directory)
+10-10 02:07:30.928  2031  2146 W LastMileLogger: Failed to arm fail-safe.
+10-10 02:07:30.928  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.getMacAddress failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:30.928  2031  2146 I WifiClientModeImpl[wlan0]: Connecting with null as the mac address
+10-10 02:07:30.928  1958  1958 W wificond: Scan is not started. Ignore abort request
+10-10 02:07:30.928  2031  2146 D SupplicantStaIfaceHal: connectToNetwork "VirtWifi"NONE
+10-10 02:07:30.928  2031  2146 I SupplicantStaIfaceHal: addSupplicantStaNetwork via HIDL
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal: The target security params: Security Parameters:
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  Type: 0
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  Enabled: true
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  KeyMgmt: NONE
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  Protocols: WPA RSN
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  AuthAlgorithms:
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  PairwiseCiphers:
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  GroupCiphers:
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  GroupMgmtCiphers:
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  SuiteBCiphers:
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  RequirePmf: false
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  IsAddedByAutoUpgrade: false
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  IsSaeH2eOnlyMode: false
+10-10 02:07:30.930  2031  2146 D SupplicantStaNetworkHal:  IsSaePkOnlyMode: false
+10-10 02:07:30.932  9757  9757 I wpa_supplicant: wlan0: Trying to associate with aa:50:69:b4:e1:47 (SSID='VirtWifi' freq=5240 MHz)
+10-10 02:07:30.932  2031  2146 D WifiCountryCode: evaluateAllCmmStateAndApplyIfAllReady: {ConcreteClientModeManager{id=6044890 iface=wlan0 role=ROLE_CLIENT_PRIMARY}=false}
+10-10 02:07:30.932  2031  2146 D WifiClientModeImpl[wlan0]: Start Connecting Watchdog 1
+10-10 02:07:32.107  9795  9795 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:32.147  9800  9800 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:32.149  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:32.152  2031  2052 W ImageReader_JNI: Unable to acquire a buffer item, very likely client tried to acquire more than maxImages buffers
+10-10 02:07:32.152  2031  2052 E gralloc_nox: gralloc_lock_ycbcr can only be used with HAL_PIXEL_FORMAT_YCbCr_420_888 or HAL_PIXEL_FORMAT_YV12, got 1 instead. -EINVAL
+10-10 02:07:32.152  2031  2052 W AndroidMediaUtils: lockAsyncYCbCr failed with error 3
+10-10 02:07:32.220  2031  2054 I ActivityTaskManager: Config changes=20000480 {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w960dp h516dp 320dpi lrg long land finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1920, 1080) mAppBounds=Rect(0, 0 - 1920, 1080) mMaxBounds=Rect(0, 0 - 1920, 1080) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.2 s.246 ?fontWeightAdjustment}
+10-10 02:07:32.221  2031  2054 W ActivityTaskManager: Current config: {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w540dp h936dp 320dpi lrg long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 1920) mAppBounds=Rect(0, 0 - 1080, 1920) mMaxBounds=Rect(0, 0 - 1080, 1920) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.246 ?fontWeightAdjustment} unchanged for IME proc com.android.inputmethod.pinyin
+10-10 02:07:32.222  2031  2054 I WindowManager: Override config changes=20000480 {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w960dp h516dp 320dpi lrg long land finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1920, 1080) mAppBounds=Rect(0, 0 - 1920, 1080) mMaxBounds=Rect(0, 0 - 1920, 1080) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.2 s.246 ?fontWeightAdjustment} for displayId=0
+10-10 02:07:32.223  2031  2054 V ActivityTaskManager: Sending to IME proc com.android.inputmethod.pinyin new config {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w960dp h516dp 320dpi lrg long land finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1920, 1080) mAppBounds=Rect(0, 0 - 1920, 1080) mMaxBounds=Rect(0, 0 - 1920, 1080) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.2 s.246 ?fontWeightAdjustment}
+10-10 02:07:32.227  2031  2054 I InputManager-JNI: Viewport [0] to add: local:0, isActive: true
+10-10 02:07:32.227  2206  2206 D StatusBar: Received new disable state. Old: enaihbcrso.qingr | New: enaihbcrso.qingr
+10-10 02:07:32.227  2031  2128 I InputReader: Reconfiguring input devices, changes=DISPLAY_INFO |
+10-10 02:07:32.227  2031  2128 I InputReader: Device reconfigured: id=6, name='Android_Input', size 1080x1920, orientation 1, mode 1, display id 0
+10-10 02:07:32.227  2031  2128 I InputReader: Device reconfigured: id=6, name='Android_Input', size 1080x1920, orientation 1, mode 1, display id 0
+10-10 02:07:32.232  1872  1924 I gralloc_nox: setOrientation: orientation=1
+10-10 02:07:32.236  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 372736
+10-10 02:07:32.238  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:32.239  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 7929856
+10-10 02:07:32.239  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 176128
+10-10 02:07:32.243  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:32.245  2031  2095 D Sensors : Client connection accepted (258)
+10-10 02:07:32.246  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 176128
+10-10 02:07:32.247  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 372736
+10-10 02:07:32.248  2031  4827 I WindowManager: finishDrawing of orientation change: Window{6bae67 u0 ScreenDecorOverlayBottom} 21ms
+10-10 02:07:32.250  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 372736
+10-10 02:07:32.252  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 176128
+10-10 02:07:32.254  2031  4827 I WindowManager: finishDrawing of orientation change: Window{727fc92 u0 StatusBar} 29ms
+10-10 02:07:32.267  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:32.268  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 7929856
+10-10 02:07:32.278  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 372736
+10-10 02:07:32.282  1870  1870 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 7929856
+10-10 02:07:32.282  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:32.284  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 176128
+10-10 02:07:32.284  2031  4827 I WindowManager: finishDrawing of orientation change: Window{369bdd6 u0 com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity} 58ms
+10-10 02:07:32.305  2031  2055 I WindowManager: Screen frozen for +155ms due to Window{369bdd6 u0 com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity}
+10-10 02:07:32.305  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:32.317  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:32.335  2031  2055 W ImageReader_JNI: Unable to acquire a buffer item, very likely client tried to acquire more than maxImages buffers
+10-10 02:07:32.335  2031  2055 E gralloc_nox: gralloc_lock_ycbcr can only be used with HAL_PIXEL_FORMAT_YCbCr_420_888 or HAL_PIXEL_FORMAT_YV12, got 1 instead. -EINVAL
+10-10 02:07:32.335  2031  2055 W AndroidMediaUtils: lockAsyncYCbCr failed with error 3
+10-10 02:07:32.420  2031  4827 I WindowManager: finishDrawing of orientation change: Window{6eb32aa u0 ScreenDecorOverlay} 194ms
+10-10 02:07:32.430  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 176128
+10-10 02:07:32.512  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 176128
+10-10 02:07:32.964  9805  9805 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:33.002  2031  2051 I EthernetTracker: interfaceLinkStateChanged, iface: wlan0, up: true
+10-10 02:07:33.002  9757  9757 I wpa_supplicant: wlan0: Associated with aa:50:69:b4:e1:47
+10-10 02:07:33.003  9757  9757 I wpa_supplicant: wlan0: CTRL-EVENT-CONNECTED - Connection to aa:50:69:b4:e1:47 completed [id=0 id_str=%7B%22configKey%22%3A%22%5C%22VirtWifi%5C%22NONE%22%2C%22creatorUid%22%3A%221000%22%7D]
+10-10 02:07:33.003  2031  2051 I EthernetTracker: interfaceLinkStateChanged, iface: wlan0, up: true
+10-10 02:07:33.003  9757  9757 I wpa_supplicant: wlan0: CTRL-EVENT-SUBNET-STATUS-UPDATE status=0
+10-10 02:07:33.003  2031  2051 I EthernetTracker: interfaceLinkStateChanged, iface: wlan0, up: true
+10-10 02:07:33.005  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.getMacAddress failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:33.006  2031  2146 D ConnectivityService: registerNetworkAgent NetworkAgentInfo{network{105}  handle{454377263117}  ni{WIFI CONNECTING extra: } Score(60 ; KeepConnected : 0 ; Policies : IS_UNMETERED)   lp{{LinkAddresses: [ ] DnsAddresses: [ ] Domains: null MTU: 0 Routes: [ ]}}  nc{[ Transports: WIFI Capabilities: NOT_METERED&INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&NOT_ROAMING&FOREGROUND&NOT_CONGESTED&NOT_SUSPENDED&NOT_VCN_MANAGED LinkUpBandwidth>=1048576Kbps LinkDnBandwidth>=1048576Kbps Specifier: <WifiNetworkAgentSpecifier [WifiConfiguration=, SSID="VirtWifi", BSSID=aa:50:69:b4:e1:47, band=2, mMatchLocalOnlySpecifiers=false]> TransportInfo: <SSID: "VirtWifi", BSSID: aa:50:69:b4:e1:47, MAC: <none>, Security type: 0, Supplicant state: ASSOCIATED, Wi-Fi standard: 0, RSSI: -127, Link speed: -1Mbps, Tx Link speed: -1Mbps, Max Supported Tx Link speed: -1Mbps, Rx Link speed: -1Mbps, Max Supported Rx Link speed: -1Mbps, Frequency: 5240MHz, Net ID: 0, Metered hint: false, score: 0, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1> OwnerUid: 1000 AdminUids: [1000] SSID: "VirtWifi"]}}
+10-10 02:07:33.007  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setPowerSave failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:33.007  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setBtCoexistenceMode failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:33.009  2031  2153 D ConnectivityService: [105 WIFI] EVENT_NETWORK_INFO_CHANGED, going from CONNECTING to CONNECTING
+10-10 02:07:33.009  2031  2153 D ConnectivityService: NetReassign [no changes]
+10-10 02:07:33.010  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.stopRxFilter failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:33.010  2031  2153 D ConnectivityService: NetReassign [no changes]
+10-10 02:07:33.014  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setBtCoexistenceMode failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:33.014  2031  2153 D ConnectivityService: Adding iface wlan0 to network 105
+10-10 02:07:33.014  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setSuspendModeEnabled failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:33.014  1850  1891 E Netd    : no such netId 105
+10-10 02:07:33.014  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setPowerSave failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:33.015  2031  2153 W ConnectivityService: Exception adding interface: android.os.ServiceSpecificException: Machine is not on the network (code 64)
+10-10 02:07:33.015  1850  1891 E Netd    : no such netId 105
+10-10 02:07:33.016  2366  9765 D DhcpClient: l2key: W4c51e20ae729f426 lease address: /172.17.100.15 lease expiry: 1791654521584 current time: 1791569253016
+10-10 02:07:33.016  2366  9765 D DhcpClient: Broadcasting DHCPREQUEST ciaddr=0.0.0.0 request=172.17.100.15 serverid=null
+10-10 02:07:33.022  2366  9765 D DhcpClient: Received packet: 08:00:27:21:12:31 ACK: your new IP /172.17.100.15, netmask /255.255.255.0, gateways [/172.17.100.2] DNS servers: /8.8.4.4 /8.8.8.8 /114.114.114.114 /8.8.8.8 , lease time 86400
+10-10 02:07:33.022  2366  9765 D DhcpClient: Confirmed lease: android.net.networkstack.DhcpResults@eac218c DHCP server /172.17.100.2 Vendor info null lease 86400 seconds Servername
+10-10 02:07:33.023  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setPowerSave failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:33.023  2031  2146 E SupplicantStaIfaceHal: ISupplicantStaIface.setBtCoexistenceMode failed: {.code = FAILURE_UNKNOWN, .debugMessage = }
+10-10 02:07:33.025  2366  9765 D DhcpClient: Scheduling renewal in 43199s
+10-10 02:07:33.025  2366  9765 D DhcpClient: Scheduling rebind in 75599s
+10-10 02:07:33.025  2366  9765 D DhcpClient: Scheduling expiry in 86399s
+10-10 02:07:33.029  2031  2146 W WifiScoreReport: Cannot start external scoring netId=105 currentNetId=105 currentNetCapabilities=[ Transports: WIFI Capabilities: NOT_METERED&INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&NOT_ROAMING&NOT_CONGESTED&NOT_SUSPENDED&NOT_VCN_MANAGED LinkUpBandwidth>=12000Kbps LinkDnBandwidth>=60000Kbps Specifier: <WifiNetworkAgentSpecifier [WifiConfiguration=, SSID="VirtWifi", BSSID=aa:50:69:b4:e1:47, band=2, mMatchLocalOnlySpecifiers=false]> TransportInfo: <SSID: "VirtWifi", BSSID: aa:50:69:b4:e1:47, MAC: <none>, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: 0, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: -1Mbps, Rx Link speed: -1Mbps, Max Supported Rx Link speed: -1Mbps, Frequency: 5240MHz, Net ID: 0, Metered hint: false, score: 60, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1> SignalStrength: -50 OwnerUid: 1000 AdminUids: [1000] SSID: "VirtWifi"] sessionId=1053
+10-10 02:07:33.034  2031  2390 D WifiMemoryStoreImpl: Set cluster Gd7bc338e1768a425 for W4c51e20ae729f426: SUCCESS
+10-10 02:07:33.038  2031  2390 D WifiMemoryStoreImpl: Set cluster Gd7bc338e1768a425 for Wd7bc338e1768a425: SUCCESS
+10-10 02:07:33.053  1850  1891 E Netd    : no such netId 105
+10-10 02:07:33.053  2031  2153 E ConnectivityService: Exception in networkAddRouteParcel for non-gateway: android.os.ServiceSpecificException: Machine is not on the network (code 64)
+10-10 02:07:33.054  1850  1891 E Netd    : no such netId 105
+10-10 02:07:33.054  2031  2153 E ConnectivityService: Exception in networkAddRouteParcel for gateway: android.os.ServiceSpecificException: Machine is not on the network (code 64)
+10-10 02:07:33.133  2031  2153 D ConnectivityService: Setting DNS servers for network 105 to [/8.8.4.4, /8.8.8.8, /114.114.114.114]
+10-10 02:07:33.197  2031  2153 D ConnectivityService: [105 WIFI] EVENT_NETWORK_INFO_CHANGED, going from CONNECTING to CONNECTED
+10-10 02:07:33.200  2031  2153 D DnsManager: sendDnsConfigurationForNetwork(105, [8.8.4.4, 8.8.8.8, 114.114.114.114], [], 1800, 25, 8, 64, 0, 0, , [])
+10-10 02:07:33.202  2031  2153 W DnsManager: updatePrivateDns(105, PrivateDnsConfig{true:/[]})
+10-10 02:07:33.203  2031  2153 D ConnectivityService: Setting DNS servers for network 105 to [/8.8.4.4, /8.8.8.8, /114.114.114.114]
+10-10 02:07:33.203  2031  2153 D DnsManager: sendDnsConfigurationForNetwork(105, [8.8.4.4, 8.8.8.8, 114.114.114.114], [], 1800, 25, 8, 64, 0, 0, , [8.8.4.4, 8.8.8.8, 114.114.114.114])
+10-10 02:07:33.206  2031  2153 D ConnectivityService: Adding iface wlan0 to network 105
+10-10 02:07:33.208  1850  1891 E libnetd_resolv: tcQdiscAddDevClsact(4[wlan0]) failure: No such file or directory
+10-10 02:07:33.212  2031  2153 D ConnectivityService: Setting DNS servers for network 105 to [/8.8.4.4, /8.8.8.8, /114.114.114.114]
+10-10 02:07:33.213  2031  2153 D DnsManager: sendDnsConfigurationForNetwork(105, [8.8.4.4, 8.8.8.8, 114.114.114.114], [], 1800, 25, 8, 64, 0, 0, , [8.8.4.4, 8.8.8.8, 114.114.114.114])
+10-10 02:07:33.284  2031  2146 D WifiClientModeImpl[wlan0]: Received signal strength thresholds: []
+10-10 02:07:33.284  2031  2153 D ConnectivityService: NetReassign [85 : null ??105, 26 : null ??105, 23 : null ??105, 79 : null ??105, 39 : null ??105, 17 : null ??105, 19 : null ??105, 89 : null ??105, 98 : null ??105, 94 : null ??105, 21 : null ??105, 86 : null ??105, 105 : null ??105, 15 : null ??105, 7 : null ??105, 91 : null ??105, 101 : null ??105, 1 : null ??105, 31 : null ??105, 28 : null ??105, 50 : null ??105]
+10-10 02:07:33.285  2031  2153 D ConnectivityService: Switching to new default network for: uid/pid:1000/2031 activeRequest: 1 callbackRequest: 1 [NetworkRequest [ REQUEST id=1, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&NOT_VCN_MANAGED RequestorUid: 1000 RequestorPkg: android] ]] callback flags: 1 priority: 2147483647 using NetworkAgentInfo{network{105}  handle{454377263117}  ni{WIFI CONNECTED extra: } Score(60 ; KeepConnected : 0 ; Policies : TRANSPORT_PRIMARY&IS_UNMETERED)   lp{{InterfaceName: wlan0 LinkAddresses: [ fe80::8377:972:3e5b:d176/64,172.17.100.15/24 ] DnsAddresses: [ /8.8.4.4,/8.8.8.8,/114.114.114.114 ] Domains: null MTU: 0 ServerAddress: /172.17.100.2 TcpBufferSizes: 524288,1048576,2097152,262144,524288,1048576 Routes: [ fe80::/64 -> :: wlan0 mtu 0,172.17.100.0/24 -> 0.0.0.0 wlan0 mtu 0,0.0.0.0/0 -> 172.17.100.2 wlan0 mtu 0 ]}}  nc{[ Transports: WIFI Capabilities: NOT_METERED&INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&NOT_ROAMING&FOREGROUND&NOT_CONGESTED&NOT_SUSPENDED&NOT_VCN_MANAGED LinkUpBandwidth>=12000Kbps LinkDnBandwidth>=60000Kbps Specifier: <WifiNetworkAgentSpecifier [WifiConfiguration=, SSID="VirtWifi", BSSID=aa:50:69:b4:e1:47, band=2, mMatchLocalOnlySpecifiers=false]> TransportInfo: <SSID: "VirtWifi", BSSID: aa:50:69:b4:e1:47, MAC: <none>, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: 0, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: -1Mbps, Rx Link speed: -1Mbps, Max Supported Rx Link speed: -1Mbps, Frequency: 5240MHz, Net ID: 0, Metered hint: false, score: 60, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1> SignalStrength: -50 OwnerUid: 1000 AdminUids: [1000] SSID: "VirtWifi"]}}
+10-10 02:07:33.285  2366  9819 D NetworkMonitor/105: Validation disabled.
+10-10 02:07:33.374  2366  2459 D UpstreamNetworkMonitor: New default Internet network: 105
+10-10 02:07:33.374  2031  2331 D NetworkTimeUpdateService: New default network 105; checking time.
+10-10 02:07:33.376  7598  7652 I NearbyMediums: WifiNetwork defaultNetworkCallback onAvailable netId:105
+10-10 02:07:33.377  7598  7652 I NearbyPresence: (REDACTED) NetworkMonitorImpl onAvailable %s
+10-10 02:07:33.377  7598  7652 I NearbyPresence: (REDACTED) NetworkMonitorImpl onLinkPropertiesChanged %s
+10-10 02:07:33.379  2031  2153 D ConnectivityService: Sending CONNECTED broadcast for type 1 [105 WIFI] isDefaultNetwork=true
+10-10 02:07:33.379  2031  2153 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendStickyBroadcast:1568 com.android.server.ConnectivityService.sendStickyBroadcast:2811 com.android.server.ConnectivityService.sendGeneralBroadcast:2786 com.android.server.ConnectivityService.sendConnectedBroadcast:2759 com.android.server.ConnectivityService.sendLegacyNetworkBroadcast:8704
+10-10 02:07:33.382  3922  3922 I Finsky  : [2] ppf.U(5): Installer: found apps to install. apps=[]
+10-10 02:07:33.384  2206  2206 W View    : requestLayout() improperly called by com.android.keyguard.AlphaOptimizedLinearLayout{95df723 V.E...... ......ID 5,0-35,44 #7f0b0669 app:id/wifi_group} during layout: running second layout pass
+10-10 02:07:33.385  2206  2206 W View    : requestLayout() improperly called by com.android.keyguard.AlphaOptimizedLinearLayout{6611420 V.E...... ......ID 5,0-35,44 #7f0b0669 app:id/wifi_group} during layout: running second layout pass
+10-10 02:07:33.387  2206  2206 W View    : requestLayout() improperly called by com.android.keyguard.AlphaOptimizedLinearLayout{c3781d9 V.E...... ......ID 5,0-35,44 #7f0b0669 app:id/wifi_group} during layout: running second layout pass
+10-10 02:07:33.416  7598  7647 I NetworkManagementSocketTagger: tagSocketFd(-1, 1031, -1) failed with errno-9
+10-10 02:07:33.456  7598  7652 I NearbyPresence: (REDACTED) NetworkMonitorImpl onLinkPropertiesChanged %s
+10-10 02:07:33.505  2031  2153 D ConnectivityService: [105 WIFI] validation passed
+10-10 02:07:33.505  2031  2153 D ConnectivityService: NetReassign [no changes]
+10-10 02:07:33.506  2031  2051 E TelephonyManager: Error calling #isDataEnabled, returning default (false).
+10-10 02:07:33.506  2031  2051 E TelephonyManager: java.lang.IllegalStateException: telephony service is null.
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at android.telephony.TelephonyManager.isDataEnabledForReason(TelephonyManager.java:12569)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at android.telephony.TelephonyManager.isDataEnabledForReason(TelephonyManager.java:12560)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at android.telephony.TelephonyManager.isDataEnabled(TelephonyManager.java:10124)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at android.telephony.TelephonyManager.getDataEnabled(TelephonyManager.java:10098)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at com.android.server.location.gnss.GnssNetworkConnectivityHandler.handleUpdateNetworkState(GnssNetworkConnectivityHandler.java:436)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at com.android.server.location.gnss.GnssNetworkConnectivityHandler.access$700(GnssNetworkConnectivityHandler.java:54)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at com.android.server.location.gnss.GnssNetworkConnectivityHandler$2.onCapabilitiesChanged(GnssNetworkConnectivityHandler.java:369)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at android.net.ConnectivityManager$NetworkCallback.onAvailable(ConnectivityManager.java:3565)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at android.net.ConnectivityManager$NetworkCallback.onAvailable(ConnectivityManager.java:3542)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at android.net.ConnectivityManager$CallbackHandler.handleMessage(ConnectivityManager.java:3866)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at android.os.Looper.loopOnce(Looper.java:201)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at android.os.Looper.loop(Looper.java:288)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+10-10 02:07:33.506  2031  2051 E TelephonyManager: 	at com.android.server.ServiceThread.run(ServiceThread.java:44)
+10-10 02:07:33.506  7598  7652 I NearbyPresence: (REDACTED) NetworkMonitorImpl onLinkPropertiesChanged %s
+10-10 02:07:33.506  2031  2051 I GnssNetworkConnectivityHandler: updateNetworkState, state=CLOSED, connected=true, network=105, capabilities=[ Transports: WIFI Capabilities: NOT_METERED&INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&VALIDATED&NOT_ROAMING&FOREGROUND&NOT_CONGESTED&NOT_SUSPENDED&NOT_VCN_MANAGED LinkUpBandwidth>=12000Kbps LinkDnBandwidth>=60000Kbps TransportInfo: <SSID: <unknown ssid>, BSSID: 02:00:00:00:00:00, MAC: 02:00:00:00:00:00, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: 0, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: -1Mbps, Rx Link speed: -1Mbps, Max Supported Rx Link speed: -1Mbps, Frequency: 5240MHz, Net ID: -1, Metered hint: false, score: 60, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1> SignalStrength: -50 SSID: "VirtWifi"], availableNetworkCount: 1
+10-10 02:07:33.509  2031  2153 D ConnectivityService: Setting DNS servers for network 105 to [/8.8.4.4, /8.8.8.8, /114.114.114.114]
+10-10 02:07:33.510  2031  2153 D DnsManager: sendDnsConfigurationForNetwork(105, [8.8.4.4, 8.8.8.8, 114.114.114.114], [], 1800, 25, 8, 64, 0, 0, , [8.8.4.4, 8.8.8.8, 114.114.114.114])
+10-10 02:07:33.510  2031  2153 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendStickyBroadcast:1568 com.android.server.ConnectivityService.sendStickyBroadcast:2811 com.android.server.ConnectivityService.sendGeneralBroadcast:2786 com.android.server.ConnectivityService.sendInetConditionBroadcast:2763 com.android.server.ConnectivityService.updateInetCondition:8451
+10-10 02:07:33.511  2031  2153 D ConnectivityService: NetReassign [no changes]
+10-10 02:07:33.511  2031  2146 W LastMileLogger: Failed to stop event tracing: /sys/kernel/debug/tracing/instances/wifi/tracing_on: open failed: ENOENT (No such file or directory)
+10-10 02:07:33.513  7598  9293 I AlarmManager: setExactAndAllowWhileIdle [name: GCM_HB_ALARM type: 2 triggerAtMillis: 6709765]
+10-10 02:07:33.513  7598  8042 I NearbyMediums: Wifi changed new SSID: "Guest"
+10-10 02:07:33.513  7598  8042 I NearbyMediums: WifiLanConnectivityInfo is changed, should notify.
+10-10 02:07:33.513  7598  8042 I NearbyMediums: [WifiNetworkV2] networkCallback doAvailable netId:105 wifiStatusChangedCallbacks.size:0 freq:5240
+10-10 02:07:33.514  2031  2146 I WifiClientModeImpl: Default Gateway MAC address of aa:50:69:b4:e1:47 from routes is : 52:54:00:12:35:02
+10-10 02:07:33.515  2031  2153 D ConnectivityService: NetReassign [no changes]
+10-10 02:07:33.515  2031  4566 D WifiMemoryStoreImpl: Set cluster Gd7bc338e1768a425 for W4c51e20ae729f426: SUCCESS
+10-10 02:07:33.516  7598  8042 I NearbyMediums: Wifi changed new SSID: "Guest"
+10-10 02:07:33.516  7598  8042 I NearbyMediums: WifiLanConnectivityInfo is not changed, skip notify.
+10-10 02:07:33.517  2031  2153 D ConnectivityService: NetReassign [no changes]
+10-10 02:07:33.517  2031  2146 D WifiConfigStore: Writing to stores completed in 2 ms.
+10-10 02:07:33.518  7598  8042 I NearbyMediums: Wifi changed new SSID: "Guest"
+10-10 02:07:33.518  7598  8042 I NearbyMediums: WifiLanConnectivityInfo is not changed, skip notify.
+10-10 02:07:33.518  7598  8190 I NearbyMediums: (REDACTED) Querying wifi usable channels failed with exception
+10-10 02:07:33.518  7598  8190 I NearbyMediums: java.lang.UnsupportedOperationException
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at android.os.Parcel.createExceptionOrNull(Parcel.java:2437)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at android.os.Parcel.createException(Parcel.java:2409)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at android.os.Parcel.readException(Parcel.java:2392)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at android.os.Parcel.readException(Parcel.java:2334)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at android.net.wifi.IWifiManager$Stub$Proxy.getUsableChannels(IWifiManager.java:5127)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at android.net.wifi.WifiManager.getUsableChannels(WifiManager.java:8157)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at ciq$$ExternalSyntheticApiModelOutline0.m(D8$$SyntheticClass:59)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at dywz.x(:com.google.android.gms@263768032@26.37.68 (190800-995428298):21)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at dywz.t(:com.google.android.gms@263768032@26.37.68 (190800-995428298):22)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at dywz.o(:com.google.android.gms@263768032@26.37.68 (190800-995428298):24)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at dzqm.run(:com.google.android.gms@263768032@26.37.68 (190800-995428298):9)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at bped.d(:com.google.android.gms@263768032@26.37.68 (190800-995428298):50)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at bped.c(:com.google.android.gms@263768032@26.37.68 (190800-995428298):6)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at bped.run(:com.google.android.gms@263768032@26.37.68 (190800-995428298):33)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at bpkc.run(:com.google.android.gms@263768032@26.37.68 (190800-995428298):8)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at java.lang.Thread.run(Thread.java:920)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: Caused by: android.os.RemoteException: Remote stack trace:
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at com.android.server.wifi.WifiServiceImpl.getUsableChannels(WifiServiceImpl.java:5365)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at android.net.wifi.IWifiManager$Stub.onTransact(IWifiManager.java:2001)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at android.os.Binder.execTransactInternal(Binder.java:1184)
+10-10 02:07:33.518  7598  8190 I NearbyMediums: 	at android.os.Binder.execTransact(Binder.java:1143)
+10-10 02:07:33.518  7598  8190 I NearbyMediums:
+10-10 02:07:33.519  7598  8190 I NearbyMediums: [DeviceCapabilities] Skip refreshing cached wifi channels because it is not supported (refreshCacheWifiChannelsRightAfterNetworkCallbackInvoked:true isWifiGetUsableChannelsSupported:false)
+10-10 02:07:33.527  7598  9293 I AlarmManager: setExactAndAllowWhileIdle [name: GCM_HB_ALARM type: 2 triggerAtMillis: 6709779]
+10-10 02:07:33.527  7598  9293 W WakeLock: GCM_CONN_ALARM release without a matched acquire! [CONTEXT service_id=259 ]
+10-10 02:07:33.529  7598  9293 I AlarmManager: setExactAndAllowWhileIdle [name: GCM_HB_ALARM type: 2 triggerAtMillis: 6709781]
+10-10 02:07:34.035  7598  8190 I NearbySharing: Network state changed: NetworkState(isRestricted=false, isOnline=true, isCongested=false, isMetered=false, isWifiConnected=true)
+10-10 02:07:34.213  9827  9827 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:34.438  9832  9832 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:34.440  9687  9687 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=5
+10-10 02:07:34.454  2031  2054 I system_server: Explicit concurrent copying GC freed 116960(4810KB) AllocSpace objects, 28(1116KB) LOS objects, 49% free, 14MB/29MB, paused 27us,24us total 36.156ms
+10-10 02:07:34.457  2031  2043 W System  : A resource failed to call close.
+10-10 02:07:34.458  2031  2043 W System  : A resource failed to call close.
+10-10 02:07:34.458  2031  2043 W System  : A resource failed to call close.
+10-10 02:07:34.488  2031  2054 I system_server: Explicit concurrent copying GC freed 1010(94KB) AllocSpace objects, 0(0B) LOS objects, 49% free, 14MB/29MB, paused 101us,23us total 33.172ms
+10-10 02:07:34.666  9837  9837 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:34.937  9687  9687 I AIG4    : AIG4_CAD|COMMAND|LINE|ACCEPTED|REV=6
+10-10 02:07:35.637  9840  9840 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:35.638  1870  4111 D gralloc_nox: gralloc_alloc: Creating ashmem region of size 8298496
+10-10 02:07:35.640  9840  9842 D hw-ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:35.640  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:35.640  9840  9842 I Gralloc4: mapper 4.x is not supported
+10-10 02:07:35.640  1661  1661 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@3.0::IMapper/default in either framework or device VINTF manifest.
+10-10 02:07:35.640  9840  9842 W Gralloc3: mapper 3.x is not supported
+10-10 02:07:35.642  9840  9842 D screencap: createUnique: call
+10-10 02:07:35.642  9840  9842 D screencap: HostComposition ext ANDROID_EMU_direct_mem ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_read_color_buffer_dma GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_1
+10-10 02:07:35.773  9844  9844 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 02:07:35.777  2636  3106 I MediaProvider: Begin Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-rotated-cad.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:35.781  2636  3106 W MediaProvider: isAppCloneUserPair failed. Users: 0 and 0
+10-10 02:07:35.781  2636  3106 W MediaProvider: isAppCloneUserPair for user 0: false
+10-10 02:07:35.784  2636  3106 I MediaProvider: End Intent { act=android.intent.action.MEDIA_SCANNER_SCAN_FILE dat=file:///sdcard/aig-task6-rotated-cad.png flg=0x1400010 cmp=com.android.providers.media.module/com.android.providers.media.MediaService }
+10-10 02:07:35.938  9854  9854 D ProcessState: Binder ioctl to enable oneway spam detection failed: Invalid argument
