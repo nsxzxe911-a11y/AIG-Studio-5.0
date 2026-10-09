@@ -1299,33 +1299,50 @@ internal fun testRuntimeLinkStateSyncContract() {
         RuntimeLinkId.CAD_CAM,RuntimeLinkId.CAM_SIM,RuntimeLinkId.SIM_NC
     ))
     check(RuntimeLinkContract.DISCONNECT_POLICY=="DATA_FLOW_ONLY_PRESERVE_RUNTIME_DATA")
-    check(setOf("CAD_GEOMETRY","CAM_TOOLPATH","SIM_STATE","NC_GCODE").all{
-        it in RuntimeLinkContract.PRESERVED_DOMAINS
-    })
-    check(RuntimeLinkStatus.CONNECTED.colorToken=="CYAN_GREEN")
-    check(RuntimeLinkStatus.DISCONNECTED.colorToken=="GRAY")
-    check(RuntimeLinkStatus.WARNING.colorToken=="YELLOW")
-    check(RuntimeLinkStatus.ALARM.colorToken=="RED")
-    check(RuntimeLinkContract.managedLinks.all{state.status(it)==RuntimeLinkStatus.CONNECTED})
+    check(setOf("CAD_GEOMETRY","CAM_TOOLPATH","SIM_STATE","NC_GCODE").all{it in RuntimeLinkContract.PRESERVED_DOMAINS})
+    check(RuntimeLinkStatus.entries.map{it.name}==listOf("CONNECTED","DEGRADED","DISCONNECTED"))
+    check(RuntimeLinkStatus.valueOf("CONNECTED").colorToken=="CYAN_GREEN")
+    check(RuntimeLinkStatus.valueOf("DEGRADED").colorToken=="YELLOW")
+    check(RuntimeLinkStatus.valueOf("DISCONNECTED").colorToken=="GRAY")
+    check(runCatching{RuntimeLinkStatus.valueOf("WARNING")}.isFailure)
+    check(runCatching{RuntimeLinkStatus.valueOf("ALARM")}.isFailure)
+    check(RuntimeLinkContract.cockpitLinks.all{state.status(it)==RuntimeLinkStatus.CONNECTED})
+    check(state.status(RuntimeLinkId.GPU_3D)==RuntimeLinkStatus.DISCONNECTED)
+    check(state.status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.DISCONNECTED)
     val cockpit=mutableListOf<RuntimeLinkSnapshot>()
     val manager=mutableListOf<RuntimeLinkSnapshot>()
-    state.observe{cockpit+=it}
-    state.observe{manager+=it}
+    state.observe{cockpit+=it}; state.observe{manager+=it}
     state.toggle(RuntimeLinkId.CAD_CAM)
     check(state.status(RuntimeLinkId.CAD_CAM)==RuntimeLinkStatus.DISCONNECTED)
     check(cockpit.last()==manager.last())
-    check(cockpit.last().status(RuntimeLinkId.CAD_CAM)==RuntimeLinkStatus.DISCONNECTED)
     state.set(RuntimeLinkId.CAD_CAM,RuntimeLinkStatus.CONNECTED)
-    check(cockpit.last()==manager.last())
-    check(cockpit.last().status(RuntimeLinkId.CAD_CAM)==RuntimeLinkStatus.CONNECTED)
-    state.set(RuntimeLinkId.MACHINE,RuntimeLinkStatus.WARNING)
-    check(cockpit.last().status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.WARNING)
-    state.set(RuntimeLinkId.MACHINE,RuntimeLinkStatus.ALARM)
-    check(manager.last().status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.ALARM)
+    state.set(RuntimeLinkId.MACHINE,RuntimeLinkStatus.valueOf("DEGRADED"))
+    check(cockpit.last().status(RuntimeLinkId.MACHINE).name=="DEGRADED")
+    check(state.toggle(RuntimeLinkId.MACHINE).name=="DEGRADED")
+    state.set(RuntimeLinkId.MACHINE,RuntimeLinkStatus.DISCONNECTED)
+    check(manager.last().status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.DISCONNECTED)
+    val report=state.javaClass.methods.singleOrNull{it.name=="reportHealth" && it.parameterCount==3}
+        ?: error("reportHealth transport/data-flow classifier missing")
+    check((report.invoke(state,RuntimeLinkId.MACHINE,true,false) as RuntimeLinkStatus).name=="DEGRADED")
+    check((report.invoke(state,RuntimeLinkId.MACHINE,true,true) as RuntimeLinkStatus)==RuntimeLinkStatus.CONNECTED)
+    check((report.invoke(state,RuntimeLinkId.MACHINE,false,true) as RuntimeLinkStatus)==RuntimeLinkStatus.DISCONNECTED)
+    val aiTeacherMethod=RuntimeIssueRoutingPolicy::class.java.methods.singleOrNull{
+        it.name=="aiTeacherEnabled" && it.parameterCount==1 && it.parameterTypes[0]==RuntimeLinkSnapshot::class.java
+    } ?: error("AI routing must consume shared RuntimeLinkSnapshot")
+    val connectionMessageMethod=RuntimeIssueRoutingPolicy::class.java.methods.singleOrNull{
+        it.name=="connectionMessage" && it.parameterCount==1 && it.parameterTypes[0]==RuntimeLinkSnapshot::class.java
+    } ?: error("connection message must consume shared RuntimeLinkSnapshot")
+    state.set(RuntimeLinkId.CAD_CAM,RuntimeLinkStatus.valueOf("DEGRADED"))
+    check(aiTeacherMethod.invoke(RuntimeIssueRoutingPolicy,state.snapshot())==true)
+    check((connectionMessageMethod.invoke(RuntimeIssueRoutingPolicy,state.snapshot()) as String).contains("??"))
+    state.set(RuntimeLinkId.CAD_CAM,RuntimeLinkStatus.DISCONNECTED)
+    check(aiTeacherMethod.invoke(RuntimeIssueRoutingPolicy,state.snapshot())==false)
+    check((connectionMessageMethod.invoke(RuntimeIssueRoutingPolicy,state.snapshot()) as String).contains("??"))
+    state.set(RuntimeLinkId.CAD_CAM,RuntimeLinkStatus.CONNECTED)
     val preserved=RuntimeLinkContract.PRESERVED_DOMAINS.toSet()
     state.toggle(RuntimeLinkId.SIM_NC)
     check(RuntimeLinkContract.PRESERVED_DOMAINS.toSet()==preserved)
-    println("RUNTIME_LINK_STATE_SYNC_GATE_PASS|COCKPIT_MANAGER_SHARED_STATE|DATA_FLOW_ONLY|PRESERVE_CAD_CAM_SIM_NC|4_STATE_COLORS")
+    println("RUNTIME_LINK_STATE_SYNC_GATE_PASS|COCKPIT_MANAGER_SHARED_STATE|DATA_FLOW_ONLY|PRESERVE_CAD_CAM_SIM_NC|3_STATE_LINK_MODEL")
 }
 fun main() {
     testRuntimeLinkStateSyncContract()

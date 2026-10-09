@@ -2,9 +2,8 @@ package com.aigstudio.core
 
 enum class RuntimeLinkStatus(val colorToken:String) {
     CONNECTED("CYAN_GREEN"),
-    DISCONNECTED("GRAY"),
-    WARNING("YELLOW"),
-    ALARM("RED")
+    DEGRADED("YELLOW"),
+    DISCONNECTED("GRAY")
 }
 
 enum class RuntimeLinkId(
@@ -12,11 +11,11 @@ enum class RuntimeLinkId(
     val cockpitLeft:String?=null,
     val cockpitRight:String?=null
 ) {
-    CAD_CAM("CAD ↔ CAM","CAD","CAM"),
-    CAM_SIM("CAM ↔ 3D SIM","CAM","3D SIM"),
-    SIM_NC("3D SIM ↔ NC","3D SIM","NC"),
+    CAD_CAM("CAD ? CAM","CAD","CAM"),
+    CAM_SIM("CAM ? 3D SIM","CAM","3D SIM"),
+    SIM_NC("3D SIM ? NC","3D SIM","NC"),
     GPU_3D("3D GPU"),
-    MACHINE("機台連線")
+    MACHINE("????")
 }
 
 data class RuntimeLinkSnapshot(
@@ -25,6 +24,9 @@ data class RuntimeLinkSnapshot(
     fun status(id:RuntimeLinkId):RuntimeLinkStatus=
         values[id] ?: RuntimeLinkStatus.DISCONNECTED
     fun asMap():Map<RuntimeLinkId,RuntimeLinkStatus> = values.toMap()
+    fun allAvailable(ids:Collection<RuntimeLinkId>):Boolean=ids.all{status(it)!=RuntimeLinkStatus.DISCONNECTED}
+    fun allHealthy(ids:Collection<RuntimeLinkId>):Boolean=ids.all{status(it)==RuntimeLinkStatus.CONNECTED}
+    fun anyDegraded(ids:Collection<RuntimeLinkId>):Boolean=ids.any{status(it)==RuntimeLinkStatus.DEGRADED}
 }
 
 object RuntimeLinkContract {
@@ -35,11 +37,15 @@ object RuntimeLinkContract {
         RuntimeLinkId.CAD_CAM,RuntimeLinkId.CAM_SIM,RuntimeLinkId.SIM_NC,
         RuntimeLinkId.GPU_3D,RuntimeLinkId.MACHINE
     )
+    val userToggleableLinks=cockpitLinks.toSet()
+    val runtimeOwnedLinks=managedLinks.filterNot { it in userToggleableLinks }.toSet()
+    fun defaultStatus(id:RuntimeLinkId):RuntimeLinkStatus=
+        if(id in userToggleableLinks) RuntimeLinkStatus.CONNECTED else RuntimeLinkStatus.DISCONNECTED
 }
 
 class RuntimeLinkStore {
     private val values=linkedMapOf<RuntimeLinkId,RuntimeLinkStatus>().apply {
-        RuntimeLinkContract.managedLinks.forEach { put(it,RuntimeLinkStatus.CONNECTED) }
+        RuntimeLinkContract.managedLinks.forEach { put(it,RuntimeLinkContract.defaultStatus(it)) }
     }
     private val observers=linkedSetOf<(RuntimeLinkSnapshot)->Unit>()
 
@@ -67,7 +73,17 @@ class RuntimeLinkStore {
         return status
     }
 
+    fun reportHealth(id:RuntimeLinkId,transportAvailable:Boolean,dataFlowHealthy:Boolean):RuntimeLinkStatus {
+        val next=when {
+            !transportAvailable -> RuntimeLinkStatus.DISCONNECTED
+            dataFlowHealthy -> RuntimeLinkStatus.CONNECTED
+            else -> RuntimeLinkStatus.DEGRADED
+        }
+        return set(id,next)
+    }
+
     fun toggle(id:RuntimeLinkId):RuntimeLinkStatus {
+        if(id !in RuntimeLinkContract.userToggleableLinks) return status(id)
         val next=if(status(id)==RuntimeLinkStatus.CONNECTED)
             RuntimeLinkStatus.DISCONNECTED else RuntimeLinkStatus.CONNECTED
         return set(id,next)

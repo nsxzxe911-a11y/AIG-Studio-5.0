@@ -1283,32 +1283,29 @@ class MainActivity : Activity() {
         val homeLinkManagerButtons=linkedMapOf<RuntimeLinkId,RgbGlowButton>()
         fun runtimeLinkColor(linkStatus:RuntimeLinkStatus):Int=when(linkStatus) {
             RuntimeLinkStatus.CONNECTED -> 0xFF3DEBFF.toInt()
+            RuntimeLinkStatus.DEGRADED -> StudioProductionTheme.warning
             RuntimeLinkStatus.DISCONNECTED -> 0xFF66727D.toInt()
-            RuntimeLinkStatus.WARNING -> StudioProductionTheme.warning
-            RuntimeLinkStatus.ALARM -> StudioProductionTheme.alarm
         }
         fun runtimeLinkSymbol(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
-            RuntimeLinkStatus.CONNECTED -> "🔗"
-            RuntimeLinkStatus.DISCONNECTED -> "⛓"
-            RuntimeLinkStatus.WARNING -> "⚠"
-            RuntimeLinkStatus.ALARM -> "ALARM"
+            RuntimeLinkStatus.CONNECTED -> "??"
+            RuntimeLinkStatus.DEGRADED -> "?"
+            RuntimeLinkStatus.DISCONNECTED -> "?"
         }
         fun runtimeLinkLabel(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
-            RuntimeLinkStatus.CONNECTED -> "連接"
-            RuntimeLinkStatus.DISCONNECTED -> "斷開"
-            RuntimeLinkStatus.WARNING -> "警告"
-            RuntimeLinkStatus.ALARM -> "Alarm"
+            RuntimeLinkStatus.CONNECTED -> "???"
+            RuntimeLinkStatus.DEGRADED -> "??"
+            RuntimeLinkStatus.DISCONNECTED -> "??"
         }
         fun renderRuntimeLinks(snapshot:RuntimeLinkSnapshot) {
             homeLinkQuickButtons.forEach { (id,button) ->
                 val s=snapshot.status(id)
                 button.text="${id.cockpitLeft} ${runtimeLinkSymbol(s)} ${id.cockpitRight}"
-                button.setRgbState(runtimeLinkColor(s),s==RuntimeLinkStatus.CONNECTED,s==RuntimeLinkStatus.ALARM)
+                button.setRgbState(runtimeLinkColor(s),s==RuntimeLinkStatus.CONNECTED,false)
             }
             homeLinkManagerButtons.forEach { (id,button) ->
                 val s=snapshot.status(id)
                 button.text="${id.displayName} • ${runtimeLinkLabel(s)}"
-                button.setRgbState(runtimeLinkColor(s),s==RuntimeLinkStatus.CONNECTED,s==RuntimeLinkStatus.ALARM)
+                button.setRgbState(runtimeLinkColor(s),s==RuntimeLinkStatus.CONNECTED,false)
             }
         }
         fun runtimeLinkButton(id:RuntimeLinkId,cockpit:Boolean)=RgbGlowButton(this).apply {
@@ -1316,7 +1313,7 @@ class MainActivity : Activity() {
             minHeight=dp(40)
             maxLines=1
             contentDescription=(if(cockpit) "COCKPIT LINK " else "LINK MANAGER ")+id.name
-            setOnClickListener { runtimeLinkStore.toggle(id) }
+            if(id in RuntimeLinkContract.userToggleableLinks) setOnClickListener { runtimeLinkStore.toggle(id) } else isClickable=false
             if(cockpit) homeLinkQuickButtons[id]=this else homeLinkManagerButtons[id]=this
         }
 

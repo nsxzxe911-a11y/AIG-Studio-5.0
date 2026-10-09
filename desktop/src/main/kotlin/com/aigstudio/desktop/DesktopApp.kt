@@ -5246,26 +5246,29 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     val desktopLinkManagerButtons=linkedMapOf<RuntimeLinkId,JButton>()
     fun desktopRuntimeLinkColor(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
         RuntimeLinkStatus.CONNECTED -> Color(61,235,255)
+        RuntimeLinkStatus.DEGRADED -> StudioDesktopProductionTheme.warning
         RuntimeLinkStatus.DISCONNECTED -> Color(102,114,125)
-        RuntimeLinkStatus.WARNING -> StudioDesktopProductionTheme.warning
-        RuntimeLinkStatus.ALARM -> StudioDesktopProductionTheme.alarm
     }
     fun desktopRuntimeLinkSymbol(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
-        RuntimeLinkStatus.CONNECTED -> "🔗"
-        RuntimeLinkStatus.DISCONNECTED -> "⛓"
-        RuntimeLinkStatus.WARNING -> "⚠"
-        RuntimeLinkStatus.ALARM -> "ALARM"
+        RuntimeLinkStatus.CONNECTED -> "??"
+        RuntimeLinkStatus.DEGRADED -> "?"
+        RuntimeLinkStatus.DISCONNECTED -> "?"
     }
     fun desktopRuntimeLinkLabel(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
-        RuntimeLinkStatus.CONNECTED -> "連接"
-        RuntimeLinkStatus.DISCONNECTED -> "斷開"
-        RuntimeLinkStatus.WARNING -> "警告"
-        RuntimeLinkStatus.ALARM -> "Alarm"
+        RuntimeLinkStatus.CONNECTED -> "???"
+        RuntimeLinkStatus.DEGRADED -> "??"
+        RuntimeLinkStatus.DISCONNECTED -> "??"
     }
     fun desktopRuntimeLinkButton(id:RuntimeLinkId,cockpit:Boolean)=JButton().apply {
-        isFocusPainted=false;isOpaque=true;cursor=Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+        isFocusPainted=false;isOpaque=true
         background=Color(8,18,30);font=font.deriveFont(Font.BOLD,12f)
-        addActionListener { runtimeLinkStore.toggle(id) }
+        if(id in RuntimeLinkContract.userToggleableLinks) {
+            cursor=Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+            addActionListener { runtimeLinkStore.toggle(id) }
+        } else {
+            cursor=Cursor.getDefaultCursor()
+            toolTipText="Runtime ????"
+        }
         if(cockpit) desktopLinkQuickButtons[id]=this else desktopLinkManagerButtons[id]=this
     }
     fun renderDesktopRuntimeLinks(snapshot:RuntimeLinkSnapshot) {
