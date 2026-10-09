@@ -5,7 +5,7 @@
   "branch": "feat/aig-cnc-376-link-waiting",
   "recorded_source_head": "678f5247ddbd042ba33cdf93ae69cfe0f25f0291",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "LINK_WAITING_SOURCE_PASS_BINARY_PENDING",
+  "status": "LINK_WAITING_BINARY_INSTALLER_PASS",
   "departments": {
     "HOME": "EXECUTE_UNTIL_PASS",
     "CAD": "EXECUTE_UNTIL_PASS",
@@ -718,13 +718,33 @@
     }
   }
   ,"binary_runtime_evidence_376": {
-    "status": "SOURCE_PASS_BINARY_PENDING",
+    "status": "PASS_APK_SETUP_INSTALL_LAUNCH_UNINSTALL",
     "feature_source_sha": "678f5247ddbd042ba33cdf93ae69cfe0f25f0291",
+    "release_source_sha": "0824ab78dd14348c047be3f0f23b5e4da955619c",
     "internal_link_state_model": ["CONNECTED", "DEGRADED", "DISCONNECTED"],
     "disconnected_presentation": "WAITING",
     "display_zh_tw": "\u7b49\u5f85",
     "historical_375_preserved": true,
-    "android": "PENDING",
-    "windows": "PENDING"
+    "android": {
+      "status": "PASS_NOX_INSTALL_COLD_LAUNCH",
+      "apk": "release/android/AIG_CNC_376_FULL_INSTALLABLE.apk",
+      "apk_sha256": "4b77ef4d7a55aa04787c21b9712c974c5147b47864978e13f01a204859d60fe9",
+      "version_name": "376.0.0",
+      "version_code": 3760000,
+      "waiting_presentation": "PASS"
+    },
+    "windows": {
+      "status": "PASS_SETUP_64BIT_INSTALL_LAUNCH_UNINSTALL",
+      "setup_exe": "release/windows/AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe",
+      "setup_exe_sha256": "5b90476b86ae6991a7059fea2473443803ea31219d97c691f26411f9db074479",
+      "architecture": "x86_64",
+      "setup_install": "PASS_EXIT_0",
+      "installed_version": "3.76.0",
+      "installed_runtime_smoke": "PASS",
+      "installed_source_sha": "0824ab78dd14348c047be3f0f23b5e4da955619c",
+      "installed_removed_cells": 7500,
+      "uninstall": "PASS_EXIT_0",
+      "uninstall_install_dir_removed": true
+    }
   }
 }
