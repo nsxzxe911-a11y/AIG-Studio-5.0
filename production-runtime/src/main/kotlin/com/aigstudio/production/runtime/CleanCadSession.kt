@@ -5,6 +5,8 @@ import com.aigstudio.core.Arc
 import com.aigstudio.core.CNC_RESOLUTION_MM
 import com.aigstudio.core.CadEditEngine
 import com.aigstudio.core.CadSemanticIdentity
+import com.aigstudio.core.CadSnapEngine
+import com.aigstudio.core.SnapMode
 import com.aigstudio.core.Circle
 import com.aigstudio.core.DrawingDocument
 import com.aigstudio.core.Entity
@@ -16,6 +18,9 @@ import com.aigstudio.core.filletCommand
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.hypot
+
+enum class CleanCadSnapMode { ENDPOINT, MIDPOINT, CENTER, INTERSECTION, TANGENT, HORIZONTAL, VERTICAL }
+data class CleanCadSnapPoint(val x:Double,val y:Double)
 
 sealed interface CleanCadPrimitive {
     val selected:Boolean
@@ -53,6 +58,14 @@ class CleanCadSession {
         requireFinite(cx,cy,diameter)
         require(diameter>=CNC_RESOLUTION_MM*2.0) { "HOLE diameter must be at least 0.002 mm" }
         history.run(AddEntitiesCommand(listOf(Circle(id=CadSemanticIdentity.newHoleId(),center=Vec2(cx,cy),radius=diameter/2.0))))
+    }
+
+    fun snapPoint(x:Double,y:Double,tolerance:Double,mode:CleanCadSnapMode,referenceX:Double?=null,referenceY:Double?=null):CleanCadSnapPoint? {
+        requireFinite(x,y,tolerance); require(tolerance>0.0)
+        require((referenceX==null)==(referenceY==null)){"Snap reference requires both X and Y"}
+        val ref=if(referenceX!=null&&referenceY!=null) Vec2(referenceX,referenceY) else null
+        val q=CadSnapEngine.snapTo(document,Vec2(x,y),tolerance,setOf(SnapMode.valueOf(mode.name)),ref) ?: return null
+        return CleanCadSnapPoint(q.x,q.y)
     }
 
     fun selectNearest(x:Double,y:Double,multiSelect:Boolean=false,toleranceMm:Double=3.0):Boolean {

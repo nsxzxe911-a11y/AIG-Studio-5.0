@@ -3,11 +3,11 @@ android {
     namespace = "com.aigstudio.production"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.aigstudio.production.clean392"
+        applicationId = "com.aigstudio.production.clean393"
         minSdk = 26
         targetSdk = 36
-        versionCode = 392001
-        versionName = "392-cad-corners"
+        versionCode = 393001
+        versionName = "393-cad-snap"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

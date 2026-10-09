@@ -63,3 +63,10 @@ tasks.register<JavaExec>("cleanCadCornerRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("CleanCadCornerRegressionKt")
 }
+
+
+tasks.register<JavaExec>("cleanCadSnapRegression") {
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("CleanCadSnapRegressionKt")
+}

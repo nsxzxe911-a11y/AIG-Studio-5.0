@@ -14,24 +14,30 @@ import android.widget.GridLayout
 import android.widget.LinearLayout
 import com.aigstudio.production.runtime.CleanCadPrimitive
 import com.aigstudio.production.runtime.CleanCadSession
+import com.aigstudio.production.runtime.CleanCadSnapMode
 import kotlin.math.hypot
 import kotlin.math.min
 
 class CleanCadPanel(context:Context, private val session:CleanCadSession, private val onStatus:(String)->Unit):LinearLayout(context) {
     private enum class Tool { LINE, RECT, CIRCLE, HOLE, SELECT }
     private val canvasView=CadCanvas(context)
+    private lateinit var snapButton:Button
+    private var snapMode:CleanCadSnapMode?=null
+    private val snapModes=listOf(CleanCadSnapMode.ENDPOINT,CleanCadSnapMode.MIDPOINT,CleanCadSnapMode.CENTER,CleanCadSnapMode.INTERSECTION,CleanCadSnapMode.HORIZONTAL,CleanCadSnapMode.VERTICAL,CleanCadSnapMode.TANGENT)
 
     init {
         orientation=VERTICAL
         setPadding(dp(4),dp(4),dp(4),dp(4))
         background=GradientDrawable().apply { setColor(0xD0020407.toInt()); setStroke(dp(1),Color.rgb(61,235,255)); cornerRadius=dp(10).toFloat() }
         val tools=GridLayout(context).apply { columnCount=5 }
-        fun toolButton(label:String,desc:String,action:()->Unit) {
-            tools.addView(Button(context).apply {
+        fun toolButton(label:String,desc:String,action:()->Unit):Button {
+            val button=Button(context).apply {
                 text=label; contentDescription=desc; isAllCaps=false; textSize=8f; setTextColor(Color.WHITE)
                 background=GradientDrawable().apply { setColor(0xCC07111B.toInt()); setStroke(dp(1),Color.rgb(61,235,255)); cornerRadius=dp(8).toFloat() }
                 setOnClickListener { action() }
-            },GridLayout.LayoutParams().apply { width=0; height=dp(40); columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f); setMargins(dp(2),0,dp(2),dp(2)) })
+            }
+            tools.addView(button,GridLayout.LayoutParams().apply { width=0; height=dp(40); columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f); setMargins(dp(2),0,dp(2),dp(2)) })
+            return button
         }
         toolButton("LINE","CAD TOOL LINE"){session.clearSelection();canvasView.tool=Tool.LINE;report("LINE READY")}
         toolButton("RECT","CAD TOOL RECT"){session.clearSelection();canvasView.tool=Tool.RECT;report("RECT READY")}
@@ -46,9 +52,29 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
         toolButton("ARRAY×3","CAD ARRAY 3X"){editAction("ARRAY 3X"){session.arraySelected(3,10.0,0.0)}}
         toolButton("CHAMFER 5","CAD CHAMFER 5MM"){editAction("CHAMFER 5"){session.chamferSelected(5.0)}}
         toolButton("FILLET R5","CAD FILLET R5MM"){editAction("FILLET R5"){session.filletSelected(5.0)}}
+        snapButton=toolButton("SNAP OFF","CAD SNAP CYCLE"){cycleSnapMode()}
         addView(tools,LayoutParams(-1,-2))
         addView(canvasView,LayoutParams(-1,0,1f))
         report("READY")
+    }
+
+    private fun cycleSnapMode() {
+        val current=snapMode
+        snapMode=if(current==null) snapModes.first() else snapModes.getOrNull(snapModes.indexOf(current)+1)
+        val name=snapMode?.name ?: "OFF"
+        snapButton.text=when(snapMode) {
+            CleanCadSnapMode.ENDPOINT -> "SNAP END"
+            CleanCadSnapMode.MIDPOINT -> "SNAP MID"
+            CleanCadSnapMode.CENTER -> "SNAP CTR"
+            CleanCadSnapMode.INTERSECTION -> "SNAP INT"
+            CleanCadSnapMode.HORIZONTAL -> "SNAP HOR"
+            CleanCadSnapMode.VERTICAL -> "SNAP VER"
+            CleanCadSnapMode.TANGENT -> "SNAP TAN"
+            null -> "SNAP OFF"
+        }
+        canvasView.clearSnapMarker()
+        report("SNAP $name")
+        Log.i("AIG-CLEAN-CAD","CLEAN_CAD_SNAP_MODE|$name")
     }
 
     private fun editAction(label:String,action:()->Unit) {
@@ -70,6 +96,7 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
     private inner class CadCanvas(context:Context):View(context) {
         var tool=Tool.LINE
         private var down:World?=null
+        private var lastSnap:World?=null
         private val paint=Paint(Paint.ANTI_ALIAS_FLAG)
         init { contentDescription="CLEAN CAD CANVAS"; setBackgroundColor(0xCC020407.toInt()) }
 
@@ -99,14 +126,26 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
                     }
                 }
             }
+            lastSnap?.let { q ->
+                val m=screen(q.x,q.y,scale)
+                paint.style=Paint.Style.STROKE; paint.strokeWidth=2f; paint.color=Color.rgb(255,196,64)
+                c.drawCircle(m.first,m.second,dp(6).toFloat(),paint)
+            }
             paint.style=Paint.Style.FILL
         }
 
         override fun onTouchEvent(e:MotionEvent):Boolean {
             when(e.actionMasked) {
-                MotionEvent.ACTION_DOWN -> { down=world(e.x,e.y); return true }
+                MotionEvent.ACTION_DOWN -> {
+                    val raw=world(e.x,e.y)
+                    down=if(tool==Tool.SELECT) raw else snapWorld(raw,null)
+                    return true
+                }
                 MotionEvent.ACTION_UP -> {
-                    val a=down ?: return true; val b=world(e.x,e.y); down=null
+                    val a=down ?: return true
+                    val raw=world(e.x,e.y)
+                    val b=if(tool==Tool.SELECT) raw else snapWorld(raw,a)
+                    down=null
                     if(tool==Tool.SELECT) {
                         if(session.selectedCount()>=2) session.clearSelection()
                         val ok=session.selectNearest(b.x,b.y,session.selectedCount()>0)
@@ -130,6 +169,19 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
                 }
             }
             return true
+        }
+
+        fun clearSnapMarker(){ lastSnap=null; invalidate() }
+
+        private fun snapWorld(raw:World,reference:World?):World {
+            val mode=snapMode ?: return raw
+            if((mode==CleanCadSnapMode.HORIZONTAL || mode==CleanCadSnapMode.VERTICAL) && reference==null) return raw
+            val q=runCatching { session.snapPoint(raw.x,raw.y,3.0,mode,reference?.x,reference?.y) }.getOrNull() ?: return raw
+            val snapped=World(q.x,q.y)
+            lastSnap=snapped
+            Log.i("AIG-CLEAN-CAD","CLEAN_CAD_SNAP_APPLY|${mode.name}|PASS|x=${q.x}|y=${q.y}")
+            invalidate()
+            return snapped
         }
 
         private fun scalePx():Double=min(width.coerceAtLeast(1)/160.0,height.coerceAtLeast(1)/100.0).coerceAtLeast(1.0)
