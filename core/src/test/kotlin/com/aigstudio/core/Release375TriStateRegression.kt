@@ -1,7 +1,7 @@
 package com.aigstudio.core
 
 import java.io.File
-private const val FEATURE_SHA="0c2545e7b15f261199f0e921363492a770307eb3"
+private const val FEATURE_SHA="3ec0347a027a9c7dee35d6ac011581b588e5c0c1"
 private fun root375():File {
     val d=File(".").canonicalFile
     if(File(d,"release-version.properties").isFile)return d

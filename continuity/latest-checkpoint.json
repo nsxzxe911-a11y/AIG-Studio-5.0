@@ -3,7 +3,7 @@
   "product": "AIG CNC",
   "version": "375.0.0",
   "branch": "feat/aig-cnc-375-link-tristate",
-  "recorded_source_head": "0c2545e7b15f261199f0e921363492a770307eb3",
+  "recorded_source_head": "3ec0347a027a9c7dee35d6ac011581b588e5c0c1",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
   "status": "TRISTATE_LINK_SOURCE_PASS_BINARY_PENDING",
   "departments": {
@@ -669,7 +669,7 @@
   },
   "binary_runtime_evidence_375": {
     "status": "SOURCE_PASS_BINARY_PENDING",
-    "feature_source_sha": "0c2545e7b15f261199f0e921363492a770307eb3",
+    "feature_source_sha": "3ec0347a027a9c7dee35d6ac011581b588e5c0c1",
     "link_state_model": [
       "CONNECTED",
       "DEGRADED",
