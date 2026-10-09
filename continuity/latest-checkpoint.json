@@ -1,11 +1,11 @@
 {
   "schema": "aig-continuity-checkpoint-v1",
   "product": "AIG CNC",
-  "version": "374.0.0",
-  "branch": "feat/aig-cnc-374-runtime-link-completion",
-  "recorded_source_head": "bcaa848290e21a4e021cdb333abdc4503c60aac4",
+  "version": "375.0.0",
+  "branch": "feat/aig-cnc-375-link-tristate",
+  "recorded_source_head": "0c2545e7b15f261199f0e921363492a770307eb3",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "FULL_RUNTIME_LINK_COMPLETION_BINARY_INSTALLER_PASS",
+  "status": "TRISTATE_LINK_SOURCE_PASS_BINARY_PENDING",
   "departments": {
     "HOME": "EXECUTE_UNTIL_PASS",
     "CAD": "EXECUTE_UNTIL_PASS",
@@ -666,5 +666,25 @@
       "uninstall_install_dir_removed": true,
       "uninstall_registry_removed": true
     }
+  },
+  "binary_runtime_evidence_375": {
+    "status": "SOURCE_PASS_BINARY_PENDING",
+    "feature_source_sha": "0c2545e7b15f261199f0e921363492a770307eb3",
+    "link_state_model": [
+      "CONNECTED",
+      "DEGRADED",
+      "DISCONNECTED"
+    ],
+    "degraded_semantics": "TRANSPORT_AVAILABLE_DATA_FLOW_UNHEALTHY",
+    "disconnected_semantics": "TRANSPORT_UNAVAILABLE_ONLY",
+    "external_links_default": "DISCONNECTED_UNTIL_RUNTIME_EVIDENCE",
+    "runtime_owned_links": [
+      "GPU_3D",
+      "MACHINE"
+    ],
+    "shared_snapshot_for_ai_routing": true,
+    "apk": "PENDING",
+    "windows_portable": "PENDING",
+    "windows_setup": "PENDING"
   }
 }

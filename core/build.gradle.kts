@@ -166,3 +166,12 @@ tasks.register<JavaExec>("release374Regression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.Release374RegressionKt")
 }
+
+
+tasks.register<JavaExec>("release375TriStateRegression") {
+    group = "verification"
+    description = "Checks AIG CNC 375 shared three-state link release promotion"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.Release375TriStateRegressionKt")
+}
