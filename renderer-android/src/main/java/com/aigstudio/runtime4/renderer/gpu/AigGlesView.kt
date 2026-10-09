@@ -1,4 +1,4 @@
-﻿package com.aigstudio.runtime4.renderer.gpu
+package com.aigstudio.runtime4.renderer.gpu
 
 import android.content.Context
 import android.opengl.GLSurfaceView
@@ -10,11 +10,13 @@ import com.aigstudio.runtime4.renderer.*
 class AigGlesView(
     context: Context,
     private val cadRuntime: CadRuntimePort,
+    onFirstFrame: (() -> Unit)? = null,
 ) : GLSurfaceView(context) {
     private val sceneRouter = SceneRouter(SceneId.HOME)
     private val cadController = CadSceneController(cadRuntime)
     private val pointerRouter = PointerGestureRouter(cadRuntime)
-    private val aigRenderer = AigGlesRenderer(context, cadRuntime, sceneRouter, cadController)
+    private val firstFrameSignal = onFirstFrame?.let { callback -> FirstFrameSignal { post(callback) } }
+    private val aigRenderer = AigGlesRenderer(context, cadRuntime, sceneRouter, cadController, firstFrameSignal)
     private var pressedNode: String? = null
 
     init {

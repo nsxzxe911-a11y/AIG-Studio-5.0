@@ -1,4 +1,4 @@
-﻿plugins { id("com.android.application") }
+plugins { id("com.android.application") }
 
 android {
     namespace = "com.aigstudio.runtime4.host"
@@ -20,4 +20,5 @@ dependencies {
     implementation(project(":runtime-contract"))
     implementation(project(":production-runtime"))
     implementation(project(":renderer-android"))
+    testImplementation("junit:junit:4.13.2")
 }

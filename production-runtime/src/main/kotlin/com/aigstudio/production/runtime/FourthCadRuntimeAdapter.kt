@@ -7,13 +7,32 @@ import kotlin.math.hypot
 
 class FourthCadRuntimeAdapter(
     private val session: CleanCadSession = CleanCadSession(),
-) : CadRuntimePort {
+) : CadRuntimePort, CadPersistencePort {
     private var state: CadState = CadState.initial()
     private var gestureStart: CadPoint? = null
     private var arcCenter: CadPoint? = null
     private var arcStart: CadPoint? = null
 
     override fun snapshot(): CadState = synced()
+
+    override fun exportCheckpoint(): String =
+        CadCheckpointCodec.encode(session.checkpointData(state.revision))
+
+    override fun restoreCheckpoint(raw: String): CadDispatchResult {
+        val before = state
+        return try {
+            val data = CadCheckpointCodec.decode(raw)
+            session.restoreCheckpoint(data)
+            gestureStart = null
+            arcCenter = null
+            arcStart = null
+            state = synced().copy(revision = data.revision, arcStage = 0, message = null)
+            CadDispatchResult(true, state)
+        } catch (e: Exception) {
+            state = before.copy(message = RuntimeMessage(MessageSeverity.WARNING, e.message ?: "CAD checkpoint rejected"))
+            CadDispatchResult(false, state)
+        }
+    }
 
     override fun dispatch(command: CadCommand): CadDispatchResult = try {
         when (command) {

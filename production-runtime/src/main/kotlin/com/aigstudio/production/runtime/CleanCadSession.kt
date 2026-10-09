@@ -33,7 +33,7 @@ import java.util.UUID
 enum class CleanCadSnapMode { ENDPOINT, MIDPOINT, CENTER, INTERSECTION, TANGENT, HORIZONTAL, VERTICAL }
 enum class CleanCadLayer { WORKPIECE, DIMENSIONS, CENTERLINE, TOOLPATH, SIMULATION, ORIGIN }
 enum class CleanCadDimensionKind { LENGTH, RADIUS, DIAMETER, WIDTH, HEIGHT }
-data class CleanCadDimension(val id:String,val kind:CleanCadDimensionKind,val valueMm:Double)
+data class CleanCadDimension(val id:String,val targetIds:Set<String>,val kind:CleanCadDimensionKind,val valueMm:Double)
 data class CleanCadSnapPoint(val x:Double,val y:Double)
 
 sealed interface CleanCadPrimitive {
@@ -46,7 +46,7 @@ sealed interface CleanCadPrimitive {
 
 class CleanCadSession {
     private val document=DrawingDocument()
-    private val history=History(document)
+    private var history=History(document)
     private val selectedIds=linkedSetOf<String>()
 
     fun addLine(ax:Double,ay:Double,bx:Double,by:Double) {
@@ -143,7 +143,67 @@ class CleanCadSession {
         history.run(DrivenDimensionCommand(geometry,record))
     }
     fun dimensions():List<CleanCadDimension> = document.dimensions().map {
-        CleanCadDimension(it.id,CleanCadDimensionKind.valueOf(it.kind.name),it.valueMm)
+        CleanCadDimension(it.id,it.targetIds,CleanCadDimensionKind.valueOf(it.kind.name),it.valueMm)
+    }
+
+    fun checkpointData(revision:Long):CadCheckpointData {
+        fun arcValues(e:Arc):List<Double> {
+            val start=Math.toDegrees(atan2(e.start.y-e.center.y,e.start.x-e.center.x))
+            val end=Math.toDegrees(atan2(e.end.y-e.center.y,e.end.x-e.center.x))
+            var sweep=end-start
+            if(e.clockwise){while(sweep>=0.0)sweep-=360.0}else{while(sweep<=0.0)sweep+=360.0}
+            return listOf(e.center.x,e.center.y,e.radius,start,sweep)
+        }
+        val entities=document.all().map { e ->
+            val layer=CleanCadLayer.valueOf(document.layerOf(e.id).name)
+            when(e) {
+                is Line -> CadCheckpointEntity("LINE",e.id,listOf(e.a.x,e.a.y,e.b.x,e.b.y),layer)
+                is Circle -> CadCheckpointEntity(if(e.id.startsWith("HOLE:"))"HOLE" else "CIRCLE",e.id,listOf(e.center.x,e.center.y,e.radius),layer)
+                is Arc -> CadCheckpointEntity("ARC",e.id,arcValues(e),layer)
+                else -> error("Unsupported CAD checkpoint entity")
+            }
+        }
+        return CadCheckpointData(
+            revision=revision,
+            activeLayer=activeLayer(),
+            visibility=layerVisibility(),
+            entities=entities,
+            topology=document.links().map{CadCheckpointTopology(it.aId,it.bId)},
+            dimensions=document.dimensions().map { d ->
+                CadCheckpointDimension(d.id,CleanCadDimensionKind.valueOf(d.kind.name),d.valueMm,d.targetIds.toList().sorted())
+            },
+        )
+    }
+
+    fun restoreCheckpoint(data:CadCheckpointData) {
+        require(data.entities.none{it.kind=="RECT"}) { "CNC checkpoint RECT record is unsupported; semantic rectangles restore as LINE members" }
+        val restored=data.entities.map { e ->
+            val v=e.values
+            when(e.kind) {
+                "LINE" -> Line(id=e.id,a=Vec2(v[0],v[1]),b=Vec2(v[2],v[3]))
+                "CIRCLE","HOLE" -> Circle(id=e.id,center=Vec2(v[0],v[1]),radius=v[2])
+                "ARC" -> {
+                    val sr=Math.toRadians(v[3]); val er=Math.toRadians(v[3]+v[4]); val c=Vec2(v[0],v[1]); val r=v[2]
+                    Arc(id=e.id,center=c,radius=r,start=Vec2(c.x+cos(sr)*r,c.y+sin(sr)*r),end=Vec2(c.x+cos(er)*r,c.y+sin(er)*r),clockwise=v[4]<0.0)
+                }
+                else -> error("Unsupported CAD checkpoint entity ${e.kind}")
+            }
+        }
+        val restoredIds=restored.map{it.id}.toSet()
+        val links=data.topology.map{CadTopologyLink.of(it.aId,it.bId)}
+        val dims=data.dimensions.map { d -> CadDrivenDimension(d.id,d.targetIds.toSet(),DrivenDimensionKind.valueOf(d.kind.name),d.valueMm) }
+        require(links.all{it.aId in restoredIds && it.bId in restoredIds}) { "Checkpoint topology target missing" }
+        require(dims.all{it.targetIds.all(restoredIds::contains)}) { "Checkpoint dimension target missing" }
+
+        document.clear()
+        restored.forEach(document::put)
+        data.entities.forEach { e -> document.assignLayer(listOf(e.id),CadLayerId.valueOf(e.layer.name)) }
+        data.topology.forEach { document.connect(CadTopologyLink.of(it.aId,it.bId)) }
+        dims.forEach(document::putDimension)
+        data.visibility.forEach { (layer,visible) -> document.setLayerVisible(CadLayerId.valueOf(layer.name),visible) }
+        document.setActiveLayer(CadLayerId.valueOf(data.activeLayer.name))
+        selectedIds.clear()
+        history=History(document)
     }
     fun trimSelected(){ history.run(CadEditEngine.trimCommand(document,selectedIds.toList())); selectedIds.clear() }
     fun extendSelected(){ history.run(CadEditEngine.extendCommand(document,selectedIds.toList())); selectedIds.clear() }

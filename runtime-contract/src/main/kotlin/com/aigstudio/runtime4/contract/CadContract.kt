@@ -70,3 +70,4 @@ sealed interface CadCommand {
 
 data class CadDispatchResult(val accepted:Boolean,val state:CadState)
 interface CadRuntimePort { fun snapshot():CadState; fun dispatch(command:CadCommand):CadDispatchResult }
+interface CadPersistencePort { fun exportCheckpoint():String; fun restoreCheckpoint(raw:String):CadDispatchResult }

@@ -15,6 +15,7 @@ class AigGlesRenderer(
     cadRuntime: CadRuntimePort,
     private val sceneRouter: SceneRouter,
     private val cadController: CadSceneController,
+    private val firstFrameSignal: FirstFrameSignal? = null,
 ) : GLSurfaceView.Renderer {
     val stateSource = RendererStateSource(cadRuntime)
     @Volatile var pressedNodeId: String? = null
@@ -48,6 +49,7 @@ class AigGlesRenderer(
             GLES30.glFinish()
             Log.i("AIG4", "AIG4_GLES|FIRST_FRAME|PASS")
             firstFrameLogged = true
+            firstFrameSignal?.fireOnce()
         }
     }
 
