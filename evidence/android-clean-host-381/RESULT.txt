@@ -1,0 +1,10 @@
+﻿CLEAN_HOST_NOX_AB_PASS
+PACKAGE=com.aigstudio.production.clean381
+LEGACY_PACKAGE=com.aigstudio.app
+COLD_START_MS=404
+FIRST_FRAME=RGB_HOME
+HOME_ASSET=home.png|720x1280
+SIX_AXIS_ASSET=6ax.png|720x1280
+SAME_PID=4372
+APK_DEX=NO_STARTUP_ACTIVITY|NO_LEGACY_MAIN|NO_MAINTENANCE
+NOTE=Clean Host proof only; full CAD/CAM/3D runtime migration not yet claimed.
