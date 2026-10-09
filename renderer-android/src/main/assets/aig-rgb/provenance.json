@@ -34,6 +34,16 @@
                        "sha256":  "15cc5ebe82d143584ffd5cf193fef6c07dd6e7e56e5044c1a8bcac6433f22086"
                    },
                    {
+                       "source":  "engineering-assets/images/cad.png",
+                       "runtime":  "aig-rgb/icons/cad.png",
+                       "sha256":  "b3888ae2dbaec740ec328a27a197bc96c24916b31606f28d327c3cd1013ffbd4"
+                   },
+                   {
+                       "source":  "engineering-assets/images/workspace.png",
+                       "runtime":  "aig-rgb/icons/workspace.png",
+                       "sha256":  "99770865bf4fb6f7dd4f911808e1e6d28c18a717857a2a0e0386834594127622"
+                   },
+                   {
                        "source":  "engineering-assets/images/rgb_wallpaper.png",
                        "runtime":  "aig-rgb/home/rgb_wallpaper.png",
                        "sha256":  "a4b50e8470faa8914231f8190be4673363f908be18938834482ffed2099a4708"

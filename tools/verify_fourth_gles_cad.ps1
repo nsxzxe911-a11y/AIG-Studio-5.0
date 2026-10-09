@@ -12,7 +12,7 @@ if ($viewText -notmatch 'setEGLContextClientVersion\(3\)') { throw "GLES3 contex
 if ($viewText -notmatch 'setRenderer\(') { throw "GLSurfaceView renderer not owned" }
 if (($viewText + $glesText) -match '\b(Button|ImageView|Clean[A-Za-z]*Panel)\b') { throw "legacy widget/panel dependency found" }
 if (($viewText + $glesText) -match 'cad\.png') { throw "full-page cad.png mount forbidden" }
-$required = @('line.png','rect.png','circle.png','hole.png','select.png','tool_group.png')
+$required = @('line.png','rect.png','circle.png','hole.png','select.png','tool_group.png','cad.png','workspace.png')
 foreach ($name in $required) {
   if (-not (Test-Path (Join-Path $assets "icons\$name"))) { throw "missing per-tool RGB texture: $name" }
 }
