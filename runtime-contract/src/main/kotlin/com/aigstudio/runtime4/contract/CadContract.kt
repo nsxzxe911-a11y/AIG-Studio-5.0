@@ -5,6 +5,8 @@ enum class SceneId { HOME, CAD, CAM, SIM, AXIS3, AXIS4, AXIS5, AXIS6, NC, AI }
 enum class CadTool { LINE, RECT, CIRCLE, ARC, HOLE, SELECT }
 enum class CadSnapMode { OFF, ENDPOINT, MIDPOINT, CENTER, INTERSECTION, TANGENT, HORIZONTAL, VERTICAL }
 enum class CadLayer { WORKPIECE, DIMENSIONS, CENTERLINE, TOOLPATH, SIMULATION, ORIGIN }
+enum class CadDimensionKind { LENGTH, RADIUS, DIAMETER, WIDTH, HEIGHT }
+data class CadDimensionSnapshot(val id:String,val targetKind:CadDimensionKind,val valueMm:Double)
 enum class MessageSeverity { INFO, WARNING, ALARM }
 
 data class CadPoint(val x: Double, val y: Double)
@@ -33,6 +35,7 @@ data class CadState(
     val arcStage: Int = 0,
     val activeLayer: CadLayer = CadLayer.WORKPIECE,
     val layerVisibility: Map<CadLayer,Boolean> = CadLayer.entries.associateWith { true },
+    val dimensions: List<CadDimensionSnapshot> = emptyList(),
     val message: RuntimeMessage? = null,
 ) {
     companion object {
@@ -50,6 +53,7 @@ sealed interface CadCommand {
     data class SetActiveLayer(val layer:CadLayer) : CadCommand
     data class ToggleLayerVisibility(val layer:CadLayer) : CadCommand
     data class AssignSelectionToLayer(val layer:CadLayer) : CadCommand
+    data class ApplySelectedDimension(val kind:CadDimensionKind,val valueMm:Double) : CadCommand
     data class PointerDown(val point: CadPoint) : CadCommand
     data class PointerUp(val point: CadPoint) : CadCommand
     data object Undo : CadCommand

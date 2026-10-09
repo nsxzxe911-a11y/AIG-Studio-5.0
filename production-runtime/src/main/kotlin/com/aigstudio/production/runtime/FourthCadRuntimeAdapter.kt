@@ -48,6 +48,9 @@ class FourthCadRuntimeAdapter(
             is CadCommand.AssignSelectionToLayer -> editMutation {
                 session.assignSelectedLayer(CleanCadLayer.valueOf(command.layer.name))
             }
+            is CadCommand.ApplySelectedDimension -> editMutation {
+                session.applySelectedDimension(CleanCadDimensionKind.valueOf(command.kind.name),command.valueMm)
+            }
             is CadCommand.PointerDown -> {
                 if (state.activeTool != CadTool.ARC) {
                     gestureStart = if (state.activeTool == CadTool.SELECT) command.point else snap(command.point, null)
@@ -178,6 +181,9 @@ class FourthCadRuntimeAdapter(
         activeLayer = CadLayer.valueOf(session.activeLayer().name),
         layerVisibility = CadLayer.entries.associateWith { layer ->
             session.isLayerVisible(CleanCadLayer.valueOf(layer.name))
+        },
+        dimensions = session.dimensions().map { d ->
+            CadDimensionSnapshot(d.id,CadDimensionKind.valueOf(d.kind.name),d.valueMm)
         },
     )
 }

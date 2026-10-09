@@ -19,6 +19,7 @@ class DrawingDocument {
     private val entities = LinkedHashMap<EntityId, Entity>()
     private val topologyLinks = linkedSetOf<CadTopologyLink>()
     private val layers = CadLayerState()
+    private val drivenDimensions = linkedMapOf<String,CadDrivenDimension>()
 
     fun all(): List<Entity> = entities.values.toList()
     fun get(id: EntityId): Entity? = entities[id]
@@ -39,6 +40,7 @@ class DrawingDocument {
         entities.clear()
         topologyLinks.clear()
         layers.clear()
+        drivenDimensions.clear()
     }
     fun size(): Int = entities.size
     fun snapshot(): DrawingSnapshot = DrawingSnapshot(all().map { it.copyEntity() })
@@ -64,6 +66,12 @@ class DrawingDocument {
         require(assignments.keys.all(::contains)){"Layer assignment entity missing"}
         assignments.forEach{(id,layer)->layers.assign(listOf(id),layer)}
     }
+    fun dimensions():List<CadDrivenDimension> = drivenDimensions.values.filter { d -> d.targetIds.all(::contains) }
+    fun putDimension(d:CadDrivenDimension){
+        require(d.targetIds.isNotEmpty() && d.targetIds.all(::contains)){"Dimension target missing"}
+        drivenDimensions[d.id]=d
+    }
+    fun removeDimension(id:String):CadDrivenDimension?=drivenDimensions.remove(id)
 
     fun connect(link: CadTopologyLink): Boolean {
         require(contains(link.aId) && contains(link.bId)) { "Topology entity missing" }
@@ -887,7 +895,24 @@ object RectDimensionDriveEngine {
     }
 }
 
-enum class DrivenDimensionKind { LENGTH, DIAMETER, RADIUS }
+enum class DrivenDimensionKind { LENGTH, DIAMETER, RADIUS, WIDTH, HEIGHT }
+
+data class CadDrivenDimension(
+    val id:String,
+    val targetIds:Set<EntityId>,
+    val kind:DrivenDimensionKind,
+    val valueMm:Double
+)
+
+class DrivenDimensionCommand(
+    private val geometry:Command,
+    private val record:CadDrivenDimension
+):Command {
+    override fun execute(doc:DrawingDocument){geometry.execute(doc);doc.putDimension(record)}
+    override fun undo(doc:DrawingDocument){geometry.undo(doc);doc.removeDimension(record.id)}
+    override fun selectionAfterExecute(doc:DrawingDocument)=record.targetIds.filter(doc::contains).toSet()
+    override fun selectionAfterUndo(doc:DrawingDocument)=record.targetIds.filter(doc::contains).toSet()
+}
 
 object DimensionDriveEngine {
     fun defaultKind(entity:Entity):DrivenDimensionKind = when(entity){

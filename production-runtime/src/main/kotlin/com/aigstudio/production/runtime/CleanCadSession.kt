@@ -3,6 +3,11 @@ package com.aigstudio.production.runtime
 import com.aigstudio.core.AddEntitiesCommand
 import com.aigstudio.core.AssignLayerCommand
 import com.aigstudio.core.CadLayerId
+import com.aigstudio.core.CadDrivenDimension
+import com.aigstudio.core.DimensionDriveEngine
+import com.aigstudio.core.DrivenDimensionCommand
+import com.aigstudio.core.DrivenDimensionKind
+import com.aigstudio.core.RectDimensionDriveEngine
 import com.aigstudio.core.Arc
 import com.aigstudio.core.CNC_RESOLUTION_MM
 import com.aigstudio.core.CadEditEngine
@@ -23,9 +28,12 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
+import java.util.UUID
 
 enum class CleanCadSnapMode { ENDPOINT, MIDPOINT, CENTER, INTERSECTION, TANGENT, HORIZONTAL, VERTICAL }
 enum class CleanCadLayer { WORKPIECE, DIMENSIONS, CENTERLINE, TOOLPATH, SIMULATION, ORIGIN }
+enum class CleanCadDimensionKind { LENGTH, RADIUS, DIAMETER, WIDTH, HEIGHT }
+data class CleanCadDimension(val id:String,val kind:CleanCadDimensionKind,val valueMm:Double)
 data class CleanCadSnapPoint(val x:Double,val y:Double)
 
 sealed interface CleanCadPrimitive {
@@ -51,7 +59,10 @@ class CleanCadSession {
         requireFinite(x1,y1,x2,y2)
         require(abs(x2-x1)>=CNC_RESOLUTION_MM && abs(y2-y1)>=CNC_RESOLUTION_MM) { "RECT width/height must be at least 0.001 mm" }
         val a=Vec2(x1,y1); val b=Vec2(x2,y1); val c=Vec2(x2,y2); val d=Vec2(x1,y2)
-        history.run(AddEntitiesCommand(listOf(Line(a=a,b=b),Line(a=b,b=c),Line(a=c,b=d),Line(a=d,b=a))))
+        val ids=CadSemanticIdentity.newRectIds()
+        history.run(AddEntitiesCommand(listOf(
+            Line(id=ids[0],a=a,b=b),Line(id=ids[1],a=b,b=c),Line(id=ids[2],a=c,b=d),Line(id=ids[3],a=d,b=a)
+        )))
     }
 
     fun addCircle(cx:Double,cy:Double,radius:Double) {
@@ -90,9 +101,9 @@ class CleanCadSession {
         requireFinite(x,y,toleranceMm); require(toleranceMm>=CNC_RESOLUTION_MM)
         val hit=document.visibleEntities().map { it to distanceTo(it,x,y) }.minByOrNull { it.second }
         if(hit==null || hit.second>toleranceMm) { if(!multiSelect) selectedIds.clear(); return false }
-        val id=hit.first.id
-        if(!multiSelect) { selectedIds.clear(); selectedIds.add(id) }
-        else if(id in selectedIds) selectedIds.remove(id) else selectedIds.add(id)
+        val ids=CadSemanticIdentity.selectionIds(document,hit.first)
+        if(!multiSelect) { selectedIds.clear(); selectedIds.addAll(ids) }
+        else if(ids.all{it in selectedIds}) selectedIds.removeAll(ids) else selectedIds.addAll(ids)
         return true
     }
 
@@ -111,6 +122,28 @@ class CleanCadSession {
     fun assignSelectedLayer(layer:CleanCadLayer) {
         require(selectedIds.isNotEmpty()) { "Layer assignment requires selected geometry" }
         history.run(AssignLayerCommand(selectedIds.toSet(),CadLayerId.valueOf(layer.name)))
+    }
+    fun applySelectedDimension(kind:CleanCadDimensionKind,valueMm:Double) {
+        require(valueMm.isFinite() && valueMm>=CNC_RESOLUTION_MM) { "Dimension must be >= 0.001 mm" }
+        require(selectedIds.isNotEmpty()) { "Dimension requires selected geometry" }
+        val coreKind=DrivenDimensionKind.valueOf(kind.name)
+        val geometry=when(kind) {
+            CleanCadDimensionKind.WIDTH,CleanCadDimensionKind.HEIGHT -> {
+                val current=RectDimensionDriveEngine.current(document,selectedIds)
+                val width=if(kind==CleanCadDimensionKind.WIDTH)valueMm else current.width
+                val height=if(kind==CleanCadDimensionKind.HEIGHT)valueMm else current.height
+                RectDimensionDriveEngine.command(document,selectedIds,width,height)
+            }
+            else -> {
+                require(selectedIds.size==1) { "Dimension requires one selected entity" }
+                DimensionDriveEngine.command(document,selectedIds.single(),valueMm,coreKind)
+            }
+        }
+        val record=CadDrivenDimension("DIM:"+UUID.randomUUID(),selectedIds.toSet(),coreKind,valueMm)
+        history.run(DrivenDimensionCommand(geometry,record))
+    }
+    fun dimensions():List<CleanCadDimension> = document.dimensions().map {
+        CleanCadDimension(it.id,CleanCadDimensionKind.valueOf(it.kind.name),it.valueMm)
     }
     fun trimSelected(){ history.run(CadEditEngine.trimCommand(document,selectedIds.toList())); selectedIds.clear() }
     fun extendSelected(){ history.run(CadEditEngine.extendCommand(document,selectedIds.toList())); selectedIds.clear() }
