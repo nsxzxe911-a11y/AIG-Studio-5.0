@@ -142,6 +142,23 @@ class AddEntitiesCommand(private val entities: List<Entity>) : Command {
     override fun selectionAfterUndo(doc:DrawingDocument)=emptySet<EntityId>()
 }
 
+class AssignLayerCommand(
+    private val ids:Set<EntityId>,
+    private val layer:CadLayerId
+) : Command {
+    override val geometryMutation:Boolean=false
+    private var before:Map<EntityId,CadLayerId> = emptyMap()
+    override fun execute(doc:DrawingDocument) {
+        require(ids.isNotEmpty()) { "Layer assignment requires selected geometry" }
+        before=doc.layerAssignments(ids)
+        require(before.size==ids.size) { "Layer assignment entity missing" }
+        doc.assignLayer(ids,layer)
+    }
+    override fun undo(doc:DrawingDocument) = doc.restoreLayerAssignments(before)
+    override fun selectionAfterExecute(doc:DrawingDocument)=ids.filter(doc::contains).toSet()
+    override fun selectionAfterUndo(doc:DrawingDocument)=ids.filter(doc::contains).toSet()
+}
+
 class DeleteEntityCommand(private val id: EntityId) : Command {
     private var deleted: Entity? = null
     private var deletedLinks: Set<CadTopologyLink> = emptySet()

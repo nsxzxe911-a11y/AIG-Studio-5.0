@@ -35,6 +35,19 @@ class FourthCadRuntimeAdapter(
                 state = synced().copy(arcClockwise = !state.arcClockwise, message = null)
                 accepted()
             }
+            is CadCommand.SetActiveLayer -> {
+                session.setActiveLayer(CleanCadLayer.valueOf(command.layer.name))
+                state = synced().copy(message = null)
+                accepted()
+            }
+            is CadCommand.ToggleLayerVisibility -> {
+                session.toggleLayerVisibility(CleanCadLayer.valueOf(command.layer.name))
+                state = synced().copy(message = null)
+                accepted()
+            }
+            is CadCommand.AssignSelectionToLayer -> editMutation {
+                session.assignSelectedLayer(CleanCadLayer.valueOf(command.layer.name))
+            }
             is CadCommand.PointerDown -> {
                 if (state.activeTool != CadTool.ARC) {
                     gestureStart = if (state.activeTool == CadTool.SELECT) command.point else snap(command.point, null)
@@ -162,5 +175,9 @@ class FourthCadRuntimeAdapter(
         },
         selectedCount = session.selectedCount(),
         topologyCount = session.topologyCount(),
+        activeLayer = CadLayer.valueOf(session.activeLayer().name),
+        layerVisibility = CadLayer.entries.associateWith { layer ->
+            session.isLayerVisible(CleanCadLayer.valueOf(layer.name))
+        },
     )
 }

@@ -1,6 +1,8 @@
 package com.aigstudio.production.runtime
 
 import com.aigstudio.core.AddEntitiesCommand
+import com.aigstudio.core.AssignLayerCommand
+import com.aigstudio.core.CadLayerId
 import com.aigstudio.core.Arc
 import com.aigstudio.core.CNC_RESOLUTION_MM
 import com.aigstudio.core.CadEditEngine
@@ -23,6 +25,7 @@ import kotlin.math.hypot
 import kotlin.math.sin
 
 enum class CleanCadSnapMode { ENDPOINT, MIDPOINT, CENTER, INTERSECTION, TANGENT, HORIZONTAL, VERTICAL }
+enum class CleanCadLayer { WORKPIECE, DIMENSIONS, CENTERLINE, TOOLPATH, SIMULATION, ORIGIN }
 data class CleanCadSnapPoint(val x:Double,val y:Double)
 
 sealed interface CleanCadPrimitive {
@@ -85,7 +88,7 @@ class CleanCadSession {
 
     fun selectNearest(x:Double,y:Double,multiSelect:Boolean=false,toleranceMm:Double=3.0):Boolean {
         requireFinite(x,y,toleranceMm); require(toleranceMm>=CNC_RESOLUTION_MM)
-        val hit=document.all().map { it to distanceTo(it,x,y) }.minByOrNull { it.second }
+        val hit=document.visibleEntities().map { it to distanceTo(it,x,y) }.minByOrNull { it.second }
         if(hit==null || hit.second>toleranceMm) { if(!multiSelect) selectedIds.clear(); return false }
         val id=hit.first.id
         if(!multiSelect) { selectedIds.clear(); selectedIds.add(id) }
@@ -95,6 +98,20 @@ class CleanCadSession {
 
     fun selectedCount():Int=selectedIds.size
     fun clearSelection(){ selectedIds.clear() }
+    fun activeLayer():CleanCadLayer=CleanCadLayer.valueOf(document.activeLayer().name)
+    fun setActiveLayer(layer:CleanCadLayer){ document.setActiveLayer(CadLayerId.valueOf(layer.name)) }
+    fun isLayerVisible(layer:CleanCadLayer):Boolean=document.isLayerVisible(CadLayerId.valueOf(layer.name))
+    fun layerVisibility():Map<CleanCadLayer,Boolean> = CleanCadLayer.entries.associateWith(::isLayerVisible)
+    fun toggleLayerVisibility(layer:CleanCadLayer):Boolean {
+        val next=!isLayerVisible(layer)
+        document.setLayerVisible(CadLayerId.valueOf(layer.name),next)
+        if(!next) selectedIds.removeAll { id -> document.layerOf(id).name==layer.name }
+        return next
+    }
+    fun assignSelectedLayer(layer:CleanCadLayer) {
+        require(selectedIds.isNotEmpty()) { "Layer assignment requires selected geometry" }
+        history.run(AssignLayerCommand(selectedIds.toSet(),CadLayerId.valueOf(layer.name)))
+    }
     fun trimSelected(){ history.run(CadEditEngine.trimCommand(document,selectedIds.toList())); selectedIds.clear() }
     fun extendSelected(){ history.run(CadEditEngine.extendCommand(document,selectedIds.toList())); selectedIds.clear() }
     fun offsetSelected(distance:Double){ history.run(CadEditEngine.offsetCommand(document,selectedIds,distance)); selectedIds.clear() }
@@ -126,7 +143,7 @@ class CleanCadSession {
     fun holeCount():Int=document.all().count { it.id.startsWith("HOLE:") }
     fun arcCount():Int=document.all().count { it is Arc }
 
-    fun primitives():List<CleanCadPrimitive> = document.all().mapNotNull { e ->
+    fun primitives():List<CleanCadPrimitive> = document.visibleEntities().mapNotNull { e ->
         when(e) {
             is Line -> CleanCadPrimitive.Segment(e.a.x,e.a.y,e.b.x,e.b.y,e.id in selectedIds)
             is Circle -> if(e.id.startsWith("HOLE:")) CleanCadPrimitive.HoleShape(e.center.x,e.center.y,e.radius,e.id in selectedIds)
