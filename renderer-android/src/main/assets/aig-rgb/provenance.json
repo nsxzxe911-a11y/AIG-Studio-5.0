@@ -1,0 +1,42 @@
+﻿{
+    "schema":  "AIG_RGB_NODE_TEXTURE_PROVENANCE_V1",
+    "generated":  "2026-10-09",
+    "role":  "GPU_SCENE_NODE_TEXTURES_NOT_FULL_PAGE_FUNCTIONAL_UI",
+    "assets":  [
+                   {
+                       "source":  "engineering-assets/images/line.png",
+                       "runtime":  "aig-rgb/icons/line.png",
+                       "sha256":  "b043e1073c71a2535f4bcae4ebcd19f566cb2452b5b9c76e5ee8e0e567266474"
+                   },
+                   {
+                       "source":  "engineering-assets/images/rect.png",
+                       "runtime":  "aig-rgb/icons/rect.png",
+                       "sha256":  "20157f6d7a345c2f6ce1fe5bdeb77d243dc83961ae252ff9d66256c53079e24e"
+                   },
+                   {
+                       "source":  "engineering-assets/images/circle.png",
+                       "runtime":  "aig-rgb/icons/circle.png",
+                       "sha256":  "eb3801daee91c551025d52e92cb817c95c2fab07cd8c56e9a73919208e9f026b"
+                   },
+                   {
+                       "source":  "engineering-assets/images/hole.png",
+                       "runtime":  "aig-rgb/icons/hole.png",
+                       "sha256":  "8c9ed3e0dfd4db35629ee6b920dc2d49538a3b431473153815a53c76f8aab98a"
+                   },
+                   {
+                       "source":  "engineering-assets/images/select.png",
+                       "runtime":  "aig-rgb/icons/select.png",
+                       "sha256":  "420ad253979475c3afe4055ce95767c3b854c921c5a80346a9ae50b20d08b683"
+                   },
+                   {
+                       "source":  "engineering-assets/images/tool_group.png",
+                       "runtime":  "aig-rgb/icons/tool_group.png",
+                       "sha256":  "15cc5ebe82d143584ffd5cf193fef6c07dd6e7e56e5044c1a8bcac6433f22086"
+                   },
+                   {
+                       "source":  "engineering-assets/images/rgb_wallpaper.png",
+                       "runtime":  "aig-rgb/home/rgb_wallpaper.png",
+                       "sha256":  "a4b50e8470faa8914231f8190be4673363f908be18938834482ffed2099a4708"
+                   }
+               ]
+}

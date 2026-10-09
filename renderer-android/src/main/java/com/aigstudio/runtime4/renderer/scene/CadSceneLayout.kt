@@ -68,6 +68,7 @@ object CadSceneLayout {
         "CAD.CIRCLE" -> "aig-rgb/icons/circle.png"
         "CAD.HOLE" -> "aig-rgb/icons/hole.png"
         "CAD.SELECT" -> "aig-rgb/icons/select.png"
+        "CAD.TOOL_GROUP" -> "aig-rgb/icons/tool_group.png"
         else -> null
     }
 }
