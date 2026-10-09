@@ -28,6 +28,16 @@ class CleanCamSession {
     fun side()=settings.contourSide.name
     fun direction()=settings.contourDirection.name
     fun safeZ()=settings.safeZ
+    fun toolDiameter()=settings.toolDiameter
+    fun depth()=settings.depth
+    fun feed()=settings.feedMmMin
+    fun leadIn()=settings.leadInMm
+    fun leadOut()=settings.leadOutMm
+    fun setToolDiameter(value:Double){ settings=settings.copy(toolDiameter=value) }
+    fun setDepth(value:Double){ settings=settings.copy(depth=value) }
+    fun setFeed(value:Double){ settings=settings.copy(feedMmMin=value) }
+    fun setLeadIn(value:Double){ settings=settings.copy(leadInMm=value) }
+    fun setLeadOut(value:Double){ settings=settings.copy(leadOutMm=value) }
     fun points():List<CleanCamPoint> = settings.manualPath.map { p ->
         val motion=when {
             p.rapid -> CamMotionKind.G0

@@ -24,6 +24,11 @@ tasks.register<JavaExec>("fourthCamAxisParityRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("FourthCamAxisParityRegressionKt")
 }
+tasks.register<JavaExec>("fourthCamRuntimeAdapterRegression") {
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("FourthCamRuntimeAdapterRegressionKt")
+}
 
 tasks.register<JavaExec>("cleanSimRegression") {
     dependsOn("testClasses")
