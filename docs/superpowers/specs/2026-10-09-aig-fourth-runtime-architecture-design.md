@@ -58,10 +58,10 @@ Existing `Clean*Session` classes may initially be wrapped as legacy-core adapter
 
 Before CONNECT/DISCONNECT is implemented, each module must independently open, operate, save/restore, report its own messages, render its own content and survive faults in other modules.
 
-Delivery order: CAD -> CAM -> 3D SIM -> 3AX -> 4AX -> 5AX -> 6AX -> NC/G-code -> AI.
+Delivery order: CAD -> CAM -> NC/G-code -> 3D SIM -> 3AX -> 4AX -> 5AX -> 6AX -> AI. CAM is completed standalone first; NC is then opened as an independent handwritten-program path; SIM and 3AX/4AX/5AX/6AX consume normalized motion without owning CAM/NC state.
 
 CAD must independently support drawing, selection, Undo/Redo, SNAP, Trim, Extend, Offset, Array, Chamfer, Fillet and geometry-topology connect/disconnect editing behavior. This CAD topology operation is distinct from the later cross-module CONNECT/DISCONNECT data-link feature.
-CAM must support MANUAL without CAD, retain manual-first policy, Safe-Z, editable cut/rapid points, avoidance, side/direction and future XYZABC point state without losing A/B/C.
+CAM must support MANUAL without CAD, retain manual-first policy, Safe-Z, editable cut/rapid points, avoidance, side/direction and complete XYZABC point state from the start without losing any rotary axis. CAM strategy, Active Toolpath and Candidate Toolpath are separate versioned states.
 SIM must support independent test/manual path sources and true material-removal evidence.
 3AX/4AX/5AX/6AX use One Scene / One Renderer / No Overlay and keep their own XYZ/A/B/C scene state.
 NC must open directly for professional G-code editing and Fanuc validation without requiring CAD or CAM.
@@ -69,7 +69,7 @@ AI must independently support Immutable Main -> Working Copy -> Verify -> Promot
 
 ## 8. CONNECT / DISCONNECT comes last
 
-Module linking is a second-stage data-handoff feature, not a permission gate. A disconnected module remains fully usable. CONNECT only enables controlled snapshot/revision handoff between already-standalone modules. A standalone PASS for every module is a hard prerequisite before Shared Link Graph work begins.
+Module linking is a second-stage data-handoff feature, not a permission gate. A disconnected module remains fully usable. CONNECT only enables controlled snapshot/revision handoff between already-standalone modules. Local protective link state inside CAM (for example CAM -> TOOLPATH connect/disconnect that preserves a manual working copy and produces candidates) is allowed before Shared Link Graph because it is part of CAM ownership semantics, not a global module permission gate. A standalone PASS for every module is a hard prerequisite before Shared Link Graph work begins.
 
 ## 9. Error and warning policy: no red lock
 
