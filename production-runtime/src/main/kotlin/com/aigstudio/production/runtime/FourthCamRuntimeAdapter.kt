@@ -64,6 +64,7 @@ class FourthCamRuntimeAdapter(
             is CamCommand.SetMachiningRegion -> strategyMutation { validateRegion(command.value); machiningRegion=command.value }
             is CamCommand.SelectSource -> {
                 require(command.source.kind!=CamSourceKind.NONE){"Source kind NONE cannot be selected"}
+                if(command.source.kind==CamSourceKind.PHOTO || command.source.kind==CamSourceKind.AI_CAMERA) require(CamSourceAdapter.verify(command.source)){"CAM source digest mismatch"}
                 state=state.copy(source=command.source,zones=command.source.zones,message=null)
                 accepted()
             }
@@ -146,7 +147,15 @@ class FourthCamRuntimeAdapter(
     }
 
     private fun generateCandidate():CamDispatchResult {
-        val points=snapshotPoints()
+        val source=state.source
+        val points=if(source!=null && (source.kind==CamSourceKind.PHOTO || source.kind==CamSourceKind.AI_CAMERA)) {
+            require(CamSourceAdapter.verify(source)){"CAM source digest mismatch"}
+            val contours=source.contours.filter { contour ->
+                val region=state.strategy.machiningRegion ?: return@filter true
+                contour.points.any { p -> p.xMm in region.minX..region.maxX && p.yMm in region.minY..region.maxY }
+            }
+            session.generateAutoFromContours(contours).map { p -> CamPointSnapshot(p.x,p.y,p.z,p.axisA,p.axisB,p.axisC,p.motion,p.arcI,p.arcJ) }
+        } else snapshotPoints()
         require(points.size>=2){"No CAM path available for candidate"}
         candidateRevision++
         val candidate=CamCandidateToolpath(

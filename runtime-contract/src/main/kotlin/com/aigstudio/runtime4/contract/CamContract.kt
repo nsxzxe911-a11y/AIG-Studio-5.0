@@ -16,6 +16,11 @@ data class CamPointSnapshot(
     val manualOverride:Boolean=false, val avoidance:Boolean=false,
 )
 
+data class OrientationCandidate(val a:Double,val b:Double,val c:Double) {
+    init {
+        require(listOf(a,b,c).all { it.isFinite() && kotlin.math.abs(it)<=360.0 }) { "Orientation candidate A/B/C out of range" }
+    }
+}
 data class CamSourcePoint(val xMm:Double,val yMm:Double)
 data class CamContourSnapshot(val points:List<CamSourcePoint>)
 data class CamZoneSnapshot(

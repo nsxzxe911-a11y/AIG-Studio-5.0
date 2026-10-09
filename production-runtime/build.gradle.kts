@@ -104,3 +104,8 @@ tasks.register<JavaExec>("camCheckpointRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("CamCheckpointRegressionKt")
 }
+tasks.register<JavaExec>("camSourceIsolationRegression") {
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("CamSourceIsolationRegressionKt")
+}

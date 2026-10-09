@@ -6,6 +6,13 @@ import com.aigstudio.core.ContourDirection
 import com.aigstudio.core.ContourSide
 import com.aigstudio.core.ManualCamPathEngine
 import com.aigstudio.core.ManualCamPoint
+import com.aigstudio.core.ArcFeed
+import com.aigstudio.core.Feed
+import com.aigstudio.core.Rapid
+import com.aigstudio.core.Vec2
+import com.aigstudio.core.Line
+import com.aigstudio.core.DrawingSnapshot
+import com.aigstudio.core.CamEngine
 import com.aigstudio.runtime4.contract.*
 
 data class CleanCamPoint(
@@ -71,6 +78,23 @@ class CleanCamSession {
     fun toggleDirection(){
         val d=if(settings.contourDirection==ContourDirection.CCW)ContourDirection.CW else ContourDirection.CCW
         settings=settings.copy(contourDirection=d,climb=d==ContourDirection.CCW)
+    }
+    fun generateAutoFromContours(contours:List<CamContourSnapshot>):List<CleanCamPoint>{
+        require(contours.isNotEmpty()){ "AUTO CAM source requires contours" }
+        val entities=contours.flatMapIndexed { ci, contour ->
+            require(contour.points.size>=2){ "AUTO CAM contour requires at least two points" }
+            contour.points.zipWithNext().mapIndexed { si,(a,b) ->
+                Line("PHOTO:$ci:$si",Vec2(a.xMm,a.yMm),Vec2(b.xMm,b.yMm))
+            }
+        }
+        return CamEngine.generate(DrawingSnapshot(entities),settings.copy(pathMode=CamPathMode.AUTO),axisA=0.0,axisB=0.0,axisC=0.0)
+            .flatMap { path -> path.moves.map { move ->
+                when(move){
+                    is Rapid -> CleanCamPoint(move.to.x,move.to.y,move.z,true,move.axisA,move.axisB,move.axisC,CamMotionKind.G0)
+                    is Feed -> CleanCamPoint(move.to.x,move.to.y,move.z,false,move.axisA,move.axisB,move.axisC,CamMotionKind.G1)
+                    is ArcFeed -> CleanCamPoint(move.to.x,move.to.y,move.z,false,move.axisA,move.axisB,move.axisC,if(move.clockwise)CamMotionKind.G2 else CamMotionKind.G3,move.centerOffset.x,move.centerOffset.y,move.clockwise)
+                }
+            }}
     }
     fun restoreBaseline(strategy:CamStrategySnapshot,points:List<CamPointSnapshot>){
         val manual=points.map { p ->

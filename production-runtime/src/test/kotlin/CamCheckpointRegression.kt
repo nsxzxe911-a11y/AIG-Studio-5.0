@@ -1,9 +1,10 @@
 import com.aigstudio.production.runtime.FourthCamRuntimeAdapter
+import com.aigstudio.production.runtime.CamSourceAdapter
 import com.aigstudio.runtime4.contract.*
 
 fun main() {
-    val source=CamSourceSnapshot(
-        CamSourceKind.PHOTO,"photo-7",7L,"photo-digest",
+    val source=CamSourceAdapter.fromCalibratedContours(
+        CamSourceKind.PHOTO,"photo-7",7L,
         listOf(CamContourSnapshot(listOf(CamSourcePoint(0.0,0.0),CamSourcePoint(20.0,0.0),CamSourcePoint(20.0,20.0)))),
         listOf(CamZoneSnapshot("source-clamp",CamZoneKind.CLAMP,2.0,2.0,4.0,4.0,3.0)),
     )
