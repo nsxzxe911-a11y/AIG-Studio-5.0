@@ -1301,6 +1301,11 @@ internal fun testRuntimeLinkStateSyncContract() {
     check(RuntimeLinkContract.DISCONNECT_POLICY=="DATA_FLOW_ONLY_PRESERVE_RUNTIME_DATA")
     check(setOf("CAD_GEOMETRY","CAM_TOOLPATH","SIM_STATE","NC_GCODE").all{it in RuntimeLinkContract.PRESERVED_DOMAINS})
     check(RuntimeLinkStatus.entries.map{it.name}==listOf("CONNECTED","DEGRADED","DISCONNECTED"))
+    val linkPresentation=Class.forName("com.aigstudio.core.RuntimeLinkPresentation")
+    val linkLabelMethod=linkPresentation.methods.single{it.name=="label" && it.parameterCount==1}
+    val waitingLabel=linkLabelMethod.invoke(null,RuntimeLinkStatus.DISCONNECTED) as String
+    check(waitingLabel=="\u7b49\u5f85")
+    check(waitingLabel!="\u96e2\u7dda")
     check(RuntimeLinkId.CAD_CAM.displayName=="CAD \u2194 CAM")
     check(RuntimeLinkId.CAM_SIM.displayName=="CAM \u2194 3D SIM")
     check(RuntimeLinkId.SIM_NC.displayName=="3D SIM \u2194 NC")

@@ -1291,11 +1291,7 @@ class MainActivity : Activity() {
             RuntimeLinkStatus.DEGRADED -> "\u26A0"
             RuntimeLinkStatus.DISCONNECTED -> "\u26D3"
         }
-        fun runtimeLinkLabel(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
-            RuntimeLinkStatus.CONNECTED -> "\u5DF2\u9023\u7DDA"
-            RuntimeLinkStatus.DEGRADED -> "\u964D\u7D1A"
-            RuntimeLinkStatus.DISCONNECTED -> "\u96E2\u7DDA"
-        }
+        fun runtimeLinkLabel(linkStatus:RuntimeLinkStatus)=com.aigstudio.core.RuntimeLinkPresentation.label(linkStatus)
         fun renderRuntimeLinks(snapshot:RuntimeLinkSnapshot) {
             homeLinkQuickButtons.forEach { (id,button) ->
                 val s=snapshot.status(id)

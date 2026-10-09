@@ -6,6 +6,15 @@ enum class RuntimeLinkStatus(val colorToken:String) {
     DISCONNECTED("GRAY")
 }
 
+object RuntimeLinkPresentation {
+    @JvmStatic
+    fun label(status:RuntimeLinkStatus):String=when(status) {
+        RuntimeLinkStatus.CONNECTED -> "\u5DF2\u9023\u7DDA"
+        RuntimeLinkStatus.DEGRADED -> "\u964D\u7D1A"
+        RuntimeLinkStatus.DISCONNECTED -> "\u7B49\u5F85"
+    }
+}
+
 enum class RuntimeLinkId(
     val displayName:String,
     val cockpitLeft:String?=null,

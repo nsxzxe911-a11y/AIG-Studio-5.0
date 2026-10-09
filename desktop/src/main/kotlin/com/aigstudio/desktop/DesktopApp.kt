@@ -5254,11 +5254,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         RuntimeLinkStatus.DEGRADED -> "\u26A0"
         RuntimeLinkStatus.DISCONNECTED -> "\u26D3"
     }
-    fun desktopRuntimeLinkLabel(linkStatus:RuntimeLinkStatus)=when(linkStatus) {
-        RuntimeLinkStatus.CONNECTED -> "\u5DF2\u9023\u7DDA"
-        RuntimeLinkStatus.DEGRADED -> "\u964D\u7D1A"
-        RuntimeLinkStatus.DISCONNECTED -> "\u96E2\u7DDA"
-    }
+    fun desktopRuntimeLinkLabel(linkStatus:RuntimeLinkStatus)=com.aigstudio.core.RuntimeLinkPresentation.label(linkStatus)
     fun desktopRuntimeLinkButton(id:RuntimeLinkId,cockpit:Boolean)=JButton().apply {
         isFocusPainted=false;isOpaque=true
         background=Color(8,18,30);font=font.deriveFont(Font.BOLD,12f)
