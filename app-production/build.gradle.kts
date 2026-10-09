@@ -3,11 +3,11 @@ android {
     namespace = "com.aigstudio.production"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.aigstudio.production.clean381"
+        applicationId = "com.aigstudio.production.clean382"
         minSdk = 26
         targetSdk = 36
-        versionCode = 381001
-        versionName = "381-clean-host"
+        versionCode = 382001
+        versionName = "382-clean-cad"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -15,3 +15,5 @@ android {
     }
 }
 dependencies { implementation(project(":core")) }
+
+dependencies { implementation(project(":production-runtime")) }

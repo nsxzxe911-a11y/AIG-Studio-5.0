@@ -14,12 +14,15 @@ import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.aigstudio.production.runtime.CleanCadSession
 
 class CleanMainActivity : Activity() {
     private val surfaces = listOf("HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI")
     private lateinit var art: ImageView
     private lateinit var status: TextView
     private val navButtons = linkedMapOf<String, Button>()
+    private lateinit var contentHost: FrameLayout
+    private val cadSession = CleanCadSession()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +56,8 @@ class CleanMainActivity : Activity() {
         }
         chrome.addView(title)
         chrome.addView(status)
-        chrome.addView(View(this), LinearLayout.LayoutParams(1,0,1f))
+        contentHost = FrameLayout(this).apply { contentDescription = "CLEAN RUNTIME CONTENT HOST" }
+        chrome.addView(contentHost, LinearLayout.LayoutParams(-1,0,1f))
 
         val grid = GridLayout(this).apply { columnCount = 5; rowCount = 2; alignmentMode = GridLayout.ALIGN_BOUNDS }
         surfaces.forEachIndexed { index, surface ->
@@ -82,6 +86,11 @@ class CleanMainActivity : Activity() {
         val bitmap = assets.open(file).use { BitmapFactory.decodeStream(it) }
             ?: error("RGB surface decode failed: $file")
         art.setImageBitmap(bitmap)
+        contentHost.removeAllViews()
+        if(surface == "CAD") {
+            contentHost.addView(CleanCadPanel(this,cadSession) { status.text=it }, FrameLayout.LayoutParams(-1,-1))
+            Log.i("AIG-CLEAN-CAD", "CLEAN_CAD_PANEL_MOUNT|PASS|REAL_RUNTIME")
+        }
         status.text = if(surface == "HOME") "RGB HOME • 0.001 mm • GPU READY" else "$surface • CLEAN PRODUCTION SURFACE"
         navButtons.forEach { (id, button) ->
             val active = id == surface

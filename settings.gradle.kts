@@ -1,4 +1,4 @@
-pluginManagement {
+﻿pluginManagement {
     repositories {
         google()
         mavenCentral()
@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 rootProject.name = "AIGStudio"
 include(":app", ":core", ":desktop")
 include(":app-production")
+include(":production-runtime")
