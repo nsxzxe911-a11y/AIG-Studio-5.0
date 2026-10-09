@@ -2,7 +2,9 @@ package com.aigstudio.app
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
@@ -78,6 +80,13 @@ object RuntimeSurfaceAndroidInstaller {
             for(i in 0 until view.childCount) findRuntimeHost(view.getChildAt(i))?.let { return it }
         }
         return null
+    }
+
+    fun mountVisibleSurface(target:View,surface:String) {
+        val normalized=RuntimeSurfaceVisualContract.normalize(surface)
+        if(normalized=="HOME") return
+        target.contentDescription="FORMAL $normalized PAGE VISIBLE ROOT"
+        mountOn(target,normalized)
     }
 
     private fun mountOn(target:View,surface:String) {
@@ -170,9 +179,9 @@ private object RuntimeFullSurfaceAssets {
             val bytes=context.assets.open("$ROOT/$file").use{it.readBytes()}
             val actual=MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}
             require(actual==exp){"Full RGB surface hash mismatch: $id"}
-            val d=Drawable.createFromStream(bytes.inputStream(),"$id.png") ?: return@runCatching null
-            require(d.intrinsicWidth==720 && d.intrinsicHeight==1280 && d.intrinsicHeight>d.intrinsicWidth){"Mobile RGB surface must be dedicated portrait 720x1280: $id"}
-            d
+            val bitmap=BitmapFactory.decodeByteArray(bytes,0,bytes.size) ?: return@runCatching null
+            require(bitmap.width==720 && bitmap.height==1280 && bitmap.height>bitmap.width){"Mobile RGB surface must be dedicated portrait 720x1280: $id"}
+            BitmapDrawable(context.resources,bitmap)
         }.getOrNull()
         cache[id]=value
         return value

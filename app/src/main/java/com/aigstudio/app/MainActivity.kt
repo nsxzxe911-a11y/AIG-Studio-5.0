@@ -2434,6 +2434,7 @@ class MainActivity : Activity() {
         action("系統監控 HUD") { applySystemHudPreference(true); showExpandedSystemHud() }
         action("環境 / FPS / 溫度設定") { showEnvironmentSettings() }
         action("ChatGPT AI 更新") { runSecureUpdateCheck() }
+        RuntimeSurfaceAndroidInstaller.mountVisibleSurface(box,"AI")
         AlertDialog.Builder(this)
             .setTitle("AIG CNC AI SYSTEM SUITE")
             .setView(box)
@@ -2844,6 +2845,7 @@ class MainActivity : Activity() {
         })
         root.addView(controls,LinearLayout.LayoutParams(-1,-2))
         rebuild()
+        RuntimeSurfaceAndroidInstaller.mountVisibleSurface(root,"6AX")
         AlertDialog.Builder(this)
             .setTitle("6AX • XYZ + A/B/C 姿態驗證")
             .setMessage("C 軸已進正式 Runtime 姿態層；未完成機台專屬 6AX kinematics / Post 驗證前，NC 輸出保持鎖定。")
@@ -2861,7 +2863,7 @@ class MainActivity : Activity() {
         }
 
         if(!forceRecalculate && camDerivedCache==null) {
-            AlertDialog.Builder(this)
+        AlertDialog.Builder(this)
                 .setTitle("AIG CNC • CAM")
                 .setMessage(
                     "CAM STALE • 尚未建立刀路\n"+
@@ -3228,6 +3230,7 @@ class MainActivity : Activity() {
         }
         action("←",0xFF7894A8.toInt()) { dialog.dismiss() }
         root.addView(actions,LinearLayout.LayoutParams(-1,-2))
+        RuntimeSurfaceAndroidInstaller.mountVisibleSurface(root,"CAM")
 
         dialog=AlertDialog.Builder(this)
             .setTitle("AIG CNC • REAL CAM")
@@ -4042,6 +4045,12 @@ class MainActivity : Activity() {
             activeMachiningView=null
             activeAxisPreview=null
             activeMode=mode
+            val visibleSurface=when(mode) {
+                "3D" -> "SIM"
+                "NC_EDIT" -> "NC"
+                else -> mode
+            }
+            RuntimeSurfaceAndroidInstaller.mountVisibleSurface(root,visibleSurface)
             ncPanel.visibility=if(mode=="NC_EDIT") View.VISIBLE else View.GONE
             modeButtons.forEach { (id,b)-> b.setRgbState(colors[(id.hashCode() and Int.MAX_VALUE)%colors.size],id==mode) }
             visualHost.removeAllViews()
@@ -4986,7 +4995,8 @@ class MainActivity : Activity() {
         fun showNcOperatorPalette() {
             val groups=NcCodeCatalog.operatorPalette()
             val groupLabels=groups.map { it.first+" • "+it.second.size+" codes" }.toTypedArray()
-            AlertDialog.Builder(this)
+            RuntimeSurfaceAndroidInstaller.mountVisibleSurface(box,"NC")
+        AlertDialog.Builder(this)
                 .setTitle("G/M 功能 • FANUC")
                 .setItems(groupLabels) { _, groupIndex ->
                     val group=groups[groupIndex]
@@ -5136,6 +5146,7 @@ class MainActivity : Activity() {
                         "\n" + animationSummary
                 })
 
+                RuntimeSurfaceAndroidInstaller.mountVisibleSurface(box,"SIM")
                 AlertDialog.Builder(this)
                     .setTitle("RGB 真 3D 加工 • 拖曳旋轉 • 雙指縮放/平移")
                     .setView(box)

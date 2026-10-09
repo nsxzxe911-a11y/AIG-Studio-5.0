@@ -26,15 +26,16 @@ def verify_png(root,name,w,h,hashes):
     need(hashlib.sha256(p.read_bytes()).hexdigest()==hashes[name],'SHA_'+name.upper())
     need(png_size(p)==(w,h),'DIM_'+name.upper())
 
-need('d.intrinsicHeight>d.intrinsicWidth' in ANDROID,'ANDROID_PORTRAIT_GUARD')
+need('bitmap.height>bitmap.width' in ANDROID,'ANDROID_PORTRAIT_GUARD')
 need('RGB_PAGE_MOUNT|' in ANDROID,'ANDROID_RUNTIME_MOUNT_LOG')
 need('loadExact(activity)?.let' in APP and APP.index('loadExact(activity)?.let') < APP.index('loadRuntimeSurfaceFallback(activity)?.let'),'HOME_EXACT_FIRST')
 need('runtime-surfaces/mobile' in APP,'HOME_MOBILE_RUNTIME_ROOT')
 need('bitmap.width==720 && bitmap.height==1280' in APP,'HOME_PORTRAIT_ONLY')
+need('BitmapFactory.decodeByteArray' in ANDROID,'ANDROID_RAW_BITMAP_PIXEL_GUARD')
+need('bitmap.width==720 && bitmap.height==1280' in ANDROID,'ANDROID_RAW_BITMAP_DIMENSIONS')
+need('intrinsicWidth==720' not in ANDROID,'ANDROID_NO_DENSITY_SCALED_INTRINSIC_GUARD')
 dh=props(DESKTOP/'sha256.properties'); mh=props(MOBILE/'sha256.properties')
 for name in ('nc.png','ai.png'): verify_png(DESKTOP,name,1280,720,dh)
 for name in ('home.png','cad.png','cam.png','sim.png','3ax.png','4ax.png','5ax.png','6ax.png','nc.png','ai.png'):
     verify_png(MOBILE,name,720,1280,mh)
 print('RUNTIME_FULL_SURFACE_ART_PASS|AIG_CNC_379|DESKTOP_NC_AI|MOBILE_HOME_PLUS_9|PORTRAIT_720X1280|SHA256|NO_ICON_STRETCH')
-
-
