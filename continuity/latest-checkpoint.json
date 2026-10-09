@@ -5,7 +5,7 @@
   "branch": "feat/aig-cnc-377-direct-3ax-nc",
   "recorded_source_head": "a572bb7e8e5e914f9f9bbe8482f7856b71fc9f84",
   "mode": "RESUME_FROM_LAST_CHECKPOINT",
-  "status": "DIRECT_3AX_GCODE_SOURCE_PASS_BINARY_PENDING",
+  "status": "DIRECT_3AX_GCODE_BINARY_INSTALLER_PASS",
   "departments": {
     "HOME": "EXECUTE_UNTIL_PASS",
     "CAD": "EXECUTE_UNTIL_PASS",
@@ -773,8 +773,45 @@
     "verification_marker": "NO_CAM_PREREQ_FOR_3AX_PREVIEW|DIRECT_GCODE_EDITOR"
   },
   "binary_runtime_evidence_377": {
-    "status": "PENDING",
+    "status": "PASS_APK_SETUP_INSTALL_LAUNCH_UNINSTALL",
     "feature_source_sha": "a572bb7e8e5e914f9f9bbe8482f7856b71fc9f84",
-    "historical_376_preserved": true
+    "release_source_sha": "143895dbe588f94fa293c1f211e90fddf18894c0",
+    "historical_376_preserved": true,
+    "android": {
+      "status": "PASS_NOX_INSTALL_COLD_LAUNCH_HOME_3AX_GCODE",
+      "apk": "release/android/AIG_CNC_377_FULL_INSTALLABLE.apk",
+      "apk_sha256": "f23c4b79d8515dba1711327b6ca87a18e6b8798aabbbf8f127005d658a76e3cc",
+      "package": "com.aigstudio.app",
+      "version_name": "377.0.0",
+      "version_code": 3770000,
+      "nox_device": "Nox_1",
+      "nox_abi": "x86_64",
+      "adb_serial": "127.0.0.1:52025",
+      "cold_launch_ms": 662,
+      "official_rgb_home": "PASS",
+      "home_3ax_button": "PASS",
+      "home_nc_gcode_button": "PASS",
+      "nox_direct_3ax_no_cam": "PASS",
+      "nox_3ax_cam_paths": 0,
+      "nox_3ax_removed_cells": 0,
+      "nox_direct_gcode_editor": "PASS",
+      "engineering_shell_default": "OFF"
+    },
+    "windows": {
+      "status": "PASS_SETUP_64BIT_INSTALL_LAUNCH_UNINSTALL",
+      "setup_exe": "release/windows/AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe",
+      "setup_exe_sha256": "0f816e93c19fd70e5d1f83b1a44bc1aa75da6911a1457ef5545a44b71bac0352",
+      "pe_machine": "0x8664",
+      "architecture": "x86_64",
+      "setup_install": "PASS_EXIT_0",
+      "installed_version": "3.77.0",
+      "installed_runtime_smoke": "PASS",
+      "installed_source_sha": "143895dbe588f94fa293c1f211e90fddf18894c0",
+      "installed_removed_cells": 7500,
+      "installed_5x_dynamic": "PASS",
+      "uninstall": "PASS_EXIT_0",
+      "uninstall_install_dir_removed": true,
+      "uninstall_registry_removed": true
+    }
   }
 }
