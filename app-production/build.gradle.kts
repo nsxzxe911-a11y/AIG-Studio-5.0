@@ -3,11 +3,11 @@ android {
     namespace = "com.aigstudio.production"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.aigstudio.production.clean390"
+        applicationId = "com.aigstudio.production.clean391"
         minSdk = 26
         targetSdk = 36
-        versionCode = 390001
-        versionName = "390-ai-continuity"
+        versionCode = 391001
+        versionName = "391-cad-tools"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

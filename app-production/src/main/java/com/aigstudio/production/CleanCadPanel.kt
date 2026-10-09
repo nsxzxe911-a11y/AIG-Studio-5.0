@@ -17,7 +17,7 @@ import kotlin.math.hypot
 import kotlin.math.min
 
 class CleanCadPanel(context:Context, private val session:CleanCadSession, private val onStatus:(String)->Unit):LinearLayout(context) {
-    private enum class Tool { LINE, RECT, CIRCLE }
+    private enum class Tool { LINE, RECT, CIRCLE, SELECT }
     private val canvasView=CadCanvas(context)
 
     init {
@@ -27,25 +27,40 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
         val tools=GridLayout(context).apply { columnCount=5 }
         fun toolButton(label:String,desc:String,action:()->Unit) {
             tools.addView(Button(context).apply {
-                text=label; contentDescription=desc; isAllCaps=false; textSize=9f; setTextColor(Color.WHITE)
+                text=label; contentDescription=desc; isAllCaps=false; textSize=8f; setTextColor(Color.WHITE)
                 background=GradientDrawable().apply { setColor(0xCC07111B.toInt()); setStroke(dp(1),Color.rgb(61,235,255)); cornerRadius=dp(8).toFloat() }
                 setOnClickListener { action() }
-            },GridLayout.LayoutParams().apply { width=0; height=dp(42); columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f); setMargins(dp(2),0,dp(2),dp(2)) })
+            },GridLayout.LayoutParams().apply { width=0; height=dp(40); columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f); setMargins(dp(2),0,dp(2),dp(2)) })
         }
-        toolButton("LINE","CAD TOOL LINE"){canvasView.tool=Tool.LINE; report("LINE READY")}
-        toolButton("RECT","CAD TOOL RECT"){canvasView.tool=Tool.RECT; report("RECT READY")}
-        toolButton("CIRCLE","CAD TOOL CIRCLE"){canvasView.tool=Tool.CIRCLE; report("CIRCLE READY")}
-        toolButton("UNDO","CAD UNDO"){if(session.undo()){canvasView.invalidate(); report("UNDO")}}
-        toolButton("REDO","CAD REDO"){if(session.redo()){canvasView.invalidate(); report("REDO")}}
+        toolButton("LINE","CAD TOOL LINE"){session.clearSelection();canvasView.tool=Tool.LINE;report("LINE READY")}
+        toolButton("RECT","CAD TOOL RECT"){session.clearSelection();canvasView.tool=Tool.RECT;report("RECT READY")}
+        toolButton("CIRCLE","CAD TOOL CIRCLE"){session.clearSelection();canvasView.tool=Tool.CIRCLE;report("CIRCLE READY")}
+        toolButton("SELECT","CAD TOOL SELECT"){session.clearSelection();canvasView.tool=Tool.SELECT;canvasView.invalidate();report("SELECT READY")}
+        toolButton("UNDO","CAD UNDO"){if(session.undo()){canvasView.invalidate();report("UNDO")}}
+        toolButton("REDO","CAD REDO"){if(session.redo()){canvasView.invalidate();report("REDO")}}
+        toolButton("TRIM","CAD TRIM"){editAction("TRIM"){session.trimSelected()}}
+        toolButton("EXTEND","CAD EXTEND"){editAction("EXTEND"){session.extendSelected()}}
+        toolButton("OFFSET 5","CAD OFFSET 5MM"){editAction("OFFSET 5"){session.offsetSelected(5.0)}}
+        toolButton("ARRAY×3","CAD ARRAY 3X"){editAction("ARRAY 3X"){session.arraySelected(3,10.0,0.0)}}
         addView(tools,LayoutParams(-1,-2))
         addView(canvasView,LayoutParams(-1,0,1f))
         report("READY")
     }
 
+    private fun editAction(label:String,action:()->Unit) {
+        runCatching(action).onSuccess {
+            canvasView.invalidate(); report(label)
+            Log.i("AIG-CLEAN-CAD","CLEAN_CAD_EDIT|$label|PASS|entities=${session.entityCount()}")
+        }.onFailure {
+            onStatus("CAD $label • ${it.message}")
+            Log.i("AIG-CLEAN-CAD","CLEAN_CAD_EDIT|$label|BLOCKED|${it.message}")
+        }
+    }
+
     private fun report(event:String) {
-        val text="CAD $event • ENTITIES=${session.entityCount()} • 0.001 mm"
+        val text="CAD $event • ENTITIES=${session.entityCount()} • SELECTED=${session.selectedCount()} • 0.001 mm"
         onStatus(text)
-        Log.i("AIG-CLEAN-CAD","CLEAN_CAD_STATUS|$event|entities=${session.entityCount()}")
+        Log.i("AIG-CLEAN-CAD","CLEAN_CAD_STATUS|$event|entities=${session.entityCount()}|selected=${session.selectedCount()}")
     }
 
     private inner class CadCanvas(context:Context):View(context) {
@@ -64,11 +79,11 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
             }
             paint.color=Color.rgb(61,235,255); paint.strokeWidth=2f
             c.drawLine(0f,height/2f,width.toFloat(),height/2f,paint); c.drawLine(width/2f,0f,width/2f,height.toFloat(),paint)
-            paint.color=Color.rgb(225,240,255); paint.strokeWidth=3f; paint.style=Paint.Style.STROKE
+            paint.strokeWidth=3f; paint.style=Paint.Style.STROKE
             session.primitives().forEach { p ->
+                paint.color=if(p.selected) Color.rgb(255,196,64) else Color.rgb(225,240,255)
                 when(p) {
                     is CleanCadPrimitive.Segment -> { val a=screen(p.ax,p.ay,scale); val b=screen(p.bx,p.by,scale); c.drawLine(a.first,a.second,b.first,b.second,paint) }
-
                     is CleanCadPrimitive.CircleShape -> { val q=screen(p.cx,p.cy,scale); c.drawCircle(q.first,q.second,(p.radius*scale).toFloat(),paint) }
                 }
             }
@@ -80,11 +95,19 @@ class CleanCadPanel(context:Context, private val session:CleanCadSession, privat
                 MotionEvent.ACTION_DOWN -> { down=world(e.x,e.y); return true }
                 MotionEvent.ACTION_UP -> {
                     val a=down ?: return true; val b=world(e.x,e.y); down=null
+                    if(tool==Tool.SELECT) {
+                        if(session.selectedCount()>=2) session.clearSelection()
+                        val ok=session.selectNearest(b.x,b.y,session.selectedCount()>0)
+                        invalidate(); report(if(ok)"SELECT" else "SELECT MISS")
+                        Log.i("AIG-CLEAN-CAD","CLEAN_CAD_SELECT|${if(ok)"PASS" else "MISS"}|selected=${session.selectedCount()}")
+                        return true
+                    }
                     runCatching {
                         when(tool) {
                             Tool.LINE -> session.addLine(a.x,a.y,b.x,b.y)
                             Tool.RECT -> session.addRect(a.x,a.y,b.x,b.y)
                             Tool.CIRCLE -> session.addCircle(a.x,a.y,hypot(b.x-a.x,b.y-a.y))
+                            Tool.SELECT -> Unit
                         }
                     }.onSuccess {
                         invalidate(); val t=tool.name; report(t)

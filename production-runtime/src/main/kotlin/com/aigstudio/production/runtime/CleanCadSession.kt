@@ -1,22 +1,28 @@
-﻿package com.aigstudio.production.runtime
+package com.aigstudio.production.runtime
 
 import com.aigstudio.core.AddEntitiesCommand
 import com.aigstudio.core.CNC_RESOLUTION_MM
+import com.aigstudio.core.CadEditEngine
 import com.aigstudio.core.Circle
 import com.aigstudio.core.DrawingDocument
+import com.aigstudio.core.Entity
 import com.aigstudio.core.History
 import com.aigstudio.core.Line
 import com.aigstudio.core.Vec2
 import kotlin.math.abs
+import kotlin.math.hypot
+import kotlin.math.min
 
 sealed interface CleanCadPrimitive {
-    data class Segment(val ax:Double,val ay:Double,val bx:Double,val by:Double):CleanCadPrimitive
-    data class CircleShape(val cx:Double,val cy:Double,val radius:Double):CleanCadPrimitive
+    val selected:Boolean
+    data class Segment(val ax:Double,val ay:Double,val bx:Double,val by:Double,override val selected:Boolean=false):CleanCadPrimitive
+    data class CircleShape(val cx:Double,val cy:Double,val radius:Double,override val selected:Boolean=false):CleanCadPrimitive
 }
 
 class CleanCadSession {
     private val document=DrawingDocument()
     private val history=History(document)
+    private val selectedIds=linkedSetOf<String>()
 
     fun addLine(ax:Double,ay:Double,bx:Double,by:Double) {
         requireFinite(ax,ay,bx,by)
@@ -37,15 +43,45 @@ class CleanCadSession {
         history.run(AddEntitiesCommand(listOf(Circle(center=Vec2(cx,cy),radius=radius))))
     }
 
-    fun undo():Boolean=history.undo()
-    fun redo():Boolean=history.redo()
+    fun selectNearest(x:Double,y:Double,multiSelect:Boolean=false,toleranceMm:Double=3.0):Boolean {
+        requireFinite(x,y,toleranceMm); require(toleranceMm>=CNC_RESOLUTION_MM)
+        val hit=document.all().map { it to distanceTo(it,x,y) }.minByOrNull { it.second }
+        if(hit==null || hit.second>toleranceMm) { if(!multiSelect) selectedIds.clear(); return false }
+        val id=hit.first.id
+        if(!multiSelect) { selectedIds.clear(); selectedIds.add(id) }
+        else if(id in selectedIds) selectedIds.remove(id) else selectedIds.add(id)
+        return true
+    }
+
+    fun selectedCount():Int=selectedIds.size
+    fun clearSelection(){ selectedIds.clear() }
+    fun trimSelected(){ history.run(CadEditEngine.trimCommand(document,selectedIds.toList())); selectedIds.clear() }
+    fun extendSelected(){ history.run(CadEditEngine.extendCommand(document,selectedIds.toList())); selectedIds.clear() }
+    fun offsetSelected(distance:Double){ history.run(CadEditEngine.offsetCommand(document,selectedIds,distance)); selectedIds.clear() }
+    fun arraySelected(count:Int,dx:Double,dy:Double){ history.run(CadEditEngine.linearArrayCommand(document,selectedIds,count,dx,dy)); selectedIds.clear() }
+
+    fun undo():Boolean { selectedIds.clear(); return history.undo() }
+    fun redo():Boolean { selectedIds.clear(); return history.redo() }
     fun entityCount():Int=document.size()
     fun primitives():List<CleanCadPrimitive> = document.all().mapNotNull { e ->
         when(e) {
-            is Line -> CleanCadPrimitive.Segment(e.a.x,e.a.y,e.b.x,e.b.y)
-            is Circle -> CleanCadPrimitive.CircleShape(e.center.x,e.center.y,e.radius)
+            is Line -> CleanCadPrimitive.Segment(e.a.x,e.a.y,e.b.x,e.b.y,e.id in selectedIds)
+            is Circle -> CleanCadPrimitive.CircleShape(e.center.x,e.center.y,e.radius,e.id in selectedIds)
             else -> null
         }
+    }
+
+    private fun distanceTo(e:Entity,x:Double,y:Double):Double = when(e) {
+        is Line -> pointSegmentDistance(x,y,e.a.x,e.a.y,e.b.x,e.b.y)
+        is Circle -> abs(hypot(x-e.center.x,y-e.center.y)-e.radius)
+        else -> Double.POSITIVE_INFINITY
+    }
+
+    private fun pointSegmentDistance(px:Double,py:Double,ax:Double,ay:Double,bx:Double,by:Double):Double {
+        val dx=bx-ax; val dy=by-ay; val len2=dx*dx+dy*dy
+        if(len2<=0.0) return hypot(px-ax,py-ay)
+        val t=(((px-ax)*dx+(py-ay)*dy)/len2).coerceIn(0.0,1.0)
+        return hypot(px-(ax+t*dx),py-(ay+t*dy))
     }
 
     private fun requireFinite(vararg values:Double) {
