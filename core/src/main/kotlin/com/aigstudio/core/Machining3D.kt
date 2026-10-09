@@ -836,3 +836,32 @@ object Machining3DEngine {
         return Machining3DResult(cam, resolvedStock, removal, mesh, fixtures.toList(), toolAssembly)
     }
 }
+
+
+/**
+ * A neutral, non-cutting 3AX machine scene for direct HOME preview.
+ * It intentionally contains no toolpath and performs no material removal.
+ */
+object ThreeAxisPreviewScene {
+    fun create(
+        snapshot: DrawingSnapshot,
+        settings: CamSettings = CamSettings(),
+        fixtures: List<FixtureObstacle> = emptyList(),
+        toolAssembly: ToolAssemblyConfig = ToolAssemblyConfig()
+    ): Machining3DResult {
+        val stock = if (snapshot.entities.isNotEmpty()) {
+            Stock3D.fromSnapshot(snapshot)
+        } else {
+            Stock3D(-50.0, -40.0, 50.0, 40.0, 20.0)
+        }
+        val removal = RemovalField3D(stock)
+        val mesh = SurfaceMesh3D.fromRemoval(removal)
+        require(mesh.vertices.isNotEmpty() && mesh.triangles.isNotEmpty()) { "3AX preview mesh generation failed" }
+        val cam = CamModel.previewOnly(
+            revision = 0L,
+            snapshot = snapshot,
+            settings = settings
+        )
+        return Machining3DResult(cam, stock, removal, mesh, fixtures.toList(), toolAssembly)
+    }
+}

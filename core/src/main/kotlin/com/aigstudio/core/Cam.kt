@@ -86,6 +86,12 @@ class CamModel private constructor(
     val toolpaths: List<Toolpath>
 ) {
     companion object {
+        fun previewOnly(
+            revision: Long,
+            snapshot: DrawingSnapshot,
+            settings: CamSettings = CamSettings()
+        ): CamModel = CamModel(revision, snapshot, settings, emptyList())
+
         fun fromCad(
             revision: Long,
             snapshot: DrawingSnapshot,

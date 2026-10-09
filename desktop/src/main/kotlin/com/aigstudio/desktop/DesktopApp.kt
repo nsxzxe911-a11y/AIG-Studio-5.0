@@ -3221,6 +3221,34 @@ private fun saveDesktopRotaryMachineProfile(profile:RotaryAxisClampProfile){
     rotaryMachinePrefs.flush()
 }
 
+private fun showDirectThreeAxisPreview(
+    frame:JFrame,
+    doc:DrawingDocument,
+    status:JLabel,
+    derived:Machining3DResult?,
+    settings:CamSettings,
+    fixtures:List<FixtureObstacle>,
+    toolAssembly:ToolAssemblyConfig
+) {
+    if (derived != null) {
+        showUnifiedMachiningEditor(frame,doc,status,derived,"3AX",settings,fixtures,toolAssembly)
+        return
+    }
+    val preview=ThreeAxisPreviewScene.create(doc.snapshot(),settings,fixtures,toolAssembly)
+    JDialog(frame,"3AX \u2022 \u6A5F\u53F0\u9810\u89BD",false).apply {
+        layout=BorderLayout(8,8)
+        add(JLabel("3AX \u2022 XYZ MACHINE PREVIEW \u2022 \u7B49\u5F85 CAM \u5200\u8DEF",SwingConstants.CENTER).apply {
+            foreground=Color(99,255,157)
+        },BorderLayout.NORTH)
+        add(Mesh3DPanel(preview).apply { setMachineMode("3AX") },BorderLayout.CENTER)
+        minimumSize=Dimension(760,560)
+        size=Dimension(980,700)
+        setLocationRelativeTo(frame)
+        isVisible=true
+    }
+    status.text="3AX \u2022 MACHINE PREVIEW \u2022 WAITING CAM"
+}
+
 private fun showUnifiedMachiningEditor(
     frame:JFrame,
     doc:DrawingDocument,
@@ -5292,15 +5320,19 @@ private fun showApp(showWindow:Boolean=true):JFrame {
         add(homeLaunch("CAD",StudioDesktopProductionTheme.accent){productionUiButtons["CAD"]?.doClick()})
         add(homeLaunch("CAM",StudioDesktopProductionTheme.cutting){productionUiButtons["CAM"]?.doClick()})
         add(homeLaunch("SIM",Color(139,92,246)){productionUiButtons["SIM"]?.doClick()})
-        add(homeLaunch("3AX",Color(59,130,246)){runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache,"3AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="3AX WARNING • "+(it.message?:"error")}})
+        add(homeLaunch("3AX",Color(59,130,246)){showDirectThreeAxisPreview(
+                frame,doc,status,productionCamDerivedCache,productionCamSettings,productionFixtures,productionToolAssembly)})
         add(homeLaunch("4AX",Color(245,158,11)){runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,productionCamDerivedCache,"4AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="4AX WARNING • "+(it.message?:"error")}})
         add(homeLaunch("5AX",Color(236,72,153)){runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,productionCamDerivedCache,"5AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="5AX WARNING • "+(it.message?:"error")}})
         add(homeLaunch("6AX",Color(34,211,238)){runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,productionCamDerivedCache,"6AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="6AX WARNING • "+(it.message?:"error")}})
-        add(homeLaunch("NC",Color(80,170,255)){productionUiButtons["NC"]?.doClick()})
+        add(homeLaunch("NC/G\u78BC",Color(80,170,255)){
+            runCatching { showNcEditor(frame,productionCamDerivedCache,!productionCamIsStale()) }
+                .onSuccess { status.text="NC/G-CODE \u2022 DIRECT EDIT \u2022 "+MasterRuntimeChainContract.masterOriginLabel() }
+                .onFailure { status.text="NC EDIT BLOCKED \u2022 "+(it.message?:"error") }
+        })
         add(homeLaunch("AI",Color(139,92,246)){productionUiButtons["AI"]?.doClick()})
     }
     val homeLinkCockpit=JPanel(FlowLayout(FlowLayout.CENTER,8,6)).apply {

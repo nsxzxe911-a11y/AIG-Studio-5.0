@@ -184,3 +184,12 @@ tasks.register<JavaExec>("release376LinkWaitingRegression") {
     mainClass.set("com.aigstudio.core.Release376LinkWaitingRegressionKt")
 }
 
+
+
+tasks.register<JavaExec>("homeDirectEntries377Regression") {
+    group = "verification"
+    description = "Checks AIG CNC 377 direct HOME 3AX and NC/G-code entries on Android and Windows"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.HomeDirectEntries377RegressionKt")
+}

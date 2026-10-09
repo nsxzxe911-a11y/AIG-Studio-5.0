@@ -1439,6 +1439,8 @@ class MainActivity : Activity() {
         homeAction("CAD",0xFF3DEBFF.toInt()){enterCadRuntime()}
         homeAction("CAM",0xFF22C55E.toInt()){showCamWorkstation()}
         homeAction("SIM",0xFF8B5CF6.toInt()){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))}
+        homeAction("3AX",0xFF3B82F6.toInt()){showDirectThreeAxisHome()}
+        homeAction("NC/G\u78BC",0xFF50AAFF.toInt()){showNcEditDialog()}
         homeAction("多功能",0xFF27E9FF.toInt()){showOneKeyMultiFunction()}
         homeContent.addView(chromeText(
             "3D / 3AX / 4AX / 5AX / 6AX / NC / AI",
@@ -3616,6 +3618,40 @@ class MainActivity : Activity() {
             .setNegativeButton("關閉",null)
             .create()
         dialog.show()
+    }
+
+    private fun showDirectThreeAxisHome() {
+        if (camDerivedCache != null) {
+            showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))
+            return
+        }
+        val preview = ThreeAxisPreviewScene.create(
+            snapshot = cad.snapshot(),
+            settings = camSettings,
+            fixtures = camFixtures,
+            toolAssembly = camToolAssembly
+        )
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(0xFF040A11.toInt())
+            setPadding(dp(6), dp(6), dp(6), dp(6))
+        }
+        box.addView(
+            Machining3DView(this,preview,"3AX"),
+            LinearLayout.LayoutParams(-1, dp(430))
+        )
+        box.addView(TextView(this).apply {
+            text = "3AX \u2022 XYZ MACHINE PREVIEW \u2022 \u7B49\u5F85 CAM \u5200\u8DEF"
+            setTextColor(0xFF63FF9D.toInt())
+            textSize = StudioDisplayPolicy.sp(this, 10.5f)
+            setPadding(dp(10), dp(6), dp(10), dp(6))
+        })
+        AlertDialog.Builder(this)
+            .setTitle("3AX \u2022 \u6A5F\u53F0\u9810\u89BD")
+            .setView(box)
+            .setPositiveButton("CAM \u8A2D\u5B9A") { _,_ -> showCamWorkstation() }
+            .setNegativeButton("\u95DC\u9589", null)
+            .show()
     }
 
     private fun showUnifiedMachiningWorkspace(initialMode:String) {
