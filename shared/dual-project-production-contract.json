@@ -1,0 +1,124 @@
+{
+    "schema":  "aig-dual-project-production-contract-v1",
+    "projects":  [
+                     "AIG-II",
+                     "AIG CNC"
+                 ],
+    "policy":  {
+                   "dual_project_same_round":  true,
+                   "mobile_desktop_separate_ui_art":  true,
+                   "programming_reads_rgb_baseline_before_code":  true,
+                   "programming_and_3d_art_are_final_core_departments":  true,
+                   "no_engineering_shell_as_product_ui":  true,
+                   "no_fake_buttons":  true,
+                   "no_fake_runtime_state":  true,
+                   "approved_rgb_reference_manifest_required":  true,
+                   "rgb_reference_digest_required":  true
+               },
+    "platforms":  {
+                      "android":  {
+                                      "layout_family":  "MOBILE",
+                                      "ui_art_asset_set":  "AIG_RGB_MOBILE",
+                                      "delivery_surface":  "APK"
+                                  },
+                      "windows":  {
+                                      "layout_family":  "DESKTOP_CONSOLE",
+                                      "ui_art_asset_set":  "AIG_RGB_DESKTOP",
+                                      "delivery_surface":  "EXE_SETUP"
+                                  }
+                  },
+    "pages":  [
+                  "HOME",
+                  "CAD",
+                  "CAM",
+                  "SIM",
+                  "3AX",
+                  "4AX",
+                  "5AX",
+                  "6AX",
+                  "NC_GCODE",
+                  "AI",
+                  "SETTINGS",
+                  "LINK_MANAGER",
+                  "FILES_PROJECTS",
+                  "SYSTEM_MONITOR"
+              ],
+    "departments":  [
+                        "PROGRAMMING",
+                        "THREE_D_ANIMATION_ART",
+                        "UI_UX",
+                        "HOME_INTEGRATION",
+                        "CAD_GEOMETRY",
+                        "CAM_TOOLPATH",
+                        "SIMULATION",
+                        "AXIS_3",
+                        "AXIS_4",
+                        "AXIS_5",
+                        "AXIS_6",
+                        "NC_GCODE",
+                        "AI",
+                        "SETTINGS",
+                        "LINK_SYNC",
+                        "FILES_PROJECTS",
+                        "VERSION_UPDATE",
+                        "SYSTEM_MONITOR",
+                        "ANDROID_PACKAGING",
+                        "WINDOWS_PACKAGING",
+                        "VERIFICATION"
+                    ],
+    "programming_department":  {
+                                   "required_sequence":  [
+                                                             "READ_APPROVED_RGB_BASELINE",
+                                                             "SPLIT_PAGE",
+                                                             "DEFINE_COMPONENT_IDS",
+                                                             "WIRE_CALLBACKS",
+                                                             "WIRE_SHARED_CONTRACT",
+                                                             "WIRE_RUNTIME",
+                                                             "WRITE_RESULT_STATE_BACK",
+                                                             "VERIFY_REAL_OPERATION"
+                                                         ],
+                                   "must_not":  [
+                                                    "DESIGN_PRODUCT_UI_WITHOUT_RGB_BASELINE",
+                                                    "USE_ENGINEERING_SHELL_AS_PRODUCT_UI",
+                                                    "SHIP_NOOP_BUTTON",
+                                                    "DUPLICATE_PLATFORM_STATE_CONTRACT"
+                                                ]
+                               },
+    "three_d_animation_art_department":  {
+                                             "owns":  [
+                                                          "RGB_SKIN",
+                                                          "BUTTON_VISUAL_STATES",
+                                                          "MACHINE_MODEL_APPEARANCE",
+                                                          "TOOL_SPINDLE_WORKPIECE_VISUALS",
+                                                          "CAM_SIM_MOTION_VISUALS",
+                                                          "AXIS_VISUAL_DISTINCTION",
+                                                          "LIGHTING_GLOW_MATERIALS"
+                                                      ],
+                                             "must_bind_to_real_runtime":  true,
+                                             "must_not_ship_visual_only_fake_motion":  true
+                                         },
+    "page_delivery_required":  [
+                                   "APPROVED_RGB_REFERENCE",
+                                   "PAGE_LAYOUT",
+                                   "REAL_BUTTONS",
+                                   "CALLBACKS",
+                                   "SHARED_STATE_BINDING",
+                                   "RUNTIME_COMMAND",
+                                   "RESULT_STATE_WRITEBACK",
+                                   "LOCALIZATION_KEYS",
+                                   "ERROR_STATUS",
+                                   "ANDROID_SCREENSHOT",
+                                   "WINDOWS_SCREENSHOT",
+                                   "RGB_REFERENCE_SHA256"
+                               ],
+    "comparison_gate":  {
+                            "compare_same_page_same_round":  true,
+                            "compare_mobile_against_mobile_only":  true,
+                            "compare_desktop_against_desktop_only":  true,
+                            "block_if_page_missing_in_either_project":  true,
+                            "block_if_callback_missing_in_either_project":  true,
+                            "block_if_visual_asset_missing_in_either_project":  true,
+                            "block_if_runtime_result_diff_is_unexplained":  true
+                        },
+    "completion_rule":  "A page is complete only when AIG-II and AIG CNC deliver the same-round page evidence for Android and Windows, with platform-specific UI art and real runtime behavior."
+}
