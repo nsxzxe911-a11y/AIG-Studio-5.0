@@ -6,7 +6,7 @@ import kotlin.math.abs
 
 class FourthCamRuntimeAdapter(
     private val session:CleanCamSession=CleanCamSession(),
-):CamRuntimePort {
+):CamRuntimePort,CamPersistencePort {
     private var toolNumber=1
     private var spindleRpm=2300.0
     private var leadInMm=2.0
@@ -19,6 +19,34 @@ class FourthCamRuntimeAdapter(
     private var state=CamState.initial().copy(strategy=buildStrategy())
 
     override fun snapshot():CamState=state
+
+    override fun exportCheckpoint():String = CamCheckpointCodec.encode(CamCheckpointData(state,snapshotPoints()))
+
+    override fun restoreCheckpoint(raw:String):CamDispatchResult {
+        val before=state
+        return try {
+            val data=CamCheckpointCodec.decode(raw)
+            require(strategyDigest(data.state.strategy)==data.state.strategy.digest){"CAM strategy digest mismatch"}
+            data.state.active?.let { require(pathDigest(it.points)==it.digest){"CAM active digest mismatch"} }
+            data.state.candidate?.let { require(pathDigest(it.points)==it.digest){"CAM candidate digest mismatch"} }
+            data.state.savedCandidates.forEach { require(pathDigest(it.points)==it.digest){"CAM saved candidate digest mismatch"} }
+            session.restoreBaseline(data.state.strategy,data.baseline)
+            toolNumber=data.state.strategy.toolNumber
+            spindleRpm=data.state.strategy.spindleRpm
+            leadInMm=data.state.strategy.leadInMm
+            leadOutMm=data.state.strategy.leadOutMm
+            machiningRegion=data.state.strategy.machiningRegion
+            strategyRevision=data.state.strategy.revision
+            activeRevision=data.state.active?.revision ?: 0L
+            candidateRevision=(listOfNotNull(data.state.candidate?.revision)+data.state.savedCandidates.map{it.revision}).maxOrNull() ?: 0L
+            saveRevision=data.state.saveHistory.maxOfOrNull{it.revision} ?: 0L
+            state=data.state.copy(message=null)
+            accepted()
+        } catch(e:Exception) {
+            state=before.copy(message=RuntimeMessage(MessageSeverity.WARNING,e.message ?: "CAM checkpoint rejected"))
+            CamDispatchResult(false,state)
+        }
+    }
 
     override fun dispatch(command:CamCommand):CamDispatchResult = try {
         when(command) {

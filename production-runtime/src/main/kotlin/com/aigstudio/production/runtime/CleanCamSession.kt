@@ -6,7 +6,7 @@ import com.aigstudio.core.ContourDirection
 import com.aigstudio.core.ContourSide
 import com.aigstudio.core.ManualCamPathEngine
 import com.aigstudio.core.ManualCamPoint
-import com.aigstudio.runtime4.contract.CamMotionKind
+import com.aigstudio.runtime4.contract.*
 
 data class CleanCamPoint(
     val x:Double,
@@ -72,6 +72,23 @@ class CleanCamSession {
         val d=if(settings.contourDirection==ContourDirection.CCW)ContourDirection.CW else ContourDirection.CCW
         settings=settings.copy(contourDirection=d,climb=d==ContourDirection.CCW)
     }
-    internal fun coreSettings():CamSettings=settings
+    fun restoreBaseline(strategy:CamStrategySnapshot,points:List<CamPointSnapshot>){
+        val manual=points.map { p ->
+            require(listOf(p.x,p.y,p.z,p.a,p.b,p.c).all{it.isFinite()}){"CAM baseline point must be finite"}
+            require(kotlin.math.abs(p.a)<=360.0 && kotlin.math.abs(p.b)<=360.0 && kotlin.math.abs(p.c)<=360.0){"CAM baseline A/B/C out of range"}
+            val rapid=p.motion==CamMotionKind.G0
+            if(rapid) require(p.z+1e-9>=strategy.safeZMm){"CAM baseline G0 below Safe-Z"} else require(p.z<=1e-9){"CAM baseline cut above Z0"}
+            if(p.motion==CamMotionKind.G2 || p.motion==CamMotionKind.G3) require(p.arcI!=null && p.arcJ!=null){"CAM baseline arc missing center"}
+            ManualCamPoint(p.x,p.y,p.z,rapid,p.arcI,p.arcJ,when(p.motion){CamMotionKind.G2->true;CamMotionKind.G3->false;else->null},p.a,p.b,p.c)
+        }
+        val side=ContourSide.valueOf(strategy.side.name)
+        val direction=ContourDirection.valueOf(strategy.direction.name)
+        settings=CamSettings(
+            toolDiameter=strategy.toolDiameterMm,depth=strategy.depthMm,safeZ=strategy.safeZMm,feedMmMin=strategy.feedMmMin,
+            climb=direction==ContourDirection.CCW,contourSide=side,contourDirection=direction,
+            pathMode=if(manual.isEmpty()) CamPathMode.AUTO else CamPathMode.MANUAL,manualPath=manual,
+            leadInMm=strategy.leadInMm,leadOutMm=strategy.leadOutMm,
+        )
+    }    internal fun coreSettings():CamSettings=settings
     private fun ensureManual(){ if(settings.pathMode!=CamPathMode.MANUAL) startManual() }
 }

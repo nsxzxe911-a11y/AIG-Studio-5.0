@@ -99,3 +99,8 @@ tasks.register<JavaExec>("fourthCamManualEditRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("FourthCamManualEditRegressionKt")
 }
+tasks.register<JavaExec>("camCheckpointRegression") {
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("CamCheckpointRegressionKt")
+}

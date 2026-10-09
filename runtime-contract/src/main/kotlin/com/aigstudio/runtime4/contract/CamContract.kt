@@ -122,3 +122,4 @@ sealed interface CamCommand {
 
 data class CamDispatchResult(val accepted:Boolean,val state:CamState)
 interface CamRuntimePort { fun snapshot():CamState; fun dispatch(command:CamCommand):CamDispatchResult }
+interface CamPersistencePort { fun exportCheckpoint():String; fun restoreCheckpoint(raw:String):CamDispatchResult }
