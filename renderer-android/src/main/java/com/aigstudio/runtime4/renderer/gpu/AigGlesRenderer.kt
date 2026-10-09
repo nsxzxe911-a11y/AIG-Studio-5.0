@@ -1,4 +1,4 @@
-﻿package com.aigstudio.runtime4.renderer.gpu
+package com.aigstudio.runtime4.renderer.gpu
 
 import android.content.Context
 import android.opengl.GLES30
@@ -124,7 +124,10 @@ class AigGlesRenderer(
         }
         p.draw(GlesGeometryBuffer.quad(node.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,base)
         if (node is RgbGlassButtonNode) {
-            val tex = textures?.texture(node.textureRef)
+            val tex = when (val plan = RgbNodeTexturePlan.forNode(node)) {
+                is RgbNodeTexturePlan.Asset -> textures?.texture(plan.path)
+                is RgbNodeTexturePlan.GeneratedLabel -> textures?.labelTexture(plan.label)
+            }
             if (tex != null) p.draw(GlesGeometryBuffer.quad(node.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.94f),tex)
         }
     }
