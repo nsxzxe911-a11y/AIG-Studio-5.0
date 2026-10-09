@@ -34,3 +34,9 @@ tasks.register<JavaExec>("cleanNcRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("CleanNcSessionRegressionKt")
 }
+
+tasks.register<JavaExec>("cleanAiRegression") {
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("CleanAiSessionRegressionKt")
+}
