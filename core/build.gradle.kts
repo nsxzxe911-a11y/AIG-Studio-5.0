@@ -175,3 +175,12 @@ tasks.register<JavaExec>("release375TriStateRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.Release375TriStateRegressionKt")
 }
+
+tasks.register<JavaExec>("release376LinkWaitingRegression") {
+    group = "verification"
+    description = "Checks AIG CNC 376 waiting presentation over three-state link truth"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.Release376LinkWaitingRegressionKt")
+}
+
