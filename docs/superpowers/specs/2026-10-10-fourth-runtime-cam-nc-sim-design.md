@@ -1,7 +1,7 @@
 # AIG-II / AIG CNC Fourth Runtime CAM -> NC -> SIM Modular Design
 
 Date: 2026-10-10
-Status: Approved conversational design; written-spec review pending
+Status: Approved written design
 Scope: AIG-II + AIG CNC, fourth-runtime CAM first, with NC Editor and 3AX/4AX/5AX/6AX SIM contracts reserved now
 
 ## 1. Purpose
