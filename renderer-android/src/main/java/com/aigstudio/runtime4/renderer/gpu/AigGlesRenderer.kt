@@ -153,15 +153,49 @@ class AigGlesRenderer(
         val hudWidth=132f*density;val hudHeight=26f*density;val inset=8f*density;val hud=UiBounds(viewportBounds.right-hudWidth-inset,viewportBounds.top+inset,viewportBounds.right-inset,viewportBounds.top+inset+hudHeight)
         p.draw(GlesGeometryBuffer.quad(hud),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.02f,0.12f,0.18f,0.88f));textures?.labelTextureRef(presentation.hudLabel)?.let{tex->val fitted=LabelTextureLayout.contain(hud,tex.aspectRatio,3f*density,false);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex.id)}
     }
+    private fun inset(bounds:UiBounds,amount:Float):UiBounds=UiBounds(bounds.left+amount,bounds.top+amount,bounds.right-amount,bounds.bottom-amount)
+
+    private fun drawRgbFrame(p:GlesProgram,bounds:UiBounds,state:VisualState,thickness:Float){
+        val t=thickness.coerceAtLeast(1f)
+        p.draw(GlesGeometryBuffer.quad(UiBounds(bounds.left,bounds.top,bounds.right,bounds.top+t)),GLES30.GL_TRIANGLES,widthPx,heightPx,RgbSkinTokens.edgeFor(0,state))
+        p.draw(GlesGeometryBuffer.quad(UiBounds(bounds.left,bounds.top,bounds.left+t,bounds.bottom)),GLES30.GL_TRIANGLES,widthPx,heightPx,RgbSkinTokens.edgeFor(1,state))
+        p.draw(GlesGeometryBuffer.quad(UiBounds(bounds.left,bounds.bottom-t,bounds.right,bounds.bottom)),GLES30.GL_TRIANGLES,widthPx,heightPx,RgbSkinTokens.edgeFor(2,state))
+        p.draw(GlesGeometryBuffer.quad(UiBounds(bounds.right-t,bounds.top,bounds.right,bounds.bottom)),GLES30.GL_TRIANGLES,widthPx,heightPx,RgbSkinTokens.edgeFor(3,state))
+    }
+
+    private fun drawGlassPanel(p:GlesProgram,node:RgbGlassPanelNode){
+        val t=1.5f*density
+        p.draw(GlesGeometryBuffer.quad(node.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,RgbSkinTokens.edgeFor(1,VisualState.NORMAL))
+        p.draw(GlesGeometryBuffer.quad(inset(node.bounds,t)),GLES30.GL_TRIANGLES,widthPx,heightPx,RgbSkinTokens.panelFill())
+        drawRgbFrame(p,node.bounds,VisualState.NORMAL,t)
+    }
+
+    private fun drawGlassButton(p:GlesProgram,node:RgbGlassButtonNode,state:VisualState){
+        val t=2f*density
+        p.draw(GlesGeometryBuffer.quad(node.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,RgbSkinTokens.edgeFor(0,state))
+        val inner=inset(node.bounds,t)
+        val fill=RgbSkinTokens.fillFor(state)
+        if(node.skinRole==RgbSkinRole.NAVIGATION && state==VisualState.NORMAL)fill[3]=0.78f
+        p.draw(GlesGeometryBuffer.quad(inner),GLES30.GL_TRIANGLES,widthPx,heightPx,fill)
+        drawRgbFrame(p,node.bounds,state,t)
+        val shine=UiBounds(inner.left+1f*density,inner.top+1f*density,inner.right-1f*density,(inner.top+2f*density).coerceAtMost(inner.bottom))
+        p.draw(GlesGeometryBuffer.quad(shine),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.80f,0.96f,1f,if(state==VisualState.DISABLED)0.10f else 0.34f))
+        when(val plan=RgbNodeTexturePlan.forNode(node)){
+            is RgbNodeTexturePlan.Asset->textures?.texture(plan.path)?.let{tex->p.draw(GlesGeometryBuffer.quad(inner),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,if(state==VisualState.DISABLED)0.35f else 0.92f),tex)}
+            is RgbNodeTexturePlan.GeneratedLabel->textures?.labelTextureRef(plan.label)?.let{tex->val fitted=LabelTextureLayout.contain(inner,tex.aspectRatio,4f*density,false);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,if(state==VisualState.DISABLED)0.42f else 0.96f),tex.id)}
+        }
+    }
+
     private fun drawNode(p:GlesProgram,node:SceneNode){
-        if(!node.visible)return;val selectedByTool=sceneRouter.current==SceneId.CAD && node.id=="CAD.${stateSource.snapshotForFrame().activeTool.name}";val pressed=node.id==pressedNodeId
+        if(!node.visible)return
+        if(node is RgbGlassPanelNode){drawGlassPanel(p,node);return}
+        val selectedByTool=sceneRouter.current==SceneId.CAD && node.id=="CAD.${stateSource.snapshotForFrame().activeTool.name}"
+        val pressed=node.id==pressedNodeId
+        if(node is RgbGlassButtonNode){
+            val state=when{!node.enabled->VisualState.DISABLED;pressed->VisualState.PRESSED;node.visualState==VisualState.ALARM->VisualState.ALARM;selectedByTool||node.visualState==VisualState.SELECTED->VisualState.SELECTED;else->VisualState.NORMAL}
+            drawGlassButton(p,node,state);return
+        }
         val base=when{pressed->floatArrayOf(0.35f,0.72f,1f,0.96f);node.visualState==VisualState.ALARM->floatArrayOf(0.42f,0.05f,0.06f,0.94f);selectedByTool||node.visualState==VisualState.SELECTED->floatArrayOf(0.25f,0.9f,1f,0.92f);else->floatArrayOf(0.08f,0.25f,0.38f,0.84f)}
         p.draw(GlesGeometryBuffer.quad(node.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,base)
-        if(node is RgbGlassButtonNode){
-            when(val plan=RgbNodeTexturePlan.forNode(node)){
-                is RgbNodeTexturePlan.Asset->textures?.texture(plan.path)?.let{tex->p.draw(GlesGeometryBuffer.quad(node.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.94f),tex)}
-                is RgbNodeTexturePlan.GeneratedLabel->textures?.labelTextureRef(plan.label)?.let{tex->val fitted=LabelTextureLayout.contain(node.bounds,tex.aspectRatio,4f*density,false);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.94f),tex.id)}
-            }
-        }
     }
 }

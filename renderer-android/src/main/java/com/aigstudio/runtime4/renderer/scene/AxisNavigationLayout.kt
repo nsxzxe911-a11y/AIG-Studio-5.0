@@ -36,7 +36,7 @@ object AxisNavigationLayout {
             val left=gap+col*(buttonWidth+gap);val y=top+gap+row*(touch+gap)
             RgbGlassButtonNode(
                 spec.id,UiBounds(left,y,(left+buttonWidth).coerceAtMost(widthPx-gap),(y+touch).coerceAtMost(heightPx-gap)),50,
-                spec.label,spec.texture,null,if(spec.id==selectedId)VisualState.SELECTED else VisualState.NORMAL
+                spec.label,spec.texture,null,if(spec.id==selectedId)VisualState.SELECTED else VisualState.NORMAL,skinRole=RgbSkinRole.NAVIGATION
             )
         }
         return AxisNavigationResult(top,buttons)
