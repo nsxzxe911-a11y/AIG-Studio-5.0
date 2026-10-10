@@ -897,7 +897,8 @@ data class NcMachineTravelLimits(
     val y: NcAxisTravelRange? = null,
     val z: NcAxisTravelRange? = null,
     val a: NcAxisTravelRange? = NcAxisTravelRange(-360.0, 360.0),
-    val b: NcAxisTravelRange? = NcAxisTravelRange(-360.0, 360.0)
+    val b: NcAxisTravelRange? = NcAxisTravelRange(-360.0, 360.0),
+    val c: NcAxisTravelRange? = NcAxisTravelRange(-360.0, 360.0)
 ) {
     fun rangeFor(axis: Char): NcAxisTravelRange? = when (axis.uppercaseChar()) {
         'X' -> x
@@ -905,6 +906,7 @@ data class NcMachineTravelLimits(
         'Z' -> z
         'A' -> a
         'B' -> b
+        'C' -> c
         else -> null
     }
 
@@ -914,13 +916,15 @@ data class NcMachineTravelLimits(
             yMin: Double, yMax: Double,
             zMin: Double, zMax: Double,
             aMin: Double = -360.0, aMax: Double = 360.0,
-            bMin: Double = -360.0, bMax: Double = 360.0
+            bMin: Double = -360.0, bMax: Double = 360.0,
+            cMin: Double = -360.0, cMax: Double = 360.0
         ): NcMachineTravelLimits = NcMachineTravelLimits(
             x = NcAxisTravelRange(xMin, xMax),
             y = NcAxisTravelRange(yMin, yMax),
             z = NcAxisTravelRange(zMin, zMax),
             a = NcAxisTravelRange(aMin, aMax),
-            b = NcAxisTravelRange(bMin, bMax)
+            b = NcAxisTravelRange(bMin, bMax),
+            c = NcAxisTravelRange(cMin, cMax)
         )
     }
 }
