@@ -16,8 +16,9 @@ object NcSceneLayout {
         val touch=48f*density
         val gap=3f*density
         val landscape=widthPx>heightPx
-        val navTop=heightPx-touch-gap
-        val columns=if(landscape)7 else 6
+        val nav=AxisNavigationLayout.layout(widthPx,heightPx,density,"NAV.NC")
+        val navTop=nav.top
+        val columns=7
         val rows=ceil(controls.size/columns.toDouble()).toInt()
         val panelMinWidth=columns*touch+(columns+1)*gap
         val panelWidth=if(landscape) max(widthPx*0.42f,panelMinWidth) else widthPx
@@ -56,10 +57,7 @@ object NcSceneLayout {
             val top=(editorBounds.top+(diagnostic.lineNumber-1).coerceAtLeast(0)*lineHeight).coerceAtMost((editorBounds.bottom-lineHeight).coerceAtLeast(editorBounds.top))
             nodes+=SceneNode("NC.DIAG.${diagnostic.lineNumber}.$index",UiBounds(editorBounds.left,top,editorBounds.left+6f*density,top+lineHeight),12,VisualState.ALARM,enabled=false)
         }
-        nodes+=RgbGlassButtonNode("NAV.HOME",UiBounds(gap,navTop,gap+touch,navTop+touch),50,"HOME","aig-rgb/icons/workspace.png",null)
-        nodes+=RgbGlassButtonNode("NAV.CAD",UiBounds(gap*2+touch,navTop,gap*2+touch*2,navTop+touch),50,"CAD","aig-rgb/icons/cad.png",null)
-        nodes+=RgbGlassButtonNode("NAV.CAM",UiBounds(gap*3+touch*2,navTop,gap*3+touch*3,navTop+touch),50,"CAM","aig-rgb/icons/cam.png",null)
-        nodes+=RgbGlassButtonNode("NAV.NC",UiBounds(gap*4+touch*3,navTop,gap*4+touch*4,navTop+touch),50,"NC",null,null,VisualState.SELECTED)
+        nodes+=nav.buttons
         return nodes
     }
 

@@ -21,6 +21,7 @@ class AigGlesView(
     private val axisRuntime: AxisRuntimePort,
     private val simRuntime: SimRuntimePort? = null,
     private val aiRuntime: AiRuntimePort? = null,
+    private val pageRuntime: PageConnectionRuntimePort? = null,
     onFirstFrame: (() -> Unit)? = null,
 ) : GLSurfaceView(context) {
     private val sceneRouter = SceneRouter(SceneId.HOME)
@@ -29,10 +30,11 @@ class AigGlesView(
     private val ncController = ncRuntime?.let(::NcSceneController)
     private val simController = simRuntime?.let(::SimSceneController)
     private val aiController = aiRuntime?.let(::AiSceneController)
+    private val productDeckController = pageRuntime?.let(::ProductControlDeckController)
     private val ncInput = ncRuntime?.let { runtime -> NcTextInputBridge(runtime){ requestRender() } }
     private val pointerRouter = PointerGestureRouter(cadRuntime)
     private val firstFrameSignal = onFirstFrame?.let { callback -> FirstFrameSignal { post(callback) } }
-    private val aigRenderer = AigGlesRenderer(context,cadRuntime,camRuntime,ncRuntime,axisRuntime,simRuntime,aiRuntime,sceneRouter,cadController,camController,ncController,firstFrameSignal)
+    private val aigRenderer = AigGlesRenderer(context,cadRuntime,camRuntime,ncRuntime,axisRuntime,simRuntime,aiRuntime,sceneRouter,cadController,camController,ncController,productDeckController,firstFrameSignal)
     private var pressedNode: String? = null
 
     init {
@@ -133,6 +135,7 @@ class AigGlesView(
             Log.i("AIG4","AIG4_SCENE|${from.name}_TO_${destination.name}|PASS")
             return
         }
+        productDeckController?.activate(sceneRouter.current.toPageId(),nodeId)?.let{state->Log.i("AIG4","AIG4_LINK|"+state.page.name+"|"+nodeId+"|PASS");requestRender();return}
         when(sceneRouter.current){
             SceneId.CAD->cadController.activate(nodeId)?.let{logCadCommand(nodeId.substringAfter("CAD."),it)}
             SceneId.CAM->camController.activate(nodeId)?.let{logCamCommand(nodeId.substringAfter("CAM."),it)}
@@ -155,16 +158,19 @@ class AigGlesView(
         Log.i("AIG4",if(result.accepted)"AIG4_NC|COMMAND|$name|ACCEPTED|REV=${result.state.working.revision}" else "AIG4_NC|COMMAND|$name|REJECTED|LOCAL_MESSAGE")
     }
 
-    private fun currentNodes(density:Float):List<SceneNode> = TopLevelNodeResolver.resolve(sceneRouter.current,TopLevelNodeSources(
-        home={HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-        cad={cadController.nodes(width.toFloat(),height.toFloat(),density)},
-        cam={camController.nodes(width.toFloat(),height.toFloat(),density)},
-        sim={simController?.nodes(width.toFloat(),height.toFloat(),density) ?: SimSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-        axis3={Axis3SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-        axis4={Axis4SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-        axis5={Axis5SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-        axis6={Axis6SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-        nc={ncController?.nodes(width.toFloat(),height.toFloat(),density) ?: NcSceneLayout.nodes(width.toFloat(),height.toFloat(),density,NcState.initial())},
-        ai={aiController?.nodes(width.toFloat(),height.toFloat(),density) ?: AiSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-    ))
+    private fun currentNodes(density:Float):List<SceneNode> {
+        val base=TopLevelNodeResolver.resolve(sceneRouter.current,TopLevelNodeSources(
+            home={HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            cad={cadController.nodes(width.toFloat(),height.toFloat(),density)},
+            cam={camController.nodes(width.toFloat(),height.toFloat(),density)},
+            sim={simController?.nodes(width.toFloat(),height.toFloat(),density) ?: SimSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            axis3={Axis3SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            axis4={Axis4SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            axis5={Axis5SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            axis6={Axis6SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            nc={ncController?.nodes(width.toFloat(),height.toFloat(),density) ?: NcSceneLayout.nodes(width.toFloat(),height.toFloat(),density,NcState.initial())},
+            ai={aiController?.nodes(width.toFloat(),height.toFloat(),density) ?: AiSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+        ))
+        return base+(productDeckController?.nodes(sceneRouter.current.toPageId(),width.toFloat(),height.toFloat(),density) ?: emptyList())
+    }
 }

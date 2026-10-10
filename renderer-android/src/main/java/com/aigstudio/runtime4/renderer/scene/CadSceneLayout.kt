@@ -21,12 +21,10 @@ object CadSceneLayout {
         layerPopup.forEachIndexed{index,id->nodes+=RgbGlassButtonNode(id,popupBounds(index,layerColumns),45,layerLabel(id),null,commandFor(id),visible=layerGroupExpanded)}
         val dimColumns=if(landscape)5 else 3
         dimensionPopup.forEachIndexed{index,id->nodes+=RgbGlassButtonNode(id,popupBounds(index,dimColumns),45,dimensionLabel(id),null,null,visible=dimensionGroupExpanded)}
-        val navTop=heightPx-touch-gap
+        val nav=AxisNavigationLayout.layout(widthPx,heightPx,density,"NAV.CAD")
+        val navTop=nav.top
         nodes+=SceneNode("CAD.VIEWPORT",UiBounds(gap,toolbarBottom,widthPx-gap,navTop-gap),1)
-        nodes+=RgbGlassButtonNode("NAV.HOME",UiBounds(gap,navTop,gap+touch,navTop+touch),50,"HOME","aig-rgb/icons/workspace.png",null)
-        nodes+=RgbGlassButtonNode("NAV.CAD",UiBounds(gap*2+touch,navTop,gap*2+touch*2,navTop+touch),50,"CAD","aig-rgb/icons/cad.png",null,VisualState.SELECTED)
-        nodes+=RgbGlassButtonNode("NAV.CAM",UiBounds(gap*3+touch*2,navTop,gap*3+touch*3,navTop+touch),50,"CAM","aig-rgb/icons/cam.png",null)
-        nodes+=RgbGlassButtonNode("NAV.NC",UiBounds(gap*4+touch*3,navTop,gap*4+touch*4,navTop+touch),50,"NC",null,null)
+        nodes+=nav.buttons
         return nodes
     }
 

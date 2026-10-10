@@ -9,6 +9,7 @@ import com.aigstudio.production.runtime.FourthNcRuntimeAdapter
 import com.aigstudio.production.runtime.FourthAxisRuntimeAdapter
 import com.aigstudio.production.runtime.FourthSimRuntimeAdapter
 import com.aigstudio.production.runtime.FourthAiRuntimeAdapter
+import com.aigstudio.production.runtime.ProductionPageRuntime
 import com.aigstudio.runtime4.renderer.gpu.AigGlesView
 
 class FourthMainActivity:Activity(){
@@ -29,6 +30,7 @@ class FourthMainActivity:Activity(){
         val axisRuntime=FourthAxisRuntimeAdapter(ncRuntime)
         val simRuntime=FourthSimRuntimeAdapter { ncRuntime.snapshot().motionProgram }
         val aiRuntime=FourthAiRuntimeAdapter()
+        val pageRuntime=ProductionPageRuntime(cadRuntime,camRuntime,ncRuntime,axisRuntime,simRuntime,aiRuntime)
         recoveryPlan=FourthRuntimeRecoveryPlan(
             cadComplete={val r=cadRuntime.completeRecovery();RecoveryDomainStatus("CAD",r?.accepted,r==null)},
             camComplete={val r=camRuntime.completeRecovery();RecoveryDomainStatus("CAM",r?.accepted,r==null)},
@@ -37,7 +39,7 @@ class FourthMainActivity:Activity(){
             camSave={camRuntime.saveNowIfReady()},
             ncSave={ncRuntime.saveNowIfReady()},
         )
-        glesView=AigGlesView(this,cadRuntime,camRuntime,ncRuntime,axisRuntime,simRuntime,aiRuntime){
+        glesView=AigGlesView(this,cadRuntime,camRuntime,ncRuntime,axisRuntime,simRuntime,aiRuntime,pageRuntime){
             recoveryPlan.completeAll().forEach{status->
                 Log.i("AIG4","AIG4_${status.domain}|RECOVERY|"+recoveryStatus(status))
                 status.warning?.let{Log.w("AIG4","AIG4_${status.domain}|RECOVERY|WARNING|$it")}

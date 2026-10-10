@@ -22,3 +22,7 @@ data class PageCapabilityState(
 }
 
 interface PageRuntimePort { fun snapshot(page:PageId):PageCapabilityState }
+
+interface PageConnectionRuntimePort:PageRuntimePort {
+    fun setConnection(source:PageId,target:PageId,connected:Boolean):PageCapabilityState
+}

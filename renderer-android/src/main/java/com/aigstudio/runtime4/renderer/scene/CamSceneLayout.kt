@@ -25,12 +25,11 @@ object CamSceneLayout {
             }
             RgbGlassButtonNode(id,bounds(index),30,id.substringAfter("CAM."),textureFor(id),null,visual,camCommandBinding=commandFor(id,state))
         }.toMutableList<SceneNode>()
-        val rows=(controls.size+columns-1)/columns; val toolbarBottom=gap+rows*(touch+gap); val navTop=heightPx-touch-gap
+        val rows=(controls.size+columns-1)/columns; val toolbarBottom=gap+rows*(touch+gap)
+        val nav=AxisNavigationLayout.layout(widthPx,heightPx,density,"NAV.CAM")
+        val navTop=nav.top
         nodes+=SceneNode("CAM.VIEWPORT",UiBounds(gap,toolbarBottom,widthPx-gap,navTop-gap),1)
-        nodes+=RgbGlassButtonNode("NAV.HOME",UiBounds(gap,navTop,gap+touch,navTop+touch),50,"HOME","aig-rgb/icons/workspace.png",null)
-        nodes+=RgbGlassButtonNode("NAV.CAD",UiBounds(gap*2+touch,navTop,gap*2+touch*2,navTop+touch),50,"CAD","aig-rgb/icons/cad.png",null)
-        nodes+=RgbGlassButtonNode("NAV.CAM",UiBounds(gap*3+touch*2,navTop,gap*3+touch*3,navTop+touch),50,"CAM","aig-rgb/icons/cam.png",null,VisualState.SELECTED)
-        nodes+=RgbGlassButtonNode("NAV.NC",UiBounds(gap*4+touch*3,navTop,gap*4+touch*4,navTop+touch),50,"NC",null,null)
+        nodes+=nav.buttons
         return nodes
     }
 

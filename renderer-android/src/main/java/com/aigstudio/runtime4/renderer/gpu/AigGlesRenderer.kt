@@ -22,6 +22,7 @@ class AigGlesRenderer(
     private val cadController:CadSceneController,
     private val camController:CamSceneController,
     private val ncController:NcSceneController?,
+    private val productDeckController:ProductControlDeckController?,
     private val firstFrameSignal:FirstFrameSignal?=null,
 ):GLSurfaceView.Renderer {
     val stateSource=RendererStateSource(cadRuntime)
@@ -61,6 +62,7 @@ class AigGlesRenderer(
             FourthRenderRoute.AI->drawAi(p)
             FourthRenderRoute.UNAVAILABLE->drawUnavailable(p,sceneRouter.current)
         }
+        productDeckController?.nodes(sceneRouter.current.toPageId(),widthPx,heightPx,density)?.forEach{drawNode(p,it)}
         if(!firstFrameLogged){GLES30.glFinish();Log.i("AIG4","AIG4_GLES|FIRST_FRAME|PASS");firstFrameLogged=true;firstFrameSignal?.fireOnce()}
     }
 
