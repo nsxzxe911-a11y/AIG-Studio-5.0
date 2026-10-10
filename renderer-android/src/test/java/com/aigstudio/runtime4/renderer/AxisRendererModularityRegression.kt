@@ -16,6 +16,7 @@ class AxisRendererModularityRegression {
     @Test fun axisRendererModuleOwnsOnlyImplementedAxisRoutes() {
         val renderer = AxisGlesSceneRenderer(AxisRendererStateSource(AxisModuleRuntimeStub()))
         assertTrue(renderer.supports(FourthRenderRoute.AXIS3))
+        assertTrue(renderer.supports(FourthRenderRoute.AXIS4))
         assertFalse(renderer.supports(FourthRenderRoute.UNAVAILABLE))
     }
 }
