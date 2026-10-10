@@ -78,7 +78,7 @@ class AigGlesRenderer(
             val bounds=UiBounds(editor.bounds.left+10f*density,top,editor.bounds.right-8f*density,top+lineHeight)
             if(line.number==presentation.cursorLine)p.draw(GlesGeometryBuffer.quad(bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.05f,0.22f,0.30f,0.82f))
             val label=line.number.toString().padStart(4,'0')+"  "+line.text
-            textures?.labelTexture(label)?.let{tex->p.draw(GlesGeometryBuffer.quad(bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex)}
+            textures?.labelTextureRef(label)?.let{tex->val fitted=LabelTextureLayout.contain(bounds,tex.aspectRatio,2f*density,true);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex.id)}
         }
         val status=UiBounds(editor.bounds.left+8f*density,editor.bounds.bottom-statusHeight,editor.bounds.right-8f*density,editor.bounds.bottom)
         val local=presentation.localMessage
@@ -88,7 +88,7 @@ class AigGlesRenderer(
         val preview=presentation.previewCandidateId?.let{" | PREVIEW $it"}.orEmpty()
         val warning=local?.let{" | ${it.severity.name}: ${it.text}"}.orEmpty()
         val statusText="WORK ${presentation.workingId} V${presentation.revision} | ${state.editMode.name} | CAM ${presentation.camLink.name}"+candidate+preview+warning
-        textures?.labelTexture(statusText)?.let{tex->p.draw(GlesGeometryBuffer.quad(status),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex)}
+        textures?.labelTextureRef(statusText)?.let{tex->val fitted=LabelTextureLayout.contain(status,tex.aspectRatio,3f*density,true);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex.id)}
         nodes.filter{it.id!="NC.EDITOR"}.forEach{drawNode(p,it)}
     }
     private fun drawCamPath(p:GlesProgram,viewport:CamViewportNode,points:List<CamPointSnapshot>,color:FloatArray,lineWidth:Float){
@@ -109,7 +109,7 @@ class AigGlesRenderer(
         val inset=8f*density;val h=28f*density;val w=min(viewport.width-inset*2,360f*density);val box=UiBounds(viewport.left+inset,viewport.top+inset,viewport.left+inset+w,viewport.top+inset+h)
         val base=when(message.severity){MessageSeverity.INFO->floatArrayOf(0.02f,0.12f,0.18f,0.94f);MessageSeverity.WARNING->floatArrayOf(0.28f,0.18f,0.02f,0.94f);MessageSeverity.ALARM->floatArrayOf(0.30f,0.03f,0.04f,0.94f)}
         p.draw(GlesGeometryBuffer.quad(box),GLES30.GL_TRIANGLES,widthPx,heightPx,base)
-        textures?.labelTexture("${message.severity.name}: ${message.text}")?.let{tex->p.draw(GlesGeometryBuffer.quad(box),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex)}
+        textures?.labelTextureRef("${message.severity.name}: ${message.text}")?.let{tex->val fitted=LabelTextureLayout.contain(box,tex.aspectRatio,3f*density,true);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex.id)}
     }
 
     private fun drawGrid(p:GlesProgram,bounds:UiBounds,viewport:CadViewportNode){
@@ -131,11 +131,17 @@ class AigGlesRenderer(
     private fun drawSnapFeedback(p:GlesProgram,viewport:CadViewportNode,viewportBounds:UiBounds){
         val presentation=CadSnapPresentation.from(stateSource.snapshotForFrame(),viewport,8f*density);presentation.marker?.let{m->p.draw(GlesGeometryBuffer.polyline(m.diamond),GLES30.GL_LINE_STRIP,widthPx,heightPx,floatArrayOf(0.2f,1f,1f,1f),lineWidth=2.5f);p.draw(GlesGeometryBuffer.polyline(m.cross),GLES30.GL_LINES,widthPx,heightPx,floatArrayOf(1f,0.35f,0.95f,1f),lineWidth=2f)}
         val hudWidth=132f*density;val hudHeight=26f*density;val inset=8f*density;val hud=UiBounds(viewportBounds.right-hudWidth-inset,viewportBounds.top+inset,viewportBounds.right-inset,viewportBounds.top+inset+hudHeight)
-        p.draw(GlesGeometryBuffer.quad(hud),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.02f,0.12f,0.18f,0.88f));textures?.labelTexture(presentation.hudLabel)?.let{tex->p.draw(GlesGeometryBuffer.quad(hud),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex)}
+        p.draw(GlesGeometryBuffer.quad(hud),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.02f,0.12f,0.18f,0.88f));textures?.labelTextureRef(presentation.hudLabel)?.let{tex->val fitted=LabelTextureLayout.contain(hud,tex.aspectRatio,3f*density,false);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex.id)}
     }
     private fun drawNode(p:GlesProgram,node:SceneNode){
         if(!node.visible)return;val selectedByTool=sceneRouter.current==SceneId.CAD && node.id=="CAD.${stateSource.snapshotForFrame().activeTool.name}";val pressed=node.id==pressedNodeId
         val base=when{pressed->floatArrayOf(0.35f,0.72f,1f,0.96f);node.visualState==VisualState.ALARM->floatArrayOf(0.42f,0.05f,0.06f,0.94f);selectedByTool||node.visualState==VisualState.SELECTED->floatArrayOf(0.25f,0.9f,1f,0.92f);else->floatArrayOf(0.08f,0.25f,0.38f,0.84f)}
-        p.draw(GlesGeometryBuffer.quad(node.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,base);if(node is RgbGlassButtonNode){val tex=when(val plan=RgbNodeTexturePlan.forNode(node)){is RgbNodeTexturePlan.Asset->textures?.texture(plan.path);is RgbNodeTexturePlan.GeneratedLabel->textures?.labelTexture(plan.label)};if(tex!=null)p.draw(GlesGeometryBuffer.quad(node.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.94f),tex)}
+        p.draw(GlesGeometryBuffer.quad(node.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,base)
+        if(node is RgbGlassButtonNode){
+            when(val plan=RgbNodeTexturePlan.forNode(node)){
+                is RgbNodeTexturePlan.Asset->textures?.texture(plan.path)?.let{tex->p.draw(GlesGeometryBuffer.quad(node.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.94f),tex)}
+                is RgbNodeTexturePlan.GeneratedLabel->textures?.labelTextureRef(plan.label)?.let{tex->val fitted=LabelTextureLayout.contain(node.bounds,tex.aspectRatio,4f*density,false);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.94f),tex.id)}
+            }
+        }
     }
 }

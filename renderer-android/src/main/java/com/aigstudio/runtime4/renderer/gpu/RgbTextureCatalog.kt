@@ -9,39 +9,55 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.opengl.GLES30
 import android.opengl.GLUtils
+import kotlin.math.ceil
 import kotlin.math.min
 
+internal data class GeneratedLabelTexture(val id:Int,val aspectRatio:Float)
+private data class TextureEntry(val id:Int,val width:Int,val height:Int)
+
 class RgbTextureCatalog(private val context: Context) {
-    private val cache = linkedMapOf<String, Int>()
+    private val cache = linkedMapOf<String, TextureEntry>()
 
     fun texture(path: String?): Int? {
         if (path.isNullOrBlank()) return null
-        cache[path]?.let { return it }
+        cache[path]?.let { return it.id }
         val bitmap = runCatching { context.assets.open(path).use(BitmapFactory::decodeStream) }.getOrNull() ?: return null
-        return upload(path, bitmap)
+        return upload(path, bitmap).id
     }
 
-    fun labelTexture(label: String): Int? {
-        val clean = label.trim().ifBlank { return null }
-        val key = "generated-label:$clean"
-        cache[key]?.let { return it }
-        val bitmap = Bitmap.createBitmap(512, 256, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE
-            textAlign = Paint.Align.CENTER
-            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            textSize = 92f
+    fun labelTexture(label: String): Int? = labelTextureRef(label)?.id
+
+    internal fun labelTextureRef(label:String):GeneratedLabelTexture? {
+        val clean=label.trim().ifBlank{return null}
+        val key="generated-label:$clean"
+        cache[key]?.let{return GeneratedLabelTexture(it.id,it.width.toFloat()/it.height.toFloat())}
+        val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{
+            color=Color.WHITE
+            textAlign=Paint.Align.LEFT
+            typeface=Typeface.create(Typeface.MONOSPACE,Typeface.BOLD)
+            textSize=64f
         }
-        val maxWidth = 448f
-        val measured = paint.measureText(clean).coerceAtLeast(1f)
-        paint.textSize *= min(1f, maxWidth / measured)
-        val baseline = bitmap.height / 2f - (paint.ascent() + paint.descent()) / 2f
-        canvas.drawText(clean, bitmap.width / 2f, baseline, paint)
-        return upload(key, bitmap)
+        val horizontalPad=20
+        val verticalPad=14
+        val maxInnerWidth=1960f
+        val measured0=paint.measureText(clean).coerceAtLeast(1f)
+        if(measured0>maxInnerWidth)paint.textSize*=maxInnerWidth/measured0
+        val measured=paint.measureText(clean).coerceAtLeast(1f)
+        val fm=paint.fontMetrics
+        val textHeight=(fm.descent-fm.ascent).coerceAtLeast(1f)
+        val width=(ceil(measured).toInt()+horizontalPad*2).coerceIn(48,2048)
+        val height=(ceil(textHeight).toInt()+verticalPad*2).coerceIn(48,256)
+        val bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888)
+        val canvas=Canvas(bitmap)
+        val baseline=height/2f-(paint.ascent()+paint.descent())/2f
+        canvas.drawText(clean,horizontalPad.toFloat(),baseline,paint)
+        val entry=upload(key,bitmap)
+        return GeneratedLabelTexture(entry.id,entry.width.toFloat()/entry.height.toFloat())
     }
 
-    private fun upload(key: String, bitmap: Bitmap): Int {
+    private fun upload(key: String, bitmap: Bitmap): TextureEntry {
+        val width=bitmap.width
+        val height=bitmap.height
         val ids = IntArray(1)
         GLES30.glGenTextures(1, ids, 0)
         val id = ids[0]
@@ -53,12 +69,13 @@ class RgbTextureCatalog(private val context: Context) {
         GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, bitmap, 0)
         bitmap.recycle()
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0)
-        cache[key] = id
-        return id
+        val entry=TextureEntry(id,width,height)
+        cache[key] = entry
+        return entry
     }
 
     fun release() {
-        if (cache.isNotEmpty()) GLES30.glDeleteTextures(cache.size, cache.values.toIntArray(), 0)
+        if (cache.isNotEmpty()) GLES30.glDeleteTextures(cache.size, cache.values.map{it.id}.toIntArray(), 0)
         cache.clear()
     }
 }
