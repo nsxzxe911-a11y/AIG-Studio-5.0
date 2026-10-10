@@ -5,7 +5,7 @@ import com.aigstudio.runtime4.contract.AxisRuntimePort
 import com.aigstudio.runtime4.contract.AxisSceneState
 import com.aigstudio.runtime4.contract.SceneId
 
-enum class FourthRenderRoute { HOME, CAD, CAM, AXIS3, AXIS4, AXIS5, NC, UNAVAILABLE }
+enum class FourthRenderRoute { HOME, CAD, CAM, AXIS3, AXIS4, AXIS5, AXIS6, NC, UNAVAILABLE }
 
 object RenderRoutePolicy {
     fun forScene(scene: SceneId): FourthRenderRoute = when (scene) {
@@ -15,6 +15,7 @@ object RenderRoutePolicy {
         SceneId.AXIS3 -> FourthRenderRoute.AXIS3
         SceneId.AXIS4 -> FourthRenderRoute.AXIS4
         SceneId.AXIS5 -> FourthRenderRoute.AXIS5
+        SceneId.AXIS6 -> FourthRenderRoute.AXIS6
         SceneId.NC -> FourthRenderRoute.NC
         else -> FourthRenderRoute.UNAVAILABLE
     }

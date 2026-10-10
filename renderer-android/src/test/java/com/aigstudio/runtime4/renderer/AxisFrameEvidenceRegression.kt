@@ -13,6 +13,8 @@ class AxisFrameEvidenceRegression {
         assertEquals("AIG4_AXIS4|FIRST_FRAME|PASS|MOTION=MP31|A=10.000|BLOCK=7/8",AxisFrameEvidence.axis4Marker(axis4))
         val axis5=AxisSceneState(AxisMode.AXIS5,AxisPoseSnapshot(1.0,2.0,-3.0,10.0,20.0,30.0),"MP31",31L,7,8)
         assertEquals("AIG4_AXIS5|FIRST_FRAME|PASS|MOTION=MP31|A=10.000|B=20.000|BLOCK=7/8",AxisFrameEvidence.axis5Marker(axis5))
+        val axis6=AxisSceneState(AxisMode.AXIS6,AxisPoseSnapshot(1.0,2.0,-3.0,10.0,20.0,30.0),"MP31",31L,7,8)
+        assertEquals("AIG4_AXIS6|FIRST_FRAME|PASS|MOTION=MP31|A=10.000|B=20.000|C=30.000|BLOCK=7/8",AxisFrameEvidence.axis6Marker(axis6))
     }
 
     @Test fun localMessageSuffixPreservesSeverityAndText() {

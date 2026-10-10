@@ -32,4 +32,10 @@ object AxisFrameEvidence {
         val pose=state.pose.forMode(AxisMode.AXIS5)
         return String.format(Locale.US,"AIG4_AXIS5|FIRST_FRAME|PASS|MOTION=%s|A=%.3f|B=%.3f|BLOCK=%d/%d",motion,pose.a,pose.b,state.blockIndex,state.blockCount)
     }
+
+    fun axis6Marker(state: AxisSceneState): String {
+        val motion=state.motionProgramId ?: "NONE"
+        val pose=state.pose.forMode(AxisMode.AXIS6)
+        return String.format(Locale.US,"AIG4_AXIS6|FIRST_FRAME|PASS|MOTION=%s|A=%.3f|B=%.3f|C=%.3f|BLOCK=%d/%d",motion,pose.a,pose.b,pose.c,state.blockIndex,state.blockCount)
+    }
 }

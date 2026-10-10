@@ -156,6 +156,7 @@ class AigGlesView(
         SceneId.AXIS3->Axis3SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.AXIS4->Axis4SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.AXIS5->Axis5SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
+        SceneId.AXIS6->Axis6SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.NC->ncController?.nodes(width.toFloat(),height.toFloat(),density) ?: HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         else->HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
     }

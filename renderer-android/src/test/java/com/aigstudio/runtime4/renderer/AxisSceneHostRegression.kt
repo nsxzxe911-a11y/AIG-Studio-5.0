@@ -30,4 +30,9 @@ class AxisSceneHostRegression {
         assertFalse(host.commit(stale));assertTrue(host.commit(axis5));assertEquals(SceneId.AXIS5,host.activeScene)
         assertEquals(SceneId.AXIS3,host.navigateImmediate(SceneId.AXIS3))
     }
+
+    @Test fun axis6CompletesFullLatestWinsCycle(){
+        val host=AxisSceneHost(SceneId.AXIS3);assertEquals(SceneId.AXIS4,host.navigateImmediate(SceneId.AXIS4));assertEquals(SceneId.AXIS5,host.navigateImmediate(SceneId.AXIS5))
+        val stale=host.request(SceneId.AXIS4);val axis6=host.request(SceneId.AXIS6);assertFalse(host.commit(stale));assertTrue(host.commit(axis6));assertEquals(SceneId.AXIS6,host.activeScene);assertEquals(SceneId.AXIS3,host.navigateImmediate(SceneId.AXIS3))
+    }
 }

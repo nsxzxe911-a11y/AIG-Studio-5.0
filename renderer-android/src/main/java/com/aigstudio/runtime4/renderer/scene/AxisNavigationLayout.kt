@@ -18,6 +18,7 @@ object AxisNavigationLayout {
         Spec("NAV.3AX","3AX"),
         Spec("NAV.4AX","4AX"),
         Spec("NAV.5AX","5AX"),
+        Spec("NAV.6AX","6AX"),
         Spec("NAV.NC","NC"),
     )
 

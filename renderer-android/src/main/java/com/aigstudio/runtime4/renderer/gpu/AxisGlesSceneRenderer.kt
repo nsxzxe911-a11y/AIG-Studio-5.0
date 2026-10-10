@@ -16,11 +16,14 @@ class AxisGlesSceneRenderer(
     private val axis4Specs=MachineProfile4AxHrtStyle.parts.associateBy{it.id}
     private val axis5Parts=Axis5Mesh.parts()
     private val axis5Specs=MachineProfile5AxTrunnionStyle.parts.associateBy{it.id}
+    private val axis6Parts=Axis6Mesh.parts()
+    private val axis6Specs=MachineProfile6AxNicStyle.parts.associateBy{it.id}
     private var axis3FirstFrameLogged=false
     private var axis4FirstFrameLogged=false
     private var axis5FirstFrameLogged=false
+    private var axis6FirstFrameLogged=false
 
-    fun supports(route:FourthRenderRoute):Boolean = route==FourthRenderRoute.AXIS3 || route==FourthRenderRoute.AXIS4 || route==FourthRenderRoute.AXIS5
+    fun supports(route:FourthRenderRoute):Boolean = route==FourthRenderRoute.AXIS3 || route==FourthRenderRoute.AXIS4 || route==FourthRenderRoute.AXIS5 || route==FourthRenderRoute.AXIS6
 
     fun drawAxis3(
         p:GlesProgram,p3:Gles3dProgram,textures:RgbTextureCatalog?,widthPx:Float,heightPx:Float,density:Float,
@@ -132,6 +135,38 @@ class AxisGlesSceneRenderer(
         val hudText=String.format(Locale.US,"5AX | X%.3f Y%.3f Z%.3f A%.3f B%.3f | MOTION %s | BLOCK %d/%d%s",visual.x,visual.y,visual.z,visual.aDegrees,visual.bDegrees,motion,state.blockIndex,state.blockCount,message)
         drawHud(p,textures,viewport,widthPx,heightPx,density,hudText);nodes.filter{it.id!="AXIS5.VIEWPORT"}.forEach(drawNode)
         if(!axis5FirstFrameLogged){Log.i("AIG4",AxisFrameEvidence.axis5Marker(state));axis5FirstFrameLogged=true}
+    }
+    fun drawAxis6(
+        p:GlesProgram,p3:Gles3dProgram,textures:RgbTextureCatalog?,widthPx:Float,heightPx:Float,density:Float,
+        drawNode:(SceneNode)->Unit,
+    ) {
+        val nodes=Axis6SceneLayout.nodes(widthPx,heightPx,density)
+        val viewport=nodes.first{it.id=="AXIS6.VIEWPORT"}.bounds
+        p.draw(GlesGeometryBuffer.quad(viewport),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.003f,0.012f,0.025f,1f))
+        val state=stateSource.snapshotForFrame(AxisMode.AXIS6)
+        val visual=Axis6Presentation.from(state);val frame=Axis6Presentation.kinematicFrame(state)
+        val viewProjection=begin3d(viewport,widthPx,heightPx,9.8f,7.8f,13.2f)
+        val motionX=(visual.x*0.02).toFloat().coerceIn(-2.2f,2.2f);val motionY=(visual.z*0.02).toFloat().coerceIn(-1.8f,1.8f);val motionZ=(visual.y*0.02).toFloat().coerceIn(-2.2f,2.2f)
+        fun applyJoint(model:FloatArray,joint:MachineJointSpec,degrees:Double){val q=joint.pivot;val d=joint.direction;Matrix.translateM(model,0,q.x,q.y,q.z);Matrix.rotateM(model,0,degrees.toFloat(),d.x,d.y,d.z);Matrix.translateM(model,0,-q.x,-q.y,-q.z)}
+        axis6Parts.forEach{mesh->
+            val spec=axis6Specs.getValue(mesh.part.name);val model=FloatArray(16);Matrix.setIdentityM(model,0)
+            when(mesh.part){
+                Axis6Part.SWIVEL_A->{Matrix.translateM(model,0,motionX,motionY,motionZ);applyJoint(model,frame.a,frame.aDegrees);Matrix.translateM(model,0,spec.offset.x,spec.offset.y,spec.offset.z)}
+                Axis6Part.SWIVEL_B->{Matrix.translateM(model,0,motionX,motionY,motionZ);applyJoint(model,frame.a,frame.aDegrees);applyJoint(model,frame.b,frame.bDegrees);Matrix.translateM(model,0,spec.offset.x,spec.offset.y,spec.offset.z)}
+                Axis6Part.SPINDLE_C,Axis6Part.TOOL->{Matrix.translateM(model,0,motionX,motionY,motionZ);applyJoint(model,frame.a,frame.aDegrees);applyJoint(model,frame.b,frame.bDegrees);applyJoint(model,frame.c,frame.cDegrees);Matrix.translateM(model,0,spec.offset.x,spec.offset.y,spec.offset.z)}
+                else->Matrix.translateM(model,0,spec.offset.x,spec.offset.y,spec.offset.z)
+            }
+            val color=when(mesh.part){
+                Axis6Part.BASE->floatArrayOf(0.06f,0.16f,0.25f,1f);Axis6Part.COLUMN->floatArrayOf(0.09f,0.25f,0.36f,1f);Axis6Part.TABLE->floatArrayOf(0.12f,0.37f,0.49f,1f);Axis6Part.WORKPIECE->floatArrayOf(0.50f,0.54f,0.58f,1f)
+                Axis6Part.SWIVEL_A->floatArrayOf(0.13f,0.44f,0.57f,1f);Axis6Part.SWIVEL_B->floatArrayOf(0.18f,0.55f,0.67f,1f);Axis6Part.SPINDLE_C->floatArrayOf(0.25f,0.68f,0.76f,1f);Axis6Part.TOOL->floatArrayOf(0.86f,0.92f,0.96f,1f)
+            }
+            drawMesh(p3,mesh.vertices,model,viewProjection,color)
+        }
+        end3d(widthPx,heightPx)
+        val motion=state.motionProgramId?:"NONE";val message=AxisFrameEvidence.messageSuffix(state.message)
+        val hudText=String.format(Locale.US,"6AX | X%.3f Y%.3f Z%.3f A%.3f B%.3f C%.3f | MOTION %s | BLOCK %d/%d%s",visual.x,visual.y,visual.z,visual.aDegrees,visual.bDegrees,visual.cDegrees,motion,state.blockIndex,state.blockCount,message)
+        drawHud(p,textures,viewport,widthPx,heightPx,density,hudText);nodes.filter{it.id!="AXIS6.VIEWPORT"}.forEach(drawNode)
+        if(!axis6FirstFrameLogged){Log.i("AIG4",AxisFrameEvidence.axis6Marker(state));axis6FirstFrameLogged=true}
     }
     private fun begin3d(viewport:UiBounds,widthPx:Float,heightPx:Float,eyeX:Float,eyeY:Float,eyeZ:Float):FloatArray {
         val vx=viewport.left.toInt().coerceAtLeast(0);val vy=(heightPx-viewport.bottom).toInt().coerceAtLeast(0)
