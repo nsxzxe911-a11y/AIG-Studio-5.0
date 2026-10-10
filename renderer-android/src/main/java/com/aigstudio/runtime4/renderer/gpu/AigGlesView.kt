@@ -116,21 +116,23 @@ class AigGlesView(
     }
 
     private fun activate(nodeId:String){
-        when(nodeId){
-            "NAV.CAD"->{val from=sceneRouter.current;sceneRouter.navigate(SceneId.CAD);Log.i("AIG4","AIG4_SCENE|${from.name}_TO_CAD|PASS")}
-            "NAV.CAM"->{val from=sceneRouter.current;sceneRouter.navigate(SceneId.CAM);Log.i("AIG4","AIG4_SCENE|${from.name}_TO_CAM|PASS")}
-            "NAV.NC"->{
-                val controller=ncController
-                if(controller==null){Log.w("AIG4","AIG4_NC|NAV|REJECTED|LOCAL_MESSAGE|NC_RUNTIME_NOT_BOUND");return}
-                val from=sceneRouter.current;sceneRouter.navigate(SceneId.NC);openNcKeyboard();Log.i("AIG4","AIG4_SCENE|${from.name}_TO_NC|PASS")
+        val destination=SharedVisualPolicy.destination(nodeId)
+        if(destination!=null){
+            if(destination==SceneId.NC && ncController==null){
+                Log.w("AIG4","AIG4_NC|NAV|REJECTED|LOCAL_MESSAGE|NC_RUNTIME_NOT_BOUND")
+                return
             }
-            "NAV.HOME"->{val from=sceneRouter.current;sceneRouter.navigate(SceneId.HOME);Log.i("AIG4","AIG4_SCENE|${from.name}_TO_HOME|PASS")}
-            else->when(sceneRouter.current){
-                SceneId.CAD->cadController.activate(nodeId)?.let{logCadCommand(nodeId.substringAfter("CAD."),it)}
-                SceneId.CAM->camController.activate(nodeId)?.let{logCamCommand(nodeId.substringAfter("CAM."),it)}
-                SceneId.NC->ncController?.activate(nodeId)?.let{logNcCommand(nodeId.substringAfter("NC."),it)}
-                else->Unit
-            }
+            val from=sceneRouter.current
+            sceneRouter.navigate(destination)
+            if(destination==SceneId.NC)openNcKeyboard()
+            Log.i("AIG4","AIG4_SCENE|${from.name}_TO_${destination.name}|PASS")
+            return
+        }
+        when(sceneRouter.current){
+            SceneId.CAD->cadController.activate(nodeId)?.let{logCadCommand(nodeId.substringAfter("CAD."),it)}
+            SceneId.CAM->camController.activate(nodeId)?.let{logCamCommand(nodeId.substringAfter("CAM."),it)}
+            SceneId.NC->ncController?.activate(nodeId)?.let{logNcCommand(nodeId.substringAfter("NC."),it)}
+            else->Unit
         }
     }
 
@@ -150,6 +152,7 @@ class AigGlesView(
         SceneId.HOME->HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.CAD->cadController.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.CAM->camController.nodes(width.toFloat(),height.toFloat(),density)
+        SceneId.AXIS3->Axis3SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.NC->ncController?.nodes(width.toFloat(),height.toFloat(),density) ?: HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         else->HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
     }
