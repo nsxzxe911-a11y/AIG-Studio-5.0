@@ -29,7 +29,7 @@ object AxisNavigationLayout {
         val touch=SharedVisualPolicy.touchPx(density)
         val gap=SharedVisualPolicy.gapPx(density)
         val maxColumns=max(1,floor((widthPx-gap)/(touch+gap)).toInt())
-        val columns=max(1,minOf(specs.size,maxColumns))
+        val columns=max(1,minOf(specs.size+1,maxColumns))
         val rows=ceil(specs.size.toDouble()/columns.toDouble()).toInt()
         val buttonWidth=max(touch,(widthPx-gap*(columns+1))/columns)
         val navHeight=gap+rows*(touch+gap)
