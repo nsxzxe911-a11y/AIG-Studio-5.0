@@ -1,4 +1,4 @@
-plugins { id("com.android.application") }
+﻿plugins { id("com.android.application") }
 
 android {
     namespace = "com.aigstudio.runtime4.host"
@@ -7,8 +7,8 @@ android {
         applicationId = "com.aigstudio.production.fourth395"
         minSdk = 26
         targetSdk = 36
-        versionCode = 401001
-        versionName = "401-fourth-independent-pages"
+        versionCode = 402001
+        versionName = "402-fourth-product-links"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -26,3 +26,4 @@ dependencies {
 tasks.matching { it.name.endsWith("UnitTest") }.configureEach {
     inputs.file(project.layout.projectDirectory.file("build.gradle.kts"))
 }
+
