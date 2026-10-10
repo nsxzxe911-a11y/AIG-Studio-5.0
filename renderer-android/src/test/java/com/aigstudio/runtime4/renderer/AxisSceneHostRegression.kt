@@ -20,6 +20,6 @@ class AxisSceneHostRegression {
     @Test fun explicitNavigationMaps3axWithoutHomeFallback() {
         assertEquals(SceneId.AXIS3, SharedVisualPolicy.destination("NAV.3AX"))
         assertEquals(SceneId.CAD, SharedVisualPolicy.destination("NAV.CAD"))
-        assertEquals(null, SharedVisualPolicy.destination("NAV.4AX"))
+        assertEquals(SceneId.AXIS4, SharedVisualPolicy.destination("NAV.4AX"))
     }
 }

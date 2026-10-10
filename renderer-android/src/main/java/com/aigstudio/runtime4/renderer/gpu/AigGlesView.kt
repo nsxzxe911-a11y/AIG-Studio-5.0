@@ -154,6 +154,7 @@ class AigGlesView(
         SceneId.CAD->cadController.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.CAM->camController.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.AXIS3->Axis3SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
+        SceneId.AXIS4->Axis4SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.NC->ncController?.nodes(width.toFloat(),height.toFloat(),density) ?: HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         else->HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
     }
