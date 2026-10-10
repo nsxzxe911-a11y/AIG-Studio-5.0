@@ -13,10 +13,10 @@ object AxisNavigationLayout {
     private data class Spec(val id:String,val label:String,val texture:String?=null)
     private data class Metrics(val touch:Float,val gap:Float,val columns:Int,val rows:Int,val buttonWidth:Float,val top:Float)
     private val specs=listOf(
-        Spec("NAV.HOME","HOME","aig-rgb/icons/workspace.png"),
+        Spec("NAV.HOME","首頁","aig-rgb/icons/workspace.png"),
         Spec("NAV.CAD","CAD","aig-rgb/icons/cad.png"),
         Spec("NAV.CAM","CAM","aig-rgb/icons/cam.png"),
-        Spec("NAV.SIM","SIM"),
+        Spec("NAV.SIM","3D走刀"),
         Spec("NAV.3AX","3AX"),
         Spec("NAV.4AX","4AX"),
         Spec("NAV.5AX","5AX"),
