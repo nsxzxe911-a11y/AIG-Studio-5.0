@@ -1,6 +1,6 @@
 package com.aigstudio.runtime4.contract
 
-enum class PageId { HOME, CAD, CAM, SIM, AXIS3, AXIS4, AXIS5, AXIS6, NC, AI }
+enum class PageId { HOME, CAD, CAM, SIM, MULTIFUNCTION, AXIS3, AXIS4, AXIS5, AXIS6, NC, AI }
 
 data class PageConnection(val source:PageId,val target:PageId,val connected:Boolean)
 data class PageLocalStatus(val severity:MessageSeverity,val text:String)

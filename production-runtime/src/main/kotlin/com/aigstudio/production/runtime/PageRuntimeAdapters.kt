@@ -25,7 +25,7 @@ class ProductionPageRuntime(
             PageId.AXIS5->axis.snapshot(AxisMode.AXIS5).message?.toPageStatus()
             PageId.AXIS6->axis.snapshot(AxisMode.AXIS6).message?.toPageStatus()
             PageId.AI->ai.snapshot().message?.toPageStatus() ?: PageLocalStatus(MessageSeverity.INFO,ai.snapshot().summary)
-            PageId.HOME->null
+            PageId.HOME,PageId.MULTIFUNCTION->null
         }
         return PageCapabilityState(page,true,PageId.entries.filter{it!=page}.map{target->PageConnection(page,target,links[page to target]==true)},status)
     }

@@ -31,6 +31,6 @@ class PageCapabilityContractRegression {
     }
 
     @Test fun contractCoversAllProductPages(){
-        assertEquals(setOf(PageId.HOME,PageId.CAD,PageId.CAM,PageId.SIM,PageId.AXIS3,PageId.AXIS4,PageId.AXIS5,PageId.AXIS6,PageId.NC,PageId.AI),PageId.entries.toSet())
+        assertEquals(setOf(PageId.HOME,PageId.CAD,PageId.CAM,PageId.SIM,PageId.MULTIFUNCTION,PageId.AXIS3,PageId.AXIS4,PageId.AXIS5,PageId.AXIS6,PageId.NC,PageId.AI),PageId.entries.toSet())
     }
 }
