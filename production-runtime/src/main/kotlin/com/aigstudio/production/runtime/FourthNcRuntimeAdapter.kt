@@ -8,6 +8,7 @@ class FourthNcRuntimeAdapter(
 ):NcRuntimePort {
     private var workingRevision=0L
     private var motionRevision=0L
+    private var saveRevision=0L
     private var state:NcState
 
     init {
@@ -23,7 +24,7 @@ class FourthNcRuntimeAdapter(
 
     override fun dispatch(command:NcCommand):NcDispatchResult = try {
         when(command){
-            is NcCommand.SetProgram->replaceProgram(command.text,command.text.replace("\r\n","\n").replace('\r','\n').length)
+            is NcCommand.SetProgram->replaceProgram(command.text,normalize(command.text).length)
             is NcCommand.InsertText->insertText(command.text)
             NcCommand.Backspace->backspace()
             NcCommand.DeleteForward->deleteForward()
@@ -33,8 +34,11 @@ class FourthNcRuntimeAdapter(
             NcCommand.Validate->reparseCurrent()
             NcCommand.ConnectCam->{state=state.copy(camLink=NcCamLinkState.CONNECTED,message=null);accepted()}
             NcCommand.DisconnectCam->{state=state.copy(camLink=NcCamLinkState.DISCONNECTED,message=null);accepted()}
-            is NcCommand.ReceiveCandidate->rejected("NC candidate workflow is not active yet")
-            NcCommand.PreviewCandidate,NcCommand.KeepWorkingCopy,NcCommand.AdoptCandidate,NcCommand.SaveCandidateAsNewVersion->rejected("NC candidate workflow is not active yet")
+            is NcCommand.ReceiveCandidate->receiveCandidate(command.candidate)
+            NcCommand.PreviewCandidate->previewCandidate()
+            NcCommand.KeepWorkingCopy->{state=state.copy(previewCandidateId=null,message=null);accepted()}
+            NcCommand.AdoptCandidate->adoptCandidate()
+            NcCommand.SaveCandidateAsNewVersion->saveCandidate()
             NcCommand.FreezeActive->{state=state.copy(working=state.working.copy(frozen=true),message=null);accepted()}
             NcCommand.UnfreezeActive->{state=state.copy(working=state.working.copy(frozen=false),message=null);accepted()}
             is NcCommand.SelectMachineProfile->{state=state.copy(machineProfile=command.profile);reparseCurrent()}
@@ -68,15 +72,13 @@ class FourthNcRuntimeAdapter(
         if(state.working.frozen)return rejected("NC Working Copy is frozen")
         val w=state.working;if(w.cursorOffset==0)return accepted()
         require(w.cursorOffset in 0..w.program.length){"NC cursor out of range"}
-        val next=w.program.removeRange(w.cursorOffset-1,w.cursorOffset)
-        return replaceProgram(next,w.cursorOffset-1)
+        return replaceProgram(w.program.removeRange(w.cursorOffset-1,w.cursorOffset),w.cursorOffset-1)
     }
     private fun deleteForward():NcDispatchResult{
         if(state.working.frozen)return rejected("NC Working Copy is frozen")
         val w=state.working;require(w.cursorOffset in 0..w.program.length){"NC cursor out of range"}
         if(w.cursorOffset==w.program.length)return accepted()
-        val next=w.program.removeRange(w.cursorOffset,w.cursorOffset+1)
-        return replaceProgram(next,w.cursorOffset)
+        return replaceProgram(w.program.removeRange(w.cursorOffset,w.cursorOffset+1),w.cursorOffset)
     }
     private fun setCursor(offset:Int):NcDispatchResult{
         require(offset in 0..state.working.program.length){"NC cursor out of range"}
@@ -85,14 +87,43 @@ class FourthNcRuntimeAdapter(
     private fun toggleBlockSkip():NcDispatchResult{
         if(state.working.frozen)return rejected("NC Working Copy is frozen")
         val w=state.working;val start=w.program.lastIndexOf('\n',w.cursorOffset.coerceAtMost(w.program.length)-1).let{if(it<0)0 else it+1}
-        val next=if(start<w.program.length && w.program[start]=='/') w.program.removeRange(start,start+1) else w.program.substring(0,start)+"/"+w.program.substring(start)
-        val cursor=(w.cursorOffset+(if(start<w.program.length && w.program[start]=='/')-1 else 1)).coerceIn(0,next.length)
+        val had=start<w.program.length && w.program[start]=='/'
+        val next=if(had) w.program.removeRange(start,start+1) else w.program.substring(0,start)+"/"+w.program.substring(start)
+        val cursor=(w.cursorOffset+(if(had)-1 else 1)).coerceIn(0,next.length)
         return replaceProgram(next,cursor)
     }
     private fun reparseCurrent():NcDispatchResult{
         motionRevision++
         val parsed=NcMotionAdapter.parse(state.working.program,state.machineProfile,motionRevision)
         state=state.copy(motionProgram=parsed.first,diagnostics=parsed.second,message=messageFor(parsed.second));return accepted()
+    }
+    private fun receiveCandidate(candidate:NcCandidate):NcDispatchResult{
+        require(programDigest(candidate.program)==candidate.digest){"NC candidate digest mismatch"}
+        state=state.copy(candidate=candidate,previewCandidateId=null,message=null)
+        return accepted()
+    }
+    private fun previewCandidate():NcDispatchResult{
+        val candidate=state.candidate ?: return rejected("No NC candidate to preview")
+        state=state.copy(previewCandidateId=candidate.id,message=null);return accepted()
+    }
+    private fun adoptCandidate():NcDispatchResult{
+        if(state.working.frozen)return rejected("NC Working Copy is frozen")
+        val candidate=state.candidate ?: return rejected("No NC candidate to adopt")
+        workingRevision++;motionRevision++
+        val text=normalize(candidate.program)
+        val parsed=NcMotionAdapter.parse(text,state.machineProfile,motionRevision)
+        state=state.copy(
+            working=NcWorkingCopy("NC"+workingRevision,workingRevision,candidate.digest,text,text.length,false),
+            candidate=null,previewCandidateId=null,motionProgram=parsed.first,diagnostics=parsed.second,message=messageFor(parsed.second)
+        )
+        return accepted()
+    }
+    private fun saveCandidate():NcDispatchResult{
+        val candidate=state.candidate ?: return rejected("No NC candidate to save")
+        saveRevision++
+        val record=NcSaveRecord(saveRevision,"CANDIDATE",candidate.id,candidate.digest,"Candidate "+candidate.id+" saved")
+        state=state.copy(savedCandidates=state.savedCandidates+candidate,saveHistory=state.saveHistory+record,message=null)
+        return accepted()
     }
     private fun accepted()=NcDispatchResult(true,state)
     private fun rejected(text:String):NcDispatchResult{state=state.copy(message=RuntimeMessage(MessageSeverity.WARNING,text));return NcDispatchResult(false,state)}
