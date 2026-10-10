@@ -67,7 +67,11 @@ foreach($marker in @('CLEAN_CAD_RUNTIME_PASS','CLEAN_CAM_RUNTIME_PASS','CLEAN_SI
 $renderer=Get-ChildItem (Join-Path $root 'renderer-android\src\main\java') -Recurse -Filter AigGlesRenderer.kt | Select-Object -First 1
 Need ($null -ne $renderer) 'AigGlesRenderer.kt missing'
 $rendererText=[IO.File]::ReadAllText($renderer.FullName)
-Need ($rendererText.Contains('FourthRenderRoute.AXIS3->drawAxis3(p)')) 'Dedicated AXIS3 renderer route missing'
+Need ($rendererText.Contains('FourthRenderRoute.AXIS3') -and $rendererText.Contains('axisSceneRenderer.drawAxis3')) 'Dedicated AXIS3 renderer delegation missing'
+$axisRenderer=Get-ChildItem (Join-Path $root 'renderer-android\\src\\main\\java') -Recurse -Filter AxisGlesSceneRenderer.kt | Select-Object -First 1
+Need ($null -ne $axisRenderer) 'AxisGlesSceneRenderer.kt missing'
+$axisRendererText=[IO.File]::ReadAllText($axisRenderer.FullName)
+Need ($axisRendererText.Contains('fun drawAxis3(') -and $axisRendererText.Contains('AxisMode.AXIS3')) 'AXIS3 draw ownership missing from axis renderer module'
 Need (!$rendererText.Contains('SceneId.AXIS3->drawHome')) 'AXIS3 still falls back to HOME'
 $bad=Get-ChildItem (Join-Path $root 'renderer-android\src\main'),(Join-Path $root 'product-host-android\src\main') -Recurse -File | Select-String -Pattern 'Engineering Shell|AIG-CLEAN|NOUI|java\.awt|javax\.swing'
 Need (!$bad) 'Engineering/desktop shell marker found in product runtime'
