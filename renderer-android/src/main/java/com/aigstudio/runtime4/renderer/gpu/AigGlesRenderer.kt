@@ -103,18 +103,7 @@ class AigGlesRenderer(
         Log.w("AIG4","AIG4_SCENE|${scene.name}|UNAVAILABLE|LOCAL_MESSAGE")
     }
     private fun drawHome(p:GlesProgram){
-        val skin=FullSurfaceSkinPlan.assetFor(SceneId.HOME,widthPx,heightPx)
-        textures?.texture(skin ?: "aig-rgb/home/rgb_wallpaper.png")?.let{tex->p.draw(GlesGeometryBuffer.quad(UiBounds(0f,0f,widthPx,heightPx)),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.98f),tex)}
-        if(skin==null)HomeSceneLayout.nodes(widthPx,heightPx,density).forEach{drawNode(p,it)} else drawMorningHomeTraditionalChinese(p)
-    }
-    private fun drawMorningHomeTraditionalChinese(p:GlesProgram){
-        MorningHomeTraditionalChinesePlan.labels(widthPx,heightPx).forEach{item->
-            p.draw(GlesGeometryBuffer.quad(item.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.004f,0.016f,0.028f,0.985f))
-            textures?.labelTextureRef(item.text)?.let{tex->
-                val fitted=LabelTextureLayout.contain(item.bounds,tex.aspectRatio,3f*density,true)
-                p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.92f,0.98f,1f,0.98f),tex.id)
-            }
-        }
+        HomeSceneLayout.nodes(widthPx,heightPx,density).forEach{drawNode(p,it)}
     }
     private fun drawCad(p:GlesProgram){
         val nodes=cadController.nodes(widthPx,heightPx,density);val viewportNode=nodes.first{it.id=="CAD.VIEWPORT"};val viewport=CadViewportNode(viewportNode.bounds)
