@@ -1029,9 +1029,9 @@ object NcBlockFormatPolicy {
 object NcRuntimeInterlock {
     private val numericWord = Regex("""(?i)([A-Z])\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))(?=\s|[A-Z]|$)""")
     private val recognizedAddresses = setOf(
-        'G','M','N','O','X','Y','Z','A','B','I','J','K','R','Q','F','S','T','H','P','D'
+        'G','M','N','O','X','Y','Z','A','B','C','I','J','K','R','Q','F','S','T','H','P','D'
     )
-    private val axisAddresses = setOf('X','Y','Z','A','B')
+    private val axisAddresses = setOf('X','Y','Z','A','B','C')
 
     private fun cleanLine(raw: String): String =
         raw.replace(Regex("""\([^)]*\)"""), " ")
@@ -1044,7 +1044,7 @@ object NcRuntimeInterlock {
         limits: NcMachineTravelLimits = NcMachineTravelLimits()
     ): List<NcRuntimeInterlockFinding> {
         val findings = mutableListOf<NcRuntimeInterlockFinding>()
-        val current = mutableMapOf('X' to 0.0, 'Y' to 0.0, 'Z' to 0.0, 'A' to 0.0, 'B' to 0.0)
+        val current = mutableMapOf('X' to 0.0, 'Y' to 0.0, 'Z' to 0.0, 'A' to 0.0, 'B' to 0.0, 'C' to 0.0)
         var absolute = true
 
         program.split("\n").forEachIndexed { index, raw ->
