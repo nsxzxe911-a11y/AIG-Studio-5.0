@@ -3,18 +3,21 @@ package com.aigstudio.runtime4.renderer.gpu
 import android.content.Context
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
+import android.opengl.Matrix
 import android.util.Log
 import com.aigstudio.runtime4.contract.*
 import com.aigstudio.runtime4.renderer.*
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import kotlin.math.*
+import java.util.Locale
 
 class AigGlesRenderer(
     private val context:Context,
     cadRuntime:CadRuntimePort,
     camRuntime:CamRuntimePort,
     ncRuntime:NcRuntimePort?,
+    axisRuntime:AxisRuntimePort,
     private val sceneRouter:SceneRouter,
     private val cadController:CadSceneController,
     private val camController:CamSceneController,
@@ -24,24 +27,77 @@ class AigGlesRenderer(
     val stateSource=RendererStateSource(cadRuntime)
     val camStateSource=CamRendererStateSource(camRuntime)
     val ncStateSource=ncRuntime?.let(::NcRendererStateSource)
+    val axisStateSource=AxisRendererStateSource(axisRuntime)
     @Volatile var pressedNodeId:String?=null
     private var widthPx=1f; private var heightPx=1f
     private val density=context.resources.displayMetrics.density
-    private var program:GlesProgram?=null; private var textures:RgbTextureCatalog?=null; private var firstFrameLogged=false
+    private var program:GlesProgram?=null; private var program3d:Gles3dProgram?=null; private var textures:RgbTextureCatalog?=null; private var firstFrameLogged=false; private var axis3FirstFrameLogged=false
 
     override fun onSurfaceCreated(gl:GL10?,config:EGLConfig?){
-        program?.release();textures?.release();program=GlesProgram();textures=RgbTextureCatalog(context)
+        program?.release();program3d?.release();textures?.release();program=GlesProgram();program3d=Gles3dProgram();textures=RgbTextureCatalog(context)
         GLES30.glEnable(GLES30.GL_BLEND);GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA,GLES30.GL_ONE_MINUS_SRC_ALPHA)
         Log.i("AIG4","AIG4_GLES|VERSION|${GLES30.glGetString(GLES30.GL_VERSION)}")
     }
     override fun onSurfaceChanged(gl:GL10?,width:Int,height:Int){widthPx=max(1,width).toFloat();heightPx=max(1,height).toFloat();GLES30.glViewport(0,0,width,height)}
     override fun onDrawFrame(gl:GL10?){
         val p=program?:return
+        GLES30.glViewport(0,0,widthPx.toInt(),heightPx.toInt())
         GLES30.glClearColor(0.004f,0.02f,0.04f,1f);GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
-        when(sceneRouter.current){SceneId.HOME->drawHome(p);SceneId.CAD->drawCad(p);SceneId.CAM->drawCam(p);SceneId.NC->drawNc(p);else->drawHome(p)}
+        when(RenderRoutePolicy.forScene(sceneRouter.current)){
+            FourthRenderRoute.HOME->drawHome(p)
+            FourthRenderRoute.CAD->drawCad(p)
+            FourthRenderRoute.CAM->drawCam(p)
+            FourthRenderRoute.AXIS3->drawAxis3(p)
+            FourthRenderRoute.NC->drawNc(p)
+            FourthRenderRoute.UNAVAILABLE->drawUnavailable(p,sceneRouter.current)
+        }
         if(!firstFrameLogged){GLES30.glFinish();Log.i("AIG4","AIG4_GLES|FIRST_FRAME|PASS");firstFrameLogged=true;firstFrameSignal?.fireOnce()}
     }
 
+    private fun drawAxis3(p:GlesProgram){
+        val p3=program3d?:return
+        val nodes=Axis3SceneLayout.nodes(widthPx,heightPx,density)
+        val viewport=nodes.first{it.id=="AXIS3.VIEWPORT"}.bounds
+        p.draw(GlesGeometryBuffer.quad(viewport),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.006f,0.018f,0.032f,1f))
+        val state=axisStateSource.snapshotForFrame(AxisMode.AXIS3)
+        val vx=viewport.left.toInt().coerceAtLeast(0);val vy=(heightPx-viewport.bottom).toInt().coerceAtLeast(0)
+        val vw=viewport.width.toInt().coerceAtLeast(1);val vh=viewport.height.toInt().coerceAtLeast(1)
+        GLES30.glViewport(vx,vy,vw,vh);GLES30.glEnable(GLES30.GL_DEPTH_TEST);GLES30.glDepthFunc(GLES30.GL_LEQUAL);GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT)
+        val projection=FloatArray(16);val view=FloatArray(16);val viewProjection=FloatArray(16)
+        Matrix.perspectiveM(projection,0,42f,vw.toFloat()/vh.toFloat(),0.1f,60f)
+        Matrix.setLookAtM(view,0,9f,7f,11f,0f,-0.4f,0f,0f,1f,0f)
+        Matrix.multiplyMM(viewProjection,0,projection,0,view,0)
+        val motionX=(state.pose.x*0.02).toFloat().coerceIn(-2.2f,2.2f)
+        val motionY=(state.pose.z*0.02).toFloat().coerceIn(-1.8f,1.8f)
+        val motionZ=(state.pose.y*0.02).toFloat().coerceIn(-2.2f,2.2f)
+        Axis3Mesh.parts().forEach{mesh->
+            val model=FloatArray(16);Matrix.setIdentityM(model,0)
+            val color=when(mesh.part){
+                Axis3Part.BASE->{Matrix.translateM(model,0,0f,-2.4f,0f);floatArrayOf(0.10f,0.22f,0.30f,1f)}
+                Axis3Part.COLUMN->{Matrix.translateM(model,0,-2.7f,0.2f,0.4f);floatArrayOf(0.12f,0.32f,0.42f,1f)}
+                Axis3Part.TABLE->{Matrix.translateM(model,0,0f,-1.55f,0f);floatArrayOf(0.16f,0.48f,0.58f,1f)}
+                Axis3Part.WORKPIECE->{Matrix.translateM(model,0,0f,-0.88f,0f);floatArrayOf(0.48f,0.52f,0.56f,1f)}
+                Axis3Part.SPINDLE->{Matrix.translateM(model,0,motionX,2.0f+motionY,motionZ);floatArrayOf(0.18f,0.68f,0.82f,1f)}
+                Axis3Part.TOOL->{Matrix.translateM(model,0,motionX,0.15f+motionY,motionZ);floatArrayOf(0.82f,0.88f,0.92f,1f)}
+            }
+            val mvp=FloatArray(16);Matrix.multiplyMM(mvp,0,viewProjection,0,model,0);p3.draw(mesh.vertices,mvp,model,color)
+        }
+        GLES30.glDisable(GLES30.GL_DEPTH_TEST);GLES30.glViewport(0,0,widthPx.toInt(),heightPx.toInt())
+        val hudH=28f*density;val hud=UiBounds(viewport.left+8f*density,viewport.top+8f*density,viewport.right-8f*density,viewport.top+8f*density+hudH)
+        p.draw(GlesGeometryBuffer.quad(hud),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.02f,0.12f,0.18f,0.90f))
+        val pose=state.pose;val motion=state.motionProgramId?:"NONE";val message=state.message?.let{" | ${it.severity.name}: ${it.text}"}.orEmpty()
+        val text=String.format(Locale.US,"3AX | X%.3f Y%.3f Z%.3f | MOTION %s | BLOCK %d/%d%s",pose.x,pose.y,pose.z,motion,state.blockIndex,state.blockCount,message)
+        textures?.labelTextureRef(text)?.let{tex->val fitted=LabelTextureLayout.contain(hud,tex.aspectRatio,3f*density,true);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex.id)}
+        nodes.filter{it.id!="AXIS3.VIEWPORT"}.forEach{drawNode(p,it)}
+        if(!axis3FirstFrameLogged){Log.i("AIG4","AIG4_AXIS3|FIRST_FRAME|PASS|MOTION=$motion|BLOCK=${state.blockIndex}/${state.blockCount}");axis3FirstFrameLogged=true}
+    }
+
+    private fun drawUnavailable(p:GlesProgram,scene:SceneId){
+        val inset=16f*density;val box=UiBounds(inset,inset,widthPx-inset,min(heightPx-inset,inset+72f*density))
+        p.draw(GlesGeometryBuffer.quad(box),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.05f,0.10f,0.14f,0.94f))
+        textures?.labelTextureRef("${scene.name} | UNAVAILABLE | LOCAL MESSAGE")?.let{tex->val fitted=LabelTextureLayout.contain(box,tex.aspectRatio,6f*density,true);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex.id)}
+        Log.w("AIG4","AIG4_SCENE|${scene.name}|UNAVAILABLE|LOCAL_MESSAGE")
+    }
     private fun drawHome(p:GlesProgram){
         textures?.texture("aig-rgb/home/rgb_wallpaper.png")?.let{tex->p.draw(GlesGeometryBuffer.quad(UiBounds(0f,0f,widthPx,heightPx)),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.95f),tex)}
         HomeSceneLayout.nodes(widthPx,heightPx,density).forEach{drawNode(p,it)}

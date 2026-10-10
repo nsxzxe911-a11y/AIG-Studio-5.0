@@ -18,6 +18,7 @@ class AigGlesView(
     private val cadRuntime: CadRuntimePort,
     private val camRuntime: CamRuntimePort,
     private val ncRuntime: NcRuntimePort? = null,
+    private val axisRuntime: AxisRuntimePort,
     onFirstFrame: (() -> Unit)? = null,
 ) : GLSurfaceView(context) {
     private val sceneRouter = SceneRouter(SceneId.HOME)
@@ -27,7 +28,7 @@ class AigGlesView(
     private val ncInput = ncRuntime?.let { runtime -> NcTextInputBridge(runtime){ requestRender() } }
     private val pointerRouter = PointerGestureRouter(cadRuntime)
     private val firstFrameSignal = onFirstFrame?.let { callback -> FirstFrameSignal { post(callback) } }
-    private val aigRenderer = AigGlesRenderer(context,cadRuntime,camRuntime,ncRuntime,sceneRouter,cadController,camController,ncController,firstFrameSignal)
+    private val aigRenderer = AigGlesRenderer(context,cadRuntime,camRuntime,ncRuntime,axisRuntime,sceneRouter,cadController,camController,ncController,firstFrameSignal)
     private var pressedNode: String? = null
 
     init {
