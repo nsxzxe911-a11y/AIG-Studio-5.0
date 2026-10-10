@@ -4,6 +4,7 @@ import android.opengl.GLES30
 import android.opengl.Matrix
 import android.util.Log
 import com.aigstudio.runtime4.contract.AxisMode
+import com.aigstudio.runtime4.renderer.machine.MachineProfile4AxHrtStyle
 import com.aigstudio.runtime4.renderer.*
 import java.util.Locale
 
@@ -12,6 +13,7 @@ class AxisGlesSceneRenderer(
 ) {
     private val axis3Parts=Axis3Mesh.parts()
     private val axis4Parts=Axis4Mesh.parts()
+    private val axis4Specs=MachineProfile4AxHrtStyle.parts.associateBy{it.id}
     private var axis3FirstFrameLogged=false
     private var axis4FirstFrameLogged=false
 
@@ -57,22 +59,34 @@ class AxisGlesSceneRenderer(
         p.draw(GlesGeometryBuffer.quad(viewport),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.005f,0.016f,0.030f,1f))
         val state=stateSource.snapshotForFrame(AxisMode.AXIS4)
         val visual=Axis4Presentation.from(state)
-        val viewProjection=begin3d(viewport,widthPx,heightPx,9.5f,7.2f,12.5f)
+        val workholding=Axis4Presentation.workholdingTransform(state)
+        val viewProjection=begin3d(viewport,widthPx,heightPx,9.5f,7.0f,12.5f)
         val motionX=(visual.x*0.02).toFloat().coerceIn(-2.2f,2.2f)
         val motionY=(visual.z*0.02).toFloat().coerceIn(-1.8f,1.8f)
         val motionZ=(visual.y*0.02).toFloat().coerceIn(-2.2f,2.2f)
-        val a=visual.aDegrees.toFloat()
         axis4Parts.forEach{mesh->
+            val spec=axis4Specs.getValue(mesh.part.name)
             val model=FloatArray(16);Matrix.setIdentityM(model,0)
+            if(mesh.part==Axis4Part.PLATTER || mesh.part==Axis4Part.CHUCK || mesh.part==Axis4Part.WORKPIECE){
+                val pivot=workholding.pivot
+                Matrix.translateM(model,0,pivot.x,pivot.y,pivot.z)
+                Matrix.rotateM(model,0,workholding.angleDegrees.toFloat(),1f,0f,0f)
+                Matrix.translateM(model,0,spec.offset.x-pivot.x,spec.offset.y-pivot.y,spec.offset.z-pivot.z)
+            } else if(mesh.part==Axis4Part.SPINDLE || mesh.part==Axis4Part.TOOL){
+                Matrix.translateM(model,0,spec.offset.x+motionX,spec.offset.y+motionY,spec.offset.z+motionZ)
+            } else {
+                Matrix.translateM(model,0,spec.offset.x,spec.offset.y,spec.offset.z)
+            }
             val color=when(mesh.part){
-                Axis4Part.BASE->{Matrix.translateM(model,0,0f,-2.5f,0f);floatArrayOf(0.09f,0.20f,0.28f,1f)}
-                Axis4Part.COLUMN->{Matrix.translateM(model,0,-3.0f,0.0f,0.5f);floatArrayOf(0.11f,0.30f,0.40f,1f)}
-                Axis4Part.SUPPORT_LEFT->{Matrix.translateM(model,0,-2.3f,-0.95f,0f);floatArrayOf(0.16f,0.48f,0.58f,1f)}
-                Axis4Part.SUPPORT_RIGHT->{Matrix.translateM(model,0,2.3f,-0.95f,0f);floatArrayOf(0.16f,0.48f,0.58f,1f)}
-                Axis4Part.TRUNNION->{Matrix.translateM(model,0,0f,-0.75f,0f);Matrix.rotateM(model,0,a,1f,0f,0f);floatArrayOf(0.20f,0.58f,0.68f,1f)}
-                Axis4Part.WORKPIECE->{Matrix.translateM(model,0,0f,-0.75f,0f);Matrix.rotateM(model,0,a,1f,0f,0f);Matrix.translateM(model,0,0f,0.70f,0f);floatArrayOf(0.50f,0.54f,0.58f,1f)}
-                Axis4Part.SPINDLE->{Matrix.translateM(model,0,motionX,2.15f+motionY,motionZ);floatArrayOf(0.18f,0.68f,0.82f,1f)}
-                Axis4Part.TOOL->{Matrix.translateM(model,0,motionX,0.30f+motionY,motionZ);floatArrayOf(0.84f,0.90f,0.94f,1f)}
+                Axis4Part.BASE->floatArrayOf(0.07f,0.18f,0.27f,1f)
+                Axis4Part.COLUMN->floatArrayOf(0.10f,0.28f,0.38f,1f)
+                Axis4Part.TABLE->floatArrayOf(0.13f,0.42f,0.52f,1f)
+                Axis4Part.ROTARY_HOUSING->floatArrayOf(0.12f,0.36f,0.46f,1f)
+                Axis4Part.PLATTER->floatArrayOf(0.24f,0.55f,0.62f,1f)
+                Axis4Part.CHUCK->floatArrayOf(0.34f,0.62f,0.68f,1f)
+                Axis4Part.WORKPIECE->floatArrayOf(0.50f,0.54f,0.58f,1f)
+                Axis4Part.SPINDLE->floatArrayOf(0.18f,0.68f,0.82f,1f)
+                Axis4Part.TOOL->floatArrayOf(0.84f,0.90f,0.94f,1f)
             }
             drawMesh(p3,mesh.vertices,model,viewProjection,color)
         }
@@ -83,7 +97,6 @@ class AxisGlesSceneRenderer(
         nodes.filter{it.id!="AXIS4.VIEWPORT"}.forEach(drawNode)
         if(!axis4FirstFrameLogged){Log.i("AIG4",AxisFrameEvidence.axis4Marker(state));axis4FirstFrameLogged=true}
     }
-
     private fun begin3d(viewport:UiBounds,widthPx:Float,heightPx:Float,eyeX:Float,eyeY:Float,eyeZ:Float):FloatArray {
         val vx=viewport.left.toInt().coerceAtLeast(0);val vy=(heightPx-viewport.bottom).toInt().coerceAtLeast(0)
         val vw=viewport.width.toInt().coerceAtLeast(1);val vh=viewport.height.toInt().coerceAtLeast(1)
