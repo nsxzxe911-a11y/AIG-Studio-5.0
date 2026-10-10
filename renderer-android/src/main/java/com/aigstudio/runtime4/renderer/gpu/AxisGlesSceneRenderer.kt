@@ -42,10 +42,10 @@ class AxisGlesSceneRenderer(
             drawMesh(p3,mesh.vertices,model,viewProjection,color)
         }
         end3d(widthPx,heightPx)
-        val pose=state.pose;val motion=state.motionProgramId?:"NONE";val message=state.message?.let{" | : "}.orEmpty()
+        val pose=state.pose;val motion=state.motionProgramId?:"NONE";val message=AxisFrameEvidence.messageSuffix(state.message)
         drawHud(p,textures,viewport,widthPx,heightPx,density,String.format(Locale.US,"3AX | X%.3f Y%.3f Z%.3f | MOTION %s | BLOCK %d/%d%s",pose.x,pose.y,pose.z,motion,state.blockIndex,state.blockCount,message))
         nodes.filter{it.id!="AXIS3.VIEWPORT"}.forEach(drawNode)
-        if(!axis3FirstFrameLogged){Log.i("AIG4","AIG4_AXIS3|FIRST_FRAME|PASS|MOTION=|BLOCK=/");axis3FirstFrameLogged=true}
+        if(!axis3FirstFrameLogged){Log.i("AIG4",AxisFrameEvidence.axis3Marker(state));axis3FirstFrameLogged=true}
     }
 
     fun drawAxis4(
@@ -77,11 +77,11 @@ class AxisGlesSceneRenderer(
             drawMesh(p3,mesh.vertices,model,viewProjection,color)
         }
         end3d(widthPx,heightPx)
-        val motion=state.motionProgramId?:"NONE";val message=state.message?.let{" | : "}.orEmpty()
+        val motion=state.motionProgramId?:"NONE";val message=AxisFrameEvidence.messageSuffix(state.message)
         val hudText=String.format(Locale.US,"4AX | X%.3f Y%.3f Z%.3f A%.3f | MOTION %s | BLOCK %d/%d%s",visual.x,visual.y,visual.z,visual.aDegrees,motion,state.blockIndex,state.blockCount,message)
         drawHud(p,textures,viewport,widthPx,heightPx,density,hudText)
         nodes.filter{it.id!="AXIS4.VIEWPORT"}.forEach(drawNode)
-        if(!axis4FirstFrameLogged){val aText=String.format(Locale.US,"%.3f",visual.aDegrees);Log.i("AIG4","AIG4_AXIS4|FIRST_FRAME|PASS|MOTION=|A=|BLOCK=/");axis4FirstFrameLogged=true}
+        if(!axis4FirstFrameLogged){Log.i("AIG4",AxisFrameEvidence.axis4Marker(state));axis4FirstFrameLogged=true}
     }
 
     private fun begin3d(viewport:UiBounds,widthPx:Float,heightPx:Float,eyeX:Float,eyeY:Float,eyeZ:Float):FloatArray {
