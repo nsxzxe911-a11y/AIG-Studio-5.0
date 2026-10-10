@@ -109,7 +109,7 @@ class AigGlesRenderer(
     }
     private fun drawMorningHomeTraditionalChinese(p:GlesProgram){
         MorningHomeTraditionalChinesePlan.labels(widthPx,heightPx).forEach{item->
-            p.draw(GlesGeometryBuffer.quad(item.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.004f,0.016f,0.028f,0.92f))
+            p.draw(GlesGeometryBuffer.quad(item.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.004f,0.016f,0.028f,0.985f))
             textures?.labelTextureRef(item.text)?.let{tex->
                 val fitted=LabelTextureLayout.contain(item.bounds,tex.aspectRatio,3f*density,true)
                 p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.92f,0.98f,1f,0.98f),tex.id)
