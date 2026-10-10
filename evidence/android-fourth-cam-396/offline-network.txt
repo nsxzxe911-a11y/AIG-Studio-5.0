@@ -1,0 +1,1 @@
+ROUTE=default via 172.17.99.2 dev rmnet_ipa0  172.17.99.0/24 dev rmnet_ipa0 proto kernel scope link src 172.17.99.15  PING_CODE=2 PING=connect: Network is unreachable

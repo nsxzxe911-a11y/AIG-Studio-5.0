@@ -1,0 +1,96 @@
+--------- beginning of main
+10-10 09:56:41.587 D/ProcessState(16720): Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 09:56:41.590 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:41.593 W/ImageReader_JNI( 2031): Unable to acquire a buffer item, very likely client tried to acquire more than maxImages buffers
+10-10 09:56:41.593 E/gralloc_nox( 2031): gralloc_lock_ycbcr can only be used with HAL_PIXEL_FORMAT_YCbCr_420_888 or HAL_PIXEL_FORMAT_YV12, got 1 instead. -EINVAL
+10-10 09:56:41.593 W/AndroidMediaUtils( 2031): lockAsyncYCbCr failed with error 3
+--------- beginning of system
+10-10 09:56:41.666 I/ActivityTaskManager( 2031): Config changes=20000480 {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w540dp h936dp 320dpi lrg long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 1920) mAppBounds=Rect(0, 0 - 1080, 1920) mMaxBounds=Rect(0, 0 - 1080, 1920) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.510 ?fontWeightAdjustment}
+10-10 09:56:41.668 W/ActivityTaskManager( 2031): Current config: {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w960dp h516dp 320dpi lrg long land finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1920, 1080) mAppBounds=Rect(0, 0 - 1920, 1080) mMaxBounds=Rect(0, 0 - 1920, 1080) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.2 s.510 ?fontWeightAdjustment} unchanged for IME proc com.android.inputmethod.pinyin
+10-10 09:56:41.668 I/WindowManager( 2031): Override config changes=20000480 {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w540dp h936dp 320dpi lrg long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 1920) mAppBounds=Rect(0, 0 - 1080, 1920) mMaxBounds=Rect(0, 0 - 1080, 1920) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.510 ?fontWeightAdjustment} for displayId=0
+10-10 09:56:41.669 V/ActivityTaskManager( 2031): Sending to IME proc com.android.inputmethod.pinyin new config {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w540dp h936dp 320dpi lrg long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 1920) mAppBounds=Rect(0, 0 - 1080, 1920) mMaxBounds=Rect(0, 0 - 1080, 1920) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.510 ?fontWeightAdjustment}
+10-10 09:56:41.673 I/InputManager-JNI( 2031): Viewport [0] to add: local:0, isActive: true
+10-10 09:56:41.674 I/InputReader( 2031): Reconfiguring input devices, changes=DISPLAY_INFO |
+10-10 09:56:41.674 I/InputReader( 2031): Device reconfigured: id=6, name='Android_Input', size 1080x1920, orientation 0, mode 1, display id 0
+10-10 09:56:41.674 I/InputReader( 2031): Device reconfigured: id=6, name='Android_Input', size 1080x1920, orientation 0, mode 1, display id 0
+10-10 09:56:41.675 D/StatusBar( 2206): Received new disable state. Old: enaihbcrso.qingr | New: enaihbcrso.qingr
+10-10 09:56:41.681 I/gralloc_nox( 1872): setOrientation: orientation=0
+10-10 09:56:41.685 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 311296
+10-10 09:56:41.685 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:41.685 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8089600
+10-10 09:56:41.687 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 208896
+10-10 09:56:41.690 D/Sensors ( 2031): Client connection accepted (308)
+10-10 09:56:41.763 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8089600
+10-10 09:56:41.764 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:41.767 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8089600
+10-10 09:56:41.773 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 208896
+10-10 09:56:41.773 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:41.773 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 208896
+10-10 09:56:41.775 I/WindowManager( 2031): finishDrawing of orientation change: Window{6bae67 u0 ScreenDecorOverlayBottom} 101ms
+10-10 09:56:41.813 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:41.815 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 208896
+10-10 09:56:41.815 I/WindowManager( 2031): finishDrawing of orientation change: Window{a532123 u0 com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity} 142ms
+10-10 09:56:41.819 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 208896
+10-10 09:56:41.819 I/WindowManager( 2031): finishDrawing of orientation change: Window{727fc92 u0 StatusBar} 147ms
+10-10 09:56:41.824 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 208896
+10-10 09:56:41.826 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 208896
+10-10 09:56:41.827 I/WindowManager( 2031): finishDrawing of orientation change: Window{6eb32aa u0 ScreenDecorOverlay} 154ms
+10-10 09:56:41.832 I/WindowManager( 2031): Screen frozen for +242ms due to Window{a532123 u0 com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity}
+10-10 09:56:41.833 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:41.839 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:41.841 W/ImageReader_JNI( 2031): Unable to acquire a buffer item, very likely client tried to acquire more than maxImages buffers
+10-10 09:56:41.841 E/gralloc_nox( 2031): gralloc_lock_ycbcr can only be used with HAL_PIXEL_FORMAT_YCbCr_420_888 or HAL_PIXEL_FORMAT_YV12, got 1 instead. -EINVAL
+10-10 09:56:41.841 W/AndroidMediaUtils( 2031): lockAsyncYCbCr failed with error 3
+10-10 09:56:41.923 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 208896
+10-10 09:56:41.939 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 208896
+10-10 09:56:42.427 D/ProcessState(16725): Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 09:56:42.537 D/ProcessState(16732): Binder ioctl to enable oneway spam detection failed: Invalid argument
+10-10 09:56:42.539 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:42.542 W/ImageReader_JNI( 2031): Unable to acquire a buffer item, very likely client tried to acquire more than maxImages buffers
+10-10 09:56:42.542 E/gralloc_nox( 2031): gralloc_lock_ycbcr can only be used with HAL_PIXEL_FORMAT_YCbCr_420_888 or HAL_PIXEL_FORMAT_YV12, got 1 instead. -EINVAL
+10-10 09:56:42.542 W/AndroidMediaUtils( 2031): lockAsyncYCbCr failed with error 3
+10-10 09:56:42.615 I/ActivityTaskManager( 2031): Config changes=20000480 {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w960dp h516dp 320dpi lrg long land finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1920, 1080) mAppBounds=Rect(0, 0 - 1920, 1080) mMaxBounds=Rect(0, 0 - 1920, 1080) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.2 s.532 ?fontWeightAdjustment}
+10-10 09:56:42.617 W/ActivityTaskManager( 2031): Current config: {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w540dp h936dp 320dpi lrg long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 1920) mAppBounds=Rect(0, 0 - 1080, 1920) mMaxBounds=Rect(0, 0 - 1080, 1920) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.532 ?fontWeightAdjustment} unchanged for IME proc com.android.inputmethod.pinyin
+10-10 09:56:42.617 I/WindowManager( 2031): Override config changes=20000480 {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w960dp h516dp 320dpi lrg long land finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1920, 1080) mAppBounds=Rect(0, 0 - 1920, 1080) mMaxBounds=Rect(0, 0 - 1920, 1080) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.2 s.532 ?fontWeightAdjustment} for displayId=0
+10-10 09:56:42.618 V/ActivityTaskManager( 2031): Sending to IME proc com.android.inputmethod.pinyin new config {1.0 466mcc92mnc [zh_TW] ldltr sw540dp w960dp h516dp 320dpi lrg long land finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1920, 1080) mAppBounds=Rect(0, 0 - 1920, 1080) mMaxBounds=Rect(0, 0 - 1920, 1080) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.2 s.532 ?fontWeightAdjustment}
+10-10 09:56:42.621 I/InputManager-JNI( 2031): Viewport [0] to add: local:0, isActive: true
+10-10 09:56:42.622 I/InputReader( 2031): Reconfiguring input devices, changes=DISPLAY_INFO |
+10-10 09:56:42.622 D/StatusBar( 2206): Received new disable state. Old: enaihbcrso.qingr | New: enaihbcrso.qingr
+10-10 09:56:42.622 I/InputReader( 2031): Device reconfigured: id=6, name='Android_Input', size 1080x1920, orientation 1, mode 1, display id 0
+10-10 09:56:42.622 I/InputReader( 2031): Device reconfigured: id=6, name='Android_Input', size 1080x1920, orientation 1, mode 1, display id 0
+10-10 09:56:42.627 W/utmethod.pinyi( 3026): Reducing the number of considered missed Gc histogram windows from 2737 to 100
+10-10 09:56:42.631 I/gralloc_nox( 1872): setOrientation: orientation=1
+10-10 09:56:42.637 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 372736
+10-10 09:56:42.637 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 7929856
+10-10 09:56:42.637 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:42.639 D/Sensors ( 2031): Client connection accepted (308)
+10-10 09:56:42.673 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 372736
+10-10 09:56:42.725 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:42.725 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 7929856
+10-10 09:56:42.726 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 176128
+10-10 09:56:42.728 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 7929856
+10-10 09:56:42.729 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:42.745 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 372736
+10-10 09:56:42.766 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:42.767 I/WindowManager( 2031): finishDrawing of orientation change: Window{a532123 u0 com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity} 146ms
+10-10 09:56:42.772 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 176128
+10-10 09:56:42.774 I/WindowManager( 2031): finishDrawing of orientation change: Window{6bae67 u0 ScreenDecorOverlayBottom} 153ms
+10-10 09:56:42.775 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 176128
+10-10 09:56:42.776 I/WindowManager( 2031): finishDrawing of orientation change: Window{727fc92 u0 StatusBar} 155ms
+10-10 09:56:42.777 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 176128
+10-10 09:56:42.778 I/WindowManager( 2031): finishDrawing of orientation change: Window{6eb32aa u0 ScreenDecorOverlay} 157ms
+10-10 09:56:42.779 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 372736
+10-10 09:56:42.784 I/WindowManager( 2031): Screen frozen for +245ms due to Window{a532123 u0 com.aigstudio.production.fourth395/com.aigstudio.runtime4.host.FourthMainActivity}
+10-10 09:56:42.784 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:42.784 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 8298496
+10-10 09:56:42.790 W/ImageReader_JNI( 2031): Unable to acquire a buffer item, very likely client tried to acquire more than maxImages buffers
+10-10 09:56:42.790 E/gralloc_nox( 2031): gralloc_lock_ycbcr can only be used with HAL_PIXEL_FORMAT_YCbCr_420_888 or HAL_PIXEL_FORMAT_YV12, got 1 instead. -EINVAL
+10-10 09:56:42.790 W/AndroidMediaUtils( 2031): lockAsyncYCbCr failed with error 3
+10-10 09:56:42.826 W/System  ( 2031): A resource failed to call close.
+10-10 09:56:42.839 W/System  ( 2031): A resource failed to call close.
+10-10 09:56:42.839 W/System  ( 2031): A resource failed to call close.
+10-10 09:56:42.840 W/System  ( 2031): A resource failed to call close.
+10-10 09:56:42.841 W/System  ( 2031): A resource failed to call release.
+10-10 09:56:42.865 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 176128
+10-10 09:56:42.881 D/gralloc_nox( 1870): gralloc_alloc: Creating ashmem region of size 176128
+10-10 09:56:43.378 D/ProcessState(16737): Binder ioctl to enable oneway spam detection failed: Invalid argument
