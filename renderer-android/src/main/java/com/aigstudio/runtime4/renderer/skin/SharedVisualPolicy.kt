@@ -15,6 +15,7 @@ object SharedVisualPolicy {
         "NAV.CAM" -> SceneId.CAM
         "NAV.3AX" -> SceneId.AXIS3
         "NAV.4AX" -> SceneId.AXIS4
+        "NAV.5AX" -> SceneId.AXIS5
         "NAV.NC" -> SceneId.NC
         else -> null
     }

@@ -13,6 +13,7 @@ data class MachineJointSpec(
     val kind:JointKind,
     val parentId:String?,
     val pivot:MachineVec3,
+    val direction:MachineVec3,
     val min:Double,
     val max:Double,
 )

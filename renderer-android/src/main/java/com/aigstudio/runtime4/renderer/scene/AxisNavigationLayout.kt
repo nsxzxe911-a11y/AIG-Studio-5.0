@@ -17,6 +17,7 @@ object AxisNavigationLayout {
         Spec("NAV.CAM","CAM","aig-rgb/icons/cam.png"),
         Spec("NAV.3AX","3AX"),
         Spec("NAV.4AX","4AX"),
+        Spec("NAV.5AX","5AX"),
         Spec("NAV.NC","NC"),
     )
 

@@ -48,6 +48,7 @@ class AigGlesRenderer(
             FourthRenderRoute.CAM->drawCam(p)
             FourthRenderRoute.AXIS3->program3d?.let{p3->axisSceneRenderer.drawAxis3(p,p3,textures,widthPx,heightPx,density){node->drawNode(p,node)}}
             FourthRenderRoute.AXIS4->program3d?.let{p3->axisSceneRenderer.drawAxis4(p,p3,textures,widthPx,heightPx,density){node->drawNode(p,node)}}
+            FourthRenderRoute.AXIS5->program3d?.let{p3->axisSceneRenderer.drawAxis5(p,p3,textures,widthPx,heightPx,density){node->drawNode(p,node)}}
             FourthRenderRoute.NC->drawNc(p)
             FourthRenderRoute.UNAVAILABLE->drawUnavailable(p,sceneRouter.current)
         }

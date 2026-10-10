@@ -2,8 +2,9 @@ package com.aigstudio.runtime4.renderer.machine
 
 import com.aigstudio.runtime4.contract.AxisMode
 
-private fun linear(id:String,axis:MachineAxis,parent:String?,pivot:MachineVec3,min:Double,max:Double)=MachineJointSpec(id,axis,JointKind.LINEAR,parent,pivot,min,max)
-private fun rotary(id:String,axis:MachineAxis,parent:String?,pivot:MachineVec3,min:Double,max:Double)=MachineJointSpec(id,axis,JointKind.ROTARY,parent,pivot,min,max)
+private fun directionFor(axis:MachineAxis)=when(axis){MachineAxis.X,MachineAxis.A->MachineVec3(1f,0f,0f);MachineAxis.Y,MachineAxis.B->MachineVec3(0f,1f,0f);MachineAxis.Z,MachineAxis.C->MachineVec3(0f,0f,1f)}
+private fun linear(id:String,axis:MachineAxis,parent:String?,pivot:MachineVec3,min:Double,max:Double)=MachineJointSpec(id,axis,JointKind.LINEAR,parent,pivot,directionFor(axis),min,max)
+private fun rotary(id:String,axis:MachineAxis,parent:String?,pivot:MachineVec3,min:Double,max:Double,direction:MachineVec3=directionFor(axis))=MachineJointSpec(id,axis,JointKind.ROTARY,parent,pivot,direction,min,max)
 private fun part(id:String,parent:String?,sx:Float,sy:Float,sz:Float,ox:Float,oy:Float,oz:Float)=MachinePartSpec(id,parent,MachineVec3(sx,sy,sz),MachineVec3(ox,oy,oz))
 
 val MachineProfile3Ax=MachineProfile(
@@ -60,8 +61,8 @@ val MachineProfile6AxNicStyle=MachineProfile(
         linear("Y",MachineAxis.Y,"X",MachineVec3(0f,0f,0f),-400.0,400.0),
         linear("Z",MachineAxis.Z,"Y",MachineVec3(0f,0f,0f),-500.0,500.0),
         rotary("A",MachineAxis.A,"Z",MachineVec3(0f,1.6f,0f),-180.0,180.0),
-        rotary("B",MachineAxis.B,"A",MachineVec3(0f,1.05f,0f),-180.0,180.0),
-        rotary("C",MachineAxis.C,"B",MachineVec3(0f,0.55f,0f),-360.0,360.0),
+        rotary("B",MachineAxis.B,"A",MachineVec3(0f,1.05f,0f),-180.0,180.0,MachineVec3(0f,0f,1f)),
+        rotary("C",MachineAxis.C,"B",MachineVec3(0f,0.55f,0f),-360.0,360.0,MachineVec3(0f,1f,0f)),
     ),
     listOf(
         part("BASE",null,7.8f,0.8f,5.8f,0f,-2.55f,0f),part("COLUMN",null,1.45f,5.4f,1.65f,-3.05f,0.05f,0.55f),part("TABLE","Y",4.8f,0.5f,3.5f,0f,-1.55f,0f),

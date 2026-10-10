@@ -4,7 +4,7 @@ import android.opengl.GLES30
 import android.opengl.Matrix
 import android.util.Log
 import com.aigstudio.runtime4.contract.AxisMode
-import com.aigstudio.runtime4.renderer.machine.MachineProfile4AxHrtStyle
+import com.aigstudio.runtime4.renderer.machine.*
 import com.aigstudio.runtime4.renderer.*
 import java.util.Locale
 
@@ -14,10 +14,13 @@ class AxisGlesSceneRenderer(
     private val axis3Parts=Axis3Mesh.parts()
     private val axis4Parts=Axis4Mesh.parts()
     private val axis4Specs=MachineProfile4AxHrtStyle.parts.associateBy{it.id}
+    private val axis5Parts=Axis5Mesh.parts()
+    private val axis5Specs=MachineProfile5AxTrunnionStyle.parts.associateBy{it.id}
     private var axis3FirstFrameLogged=false
     private var axis4FirstFrameLogged=false
+    private var axis5FirstFrameLogged=false
 
-    fun supports(route:FourthRenderRoute):Boolean = route==FourthRenderRoute.AXIS3 || route==FourthRenderRoute.AXIS4
+    fun supports(route:FourthRenderRoute):Boolean = route==FourthRenderRoute.AXIS3 || route==FourthRenderRoute.AXIS4 || route==FourthRenderRoute.AXIS5
 
     fun drawAxis3(
         p:GlesProgram,p3:Gles3dProgram,textures:RgbTextureCatalog?,widthPx:Float,heightPx:Float,density:Float,
@@ -96,6 +99,39 @@ class AxisGlesSceneRenderer(
         drawHud(p,textures,viewport,widthPx,heightPx,density,hudText)
         nodes.filter{it.id!="AXIS4.VIEWPORT"}.forEach(drawNode)
         if(!axis4FirstFrameLogged){Log.i("AIG4",AxisFrameEvidence.axis4Marker(state));axis4FirstFrameLogged=true}
+    }
+    fun drawAxis5(
+        p:GlesProgram,p3:Gles3dProgram,textures:RgbTextureCatalog?,widthPx:Float,heightPx:Float,density:Float,
+        drawNode:(SceneNode)->Unit,
+    ) {
+        val nodes=Axis5SceneLayout.nodes(widthPx,heightPx,density)
+        val viewport=nodes.first{it.id=="AXIS5.VIEWPORT"}.bounds
+        p.draw(GlesGeometryBuffer.quad(viewport),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.004f,0.014f,0.028f,1f))
+        val state=stateSource.snapshotForFrame(AxisMode.AXIS5)
+        val visual=Axis5Presentation.from(state);val frame=Axis5Presentation.kinematicFrame(state)
+        val viewProjection=begin3d(viewport,widthPx,heightPx,9.8f,7.6f,12.8f)
+        val motionX=(visual.x*0.02).toFloat().coerceIn(-2.2f,2.2f);val motionY=(visual.z*0.02).toFloat().coerceIn(-1.8f,1.8f);val motionZ=(visual.y*0.02).toFloat().coerceIn(-2.2f,2.2f)
+        fun applyJoint(model:FloatArray,joint:MachineJointSpec,degrees:Double){val q=joint.pivot;val d=joint.direction;Matrix.translateM(model,0,q.x,q.y,q.z);Matrix.rotateM(model,0,degrees.toFloat(),d.x,d.y,d.z);Matrix.translateM(model,0,-q.x,-q.y,-q.z)}
+        axis5Parts.forEach{mesh->
+            val spec=axis5Specs.getValue(mesh.part.name);val model=FloatArray(16);Matrix.setIdentityM(model,0)
+            when(mesh.part){
+                Axis5Part.TILT_CRADLE->{applyJoint(model,frame.a,frame.aDegrees);Matrix.translateM(model,0,spec.offset.x,spec.offset.y,spec.offset.z)}
+                Axis5Part.PLATTER,Axis5Part.WORKPIECE->{applyJoint(model,frame.a,frame.aDegrees);applyJoint(model,frame.b,frame.bDegrees);Matrix.translateM(model,0,spec.offset.x,spec.offset.y,spec.offset.z)}
+                Axis5Part.SPINDLE,Axis5Part.TOOL->Matrix.translateM(model,0,spec.offset.x+motionX,spec.offset.y+motionY,spec.offset.z+motionZ)
+                else->Matrix.translateM(model,0,spec.offset.x,spec.offset.y,spec.offset.z)
+            }
+            val color=when(mesh.part){
+                Axis5Part.BASE->floatArrayOf(0.07f,0.17f,0.26f,1f);Axis5Part.COLUMN->floatArrayOf(0.10f,0.27f,0.37f,1f);Axis5Part.TABLE->floatArrayOf(0.12f,0.39f,0.50f,1f)
+                Axis5Part.TILT_SUPPORT_LEFT,Axis5Part.TILT_SUPPORT_RIGHT->floatArrayOf(0.14f,0.43f,0.54f,1f);Axis5Part.TILT_CRADLE->floatArrayOf(0.17f,0.50f,0.61f,1f);Axis5Part.PLATTER->floatArrayOf(0.23f,0.61f,0.69f,1f)
+                Axis5Part.WORKPIECE->floatArrayOf(0.50f,0.54f,0.58f,1f);Axis5Part.SPINDLE->floatArrayOf(0.18f,0.68f,0.82f,1f);Axis5Part.TOOL->floatArrayOf(0.84f,0.90f,0.94f,1f)
+            }
+            drawMesh(p3,mesh.vertices,model,viewProjection,color)
+        }
+        end3d(widthPx,heightPx)
+        val motion=state.motionProgramId?:"NONE";val message=AxisFrameEvidence.messageSuffix(state.message)
+        val hudText=String.format(Locale.US,"5AX | X%.3f Y%.3f Z%.3f A%.3f B%.3f | MOTION %s | BLOCK %d/%d%s",visual.x,visual.y,visual.z,visual.aDegrees,visual.bDegrees,motion,state.blockIndex,state.blockCount,message)
+        drawHud(p,textures,viewport,widthPx,heightPx,density,hudText);nodes.filter{it.id!="AXIS5.VIEWPORT"}.forEach(drawNode)
+        if(!axis5FirstFrameLogged){Log.i("AIG4",AxisFrameEvidence.axis5Marker(state));axis5FirstFrameLogged=true}
     }
     private fun begin3d(viewport:UiBounds,widthPx:Float,heightPx:Float,eyeX:Float,eyeY:Float,eyeZ:Float):FloatArray {
         val vx=viewport.left.toInt().coerceAtLeast(0);val vy=(heightPx-viewport.bottom).toInt().coerceAtLeast(0)

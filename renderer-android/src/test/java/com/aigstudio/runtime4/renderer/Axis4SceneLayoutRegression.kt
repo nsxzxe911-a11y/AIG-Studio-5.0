@@ -12,7 +12,7 @@ class Axis4SceneLayoutRegression {
     @Test fun axis4HasDedicatedRouteAndNavigation() {
         assertEquals(SceneId.AXIS4, SharedVisualPolicy.destination("NAV.4AX"))
         assertEquals(FourthRenderRoute.AXIS4, RenderRoutePolicy.forScene(SceneId.AXIS4))
-        assertEquals(FourthRenderRoute.UNAVAILABLE, RenderRoutePolicy.forScene(SceneId.AXIS5))
+        assertEquals(FourthRenderRoute.AXIS5, RenderRoutePolicy.forScene(SceneId.AXIS5))
         assertNotNull(HomeSceneLayout.nodes(1080f,1920f,2f).firstOrNull{it.id=="NAV.4AX"})
         assertNotNull(Axis3SceneLayout.nodes(1080f,1920f,2f).firstOrNull{it.id=="NAV.4AX"})
     }

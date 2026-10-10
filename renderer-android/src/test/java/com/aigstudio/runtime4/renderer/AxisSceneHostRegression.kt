@@ -22,4 +22,12 @@ class AxisSceneHostRegression {
         assertEquals(SceneId.CAD, SharedVisualPolicy.destination("NAV.CAD"))
         assertEquals(SceneId.AXIS4, SharedVisualPolicy.destination("NAV.4AX"))
     }
+    @Test fun axis5ParticipatesInLatestWinsCycle() {
+        val host=AxisSceneHost(SceneId.AXIS3)
+        assertEquals(SceneId.AXIS4,host.navigateImmediate(SceneId.AXIS4))
+        val stale=host.request(SceneId.AXIS3)
+        val axis5=host.request(SceneId.AXIS5)
+        assertFalse(host.commit(stale));assertTrue(host.commit(axis5));assertEquals(SceneId.AXIS5,host.activeScene)
+        assertEquals(SceneId.AXIS3,host.navigateImmediate(SceneId.AXIS3))
+    }
 }

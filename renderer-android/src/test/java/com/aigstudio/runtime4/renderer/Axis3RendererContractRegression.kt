@@ -16,10 +16,11 @@ private class AxisRendererRuntimeStub : AxisRuntimePort {
 }
 
 class Axis3RendererContractRegression {
-    @Test fun axis3HasDedicatedRendererAndUnimplementedAxisNeverFallsBackHome() {
+    @Test fun implementedAxesHaveDedicatedRoutesAndUnimplementedAxisNeverFallsBackHome() {
         assertEquals(FourthRenderRoute.AXIS3, RenderRoutePolicy.forScene(SceneId.AXIS3))
         assertEquals(FourthRenderRoute.AXIS4, RenderRoutePolicy.forScene(SceneId.AXIS4))
-        assertEquals(FourthRenderRoute.UNAVAILABLE, RenderRoutePolicy.forScene(SceneId.AXIS5))
+        assertEquals(FourthRenderRoute.AXIS5, RenderRoutePolicy.forScene(SceneId.AXIS5))
+        assertEquals(FourthRenderRoute.UNAVAILABLE, RenderRoutePolicy.forScene(SceneId.AXIS6))
         assertEquals(FourthRenderRoute.UNAVAILABLE, RenderRoutePolicy.forScene(SceneId.SIM))
     }
 
