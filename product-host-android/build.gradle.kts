@@ -7,8 +7,8 @@ android {
         applicationId = "com.aigstudio.production.fourth395"
         minSdk = 26
         targetSdk = 36
-        versionCode = 402001
-        versionName = "402-fourth-product-links"
+        versionCode = 403001
+        versionName = "403-fourth-product-links-safe"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -26,4 +26,5 @@ dependencies {
 tasks.matching { it.name.endsWith("UnitTest") }.configureEach {
     inputs.file(project.layout.projectDirectory.file("build.gradle.kts"))
 }
+
 
