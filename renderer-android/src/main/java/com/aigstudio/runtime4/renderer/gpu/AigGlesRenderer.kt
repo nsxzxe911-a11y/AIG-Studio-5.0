@@ -108,7 +108,7 @@ class AigGlesRenderer(
         HomeSceneLayout.nodes(widthPx,heightPx,density,presentation).forEach{drawNode(p,it)}
     }
     private fun drawMultifunction(p:GlesProgram){
-        MultifunctionPlaceholderLayout.nodes(widthPx,heightPx,density).forEach{drawNode(p,it)}
+        MultifunctionSceneLayout.nodes(widthPx,heightPx,density).forEach{drawNode(p,it)}
     }
     private fun drawCad(p:GlesProgram){
         val nodes=cadController.nodes(widthPx,heightPx,density);val viewportNode=nodes.first{it.id=="CAD.VIEWPORT"};val viewport=CadViewportNode(viewportNode.bounds)
@@ -226,6 +226,15 @@ class AigGlesRenderer(
         p.draw(GlesGeometryBuffer.quad(shine),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.80f,0.96f,1f,if(state==VisualState.DISABLED)0.10f else 0.34f))
         when(val plan=RgbNodeTexturePlan.forNode(node)){
             is RgbNodeTexturePlan.Asset->textures?.texture(plan.path)?.let{tex->p.draw(GlesGeometryBuffer.quad(inner),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,if(state==VisualState.DISABLED)0.35f else 0.92f),tex)}
+            is RgbNodeTexturePlan.AssetWithLabel->{
+                val iconSize=minOf(inner.width*0.42f,inner.height*0.50f)
+                val iconLeft=inner.left+(inner.width-iconSize)*0.5f
+                val iconTop=inner.top+inner.height*0.08f
+                val iconBounds=UiBounds(iconLeft,iconTop,iconLeft+iconSize,iconTop+iconSize)
+                textures?.texture(plan.path)?.let{tex->p.draw(GlesGeometryBuffer.quad(iconBounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,if(state==VisualState.DISABLED)0.35f else 0.94f),tex)}
+                val labelBounds=UiBounds(inner.left+4f*density,inner.bottom-inner.height*0.30f,inner.right-4f*density,inner.bottom-4f*density)
+                textures?.labelTextureRef(plan.label)?.let{tex->val fitted=LabelTextureLayout.contain(labelBounds,tex.aspectRatio,2f*density,false);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,if(state==VisualState.DISABLED)0.42f else 0.98f),tex.id)}
+            }
             is RgbNodeTexturePlan.GeneratedLabel->textures?.labelTextureRef(plan.label)?.let{tex->val fitted=LabelTextureLayout.contain(inner,tex.aspectRatio,4f*density,false);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,if(state==VisualState.DISABLED)0.42f else 0.96f),tex.id)}
         }
     }

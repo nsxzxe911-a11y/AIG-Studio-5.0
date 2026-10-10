@@ -179,7 +179,7 @@ class AigGlesView(
             axis6={Axis6SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
             nc={ncController?.nodes(width.toFloat(),height.toFloat(),density) ?: NcSceneLayout.nodes(width.toFloat(),height.toFloat(),density,NcState.initial())},
             ai={aiController?.nodes(width.toFloat(),height.toFloat(),density) ?: AiSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-            multifunction={MultifunctionPlaceholderLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            multifunction={MultifunctionSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
         ))
         return base+(productDeckController?.nodes(sceneRouter.current.toPageId(),width.toFloat(),height.toFloat(),density) ?: emptyList())
     }

@@ -14,6 +14,7 @@ object AigProfessionalTokens {
 
     fun skinRole(kind:AigUiKind):RgbSkinRole=when(kind){
         AigUiKind.NAV->RgbSkinRole.NAVIGATION
+        AigUiKind.CARD->RgbSkinRole.CARD
         AigUiKind.PANEL,AigUiKind.STATUS_CARD,AigUiKind.VIEWPORT,AigUiKind.HUD,AigUiKind.CONTROL_DECK->RgbSkinRole.PANEL
         else->RgbSkinRole.CONTROL
     }

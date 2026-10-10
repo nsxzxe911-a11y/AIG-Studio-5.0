@@ -25,6 +25,14 @@ object AigUiLocalization {
         "home.quick.sim" to "3D走刀",
         "home.quick.nc" to "NC程式",
         "home.multifunction" to "多功能",
+        "multifunction.title" to "多功能工作站",
+        "multifunction.sim" to "3D走刀",
+        "multifunction.3ax" to "3軸",
+        "multifunction.4ax" to "4軸",
+        "multifunction.5ax" to "5軸",
+        "multifunction.6ax" to "6軸",
+        "multifunction.nc" to "NC程式",
+        "multifunction.ai" to "AI智慧",
         "multifunction.pending" to "多功能工作站載入中",
     )
 
@@ -50,6 +58,14 @@ object AigUiLocalization {
         "home.quick.sim" to "3D Toolpath",
         "home.quick.nc" to "NC Program",
         "home.multifunction" to "Multifunction",
+        "multifunction.title" to "Multifunction Workstation",
+        "multifunction.sim" to "3D Toolpath",
+        "multifunction.3ax" to "3 Axis",
+        "multifunction.4ax" to "4 Axis",
+        "multifunction.5ax" to "5 Axis",
+        "multifunction.6ax" to "6 Axis",
+        "multifunction.nc" to "NC Program",
+        "multifunction.ai" to "AI",
         "multifunction.pending" to "Multifunction Workstation Loading",
     )
 
