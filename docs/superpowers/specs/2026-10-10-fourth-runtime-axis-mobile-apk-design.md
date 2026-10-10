@@ -1,17 +1,18 @@
 # Fourth Runtime Axis Visual Foundation + Mobile APK Design
 
-**Status:** Design for review. No AXIS renderer implementation is authorized until this written spec is explicitly reviewed/approved.
+**Status:** Approved architecture direction for shared dual-project use. Platform renderer implementation remains milestone-gated and evidence-driven.
 
 **Date:** 2026-10-10
 **Projects:** AIG CNC + AIG-II
 **Baseline checkpoints:** AIG CNC `6ab2b99c82fb3f7d68b31f9f1fc8a0d5a72a53d1`; AIG-II `0ab1be7b507e02c5000969f8476a16f891308ecb`.
 **NC baseline:** Task 7 exact-SHA standalone evidence is closed and immutable. Future axis/visual work must not rewrite NC 397/476 evidence.
+**Dual-project rule:** Shared architecture/policy is specified and reported once for both projects. Split AIG CNC vs AIG-II reporting only when code, version, evidence, capability, or result actually differs.
 
 ## 1. Goal
 
-Convert the current Fourth Runtime into the authoritative mobile product runtime for HOME / CAD / CAM / SIM / 3AX / 4AX / 5AX / 6AX / NC / AI, then package that same runtime as the Android phone APK. Add the missing real 3AX–6AX GLES scenes, shared RGB Glass visual foundation, shared MotionProgram animation, adaptive layouts and Shared Settings integration without reintroducing Engineering Shell or duplicating domain truth.
+Convert the current Fourth Runtime into the authoritative mobile product runtime for HOME / CAD / CAM / SIM / 3AX / 4AX / 5AX / 6AX / NC / AI, then package that same runtime as the Android phone APK. Add the missing real 3AX–6AX GPU scenes, shared RGB Glass visual foundation, shared MotionProgram animation, adaptive layouts and Shared Settings integration without reintroducing Engineering Shell or duplicating domain truth.
 
-The phone APK is the next primary delivery target. Windows parity follows through a native D3D11 renderer adapter, not by forcing Android and Windows to pretend they use the same GPU backend.
+The phone APK is the next primary delivery target. Android targets a Vulkan-primary / GLES-compatibility renderer strategy; Windows targets D3D12-primary / D3D11-compatibility. The platforms share scene, motion, material semantics and settings contracts, but never pretend to use the same GPU backend.
 
 ## 2. Current facts and gap
 
@@ -28,7 +29,7 @@ The phone APK is the next primary delivery target. Windows parity follows throug
 
 ### Approach A — Shared contracts + platform renderer adapters (selected)
 
-Keep domain state and motion in `runtime-contract` / `production-runtime`; implement Android scenes in GLES 3.x and later Windows scenes in D3D11. Share scene semantics, node IDs, settings and motion snapshots, but allow platform-specific GPU resource code.
+Keep domain state and motion in `runtime-contract` / `production-runtime`; implement Android with Vulkan as the target primary path and GLES 3.x as compatibility/fallback, and Windows with D3D12 as the target primary path and D3D11 as compatibility/fallback. Share scene semantics, node IDs, settings and motion snapshots, but keep platform-specific GPU resource code separate.
 
 **Why selected:** preserves real platform capabilities, keeps callbacks/data authoritative, avoids duplicated business logic, and supports Android-first delivery without blocking Windows.
 
@@ -36,7 +37,7 @@ Keep domain state and motion in `runtime-contract` / `production-runtime`; imple
 
 This is faster for one screen but duplicates scene state, control semantics, settings behavior and motion interpretation. It will drift and require repeated fixes. Rejected as the long-term architecture.
 
-### Approach C — One fake renderer abstraction hiding GLES/D3D11 differences
+### Approach C — One fake renderer abstraction hiding Vulkan/GLES/D3D12/D3D11 differences
 
 A single synthetic GPU backend would make settings misleading and make device/driver capability impossible to report truthfully. Rejected. Shared contracts are allowed; fake backend identity is not.
 
@@ -71,7 +72,7 @@ Own authoritative state adapters and behavior:
 
 ### `renderer-android`
 
-Own Android GLES presentation only:
+Own Android GPU presentation only (Vulkan-primary target, GLES compatibility):
 
 - `AxisSceneHost`
 - AXIS3/4/5/6 scene controllers/layouts
@@ -79,7 +80,7 @@ Own Android GLES presentation only:
 - camera and gestures
 - RGB Glass nodes
 - adaptive layout
-- GLES draw/update/dispose lifecycle
+- backend-specific Vulkan/GLES draw/update/dispose lifecycle
 
 ### `product-host-android`
 
@@ -87,8 +88,35 @@ Own Android lifecycle, recovery binding, settings persistence wiring and APK pac
 
 ### Windows later
 
-Windows consumes the same runtime contracts and scene semantics through D3D11-specific resources. It must not reuse GLES objects or advertise Vulkan/D3D features that are not active.
+Windows consumes the same runtime contracts and scene semantics through D3D12-primary / D3D11-fallback resources. It must not reuse Android GPU objects or advertise D3D12/D3D11 features that are not actually active.
 
+## 4A. AAA-style platform rendering split
+
+The rendering direction follows modern large-scale 3D game architecture: one scene/motion truth, separate platform render paths and quality budgets.
+
+### Android / phone GPU path
+
+- target backend order: `AUTO -> VULKAN -> GLES3`
+- optimize for tile-based/mobile GPUs, bandwidth and thermal limits
+- dynamic resolution and resolution scale may change visual pixels only
+- LOD/HLOD, frustum/occlusion culling and texture/mesh streaming are first-class
+- shader/pipeline cache must reduce runtime hitching
+- frame pacing and thermal governor are part of renderer policy
+- 60 FPS remains the default product target; 90/120 are capability/thermal-dependent
+- mobile lighting uses efficient PBR/IBL and bounded dynamic shadows rather than desktop-cost effects everywhere
+
+### Windows / desktop GPU path
+
+- target backend order: `AUTO -> D3D12 -> D3D11`
+- D3D12 is the high-end path; D3D11 is compatibility fallback
+- higher mesh/material/shadow budgets are allowed according to detected VRAM/GPU capability
+- architecture may expose optional capability ports for VRS, mesh/meshlet paths, async compute, advanced shadows/GI and hardware ray tracing; none may be reported active without real support/evidence
+- introduce an `UpscalerPort` so DLSS/FSR/native scaling can be selected by capability without entering CAD/CAM/NC domain logic
+- NVIDIA policy A remains: read capability and optimize AIG itself, never silently mutate system/global driver policy
+
+### Shared invariant
+
+Dynamic resolution, LOD, upscaling, ray tracing, shader quality, backend choice and FPS are presentation controls only. They must never change `MotionProgram`, XYZABC, CAD/CAM geometry, Safe-Z, NC output, SIM material-removal math or the 0.001 mm machining precision contract.
 ## 5. Shared Visual Foundation
 
 Introduce a visual contract layer with these concepts:
@@ -117,7 +145,7 @@ Shared atlas/cache should be used for common icons/borders. Scene-specific machi
 
 ## 6. One Scene / One Renderer / No Overlay
 
-Fourth Runtime keeps exactly one authoritative GLES surface and one active scene at a time.
+Fourth Runtime keeps exactly one authoritative GPU presentation surface/host and one active scene at a time. The Android implementation may use Vulkan or GLES, but never mounts parallel renderers for the same active scene.
 
 `AxisSceneHost` responsibilities:
 
@@ -128,7 +156,7 @@ Fourth Runtime keeps exactly one authoritative GLES surface and one active scene
 5. reject stale asynchronous load completion using latest-request-wins tokens
 6. expose deterministic lifecycle markers for tests/evidence
 
-No Android `Button`, `TextView`, WebView, legacy `Clean*Panel`, or second GLSurfaceView may be overlaid to fake an axis page.
+No Android `Button`, `TextView`, WebView, legacy `Clean*Panel`, or second competing GPU surface may be overlaid to fake an axis page.
 
 Required switch stress test: `3AX -> 4AX -> 5AX -> 6AX -> 3AX` for at least 100 cycles with no parallel mount, stale scene reappearance, resource leak growth, or callback cross-routing.
 
@@ -212,7 +240,7 @@ Examples:
 - `PLAY` -> START / PAUSE / STEP / RESET
 - `DISPLAY` -> HUD / TOOLPATH / FIXTURE / MACHINE
 
-The expanded group is still part of the same GLES scene, not a platform dialog overlay. Dangerous actions stay visually separated and require explicit intent. Control minimum touch target remains 48dp.
+The expanded group is still part of the same active GPU scene, not a platform dialog overlay. Dangerous actions stay visually separated and require explicit intent. Control minimum touch target remains 48dp.
 
 ## 10. Adaptive layout
 
@@ -251,14 +279,15 @@ Required live consumers:
 
 Android truth:
 
-- current Fourth Runtime backend = OpenGL ES 3.x
-- Vulkan remains disabled/unavailable until a real Vulkan renderer and first-frame evidence exist
+- current verified Fourth Runtime baseline = OpenGL ES 3.x; it remains the compatibility path during migration
+- target backend preference = AUTO -> VULKAN -> GLES3; Vulkan becomes selectable only after a real renderer, capability probe and first-frame evidence exist
+- Settings must never claim Vulkan active before that evidence exists
 - emulator policy may cap FPS independently from physical-device capability
 - 3D GPU rendering remains enabled; 2D acceleration may be user-policy controlled without changing geometry truth
 
 Windows/NVIDIA policy **A** is fixed:
 
-- AIG manages only its own D3D11 backend, FPS, Quality, Power and scene settings
+- AIG manages only its own `AUTO -> D3D12 -> D3D11` backend selection, FPS, Quality, Power and scene settings
 - AIG may read/display NVIDIA adapter + driver status
 - AIG may provide an explicit shortcut to NVIDIA/Windows graphics settings
 - AIG does **not** automatically modify global NVIDIA Control Panel settings, Windows global graphics policy, driver profiles or driver installation
@@ -279,21 +308,21 @@ Production phone rules:
 - package/version only move forward
 - final phone evidence must include a physical 64-bit Android device path (S23/S23 Ultra class) in addition to emulator evidence
 
-ABI rule: the current Kotlin/GLES APK is bytecode and is not made “32-bit” merely because an emulator is x86. If native libraries are introduced for mesh/geometry/rendering, production native artifacts must include `arm64-v8a`; x86/x86_64 may be kept only for emulator/dev variants and must not be the only production ABI.
+ABI rule: the current Kotlin/GPU APK core is bytecode and is not made “32-bit” merely because an emulator is x86. If native libraries are introduced for mesh/geometry/rendering, production native artifacts must include `arm64-v8a`; x86/x86_64 may be kept only for emulator/dev variants and must not be the only production ABI.
 
 Release sequence:
 
 1. Fourth Runtime debug APK for deterministic evidence
 2. device install/run evidence
 3. signed release APK/AAB after the same runtime gates pass
-4. Windows D3D11 parity after Android scene/runtime architecture is stable
+4. Windows D3D12-primary / D3D11-fallback parity after Android scene/runtime architecture is stable
 
 ## 13. Resource and performance lifecycle
 
 - lazy-load scene-specific mesh/texture/material/shader resources
 - shared RGB icons/labels/borders use cache/atlas where practical
 - scene detach disposes scene-owned buffers/textures
-- shared cache is reference-counted or lifetime-bound to the one GLES surface
+- shared cache is reference-counted or lifetime-bound to the one active GPU host/surface
 - no asset copied into every page folder solely for convenience
 - render-quality/FPS/power policies may reduce visual density only; they cannot alter CAD/CAM/NC precision or MotionProgram values
 - idle scenes do not keep animating off-screen
@@ -324,7 +353,7 @@ Run focused gates only:
 - touch target/adaptive layout
 - skin token state mapping
 - screenshot/image-diff evidence
-- GLES first frame
+- active GPU backend first frame
 - no overlay / no Engineering Shell markers
 
 Do not rerun deep geometry/motion regressions when only skin/layout tokens changed.
@@ -370,9 +399,9 @@ Final Axis integration additionally runs 100-cycle `3->4->5->6->3` switch stress
 7. AXIS6 vertical real scene + A/B/C motion + evidence.
 8. Bind shared MotionRuntime/toolpath playback across Axis/SIM.
 9. Bind Skin Pack switching and adaptive multifunction controls.
-10. Bind Shared Settings live consumers and Android GLES capability truth.
+10. Bind Shared Settings live consumers and Android Vulkan/GLES capability truth.
 11. Produce/install physical-phone APK evidence; then signed release packaging.
-12. Implement Windows D3D11 renderer parity under NVIDIA policy A.
+12. Implement Windows D3D12-primary / D3D11-fallback renderer parity under NVIDIA policy A.
 
 Every implementation milestone must raise version metadata above the previous released milestone; no downgrade or overwrite of newer evidence.
 
@@ -388,7 +417,7 @@ The architecture is accepted only when:
 - no legacy Engineering Shell/panel is the product surface
 - local warnings do not globally stop/red-lock Runtime
 - offline first UI and recovery work
-- Android reports GLES truth; Windows later reports D3D11 truth
+- Android reports truthful active Vulkan/GLES backend; Windows later reports truthful active D3D12/D3D11 backend
 - NVIDIA global settings are not mutated
 - APK evidence is exact-SHA bound and reproducible
 - physical-phone run is proven before calling the mobile conversion production-ready
@@ -401,4 +430,4 @@ The architecture is accepted only when:
 - no importing legacy Engineering UI/activity/panel code into Fourth Runtime
 - no certifying non-zero-C CAM post before its dedicated 6AX post verification
 - no weakening NC/CAD/CAM exact-SHA historical evidence to make a newer build appear compatible
-- no Windows D3D11 implementation before Android Axis architecture is stable
+- no Windows D3D12/D3D11 implementation before Android Axis architecture is stable
