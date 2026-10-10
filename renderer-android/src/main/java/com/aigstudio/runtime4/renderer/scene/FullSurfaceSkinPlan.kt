@@ -4,10 +4,11 @@ import com.aigstudio.runtime4.contract.SceneId
 
 object FullSurfaceSkinPlan {
     fun assetFor(scene: SceneId, widthPx: Float, heightPx: Float): String? {
-        if (widthPx <= heightPx) return null
-        return when (scene) {
-            SceneId.HOME -> "aig-rgb/full-surface/home_landscape.png"
-            else -> null
+        if (scene != SceneId.HOME) return null
+        return if (widthPx > heightPx) {
+            "aig-rgb/morning-20261005/home_landscape.png"
+        } else {
+            "aig-rgb/morning-20261005/home_portrait.png"
         }
     }
 }

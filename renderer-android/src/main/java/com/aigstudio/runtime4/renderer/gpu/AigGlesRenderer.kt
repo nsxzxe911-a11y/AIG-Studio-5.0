@@ -103,8 +103,9 @@ class AigGlesRenderer(
         Log.w("AIG4","AIG4_SCENE|${scene.name}|UNAVAILABLE|LOCAL_MESSAGE")
     }
     private fun drawHome(p:GlesProgram){
-        val skin=FullSurfaceSkinPlan.assetFor(SceneId.HOME,widthPx,heightPx);textures?.texture(skin ?: "aig-rgb/home/rgb_wallpaper.png")?.let{tex->p.draw(GlesGeometryBuffer.quad(UiBounds(0f,0f,widthPx,heightPx)),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.98f),tex)}
-        HomeSceneLayout.nodes(widthPx,heightPx,density).forEach{drawNode(p,it)}
+        val skin=FullSurfaceSkinPlan.assetFor(SceneId.HOME,widthPx,heightPx)
+        textures?.texture(skin ?: "aig-rgb/home/rgb_wallpaper.png")?.let{tex->p.draw(GlesGeometryBuffer.quad(UiBounds(0f,0f,widthPx,heightPx)),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.98f),tex)}
+        if(skin==null)HomeSceneLayout.nodes(widthPx,heightPx,density).forEach{drawNode(p,it)}
     }
     private fun drawCad(p:GlesProgram){
         val nodes=cadController.nodes(widthPx,heightPx,density);val viewportNode=nodes.first{it.id=="CAD.VIEWPORT"};val viewport=CadViewportNode(viewportNode.bounds)
