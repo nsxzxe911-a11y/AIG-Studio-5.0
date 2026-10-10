@@ -20,6 +20,7 @@ object NcCheckpointCodec {
             appendLine("WORK|${txt(w.id)}|${w.revision}|${txt(w.digest)}|${w.cursorOffset}|${if(w.frozen)1 else 0}")
             appendLine("PROGRAM|${enc(w.program)}")
             appendLine("LINK|${s.camLink.name}")
+            appendLine("EDIT|${s.editMode.name}")
             s.candidate?.let{c->appendLine(candidateLine("CAND",c,null))}
             s.savedCandidates.forEachIndexed{i,c->appendLine(candidateLine("SAVED",c,i))}
             appendLine("PREVIEW|${s.previewCandidateId?.let(::txt) ?: "-"}")
@@ -35,7 +36,7 @@ object NcCheckpointCodec {
         require(lines.size>=8 && lines.first()==HEADER){"Unsupported NC checkpoint schema"}
         require(lines.last()=="END") {"NC checkpoint is truncated"}
         var profile:NcMachineProfileSnapshot?=null
-        var workHeader:WorkHeader?=null; var program:String?=null; var link:NcCamLinkState?=null
+        var workHeader:WorkHeader?=null; var program:String?=null; var link:NcCamLinkState?=null; var editMode:NcEditMode?=null
         var candidate:NcCandidate?=null; val saved=linkedMapOf<Int,NcCandidate>(); var preview:String?=null; var previewSeen=false
         val history=mutableListOf<NcSaveRecord>(); var motion:MotionProgram?=null; var diagSeen=false
         lines.drop(1).dropLast(1).forEach{line->
@@ -45,6 +46,7 @@ object NcCheckpointCodec {
                 "WORK"->{require(x.size==6 && workHeader==null);workHeader=WorkHeader(decTxt(x[1]),long(x[2]),decTxt(x[3]),int(x[4]),bool(x[5]))}
                 "PROGRAM"->{require(x.size==2 && program==null);program=dec(x[1])}
                 "LINK"->{require(x.size==2 && link==null);link=enumValueOf(x[1])}
+                "EDIT"->{require(x.size==2 && editMode==null);editMode=enumValueOf(x[1])}
                 "CAND"->{require(candidate==null);candidate=parseCandidate(x,1)}
                 "SAVED"->{require(x.size==8);val i=int(x[1]);require(i>=0 && i !in saved);saved[i]=parseCandidate(x,2)}
                 "PREVIEW"->{require(x.size==2 && !previewSeen);previewSeen=true;preview=if(x[1]=="-")null else decTxt(x[1])}
@@ -56,7 +58,7 @@ object NcCheckpointCodec {
         }
         val p=profile?:error("NC machine profile missing"); val wh=workHeader?:error("NC Working Copy header missing"); val text=program?:error("NC program missing")
         val working=NcWorkingCopy(wh.id,wh.revision,wh.digest,text,wh.cursor,wh.frozen)
-        val st=NcState(machineProfile=p,working=working,camLink=link?:error("NC CAM link missing"),candidate=candidate,savedCandidates=saved.toSortedMap().values.toList(),previewCandidateId=preview,motionProgram=motion?:error("NC motion identity missing"),saveHistory=history)
+        val st=NcState(machineProfile=p,working=working,camLink=link?:error("NC CAM link missing"),candidate=candidate,savedCandidates=saved.toSortedMap().values.toList(),previewCandidateId=preview,motionProgram=motion?:error("NC motion identity missing"),saveHistory=history,editMode=editMode?:error("NC edit mode missing"))
         require(previewSeen && diagSeen){"NC preview/diagnostic source record missing"}
         return NcCheckpointData(st).also(::validate)
     }

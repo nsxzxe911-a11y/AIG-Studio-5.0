@@ -90,5 +90,16 @@ fun main(){
     val mismatch=runtime.dispatch(NcCommand.SelectMachineProfile(p3)); check(mismatch.accepted)
     check(mismatch.state.diagnostics.any{it.code=="AXIS_C_UNSUPPORTED_BY_PROFILE"})
     check(mismatch.state.working.program.contains("C35")){"profile mismatch must not delete C data"}
+
+    val editRuntime=FourthNcRuntimeAdapter(profile6())
+    check(editRuntime.snapshot().editMode==NcEditMode.INSERT)
+    check(editRuntime.dispatch(NcCommand.SetProgram("G90")).accepted)
+    check(editRuntime.dispatch(NcCommand.SetCursor(1)).accepted)
+    check(editRuntime.dispatch(NcCommand.ToggleInsertMode).accepted)
+    check(editRuntime.snapshot().editMode==NcEditMode.REPLACE)
+    check(editRuntime.dispatch(NcCommand.InsertText("1")).accepted)
+    check(editRuntime.snapshot().working.program=="G10")
+    check(editRuntime.dispatch(NcCommand.ToggleInsertMode).accepted)
+    check(editRuntime.snapshot().editMode==NcEditMode.INSERT)
     println("FOURTH_NC_RUNTIME_PASS|AIG_CNC|DIRECT_EDIT|LOCAL_DIAGNOSTIC|XYZABC|MOTION_PROGRAM")
 }

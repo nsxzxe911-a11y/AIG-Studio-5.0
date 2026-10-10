@@ -51,6 +51,7 @@ class FourthNcRuntimeAdapter(
             is NcCommand.InsertText->insertText(command.text)
             NcCommand.Backspace->backspace()
             NcCommand.DeleteForward->deleteForward()
+            NcCommand.ToggleInsertMode->toggleInsertMode()
             is NcCommand.SetCursor->setCursor(command.offset)
             NcCommand.NewBlock->insertText("\n")
             NcCommand.ToggleBlockSkip->toggleBlockSkip()
@@ -88,7 +89,10 @@ class FourthNcRuntimeAdapter(
         if(state.working.frozen)return rejected("NC Working Copy is frozen")
         val w=state.working;require(w.cursorOffset in 0..w.program.length){"NC cursor out of range"}
         val normalized=normalize(text)
-        val next=w.program.substring(0,w.cursorOffset)+normalized+w.program.substring(w.cursorOffset)
+        val next=if(state.editMode==NcEditMode.INSERT) w.program.substring(0,w.cursorOffset)+normalized+w.program.substring(w.cursorOffset) else {
+            val end=(w.cursorOffset+normalized.length).coerceAtMost(w.program.length)
+            w.program.substring(0,w.cursorOffset)+normalized+w.program.substring(end)
+        }
         return replaceProgram(next,w.cursorOffset+normalized.length)
     }
     private fun backspace():NcDispatchResult{
@@ -102,6 +106,10 @@ class FourthNcRuntimeAdapter(
         val w=state.working;require(w.cursorOffset in 0..w.program.length){"NC cursor out of range"}
         if(w.cursorOffset==w.program.length)return accepted()
         return replaceProgram(w.program.removeRange(w.cursorOffset,w.cursorOffset+1),w.cursorOffset)
+    }
+    private fun toggleInsertMode():NcDispatchResult{
+        state=state.copy(editMode=if(state.editMode==NcEditMode.INSERT)NcEditMode.REPLACE else NcEditMode.INSERT,message=null)
+        return accepted()
     }
     private fun setCursor(offset:Int):NcDispatchResult{
         require(offset in 0..state.working.program.length){"NC cursor out of range"}

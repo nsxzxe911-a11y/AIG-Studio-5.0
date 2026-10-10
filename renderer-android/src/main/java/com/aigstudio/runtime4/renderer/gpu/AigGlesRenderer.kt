@@ -14,13 +14,16 @@ class AigGlesRenderer(
     private val context:Context,
     cadRuntime:CadRuntimePort,
     camRuntime:CamRuntimePort,
+    ncRuntime:NcRuntimePort?,
     private val sceneRouter:SceneRouter,
     private val cadController:CadSceneController,
     private val camController:CamSceneController,
+    private val ncController:NcSceneController?,
     private val firstFrameSignal:FirstFrameSignal?=null,
 ):GLSurfaceView.Renderer {
     val stateSource=RendererStateSource(cadRuntime)
     val camStateSource=CamRendererStateSource(camRuntime)
+    val ncStateSource=ncRuntime?.let(::NcRendererStateSource)
     @Volatile var pressedNodeId:String?=null
     private var widthPx=1f; private var heightPx=1f
     private val density=context.resources.displayMetrics.density
@@ -35,7 +38,7 @@ class AigGlesRenderer(
     override fun onDrawFrame(gl:GL10?){
         val p=program?:return
         GLES30.glClearColor(0.004f,0.02f,0.04f,1f);GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
-        when(sceneRouter.current){SceneId.HOME->drawHome(p);SceneId.CAD->drawCad(p);SceneId.CAM->drawCam(p);else->drawHome(p)}
+        when(sceneRouter.current){SceneId.HOME->drawHome(p);SceneId.CAD->drawCad(p);SceneId.CAM->drawCam(p);SceneId.NC->drawNc(p);else->drawHome(p)}
         if(!firstFrameLogged){GLES30.glFinish();Log.i("AIG4","AIG4_GLES|FIRST_FRAME|PASS");firstFrameLogged=true;firstFrameSignal?.fireOnce()}
     }
 
@@ -56,6 +59,37 @@ class AigGlesRenderer(
         drawCamPath(p,viewport,presentation.candidate,floatArrayOf(1f,0.72f,0.2f,0.88f),2f)
         presentation.localMessage?.let{drawCamMessage(p,viewportNode.bounds,it)}
         nodes.filter{it.id!="CAM.VIEWPORT"}.forEach{drawNode(p,it)}
+    }
+    private fun drawNc(p:GlesProgram){
+        val controller=ncController;val source=ncStateSource
+        if(controller==null||source==null){drawHome(p);return}
+        val nodes=controller.nodes(widthPx,heightPx,density)
+        val editor=nodes.first{it.id=="NC.EDITOR"}
+        p.draw(GlesGeometryBuffer.quad(editor.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.008f,0.025f,0.045f,1f))
+        val state=source.snapshotForFrame();val presentation=NcPresentation.from(state)
+        val statusHeight=28f*density;val lineHeight=22f*density
+        val usable=(editor.bounds.height-statusHeight-6f*density).coerceAtLeast(lineHeight)
+        val maxLines=max(1,floor(usable/lineHeight).toInt())
+        val cursorIndex=(presentation.cursorLine-1).coerceAtLeast(0)
+        val maxStart=max(0,presentation.lines.size-maxLines)
+        val start=(cursorIndex-maxLines/2).coerceIn(0,maxStart)
+        presentation.lines.drop(start).take(maxLines).forEachIndexed{row,line->
+            val top=editor.bounds.top+row*lineHeight
+            val bounds=UiBounds(editor.bounds.left+10f*density,top,editor.bounds.right-8f*density,top+lineHeight)
+            if(line.number==presentation.cursorLine)p.draw(GlesGeometryBuffer.quad(bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.05f,0.22f,0.30f,0.82f))
+            val label=line.number.toString().padStart(4,'0')+"  "+line.text
+            textures?.labelTexture(label)?.let{tex->p.draw(GlesGeometryBuffer.quad(bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex)}
+        }
+        val status=UiBounds(editor.bounds.left+8f*density,editor.bounds.bottom-statusHeight,editor.bounds.right-8f*density,editor.bounds.bottom)
+        val local=presentation.localMessage
+        val statusColor=when(local?.severity){MessageSeverity.ALARM->floatArrayOf(0.30f,0.03f,0.04f,0.94f);MessageSeverity.WARNING->floatArrayOf(0.28f,0.18f,0.02f,0.94f);else->floatArrayOf(0.02f,0.12f,0.18f,0.92f)}
+        p.draw(GlesGeometryBuffer.quad(status),GLES30.GL_TRIANGLES,widthPx,heightPx,statusColor)
+        val candidate=presentation.candidateId?.let{" | CAND $it"}.orEmpty()
+        val preview=presentation.previewCandidateId?.let{" | PREVIEW $it"}.orEmpty()
+        val warning=local?.let{" | ${it.severity.name}: ${it.text}"}.orEmpty()
+        val statusText="WORK ${presentation.workingId} V${presentation.revision} | ${state.editMode.name} | CAM ${presentation.camLink.name}"+candidate+preview+warning
+        textures?.labelTexture(statusText)?.let{tex->p.draw(GlesGeometryBuffer.quad(status),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex)}
+        nodes.filter{it.id!="NC.EDITOR"}.forEach{drawNode(p,it)}
     }
     private fun drawCamPath(p:GlesProgram,viewport:CamViewportNode,points:List<CamPointSnapshot>,color:FloatArray,lineWidth:Float){
         if(points.size==1){val s=viewport.worldToScreen(points[0].x,points[0].y);p.draw(GlesGeometryBuffer.line(s.first-5f,s.second,s.first+5f,s.second),GLES30.GL_LINES,widthPx,heightPx,color,lineWidth=lineWidth);return}

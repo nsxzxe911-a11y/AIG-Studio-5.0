@@ -1,6 +1,7 @@
 package com.aigstudio.runtime4.contract
 
 enum class NcMotionKind { NONE, G0, G1, G2, G3, CYCLE }
+enum class NcEditMode { INSERT, REPLACE }
 enum class NcCamLinkState { CONNECTED, DISCONNECTED }
 enum class NcCandidateSourceKind { CAM_POST, MANUAL_IMPORT, AI_SUGGESTION }
 
@@ -104,6 +105,7 @@ data class NcState(
     val motionProgram:MotionProgram?=null,
     val diagnostics:List<NcDiagnostic> = emptyList(),
     val saveHistory:List<NcSaveRecord> = emptyList(),
+    val editMode:NcEditMode=NcEditMode.INSERT,
     val message:RuntimeMessage?=null,
 ){ companion object { fun initial(profile:NcMachineProfileSnapshot=NcMachineProfileSnapshot.defaultFanuc3Ax())=NcState(machineProfile=profile) } }
 
@@ -112,6 +114,7 @@ sealed interface NcCommand {
     data class InsertText(val text:String):NcCommand
     data object Backspace:NcCommand
     data object DeleteForward:NcCommand
+    data object ToggleInsertMode:NcCommand
     data class SetCursor(val offset:Int):NcCommand
     data object NewBlock:NcCommand
     data object ToggleBlockSkip:NcCommand
