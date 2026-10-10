@@ -30,7 +30,10 @@ class FourthHostRecoveryRegression {
         val file=sequenceOf(File("build.gradle.kts"),File("product-host-android/build.gradle.kts")).firstOrNull{it.isFile} ?: error("product-host build.gradle.kts not found")
         val text=file.readText()
         assertTrue(text.contains("applicationId = \"com.aigstudio.production.fourth395\""))
-        assertTrue(text.contains("versionName = \"397-fourth-nc\""))
-        assertTrue(text.contains("versionCode = 397001"))
-    }
-}
+        val versionCode=Regex("versionCode = (\\d+)").find(text)?.groupValues?.get(1)?.toInt() ?: error("versionCode missing")
+        val versionName=Regex("versionName = \"([^\"]+)\"").find(text)?.groupValues?.get(1) ?: error("versionName missing")
+        val major=versionName.substringBefore('-').toIntOrNull() ?: error("numeric version prefix missing")
+        assertTrue("versionCode must not regress",versionCode >= 398001)
+        assertTrue("versionName must not regress",major >= 398)
+        assertTrue("Fourth Runtime milestone name required",versionName.contains("fourth-"))
+    }}

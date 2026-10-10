@@ -22,3 +22,7 @@ dependencies {
     implementation(project(":renderer-android"))
     testImplementation("junit:junit:4.13.2")
 }
+
+tasks.matching { it.name.endsWith("UnitTest") }.configureEach {
+    inputs.file(project.layout.projectDirectory.file("build.gradle.kts"))
+}
