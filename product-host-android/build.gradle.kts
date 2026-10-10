@@ -1,4 +1,4 @@
-﻿plugins { id("com.android.application") }
+plugins { id("com.android.application") }
 
 android {
     namespace = "com.aigstudio.runtime4.host"
@@ -7,8 +7,8 @@ android {
         applicationId = "com.aigstudio.production.fourth395"
         minSdk = 26
         targetSdk = 36
-        versionCode = 403001
-        versionName = "403-fourth-product-links-safe"
+        versionCode = 404001
+        versionName = "404-fourth-real-axis-safe"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
