@@ -1,4 +1,4 @@
-﻿package com.aigstudio.runtime4.renderer.gpu
+package com.aigstudio.runtime4.renderer.gpu
 
 import android.content.Context
 import android.opengl.GLSurfaceView
@@ -155,16 +155,16 @@ class AigGlesView(
         Log.i("AIG4",if(result.accepted)"AIG4_NC|COMMAND|$name|ACCEPTED|REV=${result.state.working.revision}" else "AIG4_NC|COMMAND|$name|REJECTED|LOCAL_MESSAGE")
     }
 
-    private fun currentNodes(density:Float):List<SceneNode> = when(sceneRouter.current){
-        SceneId.HOME->HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
-        SceneId.CAD->cadController.nodes(width.toFloat(),height.toFloat(),density)
-        SceneId.CAM->camController.nodes(width.toFloat(),height.toFloat(),density)
-        SceneId.SIM->simController?.nodes(width.toFloat(),height.toFloat(),density) ?: SimSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
-        SceneId.AXIS3->Axis3SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
-        SceneId.AXIS4->Axis4SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
-        SceneId.AXIS5->Axis5SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
-        SceneId.AXIS6->Axis6SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
-        SceneId.NC->ncController?.nodes(width.toFloat(),height.toFloat(),density) ?: HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
-        else->HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
-    }
+    private fun currentNodes(density:Float):List<SceneNode> = TopLevelNodeResolver.resolve(sceneRouter.current,TopLevelNodeSources(
+        home={HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+        cad={cadController.nodes(width.toFloat(),height.toFloat(),density)},
+        cam={camController.nodes(width.toFloat(),height.toFloat(),density)},
+        sim={simController?.nodes(width.toFloat(),height.toFloat(),density) ?: SimSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+        axis3={Axis3SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+        axis4={Axis4SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+        axis5={Axis5SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+        axis6={Axis6SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+        nc={ncController?.nodes(width.toFloat(),height.toFloat(),density) ?: NcSceneLayout.nodes(width.toFloat(),height.toFloat(),density,NcState.initial())},
+        ai={aiController?.nodes(width.toFloat(),height.toFloat(),density) ?: AiSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+    ))
 }
