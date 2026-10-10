@@ -1,6 +1,7 @@
 package com.aigstudio.runtime4.renderer
 
 import com.aigstudio.runtime4.contract.*
+import kotlin.math.ceil
 import kotlin.math.max
 
 object NcSceneLayout {
@@ -12,10 +13,27 @@ object NcSceneLayout {
     )
 
     fun nodes(widthPx:Float,heightPx:Float,density:Float,state:NcState):List<SceneNode>{
-        val touch=48f*density; val gap=6f*density; val landscape=widthPx>heightPx
-        val columns=if(landscape)10 else 6
-        val button=max(touch,(widthPx-gap*(columns+1))/columns)
-        fun bounds(index:Int):UiBounds{val col=index%columns;val row=index/columns;val left=gap+col*(button+gap);val top=gap+row*(touch+gap);return UiBounds(left,top,left+button,top+touch)}
+        val touch=48f*density
+        val gap=3f*density
+        val landscape=widthPx>heightPx
+        val navTop=heightPx-touch-gap
+        val columns=if(landscape)7 else 6
+        val rows=ceil(controls.size/columns.toDouble()).toInt()
+        val panelMinWidth=columns*touch+(columns+1)*gap
+        val panelWidth=if(landscape) max(widthPx*0.42f,panelMinWidth) else widthPx
+        val panelLeft=if(landscape) widthPx-panelWidth else 0f
+        val buttonWidth=max(touch,(panelWidth-gap*(columns+1))/columns)
+        val keypadHeight=rows*touch+(rows+1)*gap
+        val panelTop=if(landscape) 0f else (navTop-gap-keypadHeight).coerceAtLeast(gap)
+
+        fun controlBounds(index:Int):UiBounds{
+            val col=index%columns
+            val row=index/columns
+            val left=panelLeft+gap+col*(buttonWidth+gap)
+            val top=panelTop+gap+row*(touch+gap)
+            return UiBounds(left,top,left+buttonWidth,top+touch)
+        }
+
         val nodes=controls.mapIndexed{index,id->
             val visual=when(id){
                 "NC.CAM_LINK"->if(state.camLink==NcCamLinkState.CONNECTED)VisualState.SELECTED else VisualState.NORMAL
@@ -24,12 +42,14 @@ object NcSceneLayout {
                 "NC.INSERT"->if(state.editMode==NcEditMode.REPLACE)VisualState.SELECTED else VisualState.NORMAL
                 else->VisualState.NORMAL
             }
-            RgbGlassButtonNode(id,bounds(index),30,labelFor(id),null,null,visual,ncCommandBinding=commandFor(id,state))
+            RgbGlassButtonNode(id,controlBounds(index),30,labelFor(id),null,null,visual,ncCommandBinding=commandFor(id,state))
         }.toMutableList<SceneNode>()
-        val rows=(controls.size+columns-1)/columns
-        val toolbarBottom=gap+rows*(touch+gap)
-        val navTop=heightPx-touch-gap
-        val editorBounds=UiBounds(gap,toolbarBottom,widthPx-gap,navTop-gap)
+
+        val editorBounds=if(landscape){
+            UiBounds(gap,gap,(panelLeft-gap).coerceAtLeast(gap+touch),navTop-gap)
+        }else{
+            UiBounds(gap,gap,widthPx-gap,(panelTop-gap).coerceAtLeast(gap+touch))
+        }
         nodes+=NcEditorViewportNode("NC.EDITOR",editorBounds,1)
         val lineHeight=22f*density
         state.diagnostics.filter{it.severity!=MessageSeverity.INFO}.forEachIndexed{index,diagnostic->
