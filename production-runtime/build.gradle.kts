@@ -124,3 +124,8 @@ tasks.register<JavaExec>("fourthNcCandidateRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("FourthNcCandidateRegressionKt")
 }
+tasks.register<JavaExec>("ncCheckpointRegression") {
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("NcCheckpointRegressionKt")
+}

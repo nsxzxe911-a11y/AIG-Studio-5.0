@@ -5,7 +5,7 @@ import java.security.MessageDigest
 
 class FourthNcRuntimeAdapter(
     profile:NcMachineProfileSnapshot=NcMachineProfileSnapshot.defaultFanuc3Ax(),
-):NcRuntimePort {
+):NcRuntimePort,NcPersistencePort {
     private var workingRevision=0L
     private var motionRevision=0L
     private var saveRevision=0L
@@ -21,6 +21,29 @@ class FourthNcRuntimeAdapter(
     }
 
     override fun snapshot():NcState=state
+    override fun exportCheckpoint():String=NcCheckpointCodec.encode(NcCheckpointData(state))
+
+    override fun restoreCheckpoint(raw:String):NcDispatchResult {
+        val before=state
+        return try {
+            val data=NcCheckpointCodec.decode(raw); val saved=data.state; val expected=saved.motionProgram ?: error("NC motion identity missing")
+            val parsed=NcMotionAdapter.parse(saved.working.program,saved.machineProfile,expected.revision)
+            require(parsed.first.digest==expected.digest){"NC MotionProgram digest mismatch"}
+            fun hydrate(candidate:NcCandidate):NcCandidate=candidate.copy(motionProgram=NcMotionAdapter.parse(candidate.program,saved.machineProfile,candidate.revision).first)
+            state=saved.copy(
+                candidate=saved.candidate?.let(::hydrate),
+                savedCandidates=saved.savedCandidates.map(::hydrate),
+                motionProgram=parsed.first,diagnostics=parsed.second,message=null,
+            )
+            workingRevision=state.working.revision
+            motionRevision=expected.revision
+            saveRevision=state.saveHistory.maxOfOrNull{it.revision} ?: 0L
+            accepted()
+        } catch(e:Exception){
+            state=before.copy(message=RuntimeMessage(MessageSeverity.WARNING,e.message?:"NC checkpoint rejected"))
+            NcDispatchResult(false,state)
+        }
+    }
 
     override fun dispatch(command:NcCommand):NcDispatchResult = try {
         when(command){
