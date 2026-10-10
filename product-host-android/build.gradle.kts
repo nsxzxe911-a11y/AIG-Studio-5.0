@@ -7,8 +7,8 @@ android {
         applicationId = "com.aigstudio.production.fourth395"
         minSdk = 26
         targetSdk = 36
-        versionCode = 399001
-        versionName = "399-fourth-axis4"
+        versionCode = 400001
+        versionName = "400-fourth-real-axis"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
