@@ -9,6 +9,24 @@ data class AigPageLayout(
     val baseZ:Int = 50,
 )
 
+
+class AigLabelNode(
+    id:String,
+    bounds:UiBounds,
+    z:Int,
+    val text:String,
+    visualState:VisualState=VisualState.NORMAL,
+    visible:Boolean=true,
+):SceneNode(id,bounds,z,visualState,false,visible)
+
+class AigIconNode(
+    id:String,
+    bounds:UiBounds,
+    z:Int,
+    val textureRef:String?,
+    visualState:VisualState=VisualState.NORMAL,
+    visible:Boolean=true,
+):SceneNode(id,bounds,z,visualState,false,visible)
 object AigComponentNodeAdapter {
     fun nodes(descriptor:AigUiPageDescriptor,layout:AigPageLayout):List<SceneNode> =
         descriptor.components.filter{it.visible}.mapIndexed{index,component->
@@ -36,9 +54,8 @@ object AigComponentNodeAdapter {
                 )
                 AigUiKind.PANEL,AigUiKind.STATUS_CARD,AigUiKind.VIEWPORT,AigUiKind.HUD,AigUiKind.CONTROL_DECK->
                     RgbGlassPanelNode(component.controlId,bounds,layout.baseZ+index,AigProfessionalTokens.skinRole(component.kind))
-                AigUiKind.ICON,AigUiKind.LABEL->SceneNode(
-                    component.controlId,bounds,layout.baseZ+index,visual,false,true,
-                )
+                AigUiKind.LABEL->AigLabelNode(component.controlId,bounds,layout.baseZ+index,label,visual,component.visible)
+                AigUiKind.ICON->AigIconNode(component.controlId,bounds,layout.baseZ+index,texture,visual,component.visible)
             }
         }
 }

@@ -7,8 +7,8 @@ android {
         applicationId = "com.aigstudio.production.fourth395"
         minSdk = 26
         targetSdk = 36
-        versionCode = 409001
-        versionName = "409-fourth-morning-home-zh-tw-tight"
+        versionCode = 410001
+        versionName = "410-fourth-professional-home"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

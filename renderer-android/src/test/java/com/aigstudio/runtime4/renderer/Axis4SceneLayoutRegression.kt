@@ -13,7 +13,8 @@ class Axis4SceneLayoutRegression {
         assertEquals(SceneId.AXIS4, SharedVisualPolicy.destination("NAV.4AX"))
         assertEquals(FourthRenderRoute.AXIS4, RenderRoutePolicy.forScene(SceneId.AXIS4))
         assertEquals(FourthRenderRoute.AXIS5, RenderRoutePolicy.forScene(SceneId.AXIS5))
-        assertNotNull(HomeSceneLayout.nodes(1080f,1920f,2f).firstOrNull{it.id=="NAV.4AX"})
+        assertTrue(HomeSceneLayout.nodes(1080f,1920f,2f).none{it.id=="NAV.4AX"})
+        assertNotNull(HomeSceneLayout.nodes(1080f,1920f,2f).firstOrNull{it.id=="NAV.MULTIFUNCTION"})
         assertNotNull(Axis3SceneLayout.nodes(1080f,1920f,2f).firstOrNull{it.id=="NAV.4AX"})
     }
 

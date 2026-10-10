@@ -26,8 +26,9 @@ class Axis3SceneLayoutRegression {
         }
     }
 
-    @Test fun homeNavigationContains3axEntry() {
+    @Test fun homeRoutesAxisPagesThroughMultifunction() {
         val nodes = HomeSceneLayout.nodes(1080f, 2316f, 3f)
-        assertNotNull(nodes.firstOrNull { it.id == "NAV.3AX" })
+        assertTrue(nodes.none { it.id == "NAV.3AX" })
+        assertNotNull(nodes.firstOrNull { it.id == "NAV.MULTIFUNCTION" })
     }
 }

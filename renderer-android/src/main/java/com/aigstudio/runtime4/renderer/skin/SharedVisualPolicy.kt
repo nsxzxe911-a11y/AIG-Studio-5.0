@@ -1,4 +1,4 @@
-﻿package com.aigstudio.runtime4.renderer
+package com.aigstudio.runtime4.renderer
 
 import com.aigstudio.runtime4.contract.SceneId
 
@@ -14,6 +14,7 @@ object SharedVisualPolicy {
         "NAV.CAD" -> SceneId.CAD
         "NAV.CAM" -> SceneId.CAM
         "NAV.SIM" -> SceneId.SIM
+        "NAV.MULTIFUNCTION" -> SceneId.MULTIFUNCTION
         "NAV.3AX" -> SceneId.AXIS3
         "NAV.4AX" -> SceneId.AXIS4
         "NAV.5AX" -> SceneId.AXIS5

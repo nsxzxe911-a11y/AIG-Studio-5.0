@@ -50,5 +50,5 @@ class ProductControlDeckController(private val runtime:PageConnectionRuntimePort
     }
 }
 
-fun SceneId.toPageId():PageId=when(this){SceneId.HOME->PageId.HOME;SceneId.CAD->PageId.CAD;SceneId.CAM->PageId.CAM;SceneId.SIM->PageId.SIM;SceneId.AXIS3->PageId.AXIS3;SceneId.AXIS4->PageId.AXIS4;SceneId.AXIS5->PageId.AXIS5;SceneId.AXIS6->PageId.AXIS6;SceneId.NC->PageId.NC;SceneId.AI->PageId.AI}
+fun SceneId.toPageId():PageId=when(this){SceneId.HOME->PageId.HOME;SceneId.CAD->PageId.CAD;SceneId.CAM->PageId.CAM;SceneId.SIM->PageId.SIM;SceneId.MULTIFUNCTION->PageId.MULTIFUNCTION;SceneId.AXIS3->PageId.AXIS3;SceneId.AXIS4->PageId.AXIS4;SceneId.AXIS5->PageId.AXIS5;SceneId.AXIS6->PageId.AXIS6;SceneId.NC->PageId.NC;SceneId.AI->PageId.AI}
 private fun PageId.sceneNavName():String=when(this){PageId.HOME->"HOME";PageId.CAD->"CAD";PageId.CAM->"CAM";PageId.SIM->"SIM";PageId.MULTIFUNCTION->"MULTIFUNCTION";PageId.AXIS3->"3AX";PageId.AXIS4->"4AX";PageId.AXIS5->"5AX";PageId.AXIS6->"6AX";PageId.NC->"NC";PageId.AI->"AI"}

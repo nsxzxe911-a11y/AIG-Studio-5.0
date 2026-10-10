@@ -11,6 +11,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.view.inputmethod.InputMethodManager
 import com.aigstudio.runtime4.contract.*
+import com.aigstudio.runtime4.contract.ui.AigUiAction
 import com.aigstudio.runtime4.renderer.*
 
 class AigGlesView(
@@ -116,6 +117,16 @@ class AigGlesView(
         return true
     }
 
+    private fun navigateTo(destination:SceneId){
+        if(destination==SceneId.NC && ncController==null){
+            Log.w("AIG4","AIG4_NC|NAV|REJECTED|LOCAL_MESSAGE|NC_RUNTIME_NOT_BOUND")
+            return
+        }
+        val from=sceneRouter.current
+        sceneRouter.navigate(destination)
+        if(destination==SceneId.NC)openNcKeyboard()
+        Log.i("AIG4","AIG4_SCENE|${from.name}_TO_${destination.name}|PASS")
+    }
     private fun openNcKeyboard(){
         if(ncInput==null)return
         requestFocus()
@@ -123,18 +134,16 @@ class AigGlesView(
     }
 
     private fun activate(nodeId:String){
-        val destination=SharedVisualPolicy.destination(nodeId)
-        if(destination!=null){
-            if(destination==SceneId.NC && ncController==null){
-                Log.w("AIG4","AIG4_NC|NAV|REJECTED|LOCAL_MESSAGE|NC_RUNTIME_NOT_BOUND")
-                return
-            }
-            val from=sceneRouter.current
-            sceneRouter.navigate(destination)
-            if(destination==SceneId.NC)openNcKeyboard()
-            Log.i("AIG4","AIG4_SCENE|${from.name}_TO_${destination.name}|PASS")
+        val professionalAction=currentNodes(resources.displayMetrics.density)
+            .filterIsInstance<RgbGlassButtonNode>()
+            .firstOrNull{it.id==nodeId}
+            ?.aigActionBinding
+        if(professionalAction is AigUiAction.Navigate){
+            navigateTo(professionalAction.page.toSceneId())
             return
         }
+        val destination=SharedVisualPolicy.destination(nodeId)
+        if(destination!=null){navigateTo(destination);return}
         productDeckController?.activate(sceneRouter.current.toPageId(),nodeId)?.let{state->Log.i("AIG4","AIG4_LINK|"+state.page.name+"|"+nodeId+"|PASS");requestRender();return}
         when(sceneRouter.current){
             SceneId.CAD->cadController.activate(nodeId)?.let{logCadCommand(nodeId.substringAfter("CAD."),it)}
@@ -170,6 +179,7 @@ class AigGlesView(
             axis6={Axis6SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
             nc={ncController?.nodes(width.toFloat(),height.toFloat(),density) ?: NcSceneLayout.nodes(width.toFloat(),height.toFloat(),density,NcState.initial())},
             ai={aiController?.nodes(width.toFloat(),height.toFloat(),density) ?: AiSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            multifunction={MultifunctionPlaceholderLayout.nodes(width.toFloat(),height.toFloat(),density)},
         ))
         return base+(productDeckController?.nodes(sceneRouter.current.toPageId(),width.toFloat(),height.toFloat(),density) ?: emptyList())
     }

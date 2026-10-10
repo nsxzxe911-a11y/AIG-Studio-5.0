@@ -54,6 +54,7 @@ class AigGlesRenderer(
             FourthRenderRoute.CAD->drawCad(p)
             FourthRenderRoute.CAM->drawCam(p)
             FourthRenderRoute.SIM->drawSim(p)
+            FourthRenderRoute.MULTIFUNCTION->drawMultifunction(p)
             FourthRenderRoute.AXIS3->program3d?.let{p3->axisSceneRenderer.drawAxis3(p,p3,textures,widthPx,heightPx,density){node->drawNode(p,node)}}
             FourthRenderRoute.AXIS4->program3d?.let{p3->axisSceneRenderer.drawAxis4(p,p3,textures,widthPx,heightPx,density){node->drawNode(p,node)}}
             FourthRenderRoute.AXIS5->program3d?.let{p3->axisSceneRenderer.drawAxis5(p,p3,textures,widthPx,heightPx,density){node->drawNode(p,node)}}
@@ -103,7 +104,11 @@ class AigGlesRenderer(
         Log.w("AIG4","AIG4_SCENE|${scene.name}|UNAVAILABLE|LOCAL_MESSAGE")
     }
     private fun drawHome(p:GlesProgram){
-        HomeSceneLayout.nodes(widthPx,heightPx,density).forEach{drawNode(p,it)}
+        val presentation=HomeLivePresentation.from(ncStateSource?.snapshotForFrame(),aiStateSource?.snapshot())
+        HomeSceneLayout.nodes(widthPx,heightPx,density,presentation).forEach{drawNode(p,it)}
+    }
+    private fun drawMultifunction(p:GlesProgram){
+        MultifunctionPlaceholderLayout.nodes(widthPx,heightPx,density).forEach{drawNode(p,it)}
     }
     private fun drawCad(p:GlesProgram){
         val nodes=cadController.nodes(widthPx,heightPx,density);val viewportNode=nodes.first{it.id=="CAD.VIEWPORT"};val viewport=CadViewportNode(viewportNode.bounds)
@@ -227,6 +232,14 @@ class AigGlesRenderer(
 
     private fun drawNode(p:GlesProgram,node:SceneNode){
         if(!node.visible)return
+        if(node is AigLabelNode){
+            textures?.labelTextureRef(node.text)?.let{tex->val fitted=LabelTextureLayout.contain(node.bounds,tex.aspectRatio,2f*density,true);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.92f,0.98f,1f,0.98f),tex.id)}
+            return
+        }
+        if(node is AigIconNode){
+            textures?.texture(node.textureRef)?.let{tex->p.draw(GlesGeometryBuffer.quad(node.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.94f),tex)}
+            return
+        }
         if(node is RgbGlassPanelNode){drawGlassPanel(p,node);return}
         val selectedByTool=sceneRouter.current==SceneId.CAD && node.id=="CAD.${stateSource.snapshotForFrame().activeTool.name}"
         val pressed=node.id==pressedNodeId
