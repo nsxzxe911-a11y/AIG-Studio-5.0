@@ -1,4 +1,4 @@
-﻿package com.aigstudio.runtime4.renderer
+package com.aigstudio.runtime4.renderer
 
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -11,6 +11,7 @@ data class AxisNavigationResult(
 
 object AxisNavigationLayout {
     private data class Spec(val id:String,val label:String,val texture:String?=null)
+    private data class Metrics(val touch:Float,val gap:Float,val columns:Int,val rows:Int,val buttonWidth:Float,val top:Float)
     private val specs=listOf(
         Spec("NAV.HOME","HOME","aig-rgb/icons/workspace.png"),
         Spec("NAV.CAD","CAD","aig-rgb/icons/cad.png"),
@@ -24,7 +25,7 @@ object AxisNavigationLayout {
         Spec("NAV.AI","AI"),
     )
 
-    fun layout(widthPx:Float,heightPx:Float,density:Float,selectedId:String):AxisNavigationResult {
+    private fun metrics(widthPx:Float,heightPx:Float,density:Float):Metrics {
         val touch=SharedVisualPolicy.touchPx(density)
         val gap=SharedVisualPolicy.gapPx(density)
         val maxColumns=max(1,floor((widthPx-gap)/(touch+gap)).toInt())
@@ -33,15 +34,30 @@ object AxisNavigationLayout {
         val buttonWidth=max(touch,(widthPx-gap*(columns+1))/columns)
         val navHeight=gap+rows*(touch+gap)
         val top=(heightPx-navHeight).coerceAtLeast(0f)
+        return Metrics(touch,gap,columns,rows,buttonWidth,top)
+    }
+
+    fun layout(widthPx:Float,heightPx:Float,density:Float,selectedId:String):AxisNavigationResult {
+        val m=metrics(widthPx,heightPx,density)
         val buttons=specs.mapIndexed{index,spec->
-            val row=index/columns;val col=index%columns
-            val left=gap+col*(buttonWidth+gap);val y=top+gap+row*(touch+gap)
+            val row=index/m.columns;val col=index%m.columns
+            val left=m.gap+col*(m.buttonWidth+m.gap);val y=m.top+m.gap+row*(m.touch+m.gap)
             RgbGlassButtonNode(
-                spec.id,UiBounds(left,y,(left+buttonWidth).coerceAtMost(widthPx-gap),(y+touch).coerceAtMost(heightPx-gap)),50,
+                spec.id,UiBounds(left,y,(left+m.buttonWidth).coerceAtMost(widthPx-m.gap),(y+m.touch).coerceAtMost(heightPx-m.gap)),50,
                 spec.label,spec.texture,null,if(spec.id==selectedId)VisualState.SELECTED else VisualState.NORMAL,skinRole=RgbSkinRole.NAVIGATION
             )
         }
-        return AxisNavigationResult(top,buttons)
+        return AxisNavigationResult(m.top,buttons)
+    }
+
+    fun freeSlots(widthPx:Float,heightPx:Float,density:Float):List<UiBounds> {
+        val m=metrics(widthPx,heightPx,density)
+        val occupiedLast=specs.size-(m.rows-1)*m.columns
+        if(occupiedLast>=m.columns)return emptyList()
+        val row=m.rows-1
+        return (occupiedLast until m.columns).map{col->
+            val left=m.gap+col*(m.buttonWidth+m.gap);val y=m.top+m.gap+row*(m.touch+m.gap)
+            UiBounds(left,y,(left+m.buttonWidth).coerceAtMost(widthPx-m.gap),(y+m.touch).coerceAtMost(heightPx-m.gap))
+        }
     }
 }
-

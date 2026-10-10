@@ -1,5 +1,7 @@
 package com.aigstudio.runtime4.renderer
 import com.aigstudio.runtime4.contract.*
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.max
 
 data class ProductControlDescriptor(val id:String,val source:PageId,val target:PageId?,val label:String,val connected:Boolean)
@@ -23,10 +25,14 @@ object ProductControlDeck {
     }
     fun nodes(page:PageId,state:PageCapabilityState,expanded:Boolean,widthPx:Float,heightPx:Float,density:Float):List<SceneNode>{
         val d=descriptors(page,state,expanded);if(d.isEmpty())return emptyList()
+        val free=AxisNavigationLayout.freeSlots(widthPx,heightPx,density)
+        if(free.size>=d.size)return d.mapIndexed{index,it->RgbGlassButtonNode(it.id,free[index],60,it.label,null,null,if(it.connected)VisualState.SELECTED else VisualState.NORMAL,skinRole=RgbSkinRole.CONTROL)}
         val touch=SharedVisualPolicy.touchPx(density);val gap=SharedVisualPolicy.gapPx(density);val count=d.size
-        val buttonWidth=max(touch,(widthPx-gap*(count+1))/count);val navTop=AxisNavigationLayout.layout(widthPx,heightPx,density,"NAV."+page.sceneNavName()).top
-        val bottom=(navTop-gap).coerceAtLeast(touch+gap);val top=bottom-touch
-        return d.mapIndexed{index,it->val left=gap+index*(buttonWidth+gap);RgbGlassButtonNode(it.id,UiBounds(left,top,(left+buttonWidth).coerceAtMost(widthPx-gap),bottom),60,it.label,null,null,if(it.connected)VisualState.SELECTED else VisualState.NORMAL,skinRole=RgbSkinRole.CONTROL)}
+        val maxColumns=max(1,floor((widthPx-gap)/(touch+gap)).toInt());val columns=max(1,minOf(count,maxColumns));val rows=ceil(count.toDouble()/columns.toDouble()).toInt()
+        val buttonWidth=max(touch,(widthPx-gap*(columns+1))/columns);val panelHeight=rows*touch+max(0,rows-1)*gap
+        val navTop=AxisNavigationLayout.layout(widthPx,heightPx,density,"NAV."+page.sceneNavName()).top
+        val top=(heightPx*0.36f).coerceAtMost((navTop-gap-panelHeight).coerceAtLeast(gap)).coerceAtLeast(gap)
+        return d.mapIndexed{index,it->val row=index/columns;val col=index%columns;val left=gap+col*(buttonWidth+gap);val y=top+row*(touch+gap);RgbGlassButtonNode(it.id,UiBounds(left,y,(left+buttonWidth).coerceAtMost(widthPx-gap),y+touch),60,it.label,null,null,if(it.connected)VisualState.SELECTED else VisualState.NORMAL,skinRole=RgbSkinRole.CONTROL)}
     }
 }
 
