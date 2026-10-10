@@ -1,4 +1,4 @@
-package com.aigstudio.runtime4.renderer
+﻿package com.aigstudio.runtime4.renderer
 
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -15,11 +15,13 @@ object AxisNavigationLayout {
         Spec("NAV.HOME","HOME","aig-rgb/icons/workspace.png"),
         Spec("NAV.CAD","CAD","aig-rgb/icons/cad.png"),
         Spec("NAV.CAM","CAM","aig-rgb/icons/cam.png"),
+        Spec("NAV.SIM","SIM"),
         Spec("NAV.3AX","3AX"),
         Spec("NAV.4AX","4AX"),
         Spec("NAV.5AX","5AX"),
         Spec("NAV.6AX","6AX"),
         Spec("NAV.NC","NC"),
+        Spec("NAV.AI","AI"),
     )
 
     fun layout(widthPx:Float,heightPx:Float,density:Float,selectedId:String):AxisNavigationResult {
@@ -42,3 +44,4 @@ object AxisNavigationLayout {
         return AxisNavigationResult(top,buttons)
     }
 }
+

@@ -16,6 +16,8 @@ class AigGlesRenderer(
     camRuntime:CamRuntimePort,
     ncRuntime:NcRuntimePort?,
     axisRuntime:AxisRuntimePort,
+    simRuntime:SimRuntimePort?,
+    aiRuntime:AiRuntimePort?,
     private val sceneRouter:SceneRouter,
     private val cadController:CadSceneController,
     private val camController:CamSceneController,
@@ -26,11 +28,15 @@ class AigGlesRenderer(
     val camStateSource=CamRendererStateSource(camRuntime)
     val ncStateSource=ncRuntime?.let(::NcRendererStateSource)
     val axisStateSource=AxisRendererStateSource(axisRuntime)
+    val simStateSource=simRuntime
+    val aiStateSource=aiRuntime
+    private val simSceneController=simRuntime?.let(::SimSceneController)
+    private val aiSceneController=aiRuntime?.let(::AiSceneController)
     private val axisSceneRenderer=AxisGlesSceneRenderer(axisStateSource)
     @Volatile var pressedNodeId:String?=null
     private var widthPx=1f; private var heightPx=1f
     private val density=context.resources.displayMetrics.density
-    private var program:GlesProgram?=null; private var program3d:Gles3dProgram?=null; private var textures:RgbTextureCatalog?=null; private var firstFrameLogged=false
+    private var program:GlesProgram?=null; private var program3d:Gles3dProgram?=null; private var textures:RgbTextureCatalog?=null; private var firstFrameLogged=false; private var simFirstFrameLogged=false; private var aiFirstFrameLogged=false
 
     override fun onSurfaceCreated(gl:GL10?,config:EGLConfig?){
         program?.release();program3d?.release();textures?.release();program=GlesProgram();program3d=Gles3dProgram();textures=RgbTextureCatalog(context)
@@ -46,16 +52,48 @@ class AigGlesRenderer(
             FourthRenderRoute.HOME->drawHome(p)
             FourthRenderRoute.CAD->drawCad(p)
             FourthRenderRoute.CAM->drawCam(p)
+            FourthRenderRoute.SIM->drawSim(p)
             FourthRenderRoute.AXIS3->program3d?.let{p3->axisSceneRenderer.drawAxis3(p,p3,textures,widthPx,heightPx,density){node->drawNode(p,node)}}
             FourthRenderRoute.AXIS4->program3d?.let{p3->axisSceneRenderer.drawAxis4(p,p3,textures,widthPx,heightPx,density){node->drawNode(p,node)}}
             FourthRenderRoute.AXIS5->program3d?.let{p3->axisSceneRenderer.drawAxis5(p,p3,textures,widthPx,heightPx,density){node->drawNode(p,node)}}
             FourthRenderRoute.AXIS6->program3d?.let{p3->axisSceneRenderer.drawAxis6(p,p3,textures,widthPx,heightPx,density){node->drawNode(p,node)}}
             FourthRenderRoute.NC->drawNc(p)
+            FourthRenderRoute.AI->drawAi(p)
             FourthRenderRoute.UNAVAILABLE->drawUnavailable(p,sceneRouter.current)
         }
         if(!firstFrameLogged){GLES30.glFinish();Log.i("AIG4","AIG4_GLES|FIRST_FRAME|PASS");firstFrameLogged=true;firstFrameSignal?.fireOnce()}
     }
 
+    private fun drawSim(p:GlesProgram){
+        val controller=simSceneController;val runtime=simStateSource
+        val nodes=(controller?.nodes(widthPx,heightPx,density) ?: SimSceneLayout.nodes(widthPx,heightPx,density))
+        val viewport=nodes.first{it.id=="SIM.VIEWPORT"}.bounds
+        p.draw(GlesGeometryBuffer.quad(viewport),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.004f,0.018f,0.03f,1f))
+        val state=runtime?.snapshot() ?: SimState(message=RuntimeMessage(MessageSeverity.INFO,"SIM_RUNTIME_NOT_BOUND"))
+        if(state.ready && state.depth.isNotEmpty() && state.nx>0 && state.ny>0){
+            val stride=max(1,max(state.nx,state.ny)/32);val cw=viewport.width/state.nx.toFloat();val ch=viewport.height/state.ny.toFloat()
+            var iy=0;while(iy<state.ny){var ix=0;while(ix<state.nx){val idx=iy*state.nx+ix;if(idx<state.depth.size&&state.depth[idx]<0.0){val l=viewport.left+ix*cw;val top=viewport.top+iy*ch;val r=(l+cw*stride).coerceAtMost(viewport.right);val b=(top+ch*stride).coerceAtMost(viewport.bottom);val mag=((-state.depth[idx])/(-state.minDepthMm).coerceAtLeast(0.001)).toFloat().coerceIn(0f,1f);p.draw(GlesGeometryBuffer.quad(UiBounds(l,top,r,b)),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.08f+0.18f*mag,0.28f+0.58f*mag,0.42f+0.50f*mag,0.90f))};ix+=stride};iy+=stride}
+        }
+        val statusH=32f*density;val status=UiBounds(viewport.left+6f*density,viewport.top+6f*density,viewport.right-6f*density,(viewport.top+6f*density+statusH).coerceAtMost(viewport.bottom))
+        p.draw(GlesGeometryBuffer.quad(status),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.02f,0.10f,0.16f,0.94f))
+        val msg=state.message?.let{" | ${it.severity.name}: ${it.text}"}.orEmpty();val text="SIM ${state.displayMode} | CELLS ${state.removedCells} | MIN ${String.format(java.util.Locale.US,"%.3f",state.minDepthMm)} | VOL ${String.format(java.util.Locale.US,"%.3f",state.removedVolumeMm3)} | BLOCK ${state.blockIndex+1}/${state.blockCount}"+msg
+        textures?.labelTextureRef(text)?.let{tex->val fitted=LabelTextureLayout.contain(status,tex.aspectRatio,3f*density,true);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex.id)}
+        nodes.filter{it.id!="SIM.VIEWPORT"}.forEach{drawNode(p,it)}
+        if(!simFirstFrameLogged){Log.i("AIG4","AIG4_SIM|FIRST_FRAME|PASS|READY=${state.ready}|CELLS=${state.removedCells}|MOTION=${state.motionProgramId.orEmpty()}");simFirstFrameLogged=true}
+    }
+
+    private fun drawAi(p:GlesProgram){
+        val controller=aiSceneController;val runtime=aiStateSource
+        val nodes=(controller?.nodes(widthPx,heightPx,density) ?: AiSceneLayout.nodes(widthPx,heightPx,density))
+        val panel=nodes.first{it.id=="AI.STATUS"}.bounds
+        p.draw(GlesGeometryBuffer.quad(panel),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.006f,0.024f,0.045f,1f))
+        val state=runtime?.snapshot() ?: AiState(available=false,message=RuntimeMessage(MessageSeverity.INFO,"AI_RUNTIME_NOT_BOUND"))
+        val inset=10f*density;val rowH=34f*density
+        val rows=listOf("AI LOCAL VAULT | ${state.vaultState}",state.summary,"CHANGES ${state.hasChanges} | VERIFIED ${state.verified} | ISSUES ${state.issueCount}",state.message?.let{"${it.severity.name}: ${it.text}"}.orEmpty()).filter{it.isNotBlank()}
+        rows.forEachIndexed{i,label->val box=UiBounds(panel.left+inset,panel.top+inset+i*rowH,panel.right-inset,(panel.top+inset+(i+1)*rowH).coerceAtMost(panel.bottom));textures?.labelTextureRef(label)?.let{tex->val fitted=LabelTextureLayout.contain(box,tex.aspectRatio,2f*density,true);p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(1f,1f,1f,0.96f),tex.id)}}
+        nodes.filter{it.id!="AI.STATUS"}.forEach{drawNode(p,it)}
+        if(!aiFirstFrameLogged){Log.i("AIG4","AIG4_AI|FIRST_FRAME|PASS|AVAILABLE=${state.available}|STATE=${state.vaultState}");aiFirstFrameLogged=true}
+    }
     private fun drawUnavailable(p:GlesProgram,scene:SceneId){
         val inset=16f*density;val box=UiBounds(inset,inset,widthPx-inset,min(heightPx-inset,inset+72f*density))
         p.draw(GlesGeometryBuffer.quad(box),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.05f,0.10f,0.14f,0.94f))

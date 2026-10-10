@@ -5,6 +5,9 @@ data class SimState(
     val motionProgramId:String?=null,
     val motionRevision:Long=0L,
     val motionDigest:String="",
+    val blockIndex:Int=-1,
+    val blockCount:Int=0,
+    val displayMode:String="MATERIAL",
     val removedCells:Int=0,
     val minDepthMm:Double=0.0,
     val removedVolumeMm3:Double=0.0,
@@ -17,5 +20,7 @@ data class SimState(
 interface SimRuntimePort {
     fun snapshot():SimState
     fun run():SimState
+    fun step():SimState
     fun reset():SimState
+    fun toggleDisplay():SimState
 }

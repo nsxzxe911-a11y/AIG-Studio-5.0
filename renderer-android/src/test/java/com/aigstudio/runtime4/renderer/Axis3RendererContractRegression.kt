@@ -21,7 +21,7 @@ class Axis3RendererContractRegression {
         assertEquals(FourthRenderRoute.AXIS4, RenderRoutePolicy.forScene(SceneId.AXIS4))
         assertEquals(FourthRenderRoute.AXIS5, RenderRoutePolicy.forScene(SceneId.AXIS5))
         assertEquals(FourthRenderRoute.AXIS6, RenderRoutePolicy.forScene(SceneId.AXIS6))
-        assertEquals(FourthRenderRoute.UNAVAILABLE, RenderRoutePolicy.forScene(SceneId.SIM))
+        assertEquals(FourthRenderRoute.SIM, RenderRoutePolicy.forScene(SceneId.SIM))
     }
 
     @Test fun rendererStateSourceRequestsAxis3Truth() {

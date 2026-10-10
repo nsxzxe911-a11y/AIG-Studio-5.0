@@ -1,4 +1,4 @@
-package com.aigstudio.runtime4.renderer.gpu
+﻿package com.aigstudio.runtime4.renderer.gpu
 
 import android.content.Context
 import android.opengl.GLSurfaceView
@@ -19,16 +19,20 @@ class AigGlesView(
     private val camRuntime: CamRuntimePort,
     private val ncRuntime: NcRuntimePort? = null,
     private val axisRuntime: AxisRuntimePort,
+    private val simRuntime: SimRuntimePort? = null,
+    private val aiRuntime: AiRuntimePort? = null,
     onFirstFrame: (() -> Unit)? = null,
 ) : GLSurfaceView(context) {
     private val sceneRouter = SceneRouter(SceneId.HOME)
     private val cadController = CadSceneController(cadRuntime)
     private val camController = CamSceneController(camRuntime)
     private val ncController = ncRuntime?.let(::NcSceneController)
+    private val simController = simRuntime?.let(::SimSceneController)
+    private val aiController = aiRuntime?.let(::AiSceneController)
     private val ncInput = ncRuntime?.let { runtime -> NcTextInputBridge(runtime){ requestRender() } }
     private val pointerRouter = PointerGestureRouter(cadRuntime)
     private val firstFrameSignal = onFirstFrame?.let { callback -> FirstFrameSignal { post(callback) } }
-    private val aigRenderer = AigGlesRenderer(context,cadRuntime,camRuntime,ncRuntime,axisRuntime,sceneRouter,cadController,camController,ncController,firstFrameSignal)
+    private val aigRenderer = AigGlesRenderer(context,cadRuntime,camRuntime,ncRuntime,axisRuntime,simRuntime,aiRuntime,sceneRouter,cadController,camController,ncController,firstFrameSignal)
     private var pressedNode: String? = null
 
     init {
@@ -133,6 +137,8 @@ class AigGlesView(
             SceneId.CAD->cadController.activate(nodeId)?.let{logCadCommand(nodeId.substringAfter("CAD."),it)}
             SceneId.CAM->camController.activate(nodeId)?.let{logCamCommand(nodeId.substringAfter("CAM."),it)}
             SceneId.NC->ncController?.activate(nodeId)?.let{logNcCommand(nodeId.substringAfter("NC."),it)}
+            SceneId.SIM->simController?.activate(nodeId)?.let{Log.i("AIG4","AIG4_SIM|COMMAND|"+nodeId.substringAfter("SIM.")+"|STATE="+(if(it.ready)"READY" else "LOCAL"))}
+            SceneId.AI->aiController?.activate(nodeId)?.let{Log.i("AIG4","AIG4_AI|COMMAND|"+nodeId.substringAfter("AI.")+"|"+(if(it.accepted)"ACCEPTED" else "REJECTED_LOCAL_MESSAGE"))}
             else->Unit
         }
     }
@@ -153,6 +159,7 @@ class AigGlesView(
         SceneId.HOME->HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.CAD->cadController.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.CAM->camController.nodes(width.toFloat(),height.toFloat(),density)
+        SceneId.SIM->simController?.nodes(width.toFloat(),height.toFloat(),density) ?: SimSceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.AXIS3->Axis3SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.AXIS4->Axis4SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
         SceneId.AXIS5->Axis5SceneLayout.nodes(width.toFloat(),height.toFloat(),density)
