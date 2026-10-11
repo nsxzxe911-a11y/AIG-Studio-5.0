@@ -81,9 +81,19 @@ REBUILD：保留既有材料移除 base core，新增獨立 `SimEvaluationState`
 
 KEEP：AxisMode、XYZABC pose、motion program id/revision、block index/count。
 REBUILD：Axis Runtime 擴充成完整 execution state，包含 spindle、feed、tool、running/paused/stopped、axis limit result、pose safety、collision result、connection state。
-REBUILD：控制 Command 必須覆蓋 Play/Pause/Stop/Display 與對應軸 jog；3AX 無 A/B/C，4AX=A，5AX=A/B，6AX=A/B/C。
-5AX/6AX 必須保留 CAM/NC 傳入的 ABC，不得由 UI renderer 臨時產生姿態。
-安全/限位/碰撞由 Axis/Core Evaluator 計算，UI 只顯示。
+REBUILD：控制 Command 必須覆蓋 Play/Pause/Stop/Display 與目前 Machine Profile 宣告可用的線性/旋轉軸 jog。軸數決定自由度數量，但 A/B/C 的實際指派、旋轉方向、安裝方向與運動鏈不得由頁面名稱硬寫死。
+5AX/6AX 必須保留 CAM/NC 傳入的姿態資料，並由選定 Kinematics Profile 映射到實體旋轉模組；不得由 UI renderer 臨時產生姿態。
+安全/限位/碰撞由 Axis/Core Evaluator 依選定 Machine/Kinematics Profile 計算，UI 只顯示。
+
+#### 可替換 Machine / Kinematics / Scene Modules
+
+3AX / 4AX / 5AX / 6AX 頁面是能力頁，不等於單一固定機台外型。每頁可選不同 Machine Profile；同一 4AX 頁可切換直立轉台、臥式轉台、不同安裝方向或其他經驗證的四軸配置。5AX/6AX 亦可依實際機台採不同 head/table 組合。
+
+每個 `MachineProfile` 至少宣告：axisCount、logical axes、kinematic chain、axis transforms、travel/rotary limits、spindle module、table/rotary modules、fixture mount、scene profile、supported capabilities。
+
+`KinematicsProfile` 負責把 CAM/NC 的 XYZ/姿態命令映射為實際機台模組運動；`SceneModuleProfile` 只決定可視化幾何與組裝位置。兩者分離，禁止因更換外觀模型而改變加工數學，也禁止 Renderer 自行決定運動學。
+
+UI 控制由 Capability/readiness 動態顯示或禁用，不因更換機台形式而複製整頁 UI。切換 Machine Profile 必須在 execution STOPPED 狀態進行；切換後重新驗證軸限位、姿態、安全與目前程式相容性，不沿用未驗證的執行狀態。專案保存所選 Machine Profile ID / revision / digest，Android 與 Windows 後續使用相同語義。
 
 ### NC — Fanuc 編輯＋Execution Core
 
@@ -145,7 +155,7 @@ AIG CNC 與 AIG-II 共用 Capability ID、Runtime Contract 形狀、State/Comman
 - CAD 幾何與編輯結果可重現。
 - CAM manual XYZABC、避讓、Safe-Z、方向與策略評估有數值斷言。
 - SIM removed cells/depth/volume/progress/safety 有數值證據，不以截圖替代。
-- Axis 3/4/5/6 mode masking、limits、pose safety、execution state 有測試。
+- Axis 3/4/5/6 mode masking、Machine Profile 切換、kinematic mapping、limits、pose safety、execution state 有測試。
 - NC parser/diagnostics/execution mode/G34/cycles/custom M-code 有測試。
 - AI Verified 流程不可繞過 Working Copy。
 
@@ -163,7 +173,7 @@ AIG CNC 與 AIG-II 共用 Capability ID、Runtime Contract 形狀、State/Comman
 本文件是父架構規格，不把所有 Core 重製塞進一次修改。依賴順序固定：
 
 1. **Slice A — UI Capability Catalog**：完成十頁新版 UI surface、Capability ID、readiness、CORE_WAIT 行為與 shared contract skeleton。
-2. **Slice B — SIM + Axis Core**：先重製最缺的 SIM Evaluation 與 3/4/5/6AX execution/safety。
+2. **Slice B — SIM + Axis Core**：先重製最缺的 SIM Evaluation 與 3/4/5/6AX execution/safety，並建立可替換 Machine/Kinematics/Scene Module Profile。
 3. **Slice C — CAD/CAM/NC Gap**：保留成熟核心，只補新版 UI 明確缺口，包含 NC Execution。
 4. **Slice D — AI Cross-Module**：最後接入各模組 authoritative state，完成結構化診斷與 Verified 流程。
 
@@ -174,7 +184,7 @@ AIG CNC 與 AIG-II 共用 Capability ID、Runtime Contract 形狀、State/Comman
 本架構完成的判定不是「十頁都有圖」，而是：
 
 - 十頁每個可見功能都有 Capability ID 與 readiness。
-- 所有 READY 功能都有真 Command/State/Evaluator/Engine 路徑。
+- 所有 READY 功能都有真 Command/State/Evaluator/Engine 路徑；Axis 頁的機台形式由可驗證 Machine/Kinematics Profile 決定，不以固定模型硬編碼。
 - 所有 CORE_WAIT 功能不執行假 callback。
 - 動態值沒有 baked demo telemetry。
 - 評估結果由 Core 產生且有數值測試。
