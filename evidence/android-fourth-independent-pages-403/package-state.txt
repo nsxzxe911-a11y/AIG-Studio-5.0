@@ -1,0 +1,2 @@
+﻿    versionCode=403001 minSdk=26 targetSdk=36
+    versionName=403-fourth-product-links-safe

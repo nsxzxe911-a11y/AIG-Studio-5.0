@@ -1,0 +1,3 @@
+﻿Package [com.aigstudio.production.fourth395] (8ae5ead):
+versionCode=398001 minSdk=26 targetSdk=36
+versionName=398-fourth-axis3

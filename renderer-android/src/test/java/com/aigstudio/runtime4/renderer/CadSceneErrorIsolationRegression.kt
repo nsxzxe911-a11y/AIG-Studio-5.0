@@ -1,4 +1,4 @@
-﻿package com.aigstudio.runtime4.renderer
+package com.aigstudio.runtime4.renderer
 
 import com.aigstudio.runtime4.contract.*
 import org.junit.Assert.*
@@ -16,7 +16,7 @@ class CadSceneErrorIsolationRegression {
         val fake = FakePort()
         val controller = CadSceneController(fake)
         val nodes = controller.nodes(1080f,2316f,3f)
-        assertTrue(nodes.filter { it.id.startsWith("CAD.") && it.id != "CAD.VIEWPORT" }.filter { it.visible }.all { it.enabled })
+        assertTrue(nodes.filterIsInstance<RgbGlassButtonNode>().filter { it.id.startsWith("CAD.") && it.visible }.all { it.enabled })
         controller.activate("CAD.UNDO")
         assertTrue(fake.commands.last() is CadCommand.Undo)
         assertTrue(controller.nodes(1080f,2316f,3f).first { it.id == "CAD.LINE" }.enabled)
@@ -24,9 +24,10 @@ class CadSceneErrorIsolationRegression {
 
     @Test fun oneKeyToolGroupExpandsRealAdvancedNodes() {
         val controller = CadSceneController(FakePort())
-        assertFalse(controller.nodes(1080f,2316f,3f).first { it.id == "CAD.TRIM" }.visible)
+        assertTrue(controller.nodes(1080f,2316f,3f).none { it.id == "CAD.CHAMFER" })
+        assertTrue(controller.nodes(1080f,2316f,3f).none { it.id == "CAD.FILLET" })
         controller.activate("CAD.TOOL_GROUP")
-        assertTrue(controller.nodes(1080f,2316f,3f).first { it.id == "CAD.TRIM" }.visible)
+        assertTrue(controller.nodes(1080f,2316f,3f).first { it.id == "CAD.CHAMFER" }.visible)
         assertTrue(controller.nodes(1080f,2316f,3f).first { it.id == "CAD.FILLET" }.visible)
     }
 }

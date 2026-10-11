@@ -1,13 +1,15 @@
-﻿package com.aigstudio.runtime4.renderer
+package com.aigstudio.runtime4.renderer
 
 import com.aigstudio.runtime4.contract.SceneId
 
-class SceneRouter(initial: SceneId = SceneId.HOME) {
-    var current: SceneId = initial
-        private set
+private fun canonicalScene(scene:SceneId):SceneId=
+    if(scene==SceneId.MULTIFUNCTION) SceneId.HOME else scene
 
-    fun navigate(target: SceneId): SceneId {
-        current = target
-        return current
-    }
+class SceneRouter(initial: SceneId = SceneId.HOME) {
+    private val host = AxisSceneHost(canonicalScene(initial))
+    val current: SceneId get() = host.activeScene
+
+    fun navigate(target: SceneId): SceneId = host.navigateImmediate(canonicalScene(target))
+    fun request(target: SceneId): AxisSceneRequest = host.request(canonicalScene(target))
+    fun commit(request: AxisSceneRequest): Boolean = host.commit(request)
 }

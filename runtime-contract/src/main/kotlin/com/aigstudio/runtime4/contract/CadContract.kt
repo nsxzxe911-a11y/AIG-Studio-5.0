@@ -1,6 +1,6 @@
 package com.aigstudio.runtime4.contract
 
-enum class SceneId { HOME, CAD, CAM, SIM, AXIS3, AXIS4, AXIS5, AXIS6, NC, AI }
+enum class SceneId { HOME, CAD, CAM, SIM, MULTIFUNCTION, AXIS3, AXIS4, AXIS5, AXIS6, NC, AI }
 
 enum class CadTool { LINE, RECT, CIRCLE, ARC, HOLE, SELECT }
 enum class CadSnapMode { OFF, ENDPOINT, MIDPOINT, CENTER, INTERSECTION, TANGENT, HORIZONTAL, VERTICAL }

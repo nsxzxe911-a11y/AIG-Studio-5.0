@@ -27,7 +27,7 @@ class CadContractRegression {
 
     @Test
     fun sceneIdsAndCommandsAreConstructible() {
-        assertEquals(listOf("HOME","CAD","CAM","SIM","AXIS3","AXIS4","AXIS5","AXIS6","NC","AI"), SceneId.entries.map { it.name })
+        assertEquals(listOf("HOME","CAD","CAM","SIM","MULTIFUNCTION","AXIS3","AXIS4","AXIS5","AXIS6","NC","AI"), SceneId.entries.map { it.name })
         assertTrue(CadTool.ARC in CadTool.entries)
         val p = CadPoint(1.0, 2.0)
         val commands: List<CadCommand> = listOf(

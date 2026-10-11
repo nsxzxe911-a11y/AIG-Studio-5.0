@@ -1,0 +1,25 @@
+{
+  "schema": "AIG_ONE_PAGE_ONE_IMAGE_V1",
+  "platform": "ANDROID",
+  "cross_surface_fallback": false,
+  "pages": {
+    "HOME": "home.jpg",
+    "CAD": "cad.png",
+    "CAM": "cam.png",
+    "SIM": "sim.png",
+    "MULTIFUNCTION": "multifunction.png",
+    "3AX": "3ax.png",
+    "4AX": "4ax.png",
+    "5AX": "5ax.png",
+    "6AX": "6ax.png",
+    "NC": "nc.png",
+    "AI": "ai.png"
+  },
+  "missing": [],
+  "sha256": {
+    "cad.png": "b60990d858ed1dd98afd8d2812d485d14ec5e28bec50f9439ecf29eb7c86071c"
+  },
+  "dimensions": {
+    "cad.png": "941x1672"
+  }
+}

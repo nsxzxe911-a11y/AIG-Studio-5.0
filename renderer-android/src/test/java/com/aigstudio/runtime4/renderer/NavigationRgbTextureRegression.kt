@@ -1,20 +1,22 @@
-﻿package com.aigstudio.runtime4.renderer
+package com.aigstudio.runtime4.renderer
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import com.aigstudio.runtime4.contract.ui.AigUiAction
+import org.junit.Assert.*
 import org.junit.Test
 
 class NavigationRgbTextureRegression {
-    @Test fun homeAndCadNavigationUseDirectRgbImageNodes() {
-        val home = HomeSceneLayout.nodes(1080f, 1920f, 2f)
-        val homeNode = home.first { it.id == "NAV.HOME" }
-        val cadNode = home.first { it.id == "NAV.CAD" }
-        assertTrue(homeNode is RgbGlassButtonNode)
-        assertTrue(cadNode is RgbGlassButtonNode)
-        assertEquals("aig-rgb/icons/workspace.png", (homeNode as RgbGlassButtonNode).textureRef)
-        assertEquals("aig-rgb/icons/cad.png", (cadNode as RgbGlassButtonNode).textureRef)
-        val cadScene = CadSceneLayout.nodes(1080f, 1920f, 2f, false)
-        assertEquals("aig-rgb/icons/workspace.png", (cadScene.first { it.id == "NAV.HOME" } as RgbGlassButtonNode).textureRef)
-        assertEquals("aig-rgb/icons/cad.png", (cadScene.first { it.id == "NAV.CAD" } as RgbGlassButtonNode).textureRef)
+    @Test fun professionalHomeNavigationUsesRealGeneratedRuntimeControls(){
+        val home=HomeSceneLayout.nodes(1080f,1920f,2f)
+        val homeNode=home.first{it.id=="NAV.HOME"} as RgbGlassButtonNode
+        val cadNode=home.first{it.id=="NAV.CAD"} as RgbGlassButtonNode
+        assertEquals("aig-rgb/home/workspace.png",homeNode.textureRef)
+        assertEquals("aig-rgb/home/cad.png",cadNode.textureRef)
+        assertTrue(homeNode.aigActionBinding is AigUiAction.Navigate)
+        assertTrue(cadNode.aigActionBinding is AigUiAction.Navigate)
+        assertEquals("首頁",homeNode.label)
+        assertEquals("CAD製圖",cadNode.label)
+        val cadScene=CadSceneLayout.nodes(1080f,1920f,2f,false)
+        assertEquals("aig-rgb/home/workspace.png",(cadScene.first{it.id=="NAV.HOME"} as RgbGlassButtonNode).textureRef)
+        assertEquals("aig-rgb/home/cad.png",(cadScene.first{it.id=="NAV.CAD"} as RgbGlassButtonNode).textureRef)
     }
 }

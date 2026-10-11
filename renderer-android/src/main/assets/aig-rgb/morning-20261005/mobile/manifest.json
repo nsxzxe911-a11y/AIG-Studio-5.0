@@ -1,0 +1,20 @@
+{
+  "schema": "AIG_TRUE_RGB_PAGE_MAP_V2",
+  "platform": "ANDROID",
+  "root": "aig-rgb/morning-20261005/mobile",
+  "cross_surface_fallback": false,
+  "pages": {
+    "HOME": "home.png",
+    "CAD": null,
+    "CAM": null,
+    "SIM": null,
+    "MULTIFUNCTION": null,
+    "3AX": null,
+    "4AX": null,
+    "5AX": null,
+    "6AX": null,
+    "NC": null,
+    "AI": null
+  },
+  "missing": ["CAD","CAM","SIM","MULTIFUNCTION","3AX","4AX","5AX","6AX","NC","AI"]
+}
