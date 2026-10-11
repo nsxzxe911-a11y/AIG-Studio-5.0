@@ -136,7 +136,11 @@ class AigGlesRenderer(
     }
 
     private fun drawImageBackedRuntimeOverlay(p:GlesProgram,page:PageId){
+        drawRuntimeTruthMasks(p,page)
+      drawTruthTextBlocks(p,page,MobileRuntimeTruthTextPlan.header())
         when(page){
+            PageId.HOME->drawHomeImageLiveOverlay(p)
+            PageId.CAD->drawCadImageLiveOverlay(p)
             PageId.CAM->drawCamImageLiveOverlay(p)
             PageId.SIM->if(simImageMapEnabled) drawSimImageLiveOverlay(p)
             PageId.AXIS3,PageId.AXIS4,PageId.AXIS5,PageId.AXIS6->drawAxisImageLiveOverlay(p,page)
@@ -146,16 +150,66 @@ class AigGlesRenderer(
         }
     }
 
+    private fun drawRuntimeTruthMasks(p:GlesProgram,page:PageId){
+        MobileRuntimeTruthMaskLayout.regions(page,widthPx,heightPx).forEach{region->
+            val fill=if(region.id=="CAD.VIEWPORT") floatArrayOf(0.008f,0.03f,0.05f,1f)
+            else floatArrayOf(0.003f,0.017f,0.03f,0.98f)
+            p.draw(GlesGeometryBuffer.quad(region.bounds),GLES30.GL_TRIANGLES,widthPx,heightPx,fill)
+        }
+    }
+
+    private fun drawTruthTextBlocks(p:GlesProgram,page:PageId,blocks:List<RuntimeTruthTextBlock>){
+        blocks.forEach{block->
+            val bounds=MobileRuntimeTruthMaskLayout.region(page,block.regionId,widthPx,heightPx) ?: return@forEach
+            val lines=block.lines.ifEmpty{listOf("—")}
+            val pad=(4f*density).coerceAtMost(bounds.width*0.05f)
+            val rowH=(bounds.height/lines.size.coerceAtLeast(1)).coerceAtMost(28f*density)
+            lines.forEachIndexed{index,label->
+                val top=bounds.top+pad+index*rowH
+                if(top<bounds.bottom-pad){
+                    val row=UiBounds(bounds.left+pad,top,bounds.right-pad,(top+rowH-pad).coerceAtMost(bounds.bottom-pad))
+                    textures?.labelTextureRef(label)?.let{tex->
+                        val fitted=LabelTextureLayout.contain(row,tex.aspectRatio,(1.5f*density).coerceAtLeast(1f),true)
+                        p.draw(GlesGeometryBuffer.quad(fitted),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.88f,0.98f,1f,0.98f),tex.id)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun drawHomeImageLiveOverlay(p:GlesProgram){
+        drawTruthTextBlocks(p,PageId.HOME,MobileRuntimeTruthTextPlan.home(ncStateSource?.snapshotForFrame(),aiStateSource?.snapshot()))
+    }
+
+    private fun drawCadImageLiveOverlay(p:GlesProgram){
+        val bounds=MobileRuntimeTruthMaskLayout.region(PageId.CAD,"CAD.VIEWPORT",widthPx,heightPx) ?: return
+        val viewport=CadViewportNode(bounds)
+        drawGrid(p,bounds,viewport)
+        drawCadGeometry(p,viewport)
+        drawSnapFeedback(p,viewport,bounds)
+        drawTruthTextBlocks(p,PageId.CAD,MobileRuntimeTruthTextPlan.cad(stateSource.snapshotForFrame()))
+    }
+
     private fun drawAxisImageLiveOverlay(p:GlesProgram,page:PageId){
         val viewport=AxisImageRuntimeLayout.viewport(page,widthPx,heightPx) ?: return
-        val p3=program3d ?: return
-        when(page){
-            PageId.AXIS3->axisSceneRenderer.drawAxis3(p,p3,textures,widthPx,heightPx,density,{node->drawNode(p,node)},viewportOverride=viewport,drawControls=false)
-            PageId.AXIS4->axisSceneRenderer.drawAxis4(p,p3,textures,widthPx,heightPx,density,{node->drawNode(p,node)},viewportOverride=viewport,drawControls=false)
-            PageId.AXIS5->axisSceneRenderer.drawAxis5(p,p3,textures,widthPx,heightPx,density,{node->drawNode(p,node)},viewportOverride=viewport,drawControls=false)
-            PageId.AXIS6->axisSceneRenderer.drawAxis6(p,p3,textures,widthPx,heightPx,density,{node->drawNode(p,node)},viewportOverride=viewport,drawControls=false)
-            else->Unit
+        val mode=when(page){
+            PageId.AXIS3->AxisMode.AXIS3
+            PageId.AXIS4->AxisMode.AXIS4
+            PageId.AXIS5->AxisMode.AXIS5
+            PageId.AXIS6->AxisMode.AXIS6
+            else->return
         }
+        val state=axisStateSource.snapshotForFrame(mode)
+        program3d?.let{p3->
+            when(page){
+                PageId.AXIS3->axisSceneRenderer.drawAxis3(p,p3,textures,widthPx,heightPx,density,{node->drawNode(p,node)},viewportOverride=viewport,drawControls=false)
+                PageId.AXIS4->axisSceneRenderer.drawAxis4(p,p3,textures,widthPx,heightPx,density,{node->drawNode(p,node)},viewportOverride=viewport,drawControls=false)
+                PageId.AXIS5->axisSceneRenderer.drawAxis5(p,p3,textures,widthPx,heightPx,density,{node->drawNode(p,node)},viewportOverride=viewport,drawControls=false)
+                PageId.AXIS6->axisSceneRenderer.drawAxis6(p,p3,textures,widthPx,heightPx,density,{node->drawNode(p,node)},viewportOverride=viewport,drawControls=false)
+                else->Unit
+            }
+        }
+        drawTruthTextBlocks(p,page,MobileRuntimeTruthTextPlan.axis(state))
     }
 
     private fun drawNcImageLiveOverlay(p:GlesProgram){
