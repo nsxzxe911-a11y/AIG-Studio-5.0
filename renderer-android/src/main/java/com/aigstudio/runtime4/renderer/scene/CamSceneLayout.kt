@@ -1,34 +1,34 @@
 package com.aigstudio.runtime4.renderer
 
 import com.aigstudio.runtime4.contract.*
+import com.aigstudio.runtime4.contract.ui.AigUiLocalization
 import kotlin.math.max
 
 object CamSceneLayout {
-    private val controls=listOf(
-        "CAM.MANUAL","CAM.AUTO","CAM.PREVIEW","CAM.SOURCE_LINK","CAM.TOOLPATH_LINK",
-        "CAM.TOOL","CAM.DIAMETER","CAM.DEPTH","CAM.SAFE_Z","CAM.FEED","CAM.SPEED",
-        "CAM.SIDE","CAM.DIRECTION","CAM.LEAD_IN","CAM.LEAD_OUT","CAM.REGION",
-        "CAM.ADD","CAM.EDIT","CAM.CUT_EDIT","CAM.AVOID","CAM.FIXTURE","CAM.FREEZE","CAM.KEEP","CAM.ADOPT","CAM.SAVE"
-    )
+    private val assets=setOf("aig-rgb/cam/cam.png")
 
     fun nodes(widthPx:Float,heightPx:Float,density:Float,state:CamState):List<SceneNode>{
-        val touch=48f*density; val gap=8f*density; val landscape=widthPx>heightPx
-        val columns=if(landscape)8 else 5; val button=max(touch,(widthPx-gap*(columns+1))/columns)
-        fun bounds(index:Int):UiBounds{val col=index%columns;val row=index/columns;val left=gap+col*(button+gap);val top=gap+row*(touch+gap);return UiBounds(left,top,left+button,top+touch)}
-        val nodes=controls.mapIndexed { index,id ->
-            val visual=when(id){
-                "CAM.SOURCE_LINK" -> if(state.sourceLink==CamSourceLinkState.CONNECTED) VisualState.SELECTED else VisualState.NORMAL
-                "CAM.TOOLPATH_LINK" -> if(state.toolpathLink==CamToolpathLinkState.CONNECTED) VisualState.SELECTED else VisualState.NORMAL
-                "CAM.FREEZE" -> if(state.active?.frozen==true) VisualState.SELECTED else VisualState.NORMAL
-                "CAM.PREVIEW" -> if(state.previewCandidateId!=null) VisualState.SELECTED else VisualState.NORMAL
-                else -> VisualState.NORMAL
-            }
-            RgbGlassButtonNode(id,bounds(index),30,id.substringAfter("CAM."),textureFor(id),null,visual,camCommandBinding=commandFor(id,state))
-        }.toMutableList<SceneNode>()
-        val rows=(controls.size+columns-1)/columns; val toolbarBottom=gap+rows*(touch+gap)
+        val touch=SharedVisualPolicy.touchPx(density);val gap=SharedVisualPolicy.gapPx(density);val landscape=widthPx>heightPx
+        val descriptor=CamProfessionalDescriptor.descriptor(state)
+        val controls=descriptor.components.filter{it.visible&&it.kind==com.aigstudio.runtime4.contract.ui.AigUiKind.BUTTON}
+        val columns=if(landscape)8 else 5
+        val button=max(touch,(widthPx-gap*(columns+1))/columns)
+        val rows=max(1,(controls.size+columns-1)/columns)
+        val deckTop=gap;val deckBottom=deckTop+gap+rows*(touch+gap)
+        val bounds=linkedMapOf<String,UiBounds>()
+        bounds["CAM.CONTROL_DECK"]=UiBounds(gap,deckTop,widthPx-gap,deckBottom)
+        controls.forEachIndexed{index,component->
+            val col=index%columns;val row=index/columns
+            val left=gap*2+col*(button+gap);val top=deckTop+gap+row*(touch+gap)
+            bounds[component.controlId]=UiBounds(left,top,(left+button).coerceAtMost(widthPx-gap*2),top+touch)
+        }
         val nav=AxisNavigationLayout.layout(widthPx,heightPx,density,"NAV.CAM")
-        val navTop=nav.top
-        nodes+=SceneNode("CAM.VIEWPORT",UiBounds(gap,toolbarBottom,widthPx-gap,navTop-gap),1)
+        val frameTop=deckBottom+gap
+        val frameBottom=(nav.top-gap).coerceAtLeast(frameTop+touch)
+        bounds["CAM.VIEWPORT.FRAME"]=UiBounds(gap,frameTop,widthPx-gap,frameBottom)
+        val nodes=AigComponentNodeAdapter.nodes(descriptor,AigPageLayout(bounds,AigUiLocalization.labels("zh-TW"),assets,20)).toMutableList<SceneNode>()
+        val inset=2f*density
+        nodes+=SceneNode("CAM.VIEWPORT",UiBounds(gap+inset,frameTop+inset,widthPx-gap-inset,frameBottom-inset),1)
         nodes+=nav.buttons
         return nodes
     }
@@ -50,9 +50,9 @@ object CamSceneLayout {
         "CAM.LEAD_IN"->CamCommand.SetLeadIn(if(state.strategy.leadInMm==2.0)5.0 else 2.0)
         "CAM.LEAD_OUT"->CamCommand.SetLeadOut(if(state.strategy.leadOutMm==2.0)5.0 else 2.0)
         "CAM.REGION"->CamCommand.SetMachiningRegion(if(state.strategy.machiningRegion==null)CamMachiningRegion(-50.0,-50.0,50.0,50.0) else null)
-        "CAM.ADD"->{val last=state.active?.points?.lastOrNull(); CamCommand.AddPoint(state.active?.points?.size?:0,(last?.x?:0.0)+10.0,last?.y?:0.0,state.strategy.safeZMm,last?.a?:0.0,last?.b?:0.0,last?.c?:0.0,CamMotionKind.G0)}
-        "CAM.EDIT"->{val p=state.active?.points?.firstOrNull()?:CamPointSnapshot(0.0,0.0,state.strategy.safeZMm,0.0,0.0,0.0,CamMotionKind.G0); CamCommand.ReplacePointXYZABC(0,p.x,p.y,state.strategy.safeZMm,10.0,20.0,30.0,CamMotionKind.G0)}
-        "CAM.CUT_EDIT"->{val index=if((state.active?.points?.size?:0)>1)1 else 0; val p=state.active?.points?.getOrNull(index)?:CamPointSnapshot(10.0,0.0,state.strategy.depthMm,0.0,0.0,0.0,CamMotionKind.G1); CamCommand.ReplacePointXYZABC(index,p.x+10.0,p.y,state.strategy.depthMm,10.0,20.0,30.0,CamMotionKind.G1)}
+        "CAM.ADD"->{val last=state.active?.points?.lastOrNull();CamCommand.AddPoint(state.active?.points?.size?:0,(last?.x?:0.0)+10.0,last?.y?:0.0,state.strategy.safeZMm,last?.a?:0.0,last?.b?:0.0,last?.c?:0.0,CamMotionKind.G0)}
+        "CAM.EDIT"->{val p=state.active?.points?.firstOrNull()?:CamPointSnapshot(0.0,0.0,state.strategy.safeZMm,0.0,0.0,0.0,CamMotionKind.G0);CamCommand.ReplacePointXYZABC(0,p.x,p.y,state.strategy.safeZMm,10.0,20.0,30.0,CamMotionKind.G0)}
+        "CAM.CUT_EDIT"->{val index=if((state.active?.points?.size?:0)>1)1 else 0;val p=state.active?.points?.getOrNull(index)?:CamPointSnapshot(10.0,0.0,state.strategy.depthMm,0.0,0.0,0.0,CamMotionKind.G1);CamCommand.ReplacePointXYZABC(index,p.x+10.0,p.y,state.strategy.depthMm,10.0,20.0,30.0,CamMotionKind.G1)}
         "CAM.AVOID"->CamCommand.InsertAvoidance(0,25.0,25.0,state.strategy.depthMm)
         "CAM.FIXTURE"->CamCommand.AddZone(CamZoneSnapshot("fixture-1",CamZoneKind.FIXTURE,-15.0,-10.0,15.0,10.0,5.0))
         "CAM.FREEZE"->if(state.active?.frozen==true)CamCommand.UnfreezeActive else CamCommand.FreezeActive
@@ -61,6 +61,4 @@ object CamSceneLayout {
         "CAM.SAVE"->CamCommand.SaveCandidateAsNewVersion
         else->null
     }
-
-    private fun textureFor(id:String):String?=when(id){"CAM.AUTO","CAM.MANUAL"->"aig-rgb/icons/cam.png";else->null}
 }

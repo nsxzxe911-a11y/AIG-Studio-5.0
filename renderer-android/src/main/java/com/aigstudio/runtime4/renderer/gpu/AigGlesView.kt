@@ -6,6 +6,7 @@ import android.text.InputType
 import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.ViewConfiguration
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
@@ -37,6 +38,16 @@ class AigGlesView(
     private val firstFrameSignal = onFirstFrame?.let { callback -> FirstFrameSignal { post(callback) } }
     private val aigRenderer = AigGlesRenderer(context,cadRuntime,camRuntime,ncRuntime,axisRuntime,simRuntime,aiRuntime,sceneRouter,cadController,camController,ncController,productDeckController,firstFrameSignal)
     private var pressedNode: String? = null
+    private val appContext=context.applicationContext
+    private val cadRibbonState=CadSwipeRibbonState()
+    private var cadRibbonGesture:CadSwipeGestureTracker?=null
+    private val pageToolStates=mutableMapOf<PageId,PageToolRibbonState>()
+    private var pageToolGesture:PageToolGestureTracker?=null
+    private var pageToolGesturePage:PageId?=null
+    private val touchSlopPx=ViewConfiguration.get(context).scaledTouchSlop.toFloat().coerceAtLeast(8f)
+    private var cadImageMapCurrent:Boolean?=null
+    private var camImageMapCurrent:Boolean?=null
+    private var simImageMapCurrent:Boolean?=null
 
     init {
         setEGLContextClientVersion(3)
@@ -48,6 +59,42 @@ class AigGlesView(
     }
 
     fun currentScene():SceneId=sceneRouter.current
+
+    private fun cadImageMapReady():Boolean {
+        cadImageMapCurrent?.let{return it}
+        val path=PageSurfaceTexturePlan.path(PageId.CAD)
+        val ok=runCatching {
+            path!=null && appContext.assets.open(path).use { CadImagePixelManifest.isCompatibleBytes(it.readBytes()) }
+        }.getOrDefault(false)
+        cadImageMapCurrent=ok
+        aigRenderer.cadImageMapEnabled=ok
+        if(!ok) Log.i("AIG4","AIG4_CAD|INTERACTION_MAP_STALE|DISABLED")
+        return ok
+    }
+
+    private fun camImageMapReady():Boolean {
+        camImageMapCurrent?.let{return it}
+        val path=PageSurfaceTexturePlan.path(PageId.CAM)
+        val ok=runCatching {
+            path!=null && appContext.assets.open(path).use { CamImagePixelManifest.isCompatibleBytes(it.readBytes()) }
+        }.getOrDefault(false)
+        camImageMapCurrent=ok
+        aigRenderer.camImageMapEnabled=ok
+        if(!ok) Log.i("AIG4","AIG4_CAM|INTERACTION_MAP_STALE|DISABLED")
+        return ok
+    }
+
+    private fun simImageMapReady():Boolean {
+        simImageMapCurrent?.let{return it}
+        val path=PageSurfaceTexturePlan.path(PageId.SIM)
+        val ok=runCatching {
+            path!=null && appContext.assets.open(path).use { SimImagePixelManifest.isCompatibleBytes(it.readBytes()) }
+        }.getOrDefault(false)
+        simImageMapCurrent=ok
+        aigRenderer.simImageMapEnabled=ok
+        if(!ok) Log.i("AIG4","AIG4_SIM|INTERACTION_MAP_STALE|DISABLED")
+        return ok
+    }
 
     override fun onCheckIsTextEditor():Boolean = ncInput != null
 
@@ -86,6 +133,19 @@ class AigGlesView(
         val nodes=currentNodes(density)
         when(event.actionMasked){
             MotionEvent.ACTION_DOWN->{
+                val page=sceneRouter.current.toPageId()
+                if(page!=PageId.CAD && page!=PageId.MULTIFUNCTION && !(page==PageId.CAM && camImageMapReady()) && !(page==PageId.SIM && simImageMapReady())){
+                    val raw=rawNodes(density); val toolState=toolState(page,raw)
+                    if(toolState!=null && UnifiedMobileControlShell.toolPanelBounds(width.toFloat(),height.toFloat(),density).contains(event.x,event.y)){
+                        val toolNodes=UnifiedMobileControlShell.toolRibbonNodes(raw,page,width.toFloat(),height.toFloat(),density,toolState.pageIndex)
+                        val hit=hitTestTopmost(toolNodes,event.x,event.y) as? RgbGlassButtonNode
+                        if(hit!=null){
+                            pageToolGesture=PageToolGestureTracker(touchSlopPx).also{it.onDown(event.x,event.y,hit.id,unifiedState(hit.visualState),hit.enabled)}
+                            pageToolGesturePage=page; pressedNode=hit.id; aigRenderer.pressedNodeId=hit.id
+                            requestRender(); return true
+                        }
+                    }
+                }
                 val hit=hitTestTopmost(nodes,event.x,event.y)
                 pressedNode=hit?.id; aigRenderer.pressedNodeId=pressedNode
                 if(sceneRouter.current==SceneId.CAD && hit?.id=="CAD.VIEWPORT"){
@@ -94,12 +154,34 @@ class AigGlesView(
                 requestRender(); return true
             }
             MotionEvent.ACTION_MOVE->{
+                pageToolGesture?.let{gesture->
+                    val state=gesture.onMove(event.x,event.y)
+                    if(state==PageToolGestureState.SWIPING || state==PageToolGestureState.CANCELLED){pressedNode=null;aigRenderer.pressedNodeId=null}
+                    requestRender();return true
+                }
                 if(sceneRouter.current==SceneId.CAD && pressedNode=="CAD.VIEWPORT"){
                     nodes.firstOrNull{it.id=="CAD.VIEWPORT"}?.let{pointerRouter.onMove(CadViewportNode(it.bounds).screenToWorld(event.x,event.y));requestRender()}
                 }
                 return true
             }
             MotionEvent.ACTION_UP->{
+                pageToolGesture?.let{gesture->
+                    val page=pageToolGesturePage ?: sceneRouter.current.toPageId()
+                    val release=gesture.onUp(event.x,event.y); val tapId=gesture.tapActivationId
+                    pageToolGesture=null; pageToolGesturePage=null; pressedNode=null; aigRenderer.pressedNodeId=null
+                    when(release){
+                        PageToolRelease.TAP->if(tapId!=null)activate(tapId)
+                        PageToolRelease.SWIPE_LEFT,PageToolRelease.SWIPE_RIGHT->{
+                            val raw=rawNodes(density); val state=toolState(page,raw)
+                            state?.apply(release); val index=state?.pageIndex ?: 0
+                            aigRenderer.setToolPageIndex(page,index)
+                            val count=UnifiedMobileControlShell.toolPages(raw,page).size
+                            Log.i("AIG4","AIG4_${page.name}|RIBBON|${release.name}|PAGE=${index+1}/${count.coerceAtLeast(1)}|NO_COMMAND")
+                        }
+                        PageToolRelease.CANCEL->Unit
+                    }
+                    requestRender();return true
+                }
                 val downId=pressedNode; pressedNode=null; aigRenderer.pressedNodeId=null
                 if(sceneRouter.current==SceneId.CAD && downId=="CAD.VIEWPORT"){
                     nodes.firstOrNull{it.id=="CAD.VIEWPORT"}?.let{ val result=pointerRouter.onUp(CadViewportNode(it.bounds).screenToWorld(event.x,event.y)); logCadGeometry(result) }
@@ -112,7 +194,10 @@ class AigGlesView(
                 if(downId!=null && downId==upId)activate(downId)
                 requestRender(); return true
             }
-            MotionEvent.ACTION_CANCEL->{pressedNode=null;aigRenderer.pressedNodeId=null;pointerRouter.cancel();requestRender();return true}
+            MotionEvent.ACTION_CANCEL->{
+                pageToolGesture?.cancel();pageToolGesture=null;pageToolGesturePage=null
+                cadRibbonGesture?.cancel();cadRibbonGesture=null;pressedNode=null;aigRenderer.pressedNodeId=null;pointerRouter.cancel();requestRender();return true
+            }
         }
         return true
     }
@@ -167,20 +252,48 @@ class AigGlesView(
         Log.i("AIG4",if(result.accepted)"AIG4_NC|COMMAND|$name|ACCEPTED|REV=${result.state.working.revision}" else "AIG4_NC|COMMAND|$name|REJECTED|LOCAL_MESSAGE")
     }
 
-    private fun currentNodes(density:Float):List<SceneNode> {
+    private fun primaryImageSkinActive(page:PageId):Boolean = PageSurfaceTexturePlan.path(page)!=null
+    private fun imageSkinNavNodes(page:PageId):List<SceneNode> = PrimaryPageNavigationLayout.nodes(width.toFloat(),height.toFloat(),page)
+
+    private fun rawNodes(density:Float):List<SceneNode> {
         val base=TopLevelNodeResolver.resolve(sceneRouter.current,TopLevelNodeSources(
-            home={HomeSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-            cad={cadController.nodes(width.toFloat(),height.toFloat(),density)},
-            cam={camController.nodes(width.toFloat(),height.toFloat(),density)},
-            sim={simController?.nodes(width.toFloat(),height.toFloat(),density) ?: SimSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-            axis3={Axis3SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-            axis4={Axis4SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-            axis5={Axis5SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-            axis6={Axis6SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-            nc={ncController?.nodes(width.toFloat(),height.toFloat(),density) ?: NcSceneLayout.nodes(width.toFloat(),height.toFloat(),density,NcState.initial())},
-            ai={aiController?.nodes(width.toFloat(),height.toFloat(),density) ?: AiSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
-            multifunction={MultifunctionSceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            home={imageSkinNavNodes(PageId.HOME)},
+            cad={if(cadImageMapReady()) imageSkinNavNodes(PageId.CAD)+CadImageInteractionLayout.nodes(width.toFloat(),height.toFloat()).filterNot{it.id.startsWith("IMG.")} else imageSkinNavNodes(PageId.CAD)},
+            cam={if(camImageMapReady()) imageSkinNavNodes(PageId.CAM)+CamImageInteractionLayout.nodes(width.toFloat(),height.toFloat(),camController.state()).filterNot{it.id.startsWith("IMG.")} else imageSkinNavNodes(PageId.CAM)},
+            sim={if(simImageMapReady()) imageSkinNavNodes(PageId.SIM)+SimImageInteractionLayout.nodes(width.toFloat(),height.toFloat()).filterNot{it.id.startsWith("IMG.")} else imageSkinNavNodes(PageId.SIM)},
+            axis3={if(primaryImageSkinActive(PageId.AXIS3)) imageSkinNavNodes(PageId.AXIS3) else Axis3SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            axis4={if(primaryImageSkinActive(PageId.AXIS4)) imageSkinNavNodes(PageId.AXIS4) else Axis4SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            axis5={if(primaryImageSkinActive(PageId.AXIS5)) imageSkinNavNodes(PageId.AXIS5) else Axis5SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            axis6={if(primaryImageSkinActive(PageId.AXIS6)) imageSkinNavNodes(PageId.AXIS6) else Axis6SceneLayout.nodes(width.toFloat(),height.toFloat(),density)},
+            nc={if(primaryImageSkinActive(PageId.NC)) imageSkinNavNodes(PageId.NC) else (ncController?.nodes(width.toFloat(),height.toFloat(),density) ?: NcSceneLayout.nodes(width.toFloat(),height.toFloat(),density,NcState.initial()))},
+            ai={if(primaryImageSkinActive(PageId.AI)) imageSkinNavNodes(PageId.AI) else (aiController?.nodes(width.toFloat(),height.toFloat(),density) ?: AiSceneLayout.nodes(width.toFloat(),height.toFloat(),density))},
+            multifunction={MultifunctionImageInteractionLayout.nodes(width.toFloat(),height.toFloat())},
         ))
-        return base+(productDeckController?.nodes(sceneRouter.current.toPageId(),width.toFloat(),height.toFloat(),density) ?: emptyList())
+        val page=sceneRouter.current.toPageId()
+        val deck=if(primaryImageSkinActive(page)) emptyList() else (productDeckController?.nodes(page,width.toFloat(),height.toFloat(),density) ?: emptyList())
+        return base+deck
     }
+    private fun unifiedState(state:VisualState)=when(state){
+        VisualState.NORMAL->UnifiedVisualState.NORMAL
+        VisualState.PRESSED->UnifiedVisualState.PRESSED
+        VisualState.SELECTED->UnifiedVisualState.SELECTED
+        VisualState.DISABLED->UnifiedVisualState.DISABLED
+        VisualState.ALARM->UnifiedVisualState.ALARM
+    }
+
+    private fun toolState(page:PageId,raw:List<SceneNode>):PageToolRibbonState?{
+        val count=UnifiedMobileControlShell.toolPages(raw,page).size
+        if(count<=0)return null
+        return pageToolStates.getOrPut(page){PageToolRibbonState(count)}
+    }
+
+    private fun currentNodes(density:Float):List<SceneNode>{
+        val raw=rawNodes(density)
+        val page=sceneRouter.current.toPageId()
+        if(PageSurfaceTexturePlan.path(page)!=null) return raw
+        val index=toolState(page,raw)?.pageIndex ?: 0
+        aigRenderer.setToolPageIndex(page,index)
+        return UnifiedMobileControlShell.compose(raw,page,width.toFloat(),height.toFloat(),density,index)
+    }
+
 }

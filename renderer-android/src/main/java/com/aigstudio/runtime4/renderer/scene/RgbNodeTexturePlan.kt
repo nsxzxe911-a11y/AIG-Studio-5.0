@@ -8,7 +8,7 @@ sealed interface RgbNodeTexturePlan {
     companion object {
         fun forNode(node:RgbGlassButtonNode):RgbNodeTexturePlan {
             val asset=node.textureRef
-            if(node.skinRole==RgbSkinRole.CARD && !asset.isNullOrBlank()) {
+            if(node.skinRole in setOf(RgbSkinRole.CARD,RgbSkinRole.WORKSTATION_CONTROL,RgbSkinRole.WORKSTATION_NAV,RgbSkinRole.HOME_NAV,RgbSkinRole.HOME_ACTION,RgbSkinRole.HOME_STATUS) && !asset.isNullOrBlank()) {
                 return AssetWithLabel(asset,node.label.ifBlank{node.id.substringAfterLast('.')})
             }
             return if(!asset.isNullOrBlank()) Asset(asset)

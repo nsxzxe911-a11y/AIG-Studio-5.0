@@ -25,6 +25,18 @@ object ProductControlDeck {
     }
     fun nodes(page:PageId,state:PageCapabilityState,expanded:Boolean,widthPx:Float,heightPx:Float,density:Float):List<SceneNode>{
         val d=descriptors(page,state,expanded);if(d.isEmpty())return emptyList()
+        if(page==PageId.CAD || page==PageId.CAM || page==PageId.SIM){
+            val touch=SharedVisualPolicy.touchPx(density);val gap=4f*density
+            val navBottom=ProfessionalTopNavigationLayout.layout(widthPx,heightPx,density,"NAV."+page.sceneNavName()).bottom
+            val chipWidth=max(touch*1.5f,112f*density).coerceAtMost(widthPx*0.18f)
+            val columns=max(1,floor((widthPx-gap)/(chipWidth+gap)).toInt())
+            return d.mapIndexed{index,it->
+                val row=index/columns;val col=index%columns
+                val right=widthPx-gap-col*(chipWidth+gap);val left=right-chipWidth
+                val top=navBottom+gap+row*(touch+gap)
+                RgbGlassButtonNode(it.id,UiBounds(left,top,right,top+touch),80,it.label,null,null,if(it.connected)VisualState.SELECTED else VisualState.NORMAL,skinRole=RgbSkinRole.STATUS_CHIP)
+            }
+        }
         val free=AxisNavigationLayout.freeSlots(widthPx,heightPx,density)
         if(free.size>=d.size)return d.mapIndexed{index,it->RgbGlassButtonNode(it.id,free[index],60,it.label,null,null,if(it.connected)VisualState.SELECTED else VisualState.NORMAL,skinRole=RgbSkinRole.CONTROL)}
         val touch=SharedVisualPolicy.touchPx(density);val gap=SharedVisualPolicy.gapPx(density);val count=d.size

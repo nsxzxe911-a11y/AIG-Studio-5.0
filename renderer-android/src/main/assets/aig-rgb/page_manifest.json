@@ -1,0 +1,23 @@
+{
+  "schema": "AIG_RGB_PAGE_ASSET_OWNERSHIP_V1",
+  "approval_authority": "MORNING_APPROVED_RGB_2026_10_05",
+  "full_surface_policy": "REFERENCE_ONLY_NO_FAKE_RUNTIME_UI",
+  "cross_surface_fallback": false,
+  "pages": {
+    "HOME": {
+      "mobile_baseline": "docs/assets/reference/2026-10-05-morning/home_portrait.png",
+      "desktop_baseline": "docs/assets/reference/2026-10-05-morning/home_landscape.png",
+      "runtime_root": "aig-rgb/home/"
+    },
+    "CAD": {
+      "desktop_baseline": "aig-morning-baseline/20261006/AIG_CAD_CAM_Desktop_Baseline.png",
+      "lineage": "10/5 approved family -> 10/6 recovered baseline",
+      "runtime_root": "aig-rgb/cad/"
+    },
+    "CAM": {
+      "desktop_baseline": "aig-morning-baseline/20261006/AIG_CAD_CAM_Desktop_Baseline.png",
+      "lineage": "10/5 approved family -> 10/6 recovered baseline",
+      "runtime_root": "aig-rgb/cam/"
+    }
+  }
+}

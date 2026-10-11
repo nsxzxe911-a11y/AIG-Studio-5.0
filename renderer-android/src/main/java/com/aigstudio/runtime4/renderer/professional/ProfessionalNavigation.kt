@@ -8,7 +8,7 @@ fun PageId.toSceneId():SceneId=when(this){
     PageId.CAD->SceneId.CAD
     PageId.CAM->SceneId.CAM
     PageId.SIM->SceneId.SIM
-    PageId.MULTIFUNCTION->SceneId.MULTIFUNCTION
+    PageId.MULTIFUNCTION->SceneId.HOME
     PageId.AXIS3->SceneId.AXIS3
     PageId.AXIS4->SceneId.AXIS4
     PageId.AXIS5->SceneId.AXIS5

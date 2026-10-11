@@ -26,12 +26,15 @@ class NoFakeProfessionalUiRegression {
         assertFalse(source.contains("drawMorningHomeTraditionalChinese"))
     }
 
-    @Test fun approvedMorningArtworkLivesInReferenceAreaNotRuntimeAssets(){
+    @Test fun runtimePageArtworkIsVisualOnlyAndCadControlsStayModuleBound(){
         val root=repoRoot()
-        assertFalse(File(root,"renderer-android/src/main/assets/aig-rgb/morning-20261005").exists())
         assertFalse(File(root,"renderer-android/src/main/assets/aig-rgb/full-surface").exists())
-        assertTrue(File(root,"docs/assets/reference/2026-10-05-morning/home_landscape.png").isFile)
-        assertTrue(File(root,"docs/assets/reference/2026-10-05-morning/home_portrait.png").isFile)
+        assertTrue(File(root,"renderer-android/src/main/assets/aig-rgb/page-surfaces/cad.png").isFile)
+        assertEquals("aig-rgb/page-surfaces/cad.png",PageSurfaceTexturePlan.path(PageId.CAD))
+        val ids=CadImageModuleCatalog.controlIds()
+        assertTrue(ids.isNotEmpty())
+        assertTrue(ids.all{CadImageModuleCatalog.component(it)?.action!=null})
+        assertEquals(ids.size,ids.toSet().size)
     }
 
     @Test fun adapterPreservesActionAndFallsBackToLocalizedLabelWhenIconMissing(){

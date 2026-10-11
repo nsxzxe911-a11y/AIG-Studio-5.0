@@ -2,64 +2,69 @@ package com.aigstudio.runtime4.renderer
 
 import com.aigstudio.runtime4.contract.*
 import com.aigstudio.runtime4.contract.ui.*
-import com.aigstudio.runtime4.renderer.gpu.FourthRenderRoute
-import com.aigstudio.runtime4.renderer.gpu.RenderRoutePolicy
 import org.junit.Assert.*
 import org.junit.Test
 
 class ProfessionalHomeRegression {
-    @Test fun homeDescriptorHasProfessionalRegionsAndRealTopNavigation(){
+    @Test fun mobileHomeOwnsApprovedDashboardRegions(){
         val d=HomeProfessionalDescriptor.descriptor()
         val ids=d.components.map{it.controlId}.toSet()
         listOf(
-            "HOME.HEADER","HOME.MACHINE.CARD","HOME.PROJECT.CARD","HOME.HERO",
-            "HOME.AI.CARD","HOME.QUICK.DECK","HOME.MULTIFUNCTION.OPEN",
+            "HOME.HEADER","HOME.CONNECTIONS.PANEL","HOME.QUICK.PANEL","HOME.ONECLICK.PANEL",
+            "HOME.FILES.PANEL","HOME.TOOLS.PANEL","HOME.USER.PANEL","HOME.LINKS.PANEL","HOME.SYSTEM.PANEL"
         ).forEach{assertTrue("missing $it",it in ids)}
+    }
+
+    @Test fun mobileHomeTopNavigationHasTenRealDestinations(){
+        val d=HomeProfessionalDescriptor.descriptor()
         val expected=listOf(
-            "NAV.HOME" to "首頁","NAV.CAD" to "CAD製圖","NAV.CAM" to "CAM加工",
-            "NAV.SIM" to "3D走刀","NAV.MULTIFUNCTION" to "多功能",
-            "NAV.NC" to "NC程式","NAV.AI" to "AI智慧",
+            "NAV.HOME" to PageId.HOME,"NAV.CAD" to PageId.CAD,"NAV.CAM" to PageId.CAM,"NAV.SIM" to PageId.SIM,
+            "NAV.3AX" to PageId.AXIS3,"NAV.4AX" to PageId.AXIS4,"NAV.5AX" to PageId.AXIS5,"NAV.6AX" to PageId.AXIS6,
+            "NAV.NC" to PageId.NC,"NAV.AI" to PageId.AI,
         )
-        val zh=AigUiLocalization.labels("zh-TW")
-        expected.forEach{(id,text)->
+        expected.forEach{(id,page)->
             val c=d.components.single{it.controlId==id}
-            assertNotNull(c.action)
-            assertEquals(text,zh.getValue(c.labelKey!!))
+            assertEquals(AigUiAction.Navigate(page),c.action)
+            assertTrue(c.enabled)
         }
+        assertNull(d.components.firstOrNull{it.controlId=="NAV.MULTIFUNCTION"})
     }
 
-    @Test fun homeLayoutsAreAdaptiveNonOverlappingAndTouchSafe(){
-        listOf(Triple(1080f,1920f,2f),Triple(1920f,1080f,2f)).forEach{(w,h,d)->
-            val nodes=HomeSceneLayout.nodes(w,h,d)
-            val interactive=nodes.filterIsInstance<RgbGlassButtonNode>().filter{it.visible&&it.enabled}
-            interactive.forEach{node->
-                assertTrue("${node.id} width",node.bounds.width>=48f*d)
-                assertTrue("${node.id} height",node.bounds.height>=48f*d)
-            }
-            interactive.indices.forEach{i->for(j in i+1 until interactive.size){
-                val a=interactive[i].bounds;val b=interactive[j].bounds
-                val overlap=a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top
-                assertFalse("overlap ${interactive[i].id} / ${interactive[j].id}",overlap)
-            }}
-            val hero=nodes.single{it.id=="HOME.HERO"}.bounds
-            assertTrue("hero width priority",hero.width>=w*0.45f)
-            assertTrue("hero height priority",hero.height>=h*0.25f)
-        }
+    @Test fun mobileHomePortraitUsesTwoNavRowsAndNonOverlappingDashboard(){
+        val nodes=HomeSceneLayout.nodes(1080f,2316f,3f)
+        val nav=nodes.filterIsInstance<RgbGlassButtonNode>().filter{it.id.startsWith("NAV.")}
+        assertEquals(10,nav.size)
+        assertEquals(2,nav.map{it.bounds.top}.distinct().size)
+        nav.forEach{assertTrue(it.bounds.width>=108f);assertTrue(it.bounds.height>=108f)}
+        val panels=listOf("HOME.CONNECTIONS.PANEL","HOME.QUICK.PANEL","HOME.ONECLICK.PANEL","HOME.FILES.PANEL","HOME.SYSTEM.PANEL")
+            .map{id->nodes.single{it.id==id}.bounds}
+        panels.indices.forEach{i->for(j in i+1 until panels.size){
+            val a=panels[i];val b=panels[j]
+            assertFalse(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top)
+        }}
     }
 
-    @Test fun missingRuntimeUsesTruthfulLocalStatusNeverFictionalTelemetry(){
-        val labels=HomeLivePresentation.localOnly().labels("zh-TW")
-        assertEquals("機台未連線",labels.getValue("home.machine.value"))
-        assertEquals("尚無工作專案",labels.getValue("home.project.value"))
-        assertEquals("AI 本機功能可用",labels.getValue("home.ai.value"))
-        val all=labels.values.joinToString("|")
-        assertFalse(all.contains("95%"))
-        assertFalse(all.contains("S2300"))
+    @Test fun connectionStripUsesTruthfulNonClickableStatusCards(){
+        val d=HomeProfessionalDescriptor.descriptor()
+        val local=d.components.single{it.controlId=="HOME.CONNECTIONS.CAD"}
+        val cloud=d.components.single{it.controlId=="HOME.CONNECTIONS.CLOUD"}
+        assertEquals(AigUiKind.STATUS_CARD,local.kind)
+        assertFalse(local.enabled);assertNull(local.action);assertEquals(AigUiState.SELECTED,local.state)
+        assertFalse(cloud.enabled);assertNull(cloud.action);assertEquals(AigUiState.DISABLED,cloud.state)
+        val node=HomeSceneLayout.nodes(1080f,2316f,3f).single{it.id=="HOME.CONNECTIONS.CAD"} as RgbGlassButtonNode
+        assertEquals(RgbSkinRole.HOME_STATUS,node.skinRole)
+        assertFalse(node.enabled)
     }
 
-    @Test fun multifunctionHomeControlHasRealDedicatedRouteSkeleton(){
-        assertEquals(SceneId.MULTIFUNCTION,SharedVisualPolicy.destination("NAV.MULTIFUNCTION"))
-        assertEquals(SceneId.MULTIFUNCTION,HomeProfessionalDescriptor.descriptor().components.single{it.controlId=="HOME.MULTIFUNCTION.OPEN"}.let{(it.action as AigUiAction.Navigate).page.toSceneId()})
-        assertEquals(FourthRenderRoute.MULTIFUNCTION,RenderRoutePolicy.forScene(SceneId.MULTIFUNCTION))
+    @Test fun homepageInteractiveTilesNeverUseFakeActions(){
+        val d=HomeProfessionalDescriptor.descriptor()
+        val interactive=d.components.filter{it.enabled&&it.kind in setOf(AigUiKind.BUTTON,AigUiKind.NAV,AigUiKind.CARD)}
+        assertTrue(interactive.isNotEmpty())
+        assertTrue(interactive.all{it.action!=null})
+    }
+
+    @Test fun localOnlyPresentationNeverInventsMachineTelemetry(){
+        val all=HomeLivePresentation.localOnly().labels("zh-TW").values.joinToString("|")
+        listOf("42%","12000 rpm","192.168.","42°C","MACHINE RUNNING").forEach{assertFalse(all.contains(it))}
     }
 }

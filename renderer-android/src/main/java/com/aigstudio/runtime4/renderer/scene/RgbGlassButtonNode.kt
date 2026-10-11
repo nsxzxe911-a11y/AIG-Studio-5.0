@@ -5,7 +5,7 @@ import com.aigstudio.runtime4.contract.CamCommand
 import com.aigstudio.runtime4.contract.NcCommand
 import com.aigstudio.runtime4.contract.ui.AigUiAction
 
-enum class RgbSkinRole { PANEL, CONTROL, NAVIGATION, CARD }
+enum class RgbSkinRole { PANEL, CONTROL, NAVIGATION, CARD, WORKSTATION_PANEL, WORKSTATION_CONTROL, WORKSTATION_NAV, STATUS_CHIP, HOME_PANEL, HOME_NAV, HOME_ACTION, HOME_STATUS }
 
 class RgbGlassPanelNode(id:String,bounds:UiBounds,z:Int,val skinRole:RgbSkinRole=RgbSkinRole.PANEL):SceneNode(id,bounds,z,VisualState.NORMAL,false,true)
 

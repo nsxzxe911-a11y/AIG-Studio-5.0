@@ -28,9 +28,11 @@ class AxisGlesSceneRenderer(
     fun drawAxis3(
         p:GlesProgram,p3:Gles3dProgram,textures:RgbTextureCatalog?,widthPx:Float,heightPx:Float,density:Float,
         drawNode:(SceneNode)->Unit,
+        viewportOverride:UiBounds?=null,
+        drawControls:Boolean=true,
     ) {
         val nodes=Axis3SceneLayout.nodes(widthPx,heightPx,density)
-        val viewport=nodes.first{it.id=="AXIS3.VIEWPORT"}.bounds
+        val viewport=viewportOverride ?: nodes.first{it.id=="AXIS3.VIEWPORT"}.bounds
         p.draw(GlesGeometryBuffer.quad(viewport),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.006f,0.018f,0.032f,1f))
         val state=stateSource.snapshotForFrame(AxisMode.AXIS3)
         val viewProjection=begin3d(viewport,widthPx,heightPx,9f,7f,11f)
@@ -52,16 +54,18 @@ class AxisGlesSceneRenderer(
         end3d(widthPx,heightPx)
         val pose=state.pose;val motion=state.motionProgramId?:"NONE";val message=AxisFrameEvidence.messageSuffix(state.message)
         drawHud(p,textures,viewport,widthPx,heightPx,density,String.format(Locale.US,"3AX | X%.3f Y%.3f Z%.3f | MOTION %s | BLOCK %d/%d%s",pose.x,pose.y,pose.z,motion,state.blockIndex,state.blockCount,message))
-        nodes.filter{it.id!="AXIS3.VIEWPORT"}.forEach(drawNode)
+        if(drawControls) nodes.filter{it.id!="AXIS3.VIEWPORT"}.forEach(drawNode)
         if(!axis3FirstFrameLogged){Log.i("AIG4",AxisFrameEvidence.axis3Marker(state));axis3FirstFrameLogged=true}
     }
 
     fun drawAxis4(
         p:GlesProgram,p3:Gles3dProgram,textures:RgbTextureCatalog?,widthPx:Float,heightPx:Float,density:Float,
         drawNode:(SceneNode)->Unit,
+        viewportOverride:UiBounds?=null,
+        drawControls:Boolean=true,
     ) {
         val nodes=Axis4SceneLayout.nodes(widthPx,heightPx,density)
-        val viewport=nodes.first{it.id=="AXIS4.VIEWPORT"}.bounds
+        val viewport=viewportOverride ?: nodes.first{it.id=="AXIS4.VIEWPORT"}.bounds
         p.draw(GlesGeometryBuffer.quad(viewport),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.005f,0.016f,0.030f,1f))
         val state=stateSource.snapshotForFrame(AxisMode.AXIS4)
         val visual=Axis4Presentation.from(state)
@@ -100,15 +104,17 @@ class AxisGlesSceneRenderer(
         val motion=state.motionProgramId?:"NONE";val message=AxisFrameEvidence.messageSuffix(state.message)
         val hudText=String.format(Locale.US,"4AX | X%.3f Y%.3f Z%.3f A%.3f | MOTION %s | BLOCK %d/%d%s",visual.x,visual.y,visual.z,visual.aDegrees,motion,state.blockIndex,state.blockCount,message)
         drawHud(p,textures,viewport,widthPx,heightPx,density,hudText)
-        nodes.filter{it.id!="AXIS4.VIEWPORT"}.forEach(drawNode)
+        if(drawControls) nodes.filter{it.id!="AXIS4.VIEWPORT"}.forEach(drawNode)
         if(!axis4FirstFrameLogged){Log.i("AIG4",AxisFrameEvidence.axis4Marker(state));axis4FirstFrameLogged=true}
     }
     fun drawAxis5(
         p:GlesProgram,p3:Gles3dProgram,textures:RgbTextureCatalog?,widthPx:Float,heightPx:Float,density:Float,
         drawNode:(SceneNode)->Unit,
+        viewportOverride:UiBounds?=null,
+        drawControls:Boolean=true,
     ) {
         val nodes=Axis5SceneLayout.nodes(widthPx,heightPx,density)
-        val viewport=nodes.first{it.id=="AXIS5.VIEWPORT"}.bounds
+        val viewport=viewportOverride ?: nodes.first{it.id=="AXIS5.VIEWPORT"}.bounds
         p.draw(GlesGeometryBuffer.quad(viewport),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.004f,0.014f,0.028f,1f))
         val state=stateSource.snapshotForFrame(AxisMode.AXIS5)
         val visual=Axis5Presentation.from(state);val frame=Axis5Presentation.kinematicFrame(state)
@@ -133,15 +139,17 @@ class AxisGlesSceneRenderer(
         end3d(widthPx,heightPx)
         val motion=state.motionProgramId?:"NONE";val message=AxisFrameEvidence.messageSuffix(state.message)
         val hudText=String.format(Locale.US,"5AX | X%.3f Y%.3f Z%.3f A%.3f B%.3f | MOTION %s | BLOCK %d/%d%s",visual.x,visual.y,visual.z,visual.aDegrees,visual.bDegrees,motion,state.blockIndex,state.blockCount,message)
-        drawHud(p,textures,viewport,widthPx,heightPx,density,hudText);nodes.filter{it.id!="AXIS5.VIEWPORT"}.forEach(drawNode)
+        drawHud(p,textures,viewport,widthPx,heightPx,density,hudText);if(drawControls) nodes.filter{it.id!="AXIS5.VIEWPORT"}.forEach(drawNode)
         if(!axis5FirstFrameLogged){Log.i("AIG4",AxisFrameEvidence.axis5Marker(state));axis5FirstFrameLogged=true}
     }
     fun drawAxis6(
         p:GlesProgram,p3:Gles3dProgram,textures:RgbTextureCatalog?,widthPx:Float,heightPx:Float,density:Float,
         drawNode:(SceneNode)->Unit,
+        viewportOverride:UiBounds?=null,
+        drawControls:Boolean=true,
     ) {
         val nodes=Axis6SceneLayout.nodes(widthPx,heightPx,density)
-        val viewport=nodes.first{it.id=="AXIS6.VIEWPORT"}.bounds
+        val viewport=viewportOverride ?: nodes.first{it.id=="AXIS6.VIEWPORT"}.bounds
         p.draw(GlesGeometryBuffer.quad(viewport),GLES30.GL_TRIANGLES,widthPx,heightPx,floatArrayOf(0.003f,0.012f,0.025f,1f))
         val state=stateSource.snapshotForFrame(AxisMode.AXIS6)
         val visual=Axis6Presentation.from(state);val frame=Axis6Presentation.kinematicFrame(state)
@@ -165,7 +173,7 @@ class AxisGlesSceneRenderer(
         end3d(widthPx,heightPx)
         val motion=state.motionProgramId?:"NONE";val message=AxisFrameEvidence.messageSuffix(state.message)
         val hudText=String.format(Locale.US,"6AX | X%.3f Y%.3f Z%.3f A%.3f B%.3f C%.3f | MOTION %s | BLOCK %d/%d%s",visual.x,visual.y,visual.z,visual.aDegrees,visual.bDegrees,visual.cDegrees,motion,state.blockIndex,state.blockCount,message)
-        drawHud(p,textures,viewport,widthPx,heightPx,density,hudText);nodes.filter{it.id!="AXIS6.VIEWPORT"}.forEach(drawNode)
+        drawHud(p,textures,viewport,widthPx,heightPx,density,hudText);if(drawControls) nodes.filter{it.id!="AXIS6.VIEWPORT"}.forEach(drawNode)
         if(!axis6FirstFrameLogged){Log.i("AIG4",AxisFrameEvidence.axis6Marker(state));axis6FirstFrameLogged=true}
     }
     private fun begin3d(viewport:UiBounds,widthPx:Float,heightPx:Float,eyeX:Float,eyeY:Float,eyeZ:Float):FloatArray {

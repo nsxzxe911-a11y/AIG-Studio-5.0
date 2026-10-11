@@ -7,6 +7,7 @@ data class AigPageLayout(
     val labelsByKey:Map<String,String> = emptyMap(),
     val availableAssets:Set<String> = emptySet(),
     val baseZ:Int = 50,
+    val skinRoleByControlId:Map<String,RgbSkinRole> = emptyMap(),
 )
 
 
@@ -36,6 +37,7 @@ object AigComponentNodeAdapter {
             val label=component.labelKey?.let{layout.labelsByKey[it] ?: it}
                 ?: component.controlId.substringAfterLast('.')
             val texture=component.iconAsset?.takeIf{it in layout.availableAssets}
+            val skinRole=layout.skinRoleByControlId[component.controlId] ?: AigProfessionalTokens.skinRole(component.kind)
             when(component.kind){
                 AigUiKind.BUTTON,AigUiKind.NAV,AigUiKind.CARD->RgbGlassButtonNode(
                     id=component.controlId,
@@ -49,11 +51,16 @@ object AigComponentNodeAdapter {
                     visible=component.visible,
                     camCommandBinding=(component.action as? AigUiAction.Cam)?.command,
                     ncCommandBinding=(component.action as? AigUiAction.Nc)?.command,
-                    skinRole=AigProfessionalTokens.skinRole(component.kind),
+                    skinRole=skinRole,
                     aigActionBinding=component.action,
                 )
-                AigUiKind.PANEL,AigUiKind.STATUS_CARD,AigUiKind.VIEWPORT,AigUiKind.HUD,AigUiKind.CONTROL_DECK->
-                    RgbGlassPanelNode(component.controlId,bounds,layout.baseZ+index,AigProfessionalTokens.skinRole(component.kind))
+                AigUiKind.STATUS_CARD->RgbGlassButtonNode(
+                    id=component.controlId,bounds=bounds,z=layout.baseZ+index,label=label,textureRef=texture,
+                    commandBinding=null,visualState=visual,enabled=false,visible=component.visible,
+                    skinRole=skinRole,aigActionBinding=null,
+                )
+                AigUiKind.PANEL,AigUiKind.VIEWPORT,AigUiKind.HUD,AigUiKind.CONTROL_DECK->
+                    RgbGlassPanelNode(component.controlId,bounds,layout.baseZ+index,skinRole)
                 AigUiKind.LABEL->AigLabelNode(component.controlId,bounds,layout.baseZ+index,label,visual,component.visible)
                 AigUiKind.ICON->AigIconNode(component.controlId,bounds,layout.baseZ+index,texture,visual,component.visible)
             }
