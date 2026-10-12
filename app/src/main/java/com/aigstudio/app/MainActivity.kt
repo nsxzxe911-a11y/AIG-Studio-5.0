@@ -3,6 +3,7 @@ package com.aigstudio.app
 import java.io.File
 
 import android.app.Activity
+import android.util.Log
 import android.app.AlertDialog
 import android.os.SystemClock
 import android.speech.RecognizerIntent
@@ -745,6 +746,11 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (AigCncEntryGateController.installIfNeeded(this)) return
+        if (Aig436VisualPageContract.VISUAL_AUTHORITY_OWNS_TOP_LAYER) {
+            Log.i("AIG436_VISUAL", "runtime=VISUAL_AUTHORITY_PAGER|engineeringShell=false")
+            setContentView(Aig436VisualPagerView(this))
+            return
+        }
         SharedSettingsAndroidBridge.load(this)
         runCatching { applyCoordinatePrecisionPreference() }
         // System launch window stays visible until the first Production Runtime frame.

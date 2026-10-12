@@ -40,7 +40,7 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         installGlobalSkinChrome(activity)
-        if (!AigCncEntryGateController.runtimeOverlaysAllowed()) {
+        if (Aig436VisualPageContract.VISUAL_AUTHORITY_OWNS_TOP_LAYER || !AigCncEntryGateController.runtimeOverlaysAllowed()) {
             Log.i("AIG-ENTRY-OVERLAY", "ENTRY_GATE|RUNTIME_OVERLAYS=SKIP")
             return
         }
