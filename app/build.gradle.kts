@@ -14,6 +14,11 @@ val releaseVersionCode = releaseMajor * 10000
 val androidCompileSdk = 36
 val androidTargetSdk = 36
 val uiVerifySideLoad = providers.gradleProperty("aigUiVerifySideLoad").orNull == "true"
+val googleWebClientId = providers.gradleProperty("AIG_GOOGLE_WEB_CLIENT_ID").orNull
+    ?: System.getenv("AIG_GOOGLE_WEB_CLIENT_ID").orEmpty()
+val googleWebClientIdLiteral = "\"" + googleWebClientId
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"") + "\""
 
 android {
     namespace = "com.aigstudio.app"
@@ -24,6 +29,7 @@ android {
         targetSdk = androidTargetSdk
         versionCode = releaseVersionCode
         versionName = releaseVersionName
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", googleWebClientIdLiteral)
     }
     sourceSets.getByName("main").assets.srcDir(rootProject.file("shared/tutorial"))
     buildFeatures {
@@ -35,7 +41,13 @@ android {
     }
 }
 
-dependencies { implementation(project(":core")) }
+dependencies {
+    implementation(project(":core"))
+    implementation("androidx.credentials:credentials:1.6.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+    testImplementation("junit:junit:4.13.2")
+}
 
 tasks.register("verifyAndroidPlatform") {
     doLast {

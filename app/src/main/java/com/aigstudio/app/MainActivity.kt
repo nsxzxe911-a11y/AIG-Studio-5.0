@@ -744,6 +744,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (AigCncEntryGateController.installIfNeeded(this)) return
         SharedSettingsAndroidBridge.load(this)
         runCatching { applyCoordinatePrecisionPreference() }
         // System launch window stays visible until the first Production Runtime frame.
