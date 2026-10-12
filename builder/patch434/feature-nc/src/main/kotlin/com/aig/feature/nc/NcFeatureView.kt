@@ -1,0 +1,8 @@
+package com.aig.feature.nc
+import android.content.Context
+import android.graphics.Color
+import android.view.Gravity
+import android.widget.*
+import com.aig.core.fanuc.*
+import com.aig.core.ui.UiKit
+object NcFeatureView{private fun ins(e:EditText,s:String){val p=e.selectionStart.coerceAtLeast(0);e.text.insert(p,s);e.setSelection((p+s.length).coerceAtMost(e.text.length))};fun create(c:Context):LinearLayout{val r=UiKit.column(c);val st=UiKit.statusLabel(c,"NC / FANUC • EDIT • 0.001 mm");r.addView(st);val e=EditText(c).apply{setTextColor(Color.WHITE);setBackgroundColor(Color.rgb(2,4,7));textSize=13f;gravity=Gravity.TOP or Gravity.START;setHorizontallyScrolling(true)};val p=FanucMachineProfile();e.setText(FanucPost.boltCircleG83(BoltCircleCycle()));r.addView(e,LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f));val q=UiKit.toolGrid(c,5);listOf("G34+G83","O4","O5","M42","M44").forEach{t->UiKit.addGridButton(q,t){when(t){"G34+G83"->e.setText(FanucPost.boltCircleG83(BoltCircleCycle()));"O4"->ins(e,"\nM98 P4");"O5"->ins(e,"\nM98 P5");"M42"->ins(e,"\n${p.lockAxisMCode}");"M44"->ins(e,"\n${p.unlockAxisMCode}")}}};r.addView(q);val k=UiKit.toolGrid(c,5);listOf("G","M","X","Y","Z","F","S","T","I","J","K","R","H","D","/","7","8","9","4","5","6","1","2","3","0",".","-","+").forEach{x->UiKit.addGridButton(k,x){ins(e,x)}};UiKit.addGridButton(k,"EOB"){ins(e,"\n")};UiKit.addGridButton(k,"INSERT"){st.text="INSERT"};UiKit.addGridButton(k,"DELETE"){val x=e.selectionStart;if(x>0){e.text.delete(x-1,x);e.setSelection(x-1)}};UiKit.addGridButton(k,"BLOCK SKIP"){ins(e,"/")};r.addView(ScrollView(c).apply{addView(k)},LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,UiKit.dp(c,220)));return r}}
