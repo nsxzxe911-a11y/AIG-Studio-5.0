@@ -17,12 +17,26 @@ if "FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.L
 if "Gravity.BOTTOM" in home and "UiKit.panel" in home:
     failures.append("HOME_BOTTOM_OVERLAY_CARD_FORBIDDEN")
 
-# Formal HOME must not expose engineering-shell terminology to the operator.
-for bad in ["One Scene", "One Renderer", "No Overlay", "Runtime 狀態", "Renderer", "工程殼"]:
+# Formal HOME must not expose implementation/debug wording to the operator.
+for bad in [
+    "One Scene", "One Renderer", "No Overlay", "Runtime 狀態", "Renderer", "工程殼",
+    "正式 Runtime HOME", "OpenGL ES", "VERTICAL ONLY", "不使用整張 UI 截圖"
+]:
     if bad in home:
         failures.append("HOME_ENGINEERING_TEXT_FORBIDDEN:" + bad.replace(" ", "_"))
 
-# Navigation may exist once at the application shell, but HOME must not duplicate it visually.
+# MainActivity must be a host, not a permanently visible engineering shell.
+for bad in [
+    'val header=UiKit.panel',
+    '"434.0.0"',
+    '"Android 官方 Runtime"',
+    'repeat(2){r->',
+    'root.addView(UiKit.statusLabel'
+]:
+    if bad in main:
+        failures.append("TOP_ENGINEERING_SHELL_FORBIDDEN:" + bad.replace(" ", "_"))
+
+# Navigation must still be real and unique.
 for tab in ["HOME", "CAD", "CAM", "SIM", "3AX", "4AX", "5AX", "6AX", "NC", "AI"]:
     if main.count(f'"{tab}"') == 0:
         failures.append(f"MISSING_REAL_NAV_{tab}")
