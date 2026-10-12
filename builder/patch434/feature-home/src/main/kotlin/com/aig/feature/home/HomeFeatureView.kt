@@ -1,10 +1,59 @@
 package com.aig.feature.home
+
 import android.content.Context
 import android.graphics.Color
 import android.view.Gravity
 import android.view.View
-import android.widget.*
+import android.widget.LinearLayout
 import com.aig.core.settings.RuntimeSettings
-import com.aig.core.ui.R as UiR
 import com.aig.core.ui.UiKit
-object HomeFeatureView{fun create(c:Context):View=FrameLayout(c).apply{setBackgroundColor(Color.rgb(2,4,7));addView(ImageView(c).apply{setImageResource(UiR.drawable.aig_home);scaleType=ImageView.ScaleType.CENTER_CROP;contentDescription="AIG RGB HOME official skin"},FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT));val o=UiKit.panel(c).apply{gravity=Gravity.CENTER_HORIZONTAL;val s=RuntimeSettings();addView(UiKit.label(c,"AIG-II / AIG CNC 434",25f));addView(UiKit.label(c,"正式 RGB HOME • Android 官方 Runtime",16f));addView(UiKit.statusLabel(c,"0.001 mm • ${s.fps.fps}Hz • GPU 3D ${if(s.gpu3d)"ON" else "OFF"} • 本機離線可用"));addView(UiKit.label(c,"CAD / CAM / NC 已連核心；SIM / 3AX / 4AX / 5AX / 6AX 使用 Runtime OpenGL ES，SIM 顯示數值材料移除證據。",12f))};addView(o,FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.WRAP_CONTENT,Gravity.BOTTOM).apply{setMargins(UiKit.dp(c,12),UiKit.dp(c,12),UiKit.dp(c,12),UiKit.dp(c,16))})}}
+
+object HomeFeatureView {
+    fun create(c: Context): View {
+        val settings = RuntimeSettings()
+        return UiKit.column(c).apply {
+            setBackgroundColor(Color.rgb(2, 4, 7))
+            gravity = Gravity.TOP
+
+            addView(UiKit.label(c, "AIG-II / AIG CNC", 28f))
+            addView(UiKit.label(c, "435.0.0 • 正式 Runtime HOME", 16f))
+            addView(
+                UiKit.statusLabel(
+                    c,
+                    "0.001 mm • ${settings.fps.fps}Hz • GPU 3D ${if (settings.gpu3d) "ON" else "OFF"} • 本機離線可用"
+                )
+            )
+
+            addView(UiKit.panel(c).apply {
+                addView(UiKit.label(c, "加工核心", 18f))
+                addView(UiKit.label(c, "CAD  真幾何 / SNAP / TRIM / EXTEND / OFFSET / ARRAY", 14f))
+                addView(UiKit.label(c, "CAM  MANUAL 優先 / Safe-Z / 避讓 / A-B-C 保留", 14f))
+                addView(UiKit.label(c, "NC   Fanuc 編輯 / G-M Code / 0.001 mm", 14f))
+            }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, UiKit.dp(c, 8), 0, 0) })
+
+            addView(UiKit.panel(c).apply {
+                addView(UiKit.label(c, "模擬與軸態", 18f))
+                addView(UiKit.label(c, "SIM  OpenGL ES / 數值材料移除", 14f))
+                addView(UiKit.label(c, "3AX  X/Y/Z", 14f))
+                addView(UiKit.label(c, "4AX  A", 14f))
+                addView(UiKit.label(c, "5AX  A/B", 14f))
+                addView(UiKit.label(c, "6AX  A/B/C • VERTICAL ONLY", 14f))
+            }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, UiKit.dp(c, 8), 0, 0) })
+
+            addView(UiKit.panel(c).apply {
+                addView(UiKit.label(c, "Runtime 狀態", 18f))
+                addView(UiKit.label(c, "One Scene / One Renderer / No Overlay", 14f))
+                addView(UiKit.label(c, "HOME 不使用整張 UI 截圖，不建立第二套假按鈕。", 14f))
+            }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, UiKit.dp(c, 8), 0, 0) })
+        }
+    }
+}
