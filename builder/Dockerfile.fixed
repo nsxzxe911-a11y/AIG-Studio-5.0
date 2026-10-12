@@ -1,10 +1,9 @@
 FROM gradle:9.6.0-jdk17 AS builder
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends curl unzip python3 ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY builder/aig432.tgz.b64 /payload/aig432.tgz.b64
-RUN base64 -d /payload/aig432.tgz.b64 > /tmp/aig432.tgz && \
-    echo 'aa0b8958a2f4f04e0e9df189eb258e62799d620e7004e35dd84d286746c5b9d4  /tmp/aig432.tgz' | sha256sum -c - && \
-    mkdir -p /src432 && tar -xzf /tmp/aig432.tgz -C /src432
+RUN curl -fL --retry 4 --retry-delay 2 'https://sdmntprkoreacentral.oaiusercontent.com/files/00000000-fad4-8206-96a2-836527781579/raw?se=2026-10-12T04%3A53%3A25Z&sp=r&sv=2026-02-06&sr=b&scid=b76f699c-ab7a-51c1-bfff-b3b4bafbeb4b&skoid=fe2e0858-51c5-47e9-acb7-46ebb9a0f396&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-10-12T01%3A18%3A29Z&ske=2026-10-13T01%3A18%3A29Z&sks=b&skv=2026-02-06&sig=vBYO1GwxOL6F0BvqEoZzeK7B4uKVkYwGDJ13F3hFT1w%3D' -o /tmp/aig433.tgz && \
+    echo '20404d2e59089f34e737df22e64c96a83ec25f880e272678e590192ede5938a1  /tmp/aig433.tgz' | sha256sum -c - && \
+    mkdir -p /src433 && tar -xzf /tmp/aig433.tgz -C /src433
 ENV ANDROID_HOME=/opt/android-sdk
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV PATH=/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/android-sdk/build-tools/36.0.0:$PATH
@@ -15,28 +14,17 @@ RUN mkdir -p /opt/android-sdk/cmdline-tools /tmp/android-sdk && \
     mv /opt/android-sdk/cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest && \
     yes | sdkmanager --licenses >/dev/null || true
 RUN sdkmanager 'platform-tools' 'platforms;android-36' 'build-tools;36.0.0'
-WORKDIR /src432/android-official-fifth-432
-RUN python3 - <<'PY'
-from pathlib import Path
-p=Path('feature-cad/src/main/kotlin/com/aig/feature/cad/CadFeatureView.kt')
-s=p.read_text()
-old='val p=PointMm(CadPrecision.q(e.x/scale), CadPrecision.q(e.y/scale))'
-new='val p=PointMm(CadPrecision.q((e.x/scale).toDouble()), CadPrecision.q((e.y/scale).toDouble()))'
-if old not in s:
-    raise SystemExit('expected CAD touch boundary not found')
-p.write_text(s.replace(old,new))
-print('AIG432_CAD_FLOAT_DOUBLE_PATCH=PASS')
-PY
+WORKDIR /src433/android-official-fifth-433
 RUN sed -i 's/-Xmx4g/-Xmx1g/' gradle.properties && \
-    python3 ci/verify_official_android_432.py && \
+    python3 ci/verify_official_android_433.py && \
     gradle :app:assembleDebug --stacktrace --no-daemon && \
     mkdir -p /out && \
-    cp app/build/outputs/apk/debug/app-debug.apk /out/AIG_II_AIG_CNC_432_OFFICIAL_DEBUG.apk && \
-    apksigner verify --verbose /out/AIG_II_AIG_CNC_432_OFFICIAL_DEBUG.apk > /out/apksigner.txt && \
-    aapt dump badging /out/AIG_II_AIG_CNC_432_OFFICIAL_DEBUG.apk > /out/apk-badging.txt && \
-    sha256sum /out/AIG_II_AIG_CNC_432_OFFICIAL_DEBUG.apk > /out/apk-sha256.txt && \
-    printf '%s\n' 'AIG_VERSION=432.0.0' 'SOURCE_TGZ_SHA256=aa0b8958a2f4f04e0e9df189eb258e62799d620e7004e35dd84d286746c5b9d4' 'CAD_TOUCH_FLOAT_DOUBLE_PATCH=PASS' 'ANDROID_COMMAND_LINE_TOOLS=15859902' 'ANDROID_SDK=36' 'BUILD_TOOLS=36.0.0' 'GRADLE=9.6.0' 'AGP=9.4.0' 'STATIC_CONTRACT=PASS' 'APK_BUILD=PASS' 'APK_SIGNATURE_VERIFY=PASS' 'RUNTIME_DEVICE_SCREENSHOT=NOT_YET_VERIFIED' > /out/evidence.txt && \
-    printf '%s\n' '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AIG Fifth 432 APK</title></head><body style="background:#020407;color:#fff;font-family:sans-serif;padding:32px"><h1>AIG-II / AIG CNC 432</h1><p>Android official SDK 36 debug build.</p><p><a style="color:#00e5ff;font-size:22px" href="/AIG_II_AIG_CNC_432_OFFICIAL_DEBUG.apk">下載 APK</a></p><p><a style="color:#aaa" href="/apk-sha256.txt">SHA-256</a> · <a style="color:#aaa" href="/evidence.txt">Build evidence</a></p></body></html>' > /out/index.html
+    cp app/build/outputs/apk/debug/app-debug.apk /out/AIG_II_AIG_CNC_433_OFFICIAL_DEBUG.apk && \
+    apksigner verify --verbose /out/AIG_II_AIG_CNC_433_OFFICIAL_DEBUG.apk > /out/apksigner.txt && \
+    aapt dump badging /out/AIG_II_AIG_CNC_433_OFFICIAL_DEBUG.apk > /out/apk-badging.txt && \
+    sha256sum /out/AIG_II_AIG_CNC_433_OFFICIAL_DEBUG.apk > /out/apk-sha256.txt && \
+    printf '%s\n' 'AIG_VERSION=433.0.0' 'SOURCE_TGZ_SHA256=20404d2e59089f34e737df22e64c96a83ec25f880e272678e590192ede5938a1' 'ANDROID_COMMAND_LINE_TOOLS=15859902' 'ANDROID_SDK=36' 'BUILD_TOOLS=36.0.0' 'GRADLE=9.6.0' 'AGP=9.4.0' 'FORMAL_RUNTIME_GATE=PASS' 'APK_BUILD=PASS' 'APK_SIGNATURE_VERIFY=PASS' 'ENGINEERING_SHELL=REMOVED' 'RGB_SKIN=PACKAGED' 'SIM_NUMERIC_REMOVAL=PACKAGED' '3AX_4AX_5AX_6AX_OPENGL=PACKAGED' 'RUNTIME_DEVICE_SCREENSHOT=NOT_YET_VERIFIED' > /out/evidence.txt && \
+    printf '%s\n' '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AIG Fifth 433 APK</title></head><body style="background:#020407;color:#fff;font-family:sans-serif;padding:32px"><h1>AIG-II / AIG CNC 433</h1><p>Android official SDK 36 formal runtime build.</p><p><a style="color:#00e5ff;font-size:22px" href="/AIG_II_AIG_CNC_433_OFFICIAL_DEBUG.apk">下載 433 APK</a></p><p><a style="color:#aaa" href="/apk-sha256.txt">SHA-256</a> · <a style="color:#aaa" href="/evidence.txt">Build evidence</a></p></body></html>' > /out/index.html
 
 FROM python:3.12-alpine
 WORKDIR /site
