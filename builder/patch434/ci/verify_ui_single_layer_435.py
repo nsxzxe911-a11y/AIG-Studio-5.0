@@ -17,6 +17,11 @@ if "FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.L
 if "Gravity.BOTTOM" in home and "UiKit.panel" in home:
     failures.append("HOME_BOTTOM_OVERLAY_CARD_FORBIDDEN")
 
+# Formal HOME must not expose engineering-shell terminology to the operator.
+for bad in ["One Scene", "One Renderer", "No Overlay", "Runtime 狀態", "Renderer", "工程殼"]:
+    if bad in home:
+        failures.append("HOME_ENGINEERING_TEXT_FORBIDDEN:" + bad.replace(" ", "_"))
+
 # Navigation may exist once at the application shell, but HOME must not duplicate it visually.
 for tab in ["HOME", "CAD", "CAM", "SIM", "3AX", "4AX", "5AX", "6AX", "NC", "AI"]:
     if main.count(f'"{tab}"') == 0:
