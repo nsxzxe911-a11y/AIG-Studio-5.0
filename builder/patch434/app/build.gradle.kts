@@ -1,0 +1,3 @@
+plugins { id("com.android.application") }
+android { namespace = "com.aig.fifth432"; compileSdk = 36; defaultConfig { applicationId = "com.aig.fifth432"; minSdk = 28; targetSdk = 36; versionCode = 4340001; versionName = "434.0.0" }; compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }; packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
+dependencies { implementation(project(":core-ui")); implementation(project(":core-sync")); implementation(project(":core-settings")); implementation(project(":feature-home")); implementation(project(":feature-cad")); implementation(project(":feature-cam")); implementation(project(":feature-nc")); implementation(project(":renderer-unity-api")) }

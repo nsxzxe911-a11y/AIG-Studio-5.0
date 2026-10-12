@@ -1,0 +1,2 @@
+package com.aig.renderer.unity.api
+enum class AxisModule{AXIS3,AXIS4,AXIS5,AXIS6};data class AxisPose(val a:Double=0.0,val b:Double=0.0,val c:Double=0.0);interface UnityRendererBridge{val installed:Boolean;fun mount(module:AxisModule):Boolean;fun setPose(pose:AxisPose):Boolean;fun detach()};object RendererContract{const val POLICY="NATIVE_OPENGL_ES_TRUE_3D_WITH_RUNTIME_AXIS_TRANSFORMS_AND_NUMERIC_STOCK_REMOVAL"}
