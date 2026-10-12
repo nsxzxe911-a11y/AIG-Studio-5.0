@@ -1,10 +1,9 @@
 FROM gradle:9.6.0-jdk17 AS builder
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends curl unzip python3 ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY builder/aig432.tgz.b64 /payload/aig432.tgz.b64
-RUN base64 -d /payload/aig432.tgz.b64 > /tmp/aig432.tgz && \
-    echo '2fe6b01254bd1d664afbb1c85e0cb3efeae0ac6eedd57ecaf32633628e1b7185  /tmp/aig432.tgz' | sha256sum -c - && \
-    mkdir -p /src432 && tar -xzf /tmp/aig432.tgz -C /src432
+COPY builder/aig432.tgz /payload/aig432.tgz
+RUN echo '2fe6b01254bd1d664afbb1c85e0cb3efeae0ac6eedd57ecaf32633628e1b7185  /payload/aig432.tgz' | sha256sum -c - && \
+    mkdir -p /src432 && tar -xzf /payload/aig432.tgz -C /src432
 ENV ANDROID_HOME=/opt/android-sdk
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV PATH=/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/android-sdk/build-tools/36.0.0:$PATH
