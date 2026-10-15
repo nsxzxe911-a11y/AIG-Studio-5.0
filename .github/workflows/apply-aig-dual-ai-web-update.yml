@@ -1,0 +1,39 @@
+name: Apply AIG Studio dual AI web update patch
+
+on:
+  push:
+    branches:
+      - feature/aig-dual-ai-web-update-20261015
+    paths:
+      - 'ci/apply_aig_dual_ai_web_update_patch.py'
+      - '.github/workflows/apply-aig-dual-ai-web-update.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python ci/apply_aig_dual_ai_web_update_patch.py
+      - run: |
+          python ci/verify_aig_dual_ai_web_update.py
+          git diff --check
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then
+            echo 'No changes.'
+            exit 0
+          fi
+          git config user.name 'AIG AI Update'
+          git config user.email 'actions@users.noreply.github.com'
+          git add core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt
+          git commit -m 'feat(ai-update): route Studio updates through AIG web channel'
+          git push origin HEAD:feature/aig-dual-ai-web-update-20261015
