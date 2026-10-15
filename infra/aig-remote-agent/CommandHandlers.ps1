@@ -8,6 +8,19 @@ $script:AigRepo = 'E:\AIG\AIG\AIG-II-429-win'
 $script:Expected462 = '6cd20f36'
 $script:ResumeScript = Join-Path $env:ProgramData 'AIG-II\RemoteAgent\AIG-II-463-RESUME-READONLY.ps1'
 
+function Assert-Aig462Floor {
+    if (-not (Test-Path $script:AigRepo)) { throw "AIG_REPO_MISSING" }
+    Push-Location $script:AigRepo
+    try {
+        & git cat-file -e "$($script:Expected462)^{commit}" 2>$null
+        if ($LASTEXITCODE -ne 0) { throw "AIG_462_COMMIT_MISSING" }
+        & git merge-base --is-ancestor $script:Expected462 HEAD
+        if ($LASTEXITCODE -ne 0) { throw "AIG_462_ANCESTRY_BLOCK" }
+        return (& git rev-parse HEAD 2>$null | Out-String).Trim()
+    }
+    finally { Pop-Location }
+}
+
 function Invoke-NoxStatus {
     if (-not (Test-Path $script:NoxAdb)) { throw "NOX_ADB_MISSING" }
     $null = & $script:NoxAdb connect $script:NoxTarget 2>&1
@@ -32,25 +45,26 @@ function Invoke-NoxStart {
 }
 
 function Invoke-Resume463 {
-    if (-not (Test-Path $script:AigRepo)) { throw "AIG_REPO_MISSING" }
-    Push-Location $script:AigRepo
-    try {
-        & git cat-file -e "$($script:Expected462)^{commit}" 2>$null
-        if ($LASTEXITCODE -ne 0) { throw "AIG_462_COMMIT_MISSING" }
-        & git merge-base --is-ancestor $script:Expected462 HEAD
-        if ($LASTEXITCODE -ne 0) { throw "AIG_462_ANCESTRY_BLOCK" }
-        if (-not (Test-Path $script:ResumeScript)) { throw "RESUME_SCRIPT_MISSING" }
-        return (& $script:ResumeScript 2>&1 | Out-String).Trim()
-    }
-    finally { Pop-Location }
+    $head = Assert-Aig462Floor
+    if (-not (Test-Path $script:ResumeScript)) { throw "RESUME_SCRIPT_MISSING" }
+    $resume = (& $script:ResumeScript 2>&1 | Out-String).Trim()
+    return "AIG_463_RESUME|HEAD=$head|$resume"
+}
+
+function Invoke-WindowsAiUpdate {
+    $head = Assert-Aig462Floor
+    if (-not (Test-Path $script:ResumeScript)) { throw "WINDOWS_AI_UPDATE_ENTRY_MISSING" }
+    $resume = (& $script:ResumeScript 2>&1 | Out-String).Trim()
+    return "WINDOWS_AI_UPDATE_TRIGGERED|PATH=WEB_TO_WINDOWS|BASE=462|HEAD=$head|NEXT=463|$resume"
 }
 
 function Invoke-AigRemoteCommand {
     param([Parameter(Mandatory = $true)][string]$Name)
     switch ($Name) {
+        'WINDOWS_AI_UPDATE' { return Invoke-WindowsAiUpdate }
+        'RESUME_463' { return Invoke-Resume463 }
         'NOX_STATUS' { return Invoke-NoxStatus }
         'NOX_START' { return Invoke-NoxStart }
-        'RESUME_463' { return Invoke-Resume463 }
         default { throw "UNSUPPORTED_COMMAND:$Name" }
     }
 }
