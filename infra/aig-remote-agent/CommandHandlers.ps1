@@ -7,6 +7,8 @@ $script:NoxTarget = '127.0.0.1:62026'
 $script:AigRepo = 'E:\AIG\AIG\AIG-II-429-win'
 $script:Expected462 = '6cd20f36'
 $script:ResumeScript = Join-Path $env:ProgramData 'AIG-II\RemoteAgent\AIG-II-463-RESUME-READONLY.ps1'
+$script:FastLoopLegacy = 'E:\AIG_WORK\tools\fast-loop\aig-fast.ps1'
+$script:FastLoopRecovered = Join-Path $env:ProgramData 'AIG-II\RemoteAgent\aig-fast.ps1'
 
 function Assert-Aig462Floor {
     if (-not (Test-Path $script:AigRepo)) { throw "AIG_REPO_MISSING" }
@@ -58,10 +60,26 @@ function Invoke-WindowsAiUpdate {
     return "WINDOWS_AI_UPDATE_TRIGGERED|PATH=WEB_TO_WINDOWS|BASE=462|HEAD=$head|NEXT=463|$resume"
 }
 
+function Resolve-FastLoop {
+    foreach ($candidate in @($script:FastLoopLegacy, $script:FastLoopRecovered)) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
+    }
+    throw "AIG_FAST_LOOP_MISSING"
+}
+
+function Invoke-DualAndroidUpdate {
+    # Fixed dual-project Android route only. No user parameters are accepted.
+    $fastLoop = Resolve-FastLoop
+    $result = (& $fastLoop -Project 'BOTH' -Platform 'ANDROID' 2>&1 | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0) { throw "AIG_FAST_LOOP_DUAL_ANDROID_FAILED:$LASTEXITCODE" }
+    return "AIG_FAST_LOOP_DUAL_ANDROID|PROJECT=BOTH|PLATFORM=ANDROID|ENTRY=$fastLoop|$result"
+}
+
 function Invoke-AigRemoteCommand {
     param([Parameter(Mandatory = $true)][string]$Name)
     switch ($Name) {
         'WINDOWS_AI_UPDATE' { return Invoke-WindowsAiUpdate }
+        'DUAL_ANDROID_UPDATE' { return Invoke-DualAndroidUpdate }
         'RESUME_463' { return Invoke-Resume463 }
         'NOX_STATUS' { return Invoke-NoxStatus }
         'NOX_START' { return Invoke-NoxStart }
