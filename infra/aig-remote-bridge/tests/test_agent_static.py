@@ -13,12 +13,22 @@ def test_windows_agent_files_exist():
 def test_handlers_have_only_fixed_whitelist_and_paths():
     text = HANDLERS.read_text(encoding="utf-8")
     assert "NOX_STATUS" in text and "NOX_START" in text and "RESUME_463" in text
+    assert "DUAL_ANDROID_UPDATE" in text
     assert "E:\\Program Files\\Nox\\bin\\nox_adb.exe" in text
     assert "127.0.0.1:62026" in text
     assert "E:\\AIG\\AIG\\AIG-II-429-win" in text
     assert "6cd20f36" in text
     assert "merge-base --is-ancestor" in text
     assert "cat-file -e" in text
+
+
+def test_dual_android_update_is_fixed_fast_loop_only():
+    text = HANDLERS.read_text(encoding="utf-8")
+    assert "Invoke-DualAndroidUpdate" in text
+    assert "E:\\AIG_WORK\\tools\\fast-loop\\aig-fast.ps1" in text
+    assert "-Project" in text and "BOTH" in text
+    assert "-Platform" in text and "ANDROID" in text
+    assert "AIG_FAST_LOOP_DUAL_ANDROID" in text
 
 
 def test_no_arbitrary_shell_primitives():
