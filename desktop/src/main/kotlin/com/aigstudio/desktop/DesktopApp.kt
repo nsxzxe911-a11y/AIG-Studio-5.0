@@ -463,7 +463,7 @@ private object ProductionRgbAssets {
             n.contains("3AX") || n.contains("3 AXIS") -> "3ax"
             n.contains("4AX") || n.contains("4 AXIS") || name.contains("四軸") -> "4ax"
             n.contains("5AX") || n.contains("5 AXIS") || n=="5X" || name.contains("五軸") -> "5ax"
-            n.contains("6AX") || n.contains("6 AXIS") || n=="6X" || name.contains("六軸") -> "5ax"
+            n.contains("6AX") || n.contains("6 AXIS") || n=="6X" || name.contains("六軸") -> "6ax"
             n=="NC" || n.contains("NC_EDIT") || n.contains("NC EDIT") -> "nc"
             n=="AI" || n.contains("AI ") -> "ai"
             else -> null
@@ -3222,7 +3222,7 @@ private fun showUnifiedMachiningEditor(
     mode("5AX","五軸","5 AXIS",Color(236,72,153),"5AX"){
         maximizeVisualWorkspace();axisMode="5AX";axisC=0.0;rebuildMachiningForMode();card.show(visual,"AXIS")
     }
-    mode("6AX","六軸","6 AXIS",Color(34,211,238),"6AX"){
+    mode("6AX","六軸","6 AXIS",Color(159,114,255),"6AX"){
         maximizeVisualWorkspace();axisMode="6AX";rebuildMachiningForMode();card.show(visual,"AXIS")
     }
     mode("NC_EDIT","程式","NC EDIT",Color(80,170,255),"NC_EDIT"){showNcWorkspace();editor.requestFocusInWindow()}
@@ -4841,6 +4841,31 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("SIM")+" • "+MasterRuntimeChainContract.masterOriginLabel()+" • "+WorkstationChromeContract.PRECISION }
             .onFailure { status.text="SIM WARNING • "+(it.message?:"error") }
     })
+    moduleButtons.add(productionUiButton("3AX", Color(59,130,246)) {
+        runCatching { showUnifiedMachiningEditor(
+                frame,doc,status,productionCamDerivedCache,"3AX",productionCamSettings,productionFixtures,productionToolAssembly
+            ) }
+            .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("3AX")+" • XYZ • "+WorkstationChromeContract.PRECISION }
+            .onFailure { status.text="3AX WARNING • "+(it.message?:"error") }
+    })
+    moduleButtons.add(productionUiButton("4AX", Color(245,158,11)) {
+        runCatching { showUnifiedMachiningEditor(
+                frame,doc,status,productionCamDerivedCache,"4AX",productionCamSettings,productionFixtures,productionToolAssembly
+            ) }
+            .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("4AX")+" • XYZA • "+WorkstationChromeContract.PRECISION }
+            .onFailure { status.text="4AX WARNING • "+(it.message?:"error") }
+    })
+    moduleButtons.add(productionUiButton("5AX", Color(236,72,153)) {
+        runCatching { showUnifiedMachiningEditor(
+                frame,doc,status,productionCamDerivedCache,"5AX",productionCamSettings,productionFixtures,productionToolAssembly
+            ) }
+            .onSuccess { status.text="UX • "+RuntimeUxFlowContract.title("5AX")+" • XYZAB • "+WorkstationChromeContract.PRECISION }
+            .onFailure { status.text="5AX WARNING • "+(it.message?:"error") }
+    })
+    moduleButtons.add(productionUiButton("6AX", Color(159,114,255)) {
+        showSixAxisRuntimeStage()
+        status.text="UX • "+RuntimeUxFlowContract.title("6AX")+" • XYZABC • "+WorkstationChromeContract.PRECISION
+    })
     moduleButtons.add(productionUiButton("NC", Color(80,170,255)) {
         runCatching { showNcEditor(
                 frame,productionCamDerivedCache,!productionCamIsStale()
@@ -5069,7 +5094,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 frame,doc,status,productionCamDerivedCache,"4AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="4AX WARNING • "+(it.message?:"error")}})
         add(homeLaunch("5AX",Color(236,72,153)){runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,productionCamDerivedCache,"5AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="5AX WARNING • "+(it.message?:"error")}})
-        add(homeLaunch("6AX",Color(34,211,238)){runCatching{showUnifiedMachiningEditor(
+        add(homeLaunch("6AX",Color(159,114,255)){productionUiButtons["6AX"]?.doClick(); runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,productionCamDerivedCache,"6AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="6AX WARNING • "+(it.message?:"error")}})
         add(homeLaunch("NC",Color(80,170,255)){productionUiButtons["NC"]?.doClick()})
         add(homeLaunch("AI",Color(139,92,246)){productionUiButtons["AI"]?.doClick()})

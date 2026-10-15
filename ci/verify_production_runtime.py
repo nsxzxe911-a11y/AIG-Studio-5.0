@@ -73,7 +73,7 @@ if "runtime-evidence" not in windows_build:
 if "WINDOWS_EXECUTABLE_SMOKE_CAPTURED" not in windows_build:
     raise SystemExit("Windows executable smoke evidence marker missing")
 
-switch_modes = 'val modes = listOf("CAD","CAM","SIM","NC","AI")'
+switch_modes = 'val modes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI")'
 if switch_modes not in env:
     raise SystemExit("production UI stable-order contract missing")
 for marker in [
@@ -81,6 +81,10 @@ for marker in [
     'addProductionUi("CAD")',
     'addProductionUi("CAM")',
     'addProductionUi("SIM")',
+    'addProductionUi("3AX")',
+    'addProductionUi("4AX")',
+    'addProductionUi("5AX")',
+    'addProductionUi("6AX")',
     'addProductionUi("NC")',
     'addProductionUi("AI")',
     'action("3/4/5/6AX"',
@@ -92,6 +96,10 @@ for marker in [
     'productionUiButton("CAD"',
     'productionUiButton("CAM"',
     'productionUiButton("SIM"',
+    'productionUiButton("3AX"',
+    'productionUiButton("4AX"',
+    'productionUiButton("5AX"',
+    'productionUiButton("6AX"',
     'productionUiButton("NC"',
     'productionUiButton("AI"',
     'camAction("軸模式"',
@@ -99,7 +107,7 @@ for marker in [
     if marker not in desktop:
         raise SystemExit(f"Windows production UI switch marker missing: {marker}")
 
-print("PRODUCTION_UI_SWITCH_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED|STABLE_ORDER|LIVE_RUNTIME")
+print("PRODUCTION_UI_SWITCH_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|DIRECT_AXIS_NAV|STABLE_ORDER|LIVE_RUNTIME")
 if 'const val POLICY = "NO_UI_NO_FUNCTION"' not in env:
     raise SystemExit("visible-function UI policy missing")
 for marker in [
@@ -116,7 +124,7 @@ for marker in [
 ]:
     if marker not in desktop:
         raise SystemExit(f"Windows visible-function UI marker missing: {marker}")
-print("VISIBLE_FUNCTION_UI_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
+print("VISIBLE_FUNCTION_UI_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
 for marker in [
     'const val POLICY = "XYZABC_SIMULATION_FIRST_NC_INTERLOCK"',
     'const val NC_POST_VERIFIED = false',

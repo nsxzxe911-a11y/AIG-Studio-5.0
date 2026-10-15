@@ -1,0 +1,264 @@
+name: AIG Studio direct release validation
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fast-review:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Parallel department fast review
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/fast_review.py | tee fast-review.log
+          grep -Fq 'FAST_REVIEW_PASS|' fast-review.log
+
+  android-and-source:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK local-cache fast path
+        shell: bash
+        run: |
+          set -euo pipefail
+          INSTALLED_BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | sort -V | tail -1 || true)"
+          if [ -d "$ANDROID_HOME/platforms/android-36" ] && [ -n "$INSTALLED_BUILD_TOOLS" ] && [ -x "$ANDROID_HOME/build-tools/$INSTALLED_BUILD_TOOLS/apksigner" ]; then
+            echo "ANDROID_SDK_CACHE_FAST_PATH=PASS"
+            echo "LATEST_BUILD_TOOLS=build-tools;$INSTALLED_BUILD_TOOLS" >> "$GITHUB_ENV"
+          else
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+            test -x "$SDKMANAGER"
+            yes | "$SDKMANAGER" --licenses >/dev/null || true
+            LATEST_BUILD_TOOLS="$("$SDKMANAGER" --list | sed -nE 's/^[[:space:]]*(build-tools;[0-9]+(\.[0-9]+){2})[[:space:]]+.*/\1/p' | sort -V | tail -1)"
+            test -n "$LATEST_BUILD_TOOLS"
+            "$SDKMANAGER" "platform-tools" "platforms;android-36" "$LATEST_BUILD_TOOLS"
+            echo "ANDROID_SDK_CACHE_FAST_PATH=MISS_INSTALL_REQUIRED"
+            echo "LATEST_BUILD_TOOLS=$LATEST_BUILD_TOOLS" >> "$GITHUB_ENV"
+          fi
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Verify release command, responsibility routing, and continuity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/verify_release_command_dispatch.py | tee release-command.log
+          python3 ci/verify_ai_responsibility_routing.py | tee ai-responsibility.log
+          python3 ci/verify_continuity_checkpoint.py | tee continuity.log
+          python3 ci/verify_xml_cache_update_standard.py | tee xml-cache-standard.log
+          python3 ci/verify_theme_pack_hot_swap.py | tee theme-hot-swap.log
+          python3 ci/verify_network_resilience.py | tee network-resilience.log
+          grep -Fq 'NETWORK_RESILIENCE_GATE_PASS|ANDROID_WINDOWS_OFF_MAIN_SYNC_IO|40MS_DEBOUNCE|STALE_RESULT_SUPPRESSION|VALIDATED_RECONNECT_RESET|OFFLINE_FAST_FAIL|RANGE_ETAG_IF_RANGE|CHECKPOINT_RETAINED' network-resilience.log
+          grep -Fq 'THEME_PACK_HOT_SWAP_GATE_PASS|AI_LAYOUT|8_MOBILE_SCREENS|NO_RESTART|AUTO_ROLLBACK_OFF|NO_ENGINEERING_SHELL|CORE_IMMUTABLE' theme-hot-swap.log
+          python3 ci/department_autocheck.py | tee department-autocheck.log
+          grep -Fq 'ALL_DEPARTMENT_RELEASE_COMMAND_PASS|' release-command.log
+          grep -Fq 'AI_RESPONSIBILITY_ROUTING_PASS|' ai-responsibility.log
+          grep -Fq 'AI_NETWORK_NOT_OWNER_PASS|' ai-responsibility.log
+          grep -Fq 'CONTINUITY_PASS' continuity.log
+          grep -Fq 'XML_CACHE_UPDATE_STANDARD_PASS|' xml-cache-standard.log
+          grep -Fq 'ALL_DEPARTMENTS_SOURCE_AUTOCHECK_PASS' department-autocheck.log
+      - name: Verify production runtime boundary
+        shell: bash
+        run: |
+          python3 ci/verify_production_runtime.py | tee production-runtime.log
+          grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|' production-runtime.log
+          grep -Fq 'PRODUCTION_UI_SWITCH_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|DIRECT_AXIS_NAV|STABLE_ORDER|LIVE_RUNTIME' production-runtime.log
+          grep -Fq 'VISIBLE_FUNCTION_UI_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' production-runtime.log
+          grep -Fq 'CONTINUOUS_6AX_PRODUCTION_GATE_PASS|ABC_TOOLPOINTS|SIM|ROTARY_C|NC_C_FAIL_CLOSED' production-runtime.log
+          grep -Fq 'SIX_AXIS_COLLISION_SPACE_PRODUCTION_GATE_PASS|ABC_MACHINE_SPACE|ROTATING_FIXTURE|MACHINE_ENVELOPE|NC_INTERLOCK_UNCHANGED' production-runtime.log
+          grep -Fq 'COLLISION_LOOKAHEAD_PRODUCTION_GATE_PASS|PREDICT|SUGGEST|MANUAL_CONFIRM|REVALIDATE|NC_INTERLOCK_UNCHANGED' production-runtime.log
+          grep -Fq 'FIXTURE_MODEL_PRODUCTION_UI_GATE_PASS|ANDROID|WINDOWS|MASTER_ORIGIN_BOUNDS|LOOKAHEAD_VISIBLE|NO_AUTO_NC' production-runtime.log
+          grep -Fq 'MODELED_COLLISION_NC_INTERLOCK_PRODUCTION_GATE_PASS|COLLISION|OVERCUT|UNMODELED_WARNING_ONLY|PREFLIGHT_MODEL_REQUIRED' production-runtime.log
+          grep -Fq 'PROJECT_FIXTURE_PERSISTENCE_PRODUCTION_GATE_PASS|V3|V1_V2_COMPAT|AXIS_C|FIXTURE|TOOL_ASSEMBLY|ANDROID_WINDOWS' production-runtime.log
+          grep -Fq 'PROJECT_FIXTURE_DIGEST_PRODUCTION_GATE_PASS|0.001_FIXTURE_SHA|REVISION_SYNC|NO_SILENT_OVERWRITE' production-runtime.log
+          grep -Fq 'PROJECT_RUNTIME_SYNC_UI_PRODUCTION_GATE_PASS|ANDROID|WINDOWS|SAVE|OPEN|SHARE_STATUS|SHARE_PUBLISH|NO_AUTO_OVERWRITE|EXPLICIT_CONFIRM|REMOTE_DIGEST_RACE_BLOCK' production-runtime.log
+          grep -Fq 'FULL_PROJECT_RECOVERY_PRODUCTION_GATE_PASS|ANDROID|WINDOWS|V3_ATOMIC_SAVE|15S|CAD_CAM_ABC_FIXTURE_TOOL_NC|NONFATAL_CORRUPT_FALLBACK' production-runtime.log
+          grep -Fq 'TOOL_ASSEMBLY_PRODUCTION_GATE_PASS|ANDROID|WINDOWS|HOLDER_COLLISION_EFFECT|PROJECT_V3_DIGEST|NC_INTERLOCK_MODEL' production-runtime.log
+          grep -Fq 'MANUAL_6AX_EDIT_PRODUCTION_GATE_PASS|INSERT|REPLACE|AVOIDANCE|ABC_CONTINUITY|C_AXIS_NC_FAIL_CLOSED' production-runtime.log
+          grep -Fq 'MANUAL_6AX_AXIS_EDIT_PRODUCTION_GATE_PASS|ABC_EDITABLE|RANGE_GUARD|SIM_CONTINUITY|C_AXIS_NC_FAIL_CLOSED' production-runtime.log
+          grep -Fq 'OFFLINE_FIRST_UI_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' production-runtime.log
+          grep -Fq 'NETWORK_RESUME_UI_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY' production-runtime.log
+          grep -Fq 'NETWORK_RETRY_UI_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE' production-runtime.log
+          grep -Fq 'INTEGRATED_MAINTENANCE_UI_GATE_PASS|ANDROID|WINDOWS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|REAL_ACTIONS' production-runtime.log
+          grep -Fq 'PRODUCTION_SHELL_EVIDENCE_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY' production-runtime.log
+          grep -Fq 'LOW_LATENCY_NETWORK_GATE_PASS|START_40MS|MANIFEST_1200_2000|APK_IDLE_2500_5000|RETRY_120MS_X2|BACKGROUND_CHECK_ONLY|UI_NEVER_WAIT' production-runtime.log
+      - name: Verify all runtime pages and callbacks
+        shell: bash
+        run: |
+          python3 ci/verify_runtime_surfaces.py | tee runtime-surfaces.log
+          grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
+          grep -Fq 'PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|DIRECT_AXIS_NAV|STABLE_ORDER' runtime-surfaces.log
+          grep -Fq 'SHARED_SYNC_RUNTIME_WATCHER_GATE_PASS|' runtime-surfaces.log
+          echo 'STUDIO_TOOLCHAIN_238=AGP_9.4.0|KOTLIN_2.4.20|GRADLE_9.7.0|JDK_17|API_36_STABLE|API_37_PREVIEW_TRACKED|LATEST_BUILD_TOOLS|DIRECT_AXIS_NAV_GATE|CHECKOUT_V7|SETUP_GRADLE_V6'
+          grep -Fq 'VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS' runtime-surfaces.log
+          grep -Fq 'CONTINUOUS_6AX_RUNTIME_GATE_PASS|CAM_PER_TOOLPOINT_ABC|PROGRESSIVE_SIM|ANDROID_LIVE_C|WINDOWS_LIVE_C|NC_C_FAIL_CLOSED' runtime-surfaces.log
+          grep -Fq 'SIX_AXIS_COLLISION_SPACE_GATE_PASS|ABC_MACHINE_SPACE|FIXTURE|CLAMP|MACHINE_ENVELOPE|ROTATING_FIXTURE|C90' runtime-surfaces.log
+          grep -Fq 'COLLISION_LOOKAHEAD_RUNTIME_GATE_PASS|BOUNDED_HORIZON|RETRACT_Z|PATH_REROUTE|POSTURE_CHANGE_REQUIRED|MANUAL_CONFIRM|REVALIDATE|NO_AUTO_NC' runtime-surfaces.log
+          grep -Fq 'FIXTURE_MODEL_RUNTIME_UI_GATE_PASS|ANDROID|WINDOWS|CLAMP|VISE|FIXTURE|MACHINE_ENVELOPE|LOOKAHEAD_VISIBLE|SHARED_RISK_MODEL' runtime-surfaces.log
+          grep -Fq 'MODELED_COLLISION_NC_INTERLOCK_RUNTIME_GATE_PASS|MODELED_COLLISION_BLOCK|OVERCUT_BLOCK|UNMODELED_WARNING_ONLY|PREFLIGHT_REQUIRES_MODEL' runtime-surfaces.log
+          grep -Fq 'PROJECT_FIXTURE_PERSISTENCE_RUNTIME_GATE_PASS|PROJECT_V3|AXIS_C|MANUAL_C|FIXTURE|TOOL_ASSEMBLY|V1_V2_BACKWARD_COMPAT|ANDROID_WINDOWS_RESTORE' runtime-surfaces.log
+          grep -Fq 'PROJECT_FIXTURE_SYNC_RUNTIME_GATE_PASS|FIXTURE_0.001_CHANGES_SHA|REVISION|REMOTE_NEWER|DIRTY_TRACKING|NO_SILENT_OVERWRITE' runtime-surfaces.log
+          grep -Fq 'PROJECT_RUNTIME_SYNC_UI_GATE_PASS|ANDROID|WINDOWS|SAVE|OPEN|SHARE_STATUS|SHARE_PUBLISH|ADOPT_REMOTE|KEEP_LOCAL|SAVE_COPY|EXPLICIT_CONFIRM|RACE_GUARD' runtime-surfaces.log
+          grep -Fq 'FULL_PROJECT_RECOVERY_RUNTIME_GATE_PASS|ANDROID|WINDOWS|PROJECT_V3|CAD|CAM|ABC|FIXTURE|TOOL_ASSEMBLY|NC|15S|CORRUPT_RECOVERY_IGNORED' runtime-surfaces.log
+          grep -Fq 'TOOL_ASSEMBLY_RUNTIME_GATE_PASS|ANDROID|WINDOWS|HOLDER_DIAMETER|HOLDER_LENGTH|STICKOUT|CAM_SIM_5AX_6AX_COLLISION|PROJECT_V3|REVALIDATE' runtime-surfaces.log
+          grep -Fq 'MANUAL_6AX_EDIT_RUNTIME_GATE_PASS|ANDROID|WINDOWS|INSERT|REPLACE|AVOIDANCE|ABC_PRESERVED|C_VISIBLE|NC_C_FAIL_CLOSED' runtime-surfaces.log
+          grep -Fq 'MANUAL_6AX_AXIS_EDIT_RUNTIME_GATE_PASS|ANDROID|WINDOWS|ABC_EDITABLE|RANGE_GUARD|SIM_CONTINUITY|NC_C_FAIL_CLOSED' runtime-surfaces.log
+          grep -Fq 'OFFLINE_FIRST_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NETWORK_NOT_REQUIRED|DIRECT_UI|LOCAL_RUNTIME|BACKGROUND_ONLINE_ONLY' runtime-surfaces.log
+          grep -Fq 'NETWORK_RESUME_UI_RUNTIME_GATE_PASS|POST_READY_OBSERVER|NO_STATUS_RACE|NETWORK_OPTIONAL|UNREGISTER_ON_DESTROY' runtime-surfaces.log
+          grep -Fq 'NETWORK_RETRY_UI_RUNTIME_GATE_PASS|ATOMIC_SINGLE_CHECK|RETRY_ON_RECONNECT|COMPACT_BADGE|NO_LONG_MESSAGE' runtime-surfaces.log
+          grep -Fq 'INTEGRATED_MAINTENANCE_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|PRODUCTION_UI_BOOT|NO_SEPARATE_ENGINEERING_SHELL|OFFLINE_MAINT|REAL_ACTIONS' runtime-surfaces.log
+          grep -Fq 'PRODUCTION_SHELL_EVIDENCE_RUNTIME_GATE_PASS|DESKTOP_LAUNCH_FROM_SHOWAPP|NO_SMOKE_ROOT_AS_AUTHORITY' runtime-surfaces.log
+          grep -Fq 'LOW_LATENCY_NETWORK_RUNTIME_GATE_PASS|ANDROID|START_40MS|MANIFEST_1200_2000|APK_IDLE_2500_5000|RETRY_120MS_X2|BACKGROUND_CHECK_ONLY|UI_NEVER_WAIT' runtime-surfaces.log
+          grep -Fq 'AXIS_3_4_5_PAGE_RUNTIME_BINDING_PASS' runtime-surfaces.log
+          grep -Fq 'NO_FAKE_PAGE_CALLBACK_GATE_PASS' runtime-surfaces.log
+          grep -Fq 'ADAPTIVE_UI_TEXT_GATE_PASS' runtime-surfaces.log
+          grep -Fq 'CAD_EDIT_RUNTIME_GATE_PASS' runtime-surfaces.log
+          grep -Fq 'CAD_PRECISION_EDIT_RUNTIME_GATE_PASS' runtime-surfaces.log
+          grep -Fq 'AXIS_POSE_BADGE_REFLOW_GATE_PASS|ANDROID|WINDOWS|3D|3AX|4AX|5AX|ONE_TWO_THREE_LINE|DYNAMIC_2LINE_3LINE_SMOKE|NO_OVERFLOW|FULL_AB_PRECISION|DIRECTION|DEPTH|POSE_ANGLE|SMOKE_IMAGE|VISUAL_ONLY' runtime-surfaces.log
+          grep -Fq 'AXIS_DEPTH_BEADS_GATE_PASS|ANDROID|WINDOWS|3D|5AX|PROJECTED_DEPTH_DELTA|DIRECTIONAL_RADIUS|DIRECTIONAL_ALPHA|SMOKE_EVIDENCE|VISUAL_ONLY' runtime-surfaces.log
+          grep -Fq 'LIBRARY_5X_REAL_CAM_SKIN_GATE_PASS|ANDROID|WINDOWS|CHATGPT_ANDROID_LIBRARY_REFERENCE|IMAGE_GEN_1|IMAGE_GEN_2|CAM_SETTINGS_LIVE|WORK_OFFSET_LIVE|TOOLPATH_LIVE|VISUAL_ONLY|NO_GEOMETRY_MUTATION' runtime-surfaces.log
+          grep -Fq 'STUDIO_AXIS_MODEL_MAIN_UI_GATE_PASS|' runtime-surfaces.log
+      - name: Build Android APK and source package
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum -c design/theme/official_rgb/android-drawable.sha256
+          echo 'RGB_VECTOR_ASSET_INTEGRITY=PASS'
+          bash ./build_android_release.sh | tee release-validation.log
+          grep -Fq 'AIG_STUDIO_ANDROID_PACKAGE=PASS' release-validation.log
+          grep -Fq 'CAD_RGB_WORKSPACE_GATE_PASS' runtime-surfaces.log
+          test -s release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
+          test -s release/android/AIG_Studio_5_0_RGB_UI_VERIFY_SIDELOAD.apk
+          test -s release/android/SHA256SUMS.txt
+          test -s release/android/RELEASE_MANIFEST.txt
+          test -s release/source/AIG_Studio_FULL_PROJECT_SOURCE.zip
+          test -s release/source/SHA256SUMS.txt
+          test -s release/source/RELEASE_MANIFEST.txt
+          test -s app/src/main/res/drawable/ic_rgb_3ax.xml
+          test -s app/src/main/res/drawable/ic_rgb_4ax.xml
+          test -s app/src/main/res/drawable/ic_rgb_5ax.xml
+          grep -Fq 'app/src/main/res/drawable/ic_rgb_3ax.xml' design/theme/official_rgb/android-drawable.sha256
+          grep -Fq 'app/src/main/res/drawable/ic_rgb_4ax.xml' design/theme/official_rgb/android-drawable.sha256
+          grep -Fq 'app/src/main/res/drawable/ic_rgb_5ax.xml' design/theme/official_rgb/android-drawable.sha256
+          echo 'AXIS_3_4_5_RGB_SKIN_INTEGRITY=PASS'
+          echo 'ANDROID_PACKAGE_FILES_PRESENT=PASS'
+      - name: Verify Android APK
+        shell: bash
+        run: |
+          APK=release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk
+          UI_VERIFY_APK=release/android/AIG_Studio_5_0_RGB_UI_VERIFY_SIDELOAD.apk
+          VERSION="$(awk -F= '$1=="versionName"{print $2}' release-version.properties)"
+          RELEASE_MAJOR="${VERSION%%.*}"
+          UI_VERIFY_PACKAGE="com.aigstudio.app.uiverify${RELEASE_MAJOR}"
+          test -s "$APK"
+          test -s "$UI_VERIFY_APK"
+          BUILD_TOOLS_DIR="$ANDROID_HOME/build-tools/${LATEST_BUILD_TOOLS#build-tools;}"
+          test -x "$BUILD_TOOLS_DIR/zipalign"
+          test -x "$BUILD_TOOLS_DIR/apksigner"
+          test -x "$BUILD_TOOLS_DIR/aapt"
+          "$BUILD_TOOLS_DIR/zipalign" -c -P 16 4 "$APK"
+          "$BUILD_TOOLS_DIR/apksigner" verify --verbose "$APK"
+          "$BUILD_TOOLS_DIR/apksigner" verify --verbose "$UI_VERIFY_APK"
+          "$BUILD_TOOLS_DIR/aapt" dump badging "$APK" | grep -F "package: name='com.aigstudio.app'"
+          "$BUILD_TOOLS_DIR/aapt" dump badging "$UI_VERIFY_APK" | grep -F "package: name='$UI_VERIFY_PACKAGE'"
+          "$BUILD_TOOLS_DIR/aapt" dump badging "$APK" | grep -F "targetSdkVersion:'36'"
+          "$BUILD_TOOLS_DIR/aapt" dump badging "$UI_VERIFY_APK" | grep -F "targetSdkVersion:'36'"
+          (cd release/android && sha256sum -c SHA256SUMS.txt)
+          (cd release/source && sha256sum -c SHA256SUMS.txt)
+          grep -Fx "version=$VERSION" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "git_sha=$GITHUB_SHA" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "version=$VERSION" release/source/RELEASE_MANIFEST.txt
+          grep -Fx "git_sha=$GITHUB_SHA" release/source/RELEASE_MANIFEST.txt
+          grep -Fx "release_state=PRODUCTION_RUNTIME_CANDIDATE" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "release_class=PRODUCTION_RUNTIME" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "runtime_evidence=APK_BUILD_SIGN_PACKAGE" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "ui_verify_package=$UI_VERIFY_PACKAGE" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "ui_verify_runtime=PRODUCTION_RUNTIME_SAME_CODE_DIFFERENT_PACKAGE_ID" release/android/RELEASE_MANIFEST.txt
+          grep -Fx "device_launch_evidence=REQUIRED_FOR_RUNTIME_EVIDENCE" release/android/RELEASE_MANIFEST.txt
+      - name: Enable KVM group perms
+        shell: bash
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          test -w /dev/kvm
+          echo 'ANDROID_EMULATOR_KVM_READY=PASS'
+      - name: Studio offline Runtime UI visual evidence
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: bash ci/verify_android_offline_rgb_home.sh
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: AIG-Studio-Android-and-Source
+          path: |
+            release/android/
+            release/source/
+          if-no-files-found: error
+          retention-days: 3
+
+  windows-exe:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Build Windows EXE
+        shell: pwsh
+        run: .\build_windows_native.ps1
+      - name: Verify Windows EXE
+        shell: pwsh
+        run: |
+          $exe = 'release\windows\AIG_Studio_5_0_RGB_FULL_RELEASE_PC.exe'
+          if (-not (Test-Path $exe)) { throw 'EXE missing' }
+          $bytes = [IO.File]::ReadAllBytes($exe)
+          if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw 'PE/MZ invalid' }
+          $actual = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          $expected = ((Get-Content 'release\windows\SHA256SUMS.txt' -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
+          if ($actual -ne $expected) { throw 'SHA256 mismatch' }
+          $versionName = (ConvertFrom-StringData (Get-Content 'release-version.properties' -Raw)).versionName
+          $manifest = Get-Content 'release\windows\RELEASE_MANIFEST.txt'
+          if ($manifest -notcontains ("version=" + $versionName)) { throw 'Manifest version mismatch' }
+          if ($manifest -notcontains ("git_sha=" + $env:GITHUB_SHA)) { throw 'Manifest Git SHA mismatch' }
+          if ($manifest -notcontains 'release_state=PRODUCTION_RUNTIME_CANDIDATE') { throw 'Production runtime release state missing' }
+          if ($manifest -notcontains 'release_class=PRODUCTION_RUNTIME') { throw 'Production runtime class missing' }
+          if ($manifest -notcontains 'runtime_evidence=WINDOWS_EXECUTABLE_SMOKE_CAPTURED') { throw 'Windows runtime evidence marker missing' }
+          $evidence = 'release\windows\runtime-evidence'
+          foreach ($name in @('desktop_launch.png','desktop_3d_before.png','desktop_3d.png','desktop_5x_axis_badge_mid.png','desktop_5x_axis_badge_narrow.png','desktop_smoke.txt')) {
+            $path = Join-Path $evidence $name
+            if (-not (Test-Path $path)) { throw "Production runtime evidence missing: $name" }
+            if ((Get-Item $path).Length -le 0) { throw "Production runtime evidence empty: $name" }
+          }
+      - uses: actions/upload-artifact@v7
+        with:
+          name: AIG-Studio-Windows-EXE
+          path: release/windows/
+          if-no-files-found: error
+          retention-days: 3

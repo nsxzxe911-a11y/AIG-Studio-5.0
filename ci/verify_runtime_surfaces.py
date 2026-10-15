@@ -213,6 +213,10 @@ for needle in (
     'productionUiButton("CAD"',
     'productionUiButton("CAM"',
     'productionUiButton("SIM"',
+    'productionUiButton("3AX"',
+    'productionUiButton("4AX"',
+    'productionUiButton("5AX"',
+    'productionUiButton("6AX"',
     'productionUiButton("NC"',
     'productionUiButton("AI"',
     'ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList())',
@@ -223,14 +227,14 @@ for needle in (
     if needle not in desktop:
         raise SystemExit(f"Windows Production UI 缺少：{needle}")
 for needle in (
-    'val modes = listOf("CAD","CAM","SIM","NC","AI")',
+    'val modes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI")',
     '"3AX" -> "3AX"',
     '"4AX" -> "4AX"',
     '"5AX" -> "5AX"',
     '"6AX" -> "6AX"',
 ):
     require(env, needle, "WINDOWS_AXIS_NESTED_PRODUCTION_UI_238")
-print("PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|WINDOWS|CAD|CAM|SIM|NC|AI|AXIS_NESTED_3AX_4AX_5AX_6AX|STABLE_ORDER")
+print("PRODUCTION_UI_SWITCH_RUNTIME_SURFACE_GATE_PASS|ANDROID|WINDOWS|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|DIRECT_AXIS_NAV|STABLE_ORDER")
 
 for needle in (
     'const val POLICY = "NO_UI_NO_FUNCTION"',
@@ -261,7 +265,7 @@ for needle in (
     'mainCardHost.add(aiPanel,"AI")',
 ):
     require(desktop, needle, "WINDOWS_VISIBLE_FUNCTION_UI_212")
-print("VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
+print("VISIBLE_FUNCTION_UI_RUNTIME_GATE_PASS|ANDROID|WINDOWS|NO_UI_NO_FUNCTION|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|VISIBLE_ACTIONS|LIVE_CALLBACKS")
 
 for needle in (
     'contentDescription = "CAD FIXED QUICK REACH"',
