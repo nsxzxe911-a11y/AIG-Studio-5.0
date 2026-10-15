@@ -40,8 +40,19 @@ sleep 4
 
 ui_dump() {
   local name="$1"
-  adb shell uiautomator dump "$UI_REMOTE" >/dev/null
-  adb pull "$UI_REMOTE" "$EVIDENCE/$name.xml" >/dev/null
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    adb shell rm -f "$UI_REMOTE" >/dev/null 2>&1 || true
+    if adb shell uiautomator dump "$UI_REMOTE" >/dev/null 2>&1; then
+      if adb pull "$UI_REMOTE" "$EVIDENCE/$name.xml" >/dev/null 2>&1 && grep -Fq '<hierarchy' "$EVIDENCE/$name.xml"; then
+        echo "UI_DUMP_RETRY_PASS|$name|ATTEMPT=$attempt"
+        return 0
+      fi
+    fi
+    sleep 1
+  done
+  echo "UI_DUMP_RETRY_EXHAUSTED|$name" >&2
+  return 1
 }
 
 tap_exact() {
