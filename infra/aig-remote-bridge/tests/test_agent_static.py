@@ -58,6 +58,12 @@ def test_dual_android_update_builds_both_before_atomic_promote():
     for marker in (
         "Prepare-AndroidCandidate",
         "Test-AndroidCandidate",
+        "Test-DualProjectExactBinding",
+        "integration\\manifest.json",
+        "runtime_binding",
+        "exact_sha",
+        "FAST_LOOP_DUAL_EXACT_BINDING_PASS",
+        "FAST_LOOP_DUAL_EXACT_BINDING_MISMATCH",
         "Invoke-AtomicDualAndroidInstall",
         "install-create --multi-package",
         "install-add-session",
@@ -70,7 +76,8 @@ def test_dual_android_update_builds_both_before_atomic_promote():
         assert marker in fast, marker
     both_start = fast.index("if($Project -eq 'BOTH' -and $Platform -eq 'ANDROID')")
     both_block = fast[both_start:]
-    assert "Invoke-AtomicDualAndroidInstall" in both_block
+    assert "Test-DualProjectExactBinding $aigIi $aigCnc" in both_block
+    assert both_block.index("Test-DualProjectExactBinding $aigIi $aigCnc") < both_block.index("Invoke-AtomicDualAndroidInstall $aigIi $aigCnc")
     assert "install -r" not in both_block
 
 
