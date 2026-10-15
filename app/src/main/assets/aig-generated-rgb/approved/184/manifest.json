@@ -21,7 +21,7 @@
   "engineering_replacement_after_validation_allowed": true,
   "release_gate_required": true,
   "physical_color_equality_required": false,
-  "asset_count": 32,
+  "asset_count": 33,
   "assets": [
     {
       "id": "line",
@@ -192,6 +192,16 @@
       "width": 48,
       "height": 48,
       "accent_rgb": "#FF50DC"
+    },
+    {
+      "id": "6ax",
+      "label": "6AX",
+      "semantic_role": "AXIS",
+      "filename": "6ax.png",
+      "sha256": "7105975cb624dc589a677839a4aac7f1ca2e12a42c3b0e16a7641c56ed0c4bc1",
+      "width": 48,
+      "height": 48,
+      "accent_rgb": "#9F72FF"
     },
     {
       "id": "nc",

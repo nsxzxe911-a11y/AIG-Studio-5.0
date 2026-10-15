@@ -110,7 +110,7 @@ object ProductionRgbAssets {
             n.contains("3AX") || n.contains("3 AXIS") -> "3ax"
             n.contains("4AX") || n.contains("4 AXIS") -> "4ax"
             n.contains("5AX") || n.contains("5 AXIS") || n=="5X" -> "5ax"
-            n.contains("6AX") || n.contains("6 AXIS") || n=="6X" -> "5ax"
+            n.contains("6AX") || n.contains("6 AXIS") || n=="6X" -> "6ax"
             n=="NC" || n.contains("NC_EDIT") || n.contains("NC EDIT") -> "nc"
             n=="AI" || n.contains("AI ") -> "ai"
             n.contains("SAVE") || name=="儲存" -> "save"
