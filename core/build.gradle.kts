@@ -14,6 +14,14 @@ tasks.register<JavaExec>("coreRegression") {
     mainClass.set("com.aigstudio.core.CoreRegressionTestKt")
 }
 
+tasks.register<JavaExec>("camManualMachiningContractRegression") {
+    group = "verification"
+    description = "Runs the focused CAM MANUAL machining completeness contract gate"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.CamManualMachiningContractRegressionKt")
+}
+
 tasks.register<JavaExec>("runtimeLinkRegression") {
     group = "verification"
     description = "Runs the focused HOME/Cockpit runtime-link synchronization gate"
