@@ -1,0 +1,57 @@
+name: Repair Runtime Surface CI contract once
+
+on:
+  push:
+    branches:
+      - feature/aig-dual-ai-web-update-20261015
+    paths:
+      - .github/workflows/repair-runtime-surface-ci-contract-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Replace only stale release-validation self-checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('ci/verify_runtime_surfaces.py')
+          text=path.read_text(encoding='utf-8')
+          replacements={
+              'require(workflow, "grep -Fq \'ADAPTIVE_UI_TEXT_GATE_PASS\' release-validation.log", "CI_ADAPTIVE_UI_TEXT_MARKER_158")':
+              'require(workflow, "grep -Fq \'ADAPTIVE_UI_TEXT_GATE_PASS\' runtime-surfaces.log", "CI_ADAPTIVE_UI_TEXT_MARKER_158")',
+              'require(workflow, "grep -Fq \'CAD_EDIT_INTEGRITY_GATE_PASS\' release-validation.log", "CI_CAD_EDIT_MARKER_159")':
+              'require(workflow, "grep -Fq \'CAD_EDIT_RUNTIME_GATE_PASS\' runtime-surfaces.log", "CI_CAD_EDIT_MARKER_159")',
+              'require(workflow, "grep -Fq \'CAD_PRECISION_EDIT_GATE_PASS\' release-validation.log", "CI_CAD_PRECISION_EDIT_REGRESSION_MARKER_162")':
+              'require(workflow, "grep -Fq \'CAD_PRECISION_EDIT_RUNTIME_GATE_PASS\' runtime-surfaces.log", "CI_CAD_PRECISION_EDIT_REGRESSION_MARKER_162")',
+          }
+          for old,new in replacements.items():
+              count=text.count(old)
+              if count != 1:
+                  raise SystemExit(f'BLOCKED_EXACT_CI_CONTRACT_REPAIR|EXPECTED=1|ACTUAL={count}|OLD={old}')
+              text=text.replace(old,new,1)
+          path.write_text(text,encoding='utf-8')
+          print('RUNTIME_SURFACE_CI_CONTRACT_REPAIR_PASS|ADAPTIVE_RUNTIME_LOG|CAD_EDIT_RUNTIME_LOG|CAD_PRECISION_RUNTIME_LOG')
+          PY
+          git diff --check
+          python3 -m py_compile ci/verify_runtime_surfaces.py
+          grep -Fq "ADAPTIVE_UI_TEXT_GATE_PASS' runtime-surfaces.log" ci/verify_runtime_surfaces.py
+          grep -Fq "CAD_EDIT_RUNTIME_GATE_PASS' runtime-surfaces.log" ci/verify_runtime_surfaces.py
+          grep -Fq "CAD_PRECISION_EDIT_RUNTIME_GATE_PASS' runtime-surfaces.log" ci/verify_runtime_surfaces.py
+      - name: Commit source-only CI contract repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ci/verify_runtime_surfaces.py
+          git diff --cached --check
+          git commit -m "fix(ci): align Runtime surface evidence sources"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
