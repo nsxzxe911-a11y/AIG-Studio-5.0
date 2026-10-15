@@ -8,6 +8,8 @@ page=ROOT/'web/updates/index.html'
 channel=ROOT/'web/updates/channel.json'
 button_manifest_contract=ROOT/'core/src/main/kotlin/com/aigstudio/core/UiButtonManifestContract.kt'
 button_manifest_file=ROOT/'design/ui/button-manifest-v1.json'
+runtime_source=ROOT/'app/src/main/java/com/aigstudio/app/MainActivity.kt'
+offline_evidence_script=ROOT/'ci/verify_android_offline_rgb_home.sh'
 
 for marker in (
     'DESKTOP_COMMANDER_REQUIRED=false',
@@ -86,6 +88,23 @@ for button in buttons:
     assert button['verifiedCallback']==callback
     assert button['bounds'] is None, f'UI_BUTTON_JSON_UNVERIFIED_BOUNDS_NOT_NULL:{button_id}'
 
+assert runtime_source.is_file(), 'ANDROID_RUNTIME_SOURCE_MISSING'
+runtime_text=runtime_source.read_text(encoding='utf-8')
+for marker in (
+    'contentDescription="AIG CNC PRODUCTION RUNTIME HOST"',
+    'homeRoot.contentDescription="AIG CNC PRODUCTION HOME RUNTIME • FIRST FRAME"',
+    'root.visibility=View.GONE',
+    'homeRoot.visibility=View.VISIBLE',
+):
+    assert marker in runtime_text, f'ANDROID_FINAL_HOME_MARKER_MISSING:{marker}'
+
+assert offline_evidence_script.is_file(), 'ANDROID_OFFLINE_EVIDENCE_SCRIPT_MISSING'
+evidence_text=offline_evidence_script.read_text(encoding='utf-8')
+assert "grep -F 'AIG CNC PRODUCTION HOME RUNTIME • FIRST FRAME'" in evidence_text, 'ANDROID_EVIDENCE_FINAL_HOME_MARKER_MISMATCH'
+assert "grep -F 'AIG CNC PRODUCTION RUNTIME HOST'" in evidence_text, 'ANDROID_EVIDENCE_RUNTIME_HOST_MARKER_MISSING'
+assert "grep -F 'AIG CNC FORMAL RGB HOME'" not in evidence_text, 'ANDROID_EVIDENCE_STALE_HOME_MARKER_PRESENT'
+
 print('AIG_STUDIO_DUAL_AI_WEB_UPDATE_PASS|WEB_DOWNLOAD_SURFACE|NO_DESKTOP_COMMANDER|VERIFIED_ONLY')
 print('UI_BUTTON_MANIFEST_CONTRACT_PASS|AUTHORITY_RGB|BUTTON_ID|SHARED_COMMAND|VERIFIED_CALLBACKS|NULL_BOUNDS_ALLOWED')
 print('UI_BUTTON_JSON_MANIFEST_PASS|PACK_184|HOME_416|6_VERIFIED_NAV|NULL_BOUNDS')
+print('ANDROID_OFFLINE_RGB_HOME_EVIDENCE_CONTRACT_PASS|FINAL_FIRST_FRAME_MARKER|RUNTIME_HOST')
