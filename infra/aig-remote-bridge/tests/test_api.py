@@ -133,3 +133,13 @@ def test_control_page_has_only_whitelisted_actions_and_no_secrets(monkeypatch):
     assert 'controller-secret' not in text
     assert 'agent-secret' not in text
     assert 'localStorage' in text
+
+
+def test_runtime_store_uses_redis_url(monkeypatch):
+    import app as app_module
+    marker = object()
+    seen = {}
+    monkeypatch.setenv('REDIS_URL', 'redis://example/0')
+    monkeypatch.setattr(app_module.RedisCommandStore, 'from_url', lambda url: seen.setdefault(url, marker))
+    assert app_module.build_default_store() is marker
+    assert 'redis://example/0' in seen
