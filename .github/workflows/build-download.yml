@@ -208,7 +208,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: |
-            set -euo pipefail
+            set -eu
             APK='release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk'
             PKG='com.aigstudio.app'
             EVIDENCE='release/android/runtime-evidence'
@@ -217,7 +217,8 @@ jobs:
             adb shell svc wifi disable || true
             adb shell svc data disable || true
             adb shell am force-stop "$PKG"
-            adb shell am start -W -n "$PKG/.MainActivity" | tee "$EVIDENCE/android_launch.txt"
+            adb shell am start -W -n "$PKG/.MainActivity" > "$EVIDENCE/android_launch.txt"
+            cat "$EVIDENCE/android_launch.txt"
             sleep 3
             adb shell dumpsys activity activities > "$EVIDENCE/activity.txt"
             grep -F "$PKG/.MainActivity" "$EVIDENCE/activity.txt"
