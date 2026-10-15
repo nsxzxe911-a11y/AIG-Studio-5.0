@@ -1,0 +1,55 @@
+name: Repair Android emulator KVM once
+
+on:
+  push:
+    branches:
+      - feature/aig-dual-ai-web-update-20261015
+    paths:
+      - .github/workflows/repair-android-emulator-kvm-once.yml
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feature/aig-dual-ai-web-update-20261015
+      - name: Insert official KVM enable step
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/build-download.yml')
+          text = p.read_text(encoding='utf-8')
+          needle = "      - name: Studio offline Runtime UI visual evidence\n        uses: ReactiveCircus/android-emulator-runner@v2\n"
+          replacement = "      - name: Enable KVM group perms\n        shell: bash\n        run: |\n          echo 'KERNEL==\"kvm\", GROUP=\"kvm\", MODE=\"0666\", OPTIONS+=\"static_node=kvm\"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules\n          sudo udevadm control --reload-rules\n          sudo udevadm trigger --name-match=kvm\n          test -w /dev/kvm\n          echo 'ANDROID_EMULATOR_KVM_READY=PASS'\n      - name: Studio offline Runtime UI visual evidence\n        uses: ReactiveCircus/android-emulator-runner@v2\n"
+          if 'ANDROID_EMULATOR_KVM_READY=PASS' not in text:
+              if needle not in text:
+                  raise SystemExit('KVM_REPAIR_NEEDLE_MISSING')
+              text = text.replace(needle, replacement, 1)
+              p.write_text(text, encoding='utf-8')
+          PY
+          python3 ci/verify_android_emulator_kvm_contract.py
+      - name: Commit KVM repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/build-download.yml
+          if git diff --cached --quiet; then
+            echo 'KVM_REPAIR_ALREADY_PRESENT=PASS'
+          else
+            git commit -m 'fix(ci): enable KVM for Android runtime evidence'
+            git push origin HEAD:feature/aig-dual-ai-web-update-20261015
+          fi
+      - name: Dispatch formal builder on repaired ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh workflow run build-download.yml --repo 'nsxzxe911-a11y/AIG-Studio-5.0' --ref 'feature/aig-dual-ai-web-update-20261015'
