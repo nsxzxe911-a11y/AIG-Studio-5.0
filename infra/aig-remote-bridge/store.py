@@ -23,7 +23,7 @@ def _dt(value: str | None) -> datetime | None:
 
 
 def _empty_state() -> dict[str, Any]:
-    return {"commands": {}, "queue": []}
+    return {"commands": {}, "queue": [], "heartbeats": {}}
 
 
 class _CommandSemantics:
@@ -51,6 +51,27 @@ class _CommandSemantics:
                     rec["leased_by"] = None
                     if cid not in queue:
                         queue.append(cid)
+
+    def heartbeat(self, agent_id: str) -> dict[str, Any]:
+        now = self._now()
+        def op(state):
+            state.setdefault("heartbeats", {})
+            rec = {"agent_id": agent_id, "last_seen": _iso(now), "online": True}
+            state["heartbeats"][agent_id] = rec
+            return copy.deepcopy(rec)
+        return self._mutate(op)
+
+    def agent_status(self, agent_id: str) -> dict[str, Any]:
+        now = self._now()
+        def op(state):
+            state.setdefault("heartbeats", {})
+            rec = state["heartbeats"].get(agent_id)
+            if not rec:
+                return {"agent_id": agent_id, "last_seen": None, "online": False}
+            last_seen = _dt(rec.get("last_seen"))
+            online = bool(last_seen and (now - last_seen) <= timedelta(seconds=90))
+            return {"agent_id": agent_id, "last_seen": rec.get("last_seen"), "online": online}
+        return self._mutate(op)
 
     def enqueue(self, name: str) -> dict[str, Any]:
         now = self._now()
