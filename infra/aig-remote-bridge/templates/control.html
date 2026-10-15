@@ -3,70 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>AIG II Remote Maintenance</title>
+<title>AIG 雙專案 AI 更新</title>
 <style>
-:root{color-scheme:dark;--bg:#020407;--panel:#07111B;--cyan:#36e7ff;--gold:#ffc857;--ok:#59f59c;--warn:#ffd98f;--muted:#8aa4b5}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0%,rgba(37,99,235,.10),transparent 25%),var(--bg);color:#eaf7ff;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;min-height:100vh}.wrap{max-width:900px;margin:auto;padding:20px}.brand{font-size:28px;font-weight:800;letter-spacing:.08em}.sub{opacity:.7;margin:4px 0 18px}.panel{background:linear-gradient(180deg,rgba(7,17,27,.98),rgba(4,10,17,.98));border:1px solid rgba(54,231,255,.45);box-shadow:0 0 24px rgba(54,231,255,.08);border-radius:16px;padding:16px;margin:14px 0}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.coregrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(max-width:720px){.coregrid{grid-template-columns:1fr}}.core{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;background:rgba(0,0,0,.16)}.core h3{margin:0 0 8px;font-size:14px}.kv{display:grid;grid-template-columns:150px 1fr;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.05);font-size:12.5px}.kv:first-of-type{border-top:0}.k{color:var(--muted)}.v{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-all}.ok{color:var(--ok)}.info{color:var(--cyan)}.wait{color:var(--warn)}input{flex:1;min-width:220px;background:#03080e;color:#fff;border:1px solid #24556b;border-radius:10px;padding:12px}button{background:#081520;color:#fff;border:1px solid var(--cyan);border-radius:12px;padding:13px 16px;font-weight:700;min-height:48px}button[data-command="AIG_DUAL_AI_UPDATE"]{border-color:var(--gold);box-shadow:0 0 18px rgba(255,200,87,.18)}button[data-command="WINDOWS_AI_UPDATE"]{border-color:#8bdcff}button[data-command="RESUME_463"]{border-color:#8bdcff}.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #314453;border-radius:999px}.dot{width:10px;height:10px;border-radius:50%;background:#68757c}.online .dot{background:var(--ok);box-shadow:0 0 12px var(--ok)}pre{white-space:pre-wrap;word-break:break-word;background:#010305;border:1px solid #173342;border-radius:10px;padding:12px;min-height:120px}.warn{color:var(--warn);font-size:13px}.note{font-size:12.5px;color:var(--muted);line-height:1.55}
+:root{color-scheme:dark;--bg:#020407;--panel:#07111B;--cyan:#36e7ff;--ok:#59f59c;--muted:#8aa4b5}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0%,rgba(54,231,255,.10),transparent 28%),var(--bg);color:#eaf7ff;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;min-height:100vh}.wrap{max-width:760px;margin:auto;padding:28px}.brand{font-size:28px;font-weight:900;letter-spacing:.06em}.sub{color:var(--muted);margin:6px 0 20px}.panel{background:linear-gradient(180deg,rgba(7,17,27,.98),rgba(4,10,17,.98));border:1px solid rgba(54,231,255,.42);border-radius:16px;padding:20px;box-shadow:0 0 24px rgba(54,231,255,.08)}.ok{color:var(--ok);font-weight:800}.note{color:var(--muted);line-height:1.7}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 20px;margin-top:14px;border:1px solid var(--cyan);border-radius:12px;background:#081520;color:white;text-decoration:none;font-weight:800;box-shadow:0 0 16px rgba(54,231,255,.12)}
 </style>
 </head>
 <body><main class="wrap">
-<div class="brand">AIG II · AI UPDATE</div>
-<div class="sub">AIG 雙專案 AI 更新 → Working Copy → 雙案 Gate → 原子 Promote；錯誤不覆寫 Stable</div>
-
+<div class="brand">AIG 雙專案 AI 更新</div>
+<div class="sub">正式更新入口已移到 AIG Web</div>
 <section class="panel">
-  <strong>AIG 雙專案穩定更新核心</strong>
-  <div class="coregrid" style="margin-top:12px">
-    <div class="core"><h3>AI Update Command</h3>
-      <div class="kv"><div class="k">正式命令</div><div class="v ok">AIG_DUAL_AI_UPDATE</div></div>
-      <div class="kv"><div class="k">相容命令</div><div class="v">DUAL_ANDROID_UPDATE</div></div>
-      <div class="kv"><div class="k">固定範圍</div><div class="v info">AIG-II + AIG Studio · BOTH</div></div>
-    </div>
-    <div class="core"><h3>Stable Gate</h3>
-      <div class="kv"><div class="k">Working Copy</div><div class="v ok">VERIFY BEFORE PROMOTE</div></div>
-      <div class="kv"><div class="k">Dual Gate</div><div class="v ok">BOTH PASS + exact SHA</div></div>
-      <div class="kv"><div class="k">Error</div><div class="v ok">CURRENT_STABLE_RETAINED</div></div>
-    </div>
-    <div class="core"><h3>Android / Nox</h3>
-      <div class="kv"><div class="k">模式</div><div class="v ok">ATOMIC MULTI-PACKAGE</div></div>
-      <div class="kv"><div class="k">Nox</div><div class="v info">Nox_1 · 127.0.0.1:62026</div></div>
-      <div class="kv"><div class="k">規則</div><div class="v">不支援原子雙安裝即 BLOCK</div></div>
-    </div>
-    <div class="core"><h3>Windows / 續接</h3>
-      <div class="kv"><div class="k">Windows</div><div class="v">WINDOWS_AI_UPDATE</div></div>
-      <div class="kv"><div class="k">可信基底</div><div class="v ok">462 · 6cd20f36</div></div>
-      <div class="kv"><div class="k">Windows live</div><div id="runnerState" class="v wait">等待 Windows Agent / Runner 回報</div></div>
-    </div>
-  </div>
-  <p class="note">正式 AI 更新只走固定命令。候選先 build、驗 SHA、雙案全過，再一次 Promote；任一步錯誤即停止，既有 Stable 保持不變。</p>
+  <div class="ok">SIGNED MANIFEST / VERIFIED ONLY / CURRENT STABLE RETAINED</div>
+  <p class="note">AIG-II 與 AIG Studio 5.0 現在由 AIG 自己的 AI 更新核心處理：AIG Web 發佈 → Working Copy → exact SHA / SHA-256 / 簽章驗證 → 雙案 Gate → Promote。任一步失敗都保留目前 Stable。</p>
+  <a class="btn" href="https://aig-studio-rgb-runtime.onrender.com/updates/">前往 AIG Web 更新中心</a>
 </section>
-
-<section class="panel"><div class="row"><input id="token" type="password" autocomplete="off" placeholder="Controller token"><button id="saveToken">保存此手機</button></div><p class="warn">Token 只存於此瀏覽器 localStorage，不寫入頁面或網址。</p></section>
-<section class="panel"><div id="agentBadge" class="badge"><span class="dot"></span><span id="agentText">Windows: checking...</span></div></section>
-<section class="panel">
-  <div class="row">
-    <button data-command="AIG_DUAL_AI_UPDATE">AIG 雙專案 AI 安全更新</button>
-    <button data-command="WINDOWS_AI_UPDATE">Windows AI 更新</button>
-    <button data-command="RESUME_463">463 唯讀續接</button>
-    <button data-command="NOX_STATUS">夜神狀態</button>
-    <button data-command="NOX_START">啟動夜神</button>
-  </div>
-  <p class="note">舊 DUAL_ANDROID_UPDATE 仍保留 API 相容；正式介面改走 AIG_DUAL_AI_UPDATE。</p>
-</section>
-<section class="panel"><strong>結果</strong><pre id="result">尚未送出命令。</pre></section>
-</main>
-<script>
-const TOKEN_KEY='aig_remote_controller_token';
-const tokenInput=document.getElementById('token');
-const result=document.getElementById('result');
-const badge=document.getElementById('agentBadge');
-const agentText=document.getElementById('agentText');
-const runnerState=document.getElementById('runnerState');
-tokenInput.value=localStorage.getItem(TOKEN_KEY)||'';
-document.getElementById('saveToken').onclick=()=>{localStorage.setItem(TOKEN_KEY,tokenInput.value.trim());result.textContent='Token 已保存於此手機。'};
-function headers(){const t=localStorage.getItem(TOKEN_KEY)||tokenInput.value.trim();return {'Authorization':'Bearer '+t,'Content-Type':'application/json'};}
-async function refreshAgent(){try{const r=await fetch('/api/agent/status/DESKTOP-6KOFHUK',{headers:headers()});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();badge.classList.toggle('online',!!j.online);agentText.textContent='Windows: '+(j.online?'ONLINE':'OFFLINE')+(j.last_seen?' · '+j.last_seen:'');runnerState.textContent=j.online?'WINDOWS DIRECT ONLINE':'等待 Windows Agent / Runner 回報';runnerState.className='v '+(j.online?'ok':'wait');}catch(e){badge.classList.remove('online');agentText.textContent='Windows: unavailable';runnerState.textContent='等待 Windows Agent / Runner 回報';runnerState.className='v wait';}}
-async function waitCommand(id){for(let i=0;i<45;i++){await new Promise(r=>setTimeout(r,2000));const r=await fetch('/api/commands/'+encodeURIComponent(id),{headers:headers()});if(!r.ok){result.textContent='查詢失敗 HTTP '+r.status;return;}const j=await r.json();result.textContent=JSON.stringify(j,null,2);if(['succeeded','failed','expired'].includes(j.status))return;}}
-async function send(name){result.textContent='送出 '+name+' ...';const r=await fetch('/api/commands',{method:'POST',headers:headers(),body:JSON.stringify({name})});const j=await r.json();result.textContent=JSON.stringify(j,null,2);if(r.ok&&j.id)waitCommand(j.id);}
-document.querySelectorAll('button[data-command]').forEach(b=>b.onclick=()=>send(b.dataset.command));
-refreshAgent();setInterval(refreshAgent,15000);
-</script></body></html>
+</main></body>
+</html>
