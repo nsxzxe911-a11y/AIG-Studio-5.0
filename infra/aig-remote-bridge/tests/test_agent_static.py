@@ -61,11 +61,15 @@ def test_dual_android_update_builds_both_before_atomic_promote():
         "CURRENT_STABLE_RETAINED",
     ):
         assert marker in fast, marker
-    # The BOTH/ANDROID path must not fall back to sequential install -r after a multi-package failure.
     both_start = fast.index("if($Project -eq 'BOTH' -and $Platform -eq 'ANDROID')")
     both_block = fast[both_start:]
     assert "Invoke-AtomicDualAndroidInstall" in both_block
     assert "install -r" not in both_block
+
+
+def test_dual_android_post_commit_has_no_unknown_placeholder_command():
+    fast = FAST_LOOP.read_text(encoding="utf-8")
+    assert "runCatching = $null" not in fast
 
 
 def test_no_arbitrary_shell_primitives():
