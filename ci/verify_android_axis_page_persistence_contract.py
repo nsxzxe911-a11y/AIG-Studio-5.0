@@ -16,14 +16,9 @@ builder = BUILDER.read_text(encoding="utf-8")
 
 for marker in [
     "AXIS_PERSISTENCE_SEED_PROJECT",
-    "MACHINING 3D VIEW 3AX",
-    "MACHINING 3D VIEW 4AX",
-    "MACHINING 3D VIEW 5AX",
-    "MACHINING 3D VIEW 6AX",
-    "AXIS_PAGE_3AX_PERSISTENCE_PASS",
-    "AXIS_PAGE_4AX_PERSISTENCE_PASS",
-    "AXIS_PAGE_5AX_PERSISTENCE_PASS",
-    "AXIS_PAGE_6AX_PERSISTENCE_PASS",
+    "for axis in 3AX 4AX 5AX 6AX",
+    'grep -F "MACHINING 3D VIEW $axis"',
+    'echo "AXIS_PAGE_${axis}_PERSISTENCE_PASS|REAL_MACHINING3DVIEW|TWO_SNAPSHOTS|MAIN_ACTIVITY_RESUMED"',
     "ANDROID_AXIS_PAGE_PERSISTENCE_GATE_PASS|3AX|4AX|5AX|6AX|TWO_SNAPSHOTS|MAIN_ACTIVITY_RESUMED|NO_HOME_FALLBACK",
 ]:
     assert marker in script, f"ANDROID_AXIS_PERSISTENCE_MARKER_MISSING:{marker}"
@@ -32,6 +27,7 @@ assert "bash ci/verify_android_axis_page_persistence.sh" in home_script, "ANDROI
 assert "bash ci/verify_android_offline_rgb_home.sh" in builder, "ANDROID_HOME_RUNTIME_BUILDER_STEP_MISSING"
 assert 'contentDescription = "MACHINING 3D VIEW "' in view, "MACHINING_3D_ACCESSIBILITY_MARKER_MISSING"
 assert 'contentDescription="AXIS PAGE 6AX RUNTIME"' in android, "SIX_AXIS_PAGE_ACCESSIBILITY_MARKER_MISSING"
+assert 'contentDescription="AXIS PAGE $initialMode RUNTIME"' in android, "MULTI_AXIS_PAGE_ACCESSIBILITY_MARKER_MISSING"
 assert '6 -> showSixAxisRuntimeStage()' in android, "HOME_MULTI_FUNCTION_6AX_MUST_USE_DEDICATED_RUNTIME"
 assert '6 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("6AX"))' not in android, "HOME_MULTI_FUNCTION_6AX_LEGACY_ROUTE_PRESENT"
 
