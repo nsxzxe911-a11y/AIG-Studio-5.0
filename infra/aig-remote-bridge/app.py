@@ -29,16 +29,24 @@ def create_app(store: Any = None) -> FastAPI:
     app = FastAPI(title="AIG Remote Command Bridge")
     command_store = store
     control_page = Path(__file__).resolve().parent / "templates" / "control.html"
+    auth_configured = bool(os.environ.get("AIG_CONTROLLER_TOKEN")) and bool(os.environ.get("AIG_AGENT_TOKEN"))
+    print(
+        "AIG_REMOTE_READINESS "
+        f"STORE={'READY' if command_store is not None else 'MISSING'} "
+        f"AUTH={'READY' if auth_configured else 'MISSING'} "
+        "PRIMARY=WEB_TO_WINDOWS_AI_UPDATE",
+        flush=True,
+    )
 
     @app.get("/health")
     def health():
         store_configured = command_store is not None
-        auth_configured = bool(os.environ.get("AIG_CONTROLLER_TOKEN")) and bool(os.environ.get("AIG_AGENT_TOKEN"))
+        current_auth_configured = bool(os.environ.get("AIG_CONTROLLER_TOKEN")) and bool(os.environ.get("AIG_AGENT_TOKEN"))
         return {
             "status": "ok",
-            "ready": store_configured and auth_configured,
+            "ready": store_configured and current_auth_configured,
             "store_configured": store_configured,
-            "auth_configured": auth_configured,
+            "auth_configured": current_auth_configured,
             "primary_path": "WEB_TO_WINDOWS_AI_UPDATE",
         }
 
