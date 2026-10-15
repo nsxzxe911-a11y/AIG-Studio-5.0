@@ -1,0 +1,26 @@
+name: AIG remote direct trigger gate
+
+on:
+  push:
+    branches:
+      - infra/aig-remote-bridge-20261015
+
+permissions:
+  contents: read
+
+jobs:
+  verify-direct-trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install bridge test dependencies
+        run: python -m pip install -r infra/aig-remote-bridge/requirements.txt
+      - name: Bridge tests
+        run: pytest -q infra/aig-remote-bridge/tests
+      - name: Windows agent static contract
+        shell: pwsh
+        run: ./infra/aig-remote-agent/Test-AigRemoteAgent.ps1
