@@ -6,6 +6,8 @@ from typing import Any
 from fastapi import FastAPI, Header
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from store import RedisCommandStore
+
 ALLOWED_COMMANDS = frozenset({"NOX_STATUS", "NOX_START", "RESUME_463"})
 
 
@@ -14,6 +16,13 @@ def _authorized(authorization: str | None, expected: str) -> bool:
         return False
     supplied = authorization[7:]
     return bool(supplied) and hmac.compare_digest(supplied, expected)
+
+
+def build_default_store():
+    url = os.environ.get("REDIS_URL") or os.environ.get("KEY_VALUE_URL")
+    if not url:
+        return None
+    return RedisCommandStore.from_url(url)
 
 
 def create_app(store: Any = None) -> FastAPI:
@@ -100,4 +109,4 @@ def create_app(store: Any = None) -> FastAPI:
     return app
 
 
-app = create_app()
+app = create_app(build_default_store())
