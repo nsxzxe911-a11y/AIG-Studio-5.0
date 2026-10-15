@@ -1,0 +1,41 @@
+name: Diagnose formal gate markers once
+
+on:
+  push:
+    branches:
+      - feature/aig-dual-ai-web-update-20261015
+    paths:
+      - .github/workflows/diagnose-formal-gate-markers-once.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Diagnose production marker contract without changing runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/verify_production_runtime.py | tee production-runtime.log
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          workflow=Path('.github/workflows/build-download.yml').read_text(encoding='utf-8')
+          log=Path('production-runtime.log').read_text(encoding='utf-8')
+          start=workflow.index('      - name: Verify production runtime boundary')
+          end=workflow.index('      - name: Verify all runtime pages and callbacks',start)
+          block=workflow[start:end]
+          markers=re.findall(r"grep -Fq '([^']+)' production-runtime\.log",block)
+          missing=[]
+          for marker in markers:
+              ok=marker in log
+              print(('PROD_MARKER_PASS|' if ok else 'PROD_MARKER_MISS|')+marker)
+              if not ok: missing.append(marker)
+          print(f'PROD_MARKER_SUMMARY|TOTAL={len(markers)}|MISSING={len(missing)}')
+          if missing:
+              raise SystemExit(1)
+          PY
