@@ -7,6 +7,7 @@ policy=(ROOT/'core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt').r
 page=ROOT/'web/updates/index.html'
 channel=ROOT/'web/updates/channel.json'
 button_manifest_contract=ROOT/'core/src/main/kotlin/com/aigstudio/core/UiButtonManifestContract.kt'
+button_manifest_file=ROOT/'design/ui/button-manifest-v1.json'
 
 for marker in (
     'DESKTOP_COMMANDER_REQUIRED=false',
@@ -57,5 +58,34 @@ for marker in (
 ):
     assert marker in button_contract, f'UI_BUTTON_MANIFEST_MARKER_MISSING:{marker}'
 
+assert button_manifest_file.is_file(), 'UI_BUTTON_JSON_MANIFEST_MISSING'
+manifest=json.loads(button_manifest_file.read_text(encoding='utf-8'))
+assert manifest['schema']=='aig-ui-button-manifest-v1'
+assert manifest['pipeline']=='AUTHORITY_RGB_TO_BUTTON_ID_TO_MANIFEST_TO_SHARED_COMMAND_TO_RUNTIME_CORE'
+assert manifest['authority']['rgbButtonPack']=='184'
+assert manifest['authority']['homePack']=='416'
+assert manifest['boundsVerified'] is False
+buttons=manifest['buttons']
+expected={
+    'NAV_HOME':('HOME','rgb_wallpaper','OPEN_HOME','showRuntimeHome?.invoke()'),
+    'NAV_CAD':('CAD','cad','OPEN_CAD','Toast.makeText(this,"CAD • LIVE WORKSPACE",Toast.LENGTH_SHORT).show()'),
+    'NAV_CAM':('CAM','cam','OPEN_CAM','showCamWorkstation()'),
+    'NAV_SIM':('SIM','sim','OPEN_SIM','showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))'),
+    'NAV_NC':('NC','nc','OPEN_NC','showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))'),
+    'NAV_AI':('AI','ai','OPEN_AI','showAiSystemSuiteDialog()'),
+}
+assert len(buttons)==len(expected), 'UI_BUTTON_JSON_COUNT_MISMATCH'
+assert len({b['buttonId'] for b in buttons})==len(buttons), 'UI_BUTTON_JSON_DUPLICATE_ID'
+for button in buttons:
+    button_id=button['buttonId']
+    assert button_id in expected, f'UI_BUTTON_JSON_UNKNOWN_ID:{button_id}'
+    surface,asset,command,callback=expected[button_id]
+    assert button['surfaceId']==surface
+    assert button['assetId']==asset
+    assert button['sharedCommand']==command
+    assert button['verifiedCallback']==callback
+    assert button['bounds'] is None, f'UI_BUTTON_JSON_UNVERIFIED_BOUNDS_NOT_NULL:{button_id}'
+
 print('AIG_STUDIO_DUAL_AI_WEB_UPDATE_PASS|WEB_DOWNLOAD_SURFACE|NO_DESKTOP_COMMANDER|VERIFIED_ONLY')
 print('UI_BUTTON_MANIFEST_CONTRACT_PASS|AUTHORITY_RGB|BUTTON_ID|SHARED_COMMAND|VERIFIED_CALLBACKS|NULL_BOUNDS_ALLOWED')
+print('UI_BUTTON_JSON_MANIFEST_PASS|PACK_184|HOME_416|6_VERIFIED_NAV|NULL_BOUNDS')
