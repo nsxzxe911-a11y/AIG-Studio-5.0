@@ -78,8 +78,42 @@ for button_id, json_entry in sorted(json_entries.items()):
     callback = json_entry["verifiedCallback"]
     assert callback in runtime, f"UI_BUTTON_RUNTIME_CALLBACK_MISSING:{button_id}:{callback}"
 
-assert len(json_entries) == 6, f"UI_BUTTON_VERIFIED_NAV_COUNT_MISMATCH:{len(json_entries)}"
+axis_expected = {
+    "NAV_3AX": {
+        "surfaceId": "3AX",
+        "assetId": "3ax",
+        "sharedCommand": "OPEN_3AX",
+        "verifiedCallback": 'showUnifiedMachiningWorkspace("3AX")',
+    },
+    "NAV_4AX": {
+        "surfaceId": "4AX",
+        "assetId": "4ax",
+        "sharedCommand": "OPEN_4AX",
+        "verifiedCallback": 'showUnifiedMachiningWorkspace("4AX")',
+    },
+    "NAV_5AX": {
+        "surfaceId": "5AX",
+        "assetId": "5ax",
+        "sharedCommand": "OPEN_5AX",
+        "verifiedCallback": 'showUnifiedMachiningWorkspace("5AX")',
+    },
+    "NAV_6AX": {
+        "surfaceId": "6AX",
+        "assetId": "6ax",
+        "sharedCommand": "OPEN_6AX",
+        "verifiedCallback": "showSixAxisRuntimeStage()",
+    },
+}
+for button_id, expected in axis_expected.items():
+    assert button_id in json_entries, f"UI_BUTTON_AXIS_ID_MISSING:{button_id}"
+    for field_name, expected_value in expected.items():
+        assert json_entries[button_id][field_name] == expected_value, (
+            f"UI_BUTTON_AXIS_BINDING_MISMATCH:{button_id}:{field_name}:"
+            f"ACTUAL={json_entries[button_id][field_name]!r}:EXPECTED={expected_value!r}"
+        )
+
+assert len(json_entries) == 10, f"UI_BUTTON_VERIFIED_NAV_COUNT_MISMATCH:{len(json_entries)}"
 print(
     "UI_BUTTON_MANIFEST_CONSISTENCY_PASS|"
-    "JSON_KOTLIN_RUNTIME|6_VERIFIED_NAV|CALLBACKS_LIVE|BOUNDS_NULL"
+    "JSON_KOTLIN_RUNTIME|10_VERIFIED_NAV|3AX_4AX_5AX_6AX|CALLBACKS_LIVE|BOUNDS_NULL"
 )
