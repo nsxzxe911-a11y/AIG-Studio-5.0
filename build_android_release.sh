@@ -22,6 +22,9 @@ if [[ "${GITHUB_ACTIONS:-}" == "true" && -e /dev/kvm ]]; then
   echo "ANDROID_EMULATOR_KVM_PREFLIGHT=PASS"
 fi
 
+gradle -p "$ROOT" --no-daemon :core:camManualMachiningContractRegression
+echo "CAM_MANUAL_MACHINING_CONTRACT_GATE=PASS"
+
 rm -rf "$ANDROID_OUT" "$SOURCE_OUT"
 mkdir -p "$ANDROID_OUT" "$SOURCE_OUT"
 
