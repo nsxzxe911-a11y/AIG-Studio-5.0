@@ -13,6 +13,15 @@ test -n "$VERSION"
 test -n "$GIT_SHA"
 test -f "$ROOT/settings.gradle.kts"
 
+if [[ "${GITHUB_ACTIONS:-}" == "true" && -e /dev/kvm ]]; then
+  if [[ ! -r /dev/kvm || ! -w /dev/kvm ]]; then
+    sudo chmod 666 /dev/kvm
+  fi
+  test -r /dev/kvm
+  test -w /dev/kvm
+  echo "ANDROID_EMULATOR_KVM_PREFLIGHT=PASS"
+fi
+
 rm -rf "$ANDROID_OUT" "$SOURCE_OUT"
 mkdir -p "$ANDROID_OUT" "$SOURCE_OUT"
 
