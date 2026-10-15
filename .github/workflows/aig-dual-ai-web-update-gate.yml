@@ -18,3 +18,4 @@ jobs:
         with:
           python-version: '3.12'
       - run: python ci/verify_aig_dual_ai_web_update.py
+      - run: python ci/verify_ui_button_manifest_consistency.py
