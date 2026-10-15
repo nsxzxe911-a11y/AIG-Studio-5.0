@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AIG II Remote Maintenance</title>
+<style>
+:root{color-scheme:dark;--bg:#020407;--panel:#07111B;--cyan:#36e7ff;--gold:#ffc857;--ok:#59f59c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#eaf7ff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}.wrap{max-width:760px;margin:auto;padding:20px}.brand{font-size:28px;font-weight:800;letter-spacing:.08em}.sub{opacity:.7;margin:4px 0 18px}.panel{background:linear-gradient(180deg,rgba(7,17,27,.98),rgba(4,10,17,.98));border:1px solid rgba(54,231,255,.45);box-shadow:0 0 24px rgba(54,231,255,.08);border-radius:16px;padding:16px;margin:14px 0}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}input{flex:1;min-width:220px;background:#03080e;color:#fff;border:1px solid #24556b;border-radius:10px;padding:12px}button{background:#081520;color:#fff;border:1px solid var(--cyan);border-radius:12px;padding:13px 16px;font-weight:700;min-height:48px}button[data-command="RESUME_463"]{border-color:var(--gold)}.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #314453;border-radius:999px}.dot{width:10px;height:10px;border-radius:50%;background:#68757c}.online .dot{background:var(--ok);box-shadow:0 0 12px var(--ok)}pre{white-space:pre-wrap;word-break:break-word;background:#010305;border:1px solid #173342;border-radius:10px;padding:12px;min-height:120px}.warn{color:#ffd98f;font-size:13px}
+</style>
+</head>
+<body><main class="wrap">
+<div class="brand">AIG II · REMOTE MAINTENANCE</div>
+<div class="sub">第二遠端路徑 · 白名單命令</div>
+<section class="panel"><div class="row"><input id="token" type="password" autocomplete="off" placeholder="Controller token"><button id="saveToken">保存此手機</button></div><p class="warn">Token 只存於此瀏覽器 localStorage，不寫入頁面或網址。</p></section>
+<section class="panel"><div id="agentBadge" class="badge"><span class="dot"></span><span id="agentText">Agent: checking...</span></div></section>
+<section class="panel"><div class="row"><button data-command="NOX_STATUS">夜神狀態 · NOX_STATUS</button><button data-command="NOX_START">啟動夜神 · NOX_START</button><button data-command="RESUME_463">續接 463 · RESUME_463</button></div></section>
+<section class="panel"><strong>結果</strong><pre id="result">尚未送出命令。</pre></section>
+</main>
+<script>
+const TOKEN_KEY='aig_remote_controller_token';const tokenInput=document.getElementById('token');const result=document.getElementById('result');const badge=document.getElementById('agentBadge');const agentText=document.getElementById('agentText');tokenInput.value=localStorage.getItem(TOKEN_KEY)||'';document.getElementById('saveToken').onclick=()=>{localStorage.setItem(TOKEN_KEY,tokenInput.value.trim());result.textContent='Token 已保存於此手機。'};function headers(){const t=localStorage.getItem(TOKEN_KEY)||tokenInput.value.trim();return {'Authorization':'Bearer '+t,'Content-Type':'application/json'};}async function refreshAgent(){try{const r=await fetch('/api/agent/status/DESKTOP-6KOFHUK',{headers:headers()});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();badge.classList.toggle('online',!!j.online);agentText.textContent='Agent: '+(j.online?'ONLINE':'OFFLINE')+(j.last_seen?' · '+j.last_seen:'');}catch(e){badge.classList.remove('online');agentText.textContent='Agent: unavailable';}}async function waitCommand(id){for(let i=0;i<45;i++){await new Promise(r=>setTimeout(r,2000));const r=await fetch('/api/commands/'+encodeURIComponent(id),{headers:headers()});if(!r.ok){result.textContent='查詢失敗 HTTP '+r.status;return;}const j=await r.json();result.textContent=JSON.stringify(j,null,2);if(['succeeded','failed','expired'].includes(j.status))return;}}async function send(name){result.textContent='送出 '+name+' ...';const r=await fetch('/api/commands',{method:'POST',headers:headers(),body:JSON.stringify({name})});const j=await r.json();result.textContent=JSON.stringify(j,null,2);if(r.ok&&j.id)waitCommand(j.id);}document.querySelectorAll('button[data-command]').forEach(b=>b.onclick=()=>send(b.dataset.command));refreshAgent();setInterval(refreshAgent,15000);
+</script></body></html>
