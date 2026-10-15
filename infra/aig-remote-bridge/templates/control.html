@@ -6,51 +6,51 @@
 <title>AIG II Remote Maintenance</title>
 <style>
 :root{color-scheme:dark;--bg:#020407;--panel:#07111B;--cyan:#36e7ff;--gold:#ffc857;--ok:#59f59c;--warn:#ffd98f;--muted:#8aa4b5}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0%,rgba(37,99,235,.10),transparent 25%),var(--bg);color:#eaf7ff;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;min-height:100vh}.wrap{max-width:900px;margin:auto;padding:20px}.brand{font-size:28px;font-weight:800;letter-spacing:.08em}.sub{opacity:.7;margin:4px 0 18px}.panel{background:linear-gradient(180deg,rgba(7,17,27,.98),rgba(4,10,17,.98));border:1px solid rgba(54,231,255,.45);box-shadow:0 0 24px rgba(54,231,255,.08);border-radius:16px;padding:16px;margin:14px 0}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.coregrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(max-width:720px){.coregrid{grid-template-columns:1fr}}.core{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;background:rgba(0,0,0,.16)}.core h3{margin:0 0 8px;font-size:14px}.kv{display:grid;grid-template-columns:150px 1fr;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.05);font-size:12.5px}.kv:first-of-type{border-top:0}.k{color:var(--muted)}.v{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-all}.ok{color:var(--ok)}.info{color:var(--cyan)}.wait{color:var(--warn)}input{flex:1;min-width:220px;background:#03080e;color:#fff;border:1px solid #24556b;border-radius:10px;padding:12px}button{background:#081520;color:#fff;border:1px solid var(--cyan);border-radius:12px;padding:13px 16px;font-weight:700;min-height:48px}button[data-command="DUAL_ANDROID_UPDATE"]{border-color:var(--gold);box-shadow:0 0 18px rgba(255,200,87,.18)}button[data-command="WINDOWS_AI_UPDATE"]{border-color:#8bdcff}button[data-command="RESUME_463"]{border-color:#8bdcff}.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #314453;border-radius:999px}.dot{width:10px;height:10px;border-radius:50%;background:#68757c}.online .dot{background:var(--ok);box-shadow:0 0 12px var(--ok)}pre{white-space:pre-wrap;word-break:break-word;background:#010305;border:1px solid #173342;border-radius:10px;padding:12px;min-height:120px}.warn{color:var(--warn);font-size:13px}.note{font-size:12.5px;color:var(--muted);line-height:1.55}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0%,rgba(37,99,235,.10),transparent 25%),var(--bg);color:#eaf7ff;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;min-height:100vh}.wrap{max-width:900px;margin:auto;padding:20px}.brand{font-size:28px;font-weight:800;letter-spacing:.08em}.sub{opacity:.7;margin:4px 0 18px}.panel{background:linear-gradient(180deg,rgba(7,17,27,.98),rgba(4,10,17,.98));border:1px solid rgba(54,231,255,.45);box-shadow:0 0 24px rgba(54,231,255,.08);border-radius:16px;padding:16px;margin:14px 0}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.coregrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(max-width:720px){.coregrid{grid-template-columns:1fr}}.core{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;background:rgba(0,0,0,.16)}.core h3{margin:0 0 8px;font-size:14px}.kv{display:grid;grid-template-columns:150px 1fr;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.05);font-size:12.5px}.kv:first-of-type{border-top:0}.k{color:var(--muted)}.v{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-all}.ok{color:var(--ok)}.info{color:var(--cyan)}.wait{color:var(--warn)}input{flex:1;min-width:220px;background:#03080e;color:#fff;border:1px solid #24556b;border-radius:10px;padding:12px}button{background:#081520;color:#fff;border:1px solid var(--cyan);border-radius:12px;padding:13px 16px;font-weight:700;min-height:48px}button[data-command="AIG_DUAL_AI_UPDATE"]{border-color:var(--gold);box-shadow:0 0 18px rgba(255,200,87,.18)}button[data-command="WINDOWS_AI_UPDATE"]{border-color:#8bdcff}button[data-command="RESUME_463"]{border-color:#8bdcff}.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #314453;border-radius:999px}.dot{width:10px;height:10px;border-radius:50%;background:#68757c}.online .dot{background:var(--ok);box-shadow:0 0 12px var(--ok)}pre{white-space:pre-wrap;word-break:break-word;background:#010305;border:1px solid #173342;border-radius:10px;padding:12px;min-height:120px}.warn{color:var(--warn);font-size:13px}.note{font-size:12.5px;color:var(--muted);line-height:1.55}
 </style>
 </head>
 <body><main class="wrap">
-<div class="brand">AIG II · REMOTE MAINTENANCE</div>
-<div class="sub">WEB → 雙專案 Fast Loop → Android / 夜神；Windows AI 更新保留為第二路徑</div>
+<div class="brand">AIG II · AI UPDATE</div>
+<div class="sub">AIG 雙專案 AI 更新 → Working Copy → 雙案 Gate → 原子 Promote；錯誤不覆寫 Stable</div>
 
 <section class="panel">
-  <strong>雙專案 / 建製核心</strong>
+  <strong>AIG 雙專案穩定更新核心</strong>
   <div class="coregrid" style="margin-top:12px">
-    <div class="core"><h3>Fast Loop Core</h3>
-      <div class="kv"><div class="k">AIG-II + Studio</div><div class="v ok">DUAL_ANDROID_UPDATE</div></div>
-      <div class="kv"><div class="k">固定參數</div><div class="v info">Project=BOTH · Platform=ANDROID</div></div>
+    <div class="core"><h3>AI Update Command</h3>
+      <div class="kv"><div class="k">正式命令</div><div class="v ok">AIG_DUAL_AI_UPDATE</div></div>
+      <div class="kv"><div class="k">相容命令</div><div class="v">DUAL_ANDROID_UPDATE</div></div>
+      <div class="kv"><div class="k">固定範圍</div><div class="v info">AIG-II + AIG Studio · BOTH</div></div>
+    </div>
+    <div class="core"><h3>Stable Gate</h3>
+      <div class="kv"><div class="k">Working Copy</div><div class="v ok">VERIFY BEFORE PROMOTE</div></div>
+      <div class="kv"><div class="k">Dual Gate</div><div class="v ok">BOTH PASS + exact SHA</div></div>
+      <div class="kv"><div class="k">Error</div><div class="v ok">CURRENT_STABLE_RETAINED</div></div>
+    </div>
+    <div class="core"><h3>Android / Nox</h3>
+      <div class="kv"><div class="k">模式</div><div class="v ok">ATOMIC MULTI-PACKAGE</div></div>
       <div class="kv"><div class="k">Nox</div><div class="v info">Nox_1 · 127.0.0.1:62026</div></div>
+      <div class="kv"><div class="k">規則</div><div class="v">不支援原子雙安裝即 BLOCK</div></div>
     </div>
-    <div class="core"><h3>Updater / Gate</h3>
-      <div class="kv"><div class="k">AIG-II</div><div class="v ok">ChatGPT AI 更新 PRESENT</div></div>
-      <div class="kv"><div class="k">AIG Studio 5.0</div><div class="v ok">VERIFIED NEWER ONLY</div></div>
-      <div class="kv"><div class="k">Dual Gate</div><div class="v ok">exact SHA · FORWARD ONLY</div></div>
-    </div>
-    <div class="core"><h3>Windows Direct Path</h3>
-      <div class="kv"><div class="k">命令</div><div class="v">WINDOWS_AI_UPDATE</div></div>
+    <div class="core"><h3>Windows / 續接</h3>
+      <div class="kv"><div class="k">Windows</div><div class="v">WINDOWS_AI_UPDATE</div></div>
       <div class="kv"><div class="k">可信基底</div><div class="v ok">462 · 6cd20f36</div></div>
       <div class="kv"><div class="k">Windows live</div><div id="runnerState" class="v wait">等待 Windows Agent / Runner 回報</div></div>
     </div>
-    <div class="core"><h3>目前續接</h3>
-      <div class="kv"><div class="k">下一步</div><div class="v info">463 RED → GREEN → 3AX → 4AX → 5AX → 6AX</div></div>
-      <div class="kv"><div class="k">安全</div><div class="v ok">FIXED COMMANDS ONLY · NO ROLLBACK</div></div>
-      <div class="kv"><div class="k">ADB</div><div class="v">僅 Windows 本機 loopback，不公開</div></div>
-    </div>
   </div>
-  <p class="note">DUAL_ANDROID_UPDATE 只會呼叫固定 Fast Loop：AIG-II + AIG Studio、Android、Nox_1；不接受任意專案、平台或命令參數。</p>
+  <p class="note">正式 AI 更新只走固定命令。候選先 build、驗 SHA、雙案全過，再一次 Promote；任一步錯誤即停止，既有 Stable 保持不變。</p>
 </section>
 
 <section class="panel"><div class="row"><input id="token" type="password" autocomplete="off" placeholder="Controller token"><button id="saveToken">保存此手機</button></div><p class="warn">Token 只存於此瀏覽器 localStorage，不寫入頁面或網址。</p></section>
 <section class="panel"><div id="agentBadge" class="badge"><span class="dot"></span><span id="agentText">Windows: checking...</span></div></section>
 <section class="panel">
   <div class="row">
-    <button data-command="DUAL_ANDROID_UPDATE">雙專案 Android 更新 · DUAL_ANDROID_UPDATE</button>
-    <button data-command="WINDOWS_AI_UPDATE">Windows AI 更新 · WINDOWS_AI_UPDATE</button>
-    <button data-command="RESUME_463">463 唯讀續接 · RESUME_463</button>
-    <button data-command="NOX_STATUS">夜神狀態 · NOX_STATUS</button>
-    <button data-command="NOX_START">啟動夜神 · NOX_START</button>
+    <button data-command="AIG_DUAL_AI_UPDATE">AIG 雙專案 AI 安全更新</button>
+    <button data-command="WINDOWS_AI_UPDATE">Windows AI 更新</button>
+    <button data-command="RESUME_463">463 唯讀續接</button>
+    <button data-command="NOX_STATUS">夜神狀態</button>
+    <button data-command="NOX_START">啟動夜神</button>
   </div>
-  <p class="note">主攻雙專案 Fast Loop；Windows AI 更新與 NOX_* 保留作診斷/備援。</p>
+  <p class="note">舊 DUAL_ANDROID_UPDATE 仍保留 API 相容；正式介面改走 AIG_DUAL_AI_UPDATE。</p>
 </section>
 <section class="panel"><strong>結果</strong><pre id="result">尚未送出命令。</pre></section>
 </main>
