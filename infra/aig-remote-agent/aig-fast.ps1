@@ -142,6 +142,35 @@ function Test-AndroidCandidate($Candidate) {
     return $true
 }
 
+function Test-DualProjectExactBinding($AigIi, $AigCnc) {
+    $manifestPath = Join-Path $AigIi.Root 'integration\manifest.json'
+    if(-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        throw 'FAST_LOOP_DUAL_BINDING_MANIFEST_MISSING|CURRENT_STABLE_RETAINED'
+    }
+
+    try {
+        $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
+    }
+    catch {
+        throw "FAST_LOOP_DUAL_BINDING_MANIFEST_INVALID|CURRENT_STABLE_RETAINED|$($_.Exception.Message)"
+    }
+
+    $expected = ([string]$manifest.runtime_binding.exact_sha).Trim().ToLowerInvariant()
+    $actual = ([string]$AigCnc.Head).Trim().ToLowerInvariant()
+    if($expected -notmatch '^[0-9a-f]{40}$') {
+        throw 'FAST_LOOP_DUAL_BINDING_SHA_INVALID|CURRENT_STABLE_RETAINED'
+    }
+    if($actual -notmatch '^[0-9a-f]{40}$') {
+        throw 'FAST_LOOP_DUAL_ACTUAL_SHA_INVALID|CURRENT_STABLE_RETAINED'
+    }
+    if($actual -ne $expected) {
+        throw "FAST_LOOP_DUAL_EXACT_BINDING_MISMATCH|EXPECTED=$expected|ACTUAL=$actual|CURRENT_STABLE_RETAINED"
+    }
+
+    Write-Host "FAST_LOOP_DUAL_EXACT_BINDING_PASS|STUDIO_SHA=$actual|MANIFEST=$manifestPath"
+    return $true
+}
+
 function Capture-AndroidEvidence($Candidate) {
     $package = $Candidate.Package
     $activity = $Candidate.Activity
@@ -179,8 +208,6 @@ function Invoke-AtomicDualAndroidInstall($AigIi, $AigCnc) {
 
     Write-Host "FAST_LOOP_DUAL_PREFLIGHT_PASS|AIGII=$($AigIi.Sha256)|AIGCNC=$($AigCnc.Sha256)|PROTOCOL=$AtomicProtocolMarker"
 
-    # adb install-multi-package uses a parent multi-package session with child sessions and one final commit.
-    # If the device/adb pair cannot perform that transaction, fail closed; never fall back to sequential installs.
     & $NoxAdb -s $NoxTarget install-multi-package -r $AigIi.Apk $AigCnc.Apk | Out-Host
     if($LASTEXITCODE -ne 0) {
         throw "FAST_LOOP_ATOMIC_MULTI_PACKAGE_UNSUPPORTED_OR_FAILED:$LASTEXITCODE|CURRENT_STABLE_RETAINED"
@@ -194,7 +221,6 @@ function Invoke-Android([string]$Id) {
     Test-AndroidCandidate $candidate | Out-Null
     Ensure-NoxOnline
 
-    # Single-project maintenance path only. Dual-project update never uses this sequential path.
     & $NoxAdb -s $NoxTarget install -r $candidate.Apk | Out-Host
     if($LASTEXITCODE -ne 0) {
         throw "FAST_LOOP_ANDROID_INSTALL_FAIL:$Id|CURRENT_STABLE_RETAINED"
@@ -214,17 +240,16 @@ function Invoke-Desktop([string]$Id) {
 
 if($Project -eq 'BOTH' -and $Platform -eq 'ANDROID') {
     try {
-        # Stage and verify BOTH projects before any installed package is touched.
         $aigIi = Prepare-AndroidCandidate 'AIGII'
         Test-AndroidCandidate $aigIi | Out-Null
         $aigCnc = Prepare-AndroidCandidate 'AIGCNC'
         Test-AndroidCandidate $aigCnc | Out-Null
+        Test-DualProjectExactBinding $aigIi $aigCnc | Out-Null
         Invoke-AtomicDualAndroidInstall $aigIi $aigCnc
 
-        # Evidence is post-commit telemetry, not a promotion input. Promotion happened atomically above.
         try { Capture-AndroidEvidence $aigIi } catch { Write-Warning "AIGII_POST_COMMIT_EVIDENCE:$($_.Exception.Message)" }
         try { Capture-AndroidEvidence $aigCnc } catch { Write-Warning "AIGCNC_POST_COMMIT_EVIDENCE:$($_.Exception.Message)" }
-        Write-Host "AIG_STABLE_DUAL_UPDATE_PASS|PROJECT=BOTH|PLATFORM=ANDROID|PROMOTION=ATOMIC"
+        Write-Host "AIG_STABLE_DUAL_UPDATE_PASS|PROJECT=BOTH|PLATFORM=ANDROID|PROMOTION=ATOMIC|EXACT_BINDING=PASS"
     }
     catch {
         Write-Host "AIG_STABLE_DUAL_UPDATE_BLOCKED|$($_.Exception.Message)|CURRENT_STABLE_RETAINED"
