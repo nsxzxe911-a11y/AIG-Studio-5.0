@@ -50,11 +50,19 @@ for marker in (
     'NAV_CAD',
     'NAV_CAM',
     'NAV_SIM',
+    'NAV_3AX',
+    'NAV_4AX',
+    'NAV_5AX',
+    'NAV_6AX',
     'NAV_NC',
     'NAV_AI',
     'showRuntimeHome?.invoke()',
     'showCamWorkstation()',
     'showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))',
+    'showUnifiedMachiningWorkspace("3AX")',
+    'showUnifiedMachiningWorkspace("4AX")',
+    'showUnifiedMachiningWorkspace("5AX")',
+    'showSixAxisRuntimeStage()',
     'showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))',
     'showAiSystemSuiteDialog()',
 ):
@@ -73,6 +81,10 @@ expected={
     'NAV_CAD':('CAD','cad','OPEN_CAD','Toast.makeText(this,"CAD • LIVE WORKSPACE",Toast.LENGTH_SHORT).show()'),
     'NAV_CAM':('CAM','cam','OPEN_CAM','showCamWorkstation()'),
     'NAV_SIM':('SIM','sim','OPEN_SIM','showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))'),
+    'NAV_3AX':('3AX','3ax','OPEN_3AX','showUnifiedMachiningWorkspace("3AX")'),
+    'NAV_4AX':('4AX','4ax','OPEN_4AX','showUnifiedMachiningWorkspace("4AX")'),
+    'NAV_5AX':('5AX','5ax','OPEN_5AX','showUnifiedMachiningWorkspace("5AX")'),
+    'NAV_6AX':('6AX','6ax','OPEN_6AX','showSixAxisRuntimeStage()'),
     'NAV_NC':('NC','nc','OPEN_NC','showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))'),
     'NAV_AI':('AI','ai','OPEN_AI','showAiSystemSuiteDialog()'),
 }
@@ -106,5 +118,5 @@ assert "grep -F 'AIG CNC FORMAL RGB HOME'" not in evidence_text, 'ANDROID_EVIDEN
 
 print('AIG_STUDIO_DUAL_AI_WEB_UPDATE_PASS|WEB_DOWNLOAD_SURFACE|NO_DESKTOP_COMMANDER|VERIFIED_ONLY')
 print('UI_BUTTON_MANIFEST_CONTRACT_PASS|AUTHORITY_RGB|BUTTON_ID|SHARED_COMMAND|VERIFIED_CALLBACKS|NULL_BOUNDS_ALLOWED')
-print('UI_BUTTON_JSON_MANIFEST_PASS|PACK_184|HOME_416|6_VERIFIED_NAV|NULL_BOUNDS')
+print('UI_BUTTON_JSON_MANIFEST_PASS|PACK_184|HOME_416|10_VERIFIED_NAV|3AX_4AX_5AX_6AX|NULL_BOUNDS')
 print('ANDROID_OFFLINE_RGB_HOME_EVIDENCE_CONTRACT_PASS|FINAL_FIRST_FRAME_MARKER|RUNTIME_HOST')
