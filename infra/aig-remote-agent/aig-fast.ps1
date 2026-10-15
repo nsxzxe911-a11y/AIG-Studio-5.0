@@ -22,6 +22,7 @@ $NoxTarget = '127.0.0.1:62026'
 $InstallModeMarker = 'install -r'
 $LaunchModeMarker = 'shell am start'
 $DesktopTaskMarker = ':desktop:run'
+$AtomicProtocolMarker = 'install-create --multi-package | install-add-session | install-commit'
 
 $ProjectTable = @{
     AIGII = @{
@@ -59,7 +60,7 @@ function Resolve-Gradle([string]$Root) {
 
 function Ensure-NoxOnline {
     if(-not (Test-Path -LiteralPath $NoxAdb -PathType Leaf)) {
-        throw 'FAST_LOOP_NOX_ADB_MISSING'
+        throw 'FAST_LOOP_NOX_ADB_MISSING|CURRENT_STABLE_RETAINED'
     }
 
     & $NoxAdb connect $NoxTarget | Out-Host
@@ -67,7 +68,7 @@ function Ensure-NoxOnline {
     if($state -eq 'device') { return }
 
     if(-not (Test-Path -LiteralPath $NoxConsole -PathType Leaf)) {
-        throw 'FAST_LOOP_NOX_CONSOLE_MISSING'
+        throw 'FAST_LOOP_NOX_CONSOLE_MISSING|CURRENT_STABLE_RETAINED'
     }
 
     & $NoxConsole launch "-name:$NoxInstance" | Out-Host
@@ -77,14 +78,18 @@ function Ensure-NoxOnline {
         $state = (& $NoxAdb -s $NoxTarget get-state 2>$null | Out-String).Trim()
         if($state -eq 'device') { return }
     }
-    throw 'FAST_LOOP_NOX_OFFLINE_AFTER_START'
+    throw 'FAST_LOOP_NOX_OFFLINE_AFTER_START|CURRENT_STABLE_RETAINED'
 }
 
 function Resolve-DebugApk([string]$Root) {
     $preferred = Join-Path $Root 'app\build\outputs\apk\debug\app-debug.apk'
     if(Test-Path -LiteralPath $preferred -PathType Leaf) { return $preferred }
 
-    $apk = Get-ChildItem -LiteralPath (Join-Path $Root 'app\build\outputs\apk') -Filter '*.apk' -File -Recurse -ErrorAction SilentlyContinue |
+    $apkRoot = Join-Path $Root 'app\build\outputs\apk'
+    if(-not (Test-Path -LiteralPath $apkRoot -PathType Container)) {
+        throw "FAST_LOOP_APK_ROOT_MISSING:$Root"
+    }
+    $apk = Get-ChildItem -LiteralPath $apkRoot -Filter '*.apk' -File -Recurse -ErrorAction SilentlyContinue |
         Where-Object { $_.FullName -match '\\debug\\' -and $_.Name -notmatch 'androidTest' } |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
@@ -92,34 +97,66 @@ function Resolve-DebugApk([string]$Root) {
     return $apk.FullName
 }
 
-function Invoke-Android([string]$Id) {
+function Prepare-AndroidCandidate([string]$Id) {
     $root = Resolve-ProjectRoot $Id
     $gradle = Resolve-Gradle $root
-    $package = $ProjectTable[$Id].Package
-    $activity = $ProjectTable[$Id].Activity
+    Write-Host "FAST_LOOP_STAGE|PROJECT=$Id|ROOT=$root"
 
-    Write-Host "FAST_LOOP|PROJECT=$Id|PLATFORM=ANDROID|ROOT=$root"
     & $gradle -p $root :app:assembleDebug --no-daemon
-    if($LASTEXITCODE -ne 0) { throw "FAST_LOOP_ANDROID_BUILD_FAIL:$Id" }
+    if($LASTEXITCODE -ne 0) {
+        throw "FAST_LOOP_ANDROID_BUILD_FAIL:$Id|CURRENT_STABLE_RETAINED"
+    }
 
     $apk = Resolve-DebugApk $root
-    Ensure-NoxOnline
+    $head = (& git -C $root rev-parse HEAD 2>$null | Out-String).Trim()
+    if(-not $head) { throw "FAST_LOOP_GIT_HEAD_MISSING:$Id|CURRENT_STABLE_RETAINED" }
+    $sha = (Get-FileHash -LiteralPath $apk -Algorithm SHA256).Hash.ToUpperInvariant()
 
-    & $NoxAdb -s $NoxTarget install -r $apk | Out-Host
-    if($LASTEXITCODE -ne 0) { throw "FAST_LOOP_ANDROID_INSTALL_FAIL:$Id" }
+    return [pscustomobject]@{
+        Id = $Id
+        Root = $root
+        Apk = $apk
+        Sha256 = $sha
+        Head = $head
+        Package = $ProjectTable[$Id].Package
+        Activity = $ProjectTable[$Id].Activity
+    }
+}
+
+function Test-AndroidCandidate($Candidate) {
+    if($null -eq $Candidate) { throw 'FAST_LOOP_CANDIDATE_NULL|CURRENT_STABLE_RETAINED' }
+    if(-not (Test-Path -LiteralPath $Candidate.Apk -PathType Leaf)) {
+        throw "FAST_LOOP_CANDIDATE_APK_MISSING:$($Candidate.Id)|CURRENT_STABLE_RETAINED"
+    }
+    $file = Get-Item -LiteralPath $Candidate.Apk
+    if($file.Length -le 0) {
+        throw "FAST_LOOP_CANDIDATE_APK_EMPTY:$($Candidate.Id)|CURRENT_STABLE_RETAINED"
+    }
+    if($Candidate.Sha256 -notmatch '^[0-9A-F]{64}$') {
+        throw "FAST_LOOP_CANDIDATE_SHA_INVALID:$($Candidate.Id)|CURRENT_STABLE_RETAINED"
+    }
+    $fresh = (Get-FileHash -LiteralPath $Candidate.Apk -Algorithm SHA256).Hash.ToUpperInvariant()
+    if($fresh -ne $Candidate.Sha256) {
+        throw "FAST_LOOP_CANDIDATE_SHA_CHANGED:$($Candidate.Id)|CURRENT_STABLE_RETAINED"
+    }
+    return $true
+}
+
+function Capture-AndroidEvidence($Candidate) {
+    $package = $Candidate.Package
+    $activity = $Candidate.Activity
+    $root = $Candidate.Root
 
     & $NoxAdb -s $NoxTarget shell am force-stop $package | Out-Null
     & $NoxAdb -s $NoxTarget shell am start -n "$package/$activity" | Out-Host
-    if($LASTEXITCODE -ne 0) { throw "FAST_LOOP_ANDROID_LAUNCH_FAIL:$Id" }
 
     Start-Sleep -Seconds 2
     $evidence = Join-Path $root 'release\fast-loop-evidence'
     New-Item -ItemType Directory -Path $evidence -Force | Out-Null
-
-    $remoteShot = "/sdcard/aig-fast-$($Id.ToLowerInvariant()).png"
-    $localShot = Join-Path $evidence "$Id-nox.png"
-    $logFile = Join-Path $evidence "$Id-logcat.txt"
-    $pkgFile = Join-Path $evidence "$Id-package.txt"
+    $remoteShot = "/sdcard/aig-fast-$($Candidate.Id.ToLowerInvariant()).png"
+    $localShot = Join-Path $evidence "$($Candidate.Id)-nox.png"
+    $logFile = Join-Path $evidence "$($Candidate.Id)-logcat.txt"
+    $pkgFile = Join-Path $evidence "$($Candidate.Id)-package.txt"
 
     & $NoxAdb -s $NoxTarget logcat -d | Out-File -FilePath $logFile -Encoding utf8
     & $NoxAdb -s $NoxTarget shell screencap -p $remoteShot | Out-Null
@@ -127,7 +164,43 @@ function Invoke-Android([string]$Id) {
     & $NoxAdb -s $NoxTarget shell dumpsys package $package | Select-String 'versionCode=|versionName=' |
         Out-File -FilePath $pkgFile -Encoding utf8
 
-    Write-Host "FAST_LOOP_ANDROID_PASS|PROJECT=$Id|TARGET=$NoxTarget|APK=$apk|SCREENSHOT=$localShot"
+    Write-Host "FAST_LOOP_ANDROID_EVIDENCE|PROJECT=$($Candidate.Id)|HEAD=$($Candidate.Head)|SHA256=$($Candidate.Sha256)|SCREENSHOT=$localShot"
+}
+
+function Invoke-AtomicDualAndroidInstall($AigIi, $AigCnc) {
+    Test-AndroidCandidate $AigIi | Out-Null
+    Test-AndroidCandidate $AigCnc | Out-Null
+    Ensure-NoxOnline
+
+    $packageHelp = (& $NoxAdb -s $NoxTarget shell cmd package help 2>&1 | Out-String)
+    if($packageHelp -notmatch '--multi-package') {
+        throw 'FAST_LOOP_ATOMIC_MULTI_PACKAGE_UNSUPPORTED|CURRENT_STABLE_RETAINED'
+    }
+
+    Write-Host "FAST_LOOP_DUAL_PREFLIGHT_PASS|AIGII=$($AigIi.Sha256)|AIGCNC=$($AigCnc.Sha256)|PROTOCOL=$AtomicProtocolMarker"
+
+    # adb install-multi-package uses a parent multi-package session with child sessions and one final commit.
+    # If the device/adb pair cannot perform that transaction, fail closed; never fall back to sequential installs.
+    & $NoxAdb -s $NoxTarget install-multi-package -r $AigIi.Apk $AigCnc.Apk | Out-Host
+    if($LASTEXITCODE -ne 0) {
+        throw "FAST_LOOP_ATOMIC_MULTI_PACKAGE_UNSUPPORTED_OR_FAILED:$LASTEXITCODE|CURRENT_STABLE_RETAINED"
+    }
+
+    Write-Host "FAST_LOOP_DUAL_ATOMIC_INSTALL_PASS|AIGII_HEAD=$($AigIi.Head)|AIGCNC_HEAD=$($AigCnc.Head)|TARGET=$NoxTarget"
+}
+
+function Invoke-Android([string]$Id) {
+    $candidate = Prepare-AndroidCandidate $Id
+    Test-AndroidCandidate $candidate | Out-Null
+    Ensure-NoxOnline
+
+    # Single-project maintenance path only. Dual-project update never uses this sequential path.
+    & $NoxAdb -s $NoxTarget install -r $candidate.Apk | Out-Host
+    if($LASTEXITCODE -ne 0) {
+        throw "FAST_LOOP_ANDROID_INSTALL_FAIL:$Id|CURRENT_STABLE_RETAINED"
+    }
+    Capture-AndroidEvidence $candidate
+    Write-Host "FAST_LOOP_ANDROID_PASS|PROJECT=$Id|TARGET=$NoxTarget|APK=$($candidate.Apk)"
 }
 
 function Invoke-Desktop([string]$Id) {
@@ -137,6 +210,28 @@ function Invoke-Desktop([string]$Id) {
     $args = @('-p', $root, ':desktop:run', '--no-daemon')
     Start-Process -FilePath $gradle -ArgumentList $args -WorkingDirectory $root | Out-Null
     Write-Host "FAST_LOOP_DESKTOP_STARTED|PROJECT=$Id|TASK=$DesktopTaskMarker"
+}
+
+if($Project -eq 'BOTH' -and $Platform -eq 'ANDROID') {
+    try {
+        # Stage and verify BOTH projects before any installed package is touched.
+        $aigIi = Prepare-AndroidCandidate 'AIGII'
+        Test-AndroidCandidate $aigIi | Out-Null
+        $aigCnc = Prepare-AndroidCandidate 'AIGCNC'
+        Test-AndroidCandidate $aigCnc | Out-Null
+        Invoke-AtomicDualAndroidInstall $aigIi $aigCnc
+
+        # Evidence is post-commit telemetry, not a promotion input. Promotion happened atomically above.
+        runCatching = $null
+        try { Capture-AndroidEvidence $aigIi } catch { Write-Warning "AIGII_POST_COMMIT_EVIDENCE:$($_.Exception.Message)" }
+        try { Capture-AndroidEvidence $aigCnc } catch { Write-Warning "AIGCNC_POST_COMMIT_EVIDENCE:$($_.Exception.Message)" }
+        Write-Host "AIG_STABLE_DUAL_UPDATE_PASS|PROJECT=BOTH|PLATFORM=ANDROID|PROMOTION=ATOMIC"
+    }
+    catch {
+        Write-Host "AIG_STABLE_DUAL_UPDATE_BLOCKED|$($_.Exception.Message)|CURRENT_STABLE_RETAINED"
+        throw
+    }
+    return
 }
 
 $projects = if($Project -eq 'BOTH') { @('AIGII','AIGCNC') } else { @($Project) }
