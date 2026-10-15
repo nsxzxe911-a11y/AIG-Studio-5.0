@@ -1,0 +1,22 @@
+name: Inspect production UI contract once
+
+on:
+  push:
+    branches:
+      - feature/aig-dual-ai-web-update-20261015
+    paths:
+      - .github/workflows/inspect-production-ui-contract-once.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate production UI switch contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -R -n -B 12 -A 40 'ProductionUiSwitchContract' core app | head -n 240
