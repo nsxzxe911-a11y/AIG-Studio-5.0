@@ -191,6 +191,14 @@ jobs:
           grep -Fx "ui_verify_package=$UI_VERIFY_PACKAGE" release/android/RELEASE_MANIFEST.txt
           grep -Fx "ui_verify_runtime=PRODUCTION_RUNTIME_SAME_CODE_DIFFERENT_PACKAGE_ID" release/android/RELEASE_MANIFEST.txt
           grep -Fx "device_launch_evidence=REQUIRED_FOR_RUNTIME_EVIDENCE" release/android/RELEASE_MANIFEST.txt
+      - name: Enable KVM group perms
+        shell: bash
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          test -w /dev/kvm
+          echo 'ANDROID_EMULATOR_KVM_READY=PASS'
       - name: Studio offline Runtime UI visual evidence
         uses: ReactiveCircus/android-emulator-runner@v2
         with:
