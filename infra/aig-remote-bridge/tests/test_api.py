@@ -1,5 +1,5 @@
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -8,38 +8,20 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from app import create_app
-
-
-class MemoryStore:
-    def __init__(self):
-        self.commands = {}
-        self.seq = 0
-
-    def enqueue(self, name):
-        self.seq += 1
-        cid = f"cmd-{self.seq}"
-        now = datetime.now(timezone.utc)
-        rec = {
-            "id": cid,
-            "name": name,
-            "created_at": now.isoformat(),
-            "expires_at": (now + timedelta(minutes=15)).isoformat(),
-            "status": "queued",
-        }
-        self.commands[cid] = rec
-        return rec
-
-    def get(self, cid):
-        return self.commands.get(cid)
+from store import MemoryCommandStore
 
 
 def make_client(monkeypatch):
     monkeypatch.setenv("AIG_CONTROLLER_TOKEN", "controller-secret")
     monkeypatch.setenv("AIG_AGENT_TOKEN", "agent-secret")
-    return TestClient(create_app(MemoryStore()))
+    return TestClient(create_app(MemoryCommandStore()))
 
 
 def auth(token="controller-secret"):
+    return {"Authorization": f"Bearer {token}"}
+
+
+def agent_auth(token="agent-secret"):
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -70,7 +52,6 @@ def test_valid_nox_status_queues_with_15_minute_expiry(monkeypatch):
     body = r.json()
     assert body["name"] == "NOX_STATUS"
     assert body["status"] == "queued"
-    assert body["id"].startswith("cmd-")
     created = datetime.fromisoformat(body["created_at"])
     expires = datetime.fromisoformat(body["expires_at"])
     assert timedelta(minutes=14, seconds=59) <= expires - created <= timedelta(minutes=15, seconds=1)
@@ -83,3 +64,50 @@ def test_get_command_requires_controller_token(monkeypatch):
     r = c.get(f"/api/commands/{queued['id']}", headers=auth())
     assert r.status_code == 200
     assert r.json()["id"] == queued["id"]
+
+
+def test_agent_token_is_isolated_from_controller_token(monkeypatch):
+    c = make_client(monkeypatch)
+    r = c.post("/api/agent/heartbeat", json={"agent_id": "DESKTOP-6KOFHUK"}, headers=auth())
+    assert r.status_code == 401
+
+
+def test_agent_heartbeat(monkeypatch):
+    c = make_client(monkeypatch)
+    r = c.post("/api/agent/heartbeat", json={"agent_id": "DESKTOP-6KOFHUK"}, headers=agent_auth())
+    assert r.status_code == 200
+    assert r.json()["status"] == "online"
+    assert r.json()["agent_id"] == "DESKTOP-6KOFHUK"
+
+
+def test_agent_poll_leases_next_command(monkeypatch):
+    c = make_client(monkeypatch)
+    queued = c.post("/api/commands", json={"name": "NOX_STATUS"}, headers=auth()).json()
+    r = c.post("/api/agent/poll", json={"agent_id": "DESKTOP-6KOFHUK"}, headers=agent_auth())
+    assert r.status_code == 200
+    assert r.json()["command"]["id"] == queued["id"]
+    assert r.json()["command"]["status"] == "leased"
+
+
+def test_agent_result_success_and_failure(monkeypatch):
+    c = make_client(monkeypatch)
+    queued = c.post("/api/commands", json={"name": "NOX_STATUS"}, headers=auth()).json()
+    c.post("/api/agent/poll", json={"agent_id": "DESKTOP-6KOFHUK"}, headers=agent_auth())
+    ok = c.post("/api/agent/result", json={"command_id": queued["id"], "status": "succeeded", "summary": "device"}, headers=agent_auth())
+    assert ok.status_code == 200
+    assert ok.json()["status"] == "succeeded"
+
+    queued2 = c.post("/api/commands", json={"name": "NOX_START"}, headers=auth()).json()
+    c.post("/api/agent/poll", json={"agent_id": "DESKTOP-6KOFHUK"}, headers=agent_auth())
+    fail = c.post("/api/agent/result", json={"command_id": queued2["id"], "status": "failed", "summary": "nox missing"}, headers=agent_auth())
+    assert fail.status_code == 200
+    assert fail.json()["status"] == "failed"
+
+
+def test_agent_result_summary_is_truncated(monkeypatch):
+    c = make_client(monkeypatch)
+    queued = c.post("/api/commands", json={"name": "NOX_STATUS"}, headers=auth()).json()
+    c.post("/api/agent/poll", json={"agent_id": "DESKTOP-6KOFHUK"}, headers=agent_auth())
+    r = c.post("/api/agent/result", json={"command_id": queued["id"], "status": "succeeded", "summary": "x" * 5000}, headers=agent_auth())
+    assert r.status_code == 200
+    assert len(r.json()["result_summary"]) == 4096
