@@ -18,4 +18,4 @@ jobs:
       - name: Dispatch existing formal builder on this ref
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run build-download.yml --ref "${GITHUB_REF_NAME}"
+        run: gh workflow run build-download.yml --repo "nsxzxe911-a11y/AIG-Studio-5.0" --ref "${GITHUB_REF_NAME}"
