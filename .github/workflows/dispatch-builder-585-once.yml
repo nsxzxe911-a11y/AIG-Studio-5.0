@@ -1,0 +1,25 @@
+name: Dispatch formal builder 585 once
+
+on:
+  push:
+    branches:
+      - feature/aig-dual-ai-web-update-20261015
+    paths:
+      - .github/workflows/dispatch-builder-585-once.yml
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch formal builder 585
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run build-download.yml --repo 'nsxzxe911-a11y/AIG-Studio-5.0' --ref 'feature/aig-dual-ai-web-update-20261015'
+          echo 'FORMAL_BUILDER_585_DISPATCHED=PASS'
