@@ -6,7 +6,7 @@ on:
       - feature/aig-dual-ai-web-update-20261015
 
 permissions:
-  contents: write
+  contents: read
   actions: write
 
 jobs:
@@ -25,34 +25,21 @@ jobs:
       - name: Compile Studio update policy
         run: gradle :core:compileKotlin --no-daemon --console=plain
 
-  kvm-hotfix-581:
+  dispatch-builder-581:
     if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: feature/aig-dual-ai-web-update-20261015
-          fetch-depth: 0
-      - name: Patch only formal builder KVM block
+      - uses: actions/checkout@v4
+      - name: Verify CI-only KVM preflight
         shell: bash
         run: |
           set -euo pipefail
-          python3 ci/kvm_hotfix_581.py
-          python3 ci/verify_android_emulator_kvm_contract.py
-      - name: Commit exact KVM hotfix
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/workflows/build-download.yml
-          if git diff --cached --quiet; then
-            echo 'KVM_581_COMMIT_NOT_NEEDED=PASS'
-          else
-            git commit -m 'fix(ci): harden formal builder KVM gate for 581'
-            git push origin HEAD:feature/aig-dual-ai-web-update-20261015
-          fi
+          grep -Fq 'ANDROID_EMULATOR_KVM_PREFLIGHT=PASS' build_android_release.sh
+          grep -Fq 'sudo chmod 666 /dev/kvm' build_android_release.sh
+          grep -Fq 'test -r /dev/kvm' build_android_release.sh
+          grep -Fq 'test -w /dev/kvm' build_android_release.sh
+          echo 'KVM_581_RELEASE_PREFLIGHT_CONTRACT=PASS'
       - name: Dispatch formal builder 581
         env:
           GH_TOKEN: ${{ github.token }}
