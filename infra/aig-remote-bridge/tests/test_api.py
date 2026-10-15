@@ -143,3 +143,25 @@ def test_runtime_store_uses_database_url(monkeypatch):
     monkeypatch.setattr(app_module.SqlCommandStore, 'from_url', lambda url: seen.setdefault(url, marker))
     assert app_module.build_default_store() is marker
     assert 'postgresql://example/db' in seen
+
+
+def test_health_reports_not_ready_without_store_or_tokens(monkeypatch):
+    monkeypatch.delenv('AIG_CONTROLLER_TOKEN', raising=False)
+    monkeypatch.delenv('AIG_AGENT_TOKEN', raising=False)
+    c = TestClient(create_app(None))
+    body = c.get('/health').json()
+    assert body['status'] == 'ok'
+    assert body['ready'] is False
+    assert body['store_configured'] is False
+    assert body['auth_configured'] is False
+
+
+def test_health_reports_ready_with_store_and_both_tokens(monkeypatch):
+    monkeypatch.setenv('AIG_CONTROLLER_TOKEN', 'controller-secret')
+    monkeypatch.setenv('AIG_AGENT_TOKEN', 'agent-secret')
+    c = TestClient(create_app(MemoryCommandStore()))
+    body = c.get('/health').json()
+    assert body['status'] == 'ok'
+    assert body['ready'] is True
+    assert body['store_configured'] is True
+    assert body['auth_configured'] is True
