@@ -21,11 +21,21 @@ grep -F "$PKG/.MainActivity" "$EVIDENCE/activity.txt"
 
 adb shell uiautomator dump /sdcard/aig-studio-ui.xml >/dev/null
 adb pull /sdcard/aig-studio-ui.xml "$EVIDENCE/android_ui.xml" >/dev/null
-grep -F 'AIG CNC FORMAL RGB HOME' "$EVIDENCE/android_ui.xml"
-grep -F 'AIG CNC PRODUCTION RUNTIME HOST' "$EVIDENCE/android_ui.xml"
+
+if ! grep -F 'AIG CNC PRODUCTION HOME RUNTIME • FIRST FRAME' "$EVIDENCE/android_ui.xml"; then
+  echo 'OFFLINE_HOME_FIRST_FRAME_MARKER_MISSING=FAIL'
+  cat "$EVIDENCE/android_ui.xml"
+  exit 1
+fi
+if ! grep -F 'AIG CNC PRODUCTION RUNTIME HOST' "$EVIDENCE/android_ui.xml"; then
+  echo 'OFFLINE_RUNTIME_HOST_MARKER_MISSING=FAIL'
+  cat "$EVIDENCE/android_ui.xml"
+  exit 1
+fi
 
 if grep -Eqi 'ENGINEERING SHELL|SYSTEM READY|PHYSICAL PERFORMANCE|MASTER COORDINATE ROOT|MAINTENANCE SYSTEM STRIP|2D CAD .*LIVE WORKSPACE' "$EVIDENCE/android_ui.xml"; then
   echo 'DEFAULT_ENGINEERING_SHELL_DETECTED=FAIL'
+  cat "$EVIDENCE/android_ui.xml"
   exit 1
 fi
 
