@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#020407" />
+<title>AIG 更新核心狀態</title>
+<style>
+:root{color-scheme:dark;--bg:#020407;--panel:#07111B;--text:#E8F7FF;--muted:#8DA8B8;--cyan:#33E6FF;--magenta:#FF4FD8;--gold:#FFD166;--green:#58F29C;--amber:#FFC857;--line:rgba(91,224,255,.32)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0%,rgba(36,91,255,.12),transparent 28%),radial-gradient(circle at 85% 10%,rgba(255,79,216,.10),transparent 24%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:18px 14px 34px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.brand{font-size:28px;font-weight:800;letter-spacing:.04em}.brand span{background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--gold));-webkit-background-clip:text;color:transparent}.sub{color:var(--muted);font-size:13px;margin-top:4px}.stamp{font-size:12px;color:var(--muted);text-align:right}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}@media(max-width:720px){.grid{grid-template-columns:1fr}.top{flex-direction:column}.stamp{text-align:left}}
+.card{background:linear-gradient(180deg,rgba(11,26,39,.96),rgba(4,11,18,.96));border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:0 0 24px rgba(43,219,255,.05)}
+.card h2{margin:0 0 11px;font-size:15px;color:#fff}.row{display:grid;grid-template-columns:170px 1fr;gap:10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.055);font-size:13px}.row:first-of-type{border-top:0}.k{color:var(--muted)}.v{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-all}.ok{color:var(--green)}.wait{color:var(--amber)}.info{color:var(--cyan)}.foot{margin-top:14px;padding:12px 14px;border:1px solid rgba(255,209,102,.28);border-radius:14px;color:#D8E8F1;background:rgba(255,209,102,.035);font-size:13px;line-height:1.55}.tag{display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid currentColor;font-size:11px;font-weight:700}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button,a.btn{appearance:none;border:1px solid rgba(91,224,255,.42);background:#071725;color:#DDFBFF;border-radius:10px;padding:9px 12px;text-decoration:none;font-weight:700;font-size:13px}button:active,a.btn:active{transform:translateY(1px)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><div class="brand"><span>AIG II</span> 更新核心</div><div class="sub">既有 Updater / Dual-Project Gate / Build / Nox 狀態顯示</div></div>
+    <div class="stamp">狀態頁 v1<br>2026-10-15</div>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>雙專案核心</h2>
+      <div class="row"><div class="k">AIG-II Updater Core</div><div class="v ok">PRESENT · SecureUpdateManager</div></div>
+      <div class="row"><div class="k">AIG Studio Updater Core</div><div class="v ok">PRESENT · VERIFIED NEWER ONLY</div></div>
+      <div class="row"><div class="k">Dual-Project Gate</div><div class="v ok">PRESENT · exact SHA binding</div></div>
+      <div class="row"><div class="k">Remote Gate binding</div><div class="v info">AIG-II main → Studio 361.0.0 · d32bbea3d6f3b520c73f2c904615981e3d1833a2</div></div>
+    </section>
+
+    <section class="card">
+      <h2>本機可信斷點</h2>
+      <div class="row"><div class="k">AIG-II</div><div class="v ok">462.0.0</div></div>
+      <div class="row"><div class="k">Commit</div><div class="v ok">6cd20f36</div></div>
+      <div class="row"><div class="k">下一步</div><div class="v info">463 RED → GREEN → 3AX → 4AX → 5AX → 6AX Authority</div></div>
+      <div class="row"><div class="k">本機即時讀取</div><div class="v wait">待遠端橋恢復 · 不冒充 ONLINE</div></div>
+    </section>
+
+    <section class="card">
+      <h2>建製核心</h2>
+      <div class="row"><div class="k">Self-hosted Build Core</div><div class="v ok">HISTORICAL CORE FOUND</div></div>
+      <div class="row"><div class="k">歷史 Runner label</div><div class="v info">self-hosted · Windows · X64 · aigii-final-windows</div></div>
+      <div class="row"><div class="k">Android</div><div class="v ok">APK Build / inspect / SHA256 core existed</div></div>
+      <div class="row"><div class="k">Windows</div><div class="v ok">Regression / EXE / SHA256 core existed</div></div>
+      <div class="row"><div class="k">Runner 即時狀態</div><div class="v wait">UNVERIFIED · 等本機 runner 回報</div></div>
+    </section>
+
+    <section class="card">
+      <h2>夜神 / Runtime</h2>
+      <div class="row"><div class="k">ADB 目標</div><div class="v info">127.0.0.1:62026</div></div>
+      <div class="row"><div class="k">最後可信 APK</div><div class="v ok">462.0.0</div></div>
+      <div class="row"><div class="k">APK SHA-256</div><div class="v">43175FB47BC644E30CCC44771391350D954B12AE6EFC744D21BA3A426B08C265</div></div>
+      <div class="row"><div class="k">夜神即時連線</div><div class="v wait">待本機橋 · 不冒充 ONLINE</div></div>
+    </section>
+  </div>
+
+  <div class="foot">
+    <span class="tag">規則</span>
+    這頁只把既有核心顯示出來，不重造 Updater、不提供假更新按鈕、不回退 462。真正更新仍由既有雙專案 Updater / Gate / Build 核心執行；本機未連線時明確顯示「待連線」。
+    <div class="actions">
+      <button onclick="location.reload()">重新整理狀態頁</button>
+      <a class="btn" href="./">返回 AIG Runtime</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>
