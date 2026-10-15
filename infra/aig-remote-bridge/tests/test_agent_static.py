@@ -41,10 +41,31 @@ def test_recovered_fast_loop_is_packaged_as_fixed_fallback():
     assert "ValidateSet('AIGII','AIGCNC','BOTH')" in fast
     assert "ValidateSet('ANDROID','DESKTOP','BOTH')" in fast
     assert "127.0.0.1:62026" in fast
-    assert "install -r" in fast
     installer = INSTALLER.read_text(encoding="utf-8")
     assert "aig-fast.ps1" in installer
     assert "Copy-Item" in installer
+
+
+def test_dual_android_update_builds_both_before_atomic_promote():
+    fast = FAST_LOOP.read_text(encoding="utf-8")
+    for marker in (
+        "Prepare-AndroidCandidate",
+        "Test-AndroidCandidate",
+        "Invoke-AtomicDualAndroidInstall",
+        "install-create --multi-package",
+        "install-add-session",
+        "install-commit",
+        "FAST_LOOP_ATOMIC_MULTI_PACKAGE_UNSUPPORTED",
+        "FAST_LOOP_DUAL_PREFLIGHT_PASS",
+        "FAST_LOOP_DUAL_ATOMIC_INSTALL_PASS",
+        "CURRENT_STABLE_RETAINED",
+    ):
+        assert marker in fast, marker
+    # The BOTH/ANDROID path must not fall back to sequential install -r after a multi-package failure.
+    both_start = fast.index("if($Project -eq 'BOTH' -and $Platform -eq 'ANDROID')")
+    both_block = fast[both_start:]
+    assert "Invoke-AtomicDualAndroidInstall" in both_block
+    assert "install -r" not in both_block
 
 
 def test_no_arbitrary_shell_primitives():
