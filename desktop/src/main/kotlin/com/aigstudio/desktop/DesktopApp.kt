@@ -5094,8 +5094,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
                 frame,doc,status,productionCamDerivedCache,"4AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="4AX WARNING • "+(it.message?:"error")}})
         add(homeLaunch("5AX",Color(236,72,153)){runCatching{showUnifiedMachiningEditor(
                 frame,doc,status,productionCamDerivedCache,"5AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="5AX WARNING • "+(it.message?:"error")}})
-        add(homeLaunch("6AX",Color(159,114,255)){productionUiButtons["6AX"]?.doClick(); runCatching{showUnifiedMachiningEditor(
-                frame,doc,status,productionCamDerivedCache,"6AX",productionCamSettings,productionFixtures,productionToolAssembly)}.onFailure{status.text="6AX WARNING • "+(it.message?:"error")}})
+        add(homeLaunch("6AX",Color(159,114,255)){productionUiButtons["6AX"]?.doClick()})
         add(homeLaunch("NC",Color(80,170,255)){productionUiButtons["NC"]?.doClick()})
         add(homeLaunch("AI",Color(139,92,246)){productionUiButtons["AI"]?.doClick()})
     }
