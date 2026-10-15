@@ -133,6 +133,9 @@ object RollingUpdatePolicy {
     const val DUAL_PROJECT_PROMOTION_REQUIRES_BOTH=true
     const val PROMOTION_FAIL_CLOSED=true
     const val NO_IN_PLACE_OVERWRITE=true
+    const val DESKTOP_COMMANDER_REQUIRED=false
+    const val UPDATE_DELIVERY_CHANNEL="AIG_WEB"
+    const val AIG_WEB_DOWNLOAD_URL="https://aig-studio-rgb-runtime.onrender.com/updates/"
     const val REGRESSION_EXECUTION_ENABLED=false
     const val ALLOW_DOWNGRADE=false
     const val ALLOW_EQUAL_VERSION_REINSTALL=false
