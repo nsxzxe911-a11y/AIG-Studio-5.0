@@ -149,18 +149,18 @@ def test_controller_can_read_agent_online_status(monkeypatch):
     assert r.json()['online'] is True
 
 
-def test_control_page_has_only_whitelisted_actions_and_no_secrets(monkeypatch):
+def test_control_page_is_aig_web_migration_without_remote_controls(monkeypatch):
     c = make_client(monkeypatch)
     r = c.get('/control')
     assert r.status_code == 200
     text = r.text
-    for name in ['AIG_DUAL_AI_UPDATE', 'WINDOWS_AI_UPDATE', 'DUAL_ANDROID_UPDATE', 'RESUME_463', 'NOX_STATUS', 'NOX_START']:
-        assert name in text
-    assert 'AIG 雙專案 AI 安全更新' in text
-    assert 'SHELL' not in text
+    assert 'AIG 雙專案 AI 更新' in text
+    assert 'https://aig-studio-rgb-runtime.onrender.com/updates/' in text
+    assert 'CURRENT STABLE RETAINED' in text
+    for forbidden in ['WINDOWS_AI_UPDATE', 'DUAL_ANDROID_UPDATE', 'RESUME_463', 'NOX_STATUS', 'NOX_START', 'DESKTOP-6KOFHUK', 'Controller token', 'localStorage']:
+        assert forbidden not in text
     assert 'controller-secret' not in text
     assert 'agent-secret' not in text
-    assert 'localStorage' in text
 
 
 def test_runtime_store_uses_database_url(monkeypatch):
