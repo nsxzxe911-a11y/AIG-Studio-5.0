@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 from sql_store import SqlCommandStore
 
-ALLOWED_COMMANDS = frozenset({"NOX_STATUS", "NOX_START", "RESUME_463"})
+ALLOWED_COMMANDS = frozenset({"WINDOWS_AI_UPDATE", "RESUME_463", "NOX_STATUS", "NOX_START"})
 
 
 def _authorized(authorization: str | None, expected: str) -> bool:
@@ -39,6 +39,7 @@ def create_app(store: Any = None) -> FastAPI:
             "ready": store_configured and auth_configured,
             "store_configured": store_configured,
             "auth_configured": auth_configured,
+            "primary_path": "WEB_TO_WINDOWS_AI_UPDATE",
         }
 
     @app.get("/control", response_class=HTMLResponse)
