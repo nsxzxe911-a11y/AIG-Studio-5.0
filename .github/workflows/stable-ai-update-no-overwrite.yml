@@ -1,0 +1,22 @@
+name: Stable AI update no-overwrite gate
+
+on:
+  push:
+    paths:
+      - 'core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt'
+      - 'ci/verify_stable_ai_update_no_overwrite.py'
+      - '.github/workflows/stable-ai-update-no-overwrite.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python ci/verify_stable_ai_update_no_overwrite.py
