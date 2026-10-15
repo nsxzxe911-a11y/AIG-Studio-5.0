@@ -20,4 +20,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run build-download.yml --repo "nsxzxe911-a11y/AIG-Studio-5.0" --ref "${GITHUB_REF_NAME}"
 
-# pulse: formal-runtime-contract-aligned-20261015
+# pulse: kvm-runtime-evidence-repaired-20261015
