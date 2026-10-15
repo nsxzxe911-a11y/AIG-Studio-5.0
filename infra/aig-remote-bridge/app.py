@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 from sql_store import SqlCommandStore
 
-ALLOWED_COMMANDS = frozenset({"WINDOWS_AI_UPDATE", "RESUME_463", "NOX_STATUS", "NOX_START"})
+ALLOWED_COMMANDS = frozenset({"WINDOWS_AI_UPDATE", "DUAL_ANDROID_UPDATE", "RESUME_463", "NOX_STATUS", "NOX_START"})
 
 
 def _authorized(authorization: str | None, expected: str) -> bool:
@@ -34,7 +34,7 @@ def create_app(store: Any = None) -> FastAPI:
         "AIG_REMOTE_READINESS "
         f"STORE={'READY' if command_store is not None else 'MISSING'} "
         f"AUTH={'READY' if auth_configured else 'MISSING'} "
-        "PRIMARY=WEB_TO_WINDOWS_AI_UPDATE",
+        "PRIMARY=WEB_TO_DUAL_ANDROID_FAST_LOOP",
         flush=True,
     )
 
@@ -47,7 +47,7 @@ def create_app(store: Any = None) -> FastAPI:
             "ready": store_configured and current_auth_configured,
             "store_configured": store_configured,
             "auth_configured": current_auth_configured,
-            "primary_path": "WEB_TO_WINDOWS_AI_UPDATE",
+            "primary_path": "WEB_TO_DUAL_ANDROID_FAST_LOOP",
         }
 
     @app.get("/control", response_class=HTMLResponse)
