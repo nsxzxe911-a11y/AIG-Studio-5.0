@@ -1,9 +1,10 @@
 import hmac
 import os
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Header
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 ALLOWED_COMMANDS = frozenset({"NOX_STATUS", "NOX_START", "RESUME_463"})
 
@@ -18,10 +19,15 @@ def _authorized(authorization: str | None, expected: str) -> bool:
 def create_app(store: Any = None) -> FastAPI:
     app = FastAPI(title="AIG Remote Command Bridge")
     command_store = store
+    control_page = Path(__file__).resolve().parent / "templates" / "control.html"
 
     @app.get("/health")
     def health():
         return {"status": "ok"}
+
+    @app.get("/control", response_class=HTMLResponse)
+    def control():
+        return HTMLResponse(control_page.read_text(encoding="utf-8"))
 
     @app.post("/api/commands")
     def enqueue_command(payload: dict[str, Any], authorization: str | None = Header(default=None)):
@@ -49,10 +55,21 @@ def create_app(store: Any = None) -> FastAPI:
     def agent_heartbeat(payload: dict[str, Any], authorization: str | None = Header(default=None)):
         if not _authorized(authorization, os.environ.get("AIG_AGENT_TOKEN", "")):
             return JSONResponse({"error": "unauthorized"}, status_code=401)
+        if command_store is None:
+            return JSONResponse({"error": "store_unavailable"}, status_code=503)
         agent_id = str(payload.get("agent_id") or "").strip()
         if not agent_id:
             return JSONResponse({"error": "invalid_agent_id"}, status_code=400)
+        command_store.heartbeat(agent_id)
         return {"status": "online", "agent_id": agent_id}
+
+    @app.get("/api/agent/status/{agent_id}")
+    def agent_status(agent_id: str, authorization: str | None = Header(default=None)):
+        if not _authorized(authorization, os.environ.get("AIG_CONTROLLER_TOKEN", "")):
+            return JSONResponse({"error": "unauthorized"}, status_code=401)
+        if command_store is None:
+            return JSONResponse({"error": "store_unavailable"}, status_code=503)
+        return command_store.agent_status(agent_id)
 
     @app.post("/api/agent/poll")
     def agent_poll(payload: dict[str, Any], authorization: str | None = Header(default=None)):
