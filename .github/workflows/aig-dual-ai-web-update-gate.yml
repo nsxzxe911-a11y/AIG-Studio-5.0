@@ -20,3 +20,4 @@ jobs:
       - run: python ci/verify_aig_dual_ai_web_update.py
       - run: python ci/verify_ui_button_manifest_consistency.py
       - run: python ci/verify_axis_button_asset_contract.py
+      - run: python ci/verify_formal_global_navigation.py
