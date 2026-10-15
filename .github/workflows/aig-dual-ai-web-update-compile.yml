@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   compile:
@@ -23,3 +24,17 @@ jobs:
           gradle-version: '9.6.0'
       - name: Compile Studio update policy
         run: gradle :core:compileKotlin --no-daemon --console=plain
+
+  dispatch-builder-584:
+    if: ${{ contains(github.event.head_commit.message, '[dispatch-584]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch formal builder 584
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run build-download.yml --repo nsxzxe911-a11y/AIG-Studio-5.0 --ref feature/aig-dual-ai-web-update-20261015
+          echo 'FORMAL_BUILDER_584_DISPATCHED=PASS'
