@@ -222,7 +222,6 @@ if($Project -eq 'BOTH' -and $Platform -eq 'ANDROID') {
         Invoke-AtomicDualAndroidInstall $aigIi $aigCnc
 
         # Evidence is post-commit telemetry, not a promotion input. Promotion happened atomically above.
-        runCatching = $null
         try { Capture-AndroidEvidence $aigIi } catch { Write-Warning "AIGII_POST_COMMIT_EVIDENCE:$($_.Exception.Message)" }
         try { Capture-AndroidEvidence $aigCnc } catch { Write-Warning "AIGCNC_POST_COMMIT_EVIDENCE:$($_.Exception.Message)" }
         Write-Host "AIG_STABLE_DUAL_UPDATE_PASS|PROJECT=BOTH|PLATFORM=ANDROID|PROMOTION=ATOMIC"
