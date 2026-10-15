@@ -6,6 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]
 policy=(ROOT/'core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt').read_text(encoding='utf-8')
 page=ROOT/'web/updates/index.html'
 channel=ROOT/'web/updates/channel.json'
+button_manifest_contract=ROOT/'core/src/main/kotlin/com/aigstudio/core/UiButtonManifestContract.kt'
 
 for marker in (
     'DESKTOP_COMMANDER_REQUIRED=false',
@@ -36,4 +37,25 @@ for product in ('aigii','studio'):
     assert p['verified'] is False
     assert p['downloadUrl'] is None
 
+assert button_manifest_contract.is_file(), 'UI_BUTTON_MANIFEST_CONTRACT_MISSING'
+button_contract=button_manifest_contract.read_text(encoding='utf-8')
+for marker in (
+    'SCHEMA="aig-ui-button-manifest-v1"',
+    'AUTHORITY_RGB_TO_BUTTON_ID_TO_MANIFEST_TO_SHARED_COMMAND_TO_RUNTIME_CORE',
+    'UNVERIFIED_BOUNDS_ALLOWED=true',
+    'NAV_HOME',
+    'NAV_CAD',
+    'NAV_CAM',
+    'NAV_SIM',
+    'NAV_NC',
+    'NAV_AI',
+    'showRuntimeHome?.invoke()',
+    'showCamWorkstation()',
+    'showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))',
+    'showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))',
+    'showAiSystemSuiteDialog()',
+):
+    assert marker in button_contract, f'UI_BUTTON_MANIFEST_MARKER_MISSING:{marker}'
+
 print('AIG_STUDIO_DUAL_AI_WEB_UPDATE_PASS|WEB_DOWNLOAD_SURFACE|NO_DESKTOP_COMMANDER|VERIFIED_ONLY')
+print('UI_BUTTON_MANIFEST_CONTRACT_PASS|AUTHORITY_RGB|BUTTON_ID|SHARED_COMMAND|VERIFIED_CALLBACKS|NULL_BOUNDS_ALLOWED')
