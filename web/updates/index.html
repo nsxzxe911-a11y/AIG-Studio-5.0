@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AIG 雙專案 AI 更新</title>
+<style>
+:root{color-scheme:dark;--bg:#020407;--panel:#07111B;--line:#1ee7ff;--ok:#58f39a;--warn:#ffc857;--muted:#8ca8ba}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0%,rgba(30,231,255,.12),transparent 28%),var(--bg);color:#eef9ff;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;min-height:100vh}.wrap{max-width:920px;margin:auto;padding:22px}.brand{font-size:28px;font-weight:900;letter-spacing:.06em}.sub{color:var(--muted);margin:5px 0 18px}.panel{background:linear-gradient(180deg,rgba(7,17,27,.98),rgba(3,9,15,.98));border:1px solid rgba(30,231,255,.36);border-radius:16px;padding:16px;margin:14px 0;box-shadow:0 0 22px rgba(30,231,255,.07)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}@media(max-width:700px){.grid{grid-template-columns:1fr}}.card{border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:14px;background:rgba(0,0,0,.18)}h2,h3{margin:0 0 10px}.kv{display:grid;grid-template-columns:115px 1fr;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.05);font-size:13px}.kv:first-of-type{border-top:0}.k{color:var(--muted)}.v{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-all}.ok{color:var(--ok)}.wait{color:var(--warn)}a.btn,button.btn{display:inline-flex;align-items:center;justify-content:center;margin-top:12px;min-height:48px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:#071824;color:white;text-decoration:none;font-weight:800}a.disabled{pointer-events:none;opacity:.38;border-color:#4b5a63}.note{color:var(--muted);font-size:13px;line-height:1.6}.gate{font-size:14px;color:var(--ok)}
+</style>
+</head>
+<body><main class="wrap">
+<div class="brand">AIG 雙專案 AI 更新</div>
+<div class="sub">AIG-II + AIG Studio 5.0 · AIG Web 正式下載面</div>
+<section class="panel">
+  <h2>穩定更新規則</h2>
+  <div class="gate">VERIFIED ONLY · BOTH PASS · CURRENT STABLE RETAINED ON ERROR</div>
+  <p class="note">只有已通過版本、exact SHA、artifact SHA-256 與簽章/安裝驗證的檔案才會開放下載。任一專案未通過時，不 Promote、不覆寫目前 Stable。</p>
+</section>
+<section class="panel"><div class="grid">
+  <div class="card" id="aigii"><h3>AIG-II</h3><div class="kv"><div class="k">狀態</div><div class="v wait" data-field="status">CHECKING</div></div><div class="kv"><div class="k">版本</div><div class="v" data-field="version">—</div></div><div class="kv"><div class="k">Exact SHA</div><div class="v" data-field="sha">—</div></div><a class="btn disabled" data-field="download">尚未開放 VERIFIED 下載</a></div>
+  <div class="card" id="studio"><h3>AIG Studio 5.0</h3><div class="kv"><div class="k">狀態</div><div class="v wait" data-field="status">CHECKING</div></div><div class="kv"><div class="k">版本</div><div class="v" data-field="version">—</div></div><div class="kv"><div class="k">Exact SHA</div><div class="v" data-field="sha">—</div></div><a class="btn disabled" data-field="download">尚未開放 VERIFIED 下載</a></div>
+</div></section>
+<section class="panel"><strong>更新路徑</strong><p class="note">AIG App → AI 更新雙專案 → signed manifest / AIG Web → Working Copy → 雙案 Gate → Promote。網路失敗、簽章錯誤、SHA 錯誤、版本不符或雙案未同時通過時，全部維持 CURRENT STABLE RETAINED。</p></section>
+</main>
+<script>
+function bind(id,p){const el=document.getElementById(id);const s=el.querySelector('[data-field=status]');const v=el.querySelector('[data-field=version]');const h=el.querySelector('[data-field=sha]');const a=el.querySelector('[data-field=download]');if(p&&p.verified===true&&p.downloadUrl){s.textContent='VERIFIED';s.className='v ok';v.textContent=p.version||'—';h.textContent=p.exactSha||'—';a.textContent='下載 VERIFIED 版本';a.href=p.downloadUrl;a.className='btn';}else{s.textContent='NOT RELEASED';s.className='v wait';v.textContent=(p&&p.version)||'—';h.textContent=(p&&p.exactSha)||'—';a.removeAttribute('href');a.textContent='尚未開放 VERIFIED 下載';a.className='btn disabled';}}
+fetch('./channel.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(j=>{bind('aigii',j.products&&j.products.aigii);bind('studio',j.products&&j.products.studio)}).catch(()=>{bind('aigii',null);bind('studio',null)});
+</script>
+</body></html>
