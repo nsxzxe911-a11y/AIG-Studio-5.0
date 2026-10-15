@@ -1,0 +1,63 @@
+name: Repair Studio builder marker once
+
+on:
+  push:
+    branches:
+      - feature/aig-dual-ai-web-update-20261015
+    paths:
+      - .github/workflows/repair-studio-builder-marker-once.yml
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  repair-and-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Prove current theme verifier marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/verify_theme_pack_hot_swap.py | tee theme-hot-swap.log
+          grep -Fq 'THEME_PACK_HOT_SWAP_GATE_PASS|AI_LAYOUT|8_MOBILE_SCREENS|NO_RESTART|AUTO_ROLLBACK_OFF|NO_ENGINEERING_SHELL|CORE_IMMUTABLE' theme-hot-swap.log
+
+      - name: Replace only stale builder marker assertion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/build-download.yml')
+          text = path.read_text(encoding='utf-8')
+          old = 'THEME_PACK_HOT_SWAP_GATE_PASS|AI_LAYOUT|8_MOBILE_SCREENS|NO_RESTART|LAST_VERIFIED_ROLLBACK|NO_ENGINEERING_SHELL|CORE_IMMUTABLE'
+          new = 'THEME_PACK_HOT_SWAP_GATE_PASS|AI_LAYOUT|8_MOBILE_SCREENS|NO_RESTART|AUTO_ROLLBACK_OFF|NO_ENGINEERING_SHELL|CORE_IMMUTABLE'
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'BLOCKED_EXACT_BUILDER_REPAIR|EXPECTED=1|ACTUAL={count}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          print('STUDIO_BUILDER_THEME_MARKER_REPAIR_PASS|OLD=LAST_VERIFIED_ROLLBACK|NEW=AUTO_ROLLBACK_OFF')
+          PY
+          git diff --check
+          grep -Fq 'AUTO_ROLLBACK_OFF' .github/workflows/build-download.yml
+          ! grep -Fq 'LAST_VERIFIED_ROLLBACK' .github/workflows/build-download.yml
+
+      - name: Commit verified one-literal builder repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/build-download.yml
+          git diff --cached --check
+          git commit -m "fix(ci): align Studio theme gate marker"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Dispatch existing formal builder on repaired ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh workflow run build-download.yml --repo "nsxzxe911-a11y/AIG-Studio-5.0" --ref "${GITHUB_REF_NAME}"
