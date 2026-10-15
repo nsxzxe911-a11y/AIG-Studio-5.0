@@ -23,7 +23,7 @@ $configPath = Join-Path $target 'agent.config.json'
 
 New-Item -ItemType Directory -Path $target -Force | Out-Null
 
-$required = @('AigRemoteAgent.ps1', 'CommandHandlers.ps1')
+$required = @('AigRemoteAgent.ps1', 'CommandHandlers.ps1', 'aig-fast.ps1')
 foreach ($name in $required) {
     $src = Join-Path $PSScriptRoot $name
     if (-not (Test-Path $src)) { throw "PACKAGE_FILE_MISSING:$name" }
@@ -52,4 +52,4 @@ $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RestartCount 3 -Re
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principalTask -Settings $settings -Force | Out-Null
 Start-ScheduledTask -TaskName $taskName
 
-"AIG_REMOTE_AGENT_INSTALLED|PATH=$target|TASK=$taskName"
+"AIG_REMOTE_AGENT_INSTALLED|PATH=$target|TASK=$taskName|FAST_LOOP=PACKAGED"
