@@ -57,6 +57,15 @@ def test_valid_nox_status_queues_with_15_minute_expiry(monkeypatch):
     assert timedelta(minutes=14, seconds=59) <= expires - created <= timedelta(minutes=15, seconds=1)
 
 
+def test_windows_ai_update_direct_trigger_is_whitelisted(monkeypatch):
+    c = make_client(monkeypatch)
+    r = c.post("/api/commands", json={"name": "WINDOWS_AI_UPDATE"}, headers=auth())
+    assert r.status_code == 202
+    body = r.json()
+    assert body["name"] == "WINDOWS_AI_UPDATE"
+    assert body["status"] == "queued"
+
+
 def test_get_command_requires_controller_token(monkeypatch):
     c = make_client(monkeypatch)
     queued = c.post("/api/commands", json={"name": "NOX_STATUS"}, headers=auth()).json()
@@ -127,7 +136,7 @@ def test_control_page_has_only_whitelisted_actions_and_no_secrets(monkeypatch):
     r = c.get('/control')
     assert r.status_code == 200
     text = r.text
-    for name in ['NOX_STATUS', 'NOX_START', 'RESUME_463']:
+    for name in ['WINDOWS_AI_UPDATE', 'RESUME_463', 'NOX_STATUS', 'NOX_START']:
         assert name in text
     assert 'SHELL' not in text
     assert 'controller-secret' not in text
