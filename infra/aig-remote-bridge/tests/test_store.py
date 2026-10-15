@@ -55,3 +55,13 @@ def test_duplicate_completion_is_idempotent_and_not_redelivered():
     assert second["status"] == "succeeded"
     assert second["result_summary"] == "ok"
     assert s.lease_next("agent-1") is None
+
+
+def test_heartbeat_online_window_is_90_seconds():
+    current = [BASE]
+    s = MemoryCommandStore(now=lambda: current[0])
+    hb = s.heartbeat("DESKTOP-6KOFHUK")
+    assert hb["agent_id"] == "DESKTOP-6KOFHUK"
+    assert s.agent_status("DESKTOP-6KOFHUK")["online"] is True
+    current[0] += timedelta(seconds=91)
+    assert s.agent_status("DESKTOP-6KOFHUK")["online"] is False
