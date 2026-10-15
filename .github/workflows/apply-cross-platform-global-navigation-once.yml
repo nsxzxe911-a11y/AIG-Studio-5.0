@@ -56,3 +56,4 @@ jobs:
           git add .github/workflows/build-download.yml
           git commit -m 'fix(ui): align Android Windows 9-mode production navigation'
           git push origin HEAD:feature/aig-dual-ai-web-update-20261015
+      # one-shot trigger: 2026-10-15
