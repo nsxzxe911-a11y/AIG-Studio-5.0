@@ -1,0 +1,20 @@
+name: AIG Studio dual AI web update gate
+
+on:
+  push:
+    branches:
+      - feature/aig-dual-ai-web-update-20261015
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python ci/verify_aig_dual_ai_web_update.py
