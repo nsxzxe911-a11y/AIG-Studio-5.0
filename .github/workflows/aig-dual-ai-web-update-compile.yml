@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  actions: write
 
 jobs:
   compile:
@@ -24,27 +23,3 @@ jobs:
           gradle-version: '9.6.0'
       - name: Compile Studio update policy
         run: gradle :core:compileKotlin --no-daemon --console=plain
-
-  dispatch-builder-581:
-    if: ${{ github.actor != 'github-actions[bot]' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-      - name: Verify CI-only KVM preflight
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -Fq 'ANDROID_EMULATOR_KVM_PREFLIGHT=PASS' build_android_release.sh
-          grep -Fq 'sudo chmod 666 /dev/kvm' build_android_release.sh
-          grep -Fq 'test -r /dev/kvm' build_android_release.sh
-          grep -Fq 'test -w /dev/kvm' build_android_release.sh
-          echo 'KVM_581_RELEASE_PREFLIGHT_CONTRACT=PASS'
-      - name: Dispatch formal builder 581
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          gh workflow run build-download.yml --repo nsxzxe911-a11y/AIG-Studio-5.0 --ref feature/aig-dual-ai-web-update-20261015
-          echo 'FORMAL_BUILDER_581_DISPATCHED=PASS'
