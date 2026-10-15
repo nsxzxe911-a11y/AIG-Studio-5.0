@@ -1,12 +1,12 @@
 import hmac
 import os
-from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Header
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from sql_store import SqlCommandStore
+from store import SqlCommandStore
+from pathlib import Path
 
 ALLOWED_COMMANDS = frozenset({"NOX_STATUS", "NOX_START", "RESUME_463"})
 
@@ -32,7 +32,14 @@ def create_app(store: Any = None) -> FastAPI:
 
     @app.get("/health")
     def health():
-        return {"status": "ok"}
+        store_configured = command_store is not None
+        auth_configured = bool(os.environ.get("AIG_CONTROLLER_TOKEN")) and bool(os.environ.get("AIG_AGENT_TOKEN"))
+        return {
+            "status": "ok",
+            "ready": store_configured and auth_configured,
+            "store_configured": store_configured,
+            "auth_configured": auth_configured,
+        }
 
     @app.get("/control", response_class=HTMLResponse)
     def control():
