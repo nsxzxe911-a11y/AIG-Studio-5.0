@@ -9,16 +9,51 @@ on:
       - .github/workflows/trigger-build-download-once.yml
 
 permissions:
-  contents: read
+  contents: write
   actions: write
 
 jobs:
-  dispatch:
+  patch-core:
     runs-on: ubuntu-latest
     steps:
-      - name: Dispatch existing formal builder on this ref
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Apply bounded CAM MANUAL machining contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('core/src/main/kotlin/com/aigstudio/core/Cam.kt')
+          s = p.read_text(encoding='utf-8')
+          old = '        require(settings.manualPath.size>=2){"Manual CAM path requires at least two points"}\n        val total=settings.manualPath.size.coerceAtLeast(1)'
+          new = '        require(settings.manualPath.size>=2){"Manual CAM path requires at least two points"}\n        require(settings.manualPath.any { !it.rapid }) { "Manual CAM path requires at least one cutting move" }\n        val total=settings.manualPath.size.coerceAtLeast(1)'
+          if new in s:
+              print('CAM_MANUAL_MACHINING_CONTRACT_ALREADY_APPLIED')
+          else:
+              if old not in s:
+                  raise SystemExit('CAM MANUAL patch anchor not found')
+              p.write_text(s.replace(old, new, 1), encoding='utf-8')
+              print('CAM_MANUAL_MACHINING_CONTRACT_PATCHED')
+          PY
+          if git diff --quiet -- core/src/main/kotlin/com/aigstudio/core/Cam.kt; then
+            echo 'CAM_MANUAL_CORE_PATCH_NOOP=PASS'
+          else
+            git config user.name 'AIG Studio CI'
+            git config user.email 'actions@users.noreply.github.com'
+            git add core/src/main/kotlin/com/aigstudio/core/Cam.kt
+            git commit -m 'fix(cam): reject G0-only manual machining paths'
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+            echo 'CAM_MANUAL_CORE_PATCH_PUSH=PASS'
+          fi
+
+  dispatch:
+    needs: patch-core
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch existing formal builder on patched ref
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run build-download.yml --repo "nsxzxe911-a11y/AIG-Studio-5.0" --ref "${GITHUB_REF_NAME}"
 
-# pulse: studio-371-cam-manual-behavior-red-20261016
+# pulse: studio-371-cam-manual-green-20261016
