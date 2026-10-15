@@ -129,6 +129,10 @@ object RollingUpdatePolicy {
     const val PARTIAL_CHECKPOINT_PERSIST=true
     const val CHANGED_PACKAGES_ONLY=true
     const val WORKING_COPY_BEFORE_PROMOTE=true
+    const val UPDATE_ERROR_RETAINS_STABLE=true
+    const val DUAL_PROJECT_PROMOTION_REQUIRES_BOTH=true
+    const val PROMOTION_FAIL_CLOSED=true
+    const val NO_IN_PLACE_OVERWRITE=true
     const val REGRESSION_EXECUTION_ENABLED=false
     const val ALLOW_DOWNGRADE=false
     const val ALLOW_EQUAL_VERSION_REINSTALL=false
@@ -176,6 +180,14 @@ object RollingUpdatePolicy {
         return checkpoint.downloadedBytes
     }
 
+    fun stablePromoteAllowed(
+        candidateVerified:Boolean,
+        dualProjectPass:Boolean,
+        exactBindingPass:Boolean,
+        noUpdateErrors:Boolean
+    ):Boolean =
+        candidateVerified && dualProjectPass && exactBindingPass && noUpdateErrors
+
     @Suppress("UNUSED_PARAMETER")
     fun canPromote(
         currentBaseline:String,
@@ -211,13 +223,52 @@ object VerifiedWorkingCopy {
 
     fun promote(staged:File,target:File):File {
         require(staged.isFile){"Verified working copy missing"}
-        target.parentFile?.mkdirs()
-        if(target.exists()) require(target.delete()){"Unable to replace package"}
-        val moved=runCatching {
-            Files.move(staged.toPath(),target.toPath(),StandardCopyOption.ATOMIC_MOVE)
-        }.isSuccess
-        if(!moved) Files.move(staged.toPath(),target.toPath())
-        require(target.isFile){"Package promotion failed"}
-        return target
+        val parent=target.parentFile ?: error("Promotion target parent missing")
+        parent.mkdirs()
+        require(staged.canonicalFile!=target.canonicalFile){"Working copy cannot be stable target"}
+
+        val expectedSha=sha256(staged)
+        val candidate=File(parent,target.name+".candidate-"+System.nanoTime())
+        val backup=File(parent,target.name+".stable-backup")
+        val hadStable=target.isFile
+        var promoted=false
+
+        Files.copy(staged.toPath(),candidate.toPath(),StandardCopyOption.REPLACE_EXISTING)
+        require(sha256(candidate).equals(expectedSha,ignoreCase=true)){"Candidate verification failed"}
+        if(hadStable) {
+            Files.copy(target.toPath(),backup.toPath(),StandardCopyOption.REPLACE_EXISTING)
+            require(backup.isFile){"Stable backup failed"}
+        }
+
+        try {
+            val atomic=runCatching {
+                Files.move(
+                    candidate.toPath(),
+                    target.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE
+                )
+            }.isSuccess
+            if(!atomic) {
+                Files.move(candidate.toPath(),target.toPath(),StandardCopyOption.REPLACE_EXISTING)
+            }
+            require(target.isFile){"Package promotion failed"}
+            require(sha256(target).equals(expectedSha,ignoreCase=true)){"Promoted package digest mismatch"}
+            promoted=true
+            staged.delete()
+            return target
+        } catch(error:Throwable) {
+            runCatching {
+                if(hadStable && backup.isFile) {
+                    Files.copy(backup.toPath(),target.toPath(),StandardCopyOption.REPLACE_EXISTING)
+                } else if(!hadStable && target.exists()) {
+                    target.delete()
+                }
+            }
+            throw error
+        } finally {
+            candidate.delete()
+            if(promoted) backup.delete()
+        }
     }
 }
