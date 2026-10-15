@@ -56,10 +56,12 @@ jobs:
           python ci/verify_runtime_surfaces.py
           python ci/fast_review.py
           gradle :core:compileKotlin :desktop:compileKotlin --no-daemon --console=plain
-      - name: Commit cross-platform global navigation
+      - name: Stage verified cross-platform navigation
         shell: bash
         run: |
           set -euo pipefail
+          cp .github/workflows/build-download.yml ci/build-download.patched.yml
+          git checkout -- .github/workflows/build-download.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt
@@ -67,6 +69,6 @@ jobs:
           git add desktop/src/main/resources/aig-generated-rgb/approved/184/sha256.properties
           git add ci/verify_production_runtime.py
           git add ci/verify_runtime_surfaces.py
-          git add .github/workflows/build-download.yml
+          git add ci/build-download.patched.yml
           git commit -m 'fix(ui): align Android Windows 9-mode production navigation'
           git push origin HEAD:feature/aig-dual-ai-web-update-20261015
