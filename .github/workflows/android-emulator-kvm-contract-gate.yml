@@ -1,0 +1,21 @@
+name: Android emulator KVM contract gate
+
+on:
+  push:
+    branches:
+      - feature/aig-dual-ai-web-update-20261015
+    paths:
+      - ci/verify_android_emulator_kvm_contract.py
+      - .github/workflows/android-emulator-kvm-contract-gate.yml
+      - .github/workflows/build-download.yml
+
+permissions:
+  contents: read
+
+jobs:
+  verify-kvm-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify formal builder KVM contract
+        run: python3 ci/verify_android_emulator_kvm_contract.py
