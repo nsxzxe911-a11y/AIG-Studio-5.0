@@ -3,11 +3,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 HANDLERS = ROOT / "aig-remote-agent" / "CommandHandlers.ps1"
 AGENT = ROOT / "aig-remote-agent" / "AigRemoteAgent.ps1"
+INSTALLER = ROOT / "aig-remote-agent" / "Install-AigRemoteAgent.ps1"
+FAST_LOOP = ROOT / "aig-remote-agent" / "aig-fast.ps1"
 
 
 def test_windows_agent_files_exist():
     assert HANDLERS.exists()
     assert AGENT.exists()
+    assert INSTALLER.exists()
 
 
 def test_handlers_have_only_fixed_whitelist_and_paths():
@@ -31,8 +34,23 @@ def test_dual_android_update_is_fixed_fast_loop_only():
     assert "AIG_FAST_LOOP_DUAL_ANDROID" in text
 
 
+def test_recovered_fast_loop_is_packaged_as_fixed_fallback():
+    assert FAST_LOOP.exists()
+    fast = FAST_LOOP.read_text(encoding="utf-8")
+    assert "RECOVERED_FAST_LOOP_CANDIDATE" in fast
+    assert "ValidateSet('AIGII','AIGCNC','BOTH')" in fast
+    assert "ValidateSet('ANDROID','DESKTOP','BOTH')" in fast
+    assert "127.0.0.1:62026" in fast
+    assert "install -r" in fast
+    installer = INSTALLER.read_text(encoding="utf-8")
+    assert "aig-fast.ps1" in installer
+    assert "Copy-Item" in installer
+
+
 def test_no_arbitrary_shell_primitives():
     combined = HANDLERS.read_text(encoding="utf-8") + "\n" + AGENT.read_text(encoding="utf-8")
+    if FAST_LOOP.exists():
+        combined += "\n" + FAST_LOOP.read_text(encoding="utf-8")
     forbidden = ["Invoke-Expression", "iex ", "cmd /c", "cmd.exe /c", "powershell -Command", "pwsh -Command"]
     for item in forbidden:
         assert item.lower() not in combined.lower()
