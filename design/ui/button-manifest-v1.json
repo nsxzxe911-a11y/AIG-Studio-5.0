@@ -1,0 +1,59 @@
+{
+  "schema": "aig-ui-button-manifest-v1",
+  "pipeline": "AUTHORITY_RGB_TO_BUTTON_ID_TO_MANIFEST_TO_SHARED_COMMAND_TO_RUNTIME_CORE",
+  "authority": {
+    "rgbButtonPack": "184",
+    "homePack": "416"
+  },
+  "boundsVerified": false,
+  "buttons": [
+    {
+      "buttonId": "NAV_HOME",
+      "surfaceId": "HOME",
+      "assetId": "rgb_wallpaper",
+      "sharedCommand": "OPEN_HOME",
+      "verifiedCallback": "showRuntimeHome?.invoke()",
+      "bounds": null
+    },
+    {
+      "buttonId": "NAV_CAD",
+      "surfaceId": "CAD",
+      "assetId": "cad",
+      "sharedCommand": "OPEN_CAD",
+      "verifiedCallback": "Toast.makeText(this,\"CAD • LIVE WORKSPACE\",Toast.LENGTH_SHORT).show()",
+      "bounds": null
+    },
+    {
+      "buttonId": "NAV_CAM",
+      "surfaceId": "CAM",
+      "assetId": "cam",
+      "sharedCommand": "OPEN_CAM",
+      "verifiedCallback": "showCamWorkstation()",
+      "bounds": null
+    },
+    {
+      "buttonId": "NAV_SIM",
+      "surfaceId": "SIM",
+      "assetId": "sim",
+      "sharedCommand": "OPEN_SIM",
+      "verifiedCallback": "showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget(\"SIM\"))",
+      "bounds": null
+    },
+    {
+      "buttonId": "NAV_NC",
+      "surfaceId": "NC",
+      "assetId": "nc",
+      "sharedCommand": "OPEN_NC",
+      "verifiedCallback": "showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget(\"NC\"))",
+      "bounds": null
+    },
+    {
+      "buttonId": "NAV_AI",
+      "surfaceId": "AI",
+      "assetId": "ai",
+      "sharedCommand": "OPEN_AI",
+      "verifiedCallback": "showAiSystemSuiteDialog()",
+      "bounds": null
+    }
+  ]
+}
