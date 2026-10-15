@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+# Fresh gate after Studio AIG Web updater policy patch.
 ROOT=Path(__file__).resolve().parents[1]
 policy=(ROOT/'core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt').read_text(encoding='utf-8')
 page=ROOT/'web/updates/index.html'
