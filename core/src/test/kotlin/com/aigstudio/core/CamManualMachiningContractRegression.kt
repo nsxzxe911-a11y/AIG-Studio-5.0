@@ -9,8 +9,8 @@ fun main() {
             safeZ=8.0,
             feedMmMin=160.0
         ),
-        startX=0.0,
-        startY=0.0
+        0.0,
+        0.0
     )
 
     check(draft.pathMode==CamPathMode.MANUAL)
