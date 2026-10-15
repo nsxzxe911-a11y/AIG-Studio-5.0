@@ -1,0 +1,88 @@
+name: Repair Studio 370 continuity once
+
+on:
+  push:
+    branches:
+      - feature/aig-dual-ai-web-update-20261015
+    paths:
+      - .github/workflows/repair-studio-370-continuity-once.yml
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  repair-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Repair only the four stale continuity version fields
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              "continuity/release-command.json": (
+                  '  "version": "361.0.0",',
+                  '  "version": "370.0.0",',
+              ),
+              "continuity/ai-responsibility-routing.json": (
+                  '  "version": "361.0.0",',
+                  '  "version": "370.0.0",',
+              ),
+              "continuity/latest-checkpoint.json": (
+                  '  "version": "361.0.0",',
+                  '  "version": "370.0.0",',
+              ),
+              "continuity/cache-update-standard.xml": (
+                  'product="AIG Studio 5.0" version="360.0.0"',
+                  'product="AIG Studio 5.0" version="370.0.0"',
+              ),
+          }
+
+          for rel, (old, new) in replacements.items():
+              path = Path(rel)
+              text = path.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"BLOCKED_EXACT_REPAIR|{rel}|EXPECTED=1|ACTUAL={count}")
+              path.write_text(text.replace(old, new, 1), encoding="utf-8")
+              print(f"STUDIO_370_CONTINUITY_REPAIR|{rel}|PASS")
+          PY
+          git diff --check
+
+      - name: Verify continuity and full fast review before commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/verify_release_command_dispatch.py
+          python3 ci/verify_ai_responsibility_routing.py
+          python3 ci/verify_continuity_checkpoint.py
+          python3 ci/verify_xml_cache_update_standard.py
+          python3 ci/fast_review.py | tee fast-review-after-repair.log
+          grep -Fq 'FAST_REVIEW_PASS|' fast-review-after-repair.log
+
+      - name: Commit verified metadata-only repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            continuity/release-command.json \
+            continuity/ai-responsibility-routing.json \
+            continuity/latest-checkpoint.json \
+            continuity/cache-update-standard.xml
+          git diff --cached --check
+          git commit -m "fix(release): align Studio 370 continuity metadata"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Dispatch existing formal builder on repaired ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh workflow run build-download.yml --repo "nsxzxe911-a11y/AIG-Studio-5.0" --ref "${GITHUB_REF_NAME}"
