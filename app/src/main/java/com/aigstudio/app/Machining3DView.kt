@@ -18,6 +18,10 @@ class Machining3DView(
     private val machineMode: String? = null,
     private val machineAxisC: Double = 0.0
 ) : View(context) {
+    init {
+        contentDescription = "MACHINING 3D VIEW " + (machineMode ?: "3D")
+    }
+
     private data class ScreenPoint(val x: Float, val y: Float, val depth: Double)
 
     private var rotateX = -35.0

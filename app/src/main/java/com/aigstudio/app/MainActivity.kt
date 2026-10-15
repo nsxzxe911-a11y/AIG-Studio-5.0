@@ -1443,7 +1443,7 @@ class MainActivity : Activity() {
                         3 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("3AX"))
                         4 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("4AX"))
                         5 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))
-                        6 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("6AX"))
+                        6 -> showSixAxisRuntimeStage()
                         7 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))
                         8 -> showAiSystemSuiteDialog()
                         9 -> showUserSettingsCenter()
@@ -2727,6 +2727,7 @@ class MainActivity : Activity() {
             orientation=LinearLayout.VERTICAL
             setBackgroundColor(0xFF040A11.toInt())
             setPadding(dp(8),dp(8),dp(8),dp(8))
+            contentDescription="AXIS PAGE 6AX RUNTIME"
         }
         val status=TextView(this).apply {
             setTextColor(0xFF63FF9D.toInt())
@@ -3622,6 +3623,9 @@ class MainActivity : Activity() {
             orientation=LinearLayout.VERTICAL
             setBackgroundColor(0xFF040A11.toInt())
             setPadding(dp(6),dp(6),dp(6),dp(6))
+            if(initialMode in setOf("3AX","4AX","5AX")) {
+                contentDescription="AXIS PAGE $initialMode RUNTIME"
+            }
         }
         root.addView(TextView(this).apply {
             text="AIG CNC • 加工模擬 / 多軸控制"

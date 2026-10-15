@@ -42,4 +42,5 @@ fi
 adb exec-out screencap -p > "$EVIDENCE/android_runtime_launch.png"
 test "$(stat -c%s "$EVIDENCE/android_runtime_launch.png")" -gt 20000
 printf 'device_launch_evidence=EMULATOR_OFFLINE_FORMAL_RGB_HOME_VISIBLE\nengineering_shell_default=FALSE\npackage=%s\n' "$PKG" > "$EVIDENCE/UI_ENTRY_EVIDENCE.txt"
+bash ci/verify_android_axis_page_persistence.sh
 echo 'STUDIO_ANDROID_VISIBLE_RUNTIME_GATE_PASS|OFFLINE|FORMAL_RGB_HOME|NO_ENGINEERING_SHELL'
