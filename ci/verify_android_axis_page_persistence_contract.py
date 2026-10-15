@@ -23,6 +23,15 @@ for marker in [
 ]:
     assert marker in script, f"ANDROID_AXIS_PERSISTENCE_MARKER_MISSING:{marker}"
 
+for marker in [
+    "for attempt in 1 2 3 4 5",
+    'if adb shell uiautomator dump "$UI_REMOTE" >/dev/null 2>&1; then',
+    "UI_DUMP_RETRY_PASS|",
+    "UI_DUMP_RETRY_EXHAUSTED|",
+]:
+    assert marker in script, f"ANDROID_AXIS_PERSISTENCE_UI_DUMP_RETRY_MISSING:{marker}"
+
+assert script.count("uiautomator dump") == 1, "ANDROID_AXIS_PERSISTENCE_DIRECT_UI_DUMP_BYPASS_PRESENT"
 assert "bash ci/verify_android_axis_page_persistence.sh" in home_script, "ANDROID_AXIS_PERSISTENCE_HOME_CHAIN_MISSING"
 assert "bash ci/verify_android_offline_rgb_home.sh" in builder, "ANDROID_HOME_RUNTIME_BUILDER_STEP_MISSING"
 assert 'contentDescription = "MACHINING 3D VIEW "' in view, "MACHINING_3D_ACCESSIBILITY_MARKER_MISSING"
@@ -31,4 +40,4 @@ assert 'contentDescription="AXIS PAGE $initialMode RUNTIME"' in android, "MULTI_
 assert '6 -> showSixAxisRuntimeStage()' in android, "HOME_MULTI_FUNCTION_6AX_MUST_USE_DEDICATED_RUNTIME"
 assert '6 -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("6AX"))' not in android, "HOME_MULTI_FUNCTION_6AX_LEGACY_ROUTE_PRESENT"
 
-print("ANDROID_AXIS_PAGE_PERSISTENCE_CONTRACT_PASS|REAL_PROJECT_RECOVERY|REAL_CAM_REBUILD|REAL_MACHINING3DVIEW|3AX|4AX|5AX|6AX|TWO_SNAPSHOTS|NO_FAKE_UI")
+print("ANDROID_AXIS_PAGE_PERSISTENCE_CONTRACT_PASS|REAL_PROJECT_RECOVERY|REAL_CAM_REBUILD|REAL_MACHINING3DVIEW|3AX|4AX|5AX|6AX|TWO_SNAPSHOTS|UI_DUMP_RETRY_5X|NO_FAKE_UI")
