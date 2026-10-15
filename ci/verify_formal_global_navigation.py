@@ -65,6 +65,11 @@ for marker in [
 ]:
     assert marker in desktop, f"FORMAL_GLOBAL_NAV_WINDOWS_MISSING:{marker}"
 
+home_6ax_single = 'add(homeLaunch("6AX",Color(159,114,255)){productionUiButtons["6AX"]?.doClick()})'
+home_6ax_double = 'add(homeLaunch("6AX",Color(159,114,255)){productionUiButtons["6AX"]?.doClick(); runCatching{showUnifiedMachiningEditor('
+assert home_6ax_single in desktop, "FORMAL_GLOBAL_NAV_WINDOWS_HOME_6AX_SINGLE_PATH_MISSING"
+assert home_6ax_double not in desktop, "FORMAL_GLOBAL_NAV_WINDOWS_HOME_6AX_DOUBLE_LAUNCH"
+
 desktop_order = [
     'productionUiButton("CAD"',
     'productionUiButton("CAM"',
@@ -101,4 +106,4 @@ for stale in (
 ):
     assert stale not in builder, f"FORMAL_GLOBAL_NAV_STALE_BUILDER_MARKER:{stale}"
 
-print("FORMAL_GLOBAL_NAVIGATION_PASS|ANDROID_WINDOWS|9_MODE_CONTRACT|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|DIRECT_AXIS_NAV|6AX_DISTINCT|LIVE_CALLBACKS")
+print("FORMAL_GLOBAL_NAVIGATION_PASS|ANDROID_WINDOWS|9_MODE_CONTRACT|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI|DIRECT_AXIS_NAV|6AX_DISTINCT|HOME_6AX_SINGLE_PATH|LIVE_CALLBACKS")
