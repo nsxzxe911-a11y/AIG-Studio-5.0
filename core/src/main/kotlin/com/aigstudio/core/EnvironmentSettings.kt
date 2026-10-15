@@ -813,7 +813,7 @@ object MasterRuntimeChainContract {
 
 object ProductionUiSwitchContract {
     const val POLICY = "PRODUCTION_UI_SWITCH_STABLE_ORDER_LIVE_RUNTIME"
-    val modes = listOf("CAD","CAM","SIM","NC","AI")
+    val modes = listOf("CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI")
     const val initialMode = "CAD"
 
     fun normalize(mode:String):String {

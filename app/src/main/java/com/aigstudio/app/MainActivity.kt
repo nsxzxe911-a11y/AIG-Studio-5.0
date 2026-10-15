@@ -858,6 +858,7 @@ class MainActivity : Activity() {
             "3AX" to 0xFF3B82F6.toInt(),
             "4AX" to 0xFFF59E0B.toInt(),
             "5AX" to 0xFFEC4899.toInt(),
+            "6AX" to 0xFF9F72FF.toInt(),
             "NC" to 0xFF50AAFF.toInt(),
             "AI" to 0xFF8B5CF6.toInt()
         )
@@ -909,6 +910,10 @@ class MainActivity : Activity() {
                 }
                 "5AX" -> {
                     action("開啟 5AX",1){showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("5AX"))}
+                    action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
+                }
+                "6AX" -> {
+                    action("開啟 6AX",5){showSixAxisRuntimeStage()}
                     action("加工工具",5){openCategory("加工"){showMachiningBranch()}}
                 }
                 "NC" -> {
@@ -964,6 +969,10 @@ class MainActivity : Activity() {
         }
         addProductionUi("CAM") { showCamWorkstation() }
         addProductionUi("SIM") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM")) }
+        addProductionUi("3AX") { showUnifiedMachiningWorkspace("3AX") }
+        addProductionUi("4AX") { showUnifiedMachiningWorkspace("4AX") }
+        addProductionUi("5AX") { showUnifiedMachiningWorkspace("5AX") }
+        addProductionUi("6AX") { showSixAxisRuntimeStage() }
         addProductionUi("NC") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC")) }
         addProductionUi("AI") { showAiSystemSuiteDialog() }
         check(ProductionUiSwitchContract.stableOrder(productionUiButtons.keys.toList()))
@@ -978,7 +987,7 @@ class MainActivity : Activity() {
             setOnClickListener { showRuntimeHome?.invoke() }
         })
         selectProductionUi(ProductionUiSwitchContract.initialMode)
-        productionUiSwitch.visibility=View.GONE
+        productionUiSwitch.visibility=View.VISIBLE
         root.addView(productionUiSwitch,LinearLayout.LayoutParams(-1,-2))
         visibleModeTitle.visibility=View.GONE
         root.addView(visibleModeTitle,LinearLayout.LayoutParams(-1,-2))
