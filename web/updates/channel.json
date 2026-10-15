@@ -1,0 +1,24 @@
+{
+  "schema": "aig-dual-ai-web-update-v1",
+  "delivery": "AIG_WEB",
+  "desktopCommanderRequired": false,
+  "promotion": "BOTH_PASS_ATOMIC_OR_RETAIN_STABLE",
+  "products": {
+    "aigii": {
+      "name": "AIG-II",
+      "verified": false,
+      "version": null,
+      "exactSha": null,
+      "sha256": null,
+      "downloadUrl": null
+    },
+    "studio": {
+      "name": "AIG Studio 5.0",
+      "verified": false,
+      "version": null,
+      "exactSha": null,
+      "sha256": null,
+      "downloadUrl": null
+    }
+  }
+}
