@@ -40,6 +40,38 @@
       "bounds": null
     },
     {
+      "buttonId": "NAV_3AX",
+      "surfaceId": "3AX",
+      "assetId": "3ax",
+      "sharedCommand": "OPEN_3AX",
+      "verifiedCallback": "showUnifiedMachiningWorkspace(\"3AX\")",
+      "bounds": null
+    },
+    {
+      "buttonId": "NAV_4AX",
+      "surfaceId": "4AX",
+      "assetId": "4ax",
+      "sharedCommand": "OPEN_4AX",
+      "verifiedCallback": "showUnifiedMachiningWorkspace(\"4AX\")",
+      "bounds": null
+    },
+    {
+      "buttonId": "NAV_5AX",
+      "surfaceId": "5AX",
+      "assetId": "5ax",
+      "sharedCommand": "OPEN_5AX",
+      "verifiedCallback": "showUnifiedMachiningWorkspace(\"5AX\")",
+      "bounds": null
+    },
+    {
+      "buttonId": "NAV_6AX",
+      "surfaceId": "6AX",
+      "assetId": "6ax",
+      "sharedCommand": "OPEN_6AX",
+      "verifiedCallback": "showSixAxisRuntimeStage()",
+      "bounds": null
+    },
+    {
       "buttonId": "NAV_NC",
       "surfaceId": "NC",
       "assetId": "nc",
