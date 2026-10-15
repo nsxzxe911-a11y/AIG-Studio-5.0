@@ -66,6 +66,15 @@ def test_windows_ai_update_direct_trigger_is_whitelisted(monkeypatch):
     assert body["status"] == "queued"
 
 
+def test_dual_android_update_fast_loop_trigger_is_whitelisted(monkeypatch):
+    c = make_client(monkeypatch)
+    r = c.post("/api/commands", json={"name": "DUAL_ANDROID_UPDATE"}, headers=auth())
+    assert r.status_code == 202
+    body = r.json()
+    assert body["name"] == "DUAL_ANDROID_UPDATE"
+    assert body["status"] == "queued"
+
+
 def test_get_command_requires_controller_token(monkeypatch):
     c = make_client(monkeypatch)
     queued = c.post("/api/commands", json={"name": "NOX_STATUS"}, headers=auth()).json()
@@ -136,7 +145,7 @@ def test_control_page_has_only_whitelisted_actions_and_no_secrets(monkeypatch):
     r = c.get('/control')
     assert r.status_code == 200
     text = r.text
-    for name in ['WINDOWS_AI_UPDATE', 'RESUME_463', 'NOX_STATUS', 'NOX_START']:
+    for name in ['WINDOWS_AI_UPDATE', 'DUAL_ANDROID_UPDATE', 'RESUME_463', 'NOX_STATUS', 'NOX_START']:
         assert name in text
     assert 'SHELL' not in text
     assert 'controller-secret' not in text
