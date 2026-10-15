@@ -64,20 +64,21 @@ function Resolve-FastLoop {
     foreach ($candidate in @($script:FastLoopLegacy, $script:FastLoopRecovered)) {
         if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
     }
-    throw "AIG_FAST_LOOP_MISSING"
+    throw "AIG_FAST_LOOP_MISSING|CURRENT_STABLE_RETAINED"
 }
 
 function Invoke-DualAndroidUpdate {
     # Fixed dual-project Android route only. No user parameters are accepted.
     $fastLoop = Resolve-FastLoop
     $result = (& $fastLoop -Project 'BOTH' -Platform 'ANDROID' 2>&1 | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0) { throw "AIG_FAST_LOOP_DUAL_ANDROID_FAILED:$LASTEXITCODE" }
-    return "AIG_FAST_LOOP_DUAL_ANDROID|PROJECT=BOTH|PLATFORM=ANDROID|ENTRY=$fastLoop|$result"
+    if ($LASTEXITCODE -ne 0) { throw "AIG_FAST_LOOP_DUAL_ANDROID_FAILED:$LASTEXITCODE|CURRENT_STABLE_RETAINED" }
+    return "AIG_DUAL_AI_UPDATE_PASS|AIG_FAST_LOOP_DUAL_ANDROID|PROJECT=BOTH|PLATFORM=ANDROID|ENTRY=$fastLoop|$result"
 }
 
 function Invoke-AigRemoteCommand {
     param([Parameter(Mandatory = $true)][string]$Name)
     switch ($Name) {
+        'AIG_DUAL_AI_UPDATE' { return Invoke-DualAndroidUpdate }
         'WINDOWS_AI_UPDATE' { return Invoke-WindowsAiUpdate }
         'DUAL_ANDROID_UPDATE' { return Invoke-DualAndroidUpdate }
         'RESUME_463' { return Invoke-Resume463 }
