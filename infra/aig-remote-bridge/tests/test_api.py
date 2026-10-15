@@ -111,3 +111,25 @@ def test_agent_result_summary_is_truncated(monkeypatch):
     r = c.post("/api/agent/result", json={"command_id": queued["id"], "status": "succeeded", "summary": "x" * 5000}, headers=agent_auth())
     assert r.status_code == 200
     assert len(r.json()["result_summary"]) == 4096
+
+
+def test_controller_can_read_agent_online_status(monkeypatch):
+    c = make_client(monkeypatch)
+    c.post('/api/agent/heartbeat', json={'agent_id': 'DESKTOP-6KOFHUK'}, headers=agent_auth())
+    assert c.get('/api/agent/status/DESKTOP-6KOFHUK').status_code == 401
+    r = c.get('/api/agent/status/DESKTOP-6KOFHUK', headers=auth())
+    assert r.status_code == 200
+    assert r.json()['online'] is True
+
+
+def test_control_page_has_only_whitelisted_actions_and_no_secrets(monkeypatch):
+    c = make_client(monkeypatch)
+    r = c.get('/control')
+    assert r.status_code == 200
+    text = r.text
+    for name in ['NOX_STATUS', 'NOX_START', 'RESUME_463']:
+        assert name in text
+    assert 'SHELL' not in text
+    assert 'controller-secret' not in text
+    assert 'agent-secret' not in text
+    assert 'localStorage' in text
