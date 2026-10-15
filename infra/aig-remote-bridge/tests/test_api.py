@@ -135,11 +135,11 @@ def test_control_page_has_only_whitelisted_actions_and_no_secrets(monkeypatch):
     assert 'localStorage' in text
 
 
-def test_runtime_store_uses_redis_url(monkeypatch):
+def test_runtime_store_uses_database_url(monkeypatch):
     import app as app_module
     marker = object()
     seen = {}
-    monkeypatch.setenv('REDIS_URL', 'redis://example/0')
-    monkeypatch.setattr(app_module.RedisCommandStore, 'from_url', lambda url: seen.setdefault(url, marker))
+    monkeypatch.setenv('DATABASE_URL', 'postgresql://example/db')
+    monkeypatch.setattr(app_module.SqlCommandStore, 'from_url', lambda url: seen.setdefault(url, marker))
     assert app_module.build_default_store() is marker
-    assert 'redis://example/0' in seen
+    assert 'postgresql://example/db' in seen
