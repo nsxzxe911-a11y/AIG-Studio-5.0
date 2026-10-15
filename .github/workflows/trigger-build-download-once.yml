@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/aig-dual-ai-web-update-20261015
+      - feature/studio-371-cam-manual-machining-contract
     paths:
       - .github/workflows/trigger-build-download-once.yml
 
@@ -20,4 +21,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run build-download.yml --repo "nsxzxe911-a11y/AIG-Studio-5.0" --ref "${GITHUB_REF_NAME}"
 
-# pulse: posix-emulator-evidence-repaired-20261015
+# pulse: studio-371-cam-manual-red-20261016
