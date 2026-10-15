@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import FastAPI, Header
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from store import RedisCommandStore
+from sql_store import SqlCommandStore
 
 ALLOWED_COMMANDS = frozenset({"NOX_STATUS", "NOX_START", "RESUME_463"})
 
@@ -19,10 +19,10 @@ def _authorized(authorization: str | None, expected: str) -> bool:
 
 
 def build_default_store():
-    url = os.environ.get("REDIS_URL") or os.environ.get("KEY_VALUE_URL")
+    url = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
     if not url:
         return None
-    return RedisCommandStore.from_url(url)
+    return SqlCommandStore.from_url(url)
 
 
 def create_app(store: Any = None) -> FastAPI:
