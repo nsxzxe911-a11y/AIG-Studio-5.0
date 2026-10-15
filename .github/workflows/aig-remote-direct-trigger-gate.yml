@@ -23,4 +23,6 @@ jobs:
         run: pytest -q infra/aig-remote-bridge/tests
       - name: Windows agent static contract
         shell: pwsh
+        env:
+          ProgramData: ${{ runner.temp }}
         run: ./infra/aig-remote-agent/Test-AigRemoteAgent.ps1
