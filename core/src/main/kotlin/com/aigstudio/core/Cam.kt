@@ -266,6 +266,7 @@ object CamEngine {
     ):List<Toolpath> {
         require(settings.pathMode==CamPathMode.MANUAL){"Manual CAM mode not active"}
         require(settings.manualPath.size>=2){"Manual CAM path requires at least two points"}
+        require(settings.manualPath.any { !it.rapid }) { "Manual CAM path requires at least one cutting move" }
         val total=settings.manualPath.size.coerceAtLeast(1)
         val manualHasC=settings.manualPath.any{abs(it.axisC)>EPS}
         val moves=settings.manualPath.mapIndexed { index,p ->
