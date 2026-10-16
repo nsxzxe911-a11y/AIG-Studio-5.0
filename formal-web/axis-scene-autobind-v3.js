@@ -1,4 +1,6 @@
 import { mountAxisScene, releaseAxisScene, renderAxisSceneMarkup, getAxisSceneConfig } from './axis-scene-v2.js';
+import { mountSixAxisScene, releaseSixAxisScene, renderSixAxisSceneMarkup } from './six-axis-formal.js';
+import { sceneBackendFor } from './axis-scene-router.js';
 import { getUiState } from './runtime-adapter.js';
 
 const AXIS_PAGES=Object.freeze(['3AX','4AX','5AX','6AX']);
@@ -6,67 +8,15 @@ export function isAxisPage(pageId){return AXIS_PAGES.includes(pageId);}
 export function axesForPage(pageId){return getAxisSceneConfig(pageId).axes;}
 export function isJogCommand(command=''){return String(command).startsWith('JOG_');}
 export function makeAxisStateReader(productId,stateReader=getUiState){return axis=>{const value=Number(stateReader(productId,`axis.${axis}`));return Number.isFinite(value)?value:0;};}
-export function mutationAddsAxisStage(mutation){
-  for(const node of mutation?.addedNodes||[]){
-    if(!node||node.nodeType!==1)continue;
-    if(node.matches?.('.runtime-stage')&&isAxisPage(node.dataset?.runtimePage))return true;
-    if(node.querySelector?.('.runtime-stage[data-runtime-page="3AX"],.runtime-stage[data-runtime-page="4AX"],.runtime-stage[data-runtime-page="5AX"],.runtime-stage[data-runtime-page="6AX"]'))return true;
-  }
-  return false;
-}
+export function mutationAddsAxisStage(mutation){for(const node of mutation?.addedNodes||[]){if(!node||node.nodeType!==1)continue;if(node.matches?.('.runtime-stage')&&isAxisPage(node.dataset?.runtimePage))return true;if(node.querySelector?.('.runtime-stage[data-runtime-page="3AX"],.runtime-stage[data-runtime-page="4AX"],.runtime-stage[data-runtime-page="5AX"],.runtime-stage[data-runtime-page="6AX"]'))return true;}return false;}
 export function shouldUpgradeAxisStage(stage){return Boolean(stage?.dataset&&isAxisPage(stage.dataset.runtimePage)&&stage.dataset.axisUpgraded!=='true');}
 function productIdFor(stage){return stage?.closest?.('.product-pane')?.dataset?.product||'aig-ii';}
 function sceneHost(stage,pageId){return stage?.querySelector?.(`[data-axis-scene="${pageId}"]`)||null;}
-function renderExisting(stage){
-  const pageId=stage?.dataset?.runtimePage;
-  if(!isAxisPage(pageId))return null;
-  const host=sceneHost(stage,pageId);
-  if(!host)return null;
-  const productId=productIdFor(stage);
-  const controller=mountAxisScene(host,pageId,{getAxisState:makeAxisStateReader(productId,getUiState)});
-  controller.render?.();
-  return controller;
-}
-export function upgradeAxisStage(stage){
-  const pageId=stage?.dataset?.runtimePage;
-  if(!isAxisPage(pageId))return false;
-  if(stage.dataset.axisUpgraded==='true'){return false;}
-  const authority=stage.querySelector?.('.authority-surface'),controls=stage.querySelector?.('.axis-controls');
-  if(!authority||!controls)return false;
-  const doc=stage.ownerDocument||globalThis.document;
-  if(!doc?.createElement)return false;
-  const workspace=doc.createElement('div');workspace.className='axis-workspace';workspace.dataset.viewportShare='70';workspace.dataset.axisPage=pageId;
-  const main=doc.createElement('div');main.className='axis-main-viewport';main.innerHTML=renderAxisSceneMarkup(pageId);
-  const side=doc.createElement('aside');side.className='axis-side-panel';workspace.append(main,side);side.append(controls);authority.replaceWith(workspace);
-  stage.dataset.axisUpgraded='true';renderExisting(stage);return true;
-}
-function releaseNodeScenes(node){if(!node||node.nodeType!==1)return;if(node.matches?.('[data-axis-scene]'))releaseAxisScene(node);node.querySelectorAll?.('[data-axis-scene]').forEach(releaseAxisScene);}
-function scanNode(node){
-  if(!node||node.nodeType!==1)return;
-  if(node.matches?.('.runtime-stage')&&isAxisPage(node.dataset?.runtimePage))upgradeAxisStage(node);
-  node.querySelectorAll?.('.runtime-stage').forEach(stage=>{if(isAxisPage(stage.dataset?.runtimePage))upgradeAxisStage(stage);});
-}
+function renderExisting(stage){const pageId=stage?.dataset?.runtimePage;if(!isAxisPage(pageId))return null;const host=sceneHost(stage,pageId);if(!host)return null;const productId=productIdFor(stage),getAxisState=makeAxisStateReader(productId,getUiState);const controller=sceneBackendFor(pageId)==='six-axis-formal'?mountSixAxisScene(host,{getAxisState}):mountAxisScene(host,pageId,{getAxisState});controller.render?.();return controller;}
+export function upgradeAxisStage(stage){const pageId=stage?.dataset?.runtimePage;if(!isAxisPage(pageId))return false;if(stage.dataset.axisUpgraded==='true')return false;const authority=stage.querySelector?.('.authority-surface'),controls=stage.querySelector?.('.axis-controls');if(!authority||!controls)return false;const doc=stage.ownerDocument||globalThis.document;if(!doc?.createElement)return false;const workspace=doc.createElement('div');workspace.className='axis-workspace';workspace.dataset.viewportShare='70';workspace.dataset.axisPage=pageId;const main=doc.createElement('div');main.className='axis-main-viewport';main.innerHTML=sceneBackendFor(pageId)==='six-axis-formal'?renderSixAxisSceneMarkup():renderAxisSceneMarkup(pageId);const side=doc.createElement('aside');side.className='axis-side-panel';workspace.append(main,side);side.append(controls);authority.replaceWith(workspace);stage.dataset.axisUpgraded='true';renderExisting(stage);return true;}
+function releaseHost(host){if(host?.dataset?.axisScene==='6AX')releaseSixAxisScene(host);else releaseAxisScene(host);}
+function releaseNodeScenes(node){if(!node||node.nodeType!==1)return;if(node.matches?.('[data-axis-scene]'))releaseHost(node);node.querySelectorAll?.('[data-axis-scene]').forEach(releaseHost);}
+function scanNode(node){if(!node||node.nodeType!==1)return;if(node.matches?.('.runtime-stage')&&isAxisPage(node.dataset?.runtimePage))upgradeAxisStage(node);node.querySelectorAll?.('.runtime-stage').forEach(stage=>{if(isAxisPage(stage.dataset?.runtimePage))upgradeAxisStage(stage);});}
 function initialScan(root){root?.querySelectorAll?.('.runtime-stage').forEach(stage=>{if(isAxisPage(stage.dataset?.runtimePage))upgradeAxisStage(stage);});}
-export function bootAxisSceneAutobind(root=globalThis.document?.querySelector?.('#dual-runtime')){
-  if(!root)return null;
-  initialScan(root);
-  const Observer=globalThis.MutationObserver;
-  const observer=Observer?new Observer(mutations=>{
-    for(const mutation of mutations){
-      mutation.removedNodes?.forEach(releaseNodeScenes);
-      if(!mutationAddsAxisStage(mutation))continue;
-      mutation.addedNodes?.forEach(scanNode);
-    }
-  }):null;
-  observer?.observe(root,{childList:true,subtree:true});
-  const onClick=event=>{
-    const command=event.target?.closest?.('[data-command]')?.dataset?.command||'';
-    if(!isJogCommand(command))return;
-    const stage=event.target?.closest?.('.runtime-stage');
-    if(!stage)return;
-    globalThis.requestAnimationFrame?.(()=>renderExisting(stage));
-  };
-  root.addEventListener?.('click',onClick,false);
-  return{disconnect(){observer?.disconnect();root.removeEventListener?.('click',onClick,false);root.querySelectorAll?.('[data-axis-scene]').forEach(releaseAxisScene);}};
-}
+export function bootAxisSceneAutobind(root=globalThis.document?.querySelector?.('#dual-runtime')){if(!root)return null;initialScan(root);const Observer=globalThis.MutationObserver;const observer=Observer?new Observer(mutations=>{for(const mutation of mutations){mutation.removedNodes?.forEach(releaseNodeScenes);if(!mutationAddsAxisStage(mutation))continue;mutation.addedNodes?.forEach(scanNode);}}):null;observer?.observe(root,{childList:true,subtree:true});const onClick=event=>{const command=event.target?.closest?.('[data-command]')?.dataset?.command||'';if(!isJogCommand(command))return;const stage=event.target?.closest?.('.runtime-stage');if(!stage)return;globalThis.requestAnimationFrame?.(()=>renderExisting(stage));};root.addEventListener?.('click',onClick,false);return{disconnect(){observer?.disconnect();root.removeEventListener?.('click',onClick,false);root.querySelectorAll?.('[data-axis-scene]').forEach(releaseHost);}};}
 if(typeof document!=='undefined'){const start=()=>bootAxisSceneAutobind(document.querySelector('#dual-runtime'));if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();}
