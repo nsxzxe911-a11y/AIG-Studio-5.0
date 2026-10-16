@@ -1,0 +1,115 @@
+@settings(defaultLengthUnit = mm, kclVersion = 2.0)
+
+// AIG-II 6AX Zoo CAD V2 / Visual V9 authority model.
+// Visual authority intent: full enclosed industrial machining center with
+// twin heavy trunnion supports, central Z spindle, open machining envelope,
+// dark graphite body and discrete AIG RGB trim.
+// Engineering coordinate system: X left/right, Y front/rear, Z up.
+// Runtime hierarchy contract remains C -> B -> A.
+// Concept model only. NOT manufacturing-certified.
+
+aShaftOD = 62
+aBearingOD = 168
+aHousingOD = 236
+bShaftOD = 54
+bBearingOD = 142
+bHousingOD = 214
+cBaseOD = 300
+cTableOD = 338
+
+frameColor = "#050A10"
+panelColor = "#111923"
+paintColor = "#17242E"
+steelColor = "#9AA7AC"
+darkSteel = "#46565E"
+railColor = "#68767C"
+workColor = "#C9922E"
+toolColor = "#E3ECEF"
+rgbCyan = "#00D9FF"
+rgbBlue = "#3867FF"
+rgbViolet = "#9D4DFF"
+rgbPink = "#FF3BA7"
+rgbAmber = "#FFB03A"
+
+fn makeBox(@cx, cy, z0, sx, sy, sz, color) {
+  body = startSketchOn(XY)
+    |> startProfile(at = [-sx / 2, -sy / 2])
+    |> xLine(length = sx)
+    |> yLine(length = sy)
+    |> xLine(length = -sx)
+    |> close()
+    |> extrude(length = sz)
+    |> translate(xyz = [cx, cy, z0], global = true)
+    |> appearance(color = color)
+  return body
+}
+fn rawCylinderX(@length, od) { return startSketchOn(YZ) |> circle(center = [0, 0], radius = od / 2) |> extrude(length = length) }
+fn rawCylinderY(@length, od) { return startSketchOn(XZ) |> circle(center = [0, 0], radius = od / 2) |> extrude(length = length) }
+fn rawCylinderZ(@length, od) { return startSketchOn(XY) |> circle(center = [0, 0], radius = od / 2) |> extrude(length = length) }
+fn makeCylinderX(@cx, cy, cz, length, od, color) { return rawCylinderX(length, od = od) |> translate(xyz = [cx - length / 2, cy, cz], global = true) |> appearance(color = color) }
+fn makeCylinderY(@cx, cy, cz, length, od, color) { return rawCylinderY(length, od = od) |> translate(xyz = [cx, cy - length / 2, cz], global = true) |> appearance(color = color) }
+fn makeCylinderZ(@cx, cy, cz, length, od, color) { return rawCylinderZ(length, od = od) |> translate(xyz = [cx, cy, cz - length / 2], global = true) |> appearance(color = color) }
+fn makeRingX(@cx, cy, cz, length, od, id, color) { outer = rawCylinderX(length, od = od); inner = rawCylinderX(length + 4, od = id) |> translate(x = -2, global = true); return subtract(outer, tools = [inner]) |> translate(xyz = [cx - length / 2, cy, cz], global = true) |> appearance(color = color) }
+fn makeRingY(@cx, cy, cz, length, od, id, color) { outer = rawCylinderY(length, od = od); inner = rawCylinderY(length + 4, od = id) |> translate(y = -2, global = true); return subtract(outer, tools = [inner]) |> translate(xyz = [cx, cy - length / 2, cz], global = true) |> appearance(color = color) }
+fn makeRingZ(@cx, cy, cz, length, od, id, color) { outer = rawCylinderZ(length, od = od); inner = rawCylinderZ(length + 4, od = id) |> translate(z = -2, global = true); return subtract(outer, tools = [inner]) |> translate(xyz = [cx, cy, cz - length / 2], global = true) |> appearance(color = color) }
+fn makePrismX(@cx, cy, cz, length, od, sides, color) { return startSketchOn(YZ) |> polygon(radius = od / 2, numSides = sides, center = [0, 0]) |> extrude(length = length) |> translate(xyz = [cx - length / 2, cy, cz], global = true) |> appearance(color = color) }
+
+STATIC_BED = makeBox(0, cy = 0, z0 = 0, sx = 1500, sy = 980, sz = 105, color = frameColor)
+STATIC_FRONT_PLINTH = makeBox(0, cy = -445, z0 = 105, sx = 1340, sy = 90, sz = 150, color = panelColor)
+STATIC_LEFT_COLUMN = makeBox(-650, cy = 245, z0 = 105, sx = 155, sy = 300, sz = 790, color = frameColor)
+STATIC_RIGHT_COLUMN = makeBox(650, cy = 245, z0 = 105, sx = 155, sy = 300, sz = 790, color = frameColor)
+STATIC_BRIDGE = makeBox(0, cy = 250, z0 = 790, sx = 1440, sy = 250, sz = 125, color = frameColor)
+STATIC_BACK_WALL = makeBox(0, cy = 360, z0 = 105, sx = 1040, sy = 70, sz = 630, color = panelColor)
+STATIC_LEFT_INNER_WALL = makeBox(-515, cy = 250, z0 = 130, sx = 65, sy = 205, sz = 600, color = paintColor)
+STATIC_RIGHT_INNER_WALL = makeBox(515, cy = 250, z0 = 130, sx = 65, sy = 205, sz = 600, color = paintColor)
+STATIC_LEFT_SHELL = makeBox(-715, cy = -15, z0 = 125, sx = 115, sy = 760, sz = 690, color = panelColor)
+STATIC_RIGHT_SHELL = makeBox(715, cy = -15, z0 = 125, sx = 115, sy = 760, sz = 690, color = panelColor)
+STATIC_LEFT_TOP_CAP = makeBox(-650, cy = -25, z0 = 750, sx = 245, sy = 620, sz = 85, color = panelColor)
+STATIC_RIGHT_TOP_CAP = makeBox(650, cy = -25, z0 = 750, sx = 245, sy = 620, sz = 85, color = panelColor)
+RGB_LEFT_CYAN = makeBox(-772, cy = -120, z0 = 165, sx = 8, sy = 410, sz = 480, color = rgbCyan)
+RGB_LEFT_BLUE = makeBox(-772, cy = 155, z0 = 205, sx = 8, sy = 120, sz = 400, color = rgbBlue)
+RGB_RIGHT_VIOLET = makeBox(772, cy = 70, z0 = 175, sx = 8, sy = 270, sz = 490, color = rgbViolet)
+RGB_RIGHT_PINK = makeBox(772, cy = -210, z0 = 175, sx = 8, sy = 210, sz = 340, color = rgbPink)
+RGB_RIGHT_AMBER = makeBox(772, cy = 245, z0 = 215, sx = 8, sy = 90, sz = 300, color = rgbAmber)
+X_RAIL_UPPER = makeBox(0, cy = 302, z0 = 700, sx = 860, sy = 28, sz = 32, color = railColor)
+X_RAIL_LOWER = makeBox(0, cy = 302, z0 = 628, sx = 860, sy = 28, sz = 32, color = railColor)
+Z_RAIL_LEFT = makeBox(-82, cy = 285, z0 = 405, sx = 34, sy = 34, sz = 330, color = railColor)
+Z_RAIL_RIGHT = makeBox(82, cy = 285, z0 = 405, sx = 34, sy = 34, sz = 330, color = railColor)
+SPINDLE_CARRIAGE = makeBox(0, cy = 255, z0 = 500, sx = 265, sy = 210, sz = 250, color = paintColor)
+SPINDLE_HEAD = makeBox(0, cy = 160, z0 = 430, sx = 190, sy = 180, sz = 255, color = panelColor)
+SPINDLE_GUARD = makeCylinderZ(0, cy = 68, cz = 445, length = 180, od = 146, color = darkSteel)
+SPINDLE_NOSE = makeCylinderZ(0, cy = 68, cz = 338, length = 82, od = 82, color = steelColor)
+TOOL_HOLDER = makeCylinderZ(0, cy = 68, cz = 278, length = 68, od = 48, color = darkSteel)
+TOOL = makeCylinderZ(0, cy = 68, cz = 220, length = 92, od = 12, color = toolColor)
+C_AXIS_BASE = makeCylinderZ(0, cy = 0, cz = 158, length = 110, od = cBaseOD, color = paintColor)
+C_AXIS_TABLE = makeCylinderZ(0, cy = 0, cz = 225, length = 54, od = cTableOD, color = darkSteel)
+C_AXIS_RING = makeRingZ(0, cy = 0, cz = 246, length = 36, od = 382, id = 344, color = steelColor)
+bAxisZ = 365
+bSupportY = 172
+B_SUPPORT_FRONT = makeRingY(0, cy = -bSupportY, cz = bAxisZ, length = 68, od = bHousingOD, id = 158, color = paintColor)
+B_SUPPORT_REAR = makeRingY(0, cy = bSupportY, cz = bAxisZ, length = 68, od = bHousingOD, id = 158, color = paintColor)
+B_BEARING_FRONT = makeRingY(0, cy = -bSupportY, cz = bAxisZ, length = 74, od = bBearingOD, id = 66, color = steelColor)
+B_BEARING_REAR = makeRingY(0, cy = bSupportY, cz = bAxisZ, length = 74, od = bBearingOD, id = 66, color = steelColor)
+B_JOURNAL_FRONT = makeCylinderY(0, cy = -bSupportY, cz = bAxisZ, length = 98, od = bShaftOD, color = darkSteel)
+B_JOURNAL_REAR = makeCylinderY(0, cy = bSupportY, cz = bAxisZ, length = 98, od = bShaftOD, color = darkSteel)
+B_CRADLE = makeBox(0, cy = 0, z0 = 285, sx = 610, sy = 310, sz = 42, color = paintColor)
+B_CRADLE_LEFT_ARM = makeBox(-285, cy = 0, z0 = 310, sx = 64, sy = 310, sz = 255, color = paintColor)
+B_CRADLE_RIGHT_ARM = makeBox(285, cy = 0, z0 = 310, sx = 64, sy = 310, sz = 255, color = paintColor)
+B_CRADLE_LEFT_FOOT = makeBox(-285, cy = 0, z0 = 260, sx = 118, sy = 330, sz = 70, color = panelColor)
+B_CRADLE_RIGHT_FOOT = makeBox(285, cy = 0, z0 = 260, sx = 118, sy = 330, sz = 70, color = panelColor)
+aAxisZ = 420
+aSupportX = 282
+A_SUPPORT_LEFT = makeRingX(-aSupportX, cy = 0, cz = aAxisZ, length = 118, od = aHousingOD, id = 182, color = paintColor)
+A_SUPPORT_RIGHT = makeRingX(aSupportX, cy = 0, cz = aAxisZ, length = 118, od = aHousingOD, id = 182, color = paintColor)
+A_BEARING_LEFT = makeRingX(-aSupportX, cy = 0, cz = aAxisZ, length = 128, od = aBearingOD, id = 78, color = steelColor)
+A_BEARING_RIGHT = makeRingX(aSupportX, cy = 0, cz = aAxisZ, length = 128, od = aBearingOD, id = 78, color = steelColor)
+A_SHAFT_LEFT = makeCylinderX(-aSupportX, cy = 0, cz = aAxisZ, length = 146, od = aShaftOD, color = darkSteel)
+A_SHAFT_RIGHT = makeCylinderX(aSupportX, cy = 0, cz = aAxisZ, length = 146, od = aShaftOD, color = darkSteel)
+A_BODY = makeCylinderX(0, cy = 0, cz = aAxisZ, length = 430, od = 98, color = darkSteel)
+CHUCK = makeCylinderX(0, cy = 0, cz = aAxisZ, length = 214, od = 158, color = steelColor)
+WORKPIECE_HUB = makeCylinderX(0, cy = 0, cz = aAxisZ, length = 138, od = 116, color = darkSteel)
+WORKPIECE = makePrismX(0, cy = 0, cz = aAxisZ, length = 118, od = 132, sides = 12, color = workColor)
+
+// C pivot [0,0,225] +Z; B pivot [0,0,365] +Y; A pivot [0,0,420] +X.
+// Motion hierarchy: C rotates B + A; B rotates complete A assembly; A rotates chuck/work.
+// Review: A ±180deg, B at least ±60deg, C ±180deg.
