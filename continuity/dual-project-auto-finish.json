@@ -22,9 +22,9 @@
     ]
   },
   "taskState": {
-    "completed": [1, 3],
-    "currentTask": 4,
-    "nextTask": 4,
+    "completed": [1, 3, 4],
+    "currentTask": 5,
+    "nextTask": 5,
     "releaseStatus": "BLOCKED_UNTIL_DUAL_PROJECT_SINGLE_GATE_PASS"
   },
   "evidence": {
@@ -32,6 +32,10 @@
     "formalRuntimeGreenRun": 38963757662,
     "formalRuntimeGate": "PASS",
     "runtimeSurfaceVerifier": "PASS",
-    "productionRuntimeVerifier": "PASS"
+    "productionRuntimeVerifier": "PASS",
+    "formalWebRedRun": 38965138089,
+    "formalWebGreenRun": 38965277404,
+    "formalWebGate": "PASS",
+    "sixAxisWebPolicy": "MIRROR_ONLY_NATIVE_PRODUCTION_GATE_IS_TRUTH"
   }
 }
