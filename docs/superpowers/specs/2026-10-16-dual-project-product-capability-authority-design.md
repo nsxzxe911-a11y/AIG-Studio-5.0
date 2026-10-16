@@ -5,7 +5,7 @@ Status: USER-APPROVED DESIGN
 
 ## 1. Purpose
 
-Prevent AIG and AIG II from being mixed by repository names, stale engineering shells, theme defaults, or incomplete builder evidence. Product identity and runtime capability must be derived from a machine-verifiable Product Capability Authority, cross-checked against approved RGB Authority assets, then verified through real runtime callbacks and core results.
+Prevent AIG and AIG II from being mixed by repository names, stale engineering shells, theme defaults, or incomplete builder evidence. Product identity must first be recognized from the approved RGB Authority set, then confirmed by a machine-verifiable Product Capability Authority, and finally verified through real runtime callbacks and core results.
 
 ## 2. Product Identity
 
@@ -89,12 +89,13 @@ Axis capability is separate from shared core.
 
 Resolution order:
 
-1. Read Product Capability Authority (`productId`, `MAX_AXIS`, required formal pages).
-2. Read approved RGB Authority manifest and asset identities.
-3. Cross-check the axis pages visible in Authority assets against `MAX_AXIS`.
-4. Bind formal runtime pages.
-5. Bind `Button ID -> Shared Command -> Runtime/Core -> Result/Status`.
-6. Run runtime evidence.
+1. Read the approved RGB Authority manifest and Authority asset identities for the project.
+2. Infer the expected product family from the approved page set: AIG must stop at 3AX; AIG II must contain the approved 3AX/4AX/5AX/6AX family.
+3. Read Product Capability Authority (`productId`, `MAX_AXIS`, required formal pages).
+4. Cross-check Product Capability Authority against the RGB Authority result.
+5. Bind formal runtime pages.
+6. Bind `Button ID -> Shared Command -> Runtime/Core -> Result/Status`.
+7. Run runtime evidence.
 
 If Product Capability Authority and RGB Authority disagree, release is BLOCKED. Do not guess from repository name, branch name, theme ID, old engineering page, or builder number.
 
