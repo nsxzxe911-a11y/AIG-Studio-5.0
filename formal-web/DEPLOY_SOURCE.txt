@@ -1,8 +1,8 @@
 AIG dual formal runtime
-Source: AIG-II feature/aig-web-6ax-visual-v1-20261016 @ 53c36c195e6c4fc9531ec9df0411ef5975d4af90
+Source: AIG-II feature/aig-web-6ax-visual-v1-20261016 @ 9e28d3cfe33cd479d38d29f9e190e4d7d7a9fd83
 Axis Runtime: V3 state/event fix retained
 MPG: ×1 / ×10 / ×100 / ×1000 retained
-6AX Visual V2: round C table + round A rotary/chuck + faceted workpiece + round tooling + nested C→B→A pivots + dedicated camera + basic directional shading
-Local focused TDD: 9/9 PASS; node --check PASS
-Mirror six-axis-formal.js blob: d1fd73d980c1839659a9c53803946255f2e73ce6 (AIG-II = AIG-Studio mirror)
+6AX Visual V3: raised C pedestal + C rotary table + B swing cradle with front/rear bearings + A spindle with left/right bearings + concentric chuck/workpiece + nested C→B→A pivots + raised camera target
+Local focused TDD: RED 4 fail / 1 pass on V2; GREEN 12/12 PASS; node --check PASS
+Mirror six-axis-formal.js blob: 0e0c2f86dcd8cefafe3e34ecc6e202ed7289e322 (AIG-II = AIG-Studio mirror)
 Scope: 6AX Web visual only; 3AX/4AX/5AX, Windows, APK, Native Core untouched
