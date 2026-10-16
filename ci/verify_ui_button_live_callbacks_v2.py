@@ -16,8 +16,8 @@ for button_id,entry in entries.items():
     assert callback in runtime, f'RUNTIME_CALLBACK_MISSING:{button_id}:{callback}'
     assert callback in contract, f'CONTRACT_CALLBACK_MISSING:{button_id}:{callback}'
 
+assert 'refreshVisibleMode(normalized)' in runtime, 'PRODUCTION_NAV_WRAPPER_MUST_REFRESH_FORMAL_MODE'
 cad=entries['NAV_CAD']['verifiedCallback']
-assert 'selectTool(Tool.SELECT)' in cad, 'CAD_NAV_MUST_BIND_REAL_CAD_STATE'
-assert 'refreshVisibleMode("CAD")' in cad, 'CAD_NAV_MUST_REFRESH_FORMAL_CAD_MODE'
+assert cad=='selectTool(Tool.SELECT)', f'CAD_NAV_MUST_BIND_REAL_CAD_STATE:{cad}'
 
-print('UI_BUTTON_LIVE_CALLBACK_V2_PASS|10_NAV|NO_TOAST_ONLY|CAD_REAL_STATE|JSON_KOTLIN_RUNTIME')
+print('UI_BUTTON_LIVE_CALLBACK_V2_PASS|10_NAV|NO_TOAST_ONLY|CAD_REAL_STATE|FORMAL_MODE_REFRESH|JSON_KOTLIN_RUNTIME')
