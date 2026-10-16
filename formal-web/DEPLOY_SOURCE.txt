@@ -1,11 +1,11 @@
 AIG dual formal runtime
-Source: AIG-II feature/aig-web-6ax-visual-v1-20261016 @ 8c56164c918372e60aac47c8efc61248b9b78efb
+Source: AIG-II feature/aig-web-6ax-visual-v1-20261016 @ fa79c0b2fd5e3877d42fdff816084ad52d82195d
 Axis Runtime: V3 state/event fix retained
 MPG: ×1 / ×10 / ×100 / ×1000 retained
-Z baseline: Runtime starts at 350.000; Web visual motion uses Z-350 reference so the tool does not jump off-screen
-6AX Visual V6: C pedestal/table reduced again + B bearing/pivot center raised + A spindle/bearing center raised + B bearing housings changed to circular ringZ + A bearing rings thickened + concentric A spindle/chuck/workpiece + nested C→B→A pivots
-AIG-II six-axis-formal.js blob: c765f66187b2a03e20e97cc0e343c39068d957c9
-AIG-Studio six-axis-formal.js blob: c765f66187b2a03e20e97cc0e343c39068d957c9
-AIG-II / Studio axis-scene-v2.js blob: d80b03ff41051a306c40c9c326c2e1380b4f0116
-Scope: Web Runtime geometry / axis visual baseline only; Windows, APK, Native Core untouched
+Z baseline: Runtime starts at 350.000; Web visual motion uses Z-350 reference
+6AX Visual V7: corrected X/Z primitive transform order so ringX/cylinderX and ringZ/cylinderZ keep true circular cross-sections; A/B axis cores reduced; rear columns/bridge/head rail moved backward for clearance; C compact base and raised A/B centers retained
+AIG-II / Studio six-axis-formal-v7.js blob: 9102bc730677ed18ddc1afdef621ad1083f3c11f
+AIG-II / Studio axis-scene-autobind-v3.js blob: bd5843aa55b9d885147f6ee3ef08808b7b45641c
+Local focused V7 verification: AIG_6AX_V7_GEOMETRY_MATRIX_PASS + node --check six-axis-formal-v7.js PASS
+Scope: 6AX Web visual renderer only; Windows, APK, Native Core untouched
 Visual Authority status: pending user review on deployed runtime
