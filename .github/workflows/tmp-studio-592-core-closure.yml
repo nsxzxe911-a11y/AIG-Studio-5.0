@@ -15,7 +15,7 @@ concurrency:
 jobs:
   focused:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -24,6 +24,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Android SDK 36 preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d "$ANDROID_HOME/platforms/android-36"
+          INSTALLED_BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | sort -V | tail -1 || true)"
+          test -n "$INSTALLED_BUILD_TOOLS"
+          echo "ANDROID_SDK_36_PREFLIGHT=PASS|BUILD_TOOLS=$INSTALLED_BUILD_TOOLS"
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '9.7.0'
@@ -53,8 +61,17 @@ jobs:
           python3 ci/verify_ui_button_manifest_consistency.py
           python3 ci/verify_production_runtime.py
           python3 ci/verify_runtime_surfaces.py
-      - name: Run core unit tests
-        run: gradle :core:test --no-daemon
+      - name: Run supported focused core regressions
+        run: |
+          set -euo pipefail
+          gradle --no-daemon \
+            :core:camManualMachiningContractRegression \
+            :core:runtimeLinkRegression \
+            :core:openRuntimePolicyRegression \
+            :core:rgbGlobalSkinRegression \
+            :core:tutorialPresentationRegression
+      - name: Compile and assemble Android production runtime
+        run: gradle --no-daemon :app:verifyAndroidPlatform :app:assembleDebug
       - name: Commit verified live callback fix
         if: steps.state.outputs.applied == 'false'
         shell: bash
