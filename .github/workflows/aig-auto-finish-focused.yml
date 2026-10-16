@@ -1,0 +1,32 @@
+name: AIG Studio Auto Finish Focused Gate
+
+on:
+  push:
+    branches:
+      - feature/dual-project-auto-finish-20261017
+    paths:
+      - ci/test_formal_runtime_entry_gate.py
+      - ci/verify_formal_runtime_entry.py
+      - ci/verify_runtime_surfaces.py
+      - ci/verify_production_runtime.py
+      - continuity/dual-project-auto-finish.json
+      - .github/workflows/aig-auto-finish-focused.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  formal-runtime-entry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Formal Runtime entry unit gate
+        run: python3 ci/test_formal_runtime_entry_gate.py
+      - name: Formal Runtime entry repository gate
+        run: python3 ci/verify_formal_runtime_entry.py
+      - name: Existing Studio Runtime surface verifier
+        run: python3 ci/verify_runtime_surfaces.py
+      - name: Existing Studio production Runtime verifier
+        run: python3 ci/verify_production_runtime.py
