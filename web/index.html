@@ -1,1 +1,55 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#020407"><title>AIG II · 3–6AX RGB Runtime</title><link rel="stylesheet" href="app.css"></head><body><div class="app-shell"><header class="topbar"><div class="brand"><div class="brand-mark">AIG II</div><div><strong>CNC RGB RUNTIME</strong><small>3AX · 4AX · 5AX · 6AX / 0.001 mm</small></div></div><nav class="main-nav" id="main-nav"><button data-view="HOME">HOME</button><button data-view="3AX">3AX</button><button data-view="4AX">4AX</button><button data-view="5AX">5AX</button><button data-view="6AX" class="active">6AX</button><button data-view="RELEASE">RELEASE</button></nav><div class="live-pill"><i></i> LOCAL READY</div></header><main><section id="home-view" class="view"></section><section id="axis-view" class="view active"><div class="axis-head"><div><div class="eyebrow">AIG-II MACHINING</div><h1 id="axis-title">6AX 多面加工</h1><p id="axis-subtitle">XYZ + A/B/C · 真實方向鎖定 · 大型加工視窗</p></div><div class="status-cluster"><span id="runtime-status" class="status-chip ok">RUNTIME READY</span><span id="package-status" class="status-chip pending">PACKAGE PENDING</span></div></div><div class="workspace"><article class="machine-card"><div class="machine-toolbar"><div class="coords"><span>X <b id="xv">0.000</b></span><span>Y <b id="yv">0.000</b></span><span>Z <b id="zv">0.000</b></span><span class="rot">A <b id="av">0.000</b>°</span><span class="rot">B <b id="bv">0.000</b>°</span><span class="rot">C <b id="cv">0.000</b>°</span></div><div class="camera-actions"><button id="reset-view">RESET VIEW</button></div></div><div class="scene-wrap"><canvas id="machine-canvas"></canvas><div class="scene-overlay"><div><b id="scene-mode">6AX</b><span>AUTHORITY MATCH / GLB READY</span></div><div class="fps">60 FPS</div></div></div><div class="playback"><button class="primary" id="play-btn">▶ PLAY</button><button id="pause-btn">Ⅱ PAUSE</button><button id="single-btn">▸ SINGLE</button><button id="stop-btn">■ STOP</button><div class="progress-track"><i id="progress-bar"></i></div></div></article><aside class="control-card"><div class="panel-title"><span>AXIS CONTROL</span><small id="axis-caption">A / B / C</small></div><div id="axis-controls" class="axis-controls"><button data-axis="A" data-delta="-5">A−</button><button data-axis="A" data-delta="5">A+</button><button data-axis="B" data-delta="-5">B−</button><button data-axis="B" data-delta="5">B+</button><button data-axis="C" data-delta="-5">C−</button><button data-axis="C" data-delta="5">C+</button><button class="wide" id="pose-reset">RESET</button></div><div class="divider"></div><div class="panel-title"><span>MACHINE STATE</span><small>live</small></div><div class="metrics"><div><span>Feed</span><b>150 mm/min</b></div><div><span>Spindle</span><b>2300 rpm</b></div><div><span>Tool</span><b>Ø10</b></div><div><span>Precision</span><b>0.001 mm</b></div><div><span>Material removal</span><b>READY</b></div><div><span>NC</span><b>G90 / G54</b></div></div><div class="divider"></div><div class="panel-title"><span>EVIDENCE</span><small>fail-closed</small></div><div class="evidence"><p><i class="dot green"></i> Axis direction contract</p><p><i class="dot green"></i> GLB structure gate</p><p><i class="dot amber"></i> Visual Authority review</p><p><i class="dot amber"></i> APK / EXE package proof</p></div><a class="legacy-link" href="legacy-runtime.html">開啟舊版完整 CAD / CAM / SIM / NC</a></aside></div></section><section id="release-view" class="view"></section></main><footer>OFFLINE-FIRST · NO ENGINEERING SHELL · FANUC WORKFLOW · ANDROID + WINDOWS</footer></div><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407">
+<meta name="color-scheme" content="dark">
+<title>AIG II · RGB Web Runtime</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="app" class="app-shell">
+<header class="topbar">
+  <div class="brand"><span class="brand-orb">AIG</span><div><strong>AIG II</strong><small>RGB WEB RUNTIME · 0.001 mm</small></div></div>
+  <nav id="main-nav" class="main-nav" aria-label="AIG II 主頁籤"></nav>
+  <div class="ready"><i></i>LOCAL READY</div>
+</header>
+<main>
+  <section class="page-head">
+    <div><span id="page-kicker" class="kicker">AUTHORITY LOCK</span><h1 id="page-title">HOME</h1><p id="page-subtitle"></p></div>
+    <div class="status-row"><span class="chip good">BLACK RGB</span><span id="visual-status" class="chip pending">VISUAL REVIEW</span></div>
+  </section>
+
+  <section class="workbench">
+    <article class="authority-card">
+      <div class="card-head"><div><b>AIG RGB AUTHORITY</b><small id="authority-class"></small></div><span id="authority-state" class="authority-state">REFERENCE</span></div>
+      <div class="authority-stage"><img id="authority-image" alt="AIG RGB Authority"></div>
+      <div class="authority-meta"><span id="authority-source"></span><code id="authority-sha"></code></div>
+    </article>
+
+    <aside class="runtime-card">
+      <div class="card-head"><div><b>WEB RUNTIME</b><small id="runtime-label">正式頁重建</small></div><span class="runtime-state">LAYOUT READY</span></div>
+      <div id="runtime-summary" class="runtime-summary"></div>
+      <div id="axis-panel" class="axis-panel" hidden>
+        <div class="axis-readout"><span>A <b id="axis-a">0.000</b>°</span><span>B <b id="axis-b">0.000</b>°</span><span>C <b id="axis-c">0.000</b>°</span></div>
+        <div id="axis-buttons" class="axis-buttons"></div>
+      </div>
+      <div class="runtime-note">Authority 圖保持獨立；真 GLB 尚未通過視覺 Gate 時，不使用低畫質 Canvas 或方塊模型頂替。</div>
+      <a class="legacy-link" href="legacy-runtime.html">開啟既有 CAD / CAM / SIM / NC Runtime</a>
+    </aside>
+  </section>
+
+  <section class="evidence-strip">
+    <div><span>AUTHORITY</span><b id="ev-authority">READY</b></div>
+    <div><span>WEB LAYOUT</span><b>READY</b></div>
+    <div><span>MODEL / GLB</span><b id="ev-model" class="pending-text">PENDING</b></div>
+    <div><span>CALLBACK</span><b id="ev-callback" class="pending-text">PARTIAL</b></div>
+    <div><span>APK / EXE</span><b class="pending-text">PENDING</b></div>
+  </section>
+</main>
+<footer>HOME / CAD / CAM / SIM / 3AX / 4AX / 5AX / 6AX / NC / AI · NO ENGINEERING SHELL</footer>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
