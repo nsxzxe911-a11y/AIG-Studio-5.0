@@ -7,14 +7,15 @@ const PRIMARY=Object.freeze({
   author:'Rob Tuytel',
   externalOptional:true
 });
-const PAINTED=new Set(['bed','rearColumnLeft','rearColumnRight','bridge','headRail','spindleHead','bSupportFront']);
+const REMOVED=new Set(['headRail','bSupportFront']);
+const PAINTED=new Set(['bed','rearColumnLeft','rearColumnRight','bridge','spindleHead']);
 const STEEL=new Set(['spindleNose','toolHolder','tool','bSupportRear','bArmLeft','bArmRight','bBearingFront','bBearingRear','bJournalFront','bJournalRear','aBearingLeft','aBearingRight','aHubLeft','aHubRight','aBody','chuck']);
 export function getSixAxisV8SkinManifest(){return {primary:PRIMARY,offlineFallback:'V7_COLORS'};}
-export function decorateSixAxisV8Geometry(base){return {...base,solids:(base.solids||[]).map(s=>{
+export function decorateSixAxisV8Geometry(base){return {...base,solids:(base.solids||[]).filter(s=>!REMOVED.has(s.name)).map(s=>{
   const out={...s,position:s.position?[...s.position]:s.position,size:s.size?[...s.size]:s.size};
-  if(s.name==='bArmLeft'){out.position=[-1.42,.82,0];out.size=[.26,1.08,.78];}
-  if(s.name==='bArmRight'){out.position=[1.42,.82,0];out.size=[.26,1.08,.78];}
-  if(s.name==='bSupportRear'){out.position=[0,.10,1.04];out.size=[1.28,.38,.20];}
+  if(s.name==='bArmLeft'){out.position=[-1.48,.84,0];out.size=[.18,.96,.60];}
+  if(s.name==='bArmRight'){out.position=[1.48,.84,0];out.size=[.18,.96,.60];}
+  if(s.name==='bSupportRear'){out.position=[0,.10,1.18];out.size=[1.08,.32,.14];}
   if(PAINTED.has(s.name)) out.skin=PRIMARY.id;
   if(STEEL.has(s.name)) out.material='brushed-steel';
   return out;
