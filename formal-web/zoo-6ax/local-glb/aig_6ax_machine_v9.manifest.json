@@ -1,0 +1,39 @@
+{
+  "asset": "aig_6ax_machine_v9.glb",
+  "authority": "Visual V9",
+  "source": "aig_6ax_machine_v2.kcl contract mirrored procedurally",
+  "units": "mm",
+  "upAxis": "Z",
+  "runtimeScaleRequired": true,
+  "hierarchy": [
+    "C_GROUP",
+    "B_GROUP",
+    "A_GROUP"
+  ],
+  "pivotsMM": {
+    "C_GROUP": [
+      0,
+      0,
+      225
+    ],
+    "B_GROUP": [
+      0,
+      0,
+      365
+    ],
+    "A_GROUP": [
+      0,
+      0,
+      420
+    ]
+  },
+  "axes": {
+    "C_GROUP": "+Z",
+    "B_GROUP": "+Y",
+    "A_GROUP": "+X"
+  },
+  "nodeCount": 55,
+  "meshCount": 51,
+  "materialCount": 13,
+  "status": "VISUAL_RUNTIME_ASSET_NOT_MANUFACTURING_CERTIFIED"
+}
