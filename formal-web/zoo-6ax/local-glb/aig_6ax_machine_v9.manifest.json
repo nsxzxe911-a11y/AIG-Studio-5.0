@@ -1,7 +1,7 @@
 {
   "asset": "aig_6ax_machine_v9.glb",
-  "authority": "Visual V9.1",
-  "source": "Visual V9 deterministic GLB + professional housing proportion pass",
+  "authority": "Visual V9.2",
+  "source": "Visual V9.1 deterministic GLB + upper-light A-axis proportion pass",
   "units": "mm",
   "upAxis": "Z",
   "runtimeScaleRequired": true,
@@ -38,10 +38,10 @@
   "status": "VISUAL_RUNTIME_ASSET_NOT_MANUFACTURING_CERTIFIED",
   "mechanicalHierarchyMM": {
     "A": {
-      "driveCoverOD": 332,
-      "supportOD": 300,
-      "bearingOD": 210,
-      "shaftOD": 70
+      "driveCoverOD": 268,
+      "supportOD": 236,
+      "bearingOD": 170,
+      "shaftOD": 48
     },
     "B": {
       "driveCoverOD": 302,
@@ -54,5 +54,6 @@
     "A_bolts": 16,
     "B_bolts": 12,
     "steppedHousing": true
-  }
+  },
+  "designIntent": "upper_light_lower_heavy_bottom_unchanged"
 }
