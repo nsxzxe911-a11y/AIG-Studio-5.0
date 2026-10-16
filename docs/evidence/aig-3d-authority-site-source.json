@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "schemaId": "aig-3d-authority-site-v1",
+  "canonicalRepository": "nsxzxe911-a11y/AIG-II",
+  "canonicalBranch": "docs/aig-3d-authority-compare-site-20261016",
+  "sitePath": "web/authority-compare",
+  "lastVerifiedCommitSha": "3b1ca148f7fe86543da78bc276b846a831fab178",
+  "supportedAxes": ["3AX"],
+  "mode": "POINTER_ONLY_NO_SITE_COPY"
+}
