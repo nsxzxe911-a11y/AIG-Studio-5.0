@@ -1,6 +1,5 @@
-const CACHE_PREFIX='aig-studio-runtime-';
-const CACHE_NAME=CACHE_PREFIX+'rgb-console-6ax-v2';
-const APP_SHELL=['./','./index.html','./app.css','./app.js','./legacy-runtime.html','./manifest.webmanifest'];
-self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(APP_SHELL)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith(CACHE_PREFIX)&&k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',event=>{const r=event.request;if(r.method!=='GET')return;const u=new URL(r.url);if(u.origin!==self.location.origin)return;if(r.mode==='navigate'){event.respondWith(fetch(r).then(async res=>{if(res.ok)(await caches.open(CACHE_NAME)).put(r,res.clone());return res}).catch(async()=>await caches.match(r)||await caches.match('./index.html')));return}event.respondWith(fetch(r).then(async res=>{if(res.ok)(await caches.open(CACHE_NAME)).put(r,res.clone());return res}).catch(()=>caches.match(r)))});
+const CACHE='aig-ii-rgb-ten-pages-20261016-v2';
+const SHELL=['./','./index.html','./app.css','./app.js','./authority/6ax-reference.svg','./legacy-runtime.html'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('aig-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.origin!==location.origin)return;if(e.request.mode==='navigate'){e.respondWith(fetch(e.request).then(r=>{const x=r.clone();caches.open(CACHE).then(c=>c.put(e.request,x));return r}).catch(()=>caches.match('./index.html')));return}e.respondWith(fetch(e.request).then(r=>{const x=r.clone();caches.open(CACHE).then(c=>c.put(e.request,x));return r}).catch(()=>caches.match(e.request)))});
