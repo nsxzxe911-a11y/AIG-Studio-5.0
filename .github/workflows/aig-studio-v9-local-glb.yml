@@ -8,8 +8,10 @@ on:
     paths:
       - formal-web/zoo-6ax/generate-v9-glb.py
       - formal-web/zoo-6ax/upgrade-v91-glb.py
+      - formal-web/zoo-6ax/upgrade-v92-glb.py
       - formal-web/zoo-6ax/validate-v9-glb.py
       - formal-web/zoo-6ax/validate-v91-glb.py
+      - formal-web/zoo-6ax/validate-v92-glb.py
       - .github/workflows/aig-studio-v9-local-glb.yml
 
 permissions:
@@ -29,12 +31,16 @@ jobs:
         run: python3 formal-web/zoo-6ax/upgrade-v91-glb.py
       - name: Validate Visual V9.1 mechanical hierarchy
         run: python3 formal-web/zoo-6ax/validate-v91-glb.py
+      - name: Apply Visual V9.2 upper-light lower-heavy pass
+        run: python3 formal-web/zoo-6ax/upgrade-v92-glb.py
+      - name: Validate Visual V9.2 upper-light lower-heavy contract
+        run: python3 formal-web/zoo-6ax/validate-v92-glb.py
       - name: Write checksums
         run: |
           cd formal-web/zoo-6ax/local-glb
           sha256sum aig_6ax_machine_v9.glb aig_6ax_machine_v9.manifest.json > SHA256SUMS.txt
-          printf 'AIG_V91_LOCAL_GLB_PASS\n' > BUILD_STATUS.txt
-      - name: Commit V9.1 GLB to Studio branch
+          printf 'AIG_V92_LOCAL_GLB_PASS\n' > BUILD_STATUS.txt
+      - name: Commit V9.2 GLB to Studio branch
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -43,5 +49,5 @@ jobs:
           git add formal-web/zoo-6ax/local-glb/aig_6ax_machine_v9.manifest.json
           git add formal-web/zoo-6ax/local-glb/SHA256SUMS.txt
           git add formal-web/zoo-6ax/local-glb/BUILD_STATUS.txt
-          git commit -m "asset(6ax): publish Visual V9.1 GLB" || exit 0
+          git commit -m "asset(6ax): publish Visual V9.2 GLB" || exit 0
           git push origin HEAD:web/aig-dual-formal-runtime-20261016
