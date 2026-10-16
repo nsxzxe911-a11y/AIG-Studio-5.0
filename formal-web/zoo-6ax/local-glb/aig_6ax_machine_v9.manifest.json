@@ -1,7 +1,7 @@
 {
   "asset": "aig_6ax_machine_v9.glb",
-  "authority": "Visual V9.2",
-  "source": "Visual V9.1 deterministic GLB + upper-light A-axis proportion pass",
+  "authority": "Visual V9.3",
+  "source": "Visual V9.2 deterministic GLB + A-axis installation-span clearance pass",
   "units": "mm",
   "upAxis": "Z",
   "runtimeScaleRequired": true,
@@ -55,5 +55,14 @@
     "B_bolts": 12,
     "steppedHousing": true
   },
-  "designIntent": "upper_light_lower_heavy_bottom_unchanged"
+  "designIntent": "a_axis_span_reduced_shell_clearance_lower_unchanged",
+  "aAxisCentersMM": {
+    "support": 220,
+    "bearing": 220,
+    "shaft": 220,
+    "driveCover": 255,
+    "bearingCap": 245,
+    "boltRing": 270,
+    "maxAxialEnvelope": 290
+  }
 }
