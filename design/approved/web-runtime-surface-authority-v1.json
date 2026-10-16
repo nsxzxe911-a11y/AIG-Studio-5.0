@@ -1,0 +1,24 @@
+{
+  "schema": "aig-web-runtime-surface-authority-v1",
+  "base_builder": 588,
+  "base_sha": "3bdeed6cb4a504a65b23ba9ad355ba34d2af0e9b",
+  "formal_surfaces": ["HOME", "CAD", "CAM", "SIM", "3AX", "4AX", "5AX", "6AX", "NC", "AI"],
+  "policy": {
+    "missing_asset": "APPROVED_ASSET_PENDING_INGEST",
+    "fallback": "PROCEDURAL_RGB_GLASS",
+    "engineering_shell_fallback": "FORBIDDEN",
+    "approved_asset_overwrite": false
+  },
+  "surfaces": {
+    "HOME": {"status": "APPROVED_ASSET_PENDING_INGEST", "fallback": "PROCEDURAL_RGB_GLASS", "known_pack": "AIG_RGB_HOME_416", "known_pack_state": "VALIDATED_DERIVED"},
+    "CAD": {"status": "APPROVED_ASSET_PENDING_INGEST", "fallback": "PROCEDURAL_RGB_GLASS"},
+    "CAM": {"status": "USER_APPROVED_VISUAL_TARGET", "manifest": "design/approved/AIG_UI_APPROVED_MANIFEST.json", "targets": ["AIG_CNC_CAM_RGB_BILINGUAL_MOBILE_APPROVED", "AIG_II_CAM_RGB_BILINGUAL_DESKTOP_APPROVED"]},
+    "SIM": {"status": "APPROVED_ASSET_PENDING_INGEST", "fallback": "PROCEDURAL_RGB_GLASS"},
+    "3AX": {"status": "APPROVED_ASSET_PENDING_INGEST", "fallback": "PROCEDURAL_RGB_GLASS"},
+    "4AX": {"status": "APPROVED_ASSET_PENDING_INGEST", "fallback": "PROCEDURAL_RGB_GLASS"},
+    "5AX": {"status": "APPROVED_ASSET_PENDING_INGEST", "fallback": "PROCEDURAL_RGB_GLASS"},
+    "6AX": {"status": "APPROVED_ASSET_PENDING_INGEST", "fallback": "PROCEDURAL_RGB_GLASS"},
+    "NC": {"status": "APPROVED_ASSET_PENDING_INGEST", "fallback": "PROCEDURAL_RGB_GLASS"},
+    "AI": {"status": "APPROVED_ASSET_PENDING_INGEST", "fallback": "PROCEDURAL_RGB_GLASS"}
+  }
+}
