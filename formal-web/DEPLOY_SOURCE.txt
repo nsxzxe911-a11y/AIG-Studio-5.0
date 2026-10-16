@@ -1,11 +1,13 @@
 AIG dual formal runtime
-Source: AIG-II feature/aig-web-6ax-visual-v1-20261016 @ fa79c0b2fd5e3877d42fdff816084ad52d82195d
+Source: AIG-II feature/aig-web-6ax-visual-v1-20261016 @ d3e9c8f4887063135e2ec435a28ff6dca6a3afdc
 Axis Runtime: V3 state/event fix retained
 MPG: ×1 / ×10 / ×100 / ×1000 retained
 Z baseline: Runtime starts at 350.000; Web visual motion uses Z-350 reference
-6AX Visual V7: corrected X/Z primitive transform order so ringX/cylinderX and ringZ/cylinderZ keep true circular cross-sections; A/B axis cores reduced; rear columns/bridge/head rail moved backward for clearance; C compact base and raised A/B centers retained
-AIG-II / Studio six-axis-formal-v7.js blob: 9102bc730677ed18ddc1afdef621ad1083f3c11f
-AIG-II / Studio axis-scene-autobind-v3.js blob: bd5843aa55b9d885147f6ee3ef08808b7b45641c
-Local focused V7 verification: AIG_6AX_V7_GEOMETRY_MATRIX_PASS + node --check six-axis-formal-v7.js PASS
-Scope: 6AX Web visual renderer only; Windows, APK, Native Core untouched
+6AX Visual V8: V7 geometry/pivots retained; external optional CC0 machine-skin layer added; Poly Haven Blue Metal Plate applied to enclosure surfaces; brushed-steel shader applied to bearings/spindle/tool; immediate V7-color fallback if skin is unavailable/offline
+External skin source: Poly Haven / Blue Metal Plate / Rob Tuytel / CC0 / https://polyhaven.com/a/blue_metal_plate
+AIG-II / Studio six-axis-formal-v8.js blob: c9a1c51e25c183c4b28f4425a153da0caa156465
+AIG-II / Studio six-axis-skin-v8.js blob: 8a89d13fc167d28d7d6957649c6504898b731d70
+AIG-II / Studio axis-scene-autobind-v3.js blob: 1a3d8518ebfa49710ae8ee22ddb162953ac2cf63
+Local TDD: V8 skin tests RED on missing module -> GREEN 2/2 PASS; node --check six-axis-formal-v8.js PASS
+Scope: 6AX Web visual skin/material layer only; Windows, APK, Native Core untouched
 Visual Authority status: pending user review on deployed runtime
