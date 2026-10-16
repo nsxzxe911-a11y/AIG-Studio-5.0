@@ -1,0 +1,53 @@
+name: Studio 593 CAD live preview GREEN once
+
+on:
+  push:
+    branches:
+      - work/studio-593-runtime-page-red
+    paths:
+      - .github/workflows/studio-593-cad-preview-green-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  cad-live-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Confirm CAD preview RED before patch
+        shell: bash
+        run: |
+          set +e
+          python3 ci/verify_cad_live_preview_v593.py > /tmp/cad-red.log 2>&1
+          rc=$?
+          cat /tmp/cad-red.log
+          test "$rc" -ne 0
+          grep -Eq 'CAD_LIVE_PREVIEW_MISSING|CAD_ACTION_MOVE_PAN_ONLY' /tmp/cad-red.log
+      - name: Apply CAD live preview GREEN
+        run: python3 ci/apply_cad_live_preview_v593.py
+      - name: Verify CAD live preview GREEN
+        run: python3 ci/verify_cad_live_preview_v593.py
+      - name: Keep formal page architecture RED
+        shell: bash
+        run: |
+          set +e
+          python3 ci/verify_formal_page_architecture_v593.py > /tmp/page-red.log 2>&1
+          rc=$?
+          cat /tmp/page-red.log
+          test "$rc" -ne 0
+          grep -Fq 'FORMAL_PAGE_MODAL_OR_GENERIC_SHELL_FORBIDDEN' /tmp/page-red.log
+      - name: Commit CAD preview only
+        shell: bash
+        run: |
+          if git diff --quiet -- app/src/main/java/com/aigstudio/app/MainActivity.kt; then
+            echo 'CAD_PREVIEW_ALREADY_APPLIED=PASS'
+            exit 0
+          fi
+          git config user.name 'AIG Studio CI'
+          git config user.email 'actions@users.noreply.github.com'
+          git add app/src/main/java/com/aigstudio/app/MainActivity.kt
+          git commit -m 'fix(cad): add live transient geometry preview'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
