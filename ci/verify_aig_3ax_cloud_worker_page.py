@@ -11,9 +11,11 @@ def main():
     required = [
         'AIG 3AX Cloud 3D Worker',
         'uiux/assets/axis3.jpg',
-        'tur-learning/TRELLIS',
-        '/image_to_glb',
+        'Ayush4151y/trellis-3d-demo',
+        '/generate_shape',
+        'Hunyuan3D-2.1',
         'Client.connect',
+        'view_api',
         'handle_file',
         'EXTERNAL_AI_CANDIDATE',
         'runtimeCompatible:false',
@@ -30,7 +32,8 @@ def main():
     assert 'type="file"' in s and 'accept="image/png,image/jpeg,image/webp"' in s, 'AIG_3AX_CLOUD_WORKER_FILE_INPUT_MISSING'
     assert 'download' in s and '.glb' in s, 'AIG_3AX_CLOUD_WORKER_GLB_DOWNLOAD_MISSING'
     assert 'verifyGlb(buffer)' in s and 'crypto.subtle.digest("SHA-256"' in s, 'AIG_3AX_CLOUD_WORKER_CLIENT_INTEGRITY_GATE_MISSING'
-    print('AIG_3AX_CLOUD_WORKER_PAGE_PASS|AIG=3AX_ONLY|RAW_CANDIDATE_ONLY')
+    assert 'p.length!==6' in s, 'AIG_3AX_CLOUD_WORKER_API_DRIFT_GATE_MISSING'
+    print('AIG_3AX_CLOUD_WORKER_PAGE_PASS|AIG=3AX_ONLY|RAW_CANDIDATE_ONLY|API_DRIFT_BLOCK')
 
 
 if __name__ == '__main__':
