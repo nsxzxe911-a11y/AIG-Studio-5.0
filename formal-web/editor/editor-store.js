@@ -1,0 +1,7 @@
+function clone(value){return value==null?value:structuredClone(value);}
+export function makeStoreKey(productId,pageId,deviceClass){return `${productId}::${pageId}::${deviceClass}`;}
+export function createMemoryAdapter(){const map=new Map();return {getItem:key=>map.has(key)?map.get(key):null,setItem:(key,value)=>{map.set(key,String(value));},removeItem:key=>map.delete(key)};}
+function browserAdapter(){return typeof localStorage!=='undefined'?localStorage:createMemoryAdapter();}
+function read(adapter,key){const raw=adapter.getItem(key);return raw?JSON.parse(raw):{draft:null,current:null,superseded:[]};}
+function write(adapter,key,value){adapter.setItem(key,JSON.stringify(value));}
+export function createEditorStore(adapter=browserAdapter()){return {saveDraft(key,model){const data=read(adapter,key);data.draft={...clone(model),status:'DRAFT'};write(adapter,key,data);return clone(data.draft);},loadDraft(key){return clone(read(adapter,key).draft);},getCurrentApproved(key){return clone(read(adapter,key).current);},approveDraft(key){const data=read(adapter,key);if(!data.draft)throw new Error('NO_DRAFT_TO_APPROVE');const nextVersion=(data.current?.version||0)+1;if(data.current){data.superseded.unshift({...data.current,status:'SUPERSEDED'});}data.current={...clone(data.draft),version:nextVersion,status:'CURRENT_APPROVED'};data.draft=null;write(adapter,key,data);return clone(data.current);},listVersions(key){const data=read(adapter,key);return [data.current,...data.superseded].filter(Boolean).map(clone);}};}
