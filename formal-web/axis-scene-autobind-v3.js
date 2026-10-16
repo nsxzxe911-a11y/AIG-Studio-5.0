@@ -1,5 +1,5 @@
 import { mountAxisScene, releaseAxisScene, renderAxisSceneMarkup, getAxisSceneConfig } from './axis-scene-v2.js';
-import { mountSixAxisScene, releaseSixAxisScene, renderSixAxisSceneMarkup } from './six-axis-formal-v7.js';
+import { mountSixAxisScene, releaseSixAxisScene, renderSixAxisSceneMarkup } from './six-axis-formal-v8.js';
 import { sceneBackendFor } from './axis-scene-router.js';
 import { getUiState } from './runtime-adapter.js';
 
