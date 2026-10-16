@@ -1,0 +1,43 @@
+name: TEMP Studio 592 Core Closure
+
+on:
+  push:
+    branches:
+      - work/studio-592-web-authority-core-closure
+
+permissions:
+  contents: read
+
+concurrency:
+  group: studio-592-core-closure
+  cancel-in-progress: true
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Verify Web Authority surfaces
+        run: |
+          set -euo pipefail
+          python3 ci/verify_formal_web_navigation.py
+          python3 ci/verify_web_authority_isolation.py
+          node ci/verify_web_runtime.mjs
+      - name: Verify production navigation callbacks are live
+        run: python3 ci/verify_ui_button_live_callbacks_v2.py
+      - name: Verify existing runtime gates
+        run: |
+          set -euo pipefail
+          python3 ci/verify_ui_button_manifest_consistency.py
+          python3 ci/verify_production_runtime.py
+          python3 ci/verify_runtime_surfaces.py
+      - name: Run core unit tests
+        run: gradle :core:test --no-daemon
