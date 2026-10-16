@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "productId": "AIG",
+  "axisMode": "3AX",
+  "branch": "work/aig-3ax-cloud-worker-20261016",
+  "headSha": "0e10e051c9e6682899618fa44592eff1c4db5a4b",
+  "frontend": {
+    "provider": "Render",
+    "serviceId": "srv-db8r6aavcj2c73au3oag",
+    "serviceName": "aig-3ax-cloud-worker",
+    "url": "https://aig-3ax-cloud-worker.onrender.com",
+    "deployId": "dep-db8r6aqvcj2c73au3phg",
+    "deployStatus": "live",
+    "deployedCommitSha": "0e10e051c9e6682899618fa44592eff1c4db5a4b"
+  },
+  "generation": {
+    "provider": "Ayush4151y/trellis-3d-demo",
+    "engine": "Hunyuan3D-2.1",
+    "endpoint": "/generate_shape",
+    "candidateClass": "EXTERNAL_AI_CANDIDATE",
+    "runtimeCompatible": false,
+    "pivotsInjected": false,
+    "axisDirectionVerified": false,
+    "endToEndGeneratedGlbVerified": false
+  },
+  "persistence": {
+    "status": "BLOCKED_FREE_DATABASE_LIMIT",
+    "provider": "Render",
+    "attemptedDatabase": "aig-3ax-candidate-db",
+    "plan": "free",
+    "providerError": "cannot have more than one active free tier database",
+    "existingFreeDatabase": "aig-remote-command-db",
+    "existingDatabaseMustNotBeRepurposedWithoutExplicitStorageDesign": true
+  },
+  "safety": {
+    "supportedAxes": ["3AX"],
+    "forbiddenAxes": ["4AX", "5AX", "6AX"],
+    "automaticRuntimePromotion": false,
+    "productCoreMutation": false
+  }
+}
