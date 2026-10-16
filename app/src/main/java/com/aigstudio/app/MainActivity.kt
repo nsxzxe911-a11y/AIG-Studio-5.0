@@ -5969,6 +5969,12 @@ class CadView(
     private val axisPaint = Paint(2).apply { color = 0xFF00B8D4.toInt() }
     private val geoPaint = Paint(3).apply { color = 0xFFE8F1FA.toInt(); style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
     private val accentPaint = Paint(3).apply { color = 0xFFFFB020.toInt(); style = Paint.Style.STROKE }
+    private val previewPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF3DEBFF.toInt(); style = Paint.Style.STROKE
+        strokeWidth = 2f * resources.displayMetrics.density
+        strokeCap = Paint.Cap.ROUND
+        pathEffect = android.graphics.DashPathEffect(floatArrayOf(10f, 8f), 0f)
+    }
     private val controlFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF3DEBFF.toInt(); style = Paint.Style.FILL }
     private val controlStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFFFB020.toInt(); style = Paint.Style.STROKE; strokeWidth = 2f * resources.displayMetrics.density }
     private val textPaint = Paint(1).apply { color = 0xFF8FB3C9.toInt(); textSize = 14 * resources.displayMetrics.scaledDensity; isDither = true }
@@ -5980,6 +5986,7 @@ class CadView(
     private var sceneRevision = 1L
     private var tool = Tool.LINE
     private var firstPoint: Vec2? = null
+    private var previewPoint: Vec2? = null
     private var arcCenter: Vec2? = null
     private var arcStart: Vec2? = null
     private val selectedIds = linkedSetOf<String>()
@@ -6643,6 +6650,7 @@ class CadView(
             if (geometryVisible) drawEntities(layer)
         }
         firstPoint?.let { val p = transform.worldToScreen(it); canvas.drawCircle(p.x.toFloat(), p.y.toFloat(), 8f, accentPaint) }
+        drawTransientPreview(canvas)
         canvas.drawText("精度 0.001 mm • 顯示 0.000 • ${StudioDisplayPolicy.profile(this).tier} • ${renderEngine.backendName} cache=${renderEngine.cacheHits}/${renderEngine.recordings} • ${tool.name}   X ${DisplayFormat.mm(lastWorld.x)}  Y ${DisplayFormat.mm(lastWorld.y)}   C${DisplayFormat.mm(chamferValue)} R${DisplayFormat.mm(filletValue)}", 16f, 26f, textPaint)
     }
 
@@ -6758,6 +6766,44 @@ class CadView(
         drawSelectedControlPoints(canvas)
     }
 
+    private fun drawTransientPreview(canvas: Canvas) {
+        val p = previewPoint ?: return
+        fun screen(v: Vec2)=transform.worldToScreen(v)
+        when(tool) {
+            Tool.LINE -> firstPoint?.let { a ->
+                val sa=screen(a); val sb=screen(p)
+                canvas.drawLine(sa.x.toFloat(),sa.y.toFloat(),sb.x.toFloat(),sb.y.toFloat(),previewPaint)
+            }
+            Tool.RECT -> firstPoint?.let { a ->
+                val p1=screen(a); val p2=screen(Vec2(p.x,a.y)); val p3=screen(p); val p4=screen(Vec2(a.x,p.y))
+                val path=Path().apply { moveTo(p1.x.toFloat(),p1.y.toFloat()); lineTo(p2.x.toFloat(),p2.y.toFloat()); lineTo(p3.x.toFloat(),p3.y.toFloat()); lineTo(p4.x.toFloat(),p4.y.toFloat()); close() }
+                canvas.drawPath(path,previewPaint)
+            }
+            Tool.CIRCLE, Tool.HOLE -> firstPoint?.let { c ->
+                val sc=screen(c); val r=(c.distanceTo(p)*transform.pixelsPerUnit).toFloat()
+                if(r>0f) canvas.drawCircle(sc.x.toFloat(),sc.y.toFloat(),r,previewPaint)
+            }
+            Tool.ARC -> {
+                val center=arcCenter
+                val start=arcStart
+                if(center!=null && start==null) {
+                    val a=screen(center); val b=screen(p)
+                    canvas.drawLine(a.x.toFloat(),a.y.toFloat(),b.x.toFloat(),b.y.toFloat(),previewPaint)
+                    val r=(center.distanceTo(p)*transform.pixelsPerUnit).toFloat()
+                    if(r>0f) canvas.drawCircle(a.x.toFloat(),a.y.toFloat(),r,previewPaint)
+                } else if(center!=null && start!=null) {
+                    val radius=center.distanceTo(start)
+                    val direction=p-center
+                    if(direction.length()>=CNC_RESOLUTION_MM) {
+                        val end=center+direction.normalized()*radius
+                        drawArcPolyline(canvas,Arc(center=center,radius=radius,start=start,end=end,clockwise=false),previewPaint)
+                    }
+                }
+            }
+            else -> Unit
+        }
+    }
+
     private fun drawSelectedControlPoints(canvas:Canvas) {
         if(selectedIds.isEmpty()) return
         val density=resources.displayMetrics.density
@@ -6807,13 +6853,21 @@ class CadView(
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 lastX = event.x; lastY = event.y
-                if (tool != Tool.PAN) handleTap(lastWorld)
+                if (tool != Tool.PAN) {
+                    handleTap(lastWorld)
+                    previewPoint = null
+                }
                 sceneRevision++
                 invalidate(); return true
             }
-            MotionEvent.ACTION_MOVE -> if (tool == Tool.PAN) {
-                transform.pan((event.x-lastX).toDouble(), (event.y-lastY).toDouble())
-                lastX=event.x; lastY=event.y; sceneRevision++; postInvalidateOnAnimation(); return true
+            MotionEvent.ACTION_MOVE -> {
+                if (tool == Tool.PAN) {
+                    transform.pan((event.x-lastX).toDouble(), (event.y-lastY).toDouble())
+                    lastX=event.x; lastY=event.y; sceneRevision++
+                } else {
+                    previewPoint = lastWorld
+                }
+                postInvalidateOnAnimation(); return true
             }
         }
         return true
