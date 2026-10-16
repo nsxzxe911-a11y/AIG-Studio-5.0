@@ -1,0 +1,30 @@
+{
+  "schema": "aig-dual-project-auto-finish-v1",
+  "mode": "AUTO_FINISH",
+  "branch": "feature/dual-project-auto-finish-20261017",
+  "sourceAnchor": "813af6257ac679b1c5027883770eaa97893a8f4e",
+  "studioRepository": "nsxzxe911-a11y/AIG-Studio-5.0",
+  "controllerRepository": "nsxzxe911-a11y/AIG-II",
+  "controllerSourceAnchor": "c2166fbb05be75df2ee8ebbed15dcac168d88e36",
+  "versionPolicy": "FREEZE_UNTIL_DUAL_PROJECT_SINGLE_GATE_PASS",
+  "formalRuntimePolicy": {
+    "homeFirst": true,
+    "engineeringShellFallback": false,
+    "authorityCompareProductionEntry": false,
+    "forbiddenProductionTokens": [
+      "runtime-shell.js",
+      "dual-runtime",
+      "product-pane",
+      "雙產品工作區",
+      "engineering shell",
+      "工程殼",
+      "authority-compare/index.html"
+    ]
+  },
+  "taskState": {
+    "completed": [],
+    "currentTask": 1,
+    "nextTask": 3,
+    "releaseStatus": "BLOCKED_UNTIL_DUAL_PROJECT_SINGLE_GATE_PASS"
+  }
+}
