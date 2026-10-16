@@ -1,13 +1,13 @@
 AIG dual formal runtime
-Source: AIG-II feature/aig-web-6ax-visual-v1-20261016 @ c905f398038022e016b8c7520fca5a8fd6812caf
+Source: AIG-II feature/aig-web-6ax-visual-v1-20261016 @ 590515b8fe72c5507fa6ae3e6e02cdb87da0b5ee
 Axis Runtime: V3 state/event fix retained
 MPG: ×1 / ×10 / ×100 / ×1000 retained
 Z baseline: Runtime starts at 350.000; Web visual motion uses Z-350 reference
-6AX Visual V8.2: V8 CC0 skin retained; marked headRail removed; front B support box removed while circular front/rear bearing hardware stays; B swing arms slimmed further and moved outward; rear support reduced and moved farther rearward; V7 pivot chain and compact C base retained
+6AX Visual V8.3: V8 CC0 skin retained; mechanical proportion rule corrected to support seat > bearing > shaft for both A and B axes; A shaft body reduced; A/B support seats added as larger circular structural rings; prior V8.2 marked-clearance removals retained; V7 pivot chain and compact C base retained
 External skin source: Poly Haven / Blue Metal Plate / Rob Tuytel / CC0 / https://polyhaven.com/a/blue_metal_plate
 AIG-II / Studio six-axis-formal-v8.js blob: c9a1c51e25c183c4b28f4425a153da0caa156465
-AIG-II / Studio six-axis-skin-v8.js blob: e1f573beb5c2aad8c6fc889f37af7cb83c6556fe
+AIG-II / Studio six-axis-skin-v8.js blob: 5a2fb38815f1b49d3a965e86da04373c237db8a2
 AIG-II / Studio axis-scene-autobind-v3.js blob: 1a3d8518ebfa49710ae8ee22ddb162953ac2cf63
-Local TDD: V8.2 marked-clearance tests RED 2/2 fail on V8.1 -> GREEN 2/2 PASS; node --check six-axis-skin-v8.js PASS
-Scope: 6AX Web visual support geometry/skin assignment only; Windows, APK, Native Core untouched
+Focused verification: node --check six-axis-skin-v8.js PASS; AIG_6AX_V83_MECHANICAL_PROPORTION_PASS using exact deployed skin source and representative V7 geometry contract
+Scope: 6AX Web visual support/bearing/shaft geometry and skin assignment only; Windows, APK, Native Core untouched
 Visual Authority status: pending user review on deployed runtime
