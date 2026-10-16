@@ -16,9 +16,9 @@ def main():
         'Client.connect',
         'handle_file',
         'EXTERNAL_AI_CANDIDATE',
-        'runtimeCompatible=false',
-        'pivotsInjected=false',
-        'axisDirectionVerified=false',
+        'runtimeCompatible:false',
+        'pivotsInjected:false',
+        'axisDirectionVerified:false',
         '4f46a4c1f1ed7c71165108ed13f4809201794c16ebc397987d06d1be1f773e28',
         '@google/model-viewer@4.4.0',
     ]
@@ -27,8 +27,9 @@ def main():
     forbidden = ['4AX', '5AX', '6AX', 'MODEL_VISUAL_PASS', 'RUNTIME_PASS', 'contents: write']
     for token in forbidden:
         assert token not in s, f'AIG_3AX_CLOUD_WORKER_CAPABILITY_OR_FAKE_PASS:{token}'
-    assert '<input type="file"' in s, 'AIG_3AX_CLOUD_WORKER_FILE_INPUT_MISSING'
+    assert 'type="file"' in s and 'accept="image/png,image/jpeg,image/webp"' in s, 'AIG_3AX_CLOUD_WORKER_FILE_INPUT_MISSING'
     assert 'download' in s and '.glb' in s, 'AIG_3AX_CLOUD_WORKER_GLB_DOWNLOAD_MISSING'
+    assert 'verifyGlb(buffer)' in s and 'crypto.subtle.digest("SHA-256"' in s, 'AIG_3AX_CLOUD_WORKER_CLIENT_INTEGRITY_GATE_MISSING'
     print('AIG_3AX_CLOUD_WORKER_PAGE_PASS|AIG=3AX_ONLY|RAW_CANDIDATE_ONLY')
 
 
