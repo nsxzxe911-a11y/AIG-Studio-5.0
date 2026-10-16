@@ -9,6 +9,8 @@ on:
       - ci/verify_formal_runtime_entry.py
       - ci/verify_runtime_surfaces.py
       - ci/verify_production_runtime.py
+      - ci/test_formal_web_runtime.py
+      - web/main-runtime-preview.html
       - continuity/dual-project-auto-finish.json
       - .github/workflows/aig-auto-finish-focused.yml
   workflow_dispatch:
@@ -30,3 +32,5 @@ jobs:
         run: python3 ci/verify_runtime_surfaces.py
       - name: Existing Studio production Runtime verifier
         run: python3 ci/verify_production_runtime.py
+      - name: Formal Studio Web Runtime gate
+        run: python3 ci/test_formal_web_runtime.py
