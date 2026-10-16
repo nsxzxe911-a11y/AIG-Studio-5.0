@@ -1,10 +1,17 @@
 {
-  "schemaVersion": 1,
-  "schemaId": "aig-3d-authority-site-v1",
+  "schemaVersion": 2,
+  "schemaId": "aig-3d-authority-site-v2",
   "canonicalRepository": "nsxzxe911-a11y/AIG-II",
   "canonicalBranch": "docs/aig-3d-authority-compare-site-20261016",
   "sitePath": "web/authority-compare",
-  "lastVerifiedCommitSha": "9436644088c9832e3e4905916f7db8475d9ff704",
+  "lastVerifiedCommitSha": "c7c1882e2e13c2b4b8f45c5c76b031748c36b6fb",
+  "canonicalEvidence": {
+    "tenPageAuthoritySourceIdentity": "VERIFIED",
+    "tenPagePackagedAssets": "PENDING",
+    "axisMachineReference": "3AX_AVAILABLE_AS_CANONICAL_REFERENCE_IDENTITY",
+    "modelStatus": "VISUAL_REVIEW_PENDING"
+  },
   "supportedAxes": ["3AX"],
+  "forbiddenAxes": ["4AX", "5AX", "6AX"],
   "mode": "POINTER_ONLY_NO_SITE_COPY"
 }
