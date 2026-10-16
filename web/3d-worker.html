@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>AIG 3AX Cloud 3D Worker</title>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js"></script>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,"Noto Sans TC",system-ui,sans-serif;background:#020407;color:#eaf7ff}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0,#0a2637 0,#020407 38%);min-height:100vh}
+    .shell{max-width:1180px;margin:auto;padding:18px}.top{border:1px solid #1a4a68;background:rgba(7,17,27,.92);border-radius:18px;padding:16px 18px;box-shadow:0 0 28px rgba(52,195,255,.10)}
+    h1{font-size:1.3rem;margin:0}.sub{margin-top:5px;color:#8facc0;font-size:.88rem}.badge{display:inline-block;margin-top:10px;border:1px solid #2d8db8;border-radius:999px;padding:5px 10px;color:#8ee7ff;font-size:.78rem}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.card{border:1px solid #163c53;background:rgba(7,17,27,.94);border-radius:18px;overflow:hidden}.card h2{font-size:1rem;margin:0;padding:13px 15px;border-bottom:1px solid #163c53}.body{padding:14px}
+    img,model-viewer{width:100%;height:420px;object-fit:contain;background:#010305;border:1px solid #173e57;border-radius:13px}model-viewer{display:block}
+    .toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}button,.button{appearance:none;border:1px solid #318bb4;border-radius:11px;background:#071723;color:#eaf7ff;padding:11px 14px;font:inherit;text-decoration:none;cursor:pointer}.primary{border-color:#60d7ff;box-shadow:0 0 18px rgba(52,195,255,.16)}button:disabled,.disabled{opacity:.4;cursor:not-allowed}
+    input[type=file]{width:100%;padding:10px;border:1px dashed #355b70;border-radius:11px;background:#050b10;color:#bcd3df}.status{margin-top:12px;padding:11px 12px;border-left:3px solid #d29b31;background:#0a131a;white-space:pre-wrap;word-break:break-word}.ok{border-left-color:#44d893}.err{border-left-color:#ec7777}.kv{display:grid;grid-template-columns:148px 1fr;gap:7px 10px;margin-top:12px;font-size:.86rem}.kv div:nth-child(odd){color:#87a5b7}code{color:#9fe9ff;word-break:break-all}.warning{margin-top:13px;padding:11px;border:1px solid #6d5220;border-radius:12px;color:#ffd474;background:#171205;font-size:.84rem}.footer{padding:15px 2px;color:#6f8999;font-size:.78rem}
+    @media(max-width:820px){.grid{grid-template-columns:1fr}img,model-viewer{height:320px}.kv{grid-template-columns:112px 1fr}}
+  </style>
+</head>
+<body>
+<main class="shell">
+  <section class="top">
+    <h1>AIG 3AX Cloud 3D Worker</h1>
+    <div class="sub">Authority/Reference → TRELLIS Image→3D → GLB 候選 → SHA 驗證。全程網路執行，不依賴桌機。</div>
+    <span class="badge">AIG · 3AX ONLY · EXTERNAL_AI_CANDIDATE</span>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>1 · 3AX 輸入圖</h2>
+      <div class="body">
+        <img id="source-preview" alt="AIG 3AX reference">
+        <div class="toolbar"><button id="use-default">使用 AIG 3AX 預設圖</button></div>
+        <p class="sub">也可以選擇另一張 3AX 參考圖；檔案只會送到生成服務，不會自動寫進 Runtime。</p>
+        <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp">
+        <div class="kv">
+          <div>Canonical Authority SHA</div><div><code>4f46a4c1f1ed7c71165108ed13f4809201794c16ebc397987d06d1be1f773e28</code></div>
+          <div>預設網路素材</div><div><code>uiux/assets/axis3.jpg</code></div>
+          <div>服務</div><div><code>tur-learning/TRELLIS · /image_to_glb</code></div>
+        </div>
+        <div class="toolbar">
+          <button id="generate" class="primary">生成 3AX GLB</button>
+          <button id="cancel" disabled>取消本輪</button>
+        </div>
+        <div id="status" class="status">READY · 尚未開始生成</div>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2>2 · GLB 候選預覽</h2>
+      <div class="body">
+        <model-viewer id="viewer" camera-controls interaction-prompt="none" shadow-intensity="1" exposure="1.15" alt="AIG 3AX external AI GLB candidate"></model-viewer>
+        <div class="toolbar">
+          <a id="download-glb" class="button disabled" aria-disabled="true">下載候選 GLB</a>
+          <a id="download-json" class="button disabled" aria-disabled="true">下載候選 JSON</a>
+        </div>
+        <div class="kv">
+          <div>Candidate class</div><div><code>EXTERNAL_AI_CANDIDATE</code></div>
+          <div>GLB SHA-256</div><div><code id="model-sha">—</code></div>
+          <div>runtimeCompatible</div><div><code>false</code></div>
+          <div>pivotsInjected</div><div><code>false</code></div>
+          <div>axisDirectionVerified</div><div><code>false</code></div>
+        </div>
+        <div class="warning">此頁只產生外觀候選。候選必須回到 AIG Gate 做語意分件、Pivot 與軸方向驗證後，才有資格進正式 Runtime；本頁不會自動升級任何 PASS。</div>
+      </div>
+    </article>
+  </section>
+  <div class="footer">AIG 3AX Cloud Worker · Browser-side Gradio client · no product-core mutation</div>
+</main>
+
+<script type="module">
+import { Client, handle_file } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
+
+const DEFAULT_IMAGE_URL = "https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-Studio-5.0/813af6257ac679b1c5027883770eaa97893a8f4e/uiux/assets/axis3.jpg";
+const SPACE = "tur-learning/TRELLIS";
+const ENDPOINT = "/image_to_glb";
+const CANONICAL_SHA = "4f46a4c1f1ed7c71165108ed13f4809201794c16ebc397987d06d1be1f773e28";
+const $ = id => document.getElementById(id);
+let selectedFile = null;
+let sourceObjectUrl = null;
+let modelObjectUrl = null;
+let manifestObjectUrl = null;
+let cancelled = false;
+
+function setStatus(text, type="") {
+  const el = $("status"); el.textContent = text; el.className = `status ${type}`.trim();
+}
+function revoke(url){ if(url) URL.revokeObjectURL(url); }
+function resetDownloads(){
+  for (const id of ["download-glb","download-json"]) { const a=$(id); a.removeAttribute("href"); a.classList.add("disabled"); a.setAttribute("aria-disabled","true"); }
+  $("model-sha").textContent="—"; $("viewer").removeAttribute("src");
+  revoke(modelObjectUrl); modelObjectUrl=null; revoke(manifestObjectUrl); manifestObjectUrl=null;
+}
+function setDefault(){
+  selectedFile=null; revoke(sourceObjectUrl); sourceObjectUrl=null; $("file-input").value=""; $("source-preview").src=DEFAULT_IMAGE_URL; resetDownloads(); setStatus("READY · 使用 AIG 3AX 預設網路素材");
+}
+$("use-default").addEventListener("click", setDefault);
+$("file-input").addEventListener("change", e => {
+  selectedFile=e.target.files?.[0] || null;
+  if(!selectedFile) return setDefault();
+  revoke(sourceObjectUrl); sourceObjectUrl=URL.createObjectURL(selectedFile); $("source-preview").src=sourceObjectUrl; resetDownloads(); setStatus(`READY · 自訂圖：${selectedFile.name}`);
+});
+$("cancel").addEventListener("click",()=>{ cancelled=true; setStatus("CANCEL REQUESTED · 若雲端已開始運算，本頁只會忽略回傳結果"); });
+
+async function sourceBlob(){
+  if(selectedFile) return selectedFile;
+  const r=await fetch(DEFAULT_IMAGE_URL,{cache:"no-store"});
+  if(!r.ok) throw new Error(`預設 3AX 圖讀取失敗 HTTP ${r.status}`);
+  return await r.blob();
+}
+function extractResultUrl(value){
+  if(!value) return null;
+  if(typeof value === "string") return value;
+  if(Array.isArray(value)) { for(const v of value){ const u=extractResultUrl(v); if(u) return u; } return null; }
+  if(typeof value === "object") return value.url || value.path || value.name || null;
+  return null;
+}
+async function sha256Hex(buffer){
+  const digest=await crypto.subtle.digest("SHA-256",buffer);
+  return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function verifyGlb(buffer){
+  if(buffer.byteLength < 20) throw new Error("GLB 太小");
+  const b=new Uint8Array(buffer); if(String.fromCharCode(...b.slice(0,4))!=="glTF") throw new Error("GLB magic 不正確");
+  const v=new DataView(buffer); if(v.getUint32(4,true)!==2) throw new Error("GLB 版本不是 2");
+  if(v.getUint32(8,true)!==buffer.byteLength) throw new Error("GLB length 不一致");
+}
+function enableDownload(id,href,name){ const a=$(id); a.href=href; a.download=name; a.classList.remove("disabled"); a.setAttribute("aria-disabled","false"); }
+
+$("generate").addEventListener("click", async ()=>{
+  const generate=$("generate"), cancel=$("cancel"); cancelled=false; resetDownloads(); generate.disabled=true; cancel.disabled=false;
+  try{
+    setStatus("CONNECTING · 連接 TRELLIS 雲端…");
+    const image=await sourceBlob();
+    const app=await Client.connect(SPACE);
+    if(cancelled) throw new Error("本輪已取消");
+    setStatus("GENERATING · TRELLIS 正在建立 3AX 外觀候選；ZeroGPU 冷啟動可能需要較久時間…");
+    const result=await app.predict(ENDPOINT,[handle_file(image),[],false,1,7.5,12,3.0,12,"stochastic",0.95,1024]);
+    if(cancelled) throw new Error("本輪已取消；雲端回傳已忽略");
+    const remoteUrl=extractResultUrl(result?.data?.[0] ?? result?.data);
+    if(!remoteUrl) throw new Error("TRELLIS 有回傳，但找不到 GLB URL");
+    setStatus("VERIFYING · GLB 下載與 SHA 驗證中…");
+    const rr=await fetch(remoteUrl); if(!rr.ok) throw new Error(`GLB 下載失敗 HTTP ${rr.status}`);
+    const buffer=await rr.arrayBuffer(); verifyGlb(buffer); const modelSha=await sha256Hex(buffer);
+    modelObjectUrl=URL.createObjectURL(new Blob([buffer],{type:"model/gltf-binary"}));
+    $("viewer").src=modelObjectUrl; $("model-sha").textContent=modelSha;
+    enableDownload("download-glb",modelObjectUrl,"AIG-3AX-TRELLIS-candidate.glb");
+    const manifest={schemaVersion:1,productId:"AIG",axisMode:"3AX",candidateClass:"EXTERNAL_AI_CANDIDATE",status:"EXTERNAL_AI_CANDIDATE",provider:"tur-learning/TRELLIS",apiName:ENDPOINT,visualAuthoritySha256:CANONICAL_SHA,modelSha256:modelSha,runtimeCompatible:false,pivotsInjected:false,axisDirectionVerified:false};
+    manifestObjectUrl=URL.createObjectURL(new Blob([JSON.stringify(manifest,null,2)],{type:"application/json"}));
+    enableDownload("download-json",manifestObjectUrl,"AIG-3AX-TRELLIS-candidate.json");
+    setStatus(`CANDIDATE READY · GLB 已驗證\nSHA-256 ${modelSha}\n尚未注入 Pivot／尚未通過軸方向 Gate`,"ok");
+  }catch(err){ setStatus(`BLOCKED · ${err?.message || err}`,"err"); }
+  finally{ generate.disabled=false; cancel.disabled=true; }
+});
+
+setDefault();
+</script>
+</body>
+</html>
