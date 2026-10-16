@@ -1,4 +1,5 @@
-AIG-II source branch: feature/aig-visual-runtime-editor-20261016
-AIG-II source commit: b910485a4060d1d2648405b4c09780e677021d25
-Studio mirror commit: 058b07ba7cefbaf2e8cb6fdc29efb113e674634c
-Feature: 3AX persistent 70/30 WebGL machining viewport
+AIG dual formal runtime
+Source: AIG-II feature/aig-visual-runtime-editor-20261016
+Axis Runtime: V2 / 3AX-6AX persistent WebGL
+Local TDD: 11/11 PASS
+Scope: Web-only; Windows/APK/Native Core untouched
