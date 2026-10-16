@@ -20,7 +20,7 @@
       "surfaceId": "CAD",
       "assetId": "cad",
       "sharedCommand": "OPEN_CAD",
-      "verifiedCallback": "Toast.makeText(this,\"CAD • LIVE WORKSPACE\",Toast.LENGTH_SHORT).show()",
+      "verifiedCallback": "selectTool(Tool.SELECT)",
       "bounds": null
     },
     {

@@ -965,7 +965,7 @@ class MainActivity : Activity() {
             productionUiSwitch.addView(button)
         }
         addProductionUi("CAD") {
-            Toast.makeText(this,"CAD • LIVE WORKSPACE",Toast.LENGTH_SHORT).show()
+            selectTool(Tool.SELECT)
         }
         addProductionUi("CAM") { showCamWorkstation() }
         addProductionUi("SIM") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM")) }

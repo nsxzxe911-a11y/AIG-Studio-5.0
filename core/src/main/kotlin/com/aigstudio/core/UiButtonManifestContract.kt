@@ -47,7 +47,7 @@ object UiButtonManifestContract {
             surfaceId = "CAD",
             assetId = "cad",
             command = SharedUiCommand.OPEN_CAD,
-            verifiedCallback = """Toast.makeText(this,"CAD • LIVE WORKSPACE",Toast.LENGTH_SHORT).show()""",
+            verifiedCallback = "selectTool(Tool.SELECT)",
         ),
         UiButtonManifestEntry(
             buttonId = "NAV_CAM",
