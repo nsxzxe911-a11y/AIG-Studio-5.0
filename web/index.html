@@ -181,7 +181,7 @@ html,body{background:#020407}
 </div>
 <script>
 const pages=[
- ["HOME","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["SIM","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"],["6AX","#27e9ff"],["NC","#33f39b"]
+ ["HOME","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["SIM","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"],["6AX","#27e9ff"],["NC","#33f39b"],["AI","#9f72ff"]
 ];
 const utilityPages=[["刀路","#ff4da6"],["功能","#9f72ff"]];
 const nav=document.getElementById("nav"),screens=document.getElementById("screens");
@@ -248,6 +248,17 @@ function ncPage(){
  '<div class="body" style="padding-top:0"><div class="ncKeypad" data-nc-keypad>'+keypad+'</div></div>'+
  '<div class="body" style="padding-top:0"><div class="notice" data-nc-msg>讀取目前軸別 G-code 後可直接編輯。</div></div></section>'+
  '<section class="panel"><div class="head"><h3>NC 狀態 / 游標說明</h3></div><div class="body ncCursor"><div class="field"><b>游標</b><span data-nc-cursor>LINE 1</span></div><div class="field"><b>Cursor-Line CNC Help</b><span data-nc-help>移動游標即可查看目前行 G/M 說明。</span></div><div class="field"><b>解析區塊</b><span data-nc-blocks>0</span></div><div class="field"><b>責任範圍</b><span>NC 只處理 G-code；碰撞 / Setup / 3D 穩定性請到 SIM 進階者模式。</span></div><div class="notice">Block Skip 會切換目前行行首 /；M00 / M01 / Dry Run / Single Block 於 SIM 執行。</div><div class="ncShortcut">快捷：Ctrl+S 儲存 • Ctrl+Enter 驗證 • Alt+I INSERT • Alt+D DELETE • Alt+B BLOCK SKIP</div></div></section></div></div>';
+}
+
+function aiPage(){
+ return '<div data-ai-runtime data-authority-fallback="PROCEDURAL_RGB_GLASS"><div class="workgrid">'+
+ '<section class="panel"><div class="head"><div><h2>AI • LOCAL PROJECT CONTEXT</h2><small>AIG 正式 RGB Runtime • 本機優先 • 不控制 CNC 輸出</small></div><span class="spacer"></span><span class="badge">LOCAL AI</span></div><div class="body">'+
+ '<div class="runtimeStatus"><div class="metric"><b>WORKING COPY</b><span data-ai-working>LOCAL ACTIVE</span></div><div class="metric"><b>VERIFIED MAIN</b><span data-ai-verified>PENDING VERIFY</span></div><div class="metric"><b>IMMUTABLE VAULT</b><span data-ai-vault>READ ONLY</span></div><div class="metric"><b>MACHINE OUTPUT</b><span>DISABLED</span></div></div>'+
+ '<div class="notice" style="margin-top:9px">AI 只讀取目前專案 CAD / CAM / SIM / NC context 提供檢查與導覽；不自動覆蓋 Verified Main、不直接送出 CNC 動作。</div></div></section>'+
+ '<section class="panel"><div class="head"><h3>PROJECT CONTEXT</h3></div><div class="body menuDetailGrid">'+
+ '<div class="field"><b>CAD</b><span data-ai-context-cad>CHECKING</span></div><div class="field"><b>CAM</b><span data-ai-context-cam>CHECKING</span></div><div class="field"><b>SIM</b><span data-ai-context-sim>CHECKING</span></div><div class="field"><b>NC</b><span data-ai-context-nc>CHECKING</span></div>'+
+ '<div class="field"><b>Authority</b><span>PROCEDURAL RGB GLASS</span></div><div class="field"><b>Visual asset</b><span>APPROVED ASSET PENDING INGEST</span></div></div></section>'+
+ '</div></div>';
 }
 
 function simPage(axis){
@@ -3094,10 +3105,23 @@ function makeMenuRuntime(root){
  });
  render("PROJECT");
 }
+function makeAiRuntime(root){
+ const present=(key)=>{try{return localStorage.getItem(key)?"AVAILABLE":"EMPTY"}catch{return"LOCAL STORAGE UNAVAILABLE"}};
+ const ncLines=()=>{try{return ["3AX","4AX","5AX","6AX"].reduce((n,ax)=>{const code=localStorage.getItem("aig-code-"+ax)||"";return n+(code?code.split(/\r?\n/).filter(Boolean).length:0)},0)}catch{return 0}};
+ const set=(sel,value)=>{const el=root.querySelector(sel);if(el)el.textContent=value};
+ set("[data-ai-working]","LOCAL ACTIVE");
+ set("[data-ai-verified]","PENDING #589 VERIFY");
+ set("[data-ai-vault]","READ ONLY");
+ set("[data-ai-context-cad]",present("aig-cad-draft-v1"));
+ set("[data-ai-context-cam]",present("aig-cam-toolpath-v1"));
+ set("[data-ai-context-sim]",present("aig-stock-v1"));
+ set("[data-ai-context-nc]",ncLines()+" lines");
+}
+
 pages.forEach(([name,color])=>{
  const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>aigGuard(document.body,"頁面切換",()=>show(name),null,"warn");nav.appendChild(b);
  const s=document.createElement("section");s.className="screen";s.dataset.page=name;
- s.innerHTML=name==="HOME"?homePage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="SIM"?simHubPage():name==="NC"?ncPage():simPage(name);
+ s.innerHTML=name==="HOME"?homePage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="SIM"?simHubPage():name==="NC"?ncPage():name==="AI"?aiPage():simPage(name);
  screens.appendChild(s);
 });
 utilityPages.forEach(([name])=>{const s=document.createElement("section");s.className="screen";s.dataset.page=name;s.innerHTML=name==="刀路"?toolpathPage():menuPage();screens.appendChild(s)});
@@ -3105,6 +3129,7 @@ document.querySelectorAll("[data-runtime]").forEach(el=>{aigBindFieldFeedback(el
 document.querySelectorAll("[data-home-runtime]").forEach(el=>aigGuard(el,"HOME Runtime 初始化",()=>makeHomeRuntime(el),null,"warn"));
 document.querySelectorAll("[data-sim-hub]").forEach(el=>aigGuard(el,"SIM 中心初始化",()=>makeSimHubRuntime(el),null,"warn"));
 document.querySelectorAll("[data-nc-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"NC Runtime 初始化",()=>makeNcRuntime(el),null,"error")});
+document.querySelectorAll("[data-ai-runtime]").forEach(el=>aigGuard(el,"AI Runtime 初始化",()=>makeAiRuntime(el),null,"warn"));
 document.querySelectorAll("[data-cad-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"CAD Runtime 初始化",()=>makeCadRuntime(el),null,"error")});
 document.querySelectorAll("[data-cam-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"CAM Runtime 初始化",()=>makeCamRuntime(el),null,"error")});
 document.querySelectorAll("[data-tp-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"刀路 Runtime 初始化",()=>makeToolpathRuntime(el),null,"error")});
