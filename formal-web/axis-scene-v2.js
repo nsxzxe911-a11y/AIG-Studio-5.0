@@ -28,7 +28,7 @@ function scale(x,y,z){const m=I();m[0]=x;m[5]=y;m[10]=z;return m;}
 function rx(a){const r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r),m=I();m[5]=c;m[6]=s;m[9]=-s;m[10]=c;return m;}
 function ry(a){const r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r),m=I();m[0]=c;m[2]=-s;m[8]=s;m[10]=c;return m;}
 function rz(a){const r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r),m=I();m[0]=c;m[1]=s;m[4]=-s;m[5]=c;return m;}
-function model(item,pose,pageId){let m=mul(translate(...item.position),scale(...item.size));if(item.dynamic==='tool'){const off=translate(pose.x*.03,pose.z*.03,-pose.y*.03);m=mul(off,m);}if(item.dynamic==='workpiece'){const rot=pageId==='4AX'?rx(pose.a):pageId==='5AX'?mul(ry(pose.b),rx(pose.a)):pageId==='6AX'?mul(rz(pose.c),mul(ry(pose.b),rx(pose.a))):I();m=mul(rot,m);}return m;}
+function model(item,pose,pageId){let m=mul(translate(...item.position),scale(...item.size));if(item.dynamic==='tool'){const off=translate(pose.x*.03,(pose.z-350)*.03,-pose.y*.03);m=mul(off,m);}if(item.dynamic==='workpiece'){const rot=pageId==='4AX'?rx(pose.a):pageId==='5AX'?mul(ry(pose.b),rx(pose.a)):pageId==='6AX'?mul(rz(pose.c),mul(ry(pose.b),rx(pose.a))):I();m=mul(rot,m);}return m;}
 function perspective(fovy,aspect,near,far){const f=1/Math.tan(fovy/2),nf=1/(near-far);return new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)*nf,-1,0,0,(2*far*near)*nf,0]);}
 function norm(v){const l=Math.hypot(v[0],v[1],v[2])||1;return v.map(x=>x/l);}
 function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
