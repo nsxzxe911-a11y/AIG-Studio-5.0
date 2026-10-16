@@ -1,6 +1,6 @@
 import { validateBinding } from './editor/command-registry.js';
 
-function initialState(){return {ui:{shell:'formal-runtime',connection:'independent',lastStatus:'READY'},nc:{text:''},settings:{fps:60,precision:'0.001',jogMultiplier:1},sim:{playback:'stopped'},axis:{x:0,y:0,z:0,a:0,b:0,c:0},cad:{editorOpen:false},cam:{editorOpen:false}};}
+function initialState(){return {ui:{shell:'formal-runtime',connection:'independent',lastStatus:'READY'},nc:{text:''},settings:{fps:60,precision:'0.001',jogMultiplier:1},sim:{playback:'stopped'},axis:{x:0,y:0,z:350,a:0,b:0,c:0},cad:{editorOpen:false},cam:{editorOpen:false}};}
 const states=new Map();
 function stateFor(productId){if(!['aig-ii','aig'].includes(productId))throw new Error(`UNKNOWN_PRODUCT:${productId}`);if(!states.has(productId))states.set(productId,initialState());return states.get(productId);}
 export function getUiState(productId,statePath){const parts=statePath.split('.');let value=stateFor(productId);for(const key of parts){value=value?.[key];}return value;}
