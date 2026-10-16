@@ -1,5 +1,6 @@
 AIG dual formal runtime
-Source: AIG-II feature/aig-visual-runtime-editor-20261016
-Axis Runtime: V2 / 3AX-6AX persistent WebGL
-Local TDD: 11/11 PASS
-Scope: Web-only; Windows/APK/Native Core untouched
+Source: AIG-II feature/aig-web-6ax-visual-v1-20261016 @ 653b65e27f4c1db210197602f7213a6d24c633f2
+Axis Runtime: V3 state/event fix retained
+6AX Visual: formal machine silhouette + nested C→B→A pivots + dedicated camera
+Local focused TDD: 7/7 PASS
+Scope: 6AX Web visual only; 3AX/4AX/5AX, Windows, APK, Native Core untouched
