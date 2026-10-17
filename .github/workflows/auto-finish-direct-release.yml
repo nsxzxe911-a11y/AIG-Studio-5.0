@@ -11,6 +11,7 @@ on:
       - desktop/**
       - shared/**
       - ci/**
+      - continuity/**
       - web/**
       - build_android_release.sh
       - build_windows_native.ps1
