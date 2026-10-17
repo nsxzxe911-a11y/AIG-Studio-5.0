@@ -10,7 +10,7 @@ import android.graphics.Color
 import android.graphics.ColorFilter
 import android.graphics.Paint
 import android.graphics.PixelFormat
-import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
@@ -21,13 +21,13 @@ import android.view.ViewTreeObserver
 import java.security.MessageDigest
 import java.util.Collections
 import java.util.WeakHashMap
-import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Installs an approved RGB HOME authority without changing machining callbacks.
  * Priority is the current user-approved 2026-10-16 authority, then the verified
  * 2026-10-05 AIG-II 427 stable authority. The programmatic engineering shell is
- * never a production fallback and is never visible beneath the approved art.
+ * never a production fallback and is never visible beneath approved art.
  */
 class AigStudioApplication : Application(), Application.ActivityLifecycleCallbacks {
     private val applied = Collections.newSetFromMap(WeakHashMap<View, Boolean>())
@@ -57,12 +57,12 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
                         is LoadedHomeAuthority.Current -> {
                             installAuthoritySurface(home,decor,loaded.drawable,currentLayout=true)
                             home.contentDescription="$originalDescription | AIG RGB HOME AUTHORITY APPLIED|${loaded.authorityId}|${loaded.sha256}"
-                            Log.i("AIG-RGB-HOME","AUTHORITY_APPLIED|${loaded.authorityId}|${loaded.sha256}|SHELL_HIDDEN|HIT_MAP_ACTIVE")
+                            Log.i("AIG-RGB-HOME","AUTHORITY_APPLIED|${loaded.authorityId}|${loaded.sha256}|SHELL_HIDDEN|PIXEL_HIT_MAP_ACTIVE")
                         }
                         is LoadedHomeAuthority.Stable -> {
                             installAuthoritySurface(home,decor,loaded.drawable,currentLayout=false)
                             home.contentDescription="$originalDescription | AIG RGB HOME STABLE AUTHORITY APPLIED|${loaded.authorityId}|${loaded.sha256}"
-                            Log.w("AIG-RGB-HOME","STABLE_AUTHORITY_APPLIED|${loaded.authorityId}|${loaded.sha256}|CURRENT_AUTHORITY_PENDING|SHELL_HIDDEN|HIT_MAP_ACTIVE")
+                            Log.w("AIG-RGB-HOME","STABLE_AUTHORITY_APPLIED|${loaded.authorityId}|${loaded.sha256}|CURRENT_AUTHORITY_PENDING|SHELL_HIDDEN|NO_UNVERIFIED_HIT_MAP")
                         }
                         is LoadedHomeAuthority.Missing -> {
                             home.alpha=0f
@@ -82,8 +82,8 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
         home.background=drawable
         home.alpha=1f
         if(home is ViewGroup) {
-            // A formal Authority page is a single visual layer. The old programmatic
-            // HOME remains only as hidden callback state; it is never visible.
+            // A formal Authority page is a single visible visual layer. The legacy
+            // programmatic HOME survives only as hidden callback state.
             for(i in 0 until home.childCount) home.getChildAt(i).visibility=View.INVISIBLE
             home.addView(
                 AuthorityHomeHitMapView(home.context,currentLayout) { page ->
@@ -138,42 +138,56 @@ private class AuthorityHomeHitMapView(
     private val currentLayout:Boolean,
     private val navigate:(String)->Boolean,
 ):View(context) {
-    private data class Hit(val page:String,val left:Float,val top:Float,val right:Float,val bottom:Float)
-
-    private val topNavigation=listOf(
-        "HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI"
-    ).mapIndexed { index,page ->
-        val left=0.018f + index*0.0954f
-        Hit(page,left,0.091f,left+0.090f,0.151f)
-    }
-    private val currentModuleCards=listOf(
-        Hit("CAD",0.018f,0.574f,0.334f,0.655f),
-        Hit("CAM",0.343f,0.574f,0.646f,0.655f),
-        Hit("SIM",0.653f,0.574f,0.971f,0.655f),
-        Hit("3AX",0.018f,0.656f,0.334f,0.730f),
-        Hit("4AX",0.343f,0.656f,0.646f,0.730f),
-        Hit("5AX",0.653f,0.656f,0.971f,0.730f),
-        Hit("6AX",0.018f,0.731f,0.334f,0.808f),
-        Hit("NC",0.343f,0.731f,0.646f,0.808f),
-        Hit("AI",0.653f,0.731f,0.971f,0.808f),
+    // Measured directly from Current Approved 01_HOME.png, SHA-256
+    // f360cb828ff6d05076792b0d04474503316dea85896f82f6452b0d6c9d7ae99e.
+    private data class Hit(val page:String,val left:Int,val top:Int,val right:Int,val bottom:Int)
+    private val sourceWidth=941f
+    private val sourceHeight=1672f
+    private val currentHits=listOf(
+        Hit("HOME",18,156,109,254),
+        Hit("CAD",111,156,195,254),
+        Hit("CAM",199,156,282,254),
+        Hit("SIM",289,156,370,254),
+        Hit("3AX",378,156,460,254),
+        Hit("4AX",466,156,548,254),
+        Hit("5AX",555,156,639,254),
+        Hit("6AX",644,156,728,254),
+        Hit("NC",732,156,815,254),
+        Hit("AI",822,156,915,254),
+        Hit("CAD",18,965,312,1093),
+        Hit("CAM",321,965,608,1093),
+        Hit("SIM",615,965,916,1093),
+        Hit("3AX",18,1100,312,1219),
+        Hit("4AX",322,1100,608,1219),
+        Hit("5AX",615,1100,916,1219),
+        Hit("6AX",18,1225,312,1344),
+        Hit("NC",322,1225,608,1344),
+        Hit("AI",615,1225,916,1344),
     )
 
     init {
-        isClickable=true
+        isClickable=currentLayout
         contentDescription=if(currentLayout)
-            "AIG RGB AUTHORITY HIT MAP • CURRENT • REAL CALLBACKS"
+            "AIG RGB AUTHORITY HIT MAP • CURRENT • PIXEL VERIFIED • REAL CALLBACKS"
         else
-            "AIG RGB AUTHORITY HIT MAP • STABLE • REAL CALLBACKS"
+            "AIG RGB STABLE AUTHORITY • VISUAL FALLBACK ONLY • NO UNVERIFIED HIT MAP"
     }
 
     override fun onTouchEvent(event:MotionEvent):Boolean {
+        if(!currentLayout) return false
         if(event.action!=MotionEvent.ACTION_UP) return true
         if(width<=0 || height<=0) return true
-        val x=event.x/width.toFloat()
-        val y=event.y/height.toFloat()
-        val hits=if(currentLayout) topNavigation+currentModuleCards else topNavigation
-        hits.firstOrNull { x>=it.left && x<=it.right && y>=it.top && y<=it.bottom }
-            ?.let { navigate(it.page) }
+        val scale=min(width/sourceWidth,height/sourceHeight)
+        val drawWidth=sourceWidth*scale
+        val drawHeight=sourceHeight*scale
+        val left=(width-drawWidth)/2f
+        val top=(height-drawHeight)/2f
+        if(event.x<left || event.x>left+drawWidth || event.y<top || event.y>top+drawHeight) return true
+        val sourceX=(event.x-left)/scale
+        val sourceY=(event.y-top)/scale
+        currentHits.firstOrNull {
+            sourceX>=it.left && sourceX<=it.right && sourceY>=it.top && sourceY<=it.bottom
+        }?.let { navigate(it.page) }
         performClick()
         return true
     }
@@ -233,25 +247,26 @@ private object HomeRgbAsset {
         require(bitmap.width==width && bitmap.height==height) {
             "$format HOME authority dimensions invalid: ${bitmap.width}x${bitmap.height}"
         }
-        return HomeCoverDrawable(bitmap)
+        return HomeFitDrawable(bitmap)
     }
 }
 
-private class HomeCoverDrawable(private val bitmap: Bitmap) : Drawable() {
+private class HomeFitDrawable(private val bitmap: Bitmap) : Drawable() {
     private val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-    private val shadePaint = Paint().apply { color = Color.argb(20, 2, 4, 7) }
+    private val shadePaint = Paint().apply { color = Color.argb(12, 2, 4, 7) }
 
     override fun draw(canvas: Canvas) {
-        val b = bounds
-        if (b.width() <= 0 || b.height() <= 0) return
-        val scale = max(b.width().toFloat() / bitmap.width, b.height().toFloat() / bitmap.height)
-        val srcW = (b.width() / scale).toInt().coerceIn(1, bitmap.width)
-        val srcH = (b.height() / scale).toInt().coerceIn(1, bitmap.height)
-        val sx = ((bitmap.width - srcW) / 2).coerceAtLeast(0)
-        val sy = ((bitmap.height - srcH) / 2).coerceAtLeast(0)
-        val src = Rect(sx, sy, sx + srcW, sy + srcH)
-        canvas.drawBitmap(bitmap, src, b, imagePaint)
-        canvas.drawRect(b, shadePaint)
+        val b=bounds
+        if(b.width()<=0 || b.height()<=0) return
+        canvas.drawColor(Color.rgb(2,4,7))
+        val scale=min(b.width().toFloat()/bitmap.width,b.height().toFloat()/bitmap.height)
+        val drawWidth=bitmap.width*scale
+        val drawHeight=bitmap.height*scale
+        val left=b.left+(b.width()-drawWidth)/2f
+        val top=b.top+(b.height()-drawHeight)/2f
+        val dst=RectF(left,top,left+drawWidth,top+drawHeight)
+        canvas.drawBitmap(bitmap,null,dst,imagePaint)
+        canvas.drawRect(dst,shadePaint)
     }
 
     override fun setAlpha(alpha: Int) { imagePaint.alpha = alpha.coerceIn(0, 255) }
