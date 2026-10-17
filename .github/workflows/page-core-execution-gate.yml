@@ -1,0 +1,32 @@
+name: AIG Studio Page Core Execution Gate
+
+on:
+  push:
+    branches:
+      - work/page-core-execution-final-20261017
+  pull_request:
+    branches:
+      - feature/dual-project-auto-finish-20261017
+
+permissions:
+  contents: read
+
+concurrency:
+  group: studio-page-core-execution-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused-red-green:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Execute Studio formal page real-core assertions
+        run: gradle :core:studioPageCoreExecutionGate --stacktrace
