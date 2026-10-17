@@ -31,6 +31,24 @@ fun main(){
     nc.setMachineConnected(true)
     check(nc.dispatch(ncCmd("NC.OUTPUT","NC.OUTPUT.SEND_MACHINE")) is PageResult.Accepted)
 
+    val six=NcPageRuntime()
+    val sixProgram="G90 G54\nG0 X0 Y0 Z5 C0\nG1 X10 Y0 Z-2 A10 B20 C30 F150\nM30"
+    check(six.dispatch(ncCmd("NC.EDITOR","NC.EDITOR.INSERT","text" to sixProgram)) is PageResult.Accepted)
+    val sixParsed=six.dispatch(ncCmd("NC.PARSER","NC.PARSER.PARSE")) as PageResult.Accepted
+    check(sixParsed.evidence["cAxis"]=="VALIDATED")
+    check(six.dispatch(ncCmd("NC.PREVIEW","NC.PREVIEW.RENDER")) is PageResult.Accepted)
+    val sixVerify=six.dispatch(ncCmd("NC.VERIFY","NC.VERIFY.RUN")) as PageResult.Accepted
+    check(sixVerify.evidence["cAxis"]=="VALIDATED")
+    val sixPrepared=six.dispatch(ncCmd("NC.OUTPUT","NC.OUTPUT.PREPARE")) as PageResult.Accepted
+    check(sixPrepared.evidence["cAxis"]=="VALIDATED")
+    check(six.ncText().contains("C30"))
+
+    val badC=NcPageRuntime()
+    badC.dispatch(ncCmd("NC.EDITOR","NC.EDITOR.INSERT","text" to "G90\nG1 X1 C361 F150"))
+    val badCParse=badC.dispatch(ncCmd("NC.PARSER","NC.PARSER.PARSE"))
+    check(badCParse is PageResult.Rejected)
+    check(badC.messages().last().detail.contains("C"))
+
     val bad=NcPageRuntime()
     bad.dispatch(ncCmd("NC.EDITOR","NC.EDITOR.INSERT","text" to "G90\nG1 X1 X2 F150"))
     val badParse=bad.dispatch(ncCmd("NC.PARSER","NC.PARSER.PARSE"))
@@ -44,5 +62,5 @@ fun main(){
     check(delete.dispatch(ncCmd("NC.EDITOR","NC.EDITOR.DELETE","line" to "1")) is PageResult.Accepted)
     check(delete.snapshot().state["lineCount"]=="1")
 
-    println("NC_PAGE_RUNTIME_PASS|EDITOR|INTERLOCK_PARSER|TIMELINE_PREVIEW|VERIFY|INLINE_ALARM|SINGLE_BLOCK|DRY_RUN|BLOCK_SKIP|CUSTOM_M|MACHINE_FAIL_CLOSED")
+    println("NC_PAGE_RUNTIME_PASS|EDITOR|INTERLOCK_PARSER|TIMELINE_PREVIEW|VERIFY|INLINE_ALARM|SINGLE_BLOCK|DRY_RUN|BLOCK_SKIP|CUSTOM_M|6AX_C_COMPAT|MACHINE_FAIL_CLOSED")
 }
