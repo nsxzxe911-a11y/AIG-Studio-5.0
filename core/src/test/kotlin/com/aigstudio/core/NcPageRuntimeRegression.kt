@@ -19,6 +19,7 @@ fun main(){
     check(parsed.evidence["parserStatus"]=="PASS")
     val preview=nc.dispatch(ncCmd("NC.PREVIEW","NC.PREVIEW.RENDER")) as PageResult.Accepted
     check(preview.evidence.getValue("eventCount").toInt()>0)
+    check(preview.evidence.getValue("executionActions").isNotBlank())
 
     val verify=nc.dispatch(ncCmd("NC.VERIFY","NC.VERIFY.RUN")) as PageResult.Accepted
     check(verify.evidence["verified"]=="true")
@@ -50,7 +51,9 @@ fun main(){
     check(g34Parsed.evidence["g34Profile"]=="XY_J0_I_DIAMETER_K_COUNT")
     val g34Preview=g34.dispatch(ncCmd("NC.PREVIEW","NC.PREVIEW.RENDER")) as PageResult.Accepted
     check(g34Preview.evidence["g34Profile"]=="XY_J0_I_DIAMETER_K_COUNT")
-    check(g34Preview.evidence.getValue("summary").contains("HOLE_PATTERN") || g34Preview.evidence.getValue("summary").contains("CANNED_CYCLE"))
+    val g34Actions=g34Preview.evidence.getValue("executionActions")
+    check(g34Actions.contains("HOLE_PATTERN") || g34Actions.contains("CANNED_CYCLE"))
+    check(g34Preview.evidence.getValue("executionDomains").contains("MATERIAL_REMOVAL"))
     check(g34.dispatch(ncCmd("NC.VERIFY","NC.VERIFY.RUN")) is PageResult.Accepted)
     check(g34.dispatch(ncCmd("NC.OUTPUT","NC.OUTPUT.PREPARE")) is PageResult.Accepted)
 
@@ -91,5 +94,5 @@ fun main(){
     check(delete.dispatch(ncCmd("NC.EDITOR","NC.EDITOR.DELETE","line" to "1")) is PageResult.Accepted)
     check(delete.snapshot().state["lineCount"]=="1")
 
-    println("NC_PAGE_RUNTIME_PASS|EDITOR|INTERLOCK_PARSER|TIMELINE_PREVIEW|VERIFY|INLINE_ALARM|SINGLE_BLOCK|DRY_RUN|BLOCK_SKIP|CUSTOM_M|6AX_C_COMPAT|G34_G83_PROFILE|M98_L_REPEAT|MACHINE_FAIL_CLOSED")
+    println("NC_PAGE_RUNTIME_PASS|EDITOR|INTERLOCK_PARSER|TIMELINE_PREVIEW|STRUCTURED_ACTION_EVIDENCE|VERIFY|INLINE_ALARM|SINGLE_BLOCK|DRY_RUN|BLOCK_SKIP|CUSTOM_M|6AX_C_COMPAT|G34_G83_PROFILE|M98_L_REPEAT|MACHINE_FAIL_CLOSED")
 }
