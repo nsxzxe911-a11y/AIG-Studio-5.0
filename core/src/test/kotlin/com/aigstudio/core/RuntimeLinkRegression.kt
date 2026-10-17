@@ -21,9 +21,39 @@ private class BridgeTestRuntime(
 }
 
 fun main() {
-    testRuntimeLinkStateSyncContract()
-
+    check(RuntimeLinkContract.managedLinks==listOf(
+        RuntimeLinkId.CAD_CAM,RuntimeLinkId.CAM_SIM,RuntimeLinkId.SIM_NC,
+        RuntimeLinkId.NC_MACHINE,RuntimeLinkId.GPU_3D,RuntimeLinkId.MACHINE
+    ))
+    check(RuntimeLinkContract.machiningLinks==listOf(
+        RuntimeLinkId.CAD_CAM,RuntimeLinkId.CAM_SIM,RuntimeLinkId.SIM_NC,RuntimeLinkId.NC_MACHINE
+    ))
+    check(RuntimeLinkContract.cockpitLinks==listOf(
+        RuntimeLinkId.CAD_CAM,RuntimeLinkId.CAM_SIM,RuntimeLinkId.SIM_NC
+    ))
     check(RuntimeLinkContract.DISCONNECT_POLICY=="DATA_FLOW_ONLY_PRESERVE_RUNTIME_DATA")
+    check(setOf("CAD_GEOMETRY","CAM_TOOLPATH","SIM_STATE","NC_GCODE").all{it in RuntimeLinkContract.PRESERVED_DOMAINS})
+    check(RuntimeLinkStatus.CONNECTED.colorToken=="CYAN_GREEN")
+    check(RuntimeLinkStatus.DISCONNECTED.colorToken=="GRAY")
+    check(RuntimeLinkStatus.WARNING.colorToken=="YELLOW")
+    check(RuntimeLinkStatus.ALARM.colorToken=="RED")
+
+    val linkState=RuntimeLinkStore()
+    check(RuntimeLinkContract.managedLinks.all{linkState.status(it)==RuntimeLinkStatus.CONNECTED})
+    val snapshots=mutableListOf<RuntimeLinkSnapshot>()
+    linkState.observe{snapshots+=it}
+    linkState.toggle(RuntimeLinkId.CAD_CAM)
+    check(linkState.status(RuntimeLinkId.CAD_CAM)==RuntimeLinkStatus.DISCONNECTED)
+    linkState.set(RuntimeLinkId.CAD_CAM,RuntimeLinkStatus.CONNECTED)
+    check(linkState.status(RuntimeLinkId.CAD_CAM)==RuntimeLinkStatus.CONNECTED)
+    linkState.set(RuntimeLinkId.NC_MACHINE,RuntimeLinkStatus.WARNING)
+    check(linkState.status(RuntimeLinkId.NC_MACHINE)==RuntimeLinkStatus.WARNING)
+    check(linkState.status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.WARNING)
+    check(snapshots.last().status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.WARNING)
+    linkState.set(RuntimeLinkId.MACHINE,RuntimeLinkStatus.ALARM)
+    check(linkState.status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.ALARM)
+    check(linkState.status(RuntimeLinkId.NC_MACHINE)==RuntimeLinkStatus.ALARM)
+
     check(RuntimeBridgeContract.definition(RuntimeLinkId.CAD_CAM).sourcePage==PageId.CAD)
     check(RuntimeBridgeContract.definition(RuntimeLinkId.CAD_CAM).targetPage==PageId.CAM)
     check(RuntimeBridgeContract.definition(RuntimeLinkId.CAM_SIM).targetPage==PageId.SIM)
@@ -65,5 +95,5 @@ fun main() {
     check(repeated is RuntimeBridgeTransferResult.Rejected && repeated.code=="STALE_REVISION")
     check(cam.snapshot()==targetStable)
 
-    println("RUNTIME_TYPED_BRIDGE_PASS|CAD_CAM|CAM_SIM|SIM_NC|NC_MACHINE|DISCONNECT_PRESERVES_DATA|STALE_REJECT|DIGEST_REJECT|NO_OVERWRITE")
+    println("RUNTIME_TYPED_BRIDGE_PASS|CAD_CAM|CAM_SIM|SIM_NC|NC_MACHINE|MACHINE_ALIAS_SYNC|DISCONNECT_PRESERVES_DATA|STALE_REJECT|DIGEST_REJECT|NO_OVERWRITE")
 }
