@@ -1,4 +1,4 @@
-/* AIG Authority HOME V1 — Nine-Slice chrome + safe Runtime derivative + real controls */
+/* AIG HOME Authority contract — HOME_FINAL_4K_BLOCKED until native AIG-II RGB 3840x2160 exists. */
 html.aigAuthoritySkinV1 body,html.aigAuthoritySkinV1 .app{background:#020407;color:#eefbff}
 html.aigAuthoritySkinV1 .top{background:linear-gradient(180deg,rgba(2,4,7,.98),rgba(3,8,14,.96));border-bottom:1px solid rgba(39,233,255,.55);box-shadow:0 0 26px rgba(39,233,255,.10),0 12px 34px #000}
 html.aigAuthoritySkinV1 .logo{font-weight:950;letter-spacing:.08em;text-shadow:0 0 8px #27e9ff,0 0 18px #9f72ff}
@@ -20,40 +20,30 @@ html.aigAuthoritySkinV1 button:active{filter:brightness(1.28);transform:translat
 html.aigAuthoritySkinV1 button.active,html.aigAuthoritySkinV1 button[aria-pressed="true"]{filter:brightness(1.2);box-shadow:0 0 18px rgba(39,233,255,.25),0 0 26px rgba(159,114,255,.14)}
 html.aigAuthoritySkinV1 button:disabled{filter:saturate(.25) brightness(.65);opacity:.7}
 
-/* SOURCE_SCOPE_CONTAMINATION_MASKED — this WebP is a Runtime derivative, never the source Authority. */
+/* Fail-closed visual state: no lower-resolution image may impersonate final 4K Authority. */
 html.aigAuthoritySkinV1 .screen[data-page="HOME"]{padding:0!important;background:#020407!important;overflow:auto!important}
-html.aigAuthoritySkinV1 [data-home-runtime]{position:relative!important;width:100%!important;max-width:1672px!important;aspect-ratio:1672/859!important;margin:0 auto!important;overflow:hidden!important;isolation:isolate;background:#020407 url('../../generated/ui-regions/HOME/static/AIG_HOME_BODY_SAFE_Q90_V1.webp') center/100% 100% no-repeat!important}
-/* no-upscale: the visual source is never rendered above 1672×859. */
+html.aigAuthoritySkinV1 [data-home-runtime]{position:relative!important;width:100%!important;max-width:3840px!important;aspect-ratio:16/9!important;margin:0 auto!important;overflow:hidden!important;isolation:isolate;background:#020407!important}
 html.aigAuthoritySkinV1 [data-home-runtime]>.workgrid{position:absolute!important;inset:0!important;display:block!important;z-index:2!important;background:transparent!important}
 html.aigAuthoritySkinV1 [data-home-runtime] .panel{display:contents!important;background:transparent!important;border:0!important;box-shadow:none!important}
 html.aigAuthoritySkinV1 [data-home-runtime] .panel>.head{display:none!important}
 html.aigAuthoritySkinV1 [data-home-runtime] .panel>.body,html.aigAuthoritySkinV1 [data-home-runtime] .menuGrid,html.aigAuthoritySkinV1 [data-home-runtime] .controls{display:contents!important}
 html.aigAuthoritySkinV1 [data-home-runtime] .menuCard[data-open-page="刀路"],html.aigAuthoritySkinV1 [data-home-runtime] .menuCard[data-open-page="功能"]{display:none!important}
 
-/* AIG_HOME_RUNTIME_CARDS — real native buttons, not image hotzones. */
+/* Real native controls remain usable while the visual Authority is blocked. */
 html.aigAuthoritySkinV1 [data-home-runtime] button[data-button-id="BTN.HOME.CARD.CAD"],html.aigAuthoritySkinV1 [data-home-runtime] button[data-button-id="BTN.HOME.CARD.CAM"],html.aigAuthoritySkinV1 [data-home-runtime] button[data-button-id="BTN.HOME.CARD.SIM"],html.aigAuthoritySkinV1 [data-home-runtime] button[data-button-id="BTN.HOME.CARD.NC"]{position:absolute!important;top:70.08149%!important;height:15.25029%!important;z-index:5!important;background:rgba(3,7,13,.91)!important;font-weight:800!important;font-size:clamp(12px,1.1vw,20px)!important;pointer-events:auto!important}
 html.aigAuthoritySkinV1 [data-home-runtime] button[data-button-id="BTN.HOME.CARD.CAD"]{left:1.67464%!important;width:23.56459%!important}
 html.aigAuthoritySkinV1 [data-home-runtime] button[data-button-id="BTN.HOME.CARD.CAM"]{left:26.01675%!important;width:22.90670%!important}
 html.aigAuthoritySkinV1 [data-home-runtime] button[data-button-id="BTN.HOME.CARD.SIM"]{left:49.70096%!important;width:23.08612%!important}
 html.aigAuthoritySkinV1 [data-home-runtime] button[data-button-id="BTN.HOME.CARD.NC"]{left:73.62440%!important;width:24.04306%!important}
-
-/* AIG_HOME_RUNTIME_SCOPE_ACTION — real 3AX action occupies the contaminated hero-control region. */
 html.aigAuthoritySkinV1 [data-home-runtime] button[data-button-id="BTN.HOME.QUICK.3AX"]{position:absolute!important;left:32.3%!important;top:13.4%!important;width:16.2%!important;height:22.8%!important;z-index:7!important;background:linear-gradient(145deg,rgba(2,10,18,.96),rgba(7,17,27,.94))!important;border:1px solid rgba(39,233,255,.78)!important;box-shadow:0 0 20px rgba(39,233,255,.2),inset 0 0 22px rgba(159,114,255,.10)!important;color:#eaffff!important;font-weight:900!important;font-size:clamp(14px,1.2vw,22px)!important;pointer-events:auto!important}
-html.aigAuthoritySkinV1 [data-home-runtime] button[data-button-id="BTN.HOME.QUICK.3AX"]::after{content:' • XYZ ONLY';color:#27e9ff;font-size:.72em}
 
-/* AIG_HOME_RUNTIME_AXIS_MASK — product scope only; never fake numeric axis state. */
-html.aigAuthoritySkinV1 [data-home-runtime]::after{content:'AIG 3AX\A XYZ ACTIVE';white-space:pre-line;position:absolute;left:63.05%;top:14%;width:8.1%;height:14.8%;z-index:6;box-sizing:border-box;padding:1.1% .8%;background:linear-gradient(145deg,rgba(2,8,14,.98),rgba(7,17,27,.96));border:1px solid rgba(39,233,255,.72);border-radius:10px;color:#dffcff;font:800 clamp(10px,.85vw,15px)/1.7 system-ui;text-align:center;text-shadow:0 0 8px rgba(39,233,255,.65);pointer-events:none}
-
-/* AIG_HOME_RUNTIME_OVERVIEW — real DOM values replace baked KPI imagery. */
+/* Runtime values only; never replace missing Authority with baked image values. */
 html.aigAuthoritySkinV1 [data-home-runtime] .runtimeStatus{position:absolute!important;left:72.25%!important;top:1.8%!important;width:25.25%!important;height:29.5%!important;z-index:6!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;box-sizing:border-box!important;padding:14px!important;background:linear-gradient(145deg,rgba(2,8,14,.97),rgba(6,16,26,.96))!important;border:1px solid rgba(39,233,255,.7)!important;border-radius:18px!important;box-shadow:0 0 24px rgba(39,233,255,.12),inset 0 0 28px rgba(159,114,255,.06)!important;pointer-events:none!important}
 html.aigAuthoritySkinV1 [data-home-runtime] .runtimeStatus .metric{min-width:0!important;background:rgba(5,18,29,.72)!important;border:1px solid rgba(39,233,255,.28)!important;border-radius:10px!important;padding:8px!important;color:#dffcff!important}
 html.aigAuthoritySkinV1 [data-home-runtime] .runtimeStatus .metric b{display:block;color:#75f4ff!important;font-size:clamp(9px,.72vw,13px)!important}
 html.aigAuthoritySkinV1 [data-home-runtime] .runtimeStatus .metric span{font-size:clamp(10px,.85vw,15px)!important}
-
-/* HOME.SYSTEM_MESSAGES — Runtime text only. */
 html.aigAuthoritySkinV1 [data-home-runtime]>[data-message-id="HOME.SYSTEM_MESSAGES"]{position:absolute!important;left:72.9665%!important;top:35.0419%!important;width:24.8206%!important;height:32.9453%!important;z-index:8!important;box-sizing:border-box!important;overflow:auto!important;background:linear-gradient(145deg,rgba(2,8,14,.98),rgba(6,16,26,.96))!important;padding:12px 16px!important;text-shadow:0 0 8px rgba(39,233,255,.55);pointer-events:none!important}
 
-/* Pending project/recent-project areas stay explicitly masked until their real controls/state are wired. */
-html.aigAuthoritySkinV1 [data-home-runtime]::before{content:'PROJECT • 專案控制由正式 PROJECT 頁提供';position:absolute;left:1.2%;top:47.5%;width:28.2%;height:20.2%;z-index:6;box-sizing:border-box;padding:5.5% 1.4% 0;background:linear-gradient(145deg,rgba(2,8,14,.98),rgba(6,16,26,.96));border:1px solid rgba(159,114,255,.55);border-radius:18px;color:#dffcff;font:800 clamp(10px,.85vw,15px)/1.4 system-ui;text-align:center;pointer-events:none}
-html.aigAuthoritySkinV1 [data-home-runtime] .panel:first-child .notice:not([data-message-id]){display:block!important;position:absolute!important;left:1.2%!important;right:1.2%!important;bottom:1.2%!important;height:7.4%!important;z-index:7!important;box-sizing:border-box!important;margin:0!important;padding:1.1% 1.4%!important;overflow:hidden!important;background:linear-gradient(145deg,rgba(2,8,14,.98),rgba(6,16,26,.96))!important;border:1px solid rgba(39,233,255,.42)!important;color:transparent!important;pointer-events:none!important}
-html.aigAuthoritySkinV1 [data-home-runtime] .panel:first-child .notice:not([data-message-id])::after{content:'AIG LOCAL READY • 最近專案與檔案清單由 PROJECT Runtime 提供';position:absolute;inset:0;display:flex;align-items:center;padding:0 2%;color:#bfefff;font:700 clamp(10px,.8vw,14px)/1.3 system-ui}
+/* Neutral placeholder regions are not Authority and carry no fake dynamic values. */
+html.aigAuthoritySkinV1 [data-home-runtime]::before{content:'';position:absolute;left:1.2%;top:47.5%;width:28.2%;height:20.2%;z-index:1;box-sizing:border-box;background:#020407;border:1px solid rgba(159,114,255,.28);border-radius:18px;pointer-events:none}
+html.aigAuthoritySkinV1 [data-home-runtime] .panel:first-child .notice:not([data-message-id]){display:block!important;position:absolute!important;left:1.2%!important;right:1.2%!important;bottom:1.2%!important;height:7.4%!important;z-index:7!important;box-sizing:border-box!important;margin:0!important;padding:1.1% 1.4%!important;overflow:hidden!important;background:#020407!important;border:1px solid rgba(39,233,255,.24)!important;color:transparent!important;pointer-events:none!important}
