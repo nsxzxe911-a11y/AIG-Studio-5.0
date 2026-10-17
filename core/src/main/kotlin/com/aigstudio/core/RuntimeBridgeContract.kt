@@ -82,7 +82,7 @@ object RuntimeBridgeContract {
     fun validate(
         id:RuntimeLinkId,
         payload:RuntimeBridgePayload,
-        currentTargetRevision:Long,
+        lastAcceptedSourceRevision:Long,
     ):RuntimeBridgeValidation {
         val definition=runCatching{definition(id)}.getOrElse{
             return RuntimeBridgeValidation.Rejected("UNSUPPORTED_LINK",it.message.orEmpty())
@@ -93,8 +93,8 @@ object RuntimeBridgeContract {
             return RuntimeBridgeValidation.Rejected("WRONG_SOURCE","Expected ${definition.sourcePage.id}, got ${payload.sourcePage.id}")
         if(payload.targetPage!=definition.targetPage)
             return RuntimeBridgeValidation.Rejected("WRONG_TARGET","Expected ${definition.targetPage.id}, got ${payload.targetPage.id}")
-        if(payload.revision<=currentTargetRevision)
-            return RuntimeBridgeValidation.Rejected("STALE_REVISION","Incoming r${payload.revision} <= current r$currentTargetRevision")
+        if(payload.revision<=lastAcceptedSourceRevision)
+            return RuntimeBridgeValidation.Rejected("STALE_REVISION","Incoming source r${payload.revision} <= accepted source r$lastAcceptedSourceRevision")
         if(!Regex("[0-9a-f]{64}").matches(payload.digest.lowercase()))
             return RuntimeBridgeValidation.Rejected("DIGEST_FORMAT","Bridge digest must be SHA-256 hex")
         val expected=digest(
@@ -150,7 +150,7 @@ object RuntimeBridgeRouter {
 
         val payload=source.exportPayload(canonical)
             ?: return RuntimeBridgeTransferResult.Rejected(canonical,"NO_PAYLOAD","Source page exported no payload")
-        when(val validation=RuntimeBridgeContract.validate(canonical,payload,target.snapshot().revision)){
+        when(val validation=RuntimeBridgeContract.validate(canonical,payload,-1L)){
             is RuntimeBridgeValidation.Rejected -> return RuntimeBridgeTransferResult.Rejected(
                 canonical,validation.code,validation.detail
             )
