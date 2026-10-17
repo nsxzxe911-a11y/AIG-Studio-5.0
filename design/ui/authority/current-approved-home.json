@@ -1,0 +1,23 @@
+{
+  "schema": "aig-current-approved-home-v1",
+  "authorityId": "AIG_MOBILE_CURRENT_APPROVED_V1_20261016",
+  "approvalState": "USER_APPROVED_RECOVERED",
+  "binaryIngest": "PENDING_LIBRARY_RECOVERY",
+  "policy": "No engineering-shell fallback may satisfy formal UI evidence. Binary body, SHA and dimensions are mandatory.",
+  "mobile": {
+    "file": "app/src/main/assets/aig-authority/current/01_HOME.png",
+    "libraryName": "01_HOME.png",
+    "sha256": "f360cb828ff6d05076792b0d04474503316dea85896f82f6452b0d6c9d7ae99e",
+    "bytes": 2286719,
+    "width": 941,
+    "height": 1672
+  },
+  "desktop": {
+    "file": "desktop/src/main/resources/aig-authority/current/01_HOME_DESKTOP_4K.png",
+    "libraryName": "01_HOME_DESKTOP_4K.png",
+    "sha256": "61e00235ce9a7ac0d18bd0fb115307f7807f18cb32c149d93b50527b929b0ba2",
+    "bytes": 1734959,
+    "width": 1672,
+    "height": 941
+  }
+}
