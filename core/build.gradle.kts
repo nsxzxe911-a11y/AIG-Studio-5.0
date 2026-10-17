@@ -45,3 +45,40 @@ tasks.register<JavaExec>("rgbGlobalSkinRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.AigRgbGlobalSkinRegressionKt")
 }
+
+val pageAutonomyRegressionClasses = linkedMapOf(
+    "pageRuntimeContractRegression" to "com.aigstudio.core.PageRuntimeContractRegressionKt",
+    "pageCommandCatalogRegression" to "com.aigstudio.core.PageCommandCatalogRegressionKt",
+    "cadPageRuntimeRegression" to "com.aigstudio.core.CadPageRuntimeRegressionKt",
+    "camPageRuntimeRegression" to "com.aigstudio.core.CamPageRuntimeRegressionKt",
+    "simAcceptancePolicyRegression" to "com.aigstudio.core.SimAcceptancePolicyRegressionKt",
+    "simPageRuntimeRegression" to "com.aigstudio.core.SimPageRuntimeRegressionKt",
+    "axisPageRuntimeRegression" to "com.aigstudio.core.AxisPageRuntimeRegressionKt",
+    "ncSixAxisCompatibilityRegression" to "com.aigstudio.core.NcSixAxisCompatibilityRegressionKt",
+    "fanucM98RepeatRegression" to "com.aigstudio.core.FanucM98RepeatRegressionKt",
+    "ncCannedCyclePlannerRegression" to "com.aigstudio.core.NcCannedCyclePlannerRegressionKt",
+    "ncFirstMotionRegression" to "com.aigstudio.core.NcFirstMotionRegressionKt",
+    "fanucPostRuntimeRegression" to "com.aigstudio.core.FanucPostRuntimeRegressionKt",
+    "ncPageRuntimeRegression" to "com.aigstudio.core.NcPageRuntimeRegressionKt",
+    "homePageRuntimeRegression" to "com.aigstudio.core.HomePageRuntimeRegressionKt",
+    "runtimePageBridgeRegression" to "com.aigstudio.core.RuntimePageBridgeRegressionKt",
+    "machiningOrchestratorRegression" to "com.aigstudio.core.MachiningOrchestratorRegressionKt",
+    "aiPageRuntimeRegression" to "com.aigstudio.core.AiPageRuntimeRegressionKt",
+)
+
+val pageAutonomyRegressionTasks = pageAutonomyRegressionClasses.map { (taskName, mainClassName) ->
+    tasks.register<JavaExec>(taskName) {
+        group = "verification"
+        description = "Runs $mainClassName"
+        dependsOn("testClasses")
+        classpath = sourceSets["test"].runtimeClasspath
+        mainClass.set(mainClassName)
+    }
+}
+
+tasks.register("pageAutonomyRegression") {
+    group = "verification"
+    description = "Runs focused PageRuntime/Fanuc/bridge/AI regression mains"
+    dependsOn(pageAutonomyRegressionTasks)
+    dependsOn("runtimeLinkRegression")
+}
