@@ -226,9 +226,9 @@ object NcFirstMachiningPreviewEngine {
         fixtures:List<FixtureObstacle> = emptyList(),
         toolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
     ):NcFirstMachiningPreview {
-        val cFindings=NcSixAxisCompatibility.cFindings(program)
-        require(cFindings.isEmpty()){cFindings.first().message}
-        val legacy=NcSixAxisCompatibility.legacyProgram(program)
+        val compatibility=StudioFanucProgramCompatibility.findings(program)
+        require(compatibility.isEmpty()){compatibility.first().message}
+        val legacy=StudioFanucProgramCompatibility.legacyProgram(program)
         val runtimeFindings=NcRuntimeInterlock.findings(legacy)
         require(runtimeFindings.isEmpty()){runtimeFindings.first().message}
         val profile=StudioFanucMachineProfile.rotaryProfile()
