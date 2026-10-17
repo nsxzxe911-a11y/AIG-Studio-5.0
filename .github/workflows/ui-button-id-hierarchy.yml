@@ -9,6 +9,7 @@ on:
       - 'ci/verify_page_department_manifests.py'
       - 'ci/test_page_button_id_hierarchy.py'
       - 'ci/test_dual_ui_id_contract.py'
+      - 'ci/emit_dual_ui_tuple_digest.py'
       - '.github/workflows/ui-button-id-hierarchy.yml'
 
 permissions:
@@ -43,3 +44,8 @@ jobs:
         run: |
           set -euo pipefail
           python3 test_dual_ui_id_contract.py
+      - name: Emit canonical dual-ID tuple digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/emit_dual_ui_tuple_digest.py
