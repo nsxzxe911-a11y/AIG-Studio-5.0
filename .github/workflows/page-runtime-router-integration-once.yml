@@ -26,14 +26,16 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '9.7.0'
-      - name: Apply narrow platform router patch
+      - name: Apply narrow runtime compatibility patches
         shell: bash
         run: |
           set -euo pipefail
           python3 ci/apply_page_runtime_router_integration.py | tee router-patch.log
           python3 ci/finalize_page_runtime_router_patch.py | tee router-finalize.log
+          python3 ci/apply_nc_first_air_feed_compatibility.py | tee nc-first-air-feed.log
           grep -Fq 'PAGE_RUNTIME_ROUTER_INTEGRATION_PATCH_PASS|' router-patch.log
           grep -Fq 'PAGE_RUNTIME_ROUTER_ANDROID_FINALIZE_PASS|' router-finalize.log
+          grep -Fq 'NC_FIRST_AIR_FEED_COMPAT_PATCH_PASS|' nc-first-air-feed.log
           git diff --check
       - name: Verify shared page routing contracts
         shell: bash
@@ -56,7 +58,7 @@ jobs:
         run: |
           set -euo pipefail
           gradle :core:testClasses :core:pageAutonomyRegression :app:assembleDebug :desktop:compileKotlin --stacktrace
-      - name: Commit verified platform integration
+      - name: Commit verified runtime integration
         shell: bash
         run: |
           set -euo pipefail
@@ -64,11 +66,12 @@ jobs:
           git config user.email 'aig-router-integrator@users.noreply.github.com'
           git add app/src/main/java/com/aigstudio/app/MainActivity.kt \
                   desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt \
-                  web/index.html
+                  web/index.html \
+                  core/src/main/kotlin/com/aigstudio/core/NcFirstMotion.kt
           if git diff --cached --quiet; then
             echo 'PAGE_RUNTIME_ROUTER_ALREADY_INTEGRATED=PASS'
             exit 0
           fi
-          git commit -m 'feat: wire autonomous page routers into production surfaces'
+          git commit -m 'feat: wire autonomous page routers and NC-first air-feed compatibility'
           git push origin HEAD:architecture/page-autonomy-ai-orchestrator-after-588
           echo 'PAGE_RUNTIME_ROUTER_PLATFORM_COMMIT=PASS'
