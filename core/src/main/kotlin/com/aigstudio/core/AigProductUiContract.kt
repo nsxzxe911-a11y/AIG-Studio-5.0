@@ -45,8 +45,8 @@ object AigProductUiContract {
         require(NAVIGATION.map { it.pageId } == PRODUCTION_PAGES) {
             "AIG navigation order must match production page order."
         }
-        require(NAVIGATION.none { it.pageId in setOf(PageId.AX4, PageId.AX5, PageId.AX6) }) {
-            "AIG product UI must not expose 4AX/5AX/6AX."
+        require(NAVIGATION.all { it.pageId in PRODUCTION_PAGES }) {
+            "AIG product UI may expose only pages declared by its production whitelist."
         }
         NAVIGATION.forEach { entry ->
             require(entry.viewId == UiDualIdContract.navigationViewId(entry.buttonId)) {
