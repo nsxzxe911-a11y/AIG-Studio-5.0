@@ -30,12 +30,19 @@ concurrency:
 jobs:
   focused-contract-gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
       - name: Verify Authority catalog
         run: python3 ci/verify_aig_authority_v7.py
       - name: Verify AIG seven-page product scope
@@ -54,6 +61,12 @@ jobs:
         run: python3 ci/verify_web_authority_controls.py
       - name: Verify Android Windows Web semantic consistency
         run: python3 ci/verify_reverse_ui_cross_platform_contract.py
+      - name: Compile Core Android Windows product adapters
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon :core:compileKotlin :desktop:compileKotlin :app:compileDebugKotlin
+          echo 'AIG_PRODUCT_ADAPTER_COMPILE_PASS|CORE|ANDROID|WINDOWS|JDK17|GRADLE9.7'
       - name: Capture Stage3 HOME runtime evidence
         shell: bash
         run: |
