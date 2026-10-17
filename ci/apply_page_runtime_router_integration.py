@@ -59,7 +59,8 @@ def patch_android():
     start=text.index('        fun addProductionUi(id:String, action:()->Unit) {')
     end=text.index('        addProductionUi("CAD")',start)
     block=text[start:end]
-    if 'productionPageRouter?.navigate(navId)' not in block:
+    already_routed=('productionPageRouter?.navigate(navId)' in block or 'productionPageRouter?.navigateView(viewId)' in block)
+    if not already_routed:
         if block.count('action()')!=1:
             raise AssertionError(f'ANDROID_ADD_UI_ACTION_CALL_COUNT:{block.count("action()")}')
         block=block.replace(
@@ -105,9 +106,10 @@ def patch_desktop():
     start=text.index(marker)
     end=text.index('    val productionHomeButton=',start)
     block=text[start:end]
-    if 'productionPageRouter?.navigate(navId)' not in block:
+    already_routed=('productionPageRouter?.navigate(navId)' in block or 'productionPageRouter?.navigateView(viewId)' in block)
+    if not already_routed:
         if block.count('action()')!=1:
-            raise AssertionError(f'WINDOWS_PRODUCTION_BUTTON_ACTION_CALL_COUNT:{block.count("action()") }')
+            raise AssertionError(f'WINDOWS_PRODUCTION_BUTTON_ACTION_CALL_COUNT:{block.count("action()")}')
         block=block.replace(
             'action()',
             'val navId="NAV_"+normalized\n                if(PageRuntimeRouter.NAVIGATION.containsKey(navId)) productionPageRouter?.navigate(navId) ?: action() else action()',
@@ -182,6 +184,6 @@ function navigateProductionPage(name){
 
 def main():
     patch_android();patch_desktop();patch_web()
-    print('PAGE_RUNTIME_ROUTER_INTEGRATION_PATCH_PASS|ANDROID|WINDOWS|WEB|CAD_TOAST_REMOVED|WEB_AI_ADDED|WEB_ROUTER_INSTANCE')
+    print('PAGE_RUNTIME_ROUTER_INTEGRATION_PATCH_PASS|ANDROID|WINDOWS|WEB|CAD_TOAST_REMOVED|WEB_AI_ADDED|WEB_ROUTER_INSTANCE|IDEMPOTENT_DUAL_ID')
 
 if __name__=='__main__': main()
