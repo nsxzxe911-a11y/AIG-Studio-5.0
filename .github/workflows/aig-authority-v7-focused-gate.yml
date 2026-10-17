@@ -48,5 +48,28 @@ jobs:
           fi
       - name: Verify Web native Authority controls
         run: python3 ci/verify_web_authority_controls.py
+      - name: Capture Stage3 HOME runtime evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --directory . >/tmp/aig-web.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          sleep 2
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME"
+          mkdir -p evidence/stage3
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --hide-scrollbars --window-size=1920,1080 \
+            --screenshot=evidence/stage3/AIG_HOME_STAGE3_WEB_${GITHUB_SHA}.png \
+            "http://127.0.0.1:8765/web/index.html#HOME"
+          test -s evidence/stage3/AIG_HOME_STAGE3_WEB_${GITHUB_SHA}.png
+          sha256sum evidence/stage3/AIG_HOME_STAGE3_WEB_${GITHUB_SHA}.png | tee evidence/stage3/SHA256SUMS.txt
+          echo "STAGE3_WEB_HOME_RUNTIME_SCREENSHOT_PASS|$GITHUB_SHA"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: AIG-HOME-STAGE3-WEB-${{ github.sha }}
+          path: evidence/stage3/
+          if-no-files-found: error
+          retention-days: 30
       - name: Focused gate summary
         run: echo 'AIG_AUTHORITY_V7_FOCUSED_GATE_PASS'
