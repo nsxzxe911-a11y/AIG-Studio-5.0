@@ -90,10 +90,11 @@ class AiPageRuntime(
         val plan=latestPlan ?: error("Build a machining plan before audit")
         val endsAtMachine=plan.stages.lastOrNull()?.action=="NC_MACHINE"
         val simNcGate=if(plan.routeKind==MachiningRouteKind.REUSE_VERIFIED_STAGE){
-            plan.reusedEvidence.any{it.pageId==PageId.SIM && it.verified} &&
+            val sim=plan.reusedEvidence.firstOrNull{it.pageId==PageId.SIM}
+            MachiningEvidenceSafetyPolicy.safeSimReuse(sim) &&
                 plan.reusedEvidence.any{it.pageId==PageId.NC && it.verified}
         } else {
-            val sim=plan.stages.indexOfFirst{it.subpage.value=="SIM.RESULT"}
+            val sim=plan.stages.indexOfFirst{it.subpage.value=="SIM.RESULT" && it.requiredEvidence=="SIM_PREFLIGHT_READY"}
             val verify=plan.stages.indexOfFirst{it.subpage.value=="NC.VERIFY"}
             val machine=plan.stages.indexOfLast{it.action=="NC_MACHINE"}
             sim>=0 && verify>sim && machine>verify
@@ -101,7 +102,7 @@ class AiPageRuntime(
         val safe=endsAtMachine && simNcGate
         lastAuditSafe=safe
         revision++
-        if(!safe) error("AI plan audit failed: SIM/NC safety sequence is incomplete")
+        if(!safe) error("AI plan audit failed: strict SIM preflight / NC safety sequence is incomplete")
         return accepted(command,mapOf(
             "safe" to "true",
             "endsAtMachine" to endsAtMachine.toString(),
@@ -136,12 +137,16 @@ class AiPageRuntime(
         val verified=args["${prefix}Verified"]?.toBooleanStrictOrNull() ?: return null
         val revision=args["${prefix}Revision"]?.toLongOrNull() ?: 0L
         require(revision>=0L){"$prefix evidence revision must be non-negative"}
+        val preflightReady=if(page==PageId.SIM) args["${prefix}PreflightReady"]?.toBooleanStrictOrNull() ?: false else false
+        val fixtureCoverageKnown=if(page==PageId.SIM) args["${prefix}FixtureCoverageKnown"]?.toBooleanStrictOrNull() ?: false else false
         return MachiningStageEvidence(
             pageId=page,
             revision=revision,
             digest=args["${prefix}Digest"].orEmpty(),
             verified=verified,
             axisMode=args["${prefix}Axis"] ?: defaultAxis,
+            preflightReady=preflightReady,
+            fixtureCoverageKnown=fixtureCoverageKnown,
         )
     }
 
