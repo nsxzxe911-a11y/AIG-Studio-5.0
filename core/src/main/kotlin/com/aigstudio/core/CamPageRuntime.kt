@@ -86,7 +86,22 @@ class CamPageRuntime(
     private fun setCompensation(command:PageCommand,value:String):PageResult { compensation=value;revision++;return accepted(command,mapOf("compensation" to value)) }
     private fun selectTool(command:PageCommand):PageResult { val d=number(command,"diameter",settings.toolDiameter);val f=number(command,"feed",settings.feedMmMin);val z=number(command,"depth",settings.depth);settings=settings.copy(toolDiameter=d,feedMmMin=f,depth=z);lastToolpaths=emptyList();revision++;return accepted(command,mapOf("toolDiameter" to d.toString(),"feedMmMin" to f.toString(),"depth" to z.toString())) }
     private fun selectRegion(command:PageCommand):PageResult { regionId=text(command,"regionId");require(regionId.isNotBlank());revision++;return accepted(command,mapOf("regionId" to regionId)) }
-    private fun generatePreview(command:PageCommand):PageResult { lastToolpaths=if(settings.pathMode==CamPathMode.MANUAL)CamEngine.generateManual(settings) else if(lastToolpaths.isNotEmpty())lastToolpaths else CamEngine.generate(sourceCadSnapshot,settings);require(lastToolpaths.isNotEmpty());require(lastToolpaths.any{p->p.moves.any{!it.rapid}});return accepted(command,pathEvidence(lastStrategy)) }
+    private fun generatePreview(command:PageCommand):PageResult {
+        lastToolpaths=if(settings.pathMode==CamPathMode.MANUAL)CamEngine.generateManual(settings) else if(lastToolpaths.isNotEmpty())lastToolpaths else CamEngine.generate(sourceCadSnapshot,settings)
+        require(lastToolpaths.isNotEmpty())
+        require(lastToolpaths.any{p->p.moves.any{!it.rapid}})
+        val programNumber=command.arguments["programNumber"]?.toInt() ?: 1
+        val toolNumber=command.arguments["toolNumber"]?.toInt() ?: 1
+        val hNumber=command.arguments["hNumber"]?.toInt() ?: toolNumber
+        val spindleRpm=command.arguments["spindleRpm"]?.toInt() ?: 2300
+        val nc=FanucPostRuntime.generate(lastToolpaths,settings.safeZ,compensation,programNumber,toolNumber,hNumber,spindleRpm)
+        return accepted(command,pathEvidence(lastStrategy)+mapOf(
+            "postProfile" to FanucPostRuntime.PROFILE,
+            "programNumber" to programNumber.toString(),
+            "ncLineCount" to nc.lineSequence().count().toString(),
+            "ncText" to nc
+        ))
+    }
     private fun generateAuto(command:PageCommand,strategy:String):PageResult { require(sourceCadSnapshot.entities.isNotEmpty());settings=settings.copy(pathMode=CamPathMode.AUTO);lastToolpaths=when(strategy){"DRILL"->drillPaths();"ROUGH"->roughPaths();else->CamEngine.generate(sourceCadSnapshot,settings)};require(lastToolpaths.isNotEmpty());require(lastToolpaths.any{p->p.moves.any{!it.rapid}});lastStrategy=strategy;revision++;return accepted(command,pathEvidence(strategy)) }
     private fun roughPaths():List<Toolpath> { val eligible=sourceCadSnapshot.entities.none{it.id.startsWith("HOLE:")};if(eligible){val pocket=runCatching{CamWorkflowEngine.buildCommonPocket(sourceCadSnapshot.entities,settings)}.getOrNull();if(pocket!=null)return CamEngine.generateManual(pocket)};return CamEngine.generate(sourceCadSnapshot,settings) }
     private fun drillPaths():List<Toolpath> { val holes=sourceCadSnapshot.entities.filterIsInstance<Circle>().filter{it.id.startsWith("HOLE:")};require(holes.isNotEmpty());return holes.map{h->Toolpath(listOf(Rapid(h.center,settings.safeZ),Feed(h.center,settings.feedMmMin,settings.depth),Rapid(h.center,settings.safeZ)))} }
