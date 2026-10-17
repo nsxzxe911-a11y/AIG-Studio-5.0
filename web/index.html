@@ -179,9 +179,11 @@ html,body{background:#020407}
 <main class="shell" id="screens"></main>
 <footer class="footer">AIG CNC • 黑色高對比 Runtime • Web Runtime • CNC machine output disabled</footer>
 </div>
+<script src="./runtime/page-runtime-router.js"></script>
+<script src="./runtime/ai-page-runtime.js"></script>
 <script>
 const pages=[
- ["HOME","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["SIM","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"],["6AX","#27e9ff"],["NC","#33f39b"]
+ ["HOME","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["SIM","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"],["6AX","#27e9ff"],["NC","#33f39b"],["AI","#9f72ff"]
 ];
 const utilityPages=[["刀路","#ff4da6"],["功能","#9f72ff"]];
 const nav=document.getElementById("nav"),screens=document.getElementById("screens");
@@ -235,6 +237,12 @@ function simHubPage(){
  return '<div data-sim-hub><section class="panel"><div class="head"><div><h2>SIM 模擬中心</h2><small>共用現有真 3D / 材料移除 Runtime，不建立假模擬</small></div></div><div class="body">'+
  '<div class="menuGrid">'+["3AX","4AX","5AX","6AX"].map(a=>'<button class="menuCard" data-open-page="'+a+'" data-sim-axis="'+a+'"><b>'+a+'</b><span data-sim-state="'+a+'">READY</span></button>').join("")+'</div>'+
  '<div class="notice" style="margin-top:9px">選擇軸數後進入同一套 G-code / WebGL / 碰撞 / 材料移除 Runtime。</div></div></section></div>';
+}
+function aiPage(){
+ return '<div data-ai-page-runtime><section class="panel"><div class="head"><div><h2>AI 加工規劃</h2><small>只規劃 / 解釋 / 稽核；不直接控制機台</small></div></div><div class="body">'+
+ '<div class="menuDetailGrid"><label class="field"><b>目標軸數</b><select data-ai-axis><option>3AX</option><option>4AX</option><option>5AX</option><option>6AX</option></select></label><label class="field"><b>目標</b><select data-ai-objective><option>FASTEST_SAFE</option><option>MIN_REWORK</option><option>MIN_TOOL_CHANGES</option></select></label><label class="field"><b>現有成果</b><span><label><input type="checkbox" data-ai-cad> CAD</label> <label><input type="checkbox" data-ai-manual> MANUAL CAM</label> <label><input type="checkbox" data-ai-cam> CAM 刀路</label> <label><input type="checkbox" data-ai-nc> NC</label></span></label></div>'+
+ '<div class="controls"><button class="btn" data-ai-command="AI.PLAN.BUILD">建立方案</button><button class="btn" data-ai-command="AI.PLAN.OPTIMIZE">最快安全</button><button class="btn" data-ai-command="AI.ASSIST.EXPLAIN">說明</button><button class="btn" data-ai-command="AI.AUDIT.RUN">稽核</button><button class="btn" data-ai-command="AI.RECOVERY.REPLAN">重新規劃</button></div>'+
+ '<div class="notice" style="margin-top:9px" data-ai-result>AI READY • 等待加工條件</div></div></section></div>';
 }
 function ncPage(){
  const keyRows=[
@@ -3095,9 +3103,9 @@ function makeMenuRuntime(root){
  render("PROJECT");
 }
 pages.forEach(([name,color])=>{
- const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>aigGuard(document.body,"頁面切換",()=>show(name),null,"warn");nav.appendChild(b);
+ const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>aigGuard(document.body,"頁面切換",()=>navigateProductionPage(name),null,"warn");nav.appendChild(b);
  const s=document.createElement("section");s.className="screen";s.dataset.page=name;
- s.innerHTML=name==="HOME"?homePage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="SIM"?simHubPage():name==="NC"?ncPage():simPage(name);
+ s.innerHTML=name==="HOME"?homePage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="SIM"?simHubPage():name==="NC"?ncPage():name==="AI"?aiPage():simPage(name);
  screens.appendChild(s);
 });
 utilityPages.forEach(([name])=>{const s=document.createElement("section");s.className="screen";s.dataset.page=name;s.innerHTML=name==="刀路"?toolpathPage():menuPage();screens.appendChild(s)});
@@ -3118,7 +3126,16 @@ function show(name){
  history.replaceState(null,"","#"+encodeURIComponent(name));
  setTimeout(()=>window.dispatchEvent(new Event("resize")),0);
 }
-document.addEventListener("click",e=>{const a=e.target.closest("[data-open-page]");if(a)aigGuard(document.body,"頁面切換",()=>show(a.dataset.openPage),null,"warn")});
+const productionPageRouter=new AigPageRuntimeRouter({
+ runtimeProvider:page=>page==="AI"?(document.querySelector("[data-ai-page-runtime]")?._aigAiRuntime||null):null,
+ pageNavigator:page=>show(page)
+});
+window.aigProductionPageRouter=productionPageRouter;
+function navigateProductionPage(name){
+ const navId="NAV_"+name;
+ return AIG_PAGE_NAVIGATION[navId]?productionPageRouter.navigate(navId):show(name);
+}
+document.addEventListener("click",e=>{const a=e.target.closest("[data-open-page]");if(a)aigGuard(document.body,"頁面切換",()=>navigateProductionPage(a.dataset.openPage),null,"warn")});
 aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash||"#HOME").slice(1))),null,"error");
 </script>
 

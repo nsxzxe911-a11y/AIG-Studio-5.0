@@ -4546,6 +4546,7 @@ private fun showApp(showWindow:Boolean=true):JFrame {
 
     var maintenanceCenterAction: (() -> Unit)? = null
     val productionUiButtons=linkedMapOf<String,GlassActionButton>()
+    var productionPageRouter:PageRuntimeRouter?=null
 
     fun showUserSettingsCenter(){
         val names=StudioDesktopProductionTheme.ids().map{StudioDesktopProductionTheme.name(it)}.toTypedArray()
@@ -4805,6 +4806,23 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     linkTools.add(button("連接", Color(63,255,157)) { cad.connectSelected() })
     linkTools.add(button("斷開", Color(255,176,32)) { cad.disconnectSelected() })
     linkTools.add(button("全部斷開", Color(239,68,68)) { cad.disconnectAllTopology() })
+    productionPageRouter=PageRuntimeRouter(
+        runtimeProvider={ _:PageId -> null },
+        pageNavigator={ page ->
+            when(page) {
+                PageId.HOME -> { productionUiButtons.forEach { (_,button) -> button.active=false }; mainCardLayout.show(mainCardHost,"HOME"); status.text="HOME • PRODUCTION RUNTIME" }
+                PageId.CAD -> { mainCardLayout.show(mainCardHost,"CAD"); status.text="CAD • PRODUCTION UI" }
+                PageId.CAM -> showProductionCam()
+                PageId.SIM -> runCatching { showUnifiedMachiningEditor(frame,doc,status,productionCamDerivedCache,ProductionUiSwitchContract.runtimeTarget("SIM"),productionCamSettings,productionFixtures,productionToolAssembly) }.onFailure { status.text="SIM WARNING • "+(it.message?:"error") }
+                PageId.AX3 -> runCatching { showUnifiedMachiningEditor(frame,doc,status,productionCamDerivedCache,"3AX",productionCamSettings,productionFixtures,productionToolAssembly) }.onFailure { status.text="3AX WARNING • "+(it.message?:"error") }
+                PageId.AX4 -> runCatching { showUnifiedMachiningEditor(frame,doc,status,productionCamDerivedCache,"4AX",productionCamSettings,productionFixtures,productionToolAssembly) }.onFailure { status.text="4AX WARNING • "+(it.message?:"error") }
+                PageId.AX5 -> runCatching { showUnifiedMachiningEditor(frame,doc,status,productionCamDerivedCache,"5AX",productionCamSettings,productionFixtures,productionToolAssembly) }.onFailure { status.text="5AX WARNING • "+(it.message?:"error") }
+                PageId.AX6 -> showSixAxisRuntimeStage()
+                PageId.NC -> runCatching { showNcEditor(frame,productionCamDerivedCache,!productionCamIsStale()) }.onFailure { status.text="NC EDIT BLOCKED • "+(it.message?:"error") }
+                PageId.AI -> { mainCardLayout.show(mainCardHost,"AI"); status.text="AI • PRODUCTION UI • LOCAL ASSIST" }
+            }
+        }
+    )
     fun productionUiButton(id:String,color:Color,action:()->Unit):GlassActionButton {
         val normalized=ProductionUiSwitchContract.normalize(id)
         return GlassActionButton(normalized,color).apply {
@@ -4812,7 +4830,8 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             productionUiButtons[normalized]=this
             addActionListener {
                 productionUiButtons.forEach { (key,b) -> b.active=(key==normalized) }
-                action()
+                val navId="NAV_"+normalized
+                if(PageRuntimeRouter.NAVIGATION.containsKey(navId)) productionPageRouter?.navigate(navId) ?: action() else action()
             }
         }
     }

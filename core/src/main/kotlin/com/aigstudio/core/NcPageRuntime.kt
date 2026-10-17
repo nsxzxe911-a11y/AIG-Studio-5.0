@@ -138,7 +138,18 @@ class NcPageRuntime(
         val blocked=timeline.firstOrNull{it.status=="BLOCKED"}
         require(blocked==null){"NC preview blocked at L${blocked?.lineNumber}"}
         previewed=true;verified=false;prepared=false;revision++
-        return accepted(command,mapOf("eventCount" to timeline.size.toString(),"readyEventCount" to timeline.count{it.status=="READY"}.toString(),"g34Profile" to profile().g34VendorProfile.template.name,"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","summary" to NcExecutionTimeline.programSummary(legacy,controller,machineLimits,profile())))
+        val ready=timeline.filter{it.status=="READY"}
+        val executionActions=ready.map{it.action}.distinct().joinToString(",")
+        val executionDomains=ready.flatMap{it.domains}.distinct().joinToString(","){it.name}
+        return accepted(command,mapOf(
+            "eventCount" to timeline.size.toString(),
+            "readyEventCount" to ready.size.toString(),
+            "executionActions" to executionActions,
+            "executionDomains" to executionDomains,
+            "g34Profile" to profile().g34VendorProfile.template.name,
+            "cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED",
+            "summary" to NcExecutionTimeline.programSummary(legacy,controller,machineLimits,profile())
+        ))
     }
     private fun verify(command:PageCommand):PageResult {
         require(parsed)

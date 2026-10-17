@@ -846,6 +846,7 @@ class MainActivity : Activity() {
         })
 
         var showRuntimeHome:(()->Unit)?=null
+        var productionPageRouter:PageRuntimeRouter?=null
         val productionUiSwitch = FlowLayout(this).apply {
             setPadding(dp(5), dp(2), dp(5), dp(3))
             contentDescription = "PRODUCTION UI SWITCH"
@@ -958,14 +959,17 @@ class MainActivity : Activity() {
                 setOnClickListener {
                     selectProductionUi(normalized)
                     refreshVisibleMode(normalized)
-                    action()
+                    val navId="NAV_"+normalized
+                    if(PageRuntimeRouter.NAVIGATION.containsKey(navId)) productionPageRouter?.navigate(navId) ?: action() else action()
                 }
             }
             productionUiButtons[normalized]=button
             productionUiSwitch.addView(button)
         }
         addProductionUi("CAD") {
-            Toast.makeText(this,"CAD • LIVE WORKSPACE",Toast.LENGTH_SHORT).show()
+            root.visibility=View.VISIBLE
+            selectProductionUi("CAD")
+            refreshVisibleMode("CAD")
         }
         addProductionUi("CAM") { showCamWorkstation() }
         addProductionUi("SIM") { showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM")) }
@@ -1418,6 +1422,23 @@ class MainActivity : Activity() {
             selectProductionUi("CAD")
             refreshVisibleMode("CAD")
         }
+        productionPageRouter=PageRuntimeRouter(
+            runtimeProvider={ _:PageId -> null },
+            pageNavigator={ page ->
+                when(page) {
+                    PageId.HOME -> showRuntimeHome?.invoke()
+                    PageId.CAD -> enterCadRuntime()
+                    PageId.CAM -> showCamWorkstation()
+                    PageId.SIM -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))
+                    PageId.AX3 -> showUnifiedMachiningWorkspace("3AX")
+                    PageId.AX4 -> showUnifiedMachiningWorkspace("4AX")
+                    PageId.AX5 -> showUnifiedMachiningWorkspace("5AX")
+                    PageId.AX6 -> showSixAxisRuntimeStage()
+                    PageId.NC -> showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))
+                    PageId.AI -> showAiSystemSuiteDialog()
+                }
+            }
+        )
         fun homeAction(label:String,color:Int,run:()->Unit) {
             homeModes.addView(RgbGlowButton(this).apply {
                 text=label

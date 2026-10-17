@@ -210,7 +210,8 @@ object NcFirstMotionParser {
         require(rapidZ.isNotEmpty() && rapidZ.all{it>0.0}){"NC-first rapid motion must remain above Z0"}
         val cuts=points.filter{!it.rapid}
         require(cuts.any{it.z<0.0}){"NC-first preview requires at least one cutting move below Z0"}
-        require(cuts.all{it.z<=0.0}){"NC-first cutting motion above Z0 is not accepted by material preview"}
+        // Feed motion above Z0 is valid NC motion (for example G83 from R plane toward stock).
+        // It remains a Feed in the trace; only the material-removal projection treats it as non-cutting.
         return NcFirstMotionTrace(
             points,rapidZ.minOrNull()!!,cuts.minOf{it.z},feed,axisWords,
             cannedCycleHoleCount,g34HoleCount,cycleModels.toSet()
@@ -235,13 +236,20 @@ object NcFirstMachiningPreviewEngine {
         val alarm=NcEditorAlarmRouter.firstAlarm(legacy,CncControllerProfile.FANUC,rotaryClampProfile=profile)
         require(alarm==null){alarm?.compact().orEmpty()}
         val trace=NcFirstMotionParser.parse(program,machineMode)
+        // Manual CAM historically used rapid=false as a synonym for "material cutting".
+        // NC allows feed motion above stock, so preserve the true trace and create a material-only projection.
+        val materialProjection=trace.points.map { point ->
+            if(!point.rapid && point.z>0.0) point.copy(rapid=true) else point
+        }
+        val materialSafeZ=materialProjection.asSequence().filter{it.rapid}.map{it.z}.minOrNull()
+            ?: trace.safeZ
         val settings=CamSettings(
             toolDiameter=toolDiameter,
             depth=trace.depth,
-            safeZ=trace.safeZ,
+            safeZ=materialSafeZ,
             feedMmMin=trace.feedMmMin,
             pathMode=CamPathMode.MANUAL,
-            manualPath=trace.points
+            manualPath=materialProjection
         )
         val result=Machining3DEngine.build(
             DrawingSnapshot(emptyList()),settings,fixtures=fixtures,toolAssembly=toolAssembly
