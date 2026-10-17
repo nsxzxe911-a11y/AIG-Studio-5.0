@@ -30,10 +30,21 @@ fun main(){
     check(cad.snapshot().state["photoScaleMmPerPixel"]=="0.025")
 
     val saved=cad.dispatch(cmd("CAD.FILE","CAD.FILE.SAVE")) as PageResult.Accepted
+    check(saved.evidence["format"]=="AIG_CAD")
     val data=saved.evidence.getValue("cadData")
     val reopened=CadPageRuntime()
     check(reopened.dispatch(cmd("CAD.FILE","CAD.FILE.OPEN","data" to data)) is PageResult.Accepted)
     check(reopened.geometrySnapshot().entities.size==cad.geometrySnapshot().entities.size)
+
+    val dxfExport=cad.dispatch(cmd("CAD.FILE","CAD.FILE.EXPORT","format" to "DXF")) as PageResult.Accepted
+    check(dxfExport.evidence["format"]=="DXF")
+    val dxf=dxfExport.evidence.getValue("data")
+    check(dxf.contains("SECTION") && dxf.contains("ENTITIES") && dxf.contains("EOF"))
+    val imported=CadPageRuntime()
+    val importResult=imported.dispatch(cmd("CAD.FILE","CAD.FILE.IMPORT","format" to "DXF","data" to dxf)) as PageResult.Accepted
+    check(importResult.evidence["format"]=="DXF")
+    check(imported.geometrySnapshot().entities.size==cad.geometrySnapshot().entities.size)
+    check(imported.geometrySnapshot().entities.any{it.id.startsWith("HOLE:")})
 
     val offsetCad=CadPageRuntime()
     offsetCad.dispatch(cmd("CAD.DRAW","CAD.DRAW.CIRCLE","cx" to "0","cy" to "0","r" to "5"))
@@ -69,5 +80,5 @@ fun main(){
     val extendIds=extend.geometrySnapshot().entities.map{it.id}.joinToString(",")
     check(extend.dispatch(cmd("CAD.EDIT","CAD.EDIT.EXTEND","ids" to extendIds)) is PageResult.Accepted)
 
-    println("CAD_PAGE_RUNTIME_PASS|DRAW|TRIM_EXTEND_OFFSET_ARRAY|CHAMFER_FILLET|UNDO_REDO|SNAP|PHOTO|FILE_ROUNDTRIP|LOCAL_RUNTIME")
+    println("CAD_PAGE_RUNTIME_PASS|DRAW|TRIM_EXTEND_OFFSET_ARRAY|CHAMFER_FILLET|UNDO_REDO|SNAP|PHOTO|AIG_FILE_ROUNDTRIP|DXF_IMPORT_EXPORT|LOCAL_RUNTIME")
 }
