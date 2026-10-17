@@ -29,6 +29,7 @@ fun main(){
     check("G83_FULL_R_RETRACT" in g34Trace.cycleModels)
     check(g34Trace.safeZ==3.0)
     check(g34Trace.depth==-20.0)
+    check(g34Trace.points.any{!it.rapid && it.z>0.0})
     val holeBottoms=g34Trace.points.filter{!it.rapid && abs(it.z+20.0)<1e-9}
     check(holeBottoms.size==6)
     check(holeBottoms.all{abs(hypot(it.x,it.y)-15.0)<1e-6})
@@ -47,5 +48,5 @@ fun main(){
     check(g73Trace.cannedCycleHoleCount==1)
     check("G73_CONSERVATIVE_FULL_R_RETRACT" in g73Trace.cycleModels)
 
-    println("NC_FIRST_MOTION_PASS|G90|G0_G1_G2|ABC|G34_I_DIAMETER_K_COUNT|G81|G73_CONSERVATIVE|G83|G98_G99|TRUE_3D|MATERIAL_REMOVAL|PREFLIGHT_FAIL_CLOSED|AXIS_MODE")
+    println("NC_FIRST_MOTION_PASS|G90|G0_G1_G2|ABC|G34_I_DIAMETER_K_COUNT|G81|G73_CONSERVATIVE|G83|AIR_FEED_TRACE|G98_G99|TRUE_3D|MATERIAL_REMOVAL|PREFLIGHT_FAIL_CLOSED|AXIS_MODE")
 }
