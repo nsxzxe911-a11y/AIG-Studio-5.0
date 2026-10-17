@@ -7,6 +7,7 @@ PAGES = ["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI"]
 SCHEMA = "aig-page-button-manifest-v1"
 DANGER = {"NORMAL","CAUTION","CNC_OUTPUT"}
 ID_RE = re.compile(r"^[A-Z0-9]+(?:\.[A-Z0-9_]+){2,}$")
+VIEW_ID_RE = re.compile(r"^VIEW\.[A-Z0-9]+(?:\.[A-Z0-9_]+){2,}$")
 
 def expected_commands():
     out = {
@@ -53,6 +54,7 @@ def expected_subpage(page, command):
 def verify_page_manifests(root=ROOT):
     expected = expected_commands()
     global_ids = set()
+    global_view_ids = set()
     total = 0
     for page in PAGES:
         path = root / "design" / "ui" / "pages" / page / "button-manifest.json"
@@ -65,10 +67,15 @@ def verify_page_manifests(root=ROOT):
         assert actual == set(expected[page]), f"PAGE_COMMAND_SET_DRIFT:{page}:actual={sorted(actual)}:expected={sorted(expected[page])}"
         for button in buttons:
             bid = button["buttonId"]
+            view_id = button.get("viewId")
             assert ID_RE.fullmatch(bid), f"PAGE_BUTTON_ID_NOT_HIERARCHICAL:{bid}"
             assert bid == button["commandId"], f"PAGE_BUTTON_COMMAND_ID_MISMATCH:{bid}:{button['commandId']}"
             assert bid not in global_ids, f"PAGE_BUTTON_DUPLICATE:{bid}"
             global_ids.add(bid)
+            assert isinstance(view_id,str) and VIEW_ID_RE.fullmatch(view_id), f"PAGE_VIEW_ID_NOT_HIERARCHICAL:{bid}:{view_id}"
+            assert view_id == f"VIEW.{bid}", f"PAGE_VIEW_BUTTON_ID_MISMATCH:{view_id}:{bid}"
+            assert view_id not in global_view_ids, f"PAGE_VIEW_ID_DUPLICATE:{view_id}"
+            global_view_ids.add(view_id)
             assert button["pageId"] == page
             assert button["subpageId"] == expected_subpage(page, button["commandId"])
             assert button["ownerDomain"] == page
@@ -81,8 +88,9 @@ def verify_page_manifests(root=ROOT):
             assert button.get("bounds") is None
             total += 1
     assert total >= 100, f"PAGE_BUTTON_PROFESSIONAL_COVERAGE_TOO_SMALL:{total}"
+    assert len(global_view_ids)==total, f"PAGE_VIEW_ID_COUNT_MISMATCH:{len(global_view_ids)}:{total}"
     return total
 
 if __name__ == "__main__":
     total = verify_page_manifests()
-    print(f"PAGE_DEPARTMENT_MANIFEST_PASS|10_PAGES|{total}_BUTTONS|PAGE_SUBPAGE_ACTION_ID|BUTTON_ID_EQUALS_COMMAND_ID|TYPED_CALLBACK|LOCAL_MESSAGES|NO_FAKE_BOUNDS")
+    print(f"PAGE_DEPARTMENT_MANIFEST_PASS|10_PAGES|{total}_BUTTONS|DUAL_ID_VIEW_AND_COMMAND|PAGE_SUBPAGE_ACTION_ID|BUTTON_ID_EQUALS_COMMAND_ID|TYPED_CALLBACK|LOCAL_MESSAGES|NO_FAKE_BOUNDS")
