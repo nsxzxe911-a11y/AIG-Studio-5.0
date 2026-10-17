@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.FrameLayout
 import com.aigstudio.app.RgbGlowButton
 import com.aigstudio.core.tutorial.*
@@ -85,15 +86,16 @@ class TutorialDialogRenderer(private val activity:Activity,private val adapter:T
 }
 
 object TutorialOverlayInstaller {
+    private const val FLOAT_TAG="AIG_TUTORIAL_FLOAT"
     private val installed=Collections.newSetFromMap(WeakHashMap<Activity,Boolean>())
 
     fun install(activity:Activity) {
         if(!installed.add(activity)) return
         activity.window.decorView.post {
             val root=activity.window.decorView as? ViewGroup ?: return@post
-            if(root.findViewWithTag<View>("AIG_TUTORIAL_FLOAT")!=null) return@post
+            if(root.findViewWithTag<View>(FLOAT_TAG)!=null) return@post
             val button=RgbGlowButton(activity).apply {
-                tag="AIG_TUTORIAL_FLOAT"
+                tag=FLOAT_TAG
                 text="AI 教程"
                 contentDescription="AI 導航 / 教程中心 / 目前頁面說明 / 嘴炮模式"
                 textSize=11f
@@ -107,7 +109,35 @@ object TutorialOverlayInstaller {
                     topMargin=dp(activity,54);marginEnd=dp(activity,116)
                 })
             } else root.addView(button,ViewGroup.LayoutParams(dp(activity,104),dp(activity,46)))
+
+            fun syncVisibility() {
+                button.visibility=if(formalHomeVisible(root)) View.GONE else View.VISIBLE
+            }
+            val listener=object:ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout()=syncVisibility()
+            }
+            root.viewTreeObserver.addOnGlobalLayoutListener(listener)
+            button.addOnAttachStateChangeListener(object:View.OnAttachStateChangeListener {
+                override fun onViewAttachedToWindow(v:View)=syncVisibility()
+                override fun onViewDetachedFromWindow(v:View) {
+                    if(root.viewTreeObserver.isAlive) root.viewTreeObserver.removeOnGlobalLayoutListener(listener)
+                    button.removeOnAttachStateChangeListener(this)
+                }
+            })
+            syncVisibility()
         }
+    }
+
+    private fun formalHomeVisible(view:View):Boolean {
+        if(view.visibility==View.VISIBLE && view.isShown) {
+            val description=view.contentDescription?.toString().orEmpty()
+            if(description.contains("AIG CNC FORMAL RGB HOME",ignoreCase=true) ||
+                description.contains("AIG CNC PRODUCTION HOME RUNTIME • FIRST FRAME",ignoreCase=true)) return true
+        }
+        if(view is ViewGroup) {
+            for(i in 0 until view.childCount) if(formalHomeVisible(view.getChildAt(i))) return true
+        }
+        return false
     }
 
     private fun dp(activity:Activity,value:Int):Int=(value*activity.resources.displayMetrics.density).toInt()
