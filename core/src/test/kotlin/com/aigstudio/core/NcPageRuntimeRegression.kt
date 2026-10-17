@@ -51,11 +51,26 @@ fun main(){
     val g34Preview=g34.dispatch(ncCmd("NC.PREVIEW","NC.PREVIEW.RENDER")) as PageResult.Accepted
     check(g34Preview.evidence["g34Profile"]=="XY_J0_I_DIAMETER_K_COUNT")
     check(g34Preview.evidence.getValue("summary").contains("HOLE_PATTERN") || g34Preview.evidence.getValue("summary").contains("CANNED_CYCLE"))
+    check(g34.dispatch(ncCmd("NC.VERIFY","NC.VERIFY.RUN")) is PageResult.Accepted)
+    check(g34.dispatch(ncCmd("NC.OUTPUT","NC.OUTPUT.PREPARE")) is PageResult.Accepted)
 
     val badG34=NcPageRuntime()
     badG34.dispatch(ncCmd("NC.EDITOR","NC.EDITOR.INSERT","text" to "G90\nG0 Z30\nG34 J0 I0 K6 G83 R3 Z-20 Q2 F150"))
     val badG34Parse=badG34.dispatch(ncCmd("NC.PARSER","NC.PARSER.PARSE"))
     check(badG34Parse is PageResult.Rejected)
+
+    val m98=NcPageRuntime()
+    check(m98.dispatch(ncCmd("NC.EDITOR","NC.EDITOR.INSERT","text" to "G90\nM98 P4 L2\nM30")) is PageResult.Accepted)
+    val m98Parsed=m98.dispatch(ncCmd("NC.PARSER","NC.PARSER.PARSE")) as PageResult.Accepted
+    check(m98Parsed.evidence["m98Repeat"]=="VALIDATED")
+    check(m98.snapshot().state["m98RepeatCompatible"]=="true")
+    check(m98.dispatch(ncCmd("NC.PREVIEW","NC.PREVIEW.RENDER")) is PageResult.Accepted)
+    check(m98.dispatch(ncCmd("NC.VERIFY","NC.VERIFY.RUN")) is PageResult.Accepted)
+    check(m98.dispatch(ncCmd("NC.OUTPUT","NC.OUTPUT.PREPARE")) is PageResult.Accepted)
+
+    val badM98=NcPageRuntime()
+    badM98.dispatch(ncCmd("NC.EDITOR","NC.EDITOR.INSERT","text" to "M98 P4 L0"))
+    check(badM98.dispatch(ncCmd("NC.PARSER","NC.PARSER.PARSE")) is PageResult.Rejected)
 
     val badC=NcPageRuntime()
     badC.dispatch(ncCmd("NC.EDITOR","NC.EDITOR.INSERT","text" to "G90\nG1 X1 C361 F150"))
@@ -76,5 +91,5 @@ fun main(){
     check(delete.dispatch(ncCmd("NC.EDITOR","NC.EDITOR.DELETE","line" to "1")) is PageResult.Accepted)
     check(delete.snapshot().state["lineCount"]=="1")
 
-    println("NC_PAGE_RUNTIME_PASS|EDITOR|INTERLOCK_PARSER|TIMELINE_PREVIEW|VERIFY|INLINE_ALARM|SINGLE_BLOCK|DRY_RUN|BLOCK_SKIP|CUSTOM_M|6AX_C_COMPAT|G34_G83_PROFILE|MACHINE_FAIL_CLOSED")
+    println("NC_PAGE_RUNTIME_PASS|EDITOR|INTERLOCK_PARSER|TIMELINE_PREVIEW|VERIFY|INLINE_ALARM|SINGLE_BLOCK|DRY_RUN|BLOCK_SKIP|CUSTOM_M|6AX_C_COMPAT|G34_G83_PROFILE|M98_L_REPEAT|MACHINE_FAIL_CLOSED")
 }
