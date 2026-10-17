@@ -4,6 +4,8 @@ set -euo pipefail
 APK='release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk'
 PKG='com.aigstudio.app'
 EVIDENCE='release/android/runtime-evidence'
+AUTHORITY_ID='AIG_MOBILE_CURRENT_APPROVED_V1_20261016'
+AUTHORITY_SHA='f360cb828ff6d05076792b0d04474503316dea85896f82f6452b0d6c9d7ae99e'
 
 mkdir -p "$EVIDENCE"
 test -s "$APK"
@@ -33,6 +35,17 @@ if ! grep -F 'AIG CNC PRODUCTION RUNTIME HOST' "$EVIDENCE/android_ui.xml"; then
   exit 1
 fi
 
+if grep -F 'AIG RGB HOME AUTHORITY MISSING' "$EVIDENCE/android_ui.xml"; then
+  echo 'HOME_AUTHORITY_MISSING_ENGINEERING_FALLBACK_BLOCKED=FAIL'
+  cat "$EVIDENCE/android_ui.xml"
+  exit 1
+fi
+if ! grep -F "AIG RGB HOME AUTHORITY APPLIED|${AUTHORITY_ID}|${AUTHORITY_SHA}" "$EVIDENCE/android_ui.xml"; then
+  echo 'HOME_AUTHORITY_APPLIED_MARKER_MISSING=FAIL'
+  cat "$EVIDENCE/android_ui.xml"
+  exit 1
+fi
+
 if grep -Eqi 'ENGINEERING SHELL|SYSTEM READY|PHYSICAL PERFORMANCE|MASTER COORDINATE ROOT|MAINTENANCE SYSTEM STRIP|2D CAD .*LIVE WORKSPACE' "$EVIDENCE/android_ui.xml"; then
   echo 'DEFAULT_ENGINEERING_SHELL_DETECTED=FAIL'
   cat "$EVIDENCE/android_ui.xml"
@@ -41,6 +54,6 @@ fi
 
 adb exec-out screencap -p > "$EVIDENCE/android_runtime_launch.png"
 test "$(stat -c%s "$EVIDENCE/android_runtime_launch.png")" -gt 20000
-printf 'device_launch_evidence=EMULATOR_OFFLINE_FORMAL_RGB_HOME_VISIBLE\nengineering_shell_default=FALSE\npackage=%s\n' "$PKG" > "$EVIDENCE/UI_ENTRY_EVIDENCE.txt"
+printf 'device_launch_evidence=EMULATOR_OFFLINE_FORMAL_RGB_HOME_VISIBLE\nauthority_id=%s\nauthority_sha256=%s\nauthority_applied=TRUE\nengineering_shell_default=FALSE\npackage=%s\n' "$AUTHORITY_ID" "$AUTHORITY_SHA" "$PKG" > "$EVIDENCE/UI_ENTRY_EVIDENCE.txt"
 bash ci/verify_android_axis_page_persistence.sh
-echo 'STUDIO_ANDROID_VISIBLE_RUNTIME_GATE_PASS|OFFLINE|FORMAL_RGB_HOME|NO_ENGINEERING_SHELL'
+echo 'STUDIO_ANDROID_VISIBLE_RUNTIME_GATE_PASS|OFFLINE|FORMAL_RGB_HOME|AUTHORITY_APPLIED|NO_ENGINEERING_SHELL'
