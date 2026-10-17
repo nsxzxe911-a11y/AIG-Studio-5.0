@@ -1,0 +1,43 @@
+export const AIG_ZHTW_TERMS = Object.freeze({
+  "HOME": "首頁",
+  "CAD": "製圖",
+  "CAM": "加工",
+  "TOOLPATH_3D": "3D 刀路",
+  "SIM": "模擬",
+  "3AX": "三軸",
+  "4AX": "四軸",
+  "5AX": "五軸",
+  "6AX": "六軸",
+  "NC": "程式",
+  "AI": "AI 助手",
+  "SETTINGS": "設定",
+  "TOOL_LIBRARY": "刀具庫",
+  "TOOL_MANAGER": "刀具管理",
+  "HOLDER": "刀柄",
+  "TOOL_ASSEMBLY": "刀具組裝",
+  "WORKPIECE": "工件",
+  "STOCK": "毛胚",
+  "FIXTURE": "夾具",
+  "MACHINE_SETUP": "機台設定",
+  "DISPLAY_SETTINGS": "顯示設定",
+  "RENDERER_SETTINGS": "繪圖引擎設定",
+  "RECOVERY": "復原",
+  "SYNC": "同步",
+  "SMART_DRAW": "智慧繪圖",
+  "SMART_EDIT": "智慧編輯",
+  "SMART_CORNER": "倒角／圓角",
+  "SMART_PATTERN": "陣列",
+  "SMART_DIMENSION": "尺寸",
+  "SMART_SNAP": "鎖點",
+  "SMART_PHOTO": "圖片校正",
+  "SMART_FILE": "檔案",
+  "WORK_COORDINATE": "工作座標",
+  "MACHINE_COORDINATE": "機械座標",
+  "SINGLE_BLOCK": "單節",
+  "DRY_RUN": "空跑",
+  "BLOCK_SKIP": "選擇跳過"
+});
+
+export function aigZhTw(key) {
+  return AIG_ZHTW_TERMS[key] ?? key;
+}
