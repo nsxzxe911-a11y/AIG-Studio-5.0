@@ -16,6 +16,18 @@ fun main(){
     check(nc.contains("G1 X10.000 Y0.000 Z-2.000 A10.000 B20.000 C30.000 F150.000"))
     check(nc.contains("G3 X10.000 Y10.000 Z-2.000 I0.000 J5.000 A10.000 B20.000 C30.000 F120.000"))
     check(nc.contains("G40"))
+    check(nc.contains("G80"))
     check(nc.contains("M99"))
-    println("FANUC_POST_RUNTIME_PASS|G90_G54|TOOL_SPINDLE_G43|G0_G1_G3|ABC|SAFE_Z|M99")
+
+    val subprogramNc=FanucPostRuntime.generate(
+        paths,safeZ=5.0,programNumber=9,toolNumber=9,hNumber=1,spindleRpm=2300,
+        toolChangeSubprogram=4,endSubprogram=5,programEnd="M30"
+    )
+    check(subprogramNc.contains("M98 P4"))
+    check(subprogramNc.contains("M98 P5"))
+    check(subprogramNc.lineSequence().any{it=="M30"})
+    check(runCatching{FanucPostRuntime.generate(paths,5.0,toolChangeSubprogram=0)}.isFailure)
+    check(runCatching{FanucPostRuntime.generate(paths,5.0,programEnd="M2")}.isFailure)
+
+    println("FANUC_POST_RUNTIME_PASS|G90_G54|TOOL_SPINDLE_G43|G0_G1_G3|ABC|SAFE_Z|G80|P4_P5|M99_M30")
 }
