@@ -49,6 +49,7 @@ tasks.register<JavaExec>("rgbGlobalSkinRegression") {
 val pageAutonomyRegressionClasses = linkedMapOf(
     "pageRuntimeContractRegression" to "com.aigstudio.core.PageRuntimeContractRegressionKt",
     "pageCommandCatalogRegression" to "com.aigstudio.core.PageCommandCatalogRegressionKt",
+    "uiDualIdContractRegression" to "com.aigstudio.core.UiDualIdContractRegressionKt",
     "cadPageRuntimeRegression" to "com.aigstudio.core.CadPageRuntimeRegressionKt",
     "camPageRuntimeRegression" to "com.aigstudio.core.CamPageRuntimeRegressionKt",
     "simAcceptancePolicyRegression" to "com.aigstudio.core.SimAcceptancePolicyRegressionKt",
