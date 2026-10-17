@@ -8,11 +8,15 @@ on:
       - 'design/ui/**'
       - 'web/runtime/**'
       - 'core/src/main/kotlin/com/aigstudio/core/UiButtonManifestContract.kt'
+      - 'core/src/main/kotlin/com/aigstudio/core/AigProductUiContract.kt'
+      - 'app/src/main/java/com/aigstudio/app/PageRuntimeRouter.kt'
+      - 'desktop/src/main/kotlin/com/aigstudio/desktop/PageRuntimeRouter.kt'
       - 'ci/verify_aig_authority_v7.py'
       - 'ci/verify_aig_product_contract_v1.py'
       - 'ci/verify_ui_region_manifest.py'
       - 'ci/verify_ui_skin_contract.py'
       - 'ci/verify_web_authority_controls.py'
+      - 'ci/verify_reverse_ui_cross_platform_contract.py'
       - '.github/workflows/aig-authority-v7-focused-gate.yml'
   workflow_dispatch:
 
@@ -48,6 +52,8 @@ jobs:
           fi
       - name: Verify Web native Authority controls
         run: python3 ci/verify_web_authority_controls.py
+      - name: Verify Android Windows Web semantic consistency
+        run: python3 ci/verify_reverse_ui_cross_platform_contract.py
       - name: Capture Stage3 HOME runtime evidence
         shell: bash
         run: |
