@@ -1,0 +1,65 @@
+name: Ingest verified stable HOME authority once
+
+on:
+  push:
+    branches:
+      - architecture/page-autonomy-ai-orchestrator-after-588
+    paths:
+      - '.github/authority-stable-home-ingest.trigger'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: authority-stable-home-ingest
+  cancel-in-progress: true
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: architecture/page-autonomy-ai-orchestrator-after-588
+          fetch-depth: 1
+      - name: Fetch exact AIG-II verified 427 HOME binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          AIGII_SHA='f557c2de9e4a627f504d0ef927085cd70ea94eb0'
+          BASE="https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-II/${AIGII_SHA}"
+          TMP="$(mktemp -d)"
+          curl -fsSL "$BASE/app/src/main/assets/aig-generated-rgb/approved/427/home_mobile.jpg" -o "$TMP/home_mobile.jpg"
+          curl -fsSL "$BASE/app/src/main/assets/aig-generated-rgb/approved/427/home_desktop.jpg" -o "$TMP/home_desktop.jpg"
+          echo '8835cded863074b4de9b848e12eb037254119b5a7f21e135b66657f764fbd652  '"$TMP/home_mobile.jpg" | sha256sum -c -
+          echo '02185fbd1dd8026ad17bf6cb1994bcd5a03d03e46b68bb45135d911d809ff9da  '"$TMP/home_desktop.jpg" | sha256sum -c -
+          mkdir -p app/src/main/assets/aig-generated-rgb/approved/427
+          mkdir -p desktop/src/main/resources/aig-generated-rgb/approved/427
+          cp "$TMP/home_mobile.jpg" app/src/main/assets/aig-generated-rgb/approved/427/home_mobile.jpg
+          cp "$TMP/home_desktop.jpg" desktop/src/main/resources/aig-generated-rgb/approved/427/home_desktop.jpg
+          printf '%s\n' \
+            'source_repo=nsxzxe911-a11y/AIG-II' \
+            "source_sha=$AIGII_SHA" \
+            'authority=AIG_RGB_HOME_427' \
+            'approval=MORNING_APPROVED_RGB_2026_10_05' \
+            'role=VERIFIED_STABLE_FALLBACK_ONLY' \
+            'mobile_sha256=8835cded863074b4de9b848e12eb037254119b5a7f21e135b66657f764fbd652' \
+            'desktop_sha256=02185fbd1dd8026ad17bf6cb1994bcd5a03d03e46b68bb45135d911d809ff9da' \
+            > app/src/main/assets/aig-generated-rgb/approved/427/STABLE_AUTHORITY_SOURCE.properties
+          cp app/src/main/assets/aig-generated-rgb/approved/427/STABLE_AUTHORITY_SOURCE.properties \
+             desktop/src/main/resources/aig-generated-rgb/approved/427/STABLE_AUTHORITY_SOURCE.properties
+          echo 'VERIFIED_STABLE_HOME_INGEST_PREPARED=PASS'
+      - name: Commit verified binary fallback to feature branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'AIG Authority Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add app/src/main/assets/aig-generated-rgb/approved/427 desktop/src/main/resources/aig-generated-rgb/approved/427
+          if git diff --cached --quiet; then
+            echo 'VERIFIED_STABLE_HOME_ALREADY_PRESENT=PASS'
+            exit 0
+          fi
+          git commit -m 'ui: ingest verified 427 RGB HOME stable fallback'
+          git push origin HEAD:architecture/page-autonomy-ai-orchestrator-after-588
+          echo 'VERIFIED_STABLE_HOME_INGEST_COMMIT=PASS'
