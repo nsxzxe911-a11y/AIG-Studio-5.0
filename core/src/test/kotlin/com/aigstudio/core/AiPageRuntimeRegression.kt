@@ -27,6 +27,17 @@ fun main(){
     check(audit.evidence["endsAtMachine"]=="true")
     check(audit.evidence["simNcGate"]=="true")
 
+    val legacy=ai.dispatch(aiCmd("AI.PLAN","AI.PLAN.OPTIMIZE",
+        "objective" to "MIN_REWORK",
+        "targetAxis" to "4AX",
+        "hasNcProgram" to "true",
+        "hasCadGeometry" to "true",
+        "hasManualCamArtifact" to "true",
+        "hasCamToolpath" to "true",
+        "simVerified" to "true","simRevision" to "11","simDigest" to "sim11","simAxis" to "4AX",
+        "ncVerified" to "true","ncRevision" to "19","ncDigest" to "nc19","ncAxis" to "4AX")) as PageResult.Accepted
+    check(legacy.evidence["routeKind"]!="REUSE_VERIFIED_STAGE")
+
     val optimized=ai.dispatch(aiCmd("AI.PLAN","AI.PLAN.OPTIMIZE",
         "objective" to "MIN_REWORK",
         "targetAxis" to "4AX",
@@ -35,8 +46,13 @@ fun main(){
         "hasManualCamArtifact" to "true",
         "hasCamToolpath" to "true",
         "simVerified" to "true","simRevision" to "12","simDigest" to "sim12","simAxis" to "4AX",
+        "simPreflightReady" to "true","simFixtureCoverageKnown" to "true",
         "ncVerified" to "true","ncRevision" to "20","ncDigest" to "nc20","ncAxis" to "4AX")) as PageResult.Accepted
     check(optimized.evidence["routeKind"]=="REUSE_VERIFIED_STAGE")
+    check(ai.currentInput()?.simEvidence?.preflightReady==true)
+    check(ai.currentInput()?.simEvidence?.fixtureCoverageKnown==true)
+    val reuseAudit=ai.dispatch(aiCmd("AI.AUDIT","AI.AUDIT.RUN")) as PageResult.Accepted
+    check(reuseAudit.evidence["safe"]=="true")
 
     val replan=ai.dispatch(aiCmd("AI.RECOVERY","AI.RECOVERY.REPLAN",
         "objective" to "FASTEST_SAFE",
@@ -57,5 +73,5 @@ fun main(){
     check(ai.exportPayload(RuntimeLinkId.CAD_CAM)==null)
     check(ai.messages().all{it.pageId==PageId.AI})
 
-    println("AI_PAGE_RUNTIME_PASS|ASSIST|PLAN|OPTIMIZE|AUDIT|RECOVERY|ORCHESTRATOR_ONLY|NO_DOMAIN_MUTATION|LOCAL_ERROR")
+    println("AI_PAGE_RUNTIME_PASS|ASSIST|PLAN|OPTIMIZE|AUDIT|RECOVERY|STRICT_SIM_REUSE|LEGACY_UNMODELED_REJECTED|ORCHESTRATOR_ONLY|NO_DOMAIN_MUTATION|LOCAL_ERROR")
 }
