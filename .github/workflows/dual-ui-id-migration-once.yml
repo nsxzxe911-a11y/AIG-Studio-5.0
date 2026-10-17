@@ -1,0 +1,45 @@
+name: AIG Studio dual UI ID migration once
+
+on:
+  push:
+    branches:
+      - architecture/page-autonomy-ai-orchestrator-after-588
+    paths:
+      - '.github/workflows/dual-ui-id-migration-once.yml'
+      - '.github/dual-ui-id-migration.trigger'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: studio-dual-ui-id-migration-once
+  cancel-in-progress: true
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: architecture/page-autonomy-ai-orchestrator-after-588
+          fetch-depth: 0
+      - name: Apply deterministic view IDs
+        run: python3 ci/apply_dual_ui_ids.py
+      - name: Verify dual ID manifests
+        run: |
+          python3 ci/verify_page_department_manifests.py
+          (cd ci && python3 test_page_button_id_hierarchy.py)
+          (cd ci && python3 test_dual_ui_id_contract.py)
+      - name: Commit verified dual IDs
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- design/ui/pages; then
+            echo 'DUAL_UI_ID_ALREADY_APPLIED'
+            exit 0
+          fi
+          git config user.name 'AIG Verified Builder'
+          git config user.email 'actions@users.noreply.github.com'
+          git add design/ui/pages
+          git commit -m 'ui: bind 122 controls to stable dual IDs'
+          git push origin HEAD:architecture/page-autonomy-ai-orchestrator-after-588
