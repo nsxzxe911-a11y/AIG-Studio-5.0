@@ -8,8 +8,17 @@ function result(type,commandId,revision,evidence={},code='',detail=''){
 function asBool(v,d=false){ if(v===undefined||v===null||v==='')return d; return v===true||String(v).toLowerCase()==='true'; }
 function evidence(args,prefix,page,targetAxis){
   if(args[prefix+'Verified']===undefined)return null;
-  return {pageId:page,revision:Number(args[prefix+'Revision']||0),digest:String(args[prefix+'Digest']||''),verified:asBool(args[prefix+'Verified']),axisMode:String(args[prefix+'Axis']||targetAxis)};
+  return {
+    pageId:page,
+    revision:Number(args[prefix+'Revision']||0),
+    digest:String(args[prefix+'Digest']||''),
+    verified:asBool(args[prefix+'Verified']),
+    axisMode:String(args[prefix+'Axis']||targetAxis),
+    preflightReady:page==='SIM'?asBool(args[prefix+'PreflightReady']):false,
+    fixtureCoverageKnown:page==='SIM'?asBool(args[prefix+'FixtureCoverageKnown']):false
+  };
 }
+function safeSimReuse(sim){return !!sim&&sim.verified===true&&sim.preflightReady===true&&sim.fixtureCoverageKnown===true;}
 function stagesFor(kind,axis){
   if(kind==='REUSE_VERIFIED_STAGE')return [
     ['NC','NC.OUTPUT','NC_OUTPUT_PREPARE'],['NC','NC.OUTPUT','NC_MACHINE']
@@ -31,7 +40,10 @@ function stagesFor(kind,axis){
   ];
 }
 function safe(kind,stages,reused){
-  if(kind==='REUSE_VERIFIED_STAGE')return reused.some(x=>x.pageId==='SIM'&&x.verified)&&reused.some(x=>x.pageId==='NC'&&x.verified)&&stages.at(-1)?.[2]==='NC_MACHINE';
+  if(kind==='REUSE_VERIFIED_STAGE'){
+    const sim=reused.find(x=>x.pageId==='SIM');
+    return safeSimReuse(sim)&&reused.some(x=>x.pageId==='NC'&&x.verified)&&stages.at(-1)?.[2]==='NC_MACHINE';
+  }
   const sim=stages.findIndex(x=>x[1]==='SIM.RESULT'),verify=stages.findIndex(x=>x[1]==='NC.VERIFY'),machine=stages.findLastIndex(x=>x[2]==='NC_MACHINE');
   return sim>=0&&verify>sim&&machine>verify;
 }
@@ -41,9 +53,13 @@ function planFrom(args){
   const objective=String(args.objective||'FASTEST_SAFE').toUpperCase();
   const sim=evidence(args,'sim','SIM',axis),nc=evidence(args,'nc','NC',axis);
   const candidates=[];
-  function add(kind,eligible,blockers,reused=[]){const stages=stagesFor(kind,axis);const safeOk=safe(kind,stages,reused);const all=[...blockers,...(safeOk?[]:['SIM_NC_SAFETY_SEQUENCE_REQUIRED'])];candidates.push({routeKind:kind,eligible:eligible&&safeOk,estimatedCost:ROUTE_COST[kind],blockers:all,stages,reusedEvidence:reused});}
+  function add(kind,eligible,blockers,reused=[]){const stages=stagesFor(kind,axis);const safeOk=safe(kind,stages,reused);const all=[...blockers,...(safeOk?[]:['SIM_NC_SAFETY_SEQUENCE_REQUIRED'])];candidates.push({routeKind:kind,eligible:eligible&&safeOk,estimatedCost:ROUTE_COST[kind],blockers:[...new Set(all)],stages,reusedEvidence:reused});}
   const reuseBlock=[];
   if(!sim?.verified)reuseBlock.push('SIM_VERIFIED_EVIDENCE_REQUIRED');
+  else{
+    if(!sim.preflightReady)reuseBlock.push('SIM_PREFLIGHT_READY_REQUIRED');
+    if(!sim.fixtureCoverageKnown)reuseBlock.push('SIM_FIXTURE_COVERAGE_REQUIRED');
+  }
   if(!nc?.verified)reuseBlock.push('NC_VERIFIED_EVIDENCE_REQUIRED');
   if(sim&&sim.axisMode!==axis)reuseBlock.push('SIM_AXIS_MISMATCH');
   if(nc&&nc.axisMode!==axis)reuseBlock.push('NC_AXIS_MISMATCH');
@@ -77,7 +93,7 @@ class WebAiPageRuntime{
       }
       if(command.commandId==='AI.AUDIT.RUN'){
         if(!this.plan)throw new Error('Build a machining plan before audit');
-        const ok=safe(this.plan.routeKind,this.plan.stages,this.plan.reusedEvidence||[]);if(!ok)throw new Error('SIM/NC safety sequence incomplete');this.lastAuditSafe=true;this.revision++;
+        const ok=safe(this.plan.routeKind,this.plan.stages,this.plan.reusedEvidence||[]);if(!ok)throw new Error('Strict SIM preflight / NC safety sequence incomplete');this.lastAuditSafe=true;this.revision++;
         return result('ACCEPTED',command.commandId,this.revision,{safe:'true',endsAtMachine:String(this.plan.stages.at(-1)?.[2]==='NC_MACHINE'),simNcGate:'true'});
       }
       throw new Error('Unknown AI command '+command.commandId);
@@ -110,4 +126,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 global.WebAiPageRuntime=WebAiPageRuntime;
 global.aigWebMachiningPlan=planFrom;
+global.aigWebSafeSimReuse=safeSimReuse;
 })(typeof window!=='undefined'?window:globalThis);
