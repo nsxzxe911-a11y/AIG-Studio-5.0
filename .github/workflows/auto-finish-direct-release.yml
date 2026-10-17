@@ -1,5 +1,6 @@
 name: AIG Studio direct release validation
 
+# Exact-SHA product proof after continuity metadata sync to 370.0.0.
 on:
   push:
     branches:
