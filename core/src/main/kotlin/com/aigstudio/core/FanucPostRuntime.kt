@@ -3,6 +3,8 @@ package com.aigstudio.core
 import java.util.Locale
 import kotlin.math.abs
 
+enum class FanucToolChangeMode { INLINE_M6, SUBPROGRAM, INLINE_THEN_SUBPROGRAM }
+
 object FanucPostRuntime {
     const val PROFILE="FANUC"
 
@@ -29,6 +31,7 @@ object FanucPostRuntime {
         toolChangeSubprogram:Int?=null,
         endSubprogram:Int?=null,
         programEnd:String="M99",
+        toolChangeMode:FanucToolChangeMode?=null,
     ):String {
         require(toolpaths.isNotEmpty()){ "Fanuc post requires toolpath" }
         require(toolpaths.any{p->p.moves.any{!it.rapid}}){ "Fanuc post requires cutting motion" }
@@ -41,12 +44,32 @@ object FanucPostRuntime {
         toolChangeSubprogram?.let{require(it in 1..9999){"Tool-change subprogram must be 1..9999"}}
         endSubprogram?.let{require(it in 1..9999){"End subprogram must be 1..9999"}}
         require(programEnd in setOf("M99","M30")){"Program end must be M99 or M30"}
+
+        val resolvedToolChangeMode=toolChangeMode ?: if(toolChangeSubprogram==null)
+            FanucToolChangeMode.INLINE_M6 else FanucToolChangeMode.SUBPROGRAM
+        when(resolvedToolChangeMode){
+            FanucToolChangeMode.INLINE_M6 -> require(toolChangeSubprogram==null){
+                "INLINE_M6 cannot also invoke a tool-change subprogram; choose INLINE_THEN_SUBPROGRAM explicitly"
+            }
+            FanucToolChangeMode.SUBPROGRAM, FanucToolChangeMode.INLINE_THEN_SUBPROGRAM ->
+                require(toolChangeSubprogram!=null){"Tool-change subprogram is required for $resolvedToolChangeMode"}
+        }
+
         return buildString {
             appendLine("%")
             appendLine("O"+programNumber.toString().padStart(4,'0'))
             appendLine("G90 G54")
-            appendLine("T$toolNumber M6")
-            toolChangeSubprogram?.let{appendLine("M98 P$it")}
+            when(resolvedToolChangeMode){
+                FanucToolChangeMode.INLINE_M6 -> appendLine("T$toolNumber M6")
+                FanucToolChangeMode.SUBPROGRAM -> {
+                    appendLine("T$toolNumber")
+                    appendLine("M98 P${toolChangeSubprogram!!}")
+                }
+                FanucToolChangeMode.INLINE_THEN_SUBPROGRAM -> {
+                    appendLine("T$toolNumber M6")
+                    appendLine("M98 P${toolChangeSubprogram!!}")
+                }
+            }
             appendLine("S$spindleRpm M3")
             appendLine("G43 Z${fmt(safeZ)} H$hNumber M8")
             if(compensation!="G40") appendLine(compensation)
