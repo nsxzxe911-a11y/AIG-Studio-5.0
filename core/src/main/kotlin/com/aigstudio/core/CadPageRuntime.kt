@@ -8,10 +8,7 @@ private object CadPageCodec {
         when (entity) {
             is Line -> listOf("L",entity.id,entity.a.x,entity.a.y,entity.b.x,entity.b.y).joinToString("|")
             is Circle -> listOf("C",entity.id,entity.center.x,entity.center.y,entity.radius).joinToString("|")
-            is Arc -> listOf(
-                "A",entity.id,entity.center.x,entity.center.y,entity.radius,
-                entity.start.x,entity.start.y,entity.end.x,entity.end.y,entity.clockwise
-            ).joinToString("|")
+            is Arc -> listOf("A",entity.id,entity.center.x,entity.center.y,entity.radius,entity.start.x,entity.start.y,entity.end.x,entity.end.y,entity.clockwise).joinToString("|")
         }
     }
 
@@ -52,7 +49,8 @@ class CadPageRuntime : PageRuntime {
             "CAD.EDIT.ARRAY" -> runGeometry(command,CadEditEngine.linearArrayCommand(document,ids(command),int(command,"count"),number(command,"dx"),number(command,"dy")))
             "CAD.EDIT.CHAMFER" -> chamfer(command); "CAD.EDIT.FILLET" -> fillet(command)
             "CAD.EDIT.UNDO" -> undo(command); "CAD.EDIT.REDO" -> redo(command)
-            "CAD.FILE.OPEN","CAD.FILE.IMPORT" -> openData(command); "CAD.FILE.SAVE","CAD.FILE.EXPORT" -> saveData(command)
+            "CAD.FILE.OPEN" -> openInternal(command); "CAD.FILE.SAVE" -> saveInternal(command)
+            "CAD.FILE.IMPORT" -> importData(command); "CAD.FILE.EXPORT" -> exportData(command)
             "CAD.PHOTO.ALIGN" -> photoAlign(command); "CAD.PHOTO.SCALE" -> photoScale(command); "CAD.VIEW.SNAP" -> snap(command)
             else -> error("CAD command not implemented: ${command.commandId}")
         }
@@ -70,10 +68,7 @@ class CadPageRuntime : PageRuntime {
 
     override fun exportPayload(target: RuntimeLinkId): RuntimeBridgePayload? =
         if(RuntimeBridgeContract.canonical(target)==RuntimeLinkId.CAD_CAM)
-            RuntimeBridgeContract.payload(RuntimeLinkId.CAD_CAM,revision,mapOf(
-                "cadData" to CadBridgeCodec.encode(document.snapshot()),
-                "entityCount" to document.size().toString()
-            )) else null
+            RuntimeBridgeContract.payload(RuntimeLinkId.CAD_CAM,revision,mapOf("cadData" to CadBridgeCodec.encode(document.snapshot()),"entityCount" to document.size().toString())) else null
 
     override fun importPayload(source: RuntimeLinkId, payload: RuntimeBridgePayload): PageResult =
         PageResult.Rejected(pageId,"CAD_IMPORT_BRIDGE_NOT_ACTIVE",revision)
@@ -86,8 +81,23 @@ class CadPageRuntime : PageRuntime {
     private fun fillet(command:PageCommand):PageResult { val s=ids(command);require(s.size==2);val a=document.get(s[0]) as? Line?:error("FILLET first entity must be LINE");val b=document.get(s[1]) as? Line?:error("FILLET second entity must be LINE");val r=Geometry.fillet(a,b,number(command,"radius"));return runGeometry(command,ReplaceEntitiesCommand(listOf(a,b),listOf(r.first,r.second,r.arc))) }
     private fun undo(command:PageCommand):PageResult { val o=history.undoOutcome()?:error("Nothing to undo");if(o.geometryMutation)revision++;return accepted(command,mapOf("entityCount" to document.size().toString(),"operation" to "UNDO")) }
     private fun redo(command:PageCommand):PageResult { val o=history.redoOutcome()?:error("Nothing to redo");if(o.geometryMutation)revision++;return accepted(command,mapOf("entityCount" to document.size().toString(),"operation" to "REDO")) }
-    private fun openData(command:PageCommand):PageResult { val parsed=CadPageCodec.decode(text(command,"data"));document.clear();parsed.forEach(document::put);history=History(document);revision++;return accepted(command,mapOf("entityCount" to document.size().toString(),"loaded" to "true")) }
-    private fun saveData(command:PageCommand):PageResult=accepted(command,mapOf("entityCount" to document.size().toString(),"cadData" to CadPageCodec.encode(document.snapshot())))
+
+    private fun replaceDocument(parsed:List<Entity>){ document.clear();parsed.forEach(document::put);history=History(document);revision++ }
+    private fun openInternal(command:PageCommand):PageResult { replaceDocument(CadPageCodec.decode(text(command,"data")));return accepted(command,mapOf("entityCount" to document.size().toString(),"loaded" to "true","format" to "AIG_CAD")) }
+    private fun saveInternal(command:PageCommand):PageResult=accepted(command,mapOf("entityCount" to document.size().toString(),"format" to "AIG_CAD","cadData" to CadPageCodec.encode(document.snapshot())))
+    private fun fileFormat(command:PageCommand,default:String):String=(command.arguments["format"]?:default).trim().uppercase().replace("-","_")
+    private fun importData(command:PageCommand):PageResult {
+        val format=fileFormat(command,"DXF")
+        val parsed=when(format){"DXF","DXF_ASCII"->CadDxfCodec.importAscii(text(command,"data"));"AIG_CAD","INTERNAL"->CadPageCodec.decode(text(command,"data"));else->error("Unsupported CAD import format: $format")}
+        replaceDocument(parsed)
+        return accepted(command,mapOf("entityCount" to document.size().toString(),"loaded" to "true","format" to if(format.startsWith("DXF"))"DXF" else "AIG_CAD"))
+    }
+    private fun exportData(command:PageCommand):PageResult {
+        val format=fileFormat(command,"DXF")
+        val data=when(format){"DXF","DXF_ASCII"->CadDxfCodec.exportAscii(document.snapshot().entities);"AIG_CAD","INTERNAL"->CadPageCodec.encode(document.snapshot());else->error("Unsupported CAD export format: $format")}
+        return accepted(command,mapOf("entityCount" to document.size().toString(),"format" to if(format.startsWith("DXF"))"DXF" else "AIG_CAD","data" to data))
+    }
+
     private fun photoAlign(command:PageCommand):PageResult { photoAlignX=number(command,"x");photoAlignY=number(command,"y");photoRotationDeg=number(command,"rotationDeg",0.0);revision++;return accepted(command,mapOf("aligned" to "true")) }
     private fun photoScale(command:PageCommand):PageResult { val s=number(command,"mmPerPixel");require(s.isFinite()&&s>0.0);photoScaleMmPerPixel=s;revision++;return accepted(command,mapOf("mmPerPixel" to s.toString())) }
     private fun snap(command:PageCommand):PageResult { val point=Vec2(number(command,"x"),number(command,"y"));val tolerance=number(command,"tolerance",CNC_RESOLUTION_MM);val modes=command.arguments["modes"]?.split(',')?.filter{it.isNotBlank()}?.map{SnapMode.valueOf(it.trim())}?.toSet()?:SnapMode.entries.toSet();val ref=if(command.arguments.containsKey("referenceX")&&command.arguments.containsKey("referenceY"))Vec2(number(command,"referenceX"),number(command,"referenceY")) else null;val hit=CadSnapEngine.snapTo(document,point,tolerance,modes,ref);return accepted(command,if(hit==null)mapOf("snapped" to "false") else mapOf("snapped" to "true","x" to hit.x.toString(),"y" to hit.y.toString())) }
