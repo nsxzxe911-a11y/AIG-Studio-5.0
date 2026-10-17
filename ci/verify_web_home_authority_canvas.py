@@ -26,19 +26,26 @@ def main():
  if not ROUTER.is_file(): e.append('missing page-runtime-router.js')
  else:
   s=ROUTER.read_text(encoding='utf-8')
-  for token in ['installHomeAuthorityCanvasV1','AIG_HOME_AUTHORITY_SOURCE_WIDTH=1672','AIG_HOME_AUTHORITY_BODY_HEIGHT=859','Math.min(1,','dataAuthorityCanvas','AIG_HOME_RUNTIME_AXIS_MASK','AIG_HOME_RUNTIME_OVERVIEW','HOME.SYSTEM_MESSAGES']:
+  for token in [
+   'installHomeAuthorityCanvasV1','AIG_HOME_AUTHORITY_SOURCE_WIDTH=1672','AIG_HOME_AUTHORITY_BODY_HEIGHT=859','Math.min(1,',
+   'dataAuthorityCanvas','AIG_HOME_RUNTIME_AXIS_MASK','AIG_HOME_RUNTIME_OVERVIEW','HOME.SYSTEM_MESSAGES',
+   'AIG_HOME_SOURCE_SCOPE_CONTAMINATION','SOURCE_SCOPE_CONTAMINATION_MASKED','dataScopeMask','aigHomeAuthorityLegacyShell'
+  ]:
    if token not in s:e.append('router missing HOME Authority canvas token '+token)
-  for forbidden in ["'5AX'","'4AX'","'6AX'"]:
-   # Shared core may contain multi-axis routes; canvas installer itself must be explicitly 3AX-only.
-   marker='installHomeAuthorityCanvasV1'
-   start=s.find(marker)
-   end=s.find('function installProductDomGuard',start)
-   segment=s[start:end if end!=-1 else len(s)] if start!=-1 else ''
+  marker='function installHomeAuthorityCanvasV1'
+  start=s.find(marker)
+  end=s.find('function installProductDomGuard',start)
+  segment=s[start:end if end!=-1 else len(s)] if start!=-1 else ''
+  for forbidden in ["'4AX'","'5AX'","'6AX'"]:
    if forbidden in segment:e.append('HOME Authority canvas exposes forbidden axis '+forbidden)
  if not CSS.is_file(): e.append('missing Authority CSS')
  else:
   css=CSS.read_text(encoding='utf-8')
-  for token in ['.aigHomeAuthorityCanvas','width:1672px','height:859px','transform-origin:top center','pointer-events:none','.aigHomeAuthorityInteractiveLayer','pointer-events:auto']:
+  for token in [
+   '.aigHomeAuthorityCanvas','width:1672px','height:859px','transform-origin:top center','pointer-events:none',
+   '.aigHomeAuthorityInteractiveLayer','pointer-events:auto','.aigHomeScopeMask','.aigHomeRuntimeOverview',
+   '.aigHomeAuthorityLegacyShell','display:none!important'
+  ]:
    if token not in css:e.append('CSS missing canvas token '+token)
  for name,size in TILES.items():
   p=TILE_DIR/name
@@ -47,6 +54,6 @@ def main():
    if png_size(p)!=size:e.append(f'static tile size drift {name}: {png_size(p)} != {size}')
   except Exception as ex:e.append(f'invalid static tile {name}: {ex}')
  if e:return fail(e)
- print('WEB_HOME_AUTHORITY_CANVAS_PASS|8_STATIC_TILES|1672X859|SCALE_MAX_1|NATIVE_OVERLAY|3AX_MASK|RUNTIME_MESSAGES|NO_UPSCALE')
+ print('WEB_HOME_AUTHORITY_CANVAS_PASS|8_STATIC_TILES|1672X859|SCALE_MAX_1|NATIVE_OVERLAY|3AX_SCOPE_MASK|RUNTIME_OVERVIEW|RUNTIME_MESSAGES|LEGACY_SHELL_HIDDEN|NO_UPSCALE')
  return 0
 if __name__=='__main__':sys.exit(main())
