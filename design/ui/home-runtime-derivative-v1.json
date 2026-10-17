@@ -1,0 +1,52 @@
+{
+  "schema": "aig-home-runtime-derivative-v1",
+  "project": "AIG",
+  "platform": "DESKTOP_WEB",
+  "pageId": "HOME",
+  "sourceVisualId": "AIG-AUTH-DESKTOP-HOME-V1",
+  "sourceAuthority": {
+    "sha256": "ded539a2238c84a675a89995125e9d1fe0e3111d8dc68fe6e09372c1c4408466",
+    "width": 1672,
+    "height": 941,
+    "bodyCrop": {"x": 0, "y": 82, "width": 1672, "height": 859},
+    "scopeStatus": "SOURCE_SCOPE_CONTAMINATION",
+    "scopeFindings": [
+      "Hero text contains 5-AXIS",
+      "Hero HUD contains A/C rotary-axis values",
+      "Source must remain immutable evidence and must not be relabeled as corrected AIG Authority"
+    ]
+  },
+  "runtimeDerivative": {
+    "status": "ASSET_INGEST_PENDING",
+    "renderPolicy": "AUTHORITY_BODY_TILES_PLUS_REAL_NATIVE_OVERLAY",
+    "quality": "WEBP_Q98_RUNTIME_DERIVATIVE_NOT_SOURCE_AUTHORITY",
+    "noUpscale": true,
+    "maxScale": 1.0,
+    "width": 1672,
+    "height": 859,
+    "runtimeScopeStatus": "SOURCE_SCOPE_CONTAMINATION_MASKED",
+    "tileGrid": {"columns": 4, "rows": 2, "columnWidth": 418, "rowHeights": [430, 429]},
+    "tiles": [
+      {"path":"generated/ui-regions/HOME/static/HOME_BODY_R1C1.webp","width":418,"height":430,"sha256":"46033747d2d60a6417879cbf8416c1d5cb84455b979f3ffdd7281e07c83b9d44"},
+      {"path":"generated/ui-regions/HOME/static/HOME_BODY_R1C2.webp","width":418,"height":430,"sha256":"12c5a3d79e6e4f72a91fcc94776f39f681bf9af0fe751d83d32241429354f335"},
+      {"path":"generated/ui-regions/HOME/static/HOME_BODY_R1C3.webp","width":418,"height":430,"sha256":"5b341ef25559798255c20a7518e025e7904f4edd0c876a522419c368628d992f"},
+      {"path":"generated/ui-regions/HOME/static/HOME_BODY_R1C4.webp","width":418,"height":430,"sha256":"9f973798c8b47e2178e4ca420533f44e46a57d3ef83d0f4851a755a544e04e87"},
+      {"path":"generated/ui-regions/HOME/static/HOME_BODY_R2C1.webp","width":418,"height":429,"sha256":"c47d21fd7931e959a7e157c47fff421916fd8ee0d537eb9a57cb57138e4c5a5f"},
+      {"path":"generated/ui-regions/HOME/static/HOME_BODY_R2C2.webp","width":418,"height":429,"sha256":"ec75f223ed3fc12ac14cc315ccf4c0180188d42d2951e7177d558cd581354c2f"},
+      {"path":"generated/ui-regions/HOME/static/HOME_BODY_R2C3.webp","width":418,"height":429,"sha256":"d056225aaad1dfab964ae72a6bb379222ebfe852d4700f76c3dfbf96db3b3f16"},
+      {"path":"generated/ui-regions/HOME/static/HOME_BODY_R2C4.webp","width":418,"height":429,"sha256":"dc46a9ac3038b0745b9364a82f389a8b805f35c2cfa1edb7eb05875940585da2"}
+    ]
+  },
+  "runtimeOverlays": [
+    {"id":"AIG_HOME_RUNTIME_SCOPE_ACTION","purpose":"Real 3AX native action covers contaminated 5-AXIS label region","requiredControl":"BTN.HOME.QUICK.3AX","pointerEvents":"auto"},
+    {"id":"AIG_HOME_RUNTIME_AXIS_MASK","purpose":"Opaque AIG 3AX scope panel covers baked A/C HUD","contentPolicy":"NO_BAKED_DYNAMIC_VALUES"},
+    {"id":"AIG_HOME_RUNTIME_OVERVIEW","purpose":"Real runtime overview covers baked production KPI panel","contentPolicy":"RUNTIME_VALUES_ONLY"},
+    {"id":"HOME.SYSTEM_MESSAGES","purpose":"Real runtime message panel covers baked system-message panel","contentPolicy":"RUNTIME_TEXT_REQUIRED_NO_BAKED_CONTENT"}
+  ],
+  "legacyShellPolicy": {
+    "visualShell": "HIDE",
+    "realNativeControls": "KEEP_AND_REPOSITION",
+    "engineeringShellAllowedOnHome": false
+  },
+  "finalAuthorityStatus": "BLOCKED_UNTIL_SOURCE_SCOPE_CONTAMINATION_IS_REPLACED_OR_EXPLICITLY_REAPPROVED"
+}
