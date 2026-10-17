@@ -63,9 +63,55 @@ def patch_desktop():
     write(path,text)
 
 
+def patch_web():
+    index=Path('web/index.html')
+    text=read(index)
+    if 'b.dataset.viewId=navViewId' not in text:
+        old='''pages.forEach(([name,color])=>{
+ const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>aigGuard(document.body,"頁面切換",()=>navigateProductionPage(name),null,"warn");nav.appendChild(b);
+ const s=document.createElement("section");s.className="screen";s.dataset.page=name;
+'''
+        new='''pages.forEach(([name,color])=>{
+ const navButtonId="NAV_"+name,navViewId=AIG_NAV_VIEW_ID(navButtonId);
+ const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.dataset.buttonId=navButtonId;b.dataset.viewId=navViewId;b.style.setProperty("--accent",color);b.onclick=()=>aigGuard(document.body,"頁面切換",()=>productionPageRouter.navigateView(navViewId),null,"warn");nav.appendChild(b);
+ const s=document.createElement("section");s.className="screen";s.dataset.page=name;
+'''
+        text=replace_once(text,old,new,'WEB_NAV_DOM_DUAL_ID')
+    if 'productionPageRouter.navigateView(viewId)' not in text:
+        old='''function navigateProductionPage(name){
+ const navId="NAV_"+name;
+ return AIG_PAGE_NAVIGATION[navId]?productionPageRouter.navigate(navId):show(name);
+}
+'''
+        new='''function navigateProductionPage(name){
+ const navId="NAV_"+name;
+ if(!AIG_PAGE_NAVIGATION[navId])return show(name);
+ const viewId=AIG_NAV_VIEW_ID(navId);
+ return productionPageRouter.navigateView(viewId);
+}
+'''
+        text=replace_once(text,old,new,'WEB_NAVIGATE_VIEW')
+    write(index,text)
+
+    ai=Path('web/runtime/ai-page-runtime.js')
+    ai_text=read(ai)
+    if 'btn.dataset.viewId=viewId' not in ai_text:
+        old="""    root.querySelectorAll('[data-ai-command]').forEach(btn=>btn.addEventListener('click',()=>router.dispatchButton(btn.dataset.aiCommand,args())));
+"""
+        new="""    root.querySelectorAll('[data-ai-command]').forEach(btn=>{
+      const buttonId=btn.dataset.aiCommand,viewId=global.AIG_VIEW_ID_FOR_BUTTON(buttonId);
+      btn.dataset.buttonId=buttonId;btn.dataset.viewId=viewId;
+      btn.addEventListener('click',()=>router.dispatchView(viewId,args()));
+    });
+"""
+        ai_text=replace_once(ai_text,old,new,'WEB_AI_DOM_DUAL_ID')
+    write(ai,ai_text)
+
+
 def main():
     patch_android()
     patch_desktop()
-    print('DUAL_UI_RUNTIME_BINDING_PATCH_PASS|ANDROID_NAV_VIEW_ID|WINDOWS_NAV_VIEW_ID|NAVIGATE_VIEW')
+    patch_web()
+    print('DUAL_UI_RUNTIME_BINDING_PATCH_PASS|ANDROID_NAV_VIEW_ID|WINDOWS_NAV_VIEW_ID|WEB_NAV_VIEW_ID|WEB_AI_VIEW_ID|NAVIGATE_VIEW|DISPATCH_VIEW')
 
 if __name__=='__main__': main()
