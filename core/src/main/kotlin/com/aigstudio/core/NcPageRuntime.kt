@@ -42,6 +42,7 @@ class NcPageRuntime(
         "parsed" to parsed.toString(),"previewed" to previewed.toString(),"verified" to verified.toString(),"prepared" to prepared.toString(),
         "machineConnected" to machineConnected.toString(),"machineEligible" to (verified && prepared).toString(),
         "cAxisCompatible" to NcSixAxisCompatibility.cFindings(program).isEmpty().toString(),
+        "m98RepeatCompatible" to FanucM98RepeatCompatibility.findings(program).isEmpty().toString(),
         "g34Profile" to profile().g34VendorProfile.template.name,
         "customMCodes" to installedCustomMCodes.sorted().joinToString(","),"alarmCode" to (lastAlarm?.code ?: ""),"alarmLine" to (lastAlarm?.lineNumber?.toString() ?: ""),
         "upstreamSimVerified" to upstreamSimVerified.toString(),"lastSimBridgeRevision" to lastSimBridgeRevision.toString(),"lastSimBridgeDigest" to lastSimBridgeDigest
@@ -109,24 +110,29 @@ class NcPageRuntime(
     private fun setBlockSkip(command:PageCommand):PageResult { blockSkip=boolean(command,"enabled");revision++;return accepted(command,mapOf("blockSkip" to blockSkip.toString())) }
     private fun addCustomMCode(command:PageCommand):PageResult { val code=(command.arguments["code"] ?: error("Custom M-code requires code")).trim().uppercase();require(Regex("""M\d{1,3}""").matches(code));installedCustomMCodes+=code;invalidateVerification();revision++;return accepted(command,mapOf("customMCode" to code,"customMCodeCount" to installedCustomMCodes.size.toString())) }
 
-    private fun legacyProgram():String=NcSixAxisCompatibility.legacyProgram(program)
+    private fun legacyProgram():String=StudioFanucProgramCompatibility.legacyProgram(program)
+    private fun compatibilityFindings():List<NcRuntimeInterlockFinding>=StudioFanucProgramCompatibility.findings(program)
     private fun cFindings():List<NcRuntimeInterlockFinding>=NcSixAxisCompatibility.cFindings(program)
-    private fun compatibilityAlarm():NcEditorAlarm?=cFindings().firstOrNull()?.let{
-        NcEditorAlarm(it.lineNumber,lineAt(it.lineNumber),it.code,it.message,"修正 C 軸數值至 ±360° 且每 Block 僅一個 C 值後重新驗證")
+    private fun compatibilityAlarm():NcEditorAlarm?=compatibilityFindings().firstOrNull()?.let{
+        val hint=if(it.code.contains("_C") || it.code.contains("AXIS_C"))
+            "修正 C 軸數值至 ±360° 且每 Block 僅一個 C 值後重新驗證"
+        else
+            "修正 M98 的 L 重複次數為單一正整數後重新驗證"
+        NcEditorAlarm(it.lineNumber,lineAt(it.lineNumber),it.code,it.message,hint)
     }
 
     private fun parse(command:PageCommand):PageResult {
         require(program.isNotBlank())
         val legacy=legacyProgram()
-        val runtime=cFindings()+NcRuntimeInterlock.findings(legacy,machineLimits)
+        val runtime=compatibilityFindings()+NcRuntimeInterlock.findings(legacy,machineLimits)
         val alarm=compatibilityAlarm() ?: NcEditorAlarmRouter.firstAlarm(legacy,controller,machineLimits,profile())
         if(runtime.isNotEmpty()||alarm!=null){lastAlarm=alarm?:runtime.first().let{NcEditorAlarm(it.lineNumber,lineAt(it.lineNumber),it.code,it.message,"依 LINE HELP 修正後重新驗證")};error(lastAlarm!!.compact())}
         parsed=true;previewed=false;verified=false;prepared=false;lastAlarm=null;revision++
-        return accepted(command,mapOf("parserStatus" to "PASS","lineCount" to lineCount().toString(),"g34Profile" to profile().g34VendorProfile.template.name,"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","customMCodes" to installedCustomMCodes.sorted().joinToString(",")))
+        return accepted(command,mapOf("parserStatus" to "PASS","lineCount" to lineCount().toString(),"g34Profile" to profile().g34VendorProfile.template.name,"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","m98Repeat" to if(program.contains(Regex("""(?i)M\s*98[^\n]*\bL\s*\d""")))"VALIDATED" else "NOT_USED","customMCodes" to installedCustomMCodes.sorted().joinToString(",")))
     }
     private fun preview(command:PageCommand):PageResult {
         require(parsed)
-        require(cFindings().isEmpty()){"C-axis compatibility validation failed"}
+        require(compatibilityFindings().isEmpty()){"Fanuc compatibility validation failed"}
         val legacy=legacyProgram()
         val timeline=NcExecutionTimeline.build(legacy,controller,machineLimits,profile())
         val blocked=timeline.firstOrNull{it.status=="BLOCKED"}
@@ -136,7 +142,7 @@ class NcPageRuntime(
     }
     private fun verify(command:PageCommand):PageResult {
         require(parsed)
-        val c=cFindings();require(c.isEmpty()){c.first().message}
+        val compatibility=compatibilityFindings();require(compatibility.isEmpty()){compatibility.first().message}
         val legacy=legacyProgram()
         val interlock=machineInterlock.inspect(legacy)
         val timeline=NcExecutionTimeline.build(legacy,controller,machineLimits,profile())
@@ -149,7 +155,7 @@ class NcPageRuntime(
     private fun setDryRun(command:PageCommand):PageResult { dryRun=boolean(command,"enabled");revision++;return accepted(command,mapOf("dryRun" to dryRun.toString())) }
     private fun prepareOutput(command:PageCommand):PageResult {
         require(verified){"NC output requires successful VERIFY"}
-        require(cFindings().isEmpty()){ "C-axis compatibility validation failed" }
+        require(compatibilityFindings().isEmpty()){ "Fanuc compatibility validation failed" }
         require(NcExecutionTimeline.build(legacyProgram(),controller,machineLimits,profile()).none{it.status=="BLOCKED"})
         prepared=true;revision++
         return accepted(command,mapOf("machineEligible" to "true","dryRun" to dryRun.toString(),"singleBlock" to singleBlock.toString(),"blockSkip" to blockSkip.toString(),"g34Profile" to profile().g34VendorProfile.template.name,"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","upstreamSimVerified" to upstreamSimVerified.toString()))
