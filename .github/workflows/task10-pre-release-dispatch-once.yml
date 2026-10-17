@@ -1,0 +1,28 @@
+name: AIG Task 10 pre-release dispatch once
+
+on:
+  push:
+    branches:
+      - architecture/page-autonomy-ai-orchestrator-after-588
+    paths:
+      - .github/task10-pre-release.trigger
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Dispatch formal Studio release validation on feature ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run build-download.yml \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref architecture/page-autonomy-ai-orchestrator-after-588
+          echo 'TASK10_FORMAL_VALIDATION_DISPATCH=PASS'
