@@ -1,58 +1,64 @@
 {
   "schema": "aig-home-runtime-derivative-v1",
-  "project": "AIG",
+  "projectProjection": "AIG",
+  "visualAuthorityFamily": "AIG-II_RGB",
   "platform": "DESKTOP_WEB",
   "pageId": "HOME",
-  "sourceVisualId": "AIG-AUTH-DESKTOP-HOME-V1",
-  "sourceAuthority": {
+  "requiredNativeAuthority": {
+    "authorityId": "AIGII-DESKTOP-HOME-NATIVE-4K",
+    "width": 3840,
+    "height": 2160,
+    "native4K": true,
+    "status": "MISSING_NATIVE_4K_AUTHORITY",
+    "fallbackPolicy": "NO_IMAGE_SUBSTITUTION",
+    "registryKey": "DESKTOP.HOME"
+  },
+  "verifiedAigiiSource": {
+    "authorityId": "AIGII-DESKTOP-HOME-438-SOURCE",
+    "libraryFileId": "file_0000000020908209822a821f6fcd5015",
+    "sha256": "61e00235ce9a7ac0d18bd0fb115307f7807f18cb32c149d93b50527b929b0ba2",
+    "width": 1672,
+    "height": 941,
+    "rawByteStatus": "VERIFIED",
+    "native4K": false,
+    "runtimeStatus": "BLOCK_NON_4K_SOURCE_VERIFIED"
+  },
+  "legacyAigReference": {
+    "visualId": "AIG-AUTH-DESKTOP-HOME-V1",
     "sha256": "ded539a2238c84a675a89995125e9d1fe0e3111d8dc68fe6e09372c1c4408466",
     "width": 1672,
     "height": 941,
     "bodyCrop": {"x": 0, "y": 82, "width": 1672, "height": 859},
+    "role": "REFERENCE_ONLY_NON_4K",
+    "runtimeAllowed": false,
     "scopeStatus": "SOURCE_SCOPE_CONTAMINATION",
     "scopeFindings": [
-      "Hero source contains 5-AXIS text",
-      "Hero source contains A/C rotary-axis values",
-      "Source contains baked KPI/message/project/recent-project values",
-      "Source stays immutable and is never relabeled as corrected AIG Authority"
+      "Legacy AIG source contains 5-AXIS text",
+      "Legacy AIG source contains A/C rotary-axis values",
+      "Legacy source contains baked KPI/message/project/recent-project values",
+      "Legacy source is not part of the AIG-II single visual authority chain"
     ]
   },
-  "runtimeDerivative": {
-    "status": "ASSET_INGEST_PENDING",
+  "obsoleteDerivative": {
     "asset": "generated/ui-regions/HOME/static/AIG_HOME_BODY_SAFE_Q90_V1.webp",
     "sha256": "5e248fb00e27cac6107f31bc080b283ed4922797605aeb7d31581cb48607ddbd",
     "width": 1672,
     "height": 859,
-    "encoding": "WEBP_Q90",
-    "role": "RUNTIME_DERIVATIVE_NOT_SOURCE_AUTHORITY",
-    "renderPolicy": "SAFE_MASKED_AUTHORITY_BODY_PLUS_REAL_NATIVE_OVERLAY",
-    "runtimeScopeStatus": "SOURCE_SCOPE_CONTAMINATION_MASKED",
-    "noUpscale": true,
-    "maxScale": 1.0,
-    "safeMaskPolicy": {
-      "maskedBakedRegions": [
-        "PROJECT_CONTROLS",
-        "5AX_LABEL_AND_CHECKLIST",
-        "ROTARY_A_C_HUD",
-        "BAKED_KPI_AND_SYSTEM_MESSAGES",
-        "BAKED_BOTTOM_CARDS",
-        "BAKED_RECENT_PROJECTS"
-      ],
-      "preservedStaticRegions": ["AIG_BRAND", "CENTER_MACHINE_HERO"],
-      "dynamicValuesAllowedInRaster": false
-    }
+    "status": "OBSOLETE_NOT_INGESTED",
+    "runtimeAllowed": false,
+    "reason": "Formal Desktop HOME now requires native 3840x2160 AIG-II RGB Authority; lower-resolution derivative may remain evidence only."
   },
-  "runtimeOverlays": [
-    {"id":"AIG_HOME_RUNTIME_SCOPE_ACTION","purpose":"Real 3AX native action replaces contaminated 5-AXIS visual region","requiredControl":"BTN.HOME.QUICK.3AX","pointerEvents":"auto"},
-    {"id":"AIG_HOME_RUNTIME_AXIS_MASK","purpose":"AIG 3AX XYZ-only scope indicator; no baked numeric state","contentPolicy":"NO_BAKED_DYNAMIC_VALUES"},
-    {"id":"AIG_HOME_RUNTIME_OVERVIEW","purpose":"Real runtime overview replaces baked KPI area","contentPolicy":"RUNTIME_VALUES_ONLY"},
-    {"id":"HOME.SYSTEM_MESSAGES","purpose":"Real runtime message panel replaces baked system messages","contentPolicy":"RUNTIME_TEXT_REQUIRED_NO_BAKED_CONTENT"},
-    {"id":"AIG_HOME_RUNTIME_CARDS","purpose":"Real CAD/CAM/SIM/NC native controls replace baked bottom cards","contentPolicy":"REAL_NATIVE_CONTROLS_ONLY"}
-  ],
-  "legacyShellPolicy": {
-    "visualShell": "HIDE",
-    "realNativeControls": "KEEP_AND_REPOSITION",
+  "runtimeState": {
+    "status": "BLOCKED_NO_NATIVE_4K_HOME",
+    "backgroundPolicy": "NEUTRAL_BLACK_ONLY",
+    "realNativeControlsAllowed": true,
+    "fakeAuthorityFallbackAllowed": false,
     "engineeringShellAllowedOnHome": false
   },
-  "finalAuthorityStatus": "BLOCKED_UNTIL_SOURCE_SCOPE_CONTAMINATION_IS_REPLACED_OR_EXPLICITLY_REAPPROVED"
+  "runtimeOverlays": [
+    {"id":"AIG_HOME_RUNTIME_SCOPE_ACTION","requiredControl":"BTN.HOME.QUICK.3AX","pointerEvents":"auto"},
+    {"id":"HOME.SYSTEM_MESSAGES","contentPolicy":"RUNTIME_TEXT_REQUIRED_NO_BAKED_CONTENT"},
+    {"id":"AIG_HOME_RUNTIME_CARDS","contentPolicy":"REAL_NATIVE_CONTROLS_ONLY"}
+  ],
+  "finalAuthorityStatus": "BLOCKED_UNTIL_NATIVE_3840X2160_AIGII_HOME_REGISTERED"
 }
