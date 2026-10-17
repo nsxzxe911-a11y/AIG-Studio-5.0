@@ -21,6 +21,9 @@ class AxisPageRuntime(
     private var ncBlocks=0
     private var ncAxisWords=0
     private var ncParsed=false
+    private var ncPreview:NcFirstMachiningPreview?=null
+    private var ncFixtures:List<FixtureObstacle> = emptyList()
+    private var ncToolAssembly:ToolAssemblyConfig = ToolAssemblyConfig()
 
     private val allowedAxes:Set<Char> = when(pageId) {
         PageId.AX3 -> setOf('X','Y','Z')
@@ -39,6 +42,7 @@ class AxisPageRuntime(
         val beforeBlocks=ncBlocks
         val beforeAxisWords=ncAxisWords
         val beforeParsed=ncParsed
+        val beforePreview=ncPreview
         return try {
             PageCommandCatalog.validate(command)
             when {
@@ -59,6 +63,7 @@ class AxisPageRuntime(
             ncBlocks=beforeBlocks
             ncAxisWords=beforeAxisWords
             ncParsed=beforeParsed
+            ncPreview=beforePreview
             reject(command,t.message ?: t::class.simpleName.orEmpty())
         }
     }
@@ -71,7 +76,21 @@ class AxisPageRuntime(
         put("ncFirstStage",ncFirstStage)
         put("ncBlocks",ncBlocks.toString())
         put("ncAxisWords",ncAxisWords.toString())
+        put("ncMoveCount",(ncPreview?.trace?.points?.size ?: 0).toString())
+        put("ncRemovedCells",(ncPreview?.removedCells ?: 0).toString())
+        put("ncRemovedVolumeMm3",(ncPreview?.removedVolumeMm3 ?: 0.0).toString())
+        put("ncFixtureCoverage",ncPreview?.risk?.fixtureCoverageWord ?: "UNKNOWN")
+        put("ncPreflightReady",(ncPreview?.risk?.let(SimAcceptancePolicy::formalAcceptAllowed) ?: false).toString())
+        put("ncHas3DResult",(ncPreview!=null).toString())
     })
+
+    fun ncFirstMachiningResult():Machining3DResult?=ncPreview?.result
+    fun ncFirstProgram():String=ncProgram
+    fun setNcFirstFixtures(value:List<FixtureObstacle>,assembly:ToolAssemblyConfig=ncToolAssembly){
+        ncFixtures=value.toList();ncToolAssembly=assembly;ncPreview=null
+        if(ncParsed)ncFirstStage="PARSED"
+        revision++
+    }
 
     override fun messages():List<PageMessage> = localMessages.toList()
     override fun exportPayload(target:RuntimeLinkId):RuntimeBridgePayload?=null
@@ -129,6 +148,7 @@ class AxisPageRuntime(
         }
         ncAxisWords=0
         ncParsed=false
+        ncPreview=null
         ncFirstStage="OPEN"
         revision++
         return accepted(command,mapOf(
@@ -152,34 +172,56 @@ class AxisPageRuntime(
                 count++
             }
             val letters=Regex("""(?i)([XYZABC])\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)?)""").findAll(clean)
-            letters.forEach{m->
-                if(m.groupValues[2].isBlank()) error("Axis ${m.groupValues[1]} missing numeric value at line ${index+1}")
-            }
+            letters.forEach{m->if(m.groupValues[2].isBlank()) error("Axis ${m.groupValues[1]} missing numeric value at line ${index+1}")}
         }
-        require(unsupported.isEmpty()){
-            "${pageId.id} NC-first forbids axis ${unsupported.joinToString(",")}"
-        }
+        require(unsupported.isEmpty()){ "${pageId.id} NC-first forbids axis ${unsupported.joinToString(",")}" }
+        val cFindings=NcSixAxisCompatibility.cFindings(ncProgram)
+        require(cFindings.isEmpty()){cFindings.first().message}
+        val legacy=NcSixAxisCompatibility.legacyProgram(ncProgram)
+        val runtime=NcRuntimeInterlock.findings(legacy)
+        require(runtime.isEmpty()){runtime.first().message}
+        val alarm=NcEditorAlarmRouter.firstAlarm(legacy,CncControllerProfile.FANUC)
+        require(alarm==null){alarm?.compact().orEmpty()}
         ncAxisWords=count
         ncParsed=true
+        ncPreview=null
         ncFirstStage="PARSED"
         revision++
         return accepted(command,mapOf(
             "axisPrecheck" to "PASS",
+            "fanucParser" to "PASS",
             "blocks" to ncBlocks.toString(),
             "axisWordCount" to ncAxisWords.toString(),
             "allowedAxes" to allowedAxes.joinToString(""),
+            "cAxis" to if(NcSixAxisCompatibility.hasC(ncProgram))"VALIDATED" else "NOT_USED"
         ))
     }
 
     private fun previewNc(command:PageCommand):PageResult {
         require(ncParsed){"NC-first parse must pass before preview"}
-        ncFirstStage="PREVIEW"
+        val toolDiameter=number(command,"toolDiameter",10.0)
+        require(toolDiameter>0.0){"NC-first tool diameter must be positive"}
+        val preview=NcFirstMachiningPreviewEngine.build(
+            ncProgram,pageId.id,toolDiameter,ncFixtures,ncToolAssembly
+        )
+        ncPreview=preview
+        ncAxisWords=preview.trace.axisWordCount
+        ncFirstStage="PREVIEW_3D"
         revision++
         return accepted(command,mapOf(
-            "previewLevel" to "AXIS_WORD_TRACE",
+            "previewLevel" to "MACHINING_3D_MATERIAL_REMOVAL",
             "axisWordCount" to ncAxisWords.toString(),
             "blocks" to ncBlocks.toString(),
             "machineMode" to pageId.id,
+            "moveCount" to preview.trace.points.size.toString(),
+            "removedCells" to preview.removedCells.toString(),
+            "removedVolumeMm3" to preview.removedVolumeMm3.toString(),
+            "meshVertices" to preview.result.mesh.vertices.size.toString(),
+            "meshTriangles" to preview.result.mesh.triangles.size.toString(),
+            "collisionCount" to preview.risk.collisionCount.toString(),
+            "overcutCount" to preview.risk.overcutCount.toString(),
+            "fixtureCoverage" to preview.risk.fixtureCoverageWord,
+            "preflightReady" to SimAcceptancePolicy.formalAcceptAllowed(preview.risk).toString()
         ))
     }
 
@@ -190,7 +232,7 @@ class AxisPageRuntime(
         localMessages+=PageMessage(
             pageId,command.subpage.takeIf{it.page==pageId},"AXIS_COMMAND_REJECTED",detail,
             relatedButtonId=command.commandId,revision=revision,timestampEpochMs=System.currentTimeMillis(),
-            severity=PageMessageSeverity.WARNING
+            severity=if(command.commandId.endsWith(".NC_FIRST.PARSE")||command.commandId.endsWith(".NC_FIRST.PREVIEW"))PageMessageSeverity.BLOCKED_ACTION else PageMessageSeverity.WARNING
         )
         return PageResult.Rejected(pageId,"AXIS_COMMAND_REJECTED",revision,detail)
     }
