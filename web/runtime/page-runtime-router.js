@@ -6,11 +6,28 @@ const NAVIGATION=Object.freeze({
   NAV_HOME:'HOME',NAV_CAD:'CAD',NAV_CAM:'CAM',NAV_SIM:'SIM',NAV_3AX:'3AX',
   NAV_4AX:'4AX',NAV_5AX:'5AX',NAV_6AX:'6AX',NAV_NC:'NC',NAV_AI:'AI'
 });
+function viewIdForButton(buttonId){return 'VIEW.'+buttonId;}
+function navigationViewId(buttonId){
+  if(!NAVIGATION[buttonId]) throw new Error('Unknown production navigation Button ID: '+buttonId);
+  return 'VIEW.NAV.'+buttonId.replace(/^NAV_/, '');
+}
+function buttonIdForView(viewId){
+  if(typeof viewId!=='string'||!viewId.startsWith('VIEW.')||viewId.startsWith('VIEW.NAV.')) throw new Error('Unknown page View ID: '+viewId);
+  const buttonId=viewId.slice(5);
+  if(!ROUTES[buttonId]||viewIdForButton(buttonId)!==viewId) throw new Error('Unknown page View ID: '+viewId);
+  return buttonId;
+}
+function navigationButtonId(viewId){
+  if(typeof viewId!=='string'||!viewId.startsWith('VIEW.NAV.')) throw new Error('Unknown navigation View ID: '+viewId);
+  const buttonId='NAV_'+viewId.slice('VIEW.NAV.'.length);
+  if(!NAVIGATION[buttonId]||navigationViewId(buttonId)!==viewId) throw new Error('Unknown navigation View ID: '+viewId);
+  return buttonId;
+}
 
 const ROUTES=Object.create(null);
 function add(buttonId,pageId,subpageId){
   if(ROUTES[buttonId]) throw new Error('Duplicate Web Button ID: '+buttonId);
-  ROUTES[buttonId]=Object.freeze({buttonId,pageId,subpageId,commandId:buttonId});
+  ROUTES[buttonId]=Object.freeze({viewId:viewIdForButton(buttonId),buttonId,pageId,subpageId,commandId:buttonId});
 }
 
 add('HOME.PROJECTS.OPEN','HOME','HOME.PROJECTS');
@@ -82,6 +99,8 @@ class AigPageRuntimeRouter {
     this.pageNavigator(pageId);
     return pageId;
   }
+  navigateView(viewId){return this.navigate(navigationButtonId(viewId));}
+  dispatchView(viewId,args={}){return this.dispatchButton(buttonIdForView(viewId),args);}
   dispatchButton(buttonId,args={}){
     const route=ROUTES[buttonId];
     if(!route) throw new Error('Unknown page Button ID: '+buttonId);
@@ -97,11 +116,14 @@ class AigPageRuntimeRouter {
   }
   static route(buttonId){ return ROUTES[buttonId]||null; }
   static inventory(){ return Object.keys(ROUTES).sort(); }
+  static viewIdForButton(buttonId){ if(!ROUTES[buttonId]) throw new Error('Unknown page Button ID: '+buttonId); return viewIdForButton(buttonId); }
 }
 
 Object.freeze(ROUTES);
 global.AIG_PAGE_IDS=PAGE_IDS;
 global.AIG_PAGE_NAVIGATION=NAVIGATION;
 global.AIG_PAGE_COMMAND_ROUTES=ROUTES;
+global.AIG_VIEW_ID_FOR_BUTTON=viewIdForButton;
+global.AIG_NAV_VIEW_ID=navigationViewId;
 global.AigPageRuntimeRouter=AigPageRuntimeRouter;
 })(typeof window!=='undefined'?window:globalThis);
