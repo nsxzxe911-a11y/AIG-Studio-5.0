@@ -27,6 +27,8 @@ object RuntimeIssueRoutingPolicy {
         RuntimeIssueDomain.AI -> "AI TEACHER"
     }
 
+    fun owner(page:PageId):String = page.id
+
     fun showDiagnostic(name:String,mode:RuntimeExperienceMode):Boolean =
         name !in ADVANCED_ONLY_DIAGNOSTICS || mode==RuntimeExperienceMode.ADVANCED
 
