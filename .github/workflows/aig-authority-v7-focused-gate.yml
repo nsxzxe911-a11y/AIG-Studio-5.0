@@ -15,6 +15,7 @@ on:
       - 'desktop/src/main/kotlin/com/aigstudio/desktop/PageRuntimeRouter.kt'
       - 'ci/verify_aig_authority_v7.py'
       - 'ci/verify_aig_product_contract_v1.py'
+      - 'ci/verify_aigii_rgb_master_registry_v2.py'
       - 'ci/verify_ui_region_manifest.py'
       - 'ci/verify_ui_skin_contract.py'
       - 'ci/verify_web_authority_controls.py'
@@ -49,6 +50,8 @@ jobs:
           gradle-version: '9.7.0'
       - name: Verify Authority catalog
         run: python3 ci/verify_aig_authority_v7.py
+      - name: Verify AIG-II RGB master registry V2
+        run: python3 ci/verify_aigii_rgb_master_registry_v2.py
       - name: Verify AIG seven-page product scope
         run: python3 ci/verify_aig_product_contract_v1.py
       - name: Verify reverse-engineered regions
