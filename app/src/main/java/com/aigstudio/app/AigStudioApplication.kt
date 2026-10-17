@@ -22,10 +22,10 @@ import java.util.WeakHashMap
 import kotlin.math.max
 
 /**
- * Installs the current user-approved RGB HOME authority without changing
- * machining callbacks. Formal HOME fails closed: a missing or mismatched
- * authority image must never expose the programmatic engineering shell as
- * production RGB evidence.
+ * Installs an approved RGB HOME authority without changing machining callbacks.
+ * Priority is the current user-approved 2026-10-16 authority, then the verified
+ * 2026-10-05 AIG-II 427 stable authority. The programmatic engineering shell is
+ * never a production fallback.
  */
 class AigStudioApplication : Application(), Application.ActivityLifecycleCallbacks {
     private val applied = Collections.newSetFromMap(WeakHashMap<View, Boolean>())
@@ -50,19 +50,28 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
                 if (applied.add(home)) {
                     val originalDescription=home.contentDescription?.toString().orEmpty()
                         .substringBefore(" | AIG RGB HOME AUTHORITY")
-                    runCatching { HomeRgbAsset.load(activity) }
-                        .onSuccess { drawable ->
-                            home.background=drawable
+                        .substringBefore(" | AIG RGB HOME STABLE AUTHORITY")
+                    when(val loaded=HomeRgbAsset.loadBest(activity)) {
+                        is LoadedHomeAuthority.Current -> {
+                            home.background=loaded.drawable
                             home.alpha=1f
-                            home.contentDescription="$originalDescription | AIG RGB HOME AUTHORITY APPLIED|${HomeRgbAsset.AUTHORITY_ID}|${HomeRgbAsset.EXPECTED_SHA256}"
+                            home.contentDescription="$originalDescription | AIG RGB HOME AUTHORITY APPLIED|${loaded.authorityId}|${loaded.sha256}"
                             home.invalidate()
-                            Log.i("AIG-RGB-HOME","AUTHORITY_APPLIED|${HomeRgbAsset.AUTHORITY_ID}|${HomeRgbAsset.EXPECTED_SHA256}")
+                            Log.i("AIG-RGB-HOME","AUTHORITY_APPLIED|${loaded.authorityId}|${loaded.sha256}")
                         }
-                        .onFailure { error ->
+                        is LoadedHomeAuthority.Stable -> {
+                            home.background=loaded.drawable
+                            home.alpha=1f
+                            home.contentDescription="$originalDescription | AIG RGB HOME STABLE AUTHORITY APPLIED|${loaded.authorityId}|${loaded.sha256}"
+                            home.invalidate()
+                            Log.w("AIG-RGB-HOME","STABLE_AUTHORITY_APPLIED|${loaded.authorityId}|${loaded.sha256}|CURRENT_AUTHORITY_PENDING")
+                        }
+                        is LoadedHomeAuthority.Missing -> {
                             home.alpha=0f
-                            home.contentDescription="$originalDescription | AIG RGB HOME AUTHORITY MISSING|${HomeRgbAsset.AUTHORITY_ID}|${HomeRgbAsset.EXPECTED_SHA256}"
-                            Log.e("AIG-RGB-HOME","AUTHORITY_MISSING_BLOCK_FORMAL_HOME|${HomeRgbAsset.AUTHORITY_ID}",error)
+                            home.contentDescription="$originalDescription | AIG RGB HOME AUTHORITY MISSING|${HomeRgbAsset.CURRENT_AUTHORITY_ID}|${HomeRgbAsset.CURRENT_SHA256}"
+                            Log.e("AIG-RGB-HOME","AUTHORITY_MISSING_BLOCK_FORMAL_HOME|${loaded.detail}")
                         }
+                    }
                 }
                 if (decor.viewTreeObserver.isAlive) decor.viewTreeObserver.removeOnGlobalLayoutListener(this)
             }
@@ -111,20 +120,41 @@ private object OptionalTutorialModule {
     }
 }
 
-private object HomeRgbAsset {
-    const val AUTHORITY_ID="AIG_MOBILE_CURRENT_APPROVED_V1_20261016"
-    const val EXPECTED_SHA256="f360cb828ff6d05076792b0d04474503316dea85896f82f6452b0d6c9d7ae99e"
-    private const val ASSET_PATH="aig-authority/current/01_HOME.png"
-    private const val EXPECTED_WIDTH=941
-    private const val EXPECTED_HEIGHT=1672
+private sealed interface LoadedHomeAuthority {
+    val drawable:Drawable?
+    data class Current(override val drawable:Drawable,val authorityId:String,val sha256:String):LoadedHomeAuthority
+    data class Stable(override val drawable:Drawable,val authorityId:String,val sha256:String):LoadedHomeAuthority
+    data class Missing(val detail:String):LoadedHomeAuthority { override val drawable:Drawable?=null }
+}
 
-    fun load(activity: Activity): Drawable {
-        val bytes=activity.assets.open(ASSET_PATH).use { it.readBytes() }
+private object HomeRgbAsset {
+    const val CURRENT_AUTHORITY_ID="AIG_MOBILE_CURRENT_APPROVED_V1_20261016"
+    const val CURRENT_SHA256="f360cb828ff6d05076792b0d04474503316dea85896f82f6452b0d6c9d7ae99e"
+    private const val CURRENT_PATH="aig-authority/current/01_HOME.png"
+    private const val CURRENT_WIDTH=941
+    private const val CURRENT_HEIGHT=1672
+
+    private const val STABLE_AUTHORITY_ID="AIG_RGB_HOME_427"
+    private const val STABLE_SHA256="8835cded863074b4de9b848e12eb037254119b5a7f21e135b66657f764fbd652"
+    private const val STABLE_PATH="aig-generated-rgb/approved/427/home_mobile.jpg"
+    private const val STABLE_WIDTH=720
+    private const val STABLE_HEIGHT=1280
+
+    fun loadBest(activity:Activity):LoadedHomeAuthority {
+        val current=runCatching { load(activity,CURRENT_PATH,CURRENT_SHA256,CURRENT_WIDTH,CURRENT_HEIGHT,"PNG") }
+        if(current.isSuccess) return LoadedHomeAuthority.Current(current.getOrThrow(),CURRENT_AUTHORITY_ID,CURRENT_SHA256)
+        val stable=runCatching { load(activity,STABLE_PATH,STABLE_SHA256,STABLE_WIDTH,STABLE_HEIGHT,"JPEG") }
+        if(stable.isSuccess) return LoadedHomeAuthority.Stable(stable.getOrThrow(),STABLE_AUTHORITY_ID,STABLE_SHA256)
+        return LoadedHomeAuthority.Missing("CURRENT=${current.exceptionOrNull()?.message};STABLE=${stable.exceptionOrNull()?.message}")
+    }
+
+    private fun load(activity:Activity,path:String,expectedSha:String,width:Int,height:Int,format:String):Drawable {
+        val bytes=activity.assets.open(path).use { it.readBytes() }
         val digest=MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-        require(digest==EXPECTED_SHA256) { "Current HOME authority SHA mismatch" }
-        val bitmap=BitmapFactory.decodeByteArray(bytes,0,bytes.size) ?: error("Current HOME authority PNG decode failed")
-        require(bitmap.width==EXPECTED_WIDTH && bitmap.height==EXPECTED_HEIGHT) {
-            "Current HOME authority dimensions invalid: ${bitmap.width}x${bitmap.height}"
+        require(digest==expectedSha) { "$format HOME authority SHA mismatch" }
+        val bitmap=BitmapFactory.decodeByteArray(bytes,0,bytes.size) ?: error("$format HOME authority decode failed")
+        require(bitmap.width==width && bitmap.height==height) {
+            "$format HOME authority dimensions invalid: ${bitmap.width}x${bitmap.height}"
         }
         return HomeCoverDrawable(bitmap)
     }
