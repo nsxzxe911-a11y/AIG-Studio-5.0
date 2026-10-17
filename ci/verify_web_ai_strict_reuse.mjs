@@ -21,4 +21,4 @@ if(!unsafe || !unsafe.eligible) throw new Error('WEB_AI_STRICT_REUSE_NOT_ELIGIBL
 let multiAxisBlocked=false;
 try{globalThis.aigWebMachiningPlan({targetAxis:'6AX',hasNcProgram:'true'});}catch(_){multiAxisBlocked=true;}
 if(!multiAxisBlocked) throw new Error('WEB_AI_MULTI_AXIS_PRODUCT_GUARD_MISSING');
-console.log('WEB_AI_STRICT_REUSE_PASS|VERIFIED|PREFLIGHT|FIXTURE_COVERAGE|LEGACY_REJECTED|AIG_3AX_ONLY');
+console.log('WEB_AI_STRICT_REUSE_PASS|VERIFIED|PREFLIGHT|FIXTURE_COVERAGE|LEGACY_REJECTED');
