@@ -14,6 +14,33 @@ fun main(){
     check(cam.dispatch(camCmd("CAM.MANUAL","CAM.MANUAL.ADD_POINT",
         "x" to "20","y" to "20","z" to "-2","rapid" to "false")) is PageResult.Accepted)
 
+    val postAtomic=CamPageRuntime()
+    check(postAtomic.dispatch(camCmd("CAM.MANUAL","CAM.MANUAL.ADD_POINT",
+        "x" to "0","y" to "0","z" to "-1","rapid" to "false")) is PageResult.Accepted)
+    check(postAtomic.dispatch(camCmd("CAM.MANUAL","CAM.MANUAL.ADD_POINT",
+        "x" to "10","y" to "0","z" to "-1","rapid" to "false")) is PageResult.Accepted)
+    val beforeBadPostSnapshot=postAtomic.snapshot()
+    val beforeBadPostPaths=postAtomic.toolpaths()
+    val beforeBadPostSettings=postAtomic.camSettings()
+    check(beforeBadPostPaths.isEmpty())
+    val badPost=postAtomic.dispatch(camCmd("CAM.POST_PREVIEW","CAM.POST_PREVIEW.GENERATE","programEnd" to "M2"))
+    check(badPost is PageResult.Rejected)
+    check(postAtomic.snapshot()==beforeBadPostSnapshot)
+    check(postAtomic.toolpaths()==beforeBadPostPaths)
+    check(postAtomic.camSettings()==beforeBadPostSettings)
+
+    val noHoleCad=DrawingSnapshot(listOf(Line(id="EDGE",a=Vec2(0.0,0.0),b=Vec2(20.0,0.0))))
+    val noHole=CamPageRuntime(cadSnapshot=noHoleCad,cadRevision=8L)
+    val beforeBadDrillSnapshot=noHole.snapshot()
+    val beforeBadDrillPaths=noHole.toolpaths()
+    val beforeBadDrillSettings=noHole.camSettings()
+    val badDrill=noHole.dispatch(camCmd("CAM.AUTO","CAM.AUTO.DRILL"))
+    check(badDrill is PageResult.Rejected)
+    check(noHole.snapshot()==beforeBadDrillSnapshot)
+    check(noHole.toolpaths()==beforeBadDrillPaths)
+    check(noHole.camSettings()==beforeBadDrillSettings)
+    check(noHole.messages().last().pageId==PageId.CAM)
+
     val beforePreviewRevision=cam.snapshot().revision
     val preview=cam.dispatch(camCmd("CAM.POST_PREVIEW","CAM.POST_PREVIEW.GENERATE",
         "programNumber" to "9","toolNumber" to "9","hNumber" to "1","spindleRpm" to "2300",
@@ -36,27 +63,6 @@ fun main(){
     check(nc.lineSequence().any{it=="M30"})
     val firstCut=cam.toolpaths().flatMap{it.moves}.first{!it.rapid}
     check(firstCut.axisA==15.0 && firstCut.axisB==25.0 && firstCut.axisC==35.0)
-
-    val beforeBadPostSnapshot=cam.snapshot()
-    val beforeBadPostPaths=cam.toolpaths()
-    val beforeBadPostSettings=cam.camSettings()
-    val badPost=cam.dispatch(camCmd("CAM.POST_PREVIEW","CAM.POST_PREVIEW.GENERATE","programEnd" to "M2"))
-    check(badPost is PageResult.Rejected)
-    check(cam.snapshot()==beforeBadPostSnapshot)
-    check(cam.toolpaths()==beforeBadPostPaths)
-    check(cam.camSettings()==beforeBadPostSettings)
-
-    val noHoleCad=DrawingSnapshot(listOf(Line(id="EDGE",a=Vec2(0.0,0.0),b=Vec2(20.0,0.0))))
-    val noHole=CamPageRuntime(cadSnapshot=noHoleCad,cadRevision=8L)
-    val beforeBadDrillSnapshot=noHole.snapshot()
-    val beforeBadDrillPaths=noHole.toolpaths()
-    val beforeBadDrillSettings=noHole.camSettings()
-    val badDrill=noHole.dispatch(camCmd("CAM.AUTO","CAM.AUTO.DRILL"))
-    check(badDrill is PageResult.Rejected)
-    check(noHole.snapshot()==beforeBadDrillSnapshot)
-    check(noHole.toolpaths()==beforeBadDrillPaths)
-    check(noHole.camSettings()==beforeBadDrillSettings)
-    check(noHole.messages().last().pageId==PageId.CAM)
 
     check(cam.dispatch(camCmd("CAM.MANUAL","CAM.MANUAL.SET_SAFE_Z","z" to "8")) is PageResult.Accepted)
     check(cam.snapshot().state["safeZ"]=="8.0")
