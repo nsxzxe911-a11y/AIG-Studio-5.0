@@ -34,6 +34,7 @@ def main():
             "CadEditEngine.offsetCommand","CadEditEngine.linearArrayCommand",
             "Geometry.chamfer","Geometry.fillet","CadSnapEngine.snapTo",
             "CadSemanticIdentity.newRectIds","CadSemanticIdentity.newHoleId",
+            "CadDxfCodec.importAscii","CadDxfCodec.exportAscii",
         ],
         "CAD_PAGE_RUNTIME_PASS|",
     )
@@ -45,11 +46,20 @@ def main():
             "ManualCamPathEngine.startBlank","ManualCamPathEngine.replacePoint",
             "ManualCamPathEngine.insertPoint","ManualCamPathEngine.deletePoint",
             "CamEngine.generateManual","CamEngine.generate(","CamWorkflowEngine.buildCommonPocket",
-            "Toolpath(listOf(","HOLE:",
+            "Toolpath(listOf(","HOLE:","FanucPostRuntime.generate",
         ],
         "CAM_PAGE_RUNTIME_PASS|",
     )
-    print(f"CAD_CAM_PAGE_RUNTIME_BINDING_PASS|CAD={cad}|CAM={cam}|REAL_CORE_SYMBOLS|NO_TOAST|NO_STRATEGY_STRING")
+    cad_test=read(Path("core/src/test/kotlin/com/aigstudio/core/CadPageRuntimeRegression.kt"))
+    cam_test=read(Path("core/src/test/kotlin/com/aigstudio/core/CamPageRuntimeRegression.kt"))
+    post=read(Path("core/src/main/kotlin/com/aigstudio/core/FanucPostRuntime.kt"))
+    post_test=read(Path("core/src/test/kotlin/com/aigstudio/core/FanucPostRuntimeRegression.kt"))
+    assert "DXF_IMPORT_EXPORT" in cad_test
+    assert "FANUC_POST_NC" in cam_test
+    for token in ["G90 G54","G43 Z","M99","ArcFeed","axisC"]:
+        assert token in post, f"FANUC_POST_TOKEN_MISSING:{token}"
+    assert "FANUC_POST_RUNTIME_PASS|" in post_test
+    print(f"CAD_CAM_PAGE_RUNTIME_BINDING_PASS|CAD={cad}|CAM={cam}|DXF_IMPORT_EXPORT|REAL_FANUC_POST|REAL_CORE_SYMBOLS|NO_TOAST|NO_STRATEGY_STRING")
 
 if __name__=="__main__":
     main()
