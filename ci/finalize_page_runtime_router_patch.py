@@ -5,7 +5,6 @@ MAIN = ROOT / "app/src/main/java/com/aigstudio/app/MainActivity.kt"
 
 OLD = '        addProductionUi("CAD") { enterCadRuntime() }'
 NEW = '''        addProductionUi("CAD") {
-            homeRoot.visibility=View.GONE
             root.visibility=View.VISIBLE
             selectProductionUi("CAD")
             refreshVisibleMode("CAD")
@@ -21,4 +20,4 @@ assert 'Toast.makeText(this,"CAD • LIVE WORKSPACE"' not in final, "ANDROID_NAV
 assert OLD not in final, "ANDROID_CAD_FORWARD_REFERENCE_STILL_PRESENT"
 assert NEW in final, "ANDROID_CAD_INLINE_FALLBACK_MISSING"
 assert "productionPageRouter?.navigate(navId)" in final, "ANDROID_PRODUCTION_NAV_ROUTER_MISSING"
-print("PAGE_RUNTIME_ROUTER_ANDROID_FINALIZE_PASS|NO_TOAST|NO_FORWARD_REFERENCE|INLINE_CAD_FALLBACK")
+print("PAGE_RUNTIME_ROUTER_ANDROID_FINALIZE_PASS|NO_TOAST|NO_FORWARD_REFERENCE|IN_SCOPE_CAD_FALLBACK")
