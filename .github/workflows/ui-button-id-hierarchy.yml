@@ -8,6 +8,7 @@ on:
       - 'design/ui/pages/**'
       - 'ci/verify_page_department_manifests.py'
       - 'ci/test_page_button_id_hierarchy.py'
+      - 'ci/test_dual_ui_id_contract.py'
       - '.github/workflows/ui-button-id-hierarchy.yml'
 
 permissions:
@@ -36,3 +37,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 test_page_button_id_hierarchy.py
+      - name: Verify dual UI IDs
+        shell: bash
+        working-directory: ci
+        run: |
+          set -euo pipefail
+          python3 test_dual_ui_id_contract.py
