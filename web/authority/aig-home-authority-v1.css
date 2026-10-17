@@ -1,0 +1,36 @@
+/* AIG Authority HOME V1 — true Nine-Slice frames, runtime text/icons only */
+html.aigAuthoritySkinV1 body,
+html.aigAuthoritySkinV1 .app{background:#020407;color:#eefbff}
+html.aigAuthoritySkinV1 .top{background:linear-gradient(180deg,rgba(2,4,7,.98),rgba(3,8,14,.96));border-bottom:1px solid rgba(39,233,255,.55);box-shadow:0 0 26px rgba(39,233,255,.10),0 12px 34px #000}
+html.aigAuthoritySkinV1 .logo{font-weight:950;letter-spacing:.08em;text-shadow:0 0 8px #27e9ff,0 0 18px #9f72ff}
+html.aigAuthoritySkinV1 .brand small{color:#bdefff}
+html.aigAuthoritySkinV1 button[data-button-id^="NAV_"],
+html.aigAuthoritySkinV1 .screen[data-page="HOME"] .menuCard,
+html.aigAuthoritySkinV1 .screen[data-page="HOME"] .btn,
+html.aigAuthoritySkinV1 [data-message-id="HOME.SYSTEM_MESSAGES"]{
+  border:8px solid transparent!important;
+  border-image-slice:8 fill!important;
+  border-image-width:8px!important;
+  border-image-repeat:stretch!important;
+  background:#03070d!important;
+  color:#eefbff;
+  image-rendering:auto;
+}
+html.aigAuthoritySkinV1 button[data-button-id="NAV_HOME"]{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_NAV_HOME.png')}
+html.aigAuthoritySkinV1 button[data-button-id="NAV_CAD"]{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_NAV_CAD.png')}
+html.aigAuthoritySkinV1 button[data-button-id="NAV_CAM"]{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_NAV_CAM.png')}
+html.aigAuthoritySkinV1 button[data-button-id="NAV_SIM"]{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_NAV_SIM.png')}
+html.aigAuthoritySkinV1 button[data-button-id="NAV_3AX"]{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_NAV_3AX.png')}
+html.aigAuthoritySkinV1 button[data-button-id="NAV_NC"]{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_NAV_NC.png')}
+html.aigAuthoritySkinV1 button[data-button-id="NAV_AI"]{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_NAV_AI.png')}
+html.aigAuthoritySkinV1 button[data-button-id="BTN.HOME.CARD.CAD"]{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_CARD_CAD.png')}
+html.aigAuthoritySkinV1 button[data-button-id="BTN.HOME.CARD.CAM"]{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_CARD_CAM.png')}
+html.aigAuthoritySkinV1 button[data-button-id="BTN.HOME.CARD.SIM"]{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_CARD_SIM.png')}
+html.aigAuthoritySkinV1 button[data-button-id="BTN.HOME.CARD.NC"]{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_CARD_NC.png')}
+html.aigAuthoritySkinV1 .screen[data-page="HOME"] .menuCard{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_START.png')}
+html.aigAuthoritySkinV1 .screen[data-page="HOME"] .btn{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_OPEN_PROJECT.png')}
+html.aigAuthoritySkinV1 [data-message-id="HOME.SYSTEM_MESSAGES"]{border-image-source:url('../../generated/ui-regions/HOME/nineslice/HOME_MESSAGE_FRAME.png');min-height:72px;padding:12px 16px;text-shadow:0 0 8px rgba(39,233,255,.55)}
+html.aigAuthoritySkinV1 button:active{filter:brightness(1.28);transform:translateY(1px)}
+html.aigAuthoritySkinV1 button.active,
+html.aigAuthoritySkinV1 button[aria-pressed="true"]{filter:brightness(1.2);box-shadow:0 0 18px rgba(39,233,255,.25),0 0 26px rgba(159,114,255,.14)}
+html.aigAuthoritySkinV1 button:disabled{filter:saturate(.25) brightness(.65);opacity:.7}
