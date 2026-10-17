@@ -6,6 +6,14 @@ const NAVIGATION=Object.freeze({
   NAV_HOME:'HOME',NAV_CAD:'CAD',NAV_CAM:'CAM',NAV_SIM:'SIM',NAV_3AX:'3AX',
   NAV_4AX:'4AX',NAV_5AX:'5AX',NAV_6AX:'6AX',NAV_NC:'NC',NAV_AI:'AI'
 });
+const PRODUCT_PAGE_IDS=Object.freeze(['HOME','CAD','CAM','SIM','3AX','NC','AI']);
+const PRODUCT_NAVIGATION=Object.freeze({
+  NAV_HOME:'HOME',NAV_CAD:'CAD',NAV_CAM:'CAM',NAV_SIM:'SIM',NAV_3AX:'3AX',NAV_NC:'NC',NAV_AI:'AI'
+});
+const PRODUCT_NAV_COMMANDS=Object.freeze({
+  NAV_HOME:'OPEN_HOME',NAV_CAD:'OPEN_CAD',NAV_CAM:'OPEN_CAM',NAV_SIM:'OPEN_SIM',
+  NAV_3AX:'OPEN_3AX',NAV_NC:'OPEN_NC',NAV_AI:'OPEN_AI'
+});
 function viewIdForButton(buttonId){return 'VIEW.'+buttonId;}
 function navigationViewId(buttonId){
   if(!NAVIGATION[buttonId]) throw new Error('Unknown production navigation Button ID: '+buttonId);
@@ -23,6 +31,26 @@ function navigationButtonId(viewId){
   if(!NAVIGATION[buttonId]||navigationViewId(buttonId)!==viewId) throw new Error('Unknown navigation View ID: '+viewId);
   return buttonId;
 }
+
+function installProductDomGuard(){
+  if(typeof document==='undefined') return;
+  const allowed=new Set(PRODUCT_PAGE_IDS),utilities=new Set(['刀路','功能']);
+  const guard=(host,extra)=>{
+    if(!host||host.dataset?.aigProductGuard==='1') return;
+    const append=host.appendChild.bind(host);
+    host.appendChild=function(node){
+      const page=node&&node.dataset&&node.dataset.page;
+      if(page&&!allowed.has(page)&&!(extra&&extra.has(page))) return node;
+      return append(node);
+    };
+    if(host.dataset) host.dataset.aigProductGuard='1';
+  };
+  const nav=document.getElementById('nav'),screens=document.getElementById('screens');
+  guard(nav,null);
+  guard(screens,utilities);
+  if(nav&&nav.style) nav.style.gridTemplateColumns='repeat(7,minmax(72px,1fr))';
+}
+installProductDomGuard();
 
 const ROUTES=Object.create(null);
 function add(buttonId,pageId,subpageId){
@@ -122,6 +150,9 @@ class AigPageRuntimeRouter {
 Object.freeze(ROUTES);
 global.AIG_PAGE_IDS=PAGE_IDS;
 global.AIG_PAGE_NAVIGATION=NAVIGATION;
+global.AIG_PRODUCT_PAGE_IDS=PRODUCT_PAGE_IDS;
+global.AIG_PRODUCT_PAGE_NAVIGATION=PRODUCT_NAVIGATION;
+global.AIG_PRODUCT_NAV_COMMAND_ID=PRODUCT_NAV_COMMANDS;
 global.AIG_PAGE_COMMAND_ROUTES=ROUTES;
 global.AIG_VIEW_ID_FOR_BUTTON=viewIdForButton;
 global.AIG_NAV_VIEW_ID=navigationViewId;
