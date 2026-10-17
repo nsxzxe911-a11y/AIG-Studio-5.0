@@ -9,6 +9,8 @@ data class MachiningStageEvidence(
     val digest:String,
     val verified:Boolean,
     val axisMode:String,
+    val preflightReady:Boolean=false,
+    val fixtureCoverageKnown:Boolean=false,
 )
 
 data class MachiningPlanStage(
@@ -103,9 +105,14 @@ class MachiningOrchestrator {
     private fun reuseCandidate(input:MachiningPlanInput):MachiningRouteCandidate {
         val reused=listOfNotNull(input.simEvidence,input.ncEvidence)
         val blockers=mutableListOf<String>()
-        if(input.simEvidence?.verified!=true) blockers += "SIM_VERIFIED_EVIDENCE_REQUIRED"
+        val sim=input.simEvidence
+        if(sim?.verified!=true) blockers += "SIM_VERIFIED_EVIDENCE_REQUIRED"
+        else {
+            if(!sim.preflightReady) blockers += "SIM_PREFLIGHT_READY_REQUIRED"
+            if(!sim.fixtureCoverageKnown) blockers += "SIM_FIXTURE_COVERAGE_REQUIRED"
+        }
         if(input.ncEvidence?.verified!=true) blockers += "NC_VERIFIED_EVIDENCE_REQUIRED"
-        if(input.simEvidence?.axisMode!=input.targetAxis.id && input.simEvidence!=null) blockers += "SIM_AXIS_MISMATCH"
+        if(sim?.axisMode!=input.targetAxis.id && sim!=null) blockers += "SIM_AXIS_MISMATCH"
         if(input.ncEvidence?.axisMode!=input.targetAxis.id && input.ncEvidence!=null) blockers += "NC_AXIS_MISMATCH"
         val stages=listOf(
             stage(PageId.NC,"NC.OUTPUT","NC_OUTPUT_PREPARE","NC_VERIFIED_EVIDENCE"),
@@ -117,7 +124,7 @@ class MachiningOrchestrator {
             eligible=blockers.isEmpty(),
             estimatedCost=8,
             blockers=blockers,
-            reasons=listOf("Reuse verified SIM and NC evidence","Skip already verified authoring and simulation stages"),
+            reasons=listOf("Reuse formally safe SIM and verified NC evidence","Skip already verified authoring and simulation stages"),
             reusedEvidence=reused,
         )
     }
@@ -132,13 +139,13 @@ class MachiningOrchestrator {
             stage(input.targetAxis,axisNcFirst,"AXIS_NC_FIRST_PREVIEW","AXIS_PRECHECK_PASS"),
             stage(PageId.SIM,"SIM.MATERIAL","SIM_MATERIAL_REMOVAL","REMOVED_VOLUME_EVIDENCE"),
             stage(PageId.SIM,"SIM.COLLISION","SIM_COLLISION_CHECK","COLLISION_EVIDENCE"),
-            stage(PageId.SIM,"SIM.RESULT","SIM_ACCEPT","SIM_VERIFIED_EVIDENCE"),
+            stage(PageId.SIM,"SIM.RESULT","SIM_ACCEPT","SIM_PREFLIGHT_READY"),
             stage(PageId.NC,"NC.VERIFY","NC_VERIFY","NC_VERIFIED_EVIDENCE"),
             stage(PageId.NC,"NC.OUTPUT","NC_OUTPUT_PREPARE","NC_OUTPUT_READY"),
             stage(PageId.NC,"NC.OUTPUT","NC_MACHINE","NC_MACHINE_AUTHORIZATION"),
         )
         return candidate(MachiningRouteKind.NC_FIRST,stages,30,blockers,
-            listOf("Existing NC program avoids CAD/CAM authoring","SIM and NC verification remain mandatory"))
+            listOf("Existing NC program avoids CAD/CAM authoring","Strict SIM preflight and NC verification remain mandatory"))
     }
 
     private fun manualCamCandidate(input:MachiningPlanInput):MachiningRouteCandidate {
@@ -146,17 +153,17 @@ class MachiningOrchestrator {
         if(!input.hasManualCamArtifact && !input.hasCamToolpath) blockers += "MANUAL_CAM_ARTIFACT_REQUIRED"
         val stages=listOf(
             stage(PageId.CAM,"CAM.MANUAL","CAM_MANUAL_EDIT","MANUAL_TOOLPATH"),
-            stage(PageId.CAM,"CAM.POST_PREVIEW","CAM_POST_PREVIEW","CAM_TOOLPATH_EVIDENCE"),
+            stage(PageId.CAM,"CAM.POST_PREVIEW","CAM_POST_PREVIEW","FANUC_NC_PREVIEW"),
             stage(PageId.SIM,"SIM.MATERIAL","SIM_MATERIAL_REMOVAL","REMOVED_VOLUME_EVIDENCE"),
             stage(PageId.SIM,"SIM.COLLISION","SIM_COLLISION_CHECK","COLLISION_EVIDENCE"),
-            stage(PageId.SIM,"SIM.RESULT","SIM_ACCEPT","SIM_VERIFIED_EVIDENCE"),
+            stage(PageId.SIM,"SIM.RESULT","SIM_ACCEPT","SIM_PREFLIGHT_READY"),
             stage(PageId.NC,"NC.PARSER","NC_PARSE","PARSER_PASS"),
             stage(PageId.NC,"NC.VERIFY","NC_VERIFY","NC_VERIFIED_EVIDENCE"),
             stage(PageId.NC,"NC.OUTPUT","NC_OUTPUT_PREPARE","NC_OUTPUT_READY"),
             stage(PageId.NC,"NC.OUTPUT","NC_MACHINE","NC_MACHINE_AUTHORIZATION"),
         )
         return candidate(MachiningRouteKind.MANUAL_CAM_FIRST,stages,42,blockers,
-            listOf("Manual CAM starts without CAD geometry","SIM and NC verification remain mandatory"))
+            listOf("Manual CAM starts without CAD geometry","Strict SIM preflight and NC verification remain mandatory"))
     }
 
     private fun cadFirstCandidate(input:MachiningPlanInput):MachiningRouteCandidate {
@@ -167,14 +174,14 @@ class MachiningOrchestrator {
             stage(PageId.CAM,"CAM.AUTO","CAM_AUTO_GENERATE","CAM_TOOLPATH_EVIDENCE"),
             stage(PageId.SIM,"SIM.MATERIAL","SIM_MATERIAL_REMOVAL","REMOVED_VOLUME_EVIDENCE"),
             stage(PageId.SIM,"SIM.COLLISION","SIM_COLLISION_CHECK","COLLISION_EVIDENCE"),
-            stage(PageId.SIM,"SIM.RESULT","SIM_ACCEPT","SIM_VERIFIED_EVIDENCE"),
+            stage(PageId.SIM,"SIM.RESULT","SIM_ACCEPT","SIM_PREFLIGHT_READY"),
             stage(PageId.NC,"NC.PARSER","NC_PARSE","PARSER_PASS"),
             stage(PageId.NC,"NC.VERIFY","NC_VERIFY","NC_VERIFIED_EVIDENCE"),
             stage(PageId.NC,"NC.OUTPUT","NC_OUTPUT_PREPARE","NC_OUTPUT_READY"),
             stage(PageId.NC,"NC.OUTPUT","NC_MACHINE","NC_MACHINE_AUTHORIZATION"),
         )
         return candidate(MachiningRouteKind.CAD_FIRST,stages,60,blockers,
-            listOf("Generate CAM from available CAD geometry","Full CAD to CAM to SIM to NC chain"))
+            listOf("Generate CAM from available CAD geometry","Full CAD to CAM to strict SIM preflight to NC chain"))
     }
 
     private fun candidate(
@@ -190,14 +197,15 @@ class MachiningOrchestrator {
     }
 
     private fun safeMachineRoute(candidate:MachiningRouteCandidate):Boolean =
-        if(candidate.routeKind==MachiningRouteKind.REUSE_VERIFIED_STAGE)
-            candidate.eligible && candidate.reusedEvidence.any{it.pageId==PageId.SIM && it.verified} &&
+        if(candidate.routeKind==MachiningRouteKind.REUSE_VERIFIED_STAGE) {
+            val sim=candidate.reusedEvidence.firstOrNull{it.pageId==PageId.SIM}
+            candidate.eligible && MachiningEvidenceSafetyPolicy.safeSimReuse(sim) &&
                 candidate.reusedEvidence.any{it.pageId==PageId.NC && it.verified} &&
                 candidate.stages.lastOrNull()?.action=="NC_MACHINE"
-        else safeStageSequence(candidate.stages)
+        } else safeStageSequence(candidate.stages)
 
     private fun safeStageSequence(stages:List<MachiningPlanStage>):Boolean {
-        val sim=stages.indexOfFirst{it.subpage.value=="SIM.RESULT"}
+        val sim=stages.indexOfFirst{it.subpage.value=="SIM.RESULT" && it.requiredEvidence=="SIM_PREFLIGHT_READY"}
         val verify=stages.indexOfFirst{it.subpage.value=="NC.VERIFY"}
         val machine=stages.indexOfLast{it.action=="NC_MACHINE"}
         return sim>=0 && verify>sim && machine>verify
