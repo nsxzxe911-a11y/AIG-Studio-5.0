@@ -18,25 +18,34 @@ jobs:
   ingest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout Studio feature branch
+        uses: actions/checkout@v7
         with:
           ref: architecture/page-autonomy-ai-orchestrator-after-588
           fetch-depth: 1
-      - name: Fetch exact AIG-II verified 427 HOME binaries
+      - name: Checkout exact AIG-II authority source
+        uses: actions/checkout@v7
+        with:
+          repository: nsxzxe911-a11y/AIG-II
+          ref: f557c2de9e4a627f504d0ef927085cd70ea94eb0
+          path: _aigii_authority_source
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Copy and verify exact AIG-II 427 HOME binaries
         shell: bash
         run: |
           set -euo pipefail
           AIGII_SHA='f557c2de9e4a627f504d0ef927085cd70ea94eb0'
-          BASE="https://raw.githubusercontent.com/nsxzxe911-a11y/AIG-II/${AIGII_SHA}"
-          TMP="$(mktemp -d)"
-          curl -fsSL "$BASE/app/src/main/assets/aig-generated-rgb/approved/427/home_mobile.jpg" -o "$TMP/home_mobile.jpg"
-          curl -fsSL "$BASE/app/src/main/assets/aig-generated-rgb/approved/427/home_desktop.jpg" -o "$TMP/home_desktop.jpg"
-          echo '8835cded863074b4de9b848e12eb037254119b5a7f21e135b66657f764fbd652  '"$TMP/home_mobile.jpg" | sha256sum -c -
-          echo '02185fbd1dd8026ad17bf6cb1994bcd5a03d03e46b68bb45135d911d809ff9da  '"$TMP/home_desktop.jpg" | sha256sum -c -
+          MOBILE='_aigii_authority_source/app/src/main/assets/aig-generated-rgb/approved/427/home_mobile.jpg'
+          DESKTOP='_aigii_authority_source/app/src/main/assets/aig-generated-rgb/approved/427/home_desktop.jpg'
+          test -s "$MOBILE"
+          test -s "$DESKTOP"
+          echo '8835cded863074b4de9b848e12eb037254119b5a7f21e135b66657f764fbd652  '"$MOBILE" | sha256sum -c -
+          echo '02185fbd1dd8026ad17bf6cb1994bcd5a03d03e46b68bb45135d911d809ff9da  '"$DESKTOP" | sha256sum -c -
           mkdir -p app/src/main/assets/aig-generated-rgb/approved/427
           mkdir -p desktop/src/main/resources/aig-generated-rgb/approved/427
-          cp "$TMP/home_mobile.jpg" app/src/main/assets/aig-generated-rgb/approved/427/home_mobile.jpg
-          cp "$TMP/home_desktop.jpg" desktop/src/main/resources/aig-generated-rgb/approved/427/home_desktop.jpg
+          cp "$MOBILE" app/src/main/assets/aig-generated-rgb/approved/427/home_mobile.jpg
+          cp "$DESKTOP" desktop/src/main/resources/aig-generated-rgb/approved/427/home_desktop.jpg
           printf '%s\n' \
             'source_repo=nsxzxe911-a11y/AIG-II' \
             "source_sha=$AIGII_SHA" \
@@ -48,6 +57,7 @@ jobs:
             > app/src/main/assets/aig-generated-rgb/approved/427/STABLE_AUTHORITY_SOURCE.properties
           cp app/src/main/assets/aig-generated-rgb/approved/427/STABLE_AUTHORITY_SOURCE.properties \
              desktop/src/main/resources/aig-generated-rgb/approved/427/STABLE_AUTHORITY_SOURCE.properties
+          rm -rf _aigii_authority_source
           echo 'VERIFIED_STABLE_HOME_INGEST_PREPARED=PASS'
       - name: Commit verified binary fallback to feature branch
         shell: bash
