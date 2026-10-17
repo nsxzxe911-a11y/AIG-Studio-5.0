@@ -1,0 +1,81 @@
+name: AIG Studio Auto Finish Version Sync
+
+on:
+  push:
+    branches:
+      - feature/dual-project-auto-finish-20261017
+    paths:
+      - .github/workflows/auto-finish-version-sync.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair-version-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Repair continuity metadata to frozen release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, re
+          from pathlib import Path
+          root=Path('.')
+          version=''
+          for line in (root/'release-version.properties').read_text(encoding='utf-8').splitlines():
+              if line.startswith('versionName='):
+                  version=line.split('=',1)[1].strip()
+                  break
+          if version!='370.0.0':
+              raise SystemExit(f'FROZEN_VERSION_MISMATCH|expected=370.0.0|actual={version}')
+          for rel in (
+              'continuity/release-command.json',
+              'continuity/ai-responsibility-routing.json',
+              'continuity/latest-checkpoint.json',
+          ):
+              p=root/rel
+              data=json.loads(p.read_text(encoding='utf-8'))
+              before=data.get('version')
+              data['version']=version
+              p.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+              print(f'VERSION_SYNC|{rel}|{before}->{version}')
+          p=root/'continuity/cache-update-standard.xml'
+          s=p.read_text(encoding='utf-8')
+          ns,n=re.subn(r'(<aigCacheUpdateStandard\b[^>]*\bversion=")[^"]+("[^>]*>)',rf'\g<1>{version}\g<2>',s,count=1)
+          if n!=1:
+              raise SystemExit('XML_VERSION_SYNC_FAIL')
+          p.write_text(ns,encoding='utf-8')
+          print(f'VERSION_SYNC|continuity/cache-update-standard.xml|->{version}')
+          PY
+      - name: Reverify continuity and professional audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/verify_release_command_dispatch.py
+          python3 ci/verify_ai_responsibility_routing.py
+          python3 ci/verify_continuity_checkpoint.py
+          python3 ci/verify_xml_cache_update_standard.py
+          python3 ci/pro_audit.py | tee pro-audit.log
+          grep -Fq 'PRO_AUDIT_PASS|' pro-audit.log
+          python3 ci/fast_review.py | tee fast-review.log
+          grep -Fq 'FAST_REVIEW_PASS|' fast-review.log
+      - name: Diff hygiene
+        run: git diff --check
+      - name: Commit verified metadata repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add continuity/release-command.json continuity/ai-responsibility-routing.json continuity/latest-checkpoint.json continuity/cache-update-standard.xml
+          git diff --cached --quiet && { echo 'VERSION_METADATA_ALREADY_SYNCED'; exit 0; }
+          git commit -m 'fix(release): sync Studio continuity metadata to 370.0.0'
+          git push origin HEAD:feature/dual-project-auto-finish-20261017
+      - name: GREEN marker
+        run: echo 'STUDIO_VERSION_METADATA_SYNC_GREEN|370.0.0|CONTINUITY|PRO_AUDIT|FAST_REVIEW'
