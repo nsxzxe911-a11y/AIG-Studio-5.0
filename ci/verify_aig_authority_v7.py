@@ -45,19 +45,27 @@ def main():
         else: seen.add(vid)
         if page in FORBIDDEN: errors.append(f'{p}: forbidden AIG page {page}')
         if page not in set(ALLOWED_PRODUCTION+['BOOT','SETTINGS','PROJECT']): errors.append(f'{p}: unsupported pageId {page}')
-        if not rel: errors.append(f'{p}: missing asset'); continue
-        fp=ROOT/rel
-        if not fp.is_file(): errors.append(f'{p}: missing asset file {rel}'); continue
-        actual_sha=sha256(fp)
-        if actual_sha.lower()!=str(a.get('sha256','')).lower(): errors.append(f'{p}: sha mismatch {vid}')
-        try: w,h=png_size(fp)
-        except Exception as e: errors.append(f'{p}: png parse error {e}'); continue
-        if [w,h] != [a.get('sourceWidth'),a.get('sourceHeight')]: errors.append(f'{p}: dimension mismatch {vid}: {w}x{h}')
+        state=a.get('ingestState')
+        if state not in {'INGESTED','APPROVED_ASSET_PENDING_INGEST'}: errors.append(f'{p}: invalid ingestState {state}')
+        if state=='INGESTED':
+            if not rel: errors.append(f'{p}: INGESTED asset missing repo path'); continue
+            fp=ROOT/rel
+            if not fp.is_file(): errors.append(f'{p}: missing asset file {rel}'); continue
+            actual_sha=sha256(fp)
+            if actual_sha.lower()!=str(a.get('sha256','')).lower(): errors.append(f'{p}: sha mismatch {vid}')
+            try: w,h=png_size(fp)
+            except Exception as e: errors.append(f'{p}: png parse error {e}'); continue
+            if [w,h] != [a.get('sourceWidth'),a.get('sourceHeight')]: errors.append(f'{p}: dimension mismatch {vid}: {w}x{h}')
+        else:
+            if not a.get('libraryPath'): errors.append(f'{p}: pending ingest requires libraryPath')
+            if len(str(a.get('sha256',''))) != 64: errors.append(f'{p}: pending ingest requires sha256')
+            w,h=a.get('sourceWidth'),a.get('sourceHeight')
         native=(w,h)==(3840,2160)
         if bool(a.get('native4K')) != native: errors.append(f'{p}: native4K flag mismatch {vid}')
         if not native and a.get('targetRuntime')!='3840x2160': errors.append(f'{p}: non-4K source missing targetRuntime {vid}')
     if errors: return fail(errors)
-    print(f'AIG_AUTHORITY_V7_PASS|ASSETS={len(assets)}|PAGES=7|NO_4AX_5AX_6AX|SHA_DIMENSIONS_LOCKED')
+    pending=sum(1 for a in assets if a.get('ingestState')=='APPROVED_ASSET_PENDING_INGEST')
+    print(f'AIG_AUTHORITY_V7_PASS|ASSETS={len(assets)}|PAGES=7|NO_4AX_5AX_6AX|SHA_DIMENSIONS_LOCKED|PENDING_INGEST={pending}')
     return 0
 
 if __name__=='__main__': sys.exit(main())
