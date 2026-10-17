@@ -19,17 +19,54 @@ class CamPageRuntime(
     private var lastStrategy="MANUAL"
     private var lastToolpaths:List<Toolpath> = emptyList()
 
-    override fun dispatch(command: PageCommand): PageResult = try {
-        PageCommandCatalog.validate(command)
-        when(command.commandId) {
-            "CAM.MANUAL.ADD_POINT" -> addManualPoint(command); "CAM.MANUAL.EDIT_POINT" -> editManualPoint(command); "CAM.MANUAL.DELETE_POINT" -> deleteManualPoint(command)
-            "CAM.MANUAL.SET_MOTION_G0" -> setMotion(command,true); "CAM.MANUAL.SET_MOTION_G1" -> setMotion(command,false); "CAM.MANUAL.SET_SAFE_Z" -> setSafeZ(command)
-            "CAM.MAIN.COMP_G41" -> setCompensation(command,"G41"); "CAM.MAIN.COMP_G42" -> setCompensation(command,"G42")
-            "CAM.TOOL.SELECT" -> selectTool(command); "CAM.REGION.SELECT" -> selectRegion(command); "CAM.POST_PREVIEW.GENERATE" -> generatePreview(command)
-            "CAM.AUTO.GENERATE" -> generateAuto(command,"GENERATE"); "CAM.AUTO.ROUGH" -> generateAuto(command,"ROUGH"); "CAM.AUTO.FINISH" -> generateAuto(command,"FINISH"); "CAM.AUTO.CONTOUR" -> generateAuto(command,"CONTOUR"); "CAM.AUTO.DRILL" -> generateAuto(command,"DRILL")
-            else -> error("CAM command not implemented: ${command.commandId}")
+    private data class CamRuntimeState(
+        val revision:Long,
+        val sourceCadSnapshot:DrawingSnapshot,
+        val sourceCadRevision:Long,
+        val lastCadBridgeRevision:Long,
+        val lastCadBridgeDigest:String,
+        val settings:CamSettings,
+        val compensation:String,
+        val regionId:String,
+        val lastStrategy:String,
+        val lastToolpaths:List<Toolpath>,
+    )
+
+    private fun captureState()=CamRuntimeState(
+        revision,sourceCadSnapshot,sourceCadRevision,lastCadBridgeRevision,lastCadBridgeDigest,
+        settings,compensation,regionId,lastStrategy,lastToolpaths.toList()
+    )
+
+    private fun restoreState(state:CamRuntimeState){
+        revision=state.revision
+        sourceCadSnapshot=state.sourceCadSnapshot
+        sourceCadRevision=state.sourceCadRevision
+        lastCadBridgeRevision=state.lastCadBridgeRevision
+        lastCadBridgeDigest=state.lastCadBridgeDigest
+        settings=state.settings
+        compensation=state.compensation
+        regionId=state.regionId
+        lastStrategy=state.lastStrategy
+        lastToolpaths=state.lastToolpaths
+    }
+
+    override fun dispatch(command: PageCommand): PageResult {
+        val before=captureState()
+        return try {
+            PageCommandCatalog.validate(command)
+            when(command.commandId) {
+                "CAM.MANUAL.ADD_POINT" -> addManualPoint(command); "CAM.MANUAL.EDIT_POINT" -> editManualPoint(command); "CAM.MANUAL.DELETE_POINT" -> deleteManualPoint(command)
+                "CAM.MANUAL.SET_MOTION_G0" -> setMotion(command,true); "CAM.MANUAL.SET_MOTION_G1" -> setMotion(command,false); "CAM.MANUAL.SET_SAFE_Z" -> setSafeZ(command)
+                "CAM.MAIN.COMP_G41" -> setCompensation(command,"G41"); "CAM.MAIN.COMP_G42" -> setCompensation(command,"G42")
+                "CAM.TOOL.SELECT" -> selectTool(command); "CAM.REGION.SELECT" -> selectRegion(command); "CAM.POST_PREVIEW.GENERATE" -> generatePreview(command)
+                "CAM.AUTO.GENERATE" -> generateAuto(command,"GENERATE"); "CAM.AUTO.ROUGH" -> generateAuto(command,"ROUGH"); "CAM.AUTO.FINISH" -> generateAuto(command,"FINISH"); "CAM.AUTO.CONTOUR" -> generateAuto(command,"CONTOUR"); "CAM.AUTO.DRILL" -> generateAuto(command,"DRILL")
+                else -> error("CAM command not implemented: ${command.commandId}")
+            }
+        } catch(t:Throwable) {
+            restoreState(before)
+            reject(command,t.message ?: t::class.simpleName.orEmpty())
         }
-    } catch(t:Throwable) { reject(command,t.message ?: t::class.simpleName.orEmpty()) }
+    }
 
     override fun snapshot(): PageSnapshot = PageSnapshot(pageId,revision,mapOf(
         "mode" to settings.pathMode.name,"manualPointCount" to settings.manualPath.size.toString(),
