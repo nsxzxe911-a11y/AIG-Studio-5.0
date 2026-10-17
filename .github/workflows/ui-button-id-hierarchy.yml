@@ -1,0 +1,38 @@
+name: AIG Studio UI Button-ID hierarchy
+
+on:
+  push:
+    branches:
+      - architecture/page-autonomy-ai-orchestrator-after-588
+    paths:
+      - 'design/ui/pages/**'
+      - 'ci/verify_page_department_manifests.py'
+      - 'ci/test_page_button_id_hierarchy.py'
+      - '.github/workflows/ui-button-id-hierarchy.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: studio-ui-button-id-hierarchy
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: architecture/page-autonomy-ai-orchestrator-after-588
+          fetch-depth: 1
+      - name: Verify manifest baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/verify_page_department_manifests.py
+      - name: Verify malformed IDs fail closed
+        shell: bash
+        working-directory: ci
+        run: |
+          set -euo pipefail
+          python3 test_page_button_id_hierarchy.py
