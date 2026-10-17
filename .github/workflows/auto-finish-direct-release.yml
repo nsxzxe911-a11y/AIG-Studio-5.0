@@ -67,22 +67,33 @@ jobs:
           set -euo pipefail
           python3 ci/verify_production_runtime.py | tee production-runtime.log
           grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|' production-runtime.log
+          grep -Fq 'CONTINUOUS_6AX_PRODUCTION_GATE_PASS|ABC_TOOLPOINTS|SIM|ROTARY_C|NC_C_FAIL_CLOSED' production-runtime.log
           python3 ci/verify_runtime_surfaces.py | tee runtime-surfaces.log
           grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
+          grep -Fq 'CONTINUOUS_6AX_RUNTIME_GATE_PASS|CAM_PER_TOOLPOINT_ABC|PROGRESSIVE_SIM|ANDROID_LIVE_C|WINDOWS_LIVE_C|NC_C_FAIL_CLOSED' runtime-surfaces.log
           python3 ci/test_formal_runtime_entry_gate.py
           python3 ci/verify_formal_runtime_entry.py
           python3 ci/test_formal_web_runtime.py
           sha256sum -c design/theme/official_rgb/android-drawable.sha256
           echo 'STUDIO_RGB_AUTHORITY_INTEGRITY=PASS'
-      - name: Build Android release
+      - name: Build and verify Android release
         shell: bash
         run: |
           set -euo pipefail
           bash ./build_android_release.sh | tee release-validation.log
-          find release -type f -name '*.apk' -size +0c -print | tee apk-files.txt
-          test -s apk-files.txt
-          grep -Fq 'CONTINUOUS_6AX_CAM_SIM_GATE_PASS' release-validation.log
-          grep -Fq 'UNIFIED_NC_SAFETY_CLOSURE_GATE_PASS' release-validation.log
+          grep -Fq 'AIG_STUDIO_ANDROID_PACKAGE=PASS' release-validation.log
+          APK='release/android/AIG_Studio_5_0_RGB_FULL_INSTALLABLE.apk'
+          UI_APK='release/android/AIG_Studio_5_0_RGB_UI_VERIFY_SIDELOAD.apk'
+          test -s "$APK"
+          test -s "$UI_APK"
+          (cd release/android && sha256sum -c SHA256SUMS.txt)
+          (cd release/source && sha256sum -c SHA256SUMS.txt)
+          grep -Fx 'version=370.0.0' release/android/RELEASE_MANIFEST.txt
+          grep -Fx "git_sha=$GITHUB_SHA" release/android/RELEASE_MANIFEST.txt
+          grep -Fx 'release_class=PRODUCTION_RUNTIME' release/android/RELEASE_MANIFEST.txt
+          grep -Fx 'version=370.0.0' release/source/RELEASE_MANIFEST.txt
+          grep -Fx "git_sha=$GITHUB_SHA" release/source/RELEASE_MANIFEST.txt
+          echo 'STUDIO_ANDROID_EXACT_SHA_PACKAGE=PASS'
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Auto-Finish-Android-Source
@@ -111,6 +122,10 @@ jobs:
           $exe=Get-ChildItem -Recurse release -Filter *.exe | Where-Object {$_.Length -gt 0}
           if(-not $exe){ throw 'STUDIO_WINDOWS_EXE_MISSING' }
           $exe | ForEach-Object { Write-Host ("STUDIO_WINDOWS_EXE="+$_.FullName) }
+          $manifest=Get-Content 'release/windows/RELEASE_MANIFEST.txt'
+          if($manifest -notcontains 'version=370.0.0'){ throw 'STUDIO_WINDOWS_VERSION_MISMATCH' }
+          if($manifest -notcontains ("git_sha="+$env:GITHUB_SHA)){ throw 'STUDIO_WINDOWS_SHA_MISMATCH' }
+          Write-Host 'STUDIO_WINDOWS_EXACT_SHA_PACKAGE=PASS'
       - uses: actions/upload-artifact@v4
         with:
           name: AIG-Studio-Auto-Finish-Windows
