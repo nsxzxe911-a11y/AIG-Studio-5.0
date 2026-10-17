@@ -4,10 +4,10 @@ await import('../web/runtime/ai-page-runtime.js');
 
 function plan(extra){
   return globalThis.aigWebMachiningPlan({
-    objective:'MIN_REWORK',targetAxis:'4AX',
+    objective:'MIN_REWORK',targetAxis:'3AX',
     hasNcProgram:'true',hasCadGeometry:'true',hasManualCamArtifact:'true',hasCamToolpath:'true',
-    simVerified:'true',simRevision:'12',simDigest:'sim12',simAxis:'4AX',
-    ncVerified:'true',ncRevision:'20',ncDigest:'nc20',ncAxis:'4AX',
+    simVerified:'true',simRevision:'12',simDigest:'sim12',simAxis:'3AX',
+    ncVerified:'true',ncRevision:'20',ncDigest:'nc20',ncAxis:'3AX',
     ...extra
   });
 }
@@ -18,4 +18,7 @@ const strict=plan({simPreflightReady:'true',simFixtureCoverageKnown:'true'});
 if(strict.routeKind!=='REUSE_VERIFIED_STAGE') throw new Error('WEB_AI_STRICT_SIM_EVIDENCE_NOT_REUSED');
 const unsafe=strict.considered.find(x=>x.routeKind==='REUSE_VERIFIED_STAGE');
 if(!unsafe || !unsafe.eligible) throw new Error('WEB_AI_STRICT_REUSE_NOT_ELIGIBLE');
-console.log('WEB_AI_STRICT_REUSE_PASS|VERIFIED|PREFLIGHT|FIXTURE_COVERAGE|LEGACY_REJECTED');
+let multiAxisBlocked=false;
+try{globalThis.aigWebMachiningPlan({targetAxis:'6AX',hasNcProgram:'true'});}catch(_){multiAxisBlocked=true;}
+if(!multiAxisBlocked) throw new Error('WEB_AI_MULTI_AXIS_PRODUCT_GUARD_MISSING');
+console.log('WEB_AI_STRICT_REUSE_PASS|VERIFIED|PREFLIGHT|FIXTURE_COVERAGE|LEGACY_REJECTED|AIG_3AX_ONLY');
