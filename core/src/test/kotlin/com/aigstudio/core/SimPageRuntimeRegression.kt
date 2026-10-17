@@ -38,7 +38,21 @@ fun main(){
     check(risk.evidence["collisionCount"]=="0")
     check(risk.evidence["overcutCount"]=="0")
     check(risk.evidence["fixtureCoverage"]=="UNMODELED")
-    check(sim.dispatch(simCmd("SIM.RESULT","SIM.RESULT.ACCEPT")) is PageResult.Accepted)
+    check(risk.evidence["preflightReady"]=="false")
+    val blocked=sim.dispatch(simCmd("SIM.RESULT","SIM.RESULT.ACCEPT"))
+    check(blocked is PageResult.Rejected && blocked.code=="SIM_PREFLIGHT_BLOCKED")
+    check(sim.snapshot().state["acceptedResult"]=="false")
+    check(sim.exportPayload(RuntimeLinkId.SIM_NC)==null)
+    check(sim.messages().last().severity==PageMessageSeverity.BLOCKED_ACTION)
+    check(sim.snapshot().state.getValue("removedVolumeMm3").toDouble()>0.0)
 
-    println("SIM_PAGE_RUNTIME_PASS|TRUE_MATERIAL_REMOVAL|REMOVED_VOLUME|PROGRESSIVE_PLAYBACK|3D_MESH|COLLISION_LOCAL|UNMODELED_WARNING_ONLY")
+    sim.setFixtures(listOf(FixtureObstacle(1,FixtureKind.FIXTURE,40.0,40.0,-5.0,50.0,50.0,5.0)))
+    check(sim.dispatch(simCmd("SIM.MATERIAL","SIM.MATERIAL.RUN")) is PageResult.Accepted)
+    val modeledRisk=sim.dispatch(simCmd("SIM.COLLISION","SIM.COLLISION.CHECK")) as PageResult.Accepted
+    check(modeledRisk.evidence["fixtureCoverage"]=="MODELED")
+    check(modeledRisk.evidence["preflightReady"]=="true")
+    check(sim.dispatch(simCmd("SIM.RESULT","SIM.RESULT.ACCEPT")) is PageResult.Accepted)
+    check(sim.exportPayload(RuntimeLinkId.SIM_NC)!=null)
+
+    println("SIM_PAGE_RUNTIME_PASS|TRUE_MATERIAL_REMOVAL|REMOVED_VOLUME|PROGRESSIVE_PLAYBACK|3D_MESH|STRICT_PREFLIGHT|MODELED_FIXTURE_REQUIRED|LOCAL_BLOCK")
 }
