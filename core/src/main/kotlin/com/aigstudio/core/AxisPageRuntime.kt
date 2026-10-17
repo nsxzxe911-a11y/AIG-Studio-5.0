@@ -77,6 +77,9 @@ class AxisPageRuntime(
         put("ncBlocks",ncBlocks.toString())
         put("ncAxisWords",ncAxisWords.toString())
         put("ncMoveCount",(ncPreview?.trace?.points?.size ?: 0).toString())
+        put("ncCannedCycleHoleCount",(ncPreview?.trace?.cannedCycleHoleCount ?: 0).toString())
+        put("ncG34HoleCount",(ncPreview?.trace?.g34HoleCount ?: 0).toString())
+        put("ncCycleModels",ncPreview?.trace?.cycleModels?.sorted()?.joinToString(",") ?: "")
         put("ncRemovedCells",(ncPreview?.removedCells ?: 0).toString())
         put("ncRemovedVolumeMm3",(ncPreview?.removedVolumeMm3 ?: 0.0).toString())
         put("ncFixtureCoverage",ncPreview?.risk?.fixtureCoverageWord ?: "UNKNOWN")
@@ -180,7 +183,8 @@ class AxisPageRuntime(
         val legacy=NcSixAxisCompatibility.legacyProgram(ncProgram)
         val runtime=NcRuntimeInterlock.findings(legacy)
         require(runtime.isEmpty()){runtime.first().message}
-        val alarm=NcEditorAlarmRouter.firstAlarm(legacy,CncControllerProfile.FANUC)
+        val profile=StudioFanucMachineProfile.rotaryProfile()
+        val alarm=NcEditorAlarmRouter.firstAlarm(legacy,CncControllerProfile.FANUC,rotaryClampProfile=profile)
         require(alarm==null){alarm?.compact().orEmpty()}
         ncAxisWords=count
         ncParsed=true
@@ -190,6 +194,7 @@ class AxisPageRuntime(
         return accepted(command,mapOf(
             "axisPrecheck" to "PASS",
             "fanucParser" to "PASS",
+            "g34Profile" to profile.g34VendorProfile.template.name,
             "blocks" to ncBlocks.toString(),
             "axisWordCount" to ncAxisWords.toString(),
             "allowedAxes" to allowedAxes.joinToString(""),
@@ -214,6 +219,9 @@ class AxisPageRuntime(
             "blocks" to ncBlocks.toString(),
             "machineMode" to pageId.id,
             "moveCount" to preview.trace.points.size.toString(),
+            "cannedCycleHoleCount" to preview.trace.cannedCycleHoleCount.toString(),
+            "g34HoleCount" to preview.trace.g34HoleCount.toString(),
+            "cycleModels" to preview.trace.cycleModels.sorted().joinToString(","),
             "removedCells" to preview.removedCells.toString(),
             "removedVolumeMm3" to preview.removedVolumeMm3.toString(),
             "meshVertices" to preview.result.mesh.vertices.size.toString(),
