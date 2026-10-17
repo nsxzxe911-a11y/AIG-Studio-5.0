@@ -120,6 +120,31 @@ function sanitizeProductScreen(node){
   return true;
 }
 
+function installAuthoritySkinV1(){
+  if(typeof document==='undefined'||typeof document.createElement!=='function'||!document.head)return false;
+  const cssId='aig-authority-home-v1-css';
+  if(!document.getElementById(cssId)){
+    const link=document.createElement('link');
+    link.id=cssId;
+    link.rel='stylesheet';
+    link.href='./authority/aig-home-authority-v1.css';
+    link.dataset.aigAuthoritySkin='AIG-AUTH-DESKTOP-HOME-V1';
+    document.head.appendChild(link);
+  }
+  const apply=()=>{
+    if(document.documentElement&&document.documentElement.classList)document.documentElement.classList.add('aigAuthoritySkinV1');
+    document.title='AIG Authority RGB Runtime';
+    if(typeof document.querySelector==='function'){
+      const logo=document.querySelector('.brand .logo');
+      const subtitle=document.querySelector('.brand small');
+      if(logo)logo.textContent='AIG';
+      if(subtitle)subtitle.textContent='AIG Authority RGB Runtime';
+    }
+  };
+  if(document.readyState==='loading'&&typeof document.addEventListener==='function')document.addEventListener('DOMContentLoaded',apply,{once:true});
+  else apply();
+  return true;
+}
 function installProductDomGuard(){
   if(typeof document==='undefined') return;
   const allowed=new Set(PRODUCT_PAGE_IDS),utilities=new Set(['刀路','功能']);
@@ -140,6 +165,7 @@ function installProductDomGuard(){
   guard(screens,utilities,'SCREEN');
   if(nav&&nav.style) nav.style.gridTemplateColumns='repeat(7,minmax(72px,1fr))';
 }
+installAuthoritySkinV1();
 installProductDomGuard();
 
 const ROUTES=Object.create(null);
