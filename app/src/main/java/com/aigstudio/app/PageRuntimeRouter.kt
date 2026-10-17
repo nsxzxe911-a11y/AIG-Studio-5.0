@@ -7,6 +7,7 @@ import com.aigstudio.core.PageMessage
 import com.aigstudio.core.PageResult
 import com.aigstudio.core.PageRuntime
 import com.aigstudio.core.SubpageId
+import com.aigstudio.core.UiDualIdContract
 
 class PageRuntimeRouter(
     private val runtimeProvider:(PageId)->PageRuntime?,
@@ -34,6 +35,14 @@ class PageRuntimeRouter(
         pageNavigator(target)
         return target
     }
+
+    fun navigateView(viewId:String):PageId = navigate(UiDualIdContract.navigationButtonId(viewId))
+
+    fun dispatchView(
+        viewId:String,
+        arguments:Map<String,String> = emptyMap(),
+        subpageId:String?=null,
+    ):PageResult = dispatchButton(UiDualIdContract.buttonIdForView(viewId),arguments,subpageId)
 
     fun dispatchButton(
         buttonId:String,
