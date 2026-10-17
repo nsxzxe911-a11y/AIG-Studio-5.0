@@ -3103,7 +3103,8 @@ function makeMenuRuntime(root){
  render("PROJECT");
 }
 pages.forEach(([name,color])=>{
- const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>aigGuard(document.body,"頁面切換",()=>navigateProductionPage(name),null,"warn");nav.appendChild(b);
+ const navButtonId="NAV_"+name,navViewId=AIG_NAV_VIEW_ID(navButtonId);
+ const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.dataset.buttonId=navButtonId;b.dataset.viewId=navViewId;b.style.setProperty("--accent",color);b.onclick=()=>aigGuard(document.body,"頁面切換",()=>productionPageRouter.navigateView(navViewId),null,"warn");nav.appendChild(b);
  const s=document.createElement("section");s.className="screen";s.dataset.page=name;
  s.innerHTML=name==="HOME"?homePage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="SIM"?simHubPage():name==="NC"?ncPage():name==="AI"?aiPage():simPage(name);
  screens.appendChild(s);
@@ -3133,7 +3134,9 @@ const productionPageRouter=new AigPageRuntimeRouter({
 window.aigProductionPageRouter=productionPageRouter;
 function navigateProductionPage(name){
  const navId="NAV_"+name;
- return AIG_PAGE_NAVIGATION[navId]?productionPageRouter.navigate(navId):show(name);
+ if(!AIG_PAGE_NAVIGATION[navId])return show(name);
+ const viewId=AIG_NAV_VIEW_ID(navId);
+ return productionPageRouter.navigateView(viewId);
 }
 document.addEventListener("click",e=>{const a=e.target.closest("[data-open-page]");if(a)aigGuard(document.body,"頁面切換",()=>navigateProductionPage(a.dataset.openPage),null,"warn")});
 aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash||"#HOME").slice(1))),null,"error");

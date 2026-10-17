@@ -118,7 +118,11 @@ function init(){
       hasCamToolpath:String(!!root.querySelector('[data-ai-cam]')?.checked),
       hasNcProgram:String(!!root.querySelector('[data-ai-nc]')?.checked)
     };}
-    root.querySelectorAll('[data-ai-command]').forEach(btn=>btn.addEventListener('click',()=>router.dispatchButton(btn.dataset.aiCommand,args())));
+    root.querySelectorAll('[data-ai-command]').forEach(btn=>{
+      const buttonId=btn.dataset.aiCommand,viewId=global.AIG_VIEW_ID_FOR_BUTTON(buttonId);
+      btn.dataset.buttonId=buttonId;btn.dataset.viewId=viewId;
+      btn.addEventListener('click',()=>router.dispatchView(viewId,args()));
+    });
     root._aigAiRuntime=runtime;root._aigAiRouter=router;
   });
 }
