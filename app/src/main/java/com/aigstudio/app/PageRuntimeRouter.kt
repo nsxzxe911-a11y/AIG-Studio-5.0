@@ -1,5 +1,6 @@
 package com.aigstudio.app
 
+import com.aigstudio.core.AigProductUiContract
 import com.aigstudio.core.PageCommand
 import com.aigstudio.core.PageCommandCatalog
 import com.aigstudio.core.PageId
@@ -16,7 +17,7 @@ class PageRuntimeRouter(
     private val messageSink:(PageMessage)->Unit = {},
 ) {
     companion object {
-        val NAVIGATION:Map<String,PageId> = linkedMapOf(
+        val SHARED_NAVIGATION:Map<String,PageId> = linkedMapOf(
             "NAV_HOME" to PageId.HOME,
             "NAV_CAD" to PageId.CAD,
             "NAV_CAM" to PageId.CAM,
@@ -28,10 +29,12 @@ class PageRuntimeRouter(
             "NAV_NC" to PageId.NC,
             "NAV_AI" to PageId.AI,
         )
+        val PRODUCT_NAVIGATION:Map<String,PageId> = AigProductUiContract.navigationPageMap()
+        val NAVIGATION:Map<String,PageId> = PRODUCT_NAVIGATION
     }
 
     fun navigate(buttonId:String):PageId {
-        val target=NAVIGATION[buttonId] ?: error("Unknown production navigation Button ID: $buttonId")
+        val target=NAVIGATION[buttonId] ?: error("Button ID is not exposed by AIG product navigation: $buttonId")
         pageNavigator(target)
         return target
     }
