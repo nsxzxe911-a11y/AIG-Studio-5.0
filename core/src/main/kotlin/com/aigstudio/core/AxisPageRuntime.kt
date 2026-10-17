@@ -85,6 +85,7 @@ class AxisPageRuntime(
         put("ncFixtureCoverage",ncPreview?.risk?.fixtureCoverageWord ?: "UNKNOWN")
         put("ncPreflightReady",(ncPreview?.risk?.let(SimAcceptancePolicy::formalAcceptAllowed) ?: false).toString())
         put("ncHas3DResult",(ncPreview!=null).toString())
+        put("ncM98RepeatCompatible",FanucM98RepeatCompatibility.findings(ncProgram).isEmpty().toString())
     })
 
     fun ncFirstMachiningResult():Machining3DResult?=ncPreview?.result
@@ -178,9 +179,9 @@ class AxisPageRuntime(
             letters.forEach{m->if(m.groupValues[2].isBlank()) error("Axis ${m.groupValues[1]} missing numeric value at line ${index+1}")}
         }
         require(unsupported.isEmpty()){ "${pageId.id} NC-first forbids axis ${unsupported.joinToString(",")}" }
-        val cFindings=NcSixAxisCompatibility.cFindings(ncProgram)
-        require(cFindings.isEmpty()){cFindings.first().message}
-        val legacy=NcSixAxisCompatibility.legacyProgram(ncProgram)
+        val compatibility=StudioFanucProgramCompatibility.findings(ncProgram)
+        require(compatibility.isEmpty()){compatibility.first().message}
+        val legacy=StudioFanucProgramCompatibility.legacyProgram(ncProgram)
         val runtime=NcRuntimeInterlock.findings(legacy)
         require(runtime.isEmpty()){runtime.first().message}
         val profile=StudioFanucMachineProfile.rotaryProfile()
@@ -198,7 +199,8 @@ class AxisPageRuntime(
             "blocks" to ncBlocks.toString(),
             "axisWordCount" to ncAxisWords.toString(),
             "allowedAxes" to allowedAxes.joinToString(""),
-            "cAxis" to if(NcSixAxisCompatibility.hasC(ncProgram))"VALIDATED" else "NOT_USED"
+            "cAxis" to if(NcSixAxisCompatibility.hasC(ncProgram))"VALIDATED" else "NOT_USED",
+            "m98Repeat" to if(ncProgram.contains(Regex("""(?i)M\s*98[^\n]*\bL\s*\d""")))"VALIDATED" else "NOT_USED"
         ))
     }
 
