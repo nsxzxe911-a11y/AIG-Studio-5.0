@@ -1,0 +1,116 @@
+name: AIG Studio direct release validation
+
+on:
+  push:
+    branches:
+      - feature/dual-project-auto-finish-20261017
+    paths:
+      - .github/workflows/auto-finish-direct-release.yml
+      - app/**
+      - core/**
+      - desktop/**
+      - shared/**
+      - ci/**
+      - web/**
+      - build_android_release.sh
+      - build_windows_native.ps1
+      - release-version.properties
+  workflow_dispatch:
+
+concurrency:
+  group: studio-auto-finish-release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fast-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - name: Fast review
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/fast_review.py | tee fast-review.log
+          grep -Fq 'FAST_REVIEW_PASS|' fast-review.log
+
+  android-and-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          BUILD_TOOLS="$("$SDKMANAGER" --list | sed -nE 's/^[[:space:]]*(build-tools;[0-9]+(\.[0-9]+){2})[[:space:]]+.*/\1/p' | sort -V | tail -1)"
+          test -n "$BUILD_TOOLS"
+          "$SDKMANAGER" "platform-tools" "platforms;android-36" "$BUILD_TOOLS"
+      - name: Formal runtime and RGB authority gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/verify_production_runtime.py | tee production-runtime.log
+          grep -Fq 'PRODUCTION_RUNTIME_ONLY_GATE_PASS|' production-runtime.log
+          python3 ci/verify_runtime_surfaces.py | tee runtime-surfaces.log
+          grep -Fq 'ALL_SCREENS_RUNTIME_GATE_PASS' runtime-surfaces.log
+          python3 ci/test_formal_runtime_entry_gate.py
+          python3 ci/verify_formal_runtime_entry.py
+          python3 ci/test_formal_web_runtime.py
+          sha256sum -c design/theme/official_rgb/android-drawable.sha256
+          echo 'STUDIO_RGB_AUTHORITY_INTEGRITY=PASS'
+      - name: Build Android release
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ./build_android_release.sh | tee release-validation.log
+          find release -type f -name '*.apk' -size +0c -print | tee apk-files.txt
+          test -s apk-files.txt
+          grep -Fq 'CONTINUOUS_6AX_CAM_SIM_GATE_PASS' release-validation.log
+          grep -Fq 'UNIFIED_NC_SAFETY_CLOSURE_GATE_PASS' release-validation.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AIG-Studio-Auto-Finish-Android-Source
+          path: |
+            release/android/
+            release/source/
+          if-no-files-found: error
+
+  windows-exe:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
+      - name: Build Windows release
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          .\build_windows_native.ps1
+          $exe=Get-ChildItem -Recurse release -Filter *.exe | Where-Object {$_.Length -gt 0}
+          if(-not $exe){ throw 'STUDIO_WINDOWS_EXE_MISSING' }
+          $exe | ForEach-Object { Write-Host ("STUDIO_WINDOWS_EXE="+$_.FullName) }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AIG-Studio-Auto-Finish-Windows
+          path: release/windows/
+          if-no-files-found: error
