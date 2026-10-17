@@ -1,6 +1,7 @@
 (function(global){
 'use strict';
 
+const AIG_ALLOWED_AXES=Object.freeze(['3AX']);
 const ROUTE_COST={REUSE_VERIFIED_STAGE:8,NC_FIRST:30,MANUAL_CAM_FIRST:42,CAD_FIRST:60};
 function result(type,commandId,revision,evidence={},code='',detail=''){
   return {type,pageId:'AI',commandId,revision,evidence,code,detail};
@@ -49,7 +50,7 @@ function safe(kind,stages,reused){
 }
 function planFrom(args){
   const axis=String(args.targetAxis||'3AX').toUpperCase();
-  if(!['3AX','4AX','5AX','6AX'].includes(axis))throw new Error('Unsupported axis '+axis);
+  if(!AIG_ALLOWED_AXES.includes(axis))throw new Error('AIG product supports 3AX only; multi-axis belongs to AIG-II');
   const objective=String(args.objective||'FASTEST_SAFE').toUpperCase();
   const sim=evidence(args,'sim','SIM',axis),nc=evidence(args,'nc','NC',axis);
   const candidates=[];
@@ -103,6 +104,11 @@ class WebAiPageRuntime{
 
 function init(){
   document.querySelectorAll('[data-ai-page-runtime]').forEach(root=>{
+    const axisSelect=root.querySelector('[data-ai-axis]');
+    if(axisSelect){
+      Array.from(axisSelect.options||[]).forEach(option=>{if(!AIG_ALLOWED_AXES.includes(String(option.value).toUpperCase()))option.remove();});
+      axisSelect.value='3AX';
+    }
     const runtime=new WebAiPageRuntime();
     const out=root.querySelector('[data-ai-result]');
     const router=new global.AigPageRuntimeRouter({
@@ -128,6 +134,7 @@ function init(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 
+global.AIG_ALLOWED_AI_AXES=AIG_ALLOWED_AXES;
 global.WebAiPageRuntime=WebAiPageRuntime;
 global.aigWebMachiningPlan=planFrom;
 global.aigWebSafeSimReuse=safeSimReuse;
