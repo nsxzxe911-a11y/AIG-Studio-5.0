@@ -41,6 +41,7 @@ class NcPageRuntime(
         "lineCount" to lineCount().toString(),"blockSkip" to blockSkip.toString(),"singleBlock" to singleBlock.toString(),"dryRun" to dryRun.toString(),
         "parsed" to parsed.toString(),"previewed" to previewed.toString(),"verified" to verified.toString(),"prepared" to prepared.toString(),
         "machineConnected" to machineConnected.toString(),"machineEligible" to (verified && prepared).toString(),
+        "cAxisCompatible" to NcSixAxisCompatibility.cFindings(program).isEmpty().toString(),
         "customMCodes" to installedCustomMCodes.sorted().joinToString(","),"alarmCode" to (lastAlarm?.code ?: ""),"alarmLine" to (lastAlarm?.lineNumber?.toString() ?: ""),
         "upstreamSimVerified" to upstreamSimVerified.toString(),"lastSimBridgeRevision" to lastSimBridgeRevision.toString(),"lastSimBridgeDigest" to lastSimBridgeDigest
     ))
@@ -72,10 +73,12 @@ class NcPageRuntime(
             is RuntimeBridgeValidation.Rejected -> PageResult.Rejected(pageId,validation.code,revision,validation.detail)
             RuntimeBridgeValidation.Accepted -> {
                 val verifiedFlag=payload.body["verified"]?.toBooleanStrictOrNull()==true
+                val preflightReady=payload.body["preflightReady"]?.toBooleanStrictOrNull()==true
                 val collisions=payload.body["collisionCount"]?.toIntOrNull() ?: Int.MAX_VALUE
                 val overcuts=payload.body["overcutCount"]?.toIntOrNull() ?: Int.MAX_VALUE
-                if(!verifiedFlag || collisions!=0 || overcuts!=0)
-                    PageResult.Rejected(pageId,"SIM_NC_EVIDENCE_BLOCKED",revision,"SIM evidence is not safe for NC")
+                val coverage=payload.body["fixtureCoverage"].orEmpty()
+                if(!verifiedFlag || !preflightReady || collisions!=0 || overcuts!=0 || coverage!="MODELED")
+                    PageResult.Rejected(pageId,"SIM_NC_EVIDENCE_BLOCKED",revision,"SIM evidence is not formally safe for NC")
                 else {
                     lastSimBridgeRevision=payload.revision
                     lastSimBridgeDigest=payload.digest
@@ -83,6 +86,7 @@ class NcPageRuntime(
                     revision++
                     PageResult.Accepted(pageId,"SIM_NC_IMPORT",revision,mapOf(
                         "upstreamSimVerified" to "true","sourceSimRevision" to payload.revision.toString(),
+                        "fixtureCoverage" to coverage,
                         "removedVolumeMm3" to payload.body["removedVolumeMm3"].orEmpty()
                     ))
                 }
@@ -103,12 +107,52 @@ class NcPageRuntime(
     private fun delete(command:PageCommand):PageResult { val line=command.arguments["line"]?.toIntOrNull() ?: error("NC DELETE requires line");val lines=program.split("\n").toMutableList();require(line in 1..lines.size){"NC DELETE line out of range"};lines.removeAt(line-1);program=lines.joinToString("\n");invalidateVerification();revision++;return accepted(command,mapOf("lineCount" to lineCount().toString())) }
     private fun setBlockSkip(command:PageCommand):PageResult { blockSkip=boolean(command,"enabled");revision++;return accepted(command,mapOf("blockSkip" to blockSkip.toString())) }
     private fun addCustomMCode(command:PageCommand):PageResult { val code=(command.arguments["code"] ?: error("Custom M-code requires code")).trim().uppercase();require(Regex("""M\d{1,3}""").matches(code));installedCustomMCodes+=code;invalidateVerification();revision++;return accepted(command,mapOf("customMCode" to code,"customMCodeCount" to installedCustomMCodes.size.toString())) }
-    private fun parse(command:PageCommand):PageResult { require(program.isNotBlank());val runtime=NcRuntimeInterlock.findings(program,machineLimits);val alarm=NcEditorAlarmRouter.firstAlarm(program,controller,machineLimits,profile());if(runtime.isNotEmpty()||alarm!=null){lastAlarm=alarm?:runtime.first().let{NcEditorAlarm(it.lineNumber,lineAt(it.lineNumber),it.code,it.message,"依 LINE HELP 修正後重新驗證")};error(lastAlarm!!.compact())};parsed=true;previewed=false;verified=false;prepared=false;lastAlarm=null;revision++;return accepted(command,mapOf("parserStatus" to "PASS","lineCount" to lineCount().toString(),"customMCodes" to installedCustomMCodes.sorted().joinToString(","))) }
-    private fun preview(command:PageCommand):PageResult { require(parsed);val timeline=NcExecutionTimeline.build(program,controller,machineLimits,profile());val blocked=timeline.firstOrNull{it.status=="BLOCKED"};require(blocked==null){"NC preview blocked at L${blocked?.lineNumber}"};previewed=true;verified=false;prepared=false;revision++;return accepted(command,mapOf("eventCount" to timeline.size.toString(),"readyEventCount" to timeline.count{it.status=="READY"}.toString(),"summary" to NcExecutionTimeline.programSummary(program,controller,machineLimits,profile()))) }
-    private fun verify(command:PageCommand):PageResult { require(parsed);val interlock=machineInterlock.inspect(program);val timeline=NcExecutionTimeline.build(program,controller,machineLimits,profile());val blocked=timeline.firstOrNull{it.status=="BLOCKED"};require(interlock.canExecute&&blocked==null){"NC VERIFY blocked: ${blocked?.reasons?.joinToString(",") ?: interlock.message}"};verified=true;prepared=false;lastAlarm=null;revision++;return accepted(command,mapOf("verified" to "true","machineInterlock" to interlock.state.name,"eventCount" to timeline.size.toString(),"upstreamSimVerified" to upstreamSimVerified.toString())) }
+
+    private fun legacyProgram():String=NcSixAxisCompatibility.legacyProgram(program)
+    private fun cFindings():List<NcRuntimeInterlockFinding>=NcSixAxisCompatibility.cFindings(program)
+    private fun compatibilityAlarm():NcEditorAlarm?=cFindings().firstOrNull()?.let{
+        NcEditorAlarm(it.lineNumber,lineAt(it.lineNumber),it.code,it.message,"修正 C 軸數值至 ±360° 且每 Block 僅一個 C 值後重新驗證")
+    }
+
+    private fun parse(command:PageCommand):PageResult {
+        require(program.isNotBlank())
+        val legacy=legacyProgram()
+        val runtime=cFindings()+NcRuntimeInterlock.findings(legacy,machineLimits)
+        val alarm=compatibilityAlarm() ?: NcEditorAlarmRouter.firstAlarm(legacy,controller,machineLimits,profile())
+        if(runtime.isNotEmpty()||alarm!=null){lastAlarm=alarm?:runtime.first().let{NcEditorAlarm(it.lineNumber,lineAt(it.lineNumber),it.code,it.message,"依 LINE HELP 修正後重新驗證")};error(lastAlarm!!.compact())}
+        parsed=true;previewed=false;verified=false;prepared=false;lastAlarm=null;revision++
+        return accepted(command,mapOf("parserStatus" to "PASS","lineCount" to lineCount().toString(),"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","customMCodes" to installedCustomMCodes.sorted().joinToString(",")))
+    }
+    private fun preview(command:PageCommand):PageResult {
+        require(parsed)
+        require(cFindings().isEmpty()){"C-axis compatibility validation failed"}
+        val legacy=legacyProgram()
+        val timeline=NcExecutionTimeline.build(legacy,controller,machineLimits,profile())
+        val blocked=timeline.firstOrNull{it.status=="BLOCKED"}
+        require(blocked==null){"NC preview blocked at L${blocked?.lineNumber}"}
+        previewed=true;verified=false;prepared=false;revision++
+        return accepted(command,mapOf("eventCount" to timeline.size.toString(),"readyEventCount" to timeline.count{it.status=="READY"}.toString(),"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","summary" to NcExecutionTimeline.programSummary(legacy,controller,machineLimits,profile())))
+    }
+    private fun verify(command:PageCommand):PageResult {
+        require(parsed)
+        val c=cFindings();require(c.isEmpty()){c.first().message}
+        val legacy=legacyProgram()
+        val interlock=machineInterlock.inspect(legacy)
+        val timeline=NcExecutionTimeline.build(legacy,controller,machineLimits,profile())
+        val blocked=timeline.firstOrNull{it.status=="BLOCKED"}
+        require(interlock.canExecute&&blocked==null){"NC VERIFY blocked: ${blocked?.reasons?.joinToString(",") ?: interlock.message}"}
+        verified=true;prepared=false;lastAlarm=null;revision++
+        return accepted(command,mapOf("verified" to "true","machineInterlock" to interlock.state.name,"eventCount" to timeline.size.toString(),"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","upstreamSimVerified" to upstreamSimVerified.toString()))
+    }
     private fun setSingleBlock(command:PageCommand):PageResult { singleBlock=boolean(command,"enabled");revision++;return accepted(command,mapOf("singleBlock" to singleBlock.toString())) }
     private fun setDryRun(command:PageCommand):PageResult { dryRun=boolean(command,"enabled");revision++;return accepted(command,mapOf("dryRun" to dryRun.toString())) }
-    private fun prepareOutput(command:PageCommand):PageResult { require(verified){"NC output requires successful VERIFY"};require(NcExecutionTimeline.build(program,controller,machineLimits,profile()).none{it.status=="BLOCKED"});prepared=true;revision++;return accepted(command,mapOf("machineEligible" to "true","dryRun" to dryRun.toString(),"singleBlock" to singleBlock.toString(),"blockSkip" to blockSkip.toString(),"upstreamSimVerified" to upstreamSimVerified.toString())) }
+    private fun prepareOutput(command:PageCommand):PageResult {
+        require(verified){"NC output requires successful VERIFY"}
+        require(cFindings().isEmpty()){ "C-axis compatibility validation failed" }
+        require(NcExecutionTimeline.build(legacyProgram(),controller,machineLimits,profile()).none{it.status=="BLOCKED"})
+        prepared=true;revision++
+        return accepted(command,mapOf("machineEligible" to "true","dryRun" to dryRun.toString(),"singleBlock" to singleBlock.toString(),"blockSkip" to blockSkip.toString(),"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","upstreamSimVerified" to upstreamSimVerified.toString()))
+    }
     private fun sendMachine(command:PageCommand):PageResult { require(verified&&prepared);require(machineConnected){"NC_MACHINE is disconnected"};revision++;return accepted(command,mapOf("machineEligible" to "true","dispatch" to "AUTHORIZED_OUTPUT_READY","programLines" to lineCount().toString())) }
     private fun profile():RotaryAxisClampProfile = RotaryAxisClampProfile.configured(installedOptionalCodes=installedCustomMCodes)
     private fun invalidateVerification(){ parsed=false;previewed=false;verified=false;prepared=false;lastAlarm=null }
