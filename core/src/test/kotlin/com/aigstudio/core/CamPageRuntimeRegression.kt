@@ -37,6 +37,27 @@ fun main(){
     val firstCut=cam.toolpaths().flatMap{it.moves}.first{!it.rapid}
     check(firstCut.axisA==15.0 && firstCut.axisB==25.0 && firstCut.axisC==35.0)
 
+    val beforeBadPostSnapshot=cam.snapshot()
+    val beforeBadPostPaths=cam.toolpaths()
+    val beforeBadPostSettings=cam.camSettings()
+    val badPost=cam.dispatch(camCmd("CAM.POST_PREVIEW","CAM.POST_PREVIEW.GENERATE","programEnd" to "M2"))
+    check(badPost is PageResult.Rejected)
+    check(cam.snapshot()==beforeBadPostSnapshot)
+    check(cam.toolpaths()==beforeBadPostPaths)
+    check(cam.camSettings()==beforeBadPostSettings)
+
+    val noHoleCad=DrawingSnapshot(listOf(Line(id="EDGE",a=Vec2(0.0,0.0),b=Vec2(20.0,0.0))))
+    val noHole=CamPageRuntime(cadSnapshot=noHoleCad,cadRevision=8L)
+    val beforeBadDrillSnapshot=noHole.snapshot()
+    val beforeBadDrillPaths=noHole.toolpaths()
+    val beforeBadDrillSettings=noHole.camSettings()
+    val badDrill=noHole.dispatch(camCmd("CAM.AUTO","CAM.AUTO.DRILL"))
+    check(badDrill is PageResult.Rejected)
+    check(noHole.snapshot()==beforeBadDrillSnapshot)
+    check(noHole.toolpaths()==beforeBadDrillPaths)
+    check(noHole.camSettings()==beforeBadDrillSettings)
+    check(noHole.messages().last().pageId==PageId.CAM)
+
     check(cam.dispatch(camCmd("CAM.MANUAL","CAM.MANUAL.SET_SAFE_Z","z" to "8")) is PageResult.Accepted)
     check(cam.snapshot().state["safeZ"]=="8.0")
     check(cam.dispatch(camCmd("CAM.MANUAL","CAM.MANUAL.SET_MOTION_G0","index" to "1")) is PageResult.Accepted)
@@ -72,5 +93,5 @@ fun main(){
     check(cam.snapshot().state["mode"]=="MANUAL")
     check(cam.manualPoints().last().let{it.axisA==45.0 && it.axisB==55.0 && it.axisC==65.0})
 
-    println("CAM_PAGE_RUNTIME_PASS|MANUAL_FIRST|G0_G1|SAFE_Z|ABC_PRESERVED|COMP|TOOL_REGION|AUTO_REAL_TOOLPATH|DRILL_REAL_TOOLPATH|FANUC_POST_NC|P4_P5|POST_REVISION|LOCAL_RUNTIME")
+    println("CAM_PAGE_RUNTIME_PASS|MANUAL_FIRST|G0_G1|SAFE_Z|ABC_PRESERVED|COMP|TOOL_REGION|AUTO_REAL_TOOLPATH|DRILL_REAL_TOOLPATH|FANUC_POST_NC|P4_P5|POST_REVISION|REJECT_ATOMIC|LOCAL_RUNTIME")
 }
