@@ -20,6 +20,9 @@ Trusted release evidence baseline: Builder #588 / Studio SHA `3bdeed6cb4a504a65b
 
 - `ALREADY_IN_RUNTIME`: current formal runtime already uses the capability.
 - `FOUND_PENDING_INTEGRATION`: mature implementation exists but is not fully wired into the current formal runtime.
+- `CORE_PRESENT_RUNTIME_PENDING`: current core/registry exists, but formal runtime enforcement or entry wiring is still missing.
+- `PLATFORM_GAP`: one platform has verified runtime wiring while another platform lacks equivalent formal entry wiring.
+- `SAFETY_GAP`: existing logic can reach a formal accept/pass path without satisfying the stronger safety condition already represented by the core.
 - `GATE_ONLY`: belongs in CI/release verification, not the runtime application.
 - `SUPERSEDED`: historical implementation has been replaced by a better current implementation; do not restore it.
 - `DOC_ONLY`: design/spec only; not implementation evidence.
@@ -38,6 +41,19 @@ Trusted release evidence baseline: Builder #588 / Studio SHA `3bdeed6cb4a504a65b
 | Web PageRuntimeRouter | FOUND_PENDING_INTEGRATION | `web/runtime/page-runtime-router.js` | Load and use from formal web runtime | Ten-page inventory includes AI |
 | Typed CONNECT bridge | FOUND_PENDING_INTEGRATION | `RuntimeBridgeContract.kt`, `RuntimeBridgeCodecs.kt`, `RuntimeLinks.kt` | CAD→CAM→SIM→NC→MACHINE | CONNECT transports data only; disconnected pages stay usable |
 | Machining AI Orchestrator | FOUND_PENDING_INTEGRATION | `MachiningOrchestrator.kt`, `AiPageRuntime.kt` | Formal AI page | AI cannot mutate domain truth or bypass SIM/NC safety |
+
+## P0 — CNC safety / platform parity / dependency enforcement audit (2026-10-17 round)
+
+| Foundation | Status | Evidence / source | Integration target | Do-not-regress |
+|---|---|---|---|---|
+| Android adaptive refresh / thermal telemetry | ALREADY_IN_RUNTIME | `AdaptiveRefreshController.kt`, `CpuGpuTemperatureProbe.kt`, `MainActivity.kt`; governor starts after formal HOME first frame, touch restores interactive FPS, lifecycle stops it, HUD reports CPU/GPU/frame-time/RAM/AUTO CAP | Keep current Android formal runtime | Do not duplicate with another governor |
+| Windows thermal/telemetry parity | PLATFORM_GAP | Recovery branch `DesktopApp.kt` has no equivalent `EnvironmentSettings`/temperature/adaptive-refresh runtime wiring found | Windows `DesktopApp` formal runtime | Match policy semantics without forcing Android-only probe APIs onto Windows |
+| Android secure update runtime | ALREADY_IN_RUNTIME | `SecureServices.kt` + `MainActivity` `SecureUpdateManager.autoCheck()`; HTTPS/digest/signature/package/signer/version/circuit-breaker checks | Keep current Android updater | Fail fast/offline; only upgrade; never replace stable runtime on failed verification |
+| Windows secure update parity | PLATFORM_GAP | Shared update policy exists, but no equivalent secure updater call/path found in recovery-branch `DesktopApp.kt` | Windows `DesktopApp` secure update/repair entry | Same verification contract as Android before promote/install |
+| Package dependency registry | CORE_PRESENT_RUNTIME_PENDING | Current `core/PackageBundle.kt` / `StudioPackageRegistry`; no formal `MainActivity` use found | Hot-Repair coordinator dependency closure | A page/package repair must include required dependent packages; never promote an incomplete set |
+| `.aigp` Project V3 package format | ALREADY_IN_RUNTIME | Current `ProjectRepository.kt`: V3 persists MANUALTP A/B/C, TOOLASSEMBLY, FIXTURE, NC, revision/digest and keeps V1/V2 read compatibility | Keep current repository | Do not restore older project format over V3 |
+| Tool/fixture collision and risk computation | ALREADY_IN_RUNTIME | `SimPageRuntime.kt` feeds fixture plus holder/stickout into `Machining3DEngine` / `MachiningRiskScanner` | Keep current SIM safety core | Tool/fixture data must remain machining truth, not display-only metadata |
+| SIM formal ACCEPT fixture coverage gate | SAFETY_GAP | `MachiningRiskReport.preflightReady = ok && fixtureCoverageKnown`, but current `SIM.RESULT.ACCEPT` checks `report.ok`; `fixtureCoverageKnown=false` when no enabled non-machine-envelope fixture is modeled | `SimPageRuntime` ACCEPT/export/downstream bridge | High priority: unmodeled fixture/clamp coverage must not silently become formal machining acceptance; block only the unsafe action/page flow, not unrelated pages |
 
 ## P0 — Runtime hot repair / no-full-redownload repair path
 
@@ -119,6 +135,10 @@ Trusted release evidence baseline: Builder #588 / Studio SHA `3bdeed6cb4a504a65b
 
 ## Existing foundations that are already absorbed — do not duplicate
 
+- Android `AdaptiveRefreshController` + `CpuGpuTemperatureProbe` + formal HUD wiring are already live; do not rebuild thermal telemetry on Android.
+- Android `SecureUpdateManager.autoCheck()` and `SecureServices` are already in the formal entry path; recover parity on Windows rather than replacing Android.
+- Current Project V3 format already owns MANUALTP A/B/C, TOOLASSEMBLY, FIXTURE, NC, revision/digest and V1/V2 compatibility.
+- Tool/fixture data already reaches SIM collision/risk computation; the pending issue is the formal ACCEPT condition, not the collision engine itself.
 - `StudioProjectRepository`: already used by current Android/Windows runtime.
 - Current `ProjectSync`: supersedes old revision/digest/conflict-only implementation.
 - `EnvironmentSettings`: supersedes old 436 RuntimeSettings.
@@ -129,19 +149,21 @@ Trusted release evidence baseline: Builder #588 / Studio SHA `3bdeed6cb4a504a65b
 
 ## Pending execution order
 
-1. Complete Task 9: Android/Windows/Web formal entry uses PageRuntimeRouter.
-2. Replace all legacy direct/Toast callbacks with 122 typed Page/Button routes.
-3. Make PageMessage/Error the only page-local UI message path.
-4. Wire typed CAD→CAM→SIM→NC→MACHINE bridges into formal UI.
-5. Wire AI Machining Orchestrator into formal AI page without domain mutation authority.
-6. Recover full Axis cockpit controls + 6AX tool-direction/HUD/tool-axis camera + Web axis auto-bind.
-7. Integrate Runtime Hot Repair: Page/Button/Message/Asset diagnostics → changed package → verified working copy → atomic promote → page refresh.
-8. Recover CAD PHOTO ingest/EXIF/recognizer + DXF codec + AutoSave/CrashRecovery orchestration.
-9. Add custom M-code label/use metadata registry without weakening current safety validation.
-10. Apply AiLayoutComposer plans to Android/Windows/Web responsive layout/hot repair.
-11. Close core/runtime Gate before login work.
-12. Integrate Google Identity + local auth + offline entry; separately implement real Google Drive transport.
-13. Run AIG-II dual-project exact-SHA Gate, Android APK, Windows EXE and formal Runtime evidence.
+1. **CNC safety first:** make SIM formal ACCEPT/export/downstream pass require modeled fixture coverage (`preflightReady` or an equally strict explicit policy), while isolating BLOCK to the unsafe action/page flow.
+2. Complete Task 9: Android/Windows/Web formal entry uses PageRuntimeRouter.
+3. Replace all legacy direct/Toast callbacks with 122 typed Page/Button routes.
+4. Make PageMessage/Error the only page-local UI message path.
+5. Wire typed CAD→CAM→SIM→NC→MACHINE bridges into formal UI.
+6. Wire AI Machining Orchestrator into formal AI page without domain mutation authority.
+7. Recover full Axis cockpit controls + 6AX tool-direction/HUD/tool-axis camera + Web axis auto-bind.
+8. Integrate Runtime Hot Repair: Page/Button/Message/Asset diagnostics → changed package → dependency closure from `StudioPackageRegistry` → verified working copy → atomic promote → page refresh.
+9. Add Windows parity for thermal/telemetry and secure update/repair policy without duplicating Android-only APIs.
+10. Recover CAD PHOTO ingest/EXIF/recognizer + DXF codec + AutoSave/CrashRecovery orchestration.
+11. Add custom M-code label/use metadata registry without weakening current safety validation.
+12. Apply AiLayoutComposer plans to Android/Windows/Web responsive layout/hot repair.
+13. Close core/runtime Gate before login work.
+14. Integrate Google Identity + local auth + offline entry; separately implement real Google Drive transport.
+15. Run AIG-II dual-project exact-SHA Gate, Android APK, Windows EXE and formal Runtime evidence.
 
 ## Release boundary
 
