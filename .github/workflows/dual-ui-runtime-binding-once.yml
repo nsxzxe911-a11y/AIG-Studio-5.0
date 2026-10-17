@@ -37,7 +37,7 @@ jobs:
           python3 ci/verify_page_department_manifests.py
           (cd ci && python3 test_page_button_id_hierarchy.py)
           (cd ci && python3 test_dual_ui_id_contract.py)
-      - name: Verify Router dual-ID symbols
+      - name: Verify Router and actual control dual-ID symbols
         shell: bash
         run: |
           set -euo pipefail
@@ -47,6 +47,17 @@ jobs:
           grep -q 'fun navigateView' desktop/src/main/kotlin/com/aigstudio/desktop/PageRuntimeRouter.kt
           grep -q 'dispatchView(viewId' web/runtime/page-runtime-router.js
           grep -q 'navigateView(viewId' web/runtime/page-runtime-router.js
+          grep -q 'tag=viewId' app/src/main/java/com/aigstudio/app/MainActivity.kt
+          grep -q 'navigateView(viewId)' app/src/main/java/com/aigstudio/app/MainActivity.kt
+          grep -q 'name=viewId' desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt
+          grep -q 'putClientProperty("aig.buttonId",navId)' desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt
+          grep -q 'navigateView(viewId)' desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt
+          grep -q 'b.dataset.buttonId=navButtonId' web/index.html
+          grep -q 'b.dataset.viewId=navViewId' web/index.html
+          grep -q 'productionPageRouter.navigateView(navViewId)' web/index.html
+          grep -q 'btn.dataset.buttonId=buttonId' web/runtime/ai-page-runtime.js
+          grep -q 'btn.dataset.viewId=viewId' web/runtime/ai-page-runtime.js
+          grep -q 'router.dispatchView(viewId,args())' web/runtime/ai-page-runtime.js
           ! grep -q 'CAD • LIVE WORKSPACE' core/src/main/kotlin/com/aigstudio/core/UiButtonManifestContract.kt
       - name: Compile and run PageRuntime regressions
         shell: bash
@@ -57,12 +68,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- app/src/main/java/com/aigstudio/app/MainActivity.kt desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt; then
+          if git diff --quiet -- app/src/main/java/com/aigstudio/app/MainActivity.kt desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt web/index.html web/runtime/ai-page-runtime.js; then
             echo 'DUAL_UI_RUNTIME_BINDINGS_ALREADY_APPLIED'
             exit 0
           fi
           git config user.name 'AIG Verified Builder'
           git config user.email 'actions@users.noreply.github.com'
-          git add app/src/main/java/com/aigstudio/app/MainActivity.kt desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt
-          git commit -m 'ui: bind production navigation views to dual IDs'
+          git add app/src/main/java/com/aigstudio/app/MainActivity.kt \
+                  desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt \
+                  web/index.html \
+                  web/runtime/ai-page-runtime.js
+          git commit -m 'ui: bind production controls to stable dual IDs'
           git push origin HEAD:architecture/page-autonomy-ai-orchestrator-after-588
