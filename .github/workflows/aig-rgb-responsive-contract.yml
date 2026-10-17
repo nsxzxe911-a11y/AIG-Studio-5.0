@@ -1,0 +1,22 @@
+name: AIG RGB Responsive Contract
+
+on:
+  push:
+    branches:
+      - feature/dual-project-auto-finish-20261017
+    paths:
+      - 'web/runtime/**'
+      - 'ci/test_rgb_responsive_page_contract.py'
+      - '.github/workflows/aig-rgb-responsive-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify responsive RGB page contract
+        run: python ci/test_rgb_responsive_page_contract.py
