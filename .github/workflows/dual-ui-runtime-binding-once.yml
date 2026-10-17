@@ -27,6 +27,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.0'
       - name: Apply narrow production View-ID bindings
         run: python3 ci/apply_dual_ui_runtime_bindings.py
       - name: Verify dual ID manifests
@@ -49,8 +52,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          chmod +x ./gradlew
-          ./gradlew :core:pageAutonomyRegression :app:assembleDebug :desktop:compileKotlin --no-daemon
+          gradle :core:testClasses :core:pageAutonomyRegression :app:assembleDebug :desktop:compileKotlin --stacktrace
       - name: Commit verified production View-ID bindings
         shell: bash
         run: |
