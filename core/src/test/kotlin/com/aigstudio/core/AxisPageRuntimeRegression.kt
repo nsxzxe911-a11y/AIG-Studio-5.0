@@ -43,6 +43,7 @@ fun main(){
     val parsed=ax6.dispatch(axisCmd(PageId.AX6,"6AX.NC_FIRST","6AX.NC_FIRST.PARSE")) as PageResult.Accepted
     check(parsed.evidence["axisPrecheck"]=="PASS")
     check(parsed.evidence["fanucParser"]=="PASS")
+    check(parsed.evidence["g34Profile"]=="XY_J0_I_DIAMETER_K_COUNT")
     check(parsed.evidence["cAxis"]=="VALIDATED")
     check(parsed.evidence.getValue("blocks")=="2")
     val preview=ax6.dispatch(axisCmd(PageId.AX6,"6AX.NC_FIRST","6AX.NC_FIRST.PREVIEW","toolDiameter" to "6")) as PageResult.Accepted
@@ -63,11 +64,24 @@ fun main(){
     check(modeledPreview.evidence["fixtureCoverage"]=="MODELED")
     check(modeledPreview.evidence["preflightReady"]=="true")
 
+    val drillAx=AxisPageRuntime(PageId.AX3)
+    val drillProgram="G90 G54\nG0 X0 Y0 Z30\nG34 J0 I30 K6 G83 R3 Z-20 Q2 F150\nG80"
+    check(drillAx.dispatch(axisCmd(PageId.AX3,"3AX.NC_FIRST","3AX.NC_FIRST.OPEN","gcode" to drillProgram)) is PageResult.Accepted)
+    val drillParsed=drillAx.dispatch(axisCmd(PageId.AX3,"3AX.NC_FIRST","3AX.NC_FIRST.PARSE")) as PageResult.Accepted
+    check(drillParsed.evidence["g34Profile"]=="XY_J0_I_DIAMETER_K_COUNT")
+    val drillPreview=drillAx.dispatch(axisCmd(PageId.AX3,"3AX.NC_FIRST","3AX.NC_FIRST.PREVIEW","toolDiameter" to "6")) as PageResult.Accepted
+    check(drillPreview.evidence["g34HoleCount"]=="6")
+    check(drillPreview.evidence["cannedCycleHoleCount"]=="6")
+    check(drillPreview.evidence.getValue("cycleModels").contains("G83_FULL_R_RETRACT"))
+    check(drillPreview.evidence.getValue("removedCells").toInt()>0)
+    check(drillPreview.evidence.getValue("removedVolumeMm3").toDouble()>0.0)
+    check(drillAx.snapshot().state["ncG34HoleCount"]=="6")
+
     val forbidden="G90 G0 X0 Y0 Z5\nG1 X1 Z-1 C45 F100"
     ax5.dispatch(axisCmd(PageId.AX5,"5AX.NC_FIRST","5AX.NC_FIRST.OPEN","gcode" to forbidden))
     val rejected=ax5.dispatch(axisCmd(PageId.AX5,"5AX.NC_FIRST","5AX.NC_FIRST.PARSE"))
     check(rejected is PageResult.Rejected)
     check(ax5.messages().last().pageId==PageId.AX5)
 
-    println("AXIS_PAGE_RUNTIME_PASS|3AX_XYZ|4AX_A|5AX_AB|6AX_ABC|STATE_PERSISTENCE|VIEW_PRESET|NC_FIRST_FANUC_PARSE|NC_FIRST_TRUE_3D|NC_FIRST_MATERIAL_REMOVAL|NC_FIRST_PREFLIGHT|LOCAL_REJECT")
+    println("AXIS_PAGE_RUNTIME_PASS|3AX_XYZ|4AX_A|5AX_AB|6AX_ABC|STATE_PERSISTENCE|VIEW_PRESET|NC_FIRST_FANUC_PARSE|NC_FIRST_G34_G83|NC_FIRST_TRUE_3D|NC_FIRST_MATERIAL_REMOVAL|NC_FIRST_PREFLIGHT|LOCAL_REJECT")
 }
