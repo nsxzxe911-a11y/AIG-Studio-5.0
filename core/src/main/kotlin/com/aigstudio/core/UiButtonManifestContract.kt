@@ -21,6 +21,7 @@ data class UiButtonBounds(
 )
 
 data class UiButtonManifestEntry(
+    val viewId: String,
     val buttonId: String,
     val surfaceId: String,
     val assetId: String,
@@ -30,96 +31,62 @@ data class UiButtonManifestEntry(
 )
 
 object UiButtonManifestContract {
-    const val SCHEMA="aig-ui-button-manifest-v1"
-    const val AUTHORITY_POLICY="AUTHORITY_RGB_TO_BUTTON_ID_TO_MANIFEST_TO_SHARED_COMMAND_TO_RUNTIME_CORE"
+    const val SCHEMA="aig-ui-button-manifest-v2-dual-id"
+    const val AUTHORITY_POLICY="AUTHORITY_RGB_TO_VIEW_ID_TO_BUTTON_ID_TO_SHARED_COMMAND_TO_RUNTIME_CORE"
     const val UNVERIFIED_BOUNDS_ALLOWED=true
 
+    private fun nav(
+        page:String,
+        assetId:String,
+        command:SharedUiCommand,
+    )=UiButtonManifestEntry(
+        viewId="VIEW.NAV.$page",
+        buttonId="NAV_$page",
+        surfaceId=page,
+        assetId=assetId,
+        command=command,
+        verifiedCallback="PageRuntimeRouter.navigate(NAV_$page)",
+    )
+
     val PRODUCTION_NAVIGATION = listOf(
-        UiButtonManifestEntry(
-            buttonId = "NAV_HOME",
-            surfaceId = "HOME",
-            assetId = "rgb_wallpaper",
-            command = SharedUiCommand.OPEN_HOME,
-            verifiedCallback = "showRuntimeHome?.invoke()",
-        ),
-        UiButtonManifestEntry(
-            buttonId = "NAV_CAD",
-            surfaceId = "CAD",
-            assetId = "cad",
-            command = SharedUiCommand.OPEN_CAD,
-            verifiedCallback = """Toast.makeText(this,"CAD • LIVE WORKSPACE",Toast.LENGTH_SHORT).show()""",
-        ),
-        UiButtonManifestEntry(
-            buttonId = "NAV_CAM",
-            surfaceId = "CAM",
-            assetId = "cam",
-            command = SharedUiCommand.OPEN_CAM,
-            verifiedCallback = "showCamWorkstation()",
-        ),
-        UiButtonManifestEntry(
-            buttonId = "NAV_SIM",
-            surfaceId = "SIM",
-            assetId = "sim",
-            command = SharedUiCommand.OPEN_SIM,
-            verifiedCallback = """showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("SIM"))""",
-        ),
-        UiButtonManifestEntry(
-            buttonId = "NAV_3AX",
-            surfaceId = "3AX",
-            assetId = "3ax",
-            command = SharedUiCommand.OPEN_3AX,
-            verifiedCallback = """showUnifiedMachiningWorkspace("3AX")""",
-        ),
-        UiButtonManifestEntry(
-            buttonId = "NAV_4AX",
-            surfaceId = "4AX",
-            assetId = "4ax",
-            command = SharedUiCommand.OPEN_4AX,
-            verifiedCallback = """showUnifiedMachiningWorkspace("4AX")""",
-        ),
-        UiButtonManifestEntry(
-            buttonId = "NAV_5AX",
-            surfaceId = "5AX",
-            assetId = "5ax",
-            command = SharedUiCommand.OPEN_5AX,
-            verifiedCallback = """showUnifiedMachiningWorkspace("5AX")""",
-        ),
-        UiButtonManifestEntry(
-            buttonId = "NAV_6AX",
-            surfaceId = "6AX",
-            assetId = "6ax",
-            command = SharedUiCommand.OPEN_6AX,
-            verifiedCallback = "showSixAxisRuntimeStage()",
-        ),
-        UiButtonManifestEntry(
-            buttonId = "NAV_NC",
-            surfaceId = "NC",
-            assetId = "nc",
-            command = SharedUiCommand.OPEN_NC,
-            verifiedCallback = """showUnifiedMachiningWorkspace(ProductionUiSwitchContract.runtimeTarget("NC"))""",
-        ),
-        UiButtonManifestEntry(
-            buttonId = "NAV_AI",
-            surfaceId = "AI",
-            assetId = "ai",
-            command = SharedUiCommand.OPEN_AI,
-            verifiedCallback = "showAiSystemSuiteDialog()",
-        ),
+        nav("HOME","rgb_wallpaper",SharedUiCommand.OPEN_HOME),
+        nav("CAD","cad",SharedUiCommand.OPEN_CAD),
+        nav("CAM","cam",SharedUiCommand.OPEN_CAM),
+        nav("SIM","sim",SharedUiCommand.OPEN_SIM),
+        nav("3AX","3ax",SharedUiCommand.OPEN_3AX),
+        nav("4AX","4ax",SharedUiCommand.OPEN_4AX),
+        nav("5AX","5ax",SharedUiCommand.OPEN_5AX),
+        nav("6AX","6ax",SharedUiCommand.OPEN_6AX),
+        nav("NC","nc",SharedUiCommand.OPEN_NC),
+        nav("AI","ai",SharedUiCommand.OPEN_AI),
     )
 
     init {
         require(PRODUCTION_NAVIGATION.map { it.buttonId }.distinct().size == PRODUCTION_NAVIGATION.size) {
             "Duplicate Button ID in production navigation manifest."
         }
+        require(PRODUCTION_NAVIGATION.map { it.viewId }.distinct().size == PRODUCTION_NAVIGATION.size) {
+            "Duplicate View ID in production navigation manifest."
+        }
+        require(PRODUCTION_NAVIGATION.all { it.viewId == UiDualIdContract.navigationViewId(it.buttonId) }) {
+            "Production navigation View ID must map one-to-one to Button ID."
+        }
         require(PRODUCTION_NAVIGATION.all { it.bounds == null }) {
             "Authority RGB bounds must stay null until pixel verification."
         }
-        require(PRODUCTION_NAVIGATION.all { it.verifiedCallback.isNotBlank() }) {
-            "Every Button ID must reference a verified live callback."
+        require(PRODUCTION_NAVIGATION.all { it.verifiedCallback.startsWith("PageRuntimeRouter.navigate(") }) {
+            "Every navigation ID must route through PageRuntimeRouter."
+        }
+        require(PRODUCTION_NAVIGATION.none { "toast" in it.verifiedCallback.lowercase() }) {
+            "Toast-only production navigation callbacks are forbidden."
         }
     }
 
     fun byButtonId(buttonId: String): UiButtonManifestEntry =
         PRODUCTION_NAVIGATION.firstOrNull { it.buttonId == buttonId }
             ?: error("Unknown Button ID: $buttonId")
+
+    fun byViewId(viewId: String): UiButtonManifestEntry =
+        PRODUCTION_NAVIGATION.firstOrNull { it.viewId == viewId }
+            ?: error("Unknown View ID: $viewId")
 }
