@@ -23,11 +23,22 @@ fun main(){
         paths,safeZ=5.0,programNumber=9,toolNumber=9,hNumber=1,spindleRpm=2300,
         toolChangeSubprogram=4,endSubprogram=5,programEnd="M30"
     )
+    check(subprogramNc.lineSequence().any{it=="T9"})
+    check(subprogramNc.lineSequence().none{it=="T9 M6"})
     check(subprogramNc.contains("M98 P4"))
     check(subprogramNc.contains("M98 P5"))
     check(subprogramNc.lineSequence().any{it=="M30"})
+
+    val explicitBoth=FanucPostRuntime.generate(
+        paths,safeZ=5.0,toolNumber=9,toolChangeSubprogram=4,
+        toolChangeMode=FanucToolChangeMode.INLINE_THEN_SUBPROGRAM
+    )
+    check(explicitBoth.lineSequence().any{it=="T9 M6"})
+    check(explicitBoth.contains("M98 P4"))
+
     check(runCatching{FanucPostRuntime.generate(paths,5.0,toolChangeSubprogram=0)}.isFailure)
     check(runCatching{FanucPostRuntime.generate(paths,5.0,programEnd="M2")}.isFailure)
+    check(runCatching{FanucPostRuntime.generate(paths,5.0,toolChangeMode=FanucToolChangeMode.SUBPROGRAM)}.isFailure)
 
-    println("FANUC_POST_RUNTIME_PASS|G90_G54|TOOL_SPINDLE_G43|G0_G1_G3|ABC|SAFE_Z|G80|P4_P5|M99_M30")
+    println("FANUC_POST_RUNTIME_PASS|G90_G54|TOOL_SPINDLE_G43|G0_G1_G3|ABC|SAFE_Z|G80|P4_P5|M99_M30|NO_DUPLICATE_TOOL_CHANGE")
 }
