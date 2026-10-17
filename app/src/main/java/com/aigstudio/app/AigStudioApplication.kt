@@ -2,6 +2,7 @@ package com.aigstudio.app
 
 import android.app.Activity
 import android.app.Application
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -13,6 +14,7 @@ import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
@@ -25,7 +27,7 @@ import kotlin.math.max
  * Installs an approved RGB HOME authority without changing machining callbacks.
  * Priority is the current user-approved 2026-10-16 authority, then the verified
  * 2026-10-05 AIG-II 427 stable authority. The programmatic engineering shell is
- * never a production fallback.
+ * never a production fallback and is never visible beneath the approved art.
  */
 class AigStudioApplication : Application(), Application.ActivityLifecycleCallbacks {
     private val applied = Collections.newSetFromMap(WeakHashMap<View, Boolean>())
@@ -53,18 +55,14 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
                         .substringBefore(" | AIG RGB HOME STABLE AUTHORITY")
                     when(val loaded=HomeRgbAsset.loadBest(activity)) {
                         is LoadedHomeAuthority.Current -> {
-                            home.background=loaded.drawable
-                            home.alpha=1f
+                            installAuthoritySurface(home,decor,loaded.drawable,currentLayout=true)
                             home.contentDescription="$originalDescription | AIG RGB HOME AUTHORITY APPLIED|${loaded.authorityId}|${loaded.sha256}"
-                            home.invalidate()
-                            Log.i("AIG-RGB-HOME","AUTHORITY_APPLIED|${loaded.authorityId}|${loaded.sha256}")
+                            Log.i("AIG-RGB-HOME","AUTHORITY_APPLIED|${loaded.authorityId}|${loaded.sha256}|SHELL_HIDDEN|HIT_MAP_ACTIVE")
                         }
                         is LoadedHomeAuthority.Stable -> {
-                            home.background=loaded.drawable
-                            home.alpha=1f
+                            installAuthoritySurface(home,decor,loaded.drawable,currentLayout=false)
                             home.contentDescription="$originalDescription | AIG RGB HOME STABLE AUTHORITY APPLIED|${loaded.authorityId}|${loaded.sha256}"
-                            home.invalidate()
-                            Log.w("AIG-RGB-HOME","STABLE_AUTHORITY_APPLIED|${loaded.authorityId}|${loaded.sha256}|CURRENT_AUTHORITY_PENDING")
+                            Log.w("AIG-RGB-HOME","STABLE_AUTHORITY_APPLIED|${loaded.authorityId}|${loaded.sha256}|CURRENT_AUTHORITY_PENDING|SHELL_HIDDEN|HIT_MAP_ACTIVE")
                         }
                         is LoadedHomeAuthority.Missing -> {
                             home.alpha=0f
@@ -80,6 +78,42 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
         decor.post { listener.onGlobalLayout() }
     }
 
+    private fun installAuthoritySurface(home:View,decor:View,drawable:Drawable,currentLayout:Boolean) {
+        home.background=drawable
+        home.alpha=1f
+        if(home is ViewGroup) {
+            // A formal Authority page is a single visual layer. The old programmatic
+            // HOME remains only as hidden callback state; it is never visible.
+            for(i in 0 until home.childCount) home.getChildAt(i).visibility=View.INVISIBLE
+            home.addView(
+                AuthorityHomeHitMapView(home.context,currentLayout) { page ->
+                    if(page=="HOME") true
+                    else findByContentDescription(decor,"UI $page")?.performClick()==true
+                },
+                ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT)
+            )
+        }
+        home.invalidate()
+    }
+
+    private fun findFormalHome(view: View): View? {
+        val description=view.contentDescription?.toString().orEmpty()
+        if(description.contains("AIG CNC FORMAL RGB HOME") ||
+            description.contains("AIG CNC PRODUCTION HOME RUNTIME • FIRST FRAME")) return view
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) findFormalHome(view.getChildAt(i))?.let { return it }
+        }
+        return null
+    }
+
+    private fun findByContentDescription(view:View,target:String):View? {
+        if(view.contentDescription?.toString()==target) return view
+        if(view is ViewGroup) {
+            for(i in 0 until view.childCount) findByContentDescription(view.getChildAt(i),target)?.let{return it}
+        }
+        return null
+    }
+
     private fun installGlobalSkinChrome(activity:Activity) {
         runCatching {
             StudioThemePackRuntime.switchTo("aig_rgb_global_v1")
@@ -91,20 +125,63 @@ class AigStudioApplication : Application(), Application.ActivityLifecycleCallbac
         }
     }
 
-    private fun findFormalHome(view: View): View? {
-        if (view.contentDescription?.toString()?.contains("AIG CNC FORMAL RGB HOME") == true) return view
-        if (view is ViewGroup) {
-            for (i in 0 until view.childCount) findFormalHome(view.getChildAt(i))?.let { return it }
-        }
-        return null
-    }
-
     override fun onActivityStarted(activity: Activity) = Unit
     override fun onActivityResumed(activity: Activity) = Unit
     override fun onActivityPaused(activity: Activity) = Unit
     override fun onActivityStopped(activity: Activity) = Unit
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
     override fun onActivityDestroyed(activity: Activity) = Unit
+}
+
+private class AuthorityHomeHitMapView(
+    context:Context,
+    private val currentLayout:Boolean,
+    private val navigate:(String)->Boolean,
+):View(context) {
+    private data class Hit(val page:String,val left:Float,val top:Float,val right:Float,val bottom:Float)
+
+    private val topNavigation=listOf(
+        "HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI"
+    ).mapIndexed { index,page ->
+        val left=0.018f + index*0.0954f
+        Hit(page,left,0.091f,left+0.090f,0.151f)
+    }
+    private val currentModuleCards=listOf(
+        Hit("CAD",0.018f,0.574f,0.334f,0.655f),
+        Hit("CAM",0.343f,0.574f,0.646f,0.655f),
+        Hit("SIM",0.653f,0.574f,0.971f,0.655f),
+        Hit("3AX",0.018f,0.656f,0.334f,0.730f),
+        Hit("4AX",0.343f,0.656f,0.646f,0.730f),
+        Hit("5AX",0.653f,0.656f,0.971f,0.730f),
+        Hit("6AX",0.018f,0.731f,0.334f,0.808f),
+        Hit("NC",0.343f,0.731f,0.646f,0.808f),
+        Hit("AI",0.653f,0.731f,0.971f,0.808f),
+    )
+
+    init {
+        isClickable=true
+        contentDescription=if(currentLayout)
+            "AIG RGB AUTHORITY HIT MAP • CURRENT • REAL CALLBACKS"
+        else
+            "AIG RGB AUTHORITY HIT MAP • STABLE • REAL CALLBACKS"
+    }
+
+    override fun onTouchEvent(event:MotionEvent):Boolean {
+        if(event.action!=MotionEvent.ACTION_UP) return true
+        if(width<=0 || height<=0) return true
+        val x=event.x/width.toFloat()
+        val y=event.y/height.toFloat()
+        val hits=if(currentLayout) topNavigation+currentModuleCards else topNavigation
+        hits.firstOrNull { x>=it.left && x<=it.right && y>=it.top && y<=it.bottom }
+            ?.let { navigate(it.page) }
+        performClick()
+        return true
+    }
+
+    override fun performClick():Boolean {
+        super.performClick()
+        return true
+    }
 }
 
 private object OptionalTutorialModule {
@@ -162,7 +239,7 @@ private object HomeRgbAsset {
 
 private class HomeCoverDrawable(private val bitmap: Bitmap) : Drawable() {
     private val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-    private val shadePaint = Paint().apply { color = Color.argb(32, 2, 4, 7) }
+    private val shadePaint = Paint().apply { color = Color.argb(20, 2, 4, 7) }
 
     override fun draw(canvas: Canvas) {
         val b = bounds
