@@ -94,10 +94,20 @@ class CamPageRuntime(
         val toolNumber=command.arguments["toolNumber"]?.toInt() ?: 1
         val hNumber=command.arguments["hNumber"]?.toInt() ?: toolNumber
         val spindleRpm=command.arguments["spindleRpm"]?.toInt() ?: 2300
-        val nc=FanucPostRuntime.generate(lastToolpaths,settings.safeZ,compensation,programNumber,toolNumber,hNumber,spindleRpm)
+        val toolChangeSubprogram=optionalInt(command,"toolChangeSubprogram")
+        val endSubprogram=optionalInt(command,"endSubprogram")
+        val programEnd=(command.arguments["programEnd"] ?: "M99").trim().uppercase()
+        val nc=FanucPostRuntime.generate(
+            lastToolpaths,settings.safeZ,compensation,programNumber,toolNumber,hNumber,spindleRpm,
+            toolChangeSubprogram,endSubprogram,programEnd
+        )
+        revision++
         return accepted(command,pathEvidence(lastStrategy)+mapOf(
             "postProfile" to FanucPostRuntime.PROFILE,
             "programNumber" to programNumber.toString(),
+            "toolChangeSubprogram" to (toolChangeSubprogram?.toString() ?: ""),
+            "endSubprogram" to (endSubprogram?.toString() ?: ""),
+            "programEnd" to programEnd,
             "ncLineCount" to nc.lineSequence().count().toString(),
             "ncText" to nc
         ))
@@ -111,6 +121,7 @@ class CamPageRuntime(
     private fun reject(command:PageCommand,detail:String):PageResult { localMessages+=PageMessage(pageId,command.subpage.takeIf{it.page==pageId},"CAM_COMMAND_REJECTED",detail,relatedButtonId=command.commandId,revision=revision,timestampEpochMs=System.currentTimeMillis(),severity=PageMessageSeverity.WARNING);return PageResult.Rejected(pageId,"CAM_COMMAND_REJECTED",revision,detail) }
     private fun text(command:PageCommand,key:String)=command.arguments[key]?:error("Missing CAM argument: $key")
     private fun int(command:PageCommand,key:String)=text(command,key).toInt()
+    private fun optionalInt(command:PageCommand,key:String)=command.arguments[key]?.toInt()
     private fun number(command:PageCommand,key:String)=text(command,key).toDouble().also{require(it.isFinite())}
     private fun number(command:PageCommand,key:String,default:Double)=command.arguments[key]?.toDouble()?.also{require(it.isFinite())}?:default
     private fun optionalNumber(command:PageCommand,key:String)=command.arguments[key]?.toDouble()?.also{require(it.isFinite())}
