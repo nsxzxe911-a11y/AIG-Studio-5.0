@@ -144,11 +144,44 @@ def patch_web():
     new_render=' s.innerHTML=name==="HOME"?homePage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="SIM"?simHubPage():name==="NC"?ncPage():name==="AI"?aiPage():simPage(name);'
     if new_render not in text:
         text=replace_once(text,old_render,new_render,'WEB_PAGE_RENDER_SWITCH')
+
+    if 'const productionPageRouter=new AigPageRuntimeRouter({' not in text:
+        show_block='''function show(name){
+ aigApplyAdvancedVisibility();
+ if(!pages.concat(utilityPages).some(p=>p[0]===name))name="HOME";
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
+ document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.dataset.page===name));
+ history.replaceState(null,"","#"+encodeURIComponent(name));
+ setTimeout(()=>window.dispatchEvent(new Event("resize")),0);
+}
+'''
+        router='''const productionPageRouter=new AigPageRuntimeRouter({
+ runtimeProvider:page=>page==="AI"?(document.querySelector("[data-ai-page-runtime]")?._aigAiRuntime||null):null,
+ pageNavigator:page=>show(page)
+});
+window.aigProductionPageRouter=productionPageRouter;
+function navigateProductionPage(name){
+ const navId="NAV_"+name;
+ return AIG_PAGE_NAVIGATION[navId]?productionPageRouter.navigate(navId):show(name);
+}
+'''
+        text=replace_once(text,show_block,show_block+router,'WEB_ROUTER_INSTANCE')
+
+    text=text.replace(
+        'b.onclick=()=>aigGuard(document.body,"頁面切換",()=>show(name),null,"warn")',
+        'b.onclick=()=>aigGuard(document.body,"頁面切換",()=>navigateProductionPage(name),null,"warn")',
+        1,
+    )
+    text=text.replace(
+        'document.addEventListener("click",e=>{const a=e.target.closest("[data-open-page]");if(a)aigGuard(document.body,"頁面切換",()=>show(a.dataset.openPage),null,"warn")});',
+        'document.addEventListener("click",e=>{const a=e.target.closest("[data-open-page]");if(a)aigGuard(document.body,"頁面切換",()=>navigateProductionPage(a.dataset.openPage),null,"warn")});',
+        1,
+    )
     write(rel,text)
 
 
 def main():
     patch_android();patch_desktop();patch_web()
-    print('PAGE_RUNTIME_ROUTER_INTEGRATION_PATCH_PASS|ANDROID|WINDOWS|WEB|CAD_TOAST_REMOVED|WEB_AI_ADDED')
+    print('PAGE_RUNTIME_ROUTER_INTEGRATION_PATCH_PASS|ANDROID|WINDOWS|WEB|CAD_TOAST_REMOVED|WEB_AI_ADDED|WEB_ROUTER_INSTANCE')
 
 if __name__=='__main__': main()
