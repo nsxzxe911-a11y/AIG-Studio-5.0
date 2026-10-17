@@ -2,6 +2,7 @@ package com.aigstudio.bootstrap
 
 import com.aigstudio.core.StudioStartupStage
 import com.aigstudio.desktop.AigRgbDesktopSkinRuntime
+import com.aigstudio.desktop.FormalPageCoreDesktopBinding
 import com.aigstudio.desktop.HomeRgbDesktopInstaller
 import java.awt.Frame
 import javax.swing.JFrame
@@ -27,9 +28,10 @@ private class RestoredDesktopStartup {
     fun close(){closeMethod.invoke(instance)}
 }
 
-/** Installs validated RGB skin/HOME/tutorial visual layers, then delegates to the existing production runtime. */
+/** Installs validated RGB skin/HOME/tutorial/core layers, then delegates to the existing production runtime. */
 fun main(args:Array<String>) {
     val smoke=args.contains("--smoke")
+    FormalPageCoreDesktopBinding.installGlobal()
     if(!smoke) {
         AigRgbDesktopSkinRuntime.install()
         HomeRgbDesktopInstaller.install()
