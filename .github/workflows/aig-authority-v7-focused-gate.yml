@@ -1,0 +1,49 @@
+name: AIG Authority V7 focused gate
+
+on:
+  push:
+    branches:
+      - work/aig-authority-v7-reverse-engineering
+    paths:
+      - 'design/ui/**'
+      - 'web/runtime/**'
+      - 'core/src/main/kotlin/com/aigstudio/core/UiButtonManifestContract.kt'
+      - 'ci/verify_aig_authority_v7.py'
+      - 'ci/verify_aig_product_contract_v1.py'
+      - 'ci/verify_ui_region_manifest.py'
+      - 'ci/verify_ui_skin_contract.py'
+      - '.github/workflows/aig-authority-v7-focused-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aig-authority-v7-focused-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused-contract-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Verify Authority catalog
+        run: python3 ci/verify_aig_authority_v7.py
+      - name: Verify AIG seven-page product scope
+        run: python3 ci/verify_aig_product_contract_v1.py
+      - name: Verify reverse-engineered regions
+        run: python3 ci/verify_ui_region_manifest.py
+      - name: Verify skins when present
+        shell: bash
+        run: |
+          if [ -f ci/verify_ui_skin_contract.py ] && [ -f design/ui/skin-manifest-v1.json ]; then
+            python3 ci/verify_ui_skin_contract.py
+          else
+            echo 'UI_SKIN_CONTRACT_PENDING'
+          fi
+      - name: Focused gate summary
+        run: echo 'AIG_AUTHORITY_V7_FOCUSED_GATE_PASS'
