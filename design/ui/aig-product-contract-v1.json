@@ -1,0 +1,17 @@
+{
+  "schema": "aig-product-contract-v1",
+  "project": "AIG",
+  "productionPages": ["HOME", "CAD", "CAM", "SIM", "3AX", "NC", "AI"],
+  "navigation": [
+    {"pageId":"HOME","viewId":"VIEW.NAV.HOME","buttonId":"NAV_HOME","commandId":"OPEN_HOME","visualId":"AIG-AUTH-DESKTOP-HOME-V1"},
+    {"pageId":"CAD","viewId":"VIEW.NAV.CAD","buttonId":"NAV_CAD","commandId":"OPEN_CAD","visualId":"AIG-AUTH-DESKTOP-CAD-V1"},
+    {"pageId":"CAM","viewId":"VIEW.NAV.CAM","buttonId":"NAV_CAM","commandId":"OPEN_CAM","visualId":"AIG-AUTH-DESKTOP-CAM-V1"},
+    {"pageId":"SIM","viewId":"VIEW.NAV.SIM","buttonId":"NAV_SIM","commandId":"OPEN_SIM","visualId":"AIG-AUTH-DESKTOP-SIM-V1"},
+    {"pageId":"3AX","viewId":"VIEW.NAV.3AX","buttonId":"NAV_3AX","commandId":"OPEN_3AX","visualId":"AIG-AUTH-DESKTOP-3AX-V1"},
+    {"pageId":"NC","viewId":"VIEW.NAV.NC","buttonId":"NAV_NC","commandId":"OPEN_NC","visualId":"AIG-AUTH-DESKTOP-NC-V1"},
+    {"pageId":"AI","viewId":"VIEW.NAV.AI","buttonId":"NAV_AI","commandId":"OPEN_AI","visualId":"AIG-AUTH-DESKTOP-AI-V1"}
+  ],
+  "axisPolicy": "AIG_PRODUCT_AXIS_3_ONLY_SHARED_CORE_UNCHANGED",
+  "visualPrimaryKeyPolicy": "VISUAL_ID_NOT_FUNCTION_PRIMARY_KEY",
+  "sharedCapabilityPolicy": "SHARED_4AX_5AX_6AX_COMMANDS_REMAIN_AVAILABLE_TO_AIG_II_BUT_ARE_NOT_AIG_PRODUCT_NAVIGATION"
+}
