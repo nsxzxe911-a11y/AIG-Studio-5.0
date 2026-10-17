@@ -42,16 +42,32 @@ fun main(){
     check(ax6.dispatch(axisCmd(PageId.AX6,"6AX.NC_FIRST","6AX.NC_FIRST.OPEN","gcode" to gcode)) is PageResult.Accepted)
     val parsed=ax6.dispatch(axisCmd(PageId.AX6,"6AX.NC_FIRST","6AX.NC_FIRST.PARSE")) as PageResult.Accepted
     check(parsed.evidence["axisPrecheck"]=="PASS")
+    check(parsed.evidence["fanucParser"]=="PASS")
+    check(parsed.evidence["cAxis"]=="VALIDATED")
     check(parsed.evidence.getValue("blocks")=="2")
-    val preview=ax6.dispatch(axisCmd(PageId.AX6,"6AX.NC_FIRST","6AX.NC_FIRST.PREVIEW")) as PageResult.Accepted
+    val preview=ax6.dispatch(axisCmd(PageId.AX6,"6AX.NC_FIRST","6AX.NC_FIRST.PREVIEW","toolDiameter" to "6")) as PageResult.Accepted
+    check(preview.evidence["previewLevel"]=="MACHINING_3D_MATERIAL_REMOVAL")
     check(preview.evidence.getValue("axisWordCount").toInt()>=6)
-    check(ax6.snapshot().state["ncFirstStage"]=="PREVIEW")
+    check(preview.evidence.getValue("moveCount").toInt()>=2)
+    check(preview.evidence.getValue("removedCells").toInt()>0)
+    check(preview.evidence.getValue("removedVolumeMm3").toDouble()>0.0)
+    check(preview.evidence.getValue("meshVertices").toInt()>0)
+    check(preview.evidence.getValue("meshTriangles").toInt()>0)
+    check(preview.evidence["fixtureCoverage"]=="UNMODELED")
+    check(preview.evidence["preflightReady"]=="false")
+    check(ax6.snapshot().state["ncFirstStage"]=="PREVIEW_3D")
+    check(ax6.ncFirstMachiningResult()!=null)
 
-    val forbidden="G90 G1 X1 C45 F100"
+    ax6.setNcFirstFixtures(listOf(FixtureObstacle(99,FixtureKind.FIXTURE,40.0,40.0,-5.0,50.0,50.0,5.0)))
+    val modeledPreview=ax6.dispatch(axisCmd(PageId.AX6,"6AX.NC_FIRST","6AX.NC_FIRST.PREVIEW","toolDiameter" to "6")) as PageResult.Accepted
+    check(modeledPreview.evidence["fixtureCoverage"]=="MODELED")
+    check(modeledPreview.evidence["preflightReady"]=="true")
+
+    val forbidden="G90 G0 X0 Y0 Z5\nG1 X1 Z-1 C45 F100"
     ax5.dispatch(axisCmd(PageId.AX5,"5AX.NC_FIRST","5AX.NC_FIRST.OPEN","gcode" to forbidden))
     val rejected=ax5.dispatch(axisCmd(PageId.AX5,"5AX.NC_FIRST","5AX.NC_FIRST.PARSE"))
     check(rejected is PageResult.Rejected)
     check(ax5.messages().last().pageId==PageId.AX5)
 
-    println("AXIS_PAGE_RUNTIME_PASS|3AX_XYZ|4AX_A|5AX_AB|6AX_ABC|STATE_PERSISTENCE|VIEW_PRESET|NC_FIRST_AXIS_PRECHECK|LOCAL_REJECT")
+    println("AXIS_PAGE_RUNTIME_PASS|3AX_XYZ|4AX_A|5AX_AB|6AX_ABC|STATE_PERSISTENCE|VIEW_PRESET|NC_FIRST_FANUC_PARSE|NC_FIRST_TRUE_3D|NC_FIRST_MATERIAL_REMOVAL|NC_FIRST_PREFLIGHT|LOCAL_REJECT")
 }
