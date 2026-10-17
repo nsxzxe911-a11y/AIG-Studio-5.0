@@ -17,6 +17,13 @@ fun main(){
     val preview=cam.dispatch(camCmd("CAM.POST_PREVIEW","CAM.POST_PREVIEW.GENERATE")) as PageResult.Accepted
     check(preview.evidence.getValue("toolpathCount").toInt()>0)
     check(preview.evidence.getValue("moveCount").toInt()>0)
+    check(preview.evidence["postProfile"]=="FANUC")
+    check(preview.evidence.getValue("ncLineCount").toInt()>0)
+    val nc=preview.evidence.getValue("ncText")
+    check(nc.contains("G90 G54"))
+    check(nc.contains("G43 Z5.000 H1 M8"))
+    check(nc.contains("A15.000 B25.000 C35.000"))
+    check(nc.contains("M99"))
     val firstCut=cam.toolpaths().flatMap{it.moves}.first{!it.rapid}
     check(firstCut.axisA==15.0 && firstCut.axisB==25.0 && firstCut.axisC==35.0)
 
@@ -55,5 +62,5 @@ fun main(){
     check(cam.snapshot().state["mode"]=="MANUAL")
     check(cam.manualPoints().last().let{it.axisA==45.0 && it.axisB==55.0 && it.axisC==65.0})
 
-    println("CAM_PAGE_RUNTIME_PASS|MANUAL_FIRST|G0_G1|SAFE_Z|ABC_PRESERVED|COMP|TOOL_REGION|AUTO_REAL_TOOLPATH|DRILL_REAL_TOOLPATH|LOCAL_RUNTIME")
+    println("CAM_PAGE_RUNTIME_PASS|MANUAL_FIRST|G0_G1|SAFE_Z|ABC_PRESERVED|COMP|TOOL_REGION|AUTO_REAL_TOOLPATH|DRILL_REAL_TOOLPATH|FANUC_POST_NC|LOCAL_RUNTIME")
 }
