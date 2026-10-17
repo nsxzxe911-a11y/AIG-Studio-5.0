@@ -15,6 +15,7 @@ enum class RuntimeLinkId(
     CAD_CAM("CAD ↔ CAM","CAD","CAM"),
     CAM_SIM("CAM ↔ 3D SIM","CAM","3D SIM"),
     SIM_NC("3D SIM ↔ NC","3D SIM","NC"),
+    NC_MACHINE("NC ↔ MACHINE","NC","MACHINE"),
     GPU_3D("3D GPU"),
     MACHINE("機台連線")
 }
@@ -31,9 +32,12 @@ object RuntimeLinkContract {
     const val DISCONNECT_POLICY="DATA_FLOW_ONLY_PRESERVE_RUNTIME_DATA"
     val PRESERVED_DOMAINS=setOf("CAD_GEOMETRY","CAM_TOOLPATH","SIM_STATE","NC_GCODE")
     val cockpitLinks=listOf(RuntimeLinkId.CAD_CAM,RuntimeLinkId.CAM_SIM,RuntimeLinkId.SIM_NC)
+    val machiningLinks=listOf(
+        RuntimeLinkId.CAD_CAM,RuntimeLinkId.CAM_SIM,RuntimeLinkId.SIM_NC,RuntimeLinkId.NC_MACHINE
+    )
     val managedLinks=listOf(
         RuntimeLinkId.CAD_CAM,RuntimeLinkId.CAM_SIM,RuntimeLinkId.SIM_NC,
-        RuntimeLinkId.GPU_3D,RuntimeLinkId.MACHINE
+        RuntimeLinkId.NC_MACHINE,RuntimeLinkId.GPU_3D,RuntimeLinkId.MACHINE
     )
 }
 
@@ -60,6 +64,8 @@ class RuntimeLinkStore {
         synchronized(this) {
             if(values[id]==status) return status
             values[id]=status
+            if(id==RuntimeLinkId.NC_MACHINE) values[RuntimeLinkId.MACHINE]=status
+            if(id==RuntimeLinkId.MACHINE) values[RuntimeLinkId.NC_MACHINE]=status
             snap=RuntimeLinkSnapshot(values.toMap())
             targets=observers.toList()
         }
