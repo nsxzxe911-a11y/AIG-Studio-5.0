@@ -111,8 +111,8 @@ class NcPageRuntime(
     private fun addCustomMCode(command:PageCommand):PageResult { val code=(command.arguments["code"] ?: error("Custom M-code requires code")).trim().uppercase();require(Regex("""M\d{1,3}""").matches(code));installedCustomMCodes+=code;invalidateVerification();revision++;return accepted(command,mapOf("customMCode" to code,"customMCodeCount" to installedCustomMCodes.size.toString())) }
 
     private fun legacyProgram():String=StudioFanucProgramCompatibility.legacyProgram(program)
-    private fun compatibilityFindings():List<NcRuntimeInterlockFinding>=StudioFanucProgramCompatibility.findings(program)
-    private fun cFindings():List<NcRuntimeInterlockFinding>=NcSixAxisCompatibility.cFindings(program)
+    private fun compatibilityFindings():List<NcRuntimeInterlockFinding> = StudioFanucProgramCompatibility.findings(program)
+    private fun cFindings():List<NcRuntimeInterlockFinding> = NcSixAxisCompatibility.cFindings(program)
     private fun compatibilityAlarm():NcEditorAlarm?=compatibilityFindings().firstOrNull()?.let{
         val hint=if(it.code.contains("_C") || it.code.contains("AXIS_C"))
             "修正 C 軸數值至 ±360° 且每 Block 僅一個 C 值後重新驗證"
