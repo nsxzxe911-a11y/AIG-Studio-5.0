@@ -1,0 +1,66 @@
+name: AIG Studio dual UI runtime binding once
+
+on:
+  push:
+    branches:
+      - architecture/page-autonomy-ai-orchestrator-after-588
+    paths:
+      - '.github/workflows/dual-ui-runtime-binding-once.yml'
+      - '.github/dual-ui-runtime-binding.trigger'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: studio-dual-ui-runtime-binding-once
+  cancel-in-progress: true
+
+jobs:
+  bind-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: architecture/page-autonomy-ai-orchestrator-after-588
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Apply narrow production View-ID bindings
+        run: python3 ci/apply_dual_ui_runtime_bindings.py
+      - name: Verify dual ID manifests
+        run: |
+          python3 ci/verify_page_department_manifests.py
+          (cd ci && python3 test_page_button_id_hierarchy.py)
+          (cd ci && python3 test_dual_ui_id_contract.py)
+      - name: Verify Router dual-ID symbols
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'fun dispatchView' app/src/main/java/com/aigstudio/app/PageRuntimeRouter.kt
+          grep -q 'fun navigateView' app/src/main/java/com/aigstudio/app/PageRuntimeRouter.kt
+          grep -q 'fun dispatchView' desktop/src/main/kotlin/com/aigstudio/desktop/PageRuntimeRouter.kt
+          grep -q 'fun navigateView' desktop/src/main/kotlin/com/aigstudio/desktop/PageRuntimeRouter.kt
+          grep -q 'dispatchView(viewId' web/runtime/page-runtime-router.js
+          grep -q 'navigateView(viewId' web/runtime/page-runtime-router.js
+          ! grep -q 'CAD • LIVE WORKSPACE' core/src/main/kotlin/com/aigstudio/core/UiButtonManifestContract.kt
+      - name: Compile and run PageRuntime regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :core:pageAutonomyRegression :app:assembleDebug :desktop:compileKotlin --no-daemon
+      - name: Commit verified production View-ID bindings
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- app/src/main/java/com/aigstudio/app/MainActivity.kt desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt; then
+            echo 'DUAL_UI_RUNTIME_BINDINGS_ALREADY_APPLIED'
+            exit 0
+          fi
+          git config user.name 'AIG Verified Builder'
+          git config user.email 'actions@users.noreply.github.com'
+          git add app/src/main/java/com/aigstudio/app/MainActivity.kt desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt
+          git commit -m 'ui: bind production navigation views to dual IDs'
+          git push origin HEAD:architecture/page-autonomy-ai-orchestrator-after-588
