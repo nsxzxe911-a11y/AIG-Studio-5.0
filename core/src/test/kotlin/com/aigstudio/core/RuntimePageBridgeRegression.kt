@@ -40,8 +40,15 @@ fun main(){
     check(sim.sourceCamSettings().pathMode==CamPathMode.MANUAL)
     check(sim.sourceCamSettings().manualPath.last().axisC==35.0)
 
+    // Formal SIM->NC evidence now requires modeled fixture/clamp coverage. Keep the fixture
+    // outside the machining envelope so this test proves the bridge contract, not a collision.
+    sim.setFixtures(listOf(
+        FixtureObstacle(1001,FixtureKind.FIXTURE,60.0,60.0,-5.0,70.0,70.0,5.0)
+    ))
     check(sim.dispatch(simBridgeCmd("SIM.MATERIAL","SIM.MATERIAL.RUN")) is PageResult.Accepted)
-    check(sim.dispatch(simBridgeCmd("SIM.COLLISION","SIM.COLLISION.CHECK")) is PageResult.Accepted)
+    val risk=sim.dispatch(simBridgeCmd("SIM.COLLISION","SIM.COLLISION.CHECK")) as PageResult.Accepted
+    check(risk.evidence["fixtureCoverage"]=="MODELED")
+    check(risk.evidence["preflightReady"]=="true")
     check(sim.dispatch(simBridgeCmd("SIM.RESULT","SIM.RESULT.ACCEPT")) is PageResult.Accepted)
 
     val simToNc=RuntimeBridgeRouter.transfer(RuntimeLinkId.SIM_NC,links,sim,nc)
@@ -53,5 +60,5 @@ fun main(){
     check(repeated is RuntimeBridgeTransferResult.Rejected && repeated.code=="STALE_REVISION")
     check(nc.snapshot()==ncBefore)
 
-    println("RUNTIME_PAGE_BRIDGE_PASS|CAD_CAM_GEOMETRY|CAM_SIM_MANUAL_ABC|DISCONNECT_PRESERVE|SIM_NC_VERIFIED_EVIDENCE|STALE_NO_OVERWRITE")
+    println("RUNTIME_PAGE_BRIDGE_PASS|CAD_CAM_GEOMETRY|CAM_SIM_MANUAL_ABC|DISCONNECT_PRESERVE|SIM_NC_STRICT_PREFLIGHT|MODELED_FIXTURE|STALE_NO_OVERWRITE")
 }
