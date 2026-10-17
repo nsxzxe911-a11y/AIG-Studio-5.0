@@ -42,6 +42,7 @@ class NcPageRuntime(
         "parsed" to parsed.toString(),"previewed" to previewed.toString(),"verified" to verified.toString(),"prepared" to prepared.toString(),
         "machineConnected" to machineConnected.toString(),"machineEligible" to (verified && prepared).toString(),
         "cAxisCompatible" to NcSixAxisCompatibility.cFindings(program).isEmpty().toString(),
+        "g34Profile" to profile().g34VendorProfile.template.name,
         "customMCodes" to installedCustomMCodes.sorted().joinToString(","),"alarmCode" to (lastAlarm?.code ?: ""),"alarmLine" to (lastAlarm?.lineNumber?.toString() ?: ""),
         "upstreamSimVerified" to upstreamSimVerified.toString(),"lastSimBridgeRevision" to lastSimBridgeRevision.toString(),"lastSimBridgeDigest" to lastSimBridgeDigest
     ))
@@ -121,7 +122,7 @@ class NcPageRuntime(
         val alarm=compatibilityAlarm() ?: NcEditorAlarmRouter.firstAlarm(legacy,controller,machineLimits,profile())
         if(runtime.isNotEmpty()||alarm!=null){lastAlarm=alarm?:runtime.first().let{NcEditorAlarm(it.lineNumber,lineAt(it.lineNumber),it.code,it.message,"依 LINE HELP 修正後重新驗證")};error(lastAlarm!!.compact())}
         parsed=true;previewed=false;verified=false;prepared=false;lastAlarm=null;revision++
-        return accepted(command,mapOf("parserStatus" to "PASS","lineCount" to lineCount().toString(),"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","customMCodes" to installedCustomMCodes.sorted().joinToString(",")))
+        return accepted(command,mapOf("parserStatus" to "PASS","lineCount" to lineCount().toString(),"g34Profile" to profile().g34VendorProfile.template.name,"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","customMCodes" to installedCustomMCodes.sorted().joinToString(",")))
     }
     private fun preview(command:PageCommand):PageResult {
         require(parsed)
@@ -131,7 +132,7 @@ class NcPageRuntime(
         val blocked=timeline.firstOrNull{it.status=="BLOCKED"}
         require(blocked==null){"NC preview blocked at L${blocked?.lineNumber}"}
         previewed=true;verified=false;prepared=false;revision++
-        return accepted(command,mapOf("eventCount" to timeline.size.toString(),"readyEventCount" to timeline.count{it.status=="READY"}.toString(),"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","summary" to NcExecutionTimeline.programSummary(legacy,controller,machineLimits,profile())))
+        return accepted(command,mapOf("eventCount" to timeline.size.toString(),"readyEventCount" to timeline.count{it.status=="READY"}.toString(),"g34Profile" to profile().g34VendorProfile.template.name,"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","summary" to NcExecutionTimeline.programSummary(legacy,controller,machineLimits,profile())))
     }
     private fun verify(command:PageCommand):PageResult {
         require(parsed)
@@ -142,7 +143,7 @@ class NcPageRuntime(
         val blocked=timeline.firstOrNull{it.status=="BLOCKED"}
         require(interlock.canExecute&&blocked==null){"NC VERIFY blocked: ${blocked?.reasons?.joinToString(",") ?: interlock.message}"}
         verified=true;prepared=false;lastAlarm=null;revision++
-        return accepted(command,mapOf("verified" to "true","machineInterlock" to interlock.state.name,"eventCount" to timeline.size.toString(),"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","upstreamSimVerified" to upstreamSimVerified.toString()))
+        return accepted(command,mapOf("verified" to "true","machineInterlock" to interlock.state.name,"eventCount" to timeline.size.toString(),"g34Profile" to profile().g34VendorProfile.template.name,"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","upstreamSimVerified" to upstreamSimVerified.toString()))
     }
     private fun setSingleBlock(command:PageCommand):PageResult { singleBlock=boolean(command,"enabled");revision++;return accepted(command,mapOf("singleBlock" to singleBlock.toString())) }
     private fun setDryRun(command:PageCommand):PageResult { dryRun=boolean(command,"enabled");revision++;return accepted(command,mapOf("dryRun" to dryRun.toString())) }
@@ -151,10 +152,10 @@ class NcPageRuntime(
         require(cFindings().isEmpty()){ "C-axis compatibility validation failed" }
         require(NcExecutionTimeline.build(legacyProgram(),controller,machineLimits,profile()).none{it.status=="BLOCKED"})
         prepared=true;revision++
-        return accepted(command,mapOf("machineEligible" to "true","dryRun" to dryRun.toString(),"singleBlock" to singleBlock.toString(),"blockSkip" to blockSkip.toString(),"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","upstreamSimVerified" to upstreamSimVerified.toString()))
+        return accepted(command,mapOf("machineEligible" to "true","dryRun" to dryRun.toString(),"singleBlock" to singleBlock.toString(),"blockSkip" to blockSkip.toString(),"g34Profile" to profile().g34VendorProfile.template.name,"cAxis" to if(NcSixAxisCompatibility.hasC(program))"VALIDATED" else "NOT_USED","upstreamSimVerified" to upstreamSimVerified.toString()))
     }
     private fun sendMachine(command:PageCommand):PageResult { require(verified&&prepared);require(machineConnected){"NC_MACHINE is disconnected"};revision++;return accepted(command,mapOf("machineEligible" to "true","dispatch" to "AUTHORIZED_OUTPUT_READY","programLines" to lineCount().toString())) }
-    private fun profile():RotaryAxisClampProfile = RotaryAxisClampProfile.configured(installedOptionalCodes=installedCustomMCodes)
+    private fun profile():RotaryAxisClampProfile = StudioFanucMachineProfile.rotaryProfile(installedCustomMCodes)
     private fun invalidateVerification(){ parsed=false;previewed=false;verified=false;prepared=false;lastAlarm=null }
     private fun lineCount():Int=if(program.isBlank())0 else program.split("\n").size
     private fun lineAt(line:Int)=program.split("\n").getOrNull(line-1).orEmpty()
