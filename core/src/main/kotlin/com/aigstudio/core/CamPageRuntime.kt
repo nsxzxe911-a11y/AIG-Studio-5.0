@@ -199,12 +199,8 @@ class CamPageRuntime(
         val eligible=sourceCadSnapshot.entities.none{it.id.startsWith("HOLE:")}
         if(eligible) {
             val pocket=runCatching { CamWorkflowEngine.buildCommonPocket(sourceCadSnapshot.entities,settings) }.getOrNull()
-            if(pocket!=null) {
-                settings=pocket
-                return CamEngine.generateManual(settings)
-            }
+            if(pocket!=null) return CamEngine.generateManual(pocket)
         }
-        settings=settings.copy(pathMode=CamPathMode.AUTO)
         return CamEngine.generate(sourceCadSnapshot,settings)
     }
 
