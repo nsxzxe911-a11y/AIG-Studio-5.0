@@ -61,11 +61,16 @@ def main():
     assert "P4_P5" in cam_test and "POST_REVISION" in cam_test
     assert "REJECT_ATOMIC" in cam_test
     assert "beforeBadPostSnapshot" in cam_test and "beforeBadDrillSnapshot" in cam_test
-    for token in ["G90 G54","G43 Z","G80","M99","M30","M98 P","ArcFeed","axisC","toolChangeSubprogram","endSubprogram"]:
+    for token in [
+        "G90 G54","G43 Z","G80","M99","M30","M98 P","ArcFeed","axisC",
+        "toolChangeSubprogram","endSubprogram","FanucToolChangeMode","INLINE_THEN_SUBPROGRAM",
+    ]:
         assert token in post, f"FANUC_POST_TOKEN_MISSING:{token}"
     assert "FANUC_POST_RUNTIME_PASS|" in post_test
     assert "P4_P5" in post_test and "M99_M30" in post_test
-    print(f"CAD_CAM_PAGE_RUNTIME_BINDING_PASS|CAD={cad}|CAM={cam}|DXF_IMPORT_EXPORT|REAL_FANUC_POST|P4_P5|M99_M30|POST_REVISION|CAM_REJECT_ATOMIC|REAL_CORE_SYMBOLS|NO_TOAST|NO_STRATEGY_STRING")
+    assert "NO_DUPLICATE_TOOL_CHANGE" in post_test
+    assert 'lineSequence().none{it=="T9 M6"}' in post_test
+    print(f"CAD_CAM_PAGE_RUNTIME_BINDING_PASS|CAD={cad}|CAM={cam}|DXF_IMPORT_EXPORT|REAL_FANUC_POST|P4_P5|M99_M30|NO_DUPLICATE_TOOL_CHANGE|POST_REVISION|CAM_REJECT_ATOMIC|REAL_CORE_SYMBOLS|NO_TOAST|NO_STRATEGY_STRING")
 
 if __name__=="__main__":
     main()
