@@ -31,7 +31,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 ci/apply_page_runtime_router_integration.py | tee router-patch.log
+          python3 ci/finalize_page_runtime_router_patch.py | tee router-finalize.log
           grep -Fq 'PAGE_RUNTIME_ROUTER_INTEGRATION_PATCH_PASS|' router-patch.log
+          grep -Fq 'PAGE_RUNTIME_ROUTER_ANDROID_FINALIZE_PASS|' router-finalize.log
           git diff --check
       - name: Verify shared page routing contracts
         shell: bash
@@ -49,11 +51,11 @@ jobs:
           grep -Fq 'NC_HOME_PAGE_RUNTIME_BINDING_PASS|' nc-home-runtime.log
           grep -Fq 'AI_MACHINING_RUNTIME_BINDING_PASS|' ai-machining-runtime.log
           grep -Fq 'PAGE_RUNTIME_CROSS_PLATFORM_PASS|' page-runtime-cross-platform.log
-      - name: Compile phase gate
+      - name: Compile and focused regression gate
         shell: bash
         run: |
           set -euo pipefail
-          gradle :core:test :app:assembleDebug :desktop:compileKotlin --stacktrace
+          gradle :core:testClasses :core:pageAutonomyRegression :app:assembleDebug :desktop:compileKotlin --stacktrace
       - name: Commit verified platform integration
         shell: bash
         run: |
