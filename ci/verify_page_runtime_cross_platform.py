@@ -28,6 +28,14 @@ def web_inventory():
     result=subprocess.run(["node","-e",code],cwd=ROOT,text=True,capture_output=True,check=True)
     return json.loads(result.stdout.strip())
 
+def verify_web_ai_strict_reuse():
+    result=subprocess.run(
+        ["node",str(ROOT/"ci/verify_web_ai_strict_reuse.mjs")],
+        cwd=ROOT,text=True,capture_output=True,check=True,
+    )
+    marker=result.stdout.strip()
+    assert marker=="WEB_AI_STRICT_REUSE_PASS|VERIFIED|PREFLIGHT|FIXTURE_COVERAGE|LEGACY_REJECTED",marker
+
 def main():
     expected=manifest_routes()
     android_router=read(Path("app/src/main/java/com/aigstudio/app/PageRuntimeRouter.kt"))
@@ -35,6 +43,7 @@ def main():
     android_ui=read(Path("app/src/main/java/com/aigstudio/app/MainActivity.kt"))
     desktop_ui=read(Path("desktop/src/main/kotlin/com/aigstudio/desktop/DesktopApp.kt"))
     web_index=read(Path("web/index.html"))
+    web_ai=read(Path("web/runtime/ai-page-runtime.js"))
 
     for name,source in (("ANDROID",android_router),("WINDOWS",desktop_router)):
         for nav_id,page in NAV.items():
@@ -52,14 +61,22 @@ def main():
         ":extra="+str(sorted(set(actual_web)-set(expected)))
     )
 
-    # Integration assertions: new router files do not count until production surfaces call them.
+    # Integration assertions: router files do not count until production surfaces call them.
     assert "PageRuntimeRouter(" in android_ui,"ANDROID_ROUTER_NOT_INTEGRATED"
     assert 'Toast.makeText(this,"CAD • LIVE WORKSPACE"' not in android_ui,"ANDROID_NAV_CAD_STILL_TOAST_ONLY"
+    assert "productionPageRouter?.navigate(navId)" in android_ui,"ANDROID_NAV_NOT_ROUTED"
     assert "PageRuntimeRouter(" in desktop_ui,"WINDOWS_ROUTER_NOT_INTEGRATED"
+    assert "productionPageRouter?.navigate(navId)" in desktop_ui,"WINDOWS_NAV_NOT_ROUTED"
     assert 'runtime/page-runtime-router.js' in web_index,"WEB_ROUTER_SCRIPT_NOT_LOADED"
     assert '["AI","#' in web_index or "['AI','#" in web_index,"WEB_AI_PAGE_MISSING"
-    assert "AigPageRuntimeRouter" in web_index,"WEB_ROUTER_NOT_INTEGRATED"
+    assert "new AigPageRuntimeRouter" in web_index,"WEB_ROUTER_NOT_INTEGRATED"
+    assert "navigateProductionPage(name)" in web_index,"WEB_NAV_NOT_ROUTED"
+    assert "productionPageRouter.navigate(navId)" in web_index,"WEB_NAV_NOT_ROUTED_THROUGH_ROUTER"
 
-    print(f"PAGE_RUNTIME_CROSS_PLATFORM_PASS|10_PAGES|{len(expected)}_BUTTONS|ANDROID|WINDOWS|WEB|NAV_AND_COMMAND_IDS|REAL_ROUTER_INTEGRATION")
+    for token in ["preflightReady","fixtureCoverageKnown","SIM_PREFLIGHT_READY_REQUIRED","SIM_FIXTURE_COVERAGE_REQUIRED","safeSimReuse"]:
+        assert token in web_ai,f"WEB_AI_STRICT_REUSE_TOKEN_MISSING:{token}"
+    verify_web_ai_strict_reuse()
+
+    print(f"PAGE_RUNTIME_CROSS_PLATFORM_PASS|10_PAGES|{len(expected)}_BUTTONS|ANDROID|WINDOWS|WEB|NAV_AND_COMMAND_IDS|REAL_ROUTER_INTEGRATION|WEB_AI_STRICT_REUSE")
 
 if __name__=="__main__": main()
