@@ -948,9 +948,12 @@ class MainActivity : Activity() {
         }
         fun addProductionUi(id:String, action:()->Unit) {
             val normalized=ProductionUiSwitchContract.normalize(id)
+            val navId="NAV_"+normalized
+            val viewId=UiDualIdContract.navigationViewId(navId)
             val button=RgbGlowButton(this).apply {
                 text=normalized
-                contentDescription="UI $normalized"
+                tag=viewId
+                contentDescription="$viewId • $navId"
                 textSize=StudioDisplayPolicy.sp(this,9.5f)
                 minWidth=dp(68)
                 minHeight=dp(42)
@@ -959,8 +962,7 @@ class MainActivity : Activity() {
                 setOnClickListener {
                     selectProductionUi(normalized)
                     refreshVisibleMode(normalized)
-                    val navId="NAV_"+normalized
-                    if(PageRuntimeRouter.NAVIGATION.containsKey(navId)) productionPageRouter?.navigate(navId) ?: action() else action()
+                    if(PageRuntimeRouter.NAVIGATION.containsKey(navId)) productionPageRouter?.navigateView(viewId) ?: action() else action()
                 }
             }
             productionUiButtons[normalized]=button

@@ -4825,13 +4825,16 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     )
     fun productionUiButton(id:String,color:Color,action:()->Unit):GlassActionButton {
         val normalized=ProductionUiSwitchContract.normalize(id)
+        val navId="NAV_"+normalized
+        val viewId=UiDualIdContract.navigationViewId(navId)
         return GlassActionButton(normalized,color).apply {
-            toolTipText="正式 UI 切換 • "+normalized
+            name=viewId
+            putClientProperty("aig.buttonId",navId)
+            toolTipText="正式 UI 切換 • $viewId • $navId"
             productionUiButtons[normalized]=this
             addActionListener {
                 productionUiButtons.forEach { (key,b) -> b.active=(key==normalized) }
-                val navId="NAV_"+normalized
-                if(PageRuntimeRouter.NAVIGATION.containsKey(navId)) productionPageRouter?.navigate(navId) ?: action() else action()
+                if(PageRuntimeRouter.NAVIGATION.containsKey(navId)) productionPageRouter?.navigateView(viewId) ?: action() else action()
             }
         }
     }
