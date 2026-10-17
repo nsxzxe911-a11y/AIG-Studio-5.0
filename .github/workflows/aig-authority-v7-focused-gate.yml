@@ -6,6 +6,8 @@ on:
       - work/aig-authority-v7-reverse-engineering
     paths:
       - 'design/ui/**'
+      - 'generated/ui-regions/**'
+      - 'web/authority/**'
       - 'web/runtime/**'
       - 'core/src/main/kotlin/com/aigstudio/core/UiButtonManifestContract.kt'
       - 'core/src/main/kotlin/com/aigstudio/core/AigProductUiContract.kt'
@@ -16,6 +18,7 @@ on:
       - 'ci/verify_ui_region_manifest.py'
       - 'ci/verify_ui_skin_contract.py'
       - 'ci/verify_web_authority_controls.py'
+      - 'ci/verify_web_authority_visual_skin.py'
       - 'ci/verify_reverse_ui_cross_platform_contract.py'
       - '.github/workflows/aig-authority-v7-focused-gate.yml'
   workflow_dispatch:
@@ -59,6 +62,8 @@ jobs:
           fi
       - name: Verify Web native Authority controls
         run: python3 ci/verify_web_authority_controls.py
+      - name: Verify Web Authority visual skin
+        run: python3 ci/verify_web_authority_visual_skin.py
       - name: Verify Android Windows Web semantic consistency
         run: python3 ci/verify_reverse_ui_cross_platform_contract.py
       - name: Compile Core Android Windows product adapters
