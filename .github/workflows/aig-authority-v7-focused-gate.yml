@@ -12,6 +12,7 @@ on:
       - 'ci/verify_aig_product_contract_v1.py'
       - 'ci/verify_ui_region_manifest.py'
       - 'ci/verify_ui_skin_contract.py'
+      - 'ci/verify_web_authority_controls.py'
       - '.github/workflows/aig-authority-v7-focused-gate.yml'
   workflow_dispatch:
 
@@ -45,5 +46,7 @@ jobs:
           else
             echo 'UI_SKIN_CONTRACT_PENDING'
           fi
+      - name: Verify Web native Authority controls
+        run: python3 ci/verify_web_authority_controls.py
       - name: Focused gate summary
         run: echo 'AIG_AUTHORITY_V7_FOCUSED_GATE_PASS'
