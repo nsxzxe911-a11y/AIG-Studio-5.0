@@ -61,7 +61,7 @@ class NcPageRuntime(
     ))
 
     fun ncText():String=program
-    fun customMCodes():Set<String>=installedCustomMCodes.toSet()
+    fun customMCodes():Set<String> = installedCustomMCodes.toSet()
     fun setMachineConnected(connected:Boolean){machineConnected=connected;revision++}
 
     override fun messages():List<PageMessage> = localMessages.toList()
