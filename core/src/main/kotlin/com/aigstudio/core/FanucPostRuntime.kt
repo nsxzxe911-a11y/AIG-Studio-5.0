@@ -26,6 +26,9 @@ object FanucPostRuntime {
         toolNumber:Int=1,
         hNumber:Int=1,
         spindleRpm:Int=2300,
+        toolChangeSubprogram:Int?=null,
+        endSubprogram:Int?=null,
+        programEnd:String="M99",
     ):String {
         require(toolpaths.isNotEmpty()){ "Fanuc post requires toolpath" }
         require(toolpaths.any{p->p.moves.any{!it.rapid}}){ "Fanuc post requires cutting motion" }
@@ -35,11 +38,15 @@ object FanucPostRuntime {
         require(toolNumber in 1..999){ "Tool number must be 1..999" }
         require(hNumber in 1..999){ "H number must be 1..999" }
         require(spindleRpm in 1..99999){ "Spindle RPM must be positive" }
+        toolChangeSubprogram?.let{require(it in 1..9999){"Tool-change subprogram must be 1..9999"}}
+        endSubprogram?.let{require(it in 1..9999){"End subprogram must be 1..9999"}}
+        require(programEnd in setOf("M99","M30")){"Program end must be M99 or M30"}
         return buildString {
             appendLine("%")
             appendLine("O"+programNumber.toString().padStart(4,'0'))
             appendLine("G90 G54")
             appendLine("T$toolNumber M6")
+            toolChangeSubprogram?.let{appendLine("M98 P$it")}
             appendLine("S$spindleRpm M3")
             appendLine("G43 Z${fmt(safeZ)} H$hNumber M8")
             if(compensation!="G40") appendLine(compensation)
@@ -54,9 +61,11 @@ object FanucPostRuntime {
             }
             appendLine("G40")
             appendLine("G0 Z${fmt(safeZ)}")
+            appendLine("G80")
             appendLine("M9")
             appendLine("M5")
-            appendLine("M99")
+            endSubprogram?.let{appendLine("M98 P$it")}
+            appendLine(programEnd)
             append("%")
         }
     }
