@@ -1,0 +1,31 @@
+{
+  "version": "31",
+  "name": "V31 Multi-Axis Render Budget and Real Material Evidence",
+  "origin": "V30 LIVE",
+  "projects": [
+    "AIG-II",
+    "Studio 375"
+  ],
+  "scope": "EXISTING_WEB_RUNTIME_ONLY",
+  "studioLazyWebGL": true,
+  "studioPixelBudget": {
+    "phone": 2600000,
+    "desktop": 4800000
+  },
+  "source": "Existing Runtime canvas and material-removal fields",
+  "doNotClaim": [
+    "0.001mm voxel precision",
+    "CNC machine feedback",
+    "verified collision/precision gate",
+    "native executable acceptance"
+  ],
+  "retained": [
+    "V30 telemetry",
+    "V29 shortcuts",
+    "V28 real controls",
+    "V26 preferences",
+    "V27 navigator",
+    "Original nature portal",
+    "All existing core modules and local NC documents"
+  ]
+}

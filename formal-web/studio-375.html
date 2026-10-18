@@ -171,7 +171,8 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./studio-375-skin.css">
 <link rel="stylesheet" href="./runtime-uiux-v25.css"><link rel="stylesheet" href="./runtime-nav-v27.css"><link rel="stylesheet" href="./runtime-actions-v28.css">
 <link rel="stylesheet" href="./runtime-quick-v29.css">
-<link rel="stylesheet" href="./axis-hud-v30.css"></head>
+<link rel="stylesheet" href="./axis-hud-v30.css">
+<link rel="stylesheet" href="./axis-evidence-v31.css"></head>
 <body>
 <div class="aig-studio-v375-portal-link" role="navigation"><a href="./index.html#dual-projects">← 回 AIG-II 科技網站</a><span>STUDIO 375 · 真實 Web 工作區 · 本機資料與原工作站分開</span><a href="./dual-project-latest.html">雙專案版本與原始碼 ↗</a></div>
 <div class="app">
@@ -1424,7 +1425,20 @@ function makeGlScene(canvas,axis){
  function drawLine(points,color,vp,width=1){
    if(points.length<2)return;const a=[];for(const p of points)a.push(p.x,p.y,p.z);gl.useProgram(lineProg);gl.lineWidth(Math.max(1,width));gl.bindBuffer(gl.ARRAY_BUFFER,lineBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(loc.lp.p);gl.vertexAttribPointer(loc.lp.p,3,gl.FLOAT,false,0,0);gl.uniformMatrix4fv(loc.lp.vp,false,vp);gl.uniform3fv(loc.lp.c,color);gl.drawArrays(gl.LINE_STRIP,0,points.length);
  }
- function resize(){const dpr=Math.min(devicePixelRatio||1,2),r=canvas.getBoundingClientRect(),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);return{w,h,aspect:w/h}}
+ function resize(){
+   // Cap total pixel work on large screens, without altering stock geometry or parser precision.
+   const r=canvas.getBoundingClientRect();
+   const cssW=Math.max(1,r.width),cssH=Math.max(1,r.height),area=cssW*cssH;
+   const phone=window.matchMedia?.("(max-width:800px)")?.matches===true;
+   const pixelBudget=phone?2600000:4800000;
+   const screenDpr=Number(window.devicePixelRatio)||1;
+   const pixelDpr=Math.sqrt(pixelBudget/area);
+   const dpr=Math.max(.5,Math.min(screenDpr,2,pixelDpr));
+   const w=Math.max(1,Math.floor(cssW*dpr)),h=Math.max(1,Math.floor(cssH*dpr));
+   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+   gl.viewport(0,0,w,h);
+   return{w,h,aspect:w/h};
+ }
 
  canvas.addEventListener("pointerdown",e=>{canvas.setPointerCapture(e.pointerId);camera.manualUntil=performance.now()+2600;camera.drag={x:e.clientX,y:e.clientY,yaw:camera.yaw,pitch:camera.pitch}});
  canvas.addEventListener("pointermove",e=>{if(!camera.drag)return;camera.manualUntil=performance.now()+2600;camera.yaw=camera.drag.yaw+(e.clientX-camera.drag.x)*.008;camera.pitch=Math.max(.12,Math.min(1.38,camera.drag.pitch+(e.clientY-camera.drag.y)*.006))});
@@ -3164,7 +3178,20 @@ pages.forEach(([name,color])=>{
  screens.appendChild(s);
 });
 utilityPages.forEach(([name])=>{const s=document.createElement("section");s.className="screen";s.dataset.page=name;s.innerHTML=name==="刀路"?toolpathPage():menuPage();screens.appendChild(s)});
-document.querySelectorAll("[data-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,(el.dataset.runtime||"NC")+" Runtime 初始化",()=>makeRuntime(el),null,"error")});
+/* V31: GPU contexts are created only when a corresponding axis page is opened. */
+const v31AxisRoots=new Map();
+document.querySelectorAll("[data-runtime]").forEach(el=>{
+ aigBindFieldFeedback(el);
+ v31AxisRoots.set(el.dataset.runtime,el);
+});
+function v31EnsureAxisRuntime(axis){
+ const root=v31AxisRoots.get(axis);
+ if(!root||root.dataset.aigInitialized==="true")return;
+ aigGuard(root,axis+" Runtime 延遲初始化",()=>{
+   makeRuntime(root);
+   root.dataset.aigInitialized="true";
+ },null,"warn");
+}
 document.querySelectorAll("[data-home-runtime]").forEach(el=>aigGuard(el,"HOME Runtime 初始化",()=>makeHomeRuntime(el),null,"warn"));
 document.querySelectorAll("[data-sim-hub]").forEach(el=>aigGuard(el,"SIM 中心初始化",()=>makeSimHubRuntime(el),null,"warn"));
 document.querySelectorAll("[data-nc-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"NC Runtime 初始化",()=>makeNcRuntime(el),null,"error")});
@@ -3179,6 +3206,8 @@ function show(name){
  if(!pages.concat(utilityPages).some(p=>p[0]===name))name="HOME";
  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.dataset.page===name));
+ // The active canvas has layout dimensions before its WebGL context is created.
+ if(v31AxisRoots.has(name))v31EnsureAxisRuntime(name);
  history.replaceState(null,"","#"+encodeURIComponent(name));
  setTimeout(()=>window.dispatchEvent(new Event("resize")),0);
 }
@@ -3202,5 +3231,6 @@ aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash
 <script src="./runtime-nav-v27.js"></script>
 <script src="./runtime-actions-v28.js"></script>
 <script src="./runtime-quick-v29.js"></script>
-<script src="./axis-hud-v30.js"></script></body>
+<script src="./axis-hud-v30.js"></script>
+<script src="./axis-evidence-v31.js"></script></body>
 </html>
