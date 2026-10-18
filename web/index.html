@@ -27,7 +27,7 @@ button,textarea,input,select{font:inherit}button{color:inherit}
 .brand{display:flex;align-items:center;gap:9px;min-width:190px}.logo{font-weight:900;font-size:21px;letter-spacing:.04em}
 .brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:.12em}
 .status{margin-left:auto;color:var(--green);font-size:11px;white-space:nowrap}
-.nav{display:grid;grid-template-columns:repeat(9,minmax(72px,1fr));gap:6px;flex:1;max-width:850px}
+.nav{display:grid;grid-template-columns:repeat(10,minmax(64px,1fr));gap:6px;flex:1;max-width:850px}
 .nav button,.btn{border:1px solid #223846;background:linear-gradient(#0d141c,#05080c);border-radius:10px;min-height:40px;cursor:pointer;
  box-shadow:inset 0 1px rgba(255,255,255,.045),0 7px 18px rgba(0,0,0,.35)}
 .nav button:hover,.btn:hover{border-color:#2e6681}
@@ -181,7 +181,7 @@ html,body{background:#020407}
 </div>
 <script>
 const pages=[
- ["HOME","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["SIM","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"],["6AX","#27e9ff"],["NC","#33f39b"]
+ ["HOME","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["SIM","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"],["6AX","#27e9ff"],["NC","#33f39b"],["AI","#9f72ff"]
 ];
 const utilityPages=[["刀路","#ff4da6"],["功能","#9f72ff"]];
 const nav=document.getElementById("nav"),screens=document.getElementById("screens");
@@ -224,13 +224,66 @@ function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div cl
 
 function homePage(){
  return '<div data-home-runtime><div class="workgrid">'+
- '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 356 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
- '<div class="menuGrid"><button class="menuCard" data-open-page="CAD">CAD 製圖</button><button class="menuCard" data-open-page="CAM">CAM 刀路</button><button class="menuCard" data-open-page="SIM">SIM 模擬</button><button class="menuCard" data-open-page="NC">NC 編輯</button><button class="menuCard" data-open-page="刀路">刀路工作頁</button><button class="menuCard" data-open-page="功能">設定 / 工具</button></div>'+
+ '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Offline-first • 0.001 mm • Studio Web</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
+ '<div class="menuGrid"><button class="menuCard" data-open-page="CAD">CAD 製圖</button><button class="menuCard" data-open-page="CAM">CAM 刀路</button><button class="menuCard" data-open-page="SIM">SIM 模擬</button><button class="menuCard" data-open-page="NC">NC 編輯</button><button class="menuCard" data-open-page="AI">AI 本機加工助手</button><button class="menuCard" data-open-page="刀路">刀路工作頁</button><button class="menuCard" data-open-page="功能">設定 / 工具</button></div>'+
  '<div class="runtimeStatus" style="margin-top:9px"><div class="metric"><b>CAD</b><span data-home-cad>0 entities</span></div><div class="metric"><b>CAM</b><span data-home-cam>0 paths</span></div><div class="metric"><b>NC</b><span data-home-nc>0 lines</span></div><div class="metric"><b>Runtime</b><span>LOCAL READY</span></div></div>'+
  '<div class="notice" style="margin-top:9px">正式 Web Runtime 直接進 HOME；工程維修與設定收在功能頁。CNC machine output disabled。</div></div></section>'+
  '<section class="panel"><div class="head"><h3>快速進入真模擬</h3></div><div class="body controls"><button class="btn" data-open-page="3AX">3AX</button><button class="btn" data-open-page="4AX">4AX</button><button class="btn" data-open-page="5AX">5AX</button><button class="btn" data-open-page="6AX">6AX</button></div></section>'+
  '</div></div>';
 }
+
+function aiPage(){
+ return '<div data-ai-runtime><div class="workgrid">'+
+ '<section class="panel"><div class="head"><div><h2>AI 本機加工助手</h2><small>只分析已保存的 CAD / CAM / NC；離線可用</small></div><span class="spacer"></span><span class="badge">LOCAL / READ ONLY</span></div><div class="body">'+
+ '<div class="runtimeStatus"><div class="metric"><b>CAD 實體</b><span data-ai-cad>—</span></div><div class="metric"><b>CAM 刀路</b><span data-ai-cam>—</span></div><div class="metric"><b>NC 行數</b><span data-ai-nc>—</span></div></div>'+
+ '<div class="controls" style="margin-top:12px"><label class="param">分析軸別 <select data-ai-axis><option>3AX</option><option>4AX</option><option>5AX</option><option>6AX</option></select></label><button class="btn play" data-ai-analyze>重新讀取並分析</button></div>'+
+ '<div class="notice" data-ai-summary style="margin-top:12px" role="status" aria-live="polite">準備讀取本機資料</div><ul data-ai-findings style="line-height:1.9;padding-left:24px"></ul>'+
+ '<div class="notice">本功能為離線規則檢視，並非已接入 ChatGPT 的推理模型；不修改 CNC 程式、不發送機台指令，不能取代 NC 解析、碰撞驗證、空跑或現場安全檢查。</div></div></section>'+
+ '<section class="panel"><div class="head"><h3>接續工作</h3></div><div class="body controls"><button class="btn" data-open-page="CAD">回 CAD 製圖</button><button class="btn" data-open-page="CAM">回 CAM 刀路</button><button class="btn" data-open-page="NC">前往 NC 編輯</button><button class="btn" data-open-page="SIM">前往 SIM</button></div></section></div></div>';
+}
+function makeAiRuntime(root){
+ const axisEl=root.querySelector("[data-ai-axis]");
+ const findingsEl=root.querySelector("[data-ai-findings]");
+ function analyze(){
+  const axis=axisEl.value;
+  const cad=aigJsonRead(root,"aig-cad-draft-v1",{shapes:[]},"AI CAD");
+  const cam=aigJsonRead(root,"aig-cam-toolpath-v1",{paths:[]},"AI CAM");
+  const cadCount=Array.isArray(cad?.shapes)?cad.shapes.length:0;
+  const camCount=Array.isArray(cam?.paths)?cam.paths.length:0;
+  const code=String(aigStorageGet(root,"aig-code-"+axis,"",axis+" NC")||"");
+  const lines=code.split(/\r?\n/).filter(line=>line.trim().length>0);
+  const stripped=code.replace(/\([^)]*\)/g,"").replace(/;[^\n]*/g,"").toUpperCase();
+  const findings=[];
+  if(!cadCount)findings.push("CAD 尚未保存圖形；可直接從 NC-first 開始，不強制建立 CAD。");
+  if(!camCount)findings.push("CAM 尚未保存刀路；若採 NC-first，仍可直接進行程式解析與模擬。");
+  if(!lines.length){
+   findings.push(axis+" 尚無已保存的 NC 程式；先到 NC 編輯或軸別頁建立並儲存 G-code。");
+  }else{
+   if(!/\bG90\b/.test(stripped))findings.push("尚未找到明確的 G90 絕對座標指令；請人工確認 G90/G91 模態。");
+   if(!/\bG5[4-9]\b/.test(stripped))findings.push("尚未找到 G54～G59 工作座標指令；請確認工件座標系。");
+   if(!/\bG43\b/.test(stripped))findings.push("尚未找到 G43 刀長補償；若使用刀長補償，請核對 H 號與換刀流程。");
+   if(/\bG91\b/.test(stripped))findings.push("發現 G91 增量模式；請確認後續座標切換符合預期。");
+   if(/\bG4[12]\b/.test(stripped)&&!/\bG40\b/.test(stripped))findings.push("發現 G41/G42，但未找到 G40 取消刀補；請檢查刀補生命週期。");
+   if(/\bG0\b[^\n]*\bZ\s*-/.test(stripped))findings.push("發現快速移動 G0 到負 Z；請核對夾具與安全高度。");
+   if(/\bM98\s*P\s*4\b/.test(stripped)&&!/\bO0*4\b/.test(stripped))findings.push("有 M98 P4，但本段程式未含 O4 定義；如為外部子程式請另行核對。");
+   if(/\bM98\s*P\s*5\b/.test(stripped)&&!/\bO0*5\b/.test(stripped))findings.push("有 M98 P5，但本段程式未含 O5 定義；如為外部子程式請另行核對。");
+   if(axis==="3AX"&&/\b[ABC]\s*[-+]?\d/.test(stripped))findings.push("在 3AX 程式中偵測到旋轉軸 A/B/C 指令，請確認軸別。");
+   if(axis==="4AX"&&/\b[BC]\s*[-+]?\d/.test(stripped))findings.push("在 4AX 程式中偵測到 B/C 指令，請確認機台可用軸。");
+   if(axis==="5AX"&&/\bC\s*[-+]?\d/.test(stripped))findings.push("在 5AX 程式中偵測到 C 指令，請確認機台軸數與運動學。");
+  }
+  root.querySelector("[data-ai-cad]").textContent=String(cadCount);
+  root.querySelector("[data-ai-cam]").textContent=String(camCount);
+  root.querySelector("[data-ai-nc]").textContent=String(lines.length);
+  root.querySelector("[data-ai-summary]").textContent=axis+"｜已分析 "+lines.length+" 行已保存 NC｜"+findings.length+" 項待確認（僅供參考）";
+  findingsEl.replaceChildren();
+  if(!findings.length)findings.push("未命中此工作台的基本提醒；不代表 G-code 已安全或驗證通過。");
+  for(const item of findings){const li=document.createElement("li");li.textContent=item;findingsEl.appendChild(li)}
+ }
+ root.querySelector("[data-ai-analyze]").addEventListener("click",()=>aigGuard(root,"AI 本機讀取",analyze,null,"warn"));
+ axisEl.addEventListener("change",()=>aigGuard(root,"AI 軸別切換",analyze,null,"warn"));
+ analyze();
+}
+
 function simHubPage(){
  return '<div data-sim-hub><section class="panel"><div class="head"><div><h2>SIM 模擬中心</h2><small>共用現有真 3D / 材料移除 Runtime，不建立假模擬</small></div></div><div class="body">'+
  '<div class="menuGrid">'+["3AX","4AX","5AX","6AX"].map(a=>'<button class="menuCard" data-open-page="'+a+'" data-sim-axis="'+a+'"><b>'+a+'</b><span data-sim-state="'+a+'">READY</span></button>').join("")+'</div>'+
@@ -3097,7 +3150,7 @@ function makeMenuRuntime(root){
 pages.forEach(([name,color])=>{
  const b=document.createElement("button");b.textContent=name;b.dataset.page=name;b.style.setProperty("--accent",color);b.onclick=()=>aigGuard(document.body,"頁面切換",()=>show(name),null,"warn");nav.appendChild(b);
  const s=document.createElement("section");s.className="screen";s.dataset.page=name;
- s.innerHTML=name==="HOME"?homePage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="SIM"?simHubPage():name==="NC"?ncPage():simPage(name);
+ s.innerHTML=name==="HOME"?homePage():name==="CAD"?cadPage():name==="CAM"?camPage():name==="SIM"?simHubPage():name==="NC"?ncPage():name==="AI"?aiPage():simPage(name);
  screens.appendChild(s);
 });
 utilityPages.forEach(([name])=>{const s=document.createElement("section");s.className="screen";s.dataset.page=name;s.innerHTML=name==="刀路"?toolpathPage():menuPage();screens.appendChild(s)});
@@ -3108,6 +3161,7 @@ document.querySelectorAll("[data-nc-runtime]").forEach(el=>{aigBindFieldFeedback
 document.querySelectorAll("[data-cad-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"CAD Runtime 初始化",()=>makeCadRuntime(el),null,"error")});
 document.querySelectorAll("[data-cam-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"CAM Runtime 初始化",()=>makeCamRuntime(el),null,"error")});
 document.querySelectorAll("[data-tp-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"刀路 Runtime 初始化",()=>makeToolpathRuntime(el),null,"error")});
+document.querySelectorAll("[data-ai-runtime]").forEach(el=>aigGuard(el,"AI 本機助手初始化",()=>makeAiRuntime(el),null,"warn"));
 document.querySelectorAll("[data-menu-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"功能選單初始化",()=>makeMenuRuntime(el),null,"error")});
 aigApplyAdvancedVisibility();
 function show(name){
