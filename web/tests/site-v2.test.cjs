@@ -15,7 +15,7 @@ test('website source and live Render formal-web mirror are identical',()=>{
 
 test('homepage is an editorial website and does not open an engineering shell',()=>{
  const h=read('formal-web','index.html');
- for(const token of ['<header class="site-container brand-row">','class="notice-ribbon"','class="quick-path"',
+ for(const token of ['<header class="site-container brand-row">','site-container notice-ribbon','class="quick-path"',
   'class="guide-teasers"','class="sidebar"','技術知識庫','網站更新','site-v2.css']){
   assert.ok(h.includes(token),'missing: '+token);
  }
