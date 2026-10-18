@@ -56,7 +56,7 @@ test('changelog cites verifiable previous deployment and warns about independent
 });
 test('Site 2.0 is fully cached and JavaScript has valid parse trees',()=>{
  const worker=read('formal-web','service-worker.js');
- assert.match(worker,/aig-ii-axis-workstations-20261018-v11/);
+ assert.match(worker,/aig-ii-axis-fidelity-20261018-v12/);
  for(const p of ['index.html','guide.html','updates.html','site-v2.css','mobile-runtime.html']){
   assert.ok(worker.includes('"./'+p+'"'),'not cached: '+p);
  }

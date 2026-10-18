@@ -1,0 +1,35 @@
+/* AIG-II axis cutting display fidelity controls
+ * Display grid ≠ NC coordinate precision. Never label voxels as 0.001 mm.
+ */
+html[data-aig-project="AIGII"] .axisModuleHeader .axisQuality{
+ display:flex;align-items:center;gap:4px;padding:4px;
+ border:1px solid #3e7393;background:#071729;border-radius:11px;
+}
+html[data-aig-project="AIGII"] .axisQuality button{
+ border:1px solid transparent;border-radius:8px;
+ padding:8px 12px;min-height:40px;background:transparent;
+ color:#bdd8e8;font-size:12px;font-weight:750;cursor:pointer;
+}
+html[data-aig-project="AIGII"] .axisQuality button:hover{
+ border-color:#6dbbdf;color:#fff;
+}
+html[data-aig-project="AIGII"] .axisQuality button[aria-pressed="true"]{
+ color:#fff;border-color:#6dd6f9;background:linear-gradient(130deg,#1a6592,#303477);
+ box-shadow:0 0 12px #3198cf55;
+}
+html[data-aig-project="AIGII"] .axisModule .runtimeStatus [data-cut-resolution]{
+ color:#96e5fc;font-variant-numeric:tabular-nums;font-size:11px;
+}
+html[data-aig-project="AIGII"] .axisModule .runtimeStatus [data-frame-resolution]{
+ color:#bddbeb;font-variant-numeric:tabular-nums;
+}
+html[data-aig-project="AIGII"] .axisModule .sceneWrap canvas{
+ image-rendering:auto;
+}
+@media(max-width:1100px){
+ html[data-aig-project="AIGII"] .axisModuleHeader .axisQuality{flex:1 0 100%;justify-content:stretch}
+ html[data-aig-project="AIGII"] .axisQuality button{flex:1}
+}
+@media(max-width:600px){
+ html[data-aig-project="AIGII"] .axisQuality button{font-size:11px;min-height:38px}
+}

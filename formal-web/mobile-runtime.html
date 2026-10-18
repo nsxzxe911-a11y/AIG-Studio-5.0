@@ -174,6 +174,7 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./phase4.css">
 <link rel="stylesheet" href="./authority/aigii-runtime-visual-v2.css">
 <link rel="stylesheet" href="./authority/aigii-axis-module-v3.css">
+<link rel="stylesheet" href="./authority/aigii-axis-fidelity-v4.css">
 </head>
 <body>
 <div class="app">
@@ -335,11 +336,15 @@ function simPage(axis){
  '<div class="axisSubpages" role="group" aria-label="'+axis+' 工作頁">'+
  '<button type="button" data-axis-subpage="MACHINE" data-button-id="BTN_'+axis+'_MACHINE" data-command-id="AXIS_VIEW_MACHINE" aria-pressed="true">機台 / 動畫</button>'+
  '<button type="button" data-axis-subpage="NC_FIRST" data-button-id="BTN_'+axis+'_NC_FIRST" data-command-id="AXIS_VIEW_NC_FIRST" aria-pressed="false">NC-first / 程式</button>'+
+ '</div><div class="axisQuality" role="group" aria-label="'+axis+' 3D 品質">'+
+ '<button type="button" data-render-quality="FAST" data-button-id="BTN_'+axis+'_QUALITY_FAST" data-command-id="SET_VISUAL_FAST" aria-pressed="false">流暢</button>'+
+ '<button type="button" data-render-quality="BALANCED" data-button-id="BTN_'+axis+'_QUALITY_BALANCED" data-command-id="SET_VISUAL_BALANCED" aria-pressed="false">標準</button>'+
+ '<button type="button" data-render-quality="DETAIL" data-button-id="BTN_'+axis+'_QUALITY_DETAIL" data-command-id="SET_VISUAL_DETAIL" aria-pressed="false">細緻</button>'+
  '</div></div>';
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":axis==="6AX"?"/A/B/C":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
  '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' '+module.name+'<small>'+module.machine+' · 可拖曳旋轉相機</small></div></div>'+
  '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button>'+cameraControls+'</div><div class="notice" data-motion-legend>RAPID 快移 • ENTRY 進刀 • CUT 切削 • EXIT 退刀 • RETRACT 抬刀 • AVOID 夾具閃避</div>'+
- '<div class="runtimeStatus"><div class="metric"><b>CAMERA</b><span data-camera-mode>STOCK CENTER</span></div><div class="metric"><b>VIEW ZOOM</b><span data-camera-zoom>AUTO x2.55</span></div><div class="metric"><b>NEXT VIEW</b><span data-lookahead-state>LOOKAHEAD OFF</span></div><div class="metric"><b>SAFE FRAME</b><span data-safe-frame-state>SAFE CENTER</span></div><div class="metric"><b>VISIBILITY</b><span data-occlusion-state>CLEAR</span></div><div class="metric"><b>VIEW DEPTH</b><span data-depth-cue>FLAT</span></div><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>RECENT CUT</b><span data-cut-trail>0 / last 3</span></div><div class="metric"><b>TOOL CONTACT</b><span data-contact-state>OPEN</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>3D 顯示</b><span data-renderer>初始化</span></div><div class="metric" data-advanced-only><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric" data-advanced-only><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
+ '<div class="runtimeStatus"><div class="metric"><b>CAMERA</b><span data-camera-mode>STOCK CENTER</span></div><div class="metric"><b>VIEW ZOOM</b><span data-camera-zoom>AUTO x2.55</span></div><div class="metric"><b>NEXT VIEW</b><span data-lookahead-state>LOOKAHEAD OFF</span></div><div class="metric"><b>SAFE FRAME</b><span data-safe-frame-state>SAFE CENTER</span></div><div class="metric"><b>VISIBILITY</b><span data-occlusion-state>CLEAR</span></div><div class="metric"><b>VIEW DEPTH</b><span data-depth-cue>FLAT</span></div><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>RECENT CUT</b><span data-cut-trail>0 / last 3</span></div><div class="metric"><b>TOOL CONTACT</b><span data-contact-state>OPEN</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>3D 顯示</b><span data-renderer>初始化</span></div><div class="metric"><b>網格解析度</b><span data-cut-resolution>待初始化</span></div><div class="metric"><b>畫面解析度</b><span data-frame-resolution>待初始化</span></div><div class="metric" data-advanced-only><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric" data-advanced-only><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
  '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label><label class="param">刃長<input data-cutter-len type="number" value="30" min="1" step="0.1"></label><label class="param">刀柄 Ø<input data-holder-dia type="number" value="25" min="1" step="0.1"></label><label class="param">刀柄長<input data-holder-len type="number" value="25" min="1" step="0.1"></label><label class="param">G54 X<input data-g54-x type="number" value="0" step="0.001"></label><label class="param">G54 Y<input data-g54-y type="number" value="0" step="0.001"></label><label class="param">G54 Z<input data-g54-z type="number" value="0" step="0.001"></label><label class="param">G55 X<input data-g55-x type="number" value="0" step="0.001"></label><label class="param">G55 Y<input data-g55-y type="number" value="0" step="0.001"></label><label class="param">G55 Z<input data-g55-z type="number" value="0" step="0.001"></label><label class="param">H1<input data-h1 type="number" value="0" step="0.001"></label><label class="param">H4<input data-h4 type="number" value="0" step="0.001"></label><label class="param">H12<input data-h12 type="number" value="0" step="0.001"></label></div>'+
  '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+sourceCode[axis]+'</textarea></div>'+
@@ -1139,6 +1144,9 @@ function makeGlScene(canvas,axis){
  const gl=canvas.getContext("webgl",{antialias:true,alpha:false,preserveDrawingBuffer:false});
  if(!gl)return null;
  let lost=false;canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();lost=true});canvas.addEventListener("webglcontextrestored",()=>{lost=false});
+ // Rendering grid density and canvas resolution are independent of 0.001 mm NC coordinates.
+ const FIDELITY=Object.freeze({FAST:{height:40,xy:26,z:16,dpr:1.5,pixels:1800000,steps:56},BALANCED:{height:64,xy:38,z:24,dpr:2,pixels:3200000,steps:88},DETAIL:{height:104,xy:56,z:36,dpr:3,pixels:8200000,steps:140}});
+ let quality=(typeof window!=="undefined"&&window.matchMedia&&window.matchMedia("(max-width: 800px)").matches)?"BALANCED":"DETAIL";
  const camera={yaw:-.72,pitch:.58,zoom:2.55,userZoom:2.55,zoomTarget:2.55,zoomHoldUntil:0,zoomMode:"AUTO TRACK",lookaheadOffset:{x:0,y:0,z:0},lookaheadTarget:{x:0,y:0,z:0},lookaheadHoldUntil:0,lookaheadMode:"LOOKAHEAD OFF",safeFrameOffset:{x:0,y:0,z:0},safeFrameTarget:{x:0,y:0,z:0},safeFrameHoldUntil:0,safeFrameMode:"SAFE CENTER",drag:null,follow:(axis==="5AX"||axis==="6AX"),avoid:(axis==="5AX"||axis==="6AX"),focus:null,lastDepthCue:"FLAT",lastDepthDot:0,lastFrameMs:0,lastResponse:null,lastResponseLabel:"TRACK",manualUntil:0,avoidYaw:0,avoidPitch:0,avoidTargetYaw:0,avoidTargetPitch:0,avoidTargetValid:false,avoidHoldUntil:0,avoidSwitchCount:0,lastAvoidDecision:"CLEAR",lastOcclusion:{blocked:false,count:0,reason:"CLEAR"},lastVisibility:"CLEAR"};
 
  function shader(type,src){
@@ -1156,7 +1164,7 @@ function makeGlScene(canvas,axis){
  }
  const meshProg=program(
   'attribute vec3 aP;attribute vec3 aN;uniform mat4 uMVP;uniform mat4 uM;varying vec3 vN;void main(){gl_Position=uMVP*vec4(aP,1.0);vN=mat3(uM)*aN;}',
-  'precision mediump float;uniform vec3 uC;varying vec3 vN;void main(){vec3 n=normalize(vN);float d=.30+.70*max(dot(n,normalize(vec3(.35,.55,.78))),0.0);gl_FragColor=vec4(uC*d,1.0);}'
+  'precision mediump float;uniform vec3 uC;varying vec3 vN;void main(){vec3 n=normalize(vN);vec3 key=normalize(vec3(.35,.55,.78));float d=max(dot(n,key),0.0);float fill=max(dot(n,normalize(vec3(-.7,-.3,.5))),0.0);float light=.26+.59*d+.12*fill;float highlight=pow(max(dot(n,normalize(vec3(.20,.40,.89))),0.0),14.0)*.12;gl_FragColor=vec4(min(uC*light+vec3(highlight),vec3(1.0)),1.0);}'
  );
  const lineProg=program(
   'attribute vec3 aP;uniform mat4 uVP;void main(){gl_Position=uVP*vec4(aP,1.0);}',
@@ -1261,7 +1269,7 @@ function makeGlScene(canvas,axis){
  }
  const cube=mesh(cubeData()),stockShell=mesh(openBoxData()),cyl=mesh(cylinderData());
  const heightPb=gl.createBuffer(),heightNb=gl.createBuffer();
- const removalCache={parsed:null,key:"",n:38,base:null,completed:0,cellX:1,cellY:1,minX:0,minY:0,stockH:1,toolDia:0};
+ const removalCache={parsed:null,key:"",n:FIDELITY[quality].height,base:null,completed:0,cellX:1,cellY:1,minX:0,minY:0,stockH:1,toolDia:0};
  let lastRemoval={depth:0,volume:0};
  function sceneToolSignature(scene){
    const map=scene?.toolDiameters||{},pairs=Object.keys(map).sort((a,b)=>Number(a)-Number(b)).map(k=>k+":"+Number(map[k]||0).toFixed(4));
@@ -1288,7 +1296,7 @@ function makeGlScene(canvas,axis){
  function cutSample(heights,p,toolRadius){
    if(!p||!Number.isFinite(p.X)||!Number.isFinite(p.Y)||!Number.isFinite(p.Z)||p.Z>=removalCache.stockTop)return;
    const n=removalCache.n,cellX=removalCache.cellX,cellY=removalCache.cellY,minX=removalCache.minX,minY=removalCache.minY;
-   const z=Math.max(removalCache.stockBottom+.15,Math.min(removalCache.stockTop,p.Z));
+   const z=Math.max(removalCache.stockBottom,Math.min(removalCache.stockTop,p.Z));
    const ix0=Math.max(0,Math.floor((p.X-toolRadius-minX)/cellX)),ix1=Math.min(n-1,Math.ceil((p.X+toolRadius-minX)/cellX));
    const iy0=Math.max(0,Math.floor((p.Y-toolRadius-minY)/cellY)),iy1=Math.min(n-1,Math.ceil((p.Y+toolRadius-minY)/cellY));
    const r2=toolRadius*toolRadius;
@@ -1307,8 +1315,8 @@ function makeGlScene(canvas,axis){
    if(!bl?.cutting||tEnd<=0)return;
    const toolRadius=Math.max(.05,sceneBlockToolDia(scene,bl)/2);
    const dx=(bl.to.X||0)-(bl.from.X||0),dy=(bl.to.Y||0)-(bl.from.Y||0),dz=(bl.to.Z||0)-(bl.from.Z||0);
-   const dist=Math.hypot(dx,dy,dz),spacing=Math.max(.2,Math.min(removalCache.cellX,removalCache.cellY,toolRadius*.35));
-   const steps=Math.max(1,Math.min(500,Math.ceil(dist*Math.max(.01,tEnd)/spacing)));
+   const dist=Math.hypot(dx,dy,dz),spacing=Math.max(.08,Math.min(removalCache.cellX,removalCache.cellY,toolRadius*.25));
+   const steps=Math.max(1,Math.min(quality==="DETAIL"?1600:quality==="BALANCED"?1000:500,Math.ceil(dist*Math.max(.01,tEnd)/spacing)));
    for(let i=0;i<=steps;i++){
      const t=tEnd*i/steps;
      cutSample(heights,scene.sampleBlock(bl,t),toolRadius);
@@ -1353,7 +1361,7 @@ function makeGlScene(canvas,axis){
  }
 
  const voxelPb=gl.createBuffer(),voxelNb=gl.createBuffer();
- const voxelCache={parsed:null,key:"",nx:24,ny:24,nz:14,base:null,completed:0,minX:0,minY:0,minZ:0,stockTop:0,stockBottom:-1,sx:1,sy:1,sz:1,stockH:1,toolDia:0,initialCount:0};
+ const voxelCache={parsed:null,key:"",nx:FIDELITY[quality].xy,ny:FIDELITY[quality].xy,nz:FIDELITY[quality].z,base:null,completed:0,minX:0,minY:0,minZ:0,stockTop:0,stockBottom:-1,sx:1,sy:1,sz:1,stockH:1,toolDia:0,initialCount:0};
 
  function resetVoxel(scene,minX,minY,spanX,spanY,stockTop,stockBottom){
    const v=voxelCache,stockH=stockTop-stockBottom;
@@ -1374,7 +1382,12 @@ function makeGlScene(canvas,axis){
    const tip=inverseRotABPoint({x:p.X,y:p.Y,z:p.Z},a,b,c);
    let ax=inverseRotABVector({x:0,y:0,z:1},a,b,c),alen=Math.hypot(ax.x,ax.y,ax.z)||1;ax={x:ax.x/alen,y:ax.y/alen,z:ax.z/alen};
    const r=Math.max(.05,sceneBlockToolDia(scene,bl)/2),r2=r*r,flute=Math.max(1,Number(scene.cutterLen)||30);
-   for(let iz=0;iz<voxelCache.nz;iz++)for(let iy=0;iy<voxelCache.ny;iy++)for(let ix=0;ix<voxelCache.nx;ix++){
+   const v=voxelCache,tipEnd={x:tip.x+ax.x*flute,y:tip.y+ax.y*flute,z:tip.z+ax.z*flute};
+   // Search only voxels near the tool envelope; full-volume passes were too expensive for high detail.
+   const ix0=Math.max(0,Math.floor((Math.min(tip.x,tipEnd.x)-r-v.minX)/v.sx)),ix1=Math.min(v.nx-1,Math.ceil((Math.max(tip.x,tipEnd.x)+r-v.minX)/v.sx));
+   const iy0=Math.max(0,Math.floor((Math.min(tip.y,tipEnd.y)-r-v.minY)/v.sy)),iy1=Math.min(v.ny-1,Math.ceil((Math.max(tip.y,tipEnd.y)+r-v.minY)/v.sy));
+   const iz0=Math.max(0,Math.floor((Math.min(tip.z,tipEnd.z)-r-v.minZ)/v.sz)),iz1=Math.min(v.nz-1,Math.ceil((Math.max(tip.z,tipEnd.z)+r-v.minZ)/v.sz));
+   for(let iz=iz0;iz<=iz1;iz++)for(let iy=iy0;iy<=iy1;iy++)for(let ix=ix0;ix<=ix1;ix++){
      const k=voxelIndex(ix,iy,iz);if(!occ[k])continue;
      const c=voxelCenter(ix,iy,iz),rx=c.x-tip.x,ry=c.y-tip.y,rz=c.z-tip.z;
      const q=rx*ax.x+ry*ax.y+rz*ax.z;
@@ -1388,8 +1401,8 @@ function makeGlScene(canvas,axis){
    const dx=(bl.to.X||0)-(bl.from.X||0),dy=(bl.to.Y||0)-(bl.from.Y||0),dz=(bl.to.Z||0)-(bl.from.Z||0);
    const drot=Math.abs((bl.to.A||0)-(bl.from.A||0))+Math.abs((bl.to.B||0)-(bl.from.B||0))+Math.abs((bl.to.C||0)-(bl.from.C||0));
    const travel=Math.hypot(dx,dy,dz)+drot*Math.max(voxelCache.sx,voxelCache.sy)*.15;
-   const blockToolDia=sceneBlockToolDia(scene,bl),spacing=Math.max(.6,Math.min(voxelCache.sx,voxelCache.sy,voxelCache.sz,Math.max(.2,blockToolDia*.3)));
-   const steps=Math.max(1,Math.min(48,Math.ceil(travel*Math.max(.02,tEnd)/spacing)));
+   const blockToolDia=sceneBlockToolDia(scene,bl),spacing=Math.max(.13,Math.min(voxelCache.sx,voxelCache.sy,voxelCache.sz,Math.max(.2,blockToolDia*.24)));
+   const steps=Math.max(1,Math.min(FIDELITY[quality].steps,Math.ceil(travel*Math.max(.02,tEnd)/spacing)));
    for(let i=0;i<=steps;i++)voxelCutSample(occ,scene.sampleBlock(bl,tEnd*i/steps),scene,bl);
  }
  function voxelStock(scene,minX,minY,spanX,spanY,stockTop,stockBottom){
@@ -1443,7 +1456,15 @@ function makeGlScene(canvas,axis){
  function drawLine(points,color,vp,width=1){
    if(points.length<2)return;const a=[];for(const p of points)a.push(p.x,p.y,p.z);gl.useProgram(lineProg);gl.lineWidth(Math.max(1,width));gl.bindBuffer(gl.ARRAY_BUFFER,lineBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(loc.lp.p);gl.vertexAttribPointer(loc.lp.p,3,gl.FLOAT,false,0,0);gl.uniformMatrix4fv(loc.lp.vp,false,vp);gl.uniform3fv(loc.lp.c,color);gl.drawArrays(gl.LINE_STRIP,0,points.length);
  }
- function resize(){const dpr=Math.min(devicePixelRatio||1,2),r=canvas.getBoundingClientRect(),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);return{w,h,aspect:w/h}}
+ function resize(){
+   const cfg=FIDELITY[quality],r=canvas.getBoundingClientRect();
+   const cssArea=Math.max(1,r.width*r.height);
+   const dpr=Math.max(1,Math.min(devicePixelRatio||1,cfg.dpr,Math.sqrt(cfg.pixels/cssArea)));
+   const w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));
+   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+   gl.viewport(0,0,w,h);
+   return{w,h,aspect:w/h};
+ }
 
  canvas.addEventListener("pointerdown",e=>{canvas.setPointerCapture(e.pointerId);camera.manualUntil=performance.now()+2600;camera.drag={x:e.clientX,y:e.clientY,yaw:camera.yaw,pitch:camera.pitch}});
  canvas.addEventListener("pointermove",e=>{if(!camera.drag)return;camera.manualUntil=performance.now()+2600;camera.yaw=camera.drag.yaw+(e.clientX-camera.drag.x)*.008;camera.pitch=Math.max(.12,Math.min(1.38,camera.drag.pitch+(e.clientY-camera.drag.y)*.006))});
@@ -1602,7 +1623,20 @@ function makeGlScene(canvas,axis){
      return true;
    }catch(e){camera.lastRenderError=String(e?.stack||e||"UNKNOWN_RENDER_ERROR");return false}
  }
- return{render,camera,getRemoval:()=>({...lastRemoval})};
+ function setQuality(next){
+   if(!Object.prototype.hasOwnProperty.call(FIDELITY,next)||next===quality)return false;
+   quality=next;
+   removalCache.n=FIDELITY[quality].height;removalCache.parsed=null;removalCache.base=null;removalCache.completed=0;
+   voxelCache.nx=FIDELITY[quality].xy;voxelCache.ny=FIDELITY[quality].xy;voxelCache.nz=FIDELITY[quality].z;
+   voxelCache.parsed=null;voxelCache.base=null;voxelCache.completed=0;
+   return true;
+ }
+ function getFidelity(){
+   const cell=axis==="3AX"?[removalCache.cellX,removalCache.cellY,null]:[voxelCache.sx,voxelCache.sy,voxelCache.sz];
+   return{quality,grid:axis==="3AX"?removalCache.n+"×"+removalCache.n:voxelCache.nx+"×"+voxelCache.ny+"×"+voxelCache.nz,
+    cell,frame:canvas.width+"×"+canvas.height};
+ }
+ return{render,camera,getRemoval:()=>({...lastRemoval}),getFidelity,setQuality};
 }
 
 function buildAdaptive2DPaths(shape,p,levels){
@@ -1647,6 +1681,18 @@ function buildAdaptive2DPaths(shape,p,levels){
 }
 
 function makeRuntime(root){
+ const qualityButtons=[...root.querySelectorAll("[data-render-quality]")];
+ const setQualityUi=()=>{
+  const current=glScene?.getFidelity?.().quality||"BALANCED";
+  for(const b of qualityButtons)b.setAttribute("aria-pressed",String(b.dataset.renderQuality===current));
+ };
+ root.addEventListener("click",event=>{
+  const b=event.target.closest("[data-render-quality]");
+  if(!b||!root.contains(b))return;
+  if(glScene?.setQuality?.(b.dataset.renderQuality)){
+   setQualityUi();draw();updateUi();
+  }
+ });
  const subpageButtons=[...root.querySelectorAll("[data-axis-subpage]")];
  root.addEventListener("click",event=>{
   const btn=event.target.closest("[data-axis-subpage]");
@@ -1928,6 +1974,11 @@ function makeRuntime(root){
     }
   });
   const rendererEl=root.querySelector("[data-renderer]");if(rendererEl){rendererEl.textContent=webglOk?(axis==="3AX"?"WEBGL 3D + HEIGHTFIELD":"WEBGL 3D + ROTARY VOXEL"):"2D FALLBACK";rendererEl.dataset.renderError=webglOk?"":String(glScene?.camera?.lastRenderError||"")}
+  const fidelity=glScene?.getFidelity?.();
+  const gridEl=root.querySelector("[data-cut-resolution]"),frameEl=root.querySelector("[data-frame-resolution]");
+  if(gridEl)gridEl.textContent=webglOk&&fidelity?fidelity.grid+" 格 / "+fidelity.cell.filter(Number.isFinite).map(v=>v.toFixed(3)).join("×")+" mm/格":"3D 不可用";
+  if(frameEl)frameEl.textContent=webglOk&&fidelity?fidelity.frame+" px":"3D 不可用";
+  if(typeof setQualityUi==="function")setQualityUi();
   const ev=glScene?.getRemoval?.()||{volume:0,depth:0},cfgEvidence=settings(),envEvidence=runtimeStockEnvelope(state.parsed,cfgEvidence);
   const initialVolume=Math.max(0,envEvidence.spanX*envEvidence.spanY*envEvidence.stockH);
   const removedVolume=Math.max(0,Math.min(initialVolume,webglOk&&!state.dry?Number(ev.volume)||0:0));

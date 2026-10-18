@@ -1,6 +1,6 @@
 /* AIG-II public website + separately routed CNC workbench.
    Cache the actual portal and runtime; no engineering gallery in the startup path. */
-const CACHE="aig-ii-axis-workstations-20261018-v11";
+const CACHE="aig-ii-axis-fidelity-20261018-v12";
 const SHELL=[
   "./","./index.html","./guide.html","./updates.html","./faq.html","./project-sync.html","./site.css","./site-v2.css","./site-v21.css","./site-phase4.css","./project-sync.css","./site.js","./site-v21.js","./project-transfer.js","./project-sync.js","./phase4.css","./mobile-runtime.html","./manifest.webmanifest",
   "./runtime/page-runtime-router.js","./runtime/ai-page-runtime.js",
@@ -10,6 +10,7 @@ const SHELL=[
   "./authority/aigii-rgb-glass-runtime-20261018-v1.css",
   "./authority/aigii-runtime-visual-v2.css",
   "./authority/aigii-axis-module-v3.css",
+  "./authority/aigii-axis-fidelity-v4.css",
   "./site-dual-v2.css",
   "./authority/aigii-rgb-glass-style-20261018-v1.json"
 ];
