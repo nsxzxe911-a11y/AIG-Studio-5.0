@@ -1,0 +1,14 @@
+{
+  "version": "49.0.0",
+  "checks": {
+    "bothInlineRuntimeSyntax": "PASS",
+    "CSSBraces": "PASS",
+    "allTenNavUnchanged": "PASS",
+    "realButtonsRetained": "PASS",
+    "noStorageMigration": "PASS",
+    "offlineShellUpdated": "PASS"
+  },
+  "liveBrowser": "PENDING",
+  "realPhone": "PENDING",
+  "machineSafety": "NOT_CERTIFIED"
+}
