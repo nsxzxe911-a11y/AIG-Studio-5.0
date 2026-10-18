@@ -3,7 +3,7 @@
   "styleId": "AIGII-RGB-GLASS-20261018-STYLE-V1",
   "approvedAt": "2026-10-18",
   "approvedRole": "STYLE_REFERENCE_ONLY",
-  "originalStyleConcept": "2025-10-05 19:00 AIG RGB aesthetic",
+  "originalStyleConcept": "10/05 19:00 AIG RGB aesthetic (year not asserted)",
   "registeredReference": {
     "id": "IMG-AIGII-STYLE-HOME-20261018-V1",
     "sha256": "d179764f4f9a7edfc6218978cdb30680fb2bd55a4eeff19386726cb6df3fe607",
@@ -92,7 +92,8 @@
     "axesViewportMinPercent": 65,
     "axesViewportMaxPercent": 75,
     "callbackRequired": true,
-    "modeledMachineCannotBeStaticStandIn": true
+    "modeledMachineCannotBeStaticStandIn": true,
+    "runtimeTextMustNotUseDemoImageContent": true
   },
   "gate": {
     "style": "APPROVED",
