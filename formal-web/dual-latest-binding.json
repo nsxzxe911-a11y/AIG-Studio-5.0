@@ -36,7 +36,7 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V52 read-only CAM→SIM/NC evidence; manual 3AX candidate preview and explicit clipboard copy only. SIM/NC not auto-verified or overwritten.",
+  "notes": "V52 candidate-only CAM→SIM/NC preflight, hardened against stale CAM segment rpm, safeZ, routeMode, sourceId and XY points; no NC auto-apply.",
   "sharedWebRelease": {
     "version": "52.0.0",
     "train": "V52",

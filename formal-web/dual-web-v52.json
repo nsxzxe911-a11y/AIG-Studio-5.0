@@ -115,7 +115,9 @@
     "v52Source": "BOTH_HTML_JS_PARSE_PASS",
     "v52LiveBrowser": "PENDING",
     "v52SimMaterialRemoval": "NOT_CONNECTED",
-    "v52NcSafety": "NOT_VERIFIED"
+    "v52NcSafety": "NOT_VERIFIED",
+    "v52PathMetadata": "24_PASS_STALE_METADATA_REJECTED",
+    "v52MachineSafety": "NOT_CERTIFIED"
   },
   "note": "V34 common Web runtime train is synchronized across 2 pages. Native AIG-II 432.0.0 and Studio 375.0.0 are NOT numerically unified nor verified as a joint native build.",
   "commonAxisModule": "axis-machine-v35.js",
@@ -311,5 +313,13 @@
     "missing": "SIM real material-removal replay from CAM; NC parser and machine-specific post; real device screenshots",
     "storage": "read-only",
     "machineOutput": false
+  },
+  "v52Hardening": {
+    "reason": "Independent regression found stale CAM segment rpm/safeZ/routeMode/points accepted by NC candidate preflight",
+    "tests": 24,
+    "passed": 24,
+    "output": "NC_CANDIDATE_ONLY",
+    "realDevice": "PENDING",
+    "machineSafety": "NOT_CERTIFIED"
   }
 }

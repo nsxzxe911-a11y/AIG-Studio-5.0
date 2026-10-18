@@ -37,6 +37,19 @@ function inspect(v){
    const pairs=[[path.nodes[0].x,prev.x],[path.nodes[0].y,prev.y],[path.nodes[0].z,prev.z],
     [path.nodes[1].x,x],[path.nodes[1].y,y],[path.nodes[1].z,z],[path.depth,z],[path.feed,f]];
    if(pairs.some(([a,b])=>!Number.isFinite(Number(a))||!eq(Number(a),b)))bad("PATH_MISMATCH",tag+" 與已保存 CAM 刀路不一致");
+   // The saved segment must match its original CAM node and machining parameters.
+   // Never present stale segment metadata as a coherent NC candidate.
+   if(path.routeMode!=="MANUAL"||path.closed!==false||
+      !Number.isFinite(Number(path.rpm))||!eq(Number(path.rpm),rpm)||
+      !Number.isFinite(Number(path.safeZ))||!eq(Number(path.safeZ),safe)||
+      path.nodes.some(q=>q?.g!=="G1")||
+      !Number.isInteger(n.line)||n.line<1||n.line>1600||
+      path.sourceId!=="MANUAL_L"+n.line)bad("PATH_MISMATCH",tag+" CAM 段落模式、轉速、Safe-Z 或來源行不一致");
+   const expectedXY=xy?[[prev.x,prev.y],[x,y]]:[[x,y]];
+   if(!Array.isArray(path.points)||path.points.length!==expectedXY.length||
+      path.points.some((pt,j)=>!pt||!Number.isFinite(Number(pt.x))||
+        !Number.isFinite(Number(pt.y))||!eq(Number(pt.x),expectedXY[j][0])||
+        !eq(Number(pt.y),expectedXY[j][1])))bad("PATH_MISMATCH",tag+" CAM 平面刀路點與節點不一致");
    if(xy&&z>top+.0001)warnings.push(tag+" 在毛坯上方，不能宣稱移除材料");
   }
   lines.push(n.g+" X"+x.toFixed(3)+" Y"+y.toFixed(3)+" Z"+z.toFixed(3)+(n.g==="G1"?" F"+f.toFixed(3):""));

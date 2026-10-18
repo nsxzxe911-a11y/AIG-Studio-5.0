@@ -40,5 +40,129 @@
   "browser": "PENDING",
   "realPhone": "PENDING",
   "simMaterialRemoval": "NOT_CONNECTED",
-  "ncMachineSafety": "NOT_CERTIFIED"
+  "ncMachineSafety": "NOT_CERTIFIED",
+  "additionalHardeningTests": 24,
+  "additionalHardeningPassed": 24,
+  "additionalHardeningCases": [
+    {
+      "name": "valid genuine parser",
+      "pass": true,
+      "code": "NC_CANDIDATE_ONLY"
+    },
+    {
+      "name": "stale path rpm",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "stale path safeZ",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "stale routeMode",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "stale XY point",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "missing points",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "stale vertical point",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "stale sourceId",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "invalid source line",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "missing source line",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "closed path",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "wrong node G",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "G0 below SafeZ",
+      "pass": true,
+      "code": "RAPID"
+    },
+    {
+      "name": "G1 negative feed",
+      "pass": true,
+      "code": "PARAM"
+    },
+    {
+      "name": "G1 zero feed",
+      "pass": true,
+      "code": "PARAM"
+    },
+    {
+      "name": "non 0.001 XYZ",
+      "pass": true,
+      "code": "PRECISION"
+    },
+    {
+      "name": "G2 motion",
+      "pass": true,
+      "code": "MOTION"
+    },
+    {
+      "name": "stale XYZ endpoint",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "stale segment feed",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    },
+    {
+      "name": "missing retract",
+      "pass": true,
+      "code": "RETRACT"
+    },
+    {
+      "name": "bad stock bottom",
+      "pass": true,
+      "code": "STOCK"
+    },
+    {
+      "name": "decimal RPM",
+      "pass": true,
+      "code": "RPM"
+    },
+    {
+      "name": "unsupported ABC",
+      "pass": true,
+      "code": "ROTARY"
+    },
+    {
+      "name": "extra path",
+      "pass": true,
+      "code": "PATH_MISMATCH"
+    }
+  ]
 }
