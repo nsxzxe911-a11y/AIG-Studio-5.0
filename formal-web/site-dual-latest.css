@@ -23,3 +23,22 @@
 .v4-dual-warning{border-left:4px solid #d6aa65;background:#2b2218;padding:15px 19px;color:#f4ddb8;font-size:12px;margin-top:20px;line-height:1.9}
 @media(max-width:780px){.v4-dual-latest-entry,.v4-dual-cards{grid-template-columns:1fr}.v4-dual-latest-actions{display:grid;grid-template-columns:1fr 1fr}.v4-dual-latest-actions .v4-dual-primary{grid-column:1/-1}}
 @media(max-width:460px){.v4-dual-latest-actions{grid-template-columns:1fr}.v4-dual-latest-actions .v4-dual-primary{grid-column:auto}.v4-dual-card{padding:17px}}
+
+/* V23 cross-device navigable ten-page module matrix, non-destructive. */
+.v23-module-index{margin-top:21px;padding:20px;background:#0c1c2e;border:1px solid #325c77;border-radius:12px}
+.v23-module-heading{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:11px;border-bottom:2px solid #2a9ac6;padding-bottom:11px}
+.v23-module-heading small{color:#7bd5f7;font-size:10px;font-weight:800;letter-spacing:.09em}
+.v23-module-heading h2{margin:5px 0 0;color:#f0fbff;font-size:22px}
+.v23-module-heading>a{font-size:12px;font-weight:800;color:#7fddfb}
+.v23-module-index>p{font-size:12px;line-height:1.9;color:#abcbdc}
+.v23-module-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.v23-module{padding:13px;background:#12293d;border:1px solid #2c526c;border-radius:9px;min-width:0}
+.v23-module>span{font-size:10px;color:#7acdea;font-weight:800;letter-spacing:.09em}.v23-module h3{font-size:15px;color:#f2faff;margin:7px 0 11px}
+.v23-module>div{display:grid;gap:7px}
+.v23-module a{display:flex;justify-content:space-between;gap:5px;align-items:center;background:#183c55;border:1px solid #397ea6;padding:9px;border-radius:5px;font-size:11px;font-weight:750;text-decoration:none;color:#def6ff}
+.v23-module a.v23-module-new{background:#145e83;border-color:#4baed1}
+.v23-module a.v23-module-old{background:#1b2e41;border-color:#38506d}
+.v23-module a:focus-visible{outline:2px solid #fff}
+.v23-honesty{border-left:3px solid #b69357;color:#e1cea8;background:#272318;margin-top:14px;padding:12px 14px;font-size:12px;line-height:1.85}
+@media(max-width:1100px){.v23-module-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.v23-module-index{padding:14px}.v23-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.v23-module h3{font-size:14px}}
