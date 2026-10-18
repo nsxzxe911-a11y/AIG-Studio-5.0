@@ -13,3 +13,7 @@
 `node ci/verify_web_runtime.mjs` 是 Web 專項 Gate；版本應以根目錄 `release-version.properties` 為準，不用畫面內舊版本字串判定發佈。
 
 原始 `web/main-runtime-preview.html` 只保留歷史相容用途。
+
+## Web 373：雙平台核准 HOME 圖
+
+自 AIG-II private approved/427 pack 將 `home_mobile.jpg`、`home_desktop.jpg` 以二進位 Git Blob 原內容完整帶入可部署的 Studio Web 資源。兩平台圖片分開，不以 reference 圖冒充 Authority；現有公開 Web 圖庫共 43 張已核對來源圖資。Android 與 Windows 原生 Runtime Gate 未因此自動通過。

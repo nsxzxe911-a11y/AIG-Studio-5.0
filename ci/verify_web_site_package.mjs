@@ -18,6 +18,8 @@ for (const needle of [
   "COPY web/gallery.html /usr/share/nginx/html/gallery.html",
   "COPY web/aigii-overlay.js /usr/share/nginx/html/aigii-overlay.js",
   "COPY uiux/assets/ /usr/share/nginx/html/assets/",
+  "COPY web/authority/home_mobile.jpg /usr/share/nginx/html/assets/authority/home_mobile.jpg",
+  "COPY web/authority/home_desktop.jpg /usr/share/nginx/html/assets/authority/home_desktop.jpg",
   "COPY app/src/main/assets/aig-generated-rgb/approved/184/*.png /usr/share/nginx/html/assets/icons/"
 ]) if (!docker.includes(needle)) fail("DOCKER_COPY_" + needle);
 if (docker.includes("COPY web/main-runtime-preview.html") || !docker.includes('aigii-overlay.js')) fail("LEGACY_PREVIEW_DEFAULT");
@@ -40,12 +42,14 @@ for (const entry of entries) {
   if (unique.has(entry.url)) fail("DUPLICATE_ASSET_" + entry.url);
   unique.add(entry.url);
   countByType[entry.type] = (countByType[entry.type] || 0) + 1;
-  const src = entry.url.startsWith("./assets/icons/")
+  const src = entry.url.startsWith("./assets/authority/")
+    ? path.join("web/authority", path.basename(entry.url))
+    : entry.url.startsWith("./assets/icons/")
     ? path.join("app/src/main/assets/aig-generated-rgb/approved/184", path.basename(entry.url))
     : entry.url.startsWith("./assets/")
       ? path.join("uiux/assets", path.basename(entry.url)) : null;
   if (!src || !fs.existsSync(src)) fail("UNRESOLVED_ASSET_" + entry.url);
 }
-if (countByType["頁面／機台參考"] !== 9 || countByType["按鈕圖示"] < 30) fail("ASSET_CLASSIFICATION");
+if (countByType["官方 HOME"] !== 2 || countByType["頁面／機台參考"] !== 9 || countByType["按鈕圖示"] < 30) fail("ASSET_CLASSIFICATION");
 console.log("AIG_WEB_SITE_PACKAGE_PASS|INTERACTIVE_HOME_CAD_CAM_SIM_3_4_5_6_NC_AI|RGB=" +
-            entries.length + "|OFFLINE_SHELL|NO_FAKE_PREVIEW|CNC_OUTPUT_DISABLED");
+            entries.length + "|APPROVED_HOME_MOBILE_DESKTOP|OFFLINE_SHELL|NO_FAKE_PREVIEW|CNC_OUTPUT_DISABLED");
