@@ -1,0 +1,26 @@
+{
+  "release": "35.0.0",
+  "modules": [
+    "3AX vertical vise",
+    "4AX horizontal A indexing chuck",
+    "5AX dual-support A/B cradle",
+    "6AX open single-arm A/B/C cradle"
+  ],
+  "bothProjects": true,
+  "realRendering": "WebGL live original CNC runtime",
+  "modelType": "procedural mesh not certified Authority GLB",
+  "viewportFirst": true,
+  "keeps": [
+    "CAD",
+    "CAM",
+    "SIM",
+    "NC",
+    "AI",
+    "V33 cut mesh",
+    "V32 FPS",
+    "V31 evidence",
+    "V34 shared version"
+  ],
+  "nativeApkExe": "UNMODIFIED",
+  "limitation": "unverified by screenshot or machine twin safety"
+}

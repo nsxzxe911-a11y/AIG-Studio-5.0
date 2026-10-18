@@ -1,0 +1,9 @@
+/* V35 active 3D modules. Keep machining view above telemetry, no fixed fake bitmap. */
+.simgrid.aig-v35-live-axis .sceneWrap{position:relative;isolation:isolate;overflow:hidden}
+.simgrid.aig-v35-live-axis .aig-v35-machine-identity{position:absolute;z-index:4;top:10px;left:10px;display:flex;max-width:min(82%,350px);flex-wrap:wrap;align-items:baseline;gap:4px 9px;padding:8px 11px;border:1px solid #4683a8;border-radius:9px;background:linear-gradient(130deg,#071522de,#0a2037c4);color:#eafcff;pointer-events:none;box-shadow:0 4px 20px #0006}
+.simgrid.aig-v35-live-axis .aig-v35-machine-identity strong{font-size:12px;letter-spacing:.02em}
+.simgrid.aig-v35-live-axis .aig-v35-machine-identity span{font:700 10px ui-monospace,Consolas,monospace;color:#a3ebff}
+.simgrid.aig-v35-live-axis .aig-v35-machine-identity small{flex-basis:100%;font-size:9px;color:#9fc1d2;line-height:1.4}
+.simgrid.aig-v35-live-axis .aig-v35-machine-identity[data-aig-renderer="unverified"]{border-color:#a47e42}
+.simgrid.v30-axis-runtime .sceneWrap+.v30-hud{margin-top:10px}
+@media(max-width:700px){.simgrid.aig-v35-live-axis .aig-v35-machine-identity{max-width:66%;padding:6px 7px}.simgrid.aig-v35-live-axis .aig-v35-machine-identity small{font-size:8px}}

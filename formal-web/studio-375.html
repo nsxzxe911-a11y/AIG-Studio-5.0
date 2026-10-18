@@ -174,7 +174,8 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./axis-hud-v30.css">
 <link rel="stylesheet" href="./axis-evidence-v31.css">
 <link rel="stylesheet" href="./axis-performance-v32.css">
-<link rel="stylesheet" href="./dual-web-v34.css"></head>
+<link rel="stylesheet" href="./dual-web-v34.css">
+<link rel="stylesheet" href="./axis-machine-v35.css"></head>
 <body>
 <div class="aig-studio-v375-portal-link" role="navigation"><a href="./index.html#dual-projects">← 回 AIG-II 科技網站</a><span>STUDIO 原生 375 · Web 共同 V34 · 本機資料與原工作站分開</span><a href="./dual-project-latest.html">雙專案版本與原始碼 ↗</a></div>
 <div class="app">
@@ -311,11 +312,12 @@ function ncPage(){
 }
 
 function simPage(axis){
+ const v35Names={ "3AX":"立式 XYZ／虎鉗加工","4AX":"臥式 A 軸卡盤／分度","5AX":"A／B 雙側搖籃／傾斜加工","6AX":"直立單臂 A／B／C 搖籃"};
  const axes=axis==="3AX"?["X","Y","Z"]:axis==="4AX"?["X","Y","Z","A"]:axis==="5AX"?["X","Y","Z","A","B"]:["X","Y","Z","A","B","C"];
  const axisHtml=axes.map(a=>'<span class="axis '+a.toLowerCase()+'" data-axis-read="'+a+'">'+a+'　0.000</span>').join("");
  const cameraControls=(axis==="5AX"||axis==="6AX")?'<button class="btn selected" data-cmd="follow">跟刀 AUTO</button><button class="btn selected" data-cmd="occlusion">防遮擋 AUTO</button><button class="btn" data-cmd="center">毛坯中心</button>':"";
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":axis==="6AX"?"/A/B/C":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
- '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 真 3D 加工模擬<small>WebGL 機械模型 • A/B/C 真旋轉 • 拖曳 360° 相機</small></div></div>'+
+ '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' · '+v35Names[axis]+'<small>獨立 WebGL 機台結構 · G-code 軸態驅動 · 可拖曳相機</small></div></div>'+
  '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button>'+cameraControls+'</div><div class="notice" data-motion-legend>RAPID 快移 • ENTRY 進刀 • CUT 切削 • EXIT 退刀 • RETRACT 抬刀 • AVOID 夾具閃避</div>'+
  '<div class="runtimeStatus"><div class="metric"><b>CAMERA</b><span data-camera-mode>STOCK CENTER</span></div><div class="metric"><b>VIEW ZOOM</b><span data-camera-zoom>AUTO x2.55</span></div><div class="metric"><b>NEXT VIEW</b><span data-lookahead-state>LOOKAHEAD OFF</span></div><div class="metric"><b>SAFE FRAME</b><span data-safe-frame-state>SAFE CENTER</span></div><div class="metric"><b>VISIBILITY</b><span data-occlusion-state>CLEAR</span></div><div class="metric"><b>VIEW DEPTH</b><span data-depth-cue>FLAT</span></div><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>RECENT CUT</b><span data-cut-trail>0 / last 3</span></div><div class="metric"><b>TOOL CONTACT</b><span data-contact-state>OPEN</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>繪圖核心</b><span data-renderer>初始化</span></div><div class="metric" data-advanced-only><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric" data-advanced-only><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
@@ -1500,6 +1502,86 @@ function makeGlScene(canvas,axis){
  canvas.addEventListener("pointerup",()=>camera.drag=null);canvas.addEventListener("pointercancel",()=>camera.drag=null);
  canvas.addEventListener("wheel",e=>{e.preventDefault();camera.manualUntil=performance.now()+1800;const z=Math.max(1.25,Math.min(4.8,camera.zoom*(e.deltaY<0?.90:1.11)));camera.userZoom=z;camera.zoom=z;camera.zoomTarget=z;camera.zoomHoldUntil=performance.now()+1800;camera.zoomMode="MANUAL HOLD"},{passive:false});
 
+ function drawAxisMachineProfile(p){
+  const {axis,cx,cy,stockBottom,stockH,spanX,spanY,tableR,R,vp}=p;
+  const radius=Math.max(12,tableR),baseZ=stockBottom-18;
+  const part=(x,y,z,w,d,h,color,rot)=>{
+    const local=M(T(x,y,z),S(Math.max(.5,w),Math.max(.5,d),Math.max(.5,h)));
+    drawMesh(cube,rot?M(rot,local):local,rgb(color),vp);
+  };
+  const drum=(x,y,z,diam,height,color,rot)=>{
+    const scaled=S(Math.max(.5,diam),Math.max(.5,diam),Math.max(.5,height));
+    const model=M(T(x,y,z),rot?M(rot,scaled):scaled);
+    drawMesh(cyl,model,rgb(color),vp);
+  };
+  // V35: four distinct procedurally rendered machine structures in the existing live WebGL scene.
+  // Visual support hardware is not used as a collision-certified digital twin.
+  // Common cast-iron machine base, distinct rotary hardware above it.
+  part(cx,cy,baseZ-8,radius*2.45,radius*2.05,13,"#152a40");
+  part(cx,cy,baseZ+1,radius*2.15,radius*1.82,4,"#31516c");
+  // Real meshes and local-space outlines, not a bitmap or fixed fake overlay.
+  for(const sign of [-1,1]){
+    part(cx+sign*radius*.73,cy,baseZ+4,radius*.11,radius*1.57,2.6,"#6385a0");
+  }
+  if(axis==="3AX"){
+    // Vertical machining centre: flat XYZ bed, separate actual vise jaws and back column.
+    part(cx,cy,stockBottom-10,radius*1.75,radius*1.32,11,"#365268");
+    const jawX=Math.max(4,spanX/2+4);
+    part(cx-jawX,cy,stockBottom-1,7,spanY+11,stockH*.65+7,"#b07843");
+    part(cx+jawX,cy,stockBottom-1,7,spanY+11,stockH*.65+7,"#b07843");
+    part(cx,cy+radius*1.16,baseZ+radius*.54,radius*.43,radius*.24,radius*1.15,"#274a65");
+    part(cx,cy+radius*.84,baseZ+radius*1.06,radius*1.02,radius*.34,10,"#416881");
+    part(cx,cy+radius*.58,baseZ+radius*.96,radius*.62,radius*.18,7,"#7697b0");
+    drum(cx,cy+radius*.41,baseZ+radius*.88,radius*.28,radius*.20,"#a7cce2");
+    for(const sign of [-1,1])part(cx,cy+sign*radius*.61,stockBottom-5,radius*1.45,radius*.055,2.4,"#4d728d");
+  }else if(axis==="4AX"){
+    // Horizontal A-axis indexing/continuous chuck with side bearings.
+    const y=cy,side=radius*.94;
+    part(cx-side,y,stockBottom-6,radius*.27,radius*.58,radius*.72,"#3f506e");
+    part(cx+side,y,stockBottom-6,radius*.27,radius*.58,radius*.72,"#3f506e");
+    const alongX=RY(Math.PI/2);
+    for(const sign of [-1,1]){
+      const x=cx+sign*(side-radius*.16);
+      drum(x,y,stockBottom+stockH*.2,radius*.46,radius*.15,"#667b9a",alongX);
+      drum(x+sign*radius*.10,y,stockBottom+stockH*.2,radius*.27,radius*.12,"#89a9c3",alongX);
+    }
+    // Rotating A chuck markers share the same commanded angular transform as the stock.
+    part(cx-radius*.54,cy,stockBottom+stockH*.17,radius*.11,spanY*.67,3,"#41b9e6",R);
+    part(cx+radius*.54,cy,stockBottom+stockH*.17,radius*.11,spanY*.67,3,"#41b9e6",R);
+    drum(cx,cy,stockBottom-9,radius*.78,4,"#6d839d",R);
+    for(const sign of [-1,1])part(cx,cy+sign*radius*.41,stockBottom-5,radius*.62,3,3,"#6bb9d9",R);
+  }else if(axis==="5AX"){
+    // Dual-support A/B tilting cradle. Stock is already rendered with A/B transform.
+    const side=radius*.98;
+    for(const sign of [-1,1]){
+      const x=cx+sign*side;
+      part(x,cy,baseZ+radius*.37,radius*.24,radius*.51,radius*.86,"#4b4970");
+      drum(x-sign*radius*.10,cy,stockBottom+stockH*.16,radius*.39,radius*.11,"#8998bd",RY(Math.PI/2));
+    }
+    part(cx,cy,stockBottom-13,radius*1.87,radius*.18,radius*.18,"#4f6383");
+    drum(cx,cy,stockBottom-9,radius*.84,5,"#6f84a6",R);
+    part(cx,cy,stockBottom-4,spanX*1.16,spanY*1.1,5,"#405d84",R);
+    for(const sign of [-1,1])part(cx+sign*radius*.68,cy,stockBottom-11,radius*.11,spanY*1.28,radius*.17,"#71a6d6",R);
+    drum(cx,cy,stockBottom-3,radius*.64,3.2,"#94b2cf",R);
+  }else if(axis==="6AX"){
+    // Vertical fixed-Z head + independent single-sided A/B/C swing cradle.
+    // Leave the central machining viewport unobstructed (no enclosing cage).
+    const x=cx+radius*.99;
+    part(x,cy,baseZ+radius*.43,radius*.37,radius*.42,radius*.98,"#47617d");
+    drum(x-radius*.20,cy,stockBottom+stockH*.12,radius*.51,radius*.18,"#9a8db0",RY(Math.PI/2));
+    part(cx+radius*.52,cy,stockBottom-10,radius*.90,radius*.19,7,"#66809a",R);
+    drum(cx,cy,stockBottom-6,radius*.92,5,"#657bab",R);
+    part(cx,cy,stockBottom-3,spanX*1.13,spanY*1.13,4,"#447f8b",R);
+    for(const sign of [-1,1])part(cx,cy+sign*radius*.40,stockBottom-6,spanX*.89,2.1,3,"#76c0c2",R);
+    drum(cx,cy,stockBottom+1,radius*.70,3.5,"#97bbc8",R);
+    // Vertical column stays fixed when A/B/C values change.
+    part(cx,cy+radius*1.38,baseZ+radius*.75,radius*.27,radius*.25,radius*1.55,"#35516b");
+    part(cx,cy+radius*.93,baseZ+radius*1.46,radius*.55,radius*.95,8,"#4c6f8b");
+    part(cx,cy+radius*.67,baseZ+radius*1.18,radius*.29,radius*.24,radius*.43,"#6387a1");
+    // Open single-arm layout: no cage crossing the stock and tool visibility.
+    part(cx+radius*.74,cy,stockBottom-7,radius*.21,radius*.24,5,"#749ab4");
+  }
+ }
  function render(scene){
    if(lost||!scene?.parsed)return false;
    try{
@@ -1542,7 +1624,7 @@ function makeGlScene(canvas,axis){
      const viewDir=norm(sub(eye,target)),depthCue=runtimeDepthCue(runtimeToolAxisVector(pos,axis),viewDir);camera.lastDepthCue=depthCue.label;camera.lastDepthDot=depthCue.dot;
      const vp=M(P(Math.PI/4,aspect,.1,sceneR*20),look(eye,target,[0,0,1]));
      gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.clearColor(.003,.008,.012,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-     drawMesh(cyl,M(R,M(T(0,0,stockBottom-8),S(tableR*2,tableR*2,8))),rgb("#182532"),vp);
+     drawAxisMachineProfile({axis,cx,cy,stockBottom,stockH,spanX,spanY,tableR,R,vp});
      if(axis==="3AX"){
        drawMesh(stockShell,M(T(cx,cy,stockCenter),S(spanX,spanY,stockH)),rgb("#465f70"),vp);
        const hf=heightfield(scene,stockMinX,stockMinY,spanX,spanY,stockTop,stockBottom);
@@ -1550,12 +1632,6 @@ function makeGlScene(canvas,axis){
      }else{
        const vm=voxelStock(scene,stockMinX,stockMinY,spanX,spanY,stockTop,stockBottom);
        drawVoxelStock(vm,rgb("#6d8797"),vp,R);
-     }
-     if(axis!=="3AX"){
-       drawMesh(cube,T(-tableR-7,0,stockBottom-7),rgb("#24394b"),vp);drawMesh(cube,T(tableR+7,0,stockBottom-7),rgb("#24394b"),vp);
-     }
-     if(axis==="6AX"){
-       drawMesh(cube,M(R,M(T(cx+tableR*.45,cy,stockBottom-1),S(tableR*.32,2.5,3))),rgb("#33f39b"),vp);
      }
      for(const fixture of fixtureBoxes){
        const model=M(R,M(T(fixture.x,fixture.y,fixture.z+fixture.h/2),S(fixture.w,fixture.d,fixture.h)));
@@ -3292,5 +3368,6 @@ aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash
 <script src="./axis-hud-v30.js"></script>
 <script src="./axis-evidence-v31.js"></script>
 <script src="./axis-performance-v32.js"></script>
-<script src="./dual-web-v34.js"></script></body>
+<script src="./dual-web-v34.js"></script>
+<script src="./axis-machine-v35.js"></script></body>
 </html>

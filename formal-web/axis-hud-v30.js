@@ -36,7 +36,7 @@ function mount(root){
  }
  const explanation=d.createElement("p");explanation.className="v30-hud-note";explanation.textContent="待原工作區初始化；不代表精度、碰撞、材料移除或上機驗收通過。";
  wrap.append(heading,axes,others,explanation);
- scene.parentNode.insertBefore(wrap,scene);
+ scene.insertAdjacentElement("afterend",wrap);
  store.set(root,{outputs,explanation});
 }
 function read(root,selector){
