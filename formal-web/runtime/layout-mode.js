@@ -13,8 +13,8 @@
   const buttons=Array.from(toolbar.querySelectorAll('[data-layout-mode]'));
   const message=toolbar.querySelector('[data-layout-message]');
   function narrow(){
-    if(typeof global.matchMedia==='function')return global.matchMedia('(max-width: 720px)').matches;
-    return Number(global.innerWidth||1280)<=720;
+    if(typeof global.matchMedia==='function')return global.matchMedia('(max-width: 900px)').matches;
+    return Number(global.innerWidth||1280)<=900;
   }
   function apply(notify){
     const presentation=mode==='mobile'||(mode==='auto'&&narrow())?'mobile':'desktop';
@@ -26,6 +26,8 @@
       button.setAttribute('aria-pressed',String(selected));
     }
     if(message)message.textContent=presentation==='mobile'?'手機版畫面':'桌面版畫面';
+    // V38: toggle must synchronously reach the actual live responsive CNC layout.
+    if(typeof global.AIG_MOBILE_LAYOUT_V37?.refresh==='function')global.AIG_MOBILE_LAYOUT_V37.refresh();
     if(notify&&typeof global.dispatchEvent==='function'){
       const fire=()=>global.dispatchEvent(new Event('resize'));
       if(typeof global.requestAnimationFrame==='function')global.requestAnimationFrame(fire);else fire();

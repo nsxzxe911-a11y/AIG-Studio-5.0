@@ -9,8 +9,11 @@ function measure(){
  const widths=[d.documentElement.clientWidth,w.innerWidth,app?.getBoundingClientRect().width,root?.getBoundingClientRect().width]
   .filter(x=>Number.isFinite(x)&&x>0);
  const frame=widths.length?Math.min(...widths):w.innerWidth;
+ const selected=d.documentElement.dataset.aigLayoutMode;
  const explicit=d.documentElement.dataset.aigPresentation==="mobile";
- return{compact:explicit||frame<=900,frame:Math.round(frame),explicit};
+ // Honor a deliberate phone/desktop selection even when desktop preview is resized.
+ return{compact:selected==="mobile"?true:selected==="desktop"?false:(explicit||frame<=900),
+  frame:Math.round(frame),explicit,selected:selected||"auto"};
 }
 function fold(el,kind,label){
  if(!el||el.parentElement?.classList.contains("aig37-collapse"))return;

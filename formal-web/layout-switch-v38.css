@@ -1,0 +1,67 @@
+/* V38: the real top-right "手機版" control drives one shared mobile workbench.
+   Styles are intentionally last and only affect presentation. */
+.layoutSwitch{box-sizing:border-box;display:flex;flex-wrap:nowrap;align-items:center;gap:4px;
+  padding:4px;border:1px solid #4ccde8;border-radius:11px;
+  background:linear-gradient(145deg,#071d34,#101b2f);flex:0 0 auto;max-width:100%}
+.layoutSwitch button{cursor:pointer;min-height:37px;min-width:49px;padding:7px 9px;
+  border:1px solid transparent;border-radius:8px;
+  background:#10273f;color:#d9f7ff;font-size:11px;font-weight:750;white-space:nowrap}
+.layoutSwitch button[aria-pressed="true"]{color:white;background:linear-gradient(125deg,#1e5791,#3e358c);
+  border-color:#62e1ff;box-shadow:0 0 13px #2d9eff4d}
+.layoutSwitch button:focus-visible{outline:2px solid #ffcb78;outline-offset:2px}
+.layoutSwitch .layoutMessage{max-width:110px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-size:10px;color:#88dfff}
+/* Includes Studio, which historically did not have the AIG-II-only .aigCamUnified skin. */
+html[data-aig-presentation="mobile"] body{overflow-x:clip}
+html[data-aig-presentation="mobile"] .app{
+  box-sizing:border-box!important;width:100%!important;
+  max-width:min(100%,480px)!important;min-width:0!important;
+  margin:0 auto!important;
+}
+@media(min-width:901px){
+ html[data-aig-presentation="mobile"] .app{border:1px solid #4399c6!important;border-radius:14px;
+ box-shadow:0 0 29px #1587dc25,0 20px 55px #0009}
+}
+/* The top-right mode selector remains reachable: scroll the real ten-page nav,
+   rather than compress its ten callbacks into one phone row. */
+html[data-aig-layout-mode="mobile"] .app>.top>.layoutSwitch{
+ max-width:100%!important;order:1!important;flex:0 0 auto!important;
+ margin:0!important
+}
+html[data-aig-v37-compact="true"] .app>.top>.nav{order:99!important}
+html[data-aig-v37-compact="true"] .app>.top>.layoutSwitch .layoutMessage{display:none!important}
+html[data-aig-v37-compact="true"] .layoutSwitch button{min-height:36px!important;
+  min-width:39px!important;font-size:10px!important;padding:6px 5px!important}
+/* Explicit desktop view on an actual phone intentionally permits horizontal scrolling;
+   it must not inherit V36's breakpoint-only forced column mode. */
+@media(max-width:800px){
+ html[data-aig-layout-mode="desktop"] body{overflow-x:auto!important}
+ html[data-aig-layout-mode="desktop"] .app{
+    min-width:1050px!important;width:1050px!important;max-width:none!important;
+ }
+ html[data-aig-layout-mode="desktop"] .app>.top{
+    display:flex!important;flex-wrap:nowrap!important;min-width:1050px!important;
+ }
+ html[data-aig-layout-mode="desktop"] .app>.top>.nav{
+    display:grid!important;grid-template-columns:repeat(10,minmax(60px,1fr))!important;
+    flex:1 1 auto!important;min-width:0!important;max-width:none!important;
+    overflow-x:visible!important;
+ }
+ html[data-aig-layout-mode="desktop"] .simgrid,
+ html[data-aig-layout-mode="desktop"] .simgrid.axisModule{
+    display:grid!important;grid-template-columns:minmax(0,2fr) minmax(300px,.9fr)!important;
+    min-width:0!important;gap:12px!important;
+ }
+ html[data-aig-layout-mode="desktop"] .simgrid.axisModule{
+    grid-template-rows:auto minmax(0,1fr)!important;
+ }
+ html[data-aig-layout-mode="desktop"] .simgrid.axisModule>.axisModuleHeader{
+    grid-column:1/-1!important;grid-row:1!important;
+ }
+ html[data-aig-layout-mode="desktop"] .simgrid.axisModule>.simleft{
+    grid-column:1!important;grid-row:2!important;
+ }
+ html[data-aig-layout-mode="desktop"] .simgrid.axisModule>.editor{
+    grid-column:2!important;grid-row:2!important;
+ }
+}
