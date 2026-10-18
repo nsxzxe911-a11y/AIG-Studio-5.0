@@ -100,7 +100,9 @@ function sanitizeProductScreen(node){
   node.querySelectorAll('[data-open-page]').forEach(control=>{
     if(!decorateProductControl(control,page))removeNode(control);
   });
-  node.querySelectorAll('select option').forEach(option=>{
+  // AIG-II supports 3AX–6AX. Only the separate legacy 3AX product mode
+  // must hide unsupported multi-axis choices, never AIG-II production.
+  if(!AIGII_MODE)node.querySelectorAll('select option').forEach(option=>{
     const value=String(option.value||option.textContent||'').trim();
     if(PRODUCT_FORBIDDEN_SET.has(value))removeNode(option);
   });
@@ -127,11 +129,11 @@ function installAuthoritySkinV1(){
   if(AIGII_MODE){
     const apply=()=>{
       document.documentElement.classList.add('aigCamUnified');
-      document.title='AIG-II • CAM RGB Runtime';
+      document.title='AIG-II｜正式 CNC 工作區';
       const logo=document.querySelector('.brand .logo');
       const subtitle=document.querySelector('.brand small');
       if(logo)logo.textContent='AIG-II';
-      if(subtitle)subtitle.textContent='CAM RGB GLASS • 0.001 mm';
+      if(subtitle)subtitle.textContent='CAD · CAM · SIM · 3～6AX · NC · AI';
     };
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});
     else apply();

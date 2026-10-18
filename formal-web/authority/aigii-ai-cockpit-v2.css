@@ -1,0 +1,58 @@
+/* AIG-II AI V2 — formal RGB functional cockpit, no engineering shell or fake AI chat */
+html[data-aig-project="AIGII"] .aigAiCockpit{display:grid;gap:15px;--aiaccent:#b88afa;max-width:1800px;margin:0 auto}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiHero{padding:clamp(18px,3vw,36px);overflow:hidden;position:relative;
+ background:radial-gradient(ellipse at 88% 10%,#7f51b142,transparent 47%),
+ radial-gradient(ellipse at 22% 95%,#1588ae27,transparent 56%),
+ linear-gradient(120deg,#0c2340,#080e21)!important;
+ border-color:#7775c2!important}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiHeroTop{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiEyebrow{font-size:11px;font-weight:850;letter-spacing:.17em;color:#c1a6ff}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiSafePill{border:1px solid #448e9a;border-radius:40px;color:#9fe9d6;font-size:11px;padding:7px 12px;background:#10303c}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiHero h2{font-size:clamp(27px,4vw,46px);font-weight:900;letter-spacing:.04em;line-height:1.24;margin:16px 0 10px;color:#f3f8ff;text-shadow:0 0 19px #4d8ce263}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiHero p{color:#bdd4e6;max-width:760px;line-height:1.9;font-size:14px;margin:0}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiHeroActions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiHeroActions a{display:inline-flex;align-items:center;justify-content:center;padding:10px 17px;min-height:41px;border:1px solid #448dc2;border-radius:9px;background:#132d48;color:#dff6ff;font-size:12px;font-weight:800;text-decoration:none}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiHeroActions a:hover{border-color:#86efff;background:#22527a;color:#fff}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiWorkbench{display:grid;grid-template-columns:minmax(0,0.89fr) minmax(0,1.11fr);align-items:start;gap:15px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiWorkbench>.panel{min-width:0}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiFields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 15px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiFields select{min-height:44px;max-width:100%;font-size:13px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiSource{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;margin:0 0 15px;border:1px solid #376481;border-radius:11px;background:linear-gradient(110deg,#10283e,#0b1728)}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiSource strong{color:#e3f7ff;font-size:14px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiSource p{color:#a4cadd;font-size:12px;line-height:1.6;margin:6px 0 0}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiSource button{flex:none}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiControls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiControls .btn{min-height:46px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiControls .btn:first-child{grid-column:1/-1}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiHint{color:#91b5c8;line-height:1.85;margin:15px 0 0;font-size:12px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiResultStatus{padding:12px 15px;border:1px solid #457c9d;border-radius:10px;background:#12283c;color:#c9f3ff;font-weight:800;font-size:13px;line-height:1.7}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiResultLine{color:#acbbd9;margin:10px 0;font-size:12px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiEvidence{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 20px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiDataPill{display:inline-flex;gap:5px;font-size:11px;font-weight:700;border:1px solid #386d90;border-radius:20px;padding:7px 11px;background:#112e40;color:#a8e6ff}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiPending{color:#f5cd85;border-color:#8b6948;background:#302619}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiSectionTitle{font-size:14px;font-weight:850;color:#e5f7ff;border-left:3px solid #b287ee;padding:2px 0 2px 11px;margin:19px 0 11px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiStages{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiStage{display:flex;gap:13px;align-items:center;border:1px solid #2c516d;padding:10px 12px;background:#091b2b;border-radius:9px;font-size:13px;color:#d6e8f7;min-height:45px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiStageNum{display:grid;place-items:center;min-width:28px;height:28px;font:900 11px ui-monospace,monospace;border:1px solid #6482bc;background:#192e51;color:#a9deff;border-radius:7px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiFindings{padding:0;margin:0;list-style:none;display:grid;gap:8px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiFinding{display:grid;gap:3px;border:1px solid #856344;background:#291e19;border-radius:9px;padding:10px 13px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiFinding.aiCHECK{border-color:#4c7087;background:#101f30}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiFindingCode{font-size:10px;font-weight:850;color:#ffce97;letter-spacing:.04em}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiCHECK .aiFindingCode{color:#97dff6}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiFindingText{font-size:12px;color:#e6d7c9;line-height:1.7}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiCHECK .aiFindingText{color:#c0d6e7}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiPlaceholder{color:#94b3cb;padding:14px 3px;font-size:13px}
+html[data-aig-project="AIGII"] .aigAiCockpit .aiFooterInfo{font-size:12px;color:#a1bbd0;line-height:1.9;padding:11px 16px;border:1px solid #29475f;border-radius:10px;background:#091524}
+@media(max-width:980px){
+ html[data-aig-project="AIGII"] .aigAiCockpit .aiWorkbench{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+ html[data-aig-project="AIGII"] .aigAiCockpit .aiHero{padding:17px}
+ html[data-aig-project="AIGII"] .aigAiCockpit .aiHeroActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ html[data-aig-project="AIGII"] .aigAiCockpit .aiFields{grid-template-columns:1fr}
+ html[data-aig-project="AIGII"] .aigAiCockpit .aiSource{flex-direction:column;align-items:stretch}
+ html[data-aig-project="AIGII"] .aigAiCockpit .aiSource button{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-aig-project="AIGII"] .aigAiCockpit *{transition:none!important;animation:none!important}
+}

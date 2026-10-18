@@ -175,6 +175,7 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./authority/aigii-runtime-visual-v2.css">
 <link rel="stylesheet" href="./authority/aigii-axis-module-v3.css">
 <link rel="stylesheet" href="./authority/aigii-axis-fidelity-v4.css">
+<link rel="stylesheet" href="./authority/aigii-ai-cockpit-v2.css">
 </head>
 <body>
 <div class="app">
@@ -300,10 +301,34 @@ function simHubPage(){
  '<div class="notice" style="margin-top:9px">選擇軸數後可檢視刀路、加工過程、碰撞與材料移除。</div></div></section></div>';
 }
 function aiPage(){
- return '<div data-ai-page-runtime><section class="panel"><div class="head"><div><h2>AI 加工規劃</h2><small>只規劃 / 解釋 / 稽核；不直接控制機台</small></div></div><div class="body">'+
- '<div class="menuDetailGrid"><label class="field"><b>目標軸數</b><select data-ai-axis><option>3AX</option><option>4AX</option><option>5AX</option><option>6AX</option></select></label><label class="field"><b>目標</b><select data-ai-objective><option>FASTEST_SAFE</option><option>MIN_REWORK</option><option>MIN_TOOL_CHANGES</option></select></label><label class="field"><b>現有成果</b><span><label><input type="checkbox" data-ai-cad> CAD</label> <label><input type="checkbox" data-ai-manual> MANUAL CAM</label> <label><input type="checkbox" data-ai-cam> CAM 刀路</label> <label><input type="checkbox" data-ai-nc> NC</label></span></label></div>'+
- '<div class="controls"><button class="btn" data-ai-command="AI.PLAN.BUILD">建立方案</button><button class="btn" data-ai-command="AI.PLAN.OPTIMIZE">最快安全</button><button class="btn" data-ai-command="AI.ASSIST.EXPLAIN">說明</button><button class="btn" data-ai-command="AI.AUDIT.RUN">稽核</button><button class="btn" data-ai-command="AI.RECOVERY.REPLAN">重新規劃</button></div>'+
- '<div class="notice" style="margin-top:9px" data-ai-result>AI READY • 等待加工條件</div></div></section></div>';
+ return '<div data-ai-page-runtime class="aigAiCockpit" data-page-id="PAGE_AI" data-subpage-id="AI.MAIN">'+
+ '<section class="aiHero panel">'+
+ '<div class="aiHeroTop"><span class="aiEyebrow">AIG-II · AI ORCHESTRATOR V2</span><span class="aiSafePill">本機分析 · 真機輸出關閉</span></div>'+
+ '<h2>AI 加工助手</h2><p>整合 CAD、CAM、SIM、3～6 軸與 NC 的本機資料，規劃加工路線、找出缺口，並返回對應模組。無網路也可使用。</p>'+
+ '<div class="aiHeroActions"><a href="#CAD" data-open-page="CAD">CAD 設計</a><a href="#CAM" data-open-page="CAM">CAM 刀路</a><a href="#SIM" data-open-page="SIM">SIM 模擬</a><a href="#NC" data-open-page="NC">NC 編輯</a></div>'+
+ '</section>'+
+ '<div class="aiWorkbench">'+
+ '<section class="panel aiInputs"><div class="head"><h2>加工條件</h2><small>已保存的 Web 專案資料 · 不自動修改</small></div><div class="body">'+
+ '<div class="aiFields"><label class="field"><b>目標軸數</b><select data-ai-axis><option value="3AX">3AX / XYZ</option><option value="4AX">4AX / XYZA</option><option value="5AX">5AX / XYZAB</option><option value="6AX">6AX / XYZABC</option></select></label>'+
+ '<label class="field"><b>加工目標</b><select data-ai-objective><option value="FASTEST_SAFE">最快安全路線</option><option value="MIN_REWORK">最少重工</option><option value="MIN_TOOL_CHANGES">最少換刀（規劃）</option></select></label></div>'+
+ '<div class="aiSource"><div><strong>目前資料</strong><p data-ai-data aria-live="polite">讀取目前裝置中…</p></div><button class="btn" type="button" data-ai-refresh data-button-id="BTN_AI_REFRESH" data-command-id="AI_CONTEXT_REFRESH">重新掃描</button></div>'+
+ '<div class="aiControls">'+
+ '<button class="btn play" type="button" data-ai-command="AI.PLAN.BUILD">建立方案</button>'+
+ '<button class="btn" type="button" data-ai-command="AI.PLAN.OPTIMIZE">優化路線</button>'+
+ '<button class="btn" type="button" data-ai-command="AI.ASSIST.EXPLAIN">說明</button>'+
+ '<button class="btn" type="button" data-ai-command="AI.AUDIT.RUN">安全預檢</button>'+
+ '<button class="btn" type="button" data-ai-command="AI.RECOVERY.REPLAN">重新規劃</button>'+
+ '</div><p class="aiHint">AI 會讀取本機已儲存的加工資料。若尚未建立專案，仍會顯示起始流程與待辦；沒有通過真材料移除、碰撞與 NC Gate 之前，不標示加工完成。</p>'+
+ '</div></section>'+
+ '<section class="panel aiResults"><div class="head"><h2>工作結果</h2><small data-ai-blocker-count>尚未預檢</small></div><div class="body">'+
+ '<div class="aiResultStatus" data-ai-status role="status" aria-live="polite">AI 已就緒，點「建立方案」開始。</div>'+
+ '<div class="aiResultLine" data-ai-result>本機流程規劃 · 未連接真機</div>'+
+ '<div class="aiEvidence" data-ai-detail><span class="aiDataPill">等待讀取</span></div>'+
+ '<h3 class="aiSectionTitle">加工流程</h3><ol class="aiStages" data-ai-stages><li class="aiPlaceholder">規劃後會顯示每一步的真正工作流程。</li></ol>'+
+ '<h3 class="aiSectionTitle">缺口與安全檢查</h3><ul class="aiFindings" data-ai-issues><li class="aiPlaceholder">尚未進行檢查。</li></ul>'+
+ '</div></section></div>'+
+ '<div class="aiFooterInfo">目前提供離線規則型加工規劃與安全預檢，不是雲端對話模型。尚未接通雲端 AI 帳號，也不自動產生已驗證的材料移除或 NC 指令。</div>'+
+ '</div>';
 }
 function ncPage(){
  const keyRows=[
