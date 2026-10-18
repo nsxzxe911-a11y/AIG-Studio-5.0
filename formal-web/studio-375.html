@@ -968,6 +968,11 @@ function inverseRuntimeABPoint(p,aDeg,bDeg,cDeg=0){
  const x1=x0*cb-Number(p.z||0)*sb,z1=x0*sb+Number(p.z||0)*cb;
  return{x:x1,y:y0*ca+z1*sa,z:-y0*sa+z1*ca};
 }
+/* V48: inferred XY stock-envelope rotary center; NOT certified machine pivot. */
+function runtimeInversePivotABPoint(p,a,b,c,pivotX=0,pivotY=0){
+ const local=inverseRuntimeABPoint({x:Number(p.x)-pivotX,y:Number(p.y)-pivotY,z:Number(p.z)},a,b,c);
+ return{x:local.x+pivotX,y:local.y+pivotY,z:local.z};
+}
 function runtimeStockEnvelope(parsed,cfg={}){
  const moves=(parsed?.blocks||[]).filter(b=>b.kind==="move"),pts=moves.flatMap(b=>[b.from,b.to]);
  const minX=pts.length?Math.min(...pts.map(p=>Number(p.X||0))):-20,maxX=pts.length?Math.max(...pts.map(p=>Number(p.X||0))):20;
@@ -1048,7 +1053,7 @@ function evaluateSetupClearance(parsed,axis,cfg={}){
  let fixtureToolNo=0,fixtureToolDia=0,holderStockToolNo=0,holderStockToolDia=0;
  function localCenter(p,d){
    const a=axis==="3AX"?0:Number(p.A||0),b=(axis==="5AX"||axis==="6AX")?Number(p.B||0):0,c=axis==="6AX"?Number(p.C||0):0;
-   return inverseRuntimeABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b,c);
+   return runtimeInversePivotABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b,c,env.cx,env.cy);
  }
  function inspectSegment(p,d0,d1,r,kind,bi,line,toolNo,toolDia){
    for(let k=0;k<=8;k++){
@@ -1107,10 +1112,10 @@ function scanRuntimeCollisions(parsed,axis,cfg={}){
  const fixtureBoxes=runtimeAssemblyBoxes(cfg);
  function localCenter(p,d){
    const a=axis==="3AX"?0:Number(p.A||0),b=(axis==="5AX"||axis==="6AX")?Number(p.B||0):0,c=axis==="6AX"?Number(p.C||0):0;
-   return inverseRuntimeABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b,c);
+   return runtimeInversePivotABPoint({x:Number(p.X||0),y:Number(p.Y||0),z:Number(p.Z||0)+d},a,b,c,env.cx,env.cy);
  }
  function tableHit(q,r){
-   const radial=Math.hypot(q.x,q.y);
+   const radial=Math.hypot(q.x-env.cx,q.y-env.cy);
    return radial<=env.tableR+r && q.z>=env.tableBottom-r && q.z<=env.tableTop+r;
  }
  function segmentHitsStock(p,d0,d1,r,steps){
@@ -1246,6 +1251,7 @@ function makeGlScene(canvas,axis){
  }
  function inverseRotABVector(v,aDeg,bDeg,cDeg=0){return inverseRotABPoint(v,aDeg,bDeg,cDeg)}
  function rotMat(aDeg,bDeg,cDeg=0){return M(RZ(cDeg*Math.PI/180),M(RY(bDeg*Math.PI/180),RX(aDeg*Math.PI/180)))}
+  function runtimePivotMatrix(rotation,cx,cy){return M(T(cx,cy,0),M(rotation,T(-cx,-cy,0)))}
 
  function runtimeSegmentAabbHit(a,b,box,pad=0){
    let t0=0,t1=1;
@@ -1259,7 +1265,8 @@ function makeGlScene(canvas,axis){
  }
  function runtimeCameraOcclusion(eye,probe,pos,stockBox,fixtures,tableBox){
    const a=Number(pos?.A||0),b=Number(pos?.B||0),c=Number(pos?.C||0);
-   const le=inverseRotABPoint({x:eye[0],y:eye[1],z:eye[2]},a,b,c),lp=inverseRotABPoint({x:probe[0],y:probe[1],z:probe[2]},a,b,c);
+   const pivotX=(stockBox.minX+stockBox.maxX)/2,pivotY=(stockBox.minY+stockBox.maxY)/2;
+    const le=runtimeInversePivotABPoint({x:eye[0],y:eye[1],z:eye[2]},a,b,c,pivotX,pivotY),lp=runtimeInversePivotABPoint({x:probe[0],y:probe[1],z:probe[2]},a,b,c,pivotX,pivotY);
    const items=[{reason:"STOCK",box:stockBox},{reason:"TABLE",box:tableBox},...(fixtures||[]).map(f=>({reason:"FIXTURE",box:{minX:f.x-f.w/2,maxX:f.x+f.w/2,minY:f.y-f.d/2,maxY:f.y+f.d/2,minZ:f.z,maxZ:f.z+f.h}}))],hits=[];
    for(const item of items){const h=runtimeSegmentAabbHit(le,lp,item.box,.35);if(h&&h.enter>.015&&h.enter<.94)hits.push({reason:item.reason,enter:h.enter})}
    hits.sort((x,y)=>x.enter-y.enter);return{blocked:hits.length>0,count:hits.length,reason:hits[0]?.reason||"CLEAR",hits};
@@ -1470,7 +1477,8 @@ function makeGlScene(canvas,axis){
  function voxelCutSample(occ,p,scene,bl){
    if(!p||!Number.isFinite(p.X)||!Number.isFinite(p.Y)||!Number.isFinite(p.Z))return;
    const a=axis==="3AX"?0:(p.A||0),b=(axis==="5AX"||axis==="6AX")?(p.B||0):0,c=axis==="6AX"?(p.C||0):0;
-   const tip=inverseRotABPoint({x:p.X,y:p.Y,z:p.Z},a,b,c);
+   const pvx=voxelCache.minX+voxelCache.sx*voxelCache.nx/2,pvy=voxelCache.minY+voxelCache.sy*voxelCache.ny/2;
+   const tip=runtimeInversePivotABPoint({x:p.X,y:p.Y,z:p.Z},a,b,c,pvx,pvy);
    let ax=inverseRotABVector({x:0,y:0,z:1},a,b,c),alen=Math.hypot(ax.x,ax.y,ax.z)||1;ax={x:ax.x/alen,y:ax.y/alen,z:ax.z/alen};
    const r=Math.max(.05,sceneBlockToolDia(scene,bl)/2),r2=r*r,flute=Math.max(1,Number(scene.cutterLen)||30);
    const v=voxelCache,tipEnd={x:tip.x+ax.x*flute,y:tip.y+ax.y*flute,z:tip.z+ax.z*flute};
@@ -1641,7 +1649,7 @@ function makeGlScene(canvas,axis){
     drum(x-radius*.20,cy,stockBottom+stockH*.12,radius*.51,radius*.18,"#9a8db0",RY(Math.PI/2));
     // V46 staged kinematics: support fixed; arm uses A, cradle A+B, platter ABC.
     // Same G-code pose drives the visual stages and the existing voxel-stock transform.
-    const armR=RX(A*Math.PI/180),swingR=rotMat(A,B,0);
+    const armR=runtimePivotMatrix(RX(A*Math.PI/180),cx,cy),swingR=runtimePivotMatrix(rotMat(A,B,0),cx,cy);
     part(cx+radius*.52,cy,stockBottom-10,radius*.90,radius*.19,7,"#66809a",armR);
     drum(cx,cy,stockBottom-6,radius*.92,5,"#657bab",armR,true);
     part(cx,cy,stockBottom-3,spanX*1.13,spanY*1.13,4,"#447f8b",swingR);
@@ -1666,7 +1674,7 @@ function makeGlScene(canvas,axis){
      const stockTop=hasStock?explicitTop:0,stockH=hasStock?explicitThickness:derivedH,stockBottom=stockTop-stockH,stockCenter=(stockTop+stockBottom)/2;
      const stockMinX=hasXY?sx0:(minX+maxX)/2-fallbackSpanX/2,stockMaxX=hasXY?sx1:(minX+maxX)/2+fallbackSpanX/2,stockMinY=hasXY?sy0:(minY+maxY)/2-fallbackSpanY/2,stockMaxY=hasXY?sy1:(minY+maxY)/2+fallbackSpanY/2;
      const spanX=stockMaxX-stockMinX,spanY=stockMaxY-stockMinY,cx=(stockMinX+stockMaxX)/2,cy=(stockMinY+stockMaxY)/2,sceneR=Math.max(spanX,spanY,70);
-     const A=axis==="3AX"?0:(pos.A||0),B=(axis==="5AX"||axis==="6AX")?(pos.B||0):0,C=axis==="6AX"?(pos.C||0):0,R=rotMat(A,B,C),tableR=Math.max(spanX,spanY)*.72,fixtureBoxes=runtimeAssemblyBoxes({assembly:scene.assembly});
+     const A=axis==="3AX"?0:(pos.A||0),B=(axis==="5AX"||axis==="6AX")?(pos.B||0):0,C=axis==="6AX"?(pos.C||0):0,R=runtimePivotMatrix(rotMat(A,B,C),cx,cy),tableR=Math.max(spanX,spanY)*.72,fixtureBoxes=runtimeAssemblyBoxes({assembly:scene.assembly});
      const stockBox={minX:stockMinX,maxX:stockMaxX,minY:stockMinY,maxY:stockMaxY,minZ:stockBottom,maxZ:stockTop},tableBox={minX:cx-tableR,maxX:cx+tableR,minY:cy-tableR,maxY:cy+tableR,minZ:stockBottom-12,maxZ:stockBottom-4};
      const stockTarget=[cx,cy,stockCenter],followEligible=(axis==="5AX"||axis==="6AX")&&camera.follow,cameraBlock=scene.parsed.blocks[Math.min(scene.index,Math.max(0,scene.parsed.blocks.length-1))]||null,nextCameraBlock=scene.parsed.blocks[scene.index+1]||null,cameraToolDia=Math.max(.5,runtimeToolDiameter({toolDia:scene.toolDia,toolDiameters:scene.toolDiameters},cameraBlock)),cameraContact=runtimeToolContact(cameraBlock,pos,cameraToolDia,scene.dry,stockTop),now=performance.now(),dtMs=Math.max(4,Math.min(80,camera.lastFrameMs?now-camera.lastFrameMs:16.667)),response=runtimeCameraResponse(cameraBlock,cameraContact.active,dtMs),focusTarget=followEligible?[Number(pos.X||0),Number(pos.Y||0),Number(pos.Z||0)]:stockTarget;
      camera.lastFrameMs=now;camera.lastResponse=response;camera.lastResponseLabel=followEligible?response.label:"CENTER";

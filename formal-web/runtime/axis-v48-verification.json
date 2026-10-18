@@ -1,0 +1,18 @@
+{
+  "version": "48.0.0",
+  "result": "SOURCE_PASS_ONLY",
+  "tests": [
+    "both inline HTML scripts parse",
+    "pivot (120,-80,Z=0) invariant under A/B/C",
+    "C90 rotates nonzero point around pivot",
+    "zero pivot preserves previous inverse math",
+    "both collision scanners and voxel tip reference inferred pivot",
+    "all axis rotary mesh models use pivot matrix"
+  ],
+  "pending": [
+    "real GPU screenshots",
+    "machine calibrated 3D pivot height",
+    "arm/housing collision mesh",
+    "machine NC safety tests"
+  ]
+}
