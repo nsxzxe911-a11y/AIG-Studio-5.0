@@ -8,12 +8,12 @@ test("Both original phone runtimes receive V36 layout last",()=>{
  }});
 test("Phone header is flex not implicit grid columns, nav horizontal and axis workbench one column",()=>{
  const s=read("mobile-layout-v36.css");
- for(const v of ["display:flex!important","flex-flow:row wrap!important","grid-template-areas:none!important","overflow-x:auto!important","flex-direction:column!important","[data-axis-subpage=\\"NC_FIRST\\"]"])assert.ok(s.includes(v),v);
+ for(const v of ["display:flex!important","flex-flow:row wrap!important","grid-template-areas:none!important","overflow-x:auto!important","flex-direction:column!important","[data-axis-subpage=\"NC_FIRST\"]"])assert.ok(s.includes(v),v);
  assert.ok(s.includes("max-width:800px"));
 });
 test("Mobile status details preserve live DOM and surface safety events",()=>{
  const s=read("mobile-layout-v36.js");
- for(const v of ["d.createElement(\\"details\\")","details.append(summary,el)","warning","details.open=true","restore()"])assert.ok(s.includes(v),v);
+ for(const v of ["d.createElement(\"details\")","details.append(summary,el)","warning","details.open=true","restore()"])assert.ok(s.includes(v),v);
  for(const illegal of ["localStorage.setItem(","localStorage.removeItem(","MACHINE_CONNECT","NC_SEND","coreRuntime.dispatch("])assert.ok(!s.includes(illegal));
 });
 test("Web V36 aligned while native versions remain independent",()=>{
