@@ -16,6 +16,8 @@ const PRODUCT_NAV_COMMANDS=Object.freeze({
 });
 const PRODUCT_FORBIDDEN_PAGES=Object.freeze(['4AX','5AX','6AX']);
 const PRODUCT_PAGE_SET=new Set(PRODUCT_PAGE_IDS);
+const AIGII_MODE=typeof document!=='undefined'&&document.documentElement?.dataset?.aigProject==='AIGII';
+const ACTIVE_PAGE_SET=AIGII_MODE?new Set(PAGE_IDS):PRODUCT_PAGE_SET;
 const PRODUCT_FORBIDDEN_SET=new Set(PRODUCT_FORBIDDEN_PAGES);
 const RUNTIME_MESSAGE_SPECS=Object.freeze({
   'HOME.SYSTEM_MESSAGES':Object.freeze({messageId:'HOME.SYSTEM_MESSAGES',role:'status',ariaLive:'polite',runtimeTextRequired:true,defaultText:null})
@@ -42,7 +44,7 @@ function runtimeMessageSpec(messageId){
   const spec=RUNTIME_MESSAGE_SPECS[messageId];
   return spec?{...spec}:null;
 }
-function isProductPageAllowed(pageId){return PRODUCT_PAGE_SET.has(String(pageId||''));}
+function isProductPageAllowed(pageId){return ACTIVE_PAGE_SET.has(String(pageId||''));}
 function removeNode(node){
   if(!node)return;
   if(typeof node.remove==='function'){node.remove();return;}
@@ -53,10 +55,10 @@ function decorateProductControl(node,context){
   const tag=String(node.tagName||'').toUpperCase();
   const page=String(node.dataset.page||'');
   const target=String(node.dataset.openPage||'');
-  if(page&&PRODUCT_FORBIDDEN_SET.has(page))return false;
-  if(target&&PRODUCT_FORBIDDEN_SET.has(target))return false;
+  if(!AIGII_MODE&&page&&PRODUCT_FORBIDDEN_SET.has(page))return false;
+  if(!AIGII_MODE&&target&&PRODUCT_FORBIDDEN_SET.has(target))return false;
   if(tag!=='BUTTON')return true;
-  if(context==='NAV'&&page&&PRODUCT_PAGE_SET.has(page)){
+  if(context==='NAV'&&page&&ACTIVE_PAGE_SET.has(page)){
     const buttonId='NAV_'+page;
     node.dataset.buttonId=buttonId;
     node.dataset.commandId=PRODUCT_NAV_COMMANDS[buttonId];
@@ -64,7 +66,7 @@ function decorateProductControl(node,context){
     node.dataset.nativeControl='true';
     return true;
   }
-  if(target&&PRODUCT_PAGE_SET.has(target)){
+  if(target&&ACTIVE_PAGE_SET.has(target)){
     let buttonId='BTN.'+(context||'PRODUCT')+'.OPEN.'+target;
     let viewId='VIEW.'+(context||'PRODUCT')+'.OPEN.'+target;
     if(context==='HOME'&&['CAD','CAM','SIM','NC'].includes(target)){
@@ -93,8 +95,8 @@ function setRuntimeMessage(host,messageId,text){
 function sanitizeProductScreen(node){
   if(!node||!node.dataset)return true;
   const page=String(node.dataset.page||'');
-  if(page&&PRODUCT_FORBIDDEN_SET.has(page))return false;
-  if(!PRODUCT_PAGE_SET.has(page)||typeof node.querySelectorAll!=='function')return true;
+  if(!AIGII_MODE&&page&&PRODUCT_FORBIDDEN_SET.has(page))return false;
+  if(!ACTIVE_PAGE_SET.has(page)||typeof node.querySelectorAll!=='function')return true;
   node.querySelectorAll('[data-open-page]').forEach(control=>{
     if(!decorateProductControl(control,page))removeNode(control);
   });
@@ -122,6 +124,19 @@ function sanitizeProductScreen(node){
 
 function installAuthoritySkinV1(){
   if(typeof document==='undefined'||typeof document.createElement!=='function'||!document.head)return false;
+  if(AIGII_MODE){
+    const apply=()=>{
+      document.documentElement.classList.add('aigCamUnified');
+      document.title='AIG-II • CAM RGB Runtime';
+      const logo=document.querySelector('.brand .logo');
+      const subtitle=document.querySelector('.brand small');
+      if(logo)logo.textContent='AIG-II';
+      if(subtitle)subtitle.textContent='CAM RGB GLASS • 0.001 mm';
+    };
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});
+    else apply();
+    return true;
+  }
   const cssId='aig-authority-home-v1-css';
   if(!document.getElementById(cssId)){
     const link=document.createElement('link');
@@ -147,7 +162,7 @@ function installAuthoritySkinV1(){
 }
 function installProductDomGuard(){
   if(typeof document==='undefined') return;
-  const allowed=new Set(PRODUCT_PAGE_IDS),utilities=new Set(['刀路','功能']);
+  const allowed=new Set(AIGII_MODE?PAGE_IDS:PRODUCT_PAGE_IDS),utilities=new Set(['刀路','功能']);
   const guard=(host,extra,kind)=>{
     if(!host||host.dataset?.aigProductGuard==='1') return;
     const append=host.appendChild.bind(host);
@@ -163,7 +178,7 @@ function installProductDomGuard(){
   const nav=document.getElementById('nav'),screens=document.getElementById('screens');
   guard(nav,null,'NAV');
   guard(screens,utilities,'SCREEN');
-  if(nav&&nav.style) nav.style.gridTemplateColumns='repeat(7,minmax(72px,1fr))';
+  if(nav&&nav.style) nav.style.gridTemplateColumns='repeat('+(AIGII_MODE?10:7)+',minmax(72px,1fr))';
 }
 installAuthoritySkinV1();
 installProductDomGuard();
@@ -267,6 +282,8 @@ Object.freeze(ROUTES);
 global.AIG_PAGE_IDS=PAGE_IDS;
 global.AIG_PAGE_NAVIGATION=NAVIGATION;
 global.AIG_PRODUCT_PAGE_IDS=PRODUCT_PAGE_IDS;
+global.AIG_ACTIVE_PAGE_IDS=Object.freeze(Array.from(ACTIVE_PAGE_SET));
+global.AIG_PROJECT_MODE=AIGII_MODE?'AIGII':'AIG';
 global.AIG_PRODUCT_PAGE_NAVIGATION=PRODUCT_NAVIGATION;
 global.AIG_PRODUCT_NAV_COMMAND_ID=PRODUCT_NAV_COMMANDS;
 global.AIG_PRODUCT_FORBIDDEN_PAGES=PRODUCT_FORBIDDEN_PAGES;
