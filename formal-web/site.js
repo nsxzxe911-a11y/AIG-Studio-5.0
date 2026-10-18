@@ -3,6 +3,12 @@
 (function(){
 "use strict";
 const PAGES=new Set(["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI"]);
+/* Offline-first site navigation, without blocking the visible page. */
+if(typeof navigator!=="undefined" && "serviceWorker" in navigator){
+ window.addEventListener("load",()=>{
+  navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+ },{once:true});
+}
 function legacyDeepLink(){
   let page="";
   try{page=decodeURIComponent(location.hash.slice(1)).toUpperCase()}catch(_){return false}

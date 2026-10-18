@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-Hant" data-aig-project="AIGII">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a111c">
+<meta name="description" content="AIG-II CNC 技術指南：從 CAD、CAM、SIM、NC-first 到多軸加工的操作流程與基本檢查。">
+<title>技術知識庫｜AIG-II CNC</title>
+<link rel="stylesheet" href="./site.css"><link rel="stylesheet" href="./site-v2.css">
+</head>
+<body id="page-top">
+<a class="skip-link" href="#main-content">跳至主要內容</a>
+<div class="utility-bar"><div class="site-container utility-inner"><span>AIG-II｜CNC 技術與製造</span><div class="utility-links"><a href="./index.html">首頁</a><a href="./updates.html">網站更新</a><a href="./mobile-runtime.html#HOME">工作區</a></div></div></div>
+<header class="site-container brand-row"><a class="brand" href="./index.html" aria-label="AIG-II 首頁"><span class="brand-mark" aria-hidden="true"></span><span><strong class="brand-name">AIG-II</strong><small class="brand-sub">AI GENERATIVE CNC</small></span></a><div class="brand-lead"><strong>CNC 技術知識庫</strong>設計 · 加工 · 模擬 · NC</div></header>
+<nav class="primary-nav" aria-label="網站主導覽"><div class="site-container nav-inner" id="site-navigation" data-expanded="false">
+<button type="button" class="mobile-menu-toggle" id="site-menu-toggle" aria-expanded="false" aria-controls="site-navigation">☰　選單</button>
+<a class="nav-link" href="./index.html">首頁</a>
+<a class="nav-link" href="./index.html#modules">產品功能</a>
+<a class="nav-link" aria-current="page" href="./guide.html">技術知識庫</a>
+<a class="nav-link" href="./updates.html">網站更新</a>
+<a class="nav-workspace" href="./mobile-runtime.html#HOME">開啟工作區　↗</a>
+</div></nav>
+<div class="site-container">
+<div class="breadcrumb"><a href="./index.html">首頁</a><span>›</span><span>技術知識庫</span></div>
+<div class="content-layout">
+<main id="main-content" class="article-document">
+<span class="eyebrow">AIG-II / CNC GUIDE</span>
+<h1>從製圖到 NC 的實用操作指南</h1>
+<p class="intro">這裡整理 CNC 作業流程與基本檢查。可以從 CAD 開始，也可以直接從既有 G-code 開始。所有加工參數仍須依實際機台、刀具、工件及控制器設定確認。</p>
+<section class="page-anchor" id="cad-cam">
+<h2>01　CAD → CAM → SIM → NC</h2>
+<p>典型的設計型流程，適合還沒有加工程式、需要先建立工件幾何的情況。</p>
+<ol>
+<li><b>CAD 製圖：</b>建立線、圓、弧、孔等幾何，確認尺寸、原點、閉合輪廓與單位。</li>
+<li><b>CAM 刀路：</b>選擇刀具與加工策略，設定深度、進給、轉速、Safe-Z、加工區域和起退刀方式。</li>
+<li><b>SIM 模擬：</b>檢查刀具位置、材料移除、快速移動、工件及夾治具干涉。</li>
+<li><b>NC 驗證：</b>檢視 G-code、工作座標、刀具號與補償、固定循環和程式結束方式。</li>
+</ol>
+<a class="primary-action" href="./mobile-runtime.html#CAD">開啟 CAD 工作頁　↗</a>
+</section>
+<section class="page-anchor" id="nc-first">
+<h2>02　NC-first：直接編輯 G-code</h2>
+<p>如果已有程式，不必先經過 CAD 或 CAM。可直接進 NC 編輯器進行修改、解析與檢查，再轉入對應模擬工作頁。</p>
+<ol>
+<li>確認控制器、機型、軸數、單位、工作座標設定。</li>
+<li>檢視 G90/G91、G54 等座標與模式切換，檢查 G43 H、刀具與換刀流程。</li>
+<li>確認 G0/G1/G2/G3、鑽孔固定循環與控制器支援的 M-code。</li>
+<li>解析、模擬與單節／空跑驗證後，才考慮實機加工。</li>
+</ol>
+<p class="content-note">本網站不直接輸出機台動作。範例與檢查清單不能取代機台說明書、操作員確認、刀長校正與實機安全措施。</p>
+<a class="primary-action" href="./mobile-runtime.html#NC">直接開啟 NC 編輯器　↗</a>
+</section>
+<section class="page-anchor" id="sim-check">
+<h2>03　模擬時優先檢查什麼？</h2>
+<p>模擬目的不只是「動畫會動」，還包括用可追溯數據驗證加工過程。</p>
+<ul>
+<li><b>幾何與座標：</b>原點、座標系、G90/G91、刀長補償一致。</li>
+<li><b>路徑分段：</b>快移、進刀、切削、退刀、Safe-Z 之間的銜接正確。</li>
+<li><b>材料移除：</b>實際更新毛坯幾何或高度資料，而非只畫藍色刀路。</li>
+<li><b>碰撞與界限：</b>刀柄、夾具、機台行程及旋轉軸姿態都有合理檢查。</li>
+<li><b>程式驗證：</b>不支援指令、刀具表缺失與超界必須阻止危險輸出。</li>
+</ul>
+<a class="secondary-action" href="./mobile-runtime.html#SIM">前往 SIM 模擬　↗</a>
+</section>
+<section class="page-anchor" id="axis-guide">
+<h2>04　三軸到六軸如何選擇？</h2>
+<p><b>3AX</b> 使用 X/Y/Z；<b>4AX</b> 加入 A；<b>5AX</b> 顯示 A/B；<b>6AX</b> 顯示 A/B/C。這些是 AIG-II 的工作頁分類，並不表示每一部現場機台都擁有相同軸結構或 G-code 指令集。</p>
+<p>選擇機型後，仍需要驗證真實機械運動學、旋轉中心、工件安裝和刀具／夾具干涉。正式的多軸模擬應以機型與運動學設定為準。</p>
+<div class="lead-actions"><a class="secondary-action" href="./mobile-runtime.html#3AX">3AX　↗</a><a class="secondary-action" href="./mobile-runtime.html#4AX">4AX　↗</a><a class="secondary-action" href="./mobile-runtime.html#5AX">5AX　↗</a><a class="secondary-action" href="./mobile-runtime.html#6AX">6AX　↗</a></div>
+</section>
+<section class="page-anchor" id="product-links">
+<h2>05　直接進入工作區</h2>
+<p>網站和操作頁是獨立入口：閱讀教學時不會切換機台狀態；選擇功能後才進入獨立編輯／模擬畫面。</p>
+<div class="lead-actions"><a class="primary-action" href="./mobile-runtime.html#HOME">AIG-II 工作首頁　↗</a><a class="secondary-action" href="./index.html#modules">完整功能分類　↗</a></div>
+</section>
+</main>
+<aside class="content-toc" aria-label="本頁目錄"><strong>本篇內容</strong><a href="#cad-cam">CAD → CAM → SIM → NC</a><a href="#nc-first">NC-first 直接編輯</a><a href="#sim-check">模擬與材料移除檢查</a><a href="#axis-guide">三到六軸差異</a><a href="#product-links">工作區入口</a><a href="./updates.html">網站更新</a></aside>
+</div></div>
+<footer class="site-footer"><div class="site-container footer-inner"><div><strong>AIG-II</strong><span>CNC 技術與工作區</span></div><div class="footer-links"><a href="./index.html">首頁</a><a href="./guide.html">技術知識庫</a><a href="./updates.html">網站更新</a><a href="./mobile-runtime.html#HOME">工作區</a></div></div></footer>
+<script defer src="./site.js"></script>
+</body></html>

@@ -1,8 +1,8 @@
 /* AIG-II public website + separately routed CNC workbench.
    Cache the actual portal and runtime; no engineering gallery in the startup path. */
-const CACHE="aig-ii-public-portal-and-rgb-runtime-20261018-v6";
+const CACHE="aig-ii-site-v2-portal-runtime-20261018-v7";
 const SHELL=[
-  "./","./index.html","./site.css","./site.js","./mobile-runtime.html","./manifest.webmanifest",
+  "./","./index.html","./guide.html","./updates.html","./site.css","./site-v2.css","./site.js","./mobile-runtime.html","./manifest.webmanifest",
   "./runtime/page-runtime-router.js","./runtime/ai-page-runtime.js",
   "./runtime/layout-mode.js",
   "./authority/cam-unified-rgb-v1.css",

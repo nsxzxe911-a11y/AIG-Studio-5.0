@@ -7,9 +7,13 @@
 <meta name="description" content="AIG-II CNC 製圖、刀路規劃、加工模擬與 NC 程式的產品資訊、使用指南及工作區入口。">
 <title>AIG-II｜CNC 技術、功能與工作區</title>
 <link rel="stylesheet" href="./site.css">
+<link rel="stylesheet" href="./site-v2.css">
+<meta property="og:title" content="AIG-II｜CNC 技術與製造平台">
+<meta property="og:description" content="CAD、CAM、SIM、多軸加工、NC 與 AI 的技術導覽和操作入口。">
 <link rel="manifest" href="./manifest.webmanifest">
 </head>
-<body>
+<body id="page-top">
+<a class="skip-link" href="#main-content">跳至主要內容</a>
 <div class="utility-bar">
  <div class="site-container utility-inner">
   <span>AIG-II｜CNC 技術與製造</span>
@@ -31,19 +35,28 @@
   <a class="nav-link" href="#cadcam">CAD / CAM</a>
   <a class="nav-link" href="#multiaxis">多軸加工</a>
   <a class="nav-link" href="#ncai">NC / AI</a>
-  <a class="nav-link" href="#guide">使用指南</a>
-  <a class="nav-link" href="#about">關於 AIG-II</a>
+  <a class="nav-link" href="./guide.html">技術知識庫</a>
+  <a class="nav-link" href="./updates.html">網站更新</a>
   <a class="nav-workspace" href="./mobile-runtime.html#HOME">開啟工作區　↗</a>
  </div>
 </nav>
+<div class="site-container notice-ribbon">
+ <p><strong>網站 2.0</strong>　全新功能分類、CNC 技術指南與更清楚的工作入口。</p>
+ <a href="./updates.html">查看更新內容　›</a>
+</div>
 <div class="site-container">
  <div class="breadcrumb" aria-label="目前位置"><a href="./index.html">首頁</a><span aria-hidden="true">›</span><span>CNC 技術與產品導覽</span></div>
+ <section class="quick-path" aria-label="常用工作捷徑">
+  <a href="./mobile-runtime.html#NC"><span class="path-icon">NC</span><span class="path-text"><b>直接編輯 G-code</b><small>不需要先進 CAD</small></span><span class="path-arrow" aria-hidden="true">↗</span></a>
+  <a href="./mobile-runtime.html#CAD"><span class="path-icon">CAD</span><span class="path-text"><b>開始製圖</b><small>幾何設計與尺寸</small></span><span class="path-arrow" aria-hidden="true">↗</span></a>
+  <a href="./guide.html"><span class="path-icon">學</span><span class="path-text"><b>CNC 技術指南</b><small>流程、模擬與檢查</small></span><span class="path-arrow" aria-hidden="true">↗</span></a>
+ </section>
  <div class="page-grid">
-  <main class="main-column">
+  <main class="main-column" id="main-content">
    <article class="panel lead-article" id="about">
     <div class="lead-copy">
      <span class="section-overline">AIG-II · CNC WORKSPACE</span>
-     <h1>把 CNC 製圖、刀路與 NC 編輯，放在同一個工作流程。</h1>
+     <h1>從 <em>CAD 製圖</em> 到 <em>NC 加工</em>，自己的工作流程自己決定。</h1>
      <p>從幾何設計、加工路徑到多軸模擬，可按自己的習慣選擇操作入口。只需要編輯 G-code，也能直接進入 NC 工作區。</p>
      <div class="lead-actions">
       <a class="primary-action" href="./mobile-runtime.html#HOME">進入 AIG-II 工作區　↗</a>
@@ -79,6 +92,11 @@
      </svg>
     </div>
    </article>
+
+   <section class="guide-teasers" aria-label="精選技術指南">
+    <a href="./guide.html#cad-cam"><span class="teaser-mark">專題指南 / CAD × CAM</span><strong>如何從幾何走到可檢查的加工刀路？</strong><small>設計、參數、進退刀與模擬檢查</small><span class="teaser-arrow" aria-hidden="true">↗</span></a>
+    <a href="./guide.html#nc-first"><span class="teaser-mark">實務流程 / NC-FIRST</span><strong>只想直接編輯 G-code？從 NC 開始</strong><small>Fanuc 常用檢查項目與安全流程</small><span class="teaser-arrow" aria-hidden="true">↗</span></a>
+   </section>
 
    <section class="panel" id="modules">
     <div class="section-header"><h2>產品功能分類</h2><small>選擇功能，即可進入對應工作頁</small></div>
@@ -142,7 +160,7 @@
    </section>
 
    <section class="panel" id="guide">
-    <div class="section-header"><h2>使用指南</h2><small>依你的加工方式，選擇起點</small></div>
+    <div class="section-header"><h2>技術知識庫精選</h2><small><a href="./guide.html">閱讀完整指南　↗</a></small></div>
     <article class="article-row" id="guide-cad" data-searchable="教學 設計 CAD CAM SIM NC">
      <p class="article-meta">基礎操作 · CAD → CAM → SIM → NC</p>
      <h3><a href="./mobile-runtime.html#CAD">從 CAD 製圖開始</a></h3>
@@ -190,6 +208,20 @@
     </div>
    </section>
    <section class="panel">
+    <div class="section-header"><h2>近期網站更新</h2></div>
+    <div class="latest-list">
+     <article><time datetime="2026-10-18">2026 / 10 / 18</time><a href="./updates.html#site-v2">AIG-II 網站 2.0：分類與知識庫升級</a><p>首頁、技術指南及手機導航優化</p></article>
+     <article><time datetime="2026-10-18">2026 / 10 / 18</time><a href="./updates.html#formal-web">正式網站與 CNC 工作區分離</a><p>網站瀏覽與加工編輯各用獨立入口</p></article>
+    </div>
+   </section>
+   <section class="panel">
+    <div class="section-header"><h2>版本與下載</h2></div>
+    <div class="side-copy">
+     <p>已發布的專案版本與附件，請以 GitHub Release 實際內容為準。</p>
+     <a href="https://github.com/nsxzxe911-a11y/AIG-II/releases" target="_blank" rel="noopener noreferrer">瀏覽 AIG-II 已公開版本　↗</a>
+    </div>
+   </section>
+   <section class="panel">
     <div class="section-header"><h2>關於本站</h2></div>
     <div class="side-copy">
      <p>這裡提供 AIG-II 功能分類、使用說明和 CNC 工作入口。</p>
@@ -203,7 +235,7 @@
 <footer class="site-footer">
  <div class="site-container footer-inner">
   <div><strong>AIG-II</strong><span>AI GENERATIVE CNC · CNC 技術與產品入口</span></div>
-  <div class="footer-links"><a href="./index.html">首頁</a><a href="#modules">產品功能</a><a href="#guide">使用指南</a><a href="./mobile-runtime.html#HOME">開啟工作區</a></div>
+  <div class="footer-links"><a href="./index.html">首頁</a><a href="#modules">產品功能</a><a href="./guide.html">知識庫</a><a href="./updates.html">網站更新</a><a href="./mobile-runtime.html#HOME">工作區</a></div>
  </div>
 </footer>
 <script defer src="./site.js"></script>
