@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "aig-studio-runtime-";
-const CACHE_NAME = CACHE_PREFIX + "cam-unified-rgb-v1";
-const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./authority/cam-unified-rgb-v1.css", "./runtime/page-runtime-router.js", "./runtime/ai-page-runtime.js"];
+const CACHE_NAME = CACHE_PREFIX + "cam-unified-dual-layout-v2";
+const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./authority/cam-unified-rgb-v1.css", "./authority/desktop-mobile-layout-v1.css", "./runtime/layout-mode.js", "./runtime/page-runtime-router.js", "./runtime/ai-page-runtime.js"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
