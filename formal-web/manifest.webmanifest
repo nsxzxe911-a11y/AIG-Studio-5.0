@@ -1,0 +1,12 @@
+{
+  "name": "AIG-II CNC 技術與工作區",
+  "short_name": "AIG-II",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#020407",
+  "theme_color": "#0a111c",
+  "lang": "zh-Hant",
+  "description": "AIG-II 正式網站：產品功能分類、技術指南與 CNC 工作區。"
+}
