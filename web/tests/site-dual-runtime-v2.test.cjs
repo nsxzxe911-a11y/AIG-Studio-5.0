@@ -44,7 +44,7 @@ test('machining viewport keeps majority width with axis-specific controls and mo
 });
 test('offline cache v10 explicitly refreshes both website and workbench styles',()=>{
  const sw=get('formal-web','service-worker.js');
- assert.match(sw,/aig-ii-visual-library-20261018-v16/);
+ assert.match(sw,/aig-ii-authority-registry-recovered-20261018-v17/);
  assert.ok(sw.includes('"./site-dual-v2.css"'));
  assert.ok(sw.includes('"./authority/aigii-runtime-visual-v2.css"'));
  assert.ok(sw.includes('"./mobile-runtime.html"'));

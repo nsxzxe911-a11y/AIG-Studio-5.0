@@ -74,3 +74,16 @@ box-shadow:0 10px 35px #0008,inset 0 1px #7de5ff24}
 .visual-home-thumbs a{display:block;overflow:hidden;border:1px solid #538bb4;border-radius:9px;background:#071222;aspect-ratio:5/6}
 .visual-home-thumbs img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 20%;pointer-events:none}
 @media(max-width:650px){.visual-home-preview{grid-template-columns:1fr;padding:16px}.visual-home-thumbs a{aspect-ratio:5/4}}
+
+/* Official SHA-identified Library originals are distinct from web-hosted legacy thumbnails. */
+.authority-verified h3{font-size:16px;color:#def6ff;margin:22px 2px 12px}
+.visual-table-wrap{overflow-x:auto;border:1px solid #376987;border-radius:11px;background:#071c2d}
+.visual-source-table{border-collapse:collapse;width:100%;min-width:730px;font-variant-numeric:tabular-nums}
+.visual-source-table th,.visual-source-table td{padding:11px 12px;text-align:left;border-bottom:1px solid #254c67;color:#c4e0ec;font-size:11px}
+.visual-source-table thead th{color:#a5dcf2;background:#12304a;font-size:11px;white-space:nowrap}
+.visual-source-table tbody tr:hover{background:#16344b}
+.visual-source-table tbody th{color:#fff;font-size:13px;font-weight:850}
+.visual-source-table td code{color:#aff0ff;font-size:10px}
+.visual-source-table td small{display:block;color:#88aac7;font-size:10px;margin-top:3px}
+.visual-source-table tbody tr:last-child td,.visual-source-table tbody tr:last-child th{border-bottom:none}
+@media(max-width:600px){.visual-table-wrap{margin:0 -3px}.visual-source-table td,.visual-source-table th{padding:9px 10px}}

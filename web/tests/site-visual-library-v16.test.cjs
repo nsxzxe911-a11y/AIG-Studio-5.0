@@ -18,7 +18,7 @@ test('whole indexed source set has ten slots and no cross-page visual substitute
   assert.equal(c.originals.filter(p=>p.id===page).length,1,page);
  for(const missing of ['6AX','NC','AI']){
   const page=c.originals.find(p=>p.id===missing);
-  assert.equal(page.src,null);assert.equal(page.status,'INDEPENDENT_AUTHORITY_BINARY_MISSING');
+  assert.equal(page.src,null);assert.equal(page.status,'LIBRARY_VERIFIED_NOT_HOSTED');
  }
  assert.equal(new Set(c.originals.filter(p=>p.src).map(p=>p.src)).size,7);
  assert.equal(new Set(c.components.map(c=>c.buttonId)).size,32);
@@ -39,7 +39,7 @@ test('every published archive image and icon has a nonempty original Git blob SH
 test('image gallery has 41 actual thumbnails, missing cards and functional filtering',()=>{
  const html=read('formal-web','image-library.html');
  assert.equal((html.match(/<img\b/g)||[]).length,41);
- assert.equal((html.match(/data-visual-kind="missing"/g)||[]).length,3);
+ assert.equal((html.match(/data-visual-kind="pending"/g)||[]).length,3);
  for(const id of ['HOME','CAD','CAM','SIM','3AX','4AX','5AX','6AX','NC','AI'])
   assert.ok(html.includes('IMG-AIGII-ARCHIVE-'+id+'-V1'));
  for(const f of ['all','page','axis','component','missing'])
@@ -68,9 +68,22 @@ test('homepage visibly links full picture library and shows three real thumbnail
 });
 test('cache V16 preloads gallery UI but not multi-megabyte images on startup',()=>{
  const sw=read('formal-web','service-worker.js');
- assert.match(sw,/aig-ii-visual-library-20261018-v16/);
+ assert.match(sw,/aig-ii-authority-registry-recovered-20261018-v17/);
  for(const f of ['image-library.html','visual-library.css','visual-library.js','visual-library/manifest.json','runtime/visual-reference-v1.js'])
   assert.ok(sw.includes('"./'+f+'"'),f);
  assert.doesNotMatch(sw,/"\.\/visual-library\/pages\//);
  assert.doesNotThrow(()=>new vm.Script(sw));
+});
+
+test('Registry V3 identifies all Mobile/Desktop main originals without treating Library bytes as website bytes',()=>{
+ const c=catalog(),html=read('formal-web','image-library.html');
+ assert.equal(Object.keys(c.authorityRegistry.mobile).length,10);
+ assert.equal(Object.keys(c.authorityRegistry.desktop).length,10);
+ for(const axis of ['6AX','NC','AI']){
+  assert.match(c.authorityRegistry.mobile[axis].sha256,/^[a-f0-9]{64}$/);
+  assert.match(c.authorityRegistry.desktop[axis].sha256,/^[a-f0-9]{64}$/);
+  assert.equal(c.originals.find(x=>x.id===axis).status,'LIBRARY_VERIFIED_NOT_HOSTED');
+ }
+ assert.ok(html.includes('10 / 10 原圖在 Library'));
+ assert.ok(html.includes('網站待同步'));
 });

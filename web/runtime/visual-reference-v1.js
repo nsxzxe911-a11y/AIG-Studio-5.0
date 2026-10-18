@@ -11,12 +11,12 @@ function create(tag,cls,text){const n=document.createElement(tag);if(cls)n.class
 function addPreview(screen){
  const page=screen.dataset.page,entry=refs[page];if(!entry||screen.querySelector(".aig-reference-strip"))return;
  const [label,file]=entry,details=create("details","aig-reference-strip");
- details.dataset.imageId="IMG-AIGII-ARCHIVE-"+page+"-V1";
+ details.dataset.imageId=file?"IMG-AIGII-ARCHIVE-"+page+"-V1":"AIGII-MOBILE-"+page+"-CURRENT-20261016";
  const summary=create("summary","aig-reference-summary");
  const tile=create("span","aig-reference-mini");
  if(file){
   const img=create("img");img.src="./visual-library/pages/"+file;img.alt="";img.loading="lazy";img.decoding="async";tile.appendChild(img);
- }else tile.textContent="待補";
+ }else tile.textContent="已入庫";
  const copy=create("span","aig-reference-copy");
  copy.append(create("strong","",page+"｜"+label+"：已入庫原圖對照"),
              create("small","","只顯示視覺參考，不干涉畫圖、3D 或按鈕；點擊展開"));
@@ -31,7 +31,7 @@ function addPreview(screen){
   fig.appendChild(img);
   const cap=create("figcaption","","舊圖庫原圖預覽；不是最後核准的 Mobile/Desktop Authority，也不是可操作的機台畫面。");
   fig.appendChild(cap);panel.appendChild(fig);
- }else panel.appendChild(create("p","","此頁尚無可核對的獨立整頁圖，不能拿別頁原圖或工程模型替代。"));
+ }else panel.appendChild(create("p","","此頁 Mobile／Desktop Authority 原圖均已找到；網站尚未同步這批原始 PNG，暫時不展示替代圖。"));
  const link=create("a","aig-reference-link","開啟完整圖庫／來源分類 ↗");link.href="./image-library.html";
  link.target="_blank";link.rel="noopener noreferrer";panel.appendChild(link);
  details.append(panel);screen.appendChild(details);

@@ -13,7 +13,7 @@ const keep=(node,q)=>{
   selected==="page"&&(type==="page"&&!group.includes("多軸"))||
   selected==="axis"&&(group.includes("多軸")&&type!=="component")||
   selected==="component"&&type==="component"||
-  selected==="missing"&&type==="missing";
+  selected==="missing"&&type==="pending";
  const terms=(node.dataset.visualSearch||"").toLocaleLowerCase("zh-TW");
  return kind&&terms.includes(q);
 };
