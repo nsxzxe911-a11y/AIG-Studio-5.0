@@ -1,0 +1,222 @@
+/* AIG-II × Studio V37 real-workspace mobile recovery.
+   The V36 media query misses mobile-preview layouts on wide CSS viewports.
+   This sheet is driven by measured workbench width, not window width alone. */
+html[data-aig-v37-compact="true"] body{overflow-x:clip}
+html[data-aig-v37-compact="true"] .app{
+ box-sizing:border-box!important;min-width:0!important;max-width:100%!important;width:100%!important
+}
+html.aigCamUnified[data-aig-presentation="mobile"][data-aig-v37-compact="true"] .app{
+ max-width:min(100%,480px)!important;margin-inline:auto!important
+}
+html[data-aig-v37-compact="true"] .app>.top{
+ display:flex!important;flex-flow:row wrap!important;align-content:start!important;
+ align-items:center!important;justify-content:flex-start!important;min-width:0!important;width:100%!important;
+ height:auto!important;min-height:0!important;gap:6px!important;padding:8px!important;
+ grid-template-areas:none!important;grid-template-columns:none!important;
+ position:relative!important;inset:auto!important
+}
+html[data-aig-v37-compact="true"] .app>.top>*{
+ box-sizing:border-box;grid-area:auto!important;min-width:0!important;max-width:100%!important;order:10!important
+}
+html[data-aig-v37-compact="true"] .app>.top>.brand{
+ order:0!important;flex:1 1 150px!important;min-width:125px!important;max-width:none!important
+}
+html[data-aig-v37-compact="true"] .app>.top>.brand .logo{font-size:clamp(15px,4.1vw,20px)!important}
+html[data-aig-v37-compact="true"] .app>.top>.layoutSwitch{
+ order:1!important;display:flex!important;flex:0 0 auto!important;max-width:100%!important;margin:0!important
+}
+html[data-aig-v37-compact="true"] .app>.top>.layoutSwitch button{
+ min-width:36px!important;min-height:34px!important;padding:4px!important;font-size:10px!important
+}
+html[data-aig-v37-compact="true"] .app>.top>.layoutSwitch .layoutMessage{display:none!important}
+html[data-aig-v37-compact="true"] .app>.top>.nav{
+ display:flex!important;flex:0 0 100%!important;flex-flow:row nowrap!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ order:99!important;grid-area:auto!important;
+ overflow-x:auto!important;overflow-y:hidden!important;overscroll-behavior-x:contain;
+ scroll-snap-type:x proximity;scrollbar-width:thin;gap:5px!important;padding:3px 0!important
+}
+html[data-aig-v37-compact="true"] .app>.top>.nav button{
+ flex:0 0 67px!important;min-width:67px!important;max-width:67px!important;
+ min-height:42px!important;font-size:11px!important;
+ padding:7px 3px!important;white-space:normal!important;scroll-snap-align:start
+}
+html[data-aig-v37-compact="true"] .app>.top>.status{display:none!important}
+html[data-aig-v37-compact="true"] .app>.top>a,
+html[data-aig-v37-compact="true"] .app>.top>button{
+ flex:0 1 auto!important;order:9!important;max-width:calc(50% - 5px)!important;
+ min-width:0!important;min-height:34px!important;
+ font-size:10px!important;white-space:normal!important;
+ padding:6px 8px!important;overflow-wrap:anywhere
+}
+html[data-aig-v37-compact="true"] .app>.shell{
+ display:block!important;box-sizing:border-box!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ padding:7px!important;overflow:clip
+}
+html[data-aig-v37-compact="true"] .app>.shell>.screen,
+html[data-aig-v37-compact="true"] .app>.shell>.screen.active{
+ width:100%!important;max-width:100%!important;min-width:0!important
+}
+html[data-aig-v37-compact="true"] .simgrid,
+html[data-aig-v37-compact="true"] .simgrid.axisModule,
+html[data-aig-v37-compact="true"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"]{
+ display:flex!important;flex-flow:column nowrap!important;align-items:stretch!important;
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;min-height:0!important;gap:10px!important;
+ grid-template-columns:none!important;grid-template-rows:none!important
+}
+html[data-aig-v37-compact="true"] .simgrid>.axisModuleHeader{
+ box-sizing:border-box!important;order:0!important;
+ grid-column:auto!important;grid-row:auto!important;display:flex!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ padding:10px!important;gap:9px!important
+}
+html[data-aig-v37-compact="true"] .simgrid>.axisModuleHeader .axisSubpages{
+ width:100%!important;min-width:0!important;display:flex!important;flex-wrap:wrap!important
+}
+html[data-aig-v37-compact="true"] .simgrid>.axisModuleHeader .axisSubpages button{
+ flex:1 1 130px!important;min-width:0!important
+}
+html[data-aig-v37-compact="true"] .simgrid>.axisModuleHeader .axisQuality{
+ width:100%!important;min-width:0!important
+}
+html[data-aig-v37-compact="true"] .simgrid>.simleft,
+html[data-aig-v37-compact="true"] .simgrid>.editor{
+ display:block!important;box-sizing:border-box!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ min-height:0!important;flex:0 0 auto!important;grid-column:auto!important;grid-row:auto!important;
+ overflow:hidden!important
+}
+html[data-aig-v37-compact="true"] .simgrid[data-axis-subpage="MACHINE"]>.simleft,
+html[data-aig-v37-compact="true"] .simgrid:not([data-axis-subpage])>.simleft{order:1!important}
+html[data-aig-v37-compact="true"] .simgrid[data-axis-subpage="MACHINE"]>.editor,
+html[data-aig-v37-compact="true"] .simgrid:not([data-axis-subpage])>.editor{order:2!important}
+html[data-aig-v37-compact="true"] .simgrid[data-axis-subpage="NC_FIRST"]>.editor{order:1!important}
+html[data-aig-v37-compact="true"] .simgrid[data-axis-subpage="NC_FIRST"]>.simleft{order:2!important}
+html[data-aig-v37-compact="true"] .simgrid>.simleft>.body,
+html[data-aig-v37-compact="true"] .simgrid>.editor>.body{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;padding:9px!important
+}
+html[data-aig-v37-compact="true"] .simgrid .axisbar{display:flex!important;flex-wrap:wrap!important;gap:6px!important}
+html[data-aig-v37-compact="true"] .simgrid .axisbar .axis{
+ flex:1 1 90px!important;min-width:0!important;max-width:100%!important;overflow-wrap:normal!important
+}
+html[data-aig-v37-compact="true"] .simgrid .sceneWrap,
+html[data-aig-v37-compact="true"] .simgrid.axisModule[data-axis-subpage="MACHINE"] .sceneWrap{
+ display:block!important;box-sizing:border-box!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ height:clamp(350px,53svh,650px)!important;
+ min-height:clamp(350px,53svh,650px)!important;max-height:650px!important;overflow:hidden!important
+}
+html[data-aig-v37-compact="true"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"] .sceneWrap{
+ height:clamp(250px,36svh,380px)!important;min-height:250px!important;max-height:380px!important
+}
+html[data-aig-v37-compact="true"] .simgrid .sim3dCanvas,
+html[data-aig-v37-compact="true"] .simgrid .simCanvas{
+ display:block!important;position:absolute!important;inset:0!important;
+ width:100%!important;height:100%!important;max-height:100%!important;min-height:0!important
+}
+html[data-aig-v37-compact="true"] .simgrid .controls{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ width:100%!important;min-width:0!important;gap:6px!important
+}
+html[data-aig-v37-compact="true"] .simgrid .controls .btn{
+ box-sizing:border-box!important;width:100%!important;min-width:0!important;
+ padding:8px 4px!important;font-size:11px!important
+}
+html[data-aig-v37-compact="true"] .simgrid .v30-hud,
+html[data-aig-v37-compact="true"] .simgrid .runtimeStatus{
+ box-sizing:border-box!important;min-width:0!important;max-width:100%!important;width:100%!important
+}
+html[data-aig-v37-compact="true"] .simgrid .v30-hud-axes{
+ grid-template-columns:repeat(3,minmax(0,1fr))!important
+}
+html[data-aig-v37-compact="true"] .simgrid .v30-hud-others,
+html[data-aig-v37-compact="true"] .simgrid .runtimeStatus{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ max-height:none!important;overflow:visible!important
+}
+html[data-aig-v37-compact="true"] .simgrid .v30-chip,
+html[data-aig-v37-compact="true"] .simgrid .metric{
+ min-width:0!important;overflow-wrap:normal!important;word-break:normal!important
+}
+html[data-aig-v37-compact="true"] .simgrid .v30-chip strong,
+html[data-aig-v37-compact="true"] .simgrid .metric span{
+ font-size:11px!important;overflow-wrap:anywhere
+}
+html[data-aig-v37-compact="true"] .simgrid .editor .editorbar{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:7px!important;width:100%!important;min-width:0!important
+}
+html[data-aig-v37-compact="true"] .simgrid .editor .editorbar>*{width:100%!important;min-width:0!important}
+html[data-aig-v37-compact="true"] .simgrid .editor .editorbar .param{justify-content:space-between!important}
+html[data-aig-v37-compact="true"] .simgrid .editor .editorbar .param input{
+ width:min(72px,42%)!important;min-width:0!important
+}
+html[data-aig-v37-compact="true"] .simgrid .editor textarea.code{
+ display:block!important;box-sizing:border-box!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ min-height:clamp(240px,36svh,400px)!important;
+ height:clamp(240px,36svh,400px)!important;overflow:auto!important;font-size:12px!important
+}
+html[data-aig-v37-compact="true"] .simgrid .editor .execView{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ overflow-x:auto!important
+}
+html[data-aig-v37-compact="true"] .simgrid .editactions{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:6px!important
+}
+html[data-aig-v37-compact="true"] .simgrid .editactions .btn{
+ min-width:0!important;width:100%!important;padding:7px 4px!important
+}
+html[data-aig-v37-compact="true"] .simgrid .sceneHud{
+ max-width:46%!important;min-width:0!important;font-size:9px!important
+}
+html[data-aig-v37-compact="true"] .simgrid .aig-v35-machine-identity{max-width:65%!important}
+html[data-aig-v37-compact="true"] .simgrid .sceneTitle{
+ max-width:94%!important;font-size:11px!important;letter-spacing:0!important;
+ overflow-wrap:anywhere!important
+}
+html[data-aig-v37-compact="true"] .simgrid .aig37-collapse{
+ display:block!important;min-width:0!important;width:100%!important;margin:9px 0!important
+}
+html[data-aig-v37-compact="true"] .simgrid .aig37-collapse>summary{
+ display:list-item!important;list-style-position:inside;cursor:pointer!important;
+ padding:11px 12px!important;border:1px solid #4381a5;border-radius:8px;
+ background:linear-gradient(130deg,#0c273d,#0b192b);color:#e3f9ff;
+ font-size:12px;font-weight:750;line-height:1.6
+}
+html[data-aig-v37-compact="true"] .simgrid .aig37-collapse[open]>summary{border-radius:8px 8px 0 0}
+html[data-aig-v37-compact="true"] .simgrid .aig37-collapse[data-alert="true"]>summary{
+ border-color:#e9b357!important;color:#ffe7b4!important
+}
+html[data-aig-v37-compact="true"] .simgrid .aig37-collapse[open] > :not(summary){margin-top:7px}
+html[data-aig-v37-compact="true"] .aig36-panel,
+html[data-aig-v37-compact="true"] .aig35-panel{
+ min-width:0!important;max-width:calc(100% - 12px)!important;margin-inline:6px!important
+}
+html[data-aig-v37-compact="true"] .aig36-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+html[data-aig-v37-compact="true"] .workgrid,
+html[data-aig-v37-compact="true"] .camgrid,
+html[data-aig-v37-compact="true"] .tpGrid,
+html[data-aig-v37-compact="true"] .ncEditGrid{
+ display:flex!important;flex-flow:column nowrap!important;width:100%!important;
+ min-width:0!important;max-width:100%!important;gap:9px!important
+}
+html[data-aig-v37-compact="true"] .workgrid>*,
+html[data-aig-v37-compact="true"] .camgrid>*,
+html[data-aig-v37-compact="true"] .ncEditGrid>*{
+ width:100%!important;max-width:100%!important;min-width:0!important
+}
+@media(max-width:440px){
+ html[data-aig-v37-compact="true"] .simgrid .controls{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media (max-height:550px) and (orientation:landscape){
+ html[data-aig-v37-compact="true"] .simgrid .sceneWrap{
+  height:clamp(245px,71svh,420px)!important;
+  min-height:245px!important;max-height:420px!important
+ }
+}

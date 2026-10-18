@@ -1,0 +1,12 @@
+{
+  "version": "37.0.0",
+  "rootCause": "mobile frame under 900px inside browser viewport greater than 800px, media-only V36 skipped",
+  "fix": "actual frame width and explicit mobile UI mode",
+  "sourceScripts": "PASS",
+  "inlineScripts": [
+    3,
+    2
+  ],
+  "realDeviceAfterDeploy": "PENDING",
+  "preserves": "3-6AX real WebGL geometry and CNC editing"
+}
