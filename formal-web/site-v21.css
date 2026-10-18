@@ -1,0 +1,64 @@
+/* AIG-II Site 2.1 - content-oriented discovery. This is NOT a CNC engineering shell. */
+:root{--site-accent:#65d9f5}
+.workflow-helper{margin-bottom:19px;overflow:hidden}
+.workflow-helper .workflow-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,.75fr);gap:16px;align-items:center;padding:18px 20px}
+.workflow-helper .workflow-options{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.workflow-helper .workflow-options button,.module-filters button{
+ border:1px solid #31536c;background:#11253a;color:#bed6e9;padding:8px 15px;min-height:42px;
+ border-radius:9px;font-weight:730;transition:background .15s,border-color .15s,transform .15s
+}
+.workflow-helper .workflow-options button[aria-pressed="true"],.module-filters button[aria-pressed="true"]{
+ border-color:#61d7fa;color:#fff;background:linear-gradient(110deg,#175475,#333682);
+ box-shadow:inset 0 1px #91dbf93d,0 0 12px #2784bc3a
+}
+.workflow-helper .workflow-options button:hover,.module-filters button:hover{border-color:#77dffb}
+.workflow-helper .workflow-name{font-size:19px;line-height:1.4;margin:0 0 5px;font-weight:800;color:#f4faff}
+.workflow-helper .workflow-description{font-size:13px;color:#b4cde0;line-height:1.85;margin:0;max-width:48ch}
+.workflow-helper .workflow-cta{display:flex;flex-direction:column;align-items:flex-start;gap:9px;
+ padding:16px 18px;border:1px solid #315c7c;border-radius:10px;
+ background:linear-gradient(130deg,#10304b,#0c1b30)}
+.workflow-helper .workflow-cta small{font-size:12px;color:#9bbacc}
+.workflow-helper .workflow-cta a{width:100%}
+.module-filters{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 16px 10px;background:#0c1b2b}
+.module-filters button{min-height:38px;padding:7px 13px;font-size:12px;white-space:nowrap;border-radius:7px}
+.module-count{min-height:30px;padding:0 18px 10px;color:#94bace;font-size:12px;background:#0c1b2b}
+.category-hidden{display:none!important}
+.recent-placeholder{font-size:12px;color:#92adbe;padding:12px 15px;margin:0}
+.recent-links{list-style:none;padding:4px 0;margin:0}
+.recent-links a{display:flex;align-items:center;justify-content:space-between;gap:11px;
+ padding:10px 15px;border-bottom:1px solid #1e3449;font-size:13px;color:#e4f3ff}
+.recent-links li:last-child a{border:0}
+.recent-links a:hover{background:#162e45;text-decoration:none}
+.recent-links em{font-style:normal;font-size:11px;color:#79d7f0}
+.site-back-top{position:fixed;right:clamp(12px,3vw,28px);bottom:clamp(12px,3vw,25px);z-index:80;
+ display:grid;place-items:center;width:46px;height:46px;
+ border-radius:50%;border:1px solid #4a9ac3;
+ color:#d8f7ff;background:#153752ee;box-shadow:0 8px 20px #0009;backdrop-filter:blur(12px);
+ font-size:20px;font-weight:850}
+.site-back-top[hidden]{display:none}
+.site-back-top:hover{background:#245b78}
+.article-document details{margin:10px 0;border:1px solid #2b526d;border-radius:9px;background:#0c1b2b}
+.article-document details summary{cursor:pointer;padding:13px 16px;color:#e7f8ff;font-weight:730}
+.article-document details summary:focus-visible{outline:2px solid #ffe08f}
+.article-document details[open] summary{border-bottom:1px solid #2b526d}
+.article-document details>p{padding:0 16px 15px;margin:13px 0}
+.article-document details a{color:#86e3fb}
+@media(max-width:900px){
+ .workflow-helper .workflow-body{grid-template-columns:1fr}
+ .workflow-helper .workflow-cta{flex-direction:row;align-items:center;justify-content:space-between}
+ .workflow-helper .workflow-cta a{width:auto;min-width:170px}
+}
+@media(max-width:600px){
+ .workflow-helper .workflow-body{padding:14px;gap:11px}
+ .workflow-helper .workflow-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .workflow-helper .workflow-options button{padding-inline:8px;font-size:12px}
+ .workflow-helper .workflow-cta{flex-direction:column;align-items:stretch;padding:12px}
+ .workflow-helper .workflow-cta a{width:100%}
+ .module-filters{gap:6px;padding:9px 10px}
+ .module-filters button{flex:1 1 40%;min-width:0}
+ .module-count{padding-inline:12px}
+ .site-back-top{bottom:15px;right:12px;width:44px;height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+ .workflow-helper .workflow-options button,.module-filters button{transition:none}
+}

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-Hant" data-aig-project="AIGII"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a111c"><meta name="description" content="AIG-II 網站及 CNC 工作區常見問題：NC-first、離線、舊版畫面、模擬驗證與原生 4K 說明。">
+<title>常見問題｜AIG-II CNC</title>
+<link rel="stylesheet" href="./site.css"><link rel="stylesheet" href="./site-v2.css"><link rel="stylesheet" href="./site-v21.css"></head>
+<body id="page-top">
+<a class="skip-link" href="#main-content">跳至主要內容</a>
+<div class="utility-bar"><div class="site-container utility-inner"><span>AIG-II｜CNC 技術與製造</span><div class="utility-links"><a href="./index.html">首頁</a><a href="./guide.html">技術指南</a><a href="./mobile-runtime.html#HOME">工作區</a></div></div></div>
+<header class="site-container brand-row"><a class="brand" href="./index.html" aria-label="AIG-II 首頁"><span class="brand-mark" aria-hidden="true"></span><span><strong class="brand-name">AIG-II</strong><small class="brand-sub">AI GENERATIVE CNC</small></span></a><div class="brand-lead"><strong>常見問題與使用說明</strong>簡潔、可操作的網站入口</div></header>
+<nav class="primary-nav" aria-label="網站主導覽"><div class="site-container nav-inner" id="site-navigation" data-expanded="false">
+<button type="button" class="mobile-menu-toggle" id="site-menu-toggle" aria-expanded="false" aria-controls="site-navigation">☰　選單</button>
+<a class="nav-link" href="./index.html">首頁</a><a class="nav-link" href="./index.html#modules">產品功能</a><a class="nav-link" href="./guide.html">技術知識庫</a><a class="nav-link" href="./updates.html">網站更新</a><a class="nav-link" aria-current="page" href="./faq.html">常見問題</a><a class="nav-workspace" href="./mobile-runtime.html#HOME">開啟工作區　↗</a>
+</div></nav>
+<div class="site-container"><div class="breadcrumb"><a href="./index.html">首頁</a><span>›</span><span>常見問題</span></div>
+<div class="content-layout">
+<main id="main-content" class="article-document">
+<span class="eyebrow">AIG-II / HELP CENTER</span><h1>常見問題</h1>
+<p class="intro">網站首頁用來瀏覽技術內容和選擇工作頁；正式 CNC 編輯與模擬功能放在獨立工作區，不會在公開首頁出現工程控制殼。</p>
+<h2 id="site" class="page-anchor">網站與操作入口</h2>
+<details><summary>首頁和 CNC 工作區有什麼差別？</summary><p>首頁用來查看功能分類、教學與更新資訊；點選 <a href="./mobile-runtime.html#HOME">工作區</a> 後，才進入 CAD、CAM、SIM、3～6AX、NC 或 AI。網站改版不會自動代表所有加工核心已完成驗收。</p></details>
+<details><summary>我已經有 G-code，可以直接開始嗎？</summary><p>可以從 <a href="./mobile-runtime.html#NC">NC 編輯頁</a> 開始，不必先建立 CAD 草圖。請先核對控制器與機台支援的指令，再解析、模擬、單節和空跑檢查；不要把網頁中的預覽當作真機加工許可。</p></details>
+<details><summary>搜尋欄和分類按鈕怎麼用？</summary><p>回到 <a href="./index.html#modules">功能分類</a>，可選擇 CAD/CAM/SIM、3～6AX 或 NC/AI，再輸入關鍵字搜尋功能。按 Ctrl+K（Mac 為 Command+K）可快速把游標移到首頁搜尋欄。</p></details>
+<details><summary>「最近使用」會同步到其他裝置嗎？</summary><p>不會。網站的「最近使用」入口只保存在目前瀏覽器的本機儲存空間，清除網站資料、無痕模式或更換裝置後可能消失。它不是 CNC 專案同步，也不會保存 G-code 內容。</p></details>
+<h2 id="offline" class="page-anchor">離線、版本與視覺</h2>
+<details><summary>網路中斷還能開網站嗎？</summary><p>成功載入並快取過的網站頁面與部分工作區資源可供離線使用；第一次開站、快取遭清除或某項資源未保存時仍可能需要網路。請先在有網路時開啟所需頁面並確認功能正常。</p></details>
+<details><summary>為什麼我還看到舊網站畫面？</summary><p>可能是瀏覽器分頁仍載入舊版本，或網站快取尚未更新。請先重新整理頁面；若仍舊版，可關閉舊分頁後重新開啟 <a href="./index.html">正式首頁</a>，並檢查瀏覽器中的網站快取。重新整理前請先儲存未完成的 CNC 編輯資料。</p></details>
+<details><summary>RGB 風格是否代表全部都是原生 4K？</summary><p>不是。網站的 RGB 玻璃樣式與桌面／手機各頁的原生 4K Authority 圖是不同驗收項目。外觀更新不會自動證明每張素材已達 3840×2160，也不等於 CNC 模擬和材料移除功能已完成。</p></details>
+<h2 id="safety" class="page-anchor">加工安全與檔案</h2>
+<details><summary>可以直接讓網站控制真實 CNC 機台嗎？</summary><p>目前網站工作區的實機輸出保持停用。即使有 G-code 編輯與模擬，也需要機台連線、控制器支援、安全互鎖、程式核對及實機驗證，才可考慮真機輸出。</p></details>
+<details><summary>到哪裡確認可下載的 APK 或 EXE？</summary><p>查看 <a href="https://github.com/nsxzxe911-a11y/AIG-II/releases" target="_blank" rel="noopener noreferrer">AIG-II GitHub Releases</a>；務必核對發佈版本、附件、SHA 與驗收證據。網站的 GitHub 更新紀錄不應被當成 APK／EXE 已通過的證明。</p></details>
+<p class="content-note">Fanuc、旋轉軸、刀長補償及自訂 M-code 均可能依機台型號和參數不同而異。實機加工前應依現場程序獨立驗證。</p>
+<div class="lead-actions"><a class="primary-action" href="./mobile-runtime.html#HOME">開啟 CNC 工作區　↗</a><a class="secondary-action" href="./guide.html">閱讀技術指南</a></div>
+</main><aside class="content-toc" aria-label="本頁目錄"><strong>問題分類</strong><a href="#site">網站與操作</a><a href="#offline">離線與版本</a><a href="#safety">安全與下載</a><a href="./index.html">返回首頁</a><a href="./updates.html">更新紀錄</a></aside>
+</div></div>
+<footer class="site-footer"><div class="site-container footer-inner"><div><strong>AIG-II</strong><span>CNC 技術與工作區</span></div><div class="footer-links"><a href="./index.html">首頁</a><a href="./guide.html">技術知識庫</a><a href="./updates.html">網站更新</a><a href="./faq.html">常見問題</a></div></div></footer>
+<script defer src="./site.js"></script><script defer src="./site-v21.js"></script>
+</body></html>
