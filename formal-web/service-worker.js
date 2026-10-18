@@ -2,7 +2,7 @@
    Cache the actual portal and runtime; no engineering gallery in the startup path. */
 const REVOKED_CACHE="aig-ii-authority-revocation-20261018-v18";
 const PREVIOUS_CACHE="aig-ii-original-render-v4-20261018-v20";
-const CACHE="aig-ii-original-render-cockpit-v49-20261019";
+const CACHE="aig-ii-original-render-access-v50-20261019";
 const SHELL=[
   "./","./index.html","./image-library.html","./visual-library.css","./visual-library.js","./visual-library/manifest.json","./visual-library/authority-revocations-438.json","./runtime-visual-reference.css","./runtime/visual-reference-v1.js","./guide.html","./updates.html","./faq.html","./project-sync.html","./site.css","./site-v2.css","./site-v21.css","./site-phase4.css","./project-sync.css","./site.js","./site-v21.js","./project-transfer.js","./project-sync.js","./phase4.css","./mobile-runtime.html","./manifest.webmanifest",
   "./runtime/page-runtime-router.js","./runtime/ai-page-runtime.js","./runtime/cam-manual-path-v1.js",
@@ -23,7 +23,7 @@ const SHELL=[
   "./dual-web-v40.js","./dual-web-v40.css","./dual-web-v40.json","./axis-playback-v40.css",
   "./dual-web-v41.js","./dual-web-v41.css","./dual-web-v41.json","./axis-workspace-v41.js","./axis-workspace-v41.css",
   "./dual-web-v42.js","./dual-web-v42.css","./dual-web-v42.json","./skin-platform-v42.js","./skin-mobile-v42.css","./skin-desktop-v42.css",
-  "./dual-web-v43.js","./dual-web-v43.css","./dual-web-v43.json","./ai-page-contract-v43.json","./ai-page-v43.js","./ai-page-v43.css","./ai-page-mobile-v43.css","./ai-page-desktop-v43.css","./ai-page-v44.js","./ai-page-v44.css","./axis-cutting-v45.css","./dual-web-v45.json","./dual-web-v46.json","./dual-web-v47.json","./dual-web-v48.json","./dual-web-v49.json","./workspace-fit-v49.css","./workspace-fit-v49.js","./ai-page-contract-v44.json","./dual-web-v44.json",
+  "./dual-web-v43.js","./dual-web-v43.css","./dual-web-v43.json","./ai-page-contract-v43.json","./ai-page-v43.js","./ai-page-v43.css","./ai-page-mobile-v43.css","./ai-page-desktop-v43.css","./ai-page-v44.js","./ai-page-v44.css","./axis-cutting-v45.css","./dual-web-v45.json","./dual-web-v46.json","./dual-web-v47.json","./dual-web-v48.json","./dual-web-v49.json","./workspace-fit-v49.css","./workspace-fit-v49.js","./workspace-fit-v50.css","./workspace-fit-v50.js","./dual-web-v50.json","./ai-page-contract-v44.json","./dual-web-v44.json",
   "./runtime-uiux-v25.js","./runtime-uiux-v25.css","./uiux-settings.html","./uiux-control-v26.js","./uiux-control-v26.css","./uiux-module-contract-v25.json",
   "./studio-375.html","./studio-375-skin.css","./studio-375-overlay.js","./studio-375-diagnostics.js","./dual-project-latest.html","./dual-latest-binding.json","./site-dual-latest.css",
   "./assets/authority/home_desktop.jpg","./assets/authority/home_mobile.jpg",

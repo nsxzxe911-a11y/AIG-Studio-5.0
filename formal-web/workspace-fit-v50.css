@@ -1,0 +1,275 @@
+/* Web V49 - one viewport CNC cockpit. Presentation only: existing callbacks,
+   WebGL, editors, safety messages, RGB skins and local project stores remain. */
+html[data-aig49-active="true"],html[data-aig49-active="true"] body{
+ height:100%;overflow:hidden!important;overscroll-behavior:none!important}
+html[data-aig49-active="true"]{--aig49-vh:100dvh}
+html[data-aig49-active="true"] .app{
+ display:flex!important;flex-direction:column!important;
+ height:var(--aig49-vh)!important;min-height:0!important;max-height:var(--aig49-vh)!important;
+ overflow:hidden!important}
+html[data-aig49-active="true"] .app>.top{
+ position:relative!important;top:auto!important;flex:0 0 auto!important;
+ min-height:0!important;max-height:108px!important;overflow:hidden!important}
+html[data-aig49-active="true"] .app>.shell{
+ display:block!important;flex:1 1 0!important;height:0!important;min-height:0!important;
+ padding:5px!important;overflow:hidden!important}
+html[data-aig49-active="true"] .app>.shell>.screen.active{
+ display:flex!important;flex-direction:column!important;height:100%!important;
+ min-height:0!important;max-height:100%!important;overflow:hidden!important}
+html[data-aig49-active="true"] .app>.footer{display:none!important}
+html[data-aig49-active="true"] .screen.active :is(.workgrid,.camgrid,.simgrid,.tpGrid,.ncEditGrid,.panel,.body){min-width:0;min-height:0}
+html[data-aig49-active="true"] .screen.active :is([data-cad-runtime],[data-cam-runtime],[data-nc-runtime],[data-tp-runtime],[data-home-runtime],[data-ai-runtime],[data-ai-page-runtime],[data-sim-hub],[data-menu-runtime]){
+ display:flex;flex-direction:column;flex:1 1 auto;min-height:0;max-height:100%;
+ overflow:auto;scrollbar-width:thin;overscroll-behavior:contain}
+html[data-aig49-active="true"] .screen.active .toolstrip{flex:0 0 auto;max-height:60px;overflow:auto}
+html[data-aig49-active="true"] .screen.active :is(.workgrid,.camgrid,.ncEditGrid,.tpGrid){
+ flex:1 1 auto;min-height:0!important;max-height:100%!important;overflow:hidden!important}
+html[data-aig49-active="true"] .screen.active :is(.cadCanvas,.camCanvas,.tpCanvas,.cadCanvasWrap){
+ min-height:0!important;max-height:100%!important}
+/* Axis workstation: headers are small; engine and NC edit both fit remaining viewport. */
+html[data-aig49-active="true"] .screen.active .simgrid.aig41-workspace{
+ display:grid!important;flex:1 1 auto!important;height:100%!important;min-height:0!important;
+ max-height:100%!important;overflow:hidden!important;align-items:stretch!important;
+ grid-template-columns:minmax(0,1.9fr) minmax(270px,.83fr)!important;
+ grid-template-rows:max-content max-content max-content minmax(0,1fr)!important;gap:4px!important}
+html[data-aig49-active="true"] .screen.active .simgrid.aig41-workspace>.axisModuleHeader{
+ grid-column:1/-1!important;grid-row:1!important;max-height:63px!important;
+ overflow:auto!important;padding:3px 7px!important}
+html[data-aig49-active="true"] .screen.active .simgrid.aig41-workspace>.aig41-toolbar{
+ grid-column:1/-1!important;grid-row:2!important;max-height:48px!important;
+ overflow:auto!important;margin:0!important;padding:3px 7px!important}
+html[data-aig49-active="true"] .screen.active .simgrid.aig41-workspace>.aig43-bar{
+ grid-column:1/-1!important;grid-row:3!important;max-height:52px!important;
+ overflow:auto!important;margin:0!important;padding:3px 7px!important}
+html[data-aig49-active="true"] .screen.active .simgrid.aig41-workspace>.simleft{
+ display:grid!important;grid-column:1!important;grid-row:4!important;
+ min-height:0!important;max-height:100%!important;height:100%!important;
+ grid-template-rows:auto minmax(0,1fr)!important;overflow:hidden!important}
+html[data-aig49-active="true"] .screen.active .simgrid.aig41-workspace>.editor{
+ display:grid!important;grid-column:2!important;grid-row:4!important;
+ min-height:0!important;max-height:100%!important;height:100%!important;
+ grid-template-rows:auto auto minmax(0,1fr) auto auto!important;overflow:auto!important}
+html[data-aig49-active="true"] .screen.active .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.editor{grid-column:1!important}
+html[data-aig49-active="true"] .screen.active .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.simleft{grid-column:2!important}
+html[data-aig49-active="true"] .screen.active .simgrid .simleft>.body{
+ display:flex!important;flex-direction:column!important;min-height:0!important;
+ overflow:hidden!important;padding:4px!important}
+html[data-aig49-active="true"] .screen.active .simgrid .simleft .axisbar{
+ flex:0 0 auto;flex-wrap:nowrap!important;overflow-x:auto!important;max-height:36px!important}
+html[data-aig49-active="true"] .screen.active .simgrid .simleft .axisbar>.axis{flex:0 0 auto!important}
+html[data-aig49-active="true"] .screen.active .simgrid .simleft .sceneWrap{
+ flex:1 1 auto!important;height:100%!important;min-height:100px!important;
+ max-height:none!important;max-width:100%!important;overflow:hidden!important}
+html[data-aig49-active="true"] .screen.active .simgrid :is(.simCanvas,.sim3dCanvas){
+ min-height:0!important;max-height:100%!important;height:100%!important}
+html[data-aig49-active="true"] .screen.active .simgrid .controls{
+ display:flex!important;flex:0 0 auto!important;flex-wrap:nowrap!important;
+ min-height:0!important;max-height:45px!important;overflow-x:auto!important;
+ overflow-y:hidden!important;gap:5px!important;scrollbar-width:thin}
+html[data-aig49-active="true"] .screen.active .simgrid .controls>.btn{
+ min-width:73px!important;width:auto!important;flex:0 0 auto!important}
+html[data-aig49-active="true"] .screen.active .simgrid .controls .aig45-quality{
+ flex:0 0 auto!important;display:flex!important;flex-wrap:nowrap!important;margin:0;padding:1px}
+html[data-aig49-active="true"] .screen.active .simgrid .runtimeStatus{
+ display:flex!important;flex:0 0 auto!important;flex-wrap:nowrap!important;gap:5px!important;
+ width:100%!important;max-width:100%!important;min-height:0!important;
+ max-height:40px!important;overflow-x:auto!important;overflow-y:hidden!important}
+html[data-aig49-active="true"] .screen.active .simgrid .runtimeStatus>.metric{flex:0 0 auto!important;min-width:88px!important}
+html[data-aig49-active="true"] .screen.active .simgrid .notice[data-motion-legend]{display:none!important}
+html[data-aig49-active="true"] .screen.active .simgrid .editor textarea.code{
+ height:100%!important;min-height:0!important;max-height:100%!important;overflow:auto!important}
+html[data-aig49-active="true"] .screen.active .simgrid .editor .execView{max-height:63px!important;overflow:auto!important}
+html[data-aig49-active="true"] .screen.active .simgrid .editor .editorbar{
+ max-height:58px!important;overflow:auto!important}
+html[data-aig49-active="true"] .screen.active .aig49-dock{display:none}
+/* Desktop: fixed split; each panel's options scroll locally. */
+html[data-aig49-active="true"]:not([data-aig49-mobile="true"]) .screen.active :is(.workgrid,.camgrid,.ncEditGrid){
+ display:grid!important;grid-template-rows:minmax(0,1fr)!important;grid-auto-rows:minmax(0,1fr)!important}
+html[data-aig49-active="true"]:not([data-aig49-mobile="true"]) .screen.active :is(.workgrid,.camgrid,.ncEditGrid)>.panel{
+ height:100%!important;min-height:0!important;display:flex!important;flex-direction:column;overflow:hidden!important}
+html[data-aig49-active="true"]:not([data-aig49-mobile="true"]) .screen.active :is(.workgrid,.camgrid,.ncEditGrid)>.panel>.body{
+ flex:1 1 auto;min-height:0;overflow:auto;scrollbar-width:thin}
+html[data-aig49-active="true"]:not([data-aig49-mobile="true"]) .screen.active :is(.cadCanvas,.camCanvas,.tpCanvas,.cadCanvasWrap){
+ height:clamp(190px,calc(var(--aig49-vh) - 240px),850px)!important;min-height:0!important}
+html[data-aig49-active="true"]:not([data-aig49-mobile="true"]) .screen.active .ncEditorMain textarea{
+ max-height:calc(var(--aig49-vh) - 235px)!important}
+/* Mobile layout including manual 手机版 on wide screens. */
+html[data-aig49-active="true"][data-aig49-mobile="true"] .app{
+ max-width:min(100%,480px)!important;margin:0 auto!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .app>.top{
+ display:flex!important;flex-flow:row wrap!important;align-content:start!important;
+ max-height:94px!important;gap:3px!important;padding:3px 5px!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .app>.top>.brand{
+ flex:1 1 85px!important;min-width:85px!important;order:0!important;max-width:none!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .app>.top>.brand small{display:none!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .app>.top>.brand .logo{font-size:15px!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .app>.top>.layoutSwitch{
+ flex:0 0 auto!important;order:1!important;margin:0!important;padding:2px!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .app>.top>.layoutSwitch button{
+ min-height:28px!important;padding:3px 4px!important;font-size:10px!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .app>.top>.nav{
+ order:99!important;flex:0 0 100%!important;width:100%!important;max-width:100%!important;
+ display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;
+ overflow-y:hidden!important;scrollbar-width:none;gap:3px!important;padding:0!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .app>.top>.nav button{
+ flex:0 0 62px!important;width:62px!important;min-width:62px!important;
+ height:33px!important;min-height:33px!important;font-size:10px!important;padding:2px!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .app>.top> :is(.aigSiteBack,.projectTransferLink,.status){display:none!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .app>.shell{padding:3px!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active>.aig49-dock{
+ order:99!important;display:flex!important;flex:0 0 auto!important;height:47px!important;
+ gap:4px!important;align-items:center;padding:4px!important;margin-top:3px!important;
+ border:1px solid #316986;background:linear-gradient(110deg,#081728,#0d162b);
+ border-radius:8px;box-shadow:0 0 12px #00639c55}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active>.aig49-dock button{
+ flex:1 1 0;min-width:0;min-height:35px;padding:3px;font-size:12px;font-weight:750;
+ border-radius:7px;border:1px solid #396b85;color:#d3f5ff;background:#12253a}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active>.aig49-dock button[aria-pressed="true"]{
+ background:#19506a;border-color:#5debff;color:#fff;box-shadow:inset 0 0 14px #21b4ea55}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .simgrid.aig41-workspace{
+ display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;
+ flex:1 1 0!important;height:0!important;min-height:0!important;max-height:100%!important;gap:3px!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .simgrid.aig41-workspace>
+:is(.axisModuleHeader,.aig41-toolbar,.aig43-bar){
+ display:flex!important;flex:0 0 auto!important;flex-wrap:nowrap!important;
+ width:100%!important;max-width:100%!important;min-height:0!important;max-height:42px!important;
+ margin:0!important;padding:3px!important;overflow-x:auto!important;overflow-y:hidden!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .simgrid .axisModuleTitle{display:none!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .simgrid.aig41-workspace>.simleft,
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .simgrid.aig41-workspace>.editor{
+ flex:1 1 0!important;height:100%!important;width:100%!important;min-height:0!important;max-height:none!important;
+ overflow:hidden!important;order:10!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="view"] .simgrid>.editor,
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .simgrid>.editor,
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="code"] .simgrid>.simleft{display:none!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .simgrid .simleft .sceneWrap{display:none!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .simgrid .simleft>.body{
+ overflow:auto!important;scrollbar-width:thin}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .simgrid .simleft .controls{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ max-height:none!important;overflow:visible!important;flex-wrap:wrap!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .simgrid .simleft .controls>.btn{width:100%!important;min-width:0!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .simgrid .simleft .runtimeStatus{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ max-height:none!important;overflow:visible!important;flex-wrap:wrap!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="code"] .simgrid>.editor{
+ display:grid!important;grid-template-rows:auto auto minmax(0,1fr) auto auto!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .simgrid .editor :is(.editorbar,.editactions){
+ display:flex!important;flex-wrap:nowrap!important;gap:4px!important;max-height:46px!important;
+ overflow-x:auto!important;overflow-y:hidden!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .simgrid .editor :is(.editorbar,.editactions)>.btn{flex:0 0 auto!important}
+/* CAD/CAM/NC split: working surface directly accessible; tools on separate bottom tab. */
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active :is(.workgrid,.camgrid,.ncEditGrid,.tpGrid){
+ display:flex!important;flex-direction:column!important;flex:1 1 0!important;height:0!important;
+ min-height:0!important;overflow:hidden!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active :is(.workgrid,.camgrid,.ncEditGrid,.tpGrid)>.panel{
+ flex:1 1 auto!important;min-width:0!important;width:100%!important;max-width:100%!important;
+ min-height:0!important;overflow:auto!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .workgrid>.panel:not(:first-child),
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .camgrid>.panel:first-child,
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .ncEditGrid>.panel:not(:first-child),
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .tpGrid>.panel:not(:first-child){display:none!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .workgrid>.panel:first-child,
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .camgrid>.panel:not(:first-child),
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .ncEditGrid>.panel:first-child,
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .tpGrid>.panel:first-child{display:none!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .workgrid>.panel:not(:first-child),
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .camgrid>.panel:first-child,
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .ncEditGrid>.panel:not(:first-child),
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-aig49-pane="tools"] .tpGrid>.panel:not(:first-child){display:block!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active [data-cad-runtime]>.toolstrip,
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active [data-tp-runtime]>.toolstrip{
+ flex:0 0 auto!important;display:flex!important;flex-wrap:nowrap!important;
+ max-height:43px!important;overflow-x:auto!important;overflow-y:hidden!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active :is(.cadCanvas,.camCanvas,.tpCanvas,.cadCanvasWrap){
+ height:clamp(190px,calc(var(--aig49-vh) - 230px),650px)!important;min-height:0!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .ncEditorMain textarea{
+ height:clamp(175px,calc(var(--aig49-vh) - 235px),630px)!important;min-height:0!important;max-height:100%!important}
+html[data-aig49-active="true"] body:has(>.aig-studio-v375-portal-link)>.app{
+ height:calc(var(--aig49-vh) - 24px)!important;max-height:calc(var(--aig49-vh) - 24px)!important}
+html[data-aig49-active="true"] .aig-studio-v375-portal-link{
+ height:24px!important;min-height:24px!important;overflow:hidden!important;padding:2px 8px!important;font-size:10px!important}
+@media(max-height:510px){
+ html[data-aig49-active="true"] .app>.top{max-height:66px!important}
+ html[data-aig49-active="true"] .screen.active .simgrid>.axisModuleHeader{display:none!important}
+ html[data-aig49-active="true"] .screen.active .simgrid>.aig43-bar{display:none!important}
+ html[data-aig49-active="true"] .screen.active .simgrid .runtimeStatus{display:none!important}
+}
+
+
+
+/* V50 semantic mobile panes: never hide CAM parameters/manual CAM or NC keypad
+   behind the wrong tab. The original real DOM buttons and listeners stay intact. */
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"] [data-cam-runtime]{
+ overflow:hidden!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"] .camgrid{
+ display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+ min-height:0!important;height:0!important;max-height:100%!important;overflow:hidden!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"] .camgrid>.panel[data-aig50-role]{
+ display:none!important;min-height:0!important;max-height:100%!important;width:100%!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"][data-aig50-pane="view"] .camgrid>.panel[data-aig50-role="preview"],
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"][data-aig50-pane="manual"] .camgrid>.panel[data-aig50-role="manual"]{
+ display:flex!important;flex:1 1 0!important;flex-direction:column!important;overflow:hidden!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"][data-aig50-pane="tools"] .camgrid{
+ overflow-y:auto!important;scrollbar-width:thin!important;overscroll-behavior:contain}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"][data-aig50-pane="tools"] .camgrid>.panel[data-aig50-role="strategies"],
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"][data-aig50-pane="tools"] .camgrid>.panel[data-aig50-role="params"]{
+ display:block!important;flex:0 0 auto!important;max-height:none!important;overflow:visible!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"][data-aig50-pane="view"] .camgrid>.panel[data-aig50-role="preview"]>.body{
+ display:flex!important;flex-direction:column!important;flex:1 1 0!important;min-height:0!important;
+ overflow:hidden!important;padding:5px!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"][data-aig50-pane="view"] [data-cam-canvas]{
+ flex:1 1 0!important;width:100%!important;height:100%!important;min-height:130px!important;
+ max-height:100%!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"][data-aig50-pane="view"] .camgrid .controls{
+ display:flex!important;flex:0 0 auto!important;flex-wrap:nowrap!important;gap:4px!important;
+ max-height:45px!important;overflow-x:auto!important;overflow-y:hidden!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"][data-aig50-pane="view"] .camgrid .controls>.btn{
+ flex:0 0 auto!important;min-width:85px!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"][data-aig50-pane="manual"] [data-cam-manual-panel]>.body{
+ display:flex!important;flex:1 1 0!important;flex-direction:column!important;min-height:0!important;
+ overflow:auto!important;padding:7px!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="CAM"][data-aig50-pane="manual"] [data-cam-manual-panel] textarea{
+ flex:1 1 auto!important;min-height:130px!important;max-height:100%!important;resize:none}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"] [data-nc-runtime]{
+ overflow:hidden!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"] .ncEditGrid{
+ flex:1 1 0!important;height:0!important;min-height:0!important;overflow:hidden!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"] .ncEditGrid>.panel{
+ min-height:0!important;max-height:100%!important;overflow:auto!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="code"] .ncEditGrid>.panel:not(.ncEditorMain),
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="keypad"] .ncEditGrid>.panel:not(.ncEditorMain),
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="status"] .ncEditGrid>.panel.ncEditorMain{
+ display:none!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="status"] .ncEditGrid>.panel:not(.ncEditorMain){
+ display:block!important;flex:1 1 0!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="code"] .ncEditorMain,
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="keypad"] .ncEditorMain{
+ display:flex!important;flex-direction:column!important;flex:1 1 0!important;overflow:hidden!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"] .ncEditorMain>.editorbar{
+ display:flex!important;flex:0 0 auto!important;flex-wrap:nowrap!important;
+ max-height:48px!important;overflow-x:auto!important;overflow-y:hidden!important;gap:4px!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"] .ncEditorMain>.editorbar :is(button,.param){
+ flex:0 0 auto!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="code"] .ncEditorMain>.body:has([data-nc-keypad]),
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="keypad"] .ncEditorMain>.body:has([data-nc-code]){
+ display:none!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="code"] .ncEditorMain>.body:has([data-nc-code]){
+ display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+ min-height:0!important;overflow:hidden!important;padding:3px!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="code"] .ncEditorMain textarea[data-nc-code]{
+ flex:1 1 0!important;min-height:100px!important;height:100%!important;max-height:100%!important;overflow:auto!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="keypad"] .ncEditorMain>.body:has([data-nc-keypad]){
+ display:block!important;flex:1 1 auto!important;overflow:auto!important;min-height:0!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="keypad"] .ncKeypad{
+ display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
+ gap:5px!important;overflow:visible!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active[data-page="NC"][data-aig50-pane="keypad"] .ncKeypad .btn{
+ min-width:0!important;width:100%!important;min-height:37px!important}
+/* Correct mobile landscape/keyboard viewport; only active editor or tool pane scrolls. */
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active>.aig49-dock{
+ position:relative!important;bottom:auto!important;z-index:15!important}
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .camgrid :is(input,textarea,select),
+html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .ncEditGrid :is(input,textarea,select){
+ scroll-margin-bottom:8px}
+

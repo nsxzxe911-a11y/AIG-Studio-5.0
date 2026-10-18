@@ -1,0 +1,20 @@
+{
+  "version": "50.0.0",
+  "base": "f6f3abb7aec88aa7c8225bca1b3ac86e5942c908",
+  "syntax": "PASS",
+  "cssBraces": "PASS",
+  "mobileCam": {
+    "preview": "REAL_CANVAS",
+    "tools": "REAL_STRATEGY_AND_PARAMS",
+    "manual": "PRESENT_IN_AIGII_ONLY"
+  },
+  "mobileNc": {
+    "code": "ORIGINAL_TEXTAREA",
+    "keypad": "ORIGINAL_REAL_BUTTONS",
+    "status": "REAL_PARSER_STATUS"
+  },
+  "tests": "SOURCE_ONLY",
+  "browser": "PENDING",
+  "realDevice": "PENDING",
+  "nativeGate": "NOT_RUN"
+}
