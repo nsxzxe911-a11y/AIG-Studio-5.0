@@ -169,17 +169,25 @@ html,body{background:#020407}
 
 </style>
 <link rel="stylesheet" href="./authority/cam-unified-rgb-v1.css">
+<link rel="stylesheet" href="./authority/desktop-mobile-layout-v1.css">
 </head>
 <body>
 <div class="app">
 <header class="top">
  <div class="brand"><div><div class="logo">AIG CNC</div><small>BLACK RGB RUNTIME</small></div></div>
+ <div class="layoutSwitch" id="aig-layout-switch" role="group" aria-label="網頁版型切換">
+  <button type="button" data-layout-mode="auto" aria-pressed="true">自動</button>
+  <button type="button" data-layout-mode="desktop" aria-pressed="false">桌面版</button>
+  <button type="button" data-layout-mode="mobile" aria-pressed="false">手機版</button>
+  <span class="layoutMessage" data-layout-message role="status" aria-live="polite">偵測版型</span>
+ </div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● STUDIO 356 • LOCAL READY　0.001 mm</div>
+ <div class="status">● AIG-II WEB • LOCAL　0.001 mm</div>
 </header>
 <main class="shell" id="screens"></main>
-<footer class="footer">AIG CNC • 黑色高對比 Runtime • Web Runtime • CNC machine output disabled</footer>
+<footer class="footer">AIG-II RGB • Desktop / Mobile • CNC machine output disabled</footer>
 </div>
+<script src="./runtime/layout-mode.js"></script>
 <script src="./runtime/page-runtime-router.js"></script>
 <script src="./runtime/ai-page-runtime.js"></script>
 <script>
