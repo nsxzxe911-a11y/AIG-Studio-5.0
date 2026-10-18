@@ -24,3 +24,7 @@
 - `web/aigii-overlay.js` 建立 RGB 英雄區並保留 HOME 的 CAD/CAM/NC/AI state ref，不破壞工作頁。
 - Web PWA cache 改為 374 + **網路優先的 HTML**、離線快取備援，不再永遠顯示上一次工程殼。
 - 本次僅源碼和靜態驗證；使用者實際手機/桌面截圖驗收仍須補齊，WebGL 真切削 Gate 另列。
+
+## Public portal separated from production CNC Workstation (375)
+
+The root domain `/` serves `web/portal.html`: technology editorial homepage with news sections, categories, project description, downloads links and access to RGB library. The fully interactive CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC/AI application remains byte-for-byte sourced from `web/index.html`, but deploys at `/studio.html` only. `Dockerfile.web-runtime` must never serve it as `/index.html`. The website gate enforces that. PWA navigations are network-first and distinct offline cache routes prevent the workstation from reappearing at `/`.
