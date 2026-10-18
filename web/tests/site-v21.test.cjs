@@ -16,7 +16,7 @@ test('source web and Render formal-web are byte-for-byte identical for 2.1 site 
 test('AIG-II ordinary site has visible 2.1 features, 10 true links and zero debug shell text',()=>{
  const html=read('formal-web','index.html');
  for(const s of ['site-v21.css','site-v21.js','workflow-options','workflow-go','module-filter-status',
-  'recent-pages-list','site-back-top','./faq.html','網站 2.1']){
+  'recent-pages-list','site-back-top','./faq.html','雙專案']){
   assert.ok(html.includes(s),'missing '+s);
  }
  for(const p of ['HOME','CAD','CAM','SIM','3AX','4AX','5AX','6AX','NC','AI']){
