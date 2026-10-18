@@ -3,40 +3,209 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#020407">
-<meta name="color-scheme" content="dark">
-<title>AIG-II • RGB Glass 正式工作區</title>
-<style>
-:root{color-scheme:dark}
-*{box-sizing:border-box}
-html,body{min-height:100%;margin:0;background:#020407;color:#ecf9ff;font-family:"Noto Sans TC",system-ui,sans-serif}
-main{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 30%,#17427e66,transparent 65%),#020407}
-section{width:min(460px,100%);padding:40px 26px;text-align:center;background:linear-gradient(145deg,#0a1f34,#030810);border:1px solid #46b7e9;border-radius:20px;box-shadow:0 0 30px #287cff55}
-h1{font-size:clamp(36px,9vw,62px);letter-spacing:.08em;margin:0 0 8px;color:#eafaff;text-shadow:0 0 17px #2488ff88}
-p{margin:0 0 25px;color:#b4d4ed}
-a{display:block;color:white;text-decoration:none;padding:13px;border:1px solid #6bdfff;border-radius:11px;background:linear-gradient(110deg,#1461a7,#492399);font-weight:750}
-a:focus-visible{outline:2px solid #ffc45e;outline-offset:3px}
-</style>
+<meta name="theme-color" content="#0a111c">
+<meta name="description" content="AIG-II CNC 製圖、刀路規劃、加工模擬與 NC 程式的產品資訊、使用指南及工作區入口。">
+<title>AIG-II｜CNC 技術、功能與工作區</title>
+<link rel="stylesheet" href="./site.css">
+<link rel="manifest" href="./manifest.webmanifest">
 </head>
 <body>
-<main><section>
-<h1>AIG-II</h1>
-<p>AI GENERATIVE CNC · RGB GLASS</p>
-<a id="enter-runtime" href="./mobile-runtime.html#HOME">進入正式工作區</a>
-<noscript><p>啟用 JavaScript 可進入 CAD / CAM / SIM / NC 工作區。</p></noscript>
-</section></main>
-<script>
-(function(){
- "use strict";
- const valid=new Set(["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI"]);
- let key="HOME";
- try{const requested=decodeURIComponent(location.hash.replace(/^#/,"")).toUpperCase();if(valid.has(requested))key=requested}catch(_){}
- const dest=new URL("./mobile-runtime.html",location.href);
- dest.hash=key;
- const anchor=document.getElementById("enter-runtime");
- anchor.href=dest.href;
- location.replace(dest.href);
-})();
-</script>
+<div class="utility-bar">
+ <div class="site-container utility-inner">
+  <span>AIG-II｜CNC 技術與製造</span>
+  <div class="utility-links"><a href="#modules">功能分類</a><a href="#guide">使用指南</a><a href="./mobile-runtime.html#HOME">工作區</a></div>
+ </div>
+</div>
+<header class="site-container brand-row">
+ <a class="brand" href="./index.html" aria-label="AIG-II 網站首頁">
+  <span class="brand-mark" aria-hidden="true"></span>
+  <span><strong class="brand-name">AIG-II</strong><small class="brand-sub">AI GENERATIVE CNC</small></span>
+ </a>
+ <div class="brand-lead"><strong>從設計到加工，一站完成</strong>CAD · CAM · SIM · 多軸 · NC · AI</div>
+</header>
+<nav class="primary-nav" aria-label="網站主導覽">
+ <div class="site-container nav-inner" data-expanded="false">
+  <button type="button" class="mobile-menu-toggle" id="site-menu-toggle" aria-expanded="false" aria-controls="site-navigation">☰　選單</button>
+  <a class="nav-link" aria-current="page" href="./index.html">首頁</a>
+  <a class="nav-link" href="#modules">產品功能</a>
+  <a class="nav-link" href="#cadcam">CAD / CAM</a>
+  <a class="nav-link" href="#multiaxis">多軸加工</a>
+  <a class="nav-link" href="#ncai">NC / AI</a>
+  <a class="nav-link" href="#guide">使用指南</a>
+  <a class="nav-link" href="#about">關於 AIG-II</a>
+  <a class="nav-workspace" href="./mobile-runtime.html#HOME" id="site-navigation">開啟工作區　↗</a>
+ </div>
+</nav>
+<div class="site-container">
+ <div class="breadcrumb" aria-label="目前位置"><a href="./index.html">首頁</a><span aria-hidden="true">›</span><span>CNC 技術與產品導覽</span></div>
+ <div class="page-grid">
+  <main class="main-column">
+   <article class="panel lead-article" id="about">
+    <div class="lead-copy">
+     <span class="section-overline">AIG-II · CNC WORKSPACE</span>
+     <h1>把 CNC 製圖、刀路與 NC 編輯，放在同一個工作流程。</h1>
+     <p>從幾何設計、加工路徑到多軸模擬，可按自己的習慣選擇操作入口。只需要編輯 G-code，也能直接進入 NC 工作區。</p>
+     <div class="lead-actions">
+      <a class="primary-action" href="./mobile-runtime.html#HOME">進入 AIG-II 工作區　↗</a>
+      <a class="secondary-action" href="#modules">瀏覽產品功能</a>
+     </div>
+    </div>
+    <div class="lead-graphic" role="img" aria-label="CNC 幾何模型與刀路的示意插圖">
+     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 270" fill="none" aria-hidden="true">
+      <defs><linearGradient id="lineGlow" x1="40" y1="30" x2="310" y2="240" gradientUnits="userSpaceOnUse"><stop stop-color="#4ceeff"/><stop offset=".53" stop-color="#5794ff"/><stop offset="1" stop-color="#aa7cff"/></linearGradient></defs>
+      <g stroke="#2f6f95" stroke-width=".7" opacity=".4">
+       <path d="M30 214 175 260 321 208M30 192 175 238 321 186M30 170 175 216 321 164M30 148 175 194 321 142M30 126 175 172 321 120"/>
+       <path d="M30 214 30 126M78 229 78 141M126 244 126 156M175 260 175 172M224 244 224 156M273 226 273 138M321 208 321 120"/>
+      </g>
+      <g stroke="url(#lineGlow)" stroke-width="2.4" stroke-linejoin="round">
+       <path d="M67 143 175 104 284 142 284 204 175 242 67 204Z" fill="#143651a9"/>
+       <path d="M67 143 175 184 284 142M175 184V242"/>
+       <path d="M101 152 176 124 246 152 176 179Z" fill="#174763"/>
+       <ellipse cx="175" cy="152" rx="35" ry="14" stroke="#6edcff"/>
+       <ellipse cx="175" cy="152" rx="15" ry="6" stroke="#a9f4ff"/>
+       <path d="M108 183 142 196 175 184M201 183 234 168 253 176" stroke="#46f0c6" stroke-width="3"/>
+      </g>
+      <g stroke="#85dafa" stroke-width="2.2" fill="#09263a">
+       <path d="M166 24H195L190 43H171Z"/>
+       <path d="M174 43H187L194 105H167Z"/>
+       <path d="M174 105H187L188 127H173Z" fill="#82deff"/>
+      </g>
+      <g stroke="#64d7ff" stroke-width="1.8" opacity=".8">
+       <path d="M197 31H274M274 31V96"/>
+       <path d="M194 91Q249 69 262 120Q282 160 243 183" stroke-dasharray="5 5"/>
+       <path d="M67 143 33 129M284 142 319 128"/>
+      </g>
+      <g fill="#40dfff"><circle cx="262" cy="120" r="4"/><circle cx="243" cy="183" r="4"/></g>
+     </svg>
+    </div>
+   </article>
+
+   <section class="panel" id="modules">
+    <div class="section-header"><h2>產品功能分類</h2><small>選擇功能，即可進入對應工作頁</small></div>
+    <p class="section-intro">依功能分類瀏覽 AIG-II。這裡是網站導覽，真正的製圖、編輯與模擬操作在獨立工作區內進行。</p>
+
+    <div class="directory-group" id="cadcam" data-search-group>
+     <h3 class="directory-title">設計與刀路</h3>
+     <article class="directory-row" data-searchable="CAD 2D 製圖 幾何 線 圓 弧 尺寸 snap">
+      <span class="directory-icon" style="--row-color:#50deff">CAD</span>
+      <div class="directory-content"><h3><a href="./mobile-runtime.html#CAD">CAD 製圖</a></h3><p>2D 幾何、圖形修改、吸附、尺寸與製圖工作流程。</p></div>
+      <a class="directory-go" href="./mobile-runtime.html#CAD">進入　›</a>
+     </article>
+     <article class="directory-row" data-searchable="CAM 刀路 加工 參數 MANUAL AUTO 工序">
+      <span class="directory-icon" style="--row-color:#65e4ba">CAM</span>
+      <div class="directory-content"><h3><a href="./mobile-runtime.html#CAM">CAM 刀路規劃</a></h3><p>選擇工序、設定刀具與加工參數，規劃手動或自動刀路。</p></div>
+      <a class="directory-go" href="./mobile-runtime.html#CAM">進入　›</a>
+     </article>
+     <article class="directory-row" data-searchable="SIM 模擬 3D 材料移除 播放 加工">
+      <span class="directory-icon" style="--row-color:#ffc67e">SIM</span>
+      <div class="directory-content"><h3><a href="./mobile-runtime.html#SIM">SIM 加工模擬</a></h3><p>選擇模擬模式，檢視刀具路徑、加工動作與模擬結果。</p></div>
+      <a class="directory-go" href="./mobile-runtime.html#SIM">進入　›</a>
+     </article>
+    </div>
+    <div class="directory-group" id="multiaxis" data-search-group>
+     <h3 class="directory-title">多軸加工工作頁</h3>
+     <article class="directory-row" data-searchable="3AX 三軸 XYZ 模具 刀路">
+      <span class="directory-icon" style="--row-color:#70c5ff">3AX</span>
+      <div class="directory-content"><h3><a href="./mobile-runtime.html#3AX">三軸加工</a></h3><p>XYZ 三軸機台視圖、模擬與 G-code 工作頁。</p></div>
+      <a class="directory-go" href="./mobile-runtime.html#3AX">進入　›</a>
+     </article>
+     <article class="directory-row" data-searchable="4AX 四軸 X Y Z A 旋轉">
+      <span class="directory-icon" style="--row-color:#9bb0ff">4AX</span>
+      <div class="directory-content"><h3><a href="./mobile-runtime.html#4AX">四軸加工</a></h3><p>XYZ 加 A 軸的旋轉、分度與加工檢視。</p></div>
+      <a class="directory-go" href="./mobile-runtime.html#4AX">進入　›</a>
+     </article>
+     <article class="directory-row" data-searchable="5AX 五軸 X Y Z A B 葉輪 搖籃">
+      <span class="directory-icon" style="--row-color:#cc9bff">5AX</span>
+      <div class="directory-content"><h3><a href="./mobile-runtime.html#5AX">五軸加工</a></h3><p>XYZ 與 A/B 軸工作頁，用於多姿態刀具和工件預覽。</p></div>
+      <a class="directory-go" href="./mobile-runtime.html#5AX">進入　›</a>
+     </article>
+     <article class="directory-row" data-searchable="6AX 六軸 X Y Z A B C 多面加工">
+      <span class="directory-icon" style="--row-color:#ffa9df">6AX</span>
+      <div class="directory-content"><h3><a href="./mobile-runtime.html#6AX">六軸加工</a></h3><p>XYZ 與 A/B/C 軸組合、多面加工與機台視圖。</p></div>
+      <a class="directory-go" href="./mobile-runtime.html#6AX">進入　›</a>
+     </article>
+    </div>
+    <div class="directory-group" id="ncai" data-search-group>
+     <h3 class="directory-title">程式編輯與智慧輔助</h3>
+     <article class="directory-row" data-searchable="NC G碼 G-code FANUC 程式 編輯 解析 NC-first">
+      <span class="directory-icon" style="--row-color:#f0b9ff">NC</span>
+      <div class="directory-content"><h3><a href="./mobile-runtime.html#NC">NC / G-code 編輯</a></h3><p>可直接編寫、整理與檢查 G-code，不必先從 CAD 開始。</p></div>
+      <a class="directory-go" href="./mobile-runtime.html#NC">進入　›</a>
+     </article>
+     <article class="directory-row" data-searchable="AI 智慧 規劃 解析 輔助">
+      <span class="directory-icon" style="--row-color:#ef93fc">AI</span>
+      <div class="directory-content"><h3><a href="./mobile-runtime.html#AI">AI 智慧輔助</a></h3><p>整理加工條件、規劃步驟與查閱操作建議。</p></div>
+      <a class="directory-go" href="./mobile-runtime.html#AI">進入　›</a>
+     </article>
+    </div>
+    <div id="site-search-empty" class="search-empty" role="status" data-visible="false">沒有符合的功能；可改用「CAD」、「刀路」、「五軸」或「NC」搜尋。</div>
+   </section>
+
+   <section class="panel" id="guide">
+    <div class="section-header"><h2>使用指南</h2><small>依你的加工方式，選擇起點</small></div>
+    <article class="article-row" id="guide-cad" data-searchable="教學 設計 CAD CAM SIM NC">
+     <p class="article-meta">基礎操作 · CAD → CAM → SIM → NC</p>
+     <h3><a href="./mobile-runtime.html#CAD">從 CAD 製圖開始</a></h3>
+     <p>先建立幾何，再依序選擇刀路、檢視模擬結果及處理 NC 程式。</p>
+    </article>
+    <article class="article-row" data-searchable="教學 NC-first G-code Fanuc">
+     <p class="article-meta">直接編輯 · NC-first</p>
+     <h3><a href="./mobile-runtime.html#NC">已有 G-code，直接從 NC 開始</a></h3>
+     <p>進入 NC 編輯器，不經 CAD、CAM 也能修改程式、檢查指令並前往模擬。</p>
+    </article>
+    <article class="article-row" data-searchable="教學 3AX 4AX 5AX 6AX 模擬 多軸">
+     <p class="article-meta">加工檢視 · 多軸</p>
+     <h3><a href="./mobile-runtime.html#3AX">依機台軸數選擇工作頁</a></h3>
+     <p>3AX 到 6AX 分別提供對應軸數的工作畫面；實際輸出前仍須獨立完成安全驗證。</p>
+    </article>
+   </section>
+  </main>
+
+  <aside class="sidebar" aria-label="側邊資訊">
+   <section class="panel">
+    <div class="section-header"><h2>站內搜尋</h2></div>
+    <form class="site-search" id="site-search" role="search">
+     <input id="site-search-input" type="search" placeholder="搜尋 CAD、CAM、G-code…" aria-label="搜尋網站功能">
+     <button type="submit">搜尋</button>
+    </form>
+    <div class="search-message" id="site-search-message" role="status" aria-live="polite"></div>
+   </section>
+   <section class="panel">
+    <div class="section-header"><h2>常用工作入口</h2></div>
+    <ul class="quick-links">
+     <li><a href="./mobile-runtime.html#HOME">AIG-II 工作首頁 <span class="chevron">›</span></a></li>
+     <li><a href="./mobile-runtime.html#CAD">CAD 製圖 <span class="chevron">›</span></a></li>
+     <li><a href="./mobile-runtime.html#CAM">CAM 刀路 <span class="chevron">›</span></a></li>
+     <li><a href="./mobile-runtime.html#SIM">SIM 模擬 <span class="chevron">›</span></a></li>
+     <li><a href="./mobile-runtime.html#NC">NC 編輯 <span class="chevron">›</span></a></li>
+     <li><a href="./mobile-runtime.html#AI">AI 輔助 <span class="chevron">›</span></a></li>
+    </ul>
+   </section>
+   <section class="panel">
+    <div class="section-header"><h2>操作方式</h2></div>
+    <div class="side-copy">
+     <p><strong>以製圖開始</strong>：CAD → CAM → SIM → NC。</p>
+     <p><strong>直接寫程式</strong>：NC → 解析 → 模擬。</p>
+     <p>先在網站選好需要的功能，再進入對應工作頁操作。</p>
+    </div>
+   </section>
+   <section class="panel">
+    <div class="section-header"><h2>關於本站</h2></div>
+    <div class="side-copy">
+     <p>這裡提供 AIG-II 功能分類、使用說明和 CNC 工作入口。</p>
+     <p>桌面與手機都能瀏覽本站；進入工作區後依畫面寬度使用對應版型。</p>
+     <a href="#about">回到產品介紹　›</a>
+    </div>
+   </section>
+  </aside>
+ </div>
+</div>
+<footer class="site-footer">
+ <div class="site-container footer-inner">
+  <div><strong>AIG-II</strong><span>AI GENERATIVE CNC · CNC 技術與產品入口</span></div>
+  <div class="footer-links"><a href="./index.html">首頁</a><a href="#modules">產品功能</a><a href="#guide">使用指南</a><a href="./mobile-runtime.html#HOME">開啟工作區</a></div>
+ </div>
+</footer>
+<script defer src="./site.js"></script>
 </body>
 </html>
