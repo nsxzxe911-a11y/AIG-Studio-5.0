@@ -27,7 +27,7 @@
   ["HOME","正式 HOME","[data-home-runtime]","[data-open-page='CAD']"],
   ["CAD","CAD 製圖","[data-cad-runtime]","canvas[data-cad-canvas]"],
   ["CAM","CAM 刀路","[data-cam-runtime]","canvas.camCanvas"],
-  ["SIM","SIM 模擬",".screen[data-page='SIM']","[data-open-page='3AX']"],
+  ["SIM","SIM 模擬","[data-sim-hub]","[data-sim-axis='3AX']"],
   ["3AX","3AX 三軸","[data-runtime='3AX']","canvas[data-glcanvas]"],
   ["4AX","4AX 四軸","[data-runtime='4AX']","canvas[data-glcanvas]"],
   ["5AX","5AX 五軸","[data-runtime='5AX']","canvas[data-glcanvas]"],

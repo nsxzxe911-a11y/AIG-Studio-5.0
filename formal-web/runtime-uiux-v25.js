@@ -57,6 +57,7 @@ popup.addEventListener("change",e=>{const el=e.target;if(el.matches("[data-uiux-
 nav.addEventListener("click",()=>w.requestAnimationFrame?w.requestAnimationFrame(navUpdate):navUpdate());
 w.addEventListener("hashchange",()=>w.requestAnimationFrame?w.requestAnimationFrame(navUpdate):navUpdate());
 w.addEventListener("resize",()=>{if(config.layout==="auto")apply()});
+w.addEventListener("storage",event=>{if(event?.key!==key)return;try{config=event.newValue?clean(JSON.parse(event.newValue)):defaults();apply();display.textContent="已從另一分頁同步介面設定。CNC 資料未修改。"}catch(_){display.textContent="外部分頁設定格式無法讀取；目前介面保持原狀。"}});
 apply();
 try{if(new URLSearchParams(w.location.search).get("panel")==="uiux")open()}catch(_){}
 w.AIG_UIUX_V25=Object.freeze({getSettings:()=>({...config,visible:[...config.visible]}),open});

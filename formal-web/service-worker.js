@@ -2,12 +2,12 @@
    Cache the actual portal and runtime; no engineering gallery in the startup path. */
 const REVOKED_CACHE="aig-ii-authority-revocation-20261018-v18";
 const PREVIOUS_CACHE="aig-ii-original-render-v4-20261018-v20";
-const CACHE="aig-ii-original-render-zh-tw-uiux-v25-20261018";
+const CACHE="aig-ii-original-render-uiux-control-v26-20261018";
 const SHELL=[
   "./","./index.html","./image-library.html","./visual-library.css","./visual-library.js","./visual-library/manifest.json","./visual-library/authority-revocations-438.json","./runtime-visual-reference.css","./runtime/visual-reference-v1.js","./guide.html","./updates.html","./faq.html","./project-sync.html","./site.css","./site-v2.css","./site-v21.css","./site-phase4.css","./project-sync.css","./site.js","./site-v21.js","./project-transfer.js","./project-sync.js","./phase4.css","./mobile-runtime.html","./manifest.webmanifest",
   "./runtime/page-runtime-router.js","./runtime/ai-page-runtime.js","./runtime/cam-manual-path-v1.js",
   "./runtime/layout-mode.js",
-  "./runtime-uiux-v25.js","./runtime-uiux-v25.css","./uiux-settings.html","./uiux-module-contract-v25.json",
+  "./runtime-uiux-v25.js","./runtime-uiux-v25.css","./uiux-settings.html","./uiux-control-v26.js","./uiux-control-v26.css","./uiux-module-contract-v25.json",
   "./studio-375.html","./studio-375-skin.css","./studio-375-overlay.js","./studio-375-diagnostics.js","./dual-project-latest.html","./dual-latest-binding.json","./site-dual-latest.css",
   "./assets/authority/home_desktop.jpg","./assets/authority/home_mobile.jpg",
   "./site-nature-v24.css","./site-nature-v24.js","./site-themes/forest-dawn.svg","./site-themes/alpine-morning.svg","./site-themes/coastal-twilight.svg",
@@ -50,8 +50,14 @@ self.addEventListener("fetch",event=>{
       if(cached)return cached;
       if(isNavigation){
         const path=url.pathname;
-        const isRuntime=path.endsWith("/mobile-runtime.html");
-        const fallback=await caches.match(isRuntime?"./mobile-runtime.html":"./index.html");
+        const last=path.split("/").pop();
+        // Preserve the requested offline page, especially the Studio 375 workspace and UI/UX control center.
+        const target="./"+last;
+        if(SHELL.includes(target)){
+          const requested=await caches.match(target);
+          if(requested)return requested;
+        }
+        const fallback=await caches.match("./index.html");
         if(fallback)return fallback;
       }
       return Response.error();
