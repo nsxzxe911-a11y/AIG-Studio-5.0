@@ -17,3 +17,10 @@
 ## Web 373：雙平台核准 HOME 圖
 
 自 AIG-II private approved/427 pack 將 `home_mobile.jpg`、`home_desktop.jpg` 以二進位 Git Blob 原內容完整帶入可部署的 Studio Web 資源。兩平台圖片分開，不以 reference 圖冒充 Authority；現有公開 Web 圖庫共 43 張已核對來源圖資。Android 與 Windows 原生 Runtime Gate 未因此自動通過。
+
+## 374｜工程殼外觀隔離 + 正式 RGB HOME
+
+- 初始載入獨立 `web/aigii-skin.css`，使用核准 427 HOME 手機/電腦二進位檔作為非互動的低對比視覺底板。所有真正按鈕仍以原 Studio DOM `data-open-page`、`data-cad-*`、`data-cam-*`、`data-cmd` Callback 運行；不以整張圖片作假按鈕。
+- `web/aigii-overlay.js` 建立 RGB 英雄區並保留 HOME 的 CAD/CAM/NC/AI state ref，不破壞工作頁。
+- Web PWA cache 改為 374 + **網路優先的 HTML**、離線快取備援，不再永遠顯示上一次工程殼。
+- 本次僅源碼和靜態驗證；使用者實際手機/桌面截圖驗收仍須補齊，WebGL 真切削 Gate 另列。
