@@ -187,7 +187,8 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./ai-page-v43.css">
 <link rel="stylesheet" href="./ai-page-mobile-v43.css">
 <link rel="stylesheet" href="./ai-page-desktop-v43.css">
-<link rel="stylesheet" href="./ai-page-v44.css"></head>
+<link rel="stylesheet" href="./ai-page-v44.css">
+<link rel="stylesheet" href="./axis-cutting-v45.css"></head>
 <body>
 <div class="aig-studio-v375-portal-link" role="navigation"><a href="./index.html#dual-projects">← 回 AIG-II 科技網站</a><span>STUDIO 原生 375 · Web 共同 V43 · 本機資料與原工作站分開</span><a href="./dual-project-latest.html">雙專案版本與原始碼 ↗</a></div>
 <div class="app">
@@ -337,8 +338,8 @@ function simPage(axis){
  const cameraControls=(axis==="5AX"||axis==="6AX")?'<button class="btn selected" data-cmd="follow">跟刀 AUTO</button><button class="btn selected" data-cmd="occlusion">防遮擋 AUTO</button><button class="btn" data-cmd="center">毛坯中心</button>':"";
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":axis==="6AX"?"/A/B/C":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
  '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' · '+v35Names[axis]+'<small>獨立 WebGL 機台結構 · G-code 軸態驅動 · 可拖曳相機</small></div></div>'+
- '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button>'+cameraControls+'</div><div class="notice" data-motion-legend>RAPID 快移 • ENTRY 進刀 • CUT 切削 • EXIT 退刀 • RETRACT 抬刀 • AVOID 夾具閃避</div>'+
- '<div class="runtimeStatus"><div class="metric"><b>CAMERA</b><span data-camera-mode>STOCK CENTER</span></div><div class="metric"><b>VIEW ZOOM</b><span data-camera-zoom>AUTO x2.55</span></div><div class="metric"><b>NEXT VIEW</b><span data-lookahead-state>LOOKAHEAD OFF</span></div><div class="metric"><b>SAFE FRAME</b><span data-safe-frame-state>SAFE CENTER</span></div><div class="metric"><b>VISIBILITY</b><span data-occlusion-state>CLEAR</span></div><div class="metric"><b>VIEW DEPTH</b><span data-depth-cue>FLAT</span></div><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>RECENT CUT</b><span data-cut-trail>0 / last 3</span></div><div class="metric"><b>TOOL CONTACT</b><span data-contact-state>OPEN</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>繪圖核心</b><span data-renderer>初始化</span></div><div class="metric" data-advanced-only><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric" data-advanced-only><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
+ '<div class="controls">'+"<div class=\"aig45-quality\" role=\"group\" aria-label=\"真實網格品質\"><button type=\"button\" data-render-quality=\"FAST\">流暢</button><button type=\"button\" data-render-quality=\"BALANCED\">標準</button><button type=\"button\" data-render-quality=\"DETAIL\">細緻</button></div>"+'<button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button>'+cameraControls+'</div><div class="notice" data-motion-legend>RAPID 快移 • ENTRY 進刀 • CUT 切削 • EXIT 退刀 • RETRACT 抬刀 • AVOID 夾具閃避</div>'+
+ '<div class="runtimeStatus"><div class="metric"><b>CAMERA</b><span data-camera-mode>STOCK CENTER</span></div><div class="metric"><b>VIEW ZOOM</b><span data-camera-zoom>AUTO x2.55</span></div><div class="metric"><b>NEXT VIEW</b><span data-lookahead-state>LOOKAHEAD OFF</span></div><div class="metric"><b>SAFE FRAME</b><span data-safe-frame-state>SAFE CENTER</span></div><div class="metric"><b>VISIBILITY</b><span data-occlusion-state>CLEAR</span></div><div class="metric"><b>VIEW DEPTH</b><span data-depth-cue>FLAT</span></div><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>RECENT CUT</b><span data-cut-trail>0 / last 3</span></div><div class="metric"><b>TOOL CONTACT</b><span data-contact-state>OPEN</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>繪圖核心</b><span data-renderer>初始化</span></div><div class="metric"><b>切削網格</b><span data-cut-resolution>—</span></div><div class="metric"><b>畫面像素</b><span data-frame-resolution>—</span></div><div class="metric" data-advanced-only><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric" data-advanced-only><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
  '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label><label class="param">刃長<input data-cutter-len type="number" value="30" min="1" step="0.1"></label><label class="param">刀柄 Ø<input data-holder-dia type="number" value="25" min="1" step="0.1"></label><label class="param">刀柄長<input data-holder-len type="number" value="25" min="1" step="0.1"></label><label class="param">G54 X<input data-g54-x type="number" value="0" step="0.001"></label><label class="param">G54 Y<input data-g54-y type="number" value="0" step="0.001"></label><label class="param">G54 Z<input data-g54-z type="number" value="0" step="0.001"></label><label class="param">G55 X<input data-g55-x type="number" value="0" step="0.001"></label><label class="param">G55 Y<input data-g55-y type="number" value="0" step="0.001"></label><label class="param">G55 Z<input data-g55-z type="number" value="0" step="0.001"></label><label class="param">H1<input data-h1 type="number" value="0" step="0.001"></label><label class="param">H4<input data-h4 type="number" value="0" step="0.001"></label><label class="param">H12<input data-h12 type="number" value="0" step="0.001"></label></div>'+
  '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+sourceCode[axis]+'</textarea></div>'+
@@ -1171,7 +1172,8 @@ function makeGlScene(canvas,axis){
    return true;
  }
 
- const camera={yaw:-.72,pitch:.58,zoom:2.55,userZoom:2.55,zoomTarget:2.55,zoomHoldUntil:0,zoomMode:"AUTO TRACK",lookaheadOffset:{x:0,y:0,z:0},lookaheadTarget:{x:0,y:0,z:0},lookaheadHoldUntil:0,lookaheadMode:"LOOKAHEAD OFF",safeFrameOffset:{x:0,y:0,z:0},safeFrameTarget:{x:0,y:0,z:0},safeFrameHoldUntil:0,safeFrameMode:"SAFE CENTER",drag:null,follow:(axis==="5AX"||axis==="6AX"),avoid:(axis==="5AX"||axis==="6AX"),focus:null,lastDepthCue:"FLAT",lastDepthDot:0,lastFrameMs:0,lastResponse:null,lastResponseLabel:"TRACK",manualUntil:0,avoidYaw:0,avoidPitch:0,avoidTargetYaw:0,avoidTargetPitch:0,avoidTargetValid:false,avoidHoldUntil:0,avoidSwitchCount:0,lastAvoidDecision:"CLEAR",lastOcclusion:{blocked:false,count:0,reason:"CLEAR"},lastVisibility:"CLEAR"};
+ const FIDELITY=Object.freeze({FAST:{height:40,xy:26,z:16,steps:56,pixels:1800000,dpr:1.5},BALANCED:{height:64,xy:38,z:24,steps:88,pixels:3200000,dpr:2},DETAIL:{height:104,xy:56,z:36,steps:140,pixels:8200000,dpr:3}});let quality="BALANCED";
+  const camera={yaw:-.72,pitch:.58,zoom:2.55,userZoom:2.55,zoomTarget:2.55,zoomHoldUntil:0,zoomMode:"AUTO TRACK",lookaheadOffset:{x:0,y:0,z:0},lookaheadTarget:{x:0,y:0,z:0},lookaheadHoldUntil:0,lookaheadMode:"LOOKAHEAD OFF",safeFrameOffset:{x:0,y:0,z:0},safeFrameTarget:{x:0,y:0,z:0},safeFrameHoldUntil:0,safeFrameMode:"SAFE CENTER",drag:null,follow:(axis==="5AX"||axis==="6AX"),avoid:(axis==="5AX"||axis==="6AX"),focus:null,lastDepthCue:"FLAT",lastDepthDot:0,lastFrameMs:0,lastResponse:null,lastResponseLabel:"TRACK",manualUntil:0,avoidYaw:0,avoidPitch:0,avoidTargetYaw:0,avoidTargetPitch:0,avoidTargetValid:false,avoidHoldUntil:0,avoidSwitchCount:0,lastAvoidDecision:"CLEAR",lastOcclusion:{blocked:false,count:0,reason:"CLEAR"},lastVisibility:"CLEAR"};
 
  function shader(type,src){
   const sh=gl.createShader(type);if(!sh)return null;
@@ -1293,8 +1295,36 @@ function makeGlScene(canvas,axis){
  }
  const cube=mesh(cubeData()),stockShell=mesh(openBoxData()),cyl=mesh(cylinderData());
  const heightPb=gl.createBuffer(),heightNb=gl.createBuffer();
- const removalCache={parsed:null,key:"",n:38,base:null,completed:0,cellX:1,cellY:1,minX:0,minY:0,stockH:1,toolDia:0};
+ const removalCache={parsed:null,key:"",dry:false,n:FIDELITY[quality].height,base:null,completed:0,cellX:1,cellY:1,minX:0,minY:0,stockH:1,toolDia:0};
  let lastRemoval={depth:0,volume:0};
+  // V45 numerical WebGL solver: real G-code sampled sweeps, bounded to existing mesh resolution.
+  function v45Length(bl,tEnd,scene){
+    const e=Math.max(0,Math.min(1,Number(tEnd)||0));let sum=0,p=scene.sampleBlock(bl,0);
+    for(let i=1;i<=8;i++){const q=scene.sampleBlock(bl,e*i/8);sum+=Math.hypot((q.X||0)-(p.X||0),(q.Y||0)-(p.Y||0),(q.Z||0)-(p.Z||0));p=q}
+    return sum;
+  }
+  function v45HeightSteps(bl,tEnd,scene,toolRadius){
+    const step=Math.max(.08,Math.min(removalCache.cellX,removalCache.cellY,toolRadius*.25));
+    const cap=quality==="DETAIL"?1600:quality==="BALANCED"?1000:500;
+    return Math.max(1,Math.min(cap,Math.ceil(v45Length(bl,tEnd,scene)/step)));
+  }
+  function v45VoxelSteps(bl,tEnd,scene,toolDia){
+    const v=voxelCache;
+    const degrees=["A","B","C"].reduce((s,k)=>s+Math.abs((bl.to[k]||0)-(bl.from[k]||0)),0);
+    const radius=.5*Math.hypot(v.nx*v.sx,v.ny*v.sy,v.stockH);
+    const sweep=v45Length(bl,tEnd,scene)+degrees*Math.PI/180*radius*Math.max(0,Math.min(1,tEnd));
+    const step=Math.max(.13,Math.min(v.sx,v.sy,v.sz,Math.max(.2,toolDia*.24)));
+    return Math.max(1,Math.min(FIDELITY[quality].steps,Math.ceil(sweep/step)));
+  }
+  function v45HeightVolume(heights,top,cx,cy,n){
+    let sum=0;
+    for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+      const z=heights[y*n+x];if(!Number.isFinite(z))throw Error("NONFINITE_HEIGHT");
+      sum+=Math.max(0,top-z)*(x===0||x===n-1?0.5:1)*(y===0||y===n-1?0.5:1);
+    }
+    return sum*cx*cy;
+  }
+
  const v33MeshCache={height:null,voxel:null,hits:0,builds:0,triangles:0,acceleratedVoxel:0};
  function v33MeshStats(){return{hits:v33MeshCache.hits,builds:v33MeshCache.builds,triangles:v33MeshCache.triangles,acceleratedVoxel:v33MeshCache.acceleratedVoxel}}
  function v33Match(cache,scene,key,grid){
@@ -1315,7 +1345,7 @@ function makeGlScene(canvas,axis){
 
  function resetRemoval(scene,minX,minY,spanX,spanY,stockTop,stockBottom){
    const n=removalCache.n,stockH=stockTop-stockBottom;
-   removalCache.parsed=scene.parsed;
+   removalCache.parsed=scene.parsed;removalCache.dry=Boolean(scene.dry);
    removalCache.key=[minX.toFixed(4),minY.toFixed(4),spanX.toFixed(4),spanY.toFixed(4),stockTop.toFixed(4),stockBottom.toFixed(4),sceneToolSignature(scene)].join("|");
    removalCache.base=new Float32Array(n*n);removalCache.base.fill(stockTop);
    removalCache.completed=0;
@@ -1331,7 +1361,7 @@ function makeGlScene(canvas,axis){
  function cutSample(heights,p,toolRadius){
    if(!p||!Number.isFinite(p.X)||!Number.isFinite(p.Y)||!Number.isFinite(p.Z)||p.Z>=removalCache.stockTop)return;
    const n=removalCache.n,cellX=removalCache.cellX,cellY=removalCache.cellY,minX=removalCache.minX,minY=removalCache.minY;
-   const z=Math.max(removalCache.stockBottom+.15,Math.min(removalCache.stockTop,p.Z));
+   const z=Math.max(removalCache.stockBottom,Math.min(removalCache.stockTop,p.Z));
    const ix0=Math.max(0,Math.floor((p.X-toolRadius-minX)/cellX)),ix1=Math.min(n-1,Math.ceil((p.X+toolRadius-minX)/cellX));
    const iy0=Math.max(0,Math.floor((p.Y-toolRadius-minY)/cellY)),iy1=Math.min(n-1,Math.ceil((p.Y+toolRadius-minY)/cellY));
    const r2=toolRadius*toolRadius;
@@ -1351,7 +1381,7 @@ function makeGlScene(canvas,axis){
    const toolRadius=Math.max(.05,sceneBlockToolDia(scene,bl)/2);
    const dx=(bl.to.X||0)-(bl.from.X||0),dy=(bl.to.Y||0)-(bl.from.Y||0),dz=(bl.to.Z||0)-(bl.from.Z||0);
    const dist=Math.hypot(dx,dy,dz),spacing=Math.max(.2,Math.min(removalCache.cellX,removalCache.cellY,toolRadius*.35));
-   const steps=Math.max(1,Math.min(500,Math.ceil(dist*Math.max(.01,tEnd)/spacing)));
+   const steps=v45HeightSteps(bl,tEnd,scene,toolRadius);
    for(let i=0;i<=steps;i++){
      const t=tEnd*i/steps;
      cutSample(heights,scene.sampleBlock(bl,t),toolRadius);
@@ -1364,7 +1394,7 @@ function makeGlScene(canvas,axis){
      v33MeshCache.hits++;lastRemoval={...memo.removal};v33MeshCache.triangles=Math.trunc(memo.mesh.count/3);
      return memo.mesh;
    }
-   if(removalCache.parsed!==scene.parsed||removalCache.key!==key||scene.index<removalCache.completed)resetRemoval(scene,minX,minY,spanX,spanY,stockTop,stockBottom);
+   if(removalCache.parsed!==scene.parsed||removalCache.key!==key||removalCache.dry!==Boolean(scene.dry)||scene.index<removalCache.completed)resetRemoval(scene,minX,minY,spanX,spanY,stockTop,stockBottom);
    const target=Math.min(scene.index,scene.parsed.blocks.length);
    while(removalCache.completed<target){
      const bl=scene.parsed.blocks[removalCache.completed];
@@ -1389,8 +1419,8 @@ function makeGlScene(canvas,axis){
      push(ix,iy);push(ix+1,iy);push(ix+1,iy+1);
      push(ix,iy);push(ix+1,iy+1);push(ix,iy+1);
    }
-   let minH=stockTop,sum=0;for(const h of heights){if(h<minH)minH=h;sum+=Math.max(0,stockTop-h)}
-   lastRemoval={depth:Math.max(0,stockTop-minH),volume:sum*cx*cy};
+   let minH=stockTop;for(const h of heights)if(h<minH)minH=h;
+    lastRemoval={depth:Math.max(0,stockTop-minH),volume:v45HeightVolume(heights,stockTop,cx,cy,n)};
    return v33Save("height",scene,key,removalCache.n,{p:verts,n:norms,count:verts.length/3});
  }
  function drawHeightfield(hf,color,vp){
@@ -1401,11 +1431,11 @@ function makeGlScene(canvas,axis){
  }
 
  const voxelPb=gl.createBuffer(),voxelNb=gl.createBuffer();
- const voxelCache={parsed:null,key:"",nx:24,ny:24,nz:14,base:null,completed:0,minX:0,minY:0,minZ:0,stockTop:0,stockBottom:-1,sx:1,sy:1,sz:1,stockH:1,toolDia:0,initialCount:0};
+ const voxelCache={parsed:null,key:"",dry:false,nx:FIDELITY[quality].xy,ny:FIDELITY[quality].xy,nz:FIDELITY[quality].z,base:null,completed:0,minX:0,minY:0,minZ:0,stockTop:0,stockBottom:-1,sx:1,sy:1,sz:1,stockH:1,toolDia:0,initialCount:0};
 
  function resetVoxel(scene,minX,minY,spanX,spanY,stockTop,stockBottom){
    const v=voxelCache,stockH=stockTop-stockBottom;
-   v.parsed=scene.parsed;
+   v.parsed=scene.parsed;v.dry=Boolean(scene.dry);
    v.key=[minX.toFixed(4),minY.toFixed(4),spanX.toFixed(4),spanY.toFixed(4),stockTop.toFixed(4),stockBottom.toFixed(4),sceneToolSignature(scene)].join("|");
    v.minX=minX;v.minY=minY;v.minZ=stockBottom;v.stockTop=stockTop;v.stockBottom=stockBottom;v.stockH=stockH;v.toolDia=Math.max(.1,Number(scene.toolDia)||10); // fallback only
    v.sx=spanX/v.nx;v.sy=spanY/v.ny;v.sz=stockH/v.nz;
@@ -1442,7 +1472,7 @@ function makeGlScene(canvas,axis){
    const drot=Math.abs((bl.to.A||0)-(bl.from.A||0))+Math.abs((bl.to.B||0)-(bl.from.B||0))+Math.abs((bl.to.C||0)-(bl.from.C||0));
    const travel=Math.hypot(dx,dy,dz)+drot*Math.max(voxelCache.sx,voxelCache.sy)*.15;
    const blockToolDia=sceneBlockToolDia(scene,bl),spacing=Math.max(.6,Math.min(voxelCache.sx,voxelCache.sy,voxelCache.sz,Math.max(.2,blockToolDia*.3)));
-   const steps=Math.max(1,Math.min(48,Math.ceil(travel*Math.max(.02,tEnd)/spacing)));
+   const steps=v45VoxelSteps(bl,tEnd,scene,blockToolDia);
    for(let i=0;i<=steps;i++)voxelCutSample(occ,scene.sampleBlock(bl,tEnd*i/steps),scene,bl);
  }
  function voxelStock(scene,minX,minY,spanX,spanY,stockTop,stockBottom){
@@ -1452,7 +1482,7 @@ function makeGlScene(canvas,axis){
      v33MeshCache.hits++;lastRemoval={...memo.removal};v33MeshCache.triangles=Math.trunc(memo.mesh.count/3);
      return memo.mesh;
    }
-   if(v.parsed!==scene.parsed||v.key!==key||scene.index<v.completed)resetVoxel(scene,minX,minY,spanX,spanY,stockTop,stockBottom);
+   if(v.parsed!==scene.parsed||v.key!==key||v.dry!==Boolean(scene.dry)||scene.index<v.completed)resetVoxel(scene,minX,minY,spanX,spanY,stockTop,stockBottom);
    const target=Math.min(scene.index,scene.parsed.blocks.length);
    while(v.completed<target){
      const bl=scene.parsed.blocks[v.completed];
@@ -1506,10 +1536,10 @@ function makeGlScene(canvas,axis){
    const r=canvas.getBoundingClientRect();
    const cssW=Math.max(1,r.width),cssH=Math.max(1,r.height),area=cssW*cssH;
    const phone=window.matchMedia?.("(max-width:800px)")?.matches===true;
-   const pixelBudget=phone?2600000:4800000;
+   const pixelBudget=FIDELITY[quality].pixels;
    const screenDpr=Number(window.devicePixelRatio)||1;
    const pixelDpr=Math.sqrt(pixelBudget/area);
-   const dpr=Math.max(.5,Math.min(screenDpr,2,pixelDpr)*v32Perf.scale);
+   const dpr=Math.max(.5,Math.min(screenDpr,FIDELITY[quality].dpr,pixelDpr)*v32Perf.scale);
    const w=Math.max(1,Math.floor(cssW*dpr)),h=Math.max(1,Math.floor(cssH*dpr));
    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
    gl.viewport(0,0,w,h);
@@ -1687,7 +1717,9 @@ function makeGlScene(canvas,axis){
      return true;
    }catch(e){camera.lastRenderError=String(e?.stack||e||"UNKNOWN_RENDER_ERROR");return false}
  }
- return{render:v32Render,camera,getRemoval:()=>({...lastRemoval}),getPerformance:v32ReadPerformance,setAutoScale:v32SetAuto,getMeshStatistics:v33MeshStats};
+ function getFidelity(){return{quality,grid:axis==="3AX"?removalCache.n+"×"+removalCache.n:voxelCache.nx+"×"+voxelCache.ny+"×"+voxelCache.nz,frame:canvas.width+"×"+canvas.height}}
+  function setQuality(next){if(!Object.prototype.hasOwnProperty.call(FIDELITY,next)||next===quality)return false;quality=next;removalCache.n=FIDELITY[quality].height;removalCache.parsed=null;removalCache.base=null;removalCache.completed=0;voxelCache.nx=FIDELITY[quality].xy;voxelCache.ny=FIDELITY[quality].xy;voxelCache.nz=FIDELITY[quality].z;voxelCache.parsed=null;voxelCache.base=null;voxelCache.completed=0;v33MeshCache.height=null;v33MeshCache.voxel=null;lastRemoval={depth:0,volume:0};return true}
+  return{render:v32Render,camera,getRemoval:()=>({...lastRemoval}),getFidelity,setQuality,getPerformance:v32ReadPerformance,setAutoScale:v32SetAuto,getMeshStatistics:v33MeshStats};
 }
 
 function buildAdaptive2DPaths(shape,p,levels){
@@ -1734,6 +1766,10 @@ function buildAdaptive2DPaths(shape,p,levels){
 function makeRuntime(root){
  const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d"),glCanvas=root.querySelector("[data-glcanvas]");
  const glScene=aigGuard(root,axis+" WebGL 初始化",()=>makeGlScene(glCanvas,axis),null,"warn");
+ const qualityBtns=[...root.querySelectorAll("[data-render-quality]")];
+ function refreshQuality(){const mode=glScene?.getFidelity?.().quality||"";for(const b of qualityBtns){b.disabled=!glScene?.setQuality;b.setAttribute("aria-pressed",String(mode===b.dataset.renderQuality))}}
+ root.addEventListener("click",e=>{const b=e.target.closest("[data-render-quality]");if(b&&root.contains(b)&&glScene?.setQuality?.(b.dataset.renderQuality)){refreshQuality();draw();updateUi()}});
+ refreshQuality();root.aigVisualV45=glScene?Object.freeze({read:()=>glScene.getFidelity()}):null;
  root.aigVisualV32=glScene?Object.freeze({read:()=>glScene.getPerformance(),setAuto:on=>glScene.setAutoScale(on)}):null;
  root.aigVisualV33=glScene?Object.freeze({read:()=>glScene.getMeshStatistics()}):null;
  if(!glScene)aigShowIssue(root,"warn",axis+" WebGL 無法使用，已自動切換 2D fallback；G-code、模擬控制與編輯器仍可繼續使用。");
@@ -2023,7 +2059,9 @@ function makeRuntime(root){
       const p={};for(const k of ["X","Y","Z","A","B","C","F","S"])p[k]=lerp(bl.from[k]||0,bl.to[k]||0,t);return p;
     }
   });
-  const rendererEl=root.querySelector("[data-renderer]");if(rendererEl){rendererEl.textContent=webglOk?(axis==="3AX"?"WEBGL 3D + HEIGHTFIELD":"WEBGL 3D + ROTARY VOXEL"):"2D FALLBACK";rendererEl.dataset.renderError=webglOk?"":String(glScene?.camera?.lastRenderError||"")}
+  const f45=glScene?.getFidelity?.(),ge=root.querySelector("[data-cut-resolution]"),fe=root.querySelector("[data-frame-resolution]");
+ if(ge)ge.textContent=f45?f45.grid+" "+f45.quality:"WebGL 不可用";if(fe)fe.textContent=f45?f45.frame:"—";
+ const rendererEl=root.querySelector("[data-renderer]");if(rendererEl){rendererEl.textContent=webglOk?(axis==="3AX"?"WEBGL 3D + HEIGHTFIELD":"WEBGL 3D + ROTARY VOXEL"):"2D FALLBACK";rendererEl.dataset.renderError=webglOk?"":String(glScene?.camera?.lastRenderError||"")}
   const ev=glScene?.getRemoval?.()||{volume:0,depth:0},cfgEvidence=settings(),envEvidence=runtimeStockEnvelope(state.parsed,cfgEvidence);
   const initialVolume=Math.max(0,envEvidence.spanX*envEvidence.spanY*envEvidence.stockH);
   const removedVolume=Math.max(0,Math.min(initialVolume,webglOk&&!state.dry?Number(ev.volume)||0:0));

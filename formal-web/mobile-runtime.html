@@ -196,7 +196,8 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./ai-page-v43.css">
 <link rel="stylesheet" href="./ai-page-mobile-v43.css">
 <link rel="stylesheet" href="./ai-page-desktop-v43.css">
-<link rel="stylesheet" href="./ai-page-v44.css"></head>
+<link rel="stylesheet" href="./ai-page-v44.css">
+<link rel="stylesheet" href="./axis-cutting-v45.css"></head>
 <body>
 <div class="app">
 <header class="top">
@@ -1367,8 +1368,36 @@ function makeGlScene(canvas,axis){
  }
  const cube=mesh(cubeData()),stockShell=mesh(openBoxData()),cyl=mesh(cylinderData());
  const heightPb=gl.createBuffer(),heightNb=gl.createBuffer();
- const removalCache={parsed:null,key:"",n:FIDELITY[quality].height,base:null,completed:0,cellX:1,cellY:1,minX:0,minY:0,stockH:1,toolDia:0};
+ const removalCache={parsed:null,key:"",dry:false,n:FIDELITY[quality].height,base:null,completed:0,cellX:1,cellY:1,minX:0,minY:0,stockH:1,toolDia:0};
  let lastRemoval={depth:0,volume:0};
+  // V45 numerical WebGL solver: real G-code sampled sweeps, bounded to existing mesh resolution.
+  function v45Length(bl,tEnd,scene){
+    const e=Math.max(0,Math.min(1,Number(tEnd)||0));let sum=0,p=scene.sampleBlock(bl,0);
+    for(let i=1;i<=8;i++){const q=scene.sampleBlock(bl,e*i/8);sum+=Math.hypot((q.X||0)-(p.X||0),(q.Y||0)-(p.Y||0),(q.Z||0)-(p.Z||0));p=q}
+    return sum;
+  }
+  function v45HeightSteps(bl,tEnd,scene,toolRadius){
+    const step=Math.max(.08,Math.min(removalCache.cellX,removalCache.cellY,toolRadius*.25));
+    const cap=quality==="DETAIL"?1600:quality==="BALANCED"?1000:500;
+    return Math.max(1,Math.min(cap,Math.ceil(v45Length(bl,tEnd,scene)/step)));
+  }
+  function v45VoxelSteps(bl,tEnd,scene,toolDia){
+    const v=voxelCache;
+    const degrees=["A","B","C"].reduce((s,k)=>s+Math.abs((bl.to[k]||0)-(bl.from[k]||0)),0);
+    const radius=.5*Math.hypot(v.nx*v.sx,v.ny*v.sy,v.stockH);
+    const sweep=v45Length(bl,tEnd,scene)+degrees*Math.PI/180*radius*Math.max(0,Math.min(1,tEnd));
+    const step=Math.max(.13,Math.min(v.sx,v.sy,v.sz,Math.max(.2,toolDia*.24)));
+    return Math.max(1,Math.min(FIDELITY[quality].steps,Math.ceil(sweep/step)));
+  }
+  function v45HeightVolume(heights,top,cx,cy,n){
+    let sum=0;
+    for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+      const z=heights[y*n+x];if(!Number.isFinite(z))throw Error("NONFINITE_HEIGHT");
+      sum+=Math.max(0,top-z)*(x===0||x===n-1?0.5:1)*(y===0||y===n-1?0.5:1);
+    }
+    return sum*cx*cy;
+  }
+
  const v33MeshCache={height:null,voxel:null,hits:0,builds:0,triangles:0,acceleratedVoxel:0};
  function v33MeshStats(){return{hits:v33MeshCache.hits,builds:v33MeshCache.builds,triangles:v33MeshCache.triangles,acceleratedVoxel:v33MeshCache.acceleratedVoxel}}
  function v33Match(cache,scene,key,grid){
@@ -1389,7 +1418,7 @@ function makeGlScene(canvas,axis){
 
  function resetRemoval(scene,minX,minY,spanX,spanY,stockTop,stockBottom){
    const n=removalCache.n,stockH=stockTop-stockBottom;
-   removalCache.parsed=scene.parsed;
+   removalCache.parsed=scene.parsed;removalCache.dry=Boolean(scene.dry);
    removalCache.key=[minX.toFixed(4),minY.toFixed(4),spanX.toFixed(4),spanY.toFixed(4),stockTop.toFixed(4),stockBottom.toFixed(4),sceneToolSignature(scene)].join("|");
    removalCache.base=new Float32Array(n*n);removalCache.base.fill(stockTop);
    removalCache.completed=0;
@@ -1425,7 +1454,7 @@ function makeGlScene(canvas,axis){
    const toolRadius=Math.max(.05,sceneBlockToolDia(scene,bl)/2);
    const dx=(bl.to.X||0)-(bl.from.X||0),dy=(bl.to.Y||0)-(bl.from.Y||0),dz=(bl.to.Z||0)-(bl.from.Z||0);
    const dist=Math.hypot(dx,dy,dz),spacing=Math.max(.08,Math.min(removalCache.cellX,removalCache.cellY,toolRadius*.25));
-   const steps=Math.max(1,Math.min(quality==="DETAIL"?1600:quality==="BALANCED"?1000:500,Math.ceil(dist*Math.max(.01,tEnd)/spacing)));
+   const steps=v45HeightSteps(bl,tEnd,scene,toolRadius);
    for(let i=0;i<=steps;i++){
      const t=tEnd*i/steps;
      cutSample(heights,scene.sampleBlock(bl,t),toolRadius);
@@ -1438,7 +1467,7 @@ function makeGlScene(canvas,axis){
      v33MeshCache.hits++;lastRemoval={...memo.removal};v33MeshCache.triangles=Math.trunc(memo.mesh.count/3);
      return memo.mesh;
    }
-   if(removalCache.parsed!==scene.parsed||removalCache.key!==key||scene.index<removalCache.completed)resetRemoval(scene,minX,minY,spanX,spanY,stockTop,stockBottom);
+   if(removalCache.parsed!==scene.parsed||removalCache.key!==key||removalCache.dry!==Boolean(scene.dry)||scene.index<removalCache.completed)resetRemoval(scene,minX,minY,spanX,spanY,stockTop,stockBottom);
    const target=Math.min(scene.index,scene.parsed.blocks.length);
    while(removalCache.completed<target){
      const bl=scene.parsed.blocks[removalCache.completed];
@@ -1463,8 +1492,8 @@ function makeGlScene(canvas,axis){
      push(ix,iy);push(ix+1,iy);push(ix+1,iy+1);
      push(ix,iy);push(ix+1,iy+1);push(ix,iy+1);
    }
-   let minH=stockTop,sum=0;for(const h of heights){if(h<minH)minH=h;sum+=Math.max(0,stockTop-h)}
-   lastRemoval={depth:Math.max(0,stockTop-minH),volume:sum*cx*cy};
+   let minH=stockTop;for(const h of heights)if(h<minH)minH=h;
+    lastRemoval={depth:Math.max(0,stockTop-minH),volume:v45HeightVolume(heights,stockTop,cx,cy,n)};
    return v33Save("height",scene,key,removalCache.n,{p:verts,n:norms,count:verts.length/3});
  }
  function drawHeightfield(hf,color,vp){
@@ -1475,11 +1504,11 @@ function makeGlScene(canvas,axis){
  }
 
  const voxelPb=gl.createBuffer(),voxelNb=gl.createBuffer();
- const voxelCache={parsed:null,key:"",nx:FIDELITY[quality].xy,ny:FIDELITY[quality].xy,nz:FIDELITY[quality].z,base:null,completed:0,minX:0,minY:0,minZ:0,stockTop:0,stockBottom:-1,sx:1,sy:1,sz:1,stockH:1,toolDia:0,initialCount:0};
+ const voxelCache={parsed:null,key:"",dry:false,nx:FIDELITY[quality].xy,ny:FIDELITY[quality].xy,nz:FIDELITY[quality].z,base:null,completed:0,minX:0,minY:0,minZ:0,stockTop:0,stockBottom:-1,sx:1,sy:1,sz:1,stockH:1,toolDia:0,initialCount:0};
 
  function resetVoxel(scene,minX,minY,spanX,spanY,stockTop,stockBottom){
    const v=voxelCache,stockH=stockTop-stockBottom;
-   v.parsed=scene.parsed;
+   v.parsed=scene.parsed;v.dry=Boolean(scene.dry);
    v.key=[minX.toFixed(4),minY.toFixed(4),spanX.toFixed(4),spanY.toFixed(4),stockTop.toFixed(4),stockBottom.toFixed(4),sceneToolSignature(scene)].join("|");
    v.minX=minX;v.minY=minY;v.minZ=stockBottom;v.stockTop=stockTop;v.stockBottom=stockBottom;v.stockH=stockH;v.toolDia=Math.max(.1,Number(scene.toolDia)||10); // fallback only
    v.sx=spanX/v.nx;v.sy=spanY/v.ny;v.sz=stockH/v.nz;
@@ -1516,7 +1545,7 @@ function makeGlScene(canvas,axis){
    const drot=Math.abs((bl.to.A||0)-(bl.from.A||0))+Math.abs((bl.to.B||0)-(bl.from.B||0))+Math.abs((bl.to.C||0)-(bl.from.C||0));
    const travel=Math.hypot(dx,dy,dz)+drot*Math.max(voxelCache.sx,voxelCache.sy)*.15;
    const blockToolDia=sceneBlockToolDia(scene,bl),spacing=Math.max(.13,Math.min(voxelCache.sx,voxelCache.sy,voxelCache.sz,Math.max(.2,blockToolDia*.24)));
-   const steps=Math.max(1,Math.min(FIDELITY[quality].steps,Math.ceil(travel*Math.max(.02,tEnd)/spacing)));
+   const steps=v45VoxelSteps(bl,tEnd,scene,blockToolDia);
    for(let i=0;i<=steps;i++)voxelCutSample(occ,scene.sampleBlock(bl,tEnd*i/steps),scene,bl);
  }
  function voxelStock(scene,minX,minY,spanX,spanY,stockTop,stockBottom){
@@ -1526,7 +1555,7 @@ function makeGlScene(canvas,axis){
      v33MeshCache.hits++;lastRemoval={...memo.removal};v33MeshCache.triangles=Math.trunc(memo.mesh.count/3);
      return memo.mesh;
    }
-   if(v.parsed!==scene.parsed||v.key!==key||scene.index<v.completed)resetVoxel(scene,minX,minY,spanX,spanY,stockTop,stockBottom);
+   if(v.parsed!==scene.parsed||v.key!==key||v.dry!==Boolean(scene.dry)||scene.index<v.completed)resetVoxel(scene,minX,minY,spanX,spanY,stockTop,stockBottom);
    const target=Math.min(scene.index,scene.parsed.blocks.length);
    while(v.completed<target){
      const bl=scene.parsed.blocks[v.completed];
@@ -1844,6 +1873,7 @@ function makeRuntime(root){
 
  const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d"),glCanvas=root.querySelector("[data-glcanvas]");
  const glScene=aigGuard(root,axis+" WebGL 初始化",()=>makeGlScene(glCanvas,axis),null,"warn");
+ root.aigVisualV45=glScene?Object.freeze({read:()=>glScene.getFidelity()}):null;
  root.aigVisualV32=glScene?Object.freeze({read:()=>glScene.getPerformance(),setAuto:on=>glScene.setAutoScale(on)}):null;
  root.aigVisualV33=glScene?Object.freeze({read:()=>glScene.getMeshStatistics()}):null;
  if(!glScene)aigShowIssue(root,"warn",axis+" WebGL 無法使用，已自動切換 2D fallback；G-code、模擬控制與編輯器仍可繼續使用。");
