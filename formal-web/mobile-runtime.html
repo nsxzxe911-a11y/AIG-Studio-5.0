@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>AIG-II • RGB Glass Runtime</title>
+<title>AIG-II｜正式 CNC 工作區</title>
 <style>
 :root{
  --bg:#020407;--panel:#060a0f;--panel2:#0a1017;--panel3:#0d151e;
@@ -172,11 +172,13 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./authority/desktop-mobile-layout-v1.css">
 <link rel="stylesheet" href="./authority/aigii-rgb-glass-runtime-20261018-v1.css">
 <link rel="stylesheet" href="./phase4.css">
+<link rel="stylesheet" href="./authority/aigii-runtime-visual-v2.css">
 </head>
 <body>
 <div class="app">
 <header class="top">
  <div class="brand"><div><div class="logo">AIG-II</div><small>AI GENERATIVE CNC</small></div></div>
+ <a class="aigSiteBack" href="./index.html">網站首頁　↗</a>
  <div class="layoutSwitch" id="aig-layout-switch" role="group" aria-label="網頁版型切換">
   <button type="button" data-layout-mode="auto" aria-pressed="true">自動</button>
   <button type="button" data-layout-mode="desktop" aria-pressed="false">桌面版</button>
@@ -185,10 +187,10 @@ html,body{background:#020407}
  </div>
  <nav class="nav" id="nav"></nav>
  <a class="projectTransferLink" href="./project-sync.html" target="_blank" rel="noopener noreferrer" aria-label="跨裝置專案續接">專案續接　↗</a>
- <div class="status">● 真機輸出關閉</div>
+ <div class="status">● 安全操作模式</div>
 </header>
 <main class="shell" id="screens"></main>
-<footer class="footer">AIG-II · CAD / CAM / SIM / NC · 安全操作模式</footer>
+<footer class="footer">AIG-II · 設計 · 刀路 · 模擬 · 程式</footer>
 </div>
 <script src="./runtime/layout-mode.js"></script>
 <script src="./runtime/page-runtime-router.js"></script>
@@ -274,8 +276,8 @@ function homePage(){
     '<div class="aigSystemTiles">'+
      '<div class="aigSystemTile"><b data-home-network role="status" aria-live="polite">偵測中</b><small>LOCAL / NETWORK</small></div>'+
      '<div class="aigSystemTile"><b>0.001 mm</b><small>目標座標精度</small></div>'+
-     '<div class="aigSystemTile"><b>Android + Windows</b><small>跨平台設計目標</small></div>'+
-     '<div class="aigSystemTile"><b>真 Runtime</b><small>瀏覽器內本機工作區</small></div>'+
+     '<div class="aigSystemTile"><b>手機與電腦</b><small>自適應使用介面</small></div>'+
+     '<div class="aigSystemTile"><b>本機工作區</b><small>專案在本機保存</small></div>'+
     '</div>'+
    '</section>'+
   '</div>'+
@@ -291,9 +293,9 @@ function homePage(){
  '</div>';
 }
 function simHubPage(){
- return '<div data-sim-hub><section class="panel"><div class="head"><div><h2>SIM 模擬中心</h2><small>共用現有真 3D / 材料移除 Runtime，不建立假模擬</small></div></div><div class="body">'+
+ return '<div data-sim-hub><section class="panel"><div class="head"><div><h2>SIM 模擬中心</h2><small>依軸數進入獨立加工模擬</small></div></div><div class="body">'+
  '<div class="menuGrid">'+["3AX","4AX","5AX","6AX"].map(a=>'<button class="menuCard" data-open-page="'+a+'" data-sim-axis="'+a+'"><b>'+a+'</b><span data-sim-state="'+a+'">READY</span></button>').join("")+'</div>'+
- '<div class="notice" style="margin-top:9px">選擇軸數後進入同一套 G-code / WebGL / 碰撞 / 材料移除 Runtime。</div></div></section></div>';
+ '<div class="notice" style="margin-top:9px">選擇軸數後可檢視刀路、加工過程、碰撞與材料移除。</div></div></section></div>';
 }
 function aiPage(){
  return '<div data-ai-page-runtime><section class="panel"><div class="head"><div><h2>AI 加工規劃</h2><small>只規劃 / 解釋 / 稽核；不直接控制機台</small></div></div><div class="body">'+
@@ -335,7 +337,7 @@ function cadPage(){
  const drawTools=["LINE","RECT","CIRCLE","ARC","HOLE"].map(x=>'<button class="btn" data-cad-tool="'+x+'">'+x+'</button>').join("");
  const editTools=["TRIM","EXTEND","OFFSET","ARRAY","DIM"].map(x=>'<button class="btn" data-cad-action="'+x+'">'+x+'</button>').join("");
  return '<div data-cad-runtime><div class="toolstrip">'+drawTools+editTools+'</div><div class="workgrid" style="margin-top:9px">'+
- '<section class="panel"><div class="head"><div><h2>CAD 製圖</h2><small>真 2D Canvas • SNAP • AutoSave / Recovery • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-cad-count>0 entities</span></div><div class="body">'+
+ '<section class="panel"><div class="head"><div><h2>CAD 製圖</h2><small>幾何製圖 · SNAP · 自動保存 · 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-cad-count>0 entities</span></div><div class="body">'+
  '<div class="cadCanvasWrap"><canvas class="cadCanvas" data-cad-canvas></canvas><div class="cadHud"><span data-cad-toolhud>SELECT</span><span data-cad-coord>X 0.000 Y 0.000</span><span data-cad-snaphud>SNAP ON</span></div></div>'+
  '<div class="controls"><button class="btn" data-cad-action="UNDO">Undo</button><button class="btn" data-cad-action="REDO">Redo</button><button class="btn" data-cad-tool="SELECT">Select</button><button class="btn" data-cad-tool="PAN">Pan</button><button class="btn" data-cad-action="FIT">Fit</button><button class="btn play" data-cad-action="SNAP">SNAP</button></div></div></section>'+
  '<section class="panel"><div class="head"><h3>製圖屬性</h3></div><div class="body cadSide">'+
@@ -2036,7 +2038,7 @@ function makeHomeRuntime(root){
   root.querySelector("[data-home-cad]").textContent=(cad?.shapes?.length||0)+" entities";
   root.querySelector("[data-home-cam]").textContent=(cam?.paths?.length||0)+" paths";
   root.querySelector("[data-home-nc]").textContent=nc+" lines";
-  root.querySelector("[data-home-network]").textContent=navigator.onLine?"ONLINE / LOCAL READY":"OFFLINE / LOCAL READY";
+  root.querySelector("[data-home-network]").textContent=navigator.onLine?"線上・本機就緒":"離線・本機就緒";
  }
  refresh();window.addEventListener("online",refresh);window.addEventListener("offline",refresh);
  root.refresh=refresh;

@@ -1,0 +1,207 @@
+/* AIG-II FORMAL WEB WORKSPACE — 2026-10-18 visual refresh
+   These rules style the EXISTING real CAD/CAM/SIM/NC controls; no image overlay.
+   Native Android/Windows release authority remains independently verified. */
+html[data-aig-project="AIGII"]{--bg:#02050c;--panel:#081628;--panel2:#0e2037;--panel3:#101c32;--cyan:#5deaff;--blue:#5996ff;--green:#66e9bb;--pink:#ec83ff;--violet:#ad8dff;--line:#2b5d80}
+html[data-aig-project="AIGII"] body{
+ background:radial-gradient(ellipse 75% 400px at 55% -110px,#1478bc24,transparent 85%),#02050c!important;
+ font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+}
+html[data-aig-project="AIGII"] .app{
+ background:
+ radial-gradient(ellipse 46% 340px at 7% 17%,#1460b11a,transparent 75%),
+ radial-gradient(ellipse 36% 350px at 95% 0%,#8c3fd111,transparent 75%),
+ #02050c!important;
+}
+html[data-aig-project="AIGII"] .top{
+ min-height:82px;padding:10px 19px;gap:16px;
+ border-bottom:1px solid #378db6!important;
+ background:linear-gradient(120deg,#081b2ceb,#060c19f7 65%,#141027e8)!important;
+ box-shadow:0 11px 30px #000b,inset 0 -1px #4b9dd83b!important;
+}
+html[data-aig-project="AIGII"] .brand{
+ display:flex;align-items:center;gap:13px;min-width:164px;
+}
+html[data-aig-project="AIGII"] .brand .logo{
+ font-size:clamp(20px,2vw,30px);padding-left:44px;line-height:1.18;
+ letter-spacing:.045em;text-shadow:0 0 18px #4f9fff65;
+ position:relative;
+}
+html[data-aig-project="AIGII"] .brand .logo:before{
+ width:34px;height:35px;left:0;top:48%;content:"";position:absolute;
+ transform:translateY(-50%);
+ clip-path:polygon(50% 0,100% 93%,72% 93%,50% 42%,29% 93%,0 93%);
+ background:conic-gradient(from 55deg,#2ad7ff,#ac61ff,#fd71b8,#ffb760,#35eec3,#2ad7ff);
+ filter:drop-shadow(0 0 11px #4c90e9);
+}
+html[data-aig-project="AIGII"] .brand small{
+ letter-spacing:.105em;color:#b6cee5;font-size:9px;margin-top:4px;
+}
+html[data-aig-project="AIGII"] .nav{
+ max-width:none;gap:5px!important;border-radius:13px;
+ background:#060f1c;border:1px solid #2c5e7a;padding:5px;box-shadow:inset 0 0 15px #1068a729;
+}
+html[data-aig-project="AIGII"] .nav button{
+ min-height:44px;border-radius:8px;background:transparent!important;
+ border:1px solid transparent;box-shadow:none!important;color:#c9ddec;
+ font-size:12px;font-weight:800;letter-spacing:.02em;
+}
+html[data-aig-project="AIGII"] .nav button:hover{
+ background:#1b3551!important;color:#fff;border-color:#428cc0;
+}
+html[data-aig-project="AIGII"] .nav button.active{
+ background:linear-gradient(135deg,#1a5384,#33288d)!important;
+ color:#fff!important;border-color:var(--accent,#5ee8ff)!important;
+ box-shadow:0 0 17px #2579d375,inset 0 1px #c5eeff4d!important;
+}
+html[data-aig-project="AIGII"] .layoutSwitch{
+ border:1px solid #315c7c;background:#09172a;border-radius:11px;
+ padding:4px;gap:3px;box-shadow:inset 0 0 8px #163f744a;
+}
+html[data-aig-project="AIGII"] .layoutSwitch button{
+ min-height:33px;padding:5px 9px;font-size:11px;border-radius:8px;
+}
+html[data-aig-project="AIGII"] .layoutSwitch button[aria-pressed="true"]{
+ color:white;background:#1b5482;
+ box-shadow:0 0 8px #267ccb55;border-color:#60c4f1;
+}
+html[data-aig-project="AIGII"] .layoutMessage{color:#84a5bf}
+html[data-aig-project="AIGII"] .top .projectTransferLink{
+ border:1px solid #68c5f4;border-radius:10px;
+ background:linear-gradient(100deg,#18476c,#383071);
+ min-height:40px;font-size:12px;
+}
+html[data-aig-project="AIGII"] .status{font-size:11px;color:#90d5c6;letter-spacing:.01em}
+html[data-aig-project="AIGII"] .shell{
+ width:min(100%,3840px);margin:auto;padding:clamp(11px,1.5vw,23px);
+ gap:14px;min-height:calc(100vh - 94px);
+}
+html[data-aig-project="AIGII"] .screen.active{animation:workenter .14s ease-out both}
+@keyframes workenter{from{opacity:.8;transform:translateY(6px)}to{opacity:1;transform:none}}
+html[data-aig-project="AIGII"] .panel{
+ background:linear-gradient(156deg,#0b1c30,#050d19 80%)!important;
+ border:1px solid #2a6997a3!important;border-radius:15px!important;
+ box-shadow:0 10px 28px #0009,inset 0 1px #aae4ff14!important;
+}
+html[data-aig-project="AIGII"] .head{
+ min-height:49px;padding:12px 16px!important;
+ background:linear-gradient(90deg,#0e33568c,transparent 78%);
+ border-bottom:1px solid #2a678b8c!important;
+}
+html[data-aig-project="AIGII"] .head h2,
+html[data-aig-project="AIGII"] .head h3{
+ font-size:clamp(14px,1vw,18px)!important;
+ font-weight:800;letter-spacing:.035em;color:#f4fbff;
+}
+html[data-aig-project="AIGII"] .head small{font-size:11px;line-height:1.45;color:#95bdd7}
+html[data-aig-project="AIGII"] .body{padding:clamp(10px,1vw,17px)!important}
+html[data-aig-project="AIGII"] .btn{
+ min-height:41px;padding:8px 12px;
+ background:linear-gradient(150deg,#164363,#081b2e 85%)!important;
+ border-color:#367da8!important;border-radius:9px!important;
+ color:#e0f5ff;font-size:12px;font-weight:700;
+ box-shadow:inset 0 1px #c9f2ff17,0 5px 10px #0008;
+}
+html[data-aig-project="AIGII"] .btn:hover{
+ border-color:#8be0ff!important;box-shadow:0 0 15px #299ce86b!important;color:white;
+}
+html[data-aig-project="AIGII"] .btn.selected,
+html[data-aig-project="AIGII"] .btn.play{
+ background:linear-gradient(135deg,#1c5285,#312577)!important;
+ border-color:#72d3f9!important;color:white!important;
+ box-shadow:0 0 12px #236fe470!important;
+}
+html[data-aig-project="AIGII"] .btn:disabled{opacity:.43;box-shadow:none!important}
+html[data-aig-project="AIGII"] .field,
+html[data-aig-project="AIGII"] .metric{
+ background:#09172a!important;border:1px solid #2a5573!important;border-radius:9px;
+}
+html[data-aig-project="AIGII"] input,
+html[data-aig-project="AIGII"] textarea,
+html[data-aig-project="AIGII"] select{
+ accent-color:#50cefb;outline-offset:2px;
+}
+html[data-aig-project="AIGII"] input:focus-visible,
+html[data-aig-project="AIGII"] textarea:focus-visible,
+html[data-aig-project="AIGII"] select:focus-visible,
+html[data-aig-project="AIGII"] button:focus-visible,
+html[data-aig-project="AIGII"] a:focus-visible{
+ outline:2px solid #ffdb8b;outline-offset:3px;
+}
+html[data-aig-project="AIGII"] .code,
+html[data-aig-project="AIGII"] .cadCanvasWrap,
+html[data-aig-project="AIGII"] .camCanvas,
+html[data-aig-project="AIGII"] .sceneWrap{
+ background:#030913!important;border-color:#2d6c90!important;
+ box-shadow:inset 0 0 22px #065fb629;
+}
+html[data-aig-project="AIGII"] .sceneWrap{min-height:min(69vh,940px)!important}
+html[data-aig-project="AIGII"] .simgrid{
+ grid-template-columns:minmax(0,2.45fr) minmax(285px,.85fr)!important;
+ min-height:760px;gap:14px;
+}
+html[data-aig-project="AIGII"] .simleft{min-width:0}
+html[data-aig-project="AIGII"] .axis{
+ background:linear-gradient(115deg,#0e2840,#070f1e);border:1px solid #337ea1;
+ min-height:35px;padding:7px 11px;border-radius:9px;font-weight:700;
+}
+html[data-aig-project="AIGII"] .footer{
+ min-height:36px;padding:11px 19px;color:#789ab3;font-size:11px;
+ border-top:1px solid #203f5b;
+}
+html[data-aig-project="AIGII"] .aigFormalHome{gap:16px}
+html[data-aig-project="AIGII"] .aigFormalHome .aigHero{min-height:430px;gap:15px}
+html[data-aig-project="AIGII"] .aigFormalHome .aigGlass{
+ border:1px solid #398bbfc2;background:linear-gradient(130deg,#0d2942,#040c18)!important;
+ box-shadow:0 0 18px #085ea52b,inset 0 1px #8ce5ff25;
+}
+html[data-aig-project="AIGII"] .aigFormalHome .aigHeroCenter{
+ background:radial-gradient(ellipse at 45% 50%,#1a7cc648,transparent 52%),
+ radial-gradient(ellipse at 60% 100%,#b55cc32e,transparent 55%),
+ #030916!important;
+}
+html[data-aig-project="AIGII"] .aigFormalHome .aigHeroBrand{letter-spacing:.065em}
+html[data-aig-project="AIGII"] .aigFormalHome .aigModuleGrid{gap:15px}
+html[data-aig-project="AIGII"] .aigFormalHome .aigModuleCard{
+ min-height:166px;border-radius:15px;transition:transform .15s,box-shadow .15s;
+}
+html[data-aig-project="AIGII"] .aigFormalHome .aigModuleCard:focus-visible{outline:2px solid #ffe29f}
+html[data-aig-project="AIGII"] .aigSiteBack{
+ position:relative;display:inline-flex;align-items:center;justify-content:center;
+ color:#dcfaff;text-decoration:none;background:linear-gradient(115deg,#14466c,#282963);
+ border:1px solid #5ab7e9;border-radius:10px;min-height:40px;padding:8px 12px;font-size:12px;font-weight:750;
+}
+html[data-aig-project="AIGII"] .aigSiteBack:hover{border-color:#91eaff;box-shadow:0 0 12px #3b9dd976}
+@media(min-width:1450px){
+ html[data-aig-project="AIGII"] .top{padding-inline:26px}
+ html[data-aig-project="AIGII"] .simgrid{grid-template-columns:minmax(0,2.7fr) minmax(315px,.9fr)!important}
+ html[data-aig-project="AIGII"] .sceneWrap{min-height:min(73vh,1060px)!important}
+}
+@media(max-width:1100px){
+ html[data-aig-project="AIGII"] .top{min-height:60px;padding:9px;gap:8px}
+ html[data-aig-project="AIGII"] .brand{min-width:120px}
+ html[data-aig-project="AIGII"] .simgrid{grid-template-columns:minmax(0,1.8fr) minmax(270px,.88fr)!important}
+}
+@media(max-width:800px){
+ html[data-aig-project="AIGII"] .top{flex-wrap:wrap}
+ html[data-aig-project="AIGII"] .top .projectTransferLink{min-height:34px}
+ html[data-aig-project="AIGII"] .simgrid{display:block!important}
+ html[data-aig-project="AIGII"] .simgrid>*>.panel{margin-bottom:10px}
+ html[data-aig-project="AIGII"] .sceneWrap{min-height:50vh!important}
+ html[data-aig-project="AIGII"] .shell{padding:9px}
+}
+@media(max-width:720px){
+ html[data-aig-project="AIGII"] .brand{min-width:106px}
+ html[data-aig-project="AIGII"] .brand .logo{padding-left:31px;font-size:20px}
+ html[data-aig-project="AIGII"] .brand .logo:before{width:26px;height:29px}
+ html[data-aig-project="AIGII"] .layoutSwitch{order:4;width:100%;justify-content:center}
+ html[data-aig-project="AIGII"] .nav{order:3;width:100%;display:flex;overflow-x:auto;scrollbar-width:thin}
+ html[data-aig-project="AIGII"] .nav button{min-width:53px;flex:none}
+ html[data-aig-project="AIGII"] .status{display:none}
+ html[data-aig-project="AIGII"] .aigFormalHome .aigModuleCard{min-height:143px}
+ html[data-aig-project="AIGII"] .aigFormalHome .aigHero{min-height:auto}
+ html[data-aig-project="AIGII"] .sceneWrap{min-height:54vh!important}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-aig-project="AIGII"] .screen.active{animation:none}
+ html[data-aig-project="AIGII"] .aigFormalHome .aigModuleCard{transition:none}
+}

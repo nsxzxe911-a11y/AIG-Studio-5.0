@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="./site-v2.css">
 <link rel="stylesheet" href="./site-v21.css">
 <link rel="stylesheet" href="./site-phase4.css">
+<link rel="stylesheet" href="./site-dual-v2.css">
 <meta property="og:title" content="AIG-II｜CNC 技術與製造平台">
 <meta property="og:description" content="CAD、CAM、SIM、多軸加工、NC 與 AI 的技術導覽和操作入口。">
 <link rel="manifest" href="./manifest.webmanifest">
@@ -33,6 +34,7 @@
  <div class="site-container nav-inner" id="site-navigation" data-expanded="false">
   <button type="button" class="mobile-menu-toggle" id="site-menu-toggle" aria-expanded="false" aria-controls="site-navigation">☰　選單</button>
   <a class="nav-link" aria-current="page" href="./index.html">首頁</a>
+  <a class="nav-link" href="#dual-projects">雙專案</a>
   <a class="nav-link" href="#modules">產品功能</a>
   <a class="nav-link" href="#cadcam">CAD / CAM</a>
   <a class="nav-link" href="#multiaxis">多軸加工</a>
@@ -44,12 +46,38 @@
  </div>
 </nav>
 <div class="site-container notice-ribbon">
- <p><strong>第四階段</strong>　跨平台專案續接：匯出、檔案驗證及匯入衝突保護。</p>
+ <p><strong>AIG 網站介面新版</strong>　雙專案入口與 CNC 工作區外觀升級，已存在的加工核心保留。</p>
  <a href="./updates.html">查看更新內容　›</a>
 </div>
 <div class="site-container">
  <div class="breadcrumb" aria-label="目前位置"><a href="./index.html">首頁</a><span aria-hidden="true">›</span><span>CNC 技術與產品導覽</span></div>
- <section class="quick-path" aria-label="常用工作捷徑">
+ <section class="site-dual" id="dual-projects" aria-label="AIG 雙專案入口">
+ <div class="dual-heading"><h2>雙專案 · 正式工作入口</h2><p>網站介面與 Android／Windows 版本分開驗收</p></div>
+ <div class="dual-cards">
+  <article class="dual-card">
+   <span class="dual-eyebrow">AIG-II / MAIN INTEGRATION</span>
+   <h3>AIG-II</h3>
+   <p>CAD、CAM、SIM、3～6 軸、NC 與 AI。由正式網站直接進入已部署的 Web 工作模組，操作與模擬各有獨立頁面。</p>
+   <div class="dual-actions">
+    <a href="./mobile-runtime.html#HOME">開啟 AIG-II 工作區　↗</a>
+    <a class="secondary" href="https://github.com/nsxzxe911-a11y/AIG-II" target="_blank" rel="noopener noreferrer">查看 AIG-II 主線</a>
+   </div>
+   <p class="dual-context">網站載入的是 Web 工作區；不冒稱原生 APK／EXE 已在瀏覽器執行。</p>
+  </article>
+  <article class="dual-card studio">
+   <span class="dual-eyebrow">AIG CNC / AIG STUDIO 5.0</span>
+   <h3>AIG CNC Studio 5.0</h3>
+   <p>加工模組、幾何與刀路工作流程。雙案核心各自維護；目前網頁可進入共用的 CAD／CAM 工作介面，原生功能仍以 Studio 主線驗收。</p>
+   <div class="dual-actions">
+    <a href="./mobile-runtime.html#CAD">進入共用 Web 製圖模組　↗</a>
+    <a class="secondary" href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0" target="_blank" rel="noopener noreferrer">查看 Studio 主線</a>
+   </div>
+   <p class="dual-context">共用 Web 工具入口，不等於在本站直接執行獨立的 Studio 原生核心。</p>
+  </article>
+ </div>
+ <div class="dual-note"><strong>版本分流：</strong>兩個專案的原生程式與 Release Gate 持續獨立，網站只顯示真正已部署的 Web 功能。查看 <a href="./project-sync.html">跨裝置專案續接</a> 或 <a href="./updates.html">網站更新紀錄</a>。</div>
+</section>
+<section class="quick-path" aria-label="常用工作捷徑">
   <a href="./mobile-runtime.html#NC"><span class="path-icon">NC</span><span class="path-text"><b>直接編輯 G-code</b><small>不需要先進 CAD</small></span><span class="path-arrow" aria-hidden="true">↗</span></a>
   <a href="./mobile-runtime.html#CAD"><span class="path-icon">CAD</span><span class="path-text"><b>開始製圖</b><small>幾何設計與尺寸</small></span><span class="path-arrow" aria-hidden="true">↗</span></a>
   <a href="./project-sync.html"><span class="path-icon">檔</span><span class="path-text"><b>跨裝置專案續接</b><small>備份、匯入與衝突保護</small></span><span class="path-arrow" aria-hidden="true">↗</span></a>

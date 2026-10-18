@@ -71,7 +71,7 @@ test('public portal uses approved AIG-II identity without claiming mock images a
 test('PWA caches both website and workbench, without loading the old engineering gallery',()=>{
  const sw=read('service-worker.js');
  assert.doesNotThrow(()=>new vm.Script(sw));
- assert.match(sw,/aig-ii-phase4-transfer-20261018-v9/);
+ assert.match(sw,/aig-ii-dual-site-rgb-20261018-v10/);
  for(const entry of ['site.css','site.js','index.html','mobile-runtime.html','runtime/page-runtime-router.js'])
   assert.ok(sw.includes('"./'+entry+'"'),entry);
  assert.doesNotMatch(sw,/legacy-runtime\.html|\.\/app\.js|\.\/mobile-layout\.js/);

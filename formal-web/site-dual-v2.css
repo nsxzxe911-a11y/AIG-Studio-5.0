@@ -1,0 +1,50 @@
+/* AIG dual-project public front door — clear architecture, real links, no fake GUI. */
+:root{--accent:#50d9ff;--text:#f0f7ff}
+.site-container{max-width:1390px}
+.brand-name{font-weight:900;letter-spacing:.075em;text-shadow:0 0 16px #3096cf3e}
+.brand-mark{filter:drop-shadow(0 0 15px #547dffad)}
+.primary-nav .nav-inner{min-height:54px}
+.site-dual{display:grid;gap:13px;margin:1px 0 18px}
+.site-dual .dual-heading{display:flex;justify-content:space-between;align-items:end;gap:12px}
+.site-dual .dual-heading h2{margin:0;font-size:20px;font-weight:850;color:#ecfaff;letter-spacing:.03em}
+.site-dual .dual-heading p{margin:0;font-size:12px;color:#9fbed3}
+.site-dual .dual-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.site-dual .dual-card{position:relative;overflow:hidden;isolation:isolate;
+ border:1px solid #3485b2;border-radius:15px;min-height:224px;
+ padding:23px 23px 18px;
+ background:
+  radial-gradient(ellipse 46% 85% at 100% 12%,#336cde5e,transparent 90%),
+  linear-gradient(130deg,#113654,#071927 65%,#101430);
+ box-shadow:0 9px 28px #0008,inset 0 1px #bdf0ff19}
+.site-dual .dual-card.studio{
+ border-color:#7b6cb7;
+ background:radial-gradient(ellipse 48% 85% at 100% 12%,#9e4dd052,transparent 90%),linear-gradient(130deg,#24193d,#0d1b30 60%,#09111e);
+}
+.site-dual .dual-card:after{content:"";pointer-events:none;position:absolute;width:145px;height:145px;right:-24px;top:-17px;
+ border-radius:50%;border:1px solid #6dbbff34;box-shadow:0 0 0 22px #63beff09,0 0 0 48px #5e90ff08}
+.site-dual .dual-card.studio:after{border-color:#c38de65a;box-shadow:0 0 0 22px #bd85ff0b,0 0 0 48px #b85fe208}
+.site-dual .dual-eyebrow{font-size:11px;font-weight:800;color:#83e6ff;letter-spacing:.12em}
+.site-dual .studio .dual-eyebrow{color:#d3a5ff}
+.site-dual .dual-card h3{font-size:clamp(24px,2.3vw,34px);margin:8px 0 5px;line-height:1.22;font-weight:900}
+.site-dual .dual-card p{color:#c5dbea;font-size:13px;line-height:1.75;margin:0;max-width:49ch}
+.site-dual .dual-card .dual-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;position:relative;z-index:1}
+.site-dual .dual-actions a{min-height:40px;padding:8px 14px;border:1px solid #55b9e8;color:#fff;background:linear-gradient(110deg,#116f9d,#3644a8);font-size:12px;font-weight:780;border-radius:9px;text-decoration:none;display:inline-flex;align-items:center}
+.site-dual .studio .dual-actions a{background:linear-gradient(110deg,#493b8a,#215178);border-color:#b38afa}
+.site-dual .dual-actions a.secondary{background:#0e263c;box-shadow:none;border-color:#376c8e}
+.site-dual .dual-actions a:hover{filter:brightness(1.15)}
+.site-dual .dual-context{margin-top:10px;font-size:11px!important;color:#a1bcd0!important}
+.site-dual .dual-note{padding:12px 15px;background:#0d1c2c;border:1px solid #2b5068;border-radius:9px;color:#a7c6da;font-size:12px;line-height:1.65}
+.site-dual .dual-note strong{color:#def3ff}
+.site-dual .dual-note a{color:#9ae3ff}
+.site-dual .dual-links{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.site-dual .dual-links a{font-weight:700;color:#a9e8ff}
+.panel.lead-article{border-color:#376e8c;box-shadow:0 6px 20px #0007}
+@media(max-width:830px){
+ .site-dual .dual-cards{grid-template-columns:1fr}
+ .site-dual .dual-card{min-height:0}
+ .site-dual .dual-heading{align-items:flex-start;flex-direction:column;gap:3px}
+}
+@media(max-width:470px){
+ .site-dual .dual-card{padding:19px}
+ .site-dual .dual-actions a{width:100%;justify-content:center}
+}
