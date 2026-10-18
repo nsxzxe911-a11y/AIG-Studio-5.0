@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V45 exact real WebGL engine patches; rotary sweep, heightfield volume quadrature, dry-run cache invalidation, Studio fidelity",
+  "notes": "V46 real inline collision sweep sampling for 3AX-6AX and staged procedural 6AX A/B/C animation. Native versions/pins unchanged.",
   "sharedWebRelease": {
-    "version": "45.0.0",
-    "train": "V45",
+    "version": "46.0.0",
+    "train": "V46",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "45.0.0"
+        "version": "46.0.0"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "45.0.0"
+        "version": "46.0.0"
       }
     ],
     "commonRuntimeSource": "./dual-web-v43.js",
     "commonUiSource": "./dual-web-v43.css",
-    "releaseManifest": "./dual-web-v45.json",
+    "releaseManifest": "./dual-web-v46.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",

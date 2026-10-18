@@ -1,0 +1,18 @@
+{
+  "version": "46.0.0",
+  "tests": [
+    "Both inline original CNC Web runtime scripts syntax",
+    "Both clearance and collision scanners call adaptive bounded sweep",
+    "360deg A rotation samples >72 with stock radius",
+    "Non-rotary 3AX movement samples adapted to XY length",
+    "6AX A/B/C staged visual transform shares existing pose"
+  ],
+  "result": "SOURCE_PASS",
+  "notVerified": [
+    "Real browser GPU",
+    "Full Fanuc parser compatibility",
+    "Real machine collision safety",
+    "Authority GLB",
+    "Mobile device screenshot"
+  ]
+}
