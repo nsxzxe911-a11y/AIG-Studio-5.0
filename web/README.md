@@ -1,14 +1,15 @@
-# AIG CNC Web Runtime Preview
+# AIG Studio 5.0｜Web Runtime
 
-目前主程式網頁鏡像：`web/main-runtime-preview.html`
+主要入口：`web/index.html`（實作版）。
 
-- 對照 AIG-II 355 / Studio 320 的正式 Runtime UI/UX 邏輯。
-- HOME / CAD / CAM / SIM / 3AX / 4AX / 5AX / NC / AI / 設定。
-- 離線：直接使用目前安裝版本與設定。
-- 線上：HOME FIRST，讀取條與說明顯示版本比對流程，只接受 verified newer。
-- Regression：OFF / LOCKED。
-- CNC 真機輸出：Web Preview 停用。
+- 已有 HOME、CAD Canvas 繪圖/編輯、CAM 刀路、SIM、3AX～6AX WebGL（含降級提示）、NC Fanuc 編輯、刀路工作頁與專案功能頁。
+- 新增 **AI 本機加工助手**：只讀取已保存的 CAD/CAM/各軸 G-code，提供離線、規則式工作提醒，不使用雲端模型、也不修改或發送機台指令。
+- 原 `web/main-runtime-preview.html` 是舊展示頁，不可再當正式網站入口，尤其不可取代 CAD/CAM/NC 真功能。
+- 有網路或離線都可啟動已安裝 PWA；service worker 換版會更新快取，不能以舊快取冒稱新版。
+- CNC 真機輸出停用。Web 功能存在不等於 Android/Windows 原生 Gate 或 0.001 mm 真機精度已通過。
 
-原本較完整的 CAD/CAM/SIM Web motion prototype 保留在 `web/index.html`。
+## 驗證
 
-> Web Preview 是主程式功能/介面翻譯鏡像，不是 APK/EXE 實機啟動證據。
+`node ci/verify_web_runtime.mjs` 是 Web 專項 Gate；版本應以根目錄 `release-version.properties` 為準，不用畫面內舊版本字串判定發佈。
+
+原始 `web/main-runtime-preview.html` 只保留歷史相容用途。
