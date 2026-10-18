@@ -174,13 +174,14 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./axis-hud-v30.css">
 <link rel="stylesheet" href="./axis-evidence-v31.css">
 <link rel="stylesheet" href="./axis-performance-v32.css">
-<link rel="stylesheet" href="./dual-web-v38.css">
+<link rel="stylesheet" href="./dual-web-v39.css">
 <link rel="stylesheet" href="./axis-machine-v35.css">
 <link rel="stylesheet" href="./mobile-layout-v36.css">
 <link rel="stylesheet" href="./mobile-layout-v37.css">
-<link rel="stylesheet" href="./layout-switch-v38.css"></head>
+<link rel="stylesheet" href="./layout-switch-v38.css">
+<link rel="stylesheet" href="./axis-playback-v39.css"></head>
 <body>
-<div class="aig-studio-v375-portal-link" role="navigation"><a href="./index.html#dual-projects">← 回 AIG-II 科技網站</a><span>STUDIO 原生 375 · Web 共同 V37 · 本機資料與原工作站分開</span><a href="./dual-project-latest.html">雙專案版本與原始碼 ↗</a></div>
+<div class="aig-studio-v375-portal-link" role="navigation"><a href="./index.html#dual-projects">← 回 AIG-II 科技網站</a><span>STUDIO 原生 375 · Web 共同 V39 · 本機資料與原工作站分開</span><a href="./dual-project-latest.html">雙專案版本與原始碼 ↗</a></div>
 <div class="app">
 <header class="top">
  <div class="brand"><div><div class="logo">AIG CNC</div><small>RGB 正式工作區</small></div></div>
@@ -1806,8 +1807,18 @@ function makeRuntime(root){
   else if(state.parsed.warnings.length)aigFieldIssue(ta,"warn",state.parsed.warnings[0]);
   else aigFieldIssue(ta,null,"");
  }
+ function scrollExecInside(box,row,center=false){
+  // V39: follow the executed G-code line within its own scroll container only.
+  if(!box||!row||box.clientHeight<=0)return;
+  const outer=box.getBoundingClientRect(),inner=row.getBoundingClientRect(),margin=8;
+  if(center){box.scrollTop+=(inner.top+inner.height/2)-(outer.top+outer.height/2);return}
+  if(inner.top<outer.top+margin)box.scrollTop-=outer.top+margin-inner.top;
+  else if(inner.bottom>outer.bottom-margin)box.scrollTop+=inner.bottom-(outer.bottom-margin);
+ }
  function renderExec(){
-  const box=root.querySelector("[data-exec]");box.innerHTML="";
+  const box=root.querySelector("[data-exec]");if(!box)return;
+  const prior=box.scrollTop;
+  box.replaceChildren();
   const doneLines=new Set(state.parsed.blocks.slice(0,state.index).map(b=>b.line));
   const collisionLines=new Set(state.collisions.map(c=>c.line));
   const activeLine=currentLine(),alarmLine=state.collisionAlarm?.line;
@@ -1819,7 +1830,9 @@ function makeRuntime(root){
     if(i===alarmLine)div.classList.add("alarm");
     div.textContent=String(i+1).padStart(3,"0")+"  "+line;box.appendChild(div);
   });
-  const active=box.querySelector(".active");if(active)active.scrollIntoView({block:"nearest"});
+  // Preserve a user-visible machining viewport; only move the nested execution-list scrollbar.
+  box.scrollTop=prior;
+  scrollExecInside(box,box.querySelector(".active"));
  }
  function focusSourceLine(line,preserveAlarm=false,announce=true){
    const n=Math.max(0,Math.min((state.parsed?.lines?.length||1)-1,Math.trunc(Number(line)||0)));
@@ -1829,9 +1842,9 @@ function makeRuntime(root){
    renderExec();updateUi();draw();
    const value=ta.value,starts=[0];for(let i=0;i<value.length;i++)if(value[i]==="\n")starts.push(i+1);
    const start=starts[n]??0,next=starts[n+1]??value.length,end=Math.max(start,next-(value[next-1]==="\n"?1:0)-(value[next-2]==="\r"?1:0));
-   ta.focus();ta.setSelectionRange(start,end);
+   ta.focus({preventScroll:true});ta.setSelectionRange(start,end);
    const row=root.querySelectorAll("[data-exec] .execLine")[n];
-   if(row){row.classList.add("alarm");row.scrollIntoView({block:"center"});setTimeout(()=>row.classList.remove("alarm"),1800)}
+   if(row){row.classList.add("alarm");scrollExecInside(root.querySelector("[data-exec]"),row,true);setTimeout(()=>row.classList.remove("alarm"),1800)}
    if(announce)aigShowIssue(root,"info",axis+" 已跳到第 "+(n+1)+" 行；可直接修改 G-code。");
  }
  state.focusSourceLine=focusSourceLine;
@@ -3378,7 +3391,7 @@ aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash
 <script src="./axis-hud-v30.js"></script>
 <script src="./axis-evidence-v31.js"></script>
 <script src="./axis-performance-v32.js"></script>
-<script src="./dual-web-v38.js"></script>
+<script src="./dual-web-v39.js"></script>
 <script src="./axis-machine-v35.js"></script>
 <script src="./mobile-layout-v37.js"></script>
 <script src="./layout-switch-v38.js"></script></body>

@@ -1,0 +1,8 @@
+/* V39: prevent browser scroll anchoring during G-code playback; internal tracking only. */
+.simgrid[data-runtime] .execView[data-exec]{
+ overflow-x:auto;overflow-y:auto;overflow-anchor:none;overscroll-behavior:contain;
+ scroll-behavior:auto;scrollbar-gutter:stable;
+}
+.simgrid[data-runtime] .execView[data-exec] .execLine,
+.simgrid[data-runtime] .sceneWrap{overflow-anchor:none}
+@media(max-width:900px){.simgrid[data-runtime] .execView[data-exec]{max-height:180px}}
