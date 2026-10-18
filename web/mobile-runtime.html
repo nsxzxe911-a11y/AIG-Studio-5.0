@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>AIG Studio • BLACK RGB Runtime</title>
+<title>AIG-II • RGB Glass Runtime</title>
 <style>
 :root{
  --bg:#020407;--panel:#060a0f;--panel2:#0a1017;--panel3:#0d151e;
@@ -170,11 +170,12 @@ html,body{background:#020407}
 </style>
 <link rel="stylesheet" href="./authority/cam-unified-rgb-v1.css">
 <link rel="stylesheet" href="./authority/desktop-mobile-layout-v1.css">
+<link rel="stylesheet" href="./authority/aigii-rgb-glass-runtime-20261018-v1.css">
 </head>
 <body>
 <div class="app">
 <header class="top">
- <div class="brand"><div><div class="logo">AIG CNC</div><small>BLACK RGB RUNTIME</small></div></div>
+ <div class="brand"><div><div class="logo">AIG-II</div><small>AI GENERATIVE CNC</small></div></div>
  <div class="layoutSwitch" id="aig-layout-switch" role="group" aria-label="網頁版型切換">
   <button type="button" data-layout-mode="auto" aria-pressed="true">自動</button>
   <button type="button" data-layout-mode="desktop" aria-pressed="false">桌面版</button>
@@ -182,10 +183,10 @@ html,body{background:#020407}
   <span class="layoutMessage" data-layout-message role="status" aria-live="polite">偵測版型</span>
  </div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● AIG-II WEB • LOCAL　0.001 mm</div>
+ <div class="status">● 本機工作區 • 機台輸出停用</div>
 </header>
 <main class="shell" id="screens"></main>
-<footer class="footer">AIG-II RGB • Desktop / Mobile • CNC machine output disabled</footer>
+<footer class="footer">AIG-II • RGB GLASS • 桌面／手機 • 機台輸出停用</footer>
 </div>
 <script src="./runtime/layout-mode.js"></script>
 <script src="./runtime/page-runtime-router.js"></script>
@@ -234,13 +235,57 @@ const sourceCode={
 function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div class="head"><h3>'+title+'</h3></div><div class="body">'+body+'</div></section>'}
 
 function homePage(){
- return '<div data-home-runtime><div class="workgrid">'+
- '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Studio 356 • Offline-first • 0.001 mm</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
- '<div class="menuGrid"><button class="menuCard" data-open-page="CAD">CAD 製圖</button><button class="menuCard" data-open-page="CAM">CAM 刀路</button><button class="menuCard" data-open-page="SIM">SIM 模擬</button><button class="menuCard" data-open-page="NC">NC 編輯</button><button class="menuCard" data-open-page="刀路">刀路工作頁</button><button class="menuCard" data-open-page="功能">設定 / 工具</button></div>'+
- '<div class="runtimeStatus" style="margin-top:9px"><div class="metric"><b>CAD</b><span data-home-cad>0 entities</span></div><div class="metric"><b>CAM</b><span data-home-cam>0 paths</span></div><div class="metric"><b>NC</b><span data-home-nc>0 lines</span></div><div class="metric"><b>Runtime</b><span>LOCAL READY</span></div></div>'+
- '<div class="notice" style="margin-top:9px">正式 Web Runtime 直接進 HOME；工程維修與設定收在功能頁。CNC machine output disabled。</div></div></section>'+
- '<section class="panel"><div class="head"><h3>快速進入真模擬</h3></div><div class="body controls"><button class="btn" data-open-page="3AX">3AX</button><button class="btn" data-open-page="4AX">4AX</button><button class="btn" data-open-page="5AX">5AX</button><button class="btn" data-open-page="6AX">6AX</button></div></section>'+
- '</div></div>';
+ const tiles=[
+  ["CAD","CAD 設計","幾何製圖・尺寸與 SNAP","#43e9ff"],
+  ["CAM","CAM 編程","刀路規劃・參數與工序","#54f0a5"],
+  ["SIM","SIM 模擬","選擇軸數・驗證材料移除","#ffc45e"],
+  ["NC","NC 後處理","Fanuc G-code 編輯與解析","#a56bff"],
+  ["AI","AI 智慧","加工規劃・稽核與說明","#ff54c8"],
+  ["3AX","3AX 三軸","X / Y / Z 加工預覽","#43e9ff"],
+  ["4AX","4AX 四軸","X / Y / Z / A 加工預覽","#4d83ff"],
+  ["5AX","5AX 五軸","X / Y / Z / A / B 加工預覽","#ff54c8"],
+  ["6AX","6AX 六軸","X / Y / Z / A / B / C","#ffc45e"]
+ ];
+ return '<div data-home-runtime class="aigFormalHome">'+
+  '<div class="aigHero">'+
+   '<section class="aigGlass aigProjects" aria-label="工作入口">'+
+    '<h2 class="aigSectionTitle">專案中心</h2>'+
+    '<div class="aigProjectEntries">'+
+     '<button type="button" data-open-page="CAD"><b>CAD 製圖工作區　›</b><small>新增或繼續本機 CAD 草圖</small></button>'+
+     '<button type="button" data-open-page="NC"><b>NC-first 程式工作區　›</b><small>直接編輯、儲存與驗證 G-code</small></button>'+
+     '<button type="button" data-open-page="CAM"><b>CAM 刀路工作區　›</b><small>設定刀具、策略與起退刀</small></button>'+
+    '</div>'+
+   '</section>'+
+   '<section class="aigGlass aigHeroCenter" aria-label="AIG-II 正式首頁">'+
+    '<div class="aigPrism" aria-hidden="true"></div>'+
+    '<div class="aigHeroBrand">AIG-II</div>'+
+    '<div class="aigHeroEnglish">AI GENERATIVE CNC</div>'+
+    '<p class="aigHeroTagline">讓創意，直接成為可加工的現實</p>'+
+    '<div class="aigHeroActions">'+
+     '<button type="button" data-open-page="CAD">進入 CAD</button>'+
+     '<button type="button" data-open-page="NC">直接編輯 NC</button>'+
+    '</div>'+
+   '</section>'+
+   '<section class="aigGlass aigSystem" aria-label="本機狀態">'+
+    '<h2 class="aigSectionTitle">系統狀態</h2>'+
+    '<div class="aigSystemTiles">'+
+     '<div class="aigSystemTile"><b data-home-network role="status" aria-live="polite">偵測中</b><small>LOCAL / NETWORK</small></div>'+
+     '<div class="aigSystemTile"><b>0.001 mm</b><small>目標座標精度</small></div>'+
+     '<div class="aigSystemTile"><b>Android + Windows</b><small>跨平台設計目標</small></div>'+
+     '<div class="aigSystemTile"><b>真 Runtime</b><small>瀏覽器內本機工作區</small></div>'+
+    '</div>'+
+   '</section>'+
+  '</div>'+
+  '<section class="aigModuleGrid" aria-label="工作模組">'+tiles.map(t=>
+   '<button type="button" class="aigModuleCard" style="--edge:'+t[3]+'" data-open-page="'+t[0]+'"><b>'+t[1]+'</b><small>'+t[2]+'　›</small></button>'
+  ).join('')+'</section>'+
+  '<div class="aigHomeMetrics" aria-label="本機工作數據">'+
+   '<div class="aigGlass"><span>CAD 元件</span><b data-home-cad>0 entities</b></div>'+
+   '<div class="aigGlass"><span>CAM 刀路</span><b data-home-cam>0 paths</b></div>'+
+   '<div class="aigGlass"><span>NC 程式行數</span><b data-home-nc>0 lines</b></div>'+
+   '<div class="aigGlass"><span>真機輸出</span><b>停用</b></div>'+
+  '</div>'+
+ '</div>';
 }
 function simHubPage(){
  return '<div data-sim-hub><section class="panel"><div class="head"><div><h2>SIM 模擬中心</h2><small>共用現有真 3D / 材料移除 Runtime，不建立假模擬</small></div></div><div class="body">'+
@@ -3159,6 +3204,14 @@ aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash
       .then(function(reg){ window.AIG_OFFLINE_RUNTIME={ready:true,scope:reg.scope}; })
       .catch(function(err){ window.AIG_OFFLINE_RUNTIME={ready:false,error:String(err)}; });
   });
+})();
+</script>
+<script>
+(function(){
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("./service-worker.js").catch(function(){});
+  }, {once:true});
 })();
 </script>
 </body>
