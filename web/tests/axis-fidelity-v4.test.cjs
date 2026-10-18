@@ -11,7 +11,8 @@ test('fidelity V4 source matches actual Render assets',()=>{
 });
 test('FAST, BALANCED and DETAIL are real selectable per-axis callbacks with stable IDs',()=>{
  const s=html();
- for(const p of ['3AX','4AX','5AX','6AX'])assert.ok(s.includes('"BTN_'+p+'_MACHINE"'),p);
+ assert.match(s,/data-button-id="BTN_'\+axis\+'_MACHINE"/);
+ assert.match(s,/data-button-id="BTN_'\+axis\+'_NC_FIRST"/);
  for(const p of ['FAST','BALANCED','DETAIL']){
   assert.ok(s.includes('data-render-quality="'+p+'"'));
   assert.ok(s.includes('SET_VISUAL_'+p));
