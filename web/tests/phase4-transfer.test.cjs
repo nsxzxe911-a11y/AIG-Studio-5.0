@@ -81,7 +81,7 @@ test('stale preview blocks overwriting edited data and legacy format remains rec
 });
 test('Phase IV assets are included in versioned offline cache',()=>{
  const sw=read('formal-web','service-worker.js');
- assert.match(sw,/aig-ii-dual-site-rgb-20261018-v10/);
+ assert.match(sw,/aig-ii-axis-workstations-20261018-v11/);
  for(const p of ['index.html','project-sync.html','project-transfer.js','project-sync.js','project-sync.css','phase4.css','mobile-runtime.html'])
   assert.ok(sw.includes('"./'+p+'"'),p);
  assert.doesNotThrow(()=>new vm.Script(sw));

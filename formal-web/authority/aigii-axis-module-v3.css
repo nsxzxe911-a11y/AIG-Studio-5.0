@@ -1,0 +1,109 @@
+/* AIG 3AX–6AX dedicated workstation V3.
+ * The 3D viewport is an existing interactive WebGL scene; never an image skin.
+ * MACHINE / NC_FIRST are independent, stable subpage controls over the same
+ * axis parser, collision checker, toolpath and material-removal working state.
+ */
+html[data-aig-project="AIGII"] .simgrid.axisModule{
+ --axis-accent:#64d6ff;
+ display:grid!important;
+ grid-template-columns:minmax(0,2.65fr) minmax(310px,.98fr)!important;
+ grid-template-rows:auto minmax(0,1fr);
+ align-items:stretch;gap:12px;min-height:0;
+}
+html[data-aig-project="AIGII"] .axisModuleHeader{
+ grid-column:1/-1;grid-row:1;display:flex;align-items:center;justify-content:space-between;
+ flex-wrap:wrap;gap:16px;padding:14px 18px;border:1px solid color-mix(in srgb,var(--axis-accent) 60%,#34536f);
+ border-radius:14px;background:
+ radial-gradient(ellipse at 90% 0%,color-mix(in srgb,var(--axis-accent) 17%,transparent),transparent 50%),
+ linear-gradient(115deg,#0b2a43,#060e1d 72%);
+ box-shadow:inset 0 1px #86d7ff2a,0 5px 20px #0008;
+}
+html[data-aig-project="AIGII"] .axisModuleTitle{display:flex;flex-direction:column;gap:3px;min-width:0}
+html[data-aig-project="AIGII"] .axisModuleKicker{
+ color:var(--axis-accent);font-size:11px;letter-spacing:.11em;font-weight:800;
+}
+html[data-aig-project="AIGII"] .axisModuleTitle strong{
+ font-size:clamp(18px,1.5vw,25px);font-weight:900;letter-spacing:.035em;color:#f4fbff;
+}
+html[data-aig-project="AIGII"] .axisModuleTitle small{font-size:12px;color:#bad0e4}
+html[data-aig-project="AIGII"] .axisSubpages{
+ display:flex;align-items:center;gap:5px;padding:4px;
+ border:1px solid #315c78;border-radius:12px;background:#071421;box-shadow:inset 0 0 9px #1372a62d;
+}
+html[data-aig-project="AIGII"] .axisSubpages button{
+ min-height:42px;padding:9px 19px;border:1px solid transparent;border-radius:9px;
+ font-size:12px;font-weight:800;color:#bcd5e8;background:transparent;cursor:pointer;
+}
+html[data-aig-project="AIGII"] .axisSubpages button[aria-pressed="true"]{
+ color:white;border-color:var(--axis-accent);
+ background:linear-gradient(140deg,#176a91,#343077);
+ box-shadow:0 0 13px color-mix(in srgb,var(--axis-accent) 38%,transparent);
+}
+html[data-aig-project="AIGII"] .axisSubpages button:hover{border-color:#73c6ec;color:white}
+html[data-aig-project="AIGII"] .simgrid.axisModule>.simleft{grid-column:1;grid-row:2;min-width:0}
+html[data-aig-project="AIGII"] .simgrid.axisModule>.editor{grid-column:2;grid-row:2;min-width:0}
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="MACHINE"] .sceneWrap{
+ min-height:min(70vh,1010px)!important;
+ border-color:color-mix(in srgb,var(--axis-accent) 55%,#20526c)!important;
+}
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"]{
+ grid-template-columns:minmax(0,2.18fr) minmax(280px,.9fr)!important;
+}
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"]>.editor{
+ grid-column:1;grid-row:2;border-color:var(--axis-accent)!important;
+}
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"]>.simleft{
+ grid-column:2;grid-row:2;
+}
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"] textarea.code{
+ min-height:48vh;font-size:clamp(13px,1vw,16px);line-height:1.65;
+}
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"] .sceneWrap{
+ min-height:320px!important;max-height:390px;overflow:hidden;
+}
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"] .runtimeStatus{
+ max-height:280px;overflow-y:auto;
+}
+html[data-aig-project="AIGII"] .simgrid.axisModule .sceneTitle{
+ background:linear-gradient(90deg,#040c19d9,#081524b5);
+ border:1px solid color-mix(in srgb,var(--axis-accent) 40%,transparent);
+}
+html[data-aig-project="AIGII"] .simgrid.axisModule .axisbar{
+ border-bottom:1px solid color-mix(in srgb,var(--axis-accent) 30%,transparent);
+ padding-bottom:7px;margin-bottom:7px;
+}
+html[data-aig-project="AIGII"] .simgrid.axisModule .axis{
+ border-color:color-mix(in srgb,var(--axis-accent) 43%,#194264);
+ background:linear-gradient(110deg,#102a44,#06121e);
+}
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-runtime="4AX"] .axis.a,
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-runtime="5AX"] .axis.a,
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-runtime="6AX"] .axis.a{
+ border-color:#d39e5a;color:#ffd293
+}
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-runtime="5AX"] .axis.b,
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-runtime="6AX"] .axis.b{border-color:#bc78ee;color:#f0beff}
+html[data-aig-project="AIGII"] .simgrid.axisModule[data-runtime="6AX"] .axis.c{border-color:#6fd6bd;color:#a3ffe7}
+@media(max-width:1000px){
+ html[data-aig-project="AIGII"] .simgrid.axisModule{grid-template-columns:minmax(0,1.75fr) minmax(240px,1fr)!important}
+}
+@media(max-width:800px){
+ html[data-aig-project="AIGII"] .simgrid.axisModule,
+ html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"]{
+  display:flex!important;flex-direction:column;gap:10px;
+ }
+ html[data-aig-project="AIGII"] .simgrid.axisModule .axisModuleHeader{order:0;padding:12px}
+ html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="MACHINE"]>.simleft{order:1}
+ html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="MACHINE"]>.editor{order:2}
+ html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"]>.editor{order:1}
+ html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"]>.simleft{order:2}
+ html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"] textarea.code{min-height:43vh}
+ html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="NC_FIRST"] .sceneWrap{min-height:250px!important;max-height:330px}
+ html[data-aig-project="AIGII"] .simgrid.axisModule[data-axis-subpage="MACHINE"] .sceneWrap{min-height:58vh!important}
+}
+@media(max-width:520px){
+ html[data-aig-project="AIGII"] .axisModuleHeader{gap:11px}
+ html[data-aig-project="AIGII"] .axisSubpages{width:100%}
+ html[data-aig-project="AIGII"] .axisSubpages button{flex:1;padding:9px 8px;font-size:11px}
+ html[data-aig-project="AIGII"] .axisModuleTitle strong{font-size:19px}
+}

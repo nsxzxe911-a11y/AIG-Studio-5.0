@@ -173,6 +173,7 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./authority/aigii-rgb-glass-runtime-20261018-v1.css">
 <link rel="stylesheet" href="./phase4.css">
 <link rel="stylesheet" href="./authority/aigii-runtime-visual-v2.css">
+<link rel="stylesheet" href="./authority/aigii-axis-module-v3.css">
 </head>
 <body>
 <div class="app">
@@ -317,21 +318,35 @@ function ncPage(){
  '<section class="panel"><div class="head"><h3>NC 狀態 / 游標說明</h3></div><div class="body ncCursor"><div class="field"><b>游標</b><span data-nc-cursor>LINE 1</span></div><div class="field"><b>Cursor-Line CNC Help</b><span data-nc-help>移動游標即可查看目前行 G/M 說明。</span></div><div class="field"><b>解析區塊</b><span data-nc-blocks>0</span></div><div class="field"><b>責任範圍</b><span>NC 只處理 G-code；碰撞 / Setup / 3D 穩定性請到 SIM 進階者模式。</span></div><div class="notice">Block Skip 會切換目前行行首 /；M00 / M01 / Dry Run / Single Block 於 SIM 執行。</div><div class="ncShortcut">快捷：Ctrl+S 儲存 • Ctrl+Enter 驗證 • Alt+I INSERT • Alt+D DELETE • Alt+B BLOCK SKIP</div></div></section></div></div>';
 }
 
+const AIG_AXIS_MODULES=Object.freeze({
+ "3AX":Object.freeze({name:"三軸立式銑削",kinematic:"X / Y / Z",machine:"XYZ VMC・虎鉗工作台",accent:"#54ddff",subpages:["MACHINE","NC_FIRST"],machineId:"AIG-3AX-MACHINE",ncId:"AIG-3AX-NC-FIRST"}),
+ "4AX":Object.freeze({name:"四軸臥式旋轉",kinematic:"X / Y / Z / A",machine:"臥式 A 軸卡盤・分度／連續",accent:"#6c9dff",subpages:["MACHINE","NC_FIRST"],machineId:"AIG-4AX-MACHINE",ncId:"AIG-4AX-NC-FIRST"}),
+ "5AX":Object.freeze({name:"五軸搖籃加工",kinematic:"X / Y / Z / A / B",machine:"A/B 雙旋轉搖籃・葉輪加工視圖",accent:"#ce91ff",subpages:["MACHINE","NC_FIRST"],machineId:"AIG-5AX-MACHINE",ncId:"AIG-5AX-NC-FIRST"}),
+ "6AX":Object.freeze({name:"六軸直立式搖籃",kinematic:"X / Y / Z / A / B / C",machine:"直立式 Z 軸主軸・獨臂搖籃・ABC 工件旋轉",accent:"#ffc16a",subpages:["MACHINE","NC_FIRST"],machineId:"AIG-6AX-MACHINE",ncId:"AIG-6AX-NC-FIRST"})
+});
 function simPage(axis){
+ const module=AIG_AXIS_MODULES[axis];
+ if(!module)throw Error("Unknown AIG axis module "+axis);
  const axes=axis==="3AX"?["X","Y","Z"]:axis==="4AX"?["X","Y","Z","A"]:axis==="5AX"?["X","Y","Z","A","B"]:["X","Y","Z","A","B","C"];
  const axisHtml=axes.map(a=>'<span class="axis '+a.toLowerCase()+'" data-axis-read="'+a+'">'+a+'　0.000</span>').join("");
  const cameraControls=(axis==="5AX"||axis==="6AX")?'<button class="btn selected" data-cmd="follow">跟刀 AUTO</button><button class="btn selected" data-cmd="occlusion">防遮擋 AUTO</button><button class="btn" data-cmd="center">毛坯中心</button>':"";
+ const subnav='<div class="axisModuleHeader" data-axis-module-id="'+module.machineId+'" data-page-id="PAGE_'+axis+'">'+
+ '<div class="axisModuleTitle"><span class="axisModuleKicker">'+axis+' • '+module.kinematic+'</span><strong>'+module.name+'</strong><small>'+module.machine+'</small></div>'+
+ '<div class="axisSubpages" role="group" aria-label="'+axis+' 工作頁">'+
+ '<button type="button" data-axis-subpage="MACHINE" data-button-id="BTN_'+axis+'_MACHINE" data-command-id="AXIS_VIEW_MACHINE" aria-pressed="true">機台 / 動畫</button>'+
+ '<button type="button" data-axis-subpage="NC_FIRST" data-button-id="BTN_'+axis+'_NC_FIRST" data-command-id="AXIS_VIEW_NC_FIRST" aria-pressed="false">NC-first / 程式</button>'+
+ '</div></div>';
  const left='<section class="panel simleft"><div class="head"><div><h2>'+axis+' 模擬</h2><small>G-code 驅動 • G90/G91 • X/Y/Z'+(axis==="4AX"?"/A":axis==="5AX"?"/A/B":axis==="6AX"?"/A/B/C":"")+'</small></div><span class="spacer"></span><span class="badge" data-run-badge>READY</span></div>'+
- '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' 真 3D 加工模擬<small>WebGL 機械模型 • A/B/C 真旋轉 • 拖曳 360° 相機</small></div></div>'+
+ '<div class="body"><div class="axisbar">'+axisHtml+'</div><div class="sceneWrap"><canvas class="sim3dCanvas" data-glcanvas></canvas><canvas class="simCanvas" data-canvas></canvas><div class="sceneHud" data-hud></div><div class="sceneTitle">'+axis+' '+module.name+'<small>'+module.machine+' · 可拖曳旋轉相機</small></div></div>'+
  '<div class="controls"><button class="btn play" data-cmd="play">▶ 播放</button><button class="btn" data-cmd="pause">Ⅱ 暫停</button><button class="btn" data-cmd="step">單步</button><button class="btn" data-cmd="dry">空跑</button><button class="btn" data-cmd="single">單節</button><button class="btn" data-cmd="optional">選擇停</button><button class="btn" data-cmd="blockskip">跳段</button><button class="btn danger" data-cmd="reset">重設</button>'+cameraControls+'</div><div class="notice" data-motion-legend>RAPID 快移 • ENTRY 進刀 • CUT 切削 • EXIT 退刀 • RETRACT 抬刀 • AVOID 夾具閃避</div>'+
- '<div class="runtimeStatus"><div class="metric"><b>CAMERA</b><span data-camera-mode>STOCK CENTER</span></div><div class="metric"><b>VIEW ZOOM</b><span data-camera-zoom>AUTO x2.55</span></div><div class="metric"><b>NEXT VIEW</b><span data-lookahead-state>LOOKAHEAD OFF</span></div><div class="metric"><b>SAFE FRAME</b><span data-safe-frame-state>SAFE CENTER</span></div><div class="metric"><b>VISIBILITY</b><span data-occlusion-state>CLEAR</span></div><div class="metric"><b>VIEW DEPTH</b><span data-depth-cue>FLAT</span></div><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>RECENT CUT</b><span data-cut-trail>0 / last 3</span></div><div class="metric"><b>TOOL CONTACT</b><span data-contact-state>OPEN</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>Renderer</b><span data-renderer>初始化</span></div><div class="metric" data-advanced-only><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric" data-advanced-only><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
+ '<div class="runtimeStatus"><div class="metric"><b>CAMERA</b><span data-camera-mode>STOCK CENTER</span></div><div class="metric"><b>VIEW ZOOM</b><span data-camera-zoom>AUTO x2.55</span></div><div class="metric"><b>NEXT VIEW</b><span data-lookahead-state>LOOKAHEAD OFF</span></div><div class="metric"><b>SAFE FRAME</b><span data-safe-frame-state>SAFE CENTER</span></div><div class="metric"><b>VISIBILITY</b><span data-occlusion-state>CLEAR</span></div><div class="metric"><b>VIEW DEPTH</b><span data-depth-cue>FLAT</span></div><div class="metric"><b>目前動作</b><span data-motion-role>IDLE</span></div><div class="metric"><b>RECENT CUT</b><span data-cut-trail>0 / last 3</span></div><div class="metric"><b>TOOL CONTACT</b><span data-contact-state>OPEN</span></div><div class="metric"><b>主軸</b><span data-spindle>0 RPM</span></div><div class="metric"><b>進給</b><span data-feed>0 mm/min</span></div><div class="metric"><b>目前區塊</b><span data-block>—</span></div><div class="metric"><b>進度</b><span data-progress-text>0%</span><div class="progress"><i data-progress></i></div></div><div class="metric"><b>模式</b><span data-mode>G90</span></div><div class="metric"><b>循環</b><span data-cycle>—</span></div><div class="metric"><b>刀具直徑</b><span data-toolmetric>Ø10.000 mm</span></div><div class="metric"><b>材料移除深度</b><span data-removal>0.000 mm</span></div><div class="metric"><b>工作座標</b><span data-wcsmetric>G54</span></div><div class="metric"><b>刀長補償</b><span data-hmetric>G49</span></div><div class="metric"><b>程式層</b><span data-subprogram>MAIN</span></div><div class="metric"><b>3D 顯示</b><span data-renderer>初始化</span></div><div class="metric" data-advanced-only><b>碰撞</b><span data-collision>CLEAR</span></div><div class="metric" data-advanced-only><b>裝夾間隙</b><span data-setup-clearance>—</span></div><div class="metric"><b>網格移除量</b><span data-removal-volume>0.000 mm³</span></div><div class="metric"><b>毛坯 XYZ</b><span data-stock-size>—</span></div><div class="metric"><b>移除率</b><span data-removal-percent>0.000%</span></div><div class="metric"><b>剩餘體積</b><span data-remaining-volume>0.000 mm³</span></div><div class="metric"><b>夾治具</b><span data-fixture-count>0</span></div><div class="metric"><b>Adaptive OP</b><span data-adaptive-op>—</span></div></div></div></section>';
  const right='<section class="panel editor"><div class="head"><div><h2>G-code 編輯器</h2><small>'+axis+' 同畫面直接修改</small></div></div>'+
  '<div class="body editorbar"><button class="btn" data-editcmd="parse">重新解析</button><button class="btn" data-editcmd="verify">驗證</button><button class="btn" data-editcmd="load">讀取暫存</button><button class="btn" data-editcmd="clear">清除暫存</button><label class="param">刀徑 Ø<input data-tool-dia type="number" value="10" min="0.1" step="0.1"></label><label class="param">Safe-Z<input data-safe-z type="number" value="5" step="0.1"></label><label class="param">G73 退屑<input data-g73-retract type="number" value="0.5" min="0" step="0.1"></label><label class="param">刃長<input data-cutter-len type="number" value="30" min="1" step="0.1"></label><label class="param">刀柄 Ø<input data-holder-dia type="number" value="25" min="1" step="0.1"></label><label class="param">刀柄長<input data-holder-len type="number" value="25" min="1" step="0.1"></label><label class="param">G54 X<input data-g54-x type="number" value="0" step="0.001"></label><label class="param">G54 Y<input data-g54-y type="number" value="0" step="0.001"></label><label class="param">G54 Z<input data-g54-z type="number" value="0" step="0.001"></label><label class="param">G55 X<input data-g55-x type="number" value="0" step="0.001"></label><label class="param">G55 Y<input data-g55-y type="number" value="0" step="0.001"></label><label class="param">G55 Z<input data-g55-z type="number" value="0" step="0.001"></label><label class="param">H1<input data-h1 type="number" value="0" step="0.001"></label><label class="param">H4<input data-h4 type="number" value="0" step="0.001"></label><label class="param">H12<input data-h12 type="number" value="0" step="0.001"></label></div>'+
  '<div class="body" style="padding-top:0"><textarea class="code" data-axis="'+axis+'" spellcheck="false">'+sourceCode[axis]+'</textarea></div>'+
  '<div class="body" style="padding-top:0"><div class="execView" data-exec></div></div>'+
  '<div class="body editactions"><button class="btn" data-editcmd="insert">插入行</button><button class="btn danger" data-editcmd="delete">刪除行</button><button class="btn" data-editcmd="undo">復原</button><button class="btn" data-editcmd="redo">重做</button><button class="btn play" data-editcmd="save">儲存</button></div>'+
  '<div class="body" style="padding-top:0"><div class="notice" data-verify>可編輯 G-code；目前為瀏覽器模擬，不會送指令到實體 CNC。</div></div></section>';
- return '<div class="simgrid" data-runtime="'+axis+'">'+left+right+'</div>';
+ return '<div class="simgrid axisModule" data-runtime="'+axis+'" data-axis-subpage="MACHINE" data-axis-kind="'+axis+'" style="--axis-accent:'+module.accent+'">'+subnav+left+right+'</div>'; 
 }
 function cadPage(){
  const drawTools=["LINE","RECT","CIRCLE","ARC","HOLE"].map(x=>'<button class="btn" data-cad-tool="'+x+'">'+x+'</button>').join("");
@@ -1435,6 +1450,72 @@ function makeGlScene(canvas,axis){
  canvas.addEventListener("pointerup",()=>camera.drag=null);canvas.addEventListener("pointercancel",()=>camera.drag=null);
  canvas.addEventListener("wheel",e=>{e.preventDefault();camera.manualUntil=performance.now()+1800;const z=Math.max(1.25,Math.min(4.8,camera.zoom*(e.deltaY<0?.90:1.11)));camera.userZoom=z;camera.zoom=z;camera.zoomTarget=z;camera.zoomHoldUntil=performance.now()+1800;camera.zoomMode="MANUAL HOLD"},{passive:false});
 
+
+ // Four distinct *visual* machine structures; geometry stays subordinate to real
+ // parser/material-removal state. Visual geometry is NOT a collision-certified machine twin.
+ function drawAxisMachineProfile(p){
+  const {axis,cx,cy,stockBottom,stockH,spanX,spanY,tableR,R,vp}=p;
+  const radius=Math.max(12,tableR),baseZ=stockBottom-18;
+  const part=(x,y,z,w,d,h,color,rot)=>{
+    const local=M(T(x,y,z),S(Math.max(.5,w),Math.max(.5,d),Math.max(.5,h)));
+    drawMesh(cube,rot?M(rot,local):local,rgb(color),vp);
+  };
+  const drum=(x,y,z,diam,height,color,rot)=>{
+    const scaled=S(Math.max(.5,diam),Math.max(.5,diam),Math.max(.5,height));
+    const model=M(T(x,y,z),rot?M(rot,scaled):scaled);
+    drawMesh(cyl,model,rgb(color),vp);
+  };
+  // Common cast-iron machine base, distinct rotary hardware above it.
+  part(cx,cy,baseZ-8,radius*2.45,radius*2.05,13,"#152a40");
+  part(cx,cy,baseZ+1,radius*2.15,radius*1.82,4,"#31516c");
+  if(axis==="3AX"){
+    // Vertical machining centre: flat XYZ bed, separate actual vise jaws and back column.
+    part(cx,cy,stockBottom-10,radius*1.75,radius*1.32,11,"#365268");
+    const jawX=Math.max(4,spanX/2+4);
+    part(cx-jawX,cy,stockBottom-1,7,spanY+11,stockH*.65+7,"#b07843");
+    part(cx+jawX,cy,stockBottom-1,7,spanY+11,stockH*.65+7,"#b07843");
+    part(cx,cy+radius*1.16,baseZ+radius*.54,radius*.43,radius*.24,radius*1.15,"#274a65");
+    part(cx,cy+radius*.84,baseZ+radius*1.06,radius*1.02,radius*.34,10,"#416881");
+  }else if(axis==="4AX"){
+    // Horizontal A-axis indexing/continuous chuck with side bearings.
+    const y=cy,side=radius*.94;
+    part(cx-side,y,stockBottom-6,radius*.27,radius*.58,radius*.72,"#3f506e");
+    part(cx+side,y,stockBottom-6,radius*.27,radius*.58,radius*.72,"#3f506e");
+    const alongX=RY(Math.PI/2);
+    for(const sign of [-1,1]){
+      const x=cx+sign*(side-radius*.16);
+      drum(x,y,stockBottom+stockH*.2,radius*.46,radius*.15,"#667b9a",alongX);
+      drum(x+sign*radius*.10,y,stockBottom+stockH*.2,radius*.27,radius*.12,"#89a9c3",alongX);
+    }
+    // Rotating A chuck markers share the same commanded angular transform as the stock.
+    part(cx-radius*.54,cy,stockBottom+stockH*.17,radius*.11,spanY*.67,3,"#41b9e6",R);
+    part(cx+radius*.54,cy,stockBottom+stockH*.17,radius*.11,spanY*.67,3,"#41b9e6",R);
+  }else if(axis==="5AX"){
+    // Dual-support A/B tilting cradle. Stock is already rendered with A/B transform.
+    const side=radius*.98;
+    for(const sign of [-1,1]){
+      const x=cx+sign*side;
+      part(x,cy,baseZ+radius*.37,radius*.24,radius*.51,radius*.86,"#4b4970");
+      drum(x-sign*radius*.10,cy,stockBottom+stockH*.16,radius*.39,radius*.11,"#8998bd",RY(Math.PI/2));
+    }
+    part(cx,cy,stockBottom-13,radius*1.87,radius*.18,radius*.18,"#4f6383");
+    drum(cx,cy,stockBottom-9,radius*.84,5,"#6f84a6",R);
+    part(cx,cy,stockBottom-4,spanX*1.16,spanY*1.1,5,"#405d84",R);
+  }else if(axis==="6AX"){
+    // Vertical fixed-Z head + independent single-sided A/B/C swing cradle.
+    // Leave the central machining viewport unobstructed (no enclosing cage).
+    const x=cx+radius*.99;
+    part(x,cy,baseZ+radius*.43,radius*.37,radius*.42,radius*.98,"#47617d");
+    drum(x-radius*.20,cy,stockBottom+stockH*.12,radius*.51,radius*.18,"#9a8db0",RY(Math.PI/2));
+    part(cx+radius*.52,cy,stockBottom-10,radius*.90,radius*.19,7,"#66809a",R);
+    drum(cx,cy,stockBottom-6,radius*.92,5,"#657bab",R);
+    part(cx,cy,stockBottom-3,spanX*1.13,spanY*1.13,4,"#447f8b",R);
+    // Vertical column stays fixed when A/B/C values change.
+    part(cx,cy+radius*1.38,baseZ+radius*.75,radius*.27,radius*.25,radius*1.55,"#35516b");
+    part(cx,cy+radius*.93,baseZ+radius*1.46,radius*.55,radius*.95,8,"#4c6f8b");
+    part(cx,cy+radius*.67,baseZ+radius*1.18,radius*.29,radius*.24,radius*.43,"#6387a1");
+  }
+ }
  function render(scene){
    if(lost||!scene?.parsed)return false;
    try{
@@ -1477,7 +1558,7 @@ function makeGlScene(canvas,axis){
      const viewDir=norm(sub(eye,target)),depthCue=runtimeDepthCue(runtimeToolAxisVector(pos,axis),viewDir);camera.lastDepthCue=depthCue.label;camera.lastDepthDot=depthCue.dot;
      const vp=M(P(Math.PI/4,aspect,.1,sceneR*20),look(eye,target,[0,0,1]));
      gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.clearColor(.003,.008,.012,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-     drawMesh(cyl,M(R,M(T(0,0,stockBottom-8),S(tableR*2,tableR*2,8))),rgb("#182532"),vp);
+     drawAxisMachineProfile({axis,cx,cy,stockBottom,stockH,spanX,spanY,tableR,R,vp});
      if(axis==="3AX"){
        drawMesh(stockShell,M(T(cx,cy,stockCenter),S(spanX,spanY,stockH)),rgb("#465f70"),vp);
        const hf=heightfield(scene,stockMinX,stockMinY,spanX,spanY,stockTop,stockBottom);
@@ -1485,12 +1566,6 @@ function makeGlScene(canvas,axis){
      }else{
        const vm=voxelStock(scene,stockMinX,stockMinY,spanX,spanY,stockTop,stockBottom);
        drawVoxelStock(vm,rgb("#6d8797"),vp,R);
-     }
-     if(axis!=="3AX"){
-       drawMesh(cube,T(-tableR-7,0,stockBottom-7),rgb("#24394b"),vp);drawMesh(cube,T(tableR+7,0,stockBottom-7),rgb("#24394b"),vp);
-     }
-     if(axis==="6AX"){
-       drawMesh(cube,M(R,M(T(cx+tableR*.45,cy,stockBottom-1),S(tableR*.32,2.5,3))),rgb("#33f39b"),vp);
      }
      for(const fixture of fixtureBoxes){
        const model=M(R,M(T(fixture.x,fixture.y,fixture.z+fixture.h/2),S(fixture.w,fixture.d,fixture.h)));
@@ -1572,6 +1647,19 @@ function buildAdaptive2DPaths(shape,p,levels){
 }
 
 function makeRuntime(root){
+ const subpageButtons=[...root.querySelectorAll("[data-axis-subpage]")];
+ root.addEventListener("click",event=>{
+  const btn=event.target.closest("[data-axis-subpage]");
+  if(!btn||!root.contains(btn))return;
+  const subpage=btn.dataset.axisSubpage;
+  if(subpage!=="MACHINE"&&subpage!=="NC_FIRST")return;
+  root.dataset.axisSubpage=subpage;
+  for(const entry of subpageButtons)entry.setAttribute("aria-pressed",String(entry.dataset.axisSubpage===subpage));
+  // Keep the WebGL canvas, parsed NC state and material-removal buffers alive during switches.
+  requestAnimationFrame(()=>window.dispatchEvent(new Event("resize")));
+  if(subpage==="NC_FIRST")root.querySelector("textarea.code")?.focus({preventScroll:true});
+ });
+
  const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d"),glCanvas=root.querySelector("[data-glcanvas]");
  const glScene=aigGuard(root,axis+" WebGL 初始化",()=>makeGlScene(glCanvas,axis),null,"warn");
  if(!glScene)aigShowIssue(root,"warn",axis+" WebGL 無法使用，已自動切換 2D fallback；G-code、模擬控制與編輯器仍可繼續使用。");
