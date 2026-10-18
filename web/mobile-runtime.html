@@ -3155,7 +3155,7 @@ aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash
 (function(){
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", function(){
-    navigator.serviceWorker.ready.then(function() { return null; })
+    navigator.serviceWorker.ready
       .then(function(reg){ window.AIG_OFFLINE_RUNTIME={ready:true,scope:reg.scope}; })
       .catch(function(err){ window.AIG_OFFLINE_RUNTIME={ready:false,error:String(err)}; });
   });
