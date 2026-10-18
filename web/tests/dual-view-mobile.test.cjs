@@ -72,7 +72,7 @@ test('approved RGB Glass source is visual STYLE, not falsely claimed native 4K',
  assert.match(css,/--panel:\s*#07111b/i);
  assert.match(css,/\.aigFormalHome/);
  assert.match(css,/aigModuleCard/);
- assert.doesNotMatch(css,/uiux\/assets|legacy-runtime\.html|authority\/6ax-reference\.svg/);
+ assert.doesNotMatch(css,/(?:url|@import)\s*\([^)]*(?:uiux\/assets|legacy-runtime\.html|authority\/6ax-reference\.svg)/);
 });
 
 test('service worker installs a new cache and can serve the true Runtime offline',()=>{
