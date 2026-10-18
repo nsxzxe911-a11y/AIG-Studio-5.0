@@ -3,6 +3,7 @@ COPY web/index.html /usr/share/nginx/html/index.html
 COPY web/manifest.webmanifest /usr/share/nginx/html/manifest.webmanifest
 COPY web/service-worker.js /usr/share/nginx/html/service-worker.js
 COPY web/aigii-overlay.js /usr/share/nginx/html/aigii-overlay.js
+COPY web/aigii-skin.css /usr/share/nginx/html/aigii-skin.css
 COPY web/gallery.html /usr/share/nginx/html/gallery.html
 COPY uiux/assets/ /usr/share/nginx/html/assets/
 COPY web/authority/home_mobile.jpg /usr/share/nginx/html/assets/authority/home_mobile.jpg
