@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant" data-aig-project="AIGII">
+<html lang="zh-Hant" data-aig-project="AIGII" data-site-theme="forest">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -18,7 +18,7 @@
 <meta property="og:title" content="AIG-II｜CNC 技術與製造平台">
 <meta property="og:description" content="CAD、CAM、SIM、多軸加工、NC 與 AI 的技術導覽和操作入口。">
 <link rel="manifest" href="./manifest.webmanifest">
-</head>
+<link rel="stylesheet" href="./site-nature-v24.css"><script src="./site-nature-v24.js"></script></head>
 <body id="page-top">
 <a class="skip-link" href="#main-content">跳至主要內容</a>
 <div class="utility-bar">
@@ -52,6 +52,15 @@
   <a class="nav-workspace" href="./mobile-runtime.html#HOME">開啟工作區　↗</a>
  </div>
 </nav>
+<section class="site-container aig-theme-bar" id="site-appearance" aria-label="自然與 RGB 網站外觀切換">
+ <div class="aig-theme-intro"><strong>🌿 自然 × AI 科技</strong><p>只切換網站景觀，不改 CNC RGB 工作頁。</p></div>
+ <div class="aig-theme-choices" role="group" aria-label="選擇網站背景主題">
+ <button type="button" data-theme-choice="forest" aria-pressed="true"><span class="aig-theme-icon" aria-hidden="true"></span>森林晨光</button>
+ <button type="button" data-theme-choice="mountain" aria-pressed="false"><span class="aig-theme-icon" aria-hidden="true"></span>山嵐清晨</button>
+ <button type="button" data-theme-choice="coast" aria-pressed="false"><span class="aig-theme-icon" aria-hidden="true"></span>海岸暮色</button>
+ <button type="button" data-theme-choice="rgb" aria-pressed="false"><span class="aig-theme-icon" aria-hidden="true"></span>原版科技黑</button>
+ </div><output class="aig-theme-message" id="aig-theme-status" aria-live="polite">目前背景：森林晨光（離線向量景觀）</output>
+</section>
 <div class="site-container notice-ribbon">
  <p><strong>AIG-II 技術資訊網站</strong>　閱讀雙專案、加工技術與更新；CAD／CAM／NC 請由獨立工作區進入。原有專案資料不變。</p>
  <a href="./updates.html">查看更新內容　›</a>
@@ -60,7 +69,7 @@
  <section class="aig-editorial-front" aria-label="AIG-II 科技資訊首頁焦點">
    <div class="aig-editorial-lead">
     <a class="aig-editorial-primary" href="#dual-projects">
-     <span class="aig-editorial-tag">網站焦點 · DUAL PROJECTS</span>
+     <span class="aig-editorial-tag">NATURE × AI TECHNOLOGY · DUAL PROJECTS</span>
      <h1>AIG-II × AIG Studio 5.0<br>雙專案整合與 CNC 技術資訊</h1>
      <p>從 CAD 製圖、CAM 刀路、3D 模擬到 3～6 軸及 NC；這裡閱讀資訊、比較功能，真正的加工操作另由工作區啟動。</p>
      <span class="aig-editorial-read">了解雙專案與目前架構 <span aria-hidden="true">→</span></span>
@@ -87,6 +96,7 @@
     <a href="./mobile-runtime.html#HOME" class="aig-editorial-runtime">開啟 CNC 工作區 <span aria-hidden="true">↗</span></a>
    </div>
   </section>
+ <p class="aig-nature-note">🌄 自然主題使用本站內建的 SVG 景觀，手機與電腦皆可離線顯示；加工功能與 AI 更新入口保持獨立。</p>
  <div class="breadcrumb" aria-label="目前位置"><a href="./index.html">首頁</a><span aria-hidden="true">›</span><span>CNC 技術與產品導覽</span></div>
 <section class="v4-news-hub" id="latest" aria-label="科技資訊與工程專題"><div class="v4-news-main"><div class="v4-heading"><span>TECHNICAL STORIES / 2026</span><h2>技術專題與開發資訊</h2></div><p class="v4-disclaimer">本站文章是工程知識與專案紀錄，不是即時產業新聞；任何功能 PASS 都必須另有驗證。</p><div class="v4-news-list"><article class="v4-news-item"><span class="v4-news-cat">CAD / CAM · 工程專題</span><h3><a href="./insights.html#cad-cam">從 CAD 幾何到 CAM 真刀路</a></h3><p>CAD 原點、單位、輪廓及工件座標必須明確對應。</p><a href="./insights.html#cad-cam">閱讀完整文章 →</a></article><article class="v4-news-item"><span class="v4-news-cat">Fanuc NC · 工程專題</span><h3><a href="./insights.html#nc-first">NC-first：直接輸入 G-code 的檢查流程</a></h3><p>直接進 NC 編輯器，不必被強迫先畫 CAD。</p><a href="./insights.html#nc-first">閱讀完整文章 →</a></article><article class="v4-news-item"><span class="v4-news-cat">SIM / 3D · 工程專題</span><h3><a href="./insights.html#sim">材料移除：數值證據和動畫的差別</a></h3><p>刀具移動的動畫不代表工件已被實際切除。</p><a href="./insights.html#sim">閱讀完整文章 →</a></article><article class="v4-news-item"><span class="v4-news-cat">3AX～6AX · 工程專題</span><h3><a href="./insights.html#axis">三軸到六軸：機台形式與運動學</a></h3><p>3AX XYZ；4AX A；5AX A/B；6AX A/B/C。</p><a href="./insights.html#axis">閱讀完整文章 →</a></article><article class="v4-news-item"><span class="v4-news-cat">跨平台 · 工程專題</span><h3><a href="./insights.html#sync">手機與電腦接續專案：本機優先</a></h3><p>CAD、CAM、NC 與設定應有 revision、digest 與衝突策略。</p><a href="./insights.html#sync">閱讀完整文章 →</a></article><article class="v4-news-item"><span class="v4-news-cat">AI / Gate · 工程專題</span><h3><a href="./insights.html#ai">AI 建議不能代替 CNC Release Gate</a></h3><p>本機 AI 可根據現有 CAD/CAM/NC 訊息協助提出檢查方向。</p><a href="./insights.html#ai">閱讀完整文章 →</a></article></div><a class="v4-read-all" href="./insights.html">依分類搜尋全部專題 ↗</a></div><aside class="v4-news-sidebar" aria-label="資訊分類與版本"><section class="v4-widget"><h3>技術分類</h3><a href="./insights.html?category=cad">CAD / CAM<span>→</span></a><a href="./insights.html?category=sim">真 3D / SIM<span>→</span></a><a href="./insights.html?category=axis">3～6 軸<span>→</span></a><a href="./insights.html?category=nc">Fanuc NC<span>→</span></a><a href="./insights.html?category=ai">AI / Gate<span>→</span></a></section><section class="v4-widget"><h3>雙專案核對</h3><p>原始碼、Web 部署、APK／EXE 必須分開驗證；沒有證據就不標示 PASS。</p><a href="./status.html">查核原始碼與 Gate ↗</a></section><section class="v4-widget"><h3>實用連結</h3><a href="./image-library.html">RGB 圖庫 <span>→</span></a><a href="./project-sync.html">專案續接 <span>→</span></a><a href="./mobile-runtime.html#HOME">開啟 CNC 工作區 <span>↗</span></a></section></aside></section>
 <section class="v4-dual-latest-entry" aria-label="雙專案最新版 Web 整合入口" id="core-latest">

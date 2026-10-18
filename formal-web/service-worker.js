@@ -2,13 +2,14 @@
    Cache the actual portal and runtime; no engineering gallery in the startup path. */
 const REVOKED_CACHE="aig-ii-authority-revocation-20261018-v18";
 const PREVIOUS_CACHE="aig-ii-original-render-v4-20261018-v20";
-const CACHE="aig-ii-original-render-dual-core-v23-20261018";
+const CACHE="aig-ii-original-render-nature-v24-20261018";
 const SHELL=[
   "./","./index.html","./image-library.html","./visual-library.css","./visual-library.js","./visual-library/manifest.json","./visual-library/authority-revocations-438.json","./runtime-visual-reference.css","./runtime/visual-reference-v1.js","./guide.html","./updates.html","./faq.html","./project-sync.html","./site.css","./site-v2.css","./site-v21.css","./site-phase4.css","./project-sync.css","./site.js","./site-v21.js","./project-transfer.js","./project-sync.js","./phase4.css","./mobile-runtime.html","./manifest.webmanifest",
   "./runtime/page-runtime-router.js","./runtime/ai-page-runtime.js","./runtime/cam-manual-path-v1.js",
   "./runtime/layout-mode.js",
   "./studio-375.html","./studio-375-skin.css","./studio-375-overlay.js","./studio-375-diagnostics.js","./dual-project-latest.html","./dual-latest-binding.json","./site-dual-latest.css",
   "./assets/authority/home_desktop.jpg","./assets/authority/home_mobile.jpg",
+  "./site-nature-v24.css","./site-nature-v24.js","./site-themes/forest-dawn.svg","./site-themes/alpine-morning.svg","./site-themes/coastal-twilight.svg",
   "./site-frontpage-v3.css","./site-v4.css","./insights.html","./insights-v4.js","./status.html","./status-v4.js",
   "./ai-updates.html","./ai-updates.js","./ai-update-manifest.json","./site-ai-updates-v1.css",
   "./authority/cam-unified-rgb-v1.css",

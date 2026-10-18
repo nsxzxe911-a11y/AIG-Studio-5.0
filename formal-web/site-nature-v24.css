@@ -1,0 +1,76 @@
+/* AIG-II site V24: editorial nature scenes, NOT CNC Runtime/Authority UI. Static SVGs work offline.
+   Saved choice affects only informational pages that include this stylesheet. */
+html[data-site-theme="forest"]{--aig-nature-scene:url("./site-themes/forest-dawn.svg");--aig-nature-tint:#81d8b2;--aig-nature-line:#518f86;--aig-nature-glow:#174e4b}
+html[data-site-theme="mountain"]{--aig-nature-scene:url("./site-themes/alpine-morning.svg");--aig-nature-tint:#a6e4fc;--aig-nature-line:#527aa5;--aig-nature-glow:#214b73}
+html[data-site-theme="coast"]{--aig-nature-scene:url("./site-themes/coastal-twilight.svg");--aig-nature-tint:#f7d1aa;--aig-nature-line:#b48081;--aig-nature-glow:#674460}
+html[data-site-theme]:not([data-site-theme="rgb"]) body{
+ background-color:#0a1822;
+ background-image:linear-gradient(180deg,rgba(6,17,28,.24),rgba(7,17,29,.53) 40%,rgba(3,10,17,.9) 97%),var(--aig-nature-scene);
+ background-position:center top,center top;
+ background-size:cover,cover;
+ background-repeat:no-repeat,no-repeat;
+ background-attachment:fixed,fixed;
+}
+html[data-site-theme]:not([data-site-theme="rgb"]) .utility-bar,
+html[data-site-theme]:not([data-site-theme="rgb"]) .primary-nav{background:rgba(4,15,25,.95);border-color:var(--aig-nature-line)}
+html[data-site-theme]:not([data-site-theme="rgb"]) .brand-row{background:linear-gradient(90deg,rgba(3,15,26,.36),transparent)}
+html[data-site-theme]:not([data-site-theme="rgb"]) .aig-editorial-primary{
+ background-image:linear-gradient(100deg,rgba(4,16,27,.94) 0%,rgba(4,16,27,.79) 52%,rgba(4,16,27,.34) 100%),var(--aig-nature-scene);
+ background-size:cover,cover;background-position:center,center;
+ border-color:var(--aig-nature-line);
+ box-shadow:inset 0 0 0 1px rgba(221,254,255,.12),0 16px 40px rgba(0,0,0,.42);
+}
+html[data-site-theme]:not([data-site-theme="rgb"]) .aig-editorial-primary:after{
+ background:linear-gradient(90deg,var(--aig-nature-tint),#65b9ea,#cd8fd4)
+}
+html[data-site-theme]:not([data-site-theme="rgb"]) .aig-editorial-tag{color:var(--aig-nature-tint)}
+html[data-site-theme]:not([data-site-theme="rgb"]) .aig-editorial-minor{
+ background:linear-gradient(125deg,rgba(7,29,42,.92),rgba(5,15,28,.85));
+ border-color:var(--aig-nature-line)}
+html[data-site-theme]:not([data-site-theme="rgb"]) .aig-editorial-minor-alt{
+ background:linear-gradient(125deg,rgba(27,31,52,.95),rgba(5,16,28,.90));border-color:#6c7197}
+html[data-site-theme]:not([data-site-theme="rgb"]) .aig-editorial-rail,
+html[data-site-theme]:not([data-site-theme="rgb"]) .v4-widget,
+html[data-site-theme]:not([data-site-theme="rgb"]) .v4-side-widget,
+html[data-site-theme]:not([data-site-theme="rgb"]) .panel{
+ border-color:var(--aig-nature-line);
+}
+html[data-site-theme]:not([data-site-theme="rgb"]) .v4-news-item{background:linear-gradient(90deg,rgba(6,29,38,.5),transparent)}
+html[data-site-theme]:not([data-site-theme="rgb"]) .v4-dual-latest-entry,
+html[data-site-theme]:not([data-site-theme="rgb"]) .v4-page-hero,
+html[data-site-theme]:not([data-site-theme="rgb"]) .v4-dual-hero,
+html[data-site-theme]:not([data-site-theme="rgb"]) .ai-update-heading{
+ background-image:linear-gradient(100deg,rgba(6,22,34,.94),rgba(8,22,38,.83) 73%,rgba(6,22,34,.55)),var(--aig-nature-scene);
+ background-size:cover,cover;background-position:center,center;border-color:var(--aig-nature-line)}
+html[data-site-theme]:not([data-site-theme="rgb"]) .v4-dual-card,
+html[data-site-theme]:not([data-site-theme="rgb"]) .v4-article,
+html[data-site-theme]:not([data-site-theme="rgb"]) .v4-status-card{border-color:var(--aig-nature-line)}
+.aig-theme-bar{margin:10px auto 16px;display:flex;gap:13px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 15px;border:1px solid #386c83;border-radius:10px;background:rgba(5,18,29,.92);color:#ecf8ff}
+.aig-theme-intro{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.aig-theme-intro strong{font-size:13px;letter-spacing:.05em;color:#f0fcff}
+.aig-theme-intro p{color:#9fc0d0;margin:0;font-size:11px}
+.aig-theme-choices{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.aig-theme-choices button{min-height:38px;display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border:1px solid #3b647c;border-radius:20px;background:#112639;color:#c9e6f5;font-weight:750;font-size:12px;cursor:pointer}
+.aig-theme-choices button:hover,.aig-theme-choices button:focus-visible{border-color:#a4e9fa;background:#1a3b54}
+.aig-theme-choices button[aria-pressed="true"]{color:#fff;background:#176783;border-color:#8ce6fd;box-shadow:0 0 0 1px rgba(172,230,255,.15)}
+.aig-theme-choices .aig-theme-icon{display:inline-block;width:17px;height:17px;border-radius:50%;border:1px solid rgba(255,255,255,.47);flex:none}
+.aig-theme-choices button[data-theme-choice="forest"] .aig-theme-icon{background:linear-gradient(135deg,#7ecaaa 30%,#286f70 60%,#144147 60%)}
+.aig-theme-choices button[data-theme-choice="mountain"] .aig-theme-icon{background:linear-gradient(135deg,#a8d8fa 37%,#daeaf2 38%,#477990 60%,#193c5b 61%)}
+.aig-theme-choices button[data-theme-choice="coast"] .aig-theme-icon{background:linear-gradient(140deg,#e9b7a7 39%,#4395a6 40%,#18586f 76%)}
+.aig-theme-choices button[data-theme-choice="rgb"] .aig-theme-icon{background:linear-gradient(135deg,#141f3d,#6745c6 45%,#0edbf5)}
+.aig-theme-message{font-size:11px;color:#9bc9db;white-space:normal}
+.aig-nature-note{margin:8px 0 10px;padding:9px 12px;background:rgba(7,24,35,.78);border-left:3px solid #5cbd9e;border-radius:4px;color:#b9dfdb;font-size:11px;line-height:1.7}
+@media(max-width:760px){
+ html[data-site-theme]:not([data-site-theme="rgb"]) body{background-attachment:scroll,scroll}
+ .aig-theme-bar{align-items:flex-start}
+ .aig-theme-choices{width:100%}
+ .aig-theme-choices button{flex:1 1 auto;justify-content:center}
+ .aig-theme-message{width:100%}
+}
+@media(max-width:450px){
+ .aig-theme-bar{padding:10px}
+ .aig-theme-intro p{width:100%}
+ .aig-theme-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .aig-theme-choices button{justify-content:flex-start;font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){.aig-theme-choices button{transition:none}}
