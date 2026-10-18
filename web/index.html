@@ -1,72 +1,42 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-aig-project="AIGII">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#020407">
 <meta name="color-scheme" content="dark">
-<title>AIG II · RGB Web Runtime</title>
-<link rel="stylesheet" href="app.css">
-<link rel="stylesheet" href="mobile-layout.css">
+<title>AIG-II • RGB Glass 正式工作區</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{min-height:100%;margin:0;background:#020407;color:#ecf9ff;font-family:"Noto Sans TC",system-ui,sans-serif}
+main{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 30%,#17427e66,transparent 65%),#020407}
+section{width:min(460px,100%);padding:40px 26px;text-align:center;background:linear-gradient(145deg,#0a1f34,#030810);border:1px solid #46b7e9;border-radius:20px;box-shadow:0 0 30px #287cff55}
+h1{font-size:clamp(36px,9vw,62px);letter-spacing:.08em;margin:0 0 8px;color:#eafaff;text-shadow:0 0 17px #2488ff88}
+p{margin:0 0 25px;color:#b4d4ed}
+a{display:block;color:white;text-decoration:none;padding:13px;border:1px solid #6bdfff;border-radius:11px;background:linear-gradient(110deg,#1461a7,#492399);font-weight:750}
+a:focus-visible{outline:2px solid #ffc45e;outline-offset:3px}
+</style>
 </head>
 <body>
-<div id="app" class="app-shell">
-<header class="topbar">
-  <div class="brand"><span class="brand-orb">AIG</span><div><strong>AIG II</strong><small>RGB WEB RUNTIME · 0.001 mm</small></div></div>
-  <nav id="main-nav" class="main-nav" aria-label="AIG II 主頁籤"></nav>
-  <div class="layout-chooser" role="group" aria-label="桌面與手機版型">
-    <button type="button" data-aig-view="auto" aria-pressed="true">自動</button>
-    <button type="button" data-aig-view="desktop" aria-pressed="false">桌面版</button>
-    <button type="button" data-aig-view="mobile" aria-pressed="false">手機版</button>
-  </div>
-  <div class="ready"><i></i>LOCAL READY</div>
-</header>
-<main>
-  <section class="page-head">
-    <div><span id="page-kicker" class="kicker">AUTHORITY LOCK</span><h1 id="page-title">HOME</h1><p id="page-subtitle"></p></div>
-    <div class="status-row"><span class="chip good">BLACK RGB</span><span id="visual-status" class="chip pending">VISUAL REVIEW</span></div>
-  </section>
-
-  <section class="workbench">
-    <article class="authority-card">
-      <div class="card-head"><div><b>AIG RGB AUTHORITY</b><small id="authority-class"></small></div><span id="authority-state" class="authority-state">REFERENCE</span></div>
-      <div class="authority-stage">
-        <img id="authority-image" alt="AIG RGB Desktop Authority">
-        <div id="mobile-viewport" class="mobile-viewport" aria-label="AIG-II 手機 RGB Web 版型" hidden>
-          <div class="mobile-app-title"><strong>AIG-II</strong><span id="mobile-page-label">HOME</span><small>CAM RGB GLASS</small></div>
-          <div class="mobile-art-top"><span id="mobile-page-caption">正式手機版 Web</span><span>0.001 mm</span></div>
-          <div class="mobile-art-view"><div id="mobile-page-display" class="mobile-page-display"></div></div>
-          <div id="mobile-page-features" class="mobile-page-features"></div>
-          <a id="mobile-open-full" class="mobile-full-link" href="./mobile-runtime.html#HOME" target="_blank" rel="noopener">開啟完整手機版 Web Runtime <span aria-hidden="true">↗</span></a>
-          <div class="mobile-page-foot">手機 Web 模組版型 · 非原生 4K Authority 圖</div>
-        </div>
-      </div>
-      <div class="authority-meta"><span id="authority-source"></span><code id="authority-sha"></code></div>
-    </article>
-
-    <aside class="runtime-card">
-      <div class="card-head"><div><b>WEB RUNTIME</b><small id="runtime-label">正式頁重建</small></div><span class="runtime-state">LAYOUT READY</span></div>
-      <div id="runtime-summary" class="runtime-summary"></div>
-      <div id="axis-panel" class="axis-panel" hidden>
-        <div class="axis-readout"><span>A <b id="axis-a">0.000</b>°</span><span>B <b id="axis-b">0.000</b>°</span><span>C <b id="axis-c">0.000</b>°</span></div>
-        <div id="axis-buttons" class="axis-buttons"></div>
-      </div>
-      <div class="runtime-note">Authority 圖保持獨立；真 GLB 尚未通過視覺 Gate 時，不使用低畫質 Canvas 或方塊模型頂替。</div>
-      <a class="legacy-link" href="legacy-runtime.html">開啟既有 CAD / CAM / SIM / NC Runtime</a>
-    </aside>
-  </section>
-
-  <section class="evidence-strip">
-    <div><span>AUTHORITY</span><b id="ev-authority">READY</b></div>
-    <div><span>WEB LAYOUT</span><b>READY</b></div>
-    <div><span>MODEL / GLB</span><b id="ev-model" class="pending-text">PENDING</b></div>
-    <div><span>CALLBACK</span><b id="ev-callback" class="pending-text">PARTIAL</b></div>
-    <div><span>APK / EXE</span><b class="pending-text">PENDING</b></div>
-  </section>
-</main>
-<footer>HOME / CAD / CAM / SIM / 3AX / 4AX / 5AX / 6AX / NC / AI · NO ENGINEERING SHELL</footer>
-</div>
-<script src="app.js"></script>
-<script src="mobile-layout.js"></script>
+<main><section>
+<h1>AIG-II</h1>
+<p>AI GENERATIVE CNC · RGB GLASS</p>
+<a id="enter-runtime" href="./mobile-runtime.html#HOME">進入正式工作區</a>
+<noscript><p>啟用 JavaScript 可進入 CAD / CAM / SIM / NC 工作區。</p></noscript>
+</section></main>
+<script>
+(function(){
+ "use strict";
+ const valid=new Set(["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI"]);
+ let key="HOME";
+ try{const requested=decodeURIComponent(location.hash.replace(/^#/,"")).toUpperCase();if(valid.has(requested))key=requested}catch(_){}
+ const dest=new URL("./mobile-runtime.html",location.href);
+ dest.hash=key;
+ const anchor=document.getElementById("enter-runtime");
+ anchor.href=dest.href;
+ location.replace(dest.href);
+})();
+</script>
 </body>
 </html>
