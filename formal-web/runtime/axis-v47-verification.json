@@ -1,0 +1,12 @@
+{
+  "version": "47.0.0",
+  "scope": "source and numeric math only",
+  "bothRuntimeJs": "PASS",
+  "toolWorldZ": "PASS",
+  "stockA90B90C90": "PASS",
+  "fullCircleArcCollisionSamples": "PASS",
+  "rotary360CollisionSamples": "PASS",
+  "G0StockCheck": "SOURCE_PASS",
+  "physicalMachineSafety": "NOT_CERTIFIED",
+  "realPhone": "PENDING"
+}
