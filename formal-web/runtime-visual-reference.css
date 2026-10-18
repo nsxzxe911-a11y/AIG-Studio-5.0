@@ -1,0 +1,47 @@
+/* Non-interactive source image strip below each live CNC page. */
+html[data-aig-project="AIGII"] .aig-reference-strip{
+ margin:18px 0 25px;border:1px solid #377392;border-radius:12px;
+ background:linear-gradient(115deg,#10283d,#070f1e);box-shadow:inset 0 1px #a8f2ff19;
+ position:relative;z-index:1;clear:both;max-width:100%;
+}
+html[data-aig-project="AIGII"] .aig-reference-summary{
+ cursor:pointer;display:flex;align-items:center;gap:14px;min-height:80px;
+ padding:10px 15px;list-style:none;color:#deefff;
+}
+html[data-aig-project="AIGII"] .aig-reference-summary::-webkit-details-marker{display:none}
+html[data-aig-project="AIGII"] .aig-reference-mini{
+ flex:0 0 86px;display:flex;align-items:center;justify-content:center;
+ width:86px;height:59px;background:#050e1a;border:1px solid #39647b;border-radius:9px;
+ font-size:11px;color:#edce9a;overflow:hidden;
+}
+html[data-aig-project="AIGII"] .aig-reference-mini img{
+ display:block;width:100%;height:100%;object-fit:cover;pointer-events:none
+}
+html[data-aig-project="AIGII"] .aig-reference-copy{
+ flex:1;display:flex;flex-direction:column;gap:5px;min-width:0
+}
+html[data-aig-project="AIGII"] .aig-reference-copy strong{font-size:12px;color:#e0f6ff;font-weight:800}
+html[data-aig-project="AIGII"] .aig-reference-copy small{font-size:11px;color:#95bdce}
+html[data-aig-project="AIGII"] .aig-reference-chevron{font-size:11px;color:#a2e7fb;white-space:nowrap}
+html[data-aig-project="AIGII"] .aig-reference-detail{
+ padding:15px;border-top:1px solid #2f5f7c;display:grid;gap:12px
+}
+html[data-aig-project="AIGII"] .aig-reference-detail figure{margin:0;display:grid;gap:10px}
+html[data-aig-project="AIGII"] .aig-reference-detail figure img{
+ display:block;max-width:100%;width:min(100%,980px);height:auto;max-height:720px;
+ object-fit:contain;object-position:left center;border:1px solid #315f82;background:#030b15;border-radius:9px;
+ pointer-events:none
+}
+html[data-aig-project="AIGII"] .aig-reference-detail figcaption,
+html[data-aig-project="AIGII"] .aig-reference-detail p{font-size:12px;color:#e0c392;line-height:1.8}
+html[data-aig-project="AIGII"] .aig-reference-link{display:inline-block;width:fit-content;
+ padding:10px 16px;text-decoration:none;color:#dbf8ff;font-size:12px;font-weight:800;
+ border:1px solid #4281a4;border-radius:9px;background:#134366}
+html[data-aig-project="AIGII"] .aig-reference-link:hover{background:#1c5e87}
+@media(max-width:640px){
+ html[data-aig-project="AIGII"] .aig-reference-summary{gap:9px;padding:9px}
+ html[data-aig-project="AIGII"] .aig-reference-mini{flex-basis:66px;width:66px;height:51px}
+ html[data-aig-project="AIGII"] .aig-reference-copy strong{font-size:11px}
+ html[data-aig-project="AIGII"] .aig-reference-copy small{font-size:10px}
+ html[data-aig-project="AIGII"] .aig-reference-chevron{font-size:10px}
+}

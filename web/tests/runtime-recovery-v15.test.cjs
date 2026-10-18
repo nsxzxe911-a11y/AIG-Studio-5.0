@@ -78,7 +78,7 @@ test('CAM, SIM, NC and AI remain reachable and unchanged core markers survive',(
 });
 test('v15 cache only refreshes code; no storage wipe or version rollback',()=>{
  const s=html(),sw=read('formal-web','service-worker.js');
- assert.match(sw,/aig-ii-runtime-recovery-20261018-v15/);
+ assert.match(sw,/aig-ii-visual-library-20261018-v16/);
  assert.doesNotMatch(s.slice(s.indexOf('function show(name){'),s.indexOf('const productionPageRouter=')),/localStorage\.(?:clear|removeItem)|resetAll/i);
  assert.doesNotThrow(()=>new vm.Script(sw));
 });
