@@ -1,5 +1,9 @@
 FROM nginx:alpine
-COPY web/index.html /usr/share/nginx/html/index.html
+# Public technology-news portal is the default root. CNC workspace is a separate page.
+COPY web/portal.html /usr/share/nginx/html/index.html
+COPY web/portal.css /usr/share/nginx/html/portal.css
+COPY web/portal.js /usr/share/nginx/html/portal.js
+COPY web/index.html /usr/share/nginx/html/studio.html
 COPY web/manifest.webmanifest /usr/share/nginx/html/manifest.webmanifest
 COPY web/service-worker.js /usr/share/nginx/html/service-worker.js
 COPY web/aigii-overlay.js /usr/share/nginx/html/aigii-overlay.js
@@ -9,5 +13,5 @@ COPY uiux/assets/ /usr/share/nginx/html/assets/
 COPY web/authority/home_mobile.jpg /usr/share/nginx/html/assets/authority/home_mobile.jpg
 COPY web/authority/home_desktop.jpg /usr/share/nginx/html/assets/authority/home_desktop.jpg
 COPY app/src/main/assets/aig-generated-rgb/approved/184/*.png /usr/share/nginx/html/assets/icons/
-RUN sed -i 's#</body>#<script src="/aigii-overlay.js"></script></body>#' /usr/share/nginx/html/index.html
+RUN sed -i 's#</body>#<script src="/aigii-overlay.js"></script></body>#' /usr/share/nginx/html/studio.html
 EXPOSE 80
