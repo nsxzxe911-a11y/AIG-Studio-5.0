@@ -89,7 +89,7 @@ test('all inline JS and cache V12 parse, prior CNC core kept untouched',()=>{
   if(match[1])assert.doesNotThrow(()=>new vm.Script(match[1]));
  }
  const sw=read('formal-web','service-worker.js');
- assert.match(sw,/aig-ii-authority-registry-recovered-20261018-v17/);
+ assert.match(sw,/aig-ii-authority-revocation-20261018-v18/);
  assert.match(sw,/aigii-axis-fidelity-v4\.css/);
  assert.doesNotThrow(()=>new vm.Script(sw));
 });

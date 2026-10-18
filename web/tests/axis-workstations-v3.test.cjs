@@ -81,7 +81,7 @@ test('all scripts parse, and offline V11 includes axis workstations',()=>{
  assert.match(html,/aigii-axis-module-v3\.css/);
  for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(match[1])assert.doesNotThrow(()=>new vm.Script(match[1]));
  const sw=read('formal-web','service-worker.js');
- assert.match(sw,/aig-ii-authority-registry-recovered-20261018-v17/);
+ assert.match(sw,/aig-ii-authority-revocation-20261018-v18/);
  assert.match(sw,/\.\/authority\/aigii-axis-module-v3\.css/);
  assert.doesNotThrow(()=>new vm.Script(sw));
 });

@@ -899,8 +899,8 @@
     }
   ],
   "authorityRegistry": {
-    "id": "AIGII-RGB-MASTER-REGISTRY-V3-20261018",
-    "status": "ACTIVE_FAIL_CLOSED_WITH_4K_SOURCE_GAPS",
+    "id": "AIGII-RGB-MASTER-REGISTRY-V4-20261018-REVOKED-438-20",
+    "status": "USER_REVOKED_438_20_NO_WEBSITE_AUTHORITY",
     "source": "AIG-II Library Registry V3, byte verified",
     "mobile": {
       "HOME": {
@@ -911,8 +911,10 @@
         "height": 1672,
         "verifiedBytes": 2286719,
         "identityStatus": "CURRENT_APPROVED_IDENTITY_VERIFIED_NON_4K",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "BLOCK_NATIVE_4K_REQUIRED"
+        "visualFileStatus": "NOT_ACTIVE_WEB_AUTHORITY",
+        "finalGate": "BLOCK_WEB_AUTHORITY_SELECT",
+        "runtimeSelectable": false,
+        "note": "Separately sourced non-4K current Mobile identity, distinct from deleted 438 Mobile_HighRes; not promoted for this website"
       },
       "CAD": {
         "authorityId": "AIGII-MOBILE-CAD-CURRENT-20261016",
@@ -922,8 +924,10 @@
         "height": 1672,
         "verifiedBytes": 2153296,
         "identityStatus": "CURRENT_APPROVED_IDENTITY_VERIFIED_NON_4K",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "BLOCK_NATIVE_4K_REQUIRED"
+        "visualFileStatus": "NOT_ACTIVE_WEB_AUTHORITY",
+        "finalGate": "BLOCK_WEB_AUTHORITY_SELECT",
+        "runtimeSelectable": false,
+        "note": "Separately sourced non-4K current Mobile identity, distinct from deleted 438 Mobile_HighRes; not promoted for this website"
       },
       "CAM": {
         "authorityId": "AIGII-MOBILE-CAM-CURRENT-20261016",
@@ -933,8 +937,10 @@
         "height": 1672,
         "verifiedBytes": 2418644,
         "identityStatus": "CURRENT_APPROVED_IDENTITY_VERIFIED_NON_4K",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "BLOCK_NATIVE_4K_REQUIRED"
+        "visualFileStatus": "NOT_ACTIVE_WEB_AUTHORITY",
+        "finalGate": "BLOCK_WEB_AUTHORITY_SELECT",
+        "runtimeSelectable": false,
+        "note": "Separately sourced non-4K current Mobile identity, distinct from deleted 438 Mobile_HighRes; not promoted for this website"
       },
       "SIM": {
         "authorityId": "AIGII-MOBILE-SIM-CURRENT-20261016",
@@ -944,8 +950,10 @@
         "height": 1536,
         "verifiedBytes": 413989,
         "identityStatus": "CURRENT_APPROVED_IDENTITY_VERIFIED_NON_4K",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "BLOCK_NATIVE_4K_REQUIRED"
+        "visualFileStatus": "NOT_ACTIVE_WEB_AUTHORITY",
+        "finalGate": "BLOCK_WEB_AUTHORITY_SELECT",
+        "runtimeSelectable": false,
+        "note": "Separately sourced non-4K current Mobile identity, distinct from deleted 438 Mobile_HighRes; not promoted for this website"
       },
       "3AX": {
         "authorityId": "AIGII-MOBILE-3AX-CURRENT-20261016",
@@ -955,8 +963,10 @@
         "height": 1536,
         "verifiedBytes": 431467,
         "identityStatus": "CURRENT_APPROVED_IDENTITY_VERIFIED_NON_4K",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "BLOCK_NATIVE_4K_REQUIRED"
+        "visualFileStatus": "NOT_ACTIVE_WEB_AUTHORITY",
+        "finalGate": "BLOCK_WEB_AUTHORITY_SELECT",
+        "runtimeSelectable": false,
+        "note": "Separately sourced non-4K current Mobile identity, distinct from deleted 438 Mobile_HighRes; not promoted for this website"
       },
       "4AX": {
         "authorityId": "AIGII-MOBILE-4AX-CURRENT-20261016",
@@ -966,8 +976,10 @@
         "height": 1536,
         "verifiedBytes": 419448,
         "identityStatus": "CURRENT_APPROVED_IDENTITY_VERIFIED_NON_4K",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "BLOCK_NATIVE_4K_REQUIRED"
+        "visualFileStatus": "NOT_ACTIVE_WEB_AUTHORITY",
+        "finalGate": "BLOCK_WEB_AUTHORITY_SELECT",
+        "runtimeSelectable": false,
+        "note": "Separately sourced non-4K current Mobile identity, distinct from deleted 438 Mobile_HighRes; not promoted for this website"
       },
       "5AX": {
         "authorityId": "AIGII-MOBILE-5AX-CURRENT-20261016",
@@ -977,8 +989,10 @@
         "height": 1536,
         "verifiedBytes": 419765,
         "identityStatus": "CURRENT_APPROVED_IDENTITY_VERIFIED_NON_4K",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "BLOCK_NATIVE_4K_REQUIRED"
+        "visualFileStatus": "NOT_ACTIVE_WEB_AUTHORITY",
+        "finalGate": "BLOCK_WEB_AUTHORITY_SELECT",
+        "runtimeSelectable": false,
+        "note": "Separately sourced non-4K current Mobile identity, distinct from deleted 438 Mobile_HighRes; not promoted for this website"
       },
       "6AX": {
         "authorityId": "AIGII-MOBILE-6AX-CURRENT-20261016",
@@ -988,8 +1002,10 @@
         "height": 1536,
         "verifiedBytes": 422857,
         "identityStatus": "CURRENT_APPROVED_IDENTITY_VERIFIED_NON_4K",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "BLOCK_NATIVE_4K_REQUIRED"
+        "visualFileStatus": "NOT_ACTIVE_WEB_AUTHORITY",
+        "finalGate": "BLOCK_WEB_AUTHORITY_SELECT",
+        "runtimeSelectable": false,
+        "note": "Separately sourced non-4K current Mobile identity, distinct from deleted 438 Mobile_HighRes; not promoted for this website"
       },
       "NC": {
         "authorityId": "AIGII-MOBILE-NC-CURRENT-20261016",
@@ -999,8 +1015,10 @@
         "height": 1672,
         "verifiedBytes": 2028253,
         "identityStatus": "CURRENT_APPROVED_IDENTITY_VERIFIED_NON_4K",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "BLOCK_NATIVE_4K_REQUIRED"
+        "visualFileStatus": "NOT_ACTIVE_WEB_AUTHORITY",
+        "finalGate": "BLOCK_WEB_AUTHORITY_SELECT",
+        "runtimeSelectable": false,
+        "note": "Separately sourced non-4K current Mobile identity, distinct from deleted 438 Mobile_HighRes; not promoted for this website"
       },
       "AI": {
         "authorityId": "AIGII-MOBILE-AI-CURRENT-20261016",
@@ -1010,8 +1028,10 @@
         "height": 1672,
         "verifiedBytes": 2166812,
         "identityStatus": "CURRENT_APPROVED_IDENTITY_VERIFIED_NON_4K",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "BLOCK_NATIVE_4K_REQUIRED"
+        "visualFileStatus": "NOT_ACTIVE_WEB_AUTHORITY",
+        "finalGate": "BLOCK_WEB_AUTHORITY_SELECT",
+        "runtimeSelectable": false,
+        "note": "Separately sourced non-4K current Mobile identity, distinct from deleted 438 Mobile_HighRes; not promoted for this website"
       }
     },
     "desktop": {
@@ -1022,9 +1042,11 @@
         "width": 1672,
         "height": 941,
         "verifiedBytes": 1734959,
-        "identityStatus": "REGISTERED_SOURCE",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "BLOCK_NATIVE_4K_REQUIRED"
+        "identityStatus": "REVOKED_BY_USER_438",
+        "visualFileStatus": "DELETED_FROM_LIBRARY_438_SOURCE",
+        "finalGate": "BLOCK_REVOKED",
+        "oldIdentityStatus": "REGISTERED_SOURCE",
+        "runtimeSelectable": false
       },
       "CAD": {
         "authorityId": "AIGII-DESKTOP-CAD-438-SOURCE",
@@ -1033,9 +1055,11 @@
         "width": 3840,
         "height": 2160,
         "verifiedBytes": 256262,
-        "identityStatus": "REGISTERED_SOURCE",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "HOLD_UNTIL_CURRENT_APPROVED_ALIAS_OR_EXPLICIT_PROMOTION"
+        "identityStatus": "REVOKED_BY_USER_438",
+        "visualFileStatus": "DELETED_FROM_LIBRARY_438_SOURCE",
+        "finalGate": "BLOCK_REVOKED",
+        "oldIdentityStatus": "REGISTERED_SOURCE",
+        "runtimeSelectable": false
       },
       "CAM": {
         "authorityId": "AIGII-DESKTOP-CAM-438-SOURCE",
@@ -1044,9 +1068,11 @@
         "width": 3840,
         "height": 2160,
         "verifiedBytes": 271023,
-        "identityStatus": "REGISTERED_SOURCE",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "HOLD_UNTIL_CURRENT_APPROVED_ALIAS_OR_EXPLICIT_PROMOTION"
+        "identityStatus": "REVOKED_BY_USER_438",
+        "visualFileStatus": "DELETED_FROM_LIBRARY_438_SOURCE",
+        "finalGate": "BLOCK_REVOKED",
+        "oldIdentityStatus": "REGISTERED_SOURCE",
+        "runtimeSelectable": false
       },
       "SIM": {
         "authorityId": "AIGII-DESKTOP-SIM-438-SOURCE",
@@ -1055,9 +1081,11 @@
         "width": 3840,
         "height": 2160,
         "verifiedBytes": 274762,
-        "identityStatus": "REGISTERED_SOURCE",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "HOLD_UNTIL_CURRENT_APPROVED_ALIAS_OR_EXPLICIT_PROMOTION"
+        "identityStatus": "REVOKED_BY_USER_438",
+        "visualFileStatus": "DELETED_FROM_LIBRARY_438_SOURCE",
+        "finalGate": "BLOCK_REVOKED",
+        "oldIdentityStatus": "REGISTERED_SOURCE",
+        "runtimeSelectable": false
       },
       "3AX": {
         "authorityId": "AIGII-DESKTOP-3AX-438-SOURCE",
@@ -1066,9 +1094,11 @@
         "width": 3840,
         "height": 2160,
         "verifiedBytes": 278103,
-        "identityStatus": "REGISTERED_SOURCE",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "HOLD_UNTIL_CURRENT_APPROVED_ALIAS_OR_EXPLICIT_PROMOTION"
+        "identityStatus": "REVOKED_BY_USER_438",
+        "visualFileStatus": "DELETED_FROM_LIBRARY_438_SOURCE",
+        "finalGate": "BLOCK_REVOKED",
+        "oldIdentityStatus": "REGISTERED_SOURCE",
+        "runtimeSelectable": false
       },
       "4AX": {
         "authorityId": "AIGII-DESKTOP-4AX-438-SOURCE",
@@ -1077,9 +1107,11 @@
         "width": 3840,
         "height": 2160,
         "verifiedBytes": 281216,
-        "identityStatus": "REGISTERED_SOURCE",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "HOLD_UNTIL_CURRENT_APPROVED_ALIAS_OR_EXPLICIT_PROMOTION"
+        "identityStatus": "REVOKED_BY_USER_438",
+        "visualFileStatus": "DELETED_FROM_LIBRARY_438_SOURCE",
+        "finalGate": "BLOCK_REVOKED",
+        "oldIdentityStatus": "REGISTERED_SOURCE",
+        "runtimeSelectable": false
       },
       "5AX": {
         "authorityId": "AIGII-DESKTOP-5AX-438-SOURCE",
@@ -1088,9 +1120,11 @@
         "width": 3840,
         "height": 2160,
         "verifiedBytes": 284059,
-        "identityStatus": "REGISTERED_SOURCE",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "HOLD_UNTIL_CURRENT_APPROVED_ALIAS_OR_EXPLICIT_PROMOTION"
+        "identityStatus": "REVOKED_BY_USER_438",
+        "visualFileStatus": "DELETED_FROM_LIBRARY_438_SOURCE",
+        "finalGate": "BLOCK_REVOKED",
+        "oldIdentityStatus": "REGISTERED_SOURCE",
+        "runtimeSelectable": false
       },
       "6AX": {
         "authorityId": "AIGII-DESKTOP-6AX-438-SOURCE",
@@ -1099,9 +1133,11 @@
         "width": 3840,
         "height": 2160,
         "verifiedBytes": 285414,
-        "identityStatus": "REGISTERED_SOURCE",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "HOLD_UNTIL_CURRENT_APPROVED_ALIAS_OR_EXPLICIT_PROMOTION"
+        "identityStatus": "REVOKED_BY_USER_438",
+        "visualFileStatus": "DELETED_FROM_LIBRARY_438_SOURCE",
+        "finalGate": "BLOCK_REVOKED",
+        "oldIdentityStatus": "REGISTERED_SOURCE",
+        "runtimeSelectable": false
       },
       "NC": {
         "authorityId": "AIGII-DESKTOP-NC-438-SOURCE",
@@ -1110,9 +1146,11 @@
         "width": 3840,
         "height": 2160,
         "verifiedBytes": 279145,
-        "identityStatus": "REGISTERED_SOURCE",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "HOLD_UNTIL_CURRENT_APPROVED_ALIAS_OR_EXPLICIT_PROMOTION"
+        "identityStatus": "REVOKED_BY_USER_438",
+        "visualFileStatus": "DELETED_FROM_LIBRARY_438_SOURCE",
+        "finalGate": "BLOCK_REVOKED",
+        "oldIdentityStatus": "REGISTERED_SOURCE",
+        "runtimeSelectable": false
       },
       "AI": {
         "authorityId": "AIGII-DESKTOP-AI-438-SOURCE",
@@ -1121,11 +1159,19 @@
         "width": 3840,
         "height": 2160,
         "verifiedBytes": 329746,
-        "identityStatus": "REGISTERED_SOURCE",
-        "visualFileStatus": "LIBRARY_VERIFIED_NOT_ON_PUBLIC_WEBSITE",
-        "finalGate": "HOLD_UNTIL_CURRENT_APPROVED_ALIAS_OR_EXPLICIT_PROMOTION"
+        "identityStatus": "REVOKED_BY_USER_438",
+        "visualFileStatus": "DELETED_FROM_LIBRARY_438_SOURCE",
+        "finalGate": "BLOCK_REVOKED",
+        "oldIdentityStatus": "REGISTERED_SOURCE",
+        "runtimeSelectable": false
       }
     },
-    "note": "All 10 Mobile and all 10 Desktop main images exist as genuine Library PNG files. Their private originals have not yet been hosted on the public Render site. Desktop 438 CAD–AI sources are registered, not automatically CURRENT_APPROVED. Mobile current approved are below native 4K."
+    "note": "438 source 20 PNG images moved to Library trash; independently sourced Mobile approved identifiers are not among the deleted 20 and are kept as historical identity only on this website. None is mounted as formal web skin without new approval."
+  },
+  "authorityRevocations438": {
+    "registryId": "AIGII-RGB-MASTER-REGISTRY-V4-20261018-REVOKED-438-20",
+    "count": 20,
+    "noticePath": "./visual-library/authority-revocations-438.json",
+    "status": "REVOKED_BY_USER"
   }
 }

@@ -1,8 +1,8 @@
 /* AIG-II public website + separately routed CNC workbench.
    Cache the actual portal and runtime; no engineering gallery in the startup path. */
-const CACHE="aig-ii-authority-registry-recovered-20261018-v17";
+const CACHE="aig-ii-authority-revocation-20261018-v18";
 const SHELL=[
-  "./","./index.html","./image-library.html","./visual-library.css","./visual-library.js","./visual-library/manifest.json","./runtime-visual-reference.css","./runtime/visual-reference-v1.js","./guide.html","./updates.html","./faq.html","./project-sync.html","./site.css","./site-v2.css","./site-v21.css","./site-phase4.css","./project-sync.css","./site.js","./site-v21.js","./project-transfer.js","./project-sync.js","./phase4.css","./mobile-runtime.html","./manifest.webmanifest",
+  "./","./index.html","./image-library.html","./visual-library.css","./visual-library.js","./visual-library/manifest.json","./visual-library/authority-revocations-438.json","./runtime-visual-reference.css","./runtime/visual-reference-v1.js","./guide.html","./updates.html","./faq.html","./project-sync.html","./site.css","./site-v2.css","./site-v21.css","./site-phase4.css","./project-sync.css","./site.js","./site-v21.js","./project-transfer.js","./project-sync.js","./phase4.css","./mobile-runtime.html","./manifest.webmanifest",
   "./runtime/page-runtime-router.js","./runtime/ai-page-runtime.js","./runtime/cam-manual-path-v1.js",
   "./runtime/layout-mode.js",
   "./authority/cam-unified-rgb-v1.css",

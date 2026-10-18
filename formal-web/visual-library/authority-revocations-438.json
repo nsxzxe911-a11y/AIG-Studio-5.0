@@ -1,0 +1,35 @@
+{
+  "registryId": "AIGII-RGB-MASTER-REGISTRY-V4-20261018-REVOKED-438-20",
+  "status": "REVOKED_BY_USER",
+  "date": "2026-10-18",
+  "count": 20,
+  "actions": "20 direct 438 PNGs moved to Library trash",
+  "sources": [
+    "/AIG-II/438/ImageAuthority/Mobile_HighRes/01_HOME_MOBILE_HIGHRES.png",
+    "/AIG-II/438/ImageAuthority/Mobile_HighRes/02_CAD_MOBILE_HIGHRES.png",
+    "/AIG-II/438/ImageAuthority/Mobile_HighRes/03_CAM_MOBILE_HIGHRES.png",
+    "/AIG-II/438/ImageAuthority/Mobile_HighRes/04_SIM_MOBILE_HIGHRES.png",
+    "/AIG-II/438/ImageAuthority/Mobile_HighRes/05_3AX_MOBILE_HIGHRES.png",
+    "/AIG-II/438/ImageAuthority/Mobile_HighRes/06_4AX_MOBILE_HIGHRES.png",
+    "/AIG-II/438/ImageAuthority/Mobile_HighRes/07_5AX_MOBILE_HIGHRES.png",
+    "/AIG-II/438/ImageAuthority/Mobile_HighRes/08_6AX_MOBILE_HIGHRES.png",
+    "/AIG-II/438/ImageAuthority/Mobile_HighRes/09_NC_MOBILE_HIGHRES.png",
+    "/AIG-II/438/ImageAuthority/Mobile_HighRes/10_AI_MOBILE_HIGHRES.png",
+    "/AIG-II/438/ImageAuthority/Desktop_4K/01_HOME_DESKTOP_4K.png",
+    "/AIG-II/438/ImageAuthority/Desktop_4K/02_CAD_DESKTOP_4K.png",
+    "/AIG-II/438/ImageAuthority/Desktop_4K/03_CAM_DESKTOP_4K.png",
+    "/AIG-II/438/ImageAuthority/Desktop_4K/04_SIM_DESKTOP_4K.png",
+    "/AIG-II/438/ImageAuthority/Desktop_4K/05_3AX_DESKTOP_4K.png",
+    "/AIG-II/438/ImageAuthority/Desktop_4K/06_4AX_DESKTOP_4K.png",
+    "/AIG-II/438/ImageAuthority/Desktop_4K/07_5AX_DESKTOP_4K.png",
+    "/AIG-II/438/ImageAuthority/Desktop_4K/08_6AX_DESKTOP_4K.png",
+    "/AIG-II/438/ImageAuthority/Desktop_4K/09_NC_DESKTOP_4K.png",
+    "/AIG-II/438/ImageAuthority/Desktop_4K/10_AI_DESKTOP_4K.png"
+  ],
+  "policy": {
+    "authorityLookup": "BLOCK",
+    "automaticFallback": false,
+    "restoreOrPromote": "REQUIRES_NEW_EXPLICIT_USER_APPROVAL"
+  },
+  "note": "Other historical RGB previews and independently sourced Mobile current identity files were not deleted by this 438-specific operation."
+}

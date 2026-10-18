@@ -72,7 +72,7 @@ test('Web core remains and no AI can output NC_MACHINE',()=>{
 });
 test('AI v13 offline cache includes page and runtime',()=>{
  const sw=read('formal-web','service-worker.js');
- assert.ok(sw.includes('aig-ii-authority-registry-recovered-20261018-v17'));
+ assert.ok(sw.includes('aig-ii-authority-revocation-20261018-v18'));
  assert.ok(sw.includes('aigii-ai-cockpit-v2.css'));
  assert.ok(sw.includes('ai-page-runtime.js'));
  assert.doesNotThrow(()=>new vm.Script(sw));

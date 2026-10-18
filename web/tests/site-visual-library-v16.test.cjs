@@ -68,7 +68,7 @@ test('homepage visibly links full picture library and shows three real thumbnail
 });
 test('cache V16 preloads gallery UI but not multi-megabyte images on startup',()=>{
  const sw=read('formal-web','service-worker.js');
- assert.match(sw,/aig-ii-authority-registry-recovered-20261018-v17/);
+ assert.match(sw,/aig-ii-authority-revocation-20261018-v18/);
  for(const f of ['image-library.html','visual-library.css','visual-library.js','visual-library/manifest.json','runtime/visual-reference-v1.js'])
   assert.ok(sw.includes('"./'+f+'"'),f);
  assert.doesNotMatch(sw,/"\.\/visual-library\/pages\//);
