@@ -1,0 +1,17 @@
+/* V29 optional RGB quick dock, hidden by default so CNC viewport is never obstructed on startup. */
+.ux29-launch{flex:0 0 auto;min-height:39px;padding:7px 10px;border:1px solid #64cde9;border-radius:8px;background:linear-gradient(130deg,#082e43,#06382f);color:#e5faff;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap}
+.ux29-launch[aria-expanded="true"]{border-color:#5ff5ce;box-shadow:0 0 12px #27e9ff44}
+.ux29-panel{position:fixed;right:10px;width:min(362px,calc(100vw - 20px));max-height:min(66dvh,600px);overflow:auto;z-index:10020;padding:13px;border-radius:13px;border:1px solid #5fc7e4;background:linear-gradient(140deg,#0a2638,#07121f 80%);box-shadow:0 14px 50px #000c;color:#eafbff}
+.ux29-panel[hidden],.ux29-feedback[hidden]{display:none!important}
+.ux29-head{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.ux29-head strong{font-size:15px;color:#b2f5ff}
+.ux29-head button{border:1px solid #4b89a0;background:#163f55;color:#eafaff;border-radius:7px;padding:7px 11px;cursor:pointer}
+.ux29-hint,.ux29-detail{color:#b8d4e4;line-height:1.6;font-size:11px;margin:9px 0}
+.ux29-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ux29-grid button{min-height:43px;border-radius:9px;padding:8px 5px;color:#f2fdff;font-size:12px;font-weight:700;cursor:pointer}
+.ux29-invoke{background:linear-gradient(145deg,#164f47,#0b3037);border:1px solid #4cbb9f}
+.ux29-focus{background:linear-gradient(145deg,#143c57,#09263b);border:1px solid #589fd0}
+.ux29-grid button:focus-visible,.ux29-launch:focus-visible,.ux29-head button:focus-visible{outline:2px solid #b8ffec;outline-offset:2px}
+.ux29-feedback{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);z-index:10030;border:1px solid #71b6c6;border-radius:9px;background:#071b28;color:#dffaff;padding:10px 15px;box-shadow:0 8px 28px #000c;font-size:12px;line-height:1.55;pointer-events:none}
+@media(max-width:720px){.ux29-launch{padding:7px 8px;font-size:11px}.ux29-panel{right:8px;width:calc(100vw - 16px);max-height:55dvh}.ux29-grid button{min-height:44px}}
+@media(max-width:400px){.ux29-launch{max-width:85px;white-space:normal;line-height:1.2;padding:4px}}

@@ -1,0 +1,33 @@
+{
+  "schema": "AIG_UIUX_SAFE_QUICK_CONTROL_V29",
+  "language": "zh-TW",
+  "version": "29",
+  "defaultPanel": "CLOSED",
+  "safeInvoke": [
+    "CAD_SELECTION",
+    "CAM_STRATEGY",
+    "SIM_PAGE_NAV",
+    "AXIS_PAUSE",
+    "AXIS_NC_FIRST"
+  ],
+  "focusOnly": [
+    "CAD_UNDO",
+    "CAM_CALC",
+    "NC_EDIT",
+    "NC_VERIFY",
+    "NC_SAVE",
+    "AI_ACTIONS",
+    "TOOLPATH_VERIFY"
+  ],
+  "machineOutput": false,
+  "noPrecisionOrCorePassClaim": true,
+  "preserves": [
+    "V28 real control actions",
+    "V27 module navigator",
+    "V26 preferences",
+    "V25 UI UX",
+    "AIG-II and Studio CNC core",
+    "natural site theme",
+    "local user data"
+  ]
+}
