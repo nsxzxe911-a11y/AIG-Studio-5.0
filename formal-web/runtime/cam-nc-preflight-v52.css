@@ -1,0 +1,8 @@
+.aig52-preflight{margin:8px 0 0;padding:7px 8px;border:1px solid #35667b;border-radius:8px;background:linear-gradient(120deg,#071321,#0b1727);color:#d5f5ff;max-width:100%;min-width:0}
+.aig52-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.aig52-row>.btn{flex:0 0 auto;min-height:30px;padding:4px 8px;font-size:12px}
+.aig52-status{flex:1 1 140px;min-width:0;overflow-wrap:anywhere;font-size:11px;line-height:1.35;color:#bbdbe8}
+.aig52-code{display:block;box-sizing:border-box;margin:7px 0 5px;width:100%;max-width:100%;min-height:70px;max-height:140px;resize:vertical;overflow:auto;background:#020810;color:#b7f4d8;border:1px solid #3b7384;border-radius:6px;padding:6px;font:11px/1.4 monospace}
+.aig52-code[hidden],.aig52-preflight .btn[hidden]{display:none!important}
+.aig52-preflight>.btn{font-size:11px;min-height:28px}
+
