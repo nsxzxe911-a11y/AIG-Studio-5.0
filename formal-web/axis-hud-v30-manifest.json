@@ -1,0 +1,32 @@
+{
+  "version": "V30",
+  "project": [
+    "AIG-II",
+    "Studio 375"
+  ],
+  "scope": "3AX_TO_6AX_REAL_RUNTIME_DOM_MIRROR",
+  "language": "zh-TW",
+  "model": "NO_ENGINE_REPLACEMENT",
+  "dataSource": [
+    "data-axis-read",
+    "data-feed",
+    "data-spindle",
+    "data-toolmetric",
+    "data-wcsmetric",
+    "data-block",
+    "data-motion-role",
+    "data-run-badge"
+  ],
+  "noMachineOutput": true,
+  "geometryPrecisionClaim": false,
+  "preserves": [
+    "V29 shortcuts",
+    "V28 real actions",
+    "V27 nav",
+    "V26 settings",
+    "V25 UI UX",
+    "original natural portal",
+    "local G-code and CAD data"
+  ],
+  "notes": "HUD is DOM-read-only and reports browser simulation, not machine feedback; XYZ formatted 0.001 is a readout, not material-removal accuracy."
+}
