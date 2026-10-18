@@ -1,0 +1,104 @@
+{
+  "schema": "aigii-rgb-style-authority-v1",
+  "styleId": "AIGII-RGB-GLASS-20261018-STYLE-V1",
+  "approvedAt": "2026-10-18",
+  "approvedRole": "STYLE_REFERENCE_ONLY",
+  "originalStyleConcept": "2025-10-05 19:00 AIG RGB aesthetic",
+  "registeredReference": {
+    "id": "IMG-AIGII-STYLE-HOME-20261018-V1",
+    "sha256": "d179764f4f9a7edfc6218978cdb30680fb2bd55a4eeff19386726cb6df3fe607",
+    "width": 1672,
+    "height": 941,
+    "native4K": false,
+    "persistentLibraryPath": "/AIG-II/RGB_STYLE_APPROVED_20261018/AIGII_RGB_STYLE_REFERENCE_APPROVED_20261018.png"
+  },
+  "colorTokens": {
+    "background": "#020407",
+    "panel": "#07111B",
+    "cyan": "#43e9ff",
+    "blue": "#4d83ff",
+    "violet": "#a56bff",
+    "pink": "#ff54c8",
+    "amber": "#ffc45e",
+    "text": "#eefbff"
+  },
+  "desktop": {
+    "targetNative": [
+      3840,
+      2160
+    ],
+    "pages": [
+      "HOME",
+      "CAD",
+      "CAM",
+      "SIM",
+      "3AX",
+      "4AX",
+      "5AX",
+      "6AX",
+      "NC",
+      "AI"
+    ]
+  },
+  "mobile": {
+    "targetNative": [
+      2160,
+      3840
+    ],
+    "responsive": [
+      [
+        1440,
+        3088
+      ],
+      [
+        1080,
+        2316
+      ],
+      [
+        720,
+        1544
+      ]
+    ],
+    "pages": [
+      "HOME",
+      "CAD",
+      "CAM",
+      "SIM",
+      "3AX",
+      "4AX",
+      "5AX",
+      "6AX",
+      "NC",
+      "AI"
+    ]
+  },
+  "sourcePolicy": {
+    "exactImageId": true,
+    "exactSHA": true,
+    "filenameFallback": false,
+    "semanticFallback": false,
+    "recencyFallback": false,
+    "styleToPageAuthorityAutoPromotion": false,
+    "sourceGeometryRequired": true,
+    "nineSliceCleanMessagePanels": true,
+    "originalsPreserved": true
+  },
+  "uiPolicy": {
+    "productSpecificScope": true,
+    "traditionalChinese": true,
+    "engineeringShell": false,
+    "realControls": true,
+    "runtimeMessageOnly": true,
+    "axesViewportMinPercent": 65,
+    "axesViewportMaxPercent": 75,
+    "callbackRequired": true,
+    "modeledMachineCannotBeStaticStandIn": true
+  },
+  "gate": {
+    "style": "APPROVED",
+    "native4KPages": "BLOCK_UNVERIFIED",
+    "renderDeployment": "NOT_VERIFIED",
+    "apkExe": "NOT_VERIFIED"
+  },
+  "note": "Migrate each page deliberately to this style. This file does not alter runtime UI, page-image registration or Render deployment."
+}
