@@ -1,0 +1,117 @@
+/* AIG-II CAM style token set; visual CSS only. Reference: approved Mobile CAM source.
+No image substitution, baked values, canvas overlays or callback changes. */
+html.aigCamUnified{
+ --aig-cyan:#27e9ff;--aig-blue:#398aff;--aig-violet:#9f72ff;
+ --aig-amber:#ffa63c;--aig-surface:rgba(4,15,29,.88);
+ color-scheme:dark;
+}
+html.aigCamUnified body,html.aigCamUnified .app{
+ color:#e8faff;background:radial-gradient(ellipse at 50% -10%,rgba(40,125,220,.14),transparent 52%),#020407;
+}
+html.aigCamUnified .top{
+ position:sticky;top:0;z-index:30;
+ background:linear-gradient(160deg,rgba(5,17,32,.97),rgba(2,6,14,.96));
+ border:1px solid transparent;
+ border-image:linear-gradient(90deg,#ff9637,#20eaff 22%,#368cff 74%,#a576ff,#ff8c32) 1;
+ box-shadow:0 0 17px rgba(35,168,255,.24),inset 0 -1px rgba(45,212,255,.25);
+}
+html.aigCamUnified .logo{
+ color:#eafaff;font-size:clamp(19px,2vw,29px);font-weight:950;letter-spacing:.06em;
+ text-shadow:0 0 9px #16bbff,0 0 22px rgba(69,123,255,.6);
+}
+html.aigCamUnified .brand small{color:#91dfff}
+html.aigCamUnified .nav{display:flex;gap:5px;flex:1;min-width:0;max-width:none;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#337bb6 #020407}
+html.aigCamUnified .nav button{
+ flex:1 0 64px;min-width:64px;min-height:44px;letter-spacing:.04em;
+ border:1px solid rgba(39,223,255,.74);border-radius:9px;color:#d9f5ff;font-weight:800;
+ background:linear-gradient(150deg,rgba(10,40,71,.85),rgba(2,12,27,.88));
+ box-shadow:inset 0 0 12px rgba(38,129,255,.14),0 3px 9px #000;
+}
+html.aigCamUnified .nav button.active{
+ color:#fff;border-color:#63c4ff;
+ background:linear-gradient(155deg,rgba(42,88,242,.84),rgba(11,41,126,.86));
+ box-shadow:0 0 17px rgba(37,101,255,.6),inset 0 0 12px rgba(70,166,255,.26);
+}
+html.aigCamUnified .shell{padding:12px;gap:11px}
+html.aigCamUnified .panel{
+ position:relative;border:1px solid rgba(36,210,255,.77);border-radius:13px;
+ background:linear-gradient(150deg,rgba(8,28,49,.84),rgba(3,11,25,.93) 70%);
+ box-shadow:inset 0 0 0 1px rgba(28,88,142,.31),0 0 12px rgba(19,158,255,.16),0 8px 25px #0009;
+ backdrop-filter:blur(4px);
+}
+html.aigCamUnified .panel::before{
+ content:"";position:absolute;z-index:1;left:12px;right:14px;top:0;height:2px;pointer-events:none;
+ background:linear-gradient(90deg,#ff9b39 0%,#19e1ff 19%,#3d87ff 76%,#a97bff);
+}
+html.aigCamUnified .panel .head{
+ background:linear-gradient(90deg,rgba(7,60,93,.45),rgba(8,18,32,.15));
+ border-bottom:1px solid rgba(39,206,255,.48);padding:10px 12px;
+}
+html.aigCamUnified .panel h2,html.aigCamUnified .panel h3{color:#d8ffff;font-size:clamp(13px,1.04vw,19px)}
+html.aigCamUnified .panel .head small{color:#9fcfe6}
+html.aigCamUnified .btn,html.aigCamUnified .menuCard{
+ border:1px solid rgba(29,215,255,.74);border-radius:9px;color:#e9faff;
+ background:linear-gradient(145deg,rgba(11,47,80,.78),rgba(2,14,30,.88));
+ box-shadow:inset 0 1px rgba(129,219,255,.25),0 3px 10px rgba(0,0,0,.42);
+ transition:background .15s,border-color .15s,box-shadow .15s;
+}
+html.aigCamUnified .btn:hover,html.aigCamUnified .menuCard:hover{
+ border-color:#a5efff;box-shadow:0 0 14px rgba(35,180,255,.27),inset 0 0 12px rgba(30,137,255,.18);
+}
+html.aigCamUnified .btn.active,html.aigCamUnified .btn.selected,
+html.aigCamUnified .menuCard.active,html.aigCamUnified .btn[aria-pressed="true"]{
+ background:linear-gradient(155deg,rgba(37,85,235,.89),rgba(9,42,121,.85));border-color:#74b6ff;
+ box-shadow:0 0 18px rgba(51,103,255,.52),inset 0 0 16px rgba(52,143,255,.3);
+}
+html.aigCamUnified .btn.play{border-color:rgba(29,228,169,.7)}
+html.aigCamUnified .btn.warn{border-color:#ffad3f;color:#ffe5b2}
+html.aigCamUnified .btn.danger{border-color:#ff526c;color:#ffe4e9}
+html.aigCamUnified button:disabled{opacity:.43;filter:saturate(.4);box-shadow:none;cursor:not-allowed}
+html.aigCamUnified .field,html.aigCamUnified .param,html.aigCamUnified .notice,
+html.aigCamUnified .axis,html.aigCamUnified .badge,html.aigCamUnified .metric{
+ background:rgba(3,16,31,.75);border:1px solid rgba(27,132,187,.58);
+ border-radius:8px;color:#d1eeff;
+}
+html.aigCamUnified .metric b,html.aigCamUnified .field b{color:#82dcf8}
+html.aigCamUnified input:not([type="checkbox"]),html.aigCamUnified select,
+html.aigCamUnified textarea{
+ background:rgba(0,12,25,.90);color:#f1faff;border:1px solid rgba(25,193,245,.68);border-radius:6px;
+}
+html.aigCamUnified input[type="checkbox"]{accent-color:#4e93ff}
+html.aigCamUnified .code,html.aigCamUnified .execView,html.aigCamUnified .sceneWrap,
+html.aigCamUnified .camCanvas,html.aigCamUnified .cadCanvasWrap,html.aigCamUnified .tpCanvas{
+ background-color:#01060d;border:1px solid rgba(41,202,255,.71);border-radius:10px;
+ box-shadow:inset 0 0 23px rgba(18,93,176,.13),0 0 9px rgba(25,164,237,.12);
+}
+html.aigCamUnified .simgrid{grid-template-columns:minmax(0,2.3fr) minmax(300px,.88fr);gap:12px}
+html.aigCamUnified .simgrid .sceneWrap{min-height:clamp(470px,59vh,1120px);overflow:hidden}
+html.aigCamUnified .camgrid{gap:12px;grid-template-columns:clamp(175px,17vw,270px) minmax(0,1fr) clamp(220px,20vw,315px)}
+html.aigCamUnified .workgrid,html.aigCamUnified .ncEditGrid{gap:12px}
+html.aigCamUnified .runtimeStatus{gap:8px}
+html.aigCamUnified .menuCard{min-height:128px;padding:12px;font-size:clamp(14px,1.25vw,21px)}
+html.aigCamUnified .screen[data-page="HOME"] .menuGrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+html.aigCamUnified .sceneHud{background:rgba(2,10,24,.86);border-color:rgba(39,201,250,.65)}
+html.aigCamUnified .sceneTitle{color:#e9faff;text-shadow:0 0 11px rgba(37,159,255,.6)}
+html.aigCamUnified .footer{color:#83bedb}
+html.aigCamUnified button:focus-visible,html.aigCamUnified input:focus-visible,
+html.aigCamUnified select:focus-visible,html.aigCamUnified textarea:focus-visible{
+ outline:2px solid #ffaf38;outline-offset:2px;
+}
+@media(max-width:1100px){
+ html.aigCamUnified .simgrid,html.aigCamUnified .camgrid,
+ html.aigCamUnified .workgrid{grid-template-columns:minmax(0,1fr)}
+ html.aigCamUnified .camgrid>.panel:nth-child(2){order:-1}
+ html.aigCamUnified .menuGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+ html.aigCamUnified .top{flex-wrap:wrap;gap:7px}
+ html.aigCamUnified .brand{min-width:0;flex:1 0 45%}
+ html.aigCamUnified .status{font-size:9px}
+ html.aigCamUnified .nav{order:3;flex:1 0 100%;max-width:none;overflow-x:auto}
+ html.aigCamUnified .nav button{flex:0 0 64px;min-height:47px}
+ html.aigCamUnified .shell{padding:7px}
+ html.aigCamUnified .screen[data-page="HOME"] .menuGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ html.aigCamUnified .simgrid .sceneWrap{min-height:420px}
+ html.aigCamUnified .runtimeStatus{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){html.aigCamUnified .btn,html.aigCamUnified .nav button{transition:none}}
