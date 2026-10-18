@@ -1,0 +1,18 @@
+{
+  "version": "53.0.0",
+  "sourceChecks": [
+    "both full HTML inline scripts parse",
+    "v53 JS parse",
+    "CSS rule braces balanced",
+    "phone landscape no 480px cap",
+    "focus delegates to original V50 real button",
+    "no NC mutation",
+    "service worker precache V53 assets",
+    "native versions unchanged"
+  ],
+  "source": "PASS",
+  "browserVisual": "PENDING",
+  "phoneLandscape": "PENDING",
+  "phoneKeyboard": "PENDING",
+  "nativeGate": "NOT_RUN"
+}

@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V52 candidate-only CAM→SIM/NC preflight, hardened against stale CAM segment rpm, safeZ, routeMode, sourceId and XY points; no NC auto-apply.",
+  "notes": "V53 adjusts landscape 3-6AX full-width viewport and code editor VirtualViewport keyboard visibility; V52 CAM NC candidate safety retained.",
   "sharedWebRelease": {
-    "version": "52.0.0",
-    "train": "V52",
+    "version": "53.0.0",
+    "train": "V53",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "52.0.0"
+        "version": "53.0.0"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "52.0.0"
+        "version": "53.0.0"
       }
     ],
     "commonRuntimeSource": "./dual-web-v43.js",
     "commonUiSource": "./dual-web-v43.css",
-    "releaseManifest": "./dual-web-v52.json",
+    "releaseManifest": "./dual-web-v53.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",
