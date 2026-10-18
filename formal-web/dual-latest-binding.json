@@ -1,0 +1,40 @@
+{
+  "schema": "aigii-render-dual-latest-v1",
+  "date": "2026-10-18",
+  "kind": "WEB_RUNTIME_ADDITIVE_NATIVE_NOT_HOSTED",
+  "controller": {
+    "repo": "nsxzxe911-a11y/AIG-II",
+    "version": "432.0.0",
+    "gitCommitSha": "778f02c56a486d197d3ddded6695fbdda5625865",
+    "manifestSource": "integration/manifest.json",
+    "nativeBinaryHostedHere": false
+  },
+  "studio": {
+    "repo": "nsxzxe911-a11y/AIG-Studio-5.0",
+    "version": "375.0.0",
+    "gitCommitSha": "67fbe2719c1e149125dd569386f9323379f7ab10",
+    "webSource": "web/index.html",
+    "webSourceGitBlobSha": "ef4420a5e9574727848b562bbb62a7aae49e98b9",
+    "webEntry": "./studio-375.html#HOME",
+    "browserLocalStoragePrefix": "aigii.studio375."
+  },
+  "originalRender": {
+    "entry": "./mobile-runtime.html#HOME",
+    "originalRuntimeGitBlobSha": "9b8a00610b8511202ffe282305be97e0db969750",
+    "originalAiGitBlobSha": "013b1877c1e1a0098ba864e9df36c8c9608cd33a"
+  },
+  "exactShaBinding": {
+    "controllerManifestStudioSha": "67fbe2719c1e149125dd569386f9323379f7ab10",
+    "webRuntimePackageStudioSha": "67fbe2719c1e149125dd569386f9323379f7ab10",
+    "checked": true
+  },
+  "gate": {
+    "websiteSource": "CHECK_ON_RENDER_DEPLOY",
+    "webVisualRuntime": "REQUIRES_REAL_BROWSER",
+    "nativeApkExe": "NOT_INFERRED_FROM_WEB",
+    "cncPrecision": "NOT_VERIFIED_BY_SITE",
+    "machineOutput": "DISABLED",
+    "authority438": "REVOKED_NO_FALLBACK"
+  },
+  "notes": "Studio latest web runtime is an isolated executable copy; AIG-II latest controller is represented by verifiable pinned metadata, not native execution in a browser. Existing AIG-II Render runtime and data preserved."
+}
