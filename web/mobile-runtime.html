@@ -2263,7 +2263,7 @@ function makeSimHubRuntime(root){
     const node=find(field,axis);if(node)node.textContent=value[field];
    }
    const description=find("description",axis);if(description)description.textContent=value.description;
-   const card=find("card",axis);if(card)card.dataset.simAttention=value.errors||value.collisions?"true":"false";
+   const card=find("card",axis);if(card)card.setAttribute("data-sim-attention",value.errors||value.collisions?"true":"false");
   }
   let cam=null;try{cam=JSON.parse(localStorage.getItem("aig-cam-toolpath-v1")||"null")}catch(_){}
   const paths=Array.isArray(cam?.paths)?cam.paths:[];
