@@ -1,6 +1,6 @@
 /* V27 – Traditional Chinese modular navigation, existing real page callbacks only. */
 (function(w,d){"use strict";
-const DATA=[["HOME","首頁","主頁","[data-home-runtime]"],["CAD","CAD 製圖","設計","[data-cad-runtime]"],["CAM","CAM 刀路","設計","[data-cam-runtime]"],["SIM","SIM 模擬","多軸模擬","[data-sim-hub]"],["3AX","三軸加工","多軸模擬","[data-runtime='3AX']"],["4AX","四軸加工","多軸模擬","[data-runtime='4AX']"],["5AX","五軸加工","多軸模擬","[data-runtime='5AX']"],["6AX","六軸加工","多軸模擬","[data-runtime='6AX']"],["NC","NC 程式","NC 與 AI","[data-nc-runtime]"],["AI","AI 助手","NC 與 AI","[data-ai-runtime]"],["刀路","刀路編輯","設計","[data-toolpath-runtime]"],["功能","功能設定","主頁","[data-menu-runtime]"]];
+const DATA=[["HOME","首頁","主頁","[data-home-runtime]"],["CAD","CAD 製圖","設計","[data-cad-runtime]"],["CAM","CAM 刀路","設計","[data-cam-runtime]"],["SIM","SIM 模擬","多軸模擬","[data-sim-hub]"],["3AX","三軸加工","多軸模擬","[data-runtime='3AX']"],["4AX","四軸加工","多軸模擬","[data-runtime='4AX']"],["5AX","五軸加工","多軸模擬","[data-runtime='5AX']"],["6AX","六軸加工","多軸模擬","[data-runtime='6AX']"],["NC","NC 程式","NC 與 AI","[data-nc-runtime]"],["AI","AI 助手","NC 與 AI","[data-ai-runtime],[data-ai-page-runtime]"],["刀路","刀路編輯","設計","[data-tp-runtime]"],["功能","功能設定","主頁","[data-menu-runtime]"]];
 const pageMap=new Map(DATA.map(item=>[item[0],item]));
 const nav=d.getElementById("nav"),top=d.querySelector(".top");
 if(!nav||!top)return;

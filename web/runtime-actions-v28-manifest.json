@@ -1,0 +1,66 @@
+{
+  "schema": "AIG_UIUX_REAL_CONTROL_MAP_V28",
+  "scope": "PRESENTATION_ALLOWLIST_ONLY",
+  "language": "zh-TW",
+  "pages": [
+    "HOME",
+    "CAD",
+    "CAM",
+    "SIM",
+    "3AX",
+    "4AX",
+    "5AX",
+    "6AX",
+    "NC",
+    "AI",
+    "刀路",
+    "功能"
+  ],
+  "actions": {
+    "safeInvoke": [
+      "CAD_SELECT",
+      "CAD_LINE",
+      "CAD_RECT",
+      "CAD_CIRCLE",
+      "CAD_ARC",
+      "CAD_HOLE",
+      "CAM_FACE",
+      "CAM_PROFILE",
+      "CAM_POCKET",
+      "CAM_DRILL",
+      "SIM_AXIS_OPEN",
+      "AXIS_PAUSE",
+      "AXIS_VIEW_NC_FIRST"
+    ],
+    "focusOnly": [
+      "CAD_UNDO",
+      "CAM_CALC",
+      "NC_EDITOR",
+      "NC_VERIFY",
+      "NC_SAVE",
+      "TP_CANVAS",
+      "TP_VERIFY",
+      "AXIS_PLAY",
+      "AXIS_CODE",
+      "AI_OPTIONS"
+    ]
+  },
+  "preserves": [
+    "AIG-II latest Web core",
+    "Studio 375 Web core",
+    "V26 settings",
+    "V27 nav",
+    "NC localStorage",
+    "CAD CAM data",
+    "authority revocations",
+    "natural site theme"
+  ],
+  "nonClaim": [
+    "precision PASS",
+    "collision PASS",
+    "true material removal PASS",
+    "native APK/EXE PASS",
+    "machine output enabled"
+  ],
+  "machineOutput": false
+}

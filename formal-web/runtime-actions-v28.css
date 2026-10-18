@@ -1,0 +1,12 @@
+/* V28 in-dialog real-control palette. No extra buttons over CNC viewport. */
+.ux28-real-controls{margin:13px 0;padding:13px 11px;border:1px solid #4a91aa;border-radius:9px;background:linear-gradient(145deg,#14364d,#0d2639)}
+.ux28-real-controls h3{margin:0 0 6px!important;color:#95e5ff!important;font-size:13px!important}
+.ux28-explain{margin:4px 0!important;line-height:1.75!important;font-size:11px!important;color:#bfd6e4!important}
+.ux28-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:11px 0}
+.ux28-buttons button{width:auto!important;margin:0!important;padding:10px 7px!important;min-width:0;border-radius:6px!important;font-size:11px!important;line-height:1.4!important;text-align:center;color:#f2fbff!important;cursor:pointer}
+.ux28-operate{border:1px solid #4cbaa9!important;background:#19574f!important}
+.ux28-locate{border:1px solid #5894b8!important;background:#143b58!important}
+.ux28-buttons button:focus-visible{outline:2px solid #d4fcff!important}
+.ux28-status{font-size:11px!important;color:#c0e4ea!important;line-height:1.8!important;margin:8px 0 0!important}
+@media(max-width:710px){.ux28-buttons{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:400px){.ux28-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}}
