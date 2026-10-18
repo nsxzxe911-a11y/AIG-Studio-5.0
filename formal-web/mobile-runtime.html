@@ -1355,6 +1355,17 @@ function makeGlScene(canvas,axis){
  const heightPb=gl.createBuffer(),heightNb=gl.createBuffer();
  const removalCache={parsed:null,key:"",n:FIDELITY[quality].height,base:null,completed:0,cellX:1,cellY:1,minX:0,minY:0,stockH:1,toolDia:0};
  let lastRemoval={depth:0,volume:0};
+ const v33MeshCache={height:null,voxel:null,hits:0,builds:0,triangles:0,acceleratedVoxel:0};
+ function v33MeshStats(){return{hits:v33MeshCache.hits,builds:v33MeshCache.builds,triangles:v33MeshCache.triangles,acceleratedVoxel:v33MeshCache.acceleratedVoxel}}
+ function v33Match(cache,scene,key,grid){
+   return !!cache&&cache.parsed===scene.parsed&&cache.key===key&&cache.grid===grid&&cache.index===scene.index
+     &&cache.t===scene.t&&cache.dry===Boolean(scene.dry)&&cache.cutterLen===Number(scene.cutterLen||30);
+ }
+ function v33Save(kind,scene,key,grid,mesh){
+   v33MeshCache[kind]={parsed:scene.parsed,key,grid,index:scene.index,t:scene.t,dry:Boolean(scene.dry),
+     cutterLen:Number(scene.cutterLen||30),mesh,removal:{...lastRemoval}};
+   v33MeshCache.triangles=Math.trunc(mesh.count/3);v33MeshCache.builds++;return mesh;
+ }
  function sceneToolSignature(scene){
    const map=scene?.toolDiameters||{},pairs=Object.keys(map).sort((a,b)=>Number(a)-Number(b)).map(k=>k+":"+Number(map[k]||0).toFixed(4));
    return Number(scene?.toolDia||10).toFixed(4)+"|"+pairs.join(",");
@@ -1408,6 +1419,11 @@ function makeGlScene(canvas,axis){
  }
  function heightfield(scene,minX,minY,spanX,spanY,stockTop,stockBottom){
    const key=[minX.toFixed(4),minY.toFixed(4),spanX.toFixed(4),spanY.toFixed(4),stockTop.toFixed(4),stockBottom.toFixed(4),sceneToolSignature(scene)].join("|");
+   const memo=v33MeshCache.height;
+   if(v33Match(memo,scene,key,removalCache.n)){
+     v33MeshCache.hits++;lastRemoval={...memo.removal};v33MeshCache.triangles=Math.trunc(memo.mesh.count/3);
+     return memo.mesh;
+   }
    if(removalCache.parsed!==scene.parsed||removalCache.key!==key||scene.index<removalCache.completed)resetRemoval(scene,minX,minY,spanX,spanY,stockTop,stockBottom);
    const target=Math.min(scene.index,scene.parsed.blocks.length);
    while(removalCache.completed<target){
@@ -1435,7 +1451,7 @@ function makeGlScene(canvas,axis){
    }
    let minH=stockTop,sum=0;for(const h of heights){if(h<minH)minH=h;sum+=Math.max(0,stockTop-h)}
    lastRemoval={depth:Math.max(0,stockTop-minH),volume:sum*cx*cy};
-   return{p:verts,n:norms,count:verts.length/3};
+   return v33Save("height",scene,key,removalCache.n,{p:verts,n:norms,count:verts.length/3});
  }
  function drawHeightfield(hf,color,vp){
    gl.useProgram(meshProg);
@@ -1491,6 +1507,11 @@ function makeGlScene(canvas,axis){
  }
  function voxelStock(scene,minX,minY,spanX,spanY,stockTop,stockBottom){
    const v=voxelCache,key=[minX.toFixed(4),minY.toFixed(4),spanX.toFixed(4),spanY.toFixed(4),stockTop.toFixed(4),stockBottom.toFixed(4),sceneToolSignature(scene)].join("|");
+   const memo=v33MeshCache.voxel,grid=v.nx+"×"+v.ny+"×"+v.nz;
+   if(v33Match(memo,scene,key,grid)){
+     v33MeshCache.hits++;lastRemoval={...memo.removal};v33MeshCache.triangles=Math.trunc(memo.mesh.count/3);
+     return memo.mesh;
+   }
    if(v.parsed!==scene.parsed||v.key!==key||scene.index<v.completed)resetVoxel(scene,minX,minY,spanX,spanY,stockTop,stockBottom);
    const target=Math.min(scene.index,scene.parsed.blocks.length);
    while(v.completed<target){
@@ -1521,7 +1542,7 @@ function makeGlScene(canvas,axis){
    }
    const removed=v.initialCount-remain;
    lastRemoval={depth:Math.min(v.stockH,deepest),volume:removed*v.sx*v.sy*v.sz};
-   return{p:verts,n:norms,count:verts.length/3};
+   return v33Save("voxel",scene,key,grid,{p:verts,n:norms,count:verts.length/3});
  }
  function drawVoxelStock(vm,color,vp,model){
    gl.useProgram(meshProg);
@@ -1720,7 +1741,7 @@ function makeGlScene(canvas,axis){
    return{quality,grid:axis==="3AX"?removalCache.n+"×"+removalCache.n:voxelCache.nx+"×"+voxelCache.ny+"×"+voxelCache.nz,
     cell,frame:canvas.width+"×"+canvas.height};
  }
- return{render:v32Render,camera,getRemoval:()=>({...lastRemoval}),getFidelity,setQuality,getPerformance:v32ReadPerformance,setAutoScale:v32SetAuto};
+ return{render:v32Render,camera,getRemoval:()=>({...lastRemoval}),getFidelity,setQuality,getPerformance:v32ReadPerformance,setAutoScale:v32SetAuto,getMeshStatistics:v33MeshStats};
 }
 
 function buildAdaptive2DPaths(shape,p,levels){
@@ -1793,6 +1814,7 @@ function makeRuntime(root){
  const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d"),glCanvas=root.querySelector("[data-glcanvas]");
  const glScene=aigGuard(root,axis+" WebGL 初始化",()=>makeGlScene(glCanvas,axis),null,"warn");
  root.aigVisualV32=glScene?Object.freeze({read:()=>glScene.getPerformance(),setAuto:on=>glScene.setAutoScale(on)}):null;
+ root.aigVisualV33=glScene?Object.freeze({read:()=>glScene.getMeshStatistics()}):null;
  if(!glScene)aigShowIssue(root,"warn",axis+" WebGL 無法使用，已自動切換 2D fallback；G-code、模擬控制與編輯器仍可繼續使用。");
  const toolInput=root.querySelector("[data-tool-dia]"),safeInput=root.querySelector("[data-safe-z]"),g73Input=root.querySelector("[data-g73-retract]"),cutterInput=root.querySelector("[data-cutter-len]"),holderDiaInput=root.querySelector("[data-holder-dia]"),holderLenInput=root.querySelector("[data-holder-len]");
  const g54x=root.querySelector("[data-g54-x]"),g54y=root.querySelector("[data-g54-y]"),g54z=root.querySelector("[data-g54-z]");

@@ -13,7 +13,7 @@ function mount(root){
  const bar=el("div","v32-perf");bar.setAttribute("aria-label","3D 畫面效能監測與自動品質調整");
  bar.appendChild(el("strong","v32-perf-title","3D 畫面效能"));
  const outputs={};
- for(const [key,label] of [["fps","渲染 FPS"],["ms","JS 毫秒"],["res","畫面像素"],["scale","像素比例"]]){
+ for(const [key,label] of [["fps","渲染 FPS"],["ms","JS 毫秒"],["res","畫面像素"],["scale","像素比例"],["tri","工件三角片"],["reuse","網格重用率"]]){
   const wrap=el("span","v32-perf-metric"),k=el("small","",label),v=el("b","", "—");wrap.append(k,v);bar.appendChild(wrap);outputs[key]=v;
  }
  const button=el("button","v32-auto","自動畫質：啟用");button.type="button";button.setAttribute("aria-pressed","true");
@@ -36,8 +36,10 @@ function update(root){
   fps:formatFps(state.fps),
   ms:Number.isFinite(state.jsMs)?state.jsMs.toFixed(1):"—",
   res:state.canvas||"—",
-  scale:Math.round(state.scale*100)+"%"
- }:{fps:"—",ms:"—",res:"—",scale:"—"};
+  scale:Math.round(state.scale*100)+"%",
+  tri:(()=>{const c=root.aigVisualV33?.read?.();return c?.builds>0?c.triangles.toLocaleString("en-US"):"—"})(),
+  reuse:(()=>{const c=root.aigVisualV33?.read?.();return c&&c.hits+c.builds>0?(100*c.hits/(c.hits+c.builds)).toFixed(1)+"%":"—"})()
+ }:{fps:"—",ms:"—",res:"—",scale:"—",tri:"—",reuse:"—"};
  for(const k of Object.keys(values))if(view.outputs[k].textContent!==values[k])view.outputs[k].textContent=values[k];
  view.button.disabled=!state||Boolean(state.contextLost);
  view.button.setAttribute("aria-pressed",String(Boolean(state?.auto)));
@@ -46,7 +48,7 @@ function update(root){
  const note=!state?"工作區尚未啟動或瀏覽器無法使用 WebGL；原 NC 編輯器仍保留。":
   state.contextLost?"3D 繪圖內容遺失，無法取得有效渲染幀率；不影響 G-code 編輯。":
   state.frames<3?"統計初始化中；非實體 CNC 資料。":
-  "顯示的是 WebGL 呼叫間隔與 JavaScript 繪製耗時（不含 GPU 非同步時間）；自動調整不變更材料移除解析度。";
+  "WebGL 呼叫間隔與 JS 繪製耗時（不含 GPU 非同步時間）；V33 重用工件網格，不變更切削或 NC 精度。";
  if(view.note.textContent!==note)view.note.textContent=note;
 }
 function refresh(){

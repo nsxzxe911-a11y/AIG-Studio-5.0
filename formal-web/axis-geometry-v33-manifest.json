@@ -1,0 +1,22 @@
+{
+  "version": "33",
+  "scope": "3AX-6AX WebGL true CNC cutting surface optimization",
+  "changes": [
+    "Mesh memoization by exact CNC scene state",
+    "Studio voxel tool-bounding envelope identical strategy to AIG-II",
+    "Real geometry mesh hit counters in existing V32 HUD"
+  ],
+  "cacheKey": [
+    "G-code parser instance",
+    "block index and interpolation progress",
+    "dry run",
+    "stock envelope",
+    "tool diameter signature",
+    "cutter length",
+    "material grid shape"
+  ],
+  "noNewNCOperations": true,
+  "noPrecisionClaim": true,
+  "previousVersion": "32",
+  "rollback": false
+}
