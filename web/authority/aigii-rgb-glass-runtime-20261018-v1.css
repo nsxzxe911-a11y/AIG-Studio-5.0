@@ -1,0 +1,256 @@
+/* AIG-II RGB Glass 2026-10-18 — User-approved style direction.
+   Style only. Native 4K page authority and CNC functional Gate remain independent.
+   DO NOT load outdated uiux/assets or use the style screenshot as a fake Runtime.
+*/
+html[data-aig-project="AIGII"]{
+  --bg:#020407;--panel:#07111b;--panel2:#07111b;--panel3:#0a192a;
+  --text:#eefbff;--muted:#93b4ca;--cyan:#43e9ff;--blue:#4d83ff;
+  --green:#54f0a5;--amber:#ffc45e;--pink:#ff54c8;--violet:#a56bff;
+  --line:#245773;--r:15px;
+  color-scheme:dark;
+}
+html[data-aig-project="AIGII"],html[data-aig-project="AIGII"] body{
+  background: #020407!important;
+  color:#eefbff;
+}
+html[data-aig-project="AIGII"] .app{
+  min-height:100vh;
+  background:
+    radial-gradient(ellipse 55% 25% at 52% -5%,rgba(45,120,255,.13),transparent 75%),
+    radial-gradient(circle at 100% 15%,rgba(140,52,205,.08),transparent 30%),
+    #020407;
+}
+html[data-aig-project="AIGII"] .top{
+  min-height:72px; padding:10px clamp(10px,1.5vw,24px);
+  background:linear-gradient(105deg,rgba(3,13,27,.99),rgba(5,9,23,.98))!important;
+  border-bottom:1px solid #44cfff;
+  box-shadow:0 3px 17px #008aff48,0 15px 38px #000a;
+  backdrop-filter:blur(16px);
+}
+html[data-aig-project="AIGII"] .brand{min-width:165px}
+html[data-aig-project="AIGII"] .brand .logo{
+  position:relative; padding-left:47px; color:#f3fcff;
+  font-weight:900;font-size:clamp(19px,2vw,27px);letter-spacing:.07em;
+  text-shadow:0 0 18px #4188ff69;
+}
+html[data-aig-project="AIGII"] .brand .logo::before{
+  content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:38px;height:39px;
+  background:conic-gradient(from 120deg,#ffa83d,#f255bf,#6c51f5,#06d8ff,#44ffd7,#4776ff,#ffa83d);
+  clip-path:polygon(50% 0,100% 90%,74% 90%,50% 43%,27% 90%,0 90%);
+  filter:drop-shadow(0 0 7px #488fff);
+}
+html[data-aig-project="AIGII"] .brand small{
+  color:#94b9d9;font-size:9px;letter-spacing:.14em;margin-top:4px
+}
+html[data-aig-project="AIGII"] .nav{
+  max-width:none;gap:3px;grid-template-columns:repeat(10,minmax(48px,1fr))!important;
+  border:1px solid #2e6588;background:#030b16;border-radius:13px;
+  padding:4px;box-shadow:inset 0 0 15px #0d5c9b30;
+}
+html[data-aig-project="AIGII"] .nav button{
+  border:1px solid transparent;min-height:42px;border-radius:9px;
+  background:transparent;color:#daeafd;white-space:nowrap;
+  font-size:clamp(10px,.8vw,14px);font-weight:700;
+  transition:background .15s,border-color .15s,box-shadow .15s;
+}
+html[data-aig-project="AIGII"] .nav button.active{
+  background:linear-gradient(130deg,#133f8b,#4425a1);
+  border:1px solid #55baff;box-shadow:0 0 12px #049bffad, inset 0 0 13px #46a6ff55;
+  color:white;
+}
+html[data-aig-project="AIGII"] button:focus-visible,
+html[data-aig-project="AIGII"] a:focus-visible{
+  outline:2px solid #ffc45e;outline-offset:3px;
+}
+html[data-aig-project="AIGII"] .panel{
+  background:linear-gradient(155deg,#0a1928fa,#040a12f9 70%)!important;
+  border:1px solid #217cab8c;box-shadow:0 9px 31px #000b,inset 0 1px #95e4ff21;
+  border-radius:14px;
+}
+html[data-aig-project="AIGII"] .panel>.head{
+  background:linear-gradient(90deg,#07305966,transparent);
+  border-bottom:1px solid #2876a755;
+}
+html[data-aig-project="AIGII"] .panel h2,
+html[data-aig-project="AIGII"] .panel h3{color:#f4fbff}
+html[data-aig-project="AIGII"] .btn,
+html[data-aig-project="AIGII"] .menuCard{
+  border:1px solid #3382ab7a;
+  background:linear-gradient(160deg,#0d3150,#071524 66%,#030b14)!important;
+  color:#e4f8ff;border-radius:10px;
+  box-shadow:inset 0 1px #8eeaff1c,0 2px 11px #02060ae6;
+  transition:border-color .15s,box-shadow .15s,transform .15s;
+}
+html[data-aig-project="AIGII"] .btn:hover,
+html[data-aig-project="AIGII"] .menuCard:hover{
+  border-color:#6bdcff;box-shadow:0 0 16px #128ffd70,inset 0 0 9px #4d83ff22;
+}
+html[data-aig-project="AIGII"] .btn:active,
+html[data-aig-project="AIGII"] .menuCard:active{transform:translateY(1px)}
+html[data-aig-project="AIGII"] .btn:disabled{opacity:.4;box-shadow:none!important}
+html[data-aig-project="AIGII"] .btn.selected{
+  border-color:#b88bff;color:white;box-shadow:0 0 13px #935df080;
+}
+html[data-aig-project="AIGII"] .btn.play{border-color:#2dd7b2}
+html[data-aig-project="AIGII"] .btn.danger{border-color:#b76d5b}
+html[data-aig-project="AIGII"] .code,
+html[data-aig-project="AIGII"] .cadCanvasWrap,
+html[data-aig-project="AIGII"] .camCanvas,
+html[data-aig-project="AIGII"] .sceneWrap{
+  border-color:#20638ca8;background-color:#01060c;
+  box-shadow:inset 0 0 23px #0c87db1c;
+}
+html[data-aig-project="AIGII"] .metric,
+html[data-aig-project="AIGII"] .axis,
+html[data-aig-project="AIGII"] .field{
+  background:linear-gradient(135deg,#061b30,#030913);
+  border-color:#225672ab;
+}
+html[data-aig-project="AIGII"] .footer{color:#789cb4;border-top:1px solid #1d577799}
+html[data-aig-project="AIGII"] .shell{width:100%;max-width:3840px;margin:auto}
+
+/* HOME: real HTML buttons and status, never an image pretending to be controls. */
+.aigFormalHome{display:grid;gap:12px}
+.aigFormalHome .aigHero{
+  display:grid;grid-template-columns:minmax(225px,25%) minmax(0,1fr) minmax(225px,25%);
+  gap:12px;min-height:390px;
+}
+.aigFormalHome .aigGlass{
+  min-width:0;position:relative;overflow:hidden;
+  border:1px solid #389ed6a8;border-radius:17px;
+  background:linear-gradient(155deg,#09233b,#030a14 75%);
+  box-shadow:0 0 15px #1683df38,inset 0 1px #7fe8ff2b;
+}
+.aigFormalHome .aigGlass::before{
+  content:"";position:absolute;pointer-events:none;inset:0;border-radius:inherit;
+  background:linear-gradient(135deg,#5ceaff10,transparent 33%,#994afa09 85%,transparent);
+}
+.aigFormalHome .aigSectionTitle{
+  position:relative;margin:0;padding:13px 17px 11px;
+  border-bottom:1px solid #287dab88;font-size:17px;letter-spacing:.04em;
+}
+.aigFormalHome .aigProjectEntries{position:relative;display:grid;gap:10px;padding:13px}
+.aigFormalHome .aigProjectEntries button,
+.aigFormalHome .aigPrimaryAction{
+  width:100%;padding:14px 15px;text-align:left;cursor:pointer;
+  border-radius:11px;border:1px solid #26719b;
+  color:#e9f9ff;background:linear-gradient(110deg,#103351c9,#041321);
+}
+.aigFormalHome .aigProjectEntries button:hover,
+.aigFormalHome .aigPrimaryAction:hover{
+  border-color:#58d4ff;box-shadow:0 0 14px #1ca4e955;
+}
+.aigFormalHome .aigProjectEntries button b{display:block;font-size:14px}
+.aigFormalHome .aigProjectEntries button small{display:block;margin-top:4px;color:#9fbdd0}
+.aigFormalHome .aigHeroCenter{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:22px 18px;
+  border-color:#3f91d8;
+  background:
+    radial-gradient(ellipse at 50% 49%,#138ac044,transparent 47%),
+    radial-gradient(ellipse at 48% 92%,#fa933c2b,transparent 35%),
+    linear-gradient(155deg,#091a2a,#01050c 68%)!important;
+}
+.aigFormalHome .aigHeroCenter::after{
+  content:"";position:absolute;width:min(78%,440px);height:58px;bottom:43px;
+  border:2px solid #2988d9;border-radius:50%;
+  box-shadow:0 0 25px #248aff83,inset 0 0 20px #3eaeff78;
+  transform:perspective(360px) rotateX(66deg);pointer-events:none;
+}
+.aigFormalHome .aigPrism{
+  display:block;width:clamp(70px,10vw,142px);height:clamp(75px,10vw,140px);
+  clip-path:polygon(50% 0,100% 89%,72% 89%,50% 43%,28% 89%,0 89%);
+  background:conic-gradient(from 130deg,#ed8a28,#f749b9,#8559ef,#0bb7ff,#0af3e0,#2683fc,#ed8a28);
+  filter:drop-shadow(0 0 16px #5589ff);
+}
+.aigFormalHome .aigHeroBrand{
+  position:relative;font-size:clamp(38px,5vw,78px);font-weight:900;letter-spacing:.065em;
+  line-height:1.1;color:#e9f5ff;
+  text-shadow:0 2px #3766a2,0 0 21px #2375cd80;
+}
+.aigFormalHome .aigHeroEnglish{letter-spacing:.37em;font-size:clamp(9px,.95vw,14px);color:#b3d3f9}
+.aigFormalHome .aigHeroTagline{margin:16px 0;color:#e4f5ff;font-size:clamp(12px,1vw,16px)}
+.aigFormalHome .aigHeroActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;z-index:1}
+.aigFormalHome .aigHeroActions button{
+  min-height:43px;border:1px solid #56adf4;border-radius:10px;
+  padding:10px 17px;background:linear-gradient(105deg,#0c57a5,#301a88);
+  color:white;cursor:pointer;box-shadow:0 0 12px #259afc44;
+}
+.aigFormalHome .aigHeroActions button:hover{border-color:#87deff}
+.aigFormalHome .aigSystemTiles{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:12px}
+.aigFormalHome .aigSystemTile{
+  min-height:86px;padding:12px 9px;border:1px solid #22698b;border-radius:11px;
+  background:linear-gradient(135deg,#06233a,#020b14);
+  display:flex;flex-direction:column;justify-content:center;gap:7px;
+}
+.aigFormalHome .aigSystemTile b{color:#eafcff;font-size:clamp(12px,1vw,17px)}
+.aigFormalHome .aigSystemTile small{font-size:10px;color:#8ab7d5}
+.aigFormalHome .aigModuleGrid{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;
+}
+.aigFormalHome .aigModuleCard{
+  --edge:#43e9ff;
+  min-height:156px;position:relative;text-align:left;cursor:pointer;
+  padding:20px 17px;border:1px solid var(--edge);
+  border-radius:15px;color:white;
+  background:
+    radial-gradient(ellipse at 85% 15%,color-mix(in srgb,var(--edge) 20%,transparent),transparent 62%),
+    repeating-linear-gradient(135deg,transparent 0 16px,#8fd5ff08 17px 18px),
+    linear-gradient(135deg,#08233e,#02080f);
+  box-shadow:0 0 11px color-mix(in srgb,var(--edge) 22%,transparent),inset 0 0 12px #0009;
+}
+.aigFormalHome .aigModuleCard b{
+  display:block;font-size:clamp(19px,1.9vw,26px);color:var(--edge);
+  text-shadow:0 0 15px color-mix(in srgb,var(--edge) 32%,transparent);
+}
+.aigFormalHome .aigModuleCard small{position:absolute;bottom:15px;left:17px;right:14px;color:#d1e5f6;font-size:12px}
+.aigFormalHome .aigModuleCard:hover{
+  border-width:2px;box-shadow:0 0 20px color-mix(in srgb,var(--edge) 45%,transparent);
+  transform:translateY(-2px)
+}
+.aigFormalHome .aigHomeMetrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.aigFormalHome .aigHomeMetrics .aigGlass{padding:14px 18px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.aigFormalHome .aigHomeMetrics span{color:#bedcf1}
+.aigFormalHome .aigHomeMetrics b{font:700 14px ui-monospace,monospace;color:#5eecff}
+
+/* Larger machining viewport and peripheral controls at desktop size. */
+@media(min-width:1100px){
+ html[data-aig-project="AIGII"] .simgrid{
+   grid-template-columns:minmax(0,2.35fr) minmax(310px,.9fr)!important;
+ }
+}
+@media(max-width:1150px){
+ .aigFormalHome .aigHero{grid-template-columns:minmax(210px,1fr) minmax(0,1.45fr)}
+ .aigFormalHome .aigHeroCenter{grid-column:2;grid-row:1 / span 2}
+ .aigFormalHome .aigSystem{grid-column:1;grid-row:2}
+ .aigFormalHome .aigModuleGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:720px){
+ html[data-aig-project="AIGII"] .top{min-height:60px;padding:7px;gap:6px}
+ html[data-aig-project="AIGII"] .brand{min-width:110px}
+ html[data-aig-project="AIGII"] .brand .logo{padding-left:33px;font-size:17px}
+ html[data-aig-project="AIGII"] .brand .logo::before{width:28px;height:28px}
+ html[data-aig-project="AIGII"] .brand small{font-size:8px;letter-spacing:0}
+ html[data-aig-project="AIGII"] .nav{width:100%;display:flex;overflow-x:auto;max-width:none}
+ html[data-aig-project="AIGII"] .nav button{flex:0 0 53px;min-width:53px;min-height:42px}
+ html[data-aig-project="AIGII"] .shell{padding:7px}
+ .aigFormalHome .aigHero{display:flex;flex-direction:column;min-height:0}
+ .aigFormalHome .aigHeroCenter{order:-1;min-height:335px;grid-row:auto}
+ .aigFormalHome .aigPrism{width:90px;height:94px}
+ .aigFormalHome .aigHeroBrand{font-size:48px}
+ .aigFormalHome .aigHeroCenter::after{bottom:27px}
+ .aigFormalHome .aigModuleGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .aigFormalHome .aigModuleCard{min-height:133px;padding:14px 12px}
+ .aigFormalHome .aigModuleCard b{font-size:19px}
+ .aigFormalHome .aigModuleCard small{font-size:11px;left:12px}
+ .aigFormalHome .aigHomeMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .aigFormalHome .aigHomeMetrics .aigGlass{padding:10px 11px;display:block}
+ .aigFormalHome .aigHomeMetrics b{display:block;margin-top:7px}
+ .aigFormalHome .aigSectionTitle{font-size:15px}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-aig-project="AIGII"] .btn,
+ html[data-aig-project="AIGII"] .menuCard,
+ html[data-aig-project="AIGII"] .nav button{transition:none}
+}
