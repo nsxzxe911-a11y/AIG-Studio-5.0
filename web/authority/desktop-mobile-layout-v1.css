@@ -1,0 +1,200 @@
+/* AIG-II Desktop + Mobile web presentation — CAM RGB glass family.
+   CSS is responsive source, not a replacement of any approved image Authority. */
+html.aigCamUnified .layoutSwitch{
+ display:flex;align-items:center;gap:4px;padding:4px;
+ border:1px solid rgba(39,218,255,.7);border-radius:10px;
+ background:linear-gradient(155deg,rgba(8,31,54,.82),rgba(3,12,29,.90));
+ box-shadow:inset 0 1px rgba(106,202,255,.23),0 0 12px rgba(29,167,245,.17);
+ flex:0 0 auto;
+}
+html.aigCamUnified .layoutSwitch button{
+ cursor:pointer;min-height:38px;min-width:54px;padding:7px 9px;
+ color:#d6f4ff;background:rgba(5,23,42,.61);
+ border:1px solid transparent;border-radius:7px;
+ font:750 12px/1.2 "Noto Sans TC","Microsoft JhengHei",sans-serif;
+}
+html.aigCamUnified .layoutSwitch button.active,
+html.aigCamUnified .layoutSwitch button[aria-pressed="true"]{
+ border-color:#70bfff;
+ color:#fff;
+ background:linear-gradient(150deg,rgba(54,117,255,.82),rgba(11,53,141,.85));
+ box-shadow:0 0 12px rgba(41,133,255,.5),inset 0 0 8px rgba(89,213,255,.23);
+}
+html.aigCamUnified .layoutSwitch button:focus-visible{
+ outline:2px solid #ffb13e;outline-offset:2px;
+}
+html.aigCamUnified .layoutSwitch .layoutMessage{
+ padding:0 5px;white-space:nowrap;color:#8bdfff;font-size:11px;
+}
+html.aigCamUnified .top{flex-wrap:wrap;gap:8px}
+html.aigCamUnified .top .layoutSwitch{margin-left:auto}
+html.aigCamUnified .top .nav{order:2;flex:1 1 600px}
+html.aigCamUnified .top .status{order:3}
+html.aigCamUnified .top .layoutSwitch{order:4}
+html.aigCamUnified .screen{min-width:0}
+html.aigCamUnified .screen.active{max-width:100%}
+
+/* Mobile selection on a desktop shows a real narrow live runtime (same DOM).
+   On an actual narrow phone the frame fills the entire screen. */
+html.aigCamUnified[data-aig-presentation="mobile"] body{
+ background:radial-gradient(circle at 50% 20%,rgba(26,104,189,.23),transparent 52%),#020407;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .app{
+ width:100%;max-width:440px;min-width:0;margin:0 auto;min-height:100dvh;
+ background:linear-gradient(180deg,#020407,#030916 46%,#010407);
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .top{
+ position:sticky;top:0;z-index:30;
+ display:grid;grid-template-columns:minmax(0,1fr) auto;
+ grid-template-areas:"brand mode" "nav nav" "status status";
+ align-items:center;gap:6px;padding:9px 8px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .brand{
+ grid-area:brand;min-width:0;max-width:100%;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .brand .logo{font-size:19px;white-space:nowrap}
+html.aigCamUnified[data-aig-presentation="mobile"] .brand small{font-size:8px;letter-spacing:.02em}
+html.aigCamUnified[data-aig-presentation="mobile"] .top .layoutSwitch{
+ grid-area:mode;order:initial;margin:0;min-width:0;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .layoutSwitch button{
+ min-width:42px;min-height:39px;padding:7px 5px;font-size:10px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .layoutSwitch .layoutMessage{display:none}
+html.aigCamUnified[data-aig-presentation="mobile"] .top .nav{
+ grid-area:nav;order:initial;display:flex;flex-wrap:nowrap;
+ overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:thin;
+ gap:4px;max-width:100%;width:100%;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .nav button{
+ scroll-snap-align:start;flex:0 0 59px;min-width:59px;min-height:45px;
+ font-size:11px;padding:7px 4px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .top .status{
+ grid-area:status;order:initial;justify-self:start;font-size:9px;opacity:.84;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .shell{
+ display:block;padding:7px 6px 16px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .panel{
+ min-width:0;margin-bottom:9px;border-radius:11px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .panel .head{
+ padding:8px 9px;gap:5px;min-height:40px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .panel .head h2,
+html.aigCamUnified[data-aig-presentation="mobile"] .panel .head h3{font-size:13px}
+html.aigCamUnified[data-aig-presentation="mobile"] .panel .head small{font-size:10px}
+html.aigCamUnified[data-aig-presentation="mobile"] .panel .body{padding:8px;min-width:0}
+html.aigCamUnified[data-aig-presentation="mobile"] .workgrid,
+html.aigCamUnified[data-aig-presentation="mobile"] .camgrid,
+html.aigCamUnified[data-aig-presentation="mobile"] .simgrid,
+html.aigCamUnified[data-aig-presentation="mobile"] .ncEditGrid,
+html.aigCamUnified[data-aig-presentation="mobile"] .menuDetailGrid,
+html.aigCamUnified[data-aig-presentation="mobile"] .tpGrid{
+ display:flex;flex-direction:column;gap:9px;
+ min-width:0;min-height:0;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .camgrid > .panel,
+html.aigCamUnified[data-aig-presentation="mobile"] .simgrid > .panel,
+html.aigCamUnified[data-aig-presentation="mobile"] .workgrid > .panel{
+ width:100%;max-width:100%;min-width:0;flex:none;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .camgrid > .panel:nth-child(2){order:-1}
+html.aigCamUnified[data-aig-presentation="mobile"] .simgrid > .simleft{order:-1}
+html.aigCamUnified[data-aig-presentation="mobile"] .screen[data-page="HOME"] .menuGrid,
+html.aigCamUnified[data-aig-presentation="mobile"] .menuGrid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .menuCard{
+ width:100%;min-width:0;min-height:78px;padding:9px;font-size:13px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .axisbar{
+ display:flex;flex-wrap:wrap;gap:5px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .axis{
+ flex:1 1 calc(33.33% - 6px);min-width:0;padding:6px 5px;font-size:11px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .sceneWrap{
+ height:clamp(350px,53svh,680px)!important;
+ min-height:350px!important;max-height:680px;
+ border:1px solid rgba(42,207,255,.78);
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .sim3dCanvas,
+html.aigCamUnified[data-aig-presentation="mobile"] .simCanvas{
+ width:100%;height:100%!important;min-height:0!important;max-height:100%;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .cadCanvas,
+html.aigCamUnified[data-aig-presentation="mobile"] .camCanvas,
+html.aigCamUnified[data-aig-presentation="mobile"] .tpCanvas{
+ width:100%;height:clamp(350px,51svh,650px)!important;min-height:350px!important;
+ max-height:650px;display:block;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .cadCanvasWrap{
+ min-height:350px;max-height:670px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .controls{
+ display:flex;flex-wrap:wrap;gap:6px;padding-top:8px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .controls .btn{
+ flex:1 1 28%;min-width:82px;min-height:44px;padding:8px 5px;
+ font-size:11px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .ops{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .ops .btn{min-height:44px;font-size:11px}
+html.aigCamUnified[data-aig-presentation="mobile"] .param{
+ display:flex;flex-wrap:wrap;min-width:0;gap:4px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .param input,
+html.aigCamUnified[data-aig-presentation="mobile"] .param select{
+ min-width:0;width:100%;font-size:16px;min-height:40px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .runtimeStatus{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .metric{min-width:0;overflow-wrap:anywhere}
+html.aigCamUnified[data-aig-presentation="mobile"] .ncEditorMain{min-height:0}
+html.aigCamUnified[data-aig-presentation="mobile"] .ncKeypad{
+ grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .ncKeypad .btn{
+ min-width:0;min-height:45px;font-size:10px;padding:5px 2px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .code,
+html.aigCamUnified[data-aig-presentation="mobile"] textarea{
+ width:100%;min-width:0;max-width:100%;font-size:13px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .footer{
+ padding:10px;font-size:9px;
+}
+html.aigCamUnified[data-aig-presentation="mobile"] .sceneHud{font-size:10px;max-width:100%}
+html.aigCamUnified[data-aig-presentation="mobile"] .sceneTitle{font-size:11px;max-width:94%}
+html.aigCamUnified[data-aig-presentation="mobile"] .screen [data-subpage-id]{min-width:0}
+
+/* When selected on a desktop, give the actual mobile runtime a visible frame.
+   This is not a screenshot or simulated machine output. */
+@media(min-width:721px){
+ html.aigCamUnified[data-aig-presentation="mobile"] .app{
+  border:2px solid rgba(35,215,255,.73);
+  border-radius:21px 21px 0 0;
+  box-shadow:0 0 34px rgba(38,120,255,.22),0 25px 70px #000;
+  overflow:hidden;
+  margin:22px auto;
+ }
+}
+@media(max-width:720px){
+ html.aigCamUnified[data-aig-presentation="mobile"] .app{
+  max-width:none;border:0;box-shadow:none;margin:0;
+  padding-bottom:env(safe-area-inset-bottom);
+ }
+}
+/* Desktop selection on a narrow phone is deliberate and horizontally scrollable,
+   enabling desktop layout inspection without changing page IDs. */
+@media(max-width:720px){
+ html.aigCamUnified[data-aig-presentation="desktop"] body{overflow-x:auto}
+ html.aigCamUnified[data-aig-presentation="desktop"] .app{
+  min-width:1050px;width:1050px;max-width:none;
+ }
+}
