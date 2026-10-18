@@ -1,0 +1,41 @@
+{
+  "version": "51.0.0",
+  "base": "68178253a7c5663fc360d7d86d47944471864380",
+  "checks": {
+    "parser": "25/25 PASS",
+    "bothRuntimeSyntax": "PASS",
+    "studioManualPanel": "PASS",
+    "staleApplyGuard": "PASS",
+    "preserveData": "PASS"
+  },
+  "tests": [
+    "valid full",
+    "valid precision",
+    "valid shifted origin",
+    "reject G0 -3",
+    "reject G0 at top",
+    "reject G0 below safe",
+    "reject G0 XY at depth",
+    "reject F negative",
+    "reject F zero",
+    "reject rapid F negative",
+    "reject below bottom",
+    "allow bottom",
+    "reject XYZ ramp",
+    "reject A",
+    "reject G2",
+    "reject duplicate X",
+    "reject missing G",
+    "reject zero G1",
+    "reject G1 first",
+    "reject unsafe safeZ",
+    "reject negative stock",
+    "reject C",
+    "reject malformed F",
+    "reject M3",
+    "reject G0 unsafe retract"
+  ],
+  "live": "PENDING",
+  "realDevice": "PENDING",
+  "machine": "NOT_CERTIFIED"
+}

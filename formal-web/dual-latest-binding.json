@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V50 semantic mobile workspaces: CAM preview/strategy+params/manual and NC code/keypad/status all reachable without whole-page scroll. No CNC machine output.",
+  "notes": "V51 shared manual CAM parser, Studio G0/G1 actual segments, reject rapid below Safe-Z, nonpositive F, stale manual APPLY.",
   "sharedWebRelease": {
-    "version": "50.0.0",
-    "train": "V50",
+    "version": "51.0.0",
+    "train": "V51",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "50.0.0"
+        "version": "51.0.0"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "50.0.0"
+        "version": "51.0.0"
       }
     ],
     "commonRuntimeSource": "./dual-web-v43.js",
     "commonUiSource": "./dual-web-v43.css",
-    "releaseManifest": "./dual-web-v50.json",
+    "releaseManifest": "./dual-web-v51.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",

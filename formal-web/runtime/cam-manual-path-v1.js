@@ -1,4 +1,4 @@
-/* AIG-II manual CAM 3AX, local deterministic segments.
+/* AIG-II + Studio 5.0 shared manual CAM 3AX, local deterministic segments.
    This creates Web CAM paths, never a verified NC post or machine command.
    A/B/C and simultaneous XYZ ramps are rejected, not approximated. */
 (function(global){
@@ -28,11 +28,14 @@ function parseManual(text,params){
   const values={};for(const word of words){const key=word[0];if(!["G","X","Y","Z","F"].includes(key))throw Error("第 "+(i+1)+" 行不支援 "+key+" 軸或指令；A/B/C 應由對應 NC-first 模組驗證");if(Object.prototype.hasOwnProperty.call(values,key))throw Error("第 "+(i+1)+" 行有重複 "+key+" 欄位");values[key]=num(word.slice(1),key);}
   if(!("G" in values))throw Error("第 "+(i+1)+" 行請明確標明 G0 或 G1");
   if(values.G!==0&&values.G!==1)throw Error("第 "+(i+1)+" 行僅支援 G0 / G1");
+  if("F" in values&&values.F<=0)throw Error("第 "+(i+1)+" 行進給 F 必須大於 0；已阻擋負值或零進給");
   const rapid=values.G===0,to={X:"X" in values?values.X:pos.X,Y:"Y" in values?values.Y:pos.Y,Z:"Z" in values?values.Z:pos.Z};
   if(!hadPosition&& !rapid)throw Error("第 "+(i+1)+" 行必須先有 G0 安全定位");
+  if(rapid&&to.Z<safe-PRECISION/10)throw Error("第 "+(i+1)+" 行 G0 快速移動不可低於 Safe-Z "+safe.toFixed(3)+"；請改用 G1 下刀");
   if(rapid&&(Math.abs(to.X-pos.X)>PRECISION/10||Math.abs(to.Y-pos.Y)>PRECISION/10)&&Math.min(pos.Z,to.Z)<safe-PRECISION/10)throw Error("第 "+(i+1)+" 行 G0 XY 低於 Safe-Z，已阻擋");
   if(!rapid&&to.Z<top-thick-PRECISION/10)throw Error("第 "+(i+1)+" 行刀具超過毛坯底面");
   const xyMoved=Math.hypot(to.X-pos.X,to.Y-pos.Y)>PRECISION/10,zMoved=Math.abs(to.Z-pos.Z)>PRECISION/10;
+  if(!rapid&&!xyMoved&&!zMoved)throw Error("第 "+(i+1)+" 行 G1 沒有座標位移，不建立假切削段");
   if(!rapid&&xyMoved&&zMoved)throw Error("第 "+(i+1)+" 行同時 XYZ 斜向切削尚未提供可驗證刀具掃掠；請拆成下刀與 XY 走刀");
   if(!rapid&&xyMoved&&to.Z>top+PRECISION/10)warnings.push("第 "+(i+1)+" 行 XY 在毛坯上方，不會移除材料");
   nodes.push({g:rapid?"G0":"G1",x:to.X,y:to.Y,z:to.Z,f:"F" in values?values.F:feed,line:i+1});

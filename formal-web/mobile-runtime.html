@@ -2846,7 +2846,7 @@ function makeCamRuntime(root){
  const canvas=root.querySelector("[data-cam-canvas]"),ctx=canvas.getContext("2d");
  const cadCountEl=root.querySelector("[data-cam-cad-count]"),msgEl=root.querySelector("[data-cam-msg]"),strategyEl=root.querySelector("[data-cam-strategy-name]"),pathCountEl=root.querySelector("[data-cam-path-count]"),layerCountEl=root.querySelector("[data-cam-layer-count]"),lengthEl=root.querySelector("[data-cam-length]");
  const toolInput=root.querySelector("[data-cam-tool]"),depthInput=root.querySelector("[data-cam-depth]"),feedInput=root.querySelector("[data-cam-feed]"),rpmInput=root.querySelector("[data-cam-rpm]"),safeInput=root.querySelector("[data-cam-safez]"),stockTopInput=root.querySelector("[data-cam-stocktop]"),stockThicknessInput=root.querySelector("[data-cam-stockthickness]"),stepDownInput=root.querySelector("[data-cam-stepdown]"),marginXInput=root.querySelector("[data-cam-marginx]"),marginYInput=root.querySelector("[data-cam-marginy]"),adaptiveLoadInput=root.querySelector("[data-cam-adaptive-load]"),adaptiveRampAngleInput=root.querySelector("[data-cam-ramp-angle]"),pitchInput=root.querySelector("[data-cam-pitch]"),stepInput=root.querySelector("[data-cam-stepover]"),dirInput=root.querySelector("[data-cam-direction]"),sideInput=root.querySelector("[data-cam-contour-side]"),routeModeInput=root.querySelector("[data-cam-route-mode]"),camLeadInInput=root.querySelector("[data-cam-leadin]"),camLeadOutInput=root.querySelector("[data-cam-leadout]"),entryXInput=root.querySelector("[data-cam-entry-x]"),entryYInput=root.querySelector("[data-cam-entry-y]"),exitXInput=root.querySelector("[data-cam-exit-x]"),exitYInput=root.querySelector("[data-cam-exit-y]"),avoidEnabledInput=root.querySelector("[data-cam-avoid-enabled]"),avoidXInput=root.querySelector("[data-cam-avoid-x]"),avoidYInput=root.querySelector("[data-cam-avoid-y]"),avoidZInput=root.querySelector("[data-cam-avoid-z]");
- const state={cad:[],strategy:null,paths:[],view:{scale:4,panX:0,panY:0}};
+ const state={cad:[],strategy:null,paths:[],manualValidatedKey:null,view:{scale:4,panX:0,panY:0}};
  const manualInput=root.querySelector("[data-cam-manual-input]");
  const manualStatus=root.querySelector("[data-cam-manual-status]");
  const manualLines=root.querySelector("[data-cam-manual-lines]");
@@ -2856,7 +2856,8 @@ function makeCamRuntime(root){
    if(manualLines)manualLines.textContent=manualInput.value.split(/\r?\n/).filter(v=>v.trim()).length+" 行";
    const src=root.querySelector("[data-cam-source]");if(src)src.textContent=on?"MANUAL / 本機":"CAD / AutoSave";
  };
- if(manualInput)manualInput.addEventListener("input",updateManualUi);
+ if(manualInput)manualInput.addEventListener("input",()=>{state.manualValidatedKey=null;updateManualUi()});
+ const manualKey=p=>JSON.stringify([manualInput?.value||"",p.safeZ,p.stockTop,p.stockThickness,p.feed,p.rpm,p.toolDia]);
  const clone=x=>JSON.parse(JSON.stringify(x));
  function validateCamFields(){
    [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,marginXInput,marginYInput,adaptiveLoadInput,adaptiveRampAngleInput,pitchInput,stepInput,dirInput,sideInput,routeModeInput,camLeadInInput,camLeadOutInput,entryXInput,entryYInput,exitXInput,exitYInput,avoidXInput,avoidYInput,avoidZInput].forEach(aigValidateField);
@@ -2979,8 +2980,10 @@ function normalizeClosed(points,direction){
    if(validateCamFields()>0){msgEl.textContent="CAM 欄位有錯誤；不更動上一份刀路。";return}
    if(p.routeMode==="MANUAL"){
      try{
-       const parsed=window.AigManualCam.parseManual(manualInput.value,p);
+       state.manualValidatedKey=null;
+        const parsed=window.AigManualCam.parseManual(manualInput.value,p);
        state.paths=parsed.paths;state.manualNodes=parsed.nodes;state.manualWarnings=parsed.warnings;
+        state.manualValidatedKey=manualKey(p);
        state.strategy="MANUAL";updateStats();updateManualUi();fitManual();draw();
        manualStatus.textContent=parsed.nodes.length+" 個節點、"+parsed.paths.length+" 條實際刀路";
        msgEl.textContent="手動 CAM 已計算："+parsed.paths.length+" 條；仍需 SIM／NC 獨立驗證。"+(parsed.warnings.length?" 注意："+parsed.warnings.join("；"):"");
@@ -3049,6 +3052,9 @@ function normalizeClosed(points,direction){
  function apply(){
    if(!state.paths.length){msgEl.textContent="尚無可套用刀路。";return}
    const pp=params(),bb=allBounds(),isManual=pp.routeMode==="MANUAL";
+    if(isManual&&state.manualValidatedKey!==manualKey(pp)){
+      msgEl.textContent="手動 CAM 已修改或尚未重新驗證；請先按「計算刀路」，本次不套用舊資料。";return;
+    }
    const allManual=state.paths.flatMap(path=>path.points||[]);
    const manualBox=allManual.length?{minX:Math.min(...allManual.map(p=>p.x)),maxX:Math.max(...allManual.map(p=>p.x)),
      minY:Math.min(...allManual.map(p=>p.y)),maxY:Math.max(...allManual.map(p=>p.y))}:null;
@@ -3078,7 +3084,7 @@ function normalizeClosed(points,direction){
    if(ac.dataset.camAction==="FLOW"){if(validateCamFields()>0){msgEl.textContent="CAM 欄位有錯誤；只取消這次套用。";return}apply();show("刀路")}
  },null,"warn"));
  routeModeInput.addEventListener("change",()=>{
-   state.paths=[];state.manualNodes=[];state.strategy=routeModeInput.value==="MANUAL"?"MANUAL":null;
+   state.paths=[];state.manualNodes=[];state.manualValidatedKey=null;state.strategy=routeModeInput.value==="MANUAL"?"MANUAL":null;
    updateManualUi();updateStats();draw();
    msgEl.textContent=routeModeInput.value==="MANUAL"?"輸入 G0/G1 節點，完成後按計算刀路。":"請重新選擇 CAD 自動刀路策略。";
  });

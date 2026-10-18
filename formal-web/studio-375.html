@@ -208,6 +208,7 @@ html,body{background:#020407}
 <footer class="footer">AIG CNC • 黑色高對比 Runtime • Web Runtime • 不輸出至真實 CNC 機台</footer>
 </div>
 <script src="./runtime/layout-mode.js"></script>
+<script src="./runtime/cam-manual-path-v1.js"></script>
 <script>
 const pages=[
  ["HOME","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["SIM","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"],["6AX","#27e9ff"],["NC","#33f39b"],["AI","#9f72ff"]
@@ -377,6 +378,11 @@ function camPage(){
  return '<div data-cam-runtime><div class="camgrid">'+
  '<section class="panel"><div class="head"><h3>快速刀路</h3></div><div class="body"><div class="ops">'+ops+'</div><div class="notice" style="margin-top:8px" data-cam-msg>先選策略；CAM 會直接讀取 CAD AutoSave 幾何。</div></div></section>'+
  '<section class="panel"><div class="head"><div><h2>CAM 加工預覽</h2><small>CAD 幾何 → 真刀路資料</small></div><span class="spacer"></span><span class="badge" data-cam-cad-count>CAD 0</span></div><div class="body"><canvas class="camCanvas" data-cam-canvas></canvas><div class="controls"><button class="btn" data-cam-action="RELOAD">重讀 CAD</button><button class="btn play" data-cam-action="CALC">計算刀路</button><button class="btn" data-cam-action="FIT">Fit</button><button class="btn play" data-cam-action="APPLY">套用至刀路</button><button class="btn play" data-cam-action="FLOW">套用 → 刀路</button><button class="btn" data-open-page="刀路">刀路編輯</button></div></div></section>'+
+ '<section class="panel aigCamManualPanel" data-cam-manual-panel><div class="head"><div><h3>手動 CAM · 無須 CAD</h3><small>3AX G0／G1 · 逐點 X / Y / Z · mm</small></div></div><div class="body">'+
+ '<p class="aigCamExplain">選擇「MANUAL」即可輸入多段刀路。G0 安全定位，G1 切削與下刀；完成後按「計算刀路」，再按「套用」。旋轉 A/B/C 程式請改用各軸 NC-first。</p>'+
+ '<label class="field"><b>手動節點清單</b><textarea data-cam-manual-input spellcheck="false" rows="8" placeholder="G0 X0 Y0 Z5\nG1 X0 Y0 Z-2\nG1 X50 Y0 Z-2\nG1 X50 Y30 Z-2\nG0 Z5"></textarea></label>'+
+ '<div class="aigCamManualMeta"><span data-cam-manual-status>尚未建立手動刀路</span><span data-cam-manual-lines>0 行</span></div>'+
+ '</div></section>'+
  '<section class="panel"><div class="head"><h3>刀具與參數</h3></div><div class="body form">'+
  '<label class="param">刀具 Ø<input data-cam-tool type="number" value="10" min="0.1" step="0.001"></label>'+
  '<label class="param">深度<input data-cam-depth type="number" value="-10" step="0.001"></label>'+
@@ -2683,7 +2689,18 @@ function makeCamRuntime(root){
  const canvas=root.querySelector("[data-cam-canvas]"),ctx=canvas.getContext("2d");
  const cadCountEl=root.querySelector("[data-cam-cad-count]"),msgEl=root.querySelector("[data-cam-msg]"),strategyEl=root.querySelector("[data-cam-strategy-name]"),pathCountEl=root.querySelector("[data-cam-path-count]"),layerCountEl=root.querySelector("[data-cam-layer-count]"),lengthEl=root.querySelector("[data-cam-length]");
  const toolInput=root.querySelector("[data-cam-tool]"),depthInput=root.querySelector("[data-cam-depth]"),feedInput=root.querySelector("[data-cam-feed]"),rpmInput=root.querySelector("[data-cam-rpm]"),safeInput=root.querySelector("[data-cam-safez]"),stockTopInput=root.querySelector("[data-cam-stocktop]"),stockThicknessInput=root.querySelector("[data-cam-stockthickness]"),stepDownInput=root.querySelector("[data-cam-stepdown]"),marginXInput=root.querySelector("[data-cam-marginx]"),marginYInput=root.querySelector("[data-cam-marginy]"),adaptiveLoadInput=root.querySelector("[data-cam-adaptive-load]"),adaptiveRampAngleInput=root.querySelector("[data-cam-ramp-angle]"),pitchInput=root.querySelector("[data-cam-pitch]"),stepInput=root.querySelector("[data-cam-stepover]"),dirInput=root.querySelector("[data-cam-direction]"),sideInput=root.querySelector("[data-cam-contour-side]"),routeModeInput=root.querySelector("[data-cam-route-mode]"),camLeadInInput=root.querySelector("[data-cam-leadin]"),camLeadOutInput=root.querySelector("[data-cam-leadout]"),entryXInput=root.querySelector("[data-cam-entry-x]"),entryYInput=root.querySelector("[data-cam-entry-y]"),exitXInput=root.querySelector("[data-cam-exit-x]"),exitYInput=root.querySelector("[data-cam-exit-y]"),avoidEnabledInput=root.querySelector("[data-cam-avoid-enabled]"),avoidXInput=root.querySelector("[data-cam-avoid-x]"),avoidYInput=root.querySelector("[data-cam-avoid-y]"),avoidZInput=root.querySelector("[data-cam-avoid-z]");
- const state={cad:[],strategy:null,paths:[],view:{scale:4,panX:0,panY:0}};
+ const state={cad:[],strategy:null,paths:[],manualValidatedKey:null,view:{scale:4,panX:0,panY:0}};
+ const manualInput=root.querySelector("[data-cam-manual-input]");
+ const manualStatus=root.querySelector("[data-cam-manual-status]");
+ const manualLines=root.querySelector("[data-cam-manual-lines]");
+ const updateManualUi=()=>{
+   const on=routeModeInput.value==="MANUAL";
+   root.querySelector("[data-cam-manual-panel]")?.classList.toggle("manualSelected",on);
+   if(manualLines)manualLines.textContent=manualInput.value.split(/\r?\n/).filter(v=>v.trim()).length+" 行";
+   const src=root.querySelector("[data-cam-source]");if(src)src.textContent=on?"MANUAL / 本機":"CAD / AutoSave";
+ };
+ if(manualInput)manualInput.addEventListener("input",()=>{state.manualValidatedKey=null;updateManualUi()});
+ const manualKey=p=>JSON.stringify([manualInput?.value||"",p.safeZ,p.stockTop,p.stockThickness,p.feed,p.rpm,p.toolDia]);
  const clone=x=>JSON.parse(JSON.stringify(x));
  function validateCamFields(){
    [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,marginXInput,marginYInput,adaptiveLoadInput,adaptiveRampAngleInput,pitchInput,stepInput,dirInput,sideInput,routeModeInput,camLeadInInput,camLeadOutInput,entryXInput,entryYInput,exitXInput,exitYInput,avoidXInput,avoidYInput,avoidZInput].forEach(aigValidateField);
@@ -2704,7 +2721,10 @@ function makeCamRuntime(root){
  function params(){validateCamFields();const routeMode=routeModeInput.value==="MANUAL"?"MANUAL":"AUTO";return{toolDia:Math.max(.1,aigFiniteNumber(toolInput.value,10)),depth:aigFiniteNumber(depthInput.value,-10),feed:Math.max(1,aigFiniteNumber(feedInput.value,1200)),rpm:Math.max(1,aigFiniteNumber(rpmInput.value,12000)),safeZ:aigFiniteNumber(safeInput.value,5),stockTop:aigFiniteNumber(stockTopInput.value,0),stockThickness:Math.max(.001,aigFiniteNumber(stockThicknessInput.value,20)),stepDown:Math.max(.001,aigFiniteNumber(stepDownInput.value,2)),stockMarginX:Math.max(0,aigFiniteNumber(marginXInput.value,5)),stockMarginY:Math.max(0,aigFiniteNumber(marginYInput.value,5)),adaptiveLoad:Math.max(.10,Math.min(.45,aigFiniteNumber(adaptiveLoadInput.value,35)/100)),adaptiveRampAngleDeg:Math.max(.5,Math.min(15,aigFiniteNumber(adaptiveRampAngleInput.value,5))),tapPitch:aigFiniteNumber(pitchInput.value,0),stepover:Math.max(.05,Math.min(.95,aigFiniteNumber(stepInput.value,50)/100)),direction:dirInput.value,contourSide:sideInput.value==="INSIDE"?"INSIDE":"OUTSIDE",routeMode,leadIn:Math.max(0,aigFiniteNumber(camLeadInInput.value,0)),leadOut:Math.max(0,aigFiniteNumber(camLeadOutInput.value,0)),manualEntry:routeMode==="MANUAL"?{x:aigFiniteNumber(entryXInput.value,0),y:aigFiniteNumber(entryYInput.value,0)}:null,manualExit:routeMode==="MANUAL"?{x:aigFiniteNumber(exitXInput.value,0),y:aigFiniteNumber(exitYInput.value,0)}:null,avoidance:routeMode==="MANUAL"&&avoidEnabledInput.checked?{enabled:true,x:aigFiniteNumber(avoidXInput.value,0),y:aigFiniteNumber(avoidYInput.value,0),z:aigFiniteNumber(avoidZInput.value,20)}:{enabled:false}}}
  function loadCad(){
    const v=aigJsonRead(root,"aig-cad-draft-v1",null,"CAD AutoSave");state.cad=Array.isArray(v?.shapes)?v.shapes:[]
-   cadCountEl.textContent="CAD "+state.cad.length;msgEl.textContent=state.cad.length?"已讀取 "+state.cad.length+" 個 CAD 幾何。":"CAD 尚無幾何；先到 CAD 頁畫圖。";fit();draw();
+   cadCountEl.textContent="CAD "+state.cad.length;
+   msgEl.textContent=routeModeInput.value==="MANUAL"?"手動刀路模式："+state.paths.length+" 條待處理路徑。":
+      state.cad.length?"已讀取 "+state.cad.length+" 個 CAD 幾何。":"CAD 尚無幾何；可以切換 MANUAL 直接輸入 G0 / G1。";
+   if(routeModeInput.value==="MANUAL"&&state.paths.length){fitManual();draw()}else fit();
  }
  function resize(){
    const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));
@@ -2798,10 +2818,22 @@ function normalizeClosed(points,direction){
  }
  function parallelPaths(p){return facePaths(p).map(x=>({...x,kind:"parallel"}))}
  function calc(){
-   if(!state.strategy){msgEl.textContent="請先選刀路策略。";return}
-   if(!state.cad.length){msgEl.textContent="CAD 沒有幾何，無法計算刀路。";state.paths=[];updateStats();draw();return}
+   if(!state.strategy&&routeModeInput.value!=="MANUAL"){msgEl.textContent="請先選刀路策略，或切換 MANUAL。";return}
    const p=params();
-   if(validateCamFields()>0){state.paths=[];updateStats();draw();msgEl.textContent="CAM 欄位有錯誤；只阻擋這次刀路計算，AIG 其他功能繼續可用。";return}
+   if(validateCamFields()>0){msgEl.textContent="CAM 欄位有錯誤；不更動上一份刀路。";return}
+   if(p.routeMode==="MANUAL"){
+     try{
+       state.manualValidatedKey=null;
+        const parsed=window.AigManualCam.parseManual(manualInput.value,p);
+       state.paths=parsed.paths;state.manualNodes=parsed.nodes;state.manualWarnings=parsed.warnings;
+        state.manualValidatedKey=manualKey(p);
+       state.strategy="MANUAL";updateStats();updateManualUi();fitManual();draw();
+       manualStatus.textContent=parsed.nodes.length+" 個節點、"+parsed.paths.length+" 條實際刀路";
+       msgEl.textContent="手動 CAM 已計算："+parsed.paths.length+" 條；仍需 SIM／NC 獨立驗證。"+(parsed.warnings.length?" 注意："+parsed.warnings.join("；"):"");
+     }catch(e){manualStatus.textContent="資料未通過檢查";msgEl.textContent="手動 CAM："+String(e.message||e)+"。舊刀路保留。"}
+     return;
+   }
+   if(!state.cad.length){msgEl.textContent="CAD 沒有幾何；可切換 MANUAL 建立獨立刀路。";return}
    if(state.strategy==="FACE")state.paths=facePaths(p);
    else if(state.strategy==="PROFILE")state.paths=profilePaths(p,"profile");
    else if(state.strategy==="POCKET")state.paths=pocketPaths(p);
@@ -2824,6 +2856,16 @@ function normalizeClosed(points,direction){
    if(!(state.strategy==="ADAPTIVE"&&state.cad.some(sh=>!["rect","circle","hole"].includes(sh.type)))){
      msgEl.textContent=state.paths.length?("刀路完成："+state.paths.length+" 條。"):"目前 CAD 幾何不適用此策略。";
    }
+ }
+ function fitManual(){
+   if(!state.paths.length)return;
+   const points=state.paths.flatMap(path=>path.points||[]);
+   if(!points.length)return;
+   const {w,h}=resize(),xs=points.map(p=>p.x),ys=points.map(p=>p.y);
+   const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+   state.view.scale=Math.max(.2,Math.min(50,Math.min((w-70)/Math.max(1,maxX-minX),(h-70)/Math.max(1,maxY-minY))));
+   state.view.panX=-(minX+maxX)*.5*state.view.scale;
+   state.view.panY=(minY+maxY)*.5*state.view.scale;
  }
  function updateStats(){
    strategyEl.textContent=state.strategy||"未選";pathCountEl.textContent=state.paths.length;
@@ -2852,35 +2894,55 @@ function normalizeClosed(points,direction){
  }
  function apply(){
    if(!state.paths.length){msgEl.textContent="尚無可套用刀路。";return}
-   const pp=params(),bb=allBounds();
+   const pp=params(),bb=allBounds(),isManual=pp.routeMode==="MANUAL";
+    if(isManual&&state.manualValidatedKey!==manualKey(pp)){
+      msgEl.textContent="手動 CAM 已修改或尚未重新驗證；請先按「計算刀路」，本次不套用舊資料。";return;
+    }
+   const allManual=state.paths.flatMap(path=>path.points||[]);
+   const manualBox=allManual.length?{minX:Math.min(...allManual.map(p=>p.x)),maxX:Math.max(...allManual.map(p=>p.x)),
+     minY:Math.min(...allManual.map(p=>p.y)),maxY:Math.max(...allManual.map(p=>p.y))}:null;
+   const sourceBounds=isManual?manualBox:bb;
    const stock={
      top:pp.stockTop,thickness:pp.stockThickness,bottom:pp.stockTop-pp.stockThickness,
-     minX:bb?bb.minX-pp.stockMarginX:null,maxX:bb?bb.maxX+pp.stockMarginX:null,
-     minY:bb?bb.minY-pp.stockMarginY:null,maxY:bb?bb.maxY+pp.stockMarginY:null,
+     minX:sourceBounds?sourceBounds.minX-pp.stockMarginX:null,maxX:sourceBounds?sourceBounds.maxX+pp.stockMarginX:null,
+     minY:sourceBounds?sourceBounds.minY-pp.stockMarginY:null,maxY:sourceBounds?sourceBounds.maxY+pp.stockMarginY:null,
      marginX:pp.stockMarginX,marginY:pp.stockMarginY
    };
-   const payload={version:4,createdAt:Date.now(),strategy:state.strategy,params:pp,stock,paths:state.paths,cadEntityCount:state.cad.length};
+   const payload={version:5,createdAt:Date.now(),strategy:state.strategy,params:pp,stock,paths:state.paths,cadEntityCount:state.cad.length,
+     source:pp.routeMode==="MANUAL"?"MANUAL":"CAD",manualNodes:pp.routeMode==="MANUAL"?(state.manualNodes||[]):[],
+     verified:false,verificationStatus:"NOT_VERIFIED"};
    aigJsonWrite(root,"aig-stock-v1",stock,"毛坯資料");
    window.dispatchEvent(new CustomEvent("aig-stock-updated",{detail:stock}));
-   aigJsonWrite(root,"aig-cam-toolpath-v1",payload,"CAM 刀路");msgEl.textContent="已套用至刀路編輯頁，共 "+state.paths.length+" 條。";
+   aigJsonWrite(root,"aig-cam-toolpath-v1",payload,"CAM 刀路");
+   window.dispatchEvent(new CustomEvent("aig-cam-updated",{detail:{source:payload.source,pathCount:state.paths.length,verified:false}}));
+   msgEl.textContent="已保存 "+state.paths.length+" 條"+(pp.routeMode==="MANUAL"?"手動":"CAD")+"刀路；尚未通過 SIM 與 NC 驗證。";
  }
  root.addEventListener("click",e=>aigGuard(root,"CAM 操作",()=>{
    const st=e.target.closest("[data-cam-strategy]");if(st&&!st.disabled){state.strategy=st.dataset.camStrategy;validateCamFields();root.querySelectorAll("[data-cam-strategy]").forEach(b=>b.classList.toggle("cadSelected",b===st));strategyEl.textContent=state.strategy;msgEl.textContent="已選 "+st.textContent+"；按「計算刀路」。";return}
    const ac=e.target.closest("[data-cam-action]");if(!ac)return;
    if(ac.dataset.camAction==="RELOAD")loadCad();
    if(ac.dataset.camAction==="CALC")calc();
-   if(ac.dataset.camAction==="FIT")fit();
+   if(ac.dataset.camAction==="FIT"){if(routeModeInput.value==="MANUAL")fitManual();else fit();draw()}
    if(ac.dataset.camAction==="APPLY"){if(validateCamFields()>0){msgEl.textContent="CAM 欄位有錯誤；只取消這次套用，AIG 繼續使用。";return}apply()}
    if(ac.dataset.camAction==="FLOW"){if(validateCamFields()>0){msgEl.textContent="CAM 欄位有錯誤；只取消這次套用。";return}apply();show("刀路")}
  },null,"warn"));
+ routeModeInput.addEventListener("change",()=>{
+   state.paths=[];state.manualNodes=[];state.manualValidatedKey=null;state.strategy=routeModeInput.value==="MANUAL"?"MANUAL":null;
+   updateManualUi();updateStats();draw();
+   msgEl.textContent=routeModeInput.value==="MANUAL"?"輸入 G0/G1 節點，完成後按計算刀路。":"請重新選擇 CAD 自動刀路策略。";
+ });
  [toolInput,depthInput,feedInput,rpmInput,safeInput,stockTopInput,stockThicknessInput,stepDownInput,marginXInput,marginYInput,adaptiveLoadInput,adaptiveRampAngleInput,pitchInput,stepInput,dirInput,sideInput,routeModeInput,camLeadInInput,camLeadOutInput,entryXInput,entryYInput,exitXInput,exitYInput,avoidEnabledInput,avoidXInput,avoidYInput,avoidZInput].forEach(el=>{
    el.addEventListener("input",()=>aigGuard(root,"CAM 欄位檢查",validateCamFields,null,"warn"));
-   el.addEventListener("change",()=>aigGuard(root,"CAM 參數更新",()=>{validateCamFields();if(state.paths.length||state.strategy==="TAP")calc()},null,"warn"));
+   el.addEventListener("change",()=>aigGuard(root,"CAM 參數更新",()=>{validateCamFields();updateManualUi();if(state.paths.length||state.strategy==="TAP")calc()},null,"warn"));
  });
  try{
    const saved=aigJsonRead(root,"aig-cam-toolpath-v1",null,"CAM 刀路");
    if(saved?.strategy){
      state.strategy=saved.strategy;state.paths=Array.isArray(saved.paths)?saved.paths:[];
+     if(saved.manualNodes?.length&&manualInput&&!manualInput.value){
+       manualInput.value=saved.manualNodes.map(n=>n.g+" X"+n.x+" Y"+n.y+" Z"+n.z).join("\n");
+       state.manualNodes=saved.manualNodes;
+     }
      if(saved.params){
        toolInput.value=saved.params.toolDia??toolInput.value;depthInput.value=saved.params.depth??depthInput.value;feedInput.value=saved.params.feed??feedInput.value;
        rpmInput.value=saved.params.rpm??rpmInput.value;safeInput.value=saved.params.safeZ??safeInput.value;stockTopInput.value=saved.params.stockTop??saved.stock?.top??stockTopInput.value;stockThicknessInput.value=saved.params.stockThickness??saved.stock?.thickness??stockThicknessInput.value;stepDownInput.value=saved.params.stepDown??stepDownInput.value;marginXInput.value=saved.params.stockMarginX??saved.stock?.marginX??marginXInput.value;marginYInput.value=saved.params.stockMarginY??saved.stock?.marginY??marginYInput.value;adaptiveLoadInput.value=(saved.params.adaptiveLoad??.35)*100;adaptiveRampAngleInput.value=saved.params.adaptiveRampAngleDeg??5;pitchInput.value=saved.params.tapPitch||"";stepInput.value=(saved.params.stepover??.5)*100;dirInput.value=saved.params.direction||dirInput.value;sideInput.value=saved.params.contourSide||"OUTSIDE";routeModeInput.value=saved.params.routeMode||"AUTO";camLeadInInput.value=saved.params.leadIn??5;camLeadOutInput.value=saved.params.leadOut??5;entryXInput.value=saved.params.manualEntry?.x??0;entryYInput.value=saved.params.manualEntry?.y??0;exitXInput.value=saved.params.manualExit?.x??0;exitYInput.value=saved.params.manualExit?.y??0;avoidEnabledInput.checked=Boolean(saved.params.avoidance?.enabled);avoidXInput.value=saved.params.avoidance?.x??0;avoidYInput.value=saved.params.avoidance?.y??0;avoidZInput.value=saved.params.avoidance?.z??20;
@@ -2890,9 +2952,10 @@ function normalizeClosed(points,direction){
  }catch{}
  root.aigCamApi={
    recalc:()=>{loadCad();if(!state.strategy)state.strategy="PROFILE";calc();apply();return state.paths.length},
-   reload:loadCad
+   reload:loadCad,
+   refreshView:()=>{updateStats();draw()}
  };
- loadCad();updateStats();draw();
+ loadCad();updateManualUi();updateStats();draw();
 }
 
 function makeToolpathRuntime(root){
