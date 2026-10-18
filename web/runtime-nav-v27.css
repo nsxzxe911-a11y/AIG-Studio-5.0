@@ -1,0 +1,19 @@
+/* V27 official RGB modular navigator — desktop/mobile accessible, no CNC core replacement */
+.ux27-launch{min-height:39px;flex-shrink:0;border-radius:8px;border:1px solid #64c5e6;background:#16506d;color:#f4fcff;padding:9px 12px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap}
+.ux27-launch:focus-visible,.ux27-dialog button:focus-visible{outline:2px solid #caf6ff;outline-offset:2px}
+.ux27-dialog{position:fixed;inset:0;margin:auto;width:min(840px,calc(100vw - 20px));max-height:90dvh;overflow:auto;border:1px solid #5fbee5;border-radius:13px;background:linear-gradient(125deg,#0b2438,#081420);padding:19px;color:#eafbff;box-shadow:0 21px 76px #000b;z-index:10100}
+.ux27-dialog::backdrop{background:#000c}.ux27-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #356784;padding-bottom:12px}
+.ux27-head h2{font-size:20px;margin:0;color:#f1fbff}.ux27-head button,.ux27-aside button{border:1px solid #518dac;background:#1a4a68;color:#f3faff;padding:10px 13px;border-radius:7px;cursor:pointer;font-size:12px}
+.ux27-dialog>p{color:#bed6e3;font-size:12px;line-height:1.9}.ux27-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(225px,.85fr);gap:12px}
+.ux27-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.ux27-section{border:1px solid #32647c;background:#102d43;border-radius:9px;padding:12px}
+.ux27-section h3,.ux27-aside h3{font-size:14px;color:#85dcf6;margin:0 0 11px}
+.ux27-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.ux27-buttons button{padding:10px 8px;color:#eafaff;background:#143e57;border:1px solid #417897;border-radius:6px;font-size:12px;font-weight:750;cursor:pointer}
+.ux27-buttons button[aria-current="true"]{background:#176e91;border-color:#72e4fc}
+.ux27-aside{align-self:start;border:1px solid #356280;border-radius:9px;background:#0d2438;padding:14px}
+.ux27-aside p{font-size:12px;color:#b4d2e2;line-height:1.8;margin:8px 0}
+.ux27-aside .ux27-warning{border-left:3px solid #ddb36c;background:#2e281b;color:#f6dfb6;padding:10px}
+.ux27-aside button{display:block;width:100%;margin:8px 0}.ux27-aside a{display:block;color:#89e5fe;font-size:12px;margin-top:12px}
+.ux27-foot{margin-top:14px;border-top:1px solid #31546e;padding-top:10px}
+@media(max-width:710px){.ux27-layout{grid-template-columns:1fr}.ux27-dialog{padding:14px}}
+@media(max-width:440px){.ux27-groups{grid-template-columns:1fr}.ux27-head h2{font-size:18px}}
