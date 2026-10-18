@@ -8,6 +8,7 @@ const docker = read("Dockerfile.web-runtime");
 const html = read("web/index.html");
 const gallery = read("web/gallery.html");
 const overlay = read("web/aigii-overlay.js");
+const rgbSkin = read("web/aigii-skin.css");
 const sw = read("web/service-worker.js");
 const manifest = JSON.parse(read("web/manifest.webmanifest"));
 
@@ -17,6 +18,7 @@ for (const needle of [
   "COPY web/manifest.webmanifest /usr/share/nginx/html/manifest.webmanifest",
   "COPY web/gallery.html /usr/share/nginx/html/gallery.html",
   "COPY web/aigii-overlay.js /usr/share/nginx/html/aigii-overlay.js",
+  "COPY web/aigii-skin.css /usr/share/nginx/html/aigii-skin.css",
   "COPY uiux/assets/ /usr/share/nginx/html/assets/",
   "COPY web/authority/home_mobile.jpg /usr/share/nginx/html/assets/authority/home_mobile.jpg",
   "COPY web/authority/home_desktop.jpg /usr/share/nginx/html/assets/authority/home_desktop.jpg",
@@ -28,6 +30,10 @@ if (!html.includes("function makeCadRuntime(root)") || !html.includes("function 
 if (!html.includes('["6AX","#27e9ff"]') || !html.includes('["AI","#9f72ff"]')) fail("TEN_PAGE_NAV_MISSING");
 if (!html.includes("CNC machine output disabled")) fail("MACHINE_OUTPUT_WARNING_MISSING");
 if (!sw.includes("APP_SHELL") || !manifest.start_url) fail("OFFLINE_SHELL_MISSING");
+if (!html.includes('href="./aigii-skin.css"')) fail("SKIN_STYLESHEET_LINK_MISSING");
+if (!overlay.includes("aig-home-hero") || !overlay.includes("aig-visual-runtime") || !overlay.includes('[data-home-runtime]')) fail("HOME_RGB_OVERLAY_MISSING");
+if (!rgbSkin.includes("home_mobile.jpg") || !rgbSkin.includes("home_desktop.jpg") || !rgbSkin.includes("aig-home-hero")) fail("PLATFORM_AUTHORITY_SKIN_MISSING");
+if (!sw.includes("374-live-rgb-runtime-v1") || !sw.includes('request.mode === "navigate"')) fail("OLD_SERVICE_WORKER_CACHE");
 new Function(overlay);
 const galleryScript = gallery.match(/<script>([\s\S]*?)<\/script>/i);
 if (!galleryScript) fail("GALLERY_SCRIPT_MISSING");
@@ -52,4 +58,4 @@ for (const entry of entries) {
 }
 if (countByType["官方 HOME"] !== 2 || countByType["頁面／機台參考"] !== 9 || countByType["按鈕圖示"] < 30) fail("ASSET_CLASSIFICATION");
 console.log("AIG_WEB_SITE_PACKAGE_PASS|INTERACTIVE_HOME_CAD_CAM_SIM_3_4_5_6_NC_AI|RGB=" +
-            entries.length + "|APPROVED_HOME_MOBILE_DESKTOP|OFFLINE_SHELL|NO_FAKE_PREVIEW|CNC_OUTPUT_DISABLED");
+            entries.length + "|APPROVED_HOME_MOBILE_DESKTOP|LIVE_RGB_SKIN|NO_ENGINEERING_DEFAULT|OFFLINE_SHELL|NO_FAKE_PREVIEW|CNC_OUTPUT_DISABLED");
