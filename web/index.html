@@ -7,12 +7,18 @@
 <meta name="color-scheme" content="dark">
 <title>AIG II · RGB Web Runtime</title>
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="mobile-layout.css">
 </head>
 <body>
 <div id="app" class="app-shell">
 <header class="topbar">
   <div class="brand"><span class="brand-orb">AIG</span><div><strong>AIG II</strong><small>RGB WEB RUNTIME · 0.001 mm</small></div></div>
   <nav id="main-nav" class="main-nav" aria-label="AIG II 主頁籤"></nav>
+  <div class="layout-chooser" role="group" aria-label="桌面與手機版型">
+    <button type="button" data-aig-view="auto" aria-pressed="true">自動</button>
+    <button type="button" data-aig-view="desktop" aria-pressed="false">桌面版</button>
+    <button type="button" data-aig-view="mobile" aria-pressed="false">手機版</button>
+  </div>
   <div class="ready"><i></i>LOCAL READY</div>
 </header>
 <main>
@@ -24,7 +30,16 @@
   <section class="workbench">
     <article class="authority-card">
       <div class="card-head"><div><b>AIG RGB AUTHORITY</b><small id="authority-class"></small></div><span id="authority-state" class="authority-state">REFERENCE</span></div>
-      <div class="authority-stage"><img id="authority-image" alt="AIG RGB Authority"></div>
+      <div class="authority-stage">
+        <img id="authority-image" alt="AIG RGB Desktop Authority">
+        <div id="mobile-viewport" class="mobile-viewport" aria-label="AIG-II 手機 RGB Web 版型" hidden>
+          <div class="mobile-app-title"><strong>AIG-II</strong><span id="mobile-page-label">HOME</span><small>CAM RGB GLASS</small></div>
+          <div class="mobile-art-top"><span id="mobile-page-caption">正式手機版 Web</span><span>0.001 mm</span></div>
+          <div class="mobile-art-view"><div id="mobile-page-display" class="mobile-page-display"></div></div>
+          <div id="mobile-page-features" class="mobile-page-features"></div>
+          <div class="mobile-page-foot">手機 Web 模組版型 · 非原生 4K Authority 圖</div>
+        </div>
+      </div>
       <div class="authority-meta"><span id="authority-source"></span><code id="authority-sha"></code></div>
     </article>
 
@@ -51,5 +66,6 @@
 <footer>HOME / CAD / CAM / SIM / 3AX / 4AX / 5AX / 6AX / NC / AI · NO ENGINEERING SHELL</footer>
 </div>
 <script src="app.js"></script>
+<script src="mobile-layout.js"></script>
 </body>
 </html>
