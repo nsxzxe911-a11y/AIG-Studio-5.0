@@ -1,8 +1,8 @@
-/* AIG-II RGB Glass v5 offline shell.
-   The real interactive Runtime is cached; the old gallery is not in the startup path. */
-const CACHE="aig-ii-rgb-glass-20261018-v5";
+/* AIG-II public website + separately routed CNC workbench.
+   Cache the actual portal and runtime; no engineering gallery in the startup path. */
+const CACHE="aig-ii-public-portal-and-rgb-runtime-20261018-v6";
 const SHELL=[
-  "./","./index.html","./mobile-runtime.html","./manifest.webmanifest",
+  "./","./index.html","./site.css","./site.js","./mobile-runtime.html","./manifest.webmanifest",
   "./runtime/page-runtime-router.js","./runtime/ai-page-runtime.js",
   "./runtime/layout-mode.js",
   "./authority/cam-unified-rgb-v1.css",
