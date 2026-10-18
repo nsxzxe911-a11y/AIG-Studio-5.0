@@ -1,0 +1,14 @@
+.screen[data-aig43-page]{--aig43-color:#43e9ff}
+.screen .aig43-bar{box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr);gap:7px;min-width:0;max-width:100%;width:100%;padding:10px 12px;margin-bottom:10px;border-radius:11px;background:linear-gradient(120deg,#061725,#0b1329);border:1px solid var(--aig43-color);color:#eefbff}
+.aig43-header{display:flex;align-items:baseline;gap:6px 13px;flex-wrap:wrap}
+.aig43-title{font-size:14px;font-weight:750}.aig43-hint{font-size:10px;color:#a7cbde}
+.aig43-actions{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.aig43-action{cursor:pointer;min-height:35px;padding:7px 11px;border:1px solid var(--aig43-color);border-radius:7px;background:#102841;color:#e9fbff;font-size:11px;font-weight:700}
+.aig43-action:disabled{cursor:not-allowed;opacity:.38;border-color:#385668}
+.aig43-action:focus-visible{outline:2px solid #ffd28c;outline-offset:2px}
+.aig43-metrics{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+.aig43-metric{display:flex;align-items:baseline;gap:5px;padding:5px 7px;border:1px solid #2a5670;border-radius:6px;background:#071725;max-width:100%;min-width:0}
+.aig43-metric small{font-size:10px;color:#a2c0d2;white-space:nowrap}
+.aig43-metric b{font-size:10px;color:#d4f6ff;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aig43-note{font-size:9px;color:#8fb4c8}
+.simgrid.aig41-workspace>.aig43-bar{grid-column:1/-1!important}

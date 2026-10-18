@@ -1,0 +1,22 @@
+html[data-aig-skin-platform="desktop"] .aig43-bar{padding:11px 15px!important;background:linear-gradient(120deg,#0c2439,#0d142a)!important}
+html[data-aig-skin-platform="desktop"] .aig43-title{font-size:15px!important}
+html[data-aig-skin-platform="desktop"] .screen.active[data-aig43-kind="cad"] .workgrid{grid-template-columns:minmax(0,2fr) minmax(270px,1fr)!important}
+html[data-aig-skin-platform="desktop"] .screen.active[data-aig43-kind="cam"] .camgrid{grid-template-columns:minmax(0,1.65fr) minmax(350px,1fr)!important}
+html[data-aig-skin-platform="desktop"] .screen.active[data-aig43-kind="nc"] .ncEditGrid{grid-template-columns:minmax(0,1.6fr) minmax(290px,1fr)!important}
+@media(min-width:901px){
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace{grid-template-rows:auto auto auto minmax(0,1fr)!important}
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-has-header="false"]{grid-template-rows:auto auto minmax(0,1fr)!important}
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace>.axisModuleHeader{grid-row:1!important}
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace>.aig43-bar{grid-row:2!important;grid-column:1/-1!important}
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace>.aig41-toolbar{grid-row:3!important}
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace>.simleft,
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace>.editor{grid-row:4!important}
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-has-header="false"]>.aig43-bar{grid-row:1!important}
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-has-header="false"]>.aig41-toolbar{grid-row:2!important}
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-has-header="false"]>.simleft,
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-has-header="false"]>.editor{grid-row:3!important}
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.editor{grid-column:1!important}
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.simleft{grid-column:2!important}
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-view="machine"]:not([data-axis-subpage="NC_FIRST"]){grid-template-columns:minmax(0,1.55fr) minmax(310px,1fr)!important}
+html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace .sceneWrap{height:clamp(330px,48svh,480px)!important;min-height:330px!important;max-height:480px!important}
+}

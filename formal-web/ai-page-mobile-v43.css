@@ -1,0 +1,18 @@
+html[data-aig-skin-platform="mobile"] .aig43-bar{padding:8px!important;gap:5px!important;background:#06111d!important}
+html[data-aig-skin-platform="mobile"] .aig43-title{font-size:12px!important}
+html[data-aig-skin-platform="mobile"] .aig43-actions,
+html[data-aig-skin-platform="mobile"] .aig43-metrics{flex-wrap:nowrap!important;overflow-x:auto!important;scrollbar-width:thin;min-width:0!important;max-width:100%!important}
+html[data-aig-skin-platform="mobile"] .aig43-action{min-height:40px!important;flex:0 0 auto!important;font-size:10px!important}
+html[data-aig-skin-platform="mobile"] .aig43-metric{flex:0 0 auto!important}
+html[data-aig-skin-platform="mobile"] .simgrid.aig41-workspace>.aig43-bar{order:1!important}
+html[data-aig-skin-platform="mobile"] .simgrid.aig41-workspace>.aig41-toolbar{order:2!important}
+html[data-aig-skin-platform="mobile"] .simgrid.aig41-workspace:not([data-aig41-view="code"])>.simleft{order:3!important}
+html[data-aig-skin-platform="mobile"] .simgrid.aig41-workspace:not([data-aig41-view="code"])>.editor{order:4!important}
+html[data-aig-skin-platform="mobile"] .simgrid.aig41-workspace[data-aig41-view="code"]>.editor,
+html[data-aig-skin-platform="mobile"] .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.editor{order:3!important}
+html[data-aig-skin-platform="mobile"] .simgrid.aig41-workspace[data-aig41-view="code"]>.simleft,
+html[data-aig-skin-platform="mobile"] .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.simleft{order:4!important}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace .sceneWrap{height:clamp(270px,43svh,365px)!important;min-height:270px!important;max-height:365px!important}
+html[data-aig-skin-platform="mobile"] .screen.active[data-aig43-kind="cad"] .workgrid,
+html[data-aig-skin-platform="mobile"] .screen.active[data-aig43-kind="cam"] .camgrid,
+html[data-aig-skin-platform="mobile"] .screen.active[data-aig43-kind="nc"] .ncEditGrid{display:flex!important;flex-direction:column!important;min-width:0!important}
