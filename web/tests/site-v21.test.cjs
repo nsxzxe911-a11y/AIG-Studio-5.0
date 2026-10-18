@@ -47,7 +47,7 @@ test('knowledge center, release record and real FAQ work with local relative pat
 
 test('offline V8 caches all 2.1 pages without changing the CNC workbench',()=>{
  const sw=read('formal-web','service-worker.js');
- assert.match(sw,/aig-ii-cam-sim-core-20261018-v14/);
+ assert.match(sw,/aig-ii-runtime-recovery-20261018-v15/);
  for(const item of ['index.html','guide.html','updates.html','faq.html','site-v21.css',
   'site-v21.js','mobile-runtime.html','runtime/page-runtime-router.js']){
   assert.ok(sw.includes('"./'+item+'"'),item);

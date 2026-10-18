@@ -76,7 +76,7 @@ test('old CNC Web runtime, 3AX-6AX and AI V2 are still present and syntactically
 });
 test('offline cache v14 publishes new CAM/SIM functionality without a fake machine connector',()=>{
  const sw=read('formal-web','service-worker.js');
- assert.match(sw,/aig-ii-cam-sim-core-20261018-v14/);
+ assert.match(sw,/aig-ii-runtime-recovery-20261018-v15/);
  assert.ok(sw.includes('cam-manual-path-v1.js'));
  assert.ok(sw.includes('aigii-cam-sim-workbench-v1.css'));
  assert.doesNotThrow(()=>new vm.Script(sw));

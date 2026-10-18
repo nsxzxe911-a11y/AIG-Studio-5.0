@@ -1944,7 +1944,13 @@ function makeRuntime(root){
       renderExec();updateUi();
     }
   }
-  draw();
+  // Do not repaint a 100k+ voxel WebGL machine while the user is drawing in CAD.
+  // Idle screens redraw only on explicit user actions or when made visible.
+  const axisScreen=root.closest(".screen");
+  const visible=Boolean(axisScreen?.classList.contains("active")&&document.visibilityState!=="hidden");
+  if(state.running&&visible&&now-(state.lastFrameDrawAt||0)>=(window.innerWidth<=800?33:16)){
+    draw();state.lastFrameDrawAt=now;
+  }
   }catch(err){
     state.running=false;
     const detail=err&&err.message?err.message:String(err||"未知錯誤");
@@ -2215,7 +2221,10 @@ function makeRuntime(root){
    if(toolTable){h1.value=toolTable.H1??h1.value;h4.value=toolTable.H4??h4.value;h12.value=toolTable.H12??h12.value}
  }catch{}
  state.reloadCode=code=>{ta.value=String(code??"");remember();parse()};
- const saved=aigStorageGet(root,"aig-code-"+axis,null,axis+" G-code");if(saved!=null)ta.value=saved;remember();parse();requestAnimationFrame(tick);
+ state.refreshView=()=>{updateUi();draw()};
+ const saved=aigStorageGet(root,"aig-code-"+axis,null,axis+" G-code");if(saved!=null)ta.value=saved;remember();parse();
+ root.dataset.aigInitialized="true";
+ requestAnimationFrame(tick);
 }
 
 
@@ -2649,6 +2658,10 @@ function makeCadRuntime(root){
  if(persisted?.shapes?.length)msgEl.textContent="Recovery：已自動還原 "+persisted.shapes.length+" 個 CAD 幾何。";
  [offsetInput,arrayCountInput,arraySpacingInput,dimInput].forEach(el=>{el.addEventListener("input",()=>aigGuard(root,"CAD 欄位驗證",validateCadFields,null,"warn"));el.addEventListener("change",()=>aigGuard(root,"CAD 欄位驗證",validateCadFields,null,"warn"))});
  validateCadFields();
+ root.aigCadApi={refreshView:()=>{updateInfo();draw()},getShapeCount:()=>state.shapes.length};
+ window.addEventListener("resize",()=>{
+   if(root.closest(".screen")?.classList.contains("active"))draw();
+ });
  setTool("SELECT");updateInfo();draw();
 }
 
@@ -2913,7 +2926,8 @@ function normalizeClosed(points,direction){
  }catch{}
  root.aigCamApi={
    recalc:()=>{loadCad();if(!state.strategy)state.strategy="PROFILE";calc();apply();return state.paths.length},
-   reload:loadCad
+   reload:loadCad,
+   refreshView:()=>{updateStats();draw()}
  };
  loadCad();updateManualUi();updateStats();draw();
 }
@@ -3444,7 +3458,18 @@ pages.forEach(([name,color])=>{
  screens.appendChild(s);
 });
 utilityPages.forEach(([name])=>{const s=document.createElement("section");s.className="screen";s.dataset.page=name;s.innerHTML=name==="刀路"?toolpathPage():menuPage();screens.appendChild(s)});
-document.querySelectorAll("[data-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,(el.dataset.runtime||"NC")+" Runtime 初始化",()=>makeRuntime(el),null,"error")});
+// Initialize the selected machining axis only on activation. Keeping four
+// high-fidelity WebGL contexts active at HOME/CAD previously starved the UI.
+const axisRoots=new Map();
+document.querySelectorAll("[data-runtime]").forEach(el=>{
+  aigBindFieldFeedback(el);
+  axisRoots.set(el.dataset.runtime,el);
+});
+function ensureAxisRuntime(axis){
+  const el=axisRoots.get(axis);
+  if(!el||el.dataset.aigInitialized==="true")return;
+  aigGuard(el,axis+" Runtime 初始化",()=>makeRuntime(el),null,"error");
+}
 document.querySelectorAll("[data-home-runtime]").forEach(el=>aigGuard(el,"HOME Runtime 初始化",()=>makeHomeRuntime(el),null,"warn"));
 document.querySelectorAll("[data-sim-hub]").forEach(el=>aigGuard(el,"SIM 中心初始化",()=>makeSimHubRuntime(el),null,"warn"));
 document.querySelectorAll("[data-nc-runtime]").forEach(el=>{aigBindFieldFeedback(el);aigGuard(el,"NC Runtime 初始化",()=>makeNcRuntime(el),null,"error")});
@@ -3457,9 +3482,23 @@ function show(name){
  aigApplyAdvancedVisibility();
  if(!pages.concat(utilityPages).some(p=>p[0]===name))name="HOME";
  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
- document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.dataset.page===name));
+ document.querySelectorAll(".screen").forEach(screen=>screen.classList.toggle("active",screen.dataset.page===name));
+ // The page must be visible before creating its WebGL context or sizing its canvas.
+ if(axisRoots.has(name))ensureAxisRuntime(name);
  history.replaceState(null,"","#"+encodeURIComponent(name));
- setTimeout(()=>window.dispatchEvent(new Event("resize")),0);
+ requestAnimationFrame(()=>{
+   const current=document.querySelector('.screen.active');
+   if(current?.dataset.page!==name)return;
+   const cad=current.querySelector("[data-cad-runtime]");
+   const cam=current.querySelector("[data-cam-runtime]");
+   const sim=current.querySelector("[data-sim-hub]");
+   if(cad?.aigCadApi)cad.aigCadApi.refreshView();
+   if(cam?.aigCamApi)cam.aigCamApi.refreshView();
+   if(sim?.aigSimApi)sim.aigSimApi.refresh();
+   const axis=current.querySelector("[data-runtime]");
+   if(axis&&runtimes[name]?.refreshView)runtimes[name].refreshView();
+   window.dispatchEvent(new Event("resize"));
+ });
 }
 const productionPageRouter=new AigPageRuntimeRouter({
  runtimeProvider:page=>page==="AI"?(document.querySelector("[data-ai-page-runtime]")?._aigAiRuntime||null):null,
