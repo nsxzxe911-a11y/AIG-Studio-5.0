@@ -1,0 +1,81 @@
+{
+  "schema": "aig-dual-web-shared-v34",
+  "release": "35.0.0",
+  "date": "2026-10-18",
+  "website": "https://aig-dual-formal-runtime.onrender.com/index.html#dual-projects",
+  "originalRenderService": "srv-db8v565g1s2s738paemg",
+  "websiteRepository": "nsxzxe911-a11y/AIG-Studio-5.0",
+  "websiteBranch": "web/aig-dual-formal-runtime-20261016",
+  "previousVerifiedWebCommit": "dcc43fc0e77a7966898e1c7dc0da7fe51b4be998",
+  "projects": [
+    {
+      "id": "AIGII",
+      "label": "AIG-II",
+      "entry": "./mobile-runtime.html#HOME",
+      "webVersion": "35.0.0",
+      "nativeRepo": "nsxzxe911-a11y/AIG-II",
+      "nativeVersion": "432.0.0",
+      "nativeSourceSha": "778f02c56a486d197d3ddded6695fbdda5625865"
+    },
+    {
+      "id": "STUDIO",
+      "label": "AIG Studio 5.0",
+      "entry": "./studio-375.html#HOME",
+      "webVersion": "35.0.0",
+      "nativeRepo": "nsxzxe911-a11y/AIG-Studio-5.0",
+      "nativeVersion": "375.0.0",
+      "nativeSourceSha": "67fbe2719c1e149125dd569386f9323379f7ab10"
+    }
+  ],
+  "commonModule": "./dual-web-v35.js",
+  "pages": [
+    "HOME",
+    "CAD",
+    "CAM",
+    "SIM",
+    "3AX",
+    "4AX",
+    "5AX",
+    "6AX",
+    "NC",
+    "AI"
+  ],
+  "retained": [
+    "site/portal",
+    "RGB runtime",
+    "3-6AX V33 voxel surface cache",
+    "V32 FPS/automatic pixels",
+    "V31 removal evidence",
+    "V30 coordinates",
+    "V29 callbacks",
+    "local CAD/CAM/NC data"
+  ],
+  "compatibility": {
+    "webSharedRelease": true,
+    "bothLoadSameModule": true,
+    "pageNavigationDelegatesExistingCallbacks": true,
+    "localStorageSeparated": true,
+    "nativeBinariesUnmodified": true,
+    "machineOutputDisabled": true
+  },
+  "gate": {
+    "webSource": "CHECK_ON_RENDER_DEPLOY",
+    "webVisualRuntime": "REQUIRES_REAL_BROWSER_VISUAL_EVIDENCE",
+    "android": "NOT_BUILT",
+    "windows": "NOT_BUILT",
+    "cncSafety": "NOT_VERIFIED",
+    "nativeExactSha": "EXPLICITLY_PINNED_NOT_EQUAL_VERSION",
+    "machineGeometry": "PROCEDURAL_3D_VISUAL_NOT_AUTHORITY_GLB"
+  },
+  "note": "V34 common Web runtime train is synchronized across 2 pages. Native AIG-II 432.0.0 and Studio 375.0.0 are NOT numerically unified nor verified as a joint native build.",
+  "commonAxisModule": "axis-machine-v35.js",
+  "axisRendererDetails": {
+    "aig": "enhanced native WebGL machine profiles per 3/4/5/6AX",
+    "studio": "replaces generic table placeholders with genuine four separate WebGL machine profiles",
+    "telemetry": "after viewport so visible on phone",
+    "authenticAuthorityGLB": false,
+    "safetyGate": "NOT_VERIFIED"
+  },
+  "commonUiSource": "./dual-web-v35.css",
+  "commonRuntimeSource": "./dual-web-v35.js"
+}
