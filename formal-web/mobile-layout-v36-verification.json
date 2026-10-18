@@ -1,0 +1,19 @@
+{
+  "version": "36.0.0",
+  "checks": {
+    "v36Scripts": [
+      3,
+      2
+    ],
+    "htmlBoth": true,
+    "nativePinsUnchanged": true,
+    "phoneRuleCheck": true,
+    "version": "36.0.0"
+  },
+  "affected": [
+    "AIG-II",
+    "Studio 375"
+  ],
+  "nativeRuntimeModified": false,
+  "actualVisualPhone": "PENDING"
+}
