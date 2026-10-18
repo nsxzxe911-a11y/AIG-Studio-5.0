@@ -1,6 +1,6 @@
 {
   "schema": "aigii-render-dual-latest-v1",
-  "date": "2026-10-18",
+  "date": "2026-10-19",
   "kind": "WEB_RUNTIME_ADDITIVE_NATIVE_NOT_HOSTED",
   "controller": {
     "repo": "nsxzxe911-a11y/AIG-II",
@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V43 style-authority schema-driven 10-page UI generator on two real workspaces, uses existing callbacks and disables missing actions. Separate phone/desktop skins, V40 no G-code scroll retained; not new native AI or CNC algorithm.",
+  "notes": "Web V44 adds 84 real-control slots, live axis telemetry, CAM/NC advisory checks and workspace focus. Native exact SHA and version remain pinned, not upgraded.",
   "sharedWebRelease": {
-    "version": "43.0.0",
-    "train": "V43",
+    "version": "44.0.0",
+    "train": "V44",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "43.0.0"
+        "version": "44.0.0"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "43.0.0"
+        "version": "44.0.0"
       }
     ],
     "commonRuntimeSource": "./dual-web-v43.js",
     "commonUiSource": "./dual-web-v43.css",
-    "releaseManifest": "./dual-web-v43.json",
+    "releaseManifest": "./dual-web-v44.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",
@@ -104,12 +104,14 @@
       "archiveImages": "PENDING"
     },
     "aiPageGenerator": {
-      "schema": "./ai-page-contract-v43.json",
-      "runtime": "./ai-page-v43.js",
+      "schema": "./ai-page-contract-v44.json",
+      "base": "./ai-page-contract-v43.json",
+      "runtime": "./ai-page-v44.js",
       "platforms": [
         "mobile",
         "desktop"
       ],
+      "noFakeButtons": true,
       "doesNotOverwriteWork": true
     }
   }

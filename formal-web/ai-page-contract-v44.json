@@ -1,0 +1,54 @@
+{
+  "schema": "AIG-AI-PAGE-ENHANCEMENT-V44",
+  "version": "44.0.0",
+  "base": "./ai-page-contract-v43.json",
+  "styleAuthority": "AIGII-RGB-GLASS-20261018-STYLE-V1",
+  "pages": [
+    "HOME",
+    "CAD",
+    "CAM",
+    "SIM",
+    "3AX",
+    "4AX",
+    "5AX",
+    "6AX",
+    "NC",
+    "AI"
+  ],
+  "addedSlots": {
+    "HOME": 5,
+    "CAD": 10,
+    "CAM": 11,
+    "SIM": 1,
+    "3AX": 11,
+    "4AX": 11,
+    "5AX": 14,
+    "6AX": 14,
+    "NC": 4,
+    "AI": 3
+  },
+  "totalAdditionalSlots": 84,
+  "features": [
+    "real-only selectors; unavailable controls disabled",
+    "MANUAL CAM original core read-only precheck",
+    "advisory G-code cross-axis/G20/G91/M98 scan",
+    "original live axis readouts and removal telemetry",
+    "responsive compact focus and desktop 72% machine view"
+  ],
+  "retained": [
+    "V40 no NC auto scroll",
+    "V41 three workspace modes",
+    "V42 separate platform skins",
+    "V43 original generated controls",
+    "local data and 3D renderers"
+  ],
+  "machineOutputEnabled": false,
+  "verified": "SOURCE_SYNTAX_ONLY",
+  "notVerified": [
+    "real phone/desktop screenshots",
+    "native APK/EXE",
+    "CNC safety Gate",
+    "authority GLB",
+    "end-to-end 0.001mm proof"
+  ]
+}
