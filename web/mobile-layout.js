@@ -12,7 +12,7 @@
  const image=document.getElementById('authority-image');
  if(!stage||!region||!featureBox||!image)return;
  const controls=Array.from(document.querySelectorAll('[data-aig-view]'));
- const legacyPages=new Set(['CAD','CAM','3AX','4AX','5AX','6AX']);
+ const runtimePages=new Set(['HOME','CAD','CAM','SIM','3AX','4AX','5AX','6AX','NC','AI']);
  let mode='auto';
  try{const saved=window.localStorage&&window.localStorage.getItem(modeKey);if(modes.includes(saved))mode=saved;}catch(_){}
  let currentEmbedded='';
@@ -63,12 +63,12 @@
    mobileNav.appendChild(button);
   }
   region.replaceChildren(mobileNav);
-  if(legacyPages.has(page)){
+  if(runtimePages.has(page)){
    const frame=document.createElement('iframe');
-   frame.title='AIG-II '+page+' 手機 Web 真 Runtime 預覽';
+   frame.title='AIG-II '+page+' 手機 Web Runtime';
    frame.setAttribute('loading','eager');
    frame.setAttribute('referrerpolicy','same-origin');
-   frame.src='./legacy-runtime.html#'+encodeURIComponent(page);
+   frame.src='./mobile-runtime.html#'+encodeURIComponent(page);
    region.appendChild(frame);
    currentEmbedded=page;
   }else{
@@ -83,6 +83,8 @@
   stage.hidden=!active;
   controls.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.aigView===mode)));
   const page=pageKey();
+  const full=document.getElementById('mobile-open-full');
+  if(full)full.href='./mobile-runtime.html#'+encodeURIComponent(page);
   if(active){
    if(stage.dataset.page!==page || !region.querySelector('.mobile-quicknav')){
     pageContent(page);stage.dataset.page=page;
