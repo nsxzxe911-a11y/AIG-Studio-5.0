@@ -1,0 +1,30 @@
+{
+  "version": "32",
+  "feature": "Per-axis measured WebGL FPS & JS CPU render cost, optional adaptive framebuffer pixels",
+  "projects": [
+    "AIG-II",
+    "Studio 375"
+  ],
+  "source": "existing browser runtime render method",
+  "pixelScaleRange": [
+    0.65,
+    1
+  ],
+  "adjustmentCadenceMs": 3800,
+  "qualityLevelsChange": false,
+  "geometryOrNcChange": false,
+  "backgroundCanvasRender": false,
+  "retains": [
+    "V31 evidence",
+    "V30 HUD",
+    "V29 real shortcuts",
+    "V28 action command",
+    "original RGB skins and dual project site"
+  ],
+  "limitations": [
+    "FPS is successful WebGL render call cadence, not measured GPU frame time",
+    "material removal voxel precision is not 0.001 mm",
+    "browser machine output disabled",
+    "Release Gate and hardware FPS not verified"
+  ]
+}

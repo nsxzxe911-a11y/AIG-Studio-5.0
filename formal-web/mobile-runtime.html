@@ -181,7 +181,8 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./runtime-uiux-v25.css"><link rel="stylesheet" href="./runtime-nav-v27.css"><link rel="stylesheet" href="./runtime-actions-v28.css">
 <link rel="stylesheet" href="./runtime-quick-v29.css">
 <link rel="stylesheet" href="./axis-hud-v30.css">
-<link rel="stylesheet" href="./axis-evidence-v31.css"></head>
+<link rel="stylesheet" href="./axis-evidence-v31.css">
+<link rel="stylesheet" href="./axis-performance-v32.css"></head>
 <body>
 <div class="app">
 <header class="top">
@@ -1200,6 +1201,33 @@ function makeGlScene(canvas,axis){
  const gl=canvas.getContext("webgl",{antialias:true,alpha:false,preserveDrawingBuffer:false});
  if(!gl)return null;
  let lost=false;canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();lost=true});canvas.addEventListener("webglcontextrestored",()=>{lost=false});
+ // V32 samples actual successful WebGL render calls. JS ms excludes asynchronous GPU execution.
+ const v32Perf={frames:0,fps:null,jsMs:null,lastTime:0,lastCheck:0,auto:true,scale:1};
+ function v32ReadPerformance(){return{fps:v32Perf.fps,jsMs:v32Perf.jsMs,frames:v32Perf.frames,auto:v32Perf.auto,scale:v32Perf.scale,canvas:canvas.width+"×"+canvas.height,contextLost:lost};}
+ function v32SetAuto(value){v32Perf.auto=Boolean(value);if(!v32Perf.auto)v32Perf.scale=1;v32Perf.lastCheck=performance.now();return v32ReadPerformance();}
+ function v32Render(scene){
+   const start=performance.now();
+   const ok=render(scene);
+   const end=performance.now();
+   if(!ok)return false;
+   const delta=v32Perf.lastTime?end-v32Perf.lastTime:0;
+   v32Perf.lastTime=end;
+   v32Perf.frames++;
+   if(delta>=5&&delta<300){const fps=Math.min(144,1000/delta);v32Perf.fps=v32Perf.fps===null?fps:v32Perf.fps*.88+fps*.12}
+   else if(delta>=300){v32Perf.fps=null;v32Perf.jsMs=null;v32Perf.lastCheck=end;}
+   const cost=Math.max(0,end-start);
+   v32Perf.jsMs=v32Perf.jsMs===null?cost:v32Perf.jsMs*.84+cost*.16;
+   // Alter framebuffer size ONLY; never change stock-grid fidelity or the removal evidence buffers.
+   if(v32Perf.auto&&v32Perf.frames>40&&end-v32Perf.lastCheck>3800){
+     const slow=(v32Perf.fps!==null&&v32Perf.fps<39)||(v32Perf.jsMs!==null&&v32Perf.jsMs>23);
+     const fast=v32Perf.fps!==null&&v32Perf.fps>55&&v32Perf.jsMs!==null&&v32Perf.jsMs<12;
+     if(slow)v32Perf.scale=Math.max(.65,Math.round((v32Perf.scale-.08)*100)/100);
+     else if(fast)v32Perf.scale=Math.min(1,Math.round((v32Perf.scale+.04)*100)/100);
+     v32Perf.lastCheck=end;
+   }
+   return true;
+ }
+
  // Rendering grid density and canvas resolution are independent of 0.001 mm NC coordinates.
  const FIDELITY=Object.freeze({FAST:{height:40,xy:26,z:16,dpr:1.5,pixels:1800000,steps:56},BALANCED:{height:64,xy:38,z:24,dpr:2,pixels:3200000,steps:88},DETAIL:{height:104,xy:56,z:36,dpr:3,pixels:8200000,steps:140}});
  let quality=(typeof window!=="undefined"&&window.matchMedia&&window.matchMedia("(max-width: 800px)").matches)?"BALANCED":"DETAIL";
@@ -1515,7 +1543,7 @@ function makeGlScene(canvas,axis){
  function resize(){
    const cfg=FIDELITY[quality],r=canvas.getBoundingClientRect();
    const cssArea=Math.max(1,r.width*r.height);
-   const dpr=Math.max(1,Math.min(devicePixelRatio||1,cfg.dpr,Math.sqrt(cfg.pixels/cssArea)));
+   const dpr=Math.max(.5,Math.min(devicePixelRatio||1,cfg.dpr,Math.sqrt(cfg.pixels/cssArea))*v32Perf.scale);
    const w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));
    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
    gl.viewport(0,0,w,h);
@@ -1692,7 +1720,7 @@ function makeGlScene(canvas,axis){
    return{quality,grid:axis==="3AX"?removalCache.n+"×"+removalCache.n:voxelCache.nx+"×"+voxelCache.ny+"×"+voxelCache.nz,
     cell,frame:canvas.width+"×"+canvas.height};
  }
- return{render,camera,getRemoval:()=>({...lastRemoval}),getFidelity,setQuality};
+ return{render:v32Render,camera,getRemoval:()=>({...lastRemoval}),getFidelity,setQuality,getPerformance:v32ReadPerformance,setAutoScale:v32SetAuto};
 }
 
 function buildAdaptive2DPaths(shape,p,levels){
@@ -1764,6 +1792,7 @@ function makeRuntime(root){
 
  const axis=root.dataset.runtime,ta=root.querySelector("textarea.code"),canvas=root.querySelector("[data-canvas]"),ctx=canvas.getContext("2d"),glCanvas=root.querySelector("[data-glcanvas]");
  const glScene=aigGuard(root,axis+" WebGL 初始化",()=>makeGlScene(glCanvas,axis),null,"warn");
+ root.aigVisualV32=glScene?Object.freeze({read:()=>glScene.getPerformance(),setAuto:on=>glScene.setAutoScale(on)}):null;
  if(!glScene)aigShowIssue(root,"warn",axis+" WebGL 無法使用，已自動切換 2D fallback；G-code、模擬控制與編輯器仍可繼續使用。");
  const toolInput=root.querySelector("[data-tool-dia]"),safeInput=root.querySelector("[data-safe-z]"),g73Input=root.querySelector("[data-g73-retract]"),cutterInput=root.querySelector("[data-cutter-len]"),holderDiaInput=root.querySelector("[data-holder-dia]"),holderLenInput=root.querySelector("[data-holder-len]");
  const g54x=root.querySelector("[data-g54-x]"),g54y=root.querySelector("[data-g54-y]"),g54z=root.querySelector("[data-g54-z]");
@@ -2027,6 +2056,7 @@ function makeRuntime(root){
  }
  function draw(){
   if(!state.parsed)return;
+  if(!root.closest(".screen")?.classList.contains("active"))return;
   const renderCfg=settings(),renderBlock=currentBlock()||state.parsed?.blocks?.[state.parsed.blocks.length-1]||null;
   const webglOk=glScene?.render({
     parsed:state.parsed,index:state.index,t:state.t,pos:currentPos(),motionRole:runtimeMotionRole,toolDia:runtimeToolDiameter(renderCfg,renderBlock),toolDiameters:renderCfg.toolDiameters,activeTool:runtimeToolNumber(renderBlock),cutterLen:renderCfg.cutterLen,holderDia:renderCfg.holderDia,holderLen:renderCfg.holderLen,stock:stockConfig,assembly:assemblyConfig,collisionAlarm:state.collisionAlarm,setupClearance:state.setupClearance,requiredClearance:state.requiredClearance,dry:state.dry,
@@ -3544,5 +3574,6 @@ aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash
 <script src="./runtime-actions-v28.js"></script>
 <script src="./runtime-quick-v29.js"></script>
 <script src="./axis-hud-v30.js"></script>
-<script src="./axis-evidence-v31.js"></script></body>
+<script src="./axis-evidence-v31.js"></script>
+<script src="./axis-performance-v32.js"></script></body>
 </html>

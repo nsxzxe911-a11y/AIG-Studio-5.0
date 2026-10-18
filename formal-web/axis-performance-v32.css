@@ -1,0 +1,13 @@
+/* V32 runtime rendering controls: measured JS frame timings, adaptive framebuffer DPR only.
+   Never alter existing CNC parser, voxel/heightfield quality or machine output. */
+.simgrid.v30-axis-runtime .v32-perf{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:6px 8px;margin-top:8px;background:#091e2a;border:1px solid #326482;border-radius:9px}
+.simgrid.v30-axis-runtime .v32-perf-title{color:#a5e6f9;font-size:11px;font-weight:800;margin-right:4px}
+.simgrid.v30-axis-runtime .v32-perf-metric{display:inline-flex;align-items:baseline;gap:3px;padding:4px 6px;border-radius:6px;background:#07131f;border:1px solid #29435e;min-height:29px}
+.simgrid.v30-axis-runtime .v32-perf-metric small{font-size:9px;color:#a2bcce}
+.simgrid.v30-axis-runtime .v32-perf-metric b{font:700 11px/1.3 ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;color:#e5f7ff}
+.simgrid.v30-axis-runtime .v32-auto{margin-left:auto;padding:6px 11px;min-height:34px;cursor:pointer;border-radius:7px;border:1px solid #48a3d9;background:linear-gradient(130deg,#113454,#0a1b38);color:#c7ecff;font:750 11px/1.3 "Noto Sans TC",sans-serif}
+.simgrid.v30-axis-runtime .v32-auto[aria-pressed="true"]{border-color:#79e8fb;background:linear-gradient(130deg,#215c8f,#352d77);box-shadow:0 0 8px #247acc66;color:#fff}
+.simgrid.v30-axis-runtime .v32-auto:disabled{opacity:.46;cursor:not-allowed}
+.simgrid.v30-axis-runtime .v32-auto:focus-visible{outline:2px solid #ffd47d;outline-offset:2px}
+.simgrid.v30-axis-runtime .v32-perf-note{width:100%;font-size:10px;line-height:1.4;margin:1px 0 0;color:#98b8c7}
+@media(max-width:650px){.simgrid.v30-axis-runtime .v32-auto{margin-left:0}.simgrid.v30-axis-runtime .v32-perf-title{flex-basis:100%}}
