@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "aig-studio-runtime-";
-const CACHE_NAME = CACHE_PREFIX + "373-approved-home-multi-platform-v1";
-const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest"];
+const CACHE_NAME = CACHE_PREFIX + "374-live-rgb-runtime-v1";
+const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./aigii-skin.css", "./aigii-overlay.js"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -9,63 +9,42 @@ self.addEventListener("install", event => {
       .then(() => self.skipWaiting())
   );
 });
-
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(
-        keys
-          .filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      ))
+      .then(keys => Promise.all(keys.filter(k => k.startsWith(CACHE_PREFIX) && k !== CACHE_NAME).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
-
 self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET") return;
-
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-
   if (request.mode === "navigate") {
-    const update = fetch(request).then(async response => {
-      if (response && response.ok) {
-        const cache = await caches.open(CACHE_NAME);
-        await cache.put("./index.html", response.clone());
-      }
-      return response;
-    });
-
-    event.waitUntil(update.then(() => undefined).catch(() => undefined));
+    // Prefer fresh HTML; offline restores only the last known working page.
     event.respondWith(
-      caches.open(CACHE_NAME).then(async cache => {
-        const cached = await cache.match("./index.html");
-        if (cached) return cached;
-        try {
-          return await update;
-        } catch {
-          return new Response("AIG Runtime offline cache is not ready yet.", {
-            status: 503,
-            headers: {"Content-Type": "text/plain; charset=utf-8"}
-          });
+      fetch(request).then(async response => {
+        if (response && response.ok && url.pathname !== "/gallery.html") {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put("./index.html", response.clone());
         }
+        return response;
+      }).catch(async () => {
+        const cache = await caches.open(CACHE_NAME);
+        return (await cache.match(url.pathname.endsWith("/gallery.html") ? "./gallery.html" : "./index.html")) ||
+          new Response("網站離線快取尚未就緒", {status:503,headers:{"Content-Type":"text/plain; charset=utf-8"}});
       })
     );
     return;
   }
-
   event.respondWith(
-    caches.match(request).then(cached => {
-      if (cached) return cached;
-      return fetch(request).then(async response => {
-        if (response && response.ok) {
-          const cache = await caches.open(CACHE_NAME);
-          await cache.put(request, response.clone());
-        }
-        return response;
-      });
-    })
+    caches.match(request).then(cached => cached || fetch(request).then(async response => {
+      if (response && response.ok) {
+        const cache = await caches.open(CACHE_NAME);
+        await cache.put(request, response.clone());
+      }
+      return response;
+    }))
   );
 });
