@@ -1,12 +1,14 @@
 /* AIG-II public website + separately routed CNC workbench.
    Cache the actual portal and runtime; no engineering gallery in the startup path. */
-const PREVIOUS_CACHE="aig-ii-authority-revocation-20261018-v18";
-const CACHE="aig-ii-original-render-v4-20261018-v20";
+const REVOKED_CACHE="aig-ii-authority-revocation-20261018-v18";
+const PREVIOUS_CACHE="aig-ii-original-render-v4-20261018-v20";
+const CACHE="aig-ii-original-render-v4-ai-update-20261018-v21";
 const SHELL=[
   "./","./index.html","./image-library.html","./visual-library.css","./visual-library.js","./visual-library/manifest.json","./visual-library/authority-revocations-438.json","./runtime-visual-reference.css","./runtime/visual-reference-v1.js","./guide.html","./updates.html","./faq.html","./project-sync.html","./site.css","./site-v2.css","./site-v21.css","./site-phase4.css","./project-sync.css","./site.js","./site-v21.js","./project-transfer.js","./project-sync.js","./phase4.css","./mobile-runtime.html","./manifest.webmanifest",
   "./runtime/page-runtime-router.js","./runtime/ai-page-runtime.js","./runtime/cam-manual-path-v1.js",
   "./runtime/layout-mode.js",
   "./site-frontpage-v3.css","./site-v4.css","./insights.html","./insights-v4.js","./status.html","./status-v4.js",
+  "./ai-updates.html","./ai-updates.js","./ai-update-manifest.json","./site-ai-updates-v1.css",
   "./authority/cam-unified-rgb-v1.css",
   "./authority/desktop-mobile-layout-v1.css",
   "./authority/aigii-rgb-glass-runtime-20261018-v1.css",

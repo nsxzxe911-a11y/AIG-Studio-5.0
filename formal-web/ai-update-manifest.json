@@ -1,0 +1,35 @@
+{
+  "schema": "aigii-web-ai-publication-v1",
+  "kind": "WEB_AI_MODULE_MANIFEST_NOT_NATIVE_RELEASE",
+  "module": "Web AI Orchestrator",
+  "moduleVersion": "2.0.0",
+  "moduleId": "AIG_WEB_AI_ORCHESTRATOR_V2",
+  "sourcePath": "formal-web/runtime/ai-page-runtime.js",
+  "sourceGitBlobSha": "013b1877c1e1a0098ba864e9df36c8c9608cd33a",
+  "sourceUrl": "https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/blob/web/aig-dual-formal-runtime-20261016/formal-web/runtime/ai-page-runtime.js",
+  "publicationDate": "2026-10-18",
+  "scope": "LOCAL_FIRST_ADVISORY_ONLY",
+  "supportedAxes": [
+    "3AX",
+    "4AX",
+    "5AX",
+    "6AX"
+  ],
+  "capabilities": [
+    "local_cad_cam_nc_snapshot",
+    "NC-first_guidance",
+    "manual_cam_first_guidance",
+    "NC_syntax_hints",
+    "machining_precheck_advice"
+  ],
+  "unverified": [
+    "remote_AI_model_connection",
+    "native_CNC_engine_in_web",
+    "real_material_removal_gate",
+    "machine_output_safety",
+    "native_APK_EXE_release"
+  ],
+  "machineOutputEnabled": false,
+  "automaticCodeDeployment": false,
+  "note": "網站此清單只描述已存在的 Web AI V2 元件。新增更新入口不等於升級 AI 模型或 CNC 加工核心；真實程式更新須由已驗證原始碼部署。"
+}
