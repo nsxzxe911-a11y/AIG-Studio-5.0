@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V41 improves both browser CNC machining workspaces with genuine layout actions: Machine-first, Balanced, Program-first. Main 3D viewport stays visible by view priority; no canvas DOM replacement and V40 G-code no-auto-scroll preserved. Native 432 and 375 untouched.",
+  "notes": "V42 introduces two independent working responsive CSS skin systems for Mobile/Desktop across the existing two browser CNC projects. AIG-10.rar source images were NOT accessible for inspection/extraction in this chat; do NOT claim the uploaded archive's PNGs are deployed. Original CNC core and user's working copy preserved.",
   "sharedWebRelease": {
-    "version": "41.0.0",
-    "train": "V41",
+    "version": "42.0.0",
+    "train": "V42",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "41.0.0"
+        "version": "42.0.0"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "41.0.0"
+        "version": "42.0.0"
       }
     ],
-    "commonRuntimeSource": "./dual-web-v41.js",
-    "commonUiSource": "./dual-web-v41.css",
-    "releaseManifest": "./dual-web-v41.json",
+    "commonRuntimeSource": "./dual-web-v42.js",
+    "commonUiSource": "./dual-web-v42.css",
+    "releaseManifest": "./dual-web-v42.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",
@@ -96,6 +96,12 @@
         "code"
       ],
       "preservesV40NoAutoScroll": true
+    },
+    "separatePlatformSkin": {
+      "mobile": "./skin-mobile-v42.css",
+      "desktop": "./skin-desktop-v42.css",
+      "automatic": "./skin-platform-v42.js",
+      "archiveImages": "PENDING"
     }
   }
 }

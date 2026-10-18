@@ -1,0 +1,147 @@
+/* V42 REAL MOBILE SKIN, independent from desktop.
+   All ten original working pages keep their original runtime components and callbacks.
+   Deliberately NO image placeholder/fake buttons: archive binaries not yet inspected. */
+html[data-aig-skin-platform="mobile"]{
+ --aig42-base:#020407;--aig42-panel:#071623;--aig42-panel-2:#0c2235;
+ --aig42-glass:#0e2638d9;--aig42-line:#378db1;--aig42-electric:#5ddcff;
+ --aig42-text:#e6f9ff;--aig42-muted:#9bb9d0;
+ color-scheme:dark;
+}
+html[data-aig-skin-platform="mobile"] body{
+ background:radial-gradient(circle at 50% 0,#0d1933 0,#03060b 38%,#020407 85%)!important;
+ color:var(--aig42-text);overflow-x:clip!important;
+}
+html[data-aig-skin-platform="mobile"] .app{
+ box-sizing:border-box!important;max-width:min(100%,480px)!important;
+ min-width:0!important;width:100%!important;margin-inline:auto!important;
+ border-inline:1px solid #17466b!important;
+ background:linear-gradient(180deg,#060d19 0,#020407 80%)!important
+}
+html[data-aig-skin-platform="mobile"] .app>.top{
+ box-sizing:border-box!important;display:flex!important;flex-flow:row wrap!important;
+ justify-content:flex-start!important;align-items:center!important;gap:6px!important;
+ padding:7px!important;background:#05101ce8!important;
+ border-bottom:1px solid #3284a8!important;
+}
+html[data-aig-skin-platform="mobile"] .app>.top>.brand{flex:1 1 120px!important;min-width:0!important}
+html[data-aig-skin-platform="mobile"] .app>.top>.nav{
+ order:99!important;flex:0 0 100%!important;display:flex!important;flex-wrap:nowrap!important;
+ overflow-x:auto!important;overflow-y:hidden!important;gap:5px!important;
+ max-width:100%!important;min-width:0!important;scrollbar-width:thin!important;
+ overscroll-behavior-x:contain!important;padding-bottom:4px!important
+}
+html[data-aig-skin-platform="mobile"] .app>.top>.nav button{
+ flex:0 0 67px!important;min-width:67px!important;min-height:42px!important;
+ border-radius:8px!important;padding:6px 4px!important;font-size:11px!important;
+ background:linear-gradient(145deg,#0a1e31,#0b2740)!important;
+ border:1px solid #256986!important;color:#d4f5ff!important;
+ box-shadow:inset 0 1px #ffffff12!important
+}
+html[data-aig-skin-platform="mobile"] .app>.top>.nav button.active,
+html[data-aig-skin-platform="mobile"] .app>.top>.nav button[aria-current="page"],
+html[data-aig-skin-platform="mobile"] .app>.top>.nav button.selected{
+ border-color:#62ddff!important;color:#fff!important;
+ box-shadow:0 0 10px #13aff64a,inset 0 1px #ffffff39!important;
+}
+html[data-aig-skin-platform="mobile"] .app>.shell{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;padding:7px!important;background:transparent!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active{min-width:0!important;width:100%!important;max-width:100%!important}
+html[data-aig-skin-platform="mobile"] .screen.active .panel{
+ box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
+ border:1px solid #285b77!important;border-radius:11px!important;
+ background:linear-gradient(160deg,#081c2d,#07121e)!important;
+ box-shadow:0 6px 16px #0005!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .panel .head{
+ background:#0b2135a8!important;border-bottom:1px solid #285875!important;
+ padding:9px 11px!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .btn,
+html[data-aig-skin-platform="mobile"] .screen.active button[data-aig41-layout]{
+ min-height:38px!important;border-radius:8px!important;
+ font-size:11px!important;line-height:1.4!important;overflow-wrap:anywhere
+}
+html[data-aig-skin-platform="mobile"] .screen.active .btn.play{
+ background:linear-gradient(125deg,#07577e,#224c8b)!important;border-color:#58cdf2!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .btn.danger{
+ border-color:#be6c63!important;background:#391a26!important
+}
+/* Exact CNC machining controls remain above NC editing on MACHINE workpages. */
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ gap:8px!important;min-width:0!important;width:100%!important;max-width:100%!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace>.aig41-toolbar{
+ padding:8px!important;gap:5px!important;min-width:0!important;
+ border-radius:9px!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace .aig41-description{display:none}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace .aig41-layout-choices{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:4px!important;width:100%!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace .aig41-layout-button{
+ min-height:33px!important;min-width:0!important;padding:6px 4px!important;font-size:10px!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace>.simleft,
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace>.editor{
+ box-sizing:border-box!important;min-width:0!important;width:100%!important;max-width:100%!important;
+ flex:0 0 auto!important;grid-column:auto!important;grid-row:auto!important;
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace>.simleft{order:2!important}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace>.editor{order:3!important}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace[data-aig41-view="code"]>.editor,
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.editor{order:2!important}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace[data-aig41-view="code"]>.simleft,
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.simleft{order:3!important}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace>.axisModuleHeader{order:0!important}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid.aig41-workspace>.aig41-toolbar{order:1!important}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid .simleft .sceneWrap{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ height:clamp(270px,37svh,365px)!important;
+ min-height:270px!important;max-height:365px!important;
+ border:1px solid #3393b7!important;border-radius:10px!important;
+ overflow:hidden!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid[data-axis-subpage="NC_FIRST"] .simleft .sceneWrap{
+ height:clamp(230px,32svh,300px)!important;min-height:230px!important;max-height:300px!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid[data-aig41-view="code"] .simleft .sceneWrap{
+ height:clamp(235px,33svh,310px)!important;min-height:235px!important;max-height:310px!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid .axisbar{flex-wrap:wrap!important;gap:4px!important}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid .axisbar .axis{
+ flex:1 1 86px!important;min-width:0!important;font-size:11px!important;padding:5px!important;
+ background:#091a2d!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid .controls{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:5px!important;min-width:0!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid .controls .btn{
+ box-sizing:border-box!important;min-width:0!important;width:100%!important;
+ min-height:38px!important;padding:6px 2px!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid .editor textarea.code{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;height:clamp(210px,31svh,350px)!important;
+ min-height:210px!important;max-height:350px!important;overflow:auto!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid .runtimeStatus,
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid .v30-hud{
+ min-width:0!important;max-width:100%!important;overflow-wrap:normal!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .aig37-collapse{
+ display:block!important;min-width:0!important;width:100%!important
+}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid .metric{word-break:normal!important}
+html[data-aig-skin-platform="mobile"] .screen.active .simgrid .execView[data-exec]{
+ overflow-x:auto!important;overflow-y:auto!important;overflow-anchor:none!important
+}
+@media(max-width:380px){
+ html[data-aig-skin-platform="mobile"] .screen.active .simgrid .controls{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ html[data-aig-skin-platform="mobile"] .screen.active .simgrid .editor .editorbar{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}

@@ -1,0 +1,112 @@
+/* V42 DESKTOP RGB SKIN, independent visual/token/layout system from Mobile.
+   Original WebGL geometry, G-code, NC parser and callbacks remain authoritative. */
+html[data-aig-skin-platform="desktop"]{
+ --aig42-base:#020407;--aig42-panel:#0a1928;--aig42-panel-2:#112a44;
+ --aig42-glass:#0b2439d9;--aig42-line:#398cac;--aig42-electric:#90dfff;
+ --aig42-text:#e9f8ff;--aig42-muted:#91b6c9;color-scheme:dark;
+}
+html[data-aig-skin-platform="desktop"] body{
+ background:radial-gradient(ellipse at 60% -20%,#111a39 0,#07101a 40%,#020407 100%)!important;
+ color:var(--aig42-text)
+}
+html[data-aig-skin-platform="desktop"] .app{
+ box-sizing:border-box;max-width:100%!important;
+ background:linear-gradient(165deg,#071222,#020407 65%)!important;
+}
+html[data-aig-skin-platform="desktop"] .app>.top{
+ border-bottom:1px solid #277b9c!important;background:linear-gradient(90deg,#071625,#10162e)!important
+}
+html[data-aig-skin-platform="desktop"] .app>.top .nav button{
+ background:linear-gradient(135deg,#10293e,#10213a)!important;border:1px solid #285e80!important;
+ border-radius:9px!important;color:#cfefff!important;min-height:39px!important
+}
+html[data-aig-skin-platform="desktop"] .app>.top .nav button.active,
+html[data-aig-skin-platform="desktop"] .app>.top .nav button.selected{
+ border-color:#75d4fc!important;color:#fff!important;
+ box-shadow:0 0 14px #188ddc35,inset 0 1px #ffffff16!important
+}
+html[data-aig-skin-platform="desktop"] .app>.shell{box-sizing:border-box!important;padding:10px 14px!important}
+html[data-aig-skin-platform="desktop"] .screen.active .panel{
+ background:linear-gradient(155deg,#0b1b2d,#081322)!important;
+ border:1px solid #2f607c!important;border-radius:12px!important;
+ box-shadow:0 8px 25px #0006!important
+}
+html[data-aig-skin-platform="desktop"] .screen.active .panel>.head{
+ background:linear-gradient(90deg,#102a3c,#101c35)!important;
+ border-bottom:1px solid #35728f!important;padding:11px 14px!important
+}
+html[data-aig-skin-platform="desktop"] .screen.active .btn{
+ border-radius:7px!important;min-height:36px!important;font-size:11px!important
+}
+html[data-aig-skin-platform="desktop"] .screen.active .btn.play{
+ border-color:#67d0f7!important;background:linear-gradient(125deg,#0b5376,#255d86)!important
+}
+html[data-aig-skin-platform="desktop"] .screen.active .btn.danger{
+ background:#371a28!important;border-color:#b16e6b!important
+}
+@media(min-width:901px){
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace{
+  display:grid!important;align-items:start!important;gap:10px!important;
+  grid-template-columns:minmax(0,1.5fr) minmax(340px,1fr)!important;
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-view="balanced"]{
+  grid-template-columns:minmax(0,1.1fr) minmax(350px,1fr)!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-view="code"]{
+  grid-template-columns:minmax(0,.85fr) minmax(400px,1.25fr)!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace>.axisModuleHeader{
+  grid-column:1/-1!important;grid-row:1!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace>.aig41-toolbar{
+  grid-column:1/-1!important;grid-row:2!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-has-header="false"]>.aig41-toolbar{grid-row:1!important}
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace>.simleft{
+  grid-column:1!important;grid-row:3!important;min-width:0!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace>.editor{
+  grid-column:2!important;grid-row:3!important;min-width:0!important;
+  max-height:min(81svh,740px)!important;overflow:auto!important;overscroll-behavior:contain!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-has-header="false"]>.simleft,
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-has-header="false"]>.editor{grid-row:2!important}
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace .simleft .sceneWrap{
+  height:clamp(330px,49svh,480px)!important;max-height:480px!important;min-height:330px!important;
+  border:1px solid #4aa4cc!important;border-radius:12px!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-view="balanced"] .simleft .sceneWrap{
+  height:clamp(310px,44svh,430px)!important;max-height:430px!important;min-height:310px!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-aig41-view="code"] .simleft .sceneWrap{
+  height:clamp(280px,38svh,375px)!important;max-height:375px!important;min-height:280px!important
+ }
+ /* Original NC-first remains program-first regardless of decorative skin. */
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.editor{
+  grid-column:1!important;grid-row:3!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.simleft{
+  grid-column:2!important;grid-row:3!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"] .simleft .sceneWrap{
+  height:clamp(270px,38svh,360px)!important;max-height:360px!important;min-height:270px!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid .editor textarea.code{
+  height:clamp(245px,35svh,370px)!important;max-height:370px!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid[data-aig41-view="code"] .editor textarea.code{
+  height:clamp(340px,47svh,520px)!important;max-height:520px!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid .runtimeStatus{
+  max-height:116px!important;overflow-y:auto!important;scrollbar-width:thin!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid .v30-hud{
+  max-height:135px!important;overflow-y:auto!important;scrollbar-width:thin!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid .controls{
+  display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:6px!important
+ }
+ html[data-aig-skin-platform="desktop"] .screen.active .simgrid .controls .btn{
+  padding:7px 5px!important;min-width:0!important
+ }
+}
