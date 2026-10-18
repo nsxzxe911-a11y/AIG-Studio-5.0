@@ -178,7 +178,7 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./authority/aigii-ai-cockpit-v2.css">
 <link rel="stylesheet" href="./authority/aigii-cam-sim-workbench-v1.css">
 <link rel="stylesheet" href="./runtime-visual-reference.css">
-</head>
+<link rel="stylesheet" href="./runtime-uiux-v25.css"></head>
 <body>
 <div class="app">
 <header class="top">
@@ -509,7 +509,7 @@ function menuPage(){
  ];
  return '<div data-menu-runtime><section class="panel"><div class="head"><div><h2>功能選單</h2><small>非加工功能集中在這一頁；加工頁保持乾淨</small></div></div><div class="body"><div class="menuGrid">'+cards.map(([label,key])=>'<div class="menuCard" data-menu-key="'+key+'">'+label+'</div>').join("")+'</div></div></section>'+
  '<section class="panel" style="margin-top:9px"><div class="head"><h3 data-menu-title>功能中心</h3></div><div class="body menuDetail" data-menu-detail><div class="notice">選擇上方功能。未接線的服務會明確標示，不會假裝成功。</div></div></section>'+
- '<section class="panel" style="margin-top:9px;border-color:rgba(255,70,95,.35)"><div class="body" style="color:#ffbdc6">Reset / Disconnect / 清除資料 / 維修診斷：只從功能選單明確進入，破壞性操作需二次確認。</div></section></div>';
+ '<section class="panel" style="margin-top:9px;border-color:rgba(255,70,95,.35)"><div class="body" style="color:#ffbdc6">重設／斷開連線／清除資料／維修診斷：僅在「功能 → 維修」明確執行，危險動作需二次確認。</div></section></div>';
 }
 const runtimes={};
 
@@ -3356,10 +3356,10 @@ function makeMenuRuntime(root){
      '<div style="display:grid;gap:8px;margin-top:8px">'+(rows||'<div class="notice">目前沒有夾治具模組。</div>')+'</div>';
  }
  function monitorView(){
-   const c=counts();detail.innerHTML='<div class="menuDetailGrid"><div class="field"><b>CAD</b><span>'+c.cad+' entities</span></div><div class="field"><b>CAM/刀路</b><span>'+c.cam+' paths</span></div><div class="field"><b>夾治具</b><span>'+c.fixtures+' modules</span></div><div class="field"><b>3AX NC</b><span>'+c.n3+' lines</span></div><div class="field"><b>4AX NC</b><span>'+c.n4+' lines</span></div><div class="field"><b>5AX NC</b><span>'+c.n5+' lines</span></div><div class="field"><b>Renderer</b><span>AUTO 120/60/30</span></div></div><button class="btn" data-menu-action="REFRESH_MONITOR">重新整理</button>';
+   const c=counts();detail.innerHTML='<div class="menuDetailGrid"><div class="field"><b>CAD</b><span>'+c.cad+' entities</span></div><div class="field"><b>CAM/刀路</b><span>'+c.cam+' paths</span></div><div class="field"><b>夾治具</b><span>'+c.fixtures+' modules</span></div><div class="field"><b>3AX NC</b><span>'+c.n3+' lines</span></div><div class="field"><b>4AX NC</b><span>'+c.n4+' lines</span></div><div class="field"><b>5AX NC</b><span>'+c.n5+' lines</span></div><div class="field"><b>繪圖核心</b><span>AUTO 120/60/30</span></div></div><button class="btn" data-menu-action="REFRESH_MONITOR">重新整理</button>';
  }
  function systemView(){
-   detail.innerHTML='<div class="menuDetailGrid"><div class="field"><b>User Agent</b><span>'+navigator.userAgent.replace(/</g,"&lt;")+'</span></div><div class="field"><b>Viewport</b><span>'+innerWidth+' × '+innerHeight+'</span></div><div class="field"><b>DPR</b><span>'+(devicePixelRatio||1)+'</span></div><div class="field"><b>Online</b><span>'+(navigator.onLine?"ONLINE":"OFFLINE")+'</span></div><div class="field"><b>Storage</b><span>localStorage</span></div><div class="field"><b>Theme</b><span>BLACK RGB</span></div></div>';
+   detail.innerHTML='<div class="menuDetailGrid"><div class="field"><b>瀏覽器資訊</b><span>'+navigator.userAgent.replace(/</g,"&lt;")+'</span></div><div class="field"><b>畫面尺寸</b><span>'+innerWidth+' × '+innerHeight+'</span></div><div class="field"><b>像素密度</b><span>'+(devicePixelRatio||1)+'</span></div><div class="field"><b>網路狀態</b><span>'+(navigator.onLine?"ONLINE":"OFFLINE")+'</span></div><div class="field"><b>本機儲存</b><span>localStorage</span></div><div class="field"><b>介面主題</b><span>BLACK RGB</span></div></div>';
  }
  function simple(text){detail.innerHTML='<div class="notice">'+text+'</div>'}
  function render(key){
@@ -3374,9 +3374,9 @@ function makeMenuRuntime(root){
    else if(key==="SYSTEM")systemView();
    else if(key==="AI"){detail.innerHTML='<div class="notice"><b>AI 老師</b><br>'+aigAiTeacherText()+'</div><div class="notice">AI 只做教學與跨模組說明，不代替 CAD / CAM / SIM / NC 自己的錯誤判斷。</div>';}
    else if(key==="SYNC")simple("同步目前維持 Offline-first。Shared Folder / LAN transport 尚未接到此 Web Prototype，因此不自動覆蓋其他裝置。");
-   else if(key==="UPDATE")simple("此 Web Prototype 不執行網路自動更新；更新仍由版本分支、Gate 與驗證流程控制。");
-   else if(key==="SETTINGS"){const on=aigTutorialMode(),d=aigDomainState();detail.innerHTML='<div class="menuDetailGrid"><div class="field"><b>錯誤分流</b><span>CAD / CAM / 3D-SIM / NC 各自處理各自錯誤。</span></div><div class="field"><b>AI 老師</b><span>'+aigAiTeacherText()+'</span></div><div class="field"><b>進階者模式</b><span>'+(d.advanced?'ON：顯示碰撞、干涉、3D 穩定性與完整追蹤':'OFF：一般操作保持精簡；執行 interlock 仍保留')+'</span></div></div><div class="controls"><button class="btn '+(d.cadCam?'selected':'')+'" data-link-cadcam>CAD ↔ CAM：'+(d.cadCam?'CONNECT':'DISCONNECT')+'</button><button class="btn '+(d.camSim?'selected':'')+'" data-link-camsim>CAM ↔ SIM：'+(d.camSim?'CONNECT':'DISCONNECT')+'</button><button class="btn '+(d.simNc?'selected':'')+'" data-link-simnc>SIM ↔ NC：'+(d.simNc?'CONNECT':'DISCONNECT')+'</button><button class="btn '+(d.advanced?'selected':'')+'" data-advanced-mode>進階者模式：'+(d.advanced?'ON':'OFF')+'</button><button class="btn" data-guidance-tutorial-toggle>教學模式：'+(on?'ON':'OFF')+'</button></div><div class="notice">CONNECT / DISCONNECT 是狀態，不是錯誤；斷開後各模組仍可獨立編輯。</div>';}
-   else if(key==="MAINT")detail.innerHTML='<div class="notice">維修只處理 Web Prototype 暫存，不碰系統防毒或裝置安全。</div><button class="btn" data-menu-action="SELF_CHECK">Runtime 自我檢查</button><button class="btn danger" data-menu-action="CLEAR_DERIVED">清除 CAM/NC 衍生暫存</button><div class="notice" data-menu-msg></div>';
+   else if(key==="UPDATE")simple("此網站工作區不執行未驗證的自動更新；更新仍由版本分支、Gate 與驗證流程控制。");
+   else if(key==="SETTINGS"){const on=aigTutorialMode(),d=aigDomainState();detail.innerHTML='<div class="menuDetailGrid"><div class="field"><b>錯誤分流</b><span>CAD / CAM / 3D-SIM / NC 各自處理各自錯誤。</span></div><div class="field"><b>AI 老師</b><span>'+aigAiTeacherText()+'</span></div><div class="field"><b>進階者模式</b><span>'+(d.advanced?'ON：顯示碰撞、干涉、3D 穩定性與完整追蹤':'OFF：一般操作保持精簡；執行 interlock 仍保留')+'</span></div></div><div class="controls"><button class="btn '+(d.cadCam?'selected':'')+'" data-link-cadcam>CAD ↔ CAM：'+(d.cadCam?'CONNECT':'DISCONNECT')+'</button><button class="btn '+(d.camSim?'selected':'')+'" data-link-camsim>CAM ↔ SIM：'+(d.camSim?'CONNECT':'DISCONNECT')+'</button><button class="btn '+(d.simNc?'selected':'')+'" data-link-simnc>SIM ↔ NC：'+(d.simNc?'CONNECT':'DISCONNECT')+'</button><button class="btn '+(d.advanced?'selected':'')+'" data-advanced-mode>進階者模式：'+(d.advanced?'ON':'OFF')+'</button><button class="btn" data-guidance-tutorial-toggle>教學模式：'+(on?'ON':'OFF')+'</button></div><div class="notice">連接／斷開是模組資料傳遞狀態，不是錯誤；斷開後各模組仍可獨立編輯。</div><div class="controls"><button type="button" class="btn" data-open-uiux>開啟 UI/UX 模組化設定</button></div>';}
+   else if(key==="MAINT")detail.innerHTML='<div class="notice">維修只處理網頁工作區暫存，不碰系統防毒或裝置安全。</div><button class="btn" data-menu-action="SELF_CHECK">Runtime 自我檢查</button><button class="btn danger" data-menu-action="CLEAR_DERIVED">清除 CAM/NC 衍生暫存</button><div class="notice" data-menu-msg></div>';
    else if(key==="HELP")simple("流程：CAD 製圖 → CAM 選策略 → 套用至刀路 → 刀路編輯/驗證 → 產生 NC → 3AX/4AX/5AX 模擬與 G-code 編輯。");
    setTimeout(()=>aigValidateAllFields(detail),0);
  }
@@ -3536,5 +3536,5 @@ aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash
   }, {once:true});
 })();
 </script>
-</body>
+<script src="./runtime-uiux-v25.js"></script></body>
 </html>

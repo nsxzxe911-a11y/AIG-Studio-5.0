@@ -1,0 +1,115 @@
+{
+  "schema": "AIG_UIUX_CONTRACT_V25",
+  "language": "zh-TW",
+  "presentationOnly": true,
+  "modules": [
+    {
+      "pageId": "HOME",
+      "label": "首頁",
+      "group": "core",
+      "persistentControlId": "UIUX-MODULE-HOME",
+      "locked": true
+    },
+    {
+      "pageId": "CAD",
+      "label": "CAD 製圖",
+      "group": "cadcam",
+      "persistentControlId": "UIUX-MODULE-CAD",
+      "locked": false
+    },
+    {
+      "pageId": "CAM",
+      "label": "CAM 刀路",
+      "group": "cadcam",
+      "persistentControlId": "UIUX-MODULE-CAM",
+      "locked": false
+    },
+    {
+      "pageId": "SIM",
+      "label": "SIM 模擬",
+      "group": "axis",
+      "persistentControlId": "UIUX-MODULE-SIM",
+      "locked": false
+    },
+    {
+      "pageId": "3AX",
+      "label": "三軸加工",
+      "group": "axis",
+      "persistentControlId": "UIUX-MODULE-3AX",
+      "locked": false
+    },
+    {
+      "pageId": "4AX",
+      "label": "四軸加工",
+      "group": "axis",
+      "persistentControlId": "UIUX-MODULE-4AX",
+      "locked": false
+    },
+    {
+      "pageId": "5AX",
+      "label": "五軸加工",
+      "group": "axis",
+      "persistentControlId": "UIUX-MODULE-5AX",
+      "locked": false
+    },
+    {
+      "pageId": "6AX",
+      "label": "六軸加工",
+      "group": "axis",
+      "persistentControlId": "UIUX-MODULE-6AX",
+      "locked": false
+    },
+    {
+      "pageId": "NC",
+      "label": "NC 程式",
+      "group": "ncai",
+      "persistentControlId": "UIUX-MODULE-NC",
+      "locked": false
+    },
+    {
+      "pageId": "AI",
+      "label": "AI 助手",
+      "group": "ncai",
+      "persistentControlId": "UIUX-MODULE-AI",
+      "locked": false
+    },
+    {
+      "pageId": "刀路",
+      "label": "刀路編輯",
+      "group": "core",
+      "persistentControlId": "UIUX-MODULE-刀路",
+      "locked": true
+    },
+    {
+      "pageId": "功能",
+      "label": "功能設定",
+      "group": "core",
+      "persistentControlId": "UIUX-MODULE-功能",
+      "locked": true
+    }
+  ],
+  "sharedCommands": [
+    "UIUX-OPEN",
+    "UIUX-LAYOUT",
+    "UIUX-DENSITY",
+    "UIUX-CONTRAST",
+    "UIUX-MODULE",
+    "UIUX-PRESET",
+    "UIUX-RESET"
+  ],
+  "storageKeys": {
+    "aigii": "aigii.web.uiux.v25",
+    "studio": "aigii.studio375.uiux.v25"
+  },
+  "preserve": [
+    "CAD",
+    "CAM",
+    "SIM",
+    "NC",
+    "AI",
+    "3-6AX CNC core",
+    "original site",
+    "authority revocations"
+  ],
+  "machineOutput": "disabled"
+}

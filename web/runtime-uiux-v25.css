@@ -1,0 +1,23 @@
+/* Traditional Chinese UI/UX V25 – additive stylesheet; machining geometry untouched */
+.uiux25-launch{min-height:40px;flex-shrink:0;border:1px solid #49bae9;background:#143c56;color:#fff;padding:9px 13px;border-radius:9px;cursor:pointer;font-weight:800;font-size:12px;white-space:nowrap}
+.uiux25-launch:focus-visible,.uiux25-dialog button:focus-visible{outline:2px solid #b3f4ff;outline-offset:3px}
+.uiux25-dialog{position:fixed;inset:0;margin:auto;width:min(740px,calc(100vw - 24px));max-height:90dvh;overflow:auto;background:#081826;color:#eafaff;border:1px solid #5cbae9;border-radius:13px;padding:0;box-shadow:0 20px 68px #000c;z-index:10080}
+.uiux25-dialog::backdrop{background:rgba(0,0,0,.8)}
+.uiux25-title{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;padding:21px;border-bottom:1px solid #2b536d}
+.uiux25-title small{font-size:10px;letter-spacing:.13em;color:#88e8ff}.uiux25-title h2{margin:5px 0;font-size:22px;color:#fff}.uiux25-title p{font-size:12px;color:#a9cadd;margin:0}
+.uiux25-group{padding:17px 21px;border-bottom:1px solid #2d5068}
+.uiux25-group h3{font-size:16px;color:#effcff;margin:0 0 12px}.uiux25-group p{font-size:12px;line-height:1.8;color:#b6d4e3}
+.uiux25-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}.uiux25-fields label{display:grid;gap:6px;font-size:12px;color:#d3e6f2}.uiux25-fields select{width:100%;min-width:0;padding:9px;background:#122e46;color:#effaff;border:1px solid #427b9b;border-radius:6px}.uiux25-fields select:disabled{opacity:.8}
+.uiux25-contrast{display:flex;gap:9px;align-items:center;margin-top:14px;font-size:12px}.uiux25-contrast input,.uiux25-modules input{accent-color:#3bccff}
+.uiux25-presets{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.uiux25-presets button,.uiux25-end button,.uiux25-title button{padding:10px 12px;border:1px solid #437b9f;border-radius:7px;background:#163d57;color:#e5f8ff;cursor:pointer;font-size:12px}
+.uiux25-modules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.uiux25-modules label{display:flex;gap:9px;align-items:center;min-width:0;padding:11px 10px;background:#102f46;border:1px solid #315c79;border-radius:8px;font-size:12px}.uiux25-modules label:has(input:disabled){opacity:.76}
+.uiux25-end{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:11px;padding:16px 21px}.uiux25-end p{font-size:11px;color:#9bc5db;margin:0}.uiux25-end>div{display:flex;gap:8px}
+#nav button[hidden]{display:none!important}
+html[data-uiux25-density="compact"] .nav{gap:4px}html[data-uiux25-density="compact"] .nav button{min-height:34px!important;padding:6px!important}
+html[data-uiux25-density="compact"] .shell{padding:7px!important;gap:7px!important}html[data-uiux25-density="compact"] .panel .body{padding:9px!important}
+html[data-uiux25-contrast="high"] .nav button,html[data-uiux25-contrast="high"] .btn{border-color:#79e7fa!important;color:#fff!important;box-shadow:0 0 0 1px rgba(134,224,255,.29)!important}
+html[data-uiux25-present="mobile"] .top{flex-wrap:wrap!important}html[data-uiux25-present="mobile"] #nav{display:flex!important;flex-wrap:nowrap;overflow-x:auto;max-width:100%;width:100%}
+html[data-uiux25-present="mobile"] #nav button{flex:none!important;min-width:70px}
+html[data-uiux25-present="mobile"] .workgrid,html[data-uiux25-present="mobile"] .camgrid,html[data-uiux25-present="mobile"] .ncEditGrid,html[data-uiux25-present="mobile"] .simgrid{grid-template-columns:minmax(0,1fr)!important}
+@media(max-width:640px){.uiux25-fields{grid-template-columns:1fr 1fr}.uiux25-modules{grid-template-columns:repeat(2,minmax(0,1fr))}.uiux25-title,.uiux25-group{padding:14px}}
+@media(max-width:430px){.uiux25-fields{grid-template-columns:1fr}.uiux25-end>div{width:100%;justify-content:flex-end}}
