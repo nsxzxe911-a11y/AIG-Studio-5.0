@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V39 keeps 3D machining viewport stationary while G-code execution lines progress. No browser scrollIntoView in auto playback or explicit NC editor-line focus. Both Web projects synchronized, native binaries remain independent.",
+  "notes": "V40 fixes screenshot-confirmed auto-play web scroll remaining after V39: preserves the G-code row DOM and updates only line state classes, never scrolls programmatically during playback. Exact native SHA remains pinned.",
   "sharedWebRelease": {
-    "version": "39.0.0",
-    "train": "V39",
+    "version": "40.0.0",
+    "train": "V40",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "39.0.0"
+        "version": "40.0.0"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "39.0.0"
+        "version": "40.0.0"
       }
     ],
-    "commonRuntimeSource": "./dual-web-v39.js",
-    "commonUiSource": "./dual-web-v39.css",
-    "releaseManifest": "./dual-web-v39.json",
+    "commonRuntimeSource": "./dual-web-v40.js",
+    "commonUiSource": "./dual-web-v40.css",
+    "releaseManifest": "./dual-web-v40.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",
@@ -83,9 +83,9 @@
       "bridge": "./layout-switch-v38.js"
     },
     "playbackScroll": {
-      "scope": "both 3-6AX runtimes",
-      "behavior": "nested execView only",
-      "nativeDataModified": false
+      "fix": "no automatic G-code list scrolling; update DOM row classes in-place",
+      "css": "./axis-playback-v40.css",
+      "nativeUnmodified": true
     }
   }
 }

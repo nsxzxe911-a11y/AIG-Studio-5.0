@@ -1,0 +1,15 @@
+/* V40: no browser auto-anchor changes when the active CNC playhead advances.
+   Manual scrolling and interactive NC editing remain available. */
+html:has(.screen.active .simgrid[data-runtime]),
+html:has(.screen.active .simgrid[data-runtime]) body,
+html:has(.screen.active .simgrid[data-runtime]) .app,
+html:has(.screen.active .simgrid[data-runtime]) .shell,
+.screen.active:has(.simgrid[data-runtime]),
+.screen.active .simgrid[data-runtime],
+.screen.active .simgrid[data-runtime] .simleft,
+.screen.active .simgrid[data-runtime] .editor{
+ overflow-anchor:none!important;
+}
+.simgrid[data-runtime] .execView[data-exec]{
+ overflow-anchor:none!important;overscroll-behavior:contain;scroll-behavior:auto!important;
+}

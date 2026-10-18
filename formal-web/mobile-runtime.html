@@ -183,12 +183,13 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./axis-hud-v30.css">
 <link rel="stylesheet" href="./axis-evidence-v31.css">
 <link rel="stylesheet" href="./axis-performance-v32.css">
-<link rel="stylesheet" href="./dual-web-v39.css">
+<link rel="stylesheet" href="./dual-web-v40.css">
 <link rel="stylesheet" href="./axis-machine-v35.css">
 <link rel="stylesheet" href="./mobile-layout-v36.css">
 <link rel="stylesheet" href="./mobile-layout-v37.css">
 <link rel="stylesheet" href="./layout-switch-v38.css">
-<link rel="stylesheet" href="./axis-playback-v39.css"></head>
+<link rel="stylesheet" href="./axis-playback-v39.css">
+<link rel="stylesheet" href="./axis-playback-v40.css"></head>
 <body>
 <div class="app">
 <header class="top">
@@ -1925,24 +1926,33 @@ function makeRuntime(root){
   if(inner.top<outer.top+margin)box.scrollTop-=outer.top+margin-inner.top;
   else if(inner.bottom>outer.bottom-margin)box.scrollTop+=inner.bottom-(outer.bottom-margin);
  }
+ let execRenderedSource=null,execRenderedRows=[];
  function renderExec(){
-  const box=root.querySelector("[data-exec]");if(!box)return;
-  const prior=box.scrollTop;
-  box.replaceChildren();
-  const doneLines=new Set(state.parsed.blocks.slice(0,state.index).map(b=>b.line));
-  const collisionLines=new Set(state.collisions.map(c=>c.line));
-  const activeLine=currentLine(),alarmLine=state.collisionAlarm?.line;
-  state.parsed.lines.forEach((line,i)=>{
-    const div=document.createElement("div");div.className="execLine";
-    if(doneLines.has(i))div.classList.add("done");
-    if(collisionLines.has(i))div.classList.add("collision");
-    if(i===activeLine)div.classList.add("active");
-    if(i===alarmLine)div.classList.add("alarm");
-    div.textContent=String(i+1).padStart(3,"0")+"  "+line;box.appendChild(div);
-  });
-  // Preserve a user-visible machining viewport; only move the nested execution-list scrollbar.
-  box.scrollTop=prior;
-  scrollExecInside(box,box.querySelector(".active"));
+   const box=root.querySelector("[data-exec]");if(!box)return;
+   const lines=state.parsed.lines||[];
+   // Auto-cutting only changes existing row classes. It NEVER repositions the page.
+   if(execRenderedSource!==state.parsed||execRenderedRows.length!==lines.length||
+      (execRenderedRows.length&&execRenderedRows[0].parentNode!==box)){
+     const oldScroll=box.scrollTop,frag=document.createDocumentFragment();
+     execRenderedRows=lines.map((line,i)=>{
+       const el=document.createElement("div");el.className="execLine";
+       el.textContent=String(i+1).padStart(3,"0")+"  "+line;
+       frag.appendChild(el);return el;
+     });
+     box.replaceChildren(frag);
+     box.scrollTop=oldScroll;
+     execRenderedSource=state.parsed;
+   }
+   const doneLines=new Set(state.parsed.blocks.slice(0,state.index).map(b=>b.line));
+   const collisions=new Set(state.collisions.map(c=>c.line));
+   const active=currentLine(),alarm=state.collisionAlarm?.line;
+   for(let i=0;i<execRenderedRows.length;i++){
+     const el=execRenderedRows[i];
+     el.classList.toggle("done",doneLines.has(i));
+     el.classList.toggle("collision",collisions.has(i));
+     el.classList.toggle("active",i===active);
+     el.classList.toggle("alarm",i===alarm);
+   }
  }
  function focusSourceLine(line,preserveAlarm=false,announce=true){
    const n=Math.max(0,Math.min((state.parsed?.lines?.length||1)-1,Math.trunc(Number(line)||0)));
@@ -3633,7 +3643,7 @@ aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash
 <script src="./axis-hud-v30.js"></script>
 <script src="./axis-evidence-v31.js"></script>
 <script src="./axis-performance-v32.js"></script>
-<script src="./dual-web-v39.js"></script>
+<script src="./dual-web-v40.js"></script>
 <script src="./axis-machine-v35.js"></script>
 <script src="./mobile-layout-v37.js"></script>
 <script src="./layout-switch-v38.js"></script></body>
