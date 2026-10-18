@@ -114,3 +114,29 @@ html[data-aig-v37-compact="true"] .screen.active .simgrid.aig41-workspace .simle
 html[data-aig-v37-compact="true"] .screen.active .simgrid.aig41-workspace .simleft .runtimeStatus{
  max-height:none!important;overflow-y:visible!important
 }
+
+/* Preserve the existing NC-FIRST second work page authority over visual priorities.
+   This is a real working G-code-forward page, not a purely cosmetic subpage. */
+@media(min-width:901px){
+ html:not([data-aig-v37-compact="true"]) .screen.active
+ .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.editor{
+   grid-column:1!important;grid-row:3!important;max-height:min(88svh,980px)!important
+ }
+ html:not([data-aig-v37-compact="true"]) .screen.active
+ .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.simleft{
+   grid-column:2!important;grid-row:3!important
+ }
+ html:not([data-aig-v37-compact="true"]) .screen.active
+ .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.simleft .sceneWrap{
+   height:clamp(280px,43svh,530px)!important;min-height:0!important
+ }
+}
+html[data-aig-v37-compact="true"] .screen.active
+.simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.editor{order:2!important}
+html[data-aig-v37-compact="true"] .screen.active
+.simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.simleft{order:3!important}
+html[data-aig-v37-compact="true"] .screen.active
+.simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.simleft .sceneWrap{
+ height:clamp(250px,37svh,380px)!important;
+ min-height:250px!important;max-height:380px!important
+}

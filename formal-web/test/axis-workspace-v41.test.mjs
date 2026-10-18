@@ -28,6 +28,13 @@ test("desktop and mobile CNC work areas keep separate honest layouts",()=>{
  assert.ok(css.includes("grid-template-columns:minmax(0,3fr) minmax(310px,1fr)"));
  assert.ok(css.includes("flex-direction:column!important"));
 });
+test("V41 keeps AIG-II NC-first editor as the priority panel",()=>{
+ const css=read("axis-workspace-v41.css");
+ assert.ok(css.includes('data-axis-subpage="NC_FIRST"'));
+ assert.ok(css.includes("grid-column:1!important;grid-row:3!important"));
+ assert.ok(css.includes("grid-column:2!important;grid-row:3!important"));
+ assert.ok(css.includes("height:clamp(250px,37svh,380px)!important"));
+});
 test("shared Web41 version while native exact SHA pins unchanged",()=>{
  const m=JSON.parse(read("dual-web-v41.json")),p=JSON.parse(read("dual-latest-binding.json"));
  assert.equal(m.release,"41.0.0");assert.ok(m.projects.every(x=>x.webVersion==="41.0.0"));
