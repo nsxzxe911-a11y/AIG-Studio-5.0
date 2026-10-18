@@ -10,7 +10,7 @@
 <header class="site-container brand-row"><a class="brand" href="./index.html" aria-label="AIG-II 首頁"><span class="brand-mark" aria-hidden="true"></span><span><strong class="brand-name">AIG-II</strong><small class="brand-sub">AI GENERATIVE CNC</small></span></a><div class="brand-lead"><strong>常見問題與使用說明</strong>簡潔、可操作的網站入口</div></header>
 <nav class="primary-nav" aria-label="網站主導覽"><div class="site-container nav-inner" id="site-navigation" data-expanded="false">
 <button type="button" class="mobile-menu-toggle" id="site-menu-toggle" aria-expanded="false" aria-controls="site-navigation">☰　選單</button>
-<a class="nav-link" href="./index.html">首頁</a><a class="nav-link" href="./index.html#modules">產品功能</a><a class="nav-link" href="./guide.html">技術知識庫</a><a class="nav-link" href="./updates.html">網站更新</a><a class="nav-link" aria-current="page" href="./faq.html">常見問題</a><a class="nav-workspace" href="./mobile-runtime.html#HOME">開啟工作區　↗</a>
+<a class="nav-link" href="./index.html">首頁</a><a class="nav-link" href="./index.html#modules">產品功能</a><a class="nav-link" href="./guide.html">技術知識庫</a><a class="nav-link" href="./updates.html">網站更新</a><a class="nav-link" aria-current="page" href="./faq.html">常見問題</a><a class="nav-link" href="./project-sync.html">專案續接</a><a class="nav-workspace" href="./mobile-runtime.html#HOME">開啟工作區　↗</a>
 </div></nav>
 <div class="site-container"><div class="breadcrumb"><a href="./index.html">首頁</a><span>›</span><span>常見問題</span></div>
 <div class="content-layout">
@@ -22,6 +22,9 @@
 <details><summary>我已經有 G-code，可以直接開始嗎？</summary><p>可以從 <a href="./mobile-runtime.html#NC">NC 編輯頁</a> 開始，不必先建立 CAD 草圖。請先核對控制器與機台支援的指令，再解析、模擬、單節和空跑檢查；不要把網頁中的預覽當作真機加工許可。</p></details>
 <details><summary>搜尋欄和分類按鈕怎麼用？</summary><p>回到 <a href="./index.html#modules">功能分類</a>，可選擇 CAD/CAM/SIM、3～6AX 或 NC/AI，再輸入關鍵字搜尋功能。按 Ctrl+K（Mac 為 Command+K）可快速把游標移到首頁搜尋欄。</p></details>
 <details><summary>「最近使用」會同步到其他裝置嗎？</summary><p>不會。網站的「最近使用」入口只保存在目前瀏覽器的本機儲存空間，清除網站資料、無痕模式或更換裝置後可能消失。它不是 CNC 專案同步，也不會保存 G-code 內容。</p></details>
+<h2 id="transfer" class="page-anchor">手機／電腦資料接續</h2>
+<details><summary>手機與電腦如何交接同一份專案？</summary><p>先在原裝置的 CAD／CAM／NC 儲存，再開啟 <a href="./project-sync.html">專案續接</a> 匯出帶 SHA-256 的 JSON。在另一台裝置進入同一網站、選檔並確認差異，再以「保留本機」或「採用匯入版」處理。此流程是手動交接，非自動雲端同步。</p></details>
+<details><summary>Google Drive 是否已自動同步？</summary><p>沒有。網站尚未接入專用 Google OAuth。可把下載的專案檔手動上傳到自己的 Google Drive，另一台下載後匯入；無需在 AIG-II 網站輸入 Google 密碼。</p></details>
 <h2 id="offline" class="page-anchor">離線、版本與視覺</h2>
 <details><summary>網路中斷還能開網站嗎？</summary><p>成功載入並快取過的網站頁面與部分工作區資源可供離線使用；第一次開站、快取遭清除或某項資源未保存時仍可能需要網路。請先在有網路時開啟所需頁面並確認功能正常。</p></details>
 <details><summary>為什麼我還看到舊網站畫面？</summary><p>可能是瀏覽器分頁仍載入舊版本，或網站快取尚未更新。請先重新整理頁面；若仍舊版，可關閉舊分頁後重新開啟 <a href="./index.html">正式首頁</a>，並檢查瀏覽器中的網站快取。重新整理前請先儲存未完成的 CNC 編輯資料。</p></details>

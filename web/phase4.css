@@ -1,0 +1,19 @@
+/* AIG-II Phase IV: unobtrusive project-transfer entry, same desktop/mobile Runtime. */
+html[data-aig-project="AIGII"] .top .projectTransferLink{
+ display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;
+ min-height:38px; padding:7px 15px;border:1px solid #55bde2;
+ border-radius:10px;color:#e7faff;background:linear-gradient(105deg,#0d4566,#2b2b68);
+ text-decoration:none;font-weight:780;font-size:12px;box-shadow:0 0 14px #119dce2f;
+}
+html[data-aig-project="AIGII"] .top .projectTransferLink:hover{box-shadow:0 0 20px #27b7ff66;border-color:#9df7ff}
+html[data-aig-project="AIGII"] .aigHeroActions .heroTransferLink{
+ display:inline-flex;align-items:center;min-height:43px;padding:10px 17px;
+ border:1px solid #7ad9fc;border-radius:10px;color:#f2faff;
+ background:linear-gradient(120deg,#113b64,#25294f);text-decoration:none;z-index:1;
+ font-size:13px;font-weight:750;
+}
+html[data-aig-project="AIGII"] .aigHeroActions .heroTransferLink:hover{box-shadow:0 0 15px #2479da77}
+@media(max-width:720px){
+ html[data-aig-project="AIGII"] .top .projectTransferLink{font-size:11px;padding:6px 11px;min-height:34px}
+ html[data-aig-project="AIGII"] .aigHeroActions .heroTransferLink{font-size:12px}
+}

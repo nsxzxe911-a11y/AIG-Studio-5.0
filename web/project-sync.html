@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-Hant" data-aig-project="AIGII">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0a111c">
+<meta name="description" content="AIG-II 跨裝置專案續接：CAD、CAM、SIM 設定、3～6AX G-code 匯出、SHA-256 檢查與衝突保護。">
+<title>跨平台專案續接｜AIG-II</title>
+<link rel="stylesheet" href="./site.css"><link rel="stylesheet" href="./site-v2.css"><link rel="stylesheet" href="./project-sync.css">
+</head>
+<body><a class="skip-link" href="#main-content">跳至主要內容</a>
+<div class="utility-bar"><div class="site-container utility-inner"><span>AIG-II｜CNC 技術與製造</span><div class="utility-links"><a href="./index.html">網站首頁</a><a href="./mobile-runtime.html#HOME">工作區</a></div></div></div>
+<header class="site-container brand-row"><a class="brand" href="./index.html" aria-label="回 AIG-II 首頁"><span class="brand-mark" aria-hidden="true"></span><span><strong class="brand-name">AIG-II</strong><small class="brand-sub">AI GENERATIVE CNC</small></span></a><div class="brand-lead"><strong>跨平台專案續接</strong>手機與電腦 · 本機優先</div></header>
+<nav class="primary-nav" aria-label="網站主導覽"><div class="site-container nav-inner" id="site-navigation" data-expanded="false">
+<button type="button" class="mobile-menu-toggle" id="site-menu-toggle" aria-expanded="false" aria-controls="site-navigation">☰　選單</button>
+<a class="nav-link" href="./index.html">首頁</a><a class="nav-link" href="./index.html#modules">產品功能</a><a class="nav-link" href="./guide.html">技術知識庫</a><a class="nav-link" aria-current="page" href="./project-sync.html">專案續接</a>
+<a class="nav-link" href="./faq.html">常見問題</a><a class="nav-workspace" href="./mobile-runtime.html#HOME">返回工作區　↗</a>
+</div></nav>
+<div class="site-container"><div class="breadcrumb"><a href="./index.html">首頁</a><span>›</span><span>跨平台專案續接</span></div>
+<div class="transfer-grid">
+<main class="transfer-main" id="main-content">
+ <div class="transfer-card"><h1 class="transfer-head">手機與電腦，同一份專案格式</h1>
+ <div class="transfer-content">
+ <p>此頁可把目前瀏覽器<strong>已儲存</strong>的 CAD、CAM、工件、刀具、工作座標及 3～6AX G-code 打包成檔案，再在另一台裝置的 AIG-II 網站匯入。所有動作都在本機執行。</p>
+ <div class="transfer-counts" aria-label="目前本機專案資料"><div class="count"><b id="transfer-count">—</b><span>已儲存資料項目</span></div><div class="count"><b id="transfer-code-count">—</b><span>已保存軸別 G-code</span></div><div class="count"><b id="transfer-backup-count">—</b><span>本機保護備份</span></div></div>
+ <p class="transfer-note">匯出前請先在 CAD、CAM、NC 工作頁按儲存。尚未儲存的編輯內容不會包含在下載檔中。</p>
+ <div class="transfer-actions"><button id="transfer-export" class="primary" type="button">匯出本機專案 JSON</button><a href="./mobile-runtime.html#HOME" class="secondary">返回工作區儲存</a></div>
+ </div></div>
+ <div class="transfer-card"><h2 class="transfer-head">匯入另一台裝置的專案</h2><div class="transfer-content">
+ <p>先選擇檔案並預覽內容、校驗 SHA-256 與本機差異。<strong>沒有確認之前絕不更動原資料。</strong></p>
+ <label for="transfer-file">專案 JSON 檔案</label><input id="transfer-file" class="transfer-file" type="file" accept=".json,application/json">
+ <div id="transfer-preview" class="transfer-preview" data-ready="false">
+  <h3>檔案檢查結果</h3><dl>
+  <dt>專案名稱</dt><dd id="transfer-project-name">—</dd>
+  <dt>匯出日期</dt><dd id="transfer-date">—</dd>
+  <dt>檔案校驗</dt><dd id="transfer-digest">—</dd>
+  <dt>資料項目</dt><dd id="transfer-fields">—</dd>
+  <dt>衝突欄位</dt><dd id="transfer-conflicts">—</dd>
+  </dl>
+  <div class="transfer-choice" role="group" aria-label="衝突處理">
+   <label><input type="radio" name="transfer-mode" value="keep" checked><span><strong>保留本機</strong><span>已有資料保留不動，只補上目前缺少的資料項目</span></span></label>
+   <label><input type="radio" name="transfer-mode" value="replace"><span><strong>採用匯入版</strong><span>覆蓋有衝突的欄位；系統會先保存本機備份</span></span></label>
+  </div>
+  <label class="transfer-confirm"><input id="transfer-acknowledge" type="checkbox">我已檢查匯入預覽，了解現有專案可能受到變更，並已先儲存目前工作頁。</label>
+  <div class="transfer-actions"><button id="transfer-apply" class="primary" type="button" disabled>套用選擇的資料</button><button id="transfer-cancel" class="secondary" type="button">取消匯入</button></div>
+ </div>
+ <div class="transfer-status" id="transfer-status" data-level="info" role="status" aria-live="polite">沒有讀取任何檔案，本機資料保持原狀。</div>
+ </div></div>
+ <div class="transfer-card"><h2 class="transfer-head">本機保護備份</h2><div class="transfer-content">
+ <p>匯入前，會先保留受到變更的原資料。可在此選取先前的備份還原；還原也會先建立反向備份。</p>
+ <label for="transfer-backups">選擇備份</label><select class="backup-select" id="transfer-backups"><option value="">尚無可還原備份</option></select>
+ <div class="transfer-actions"><button id="transfer-restore" type="button" class="secondary" disabled>還原選取的備份</button></div>
+ <p class="transfer-note">本機備份會隨瀏覽器網站資料被清除而消失。若要長期保存，請另外下載專案檔。</p>
+ </div></div>
+</main>
+<aside class="transfer-aside" aria-label="跨平台續接說明">
+ <div class="transfer-card"><h2 class="transfer-head">跨裝置操作</h2><div class="transfer-content"><ol>
+ <li><strong>裝置 A</strong>：在工作區儲存 CAD、CAM 或 NC，再按「匯出 JSON」。</li>
+ <li>透過自己的檔案、隨身碟或 Google Drive <strong>手動傳輸</strong> JSON。</li>
+ <li><strong>裝置 B</strong>：在同一個 AIG-II 網站開啟此頁，選擇檔案。</li>
+ <li>確認 SHA-256、衝突欄位，選擇保留本機或採用匯入版，然後套用。</li>
+ <li>重新開啟 CNC 工作頁以載入更新的資料。</li></ol></div></div>
+ <div class="transfer-card"><h2 class="transfer-head">Google Drive</h2><div class="transfer-content">
+ <p>目前沒有網站專用的 Google OAuth 授權。此階段採<strong>手動備份／取回</strong>，不假裝已自動同步。</p>
+ <div class="transfer-links"><a href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer">手動開啟 Google Drive　↗</a></div>
+ <p>後續若接入 OAuth，仍須保留 revision、SHA 與衝突確認，不自動覆蓋本機。</p></div></div>
+ <div class="transfer-card"><h2 class="transfer-head">適用範圍</h2><div class="transfer-content">
+ <p>這是<strong>同一網站的手機／桌面瀏覽器</strong>之間交換專案；不等於原生 APK／EXE 已讀取同一格式，也不代表雲端自動同步。</p>
+ <p>支援 Web 工作區內已保存的 CAD、CAM、Stock、夾治具、刀具表、G54/G55、模組連接與 3～6AX G-code。</p>
+ </div></div>
+</aside></div></div>
+<footer class="site-footer"><div class="site-container footer-inner"><div><strong>AIG-II</strong><span>專案本機保存與跨裝置續接</span></div><div class="footer-links"><a href="./index.html">首頁</a><a href="./guide.html">技術指南</a><a href="./faq.html">常見問題</a><a href="./mobile-runtime.html#HOME">工作區</a></div></div></footer>
+<script defer src="./site.js"></script>
+<script defer src="./project-transfer.js"></script>
+<script defer src="./project-sync.js"></script>
+</body></html>

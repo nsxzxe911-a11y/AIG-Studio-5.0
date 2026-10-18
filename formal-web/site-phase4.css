@@ -1,0 +1,19 @@
+/* Phase IV on normal public site: cross-device data exchange, not an engineering shell. */
+.nav-inner .nav-link[href="./project-sync.html"]{color:#a8eeff}
+.nav-inner .nav-link[href="./project-sync.html"]:hover{color:#fff}
+.project-handoff-banner{
+ display:flex;align-items:center;gap:12px;justify-content:space-between;
+ padding:15px 18px;margin-bottom:19px;border:1px solid #31769e;border-radius:13px;
+ background:linear-gradient(105deg,#0c304c,#11213c 69%,#241b48);
+ box-shadow:0 6px 18px #0005;
+}
+.project-handoff-banner strong{font-size:16px;color:#f4fbff}
+.project-handoff-banner p{font-size:13px;color:#b6d0e3;margin:4px 0 0}
+.project-handoff-banner a{display:inline-flex;align-items:center;justify-content:center;
+ padding:9px 15px;min-height:42px;white-space:nowrap;border:1px solid #7acfff;
+ background:#165c87;color:#fff;font-size:13px;font-weight:730;border-radius:8px;text-decoration:none}
+.project-handoff-banner a:hover{background:#2377a9}
+@media(max-width:760px){
+ .project-handoff-banner{flex-wrap:wrap}
+ .project-handoff-banner a{width:100%}
+}

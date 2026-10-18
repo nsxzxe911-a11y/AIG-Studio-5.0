@@ -1,0 +1,43 @@
+/* AIG-II Stage IV transfer page: same public-site typography, no debug shell. */
+.transfer-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(255px,.8fr);gap:18px;align-items:start}
+.transfer-main{min-width:0}
+.transfer-card{background:linear-gradient(155deg,#10243a,#080f1a);border:1px solid #2d6080;border-radius:13px;overflow:hidden;margin-bottom:17px;box-shadow:0 8px 22px #0006}
+.transfer-head{margin:0;padding:14px 19px;background:#172a40;border-bottom:1px solid #2e5169;font-size:17px}
+.transfer-content{padding:17px 19px}
+.transfer-content p{margin:0 0 12px;color:#bdd0dc;font-size:13px;line-height:1.9}
+.transfer-content p:last-child{margin-bottom:0}
+.transfer-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 14px}
+.transfer-counts .count{background:#101f31;border:1px solid #2c5975;border-radius:9px;padding:13px 12px}
+.transfer-counts b{display:block;font-size:24px;color:#91e7fa}
+.transfer-counts span{font-size:11px;color:#afc8d8}
+.transfer-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}
+.transfer-actions button,.transfer-actions a{min-height:44px;cursor:pointer;padding:10px 16px;border:1px solid #3489b2;border-radius:9px;background:#124d73;color:#effbff;font-weight:750}
+.transfer-actions button.primary{background:linear-gradient(105deg,#196f9b,#363a9a);border-color:#71d5ff}
+.transfer-actions button.secondary{background:#132b41;border-color:#35627b}
+.transfer-actions button:disabled{opacity:.48;cursor:not-allowed}
+.transfer-file{display:block;width:100%;padding:12px;color:#daedff;background:#0a1928;border:1px dashed #39799b;border-radius:9px}
+.transfer-preview{display:none;margin-top:15px;padding:14px;background:#0a1b2c;border:1px solid #305c7e;border-radius:9px}
+.transfer-preview[data-ready="true"]{display:block}
+.transfer-preview h3{font-size:15px;color:#d9f7ff;margin:0 0 11px}
+.transfer-preview dl{margin:0;display:grid;grid-template-columns:120px minmax(0,1fr);gap:5px 11px;font-size:13px}
+.transfer-preview dt{color:#99b8cf}.transfer-preview dd{margin:0;word-break:break-word}
+.transfer-choice{display:grid;gap:8px;margin:13px 0}
+.transfer-choice label{display:flex;align-items:flex-start;gap:10px;border:1px solid #315474;background:#10263b;padding:12px;border-radius:8px;font-size:13px}
+.transfer-choice input{margin-top:4px;accent-color:#35bfff}
+.transfer-choice span{display:block;color:#b1c4d5;margin-top:3px;font-size:12px}
+.transfer-confirm{display:flex;gap:9px;align-items:flex-start;padding:13px;background:#201f24;border:1px solid #665b46;border-radius:8px;color:#f0d8a2;font-size:13px;line-height:1.6}
+.transfer-confirm input{margin-top:4px}
+.transfer-status{min-height:44px;padding:12px 14px;border-radius:9px;margin-top:15px;background:#091d2a;border:1px solid #2b5875;color:#b8e9ff;font-size:13px;line-height:1.7}
+.transfer-status[data-level="error"]{border-color:#ab7853;background:#32271e;color:#ffe0ad}
+.transfer-status[data-level="success"]{border-color:#38967d;background:#0b322c;color:#a9f7d5}
+.transfer-links a{display:block;padding:11px 13px;color:#b9ebff;border-bottom:1px solid #2a465f;font-size:13px}
+.transfer-links a:last-child{border-bottom:0}
+.transfer-aside{min-width:0}
+.transfer-aside ul{padding-left:19px;margin:10px 0;color:#aec8da;font-size:13px;line-height:1.9}
+.transfer-aside li{margin-bottom:6px}
+.transfer-aside strong{color:#d7f7ff}
+.transfer-note{border-left:3px solid #e7af60;background:#2b231c;padding:12px 13px;color:#efd3a4!important;font-size:12px!important;border-radius:4px}
+.backup-select{width:100%;padding:11px;color:#e5faff;border:1px solid #34627e;border-radius:8px;background:#0c1d30}
+.transfer-separator{border:0;border-top:1px solid #25445e;margin:20px 0}
+@media(max-width:780px){.transfer-grid{grid-template-columns:1fr}.transfer-aside{display:grid;grid-template-columns:1fr 1fr;gap:12px}.transfer-aside .transfer-card{margin-bottom:0}}
+@media(max-width:520px){.transfer-aside{grid-template-columns:1fr}.transfer-counts{gap:6px}.transfer-counts .count{padding:9px}.transfer-counts b{font-size:20px}.transfer-content{padding:13px}.transfer-preview dl{grid-template-columns:1fr;gap:2px}.transfer-preview dt{margin-top:6px}.transfer-actions button,.transfer-actions a{width:100%;text-align:center}}

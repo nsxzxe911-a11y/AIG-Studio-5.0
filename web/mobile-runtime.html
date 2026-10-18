@@ -171,6 +171,7 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./authority/cam-unified-rgb-v1.css">
 <link rel="stylesheet" href="./authority/desktop-mobile-layout-v1.css">
 <link rel="stylesheet" href="./authority/aigii-rgb-glass-runtime-20261018-v1.css">
+<link rel="stylesheet" href="./phase4.css">
 </head>
 <body>
 <div class="app">
@@ -183,10 +184,11 @@ html,body{background:#020407}
   <span class="layoutMessage" data-layout-message role="status" aria-live="polite">偵測版型</span>
  </div>
  <nav class="nav" id="nav"></nav>
- <div class="status">● 本機工作區 • 機台輸出停用</div>
+ <a class="projectTransferLink" href="./project-sync.html" target="_blank" rel="noopener noreferrer" aria-label="跨裝置專案續接">專案續接　↗</a>
+ <div class="status">● 真機輸出關閉</div>
 </header>
 <main class="shell" id="screens"></main>
-<footer class="footer">AIG-II • RGB GLASS • 桌面／手機 • 機台輸出停用</footer>
+<footer class="footer">AIG-II · CAD / CAM / SIM / NC · 安全操作模式</footer>
 </div>
 <script src="./runtime/layout-mode.js"></script>
 <script src="./runtime/page-runtime-router.js"></script>
@@ -264,6 +266,7 @@ function homePage(){
     '<div class="aigHeroActions">'+
      '<button type="button" data-open-page="CAD">進入 CAD</button>'+
      '<button type="button" data-open-page="NC">直接編輯 NC</button>'+
+     '<a class="heroTransferLink" href="./project-sync.html" target="_blank" rel="noopener noreferrer">專案續接　↗</a>'+
     '</div>'+
    '</section>'+
    '<section class="aigGlass aigSystem" aria-label="本機狀態">'+
@@ -2942,7 +2945,9 @@ function makeMenuRuntime(root){
    detail.innerHTML='<div class="menuDetailGrid"><label class="field"><b>專案名稱</b><input data-menu-project-name required maxlength="80" value="'+String(p.name||"").replace(/"/g,"&quot;")+'"></label><div class="field"><b>Revision</b><span>'+Number(p.revision||1)+'</span></div><div class="field"><b>儲存位置</b><span>Browser Local / Offline-first</span></div></div><div class="controls"><button class="btn play" data-menu-action="PROJECT_SAVE">儲存專案資訊</button><button class="btn" data-menu-action="PROJECT_NEW">新建空專案</button></div><div class="notice" data-menu-msg>專案資料不會自動覆蓋另一台裝置。</div>';
  }
  function fileView(){
-   detail.innerHTML='<div class="notice">匯出會包含 CAD、CAM/刀路、3AX/4AX/5AX G-code 與專案資訊；匯入只寫入本機瀏覽器。</div><div class="controls"><button class="btn play" data-menu-action="EXPORT">匯出 AIG JSON</button><button class="btn" data-menu-action="IMPORT">匯入 AIG JSON</button><input type="file" accept=".json,application/json" data-menu-file hidden></div><div class="notice" data-menu-msg></div>';
+   detail.innerHTML='<div class="notice">本機先保存，跨裝置使用帶有 SHA-256 校驗與衝突保護的專案檔。支援 CAD、CAM、Stock、刀具表、夾治具及 3～6AX NC；不自動連接 Google Drive。</div>'+
+   '<div class="controls"><a class="btn play" href="./project-sync.html" target="_blank" rel="noopener noreferrer">開啟專案續接　↗</a></div>'+
+   '<div class="notice" data-menu-msg>匯入前將預覽差異並先建立本機備份，不會直接覆蓋正在編輯的資料。</div>';
  }
  function toolsView(){
    const t=readJson("aig-tool-table-v1",{T1:10,T4:6,T12:12,H1:0,H4:0,H12:0});
@@ -3099,11 +3104,7 @@ function makeMenuRuntime(root){
    const a=e.target.closest("[data-menu-action]");if(!a)return;const msg=detail.querySelector("[data-menu-msg]");
    if(a.dataset.menuAction==="PROJECT_SAVE"){const old=readJson("aig-project-meta-v1",{revision:0}),nameEl=detail.querySelector("[data-menu-project-name]"),name=nameEl.value.trim();if(!name){aigFieldIssue(nameEl,"error","專案名稱不可空白；原專案資料保持不變。");if(msg)msg.textContent="專案名稱空白，沒有覆蓋原資料；AIG 可繼續操作。";return}saveJson("aig-project-meta-v1",{name,revision:Number(old.revision||0)+1,updatedAt:Date.now()});projectView()}
    if(a.dataset.menuAction==="PROJECT_NEW"){saveJson("aig-project-meta-v1",{name:"AIG CNC Project",revision:1,updatedAt:Date.now()});projectView()}
-   if(a.dataset.menuAction==="EXPORT"){
-     const data={schema:"AIG-WEB-PROJECT-1",exportedAt:new Date().toISOString(),project:readJson("aig-project-meta-v1",{}),cad:readJson("aig-cad-draft-v1",null),cam:readJson("aig-cam-toolpath-v1",null),stock:readJson("aig-stock-v1",null),assembly:readJson("aig-assembly-v1",null),tools:readJson("aig-tool-table-v1",null),wcs:readJson("aig-wcs-v1",null),nc:{"3AX":aigStorageGet(root,"aig-code-3AX",null,"3AX G-code"),"4AX":aigStorageGet(root,"aig-code-4AX",null,"4AX G-code"),"5AX":aigStorageGet(root,"aig-code-5AX",null,"5AX G-code")}};
-     const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="AIG_Web_Project.json";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);if(msg)msg.textContent="已匯出 AIG JSON。";
-   }
-   if(a.dataset.menuAction==="IMPORT"){detail.querySelector("[data-menu-file]").click()}
+   if(a.dataset.menuAction==="EXPORT"||a.dataset.menuAction==="IMPORT"){window.location.assign("./project-sync.html");return}
    if(a.dataset.menuAction==="TOOLS_SAVE"){const out={...readJson("aig-tool-table-v1",{})};detail.querySelectorAll("[data-toolkey]").forEach(i=>{const raw=String(i.value??"").trim();if(/^T\d+$/i.test(i.dataset.toolkey)&&raw===""){delete out[i.dataset.toolkey]}else out[i.dataset.toolkey]=Number(raw)||0});saveJson("aig-tool-table-v1",out);window.dispatchEvent(new CustomEvent("aig-tool-table-updated",{detail:out}));if(msg)msg.textContent="刀具表已儲存；任意 T 刀號保留，3AX/4AX/5AX 已重新計算。";}
    if(a.dataset.menuAction==="WCS_SAVE"){const out={G54:{X:0,Y:0,Z:0},G55:{X:0,Y:0,Z:0}};detail.querySelectorAll("[data-wcskey]").forEach(i=>{const [g,k]=i.dataset.wcskey.split("-");out[g][k]=Number(i.value)||0});saveJson("aig-wcs-v1",out);if(msg)msg.textContent="G54/G55 已儲存；模擬頁重新載入時套用。";}
    if(a.dataset.menuAction==="ASSEMBLY_CHECK"){assemblySetupCheck();return}
@@ -3150,10 +3151,6 @@ function makeMenuRuntime(root){
    if(a.dataset.menuAction==="SELF_CHECK"){const c=counts();if(msg)msg.textContent="SELF CHECK PASS：CAD "+c.cad+" / CAM "+c.cam+" / NC "+(c.n3+c.n4+c.n5)+" lines。";}
    if(a.dataset.menuAction==="CLEAR_DERIVED"){const now=Date.now();if(now>maintArmedUntil){maintArmedUntil=now+2500;if(msg)msg.textContent="清除待命：2.5 秒內再按一次才會清除 CAM 與 3/4/5AX NC；CAD 保留。";return}maintArmedUntil=0;aigStorageRemove(root,"aig-cam-toolpath-v1","CAM/NC 衍生資料");for(const ax of ["3AX","4AX","5AX"])aigStorageRemove(root,"aig-code-"+ax,ax+" G-code");if(msg)msg.textContent="已清除 CAM/NC 衍生暫存；CAD 未刪除。";}
  },null,"warn"));
- root.addEventListener("change",e=>{
-   const file=e.target.closest("[data-menu-file]");if(!file||!file.files?.[0])return;
-   const reader=new FileReader();reader.onload=()=>aigGuard(root,"專案匯入",()=>{const msg=detail.querySelector("[data-menu-msg]");let data=null;try{data=JSON.parse(String(reader.result||"{}"))}catch{if(msg)msg.textContent="匯入失敗：JSON 格式無法解析；原資料未變更。";aigShowIssue(root,"warn","匯入檔案不是有效 JSON；原資料保持不變。");return}if(data?.schema!=="AIG-WEB-PROJECT-1"){if(msg)msg.textContent="匯入失敗：檔案格式不是 AIG-WEB-PROJECT-1；原資料未變更。";aigShowIssue(root,"warn","匯入格式不相容；原資料保持不變。");return}if(data.project)saveJson("aig-project-meta-v1",data.project);if(data.cad)saveJson("aig-cad-draft-v1",data.cad);if(data.cam)saveJson("aig-cam-toolpath-v1",data.cam);if(data.stock){saveJson("aig-stock-v1",data.stock);window.dispatchEvent(new CustomEvent("aig-stock-updated",{detail:data.stock}))}if(data.assembly){saveJson("aig-assembly-v1",data.assembly);window.dispatchEvent(new CustomEvent("aig-assembly-updated",{detail:data.assembly}))}if(data.tools){saveJson("aig-tool-table-v1",data.tools);window.dispatchEvent(new CustomEvent("aig-tool-table-updated",{detail:data.tools}))}if(data.wcs)saveJson("aig-wcs-v1",data.wcs);for(const ax of ["3AX","4AX","5AX"])if(data.nc?.[ax])aigStorageSet(root,"aig-code-"+ax,data.nc[ax],ax+" G-code");if(msg)msg.textContent="匯入完成；重新開啟頁面即可載入全部資料。";aigShowIssue(root,"info","專案匯入完成。")},null,"warn");reader.onerror=()=>{const msg=detail.querySelector("[data-menu-msg]");if(msg)msg.textContent="檔案讀取失敗；原資料未變更。";aigShowIssue(root,"warn","檔案讀取失敗；AIG 其他功能可繼續使用。")};reader.readAsText(file.files[0]);
- });
  render("PROJECT");
 }
 pages.forEach(([name,color])=>{
