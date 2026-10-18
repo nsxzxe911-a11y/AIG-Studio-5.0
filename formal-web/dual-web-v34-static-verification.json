@@ -1,0 +1,19 @@
+{
+  "release": "34.0.0",
+  "checks": {
+    "shared-source": "Both HTML pages load exactly same dual-web-v34.js with same release 34.0.0",
+    "native-pins": "432.0.0 and 375.0.0 exact SHA unchanged",
+    "10-real-nav": "10-page dispatcher delegates .nav button[data-page].click only",
+    "state-preservation": "No changes to original CNC parser, G-code or storage",
+    "offline": "New cache key includes both workspaces and shared module",
+    "site-navigation": "Homepage and dual-project-latest reference common Web V34"
+  },
+  "inlineScripts": {
+    "aig": 3,
+    "studio": 2
+  },
+  "sharedModuleSyntax": "PASS",
+  "nativePinsUnchanged": true,
+  "realBrowserCheck": "PENDING",
+  "androidExeGate": "NOT_RUN"
+}

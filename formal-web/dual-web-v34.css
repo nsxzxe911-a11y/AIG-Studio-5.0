@@ -1,0 +1,15 @@
+/* Shared AIG-II × Studio 5.0 WEB V34. No engineering shell or overlay on machining viewport. */
+#aig34-launch.aig34-launch{cursor:pointer;flex:0 0 auto;min-height:39px;padding:7px 12px;border:1px solid #65bdf4;border-radius:9px;background:linear-gradient(128deg,#142f52,#2f2465);color:#ecfbff;font:750 11px/1.3 "Noto Sans TC","Microsoft JhengHei",sans-serif;box-shadow:0 0 12px #2c9fd047;white-space:nowrap}
+#aig34-launch.aig34-launch[aria-expanded="true"]{background:linear-gradient(145deg,#244d82,#3a347e)}
+.aig34-panel[hidden]{display:none!important}
+.aig34-panel{box-sizing:border-box;position:relative;z-index:28;margin:0 clamp(6px,1.5vw,19px) 10px;padding:12px 14px;border:1px solid #4b94c4;border-radius:12px;background:linear-gradient(135deg,#0a2236,#0a1328 75%);box-shadow:0 12px 30px #0008;color:#eaf9ff}
+.aig34-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.aig34-panel-head strong{font-size:13px}.aig34-panel-head button{cursor:pointer;min-height:31px;border-radius:7px;border:1px solid #436b85;background:#142f45;color:#d7f5ff;padding:5px 12px}
+.aig34-info,.aig34-hint{font-size:11px;color:#b6d2e4;line-height:1.7;margin:8px 0}
+.aig34-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px}
+.aig34-page{min-width:0;min-height:57px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:5px 3px;background:#10263d;border:1px solid #3f7799;border-radius:8px;color:#e0f7ff}
+.aig34-page b{font-size:12px}.aig34-page small{font-size:9px;color:#a7c8d9}.aig34-page:disabled{cursor:not-allowed;opacity:.42}
+.aig34-foot{display:flex;flex-wrap:wrap;gap:10px}.aig34-foot a{padding:8px 10px;border:1px solid #4892c2;border-radius:7px;background:#143858;color:#c7f4ff;font-size:11px;text-decoration:none}
+.aig34-page:focus-visible,#aig34-launch:focus-visible,.aig34-panel button:focus-visible,.aig34-foot a:focus-visible{outline:2px solid #ffd083;outline-offset:2px}
+@media(max-width:950px){.aig34-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:520px){.aig34-grid{grid-template-columns:repeat(4,minmax(0,1fr))}#aig34-launch.aig34-launch{min-height:35px;font-size:10px;padding:6px 8px}}

@@ -42,3 +42,14 @@
 .v23-honesty{border-left:3px solid #b69357;color:#e1cea8;background:#272318;margin-top:14px;padding:12px 14px;font-size:12px;line-height:1.85}
 @media(max-width:1100px){.v23-module-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px){.v23-module-index{padding:14px}.v23-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.v23-module h3{font-size:14px}}
+
+
+/* V34 dual Web release, preserves existing nature-themed website layout */
+.v34-shared-release{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(220px,.7fr);gap:22px;align-items:center;margin:0 0 18px;padding:21px 24px;border:1px solid #49b9e1;border-radius:12px;background:linear-gradient(130deg,#0e3140,#142242)}
+.v34-shared-release small{color:#95e2ed;font-size:11px;letter-spacing:.07em}
+.v34-shared-release h2{color:#f0fbff;font-size:clamp(20px,2vw,25px);margin:7px 0}
+.v34-shared-release p{color:#b9dbe7;font-size:12px;line-height:1.75}
+.v34-shared-actions{display:flex;flex-direction:column;gap:8px}
+.v34-shared-actions a{border:1px solid #4fbfdd;border-radius:7px;padding:9px 12px;text-align:center;background:#154667;color:#ddf7ff;font-size:12px;text-decoration:none}
+.v34-shared-actions a:focus-visible{outline:2px solid #ffe09d;outline-offset:2px}
+@media(max-width:780px){.v34-shared-release{grid-template-columns:1fr;padding:15px}}

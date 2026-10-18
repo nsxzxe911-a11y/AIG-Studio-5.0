@@ -36,5 +36,29 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "Studio latest web runtime is an isolated executable copy; AIG-II latest controller is represented by verifiable pinned metadata, not native execution in a browser. Existing AIG-II Render runtime and data preserved."
+  "notes": "V34: synchronized Web release train for both original Render workspaces. Native AIG-II 432.0.0 and Studio 375.0.0 remain independently versioned and exact-SHA pinned; APK/EXE, true CNC Gate and 0.001mm machining are not verified by this site. All original user data and RGB entry preserved.",
+  "sharedWebRelease": {
+    "version": "34.0.0",
+    "train": "V34",
+    "entryPoints": [
+      {
+        "project": "AIGII",
+        "url": "./mobile-runtime.html#HOME",
+        "version": "34.0.0"
+      },
+      {
+        "project": "STUDIO",
+        "url": "./studio-375.html#HOME",
+        "version": "34.0.0"
+      }
+    ],
+    "commonRuntimeSource": "./dual-web-v34.js",
+    "commonUiSource": "./dual-web-v34.css",
+    "releaseManifest": "./dual-web-v34.json",
+    "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
+    "nativeVersionsRemainIndependent": true,
+    "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",
+    "sourceBranch": "web/aig-dual-formal-runtime-20261016",
+    "gate": "WEB_DEPLOY_AND_BROWSER_CHECK_REQUIRED"
+  }
 }
