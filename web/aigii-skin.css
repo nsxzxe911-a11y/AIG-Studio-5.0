@@ -1,0 +1,125 @@
+/* AIG II / Studio 374 — approved RGB visual language, real Runtime controls remain untouched. */
+:root{--aig-bg:#020407;--aig-panel:rgba(5,13,22,.84);--aig-edge:rgba(64,212,255,.52);--aig-pink:#f44fce;--aig-blue:#4b8fff;--aig-cyan:#50f2ff;--aig-gold:#fbc35a}
+html,body{background:#020407!important}
+body.aig-visual-runtime .app{
+ background:radial-gradient(ellipse at 49% -11%,rgba(38,129,255,.18),transparent 55%),radial-gradient(ellipse at 91% 41%,rgba(243,65,210,.10),transparent 41%),radial-gradient(ellipse at 3% 73%,rgba(27,228,231,.10),transparent 37%),#020407;
+ min-height:100dvh
+}
+body.aig-visual-runtime .top{
+ min-height:86px;gap:12px;padding:12px clamp(12px,2.2vw,28px);
+ background:linear-gradient(180deg,rgba(2,4,9,.98),rgba(5,11,22,.94));
+ border-bottom:1px solid transparent;
+ border-image:linear-gradient(90deg,#244dff,#ed49d6,#35eaff,#236aff) 1;
+ box-shadow:0 12px 46px rgba(0,0,0,.8),0 0 30px rgba(44,142,255,.12);
+}
+body.aig-visual-runtime .brand{min-width:150px;position:relative;padding-left:16px}
+body.aig-visual-runtime .brand:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:8px;background:linear-gradient(#42eeff,#687bff,#ff4dcb);box-shadow:0 0 14px #55d8ff}
+body.aig-visual-runtime .logo{font-size:clamp(22px,2.6vw,29px);font-weight:900;letter-spacing:.10em;color:#f8fdff;text-shadow:0 0 19px rgba(84,208,255,.6),0 0 32px rgba(165,87,252,.28)}
+body.aig-visual-runtime .brand small{font-size:10px;letter-spacing:.11em;color:#bcdff5}
+body.aig-visual-runtime .status{margin-left:0;font-size:10px;color:#b5e8f9;padding:7px 11px;border:1px solid #287085;border-radius:9px;background:#050d16}
+body.aig-visual-runtime .nav{grid-template-columns:repeat(10,minmax(58px,1fr));gap:7px;max-width:none}
+body.aig-visual-runtime .nav button,
+body.aig-visual-runtime .btn,
+body.aig-visual-runtime .menuCard{
+ position:relative;overflow:hidden;border:1px solid transparent;isolation:isolate;
+ color:#e8f8ff;font-weight:650;background:linear-gradient(145deg,rgba(8,23,39,.94),rgba(3,7,14,.97)) padding-box,linear-gradient(115deg,#234f8e,#42e8ff 28%,#8465ff 61%,#e352d2) border-box;
+ box-shadow:inset 0 1px 0 rgba(213,246,255,.12),0 7px 19px rgba(0,0,0,.48),0 0 13px rgba(78,151,255,.1);
+ transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease;
+}
+body.aig-visual-runtime .nav button{min-height:46px;border-radius:12px;font-size:clamp(11px,1vw,14px);letter-spacing:.03em}
+body.aig-visual-runtime .nav button:hover,
+body.aig-visual-runtime .btn:hover,
+body.aig-visual-runtime .menuCard:hover{transform:translateY(-1px);box-shadow:0 0 21px rgba(47,209,255,.24),0 9px 22px #000}
+body.aig-visual-runtime .nav button.active{color:#fff;background:linear-gradient(150deg,rgba(35,74,126,.6),rgba(19,11,45,.86)) padding-box,linear-gradient(115deg,#33e5ff,#ff55d3,#5e89ff) border-box;box-shadow:0 0 25px rgba(64,175,255,.4),inset 0 0 20px rgba(92,129,250,.2)}
+body.aig-visual-runtime button:focus-visible,body.aig-visual-runtime a:focus-visible{outline:2px solid #baf4ff;outline-offset:3px}
+body.aig-visual-runtime button:active{transform:scale(.982)}
+body.aig-visual-runtime button:disabled{filter:saturate(.15);box-shadow:none;opacity:.5}
+body.aig-visual-runtime .shell{padding:clamp(10px,1.7vw,22px);gap:16px;max-width:2400px;width:100%;margin:0 auto}
+body.aig-visual-runtime .panel{
+ border:1px solid rgba(64,189,235,.36);border-radius:17px;
+ background:linear-gradient(153deg,rgba(10,24,41,.86),rgba(3,8,15,.94) 64%,rgba(12,10,29,.87));
+ box-shadow:inset 0 1px rgba(172,235,255,.08),0 18px 55px rgba(0,0,0,.48),0 0 24px rgba(60,172,246,.075);
+ backdrop-filter:blur(12px)
+}
+body.aig-visual-runtime .panel>.head{padding:14px 16px;border-bottom:1px solid rgba(78,169,255,.19);background:linear-gradient(90deg,rgba(37,99,176,.13),transparent)}
+body.aig-visual-runtime .panel>.head h2,body.aig-visual-runtime .panel>.head h3{font-size:clamp(14px,1.15vw,18px);letter-spacing:.03em;text-shadow:0 0 12px #319fdc2a}
+body.aig-visual-runtime .panel>.body{padding:14px}
+body.aig-visual-runtime .notice,body.aig-visual-runtime .field,body.aig-visual-runtime .param,body.aig-visual-runtime .metric{background:rgba(3,10,18,.70);border-color:rgba(65,139,180,.32);border-radius:9px}
+body.aig-visual-runtime input,body.aig-visual-runtime select,body.aig-visual-runtime textarea{accent-color:#56d9ff}
+body.aig-visual-runtime .badge{border-color:rgba(96,208,251,.37);color:#a9edff;background:rgba(5,28,43,.38)}
+body.aig-visual-runtime .sceneWrap,
+body.aig-visual-runtime .cadCanvasWrap,body.aig-visual-runtime .camCanvas,body.aig-visual-runtime .tpCanvas{border:1px solid rgba(64,204,249,.5);border-radius:14px;box-shadow:inset 0 0 45px rgba(0,0,0,.65),0 0 21px rgba(39,233,255,.09)}
+body.aig-visual-runtime .simgrid{grid-template-columns:minmax(0,2.17fr) minmax(295px,.83fr)}
+body.aig-visual-runtime .simleft .runtimeStatus{grid-template-columns:repeat(6,minmax(105px,1fr));gap:7px;max-height:165px;overflow:auto;scrollbar-color:#367d9d #06101c}
+body.aig-visual-runtime .simleft .runtimeStatus .metric{padding:9px;min-height:48px}
+body.aig-visual-runtime .sceneTitle{color:#e7faff;text-shadow:0 2px 13px #000,0 0 12px rgba(39,233,255,.4)}
+body.aig-visual-runtime .sceneHud{background:rgba(2,8,13,.75);border-color:rgba(56,193,240,.48)}
+body.aig-visual-runtime .controls .btn{min-height:43px;padding:8px 12px}
+body.aig-visual-runtime .btn.danger{background:linear-gradient(#1b0b18,#080407) padding-box,linear-gradient(90deg,#f86f78,#8d3552) border-box}
+body.aig-visual-runtime [data-home-runtime] .workgrid{grid-template-columns:minmax(0,1fr) 230px;min-height:0;gap:14px}
+body.aig-visual-runtime [data-home-runtime] .panel:first-child>.body{padding:clamp(12px,2vw,22px)}
+body.aig-visual-runtime .aig-home-hero{
+ position:relative;min-height:clamp(170px,22vh,275px);border-radius:16px;overflow:hidden;margin-bottom:17px;
+ border:1px solid rgba(88,208,252,.53);
+ background:radial-gradient(ellipse at 90% 5%,rgba(112,55,250,.20),transparent 55%),#030713;
+ box-shadow:0 0 30px rgba(81,126,255,.13),inset 0 0 25px #000
+}
+body.aig-visual-runtime .aig-home-hero:before{
+ content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+ background-image:linear-gradient(90deg,rgba(2,4,7,.93) 0%,rgba(2,4,7,.73) 44%,rgba(2,4,7,.18) 100%),url("./assets/authority/home_desktop.jpg");
+ background-size:cover;background-position:center 12%;
+ opacity:.89;filter:saturate(1.35) blur(1.5px);transform:scale(1.017)
+}
+body.aig-visual-runtime .aig-home-hero:after{content:"";position:absolute;inset:auto 0 0;height:4px;pointer-events:none;background:linear-gradient(90deg,#36e6ff,#626aff,#ff3ed1,#36e6ff);box-shadow:0 0 16px #35baff}
+body.aig-visual-runtime .aig-home-hero-content{position:relative;z-index:1;padding:clamp(18px,4vw,42px);display:flex;flex-direction:column;justify-content:center;min-height:inherit;max-width:730px}
+body.aig-visual-runtime .aig-home-eyebrow{font-size:11px;letter-spacing:.29em;color:#76f4ff;font-weight:800}
+body.aig-visual-runtime .aig-home-title{margin:10px 0;font-size:clamp(31px,5vw,67px);line-height:1.08;font-weight:900;letter-spacing:.06em;color:#fff;text-shadow:0 0 22px rgba(51,219,252,.50),0 0 39px rgba(160,86,255,.38)}
+body.aig-visual-runtime .aig-home-caption{margin:0;color:#d8f0fb;line-height:1.6;font-size:clamp(12px,1.2vw,16px);max-width:440px}
+body.aig-visual-runtime .aig-home-stripe{display:flex;gap:7px;flex-wrap:wrap;margin-top:17px}
+body.aig-visual-runtime .aig-home-stripe span{border:1px solid rgba(86,221,255,.44);border-radius:8px;padding:5px 9px;background:rgba(4,14,24,.71);font-size:10px;letter-spacing:.06em;color:#cceffc}
+body.aig-visual-runtime [data-home-runtime] .menuGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+body.aig-visual-runtime [data-home-runtime] .menuCard{
+ min-height:clamp(94px,12vw,165px);padding:15px;font-size:clamp(15px,1.6vw,22px);letter-spacing:.055em;border-radius:15px;
+ background:linear-gradient(145deg,rgba(9,21,34,.9),rgba(5,7,17,.92)) padding-box,linear-gradient(130deg,#38d9ff,#6870ff,#f449d5) border-box
+}
+body.aig-visual-runtime [data-home-runtime] .menuCard:nth-child(3n + 2){background:linear-gradient(145deg,rgba(8,22,35,.91),rgba(6,5,19,.92)) padding-box,linear-gradient(120deg,#8a68ff,#ef56dc,#32e5ff) border-box}
+body.aig-visual-runtime [data-home-runtime] .menuCard:nth-child(3n + 3){background:linear-gradient(145deg,rgba(8,22,35,.91),rgba(6,5,19,.92)) padding-box,linear-gradient(120deg,#35f5c1,#3b92ff,#a36aff) border-box}
+body.aig-visual-runtime [data-home-runtime] .menuCard:before{content:"";position:absolute;left:12%;right:12%;bottom:0;height:3px;background:linear-gradient(90deg,transparent,#61f1ff,transparent);opacity:.86;box-shadow:0 0 15px rgba(93,211,255,.5)}
+body.aig-visual-runtime [data-home-runtime] .runtimeStatus{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:17px!important}
+body.aig-visual-runtime [data-home-runtime] .metric{padding:13px}
+body.aig-visual-runtime [data-home-runtime] .metric span{font-size:14px;font-variant-numeric:tabular-nums}
+body.aig-visual-runtime [data-home-runtime] .notice{margin-top:13px!important}
+body.aig-visual-runtime .aig-gallery-link{
+ min-height:43px;display:inline-flex;justify-content:center;align-items:center;padding:9px 13px;border-radius:10px;white-space:nowrap;text-decoration:none;font-size:12px;color:#d8f9ff;font-weight:700;
+ background:linear-gradient(#061522,#03060b) padding-box,linear-gradient(120deg,#6c7eff,#53e3f5,#f35ace) border-box;border:1px solid transparent
+}
+body.aig-visual-runtime .footer{font-size:10px;padding:12px;color:#8eaebb}
+@media(max-width:1100px){
+ body.aig-visual-runtime .top{flex-wrap:wrap}
+ body.aig-visual-runtime .nav{order:3;flex-basis:100%;grid-template-columns:repeat(10,minmax(48px,1fr))}
+ body.aig-visual-runtime .aig-gallery-link{margin-left:auto}
+ body.aig-visual-runtime .simgrid,body.aig-visual-runtime .workgrid,body.aig-visual-runtime .camgrid,body.aig-visual-runtime [data-home-runtime] .workgrid{grid-template-columns:1fr}
+ body.aig-visual-runtime .simleft .runtimeStatus{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:680px){
+ body.aig-visual-runtime .top{padding:10px;min-height:0;gap:7px}
+ body.aig-visual-runtime .brand{min-width:0}
+ body.aig-visual-runtime .logo{font-size:23px}
+ body.aig-visual-runtime .status{display:none}
+ body.aig-visual-runtime .nav{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+ body.aig-visual-runtime .nav button{min-height:45px;font-size:12px;padding:6px 1px}
+ body.aig-visual-runtime .shell{padding:8px}
+ body.aig-visual-runtime .panel>.head{padding:10px 12px}
+ body.aig-visual-runtime .panel>.body{padding:9px}
+ body.aig-visual-runtime .aig-home-hero{min-height:245px}
+ body.aig-visual-runtime .aig-home-hero:before{background-image:linear-gradient(90deg,rgba(2,4,7,.78),rgba(2,4,7,.55),rgba(2,4,7,.28)),url("./assets/authority/home_mobile.jpg");background-position:center 14%}
+ body.aig-visual-runtime .aig-home-hero-content{min-height:245px;padding:20px}
+ body.aig-visual-runtime .aig-home-title{font-size:38px}
+ body.aig-visual-runtime [data-home-runtime] .menuGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ body.aig-visual-runtime [data-home-runtime] .menuCard{min-height:92px;font-size:16px}
+ body.aig-visual-runtime [data-home-runtime] .runtimeStatus{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body.aig-visual-runtime .simleft .runtimeStatus{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body.aig-visual-runtime .sceneWrap,body.aig-visual-runtime .sim3dCanvas,body.aig-visual-runtime .simCanvas{min-height:47vh}
+ body.aig-visual-runtime .menuCard:hover,body.aig-visual-runtime .nav button:hover{transform:none}
+}
+@media(prefers-reduced-motion:reduce){body.aig-visual-runtime *{transition:none!important}}
