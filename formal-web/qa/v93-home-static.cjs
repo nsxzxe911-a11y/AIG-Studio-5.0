@@ -8,7 +8,7 @@ assert.equal(manifest.desktopAuthority,"MISSING_APPROVED_4K_IMAGE");
 assert(source.includes("function makeHomeRuntime(")&&source.includes("function makeRuntime(")&&source.includes("voxelStock(scene"));
 assert(source.includes("v92-6ax-authority-layout.js")&&source.includes("v93-home-rgb-layout.js"));
 assert(source.includes("v93-home-glb-viewer.js")&&cache.includes("v93-home-rgb-layout.js"));
-for(const key of ["data-home-network","data-home-cad","data-home-cam","data-home-nc","aigModuleCard","aigProjectEntries"]){
+for(const key of ["data-home-network","data-home-cad","data-home-cam","data-home-nc","aigModuleCard","aigProjects"]){
  assert(js.includes(key),"Missing native HOME live binding "+key)
 }
 for(const blocked of ["cloneNode(","innerHTML=","localStorage.clear(","XMLHttpRequest(","navigator.serial","navigator.usb"]){
