@@ -34,7 +34,15 @@ async function layout(page,label){const metrics=await page.evaluate(()=>({viewpo
    await check(page,'.screen.active .simgrid.axisModule[data-runtime="6AX"]',"6AX runtime root");
    const axis=page.locator('.screen.active .simgrid.axisModule[data-runtime="6AX"]');
    await check(page,'.screen.active [data-aig86-toggle-nc]',"6AX live NC panel switch");
-   await check(page,'.screen.active [data-cmd="play"]',"6AX true playback button");
+   if(item.name==="mobile"){
+    // V91 uses a true simulator split: VIEW shows the machine, TOOLS contains
+    // the original real Play button. Do not require two panes simultaneously.
+    const toolsPane=page.locator('.screen.active .aig49-dock button[data-aig50-choice="tools"]');
+    assert(await toolsPane.count(),"6AX native TOOLS pane must exist on phone");
+    await toolsPane.click();
+    await check(page,'.screen.active [data-cmd="play"]',"6AX true playback button in TOOLS");
+    await page.locator('.screen.active .aig49-dock button[data-aig50-choice="view"]').click();
+   }else await check(page,'.screen.active [data-cmd="play"]',"6AX true playback button");
    await check(page,'.screen.active .sceneWrap',"6AX main viewport");
    assert.equal(await axis.getAttribute("data-aig86-nc"),"collapsed","6AX main viewport must start focused");
    const width=await page.evaluate(()=>{const root=document.querySelector('.screen.active .simgrid.axisModule[data-runtime="6AX"]');
