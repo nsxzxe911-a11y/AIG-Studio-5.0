@@ -75,17 +75,26 @@
   "gate": {
     "sourceRegression": "PASS",
     "mockUiContract": "PASS",
-    "actualBrowserWebGL": "PENDING",
+    "actualBrowserWebGL": "PENDING_BROWSER_EXECUTION",
     "androidScreenshot": "PENDING",
     "windowsScreenshot": "PENDING",
     "AIGIIExactShaSync": "PENDING",
     "collisionCalibration": "BLOCKED",
     "controllerPostTCP": "BLOCKED",
     "materialRemoval0_001mm": "NOT_REVERIFIED",
-    "renderWebsiteDeployment": "NOT_TRIGGERED",
+    "renderWebsiteDeployment": "V66_REVIEW_LIVE_PREVIOUS_COMMIT_FORMAL_SITE_V65_UNCHANGED",
     "apkExe": "NOT_BUILT",
     "CNCMachineOutput": "BLOCKED",
-    "liveMachineCollision": "NO_RELEASE_PASS"
+    "liveMachineCollision": "NO_RELEASE_PASS",
+    "imageAuthority": "VISUAL_REFERENCE_ONLY"
   },
-  "release": "SOURCE_PROTOTYPE_ONLY_NOT_V66_LIVE"
+  "release": "V66_REVIEW_SOURCE_BUILD_ONLY; FORMAL_SITE_V65_LIVE",
+  "previewDeploy": {
+    "service": "srv-dbarkue1egvs73bscss0",
+    "url": "https://aig-v66-6ax-review.onrender.com",
+    "status": "LIVE_PREVIOUS_SNAPSHOT",
+    "notes": "Preview service was LIVE at 0a83642991bca292bd1e69583e6817cae504203e before current modifications; deployment of newer V66 branch must be checked separately."
+  },
+  "renderTelemetry": "VIEWER_EXPOSES_FRAMES_GL_ERRORS; LIVE_BROWSER_RESULTS_NOT_YET_COLLECTED",
+  "pwaCache": "LIGHTWEIGHT_SHELL_11_ASSETS_AND_CRITICAL_BOOT_GUARD; LOCAL_SIMULATION_4_CASES_PASS"
 }
