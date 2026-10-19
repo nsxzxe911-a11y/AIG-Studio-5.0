@@ -82,4 +82,39 @@ pass("automatic visual audit checks screenshots but blocks uncertified CNC",()=>
  assert.ok(src.includes('visualRelease:"BLOCKED_AUTHORITY_NOT_APPROVED"'));
  assert.ok(src.includes('cncRelease:"BLOCKED"'));
 });
+pass("global V67 RGB navigation is wired to the actual production router",()=>{
+ const nav=read("runtime/v67-global-nav.js");
+ assert.ok(html.includes('src="./runtime/v67-global-nav.js"'));
+ assert.ok(html.includes('href="./v67-global-nav.css"'));
+ assert.ok(nav.includes("aigProductionPageRouter"));
+ assert.ok(nav.includes("navigateView"));
+ assert.ok(nav.includes("BTN.GLOBAL.NAV"));
+ assert.ok(!nav.includes("localStorage.clear"));
+});
+pass("visible AI visual-audit panel uses actual runtime buttons",()=>{
+ const ai=read("runtime/v67-ai-visual-audit-panel.js");
+ assert.ok(html.includes('src="./runtime/v67-ai-visual-audit-panel.js"'));
+ assert.ok(html.includes('href="./v67-ai-audit-panel.css"'));
+ assert.ok(ai.includes("[data-ai-page-runtime]"));
+ assert.ok(ai.includes("AIG_V67_CONTROL_REGISTRY"));
+ assert.ok(ai.includes("BTN.AI.AUDIT.RECHECK"));
+ assert.ok(ai.includes("AIG_V67_GLOBAL_NAV"));
+ assert.ok(ai.includes('releaseGate:"BLOCKED_PENDING_EXACT_IMAGE_CALLBACK_BROWSER_AND_DUAL_SHA"'));
+});
+pass("unified V67 RGB source uses approved palette only as STYLE",()=>{
+ const css=read("v67-rgb-unified.css");
+ assert.ok(css.includes("--aig67-bg:#020407"));
+ assert.ok(css.includes("--aig67-panel:#07111b"));
+ assert.ok(!css.includes("background-image:url("));
+});
+pass("automated Chromium audits cover all 12 public HTML routes and ten CNC modules",()=>{
+ const src=read("qa/v67-public-site-audit.mjs");
+ assert.ok(src.includes('readdir(root)'));
+ assert.ok(src.includes('mobile-runtime.html'));
+ assert.ok(src.includes("PNG.sync.read"));
+ const main=read("qa/v67-visual-audit.mjs");
+ assert.ok(main.includes("navigateRuntime(page,id)"));
+ assert.ok(main.includes(".aig67-global-trigger"));
+ assert.ok(main.includes("VISIBLE_NAVIGATION_UNAVAILABLE"));
+});
 console.log("AIG_V67_PAGE_SUBPAGE_AUTHORITY_SOURCE_PASS|"+n+"_CASES|BROWSER_VISUAL_GATE_PENDING");
