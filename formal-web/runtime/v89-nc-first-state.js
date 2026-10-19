@@ -124,7 +124,7 @@ function mountStandalone(){
   if(axis!==AXIS||!x||!target)return;
   const authoritative=storedMain();
   // Do not replace an independently edited NC page without an explicit save/reload.
-  const source=authoritative??(w.sourceCode?.[AXIS]??null);
+  const source=authoritative??area.dataset.aig89NcBaseline??null;
   if(source===null&&target.value.trim()){span.textContent="無法確認獨立 NC 原稿，拒絕覆蓋。";return}
   if(source!==null&&target.value!==source){
    span.textContent="獨立 NC 編輯區已有變更，請先儲存或重載，未匯入。";return
@@ -134,8 +134,14 @@ function mountStandalone(){
   span.textContent="已匯入編輯區，尚未儲存；請使用原 NC 儲存與驗證。";
   action.hidden=true;
  });
- area.querySelector("[data-nc-axis]")?.addEventListener("change",syncStandalone);
- area.dataset.aig89NcMounted="true";syncStandalone();
+ function captureNcBaseline(){
+   area.dataset.aig89NcBaseline=area.querySelector("textarea[data-nc-code]")?.value??"";
+   syncStandalone();
+ }
+ area.querySelector("[data-nc-axis]")?.addEventListener("change",()=>{
+   Promise.resolve().then(captureNcBaseline); // let original axis-change LOAD finish first
+ });
+ area.dataset.aig89NcMounted="true";captureNcBaseline();
 }
 function mount(){
  if(mounted)return;
