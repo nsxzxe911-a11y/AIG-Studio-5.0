@@ -44,7 +44,9 @@ function parse(text,options={}){
   if(lines.length>3000)throw resultError(0,"TOO_MANY_LINES","");
   if(options.headWord!==undefined&&options.headWord!==null&&options.headWord!=="C")throw resultError(0,"UNSUPPORTED_HEAD_MAPPING","C-only preview opt-in");
   const headC=options.headWord==="C";
-  let pos={X:0,Y:0,Z:0,A:0,B:0,H:0},motion=null,hasAbsolute=false,offsetWarned=false,toolWarned=false,mWarned=false;
+  const initialHead=headC?0:(options.initialH===undefined?0:Number(options.initialH));
+  if(!Number.isFinite(initialHead)||initialHead<0||initialHead>45)throw resultError(0,"INVALID_PREVIEW_HEAD_ANGLE","0°–45°");
+  let pos={X:0,Y:0,Z:0,A:0,B:0,H:initialHead},motion=null,hasAbsolute=false,offsetWarned=false,toolWarned=false,mWarned=false;
   for(let i=0;i<lines.length;i++){
    const line=i+1,body=stripComments(lines[i],line);
    if(!body||body==="%")continue;
@@ -87,7 +89,7 @@ function parse(text,options={}){
    }
   }
   if(!steps.length)throw resultError(0,"NO_SUPPORTED_G0_G1_MOTION","");
-  if(!headC)warning.push("主軸頭 H 保持手動設定 0°；C 軸未經映射");
+  if(!headC)warning.push("主軸頭 H 保留原手動角度 "+initialHead.toFixed(1)+"°；C 軸未經映射");
   warning.push("預覽座標非校正 mm；G54/刀長/TCP/真機 Post/撞機驗收均未通過");
   return Object.freeze({ok:true,steps:Object.freeze(steps),warnings:Object.freeze(warning),errors:Object.freeze([]),
    headMapping:headC?"C→H (VISUAL ONLY)":"UNMAPPED",machineOutput:"BLOCKED",ncChanged:false});
