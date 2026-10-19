@@ -1,0 +1,25 @@
+name: AIG V83 Production UI Gate
+on:
+  push:
+    branches: [web/aig-dual-formal-runtime-20261016]
+    paths:
+      - 'formal-web/**'
+      - '.github/workflows/v83-formal-ui-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  formal-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JS syntax
+        run: node --check formal-web/runtime/v82-ai-workflow.js
+      - name: Prevent engineering proxies and preserve native AI
+        run: node formal-web/qa/v83-formal-ui.test.cjs
+      - name: Safety note
+        run: echo "SOURCE_GATE_ONLY. Runtime visual, CNC material removal, and physical machine output are not certified."
