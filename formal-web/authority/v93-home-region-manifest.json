@@ -1,0 +1,17 @@
+{
+  "schema": "AIG_HOME_V93_LIVE_REGION_REBUILD",
+  "sourceReference": "01_HOME.png approved mobile reference, screenshot supplied in user project",
+  "sourceRules": "Visual composition only; never use approved screenshot as a whole-clickmap or fake status layer",
+  "desktopAuthority": "MISSING_APPROVED_4K_IMAGE",
+  "regions": [
+    {"id":"HOME_RGB_HEADER","bind":"native [data-home-network]"},
+    {"id":"HOME_TOP_NAV","bind":"real [data-open-page] with stable ButtonID/CommandID"},
+    {"id":"HOME_CENTER_MODEL","bind":"actual zoo-6ax/local-glb/aig_6ax_machine_v9.glb in WebGL; visual-only"},
+    {"id":"HOME_PROJECT_INFO","bind":"original [data-home-cad], [data-home-cam], [data-home-nc], local storage refresh"},
+    {"id":"HOME_MODULES","bind":"original .aigModuleCard buttons with real navigation"},
+    {"id":"HOME_ACTIONS","bind":"original CAD/NC shortcuts and 6AX entry"}
+  ],
+  "machineOutput": "BLOCKED",
+  "numericalMachiningAuthority": "6AX Runtime, not HOME preview",
+  "deprecatedDesktop438Source": "REVOKED_DO_NOT_USE"
+}
