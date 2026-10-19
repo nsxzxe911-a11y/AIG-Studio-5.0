@@ -1,0 +1,39 @@
+{
+  "artifact": "AIG_6AX_MECHANISM_PREVIEW_V1",
+  "date": "2026-10-19",
+  "base": "V66 branch from original Render V65 850173572caf81cd07a18375cc91aeca726786d3",
+  "sourceGate": "PASS",
+  "sourceChecks": "11 kinematics/source tests executed in V8 test harness",
+  "model": "original procedural WebGL articulated machine, independent geometry nodes; no enclosure and no fixed workpiece",
+  "axes": {
+    "X": "prismatic preview",
+    "Y": "prismatic preview",
+    "Z": "prismatic preview",
+    "A": "cradle rotation -360..360 degrees",
+    "B": "platter relative cradle -360..360 degrees",
+    "H": "spindle tilt 0..45 degrees"
+  },
+  "sourceFiles": [
+    "runtime/6ax-mechanism-core-v1.js",
+    "runtime/6ax-mechanism-preview-v1.js",
+    "runtime/6ax-mechanism-v1.test.cjs",
+    "axis-6ax-mechanism-v1.css",
+    "mobile-runtime.html"
+  ],
+  "integration": "optional separate WebGL mechanism view; original V65 WebGL, NC editor, and original run controls retained",
+  "gates": {
+    "source": "PASS",
+    "renderBrowser": "PENDING",
+    "mobileScreenshot": "PENDING",
+    "windowsScreenshot": "PENDING",
+    "linkedNc": "PENDING",
+    "machineSpecificAxisMapping": "BLOCKED",
+    "tcp": "BLOCKED",
+    "kinematicCollision": "NOT_IMPLEMENTED",
+    "materialRemoval0_001mm": "NOT_REVERIFIED",
+    "machineOutput": "DISABLED",
+    "renderDeploy": "NOT_TRIGGERED",
+    "nativeApkExe": "NOT_BUILT"
+  },
+  "safety": "NOT A MACHINE DIGITAL TWIN; never use preview geometry or statuses for CNC machine output"
+}
