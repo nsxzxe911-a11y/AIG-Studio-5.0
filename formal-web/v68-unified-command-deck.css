@@ -196,7 +196,7 @@ body:has(>.aig67-global-nav) .aig55-top{display:none!important}
 @media(max-width:900px){
  .aig68-deck-head{gap:4px}
  .aig68-advanced-toggle{min-height:24px;padding:3px 6px;font-size:10px}
- .aig68-deck-caution{display:none}
+ .aig68-deck-caution{display:block;font-size:8px;line-height:1.2;max-width:37%;color:#ffcf83}
  .screen>.aig68-legacy-extra{margin:4px 0 8px}
  .screen>.aig68-legacy-extra>summary{padding:7px 11px;font-size:10px}
  .screen.active .simgrid.aig41-workspace:has(>.aig68-deck)>.axisModuleHeader{
