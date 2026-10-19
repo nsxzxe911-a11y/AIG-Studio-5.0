@@ -1,0 +1,14 @@
+"use strict";
+const fs=require("node:fs"),path=require("node:path"),assert=require("node:assert/strict");
+const root=path.resolve(__dirname,"..");
+const read=p=>fs.readFileSync(path.join(root,p),"utf8");
+const html=read("mobile-runtime.html"),css=read("v83-formal-hide-engineering-proxy.css");
+const ai=read("runtime/v82-ai-workflow.js"),v43=read("ai-page-v43.js");
+assert(html.includes('href="./v83-formal-hide-engineering-proxy.css"'));
+assert(html.includes('src="./runtime/v82-ai-workflow.js"'));
+assert(css.includes(".aig43-bar{display:none!important"));
+assert(!css.includes(".screen{display:none"));
+assert(v43.includes('old.click()'),"V43 proxy must delegate to real controls");
+assert(ai.includes('AI.PLAN.BUILD'),"Real AI planner command must remain");
+assert(ai.includes('advanced.appendChild(x)'),"Original AI controls must remain accessible");
+console.log("AIG_V83_FORMAL_UI_SOURCE_PASS | BROWSER_VISUAL_PENDING | CNC_OUTPUT_BLOCKED");
