@@ -1,0 +1,85 @@
+{
+  "artifact": "AIG_6AX_NC_POSTURE_PREVIEW_V2",
+  "date": "2026-10-19",
+  "branch": "aig-web-v66-rgb-workspace",
+  "inheritedBase": "V65 exact commit 850173572caf81cd07a18375cc91aeca726786d3",
+  "sourceChecks": {
+    "result": "PASS",
+    "regressionCases": 23,
+    "runner": "ES module-isolate V8 emulation of CommonJS with mock fs/assert; NOT native GitHub Actions/Node job",
+    "tests": [
+      "G90 G0/G1 XYZ/A/B parsing",
+      "C unmapped fail-closed",
+      "explicit C=>H preview mapping",
+      "Fanuc H offset distinct from head tilt",
+      "unsupported G2/G3/G34/G43/G83/M98/M6/G91/G20/macros refuse",
+      "joint interpolation",
+      "A/B/H 45-degree TCP",
+      "point-by-point sampled proxy",
+      "proxy candidates against platter/cradle/A support",
+      "source NC immutability",
+      "V65 original UI controls script preserved",
+      "no machine output"
+    ]
+  },
+  "uiContractSmoke": {
+    "result": "PASS",
+    "method": "fabricated DOM element/event bridge harness; not a real browser",
+    "observed": [
+      "panel mounts without changing V65 textarea",
+      "C-axis mapping disabled initially",
+      "checkbox opt-in allows C->H sample animation",
+      "model pose setter called",
+      "editor input invalidates stale snapshot",
+      "machineOutput BLOCKED"
+    ]
+  },
+  "mechanism": {
+    "actualIndependentJoints": [
+      "X",
+      "Y",
+      "Z",
+      "A",
+      "B",
+      "H"
+    ],
+    "machineFrame": "ILLUSTRATIVE_UNCALIBRATED",
+    "sweptZones": [
+      "PLATTER",
+      "CRADLE",
+      "A_SUPPORT",
+      "BASE"
+    ],
+    "collisionResult": "POTENTIAL/UNKNOWN ONLY",
+    "fullCollisionClearance": "NOT_CERTIFIED"
+  },
+  "integration": {
+    "webFilesAdded": [
+      "runtime/6ax-nc-readonly-v2.js",
+      "runtime/6ax-nc-bridge-v2.js",
+      "axis-6ax-nc-preview-v2.css",
+      "runtime/6ax-nc-readonly-v2.test.cjs"
+    ],
+    "sourceEntry": "formal-web/mobile-runtime.html",
+    "V65Actions": "UNMODIFIED",
+    "ncWorkingCopy": "READ_ONLY",
+    "machineOutput": "DISABLED",
+    "Cmapping": "EXPLICIT_VISUAL_ONLY",
+    "Hword": "NEVER head tilt; Fanuc tool length offset"
+  },
+  "gate": {
+    "sourceRegression": "PASS",
+    "mockUiContract": "PASS",
+    "actualBrowserWebGL": "PENDING",
+    "androidScreenshot": "PENDING",
+    "windowsScreenshot": "PENDING",
+    "AIGIIExactShaSync": "PENDING",
+    "collisionCalibration": "BLOCKED",
+    "controllerPostTCP": "BLOCKED",
+    "materialRemoval0_001mm": "NOT_REVERIFIED",
+    "renderWebsiteDeployment": "NOT_TRIGGERED",
+    "apkExe": "NOT_BUILT",
+    "CNCMachineOutput": "BLOCKED"
+  },
+  "release": "SOURCE_PROTOTYPE_ONLY_NOT_V66_LIVE"
+}
