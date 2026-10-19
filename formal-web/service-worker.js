@@ -2,15 +2,17 @@
  * Critical entry assets only on installation; all other modules/assets cached
  * after on-demand use. Do NOT preload 3AX–6AX GLB/PBR or the full image library.
  * Original V65 runtime behaviors are unchanged. */
-const CACHE="aig-web-v66-rgb-shell-20261019-v4";
-const DYNAMIC="aig-web-v66-runtime-on-demand-20261019-v4";
+const CACHE="aig-web-v68-4k-rgb-shell-20261019-v1";
+const DYNAMIC="aig-web-v68-4k-runtime-on-demand-20261019-v1";
 const SHELL=[
   "./",
   "./index.html",
   "./mobile-runtime.html",
   "./manifest.webmanifest",
   "./workspace-rgb-v66.css",
-  "./workspace-responsive-v66b.css"
+  "./workspace-responsive-v66b.css",
+  "./v68-rgb-4k.css",
+  "./runtime/v68-visual-quality.js"
 ];
 const MAX_DYNAMIC_ENTRIES=260;
 const TIMEOUT_MS=5500;
