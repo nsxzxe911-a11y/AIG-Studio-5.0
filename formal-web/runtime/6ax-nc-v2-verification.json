@@ -5,7 +5,7 @@
   "inheritedBase": "V65 exact commit 850173572caf81cd07a18375cc91aeca726786d3",
   "sourceChecks": {
     "result": "PASS",
-    "regressionCases": 23,
+    "regressionCases": 25,
     "runner": "ES module-isolate V8 emulation of CommonJS with mock fs/assert; NOT native GitHub Actions/Node job",
     "tests": [
       "G90 G0/G1 XYZ/A/B parsing",
@@ -19,7 +19,8 @@
       "proxy candidates against platter/cradle/A support",
       "source NC immutability",
       "V65 original UI controls script preserved",
-      "no machine output"
+      "no machine output",
+      "manual 0-45-degree H retained when C unmapped, invalid tilt refused"
     ]
   },
   "uiContractSmoke": {
@@ -31,7 +32,8 @@
       "checkbox opt-in allows C->H sample animation",
       "model pose setter called",
       "editor input invalidates stale snapshot",
-      "machineOutput BLOCKED"
+      "machineOutput BLOCKED",
+      "program input invalidates stale preview"
     ]
   },
   "mechanism": {
@@ -51,7 +53,8 @@
       "BASE"
     ],
     "collisionResult": "POTENTIAL/UNKNOWN ONLY",
-    "fullCollisionClearance": "NOT_CERTIFIED"
+    "fullCollisionClearance": "NOT_CERTIFIED",
+    "uiManualHead": "PRESERVED_WHEN_C_UNMAPPED"
   },
   "integration": {
     "webFilesAdded": [
@@ -79,7 +82,8 @@
     "materialRemoval0_001mm": "NOT_REVERIFIED",
     "renderWebsiteDeployment": "NOT_TRIGGERED",
     "apkExe": "NOT_BUILT",
-    "CNCMachineOutput": "BLOCKED"
+    "CNCMachineOutput": "BLOCKED",
+    "liveMachineCollision": "NO_RELEASE_PASS"
   },
   "release": "SOURCE_PROTOTYPE_ONLY_NOT_V66_LIVE"
 }
