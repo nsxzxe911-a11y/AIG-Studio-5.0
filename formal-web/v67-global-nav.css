@@ -1,0 +1,38 @@
+/* V67 CNC global navigation is a real router command, compact and closed by default.
+ * Existing V65 nav stays untouched; no cover on the large 3D viewport. */
+.app>.top{overflow:visible!important;isolation:isolate}
+.aig67-global-nav{position:relative;order:6;flex:0 0 auto;min-width:0;z-index:55}
+.aig67-global-trigger{height:38px;min-height:38px;min-width:84px;display:flex;align-items:center;
+ justify-content:center;gap:5px;padding:5px 10px;white-space:nowrap;cursor:pointer;
+ color:#e9faff;font:700 12px "Noto Sans TC",system-ui,sans-serif;
+ border:1px solid transparent;border-radius:10px;
+ background:linear-gradient(#0b2235,#04111f) padding-box,
+ linear-gradient(120deg,#40e5ff,#7193ff,#db65da) border-box;
+ box-shadow:0 4px 14px #0009}
+.aig67-global-trigger[aria-expanded="true"]{box-shadow:0 0 15px #2d9cff66}
+.aig67-global-panel{position:absolute;top:calc(100% + 6px);right:0;z-index:80;min-width:232px;
+ max-width:min(330px,calc(100vw - 16px));display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:5px;max-height:min(70dvh,480px);overflow:auto;padding:10px;border-radius:14px;
+ border:1px solid #4986aa9b;background:linear-gradient(155deg,#0a1f31f7,#030a15fa);
+ box-shadow:0 18px 42px #000d;backdrop-filter:blur(12px)}
+.aig67-global-panel[hidden]{display:none!important}
+.aig67-global-panel>button{min-height:42px;padding:7px 9px;border:1px solid #315a7c;
+ border-radius:9px;background:linear-gradient(135deg,#092338,#061423);
+ color:#d9f4ff;cursor:pointer;font:700 12px "Noto Sans TC",sans-serif;
+ touch-action:manipulation}
+.aig67-global-panel>button[aria-current="true"]{
+ border-color:#54d9ff;box-shadow:inset 0 0 13px #1dafff33;color:white}
+.aig67-global-panel>button:focus-visible,.aig67-global-trigger:focus-visible{
+ outline:2px solid #b0efff;outline-offset:2px}
+.aig67-global-nav[data-error] .aig67-global-trigger{border-color:#e0a15b}
+@media(max-width:900px){
+ .aig67-global-nav{order:3!important;margin-left:auto;flex:0 0 auto}
+ .aig67-global-trigger{height:36px;min-height:36px;min-width:70px;padding:5px 7px;font-size:11px}
+ .aig67-global-panel{right:0;width:min(280px,calc(100vw - 16px));max-height:68dvh}
+ .app>.top>.nav{order:99!important}
+}
+@media(orientation:landscape) and (max-height:500px){
+ .aig67-global-panel{max-height:calc(100dvh - 45px);grid-template-columns:repeat(5,minmax(0,1fr));
+ width:min(530px,calc(100vw - 20px));min-width:0}
+ .aig67-global-panel>button{min-height:34px;padding:5px 2px;font-size:10px}
+}
