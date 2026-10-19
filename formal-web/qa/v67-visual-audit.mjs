@@ -128,6 +128,13 @@ async function inspectRuntime(page,id){
   originalCadExists:!!document.querySelector('.screen[data-page="CAD"] [data-cad-canvas]'),
   originalCamExists:!!document.querySelector('.screen[data-page="CAM"] [data-cam-canvas]'),
   screenCanvasCount:screen?.querySelectorAll("canvas").length||0,
+  canvasResolution:screen?[...screen.querySelectorAll("canvas")].map(c=>{
+   const box=c.getBoundingClientRect();
+   return {css:[Math.round(box.width),Math.round(box.height)],
+    framebuffer:[c.width,c.height],dprEffective:box.width>0?+(c.width/box.width).toFixed(2):0,
+    dataType:c.hasAttribute("data-glcanvas")?"WEBGL":c.hasAttribute("data-cad-canvas")?"CAD":
+      c.hasAttribute("data-cam-canvas")?"CAM":"OTHER"};
+  }):[],
   screenPanelCount:screen?.querySelectorAll(".panel").length||0,
   workspace:workspaceRect?{
    widthPx:Math.round(workspaceRect.width),heightPx:Math.round(workspaceRect.height),
@@ -226,6 +233,16 @@ async function profileRun(browser,profile){
     if(info.forbiddenEngineeringShellTerms?.length)
      issue("VISIBLE_ENGINEERING_SHELL_TEXT",profile.id,id,null,
       info.forbiddenEngineeringShellTerms.join(", "),"FAIL");
+    for(const canvas of info.canvasResolution||[]){
+     if(canvas.css[0]<80||canvas.css[1]<80)continue;
+     if(canvas.framebuffer[0]<canvas.css[0]*.95||canvas.framebuffer[1]<canvas.css[1]*.95)
+      issue("UNDERSAMPLED_CANVAS",profile.id,id,null,
+       canvas.dataType+" framebuffer "+canvas.framebuffer.join("×")+
+       " is smaller than visible viewport "+canvas.css.join("×"),"WARNING");
+     if(canvas.framebuffer[0]*canvas.framebuffer[1]>16000000)
+      issue("EXCESSIVE_CANVAS_MEMORY",profile.id,id,null,
+       "Canvas above 16MP may cause excessive mobile GPU bandwidth","WARNING");
+    }
     if(info.workspace&&["CAD","CAM","3AX","4AX","5AX","6AX"].includes(id)){
      if(profile.isMobile&&profile.height>profile.width&&info.workspace.visibleHeightRatio<.28)
       issue("MOBILE_WORKSPACE_VIEWPORT_TOO_SHORT",profile.id,id,null,
