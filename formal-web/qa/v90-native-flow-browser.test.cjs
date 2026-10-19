@@ -50,14 +50,22 @@ async function run(browser,label){
   await mode.selectOption("MANUAL",{force:phone});
   const code="G0 X0 Y0 Z5\nG1 X0 Y0 Z-2\nG1 X12 Y0 Z-2\nG0 Z5";
   await cam.locator('textarea[data-cam-manual-input]').fill(code,{force:phone});
-  await cam.locator('button[data-cam-action="CALC"]').click({force:phone});
+  // On Android the native preview action is hidden in the MANUAL pane.
+  // The V60 manual buttons forward to ORIGINAL CALC/APPLY callbacks.
+  if(phone)await cam.locator('[data-aig60-cmd="calc"]').click();
+  else await cam.locator('button[data-cam-action="CALC"]').click();
   const count=await cam.locator('[data-cam-path-count]').textContent();
   assert(Number(String(count).match(/\d+/)?.[0]||0)>0,"original manual CAM produced no paths");
-  await cam.locator('button[data-cam-action="APPLY"]').click({force:phone});
+  if(phone)await cam.locator('[data-aig60-cmd="apply"]').click();
+  else await cam.locator('button[data-cam-action="APPLY"]').click();
   const camSaved=await page.evaluate(()=>JSON.parse(localStorage.getItem("aig-cam-toolpath-v1")||"null"));
   assert(camSaved&&Array.isArray(camSaved.paths)&&camSaved.paths.length>0,
    "CAM actual paths not saved");
-  await cam.locator('[data-button-id="BTN_CAM_FLOW_SIM"]').click({force:phone});
+  if(phone){
+    const view=page.locator('.screen.active .aig49-dock button[data-aig50-choice="view"]');
+    if(await view.count())await view.click();
+  }
+  await cam.locator('[data-button-id="BTN_CAM_FLOW_SIM"]').click();
   await page.waitForSelector('.screen.active[data-page="SIM"]',{timeout:12000});
   const sim=page.locator('.screen.active [data-sim-hub]');
   assert(await sim.locator('[data-sim-card="6AX"]').count(),"original 6AX SIM evidence card missing");
