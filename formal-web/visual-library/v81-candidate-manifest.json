@@ -1,0 +1,33 @@
+{
+  "schema": "AIG_V81_VISUAL_CANDIDATES",
+  "note": "Upscaled 4K reference images; not native 4K and not runtime UI; image binary upload pending",
+  "assets": [
+    {
+      "page": "NC",
+      "file": "AIG_NC_RGB_4K_candidate.png",
+      "sha256": "b403e32098cfcfeae34e46775734b30b046adaf6552b08089b312267dbeed9df",
+      "width": 3840,
+      "height": 2160,
+      "approval": "CANDIDATE",
+      "repositoryAssetPresent": false
+    },
+    {
+      "page": "AI",
+      "file": "AIG_AI_RGB_4K_candidate.png",
+      "sha256": "e0673defe8e32a8d74422d73969d5e0560de2272b87b5cc8bce3030b8f927d65",
+      "width": 3840,
+      "height": 2160,
+      "approval": "CANDIDATE",
+      "repositoryAssetPresent": false
+    },
+    {
+      "page": "3D_TOOLPATH",
+      "file": "AIG_3D_TOOLPATH_RGB_4K_candidate.png",
+      "sha256": "1a10b5336b87b2503c73e8713d4867febc7375976c5a4b97a0f0cc89ac247c39",
+      "width": 3840,
+      "height": 2160,
+      "approval": "REWORK_REQUIRED",
+      "repositoryAssetPresent": false
+    }
+  ]
+}
