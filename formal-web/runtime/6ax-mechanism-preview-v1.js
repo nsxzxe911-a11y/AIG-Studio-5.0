@@ -40,7 +40,13 @@ gl.drawArrays(gl.TRIANGLES,0,m.count)}
 let viewProjection=R.identity();
 function frame(){raf=0;if(!on||!root?.isConnected||d.visibilityState==="hidden"||!gl)return;
  const rect=canvas.getBoundingClientRect();if(rect.width<50||rect.height<50){return}
- const dpi=Math.min(w.devicePixelRatio||1,2);const width=Math.round(rect.width*dpi),height=Math.round(rect.height*dpi);
+ const frame=w.AIG_V68_VISUAL_QUALITY?.frame(rect,{
+   maxDimension:w.AIG_V68_VISUAL_QUALITY?.glLimit(gl)||4096,
+   qualityPixelBudget:8294400
+ });
+ const dpi=frame?.dpr||Math.min(w.devicePixelRatio||1,2);
+ const width=frame?.width||Math.max(1,Math.round(rect.width*dpi)),
+  height=frame?.height||Math.max(1,Math.round(rect.height*dpi));
  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;gl.viewport(0,0,width,height)}
  gl.clearColor(.007,.015,.029,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.useProgram(program);
  const {yaw,pitch,dist,target}=camera;const eye=[target[0]+Math.sin(yaw)*Math.cos(pitch)*dist,target[1]-Math.cos(yaw)*Math.cos(pitch)*dist,target[2]+Math.sin(pitch)*dist];
