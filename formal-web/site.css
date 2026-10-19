@@ -1,3 +1,4 @@
+@import url("./v68-rgb-4k.css");
 /* AIG-II public site — magazine/forum-like content structure, NOT the CNC workstation. */
 :root{color-scheme:dark;--bg:#080e16;--surface:#0e1927;--surface2:#132235;--border:#233c54;--text:#ecf4fb;--muted:#9aafc2;--accent:#35c8f0;--link:#77d5ff;--vivid:#8678fc;--radius:10px}
 *{box-sizing:border-box}
