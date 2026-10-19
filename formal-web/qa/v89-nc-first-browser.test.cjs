@@ -4,7 +4,7 @@ const {chromium}=require("playwright");
 const URL=process.env.AIG_TEST_URL||"http://127.0.0.1:8765/mobile-runtime.html";
 const dir=path.resolve("artifacts/v89");fs.mkdirSync(dir,{recursive:true});
 async function runCase(browser,mode){
- const c=await browser.newContext({viewport:mode==="desktop"?{width:1440,height:900}:{width:390,height:844}});
+ const c=await browser.newContext({viewport:mode==="desktop"?{width:3840,height:2160}:{width:360,height:772},deviceScaleFactor:mode==="desktop"?1:4});
  const page=await c.newPage();
  try{
   await page.goto(URL+"#6AX",{waitUntil:"domcontentloaded",timeout:30000});
