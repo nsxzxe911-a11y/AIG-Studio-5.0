@@ -8,8 +8,8 @@
     "UI_UX": "responsive CSS for 10 primary modules, desktop geometry/coding splits, mobile overflow and nav",
     "CNC_6AX": "mobile controller drawer with live Button ID and independent true 3D joints",
     "NC_SIM": "NC sampled collision warning shown only for current sampled position; NC working copy remains read only",
-    "WEB_PERFORMANCE": "six-asset critical install shell; V66 6AX modules load only when active",
-    "OFFLINE": "critical HOME/workspace shell guarded, optional assets fast-fail to V65 runtime without NC mutation",
+    "WEB_PERFORMANCE": "six-asset critical install shell; 6AX modules load only when active; bounded 5.5-second network fallback",
+    "OFFLINE": "SW v4 network-fast-fail, guarded HOME/workspace shell, API/auth/machine/cloud-sync never cached",
     "RELEASE_QA": "two real-browser self-check pages: /qa/6ax-live-check.html and /qa/v66-all-modules-check.html"
   },
   "sourceGates": {
@@ -20,10 +20,10 @@
     },
     "crossModuleSource": {
       "status": "PASS",
-      "cases": 27,
+      "cases": 29,
       "execution": "V8 JS mock filesystem/assertions, not GitHub Actions workflow"
     },
-    "totalCases": 53,
+    "totalCases": 55,
     "optionalLoader": {
       "status": "PASS",
       "cases": [
@@ -36,10 +36,11 @@
     "offlineWorker": {
       "status": "PASS",
       "cases": [
-        "6 assets reachable",
-        "optional CSS missing install",
-        "critical Runtime missing blocks takeover",
-        "critical HOME missing blocks takeover"
+        "six critical shell assets reachable",
+        "optional CSS missing still activates with HOME and Runtime present",
+        "critical HOME or Runtime missing blocks replacement of prior SW",
+        "machine API traffic bypasses service worker",
+        "static module assets intercepted for offline caching"
       ],
       "execution": "mocked service worker cache/fetch"
     },
@@ -56,14 +57,22 @@
     "previousSWStaticShellAssets": 11,
     "dynamicCacheCap": 260,
     "actualPerformanceTiming": "PENDING_BROWSER_MEASUREMENT",
-    "furtherWork": "V65 monolithic mobile-runtime.html remains ~316KB; splitting original engine requires a separate verified migration."
+    "furtherWork": "V65 monolithic mobile-runtime.html remains ~316KB; splitting original engine requires a separate verified migration.",
+    "networkTimeoutMs": 5500,
+    "disallowedOfflineCacheRoutes": [
+      "/api/",
+      "/auth/",
+      "/machine/",
+      "/cloud-sync/"
+    ],
+    "cacheNamespace": "aig-web-v66-rgb-shell-20261019-v4"
   },
   "releaseBoundary": {
     "originalRender": "https://aig-dual-formal-runtime.onrender.com",
     "originalRenderGate": "V65 LIVE; DO NOT DEPLOY TEST BRANCH ON ORIGINAL",
     "previewRender": "https://aig-v66-6ax-review.onrender.com",
     "previewServiceId": "srv-dbarkue1egvs73bscss0",
-    "previewDeploy": "TRIGGER_AFTER_REPORT_COMMIT",
+    "previewDeploy": "TRIGGER_AFTER_FINAL_55_GATE_COMMIT",
     "AIGIIExactShaGate": "BLOCKED_PENDING_DUAL_PROJECT_SYNC",
     "WindowsExe": "NOT_BUILT",
     "AndroidApk": "NOT_BUILT"
