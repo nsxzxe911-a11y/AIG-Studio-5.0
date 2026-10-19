@@ -1,0 +1,13 @@
+{
+  "name": "aig-v67-visual-audit",
+  "version": "67.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "audit": "node ./v67-visual-audit.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.56.1",
+    "pngjs": "7.0.0"
+  }
+}
