@@ -37,3 +37,25 @@
  width:min(530px,calc(100vw - 20px));min-width:0}
  .aig67-global-panel>button{min-height:34px;padding:5px 2px;font-size:10px}
 }
+
+/* V67 mobile screenshot defect: legacy top page-nav duplicates the true
+ * floating router and takes space away from CAD/CAM/6AX viewports.
+ * Never suppress original nav until the REAL router button exists. */
+@media(max-width:900px){
+ body:has(> .aig67-global-nav) .app>.top>.nav{
+  display:none!important
+ }
+ body>.aig67-global-nav{
+  top:auto!important;
+  bottom:calc(66px + env(safe-area-inset-bottom,0px))!important;
+  right:max(8px,env(safe-area-inset-right,0px))!important
+ }
+ body>.aig67-global-nav>.aig67-global-panel{
+  top:auto!important;bottom:calc(100% + 6px)!important;
+  max-height:min(72dvh,580px)
+ }
+}
+@media(max-width:900px) and (orientation:landscape) and (max-height:520px){
+ body>.aig67-global-nav{bottom:calc(48px + env(safe-area-inset-bottom,0px))!important}
+ body>.aig67-global-nav>.aig67-global-panel{max-height:calc(100dvh - 70px)}
+}
