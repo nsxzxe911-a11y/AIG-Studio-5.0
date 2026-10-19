@@ -1,8 +1,7 @@
 name: AIG V87 Manus Candidate Intake Gate
 on:
   push:
-    branches:
-      - web/aig-dual-formal-runtime-20261016
+    branches: [web/aig-dual-formal-runtime-20261016]
     paths:
       - 'formal-web/integrations/manus-v87/**'
       - '.github/workflows/v87-manus-intake.yml'
@@ -12,41 +11,42 @@ permissions:
 jobs:
   manus-source-intake:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate intake checker syntax
-        run: node --check formal-web/integrations/manus-v87/intake-check.cjs
-      - name: Report provenance and blocked external source state
-        run: node formal-web/integrations/manus-v87/intake-check.cjs > manus-v87-intake-report.json
-      - name: Enforce machine-output blocked and no false import claim
+      - name: Verify original Manus ZIP and extract only authorized source files
+        run: python3 formal-web/integrations/manus-v87/extract-source.py
+      - name: Validate JS source and source intake checker syntax
         run: |
-          node -e '
-            const fs=require("node:fs");
-            const r=JSON.parse(fs.readFileSync("manus-v87-intake-report.json","utf8"));
-            if(r.machineOutput!=="BLOCKED")process.exit(1);
-            if(r.status==="BLOCKED_MANUS_SOURCE_MISSING"){console.log("SOURCE INTAKE BLOCKED: awaiting real Manus ZIP; not a UI/CORE PASS");}
-            else if(r.status==="READY_FOR_MANUAL_UI_DIFF"){console.log("Candidate present; manual source review is still required");}
-            else {console.log("Candidate requires review: "+r.status);}
-          '
-      - name: Safe source integrity strict gate (only after complete source files exist)
+          node --check formal-web/integrations/manus-v87/intake-check.cjs
+          node --check formal-web/integrations/manus-v87/candidate/app.js
+          node --check formal-web/integrations/manus-v87/candidate/server.js
+      - name: Strict static source provenance, route and CNC safety Gate
         run: |
-          node -e '
-            const fs=require("node:fs");
-            const r=JSON.parse(fs.readFileSync("manus-v87-intake-report.json","utf8"));
-            if(r.received===r.expected)process.exit(0);
-            console.log("Strict source Gate NOT RUN: received "+r.received+"/"+r.expected);
-          '
-          if [ -f formal-web/integrations/manus-v87/candidate/app.js ]; then
-            node formal-web/integrations/manus-v87/intake-check.cjs --strict
-          fi
-      - name: Upload exact intake report
+          node formal-web/integrations/manus-v87/intake-check.cjs --strict | tee manus-v87-intake-report.json
+      - name: Eleven isolated routes HTTP smoke test
+        shell: bash
+        run: |
+          cd formal-web/integrations/manus-v87/candidate
+          PORT=8769 node server.js >/tmp/aig-v87-manus-server.log 2>&1 &
+          PID=$!
+          trap 'kill $PID || true' EXIT
+          sleep 2
+          for path in / /cad /cam /sim /3ax /4ax /5ax /6ax /nc /ai /toolpath; do
+            curl --fail --silent --show-error -o /dev/null "http://127.0.0.1:8769$path"
+            echo "HTTP 200: $path"
+          done
+      - name: Report and source provenance (candidate only)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: aig-v87-manus-intake-report
-          path: manus-v87-intake-report.json
+          name: aig-v87-manus-original-source-intake
+          path: |
+            manus-v87-intake-report.json
+            formal-web/integrations/manus-v87/source-integrity.json
           if-no-files-found: warn
+      - name: Gate boundary
+        run: echo "MANUS SOURCE INTAKE ONLY; UI is isolated. Release, CNC material removal and machine output are NOT verified."
