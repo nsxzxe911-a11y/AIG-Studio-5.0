@@ -27,7 +27,8 @@ pass("Button ID prefix and existing callback isolation",()=>{
  assert.ok(inspector.includes('PREFIX="BTN."'));
  assert.ok(inspector.includes('data-aig67-button-id')||inspector.includes("aig67ButtonId"));
  assert.ok(inspector.includes("UNMAPPED_BLOCKED"));
- assert.ok(inspector.includes("DUPLICATE_BUTTON_ID"));
+ assert.ok(inspector.includes("LEGACY_DUPLICATE_REQUIRES_MANIFEST_FIX"));
+ assert.ok(inspector.includes("fp(stableNodeKey(n))"),"duplicate button disambiguation must use stable DOM path");
  assert.ok(!/addEventListener\(["']click["']/.test(inspector));
  assert.ok(inspector.includes("never")||inspector.includes("Preserve every preexisting"));
 });
