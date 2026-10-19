@@ -41,3 +41,34 @@
  .screen[data-page="6AX"] .aig6-hint{left:auto;right:9px;bottom:auto;top:10px}
 }
 @media(prefers-reduced-motion:reduce){.screen[data-page="6AX"] .aig6-toggle{transition:none}}
+
+
+/* V66-B: preserve the CNC cutting scene as the mobile-first interaction.
+   The drawer is real DOM controlled by BTN_6AX_VIEW_TOGGLE_PANEL, not a fake skin. */
+.screen[data-page="6AX"] .aig6-panel-toggle{display:none;pointer-events:auto}
+@media(max-width:900px){
+ .screen[data-page="6AX"] .aig6-panel-toggle{
+  display:inline-flex;position:absolute;right:8px;top:8px;z-index:5;
+  min-height:42px;align-items:center;justify-content:center;
+  padding:8px 12px;border-radius:11px;color:#edfaff;
+  border:1px solid transparent;
+  background:linear-gradient(#081827f2,#03101cf3) padding-box,
+  linear-gradient(110deg,#40e1ff,#8e88ff,#e46bcb) border-box;
+  font:700 12px "Noto Sans TC",sans-serif;
+  box-shadow:0 8px 18px #0009;
+  touch-action:manipulation;cursor:pointer;
+ }
+ .screen[data-page="6AX"] .aig6-panel-toggle:focus-visible{outline:2px solid #c2faff;outline-offset:2px}
+ .screen[data-page="6AX"] .aig6-mount[data-aig6-panel-open="false"] .aig6-panel{display:none!important}
+ .screen[data-page="6AX"] .aig6-mount[data-aig6-panel-open="true"] .aig6-panel{
+  display:grid!important;max-height:min(48%,390px);z-index:4;overscroll-behavior:contain;
+  padding:8px 9px 12px;scrollbar-width:thin;bottom:7px;
+ }
+ .screen[data-page="6AX"] .aig6-hint{
+  top:59px;right:7px;bottom:auto;left:auto;font-size:10px
+ }
+}
+@media(max-width:450px){
+ .screen[data-page="6AX"] .aig6-mount[data-aig6-panel-open="true"] .aig6-panel{grid-template-columns:repeat(2,minmax(0,1fr));max-height:51%}
+ .screen[data-page="6AX"] .aig6-slider{min-width:0}
+}
