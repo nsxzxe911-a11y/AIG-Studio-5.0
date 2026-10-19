@@ -1,0 +1,114 @@
+/* AIG Web V66-B — responsive cockpit convergence.
+ * Layout-only, no fake control surfaces or callback replacement.
+ * HOME / CAD / CAM / SIM / 3AX / 4AX / 5AX / 6AX / NC / AI.
+ * Loaded LAST after V65/V66 page-specific mobile + desktop authorities. */
+:root { --aig66-focus:#9aeeff; --aig66-panel-gap:6px }
+html,body{overscroll-behavior-x:none}
+html[data-aig49-active="true"] .app>.shell>.screen.active{min-width:0}
+.screen.active :is(.workgrid,.camgrid,.simgrid,.ncEditGrid,.tpGrid,.aigSimCards,.aigAiCockpit,.menuGrid),
+.screen.active :is(.panel,.body,.code,.toolstrip,.controls,.editorbar,.ops,.runtimeStatus,.aigHero,.aigProjects,.aig6-nc-bridge){
+ box-sizing:border-box;min-width:0;max-width:100%;
+}
+.screen.active :is(.panel,.body,.field,.metric,.notice,.aigAiCockpit,.aigSimCard){overflow-wrap:anywhere}
+.screen.active :is(.toolstrip,.editorbar,.aig61-axisnav,.aigSimActions,.aig44-actions){
+ scrollbar-width:thin;overscroll-behavior-inline:contain;
+}
+.screen.active button:focus-visible,.screen.active input:focus-visible,
+.screen.active select:focus-visible,.screen.active textarea:focus-visible{
+ outline:2px solid var(--aig66-focus);outline-offset:2px
+}
+.screen.active .code,.screen.active textarea.code{
+ white-space:pre;overflow:auto;overflow-anchor:none;
+ caret-color:#7be6ff
+}
+.screen.active :is(.sceneWrap,.cadCanvasWrap,[data-cam-canvas],.tpCanvas,.camCanvas){
+ isolation:isolate;min-width:0;max-width:100%;contain:layout paint
+}
+@media(min-width:901px){
+ /* Genuine workstation: geometry/viewer first, controls alongside. */
+ html[data-aig49-active="true"] .screen.active[data-page="CAD"] .workgrid{
+  grid-template-columns:minmax(0,2.6fr) minmax(270px,1fr)!important;
+  gap:var(--aig66-panel-gap)!important
+ }
+ html[data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid{
+  gap:var(--aig66-panel-gap)!important
+ }
+ html[data-aig49-active="true"] .screen.active[data-page="NC"] .ncEditGrid{
+  grid-template-columns:minmax(0,3fr) minmax(270px,1fr)!important;
+  gap:var(--aig66-panel-gap)!important
+ }
+ html[data-aig49-active="true"] .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"]:not([data-axis-subpage="NC_FIRST"]){
+  grid-template-columns:minmax(0,2.85fr) minmax(270px,1fr)!important
+ }
+ .screen.active .head :is(h2,h3){text-wrap:balance}
+}
+@media(max-width:900px){
+ html[data-aig-skin-platform="mobile"] .app{
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  border-inline:none!important;
+ }
+ html[data-aig49-active="true"] .app>.shell{
+  min-width:0!important;max-width:100%!important;
+  padding:4px!important
+ }
+ html[data-aig49-active="true"] .app>.top{max-height:100px!important}
+ html[data-aig-skin-platform="mobile"] .app>.top>.nav{
+  scroll-snap-type:x proximity;scroll-padding-inline:6px;
+  -webkit-overflow-scrolling:touch
+ }
+ html[data-aig-skin-platform="mobile"] .app>.top>.nav button{
+  scroll-snap-align:start;flex:0 0 65px!important;min-width:65px!important;
+ }
+ .screen.active :is(.toolstrip,.editorbar,.aig61-axisnav,.aigSimActions){
+  flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;
+  -webkit-overflow-scrolling:touch
+ }
+ .screen.active .toolstrip>.btn,.screen.active .editorbar>.btn,
+ .screen.active .aigSimActions>.btn{
+  flex:0 0 auto;white-space:nowrap;
+ }
+ .screen.active :is(.panel,.body,.metric,.field,.notice){min-width:0}
+ .screen.active :is(.code,textarea.code){font-size:clamp(11px,2.75vw,13px)!important}
+ .screen.active .runtimeStatus{max-width:100%;overflow-x:auto}
+ .screen.active[data-page="HOME"] :is(.aigProjectEntries,.aigHomeCards,.menuGrid){
+  grid-template-columns:repeat(2,minmax(0,1fr))!important
+ }
+ .screen.active[data-page="SIM"] :is(.aigSimWorkbench,.aigSimCards,.aigSimCard){
+  min-width:0;max-width:100%
+ }
+ .screen.active[data-page="NC"] .ncKeypad{
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;max-width:100%;
+ }
+ .screen.active[data-page="NC"] .ncKeypad .btn{min-width:0!important;word-break:normal;padding-inline:2px}
+ .screen.active[data-page="AI"] :is(.aigAiCockpit,.aiHero,.aigAiHistory,.aigAiMessages){
+  min-width:0;max-width:100%;
+ }
+ .screen.active[data-page="CAD"] [data-cad-runtime],
+ .screen.active[data-page="CAM"] [data-cam-runtime],
+ .screen.active[data-page="SIM"] [data-sim-hub],
+ .screen.active[data-page="NC"] [data-nc-runtime]{
+  overscroll-behavior:contain;overflow-x:hidden
+ }
+ /* Real 3D/2D viewports remain isolated: scrolling NC never drags the view. */
+ .screen.active :is(.sceneWrap,.cadCanvasWrap,[data-cam-canvas]){
+  touch-action:pan-x pan-y;max-width:100%;
+ }
+ .screen.active canvas[data-glcanvas],.screen.active .aig6-canvas{touch-action:none}
+}
+@media(max-width:420px){
+ .screen.active .head{gap:5px;padding-inline:6px!important}
+ .screen.active .head small{font-size:10px}
+ .screen.active[data-page="HOME"] .menuGrid{gap:5px!important}
+ .screen.active[data-page="NC"] .ncKeypad{gap:3px!important}
+}
+@media(orientation:landscape) and (max-height:520px){
+ html[data-aig49-active="true"] .app>.top{max-height:64px!important}
+ html[data-aig49-active="true"] .app>.shell{padding:2px!important}
+ .screen.active .toolstrip{max-height:34px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .screen.active *, .screen.active *::before, .screen.active *::after{
+  scroll-behavior:auto!important;animation-duration:.01ms!important;
+  transition-duration:.01ms!important
+ }
+}
