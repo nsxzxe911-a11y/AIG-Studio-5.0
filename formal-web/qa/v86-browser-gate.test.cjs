@@ -19,7 +19,8 @@ async function layout(page,label){const metrics=await page.evaluate(()=>({viewpo
    page.on("pageerror",e=>{console.error("BROWSER_PAGE_ERROR["+item.name+"]",e.message.slice(0,220));});
    await open(page,"AI");
    await check(page,'.screen.active [data-aig82-guide] button[data-aig82="PLAN"]',"AI real planner action");
-   await check(page,'.screen.active [data-aig86-handoff] button[data-aig86-action="AUDIT"]',"AI safe audit");
+   await page.locator('.screen.active .aig82-advanced > summary').click();
+   await check(page,'.screen.active [data-aig86-handoff] button[data-aig86-action="AUDIT"]',"AI safe audit in advanced drawer");
    const legacy=page.locator('.screen.active .aig43-bar');
    if(await legacy.count())assert(!(await legacy.isVisible()),"duplicate V43 engineering action panel");
    await layout(page,item.name+" AI");
