@@ -1,0 +1,129 @@
+{
+  "schema": "AIG_V92_REGION_REVERSE_MAPPING_V1",
+  "source": {
+    "authorityId": "AIGII-MOBILE-6AX-CURRENT-20261016",
+    "source": "Approved Library 08_6AX.png",
+    "width": 864,
+    "height": 1536,
+    "sha256": "73f34e958bb22925ceed32b986443240b9322a77bf0cadbc1b81f62501683be6",
+    "status": "CURRENT_APPROVED_IDENTITY_VERIFIED_NON_4K",
+    "role": "REFERENCE_FOR_LIVE_COMPONENT_GEOMETRY_ONLY",
+    "isRuntimeBackground": false
+  },
+  "desktop": {
+    "status": "MISSING_AUTHORITY",
+    "rejectedSource": "438_REVOKED_20",
+    "allowImageFallback": false
+  },
+  "regions": [
+    {
+      "id": "REG_6AX_NAV",
+      "rect": [
+        4,
+        98,
+        860,
+        102
+      ],
+      "bind": "NATIVE_NAV",
+      "buttonId": "NATIVE_EXISTING_IDS"
+    },
+    {
+      "id": "REG_6AX_CAMERA_RAIL",
+      "rect": [
+        5,
+        207,
+        76,
+        843
+      ],
+      "bind": "LIVE_CAMERA_API",
+      "buttonIds": [
+        "BTN_6AX_CAMERA_ISO",
+        "BTN_6AX_CAMERA_TOP",
+        "BTN_6AX_CAMERA_FRONT",
+        "BTN_6AX_CAMERA_LEFT",
+        "BTN_6AX_CAMERA_RIGHT",
+        "BTN_6AX_CAMERA_FIT",
+        "BTN_6AX_CAMERA_IN",
+        "BTN_6AX_CAMERA_OUT"
+      ]
+    },
+    {
+      "id": "REG_6AX_WEBGL",
+      "rect": [
+        82,
+        206,
+        566,
+        844
+      ],
+      "bind": "ORIGINAL_CANVAS[data-glcanvas]",
+      "renderer": "NATIVE_WEBGL_REAL_GLB"
+    },
+    {
+      "id": "REG_6AX_TELEMETRY",
+      "rect": [
+        651,
+        204,
+        209,
+        843
+      ],
+      "bind": "ORIGINAL_RUNTIME_METRIC_NODES",
+      "noFakeValues": true
+    },
+    {
+      "id": "REG_6AX_PLAYBACK",
+      "rect": [
+        9,
+        1055,
+        639,
+        134
+      ],
+      "bind": "ORIGINAL_BUTTONS[data-cmd]",
+      "noClone": true
+    },
+    {
+      "id": "REG_6AX_OPTIONS",
+      "rect": [
+        9,
+        1194,
+        851,
+        225
+      ],
+      "bind": "ORIGINAL_QUALITY_AND_CONTROL",
+      "status": "PARTIAL_REGION_BINDING"
+    },
+    {
+      "id": "REG_6AX_MOBILE_BOTTOM",
+      "rect": [
+        9,
+        1420,
+        851,
+        108
+      ],
+      "bind": "ORIGINAL_MOBILE_DOCK"
+    }
+  ],
+  "transform": "scaled responsive CSS Grid, no clickmap or bitmap buttons",
+  "machineVisualAuthority": "Latest user correction: vertical, fixed Z spindle, single arm cradle. 08_6AX illustration is layout source, NOT mechanical authority",
+  "missing": [
+    "AUTHORITATIVE_DESKTOP_4K_BINARY",
+    "PIXEL_BY_PIXEL_DESKTOP_APPROVAL",
+    "REAL_MACHINE_COLLISION_GATE"
+  ],
+  "connected": [
+    "HOME",
+    "CAD",
+    "CAM",
+    "SIM",
+    "3AX",
+    "4AX",
+    "5AX",
+    "6AX",
+    "NC",
+    "AI"
+  ],
+  "safety": {
+    "realMachineOutput": "BLOCKED",
+    "numericCncGate": "NOT_ASSERTED",
+    "fallbackOnMissingAuthority": "BLOCK"
+  }
+}
