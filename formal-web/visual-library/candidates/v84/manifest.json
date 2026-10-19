@@ -1,0 +1,38 @@
+{
+  "schema": "AIG_V84_RGB_ASSET_MANIFEST",
+  "source": "AIG 4K generated image candidates",
+  "width": 3840,
+  "height": 2160,
+  "format": "image/webp",
+  "role": "REFERENCE_PREVIEW_NOT_INTERACTIVE",
+  "machineOutput": "BLOCKED",
+  "assets": [
+    {
+      "page": "NC",
+      "filename": "nc_rgb_4k.webp",
+      "blob": "166a5f5249efc63457a8f21279776cd88a18800f",
+      "bytes": 881076,
+      "sha256": "239115dfa46bcd91f1b79cbc7602d1d3a8215376cddc3b96770bfb282db46034",
+      "pngSha256": "b403e32098cfcfeae34e46775734b30b046adaf6552b08089b312267dbeed9df",
+      "approval": "CANDIDATE"
+    },
+    {
+      "page": "AI",
+      "filename": "ai_rgb_4k.webp",
+      "blob": "c1ac307be8a1b878602259ce9989f39696b9e7bf",
+      "bytes": 874084,
+      "sha256": "441e03ab137f9db45adf68b538e117cf78b521a02a5e9209edf45dedd6b6de83",
+      "pngSha256": "e0673defe8e32a8d74422d73969d5e0560de2272b87b5cc8bce3030b8f927d65",
+      "approval": "CANDIDATE"
+    },
+    {
+      "page": "TOOLPATH",
+      "filename": "toolpath_rgb_4k.webp",
+      "blob": "27211b25a85e84bd38301f035fd80a08afeb939d",
+      "bytes": 923298,
+      "sha256": "d8692dafa086fbadcc724578b8cbf67ddebb4d7b31ccc273e1363bcbcf526287",
+      "pngSha256": "1a10b5336b87b2503c73e8713d4867febc7375976c5a4b97a0f0cc89ac247c39",
+      "approval": "REWORK_REQUIRED"
+    }
+  ]
+}
