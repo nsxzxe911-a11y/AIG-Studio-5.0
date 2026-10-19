@@ -18,7 +18,10 @@ const ATTRS=[
  ["aig50-pane","MAIN"],["aig49-pane","MAIN"],["aig6-panel-open","MACHINE"],
  ["axis","MACHINE"],["toolkey","TOOL"],["assembly-new","FIXTURE"],
  ["assembly-field","FIXTURE"],["setup-jump-axis","MAIN"],
- ["cam-action","AUTO"],["home-action","MAIN"]
+ ["cam-action","AUTO"],["home-action","MAIN"],["aig50-choice",null],
+ ["aig65-mode",null],["aig41-layout","MACHINE"],["aig44-action","MACHINE"],
+ ["ux27-page","NAV"],["aig67-global-route","NAV"],["aig67-global-nav","NAV"],
+ ["page","NAV"],["aig57-action","MAIN"],["aig43-action","MACHINE"],["aig66-panel","MACHINE"]
 ];
 const norm=s=>String(s??"").toUpperCase().trim().replace(/[^A-Z0-9_]+/g,"_").replace(/^_+|_+$/g,"").slice(0,80);
 const fp=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(16).padStart(8,"0").toUpperCase()};
@@ -31,6 +34,10 @@ function readData(n,key){return n.getAttribute?.("data-"+key)}
 function subpage(page,attr,val,n){
  const explicit=n.closest?.("[data-subpage-id]")?.getAttribute("data-subpage-id");
  if(explicit?.startsWith("SUBPAGE_"+page+"_"))return explicit.slice(("SUBPAGE_"+page+"_").length);
+ if(attr==="global-route"||attr==="global-nav"||attr==="page"||attr==="ux27-page")return "NAV";
+ if(attr==="aig50-choice")return norm(val)==="CODE"?"NC_FIRST":norm(val);
+ if(attr==="aig65-mode")return norm(val);
+ if(attr==="button-id"&&val.startsWith("BTN."))return val.split(".")[2];
  if(attr==="axis-subpage")return norm(val);
  if(attr==="cad-action"){
   const cmd=norm(val);return ["SNAP"].includes(cmd)?"SNAP":["DIM"].includes(cmd)?"DIMENSION":
@@ -49,11 +56,16 @@ function subpage(page,attr,val,n){
  return norm(ATTRS.find(([a])=>a===attr)?.[1]||"MAIN");
 }
 function getSemantic(n){
- if(n.matches?.(".nav button[data-page]"))return {attr:"page",value:readData(n,"page"),sub:"MAIN",kind:"NAVIGATION"};
- if(n.matches?.("[data-button-id]")&&!ATTRS.some(([a])=>readData(n,a)!==null)){
-  return {attr:"button-id",value:readData(n,"button-id"),sub:null,kind:"LEGACY_DECLARED"};
- }
- for(const [attr]of ATTRS){const val=readData(n,attr);if(val!==null)return{attr,value:val,kind:"SOURCE_SELECTOR"}}
+ const global=n.getAttribute?.("data-aig67-global-route");
+ if(global!==null&&global!==undefined)return{attr:"global-route",value:"OPEN_"+global,sub:"NAV",kind:"NATIVE_ROUTER"};
+ if(n.matches?.("[data-aig67-global-nav]"))return{attr:"global-nav",value:"TOGGLE",sub:"NAV",kind:"NATIVE_ROUTER"};
+ if(n.matches?.(".nav button[data-page]"))return {attr:"page",value:"OPEN_"+readData(n,"page"),sub:"NAV",kind:"LEGACY_NAV"};
+ const legacy=readData(n,"button-id");
+ if(legacy&&/^BTN\.[A-Z0-9_]+\.[A-Z0-9_]+\.[A-Z0-9_]+$/.test(legacy))
+  return{attr:"button-id",value:legacy,sub:legacy.split(".")[2],kind:"EXPLICIT_CANONICAL"};
+ for(const [attr]of ATTRS){const val=readData(n,attr);if(val!==null)
+  return{attr,value:attr==="open-page"?"OPEN_"+val:val,kind:"SOURCE_SELECTOR"}}
+ if(legacy)return {attr:"button-id",value:legacy,sub:null,kind:"LEGACY_DECLARED"};
  if(n.matches?.("a[href^='#']")&&n.closest?.(".screen"))return{attr:"href",value:n.getAttribute("href"),kind:"NAVIGATION"};
  return null;
 }
@@ -64,12 +76,17 @@ function stableNodeKey(n){let parts=[],p=n;for(let i=0;i<6&&p?.parentElement;i++
 }
 function labelNode(n,page){const sem=getSemantic(n),sub=sem?(sem.sub||subpage(page,sem.attr,sem.value,n)):"UNMAPPED";
  const code=sem?norm(sem.value)||"EMPTY":fp(stableNodeKey(n));
- const id=PREFIX+page+"."+sub+"."+(sem?code:"UNMAPPED_"+code);
- const command=sem?"COMMAND."+page+"."+sub+"."+code:null;
+ const explicit=sem?.kind==="EXPLICIT_CANONICAL"?sem.value:null;
+ const id=explicit||PREFIX+(sem?.kind==="NATIVE_ROUTER"?"GLOBAL":page)+"."+sub+"."+
+   (sem&&sem.kind!=="EXPLICIT_CANONICAL"?code:"UNMAPPED_"+code);
+ const command=sem?"COMMAND."+(sem.kind==="NATIVE_ROUTER"?"GLOBAL":page)+"."+sub+"."+code:null;
  // Preserve every preexisting V65 Button ID and Command ID — not interchangeable.
  n.dataset.aig67ButtonId=id;
  n.dataset.aig67SubpageId="SUBPAGE_"+page+"_"+sub;
- n.dataset.aig67CallbackEvidence=sem?"SELECTOR_ONLY_UNVERIFIED":"UNMAPPED_BLOCKED";
+ n.dataset.aig67CallbackEvidence=sem?(
+  sem.kind==="NATIVE_ROUTER"?"ROUTER_DECLARED_NOT_YET_CLICK_TESTED":
+  sem.kind==="EXPLICIT_CANONICAL"?"LEGACY_CALLBACK_ID_DECLARED_UNVERIFIED":
+  "SOURCE_SELECTOR_ONLY_UNVERIFIED"):"UNMAPPED_BLOCKED";
  n.dataset.aig67CommandId=command||"UNMAPPED_BLOCKED";
  if(!sem)n.dataset.aig67Issue="UNMAPPED_BUTTON";
  else delete n.dataset.aig67Issue;
@@ -82,9 +99,15 @@ function annotate(root=d){
  const map=new Map();unknown=0;duplicates=0;
  for(const n of nodes){const page=pageOf(n);const v=labelNode(n,page);
   if(n.dataset.aig67Issue)unknown++;
-  if(map.has(v.id)){duplicates++;n.dataset.aig67Issue="DUPLICATE_BUTTON_ID";
-   map.get(v.id).dataset.aig67Issue="DUPLICATE_BUTTON_ID";}
-  else map.set(v.id,n);
+  if(map.has(v.id)){
+   duplicates++;
+   // The old ID is preserved. A stable V67 region suffix makes this live
+   // control uniquely inspectable while keeping the duplicate legacy Gate RED.
+   const variant=v.id+"_"+fp(stableNodeKey(n));
+   n.dataset.aig67ButtonId=variant;
+   n.dataset.aig67Issue="LEGACY_DUPLICATE_REQUIRES_MANIFEST_FIX";
+   map.set(variant,n);
+  }else map.set(v.id,n);
  }
  // Page and subpage identity remains stable across layout switches; no new UI shells.
  for(const p of contract.pages){const screen=d.querySelector('.screen[data-page="'+p.id+'"]');
