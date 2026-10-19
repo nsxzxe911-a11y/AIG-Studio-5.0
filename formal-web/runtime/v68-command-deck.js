@@ -31,7 +31,19 @@ function ensureDeck(page,list){
  name.textContent="AIG · "+(page==="TOOLPATH"?"3D 走刀":page)+" · 操作";
  const caution=d.createElement("span");caution.className="aig68-deck-caution";
  caution.textContent="機台輸出關閉 · 紅色區域為刪除／重設";
- head.append(name,caution);
+ const advanced=d.createElement("button");advanced.type="button";
+ advanced.className="aig68-advanced-toggle";advanced.textContent="進階 ⋯";
+ advanced.dataset.aig68ButtonId="BTN."+page+".DECK.MORE";
+ advanced.dataset.aig68CommandId="COMMAND."+page+".DECK.TOGGLE_ADVANCED";
+ advanced.setAttribute("aria-expanded","false");
+ advanced.addEventListener("click",()=>{
+  const screen=deck.closest(".screen"),panel=screen?.querySelector(":scope>.aig68-legacy-extra");
+  if(!panel)return;
+  panel.open=!panel.open;
+  advanced.setAttribute("aria-expanded",String(panel.open));
+  if(panel.open)panel.scrollIntoView?.({block:"nearest",behavior:"auto"});
+ });
+ head.append(name,caution,advanced);
  const tabs=d.createElement("div");tabs.className="aig68-tabs";tabs.setAttribute("role","tablist");
  tabs.setAttribute("aria-label","所有頁面固定次序：編輯、視圖、執行、驗證、儲存、刪除／重設");
  const body=d.createElement("div");body.className="aig68-deck-body";
