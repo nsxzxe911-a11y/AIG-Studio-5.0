@@ -63,6 +63,22 @@ jobs:
           AIG_V67_BASE_URL: http://127.0.0.1:8765
           AIG_V67_AUDIT_OUT: formal-web/qa/artifacts/v67
         run: node formal-web/qa/v67-visual-audit.mjs
+      - name: Auto-crawl and screenshot every public site HTML page
+        id: public_crawl
+        continue-on-error: true
+        env:
+          AIG_V67_BASE_URL: http://127.0.0.1:8765
+          AIG_V67_AUDIT_OUT: formal-web/qa/artifacts/v67
+        run: node formal-web/qa/v67-public-site-audit.mjs
+      - name: Optional semantic AI reads captured screenshots (requires secured key)
+        id: ai_vision
+        continue-on-error: true
+        env:
+          AIG_V67_AUDIT_OUT: formal-web/qa/artifacts/v67
+          AIG_VISUAL_AI_ENABLED: 'true'
+          AIG_VISUAL_AI_API_KEY: ${{ secrets.AIG_VISUAL_AI_API_KEY }}
+          AIG_VISUAL_AI_MODEL: gpt-4.1-mini
+        run: node formal-web/qa/v67-ai-vision-review.mjs
       - name: Upload every page/subpage screenshot and JSON issue report
         if: always()
         uses: actions/upload-artifact@v4
@@ -86,6 +102,8 @@ jobs:
             s?'Chromium captures: '+s.captures.length:'No browser evidence available',
             s?'Known Authority missing: '+s.authority.missing:'Authority unresolved',
             s?'Issues: '+JSON.stringify(s.summary?.issues||{}):'Browser runtime failed',
+            'Public portal/technical pages crawler: ${{ steps.public_crawl.outcome }}',
+            'Semantic AI image review: ${{ steps.ai_vision.outcome }} (separate model report)',
             'Baseline source: ${{ steps.baseline_source.outcome }}',
             'V67 ID source: ${{ steps.v67_source.outcome }}',
             '',
@@ -95,6 +113,12 @@ jobs:
           if(!s)process.exit(1);
           if('${{ steps.baseline_source.outcome }}'!=='success'||'${{ steps.v67_source.outcome }}'!=='success')process.exit(4);
           if(s.summary?.authorityGate!=='READY'||s.summary?.screenshotGate!=='CAPTURED_CHECK_WARNINGS')process.exit(2);
+          const publicFile='formal-web/qa/artifacts/v67/public-report.json';
+          const publicResult=fs.existsSync(publicFile)?JSON.parse(fs.readFileSync(publicFile,'utf8')):null;
+          if(!publicResult||publicResult.summary?.failures>0)process.exit(5);
+          const visionFile='formal-web/qa/artifacts/v67/vision-review.json';
+          const vision=fs.existsSync(visionFile)?JSON.parse(fs.readFileSync(visionFile,'utf8')):null;
+          if(!vision||vision.verdict!=='IMAGES_REVIEWED_AUTHORITY_PENDING')process.exit(6);
           if(s.summary?.semanticVisionGate!=='SEMANTIC_PASS')process.exit(3);
           process.exit(0);
           NODE
