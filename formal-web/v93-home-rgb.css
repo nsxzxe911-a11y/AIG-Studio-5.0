@@ -323,3 +323,49 @@ html[data-aig57-home="true"] .aig93-home .aig57-utility button{
  }
  html[data-aig57-home="true"] .aig93-home .aig93-entries{display:none!important}
 }
+
+/* V93 visual acceptance polish — remove old engineering shell and historical
+ * reference strip from the actual HOME (without altering their source). */
+html[data-aig-project="AIGII"][data-aig57-home="true"] body .app>.top,
+html[data-aig-project="AIGII"][data-aig57-home="true"] body .app>.aig55-top,
+html[data-aig-project="AIGII"][data-aig57-home="true"] body .app>.footer,
+html[data-aig-project="AIGII"][data-aig57-home="true"] body .app>.shell>.screen.active[data-page="HOME"]>.aig-reference-strip{
+ display:none!important;visibility:hidden!important;max-height:0!important;
+ padding:0!important;margin:0!important;border:0!important;
+}
+html[data-aig57-home="true"] .aig93-home .aigModuleCard{
+ align-content:center!important;justify-content:center!important
+}
+@media(min-width:901px){
+ html[data-aig57-home="true"] .aig93-home .aig93-card-icon{
+  width:clamp(52px,4.3vw,104px)!important;height:clamp(52px,4.3vw,104px)!important
+ }
+ html[data-aig57-home="true"] .aig93-home .aigModuleCard{
+  grid-template-columns:clamp(52px,4.3vw,104px) minmax(0,1fr)!important;
+  padding:clamp(11px,.85vw,24px)!important;column-gap:clamp(12px,.85vw,26px)!important
+ }
+ html[data-aig57-home="true"] .aig93-home .aigModuleCard>b{
+  font-size:clamp(21px,1.35vw,48px)!important;line-height:1.2!important;
+  display:block!important;position:static!important;white-space:nowrap!important;
+ }
+ html[data-aig57-home="true"] .aig93-home .aigModuleCard>small{
+  font-size:clamp(11px,.83vw,23px)!important;line-height:1.25!important;
+  display:block!important;position:static!important;
+ }
+}
+@media(max-width:900px){
+ html[data-aig57-home="true"] .aig93-home .aigModuleCard{
+  display:flex!important;flex-direction:column!important;gap:5px!important;
+  align-items:center!important;justify-content:center!important;text-align:center!important;
+  padding:5px 3px!important;overflow:hidden!important;min-height:0!important
+ }
+ html[data-aig57-home="true"] .aig93-home .aigModuleCard>.aig93-card-icon{
+  display:block!important;position:static!important;grid-row:auto!important;grid-column:auto!important;
+  width:25px!important;height:25px!important;flex:0 0 25px!important;
+ }
+ html[data-aig57-home="true"] .aig93-home .aigModuleCard>b{
+  display:block!important;position:static!important;grid-row:auto!important;grid-column:auto!important;
+  font-size:12px!important;line-height:1.12!important;white-space:nowrap!important
+ }
+ html[data-aig57-home="true"] .aig93-home .aigModuleCard>small{display:none!important}
+}
