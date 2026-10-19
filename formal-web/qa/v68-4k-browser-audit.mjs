@@ -158,7 +158,7 @@ try{
       const n=document.querySelector(".screen.active"),c=n?.querySelector(
        "canvas[data-cad-canvas],canvas[data-cam-canvas]");
       return !c||c.width>1&&c.height>1;
-     },{timeout:2300}).catch(()=>{});
+     },null,{timeout:2300}).catch(()=>{});
 
      const d=await inspection(page);
      summary.checks.push({page:id,info:d,navigationEvidence});
