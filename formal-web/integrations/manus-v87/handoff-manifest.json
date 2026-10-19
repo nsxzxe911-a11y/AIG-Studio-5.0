@@ -1,0 +1,128 @@
+{
+  "schema": "AIG_V87_EXTERNAL_AI_HANDOFF",
+  "version": "87.0.0",
+  "origin": {
+    "provider": "Manus",
+    "taskId": "MASuqJksfKEaHGqz7yFXi8",
+    "taskUrl": "https://manus.im/app/MASuqJksfKEaHGqz7yFXi8",
+    "status": "COMPLETED_REPORTED_AND_OBSERVED_IN_CONNECTED_BROWSER",
+    "taskCompletedReported": true,
+    "originalSiteModifiedByManus": false
+  },
+  "target": {
+    "repository": "nsxzxe911-a11y/AIG-Studio-5.0",
+    "branch": "web/aig-dual-formal-runtime-20261016",
+    "formalWeb": "https://aig-dual-formal-runtime.onrender.com/mobile-runtime.html",
+    "platforms": [
+      "WEB",
+      "WINDOWS",
+      "ANDROID"
+    ],
+    "use": "CANDIDATE_DESIGN_ONLY"
+  },
+  "artifactIntake": {
+    "expectedFiles": [
+      {
+        "name": "index.html",
+        "purpose": "HTML entrypoint; compare page architecture only"
+      },
+      {
+        "name": "app.js",
+        "purpose": "Event/route handling; inspect for fake callbacks, CNC risks, IDs"
+      },
+      {
+        "name": "styles.css",
+        "purpose": "RGB Glassline CSS, desktop/mobile layout"
+      },
+      {
+        "name": "plan.md",
+        "purpose": "Page/Subpage/Button/Command design contract"
+      },
+      {
+        "name": "TODO.md",
+        "purpose": "Delivery, unresolved gaps and QA"
+      },
+      {
+        "name": "public/manus-routes.json",
+        "purpose": "Route manifest (11 pages)"
+      }
+    ],
+    "filesAvailableInGitHub": false,
+    "binarySourceVerified": false,
+    "sourceArchiveStatus": "AWAITING_USER_EXPORT",
+    "safeImportRoot": "formal-web/integrations/manus-v87/candidate/",
+    "originalRuntimeFilesProtected": true
+  },
+  "routeContract": {
+    "pages": [
+      "HOME",
+      "CAD",
+      "CAM",
+      "SIM",
+      "3AX",
+      "4AX",
+      "5AX",
+      "6AX",
+      "NC",
+      "AI",
+      "TOOLPATH"
+    ],
+    "independentToolpath": true,
+    "subpages": {
+      "3AX": [
+        "MACHINE",
+        "NC_FIRST"
+      ],
+      "4AX": [
+        "MACHINE",
+        "NC_FIRST"
+      ],
+      "5AX": [
+        "MACHINE",
+        "NC_FIRST"
+      ],
+      "6AX": [
+        "MACHINE",
+        "NC_FIRST"
+      ]
+    }
+  },
+  "ui": {
+    "win": "3840x2160",
+    "phone": "TOUCH_REFLOW",
+    "colors": {
+      "background": "#020407",
+      "panel": "#07111B"
+    },
+    "noEngineeringShell": true
+  },
+  "gates": {
+    "externalSourceIntegrity": "BLOCKED_NOT_IMPORTED",
+    "styleCompare": "PENDING_ACTUAL_FILES_AND_SCREENSHOTS",
+    "buttonIdMapping": "PENDING_REAL_SOURCE",
+    "clickCallbacks": "PENDING_CHROMIUM",
+    "cadCamSimNcCore": "NOT_DELEGATED_TO_EXTERNAL_PROTO",
+    "desktopAndMobile": "PENDING_IMPORT_EVIDENCE",
+    "renderDeployment": "BLOCKED_UNTIL_GATE_PASS",
+    "machineOutput": "BLOCKED"
+  },
+  "nonNegotiables": [
+    "Never replace formal runtime with isolated mockup",
+    "Keep existing Page ID/Button ID/Command ID, original callbacks, and real project state",
+    "No fake machine-connected or fabricated CNC evidence",
+    "Do not access GitHub secrets or physical machine",
+    "Do not claim precision or material removal based on static images",
+    "Reject external network script/unsafe eval/automatic CNC commands"
+  ],
+  "observedManusClaims": {
+    "pages": 11,
+    "parseChecks": [
+      "node --check app.js",
+      "node --check server.js"
+    ],
+    "routesHttp200": 11,
+    "reportedResponsiveScreenshots": true,
+    "reportedSourceFiles": 6,
+    "independentCoreVerified": false
+  }
+}
