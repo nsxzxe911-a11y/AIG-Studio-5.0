@@ -6,7 +6,9 @@ assert(h.includes("v91DrawGlb")&&h.includes("GLB_READY")&&h.includes("aig_6ax_ma
 assert(h.includes("function makeRuntime(")&&h.includes("voxelStock(scene"));
 assert(h.includes("v89-nc-first-state.js")&&v89.includes("aig-code-6AX"));
 assert(!h.includes("AIG_V90_REVIEW_ONLY:")&&!old.includes("v91DrawGlb"));
-assert(sw.includes("aig-ii-original-render-v92-authority-6ax-20261020"));
+assert(/const CACHE="aig-ii-original-render-v[0-9]+-[^"]+"/.test(sw),"PWA version cache namespace missing");
+assert(sw.includes('"./runtime/v92-6ax-authority-layout.js"'),"6AX real UI cache entry missing");
+assert(sw.includes('"./runtime/v93-home-glb-viewer.js"'),"HOME visual model cache entry missing");
 assert(sw.includes('"./zoo-6ax/local-glb/aig_6ax_machine_v9.glb"'));
 assert(sw.includes('"./runtime/v92-6ax-authority-layout.js"'));
 assert(h.includes("root.aigCameraV92"),"V92 original WebGL camera contract must exist");
