@@ -21,7 +21,7 @@ for(const version of ["v88-manus-runtime-adapter","v89-nc-first-state","v90-cad-
 s=s.replace("aig-ii-original-render-nc-sim-guard-v90-20261020","aig-ii-original-render-nc-sim-guard-v66-20261019");
 assert.equal(sha(s),"0e115d8095cfde04657df00481949b299796c816","PWA baseline protected");
 const script=read("runtime/v90-cad-cam-sim-runtime.js"),skin=read("v90-cad-cam-sim-runtime.css");
-for(const required of ["getShapeCount","aigCamApi","aigSimApi","data-open-page","NAV_SIM","NAV_CAM","aig-cam-toolpath-v1","numericCncGate"]){
+for(const required of ["getShapeCount","aigCamApi","aigSimApi","dataset.openPage","NAV_SIM","NAV_CAM","aig-cam-toolpath-v1","numericCncGate"]){
  assert(script.includes(required),"missing original Runtime binding "+required);
 }
 for(const blocked of ["cloneNode(","innerHTML=","WebSocket(","XMLHttpRequest(","navigator.serial","navigator.usb"]){
