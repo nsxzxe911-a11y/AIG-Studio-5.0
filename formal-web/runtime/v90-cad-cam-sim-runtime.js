@@ -57,7 +57,7 @@ function mountFlow(cfg){
  const page=cfg.page,root=getRoot(page);
  if(!root||root.dataset.aig90FlowMounted==="true")return false;
  const anchor=page==="CAD"?root.querySelector(".toolstrip"):
-              page==="CAM"?root.querySelector('.camgrid > .panel[data-aig50-role="preview"] > .head'):
+              page==="CAM"?root.querySelector("[data-cam-canvas]")?.closest(".panel")?.querySelector(":scope > .head"):
                             root.querySelector(".aigSimHero .body");
  if(!anchor)return false;
  const bar=d.createElement("div");bar.className="aig90-flowbar";bar.dataset.aig90Flow=page;
