@@ -101,6 +101,9 @@ async function inspectRuntime(page,id){
  const screen=document.querySelector('.screen.active[data-page="'+id+'"]');
  const reg=window.AIG_V67_CONTROL_REGISTRY;
  const screenRect=screen?.getBoundingClientRect();
+ const work=screen?.querySelector(".sceneWrap,.cadCanvasWrap,canvas[data-cam-canvas]");
+ const workspaceRect=work?.getBoundingClientRect();
+ const visibleText=screen?.innerText?.slice(0,7500)||"";
  const controls=screen?[...screen.querySelectorAll("button,input[type=button],input[type=range],input[type=checkbox],select[data-axis]")].map(n=>{
   const r=n.getBoundingClientRect(),sty=getComputedStyle(n);
   return {id:n.dataset.aig67ButtonId||null,legacyId:n.dataset.buttonId||null,
@@ -126,6 +129,13 @@ async function inspectRuntime(page,id){
   originalCamExists:!!document.querySelector('.screen[data-page="CAM"] [data-cam-canvas]'),
   screenCanvasCount:screen?.querySelectorAll("canvas").length||0,
   screenPanelCount:screen?.querySelectorAll(".panel").length||0,
+  workspace:workspaceRect?{
+   widthPx:Math.round(workspaceRect.width),heightPx:Math.round(workspaceRect.height),
+   widthRatio:+(workspaceRect.width/innerWidth).toFixed(3),
+   heightRatio:+(workspaceRect.height/innerHeight).toFixed(3),
+   visibleHeightRatio:+(Math.max(0,Math.min(workspaceRect.bottom,innerHeight)-Math.max(workspaceRect.top,0))/innerHeight).toFixed(3)
+  }:null,
+  forbiddenEngineeringShellTerms:(visibleText.match(/工程殼|ENGINEERING SHELL|PLACEHOLDER UI|假按鈕/ig)||[]).slice(0,7),
   errors:screen?[...screen.querySelectorAll(".aigIssueCenter,.ncAlarm.show,[role=alert]")].map(n=>n.textContent?.trim().slice(0,200)).filter(Boolean).slice(0,10):[],
   globalAudit:reg?.inspect?.()||null,controls,
   lazy:window.AIG_6AX_V66_LOADER?.inspect?.()?.state||"NOT_REGISTERED",
@@ -213,6 +223,19 @@ async function profileRun(browser,profile){
      issue("CORE_EDITOR_DISAPPEARED",profile.id,id,null,"CAD/CAM/NC root not retained","FAIL");
     if(info.viewport.documentScrollWidth>info.viewport.documentClientWidth+4)
      issue("HORIZONTAL_OVERFLOW",profile.id,id,null,JSON.stringify(info.viewport),"WARNING");
+    if(info.forbiddenEngineeringShellTerms?.length)
+     issue("VISIBLE_ENGINEERING_SHELL_TEXT",profile.id,id,null,
+      info.forbiddenEngineeringShellTerms.join(", "),"FAIL");
+    if(info.workspace&&["CAD","CAM","3AX","4AX","5AX","6AX"].includes(id)){
+     if(profile.isMobile&&profile.height>profile.width&&info.workspace.visibleHeightRatio<.28)
+      issue("MOBILE_WORKSPACE_VIEWPORT_TOO_SHORT",profile.id,id,null,
+       "Visible machining/drawing window "+(info.workspace.visibleHeightRatio*100).toFixed(1)+
+       "% of phone height; layout must prioritize the live viewport.","WARNING");
+     if(profile.width>900&&info.workspace.widthRatio<.57)
+      issue("DESKTOP_WORKSPACE_VIEWPORT_TOO_NARROW",profile.id,id,null,
+       "Machining/drawing window width "+(info.workspace.widthRatio*100).toFixed(1)+
+       "%; workspace target is approximately 65–75%.","WARNING");
+    }
     const unmapped=info.controls.filter(n=>n.issue||!n.id);
     if(unmapped.length)issue("BUTTON_ID_UNMAPPED",profile.id,id,null,
       unmapped.length+" controls have missing, duplicate or unclassified IDs","WARNING");
