@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020407">
+<title>AIG 6AX｜V66 真瀏覽器驗證</title>
+<style>
+:root{color-scheme:dark;--fg:#eaf4ff;--muted:#92b0c7;--panel:#07111b;--rgb:linear-gradient(120deg,#2ce0ff,#5b89ff,#b35eff,#ef65ca)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 45% 0,rgba(33,104,165,.18),transparent 48%),#020407;color:var(--fg);font-family:"Noto Sans TC",system-ui,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:15px max(16px,3vw);border-bottom:1px solid #2064876b}
+.brand{font-weight:900;letter-spacing:.12em;background:var(--rgb);background-clip:text;color:transparent;font-size:19px}
+header a{color:#b7f3ff;text-decoration:none;font-size:13px}
+main{margin:auto;padding:18px;max-width:1500px}
+h1{font-size:clamp(22px,3.2vw,36px);margin:0 0 7px}p{color:var(--muted);font-size:13px;line-height:1.55;margin:4px 0}
+.grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(285px,.65fr);gap:14px;align-items:start;margin-top:16px}
+.frame,.panel{min-width:0;border:1px solid #2d769877;border-radius:14px;background:rgba(7,17,27,.8);box-shadow:0 12px 38px #0008;overflow:hidden}
+.head{padding:10px 14px;border-bottom:1px solid #2c6b8659;display:flex;justify-content:space-between;align-items:center}
+iframe{width:100%;height:min(77vh,720px);border:0;display:block;background:#020407}
+.result-list{list-style:none;padding:6px 10px;margin:0}
+.result-list li{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px 8px;border-bottom:1px solid #1d34476b;font-size:13px}
+.result-list li small{font:700 11px ui-monospace,monospace;letter-spacing:.03em;color:#85b3c5}
+.result-list li[data-status="PASS"] small{color:#59e4bc}
+.result-list li[data-status="FAIL"] small{color:#ff9a97}
+.result-list li[data-status="PENDING"] small{color:#e5c07c}
+button{color:var(--fg);background:linear-gradient(#102138,#07111b) padding-box,var(--rgb) border-box;border:1px solid transparent;border-radius:11px;min-height:42px;padding:8px 13px;cursor:pointer;font-weight:700}
+button:focus-visible,a:focus-visible{outline:2px solid #9eefff;outline-offset:3px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;padding:12px}
+#summary{padding:12px;color:#b7eafb;line-height:1.5;font-size:12px;overflow-wrap:anywhere}
+#json{margin:0 12px 12px;padding:10px;font:10px/1.5 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word;background:#01070c;border:1px solid #19394c;border-radius:8px;max-height:140px;overflow:auto}
+.note{padding:9px 14px;border-top:1px solid #17465e;color:#c8a673;font-size:12px;line-height:1.5}
+@media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}iframe{height:65vh}.result-list li{padding:7px 8px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="brand">AIG / 6AX / V66</div><a href="../mobile-runtime.html#6AX">開啟完整 CNC 工作區 ↗</a></header>
+<main>
+<h1>六軸機構 · 真瀏覽器檢查</h1>
+<p>這是獨立測試站上的實際 HTML/WebGL 檢查頁；不是生成圖片。自動測試六軸機構與 NC 唯讀契約，結果由目前瀏覽器產生。</p>
+<div class="grid">
+ <section class="frame"><div class="head"><strong>即時六軸工作區</strong><span style="color:#84cbe7;font-size:11px">A/B 360° · 傾斜頭 45°</span></div>
+ <iframe id="runtime" src="../mobile-runtime.html#6AX" title="AIG 六軸 WebGL 實際工作區" loading="eager"></iframe>
+ </section>
+ <section class="panel"><div class="head"><strong>驗證狀態</strong><span id="overall" style="color:#e5c07c">檢查中</span></div>
+ <ul id="checks" class="result-list"></ul>
+ <div class="controls"><button id="run" type="button">重新檢查</button><button id="save" type="button" disabled>儲存 JSON 證據</button></div>
+ <div id="summary">等待工作區載入…</div>
+ <pre id="json" aria-label="測試 JSON 概要"></pre>
+ <div class="note">此頁不啟動真機、不修改 G-code、不驗證 0.001 mm 材料移除。通過瀏覽器測試不代表 CNC Safety Gate 通過。</div>
+ </section>
+</div>
+</main>
+<script>
+(function(){"use strict";
+ const frame=document.getElementById("runtime"),checks=document.getElementById("checks"),overall=document.getElementById("overall"),summary=document.getElementById("summary"),output=document.getElementById("json"),save=document.getElementById("save");
+ const cases=[];let running=false,report=null;
+ function add(name,status,detail){
+  cases.push({name,status,detail});
+  const li=document.createElement("li");li.dataset.status=status;
+  const title=document.createElement("span");title.textContent=name;
+  const pill=document.createElement("small");pill.textContent=status;
+  li.append(title,pill);li.title=String(detail||"");checks.append(li);
+ }
+ function pause(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+ async function run(){
+  if(running)return;running=true;report=null;save.disabled=true;checks.textContent="";cases.length=0;overall.textContent="檢查中";summary.textContent="讀取 WebGL 工作區…";
+  let w,d,mech,nc,preview,sim,ta;
+  try{
+   let ok=false;
+   for(let i=0;i<30;i++){
+    try{
+     w=frame.contentWindow;d=w.document;mech=w.AIG_6AX_MECHANISM_PREVIEW_V1;
+     nc=w.AIG_6AX_NC_READONLY_V2;sim=w.AIG_6AX_V65;
+     ta=d.querySelector('.screen[data-page="6AX"] textarea.code[data-axis="6AX"]');
+     preview=d.querySelector('.screen[data-page="6AX"] .aig6-mount');
+     if(mech&&nc&&sim&&ta&&preview){ok=true;break}
+    }catch(_){}
+    await pause(500);
+   }
+   add("V65 編輯器與 WebGL 工作頁",ok?"PASS":"FAIL",ok?"已偵測正式頁與模型預覽":"等待逾時或資源載入失敗");
+   if(!ok)throw Error("六軸工作頁未能完整載入");
+   const before=ta.value;
+   const existing=d.querySelector('.screen.active[data-page="6AX"]');
+   add("直接進入 6AX",existing?"PASS":"FAIL",existing?"目前頁面為六軸":"網址導覽沒有進入六軸");
+   const show=mech.show(true);
+   await pause(250);
+   const inspect=mech.inspect();
+   add("真實 WebGL Context",show&&inspect.webglReady?"PASS":"FAIL",inspect.webglReady?"瀏覽器已建立 WebGL":"GPU/權限/context 尚不可用");
+   const original={...inspect.joints};
+   const joints=[["A",90],["B",180],["H",45],["A",-90],["B",-90]];
+   let jointOK=true;
+   for(const [axis,value] of joints){
+    jointOK=Boolean(mech.setAxis(axis,value))&&jointOK;
+    if(mech.inspect().joints[axis]!==value)jointOK=false;
+   }
+   add("A/B ±360° 與 H 45° 控制",jointOK?"PASS":"FAIL",jointOK?"已呼叫真實機構控制器":"獨立控制回報失敗");
+   for(const [axis,val] of Object.entries(original))mech.setAxis(axis,val);
+   const gcode="G90 G0 X0 Y0 Z40 A0 B0 C0\nG1 X20 Y0 Z10 A90 B180 C45";
+   const rejected=nc.parse(gcode),accepted=nc.parse(gcode,{headWord:"C"});
+   add("C→主軸頭安全映射",!rejected.ok&&accepted.ok&&accepted.steps[1].target.H===45?"PASS":"FAIL",
+     "預設禁止 C 映射；明確選擇僅預覽後才允許");
+   const sampled=accepted.ok?nc.analyze(accepted):null;
+   add("NC 路徑姿態取樣",sampled?.ok&&sampled.samples>10?"PASS":"FAIL",sampled?.samples+" 個樣本；非校正 TCP");
+   add("非認證碰撞提示",sampled?.collisionGate==="UNVERIFIED"&&sampled?.certifiedClearance===false?"PASS":"FAIL","無候選干涉不表示可以上機");
+   add("原 G-code 未遭改寫",ta.value===before?"PASS":"FAIL",ta.value===before?"原編輯器內容保持不變":"原 NC 工作副本變動");
+   const rect=preview.querySelector("canvas.aig6-canvas")?.getBoundingClientRect();
+   add("3D 畫布具備尺寸",rect?.width>90&&rect?.height>90?"PASS":"FAIL",rect?Math.round(rect.width)+" × "+Math.round(rect.height):"缺畫布");
+   if("serviceWorker"in navigator)add("離線服務工作者",navigator.serviceWorker.controller?"PASS":"PENDING",navigator.serviceWorker.controller?"已有控制器":"首次載入可能需重新開啟才接管");
+  }catch(e){add("工作區初始化","FAIL",String(e?.message||e))}
+  const passes=cases.filter(c=>c.status==="PASS").length;
+  const fails=cases.filter(c=>c.status==="FAIL").length;
+  overall.textContent=fails?"FAIL":passes?"Browser Gate "+passes+" PASS":"待驗證";
+  overall.style.color=fails?"#ffa3a0":"#59e4bc";
+  report={scope:"AIG_6AX_V66_BROWSER_SELF_CHECK",url:location.href,timestamp:new Date().toISOString(),userAgent:navigator.userAgent,
+   viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},cases,passes,fails,
+   machineOutput:"BLOCKED",collisionGate:"UNVERIFIED",materialRemovalGate:"NOT_VERIFIED",
+   warning:"This browser self-check is NOT an independently certified collision, 0.001 mm or CNC machine gate."};
+  summary.textContent=passes+" 項 PASS / "+fails+" 項 FAIL。僅代表目前瀏覽器上的功能檢查，不能代替 CNC 安全驗收。";
+  output.textContent=JSON.stringify({passes,fails,viewport:report.viewport,cases:cases.map(({name,status})=>({name,status}))},null,2);
+  save.disabled=false;running=false;
+ }
+ document.getElementById("run").addEventListener("click",run);
+ save.addEventListener("click",()=>{
+  if(!report)return;const file=new Blob([JSON.stringify(report,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(file),a=document.createElement("a");a.href=url;a.download="AIG-6AX-V66-browser-evidence.json";
+  a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ });
+ frame.addEventListener("load",()=>run(),{once:true});
+ setTimeout(()=>{if(!running&&!report)run()},1300);
+})();
+</script>
+</body></html>
