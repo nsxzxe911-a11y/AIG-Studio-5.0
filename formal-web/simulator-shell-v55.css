@@ -1,0 +1,236 @@
+/* V55 Immersive AIG CNC simulator cockpit. DOM/Core untouched. */
+html[data-aig55-sim="true"],html[data-aig55-sim="true"] body{height:100%;overflow:hidden!important}
+html[data-aig55-sim="true"] .app{
+ height:var(--aig49-vh,100dvh)!important;max-height:var(--aig49-vh,100dvh)!important;
+ min-height:0!important;display:flex!important;flex-direction:column!important;
+ width:100%!important;max-width:100%!important;margin:0 auto!important;
+ background:#020407!important;overflow:hidden!important
+}
+html[data-aig55-sim="true"] .app>.top{display:none!important}
+html[data-aig55-sim="true"] .aig55-top{
+ flex:0 0 56px;height:56px;min-height:56px;display:flex;align-items:center;gap:9px;
+ padding:5px 10px;position:relative;z-index:30;overflow:hidden;
+ border-bottom:1px solid #2b7ca2;background:linear-gradient(105deg,#10283b,#06111e 65%,#11182a);
+ box-shadow:0 2px 14px #000a,inset 0 1px #42c7ec26
+}
+html[data-aig55-sim="true"] .aig55-home{
+ flex:0 0 auto;height:39px;cursor:pointer;
+ border:1px solid #4caec9;border-radius:8px;padding:5px 12px;
+ background:#102d42;color:#eaffff;font:750 11px/1.2 "Noto Sans TC",sans-serif
+}
+html[data-aig55-sim="true"] .aig55-id{
+ display:flex;flex-direction:column;gap:1px;white-space:nowrap;flex:0 0 auto
+}
+html[data-aig55-sim="true"] .aig55-id strong{font-size:12px;color:#f0ffff;letter-spacing:.08em}
+html[data-aig55-sim="true"] .aig55-id small{font-size:9px;color:#7dcce8;letter-spacing:.04em}
+html[data-aig55-sim="true"] .aig55-nav{
+ display:flex;gap:5px;align-items:center;flex:1 1 0;min-width:0;
+ overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;overscroll-behavior-x:contain;
+ scroll-snap-type:x proximity;padding:2px
+}
+html[data-aig55-sim="true"] .aig55-nav button{
+ flex:0 0 auto;cursor:pointer;scroll-snap-align:nearest;
+ min-width:57px;height:36px;padding:4px 8px;border:1px solid #294b65;
+ border-radius:7px;background:#081522;color:#badde9;font:750 11px "Noto Sans TC",sans-serif
+}
+html[data-aig55-sim="true"] .aig55-nav button[aria-current="page"]{
+ border-color:#57e5ff;color:white;background:linear-gradient(120deg,#145d73,#263666);
+ box-shadow:inset 0 0 12px #29f0ff2c
+}
+html[data-aig55-sim="true"] .aig55-actions{display:flex;gap:4px;flex:0 0 auto;align-items:center}
+html[data-aig55-sim="true"] .aig55-act{
+ cursor:pointer;height:34px;min-width:49px;padding:3px 7px;color:#d9f8ff;
+ border:1px solid #438cac;border-radius:7px;background:#10334a;font:750 11px "Noto Sans TC",sans-serif
+}
+html[data-aig55-sim="true"] .aig55-act:disabled{display:none!important}
+html[data-aig55-sim="true"] .aig55-safe{
+ border:1px solid #735d32;background:#251d10;color:#ffe2aa;
+ border-radius:6px;padding:6px 7px;font:700 10px "Noto Sans TC",sans-serif;white-space:nowrap
+}
+html[data-aig55-sim="true"] .app>.shell{
+ flex:1 1 0!important;display:block!important;height:0!important;min-height:0!important;
+ max-height:100%!important;overflow:hidden!important;padding:5px!important;
+ background:linear-gradient(140deg,#020407,#07121e 55%,#020407)!important
+}
+html[data-aig55-sim="true"] .app>.shell>.screen.active{
+ display:flex!important;flex-direction:column!important;
+ height:100%!important;min-height:0!important;max-height:100%!important;overflow:hidden!important
+}
+html[data-aig55-sim="true"] .screen.active :is(.panel,.body,.workgrid,.camgrid,.simgrid,.ncEditGrid,.tpGrid){
+ min-height:0!important;min-width:0!important
+}
+html[data-aig55-sim="true"] .screen.active .panel{
+ border:1px solid #2c5975!important;border-radius:10px!important;
+ background:linear-gradient(165deg,#071526,#03070e)!important;
+ box-shadow:inset 0 1px #50c9ff16,0 5px 16px #0008!important
+}
+html[data-aig55-sim="true"] .screen.active .panel>.head{
+ padding:5px 8px!important;min-height:28px!important;
+ background:#0b2132!important;border-bottom:1px solid #284e63!important
+}
+html[data-aig55-sim="true"] .screen.active .panel>.head :is(h2,h3){font-size:12px!important}
+html[data-aig55-sim="true"] .screen.active .panel>.body{padding:5px!important}
+html[data-aig55-sim="true"] .screen.active :is(button,.btn){touch-action:manipulation}
+html[data-aig55-sim="true"] :is(.aig55-top button,.screen.active button):focus-visible{
+ outline:2px solid #ffc76b!important;outline-offset:1px!important
+}
+@media(min-width:901px){
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace{
+  display:grid!important;flex:1 1 0!important;height:100%!important;
+  max-height:100%!important;overflow:hidden!important;
+  grid-template-columns:minmax(0,2.7fr) minmax(280px,1fr)!important;
+  grid-template-rows:max-content max-content max-content minmax(0,1fr)!important;gap:4px!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace>.axisModuleHeader,
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace>.aig41-toolbar,
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace>.aig43-bar{
+  grid-column:1/-1!important;min-height:0!important;max-height:36px!important;
+  margin:0!important;padding:3px 6px!important;overflow-x:auto!important;overflow-y:hidden!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace>.axisModuleHeader{grid-row:1!important;display:flex!important;flex-wrap:nowrap!important}
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace>.axisModuleHeader .axisModuleTitle{display:none!important}
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace>.aig41-toolbar{grid-row:2!important}
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace>.aig43-bar{grid-row:3!important}
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace>.simleft{
+  grid-column:1!important;grid-row:4!important;display:grid!important;
+  grid-template-rows:29px minmax(0,1fr)!important;
+  height:100%!important;max-height:100%!important;overflow:hidden!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace>.editor{
+  grid-column:2!important;grid-row:4!important;display:grid!important;
+  grid-template-rows:29px 50px minmax(0,1fr) 60px 39px!important;
+  height:100%!important;max-height:100%!important;overflow:hidden!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.editor{grid-column:1!important}
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace[data-axis-subpage="NC_FIRST"]>.simleft{grid-column:2!important}
+ html[data-aig55-sim="true"] .screen.active .simgrid .simleft>.body{
+  display:flex!important;flex-direction:column!important;min-height:0!important;overflow:hidden!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid .simleft .axisbar{
+  flex:0 0 29px!important;flex-wrap:nowrap!important;overflow-x:auto!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid .simleft .sceneWrap{
+  display:block!important;flex:1 1 0!important;
+  height:0!important;min-height:150px!important;max-height:100%!important;
+  overflow:hidden!important;border:1px solid #3da8c6!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid :is(.sim3dCanvas,.simCanvas){
+  height:100%!important;min-height:0!important;max-height:100%!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid .controls{
+  flex:0 0 40px!important;display:flex!important;flex-wrap:nowrap!important;
+  max-height:40px!important;overflow-x:auto!important;overflow-y:hidden!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid .controls>.btn{
+  flex:0 0 auto!important;min-width:68px!important;min-height:34px!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid .runtimeStatus{
+  flex:0 0 36px!important;max-height:36px!important;
+  display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid .editor textarea.code{
+  height:100%!important;min-height:0!important;max-height:100%!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid .editor .editorbar{
+  max-height:50px!important;overflow:auto!important;display:flex!important;flex-wrap:nowrap!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid .editor .execView{max-height:60px!important;overflow:auto!important}
+ html[data-aig55-sim="true"] .screen.active :is(.workgrid,.ncEditGrid){
+  flex:1 1 0!important;height:100%!important;max-height:100%!important;
+  display:grid!important;grid-template-columns:minmax(0,2.6fr) minmax(240px,1fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;gap:5px!important;overflow:hidden!important
+ }
+ html[data-aig55-sim="true"] .screen.active :is(.workgrid,.ncEditGrid)>.panel{
+  display:flex!important;flex-direction:column!important;height:100%!important;overflow:hidden!important
+ }
+ html[data-aig55-sim="true"] .screen.active :is(.workgrid,.ncEditGrid)>.panel>.body{
+  flex:1 1 auto!important;min-height:0!important;overflow:auto!important
+ }
+ html[data-aig55-sim="true"] .screen.active [data-cad-runtime] .cadCanvasWrap{
+  height:calc(100dvh - 218px)!important;min-height:160px!important;max-height:100%!important
+ }
+ html[data-aig55-sim="true"] .screen.active [data-cad-runtime] .cadCanvas{height:100%!important;min-height:0!important}
+ html[data-aig55-sim="true"] .screen.active .ncEditorMain{
+  display:flex!important;flex-direction:column!important;min-height:0!important
+ }
+ html[data-aig55-sim="true"] .screen.active .ncEditorMain>.body:has(textarea[data-nc-code]){
+  display:flex!important;flex:1 1 0!important;min-height:0!important;overflow:hidden!important
+ }
+ html[data-aig55-sim="true"] .screen.active .ncEditorMain textarea[data-nc-code]{
+  flex:1 1 auto!important;height:100%!important;min-height:85px!important;max-height:100%!important
+ }
+ html[data-aig55-sim="true"] .screen.active .ncEditorMain>.body:has(.ncKeypad){
+  flex:0 0 auto!important;max-height:140px!important;overflow:auto!important
+ }
+ html[data-aig55-sim="true"] .screen.active [data-cam-runtime]>.camgrid{
+  display:grid!important;flex:1 1 0!important;height:100%!important;max-height:100%!important;
+  grid-template-columns:minmax(0,2.65fr) minmax(245px,1fr)!important;
+  grid-template-rows:repeat(3,minmax(0,1fr))!important;gap:5px!important;overflow:hidden!important
+ }
+ html[data-aig55-sim="true"] .screen.active [data-cam-runtime]>.camgrid>.panel{
+  display:flex!important;flex-direction:column!important;height:100%!important;overflow:hidden!important
+ }
+ html[data-aig55-sim="true"] .screen.active [data-cam-runtime]>.camgrid>.panel>.body{
+  flex:1 1 auto!important;min-height:0!important;overflow:auto!important
+ }
+ html[data-aig55-sim="true"] .screen.active [data-cam-runtime]>.camgrid>.panel[data-aig50-role="preview"]{
+  grid-column:1!important;grid-row:1/4!important
+ }
+ html[data-aig55-sim="true"] .screen.active [data-cam-runtime]>.camgrid>.panel[data-aig50-role="strategies"]{
+  grid-column:2!important;grid-row:1!important
+ }
+ html[data-aig55-sim="true"] .screen.active [data-cam-runtime]>.camgrid>.panel[data-aig50-role="manual"]{
+  grid-column:2!important;grid-row:2!important
+ }
+ html[data-aig55-sim="true"] .screen.active [data-cam-runtime]>.camgrid>.panel[data-aig50-role="params"]{
+  grid-column:2!important;grid-row:3!important
+ }
+ html[data-aig55-sim="true"] .screen.active [data-cam-runtime]>.camgrid>.panel[data-aig50-role="preview"]>.body{
+  display:flex!important;flex-direction:column!important;overflow:hidden!important
+ }
+ html[data-aig55-sim="true"] .screen.active [data-cam-runtime] [data-cam-canvas]{
+  flex:1 1 0!important;width:100%!important;height:0!important;min-height:145px!important;max-height:100%!important
+ }
+ html[data-aig55-sim="true"] .screen.active [data-cam-runtime] .controls{
+  flex:0 0 38px!important;display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important
+ }
+}
+@media(max-width:900px){
+ html[data-aig55-sim="true"] .aig55-top{
+  flex:0 0 77px!important;min-height:77px!important;height:77px!important;max-height:77px!important;
+  flex-wrap:wrap;align-content:start;gap:3px 7px;padding:3px 5px
+ }
+ html[data-aig55-sim="true"] .aig55-home{height:30px;padding:3px 6px}
+ html[data-aig55-sim="true"] .aig55-id{flex:1 1 80px}
+ html[data-aig55-sim="true"] .aig55-actions .aig55-act{height:29px;padding:3px 5px}
+ html[data-aig55-sim="true"] .aig55-safe{font-size:9px;padding:4px}
+ html[data-aig55-sim="true"] .aig55-nav{
+  order:10;flex:0 0 100%;width:100%;max-width:100%;
+  min-height:34px;height:34px;gap:3px
+ }
+ html[data-aig55-sim="true"] .aig55-nav button{
+  min-height:30px;height:30px;min-width:56px;font-size:10px;padding:3px 6px
+ }
+ html[data-aig55-sim="true"] .app>.shell{padding:3px!important}
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace{gap:2px!important}
+ html[data-aig55-sim="true"] .screen.active .simgrid .simleft .sceneWrap{
+  min-height:90px!important;max-height:none!important;border-color:#36b3d4!important
+ }
+ html[data-aig55-sim="true"] .screen.active .simgrid .axisbar{
+  flex-wrap:nowrap!important;overflow-x:auto!important
+ }
+}
+@media(max-width:900px) and (orientation:landscape){
+ html[data-aig55-sim="true"] .aig55-top{
+  flex:0 0 43px!important;height:43px!important;min-height:43px!important;max-height:43px!important;
+  flex-wrap:nowrap
+ }
+ html[data-aig55-sim="true"] .aig55-id{display:none!important}
+ html[data-aig55-sim="true"] .aig55-nav{
+  order:0;flex:1 1 0;width:auto;max-width:none;height:34px
+ }
+ html[data-aig55-sim="true"] .aig55-safe{display:none!important}
+ html[data-aig55-sim="true"] .screen.active .simgrid.aig41-workspace>
+ :is(.axisModuleHeader,.aig41-toolbar,.aig43-bar){max-height:30px!important}
+}
+

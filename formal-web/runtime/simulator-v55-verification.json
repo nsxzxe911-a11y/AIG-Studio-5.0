@@ -1,0 +1,15 @@
+{
+  "version": "55.0.0",
+  "sourceTests": [
+    "10 pages delegate original nav",
+    "3 playback commands delegate real buttons",
+    "both original HTML scripts parse",
+    "V54/G-code unchanged",
+    "SW caches V55",
+    "CSS braces pass"
+  ],
+  "pass": "SOURCE_ONLY",
+  "phoneVisual": "PENDING",
+  "desktopVisual": "PENDING",
+  "machineSafety": "NOT_CERTIFIED"
+}
