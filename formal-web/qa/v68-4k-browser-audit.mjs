@@ -41,7 +41,10 @@ function metrics(buffer){const png=PNG.sync.read(buffer),n=png.width*png.height,
   visualContentPresent:max-min>35&&bright/total>.0005};
 }
 async function snap(browserPage,profile,id){
- const buffer=await browserPage.screenshot({animations:"disabled",fullPage:false,timeout:18000});
+ let buffer;
+ try{buffer=await browserPage.screenshot({animations:"allow",fullPage:false,timeout:46000})}
+ catch(e){issue(profile.id,id,"SCREENSHOT_CAPTURE_TIMEOUT",
+  "Real 4K Chromium screenshot could not complete; preserved remaining page tests. "+String(e),"FAIL");return null}
  const dir=path.join(output,profile.id);await fs.mkdir(dir,{recursive:true});
  const file=path.join(dir,id+".png");await fs.writeFile(file,buffer);
  const m=metrics(buffer);
@@ -121,15 +124,44 @@ try{
    // DOM page navigation uses the existing real V67 router via visible button.
    for(const id of pages){
     try{
+     let navigationEvidence="HOME_ENTRY";
      if(id!=="HOME"){
-      const btn=page.locator(".aig67-global-trigger");
-      await btn.click({timeout:4000,noWaitAfter:true});
-      await page.locator('.aig67-global-panel [data-aig67-global-route="'+id+'"]').click({timeout:4000,noWaitAfter:true});
+      try{
+       const btn=page.locator(".aig67-global-trigger");
+       await btn.click({timeout:2700,noWaitAfter:true});
+       await page.locator('.aig67-global-panel [data-aig67-global-route="'+id+'"]').click({
+        timeout:2700,noWaitAfter:true});
+       navigationEvidence="REAL_POINTER_BUTTON_CLICK";
+      }catch(pointerError){
+       // Heavy 4K software WebGL can prevent Playwright's actionability/stability
+       // poll from completing. Invoke ONLY the real UI button's own handler in
+       // Chromium. Label this lesser evidence; never claim pointer-click PASS.
+       const dispatched=await page.evaluate(next=>{
+        const trigger=document.querySelector(".aig67-global-trigger");
+        const control=document.querySelector('.aig67-global-panel [data-aig67-global-route="'+next+'"]');
+        if(!trigger||!control)return false;
+        if(trigger.getAttribute("aria-expanded")!=="true")trigger.click();
+        control.click();return true;
+       },id);
+       navigationEvidence=dispatched?"REAL_BUTTON_DOM_CALLBACK_ONLY":"NAVIGATION_FAILED";
+       if(dispatched)issue(p.id,id,"POINTER_ACTIONABILITY_UNVERIFIED",
+        "Real CNC page button callback fired using DOM click; physical pointer actionability timed out in 4K software rendering.","WARNING");
+       else throw pointerError;
+      }
      }
-     await page.locator('.screen.active[data-page="'+id+'"]').waitFor({state:"visible",timeout:9000});
-     await page.waitForTimeout(id.endsWith("AX")?500:170);
+     await page.locator('.screen.active[data-page="'+id+'"]').waitFor({state:"visible",timeout:12000});
+     // A newly visible native 2D canvas can still be 1x1 until its next
+     // resize/draw. Request repaint; never mutate CAD/CAM working-copy state.
+     await page.evaluate(()=>window.dispatchEvent(new Event("resize")));
+     await page.waitForTimeout(id.endsWith("AX")?470:220);
+     await page.waitForFunction(()=>{
+      const n=document.querySelector(".screen.active"),c=n?.querySelector(
+       "canvas[data-cad-canvas],canvas[data-cam-canvas]");
+      return !c||c.width>1&&c.height>1;
+     },{timeout:2300}).catch(()=>{});
+
      const d=await inspection(page);
-     summary.checks.push({page:id,info:d});
+     summary.checks.push({page:id,info:d,navigationEvidence});
      inspectQuality(p,id,d);
      if(d.activePage!==id)issue(p.id,id,"REAL_NAV_NOT_CORRECT",d.activePage,"FAIL");
      if(["HOME","CAD","CAM","6AX","NC","AI"].includes(id))await snap(page,p,id);
