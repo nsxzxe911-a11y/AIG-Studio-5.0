@@ -86,6 +86,8 @@ button:focus-visible,a:focus-visible{outline:2px solid #9eefff;outline-offset:3p
    await pause(250);
    const inspect=mech.inspect();
    add("真實 WebGL Context",show&&inspect.webglReady?"PASS":"FAIL",inspect.webglReady?"瀏覽器已建立 WebGL":"GPU/權限/context 尚不可用");
+   add("WebGL 已完成渲染且無 GL 錯誤",show&&inspect.webglReady&&inspect.renderedFrames>0&&inspect.lastGlError===0?"PASS":"FAIL",
+     "frames="+(inspect.renderedFrames??0)+" / GL="+(inspect.lastGlError??"unknown")+" / "+(inspect.canvasSize?.width||0)+"×"+(inspect.canvasSize?.height||0)+"；此項不證明機台外觀與 CNC 幾何正確");
    const original={...inspect.joints};
    const joints=[["A",90],["B",180],["H",45],["A",-90],["B",-90]];
    let jointOK=true;
@@ -109,13 +111,13 @@ button:focus-visible,a:focus-visible{outline:2px solid #9eefff;outline-offset:3p
   }catch(e){add("工作區初始化","FAIL",String(e?.message||e))}
   const passes=cases.filter(c=>c.status==="PASS").length;
   const fails=cases.filter(c=>c.status==="FAIL").length;
-  overall.textContent=fails?"FAIL":passes?"Browser Gate "+passes+" PASS":"待驗證";
+  overall.textContent=fails?"FAIL":passes?"瀏覽器自檢 "+passes+" 項 PASS":"待驗證";
   overall.style.color=fails?"#ffa3a0":"#59e4bc";
   report={scope:"AIG_6AX_V66_BROWSER_SELF_CHECK",url:location.href,timestamp:new Date().toISOString(),userAgent:navigator.userAgent,
    viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},cases,passes,fails,
    machineOutput:"BLOCKED",collisionGate:"UNVERIFIED",materialRemovalGate:"NOT_VERIFIED",
    warning:"This browser self-check is NOT an independently certified collision, 0.001 mm or CNC machine gate."};
-  summary.textContent=passes+" 項 PASS / "+fails+" 項 FAIL。僅代表目前瀏覽器上的功能檢查，不能代替 CNC 安全驗收。";
+  summary.textContent=passes+" 項 PASS / "+fails+" 項 FAIL。瀏覽器自檢不包含人工截圖對照、0.001 mm 材料移除、真正掃掠碰撞或 Fanuc Machine Gate。";
   output.textContent=JSON.stringify({passes,fails,viewport:report.viewport,cases:cases.map(({name,status})=>({name,status}))},null,2);
   save.disabled=false;running=false;
  }
