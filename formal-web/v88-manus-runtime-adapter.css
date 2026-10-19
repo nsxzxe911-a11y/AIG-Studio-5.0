@@ -58,7 +58,7 @@ html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="andro
 }
 html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="android"]
  .screen.active[data-page="6AX"][data-aig50-pane="view"] .simgrid[data-runtime="6AX"] .sceneWrap{
-  min-height:0!important;height:0!important;flex:1 1 0!important
+  min-height:80px!important;height:0!important;flex:1 1 0!important
 }
 html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="android"]
  .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"] .controls.aig86-tool-controls{
