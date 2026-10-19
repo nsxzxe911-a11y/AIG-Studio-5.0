@@ -1,0 +1,31 @@
+name: AIG V88 GPT Runtime Adapter Static Gate
+on:
+  push:
+    branches: [integration/v88-manus-runtime-gpt]
+    paths:
+      - 'formal-web/mobile-runtime.html'
+      - 'formal-web/service-worker.js'
+      - 'formal-web/v88-manus-runtime-adapter.css'
+      - 'formal-web/runtime/v88-manus-runtime-adapter.js'
+      - 'formal-web/qa/v88-manus-runtime-check.cjs'
+      - '.github/workflows/v88-gpt-runtime-integration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Adapter syntax
+        run: |
+          node --check formal-web/runtime/v88-manus-runtime-adapter.js
+          node --check formal-web/qa/v88-manus-runtime-check.cjs
+      - name: V87 source isolation + V88 PWA layout contract
+        run: node formal-web/qa/v88-manus-runtime-check.cjs
+      - name: Boundary
+        run: echo "STATIC ONLY. Browser layout, original callbacks, machining and physical CNC Gate remain UNVERIFIED."
