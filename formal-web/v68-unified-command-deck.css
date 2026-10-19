@@ -146,3 +146,66 @@
 @media(prefers-reduced-motion:reduce){
  .aig68-deck button{transition:none!important;animation:none!important}
 }
+
+
+/* Verified from live desktop/mobile Chromium shots: old V55 full-width nav
+ * and V43 generated proxy bars consumed ~100–200px above the real machining
+ * view. Keep V55 as fallback ONLY until live V67 global navigation exists. */
+body:has(>.aig67-global-nav) .aig55-top{display:none!important}
+.aig68-advanced-toggle{min-height:26px;flex:0 0 auto;border:1px solid #4a91b1;
+ border-radius:8px;background:#0b2739;color:#d9f5ff;
+ font:700 11px/1.2 "Noto Sans TC",sans-serif;padding:5px 9px;
+ cursor:pointer;touch-action:manipulation}
+.aig68-advanced-toggle:disabled{opacity:.34!important;cursor:not-allowed}
+.aig68-advanced-toggle[aria-expanded="true"]{
+ border-color:#56e1ff;box-shadow:inset 0 0 10px #15c6ff4c}
+.screen>.aig68-legacy-extra{
+ max-width:100%;margin:8px 0 15px;box-sizing:border-box;
+ border:1px solid #315872;border-radius:10px;background:#061827;
+ box-shadow:0 7px 18px #0008;min-width:0;overflow:hidden
+}
+.screen>.aig68-legacy-extra>summary{
+ padding:9px 14px;color:#a8dcf2;font:700 11px/1.4 "Noto Sans TC",sans-serif;
+ cursor:pointer;user-select:none;touch-action:manipulation;
+ border-bottom:1px solid transparent}
+.screen>.aig68-legacy-extra[open]>summary{color:#daefff;border-color:#375d77}
+.screen>.aig68-legacy-extra>.aig43-bar{
+ position:static!important;max-height:290px;overflow:auto!important;min-width:0;
+ margin:0!important;padding:8px!important;box-shadow:none!important;
+ border:0!important;background:#081b2a!important
+}
+/* V65/V43 grid line numbers must no longer reserve a large unused row
+ * after the redundant V43 shortcut strip has moved below the viewport.
+ * The authentic 3D scene and original CNC editor remain independent. */
+.screen.active .simgrid.aig41-workspace:has(>.aig68-deck){
+ grid-template-rows:auto auto auto minmax(0,1fr)!important;
+}
+.screen.active .simgrid.aig41-workspace:has(>.aig68-deck)>.aig68-deck{
+ grid-column:1/-1!important;grid-row:2!important;order:2!important;
+}
+.screen.active .simgrid.aig41-workspace:has(>.aig68-deck)>.axisModuleHeader{
+ grid-row:1!important;order:1!important;
+}
+.screen.active .simgrid.aig41-workspace:has(>.aig68-deck)>.aig41-toolbar{
+ grid-row:3!important;order:3!important;
+}
+.screen.active .simgrid.aig41-workspace:has(>.aig68-deck)>.simleft,
+.screen.active .simgrid.aig41-workspace:has(>.aig68-deck)>.editor{
+ grid-row:4!important;order:4!important;
+}
+@media(max-width:900px){
+ .aig68-deck-head{gap:4px}
+ .aig68-advanced-toggle{min-height:24px;padding:3px 6px;font-size:10px}
+ .aig68-deck-caution{display:none}
+ .screen>.aig68-legacy-extra{margin:4px 0 8px}
+ .screen>.aig68-legacy-extra>summary{padding:7px 11px;font-size:10px}
+ .screen.active .simgrid.aig41-workspace:has(>.aig68-deck)>.axisModuleHeader{
+  order:1!important;grid-row:auto!important}
+ .screen.active .simgrid.aig41-workspace:has(>.aig68-deck)>.aig68-deck{
+  order:2!important;grid-row:auto!important}
+ .screen.active .simgrid.aig41-workspace:has(>.aig68-deck)>.aig41-toolbar{
+  order:3!important;grid-row:auto!important}
+ .screen.active .simgrid.aig41-workspace:has(>.aig68-deck)>.simleft,
+ .screen.active .simgrid.aig41-workspace:has(>.aig68-deck)>.editor{
+  order:4!important;grid-row:auto!important}
+}
