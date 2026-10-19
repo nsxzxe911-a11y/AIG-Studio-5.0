@@ -158,7 +158,11 @@ function mount(){
  '<button type="button" id="aig69-nc-send" data-button-id="BTN.HOME.SOURCE.SEND_NC" hidden>送至 NC 編輯器 →</button>'+
  '<button type="button" id="aig69-go-cam" data-button-id="BTN.HOME.SOURCE.OPEN_CAM">手動 CAM →</button></div>'+
  '<p id="aig69-status" role="status" aria-live="polite"></p>';
- screen.insertBefore(panel,screen.firstChild);
+ const hero=d.createElement("figure");hero.className="aig-home-hero";hero.setAttribute("aria-label","AIG 正式首頁視覺");
+ const photo=d.createElement("img");photo.src="./visual-library/pages/home.png";photo.alt="AIG RGB 正式首頁";photo.loading="eager";photo.decoding="async";
+ photo.onerror=()=>{hero.hidden=true;};
+ hero.append(photo);screen.insertBefore(hero,screen.firstChild);
+ screen.insertBefore(panel,hero.nextSibling);
  addTraceUI();
  $("#aig69-camera").addEventListener("change",e=>chooseImage(e.target.files?.[0],"CAMERA"));
  $("#aig69-photo").addEventListener("change",e=>chooseImage(e.target.files?.[0],"PHOTO"));
