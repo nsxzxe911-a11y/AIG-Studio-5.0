@@ -20,7 +20,7 @@ async function runCase(browser,mode){
    const t=document.querySelector('.screen.active textarea.code[data-axis="6AX"]');
    t.value+="\n"+marker;t.dispatchEvent(new Event("input",{bubbles:true}));
   },serial);
-  await page.waitForTimeout(270);
+  await page.waitForTimeout(520); // Let native 350ms parser finish before snapshot.
   const value=await ta.inputValue();
   assert(value.endsWith(serial),"native source textarea must keep edits");
   const draft=await page.evaluate(()=>JSON.parse(localStorage.getItem("aig-nc-working-copy-6AX-v89")||"null"));
