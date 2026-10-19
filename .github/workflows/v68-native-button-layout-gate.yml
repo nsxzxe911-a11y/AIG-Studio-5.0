@@ -1,0 +1,94 @@
+name: AIG V68 Real Button Placement (UI-only Gate)
+on:
+  push:
+    branches: [aig-web-v68-unified-button-layout]
+    paths:
+      - 'formal-web/**'
+      - '.github/workflows/v68-native-button-layout-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aig-v68-native-button-layout-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-button-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: V65-V67 NC / Page callback preservation
+        id: baseline
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          node formal-web/runtime/6ax-nc-readonly-v2.test.cjs
+          node formal-web/qa/v66-fast-gate.test.cjs
+          node formal-web/qa/v67-contract-gate.test.cjs
+      - name: V68 stable button IDs, six positions and CNC separation
+        id: source
+        continue-on-error: true
+        run: node formal-web/qa/v68-button-layout.test.cjs
+      - name: Install Playwright and PNG audit
+        working-directory: formal-web/qa
+        run: npm install --no-audit --no-fund
+      - name: Install actual Chromium renderer
+        working-directory: formal-web/qa
+        run: npx playwright install chromium --with-deps
+      - name: Serve AIG actual runtime HTML files
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory formal-web >/tmp/aig-v68-web.log 2>&1 &
+          for i in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:8765/mobile-runtime.html >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsSI http://127.0.0.1:8765/runtime/v68-button-layout-contract.json
+      - name: Chrome actual native button positions / safe click / screenshots
+        id: browser
+        continue-on-error: true
+        env:
+          AIG_V68_BASE_URL: http://127.0.0.1:8765
+          AIG_V68_AUDIT_OUT: formal-web/qa/artifacts/v68
+        run: node formal-web/qa/v68-command-deck-browser.mjs
+      - name: Upload mobile and desktop screenshots with raw button ID findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aig-v68-native-button-layout-${{ github.sha }}
+          path: formal-web/qa/artifacts/v68
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Explicit UI-only outcome (not CNC / image authority release)
+        if: always()
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const file='formal-web/qa/artifacts/v68/report.json';
+          const data=fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):null;
+          const lines=[
+            '# AIG V68 Same-Position Real Native Buttons',
+            '',
+            'Source SHA: ${{ github.sha }}',
+            'Native V65-V67 contract checks: ${{ steps.baseline.outcome }}',
+            'V68 stable Button ID source tests: ${{ steps.source.outcome }}',
+            'Real Chromium browser action/position tests: ${{ steps.browser.outcome }}',
+            data?'Screenshots: '+data.summary.captures:'Browser screenshot evidence missing',
+            data?'Missing native selector: '+data.summary.missingNative:'Missing selector status unknown',
+            data?'Browser FAIL: '+data.summary.failures:'Browser result unavailable',
+            '',
+            'This workflow verifies UI layout and safe test actions only.',
+            '**CNC machine output, 0.001 mm geometry, material removal, exact approved RGB Authority and Android/Windows Release remain BLOCKED/PENDING.**'
+          ];
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,lines.join('\n')+'\n');
+          if(!data||data.summary.failures>0)process.exit(1);
+          if('${{ steps.baseline.outcome }}'!=='success')process.exit(2);
+          if('${{ steps.source.outcome }}'!=='success')process.exit(3);
+          if('${{ steps.browser.outcome }}'!=='success')process.exit(4);
+          NODE
