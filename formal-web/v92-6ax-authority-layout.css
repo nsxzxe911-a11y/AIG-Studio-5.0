@@ -1,0 +1,160 @@
+/* AIG V92 image-to-code skin — 864x1536 approved mobile 6AX authority.
+ * Runtime elements remain live and the GLB is actual WebGL, not a skin bitmap.
+ * Desktop layout derives from mobile composition, NOT the revoked 438 Desktop source.
+ */
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .simgrid[data-aig92-reverse-map="ready"]{
+ --a92-cyan:#21ddff;--a92-sky:#5eaeff;--a92-purple:#9b48ff;--a92-bg:#030b16;
+ --a92-glass:linear-gradient(148deg,#071a2cef,#091527f0 66%,#0d1531f0);
+ --a92-edge:linear-gradient(120deg,#f2a943 0%,#00d5ff 16%,#518aff 52%,#982fff 84%,#10eebd 100%);
+ min-width:0!important;min-height:0!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .simgrid[data-aig92-reverse-map="ready"]>.simleft{
+ display:grid!important;grid-template-rows:auto minmax(0,1fr)!important;
+ min-height:0!important;overflow:hidden!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-body{
+ display:flex!important;flex-direction:column!important;gap:7px!important;
+ flex:1 1 auto!important;min-height:0!important;height:100%!important;
+ overflow:hidden!important;padding:7px!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-stage{
+ display:grid!important;
+ grid-template-columns:clamp(54px,5vw,84px) minmax(0,1fr) minmax(240px,27%)!important;
+ grid-template-rows:minmax(0,1fr)!important;align-items:stretch!important;gap:7px!important;
+ min-height:0!important;flex:1 1 0!important;height:0!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-camera-rail{
+ display:flex!important;flex-direction:column!important;gap:5px!important;
+ min-width:0!important;overflow:auto!important;overscroll-behavior:contain!important;
+ scrollbar-width:thin!important;padding:5px 3px!important;
+ border:1px solid #328abd!important;border-radius:12px!important;background:var(--a92-glass)!important;
+ box-shadow:inset 0 0 12px #026fe538!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-camera-rail button{
+ flex:0 0 auto!important;width:100%!important;min-height:47px!important;
+ padding:4px!important;color:#ccefff!important;font:750 12px/1.1 system-ui,"Noto Sans TC",sans-serif!important;
+ white-space:normal!important;word-break:break-all!important;border-radius:7px!important;
+ border:1px solid #337fa5!important;
+ background:linear-gradient(140deg,#0d2844,#081729)!important;
+ box-shadow:inset 0 1px #58bfff2b,0 2px 10px #0009!important;cursor:pointer!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-camera-rail button[aria-pressed="true"],
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-camera-rail .selected{
+ background:linear-gradient(140deg,#0a79af,#123e75 55%,#462177)!important;
+ border-color:#75e8ff!important;box-shadow:inset 0 0 13px #8dffff55,0 0 12px #047ceb80!important;color:#fff!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-camera-native{
+ display:flex!important;flex-direction:column!important;gap:5px!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-stage>.sceneWrap{
+ display:block!important;min-width:0!important;min-height:0!important;
+ width:100%!important;height:100%!important;max-height:none!important;
+ position:relative!important;margin:0!important;border-radius:12px!important;
+ border:1px solid #53c7f6!important;overflow:hidden!important;
+ background:radial-gradient(ellipse 85% 75% at 50% 50%,#123451,#02050b 82%)!important;
+ box-shadow:inset 0 0 30px #074975,0 0 18px #2189fe33!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-telemetry{
+ display:flex!important;flex-direction:column!important;gap:6px!important;
+ min-width:0!important;overflow-y:auto!important;scrollbar-width:thin!important;padding:7px!important;
+ border:1px solid #357eae!important;border-radius:12px!important;background:var(--a92-glass)!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-telemetry-head{
+ padding:9px 8px!important;background:#10304c!important;border-radius:8px!important;
+ border-left:3px solid #37e6fd!important;color:#b5f3ff!important;
+ font:800 clamp(11px,.85vw,17px)/1.2 "Noto Sans TC",system-ui,sans-serif!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-telemetry .axisbar{
+ display:flex!important;flex-wrap:wrap!important;gap:5px!important;padding:6px!important;
+ background:linear-gradient(155deg,#08253e,#050f1e)!important;border:1px solid #295a85!important;
+ border-radius:10px!important;max-width:100%!important;overflow-x:auto!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-telemetry-priority{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-telemetry-priority>.metric{
+ min-width:0!important;padding:8px 7px!important;margin:0!important;
+ border:1px solid #225f83!important;border-radius:9px!important;background:#091d31!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-telemetry-priority>.metric span{
+ overflow-wrap:anywhere!important;color:#eaf9ff!important;font-variant-numeric:tabular-nums
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-telemetry-more{
+ min-width:0!important;border:1px solid #294f79!important;border-radius:8px!important;
+ padding:5px!important;color:#b8e8fa!important;background:#071526!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-telemetry-more>summary{
+ cursor:pointer!important;padding:8px 3px!important;font:750 11px/1.2 system-ui,"Noto Sans TC",sans-serif!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-telemetry-more .runtimeStatus{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important;
+ min-height:0!important;max-height:none!important;overflow:visible!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-bottom{
+ flex:0 0 auto!important;min-width:0!important;
+ display:flex!important;flex-direction:column!important;gap:5px!important;
+ padding:7px!important;border:1px solid #368fbb!important;border-radius:10px!important;
+ background:linear-gradient(125deg,#081728,#0c1832 70%,#17122b)!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-bottom-title{
+ border-left:3px solid #15e6f3!important;padding:3px 8px!important;
+ font:800 clamp(11px,.75vw,16px)/1.2 "Noto Sans TC",system-ui,sans-serif!important;color:#d5f5ff!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-bottom .controls{
+ display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:5px!important;
+ overflow:visible!important;min-height:0!important;max-height:none!important;padding:0!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-bottom .controls>.btn{
+ flex:1 1 90px!important;min-height:48px!important;border:1px solid #3b96bd!important;
+ border-radius:10px!important;white-space:normal!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-bottom .controls>.btn.play{
+ background:linear-gradient(140deg,#085d84,#12678d 55%,#392f83)!important;
+ box-shadow:0 0 14px #168fe785!important;border-color:#79ddf6!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-bottom .controls>.btn.danger{
+ border-color:#a85562!important;background:linear-gradient(140deg,#42202a,#3a121f)!important
+}
+html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-bottom [data-motion-legend]{
+ max-height:28px!important;overflow:hidden!important;white-space:nowrap!important;
+ text-overflow:ellipsis!important;font-size:10px!important
+}
+@media(max-width:900px){
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"][data-aig50-pane="view"] .aig92-stage{
+  display:grid!important;grid-template-columns:48px minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr)!important;
+  min-height:180px!important;flex:1 1 auto!important;height:100%!important
+ }
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"][data-aig50-pane="view"] .aig92-stage>.sceneWrap{
+  height:100%!important;min-height:180px!important;max-height:none!important;flex:1 1 auto!important
+ }
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"][data-aig50-pane="view"] .aig92-telemetry,
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"][data-aig50-pane="view"] .aig92-bottom{
+  display:none!important
+ }
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"][data-aig50-pane="view"] .aig92-camera-rail{
+  max-height:100%!important;min-height:0!important;padding:3px 2px!important
+ }
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-camera-rail button{
+  min-height:38px!important;font-size:10px!important;padding:4px 1px!important
+ }
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"][data-aig50-pane="tools"] .aig92-stage{
+  display:flex!important;flex-direction:column!important;flex:1 1 auto!important;
+  height:auto!important;min-height:0!important;overflow:auto!important
+ }
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"][data-aig50-pane="tools"] .aig92-camera-rail,
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"][data-aig50-pane="tools"] .aig92-stage>.sceneWrap{
+  display:none!important
+ }
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"][data-aig50-pane="tools"] .aig92-telemetry{
+  display:flex!important;flex:0 0 auto!important;overflow:visible!important
+ }
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"][data-aig50-pane="tools"] .aig92-bottom{
+  display:flex!important;flex:0 0 auto!important
+ }
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"][data-aig50-pane="tools"] .aig92-body{
+  overflow:auto!important
+ }
+ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-telemetry-priority{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important
+ }
+}

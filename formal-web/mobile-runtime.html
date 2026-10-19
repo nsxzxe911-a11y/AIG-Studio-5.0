@@ -236,6 +236,7 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./v89-nc-first-state.css">
 <link rel="stylesheet" href="./v90-cad-cam-sim-runtime.css">
 <link rel="stylesheet" href="./v91-rgb-desktop.css">
+<link rel="stylesheet" href="./v92-6ax-authority-layout.css">
 </head>
 <body>
 <div class="app">
@@ -2034,6 +2035,33 @@ function makeRuntime(root){
  root.aigVisualV45=glScene?Object.freeze({read:()=>glScene.getFidelity()}):null;
  root.aigVisualV32=glScene?Object.freeze({read:()=>glScene.getPerformance(),setAuto:on=>glScene.setAutoScale(on)}):null;
  root.aigVisualV33=glScene?Object.freeze({read:()=>glScene.getMeshStatistics()}):null;
+ // V92 authoritative camera callbacks operate on the EXISTING renderer camera.
+ // Changes only visualization, never NC parse, position, voxel stock or machine I/O.
+ if(axis==="6AX"){
+  const camera=glScene?.camera||null;
+  const trigger=()=>requestAnimationFrame(()=>window.dispatchEvent(new Event("resize")));
+  root.aigCameraV92=camera?Object.freeze({
+   execute:(action)=>{
+    const presets={ISO:[-.72,.58],TOP:[-.72,1.36],FRONT:[-Math.PI/2,.18],LEFT:[Math.PI,.35],RIGHT:[0,.35]};
+    if(presets[action]){
+     camera.yaw=presets[action][0];camera.pitch=presets[action][1];
+     camera.manualUntil=performance.now()+4200;camera.avoidYaw=0;camera.avoidPitch=0;trigger();return true;
+    }
+    if(action==="FIT"){
+     const native=root.querySelector('[data-cmd="center"]');
+     if(native)native.click();
+     camera.zoom=2.55;camera.userZoom=2.55;camera.manualUntil=performance.now()+4200;trigger();return true;
+    }
+    if(action==="IN"||action==="OUT"){
+     const scale=action==="IN"?.82:1.2;
+     const next=Math.max(1.25,Math.min(4.8,camera.zoom*scale));
+     camera.zoom=next;camera.userZoom=next;camera.manualUntil=performance.now()+4200;trigger();return true;
+    }
+    return false;
+   },
+   read:()=>({yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,follow:Boolean(camera.follow)})
+  }):null;
+ }
  if(!glScene)aigShowIssue(root,"warn",axis+" WebGL 無法使用，已自動切換 2D fallback；G-code、模擬控制與編輯器仍可繼續使用。");
  const toolInput=root.querySelector("[data-tool-dia]"),safeInput=root.querySelector("[data-safe-z]"),g73Input=root.querySelector("[data-g73-retract]"),cutterInput=root.querySelector("[data-cutter-len]"),holderDiaInput=root.querySelector("[data-holder-dia]"),holderLenInput=root.querySelector("[data-holder-len]");
  const g54x=root.querySelector("[data-g54-x]"),g54y=root.querySelector("[data-g54-y]"),g54z=root.querySelector("[data-g54-z]");
@@ -3873,5 +3901,6 @@ window.addEventListener("hashchange",()=>aigGuard(document.body,"網址頁面切
 <script src="./runtime/v88-manus-runtime-adapter.js"></script>
 <script src="./runtime/v89-nc-first-state.js"></script>
 <script src="./runtime/v90-cad-cam-sim-runtime.js"></script>
+<script src="./runtime/v92-6ax-authority-layout.js"></script>
 </body>
 </html>
