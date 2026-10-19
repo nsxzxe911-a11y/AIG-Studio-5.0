@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>AIG-II｜正式 CNC 工作區</title>
+<title>AIG-II｜RGB 正式 CNC 工作區</title>
 <style>
 :root{
  --bg:#020407;--panel:#060a0f;--panel2:#0a1017;--panel3:#0d151e;
@@ -232,6 +232,10 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./v85-native-workspace.css">
 <link rel="stylesheet" href="./v86-workspace-skin.css">
 <link rel="stylesheet" href="./v86-external-assist.css">
+<link rel="stylesheet" href="./v88-manus-runtime-adapter.css">
+<link rel="stylesheet" href="./v89-nc-first-state.css">
+<link rel="stylesheet" href="./v90-cad-cam-sim-runtime.css">
+<link rel="stylesheet" href="./v91-rgb-desktop.css">
 </head>
 <body>
 <div class="app">
@@ -1691,6 +1695,81 @@ function makeGlScene(canvas,axis){
  canvas.addEventListener("wheel",e=>{e.preventDefault();camera.manualUntil=performance.now()+1800;const z=Math.max(1.25,Math.min(4.8,camera.zoom*(e.deltaY<0?.90:1.11)));camera.userZoom=z;camera.zoom=z;camera.zoomTarget=z;camera.zoomHoldUntil=performance.now()+1800;camera.zoomMode="MANUAL HOLD"},{passive:false});
 
 
+ // V91: Real GLB binary meshes loaded into the existing CNC WebGL renderer.
+ const v91Glb={state:"LOADING",url:"./zoo-6ax/local-glb/aig_6ax_machine_v9.glb",meshes:[],nodes:[],roots:[],tris:0};
+ const v91Wrap=canvas.closest(".sceneWrap");
+ if(axis==="6AX"){
+  if(v91Wrap)v91Wrap.dataset.aig91Model="LOADING";
+  canvas.dataset.aig91Model="LOADING";
+  (async()=>{
+   try{
+    const res=await fetch(v91Glb.url,{cache:"force-cache"});
+    if(!res.ok)throw Error("GLB_HTTP_"+res.status);
+    const raw=await res.arrayBuffer(),dv=new DataView(raw);
+    if(dv.byteLength<28||dv.getUint32(0,true)!==0x46546c67||dv.getUint32(4,true)!==2||dv.getUint32(8,true)!==raw.byteLength)throw Error("GLB_HEADER");
+    const n=dv.getUint32(12,true),offset=20+n;
+    if(dv.getUint32(16,true)!==0x4e4f534a||offset+8>raw.byteLength||dv.getUint32(offset+4,true)!==0x004e4942)throw Error("GLB_CHUNKS");
+    const json=JSON.parse(new TextDecoder().decode(new Uint8Array(raw,20,n))),start=offset+8,binSize=dv.getUint32(offset,true);
+    if(start+binSize>raw.byteLength)throw Error("GLB_BINARY_BOUNDS");
+    const read=(id)=>{
+     const a=json.accessors?.[id],v=json.bufferViews?.[a?.bufferView];
+     if(!a||!v||v.buffer!==0)throw Error("GLB_ACCESSOR");
+     const tuple=a.type==="VEC3"?3:a.type==="SCALAR"?1:0,unit=a.componentType===5123?2:4;
+     if(!tuple||![5126,5125,5123].includes(a.componentType)||a.count>300000)throw Error("GLB_FORMAT");
+     const begin=start+(v.byteOffset||0)+(a.byteOffset||0),step=v.byteStride||tuple*unit;
+     if(begin<start||begin+(a.count-1)*step+tuple*unit>start+binSize)throw Error("GLB_DATA_BOUNDS");
+     const values=[];
+     for(let i=0;i<a.count;i++)for(let k=0;k<tuple;k++){
+      const p=begin+i*step+k*unit;
+      values.push(a.componentType===5126?dv.getFloat32(p,true):a.componentType===5125?dv.getUint32(p,true):dv.getUint16(p,true));
+     }
+     return values;
+    };
+    v91Glb.meshes=json.meshes.map(m=>m.primitives.map(p=>{
+     if(p.mode!==undefined&&p.mode!==4)throw Error("GLB_NON_TRIANGLES");
+     const points=read(p.attributes.POSITION),normals=read(p.attributes.NORMAL),indices=read(p.indices),ps=[],ns=[];
+     if(indices.length%3)throw Error("GLB_TRIANGLES");
+     for(const k of indices){
+      if(k<0||k>=points.length/3)throw Error("GLB_INDEX");
+      ps.push(...points.slice(k*3,k*3+3));ns.push(...normals.slice(k*3,k*3+3));
+     }
+     v91Glb.tris+=indices.length/3;
+     const rgbColor=json.materials[p.material]?.pbrMetallicRoughness?.baseColorFactor||[.5,.7,.85,1];
+     return{mesh:mesh({p:ps,n:ns}),color:new Float32Array(rgbColor.slice(0,3))};
+    }));
+    v91Glb.nodes=json.nodes;v91Glb.roots=json.scenes[json.scene||0].nodes;
+    if(v91Glb.tris<200||!["A_GROUP","B_GROUP","C_GROUP","SPINDLE_GROUP"].every(key=>json.nodes.some(x=>x.name===key)))throw Error("GLB_AXIS_STRUCTURE");
+    v91Glb.state="READY";canvas.dataset.aig91Model="GLB_READY";
+    if(v91Wrap)v91Wrap.dataset.aig91Model="READY";
+    requestAnimationFrame(()=>window.dispatchEvent(new Event("resize")));
+   }catch(e){v91Glb.state="ERROR";v91Glb.error=String(e?.message||e);
+    canvas.dataset.aig91Model="ERROR";if(v91Wrap)v91Wrap.dataset.aig91Model="ERROR";}
+  })();
+ }
+ function v91Quat(a){
+   const [x,y,z,w]=a||[0,0,0,1],q=I();
+   q[0]=1-2*(y*y+z*z);q[1]=2*(x*y+z*w);q[2]=2*(x*z-y*w);
+   q[4]=2*(x*y-z*w);q[5]=1-2*(x*x+z*z);q[6]=2*(y*z+x*w);
+   q[8]=2*(x*z+y*w);q[9]=2*(y*z-x*w);q[10]=1-2*(x*x+y*y);return q;
+ }
+ const v91Hidden=/^(STATIC_LEFT_|STATIC_BRIDGE|STATIC_BACK_WALL|STATIC_LEFT_INNER_WALL|STATIC_RIGHT_INNER_WALL|B_SUPPORT_REAR|B_BEARING_REAR|B_JOURNAL_REAR|B_CRADLE_LEFT_|A_SUPPORT_LEFT|A_BEARING_LEFT|A_SHAFT_LEFT|A_DRIVE_COVER_LEFT|A_BEARING_CAP_LEFT|A_BOLT_L_|WORKPIECE)/;
+ function v91DrawGlb({vp,cx,cy,stockBottom,stockH,sceneR,A,B,C}){
+  if(axis!=="6AX"||v91Glb.state!=="READY")return false;
+  const scale=Math.max(.01,sceneR/560);
+  const root=M(T(cx,cy,stockBottom+stockH/2),M(S(scale,scale,scale),T(0,0,-420)));
+  const walk=(id,parent)=>{
+   const node=v91Glb.nodes[id];if(!node||v91Hidden.test(node.name||""))return;
+   let rot=v91Quat(node.rotation);
+   if(node.name==="A_GROUP")rot=M(rot,RX(A*Math.PI/180));
+   if(node.name==="B_GROUP")rot=M(rot,RY(B*Math.PI/180));
+   if(node.name==="C_GROUP")rot=M(rot,RZ(C*Math.PI/180));
+   const here=M(parent,M(T(...(node.translation||[0,0,0])),M(rot,S(...(node.scale||[1,1,1])))));
+   if(node.mesh!==undefined)for(const item of v91Glb.meshes[node.mesh])drawMesh(item.mesh,here,item.color,vp);
+   for(const child of node.children||[])walk(child,here);
+  };
+  for(const rootId of v91Glb.roots)walk(rootId,root);
+  return true;
+ }
  // Four distinct *visual* machine structures; geometry stays subordinate to real
  // parser/material-removal state. Visual geometry is NOT a collision-certified machine twin.
  function drawAxisMachineProfile(p){
@@ -1818,6 +1897,7 @@ function makeGlScene(canvas,axis){
      const viewDir=norm(sub(eye,target)),depthCue=runtimeDepthCue(runtimeStockAxisVector(pos,axis),viewDir);camera.lastDepthCue=depthCue.label;camera.lastDepthDot=depthCue.dot;
      const vp=M(P(Math.PI/4,aspect,.1,sceneR*20),look(eye,target,[0,0,1]));
      gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.clearColor(.003,.008,.012,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+     if(!v91DrawGlb({vp,cx,cy,stockBottom,stockH,sceneR,A,B,C}))
      drawAxisMachineProfile({axis,cx,cy,stockBottom,stockH,spanX,spanY,tableR,R,vp,A,B,C});
      if(axis==="3AX"){
        drawMesh(stockShell,M(T(cx,cy,stockCenter),S(spanX,spanY,stockH)),rgb("#465f70"),vp);
@@ -3790,5 +3870,8 @@ window.addEventListener("hashchange",()=>aigGuard(document.body,"網址頁面切
 <script src="./runtime/v85-design-links.js"></script>
 <script src="./runtime/v86-workspace-layout.js"></script>
 <script src="./runtime/v86-external-assist.js"></script>
+<script src="./runtime/v88-manus-runtime-adapter.js"></script>
+<script src="./runtime/v89-nc-first-state.js"></script>
+<script src="./runtime/v90-cad-cam-sim-runtime.js"></script>
 </body>
 </html>

@@ -1,0 +1,35 @@
+name: AIG V91 Formal RGB 6AX Browser Gate
+on:
+  push:
+    branches: [web/aig-dual-formal-runtime-20261016]
+    paths:
+      - 'formal-web/mobile-runtime.html'
+      - 'formal-web/v91-rgb-desktop.css'
+      - '.github/workflows/v91-formal-rgb-glb.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node formal-web/qa/v91-formal-source.cjs
+      - run: python3 formal-web/zoo-6ax/validate-v93-glb.py
+      - run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 8765 --directory formal-web >/tmp/aig-v91-prod.log 2>&1 &
+          sleep 2
+      - run: node formal-web/qa/v91-formal-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-V91-FORMAL-4K-S23-GLB
+          path: artifacts/v91/
+          if-no-files-found: warn

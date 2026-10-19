@@ -1,0 +1,11 @@
+"use strict";
+const assert=require("node:assert/strict"),fs=require("node:fs");
+const read=x=>fs.readFileSync("formal-web/"+x,"utf8");
+const h=read("mobile-runtime.html"),old=read("mobile-runtime-v86.html"),sw=read("service-worker.js"),v89=read("runtime/v89-nc-first-state.js");
+assert(h.includes("v91DrawGlb")&&h.includes("GLB_READY")&&h.includes("aig_6ax_machine_v9.glb"));
+assert(h.includes("function makeRuntime(")&&h.includes("voxelStock(scene"));
+assert(h.includes("v89-nc-first-state.js")&&v89.includes("aig-code-6AX"));
+assert(!h.includes("AIG_V90_REVIEW_ONLY:")&&!old.includes("v91DrawGlb"));
+assert(sw.includes("aig-ii-original-render-rgb6ax-glb-v91-20261020"));
+assert(sw.includes('"./zoo-6ax/local-glb/aig_6ax_machine_v9.glb"'));
+console.log("AIG_V91_FORMAL_SOURCE_PASS | NATIVE_NC_AND_VOXEL_RETAINED");
