@@ -1,5 +1,5 @@
 {
-  "version": "59.0.0",
+  "version": "59.0.1",
   "page": "CAD",
   "parity": {
     "aigII": "ORIGINAL",
@@ -79,12 +79,13 @@
     }
   ],
   "gate": {
-    "sourceInteraction": "PASS",
+    "sourceInteraction": "27_PASS_PER_PROJECT",
     "htmlParse": "PASS",
     "render": "PENDING",
     "visualPhone": "PENDING",
     "visualWindows": "PENDING",
     "native": "NOT_BUILT",
     "machineSafety": "NOT_CERTIFIED"
-  }
+  },
+  "testRunner": "formal-web/runtime/tests/cad-interactions-v59.test.js"
 }

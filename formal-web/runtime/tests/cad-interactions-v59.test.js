@@ -86,5 +86,5 @@ function cadTest(source,label){
 }
 const fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'../../..');
-const outcomes=[['AIG-II','mobile-runtime.html'],['AIG Studio 5.0','studio-375.html']].map(([name,file])=>cadTest(fs.readFileSync(path.join(root,file),'utf8'),name));
+const outcomes=[['AIG-II','mobile-runtime.html'],['AIG Studio 5.0','studio-375.html']].map(([name,file])=>cadTest(fs.readFileSync(path.join(root,'formal-web',file),'utf8'),name));
 console.log(JSON.stringify({result:'PASS',outcomes},null,2));
