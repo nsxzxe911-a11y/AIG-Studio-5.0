@@ -52,7 +52,7 @@ try{
        !!document.body.querySelector(":scope>.aig67-global-nav")&&getComputedStyle(el).display!=="none");
       if(duplicateHeader)issue("DUPLICATE_SIMULATOR_HEADER",profile.id,id,"V55 simulator bar still crowds cutting view");
      }
-     if((id==="CAD"||id==="6AX")&&await oldBar.count()){
+     if(!profile.subset&&(id==="CAD"||id==="6AX")&&await oldBar.count()){
       const more=deck.locator(".aig68-advanced-toggle");
       if(await more.isEnabled()){
        await more.click({timeout:3500});
@@ -108,7 +108,7 @@ try{
       const view=deck.locator('[data-aig68-lane-tab="VIEW"]');
       if(!await view.isDisabled())await view.click();
      }
-     if(id==="CAD"){
+     if(id==="CAD"&&!profile.subset){
       if(profile.mobile)await deck.locator('[data-aig68-lane-tab="EDIT"]').click();
       const native=deck.locator('[data-aig68-button-id="BTN.CAD.DRAW.LINE"]');
       await native.click({timeout:5000});
