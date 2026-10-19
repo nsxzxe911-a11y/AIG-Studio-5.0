@@ -234,6 +234,7 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./v67-rgb-unified.css">
 <link rel="stylesheet" href="./v67-global-nav.css">
 <link rel="stylesheet" href="./v67-ai-audit-panel.css">
+<link rel="stylesheet" href="./v68-rgb-4k.css">
 </head>
 <body>
 <div class="app">
@@ -259,6 +260,7 @@ html,body{background:#020407}
 <script src="./runtime/ai-page-runtime.js"></script>
 <script src="./runtime/cam-manual-path-v1.js"></script>
 <script defer src="./runtime/visual-reference-v1.js"></script>
+<script src="./runtime/v68-visual-quality.js"></script>
 <script>
 const pages=[
  ["HOME","#9f72ff"],["CAD","#27e9ff"],["CAM","#33f39b"],["SIM","#ff4da6"],["3AX","#3694ff"],["4AX","#ffb326"],["5AX","#ff4da6"],["6AX","#27e9ff"],["NC","#33f39b"],["AI","#9f72ff"]
@@ -1679,9 +1681,12 @@ function makeGlScene(canvas,axis){
  }
  function resize(){
    const cfg=FIDELITY[quality],r=canvas.getBoundingClientRect();
-   const cssArea=Math.max(1,r.width*r.height);
-   const dpr=Math.max(.5,Math.min(devicePixelRatio||1,cfg.dpr,Math.sqrt(cfg.pixels/cssArea))*v32Perf.scale);
-   const w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));
+   const frame=window.AIG_V68_VISUAL_QUALITY?.frame(r,{
+     qualityPixelBudget:cfg.pixels,qualityMaxDpr:cfg.dpr,
+     dynamicScale:v32Perf.scale,maxDimension:window.AIG_V68_VISUAL_QUALITY?.glLimit(gl)||4096
+   });
+   const w=frame?.width||Math.max(1,Math.round(r.width)),
+    h=frame?.height||Math.max(1,Math.round(r.height));
    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
    gl.viewport(0,0,w,h);
    return{w,h,aspect:w/h};
@@ -2185,7 +2190,7 @@ function makeRuntime(root){
   return {minX,maxX,minY,maxY,minZ,maxZ};
  }
  function resize(){
-  const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));
+  const r=canvas.getBoundingClientRect(),dpr=window.AIG_V68_VISUAL_QUALITY?.frame(r,{maxDimension:4096}).dpr||Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));
   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}ctx.setTransform(dpr,0,0,dpr,0,0);
   return {w:r.width,h:r.height};
  }
@@ -2595,7 +2600,7 @@ function makeCadRuntime(root){
  function currentSelected(){return state.shapes.find(x=>x.id===state.selectedId)||null}
 
  function resize(){
-   const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
+   const r=canvas.getBoundingClientRect(),dpr=window.AIG_V68_VISUAL_QUALITY?.frame(r,{maxDimension:4096}).dpr||Math.min(window.devicePixelRatio||1,2);
    const w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));
    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
    ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -2927,7 +2932,7 @@ function makeCamRuntime(root){
    if(routeModeInput.value==="MANUAL"&&state.paths.length){fitManual();draw()}else fit();
  }
  function resize(){
-   const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));
+   const r=canvas.getBoundingClientRect(),dpr=window.AIG_V68_VISUAL_QUALITY?.frame(r,{maxDimension:4096}).dpr||Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));
    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}ctx.setTransform(dpr,0,0,dpr,0,0);return{w:r.width,h:r.height};
  }
  function w2s(p,w,h){return{x:w/2+state.view.panX+p.x*state.view.scale,y:h/2+state.view.panY-p.y*state.view.scale}}
@@ -3185,7 +3190,7 @@ function makeToolpathRuntime(root){
    if(!state.payload)state.payload={version:1,createdAt:Date.now(),strategy:"EDITED",params:{},cadEntityCount:0};
    state.payload.paths=state.paths;state.payload.postGeometry={toolDia:Math.max(.1,aigFiniteNumber(toolDiaInput.value,10)),cutterLen:Math.max(1,aigFiniteNumber(cutterLenInput.value,30)),holderDia:Math.max(1,aigFiniteNumber(holderDiaInput.value,25)),holderLen:Math.max(1,aigFiniteNumber(holderLenInput.value,25)),clearance:Math.max(0,aigFiniteNumber(clearanceInput.value,2))};state.payload.updatedAt=Date.now();aigJsonWrite(root,"aig-cam-toolpath-v1",state.payload,"刀路編輯");window.dispatchEvent(new CustomEvent("aig-clearance-updated",{detail:state.payload.postGeometry.clearance}));statusEl.textContent="已儲存";msgEl.textContent="刀路修改已儲存到本機。";
  }
- function resize(){const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}ctx.setTransform(dpr,0,0,dpr,0,0);return{w:r.width,h:r.height}}
+ function resize(){const r=canvas.getBoundingClientRect(),dpr=window.AIG_V68_VISUAL_QUALITY?.frame(r,{maxDimension:4096}).dpr||Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(r.width*dpr)),h=Math.max(1,Math.floor(r.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}ctx.setTransform(dpr,0,0,dpr,0,0);return{w:r.width,h:r.height}}
  function w2s(p,w,h){return{x:w/2+state.view.panX+p.x*state.view.scale,y:h/2+state.view.panY-p.y*state.view.scale}}
  function s2w(p,w,h){return{x:(p.x-w/2-state.view.panX)/state.view.scale,y:-(p.y-h/2-state.view.panY)/state.view.scale}}
  function allPoints(){return state.paths.flatMap(p=>p.points||[])}
