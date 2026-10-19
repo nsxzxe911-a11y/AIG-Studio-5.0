@@ -108,6 +108,6 @@ check("duplicate V43 proxy quickbars are safely collapsed with native callbacks 
  assert.ok(source.includes("details")||source.includes("panel.open=!panel.open"));
  const css=read("v68-unified-command-deck.css");
  assert.ok(css.includes("body:has(>.aig67-global-nav) .aig55-top"));
- assert.ok(css.includes("機台輸出"));
+ assert.ok(source.includes("機台輸出關閉"));
 });
 console.log("AIG_V68_SAME_POSITION_NATIVE_BUTTON_SOURCE_PASS|"+cases+"_CASES|CHROMIUM_CALLBACK_LAYOUT_GATE_PENDING");
