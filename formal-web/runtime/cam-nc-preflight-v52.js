@@ -3,8 +3,19 @@
 (function(g){"use strict";
 const KEY="aig-cam-toolpath-v1",EPS=1e-6;
 function bad(code,msg){const e=new Error(msg);e.code=code;throw e}
-function mm(x,name){const n=Number(x);if(!Number.isFinite(n)||Math.abs(n)>1e5)bad("NONFINITE",name+" 非有效毫米數值");if(Math.abs(n*1000-Math.round(n*1000))>EPS)bad("PRECISION",name+" 不符合 0.001 mm 格點");return n}
-function positive(x,name){const n=Number(x);if(!Number.isFinite(n)||n<=0||n>1e5)bad("PARAM",name+" 必須是有效正值");return n}
+function mm(x,name){
+ if(typeof x!=="number"||!Number.isFinite(x)||Math.abs(x)>1e5)
+  bad("NONFINITE",name+" 必須是有限數值（禁止字串與隱式轉型）");
+ if(Math.abs(x*1000-Math.round(x*1000))>EPS)
+  bad("PRECISION",name+" 不符合 0.001 mm 格點；禁止默默四捨五入");
+ return x;
+}
+function positive(x,name,integer=false){
+ const n=mm(x,name);
+ if(n<=0)bad("PARAM",name+" 必須是有效正值");
+ if(integer&&!Number.isInteger(n))bad("RPM",name+" 必須是整數");
+ return n;
+}
 function eq(a,b){return Math.abs(a-b)<1e-5}
 function digest(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,"0").toUpperCase()}
 function inspect(v){
@@ -14,9 +25,8 @@ function inspect(v){
  if(!stock||!Array.isArray(ns)||!Array.isArray(paths)||!ns.length||!paths.length)bad("INCOMPLETE","手動節點、刀路或毛坯資料缺失");
  if(ns.length>1600||paths.length>1200)bad("TOO_LARGE","超過刀路上限");
  const safe=mm(p.safeZ,"Safe-Z"),top=mm(p.stockTop,"頂面"),thick=mm(p.stockThickness,"厚度");
- const bottom=mm(stock.bottom,"底面"),feed=positive(p.feed,"進給"),rpm=positive(p.rpm,"轉速");
+ const bottom=mm(stock.bottom,"底面"),feed=positive(p.feed,"進給"),rpm=positive(p.rpm,"轉速",true);
  positive(p.toolDia,"刀徑");
- if(!Number.isInteger(rpm))bad("RPM","轉速 S 必須是整數，不能默默取整");
  if(safe<=top||thick<=0||!eq(bottom,top-thick)||!eq(mm(stock.top,"毛坯頂面"),top)||!eq(mm(stock.thickness,"毛坯厚度"),thick))bad("STOCK","Safe-Z 或毛坯上下界不一致");
  const lines=["(AIG V52 UNVERIFIED NC CANDIDATE)","(NO G43 H OR MACHINE CLEARANCE CERTIFICATION)","G90 G54 G17","S"+rpm+" M3","G0 Z"+safe.toFixed(3)];
  const warnings=["NC 候選僅供人工核對；刀長 G43/H、夾治具碰撞、SIM 材料移除、真機安全均未驗證。"];
@@ -36,20 +46,19 @@ function inspect(v){
    if(!path||path.kind!=="manual"||!Array.isArray(path.nodes)||path.nodes.length!==2)bad("PATH_MISMATCH",tag+" 切削段缺失");
    const pairs=[[path.nodes[0].x,prev.x],[path.nodes[0].y,prev.y],[path.nodes[0].z,prev.z],
     [path.nodes[1].x,x],[path.nodes[1].y,y],[path.nodes[1].z,z],[path.depth,z],[path.feed,f]];
-   if(pairs.some(([a,b])=>!Number.isFinite(Number(a))||!eq(Number(a),b)))bad("PATH_MISMATCH",tag+" 與已保存 CAM 刀路不一致");
+   if(pairs.some(([a,b])=>!eq(mm(a,tag+" 刀路座標"),b)))bad("PATH_MISMATCH",tag+" 與已保存 CAM 刀路不一致");
    // The saved segment must match its original CAM node and machining parameters.
    // Never present stale segment metadata as a coherent NC candidate.
    if(path.routeMode!=="MANUAL"||path.closed!==false||
-      !Number.isFinite(Number(path.rpm))||!eq(Number(path.rpm),rpm)||
-      !Number.isFinite(Number(path.safeZ))||!eq(Number(path.safeZ),safe)||
+      !eq(positive(path.rpm,tag+" 轉速",true),rpm)||
+      !eq(mm(path.safeZ,tag+" Safe-Z"),safe)||
       path.nodes.some(q=>q?.g!=="G1")||
       !Number.isInteger(n.line)||n.line<1||n.line>1600||
       path.sourceId!=="MANUAL_L"+n.line)bad("PATH_MISMATCH",tag+" CAM 段落模式、轉速、Safe-Z 或來源行不一致");
    const expectedXY=xy?[[prev.x,prev.y],[x,y]]:[[x,y]];
    if(!Array.isArray(path.points)||path.points.length!==expectedXY.length||
-      path.points.some((pt,j)=>!pt||!Number.isFinite(Number(pt.x))||
-        !Number.isFinite(Number(pt.y))||!eq(Number(pt.x),expectedXY[j][0])||
-        !eq(Number(pt.y),expectedXY[j][1])))bad("PATH_MISMATCH",tag+" CAM 平面刀路點與節點不一致");
+      path.points.some((pt,j)=>!pt||!eq(mm(pt.x,tag+" 路徑 X"),expectedXY[j][0])||
+        !eq(mm(pt.y,tag+" 路徑 Y"),expectedXY[j][1])))bad("PATH_MISMATCH",tag+" CAM 平面刀路點與節點不一致");
    if(xy&&z>top+.0001)warnings.push(tag+" 在毛坯上方，不能宣稱移除材料");
   }
   lines.push(n.g+" X"+x.toFixed(3)+" Y"+y.toFixed(3)+" Z"+z.toFixed(3)+(n.g==="G1"?" F"+f.toFixed(3):""));

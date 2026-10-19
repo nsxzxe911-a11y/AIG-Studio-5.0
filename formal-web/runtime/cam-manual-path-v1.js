@@ -5,9 +5,12 @@
 "use strict";
 const MAX_LINES=1600,MAX_SEGMENTS=1200,PRECISION=.001;
 function num(x,label){
- const v=Number(x);
- if(!Number.isFinite(v)||Math.abs(v)>100000)throw Error(label+" 必須為有效且合理的毫米數值");
- return v;
+ // UI params are numeric; reject coercion and sub-grid values before path creation.
+ if(typeof x!=="number"||!Number.isFinite(x)||Math.abs(x)>100000)
+  throw Error(label+" 必須是有限數值（禁止隱式轉型）");
+ if(Math.abs(x*1000-Math.round(x*1000))>1e-6)
+  throw Error(label+" 不符合 0.001 mm 格點；禁止默默四捨五入");
+ return x;
 }
 function parseManual(text,params){
  const src=String(text||"");
@@ -16,7 +19,7 @@ function parseManual(text,params){
  if(lines.length>MAX_LINES)throw Error("最多允許 "+MAX_LINES+" 行");
  const safe=num(params?.safeZ,"Safe-Z"),top=num(params?.stockTop,"頂面"),thick=num(params?.stockThickness,"毛坯厚度");
  const feed=num(params?.feed,"進給"),rpm=num(params?.rpm,"轉速"),tool=num(params?.toolDia,"刀具直徑");
- if(thick<=0||feed<=0||rpm<=0||tool<=0||safe<=top)throw Error("毛坯、進給、轉速、刀徑或 Safe-Z 參數有誤");
+ if(thick<=0||feed<=0||rpm<=0||tool<=0||safe<=top||!Number.isInteger(rpm))throw Error("毛坯、進給、整數轉速、刀徑或 Safe-Z 參數有誤");
  const result=[],nodes=[],warnings=[];
  let pos={X:0,Y:0,Z:safe},previousRapid=false,hadPosition=false,entered=false;
  for(let i=0;i<lines.length;i++){
@@ -25,7 +28,7 @@ function parseManual(text,params){
   const words=raw.replace(/([A-Z])\s+([+-]?\d)/g,"$1$2").match(/[A-Z][+-]?(?:\d+(?:\.\d*)?|\.\d+)/g)||[];
   const cleaned=raw.replace(/[A-Z][+-]?(?:\d+(?:\.\d*)?|\.\d+)/g,"").replace(/\s+/g,"");
   if(cleaned)throw Error("第 "+(i+1)+" 行包含不支援內容："+cleaned);
-  const values={};for(const word of words){const key=word[0];if(!["G","X","Y","Z","F"].includes(key))throw Error("第 "+(i+1)+" 行不支援 "+key+" 軸或指令；A/B/C 應由對應 NC-first 模組驗證");if(Object.prototype.hasOwnProperty.call(values,key))throw Error("第 "+(i+1)+" 行有重複 "+key+" 欄位");values[key]=num(word.slice(1),key);}
+  const values={};for(const word of words){const key=word[0];if(!["G","X","Y","Z","F"].includes(key))throw Error("第 "+(i+1)+" 行不支援 "+key+" 軸或指令；A/B/C 應由對應 NC-first 模組驗證");if(Object.prototype.hasOwnProperty.call(values,key))throw Error("第 "+(i+1)+" 行有重複 "+key+" 欄位");values[key]=num(Number(word.slice(1)),key);}
   if(!("G" in values))throw Error("第 "+(i+1)+" 行請明確標明 G0 或 G1");
   if(values.G!==0&&values.G!==1)throw Error("第 "+(i+1)+" 行僅支援 G0 / G1");
   if("F" in values&&values.F<=0)throw Error("第 "+(i+1)+" 行進給 F 必須大於 0；已阻擋負值或零進給");

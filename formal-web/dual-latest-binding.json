@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V56 hardens V55 emulator cockpit CSS cascade so legacy V37/V49 mobile layout cannot crush the live simulator. Desktop layout uses real original CNC controls.",
+  "notes": "V56.0.1 strictly rejects coercible strings and non-0.001-grid CAM/NC candidate inputs; 77 deterministic source tests. No real CNC output; visual and native Gates remain pending.",
   "sharedWebRelease": {
-    "version": "56.0.0",
-    "train": "V56",
+    "version": "56.0.1",
+    "train": "V56.0.1",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "56.0.0"
+        "version": "56.0.1"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "56.0.0"
+        "version": "56.0.1"
       }
     ],
     "commonRuntimeSource": "./dual-web-v43.js",
     "commonUiSource": "./dual-web-v43.css",
-    "releaseManifest": "./dual-web-v56.json",
+    "releaseManifest": "./dual-web-v56.0.1.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",
