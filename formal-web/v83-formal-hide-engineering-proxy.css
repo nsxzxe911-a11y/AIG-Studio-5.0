@@ -1,0 +1,4 @@
+/* V83 visual-only: redundant V43 generated proxy toolbar is engineering presentation.
+   Keep original Runtime controls and registered native handlers intact. */
+.app .shell .screen[data-page] .aig43-bar{display:none!important;pointer-events:none!important}
+.app .shell .screen[data-page] .aig43-bar *{pointer-events:none!important}
