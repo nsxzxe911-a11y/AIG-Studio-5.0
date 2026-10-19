@@ -1,7 +1,7 @@
 name: AIG V92 6AX Authority Reverse Mapping Runtime Gate
 on:
   push:
-    branches: [integration/v92-authority-6ax-reverse-map]
+    branches: [integration/v92-authority-6ax-reverse-map, web/aig-dual-formal-runtime-20261016]
   workflow_dispatch:
 permissions:
   contents: read
