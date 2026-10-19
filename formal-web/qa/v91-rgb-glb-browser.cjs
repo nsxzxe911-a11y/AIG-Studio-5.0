@@ -9,7 +9,13 @@ async function run(browser,mobile){
   assert.equal(page.status(),200);
   await p.waitForSelector('.screen.active[data-page="6AX"]',{timeout:18000});
   await p.waitForFunction(()=>document.querySelector('.screen.active canvas[data-glcanvas]')?.dataset.aig91Model==="GLB_READY",{timeout:35000});
+  if(mobile){
+   const view=p.locator('.screen.active .aig49-dock button[data-aig50-choice="view"]');
+   if(await view.count())await view.click();
+   await p.waitForTimeout(300);
+  }
   const data=await p.evaluate(()=>{const c=document.querySelector('.screen.active canvas[data-glcanvas]');return{model:c.dataset.aig91Model,kind:c.closest('[data-runtime]')?.dataset.runtime,viewport:c.getBoundingClientRect().toJSON(),context:!!c.getContext("webgl")}});
+  console.log("AIG_V91_VIEWPORT",name,JSON.stringify(data));
   assert.equal(data.model,"GLB_READY");assert.equal(data.kind,"6AX");assert(data.context&&data.viewport.width>200&&data.viewport.height>160);
   assert(await p.locator('.aig55-nav button[data-aig55-page="CAM"]').count());
   await p.screenshot({path:"artifacts/v91/"+name+"-GLB-RGB.png"});
