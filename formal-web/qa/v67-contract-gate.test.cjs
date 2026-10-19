@@ -123,7 +123,7 @@ pass("V67 4K full-colour CSS loaded and CNC screen uses scalable vectors",()=>{
  assert.ok(html.includes('href="./v67-4k-rgb-quality.css"'));
  assert.ok(css.includes("@media(min-width:3800px)"));
  assert.ok(css.includes("--aig4k-spectrum"));
- assert.ok(!/background-image\\s*:\\s*url\\(/i.test(css));
+ assert.ok(!/background-image\s*:\s*url\(/i.test(css));
 });
 pass("all public pages inherit scalable site 4K colour stylesheet",()=>{
  const css=read("site-nature-v24.css");
