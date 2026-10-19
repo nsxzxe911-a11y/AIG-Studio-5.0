@@ -60,7 +60,7 @@ check("original DOM delegation roots and all native callbacks are preserved",()=
  for(const x of ["[data-cad-runtime]","[data-cam-runtime]","[data-tp-runtime]",
   ".simgrid[data-runtime=","[data-nc-runtime]","[data-ai-page-runtime]"])assert.ok(html.includes(x));
  assert.ok(source.includes("root.insertBefore(deck,root.firstChild)"));
- assert.ok(source.includes("handlerEvidence"));
+ assert.ok(contract.allRecords.every(r=>r.handlerEvidence.includes("PENDING_BROWSER_CLICK")));
  assert.ok(html.includes("root.addEventListener(\"click\""));
 });
 check("proposed IDs never overwrite V65/V67 original Button ID and Command ID",()=>{
