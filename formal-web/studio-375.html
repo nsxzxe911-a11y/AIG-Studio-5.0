@@ -2526,7 +2526,7 @@ function makeNcRuntime(root){
  root.addEventListener("click",e=>aigGuard(root,"NC 操作",()=>{
    const key=e.target.closest("[data-nc-key]");if(key){const k=key.dataset.ncKey;if(k==="G/M 功能"){msg.textContent="常用：G90 G54 G43 H1 M8 • M98 P4 • M98 P5 • M99";return}insertText(k+" ");return}
    const b=e.target.closest("[data-nc-action]");if(!b)return;const cmd=b.dataset.ncAction;
-   if(cmd==="LOAD")load();if(cmd==="SAVE")save();if(cmd==="VERIFY")verify();if(cmd==="SIM"){save();show(axis())}
+   if(cmd==="LOAD")load();if(cmd==="SAVE")save();if(cmd==="VERIFY")verify();if(cmd==="SIM"){const saved=aigStorageGet(root,"aig-code-"+axis(),null,axis()+" G-code")??sourceCode[axis()]??"";if(ta.value!==saved){stateEl.textContent="未儲存";msg.textContent="尚有未儲存 G-code；SIM 不會自動覆寫，請先明確儲存。";return}let parsed;try{parsed=parseProgram(ta.value,axis(),cfg())}catch(e){stateEl.textContent="ALARM";msg.textContent="解析失敗："+(e?.message||String(e));return}if(!parsed?.blocks?.length||parsed.errors?.length||ncEditorAlarm(ta.value,parsed)){stateEl.textContent="ALARM";msg.textContent="G-code 未通過解析；不切換 SIM。";return}show(axis())}
    if(cmd==="INSERT")insertLine();if(cmd==="DELETE")deleteToken();if(cmd==="BLOCKSKIP")toggleBlockSkip();if(cmd==="TOP"||cmd==="BOTTOM")jump(cmd);
   },null,"warn"));
  ta.addEventListener("keydown",e=>{const k=e.key.toLowerCase();if(e.ctrlKey&&k==="s"){e.preventDefault();save()}else if(e.ctrlKey&&e.key==="Enter"){e.preventDefault();verify()}else if(e.altKey&&k==="i"){e.preventDefault();insertLine()}else if(e.altKey&&k==="d"){e.preventDefault();deleteToken()}else if(e.altKey&&k==="b"){e.preventDefault();toggleBlockSkip()}});

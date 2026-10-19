@@ -1,0 +1,11 @@
+{
+  "version": "66.0.0",
+  "parent": "850173572caf81cd07a18375cc91aeca726786d3",
+  "source": "PASS",
+  "ncUnit": "38/38",
+  "numeric": "77/77",
+  "browser": "PENDING",
+  "native": "NOT_BUILT",
+  "machine": "DISABLED",
+  "pending": "Render autoDeploy only; check exact SHA/status=live before calling release"
+}
