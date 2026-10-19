@@ -1,0 +1,25 @@
+/* AIG V69: real source intake. RGB, compact and non-overlay. */
+.aig69-intake{margin:10px 0 14px;padding:15px;border:1px solid #4bd9f299;border-radius:16px;background:linear-gradient(140deg,#102b43e8,#06111ded 70%);color:#e5f8ff;box-shadow:0 8px 28px #0009;min-width:0}
+.aig69-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.aig69-heading strong{font:800 clamp(15px,1.4vw,22px)/1.3 "Noto Sans TC",sans-serif}
+.aig69-heading small{color:#9cdbf1;font-size:11px}
+.aig69-stages{display:flex;gap:4px;overflow-x:auto;margin:12px 0;padding-bottom:4px}
+.aig69-stage{white-space:nowrap;flex:1 0 auto;text-align:center;padding:7px 10px;border-radius:7px;background:#0a2135;border:1px solid #31506b;color:#a4c8d8;font:700 11px/1.2 "Noto Sans TC",sans-serif}
+.aig69-stage[data-current=true]{color:#fff;border-color:#4ae4ff;background:#16516c;box-shadow:inset 0 -2px #4eeaff}
+.aig69-entry{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.aig69-entry :is(button,.aig69-source-button),.aig69-actions button,.aig69-calibrate button{min-width:0;min-height:43px;display:flex;align-items:center;justify-content:center;padding:9px 10px;border:1px solid #4b91b4;border-radius:10px;background:linear-gradient(#15334d,#0b1e30);color:#e4f8ff;font:700 12px/1.3 "Noto Sans TC",sans-serif;cursor:pointer;box-sizing:border-box;text-align:center}
+.aig69-entry input[type=file]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.aig69-entry :is(button,.aig69-source-button):focus-within,.aig69-entry button:focus-visible,.aig69-actions button:focus-visible{outline:2px solid #7ef4ff;outline-offset:2px}
+.aig69-source-info{margin:10px 0;color:#a8d5e9;font-size:11px;overflow-wrap:anywhere}
+#aig69-photo-canvas{display:block;max-width:100%;width:100%;height:auto;aspect-ratio:900/480;object-fit:contain;border:1px solid #2f6884;border-radius:9px;cursor:crosshair;touch-action:manipulation}
+#aig69-photo-canvas[hidden],#aig69-photo-help[hidden],#aig69-nc-input[hidden],#aig69-nc-send[hidden]{display:none!important}
+.aig69-calibrate{display:flex;flex-wrap:wrap;align-items:end;gap:8px;margin-top:9px}
+.aig69-calibrate label{font-size:11px;color:#b6e8f9}
+.aig69-calibrate input{display:block;max-width:170px;min-height:36px;padding:6px;border:1px solid #54788e;border-radius:7px;background:#0b1d2b;color:#fff}
+#aig69-nc-input{width:100%;min-height:160px;background:#071523;color:#d5f8e8;border:1px solid #4b819a;border-radius:9px;box-sizing:border-box;padding:10px;font:12px/1.5 monospace}
+.aig69-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.aig69-actions button:disabled{opacity:.35;cursor:not-allowed}
+#aig69-status{font:11px/1.6 "Noto Sans TC",sans-serif;color:#ffce8c;margin:10px 0 0}
+#aig69-status[data-level=ok]{color:#a4f3cc}
+#aig69-status[data-level=alarm]{color:#ff9d9d}
+@media(max-width:900px){.aig69-intake{margin:5px 0 9px;padding:9px;border-radius:12px}.aig69-heading small{font-size:9px}.aig69-entry{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.aig69-entry :is(button,.aig69-source-button){min-height:43px;font-size:11px}.aig69-stage{padding:7px 9px;font-size:10px}.aig69-actions button{min-height:42px;font-size:11px}}
