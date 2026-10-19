@@ -1,0 +1,67 @@
+/* V85: native NC and 3D toolpath Windows-class RGB layout.
+   This only styles real Runtime elements; no screenshot controls and no machine output. */
+.screen[data-page="NC"] [data-nc-runtime],
+.screen[data-page="刀路"] [data-tp-runtime]{min-width:0;max-width:100%;color:#e9f9ff}
+.screen[data-page="NC"] [data-nc-runtime] .ncEditGrid{
+ display:grid!important;grid-template-columns:minmax(0,1fr) clamp(270px,23vw,430px)!important;
+ align-items:start;gap:12px!important;min-width:0
+}
+.screen[data-page="NC"] [data-nc-runtime] .panel,
+.screen[data-page="刀路"] [data-tp-runtime] .panel{
+ min-width:0;border:1px solid #286d90!important;border-radius:13px!important;
+ background:linear-gradient(150deg,#07111b,#0a1c2d 70%,#09172b)!important;
+ box-shadow:inset 0 1px #65d9ff18,0 7px 25px #0005!important
+}
+.screen[data-page="NC"] [data-nc-runtime] .ncEditorMain textarea[data-nc-code]{
+ display:block;box-sizing:border-box;width:100%;min-width:0;
+ min-height:clamp(380px,58vh,830px);max-height:75vh;
+ font:500 clamp(12px,.95vw,17px)/1.65 Consolas,"Cascadia Code",monospace;
+ color:#d0f9ff;background:#020811;border:1px solid #275873;border-radius:9px;
+ padding:13px;resize:vertical;tab-size:2
+}
+.screen[data-page="NC"] [data-nc-runtime] .editorbar{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.screen[data-page="NC"] [data-nc-runtime] .editorbar .btn{
+ flex:0 1 auto;min-width:76px;min-height:43px;white-space:normal
+}
+.screen[data-page="NC"] [data-nc-runtime] [data-nc-keypad]{
+ display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;min-width:0
+}
+.screen[data-page="NC"] [data-nc-runtime] [data-nc-keypad] .btn{min-width:0;min-height:42px}
+.screen[data-page="NC"] [data-nc-runtime] [data-nc-action="DELETE"],
+.screen[data-page="刀路"] [data-tp-runtime] [data-tp-action="DELETE"]{
+ border:1px solid #be6479!important;background:linear-gradient(#4e1729,#2b0b16)!important
+}
+.screen[data-page="刀路"] [data-tp-runtime] .camgrid{
+ display:grid!important;grid-template-columns:clamp(210px,16vw,300px) minmax(0,1fr) clamp(250px,19vw,345px)!important;
+ gap:12px!important;align-items:start;min-width:0
+}
+.screen[data-page="刀路"] [data-tp-runtime] [data-tp-canvas]{
+ display:block;min-width:0;width:100%!important;min-height:min(57vh,650px);
+ background:#020811;border:1px solid #285a78;border-radius:10px
+}
+.screen[data-page="刀路"] [data-tp-runtime] .toolstrip{
+ position:relative!important;inset:auto!important;display:flex;flex-wrap:wrap;
+ gap:7px;padding:10px;border:1px solid #235c78;border-radius:12px;
+ background:linear-gradient(115deg,#081d2e,#081427)
+}
+.screen[data-page="刀路"] [data-tp-runtime] .toolstrip .btn{min-height:42px;white-space:normal}
+.screen[data-page="刀路"] [data-tp-runtime] .form{min-width:0}
+.screen[data-page="刀路"] [data-tp-runtime] .form input,
+.screen[data-page="刀路"] [data-tp-runtime] .form select{max-width:100%;min-width:0;box-sizing:border-box}
+.aig85-design-link{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
+ min-height:37px;padding:7px 11px;border:1px solid #34799b;border-radius:8px;
+ background:#0b2840;color:#aeefff;font-size:12px;font-weight:700;text-decoration:none}
+.aig85-design-link:hover,.aig85-design-link:focus-visible{background:#164865;color:#fff;outline-color:#9cf0ff}
+@media(max-width:1080px){
+ .screen[data-page="NC"] [data-nc-runtime] .ncEditGrid{grid-template-columns:minmax(0,1fr)!important}
+ .screen[data-page="刀路"] [data-tp-runtime] .camgrid{grid-template-columns:minmax(0,1fr)!important}
+ .screen[data-page="刀路"] [data-tp-runtime] .camgrid>section:nth-child(2){order:1}
+ .screen[data-page="刀路"] [data-tp-runtime] .camgrid>section:nth-child(1){order:2}
+ .screen[data-page="刀路"] [data-tp-runtime] .camgrid>section:nth-child(3){order:3}
+}
+@media(max-width:600px){
+ .screen[data-page="NC"] [data-nc-runtime] .ncEditorMain textarea[data-nc-code]{min-height:45vh;font-size:13px}
+ .screen[data-page="NC"] [data-nc-runtime] [data-nc-keypad] .btn{min-height:44px}
+ .screen[data-page="刀路"] [data-tp-runtime] [data-tp-canvas]{min-height:42vh}
+ .screen[data-page="NC"] [data-nc-runtime] .editorbar .btn{min-width:65px}
+}
