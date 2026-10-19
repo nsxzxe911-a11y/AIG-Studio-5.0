@@ -1,0 +1,17 @@
+{
+  "release": "63.0.0",
+  "page": "4AX",
+  "checks": [
+    "4AX original 8 runtime commands per project",
+    "4AX original 9 editing actions per project",
+    "A-axis actual readout exists",
+    "2 existing original canvases retained",
+    "original program editor retained",
+    "Android/Windows CSS separate, syntax PASS",
+    "no changes to geometry/G-code/stock engine",
+    "previous 3AX assets and code intact"
+  ],
+  "source": "PASS",
+  "browser": "PENDING",
+  "native": "NOT_BUILT"
+}

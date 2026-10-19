@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V62 3AX only: true VMC full-size viewport with 74% Windows live WebGL / 26% original NC editor, phone view/control/code panes; 8 original simulation and 9 original edit callbacks; Studio NC-first panel added, zero machine output.",
+  "notes": "V63 4AX page: real XYZA rotary-kinematic animation stage using original WebGL and NC editor, same stable 8 real sim +9 edit controls; Android/Windows layouts independently scoped. 3AX V62 stays untouched.",
   "sharedWebRelease": {
-    "version": "62.0.0",
-    "train": "V62",
+    "version": "63.0.0",
+    "train": "V63",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "62.0.0"
+        "version": "63.0.0"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "62.0.0"
+        "version": "63.0.0"
       }
     ],
     "commonRuntimeSource": "./dual-web-v43.js",
     "commonUiSource": "./dual-web-v43.css",
-    "releaseManifest": "./dual-web-v62.json",
+    "releaseManifest": "./dual-web-v63.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",

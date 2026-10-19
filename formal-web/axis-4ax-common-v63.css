@@ -1,0 +1,127 @@
+/* V63 — 4AX only. AIG-II / Studio share true NC, real WebGL, live cut volume.
+   No image backgrounds, duplicate canvases, synthesized paths or NC mutation. */
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"]{
+ min-height:0!important;max-height:100%!important;height:100%!important;
+ display:flex!important;flex-direction:column!important;overflow:hidden!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid.aig41-workspace[data-runtime="4AX"]{
+ display:grid!important;flex:1 1 0!important;height:100%!important;max-height:100%!important;
+ min-height:0!important;width:100%!important;min-width:0!important;gap:4px!important;
+ overflow:hidden!important;align-items:stretch!important;
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"]>.axisModuleHeader,
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"]>.aig41-toolbar,
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"]>.aig43-bar{
+ min-height:0!important;max-height:38px!important;gap:5px!important;
+ flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;
+ margin:0!important;padding:3px 7px!important;scrollbar-width:thin!important;
+ border:1px solid #265876!important;border-radius:7px!important;
+ background:linear-gradient(120deg,#0a2739,#070d19)!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"]>.aig41-toolbar{
+ max-height:34px!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .aig41-description{display:none!important}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .axisModuleTitle{
+ display:none!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .aig63-subpages{
+ display:flex!important;align-items:center!important;gap:5px!important;flex-wrap:nowrap!important;
+ min-width:0!important;overflow-x:auto!important;overflow-y:hidden!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .aig63-subpages button{
+ min-height:28px!important;flex:0 0 auto!important;padding:4px 9px!important;
+ color:#ccecff!important;background:#0b2837!important;border:1px solid #366a86!important;
+ border-radius:6px!important;font:750 11px "Noto Sans TC",sans-serif!important;
+ cursor:pointer!important;touch-action:manipulation!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .aig63-subpages button[aria-pressed="true"]{
+ color:#fff!important;border-color:#67e9ff!important;
+ background:linear-gradient(120deg,#0a627b,#254673)!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] :is(.simleft,.editor){
+ min-height:0!important;height:100%!important;max-height:100%!important;min-width:0!important;
+ border:1px solid #28607b!important;border-radius:9px!important;
+ background:linear-gradient(130deg,#061522,#03070c)!important;
+ box-shadow:inset 0 1px #60ddff1c,0 6px 18px #0009!important;overflow:hidden!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] :is(.simleft,.editor)>.head{
+ min-height:30px!important;max-height:30px!important;padding:4px 8px!important;
+ flex:0 0 30px!important;overflow:hidden!important;
+ border-bottom:1px solid #28617d!important;background:#0b2131!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] :is(.simleft,.editor)>.head h2{
+ font-size:12px!important;line-height:1.25!important;margin:0!important;white-space:nowrap!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] :is(.simleft,.editor)>.head small{
+ font-size:10px!important;color:#a6cddb!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"]>.simleft{
+ display:grid!important;grid-template-rows:30px minmax(0,1fr)!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"]>.simleft>.body{
+ display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important;
+ gap:5px!important;padding:5px!important;overflow:hidden!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .simleft .axisbar{
+ display:flex!important;flex:0 0 30px!important;min-height:0!important;
+ max-height:30px!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .simleft .sceneWrap{
+ display:block!important;position:relative!important;flex:1 1 0!important;height:0!important;
+ min-height:105px!important;max-height:100%!important;max-width:100%!important;
+ overflow:hidden!important;border-radius:8px!important;border:1px solid #247fa5!important;
+ background:#010409!important;box-shadow:inset 0 0 24px #041b2c!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] :is(.sim3dCanvas,.simCanvas){
+ max-height:100%!important;min-height:0!important;height:100%!important;width:100%!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .controls{
+ display:flex!important;flex:0 0 41px!important;max-height:41px!important;
+ min-height:0!important;flex-wrap:nowrap!important;gap:5px!important;
+ overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .controls .btn{
+ flex:0 0 auto!important;min-width:69px!important;min-height:34px!important;
+ height:34px!important;padding:4px 8px!important;border:1px solid #347291!important;
+ border-radius:7px!important;background:#0b2940!important;font-size:11px!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .controls .btn.danger{
+ border-color:#bb744e!important;background:#301a1b!important;color:#ffd6b0!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .runtimeStatus{
+ flex:0 0 37px!important;min-height:0!important;max-height:37px!important;
+ display:flex!important;flex-wrap:nowrap!important;gap:5px!important;
+ overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .runtimeStatus>.metric{
+ flex:0 0 auto!important;min-width:93px!important;max-width:170px!important;
+ font-size:10px!important;padding:3px 5px!important;overflow:hidden!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"]>.editor{
+ display:grid!important;grid-template-rows:30px 59px minmax(0,1fr) 57px 40px auto!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .editor>.body{
+ min-height:0!important;max-height:100%!important;overflow:hidden!important;padding:3px 5px!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .editor .editorbar{
+ display:flex!important;flex-wrap:nowrap!important;max-height:59px!important;
+ overflow-x:auto!important;overflow-y:hidden!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .editor textarea.code{
+ height:100%!important;min-height:0!important;max-height:100%!important;
+ width:100%!important;overflow:auto!important;padding:9px!important;resize:none!important;
+ color:#d5eefa!important;background:#020a11!important;border:1px solid #315d79!important;
+ border-radius:7px!important;font:12px/1.55 ui-monospace,monospace!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .editor .execView{
+ max-height:57px!important;overflow:auto!important;font-size:10px!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .editor .editactions{
+ display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;
+}
+html[data-aig63-axis="4AX"] .screen.active[data-page="4AX"] :is(button,textarea,input):focus-visible{
+ outline:2px solid #ffbd6e!important;outline-offset:1px!important
+}
+
+

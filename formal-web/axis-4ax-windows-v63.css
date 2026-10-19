@@ -1,0 +1,71 @@
+/* V63 Windows Desktop / 4K 4AX: 74% live VMC viewport; 26% NC console. */
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid.aig41-workspace[data-runtime="4AX"]{
+ display:grid!important;grid-template-columns:minmax(0,2.85fr) minmax(290px,1fr)!important;
+ grid-template-rows:max-content max-content max-content minmax(0,1fr)!important;
+ flex:1 1 0!important;min-height:0!important;max-height:100%!important;gap:5px!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"]>.axisModuleHeader{
+ grid-column:1/-1!important;grid-row:1!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"]>.aig41-toolbar{
+ grid-column:1/-1!important;grid-row:2!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"]>.aig43-bar{
+ grid-column:1/-1!important;grid-row:3!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"][data-aig41-has-header="false"]{
+ grid-template-rows:max-content max-content minmax(0,1fr)!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"][data-aig41-has-header="false"]>.aig41-toolbar{
+ grid-row:1!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"][data-aig41-has-header="false"]>.aig43-bar{
+ grid-row:2!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"]>.simleft{
+ grid-column:1!important;grid-row:4!important;overflow:hidden!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"]>.editor{
+ grid-column:2!important;grid-row:4!important;overflow:hidden!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"][data-aig41-has-header="false"]>.simleft,
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"][data-aig41-has-header="false"]>.editor{
+ grid-row:3!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"][data-axis-subpage="NC_FIRST"]>.editor{
+ grid-column:1!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"][data-axis-subpage="NC_FIRST"]>.simleft{
+ grid-column:2!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .simleft>.body{
+ display:flex!important;flex-direction:column!important;min-height:0!important;max-height:100%!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .sceneWrap{
+ flex:1 1 0!important;height:0!important;min-height:165px!important;max-height:100%!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .editor .editorbar{
+ max-height:59px!important;overflow-x:auto!important;overflow-y:hidden!important
+}
+html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"]>.aig49-dock{
+ display:none!important
+}
+@media(max-width:1080px){
+ html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid.aig41-workspace[data-runtime="4AX"]{
+  grid-template-columns:minmax(0,1.9fr) minmax(240px,1fr)!important
+ }
+}
+@media(max-height:640px){
+ html[data-aig63-axis="4AX"][data-aig49-active="true"][data-aig63-platform="windows"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .sceneWrap{
+  min-height:100px!important
+ }
+}
+
+
+/* Rotary fixture: show existing A-axis indicator, not invented rotary movement. */
+html[data-aig63-axis="4AX"][data-aig49-active="true"] .screen.active[data-page="4AX"] .simgrid[data-runtime="4AX"] .axisbar .axis.a{
+ color:#ffe3b1!important;border:1px solid #927341!important;border-radius:6px!important;
+ background:linear-gradient(135deg,#402815,#1a1316)!important;
+ font-variant-numeric:tabular-nums!important
+}
+
