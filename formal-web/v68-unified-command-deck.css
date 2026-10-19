@@ -1,0 +1,148 @@
+/* AIG V68 — same-position operational hierarchy on CAD CAM 3D TOOLPATH SIM
+ * 3AX 4AX 5AX 6AX NC AI. Buttons ARE their original native DOM nodes.
+ * No screenshot skin, overlay fake button or NC handler replacement. */
+:root{
+ --aig68-cyan:#4ee8ff;--aig68-violet:#a78bff;--aig68-amber:#ffcb82;
+ --aig68-danger:#e27978;--aig68-surface:rgba(5,15,28,.965);
+ --aig68-gap:5px
+}
+.screen.active .aig68-deck{
+ display:grid;grid-template-rows:auto minmax(48px,auto);gap:5px;min-width:0;
+ max-width:100%;margin:0 0 8px;padding:7px;border:1px solid transparent;
+ border-radius:13px;box-sizing:border-box;isolation:isolate;
+ background:linear-gradient(145deg,#0d2136ee,#06101de9) padding-box,
+ linear-gradient(111deg,#47d5ef7a,#667ff04a,#f578c84f) border-box;
+ box-shadow:inset 0 1px #d7f7ff15,0 12px 24px #0009;
+ position:sticky;top:58px;z-index:25;overflow:visible
+}
+.aig68-deck-head{display:flex;justify-content:space-between;align-items:center;
+ min-width:0;gap:8px;padding:0 4px;font:700 11px/1.2 "Noto Sans TC",sans-serif}
+.aig68-deck-name{color:#bdeeff;white-space:nowrap;letter-spacing:.04em}
+.aig68-deck-caution{font-size:9px;color:#c5a985;text-align:right;overflow-wrap:anywhere}
+.aig68-tabs{display:none}
+.aig68-deck-body{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) minmax(150px,.95fr);
+ gap:6px;min-width:0}
+.aig68-lane{
+ display:flex;flex-direction:column;min-width:0;gap:4px;
+ padding:5px 6px;border-radius:9px;background:rgba(6,22,36,.75);
+ border:1px solid #2c597d63;box-sizing:border-box;overflow:hidden
+}
+.aig68-lane[hidden]{display:none!important}
+.aig68-lane-label{display:block;font:700 10px/1.1 "Noto Sans TC",sans-serif;
+ color:#9fd7ec;letter-spacing:.02em}
+.aig68-native-actions{display:flex;flex-flow:row wrap;align-items:center;
+ align-content:start;gap:4px;min-width:0}
+.aig68-native-actions :is(button,input[type=button]){
+ min-height:35px!important;min-width:0!important;max-width:100%;
+ padding:6px 9px!important;box-sizing:border-box;flex:1 1 58px;
+ border-radius:8px!important;white-space:nowrap;
+ font:700 11px/1.25 "Noto Sans TC",system-ui,sans-serif;
+ color:#e7f7ff!important;border:1px solid #3d6486!important;
+ background:linear-gradient(158deg,#142c44,#0b1c2c)!important;
+ box-shadow:inset 0 1px #d4f4ff1b,0 3px 7px #0006!important;
+ cursor:pointer;touch-action:manipulation
+}
+.aig68-native-actions :is(button,input[type=button]):disabled{
+ opacity:.37!important;cursor:not-allowed;color:#96a3aa!important;box-shadow:none!important
+}
+.aig68-native-actions :is(button,input[type=button])[aria-pressed="true"],
+.aig68-native-actions :is(button,input[type=button]).selected{
+ border-color:#58e5ff!important;box-shadow:0 0 9px #1d9dff60!important
+}
+.aig68-native-actions :is(button,input[type=button]):focus-visible,
+.aig68-tab:focus-visible{outline:2px solid #cdf7ff!important;outline-offset:2px}
+.aig68-empty{font:10px/1.5 "Noto Sans TC",sans-serif;color:#6f93a6}
+.aig68-lane[data-aig68-lane="RUN"]{border-color:#377a8d88}
+.aig68-lane[data-aig68-lane="VERIFY"]{border-color:#457e7888}
+.aig68-lane[data-aig68-lane="FILE"]{border-color:#527db188}
+.aig68-lane[data-aig68-lane="DANGER"]{
+ background:rgba(34,13,17,.70);border:1px solid #9c555b9e;
+ padding-left:10px;box-shadow:inset 3px 0 #df8589a3
+}
+.aig68-lane[data-aig68-lane="DANGER"] .aig68-lane-label{color:#ffc4c4}
+.aig68-lane[data-aig68-lane="DANGER"] .aig68-native-actions button{
+ background:linear-gradient(#3e1f28,#240d13)!important;
+ border-color:#cb7479!important;color:#ffe6e6!important
+}
+.aig68-deck :is(button,input[type=button]):active:not(:disabled){filter:brightness(1.17)}
+/* Axis module root is already a CSS grid: command deck always spans the
+ * whole grid and precedes the true machine viewport; same size as other pages. */
+.screen .simgrid[data-runtime]>.aig68-deck{grid-column:1/-1;grid-row:auto}
+.screen [data-cad-runtime]>.aig68-deck,
+.screen [data-cam-runtime]>.aig68-deck,
+.screen [data-tp-runtime]>.aig68-deck,
+.screen [data-nc-runtime]>.aig68-deck,
+.screen [data-ai-page-runtime]>.aig68-deck,
+.screen [data-sim-hub]>.aig68-deck{width:100%}
+.screen :is(.toolstrip,.controls,.editorbar,.ops,.aiControls,.axisSubpages,.axisQuality):empty{
+ display:none!important
+}
+@media(min-width:1920px){
+ .screen.active .aig68-deck{padding:8px 9px}
+ .aig68-deck-body{gap:8px}
+ .aig68-native-actions button{font-size:12px!important;min-height:40px!important}
+}
+@media(min-width:3200px){
+ .screen.active .aig68-deck{gap:8px;padding:10px 12px;border-radius:16px}
+ .aig68-lane{padding:8px 9px;gap:7px}
+ .aig68-lane-label,.aig68-deck-name{font-size:14px}
+ .aig68-native-actions button{font-size:16px!important;min-height:49px!important;
+  border-radius:11px!important}
+ .aig68-deck-caution{font-size:12px}
+}
+@media(max-width:900px){
+ .screen.active .aig68-deck{
+  top:0;grid-template-rows:auto auto auto;gap:3px;margin-bottom:5px;
+  padding:4px;border-radius:11px;z-index:24
+ }
+ .aig68-deck-head{padding:0 4px;min-height:15px}
+ .aig68-deck-name{font-size:10px}
+ .aig68-deck-caution{font-size:8px;max-width:50%;line-height:1.25}
+ .aig68-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;min-width:0}
+ .aig68-tab{
+  min-width:0;min-height:37px;padding:4px 1px;
+  border-radius:7px;color:#b8dae9!important;
+  background:#0b2233!important;border:1px solid #2f5677!important;
+  font:700 clamp(9px,2.5vw,12px)/1.05 "Noto Sans TC",sans-serif;
+  cursor:pointer;touch-action:manipulation;white-space:nowrap;
+ }
+ .aig68-tab[aria-selected="true"]{
+  color:#ffffff!important;background:linear-gradient(#155076,#0b273e)!important;
+  border-color:#45d9f7!important;box-shadow:inset 0 -2px #5cf2ff8c
+ }
+ .aig68-tab:disabled{opacity:.4!important;cursor:not-allowed}
+ .aig68-tab[data-aig68-lane-tab="DANGER"]{
+  border-color:#ae7171!important;color:#f5c7c7!important;
+  background:#291721!important;
+ }
+ .aig68-tab[data-aig68-lane-tab="DANGER"][aria-selected="true"]{
+  background:#5b242b!important;border-color:#f1a0a0!important;
+  color:#fff!important
+ }
+ .aig68-deck-body{display:block!important;min-width:0}
+ .aig68-lane{display:none!important;min-height:42px;max-height:88px;padding:4px;
+  border:0;background:#081525;overflow:auto;overscroll-behavior:contain
+ }
+ .aig68-deck [data-aig68-lane]:not([hidden]){display:flex!important}
+ .aig68-lane-label{display:none}
+ .aig68-native-actions{display:flex;flex-flow:row nowrap;gap:4px}
+ .aig68-native-actions :is(button,input[type=button]){
+  flex:0 0 auto!important;min-width:64px!important;max-width:220px;
+  min-height:37px!important;padding:7px 8px!important;font-size:11px!important
+ }
+ .aig68-lane[data-aig68-lane="DANGER"]{border:1px solid #d18888;padding:5px 7px}
+}
+@media(max-width:410px){
+ .aig68-tab{min-height:36px;font-size:9px}
+ .aig68-deck-caution{max-width:43%}
+ .aig68-native-actions :is(button,input[type=button]){min-height:38px!important}
+}
+@media(orientation:landscape) and (max-height:520px){
+ .screen.active .aig68-deck{position:relative;top:auto}
+ .aig68-deck-head{display:none}
+ .aig68-tabs .aig68-tab{min-height:31px}
+ .aig68-native-actions button{min-height:33px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .aig68-deck button{transition:none!important;animation:none!important}
+}
