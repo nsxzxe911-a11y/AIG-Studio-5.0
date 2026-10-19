@@ -1,0 +1,52 @@
+/* V60 Windows 4K CAD/CAM operator style: live CAM preview dominates left;
+   original strategy/manual/params controls remain separately scrollable right. */
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .camgrid{
+ display:grid!important;flex:1 1 0!important;grid-template-columns:minmax(0,2.6fr) minmax(290px,1fr)!important;
+ grid-template-rows:minmax(0,.95fr) minmax(0,1.2fr) minmax(0,1.4fr)!important;
+ grid-auto-rows:minmax(0,1fr)!important;align-items:stretch!important;
+ height:100%!important;max-height:100%!important;overflow:hidden!important;gap:7px!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .camgrid>.panel{
+ display:flex!important;flex-direction:column!important;min-height:0!important;
+ height:100%!important;max-height:100%!important;overflow:hidden!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .camgrid>.panel[data-aig50-role="preview"]{
+ grid-column:1!important;grid-row:1/4!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .camgrid>.panel[data-aig50-role="strategies"]{
+ grid-column:2!important;grid-row:1!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .camgrid>.panel[data-aig50-role="manual"]{
+ grid-column:2!important;grid-row:2!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .camgrid>.panel[data-aig50-role="params"]{
+ grid-column:2!important;grid-row:3!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .camgrid>.panel[data-aig50-role="preview"]>.body{
+ display:flex!important;flex:1 1 0!important;flex-direction:column!important;min-height:0!important;
+ height:100%!important;overflow:hidden!important;gap:5px!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] [data-cam-canvas]{
+ display:block!important;flex:1 1 0!important;height:0!important;min-height:140px!important;
+ max-height:100%!important;max-width:100%!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .camgrid>.panel[data-aig50-role="strategies"]>.body,
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .camgrid>.panel[data-aig50-role="manual"]>.body,
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .camgrid>.panel[data-aig50-role="params"]>.body{
+ overflow:auto!important;min-height:0!important;scrollbar-width:thin!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] [data-cam-manual-input]{
+ height:110px!important;min-height:85px!important;max-height:130px!important;flex:0 0 auto!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .aig60-manual-work button[data-aig60-cmd="view"]{
+ display:none!important;
+}
+@media(max-height:680px){
+ html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .camgrid{
+  grid-template-rows:minmax(0,1fr) minmax(0,1fr) minmax(0,1.4fr)!important;
+ }
+ html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="windows"] .screen.active[data-page="CAM"] .aigCamExplain{
+  display:none!important;
+ }
+}
+

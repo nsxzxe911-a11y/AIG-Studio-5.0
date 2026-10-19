@@ -1,0 +1,100 @@
+/* V60 CAM third page, real CNC cockpit: original 2D CAM canvas, nine
+   CAM strategies, manual G0/G1, parameters and preflight remain mounted. */
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"]{
+ display:flex!important;flex-direction:column!important;overflow:hidden!important;
+ height:100%!important;max-height:100%!important;min-height:0!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] [data-cam-runtime]{
+ display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+ height:100%!important;max-height:100%!important;min-height:0!important;
+ padding:0!important;overflow:hidden!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid{
+ min-height:0!important;max-height:100%!important;min-width:0!important;overflow:hidden!important;
+ gap:6px!important;margin:0!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid>.panel{
+ box-sizing:border-box;min-height:0!important;min-width:0!important;
+ border:1px solid #2e6080!important;border-radius:9px!important;
+ background:linear-gradient(145deg,#091a2b,#030a13)!important;
+ box-shadow:inset 0 1px #62daff20,0 5px 16px #0009!important;overflow:hidden!important
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid>.panel>.head{
+ display:flex!important;align-items:center!important;min-height:30px!important;
+ max-height:42px!important;flex:0 0 auto!important;padding:4px 9px!important;
+ overflow:hidden!important;border-bottom:1px solid #2f667f!important;background:#0b1d2d!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid>.panel>.head h2,
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid>.panel>.head h3{
+ margin:0!important;font-size:13px!important;white-space:nowrap!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid>.panel>.head small{
+ font-size:10px!important;color:#99c4da!important;white-space:nowrap!important;
+ overflow:hidden!important;text-overflow:ellipsis!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid>.panel>.body{
+ padding:6px!important;min-height:0!important;flex:1 1 0!important;max-height:100%!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid .ops{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid .ops button{
+ min-width:0!important;min-height:35px!important;font-size:11px!important;padding:4px 5px!important;
+ border:1px solid #326a88!important;border-radius:7px!important;background:#0a2538!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid button[data-aig60-real="true"]{
+ touch-action:manipulation!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid .camCanvas{
+ width:100%!important;max-width:100%!important;min-height:0!important;
+ border:1px solid #2c7495!important;border-radius:7px!important;background:#010409!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid .controls{
+ display:flex!important;flex:0 0 auto!important;flex-wrap:nowrap!important;gap:4px!important;
+ max-width:100%!important;min-width:0!important;min-height:38px!important;
+ overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid .controls>.btn{
+ flex:0 0 auto!important;min-width:77px!important;min-height:34px!important;
+ padding:4px 7px!important;font-size:11px!important;border-radius:7px!important;
+ border:1px solid #376e91!important;background:#10263a!important
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] [data-cam-manual-panel]>.body{
+ display:flex!important;flex-direction:column!important;gap:6px!important;overflow:auto!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .aigCamExplain{
+ font-size:10px!important;line-height:1.45!important;margin:0!important;color:#9fbdd0!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] textarea[data-cam-manual-input]{
+ box-sizing:border-box!important;width:100%!important;min-height:85px!important;
+ color:#dcefff!important;background:#02070d!important;border:1px solid #317797!important;
+ border-radius:7px!important;padding:7px!important;font:12px/1.5 ui-monospace,monospace!important;
+ resize:none!important;tab-size:2!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .aig60-manual-work{
+ display:flex!important;gap:5px!important;flex-wrap:wrap!important;flex:0 0 auto!important;
+ align-items:center!important;margin-top:4px!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .aig60-manual-work button{
+ flex:1 1 auto!important;min-width:84px!important;min-height:35px!important;
+ font-size:11px!important;padding:6px 8px!important;color:#e1fbff!important;
+ border:1px solid #3a88a5!important;border-radius:7px!important;background:#0d3045!important;
+ cursor:pointer!important;touch-action:manipulation!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .aig60-manual-work button:disabled{
+ opacity:.43!important;cursor:not-allowed!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid>.panel[data-aig50-role="params"]>.body{
+ overflow-y:auto!important;overscroll-behavior:contain!important;scrollbar-width:thin!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid .param{
+ min-width:0!important;margin:0!important;font-size:11px!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid :is(.param input,select){
+ min-height:34px!important;max-width:100%!important;color:#dbf4ff!important;
+ border:1px solid #376685!important;background:#04111e!important;border-radius:6px!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"] .screen.active[data-page="CAM"] .camgrid :is(button,textarea,input,select):focus-visible{
+ outline:2px solid #ffce73!important;outline-offset:2px!important;
+}
+

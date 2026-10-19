@@ -1,0 +1,42 @@
+{
+  "release": "60.0.0",
+  "page": "03_CAM",
+  "source": {
+    "bothOriginalHtmlScripts": "PASS",
+    "strategyIds": 9,
+    "actionIds": 5,
+    "uniqueCanvas": true,
+    "callbackEvidence": "VERIFIED",
+    "manualModeDelegation": "REAL_SELECT_CHANGE",
+    "manualCalcApply": "REAL_ORIGINAL_BUTTON_CLICK",
+    "realPreviewRepaint": "aigCamApi.refreshView",
+    "staticCss": "PASS",
+    "engineChanged": false
+  },
+  "audit": [
+    {
+      "project": "formal-web/mobile-runtime.html",
+      "strategyCount": 9,
+      "actionCount": 5,
+      "canvasCount": 1,
+      "inlineScriptsParsed": 3,
+      "coreUntouched": true
+    },
+    {
+      "project": "formal-web/studio-375.html",
+      "strategyCount": 9,
+      "actionCount": 5,
+      "canvasCount": 1,
+      "inlineScriptsParsed": 2,
+      "coreUntouched": true
+    }
+  ],
+  "notVerified": [
+    "Real phone touch/keyboard/viewport",
+    "Windows 4K real screenshot",
+    "Manual CAM path numerical revalidation under V60 (existing V56 tests only)",
+    "SIM actual material-removal integration",
+    "Android APK / Windows EXE"
+  ],
+  "machineOutput": "DISABLED"
+}

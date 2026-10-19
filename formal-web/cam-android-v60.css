@@ -1,0 +1,65 @@
+/* V60 Android CAM: docked one-pane simulator instead of long scrolling webpage. */
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .app{
+ width:100%!important;max-width:100%!important;min-width:0!important;margin:0 auto!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"] .camgrid{
+ display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+ height:0!important;min-height:0!important;max-height:100%!important;overflow:hidden!important;gap:3px!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"] .camgrid>.panel[data-aig50-role]{
+ display:none!important;grid-area:auto!important;min-width:0!important;width:100%!important;
+ min-height:0!important;max-height:100%!important;overflow:hidden!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"][data-aig50-pane="view"] .camgrid>.panel[data-aig50-role="preview"],
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"][data-aig50-pane="manual"] .camgrid>.panel[data-aig50-role="manual"]{
+ display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+ height:100%!important;max-height:100%!important;overflow:hidden!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"][data-aig50-pane="tools"] .camgrid{
+ overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"][data-aig50-pane="tools"] .camgrid>.panel[data-aig50-role="strategies"],
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"][data-aig50-pane="tools"] .camgrid>.panel[data-aig50-role="params"]{
+ display:flex!important;flex:0 0 auto!important;flex-direction:column!important;
+ height:auto!important;max-height:none!important;overflow:visible!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"][data-aig50-pane="tools"] .camgrid>.panel[data-aig50-role="params"]>.body{
+ max-height:none!important;overflow:visible!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"][data-aig50-pane="view"] .camgrid>.panel[data-aig50-role="preview"]>.body{
+ display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+ min-height:0!important;height:100%!important;overflow:hidden!important;gap:5px!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"][data-aig50-pane="view"] .camgrid [data-cam-canvas]{
+ flex:1 1 0!important;display:block!important;height:0!important;min-height:120px!important;
+ max-height:100%!important;width:100%!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"][data-aig50-pane="manual"] [data-cam-manual-panel]>.body{
+ display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+ min-height:0!important;max-height:100%!important;overflow:auto!important;gap:5px!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"][data-aig50-pane="manual"] [data-cam-manual-panel] .field:has(textarea){
+ display:flex!important;flex:1 1 auto!important;flex-direction:column!important;
+ min-height:120px!important;max-height:100%!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"][data-aig50-pane="manual"] [data-cam-manual-panel] textarea{
+ flex:1 1 0!important;height:100%!important;min-height:88px!important;max-height:100%!important;resize:none!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"]>.aig49-dock{
+ display:flex!important;flex:0 0 43px!important;height:43px!important;max-height:43px!important;
+ min-height:43px!important;order:99!important;position:relative!important;
+}
+html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"]>.aig49-dock button{
+ min-height:33px!important;flex:1 1 0!important;font-size:11px!important;
+}
+@media(orientation:landscape) and (max-height:530px){
+ html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"] .camgrid [data-cam-canvas]{min-height:77px!important}
+ html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"]>.aig49-dock{
+  height:35px!important;max-height:35px!important;min-height:35px!important;flex:0 0 35px!important
+ }
+ html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"] .aigCamExplain{display:none!important}
+ html[data-aig60-cam="true"][data-aig49-active="true"][data-aig60-platform="android"] .screen.active[data-page="CAM"] .aig60-manual-work button{
+  min-height:30px!important;font-size:10px!important;padding:4px!important
+ }
+}
+
