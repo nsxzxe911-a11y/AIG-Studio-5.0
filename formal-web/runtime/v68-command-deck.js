@@ -12,7 +12,8 @@ const decks=new Map();
 const hash=str=>{let n=2166136261;for(const c of str){n^=c.charCodeAt(0);n=Math.imul(n,16777619)}return(n>>>0).toString(16).toUpperCase().padStart(8,"0")};
 const token=value=>String(value||"").toUpperCase().replace(/[^A-Z0-9]+/g,"_").replace(/^_+|_+$/g,"").slice(0,64);
 function rootFor(page,spec){
- const screen=d.querySelector('.app>.shell>.screen[data-page="'+page+'"]');
+ const runtimeName=page==="TOOLPATH"?"刀路":page;
+ const screen=d.querySelector('.app>.shell>.screen[data-page="'+runtimeName+'"]');
  return screen?.querySelector(spec[0]?.root)||null;
 }
 function isCompact(){return !!w.matchMedia?.("(max-width:900px)").matches}
@@ -38,7 +39,7 @@ function ensureDeck(page,list){
   const tab=d.createElement("button");tab.type="button";tab.className="aig68-tab";
   tab.dataset.aig68LaneTab=lane;tab.dataset.aig68ButtonId="BTN."+page+".DECK.TAB_"+lane;
   tab.dataset.aig68CommandId="COMMAND."+page+".DECK.OPEN_"+lane;
-  tab.textContent=labels[lane];tab.setAttribute("role","tab");
+  tab.textContent=lane==="DANGER"?"危險":labels[lane];tab.setAttribute("role","tab");
   tab.setAttribute("aria-controls","aig68-"+page+"-"+lane);
   tab.addEventListener("click",()=>selectLane(page,lane,true));
   tabs.append(tab);
