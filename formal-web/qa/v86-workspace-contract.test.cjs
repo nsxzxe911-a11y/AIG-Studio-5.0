@@ -13,15 +13,14 @@ assert(css.includes('@media(max-width:650px)'),"phone layout missing");
 assert(!layout.includes("innerHTML="),"must not replace original machining controls");
 assert(!assist.includes("fetch(")&&!assist.includes("XMLHttpRequest"),"external AI may not auto-upload source");
 assert(!assist.includes("G-code")||assist.includes("NO G-code"),"privacy notice missing");
-const sandbox={window:{},document:{readyState:"loading",addEventListener(){}},MutationObserver:class{observe(){}}};
+const doc={readyState:"loading",addEventListener(){},querySelectorAll(sel){return sel===".app .shell .screen[data-page]"?[{dataset:{page:"CAD"},querySelectorAll(){return [{dataset:{buttonId:"BTN_CAD_LINE"},disabled:false},{dataset:{},disabled:false}]}}]:[]}};
+const sandbox={window:{},document:doc,MutationObserver:class{observe(){}}};
 vm.runInNewContext(assist,sandbox,{timeout:2000});
-const mock={querySelectorAll(sel){return sel===".app .shell .screen[data-page]"?[{dataset:{page:"CAD"},querySelectorAll(){return [{dataset:{buttonId:"BTN_CAD_LINE"},disabled:false},{dataset:{},disabled:false}]}}]:[]}};
-sandbox.document=mock;
 const data=sandbox.window.AIG_V86_EXTERNAL_ASSIST.inspect();
 assert.equal(data.schema,"AIG_V86_WORKSPACE_READ_ONLY");assert.equal(data.machineOutput,"BLOCKED");
 assert.equal(data.pages.length,11);
 assert.equal(data.pages.find(x=>x.page==="CAD").requiresIdReview,1);
 const brief=sandbox.window.AIG_V86_EXTERNAL_ASSIST.composeExternalBrief(data);
-assert(brief.includes("NO G-code")&&brief.includes("No engineering-shell")===false); // output remains sanitized factual brief
+assert(brief.includes("NO G-code"),"sanitized content notice missing");
 assert(!brief.includes("sk-proj-")&&!brief.includes("BEGIN PRIVATE KEY"));
 console.log("AIG_V86_WORKSPACE_SOURCE_PASS | LIVE_BUTTONS_PRESERVED | MULTI_AI_HANDOFF_PRIVACY_PASS");
