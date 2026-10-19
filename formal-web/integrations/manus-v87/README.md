@@ -7,7 +7,7 @@
 - 此回報**不等於**已接入 AIG 真核心，也沒有 Manus 原始碼進入 GitHub 正式站。
 
 ## 待接收的來源檔案
-請從 Manus 任務的「查看此任務中的所有檔案」下載**完整原型專案 ZIP**（連同 `public/` 目錄），不要只傳圖片。
+完整原型 ZIP 已經交付並保存於 `original/AIG_Manus_V87_Original_20261019.zip`，SHA-256 為 `98f490dd4a8e8d3395b9c63cce96947443007f2ffdc89183d3b597723db12dd8`；CI 由 `extract-source.py` 白名單解壓 8 份檔案。
 
 接收後在**隔離目錄**解壓，逐項核對：
 
@@ -20,7 +20,7 @@
 | `TODO.md` | 原型待辦與未通過條件 |
 | `public/manus-routes.json` | 11 route 清冊 |
 
-Manus 任務中的這些檔案目前提供**任務頁私有預覽連結**，而連線工具只能讀取頁面摘要，不能取得原始檔位元組。禁止自行捏造內容或用圖片冒充原始碼。
+已透過使用者上傳 ZIP 取得實際來源位元組；已存入原始封存，未將其程式當作正式 CNC Runtime。詳見 `source-audit.md`。
 
 ## 整合原則
 1. AIG 原正式 Render 網站 `aig-dual-formal-runtime.onrender.com` 為唯一正式發布位置；原型必須先進 staging／隔離目錄。
@@ -31,8 +31,8 @@ Manus 任務中的這些檔案目前提供**任務頁私有預覽連結**，而�
 6. 禁止匯入不明遠端 script、敏感 Token、WebSerial / 裝置輸出介面；未審查腳本不可在正式站執行。
 
 ## 階段與 Gate
-- **V87-A 外部成果識別：已建立 manifest。** `handoff-manifest.json`；Manus 來源檔**尚未取得**。
-- **V87-B 素材與程式接收：BLOCKED**，待原型 ZIP／來源。
+- **V87-A 外部成果識別：已建立 manifest。** `handoff-manifest.json`；Manus 原始 ZIP **已由使用者上傳並存入 GitHub 隔離目錄**，但尚未接入真 Runtime。
+- **V87-B 源碼接收與隔離：原始 ZIP 已收；CI Gate 待確認。**
 - V87-C 靜態與安全檢查：`node formal-web/integrations/manus-v87/intake-check.cjs --strict`。
 - V87-D 逐頁 Windows/手機 RGB 比對 + 11 route + stable Button ID 映射 + callback 實測。
 - V87-E 單頁隔離整合（AI／6AX 擇一），再做其他頁；不直接以原型整包取代 `mobile-runtime.html`。
