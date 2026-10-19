@@ -79,3 +79,33 @@ html[data-aig-project="AIGII"] .screen.active .simgrid.axisModule[data-runtime="
  html[data-aig-project="AIGII"] .aig55-nav button{min-width:52px!important;min-height:40px!important;font-size:11px!important}
  html[data-aig-project="AIGII"] .screen.active .simgrid.axisModule .sceneWrap{min-height:45dvh!important}
 }
+
+/* S23 VIEW is for the machine, not a collapsed cockpit full of controls.
+ * All native command nodes stay mounted in TOOLS/NC-FIRST — nothing cloned. */
+@media(max-width:780px){
+ html[data-aig-project="AIGII"][data-aig55-sim="true"][data-aig49-mobile="true"]
+  .screen.active[data-page="6AX"][data-aig50-pane="view"] .simgrid.axisModule[data-runtime="6AX"]>.simleft{
+  display:grid!important;grid-template-rows:minmax(0,1fr)!important;
+  min-height:0!important;height:100%!important;max-height:100%!important
+ }
+ html[data-aig-project="AIGII"][data-aig55-sim="true"][data-aig49-mobile="true"]
+  .screen.active[data-page="6AX"][data-aig50-pane="view"] .simgrid.axisModule[data-runtime="6AX"]>.simleft>.head,
+ html[data-aig-project="AIGII"][data-aig55-sim="true"][data-aig49-mobile="true"]
+  .screen.active[data-page="6AX"][data-aig50-pane="view"] .simgrid.axisModule[data-runtime="6AX"] .axisbar,
+ html[data-aig-project="AIGII"][data-aig55-sim="true"][data-aig49-mobile="true"]
+  .screen.active[data-page="6AX"][data-aig50-pane="view"] .simgrid.axisModule[data-runtime="6AX"] .controls,
+ html[data-aig-project="AIGII"][data-aig55-sim="true"][data-aig49-mobile="true"]
+  .screen.active[data-page="6AX"][data-aig50-pane="view"] .simgrid.axisModule[data-runtime="6AX"] [data-motion-legend]{
+  display:none!important
+ }
+ html[data-aig-project="AIGII"][data-aig55-sim="true"][data-aig49-mobile="true"]
+  .screen.active[data-page="6AX"][data-aig50-pane="view"] .simgrid.axisModule[data-runtime="6AX"]>.simleft>.body{
+   min-height:0!important;height:100%!important;max-height:100%!important;
+   flex:1 1 auto!important;padding:3px!important;overflow:hidden!important
+ }
+ html[data-aig-project="AIGII"][data-aig55-sim="true"][data-aig49-mobile="true"]
+  .screen.active[data-page="6AX"][data-aig50-pane="view"] .simgrid.axisModule[data-runtime="6AX"] .sceneWrap{
+   min-height:185px!important;height:100%!important;max-height:100%!important;
+   flex:1 1 100%!important;overflow:hidden!important
+ }
+}
