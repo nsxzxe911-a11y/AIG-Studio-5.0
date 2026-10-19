@@ -1,0 +1,16 @@
+{
+  "version": "56.0.0",
+  "verifiedSource": [
+    "V55 original simulator script retained",
+    "ten existing module buttons retained",
+    "mobile layout specificity overrides V49 width cap",
+    "legacy header suppressed",
+    "V50 actual dock not cloned",
+    "portrait/landscape specific CSS",
+    "HTML inline scripts parse",
+    "service worker includes CSS"
+  ],
+  "browser": "PENDING",
+  "phone": "PENDING",
+  "CNC": "NOT_CERTIFIED"
+}

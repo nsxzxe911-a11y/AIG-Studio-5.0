@@ -1,0 +1,123 @@
+/* V56: cascade conflict fix for V55 simulator cockpit.
+  Stronger scoping than old V37/V42/V49/V50 selectors. Never change CNC DOM/logic. */
+html[data-aig55-sim="true"][data-aig49-active="true"] .app>.top{
+ display:none!important;visibility:hidden!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"] .app{
+ flex-direction:column!important;display:flex!important;overflow:hidden!important;
+ width:100%!important;max-width:100%!important;min-height:0!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"] .app>.shell{
+ display:block!important;flex:1 1 0!important;height:0!important;min-height:0!important;
+ max-height:100%!important;overflow:hidden!important;
+}
+/* Phone orientation takes all physical horizontal pixels; no 480px fixed shell. */
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"] .app{
+ max-width:100%!important;width:100%!important;min-width:0!important;margin:0!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"] .aig55-top{
+ flex-flow:row wrap!important;align-content:start!important;
+ height:77px!important;min-height:77px!important;max-height:77px!important;
+ flex:0 0 77px!important;gap:3px 6px!important;padding:3px 5px!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"] .aig55-id{
+ flex:1 1 76px!important;min-width:0!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"] .aig55-nav{
+ order:10!important;flex:0 0 100%!important;width:100%!important;max-width:100%!important;
+ min-height:34px!important;height:34px!important;overflow-x:auto!important;overflow-y:hidden!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"] .aig55-nav button{
+ height:30px!important;min-height:30px!important;min-width:54px!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"] .app>.shell>.screen.active{
+ min-height:0!important;height:100%!important;max-height:100%!important;
+ display:flex!important;flex-direction:column!important;overflow:hidden!important;
+}
+/* Explicit Mobile mode on a desktop preview also stays in the real phone pane
+   system, rather than inheriting V55's >=901px 73/27 two-column cockpit. */
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active .simgrid.aig41-workspace{
+ display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;
+ width:100%!important;max-width:100%!important;flex:1 1 0!important;
+ height:0!important;min-height:0!important;overflow:hidden!important;gap:3px!important;
+ grid-template-columns:none!important;grid-template-rows:none!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active .simgrid.aig41-workspace>.axisModuleHeader,
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active .simgrid.aig41-workspace>.aig41-toolbar,
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active .simgrid.aig41-workspace>.aig43-bar{
+ display:flex!important;order:0!important;flex:0 0 auto!important;
+ width:100%!important;min-height:0!important;max-height:35px!important;
+ margin:0!important;overflow-x:auto!important;overflow-y:hidden!important;
+ grid-column:auto!important;grid-row:auto!important;flex-wrap:nowrap!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active .simgrid.aig41-workspace>.simleft,
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active .simgrid.aig41-workspace>.editor{
+ flex:1 1 0!important;height:100%!important;min-height:0!important;
+ max-height:100%!important;max-width:100%!important;width:100%!important;
+ overflow:hidden!important;order:10!important;grid-column:auto!important;grid-row:auto!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active[data-aig50-pane="view"] .simgrid.aig41-workspace>.editor,
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active[data-aig50-pane="tools"] .simgrid.aig41-workspace>.editor,
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active[data-aig50-pane="code"] .simgrid.aig41-workspace>.simleft{
+ display:none!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active[data-aig50-pane="view"] .simgrid .simleft .sceneWrap{
+ display:block!important;flex:1 1 0!important;
+ height:100%!important;min-height:80px!important;max-height:100%!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active .simgrid .simleft>.body{
+ display:flex!important;flex-direction:column!important;min-height:0!important;
+ flex:1 1 0!important;overflow:hidden!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active[data-aig50-pane="tools"] .simgrid .simleft>.body{
+ overflow:auto!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active[data-aig50-pane="tools"] .simgrid .simleft .sceneWrap{display:none!important}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active[data-aig50-pane="code"] .simgrid>.editor{
+ display:grid!important;grid-template-rows:auto auto minmax(0,1fr) auto auto!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active .simgrid .editor textarea.code{
+ height:100%!important;min-height:50px!important;max-height:100%!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active>.aig49-dock{
+ display:flex!important;flex:0 0 auto!important;height:43px!important;min-height:43px!important;
+ max-height:43px!important;order:99!important;position:relative!important;
+}
+html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"]
+.screen.active>.aig49-dock button{min-height:33px!important;min-width:0!important}
+@media (orientation:landscape){
+ html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"] .aig55-top{
+  height:43px!important;max-height:43px!important;min-height:43px!important;
+  flex:0 0 43px!important;flex-wrap:nowrap!important;
+ }
+ html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"] .aig55-id{display:none!important}
+ html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"] .aig55-nav{
+  order:0!important;width:auto!important;flex:1 1 0!important;height:34px!important;
+  min-width:0!important;max-width:none!important
+ }
+ html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"] .aig55-safe{display:none!important}
+}
+/* Keep the platform's explicit mobile preview recognizable on wide desktops
+   without crushing its actual phone controls into desktop axis columns. */
+@media(min-width:901px) and (orientation:portrait){
+ html[data-aig55-sim="true"][data-aig49-active="true"][data-aig49-mobile="true"] .app{
+  max-width:min(100%,520px)!important;margin:0 auto!important;
+ }
+}
+
