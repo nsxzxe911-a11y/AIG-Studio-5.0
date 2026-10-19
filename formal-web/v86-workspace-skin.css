@@ -1,0 +1,83 @@
+/* AIG V86 — formal Windows-primary workspace: live components, not image overlays. */
+:root{--aig86-night:#020407;--aig86-panel:#07111b;--aig86-cyan:#36ddff;--aig86-violet:#9256f5}
+.app>.shell{max-width:100%;min-width:0}
+.app>.shell>.screen.active{min-width:0}
+.app>.top{gap:clamp(5px,1vw,12px);padding-inline:clamp(6px,1vw,16px)}
+.app>.top .nav{min-width:0;max-width:none;gap:clamp(3px,.5vw,9px)}
+.app>.top .nav button{min-width:0;white-space:normal;overflow-wrap:anywhere}
+.screen.active .panel{background:linear-gradient(145deg,#07111b,#081a2a 72%,#0c1522);border-color:#285a79}
+.screen.active .panel>.head{background:linear-gradient(95deg,#0a2940,#0a1525 75%);border-bottom-color:#275c7d}
+.screen.active .panel>.head h2,.screen.active .panel>.head h3{color:#e6faff;font-weight:800}
+.screen.active button:focus-visible,.screen.active a:focus-visible{outline:2px solid #85efff;outline-offset:2px}
+/* Dominant real machine viewport; actual 3D canvas stays in its Runtime container. */
+.screen.active .simgrid.axisModule{grid-template-columns:minmax(0,3.4fr) minmax(240px,1fr)!important;gap:10px!important;min-width:0}
+.screen.active .simgrid.axisModule>.axisModuleHeader{grid-column:1/-1;min-width:0}
+.screen.active .simgrid.axisModule>.simleft{min-width:0;min-height:0;grid-template-rows:auto 1fr}
+.screen.active .simgrid.axisModule>.editor{min-width:0;max-width:100%}
+.screen.active .simgrid.axisModule .sceneWrap{min-height:clamp(370px,62vh,940px);overflow:hidden}
+.screen.active .simgrid.axisModule .sceneWrap :is(canvas[data-glcanvas],canvas[data-canvas]){height:100%;width:100%}
+.screen.active .simgrid.axisModule>.simleft>.body{min-width:0}
+.screen.active .simgrid.axisModule .axisbar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.screen.active .simgrid.axisModule .axisbar .axis{flex:0 1 auto;min-width:75px}
+.screen.active .simgrid.axisModule .controls.aig86-tool-controls{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:9px 0;margin:0 0 9px;border-bottom:1px solid #235776}
+.screen.active .simgrid.axisModule .controls.aig86-tool-controls>.btn{flex:0 0 auto;min-height:44px;min-width:74px}
+.screen.active .simgrid.axisModule .controls.aig86-tool-controls>.btn[data-cmd="reset"]{margin-left:auto;border-color:#a64d66!important}
+.screen.active .simgrid.axisModule .controls.aig86-tool-controls .aig86-extras{position:relative;display:inline-block}
+.screen.active .simgrid.axisModule .controls.aig86-tool-controls .aig86-extras summary{cursor:pointer;list-style:none;min-height:44px;padding:11px 14px;border:1px solid #327597;border-radius:10px;background:#09283e;color:#bdefff;font-weight:700}
+.screen.active .simgrid.axisModule .controls.aig86-tool-controls .aig86-extra-commands{display:flex;flex-wrap:wrap;gap:7px;padding:10px 0}
+.screen.active .simgrid.axisModule .controls.aig86-tool-controls .aig86-extras[open]{flex-basis:100%}
+.screen.active .simgrid.axisModule .controls.aig86-tool-controls .aig86-extra-commands .btn{min-height:44px}
+.screen.active .simgrid.axisModule[data-aig86-nc="collapsed"][data-axis-subpage="MACHINE"]{
+ grid-template-columns:minmax(0,1fr)!important
+}
+.screen.active .simgrid.axisModule[data-aig86-nc="collapsed"][data-axis-subpage="MACHINE"]>.editor{display:none!important}
+.screen.active .simgrid.axisModule[data-axis-subpage="NC_FIRST"]{grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr)!important}
+.screen.active .simgrid.axisModule[data-axis-subpage="NC_FIRST"]>.editor{display:grid!important}
+.screen.active .simgrid.axisModule .aig86-editor-toggle{
+ min-height:44px;padding:9px 15px;border:1px solid #437ba4;border-radius:9px;
+ color:#d8faff;background:linear-gradient(125deg,#113e63,#132a46);
+ font-weight:800;cursor:pointer;flex-shrink:0
+}
+.screen.active .simgrid.axisModule .aig86-editor-toggle[aria-expanded="true"]{
+ color:#fff;border-color:#8bb5f2;box-shadow:inset 0 0 15px #348ad136
+}
+.screen.active .simgrid.axisModule .axisModuleHeader{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.screen.active .simgrid.axisModule .axisModuleTitle{min-width:0;flex:1 1 200px}
+.screen.active .simgrid.axisModule .runtimeStatus{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.screen.active .simgrid.axisModule .runtimeStatus .metric{min-width:0}
+.screen.active .simgrid.axisModule .runtimeStatus .metric span{overflow-wrap:anywhere}
+.screen.active .simgrid.axisModule .editor textarea.code{max-width:100%;box-sizing:border-box}
+/* CAD / CAM always keep actual canvas dominant and actual property controls reachable. */
+.screen.active [data-cad-runtime] .workgrid{grid-template-columns:minmax(0,1fr) clamp(250px,22vw,380px)!important}
+.screen.active [data-cad-runtime] .cadCanvasWrap{min-height:clamp(410px,65vh,890px)}
+.screen.active [data-cad-runtime] .cadCanvas{height:clamp(410px,65vh,890px)}
+.screen.active [data-cam-runtime] .camgrid{grid-template-columns:clamp(190px,17vw,310px) minmax(0,1fr)!important}
+.screen.active [data-cad-runtime] :is(.toolstrip,.controls),
+.screen.active [data-cam-runtime] :is(.toolstrip,.controls){position:relative!important;z-index:auto!important}
+.screen.active [data-nc-runtime] .ncEditGrid{max-width:100%;min-width:0}
+.screen.active [data-tp-runtime] .camgrid{min-width:0}
+/* Do not place engineering page controls over the work viewport. */
+.screen.active .aig43-bar{display:none!important}
+@media(max-width:1120px){
+ .screen.active .simgrid.axisModule,
+ .screen.active .simgrid.axisModule[data-axis-subpage="NC_FIRST"]{
+   grid-template-columns:minmax(0,1fr)!important
+ }
+ .screen.active .simgrid.axisModule>.axisModuleHeader{grid-column:1}
+ .screen.active .simgrid.axisModule .sceneWrap{min-height:clamp(360px,58vh,720px)}
+ .screen.active [data-cad-runtime] .workgrid{grid-template-columns:minmax(0,1fr)!important}
+ .screen.active [data-cam-runtime] .camgrid{grid-template-columns:minmax(0,1fr)!important}
+ .screen.active .simgrid.axisModule .runtimeStatus{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:650px){
+ .screen.active .simgrid.axisModule .axisModuleHeader{gap:5px}
+ .screen.active .simgrid.axisModule .aig86-editor-toggle{width:100%}
+ .screen.active .simgrid.axisModule .sceneWrap{min-height:48vh}
+ .screen.active .simgrid.axisModule .controls.aig86-tool-controls>.btn{flex:1 1 72px;min-width:0;min-height:48px}
+ .screen.active .simgrid.axisModule .controls.aig86-tool-controls>.btn[data-cmd="reset"]{margin-left:0}
+ .screen.active .simgrid.axisModule .runtimeStatus{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .screen.active [data-cad-runtime] .cadCanvasWrap{min-height:48vh}
+ .screen.active [data-cad-runtime] .cadCanvas{height:48vh}
+ .app>.top .nav{overflow-x:auto;scrollbar-width:thin;display:flex;min-width:0}
+ .app>.top .nav button{flex:0 0 64px;min-width:64px;min-height:44px}
+}
