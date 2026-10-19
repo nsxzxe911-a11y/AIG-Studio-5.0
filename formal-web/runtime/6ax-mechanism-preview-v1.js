@@ -102,6 +102,9 @@ function mount(){if(root?.isConnected)return true;
  const error=d.createElement("output");error.dataset.aig6Error="";error.setAttribute("role","status");
  const hint=d.createElement("div");hint.className="aig6-hint";hint.dataset.aig6Hint="";stage.append(canvas,panel,hint);panel.append(reset,error);
  wrap.append(toggle,stage);host.append(wrap);root=wrap;
+ canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();if(raf){w.cancelAnimationFrame(raf);raf=0}gl=null;program=null;mesh={};const out=root?.querySelector("[data-aig6-error]");if(out)out.textContent="WebGL 暫時中斷，等待圖形裝置恢復";});
+ canvas.addEventListener("webglcontextrestored",()=>{if(on&&initializeGL())requestFrame();});
+ if(typeof ResizeObserver!=="undefined"){const observer=new ResizeObserver(()=>requestFrame());observer.observe(canvas);}
  toggle.addEventListener("click",()=>show(!on));orbit();
  w.addEventListener("resize",requestFrame,{passive:true});
  d.addEventListener("visibilitychange",requestFrame);
