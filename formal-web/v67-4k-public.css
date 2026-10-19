@@ -1,0 +1,50 @@
+/* AIG V67 editorial/site 4K — scalable RGB color and typography.
+ * Loaded through site-nature-v24.css on every public HTML page.
+ * Keeps forest/coast/mountain SVG scenes, which are resolution independent. */
+:root{--aig-4k-screen:#020407;--aig-4k-ink:#f1faff;
+ --aig-4k-cyan:#3be8ff;--aig-4k-blue:#5895ff;--aig-4k-magenta:#f45bc5}
+html{image-rendering:auto;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{overflow-x:clip}
+.site-container,.v4-page,.v4-status-grid,.v4-gates,.v4-status-card,.v4-health,
+.v4-page-hero,.site-header,.page-grid,.sidebar,.lead-graphic,.lead-copy{
+ min-width:0;box-sizing:border-box
+}
+body :is(img,video,svg,canvas){max-width:100%}
+body :is(img,video){height:auto;object-fit:contain}
+.site-container :is(h1,h2,h3,p,strong,small,span){overflow-wrap:anywhere}
+body :is(.v4-article,.v4-status-card,.panel,.v4-page-hero,.v4-widget){
+ box-shadow:0 10px 32px #0006,inset 0 1px #ffffff09
+}
+body :is(.primary-nav,.nav-inner,.utility-inner){min-width:0}
+body :is(button,a):focus-visible{outline:2px solid #a6f1ff;outline-offset:2px}
+html[data-site-theme="rgb"] :is(.brand-row,.v4-page-hero,.v4-widget){
+ border-color:#4472ab80;background-color:#0a1c2b}
+html[data-site-theme="rgb"] .brand-mark{filter:drop-shadow(0 0 16px #498aff66)}
+@media(min-width:1920px){
+ .site-container{width:min(1700px,calc(100% - 84px))}
+ .v4-page-hero h1{font-size:clamp(32px,1.5vw,58px)}
+ .v4-article h2{font-size:clamp(20px,1vw,28px)}
+ .v4-page-hero p,.v4-status-card p{font-size:clamp(14px,.65vw,19px)}
+}
+@media(min-width:3200px){
+ .site-container{width:min(2480px,calc(100% - 128px))}
+ body{font-size:clamp(17px,.48vw,21px)}
+ .brand-mark{width:72px;height:72px}
+ .brand-name{font-size:clamp(32px,1.1vw,46px)}
+ .nav-inner a{font-size:clamp(15px,.52vw,20px)}
+ .v4-status-card,.v4-article,.v4-widget{padding:28px}
+ .v4-page-hero{padding:42px 52px}
+}
+@media(max-width:700px){
+ .site-container{width:calc(100% - 20px);min-width:0}
+ .utility-inner,.utility-links,.brand-row,.nav-inner,.footer-inner{min-width:0;max-width:100%}
+ .utility-inner{flex-wrap:wrap;gap:4px 10px}
+ .utility-inner>span{flex:1 1 100%;min-width:0}
+ .utility-links{flex-wrap:wrap;gap:3px 10px}
+ .brand-row{gap:8px}
+ .v4-page,.v4-status-grid,.v4-gates{max-width:100%}
+ .v4-status-grid,.v4-gates{grid-template-columns:minmax(0,1fr)}
+ .v4-health>div{flex-wrap:wrap;min-width:0;gap:8px}
+ .v4-status-card>a,.v4-dual-proof>a{overflow-wrap:anywhere}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
