@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V63 4AX page: real XYZA rotary-kinematic animation stage using original WebGL and NC editor, same stable 8 real sim +9 edit controls; Android/Windows layouts independently scoped. 3AX V62 stays untouched.",
+  "notes": "V64 5AX page independent A/B rotary cockpit, original 11 camera/motion callbacks and 9 real G-code editing commands; Android/Windows responsive skins. True 5-axis geometry and collision require actual machine visual/safety gate.",
   "sharedWebRelease": {
-    "version": "63.0.0",
-    "train": "V63",
+    "version": "64.0.0",
+    "train": "V64",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "63.0.0"
+        "version": "64.0.0"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "63.0.0"
+        "version": "64.0.0"
       }
     ],
     "commonRuntimeSource": "./dual-web-v43.js",
     "commonUiSource": "./dual-web-v43.css",
-    "releaseManifest": "./dual-web-v63.json",
+    "releaseManifest": "./dual-web-v64.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",

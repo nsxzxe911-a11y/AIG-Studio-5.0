@@ -1,0 +1,20 @@
+{
+  "release": "64.0.0",
+  "page": "5AX",
+  "source": "PASS",
+  "bothProjects": {
+    "callbacks": 20,
+    "webGlCanvases": 1,
+    "fallbackCanvas": 1,
+    "axisReadouts": [
+      "X",
+      "Y",
+      "Z",
+      "A",
+      "B"
+    ]
+  },
+  "native": "NOT_BUILT",
+  "machineSafety": "NOT_CERTIFIED",
+  "deviceVisual": "PENDING"
+}
