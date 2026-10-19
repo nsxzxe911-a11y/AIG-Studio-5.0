@@ -1,0 +1,7 @@
+/* V82: visual presentation; controls remain real DOM buttons. */
+[data-ai-page-runtime]:has(.aig82-guide)>.aig77-guide{display:none!important}
+.aig82-guide{background:linear-gradient(125deg,#07111b 0%,#09233b 65%,#1a1034);border:1px solid #247ea6;border-radius:18px;padding:clamp(14px,2vw,28px);color:#effbff;box-shadow:0 0 22px #004b8533}
+.aig82-intro{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.aig82-eyebrow{font-size:12px;letter-spacing:.12em;color:#8edcff}.aig82-intro h2{font-size:clamp(24px,3vw,42px);margin:8px 0}.aig82-intro p{margin:0 0 16px;color:#c0d9e8}.aig82-safe{padding:8px 12px;border:1px solid #b68b35;border-radius:999px;color:#ffd887;white-space:nowrap}
+.aig82-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.aig82-actions button{min-height:84px;padding:12px;background:linear-gradient(150deg,#0a2c4d,#123a68);border:1px solid #298bbd;border-radius:12px;color:#fff;font-weight:800;font-size:clamp(14px,1.5vw,19px);cursor:pointer;white-space:normal}.aig82-actions button:hover{background:#16557d}.aig82-actions button:focus-visible{outline:3px solid #8befff}
+[data-aig82-message]{padding:12px;background:#061726;border-radius:10px;line-height:1.6}.aig82-advanced summary{padding:12px 0;cursor:pointer;color:#a3dfff}.aig82-advanced [data-aig82-original]{display:grid;gap:12px}
+@media(max-width:650px){.aig82-actions{grid-template-columns:1fr}.aig82-actions button{min-height:56px}.aig82-intro{flex-direction:column}.aig82-safe{align-self:flex-start}}
