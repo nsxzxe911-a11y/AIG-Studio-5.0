@@ -1,0 +1,89 @@
+name: AIG V68 Real 4K RGB Visual Gate
+on:
+  push:
+    branches:
+      - aig-web-v68-rgb-4k-fidelity
+    paths:
+      - 'formal-web/**'
+      - '.github/workflows/v68-rgb-4k-visual-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aig-v68-rgb-4k-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-color-4k-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify real 4K/native mobile framebuffer logic
+        run: node formal-web/qa/v68-quality-gate.test.cjs
+      - name: Check original CNC and dual-project V67 IDs still PASS
+        run: |
+          node formal-web/runtime/6ax-nc-readonly-v2.test.cjs
+          node formal-web/qa/v66-fast-gate.test.cjs
+          node formal-web/qa/v67-contract-gate.test.cjs
+      - name: Install browser visual auditor
+        working-directory: formal-web/qa
+        run: npm install --no-audit --no-fund
+      - name: Install real headless Chromium with WebGL fallback
+        working-directory: formal-web/qa
+        run: npx playwright install chromium --with-deps
+      - name: Serve V68 exact source without deploying to production
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory formal-web >/tmp/aig-v68-http.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8765/mobile-runtime.html >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsSI http://127.0.0.1:8765/runtime/v68-visual-quality.js
+          curl -fsSI http://127.0.0.1:8765/v68-rgb-4k.css
+      - name: Capture and verify 4K Windows + high-DPI mobile screenshots
+        id: chromium_4k
+        continue-on-error: true
+        env:
+          AIG_V68_BASE_URL: http://127.0.0.1:8765
+          AIG_V68_AUDIT_OUT: formal-web/qa/artifacts/v68
+        run: node formal-web/qa/v68-4k-browser-audit.mjs
+      - name: Archive full screenshots and RGBA/color-depth/canvas measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-V68-4K-RGB-real-evidence-${{ github.sha }}
+          path: formal-web/qa/artifacts/v68
+          if-no-files-found: warn
+          retention-days: 21
+      - name: Publish precise screenshot/authority distinction
+        if: always()
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const p='formal-web/qa/artifacts/v68/report.json';
+          const x=fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):null;
+          const lines=[
+            '# AIG V68 4K RGB Display Gate',
+            '',
+            'Commit: ${{ github.sha }}',
+            'Source and original CNC regression must pass.',
+            x?'Screenshots: '+x.summary.realScreenshotCount:'Browser screenshot evidence missing',
+            x?'Actual Windows 3840x2160 capture: '+x.summary.desktop4KScreenshot:'No 4K evidence',
+            x?'Actual Android 1440x3088 capture: '+x.summary.mobileNative1440:'No mobile evidence',
+            x?'Browser failures: '+x.summary.failureCount:'Browser failed',
+            x?'Browser warnings: '+x.summary.warningCount:'Browser failed',
+            '',
+            '**4K full-color display output ≠ 4K original Authority bitmap / 0.001mm material geometry / collision-safe CNC.**',
+            'RGB platform image approvals and dual-project Android/Windows runtime Gate remain blocked until separately tested.'
+          ];
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,lines.join('\n')+'\n');
+          if(!x)process.exit(1);
+          if(!x.summary.desktop4KScreenshot||!x.summary.mobileNative1440||x.summary.failureCount)process.exit(2);
+          NODE
