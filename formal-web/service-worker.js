@@ -2,8 +2,8 @@
  * Critical entry assets only on installation; all other modules/assets cached
  * after on-demand use. Do NOT preload 3AX–6AX GLB/PBR or the full image library.
  * Original V65 runtime behaviors are unchanged. */
-const CACHE="aig-web-v66-rgb-shell-20261019-v3";
-const DYNAMIC="aig-web-v66-runtime-on-demand-20261019-v3";
+const CACHE="aig-web-v66-rgb-shell-20261019-v4";
+const DYNAMIC="aig-web-v66-runtime-on-demand-20261019-v4";
 const SHELL=[
   "./",
   "./index.html",
@@ -13,6 +13,14 @@ const SHELL=[
   "./workspace-responsive-v66b.css"
 ];
 const MAX_DYNAMIC_ENTRIES=260;
+const TIMEOUT_MS=5500;
+async function timedFetch(url,init){
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort("AIG_NETWORK_TIMEOUT"),TIMEOUT_MS);
+ try{return await fetch(url,{...(init||{}),signal:controller.signal})}
+ finally{clearTimeout(timeout)}
+}
+
 let pruneRunning=false;
 async function pruneDynamic(){
  if(pruneRunning)return;pruneRunning=true;
@@ -28,7 +36,7 @@ self.addEventListener("install",event=>{
   // A failed optional asset must NOT block installation or wipe existing data.
   await Promise.all(SHELL.map(async url=>{
    try{
-    const response=await fetch(url,{cache:"reload"});
+    const response=await timedFetch(url,{cache:"reload"});
     if(response.ok)await cache.put(url,response);
    }catch(_){/* optional asset is retried on demand */}
   }));
@@ -52,11 +60,16 @@ self.addEventListener("fetch",event=>{
  if(request.method!=="GET")return;
  const url=new URL(request.url);
  if(url.origin!==self.location.origin)return;
- // Read-only network-first preserves fresh app code while offline cache allows recovery.
+ // Only static same-origin workbench resources are cacheable. Never persist
+ // auth, APIs, machine commands or private project downloads in SW cache.
+ const path=url.pathname;
+ const staticRoute=/\.(?:html|css|js|json|svg|png|jpe?g|webp|glb|gltf|bin|woff2?)$/i.test(path)||path.endsWith("/");
+ if(!staticRoute||/\/(?:api|auth|machine|cloud-sync)\//i.test(path))return;
+ // Network-first with bounded fail-fast; caches keep the offline boot alive.
  event.respondWith((async()=>{
   const isNavigation=request.mode==="navigate";
   try{
-   const response=await fetch(request);
+   const response=await timedFetch(request);
    if(response.ok){
     const copy=response.clone();
     event.waitUntil((async()=>{
