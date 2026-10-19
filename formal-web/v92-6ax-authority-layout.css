@@ -158,3 +158,40 @@ html[data-aig-project="AIGII"] .screen.active[data-page="6AX"] .aig92-bottom [da
   grid-template-columns:repeat(2,minmax(0,1fr))!important
  }
 }
+
+/* V65 originally forces sceneWrap height:0 for a flex-only layout.
+ * AIG V92 uses CSS grid inside the original panel; this stricter selector
+ * must override V65's legacy height:0 and eliminate the 163px strip. */
+html[data-aig-project="AIGII"][data-aig65-axis="6AX"][data-aig49-active="true"]
+ .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"][data-aig92-reverse-map="ready"]
+ .simleft .aig92-stage>.sceneWrap{
+ height:100%!important;min-height:0!important;max-height:none!important;
+ display:block!important;align-self:stretch!important;flex:none!important;
+ grid-column:2!important;grid-row:1!important;
+}
+html[data-aig-project="AIGII"][data-aig65-axis="6AX"][data-aig49-active="true"]
+ .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"][data-aig92-reverse-map="ready"]
+ .simleft .aig92-stage :is(.sim3dCanvas,.simCanvas){
+ height:100%!important;min-height:0!important;max-height:100%!important;width:100%!important
+}
+html[data-aig-project="AIGII"][data-aig65-axis="6AX"][data-aig49-active="true"]
+ .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"][data-aig92-reverse-map="ready"]
+ .simleft .aig92-stage>.aig92-camera-rail{
+ grid-column:1!important;grid-row:1!important
+}
+html[data-aig-project="AIGII"][data-aig65-axis="6AX"][data-aig49-active="true"]
+ .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"][data-aig92-reverse-map="ready"]
+ .simleft .aig92-stage>.aig92-telemetry{
+ grid-column:3!important;grid-row:1!important
+}
+@media(max-width:900px){
+ html[data-aig-project="AIGII"][data-aig65-axis="6AX"][data-aig49-active="true"]
+  .screen.active[data-page="6AX"][data-aig50-pane="view"] .simgrid[data-runtime="6AX"][data-aig92-reverse-map="ready"]
+  .simleft .aig92-stage>.sceneWrap{
+  height:100%!important;min-height:180px!important;max-height:none!important;
+  grid-column:2!important;grid-row:1!important
+ }
+ html[data-aig-project="AIGII"][data-aig65-axis="6AX"][data-aig49-active="true"]
+  .screen.active[data-page="6AX"][data-aig50-pane="tools"] .simgrid[data-runtime="6AX"][data-aig92-reverse-map="ready"]
+  .simleft .aig92-stage>.sceneWrap{display:none!important}
+}
