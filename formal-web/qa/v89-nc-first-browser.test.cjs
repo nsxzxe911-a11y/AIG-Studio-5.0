@@ -45,7 +45,9 @@ async function runCase(browser,mode){
   assert.equal(verified.gate,"DOM_PRESERVED","DOM switch evidence must preserve state");
   // The independent NC editor may import a pending 6AX draft by explicit action,
   // but does not automatically overwrite the saved main program.
-  await page.locator('.app>.top .nav button[data-page="NC"]').click();
+  // Top navigation is intentionally hidden in compact simulator layout.
+  // Use the original router rather than a hidden nav or a simulated CNC command.
+  await page.evaluate(()=>window.aigProductionPageRouter.navigateView("VIEW.NAV.NC"));
   await page.waitForSelector('.screen.active[data-page="NC"]');
   await page.locator('.screen.active [data-nc-axis]').selectOption("6AX");
   const importDraft=page.locator('.screen.active [data-command-id="NC_IMPORT_6AX_WORKING_COPY"]');
@@ -55,7 +57,7 @@ async function runCase(browser,mode){
    "independent NC explicit draft import did not transfer the program");
   assert.notEqual(await page.evaluate(()=>localStorage.getItem("aig-code-6AX")),value,
    "draft import must not silently overwrite the main NC program");
-  await page.locator('.app>.top .nav button[data-page="6AX"]').click();
+  await page.evaluate(()=>window.aigProductionPageRouter.navigateView("VIEW.NAV.6AX"));
   await page.waitForSelector('.screen.active[data-page="6AX"]');
   assert.equal(await page.locator('.screen.active textarea.code[data-axis="6AX"]').inputValue(),value,
    "6AX working state changed after visiting standalone NC");
