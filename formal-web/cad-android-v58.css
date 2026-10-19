@@ -1,0 +1,68 @@
+/* V58 independent Android CAD touch cockpit, responsive S23 portrait/landscape.
+   True canvas + real V50 view/tools tabs, never a screenshot-backed fake CAD. */
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .app{
+ width:100%!important;max-width:100%!important;min-width:0!important;margin:0 auto!important;
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .toolstrip{
+ height:40px!important;min-height:40px!important;max-height:40px!important;padding:2px!important;
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .toolstrip>.btn{
+ min-width:59px!important;height:33px!important;font-size:11px!important;padding:4px 7px!important
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .workgrid{
+ flex:1 1 0!important;display:flex!important;flex-direction:column!important;
+ gap:3px!important;height:0!important;min-height:0!important;overflow:hidden!important
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .workgrid>.panel{
+ display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+ width:100%!important;min-width:0!important;height:100%!important;min-height:0!important;
+ overflow:hidden!important
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"][data-aig50-pane="view"] .workgrid>.panel:not(:first-child),
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"][data-aig50-pane="tools"] .workgrid>.panel:first-child{
+ display:none!important
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .workgrid>.panel>.head{
+ min-height:30px!important;max-height:30px!important;flex:0 0 30px!important;padding:3px 8px!important
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .workgrid>.panel>.head small{
+ font-size:8px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .cadCanvasWrap{
+ flex:1 1 0!important;height:0!important;min-height:100px!important;max-height:none!important
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .cadHud span{
+ font-size:9px!important;padding:3px 5px!important
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .workgrid>.panel:first-child .controls{
+ min-height:39px!important;max-height:39px!important
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .workgrid>.panel:first-child .controls .btn{
+ min-width:63px!important;min-height:33px!important;height:33px!important
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"]>.aig49-dock{
+ flex:0 0 43px!important;height:43px!important;min-height:43px!important;
+ display:flex!important;order:99!important;margin-top:2px!important
+}
+html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"]>.aig49-dock button{
+ flex:1 1 0!important;min-height:35px!important;font-size:12px!important;
+}
+@media(orientation:landscape) and (max-height:540px){
+ html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .toolstrip{
+  height:33px!important;min-height:33px!important;max-height:33px!important
+ }
+ html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .toolstrip>.btn{
+  height:27px!important;min-height:27px!important;font-size:10px!important
+ }
+ html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .workgrid>.panel>.head{
+  flex:0 0 27px!important;min-height:27px!important;max-height:27px!important
+ }
+ html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"] .cadCanvasWrap{
+  min-height:69px!important
+ }
+ html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"]>.aig49-dock{
+  flex:0 0 34px!important;height:34px!important;min-height:34px!important
+ }
+ html[data-aig58-cad="true"][data-aig49-active="true"][data-aig58-platform="android"] .screen.active[data-page="CAD"]>.aig49-dock button{min-height:29px!important}
+}
+
