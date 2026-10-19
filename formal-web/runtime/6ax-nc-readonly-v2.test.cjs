@@ -10,6 +10,8 @@ test("parse G90 G0/G1 A/B with current axis states",()=>{const p=N.parse(src);as
 test("comments and line numbers",()=>{const p=N.parse("G90 G0 X0 (X88) ; Y100\nN2 G1 X10");assert.equal(p.ok,true);assert.equal(p.steps[1].target.X,10);assert.equal(p.steps[1].target.Y,0)});
 test("default C is NOT H",()=>{const p=N.parse("G90 G1 C45");assert.equal(p.ok,false);assert.equal(p.errors[0].code,"C_AXIS_UNMAPPED")});
 test("C mapping is explicit visual-only",()=>{const p=N.parse("G90 G0 A0 B0 C0\nG1 A90 B180 C45",{headWord:"C"});assert.equal(p.ok,true);assert.equal(p.steps[1].target.H,45);assert.match(p.headMapping,/VISUAL ONLY/);assert.equal(p.machineOutput,"BLOCKED")});
+test("unmapped C keeps manually chosen 45-degree head H",()=>{const p=N.parse("G90 G0 X0 A10 B20\nG1 X5 A20 B40",{initialH:45});assert.equal(p.ok,true);assert.equal(p.steps[0].target.H,45);assert.equal(p.steps[1].target.H,45);assert.match(p.warnings.join(" "),/45\.0/);});
+test("invalid initial H is blocked",()=>{assert.equal(N.parse("G90 G0 X1",{initialH:60}).ok,false);assert.equal(N.parse("G90 G0 X1",{initialH:NaN}).ok,false)});
 test("Fanuc H is tool length and not head angle",()=>{const p=N.parse("G90 G0 X0 H1");assert.equal(p.ok,false);assert.equal(p.errors[0].code,"FANUC_H_IS_TOOL_OFFSET")});
 test("G43 tool length is not simulated",()=>{const p=N.parse("G90 G43 H1 G0 Z30");assert.equal(p.ok,false)});
 test("G2 G3 G34 and G83 refuse",()=>{for(const s of ["G2 X1","G3 X1","G34 I20 J0 K6","G83 Z-20"])assert.equal(N.parse("G90 "+s).ok,false)});
