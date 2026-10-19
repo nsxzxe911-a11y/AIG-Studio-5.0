@@ -48,10 +48,14 @@
       }
     ],
     "filesAvailableInGitHub": false,
-    "binarySourceVerified": false,
-    "sourceArchiveStatus": "AWAITING_USER_EXPORT",
+    "binarySourceVerified": true,
+    "sourceArchiveStatus": "ZIP_UPLOADED_TO_GITHUB_CI_PENDING",
     "safeImportRoot": "formal-web/integrations/manus-v87/candidate/",
-    "originalRuntimeFilesProtected": true
+    "originalRuntimeFilesProtected": true,
+    "originalArchiveUploaded": true,
+    "archivePath": "formal-web/integrations/manus-v87/original/AIG_Manus_V87_Original_20261019.zip",
+    "archiveSHA256": "98f490dd4a8e8d3395b9c63cce96947443007f2ffdc89183d3b597723db12dd8",
+    "sourceFilesExtractOnCI": true
   },
   "routeContract": {
     "pages": [
@@ -97,7 +101,7 @@
     "noEngineeringShell": true
   },
   "gates": {
-    "externalSourceIntegrity": "BLOCKED_NOT_IMPORTED",
+    "externalSourceIntegrity": "SOURCE_SHA_VERIFIED_LOCALLY_CI_PENDING",
     "styleCompare": "PENDING_ACTUAL_FILES_AND_SCREENSHOTS",
     "buttonIdMapping": "PENDING_REAL_SOURCE",
     "clickCallbacks": "PENDING_CHROMIUM",
