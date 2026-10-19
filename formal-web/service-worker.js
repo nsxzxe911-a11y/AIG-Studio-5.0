@@ -17,7 +17,7 @@ const SHELL=[
   "./runtime/6ax-nc-readonly-v2.js",
   "./runtime/6ax-nc-bridge-v2.js"
 ];
-const MAX_DYNAMIC_ENTRIES=120;
+const MAX_DYNAMIC_ENTRIES=260;
 let pruneRunning=false;
 async function pruneDynamic(){
  if(pruneRunning)return;pruneRunning=true;
