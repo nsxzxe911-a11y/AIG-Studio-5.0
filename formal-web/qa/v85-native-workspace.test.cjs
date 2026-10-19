@@ -1,0 +1,11 @@
+"use strict";
+const fs=require("node:fs"),path=require("node:path"),assert=require("node:assert/strict");
+const base=path.resolve(__dirname,".."),read=p=>fs.readFileSync(path.join(base,p),"utf8");
+const html=read("mobile-runtime.html"),css=read("v85-native-workspace.css"),js=read("runtime/v85-design-links.js"),gallery=read("image-library.html");
+for(const path of ["./v85-native-workspace.css","./runtime/v85-design-links.js"])assert(html.includes(path),path+" MUST BE LOADED");
+for(const key of ['data-nc-action="VERIFY"','data-nc-action="SAVE"','data-tp-action="SIM"','data-tp-action="POST"','data-tp-canvas'])assert(html.includes(key),key+" native control missing");
+for(const path of ["nc_rgb_4k.webp","ai_rgb_4k.webp","toolpath_rgb_4k.webp"])assert(js.includes(path)&&gallery.includes(path),path+" live link missing");
+assert(css.includes('minmax(0,1fr)'),"NC and 3D viewport must be responsive");
+assert(!css.includes("pointer-events:none"),"Native CNC controls must remain operable");
+assert(js.includes("靜態圖片僅作外觀對照"),"Must distinguish reference imagery from live core");
+console.log("AIG_V85_NATIVE_NC_3D_LAYOUT_SOURCE_PASS | INTERACTIVE_SCREENSHOT_GATE_PENDING");
