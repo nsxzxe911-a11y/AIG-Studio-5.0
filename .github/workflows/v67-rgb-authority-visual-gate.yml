@@ -26,12 +26,21 @@ jobs:
         with:
           node-version: '22'
       - name: V66 original CNC / NC source contract
+        id: baseline_source
+        continue-on-error: true
         run: |
           set -euo pipefail
-          node formal-web/runtime/6ax-nc-readonly-v2.test.cjs
-          node formal-web/qa/v66-fast-gate.test.cjs
+          mkdir -p formal-web/qa/artifacts/v67
+          {
+            node formal-web/runtime/6ax-nc-readonly-v2.test.cjs
+            node formal-web/qa/v66-fast-gate.test.cjs
+          } 2>&1 | tee formal-web/qa/artifacts/v67/baseline-source.log
       - name: V67 Page ID / Button ID / Authority truthfulness gate
-        run: node formal-web/qa/v67-contract-gate.test.cjs
+        id: v67_source
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          node formal-web/qa/v67-contract-gate.test.cjs 2>&1 | tee formal-web/qa/artifacts/v67/v67-source.log
       - name: Install headless visual auditor
         working-directory: formal-web/qa
         run: npm install --no-audit --no-fund
@@ -77,11 +86,14 @@ jobs:
             s?'Chromium captures: '+s.captures.length:'No browser evidence available',
             s?'Known Authority missing: '+s.authority.missing:'Authority unresolved',
             s?'Issues: '+JSON.stringify(s.summary?.issues||{}):'Browser runtime failed',
+            'Baseline source: ${{ steps.baseline_source.outcome }}',
+            'V67 ID source: ${{ steps.v67_source.outcome }}',
             '',
             '**Release remains BLOCKED until all approved page/subpage RGB references, actual browser screenshots, callbacks and dual-project SHA Gate pass.**'
           ];
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,messages.join('\n')+'\n');
           if(!s)process.exit(1);
+          if('${{ steps.baseline_source.outcome }}'!=='success'||'${{ steps.v67_source.outcome }}'!=='success')process.exit(4);
           if(s.summary?.authorityGate!=='READY'||s.summary?.screenshotGate!=='CAPTURED_CHECK_WARNINGS')process.exit(2);
           if(s.summary?.semanticVisionGate!=='SEMANTIC_PASS')process.exit(3);
           process.exit(0);
