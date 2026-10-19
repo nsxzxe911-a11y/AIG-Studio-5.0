@@ -21,5 +21,7 @@ jobs:
         run: node --check formal-web/runtime/v82-ai-workflow.js
       - name: Prevent engineering proxies and preserve native AI
         run: node formal-web/qa/v83-formal-ui.test.cjs
+      - name: V84 actual binary image digest and format Gate
+        run: node formal-web/qa/v84-rgb-assets.test.cjs
       - name: Safety note
         run: echo "SOURCE_GATE_ONLY. Runtime visual, CNC material removal, and physical machine output are not certified."
