@@ -2,8 +2,8 @@
  * Critical entry assets only on installation; all other modules/assets cached
  * after on-demand use. Do NOT preload 3AX–6AX GLB/PBR or the full image library.
  * Original V65 runtime behaviors are unchanged. */
-const CACHE="aig-web-v66-rgb-shell-20261019-v1";
-const DYNAMIC="aig-web-v66-runtime-on-demand-20261019-v1";
+const CACHE="aig-web-v66-rgb-shell-20261019-v2";
+const DYNAMIC="aig-web-v66-runtime-on-demand-20261019-v2";
 const SHELL=[
   "./",
   "./index.html",
