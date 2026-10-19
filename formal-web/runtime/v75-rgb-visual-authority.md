@@ -1,8 +1,8 @@
-# AIG Dual Project — RGB Visual Authority / 2026-10-19
-Source: user-supplied CAD reference screenshot in conversation. This document is a design contract; image binary is not yet committed to the repository.
-Applies: AIG-II and AIG Studio 5.0, Web / Android / Windows.
+# AIG Dual Project — CAD Page RGB Authority / 2026-10-19
+Source: user-supplied **CAD page** screenshot in conversation. This is NOT the HOME authority or a universal full-page skin. This document is a design contract; image binary is not yet committed to the repository.
+Applies specifically to the CAD page of AIG-II and AIG Studio 5.0, Web / Android / Windows. Other pages share the RGB design language only; each requires its own page-specific authority.
 - Formal runtime must not expose engineering shell. Engineering diagnostics only via Settings > Maintenance > Engineering.
-- Desktop: top persistent HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC/AI navigation; left page-specific tools; central dominant working canvas; right properties/coordinates/actions; bottom status/layers/AI.
+- CAD desktop: top persistent HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC/AI navigation; left CAD drawing/editing tools; central dominant CAD drawing canvas; right CAD properties/coordinates/actions; bottom CAD status/layers/AI.
 - Mobile: rearrange panels into accessible tabs/drawers, never scale a desktop screenshot as the functional UI; preserve unobstructed canvas.
 - RGB glass aesthetic: near-black #020407, panels #07111B, cyan/blue/purple RGB accents, clear selected/pressed/disabled/alarm states.
 - All visual controls must be native interactive components mapped to stable Page ID / Button ID / Shared Command / callback / status. No image-only fake controls.
