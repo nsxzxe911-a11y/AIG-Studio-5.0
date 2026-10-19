@@ -12,9 +12,10 @@ const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,"..");
 const base=(process.env.AIG_V67_BASE_URL||"http://127.0.0.1:8765").replace(/\/$/,"");
 const out=path.resolve(process.env.AIG_V67_AUDIT_OUT||path.join(here,"artifacts","v67"));
-const [contract,authority]=await Promise.all([
+const [contract,authority,mobileSource]=await Promise.all([
  fs.readFile(path.join(root,"runtime/v67-page-subpage-contract.json"),"utf8").then(JSON.parse),
- fs.readFile(path.join(root,"authority/v67-authority-ledger.json"),"utf8").then(JSON.parse)
+ fs.readFile(path.join(root,"authority/v67-authority-ledger.json"),"utf8").then(JSON.parse),
+ fs.readFile(path.join(root,"authority/v67-mobile-approved-source-index.json"),"utf8").then(JSON.parse)
 ]);
 const profiles=[
  {id:"desktop_4k",platform:"DESKTOP",width:3840,height:2160,dpr:1,isMobile:false},
@@ -28,6 +29,9 @@ const all={schema:"AIG_V67_REAL_CHROMIUM_AUDIT_V1",created:new Date().toISOStrin
  contract:{pages:contract.pageCount,subpages:contract.pages.reduce((s,p)=>s+p.subpages.length,0)},
  authority:{totalMainPairs:authority.pagePlatforms.length,totalSubpagePairs:authority.subpagePlatforms.length,
   missing:authority.summary.missing,revoked:authority.revoked.count,
+  approvedMobileSourceIdentityCount:mobileSource.images.length,
+  native4KApprovedCount:0,
+  distinction:"AIG-II 10 CURRENT_APPROVED_MOBILE_NON4K sources are visually authoritative identities, but NOT native 4K Web runtime comparison PASS",
   styleReferenceOnly:true},
  captures:[],issues:[],profiles:[],consoleErrors:[],visionModelStatus:"NOT_CONNECTED",
  visualRelease:"BLOCKED_AUTHORITY_NOT_APPROVED",cncRelease:"BLOCKED",
@@ -102,6 +106,9 @@ async function inspectRuntime(page,id){
   return {id:n.dataset.aig67ButtonId||null,legacyId:n.dataset.buttonId||null,
    callback:n.dataset.aig67CallbackEvidence||"MISSING",
    issue:n.dataset.aig67Issue||null,
+   label:(n.getAttribute("aria-label")||n.textContent||"").trim().slice(0,55),
+   selectorEvidence:[...n.attributes].filter(a=>a.name.startsWith("data-")&&
+    !a.name.startsWith("data-aig67")).slice(0,7).map(a=>({name:a.name,value:a.value.slice(0,55)})),
    visible:r.width>0&&r.height>0&&sty.visibility!=="hidden"&&sty.display!=="none",
    withinScreen:r.top>=-3&&r.left>=-3&&r.bottom<=innerHeight+3&&r.right<=innerWidth+3,
    disabled:!!n.disabled,area:Math.round(r.width*r.height)};
@@ -213,8 +220,14 @@ async function profileRun(browser,profile){
     if(badRects.length)issue("TINY_INTERACTIVE_TARGET",profile.id,id,null,badRects.length+" visible controls <100px²","WARNING");
     if(info.errors.length)issue("RUNTIME_ALERT_VISIBLE",profile.id,id,null,info.errors.join(" ; "),"WARNING");
     const approved=authority.pagePlatforms.find(x=>x.pageId===spec.pageId&&x.platform===profile.platform);
-    if(!approved?.approved){result.authorityPending++;issue("PAGE_AUTHORITY_MISSING",profile.id,id,"MAIN",
-     "Exact approved RGB image/SHA is not registered; screenshot is evidence, not authority","BLOCKED")}
+    if(!approved?.approved){
+     const source=profile.platform==="MOBILE"?mobileSource.images.find(x=>x.pageId===spec.pageId):null;
+     result.authorityPending++;
+     issue("PAGE_AUTHORITY_MISSING",profile.id,id,"MAIN",source?
+      "Mobile approved source identity "+source.authorityId+" SHA-256 "+source.sha256+
+      " exists ("+source.width+"×"+source.height+"), but NO native-resolution/runtime screenshot Authority match is verified. Do not upscale or auto-promote.":
+      "No current exact platform-approved page runtime image/SHA comparison. Screenshot is evidence, not approved Authority.","BLOCKED");
+    }
     await screenshot(page,profile,id,"MAIN");
     for(const sub of spec.subpages){
      if(sub.kind==="PENDING"){
