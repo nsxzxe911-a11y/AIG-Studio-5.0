@@ -22,7 +22,7 @@ function perspective(ratio){const f=1/Math.tan(.83/2),m=new Float32Array(16),nea
 function compile(type,code){const s=gl.createShader(type);gl.shaderSource(s,code);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error("SHADER: "+gl.getShaderInfoLog(s));return s}
 function createShader(){
  const v=compile(gl.VERTEX_SHADER,"attribute vec3 p;attribute vec3 n;uniform mat4 mvp;uniform mat4 model;varying vec3 normal;varying float height;void main(){vec4 w=model*vec4(p,1.);normal=mat3(model)*n;height=w.z;gl_Position=mvp*vec4(p,1.);}");
- const f=compile(gl.FRAGMENT_SHADER,"precision mediump float;varying vec3 normal;varying float height;uniform vec3 color;void main(){vec3 N=normalize(normal);float lite=.25+.7*max(0.,dot(N,normalize(vec3(.35,-.68,.68))));float spec=pow(max(0.,dot(N,normalize(vec3(.7,-.3,.6)))),18.)*.25;vec3 c=color*(.38+lite)+vec3(.48,.75,1.)*spec;gl_FragColor=vec4(c,1.);}");
+ const f=compile(gl.FRAGMENT_SHADER,"precision mediump float;varying vec3 normal;varying float height;uniform vec3 color;void main(){vec3 N=normalize(normal);float lite=.48+.75*max(0.,dot(N,normalize(vec3(.35,-.68,.68))));float spec=pow(max(0.,dot(N,normalize(vec3(.7,-.3,.6)))),18.)*.42;float rim=pow(1.-abs(dot(N,normalize(vec3(0.,-.6,.75)))),3.)*.2;vec3 c=mix(color,vec3(.42,.63,.82),.38)*(.62+lite)+vec3(.55,.83,1.)*(spec+rim);gl_FragColor=vec4(c,1.);}");
  program=gl.createProgram();gl.attachShader(program,v);gl.attachShader(program,f);gl.linkProgram(program);
  if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error("LINK "+gl.getProgramInfoLog(program));
  gl.useProgram(program);return{p:gl.getAttribLocation(program,"p"),n:gl.getAttribLocation(program,"n"),mvp:gl.getUniformLocation(program,"mvp"),model:gl.getUniformLocation(program,"model"),color:gl.getUniformLocation(program,"color")};
@@ -85,7 +85,7 @@ function start(){
     if(canvas.width!==wpx||canvas.height!==hpx){canvas.width=wpx;canvas.height=hpx}
     gl.viewport(0,0,wpx,hpx);gl.enable(gl.DEPTH_TEST);
     gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-    const a=now*.00010,eye=[950*Math.cos(a)-780*Math.sin(a),950*Math.sin(a)+780*Math.cos(a),790];
+    const a=now*.00010,eye=[1660*Math.cos(a)-950*Math.sin(a),1660*Math.sin(a)+950*Math.cos(a),1080];
     const pv=mul(perspective(wpx/hpx),look(eye,[0,0,360]));
     for(const item of parts){
      gl.uniformMatrix4fv(uniforms.model,false,item.world);
