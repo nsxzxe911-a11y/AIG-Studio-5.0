@@ -1,0 +1,28 @@
+name: AIG V69 Source Intake Gate
+on:
+  push:
+    branches: [aig-web-v69-photo-to-finished-part]
+    paths:
+      - 'formal-web/**'
+      - '.github/workflows/v69-source-intake-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-intake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: V68 original 84 buttons and core regressions
+        run: |
+          node formal-web/qa/v68-button-layout.test.cjs
+          node formal-web/qa/v67-contract-gate.test.cjs
+      - name: V69 photo calibration and NC-first source gate
+        run: node formal-web/qa/v69-source-intake.test.cjs
+      - name: Explicit V69 safety boundary
+        run: |
+          echo 'V69 source UI contract only; PHOTO->CAD vectorization, CAM, SIM, NC validation and physical CNC machining NOT yet passed.'
