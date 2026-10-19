@@ -1,0 +1,538 @@
+{
+  "schema": "AIG_V67_PAGE_SUBPAGE_BUTTON_COMMAND_CONTRACT",
+  "version": "67.0.0",
+  "created": "2026-10-19",
+  "status": "IMPLEMENTATION_REGISTRY_NOT_RUNTIME_CERTIFICATION",
+  "projects": [
+    "AIG-II",
+    "AIG Studio 5.0"
+  ],
+  "pageCount": 11,
+  "policies": {
+    "uniqueStableIds": true,
+    "naming": "BTN.[PAGE].[SUBPAGE].[ACTION]",
+    "commandContract": "COMMAND.[PAGE].[SUBPAGE].[ACTION]",
+    "neverOverwriteExistingDataButtonId": true,
+    "neverReplaceCallbacks": true,
+    "missingCallback": "BLOCKED_UNVERIFIED",
+    "missingAuthority": "VISUAL_PENDING",
+    "engineeringShell": "FORBIDDEN",
+    "actual3dRequired": true,
+    "machineOutput": "BLOCKED_UNTIL_MACHINE_PROFILE_GATE",
+    "defaultStartPage": "portal index.html; intentionally separate from RGB CNC Runtime HOME",
+    "nativeTargets": {
+      "desktop": [
+        3840,
+        2160
+      ],
+      "mobile": [
+        1440,
+        3088
+      ]
+    },
+    "revokedRegistry": "visual-library/authority-revocations-438.json"
+  },
+  "pages": [
+    {
+      "pageId": "PAGE_START",
+      "id": "START",
+      "kind": "portal",
+      "route": "./index.html",
+      "subpages": [
+        {
+          "id": "SUBPAGE_START_LANDING",
+          "kind": "NAVIGABLE",
+          "selector": "#main-content",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_START_DUAL_PROJECTS",
+          "kind": "NAVIGABLE",
+          "selector": "#dual-projects",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_START_SITE_THEME",
+          "kind": "GROUP",
+          "selector": "[data-theme-choice]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_START_VISUAL_LIBRARY",
+          "kind": "EXTERNAL",
+          "selector": "a[href='./image-library.html']",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        }
+      ]
+    },
+    {
+      "pageId": "PAGE_HOME",
+      "id": "HOME",
+      "kind": "runtime",
+      "route": "#HOME",
+      "subpages": [
+        {
+          "id": "SUBPAGE_HOME_MAIN",
+          "kind": "NAVIGABLE",
+          "selector": "[data-home-runtime]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_HOME_PROJECTS",
+          "kind": "GROUP",
+          "selector": "[data-home-runtime] .aigProjects",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_HOME_SETTINGS",
+          "kind": "GROUP",
+          "selector": "[data-home-runtime] [data-open-page]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_HOME_SYNC",
+          "kind": "EXTERNAL",
+          "selector": "a[href='./project-sync.html']",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        }
+      ]
+    },
+    {
+      "pageId": "PAGE_CAD",
+      "id": "CAD",
+      "kind": "runtime",
+      "route": "#CAD",
+      "subpages": [
+        {
+          "id": "SUBPAGE_CAD_DRAW",
+          "kind": "GROUP",
+          "selector": "[data-cad-tool]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_CAD_MODIFY",
+          "kind": "GROUP",
+          "selector": "[data-cad-action]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_CAD_SNAP",
+          "kind": "GROUP",
+          "selector": "[data-cad-action='SNAP']",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_CAD_DIMENSION",
+          "kind": "GROUP",
+          "selector": "[data-cad-dim]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_CAD_LAYER",
+          "kind": "PENDING",
+          "selector": "[data-cad-layer]",
+          "action": null,
+          "status": "BLOCKED_UNIMPLEMENTED"
+        },
+        {
+          "id": "SUBPAGE_CAD_FILE",
+          "kind": "PENDING",
+          "selector": "[data-cad-file]",
+          "action": null,
+          "status": "BLOCKED_UNIMPLEMENTED"
+        },
+        {
+          "id": "SUBPAGE_CAD_VIEW",
+          "kind": "GROUP",
+          "selector": "[data-cad-canvas]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        }
+      ]
+    },
+    {
+      "pageId": "PAGE_CAM",
+      "id": "CAM",
+      "kind": "runtime",
+      "route": "#CAM",
+      "subpages": [
+        {
+          "id": "SUBPAGE_CAM_MANUAL",
+          "kind": "GROUP",
+          "selector": "[data-cam-manual-panel]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_CAM_AUTO",
+          "kind": "GROUP",
+          "selector": "[data-cam-strategy]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_CAM_TOOL",
+          "kind": "GROUP",
+          "selector": "[data-cam-tool]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_CAM_STRATEGY",
+          "kind": "GROUP",
+          "selector": "[data-cam-strategy]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_CAM_ENTRY_EXIT",
+          "kind": "GROUP",
+          "selector": "[data-cam-entry-x]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_CAM_FIXTURE",
+          "kind": "GROUP",
+          "selector": "[data-cam-avoid-enabled]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_CAM_PREVIEW",
+          "kind": "GROUP",
+          "selector": "[data-cam-canvas]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        }
+      ]
+    },
+    {
+      "pageId": "PAGE_SIM",
+      "id": "SIM",
+      "kind": "runtime",
+      "route": "#SIM",
+      "subpages": [
+        {
+          "id": "SUBPAGE_SIM_OVERVIEW",
+          "kind": "NAVIGABLE",
+          "selector": "[data-sim-hub]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_SIM_MATERIAL",
+          "kind": "GROUP",
+          "selector": "[data-sim-volume]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_SIM_COLLISION",
+          "kind": "GROUP",
+          "selector": "[data-sim-collision]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_SIM_PLAYBACK",
+          "kind": "GROUP",
+          "selector": "[data-sim-axis]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        }
+      ]
+    },
+    {
+      "pageId": "PAGE_3AX",
+      "id": "3AX",
+      "kind": "runtime",
+      "route": "#3AX",
+      "subpages": [
+        {
+          "id": "SUBPAGE_3AX_MACHINE",
+          "kind": "NAVIGABLE",
+          "selector": "[data-axis-subpage=\"MACHINE\"]",
+          "action": "data-axis-subpage",
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_3AX_NC_FIRST",
+          "kind": "NAVIGABLE",
+          "selector": "[data-axis-subpage=\"NC_FIRST\"]",
+          "action": "data-axis-subpage",
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_3AX_CAMERA",
+          "kind": "GROUP",
+          "selector": "[data-cmd=\"center\"]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_3AX_TOOL",
+          "kind": "GROUP",
+          "selector": "[data-tool-dia]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_3AX_COLLISION",
+          "kind": "GROUP",
+          "selector": "[data-verify]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        }
+      ]
+    },
+    {
+      "pageId": "PAGE_4AX",
+      "id": "4AX",
+      "kind": "runtime",
+      "route": "#4AX",
+      "subpages": [
+        {
+          "id": "SUBPAGE_4AX_MACHINE",
+          "kind": "NAVIGABLE",
+          "selector": "[data-axis-subpage=\"MACHINE\"]",
+          "action": "data-axis-subpage",
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_4AX_NC_FIRST",
+          "kind": "NAVIGABLE",
+          "selector": "[data-axis-subpage=\"NC_FIRST\"]",
+          "action": "data-axis-subpage",
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_4AX_CAMERA",
+          "kind": "GROUP",
+          "selector": "[data-cmd=\"center\"]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_4AX_TOOL",
+          "kind": "GROUP",
+          "selector": "[data-tool-dia]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_4AX_COLLISION",
+          "kind": "GROUP",
+          "selector": "[data-verify]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        }
+      ]
+    },
+    {
+      "pageId": "PAGE_5AX",
+      "id": "5AX",
+      "kind": "runtime",
+      "route": "#5AX",
+      "subpages": [
+        {
+          "id": "SUBPAGE_5AX_MACHINE",
+          "kind": "NAVIGABLE",
+          "selector": "[data-axis-subpage=\"MACHINE\"]",
+          "action": "data-axis-subpage",
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_5AX_NC_FIRST",
+          "kind": "NAVIGABLE",
+          "selector": "[data-axis-subpage=\"NC_FIRST\"]",
+          "action": "data-axis-subpage",
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_5AX_CAMERA",
+          "kind": "GROUP",
+          "selector": "[data-cmd=\"center\"]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_5AX_TOOL",
+          "kind": "GROUP",
+          "selector": "[data-tool-dia]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_5AX_COLLISION",
+          "kind": "GROUP",
+          "selector": "[data-verify]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        }
+      ]
+    },
+    {
+      "pageId": "PAGE_6AX",
+      "id": "6AX",
+      "kind": "runtime",
+      "route": "#6AX",
+      "subpages": [
+        {
+          "id": "SUBPAGE_6AX_MACHINE",
+          "kind": "NAVIGABLE",
+          "selector": "[data-axis-subpage=\"MACHINE\"]",
+          "action": "data-axis-subpage",
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_6AX_NC_FIRST",
+          "kind": "NAVIGABLE",
+          "selector": "[data-axis-subpage=\"NC_FIRST\"]",
+          "action": "data-axis-subpage",
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_6AX_CAMERA",
+          "kind": "GROUP",
+          "selector": "[data-cmd=\"center\"]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_6AX_TOOL",
+          "kind": "GROUP",
+          "selector": "[data-tool-dia]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_6AX_COLLISION",
+          "kind": "GROUP",
+          "selector": "[data-verify]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_6AX_ABC",
+          "kind": "GROUP",
+          "selector": "[data-aig6-axis]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_6AX_HEAD_TILT",
+          "kind": "GROUP",
+          "selector": "[data-aig6-axis=\"H\"]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        }
+      ]
+    },
+    {
+      "pageId": "PAGE_NC",
+      "id": "NC",
+      "kind": "runtime",
+      "route": "#NC",
+      "subpages": [
+        {
+          "id": "SUBPAGE_NC_EDITOR",
+          "kind": "NAVIGABLE",
+          "selector": "[data-nc-code]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_NC_KEYPAD",
+          "kind": "GROUP",
+          "selector": "[data-nc-key]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_NC_PARSER",
+          "kind": "GROUP",
+          "selector": "[data-nc-action=\"VERIFY\"]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_NC_FANUC_POST",
+          "kind": "PENDING",
+          "selector": "[data-nc-post]",
+          "action": null,
+          "status": "BLOCKED_UNIMPLEMENTED"
+        },
+        {
+          "id": "SUBPAGE_NC_SUBPROGRAM",
+          "kind": "PENDING",
+          "selector": "[data-nc-subprogram]",
+          "action": null,
+          "status": "BLOCKED_UNIMPLEMENTED"
+        },
+        {
+          "id": "SUBPAGE_NC_SAFETY",
+          "kind": "GROUP",
+          "selector": "[data-nc-alarm]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        }
+      ]
+    },
+    {
+      "pageId": "PAGE_AI",
+      "id": "AI",
+      "kind": "runtime",
+      "route": "#AI",
+      "subpages": [
+        {
+          "id": "SUBPAGE_AI_ASSISTANT",
+          "kind": "NAVIGABLE",
+          "selector": "[data-ai-page-runtime]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_AI_CAD_REVIEW",
+          "kind": "GROUP",
+          "selector": "[data-open-page=\"CAD\"]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_AI_CAM_REVIEW",
+          "kind": "GROUP",
+          "selector": "[data-open-page=\"CAM\"]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_AI_NC_REVIEW",
+          "kind": "GROUP",
+          "selector": "[data-open-page=\"NC\"]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        },
+        {
+          "id": "SUBPAGE_AI_WORKFLOW",
+          "kind": "GROUP",
+          "selector": "[data-ai-command]",
+          "action": null,
+          "status": "DOM_CANDIDATE_REQUIRES_RUNTIME_TEST"
+        }
+      ]
+    }
+  ]
+}
