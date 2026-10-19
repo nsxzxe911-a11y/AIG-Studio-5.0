@@ -1,0 +1,61 @@
+/* V61 Android SIM: single-axis evidence card, 3AX/4AX/5AX/6AX real nav.
+   This is an evidence console; 3D action runs in the linked axis Runtime. */
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .app{
+ max-width:100%!important;width:100%!important;min-width:0!important;margin:0 auto!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] [data-sim-hub]{
+ grid-template-rows:minmax(0,.85fr) 37px minmax(0,1.8fr) auto!important;
+ gap:5px!important;padding:3px!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimHero .head small,
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimOverview p{
+ display:none!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimHero>.body{
+ padding:4px 6px!important;gap:3px!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimOverview{
+ display:flex!important;flex-wrap:wrap!important;gap:4px!important;justify-content:center!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimOverview h3{
+ font-size:12px!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimActions .btn{
+ min-height:30px!important;min-width:68px!important;padding:3px 6px!important;font-size:10px!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aig61-axisnav button{
+ min-height:33px!important;font-size:11px!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimCards{
+ display:flex!important;flex-direction:column!important;gap:0!important;
+ grid-template-columns:none!important;grid-template-rows:none!important;
+ overflow:hidden!important;min-height:0!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimCards>.aigSimCard{
+ display:none!important;flex:1 1 0!important;height:100%!important;max-height:100%!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] [data-sim-card="3AX"]:is([data-aig61-selected]){display:flex!important}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimCards>.aigSimCard[data-aig61-selected="true"]{
+ display:flex!important;overflow:auto!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimMetrics>div{
+ padding:5px 7px!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimMetrics small{
+ font-size:10px!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimMetrics b{
+ font-size:14px!important
+}
+@media(orientation:landscape) and (max-height:510px){
+ html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] [data-sim-hub]{
+  grid-template-rows:42px 32px minmax(0,1fr) auto!important;gap:3px!important
+ }
+ html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimHero>.head{
+  display:none!important
+ }
+ html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimSource{display:none!important}
+ html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimCardNote{display:none!important}
+ html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="android"] .screen.active[data-page="SIM"] .aigSimMetrics>div{padding:2px 5px!important}
+}
+

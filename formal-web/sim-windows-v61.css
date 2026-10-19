@@ -1,0 +1,27 @@
+/* V61 Windows Desktop SIM/4K: real machine evidence 2x2 matrix,
+   read-only state from axis Runtime, one click launches full machine view. */
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="windows"] .screen.active[data-page="SIM"] [data-sim-hub]{
+ grid-template-rows:minmax(0,.72fr) minmax(0,2.45fr) auto!important;
+ gap:10px!important;padding:clamp(7px,.8vw,15px)!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="windows"] .screen.active[data-page="SIM"] .aig61-axisnav{
+ display:none!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="windows"] .screen.active[data-page="SIM"] .aigSimCards{
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ grid-template-rows:repeat(2,minmax(0,1fr))!important;gap:10px!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="windows"] .screen.active[data-page="SIM"] .aigSimCard{
+ gap:clamp(4px,.65vw,13px)!important;padding:clamp(8px,1vw,17px)!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="windows"] .screen.active[data-page="SIM"] .aigSimCardNote{
+ -webkit-line-clamp:1!important
+}
+html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="windows"] .screen.active[data-page="SIM"] .aigSimMetrics b{
+ font-size:clamp(11px,1.05vw,17px)!important
+}
+@media(max-height:630px){
+ html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="windows"] .screen.active[data-page="SIM"] .aigSimCardNote{display:none!important}
+ html[data-aig61-sim="true"][data-aig49-active="true"][data-aig61-platform="windows"] .screen.active[data-page="SIM"] .aigSimMetrics>div{padding:2px 6px!important}
+}
+

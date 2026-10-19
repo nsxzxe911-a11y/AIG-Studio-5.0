@@ -1,0 +1,19 @@
+{
+  "release": "61.0.0",
+  "source": "PARITY_AND_SYNTAX_PASS",
+  "projects": [
+    "AIG-II",
+    "Studio 5.0"
+  ],
+  "axes": [
+    "3AX",
+    "4AX",
+    "5AX",
+    "6AX"
+  ],
+  "materialRemoval": "LIVE_READ_ONLY",
+  "noFakeReady": true,
+  "realDevice": "PENDING",
+  "native": "NOT_BUILT",
+  "machineOutput": "DISABLED"
+}

@@ -203,7 +203,10 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./cad-windows-v58.css">
 <link rel="stylesheet" href="./cam-common-v60.css">
 <link rel="stylesheet" href="./cam-android-v60.css">
-<link rel="stylesheet" href="./cam-windows-v60.css"></head>
+<link rel="stylesheet" href="./cam-windows-v60.css">
+<link rel="stylesheet" href="./sim-common-v61.css">
+<link rel="stylesheet" href="./sim-android-v61.css">
+<link rel="stylesheet" href="./sim-windows-v61.css"></head>
 <body>
 <div class="aig-studio-v375-portal-link" role="navigation"><a href="./index.html#dual-projects">← 回 AIG-II 科技網站</a><span>STUDIO 原生 375 · Web 共同 V43 · 本機資料與原工作站分開</span><a href="./dual-project-latest.html">雙專案版本與原始碼 ↗</a></div>
 <div class="app">
@@ -381,9 +384,57 @@ function makeAiRuntime(root){
 }
 
 function simHubPage(){
- return '<div data-sim-hub><section class="panel"><div class="head"><div><h2>SIM 模擬中心</h2><small>共用現有真 3D / 材料移除 Runtime，不建立假模擬</small></div></div><div class="body">'+
- '<div class="menuGrid">'+["3AX","4AX","5AX","6AX"].map(a=>'<button class="menuCard" data-open-page="'+a+'" data-sim-axis="'+a+'"><b>'+a+'</b><span data-sim-state="'+a+'">READY</span></button>').join("")+'</div>'+
- '<div class="notice" style="margin-top:9px">選擇軸數後進入同一套 G-code / WebGL / 碰撞 / 材料移除 Runtime。</div></div></section></div>';
+ const axisCard=axis=>
+ '<article class="aigSimCard" data-sim-card="'+axis+'" data-button-id="BTN_SIM_CARD_'+axis+'" data-command-id="OPEN_'+axis+'">'+
+ '<div class="aigSimCardHead"><strong>'+axis+'</strong><span class="aigSimState" data-sim-state="'+axis+'">未解析</span></div>'+
+ '<div class="aigSimMetrics">'+
+ '<div><small>解析區塊</small><b data-sim-blocks="'+axis+'">—</b></div>'+
+ '<div><small>已移除材料</small><b data-sim-volume="'+axis+'">—</b></div>'+
+ '<div><small>碰撞與警示</small><b data-sim-collision="'+axis+'">—</b></div>'+
+ '<div><small>加工進度</small><b data-sim-progress="'+axis+'">—</b></div></div>'+
+ '<p class="aigSimCardNote" data-sim-description="'+axis+'">等待讀取目前 Web 加工狀態</p>'+
+ '<button class="btn" type="button" data-open-page="'+axis+'" data-sim-axis="'+axis+'" data-button-id="BTN_SIM_OPEN_'+axis+'" data-command-id="NAV_'+axis+'">進入 '+axis+' 真正模擬頁 ↗</button>'+
+ '</article>';
+ return '<div data-sim-hub class="aigSimWorkbench" data-page-id="PAGE_SIM" data-subpage-id="SIM.OVERVIEW">'+
+ '<section class="panel aigSimHero"><div class="head"><div><h2>SIM 加工模擬中心</h2><small>依 3～6 軸讀取真正的解析、材料移除與碰撞狀態</small></div></div>'+
+ '<div class="body"><div class="aigSimOverview"><div><span class="aigSimEyebrow">SIM RUNTIME • LOCAL FIRST</span><h3>加工狀態總覽</h3><p>顯示實際 WebGL 模擬證據；畫面解析度不等於 0.001 mm 材料幾何精度。沒有真機許可。</p></div>'+
+ '<div class="aigSimActions"><button class="btn play" type="button" data-sim-refresh data-button-id="BTN_SIM_REFRESH" data-command-id="SIM_STATUS_REFRESH">更新資料</button>'+
+ '<button class="btn" type="button" data-open-page="CAM">開啟 CAM</button><button class="btn" type="button" data-open-page="AI">AI 檢查</button></div></div>'+
+ '<div class="aigSimSource"><span>已保存 CAM</span><strong data-sim-cam-count>讀取中</strong><small data-sim-cam-source>狀態尚未載入</small></div>'+
+ '</div></section>'+
+ '<div class="aigSimCards">'+["3AX","4AX","5AX","6AX"].map(axisCard).join("")+'</div>'+
+ '<div class="aigSimEvidence" role="status" aria-live="polite" data-sim-summary>讀取本機 Web 模擬資料中…</div>'+
+ '<p class="aigSimDisclaimer">這裡的刀路與材料移除只屬 Web 模擬。碰撞提示為可供檢查的證據，不會自動批准 NC，也不會啟動實體機台。</p></div>';
+}
+function aiPage(){
+ return '<div data-ai-page-runtime class="aigAiCockpit" data-page-id="PAGE_AI" data-subpage-id="AI.MAIN">'+
+ '<section class="aiHero panel">'+
+ '<div class="aiHeroTop"><span class="aiEyebrow">AIG-II · AI ORCHESTRATOR V2</span><span class="aiSafePill">本機分析 · 真機輸出關閉</span></div>'+
+ '<h2>AI 加工助手</h2><p>整合 CAD、CAM、SIM、3～6 軸與 NC 的本機資料，規劃加工路線、找出缺口，並返回對應模組。無網路也可使用。</p>'+
+ '<div class="aiHeroActions"><a href="#CAD" data-open-page="CAD">CAD 設計</a><a href="#CAM" data-open-page="CAM">CAM 刀路</a><a href="#SIM" data-open-page="SIM">SIM 模擬</a><a href="#NC" data-open-page="NC">NC 編輯</a></div>'+
+ '</section>'+
+ '<div class="aiWorkbench">'+
+ '<section class="panel aiInputs"><div class="head"><h2>加工條件</h2><small>已保存的 Web 專案資料 · 不自動修改</small></div><div class="body">'+
+ '<div class="aiFields"><label class="field"><b>目標軸數</b><select data-ai-axis><option value="3AX">3AX / XYZ</option><option value="4AX">4AX / XYZA</option><option value="5AX">5AX / XYZAB</option><option value="6AX">6AX / XYZABC</option></select></label>'+
+ '<label class="field"><b>加工目標</b><select data-ai-objective><option value="FASTEST_SAFE">最快安全路線</option><option value="MIN_REWORK">最少重工</option><option value="MIN_TOOL_CHANGES">最少換刀（規劃）</option></select></label></div>'+
+ '<div class="aiSource"><div><strong>目前資料</strong><p data-ai-data aria-live="polite">讀取目前裝置中…</p></div><button class="btn" type="button" data-ai-refresh data-button-id="BTN_AI_REFRESH" data-command-id="AI_CONTEXT_REFRESH">重新掃描</button></div>'+
+ '<div class="aiControls">'+
+ '<button class="btn play" type="button" data-ai-command="AI.PLAN.BUILD">建立方案</button>'+
+ '<button class="btn" type="button" data-ai-command="AI.PLAN.OPTIMIZE">優化路線</button>'+
+ '<button class="btn" type="button" data-ai-command="AI.ASSIST.EXPLAIN">說明</button>'+
+ '<button class="btn" type="button" data-ai-command="AI.AUDIT.RUN">安全預檢</button>'+
+ '<button class="btn" type="button" data-ai-command="AI.RECOVERY.REPLAN">重新規劃</button>'+
+ '</div><p class="aiHint">AI 會讀取本機已儲存的加工資料。若尚未建立專案，仍會顯示起始流程與待辦；沒有通過真材料移除、碰撞與 NC Gate 之前，不標示加工完成。</p>'+
+ '</div></section>'+
+ '<section class="panel aiResults"><div class="head"><h2>工作結果</h2><small data-ai-blocker-count>尚未預檢</small></div><div class="body">'+
+ '<div class="aiResultStatus" data-ai-status role="status" aria-live="polite">AI 已就緒，點「建立方案」開始。</div>'+
+ '<div class="aiResultLine" data-ai-result>本機流程規劃 · 未連接真機</div>'+
+ '<div class="aiEvidence" data-ai-detail><span class="aiDataPill">等待讀取</span></div>'+
+ '<h3 class="aiSectionTitle">加工流程</h3><ol class="aiStages" data-ai-stages><li class="aiPlaceholder">規劃後會顯示每一步的真正工作流程。</li></ol>'+
+ '<h3 class="aiSectionTitle">缺口與安全檢查</h3><ul class="aiFindings" data-ai-issues><li class="aiPlaceholder">尚未進行檢查。</li></ul>'+
+ '</div></section></div>'+
+ '<div class="aiFooterInfo">目前提供離線規則型加工規劃與安全預檢，不是雲端對話模型。尚未接通雲端 AI 帳號，也不自動產生已驗證的材料移除或 NC 指令。</div>'+
+ '</div>';
 }
 function ncPage(){
  const keyRows=[
@@ -399,6 +450,12 @@ function ncPage(){
  '<section class="panel"><div class="head"><h3>NC 狀態 / 游標說明</h3></div><div class="body ncCursor"><div class="field"><b>游標</b><span data-nc-cursor>LINE 1</span></div><div class="field"><b>Cursor-Line CNC Help</b><span data-nc-help>移動游標即可查看目前行 G/M 說明。</span></div><div class="field"><b>解析區塊</b><span data-nc-blocks>0</span></div><div class="field"><b>責任範圍</b><span>NC 只處理 G-code；碰撞 / Setup / 3D 穩定性請到 SIM 進階者模式。</span></div><div class="notice">Block Skip 會切換目前行行首 /；M00 / M01 / Dry Run / Single Block 於 SIM 執行。</div><div class="ncShortcut">快捷：Ctrl+S 儲存 • Ctrl+Enter 驗證 • Alt+I INSERT • Alt+D DELETE • Alt+B BLOCK SKIP</div></div></section></div></div>';
 }
 
+const AIG_AXIS_MODULES=Object.freeze({
+ "3AX":Object.freeze({name:"三軸立式銑削",kinematic:"X / Y / Z",machine:"XYZ VMC・虎鉗工作台",accent:"#54ddff",subpages:["MACHINE","NC_FIRST"],machineId:"AIG-3AX-MACHINE",ncId:"AIG-3AX-NC-FIRST"}),
+ "4AX":Object.freeze({name:"四軸臥式旋轉",kinematic:"X / Y / Z / A",machine:"臥式 A 軸卡盤・分度／連續",accent:"#6c9dff",subpages:["MACHINE","NC_FIRST"],machineId:"AIG-4AX-MACHINE",ncId:"AIG-4AX-NC-FIRST"}),
+ "5AX":Object.freeze({name:"五軸搖籃加工",kinematic:"X / Y / Z / A / B",machine:"A/B 雙旋轉搖籃・葉輪加工視圖",accent:"#ce91ff",subpages:["MACHINE","NC_FIRST"],machineId:"AIG-5AX-MACHINE",ncId:"AIG-5AX-NC-FIRST"}),
+ "6AX":Object.freeze({name:"六軸直立式搖籃",kinematic:"X / Y / Z / A / B / C",machine:"直立式 Z 軸主軸・獨臂搖籃・ABC 工件旋轉",accent:"#ffc16a",subpages:["MACHINE","NC_FIRST"],machineId:"AIG-6AX-MACHINE",ncId:"AIG-6AX-NC-FIRST"})
+});
 function simPage(axis){
  const v35Names={ "3AX":"立式 XYZ／虎鉗加工","4AX":"臥式 A 軸卡盤／分度","5AX":"A／B 雙側搖籃／傾斜加工","6AX":"直立單臂 A／B／C 搖籃"};
  const axes=axis==="3AX"?["X","Y","Z"]:axis==="4AX"?["X","Y","Z","A"]:axis==="5AX"?["X","Y","Z","A","B"]:["X","Y","Z","A","B","C"];
@@ -2375,10 +2432,53 @@ function makeHomeRuntime(root){
  root.refresh=refresh;
 }
 function makeSimHubRuntime(root){
- function refresh(){["3AX","4AX","5AX","6AX"].forEach(a=>{const s=runtimes[a],e=root.querySelector('[data-sim-state="'+a+'"]');if(e)e.textContent=s?(s.running?"RUN":s.collisionAlarm?"ALARM":"READY"):"READY"})}
- refresh();setInterval(refresh,700);
-}
-function ncHelpForLine(line){
+ const AXES=["3AX","4AX","5AX","6AX"];
+ const find=(field,axis)=>root.querySelector('[data-sim-'+field+'="'+axis+'"]');
+ const sample=axis=>{
+  const state=runtimes[axis];
+  if(!state||!state.parsed)return {state:"未就緒",blocks:"—",volume:"—",collision:"—",progress:"—",description:"此軸的 Runtime 尚未初始化。"};
+  const errors=state.parsed.errors||[],warnings=state.parsed.warnings||[],blocks=state.parsed.blocks||[];
+  const collisionCount=(state.collisions||[]).length+(state.collisionAlarm?1:0);
+  const volume=state.root?.querySelector("[data-removal-volume]")?.textContent||"未取得";
+  const progress=blocks.length?Math.max(0,Math.min(100,((state.index||0)+(state.t||0))/blocks.length*100)).toFixed(1)+"%":"0.0%";
+  const isDry=Boolean(state.dry);
+  let userProgram=false;try{userProgram=localStorage.getItem("aig-code-"+axis)!==null}catch(_){}
+  return{
+   state:errors.length?"解析錯誤":state.collisionAlarm?"碰撞警示":state.running?"執行中":isDry?"空跑模式":state.index>=blocks.length&&blocks.length?"模擬結束":"待操作",
+   blocks:blocks.length+" 塊",volume:isDry?"空跑 / 0 mm³":volume,
+   collision:errors.length?errors.length+" 個解析錯誤":collisionCount?collisionCount+" 項待檢":"0 項（僅預檢）",
+   progress,
+   description:errors.length?"請到 "+axis+" 的 G-code 編輯欄修正，原程式不刪除":
+    collisionCount?"發現碰撞／裝夾相關提示，請到軸頁查看":
+    (userProgram?"已保存 G-code 的 Web 模擬；仍需正式驗證":"目前顯示內建範例程式；不是你儲存的加工專案"),
+   errors:errors.length,collisions:collisionCount,hasBlocks:blocks.length>0,userProgram
+  };
+ };
+ function refresh(){
+  let count=0,attention=0,userCount=0;
+  for(const axis of AXES){
+   const value=sample(axis);if(value.hasBlocks)count++;if(value.userProgram)userCount++;if(value.errors||value.collisions)attention++;
+   for(const field of ["state","blocks","volume","collision","progress"]){
+    const node=find(field,axis);if(node)node.textContent=value[field];
+   }
+   const description=find("description",axis);if(description)description.textContent=value.description;
+   const card=find("card",axis);if(card)card.setAttribute("data-sim-attention",value.errors||value.collisions?"true":"false");
+  }
+  let cam=null;try{cam=JSON.parse(localStorage.getItem("aig-cam-toolpath-v1")||"null")}catch(_){}
+  const paths=Array.isArray(cam?.paths)?cam.paths:[];
+  const countEl=root.querySelector("[data-sim-cam-count]");if(countEl)countEl.textContent=paths.length+" 條刀路";
+  const sourceEl=root.querySelector("[data-sim-cam-source]");if(sourceEl)sourceEl.textContent=paths.length?
+    "來源 "+(cam.source||cam.params?.routeMode||"CAD")+" · 尚未完成 SIM 驗證":"未保存 CAM 刀路；可直接使用各軸 NC-first";
+  const summary=root.querySelector("[data-sim-summary]");
+  if(summary)summary.textContent=count+" 個軸頁有可解析程式（其中 "+userCount+" 個軸頁使用已儲存 G-code），"+attention+" 個軸頁待處理警示。未保存時顯示範例，沒有真機驗收。";
+ }
+ root.querySelector("[data-sim-refresh]")?.addEventListener("click",refresh);
+ window.addEventListener("aig-cam-updated",refresh);
+ window.addEventListener("aig-stock-updated",refresh);
+ refresh();
+ const timer=setInterval(()=>{if(!document.hidden)refresh()},1200);
+ root.aigSimApi={refresh,sample,stop:()=>clearInterval(timer)};
+}function ncHelpForLine(line){
  const u=String(line||"").toUpperCase(),tips=[];
  const rules=[[/\bG90\b/,"G90 絕對座標"],[/\bG91\b/,"G91 增量座標"],[/\bG54\b/,"G54 工作座標"],[/\bG55\b/,"G55 工作座標"],[/\bG43\b/,"G43 刀長補償 +H"],[/\bG49\b/,"G49 取消刀長補償"],[/\bG41\b/,"G41 左刀補"],[/\bG42\b/,"G42 右刀補"],[/\bG40\b/,"G40 取消刀補"],[/\bG0\b/,"G0 快速定位"],[/\bG1\b/,"G1 直線進給"],[/\bG2\b/,"G2 順時針圓弧"],[/\bG3\b/,"G3 逆時針圓弧"],[/\bG8[134]\b/,"G81/G83/G84 固定循環"],[/\bG73\b/,"G73 高速啄鑽"],[/\bG92\b/,"G92 座標設定"],[/\bM6\b/,"M6 換刀"],[/\bM8\b/,"M8 冷卻液 ON"],[/\bM9\b/,"M9 冷卻液 OFF"],[/\bM98\b/,"M98 呼叫子程式 P"],[/\bM99\b/,"M99 子程式返回"],[/\bM0\b|\bM00\b/,"M00 程式停止"],[/\bM1\b|\bM01\b/,"M01 選擇停止"],[/^\s*\//,"/ Block Skip 行"]];
  for(const [re,msg] of rules)if(re.test(u))tips.push(msg);
@@ -3631,5 +3731,6 @@ aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash
 <script src="./simulator-shell-v55.js"></script>
 <script src="./home-stage-v57.js"></script>
 <script src="./cad-page-v58.js"></script>
-<script src="./cam-page-v60.js"></script></body>
+<script src="./cam-page-v60.js"></script>
+<script src="./sim-page-v61.js"></script></body>
 </html>

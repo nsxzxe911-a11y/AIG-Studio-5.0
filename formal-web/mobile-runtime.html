@@ -212,7 +212,10 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./cad-windows-v58.css">
 <link rel="stylesheet" href="./cam-common-v60.css">
 <link rel="stylesheet" href="./cam-android-v60.css">
-<link rel="stylesheet" href="./cam-windows-v60.css"></head>
+<link rel="stylesheet" href="./cam-windows-v60.css">
+<link rel="stylesheet" href="./sim-common-v61.css">
+<link rel="stylesheet" href="./sim-android-v61.css">
+<link rel="stylesheet" href="./sim-windows-v61.css"></head>
 <body>
 <div class="app">
 <header class="top">
@@ -351,7 +354,7 @@ function simHubPage(){
  '<div><small>碰撞與警示</small><b data-sim-collision="'+axis+'">—</b></div>'+
  '<div><small>加工進度</small><b data-sim-progress="'+axis+'">—</b></div></div>'+
  '<p class="aigSimCardNote" data-sim-description="'+axis+'">等待讀取目前 Web 加工狀態</p>'+
- '<button class="btn" type="button" data-open-page="'+axis+'" data-sim-axis="'+axis+'">進入 '+axis+' 真正模擬頁 ↗</button>'+
+ '<button class="btn" type="button" data-open-page="'+axis+'" data-sim-axis="'+axis+'" data-button-id="BTN_SIM_OPEN_'+axis+'" data-command-id="NAV_'+axis+'">進入 '+axis+' 真正模擬頁 ↗</button>'+
  '</article>';
  return '<div data-sim-hub class="aigSimWorkbench" data-page-id="PAGE_SIM" data-subpage-id="SIM.OVERVIEW">'+
  '<section class="panel aigSimHero"><div class="head"><div><h2>SIM 加工模擬中心</h2><small>依 3～6 軸讀取真正的解析、材料移除與碰撞狀態</small></div></div>'+
@@ -3759,5 +3762,6 @@ aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash
 <script src="./simulator-shell-v55.js"></script>
 <script src="./home-stage-v57.js"></script>
 <script src="./cad-page-v58.js"></script>
-<script src="./cam-page-v60.js"></script></body>
+<script src="./cam-page-v60.js"></script>
+<script src="./sim-page-v61.js"></script></body>
 </html>

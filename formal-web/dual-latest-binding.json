@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V60 CAM third-page real CNC simulator cockpit; separate Android/Windows responsive layout; 9 strategies and 5 original actions, MANUAL mode shortcut dispatches real select change, CALC/APPLY delegate existing callbacks, real preview redraw; no NC/machine output or fake toolpath.",
+  "notes": "Web V61 fourth-page SIM: AIG-II and Studio share exact read-only real axis runtime evidence hub, fail-closed uninitialized status; independent phone/Desktop skins. G-code, cutting and NC untouched; no autoplay or machine output.",
   "sharedWebRelease": {
-    "version": "60.0.0",
-    "train": "V60",
+    "version": "61.0.0",
+    "train": "V61",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "60.0.0"
+        "version": "61.0.0"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "60.0.0"
+        "version": "61.0.0"
       }
     ],
     "commonRuntimeSource": "./dual-web-v43.js",
     "commonUiSource": "./dual-web-v43.css",
-    "releaseManifest": "./dual-web-v60.json",
+    "releaseManifest": "./dual-web-v61.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",
