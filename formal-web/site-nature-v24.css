@@ -1,3 +1,4 @@
+@import url("./v67-4k-public.css");
 /* AIG-II site V24: editorial nature scenes, NOT CNC Runtime/Authority UI. Static SVGs work offline.
    Saved choice affects only informational pages that include this stylesheet. */
 html[data-site-theme="forest"]{--aig-nature-scene:url("./site-themes/forest-dawn.svg");--aig-nature-tint:#81d8b2;--aig-nature-line:#518f86;--aig-nature-glow:#174e4b}
