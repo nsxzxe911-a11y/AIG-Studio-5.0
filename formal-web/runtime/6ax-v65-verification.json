@@ -1,0 +1,12 @@
+{
+  "version": "65.0.0",
+  "page": "6AX",
+  "source": "PASS",
+  "axes": "XYZABC",
+  "originalRealControlsPerProject": 20,
+  "realMaterialRemoval": "ENGINE_PRESERVED_NOT_REVERIFIED",
+  "desktopActualViewport": "LAYOUT_ONLY_VISUAL_PENDING",
+  "mobileS23": "LAYOUT_ONLY_VISUAL_PENDING",
+  "machineOutput": "DISABLED",
+  "native": "NOT_BUILT"
+}
