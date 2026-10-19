@@ -15,7 +15,7 @@ function look(eye,target){
  const norm=v=>{const n=Math.hypot(...v)||1;return v.map(x=>x/n)};
  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
  const z=norm(eye.map((v,i)=>v-target[i])),x=norm(cross([0,0,1],z)),y=cross(z,x);
- const m=I();for(let i=0;i<3;i++){m[i]=x[i];m[4+i]=y[i];m[8+i]=z[i]}
+ const m=I();for(let i=0;i<3;i++){m[i*4]=x[i];m[i*4+1]=y[i];m[i*4+2]=z[i]}
  m[12]=-x.reduce((v,e,i)=>v+e*eye[i],0);m[13]=-y.reduce((v,e,i)=>v+e*eye[i],0);m[14]=-z.reduce((v,e,i)=>v+e*eye[i],0);return m;
 }
 function perspective(ratio){const f=1/Math.tan(.83/2),m=new Float32Array(16),near=3,far=7000;m[0]=f/ratio;m[5]=f;m[10]=(far+near)/(near-far);m[11]=-1;m[14]=2*far*near/(near-far);return m}
@@ -102,6 +102,6 @@ function start(){
   }).catch(e=>{canvas.dataset.aig93Glb="error";if(label)label.textContent="GLB 外觀預覽未就緒 · 請進入 6AX 真工作區";});
  }catch(e){canvas.dataset.aig93Glb="error";if(label)label.textContent="WebGL 不可用 · 真工作區仍可操作";}
 }
-if(d.readyState==="loading")d.addEventListener("DOMContentLoaded",()=>w.addEventListener("aig93-home-mounted",start,{once:true}));
+if(d.readyState==="loading")d.addEventListener("DOMContentLoaded",()=>{w.addEventListener("aig93-home-mounted",start,{once:true});if(d.querySelector('.screen[data-page="HOME"] [data-aig93-glb]'))start()});
 else {w.addEventListener("aig93-home-mounted",start,{once:true});if(d.querySelector('.screen[data-page="HOME"] [data-aig93-glb]'))start()}
 })(window,document);
