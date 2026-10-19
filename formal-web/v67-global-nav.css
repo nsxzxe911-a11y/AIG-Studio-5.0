@@ -1,7 +1,8 @@
 /* V67 CNC global navigation is a real router command, compact and closed by default.
  * Existing V65 nav stays untouched; no cover on the large 3D viewport. */
-.app>.top{overflow:visible!important;isolation:isolate}
-.aig67-global-nav{position:relative;order:6;flex:0 0 auto;min-width:0;z-index:55}
+.aig67-global-nav{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);
+ right:max(8px,env(safe-area-inset-right,0px));width:max-content;max-width:calc(100vw - 16px);
+ z-index:500;pointer-events:auto;min-width:0}
 .aig67-global-trigger{height:38px;min-height:38px;min-width:84px;display:flex;align-items:center;
  justify-content:center;gap:5px;padding:5px 10px;white-space:nowrap;cursor:pointer;
  color:#e9faff;font:700 12px "Noto Sans TC",system-ui,sans-serif;
@@ -26,7 +27,7 @@
  outline:2px solid #b0efff;outline-offset:2px}
 .aig67-global-nav[data-error] .aig67-global-trigger{border-color:#e0a15b}
 @media(max-width:900px){
- .aig67-global-nav{order:3!important;margin-left:auto;flex:0 0 auto}
+ .aig67-global-nav{top:calc(env(safe-area-inset-top,0px) + 6px)!important;right:7px!important}
  .aig67-global-trigger{height:36px;min-height:36px;min-width:70px;padding:5px 7px;font-size:11px}
  .aig67-global-panel{right:0;width:min(280px,calc(100vw - 16px));max-height:68dvh}
  .app>.top>.nav{order:99!important}

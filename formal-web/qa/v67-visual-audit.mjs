@@ -56,12 +56,37 @@ async function screenshot(page,profile,pageId,subId="MAIN",locator=null){
  const dir=path.join(out,profile.id,basename(pageId));await fs.mkdir(dir,{recursive:true});
  const filename=path.join(dir,basename(subId)+".png");
  try{
-  const buf=locator?await locator.screenshot({timeout:12000,animations:"disabled"}):
-   await page.screenshot({timeout:20000,animations:"disabled",fullPage:false});
+  // A moving CNC control cannot satisfy locator.screenshot()'s stability
+  // check while WebGL keeps rendering. Capture the visible rectangle from the
+  // same REAL Chromium viewport instead; never scroll/alter the CNC scene.
+  let captureMode="VIEWPORT",clipped=false;
+  let buf;
+  if(locator){
+   const box=await locator.boundingBox({timeout:3500});
+   if(!box)throw Error("REGION_NOT_ATTACHED_OR_NOT_VISIBLE");
+   const view=page.viewportSize();
+   const x=Math.max(0,box.x),y=Math.max(0,box.y);
+   const right=Math.min(view.width,box.x+box.width);
+   const bottom=Math.min(view.height,box.y+box.height);
+   if(right-x<2||bottom-y<2){
+    issue("REGION_NOT_IN_VISIBLE_VIEWPORT",profile.id,pageId,subId,
+      "Region exists but is outside the active view. Screenshot not counted as PASS.","WARNING");
+    return null;
+   }
+   clipped=x!==box.x||y!==box.y||right<box.x+box.width||bottom<box.y+box.height;
+   if(clipped)issue("REGION_PARTIALLY_OUTSIDE_VIEWPORT",profile.id,pageId,subId,
+     "Visible region was clipped; not a full subpage capture.","WARNING");
+   buf=await page.screenshot({timeout:16000,animations:"disabled",
+     clip:{x,y,width:right-x,height:bottom-y}});
+   captureMode="VISIBLE_REGION_CROP";
+  }else{
+   buf=await page.screenshot({timeout:20000,animations:"disabled",fullPage:false});
+  }
   await fs.writeFile(filename,buf);
   const m=imageMetrics(buf),relative=path.relative(out,filename);
   all.captures.push({profile:profile.id,page:pageId,subpage:subId,
-   file:relative,metrics:m,source:"REAL_CHROMIUM",approvedAuthorityComparison:"NOT_AVAILABLE"});
+   file:relative,metrics:m,captureMode,clipped,
+   source:"REAL_CHROMIUM",approvedAuthorityComparison:"NOT_AVAILABLE"});
   if(m.heuristicStatus!=="PIXELS_PRESENT_NOT_SEMANTIC_PASS")
    issue("IMAGE_RENDER_HEURISTIC",profile.id,pageId,subId,m.heuristicStatus,"WARNING");
   return relative;
@@ -107,19 +132,19 @@ async function navigateRuntime(page,id){
  const global=page.locator(".aig67-global-trigger");
  const item=page.locator('.aig67-global-panel button[data-aig67-global-route="'+id+'"]');
  if(await global.count()&&await global.isVisible().catch(()=>false)&&await item.count()){
-  try{await global.click({timeout:3800});await item.click({timeout:3800});
+  try{await global.click({timeout:3800,noWaitAfter:true});await item.click({timeout:3800,noWaitAfter:true});
    mode="VISIBLE_V67_ROUTER_BUTTON"}catch(e){errors.push("V67 "+String(e).slice(0,200))}
  }
  if(mode==="NOT_NAVIGATED"){
   const legacy=page.locator('.nav button[data-page="'+id+'"]');
   if(await legacy.count()&&await legacy.isVisible().catch(()=>false)){
-   try{await legacy.click({timeout:3000});mode="VISIBLE_LEGACY_NAV"}catch(e){errors.push("LEGACY "+String(e).slice(0,160))}
+   try{await legacy.click({timeout:3000,noWaitAfter:true});mode="VISIBLE_LEGACY_NAV"}catch(e){errors.push("LEGACY "+String(e).slice(0,160))}
   }
  }
  if(mode==="NOT_NAVIGATED"){
   const links=page.locator('.screen.active [data-open-page="'+id+'"]:visible');
   if(await links.count()){
-   try{await links.first().click({timeout:3500});mode="VISIBLE_PAGE_LINK"}catch(e){errors.push("PAGE_LINK "+String(e).slice(0,160))}
+   try{await links.first().click({timeout:3500,noWaitAfter:true});mode="VISIBLE_PAGE_LINK"}catch(e){errors.push("PAGE_LINK "+String(e).slice(0,160))}
   }
  }
  if(mode==="NOT_NAVIGATED"){
@@ -171,7 +196,7 @@ async function profileRun(browser,profile){
     await page.waitForTimeout(180);
     if(id==="6AX"){try{await page.waitForFunction(()=>["READY","FAILED"].includes(window.AIG_6AX_V66_LOADER?.inspect?.()?.state),{timeout:13000})}catch(_){}
      const switcher=page.locator(".screen.active[data-page='6AX'] .aig6-toggle");
-     if(await switcher.count())try{await switcher.click({timeout:4500})}catch(e){
+     if(await switcher.count())try{await switcher.click({timeout:4500,noWaitAfter:true})}catch(e){
       issue("6AX_VISUAL_OPEN_FAIL",profile.id,id,null,String(e),"WARNING")}
     }
     const info=await inspectRuntime(page,id);
@@ -198,7 +223,7 @@ async function profileRun(browser,profile){
      const loc=page.locator('.screen.active[data-page="'+id+'"] '+sub.selector).first();
      if(!(await loc.count())){issue("SUBPAGE_SELECTOR_MISSING",profile.id,id,sub.id,sub.selector,"WARNING");continue}
      if(sub.kind==="NAVIGABLE"&&/^(3AX|4AX|5AX|6AX)$/.test(id)){
-      try{await loc.click({timeout:3500});await page.waitForTimeout(180);
+      try{await loc.click({timeout:3500,noWaitAfter:true});await page.waitForTimeout(180);
        const state=await page.locator('.screen.active[data-page="'+id+'"] .simgrid[data-runtime="'+id+'"]').first()
         .getAttribute("data-axis-subpage");
        if(state!==sub.id.slice(("SUBPAGE_"+id+"_").length))

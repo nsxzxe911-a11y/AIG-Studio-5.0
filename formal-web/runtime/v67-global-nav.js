@@ -30,7 +30,7 @@
  }
  function mount(){
   if(root?.isConnected)return;
-  const top=d.querySelector(".app>.top");if(!top)return;
+  const activeShell=d.querySelector(".app>.shell");if(!activeShell)return;
   root=d.createElement("div");root.className="aig67-global-nav";
   trigger=d.createElement("button");trigger.type="button";trigger.className="aig67-global-trigger";
   trigger.textContent="≡ 工作區";trigger.dataset.aig67GlobalNav="TOGGLE";
@@ -48,7 +48,9 @@
    const show=popup.hidden;popup.hidden=!show;root.dataset.open=String(show);
    trigger.setAttribute("aria-expanded",String(show));update()
   });
-  root.append(trigger,popup);top.append(root);
+  // Render at document level: parent panels may hide/clip the old header.
+  // Route remains the ORIGINAL production page router, without fake buttons.
+  root.append(trigger,popup);d.body.append(root);
   if(!listeners){
    listeners=true;d.addEventListener("pointerdown",e=>{if(root&&!root.contains(e.target))close()});
    d.addEventListener("keydown",e=>{if(e.key==="Escape"&&root?.dataset.open==="true"){close();trigger.focus()}});

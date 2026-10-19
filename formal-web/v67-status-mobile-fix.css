@@ -1,0 +1,22 @@
+/* AIG V67 mobile status page width repair. Root cause from real Chromium:
+ * public_mobile/status.html scrollWidth 520 vs clientWidth 360.
+ * Preserve content and live health buttons. */
+@media(max-width:700px){
+ body[data-aig-page="STATUS"],html[data-aig-status="true"] body{max-width:100%}
+ .utility-inner,.utility-links,.brand-row,.nav-inner,.footer-inner{
+  min-width:0;max-width:100%;flex-wrap:wrap
+ }
+ .utility-inner{justify-content:flex-start;gap:2px 9px;padding-block:6px}
+ .utility-inner>span{flex:1 1 100%;min-width:0;overflow-wrap:anywhere}
+ .utility-links{gap:3px 13px;font-size:11px}
+ .brand-row{gap:4px;min-height:85px;padding-block:8px}
+ .brand-row>.brand,.brand-row>.brand-lead{min-width:0;max-width:100%}
+ .brand-lead{overflow-wrap:anywhere}
+ .v4-page,.v4-page-hero,.v4-dual-proof,.v4-health,.v4-status-grid,
+ .v4-status-card,.v4-gates,.footer-inner{min-width:0;max-width:100%;
+  overflow-wrap:anywhere}
+ .v4-status-grid,.v4-gates{grid-template-columns:minmax(0,1fr)!important}
+ .v4-dual-proof>a,.v4-status-card>a{max-width:100%;overflow-wrap:anywhere}
+ .v4-health>div{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+ .v4-health button{max-width:100%}
+}
