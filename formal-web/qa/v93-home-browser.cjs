@@ -22,6 +22,16 @@ async function run(b,mobile){
   assert(info.home.width>300&&info.stage.height>110&&info.canvas.height>110);
   assert.equal(info.moduleButtons,9);assert.equal(info.navButtons,10);assert(info.ids);
   assert(!info.scroll,"HOME caused unintended browser page scrolling");
+  const hidden=await page.evaluate(()=>({
+    engineering:getComputedStyle(document.querySelector(".app>.top")).display==="none",
+    reference:getComputedStyle(document.querySelector('.screen.active[data-page="HOME"]>.aig-reference-strip')).display==="none"
+  }));
+  assert(hidden.engineering&&hidden.reference,"engineering chrome or archived reference is still visible");
+  if(mobile){
+    const cardText=page.locator('.screen.active .aig93-entries .aigModuleCard[data-open-page="CAD"]');
+    assert(await cardText.locator("b").isVisible());
+    assert(!await cardText.locator("small").isVisible(),"cramped mobile module subtitles should be omitted");
+  }
   await page.screenshot({path:"artifacts/v93/"+name+"-RGB-HOME.png",fullPage:false});
   await page.locator('.screen.active .aig93-entries .aigModuleCard[data-open-page="CAD"]').click();
   await page.waitForSelector('.screen.active[data-page="CAD"]',{timeout:15000});
