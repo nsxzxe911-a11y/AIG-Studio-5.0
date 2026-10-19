@@ -100,6 +100,21 @@ function mountFlow(cfg){
  roots.set(page,root);statusNodes.set(page,caption);
  return true;
 }
+function mountAxisNcBridge(){
+ const screen=d.querySelector('.app>.shell>.screen[data-page="6AX"]');
+ const header=screen?.querySelector('.simgrid.axisModule[data-runtime="6AX"] > .axisModuleHeader');
+ const nc=d.querySelector('.app>.shell>.screen[data-page="NC"] [data-nc-runtime] .ncEditorMain .head');
+ if(header&&!header.querySelector('[data-aig90-go-nc]')){
+  const button=addControl(header,"BTN_6AX_GO_STANDALONE_NC","NAV_NC",
+    "獨立 NC 編輯","NC");
+  button.dataset.aig90GoNc="";button.setAttribute("aria-label","開啟獨立 NC 編輯器（不重置 6AX）");
+ }
+ if(nc&&!nc.querySelector('[data-aig90-back-6ax]')){
+  const button=addControl(nc,"BTN_NC_BACK_6AX","NAV_6AX",
+    "返回 6AX","6AX");
+  button.dataset.aig90Back6ax="";button.setAttribute("aria-label","返回六軸原 Runtime 工作區");
+ }
+}
 function audit(){
  const cad=getRoot("CAD"),cam=getRoot("CAM"),sim=getRoot("SIM");
  return {version:"90.0.0",cad:{mounted:!!cad?.dataset.aig90FlowMounted,realCanvas:!!cad?.querySelector("canvas[data-cad-canvas]"),
@@ -113,7 +128,7 @@ function audit(){
 }
 function init(){
  if(ready)return;ready=true;
- ROUTES.forEach(mountFlow);refresh();
+ ROUTES.forEach(mountFlow);mountAxisNcBridge();refresh();
  const sourceCAD=getRoot("CAD")?.querySelector("[data-cad-count]");
  const sourceCAM=getRoot("CAM")?.querySelector("[data-cam-path-count]");
  for(const el of [sourceCAD,sourceCAM])if(el)new MutationObserver(refresh).observe(el,{subtree:true,childList:true,characterData:true});
