@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify final design delivery ZIP with unchanged original source
+        run: python3 formal-web/integrations/manus-v87/verify-final-design.py | tee manus-v87-final-report.json
       - name: Verify original Manus ZIP and extract only authorized source files
         run: python3 formal-web/integrations/manus-v87/extract-source.py
       - name: Validate JS source and source intake checker syntax
@@ -46,6 +48,7 @@ jobs:
           name: aig-v87-manus-original-source-intake
           path: |
             manus-v87-intake-report.json
+            manus-v87-final-report.json
             formal-web/integrations/manus-v87/source-integrity.json
           if-no-files-found: warn
       - name: Gate boundary
