@@ -43,6 +43,22 @@ async function runCase(browser,mode){
   },{expected:value});
   assert.equal(verified.text,value,"NC text changed by tab switch");
   assert.equal(verified.gate,"DOM_PRESERVED","DOM switch evidence must preserve state");
+  // The independent NC editor may import a pending 6AX draft by explicit action,
+  // but does not automatically overwrite the saved main program.
+  await page.locator('.app>.top .nav button[data-page="NC"]').click();
+  await page.waitForSelector('.screen.active[data-page="NC"]');
+  await page.locator('.screen.active [data-nc-axis]').selectOption("6AX");
+  const importDraft=page.locator('.screen.active [data-command-id="NC_IMPORT_6AX_WORKING_COPY"]');
+  assert(await importDraft.isVisible(),"independent NC must offer the pending 6AX draft");
+  await importDraft.click();
+  assert.equal(await page.locator('.screen.active textarea[data-nc-code]').inputValue(),value,
+   "independent NC explicit draft import did not transfer the program");
+  assert.notEqual(await page.evaluate(()=>localStorage.getItem("aig-code-6AX")),value,
+   "draft import must not silently overwrite the main NC program");
+  await page.locator('.app>.top .nav button[data-page="6AX"]').click();
+  await page.waitForSelector('.screen.active[data-page="6AX"]');
+  assert.equal(await page.locator('.screen.active textarea.code[data-axis="6AX"]').inputValue(),value,
+   "6AX working state changed after visiting standalone NC");
   await page.reload({waitUntil:"domcontentloaded"});
   await page.waitForFunction(()=>document.querySelector('.screen.active [data-runtime="6AX"]')?.dataset.aigInitialized==="true",{timeout:20000});
   const fresh=page.locator('.screen.active [data-runtime="6AX"]');
