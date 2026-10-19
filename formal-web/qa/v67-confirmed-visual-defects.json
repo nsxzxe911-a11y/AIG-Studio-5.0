@@ -1,0 +1,129 @@
+{
+  "schema": "AIG_V67_ACTUAL_CHROMIUM_AND_APPROVED_RGB_DEFECT_LEDGER_V1",
+  "dated": "2026-10-19",
+  "source": {
+    "repo": "nsxzxe911-a11y/AIG-Studio-5.0",
+    "runId": 39220925203,
+    "artifactId": 12171583967,
+    "artifactName": "aig-v67-visual-audit-d7d0d70988ba80957ce4b96f63f7edf3134701d3",
+    "producerSha": "d7d0d70988ba80957ce4b96f63f7edf3134701d3",
+    "platforms": [
+      "desktop_4k",
+      "mobile_1440",
+      "mobile_compact",
+      "mobile_landscape",
+      "public_desktop",
+      "public_mobile"
+    ]
+  },
+  "extractedEvidence": {
+    "cncCaptures": 101,
+    "publicCaptures": 24,
+    "cncIssues": {
+      "FAIL": 3,
+      "WARNING": 65,
+      "BLOCKED": 28
+    },
+    "publicIssues": 1,
+    "firstRunSource": "RED_NC_COMMONJS_LOAD_AND_LEGACY_ASSERTION",
+    "classification": "SOURCE_DIAGNOSTIC_NOT_RELEASE_PASS"
+  },
+  "imageAuthority": {
+    "src": "AIGII_RGB_MASTER_REGISTRY_V4",
+    "currentApprovedMobileNon4K": {
+      "HOME": "f360cb828ff6d05076792b0d04474503316dea85896f82f6452b0d6c9d7ae99e",
+      "CAD": "dc528b399e6a756d1bb76fc9260ae3361cf2437487236725dd0ee8ea2cbcaa75",
+      "6AX": "73f34e958bb22925ceed32b986443240b9322a77bf0cadbc1b81f62501683be6",
+      "AI": "92eca87fc882446c5ef0483d80539a9adf45a0d55a3d64be8943155930a67763"
+    },
+    "allNative4KApproved": false,
+    "doNotPromoteMobileToDesktop": true,
+    "revoke438Count": 20,
+    "role": "LATEST_VERIFIED_CURRENT_VISUAL_SOURCE_ONLY"
+  },
+  "findings": [
+    {
+      "id": "V67-DEF-001",
+      "severity": "HIGH",
+      "page": "GLOBAL",
+      "platform": "desktop,mobile",
+      "category": "HIDDEN_PAGE_NAV",
+      "evidence": "report.json: VISIBLE_NAVIGATION_UNAVAILABLE x14; page router fallback was used",
+      "cause": "V65 header hidden/clipped by skin while V67 menu was nested in header",
+      "resolution": "V67 menu relocated to document root; mobile duplicate legacy nav hidden only while real menu exists",
+      "status": "FIX_COMMITTED_RETEST_PENDING"
+    },
+    {
+      "id": "V67-DEF-002",
+      "severity": "HIGH",
+      "page": "CAD",
+      "platform": "mobile",
+      "category": "RGB_AUTHORITY_MISMATCH",
+      "evidence": "mobile_1440/CAD/MAIN.png vs approved 02_CAD.png; real viewport tool area occupies substantially more vertical space than reference",
+      "resolution": "Next UI page-specific correction: enlarge real CAD canvas and consolidate redundant command ribbons while retaining callbacks",
+      "status": "OPEN_VISUAL_LAYOUT"
+    },
+    {
+      "id": "V67-DEF-003",
+      "severity": "HIGH",
+      "page": "6AX",
+      "platform": "mobile",
+      "category": "MACHINING_VIEW_TOO_SMALL",
+      "evidence": "mobile_1440/6AX/MAIN.png stage appears compact below multiple tool/header rows, original 08_6AX.png provides image-source style only",
+      "resolution": "Expand true machine viewport using measured CSS layout without drawing enclosure or substituting reference image for kinematics",
+      "status": "OPEN_VISUAL_LAYOUT"
+    },
+    {
+      "id": "V67-DEF-004",
+      "severity": "HIGH",
+      "page": "HOME,CAD,CAM,SIM,3AX,4AX,5AX,6AX,NC,AI",
+      "platform": "desktop,mobile",
+      "category": "BUTTON_ID_UNMAPPED",
+      "evidence": "report.json: BUTTON_ID_UNMAPPED x20 page/profile combinations; many legacy buttons have source CSS but no canonical V67 status",
+      "resolution": "Emit machine-readable actual selector/outerHTML/legacy IDs and progressively bind per-page true callback; stop at source selector != callback proof",
+      "status": "OPEN_CONTROL_COVERAGE"
+    },
+    {
+      "id": "V67-DEF-005",
+      "severity": "MEDIUM",
+      "page": "3AX,4AX,5AX",
+      "platform": "desktop",
+      "category": "ANIMATED_SCREENSHOT_TIMEOUT",
+      "evidence": "3 region locator screenshots timed out because WebGL/animated layout never stabilizes",
+      "resolution": "Real Chromium viewport clip capture with explicit partial visibility warnings; never fake region PASS",
+      "status": "FIX_COMMITTED_RETEST_PENDING"
+    },
+    {
+      "id": "V67-DEF-006",
+      "severity": "MEDIUM",
+      "page": "STATUS",
+      "platform": "mobile",
+      "category": "HORIZONTAL_OVERFLOW",
+      "evidence": "public_mobile/status.html 520 px scrollWidth vs 360 px viewport",
+      "resolution": "V67 dedicated mobile CSS wraps large SHA/status sections and health buttons",
+      "status": "FIX_COMMITTED_RETEST_PENDING"
+    },
+    {
+      "id": "V67-DEF-007",
+      "severity": "HIGH",
+      "page": "AUTHORITY_ALL",
+      "platform": "mobile,desktop",
+      "category": "MISSING_EXACT_IMAGE_RUNTIME_COMPARISON",
+      "evidence": "22 primary + 118 subpage platform authority slots require exact SHA and real original screenshot alignment; approved Mobile non4K images are source identities not 4K runtime approvals",
+      "resolution": "Mount verified original bytes in CI, compare full runtime screenshots per Page/Subpage ID and preserve version chain; do not use revoked images",
+      "status": "BLOCKED_AUTHORITY"
+    },
+    {
+      "id": "V67-DEF-008",
+      "severity": "HIGH",
+      "page": "AI",
+      "platform": "CI",
+      "category": "SEMANTIC_AI_REVIEW_NOT_CONNECTED",
+      "evidence": "vision-review.json: AIG_VISUAL_AI_API_KEY_MISSING; no actual image-model review run",
+      "resolution": "User explicitly configures secured connector for per-screenshot model review; never send images to unexpected service",
+      "status": "PENDING_SECRET"
+    }
+  ],
+  "releaseGate": "BLOCKED_PENDING_VISUAL_CORE_NATIVE_CNC_AND_EXACT_AUTHORITY",
+  "observations": "This report was assembled from actual screenshot artifacts and user-approved Mobile visual-source identities. It does not prove live callback operation or machine safety."
+}
