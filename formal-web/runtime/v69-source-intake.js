@@ -24,7 +24,7 @@ async function chooseImage(file,kind){
  const hash=await digest(file);const url=URL.createObjectURL(file);const next=new Image();
  try{await new Promise((resolve,reject)=>{next.onload=resolve;next.onerror=reject;next.src=url})}
  catch(_){URL.revokeObjectURL(url);notice("圖片解碼失敗；不修改目前專案。","alarm");return}
- if(objectURL)URL.revokeObjectURL(objectURL);objectURL=url;img=next;points=[];
+ if(objectURL)URL.revokeObjectURL(objectURL);objectURL=url;img=next;points=[];tracePoints=[];traceSegments=[];renderTrace();
  state={...state,kind,name:file.name,imageHash:hash,calibration:null,ncHash:null,ready:false,stage:"來源"};
  $("#aig69-photo-canvas").hidden=false;$("#aig69-photo-help").hidden=false;
  $("#aig69-nc-input").hidden=true;$("#aig69-nc-send").hidden=true;
@@ -49,6 +49,7 @@ function calibrate(){
  const {ratio}=dimensions();const dx=points[1].x-points[0].x,dy=points[1].y-points[0].y;
  const px=Math.hypot(dx,dy)/ratio;
  if(px<3){notice("兩點距離太近，無法可靠校正。","alarm");return}
+ tracePoints=[];traceSegments=[];renderTrace();
  state.calibration={referenceMm:mm,referencePixels:px,mmPerPixel:mm/px,method:"TWO_POINT_USER_REFERENCE",precisionVerified:false};
  state.ready=true;render();
  notice("已記錄比例 "+state.calibration.mmPerPixel.toFixed(6)+" mm/px。照片仍是參考底圖，需在 CAD 描線／建立幾何後才能加工。","ok");
@@ -58,7 +59,7 @@ function clickPoint(ev){
  const x=(ev.clientX-rect.left)*cv.width/rect.width,y=(ev.clientY-rect.top)*cv.height/rect.height;
  const box=dimensions(),wpx=img.naturalWidth*box.ratio,hpx=img.naturalHeight*box.ratio;
  if(x<box.x||y<box.y||x>box.x+wpx||y>box.y+hpx)return;
- if(points.length>=2)points=[];points.push({x,y});state.calibration=null;render();draw();
+ if(points.length>=2)points=[];points.push({x,y});state.calibration=null;tracePoints=[];traceSegments=[];renderTrace();render();draw();
  notice("已選取 "+points.length+" / 2 個參考點。");
 }
 async function chooseNC(file){
@@ -85,6 +86,59 @@ function startCAD(){
  render();route("CAD");
  notice(state.kind==="CAD"?"已開啟原有 CAD 真實製圖工作區。":"已開啟 CAD：圖片未自動轉為線段，請依參考圖手動建立幾何。","ok");
 }
+
+/* V70 measured, manually traced CAD geometry. This is never automatic
+ * vectorization, and never certifies photo metrology or CNC output. */
+function pointToMillimeters(point){
+ const b=dimensions(),c=state.calibration;
+ if(!b||!c||!Number.isFinite(c.mmPerPixel)||c.mmPerPixel<=0)throw Error("PHOTO_SCALE_REQUIRED");
+ const x=(point.x-b.x)/b.ratio,y=(point.y-b.y)/b.ratio;
+ if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||y<0||x>img.naturalWidth||y>img.naturalHeight)throw Error("PHOTO_POINT_OUT_OF_BOUNDS");
+ return {x:Number((x*c.mmPerPixel).toFixed(3)),y:Number(((img.naturalHeight-y)*c.mmPerPixel).toFixed(3))};
+}
+let tracePoints=[],traceSegments=[];
+function addTracePoint(ev){
+ if(!state.calibration||!img){notice("請先完成兩點照片校正。","alarm");return}
+ const cv=ev.currentTarget,r=cv.getBoundingClientRect();
+ if(r.width<=0||r.height<=0)return;
+ const point={x:(ev.clientX-r.left)*cv.width/r.width,y:(ev.clientY-r.top)*cv.height/r.height};
+ let mm;
+ try{mm=pointToMillimeters(point)}catch(_){notice("點選位置超出影像，未建立幾何。","alarm");return}
+ if(tracePoints.length>=2)tracePoints=[];
+ tracePoints.push(mm);
+ if(tracePoints.length===2){
+  if(tracePoints[0].x===mm.x&&tracePoints[0].y===mm.y){tracePoints=[];notice("線段兩端重合，請重選。","alarm");return}
+  traceSegments.push(Object.freeze({type:"LINE",start:tracePoints[0],end:tracePoints[1],units:"mm",origin:"PHOTO_BOTTOM_LEFT",precisionVerified:false}));
+  tracePoints=[];
+  notice("已建立第 "+traceSegments.length+" 段手動描線幾何；尚未送入 CAD Core。","ok");
+ }else notice("已選擇描線起點（mm）；請選擇終點。");
+ renderTrace();
+}
+function renderTrace(){
+ const el=$("#aig70-trace-list");if(!el)return;
+ el.textContent=traceSegments.length?traceSegments.map((s,i)=>"L"+(i+1)+": ("+s.start.x.toFixed(3)+", "+s.start.y.toFixed(3)+") → ("+s.end.x.toFixed(3)+", "+s.end.y.toFixed(3)+") mm").join("\\n"):"尚未描線；請依序點選兩端。";
+}
+function getTraceContract(){
+ return {version:"70.0.0",sourceHash:state.imageHash,reference:state.calibration?{...state.calibration}:null,
+  origin:"PHOTO_BOTTOM_LEFT",units:"mm",geometry:traceSegments.map(s=>({...s,start:{...s.start},end:{...s.end}})),
+  cadCoreCommitted:false,autoVectorized:false,precisionVerified:false,machineOutput:"BLOCKED"};
+}
+function addTraceUI(){
+ const help=$("#aig69-photo-help");if(!help||$("#aig70-trace-toggle"))return;
+ const btn=d.createElement("button");btn.type="button";btn.id="aig70-trace-toggle";btn.dataset.buttonId="BTN.HOME.SOURCE.TRACE_LINE";btn.textContent="手動描線：建立 mm 線段";
+ const output=d.createElement("pre");output.id="aig70-trace-list";output.setAttribute("aria-label","手動描線毫米座標");
+ output.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto;font-size:12px;color:#bdefff";
+ help.append(btn,output);
+ let tracing=false;btn.addEventListener("click",()=>{
+  if(!state.calibration){notice("照片未校正，無法描線。","alarm");return}
+  tracing=!tracing;tracePoints=[];btn.setAttribute("aria-pressed",String(tracing));
+  btn.textContent=tracing?"描線中：點兩個端點（點我停止）":"手動描線：建立 mm 線段";
+  notice(tracing?"請在圖片上點兩個端點，建立毫米座標線段。":"已退出描線模式。");
+ });
+ $("#aig69-photo-canvas")?.addEventListener("click",ev=>{if(tracing){ev.stopImmediatePropagation();addTracePoint(ev)}},true);
+ renderTrace();
+}
+
 function mount(){
  const screen=$('.screen[data-page="HOME"]');if(!screen||$("#aig69-intake"))return false;
  const panel=d.createElement("section");panel.id="aig69-intake";panel.className="aig69-intake";
@@ -105,6 +159,7 @@ function mount(){
  '<button type="button" id="aig69-go-cam" data-button-id="BTN.HOME.SOURCE.OPEN_CAM">手動 CAM →</button></div>'+
  '<p id="aig69-status" role="status" aria-live="polite"></p>';
  screen.insertBefore(panel,screen.firstChild);
+ addTraceUI();
  $("#aig69-camera").addEventListener("change",e=>chooseImage(e.target.files?.[0],"CAMERA"));
  $("#aig69-photo").addEventListener("change",e=>chooseImage(e.target.files?.[0],"PHOTO"));
  $("#aig69-nc-file").addEventListener("change",e=>chooseNC(e.target.files?.[0]));
@@ -117,6 +172,6 @@ function mount(){
  render();notice("請選擇起點。此入口不會自動產生幾何、刀路或實體成品。");return true;
 }
 function init(){if(mount())return;let n=0;const t=w.setInterval(()=>{if(mount()||++n>20)w.clearInterval(t)},500)}
-w.AIG_V69_SOURCE=Object.freeze({version:"69.0.0",inspect:()=>JSON.parse(JSON.stringify({...state,photoLoaded:!!img,referencePoints:points.length,machineOutput:"BLOCKED",digitalFinishedPart:false})),route});
+w.AIG_V69_SOURCE=Object.freeze({version:"69.0.0",inspect:()=>JSON.parse(JSON.stringify({...state,photoLoaded:!!img,referencePoints:points.length,traceSegmentCount:traceSegments.length,machineOutput:"BLOCKED",digitalFinishedPart:false})),getTraceContract,route});
 if(d.readyState==="loading")d.addEventListener("DOMContentLoaded",init,{once:true});else init();
 })(window,document);
