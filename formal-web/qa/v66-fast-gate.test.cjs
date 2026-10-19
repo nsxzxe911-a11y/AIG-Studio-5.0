@@ -71,6 +71,16 @@ check("SW precache avoids giant 3D assets",()=>{
   assert.ok(!block.includes(f),"Unexpected preload "+f);
  assert.ok(sw.includes("MAX_DYNAMIC_ENTRIES=260"));
 });
+check("offline traffic has bounded 5.5 second fast-fail",()=>{
+ assert.ok(sw.includes("TIMEOUT_MS=5500"));
+ assert.ok(sw.includes("AbortController"));
+ assert.ok(sw.includes("timedFetch(request)"));
+});
+check("service worker never intercepts machine API/auth traffic",()=>{
+ assert.ok(sw.includes("staticRoute"));
+ assert.ok(sw.includes("(?:api|auth|machine|cloud-sync)"));
+ assert.ok(sw.includes("if(!staticRoute"));
+});
 check("all module and 6AX browser selfcheck pages are present",()=>{
  const wide=at("qa/v66-all-modules-check.html"),six=at("qa/6ax-live-check.html");
  assert.ok(wide.includes("V66_PASSIVE_DOM_CONTRACT_ONLY"));
