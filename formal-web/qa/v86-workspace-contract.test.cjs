@@ -1,0 +1,27 @@
+"use strict";
+const fs=require("node:fs"),path=require("node:path"),assert=require("node:assert/strict"),vm=require("node:vm");
+const root=path.resolve(__dirname,".."),read=p=>fs.readFileSync(path.join(root,p),"utf8");
+const html=read("mobile-runtime.html"),layout=read("runtime/v86-workspace-layout.js"),assist=read("runtime/v86-external-assist.js"),css=read("v86-workspace-skin.css");
+for(const p of ["./runtime/v86-workspace-layout.js","./runtime/v86-external-assist.js","./v86-workspace-skin.css","./v86-external-assist.css"])assert(html.includes(p),"missing runtime asset "+p);
+assert(/body\.insertBefore\(controls,viewport\)/.test(layout),"native controls should precede tall viewport");
+assert(/extra\.appendChild\(child\)/.test(layout),"existing controls must be moved, never cloned");
+assert(/root\.dataset\.axisSubpage==="NC_FIRST"/.test(layout),"NC-first must force original editor visible");
+assert(/new MutationObserver\(refresh\)/.test(layout),"NC-first changes must refresh panel presentation");
+assert(css.includes('data-aig86-nc="collapsed"')&&css.includes('data-axis-subpage="NC_FIRST"'),"cannot suppress NC-first");
+assert(css.includes("minmax(0,3.4fr)"),"desktop viewport not dominant");
+assert(css.includes('@media(max-width:650px)'),"phone layout missing");
+assert(!layout.includes("innerHTML="),"must not replace original machining controls");
+assert(!assist.includes("fetch(")&&!assist.includes("XMLHttpRequest"),"external AI may not auto-upload source");
+assert(!assist.includes("G-code")||assist.includes("NO G-code"),"privacy notice missing");
+const sandbox={window:{},document:{readyState:"loading",addEventListener(){}},MutationObserver:class{observe(){}}};
+vm.runInNewContext(assist,sandbox,{timeout:2000});
+const mock={querySelectorAll(sel){return sel===".app .shell .screen[data-page]"?[{dataset:{page:"CAD"},querySelectorAll(){return [{dataset:{buttonId:"BTN_CAD_LINE"},disabled:false},{dataset:{},disabled:false}]}}]:[]}};
+sandbox.document=mock;
+const data=sandbox.window.AIG_V86_EXTERNAL_ASSIST.inspect();
+assert.equal(data.schema,"AIG_V86_WORKSPACE_READ_ONLY");assert.equal(data.machineOutput,"BLOCKED");
+assert.equal(data.pages.length,11);
+assert.equal(data.pages.find(x=>x.page==="CAD").requiresIdReview,1);
+const brief=sandbox.window.AIG_V86_EXTERNAL_ASSIST.composeExternalBrief(data);
+assert(brief.includes("NO G-code")&&brief.includes("No engineering-shell")===false); // output remains sanitized factual brief
+assert(!brief.includes("sk-proj-")&&!brief.includes("BEGIN PRIVATE KEY"));
+console.log("AIG_V86_WORKSPACE_SOURCE_PASS | LIVE_BUTTONS_PRESERVED | MULTI_AI_HANDOFF_PRIVACY_PASS");
