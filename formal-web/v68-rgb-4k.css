@@ -1,0 +1,127 @@
+/* AIG V68 — professional RGB full-color / UHD-responsive visual contract.
+ * Applies to public site and CNC Runtime. 4K is output framebuffer capability,
+ * NEVER falsely claims source jpg/png authority, material removal or CNC accuracy.
+ * All UI is CSS/vector; image assets are NOT stretched to counterfeit 4K files. */
+:root{
+ --aig68-black:#020407;
+ --aig68-panel:#07111b;
+ --aig68-blue:#4b9fff;
+ --aig68-cyan:#49f4ff;
+ --aig68-violet:#a77dff;
+ --aig68-rose:#ff66bf;
+ --aig68-green:#5bfbc7;
+ --aig68-amber:#ffd57d;
+ --aig68-neon:linear-gradient(110deg,#55f4ff 0%,#4b8eff 31%,#a677ff 61%,#ff66c1 89%,#55f4ff 100%);
+ --aig68-ink:#ecf9ff;
+ --aig68-muted:#a3bccd;
+ --aig68-focus:#b8f8ff;
+ --aig68-hairline:rgba(90,184,237,.35);
+ --aig68-softshadow:0 12px 34px rgba(1,5,12,.45),inset 0 1px rgba(234,246,255,.06);
+ color-scheme:dark;
+}
+html{background:var(--aig68-black);scrollbar-color:#386280 #07111b}
+body{max-width:100%;overflow-x:clip}
+:where(button,a,input,select,textarea):focus-visible{outline:2px solid var(--aig68-focus);outline-offset:2px}
+:where(canvas,svg){max-width:100%}
+img{image-rendering:auto;max-width:100%;height:auto}
+:where(.aig68-rgb-gradient,.aig68-neon-rule){background:var(--aig68-neon)}
+/* Public: actual wider desktop 4K editorial layout, not a 1080p CSS screenshot. */
+@media(min-width:1700px){
+ body:not(:has(.app)) .site-container{
+  width:min(1740px,calc(100% - 74px));max-width:1740px;
+ }
+ body:not(:has(.app)) .brand-name{font-size:clamp(32px,1.25vw,47px)}
+ body:not(:has(.app)) .lead-graphic{min-height:clamp(250px,19vw,480px)}
+ body:not(:has(.app)) .lead-copy h1{font-size:clamp(30px,1.5vw,50px)}
+ body:not(:has(.app)) :is(.v4-news-item h3,.directory-content h3){font-size:clamp(17px,1vw,23px)}
+ body:not(:has(.app)) :is(.v4-widget p,.v4-article p,.v4-status-card p){font-size:clamp(13px,.74vw,17px)}
+ body:not(:has(.app)) :is(.v4-article,.v4-status-card,.v4-health){
+  padding:clamp(23px,1.5vw,36px)
+ }
+ body:not(:has(.app)) .v4-page-hero{padding:clamp(30px,2vw,56px)}
+}
+/* Public: real RGB light passes at 4K without rasterized fake skins. */
+body:not(:has(.app)) :is(.v4-page-hero,.panel,.v4-widget,.v4-status-card,.directory-row,.lead-article){
+ border-color:var(--aig68-hairline);
+ box-shadow:var(--aig68-softshadow);
+}
+body:not(:has(.app)) :is(.nav-workspace,.v4-search-panel button,.v4-health button){
+ border:1px solid transparent;
+ background:linear-gradient(#0e2840,#071423) padding-box,var(--aig68-neon) border-box;
+ color:#effcff;
+}
+body:not(:has(.app)) :is(.nav-workspace,.v4-search-panel button,.v4-health button):hover{
+ box-shadow:0 0 14px rgba(84,204,248,.28)
+}
+/* CNC runtime: vector text stays crisp and large viewport gets priority. */
+.app,.app>.shell,.screen.active,.screen.active .panel{min-width:0}
+.app{background-color:var(--aig68-black)}
+.screen.active :is(.panel,.aig67-ai-visual-panel){
+ border-color:var(--aig68-hairline);
+ box-shadow:var(--aig68-softshadow)
+}
+.screen.active :is(.sceneWrap,.cadCanvasWrap,.camCanvas,.tpCanvas,[data-cam-canvas]){
+ isolation:isolate;max-width:100%;min-width:0
+}
+.screen.active :is(canvas[data-glcanvas],canvas[data-cad-canvas],
+ canvas[data-cam-canvas],.aig6-canvas,canvas[data-canvas]){
+ image-rendering:auto;
+ touch-action:manipulation;
+}
+/* Canvas painting still belongs to the renderer; never use CSS filters that
+ * alter pointer coordinates, tool geometry or bitmap's pixel authority. */
+.screen.active :is(.head,.axisModuleHeader,.aig41-toolbar){
+ border-color:rgba(86,163,220,.3);
+}
+.screen.active :is(.head h2,.head h3,.axisModuleTitle){
+ color:var(--aig68-ink);
+ text-shadow:0 0 12px rgba(89,179,241,.15)
+}
+.screen.active .btn:focus-visible{outline-color:var(--aig68-focus)}
+.screen.active .runtimeStatus :is(.metric,.aigMetric){overflow-wrap:anywhere}
+.screen.active .code{font-variant-ligatures:none;tab-size:4}
+.screen.active :is(.axisQuality,.toolstrip,.editorbar,.controls){scrollbar-width:thin}
+/* Quality entry inside REAL global router, not fake decorative toggle. */
+.aig67-global-panel .aig68-quality-control{
+ grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+ padding:9px 3px 2px;border-top:1px solid rgba(83,156,200,.4)
+}
+.aig67-global-panel .aig68-quality-control label{flex:1;color:#b5d6ea;font-size:11px}
+.aig67-global-panel .aig68-quality-control button{
+ min-height:35px;padding:5px 10px;border-radius:8px;
+ background:linear-gradient(#0a273a,#061a2d) padding-box,var(--aig68-neon) border-box;
+ border:1px solid transparent;color:#edfcff;font:700 11px "Noto Sans TC",sans-serif
+}
+.aig67-global-panel .aig68-quality-control button[aria-pressed="true"]{
+ box-shadow:inset 0 0 12px #38cfff55,0 0 8px #329cff44
+}
+.aig67-global-panel .aig68-quality-control small{width:100%;font-size:10px;color:#a7c0d4}
+html[data-aig68-visual-mode="ULTRA_4K"] .aig67-global-trigger{
+ border-color:#67dfff;box-shadow:0 0 16px #289cff46
+}
+@media(min-width:1700px){
+ html[data-aig49-active="true"] .screen.active:is([data-page="3AX"],[data-page="4AX"],
+ [data-page="5AX"],[data-page="6AX"]) .simgrid:not([data-axis-subpage="NC_FIRST"]){
+  grid-template-columns:minmax(0,3fr) minmax(310px,1fr)!important
+ }
+ html[data-aig49-active="true"] .screen.active[data-page="CAD"] .workgrid{
+  grid-template-columns:minmax(0,3.15fr) minmax(315px,1fr)!important
+ }
+ html[data-aig49-active="true"] .screen.active[data-page="NC"] .ncEditGrid{
+  grid-template-columns:minmax(0,3fr) minmax(300px,1fr)!important
+ }
+ .screen.active :is(.head h2,.head h3){font-size:clamp(15px,.72vw,23px)}
+ .screen.active .btn{font-size:clamp(11px,.56vw,15px)}
+}
+/* Real phone: native framebuffer DPI; no forced 4K download. */
+@media(max-width:900px){
+ .app>.shell{min-width:0}
+ .screen.active :is(.panel,.body,.simleft,.editor){min-width:0}
+ .screen.active :is(.sceneWrap,.cadCanvasWrap){max-width:100%;min-width:0}
+ .aig67-global-panel .aig68-quality-control{padding:8px 1px 0}
+ .screen.active :is(.toolstrip,.aig49-dock,.editorbar){overscroll-behavior-x:contain}
+}
+/* Pre-existing real webview/anim performance switch handles FPS fallback. */
+@media(prefers-reduced-motion:reduce){
+ :where(.aig68-rgb-gradient,.aig68-neon-rule){animation:none!important}
+}
