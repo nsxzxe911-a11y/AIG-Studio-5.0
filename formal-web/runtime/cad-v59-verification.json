@@ -1,0 +1,90 @@
+{
+  "version": "59.0.0",
+  "page": "CAD",
+  "parity": {
+    "aigII": "ORIGINAL",
+    "studio": "ADDED_ACTUAL_RESIZE_LISTENER_AND_API",
+    "codeBytesMatch": true
+  },
+  "tests": [
+    {
+      "project": "AIG-II",
+      "checks": 27,
+      "steps": [
+        "real CAD API exists",
+        "real resize listener registered",
+        "initial geometry empty",
+        "DPR2 drawing buffer",
+        "LINE committed",
+        "world coordinates",
+        "UNDO line",
+        "REDO line",
+        "RECT committed",
+        "CIRCLE committed",
+        "HOLE committed",
+        "ARC committed",
+        "SNAP off",
+        "SNAP on",
+        "SELECT line",
+        "OFFSET selected",
+        "UNDO offset",
+        "REDO offset",
+        "FIT persisted",
+        "PAN persisted",
+        "wheel zoom persisted",
+        "CLEAR confirmation guard",
+        "CLEAR second press",
+        "UNDO after CLEAR",
+        "window resize repaints real canvas",
+        "real 2D renderer invoked",
+        "AutoSave called on drawing and history"
+      ],
+      "autoSaves": 15,
+      "realCanvasCalls": 4769
+    },
+    {
+      "project": "AIG Studio 5.0",
+      "checks": 27,
+      "steps": [
+        "real CAD API exists",
+        "real resize listener registered",
+        "initial geometry empty",
+        "DPR2 drawing buffer",
+        "LINE committed",
+        "world coordinates",
+        "UNDO line",
+        "REDO line",
+        "RECT committed",
+        "CIRCLE committed",
+        "HOLE committed",
+        "ARC committed",
+        "SNAP off",
+        "SNAP on",
+        "SELECT line",
+        "OFFSET selected",
+        "UNDO offset",
+        "REDO offset",
+        "FIT persisted",
+        "PAN persisted",
+        "wheel zoom persisted",
+        "CLEAR confirmation guard",
+        "CLEAR second press",
+        "UNDO after CLEAR",
+        "window resize repaints real canvas",
+        "real 2D renderer invoked",
+        "AutoSave called on drawing and history"
+      ],
+      "autoSaves": 15,
+      "realCanvasCalls": 4769
+    }
+  ],
+  "gate": {
+    "sourceInteraction": "PASS",
+    "htmlParse": "PASS",
+    "render": "PENDING",
+    "visualPhone": "PENDING",
+    "visualWindows": "PENDING",
+    "native": "NOT_BUILT",
+    "machineSafety": "NOT_CERTIFIED"
+  }
+}

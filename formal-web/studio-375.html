@@ -2745,6 +2745,10 @@ function makeCadRuntime(root){
  if(persisted?.shapes?.length)msgEl.textContent="Recovery：已自動還原 "+persisted.shapes.length+" 個 CAD 幾何。";
  [offsetInput,arrayCountInput,arraySpacingInput,dimInput].forEach(el=>{el.addEventListener("input",()=>aigGuard(root,"CAD 欄位驗證",validateCadFields,null,"warn"));el.addEventListener("change",()=>aigGuard(root,"CAD 欄位驗證",validateCadFields,null,"warn"))});
  validateCadFields();
+ root.aigCadApi={refreshView:()=>{updateInfo();draw()},getShapeCount:()=>state.shapes.length};
+ window.addEventListener("resize",()=>{
+   if(root.closest(".screen")?.classList.contains("active"))draw();
+ });
  setTool("SELECT");updateInfo();draw();
 }
 
