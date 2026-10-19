@@ -3737,6 +3737,8 @@ function navigateProductionPage(name){
 }
 document.addEventListener("click",e=>{const a=e.target.closest("[data-open-page]");if(a)aigGuard(document.body,"頁面切換",()=>navigateProductionPage(a.dataset.openPage),null,"warn")});
 aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash||"#HOME").slice(1))),null,"error");
+// V86: keep browser address/hash navigation synchronized with the live Runtime without a reload.
+window.addEventListener("hashchange",()=>aigGuard(document.body,"網址頁面切換",()=>show(decodeURIComponent((location.hash||"#HOME").slice(1))),null,"warn"));
 </script>
 
 <script>
