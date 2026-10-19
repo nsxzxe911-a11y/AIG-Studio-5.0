@@ -69,6 +69,10 @@ async function inspection(page){
    canvas:canvas&&rect?{cssW:rect.width,cssH:rect.height,
     width:canvas.width,height:canvas.height,
     actualDpr:rect.width>0?canvas.width/rect.width:0,visible:rect.width>0&&rect.height>0,
+    xBackingScale:rect.width>0?canvas.width/rect.width:0,
+    yBackingScale:rect.height>0?canvas.height/rect.height:0,
+    aspectDeviation:rect.width>0&&rect.height>0&&canvas.height>0?
+     Math.abs((canvas.width/canvas.height)/(rect.width/rect.height)-1):null,
     pixelCount:canvas.width*canvas.height}:null,glColorBits:colors,
    rgbStyle:!![...document.styleSheets].some(s=>String(s.href||"").includes("v68-rgb-4k.css")),
    visualLayoutMode:document.documentElement.dataset.aig68VisualMode||null};
@@ -82,6 +86,10 @@ function inspectQuality(p,id,d){
   if(d.canvas.width<1||d.canvas.height<1)issue(p.id,id,"BACKING_BUFFER_EMPTY","0 pixel bitmap","FAIL");
   if(d.canvas.pixelCount>8294400)issue(p.id,id,"PIXEL_BUDGET_EXCEEDED",d.canvas.pixelCount,"WARNING");
   if(d.canvas.actualDpr<.95)issue(p.id,id,"PIXEL_DENSITY_TOO_LOW",d.canvas.actualDpr,"WARNING");
+  if(d.canvas.aspectDeviation>.15)issue(p.id,id,"CANVAS_BACKING_ASPECT_MISMATCH",
+   "Canvas physical pixels are stretched by CSS: X scale "+
+   d.canvas.xBackingScale.toFixed(2)+" vs Y scale "+d.canvas.yBackingScale.toFixed(2)+
+   ". This must be redrawn after panel resize.","FAIL");
  }
  if(d.glColorBits&&d.glColorBits.red!==undefined&&d.glColorBits.red<8)
   issue(p.id,id,"WEBGL_COLOR_DEPTH_LOW",JSON.stringify(d.glColorBits),"WARNING");
