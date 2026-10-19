@@ -1,0 +1,83 @@
+/* V62 S23/Android 3AX: only one actual live page pane at a time. */
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .app{
+ width:100%!important;max-width:100%!important;min-width:0!important;margin:0 auto!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"] .simgrid.aig41-workspace[data-runtime="3AX"]{
+ display:flex!important;flex-direction:column!important;flex:1 1 0!important;
+ height:0!important;min-height:0!important;max-height:100%!important;gap:3px!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"] .simgrid[data-runtime="3AX"]>
+ :is(.axisModuleHeader,.aig41-toolbar,.aig43-bar){
+ display:flex!important;order:0!important;flex:0 0 auto!important;
+ width:100%!important;min-width:0!important;max-height:32px!important;
+ overflow-x:auto!important;overflow-y:hidden!important;padding:2px 4px!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"] .simgrid[data-runtime="3AX"]>.aig41-toolbar{
+ max-height:29px!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"] .simgrid[data-runtime="3AX"] :is(.simleft,.editor){
+ flex:1 1 0!important;height:100%!important;min-height:0!important;
+ max-width:100%!important;width:100%!important;order:10!important;
+ grid-row:auto!important;grid-column:auto!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="view"] .simgrid[data-runtime="3AX"]>.editor,
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="tools"] .simgrid[data-runtime="3AX"]>.editor,
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="code"] .simgrid[data-runtime="3AX"]>.simleft{
+ display:none!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="view"] .simgrid[data-runtime="3AX"]>.simleft,
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="tools"] .simgrid[data-runtime="3AX"]>.simleft,
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="code"] .simgrid[data-runtime="3AX"]>.editor{
+ display:grid!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="tools"] .simgrid[data-runtime="3AX"]>.simleft>.body{
+ overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:thin!important;
+ overscroll-behavior:contain!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="tools"] .simgrid[data-runtime="3AX"] .sceneWrap{
+ display:none!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="tools"] .simgrid[data-runtime="3AX"] .runtimeStatus{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ max-height:none!important;flex:0 0 auto!important;overflow:visible!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="tools"] .simgrid[data-runtime="3AX"] .controls{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ max-height:none!important;flex:0 0 auto!important;overflow:visible!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="tools"] .simgrid[data-runtime="3AX"] .controls .btn{
+ width:100%!important;min-width:0!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="view"] .simgrid[data-runtime="3AX"] .sceneWrap{
+ min-height:80px!important;max-height:100%!important;flex:1 1 0!important;height:0!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="view"] .simgrid[data-runtime="3AX"] .runtimeStatus{
+ display:none!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"][data-aig50-pane="code"] .simgrid[data-runtime="3AX"]>.editor{
+ grid-template-rows:29px 47px minmax(0,1fr) 38px 37px auto!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"] .simgrid[data-runtime="3AX"] .editor :is(.editorbar,.editactions){
+ max-height:47px!important;overflow-x:auto!important;overflow-y:hidden!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"]>.aig49-dock{
+ display:flex!important;order:99!important;flex:0 0 41px!important;
+ min-height:41px!important;max-height:41px!important;margin-top:2px!important
+}
+html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"]>.aig49-dock button{
+ flex:1 1 0!important;min-height:34px!important;min-width:0!important;font-size:12px!important
+}
+@media(orientation:landscape) and (max-height:510px){
+ html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"] .simgrid[data-runtime="3AX"]>
+ :is(.axisModuleHeader,.aig43-bar){max-height:28px!important}
+ html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"] .simgrid[data-runtime="3AX"]>.aig41-toolbar{
+  max-height:24px!important
+ }
+ html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"] .simgrid[data-runtime="3AX"] .sceneWrap{
+  min-height:58px!important
+ }
+ html[data-aig62-axis="3AX"][data-aig49-active="true"][data-aig62-platform="android"] .screen.active[data-page="3AX"]>.aig49-dock{
+  flex:0 0 33px!important;max-height:33px!important;min-height:33px!important
+ }
+}
+

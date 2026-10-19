@@ -1,0 +1,17 @@
+{
+  "version": "62.0.0",
+  "page": "3AX",
+  "sourceChecks": [
+    "16? no — exactly 17 original controls (8 RUN + 9 EDIT) per project",
+    "two existing canvases retained each project",
+    "all G-code editor selectors retained",
+    "two platform-specific styles separate",
+    "adapter and HTML inline scripts parse",
+    "WebGL simulation engine untouched",
+    "V61 SIM and previous pages untouched"
+  ],
+  "state": "STATIC_SOURCE_PASS",
+  "realAndroid": "PENDING",
+  "realWindows": "PENDING",
+  "nativeOutputs": "NOT_BUILT"
+}

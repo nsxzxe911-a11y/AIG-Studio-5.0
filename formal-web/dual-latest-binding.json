@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "Web V61 fourth-page SIM: AIG-II and Studio share exact read-only real axis runtime evidence hub, fail-closed uninitialized status; independent phone/Desktop skins. G-code, cutting and NC untouched; no autoplay or machine output.",
+  "notes": "V62 3AX only: true VMC full-size viewport with 74% Windows live WebGL / 26% original NC editor, phone view/control/code panes; 8 original simulation and 9 original edit callbacks; Studio NC-first panel added, zero machine output.",
   "sharedWebRelease": {
-    "version": "61.0.0",
-    "train": "V61",
+    "version": "62.0.0",
+    "train": "V62",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "61.0.0"
+        "version": "62.0.0"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "61.0.0"
+        "version": "62.0.0"
       }
     ],
     "commonRuntimeSource": "./dual-web-v43.js",
     "commonUiSource": "./dual-web-v43.css",
-    "releaseManifest": "./dual-web-v61.json",
+    "releaseManifest": "./dual-web-v62.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",

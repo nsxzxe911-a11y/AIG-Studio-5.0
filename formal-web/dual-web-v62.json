@@ -1,0 +1,647 @@
+{
+  "schema": "aig-dual-web-shared-v34",
+  "release": "62.0.0",
+  "date": "2026-10-19",
+  "website": "https://aig-dual-formal-runtime.onrender.com/index.html#dual-projects",
+  "originalRenderService": "srv-db8v565g1s2s738paemg",
+  "websiteRepository": "nsxzxe911-a11y/AIG-Studio-5.0",
+  "websiteBranch": "web/aig-dual-formal-runtime-20261016",
+  "previousVerifiedWebCommit": "ea5baf2eb7f767e29250650520e9a76b4fef2d58",
+  "projects": [
+    {
+      "id": "AIGII",
+      "label": "AIG-II",
+      "entry": "./mobile-runtime.html#HOME",
+      "webVersion": "62.0.0",
+      "nativeRepo": "nsxzxe911-a11y/AIG-II",
+      "nativeVersion": "432.0.0",
+      "nativeSourceSha": "778f02c56a486d197d3ddded6695fbdda5625865"
+    },
+    {
+      "id": "STUDIO",
+      "label": "AIG Studio 5.0",
+      "entry": "./studio-375.html#HOME",
+      "webVersion": "62.0.0",
+      "nativeRepo": "nsxzxe911-a11y/AIG-Studio-5.0",
+      "nativeVersion": "375.0.0",
+      "nativeSourceSha": "67fbe2719c1e149125dd569386f9323379f7ab10"
+    }
+  ],
+  "commonModule": "./dual-web-v43.js",
+  "pages": [
+    "HOME",
+    "CAD",
+    "CAM",
+    "SIM",
+    "3AX",
+    "4AX",
+    "5AX",
+    "6AX",
+    "NC",
+    "AI"
+  ],
+  "retained": [
+    "site/portal",
+    "RGB runtime",
+    "3-6AX V33 voxel surface cache",
+    "V32 FPS/automatic pixels",
+    "V31 removal evidence",
+    "V30 coordinates",
+    "V29 callbacks",
+    "local CAD/CAM/NC data"
+  ],
+  "compatibility": {
+    "webSharedRelease": true,
+    "bothLoadSameModule": true,
+    "pageNavigationDelegatesExistingCallbacks": true,
+    "localStorageSeparated": true,
+    "nativeBinariesUnmodified": true,
+    "machineOutputDisabled": true
+  },
+  "gate": {
+    "webSource": "CHECK_ON_RENDER_DEPLOY",
+    "webVisualRuntime": "REQUIRES_REAL_BROWSER_VISUAL_EVIDENCE",
+    "android": "NOT_BUILT",
+    "windows": "NOT_BUILT",
+    "cncSafety": "NOT_VERIFIED",
+    "nativeExactSha": "EXPLICITLY_PINNED_NOT_EQUAL_VERSION",
+    "machineGeometry": "PROCEDURAL_3D_VISUAL_NOT_AUTHORITY_GLB",
+    "phoneVisual": "REQUIRES_REAL_DEVICE_SNAPSHOT",
+    "responsiveStatic": "CSS_AND_SOURCE_CHECKED",
+    "mobileRegressionUserScreenshot": "RECEIVED_20261019_SHOWS_V36_ISSUE",
+    "phoneVisualAfterV37": "UNVERIFIED",
+    "realPhoneAfterV38": "REQUIRES_SCREENSHOT_CHECK",
+    "layoutButtonStateMock": "VALIDATE_BEFORE_RELEASE",
+    "workspaceViewStatic": "PENDING",
+    "visualOnPhone": "REQUIRES_LIVE_BROWSER_CHECK",
+    "platformSkinCss": "SOURCE_VALIDATED",
+    "imageReplacement": "PENDING_UNPACKED_ASSETS",
+    "realPhoneVisual": "NOT_YET_TESTED",
+    "v44Source": "SOURCE_SYNTAX_PASS",
+    "v44Browser": "REQUIRES_LIVE_BROWSER",
+    "v44Phone": "REQUIRES_REAL_DEVICE",
+    "v44CncSafety": "NOT_VERIFIED",
+    "v45Source": "JS_PARSE_PASS",
+    "v45Visual": "PENDING_REAL_BROWSER",
+    "v45CncSafety": "NOT_VERIFIED",
+    "v46Source": "PASS",
+    "v46SamplingUnit": "PASS",
+    "v46RealBrowser": "REQUIRES_DEVICE",
+    "v46MachineSafety": "NOT_CERTIFIED",
+    "v47Source": "PASS",
+    "v47Math": "PASS",
+    "v47RealBrowser": "REQUIRES_VISUAL_CHECK",
+    "v47MachineSafety": "NOT_CERTIFIED",
+    "v48JS": "PASS",
+    "v48PivotMath": "PASS",
+    "v48MachineSafety": "NOT_CERTIFIED",
+    "v48Browser": "PENDING_REAL_DEVICE",
+    "v49Source": "BOTH_HTML_JS_PARSE_PASS",
+    "v49Ui": "STATIC_SOURCE_CHECK_PASS",
+    "v49RealPhone": "PENDING",
+    "v49RealDesktop": "PENDING",
+    "v49CncSafety": "NOT_VERIFIED",
+    "v50StaticSyntax": "PASS",
+    "v50CamNcPaneContracts": "PASS",
+    "v50LivePhone": "PENDING",
+    "v50LiveDesktop": "PENDING",
+    "v50NativeGate": "NOT_RUN",
+    "v51ParserTests": "25_PASS",
+    "v51HtmlSyntax": "BOTH_PASS",
+    "v51ManualCam": "SOURCE_CONTRACT_PASS",
+    "v51Browser": "PENDING",
+    "v51Machine": "NOT_CERTIFIED",
+    "v52Unit": "32_PASS",
+    "v52Source": "BOTH_HTML_JS_PARSE_PASS",
+    "v52LiveBrowser": "PENDING",
+    "v52SimMaterialRemoval": "NOT_CONNECTED",
+    "v52NcSafety": "NOT_VERIFIED",
+    "v52PathMetadata": "24_PASS_STALE_METADATA_REJECTED",
+    "v52MachineSafety": "NOT_CERTIFIED",
+    "v53Source": "JS_PARSE_PASS",
+    "v53BothRuntimes": "HTML_BINDING_CHECK_PASS",
+    "v53DeviceLandscape": "PENDING_REAL_DEVICE",
+    "v53MobileKeyboard": "PENDING_REAL_DEVICE",
+    "v53MachineSafety": "NOT_CERTIFIED",
+    "v54ViewportUnit": "10_PASS",
+    "v54Static": "TWO_HTML_JS_PARSE_PASS",
+    "v54MobileVisual": "PENDING_REAL_BROWSER",
+    "v54CncSafety": "NOT_CERTIFIED",
+    "v55Source": "BOTH_HTML_JS_PARSE_PASS",
+    "v55Nav": "10_SOURCE_LINKS_PASS",
+    "v55DeviceVisual": "REQUIRES_BROWSER",
+    "v55CncSafety": "NOT_CERTIFIED",
+    "v56Static": "TWO_HTML_JS_PARSE_PASS",
+    "v56CssSelectors": "SOURCE_CHECK_PASS",
+    "v56PhoneVisual": "PENDING_BROWSER",
+    "v56CncSafety": "NOT_CERTIFIED",
+    "v56_0_1Numeric": "PASS_77_OF_77",
+    "v56_0_1BothHTML": "PARSE_PASS",
+    "v56_0_1Render": "PENDING_AUTO_DEPLOY",
+    "v56_0_1RealDevice": "PENDING",
+    "v56_0_1MachineSafety": "NOT_CERTIFIED",
+    "v57HomeSource": "BOTH_HTML_JS_PARSE_PASS",
+    "v57HomeButtons": "16_UNIQUE_EACH_PROJECT",
+    "v57Skins": "SEPARATE_ANDROID_WINDOWS_STATIC_PASS",
+    "v57RealMobile": "PENDING",
+    "v57RealWindows": "PENDING",
+    "v57NativeOutputs": "NOT_BUILT",
+    "v58CadSource": "BOTH_HTML_INLINE_JS_PARSE_PASS",
+    "v58CadButtons": "20_EXISTING_ORIGINAL_CONTROLS_EACH_PROJECT",
+    "v58CadCanvas": "UNIQUE_TRUE_CANVAS_BOTH_PROJECTS",
+    "v58MobileVisual": "PENDING",
+    "v58WindowsVisual": "PENDING",
+    "v58Native": "NOT_BUILT",
+    "v58Artwork": "BLOCK_FINAL_APPROVED_AUTHORITY",
+    "v59CadParity": "BYTE_IDENTICAL_CAD_CORE",
+    "v59CadInteraction": "BOTH_ORIGINAL_ENGINES_27_OF_27_PASS",
+    "v59CadLiveBrowser": "PENDING",
+    "v59RealPhone": "PENDING",
+    "v59RealWindows": "PENDING",
+    "v59CadCiRunner": "PATH_FIXED_SOURCE_PARSE_PASS",
+    "v60CamMarkup": "BOTH_HTML_SOURCES_PASS",
+    "v60CamScript": "JS_PARSE_PASS",
+    "v60CamStyles": "CSS_BRACES_PASS",
+    "v60CamManualDelegation": "SOURCE_CALLBACKS_PASS",
+    "v60RealBrowser": "PENDING",
+    "v60Native": "NOT_BUILT",
+    "v60CncSafety": "NOT_CERTIFIED",
+    "v61SimParity": "SAME_HUB_SOURCE_BOTH_PROJECTS",
+    "v61SimSource": "JS_PARSE_PASS",
+    "v61SimUi": "FOUR_AXIS_REAL_RUNTIME_READ_ONLY",
+    "v61SimBrowser": "PENDING_REAL_BROWSER",
+    "v61Native": "NOT_BUILT",
+    "v61CncSafety": "NOT_CERTIFIED",
+    "v62_3AX_Source": "BOTH_HTML_SCRIPTS_PASS",
+    "v62_3AX_Commands": "BOTH_17_ORIGINAL_COMMAND_IDS_PASS",
+    "v62_3AX_WebGL": "ORIGINAL_CANVAS_PRESERVED",
+    "v62_3AX_Visual": "PENDING_REAL_DEVICE",
+    "v62_3AX_Native": "NOT_BUILT"
+  },
+  "note": "V34 common Web runtime train is synchronized across 2 pages. Native AIG-II 432.0.0 and Studio 375.0.0 are NOT numerically unified nor verified as a joint native build.",
+  "commonAxisModule": "axis-machine-v35.js",
+  "axisRendererDetails": {
+    "aig": "enhanced native WebGL machine profiles per 3/4/5/6AX",
+    "studio": "replaces generic table placeholders with genuine four separate WebGL machine profiles",
+    "telemetry": "after viewport so visible on phone",
+    "authenticAuthorityGLB": false,
+    "safetyGate": "NOT_VERIFIED"
+  },
+  "commonUiSource": "./dual-web-v43.css",
+  "commonRuntimeSource": "./dual-web-v43.js",
+  "mobileLayoutModule": "./mobile-layout-v37.js",
+  "mobileLayoutCss": "./mobile-layout-v37.css",
+  "mobileLayoutFeatures": [
+    "CSS enabled by measured min(window, app, active axis layout) width rather than viewport-only",
+    "explicit mobile presentation forces compact mode at desktop preview width",
+    "3-6AX workbench columns collapsed into full-width vertical sequence",
+    "no stacked narrow runtime metrics alongside NC code",
+    "real 3D machine viewport preserved, not replaced by image",
+    "collapsible real CNC HUD and collision warnings",
+    "header flex-wrap and horizontally scrolling real module navigation"
+  ],
+  "layoutModeModule": "./runtime/layout-mode.js",
+  "layoutModeBridge": "./layout-switch-v38.js",
+  "layoutModeCss": "./layout-switch-v38.css",
+  "layoutModeContract": {
+    "auto": "<=900 CSS px chooses mobile",
+    "desktop": "explicit desktop view",
+    "mobile": "explicit compact phone layout at any desktop browser width",
+    "pages": "both AIG-II and Studio",
+    "realRuntimeCallbacksPreserved": true
+  },
+  "playbackViewport": {
+    "version": "40.0.0",
+    "behavior": "persist G-code DOM rows across blocks; update status classes without auto-scrolling",
+    "manualNavigation": "nested execution list",
+    "css": "./axis-playback-v40.css",
+    "sourceValidated": true,
+    "actualPhonePlayback": "PENDING"
+  },
+  "workspaceView": {
+    "version": "41.0.0",
+    "scope": "3AX,4AX,5AX,6AX in both real Web runtimes",
+    "ui": "./axis-workspace-v41.js",
+    "css": "./axis-workspace-v41.css",
+    "modes": [
+      "machine",
+      "balanced",
+      "code"
+    ],
+    "realCallback": "layout dataset and aria-pressed state",
+    "desktop": "machine priority 75:25, balanced 60:40, code priority 40:60 with internal editor scroll",
+    "mobile": "true single column, machine large view or code-first",
+    "ncFirst": "existing AIG-II mode preserved",
+    "autoPlayback": "V40 G-code row DOM unchanged; no scroll-to-focus",
+    "safety": "no CNC outputs or changes to NC parser"
+  },
+  "platformSkins": {
+    "platformSelector": "data-aig-skin-platform",
+    "mobile": {
+      "css": "./skin-mobile-v42.css",
+      "display": "phone 320-480px, machining 270-365px",
+      "rgbTheme": "compact glass",
+      "imageAssets": "NOT_INGESTED"
+    },
+    "desktop": {
+      "css": "./skin-desktop-v42.css",
+      "display": "desktop wide 60/40, machining 330-480px",
+      "rgbTheme": "wide studio",
+      "imageAssets": "NOT_INGESTED"
+    },
+    "controller": "./skin-platform-v42.js",
+    "sourceArchive": {
+      "fileName": "AIG-10.rar",
+      "uploadedBytes": 468846150,
+      "analysis": "BLOCKED_LOCAL_FILE_SERVICE_UNAVAILABLE",
+      "verifiedExtractedAssets": 0,
+      "approvedImageManifest": "NOT_AVAILABLE",
+      "autoUseOldImageAuthority": false
+    },
+    "nativeRuntimesModified": false,
+    "sourceIdsRequiredForImagePromotion": true
+  },
+  "pageGenerator": {
+    "schema": "./ai-page-contract-v44.json",
+    "runtime": "./ai-page-v43.js",
+    "mobileSkin": "./ai-page-mobile-v43.css",
+    "desktopSkin": "./ai-page-desktop-v43.css",
+    "pages": [
+      "HOME",
+      "CAD",
+      "CAM",
+      "SIM",
+      "3AX",
+      "4AX",
+      "5AX",
+      "6AX",
+      "NC",
+      "AI"
+    ],
+    "kind": "declarative style-to-page assembler; existing real callbacks only, not online model",
+    "nativeEngineUnchanged": true,
+    "baseSchema": "./ai-page-contract-v43.json",
+    "extensionRuntime": "./ai-page-v44.js",
+    "extensionCss": "./ai-page-v44.css",
+    "actionExtensions": 84,
+    "codePreflight": "ADVISORY_ONLY"
+  },
+  "cuttingUpgrade": {
+    "engine": "existing inline WebGL heightfield and rotary voxel",
+    "studioFidelity": "FAST/BALANCED/DETAIL",
+    "heightfieldVolume": "boundary weighted area",
+    "rotarySampling": "XYZ 8-point swept path + ABC stock radius",
+    "dryRunInvalidation": "rebuild stock caches when mode changes",
+    "nativeRelease": "UNCHANGED",
+    "realDevice": "PENDING"
+  },
+  "v46Upgrade": {
+    "adaptiveCollisionSamples": "two original pass loops per project: setup clearance and collision",
+    "maxPerMove": "3AX 128; 4AX-6AX 192",
+    "sweptDistance": "linear XYZ plus A/B/C angle multiplied by stock diagonal envelope",
+    "geometry": "6AX staged single-arm A -> A/B -> A/B/C; visualization only",
+    "noMachineOutput": true,
+    "noAuthorityGLB": true
+  },
+  "poseUpgrade": {
+    "version": "47.0.0",
+    "fixedWorldZSpindle": true,
+    "rotatingStockNormalABC": true,
+    "rotaryDrumCenterTransform": true,
+    "closedCircleG2G3CollisionSweep": true,
+    "G0StockCollisionEvenFromInside": true,
+    "certifiedMachineSafety": false
+  },
+  "v48Upgrade": {
+    "name": "shared nonzero stock XY rotation pivot",
+    "scope": [
+      "WebGL A/B/C workpiece + all staged 6AX pieces",
+      "4/5/6AX voxel tip inverse",
+      "3-6AX collision/setup clearance scanner and table radial center",
+      "camera occlusion pivot"
+    ],
+    "method": "inferred stock envelope center in XY at Z=0",
+    "limits": [
+      "no calibrated machine pivot height/configuration",
+      "no real machine geometry",
+      "no real phone browser evidence"
+    ],
+    "nativeRuntimeChanged": false
+  },
+  "v49Upgrade": {
+    "scope": "whole CNC website Runtime Mobile and Desktop UX",
+    "rootCause": "large min-height canvases, vertically stacked mobile canvas / controls / NC code",
+    "strategy": "single-viewport; original CNC canvas/buttons preserved; scroll only inside view/panel",
+    "phoneDock": "3AX-6AX view/control/code; CAD CAM NC tool switching",
+    "desktop": "fixed workspace and independent tool pane",
+    "css": "./workspace-fit-v49.css",
+    "js": "./workspace-fit-v49.js",
+    "machineOutput": "DISABLED"
+  },
+  "v50Upgrade": {
+    "scope": "Mobile/desktop real controls visibility fix",
+    "cam": [
+      "preview",
+      "strategy and params",
+      "manual if installed"
+    ],
+    "nc": [
+      "code",
+      "keypad",
+      "status"
+    ],
+    "preserve": "Existing DOM controls, data, WebGL, RGB and callbacks",
+    "code": "workspace-fit-v50.js",
+    "css": "workspace-fit-v50.css"
+  },
+  "v51Upgrade": {
+    "scope": "Both projects real manual CAM 3AX G0/G1",
+    "parser": "./runtime/cam-manual-path-v1.js",
+    "safety": "reject rapid below Safe-Z, F <= 0, stock overcut, unsupported ABC and XYZ ramps, stale apply",
+    "data": "Existing local CAD/CAM/NC preserved; no storage migration",
+    "tests": 25
+  },
+  "v52Upgrade": {
+    "name": "CAM→SIM/NC non-destructive evidence bridge",
+    "runtime": "./runtime/cam-nc-preflight-v52.js",
+    "css": "./runtime/cam-nc-preflight-v52.css",
+    "scope": "both project CAM and SIM pages",
+    "supported": "manual 3AX G0/G1",
+    "output": "unverified NC candidate in CAM preview; explicit clipboard copy; no automatic NC writes",
+    "safety": "0.001 mm coordinate grid, G0 Safe-Z, stock bounds, feed, path/segment equality, retract",
+    "missing": "SIM real material-removal replay from CAM; NC parser and machine-specific post; real device screenshots",
+    "storage": "read-only",
+    "machineOutput": false
+  },
+  "v52Hardening": {
+    "reason": "Independent regression found stale CAM segment rpm/safeZ/routeMode/points accepted by NC candidate preflight",
+    "tests": 24,
+    "passed": 24,
+    "output": "NC_CANDIDATE_ONLY",
+    "realDevice": "PENDING",
+    "machineSafety": "NOT_CERTIFIED"
+  },
+  "v53Upgrade": {
+    "scope": "Mobile landscape full-width rendering and VirtualViewport keyboard controls",
+    "landscape": "Phone landscape uses available width, no 480px desktop-preview cap",
+    "editorFocus": "Visible original NC/3-6AX/CAM manual textarea selects original live code/manual pane",
+    "keyboard": "CSS presentation follows VisualViewport; retains input and CNC button callbacks",
+    "preserved": [
+      "V52 CAM-to-NC candidate only",
+      "all CAD/CAM/NC local saved data",
+      "V49/V50 viewport UI",
+      "V40 no auto G-code scrolling"
+    ],
+    "machineOutput": "DISABLED"
+  },
+  "v54Upgrade": {
+    "scope": "narrow landscape / virtual keyboard / NC-first live pane",
+    "reason": "V50 previously refused VisualViewport heights <=250px and original NC-first selection could retain a hidden G-code pane",
+    "fixes": [
+      "VirtualViewport height>=105px while actual active editor focused",
+      "pinch zoom and normal layout unaffected",
+      "real NC-first click selects existing G-code dock button",
+      "Machine click restores view pane",
+      "text/storage/CNC state untouched"
+    ],
+    "source": "./workspace-fit-v54.js",
+    "css": "./workspace-fit-v54.css",
+    "machineOutput": "DISABLED"
+  },
+  "v55Upgrade": {
+    "goal": "CNC simulator-like fullscreen workbench, not a squeezed website",
+    "ui": "single RGB simulator nav connecting original ten module buttons; Desktop machine viewport ~73% and actual G-code pane ~27%; mobile one-pane UI",
+    "cadCam": "real canvas central/parameters around it",
+    "machine": "simulation only",
+    "retained": [
+      "original CAD CAM SIM NC AI engines",
+      "G-code scroll prevention",
+      "V54 keyboard fix",
+      "local files",
+      "old formal RGB data"
+    ],
+    "css": "./simulator-shell-v55.css",
+    "js": "./simulator-shell-v55.js"
+  },
+  "v56Upgrade": {
+    "scope": "real emulator CSS cascade priority",
+    "rootCause": "older mobile width/height selectors had higher specificity than V55 simulator rules",
+    "fixes": [
+      "hide original top chrome while simulator is active",
+      "release old 480px phone cap in landscape",
+      "honor manually-selected Mobile mode on wide CSS viewports",
+      "preserve actual V50 view/control/code dock and original panels"
+    ],
+    "originalWorkspacesRetained": true,
+    "controller": "./simulator-shell-v55.js",
+    "style": "./simulator-priority-v56.css"
+  },
+  "v56_0_1": {
+    "scope": "CAM manual parser + NC preflight fail-closed numeric/grid validation",
+    "changed": [
+      "numeric-only input to CAM core",
+      "0.001 grid on all manual coordinates and feed",
+      "integer spindle RPM",
+      "numeric-only and 0.001 grid in CAM→NC candidate preflight including saved nodes, points and metadata"
+    ],
+    "testSuite": "./runtime/tests/cam-safety-v56-0-1.test.js",
+    "cases": 77,
+    "pass": 77,
+    "fail": 0,
+    "output": "NC_CANDIDATE_ONLY",
+    "machineOutput": "DISABLED",
+    "noUserDataWrites": true,
+    "realDevice": "PENDING"
+  },
+  "v57Home": {
+    "delivery": "ONE_PAGE_HOME_FIRST",
+    "android": "./home-android-v57.css",
+    "windows": "./home-windows-v57.css",
+    "realButtonsPerProject": 16,
+    "uniqueButtons": true,
+    "originalRuntimeData": true,
+    "visualArtwork": "NOT_PROMOTED",
+    "mobileAuthority": {
+      "id": "AIGII-MOBILE-HOME-CURRENT-20261016",
+      "sha256": "f360cb828ff6d05076792b0d04474503316dea85896f82f6452b0d6c9d7ae99e",
+      "pixels": "941x1672",
+      "gate": "BLOCK_NON_NATIVE_4K"
+    },
+    "windowsAuthority": {
+      "id": "AIGII-DESKTOP-HOME-438-SOURCE",
+      "sha256": "61e00235ce9a7ac0d18bd0fb115307f7807f18cb32c149d93b50527b929b0ba2",
+      "gate": "BLOCK_REVOKED_NOT_CURRENT_APPROVED_NATIVE_4K"
+    },
+    "nativeAPK": "NOT_BUILT",
+    "nativeEXE": "NOT_BUILT",
+    "browserSnapshot": "PENDING",
+    "next": "HOME_VISUAL_GATE_THEN_CAD"
+  },
+  "v58CAD": {
+    "page": "02_CAD",
+    "status": "SOURCE_PASS_DEVICE_VISUAL_PENDING",
+    "pageScope": "CAD_ONLY",
+    "originalCADRuntime": "UNTOUCHED",
+    "canvasCountPerProject": 1,
+    "tools": 7,
+    "actions": 13,
+    "stableButtons": 20,
+    "modes": {
+      "android": "VIEW/TOOLS V50 real panels",
+      "windows": "2.7:1 Canvas/Inspector"
+    },
+    "css": [
+      "./cad-common-v58.css",
+      "./cad-android-v58.css",
+      "./cad-windows-v58.css"
+    ],
+    "ui": "./cad-page-v58.js",
+    "data": "CAD AutoSave untouched",
+    "gate": {
+      "static": "PASS",
+      "deviceVisual": "PENDING",
+      "cadPrecisionEndToEnd": "NOT_REVERIFIED",
+      "fileImportExport": "NOT_PRESENT",
+      "photoAuthority": "BLOCK_CURRENT_APPROVED_4K",
+      "androidAPK": "NOT_BUILT",
+      "windowsExe": "NOT_BUILT"
+    },
+    "previousHOME": "V57 SOURCE_DONE_VISUAL_GATE_PENDING",
+    "next": "REAL_BROWSER_CAD_VISUAL_AND_DRAWING_SMOKE_GATE"
+  },
+  "v59CadParity": {
+    "scope": "CAD_RUNTIME_ONLY",
+    "rootCause": "Studio CAD missing root.aigCadApi and resize listener from AIG-II",
+    "fix": "Studio makeCadRuntime now byte-for-byte equal to AIG-II including original resize listener",
+    "interactionTests": {
+      "perProject": [
+        {
+          "project": "AIG-II",
+          "checks": 27,
+          "persist": 15
+        },
+        {
+          "project": "AIG Studio 5.0",
+          "checks": 27,
+          "persist": 15
+        }
+      ],
+      "result": "ORIGINAL_ENGINE_EVENT_SIM_27_OF_27_PER_PROJECT_PASS"
+    },
+    "originalRGBAssets": "UNCHANGED",
+    "originalCAMNC": "UNCHANGED",
+    "androidApk": "NOT_BUILT",
+    "windowsExe": "NOT_BUILT",
+    "liveBrowser": "PENDING",
+    "realDevice": "PENDING",
+    "testRunner": "formal-web/runtime/tests/cad-interactions-v59.test.js"
+  },
+  "v60CAM": {
+    "phase": "03_CAM",
+    "status": "SOURCE_PASS_REAL_DEVICE_PENDING",
+    "platformStyles": {
+      "android": "./cam-android-v60.css",
+      "windows": "./cam-windows-v60.css",
+      "shared": "./cam-common-v60.css"
+    },
+    "connectedOriginalCallbacks": [
+      "MANUAL mode select change",
+      "CAM CALC",
+      "CAM APPLY",
+      "CAM FIT",
+      "CAM RELOAD",
+      "CAM FLOW"
+    ],
+    "newManualActions": [
+      "MANUAL switch",
+      "calculate original",
+      "apply original",
+      "original preview pane"
+    ],
+    "strategyCount": 9,
+    "actionCount": 5,
+    "canvasCount": 1,
+    "actualRenderer": "Original CAM 2D preview, not true 3D stock removal",
+    "safety": "CAM→SIM/NC candidate never auto-applied; FANUC machine output disabled",
+    "sourceTests": {
+      "both": "PASS",
+      "browser": "NOT_AVAILABLE",
+      "native": "NOT_BUILT"
+    },
+    "previous": {
+      "home": "V57 visual pending",
+      "cad": "V59.0.1 original-core regression 27/27 per project; real screenshots pending"
+    },
+    "next": "LIVE_BROWSER_AND_PHONE_CAM_GATES"
+  },
+  "v61SIM": {
+    "phase": "04_SIM",
+    "status": "SOURCE_PASS_REAL_BROWSER_PENDING",
+    "mobile": "./sim-android-v61.css",
+    "windows": "./sim-windows-v61.css",
+    "identicalHubSource": true,
+    "source": "original AIG-II SIM runtime evidence",
+    "axisCards": [
+      "3AX",
+      "4AX",
+      "5AX",
+      "6AX"
+    ],
+    "realAxisEvidence": [
+      "G-code parse blocks",
+      "runtime progress",
+      "material removal mm³ from real axis DOM",
+      "collision/parse warnings",
+      "CAM saved path count"
+    ],
+    "failClosed": "uninitialized axis reports NOT READY, not fabricated success",
+    "materialRemoval": "READ_ONLY_ACTUAL_AXIS_RUNTIME_3D_NOT_SEPARATE_SIM_HUB_RENDERER",
+    "camSimLink": "SAVED_CAM_DISPLAY_ONLY_NO_AUTO_NC_OVERWRITE",
+    "machine": "DISABLED",
+    "previousPages": {
+      "home": "visual pending",
+      "cad": "27/27 per engine simulated events; device pending",
+      "cam": "V60 source PASS; manual end-to-end pending"
+    },
+    "gates": {
+      "source": "PASS",
+      "render": "PENDING",
+      "androidRealDevice": "PENDING",
+      "windowsRealDevice": "PENDING",
+      "nativeBuild": "NOT_BUILT"
+    }
+  },
+  "v62_3AX": {
+    "page": "05_3AX",
+    "status": "SOURCE_PASS_DEVICE_VISUAL_PENDING",
+    "desktop": {
+      "layout": "74% live WebGL simulated machining, 26% original G-code editor",
+      "skin": "./axis-3ax-windows-v62.css"
+    },
+    "android": {
+      "layout": "one pane at a time view / controls / code, fixed bottom dock",
+      "skin": "./axis-3ax-android-v62.css"
+    },
+    "originalPlaybackCommands": 8,
+    "originalEditorCommands": 9,
+    "commandIds": "17 stable per project",
+    "originalWebGL": true,
+    "originalNCEditor": true,
+    "source": "./axis-3ax-v62.js",
+    "studioNCfirst": "live toggle between original .simleft and .editor, not an independent interpreter",
+    "boundaries": {
+      "modified": "3AX UI presentation + stable IDs only",
+      "retained": "HOME CAD CAM SIM 4AX 5AX 6AX NC AI engines",
+      "programs": "not overwritten",
+      "machineOutput": "DISABLED"
+    },
+    "gates": {
+      "static": "PASS",
+      "realAndroidTouch": "PENDING",
+      "realWindows4K": "PENDING",
+      "realMaterialRemoval": "NOT_REVALIDATED",
+      "nativeAPK": "NOT_BUILT",
+      "nativeEXE": "NOT_BUILT"
+    }
+  }
+}
