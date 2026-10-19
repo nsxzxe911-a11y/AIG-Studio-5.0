@@ -25,6 +25,8 @@ async function verify(browser,mobile){
   });
   assert.equal(before.mapping,"ready");assert.equal(before.nativeButtons,1);
   assert(before.cam&&before.telemetry&&before.editor===1,"real native bindings lost");
+  console.log("AIG_V92_GEOMETRY",name,JSON.stringify(before));
+  await page.screenshot({path:"artifacts/v92/"+name+"-6AX-PRECHECK.png",fullPage:false});
   assert(before.gl.width>210&&before.gl.height>170,"live GLB work window was crushed "+JSON.stringify(before));
   await page.locator('.screen.active [data-button-id="BTN_6AX_CAMERA_TOP"]').click();
   const after=await page.evaluate(()=>document.querySelector('.screen.active [data-runtime="6AX"]').aigCameraV92.read());
