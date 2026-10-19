@@ -1,0 +1,41 @@
+name: AIG V91 RGB Desktop + Real 6AX GLB Gate
+on:
+  push:
+    branches: [integration/v91-rgb-one-workspace]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check formal-web/qa/v91-rgb-glb-static.cjs
+      - run: node formal-web/qa/v91-rgb-glb-static.cjs
+      - run: python3 formal-web/zoo-6ax/validate-v93-glb.py
+  visual:
+    needs: source
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 8765 --directory formal-web >/tmp/aig-v91-http.log 2>&1 &
+          sleep 2
+      - run: node formal-web/qa/v91-rgb-glb-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-V91-RGB-6AX-4K-S23
+          path: artifacts/v91
+          if-no-files-found: warn
