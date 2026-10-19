@@ -5,7 +5,7 @@
   "inheritedBase": "V65 exact commit 850173572caf81cd07a18375cc91aeca726786d3",
   "sourceChecks": {
     "result": "PASS",
-    "regressionCases": 25,
+    "regressionCases": 26,
     "runner": "ES module-isolate V8 emulation of CommonJS with mock fs/assert; NOT native GitHub Actions/Node job",
     "tests": [
       "G90 G0/G1 XYZ/A/B parsing",
@@ -20,7 +20,8 @@
       "source NC immutability",
       "V65 original UI controls script preserved",
       "no machine output",
-      "manual 0-45-degree H retained when C unmapped, invalid tilt refused"
+      "manual 0-45-degree H retained when C unmapped, invalid tilt refused",
+      "signed A/B -360..360 preview controls aligned with negative NC motions"
     ]
   },
   "uiContractSmoke": {
@@ -54,7 +55,8 @@
     ],
     "collisionResult": "POTENTIAL/UNKNOWN ONLY",
     "fullCollisionClearance": "NOT_CERTIFIED",
-    "uiManualHead": "PRESERVED_WHEN_C_UNMAPPED"
+    "uiManualHead": "PRESERVED_WHEN_C_UNMAPPED",
+    "signedRotarySliders": "A/B -360..360"
   },
   "integration": {
     "webFilesAdded": [
