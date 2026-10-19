@@ -1,0 +1,27 @@
+/* AIG V66 NC-to-six-axis pose preview. Scoped to V1 independent 6AX overlay. */
+.screen[data-page="6AX"] .aig6-nc-bridge{display:flex;flex-direction:column;gap:6px;margin-top:7px;padding:8px 0 2px;
+ border-top:1px solid rgba(72,202,249,.30);font:11px/1.48 "Noto Sans TC",sans-serif}
+.screen[data-page="6AX"] .aig6-nc-bridge>strong{font-size:12px;color:#a1eaff}
+.screen[data-page="6AX"] .aig6-nc-bridge p{font-size:10px;line-height:1.4;color:#adc0d5;margin:0}
+.screen[data-page="6AX"] .aig6-nc-map{display:flex;gap:5px;align-items:center;color:#e8d1a3;font-size:10px;cursor:pointer}
+.screen[data-page="6AX"] .aig6-nc-map input{width:17px;height:17px;accent-color:#36d8ff;flex-shrink:0}
+.screen[data-page="6AX"] .aig6-nc-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.screen[data-page="6AX"] .aig6-nc-actions button{min-height:34px;padding:5px 3px;border-radius:9px;color:#e8f7ff;
+ border:1px solid transparent;cursor:pointer;
+ background:linear-gradient(#0b2033,#071222) padding-box,linear-gradient(120deg,#1ee0ffbb,#8160f7aa,#f261d3aa) border-box;
+ font:700 10px "Noto Sans TC",sans-serif}
+.screen[data-page="6AX"] .aig6-nc-actions button:first-child,
+.screen[data-page="6AX"] .aig6-nc-actions button:last-child{grid-column:span 3}
+.screen[data-page="6AX"] .aig6-nc-actions button:disabled{opacity:.32;filter:grayscale(.85);cursor:not-allowed}
+.screen[data-page="6AX"] .aig6-nc-actions button:focus-visible{outline:2px solid #a6efff;outline-offset:2px}
+.screen[data-page="6AX"] .aig6-nc-status{display:block;white-space:normal;overflow-wrap:anywhere;
+ font:10px/1.5 ui-monospace,"Noto Sans TC",sans-serif;color:#d5b875;background:rgba(30,21,7,.32);
+ border:1px solid #8c673755;border-radius:8px;padding:7px;min-height:44px}
+.screen[data-page="6AX"] .aig6-nc-status[data-severity="error"]{color:#ffb1a4;border-color:#b94a4a99}
+.screen[data-page="6AX"] .aig6-nc-status[data-severity="neutral"]{color:#afe6f9;border-color:#297f9e99}
+.screen[data-page="6AX"] .aig6-nc-bridge .aig6-nc-notes{color:#c5a973;overflow-wrap:anywhere}
+@media(max-width:900px){
+ .screen[data-page="6AX"] .aig6-nc-bridge{grid-column:1/-1;gap:5px;padding-top:6px;margin:2px 0}
+ .screen[data-page="6AX"] .aig6-nc-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .screen[data-page="6AX"] .aig6-nc-actions button{min-height:40px;font-size:11px}
+}
