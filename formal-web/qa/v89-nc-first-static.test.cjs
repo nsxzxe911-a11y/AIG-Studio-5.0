@@ -22,7 +22,7 @@ const cleanSW=sw
  .replace("aig-ii-original-render-nc-sim-guard-v89-20261020","aig-ii-original-render-nc-sim-guard-v66-20261019");
 assert.equal(sha(cleanSW),"0e115d8095cfde04657df00481949b299796c816","offline baseline unchanged");
 const adapter=read("runtime/v89-nc-first-state.js");
-for(const term of ['aig-nc-working-copy-6AX-v89','aig-code-6AX','data-aig89-switch-gate','NC_6AX_WORKING_COPY_RECOVER','data-editcmd="parse"','textarea.code[data-axis="6AX"]'])assert(adapter.includes(term),term);
+for(const term of ['aig-nc-working-copy-6AX-v89','aig-code-6AX','aig89SwitchGate','NC_6AX_WORKING_COPY_RECOVER','data-editcmd="parse"','textarea.code[data-axis="6AX"]'])assert(adapter.includes(term),term);
 assert(!adapter.includes("cloneNode(")&&!adapter.includes("innerHTML="));
 assert(!adapter.includes("WebSocket(")&&!adapter.includes("fetch("));
 assert(!html.includes('manus-v87/candidate/app.js'));
