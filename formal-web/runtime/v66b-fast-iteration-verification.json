@@ -1,0 +1,71 @@
+{
+  "title": "AIG Web V66-B Cross-Module Fast Iteration",
+  "date": "2026-10-19",
+  "repo": "nsxzxe911-a11y/AIG-Studio-5.0",
+  "branch": "aig-web-v66-rgb-workspace",
+  "versionScope": "Web V66 test branch only; not Studio main Web 375 or AIG-II main",
+  "changedDepartments": {
+    "UI_UX": "responsive CSS for 10 primary modules, desktop geometry/coding splits, mobile overflow and nav",
+    "CNC_6AX": "mobile controller drawer with live Button ID and independent true 3D joints",
+    "NC_SIM": "NC sampled collision warning shown only for current sampled position; NC working copy remains read only",
+    "WEB_PERFORMANCE": "six-asset critical install shell; V66 6AX modules load only when active",
+    "OFFLINE": "critical HOME/workspace shell guarded, optional assets fast-fail to V65 runtime without NC mutation",
+    "RELEASE_QA": "two real-browser self-check pages: /qa/6ax-live-check.html and /qa/v66-all-modules-check.html"
+  },
+  "sourceGates": {
+    "axisNcRegression": {
+      "status": "PASS",
+      "cases": 26,
+      "execution": "V8 JS mock filesystem/assertions, not actual browser"
+    },
+    "crossModuleSource": {
+      "status": "PASS",
+      "cases": 27,
+      "execution": "V8 JS mock filesystem/assertions, not GitHub Actions workflow"
+    },
+    "totalCases": 53,
+    "optionalLoader": {
+      "status": "PASS",
+      "cases": [
+        "HOME idle",
+        "6AX sequential 4-assets load",
+        "WebGL optional asset missing fails without original runtime reset"
+      ],
+      "execution": "mocked DOM with async script onload/onerror"
+    },
+    "offlineWorker": {
+      "status": "PASS",
+      "cases": [
+        "6 assets reachable",
+        "optional CSS missing install",
+        "critical Runtime missing blocks takeover",
+        "critical HOME missing blocks takeover"
+      ],
+      "execution": "mocked service worker cache/fetch"
+    },
+    "realBrowserScreenshots": "NOT_YET_COLLECTED",
+    "fullCAD_CAM_SIM_NCFunctional": "NOT_REVERIFIED",
+    "machineOutput": "BLOCKED",
+    "liveSafety": "NOT_VALIDATED",
+    "kinematicCollision": "ONLY_APPROXIMATE_CANDIDATES",
+    "zeroPointPrecision0_001mm": "NOT_VERIFIED"
+  },
+  "performanceContract": {
+    "optionalV66WebglOnHome": "NOT_REQUESTED_UNTIL_6AX_VISIBLE",
+    "SWStaticShellAssets": 6,
+    "previousSWStaticShellAssets": 11,
+    "dynamicCacheCap": 260,
+    "actualPerformanceTiming": "PENDING_BROWSER_MEASUREMENT",
+    "furtherWork": "V65 monolithic mobile-runtime.html remains ~316KB; splitting original engine requires a separate verified migration."
+  },
+  "releaseBoundary": {
+    "originalRender": "https://aig-dual-formal-runtime.onrender.com",
+    "originalRenderGate": "V65 LIVE; DO NOT DEPLOY TEST BRANCH ON ORIGINAL",
+    "previewRender": "https://aig-v66-6ax-review.onrender.com",
+    "previewServiceId": "srv-dbarkue1egvs73bscss0",
+    "previewDeploy": "TRIGGER_AFTER_REPORT_COMMIT",
+    "AIGIIExactShaGate": "BLOCKED_PENDING_DUAL_PROJECT_SYNC",
+    "WindowsExe": "NOT_BUILT",
+    "AndroidApk": "NOT_BUILT"
+  }
+}
