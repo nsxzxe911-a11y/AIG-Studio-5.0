@@ -1961,6 +1961,24 @@ function makeRuntime(root){
  root.aigVisualV45=glScene?Object.freeze({read:()=>glScene.getFidelity()}):null;
  root.aigVisualV32=glScene?Object.freeze({read:()=>glScene.getPerformance(),setAuto:on=>glScene.setAutoScale(on)}):null;
  root.aigVisualV33=glScene?Object.freeze({read:()=>glScene.getMeshStatistics()}):null;
+ // V68 real framebuffer: recompute 3D canvas backing when a mobile/desktop
+ // panel becomes visible or changes CSS height. Never edit NC state or material
+ // removal data; draw() only reproduces the existing parsed working copy.
+ let v68AxisRenderQueued=false;
+ const v68AxisRefresh=()=>{
+   if(!root.closest(".screen")?.classList.contains("active")||v68AxisRenderQueued)return;
+   v68AxisRenderQueued=true;
+   requestAnimationFrame(()=>{
+     v68AxisRenderQueued=false;
+     if(root.closest(".screen")?.classList.contains("active"))draw();
+   });
+ };
+ window.addEventListener("resize",v68AxisRefresh,{passive:true});
+ window.addEventListener("aig68:qualitychange",v68AxisRefresh);
+ if(typeof ResizeObserver!=="undefined"&&glCanvas){
+   const observer=new ResizeObserver(v68AxisRefresh);
+   observer.observe(glCanvas);
+ }
  if(!glScene)aigShowIssue(root,"warn",axis+" WebGL 無法使用，已自動切換 2D fallback；G-code、模擬控制與編輯器仍可繼續使用。");
  const toolInput=root.querySelector("[data-tool-dia]"),safeInput=root.querySelector("[data-safe-z]"),g73Input=root.querySelector("[data-g73-retract]"),cutterInput=root.querySelector("[data-cutter-len]"),holderDiaInput=root.querySelector("[data-holder-dia]"),holderLenInput=root.querySelector("[data-holder-len]");
  const g54x=root.querySelector("[data-g54-x]"),g54y=root.querySelector("[data-g54-y]"),g54z=root.querySelector("[data-g54-z]");
@@ -2895,6 +2913,22 @@ function makeCamRuntime(root){
  const cadCountEl=root.querySelector("[data-cam-cad-count]"),msgEl=root.querySelector("[data-cam-msg]"),strategyEl=root.querySelector("[data-cam-strategy-name]"),pathCountEl=root.querySelector("[data-cam-path-count]"),layerCountEl=root.querySelector("[data-cam-layer-count]"),lengthEl=root.querySelector("[data-cam-length]");
  const toolInput=root.querySelector("[data-cam-tool]"),depthInput=root.querySelector("[data-cam-depth]"),feedInput=root.querySelector("[data-cam-feed]"),rpmInput=root.querySelector("[data-cam-rpm]"),safeInput=root.querySelector("[data-cam-safez]"),stockTopInput=root.querySelector("[data-cam-stocktop]"),stockThicknessInput=root.querySelector("[data-cam-stockthickness]"),stepDownInput=root.querySelector("[data-cam-stepdown]"),marginXInput=root.querySelector("[data-cam-marginx]"),marginYInput=root.querySelector("[data-cam-marginy]"),adaptiveLoadInput=root.querySelector("[data-cam-adaptive-load]"),adaptiveRampAngleInput=root.querySelector("[data-cam-ramp-angle]"),pitchInput=root.querySelector("[data-cam-pitch]"),stepInput=root.querySelector("[data-cam-stepover]"),dirInput=root.querySelector("[data-cam-direction]"),sideInput=root.querySelector("[data-cam-contour-side]"),routeModeInput=root.querySelector("[data-cam-route-mode]"),camLeadInInput=root.querySelector("[data-cam-leadin]"),camLeadOutInput=root.querySelector("[data-cam-leadout]"),entryXInput=root.querySelector("[data-cam-entry-x]"),entryYInput=root.querySelector("[data-cam-entry-y]"),exitXInput=root.querySelector("[data-cam-exit-x]"),exitYInput=root.querySelector("[data-cam-exit-y]"),avoidEnabledInput=root.querySelector("[data-cam-avoid-enabled]"),avoidXInput=root.querySelector("[data-cam-avoid-x]"),avoidYInput=root.querySelector("[data-cam-avoid-y]"),avoidZInput=root.querySelector("[data-cam-avoid-z]");
  const state={cad:[],strategy:null,paths:[],manualValidatedKey:null,view:{scale:4,panX:0,panY:0}};
+ // V68 2D redraw: a newly visible CAM panel must not keep its 1×1 startup
+ // framebuffer. Only redraw the canvas, not recompute/replace actual toolpaths.
+ let v68CamRenderQueued=false;
+ const v68CamRefresh=()=>{
+   if(!root.closest(".screen")?.classList.contains("active")||v68CamRenderQueued)return;
+   v68CamRenderQueued=true;
+   requestAnimationFrame(()=>{
+     v68CamRenderQueued=false;
+     if(root.closest(".screen")?.classList.contains("active"))draw();
+   });
+ };
+ window.addEventListener("resize",v68CamRefresh,{passive:true});
+ window.addEventListener("aig68:qualitychange",v68CamRefresh);
+ if(typeof ResizeObserver!=="undefined"&&canvas){
+   const observer=new ResizeObserver(v68CamRefresh);observer.observe(canvas);
+ }
  const manualInput=root.querySelector("[data-cam-manual-input]");
  const manualStatus=root.querySelector("[data-cam-manual-status]");
  const manualLines=root.querySelector("[data-cam-manual-lines]");
