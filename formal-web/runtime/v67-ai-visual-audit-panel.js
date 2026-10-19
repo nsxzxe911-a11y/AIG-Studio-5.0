@@ -3,7 +3,7 @@
  * destructive state changes or automatic approval of missing images. */
 (function(w,d){"use strict";
  const murl="./authority/v67-authority-ledger.json",curl="./runtime/v67-page-subpage-contract.json";
- let root=null,ledger=null,contract=null,status=null,ready=false,lastError="";
+ let root=null,ledger=null,contract=null,status=null,findingsHost=null,findings=null,ready=false,lastError="";
  const goto=id=>{
   try{return !!w.AIG_V67_GLOBAL_NAV?.route(id)}catch(e){lastError=String(e);return false}
  };
@@ -25,6 +25,9 @@
    approvedExactSubpagePairs:authority?.approvedExactSubpagePairs??null,
    missingAuthoritySlots:authority?.missing??null,
    old438ImagesRevoked:ledger?.revoked?.count??null,
+   knownScreenshotDefects:findings?.findings?.length??null,
+   latestDefectEvidenceRun:findings?.source?.runId??null,
+   defectReportIsSnapshot:true,
    modelVisionConnected:false,lastError,releaseGate:"BLOCKED_PENDING_EXACT_IMAGE_CALLBACK_BROWSER_AND_DUAL_SHA"};
  }
  function update(){
@@ -36,6 +39,41 @@
   if(status.textContent!==text)status.textContent=text;
   root.dataset.aig67AuditStatus=a.missingAuthoritySlots>0?"BLOCKED_AUTHORITY":"PENDING";
  }
+ function renderFindings(){
+  if(!findingsHost)return;findingsHost.replaceChildren();
+  const title=el("strong","最近一次實際 Chromium 圖像巡檢發現","aig67-audit-findings-title");
+  findingsHost.append(title);
+  if(!findings){
+   findingsHost.append(el("p","尚未取得可核對的實際截圖缺陷紀錄，禁止視為 PASS。","aig67-audit-note"));
+   return;
+  }
+  const meta=el("p","證據 Run "+findings.source.runId+" · "+
+   (findings.extractedEvidence.cncCaptures+findings.extractedEvidence.publicCaptures)+
+   " 張實際截圖 · "+findings.findings.length+" 項已登記問題（不是即時模型判定）","aig67-audit-note");
+  findingsHost.append(meta);
+  const list=el("div",undefined,"aig67-audit-issue-list");
+  for(const issue of findings.findings.slice(0,12)){
+   const row=el("div",undefined,"aig67-audit-issue");
+   row.dataset.severity=issue.severity;row.dataset.issueId=issue.id;
+   const heading=el("strong",issue.id+" · "+issue.page+" · "+issue.category);
+   const description=el("p",issue.resolution||issue.evidence);
+   const state=el("small",issue.status);
+   row.append(heading,description,state);
+   const id=String(issue.page).split(",")[0];
+   if(["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI"].includes(id)){
+    const go=el("button","查看 "+id,"btn");go.type="button";
+    go.dataset.buttonId="BTN_AI_AUDIT_FINDING_"+issue.id;
+    go.dataset.commandId="NAV_"+id;go.addEventListener("click",()=>goto(id));
+    row.append(go);
+   }
+   list.append(row);
+  }
+  findingsHost.append(list);
+  const url=el("a","開啟這次 GitHub 自動截圖證據 ↗","aig67-audit-link");
+  url.href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/"+findings.source.runId;
+  url.target="_blank";url.rel="noopener noreferrer";findingsHost.append(url);
+ }
+
  function mount(){
   if(root?.isConnected)return true;
   const host=d.querySelector(".screen[data-page='AI'] [data-ai-page-runtime]");
@@ -68,7 +106,9 @@
   }
   const safe=el("p","機台輸出 BLOCKED · RGB 原圖逐頁核准待驗證 · Android/Windows Gate 待完成",
    "aig67-audit-safety");
-  body.append(status,note,controls,nav,safe);root.append(head,body);host.append(root);
+  findingsHost=el("section",undefined,"aig67-audit-findings");
+  body.append(status,note,controls,nav,findingsHost,safe);root.append(head,body);host.append(root);
+  renderFindings();
   update();return true;
  }
  async function init(){
@@ -82,6 +122,10 @@
    if(result[0]?.pages?.length!==11||result[1]?.summary?.missing===undefined)
     throw Error("V67_AUDIT_CONTRACT_MISMATCH");
    [contract,ledger]=result;ready=true;lastError="";
+   // Snapshot from a REAL Chromium artifact. Display its age and source run;
+   // do not represent this as a continuous vision-model result.
+   try{findings=await read("./qa/v67-confirmed-visual-defects.json")}catch(_){findings=null}
+   renderFindings();
   }catch(e){lastError=String(e?.message||e);ready=false;}
   update();
  }
