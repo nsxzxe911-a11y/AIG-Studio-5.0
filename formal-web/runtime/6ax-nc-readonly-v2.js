@@ -106,19 +106,37 @@ function nearestPointToDisk(pose,p){
  const delta=minus(p,center),height=dot(delta,n),planar=minus(delta,times(n,height)),radius=norm(planar);
  return {height,radius};
 }
+function insideAabb(p,center,half,margin=.06){return p.every((x,i)=>Math.abs(x-center[i])<=half[i]+margin)}
+function localPoint(m,p){
+ const d=[p[0]-m[12],p[1]-m[13],p[2]-m[14]];
+ return [m[0]*d[0]+m[1]*d[1]+m[2]*d[2],
+         m[4]*d[0]+m[5]*d[1]+m[6]*d[2],
+         m[8]*d[0]+m[9]*d[1]+m[10]*d[2]];
+}
 function probe(pose){
- // Approximate geometric witness ONLY: tool-sampling against the model's rotating platter.
- // This cannot assess spindle body, stock, fasteners, machine calibration or collision-free paths.
- const head=pose.pivots.spindle;
- let near=false,minDistance=Infinity;
- for(let i=0;i<=12;i++){
-  const p=K.point(head,[0,0,-.38-i*.46/12]),q=nearestPointToDisk(pose,p);
-  const radialExcess=Math.max(0,q.radius-1.31),verticalExcess=Math.max(0,Math.abs(q.height)-.30);
-  const distance=Math.hypot(radialExcess,verticalExcess);
-  minDistance=Math.min(minDistance,distance);
-  if(q.radius<=1.40&&Math.abs(q.height)<=.39)near=true;
+ // Visual-only proxy: sample spindle TOOL SHAFT against rotating platter,
+ // oriented cradle beams, fixed A-support mounts and base. Missing measured geometry
+ // implies collisionGate always UNVERIFIED even when no candidate was found.
+ const shaft=pose.pivots.spindle,zones=new Set();let minDistance=Infinity;
+ for(let i=0;i<=16;i++){
+  const p=K.point(shaft,[0,0,-.31-i*.60/16]),q=nearestPointToDisk(pose,p);
+  const radial=Math.max(0,q.radius-1.31),vertical=Math.max(0,Math.abs(q.height)-.30);
+  minDistance=Math.min(minDistance,Math.hypot(radial,vertical));
+  if(q.radius<=1.40&&Math.abs(q.height)<=.39)zones.add("PLATTER");
+  for(const x of [-2.08,2.08]){
+   if(insideAabb(p,[x,0,.95],[.47,.57,.52],.07))zones.add("A_SUPPORT");
+  }
+  const l=localPoint(pose.pivots.cradle,p);
+  for(const [center,half] of [
+   [[0,0,-.45],[1.68,.60,.12]],
+   [[0,0,-.31],[1.18,.50,.09]],
+   [[-1.65,0,-.24],[.15,.47,.33]],
+   [[1.65,0,-.24],[.15,.47,.33]]
+  ])if(insideAabb(l,center,half,.075))zones.add("CRADLE");
+  if(p[2]<.01&&Math.abs(p[0])<3.0&&Math.abs(p[1])<1.8)zones.add("BASE");
  }
- return {potentialInterference:near,clearanceProxy:minDistance};
+ return {potentialInterference:zones.size>0,zones:Object.freeze([...zones]),clearanceProxy:minDistance,
+   collisionGate:"UNVERIFIED",proxyType:"TOOL_SHAFT_APPROX_ONLY"};
 }
 function interpolate(a,b,t){const r={};for(const k of AXES)r[k]=a[k]+(b[k]-a[k])*t;return r}
 function analyze(parsed,options={}){
@@ -136,7 +154,7 @@ function analyze(parsed,options={}){
    const t=j/n,pose=K.solve(interpolate(step.start,step.target,t));
    const pr=probe(pose);
    samples++;minProxy=Math.min(minProxy,pr.clearanceProxy);
-   if(pr.potentialInterference)potential.push(Object.freeze({line:step.line,fraction:t,toolTip:pose.toolTip}));
+   if(pr.potentialInterference)potential.push(Object.freeze({line:step.line,fraction:t,toolTip:pose.toolTip,zones:pr.zones}));
    // Keep lightweight preview sample list capped by maxSamples.
    frames.push(Object.freeze({line:step.line,fraction:t,values:pose.values,toolTip:pose.toolTip,platterCenter:pose.platterCenter}));
   }
