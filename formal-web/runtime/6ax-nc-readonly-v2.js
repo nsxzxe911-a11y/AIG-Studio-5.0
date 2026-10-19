@@ -44,7 +44,7 @@ function parse(text,options={}){
   if(lines.length>3000)throw resultError(0,"TOO_MANY_LINES","");
   if(options.headWord!==undefined&&options.headWord!==null&&options.headWord!=="C")throw resultError(0,"UNSUPPORTED_HEAD_MAPPING","C-only preview opt-in");
   const headC=options.headWord==="C";
-  let pos={X:0,Y:0,Z:0,A:0,B:0,H:0},motion=null,hasAbsolute=false,offsetWarned=false,toolWarned=false;
+  let pos={X:0,Y:0,Z:0,A:0,B:0,H:0},motion=null,hasAbsolute=false,offsetWarned=false,toolWarned=false,mWarned=false;
   for(let i=0;i<lines.length;i++){
    const line=i+1,body=stripComments(lines[i],line);
    if(!body||body==="%")continue;
@@ -60,6 +60,7 @@ function parse(text,options={}){
      if(w.value>=54&&w.value<=59&&!offsetWarned){warning.push("工件座標 G5x 未校正；僅用原始數值顯示示範姿態");offsetWarned=true}
     }else if(w.word==="M"){
      if(!Number.isInteger(w.value)||!inertM.has(w.value))throw resultError(line,"UNSUPPORTED_M","M"+w.value);
+     if(!mWarned){warning.push("M 指令僅為文字解析，不執行主軸、冷卻或停機動作");mWarned=true;}
     }else if("XYZAB".includes(w.word)){
      target[w.word]=w.value;hasGeometry=true;
     }else if(w.word==="C"){
@@ -79,7 +80,7 @@ function parse(text,options={}){
     if(!hasAbsolute)throw resultError(line,"G90_REQUIRED","僅接受 G90 絕對座標");
     if(motion===null)throw resultError(line,"MOTION_REQUIRED","需 G0/G1");
     // Treat source XYZ as symbolic values. Visual model converts by its illustrative ratio.
-    for(const key of AXES){try{K.solve({...target})}catch(e){throw resultError(line,"POSE_OUT_OF_PREVIEW_LIMIT",String(e.message))}break}
+    try{K.solve(target)}catch(e){throw resultError(line,"POSE_OUT_OF_PREVIEW_LIMIT",String(e.message))}
     const record={line,motion:motion===0?"G0":"G1",start:Object.freeze({...pos}),target:Object.freeze({...target}),headFromExplicitC:hasHead};
     steps.push(Object.freeze(record));pos=target;
     if(steps.length>1000)throw resultError(line,"TOO_MANY_MOTIONS","");
