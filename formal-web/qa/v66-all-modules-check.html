@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020407"><title>AIG V66｜十頁工作區自主檢查</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}
+body{margin:0;background:#020407;color:#eaf7ff;font-family:"Noto Sans TC",system-ui,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:16px 20px;
+background:linear-gradient(135deg,#0b1a2e,#030910);border-bottom:1px solid #328dab70}
+h1{font-size:clamp(18px,3vw,30px);margin:0}header p{font-size:11px;color:#8fb9ca}
+a{color:#90e8ff}main{max-width:1440px;margin:0 auto;padding:14px}
+.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(310px,1fr);gap:12px}
+.viewer,.results{border:1px solid #3481a47b;border-radius:15px;background:linear-gradient(145deg,#081827,#030a12);
+min-width:0;overflow:hidden}
+.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:9px;border-bottom:1px solid #2e71904d;padding:11px 13px}
+iframe{width:100%;height:min(77dvh,800px);border:0;display:block;background:#020407}
+.rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:10px;overflow:auto;max-height:62vh}
+.card{border:1px solid #29495f;padding:10px;border-radius:11px;background:#091726;display:grid;gap:3px}
+.card strong{font-size:13px}.card span{font-size:10px;color:#94b4cc;overflow-wrap:anywhere}
+.card[data-ok="true"]{border-color:#277f83}.card[data-ok="true"] span{color:#62e2bb}
+.card[data-ok="false"]{border-color:#885044}.card[data-ok="false"] span{color:#ffb2a2}
+[data-status]{font:700 12px/1.5 ui-monospace,monospace;white-space:normal}
+details{margin:10px;border:1px solid #2e6376;border-radius:9px;padding:7px 9px;font-size:11px}
+summary{cursor:pointer;color:#a5ebff}#report{white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.5 ui-monospace,monospace}
+button{border:1px solid transparent;background:linear-gradient(#0b2539,#071421) padding-box,
+linear-gradient(120deg,#4bf1ff,#767eff,#d268d6) border-box;color:#ebf8ff;border-radius:10px;
+padding:9px 12px;font-weight:700;min-height:39px;cursor:pointer}
+footer{padding:11px;color:#ddbf82;font-size:11px;line-height:1.5}
+@media(max-width:900px){.layout{grid-template-columns:1fr}iframe{height:55dvh}.rows{max-height:none}}
+</style></head><body>
+<header><div><h1>AIG RGB · 十頁運行契約</h1><p>V66 工作區來源確認及即時瀏覽器檢查 · 不是工程殼首頁</p></div>
+<a href="../mobile-runtime.html#HOME">進入正式 CNC 工作區 ↗</a></header>
+<main><div class="layout">
+<section class="viewer"><div class="sectionhead"><strong>原始正式 Runtime（只讀檢查）</strong><span>HOME／CAD／CAM／SIM／3–6AX／NC／AI</span></div>
+<iframe id="app" title="AIG 正式工作區" src="../mobile-runtime.html#HOME"></iframe></section>
+<section class="results"><div class="sectionhead"><strong>十頁可用性</strong><button id="refresh" type="button">重新檢查</button></div>
+<div id="summary" style="padding:10px 14px;color:#a6e7ef;font-size:12px" aria-live="polite">正在檢查正式工作區…</div>
+<div id="rows" class="rows"></div><details><summary>查看原始 JSON 驗證資訊</summary><pre id="report"></pre></details>
+<footer>PASS 只表示 DOM／導覽／入口契約存在，不代表每頁核心、材料移除或 CNC 安全驗證完成。未載入的 6AX 模型應維持 lazy（不在 HOME 預先初始化）。</footer>
+</section></div></main>
+<script>
+(function(){"use strict";
+const iframe=document.getElementById("app"),rows=document.getElementById("rows");
+const summary=document.getElementById("summary"),report=document.getElementById("report");
+const modules=[
+ ["HOME","[data-home-runtime]","首頁工作台"],
+ ["CAD","[data-cad-runtime] [data-cad-canvas]","真 CAD Canvas"],
+ ["CAM","[data-cam-runtime] [data-cam-canvas]","刀路預覽 Canvas"],
+ ["SIM","[data-sim-hub]","模擬中心"],
+ ["3AX",".simgrid[data-runtime='3AX']","三軸工作區"],
+ ["4AX",".simgrid[data-runtime='4AX']","四軸工作區"],
+ ["5AX",".simgrid[data-runtime='5AX']","五軸工作區"],
+ ["6AX",".simgrid[data-runtime='6AX']","六軸工作區"],
+ ["NC","[data-nc-runtime] [data-nc-code]","Fanuc NC 編輯器"],
+ ["AI","[data-ai-page-runtime]","AI 加工助手"]
+];
+let last=null;
+function create(name,yes,why){
+ const div=document.createElement("article");div.className="card";div.dataset.ok=String(yes);
+ const b=document.createElement("strong");b.textContent=name;
+ const small=document.createElement("span");small.textContent=(yes?"DOM PASS · ":"CHECK FAIL · ")+why;
+ div.append(b,small);rows.append(div);
+}
+async function run(){
+ rows.textContent="";report.textContent="";summary.textContent="讀取正式 CNC Runtime…";
+ let w,d;
+ try{
+  for(let i=0;i<32;i++){
+   w=iframe.contentWindow;d=w?.document;
+   if(d?.querySelector(".app>.shell")&&d.querySelector(".screen[data-page='AI']"))break;
+   await new Promise(ok=>setTimeout(ok,350));
+  }
+  if(!d?.querySelector(".screen[data-page='AI']"))throw Error("工作區模組尚未載入");
+  const cases=modules.map(([id,selector,label])=>{
+   const page=d.querySelector('.app>.shell>.screen[data-page="'+id+'"]');
+   const nav=d.querySelector('.nav button[data-page="'+id+'"]');
+   const contract=page?.querySelector(selector);
+   const ok=Boolean(page&&nav&&contract);
+   create(id,ok,label+" · "+(nav?"導覽存在":"導覽缺失")+" · "+(contract?"模組入口存在":"模組入口缺失"));
+   return{id,label,status:ok?"DOM_PASS":"FAIL",nav:!!nav,contract:!!contract};
+  });
+  const extra={
+   originalV65Preserved:!!w.AIG_6AX_V65,
+   cncMachineOutput:"BLOCKED",
+   stageSixAxisLazyState:w.AIG_6AX_V66_LOADER?.inspect()?.state||"MISSING",
+   activePage:d.querySelector(".screen.active")?.dataset.page||"UNKNOWN",
+   viewport:{width:w.innerWidth,height:w.innerHeight},
+   horizontalOverflow:d.documentElement.scrollWidth>d.documentElement.clientWidth+3
+  };
+  const passed=cases.filter(x=>x.status==="DOM_PASS").length;
+  const errors=cases.length-passed;
+  summary.textContent=passed+"/10 頁 DOM 契約存在 · "+errors+" 個入口缺失；6AX 延遲載入："+extra.stageSixAxisLazyState+
+   "；視窗橫向溢出："+(extra.horizontalOverflow?"是（待修）":"未測得");
+  last={timestamp:new Date().toISOString(),scope:"V66_PASSIVE_DOM_CONTRACT_ONLY",cases,extra,passed,errors};
+  report.textContent=JSON.stringify(last,null,2);
+ }catch(e){summary.textContent="來源／工作區失敗："+String(e?.message||e);
+  last={status:"FAIL",detail:String(e)};report.textContent=JSON.stringify(last,null,2);}
+}
+document.getElementById("refresh").addEventListener("click",run);
+iframe.addEventListener("load",run,{once:true});
+setTimeout(()=>{if(!last)run()},1100);
+})();
+</script></body></html>
