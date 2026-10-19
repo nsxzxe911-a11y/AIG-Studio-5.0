@@ -78,7 +78,13 @@ async function run(){
    create(id,ok,label+" · "+(nav?"導覽存在":"導覽缺失")+" · "+(contract?"模組入口存在":"模組入口缺失"));
    return{id,label,status:ok?"DOM_PASS":"FAIL",nav:!!nav,contract:!!contract};
   });
+  const perf=w.performance;
+  const resources=perf?.getEntriesByType?.("resource")||[];
+  const loadedOptional=resources.filter(r=>/6ax-(?:mechanism-core|mechanism-preview|nc-readonly|nc-bridge)-v[12]\.js/.test(r.name)).length;
   const extra={
+   lazy6axResourceRequestsWhileHome:loadedOptional,
+   totalResourceRequests:resources.length,
+   runtimeNavigationMs:Math.round(perf?.getEntriesByType?.("navigation")?.[0]?.duration||0),
    originalV65Preserved:!!w.AIG_6AX_V65,
    cncMachineOutput:"BLOCKED",
    stageSixAxisLazyState:w.AIG_6AX_V66_LOADER?.inspect()?.state||"MISSING",
@@ -89,7 +95,8 @@ async function run(){
   const passed=cases.filter(x=>x.status==="DOM_PASS").length;
   const errors=cases.length-passed;
   summary.textContent=passed+"/10 頁 DOM 契約存在 · "+errors+" 個入口缺失；6AX 延遲載入："+extra.stageSixAxisLazyState+
-   "；視窗橫向溢出："+(extra.horizontalOverflow?"是（待修）":"未測得");
+   "；視窗橫向溢出："+(extra.horizontalOverflow?"是（待修）":"未測得")+
+   "；HOME 期間 6AX 選用下載："+extra.lazy6axResourceRequestsWhileHome;
   last={timestamp:new Date().toISOString(),scope:"V66_PASSIVE_DOM_CONTRACT_ONLY",cases,extra,passed,errors};
   report.textContent=JSON.stringify(last,null,2);
  }catch(e){summary.textContent="來源／工作區失敗："+String(e?.message||e);
