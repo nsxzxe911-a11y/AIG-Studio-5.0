@@ -38,3 +38,8 @@
  #aig69-intake .aig69-entry :is(button,.aig69-source-button),#aig69-intake .aig69-actions button{min-height:48px;font-size:13px}
  #aig69-intake .aig69-stages{margin:7px 0}
 }
+
+.aig-home-hero{margin:0 0 8px;width:100%;max-height:min(42vh,440px);overflow:hidden;border-radius:12px;border:1px solid #2b6c89;background:#020407}
+.aig-home-hero img{display:block;width:100%;height:100%;max-height:min(42vh,440px);object-fit:contain}
+.aig-home-hero[hidden]{display:none!important}
+@media(max-width:600px){.aig-home-hero,.aig-home-hero img{max-height:30vh}}
