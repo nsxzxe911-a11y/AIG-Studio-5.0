@@ -118,4 +118,30 @@ pass("automated Chromium audits cover all 12 public HTML routes and ten CNC modu
  assert.ok(main.includes(".aig67-global-trigger"));
  assert.ok(main.includes("VISIBLE_NAVIGATION_UNAVAILABLE"));
 });
+pass("V67 4K full-colour CSS loaded and CNC screen uses scalable vectors",()=>{
+ const css=read("v67-4k-rgb-quality.css");
+ assert.ok(html.includes('href="./v67-4k-rgb-quality.css"'));
+ assert.ok(css.includes("@media(min-width:3800px)"));
+ assert.ok(css.includes("--aig4k-spectrum"));
+ assert.ok(!/background-image\\s*:\\s*url\\(/i.test(css));
+});
+pass("all public pages inherit scalable site 4K colour stylesheet",()=>{
+ const css=read("site-nature-v24.css");
+ const publicCss=read("v67-4k-public.css");
+ assert.ok(css.startsWith('@import url("./v67-4k-public.css");'));
+ assert.ok(publicCss.includes("@media(min-width:3200px)"));
+ assert.ok(publicCss.includes("body :is(img,video,svg,canvas)"));
+});
+pass("CAD/CAM display DPI adaptive and 3D framebuffer is memory limited",()=>{
+ assert.ok(html.includes("10000000:cfg.pixels"));
+ assert.ok(html.includes("innerWidth>=2560?2.5:2"));
+ assert.ok(html.includes("Math.sqrt((innerWidth>=2560?10000000:6500000)/area)"));
+ assert.ok(html.includes("v32Perf.scale"),"automatic GPU performance scaling must remain");
+});
+pass("4K screenshot inspector captures real framebuffer evidence",()=>{
+ const src=read("qa/v67-visual-audit.mjs");
+ assert.ok(src.includes("canvasResolution"));
+ assert.ok(src.includes("UNDERSAMPLED_CANVAS"));
+ assert.ok(src.includes("EXCESSIVE_CANVAS_MEMORY"));
+});
 console.log("AIG_V67_PAGE_SUBPAGE_AUTHORITY_SOURCE_PASS|"+n+"_CASES|BROWSER_VISUAL_GATE_PENDING");
