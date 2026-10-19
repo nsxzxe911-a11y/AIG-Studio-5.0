@@ -2,10 +2,10 @@
    Cache the actual portal and runtime; no engineering gallery in the startup path. */
 const REVOKED_CACHE="aig-ii-authority-revocation-20261018-v18";
 const PREVIOUS_CACHE="aig-ii-original-render-v4-20261018-v20";
-const CACHE="aig-ii-original-render-nc-sim-guard-v66-20261019";
+const CACHE="aig-ii-original-render-nc-sim-guard-v88-20261020";
 const SHELL=[
   "./","./index.html","./image-library.html","./visual-library.css","./visual-library.js","./visual-library/manifest.json","./visual-library/authority-revocations-438.json","./runtime-visual-reference.css","./runtime/visual-reference-v1.js","./guide.html","./updates.html","./faq.html","./project-sync.html","./site.css","./site-v2.css","./site-v21.css","./site-phase4.css","./project-sync.css","./site.js","./site-v21.js","./project-transfer.js","./project-sync.js","./phase4.css","./mobile-runtime.html","./manifest.webmanifest",
-  "./runtime/page-runtime-router.js","./runtime/ai-page-runtime.js","./runtime/cam-manual-path-v1.js","./runtime/cam-nc-preflight-v52.js","./runtime/cam-nc-preflight-v52.css",
+  "./runtime/page-runtime-router.js","./v88-manus-runtime-adapter.css","./runtime/v88-manus-runtime-adapter.js","./runtime/ai-page-runtime.js","./runtime/cam-manual-path-v1.js","./runtime/cam-nc-preflight-v52.js","./runtime/cam-nc-preflight-v52.css",
   "./runtime/layout-mode.js",
   "./runtime-nav-v27.js","./runtime-nav-v27.css",
   "./runtime-actions-v28.js","./runtime-actions-v28.css","./runtime-actions-v28-manifest.json",

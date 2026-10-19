@@ -1,0 +1,87 @@
+/* AIG V88 — Manus layout principles on genuine Runtime DOM only.
+ * Live 6AX WebGL, source NC textarea and original callbacks are never replaced. */
+:root{--aig88-glass:#07111b;--aig88-ink:#e8faff;--aig88-edge:#357795}
+.screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"] :is(.simleft,.editor){
+  min-width:0;border-color:var(--aig88-edge)!important;
+  box-shadow:inset 0 1px 0 #65e9ff23,0 10px 25px #0008!important
+}
+.screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"] .sceneWrap{
+  min-width:0;border-color:#419bba!important;
+  box-shadow:inset 0 0 20px #08243a,0 0 0 1px #1f668b!important
+}
+.screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"] .runtimeStatus .aig88-runtime-note{
+  min-width:150px!important;border-color:#a47940!important;
+  background:linear-gradient(125deg,#2a2118,#101c2e)!important
+}
+.screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"] .runtimeStatus .aig88-runtime-note span{color:#ffd59b!important}
+.screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"] button:focus-visible,
+.screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"] textarea:focus-visible{
+  outline:3px solid #90eaff!important;outline-offset:2px!important
+}
+/* V65 used high-specificity !important on both panels. Resolve V86 collapse
+ * at the SAME runtime selectors, not by hiding the entire workspace. */
+html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="windows"]
+ .screen.active[data-page="6AX"] .simgrid.axisModule[data-runtime="6AX"][data-axis-subpage="MACHINE"][data-aig86-nc="collapsed"]{
+  grid-template-columns:minmax(0,1fr)!important
+}
+html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="windows"]
+ .screen.active[data-page="6AX"] .simgrid.axisModule[data-runtime="6AX"][data-axis-subpage="MACHINE"][data-aig86-nc="collapsed"]>.editor{
+  display:none!important
+}
+html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="windows"]
+ .screen.active[data-page="6AX"] .simgrid.axisModule[data-runtime="6AX"][data-axis-subpage="MACHINE"][data-aig86-nc="expanded"]{
+  grid-template-columns:minmax(0,72fr) minmax(280px,28fr)!important
+}
+html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="windows"]
+ .screen.active[data-page="6AX"] .simgrid.axisModule[data-runtime="6AX"][data-axis-subpage="NC_FIRST"]{
+  grid-template-columns:minmax(0,45fr) minmax(290px,55fr)!important
+}
+html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="windows"]
+ .screen.active[data-page="6AX"] .simgrid.axisModule[data-runtime="6AX"][data-axis-subpage="NC_FIRST"]>.editor{
+  display:grid!important;grid-column:1!important
+}
+html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="windows"]
+ .screen.active[data-page="6AX"] .simgrid.axisModule[data-runtime="6AX"][data-axis-subpage="NC_FIRST"]>.simleft{
+  grid-column:2!important
+}
+/* Native status, motion, material volume and collision readouts stay in the
+ * original .runtimeStatus container. No generated values or SVG mock machine. */
+html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="android"]
+ .screen.active[data-page="6AX"] .simgrid.axisModule[data-runtime="6AX"]>.axisModuleHeader{
+  min-height:44px!important;max-height:48px!important;overflow-x:auto!important
+}
+html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="android"]
+ .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"] .axisSubpages button,
+html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="android"]
+ .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"] .aig86-editor-toggle{
+  min-height:40px!important;padding:5px 9px!important;white-space:nowrap!important
+}
+html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="android"]
+ .screen.active[data-page="6AX"][data-aig50-pane="view"] .simgrid[data-runtime="6AX"] .sceneWrap{
+  min-height:0!important;height:0!important;flex:1 1 0!important
+}
+html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="android"]
+ .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"] .controls.aig86-tool-controls{
+  flex:0 0 46px!important;max-height:46px!important;overflow-x:auto!important;overflow-y:hidden!important
+}
+html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="android"]
+ .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"] .controls.aig86-tool-controls>.btn{
+  min-height:42px!important;height:42px!important
+}
+@media(max-width:720px){
+  .screen.active[data-page="NC"] [data-nc-runtime] .ncEditGrid,
+  .screen.active[data-page="CAD"] [data-cad-runtime] .workgrid,
+  .screen.active[data-page="CAM"] [data-cam-runtime] .camgrid{
+    grid-template-columns:minmax(0,1fr)!important
+  }
+  .screen.active[data-page="NC"] [data-nc-runtime] textarea[data-nc-code]{max-width:100%!important}
+  .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"] .editorbar{
+    overscroll-behavior-x:contain;scrollbar-width:thin
+  }
+}
+@media(max-width:730px){
+  html[data-aig65-axis="6AX"][data-aig49-active="true"][data-aig65-platform="windows"]
+   .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"][data-axis-subpage="NC_FIRST"]{
+    grid-template-columns:minmax(0,1fr)!important
+  }
+}
