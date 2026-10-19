@@ -5,6 +5,7 @@ on:
     paths:
       - 'formal-web/mobile-runtime.html'
       - 'formal-web/v91-rgb-desktop.css'
+      - 'formal-web/qa/v91-formal-source.cjs'
       - '.github/workflows/v91-formal-rgb-glb.yml'
   workflow_dispatch:
 permissions:
