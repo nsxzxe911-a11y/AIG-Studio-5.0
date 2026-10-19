@@ -88,6 +88,7 @@ async function inspectRuntime(page,id){
    documentScrollWidth:document.documentElement.scrollWidth,
    documentClientWidth:document.documentElement.clientWidth},
   navCount:document.querySelectorAll(".nav button[data-page]").length,
+  realNavigation:window.AIG_V67_GLOBAL_NAV?.inspect?.()||null,
   originalNcExists:!!document.querySelector('.screen[data-page="NC"] [data-nc-code]'),
   originalCadExists:!!document.querySelector('.screen[data-page="CAD"] [data-cad-canvas]'),
   originalCamExists:!!document.querySelector('.screen[data-page="CAM"] [data-cam-canvas]'),
@@ -102,11 +103,38 @@ async function inspectRuntime(page,id){
  },id);
 }
 async function navigateRuntime(page,id){
- const nav=page.locator('.nav button[data-page="'+id+'"]');
- await nav.waitFor({state:"attached",timeout:13000});
- await nav.click({timeout:13000});
- await page.locator('.screen.active[data-page="'+id+'"]').waitFor({state:"visible",timeout:13000});
- await page.waitForTimeout(id.endsWith("AX")?750:200);
+ const errors=[];let mode="NOT_NAVIGATED";
+ const global=page.locator(".aig67-global-trigger");
+ const item=page.locator('.aig67-global-panel button[data-aig67-global-route="'+id+'"]');
+ if(await global.count()&&await global.isVisible().catch(()=>false)&&await item.count()){
+  try{await global.click({timeout:3800});await item.click({timeout:3800});
+   mode="VISIBLE_V67_ROUTER_BUTTON"}catch(e){errors.push("V67 "+String(e).slice(0,200))}
+ }
+ if(mode==="NOT_NAVIGATED"){
+  const legacy=page.locator('.nav button[data-page="'+id+'"]');
+  if(await legacy.count()&&await legacy.isVisible().catch(()=>false)){
+   try{await legacy.click({timeout:3000});mode="VISIBLE_LEGACY_NAV"}catch(e){errors.push("LEGACY "+String(e).slice(0,160))}
+  }
+ }
+ if(mode==="NOT_NAVIGATED"){
+  const links=page.locator('.screen.active [data-open-page="'+id+'"]:visible');
+  if(await links.count()){
+   try{await links.first().click({timeout:3500});mode="VISIBLE_PAGE_LINK"}catch(e){errors.push("PAGE_LINK "+String(e).slice(0,160))}
+  }
+ }
+ if(mode==="NOT_NAVIGATED"){
+  // Read-only browser audit fallback: navigate via the REAL existing router.
+  // Flag the missing visible user route, never count this as a user-click PASS.
+  const succeeded=await page.evaluate(id=>{
+   try{return !!window.aigProductionPageRouter?.navigateView?.("VIEW.NAV."+id)}catch(_){return false}
+  },id);
+  mode=succeeded?"DIRECT_ROUTER_FALLBACK_NOT_UI_PROVEN":"NO_NAV_ROUTE";
+  issue("VISIBLE_NAVIGATION_UNAVAILABLE","BROWSER",id,null,
+   "Only internal router could open page; details: "+errors.join("; "),"WARNING");
+ }
+ await page.locator('.screen.active[data-page="'+id+'"]').waitFor({state:"visible",timeout:9000});
+ await page.waitForTimeout(id.endsWith("AX")?700:180);
+ return mode;
 }
 async function profileRun(browser,profile){
  const context=await browser.newContext({
@@ -139,7 +167,7 @@ async function profileRun(browser,profile){
   for(const spec of contract.pages.filter(p=>p.kind==="runtime")){
    const id=spec.id;
    try{
-    if(id!=="HOME")await navigateRuntime(page,id);
+    const routeMethod=id==="HOME"?"ENTRY_HASH":await navigateRuntime(page,id);
     await page.waitForTimeout(180);
     if(id==="6AX"){try{await page.waitForFunction(()=>["READY","FAILED"].includes(window.AIG_6AX_V66_LOADER?.inspect?.()?.state),{timeout:13000})}catch(_){}
      const switcher=page.locator(".screen.active[data-page='6AX'] .aig6-toggle");
@@ -147,7 +175,7 @@ async function profileRun(browser,profile){
       issue("6AX_VISUAL_OPEN_FAIL",profile.id,id,null,String(e),"WARNING")}
     }
     const info=await inspectRuntime(page,id);
-    result.pages.push({page:id,info});
+    result.pages.push({page:id,info,routeMethod});
     if(info.active!==id)issue("PAGE_NOT_ACTIVE",profile.id,id,null,"SPA actual view mismatch","FAIL");
     if(!info.originalNcExists||!info.originalCadExists||!info.originalCamExists)
      issue("CORE_EDITOR_DISAPPEARED",profile.id,id,null,"CAD/CAM/NC root not retained","FAIL");
