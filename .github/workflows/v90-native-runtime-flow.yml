@@ -1,0 +1,51 @@
+name: AIG V90 CAD CAM SIM Native Runtime UI Gate
+on:
+  push:
+    branches: [integration/v90-cad-cam-sim-runtime]
+    paths:
+      - 'formal-web/mobile-runtime.html'
+      - 'formal-web/service-worker.js'
+      - 'formal-web/v90-cad-cam-sim-runtime.css'
+      - 'formal-web/runtime/v90-cad-cam-sim-runtime.js'
+      - 'formal-web/qa/v90-native-flow-static.test.cjs'
+      - 'formal-web/qa/v90-native-flow-browser.test.cjs'
+      - '.github/workflows/v90-native-runtime-flow.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check formal-web/runtime/v90-cad-cam-sim-runtime.js
+      - run: node --check formal-web/qa/v90-native-flow-static.test.cjs
+      - run: node --check formal-web/qa/v90-native-flow-browser.test.cjs
+      - run: node formal-web/qa/v90-native-flow-static.test.cjs
+  chrome-desktop-mobile:
+    needs: source-integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 8765 --directory formal-web >/tmp/aig90.log 2>&1 &
+          sleep 2
+      - run: node formal-web/qa/v90-native-flow-browser.test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aig-v90-cad-cam-sim-desktop-s23
+          path: artifacts/v90/
+          if-no-files-found: warn
+      - run: echo "Browser UI/state only; 3D physics, coordinate precision, Fanuc NC, true machine and APK/EXE Gate remain BLOCKED."
