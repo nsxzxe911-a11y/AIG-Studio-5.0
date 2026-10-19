@@ -29,7 +29,8 @@ function refreshPose(){
 function load(){
  pause();const p=P();if(!p||!editor){notify("6AX 原始 NC 編輯器或 3D 預覽不存在","error");return false}
  const source=editor.value;
- const parsed=N.parse(source,{headWord:choice.checked?"C":null});
+ const savedHead=choice.checked?0:(p.inspect?.().joints?.H??0);
+ const parsed=N.parse(source,{headWord:choice.checked?"C":null,initialH:savedHead});
  if(!parsed.ok){loaded=null;const e=parsed.errors[0];notify("拒絕載入：行 "+(e?.line||0)+" · "+(e?.code||"UNKNOWN")+(e?.detail?" · "+e.detail:""),"error");buttons();return false}
  const samples=N.analyze(parsed,{maxSamples:12000,previewLinearStep:2,previewAngleStep:5});
  if(!samples.ok){loaded=null;notify("路徑取樣超過預覽上限："+samples.status+"。NC 原文保持不變","error");buttons();return false}
@@ -45,7 +46,8 @@ function advance(direction){if(!validity())return refreshPose();index=Math.min(l
 function play(){if(playing){pause();return}
  if(!validity()||index>=loaded.samples.points.length-1){notify("先載入 G0/G1 程式，或回到取樣起點","warn");return}
  playing=true;lastTick=0;ui.querySelector('[data-aig6-play]').textContent="Ⅱ 暫停預覽";
- function tick(now){raf=0;if(!playing||!validity()||d.hidden){pause();buttons();return}
+ function tick(now){raf=0;if(!playing||!validity()||d.hidden||!d.querySelector('.app>.shell>.screen.active[data-page="6AX"]')||
+     (ui?.getClientRects&&ui.getClientRects().length===0)){pause();buttons();return}
   if(!lastTick||now-lastTick>=65){lastTick=now;index=Math.min(index+1,loaded.samples.points.length-1);if(!refreshPose()){pause();return}}
   if(index>=loaded.samples.points.length-1){pause();return}
   raf=w.requestAnimationFrame(tick);
