@@ -35,8 +35,13 @@ self.addEventListener("install",event=>{
    try{
     const response=await fetch(url,{cache:"reload"});
     if(response.ok)await cache.put(url,response);
-   }catch(_){/* availability reported by actual runtime when requested */}
+   }catch(_){/* optional asset is retried on demand */}
   }));
+  // Never activate and remove the preceding offline worker if the two
+  // boot entrypoints could not be cached (for example: offline update).
+  for(const critical of ["./index.html","./mobile-runtime.html"]){
+    if(!await cache.match(critical))throw Error("V66_CRITICAL_SHELL_MISSING:"+critical);
+  }
   await self.skipWaiting();
  })());
 });
