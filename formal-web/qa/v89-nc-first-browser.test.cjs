@@ -66,7 +66,8 @@ async function runCase(browser,mode){
   const fresh=page.locator('.screen.active [data-runtime="6AX"]');
   const recovery=fresh.locator('[data-command-id="NC_6AX_WORKING_COPY_RECOVER"]');
   // A recovered draft must be an explicit user action, never overwrite saved main.
-  if(mode==="mobile")await fresh.locator('.axisSubpages button[data-axis-subpage="NC_FIRST"]').click();
+  // Both desktop and mobile start in MACHINE mode with the NC drawer collapsed.
+  await fresh.locator('.axisSubpages button[data-axis-subpage="NC_FIRST"]').click();
   assert(await recovery.isVisible(),"pending working-copy recovery not presented");
   await recovery.click();
   assert.equal(await fresh.locator('textarea.code').inputValue(),value);
