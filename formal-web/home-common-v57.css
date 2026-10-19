@@ -1,0 +1,79 @@
+/* V57 HOME-only: one real launcher + project data, no fake screenshots. */
+html[data-aig57-home="true"] .app{width:100%!important;max-width:100%!important;height:100dvh!important;min-height:0!important;max-height:100dvh!important;overflow:hidden!important}
+html[data-aig57-home="true"] .app>.top,
+html[data-aig57-home="true"] .app>.aig55-top{display:none!important}
+html[data-aig57-home="true"] .app>.shell{
+ display:block!important;flex:1 1 0!important;height:0!important;max-height:100%!important;
+ min-height:0!important;overflow:hidden!important;padding:5px!important;background:#020407!important}
+html[data-aig57-home="true"] .app>.shell>.screen.active[data-page="HOME"]{
+ display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important;max-height:100%!important;overflow:hidden!important}
+html[data-aig57-home="true"] .aigFormalHome.aig57-home{
+ display:grid!important;grid-template-rows:minmax(0,1fr) auto auto!important;
+ height:100%!important;max-height:100%!important;min-height:0!important;gap:8px!important;
+ padding:6px!important;overflow:hidden!important;
+ background:radial-gradient(ellipse at 48% 27%,#123a5f22,transparent 70%),#020407!important}
+html[data-aig57-home="true"] .aig57-home .aigGlass,
+html[data-aig57-home="true"] .aig57-home .aigModuleCard{
+ min-width:0!important;min-height:0!important;background:linear-gradient(150deg,#071a2b,#030910)!important;
+ border:1px solid #2b5874!important;border-radius:10px!important;
+ box-shadow:inset 0 1px #7decff12,0 5px 14px #0007!important;overflow:hidden!important}
+html[data-aig57-home="true"] .aig57-home .aigHero{
+ display:grid!important;height:100%!important;min-height:0!important;gap:8px!important;align-items:stretch!important}
+html[data-aig57-home="true"] .aig57-home .aigGlass{
+ display:flex!important;flex-direction:column!important;min-height:0!important;max-height:100%!important}
+html[data-aig57-home="true"] .aig57-home .aigSectionTitle{font-size:13px!important;margin:0!important;padding:7px 10px!important}
+html[data-aig57-home="true"] .aig57-home .aigProjectEntries{
+ flex:1 1 auto!important;min-height:0!important;display:grid!important;gap:6px!important;
+ overflow:auto!important;padding:7px!important}
+html[data-aig57-home="true"] .aig57-home .aigProjectEntries button{
+ width:100%!important;min-height:45px!important;padding:7px 10px!important;text-align:left!important;
+ border:1px solid #315c76!important;border-radius:7px!important;background:#0b1d2d!important}
+html[data-aig57-home="true"] .aig57-home .aigProjectEntries button b{font-size:12px!important}
+html[data-aig57-home="true"] .aig57-home .aigProjectEntries button small{font-size:9px!important}
+html[data-aig57-home="true"] .aig57-home .aigHeroCenter{
+ display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;
+ min-height:0!important;padding:10px!important}
+html[data-aig57-home="true"] .aig57-home .aigPrism{
+ flex:0 0 auto!important;max-width:30%!important;max-height:36%!important}
+html[data-aig57-home="true"] .aig57-home .aigHeroBrand{
+ font-size:clamp(20px,3vw,42px)!important;line-height:1.1!important;letter-spacing:.05em!important}
+html[data-aig57-home="true"] .aig57-home .aigHeroEnglish{font-size:9px!important;letter-spacing:.19em!important}
+html[data-aig57-home="true"] .aig57-home .aigHeroTagline{margin:2px!important;font-size:11px!important;text-align:center}
+html[data-aig57-home="true"] .aig57-home .aigHeroActions{display:flex!important;justify-content:center!important;gap:5px!important;flex-wrap:wrap!important}
+html[data-aig57-home="true"] .aig57-home .aigHeroActions :is(button,a){
+ flex:1 1 auto!important;min-width:0!important;min-height:37px!important;padding:6px 9px!important;
+ font-size:11px!important;border-radius:7px!important}
+html[data-aig57-home="true"] .aig57-home .aigSystemTiles{
+ flex:1 1 auto!important;min-height:0!important;display:grid!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;padding:7px!important}
+html[data-aig57-home="true"] .aig57-home .aigSystemTile{
+ min-width:0!important;min-height:0!important;padding:6px!important;border-radius:7px!important}
+html[data-aig57-home="true"] .aig57-home .aigSystemTile b{font-size:11px!important}
+html[data-aig57-home="true"] .aig57-home .aigSystemTile small{font-size:9px!important}
+html[data-aig57-home="true"] .aig57-home .aigModuleGrid{
+ display:grid!important;grid-template-rows:minmax(0,1fr)!important;min-height:0!important;gap:6px!important;
+ align-items:stretch!important;overflow:auto!important;padding:1px!important}
+html[data-aig57-home="true"] .aig57-home .aigModuleCard{
+ min-height:0!important;padding:7px 10px!important;text-align:left!important;display:flex!important;
+ flex-direction:column!important;justify-content:center!important;gap:4px!important}
+html[data-aig57-home="true"] .aig57-home .aigModuleCard b{font-size:12px!important}
+html[data-aig57-home="true"] .aig57-home .aigModuleCard small{font-size:9px!important}
+html[data-aig57-home="true"] .aig57-home .aigHomeMetrics{
+ min-height:0!important;max-height:62px!important;display:grid!important;gap:6px!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;overflow:hidden!important}
+html[data-aig57-home="true"] .aig57-home .aigHomeMetrics>.aigGlass{
+ min-height:0!important;max-height:62px!important;display:flex!important;justify-content:center!important;
+ gap:2px!important;padding:4px 6px!important}
+html[data-aig57-home="true"] .aig57-home .aigHomeMetrics span{font-size:9px!important}
+html[data-aig57-home="true"] .aig57-home .aigHomeMetrics b{
+ font-size:11px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[data-aig57-home="true"] .aig57-home .aig57-utility{
+ display:flex;gap:5px;min-height:0;justify-content:flex-end
+}
+html[data-aig57-home="true"] .aig57-home .aig57-utility button{
+ min-width:88px;min-height:30px;padding:3px 8px;border:1px solid #326b88;
+ background:#0b2030;border-radius:8px;color:#dbf8ff;font-size:11px;font-weight:700}
+html[data-aig57-home="true"] .aig57-home :is(button,a){touch-action:manipulation;cursor:pointer}
+html[data-aig57-home="true"] .aig57-home button:hover{border-color:#6ce8ff!important;filter:brightness(1.12)}
+html[data-aig57-home="true"] .aig57-home :is(button,a):focus-visible{outline:2px solid #ffb94c!important;outline-offset:2px!important}
+

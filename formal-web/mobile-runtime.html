@@ -203,7 +203,10 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./workspace-fit-v54.css">
 <link rel="stylesheet" href="./simulator-shell-v55.css">
 <link rel="stylesheet" href="./simulator-priority-v56.css">
-<link rel="stylesheet" href="./runtime/cam-nc-preflight-v52.css"></head>
+<link rel="stylesheet" href="./runtime/cam-nc-preflight-v52.css">
+<link rel="stylesheet" href="./home-common-v57.css">
+<link rel="stylesheet" href="./home-android-v57.css">
+<link rel="stylesheet" href="./home-windows-v57.css"></head>
 <body>
 <div class="app">
 <header class="top">
@@ -283,7 +286,7 @@ function homePage(){
   ["5AX","5AX 五軸","X / Y / Z / A / B 加工預覽","#ff54c8"],
   ["6AX","6AX 六軸","X / Y / Z / A / B / C","#ffc45e"]
  ];
- return '<div data-home-runtime class="aigFormalHome">'+
+ const html='<div data-home-runtime class="aigFormalHome aig57-home">'+
   '<div class="aigHero">'+
    '<section class="aigGlass aigProjects" aria-label="工作入口">'+
     '<h2 class="aigSectionTitle">專案中心</h2>'+
@@ -317,6 +320,7 @@ function homePage(){
   '<section class="aigModuleGrid" aria-label="工作模組">'+tiles.map(t=>
    '<button type="button" class="aigModuleCard" style="--edge:'+t[3]+'" data-open-page="'+t[0]+'"><b>'+t[1]+'</b><small>'+t[2]+'　›</small></button>'
   ).join('')+'</section>'+
+  '<div class="aig57-utility"><button type="button" data-open-page="刀路">刀路管理</button><button type="button" data-open-page="功能">設定／工具</button></div>'+ 
   '<div class="aigHomeMetrics" aria-label="本機工作數據">'+
    '<div class="aigGlass"><span>CAD 元件</span><b data-home-cad>0 entities</b></div>'+
    '<div class="aigGlass"><span>CAM 刀路</span><b data-home-cam>0 paths</b></div>'+
@@ -324,6 +328,12 @@ function homePage(){
    '<div class="aigGlass"><span>真機輸出</span><b>停用</b></div>'+
   '</div>'+
  '</div>';
+ const counts={};
+ return html.replace(/<button\b([^>]*?)data-open-page="([^"]+)"([^>]*)>/g,(whole,a,id,b)=>{
+  const n=(counts[id]||0)+1;counts[id]=n;
+  const key=id==="刀路"?"TOOLPATH":id==="功能"?"SETTINGS":id;
+  return '<button'+a+'data-open-page="'+id+'" data-button-id="BTN_HOME_'+key+'_'+n+'" data-command-id="NAV_'+key+'"'+b+'>';
+ });
 }
 function simHubPage(){
  const axisCard=axis=>
@@ -3740,5 +3750,6 @@ aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash
 <script src="./runtime/cam-nc-preflight-v52.js"></script>
 <script src="./workspace-fit-v53.js"></script>
 <script src="./workspace-fit-v54.js"></script>
-<script src="./simulator-shell-v55.js"></script></body>
+<script src="./simulator-shell-v55.js"></script>
+<script src="./home-stage-v57.js"></script></body>
 </html>

@@ -194,7 +194,10 @@ html,body{background:#020407}
 <link rel="stylesheet" href="./workspace-fit-v54.css">
 <link rel="stylesheet" href="./simulator-shell-v55.css">
 <link rel="stylesheet" href="./simulator-priority-v56.css">
-<link rel="stylesheet" href="./runtime/cam-nc-preflight-v52.css"></head>
+<link rel="stylesheet" href="./runtime/cam-nc-preflight-v52.css">
+<link rel="stylesheet" href="./home-common-v57.css">
+<link rel="stylesheet" href="./home-android-v57.css">
+<link rel="stylesheet" href="./home-windows-v57.css"></head>
 <body>
 <div class="aig-studio-v375-portal-link" role="navigation"><a href="./index.html#dual-projects">← 回 AIG-II 科技網站</a><span>STUDIO 原生 375 · Web 共同 V43 · 本機資料與原工作站分開</span><a href="./dual-project-latest.html">雙專案版本與原始碼 ↗</a></div>
 <div class="app">
@@ -258,13 +261,65 @@ const sourceCode={
 function panel(title,body,cls=""){return '<section class="panel '+cls+'"><div class="head"><h3>'+title+'</h3></div><div class="body">'+body+'</div></section>'}
 
 function homePage(){
- return '<div data-home-runtime><div class="workgrid">'+
- '<section class="panel"><div class="head"><div><h2>AIG CNC HOME</h2><small>Offline-first • 0.001 mm • Studio Web</small></div><span class="spacer"></span><span class="badge" data-home-network>LOCAL</span></div><div class="body">'+
- '<div class="menuGrid"><button class="menuCard" data-open-page="CAD">CAD 製圖</button><button class="menuCard" data-open-page="CAM">CAM 刀路</button><button class="menuCard" data-open-page="SIM">SIM 模擬</button><button class="menuCard" data-open-page="NC">NC 編輯</button><button class="menuCard" data-open-page="AI">AI 本機加工助手</button><button class="menuCard" data-open-page="刀路">刀路工作頁</button><button class="menuCard" data-open-page="功能">設定 / 工具</button></div>'+
- '<div class="runtimeStatus" style="margin-top:9px"><div class="metric"><b>CAD</b><span data-home-cad>0 entities</span></div><div class="metric"><b>CAM</b><span data-home-cam>0 paths</span></div><div class="metric"><b>NC</b><span data-home-nc>0 lines</span></div><div class="metric"><b>Runtime</b><span>LOCAL READY</span></div></div>'+
- '<div class="notice" style="margin-top:9px">正式 Web Runtime 直接進 HOME；工程維修與設定收在功能頁。CNC machine output disabled。</div></div></section>'+
- '<section class="panel"><div class="head"><h3>快速進入真模擬</h3></div><div class="body controls"><button class="btn" data-open-page="3AX">3AX</button><button class="btn" data-open-page="4AX">4AX</button><button class="btn" data-open-page="5AX">5AX</button><button class="btn" data-open-page="6AX">6AX</button></div></section>'+
- '</div></div>';
+ const tiles=[
+  ["CAD","CAD 設計","幾何製圖・尺寸與 SNAP","#43e9ff"],
+  ["CAM","CAM 編程","刀路規劃・參數與工序","#54f0a5"],
+  ["SIM","SIM 模擬","選擇軸數・驗證材料移除","#ffc45e"],
+  ["NC","NC 後處理","Fanuc G-code 編輯與解析","#a56bff"],
+  ["AI","AI 智慧","加工規劃・稽核與說明","#ff54c8"],
+  ["3AX","3AX 三軸","X / Y / Z 加工預覽","#43e9ff"],
+  ["4AX","4AX 四軸","X / Y / Z / A 加工預覽","#4d83ff"],
+  ["5AX","5AX 五軸","X / Y / Z / A / B 加工預覽","#ff54c8"],
+  ["6AX","6AX 六軸","X / Y / Z / A / B / C","#ffc45e"]
+ ];
+ const html='<div data-home-runtime class="aigFormalHome aig57-home">'+
+  '<div class="aigHero">'+
+   '<section class="aigGlass aigProjects" aria-label="工作入口">'+
+    '<h2 class="aigSectionTitle">專案中心</h2>'+
+    '<div class="aigProjectEntries">'+
+     '<button type="button" data-open-page="CAD"><b>CAD 製圖工作區　›</b><small>新增或繼續本機 CAD 草圖</small></button>'+
+     '<button type="button" data-open-page="NC"><b>NC-first 程式工作區　›</b><small>直接編輯、儲存與驗證 G-code</small></button>'+
+     '<button type="button" data-open-page="CAM"><b>CAM 刀路工作區　›</b><small>設定刀具、策略與起退刀</small></button>'+
+    '</div>'+
+   '</section>'+
+   '<section class="aigGlass aigHeroCenter" aria-label="AIG Studio 5.0 正式首頁">'+
+    '<div class="aigPrism" aria-hidden="true"></div>'+
+    '<div class="aigHeroBrand">AIG Studio 5.0</div>'+
+    '<div class="aigHeroEnglish">AI GENERATIVE CNC</div>'+
+    '<p class="aigHeroTagline">讓創意，直接成為可加工的現實</p>'+
+    '<div class="aigHeroActions">'+
+     '<button type="button" data-open-page="CAD">進入 CAD</button>'+
+     '<button type="button" data-open-page="NC">直接編輯 NC</button>'+
+     '<a class="heroTransferLink" href="./project-sync.html" target="_blank" rel="noopener noreferrer">專案續接　↗</a>'+
+    '</div>'+
+   '</section>'+
+   '<section class="aigGlass aigSystem" aria-label="本機狀態">'+
+    '<h2 class="aigSectionTitle">系統狀態</h2>'+
+    '<div class="aigSystemTiles">'+
+     '<div class="aigSystemTile"><b data-home-network role="status" aria-live="polite">偵測中</b><small>LOCAL / NETWORK</small></div>'+
+     '<div class="aigSystemTile"><b>0.001 mm</b><small>目標座標精度</small></div>'+
+     '<div class="aigSystemTile"><b>手機與電腦</b><small>自適應使用介面</small></div>'+
+     '<div class="aigSystemTile"><b>本機工作區</b><small>專案在本機保存</small></div>'+
+    '</div>'+
+   '</section>'+
+  '</div>'+
+  '<section class="aigModuleGrid" aria-label="工作模組">'+tiles.map(t=>
+   '<button type="button" class="aigModuleCard" style="--edge:'+t[3]+'" data-open-page="'+t[0]+'"><b>'+t[1]+'</b><small>'+t[2]+'　›</small></button>'
+  ).join('')+'</section>'+
+  '<div class="aig57-utility"><button type="button" data-open-page="刀路">刀路管理</button><button type="button" data-open-page="功能">設定／工具</button></div>'+ 
+  '<div class="aigHomeMetrics" aria-label="本機工作數據">'+
+   '<div class="aigGlass"><span>CAD 元件</span><b data-home-cad>0 entities</b></div>'+
+   '<div class="aigGlass"><span>CAM 刀路</span><b data-home-cam>0 paths</b></div>'+
+   '<div class="aigGlass"><span>NC 程式行數</span><b data-home-nc>0 lines</b></div>'+
+   '<div class="aigGlass"><span>真機輸出</span><b>停用</b></div>'+
+  '</div>'+
+ '</div>';
+ const counts={};
+ return html.replace(/<button\b([^>]*?)data-open-page="([^"]+)"([^>]*)>/g,(whole,a,id,b)=>{
+  const n=(counts[id]||0)+1;counts[id]=n;
+  const key=id==="刀路"?"TOOLPATH":id==="功能"?"SETTINGS":id;
+  return '<button'+a+'data-open-page="'+id+'" data-button-id="BTN_HOME_'+key+'_'+n+'" data-command-id="NAV_'+key+'"'+b+'>';
+ });
 }
 
 function aiPage(){
@@ -3563,5 +3618,6 @@ aigGuard(document.body,"啟動畫面",()=>show(decodeURIComponent((location.hash
 <script src="./runtime/cam-nc-preflight-v52.js"></script>
 <script src="./workspace-fit-v53.js"></script>
 <script src="./workspace-fit-v54.js"></script>
-<script src="./simulator-shell-v55.js"></script></body>
+<script src="./simulator-shell-v55.js"></script>
+<script src="./home-stage-v57.js"></script></body>
 </html>

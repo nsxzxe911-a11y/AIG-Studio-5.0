@@ -1,0 +1,30 @@
+/* V57 Windows 4K HOME: independent horizontal operator dashboard. */
+html[data-aig57-home="true"][data-aig57-platform="windows"] .aigFormalHome.aig57-home{
+ grid-template-rows:minmax(0,1fr) minmax(0,.5fr) auto auto!important;
+ gap:clamp(7px,1vw,14px)!important;padding:clamp(9px,1.1vw,21px)!important}
+html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aigHero{
+ grid-template-columns:minmax(245px,.83fr) minmax(0,1.8fr) minmax(245px,.83fr)!important;
+ grid-template-rows:minmax(0,1fr)!important;gap:10px!important}
+html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aigModuleGrid{
+ grid-template-columns:repeat(5,minmax(0,1fr))!important;
+ grid-template-rows:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aigModuleCard{
+ min-height:60px!important;padding:10px 14px!important;justify-content:center!important}
+html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aigModuleCard b{font-size:clamp(12px,1.1vw,17px)!important}
+html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aigModuleCard small{font-size:11px!important}
+html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aigPrism{max-height:32%!important}
+html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aigHeroBrand{
+ font-size:clamp(29px,3vw,58px)!important}
+html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aigHeroActions :is(button,a){
+ min-height:40px!important}
+html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aig57-utility{justify-content:flex-end!important}
+@media(max-width:1200px){
+ html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aigHero{
+  grid-template-columns:minmax(0,1fr) minmax(0,1.65fr)!important}
+ html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aigSystem{display:none!important}
+}
+@media(max-height:640px){
+ html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aigPrism,
+ html[data-aig57-home="true"][data-aig57-platform="windows"] .aig57-home .aigHeroTagline{display:none!important}
+}
+

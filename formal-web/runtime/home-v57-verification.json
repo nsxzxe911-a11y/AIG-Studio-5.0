@@ -1,0 +1,28 @@
+{
+  "page": "HOME",
+  "release": "57.0.0",
+  "source": "PASS",
+  "buttons": 16,
+  "routeIds": [
+    "CAD",
+    "CAM",
+    "SIM",
+    "NC",
+    "AI",
+    "3AX",
+    "4AX",
+    "5AX",
+    "6AX",
+    "刀路",
+    "功能"
+  ],
+  "platformSkins": [
+    "./home-android-v57.css",
+    "./home-windows-v57.css"
+  ],
+  "imagesAsAuthority": "NONE",
+  "browser": "PENDING",
+  "androidAPK": "NOT_BUILT",
+  "windowsEXE": "NOT_BUILT",
+  "releaseGate": "BLOCK_UNTIL_REAL_VISUAL_AUTHORITY"
+}

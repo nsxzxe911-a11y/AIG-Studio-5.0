@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V56.0.1 strictly rejects coercible strings and non-0.001-grid CAM/NC candidate inputs; 77 deterministic source tests. No real CNC output; visual and native Gates remain pending.",
+  "notes": "V57 first HOME one-page delivery. Separate Android/Windows skin CSS. 16 real HOME route buttons on both projects. Old revoked authority images excluded; native APK/EXE still gated.",
   "sharedWebRelease": {
-    "version": "56.0.1",
-    "train": "V56.0.1",
+    "version": "57.0.0",
+    "train": "V57",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "56.0.1"
+        "version": "57.0.0"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "56.0.1"
+        "version": "57.0.0"
       }
     ],
     "commonRuntimeSource": "./dual-web-v43.js",
     "commonUiSource": "./dual-web-v43.css",
-    "releaseManifest": "./dual-web-v56.0.1.json",
+    "releaseManifest": "./dual-web-v57.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",
