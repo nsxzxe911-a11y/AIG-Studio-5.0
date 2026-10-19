@@ -17,12 +17,13 @@ function refreshPose(){
  const point=loaded.samples.points[index],v=point.values,p=P();
  if(!p||!p.show(true)){pause();notify("WebGL 尚未就緒，請檢查圖形裝置","warn");return false}
  for(const key of ["X","Y","Z","A","B","H"])if(!p.setAxis(key,v[key])){pause();notify("預覽位置超出模型範圍","warn");return false}
- const flag=loaded.samples.potential.length>0;
  const sample=loaded.samples;
+ const key=point.line+"|"+point.fraction.toFixed(8);
+ const flag=loaded.candidateKeys.has(key);
  notify("行 "+point.line+" · 取樣 "+(index+1)+"/"+sample.points.length+
    " · A "+v.A.toFixed(1)+"° B "+v.B.toFixed(1)+"° 頭 "+v.H.toFixed(1)+"°"+
    " · 模型 TCP("+point.toolTip.map(n=>n.toFixed(2)).join(", ")+")"+
-   (flag?" · 偵測到可能干涉":" · 干涉狀態未驗證"),
+   (flag?" · 此取樣點可能干涉":" · 本點無候選干涉，仍未驗證安全"),
    flag?"warning":"neutral");
  buttons();return true;
 }
@@ -34,7 +35,8 @@ function load(){
  if(!parsed.ok){loaded=null;const e=parsed.errors[0];notify("拒絕載入：行 "+(e?.line||0)+" · "+(e?.code||"UNKNOWN")+(e?.detail?" · "+e.detail:""),"error");buttons();return false}
  const samples=N.analyze(parsed,{maxSamples:12000,previewLinearStep:2,previewAngleStep:5});
  if(!samples.ok){loaded=null;notify("路徑取樣超過預覽上限："+samples.status+"。NC 原文保持不變","error");buttons();return false}
- loaded=Object.freeze({sourceText:source,previewMapping:choice.checked,parsed,samples});
+ loaded=Object.freeze({sourceText:source,previewMapping:choice.checked,parsed,samples,
+  candidateKeys:new Set(samples.potential.map(p=>p.line+"|"+p.fraction.toFixed(8)))});
  index=0;const ok=refreshPose();
  if(ok){const notes=ui.querySelector("[data-aig6-notes]");if(notes)notes.textContent=
    "已解析 "+parsed.steps.length+" 段，取樣 "+samples.samples+" 點 · "+
