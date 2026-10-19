@@ -7,6 +7,7 @@ const guide=d.createElement("section");guide.className="aig82-guide";guide.datas
 guide.innerHTML='<div class="aig82-intro"><div><span class="aig82-eyebrow">AIG II · 智慧加工工作區</span><h2>從照片到數位成品</h2><p>跟著三步驟操作，所有加工結果都需要真實核心驗證。</p></div><span class="aig82-safe">機台輸出鎖定</span></div><div class="aig82-actions"><button type="button" data-aig82="SOURCE">① 匯入照片／圖紙</button><button type="button" data-aig82="PLAN">② 建立加工方案</button><button type="button" data-aig82="RESULT">③ 查看驗證結果</button></div><p data-aig82-message role="status" aria-live="polite">先選擇加工資料；沒有資料時，請從第一步開始。</p><details class="aig82-advanced"><summary>展開完整加工設定與檢查</summary><div data-aig82-original></div></details>';
 root.insertBefore(guide,root.firstChild);
 const advanced=guide.querySelector("[data-aig82-original]");
+const previous=root.querySelector(":scope > .aig77-guide");if(previous){const previousOriginal=previous.querySelector("[data-aig77-original]");if(previousOriginal){[...previousOriginal.children].forEach(x=>advanced.appendChild(x));}previous.remove();}
 [...root.children].filter(x=>x!==guide).forEach(x=>advanced.appendChild(x));
 const message=guide.querySelector("[data-aig82-message]");
 guide.addEventListener("click",e=>{const btn=e.target.closest("[data-aig82]");if(!btn)return;const action=btn.dataset.aig82;
