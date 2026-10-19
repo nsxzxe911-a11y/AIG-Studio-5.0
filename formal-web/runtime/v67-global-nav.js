@@ -44,6 +44,33 @@
    b.dataset.buttonId="BTN.GLOBAL.NAV.OPEN_"+id;b.dataset.commandId="NAV_"+id;
    b.addEventListener("click",()=>route(id));popup.append(b);
   }
+  // Shared REAL display-resolution setting, independent from CNC actions.
+  // Never call setQuality(): legacy geometry quality changed voxel caches.
+  const quality=w.AIG_V68_VISUAL_QUALITY;
+  if(quality){
+   const bar=d.createElement("div");bar.className="aig68-quality-control";
+   const label=d.createElement("label");label.textContent="全彩畫質";
+   const action=d.createElement("button");action.type="button";
+   action.dataset.buttonId="BTN.GLOBAL.DISPLAY.TOGGLE_4K";
+   action.dataset.commandId="DISPLAY_RGB_FRAMEBUFFER_SET_MODE";
+   action.dataset.aig68Quality="ULTRA_4K";
+   const state=d.createElement("small");state.setAttribute("role","status");
+   const updateQuality=()=>{
+    const detail=quality.inspect(),high=detail.mode==="ULTRA_4K";
+    action.textContent=high?"4K 優先 · 開":"4K 超採樣 · 開啟";
+    action.setAttribute("aria-pressed",String(high));
+    const frame=detail.lastFrame;
+    state.textContent=high?"4K 優先，依 GPU 與畫布可見範圍限制；"+
+      (frame?("最後畫布 "+frame.width+"×"+frame.height):"尚未建立畫布"):
+      "自適應：4K 螢幕以裝置原生像素渲染；手機自動保護效能";
+   };
+   action.addEventListener("click",()=>{
+    quality.setMode(quality.inspect().mode==="ULTRA_4K"?"AUTO":"ULTRA_4K");
+    updateQuality();
+   });
+   label.append(action);bar.append(label,state);popup.append(bar);
+   w.addEventListener("aig68:qualitychange",updateQuality);updateQuality();
+  }
   trigger.addEventListener("click",()=>{
    const show=popup.hidden;popup.hidden=!show;root.dataset.open=String(show);
    trigger.setAttribute("aria-expanded",String(show));update()
