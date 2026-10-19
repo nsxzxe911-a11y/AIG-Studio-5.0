@@ -1,0 +1,88 @@
+name: AIG V67 Full RGB Visual Audit
+
+on:
+  push:
+    branches:
+      - aig-web-v67-rgb-visual-audit
+    paths:
+      - 'formal-web/**'
+      - '.github/workflows/v67-rgb-authority-visual-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aig-v67-rgb-visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  all-pages-visual-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: V66 original CNC / NC source contract
+        run: |
+          set -euo pipefail
+          node formal-web/runtime/6ax-nc-readonly-v2.test.cjs
+          node formal-web/qa/v66-fast-gate.test.cjs
+      - name: V67 Page ID / Button ID / Authority truthfulness gate
+        run: node formal-web/qa/v67-contract-gate.test.cjs
+      - name: Install headless visual auditor
+        working-directory: formal-web/qa
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium renderer
+        working-directory: formal-web/qa
+        run: npx playwright install chromium --with-deps
+      - name: Serve actual repo files without changing site
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory formal-web >/tmp/aig-v67-web.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8765/index.html >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsSI http://127.0.0.1:8765/mobile-runtime.html
+      - name: Automatically capture START + all 10 runtime pages and subpages
+        id: screenshot
+        continue-on-error: true
+        env:
+          AIG_V67_BASE_URL: http://127.0.0.1:8765
+          AIG_V67_AUDIT_OUT: formal-web/qa/artifacts/v67
+        run: node formal-web/qa/v67-visual-audit.mjs
+      - name: Upload every page/subpage screenshot and JSON issue report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aig-v67-visual-audit-${{ github.sha }}
+          path: formal-web/qa/artifacts/v67
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Summarize evidence and fail closed on missing Authority
+        if: always()
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const file='formal-web/qa/artifacts/v67/report.json';
+          const s=fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):null;
+          const messages=[
+            '# AIG V67 RGB ALL PAGES Gate',
+            '',
+            'Commit: ${{ github.sha }}',
+            'Preview built from exact branch sources.',
+            s?'Chromium captures: '+s.captures.length:'No browser evidence available',
+            s?'Known Authority missing: '+s.authority.missing:'Authority unresolved',
+            s?'Issues: '+JSON.stringify(s.summary?.issues||{}):'Browser runtime failed',
+            '',
+            '**Release remains BLOCKED until all approved page/subpage RGB references, actual browser screenshots, callbacks and dual-project SHA Gate pass.**'
+          ];
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,messages.join('\n')+'\n');
+          if(!s)process.exit(1);
+          if(s.summary?.authorityGate!=='READY'||s.summary?.screenshotGate!=='CAPTURED_CHECK_WARNINGS')process.exit(2);
+          if(s.summary?.semanticVisionGate!=='SEMANTIC_PASS')process.exit(3);
+          process.exit(0);
+          NODE
