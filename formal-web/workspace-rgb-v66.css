@@ -1,0 +1,64 @@
+/* AIG Web V66-A RGB Glass Workspace. Presentation-only; keep V65 runtime and buttons intact. */
+:root{
+ --aig66-bg:#020407;--aig66-panel:#07111b;--aig66-glass:rgba(7,17,27,.72);
+ --aig66-text:#eaf4ff;--aig66-muted:#91a9be;
+ --aig66-rgb:linear-gradient(120deg,rgba(0,217,255,.8),rgba(84,124,255,.75),rgba(166,92,255,.75),rgba(255,82,200,.72));
+ --aig66-radius:12px;
+}
+html{background:var(--aig66-bg);color-scheme:dark}
+html,body,.app{max-width:100%;min-width:0}
+body{background:var(--aig66-bg);color:var(--aig66-text)}
+.app{background:radial-gradient(circle at 17% 0%,rgba(34,141,212,.075),transparent 35%),radial-gradient(circle at 92% 85%,rgba(158,74,234,.045),transparent 35%),var(--aig66-bg)}
+.top{background:rgba(2,4,7,.92);border-bottom:1px solid rgba(100,170,225,.35);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.top .logo{background:linear-gradient(110deg,#8becff,#9c9aff,#ed8cfa);background-clip:text;-webkit-background-clip:text;color:transparent;letter-spacing:.08em}
+.shell{min-width:0;max-width:100%;overflow-x:clip}
+.shell .screen,.shell .simgrid,.shell .simleft,.shell .editor,.shell .panel{min-width:0}
+.panel{border-radius:var(--aig66-radius);background:linear-gradient(145deg,rgba(12,25,38,.91),rgba(3,8,15,.94));border:1px solid rgba(93,161,213,.29);box-shadow:0 12px 32px rgba(0,0,0,.32),inset 0 1px rgba(255,255,255,.035)}
+.head{border-bottom:1px solid rgba(121,173,219,.18)}
+.nav button,.btn,.layoutSwitch button,
+.aig49-dock button,.aig65-subpages button,
+button[data-cmd],button[data-editcmd]{
+ border:1px solid transparent;
+ border-radius:var(--aig66-radius);
+ background:linear-gradient(rgba(11,21,34,.92),rgba(5,12,21,.95)) padding-box,var(--aig66-rgb) border-box;
+ color:var(--aig66-text);
+ box-shadow:inset 0 1px rgba(255,255,255,.055);
+ transition:filter .16s ease,transform .12s ease,box-shadow .16s ease;
+}
+.nav button:hover,.btn:hover,.layoutSwitch button:hover,.aig49-dock button:hover,
+.aig65-subpages button:hover{filter:brightness(1.20)}
+.nav button:active,.btn:active,.aig49-dock button:active{transform:translateY(1px)}
+button:focus-visible,[role="button"]:focus-visible{outline:2px solid #a6efff;outline-offset:2px}
+.nav button.active,.nav button[aria-current="page"],
+.btn[aria-pressed="true"],.aig49-dock button[aria-pressed="true"],
+.aig65-subpages button[aria-pressed="true"]{
+ border-color:rgba(70,220,255,.85);
+ box-shadow:inset 0 0 14px rgba(31,160,232,.12),0 0 14px rgba(63,111,255,.13);
+}
+button:disabled{filter:grayscale(.78)!important;opacity:.38;cursor:not-allowed;box-shadow:none!important}
+.btn.danger,button.danger,[data-danger="true"]{border-color:rgba(255,102,123,.8)!important;background:linear-gradient(#271018,#11070a) padding-box,linear-gradient(110deg,#e38436,#f04c68) border-box!important}
+.btn.warn,button.warn{border-color:rgba(237,179,67,.75)!important}
+.sceneWrap{border:1px solid rgba(90,193,236,.27);background:#010307;box-shadow:inset 0 0 38px rgba(11,65,113,.16)}
+.sceneHud{background:rgba(2,8,17,.78);border-color:rgba(89,210,246,.32);backdrop-filter:blur(7px)}
+.axis,.metric{background:rgba(5,15,26,.85);border-color:rgba(92,150,198,.28)}
+.code,.execView{background:rgba(1,5,11,.94);border-color:rgba(65,132,188,.33);color:var(--aig66-text)}
+@media(min-width:901px){
+ .screen.active .simgrid[data-runtime="3AX"],
+ .screen.active .simgrid[data-runtime="4AX"],
+ .screen.active .simgrid[data-runtime="5AX"],
+ .screen.active .simgrid[data-runtime="6AX"]{
+  grid-template-columns:minmax(0, 2.85fr) minmax(285px,1fr);
+ }
+}
+@media(max-width:900px){
+ .app,.shell,.screen.active{width:100%;max-width:100%;min-width:0}
+ .top{max-width:100%;flex-wrap:wrap;gap:6px}
+ .nav{max-width:100%;min-width:0;overflow-x:auto;overscroll-behavior-x:contain}
+ .shell{padding:5px}
+ .panel{border-radius:10px}
+ .nav button,.btn,.aig49-dock button{touch-action:manipulation}
+ .sceneWrap{min-width:0;max-width:100%;overflow:hidden}
+}
+@media(prefers-reduced-motion:reduce){
+ .nav button,.btn,.layoutSwitch button,.aig49-dock button,.aig65-subpages button{transition:none!important}
+}
