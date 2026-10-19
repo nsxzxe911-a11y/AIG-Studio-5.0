@@ -41,6 +41,26 @@ try{
      const deck=page.locator('.screen.active .aig68-deck[data-aig68-page="'+id+'"]');
      await deck.waitFor({state:"visible",timeout:12000});
      await page.waitForTimeout(id.endsWith("AX")?380:100);
+     const oldBar=page.locator('.screen.active>.aig68-legacy-extra');
+     if(id!=="TOOLPATH"){
+      if(await oldBar.count()!==1)issue("LEGACY_SHORTCUT_NOT_WRAPPED",profile.id,id,"Missing safe original V43 details");
+      else if(await oldBar.evaluate(n=>n.open))issue("DUPLICATE_SHORTCUT_SHOWN_BY_DEFAULT",profile.id,id,"Should be collapsed");
+     }
+     const topLegacy=page.locator(".aig55-top");
+     if(await topLegacy.count()){
+      const duplicateHeader=await topLegacy.evaluate(el=>
+       !!document.body.querySelector(":scope>.aig67-global-nav")&&getComputedStyle(el).display!=="none");
+      if(duplicateHeader)issue("DUPLICATE_SIMULATOR_HEADER",profile.id,id,"V55 simulator bar still crowds cutting view");
+     }
+     if((id==="CAD"||id==="6AX")&&await oldBar.count()){
+      const more=deck.locator(".aig68-advanced-toggle");
+      if(await more.isEnabled()){
+       await more.click({timeout:3500});
+       if(!await oldBar.evaluate(n=>n.open))issue("ADVANCED_DETAILS_DID_NOT_OPEN",profile.id,id,"More toggle");
+       await more.click({timeout:3500});
+       if(await oldBar.evaluate(n=>n.open))issue("ADVANCED_DETAILS_DID_NOT_CLOSE",profile.id,id,"More toggle");
+      }
+     }
      const measured=await page.evaluate(({id,lanes,mobile})=>{
       const el=document.querySelector('.screen.active .aig68-deck[data-aig68-page="'+id+'"]');
       if(!el)return null;
@@ -98,7 +118,7 @@ try{
      }
      await fs.mkdir(path.join(out,profile.id),{recursive:true});
      const filename=path.join(out,profile.id,id+".png");
-     try{await page.screenshot({path:filename,timeout:12000,animations:"disabled",fullPage:false});
+     try{await page.screenshot({path:filename,timeout:26000,animations:"allow",fullPage:false});
       captures.push({profile:profile.id,page:id,file:path.relative(out,filename)})}
      catch(e){issue("SCREENSHOT_FAILED",profile.id,id,e,"WARNING")}
      pages.push({profile:profile.id,page:id,sourceCount:expected.length,
