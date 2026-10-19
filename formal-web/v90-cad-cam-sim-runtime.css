@@ -66,3 +66,21 @@ html[data-aig61-sim="true"][data-aig49-active="true"]
    min-height:0!important
   }
 }
+
+/* The native six-axis and independent NC router buttons remain operable
+ * even when the engineering top navigation is intentionally hidden. */
+.screen[data-page="6AX"] .axisModuleHeader .aig90-flow-action,
+.screen[data-page="NC"] .ncEditorMain>.head .aig90-flow-action{
+ display:inline-flex;align-items:center;justify-content:center;min-height:40px;
+ padding:6px 11px;flex:0 0 auto;white-space:nowrap;border:1px solid #4485a7;
+ border-radius:7px;color:#e9fbff;background:linear-gradient(115deg,#10415e,#172d4f);
+ font:750 11px "Noto Sans TC",sans-serif;cursor:pointer
+}
+html[data-aig65-axis="6AX"][data-aig49-active="true"]
+ .screen.active[data-page="6AX"] .simgrid[data-runtime="6AX"]>.axisModuleHeader{
+ min-height:44px!important;max-height:52px!important
+}
+.screen[data-page="6AX"] .axisModuleHeader .aig90-flow-action:focus-visible,
+.screen[data-page="NC"] .ncEditorMain>.head .aig90-flow-action:focus-visible{
+ outline:3px solid #8defff;outline-offset:2px
+}
