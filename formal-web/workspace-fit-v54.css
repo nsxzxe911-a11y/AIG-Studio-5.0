@@ -1,0 +1,37 @@
+/* V54 browser-safe supplemental mobile keyboard compactness. V49/50/53
+   CSS remains intact, and original editors/3D canvases retain their DOM nodes. */
+html[data-aig49-active="true"][data-aig49-mobile="true"][data-aig53-keyboard="true"] .screen.active .simgrid.aig41-workspace{
+ min-height:0!important;height:100%!important;max-height:100%!important;gap:2px!important;
+}
+html[data-aig49-active="true"][data-aig49-mobile="true"][data-aig53-keyboard="true"] .screen.active .simgrid>.axisModuleHeader,
+html[data-aig49-active="true"][data-aig49-mobile="true"][data-aig53-keyboard="true"] .screen.active .simgrid>.aig41-toolbar{
+ max-height:29px!important;min-height:0!important;overflow-x:auto!important;overflow-y:hidden!important;
+}
+html[data-aig49-active="true"][data-aig49-mobile="true"][data-aig53-keyboard="true"] .screen.active .simgrid .editor>.head{
+ max-height:25px!important;min-height:0!important;padding:2px 5px!important;overflow:hidden!important;
+}
+html[data-aig49-active="true"][data-aig49-mobile="true"][data-aig53-keyboard="true"] .screen.active .simgrid .editor .editorbar{
+ min-height:0!important;max-height:28px!important;overflow-x:auto!important;overflow-y:hidden!important;
+}
+html[data-aig49-active="true"][data-aig49-mobile="true"][data-aig53-keyboard="true"] .screen.active .simgrid .editor textarea.code{
+ min-height:44px!important;height:100%!important;max-height:100%!important;overflow:auto!important;
+}
+html[data-aig49-active="true"][data-aig49-mobile="true"][data-aig53-keyboard="true"] .screen.active .simgrid .editor .execView{
+ max-height:22px!important;overflow:auto!important;
+}
+html[data-aig49-active="true"][data-aig49-mobile="true"][data-aig53-keyboard="true"] .screen.active[data-page="NC"] .ncEditorMain textarea[data-nc-code]{
+ min-height:44px!important;height:100%!important;max-height:100%!important;overflow:auto!important;
+}
+html[data-aig49-active="true"][data-aig49-mobile="true"][data-aig53-keyboard="true"] .screen.active .simgrid .simleft .sceneWrap{
+ min-height:55px!important;max-height:none!important;
+}
+@media(max-height:360px) and (orientation:landscape){
+ html[data-aig49-active="true"][data-aig49-mobile="true"] .app>.top{max-height:52px!important}
+ html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active>.aig49-dock{
+  height:34px!important;min-height:34px!important;padding:2px!important}
+ html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active>.aig49-dock button{
+  min-height:27px!important}
+ html[data-aig49-active="true"][data-aig49-mobile="true"] .screen.active .simgrid>.aig43-bar{
+  max-height:24px!important;overflow-x:auto!important;overflow-y:hidden!important}
+}
+

@@ -36,25 +36,25 @@
     "machineOutput": "DISABLED",
     "authority438": "REVOKED_NO_FALLBACK"
   },
-  "notes": "V53 adjusts landscape 3-6AX full-width viewport and code editor VirtualViewport keyboard visibility; V52 CAM NC candidate safety retained.",
+  "notes": "V54 repairs landscape phone virtual keyboard usable heights <250px and live NC-first code pane synchronization without changing CNC core or stored programs.",
   "sharedWebRelease": {
-    "version": "53.0.0",
-    "train": "V53",
+    "version": "54.0.0",
+    "train": "V54",
     "entryPoints": [
       {
         "project": "AIGII",
         "url": "./mobile-runtime.html#HOME",
-        "version": "53.0.0"
+        "version": "54.0.0"
       },
       {
         "project": "STUDIO",
         "url": "./studio-375.html#HOME",
-        "version": "53.0.0"
+        "version": "54.0.0"
       }
     ],
     "commonRuntimeSource": "./dual-web-v43.js",
     "commonUiSource": "./dual-web-v43.css",
-    "releaseManifest": "./dual-web-v53.json",
+    "releaseManifest": "./dual-web-v54.json",
     "previousWebSourceSha": "54a356fd1344e6377420ceda56d322b7f6049f56",
     "nativeVersionsRemainIndependent": true,
     "sourceRepo": "nsxzxe911-a11y/AIG-Studio-5.0",

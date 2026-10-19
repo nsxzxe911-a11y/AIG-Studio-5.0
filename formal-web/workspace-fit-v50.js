@@ -42,11 +42,18 @@ function pane(s,p){
  w.requestAnimationFrame(()=>w.dispatchEvent(new Event("resize")));
 }
 function viewport(){
- const vv=w.visualViewport,focus=d.activeElement;
- const typing=focus&&/^(INPUT|TEXTAREA|SELECT)$/.test(focus.tagName)&&
-  (focus.tagName!=="INPUT"||!["checkbox","button","radio","range"].includes(focus.type));
- if(vv&&typing&&vv.scale===1&&vv.height>250&&vv.height<w.innerHeight-80)
-  root.style.setProperty("--aig49-vh",Math.round(vv.height)+"px");
+ // V54: do not drop the virtual-keyboard height correction on landscape when
+ // the remaining visible area falls below 250px. Only resize when the active
+ // original editor is focused. Desktop and pinch-zoom remain unchanged.
+ const vv=w.visualViewport,focus=d.activeElement,active=screen();
+ const typing=!!(focus&&active&&active.contains(focus)&&
+  (/^(TEXTAREA|SELECT)$/.test(focus.tagName)||
+  (focus.tagName==="INPUT"&&!["checkbox","button","radio","range","submit","reset","file"].includes(String(focus.type||"").toLowerCase()))));
+ const height=Number(vv?.height),scale=Number(vv?.scale);
+ const usable=mobile()&&typing&&Number.isFinite(height)&&height>=105&&
+  Number.isFinite(scale)&&scale>=.95&&scale<=1.05&&
+  height<w.innerHeight-Math.max(72,w.innerHeight*.13);
+ if(usable)root.style.setProperty("--aig49-vh",Math.round(height)+"px");
  else root.style.removeProperty("--aig49-vh");
 }
 function update(){

@@ -1,0 +1,15 @@
+{
+  "version": "54.0.0",
+  "verified": [
+    "V50 viewport behavior 10/10",
+    "both original HTML inline JavaScript parsing",
+    "V54 observer/script parsing",
+    "offline service worker syntax and cache manifest",
+    "original NC/CAM/canvas core unmodified"
+  ],
+  "notVerified": [
+    "Live browser mobile keyboard display",
+    "Real S23 landscape UI",
+    "4AX-6AX CNC machine safety"
+  ]
+}
