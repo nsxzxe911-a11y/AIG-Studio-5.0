@@ -1,7 +1,7 @@
 name: AIG V93 RGB HOME Native Runtime Gate
 on:
   push:
-    branches: [integration/v93-home-rgb-runtime]
+    branches: [integration/v93-home-rgb-runtime, web/aig-dual-formal-runtime-20261016]
   workflow_dispatch:
 permissions:
   contents: read
