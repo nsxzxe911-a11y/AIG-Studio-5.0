@@ -25,6 +25,8 @@ jobs:
         run: node formal-web/qa/v69-source-intake.test.cjs
       - name: V70 calibrated manual trace Gate
         run: node formal-web/qa/v70-photo-trace.test.cjs
+      - name: V82 AI workflow static integration Gate
+        run: node formal-web/qa/v82-ai-workflow.test.cjs
       - name: Explicit V69 safety boundary
         run: |
           echo 'V69 source UI contract only; PHOTO->CAD vectorization, CAM, SIM, NC validation and physical CNC machining NOT yet passed.'
