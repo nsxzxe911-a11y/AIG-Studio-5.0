@@ -96,4 +96,18 @@ check("V68 real source and visual CSS are loaded on existing formal CNC runtime"
  assert.ok(html.includes('src="./runtime/v67-global-nav.js"'));
  assert.ok(html.includes('src="./axis-6ax-v65.js"'));
 });
+check("duplicate V43 proxy quickbars are safely collapsed with native callbacks intact",()=>{
+ const compact=read("runtime/v68-legacy-shortcuts.js");
+ assert.ok(html.includes('src="./runtime/v68-legacy-shortcuts.js"'));
+ assert.ok(compact.includes('d.createElement("details")'));
+ assert.ok(compact.includes('detail.append(bar)'));
+ assert.ok(compact.includes("screen.append(detail)"));
+ assert.ok(compact.includes("aig43-bar"));
+ assert.ok(!compact.includes("cloneNode("));
+ assert.ok(!/\.click\s*\(/.test(compact));
+ assert.ok(source.includes("details")||source.includes("panel.open=!panel.open"));
+ const css=read("v68-unified-command-deck.css");
+ assert.ok(css.includes("body:has(>.aig67-global-nav) .aig55-top"));
+ assert.ok(css.includes("機台輸出"));
+});
 console.log("AIG_V68_SAME_POSITION_NATIVE_BUTTON_SOURCE_PASS|"+cases+"_CASES|CHROMIUM_CALLBACK_LAYOUT_GATE_PENDING");
