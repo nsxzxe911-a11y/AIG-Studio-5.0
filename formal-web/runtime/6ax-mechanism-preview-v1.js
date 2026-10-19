@@ -5,6 +5,7 @@
 const CORE=w.AIG_6AX_MECHANISM_CORE_V1;
 if(!CORE)return;
 let root=null,canvas=null,gl=null,mesh={},program=null,uniforms=null,raf=0,on=false,
+ renderedFrames=0,lastGlError=0,lastRenderTime=0,
  values={X:0,Y:0,Z:0,A:0,B:0,H:0}, camera={yaw:.54,pitch:.34,dist:8.8,target:[0,0,1.55]},mouse=null;
 const R=CORE,blue=[.06,.78,1,1],steel=[.53,.60,.68,1],light=[.80,.88,.94,1],
  dark=[.115,.15,.21,1],black=[.045,.065,.10,1],gold=[.87,.59,.24,1],
@@ -79,6 +80,7 @@ function frame(){raf=0;if(!on||!root?.isConnected||d.visibilityState==="hidden"|
  // reference lights are decor only and excluded from collision
  for(const x of [-2.40,2.40])draw("box",I,[x,1.30,1.65],[.028,.04,2.42],blue,null,.32);
  const hint=root.querySelector("[data-aig6-hint]");if(hint)hint.textContent="A "+values.A.toFixed(0)+"°  ·  B "+values.B.toFixed(0)+"°  ·  頭 "+values.H.toFixed(1)+"°";
+ lastGlError=gl.getError();renderedFrames++;lastRenderTime=(w.performance?.now?.()||Date.now());
 }
 function requestFrame(){if(on&&!raf)raf=w.requestAnimationFrame(frame)}
 function setAxis(id,value){const next={...values,[id]:Number(value)};try{R.solve(next);values=next;const input=root?.querySelector('[data-aig6-axis="'+id+'"]');if(input)input.value=String(values[id]);const output=root?.querySelector('[data-aig6-value="'+id+'"]');if(output)output.textContent=values[id].toFixed(id==="H"?1:0)+(id==="A"||id==="B"||id==="H"?"°":"");requestFrame();return true;}catch(e){const notice=root?.querySelector("[data-aig6-error]");if(notice)notice.textContent=String(e.message);return false}}
@@ -102,7 +104,7 @@ function mount(){if(root?.isConnected)return true;
  const error=d.createElement("output");error.dataset.aig6Error="";error.setAttribute("role","status");
  const hint=d.createElement("div");hint.className="aig6-hint";hint.dataset.aig6Hint="";stage.append(canvas,panel,hint);panel.append(reset,error);
  wrap.append(toggle,stage);host.append(wrap);root=wrap;
- canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();if(raf){w.cancelAnimationFrame(raf);raf=0}gl=null;program=null;mesh={};const out=root?.querySelector("[data-aig6-error]");if(out)out.textContent="WebGL 暫時中斷，等待圖形裝置恢復";});
+ canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();if(raf){w.cancelAnimationFrame(raf);raf=0}gl=null;program=null;mesh={};lastGlError=-1;const out=root?.querySelector("[data-aig6-error]");if(out)out.textContent="WebGL 暫時中斷，等待圖形裝置恢復";});
  canvas.addEventListener("webglcontextrestored",()=>{if(on&&initializeGL())requestFrame();});
  if(typeof ResizeObserver!=="undefined"){const observer=new ResizeObserver(()=>requestFrame());observer.observe(canvas);}
  toggle.addEventListener("click",()=>show(!on));orbit();
@@ -119,5 +121,6 @@ function initializeGL(){if(gl)return true;try{
 function show(visible){if(!mount())return false;if(visible&&!initializeGL())return false;on=!!visible;root.querySelector(".aig6-stage").hidden=!on;root.querySelector(".aig6-toggle").setAttribute("aria-pressed",String(on));if(raf){w.cancelAnimationFrame(raf);raf=0}requestFrame();return on}
 function init(){if(mount())return;let tries=0;const retry=()=>{if(mount()||++tries>24)return;w.setTimeout(retry,300)};retry()}
 if(d.readyState==="loading")d.addEventListener("DOMContentLoaded",init,{once:true});else init();
-w.AIG_6AX_MECHANISM_PREVIEW_V1=Object.freeze({version:"1.0.0",setAxis,show,inspect:()=>({mounted:!!root?.isConnected,active:on,webglReady:!!gl,joints:{...values},...({machineOutput:"BLOCKED",collisionGate:"NOT_IMPLEMENTED",materialRemovalGate:"NOT_IMPLEMENTED",accuracy:"VISUAL_UNCALIBRATED"})})});
+w.AIG_6AX_MECHANISM_PREVIEW_V1=Object.freeze({version:"1.0.0",setAxis,show,inspect:()=>({mounted:!!root?.isConnected,active:on,webglReady:!!gl,renderedFrames,lastGlError,lastRenderTime,
+ canvasSize:{width:canvas?.width||0,height:canvas?.height||0},joints:{...values},...({machineOutput:"BLOCKED",collisionGate:"NOT_IMPLEMENTED",materialRemovalGate:"NOT_IMPLEMENTED",accuracy:"VISUAL_UNCALIBRATED"})})});
 })(window,document);
