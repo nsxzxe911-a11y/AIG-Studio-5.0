@@ -1,0 +1,1656 @@
+{
+  "schema": "AIG_V67_IMAGE_AUTHORITY_INPUT_LEDGER",
+  "version": "67.0.0",
+  "date": "2026-10-19",
+  "status": "NO_APPROVED_EXACT_PAGE_ART_ASSETS_YET; VISUAL_RELEASE_BLOCKED",
+  "styleAuthority": {
+    "styleId": "AIGII-RGB-GLASS-20261018-STYLE-V1",
+    "role": "STYLE_REFERENCE_ONLY",
+    "styleImageId": "IMG-AIGII-STYLE-HOME-20261018-V1",
+    "sha256": "d179764f4f9a7edfc6218978cdb30680fb2bd55a4eeff19386726cb6df3fe607",
+    "libraryPath": "/AIG-II/RGB_STYLE_APPROVED_20261018/AIGII_RGB_STYLE_REFERENCE_APPROVED_20261018.png",
+    "styleOnly": true,
+    "prohibitAutoPromoteToRuntimeImage": true,
+    "colorTokens": {
+      "background": "#020407",
+      "panel": "#07111B",
+      "cyan": "#43e9ff",
+      "blue": "#4d83ff",
+      "violet": "#a56bff",
+      "pink": "#ff54c8",
+      "amber": "#ffc45e",
+      "text": "#eefbff"
+    }
+  },
+  "revoked": {
+    "registry": "visual-library/authority-revocations-438.json",
+    "count": 20,
+    "forbidFallback": true,
+    "authoritativeState": "REVOKED_BY_USER",
+    "revokedSources": [
+      "/AIG-II/438/ImageAuthority/Mobile_HighRes/01_HOME_MOBILE_HIGHRES.png",
+      "/AIG-II/438/ImageAuthority/Mobile_HighRes/02_CAD_MOBILE_HIGHRES.png",
+      "/AIG-II/438/ImageAuthority/Mobile_HighRes/03_CAM_MOBILE_HIGHRES.png",
+      "/AIG-II/438/ImageAuthority/Mobile_HighRes/04_SIM_MOBILE_HIGHRES.png",
+      "/AIG-II/438/ImageAuthority/Mobile_HighRes/05_3AX_MOBILE_HIGHRES.png",
+      "/AIG-II/438/ImageAuthority/Mobile_HighRes/06_4AX_MOBILE_HIGHRES.png",
+      "/AIG-II/438/ImageAuthority/Mobile_HighRes/07_5AX_MOBILE_HIGHRES.png",
+      "/AIG-II/438/ImageAuthority/Mobile_HighRes/08_6AX_MOBILE_HIGHRES.png",
+      "/AIG-II/438/ImageAuthority/Mobile_HighRes/09_NC_MOBILE_HIGHRES.png",
+      "/AIG-II/438/ImageAuthority/Mobile_HighRes/10_AI_MOBILE_HIGHRES.png",
+      "/AIG-II/438/ImageAuthority/Desktop_4K/01_HOME_DESKTOP_4K.png",
+      "/AIG-II/438/ImageAuthority/Desktop_4K/02_CAD_DESKTOP_4K.png",
+      "/AIG-II/438/ImageAuthority/Desktop_4K/03_CAM_DESKTOP_4K.png",
+      "/AIG-II/438/ImageAuthority/Desktop_4K/04_SIM_DESKTOP_4K.png",
+      "/AIG-II/438/ImageAuthority/Desktop_4K/05_3AX_DESKTOP_4K.png",
+      "/AIG-II/438/ImageAuthority/Desktop_4K/06_4AX_DESKTOP_4K.png",
+      "/AIG-II/438/ImageAuthority/Desktop_4K/07_5AX_DESKTOP_4K.png",
+      "/AIG-II/438/ImageAuthority/Desktop_4K/08_6AX_DESKTOP_4K.png",
+      "/AIG-II/438/ImageAuthority/Desktop_4K/09_NC_DESKTOP_4K.png",
+      "/AIG-II/438/ImageAuthority/Desktop_4K/10_AI_DESKTOP_4K.png"
+    ]
+  },
+  "sameStyleBothPlatforms": true,
+  "perPageVersionChainRequired": true,
+  "requireExactImageBytesForVision": true,
+  "visualAINeedsActualCapturedScreenshots": true,
+  "allowIndexAndMachineImageSubstitution": false,
+  "autoRestoreRevoked": false,
+  "pagePlatforms": [
+    {
+      "pageId": "PAGE_START",
+      "platform": "MOBILE",
+      "id": "IMG.V67.START.MOBILE",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        1440,
+        3088
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "MOBILE platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_START",
+      "platform": "DESKTOP",
+      "id": "IMG.V67.START.DESKTOP",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        3840,
+        2160
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "DESKTOP platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_HOME",
+      "platform": "MOBILE",
+      "id": "IMG.V67.HOME.MOBILE",
+      "approved": false,
+      "authority": null,
+      "candidate": {
+        "path": "assets/authority/home_mobile.jpg",
+        "verification": "REPOSITORY_FILE_EXISTS_NOT_PAGE_AUTHORITY",
+        "claimedSHA256": null
+      },
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        1440,
+        3088
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "MOBILE platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_HOME",
+      "platform": "DESKTOP",
+      "id": "IMG.V67.HOME.DESKTOP",
+      "approved": false,
+      "authority": null,
+      "candidate": {
+        "path": "assets/authority/home_desktop.jpg",
+        "verification": "REPOSITORY_FILE_EXISTS_NOT_PAGE_AUTHORITY",
+        "claimedSHA256": null
+      },
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        3840,
+        2160
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "DESKTOP platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_CAD",
+      "platform": "MOBILE",
+      "id": "IMG.V67.CAD.MOBILE",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        1440,
+        3088
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "MOBILE platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_CAD",
+      "platform": "DESKTOP",
+      "id": "IMG.V67.CAD.DESKTOP",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        3840,
+        2160
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "DESKTOP platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_CAM",
+      "platform": "MOBILE",
+      "id": "IMG.V67.CAM.MOBILE",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        1440,
+        3088
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "MOBILE platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_CAM",
+      "platform": "DESKTOP",
+      "id": "IMG.V67.CAM.DESKTOP",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        3840,
+        2160
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "DESKTOP platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_SIM",
+      "platform": "MOBILE",
+      "id": "IMG.V67.SIM.MOBILE",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        1440,
+        3088
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "MOBILE platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_SIM",
+      "platform": "DESKTOP",
+      "id": "IMG.V67.SIM.DESKTOP",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        3840,
+        2160
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "DESKTOP platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_3AX",
+      "platform": "MOBILE",
+      "id": "IMG.V67.3AX.MOBILE",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        1440,
+        3088
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "MOBILE platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_3AX",
+      "platform": "DESKTOP",
+      "id": "IMG.V67.3AX.DESKTOP",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        3840,
+        2160
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "DESKTOP platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_4AX",
+      "platform": "MOBILE",
+      "id": "IMG.V67.4AX.MOBILE",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        1440,
+        3088
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "MOBILE platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_4AX",
+      "platform": "DESKTOP",
+      "id": "IMG.V67.4AX.DESKTOP",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        3840,
+        2160
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "DESKTOP platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_5AX",
+      "platform": "MOBILE",
+      "id": "IMG.V67.5AX.MOBILE",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        1440,
+        3088
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "MOBILE platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_5AX",
+      "platform": "DESKTOP",
+      "id": "IMG.V67.5AX.DESKTOP",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        3840,
+        2160
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "DESKTOP platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_6AX",
+      "platform": "MOBILE",
+      "id": "IMG.V67.6AX.MOBILE",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        1440,
+        3088
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "MOBILE platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_6AX",
+      "platform": "DESKTOP",
+      "id": "IMG.V67.6AX.DESKTOP",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        3840,
+        2160
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "DESKTOP platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_NC",
+      "platform": "MOBILE",
+      "id": "IMG.V67.NC.MOBILE",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        1440,
+        3088
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "MOBILE platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_NC",
+      "platform": "DESKTOP",
+      "id": "IMG.V67.NC.DESKTOP",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        3840,
+        2160
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "DESKTOP platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_AI",
+      "platform": "MOBILE",
+      "id": "IMG.V67.AI.MOBILE",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        1440,
+        3088
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "MOBILE platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    },
+    {
+      "pageId": "PAGE_AI",
+      "platform": "DESKTOP",
+      "id": "IMG.V67.AI.DESKTOP",
+      "approved": false,
+      "authority": null,
+      "candidate": null,
+      "approval": "PENDING_EXACT_IMAGE_ID_SHA256_USER_APPROVAL",
+      "nativeTarget": [
+        3840,
+        2160
+      ],
+      "versionChain": [
+        "10/05 RGB baseline style",
+        "DESKTOP platform-specific latest approved revision (not yet verified)"
+      ],
+      "visualGate": "BLOCKED_AUTHORITY_MISSING"
+    }
+  ],
+  "subpagePlatforms": [
+    {
+      "parentPageId": "PAGE_START",
+      "subpageId": "SUBPAGE_START_LANDING",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_START_LANDING.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_START",
+      "subpageId": "SUBPAGE_START_LANDING",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_START_LANDING.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_START",
+      "subpageId": "SUBPAGE_START_DUAL_PROJECTS",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_START_DUAL_PROJECTS.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_START",
+      "subpageId": "SUBPAGE_START_DUAL_PROJECTS",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_START_DUAL_PROJECTS.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_START",
+      "subpageId": "SUBPAGE_START_SITE_THEME",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_START_SITE_THEME.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_START",
+      "subpageId": "SUBPAGE_START_SITE_THEME",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_START_SITE_THEME.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_START",
+      "subpageId": "SUBPAGE_START_VISUAL_LIBRARY",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_START_VISUAL_LIBRARY.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_START",
+      "subpageId": "SUBPAGE_START_VISUAL_LIBRARY",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_START_VISUAL_LIBRARY.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_HOME",
+      "subpageId": "SUBPAGE_HOME_MAIN",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_HOME_MAIN.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_HOME",
+      "subpageId": "SUBPAGE_HOME_MAIN",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_HOME_MAIN.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_HOME",
+      "subpageId": "SUBPAGE_HOME_PROJECTS",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_HOME_PROJECTS.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_HOME",
+      "subpageId": "SUBPAGE_HOME_PROJECTS",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_HOME_PROJECTS.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_HOME",
+      "subpageId": "SUBPAGE_HOME_SETTINGS",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_HOME_SETTINGS.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_HOME",
+      "subpageId": "SUBPAGE_HOME_SETTINGS",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_HOME_SETTINGS.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_HOME",
+      "subpageId": "SUBPAGE_HOME_SYNC",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_HOME_SYNC.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_HOME",
+      "subpageId": "SUBPAGE_HOME_SYNC",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_HOME_SYNC.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_DRAW",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAD_DRAW.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_DRAW",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAD_DRAW.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_MODIFY",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAD_MODIFY.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_MODIFY",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAD_MODIFY.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_SNAP",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAD_SNAP.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_SNAP",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAD_SNAP.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_DIMENSION",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAD_DIMENSION.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_DIMENSION",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAD_DIMENSION.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_LAYER",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAD_LAYER.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_LAYER",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAD_LAYER.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_FILE",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAD_FILE.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_FILE",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAD_FILE.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_VIEW",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAD_VIEW.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAD",
+      "subpageId": "SUBPAGE_CAD_VIEW",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAD_VIEW.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_MANUAL",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAM_MANUAL.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_MANUAL",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAM_MANUAL.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_AUTO",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAM_AUTO.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_AUTO",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAM_AUTO.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_TOOL",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAM_TOOL.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_TOOL",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAM_TOOL.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_STRATEGY",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAM_STRATEGY.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_STRATEGY",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAM_STRATEGY.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_ENTRY_EXIT",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAM_ENTRY_EXIT.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_ENTRY_EXIT",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAM_ENTRY_EXIT.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_FIXTURE",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAM_FIXTURE.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_FIXTURE",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAM_FIXTURE.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_PREVIEW",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_CAM_PREVIEW.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_CAM",
+      "subpageId": "SUBPAGE_CAM_PREVIEW",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_CAM_PREVIEW.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_SIM",
+      "subpageId": "SUBPAGE_SIM_OVERVIEW",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_SIM_OVERVIEW.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_SIM",
+      "subpageId": "SUBPAGE_SIM_OVERVIEW",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_SIM_OVERVIEW.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_SIM",
+      "subpageId": "SUBPAGE_SIM_MATERIAL",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_SIM_MATERIAL.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_SIM",
+      "subpageId": "SUBPAGE_SIM_MATERIAL",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_SIM_MATERIAL.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_SIM",
+      "subpageId": "SUBPAGE_SIM_COLLISION",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_SIM_COLLISION.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_SIM",
+      "subpageId": "SUBPAGE_SIM_COLLISION",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_SIM_COLLISION.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_SIM",
+      "subpageId": "SUBPAGE_SIM_PLAYBACK",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_SIM_PLAYBACK.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_SIM",
+      "subpageId": "SUBPAGE_SIM_PLAYBACK",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_SIM_PLAYBACK.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_3AX",
+      "subpageId": "SUBPAGE_3AX_MACHINE",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_3AX_MACHINE.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_3AX",
+      "subpageId": "SUBPAGE_3AX_MACHINE",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_3AX_MACHINE.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_3AX",
+      "subpageId": "SUBPAGE_3AX_NC_FIRST",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_3AX_NC_FIRST.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_3AX",
+      "subpageId": "SUBPAGE_3AX_NC_FIRST",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_3AX_NC_FIRST.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_3AX",
+      "subpageId": "SUBPAGE_3AX_CAMERA",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_3AX_CAMERA.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_3AX",
+      "subpageId": "SUBPAGE_3AX_CAMERA",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_3AX_CAMERA.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_3AX",
+      "subpageId": "SUBPAGE_3AX_TOOL",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_3AX_TOOL.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_3AX",
+      "subpageId": "SUBPAGE_3AX_TOOL",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_3AX_TOOL.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_3AX",
+      "subpageId": "SUBPAGE_3AX_COLLISION",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_3AX_COLLISION.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_3AX",
+      "subpageId": "SUBPAGE_3AX_COLLISION",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_3AX_COLLISION.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_4AX",
+      "subpageId": "SUBPAGE_4AX_MACHINE",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_4AX_MACHINE.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_4AX",
+      "subpageId": "SUBPAGE_4AX_MACHINE",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_4AX_MACHINE.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_4AX",
+      "subpageId": "SUBPAGE_4AX_NC_FIRST",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_4AX_NC_FIRST.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_4AX",
+      "subpageId": "SUBPAGE_4AX_NC_FIRST",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_4AX_NC_FIRST.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_4AX",
+      "subpageId": "SUBPAGE_4AX_CAMERA",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_4AX_CAMERA.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_4AX",
+      "subpageId": "SUBPAGE_4AX_CAMERA",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_4AX_CAMERA.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_4AX",
+      "subpageId": "SUBPAGE_4AX_TOOL",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_4AX_TOOL.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_4AX",
+      "subpageId": "SUBPAGE_4AX_TOOL",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_4AX_TOOL.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_4AX",
+      "subpageId": "SUBPAGE_4AX_COLLISION",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_4AX_COLLISION.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_4AX",
+      "subpageId": "SUBPAGE_4AX_COLLISION",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_4AX_COLLISION.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_5AX",
+      "subpageId": "SUBPAGE_5AX_MACHINE",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_5AX_MACHINE.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_5AX",
+      "subpageId": "SUBPAGE_5AX_MACHINE",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_5AX_MACHINE.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_5AX",
+      "subpageId": "SUBPAGE_5AX_NC_FIRST",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_5AX_NC_FIRST.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_5AX",
+      "subpageId": "SUBPAGE_5AX_NC_FIRST",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_5AX_NC_FIRST.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_5AX",
+      "subpageId": "SUBPAGE_5AX_CAMERA",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_5AX_CAMERA.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_5AX",
+      "subpageId": "SUBPAGE_5AX_CAMERA",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_5AX_CAMERA.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_5AX",
+      "subpageId": "SUBPAGE_5AX_TOOL",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_5AX_TOOL.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_5AX",
+      "subpageId": "SUBPAGE_5AX_TOOL",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_5AX_TOOL.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_5AX",
+      "subpageId": "SUBPAGE_5AX_COLLISION",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_5AX_COLLISION.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_5AX",
+      "subpageId": "SUBPAGE_5AX_COLLISION",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_5AX_COLLISION.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_MACHINE",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_6AX_MACHINE.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_MACHINE",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_6AX_MACHINE.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_NC_FIRST",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_6AX_NC_FIRST.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_NC_FIRST",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_6AX_NC_FIRST.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_CAMERA",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_6AX_CAMERA.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_CAMERA",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_6AX_CAMERA.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_TOOL",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_6AX_TOOL.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_TOOL",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_6AX_TOOL.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_COLLISION",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_6AX_COLLISION.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_COLLISION",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_6AX_COLLISION.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_ABC",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_6AX_ABC.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_ABC",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_6AX_ABC.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_HEAD_TILT",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_6AX_HEAD_TILT.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_6AX",
+      "subpageId": "SUBPAGE_6AX_HEAD_TILT",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_6AX_HEAD_TILT.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_NC",
+      "subpageId": "SUBPAGE_NC_EDITOR",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_NC_EDITOR.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_NC",
+      "subpageId": "SUBPAGE_NC_EDITOR",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_NC_EDITOR.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_NC",
+      "subpageId": "SUBPAGE_NC_KEYPAD",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_NC_KEYPAD.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_NC",
+      "subpageId": "SUBPAGE_NC_KEYPAD",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_NC_KEYPAD.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_NC",
+      "subpageId": "SUBPAGE_NC_PARSER",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_NC_PARSER.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_NC",
+      "subpageId": "SUBPAGE_NC_PARSER",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_NC_PARSER.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_NC",
+      "subpageId": "SUBPAGE_NC_FANUC_POST",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_NC_FANUC_POST.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_NC",
+      "subpageId": "SUBPAGE_NC_FANUC_POST",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_NC_FANUC_POST.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_NC",
+      "subpageId": "SUBPAGE_NC_SUBPROGRAM",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_NC_SUBPROGRAM.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_NC",
+      "subpageId": "SUBPAGE_NC_SUBPROGRAM",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_NC_SUBPROGRAM.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_NC",
+      "subpageId": "SUBPAGE_NC_SAFETY",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_NC_SAFETY.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_NC",
+      "subpageId": "SUBPAGE_NC_SAFETY",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_NC_SAFETY.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_AI",
+      "subpageId": "SUBPAGE_AI_ASSISTANT",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_AI_ASSISTANT.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_AI",
+      "subpageId": "SUBPAGE_AI_ASSISTANT",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_AI_ASSISTANT.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_AI",
+      "subpageId": "SUBPAGE_AI_CAD_REVIEW",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_AI_CAD_REVIEW.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_AI",
+      "subpageId": "SUBPAGE_AI_CAD_REVIEW",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_AI_CAD_REVIEW.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_AI",
+      "subpageId": "SUBPAGE_AI_CAM_REVIEW",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_AI_CAM_REVIEW.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_AI",
+      "subpageId": "SUBPAGE_AI_CAM_REVIEW",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_AI_CAM_REVIEW.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_AI",
+      "subpageId": "SUBPAGE_AI_NC_REVIEW",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_AI_NC_REVIEW.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_AI",
+      "subpageId": "SUBPAGE_AI_NC_REVIEW",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_AI_NC_REVIEW.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_AI",
+      "subpageId": "SUBPAGE_AI_WORKFLOW",
+      "platform": "MOBILE",
+      "imageId": "IMG.V67.SUBPAGE_AI_WORKFLOW.MOBILE",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    },
+    {
+      "parentPageId": "PAGE_AI",
+      "subpageId": "SUBPAGE_AI_WORKFLOW",
+      "platform": "DESKTOP",
+      "imageId": "IMG.V67.SUBPAGE_AI_WORKFLOW.DESKTOP",
+      "authoritySha256": null,
+      "authoritySource": null,
+      "status": "PENDING_NOT_AUTO_APPROVED",
+      "replaceRevoked": false
+    }
+  ],
+  "summary": {
+    "pages": 11,
+    "pagePlatformPairs": 22,
+    "subpages": 59,
+    "subpagePlatformPairs": 118,
+    "approvedExactPagePairs": 0,
+    "approvedExactSubpagePairs": 0,
+    "missing": 140
+  }
+}
