@@ -1,0 +1,55 @@
+name: AIG V89 NC-first State and 6AX Browser Gate
+on:
+  push:
+    branches: [integration/v89-nc-first-state]
+    paths:
+      - 'formal-web/mobile-runtime.html'
+      - 'formal-web/service-worker.js'
+      - 'formal-web/v89-nc-first-state.css'
+      - 'formal-web/runtime/v89-nc-first-state.js'
+      - 'formal-web/qa/v89-nc-first-static.test.cjs'
+      - 'formal-web/qa/v89-nc-first-browser.test.cjs'
+      - '.github/workflows/v89-nc-first-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check formal-web/runtime/v89-nc-first-state.js
+      - run: node --check formal-web/qa/v89-nc-first-static.test.cjs
+      - run: node --check formal-web/qa/v89-nc-first-browser.test.cjs
+      - run: node formal-web/qa/v89-nc-first-static.test.cjs
+  browser-evidence:
+    runs-on: ubuntu-latest
+    needs: source-integrity
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install actual Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Serve actual formal Runtime
+        run: |
+          python3 -m http.server 8765 --directory formal-web >/tmp/aig-v89-server.log 2>&1 &
+          sleep 2
+      - name: Desktop and phone NC-first state & screenshot test
+        run: node formal-web/qa/v89-nc-first-browser.test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aig-v89-desktop-mobile-6ax-nc-first
+          path: artifacts/v89/
+          if-no-files-found: warn
+      - name: Safety boundary
+        run: echo "DOM and screenshot Gate only; real material-removal/CNC numerical and APK/EXE Gate remain BLOCKED"
