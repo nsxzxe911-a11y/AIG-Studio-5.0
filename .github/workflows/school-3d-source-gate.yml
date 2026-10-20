@@ -59,6 +59,21 @@ jobs:
           path: artifacts/school-3d-rig-technical/
           retention-days: 14
           if-no-files-found: error
+      - name: Phase5 reconstruct smoother-skinned candidate (NOT APPROVED)
+        run: |
+          python formal-web/school-3d/tools/build_rig_phase5.py --source artifacts/school-3d-prototype-pbr --output artifacts/school-3d-rig-phase5/hero-rig-Phase5-NOT-APPROVED.glb
+          python formal-web/school-3d/tools/verify_prototype.py artifacts/school-3d-rig-phase5/hero-rig-Phase5-NOT-APPROVED.glb
+      - name: Phase5 anatomically blended vertices and animation data Gate
+        env:
+          AIG_PHASE5_MATERIALS_DIR: artifacts/school-3d-prototype-pbr
+        run: python -m unittest discover -s formal-web/school-3d/tools -p 'test_phase5_rig.py' -v
+      - name: Archive Phase5 technical candidate (NOT VISUAL AUTHORITY)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School-3D-Phase5-Skinned-Motion-NOT-APPROVED
+          path: artifacts/school-3d-rig-phase5/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
