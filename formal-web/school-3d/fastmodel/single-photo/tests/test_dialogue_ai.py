@@ -78,7 +78,7 @@ class DialogueServerTest(unittest.TestCase):
         ai=DialogueAI('fake-test-key',transport=lambda *_:llm_response([
             {'beat':0,'text':'這條走廊很長，主角光環先幫我開燈！'},
             {'beat':1,'text':'這拳頭不打人，專打尷尬的空氣！'}]))
-        self.server=make_server(Path(self.tmp.name)/'jobs',MeshyClient(''),port=0,dialogue_client=ai)
+        self.server=make_server(Path(self.tmp.name)/'jobs',MeshyClient(''),port=0,dialogue_client=ai,allow_paid_3d=True)
         self.addCleanup(self.server.server_close);self.addCleanup(self.server.shutdown)
         threading.Thread(target=self.server.serve_forever,daemon=True).start()
         self.base='http://127.0.0.1:'+str(self.server.server_port)
