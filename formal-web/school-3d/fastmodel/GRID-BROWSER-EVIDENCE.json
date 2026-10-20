@@ -1,0 +1,29 @@
+{
+  "results": [
+    {
+      "w": 390,
+      "docW": 390,
+      "mode": "edit",
+      "density": "eco",
+      "helperGrid": true,
+      "background": "repeating-linear-gradient(0deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 39px, rgba(59, 106, 139, 0.15) 40px), repeating-linear-gradient(90deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 39px, rgba(59, 106, 139, 0.15) 40px)",
+      "renderGPUAvailable": false,
+      "graphicsText": "光線追蹤：關閉（自研光柵渲染 · 無 RTX/DXR 要求）",
+      "gridOff": true,
+      "jsExceptions": []
+    },
+    {
+      "w": 1440,
+      "docW": 1440,
+      "mode": "edit",
+      "density": "eco",
+      "helperGrid": true,
+      "background": "repeating-linear-gradient(0deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 39px, rgba(59, 106, 139, 0.15) 40px), repeating-linear-gradient(90deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 39px, rgba(59, 106, 139, 0.15) 40px)",
+      "renderGPUAvailable": false,
+      "graphicsText": "光線追蹤：關閉（自研光柵渲染 · 無 RTX/DXR 要求）",
+      "gridOff": true,
+      "jsExceptions": []
+    }
+  ],
+  "note": "WebGL2 availability depends on sandbox; DOM control verification is not native GPU FPS"
+}

@@ -32,5 +32,5 @@ test('quality panel shows real fixed no-RT state and original resolutions unchan
 test('offline packer embeds the guard before renderer or application',()=>{
   const p=read('../tools/build_standalone.py');
   assert.match(p,/graphics-policy\.mjs/);
-  assert.match(p,/resolution\+'\\n'\+graphics\+'\\n'\+render/);
+  assert.match(p,/resolution\+'\\n'\+graphics\+'\\n'\+edges\+'\\n'\+render/);
 });

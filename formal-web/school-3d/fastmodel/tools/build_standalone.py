@@ -14,14 +14,15 @@ def build(glb,out):
     policy=(ROOT/'web/resource-governor.mjs').read_text('utf8').replace('export ','')
     resolution=(ROOT/'web/resolution-policy.mjs').read_text('utf8').replace('export ','')
     graphics=(ROOT/'web/graphics-policy.mjs').read_text('utf8').replace('export ','')
-    render=(ROOT/'web/renderer.mjs').read_text('utf8').replace("import {decodeGLB,readAccessor,buildBatches} from './fastmodel-data.mjs';",'').replace("import {ResourceGovernor,makeBudgets,RebuildableCache} from './resource-governor.mjs';",'').replace("import {checkRenderTarget} from './resolution-policy.mjs';",'').replace("import {GRAPHICS_POLICY,assertRasterOnly} from './graphics-policy.mjs';",'').replace('export ','')
-    main=(ROOT/'web/main.mjs').read_text('utf8').replace("import {FastModelView} from './renderer.mjs';",'').replace("import {DiskPressureGuard} from './resource-governor.mjs';",'').replace("import {RESOLUTION_PRESETS} from './resolution-policy.mjs';",'').replace("import {GRAPHICS_POLICY} from './graphics-policy.mjs';",'')
+    edges=(ROOT/'web/mesh-lines.mjs').read_text('utf8').replace('export ','')
+    render=(ROOT/'web/renderer.mjs').read_text('utf8').replace("import {decodeGLB,readAccessor,buildBatches} from './fastmodel-data.mjs';",'').replace("import {assertRasterOnly,GRAPHICS_POLICY} from './graphics-policy.mjs';",'').replace("import {buildEdgeIndex,wireCap,WIRE_MODES,WIRE_DENSITIES,adaptiveWireStep} from './mesh-lines.mjs';",'').replace("import {ResourceGovernor,makeBudgets,RebuildableCache} from './resource-governor.mjs';",'').replace("import {checkRenderTarget} from './resolution-policy.mjs';",'').replace('export ','')
+    main=(ROOT/'web/main.mjs').read_text('utf8').replace("import {FastModelView} from './renderer.mjs';",'').replace("import {WIRE_MODES,WIRE_DENSITIES} from './mesh-lines.mjs';",'').replace("import {GRAPHICS_POLICY,assertRasterOnly} from './graphics-policy.mjs';",'').replace("import {DiskPressureGuard} from './resource-governor.mjs';",'').replace("import {RESOLUTION_PRESETS} from './resolution-policy.mjs';",'')
     old="let r=await fetch('../assets/phase17-visual-NOT-APPROVED.glb');"
     new="if(window.AIG_EMBEDDED_GLB){const bytes=Uint8Array.from(atob(window.AIG_EMBEDDED_GLB),c=>c.charCodeAt(0));await importGLB(bytes.buffer);return;}let r=await fetch('../assets/phase17-visual-NOT-APPROVED.glb');"
     if old not in main:raise ValueError('Page load contract changed')
     main=main.replace(old,new)
     encoded=base64.b64encode(raw).decode('ascii')
-    payload='<script>\nwindow.AIG_EMBEDDED_GLB="'+encoded+'";\n'+data+'\n'+policy+'\n'+resolution+'\n'+graphics+'\n'+render+'\n'+main+'\n</script>'
+    payload='<script>\nwindow.AIG_EMBEDDED_GLB="'+encoded+'";\n'+data+'\n'+policy+'\n'+resolution+'\n'+graphics+'\n'+edges+'\n'+render+'\n'+main+'\n</script>'
     marker='<script type="module" src="./main.mjs"></script>'
     if html.count(marker)!=1:raise ValueError('Expected exactly one script tag')
     html=html.replace(marker,payload)

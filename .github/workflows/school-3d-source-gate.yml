@@ -467,6 +467,40 @@ jobs:
           assert len(manifest['sha256'])==64
           print('Single compatibility-first raster policy PASS — no fake 3D heroine')
           PY
+      - name: FastModel mesh-line optimization source Gate — 53 no-fake tests
+        env:
+          AIG_FASTMODEL_GLB: artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/mesh-lines.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/*.test.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          b=Path('formal-web/school-3d/fastmodel')
+          evidence=json.loads((b/'GRID-OPTIMIZATION-EVIDENCE.json').read_text())
+          assert evidence['rendering']['defaultLines']=='off'
+          assert evidence['rendering']['rayTracing'] is False
+          assert evidence['evidence']['GPUWireframeTested'] is False
+          assert evidence['evidence']['1080p60Proven'] is False
+          assert evidence['safety']['originalGLBUntouched'] is True
+          assert evidence['safety']['productionReleased'] is False
+          print('CPU topology and UI source PASS; WebGL2 GPU still requires hardware acceptance')
+          PY
+      - name: FastModel wire modes included in synthetic offline HTML
+        run: |
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMESH-GRID-MODES-NOT-GPU-VERIFIED.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMESH-GRID-MODES-NOT-GPU-VERIFIED.html').read_text()
+          for token in ['id="mesh-lines"','id="mesh-density"','id="helper-grid"','function buildEdgeIndex','gl.drawElements(gl.LINES','window.AIG_EMBEDDED_GLB']:
+            assert token in s,token
+          assert '光線追蹤：關閉' in s
+          print('Offline true wire modes source inclusion PASS; no GPU FPS inference')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
