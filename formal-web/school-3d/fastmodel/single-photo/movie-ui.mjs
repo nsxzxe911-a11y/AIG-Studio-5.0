@@ -27,7 +27,7 @@ export class MovieWorkspace {
  get isBusy(){return this.active||this.finalizing;}
  lock(on){
   for(const id of ['story-text','story-build','story-play','story-stop','pause',
-   'local-glb','action-glb','clip','movie-voice-file','movie-voice-lines','dialogue-style','cloud-dialogue',
+   'local-glb','action-glb','clip','movie-voice-file','movie-voice-lines','ai-tts-generate','ai-tts-voice','dialogue-style','cloud-dialogue',
    'dialogue-preview','timeline-capture','review-capture']){
    const element=this.el(id);
    if(element)element.disabled=!!on;
@@ -72,9 +72,14 @@ export class MovieWorkspace {
   const c=this.getContext();
   const {plan,sourceSha,view,sound,sourceName,dialogueOrigin,soundOptions}=c;
   const voiceFile=this.el('movie-voice-file').files?.[0]||null;
-  const voiceFiles=Array.from(this.el('movie-voice-lines')?.files||[]);
+  const manualLines=Array.from(this.el('movie-voice-lines')?.files||[]);
+  const generatedVoiceFiles=c.generatedVoiceFiles||[];
+  const voiceFiles=manualLines.length?manualLines:generatedVoiceFiles;
   let capture=null;
   try{
+   if(c.ttsBusy)throw Error('MOVIE_TTS_GENERATING');
+   if((manualLines.length&&generatedVoiceFiles.length)||(voiceFile&&generatedVoiceFiles.length))
+    throw Error('MOVIE_MANUAL_AND_AI_VOICE_CONFLICT');
    validateMovieSource({plan,sourceSha256:sourceSha,clips:view?.animation?.clips,
     haveModel:!!view?.model,dialogueOrigin,voiceFile});
    const cues=mapVoiceFiles(plan,voiceFiles,{wholeFilePresent:!!voiceFile});
