@@ -46,7 +46,7 @@ async function audit(){
   const runsPromise=api(BASE+PROJECTS[1].repo+"/actions/runs?branch="+encodeURIComponent(BRANCH)+"&per_page=25");
   const releasePromises=PROJECTS.map(p=>api(BASE+p.repo+"/releases?per_page=30")
    .then(data=>({project:p,data})).catch(e=>({project:p,error:String(e)})));
-  const [headRaw,runRaw,releases]=await Promise.all([headPromise,runsPromise,...releasePromises]);
+  const [headRaw,runRaw,...releases]=await Promise.all([headPromise,runsPromise,...releasePromises]);
   const sha=headRaw?.object?.sha;
   if(!/^[0-9a-f]{40}$/.test(sha||""))throw Error("GitHub 正式分支 SHA 無效");
   const runs=Array.isArray(runRaw?.workflow_runs)?runRaw.workflow_runs:[];
