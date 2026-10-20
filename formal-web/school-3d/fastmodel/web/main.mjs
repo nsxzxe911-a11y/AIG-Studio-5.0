@@ -65,14 +65,14 @@ function clearScanOverlay(){
  const ctx=scanCanvas.getContext('2d');ctx?.clearRect(0,0,scanCanvas.width,scanCanvas.height);
 }
 function applyScanMode(){
- const mode=el('scan-mode').value,density=el('scan-density').value;
+ const mode=el('scan-mode').value,density=el('scan-density').value,depthChoice=el('scan-depth').value;
  const status=el('scan-layer-status');
  updateScanColorLegend();
- if(!SCAN_MODES.includes(mode)||!SCAN_DENSITIES.includes(density)){
+ if(!SCAN_MODES.includes(mode)||!SCAN_DENSITIES.includes(density)||!['off','sampled'].includes(depthChoice)){
    status.textContent='掃描層設定無效，保留原模型。';return;
  }
  if(mode==='off'){
-   scanTopology=null;scanOverlayLast=0;clearScanOverlay();
+   scanTopology=null;scanOverlayLast=0;clearScanOverlay();el('scan-depth-status').textContent='掃描層關閉；沒有額外深度抽樣 CPU 負荷。';
    if(view){view.onScanFrame=null;view.scanOverlayTelemetry=null;applyWireChoice();}
    status.textContent='掃描覆蓋層關閉；保留原表面與你的線框設定。';return;
  }
@@ -96,20 +96,29 @@ function applyScanMode(){
    }
    scanOverlayLast=0;
    view.onScanFrame=(world,ts)=>{
-     if(ts-scanOverlayLast<50)return view.scanOverlayTelemetry;
+     const smallViewport=scanCanvas.clientWidth<650;
+     if(ts-scanOverlayLast<(smallViewport?90:50))return view.scanOverlayTelemetry;
      scanOverlayLast=ts;
      const hairReview=el('scan-risk-color').checked&&lastAnimatedAudit?.status==='POSED_SAMPLE_RISK_REVIEW_REQUIRED'&&
        Array.isArray(lastAnimatedAudit.hairOverlapFrames)&&lastAnimatedAudit.hairOverlapFrames.length>0;
+     const depthMode=el('scan-depth').value==='sampled'&&view.lastCPU>25?'off':el('scan-depth').value;
      const result=paintScanOverlay(scanCanvas,view,scanTopology,world,{
-       mode:el('scan-mode').value,density:el('scan-density').value,
+       mode:el('scan-mode').value,density:el('scan-density').value,depthMode,
        palette:el('scan-palette').value,warning:hairReview?'review':'none',
        highlightRoles:hairReview?['hair']:[]
      });
+     el('scan-depth-status').textContent=depthMode==='off'
+       ?(el('scan-depth').value==='sampled'?'畫面主繪圖 CPU 負荷較高，暫時停用三角面深度取樣（自動效能保護）。':'深度取樣關閉，線條僅作外型輔助。')
+       :'取樣來源三角面 '+result.sampledDepthTriangles+' 個、格點測試 '+result.sampledDepthCellTests+
+       ' 次，判定被遮擋輪廓 '+result.occludedSegments+' 段。'+
+       (result.sampledDepthIncomplete?' 已達掃描預算上限，深度資訊不完整。':'')+
+       ' 手機小視窗自動採低負荷；不是 GPU 真深度驗收。';
      if(result.status==='SCAN_DISPLAY_BLOCKED')status.textContent=result.reason;
      else if(ts%350<60)status.textContent='骨架實線 '+result.bonesDrawn+' 段 · 外型低亮虛線 '+result.dashedSegments+
        ' 段 · '+(scanTopology.omitted||0)+' 個來源批次超出預算/不相容；無滿版三角線／無深度遮擋保證。';
      return result;
    };
+   el('scan-depth-status').textContent=depthChoice==='sampled'?'來源 GLB 深度取樣已啟用，採受限格點與動態效能保護。':'深度取樣已關閉，最省電。';
    status.textContent='掃描層啟用：'+mode+'；真實骨段 '+scanTopology.bones.length+
     ' 條、可選來源輪廓 '+scanTopology.surfaces.length+' 批。隨動畫姿態更新，純顯示層。';
  }catch(e){
@@ -119,6 +128,7 @@ function applyScanMode(){
 }
 el('scan-mode').addEventListener('change',applyScanMode);
 el('scan-density').addEventListener('change',applyScanMode);
+el('scan-depth').addEventListener('change',applyScanMode);
 el('scan-palette').addEventListener('change',applyScanMode);
 el('scan-risk-color').addEventListener('change',applyScanMode);
 updateScanColorLegend();
@@ -334,4 +344,4 @@ document.addEventListener('visibilitychange',()=>{
  else if(!paused)view.start();
 });
 c.addEventListener('wheel',e=>{if(!view)return;e.preventDefault();view.zoomFactor=Math.max(.6,Math.min(1.6,view.zoomFactor-e.deltaY*.001));el('zoom').value=String(view.zoomFactor*100);},{passive:false});
-el('export').addEventListener('click',async()=>{if(!lastStats)return;await updateDisk();let out={schema:'AIG_FastModel_1080p60_Preview_1',scanDisplay:{mode:el('scan-mode').value,density:el('scan-density').value,palette:el('scan-palette').value,warningOptIn:el('scan-risk-color').checked,overlay:view.scanOverlayTelemetry||null,realDepthHiddenVerified:false,realSkinJointsOnly:true,sourceGLBUnchanged:true},source:'WEBGL2_BROWSER_ONLY',date:new Date().toISOString(),userAgent:navigator.userAgent,webglGpu:view.gpu,visualAuthority:'NOT_APPROVED',nativeDX12Tested:false,nativeVulkanTested:false,renderPolicy:GRAPHICS_POLICY,...lastStats,localMeshEdit:view.patchStats,surfaceInspection:{mode:view.surfaceGuide,additionalDrawCalls:0,additionalLineBuffers:0},previewDetail:lastStats.previewDetail||null,frameBaseline,latestBrowserFrameSummary:latestFrameSummary(),geometryScan:lastScan,headNeckGeometryInspection:latestSeam,hairNeckOcclusionInspection:latestHair,animatedPoseAudit:lastAnimatedAudit,requiredNativeDeviceGate:assessAnimationDeviceEvidence([]),scanKind:el('scene-kind').value,rasterLightPreset:view.lightPreset,referenceScaffold:{enabled:el('scaffold-enabled').checked,yaw:Number(el('scaffold-yaw').value),pitch:Number(el('scaffold-pitch').value),limit:Number(el('scaffold-limit').value),referenceOnly:true},meshLineDisplay:{mode:view.wireMode,density:view.wireDensity,segments:view.wireStats.segments,autoSuppressed:view.wireState.suppressed},resourcePolicy:{...lastStats.memoryPressure,gpuUsagePercentReliable:false},diskEstimate:diskInfo,warning:'browser storage quota is not entire device disk or storage write throughput'};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='AIG-FastModel-device-benchmark.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);});
+el('export').addEventListener('click',async()=>{if(!lastStats)return;await updateDisk();let out={schema:'AIG_FastModel_1080p60_Preview_1',scanDisplay:{mode:el('scan-mode').value,density:el('scan-density').value,palette:el('scan-palette').value,depthMode:el('scan-depth').value,warningOptIn:el('scan-risk-color').checked,overlay:view.scanOverlayTelemetry||null,realDepthHiddenVerified:false,realSkinJointsOnly:true,sourceGLBUnchanged:true},source:'WEBGL2_BROWSER_ONLY',date:new Date().toISOString(),userAgent:navigator.userAgent,webglGpu:view.gpu,visualAuthority:'NOT_APPROVED',nativeDX12Tested:false,nativeVulkanTested:false,renderPolicy:GRAPHICS_POLICY,...lastStats,localMeshEdit:view.patchStats,surfaceInspection:{mode:view.surfaceGuide,additionalDrawCalls:0,additionalLineBuffers:0},previewDetail:lastStats.previewDetail||null,frameBaseline,latestBrowserFrameSummary:latestFrameSummary(),geometryScan:lastScan,headNeckGeometryInspection:latestSeam,hairNeckOcclusionInspection:latestHair,animatedPoseAudit:lastAnimatedAudit,requiredNativeDeviceGate:assessAnimationDeviceEvidence([]),scanKind:el('scene-kind').value,rasterLightPreset:view.lightPreset,referenceScaffold:{enabled:el('scaffold-enabled').checked,yaw:Number(el('scaffold-yaw').value),pitch:Number(el('scaffold-pitch').value),limit:Number(el('scaffold-limit').value),referenceOnly:true},meshLineDisplay:{mode:view.wireMode,density:view.wireDensity,segments:view.wireStats.segments,autoSuppressed:view.wireState.suppressed},resourcePolicy:{...lastStats.memoryPressure,gpuUsagePercentReliable:false},diskEstimate:diskInfo,warning:'browser storage quota is not entire device disk or storage write throughput'};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='AIG-FastModel-device-benchmark.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);});
