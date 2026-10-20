@@ -3,6 +3,7 @@
  * remains an explicit export path. A sparse humanoid SDF is a DRAFT only:
  * unobserved limbs, hair and skirt are heuristics, not solved from the photo.
  */
+import {Aig42GpuTimer} from './aig-performance-4-2.mjs';
 export const AIG_SDF_VERSION='AIG_FASTMODEL_4_1_IMPLICIT_VOLUME_DRAFT';
 const finite=(x,lo,hi)=>Number.isFinite(x)&&x>=lo&&x<=hi;
 export function createImplicitScene(scaffold){
@@ -140,15 +141,24 @@ void main(){
   vec3 ro=vec3(s*1.7,0.,c*1.7);
   vec3 front=normalize(-ro),right=vec3(c,0.,-s),up=vec3(0.,1.,0.);
   vec3 rd=normalize(front+st.x*right+st.y*up);
-  float travel=0.;
+  // Conservative world-space bound: avoid expensive SDF on empty pixels.
+  // Current procedural mannequin is strictly within a sphere of radius .75.
+  float b=dot(ro,rd);
+  float determinant=b*b-dot(ro,ro)+.75*.75;
+  if(determinant<=0.){
+    fragColor=vec4(.015,.032,.06,1.);return;
+  }
+  float sphereRoot=sqrt(determinant);
+  float travel=max(0.,-b-sphereRoot);
+  float exitDistance=-b+sphereRoot;
   vec2 hit=vec2(1.,0.);
   for(int j=0;j<96;j++){
-    if(float(j)>=uStepLimit||travel>4.)break;
+    if(float(j)>=uStepLimit||travel>exitDistance)break;
     hit=map(ro+rd*travel);
     if(hit.x<.002)break;
     travel+=max(hit.x*.78,.0025);
   }
-  if(hit.x>.004||travel>4.){
+  if(hit.x>.004||travel>exitDistance){
     fragColor=vec4(.015,.032,.06,1.);return;
   }
   vec3 pos=ro+rd*travel;
@@ -186,7 +196,14 @@ export class AigImplicitRenderer {
     .map(k=>[k,gl.getUniformLocation(this.program,k)]));
   this.pixelScale=Math.max(.35,Math.min(1,pixelScale));
   this.maxSteps=Math.max(24,Math.min(96,maxSteps|0));
+  this.gpuTimer=new Aig42GpuTimer(gl);
   this.disposed=false;
+ }
+ configure({pixelScale=this.pixelScale,maxSteps=this.maxSteps}={}){
+  if(this.disposed)throw Error('AIG41_RENDERER_DISPOSED');
+  if(!Number.isFinite(pixelScale)||!Number.isFinite(maxSteps))throw Error('AIG41_QUALITY_INVALID');
+  this.pixelScale=Math.max(.35,Math.min(1,pixelScale));
+  this.maxSteps=Math.max(24,Math.min(96,maxSteps|0));
  }
  draw(yaw=0){
   if(this.disposed)throw Error('AIG41_RENDERER_DISPOSED');
@@ -194,6 +211,7 @@ export class AigImplicitRenderer {
   const w=Math.min(960,Math.max(96,Math.round(this.canvas.clientWidth*this.pixelScale)));
   const h=Math.min(640,Math.max(96,Math.round(this.canvas.clientHeight*this.pixelScale)));
   if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h;}
+  const completedGpuSample=this.gpuTimer.poll();
   gl.viewport(0,0,w,h);gl.useProgram(this.program);
   gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);gl.enableVertexAttribArray(this.loc);
   gl.vertexAttribPointer(this.loc,2,gl.FLOAT,false,0,0);
@@ -203,13 +221,17 @@ export class AigImplicitRenderer {
   const p=this.scene.parameters;
   gl.uniform4f(this.uniforms.uSizeA,p.headRadius,p.shoulderRadius,p.hipRadius,p.skirtRadius);
   gl.uniform4f(this.uniforms.uSizeB,p.neckRadius,p.hairRadius,p.armRadius,p.legRadius);
-  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  const queryStarted=this.gpuTimer.begin();
+  try{gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}
+  finally{if(queryStarted)this.gpuTimer.end();}
   return {renderPixels:w*h,rayStepsLimit:this.maxSteps,angleRadians:yaw,
+    gpuSample:completedGpuSample,gpuTimerSupported:this.gpuTimer.supported,
     result:'GPU_COMMAND_SUBMITTED_NOT_GPU_FPS_PROVEN'};
  }
  dispose(){
   if(this.disposed)return;
   this.disposed=true;
+  this.gpuTimer?.dispose();
   this.gl?.deleteBuffer(this.buffer);
   this.gl?.deleteProgram(this.program);
  }
