@@ -134,6 +134,31 @@ jobs:
           path: artifacts/school-3d-phase9-meshfirst/
           retention-days: 14
           if-no-files-found: error
+      - name: Phase10 convert prior mesh to truly independent UNRIGGED QA GLB
+        run: |
+          mkdir -p artifacts/school-3d-phase10-independent
+          python formal-web/school-3d/tools/make_unrigged_qa_fixture.py \
+            --source artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb \
+            --target artifacts/school-3d-phase10-independent/unrigged-import-NOT-APPROVED.glb \
+            --anchors artifacts/school-3d-phase10-independent/joint-anchors-MANUAL-3D-TEST.json > artifacts/school-3d-phase10-independent/import-report.json
+          python formal-web/school-3d/tools/bind_unrigged_mesh.py \
+            --source artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb \
+            --target artifacts/school-3d-phase10-independent/unrigged-import-NOT-APPROVED.glb \
+            --anchors artifacts/school-3d-phase10-independent/joint-anchors-MANUAL-3D-TEST.json \
+            --out artifacts/school-3d-phase10-independent/33joint-fitted-NOT-VISUAL-AUTHORITY.glb > artifacts/school-3d-phase10-independent/rebound-report.json
+          python formal-web/school-3d/tools/verify_prototype.py artifacts/school-3d-phase10-independent/33joint-fitted-NOT-VISUAL-AUTHORITY.glb > artifacts/school-3d-phase10-independent/glb-technical-audit.json
+          python formal-web/school-3d/tools/verify_fit_foot_contact.py artifacts/school-3d-phase10-independent/33joint-fitted-NOT-VISUAL-AUTHORITY.glb > artifacts/school-3d-phase10-independent/foot-joint-only-audit.json
+      - name: Phase10 sixteen true unrigged GLB retarget tests
+        env:
+          AIG_PHASE10_SOURCE_GLB: artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb
+        run: python -m unittest discover -s formal-web/school-3d/tools -p 'test_unrigged_mesh_binding.py' -v
+      - name: Archive Phase10 unrigged rig adapter QA, NOT visual approval
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School3D-Phase10-Unrigged-Adapter-NOT-APPROVED
+          path: artifacts/school-3d-phase10-independent/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
