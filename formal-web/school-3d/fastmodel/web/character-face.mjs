@@ -2,11 +2,19 @@
  * Not real-person facial identification. Only explicitly tagged face submeshes.
  * Scene-local roster only; never uploads biometrics.
  */
-export function faceShapeSignature(file,sampleVec3Accessor,{maxSamples=1500}={}){
+export function faceShapeSignature(file,sampleVec3Accessor,{maxSamples=1500,characterId=null}={}){
+ if(characterId!==null&&(typeof characterId!=='string'||!/^[A-Za-z0-9_-]{1,48}$/.test(characterId)))throw Error('CHARFACE_CHARACTER_TAG_INVALID');
  if(!file?.g?.nodes||!file?.g?.meshes||typeof sampleVec3Accessor!=='function')throw Error('CHARFACE_NO_GLB');
  if(!Number.isInteger(maxSamples)||maxSamples<64||maxSamples>6000)throw RangeError('CHARFACE_SAMPLE_BUDGET');
- const nodes=file.g.nodes.filter(n=>n.mesh!==undefined&&n.extras?.aigAnatomyPart==='face');
+ const allFaces=file.g.nodes.filter(n=>n.mesh!==undefined&&n.extras?.aigAnatomyPart==='face');
+ const owners=new Set(allFaces.map(n=>n.extras?.aigCharacterId).filter(x=>x!==undefined));
+ if(owners.size>1&&!characterId)throw Error('CHARFACE_MULTIPLE_CHARACTERS_REQUIRE_ID');
+ if(owners.size>0&&owners.has(undefined))throw Error('CHARFACE_OWNER_UNCLEAR');
+ if(owners.size===1&&characterId!==null&&!owners.has(characterId))throw Error('CHARFACE_CHARACTER_TAG_MISMATCH');
+ const nodes=characterId===null?allFaces:allFaces.filter(n=>n.extras?.aigCharacterId===undefined||n.extras?.aigCharacterId===characterId);
+ if(characterId!==null&&owners.size>0&&!nodes.some(n=>n.extras?.aigCharacterId===characterId))throw Error('CHARFACE_CHARACTER_NOT_FOUND');
  if(!nodes.length)throw Error('CHARFACE_NO_EXPLICIT_FACE_TAG');
+ if(nodes.some(n=>n.extras?.aigCharacterId!==undefined&&typeof n.extras.aigCharacterId!=='string'))throw Error('CHARFACE_OWNER_UNCLEAR');
  const parts=[];
  for(const node of nodes)for(const p of file.g.meshes[node.mesh]?.primitives||[]){
   const acc=file.g.accessors[p.attributes?.POSITION];
@@ -42,7 +50,7 @@ export function faceShapeSignature(file,sampleVec3Accessor,{maxSamples=1500}={})
  const descriptor=[...range.map(v=>v/maxRange),...centroid,...spread,...bins.map(n=>n/pts.length)];
  return {method:'TAGGED_FICTIONAL_3D_FACE_GEOMETRY',source:'GLB_FACE_NODE_POSITIONS',
   descriptor,pointCount:pts.length,faceNodeCount:nodes.length,biometricIdentityRecognized:false,
-  poseInvariant:false,similarityProof:false};
+  poseInvariant:false,similarityProof:false,characterTag:owners.size===1?[...owners][0]:null,explicitFaceNodesRequired:true};
 }
 export function compareFaceShapes(a,b){
  if(a?.method!=='TAGGED_FICTIONAL_3D_FACE_GEOMETRY'||b?.method!==a.method||!Array.isArray(a.descriptor)||a.descriptor.length!==b.descriptor?.length)throw Error('CHARFACE_SIGNATURE_MISMATCH');
@@ -55,24 +63,30 @@ export function compareFaceShapes(a,b){
  const distance=Math.sqrt(error/weight);
  // Heuristic alert only: false positives and false negatives are possible.
  return {distance,score:+Math.max(0,1-distance*2.8).toFixed(4),
-  alert:distance<0.055,threshold:0.055,metric:'CUSTOM_SHAPE_HEURISTIC_NOT_BIOMETRIC'};
+  alert:distance<0.055,threshold:0.055,level:distance<1e-6?'EXACT_DESCRIPTOR_DUPLICATE':distance<0.055?'SIMILAR_REVIEW':'NO_FLAG',metric:'CUSTOM_SHAPE_HEURISTIC_NOT_BIOMETRIC'};
 }
 export class CharacterFaceRoster{
- constructor(){this.entries=new Map();}
- add({id,role,signature}){
+ constructor({maxCharacters=120}={}){if(!Number.isInteger(maxCharacters)||maxCharacters<2||maxCharacters>200)throw Error('CHARFACE_ROSTER_LIMIT');this.entries=new Map();this.maxCharacters=maxCharacters;}
+ add({id,role,signature,replace=false}){
   if(typeof id!=='string'||!/^[A-Za-z0-9_-]{1,48}$/.test(id)||!['lead','classmate','supporting'].includes(role))throw Error('CHARFACE_INVALID_CHARACTER');
-  if(signature?.method!=='TAGGED_FICTIONAL_3D_FACE_GEOMETRY')throw Error('CHARFACE_INVALID_SIGNATURE');
+  if(signature?.method!=='TAGGED_FICTIONAL_3D_FACE_GEOMETRY'||!Array.isArray(signature.descriptor)||signature.descriptor.some(n=>!Number.isFinite(n)))throw Error('CHARFACE_INVALID_SIGNATURE');
+  if(replace!==true&&this.entries.has(id))throw Error('CHARFACE_ID_ALREADY_EXISTS');
+  if(replace&&!this.entries.has(id))throw Error('CHARFACE_REPLACE_NOT_FOUND');
+  if(replace&&this.entries.get(id).role!==role)throw Error('CHARFACE_ROLE_CHANGE_BLOCKED');
+  if(!replace&&this.entries.size>=this.maxCharacters)throw Error('CHARFACE_ROSTER_FULL');
+  if(role==='lead'&&[...this.entries.values()].some(prev=>prev.role==='lead'&&prev.id!==id))throw Error('CHARFACE_LEAD_ALREADY_LOCKED');
+  if(signature.characterTag&&signature.characterTag!==id)throw Error('CHARFACE_CHARACTER_TAG_MISMATCH');
   const matches=[];
   for(const prev of this.entries.values()){
    if(prev.id===id)continue;
    matches.push({id:prev.id,role:prev.role,...compareFaceShapes(signature,prev.signature)});
   }
-  // Do not overwrite an approved character on duplicate ID.
-  if(this.entries.has(id))throw Error('CHARFACE_ID_ALREADY_EXISTS');
   const sorted=matches.sort((a,b)=>a.distance-b.distance);
   this.entries.set(id,{id,role,signature});
   return {id,role,compared:matches.length,closest:sorted[0]||null,warnings:sorted.filter(x=>x.alert),
-    savedIn:'CURRENT_BROWSER_SESSION_ONLY',automaticallyChangesFace:false};
+    leadId:[...this.entries.values()].find(e=>e.role==='lead')?.id??null,
+    revision:replace?'RESCANNED_EXISTING_CHARACTER':'NEW_CHARACTER',
+    savedIn:'CURRENT_BROWSER_SESSION_ONLY',automaticallyChangesFace:false,realPersonRecognized:false};
  }
  clear(){this.entries.clear();}
 }
