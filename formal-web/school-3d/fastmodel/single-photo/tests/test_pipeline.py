@@ -70,6 +70,37 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(original,self.source.read_bytes())
         self.assertTrue((self.p.directory(job)/'animated.glb').is_file())
         self.assertFalse(done['releaseAllowed']);self.assertTrue(done['inferredUnseenSurfaces'])
+    def test_explicit_source_anchored_cutout_has_original_sha_and_derived_sha(self):
+        from unittest.mock import patch
+        from prepared_input import verify_prepared_foreground,digest_file
+        cutout=self.root/'foreground.png'
+        with Image.open(self.source) as photo:
+            original=photo.convert('RGBA')
+        for y in range(original.height):
+            for x in range(original.width):
+                rgb=original.getpixel((x,y))[:3]
+                original.putpixel((x,y),(*rgb,255 if 12<=x<78 and 20<=y<125 else 0))
+        original.save(cutout,format='PNG')
+        verify=lambda src,prep:verify_prepared_foreground(src,prep,
+            expected_hash=digest_file(self.source),expected_size=(90,140))
+        with patch('pipeline.verify_prepared_foreground',side_effect=verify):
+            report=self.p.create(self.source,action_id=4,prepared_source=cutout)
+        provenance=report['preparedForegroundEvidence']
+        self.assertEqual(provenance['mode'],'SOURCE_ANCHORED_FOREGROUND_DRAFT')
+        self.assertEqual(provenance['originalSourceSHA256'],report['sourceSHA256'])
+        self.assertEqual(provenance['preparedSourceSHA256'],digest_file(cutout))
+        self.assertEqual(digest_file(self.p.directory(report['id'])/'source-upload.png'),report['uploadSHA256'])
+        self.assertNotEqual(report['sourceSHA256'],report['uploadSHA256'])
+        self.assertTrue(report['originalImageStillAvailable'])
+        self.assertFalse(report['foregroundAndHairEdgesApproved'])
+        self.assertEqual(self.finish(report['id'])['status'],'COMPLETE')
+        self.assertEqual(len([item for item in self.posts if item[0]=='/image-to-3d']),1)
+
+    def test_nonmatching_source_foreground_blocks_before_paid_provider_call(self):
+        with self.assertRaisesRegex(ValueError,'PREPARED_NOT_OFFICIAL_HEROINE_ORIGINAL'):
+            self.p.create(self.source,action_id=4,prepared_source=self.source)
+        self.assertEqual(self.posts,[])
+
     def test_default_walk_uses_actual_rig_output_without_extra_animation_charge(self):
         done=self.finish(self.p.create(self.source)['id'])
         self.assertEqual(done['status'],'COMPLETE');self.assertEqual(len(self.posts),2)
