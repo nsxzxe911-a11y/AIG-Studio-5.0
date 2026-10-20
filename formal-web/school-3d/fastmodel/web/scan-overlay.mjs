@@ -4,6 +4,7 @@
  * This is NOT true depth-tested hidden-line removal or collision verification.
  */
 import {scanPalette,scanColor,scanColorLegend} from './scan-colors.mjs';
+import {SCAN_DEPTH_MODES,scanDepthCoordinate,sampleSourceDepth,classifySourceOcclusion} from './scan-depth.mjs';
 export const SCAN_MODES=Object.freeze(['off','bones','bones-outline','head-neck','hair']);
 export const SCAN_DENSITIES=Object.freeze(['eco','balanced','detail']);
 export function scanBudget(density='balanced'){
@@ -115,9 +116,10 @@ function skinned(v,surface,matrices){
 /** Can be called by the same draw frame that evaluated the renderer skeleton.
  * Do not use model name, color or skin 1 as an anatomical guess.
  */
-export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline',density='balanced',palette='aig-rgb',warning='none',highlightRoles=[]}={}){
+export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline',density='balanced',palette='aig-rgb',warning='none',highlightRoles=[],depthMode='off'}={}){
  if(!SCAN_MODES.includes(mode))throw Error('SCAN_MODE_INVALID');
  const b=scanBudget(density);scanPalette(palette);
+ if(!SCAN_DEPTH_MODES.includes(depthMode))throw Error('SCAN_DEPTH_MODE_INVALID');
  if(!canvas||!view||!topology||mode==='off'||!Array.isArray(world)){
   if(canvas?.getContext){const c=canvas.getContext('2d');c?.clearRect(0,0,canvas.width,canvas.height);}
   return {status:'SCAN_OFF',bonesDrawn:0,dashedSegments:0,trueDepthHiddenVerified:false};
@@ -130,7 +132,8 @@ export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline
  const ctx=canvas.getContext('2d');if(!ctx)return {status:'SCAN_NO_CANVAS',bonesDrawn:0,dashedSegments:0};
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cssW,cssH);
  const project=p=>scanProject(p,view,cssW,cssH),g=topology.bones||[];
- let bonesDrawn=0,dashedSegments=0;
+ let bonesDrawn=0,dashedSegments=0,occludedSegments=0,visibleSegments=0,unknownDepthSegments=0;
+ let sampledDepth=null;
  // Color-separated SOLID paths; bounded strokes, no dense extra WebGL draw calls.
  const linesByColor=new Map();
  for(const bone of g){
@@ -152,13 +155,26 @@ export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline
  if(mode!=='bones'){
   ctx.save();ctx.lineWidth=1;ctx.setLineDash([5,6]);const outlinesByColor=new Map();
   const jointMatrices=(topology.inverse||[]).map((set,si)=>set.map((ib,j)=>matrixProduct(world[view.file.g.skins[si].joints[j]],ib)));
+  // Share deformed/projected vertices with triangle-depth sampling; source GLB and live
+  // WebGL geometry are untouched. Only sampled/eligible skinned meshes contribute.
+  const projectedCaches=new Map();
+  function projectedVertex(surface,i){
+   let cache=projectedCaches.get(surface);
+   if(!cache){cache=new Map();projectedCaches.set(surface,cache);}
+   if(!cache.has(i)){
+    const p=skinned(i,surface,jointMatrices),xy=project(p);
+    cache.set(i,{x:xy[0]/cssW,y:xy[1]/cssH,z:scanDepthCoordinate(p,view),xy});
+   }
+   return cache.get(i);
+  }
+  const depthDensity=cssW<650&&density!=='eco'?'eco':density;
+  if(depthMode==='sampled'&&topology.surfaces?.length){
+   sampledDepth=sampleSourceDepth(topology.surfaces,projectedVertex,{density:depthDensity});
+  }
   for(const surface of topology.surfaces||[]){
    if(dashedSegments>=b.segments)break;
    if(!roleAllowed(surface.role,mode))continue;
-   const cache=new Map(),projected=i=>{
-    if(!cache.has(i))cache.set(i,project(skinned(i,surface,jointMatrices)));
-    return cache.get(i);
-   };
+   const projected=i=>projectedVertex(surface,i).xy;
    const facing=new Map();
    function direction(face){
     if(facing.has(face))return facing.get(face);
@@ -175,12 +191,22 @@ export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline
     if(!visibleEdge)continue;
     const p=projected(edge.a),q=projected(edge.c);
     if(![...p,...q].every(Number.isFinite))continue;
+    const a3=projectedVertex(surface,edge.a),b3=projectedVertex(surface,edge.c);
+    const visibility=sampledDepth?classifySourceOcclusion(sampledDepth,a3,b3,{density:depthDensity}):'unknown';
+    if(visibility==='behind-sampled-surface')occludedSegments++;
+    else if(visibility==='not-behind-sampled-surface')visibleSegments++;
+    else unknownDepthSegments++;
     const color=scanColor(surface.role,{palette,line:'outline',warning,highlightRoles});
-    if(!outlinesByColor.has(color))outlinesByColor.set(color,[]);
-    outlinesByColor.get(color).push([p,q]);dashedSegments++;
+    const kind=visibility==='behind-sampled-surface'?'hidden':'normal';
+    const key=color+'|'+kind;
+    if(!outlinesByColor.has(key))outlinesByColor.set(key,{color,kind,segments:[]});
+    outlinesByColor.get(key).segments.push([p,q]);dashedSegments++;
    }
   }
-  for(const [color,segments] of outlinesByColor){
+  for(const {color,kind,segments} of outlinesByColor.values()){
+   // Hidden sections use a finer dash. Outer visible/unknown boundaries stay subtle
+   // and dashed, never revert to a dense full-triangle solid wireframe.
+   ctx.setLineDash(kind==='hidden'?[2,5]:[5,6]);
    ctx.strokeStyle=color;ctx.beginPath();
    for(const [p,q] of segments){ctx.moveTo(...p);ctx.lineTo(...q);}
    ctx.stroke();
@@ -188,6 +214,10 @@ export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline
   ctx.restore();
  }
  return {status:topology.status,bonesDrawn,dashedSegments,palette,warningStyle:warning,sourceMaterialColorsUntouched:true,
+  scanDepthMode:depthMode,occludedSegments,visibleSegments,unknownDepthSegments,
+  sampledDepthTriangles:sampledDepth?.triangles||0,sampledDepthCellTests:sampledDepth?.cellTests||0,
+  sampledDepthIncomplete:sampledDepth?.incomplete??true,realGpuDepthVerified:false,
+  actualAnimatedCollisionProved:false,
   sourceBones:true,sourceSurfaceEdges:true,meshTrianglesDrawn:0,
   trueDepthHiddenVerified:false,occlusionGuessOnly:true,
   dottedSegmentsCapped:b.segments,scanLayersSeparate:true};
