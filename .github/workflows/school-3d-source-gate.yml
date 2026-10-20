@@ -616,7 +616,9 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           text=Path('artifacts/fastmodel-technical/CI-FASTMODEL-1-7-CAST-COLLISION-NOT-REAL-FACE-ID.html').read_text()
-          for token in ['id="character-id"','id="face-compare"','id="face-clear"',
+          for token in ['id="character-id"','id="face-compare"','id="face-clear"','id="face-rescan"',
+                        'function compareLoadedFace(replace=false)', 'CHARFACE_LEAD_ALREADY_LOCKED',
+                        'CHARFACE_MULTIPLE_CHARACTERS_REQUIRE_ID',
                         'function faceShapeSignature(', 'function compareFaceShapes(',
                         'class CharacterFaceRoster', 'biometricIdentityRecognized:false',
                         'window.AIG_EMBEDDED_GLB']:
