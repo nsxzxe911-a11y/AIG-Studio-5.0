@@ -45,5 +45,5 @@ test('user scan controls, renderer hooks and standalone embed are functional sou
  assert.match(renderer,/gl\.uniform1f\(this\.u\.exposure/);
  assert.match(pack,/scene-tools\.mjs/);
  assert.match(pack,/\+scene\+/);
- assert.match(html,/非照片、LiDAR 或光照深度掃描/);
+ assert.match(main,/非照片、LiDAR 或光照深度掃描/);
 });
