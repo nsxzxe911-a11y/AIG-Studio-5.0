@@ -36,7 +36,7 @@ el('mesh-lines').addEventListener('change',applyWireChoice);el('mesh-density').a
 // FastModel 1.4: bounded CPU analysis and real UI-to-renderer raster controls.
 const guideCanvas=el('guide-overlay');
 function paintCurrentScaffold(){
- if(!view?.bound)return;
+ if(!el('scaffold-enabled').checked||!view?.bound)return;
  paintScaffold(guideCanvas,view,{enabled:el('scaffold-enabled').checked,
   limit:Number(el('scaffold-limit').value),yaw:Number(el('scaffold-yaw').value),
   pitch:Number(el('scaffold-pitch').value)});
@@ -50,7 +50,7 @@ function refreshScaffold(){
  }
  el('scaffold-limit-value').textContent=limit+'°';
  const enabled=el('scaffold-enabled').checked;
- if(view?.bound)paintCurrentScaffold();
+ if(enabled&&view?.bound)paintCurrentScaffold();
  else {const ctx=guideCanvas.getContext('2d');ctx?.clearRect(0,0,guideCanvas.width,guideCanvas.height);}
  el('scaffold-status').textContent=enabled
   ?(view?.bound?'虛線參考支架已連動視角；角度限制 ±'+limit+'°。不修改原模型／骨架。':'支架已開啟，載入 GLB 後才有實際定位。')
