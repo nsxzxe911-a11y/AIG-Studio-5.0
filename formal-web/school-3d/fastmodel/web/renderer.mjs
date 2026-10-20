@@ -3,6 +3,7 @@ import {decodeGLB,readAccessor,buildBatches} from './fastmodel-data.mjs';
 import {buildEdgeIndex,wireCap,WIRE_MODES,WIRE_DENSITIES,adaptiveWireStep} from './mesh-lines.mjs';
 import {surfaceGuideId} from './surface-guides.mjs';
 import {LIGHT_PRESETS} from './scene-tools.mjs';
+import {createPoseEvaluator} from './pose-evaluator.mjs';
 import {DETAIL_MODES,optionalDetailGroup,initialDetailState,nextDetailState,visiblePreviewEntries} from './adaptive-detail.mjs';
 import {ResourceGovernor,makeBudgets,RebuildableCache} from './resource-governor.mjs';
 import {checkRenderTarget} from './resolution-policy.mjs';
@@ -50,8 +51,15 @@ function animatedWorld(nodes,tracks,t){const rotation=new Map();for(const tr of 
  const parent=Array(nodes.length).fill(-1);nodes.forEach((n,i)=>(n.children||[]).forEach(j=>parent[j]=i));let done=new Array(nodes.length);
  function world(i){if(done[i])return done[i];let n=nodes[i],m=n.matrix?new Float32Array(n.matrix):fromTRS(n,rotation.get(i));return done[i]=parent[i]>=0?mul(world(parent[i]),m):m;}
  return nodes.map((_,i)=>world(i));}
-function matsFor(file,world,skinIndex,inv){const skin=file.g.skins[skinIndex],n=skin.joints.length;const out=new Float32Array(4*n*4);
- for(let j=0;j<n;j++){const m=mul(world[skin.joints[j]],inv.subarray(j*16,(j+1)*16));out.set(m,j*16);}return {out,n};}
+function matsFor(file,world,skinIndex,inv,out){const skin=file.g.skins[skinIndex],n=skin.joints.length;
+ for(let j=0;j<n;j++){
+  const left=world[skin.joints[j]],at=j*16;
+  for(let col=0;col<4;col++)for(let row=0;row<4;row++){
+   let sum=0;for(let k=0;k<4;k++)sum+=left[k*4+row]*inv[at+col*4+k];
+   out[at+col*4+row]=sum;
+  }
+ }
+ return {out,n};}
 function chunkedUpload(gl,target,typed,maxBytes){
   gl.bufferData(target,typed.byteLength,gl.STATIC_DRAW);
   const bytesPerElement=typed.BYTES_PER_ELEMENT;
@@ -69,10 +77,10 @@ export class FastModelView {
   if(arrayBuffer.byteLength>this.governor.b.gpuWorkingSetEstimateBytes/2)
     throw Error('模型來源超出保守記憶體預算；原工作區不變。可先建立低 LOD 或在 RAM 更大的裝置載入。');
   // Two-phase load: parse/build/preflight first. Invalid or too large GLB CANNOT clear a live scene.
- const start=performance.now();const nextFile=decodeGLB(arrayBuffer),nextTracks=tracksFor(nextFile),assembled=buildBatches(nextFile,mode);
+ const start=performance.now();const nextFile=decodeGLB(arrayBuffer),nextTracks=tracksFor(nextFile),nextPose=createPoseEvaluator(nextFile.g.nodes,nextTracks),assembled=buildBatches(nextFile,mode);
  const requiredGPU=assembled.batches.reduce((acc,b)=>acc+b.vertices.byteLength+b.indices.byteLength,0);
  if(requiredGPU>this.governor.b.gpuWorkingSetEstimateBytes)throw Error('GPU 繪圖網格推估超過本次預算，保留原有工作區。');
- this.disposeMeshes();this.file=nextFile;this.tracks=nextTracks;this.mode=mode;this.patchStats=null;this.detailState=this.detailMode==='eco'?nextDetailState(initialDetailState(),{mode:'eco'}):initialDetailState();this.staticWorld=null;this.staticPoseUploaded=false;
+ this.disposeMeshes();this.file=nextFile;this.tracks=nextTracks;this.poseEvaluator=nextPose;this.mode=mode;this.patchStats=null;this.detailState=this.detailMode==='eco'?nextDetailState(initialDetailState(),{mode:'eco'}):initialDetailState();this.staticWorld=null;this.staticPoseUploaded=false;
  this.stats={sourceMeshes:this.file.g.meshes.length,sourcePrimitives:this.file.g.meshes.reduce((s,m)=>s+m.primitives.length,0),...{drawCalls:assembled.drawCalls,triangles:assembled.indices/3,vertices:assembled.vertices,skipped:assembled.skipped},gpu:this.gpu};
  this.gpuAllocatedEstimateBytes=requiredGPU;
  this.bound=assembled.bound;this.center=this.bound.min.map((a,i)=>(a+this.bound.max[i])*.5);this.zoom=2/Math.max(this.bound.max[1]-this.bound.min[1],(this.bound.max[0]-this.bound.min[0])*1080/1920)*.93;
@@ -87,6 +95,7 @@ export class FastModelView {
  });
  this.drawEntries=[...this.entries].sort((a,b)=>{const aa=this.file.g.materials?.[a.material]?.alphaMode==='BLEND',bb=this.file.g.materials?.[b.material]?.alphaMode==='BLEND';return Number(aa)-Number(bb);});this.refreshDetailEntries();
  this.inverseBindCache=(this.file.g.skins||[]).map(sk=>readAccessor(this.file,sk.inverseBindMatrices));
+ this.boneMatrixScratch=(this.file.g.skins||[]).map(sk=>new Float32Array(sk.joints.length*16));
  if(this.wireMode!=='off')this.setWireMode(this.wireMode,this.wireDensity);
  this.materials=this.file.g.materials||[];this.textures=await Promise.all((this.file.g.textures||[]).map(async t=>{
   const im=await createImageBitmap(getImageBytes(this.file,t.source));let tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,im);gl.generateMipmap(gl.TEXTURE_2D);this.gpuAllocatedEstimateBytes+=Math.ceil(im.width*im.height*4*1.34);im.close();return tex;
@@ -167,7 +176,7 @@ export class FastModelView {
   this.wireStats=this.countWireStats();this.gpuAllocatedEstimateBytes+=(this.wireStats.gpuBytes||0);
   return {...this.wireStats,mode,density,changed:true};
  }
- disposeMeshes(){const gl=this.gl;this.clearWireBuffers();this.drawEntries=[];this.activeDrawEntries=[];this.staticWorld=null;this.staticPoseUploaded=false;this.inverseBindCache=[];this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;for(const b of this.entries||[]){gl.deleteVertexArray(b.vao);gl.deleteBuffer(b.vb);gl.deleteBuffer(b.ib);}for(let t of this.textures||[])gl.deleteTexture(t);for(let t of this.boneTex||[])gl.deleteTexture(t);this.entries=[];this.textures=[];this.boneTex=[];}
+ disposeMeshes(){const gl=this.gl;this.clearWireBuffers();this.drawEntries=[];this.activeDrawEntries=[];this.staticWorld=null;this.staticPoseUploaded=false;this.poseEvaluator=null;this.boneMatrixScratch=[];this.inverseBindCache=[];this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;for(const b of this.entries||[]){gl.deleteVertexArray(b.vao);gl.deleteBuffer(b.vb);gl.deleteBuffer(b.ib);}for(let t of this.textures||[])gl.deleteTexture(t);for(let t of this.boneTex||[])gl.deleteTexture(t);this.entries=[];this.textures=[];this.boneTex=[];}
  resize(w,h,automatic=false){
   // Preflight dimensions and working-set allowance BEFORE touching the canvas or existing GLB.
   const gl=this.gl;
@@ -197,10 +206,14 @@ export class FastModelView {
 
  draw(ts){if(!this.file||!this.entries.length)return;const gl=this.gl;let start=performance.now();
  const animated=this.wind&&this.tracks?.length>0;
- const world=animated?animatedWorld(this.file.g.nodes,this.tracks,ts*.001):(this.staticWorld??=animatedWorld(this.file.g.nodes,[],0));
  gl.useProgram(this.program);
  if(animated||!this.staticPoseUploaded){
-   this.boneTex.forEach((texture,i)=>{let {out,n}=matsFor(this.file,world,i,this.inverseBindCache[i]);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,4,n,gl.RGBA,gl.FLOAT,out);});
+   const world=this.poseEvaluator.evaluate(animated?ts*.001:0,animated);
+   this.boneTex.forEach((texture,i)=>{
+     let {out,n}=matsFor(this.file,world,i,this.inverseBindCache[i],this.boneMatrixScratch[i]);
+     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);
+     gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,4,n,gl.RGBA,gl.FLOAT,out);
+   });
    this.staticPoseUploaded=!animated;
  }
  gl.clearColor(...this.lightSetting.background,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
@@ -248,7 +261,7 @@ export class FastModelView {
  this.onStats({...this.stats,status:'running',drawCalls:this.activeDrawEntries.length,fps:+(1000/avg).toFixed(1),p95FrameMs:+p95.toFixed(2),jsSubmitMs:+this.lastCPU.toFixed(2),resolution:[this.width,this.height],sampleCount:this.frames.length,
    stability:this.lastPressure?.status||'unmeasured',memoryPressure:this.lastPressure,
    gpuEstimateMiB:+(this.gpuAllocatedEstimateBytes/1048576).toFixed(1),cpuDerivedMiB:+(this.cpuDerivedEstimateBytes/1048576).toFixed(1),
-   frameBudget:decision,cacheEvictedMiB:+(this.governor.cache.totalEvictedBytes/1048576).toFixed(1),optionalHairRelease:this.lastOptionalRelease||null,gpuUtilizationPercent:null,surfaceGuide:this.surfaceGuide,wireMode:this.wireMode,wireDensity:this.wireDensity,wireLines:this.wireStats.segments,wireSkippedForLag:this.wireState.suppressed,previewDetail:{mode:this.detailMode,hidden:this.detailState.hidden,activeDrawCalls:this.activeDrawEntries.length,hiddenOptional:this.drawEntries.length-this.activeDrawEntries.length,optionalMarked:this.drawEntries.filter(x=>x.optionalDetail).length,displayOnly:true}});
+   frameBudget:decision,cacheEvictedMiB:+(this.governor.cache.totalEvictedBytes/1048576).toFixed(1),optionalHairRelease:this.lastOptionalRelease||null,gpuUtilizationPercent:null,animationPose:{topologyCached:!!this.poseEvaluator?.topologyCached,tracks:this.poseEvaluator?.trackCount??0,poseMatrixScratchReused:true,animated:!!(this.wind&&this.tracks?.length),actualDeviceGpuTimed:false},surfaceGuide:this.surfaceGuide,wireMode:this.wireMode,wireDensity:this.wireDensity,wireLines:this.wireStats.segments,wireSkippedForLag:this.wireState.suppressed,previewDetail:{mode:this.detailMode,hidden:this.detailState.hidden,activeDrawCalls:this.activeDrawEntries.length,hiddenOptional:this.drawEntries.length-this.activeDrawEntries.length,optionalMarked:this.drawEntries.filter(x=>x.optionalDetail).length,displayOnly:true}});
 
  }
  }
