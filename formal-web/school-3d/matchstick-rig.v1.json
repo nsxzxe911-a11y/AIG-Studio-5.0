@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "name": "AIG School Hero Slim Matchstick Reverse Rig DEBUG ONLY",
+  "authorityImage": {
+    "sha256": "83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910",
+    "width": 1672,
+    "height": 941
+  },
+  "style": {
+    "strokeWidthSourcePixels": 2,
+    "maxStrokeWidthSourcePixels": 3,
+    "markerRadiusSourcePixels": 3,
+    "visualThicknessOnly": true,
+    "caps": "round",
+    "strokeRGBA": "#55f0ea"
+  },
+  "coordinateType": "IMAGE_PIXELS_NOT_3D",
+  "nodes": {
+    "crown": {
+      "xy": [
+        628,
+        48
+      ],
+      "status": "observed-image-keypoint-approx",
+      "coordinateType": "IMAGE_PIXELS_NOT_3D"
+    },
+    "chin": {
+      "xy": [
+        661,
+        314
+      ],
+      "status": "observed-image-keypoint-approx",
+      "coordinateType": "IMAGE_PIXELS_NOT_3D"
+    },
+    "neck_base": {
+      "xy": [
+        653,
+        355
+      ],
+      "status": "observed-image-keypoint-approx",
+      "coordinateType": "IMAGE_PIXELS_NOT_3D"
+    },
+    "left_shoulder": {
+      "xy": [
+        450,
+        354
+      ],
+      "status": "observed-image-keypoint-approx",
+      "coordinateType": "IMAGE_PIXELS_NOT_3D"
+    },
+    "right_shoulder": {
+      "xy": [
+        803,
+        375
+      ],
+      "status": "observed-image-keypoint-approx",
+      "coordinateType": "IMAGE_PIXELS_NOT_3D"
+    },
+    "waistline": {
+      "xy": [
+        653,
+        677
+      ],
+      "status": "observed-image-keypoint-approx",
+      "coordinateType": "IMAGE_PIXELS_NOT_3D"
+    },
+    "left_eye_visible": {
+      "xy": [
+        638,
+        178
+      ],
+      "status": "observed-image-keypoint-approx",
+      "coordinateType": "IMAGE_PIXELS_NOT_3D"
+    },
+    "right_eye_visible": {
+      "xy": [
+        713,
+        189
+      ],
+      "status": "observed-image-keypoint-approx",
+      "coordinateType": "IMAGE_PIXELS_NOT_3D"
+    },
+    "head_center": {
+      "xy": [
+        644.5,
+        181.0
+      ],
+      "status": "interpolated-for-debug-only",
+      "coordinateType": "IMAGE_PIXELS_NOT_3D"
+    },
+    "chest_center": {
+      "xy": [
+        635.33,
+        468.67
+      ],
+      "status": "interpolated-for-debug-only",
+      "coordinateType": "IMAGE_PIXELS_NOT_3D"
+    }
+  },
+  "segments": [
+    {
+      "a": "crown",
+      "b": "head_center",
+      "kind": "inferred"
+    },
+    {
+      "a": "head_center",
+      "b": "chin",
+      "kind": "inferred"
+    },
+    {
+      "a": "chin",
+      "b": "neck_base",
+      "kind": "inferred"
+    },
+    {
+      "a": "neck_base",
+      "b": "left_shoulder",
+      "kind": "visual-reference"
+    },
+    {
+      "a": "neck_base",
+      "b": "right_shoulder",
+      "kind": "visual-reference"
+    },
+    {
+      "a": "neck_base",
+      "b": "chest_center",
+      "kind": "inferred"
+    },
+    {
+      "a": "chest_center",
+      "b": "waistline",
+      "kind": "inferred"
+    }
+  ],
+  "sizingContract": {
+    "meshGeometryAlwaysWins": true,
+    "allowBonesToStretchMesh": false,
+    "allowFitImageToLegacyRig": false,
+    "allowDebugBoneProxyVolume": false,
+    "anyPhysicalBoneRadius": null,
+    "legacyRig33NamesCanBeReused": true,
+    "oldRigScaleIsAuthority": false,
+    "allow2DPixelsAs3DAnchors": false,
+    "mustComputeNew3DAnchorsAfterMeshExists": true,
+    "skinWeightRebindBeforeAnimation": true,
+    "inverseBindMatricesMustRecalculate": true,
+    "useOldWalkOnlyAfterIKScaleCheck": true
+  },
+  "visibility": {
+    "visibleHeadShouldersTorsoOnly": true,
+    "armsOnlyWithFutureVerifiedLandmarks": true,
+    "legsUnobservableFromApprovedCrop": true,
+    "doNotInventHiddenJoints": true,
+    "calibratedCamera": false,
+    "approved3DGeometry": false
+  },
+  "release": {
+    "webHeroAllowed": false,
+    "status": "REVERSE_OVERLAY_QA_ONLY",
+    "trueFemaleRigged3DCharacterAvailable": false
+  }
+}
