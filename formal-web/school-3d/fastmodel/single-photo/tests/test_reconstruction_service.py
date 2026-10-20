@@ -71,7 +71,7 @@ class ReconstructionServiceTests(unittest.TestCase):
    try:
     base='http://127.0.0.1:'+str(server.server_port)
     info=json.load(urlopen(base+'/api/reconstruction/services'))
-    self.assertEqual(info['defaultServiceId'],SERVICE_ID)
+    self.assertIsNone(info['defaultServiceId'])
     self.assertFalse(info['providers'][0]['configured'])
     self.assertNotIn('secret',json.dumps(info))
     req=Request(base+'/api/reconstruction/jobs',data=json.dumps({'serviceId':SERVICE_ID,'requestId':'a'*32}).encode(),headers={'Content-Type':'application/json','X-AIG-Request':'1'},method='POST')
@@ -84,7 +84,7 @@ class ReconstructionServiceTests(unittest.TestCase):
       'Content-Type':'application/json','X-AIG-Request':'1'},method='POST')
     with self.assertRaises(HTTPError) as e:urlopen(missing)
     self.assertEqual(e.exception.code,409)
-    self.assertIn('RECONSTRUCTION_AUTOMATION_CONFIRMATION_REQUIRED',e.exception.read().decode())
+    self.assertIn('ZERO_CREDITS_REMOTE_3D_BLOCKED',e.exception.read().decode())
     invalid=Request(base+'/api/reconstruction/jobs',data=b'{}',headers={'Content-Type':'application/json','X-AIG-Request':'1','Origin':'http://attacker.example'},method='POST')
     with self.assertRaises(HTTPError) as e:urlopen(invalid)
     self.assertEqual(e.exception.code,403)
