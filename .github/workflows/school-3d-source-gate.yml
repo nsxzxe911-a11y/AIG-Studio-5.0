@@ -415,6 +415,40 @@ jobs:
           assert "window.AIG_EMBEDDED_GLB" in s
           print('Offline RGB controls and real policy embedded PASS; native FPS untested')
           PY
+      - name: FastModel compatibility-first raster-only policy (no RTX/DXR)
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/graphics-policy.mjs
+          node --test formal-web/school-3d/fastmodel/tests/graphics-policy.test.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          b=Path('formal-web/school-3d/fastmodel')
+          c=json.loads((b/'GRAPHICS-POLICY.v1.json').read_text())
+          for k in ['rayTracingEnabled','directX12DXREnabled','vulkanRayTracingEnabled','vulkanRayQueryEnabled','pathTracingEnabled','rtGpuRequired']:
+            assert c[k] is False, k
+          assert c['releaseState']=='PREVIEW_ONLY_NOT_PRODUCTION'
+          assert c['hardwareGPUBenchmarked'] is False
+          assert c['windowsNativeDX12Verified'] is False and c['S23NativeVulkanVerified'] is False
+          hero=json.loads((b/'reference/HERO-3D-RENDER-CANDIDATE.json').read_text())
+          assert hero['containsReal3DGeometry'] is False and hero['visualAuthorityApproved'] is False
+          print('Raster-only policy PASS; image is reference, not released 3D')
+          PY
+      - name: FastModel offline package stays raster only (synthetic source)
+        run: |
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-AIG-FastModel-RASTER-ONLY-NOT-FPS-VERIFIED.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-AIG-FastModel-RASTER-ONLY-NOT-FPS-VERIFIED.html').read_text()
+          assert 'function assertRasterOnly(' in s
+          assert 'assertRasterOnly(GRAPHICS_POLICY)' in s
+          assert '光線追蹤：關閉' in s
+          assert 'WEBGL2_RASTER' in s
+          for size in ['1920x1080','2560x1440','3840x2160']:
+            assert size in s
+          print('Offline graphics guard and RGB 1080p/2K/4K preserved')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"

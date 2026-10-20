@@ -1,6 +1,8 @@
 import {FastModelView} from './renderer.mjs';
 import {DiskPressureGuard} from './resource-governor.mjs';
 import {RESOLUTION_PRESETS} from './resolution-policy.mjs';
+import {GRAPHICS_POLICY,assertRasterOnly} from './graphics-policy.mjs';
+assertRasterOnly(GRAPHICS_POLICY);
 const el=id=>document.getElementById(id),overlay=el('overlay'),detail=el('detail');let view=null,buffer=null,paused=false,lastStats=null;
 // RGB cockpit: tabs switch only REAL existing controls; no decorative/fake buttons.
 const controls=[...document.querySelectorAll('[data-panel-target]')];
@@ -16,6 +18,7 @@ for(const b of controls){
   });
 }
 selectPanel('model');
+document.getElementById('raytrace-status').textContent='光線追蹤：關閉（自研光柵渲染 · 無 RTX/DXR 要求）';
 const quickStatus=el('quick-status');
 function showResolutionResult(result=null){
  const item=RESOLUTION_PRESETS[el('resolution').value],label=item?.short||'自訂';
