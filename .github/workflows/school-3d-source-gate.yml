@@ -648,6 +648,26 @@ jobs:
           assert "value=\"1920x1080\" selected" in t
           print('1.8 synthetic GLB integrity source Gate PASS. Head-neck REPAIR, hair motion and real hardware 1080p60 remain BLOCKED.')
           PY
+      - name: FastModel 1.9 head-neck real bridge working-copy and no-fake release Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/seam-bridge.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/seam-bridge.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMOTION-1-9-BRIDGE-NOT-WELDED-UNAPPROVED.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMOTION-1-9-BRIDGE-NOT-WELDED-UNAPPROVED.html').read_text()
+          for token in ['id="bridge-candidate"','id="bridge-status"',
+                        'function createHeadNeckBridgeCandidate(', 
+                        'VISUAL_TRIANGLE_STRIP_NOT_WELDED','BRIDGE_GAP_EXCEEDS_SAFETY_LIMIT',
+                        'HEAD-NECK-VISUAL-BRIDGE-CANDIDATE-NOT-APPROVED.glb',
+                        'window.AIG_EMBEDDED_GLB','光線追蹤：關閉']:
+              assert token in s,token
+          assert "value=\"1920x1080\" selected" in s
+          print('1.9 source-only stitched-faces GLB working-copy builder PASS. Real heroine seam, animated hair and Windows/Android GPU 60FPS remain BLOCKED.')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
