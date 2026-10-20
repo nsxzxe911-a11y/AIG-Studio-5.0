@@ -106,6 +106,34 @@ jobs:
           path: artifacts/school-3d-proportion-handoff/
           retention-days: 14
           if-no-files-found: error
+      - name: Phase9 QA target mesh first, never force fit to old rig
+        run: |
+          mkdir -p artifacts/school-3d-phase9-meshfirst
+          python formal-web/school-3d/tools/prepare_qa_mesh.py \
+            --source artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb \
+            --target artifacts/school-3d-phase9-meshfirst/target-TECHNICAL-NOT-APPROVED.glb \
+            --landmarks artifacts/school-3d-phase9-meshfirst/3d-anchors-NOT-APPROVED.json
+          python formal-web/school-3d/tools/fit_mesh_first_rig.py \
+            --source artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb \
+            --target artifacts/school-3d-phase9-meshfirst/target-TECHNICAL-NOT-APPROVED.glb \
+            --anchors artifacts/school-3d-phase9-meshfirst/3d-anchors-NOT-APPROVED.json \
+            --out artifacts/school-3d-phase9-meshfirst/meshfirst-rig-NOT-APPROVED.glb > artifacts/school-3d-phase9-meshfirst/fit-report.json
+          python formal-web/school-3d/tools/verify_mesh_first.py \
+            --target artifacts/school-3d-phase9-meshfirst/target-TECHNICAL-NOT-APPROVED.glb \
+            --result artifacts/school-3d-phase9-meshfirst/meshfirst-rig-NOT-APPROVED.glb > artifacts/school-3d-phase9-meshfirst/mesh-first-matrix-qa.json
+          python formal-web/school-3d/tools/verify_fit_foot_contact.py \
+            artifacts/school-3d-phase9-meshfirst/meshfirst-rig-NOT-APPROVED.glb > artifacts/school-3d-phase9-meshfirst/foot-joint-only-qa.json
+      - name: Phase9 11 independent fail-closed mesh-first tests
+        env:
+          AIG_PHASE9_SOURCE_GLB: artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb
+        run: python -m unittest discover -s formal-web/school-3d/tools -p 'test_mesh_first.py' -v
+      - name: Upload Phase9 rigging QA artifact, explicitly NOT Authority
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School3D-Phase9-MeshFirst-QA-NOT-APPROVED
+          path: artifacts/school-3d-phase9-meshfirst/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
