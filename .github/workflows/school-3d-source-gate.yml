@@ -26,8 +26,26 @@ jobs:
         run: |
           node --check formal-web/school-3d/school-hero.v1.js
           node --check formal-web/school-3d/glb-audit.v1.mjs
+          node --check formal-web/school-3d/material-lab.v1.js
       - name: Run fake-model rejection tests
         run: node --test formal-web/school-3d/tests/glb-audit.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: 'formal-web/school-3d/tools/material-requirements.txt'
+      - name: Install material generator dependencies
+        run: python -m pip install -r formal-web/school-3d/tools/material-requirements.txt
+      - name: Test deterministic PBR maps
+        run: python -m unittest discover -s formal-web/school-3d/tools -p 'test_skin_materials.py' -v
+      - name: Generate NON-APPROVED PBR candidate maps
+        run: python formal-web/school-3d/tools/skin_materials.py --out artifacts/school-3d-prototype-pbr --size 512
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School-3D-PBR-Prototype-NOT-Authority
+          path: artifacts/school-3d-prototype-pbr/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
