@@ -161,9 +161,10 @@ function applyScanMode(){
    // Reuse real scan topology per GLB identity and density; GLB edits/imports invalidate.
    scanCache.useSource(f);
    if(scanTopology?.scanFile===f&&scanTopology.density===density){
-     const topologyKind=scanTopology.geometry||'all';
+     // Balanced/Precise must not accidentally inherit Turbo's bones-only topology.
+     const topologyKind=speed==='turbo'?(scanTopology.geometry||'bones'):'all';
      scanTopology=scanCache.getTopology(f,{density,geometry:topologyKind})||
-       scanCachedTopology(f,density,speed==='turbo'?'bones':'all');
+       scanCachedTopology(f,density,topologyKind);
    }else{
      // If an already-built outline exists, use its HIT immediately even in Turbo.
      scanTopology=speed==='turbo'?
@@ -453,7 +454,19 @@ el('auto').addEventListener('change',()=>{if(view){view.autoQuality=el('auto').c
 el('wave').addEventListener('change',()=>{if(view){view.wind=el('wave').checked;view.staticPoseUploaded=false;}});
 el('reclaim').addEventListener('click',()=>{if(!view?.file)return;const r=view.releaseOptionalHair();el('reclaimstat').textContent=r.releasedHairBatches+' 組明確標記的細髮 GPU 快取釋放、'+(r.requestedGpuReleaseBytes/1048576).toFixed(2)+' MiB。未標記的頭頸、主髮型與工作副本不動。';});
 el('zoom').addEventListener('input',()=>{if(view)view.zoomFactor=Number(el('zoom').value)/100;});
-el('patch').addEventListener('input',()=>{if(!view?.file)return;let stat=view.patchLocal(Number(el('patch').value)/100);if(stat)el('patchstat').textContent=stat.patchedVertices+' 頂點 / '+stat.bytes+' bytes GPU 區段更新 · CPU提交 '+stat.hostSubmitMs+' ms';});
+el('patch').addEventListener('input',()=>{
+ if(!view?.file)return;
+ const stat=view.patchLocal(Number(el('patch').value)/100);
+ if(!stat)return;
+ el('patchstat').textContent=stat.patchedVertices+' 頂點 / '+stat.bytes+' bytes GPU 區段更新 · CPU提交 '+stat.hostSubmitMs+' ms';
+ // GPU local preview patch is not the immutable source GLB: previous scan
+ // contours/depth can no longer honestly represent the modified live surface.
+ scanCache.invalidate('LOCAL_GPU_WORKING_COPY_PATCH');scanCacheReport();
+ if(el('scan-mode').value!=='off'){
+  el('scan-mode').value='off';applyScanMode();
+  el('scan-layer-status').textContent='局部 GPU 預覽已修改。極速掃描已安全關閉，防止來源 GLB 的舊快取輪廓冒充已修改工作副本；重新載入正式 GLB 後再掃描。';
+ }
+});
 el('turnl').addEventListener('click',()=>{if(view)view.angle=Math.max(-1.2,view.angle-.15);});el('turnr').addEventListener('click',()=>{if(view)view.angle=Math.min(1.2,view.angle+.15);});el('reset').addEventListener('click',()=>{if(view){view.angle=0;view.zoomFactor=1;el('zoom').value='100';}});
 let pointerX=null;const c=el('view');c.addEventListener('pointerdown',e=>{pointerX=e.clientX;c.setPointerCapture?.(e.pointerId);});c.addEventListener('pointermove',e=>{if(pointerX===null||!view)return;view.angle=Math.max(-1.2,Math.min(1.2,view.angle+(e.clientX-pointerX)*.006));pointerX=e.clientX;});c.addEventListener('pointerup',()=>pointerX=null);c.addEventListener('pointercancel',()=>pointerX=null);
 document.addEventListener('visibilitychange',()=>{
