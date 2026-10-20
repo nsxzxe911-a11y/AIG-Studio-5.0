@@ -872,6 +872,28 @@ jobs:
             ||!viewer.includes('GLB_EXTERNAL_ASSETS_NOT_ALLOWED'))throw Error('SKIN_QA_VIEWER_MISSING');
           console.log('FastModel 2.8 source-only skin overlap/weight/pose Gate PASS; actual approved heroine and GPU pixels remain unverified.');
           JS
+      - name: FastModel 2.9 real GLB four-angle timed pose and fail-closed heroine evidence Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/single-photo/heroine-review.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/viewer.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/app.mjs
+          node --test formal-web/school-3d/fastmodel/single-photo/tests/heroine-review.test.mjs
+          node - <<'JS'
+          const fs=require('fs');
+          const root='formal-web/school-3d/fastmodel/single-photo/';
+          const html=fs.readFileSync(root+'dist/index.html','utf8');
+          const app=fs.readFileSync(root+'dist/app.js','utf8');
+          const viewer=fs.readFileSync(root+'viewer.mjs','utf8');
+          for(const key of ['id="review-pose"','id="review-capture"','id="review-image"','id="review-downloads"'])
+            if(!html.includes(key))throw Error('REVIEW_HTML_BUNDLE_MISSING '+key);
+          for(const key of ['HEROINE_VISUAL_EVIDENCE_2_9','BLOCKED_REAL_HEROINE_AND_MANUAL_VISUAL_QA',
+            'image/png','SHA-256'])
+            if(!app.includes(key))throw Error('REVIEW_JS_BUNDLE_MISSING '+key);
+          for(const key of ['this.animation.mixer.setTime(timeSeconds)','this.animation.mixer.setTime(previousTime)',
+            'paint.drawImage(this.renderer.domElement','inspectSkinPose(this.model'])
+            if(!viewer.includes(key))throw Error('REVIEW_TRUE_POSE_MISSING '+key);
+          console.log('FastModel 2.9 real selected pose capture/source SHA and blocked-approval SOURCE QA PASS; no approved heroine GLB or GPU screenshot evidence from CI.');
+          JS
       - name: Archive FastModel 2.7 source and synthetic offline animation evidence
         uses: actions/upload-artifact@v4
         with:
