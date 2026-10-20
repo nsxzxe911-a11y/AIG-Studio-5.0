@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#020407">
+  <meta name="description" content="AIG 首頁 3D 校園女主角獨立驗收頁；未核准模型禁止載入。">
+  <title>AIG · 3D 校園展示 V1｜獨立驗收</title>
+  <link rel="stylesheet" href="./school-hero.v1.css">
+  <script defer src="./school-hero.v1.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">跳至展示區</a>
+  <header class="topbar">
+    <a href="../index.html" class="brand" aria-label="返回 AIG 首頁"><span class="brand__mark">AIG</span><span>AIG-II · SCHOOL 3D</span></a>
+    <a class="topbar__back" href="../index.html">返回雙專案首頁 <span aria-hidden="true">↗</span></a>
+  </header>
+  <main id="main" class="layout">
+    <section class="intro">
+      <div class="eyebrow">INDEPENDENT MODULE · AUTHORITY FIRST</div>
+      <h1>晴天，放學見 <span>3D 校園女主角展示</span></h1>
+      <p>先驗證真實的角色模型、材質與動作，再接入 AIG 首頁；未通過的模型不會用低階替代品展示。</p>
+    </section>
+    <section class="workspace" aria-label="校園 3D 展示區" data-school-hero>
+      <div class="viewport" data-viewport>
+        <img class="poster" data-poster alt="正式核准的 3D 校園女主角預覽" hidden>
+        <div class="awaiting" data-placeholder>
+          <div class="awaiting__symbol" aria-hidden="true">◈</div>
+          <div class="awaiting__title">角色素材等待正式驗證</div>
+          <div class="awaiting__detail">未經 SHA-256 核准，不顯示假 3D 或候選圖片</div>
+        </div>
+        <div class="hud"><span>CHARACTER AUTHORITY</span><span data-gate-code>BLOCKED</span></div>
+      </div>
+      <div class="controlbar">
+        <div class="statusbox" aria-live="polite">
+          <strong data-status>正在確認素材來源…</strong>
+          <small data-detail>3D 引擎在使用者操作前不會載入</small>
+        </div>
+        <div class="actions">
+          <button type="button" class="check-btn" data-check>重新檢查來源</button>
+          <button type="button" class="start-btn" data-start disabled aria-disabled="true">進入 3D 展示</button>
+        </div>
+      </div>
+    </section>
+    <section class="evidence" aria-label="驗收規則">
+      <h2>V1 驗收條件</h2>
+      <p>真 3D GLB · 人體骨架 · Skin PBR · 自然動作 · 相同角色造型 · 手機與 4K 獨立驗收。這是獨立施工頁，不代表 20 分鐘電影已完成或已上線。</p>
+    </section>
+  </main>
+  <footer>© AIG-II / AIG Studio 5.0 · School 3D preview isolated from CNC runtime</footer>
+</body>
+</html>
