@@ -159,6 +159,10 @@ jobs:
           path: artifacts/school-3d-phase10-independent/
           retention-days: 14
           if-no-files-found: error
+      - name: Phase11 Reverse 2D to real GLB 3D projection regression tests
+        run: |
+          python -m unittest discover -s formal-web/school-3d/tools -p 'test_phase11_projection_gate.py' -v
+          python -c "import json; r=json.load(open('formal-web/school-3d/PHASE11-VISUAL-EVIDENCE.json')); a=json.load(open('formal-web/school-3d/reverse-authority.v1.json')); assert r['referenceSHA256']==a['source']['sha256']; assert r['releaseAllowed'] is False and r['visualAuthorityPassed'] is False and r['isRealCalibratedCamera'] is False; assert len(r['pairs'])==8 and r['meanErrorPx']>0; print('GLB projection diagnostic only, not visual approval')"
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
