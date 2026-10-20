@@ -1,0 +1,51 @@
+name: AIG Verified Visual Library Curate Gate
+on:
+  push:
+    branches:
+      - cleanup/visual-library-approved-only-20261020
+      - web/aig-dual-formal-runtime-20261016
+    paths:
+      - 'formal-web/image-library.html'
+      - 'formal-web/visual-library/manifest.json'
+      - 'formal-web/visual-library.js'
+      - 'formal-web/visual-library/pages/**'
+      - 'formal-web/visual-library/icons/**'
+      - 'formal-web/visual-library/candidates/**'
+      - 'formal-web/service-worker.js'
+      - 'formal-web/qa/curate-visual-*.cjs'
+      - '.github/workflows/curate-visual-library.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node formal-web/qa/curate-visual-static.cjs
+  browser:
+    needs: source
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 8765 --directory formal-web >/tmp/aig-curated.log 2>&1 &
+          sleep 2
+      - run: node formal-web/qa/curate-visual-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-CURATED-RGB-4K-S23
+          path: artifacts/visual-curation/
+          if-no-files-found: warn
