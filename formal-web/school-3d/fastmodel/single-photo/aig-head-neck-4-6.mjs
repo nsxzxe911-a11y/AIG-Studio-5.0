@@ -52,7 +52,7 @@ export function normalizePoseSet(calibrations){
   const array=rows.map(r=>r.measured[key]);const center=median(array);
   ratios[key]=center;
   // Flag camera/pose spread, do not silently average diverging photos.
-  if(array.some(v=>Math.abs(v-center)>Math.max(.07,center*.28)))
+  if(array.some(v=>Math.abs(v-center)>Math.max(.06,center*.20)))
    throw Error('AIG46_POSE_CAMERA_SCALE_OUTLIER_REVIEW');
  }
  return {schema:AIG46_SCHEMA,assetSetId:'HEROINE_WHITE_STRAPLESS_TWO_PIECE_PONYTAIL_4POSE_20261021',
