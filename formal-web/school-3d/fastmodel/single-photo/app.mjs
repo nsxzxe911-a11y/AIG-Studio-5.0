@@ -14,6 +14,7 @@ import {createRig,Aig43RigController,Aig43PatchCache,poseUniforms} from './aig-h
 import {appearanceFor,auditHairNeck,Aig44TimingEvidence} from './aig-qa-4-4.mjs';
 import {AIG45_POSES,AIG45_MARKERS,AIG45_SCHEMA,recognizePose,normalizeMark,auditMarks,reviewPoseSet} from './aig-calibration-4-5.mjs';
 import {AIG46_SCHEMA,normalizePoseSet,buildHeadNeckPonytail,exportOBJ} from './aig-head-neck-4-6.mjs';
+import {AIG47_SCHEMA,buildAIG47Draft,exportAIG47GLB} from './aig-welded-4-7.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -450,10 +451,17 @@ $('aig45-export').addEventListener('click',()=>{
 });
 
 // 4.6 independent native geometry path: no paid APIs or overwrite of 4.0 GLB.
-let aig46Profile=null,aig46Draft=null;
+let aig46Profile=null,aig46Draft=null,aig47Draft=null;
+function aig47Reset(message='4.7 來源或馬尾參數已變更；請重新建立共享頂點技術網格。'){
+ aig47Draft=null;
+ for(const id of ['aig47-download','aig47-evidence'])$(id).disabled=true;
+ $('aig47-build').disabled=!aig46Profile||!aig46Draft;
+ $('aig47-status').textContent=message;
+}
 const aig46Canvas=$('aig46-canvas'),aig46Ctx=aig46Canvas.getContext('2d');
 function aig46Reset(){
  aig46Draft=null;aig46Profile=null;
+ aig47Reset('4.7 等待已校正的 4.5／4.6 來源。技術 GLB 不等於正式女主角。');
  $('aig46-downloads').replaceChildren();
  for(const id of ['aig46-swing','aig46-back','aig46-yaw'])$(id).disabled=true;
  $('aig46-build').disabled=!aig45Accepted.size;
@@ -466,13 +474,14 @@ function aig46Draw(){
  ctx.fillStyle='#020407';ctx.fillRect(0,0,c.width,c.height);
  ctx.fillStyle='#b3d6ea';ctx.font='13px sans-serif';
  ctx.fillText('AIG 4.6 · 推估幾何，不是擬真人物',12,22);
- if(!aig46Draft)return;
+ const draft=aig47Draft||aig46Draft;
+ if(!draft)return;
  const yaw=Number($('aig46-yaw').value)*Math.PI/180;
  const cos=Math.cos(yaw),sin=Math.sin(yaw);
  const scale=690,cy=c.height*.66;
- const colorByPart={head:'#d3a9a1',neck:'#8dc6e8',ponytail:'#684a44'};
+ const colorByPart={head:'#d3a9a1',neck:'#8dc6e8',headNeck:'#d3a9a1',ponytail:'#684a44'};
  const tris=[];
- for(const part of aig46Draft.parts){
+ for(const part of draft.parts){
   const points=[];
   for(let i=0;i<part.positions.length;i+=3){
    const x=part.positions[i],y=part.positions[i+1],z=part.positions[i+2];
@@ -494,7 +503,7 @@ function aig46Draw(){
   ctx.lineTo(t.d.x,t.d.y);ctx.closePath();ctx.fill();ctx.stroke();
  }
  ctx.fillStyle='#f3c47a';
- ctx.fillText('3 個獨立封閉網格 · 無骨架／背面照片',12,c.height-16);
+ ctx.fillText(aig47Draft?'4.7 頭頸一體共享頂點 · 技術 GLB · 非正式人物':'4.6 三個獨立封閉網格 · 無骨架／背面照片',12,c.height-16);
 }
 function aig46Status(){
  if(!aig46Draft)return;
@@ -507,6 +516,7 @@ function aig46Status(){
 }
 function aig46Rebuild(){
  if(!aig46Profile)return;
+ aig47Reset();
  try{
   const swing=Number($('aig46-swing').value)/1000,
    back=Number($('aig46-back').value)/1000;
@@ -524,6 +534,54 @@ function aig46Rebuild(){
   aig46Draw();
  }
 }
+function aig47Download(bytes,filename,mime){
+ const link=document.createElement('a'),uri=URL.createObjectURL(new Blob([bytes],{type:mime}));
+ link.href=uri;link.download=filename;link.click();
+ setTimeout(()=>URL.revokeObjectURL(uri),30000);
+}
+$('aig47-build').addEventListener('click',()=>{
+ if(!aig46Profile||!aig46Draft){
+  aig47Reset('來源未通過 4.6 正式拓樸 Gate，不能憑空生成 4.7 頭頸。');return;
+ }
+ try{
+  const draft=buildAIG47Draft(aig46Profile,{
+   ponytailSwing:Number($('aig46-swing').value)/1000,
+   ponytailBack:Number($('aig46-back').value)/1000
+  });
+  const glb=exportAIG47GLB(draft);
+  if(!glb.bytes?.length||!draft.topologyQA)throw Error('AIG47_GLTF_EXPORT_GATE');
+  aig47Draft=draft;
+  $('aig47-download').disabled=false;$('aig47-evidence').disabled=false;
+  $('aig47-build').disabled=false;
+  $('aig47-status').textContent='已建立真正共享頂點的頭頸封閉網格（'+
+   draft.headNeckJoinRingVertices+' 個共用環頂點；'+draft.topology[0].triangleCount+
+   ' 個頭頸面）。技術 GLB '+glb.bytes.length+' bytes。馬尾／頸部代理檢測 '+ 
+   draft.hairClearance.sampledPonytailVertices+' 個頂點，內部風險 '+ 
+   draft.hairClearance.verticesInsideEnvelope+' 個。頭頸外形為推估、非人體實際焊接或蒙皮。';
+  aig46Draw();
+ }catch(error){
+  aig47Reset('4.7 共享頭頸模型 BLOCKED：'+error.message+'；4.6 及原始來源不受影響。');
+  aig46Draw();
+ }
+});
+$('aig47-download').addEventListener('click',()=>{
+ if(!aig47Draft)return;
+ try{
+  const glb=exportAIG47GLB(aig47Draft);
+  aig47Download(glb.bytes,'AIG-4.7-technical-shared-head-neck-NOT-HEROINE.glb','model/gltf-binary');
+ }catch(error){$('aig47-status').textContent='4.7 GLB 輸出 BLOCKED：'+error.message;}
+});
+$('aig47-evidence').addEventListener('click',()=>{
+ if(!aig47Draft)return;
+ const evidence={schema:AIG47_SCHEMA,sourceSHA256:aig47Draft.sourceSHA256,
+  topology:aig47Draft.topology,sharedJoinVertices:aig47Draft.headNeckJoinRingVertices,
+  headNeckSharedIndexSurface:aig47Draft.headNeckSharedVertexJoin,
+  hairClearance:aig47Draft.hairClearance,headNeckActualPhotoSkinWelded:false,
+  hairStrandPhysicalCollisionVerified:false,realHumanFaceVerified:false,
+  animatedSkinningAvailable:false,realWindowsAndroidGpuVerified:false,
+  originalPhotosAndPreviousGlbUnchanged:true,noPaidGeneration:true,releaseAllowed:false};
+ aig47Download(JSON.stringify(evidence,null,2),'AIG-4.7-head-neck-hair-Gate-NOT-APPROVED.json','application/json');
+});
 $('aig46-build').addEventListener('click',()=>{
  try{
   aig46Profile=normalizePoseSet([...aig45Accepted.values()]);
