@@ -1,0 +1,1992 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#020407"><title>AIG | 自研素描上色 × 髮絲波動 × 臉部網格</title>
+<style>
+:root{color-scheme:dark;--bg:#020407;--panel:#07111b;--line:#26465b;--cyan:#64eef3;--muted:#a8bcc9;--text:#e5f4fa}*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px/1.5 system-ui,'Noto Sans TC',sans-serif;color:var(--text)}header,main{max-width:1500px;width:calc(100% - 28px);margin:auto}header{display:flex;align-items:center;justify-content:space-between;padding:13px 0;gap:12px}h1{font-size:clamp(17px,2.4vw,23px);margin:0}small{color:var(--muted)}a{color:var(--cyan)}.summary{margin-bottom:12px;color:#a5c6d5}.panel{border:1px solid var(--line);border-radius:13px;background:var(--panel);overflow:hidden}.canvas{width:100%;display:block;aspect-ratio:1672/941;object-fit:contain;background:#06121c}.tools{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:12px;border-top:1px solid var(--line)}label{display:flex;align-items:center;gap:8px;white-space:nowrap}input[type=range]{width:110px;accent-color:#55e5e7}input[type=file]{max-width:220px}button{cursor:pointer;background:#113448;border:1px solid #447c93;color:#ecfcff;min-height:40px;padding:7px 13px;border-radius:8px}.status{padding:0 13px 12px;color:#bddee9;min-height:39px}.notes{margin:15px 0 30px;color:var(--muted)}.notes strong{color:#e4f8ff}@media(max-width:620px){header{align-items:flex-start}.tools{gap:10px}input[type=range]{width:80px}.tools label:first-child{width:100%}}
+</style>
+</head><body>
+<header><div><h1>AIG 原創網格包覆 × 火柴棒骨架轉向</h1><small>Reverse → Sketch/Color → 88 Hair Spring Guides → Local Face Mesh → Rotation</small></div><a href="../index.html">獨立工作區</a></header>
+<main><p class="summary">沿用核准原圖與細骨架；色彩素描、88 條獨立彈性髮絲、臉部小範圍幾何修整。尚未接入真正 AI 模型，不冒稱完整 3D。</p>
+<section class="panel"><canvas id="model" class="canvas" width="1672" height="941" aria-label="原圖上的蒙皮網格旋轉實驗"></canvas>
+<div class="tools">
+<label>核准 PNG <input id="source" type="file" accept="image/png"></label>
+<label>頭部轉向 <input id="headYaw" type="range" min="-12" max="12" step="1" value="0"><output id="headVal">0°</output></label>
+<label>左肩 <input id="leftArm" type="range" min="-12" max="12" value="0"><output id="leftVal">0°</output></label>
+<label>右肩 <input id="rightArm" type="range" min="-12" max="12" value="0"><output id="rightVal">0°</output></label>
+<label><input id="wire" type="checkbox">網格</label><label><input id="edit" type="checkbox">編輯輪廓</label><label><input id="bones" type="checkbox">細骨架</label>
+<label>風力 <input id="wind" type="range" min="-100" max="100" value="35"></label>
+<label><input id="hairToggle" type="checkbox" checked>獨立髮絲</label>
+<label>臉部網格修整 <input id="faceRefine" type="range" min="0" max="100" value="0"></label>
+<label><input id="sketchToggle" type="checkbox">素描＋上色</label>
+<button id="playHair" type="button">播放髮絲波動</button><output id="motionStat">髮絲待載入</output>
+<button id="reset" type="button">重設姿勢</button><button id="save" type="button">匯出輪廓 JSON</button><small id="stats">等待原圖</small></div>
+<div id="status" class="status" role="status">等待原圖</div></section>
+<p class="notes"><strong>真實完成：</strong>可重建的網格包覆、權重、GLB 結構與骨架旋轉測試。<strong>尚未完成：</strong>實際 AI 臉部推論、真實 3D 髮絲質量與碰撞、完整臉部拓樸、背面、完整雙腿及自然物理動畫。推定背面不可當成核准模型；不連接任何第三方建模平台。</p></main>
+<script id="spec" type="application/json">
+{
+  "schemaVersion": 1,
+  "id": "AIG_SCHOOL_3D_PHASE13_ENVELOPE_IMAGE_GUIDED",
+  "source": {
+    "width": 1672,
+    "height": 941,
+    "sha256": "83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910"
+  },
+  "coordinateSystem": "SOURCE_IMAGE_PIXEL_2D_TO_INFERRED_2_5D",
+  "cameraCalibrated": false,
+  "depthMeasuredFromImage": false,
+  "releaseAllowed": false,
+  "approved3DModel": false,
+  "sourceGeometryAuthority": "visible contour and proportions only, not hidden depth",
+  "legacyDollGeometryUsed": false,
+  "skeleton": {
+    "boneVisualization": "2px lines only",
+    "physicalBoneRadius": null,
+    "joints": [
+      {
+        "name": "Armature",
+        "parent": null,
+        "xy": [
+          653,
+          677
+        ],
+        "confidence": "inferred"
+      },
+      {
+        "name": "Hips",
+        "parent": "Armature",
+        "xy": [
+          653,
+          677
+        ],
+        "confidence": "visible approximate"
+      },
+      {
+        "name": "Chest",
+        "parent": "Hips",
+        "xy": [
+          635.33,
+          468.67
+        ],
+        "confidence": "interpolated"
+      },
+      {
+        "name": "Neck",
+        "parent": "Chest",
+        "xy": [
+          653,
+          355
+        ],
+        "confidence": "visible approximate"
+      },
+      {
+        "name": "Head",
+        "parent": "Neck",
+        "xy": [
+          644.5,
+          181
+        ],
+        "confidence": "interpolated"
+      },
+      {
+        "name": "LeftShoulder",
+        "parent": "Chest",
+        "xy": [
+          450,
+          354
+        ],
+        "confidence": "visible approximate"
+      },
+      {
+        "name": "RightShoulder",
+        "parent": "Chest",
+        "xy": [
+          803,
+          375
+        ],
+        "confidence": "visible approximate"
+      }
+    ]
+  },
+  "mesh": {
+    "originalPixelCoordinatePreserved": true,
+    "subdivision": 3,
+    "pixelToUnit": 0.0025,
+    "depthProxyUnits": 0.018,
+    "shellBackIsEstimated": true,
+    "textureFromOriginalImage": true,
+    "wrapFromVisibleSilhouette": true,
+    "noModelAutoRelease": true
+  },
+  "regions": [
+    {
+      "id": "skirt",
+      "bone": "Hips",
+      "polygon": [
+        [
+          516,
+          658
+        ],
+        [
+          753,
+          660
+        ],
+        [
+          805,
+          724
+        ],
+        [
+          831,
+          832
+        ],
+        [
+          865,
+          941
+        ],
+        [
+          432,
+          941
+        ],
+        [
+          460,
+          833
+        ],
+        [
+          491,
+          744
+        ]
+      ]
+    },
+    {
+      "id": "torso_uniform",
+      "bone": "Chest",
+      "polygon": [
+        [
+          460,
+          340
+        ],
+        [
+          536,
+          331
+        ],
+        [
+          562,
+          355
+        ],
+        [
+          645,
+          357
+        ],
+        [
+          741,
+          328
+        ],
+        [
+          790,
+          360
+        ],
+        [
+          812,
+          486
+        ],
+        [
+          796,
+          593
+        ],
+        [
+          765,
+          690
+        ],
+        [
+          519,
+          688
+        ],
+        [
+          461,
+          762
+        ],
+        [
+          409,
+          842
+        ],
+        [
+          390,
+          870
+        ],
+        [
+          396,
+          651
+        ],
+        [
+          400,
+          471
+        ]
+      ]
+    },
+    {
+      "id": "left_sleeve",
+      "bone": "LeftShoulder",
+      "polygon": [
+        [
+          453,
+          358
+        ],
+        [
+          495,
+          373
+        ],
+        [
+          496,
+          427
+        ],
+        [
+          478,
+          478
+        ],
+        [
+          434,
+          534
+        ],
+        [
+          424,
+          593
+        ],
+        [
+          467,
+          643
+        ],
+        [
+          445,
+          695
+        ],
+        [
+          406,
+          699
+        ],
+        [
+          380,
+          653
+        ],
+        [
+          379,
+          583
+        ],
+        [
+          399,
+          459
+        ]
+      ]
+    },
+    {
+      "id": "right_sleeve",
+      "bone": "RightShoulder",
+      "polygon": [
+        [
+          751,
+          343
+        ],
+        [
+          807,
+          361
+        ],
+        [
+          846,
+          430
+        ],
+        [
+          869,
+          505
+        ],
+        [
+          878,
+          602
+        ],
+        [
+          853,
+          640
+        ],
+        [
+          796,
+          623
+        ],
+        [
+          772,
+          570
+        ],
+        [
+          785,
+          512
+        ]
+      ]
+    },
+    {
+      "id": "face",
+      "bone": "Head",
+      "polygon": [
+        [
+          557,
+          153
+        ],
+        [
+          594,
+          126
+        ],
+        [
+          654,
+          111
+        ],
+        [
+          707,
+          134
+        ],
+        [
+          740,
+          163
+        ],
+        [
+          750,
+          219
+        ],
+        [
+          721,
+          271
+        ],
+        [
+          681,
+          318
+        ],
+        [
+          633,
+          319
+        ],
+        [
+          593,
+          286
+        ],
+        [
+          565,
+          244
+        ]
+      ]
+    },
+    {
+      "id": "hair",
+      "bone": "Head",
+      "polygon": [
+        [
+          580,
+          51
+        ],
+        [
+          633,
+          38
+        ],
+        [
+          693,
+          57
+        ],
+        [
+          728,
+          88
+        ],
+        [
+          749,
+          143
+        ],
+        [
+          752,
+          214
+        ],
+        [
+          747,
+          273
+        ],
+        [
+          767,
+          325
+        ],
+        [
+          791,
+          366
+        ],
+        [
+          848,
+          407
+        ],
+        [
+          928,
+          459
+        ],
+        [
+          953,
+          488
+        ],
+        [
+          946,
+          510
+        ],
+        [
+          893,
+          488
+        ],
+        [
+          843,
+          463
+        ],
+        [
+          793,
+          417
+        ],
+        [
+          769,
+          392
+        ],
+        [
+          785,
+          494
+        ],
+        [
+          766,
+          557
+        ],
+        [
+          740,
+          572
+        ],
+        [
+          696,
+          554
+        ],
+        [
+          603,
+          556
+        ],
+        [
+          532,
+          534
+        ],
+        [
+          455,
+          531
+        ],
+        [
+          409,
+          546
+        ],
+        [
+          389,
+          520
+        ],
+        [
+          405,
+          462
+        ],
+        [
+          427,
+          371
+        ],
+        [
+          444,
+          297
+        ],
+        [
+          466,
+          217
+        ],
+        [
+          493,
+          154
+        ],
+        [
+          529,
+          101
+        ]
+      ]
+    }
+  ],
+  "gates": {
+    "onlyObservedMainFigure": true,
+    "noFeetOrLegGeometry": true,
+    "noAutomaticFaceIdentityApproval": true,
+    "supportHeadYawTechnical": true,
+    "supportShoulderTurnTechnical": true,
+    "mustRetargetIntoTrue3DWhenReconstructed": true,
+    "mustRecomputeWeightsForFinalMesh": true
+  }
+}
+</script><script id="hairSpec" type="application/json">
+{
+  "schemaVersion": 1,
+  "id": "AIG_PHASE14_SELF_DEVELOPED_HAIR_FACE",
+  "source": {
+    "width": 1672,
+    "height": 941,
+    "sha256": "83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910"
+  },
+  "inheritedPhase13": "mesh-envelope.v1.json",
+  "cameraCalibrated": false,
+  "releasedToHomepage": false,
+  "approved3DModel": false,
+  "hair": {
+    "description": "88 procedural guides inferred from image silhouette, NOT recovered true strands",
+    "solver": "damped spring + wind + fixed scalp roots",
+    "rootAnchoring": true,
+    "segmentsPerStrand": 9,
+    "maxWindPixels": 20,
+    "colorPalette": [
+      "#241920",
+      "#38272b",
+      "#694645",
+      "#a06c5e",
+      "#d09d7e"
+    ],
+    "strands": [
+      {
+        "id": "left-00",
+        "group": "left",
+        "root": [
+          585.0,
+          100.0
+        ],
+        "tip": [
+          393.0,
+          416.0
+        ],
+        "curvature": -44.0,
+        "width": 0.55,
+        "phase": 0.0,
+        "colorIndex": 0
+      },
+      {
+        "id": "left-01",
+        "group": "left",
+        "root": [
+          587.43,
+          101.52
+        ],
+        "tip": [
+          398.17,
+          422.7
+        ],
+        "curvature": -43.17,
+        "width": 1.0,
+        "phase": 0.63,
+        "colorIndex": 1
+      },
+      {
+        "id": "left-02",
+        "group": "left",
+        "root": [
+          589.86,
+          103.04
+        ],
+        "tip": [
+          403.34,
+          429.34
+        ],
+        "curvature": -42.34,
+        "width": 1.44,
+        "phase": 1.26,
+        "colorIndex": 2
+      },
+      {
+        "id": "left-03",
+        "group": "left",
+        "root": [
+          592.29,
+          104.52
+        ],
+        "tip": [
+          408.51,
+          435.86
+        ],
+        "curvature": -41.51,
+        "width": 0.81,
+        "phase": 1.89,
+        "colorIndex": 3
+      },
+      {
+        "id": "left-04",
+        "group": "left",
+        "root": [
+          594.71,
+          105.97
+        ],
+        "tip": [
+          413.69,
+          442.2
+        ],
+        "curvature": -40.69,
+        "width": 1.25,
+        "phase": 2.52,
+        "colorIndex": 4
+      },
+      {
+        "id": "left-05",
+        "group": "left",
+        "root": [
+          597.14,
+          107.38
+        ],
+        "tip": [
+          418.86,
+          448.3
+        ],
+        "curvature": -39.86,
+        "width": 0.61,
+        "phase": 3.15,
+        "colorIndex": 0
+      },
+      {
+        "id": "left-06",
+        "group": "left",
+        "root": [
+          599.57,
+          108.72
+        ],
+        "tip": [
+          424.03,
+          454.14
+        ],
+        "curvature": -39.03,
+        "width": 1.06,
+        "phase": 3.78,
+        "colorIndex": 1
+      },
+      {
+        "id": "left-07",
+        "group": "left",
+        "root": [
+          602.0,
+          109.99
+        ],
+        "tip": [
+          429.2,
+          459.68
+        ],
+        "curvature": -38.2,
+        "width": 1.51,
+        "phase": 4.41,
+        "colorIndex": 2
+      },
+      {
+        "id": "left-08",
+        "group": "left",
+        "root": [
+          604.43,
+          111.18
+        ],
+        "tip": [
+          434.37,
+          464.91
+        ],
+        "curvature": -37.37,
+        "width": 0.87,
+        "phase": 5.04,
+        "colorIndex": 3
+      },
+      {
+        "id": "left-09",
+        "group": "left",
+        "root": [
+          606.86,
+          112.29
+        ],
+        "tip": [
+          439.54,
+          469.82
+        ],
+        "curvature": -36.54,
+        "width": 1.31,
+        "phase": 5.67,
+        "colorIndex": 4
+      },
+      {
+        "id": "left-10",
+        "group": "left",
+        "root": [
+          609.29,
+          113.29
+        ],
+        "tip": [
+          444.71,
+          474.42
+        ],
+        "curvature": -35.71,
+        "width": 0.68,
+        "phase": 6.3,
+        "colorIndex": 0
+      },
+      {
+        "id": "left-11",
+        "group": "left",
+        "root": [
+          611.71,
+          114.19
+        ],
+        "tip": [
+          449.89,
+          478.73
+        ],
+        "curvature": -34.89,
+        "width": 1.12,
+        "phase": 6.93,
+        "colorIndex": 1
+      },
+      {
+        "id": "left-12",
+        "group": "left",
+        "root": [
+          614.14,
+          114.97
+        ],
+        "tip": [
+          455.06,
+          482.78
+        ],
+        "curvature": -34.06,
+        "width": 1.57,
+        "phase": 7.56,
+        "colorIndex": 2
+      },
+      {
+        "id": "left-13",
+        "group": "left",
+        "root": [
+          616.57,
+          115.63
+        ],
+        "tip": [
+          460.23,
+          486.61
+        ],
+        "curvature": -33.23,
+        "width": 0.93,
+        "phase": 8.19,
+        "colorIndex": 3
+      },
+      {
+        "id": "left-14",
+        "group": "left",
+        "root": [
+          619.0,
+          116.17
+        ],
+        "tip": [
+          465.4,
+          490.28
+        ],
+        "curvature": -32.4,
+        "width": 1.38,
+        "phase": 8.82,
+        "colorIndex": 4
+      },
+      {
+        "id": "left-15",
+        "group": "left",
+        "root": [
+          621.43,
+          116.57
+        ],
+        "tip": [
+          470.57,
+          493.84
+        ],
+        "curvature": -31.57,
+        "width": 0.74,
+        "phase": 9.45,
+        "colorIndex": 0
+      },
+      {
+        "id": "left-16",
+        "group": "left",
+        "root": [
+          623.86,
+          116.85
+        ],
+        "tip": [
+          475.74,
+          497.36
+        ],
+        "curvature": -30.74,
+        "width": 1.19,
+        "phase": 10.08,
+        "colorIndex": 1
+      },
+      {
+        "id": "left-17",
+        "group": "left",
+        "root": [
+          626.29,
+          116.98
+        ],
+        "tip": [
+          480.91,
+          500.9
+        ],
+        "curvature": -29.91,
+        "width": 0.55,
+        "phase": 10.71,
+        "colorIndex": 2
+      },
+      {
+        "id": "left-18",
+        "group": "left",
+        "root": [
+          628.71,
+          116.98
+        ],
+        "tip": [
+          486.09,
+          504.52
+        ],
+        "curvature": -29.09,
+        "width": 1.0,
+        "phase": 11.34,
+        "colorIndex": 3
+      },
+      {
+        "id": "left-19",
+        "group": "left",
+        "root": [
+          631.14,
+          116.85
+        ],
+        "tip": [
+          491.26,
+          508.28
+        ],
+        "curvature": -28.26,
+        "width": 1.44,
+        "phase": 11.97,
+        "colorIndex": 4
+      },
+      {
+        "id": "left-20",
+        "group": "left",
+        "root": [
+          633.57,
+          116.57
+        ],
+        "tip": [
+          496.43,
+          512.23
+        ],
+        "curvature": -27.43,
+        "width": 0.81,
+        "phase": 12.6,
+        "colorIndex": 0
+      },
+      {
+        "id": "left-21",
+        "group": "left",
+        "root": [
+          636.0,
+          116.17
+        ],
+        "tip": [
+          501.6,
+          516.43
+        ],
+        "curvature": -26.6,
+        "width": 1.25,
+        "phase": 13.23,
+        "colorIndex": 1
+      },
+      {
+        "id": "left-22",
+        "group": "left",
+        "root": [
+          638.43,
+          115.63
+        ],
+        "tip": [
+          506.77,
+          520.9
+        ],
+        "curvature": -25.77,
+        "width": 0.61,
+        "phase": 13.86,
+        "colorIndex": 2
+      },
+      {
+        "id": "left-23",
+        "group": "left",
+        "root": [
+          640.86,
+          114.97
+        ],
+        "tip": [
+          511.94,
+          525.68
+        ],
+        "curvature": -24.94,
+        "width": 1.06,
+        "phase": 14.49,
+        "colorIndex": 3
+      },
+      {
+        "id": "left-24",
+        "group": "left",
+        "root": [
+          643.29,
+          114.19
+        ],
+        "tip": [
+          517.11,
+          530.77
+        ],
+        "curvature": -24.11,
+        "width": 1.51,
+        "phase": 15.12,
+        "colorIndex": 4
+      },
+      {
+        "id": "left-25",
+        "group": "left",
+        "root": [
+          645.71,
+          113.29
+        ],
+        "tip": [
+          522.29,
+          536.19
+        ],
+        "curvature": -23.29,
+        "width": 0.87,
+        "phase": 15.75,
+        "colorIndex": 0
+      },
+      {
+        "id": "left-26",
+        "group": "left",
+        "root": [
+          648.14,
+          112.29
+        ],
+        "tip": [
+          527.46,
+          541.9
+        ],
+        "curvature": -22.46,
+        "width": 1.31,
+        "phase": 16.38,
+        "colorIndex": 1
+      },
+      {
+        "id": "left-27",
+        "group": "left",
+        "root": [
+          650.57,
+          111.18
+        ],
+        "tip": [
+          532.63,
+          547.9
+        ],
+        "curvature": -21.63,
+        "width": 0.68,
+        "phase": 17.01,
+        "colorIndex": 2
+      },
+      {
+        "id": "left-28",
+        "group": "left",
+        "root": [
+          653.0,
+          109.99
+        ],
+        "tip": [
+          537.8,
+          554.15
+        ],
+        "curvature": -20.8,
+        "width": 1.12,
+        "phase": 17.64,
+        "colorIndex": 3
+      },
+      {
+        "id": "left-29",
+        "group": "left",
+        "root": [
+          655.43,
+          108.72
+        ],
+        "tip": [
+          542.97,
+          560.6
+        ],
+        "curvature": -19.97,
+        "width": 1.57,
+        "phase": 18.27,
+        "colorIndex": 4
+      },
+      {
+        "id": "left-30",
+        "group": "left",
+        "root": [
+          657.86,
+          107.38
+        ],
+        "tip": [
+          548.14,
+          567.19
+        ],
+        "curvature": -19.14,
+        "width": 0.93,
+        "phase": 18.9,
+        "colorIndex": 0
+      },
+      {
+        "id": "left-31",
+        "group": "left",
+        "root": [
+          660.29,
+          105.97
+        ],
+        "tip": [
+          553.31,
+          573.88
+        ],
+        "curvature": -18.31,
+        "width": 1.38,
+        "phase": 19.53,
+        "colorIndex": 1
+      },
+      {
+        "id": "left-32",
+        "group": "left",
+        "root": [
+          662.71,
+          104.52
+        ],
+        "tip": [
+          558.49,
+          580.59
+        ],
+        "curvature": -17.49,
+        "width": 0.74,
+        "phase": 20.16,
+        "colorIndex": 2
+      },
+      {
+        "id": "left-33",
+        "group": "left",
+        "root": [
+          665.14,
+          103.04
+        ],
+        "tip": [
+          563.66,
+          587.26
+        ],
+        "curvature": -16.66,
+        "width": 1.19,
+        "phase": 20.79,
+        "colorIndex": 3
+      },
+      {
+        "id": "left-34",
+        "group": "left",
+        "root": [
+          667.57,
+          101.52
+        ],
+        "tip": [
+          568.83,
+          593.84
+        ],
+        "curvature": -15.83,
+        "width": 0.55,
+        "phase": 21.42,
+        "colorIndex": 4
+      },
+      {
+        "id": "left-35",
+        "group": "left",
+        "root": [
+          670.0,
+          100.0
+        ],
+        "tip": [
+          574.0,
+          600.26
+        ],
+        "curvature": -15.0,
+        "width": 1.0,
+        "phase": 22.05,
+        "colorIndex": 0
+      },
+      {
+        "id": "right-00",
+        "group": "right",
+        "root": [
+          656.0,
+          96.0
+        ],
+        "tip": [
+          797.0,
+          379.0
+        ],
+        "curvature": 42.0,
+        "width": 0.55,
+        "phase": 0.47,
+        "colorIndex": 0
+      },
+      {
+        "id": "right-01",
+        "group": "right",
+        "root": [
+          658.11,
+          97.7
+        ],
+        "tip": [
+          801.91,
+          386.25
+        ],
+        "curvature": 41.4,
+        "width": 1.0,
+        "phase": 1.1,
+        "colorIndex": 1
+      },
+      {
+        "id": "right-02",
+        "group": "right",
+        "root": [
+          660.23,
+          99.39
+        ],
+        "tip": [
+          806.83,
+          393.45
+        ],
+        "curvature": 40.8,
+        "width": 1.44,
+        "phase": 1.73,
+        "colorIndex": 2
+      },
+      {
+        "id": "right-03",
+        "group": "right",
+        "root": [
+          662.34,
+          101.05
+        ],
+        "tip": [
+          811.74,
+          400.57
+        ],
+        "curvature": 40.2,
+        "width": 0.81,
+        "phase": 2.36,
+        "colorIndex": 3
+      },
+      {
+        "id": "right-04",
+        "group": "right",
+        "root": [
+          664.46,
+          102.68
+        ],
+        "tip": [
+          816.66,
+          407.56
+        ],
+        "curvature": 39.6,
+        "width": 1.25,
+        "phase": 2.99,
+        "colorIndex": 4
+      },
+      {
+        "id": "right-05",
+        "group": "right",
+        "root": [
+          666.57,
+          104.24
+        ],
+        "tip": [
+          821.57,
+          414.38
+        ],
+        "curvature": 39.0,
+        "width": 0.61,
+        "phase": 3.62,
+        "colorIndex": 0
+      },
+      {
+        "id": "right-06",
+        "group": "right",
+        "root": [
+          668.69,
+          105.75
+        ],
+        "tip": [
+          826.49,
+          420.99
+        ],
+        "curvature": 38.4,
+        "width": 1.06,
+        "phase": 4.25,
+        "colorIndex": 1
+      },
+      {
+        "id": "right-07",
+        "group": "right",
+        "root": [
+          670.8,
+          107.17
+        ],
+        "tip": [
+          831.4,
+          427.39
+        ],
+        "curvature": 37.8,
+        "width": 1.51,
+        "phase": 4.88,
+        "colorIndex": 2
+      },
+      {
+        "id": "right-08",
+        "group": "right",
+        "root": [
+          672.91,
+          108.5
+        ],
+        "tip": [
+          836.31,
+          433.54
+        ],
+        "curvature": 37.2,
+        "width": 0.87,
+        "phase": 5.51,
+        "colorIndex": 3
+      },
+      {
+        "id": "right-09",
+        "group": "right",
+        "root": [
+          675.03,
+          109.73
+        ],
+        "tip": [
+          841.23,
+          439.43
+        ],
+        "curvature": 36.6,
+        "width": 1.31,
+        "phase": 6.14,
+        "colorIndex": 4
+      },
+      {
+        "id": "right-10",
+        "group": "right",
+        "root": [
+          677.14,
+          110.85
+        ],
+        "tip": [
+          846.14,
+          445.05
+        ],
+        "curvature": 36.0,
+        "width": 0.68,
+        "phase": 6.77,
+        "colorIndex": 0
+      },
+      {
+        "id": "right-11",
+        "group": "right",
+        "root": [
+          679.26,
+          111.86
+        ],
+        "tip": [
+          851.06,
+          450.41
+        ],
+        "curvature": 35.4,
+        "width": 1.12,
+        "phase": 7.4,
+        "colorIndex": 1
+      },
+      {
+        "id": "right-12",
+        "group": "right",
+        "root": [
+          681.37,
+          112.73
+        ],
+        "tip": [
+          855.97,
+          455.53
+        ],
+        "curvature": 34.8,
+        "width": 1.57,
+        "phase": 8.03,
+        "colorIndex": 2
+      },
+      {
+        "id": "right-13",
+        "group": "right",
+        "root": [
+          683.49,
+          113.47
+        ],
+        "tip": [
+          860.89,
+          460.41
+        ],
+        "curvature": 34.2,
+        "width": 0.93,
+        "phase": 8.66,
+        "colorIndex": 3
+      },
+      {
+        "id": "right-14",
+        "group": "right",
+        "root": [
+          685.6,
+          114.07
+        ],
+        "tip": [
+          865.8,
+          465.08
+        ],
+        "curvature": 33.6,
+        "width": 1.38,
+        "phase": 9.29,
+        "colorIndex": 4
+      },
+      {
+        "id": "right-15",
+        "group": "right",
+        "root": [
+          687.71,
+          114.52
+        ],
+        "tip": [
+          870.71,
+          469.57
+        ],
+        "curvature": 33.0,
+        "width": 0.74,
+        "phase": 9.92,
+        "colorIndex": 0
+      },
+      {
+        "id": "right-16",
+        "group": "right",
+        "root": [
+          689.83,
+          114.83
+        ],
+        "tip": [
+          875.63,
+          473.92
+        ],
+        "curvature": 32.4,
+        "width": 1.19,
+        "phase": 10.55,
+        "colorIndex": 1
+      },
+      {
+        "id": "right-17",
+        "group": "right",
+        "root": [
+          691.94,
+          114.98
+        ],
+        "tip": [
+          880.54,
+          478.17
+        ],
+        "curvature": 31.8,
+        "width": 0.55,
+        "phase": 11.18,
+        "colorIndex": 2
+      },
+      {
+        "id": "right-18",
+        "group": "right",
+        "root": [
+          694.06,
+          114.98
+        ],
+        "tip": [
+          885.46,
+          482.36
+        ],
+        "curvature": 31.2,
+        "width": 1.0,
+        "phase": 11.81,
+        "colorIndex": 3
+      },
+      {
+        "id": "right-19",
+        "group": "right",
+        "root": [
+          696.17,
+          114.83
+        ],
+        "tip": [
+          890.37,
+          486.53
+        ],
+        "curvature": 30.6,
+        "width": 1.44,
+        "phase": 12.44,
+        "colorIndex": 4
+      },
+      {
+        "id": "right-20",
+        "group": "right",
+        "root": [
+          698.29,
+          114.52
+        ],
+        "tip": [
+          895.29,
+          490.74
+        ],
+        "curvature": 30.0,
+        "width": 0.81,
+        "phase": 13.07,
+        "colorIndex": 0
+      },
+      {
+        "id": "right-21",
+        "group": "right",
+        "root": [
+          700.4,
+          114.07
+        ],
+        "tip": [
+          900.2,
+          495.02
+        ],
+        "curvature": 29.4,
+        "width": 1.25,
+        "phase": 13.7,
+        "colorIndex": 1
+      },
+      {
+        "id": "right-22",
+        "group": "right",
+        "root": [
+          702.51,
+          113.47
+        ],
+        "tip": [
+          905.11,
+          499.41
+        ],
+        "curvature": 28.8,
+        "width": 0.61,
+        "phase": 14.33,
+        "colorIndex": 2
+      },
+      {
+        "id": "right-23",
+        "group": "right",
+        "root": [
+          704.63,
+          112.73
+        ],
+        "tip": [
+          910.03,
+          503.96
+        ],
+        "curvature": 28.2,
+        "width": 1.06,
+        "phase": 14.96,
+        "colorIndex": 3
+      },
+      {
+        "id": "right-24",
+        "group": "right",
+        "root": [
+          706.74,
+          111.86
+        ],
+        "tip": [
+          914.94,
+          508.71
+        ],
+        "curvature": 27.6,
+        "width": 1.51,
+        "phase": 15.59,
+        "colorIndex": 4
+      },
+      {
+        "id": "right-25",
+        "group": "right",
+        "root": [
+          708.86,
+          110.85
+        ],
+        "tip": [
+          919.86,
+          513.66
+        ],
+        "curvature": 27.0,
+        "width": 0.87,
+        "phase": 16.22,
+        "colorIndex": 0
+      },
+      {
+        "id": "right-26",
+        "group": "right",
+        "root": [
+          710.97,
+          109.73
+        ],
+        "tip": [
+          924.77,
+          518.86
+        ],
+        "curvature": 26.4,
+        "width": 1.31,
+        "phase": 16.85,
+        "colorIndex": 1
+      },
+      {
+        "id": "right-27",
+        "group": "right",
+        "root": [
+          713.09,
+          108.5
+        ],
+        "tip": [
+          929.69,
+          524.32
+        ],
+        "curvature": 25.8,
+        "width": 0.68,
+        "phase": 17.48,
+        "colorIndex": 2
+      },
+      {
+        "id": "right-28",
+        "group": "right",
+        "root": [
+          715.2,
+          107.17
+        ],
+        "tip": [
+          934.6,
+          530.03
+        ],
+        "curvature": 25.2,
+        "width": 1.12,
+        "phase": 18.11,
+        "colorIndex": 3
+      },
+      {
+        "id": "right-29",
+        "group": "right",
+        "root": [
+          717.31,
+          105.75
+        ],
+        "tip": [
+          939.51,
+          536.01
+        ],
+        "curvature": 24.6,
+        "width": 1.57,
+        "phase": 18.74,
+        "colorIndex": 4
+      },
+      {
+        "id": "right-30",
+        "group": "right",
+        "root": [
+          719.43,
+          104.24
+        ],
+        "tip": [
+          944.43,
+          542.25
+        ],
+        "curvature": 24.0,
+        "width": 0.93,
+        "phase": 19.37,
+        "colorIndex": 0
+      },
+      {
+        "id": "right-31",
+        "group": "right",
+        "root": [
+          721.54,
+          102.68
+        ],
+        "tip": [
+          949.34,
+          548.72
+        ],
+        "curvature": 23.4,
+        "width": 1.38,
+        "phase": 20.0,
+        "colorIndex": 1
+      },
+      {
+        "id": "right-32",
+        "group": "right",
+        "root": [
+          723.66,
+          101.05
+        ],
+        "tip": [
+          954.26,
+          555.42
+        ],
+        "curvature": 22.8,
+        "width": 0.74,
+        "phase": 20.63,
+        "colorIndex": 2
+      },
+      {
+        "id": "right-33",
+        "group": "right",
+        "root": [
+          725.77,
+          99.39
+        ],
+        "tip": [
+          959.17,
+          562.3
+        ],
+        "curvature": 22.2,
+        "width": 1.19,
+        "phase": 21.26,
+        "colorIndex": 3
+      },
+      {
+        "id": "right-34",
+        "group": "right",
+        "root": [
+          727.89,
+          97.7
+        ],
+        "tip": [
+          964.09,
+          569.33
+        ],
+        "curvature": 21.6,
+        "width": 0.55,
+        "phase": 21.89,
+        "colorIndex": 4
+      },
+      {
+        "id": "right-35",
+        "group": "right",
+        "root": [
+          730.0,
+          96.0
+        ],
+        "tip": [
+          969.0,
+          576.49
+        ],
+        "curvature": 21.0,
+        "width": 1.0,
+        "phase": 22.52,
+        "colorIndex": 0
+      },
+      {
+        "id": "fringe-00",
+        "group": "fringe",
+        "root": [
+          564.0,
+          110.0
+        ],
+        "tip": [
+          555.0,
+          212.0
+        ],
+        "curvature": 0.0,
+        "width": 0.3,
+        "phase": 0.88,
+        "colorIndex": 0
+      },
+      {
+        "id": "fringe-01",
+        "group": "fringe",
+        "root": [
+          574.73,
+          112.91
+        ],
+        "tip": [
+          567.53,
+          209.07
+        ],
+        "curvature": 1.56,
+        "width": 0.55,
+        "phase": 1.51,
+        "colorIndex": 1
+      },
+      {
+        "id": "fringe-02",
+        "group": "fringe",
+        "root": [
+          585.47,
+          115.69
+        ],
+        "tip": [
+          580.07,
+          206.13
+        ],
+        "curvature": 2.87,
+        "width": 0.79,
+        "phase": 2.14,
+        "colorIndex": 2
+      },
+      {
+        "id": "fringe-03",
+        "group": "fringe",
+        "root": [
+          596.2,
+          118.23
+        ],
+        "tip": [
+          592.6,
+          203.2
+        ],
+        "curvature": 3.73,
+        "width": 0.44,
+        "phase": 2.77,
+        "colorIndex": 3
+      },
+      {
+        "id": "fringe-04",
+        "group": "fringe",
+        "root": [
+          606.93,
+          120.4
+        ],
+        "tip": [
+          605.13,
+          200.27
+        ],
+        "curvature": 4.0,
+        "width": 0.69,
+        "phase": 3.4,
+        "colorIndex": 4
+      },
+      {
+        "id": "fringe-05",
+        "group": "fringe",
+        "root": [
+          617.67,
+          122.12
+        ],
+        "tip": [
+          617.67,
+          197.33
+        ],
+        "curvature": 3.64,
+        "width": 0.34,
+        "phase": 4.03,
+        "colorIndex": 0
+      },
+      {
+        "id": "fringe-06",
+        "group": "fringe",
+        "root": [
+          628.4,
+          123.31
+        ],
+        "tip": [
+          630.2,
+          194.4
+        ],
+        "curvature": 2.7,
+        "width": 0.58,
+        "phase": 4.66,
+        "colorIndex": 1
+      },
+      {
+        "id": "fringe-07",
+        "group": "fringe",
+        "root": [
+          639.13,
+          123.92
+        ],
+        "tip": [
+          642.73,
+          191.47
+        ],
+        "curvature": 1.34,
+        "width": 0.83,
+        "phase": 5.29,
+        "colorIndex": 2
+      },
+      {
+        "id": "fringe-08",
+        "group": "fringe",
+        "root": [
+          649.87,
+          123.92
+        ],
+        "tip": [
+          655.27,
+          191.47
+        ],
+        "curvature": -0.23,
+        "width": 0.48,
+        "phase": 5.92,
+        "colorIndex": 3
+      },
+      {
+        "id": "fringe-09",
+        "group": "fringe",
+        "root": [
+          660.6,
+          123.31
+        ],
+        "tip": [
+          667.8,
+          194.4
+        ],
+        "curvature": -1.77,
+        "width": 0.72,
+        "phase": 6.55,
+        "colorIndex": 4
+      },
+      {
+        "id": "fringe-10",
+        "group": "fringe",
+        "root": [
+          671.33,
+          122.12
+        ],
+        "tip": [
+          680.33,
+          197.33
+        ],
+        "curvature": -3.03,
+        "width": 0.37,
+        "phase": 7.18,
+        "colorIndex": 0
+      },
+      {
+        "id": "fringe-11",
+        "group": "fringe",
+        "root": [
+          682.07,
+          120.4
+        ],
+        "tip": [
+          692.87,
+          200.27
+        ],
+        "curvature": -3.81,
+        "width": 0.62,
+        "phase": 7.81,
+        "colorIndex": 1
+      },
+      {
+        "id": "fringe-12",
+        "group": "fringe",
+        "root": [
+          692.8,
+          118.23
+        ],
+        "tip": [
+          705.4,
+          203.2
+        ],
+        "curvature": -3.98,
+        "width": 0.86,
+        "phase": 8.44,
+        "colorIndex": 2
+      },
+      {
+        "id": "fringe-13",
+        "group": "fringe",
+        "root": [
+          703.53,
+          115.69
+        ],
+        "tip": [
+          717.93,
+          206.13
+        ],
+        "curvature": -3.53,
+        "width": 0.51,
+        "phase": 9.07,
+        "colorIndex": 3
+      },
+      {
+        "id": "fringe-14",
+        "group": "fringe",
+        "root": [
+          714.27,
+          112.91
+        ],
+        "tip": [
+          730.47,
+          209.07
+        ],
+        "curvature": -2.53,
+        "width": 0.76,
+        "phase": 9.7,
+        "colorIndex": 4
+      },
+      {
+        "id": "fringe-15",
+        "group": "fringe",
+        "root": [
+          725.0,
+          110.0
+        ],
+        "tip": [
+          743.0,
+          212.0
+        ],
+        "curvature": -1.12,
+        "width": 0.41,
+        "phase": 10.33,
+        "colorIndex": 0
+      }
+    ]
+  },
+  "face": {
+    "method": "bounded geometric correction; no neural inference or face identity claims",
+    "center": [
+      654,
+      224
+    ],
+    "eyeLandmarks": [
+      [
+        638,
+        178
+      ],
+      [
+        713,
+        189
+      ]
+    ],
+    "mouthLandmark": [
+      678,
+      268
+    ],
+    "jawLandmark": [
+      661,
+      314
+    ],
+    "maxWarpPixels": 5,
+    "identityStable": "PENDING_VISUAL_REVIEW"
+  },
+  "sketch": {
+    "method": "in-house edge-preserving color quantization + luminance ink",
+    "colorLevels": 14,
+    "edgeStrength": 0.39
+  },
+  "gate": {
+    "visualAuthority": "NOT_APPROVED",
+    "render2_5DOnly": true,
+    "noThirdPartyCharacterMesh": true,
+    "originalPixelsUnchangedOnDisk": true,
+    "aiModelAvailable": false
+  }
+}
+
+</script><script src="./beauty-engine.v1.js"></script><script src="./hair-face-workbench.v1.js"></script></body></html>
