@@ -23,7 +23,7 @@ for(const file of ["mobile-runtime.html","studio-375.html"]){
  assert(s.includes("v95-cad-authority-layout.js")&&s.includes("v95-cad-mobile.css")&&s.includes("v95-cad-desktop.css"));
  const start=s.indexOf("function cadPage(){"),end=s.indexOf("function ",start+20);
  const fn=new Function(s.slice(start,end)+"return cadPage;");
- const html=fn();
+ const html=fn()();
  assert.equal((html.match(/data-cad-tool=/g)||[]).length,7);
  assert.equal((html.match(/data-cad-action=/g)||[]).length,13);
  assert.equal((html.match(/data-cad-canvas/g)||[]).length,1);
