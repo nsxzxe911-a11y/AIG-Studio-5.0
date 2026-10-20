@@ -5,8 +5,8 @@
  * Animation matrices are copied and compared VALUE-by-VALUE (renderer reuses arrays).
  */
 export const SCAN_CACHE_LIMITS=Object.freeze({mobile:8*1048576,desktop:32*1048576});
-const finite=n=>Number.isFinite(n)&&n>=0;
-const size=n=>Math.max(0,Math.ceil(n));
+const scanCacheFinite=n=>Number.isFinite(n)&&n>=0;
+const scanCacheSize=n=>Math.max(0,Math.ceil(n));
 export function scanTopologyBytes(t){
  if(!t||typeof t!=='object')return 0;
  let total=(t.bones?.length||0)*64+(t.inverse||[]).reduce((n,skin)=>n+skin.reduce((s,m)=>s+(m?.byteLength||64),0),0);
@@ -14,7 +14,7 @@ export function scanTopologyBytes(t){
   for(const field of ['positions','joints','weights','indices'])total+=p[field]?.byteLength||0;
   total+=(p.edges?.length||0)*48;
  }
- return size(total+256);
+ return scanCacheSize(total+256);
 }
 function snapshotWorld(world){
  if(!Array.isArray(world)||world.length>4096)return null;
@@ -98,7 +98,7 @@ export function createScanDerivedCache({limitBytes=SCAN_CACHE_LIMITS.mobile}={})
   if(items.has(key)){const old=items.get(key);items.delete(key);bytes-=old.bytes;}
   if(!reserve(n)){lastEvent='SKIP_OVER_BUDGET';return false;}
   items.set(key,{kind:kindFor(geometry),last:++clock,bytes:n,value:topology});
-  bytes+=n;if(finite(buildMs)){lastBuildMs=buildMs;knownBuildReferenceMs=buildMs;}
+  bytes+=n;if(scanCacheFinite(buildMs)){lastBuildMs=buildMs;knownBuildReferenceMs=buildMs;}
   lastEvent='STORE_'+kindFor(geometry).toUpperCase();return true;
  }
  function depthKey(view,topology,density){
@@ -121,14 +121,14 @@ export function createScanDerivedCache({limitBytes=SCAN_CACHE_LIMITS.mobile}={})
   if(!snap||!signature||!depth?.grid||!Number.isFinite(depth.width)||!Number.isFinite(depth.height)){
    lastEvent='SKIP_UNSAFE_DEPTH';return false;
   }
-  const n=size(depth.grid.byteLength+snap.bytes+384);
+  const n=scanCacheSize(depth.grid.byteLength+snap.bytes+384);
   const old=items.get('depth');
   if(old){items.delete('depth');bytes-=old.bytes;}
   if(!reserve(n)){lastEvent='SKIP_OVER_BUDGET';return false;}
   items.set('depth',{kind:'depth',last:++clock,bytes:n,value:depth,
     pose:snap.matrices,signature,topology});
   bytes+=n;
-  if(finite(buildMs)){lastBuildMs=buildMs;knownBuildReferenceMs=buildMs;}
+  if(scanCacheFinite(buildMs)){lastBuildMs=buildMs;knownBuildReferenceMs=buildMs;}
   lastEvent='STORE_DEPTH';return true;
  }
  function clearDerived(reason='USER_CLEAR'){
