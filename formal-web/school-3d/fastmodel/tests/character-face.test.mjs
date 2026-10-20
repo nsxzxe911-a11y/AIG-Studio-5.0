@@ -50,7 +50,7 @@ test('unique female lead and classmate duplicate detection prevent same-face cas
  assert.equal(a.leadId,'HERO_01');
  assert.throws(()=>roster.add({id:'LEAD_B',role:'lead',signature:signature(2)}),/CHARFACE_LEAD_ALREADY_LOCKED/);
  assert.equal(roster.entries.size,1);
- const clone=roster.add({id:'CLASS_01',role:'classmate',signature:signature(2)});
+ const clone=roster.add({id:'CLASS_01',role:'classmate',signature:signature()});
  assert.equal(clone.warnings.length,1);assert.equal(clone.warnings[0].level,'EXACT_DESCRIPTOR_DUPLICATE');
  assert.equal(clone.warnings[0].id,'HERO_01');
  assert.equal(clone.realPersonRecognized,false);
