@@ -245,7 +245,7 @@ export class FastModelView {
    const scale=decision.resolutionScale;
    if(Math.abs(this.width-this.baseWidth*scale)>40)this.resize(this.baseWidth*scale,this.baseHeight*scale,true);
  }
- this.onStats({...this.stats,status:'running',fps:+(1000/avg).toFixed(1),p95FrameMs:+p95.toFixed(2),jsSubmitMs:+this.lastCPU.toFixed(2),resolution:[this.width,this.height],sampleCount:this.frames.length,
+ this.onStats({...this.stats,status:'running',drawCalls:this.activeDrawEntries.length,fps:+(1000/avg).toFixed(1),p95FrameMs:+p95.toFixed(2),jsSubmitMs:+this.lastCPU.toFixed(2),resolution:[this.width,this.height],sampleCount:this.frames.length,
    stability:this.lastPressure?.status||'unmeasured',memoryPressure:this.lastPressure,
    gpuEstimateMiB:+(this.gpuAllocatedEstimateBytes/1048576).toFixed(1),cpuDerivedMiB:+(this.cpuDerivedEstimateBytes/1048576).toFixed(1),
    frameBudget:decision,cacheEvictedMiB:+(this.governor.cache.totalEvictedBytes/1048576).toFixed(1),optionalHairRelease:this.lastOptionalRelease||null,gpuUtilizationPercent:null,surfaceGuide:this.surfaceGuide,wireMode:this.wireMode,wireDensity:this.wireDensity,wireLines:this.wireStats.segments,wireSkippedForLag:this.wireState.suppressed,previewDetail:{mode:this.detailMode,hidden:this.detailState.hidden,activeDrawCalls:this.activeDrawEntries.length,hiddenOptional:this.drawEntries.length-this.activeDrawEntries.length,optionalMarked:this.drawEntries.filter(x=>x.optionalDetail).length,displayOnly:true}});
