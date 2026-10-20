@@ -48,7 +48,8 @@ export function sampleSourceDepth(surfaces,fetch,{density='balanced'}={}){
    const inv=1/area;
    triangles++;
    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
-    if(cellTests++>=b.maxCellTests){incomplete=true;break outer;}
+    if(cellTests>=b.maxCellTests){incomplete=true;break outer;}
+    cellTests++;
     const px=(x+.5)/b.columns,py=(y+.5)/b.rows;
     const b1=((px-v0.x)*(v2.y-v0.y)-(py-v0.y)*(v2.x-v0.x))*inv;
     const b2=((v1.x-v0.x)*(py-v0.y)-(v1.y-v0.y)*(px-v0.x))*inv;
