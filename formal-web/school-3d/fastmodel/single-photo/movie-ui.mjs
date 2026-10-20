@@ -1,4 +1,5 @@
 import {RealMovieCapture,validateMovieSource,MOVIE_SOURCE_VERSION} from './movie-recorder.mjs';
+import {mapVoiceFiles,voiceTimecodes,RmsMouthDriver,VOICE_CUES_VERSION} from './voice-cues.mjs';
 
 /** Build buttons, actual recorded video and evidence only when a source-backed
  * GLB clip sequence is playable. No source GLB is modified or uploaded.
@@ -10,21 +11,23 @@ export class MovieWorkspace {
   this.doc=document;this.env=env;this.getContext=getContext;
   this.showSubtitle=showSubtitle;this.clearSubtitle=clearSubtitle;
   this.capture=null;this.active=false;this.finalizing=false;
-  this.outputUrls=[];this.lockedSource=null;
+  this.outputUrls=[];this.lockedSource=null;this.mouth=null;
   this.el=id=>document.getElementById(id);
   this.el('movie-record').addEventListener('click',()=>{void this.record();});
   this.el('movie-stop').addEventListener('click',()=>{void this.finish(false);});
-  this.el('movie-voice-file').addEventListener('change',()=>{
-   if(this.active)return;
-   this.clearOutput();
-   this.el('movie-status').textContent='配音素材已更改；下一次錄影才會納入音訊。';
-  });
+  for(const id of ['movie-voice-file','movie-voice-lines']){
+   this.el(id)?.addEventListener('change',()=>{
+    if(this.active)return;
+    this.clearOutput();
+    this.el('movie-status').textContent='配音素材已更改；下一次錄影才會納入音訊。';
+   });
+  }
   this.refresh();
  }
  get isBusy(){return this.active||this.finalizing;}
  lock(on){
   for(const id of ['story-text','story-build','story-play','story-stop','pause',
-   'local-glb','action-glb','clip','movie-voice-file','dialogue-style','cloud-dialogue',
+   'local-glb','action-glb','clip','movie-voice-file','movie-voice-lines','dialogue-style','cloud-dialogue',
    'dialogue-preview','timeline-capture','review-capture']){
    const element=this.el(id);
    if(element)element.disabled=!!on;
@@ -69,10 +72,12 @@ export class MovieWorkspace {
   const c=this.getContext();
   const {plan,sourceSha,view,sound,sourceName,dialogueOrigin,soundOptions}=c;
   const voiceFile=this.el('movie-voice-file').files?.[0]||null;
+  const voiceFiles=Array.from(this.el('movie-voice-lines')?.files||[]);
   let capture=null;
   try{
    validateMovieSource({plan,sourceSha256:sourceSha,clips:view?.animation?.clips,
     haveModel:!!view?.model,dialogueOrigin,voiceFile});
+   const cues=mapVoiceFiles(plan,voiceFiles,{wholeFilePresent:!!voiceFile});
    // Keep the previous verified movie available until a new Blob is complete.
    this.active=true;this.lock(true);
    this.el('movie-record').disabled=true;
@@ -80,11 +85,18 @@ export class MovieWorkspace {
    const original=soundOptions();
    // IMPORTANT: start while inside the user's click activation, before any
    // await; browser AudioContext/WebAudio permissions can depend on it.
-   const needAudio=original.sfx||original.music||!!voiceFile;
-   sound.configure({...original,voice:false,sfx:original.sfx||!!voiceFile});
+   const needAudio=original.sfx||original.music||!!voiceFile||cues.length>0;
+   sound.configure({...original,voice:false,sfx:original.sfx||!!voiceFile||cues.length>0});
    if(needAudio)sound.start();
    sound.configure({...original,voice:false});
    const buffer=voiceFile?await sound.decodeVoiceFile(await voiceFile.arrayBuffer()):null;
+   const cueBuffers=[];
+   for(const cue of cues){
+    const decoded=await sound.decodeVoiceFile(await cue.file.arrayBuffer());
+    if(decoded.duration>cue.seconds+.05)
+     throw Error('MOVIE_VOICE_CUE_LONGER_THAN_REAL_ACTION_'+(cue.position+1));
+    cueBuffers.push(decoded);
+   }
    if(!this.active)throw Error('MOVIE_START_ABORTED');
    const bus=needAudio?sound.createRecordingBus():null;
    const pixels=view.beginMovie1080p();
@@ -99,19 +111,27 @@ export class MovieWorkspace {
    const info=capture.begin({sourceCanvas:view.canvas,audioDestination:bus,
     sourceSha256:sourceSha,plan,clips:view.animation.clips,haveModel:true,
     dialogueOrigin,voiceFile,sourceTimeNow:()=>this.env.performance?.now?.()||0});
-   this.capture=capture;this.lockedSource={sha:sourceSha,name:sourceName,
-    dialogueOrigin,voiceImported:!!buffer,format:info.format};
+   this.capture=capture;this.mouth=new RmsMouthDriver(view.model);
+   this.lockedSource={sha:sourceSha,name:sourceName,
+    dialogueOrigin,voiceImported:!!buffer||cueBuffers.length>0,
+    voiceCueCount:cueBuffers.length,voiceTimecodes:cueBuffers.length?voiceTimecodes(plan):[],
+    rmsMouthChannelAvailable:this.mouth.available&&needAudio,
+    format:info.format};
    view.onAfterRender=t=>{
     capture.draw(t,this.el('story-subtitle').textContent);
    };
    view.onFrame=dt=>{
-    if(view.animation?.story?.playing&&!view.animation.paused)sound.tick(dt);
+    if(view.animation?.story?.playing&&!view.animation.paused){
+     sound.tick(dt);
+     this.mouth?.applyLevel(sound.getVoiceLevel());
+    }
    };
    if(buffer)sound.playRecordedVoice(buffer);
    view.animation.startStory(plan,{
     onStep:({position,beat,total})=>{
      this.showSubtitle(beat.dialogue);
      sound.step(beat);
+     if(cueBuffers.length)sound.playRecordedVoice(cueBuffers[position]);
      this.el('movie-status').textContent='真正的 '+info.format.toUpperCase()+
       ' 1080p 錄製中：'+(position+1)+'/'+total+' · '+beat.clipName+
       '。字幕、原創音效與配樂隨動作同步。';
@@ -125,6 +145,7 @@ export class MovieWorkspace {
    this.el('movie-status').textContent='錄影未建立：'+err.message+'，沒有產生假影片。';
    const {view,sound}=this.getContext();
    view?.animation?.stopStory();sound?.stop();
+   this.mouth?.restore();this.mouth=null;
    if(view){view.onAfterRender=null;view.onFrame=null;view.endMovie1080p();}
    this.active=false;this.capture=null;this.lockedSource=null;
    this.restoreControls();
@@ -148,6 +169,12 @@ export class MovieWorkspace {
     sourceSha256:this.lockedSource.sha,sourceLabel:this.lockedSource.name,
     realClipSequenceFullyRecorded:!!completedStory,
     audioVoiceFileIncluded:this.lockedSource.voiceImported,
+    timedVoiceCueCount:this.lockedSource.voiceCueCount,
+    timedVoiceTimecodes:this.lockedSource.voiceTimecodes,
+    voiceCueSchema:VOICE_CUES_VERSION,
+    rmsMouthChannelAvailable:this.lockedSource.rmsMouthChannelAvailable,
+    phonemeLipSyncVerified:false,
+    realHeroineGLBApproved:false,
     dialogueOrigin:this.lockedSource.dialogueOrigin||'OFFLINE_TEMPLATE',
     systemSpeechSynthCaptured:false,realMp4OnlyIfEncodedAsMp4:output.evidence.container==='mp4',
     nativeGPUFrameRateMeasured:false};
@@ -157,7 +184,7 @@ export class MovieWorkspace {
    const player=this.el('movie-preview');player.src=videoUrl;player.hidden=false;
    for(const a of [
     {url:videoUrl,file:output.filename,label:'下載真實 '+metadata.container.toUpperCase()+' 錄影'},
-    {url:evidenceUrl,file:'AIG-FastModel-3-4-Real-Movie-Evidence.json',label:'下載 1080p 錄影及聲音來源證據'}
+    {url:evidenceUrl,file:'AIG-FastModel-3-5-Real-Movie-Evidence.json',label:'下載 1080p 錄影及逐句配音來源證據'}
    ]){
     const link=this.doc.createElement('a');link.href=a.url;link.download=a.file;
     link.className='download';link.textContent=a.label;this.el('movie-downloads').append(link);
@@ -170,6 +197,7 @@ export class MovieWorkspace {
    // A failed new recording must not delete the previous successful export.
    this.el('movie-status').textContent='本次影片未能輸出：'+err.message+'；無新檔案，保留先前已完成的錄影。';
   }finally{
+   this.mouth?.restore();this.mouth=null;
    sound.stop();this.clearSubtitle();
    if(view){view.onAfterRender=null;view.onFrame=null;view.endMovie1080p();
     view.animation?.stopStory();if(view.animation)view.animation.paused=true;}
