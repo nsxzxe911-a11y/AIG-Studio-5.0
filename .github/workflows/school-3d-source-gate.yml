@@ -625,6 +625,29 @@ jobs:
               assert token in text, token
           print('1.7 fictional GLB face-collision SOURCE Gate PASS; not real-person face recognition or visual approval')
           PY
+      - name: FastModel 1.8 head-neck seam hair risk and native device evidence BLOCK Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/character-integrity.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/character-integrity.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMOTION-1-8-SEAM-HAIR-NATIVE-UNVERIFIED.html
+          python - <<'PY'
+          from pathlib import Path
+          t=Path('artifacts/fastmodel-technical/CI-FASTMOTION-1-8-SEAM-HAIR-NATIVE-UNVERIFIED.html').read_text()
+          for token in ['id="seam-check"','id="hair-check"',
+                        'id="native-gate-status"',
+                        'function inspectHeadNeckGeometry(',
+                        'function inspectHairNeckOcclusion(',
+                        'function assessAnimationDeviceEvidence(',
+                        'actualSeamFixed:false','actualOcclusionApproved:false',
+                        'BLOCKED_MISSING_REAL_DEVICE_EVIDENCE']:
+              assert token in t,token
+          assert 'window.AIG_EMBEDDED_GLB' in t
+          assert "value=\"1920x1080\" selected" in t
+          print('1.8 synthetic GLB integrity source Gate PASS. Head-neck REPAIR, hair motion and real hardware 1080p60 remain BLOCKED.')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
