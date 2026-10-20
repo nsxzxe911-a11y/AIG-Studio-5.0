@@ -82,7 +82,7 @@ function pack(file,mesh,skin,report){
  const old=new Uint8Array(file.bin.buffer,file.bin.byteOffset,file.bin.byteLength);
  const parts=[];
  function append(values,components,type){
-  const typed=type===5125?new Uint32Array(values):new Float32Array(values),bytes=new Uint8Array(typed.buffer),len=bytes.byteLength;
+  const typed=type===5125?new Uint32Array(values):type===5123?new Uint16Array(values):new Float32Array(values),bytes=new Uint8Array(typed.buffer),len=bytes.byteLength;
   const pad=(-len)&3;parts.push({bytes,pad});
   const originalPadded=old.byteLength+((-old.byteLength)&3);
   const offset=originalPadded+parts.slice(0,-1).reduce((s,x)=>s+x.bytes.length+x.pad,0);
@@ -99,7 +99,7 @@ function pack(file,mesh,skin,report){
  // Quad strip; winding is taken from the chosen best matching ring direction.
  for(let i=0;i<n;i++){const j=(i+1)%n;indices.push(i,j,n+i,j,n+j,n+i);}
  const attrs={POSITION:append(positions,3,5126),TEXCOORD_0:append(uv,2,5126),
-   JOINTS_0:append(joints,4,5126),WEIGHTS_0:append(weights,4,5126),
+   JOINTS_0:append(joints,4,5123),WEIGHTS_0:append(weights,4,5126),
    COLOR_0:append(colors,4,5126)};
  const index=append(indices,1,5125);
  const meshIndex=g.meshes.length;
@@ -147,6 +147,8 @@ export function createHeadNeckBridgeCandidate(arrayBuffer,{maxGapFraction=0.08}=
  const maximum=Math.sqrt(Math.max(...h.map((v,i)=>sq(v,pairing.aligned[i]))));
  if(maximum>extent*maxGapFraction)throw Error('BRIDGE_GAP_EXCEEDS_SAFETY_LIMIT');
  if(!file.g.skins?.[head.n.skin]||!file.g.materials?.[head.p.material??0])throw Error('BRIDGE_SKIN_OR_MATERIAL_MISSING');
+ const maxJoint=file.g.skins[head.n.skin].joints.length;
+ if([...h,...pairing.aligned].some(v=>v.j.some(j=>j>=maxJoint||j>65535)))throw Error('BRIDGE_JOINT_INDEX_OUT_OF_RANGE');
  return pack(file,{heads:h,necks:pairing.aligned,material:head.p.material??0},head.n.skin,{
   source:'REAL_TAGGED_HEAD_NECK_GLB',ringVertices:h.length,maximumSourceGap:maximum,
   sourceExtent:extent,thresholdFraction:maxGapFraction,skinIndex:head.n.skin});
