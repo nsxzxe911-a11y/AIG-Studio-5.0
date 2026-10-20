@@ -282,6 +282,35 @@ jobs:
           path: artifacts/school-3d-phase16-fine/
           retention-days: 14
           if-no-files-found: error
+      - name: Phase17 actual GLB image-silhouette reproject — SYNTHETIC CI only
+        run: |
+          mkdir -p artifacts/school-3d-phase17-synthetic
+          python formal-web/school-3d/phase17/tools/build_source_fidelity.py \
+            --base artifacts/school-3d-phase16-fine/CI-SYNTHETIC-528-FINE-HAIR-NOT-APPROVED.glb \
+            --source artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png \
+            --hair-spec artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json \
+            --envelope-spec artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json \
+            --phase15-builder formal-web/school-3d/phase15/tools/build_hair_cards.py \
+            --phase13-builder formal-web/school-3d/phase13/tools/build_envelope.py \
+            --out artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --report artifacts/school-3d-phase17-synthetic/CI-STRUCTURE-NOT-VISUAL-FIDELITY.json
+      - name: Phase17 16 strict source-mesh SHA face-alpha and no-fake tests
+        env:
+          AIG_P17_HAIR15: formal-web/school-3d/phase15/tools/build_hair_cards.py
+          AIG_P17_CORE13: formal-web/school-3d/phase13/tools/build_envelope.py
+          AIG_P17_BASE: artifacts/school-3d-phase16-fine/CI-SYNTHETIC-528-FINE-HAIR-NOT-APPROVED.glb
+          AIG_P17_OUT: artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb
+          AIG_P17_IMAGE: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png
+          AIG_P17_HAIR_SPEC: artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json
+          AIG_P17_ENV: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json
+        run: python -m unittest discover -s formal-web/school-3d/phase17/tools -p 'test_phase17_source.py' -v
+      - name: Archive Phase17 synthetic GLB technical only, NOT real heroine
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School3D-Phase17-SYNTHETIC-HairMatte-NOT-APPROVED
+          path: artifacts/school-3d-phase17-synthetic/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
