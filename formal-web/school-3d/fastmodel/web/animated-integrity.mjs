@@ -7,7 +7,7 @@ export const ANIMATED_QA_VERSION='FASTMOTION_2_0_POSED_POINTS_NON_AUTHORITATIVE'
 const blocked=(reason)=>({status:'BLOCKED',reason,source:ANIMATED_QA_VERSION,actualSeamFixed:false,
  animatedCollisionProved:false,actualVisualApproval:false,realDeviceTest:false});
 const ident=()=>Float32Array.of(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
-const mul=(a,b)=>{const out=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++){
+const auditMultiplyMatrix=(a,b)=>{const out=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++){
  let t=0;for(let k=0;k<4;k++)t+=a[k*4+r]*b[c*4+k];out[c*4+r]=t;
  }return out;};
 const mapped=(m,p)=>[
@@ -111,7 +111,7 @@ export function inspectAnimatedIntegrity(file,reader,{frames=25,maxVerticesPerRo
  for(let step=0;step<frames;step++){
   const seconds=(step/frames)*source.duration;
   const world=evaluator.evaluate(seconds,true);
-  const jointMatrices=g.skins.map((skin,si)=>skin.joints.map((node,j)=>mul(world[node],inverse[si][j])));
+  const jointMatrices=g.skins.map((skin,si)=>skin.joints.map((node,j)=>auditMultiplyMatrix(world[node],inverse[si][j])));
   function deform(v){
    const out=[0,0,0],joints=jointMatrices[v.skin];
    for(let k=0;k<4;k++){
