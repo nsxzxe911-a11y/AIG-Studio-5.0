@@ -72,7 +72,7 @@ export class FastModelView {
  const start=performance.now();const nextFile=decodeGLB(arrayBuffer),nextTracks=tracksFor(nextFile),assembled=buildBatches(nextFile,mode);
  const requiredGPU=assembled.batches.reduce((acc,b)=>acc+b.vertices.byteLength+b.indices.byteLength,0);
  if(requiredGPU>this.governor.b.gpuWorkingSetEstimateBytes)throw Error('GPU 繪圖網格推估超過本次預算，保留原有工作區。');
- this.disposeMeshes();this.file=nextFile;this.tracks=nextTracks;this.mode=mode;this.patchStats=null;this.detailState=initialDetailState();this.staticWorld=null;this.staticPoseUploaded=false;
+ this.disposeMeshes();this.file=nextFile;this.tracks=nextTracks;this.mode=mode;this.patchStats=null;this.detailState=this.detailMode==='eco'?nextDetailState(initialDetailState(),{mode:'eco'}):initialDetailState();this.staticWorld=null;this.staticPoseUploaded=false;
  this.stats={sourceMeshes:this.file.g.meshes.length,sourcePrimitives:this.file.g.meshes.reduce((s,m)=>s+m.primitives.length,0),...{drawCalls:assembled.drawCalls,triangles:assembled.indices/3,vertices:assembled.vertices,skipped:assembled.skipped},gpu:this.gpu};
  this.gpuAllocatedEstimateBytes=requiredGPU;
  this.bound=assembled.bound;this.center=this.bound.min.map((a,i)=>(a+this.bound.max[i])*.5);this.zoom=2/Math.max(this.bound.max[1]-this.bound.min[1],(this.bound.max[0]-this.bound.min[0])*1080/1920)*.93;
