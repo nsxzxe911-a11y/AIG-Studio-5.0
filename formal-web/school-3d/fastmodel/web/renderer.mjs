@@ -1,5 +1,6 @@
 import {decodeGLB,readAccessor,buildBatches} from './fastmodel-data.mjs';
 import {ResourceGovernor,makeBudgets,RebuildableCache} from './resource-governor.mjs';
+import {checkRenderTarget} from './resolution-policy.mjs';
 const VERTEX=`#version 300 es
 precision highp float;precision highp int;
 layout(location=0)in vec3 pos;
@@ -77,7 +78,7 @@ export class FastModelView {
  this.boneTex=(this.file.g.skins||[]).map(s=>{const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,4,s.joints.length,0,gl.RGBA,gl.FLOAT,null);return t;});
  this.boneTex.forEach((t,i)=>{this.gpuAllocatedEstimateBytes+=this.file.g.skins[i].joints.length*4*4*4;});
  this.cpuDerivedEstimateBytes=this.entries.reduce((s,e)=>s+(e.positionsPacked?.byteLength||0)+(e.firstPositions?.byteLength||0),0);
- this.resize(1920,1080);this.stats.loadMs=+(performance.now()-start).toFixed(1);this.onStats({...this.stats,status:'loaded'});return this.stats;
+ this.resize(this.baseWidth*this.governor.recommendedScale,this.baseHeight*this.governor.recommendedScale,true);this.stats.loadMs=+(performance.now()-start).toFixed(1);this.onStats({...this.stats,status:'loaded'});return this.stats;
  }
  // Under pressure, release only auxiliary GPU hair-display geometry. The source GLB and editable mesh are untouched.
  releaseOptionalHair(){
@@ -109,11 +110,32 @@ export class FastModelView {
  }
  disposeMeshes(){const gl=this.gl;this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;for(const b of this.entries||[]){gl.deleteVertexArray(b.vao);gl.deleteBuffer(b.vb);gl.deleteBuffer(b.ib);}for(let t of this.textures||[])gl.deleteTexture(t);for(let t of this.boneTex||[])gl.deleteTexture(t);this.entries=[];this.textures=[];this.boneTex=[];}
  resize(w,h,automatic=false){
-  if(!automatic){this.baseWidth=w;this.baseHeight=h;}
+  // Preflight dimensions and working-set allowance BEFORE touching the canvas or existing GLB.
+  const gl=this.gl;
+  const gmax=gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
+  const viewport=gl.getParameter(gl.MAX_VIEWPORT_DIMS);
   const targetW=Math.max(640,Math.round(w)),targetH=Math.max(360,Math.round(h));
-  if(this.width===targetW&&this.height===targetH)return;
-  this.width=targetW;this.height=targetH;this.canvas.width=targetW;this.canvas.height=targetH;this.gl.viewport(0,0,targetW,targetH);
-}
+  const verdict=checkRenderTarget({width:targetW,height:targetH,maxRenderbufferSize:gmax,
+    maxViewportWidth:viewport?.[0],maxViewportHeight:viewport?.[1],
+    gpuBudgetBytes:this.governor.b.gpuWorkingSetEstimateBytes,existingGpuBytes:this.gpuAllocatedEstimateBytes||0});
+  if(!verdict.allowed)return {ok:false,reason:verdict.reason,requested:[targetW,targetH],actual:[this.width,this.height],
+    estimatedFramebufferMiB:verdict.framebufferEstimateBytes?+(verdict.framebufferEstimateBytes/1048576).toFixed(1):null};
+  const oldW=this.canvas.width,oldH=this.canvas.height;
+  if(this.width!==targetW||this.height!==targetH){
+    this.canvas.width=targetW;this.canvas.height=targetH;
+    // Drivers may silently clamp drawing buffers; never pretend 4K if allocation failed.
+    if((gl.drawingBufferWidth>0&&gl.drawingBufferWidth!==targetW)||(gl.drawingBufferHeight>0&&gl.drawingBufferHeight!==targetH)){
+      this.canvas.width=oldW;this.canvas.height=oldH;gl.viewport(0,0,oldW,oldH);
+      return {ok:false,reason:'DRIVER_BUFFER_MISMATCH',requested:[targetW,targetH],actual:[this.width,this.height]};
+    }
+    gl.viewport(0,0,targetW,targetH);
+    this.width=targetW;this.height=targetH;
+  }
+  if(!automatic){this.baseWidth=targetW;this.baseHeight=targetH;}
+  return {ok:true,reason:'OK',requested:[targetW,targetH],actual:[this.width,this.height],
+    estimatedFramebufferMiB:+(verdict.framebufferEstimateBytes/1048576).toFixed(1),automatic};
+ }
+
  draw(ts){if(!this.file||!this.entries.length)return;const gl=this.gl;let start=performance.now();let world=animatedWorld(this.file.g.nodes,this.wind?this.tracks:[],ts*.001);gl.useProgram(this.program);
  this.boneTex.forEach((texture,i)=>{let {out,n}=matsFor(this.file,world,i);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,4,n,gl.RGBA,gl.FLOAT,out);});
  gl.clearColor(.012,.017,.035,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);

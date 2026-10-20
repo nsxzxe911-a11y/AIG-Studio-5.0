@@ -36,3 +36,8 @@ python tools/build_standalone.py --glb assets/phase17-visual-NOT-APPROVED.glb --
 ```
 
 **Next native gate:** call the newly exposed `aig_scheduler_*` C ABI from Android NDK JNI and Windows hosts; add real DX12/Vulkan timestamp queries, GPU memory data if available, battery/thermal notifications, app-scoped storage capacity monitoring, dirty Working Copy persistence and 30-minute 1080p target run on actual S23 + Windows GPU. Fail → BLOCK.
+
+
+## 1080p／2K／4K RGB 畫質擴充（2026-10-20）
+
+正式黑色 RGB「畫質」頁增加 720p（1280×720）、1080p（1920×1080）、2K/QHD（2560×1440）及 4K/UHD（3840×2160）。改動的是 GPU 畫布**內部渲染解析度**，不改手機 UI CSS 尺寸。未達 GPU 尺寸或記憶體預算時拒絕、保留現有模型與設定；開啟自動保護時可按 FPS 降階。2K 採一般消費市場 QHD 用語而非 DCI 2K。新增 8 項畫質 policy 測試，合計 35 Node tests + 2 C++ CTests PASS；實際 S23/Windows GPU 2K/4K/60FPS 尚未驗收。見 RGB-RESOLUTION-EVIDENCE.json。

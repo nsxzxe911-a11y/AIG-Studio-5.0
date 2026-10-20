@@ -383,6 +383,38 @@ jobs:
           assert 'gl.bufferSubData' in s
           print('Embedded adaptive resource governor is present')
           PY
+      - name: FastModel 1.2 real black RGB UI and safe 720p/1080p/QHD/4K selection
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --check formal-web/school-3d/fastmodel/web/resolution-policy.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --test formal-web/school-3d/fastmodel/tests/rgb-ui.test.mjs formal-web/school-3d/fastmodel/tests/resolution-policy.test.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          base=Path('formal-web/school-3d/fastmodel')
+          a=json.loads((base/'RGB-RESOLUTION-EVIDENCE.json').read_text())
+          p=a['renderPresets']
+          assert p['2K_QHD']==[2560,1440] and p['4K_UHD']==[3840,2160]
+          assert a['resolutionChangesCanvasDrawingBuffer'] is True
+          for blocked in ['S23GPU4KVerified','WindowsGPU4KVerified','fps60Proven','nativeDX12Implemented','nativeVulkanImplemented','visualAuthorityApproved','formalWebsiteDeployed','apkBuilt','exeBuilt']:
+            assert a[blocked] is False,blocked
+          assert a['releaseStatus']=='PREVIEW_ONLY_NOT_PRODUCTION'
+          print('RGB real options and truthful device-GPU no-approval Gate PASS')
+          PY
+      - name: FastModel 1.2 synthetic offline RGB+QHD+4K bundle exact source
+        run: |
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-RGB-2K-4K-NOT-GPU-PROVEN.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-RGB-2K-4K-NOT-GPU-PROVEN.html').read_text()
+          for name in ['#020407','2560x1440','3840x2160','RESOLUTION_PRESETS','checkRenderTarget','AIG_EMBEDDED_GLB']:
+            assert name in s,name
+          assert "window.AIG_EMBEDDED_GLB" in s
+          print('Offline RGB controls and real policy embedded PASS; native FPS untested')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
