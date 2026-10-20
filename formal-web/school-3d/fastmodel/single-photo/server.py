@@ -126,7 +126,7 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None,al
             try:
                 # Explicit owner policy: no credit-bearing reconstruction requests
                 # in the default self-developed AIG runtime. Never call Meshy.
-                if not allow_paid_3d and client.configured:
+                if not allow_paid_3d:
                     raise ValueError('ZERO_CREDITS_REMOTE_3D_BLOCKED')
                 if not client.configured:raise ValueError('MESHY_API_KEY_NOT_CONFIGURED')
                 if self.headers.get('Content-Type')!='application/json':raise ValueError('JSON_REQUIRED')
