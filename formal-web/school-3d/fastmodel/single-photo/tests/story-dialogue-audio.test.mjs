@@ -34,7 +34,7 @@ test('editable dialogue on real GLB storyboard syncs cue text without touching s
  assert.equal(enriched.timeline[3].audioSfxId,'punch');
  assert.equal(enriched.timeline[3].voiceSpeaker,'女主角');
  assert.equal(enriched.sourceCharacterMeshUnchanged,true);
- assert.equal(clips[3].tracks[0].values[3],.2);
+ assert.ok(Math.abs(clips[3].tracks[0].values[3]-.2)<1e-6,'Float32 bone keyframe preserved');
  assert.throws(()=>updateDialogueCue(dialogues,0,''),/DIALOGUE_EDIT_TEXT_INVALID/);
  assert.throws(()=>updateDialogueCue(dialogues,20,'台詞'),/DIALOGUE_EDIT_INDEX_INVALID/);
  assert.throws(()=>composeDialogue(input,{style:'imaginary-llm'}),/DIALOGUE_STYLE_INVALID/);
