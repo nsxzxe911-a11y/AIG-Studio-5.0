@@ -845,6 +845,20 @@ jobs:
           path: artifacts/fastmodel-26-pipeline-SYNTHETIC-NOT-APPROVED/
           retention-days: 14
           if-no-files-found: error
+      - name: FastModel 2.7 resumable single-photo backend and PBR animation source Gate
+        run: |
+          python -m unittest discover -s formal-web/school-3d/fastmodel/single-photo/tests -p 'test_*.py' -v
+          npm ci --prefix formal-web/school-3d/fastmodel/single-photo --no-audit --no-fund
+          npm test --prefix formal-web/school-3d/fastmodel/single-photo
+          npm run build --prefix formal-web/school-3d/fastmodel/single-photo
+          python formal-web/school-3d/fastmodel/single-photo/tests/build_ci_artifact.py --out artifacts/fastmodel-27-SYNTHETIC-PROTOCOL-NOT-LIVE-GENERATION
+      - name: Archive FastModel 2.7 source and synthetic offline animation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-FastModel-2-7-SOURCE-SYNTHETIC-NOT-PHOTO-GENERATED
+          path: artifacts/fastmodel-27-SYNTHETIC-PROTOCOL-NOT-LIVE-GENERATION/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
