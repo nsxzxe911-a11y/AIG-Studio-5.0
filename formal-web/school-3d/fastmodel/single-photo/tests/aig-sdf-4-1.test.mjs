@@ -62,7 +62,7 @@ test('4.1 viewport remains real buttons bound to 4.0 source SHA and resource cle
  assert.match(app,/scaffold\.sourceSHA256!==expectedSHA/);
  assert.match(app,/new AigImplicitRenderer/);
  assert.match(app,/aig41-release'\)\.addEventListener/);
- assert.match(app,/GPU FPS/);
+ assert.match(app,/非實際畫面 FPS|非 GPU FPS/);
 });
 test('WebGL2 buffer/shader created only once across angle redraws, not remeshed',()=>{
  const calls=[];
