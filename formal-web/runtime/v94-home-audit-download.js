@@ -50,7 +50,7 @@ async function audit(){
   const sha=headRaw?.object?.sha;
   if(!/^[0-9a-f]{40}$/.test(sha||""))throw Error("GitHub 正式分支 SHA 無效");
   const runs=Array.isArray(runRaw?.workflow_runs)?runRaw.workflow_runs:[];
-  const validRuns=runs.filter(r=>r?.head_sha===sha&&/AIG V9[34].*(?:HOME|Formal|RGB)/i.test(r.name||""));
+  const validRuns=runs.filter(r=>r?.head_sha===sha&&r.name==="AIG V94 HOME Audit Download Gate");
   validRuns.sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||"")));
   const run=validRuns[0]||null;
   const downloads=releases.map(({project,data,error,private:restricted})=>{

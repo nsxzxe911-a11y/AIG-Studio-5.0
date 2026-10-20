@@ -7,6 +7,7 @@ for(const required of ["AIG_HOME_V94_AUDIT","BTN_HOME_V94_AUDIT_DOWNLOAD","BTN_H
 }
 assert(ui.includes("physicalMachineOutput:\"BLOCKED\""));
 assert(ui.includes("r?.head_sha===sha"),"GitHub Gate must exactly match formal branch HEAD SHA");
+assert(ui.includes('r.name==="AIG V94 HOME Audit Download Gate"'),"Never call V93 PASS a V94 audit PASS");
 assert(ui.includes("!r.draft&&!r.prerelease"),"No draft or prerelease downloads");
 assert(ui.includes('validUrl(a.browser_download_url,project.repo)'),"No invented asset URLs");
 assert(ui.includes('歷史發布')&&ui.includes('非目前網頁版'),"Historical downloads must be labeled");
