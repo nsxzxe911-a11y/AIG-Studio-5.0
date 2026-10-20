@@ -49,7 +49,21 @@ el('mesh-lines').addEventListener('change',applyWireChoice);el('mesh-density').a
 // FastModel 2.1 scan display: real joint parent edges = solid; source mesh
 // boundary/projected silhouette = faint dashed (NOT actual depth-tested occlusion).
 const scanCanvas=el('scan-overlay');
-let turboScan=createTurboScanController(),scanLoadRevision=0,scanDeferredBuildPending=false;
+let turboScan=createTurboScanController(),scanLoadRevision=0,scanDeferredBuildPending=false,pendingExtremeStats=null;
+function reportExtremeGeometry(file,revision){
+ if(revision!==scanLoadRevision||file!==(scanFile||view?.file))return;
+ const profile=el('scan-speed').value;
+ const limit=profile==='turbo'?2000:profile==='balanced'?6000:12000;
+ try{
+   lastScan=scanGeometry(file,readAccessor,{kind:el('scene-kind').value,
+     maxSamples:limit,sampleReader:sampleVec3Accessor});
+   const dims=lastScan.sampledExtent.map(x=>x.toFixed(3)).join(' × ');
+   el('scan-status').textContent='極速掃描頂點抽樣：'+lastScan.samples.toLocaleString()+
+     '/'+lastScan.vertices.toLocaleString()+' 點，'+lastScan.triangles.toLocaleString()+
+     ' 三角面；抽樣範圍 '+dims+'（GLB 本機單位）。模式 '+profile+
+     '；使用有限數量來源資料，未完成完整 3D 形狀／碰撞證明。';
+ }catch(e){lastScan=null;el('scan-status').textContent='幾何摘要失敗：'+e.message+'；來源模型保留。';}
+}
 function scanRequestContours(f,density,revision){
  if(scanDeferredBuildPending)return;
  scanDeferredBuildPending=true;
@@ -89,7 +103,7 @@ function clearScanOverlay(){
 }
 function applyScanMode(){
  const mode=el('scan-mode').value,density=el('scan-density').value,depthChoice=el('scan-depth').value,speed=el('scan-speed').value;
- const revision=++scanLoadRevision;scanDeferredBuildPending=false;turboScan.reset(speed,scanCanvas.clientWidth<650);
+ const revision=++scanLoadRevision;scanDeferredBuildPending=false;pendingExtremeStats=null;turboScan.reset(speed,scanCanvas.clientWidth<650);
  const status=el('scan-layer-status');
  updateScanColorLegend();
  if(!SCAN_MODES.includes(mode)||!SCAN_DENSITIES.includes(density)||!['off','sampled'].includes(depthChoice)||!SCAN_SPEED_MODES.includes(speed)){
@@ -147,6 +161,11 @@ function applyScanMode(){
        ' 這不是實機 GPU FPS 量測。';
      if(speed==='turbo'&&scanTopology?.geometry==='bones'&&choice.frameSamples===1){
        scanRequestContours(f,density,revision);
+     }
+     // Never block the first real bone overlay with the 2,000-12,000 vertex summary.
+     if(pendingExtremeStats?.revision===revision){
+       const job=pendingExtremeStats;pendingExtremeStats=null;
+       setTimeout(()=>reportExtremeGeometry(job.file,job.revision),30);
      }
      el('scan-depth-status').textContent=depthMode==='off'
        ?(el('scan-depth').value==='sampled'?'畫面主繪圖 CPU 負荷較高，暫時停用三角面深度取樣（自動效能保護）。':'深度取樣關閉，線條僅作外型輔助。')
@@ -297,16 +316,15 @@ const deviceGate=assessAnimationDeviceEvidence([]);
 el('native-gate-status').textContent='Windows／Android 原生動畫證據 '+deviceGate.status+'：兩平台均需實機 FPS、p95、尺寸及溫度；瀏覽器 FPS 不可當真機 GPU 證據。';
 el('scan-btn').addEventListener('click',()=>{
  const file=scanFile||view?.file;
- if(!file){el('scan-status').textContent='無可掃描的 GLB。請選擇本機 GLB 檔案。';return;}
- try{
-   lastScan=scanGeometry(file,readAccessor,{kind:el('scene-kind').value,maxSamples:12000,sampleReader:sampleVec3Accessor});
-   if(el('scan-mode').value==='off'){el('scan-mode').value='bones-outline';applyScanMode();}
-   const e=lastScan.sampledExtent.map(x=>x.toFixed(3)).join(' × ');
-   el('scan-status').textContent='真實 GLB 頂點抽樣 PASS：'+lastScan.samples.toLocaleString()+
-     '/'+lastScan.vertices.toLocaleString()+' 點，'+lastScan.triangles.toLocaleString()+
-     ' 三角面、'+lastScan.primitives+' 個 primitive。'+'\n抽樣外包圍 '+e+
-     '（GLB 單位／不含骨架動畫姿態）。\n分類為手動指定，未啟用 AI 語意辨識；非照片、LiDAR 或光照深度掃描。';
- }catch(e){lastScan=null;el('scan-status').textContent='掃描失敗：'+e.message+'。原模型保留。';}
+ if(!file){el('scan-status').textContent='無可掃描的 GLB。請選擇本機 GLB。';return;}
+ // The visible REAL bone pose must appear before even bounded geometry statistics.
+ if(el('scan-mode').value==='off'){el('scan-mode').value='bones-outline';applyScanMode();}
+ const revision=scanLoadRevision;
+ el('scan-status').textContent='極速掃描啟動：真骨架優先顯示；第一幀後才計算有上限的 GLB 頂點摘要。';
+ if(!view||!view.onScanFrame){
+   pendingExtremeStats=null;
+   reportExtremeGeometry(file,revision); // CPU-only/no-skin fallback still yields honest geometry stats.
+ }else pendingExtremeStats={revision,file};
 });
 refreshScaffold();
 applyLightPreset();
