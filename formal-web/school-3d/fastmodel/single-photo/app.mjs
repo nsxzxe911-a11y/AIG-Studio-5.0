@@ -367,7 +367,7 @@ $('aig45-input').addEventListener('change',async()=>{
  aig45Entries=[];aig45Active=null;aig45Marks=[];aig45Accepted.clear();
  $('aig45-selector').replaceChildren();
  aig45Draw();aig45Controls();
- const files=[...$('aig45-input').files||[]];
+ const files=Array.from($('aig45-input').files||[]);
  if(!files.length){aig45SetStatus('未選照片。');return;}
  if(files.length>4){aig45SetStatus('AIG45_MAX_FOUR_IMAGES');return;}
  const seen=new Set(),entries=[];
@@ -409,7 +409,7 @@ aig45Canvas.addEventListener('click',event=>{
  const x=(event.clientX-rect.left)/rect.width;
  const y=(event.clientY-rect.top)/rect.height;
  try{
-  aig45Marks.push(normalizeMark({x,y},1,1));
+  aig45Marks.push(normalizeMark({x:x*aig45Active.image.naturalWidth,y:y*aig45Active.image.naturalHeight},aig45Active.image.naturalWidth,aig45Active.image.naturalHeight));
   aig45Draw();aig45Controls();
  }catch(error){aig45SetStatus('標記位置超界：'+error.message);}
 });
