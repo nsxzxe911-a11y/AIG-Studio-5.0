@@ -47,10 +47,15 @@ function gather(file,reader,role,budget){
  return {vertices,role,error:null};
 }
 function tracks(file,reader){
- const arr=[];let duration=0;
+ // Different glTF animation clips are alternatives, not simultaneous rotations.
+ // Fail closed rather than mixing every clip into one physically nonexistent pose.
+ if((file.g.animations?.length||0)>1)throw Error('MULTIPLE_ANIMATION_CLIPS_NEED_EXPLICIT_SELECTION');
+ const arr=[];let duration=0;const trackNodes=new Set();
  for(const animation of file.g.animations||[]){
   for(const channel of animation.channels||[]){
    if(channel.target?.path!=='rotation')throw Error('UNSUPPORTED_ANIMATION_CHANNEL');
+   if(trackNodes.has(channel.target.node))throw Error('DUPLICATE_NODE_ANIMATION_TRACK');
+   trackNodes.add(channel.target.node);
    const sampler=animation.samplers?.[channel.sampler];
    if(!sampler||sampler.interpolation&&sampler.interpolation!=='LINEAR')throw Error('UNSUPPORTED_ANIMATION_INTERPOLATION');
    const times=reader(file,sampler.input),values=reader(file,sampler.output);
