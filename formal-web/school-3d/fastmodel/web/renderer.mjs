@@ -4,6 +4,7 @@ import {buildEdgeIndex,wireCap,WIRE_MODES,WIRE_DENSITIES,adaptiveWireStep} from 
 import {surfaceGuideId} from './surface-guides.mjs';
 import {LIGHT_PRESETS} from './scene-tools.mjs';
 import {createPoseEvaluator} from './pose-evaluator.mjs';
+import {auditAnatomyMetadata} from './anatomy-guard.mjs';
 import {DETAIL_MODES,optionalDetailGroup,initialDetailState,nextDetailState,visiblePreviewEntries} from './adaptive-detail.mjs';
 import {ResourceGovernor,makeBudgets,RebuildableCache} from './resource-governor.mjs';
 import {checkRenderTarget} from './resolution-policy.mjs';
@@ -77,18 +78,18 @@ export class FastModelView {
   if(arrayBuffer.byteLength>this.governor.b.gpuWorkingSetEstimateBytes/2)
     throw Error('模型來源超出保守記憶體預算；原工作區不變。可先建立低 LOD 或在 RAM 更大的裝置載入。');
   // Two-phase load: parse/build/preflight first. Invalid or too large GLB CANNOT clear a live scene.
- const start=performance.now();const nextFile=decodeGLB(arrayBuffer),nextTracks=tracksFor(nextFile),nextPose=createPoseEvaluator(nextFile.g.nodes,nextTracks),assembled=buildBatches(nextFile,mode);
+ const start=performance.now();const nextFile=decodeGLB(arrayBuffer),nextTracks=tracksFor(nextFile),nextPose=createPoseEvaluator(nextFile.g.nodes,nextTracks),nextAnatomy=auditAnatomyMetadata(nextFile),assembled=buildBatches(nextFile,mode);
  const requiredGPU=assembled.batches.reduce((acc,b)=>acc+b.vertices.byteLength+b.indices.byteLength,0);
  if(requiredGPU>this.governor.b.gpuWorkingSetEstimateBytes)throw Error('GPU 繪圖網格推估超過本次預算，保留原有工作區。');
- this.disposeMeshes();this.file=nextFile;this.tracks=nextTracks;this.poseEvaluator=nextPose;this.mode=mode;this.patchStats=null;this.detailState=this.detailMode==='eco'?nextDetailState(initialDetailState(),{mode:'eco'}):initialDetailState();this.staticWorld=null;this.staticPoseUploaded=false;
+ this.disposeMeshes();this.file=nextFile;this.tracks=nextTracks;this.poseEvaluator=nextPose;this.anatomyAudit=nextAnatomy;this.mode=mode;this.patchStats=null;this.detailState=this.detailMode==='eco'?nextDetailState(initialDetailState(),{mode:'eco'}):initialDetailState();this.staticWorld=null;this.staticPoseUploaded=false;
  this.stats={sourceMeshes:this.file.g.meshes.length,sourcePrimitives:this.file.g.meshes.reduce((s,m)=>s+m.primitives.length,0),...{drawCalls:assembled.drawCalls,triangles:assembled.indices/3,vertices:assembled.vertices,skipped:assembled.skipped},gpu:this.gpu};
  this.gpuAllocatedEstimateBytes=requiredGPU;
  this.bound=assembled.bound;this.center=this.bound.min.map((a,i)=>(a+this.bound.max[i])*.5);this.zoom=2/Math.max(this.bound.max[1]-this.bound.min[1],(this.bound.max[0]-this.bound.min[0])*1080/1920)*.93;
- const gl=this.gl;this.program&&gl.useProgram(this.program);this.entries=assembled.batches.map(b=>{
+ const gl=this.gl;const protectedMaterials=this.anatomyAudit.protectedMaterials;this.program&&gl.useProgram(this.program);this.entries=assembled.batches.map(b=>{
   const vao=gl.createVertexArray();gl.bindVertexArray(vao);const vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vb);chunkedUpload(gl,gl.ARRAY_BUFFER,b.vertices,this.governor.b.maxSingleUploadBytes);
   const ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);chunkedUpload(gl,gl.ELEMENT_ARRAY_BUFFER,b.indices,this.governor.b.maxSingleUploadBytes);
   const stride=17*4;for(const [loc,count,offset] of [[0,3,0],[1,2,12],[2,4,20],[3,4,36],[4,4,52]]){gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,count,gl.FLOAT,false,stride,offset);}gl.bindVertexArray(null);
-  const editable=b.skin===0&&b.mat===0;const detailGroup=optionalDetailGroup(this.file.g.materials?.[b.mat],editable);
+  const editable=b.skin===0&&b.mat===0;const detailGroup=!protectedMaterials.has(b.mat)?optionalDetailGroup(this.file.g.materials?.[b.mat],editable):null;
   return {vao,vb,ib,editable,detailGroup,optionalDetail:!!detailGroup,count:b.indices.length,skin:b.skin,material:b.mat,vertexCount:b.vertexCount,gpuBytes:b.vertices.byteLength+b.indices.byteLength,
     positionsPacked:editable?b.vertices:null,firstPositions:editable?b.vertices.slice(0,Math.min(256,b.vertexCount)*17):null,
     lineSource:b.indices,lineIB:null,lineCount:0};
@@ -176,7 +177,7 @@ export class FastModelView {
   this.wireStats=this.countWireStats();this.gpuAllocatedEstimateBytes+=(this.wireStats.gpuBytes||0);
   return {...this.wireStats,mode,density,changed:true};
  }
- disposeMeshes(){const gl=this.gl;this.clearWireBuffers();this.drawEntries=[];this.activeDrawEntries=[];this.staticWorld=null;this.staticPoseUploaded=false;this.poseEvaluator=null;this.boneMatrixScratch=[];this.inverseBindCache=[];this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;for(const b of this.entries||[]){gl.deleteVertexArray(b.vao);gl.deleteBuffer(b.vb);gl.deleteBuffer(b.ib);}for(let t of this.textures||[])gl.deleteTexture(t);for(let t of this.boneTex||[])gl.deleteTexture(t);this.entries=[];this.textures=[];this.boneTex=[];}
+ disposeMeshes(){const gl=this.gl;this.clearWireBuffers();this.drawEntries=[];this.activeDrawEntries=[];this.staticWorld=null;this.staticPoseUploaded=false;this.poseEvaluator=null;this.anatomyAudit=null;this.boneMatrixScratch=[];this.inverseBindCache=[];this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;for(const b of this.entries||[]){gl.deleteVertexArray(b.vao);gl.deleteBuffer(b.vb);gl.deleteBuffer(b.ib);}for(let t of this.textures||[])gl.deleteTexture(t);for(let t of this.boneTex||[])gl.deleteTexture(t);this.entries=[];this.textures=[];this.boneTex=[];}
  resize(w,h,automatic=false){
   // Preflight dimensions and working-set allowance BEFORE touching the canvas or existing GLB.
   const gl=this.gl;
@@ -261,7 +262,7 @@ export class FastModelView {
  this.onStats({...this.stats,status:'running',drawCalls:this.activeDrawEntries.length,fps:+(1000/avg).toFixed(1),p95FrameMs:+p95.toFixed(2),jsSubmitMs:+this.lastCPU.toFixed(2),resolution:[this.width,this.height],sampleCount:this.frames.length,
    stability:this.lastPressure?.status||'unmeasured',memoryPressure:this.lastPressure,
    gpuEstimateMiB:+(this.gpuAllocatedEstimateBytes/1048576).toFixed(1),cpuDerivedMiB:+(this.cpuDerivedEstimateBytes/1048576).toFixed(1),
-   frameBudget:decision,cacheEvictedMiB:+(this.governor.cache.totalEvictedBytes/1048576).toFixed(1),optionalHairRelease:this.lastOptionalRelease||null,gpuUtilizationPercent:null,animationPose:{topologyCached:!!this.poseEvaluator?.topologyCached,tracks:this.poseEvaluator?.trackCount??0,poseMatrixScratchReused:true,animated:!!(this.wind&&this.tracks?.length),actualDeviceGpuTimed:false},surfaceGuide:this.surfaceGuide,wireMode:this.wireMode,wireDensity:this.wireDensity,wireLines:this.wireStats.segments,wireSkippedForLag:this.wireState.suppressed,previewDetail:{mode:this.detailMode,hidden:this.detailState.hidden,activeDrawCalls:this.activeDrawEntries.length,hiddenOptional:this.drawEntries.length-this.activeDrawEntries.length,optionalMarked:this.drawEntries.filter(x=>x.optionalDetail).length,displayOnly:true}});
+   frameBudget:decision,cacheEvictedMiB:+(this.governor.cache.totalEvictedBytes/1048576).toFixed(1),optionalHairRelease:this.lastOptionalRelease||null,gpuUtilizationPercent:null,animationPose:{topologyCached:!!this.poseEvaluator?.topologyCached,tracks:this.poseEvaluator?.trackCount??0,poseMatrixScratchReused:true,animated:!!(this.wind&&this.tracks?.length),actualDeviceGpuTimed:false},headNeckAudit:{status:this.anatomyAudit?.status||'UNVERIFIED',continuityVerified:false,explicitProtectedNodes:this.anatomyAudit?.protectedNodes.length||0,protectedMaterialCount:this.anatomyAudit?.protectedMaterials.size||0},surfaceGuide:this.surfaceGuide,wireMode:this.wireMode,wireDensity:this.wireDensity,wireLines:this.wireStats.segments,wireSkippedForLag:this.wireState.suppressed,previewDetail:{mode:this.detailMode,hidden:this.detailState.hidden,activeDrawCalls:this.activeDrawEntries.length,hiddenOptional:this.drawEntries.length-this.activeDrawEntries.length,optionalMarked:this.drawEntries.filter(x=>x.optionalDetail).length,displayOnly:true}});
 
  }
  }
