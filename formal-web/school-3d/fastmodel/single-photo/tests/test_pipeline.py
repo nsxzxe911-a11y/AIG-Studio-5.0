@@ -101,6 +101,46 @@ class PipelineTest(unittest.TestCase):
             self.p.create(self.source,action_id=4,prepared_source=self.source)
         self.assertEqual(self.posts,[])
 
+    def test_multiview_four_actual_inputs_auto_mesh_rig_animation_and_sha(self):
+        from reconstruction_service import MULTIVIEW_ID,project_job
+        extras=[]
+        for i in range(3):
+            path=self.root/('view-'+str(i)+'.png')
+            Image.new('RGBA',(48,88),(60+i*20,110,140,255)).save(path)
+            extras.append(path)
+        originals=[p.read_bytes() for p in extras]
+        job=self.p.create(self.source,action_id=4,additional_sources=extras,
+                          reconstruction_service=MULTIVIEW_ID)
+        self.assertEqual(job['reconstructionService'],MULTIVIEW_ID)
+        self.assertEqual(len(job['additionalImageEvidence']),3)
+        self.assertTrue(all(job['additionalImageEvidence'][i]['originalSHA256']
+                           ==__import__('hashlib').sha256(originals[i]).hexdigest()
+                           for i in range(3)))
+        done=self.finish(job['id'])
+        self.assertEqual(done['status'],'COMPLETE')
+        self.assertEqual([p[0] for p in self.posts],
+                         ['/multi-image-to-3d','/rigging','/animations'])
+        payload=self.posts[0][1]
+        self.assertNotIn('image_url',payload)
+        self.assertEqual(len(payload['image_urls']),4)
+        self.assertTrue(all(x.startswith('data:image/png;base64,') for x in payload['image_urls']))
+        self.assertNotEqual(payload['image_urls'][0],payload['image_urls'][1])
+        self.assertEqual([p.read_bytes() for p in extras],originals)
+        self.assertTrue((self.p.directory(job['id'])/'animated.glb').exists())
+        self.assertFalse(project_job(done)['faceHairNeckApproved'])
+        self.assertFalse(project_job(done)['releaseAllowed'])
+    def test_multiview_overlimit_and_mismatched_service_block_before_credits(self):
+        from reconstruction_service import MULTIVIEW_ID
+        extras=[]
+        for i in range(4):
+            path=self.root/('extra-'+str(i)+'.png')
+            Image.new('RGBA',(40,60),(60,70,80,255)).save(path)
+            extras.append(path)
+        with self.assertRaisesRegex(ValueError,'MULTIVIEW_MAX_FOUR_IMAGES'):
+            self.p.create(self.source,additional_sources=extras,reconstruction_service=MULTIVIEW_ID)
+        with self.assertRaisesRegex(ValueError,'MULTIVIEW_PROVIDER_REQUIRED'):
+            self.p.create(self.source,additional_sources=extras[:1])
+        self.assertEqual(self.posts,[])
     def test_default_walk_uses_actual_rig_output_without_extra_animation_charge(self):
         done=self.finish(self.p.create(self.source)['id'])
         self.assertEqual(done['status'],'COMPLETE');self.assertEqual(len(self.posts),2)
