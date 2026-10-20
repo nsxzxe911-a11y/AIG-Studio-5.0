@@ -73,7 +73,8 @@ export class MovieWorkspace {
   try{
    validateMovieSource({plan,sourceSha256:sourceSha,clips:view?.animation?.clips,
     haveModel:!!view?.model,dialogueOrigin,voiceFile});
-   this.clearOutput();this.active=true;this.lock(true);
+   // Keep the previous verified movie available until a new Blob is complete.
+   this.active=true;this.lock(true);
    this.el('movie-record').disabled=true;
    this.el('movie-status').textContent='準備 1080p 真 GLB 畫面與音軌；不會錄進瀏覽器系統 TTS。';
    const original=soundOptions();
@@ -90,7 +91,10 @@ export class MovieWorkspace {
    if(pixels.actualCanvasWidth!==1920||pixels.actualCanvasHeight!==1080)
     throw Error('MOVIE_ACTUAL_CANVAS_SIZE_MISMATCH');
    capture=new RealMovieCapture({env:this.env,onState:m=>{
-    if(m.state==='FAILED')this.el('movie-status').textContent='錄影器已隔離：'+m.error;
+    if(m.state==='FAILED'){
+     this.el('movie-status').textContent='錄影器已隔離：'+m.error;
+     void this.finish(false); // release GPU viewport and audio bus even on async encoder failure
+    }
    }});
    const info=capture.begin({sourceCanvas:view.canvas,audioDestination:bus,
     sourceSha256:sourceSha,plan,clips:view.animation.clips,haveModel:true,
@@ -163,8 +167,8 @@ export class MovieWorkspace {
     ' 格式 '+metadata.container.toUpperCase()+'，解析度 1920×1080，錄得 '+metadata.actualFramesDrawn+
     ' 幀，音訊軌 '+metadata.audioTracksInFile+'；不含系統 TTS。實際 FPS／完整女主角質量仍待實機驗收。';
   }catch(err){
-   this.clearOutput();
-   this.el('movie-status').textContent='影片未能輸出：'+err.message+'；沒有假檔案。';
+   // A failed new recording must not delete the previous successful export.
+   this.el('movie-status').textContent='本次影片未能輸出：'+err.message+'；無新檔案，保留先前已完成的錄影。';
   }finally{
    sound.stop();this.clearSubtitle();
    if(view){view.onAfterRender=null;view.onFrame=null;view.endMovie1080p();
