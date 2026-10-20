@@ -30,3 +30,20 @@ test('virtual dashed scaffold clamps angles without touching mesh',()=>{
  assert.equal(xy.length,2);assert.ok(xy.every(Number.isFinite));
  assert.equal(paintScaffold(null,null),null);
 });
+
+test('user scan controls, renderer hooks and standalone embed are functional source contracts',async()=>{
+ const fs=await import('node:fs');
+ const path=await import('node:path');
+ const root=new URL('../',import.meta.url);
+ const read=(f)=>fs.readFileSync(new URL(f,root),'utf8');
+ const html=read('web/index.html'),main=read('web/main.mjs'),renderer=read('web/renderer.mjs'),pack=read('tools/build_standalone.py');
+ for(const id of ['tab-scan','panel-scan','scene-kind','scan-btn','scan-status','light-preset','scaffold-enabled','scaffold-limit','scaffold-yaw','scaffold-pitch','guide-overlay'])
+   assert.match(html,new RegExp('id="'+id+'"'));
+ for(const call of ['scanGeometry(file,readAccessor','view?.setLighting','view.onGuideFrame=paintCurrentScaffold','limitAngle('])
+   assert.ok(main.includes(call),'unwired '+call);
+ assert.match(renderer,/setLighting\(preset='soft'\)/);
+ assert.match(renderer,/gl\.uniform1f\(this\.u\.exposure/);
+ assert.match(pack,/scene-tools\.mjs/);
+ assert.match(pack,/\+scene\+/);
+ assert.match(html,/非照片、LiDAR 或光照深度掃描/);
+});
