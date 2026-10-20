@@ -48,7 +48,14 @@
       "batchedPreviewDrawCalls": 4,
       "fullVertices": 35833,
       "triangles": 63867,
-      "gpuRasterPerformanceMeasured": false
+      "gpuRasterPerformanceMeasured": false,
+      "localGpuPatchExample": {
+        "vertices": 256,
+        "interleavedStrideFloats": 17,
+        "uploadedBytes": 17408,
+        "api": "WebGL2 gl.bufferSubData",
+        "gpuExecutedAndTimed": false
+      }
     }
   },
   "validity": "Native timing is Linux-host CPU only. Full and patch workloads differ; speedup ratio is not application acceleration. Browser source GLB batching count is not GPU FPS. Model remains not visually approved."

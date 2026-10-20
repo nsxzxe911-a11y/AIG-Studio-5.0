@@ -14,6 +14,7 @@
 <label><input id="auto" type="checkbox"> 慢速時自動降至 720p（可再提升）</label>
 <label><input id="wave" type="checkbox" checked> 髮束骨架動畫</label>
 <label>縮放 <input id="zoom" type="range" min="60" max="160" value="100"></label>
+<label>局部網格推拉（只更新 256 個頂點，示範用）<input id="patch" type="range" min="-100" max="100" value="0"></label><p class="small" id="patchstat">尚未修改網格</p>
 <div class="btns" style="margin-top:12px"><button id="turnl">左轉</button><button id="reset">正面</button><button id="turnr">右轉</button></div>
 <div class="btns" style="margin-top:9px"><button id="export">匯出測速 JSON</button></div>
 <div class="warning">僅為跨平台 WebGL2 技術預覽。C++ 建模核心已做 Linux 測速；原生 DX12／Vulkan 尚未接通。角色仍是 Phase17 2.5D 逆向候選，正側背面外觀未通過，不代表 1080p／60 FPS 已達標。</div></aside></section><footer>© AIG-II / AIG Studio 5.0 · 本測試頁獨立於 CNC Runtime。未合併正式網站，不會連線上傳使用者選取的 GLB。</footer></main>

@@ -41,19 +41,35 @@ function matsFor(file,world,skinIndex){const skin=file.g.skins[skinIndex],inv=re
 function getImageBytes(file,idx){const im=file.g.images[idx];if(!im||im.bufferView===undefined)throw Error('GLB embedded image missing');const bv=file.g.bufferViews[im.bufferView],start=file.bin.byteOffset+(bv.byteOffset||0),bytes=file.arrayBuffer.slice(start,start+bv.byteLength);return new Blob([bytes],{type:im.mimeType||'image/png'});}
 export class FastModelView {
  constructor(canvas,onStats=()=>{}){this.canvas=canvas;this.onStats=onStats;this.gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});if(!this.gl)throw Error('WebGL2 GPU unavailable on this device');const gl=this.gl;const ext=gl.getExtension('EXT_color_buffer_float');this.program=program(gl);this.u={};for(const k of ['zoom','angle','center','aspect','boneTexture','colorTexture','colorFactor','hasTexture'])this.u[k]=gl.getUniformLocation(this.program,k);this.textures=[];this.boneTex=[];this.entries=[];this.mode='full';this.angle=0;this.zoomFactor=1;this.wind=true;this.width=1920;this.height=1080;this.frames=[];this.last=0;this.running=false;this.autoQuality=false;this.qualityDown=0;this.qualityUp=0;gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);this.gpu=gl.getParameter(gl.RENDERER);}
- async load(arrayBuffer,mode='full'){this.disposeMeshes();const start=performance.now();this.file=decodeGLB(arrayBuffer);this.file.g.asset?.generator?.includes('NOT_APPROVED');this.tracks=tracksFor(this.file);this.mode=mode;let assembled=buildBatches(this.file,mode);this.stats={sourceMeshes:this.file.g.meshes.length,sourcePrimitives:this.file.g.meshes.reduce((s,m)=>s+m.primitives.length,0),...{drawCalls:assembled.drawCalls,triangles:assembled.indices/3,vertices:assembled.vertices,skipped:assembled.skipped},gpu:this.gpu};
+ async load(arrayBuffer,mode='full'){this.disposeMeshes();const start=performance.now();this.file=decodeGLB(arrayBuffer);this.file.g.asset?.generator?.includes('NOT_APPROVED');this.tracks=tracksFor(this.file);this.mode=mode;let assembled=buildBatches(this.file,mode);this.patchStats=null;this.stats={sourceMeshes:this.file.g.meshes.length,sourcePrimitives:this.file.g.meshes.reduce((s,m)=>s+m.primitives.length,0),...{drawCalls:assembled.drawCalls,triangles:assembled.indices/3,vertices:assembled.vertices,skipped:assembled.skipped},gpu:this.gpu};
  this.bound=assembled.bound;this.center=this.bound.min.map((a,i)=>(a+this.bound.max[i])*.5);this.zoom=2/Math.max(this.bound.max[1]-this.bound.min[1],(this.bound.max[0]-this.bound.min[0])*1080/1920)*.93;
  const gl=this.gl;this.program&&gl.useProgram(this.program);this.entries=assembled.batches.map(b=>{
   const vao=gl.createVertexArray();gl.bindVertexArray(vao);const vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vb);gl.bufferData(gl.ARRAY_BUFFER,b.vertices,gl.STATIC_DRAW);
   const ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,b.indices,gl.STATIC_DRAW);
   const stride=17*4;for(const [loc,count,offset] of [[0,3,0],[1,2,12],[2,4,20],[3,4,36],[4,4,52]]){gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,count,gl.FLOAT,false,stride,offset);}gl.bindVertexArray(null);
-  return {vao,vb,ib,count:b.indices.length,skin:b.skin,material:b.mat};
+  return {vao,vb,ib,count:b.indices.length,skin:b.skin,material:b.mat,vertexCount:b.vertexCount,positionsPacked:b.vertices,firstPositions:b.vertices.slice(0,Math.min(256,b.vertexCount)*17)};
  });
  this.materials=this.file.g.materials||[];this.textures=await Promise.all((this.file.g.textures||[]).map(async t=>{
   const im=await createImageBitmap(getImageBytes(this.file,t.source));let tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,im);gl.generateMipmap(gl.TEXTURE_2D);im.close();return tex;
  }));
  this.boneTex=(this.file.g.skins||[]).map(s=>{const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,4,s.joints.length,0,gl.RGBA,gl.FLOAT,null);return t;});
  this.resize(1920,1080);this.stats.loadMs=+(performance.now()-start).toFixed(1);this.onStats({...this.stats,status:'loaded'});return this.stats;
+ }
+ patchLocal(amount){
+  if(!this.entries.length)return null;
+  const target=this.entries.find(b=>b.skin===0&&b.material===0);
+  if(!target)return null;
+  const n=Math.min(256,target.vertexCount),gl=this.gl,t=performance.now();
+  for(let i=0;i<n;i++){
+   const offset=i*17, original=target.firstPositions[offset+2];
+   target.positionsPacked[offset+2]=original + amount*0.004*Math.sin((i/n)*Math.PI);
+  }
+  const section=target.positionsPacked.subarray(0,n*17);
+  gl.bindBuffer(gl.ARRAY_BUFFER,target.vb);
+  gl.bufferSubData(gl.ARRAY_BUFFER,0,section);
+  const result={mode:'LOCAL_GPU_BUFFER_SUBDATA_NOT_FULL_REBUILD',patchedVertices:n,bytes:n*17*4,hostSubmitMs:+(performance.now()-t).toFixed(4)};
+  this.patchStats=result;
+  return result;
  }
  disposeMeshes(){const gl=this.gl;for(const b of this.entries||[]){gl.deleteVertexArray(b.vao);gl.deleteBuffer(b.vb);gl.deleteBuffer(b.ib);}for(let t of this.textures||[])gl.deleteTexture(t);for(let t of this.boneTex||[])gl.deleteTexture(t);this.entries=[];this.textures=[];this.boneTex=[];}
  resize(w,h){this.width=w;this.height=h;this.canvas.width=w;this.canvas.height=h;this.gl.viewport(0,0,w,h);}

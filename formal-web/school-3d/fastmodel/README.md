@@ -10,11 +10,12 @@ Existing AIG School3D Phase17 SHA `893cfdef38b37d36a2d40a03f4bae0cee6f68de6` is 
 
 1. `core/fastmodel.{hpp,cpp}` — C++20 persistent mesh buffer, atomic sparse vertex modification, coalesced dirty spans, revision ids, vertex digest and bounds validation. No full rebuild on each local edit.
 2. `core/fastmodel_c_api.{h,cpp}` — C ABI entrypoints for later native Windows and Android NDK/JNI integrations; the native render backends are **NOT IMPLEMENTED**.
-3. `web/fastmodel-data.mjs` — self-developed glTF 2.0 GLB decoder with bounds checks, patch buffer and batching by material/skin.
-4. `web/renderer.mjs` — candidate WebGL2 vertex shader skinning; joint matrices streamed via `RGBA32F` bone texture; per-material batch draws, embedded GLB source images, optional 1080p↔720p adaptive buffer, quaternion animation. The script is implemented but **WebGL2 rendering has not been verified on a compatible GPU in this container**. Alpha sorting in the first prototype is approximate.
-5. `web/index.html` and `web/main.mjs` — dark AIG isolated GPU benchmark with input, drag rotation, load test GLB, CPU submission and FPS counters. **Not production site skin.**
-6. `tools/build_standalone.py` — packs the frontend code and original unapproved Phase17 GLB into one self-contained HTML that Windows and Android browsers can open offline, without third-party character assets or tools.
-7. `tests/native_fastmodel_test.cpp` and `tests/web-core.test.mjs` — native C++ safety/benchmark + real GLB decoding/batching tests.
+3. GPU editing preview: `web/renderer.mjs::patchLocal()` uses `bufferSubData` on only 256 packed vertices (17,408 bytes), **without regenerating the 551 GLB primitives**; browser slider demonstrates locality if WebGL2 is available. This is **NOT** proof of 60 FPS.
+4. `web/fastmodel-data.mjs` — self-developed glTF 2.0 GLB decoder with bounds checks, patch buffer and batching by material/skin.
+5. `web/renderer.mjs` — candidate WebGL2 vertex shader skinning; joint matrices streamed via `RGBA32F` bone texture; per-material batch draws, embedded GLB source images, optional 1080p↔720p adaptive buffer, quaternion animation. The script is implemented but **WebGL2 rendering has not been verified on a compatible GPU in this container**. Alpha sorting in the first prototype is approximate.
+6. `web/index.html` and `web/main.mjs` — dark AIG isolated GPU benchmark with input, drag rotation, load test GLB, CPU submission and FPS counters. **Not production site skin.**
+7. `tools/build_standalone.py` — packs the frontend code and original unapproved Phase17 GLB into one self-contained HTML that Windows and Android browsers can open offline, without third-party character assets or tools.
+8. `tests/native_fastmodel_test.cpp` and `tests/web-core.test.mjs` — native C++ safety/benchmark + real GLB decoding/batching tests.
 
 ### Source data, not authored anew
 
