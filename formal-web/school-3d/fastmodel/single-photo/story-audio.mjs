@@ -38,27 +38,40 @@ export class StoryAudio{
   const updated={...this.options,...opts};validOptions(updated);
   this.options=updated;return this.options;
  }
- async start(){
+ start(){
+  // Run in the DIRECT click handler: browser speech/audio unlock may require
+  // transient user activation, which is lost when awaiting a Promise.
   this.stop();
   const e=this.env;
   this.voiceAvailable=!!(this.options.voice&&e.speechSynthesis&&e.SpeechSynthesisUtterance);
   this.effectsAvailable=false;this.musicEnabled=false;
+  this.enabled=true;this.musicClock=0;this.musicStep=0;
   if((this.options.sfx||this.options.music)&&this.options.volume>0){
    const Context=e.AudioContext||e.webkitAudioContext;
    if(Context){
     try{
      if(!this.audio){this.audio=new Context();this.ownsAudio=true;}
-     await this.audio.resume?.();
-     this.effectsAvailable=this.options.sfx&&this.audio.state!=='suspended';
-     this.musicEnabled=this.options.music&&this.audio.state!=='suspended';
+     const pending=this.audio.resume?.();
+     const markReady=()=>{
+      if(!this.enabled||this.audio?.state==='suspended')return;
+      this.effectsAvailable=this.options.sfx;
+      this.musicEnabled=this.options.music;
+      this.onStatus('本機 WebAudio 已啟動；使用原創合成音效與配樂。');
+     };
+     this.effectsAvailable=this.options.sfx&&this.audio.state==='running';
+     this.musicEnabled=this.options.music&&this.audio.state==='running';
+     pending?.then?.(markReady).catch?.(err=>{
+      if(!this.enabled)return;
+      this.effectsAvailable=false;this.musicEnabled=false;
+      this.onStatus('聲音輸出被裝置拒絕：'+String(err.message||err).slice(0,80)+'；字幕仍可用。');
+     });
     }catch(err){this.effectsAvailable=false;this.musicEnabled=false;
      this.onStatus('音訊輸出不可用：'+String(err.message||err).slice(0,80)+'；字幕仍可用。');}
    }
   }
-  this.enabled=true;this.musicClock=0;this.musicStep=0;
-  const flags=[this.voiceAvailable?'語音可用':'語音不可用',
-   this.effectsAvailable?'音效可用':'音效不可用',
-   this.musicEnabled?'配樂可用':'配樂不可用'];
+  const flags=[this.voiceAvailable?'語音支援':'語音不可用',
+   this.effectsAvailable?'音效可用':'音效待啟動或不可用',
+   this.musicEnabled?'配樂可用':'配樂待啟動或不可用'];
   this.onStatus('本機音軌：'+flags.join('／')+'；使用原創波形，不使用外部歌曲或雲端聲音生成。');
   return {voice:this.voiceAvailable,sfx:this.effectsAvailable,music:this.musicEnabled,
    actualCloudVoiceGenerated:false,licensedSongUsed:false};
