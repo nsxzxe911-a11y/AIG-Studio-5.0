@@ -5,7 +5,7 @@ Phase6 proves bones/PBR/IK can exist, not that the face matches the user's appro
 
 ## Concrete output produced
 - Exact original 1672×941 reference SHA-256: `83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910`.
-- Python reusable authoring script `tools/reverse_authority.py`: crop nine original pixel regions (main heroine, face, hair, ribbon, blazer, shirt, skirt, sakura, school), output `reverse-authority.json` with bounding boxes, normalized boxes, 16 approximate visible keypoints, eight source-pixel palette samples, and a visual comparison contact sheet.
+- Python reusable authoring script `tools/reverse_authority.py`: crop eleven original pixel regions, including two **unverified** profile/back candidates from the same image collage (main heroine, face, hair, ribbon, blazer, shirt, skirt, sakura, school), output `reverse-authority.json` with bounding boxes, normalized boxes, 16 approximate visible keypoints, eight source-pixel palette samples, and a visual comparison contact sheet.
 - Validation: 4 `unittest` checks for SHA, release block, identity crop coordinates and dark hair sampled from *hair*, not sky. Original image visible only for local generation; the CI is *not* allowed to claim image reconstruction PASS without original bytes.
 - Reverse sheet and crops are **2D source references only**. No true mesh or model was produced by this phase. Nothing is published on the main AIG site.
 
