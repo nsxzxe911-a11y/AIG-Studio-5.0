@@ -27,7 +27,7 @@ export function createImplicitScene(scaffold){
    facingYaw:0};
  return {schema:AIG_SDF_VERSION,sourceSHA256:scaffold.sourceSHA256,
   scaffoldSchema:scaffold.schema||null,
-  primitiveCount:12,parameterCount:Object.keys(params).length,
+  primitiveCount:10,parameterCount:Object.keys(params).length,
   parameters:params,hiddenSurfacesInferred:true,
   inferredParts:['face depth','neck back','hair volume','arms','legs','skirt rear'],
   observedEvidence:'SOURCE_2D_SILHOUETTE_ONLY',
