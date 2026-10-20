@@ -59,7 +59,7 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None,al
             if not self.valid_origin():self.send({'error':'ORIGIN_BLOCKED'},403);return
             path=urlparse(self.path).path
             try:
-                if path=='/api/config':self.send({'configured':bool(allow_paid_3d and client.configured),'provider':'AIG_INTERNAL_NO_PAID_FALLBACK','zeroCreditsMode':not allow_paid_3d,'liveGenerationVerified':False,'dialogueAIConfigured':dialogue_client.configured,'speechAIConfigured':speech_client.configured});return
+                if path=='/api/config':self.send({'configured':bool(allow_paid_3d and client.configured),'provider':'AIG_INTERNAL_NO_PAID_FALLBACK','zeroCreditsMode':not allow_paid_3d,'liveGenerationVerified':False,'dialogueAIConfigured':bool(allow_paid_3d and dialogue_client.configured),'speechAIConfigured':bool(allow_paid_3d and speech_client.configured)});return
                 if path=='/api/aig4/capabilities':
                     self.send({'id':'aig-native-volume-4.0','implemented':True,
                        'zeroCredits':True,'networkRequestsMade':0,
@@ -142,6 +142,8 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None,al
                 except Exception as error:
                     self.send({'error':str(error)[:160]},409);return
             if self.path=='/api/story/voice':
+                if not allow_paid_3d:
+                    self.send({'error':'ZERO_CREDITS_CLOUD_VOICE_BLOCKED'},409);return
                 try:
                     if self.headers.get('Content-Type')!='application/json':
                         raise ValueError('TTS_JSON_REQUIRED')
@@ -154,6 +156,8 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None,al
                 except Exception as error:
                     self.send({'error':str(error)[:160]},409);return
             if self.path=='/api/story/dialogue':
+                if not allow_paid_3d:
+                    self.send({'error':'ZERO_CREDITS_CLOUD_DIALOGUE_BLOCKED'},409);return
                 try:
                     if self.headers.get('Content-Type')!='application/json':
                         raise ValueError('AI_DIALOGUE_JSON_REQUIRED')
