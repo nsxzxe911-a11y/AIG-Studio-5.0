@@ -117,16 +117,18 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
                 except Exception as error:
                     self.send({'error':str(error)[:160]},409);return
             try:
-                if self.path=='/api/reconstruction/jobs':
-                    # Select the actual provider BEFORE creating a possible billable job.
-                    # The service-id check below is repeated after JSON parsing.
-                    pass
                 if not client.configured:raise ValueError('MESHY_API_KEY_NOT_CONFIGURED')
                 if self.headers.get('Content-Type')!='application/json':raise ValueError('JSON_REQUIRED')
                 length=int(self.headers.get('Content-Length','0'))
                 if not 0<length<=58*1024*1024:raise ValueError('REQUEST_SIZE_LIMIT')
                 data=json.loads(self.rfile.read(length))
-                if self.path=='/api/reconstruction/jobs':require_service(data.get('serviceId'),client)
+                if self.path=='/api/reconstruction/jobs':
+                    require_service(data.get('serviceId'),client)
+                    # Explicit contract: a single click authorizes the model,
+                    # subsequent rig and animation provider stages. No new
+                    # POST after acceptance-unknown or an interrupted request.
+                    if data.get('autoStages') is not True:
+                        raise ValueError('RECONSTRUCTION_AUTOMATION_CONFIRMATION_REQUIRED')
                 elif 'serviceId' in data:require_service(data['serviceId'],client)
                 request_id=data.get('requestId','')
                 if not re.fullmatch('[0-9a-f]{32}',request_id):raise ValueError('REQUEST_ID_INVALID')
@@ -154,7 +156,12 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
                             if len(prep_bytes)>20*1024*1024:raise ValueError('PREPARED_IMAGE_SIZE_INVALID')
                             prepared=Path(temporary)/'prepared.png';prepared.write_bytes(prep_bytes)
                         d=pipe.create(file,data.get('mode','humanoid'),data.get('actionId'),prepared_source=prepared)
-                    d['requestId']=request_id;pipe.save(d['id'],d)
+                    d['requestId']=request_id
+                    if self.path=='/api/reconstruction/jobs':
+                        d['automation']={'enabled':True,'stages':['model','rig','animation'],
+                                         'initiatedBy':'EXPLICIT_USER_GENERATE_CLICK',
+                                         'repeatUnknownSubmission':False}
+                    pipe.save(d['id'],d)
                     begin(d['id']);self.send(d,202)
             except Exception as e:self.send({'error':str(e)[:180]},409)
     class LocalServer(ThreadingHTTPServer):
