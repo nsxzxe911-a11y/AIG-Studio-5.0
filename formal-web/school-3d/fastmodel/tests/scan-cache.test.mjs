@@ -31,7 +31,7 @@ test('real topology MISS then HIT for exact file and density; GLB changes invali
  assert.equal(cache.stats().reason,'GLB_SOURCE_CHANGED');
  assert.ok(cache.stats().invalidations>=2);
 });
-test('depth cache exact FLOAT MATRIX values and full camera signature; animated pose can't stale hit',()=>{
+test('depth cache exact FLOAT MATRIX values and full camera signature; animated pose cannot stale hit',()=>{
  const f=file(),cache=createScanDerivedCache({limitBytes:4096}),v=view(f),t=topology('all'),pose=[eye(),eye()];
  assert.equal(cache.getDepth({file:f,view:v,topology:t,world:pose}),null);
  assert.equal(cache.putDepth({file:f,view:v,topology:t,world:pose,depth:depth(),buildMs:3.5}),true);
