@@ -4,7 +4,7 @@ import {reviewEvidenceManifest} from './heroine-review.mjs';
 import {timelineEvidenceManifest} from './timeline-review.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
-const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set();
+const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
 function clearTimelineEvidence(){
  for(const u of timelineObjectUrls)URL.revokeObjectURL(u);
  timelineObjectUrls.length=0;
@@ -34,7 +34,7 @@ async function load(bytes,orbit){
  if(!view)return;
  const clips=await view.load(bytes,{orbit});$('clip').replaceChildren();
  clearReviewEvidence();clearTimelineEvidence();
- importedActionHashes.clear();
+ importedActionHashes.clear();actionShaByClipIndex.clear();
  $('action-glb').disabled=false;
  $('action-import-status').textContent='已載入人物 GLB。可選擇另一個骨架相符、含真實動畫的外部 GLB（不會將來源網格重疊渲染）。';
  sourceSha=null;
@@ -94,6 +94,7 @@ $('action-glb').addEventListener('change',async()=>{
   const result=await view.importExternalAction(buffer);
   if(sourceSha!==originalSha)throw Error('ACTION_TARGET_CHANGED');
   importedActionHashes.add(fingerprint);
+  result.importedNames.forEach((_,offset)=>actionShaByClipIndex.set(result.selectedIndex+offset,actionSha));
   clearReviewEvidence();clearTimelineEvidence();
   const clips=view.animation.clips;
   $('clip').replaceChildren();
@@ -176,6 +177,7 @@ $('timeline-capture').addEventListener('click',async()=>{
   }});
   if(sourceSha!==startedSha)throw Error('TIMELINE_SOURCE_CHANGED');
   const manifest=timelineEvidenceManifest({sourceSha256:sourceSha,
+    actionSha256:actionShaByClipIndex.get(view.animation.index)||sourceSha,
     clipName:result.clipName,samples:result.samples});
   const png=URL.createObjectURL(result.image);
   const json=URL.createObjectURL(new Blob([JSON.stringify(manifest,null,2)],{type:'application/json'}));
