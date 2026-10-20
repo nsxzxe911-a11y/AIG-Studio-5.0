@@ -37,8 +37,10 @@ async function run(b,mobile){
   assert(await overlay.getByText("來源／畫面 PASS").count()>0);
   assert(await overlay.getByText("BLOCKED").count()>0,"CNC Output must remain BLOCKED");
   assert(await overlay.getByText("歷史發布").count()>0,"Old APK/EXE must not look current");
-  assert.equal(await overlay.locator('a.aig94-file-download[href*="/releases/download/"]').count(),4,
-   "Only real published Release browser_download_url links allowed");
+  assert.equal(await overlay.locator('a.aig94-file-download[href*="/releases/download/"]').count(),2,
+   "Only public Studio Release assets may be direct downloaded");
+  assert(await overlay.getByText("AIG-II 為私人 GitHub 倉庫", {exact:false}).count()>0,
+   "Private AIG-II must require authenticated GitHub access");
   await p.screenshot({path:"artifacts/v94/"+kind+"-HOME-AUDIT-DOWNLOAD.png",fullPage:false});
   await overlay.locator('[data-aig94-close]').click();
   assert(!(await overlay.isVisible()));
