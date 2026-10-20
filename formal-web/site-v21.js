@@ -23,7 +23,7 @@ function renderCategories(){
  }
  if(moduleStatus){
    const name={ALL:"全部功能",DESIGN:"設計與刀路",AXIS:"多軸加工",CODE:"NC 與 AI"}[selected];
-   moduleStatus.textContent=name+" · "+count+" 個可進入的工作頁";
+   moduleStatus.textContent=name+" · "+count+" 個原生功能介紹";
  }
 }
 for(const b of categoryButtons)b.addEventListener("click",()=>{
@@ -51,8 +51,8 @@ function showWorkflow(key){
  if(!cfg||!workflowLink||!workflowTitle||!workflowText)return;
  workflowTitle.textContent=cfg.title;
  workflowText.textContent=cfg.text;
- workflowLink.href="./mobile-runtime.html#"+cfg.page;
- workflowLink.textContent=cfg.link+"　↗";
+ workflowLink.href="./native-download.html";
+ workflowLink.textContent="查看原生版本／下載　↗";
  for(const b of workflowButtons)b.setAttribute("aria-pressed",String(b.dataset.workflowChoice===key));
 }
 for(const b of workflowButtons)b.addEventListener("click",()=>showWorkflow(b.dataset.workflowChoice));
@@ -75,11 +75,11 @@ function renderRecent(){
  for(const page of recent){
   const li=document.createElement("li");
   const a=document.createElement("a");
-  a.href="./mobile-runtime.html#"+page;
+  a.href="./native-download.html";
   const span=document.createElement("span");
   span.textContent=names[page];
   const arrow=document.createElement("em");
-  arrow.textContent="開啟 ›";
+  arrow.textContent="查看原生版本 ›";
   a.append(span,arrow);li.appendChild(a);recentList.appendChild(li);
  }
 }
@@ -90,7 +90,7 @@ function saveRecent(page){
  renderRecent();
 }
 document.addEventListener("click",event=>{
- const link=event.target&&event.target.closest?event.target.closest('a[href*="mobile-runtime.html#"]'):null;
+ const link=null; // low-tier Web workspace routes were retired
  if(!link)return;
  const href=link.getAttribute("href")||"";
  const match=href.match(/^(?:\.\/)?mobile-runtime\.html#(HOME|CAD|CAM|SIM|3AX|4AX|5AX|6AX|NC|AI)$/i);

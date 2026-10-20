@@ -1,5 +1,5 @@
 /* AIG-II public website navigation and on-page search.
-   This page is the website; actual machining remains in mobile-runtime.html. */
+   This page is the public dual-project portal; retired Web runtimes remain disabled. */
 (function(){
 "use strict";
 const PAGES=new Set(["HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI"]);
@@ -13,7 +13,7 @@ function legacyDeepLink(){
   let page="";
   try{page=decodeURIComponent(location.hash.slice(1)).toUpperCase()}catch(_){return false}
   if(!PAGES.has(page))return false;
-  const dest=new URL("./mobile-runtime.html",location.href);
+  const dest=new URL("./native-download.html",location.href);
   dest.hash=page;
   location.replace(dest.href);
   return true;

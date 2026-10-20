@@ -14,6 +14,9 @@ for(const p of ["mobile-runtime-v86.html","mobile-runtime-v90.html","runtime/v90
 assert(!/href="\.\/(?:mobile-runtime(?:-v\d+)?|studio-375)\.html/.test(index),"Index must not link to low-grade runtimes");
 assert(index.includes('id="dual-projects"')&&index.includes('data-site-theme="forest"'),"Original dual project website is missing");
 assert(index.includes("native-download.html"),"No native release routing");
+const site=read("site.js"),interactive=read("site-v21.js");
+assert(!site.includes('new URL("./mobile-runtime.html"'),"Legacy deep link must not open retired runtime");
+assert(!interactive.includes('href="./mobile-runtime.html#"+'),"Dynamic site navigation must not recreate retired runtime links");
 for(const html of [work,studio]){
  assert(html.includes("低階 Web 工作區已撤除"));
  assert(!html.includes("<canvas")&&!html.includes("aigCode")&&!html.includes("makeRuntime("),"No broken Web machine shell");
