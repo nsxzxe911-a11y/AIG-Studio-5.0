@@ -1,7 +1,7 @@
 import {FastModelView} from './renderer.mjs';
 import {WIRE_MODES,WIRE_DENSITIES} from './mesh-lines.mjs';
 import {SURFACE_GUIDES} from './surface-guides.mjs';
-import {decodeGLB,readAccessor} from './fastmodel-data.mjs';
+import {decodeGLB,readAccessor,sampleVec3Accessor} from './fastmodel-data.mjs';
 import {SCAN_KINDS,scanGeometry,limitAngle,paintScaffold} from './scene-tools.mjs';
 import {measuredFrameSummary} from './adaptive-detail.mjs';
 import {DiskPressureGuard} from './resource-governor.mjs';
@@ -77,7 +77,7 @@ el('scan-btn').addEventListener('click',()=>{
  const file=scanFile||view?.file;
  if(!file){el('scan-status').textContent='無可掃描的 GLB。請選擇本機 GLB 檔案。';return;}
  try{
-   lastScan=scanGeometry(file,readAccessor,{kind:el('scene-kind').value,maxSamples:12000});
+   lastScan=scanGeometry(file,readAccessor,{kind:el('scene-kind').value,maxSamples:12000,sampleReader:sampleVec3Accessor});
    const e=lastScan.sampledExtent.map(x=>x.toFixed(3)).join(' × ');
    el('scan-status').textContent='真實 GLB 頂點抽樣 PASS：'+lastScan.samples.toLocaleString()+
      '/'+lastScan.vertices.toLocaleString()+' 點，'+lastScan.triangles.toLocaleString()+
