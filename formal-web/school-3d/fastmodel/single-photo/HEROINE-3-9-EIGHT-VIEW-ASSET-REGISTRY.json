@@ -1,0 +1,86 @@
+{
+  "schema": "AIG_FM_3_9_EIGHT_VIEW_SOURCE_REFERENCE_DRAFT",
+  "version": "3.9.0",
+  "reference": "Sakura campus heroine / flowered home dress",
+  "originalSakuraSHA256": "fbf47f32a844a80e1bb39cb23084527baaf1350427c20d2b49d21fdc453444d6",
+  "secondUserReferenceSHA256": "ed5ed4ad139605344d67bf0a865e0a82f486fed63665cf503820811569c0b31f",
+  "imageZipFilename": "AIG-FastModel-3.9-Heroine-8View-Reconstruction-DRAFT.zip",
+  "imageZipSHA256": "05f1cb891b51890375745627dde89d593e99ae0645e1d6fe451e522d9e4db031",
+  "imageZipBytes": 17794494,
+  "githubBinaryImagesCommitted": false,
+  "officialRenderAssetsUploaded": false,
+  "sourceImagesIndependent2DGenerations": true,
+  "multiViewCameraCalibrationVerified": false,
+  "avatarIdentityConsistencyApproved": false,
+  "realGLBGenerated": false,
+  "testedProviderAPI": "Meshy Multi-Image-to-3D accepts 1-4 inputs, first image primary front for meshy-7.1",
+  "recommendedInputArchivePaths": [
+    "turnaround/00-front.png",
+    "turnaround/02-left-profile-90.png",
+    "turnaround/04-back-180.png",
+    "turnaround/06-right-profile-270.png"
+  ],
+  "views": [
+    {
+      "archivePath": "turnaround/00-front.png",
+      "angleDegreesLabelOnly": 0,
+      "sha256": "32fe2851447da1a03ca4913a856a1cd327ee191bb6b966e4121a0cc2b74b1b12",
+      "width": 1086,
+      "height": 1448
+    },
+    {
+      "archivePath": "turnaround/01-front-left-45.png",
+      "angleDegreesLabelOnly": 45,
+      "sha256": "6491673b462ca4b558226aec9ea160815c9da698eaadaa92a173043dbc5a25a4",
+      "width": 1086,
+      "height": 1448
+    },
+    {
+      "archivePath": "turnaround/02-left-profile-90.png",
+      "angleDegreesLabelOnly": 90,
+      "sha256": "be9272a41a106c7f694e7bff20d6f6631e6a2803fc082a87112c9693edb5e3d5",
+      "width": 1086,
+      "height": 1448
+    },
+    {
+      "archivePath": "turnaround/03-back-left-135.png",
+      "angleDegreesLabelOnly": 135,
+      "sha256": "67afc0aa52a15f4fe389c11af0a3a4c15171b8d0634f34d2186d3228fb3ccf77",
+      "width": 1086,
+      "height": 1448
+    },
+    {
+      "archivePath": "turnaround/04-back-180.png",
+      "angleDegreesLabelOnly": 180,
+      "sha256": "f976a24d9b0cc12ff6c86dd19ad76576c7e4486fc48b9e9f7f905aecf926b732",
+      "width": 1086,
+      "height": 1448
+    },
+    {
+      "archivePath": "turnaround/05-back-right-225.png",
+      "angleDegreesLabelOnly": 225,
+      "sha256": "0eddfc83c5287303a458119ae744ecc9c309bd619a05b0de5276989fdf4643e1",
+      "width": 1086,
+      "height": 1448
+    },
+    {
+      "archivePath": "turnaround/06-right-profile-270.png",
+      "angleDegreesLabelOnly": 270,
+      "sha256": "f9ea8f4009796646417c36ef10daeaa550651bf1c7e42b29d379eee8e1545e4d",
+      "width": 1086,
+      "height": 1448
+    },
+    {
+      "archivePath": "turnaround/07-front-right-315.png",
+      "angleDegreesLabelOnly": 315,
+      "sha256": "e4886944cdba97fcd91413d790cb2ed4095766881ba9eaf93f70ae0a2f543224",
+      "width": 1086,
+      "height": 1448
+    }
+  ],
+  "limitations": [
+    "Angles are labels for independently generated 2D reference images, not calibrated 3D cameras",
+    "Secondary images must be reviewed for face/hair/dress consistency",
+    "No original actual heroine 3D GLB, no rigging/animation or final video evidence"
+  ]
+}
