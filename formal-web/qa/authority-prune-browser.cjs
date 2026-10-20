@@ -12,6 +12,7 @@ async function inspect(browser,tag,width,height){
   assert.equal(await page.locator(".reference img").count(),2);
   assert.equal(await page.locator('img[src*="/pages/"],img[src*="/icons/"],img[src*="/candidates/"]').count(),0);
   assert.equal(await page.locator(".module-card img").count(),0,"A missing authority must not gain a substitute");
+  for(const img of await page.locator(".reference img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
   const broken=await page.locator("img").evaluateAll(list=>list.filter(x=>!x.complete||!x.naturalWidth).map(x=>x.src));
   assert.equal(broken.length,0,"Broken displayed reference images: "+broken.join(","));
   const pageSize=await page.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,innerWidth:innerWidth}));
