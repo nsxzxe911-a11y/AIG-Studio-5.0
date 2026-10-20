@@ -117,7 +117,7 @@ test('UI has real dialogue edit, song mood, volume, SFX, speech, subtitle and GL
  const html=get('index.html'),app=get('app.mjs'),viewer=get('viewer.mjs');
  for(const id of ['story-subtitle','dialogue-style','story-dialogues',
    'voice-enabled','sfx-enabled','music-enabled','music-mood',
-   'audio-volume','audio-volume-value','story-audio-status','dialogue-preview']){
+   'audio-volume','audio-volume-value','story-audio-status','dialogue-preview','cloud-dialogue','cloud-dialogue-status']){
   assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.ok(app.includes('composeDialogue(story,'));
@@ -130,8 +130,14 @@ test('UI has real dialogue edit, song mood, volume, SFX, speech, subtitle and GL
  assert.ok(app.includes('storySound.pause()'));
  assert.ok(app.includes('storySound.resume()'));
  assert.ok(app.includes('showSubtitle(beat.dialogue)'));
- assert.ok(app.includes('cloudLLMDialogueGenerated:false'));
+ assert.ok(app.includes('cloudLLMDialogueGenerated:storyDialogue?.generatedByCloudLLM===true'));
  assert.ok(app.includes('originalWebAudioMusic:true'));
+ assert.ok(app.includes("api('/api/story/dialogue'"));
+ assert.ok(app.includes("dialogueCloudConfigured=!!c.dialogueAIConfigured"));
+ assert.ok(app.includes("result.source!=='CLOUD_LLM_PROVIDER_OUTPUT'"));
+ assert.ok(app.includes("rev!==storyRevision"));
+ assert.ok(html.includes('可能產生 API 費用'));
+
  assert.ok(viewer.includes('try{this.onFrame?.(dt,t);}catch(audioError)'));
  assert.ok(!html.includes('<script src="https://'), 'no remote third party audio scripts');
 });
