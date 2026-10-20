@@ -71,7 +71,13 @@ function renderDialogueEditor(){
 const refreshStoryAudioEvidence=()=>{if(storyPlan)exportStoryEvidence();};
 
 function clearStoryPlan(reason='劇情或 GLB 動作已改變，請重新解析。'){
+ const wasPlaying=!!view?.animation?.story?.playing;
  view?.animation?.stopStory();
+ if(wasPlaying){
+  view.animation.mixer.stopAllAction();
+  view.animation.paused=true;
+  $('pause').textContent='繼續動畫';
+ }
  storySound.stop();clearSubtitle();storyRevision++;
  storyPlan=null;storyDialogue=null;storyParsed=null;
  $('story-dialogues').replaceChildren();
@@ -263,6 +269,10 @@ for(const id of ['voice-enabled','sfx-enabled','music-enabled','music-mood'])
 $('dialogue-style').addEventListener('change',()=>$('story-build').click());
 $('cloud-dialogue').addEventListener('click',async()=>{
  if(cloudBusy||!dialogueCloudConfigured)return;
+ if(view?.animation?.story?.playing){
+  $('cloud-dialogue-status').textContent='劇情正在播放，請先停止動畫再改寫台詞，避免台詞與聲音時序不一致。';
+  return;
+ }
  if(!storyParsed?.beats?.length)$('story-build').click();
  if(!storyParsed?.beats?.length)return;
  cloudBusy=true;$('cloud-dialogue').disabled=true;
