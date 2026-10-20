@@ -2,6 +2,7 @@ import {assertRasterOnly,GRAPHICS_POLICY} from './graphics-policy.mjs';
 import {decodeGLB,readAccessor,buildBatches} from './fastmodel-data.mjs';
 import {buildEdgeIndex,wireCap,WIRE_MODES,WIRE_DENSITIES,adaptiveWireStep} from './mesh-lines.mjs';
 import {surfaceGuideId} from './surface-guides.mjs';
+import {LIGHT_PRESETS} from './scene-tools.mjs';
 import {ResourceGovernor,makeBudgets,RebuildableCache} from './resource-governor.mjs';
 import {checkRenderTarget} from './resolution-policy.mjs';
 const VERTEX=`#version 300 es
@@ -30,8 +31,9 @@ uniform vec4 colorFactor;
 uniform int hasTexture;
 uniform int linePass;
 uniform int surfaceGuide;
+uniform float exposure;
 out vec4 result;
-void main(){if(linePass==1){result=vec4(.34,.89,1.0,.46);return;}vec4 c=colorFactor*fColor;if(hasTexture==1)c*=texture(colorTexture,fUv);if(c.a<0.025)discard;vec3 rgb=c.rgb;
+void main(){if(linePass==1){result=vec4(.34,.89,1.0,.46);return;}vec4 c=colorFactor*fColor;if(hasTexture==1)c*=texture(colorTexture,fUv);if(c.a<0.025)discard;vec3 rgb=clamp(c.rgb*exposure,0.0,1.0);
  if(surfaceGuide==1)rgb=mix(rgb,vec3(.08,.80,.89),.28*clamp(fEditWeight,0.0,1.0));
  else if(surfaceGuide==2)rgb=pow(clamp(rgb,0.0,1.0),vec3(.86));
  result=vec4(rgb,c.a);}
@@ -57,9 +59,9 @@ function chunkedUpload(gl,target,typed,maxBytes){
 }
 function getImageBytes(file,idx){const im=file.g.images[idx];if(!im||im.bufferView===undefined)throw Error('GLB embedded image missing');const bv=file.g.bufferViews[im.bufferView],start=file.bin.byteOffset+(bv.byteOffset||0),bytes=file.arrayBuffer.slice(start,start+bv.byteLength);return new Blob([bytes],{type:im.mimeType||'image/png'});}
 export class FastModelView {
- constructor(canvas,onStats=()=>{}){assertRasterOnly(GRAPHICS_POLICY);this.graphicsPolicy=GRAPHICS_POLICY;this.canvas=canvas;this.onStats=onStats;this.gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});if(!this.gl)throw Error('WebGL2 GPU unavailable on this device');const gl=this.gl;const ext=gl.getExtension('EXT_color_buffer_float');this.program=program(gl);this.u={};for(const k of ['zoom','angle','center','aspect','boneTexture','colorTexture','colorFactor','hasTexture','linePass','editHighlight','surfaceGuide'])this.u[k]=gl.getUniformLocation(this.program,k);this.textures=[];this.boneTex=[];this.entries=[];this.mode='full';this.angle=0;this.zoomFactor=1;this.wind=true;this.width=1920;this.height=1080;this.frames=[];this.last=0;this.running=false;this.autoQuality=false;this.qualityDown=0;this.qualityUp=0;gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);this.gpu=gl.getParameter(gl.RENDERER);
+ constructor(canvas,onStats=()=>{}){assertRasterOnly(GRAPHICS_POLICY);this.graphicsPolicy=GRAPHICS_POLICY;this.canvas=canvas;this.onStats=onStats;this.gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});if(!this.gl)throw Error('WebGL2 GPU unavailable on this device');const gl=this.gl;const ext=gl.getExtension('EXT_color_buffer_float');this.program=program(gl);this.u={};for(const k of ['zoom','angle','center','aspect','boneTexture','colorTexture','colorFactor','hasTexture','linePass','editHighlight','surfaceGuide','exposure'])this.u[k]=gl.getUniformLocation(this.program,k);this.textures=[];this.boneTex=[];this.entries=[];this.mode='full';this.angle=0;this.zoomFactor=1;this.wind=true;this.width=1920;this.height=1080;this.frames=[];this.last=0;this.running=false;this.autoQuality=false;this.qualityDown=0;this.qualityUp=0;gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);this.gpu=gl.getParameter(gl.RENDERER);
  this.governor=new ResourceGovernor({budgets:makeBudgets({deviceMemoryGiB:typeof navigator!=='undefined'?navigator.deviceMemory:4})});
- this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;this.lastPressure=null;this.baseWidth=1920;this.baseHeight=1080;this.frameOrdinal=0;this.surfaceGuide='clean';this.wireMode='off';this.wireDensity='balanced';this.wireState={suppressed:false,hot:0,cool:0};this.wireStats={segments:0,drawCalls:0,gpuBytes:0};this.drawEntries=[];this.inverseBindCache=[];
+ this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;this.lastPressure=null;this.baseWidth=1920;this.baseHeight=1080;this.frameOrdinal=0;this.surfaceGuide='clean';this.lightPreset='soft';this.lightSetting=LIGHT_PRESETS.soft;this.onGuideFrame=null;this.wireMode='off';this.wireDensity='balanced';this.wireState={suppressed:false,hot:0,cool:0};this.wireStats={segments:0,drawCalls:0,gpuBytes:0};this.drawEntries=[];this.inverseBindCache=[];
  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();this.stop();this.onStats({status:'GPU_CONTEXT_LOST',message:'顯示裝置中斷：保留來源模型，停止GPU繪圖。請重新載入，絕不自動清空編輯資料。'});});}
  async load(arrayBuffer,mode='full'){
   // Refuse excessive source assets BEFORE destroying a previously displayed scene.
@@ -124,6 +126,7 @@ export class FastModelView {
  clearWireBuffers(){const gl=this.gl;for(const b of this.entries||[]){if(b.lineIB){gl.deleteBuffer(b.lineIB);b.lineIB=null;b.lineCount=0;}}this.gpuAllocatedEstimateBytes=Math.max(0,this.gpuAllocatedEstimateBytes-(this.wireStats?.gpuBytes||0));this.wireStats={segments:0,drawCalls:0,gpuBytes:0};}
  countWireStats(){let segments=0,drawCalls=0,gpuBytes=0;for(const b of this.entries){if(b.lineIB&&b.lineCount){segments+=b.lineCount/2;drawCalls++;gpuBytes+=b.lineCount*4;}}return {segments,drawCalls,gpuBytes};}
  setSurfaceGuide(mode='clean'){surfaceGuideId(mode);this.surfaceGuide=mode;return {mode,extraDrawCalls:0,extraLineBuffers:0,preservesMesh:true};}
+ setLighting(preset='soft'){if(!Object.hasOwn(LIGHT_PRESETS,preset))throw Error('Unknown raster light preset');this.lightPreset=preset;this.lightSetting=LIGHT_PRESETS[preset];return {mode:preset,rayTracing:false,rebuildsGeometry:false};}
  setWireMode(mode='off',density='balanced'){
   if(!WIRE_MODES.includes(mode)||!WIRE_DENSITIES.includes(density))throw Error('Invalid mesh line mode');
   this.clearWireBuffers();this.wireMode=mode;this.wireDensity=density;this.wireState={suppressed:false,hot:0,cool:0};
@@ -173,8 +176,8 @@ export class FastModelView {
 
  draw(ts){if(!this.file||!this.entries.length)return;const gl=this.gl;let start=performance.now();let world=animatedWorld(this.file.g.nodes,this.wind?this.tracks:[],ts*.001);gl.useProgram(this.program);
  this.boneTex.forEach((texture,i)=>{let {out,n}=matsFor(this.file,world,i,this.inverseBindCache[i]);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,4,n,gl.RGBA,gl.FLOAT,out);});
- gl.clearColor(.012,.017,.035,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
- gl.uniform1f(this.u.zoom,this.zoom*this.zoomFactor);gl.uniform1f(this.u.angle,this.angle);gl.uniform3fv(this.u.center,this.center);gl.uniform1f(this.u.aspect,this.width/this.height);gl.uniform1i(this.u.boneTexture,0);gl.uniform1i(this.u.colorTexture,1);
+ gl.clearColor(...this.lightSetting.background,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+ gl.uniform1f(this.u.zoom,this.zoom*this.zoomFactor);gl.uniform1f(this.u.angle,this.angle);gl.uniform3fv(this.u.center,this.center);gl.uniform1f(this.u.aspect,this.width/this.height);gl.uniform1i(this.u.boneTexture,0);gl.uniform1i(this.u.colorTexture,1);gl.uniform1f(this.u.exposure,this.lightSetting.exposure);
  const ordered=this.drawEntries;gl.uniform1i(this.u.linePass,0);gl.uniform1i(this.u.surfaceGuide,surfaceGuideId(this.surfaceGuide||'clean'));
  if(this.wireMode!=='off'&&!this.wireState.suppressed){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1,1);}
  let oldSkin=-1;for(const b of ordered){const mat=this.materials[b.material]||{},texid=mat.pbrMetallicRoughness?.baseColorTexture?.index,has=texid!==undefined,color=mat.pbrMetallicRoughness?.baseColorFactor||[1,1,1,1];
@@ -193,7 +196,7 @@ export class FastModelView {
    }
    gl.uniform1i(this.u.linePass,0);
  }
- gl.bindVertexArray(null);gl.depthMask(true);gl.disable(gl.BLEND);gl.flush();this.lastCPU=performance.now()-start;
+ gl.bindVertexArray(null);gl.depthMask(true);gl.disable(gl.BLEND);gl.flush();this.lastCPU=performance.now()-start;if(this.onGuideFrame&&this.frameOrdinal%2===0)this.onGuideFrame();
  if(this.last){const dt=ts-this.last;if(dt>0&&dt<250){this.frames.push(dt);if(this.frames.length>180)this.frames.shift();}}
  this.last=ts;
  // Sample only periodically; avoids adding GC/StorageManager overhead to every frame.
