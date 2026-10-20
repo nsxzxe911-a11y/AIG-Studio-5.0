@@ -103,4 +103,37 @@ class AigNative4JobsTests(unittest.TestCase):
     finally:
         server.shutdown();server.server_close();thread.join(timeout=2)
 
+ def test_zero_credits_blocks_voice_and_cloud_dialogue_even_with_credentials(self):
+    class FakePaid:
+        configured=True
+        def __init__(self):self.requests=0
+        def generate(self,body):
+            self.requests+=1
+            raise AssertionError('AIG_ZERO_CREDITS_PROVIDER_CALLED')
+    fake_voice=FakePaid();fake_dialogue=FakePaid()
+    server=make_server(self.root/'no-paid',MeshyClient('test-not-real'),port=0,
+                       dialogue_client=fake_dialogue,speech_client=fake_voice)
+    thread=threading.Thread(target=server.serve_forever,daemon=True)
+    thread.start()
+    try:
+        base='http://127.0.0.1:'+str(server.server_port)
+        config=json.load(urlopen(base+'/api/config'))
+        self.assertFalse(config['speechAIConfigured'])
+        self.assertFalse(config['dialogueAIConfigured'])
+        self.assertFalse(config['configured'])
+        for url,expected in [('/api/story/voice','ZERO_CREDITS_CLOUD_VOICE_BLOCKED'),
+                             ('/api/story/dialogue','ZERO_CREDITS_CLOUD_DIALOGUE_BLOCKED')]:
+            data=json.dumps({'beat':0,'text':'免費模式','voice':'coral'}).encode()
+            request=Request(base+url,data=data,
+                            headers={'Content-Type':'application/json','X-AIG-Request':'1'},
+                            method='POST')
+            with self.assertRaises(HTTPError) as error:
+                urlopen(request)
+            self.assertEqual(error.exception.code,409)
+            self.assertIn(expected,error.exception.read().decode())
+        self.assertEqual(fake_voice.requests,0)
+        self.assertEqual(fake_dialogue.requests,0)
+    finally:
+        server.shutdown();server.server_close();thread.join(timeout=2)
+
 if __name__=='__main__':unittest.main()
