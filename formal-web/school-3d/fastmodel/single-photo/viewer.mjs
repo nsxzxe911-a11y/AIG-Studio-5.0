@@ -4,6 +4,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {inspectSkinPose,SkinAnomalyMonitor} from './skin-anomaly.mjs';
 import {REVIEW_DIRECTIONS,reviewCameraPose,reviewPoseTime} from './heroine-review.mjs';
+import {TIMELINE_FRACTIONS,composeTimelineImage} from './timeline-review.mjs';
 
 export async function parseRiggedGLB(buffer){
  if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>200*1024*1024)throw Error('GLB_SIZE_LIMIT');
@@ -50,6 +51,7 @@ export class PhotoViewer{
  }
  fitCanvas(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);this.camera.aspect=Math.max(1,r.width)/Math.max(1,r.height);this.camera.updateProjectionMatrix();}
  async load(buffer,{orbit=false}={}){
+  if(this.reviewBusy)throw Error('TIMELINE_REVIEW_IN_PROGRESS');
   const file=await parseRiggedGLB(buffer),box=new THREE.Box3().setFromObject(file.scene);
   if(box.isEmpty())throw Error('GLB_EMPTY_SCENE');
   const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
@@ -59,6 +61,39 @@ export class PhotoViewer{
   this.scene.add(file.scene);if(old){this.scene.remove(old);this.release(old);}
   const radius=Math.max(size.x,size.y,size.z,.01);this.camera.position.copy(center).add(new THREE.Vector3(0,radius*.12,radius*1.7));this.camera.near=radius/1000;this.camera.far=radius*100;this.camera.updateProjectionMatrix();this.controls.target.copy(center);this.controls.update();
   return file.animations.map((c,i)=>({index:i,name:c.name||'片段 '+(i+1),duration:c.duration}));
+ }
+ async captureTimelineReview({onProgress=()=>{}}={}){
+  if(!this.model)throw Error('TIMELINE_MODEL_NOT_LOADED');
+  const clip=this.animation?.clips?.[this.animation?.index];
+  if(!clip)throw Error('TIMELINE_REAL_ACTION_MISSING');
+  if(this.reviewBusy)throw Error('TIMELINE_REVIEW_IN_PROGRESS');
+  this.reviewBusy=true;
+  const currentModel=this.model;
+  const wasPaused=this.animation.paused;
+  const previousTime=this.animation.mixer.time;
+  const previousProbe=this.skinProbe;
+  this.skinProbe=null;this.animation.paused=true;
+  const samples=[];
+  try{
+   for(const fraction of TIMELINE_FRACTIONS){
+    if(currentModel!==this.model)throw Error('TIMELINE_SOURCE_CHANGED');
+    const result=await this.captureHeroineReview({fraction});
+    if(result.clipName!==clip.name)throw Error('TIMELINE_CLIP_CHANGED');
+    samples.push({...result,fraction});
+    onProgress({capturedPoses:samples.length,targetPoses:4,frames:samples.length*4});
+   }
+   const collage=await composeTimelineImage(samples,{
+    imageDecoder:blob=>createImageBitmap(blob),
+    canvasFactory:()=>document.createElement('canvas')
+   });
+   return {image:collage.image,samples,clipName:clip.name,
+    frames:collage.frames,sourceGLBModified:false,hardwareFpsProven:false};
+  }finally{
+   this.animation.mixer.setTime(previousTime);
+   this.animation.paused=wasPaused;
+   this.skinProbe=previousProbe;
+   this.reviewBusy=false;
+  }
  }
  async captureHeroineReview({fraction=.5}={}){
   if(!this.model)throw Error('REVIEW_MODEL_NOT_LOADED');
