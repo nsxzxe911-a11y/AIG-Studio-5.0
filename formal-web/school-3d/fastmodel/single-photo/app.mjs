@@ -372,7 +372,7 @@ $('generate').addEventListener('click',async()=>{
   const fingerprint=sha+'|'+mode+'|'+(actionId??'default')+'|'+preparedHash+'|'+serviceId;
   const requestId=journal.begin(fingerprint);
   const image=await readData(file);
-  const payload={image,requestId,mode,actionId,serviceId};
+  const payload={image,requestId,mode,actionId,serviceId,autoStages:true};
   if(preparedImage)payload.preparedImage=preparedImage;
   const d=await api('/api/reconstruction/jobs',{method:'POST',headers:{'Content-Type':'application/json','X-AIG-Request':'1'},body:JSON.stringify(payload)});
   journal.accept(fingerprint,d.id);follow(d.id);
