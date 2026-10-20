@@ -5,10 +5,11 @@ import {timelineEvidenceManifest} from './timeline-review.mjs';
 import {parseStory,resolveStoryClips,STORY_PIPELINE_VERSION} from './story-to-animation.mjs';
 import {composeDialogue,updateDialogueCue,annotateDialoguePlan,DIALOGUE_VERSION} from './story-dialogue.mjs';
 import {StoryAudio,AUDIO_CUE_VERSION} from './story-audio.mjs';
+import {MovieWorkspace} from './movie-ui.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
-let storyPlan=null,storyOutputUrl=null,storyDialogue=null,storyParsed=null,storyRevision=0,cloudBusy=false,dialogueCloudConfigured=false;
+let storyPlan=null,storyOutputUrl=null,storyDialogue=null,storyParsed=null,storyRevision=0,cloudBusy=false,dialogueCloudConfigured=false,movieUI=null;
 const storySound=new StoryAudio({onStatus:m=>{$('story-audio-status').textContent=m;}});
 function soundOptions(){return {
  voice:$('voice-enabled').checked,sfx:$('sfx-enabled').checked,
@@ -71,6 +72,8 @@ function renderDialogueEditor(){
 const refreshStoryAudioEvidence=()=>{if(storyPlan)exportStoryEvidence();};
 
 function clearStoryPlan(reason='劇情或 GLB 動作已改變，請重新解析。'){
+ if(movieUI?.isBusy)throw Error('MOVIE_RECORDING_IN_PROGRESS');
+ movieUI?.invalidate();
  const wasPlaying=!!view?.animation?.story?.playing;
  view?.animation?.stopStory();
  if(wasPlaying){
@@ -324,6 +327,7 @@ $('story-build').addEventListener('click',()=>{
      ([...new Set(blockers)].join('、')||'尚未載入有動畫的正式 GLB 與來源 SHA')+
      '。請匯入缺少的相容動作片段後重試；不以照片晃動充數。';
   $('story-play').disabled=!(plan.ready&&sourceSha&&view?.model);
+  movieUI?.refresh();
   exportStoryEvidence();
  }catch(e){clearStoryPlan('劇情解析 BLOCKED：'+e.message);}
 });
@@ -483,7 +487,14 @@ $('clip').addEventListener('change',()=>{
   $('timeline-status').textContent='已切換真實 GLB 動畫片段；舊的四方向與 16 格圖片失效，請重新擷取。';
  }catch(e){status.textContent='片段未切換：'+e.message;}
 });
-$('pause').addEventListener('click',()=>{if(!view?.animation)return;view.animation.paused=!view.animation.paused;if(view.animation.story?.playing){if(view.animation.paused)storySound.pause();else storySound.resume();}$('pause').textContent=view.animation.paused?'繼續動畫':'暫停動畫';});
+$('pause').addEventListener('click',()=>{if(movieUI?.isBusy)return;if(!view?.animation)return;view.animation.paused=!view.animation.paused;if(view.animation.story?.playing){if(view.animation.paused)storySound.pause();else storySound.resume();}$('pause').textContent=view.animation.paused?'繼續動畫':'暫停動畫';});
+movieUI=new MovieWorkspace({
+ document,getContext:()=>({
+  plan:storyPlan,sourceSha,view,sound:storySound,sourceName:loadedFile,
+  dialogueOrigin:storyDialogue?.provider||'OFFLINE_TEMPLATE',
+  soundOptions,dialogueCloudConfigured
+ }),showSubtitle,clearSubtitle
+});
 if(window.AIG_OFFLINE){
  $('generation').hidden=true;$('stages').hidden=true;status.textContent='本機離線播放 · 原始 GLB 與 PBR 材質保留；造型與實機效能尚未正式驗收。';
  const bytes=Uint8Array.from(atob(window.AIG_OFFLINE.glb),c=>c.charCodeAt(0));
