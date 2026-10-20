@@ -1,0 +1,49 @@
+name: AIG Low Tier Web Runtime Decommission Gate
+on:
+  push:
+    branches:
+      - retire/web-low-tier-runtime-20261020
+      - web/aig-dual-formal-runtime-20261016
+    paths:
+      - 'formal-web/index.html'
+      - 'formal-web/mobile-runtime.html'
+      - 'formal-web/studio-375.html'
+      - 'formal-web/native-download.html'
+      - 'formal-web/service-worker.js'
+      - 'formal-web/qa/retire-web-source.cjs'
+      - '.github/workflows/retire-web-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node formal-web/qa/retire-web-source.cjs
+  browser:
+    needs: source
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 8765 --directory formal-web >/tmp/web-retired-http.log 2>&1 &
+          sleep 2
+      - run: node formal-web/qa/retire-web-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Decommission-Site-4K-S23-Draft-Backup
+          path: artifacts/web-retirement/
+          if-no-files-found: warn
