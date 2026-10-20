@@ -27,5 +27,15 @@ export function nextDetailState(state,{mode='auto',p95Ms=16.67,targetMs=16.67,pr
  };
 }
 export function visiblePreviewEntries(entries,hidden){
- return hidden?entries.filter(e=>e.optionalDetail!==true):entries.slice();
+ const structural=entries.filter(e=>e.optionalDetail!==true);
+ return hidden&&structural.length?structural:entries.slice();
+}
+
+/** Honest browser requestAnimationFrame wall-time comparison, not GPU timing. */
+export function measuredFrameSummary(frames,{minSamples=60}={}){
+ const clean=Array.isArray(frames)?frames.filter(x=>Number.isFinite(x)&&x>0&&x<250):[];
+ if(clean.length<minSamples)return null;
+ const sorted=[...clean].sort((a,b)=>a-b),mean=clean.reduce((a,b)=>a+b,0)/clean.length;
+ return {samples:clean.length,meanMs:+mean.toFixed(2),fps:+(1000/mean).toFixed(2),
+   p95Ms:+sorted[Math.ceil(sorted.length*.95)-1].toFixed(2),source:'BROWSER_RAF_FRAME_DELTA_NOT_GPU_TIME'};
 }
