@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as THREE from 'three';
-import {ACTION_BRIDGE_VERSION,inspectExternalAction,copyCompatibleClips} from '../action-compatibility.mjs';
+import {ACTION_BRIDGE_VERSION,inspectExternalAction,copyCompatibleClips,commitCompatibleClips} from '../action-compatibility.mjs';
 import {AnimationController} from '../viewer.mjs';
 import {timelineEvidenceManifest,TIMELINE_FRACTIONS,TIMELINE_VIEW_KEYS} from '../timeline-review.mjs';
 function rig(){
@@ -35,10 +35,35 @@ test('real exact-bind source and target rig accepts ONLY animation clip tracks, 
  assert.equal(copied.length,1);assert.notStrictEqual(copied[0],clip);
  assert.match(copied[0].name,/外部動作/);
  const ctl=new AnimationController(target.root,[]);
- ctl.clips.push(...copied);ctl.select(0);ctl.update(.5);
+ const c=commitCompatibleClips(ctl,copied);assert.equal(c.selectedIndex,0);assert.equal(c.committed,true);ctl.update(.5);
  assert.ok(target.hip.position.x>.03,'animated actual target bone with identical rig');
  assert.equal(target.root.children.length,oldNames,'never imported external source mesh to scene');
  assert.equal(report.realCombatChoreographyVerified,false);
+});
+test('failing action activation rolls back CLIP TABLE and restores prior playback time/pause',()=>{
+ const original=action(),candidate=copyCompatibleClips([action()]);
+ const uncached=[];
+ const controller={
+  clips:[original],index:0,paused:true,
+  mixer:{time:.47,setTime(v){this.time=v;},uncacheClip(c){uncached.push(c);}},
+  select(i){
+   if(i===1){this.index=1;this.mixer.time=.81;throw Error('SIMULATED_ACTION_ACTIVATION_FAILURE');}
+   this.index=i;
+  }
+ };
+ assert.throws(()=>commitCompatibleClips(controller,candidate),/ACTION_COMMIT_ROLLED_BACK/);
+ assert.deepEqual(controller.clips,[original]);
+ assert.equal(controller.index,0);
+ assert.equal(controller.mixer.time,.47);
+ assert.equal(controller.paused,true);
+ assert.deepEqual(uncached,candidate);
+});
+test('clip library bound rejects new source without deleting already working actions',()=>{
+ const originals=Array.from({length:32},(_,i)=>new THREE.AnimationClip('original-'+i,1,[new THREE.VectorKeyframeTrack('Hip.position',[0,1],[0,0,0,0,0,0])]));
+ const current={clips:[...originals],index:0,paused:false,select() {throw Error('SHOULD_NOT_SELECT');}};
+ assert.throws(()=>commitCompatibleClips(current,copyCompatibleClips([action()])),/ACTION_CLIP_LIBRARY_LIMIT/);
+ assert.equal(current.clips.length,32);
+ assert.strictEqual(current.clips[0],originals[0]);
 });
 test('different hierarchy, bind inverse or skeleton bone names rejects instead of guessed retargeting',()=>{
  const target=rig(),source=rig(),clip=action();
@@ -100,6 +125,8 @@ test('3.1 real action source GLB upload, selected clip callback and provenance U
  assert.ok(app.includes("importedActionHashes.clear();actionShaByClipIndex.clear()"));
  assert.ok(viewer.includes('inspectExternalAction(currentModel,file.scene,file.animations)'));
  assert.ok(viewer.includes('const copied=copyCompatibleClips(file.animations)'));
+ assert.ok(viewer.includes('const commit=commitCompatibleClips(controller,copied)'));
+ assert.ok(viewer.includes('this.release(file.scene)'));
  assert.ok(viewer.includes('this.release(file.scene)'));
  assert.ok(!viewer.includes('this.scene.add(file.scene); // external action'));
 });
