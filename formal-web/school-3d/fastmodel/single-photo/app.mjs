@@ -305,6 +305,103 @@ $('local-glb').addEventListener('change',async()=>{
   $('skin-check-status').textContent='本機 GLB 未載入：'+err.message+'。原有模型仍保留。';
  }
 });
+let aig4Busy=false;
+function aig4RefreshButton(){
+ $('aig4-build').disabled=aig4Busy||!$('aig4-front').files?.length;
+}
+for(const id of ['aig4-front','aig4-side'])
+ $(''+id).addEventListener('change',()=>{
+  $('aig4-status').textContent='來源已改變。4.0 只會依前景畫素建立自研封閉體積草模，未知背面／五官不會偽裝成真照片。';
+  aig4RefreshButton();
+ });
+function aig4Link(label,url,name){
+ const a=document.createElement('a');
+ a.className='download';a.href=url;a.textContent=label;a.download=name;
+ $('aig4-downloads').append(a);
+}
+async function aig4ReadData(file){
+ return new Promise((resolve,reject)=>{
+  const reader=new FileReader();
+  reader.onload=()=>resolve(reader.result);
+  reader.onerror=()=>reject(Error('AIG4_IMAGE_READ_FAILED'));
+  reader.readAsDataURL(file);
+ });
+}
+$('aig4-build').addEventListener('click',async()=>{
+ if(aig4Busy)return;
+ const front=$('aig4-front').files?.[0]||null;
+ const side=$('aig4-side').files?.[0]||null;
+ if(!front)return;
+ if(front.size>20*1024*1024||side?.size>20*1024*1024){
+  $('aig4-status').textContent='單張圖片不可超過 20 MB。';return;
+ }
+ aig4Busy=true;aig4RefreshButton();
+ $('aig4-view-gallery').replaceChildren();
+ $('aig4-downloads').replaceChildren();
+ const status4=$('aig4-status');
+ status4.textContent='本機 AIG 4.0 來源與輪廓預檢中；不呼叫 Meshy／付費 API。';
+ try{
+  const frontBytes=await front.arrayBuffer();
+  const frontSHA=await sha256Bytes(frontBytes);
+  const sideBytes=side?await side.arrayBuffer():null;
+  const sideSHA=sideBytes?await sha256Bytes(sideBytes):'NONE';
+  const fingerprint='AIG_NATIVE_4_0|'+frontSHA+'|'+sideSHA;
+  const requestId=(await sha256Bytes(new TextEncoder().encode(fingerprint))).slice(0,32);
+  const payload={requestId,image:await aig4ReadData(front)};
+  if(side)payload.sideImage=await aig4ReadData(side);
+  const job=await api('/api/aig4/jobs',{method:'POST',
+   headers:{'Content-Type':'application/json','X-AIG-Request':'1'},
+   body:JSON.stringify(payload)});
+  let end=null;
+  for(let attempt=0;attempt<180;attempt++){
+   end=await api('/api/aig4/jobs/'+job.id);
+   if(end.status==='COMPLETE'||end.status==='FAILED')break;
+   status4.textContent='AIG 自研幾何補面：'+end.phase+
+    '。0 點數；正在計算封閉體積及八角度投影。';
+   await new Promise(resolve=>setTimeout(resolve,1000));
+  }
+  if(!end||end.status!=='COMPLETE')throw Error(end?.lastError||'AIG4_JOB_INCOMPLETE_OR_TIMEOUT');
+  if(!end.real3DMeshProduced||!end.artifacts?.['model.glb']?.sha256)
+   throw Error('AIG4_TECHNICAL_GLB_NOT_VERIFIED');
+  const prefix='/api/aig4/jobs/'+job.id+'/files/';
+  aig4Link('下載真 3D 草模 GLB',prefix+'model.glb','AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb');
+  aig4Link('下載比例／信心／來源 SHA 報告',prefix+'scaffold.json','AIG-4.0-SCAFFOLD-NOT-APPROVED.json');
+  aig4Link('下載信心圖',prefix+'confidence.png','AIG-4.0-confidence.png');
+  for(const angle of [0,45,90,135,180,225,270,315]){
+   const code=String(angle).padStart(3,'0');
+   const img=document.createElement('img');
+   img.src=prefix+'view-'+code+'.png';
+   img.alt=code+'° 自研 3D 草模的推估視角，不是真實背面照片';
+   img.style.width='100%';img.style.aspectRatio='3 / 4';img.style.objectFit='contain';
+   img.style.border='1px solid #36576b';img.style.borderRadius='5px';
+   $('aig4-view-gallery').append(img);
+  }
+  const preview=document.createElement('button');
+  preview.type='button';preview.textContent='在 AIG 3D 工作區載入這份草模（非正式人物）';
+  preview.addEventListener('click',async()=>{
+   preview.disabled=true;
+   try{
+    const resp=await fetch(prefix+'model.glb');
+    if(!resp.ok)throw Error('AIG4_GLB_DOWNLOAD_FAILED');
+    const bytes=await resp.arrayBuffer();
+    if(await sha256Bytes(bytes)!==end.artifacts['model.glb'].sha256)
+     throw Error('AIG4_GLB_SHA_MISMATCH');
+    await load(bytes,true);
+    loadedFile='AIG_4_0_VOLUME_DRAFT_'+job.id;
+    status.textContent='AIG 4.0 真體積網格草模已載入；四肢、頭頸、髮束、Rig、動畫均未驗收。';
+   }catch(err){status4.textContent='GLB 預覽阻擋：'+err.message;}
+   finally{preview.disabled=false;}
+  });
+  $('aig4-downloads').append(preview);
+  status4.textContent='4.0 真實三角面 GLB 已產生，平均幾何信心 '+
+    (end.confidenceMean*100).toFixed(1)+
+    '%（僅啟發式數值，非實測準確率）；8 個補全角度與來源 SHA 已生成。' +
+    ' 未知背面／頭頸／髮束／人體拓樸仍 BLOCKED，不能直接發佈成女主角。';
+ }catch(error){
+  status4.textContent='AIG 4.0 BLOCKED：'+error.message+
+   '。若背景複雜，請改用去背的透明 PNG；不使用付費重建備援。';
+ }finally{aig4Busy=false;aig4RefreshButton();}
+});
 $('photo').addEventListener('change',async()=>{
  updateButton();
  const revision=++heroineSourceRevision,file=$('photo').files?.[0];
