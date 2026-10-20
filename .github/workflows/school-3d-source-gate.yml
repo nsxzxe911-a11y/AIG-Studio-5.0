@@ -449,6 +449,25 @@ jobs:
             assert size in s
           print('Offline graphics guard and RGB 1080p/2K/4K preserved')
           PY
+      - name: FastModel raster-only GPU policy and 3D-style image authority guard
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/render-policy.mjs
+          node --test formal-web/school-3d/fastmodel/tests/no-raytrace.test.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('formal-web/school-3d/fastmodel')
+          s=(root/'web/render-policy.mjs').read_text()
+          manifest=json.loads((root/'references/hero-3d-still-REFERENCE-ONLY.json').read_text())
+          assert "rayTracing: false" in s
+          assert "pathTracing: false" in s
+          assert "dxr: false" in s
+          assert manifest['releaseAllowed'] is False
+          assert manifest['authorityStatus']=='REFERENCE_ONLY_NOT_APPROVED'
+          assert manifest['kind']=='GENERATED_STILL_2D_SIMULATING_3D_RENDER'
+          assert len(manifest['sha256'])==64
+          print('FastModel raster only; generated character still is not 3D mesh - PASS')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"

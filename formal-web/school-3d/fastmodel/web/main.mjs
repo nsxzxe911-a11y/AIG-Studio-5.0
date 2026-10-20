@@ -1,8 +1,7 @@
 import {FastModelView} from './renderer.mjs';
 import {DiskPressureGuard} from './resource-governor.mjs';
 import {RESOLUTION_PRESETS} from './resolution-policy.mjs';
-import {GRAPHICS_POLICY,assertRasterOnly} from './graphics-policy.mjs';
-assertRasterOnly(GRAPHICS_POLICY);
+import {RENDER_POLICY} from './render-policy.mjs';
 const el=id=>document.getElementById(id),overlay=el('overlay'),detail=el('detail');let view=null,buffer=null,paused=false,lastStats=null;
 // RGB cockpit: tabs switch only REAL existing controls; no decorative/fake buttons.
 const controls=[...document.querySelectorAll('[data-panel-target]')];
@@ -18,7 +17,6 @@ for(const b of controls){
   });
 }
 selectPanel('model');
-document.getElementById('raytrace-status').textContent='光線追蹤：關閉（自研光柵渲染 · 無 RTX/DXR 要求）';
 const quickStatus=el('quick-status');
 function showResolutionResult(result=null){
  const item=RESOLUTION_PRESETS[el('resolution').value],label=item?.short||'自訂';
@@ -62,4 +60,4 @@ el('patch').addEventListener('input',()=>{if(!view?.file)return;let stat=view.pa
 el('turnl').addEventListener('click',()=>{if(view)view.angle=Math.max(-1.2,view.angle-.15);});el('turnr').addEventListener('click',()=>{if(view)view.angle=Math.min(1.2,view.angle+.15);});el('reset').addEventListener('click',()=>{if(view){view.angle=0;view.zoomFactor=1;el('zoom').value='100';}});
 let pointerX=null;const c=el('view');c.addEventListener('pointerdown',e=>{pointerX=e.clientX;c.setPointerCapture?.(e.pointerId);});c.addEventListener('pointermove',e=>{if(pointerX===null||!view)return;view.angle=Math.max(-1.2,Math.min(1.2,view.angle+(e.clientX-pointerX)*.006));pointerX=e.clientX;});c.addEventListener('pointerup',()=>pointerX=null);c.addEventListener('pointercancel',()=>pointerX=null);
 c.addEventListener('wheel',e=>{if(!view)return;e.preventDefault();view.zoomFactor=Math.max(.6,Math.min(1.6,view.zoomFactor-e.deltaY*.001));el('zoom').value=String(view.zoomFactor*100);},{passive:false});
-el('export').addEventListener('click',async()=>{if(!lastStats)return;await updateDisk();let out={schema:'AIG_FastModel_1080p60_Preview_1',source:'WEBGL2_BROWSER_ONLY',date:new Date().toISOString(),userAgent:navigator.userAgent,webglGpu:view.gpu,visualAuthority:'NOT_APPROVED',nativeDX12Tested:false,nativeVulkanTested:false,...lastStats,localMeshEdit:view.patchStats,resourcePolicy:{...lastStats.memoryPressure,gpuUsagePercentReliable:false},diskEstimate:diskInfo,warning:'browser storage quota is not entire device disk or storage write throughput'};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='AIG-FastModel-device-benchmark.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);});
+el('export').addEventListener('click',async()=>{if(!lastStats)return;await updateDisk();let out={schema:'AIG_FastModel_1080p60_Preview_1',source:'WEBGL2_BROWSER_ONLY',date:new Date().toISOString(),userAgent:navigator.userAgent,webglGpu:view.gpu,visualAuthority:'NOT_APPROVED',nativeDX12Tested:false,nativeVulkanTested:false,renderPolicy:RENDER_POLICY,...lastStats,localMeshEdit:view.patchStats,resourcePolicy:{...lastStats.memoryPressure,gpuUsagePercentReliable:false},diskEstimate:diskInfo,warning:'browser storage quota is not entire device disk or storage write throughput'};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='AIG-FastModel-device-benchmark.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);});

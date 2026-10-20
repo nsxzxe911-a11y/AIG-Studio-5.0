@@ -1,7 +1,7 @@
-import {assertRasterOnly,GRAPHICS_POLICY} from './graphics-policy.mjs';
 import {decodeGLB,readAccessor,buildBatches} from './fastmodel-data.mjs';
 import {ResourceGovernor,makeBudgets,RebuildableCache} from './resource-governor.mjs';
 import {checkRenderTarget} from './resolution-policy.mjs';
+import {enforceRasterPolicy} from './render-policy.mjs';
 const VERTEX=`#version 300 es
 precision highp float;precision highp int;
 layout(location=0)in vec3 pos;
@@ -49,7 +49,7 @@ function chunkedUpload(gl,target,typed,maxBytes){
 }
 function getImageBytes(file,idx){const im=file.g.images[idx];if(!im||im.bufferView===undefined)throw Error('GLB embedded image missing');const bv=file.g.bufferViews[im.bufferView],start=file.bin.byteOffset+(bv.byteOffset||0),bytes=file.arrayBuffer.slice(start,start+bv.byteLength);return new Blob([bytes],{type:im.mimeType||'image/png'});}
 export class FastModelView {
- constructor(canvas,onStats=()=>{}){assertRasterOnly(GRAPHICS_POLICY);this.graphicsPolicy=GRAPHICS_POLICY;this.canvas=canvas;this.onStats=onStats;this.gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});if(!this.gl)throw Error('WebGL2 GPU unavailable on this device');const gl=this.gl;const ext=gl.getExtension('EXT_color_buffer_float');this.program=program(gl);this.u={};for(const k of ['zoom','angle','center','aspect','boneTexture','colorTexture','colorFactor','hasTexture'])this.u[k]=gl.getUniformLocation(this.program,k);this.textures=[];this.boneTex=[];this.entries=[];this.mode='full';this.angle=0;this.zoomFactor=1;this.wind=true;this.width=1920;this.height=1080;this.frames=[];this.last=0;this.running=false;this.autoQuality=false;this.qualityDown=0;this.qualityUp=0;gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);this.gpu=gl.getParameter(gl.RENDERER);
+ constructor(canvas,onStats=()=>{}){this.renderPolicy=enforceRasterPolicy();this.canvas=canvas;this.onStats=onStats;this.gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});if(!this.gl)throw Error('WebGL2 GPU unavailable on this device');const gl=this.gl;const ext=gl.getExtension('EXT_color_buffer_float');this.program=program(gl);this.u={};for(const k of ['zoom','angle','center','aspect','boneTexture','colorTexture','colorFactor','hasTexture'])this.u[k]=gl.getUniformLocation(this.program,k);this.textures=[];this.boneTex=[];this.entries=[];this.mode='full';this.angle=0;this.zoomFactor=1;this.wind=true;this.width=1920;this.height=1080;this.frames=[];this.last=0;this.running=false;this.autoQuality=false;this.qualityDown=0;this.qualityUp=0;gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);this.gpu=gl.getParameter(gl.RENDERER);
  this.governor=new ResourceGovernor({budgets:makeBudgets({deviceMemoryGiB:typeof navigator!=='undefined'?navigator.deviceMemory:4})});
  this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;this.lastPressure=null;this.baseWidth=1920;this.baseHeight=1080;this.frameOrdinal=0;
  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();this.stop();this.onStats({status:'GPU_CONTEXT_LOST',message:'顯示裝置中斷：保留來源模型，停止GPU繪圖。請重新載入，絕不自動清空編輯資料。'});});}

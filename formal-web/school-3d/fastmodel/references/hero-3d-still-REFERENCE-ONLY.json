@@ -1,0 +1,14 @@
+{
+  "schema": "AIG.School3D.CharacterReference.V1",
+  "authorityStatus": "REFERENCE_ONLY_NOT_APPROVED",
+  "kind": "GENERATED_STILL_2D_SIMULATING_3D_RENDER",
+  "filename": "櫻花校園裡的微笑少女.png",
+  "width": 1086,
+  "height": 1448,
+  "sha256": "6a16ab2f4216534e2ff77e325160e8e6fbf3d69d4aefd25f9b768cc4ac017415",
+  "allowedUse": "female main character appearance study only; not verified 3D mesh, no bone rig, no movie asset",
+  "active3DSource": "Phase17 GLB still visual FAIL, unchanged",
+  "originalApprovedSourceSha": "83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910",
+  "renderPolicy": "RAY_TRACING_OFF",
+  "releaseAllowed": false
+}
