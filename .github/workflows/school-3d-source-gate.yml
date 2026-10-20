@@ -224,6 +224,37 @@ jobs:
           assert s['approved3DModel'] is False and s['releasedToHomepage'] is False
           print('Phase14 hair spring and color source QA PASS — 3D/AI visual gate remains BLOCKED')
           PY
+      - name: Phase15 original AIG 3D hair card exporter — SYNTHETIC INPUT ONLY
+        run: |
+          mkdir -p artifacts/school-3d-phase15-synthetic
+          python formal-web/school-3d/phase15/tools/prepare_ci_synthetic.py \
+            --synthetic-png artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png \
+            --hair-spec formal-web/school-3d/phase14/hair-face-spec.v1.json \
+            --out artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json
+          python formal-web/school-3d/phase15/tools/build_hair_cards.py \
+            --base artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-MESH-NOT-VISUAL-AUTHORITY.glb \
+            --source artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png \
+            --hair-spec artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json \
+            --envelope-spec artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json \
+            --phase13-builder formal-web/school-3d/phase13/tools/build_envelope.py \
+            --out artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-TRUE-3D-HAIR-NOT-APPROVED.glb \
+            --report artifacts/school-3d-phase15-synthetic/CI-PHASE15-STRUCTURAL-REPORT.json
+      - name: Phase15 real skeleton 3D hair tests (12 hard gates)
+        env:
+          AIG_PHASE15_BASE_GLB: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-MESH-NOT-VISUAL-AUTHORITY.glb
+          AIG_PHASE15_OUTPUT_GLB: artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-TRUE-3D-HAIR-NOT-APPROVED.glb
+          AIG_PHASE15_HAIR_SPEC: artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json
+          AIG_PHASE15_SOURCE_IMG: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png
+          AIG_PHASE15_ENVELOPE_SPEC: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json
+          AIG_PHASE15_PHASE13_BUILDER: formal-web/school-3d/phase13/tools/build_envelope.py
+        run: python -m unittest discover -s formal-web/school-3d/phase15/tools -p 'test_phase15_hair.py' -v
+      - name: Archive Phase15 SYNTHETIC GLB — never a real girl approval
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School3D-Phase15-SYNTHETIC-3D-HairRig-NOT-APPROVED
+          path: artifacts/school-3d-phase15-synthetic/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
