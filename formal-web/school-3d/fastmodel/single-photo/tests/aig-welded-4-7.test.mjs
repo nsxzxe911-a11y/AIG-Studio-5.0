@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {AIG45_POSES,recognizePose,auditMarks} from '../aig-calibration-4-5.mjs';
 import {normalizePoseSet,buildHeadNeckPonytail,meshTopology} from '../aig-head-neck-4-6.mjs';
 import {AIG47_SCHEMA,buildAIG47Draft,exportAIG47GLB} from '../aig-welded-4-7.mjs';
@@ -108,6 +109,22 @@ test('genuine self-contained glTF 2.0 GLB contains two technical mesh primitives
   assert.ok(view.byteLength>0&&view.byteOffset+view.byteLength<=bl);
  }
  assert.throws(()=>exportAIG47GLB({...d,topologyQA:false}),/UNVERIFIED_DRAFT/);
+});
+test('exported binary 4.7 technical GLB really loads back into a Three.js scene with two mesh objects',async()=>{
+ const glb=exportAIG47GLB(buildAIG47Draft(source()));
+ const parsed=await new GLTFLoader().parseAsync(glb.bytes.buffer,'');
+ let count=0,triangles=0;
+ parsed.scene.traverse(node=>{
+  if(!node.isMesh)return;
+  count++;
+  assert.ok(node.geometry.getAttribute('position').count>100);
+  assert.ok(node.geometry.index?.count>100);
+  triangles+=node.geometry.index.count/3;
+  assert.equal(node.isSkinnedMesh,undefined);
+ });
+ assert.equal(count,2);
+ assert.ok(triangles>300);
+ assert.equal(parsed.animations.length,0);
 });
 test('4.7 UI provides genuine source-bound shared mesh and glb download action, preserves prior versions',()=>{
  const read=x=>fs.readFileSync(new URL(x,import.meta.url),'utf8');
