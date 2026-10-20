@@ -6,10 +6,13 @@ const plan={ready:true,timeline:[
  {beat:1,seconds:1.5,dialogue:'這招有趣！'}
 ]};
 function wav(){
- const bytes=new Uint8Array(48);
- bytes.set([82,73,70,70],0);new DataView(bytes.buffer).setUint32(4,40,true);
- bytes.set([87,65,86,69,102,109,116,32],8);
- bytes.set([100,97,116,97],40);
+ const bytes=new Uint8Array(48),v=new DataView(bytes.buffer);
+ bytes.set([82,73,70,70],0);v.setUint32(4,40,true);
+ bytes.set([87,65,86,69],8);bytes.set([102,109,116,32],12);
+ v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+ v.setUint32(24,8000,true);v.setUint32(28,16000,true);
+ v.setUint16(32,2,true);v.setUint16(34,16,true);
+ bytes.set([100,97,116,97],36);v.setUint32(40,4,true);
  return bytes.buffer;
 }
 test('true audio bytes required, not arbitrary mock JSON or renamed WebM',()=>{
