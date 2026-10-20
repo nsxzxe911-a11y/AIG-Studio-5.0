@@ -145,8 +145,9 @@ function start(){
      gl.bindBuffer(gl.ARRAY_BUFFER,item.position);gl.enableVertexAttribArray(uniforms.p);gl.vertexAttribPointer(uniforms.p,3,gl.FLOAT,false,0,0);
      gl.bindBuffer(gl.ARRAY_BUFFER,item.normal);gl.enableVertexAttribArray(uniforms.n);gl.vertexAttribPointer(uniforms.n,3,gl.FLOAT,false,0,0);
      gl.drawArrays(gl.TRIANGLES,0,item.count);
-     if(gl.getError()!==gl.NO_ERROR)throw Error("GL_DRAW_ERROR");
     }
+    const err=gl.getError();
+    if(err!==gl.NO_ERROR){canvas.dataset.aig95Rendered="error_"+err;return}
     canvas.dataset.aig95Rendered="true";
    };
    w.AIG_HOME_V93_VIEWER=Object.freeze({inspect:()=>({
