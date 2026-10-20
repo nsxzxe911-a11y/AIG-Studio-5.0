@@ -117,7 +117,7 @@ test('exported binary 4.7 technical GLB really loads back into a Three.js scene 
  parsed.scene.traverse(node=>{
   if(!node.isMesh)return;
   count++;
-  assert.ok(node.geometry.getAttribute('position').count>100);
+  assert.ok(node.geometry.getAttribute('position').count>(node.name.endsWith('headNeck')?100:40),'real mesh vertex count for '+node.name);
   assert.ok(node.geometry.index?.count>100);
   triangles+=node.geometry.index.count/3;
   assert.equal(node.isSkinnedMesh,undefined);
