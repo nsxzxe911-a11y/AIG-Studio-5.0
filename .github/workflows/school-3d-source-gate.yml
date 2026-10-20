@@ -852,6 +852,26 @@ jobs:
           npm test --prefix formal-web/school-3d/fastmodel/single-photo
           npm run build --prefix formal-web/school-3d/fastmodel/single-photo
           python formal-web/school-3d/fastmodel/single-photo/tests/build_ci_artifact.py --out artifacts/fastmodel-27-SYNTHETIC-PROTOCOL-NOT-LIVE-GENERATION
+      - name: FastModel 2.8 skin overlap, twin-face and animated pose anomaly source Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/single-photo/skin-anomaly.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/app.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/viewer.mjs
+          node --test formal-web/school-3d/fastmodel/single-photo/tests/skin-anomaly.test.mjs
+          node - <<'JS'
+          const fs=require('fs');
+          const root='formal-web/school-3d/fastmodel/single-photo/';
+          const source=fs.readFileSync(root+'index.html','utf8');
+          const app=fs.readFileSync(root+'app.mjs','utf8');
+          const viewer=fs.readFileSync(root+'viewer.mjs','utf8');
+          for(const s of ['id="skin-check"','id="skin-check-status"','id="skin-check-downloads"','id="local-glb"'])
+            if(!source.includes(s))throw Error('SKIN_QA_UI_MISSING_'+s);
+          for(const s of ["view.startSkinInspection(", "new Blob([JSON.stringify(r,null,2)]", "'local-glb'"])
+            if(!app.includes(s))throw Error('SKIN_QA_CALLBACK_MISSING_'+s);
+          if(!viewer.includes('this.skinProbe.capture(this.model,t'))
+            ||!viewer.includes('GLB_EXTERNAL_ASSETS_NOT_ALLOWED'))throw Error('SKIN_QA_VIEWER_MISSING');
+          console.log('FastModel 2.8 source-only skin overlap/weight/pose Gate PASS; actual approved heroine and GPU pixels remain unverified.');
+          JS
       - name: Archive FastModel 2.7 source and synthetic offline animation evidence
         uses: actions/upload-artifact@v4
         with:
