@@ -1,0 +1,26 @@
+{
+  "previousTrustedCommit": "1ca42ff62986e34e86616005d967b31f76cc5ab7",
+  "sourcePhase15GLBSHA256": "e432a463192a3ba565937aeaf3bca2ead7cecaccac79e0fbced83beb65d65409",
+  "phase16": {
+    "output": "/mnt/data/AIG_School3D_Phase16_FineHair/out/phase16-528-fine-strands-NOT-APPROVED.glb",
+    "sha256": "04ee8f4477056ea174954f40a2f8feaf18ff3d0b4747252d875ae0e9b70928fd",
+    "bytes": 6412488,
+    "originalBaseMeshes": 18,
+    "hairGuideCount": 88,
+    "fineHairPrimitives": 528,
+    "addedHairTriangles": 52800,
+    "addedHairVertices": 27456,
+    "meanFineWidthPixels": 0.33129,
+    "maxFineWidthPixels": 0.60555,
+    "newHairJoints": 0,
+    "reusedAnimatedHairJoints": 176,
+    "embeddedRGBAHairMask": true,
+    "sourceSHA256": "83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910",
+    "visualApproval": false,
+    "hairCardNotApproved": true,
+    "widenOldSilhouette": false
+  },
+  "visualAuthority": "FAIL",
+  "thirdPartyModels": false,
+  "allS23and4KRuntimeVisualTestsPassed": false
+}
