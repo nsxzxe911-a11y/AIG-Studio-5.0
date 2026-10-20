@@ -21,6 +21,8 @@
 <p>台詞可生成、逐句編輯與即時試聽。聲音在您按播放後才啟動；配音使用裝置的繁體中文 TTS，音效／音樂為本機合成原創波形。沒有接雲端 LLM 時，台詞為本機創作範本，不假稱雲端 AI 撰寫。</p>
 <label for="dialogue-style">台詞風格</label>
 <select id="dialogue-style"><option value="witty" selected>吐槽有梗</option><option value="heroic">熱血主角</option><option value="dramatic">戲劇張力</option></select>
+<button id="cloud-dialogue" type="button" disabled>AI 改寫成更有梗的台詞（需已連線）</button>
+<p id="cloud-dialogue-status" class="status" role="status">雲端 AI 未連線。按鈕只有本機 AIG 伺服器設定 OpenAI API 後才能啟用；按下才會將劇情文字傳送雲端，可能產生 API 費用。人物 GLB 與照片不會上傳。</p>
 <div id="story-dialogues" aria-label="逐段台詞編輯器"></div>
 <label for="music-mood">原創背景配樂風格</label>
 <select id="music-mood"><option value="playful" selected>輕快搞笑</option><option value="action">緊張動作</option><option value="cinematic">電影感</option></select>
