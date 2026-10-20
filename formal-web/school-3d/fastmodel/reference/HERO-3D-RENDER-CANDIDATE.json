@@ -1,0 +1,14 @@
+{
+  "id": "AIG_SCHOOL_HERO_3D_REFERENCE_CANDIDATE_20261020",
+  "source_file_name": "櫻花校園裡的微笑少女.png",
+  "sha256": "6a16ab2f4216534e2ff77e325160e8e6fbf3d69d4aefd25f9b768cc4ac017415",
+  "width": 1086,
+  "height": 1448,
+  "kind": "AI-generated 2D 3D-style reference image",
+  "referenceUse": "face/hair/uniform/lighting visual guide, not mesh, not released and not current approved 3D GLB",
+  "visualAuthorityApproved": false,
+  "containsReal3DGeometry": false,
+  "deploymentAllowed": false,
+  "rayTracingRequired": false,
+  "target": "AIG FastModel Cinema: cinematic look, raster-only, 1080p/60fps target not validated"
+}

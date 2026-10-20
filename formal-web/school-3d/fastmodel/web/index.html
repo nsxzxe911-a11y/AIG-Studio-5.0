@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-Hant"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407"><title>AIG CINEMA · RGB 建模工作區</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif;--bg:#020407;--panel:#07111b;--text:#edf6ff;--muted:#91a7bd;--line:#243448;--cyan:#48e7f4;--violet:#a57bff;--pink:#ff59b3;--amber:#efbc80;background:var(--bg);color:var(--text)}
+*{box-sizing:border-box}html{min-width:320px}body{margin:0;min-width:320px;min-height:100svh;overflow-x:hidden;background:radial-gradient(ellipse 58% 38% at 100% -9%,#17344b58,transparent 70%),radial-gradient(ellipse 46% 34% at -12% 75%,#301c4050,transparent 70%),#020407}
+button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.42}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}[hidden]{display:none!important}
+.shell{width:min(100%,1770px);margin:0 auto;padding:0 clamp(10px,1.6vw,25px) 16px}
+.appbar{min-height:75px;display:flex;align-items:center;justify-content:space-between;gap:15px;border-bottom:1px solid #23364a;padding:8px 4px}
+.brand{display:flex;gap:12px;align-items:center;min-width:0}.brand-mark{position:relative;width:57px;height:53px;flex:0 0 auto;display:grid;place-items:center;border-radius:13px;background:linear-gradient(145deg,#122636,#040c18);border:1px solid #508ead88;box-shadow:0 0 20px #0edbef26,inset 0 0 13px #1d62a535;color:#d6ffff;font-size:18px;font-weight:900;letter-spacing:-.08em}.brand-mark:after{content:"";position:absolute;inset:-2px;border-radius:15px;border:2px solid transparent;background:linear-gradient(115deg,var(--cyan),var(--violet),var(--pink),var(--cyan)) border-box;mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);mask-composite:exclude;pointer-events:none}
+.brand-name{font-size:clamp(18px,2.3vw,25px);font-weight:830;letter-spacing:.075em;line-height:1.15}.brand-name span{background:linear-gradient(100deg,#66ecf4 8%,#b895ff 55%,#ff79c0 100%);background-clip:text;color:transparent}.brand-caption{margin:5px 0 0;color:#9db3ca;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-status{display:flex;align-items:center;gap:12px;min-width:0}.status-led{display:inline-block;height:8px;width:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan);flex:0 0 auto}.top-stat-text{font-size:11px;color:#d0e5f5;white-space:nowrap}.screen-tag{padding:7px 10px;border:1px solid #5c7c9170;border-radius:18px;color:#a9d6e2;font:11px ui-monospace,monospace;white-space:nowrap}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(278px,320px);gap:14px;margin-top:14px;align-items:start}.workstage{min-width:0}.stage-header{display:flex;align-items:center;justify-content:space-between;padding:2px 6px 11px;gap:10px}.stage-title{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:13px;font-weight:760;letter-spacing:.06em}.stage-title:before{content:"";width:4px;height:16px;border-radius:5px;background:linear-gradient(var(--cyan),var(--violet),var(--pink));box-shadow:0 0 9px #40dcee88}.stage-mode{font-size:10px;color:#a0bbd1;white-space:nowrap}
+.viewport{isolation:isolate;position:relative;width:100%;aspect-ratio:16/9;min-width:0;overflow:hidden;border-radius:16px;border:1px solid #23677e9c;background:radial-gradient(ellipse at 50% 75%,#123a5340 0%,transparent 55%),#050c15;box-shadow:0 0 0 1px #39e4f30a,0 16px 48px #0008,0 0 18px #00b9eb1c;max-height:calc(100svh - 155px)}
+.viewport.show-helper-grid{background-image:repeating-linear-gradient(0deg,transparent 0 39px,#3b6a8b26 40px),repeating-linear-gradient(90deg,transparent 0 39px,#3b6a8b26 40px)}.viewport:before{content:"";position:absolute;z-index:2;inset:0;border-radius:15px;pointer-events:none;background:linear-gradient(110deg,#57ebf36a 0%,transparent 24%,transparent 55%,#fc5cab55 100%);mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;padding:2px}.viewport:after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 50% 84%,#3b60e620,transparent 53%)}
+.guide-overlay{position:absolute;inset:0;z-index:2;width:100%;height:100%;pointer-events:none}#view{display:block;position:relative;z-index:1;width:100%;height:100%;cursor:grab;touch-action:none}.hud{position:absolute;z-index:3;pointer-events:none;top:11px;left:12px;max-width:min(83%,360px);border-radius:9px;border:1px solid #2c617a8c;background:#030c17c9;padding:8px 11px;backdrop-filter:blur(8px)}.hud-title{font-size:9px;font-weight:800;color:#7befff;letter-spacing:.13em}.overlay{font:11px/1.55 ui-monospace,monospace;color:#b8d7eb;white-space:pre-line;overflow-wrap:anywhere;margin-top:3px}.viewport-bottom{z-index:3;position:absolute;bottom:10px;left:11px;display:flex;flex-wrap:wrap;gap:7px;pointer-events:none}.viewport-bottom span{background:#050e18dc;border:1px solid #28557480;color:#a8ccdc;border-radius:13px;font-size:10px;padding:4px 9px}.viewport-bottom span.unsafe{color:#e9b975;border-color:#7856337d}
+.belowbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:11px;padding:0 3px}.mini-caption{font-size:11px;color:#89a8bd;line-height:1.5}.performance-note{font-size:11px;color:#a68ecb;white-space:nowrap}
+.control-pane{min-width:0;position:relative;border-radius:16px;background:linear-gradient(#09131f,#06101a) padding-box,linear-gradient(137deg,#4ceafa9d,#7057bd70 37%,#a74d9480 70%,#2e799860) border-box;border:1px solid transparent;box-shadow:0 8px 32px #0006,0 0 16px #8c6ff40d;overflow:hidden}.pane-heading{padding:15px 15px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px}.pane-heading strong{font-size:15px;letter-spacing:.05em}.pane-heading small{font-size:10px;color:#92b4c6}
+.panel-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:0 10px 10px;border-bottom:1px solid #193046}.tab{min-width:0;border:1px solid #214259;border-radius:10px;background:#0b1d30;color:#aabdd3;font-size:11px;font-weight:730;white-space:nowrap;padding:11px 3px;min-height:43px}.tab[aria-selected="true"]{color:white;border-color:#6dd6e9;background:linear-gradient(135deg,#0b3e52,#35205b 94%);box-shadow:inset 0 0 14px #208acc3a,0 0 12px #1daec829}.tab:hover{border-color:#658bad}
+.panel{padding:14px 15px 16px;min-width:0}.panel-title{margin:0 0 12px;color:#dcf1fa;font-size:13px;letter-spacing:.04em}.panel-sub{font-size:11px;color:#91acc0;margin:3px 0 12px;line-height:1.5}.panel label{font-size:12px;line-height:1.5;color:#b9d5e6;display:block;margin:11px 0 4px;min-width:0}.panel h3{font-size:11px;letter-spacing:.07em;color:#95bbca;margin:18px 0 9px;font-weight:740}.panel input[type=range]{display:block;width:100%;margin-top:8px;accent-color:#71dff8;cursor:pointer}.panel input[type=file]{display:block;max-width:100%;width:100%;margin-top:7px;padding:12px 9px;background:#081723;border:1px dashed #467e99;border-radius:10px;color:#9ed5ee;font-size:11px}.advanced-wire{margin-top:12px;border:1px solid #234b67;border-radius:11px;padding:10px 11px;background:#06121d}.advanced-wire summary{cursor:pointer;color:#a5cee2;font-weight:650;font-size:12px;line-height:1.5}.advanced-wire[open] summary{color:#c3f9ff}.panel select{display:block;width:100%;background:#0b2030;color:#e6f5ff;border:1px solid #38647b;border-radius:9px;padding:12px 11px;margin-top:8px;font-size:12px;min-height:43px}
+.action{border-radius:10px;min-height:44px;padding:10px 13px;color:#defbff;background:#0b2433;border:1px solid #3e7083;font-size:12px;font-weight:750;box-shadow:inset 0 0 6px #21659433}.action:hover{background:#153247;border-color:#70b8c6}.action.primary{background:linear-gradient(120deg,#114e63,#332260);border-color:#6ee8f2;color:white;box-shadow:inset 0 0 12px #26b2f12b,0 0 13px #2aadd722}.action.alert{border-color:#805775;color:#ffe0ef;background:#29142b}.btns{display:flex;gap:8px;flex-wrap:wrap}.btns .action{flex:1 1 100px}.btns.triple .action{flex:1 1 0;padding:8px 4px;min-width:0}.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.metrics>div{background:#091e2c;border:1px solid #2d4c65;border-radius:10px;padding:12px 10px;min-width:0}.metrics strong{display:block;font-size:23px;color:#87eaf6;font-variant-numeric:tabular-nums;white-space:nowrap}.metrics small{color:#abc0d0;font-size:10px}.detail{font:11px/1.65 ui-monospace,monospace;color:#9ec7d9;background:#031019;border:1px solid #1f3e54;padding:11px;border-radius:10px;overflow-wrap:anywhere;white-space:pre-wrap;margin:10px 0;min-height:40px}.check-label{display:flex!important;align-items:flex-start;gap:10px}.check-label input{flex:0 0 auto;accent-color:#69e0eb;width:17px;height:17px;margin-top:1px}.info{color:#a8c4d6;font-size:11px;line-height:1.7}.info.warning{color:#e6bf8a}.divider{height:1px;background:linear-gradient(90deg,#235977,transparent);margin:15px 0}.app-foot{font-size:10px;color:#6f8da1;padding:14px 3px 0;line-height:1.6}.accent-text{color:#81daef}.small{font-size:11px;color:#a1b9cb;line-height:1.5}.small-status{display:block;min-height:18px}#resolution-status{color:#82ddea;line-height:1.55;white-space:normal;overflow-wrap:anywhere}#resolution-tag{color:#bcdeec}
+@media(min-width:980px){.control-pane{max-height:calc(100svh - 105px);overflow-y:auto;scrollbar-color:#30526d #07111b;scrollbar-width:thin}.viewport{min-height:400px}}
+@media(max-width:980px){.workspace{grid-template-columns:minmax(0,1fr)}.viewport{max-height:none}.control-pane{margin-top:2px}.belowbar{margin-bottom:4px}.stage-mode{font-size:10px}}
+@media(max-width:530px){.shell{padding:0 9px 16px}.appbar{min-height:67px;padding:8px 0}.brand{gap:9px}.brand-mark{width:42px;height:42px;border-radius:11px;font-size:15px}.brand-mark:after{border-radius:13px}.brand-name{font-size:17px;letter-spacing:.03em}.brand-caption{font-size:9px;max-width:200px}.top-status{gap:6px}.screen-tag{font-size:9px;padding:5px}.top-stat-text{max-width:none;overflow:visible;text-overflow:clip;font-size:10px;white-space:nowrap}.screen-tag{display:none}.workspace{margin-top:10px;gap:10px}.stage-header{padding:1px 3px 8px}.stage-title{font-size:12px}.stage-mode{font-size:9px}.viewport{border-radius:11px}.hud{top:5px;left:6px;padding:5px 7px;max-width:68%;border-radius:6px}.hud-title{font-size:8px}.overlay{font-size:9px}.viewport-bottom{bottom:5px;left:5px;gap:4px}.viewport-bottom span{font-size:8px;padding:3px 5px}.viewport-bottom .unsafe{display:none}.belowbar{margin-top:8px}.mini-caption{font-size:10px}.performance-note{font-size:10px}.pane-heading{padding:12px 11px 10px}.panel{padding:13px 11px}.panel-tabs{padding:0 8px 8px}.tab{font-size:11px;min-height:45px}.app-foot{font-size:9px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.scan-color-legend{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.scan-swatch{display:inline-flex;align-items:center;gap:5px;border-radius:8px;padding:5px 8px;border:1px solid #24415488;background:#04111a;color:#c5d8e9;font-size:10px}.scan-swatch:before{content:"";display:inline-block;width:17px;height:4px;border-radius:2px;background:var(--swatch-color,#66e5ff)}.scan-swatch.dashed:before{background:repeating-linear-gradient(90deg,var(--swatch-color,#99bbcc) 0 4px,transparent 4px 8px)}
+</style></head><body>
+<main class="shell"><header class="appbar"><div class="brand"><div class="brand-mark" aria-label="AIG">AIG</div><div><div class="brand-name">AIG <span>CINEMA</span></div><p class="brand-caption">FASTMODEL · 黑色 RGB 幻彩建模工作區</p></div></div><div class="top-status"><i class="status-led" aria-hidden="true"></i><span class="top-stat-text" id="quick-status">本機待機</span><span class="screen-tag" id="resolution-tag">1080p · 60 FPS 目標</span></div></header>
+<section class="workspace" aria-label="3D 建模工作區">
+<div class="workstage"><div class="stage-header"><div class="stage-title">角色建模視窗</div><span class="stage-mode">視角拖曳 · 雙指縮放</span></div>
+<div class="viewport" id="viewport-frame"><canvas id="view" aria-label="AIG 3D 角色建模及骨架動畫"></canvas><canvas id="guide-overlay" class="guide-overlay" aria-hidden="true"></canvas><canvas id="scan-overlay" class="guide-overlay" aria-hidden="true" style="z-index:2;pointer-events:none"></canvas><div class="hud"><div class="hud-title">AIG LIVE VIEWPORT</div><div id="overlay" class="overlay" role="status">載入角色後開始預覽</div></div><div class="viewport-bottom"><span>RGB · 3D</span><span>本機模型</span><span class="unsafe">外觀候選 · 未發布</span></div></div>
+<div class="belowbar"><span class="mini-caption">工作中保留原模型及未儲存修改</span><span class="performance-note">來源模型尚未外觀驗收</span></div></div>
+<aside class="control-pane" aria-label="AIG 建模控制"><div class="pane-heading"><strong>建模控制台</strong><small>按頁切換 · 真功能</small></div>
+<div class="panel-tabs" role="tablist" aria-label="建模功能分類"><button id="tab-model" class="tab" type="button" role="tab" data-panel-target="model" aria-controls="panel-model" aria-selected="true">建模</button><button id="tab-scan" class="tab" type="button" role="tab" data-panel-target="scan" aria-controls="panel-scan" aria-selected="false">掃描</button><button id="tab-motion" class="tab" type="button" role="tab" data-panel-target="motion" aria-controls="panel-motion" aria-selected="false">動畫</button><button id="tab-display" class="tab" type="button" role="tab" data-panel-target="display" aria-controls="panel-display" aria-selected="false">畫質</button><button id="tab-resource" class="tab" type="button" role="tab" data-panel-target="resource" aria-controls="panel-resource" aria-selected="false">資源</button></div>
+<section id="panel-model" role="tabpanel" aria-labelledby="tab-model" data-panel="model" class="panel"><h2 class="panel-title">模型 · 網格編輯</h2><p class="panel-sub">讀取角色、調整視角及局部修改。來源只在本機處理。</p>
+<label for="file">角色 GLB 檔案<input id="file" type="file" accept=".glb,model/gltf-binary"></label><div class="btns" style="margin-top:11px"><button class="action primary" type="button" id="demo">載入附帶角色</button></div>
+<h3>旋轉與縮放</h3><div class="btns triple"><button class="action" id="turnl" type="button">左轉</button><button class="action" id="reset" type="button">正面</button><button class="action" id="turnr" type="button">右轉</button></div>
+<label for="zoom">模型縮放<input id="zoom" type="range" min="60" max="160" value="100"></label>
+<label for="patch">局部網格推拉<input id="patch" type="range" min="-100" max="100" value="0"></label><p class="small small-status" id="patchstat">修改時僅更新 256 個頂點</p>
+</section>
+<section id="panel-scan" role="tabpanel" aria-labelledby="tab-scan" data-panel="scan" class="panel" hidden>
+<h2 class="panel-title">極速掃描 · RGB 骨架 · 虛線支架</h2>
+<p class="panel-sub">離線分析已載入 GLB 的頂點及幾何外包圍；場景類型由你指定，不假稱 AI 語意辨識或手機 LiDAR。</p>
+<label for="scene-kind">掃描對象分類<select id="scene-kind"><option value="person" selected>人物</option><option value="animal">動物</option><option value="plant">植物</option><option value="tree">樹木</option><option value="environment">環境／建築</option><option value="water">水面</option><option value="sky">天空</option></select></label>
+<div class="divider"></div><h3>FastModel 2.4 · 極速掃描</h3>
+<label for="scan-speed">掃描速度與細節策略<select id="scan-speed">
+<option value="turbo" selected>極速 · 真骨架優先，輪廓／深度逐步加入</option>
+<option value="balanced">平衡 · 輪廓優先，深度適時加入</option>
+<option value="precise">精細 · 保留最高可用掃描細節</option>
+</select></label>
+<p class="small small-status" id="scan-speed-status" role="status">極速模式預設：先顯示 GLB 真骨架，不等待高成本輪廓計算；CPU 負荷過高自動降低掃描工作。正式 3D 模型本體、全彩材質、頭頸資料都不刪除。</p><div class="divider"></div><h3>FastModel 2.5 · 智慧記憶體快取</h3>
+<p id="scan-cache-status" class="small small-status" role="status">記憶體層級：尚未使用快取。啟動極速掃描後顯示骨架／輪廓／深度的真實 HIT、MISS、失效及容量估計。</p>
+<div class="btns"><button id="scan-cache-clear" type="button" class="action">清除可重建快取（保留骨架與原始模型）</button></div>
+<p class="small">手機掃描快取預算 8 MiB，桌面 32 MiB；只清理可重建的掃描資料。快取命中不是 GPU 60 FPS 實測。</p>
+<div class="divider"></div><h3>FastModel 2.1 · 骨架實線／外型隱藏虛線</h3>
+<label for="scan-mode">掃描顯示層<select id="scan-mode">
+<option value="off" selected>關閉 · 正式純表面／效能優先</option>
+<option value="bones-outline">骨架實線 ＋ 外輪廓低亮虛線</option>
+<option value="bones">只看真骨架實線</option>
+<option value="head-neck">頭頸重點 · 明確標記區域</option>
+<option value="hair">髮束重點 · 明確標記區域</option>
+</select></label>
+<label for="scan-density">掃描線段負荷<select id="scan-density"><option value="eco">低負荷 · 手機</option><option value="balanced" selected>平衡 · 預設</option><option value="detail">細節 · Windows</option></select></label>
+<label for="scan-depth">外型前後遮擋<select id="scan-depth">
+<option value="sampled" selected>來源模型三角面深度取樣 · 前後虛線區分</option>
+<option value="off">關閉深度取樣 · 更省電</option>
+</select></label>
+<p id="scan-depth-status" class="small small-status" role="status">掃描預設關閉。啟動後才進行有上限的來源 GLB 三角面深度抽樣；小螢幕自動降至低負荷。這不是完整 GPU 深度緩衝區讀回或精確遮擋驗收。</p>
+<div class="divider"></div><h3>FastModel 2.2 · RGB 彩色骨架與虛線</h3>
+<label for="scan-palette">快速掃描配色<select id="scan-palette">
+<option value="aig-rgb" selected>AIG RGB · 幻彩分區（推薦）</option>
+<option value="inspection">技術檢查 · 高對比</option>
+<option value="low-glare">護眼低眩光 · 行動裝置</option>
+</select></label>
+<label class="check-label"><input type="checkbox" id="scan-risk-color">只在有逐幀檢查風險資料時，將相關部位標示琥珀色（預設關閉）</label>
+<div id="scan-color-legend" class="scan-color-legend" aria-label="骨架與輪廓配色圖例">
+<span class="scan-swatch" data-color-role="head">頭／頸</span><span class="scan-swatch" data-color-role="spine">軀幹</span>
+<span class="scan-swatch" data-color-role="arm">手臂</span><span class="scan-swatch" data-color-role="leg">腿部</span>
+<span class="scan-swatch dashed" data-color-role="outline">外型虛線</span><span class="scan-swatch" data-color-role="review">待檢查</span>
+</div>
+<p id="scan-color-status" class="small small-status" role="status">模型本體使用 GLB 原有膚色、髮色、服裝貼圖與材質。RGB 顏色僅用於掃描輔助線，不替人物自動上色；紅色保留給確認後的警示，不靠接近距離直接判定穿模。</p>
+<p id="scan-layer-status" class="small small-status" role="status">掃描覆蓋層關閉；來源 GLB 不變。骨架採真 joints 父子關係實線，外型採來源網格邊界／投影輪廓的淡化虛線，並非 GPU 真深度遮擋。</p>
+<div class="btns" style="margin-top:12px"><button class="action primary" type="button" id="scan-btn">啟動極速掃描 GLB</button></div>
+<div id="scan-status" class="detail" role="status">請先載入 GLB。掃描採有限頂點抽樣，不修改原始模型。</div>
+<div class="divider"></div><h3>角色防撞臉 · 女主角／其他同學</h3>
+<p class="panel-sub">比較明確標註的虛構 3D 角色臉部幾何，提醒過於相似的角色；不識別真人，也不會自動修改臉型。每次開啟頁面重新建立角色名單。</p>
+<label for="character-id">角色 ID<input id="character-id" type="text" maxlength="48" placeholder="例如 HERO_01 或 CLASSMATE_02"></label>
+<label for="character-role">角色身份<select id="character-role"><option value="lead">主角</option><option value="classmate" selected>同學</option><option value="supporting">其他配角</option></select></label>
+<div class="btns" style="margin-top:12px"><button id="face-compare" class="action primary" type="button">掃描臉型並加入角色對照</button><button id="face-rescan" class="action" type="button">重新掃描已登錄角色</button><button id="face-clear" class="action" type="button">清空本次對照</button></div>
+<p class="small small-status">請先收錄唯一女主角（角色身份選「主角」），再逐一載入同學的獨立 GLB。若同一 GLB 有多名角色，臉部節點需設定 <code>extras.aigCharacterId</code>，並輸入對應角色 ID。修改臉型後可按「重新掃描已登錄角色」。</p>
+<div id="face-status" class="detail" role="status">尚未比對：請載入含 face 標記的 GLB。這是 3D 幾何相似提醒，無法判定真人身分或保證角色不撞臉。</div>
+<h3>光線與場景明暗 · 光柵／無光追</h3>
+<label for="light-preset">預覽光線<select id="light-preset"><option value="soft" selected>柔和光 · 人物／通用</option><option value="daylight">日光 · 動物／樹木</option><option value="dusk">黃昏 · 自然環境</option><option value="water">水色背景 · 水面檢視</option><option value="sky">天空背景 · 天空檢視</option></select></label>
+<p id="light-status" class="small small-status" role="status">柔和光 · 原 GLB 材質保留；僅調整光柵曝光與背景。</p>
+<div class="divider"></div><h3>附加虛線參考支架 · 動態角度限位</h3>
+<label class="check-label"><input id="scaffold-enabled" type="checkbox">開啟虛線參考支架（預設關閉）</label>
+<label for="scaffold-limit">角度限位 ± <output id="scaffold-limit-value">45°</output><input id="scaffold-limit" type="range" min="0" max="90" value="45" step="1"></label>
+<label for="scaffold-yaw">水平角度 <output id="scaffold-yaw-value">0°</output><input id="scaffold-yaw" type="range" min="-90" max="90" value="0" step="1"></label>
+<label for="scaffold-pitch">俯仰角度 <output id="scaffold-pitch-value">0°</output><input id="scaffold-pitch" type="range" min="-90" max="90" value="0" step="1"></label>
+<p id="scaffold-status" class="small small-status" role="status">僅顯示可調整的 2D 投影虛線，並依 GLB 外包圍定位。不生成支架實體，也不更動骨架。</p>
+<p class="info warning">這是幾何分析與視覺輔具，不是照片轉完整 3D、環境重建、物理支撐強度計算、碰撞或 IK 約束；上述功能須另外驗證。</p>
+</section>
+<section id="panel-motion" role="tabpanel" aria-labelledby="tab-motion" data-panel="motion" class="panel" hidden><h2 class="panel-title">骨架 · 髮束動態</h2><p class="panel-sub">維持細骨架，控制同一份模型的動畫，不更換網格。</p><label for="animation-clip">FastModel 2.6 · 動畫片段<select id="animation-clip" disabled></select></label><p id="animation-clip-status" class="small small-status" role="status">載入 GLB 後選擇真實動畫片段；播放與逐幀檢查同步。</p><label class="check-label"><input id="wave" type="checkbox" checked>播放選定骨架動畫</label><div class="btns" style="margin-top:14px"><button class="action primary" id="pause" type="button" disabled>暫停動畫</button></div><div class="divider"></div><h3>頭部／脖子保護稽核</h3>
+<div class="btns"><button class="action" id="anatomy-check" type="button">檢查頭頸標記與可選材質</button></div>
+<p class="small small-status" id="anatomy-status" role="status">尚未檢查；沒有明確來源標記時只顯示未驗證，不宣稱頭頸已連通。</p>
+<div class="btns"><button id="seam-check" class="action" type="button">檢查真 GLB 頭頸開放邊距離</button><button id="hair-check" class="action" type="button">檢查髮束與脖子投影遮擋</button></div>
+<p id="seam-status" class="small small-status" role="status">頭頸接縫幾何尚未量測，不能證明真正接合。</p>
+<div class="btns" style="margin-top:10px"><button id="bridge-candidate" class="action" type="button">產生可另存的頭頸橋接候選 GLB</button></div>
+<p id="bridge-status" class="small small-status" role="status">需載入具明確 head／neck 標記、相同骨架及簡單對應開放邊的 GLB。只輸出獨立候選，不更動原模型；不等於網格焊接或動畫通過。</p>
+<p id="hair-status" class="small small-status" role="status">髮束遮擋尚未量測；需正面／側面／背面及動畫實圖。</p>
+<div class="btns" style="margin-top:10px"><button id="animated-check" class="action primary" type="button">逐幀檢查骨架動畫頭頸與髮束</button></div>
+<p id="animated-status" class="small small-status" role="status">動畫逐幀姿態尚未採樣。此功能僅檢查明確標記的 GLB 頭／頸／髮束和支援的旋轉動畫；不能取代實際三角面碰撞／多視角驗收。</p>
+<p class="info">只保護有明確頭、頸、臉、頭皮標記的材質，其餘未確認批次也不會因為骨架編號被誤刪。這不是自動補面、拓樸縫合、模型接合或動畫碰撞驗證。</p>
+<div class="divider"></div><p class="info">動態預覽與 60 FPS 測速依裝置 GPU 能力運作；模型外觀仍屬技術候選。</p></section>
+<section id="panel-display" role="tabpanel" aria-labelledby="tab-display" data-panel="display" class="panel" hidden><h2 class="panel-title">畫面 · GPU 品質</h2><label for="resolution">內部渲染解析度<select id="resolution"><option value="1280x720">1280 × 720 · 720p 省電</option><option value="1920x1080" selected>1920 × 1080 · 1080p</option><option value="2560x1440">2560 × 1440 · 2K / QHD</option><option value="3840x2160">3840 × 2160 · 4K / UHD</option></select></label><p class="small small-status" id="resolution-status" role="status" aria-live="polite">已選 1080p；實際 FPS 待 GPU 量測。</p><label for="quality">模型幾何品質<select id="quality"><option value="full">完整細髮束與頭部包覆</option><option value="preview">基本角色 · 低負荷模式</option></select></label><div class="divider"></div><h3>FastModel 1.5 · 真顯示層級</h3>
+<label for="detail-mode">輔助細節效能<select id="detail-mode"><option value="auto" selected>自動 · 流暢優先（預設）</option><option value="full">完整 · 全部顯示</option><option value="eco">省電 · 隱藏有標記的次要細節</option></select></label>
+<p id="detail-status" class="small small-status" role="status">自動模式 · 未標記的頭部、脖子與主模型永不隱藏；無光追。</p>
+<p class="info">只有來源 GLB 明確標記為可選細節的細髮束、樹葉或水花才會暫時隱藏；模式切回完整可立即恢復，原始網格及工作副本保留。未標記時不假稱有 LOD 收益。</p>
+<div class="divider"></div><h3>無線建模顯示 · 優先省 GPU</h3>
+<label for="surface-guide">表面檢視方式<select id="surface-guide"><option value="clean" selected>純表面 · 最省資源</option><option value="edit-tint">修改區柔光 · 真正編輯頂點</option><option value="soft-contrast">材質對比 · 不畫網格線</option></select></label>
+<p class="small small-status" id="surface-status" role="status">純表面 · 不額外繪製網格線</p>
+<p class="info">柔光只提示既有局部推拉操作的前 256 個網格頂點，不代表自由筆刷或完整頭頸拓樸檢測。無線模式不新增模型、不清除未儲存編輯。</p>
+<details id="advanced-wire" class="advanced-wire"><summary>進階：需要時才顯示網格線</summary>
+<label for="mesh-lines">網格線顯示模式<select id="mesh-lines"><option value="off" selected>關閉 · 最順暢（建議）</option><option value="boundary">邊界線 · 只顯示拓樸開放邊</option><option value="edit">局部編輯 · 256 頂點鄰域</option><option value="full">限量完整線框 · 密度分級</option></select></label>
+<label for="mesh-density">線段密度<select id="mesh-density"><option value="eco">省電 · 手機</option><option value="balanced" selected>平衡 · 1080p</option><option value="detail">精細 · 桌面</option></select></label>
+<label class="check-label"><input type="checkbox" id="helper-grid">顯示背景輔助格線（預設關閉）</label>
+<p class="small small-status" id="meshline-status" role="status">線框預設關閉；切換時才計算邊線，掉幀時暫時隱藏。</p>
+<p class="info">邊界線指網格「未與其他三角形共享」的拓樸邊，不是相機外輪廓。完整線框有線段數上限，不逐幀重建；原人物與髮絲動畫不修改。</p>
+</details>
+<div class="divider"></div><p class="small small-status" id="raytrace-status" role="status">光線追蹤：關閉 · 一般顯卡相容模式</p><div class="divider"></div><p class="info">2K 代表 QHD 2560×1440，4K 代表 UHD 3840×2160。僅變更 3D 畫布內部像素，UI 自適應不被放大；超出 GPU 尺寸或記憶體預算時保留原畫面，連續掉幀時自動降階。60 FPS 須實機驗收。</p></section>
+<section id="panel-resource" role="tabpanel" aria-labelledby="tab-resource" data-panel="resource" class="panel" hidden><h2 class="panel-title">資源 · 效能保護</h2><div class="metrics"><div><strong id="fps">—</strong><small>瀏覽器 FPS</small></div><div><strong id="p95">—</strong><small>每幀 p95 ms</small></div><div><strong id="draw">—</strong><small>合批 Draw Calls</small></div><div><strong id="cpu">—</strong><small>CPU 提交 ms</small></div></div><div id="detail" class="detail" aria-live="polite">尚未載入 GLB</div><div id="stability" class="detail">記憶體資源：待量測</div><div id="balance" class="detail">CPU/GPU 幀時間：待量測</div><div id="native-gate-status" class="detail" role="status">Windows／Android 原生 GPU／溫度證據未提交，60 FPS 實機驗收 BLOCKED。</div><div id="disk" class="detail">本機儲存配額：待查</div><label class="check-label"><input id="auto" type="checkbox" checked>自動保護記憶體及幀率</label><div class="btns" style="margin-top:13px"><button class="action alert" id="reclaim" type="button">釋放可重建髮片快取</button></div><p class="small small-status" id="reclaimstat">原始 GLB 與目前編輯結果不清除</p><div class="btns" style="margin-top:12px"><button class="action" id="baseline" type="button">記錄目前幀率基線</button><button class="action" id="compare" type="button">比較當前效能</button></div>
+<p id="compare-status" class="small small-status" role="status">使用瀏覽器最近的有效幀時間；需至少 60 幀，並非 GPU/實機 Vulkan 計時。</p>
+<div class="btns" style="margin-top:12px"><button class="action" id="export" type="button">匯出效能紀錄 JSON</button></div><div class="divider"></div><p class="info warning">GPU 使用率、系統 RAM 與完整磁碟容量未必能由瀏覽器取得；數據不明時顯示「未量測」。僅清理可重建的 AIG 資源，不刪除使用者檔案。</p></section>
+</aside></section><footer class="app-foot">AIG FastModel Cinema · 原型工作區；此候選 3D 人物與 1080p／60 FPS 尚未通過實機驗收。正式 AIG CNC／Android APK／Windows EXE 不受影響。</footer></main>
+<script type="module" src="./main.mjs"></script></body></html>

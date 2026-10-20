@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-Hant"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407"><title>AIG SCHOOL 3D｜材質工作室 V1</title>
+<link rel="stylesheet" href="./material-lab.v1.css"><script defer src="./material-lab.v1.js"></script>
+</head><body>
+<a class="skip" href="#main">跳至材質編輯</a>
+<header class="mast"><a class="logo" href="../index.html"><span class="logoicon">AIG</span><span><strong>3D SCHOOL STUDIO</strong><small>INDEPENDENT ASSET WORKSPACE</small></span></a><nav><a href="./index.html">展示模組</a><a href="../index.html">AIG 首頁 ↗</a></nav></header>
+<main id="main" class="shell">
+ <section class="heading"><div><div class="eyebrow"><span class="dot"></span> V1 / PHASE 3 — MATERIAL ENGINEERING</div><h1>高精度材質工作室 <span>Skin · Hair · Fabric</span></h1><p>以真實 WebGL2 光照和 PBR 紋理預覽材料，先鎖住膚色與表面光澤；這是材質測試，<strong>不是完成的 3D 女主角模型。</strong></p></div><div class="heading-tag">MATERIAL PROTOTYPE<br><b>NOT AUTHORITY</b></div></section>
+ <div class="workspace">
+  <section class="viewport-panel" aria-label="即時 3D 材質球比較">
+    <div class="pane-top"><span><i class="signal"></i> REAL-TIME MATERIAL SHADING</span><span id="fps">WEBGL2 · READY</span></div>
+    <div class="stage"><canvas id="material-canvas" width="1100" height="730" aria-label="三個 PBR 材質測試球的即時 3D 畫面"></canvas><div id="fallback" hidden role="status">您的裝置無法啟用 WebGL2，材質球無法顯示。</div>
+    <div class="stage-title"><strong id="active-name">SKIN / 自然膚質</strong><small id="active-sub">SILK-SOFT SKIN SURFACE</small></div>
+    <div class="stage-bottom"><span>ORBIT BY DRAGGING · WHEEL TO ZOOM</span><span><b>◉</b> PBR ACTIVE</span></div></div>
+    <div class="swatches" role="group" aria-label="選擇要編輯的材質">
+      <button type="button" class="swatch selected" data-material="skin" aria-pressed="true"><span class="sample skin"></span><span><strong>Skin</strong><small>皮膚 · 表皮微紋理</small></span><span class="chev">↗</span></button>
+      <button type="button" class="swatch" data-material="hair" aria-pressed="false"><span class="sample hair"></span><span><strong>Hair</strong><small>深棕 · 髮絲方向光澤</small></span><span class="chev">↗</span></button>
+      <button type="button" class="swatch" data-material="fabric" aria-pressed="false"><span class="sample fabric"></span><span><strong>Fabric</strong><small>藏青 · 布料編織法線</small></span><span class="chev">↗</span></button>
+    </div>
+  </section>
+  <aside class="controls" aria-label="PBR 材質參數控制">
+    <div class="ctrl-top"><span>ASSET DEVELOPMENT</span><strong>SHADER CONTROL</strong></div>
+    <div class="ctrl-head"><h2 id="mat-title">Skin PBR</h2><span class="status">LIVE</span></div>
+    <p class="ctrl-desc" id="mat-description">柔和皮膚漫反射、低金屬度與細微孔隙。禁止塑膠、蠟像或過度磨皮外觀。</p>
+    <div class="group"><h3>表面材質</h3>
+      <div class="range-row"><label for="roughness">Roughness <output id="roughness-val">0.62</output></label><input id="roughness" type="range" min="0.15" max="0.95" step="0.01" value="0.62"></div>
+      <div class="range-row"><label for="micro">Micro Normal <output id="micro-val">0.38</output></label><input id="micro" type="range" min="0" max="1" step="0.01" value="0.38"></div>
+      <div class="range-row"><label for="sss">Skin Softness <output id="sss-val">0.42</output></label><input id="sss" type="range" min="0" max="1" step="0.01" value="0.42"></div>
+    </div>
+    <div class="group"><h3>攝影棚光源</h3>
+      <div class="range-row"><label for="exposure">Light Exposure <output id="exposure-val">1.05</output></label><input id="exposure" type="range" min="0.50" max="1.90" step="0.01" value="1.05"></div>
+      <div class="range-row"><label for="warmth">Warmth <output id="warmth-val">0.58</output></label><input id="warmth" type="range" min="0" max="1" step="0.01" value="0.58"></div>
+    </div>
+    <div class="group"><h3>Authority 臉部參考</h3><label class="reference-drop" for="authority-image"><input type="file" id="authority-image" accept="image/png,image/jpeg,image/webp" hidden><span class="upload-icon">＋</span><strong id="reference-title">載入核准的角色原圖</strong><small>只在目前瀏覽器預覽，不上傳、不更改來源圖</small></label><div class="ref-preview" id="reference-preview" hidden><img id="reference-img" alt="使用者手動載入的角色 Authority 圖"><button id="clear-reference" type="button">移除參考</button></div></div>
+    <div class="ctrl-actions"><button id="reset" type="button" class="secondary">還原參數</button><button id="capture" type="button" class="primary">擷取材質預覽 ↗</button></div>
+    <div class="warning"><b>⛨ ASSET GATE</b><p>此頁只有真實 PBR 材質樣片，尚未提供已核准的人臉拓樸、髮型與人體骨架；主頁 3D 角色 Gate 維持 BLOCKED。</p></div>
+  </aside>
+ </div>
+ <footer>V1 MATERIAL LAB · LOCAL FIRST · NO CDN · NO FAKE CHARACTER · <span id="runtime-msg">初始化材質引擎中</span></footer>
+</main></body></html>

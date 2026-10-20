@@ -1,0 +1,62 @@
+{
+  "name": "AIG_FastModel_Cinema_1_3_grid_optimization",
+  "baseCommit": "d076a15ac1c7bfdc346e80e0d752c42718825514",
+  "runtime": "WEBGL2_RASTER_ONLY",
+  "rendering": {
+    "rayTracing": false,
+    "defaultLines": "off",
+    "modes": [
+      "off",
+      "boundary",
+      "edit",
+      "full"
+    ],
+    "densities": [
+      "eco",
+      "balanced",
+      "detail"
+    ],
+    "sourceMeshes": 111,
+    "sourceGLTFPrimitives": 551,
+    "batchedDrawCalls": 9,
+    "sourceTriangles": 63867,
+    "lineCountBalanced": {
+      "boundary": 2200,
+      "edit": 848,
+      "full": 4000
+    },
+    "lineBuildMillisecondsContainerSingleRun": {
+      "boundary": 5.255,
+      "edit": 0.301,
+      "full": 1.051
+    },
+    "lineDataComputedEveryFrame": false,
+    "inverseBindMatricesCached": true
+  },
+  "evidence": {
+    "nodeTestsPassed": 53,
+    "nodeTestsFailed": 0,
+    "browserViewportChecks": [
+      [
+        390,
+        844
+      ],
+      [
+        1440,
+        900
+      ]
+    ],
+    "pageExceptions": 0,
+    "webgl2ContextAvailable": false,
+    "GPUWireframeTested": false,
+    "S23HardwareFPSTested": false,
+    "WindowsHardwareFPSTested": false,
+    "1080p60Proven": false
+  },
+  "safety": {
+    "unsavedMeshPreserved": true,
+    "originalGLBUntouched": true,
+    "productionReleased": false,
+    "DraftPR": 12
+  }
+}

@@ -1,0 +1,509 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#020407"><title>AIG | 自研網格包覆 × 細骨架轉向</title>
+<style>
+:root{color-scheme:dark;--bg:#020407;--panel:#07111b;--line:#26465b;--cyan:#64eef3;--muted:#a8bcc9;--text:#e5f4fa}*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px/1.5 system-ui,'Noto Sans TC',sans-serif;color:var(--text)}header,main{max-width:1500px;width:calc(100% - 28px);margin:auto}header{display:flex;align-items:center;justify-content:space-between;padding:13px 0;gap:12px}h1{font-size:clamp(17px,2.4vw,23px);margin:0}small{color:var(--muted)}a{color:var(--cyan)}.summary{margin-bottom:12px;color:#a5c6d5}.panel{border:1px solid var(--line);border-radius:13px;background:var(--panel);overflow:hidden}.canvas{width:100%;display:block;aspect-ratio:1672/941;object-fit:contain;background:#06121c}.tools{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:12px;border-top:1px solid var(--line)}label{display:flex;align-items:center;gap:8px;white-space:nowrap}input[type=range]{width:110px;accent-color:#55e5e7}input[type=file]{max-width:220px}button{cursor:pointer;background:#113448;border:1px solid #447c93;color:#ecfcff;min-height:40px;padding:7px 13px;border-radius:8px}.status{padding:0 13px 12px;color:#bddee9;min-height:39px}.notes{margin:15px 0 30px;color:var(--muted)}.notes strong{color:#e4f8ff}@media(max-width:620px){header{align-items:flex-start}.tools{gap:10px}input[type=range]{width:80px}.tools label:first-child{width:100%}}
+</style>
+</head><body>
+<header><div><h1>AIG 原創網格包覆 × 火柴棒骨架轉向</h1><small>Reverse Authority → Envelope Mesh → Skin Weights → Rotation</small></div><a href="../index.html">獨立工作區</a></header>
+<main><p class="summary">以已核准圖片的可見輪廓產生三角網格；滑桿讓頭部和肩膀轉向，骨架不會把人物撐大。非完整 3D 角色。</p>
+<section class="panel"><canvas id="model" class="canvas" width="1672" height="941" aria-label="原圖上的蒙皮網格旋轉實驗"></canvas>
+<div class="tools">
+<label>核准 PNG <input id="source" type="file" accept="image/png"></label>
+<label>頭部轉向 <input id="headYaw" type="range" min="-12" max="12" step="1" value="0"><output id="headVal">0°</output></label>
+<label>左肩 <input id="leftArm" type="range" min="-12" max="12" value="0"><output id="leftVal">0°</output></label>
+<label>右肩 <input id="rightArm" type="range" min="-12" max="12" value="0"><output id="rightVal">0°</output></label>
+<label><input id="wire" type="checkbox" checked>網格</label><label><input id="edit" type="checkbox">編輯輪廓</label><label><input id="bones" type="checkbox" checked>細骨架</label>
+<button id="reset" type="button">重設姿勢</button><button id="save" type="button">匯出輪廓 JSON</button><small id="stats">等待原圖</small></div>
+<div id="status" class="status" role="status">等待原圖</div></section>
+<p class="notes"><strong>真實完成：</strong>可重建的網格包覆、權重、GLB 結構與骨架旋轉測試。<strong>尚未完成：</strong>從單一圖片還原真 3D 臉部、背面、完整雙腿及自然物理動畫。推定背面不可當成核准模型；不連接任何第三方建模平台。</p></main>
+<script id="spec" type="application/json">
+{
+  "schemaVersion": 1,
+  "id": "AIG_SCHOOL_3D_PHASE13_ENVELOPE_IMAGE_GUIDED",
+  "source": {
+    "width": 1672,
+    "height": 941,
+    "sha256": "83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910"
+  },
+  "coordinateSystem": "SOURCE_IMAGE_PIXEL_2D_TO_INFERRED_2_5D",
+  "cameraCalibrated": false,
+  "depthMeasuredFromImage": false,
+  "releaseAllowed": false,
+  "approved3DModel": false,
+  "sourceGeometryAuthority": "visible contour and proportions only, not hidden depth",
+  "legacyDollGeometryUsed": false,
+  "skeleton": {
+    "boneVisualization": "2px lines only",
+    "physicalBoneRadius": null,
+    "joints": [
+      {
+        "name": "Armature",
+        "parent": null,
+        "xy": [
+          653,
+          677
+        ],
+        "confidence": "inferred"
+      },
+      {
+        "name": "Hips",
+        "parent": "Armature",
+        "xy": [
+          653,
+          677
+        ],
+        "confidence": "visible approximate"
+      },
+      {
+        "name": "Chest",
+        "parent": "Hips",
+        "xy": [
+          635.33,
+          468.67
+        ],
+        "confidence": "interpolated"
+      },
+      {
+        "name": "Neck",
+        "parent": "Chest",
+        "xy": [
+          653,
+          355
+        ],
+        "confidence": "visible approximate"
+      },
+      {
+        "name": "Head",
+        "parent": "Neck",
+        "xy": [
+          644.5,
+          181
+        ],
+        "confidence": "interpolated"
+      },
+      {
+        "name": "LeftShoulder",
+        "parent": "Chest",
+        "xy": [
+          450,
+          354
+        ],
+        "confidence": "visible approximate"
+      },
+      {
+        "name": "RightShoulder",
+        "parent": "Chest",
+        "xy": [
+          803,
+          375
+        ],
+        "confidence": "visible approximate"
+      }
+    ]
+  },
+  "mesh": {
+    "originalPixelCoordinatePreserved": true,
+    "subdivision": 3,
+    "pixelToUnit": 0.0025,
+    "depthProxyUnits": 0.018,
+    "shellBackIsEstimated": true,
+    "textureFromOriginalImage": true,
+    "wrapFromVisibleSilhouette": true,
+    "noModelAutoRelease": true
+  },
+  "regions": [
+    {
+      "id": "skirt",
+      "bone": "Hips",
+      "polygon": [
+        [
+          516,
+          658
+        ],
+        [
+          753,
+          660
+        ],
+        [
+          805,
+          724
+        ],
+        [
+          831,
+          832
+        ],
+        [
+          865,
+          941
+        ],
+        [
+          432,
+          941
+        ],
+        [
+          460,
+          833
+        ],
+        [
+          491,
+          744
+        ]
+      ]
+    },
+    {
+      "id": "torso_uniform",
+      "bone": "Chest",
+      "polygon": [
+        [
+          460,
+          340
+        ],
+        [
+          536,
+          331
+        ],
+        [
+          562,
+          355
+        ],
+        [
+          645,
+          357
+        ],
+        [
+          741,
+          328
+        ],
+        [
+          790,
+          360
+        ],
+        [
+          812,
+          486
+        ],
+        [
+          796,
+          593
+        ],
+        [
+          765,
+          690
+        ],
+        [
+          519,
+          688
+        ],
+        [
+          461,
+          762
+        ],
+        [
+          409,
+          842
+        ],
+        [
+          390,
+          870
+        ],
+        [
+          396,
+          651
+        ],
+        [
+          400,
+          471
+        ]
+      ]
+    },
+    {
+      "id": "left_sleeve",
+      "bone": "LeftShoulder",
+      "polygon": [
+        [
+          453,
+          358
+        ],
+        [
+          495,
+          373
+        ],
+        [
+          496,
+          427
+        ],
+        [
+          478,
+          478
+        ],
+        [
+          434,
+          534
+        ],
+        [
+          424,
+          593
+        ],
+        [
+          467,
+          643
+        ],
+        [
+          445,
+          695
+        ],
+        [
+          406,
+          699
+        ],
+        [
+          380,
+          653
+        ],
+        [
+          379,
+          583
+        ],
+        [
+          399,
+          459
+        ]
+      ]
+    },
+    {
+      "id": "right_sleeve",
+      "bone": "RightShoulder",
+      "polygon": [
+        [
+          751,
+          343
+        ],
+        [
+          807,
+          361
+        ],
+        [
+          846,
+          430
+        ],
+        [
+          869,
+          505
+        ],
+        [
+          878,
+          602
+        ],
+        [
+          853,
+          640
+        ],
+        [
+          796,
+          623
+        ],
+        [
+          772,
+          570
+        ],
+        [
+          785,
+          512
+        ]
+      ]
+    },
+    {
+      "id": "face",
+      "bone": "Head",
+      "polygon": [
+        [
+          557,
+          153
+        ],
+        [
+          594,
+          126
+        ],
+        [
+          654,
+          111
+        ],
+        [
+          707,
+          134
+        ],
+        [
+          740,
+          163
+        ],
+        [
+          750,
+          219
+        ],
+        [
+          721,
+          271
+        ],
+        [
+          681,
+          318
+        ],
+        [
+          633,
+          319
+        ],
+        [
+          593,
+          286
+        ],
+        [
+          565,
+          244
+        ]
+      ]
+    },
+    {
+      "id": "hair",
+      "bone": "Head",
+      "polygon": [
+        [
+          580,
+          51
+        ],
+        [
+          633,
+          38
+        ],
+        [
+          693,
+          57
+        ],
+        [
+          728,
+          88
+        ],
+        [
+          749,
+          143
+        ],
+        [
+          752,
+          214
+        ],
+        [
+          747,
+          273
+        ],
+        [
+          767,
+          325
+        ],
+        [
+          791,
+          366
+        ],
+        [
+          848,
+          407
+        ],
+        [
+          928,
+          459
+        ],
+        [
+          953,
+          488
+        ],
+        [
+          946,
+          510
+        ],
+        [
+          893,
+          488
+        ],
+        [
+          843,
+          463
+        ],
+        [
+          793,
+          417
+        ],
+        [
+          769,
+          392
+        ],
+        [
+          785,
+          494
+        ],
+        [
+          766,
+          557
+        ],
+        [
+          740,
+          572
+        ],
+        [
+          696,
+          554
+        ],
+        [
+          603,
+          556
+        ],
+        [
+          532,
+          534
+        ],
+        [
+          455,
+          531
+        ],
+        [
+          409,
+          546
+        ],
+        [
+          389,
+          520
+        ],
+        [
+          405,
+          462
+        ],
+        [
+          427,
+          371
+        ],
+        [
+          444,
+          297
+        ],
+        [
+          466,
+          217
+        ],
+        [
+          493,
+          154
+        ],
+        [
+          529,
+          101
+        ]
+      ]
+    }
+  ],
+  "gates": {
+    "onlyObservedMainFigure": true,
+    "noFeetOrLegGeometry": true,
+    "noAutomaticFaceIdentityApproval": true,
+    "supportHeadYawTechnical": true,
+    "supportShoulderTurnTechnical": true,
+    "mustRetargetIntoTrue3DWhenReconstructed": true,
+    "mustRecomputeWeightsForFinalMesh": true
+  }
+}
+</script><script src="./envelope-workbench.v1.js"></script></body></html>

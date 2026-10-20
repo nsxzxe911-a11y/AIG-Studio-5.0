@@ -1,0 +1,78 @@
+{
+  "schema": "AIG.FastModel.Cinema.RGB.Resolution.V1",
+  "updated": "2026-10-20",
+  "authorityStyle": "RGB_BLACK_#020407",
+  "baseSourceHead": "8f5728b3273e4a0eb45185642c0604b98b647cba",
+  "renderPresets": {
+    "720p": [
+      1280,
+      720
+    ],
+    "1080p": [
+      1920,
+      1080
+    ],
+    "2K_QHD": [
+      2560,
+      1440
+    ],
+    "4K_UHD": [
+      3840,
+      2160
+    ]
+  },
+  "note2K": "QHD marketing label; not DCI 2048x1080",
+  "resolutionChangesCanvasDrawingBuffer": true,
+  "textureAndAnimationSourceUnchanged": true,
+  "protectInvalidDimensions": true,
+  "protectRenderbufferLimits": true,
+  "protectEstimatedFramebufferMemory": true,
+  "automaticDownscaleDoesNotOverwriteManualTarget": true,
+  "preserveModelIfResolutionRejected": true,
+  "sourceGLBSHA256": "63562888c49692ec0fe2d36932f02286ebbf5c0e644c2796f0178b4949eee51f",
+  "standaloneHtmlSHA256": "b0916eae0712cee1c1003e93e8e1e4a433e83fd76352e2d14dc02f9b68f58c06",
+  "standaloneBytes": 14473780,
+  "nodeTestsPassed": 35,
+  "cppCtestsPassed": 2,
+  "browser": [
+    {
+      "device": "mobile",
+      "viewport": "390×844",
+      "screenWidth": 390,
+      "scrollWidth": 390,
+      "canvasWidth": 370,
+      "webgl2": false,
+      "internalWidth": 300,
+      "internalHeight": 150,
+      "status2K": "已選 2K / QHD；此裝置未建立 WebGL2 GPU，不能驗收解析度。",
+      "status4K": "已選 4K / UHD；此裝置未建立 WebGL2 GPU，不能驗收解析度。",
+      "pageErrors": []
+    },
+    {
+      "device": "desktop",
+      "viewport": "1440×900",
+      "screenWidth": 1440,
+      "scrollWidth": 1440,
+      "canvasWidth": 1057.9375,
+      "webgl2": false,
+      "internalWidth": 300,
+      "internalHeight": 150,
+      "status2K": "已選 2K / QHD；此裝置未建立 WebGL2 GPU，不能驗收解析度。",
+      "status4K": "已選 4K / UHD；此裝置未建立 WebGL2 GPU，不能驗收解析度。",
+      "pageErrors": []
+    }
+  ],
+  "hostedBrowserWebGL2Supported": false,
+  "S23GPU2KVerified": false,
+  "S23GPU4KVerified": false,
+  "WindowsGPU2KVerified": false,
+  "WindowsGPU4KVerified": false,
+  "fps60Proven": false,
+  "nativeDX12Implemented": false,
+  "nativeVulkanImplemented": false,
+  "visualAuthorityApproved": false,
+  "formalWebsiteDeployed": false,
+  "apkBuilt": false,
+  "exeBuilt": false,
+  "releaseStatus": "PREVIEW_ONLY_NOT_PRODUCTION"
+}

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020407">
+<title>AIG School 3D | 火柴棒細骨架逆向對位（非正式模型）</title>
+<style>
+:root{color-scheme:dark;--bg:#020407;--panel:#07111b;--cyan:#55f0ea;--line:#315064;--muted:#a4bbc7;--text:#e3f6ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,'Noto Sans TC',sans-serif;color:var(--text);line-height:1.5}
+header,main,footer{width:min(100% - 28px,1400px);margin-inline:auto}header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 0}a{color:var(--cyan)}header a{text-decoration:none}h1{font-size:clamp(1.2rem,2.8vw,2rem);margin:15px 0 4px}p{margin:0 0 14px;color:var(--muted)}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:16px;overflow:hidden}
+.stage{width:100%;aspect-ratio:1672/941;position:relative;background:radial-gradient(ellipse at center,#162d3e 0%,#020509 78%);contain:layout paint;display:grid;place-items:center}
+.stage img,.stage svg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.stage svg{pointer-events:none}
+.blank{max-width:400px;text-align:center;color:var(--muted);padding:24px;font-size:clamp(.9rem,2vw,1.2rem)}
+.controls{padding:15px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.controls input[type=file]{max-width:260px}button{background:#153a4b;color:#e8f9ff;border:1px solid #458ba2;border-radius:9px;padding:11px 16px;min-height:44px;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+.ctrl-label{display:flex;align-items:center;gap:7px;font-size:.9rem}.ctrl-label input[type=range]{width:90px}
+.status{padding:0 15px 15px;color:var(--muted);font-size:.83rem}.notes{padding:22px 0 32px;font-size:.91rem}.notes strong{color:var(--text)}footer{text-align:center;font-size:.77rem;color:#839bad;padding-bottom:16px}
+@media(max-width:600px){.controls{flex-direction:column;align-items:stretch}.ctrl-label{justify-content:space-between}.stage{min-height:205px}}
+</style>
+<script defer src="./matchstick-rig.v1.js"></script>
+</head>
+<body>
+<header><strong>AIG • MATCHSTICK RIG</strong><a href="./index.html">回 3D 獨立工作區 ↗</a></header>
+<main>
+<h1>火柴棒細骨架 × 逆向原圖</h1>
+<p>細線骨架只用於定位；不撐大人物、不生成假 3D。核准原圖需經 SHA-256 驗證才可顯示。</p>
+<section class="card" aria-label="細骨架來源驗證預覽">
+  <div class="stage" data-stage>
+    <div class="blank" data-empty>請選擇已核准的《櫻花校園的青春時光》原圖，開始細骨架對位。</div>
+    <img data-image hidden alt="原圖與極細骨架對位">
+    <svg data-overlay viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid meet" aria-label="逆向細骨架定位線" hidden></svg>
+  </div>
+  <div class="controls">
+    <label class="ctrl-label">選擇原圖 PNG <input data-file type="file" accept="image/png"></label>
+    <label class="ctrl-label">細骨架線寬 <input data-width type="range" min="1" max="3" step="1" value="2"><output data-width-out>2 px</output></label>
+    <label class="ctrl-label"><input data-inferred type="checkbox" checked>顯示推定線（琥珀）</label>
+    <button type="button" data-toggle disabled>隱藏細骨架</button>
+  </div>
+  <div class="status" data-status role="status" aria-live="polite">等待讀取來源契約。正式 3D 模型：未核准。</div>
+</section>
+<div class="notes"><strong>不影響原網格：</strong>線條是 SVG 視覺定位，沒有 3D 骨骼體積。33 關節骨架只能在經逆向重建的網格完成後，依 3D 錨點配合調整。原圖裁掉的腿部不補假座標。</div>
+</main><footer>AIG-II / AIG Studio 5.0 · Debug QA Only · NOT VISUAL AUTHORITY</footer>
+</body></html>

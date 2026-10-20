@@ -1,0 +1,864 @@
+name: AIG School 3D Source Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/school-3d/**'
+      - '.github/workflows/school-3d-source-gate.yml'
+  push:
+    branches:
+      - feature/aig-school-3d-hero-v1-20261020
+    paths:
+      - 'formal-web/school-3d/**'
+      - '.github/workflows/school-3d-source-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify JS syntax
+        run: |
+          node --check formal-web/school-3d/school-hero.v1.js
+          node --check formal-web/school-3d/glb-audit.v1.mjs
+          node --check formal-web/school-3d/material-lab.v1.js
+      - name: Run fake-model rejection tests
+        run: node --test formal-web/school-3d/tests/glb-audit.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: 'formal-web/school-3d/tools/material-requirements.txt'
+      - name: Install material generator dependencies
+        run: python -m pip install -r formal-web/school-3d/tools/material-requirements.txt
+      - name: Test deterministic PBR maps
+        run: python -m unittest discover -s formal-web/school-3d/tools -p 'test_skin_materials.py' -v
+      - name: Generate NON-APPROVED PBR candidate maps
+        run: python formal-web/school-3d/tools/skin_materials.py --out artifacts/school-3d-prototype-pbr --size 512
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School-3D-PBR-Prototype-NOT-Authority
+          path: artifacts/school-3d-prototype-pbr/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Build rigged humanoid GLB QA fixture (NOT APPROVED)
+        run: |
+          python formal-web/school-3d/tools/build_rig_prototype.py --source artifacts/school-3d-prototype-pbr --output artifacts/school-3d-rig-technical/hero-rig-CANDIDATE-NOT-APPROVED.glb
+          python formal-web/school-3d/tools/verify_prototype.py artifacts/school-3d-rig-technical/hero-rig-CANDIDATE-NOT-APPROVED.glb
+      - name: Test deterministic rig + morph + skeletal clips
+        run: python -m unittest discover -s formal-web/school-3d/tools -p 'test_rig_prototype.py' -v
+      - name: Upload explicit non-authority technical fixture
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School-3D-Rig-CANDIDATE-NOT-APPROVED
+          path: artifacts/school-3d-rig-technical/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Phase5 reconstruct smoother-skinned candidate (NOT APPROVED)
+        run: |
+          python formal-web/school-3d/tools/build_rig_phase5.py --source artifacts/school-3d-prototype-pbr --output artifacts/school-3d-rig-phase5/hero-rig-Phase5-NOT-APPROVED.glb
+          python formal-web/school-3d/tools/verify_prototype.py artifacts/school-3d-rig-phase5/hero-rig-Phase5-NOT-APPROVED.glb
+      - name: Phase5 anatomically blended vertices and animation data Gate
+        env:
+          AIG_PHASE5_MATERIALS_DIR: artifacts/school-3d-prototype-pbr
+        run: python -m unittest discover -s formal-web/school-3d/tools -p 'test_phase5_rig.py' -v
+      - name: Archive Phase5 technical candidate (NOT VISUAL AUTHORITY)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School-3D-Phase5-Skinned-Motion-NOT-APPROVED
+          path: artifacts/school-3d-rig-phase5/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Phase6 build 2-bone IK contact GLB (NOT VISUAL AUTHORITY)
+        run: |
+          mkdir -p artifacts/school-3d-phase6-ik
+          python formal-web/school-3d/tools/build_rig_phase6.py --source artifacts/school-3d-prototype-pbr --output artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb > artifacts/school-3d-phase6-ik/phase6-build-report.json
+          python formal-web/school-3d/tools/verify_prototype.py artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb > artifacts/school-3d-phase6-ik/glb-structure-report.json
+          python formal-web/school-3d/tools/verify_foot_contact_phase6.py artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb > artifacts/school-3d-phase6-ik/ik-stance-evidence.json
+      - name: Test Phase6 deterministic rig and encoded ankle contact
+        env:
+          AIG_PHASE6_PBR_DIR: artifacts/school-3d-prototype-pbr
+        run: python -m unittest discover -s formal-web/school-3d/tools -p 'test_phase6_ik.py' -v
+      - name: Upload only unapproved Phase6 technical GLB
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School-3D-Phase6-IK-NOT-APPROVED
+          path: artifacts/school-3d-phase6-ik/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Phase7 reverse identity reference QA (no fictional rear geometry)
+        run: |
+          python -m unittest discover -s formal-web/school-3d/tools -p 'test_reverse_authority.py' -v
+          python -c "import json; m=json.load(open('formal-web/school-3d/reverse-authority.v1.json')); assert m['reverseGate']=='REFERENCE_EXTRACTED_ONLY_NOT_3D_MODEL'; assert not m['releasedToHomepage']; print('PHASE7 2D REFERENCE ONLY - 3D NOT APPROVED')"
+      - name: Phase8 old skeleton sizing must not override Reverse Authority
+        run: |
+          python -m unittest discover -s formal-web/school-3d/tools -p 'test_reverse_rig_fit.py' -v
+          python formal-web/school-3d/tools/normalize_rig_for_reverse.py --out artifacts/school-3d-proportion-handoff/rig-fit-NOT-APPROVED.json
+      - name: Archive normalized bones, NEVER claim new character
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School3D-Phase8-Proportion-Handoff-NOT-APPROVED
+          path: artifacts/school-3d-proportion-handoff/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Phase9 QA target mesh first, never force fit to old rig
+        run: |
+          mkdir -p artifacts/school-3d-phase9-meshfirst
+          python formal-web/school-3d/tools/prepare_qa_mesh.py \
+            --source artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb \
+            --target artifacts/school-3d-phase9-meshfirst/target-TECHNICAL-NOT-APPROVED.glb \
+            --landmarks artifacts/school-3d-phase9-meshfirst/3d-anchors-NOT-APPROVED.json
+          python formal-web/school-3d/tools/fit_mesh_first_rig.py \
+            --source artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb \
+            --target artifacts/school-3d-phase9-meshfirst/target-TECHNICAL-NOT-APPROVED.glb \
+            --anchors artifacts/school-3d-phase9-meshfirst/3d-anchors-NOT-APPROVED.json \
+            --out artifacts/school-3d-phase9-meshfirst/meshfirst-rig-NOT-APPROVED.glb > artifacts/school-3d-phase9-meshfirst/fit-report.json
+          python formal-web/school-3d/tools/verify_mesh_first.py \
+            --target artifacts/school-3d-phase9-meshfirst/target-TECHNICAL-NOT-APPROVED.glb \
+            --result artifacts/school-3d-phase9-meshfirst/meshfirst-rig-NOT-APPROVED.glb > artifacts/school-3d-phase9-meshfirst/mesh-first-matrix-qa.json
+          python formal-web/school-3d/tools/verify_fit_foot_contact.py \
+            artifacts/school-3d-phase9-meshfirst/meshfirst-rig-NOT-APPROVED.glb > artifacts/school-3d-phase9-meshfirst/foot-joint-only-qa.json
+      - name: Phase9 11 independent fail-closed mesh-first tests
+        env:
+          AIG_PHASE9_SOURCE_GLB: artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb
+        run: python -m unittest discover -s formal-web/school-3d/tools -p 'test_mesh_first.py' -v
+      - name: Upload Phase9 rigging QA artifact, explicitly NOT Authority
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School3D-Phase9-MeshFirst-QA-NOT-APPROVED
+          path: artifacts/school-3d-phase9-meshfirst/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Phase10 convert prior mesh to truly independent UNRIGGED QA GLB
+        run: |
+          mkdir -p artifacts/school-3d-phase10-independent
+          python formal-web/school-3d/tools/make_unrigged_qa_fixture.py \
+            --source artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb \
+            --target artifacts/school-3d-phase10-independent/unrigged-import-NOT-APPROVED.glb \
+            --anchors artifacts/school-3d-phase10-independent/joint-anchors-MANUAL-3D-TEST.json > artifacts/school-3d-phase10-independent/import-report.json
+          python formal-web/school-3d/tools/bind_unrigged_mesh.py \
+            --source artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb \
+            --target artifacts/school-3d-phase10-independent/unrigged-import-NOT-APPROVED.glb \
+            --anchors artifacts/school-3d-phase10-independent/joint-anchors-MANUAL-3D-TEST.json \
+            --out artifacts/school-3d-phase10-independent/33joint-fitted-NOT-VISUAL-AUTHORITY.glb > artifacts/school-3d-phase10-independent/rebound-report.json
+          python formal-web/school-3d/tools/verify_prototype.py artifacts/school-3d-phase10-independent/33joint-fitted-NOT-VISUAL-AUTHORITY.glb > artifacts/school-3d-phase10-independent/glb-technical-audit.json
+          python formal-web/school-3d/tools/verify_fit_foot_contact.py artifacts/school-3d-phase10-independent/33joint-fitted-NOT-VISUAL-AUTHORITY.glb > artifacts/school-3d-phase10-independent/foot-joint-only-audit.json
+      - name: Phase10 sixteen true unrigged GLB retarget tests
+        env:
+          AIG_PHASE10_SOURCE_GLB: artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb
+        run: python -m unittest discover -s formal-web/school-3d/tools -p 'test_unrigged_mesh_binding.py' -v
+      - name: Archive Phase10 unrigged rig adapter QA, NOT visual approval
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School3D-Phase10-Unrigged-Adapter-NOT-APPROVED
+          path: artifacts/school-3d-phase10-independent/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Phase11 Reverse 2D to real GLB 3D projection regression tests
+        run: |
+          python -m unittest discover -s formal-web/school-3d/tools -p 'test_phase11_projection_gate.py' -v
+          python -c "import json; r=json.load(open('formal-web/school-3d/PHASE11-VISUAL-EVIDENCE.json')); a=json.load(open('formal-web/school-3d/reverse-authority.v1.json')); assert r['referenceSHA256']==a['source']['sha256']; assert r['releaseAllowed'] is False and r['visualAuthorityPassed'] is False and r['isRealCalibratedCamera'] is False; assert len(r['pairs'])==8 and r['meanErrorPx']>0; print('GLB projection diagnostic only, not visual approval')"
+      - name: Phase12 matchstick-slim skeleton cannot deform reverse mesh
+        run: |
+          node --check formal-web/school-3d/matchstick-rig.v1.js
+          python -m unittest discover -s formal-web/school-3d/tools -p 'test_matchstick_rig.py' -v
+          mkdir -p artifacts/school-3d-phase12-matchstick
+          python formal-web/school-3d/tools/build_matchstick_spec.py \
+            --reverse formal-web/school-3d/reverse-authority.v1.json \
+            --out artifacts/school-3d-phase12-matchstick/matchstick-rig.v1.json
+          python -c "import json; a=json.load(open('artifacts/school-3d-phase12-matchstick/matchstick-rig.v1.json')); b=json.load(open('formal-web/school-3d/matchstick-rig.v1.json')); assert a==b, 'matchstick rig source mismatch'; print('exact matching JSON fields - PASS')"
+      - name: Archive Phase12 thin-bone contract only (NOT A CHARACTER)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School-3D-Phase12-Matchstick-REVERSE-QA-ONLY
+          path: artifacts/school-3d-phase12-matchstick/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Phase13 ORIGINAL envelope source-code QA (synthetic image only)
+        run: |
+          node --check formal-web/school-3d/phase13/envelope-workbench.v1.js
+          python -m unittest discover -s formal-web/school-3d/phase13/tools -p 'test_envelope_ci.py' -v
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          a=Path('formal-web/school-3d/phase13')
+          manifest=json.loads((a/'mesh-envelope.v1.json').read_text())
+          html=(a/'envelope-workbench.v1.html').read_text()
+          embedded=json.loads(re.search(r'<script id="spec" type="application/json">\s*(.*?)\s*</script>',html,re.S).group(1))
+          reverse=json.loads(Path('formal-web/school-3d/reverse-authority.v1.json').read_text())
+          assert embedded==manifest, 'HTML embedded envelope manifest drift'
+          assert manifest['source']['sha256']==reverse['source']['sha256']
+          assert manifest['releaseAllowed'] is False and manifest['approved3DModel'] is False
+          print('Phase13 source contract passes; no real heroine model approved')
+          PY
+      - name: Generate Phase13 SYNTHETIC mesh artifact for QA, NOT original girl
+        run: python formal-web/school-3d/phase13/tools/build_envelope_synthetic_fixture.py --outdir artifacts/school-3d-phase13-synthetic
+      - name: Archive explicitly synthetic Phase13 GLB (NOT visual Authority)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School-3D-Phase13-SYNTHETIC-Skin-Envelope-NOT-APPROVED
+          path: artifacts/school-3d-phase13-synthetic/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Phase14 ORIGINAL hair-spring face-geometry and sketch-color QA (NO AI model)
+        run: |
+          node --check formal-web/school-3d/phase14/beauty-engine.v1.js
+          node --check formal-web/school-3d/phase14/hair-face-workbench.v1.js
+          node formal-web/school-3d/phase14/tools/test_beauty_engine.cjs
+          python -m unittest discover -s formal-web/school-3d/phase14/tools -p 'test_phase14_contract.py' -v
+          python formal-web/school-3d/phase14/tools/make_hair_spec.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          a=Path('formal-web/school-3d/phase14/hair-face-spec.v1.json')
+          s=json.loads(a.read_text())
+          r=json.loads(Path('formal-web/school-3d/reverse-authority.v1.json').read_text())
+          assert s['source']['sha256']==r['source']['sha256']
+          assert len(s['hair']['strands'])==88 and s['hair']['segmentsPerStrand']==9
+          assert s['gate']['aiModelAvailable'] is False
+          assert s['approved3DModel'] is False and s['releasedToHomepage'] is False
+          print('Phase14 hair spring and color source QA PASS — 3D/AI visual gate remains BLOCKED')
+          PY
+      - name: Phase15 original AIG 3D hair card exporter — SYNTHETIC INPUT ONLY
+        run: |
+          mkdir -p artifacts/school-3d-phase15-synthetic
+          python formal-web/school-3d/phase15/tools/prepare_ci_synthetic.py \
+            --synthetic-png artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png \
+            --hair-spec formal-web/school-3d/phase14/hair-face-spec.v1.json \
+            --out artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json
+          python formal-web/school-3d/phase15/tools/build_hair_cards.py \
+            --base artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-MESH-NOT-VISUAL-AUTHORITY.glb \
+            --source artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png \
+            --hair-spec artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json \
+            --envelope-spec artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json \
+            --phase13-builder formal-web/school-3d/phase13/tools/build_envelope.py \
+            --out artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-TRUE-3D-HAIR-NOT-APPROVED.glb \
+            --report artifacts/school-3d-phase15-synthetic/CI-PHASE15-STRUCTURAL-REPORT.json
+      - name: Phase15 real skeleton 3D hair tests (12 hard gates)
+        env:
+          AIG_PHASE15_BASE_GLB: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-MESH-NOT-VISUAL-AUTHORITY.glb
+          AIG_PHASE15_OUTPUT_GLB: artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-TRUE-3D-HAIR-NOT-APPROVED.glb
+          AIG_PHASE15_HAIR_SPEC: artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json
+          AIG_PHASE15_SOURCE_IMG: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png
+          AIG_PHASE15_ENVELOPE_SPEC: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json
+          AIG_PHASE15_PHASE13_BUILDER: formal-web/school-3d/phase13/tools/build_envelope.py
+        run: python -m unittest discover -s formal-web/school-3d/phase15/tools -p 'test_phase15_hair.py' -v
+      - name: Archive Phase15 SYNTHETIC GLB — never a real girl approval
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School3D-Phase15-SYNTHETIC-3D-HairRig-NOT-APPROVED
+          path: artifacts/school-3d-phase15-synthetic/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Phase16 original fine alpha hair rebuild — SYNTHETIC INPUT ONLY
+        run: |
+          mkdir -p artifacts/school-3d-phase16-fine
+          python formal-web/school-3d/phase16/tools/build_fine_hair.py \
+            --base artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-TRUE-3D-HAIR-NOT-APPROVED.glb \
+            --source artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png \
+            --hair-spec artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json \
+            --envelope-spec artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json \
+            --phase13-builder formal-web/school-3d/phase13/tools/build_envelope.py \
+            --out artifacts/school-3d-phase16-fine/CI-SYNTHETIC-528-FINE-HAIR-NOT-APPROVED.glb \
+            --report artifacts/school-3d-phase16-fine/CI-STRUCTURAL-EVIDENCE.json
+      - name: Phase16 fine strands, PNG transparency and skin integrity — 12 hard gates
+        env:
+          AIG_P16_BASE: artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-TRUE-3D-HAIR-NOT-APPROVED.glb
+          AIG_P16_OUT: artifacts/school-3d-phase16-fine/CI-SYNTHETIC-528-FINE-HAIR-NOT-APPROVED.glb
+          AIG_P16_IMAGE: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png
+          AIG_P16_HAIR: artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json
+          AIG_P16_ENV: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json
+          AIG_P16_BUILDER: formal-web/school-3d/phase13/tools/build_envelope.py
+        run: python -m unittest discover -s formal-web/school-3d/phase16/tools -p 'test_phase16_fine_hair.py' -v
+      - name: Archive Phase16 synthetic technical GLB, NOT cinematic approval
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School3D-Phase16-SYNTHETIC-FineHair528-NOT-APPROVED
+          path: artifacts/school-3d-phase16-fine/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Phase17 actual GLB image-silhouette reproject — SYNTHETIC CI only
+        run: |
+          mkdir -p artifacts/school-3d-phase17-synthetic
+          python formal-web/school-3d/phase17/tools/build_source_fidelity.py \
+            --base artifacts/school-3d-phase16-fine/CI-SYNTHETIC-528-FINE-HAIR-NOT-APPROVED.glb \
+            --source artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png \
+            --hair-spec artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json \
+            --envelope-spec artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json \
+            --phase15-builder formal-web/school-3d/phase15/tools/build_hair_cards.py \
+            --phase13-builder formal-web/school-3d/phase13/tools/build_envelope.py \
+            --out artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --report artifacts/school-3d-phase17-synthetic/CI-STRUCTURE-NOT-VISUAL-FIDELITY.json
+      - name: Phase17 16 strict source-mesh SHA face-alpha and no-fake tests
+        env:
+          AIG_P17_HAIR15: formal-web/school-3d/phase15/tools/build_hair_cards.py
+          AIG_P17_CORE13: formal-web/school-3d/phase13/tools/build_envelope.py
+          AIG_P17_BASE: artifacts/school-3d-phase16-fine/CI-SYNTHETIC-528-FINE-HAIR-NOT-APPROVED.glb
+          AIG_P17_OUT: artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb
+          AIG_P17_IMAGE: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png
+          AIG_P17_HAIR_SPEC: artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json
+          AIG_P17_ENV: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json
+        run: python -m unittest discover -s formal-web/school-3d/phase17/tools -p 'test_phase17_source.py' -v
+      - name: Archive Phase17 synthetic GLB technical only, NOT real heroine
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School3D-Phase17-SYNTHETIC-HairMatte-NOT-APPROVED
+          path: artifacts/school-3d-phase17-synthetic/
+          retention-days: 14
+          if-no-files-found: error
+      - name: FastModel 1.0 native portable C++ incremental mesh C ABI Gate
+        run: |
+          cmake -S formal-web/school-3d/fastmodel/core -B artifacts/fastmodel-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build artifacts/fastmodel-build -j2
+          ctest --test-dir artifacts/fastmodel-build --output-on-failure
+          mkdir -p artifacts/fastmodel-technical
+          ./artifacts/fastmodel-build/fastmodel_test | tee artifacts/fastmodel-technical/native-LINUX-NOT-GPU-benchmark.json
+      - name: FastModel real GLB batch importer — synthetic input, zero third-party models
+        env:
+          AIG_FASTMODEL_GLB: artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/web-core.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb "$AIG_FASTMODEL_GLB" \
+            --out artifacts/fastmodel-technical/AIG-FastModel-CI-SYNTHETIC-OFFLINE-NOT-PRODUCTION.html
+          python - <<'PY'
+          import json
+          e=json.load(open('formal-web/school-3d/fastmodel/PERFORMANCE-EVIDENCE.json'))
+          assert e['1080p60Verified'] is False
+          assert e['nativeDX12Implemented'] is False
+          assert e['nativeVulkanImplemented'] is False
+          assert e['webgl2GpuDrawVerified'] is False
+          print('PASS: no false GPU or mobile deployment claims')
+          PY
+      - name: Upload FastModel synthetic technical preview, NOT native 60fps
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-FastModel-1-SYNTHETIC-WebPreview-NOT-1080p60-Proven
+          path: artifacts/fastmodel-technical/
+          retention-days: 14
+          if-no-files-found: error
+      - name: FastModel 1.1 native resource + cache + disk probe policy Gate
+        run: |
+          cmake -S formal-web/school-3d/fastmodel/core -B artifacts/fastmodel-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build artifacts/fastmodel-build -j2
+          ctest --test-dir artifacts/fastmodel-build --output-on-failure
+      - name: FastModel 1.1 JS pressure + no-data-loss + GPU release Gate (15 tests)
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/resource-governor.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/resource-governor.test.mjs formal-web/school-3d/fastmodel/tests/renderer-resource.test.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('formal-web/school-3d/fastmodel')
+          e=json.loads((p/'STABILITY-EVIDENCE.json').read_text())
+          assert e['realDevice1080p60Verified'] is False
+          assert e['androidNativeVulkanImplemented'] is False
+          assert e['windowsNativeDX12Implemented'] is False
+          assert e['dirtyModelPreserved'] is True
+          assert e['neverDeletesUserFiles'] is True
+          assert e['GPUutilizationPercentMeasured'] is False
+          print('FastModel adaptive stability SOURCE PASS; native device/GPU FPS still BLOCKED')
+          PY
+      - name: FastModel 1.1 synthetic offline packaging and resource policy inclusion
+        run: |
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/AIG-FastModel-1-1-SYNTHETIC-NOT-60FPS.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/AIG-FastModel-1-1-SYNTHETIC-NOT-60FPS.html').read_text()
+          assert 'class ResourceGovernor' in s
+          assert 'class DiskPressureGuard' in s
+          assert 'releaseOptionalHair' in s
+          assert 'window.AIG_EMBEDDED_GLB' in s
+          assert 'gl.bufferSubData' in s
+          print('Embedded adaptive resource governor is present')
+          PY
+      - name: FastModel 1.2 real black RGB UI and safe 720p/1080p/QHD/4K selection
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --check formal-web/school-3d/fastmodel/web/resolution-policy.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --test formal-web/school-3d/fastmodel/tests/rgb-ui.test.mjs formal-web/school-3d/fastmodel/tests/resolution-policy.test.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          base=Path('formal-web/school-3d/fastmodel')
+          a=json.loads((base/'RGB-RESOLUTION-EVIDENCE.json').read_text())
+          p=a['renderPresets']
+          assert p['2K_QHD']==[2560,1440] and p['4K_UHD']==[3840,2160]
+          assert a['resolutionChangesCanvasDrawingBuffer'] is True
+          for blocked in ['S23GPU4KVerified','WindowsGPU4KVerified','fps60Proven','nativeDX12Implemented','nativeVulkanImplemented','visualAuthorityApproved','formalWebsiteDeployed','apkBuilt','exeBuilt']:
+            assert a[blocked] is False,blocked
+          assert a['releaseStatus']=='PREVIEW_ONLY_NOT_PRODUCTION'
+          print('RGB real options and truthful device-GPU no-approval Gate PASS')
+          PY
+      - name: FastModel 1.2 synthetic offline RGB+QHD+4K bundle exact source
+        run: |
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-RGB-2K-4K-NOT-GPU-PROVEN.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-RGB-2K-4K-NOT-GPU-PROVEN.html').read_text()
+          for name in ['#020407','2560x1440','3840x2160','RESOLUTION_PRESETS','checkRenderTarget','AIG_EMBEDDED_GLB']:
+            assert name in s,name
+          assert "window.AIG_EMBEDDED_GLB" in s
+          print('Offline RGB controls and real policy embedded PASS; native FPS untested')
+          PY
+      - name: FastModel compatibility-first raster-only policy (no RTX/DXR)
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/graphics-policy.mjs
+          node --test formal-web/school-3d/fastmodel/tests/graphics-policy.test.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          b=Path('formal-web/school-3d/fastmodel')
+          c=json.loads((b/'GRAPHICS-POLICY.v1.json').read_text())
+          for k in ['rayTracingEnabled','directX12DXREnabled','vulkanRayTracingEnabled','vulkanRayQueryEnabled','pathTracingEnabled','rtGpuRequired']:
+            assert c[k] is False, k
+          assert c['releaseState']=='PREVIEW_ONLY_NOT_PRODUCTION'
+          assert c['hardwareGPUBenchmarked'] is False
+          assert c['windowsNativeDX12Verified'] is False and c['S23NativeVulkanVerified'] is False
+          hero=json.loads((b/'reference/HERO-3D-RENDER-CANDIDATE.json').read_text())
+          assert hero['containsReal3DGeometry'] is False and hero['visualAuthorityApproved'] is False
+          print('Raster-only policy PASS; image is reference, not released 3D')
+          PY
+      - name: FastModel offline package stays raster only (synthetic source)
+        run: |
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-AIG-FastModel-RASTER-ONLY-NOT-FPS-VERIFIED.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-AIG-FastModel-RASTER-ONLY-NOT-FPS-VERIFIED.html').read_text()
+          assert 'function assertRasterOnly(' in s
+          assert 'assertRasterOnly(GRAPHICS_POLICY)' in s
+          assert '光線追蹤：關閉' in s
+          assert 'WEBGL2_RASTER' in s
+          for size in ['1920x1080','2560x1440','3840x2160']:
+            assert size in s
+          print('Offline graphics guard and RGB 1080p/2K/4K preserved')
+          PY
+      - name: FastModel one canonical raster-only GPU policy and 3D-style authority guard
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/graphics-policy.mjs
+          node --test formal-web/school-3d/fastmodel/tests/no-raytrace.test.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('formal-web/school-3d/fastmodel')
+          s=(root/'web/graphics-policy.mjs').read_text()
+          manifest=json.loads((root/'references/hero-3d-still-REFERENCE-ONLY.json').read_text())
+          for flag in ['rayTracingEnabled', 'dxrEnabled', 'vulkanRayTracingEnabled', 'rayQueryEnabled', 'pathTracingEnabled', 'requiredRTXGPU', 'hardwareRayTracingRequired']:
+            assert flag+': false' in s,flag
+          assert manifest['releaseAllowed'] is False
+          assert manifest['authorityStatus']=='REFERENCE_ONLY_NOT_APPROVED'
+          assert manifest['kind']=='GENERATED_STILL_2D_SIMULATING_3D_RENDER'
+          assert len(manifest['sha256'])==64
+          print('Single compatibility-first raster policy PASS — no fake 3D heroine')
+          PY
+      - name: FastModel mesh-line optimization source Gate — 53 no-fake tests
+        env:
+          AIG_FASTMODEL_GLB: artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/mesh-lines.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/*.test.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          b=Path('formal-web/school-3d/fastmodel')
+          evidence=json.loads((b/'GRID-OPTIMIZATION-EVIDENCE.json').read_text())
+          assert evidence['rendering']['defaultLines']=='off'
+          assert evidence['rendering']['rayTracing'] is False
+          assert evidence['evidence']['GPUWireframeTested'] is False
+          assert evidence['evidence']['1080p60Proven'] is False
+          assert evidence['safety']['originalGLBUntouched'] is True
+          assert evidence['safety']['productionReleased'] is False
+          print('CPU topology and UI source PASS; WebGL2 GPU still requires hardware acceptance')
+          PY
+      - name: FastModel wire modes included in synthetic offline HTML
+        run: |
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMESH-GRID-MODES-NOT-GPU-VERIFIED.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMESH-GRID-MODES-NOT-GPU-VERIFIED.html').read_text()
+          for token in ['id="mesh-lines"','id="mesh-density"','id="helper-grid"','function buildEdgeIndex','gl.drawElements(gl.LINES','window.AIG_EMBEDDED_GLB']:
+            assert token in s,token
+          assert '光線追蹤：關閉' in s
+          print('Offline true wire modes source inclusion PASS; no GPU FPS inference')
+          PY
+      - name: FastModel 1.3 NO-GRID main surface and safe soft edit guidance
+        env:
+          AIG_FASTMODEL_GLB: artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/surface-guides.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/*.test.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('formal-web/school-3d/fastmodel')
+          e=json.loads((p/'NO-GRID-EVIDENCE.json').read_text())
+          assert e['defaultSurfaceGuide']=='clean'
+          assert e['defaultWireMode']=='off'
+          assert e['surfaceGuides']==['clean','edit-tint','soft-contrast']
+          assert e['extraLineBufferAllocatedByDefault'] is False
+          assert e['extraDrawCallsInSurfaceMode']==0
+          assert e['1080p60DeviceVerified'] is False
+          assert e['gpuWebGL2AvailableInTestEnvironment'] is False
+          assert e['formalSiteDeployed'] is False
+          print('NO-GRID source policy PASS; hardware FPS remains UNVERIFIED')
+          PY
+      - name: FastModel 1.3 synthetic NO-GRID standalone contract
+        run: |
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMESH-NO-GRID-RGB-NOT-APPROVED.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMESH-NO-GRID-RGB-NOT-APPROVED.html').read_text()
+          for token in ['id="surface-guide"','value="clean" selected','<details id="advanced-wire"',
+                        'surfaceGuideId','setSurfaceGuide','window.AIG_EMBEDDED_GLB','光線追蹤：關閉']:
+            assert token in s,token
+          print('NO-GRID standalone embeds real surface modes and Phase17 synthetic GLB')
+          PY
+      - name: FastModel 1.4 bounded scan and dashed reference scaffold — no-fake source gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/scene-tools.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/scene-tools.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMESH-1-4-SCENE-NOT-AI-OR-GPU-VERIFIED.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMESH-1-4-SCENE-NOT-AI-OR-GPU-VERIFIED.html').read_text()
+          for token in ['id="scan-btn"','id="light-preset"','id="scaffold-limit"',
+                        'function scanGeometry(','function paintScaffold(','function limitAngle(',
+                        'setLighting(preset=','光線追蹤：關閉','window.AIG_EMBEDDED_GLB']:
+              assert token in s, token
+          print('FastModel1.4 source and offline feature inclusion PASS; actual GPU/semantic AI/photogrammetry not proved')
+          PY
+      - name: FastModel 1.5 reversible performance and head-neck-safe optional LOD Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/adaptive-detail.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/adaptive-detail.test.mjs formal-web/school-3d/fastmodel/tests/renderer-resource.test.mjs formal-web/school-3d/fastmodel/tests/sparse-scan.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-1-5-REVERSIBLE-LOD-NOT-GPU-VERIFIED.html
+          python - <<'PY'
+          from pathlib import Path
+          root=Path('formal-web/school-3d/fastmodel')
+          s=Path('artifacts/fastmodel-technical/CI-FASTMODEL-1-5-REVERSIBLE-LOD-NOT-GPU-VERIFIED.html').read_text()
+          for token in ['id="detail-mode"', 'id="baseline"', 'id="compare"',
+                        'function sampleVec3Accessor(', 'function optionalDetailGroup(', 'function nextDetailState(',
+                        'function measuredFrameSummary(', 'sampleReader:sampleVec3Accessor', 'window.AIG_EMBEDDED_GLB',
+                        '光線追蹤：關閉', 'value="1920x1080" selected', 'value="off" selected']:
+              assert token in s,token
+          renderer=(root/'web/renderer.mjs').read_text()
+          assert 'skin===1){gl.deleteVertexArray' not in renderer
+          assert 'this.lastOptionalRelease=this.releaseOptionalHair();' not in renderer
+          assert "e.optionalDetail===true&&e.detailGroup==='fine-hair'" in renderer
+          print('FastModel1.5 no-fake source + synthetic offline PASS; FPS and hardware approval still BLOCKED')
+          PY
+      - name: FastModel 1.6 animation pose and head neck preservation source Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/pose-evaluator.mjs
+          node --check formal-web/school-3d/fastmodel/web/anatomy-guard.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/pose-evaluator.test.mjs formal-web/school-3d/fastmodel/tests/anatomy-guard.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-1-6-POSE-NECK-UNVERIFIED.html
+          python - <<'PY'
+          from pathlib import Path
+          b=Path('formal-web/school-3d/fastmodel')
+          html=Path('artifacts/fastmodel-technical/CI-FASTMODEL-1-6-POSE-NECK-UNVERIFIED.html').read_text()
+          for token in ['id="anatomy-check"','id="anatomy-status"',
+                        'function createPoseEvaluator(', 'function auditAnatomyMetadata(',
+                        'this.poseEvaluator.evaluate', 'this.boneMatrixScratch',
+                        '光線追蹤：關閉','window.AIG_EMBEDDED_GLB']:
+              assert token in html,token
+          code=(b/'web/renderer.mjs').read_text()
+          assert 'const nextPose=createPoseEvaluator(' not in code or 'nextPose=createPoseEvaluator(nextFile.g.nodes,nextTracks)' in code
+          assert '!protectedMaterials.has(b.mat)' in code
+          assert 'this.lastOptionalRelease=this.releaseOptionalHair();' not in code
+          assert 'gl.drawElements(gl.TRIANGLES' in code
+          print('1.6 pose and explicit anatomy tags source/packager PASS; GPU and real head-neck continuity still UNVERIFIED')
+          PY
+      - name: FastModel 1.7 fictional character face anti-clone geometry Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/character-face.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/character-face.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-1-7-CAST-COLLISION-NOT-REAL-FACE-ID.html
+          python - <<'PY'
+          from pathlib import Path
+          text=Path('artifacts/fastmodel-technical/CI-FASTMODEL-1-7-CAST-COLLISION-NOT-REAL-FACE-ID.html').read_text()
+          for token in ['id="character-id"','id="face-compare"','id="face-clear"','id="face-rescan"',
+                        'function compareLoadedFace(replace=false)', 'CHARFACE_LEAD_ALREADY_LOCKED',
+                        'CHARFACE_MULTIPLE_CHARACTERS_REQUIRE_ID',
+                        'function faceShapeSignature(', 'function compareFaceShapes(',
+                        'class CharacterFaceRoster', 'biometricIdentityRecognized:false',
+                        'window.AIG_EMBEDDED_GLB']:
+              assert token in text, token
+          print('1.7 fictional GLB face-collision SOURCE Gate PASS; not real-person face recognition or visual approval')
+          PY
+      - name: FastModel 1.8 head-neck seam hair risk and native device evidence BLOCK Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/character-integrity.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/character-integrity.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMOTION-1-8-SEAM-HAIR-NATIVE-UNVERIFIED.html
+          python - <<'PY'
+          from pathlib import Path
+          t=Path('artifacts/fastmodel-technical/CI-FASTMOTION-1-8-SEAM-HAIR-NATIVE-UNVERIFIED.html').read_text()
+          for token in ['id="seam-check"','id="hair-check"',
+                        'id="native-gate-status"',
+                        'function inspectHeadNeckGeometry(',
+                        'function inspectHairNeckOcclusion(',
+                        'function assessAnimationDeviceEvidence(',
+                        'actualSeamFixed:false','actualOcclusionApproved:false',
+                        'BLOCKED_MISSING_REAL_DEVICE_EVIDENCE']:
+              assert token in t,token
+          assert 'window.AIG_EMBEDDED_GLB' in t
+          assert "value=\"1920x1080\" selected" in t
+          print('1.8 synthetic GLB integrity source Gate PASS. Head-neck REPAIR, hair motion and real hardware 1080p60 remain BLOCKED.')
+          PY
+      - name: FastModel 1.9 head-neck real bridge working-copy and no-fake release Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/seam-bridge.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/seam-bridge.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMOTION-1-9-BRIDGE-NOT-WELDED-UNAPPROVED.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMOTION-1-9-BRIDGE-NOT-WELDED-UNAPPROVED.html').read_text()
+          for token in ['id="bridge-candidate"','id="bridge-status"',
+                        'function createHeadNeckBridgeCandidate(', 
+                        'VISUAL_TRIANGLE_STRIP_NOT_WELDED','BRIDGE_GAP_EXCEEDS_SAFETY_LIMIT',
+                        'HEAD-NECK-VISUAL-BRIDGE-CANDIDATE-NOT-APPROVED.glb',
+                        'window.AIG_EMBEDDED_GLB','光線追蹤：關閉']:
+              assert token in s,token
+          assert "value=\"1920x1080\" selected" in s
+          print('1.9 source-only stitched-faces GLB working-copy builder PASS. Real heroine seam, animated hair and Windows/Android GPU 60FPS remain BLOCKED.')
+          PY
+      - name: FastModel 2.0 true CPU-skinned animation gap and hair-risk source Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/animated-integrity.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/animated-integrity.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMOTION-2-0-ANIMATED-RISK-NOT-RELEASE.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMOTION-2-0-ANIMATED-RISK-NOT-RELEASE.html').read_text()
+          for token in ['id="animated-check"','id="animated-status"',
+                        'function inspectAnimatedIntegrity(',
+                        'POSED_SAMPLE_RISK_REVIEW_REQUIRED',
+                        'animatedPoseAudit:lastAnimatedAudit',
+                        'actualSeamFixed:false',
+                        'animatedCollisionProved:false',
+                        'window.AIG_EMBEDDED_GLB',
+                        '光線追蹤：關閉']:
+              assert token in s, token
+          assert 'value="1920x1080" selected' in s
+          print('FastModel 2.0 sampled skin/animation RISK test PASS only. Approved human mesh, real hair collision, Windows/Android GPU measurements still BLOCKED.')
+          PY
+      - name: FastModel 2.1 real solid bones and dashed outline scan visual Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/scan-overlay.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --test formal-web/school-3d/fastmodel/tests/scan-overlay.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-2-1-REAL-BONES-DASHED-CONTOUR-NOT-AUTHORITY.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMODEL-2-1-REAL-BONES-DASHED-CONTOUR-NOT-AUTHORITY.html').read_text()
+          for token in ['id="scan-overlay"','id="scan-mode"','id="scan-density"',
+                        'id="scan-layer-status"','function buildScanOverlay(',
+                        'function paintScanOverlay(',
+                        "ctx.setLineDash([])", "ctx.setLineDash([5,6])",
+                        'this.onScanFrame(this.scanWorldCache,ts)',
+                        'window.AIG_EMBEDDED_GLB',
+                        '光線追蹤：關閉']:
+              assert token in s,token
+          assert 'value="1920x1080" selected' in s
+          assert 'value="off" selected' in s
+          embedded=s.split('window.AIG_EMBEDDED_GLB=',1)
+          assert len(embedded)==2, 'offline script missing'
+          script='window.AIG_EMBEDDED_GLB='+embedded[1].split('</script>',1)[0]
+          Path('/tmp/aig-fastmodel-2-1-standalone-runtime.js').write_text(script)
+          print('FastModel 2.1 exact offline JS syntax preflight prepared')
+          PY
+          node --check /tmp/aig-fastmodel-2-1-standalone-runtime.js
+          python - <<'PY'
+          print('FastModel 2.1 GLB skeleton SOLID + source outline DASHED visualization SOURCE Gate PASS; not native GPU/real approved girl Authority.')
+          PY
+      - name: FastModel 2.2 RGB scan colors and source material protection Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/scan-colors.mjs
+          node --check formal-web/school-3d/fastmodel/web/scan-overlay.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/scan-colors.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-2-2-RGB-COLORS-NOT-HEROINE-AUTHORITY.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMODEL-2-2-RGB-COLORS-NOT-HEROINE-AUTHORITY.html').read_text()
+          for token in ['id="scan-palette"','id="scan-risk-color"','id="scan-color-legend"',
+                        'id="scan-color-status"','function scanColor(',
+                        'function scanPalette(','function scanColorLegend(',
+                        "scanPalette(palette)","highlightRoles:hairReview?['hair']:[]",
+                        'sourceMaterialColorsUntouched:true','window.AIG_EMBEDDED_GLB',
+                        '光線追蹤：關閉']:
+              assert token in s,token
+          assert 'value="aig-rgb" selected' in s
+          assert 'value="1920x1080" selected' in s
+          script='window.AIG_EMBEDDED_GLB='+s.split('window.AIG_EMBEDDED_GLB=',1)[1].split('</script>',1)[0]
+          Path('/tmp/aig-fastmodel-2-2-rgb-bundle.js').write_text(script)
+          print('2.2 palette controls, original material contract and standalone JS assembled')
+          PY
+          node --check /tmp/aig-fastmodel-2-2-rgb-bundle.js
+          echo "FastModel 2.2 RGB scan source Gate PASS; GPU hardware, real face/head/hair remains unverified."
+      - name: FastModel 2.3 posed source-triangle occlusion and mobile scan budget Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/scan-depth.mjs
+          node --check formal-web/school-3d/fastmodel/web/scan-overlay.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/scan-depth.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-2-3-SAMPLED-OCCLUSION-NOT-RELEASE.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMODEL-2-3-SAMPLED-OCCLUSION-NOT-RELEASE.html').read_text()
+          for token in ['id="scan-depth"','id="scan-depth-status"',
+                        'function sampleSourceDepth(','function classifySourceOcclusion(',
+                        'function scanDepthCoordinate(','behind-sampled-surface',
+                        'sampledDepthCellTests','occludedSegments','smallViewport?90:50',
+                        'actualAnimatedCollisionProved:false','window.AIG_EMBEDDED_GLB']:
+              assert token in s,token
+          assert 'value="sampled" selected' in s
+          assert 'value="1920x1080" selected' in s
+          script='window.AIG_EMBEDDED_GLB='+s.split('window.AIG_EMBEDDED_GLB=',1)[1].split('</script>',1)[0]
+          Path('/tmp/fastmodel-2-3-standalone.js').write_text(script)
+          print('2.3 source triangle sampling, capped scan and offline JS assembled')
+          PY
+          node --check /tmp/fastmodel-2-3-standalone.js
+          echo "FastModel 2.3 sampled occlusion Gate is source QA only; Windows/Android 60FPS remains BLOCKED."
+      - name: FastModel 2.4 extreme scan staged bones and automatic throttling Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/scan-turbo.mjs
+          node --check formal-web/school-3d/fastmodel/web/scan-overlay.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/scan-turbo.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-2-4-TURBO-BONES-FIRST-NOT-APPROVED.html
+          python - <<'PY'
+          from pathlib import Path
+          h=Path('artifacts/fastmodel-technical/CI-FASTMODEL-2-4-TURBO-BONES-FIRST-NOT-APPROVED.html').read_text()
+          for token in ['id="scan-speed"','id="scan-speed-status"',
+                        '啟動極速掃描 GLB','function createTurboScanController(',
+                        "scanCachedTopology(f,density,'bones')",
+                        "scanRequestContours(f,density,revision)",
+                        'actualDeviceFpsVerified:false','window.AIG_EMBEDDED_GLB',
+                        '光線追蹤：關閉']:
+              assert token in h,token
+          assert 'value="turbo" selected' in h
+          assert 'value="1920x1080" selected' in h
+          js='window.AIG_EMBEDDED_GLB='+h.split('window.AIG_EMBEDDED_GLB=',1)[1].split('</script>',1)[0]
+          Path('/tmp/fastmodel-2-4-turbo-standalone.js').write_text(js)
+          print('2.4 ultra-fast source joint first; bounded optional contour/depth enabled')
+          PY
+          node --check /tmp/fastmodel-2-4-turbo-standalone.js
+          echo "FastModel 2.4 SOURCE Gate only; no verified native Windows/Android GPU FPS claim."
+      - name: FastModel 2.5 exact-pose scan cache HIT MISS source safety Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/scan-cache.mjs
+          node --check formal-web/school-3d/fastmodel/web/scan-overlay.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/scan-cache.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-2-5-CACHE-HITS-NO-GPU-PROOF.html
+          python - <<'PY'
+          from pathlib import Path
+          t=Path('artifacts/fastmodel-technical/CI-FASTMODEL-2-5-CACHE-HITS-NO-GPU-PROOF.html').read_text()
+          for token in ['id="scan-cache-clear"','id="scan-cache-status"',
+                        'function createScanDerivedCache(',
+                        'function scanTopologyBytes(', 'identicalWorld(',
+                        'scanCache.relievePressure()','scanCache.clearDerived(',
+                        'derivedCache:scanCache','bytesApproximate:true',
+                        'measuredGpuSpeedup:false','window.AIG_EMBEDDED_GLB']:
+              assert token in t,token
+          js='window.AIG_EMBEDDED_GLB='+t.split('window.AIG_EMBEDDED_GLB=',1)[1].split('</script>',1)[0]
+          Path('/tmp/fastmodel-2-5-cache-standalone.js').write_text(js)
+          print('2.5 cache honest UI, source isolation and offline script packaged')
+          PY
+          node --check /tmp/fastmodel-2-5-cache-standalone.js
+          echo "FastModel 2.5 source cache logic Gate PASS; native Windows/Android FPS and GPU timing still UNVERIFIED"
+      - name: FastModel 2.6 source-image to animated GLB pipeline and explicit clip Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/animation-clips.mjs
+          node --test formal-web/school-3d/fastmodel/tests/animation-clips.test.mjs formal-web/school-3d/fastmodel/tests/animated-integrity.test.mjs
+          python -m unittest discover -s formal-web/school-3d/fastmodel/tests -p 'test_image_to_animation.py' -v
+          python formal-web/school-3d/fastmodel/tools/image_to_animation.py \
+            --source artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png \
+            --envelope-spec artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json \
+            --hair-spec artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json \
+            --out artifacts/fastmodel-26-pipeline-SYNTHETIC-NOT-APPROVED
+      - name: Archive FastModel 2.6 synthetic animation pipeline outputs and hashes
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-FastModel-2-6-Image-Animation-SYNTHETIC-NOT-APPROVED
+          path: artifacts/fastmodel-26-pipeline-SYNTHETIC-NOT-APPROVED/
+          retention-days: 14
+          if-no-files-found: error
+      - name: FastModel 2.7 resumable single-photo backend and PBR animation source Gate
+        run: |
+          python -m unittest discover -s formal-web/school-3d/fastmodel/single-photo/tests -p 'test_*.py' -v
+          npm ci --prefix formal-web/school-3d/fastmodel/single-photo --no-audit --no-fund
+          npm test --prefix formal-web/school-3d/fastmodel/single-photo
+          npm run build --prefix formal-web/school-3d/fastmodel/single-photo
+          python formal-web/school-3d/fastmodel/single-photo/tests/build_ci_artifact.py --out artifacts/fastmodel-27-SYNTHETIC-PROTOCOL-NOT-LIVE-GENERATION
+      - name: Archive FastModel 2.7 source and synthetic offline animation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-FastModel-2-7-SOURCE-SYNTHETIC-NOT-PHOTO-GENERATED
+          path: artifacts/fastmodel-27-SYNTHETIC-PROTOCOL-NOT-LIVE-GENERATION/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Explicit release status
+        run: |
+          node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"

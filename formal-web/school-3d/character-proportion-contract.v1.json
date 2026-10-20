@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "contractId": "AIG_SCHOOL_REVERSE_TO_RIG_PROPORTION_GATE_V1",
+  "sourceAuthoritySHA256": "83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910",
+  "reverseManifest": "../reverse-authority.v1.json",
+  "observedPixels": {
+    "headCrownToChin": 266,
+    "visibleShoulderSpan": 353,
+    "shoulderMidToWaist": 312.5,
+    "eyeCenterDistance": 75.8023746329889,
+    "headToShoulderRatio": 1.32707,
+    "torsoToHeadProjectedRatio": 1.17481
+  },
+  "camera": {
+    "calibrated": false,
+    "perspectiveKnown": false,
+    "croppedLowerBody": true,
+    "referenceView": "oblique three-quarter",
+    "absoluteHeightMetres": null
+  },
+  "pipeline": {
+    "owner": "Reverse Authority mesh silhouette and material authority",
+    "stageOrder": [
+      "reverse-region-keypoints",
+      "camera-estimation-optional",
+      "sculpt-authority-mesh",
+      "fit-33-joint-rig-to-mesh",
+      "recompute-inverse-bind-matrices",
+      "retarget-IK-steps-and-animations",
+      "multiview-validation",
+      "release-gate"
+    ],
+    "legacyRigHasAuthority": false,
+    "doNotScaleReverseMeshToLegacyBones": true,
+    "doNotAssumeRealPersonHeightFromSingleImage": true,
+    "rigInNormalizedUnitSpace": true
+  },
+  "legacyPhase6": {
+    "source": "tools/build_rig_phase6.py",
+    "status": "BLOCKED_AS_AUTHORITY_FOR_DIMENSION",
+    "headJointY": 1.78,
+    "estimatedMaximumHairY": 2.028,
+    "heightMeasureIsNotRealPersonHeight": true,
+    "role": "technical IK/skin weights template only"
+  },
+  "bake": {
+    "referenceMeshApproved": false,
+    "targetHeightMetres": null,
+    "rigSizeLocked": false,
+    "mappingStatus": "PENDING_MESH_REGISTRATION",
+    "allowedToBind": false
+  },
+  "gates": {
+    "rejectLegacySizeAuthority": true,
+    "blockHomepage": true,
+    "blockPhase6Appearance": true,
+    "mustVerifyCameraAndSilhouette": true,
+    "mustRetargetInverseBindMatrices": true,
+    "mustReviewS23And4k": true
+  },
+  "notes": "Image perspective and lower-body crop preclude inferring absolute 3D height. All 3D dimensions must be fitted to reconstructed approved mesh; old static BONES points are never visual truth."
+}

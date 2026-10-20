@@ -1,0 +1,490 @@
+{
+  "schemaVersion": 1,
+  "id": "AIG_SCHOOL_3D_PHASE13_ENVELOPE_IMAGE_GUIDED",
+  "source": {
+    "width": 1672,
+    "height": 941,
+    "sha256": "83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910"
+  },
+  "coordinateSystem": "SOURCE_IMAGE_PIXEL_2D_TO_INFERRED_2_5D",
+  "cameraCalibrated": false,
+  "depthMeasuredFromImage": false,
+  "releaseAllowed": false,
+  "approved3DModel": false,
+  "sourceGeometryAuthority": "visible contour and proportions only, not hidden depth",
+  "legacyDollGeometryUsed": false,
+  "skeleton": {
+    "boneVisualization": "2px lines only",
+    "physicalBoneRadius": null,
+    "joints": [
+      {
+        "name": "Armature",
+        "parent": null,
+        "xy": [
+          653,
+          677
+        ],
+        "confidence": "inferred"
+      },
+      {
+        "name": "Hips",
+        "parent": "Armature",
+        "xy": [
+          653,
+          677
+        ],
+        "confidence": "visible approximate"
+      },
+      {
+        "name": "Chest",
+        "parent": "Hips",
+        "xy": [
+          635.33,
+          468.67
+        ],
+        "confidence": "interpolated"
+      },
+      {
+        "name": "Neck",
+        "parent": "Chest",
+        "xy": [
+          653,
+          355
+        ],
+        "confidence": "visible approximate"
+      },
+      {
+        "name": "Head",
+        "parent": "Neck",
+        "xy": [
+          644.5,
+          181
+        ],
+        "confidence": "interpolated"
+      },
+      {
+        "name": "LeftShoulder",
+        "parent": "Chest",
+        "xy": [
+          450,
+          354
+        ],
+        "confidence": "visible approximate"
+      },
+      {
+        "name": "RightShoulder",
+        "parent": "Chest",
+        "xy": [
+          803,
+          375
+        ],
+        "confidence": "visible approximate"
+      }
+    ]
+  },
+  "mesh": {
+    "originalPixelCoordinatePreserved": true,
+    "subdivision": 3,
+    "pixelToUnit": 0.0025,
+    "depthProxyUnits": 0.018,
+    "shellBackIsEstimated": true,
+    "textureFromOriginalImage": true,
+    "wrapFromVisibleSilhouette": true,
+    "noModelAutoRelease": true
+  },
+  "regions": [
+    {
+      "id": "skirt",
+      "bone": "Hips",
+      "polygon": [
+        [
+          516,
+          658
+        ],
+        [
+          753,
+          660
+        ],
+        [
+          805,
+          724
+        ],
+        [
+          831,
+          832
+        ],
+        [
+          865,
+          941
+        ],
+        [
+          432,
+          941
+        ],
+        [
+          460,
+          833
+        ],
+        [
+          491,
+          744
+        ]
+      ]
+    },
+    {
+      "id": "torso_uniform",
+      "bone": "Chest",
+      "polygon": [
+        [
+          460,
+          340
+        ],
+        [
+          536,
+          331
+        ],
+        [
+          562,
+          355
+        ],
+        [
+          645,
+          357
+        ],
+        [
+          741,
+          328
+        ],
+        [
+          790,
+          360
+        ],
+        [
+          812,
+          486
+        ],
+        [
+          796,
+          593
+        ],
+        [
+          765,
+          690
+        ],
+        [
+          519,
+          688
+        ],
+        [
+          461,
+          762
+        ],
+        [
+          409,
+          842
+        ],
+        [
+          390,
+          870
+        ],
+        [
+          396,
+          651
+        ],
+        [
+          400,
+          471
+        ]
+      ]
+    },
+    {
+      "id": "left_sleeve",
+      "bone": "LeftShoulder",
+      "polygon": [
+        [
+          453,
+          358
+        ],
+        [
+          495,
+          373
+        ],
+        [
+          496,
+          427
+        ],
+        [
+          478,
+          478
+        ],
+        [
+          434,
+          534
+        ],
+        [
+          424,
+          593
+        ],
+        [
+          467,
+          643
+        ],
+        [
+          445,
+          695
+        ],
+        [
+          406,
+          699
+        ],
+        [
+          380,
+          653
+        ],
+        [
+          379,
+          583
+        ],
+        [
+          399,
+          459
+        ]
+      ]
+    },
+    {
+      "id": "right_sleeve",
+      "bone": "RightShoulder",
+      "polygon": [
+        [
+          751,
+          343
+        ],
+        [
+          807,
+          361
+        ],
+        [
+          846,
+          430
+        ],
+        [
+          869,
+          505
+        ],
+        [
+          878,
+          602
+        ],
+        [
+          853,
+          640
+        ],
+        [
+          796,
+          623
+        ],
+        [
+          772,
+          570
+        ],
+        [
+          785,
+          512
+        ]
+      ]
+    },
+    {
+      "id": "face",
+      "bone": "Head",
+      "polygon": [
+        [
+          557,
+          153
+        ],
+        [
+          594,
+          126
+        ],
+        [
+          654,
+          111
+        ],
+        [
+          707,
+          134
+        ],
+        [
+          740,
+          163
+        ],
+        [
+          750,
+          219
+        ],
+        [
+          721,
+          271
+        ],
+        [
+          681,
+          318
+        ],
+        [
+          633,
+          319
+        ],
+        [
+          593,
+          286
+        ],
+        [
+          565,
+          244
+        ]
+      ]
+    },
+    {
+      "id": "hair",
+      "bone": "Head",
+      "polygon": [
+        [
+          580,
+          51
+        ],
+        [
+          633,
+          38
+        ],
+        [
+          693,
+          57
+        ],
+        [
+          728,
+          88
+        ],
+        [
+          749,
+          143
+        ],
+        [
+          752,
+          214
+        ],
+        [
+          747,
+          273
+        ],
+        [
+          767,
+          325
+        ],
+        [
+          791,
+          366
+        ],
+        [
+          848,
+          407
+        ],
+        [
+          928,
+          459
+        ],
+        [
+          953,
+          488
+        ],
+        [
+          946,
+          510
+        ],
+        [
+          893,
+          488
+        ],
+        [
+          843,
+          463
+        ],
+        [
+          793,
+          417
+        ],
+        [
+          769,
+          392
+        ],
+        [
+          785,
+          494
+        ],
+        [
+          766,
+          557
+        ],
+        [
+          740,
+          572
+        ],
+        [
+          696,
+          554
+        ],
+        [
+          603,
+          556
+        ],
+        [
+          532,
+          534
+        ],
+        [
+          455,
+          531
+        ],
+        [
+          409,
+          546
+        ],
+        [
+          389,
+          520
+        ],
+        [
+          405,
+          462
+        ],
+        [
+          427,
+          371
+        ],
+        [
+          444,
+          297
+        ],
+        [
+          466,
+          217
+        ],
+        [
+          493,
+          154
+        ],
+        [
+          529,
+          101
+        ]
+      ]
+    }
+  ],
+  "gates": {
+    "onlyObservedMainFigure": true,
+    "noFeetOrLegGeometry": true,
+    "noAutomaticFaceIdentityApproval": true,
+    "supportHeadYawTechnical": true,
+    "supportShoulderTurnTechnical": true,
+    "mustRetargetIntoTrue3DWhenReconstructed": true,
+    "mustRecomputeWeightsForFinalMesh": true
+  }
+}

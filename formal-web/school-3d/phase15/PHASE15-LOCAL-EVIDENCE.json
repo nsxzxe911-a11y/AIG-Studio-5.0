@@ -1,0 +1,22 @@
+{
+  "sha256": "e432a463192a3ba565937aeaf3bca2ead7cecaccac79e0fbced83beb65d65409",
+  "fileBytes": 3588932,
+  "trianglesAdded": 5984,
+  "verticesAdded": 3168,
+  "hairCards": 88,
+  "newHairJoints": 176,
+  "skinCount": 2,
+  "animationCount": 4,
+  "animationChannelsAdded": 176,
+  "allMeshCount": 106,
+  "originalBinBytes": 3060396,
+  "sourceSHA256": "83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910",
+  "visualApproved": false,
+  "frontReferenceVisibleOnly": true,
+  "thirdPartyCharacterUsed": false,
+  "previewImage": "phase15-actual-mesh-vs-reference.jpg",
+  "animationVideo": "phase15-actual-3d-bones-hair-wave-TECHNICAL.mp4",
+  "videoFrames": 24,
+  "firstFrameDifferentCount": 23,
+  "structuralGLBViewerLoadedGeometries": 106
+}

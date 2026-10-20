@@ -1,0 +1,52 @@
+{
+  "schema": "AIG.FastModel.Cinema.RGB.Skin.V1",
+  "authorityStyle": {
+    "background": "#020407",
+    "panel": "#07111B",
+    "accent": [
+      "#48E7F4",
+      "#A57BFF",
+      "#FF59B3"
+    ],
+    "locale": "zh-Hant",
+    "initialView": "live_modeling_workspace",
+    "engineeringShellAsHome": false
+  },
+  "legacyFeatureIDCountPreserved": 26,
+  "workingPanels": [
+    "model",
+    "motion",
+    "display",
+    "resource"
+  ],
+  "deviceLayoutEvidence": {
+    "desktop": {
+      "width": 1440,
+      "horizontalOverflow": false,
+      "viewportWidth": 1060,
+      "viewportHeight": 596
+    },
+    "mobile": {
+      "width": 390,
+      "horizontalOverflow": false,
+      "viewportWidth": 372,
+      "viewportHeight": 209
+    },
+    "mobileSmall": {
+      "width": 360,
+      "horizontalOverflow": false,
+      "viewportWidth": 342,
+      "viewportHeight": 192
+    }
+  },
+  "nodeSourceTestsPass": 27,
+  "standaloneHtmlSourceSHA256": "b96d6c2fbac9532ba3113cebfb04a4c014abc0baf409e9a9dd175e7bcf2ba482",
+  "realGPUWebGL2AvailableInHostedBrowser": false,
+  "real60FPSProven": false,
+  "nativeVulkanCompleted": false,
+  "nativeDX12Completed": false,
+  "screenShotsAreStaticUIEvidenceNot3DRender": true,
+  "CNCAppShellUnchanged": true,
+  "PRDraftMustRemain": true,
+  "visualGate": "RGB_UI_LAYOUT_PASS_3D_GPU_NOT_VERIFIED"
+}

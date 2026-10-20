@@ -1,0 +1,34 @@
+{
+  "rig": {
+    "pass_mesh_untouched": true,
+    "pass_weights": true,
+    "pass_glb_structure": true,
+    "primitives": 195,
+    "vertices": 48015,
+    "blend_vertices": 48015,
+    "restPoseErrorMax": 5.893707277770943e-08,
+    "role": "TECHNICAL_ONLY_NOT_APPROVED",
+    "visualGate": "BLOCKED",
+    "avatarApproval": false,
+    "ikMayRun": true
+  },
+  "foot": {
+    "footJointOnly": true,
+    "visualApproval": "NOT_APPROVED",
+    "minSwingLiftForRig": 0.051068240673088044,
+    "legs": {
+      "Left": {
+        "stanceXzDriftModelUnits": 4.624240429462745e-08,
+        "stanceYDriftModelUnits": 8.101001208737912e-08,
+        "swingLiftModelUnits": 0.05460003036095584
+      },
+      "Right": {
+        "stanceXzDriftModelUnits": 5.9421789377900325e-08,
+        "stanceYDriftModelUnits": 8.101001208737912e-08,
+        "swingLiftModelUnits": 0.05460003036095584
+      }
+    },
+    "status": "JOINT_CONTACT_PASS_NOT_SHOE_CONTACT"
+  },
+  "provenance": "Phase9 QA only; candidate mesh scaled 78% of rejected Phase6 and NOT the approved reverse reference"
+}

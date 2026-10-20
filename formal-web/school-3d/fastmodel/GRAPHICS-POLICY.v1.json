@@ -1,0 +1,18 @@
+{
+  "id": "AIG_FASTMODEL_RASTER_ONLY_V1",
+  "releaseState": "PREVIEW_ONLY_NOT_PRODUCTION",
+  "rayTracingEnabled": false,
+  "directX12DXREnabled": false,
+  "vulkanRayTracingEnabled": false,
+  "vulkanRayQueryEnabled": false,
+  "pathTracingEnabled": false,
+  "rtGpuRequired": false,
+  "minimumTarget": "1080p 60fps target, NOT hardware-proven",
+  "rendering": "rasterized triangle pipeline + image textures + GPU skin transforms",
+  "futureWindowsDX12Default": "rasterization; DXR disabled unless future explicit user decision and device tests",
+  "futureAndroidVulkanDefault": "rasterization; VK_KHR_ray_tracing_pipeline & VK_KHR_ray_query disabled",
+  "hardwareGPUBenchmarked": false,
+  "S23NativeVulkanVerified": false,
+  "windowsNativeDX12Verified": false,
+  "notes": "No ray tracing existed in FastModel WebGL2 renderer as of 953f4079. Guard intentionally fails closed on future RT flags. No RTX GPU requirement."
+}

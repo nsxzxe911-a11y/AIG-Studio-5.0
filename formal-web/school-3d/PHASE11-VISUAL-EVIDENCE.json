@@ -1,0 +1,135 @@
+{
+  "coordinateSystem": "uncalibrated weak-perspective diagnostic; fitted 2D projection only",
+  "model3dAnchorsSource": "independent manual QA fixture; NOT calibrated to face topology",
+  "original2DPoints": [
+    [
+      638.0,
+      178.0
+    ],
+    [
+      713.0,
+      189.0
+    ],
+    [
+      450.0,
+      354.0
+    ],
+    [
+      803.0,
+      375.0
+    ],
+    [
+      653.0,
+      355.0
+    ],
+    [
+      661.0,
+      314.0
+    ],
+    [
+      653.0,
+      677.0
+    ],
+    [
+      635.0,
+      118.0
+    ]
+  ],
+  "modelProjected2DPoints": [
+    [
+      612.4606240752804,
+      214.51213894141233
+    ],
+    [
+      705.1331777975299,
+      214.55846473744054
+    ],
+    [
+      498.40720779042846,
+      363.74056283143204
+    ],
+    [
+      804.5576084800027,
+      363.8936034075962
+    ],
+    [
+      653.1450846061813,
+      297.7137928014779
+    ],
+    [
+      657.110533071619,
+      274.8413679182311
+    ],
+    [
+      643.335293427484,
+      687.7232056778912
+    ],
+    [
+      659.1539834051249,
+      112.73007060220311
+    ]
+  ],
+  "pairs": [
+    {
+      "reference2d": "left_eye_visible",
+      "model3dJoint": "LeftEye",
+      "errorPx": 44.558
+    },
+    {
+      "reference2d": "right_eye_visible",
+      "model3dJoint": "RightEye",
+      "errorPx": 26.742
+    },
+    {
+      "reference2d": "left_shoulder",
+      "model3dJoint": "LeftShoulder",
+      "errorPx": 49.377
+    },
+    {
+      "reference2d": "right_shoulder",
+      "model3dJoint": "RightShoulder",
+      "errorPx": 11.215
+    },
+    {
+      "reference2d": "neck_base",
+      "model3dJoint": "Neck",
+      "errorPx": 57.286
+    },
+    {
+      "reference2d": "chin",
+      "model3dJoint": "Jaw",
+      "errorPx": 39.351
+    },
+    {
+      "reference2d": "waistline",
+      "model3dJoint": "Hips",
+      "errorPx": 14.436
+    },
+    {
+      "reference2d": "fringe_center",
+      "model3dJoint": "HairFront",
+      "errorPx": 24.722
+    }
+  ],
+  "medianErrorPx": 33.047,
+  "meanErrorPx": 33.461,
+  "maxErrorPx": 57.286,
+  "meanErrorOverHeadPx": 0.12579,
+  "fitParametersDiagnosticOnly": {
+    "yawRad": 0.04095,
+    "pitchRad": 0.64563,
+    "rollRad": -0.02515
+  },
+  "isRealCalibratedCamera": false,
+  "visualAuthorityPassed": false,
+  "releaseAllowed": false,
+  "status": "TECHNICAL_DIAGNOSTIC_ONLY_VISUAL_NOT_APPROVED",
+  "failReasons": [
+    "actual 3D facial/cloth sculpt does not match approved reference",
+    "source camera not calibrated",
+    "3D joint semantics approximate and not model surface landmarks",
+    "no verified identity from side/back or S23/4K runtime"
+  ],
+  "referenceSHA256": "83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910",
+  "candidateModelSHA256": "fadffd5f7be01ee749e2d7a05f57ba7fad202bab5ab20cf600ce208b67776bbe"
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "AIG_FastModel_1.3_NOGRid_Gate_20261020",
+  "source": "Phase17 original GLB not visually approved",
+  "graphicalPolicy": "WEBGL2_RASTER_ONLY_RAYTRACE_OFF",
+  "defaultSurfaceGuide": "clean",
+  "surfaceGuides": [
+    "clean",
+    "edit-tint",
+    "soft-contrast"
+  ],
+  "advancedWireModes": [
+    "off",
+    "boundary",
+    "edit",
+    "full"
+  ],
+  "defaultWireMode": "off",
+  "extraLineBufferAllocatedByDefault": false,
+  "extraDrawCallsInSurfaceMode": 0,
+  "editableVertexRegion": 256,
+  "nodeTestsPassed": 63,
+  "nodeTestsFailed": 0,
+  "nativeCTestCasesPassed": 2,
+  "offlineHtmlBytes": 14487469,
+  "offlineHtmlSHA256": "9b57216258741c75391b7e7b63babfcd57e5bdba968901feeca8a43af6583410",
+  "originalGLBSHA256": "63562888c49692ec0fe2d36932f02286ebbf5c0e644c2796f0178b4949eee51f",
+  "mobileViewWidthPx": 390,
+  "desktopViewWidthPx": 1440,
+  "horizontalOverflowObserved": false,
+  "browserJSExceptionsObserved": 0,
+  "gpuWebGL2AvailableInTestEnvironment": false,
+  "1080p60DeviceVerified": false,
+  "2K4KGPUVerified": false,
+  "nativeDX12VulkanVerified": false,
+  "imageBeautyApproved": false,
+  "formalSiteDeployed": false,
+  "apkOrExeBuilt": false,
+  "userModelDataIntentionallyDeleted": false,
+  "note": "63 source tests and 2 native tests are not measurements of hardware GPU performance; no RT, no new geometry; work in Draft PR."
+}

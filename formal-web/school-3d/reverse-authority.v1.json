@@ -1,0 +1,431 @@
+{
+  "schemaVersion": 1,
+  "authorityId": "AIG_SCHOOL_HERO_20261020_REVERSE_CINEMATIC_REFERENCE",
+  "source": {
+    "basename": "櫻花校園的青春時光.png",
+    "width": 1672,
+    "height": 941,
+    "sha256": "83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910",
+    "status": "CINEMATIC_IMAGE_REFERENCE_NOT_APPROVED_AS_3D"
+  },
+  "method": "pixel-accurate reverse region mapping; only VISIBLE front-three-quarter image measures",
+  "character": {
+    "age": 18,
+    "navy_blazer": true,
+    "white_shirt": true,
+    "wine_bow": true,
+    "navy_plaid_skirt": true,
+    "long_chestnut_hair": true,
+    "cinematic_pink_cherry_campus": true
+  },
+  "observed_camera_view": "front-three-quarter, looking slightly left from character; no calibrated focal length",
+  "regionRectangles": {
+    "primary_hero": {
+      "xyxy": [
+        341,
+        19,
+        979,
+        940
+      ],
+      "normalized_xywh": [
+        0.203947,
+        0.020191,
+        0.381579,
+        0.978746
+      ],
+      "pixelCrop": "primary_hero.png"
+    },
+    "face_identity": {
+      "xyxy": [
+        504,
+        75,
+        777,
+        355
+      ],
+      "normalized_xywh": [
+        0.301435,
+        0.079702,
+        0.163278,
+        0.297556
+      ],
+      "pixelCrop": "face_identity.png"
+    },
+    "hair_silhouette": {
+      "xyxy": [
+        385,
+        27,
+        981,
+        660
+      ],
+      "normalized_xywh": [
+        0.230263,
+        0.028693,
+        0.356459,
+        0.672689
+      ],
+      "pixelCrop": "hair_silhouette.png"
+    },
+    "ribbon": {
+      "xyxy": [
+        548,
+        351,
+        741,
+        504
+      ],
+      "normalized_xywh": [
+        0.327751,
+        0.373007,
+        0.115431,
+        0.162593
+      ],
+      "pixelCrop": "ribbon.png"
+    },
+    "blazer": {
+      "xyxy": [
+        377,
+        336,
+        913,
+        917
+      ],
+      "normalized_xywh": [
+        0.225478,
+        0.357067,
+        0.320574,
+        0.617428
+      ],
+      "pixelCrop": "blazer.png"
+    },
+    "shirt": {
+      "xyxy": [
+        493,
+        356,
+        755,
+        705
+      ],
+      "normalized_xywh": [
+        0.294856,
+        0.378321,
+        0.156699,
+        0.370882
+      ],
+      "pixelCrop": "shirt.png"
+    },
+    "plaid_skirt": {
+      "xyxy": [
+        385,
+        650,
+        892,
+        940
+      ],
+      "normalized_xywh": [
+        0.230263,
+        0.690755,
+        0.30323,
+        0.308183
+      ],
+      "pixelCrop": "plaid_skirt.png"
+    },
+    "setting_sakura": {
+      "xyxy": [
+        0,
+        0,
+        353,
+        357
+      ],
+      "normalized_xywh": [
+        0.0,
+        0.0,
+        0.211124,
+        0.379384
+      ],
+      "pixelCrop": "setting_sakura.png"
+    },
+    "setting_campus": {
+      "xyxy": [
+        275,
+        142,
+        462,
+        419
+      ],
+      "normalized_xywh": [
+        0.164474,
+        0.150903,
+        0.111842,
+        0.294368
+      ],
+      "pixelCrop": "setting_campus.png"
+    },
+    "secondary_profile_candidate": {
+      "xyxy": [
+        1181,
+        4,
+        1576,
+        255
+      ],
+      "normalized_xywh": [
+        0.70634,
+        0.004251,
+        0.236244,
+        0.266738
+      ],
+      "pixelCrop": "secondary_profile_candidate.png"
+    },
+    "rear_hair_outfit_candidate": {
+      "xyxy": [
+        1230,
+        711,
+        1438,
+        939
+      ],
+      "normalized_xywh": [
+        0.735646,
+        0.755579,
+        0.124402,
+        0.242295
+      ],
+      "pixelCrop": "rear_hair_outfit_candidate.png"
+    }
+  },
+  "estimatedVisibleKeypoints": {
+    "crown": {
+      "xy": [
+        628,
+        48
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "fringe_center": {
+      "xy": [
+        635,
+        118
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "left_eye_visible": {
+      "xy": [
+        638,
+        178
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "right_eye_visible": {
+      "xy": [
+        713,
+        189
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "nose_tip": {
+      "xy": [
+        691,
+        221
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "mouth_center": {
+      "xy": [
+        678,
+        268
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "chin": {
+      "xy": [
+        661,
+        314
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "left_cheek_outline": {
+      "xy": [
+        573,
+        224
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "right_cheek_outline": {
+      "xy": [
+        756,
+        241
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "neck_base": {
+      "xy": [
+        653,
+        355
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "left_shoulder": {
+      "xy": [
+        450,
+        354
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "right_shoulder": {
+      "xy": [
+        803,
+        375
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "left_blazer_hem": {
+      "xy": [
+        398,
+        885
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "right_blazer_hem": {
+      "xy": [
+        901,
+        864
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "ribbon_center": {
+      "xy": [
+        637,
+        435
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    },
+    "waistline": {
+      "xy": [
+        653,
+        677
+      ],
+      "confidence": "manual approximate — requires landmark QA"
+    }
+  },
+  "colorSamples": {
+    "skin_lit": {
+      "rgb": [
+        234,
+        171,
+        147
+      ],
+      "source_xy": [
+        632,
+        263
+      ]
+    },
+    "skin_rose": {
+      "rgb": [
+        228,
+        125,
+        102
+      ],
+      "source_xy": [
+        687,
+        235
+      ]
+    },
+    "hair_base": {
+      "rgb": [
+        50,
+        33,
+        34
+      ],
+      "source_xy": [
+        525,
+        250
+      ]
+    },
+    "hair_backlit": {
+      "rgb": [
+        172,
+        120,
+        104
+      ],
+      "source_xy": [
+        466,
+        360
+      ]
+    },
+    "jacket_navy": {
+      "rgb": [
+        48,
+        42,
+        57
+      ],
+      "source_xy": [
+        430,
+        450
+      ]
+    },
+    "shirt_white": {
+      "rgb": [
+        226,
+        207,
+        222
+      ],
+      "source_xy": [
+        645,
+        545
+      ]
+    },
+    "ribbon_wine": {
+      "rgb": [
+        119,
+        65,
+        78
+      ],
+      "source_xy": [
+        645,
+        443
+      ]
+    },
+    "skirt_plaid": {
+      "rgb": [
+        49,
+        43,
+        58
+      ],
+      "source_xy": [
+        566,
+        750
+      ]
+    }
+  },
+  "auxiliaryViews": {
+    "secondary_profile_candidate": {
+      "angle": "additional oblique face from same generated collage",
+      "identityMatch": "UNVERIFIED",
+      "geometryUse": "visual reference only; check consistency before 3D fitting"
+    },
+    "rear_hair_outfit_candidate": {
+      "angle": "back view in same generated collage",
+      "identityMatch": "UNVERIFIED",
+      "geometryUse": "candidate hair length, backpack and skirt silhouette; do not infer hidden topology"
+    }
+  },
+  "unobservableFromSingleImage": [
+    "unseen_side_face_geometry",
+    "full_back_of_head",
+    "ear_back_detail",
+    "shoe_sole",
+    "lower_legs_below_crop",
+    "true_surface_depth",
+    "hair_physics",
+    "nonvisible_cloth_seams",
+    "rigging_bind_pose",
+    "neutral_A_pose",
+    "physically_correct_skin_scattering"
+  ],
+  "nextRequiredEvidence": [
+    "character neutral front 3D render",
+    "side 3D render",
+    "back 3D render",
+    "same face in rotation",
+    "walk foot-ground & face-expression renders",
+    "skin hair cloth PBR shaders",
+    "mobile desktop acceptance"
+  ],
+  "noFake3D": true,
+  "allowCurrentProceduralPhase6ToBecomeAuthority": false,
+  "releasedToHomepage": false,
+  "reverseGate": "REFERENCE_EXTRACTED_ONLY_NOT_3D_MODEL"
+}

@@ -1,0 +1,28 @@
+[
+  {
+    "device": "mobile",
+    "viewport": "390×844",
+    "screenWidth": 390,
+    "scrollWidth": 390,
+    "canvasWidth": 370,
+    "webgl2": false,
+    "internalWidth": 300,
+    "internalHeight": 150,
+    "status2K": "已選 2K / QHD；此裝置未建立 WebGL2 GPU，不能驗收解析度。",
+    "status4K": "已選 4K / UHD；此裝置未建立 WebGL2 GPU，不能驗收解析度。",
+    "pageErrors": []
+  },
+  {
+    "device": "desktop",
+    "viewport": "1440×900",
+    "screenWidth": 1440,
+    "scrollWidth": 1440,
+    "canvasWidth": 1057.9375,
+    "webgl2": false,
+    "internalWidth": 300,
+    "internalHeight": 150,
+    "status2K": "已選 2K / QHD；此裝置未建立 WebGL2 GPU，不能驗收解析度。",
+    "status4K": "已選 4K / UHD；此裝置未建立 WebGL2 GPU，不能驗收解析度。",
+    "pageErrors": []
+  }
+]

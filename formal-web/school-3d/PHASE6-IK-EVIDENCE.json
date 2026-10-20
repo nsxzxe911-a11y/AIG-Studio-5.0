@@ -1,0 +1,23 @@
+{
+  "animation": "Walk_FootContact_IK_Phase6",
+  "frames": 81,
+  "duration_s": 2.0,
+  "by_leg": {
+    "Left": {
+      "world_space_stance_z_span_m": 5.52732826314406e-08,
+      "stance_y_span_m": 8.644276283664709e-08,
+      "swing_joint_lift_m": 0.07000005267922049
+    },
+    "Right": {
+      "world_space_stance_z_span_m": 7.083264641494225e-08,
+      "stance_y_span_m": 8.644276283664709e-08,
+      "swing_joint_lift_m": 0.07000005267922049
+    }
+  },
+  "pass": true,
+  "limitations": "Foot joint space (not shoe sole collision). No visual face/gait/s23 evidence; asset NOT APPROVED.",
+  "glb_sha256": "1fdee41fc07c6f4b725269a0c7c7e73979fd9651f6c1cba5dc576f7b209b9619",
+  "visual_approval": "FAIL",
+  "upload_to_formal_home": false,
+  "source_grade": "QA_PREVIEW_ONLY"
+}
