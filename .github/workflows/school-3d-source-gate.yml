@@ -668,6 +668,29 @@ jobs:
           assert "value=\"1920x1080\" selected" in s
           print('1.9 source-only stitched-faces GLB working-copy builder PASS. Real heroine seam, animated hair and Windows/Android GPU 60FPS remain BLOCKED.')
           PY
+      - name: FastModel 2.0 true CPU-skinned animation gap and hair-risk source Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/animated-integrity.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/animated-integrity.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMOTION-2-0-ANIMATED-RISK-NOT-RELEASE.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMOTION-2-0-ANIMATED-RISK-NOT-RELEASE.html').read_text()
+          for token in ['id="animated-check"','id="animated-status"',
+                        'function inspectAnimatedIntegrity(',
+                        'POSED_SAMPLE_RISK_REVIEW_REQUIRED',
+                        'animatedPoseAudit:lastAnimatedAudit',
+                        'actualSeamFixed:false',
+                        'animatedCollisionProved:false',
+                        'window.AIG_EMBEDDED_GLB',
+                        '光線追蹤：關閉']:
+              assert token in s, token
+          assert 'value="1920x1080" selected' in s
+          print('FastModel 2.0 sampled skin/animation RISK test PASS only. Approved human mesh, real hair collision, Windows/Android GPU measurements still BLOCKED.')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
