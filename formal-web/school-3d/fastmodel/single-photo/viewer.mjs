@@ -6,6 +6,7 @@ import {inspectSkinPose,SkinAnomalyMonitor} from './skin-anomaly.mjs';
 import {REVIEW_DIRECTIONS,reviewCameraPose,reviewPoseTime} from './heroine-review.mjs';
 import {TIMELINE_FRACTIONS,composeTimelineImage} from './timeline-review.mjs';
 import {inspectExternalAction,copyCompatibleClips,commitCompatibleClips} from './action-compatibility.mjs';
+import {StoryPlayback} from './story-to-animation.mjs';
 
 export async function parseRiggedGLB(buffer){
  if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>200*1024*1024)throw Error('GLB_SIZE_LIMIT');
@@ -26,14 +27,26 @@ export async function parseRiggedGLB(buffer){
  return new GLTFLoader(manager).parseAsync(buffer,'');
 }
 export class AnimationController{
- constructor(root,clips=[]){this.mixer=new THREE.AnimationMixer(root);this.clips=clips;this.index=null;this.paused=false;}
- select(index){
+ constructor(root,clips=[]){this.mixer=new THREE.AnimationMixer(root);this.clips=clips;this.index=null;this.paused=false;this.story=null;}
+ select(index,{keepStory=false}={}){
+  if(!keepStory)this.story?.stop();
   if(!Number.isInteger(index)||!this.clips[index])throw Error('CLIP_INDEX');
   this.mixer.stopAllAction();this.index=index;
   this.mixer.clipAction(this.clips[index]).reset().play();
  }
- update(seconds){if(!this.paused)this.mixer.update(Math.max(0,seconds));}
- dispose(){this.mixer.stopAllAction();this.mixer.uncacheRoot(this.mixer.getRoot());}
+ startStory(plan,callbacks={}){
+  if(this.story?.playing)throw Error('STORY_ALREADY_PLAYING');
+  const playback=new StoryPlayback(this,callbacks);
+  playback.start(plan);
+  this.story=playback;return playback;
+ }
+ stopStory(){this.story?.stop();}
+ update(seconds){
+  if(this.paused)return;
+  if(this.story?.playing)this.story.update(Math.max(0,seconds));
+  else this.mixer.update(Math.max(0,seconds));
+ }
+ dispose(){this.stopStory();this.mixer.stopAllAction();this.mixer.uncacheRoot(this.mixer.getRoot());}
 }
 export class PhotoViewer{
  constructor(canvas,onError){
@@ -66,6 +79,7 @@ export class PhotoViewer{
  }
  async importExternalAction(buffer){
   if(!this.model||!this.animation)throw Error('ACTION_TARGET_MODEL_REQUIRED');
+  if(this.animation.story?.playing)throw Error('STORY_PREVIEW_IN_PROGRESS');
   if(this.reviewBusy)throw Error('ACTION_REVIEW_IN_PROGRESS');
   if(this.actionImportBusy)throw Error('ACTION_IMPORT_IN_PROGRESS');
   this.actionImportBusy=true;
@@ -93,6 +107,7 @@ export class PhotoViewer{
   if(!this.model)throw Error('TIMELINE_MODEL_NOT_LOADED');
   const clip=this.animation?.clips?.[this.animation?.index];
   if(!clip)throw Error('TIMELINE_REAL_ACTION_MISSING');
+  if(this.animation.story?.playing)throw Error('STORY_PREVIEW_IN_PROGRESS');
   if(this.reviewBusy)throw Error('TIMELINE_REVIEW_IN_PROGRESS');
   this.reviewBusy=true;
   const currentModel=this.model;
@@ -124,6 +139,7 @@ export class PhotoViewer{
  }
  async captureHeroineReview({fraction=.5}={}){
   if(!this.model)throw Error('REVIEW_MODEL_NOT_LOADED');
+  if(this.animation?.story?.playing)throw Error('STORY_PREVIEW_IN_PROGRESS');
   const clip=this.animation?.clips?.[this.animation.index]||null;
   const {timeSeconds,animated}=reviewPoseTime(clip,fraction);
   // Camera bounds must come from the selected ACTION POSE, not a stale rest pose.
