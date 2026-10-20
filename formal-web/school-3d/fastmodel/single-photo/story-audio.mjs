@@ -45,7 +45,7 @@ export class StoryAudio{
   const e=this.env;
   this.voiceAvailable=!!(this.options.voice&&e.speechSynthesis&&e.SpeechSynthesisUtterance);
   this.effectsAvailable=false;this.musicEnabled=false;
-  this.enabled=true;this.musicClock=0;this.musicStep=0;
+  this.enabled=true;this.paused=false;this.musicClock=0;this.musicStep=0;
   if((this.options.sfx||this.options.music)&&this.options.volume>0){
    const Context=e.AudioContext||e.webkitAudioContext;
    if(Context){
@@ -112,7 +112,7 @@ export class StoryAudio{
   }
  }
  tick(dt){
-  if(!this.enabled||!this.musicEnabled||!this.audio)return;
+  if(!this.enabled||this.paused||!this.musicEnabled||!this.audio)return;
   if(!Number.isFinite(dt)||dt<0||dt>10)return;
   // Browser audio clock creates true tones, not a user-supplied music file.
   // Bound work per frame on mobile: max two notes after frame drops.
@@ -124,12 +124,27 @@ export class StoryAudio{
    this._tone({hz,end:hz,secs:.27,wave:'sine',gain:.045*this.options.volume});
   }
  }
+ pause(){
+  if(!this.enabled)return;
+  this.paused=true;
+  if(this.voiceAvailable)try{this.env.speechSynthesis.pause?.();}catch{}
+  if(this.audio?.state==='running')try{void this.audio.suspend?.();}catch{}
+ }
+ resume(){
+  if(!this.enabled)return;
+  this.paused=false;
+  if(this.voiceAvailable)try{this.env.speechSynthesis.resume?.();}catch{}
+  if(this.audio?.state==='suspended'){
+   try{const p=this.audio.resume?.();p?.catch?.(()=>{this.effectsAvailable=false;this.musicEnabled=false;});}
+   catch{this.effectsAvailable=false;this.musicEnabled=false;}
+  }
+ }
  previewDialogue(text,actionId='turn'){
   if(!this.enabled)throw Error('STORY_AUDIO_NOT_STARTED');
   this.step({beat:0,actionId,dialogue:text});
  }
  stop(){
-  this.enabled=false;this.lastCue=null;
+  this.enabled=false;this.paused=false;this.lastCue=null;
   if(this.env?.speechSynthesis&&this.speechUtterance){
    try{this.env.speechSynthesis.cancel();}catch{}
    this.speechUtterance=null;
