@@ -7,6 +7,7 @@ from pipeline import PhotoPipeline
 from provider import MeshyClient
 from dialogue_ai import DialogueAI
 from tts_voice import SpeechAI
+from reconstruction_service import SERVICE_ID,capabilities,require_service,project_job
 
 HERE=Path(__file__).resolve().parent
 
@@ -58,6 +59,12 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
             path=urlparse(self.path).path
             try:
                 if path=='/api/config':self.send({'configured':client.configured,'provider':'Meshy','liveGenerationVerified':False,'dialogueAIConfigured':dialogue_client.configured,'speechAIConfigured':speech_client.configured});return
+                if path=='/api/reconstruction/services':self.send(capabilities(client));return
+                reconstruction_match=re.fullmatch(r'/api/reconstruction/jobs/([0-9a-f]{32})',path)
+                if reconstruction_match:
+                    job=reconstruction_match[1];report=pipe.read(job)
+                    if report['status']=='RUNNING':begin(job)
+                    self.send(project_job(report));return
                 if path=='/api/actions':self.send(client.request('/animations/library'));return
                 request_match=re.fullmatch(r'/api/requests/([0-9a-f]{32})',path)
                 if request_match:
@@ -84,7 +91,7 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
             except Exception as e:self.send({'error':str(e)[:180]},409)
         def do_POST(self):
             if not self.valid_origin() or self.headers.get('X-AIG-Request')!='1':self.send({'error':'ORIGIN_BLOCKED'},403);return
-            if self.path not in ('/api/jobs','/api/story/dialogue','/api/story/voice'):
+            if self.path not in ('/api/jobs','/api/reconstruction/jobs','/api/story/dialogue','/api/story/voice'):
                 self.send({'error':'NOT_FOUND'},404);return
             if self.path=='/api/story/voice':
                 try:
@@ -110,11 +117,18 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
                 except Exception as error:
                     self.send({'error':str(error)[:160]},409);return
             try:
+                if self.path=='/api/reconstruction/jobs':
+                    # Select the actual provider BEFORE creating a possible billable job.
+                    # The service-id check below is repeated after JSON parsing.
+                    pass
                 if not client.configured:raise ValueError('MESHY_API_KEY_NOT_CONFIGURED')
                 if self.headers.get('Content-Type')!='application/json':raise ValueError('JSON_REQUIRED')
                 length=int(self.headers.get('Content-Length','0'))
                 if not 0<length<=58*1024*1024:raise ValueError('REQUEST_SIZE_LIMIT')
-                data=json.loads(self.rfile.read(length));request_id=data.get('requestId','')
+                data=json.loads(self.rfile.read(length))
+                if self.path=='/api/reconstruction/jobs':require_service(data.get('serviceId'),client)
+                elif 'serviceId' in data:require_service(data['serviceId'],client)
+                request_id=data.get('requestId','')
                 if not re.fullmatch('[0-9a-f]{32}',request_id):raise ValueError('REQUEST_ID_INVALID')
                 with create_guard:
                     # Duplicate browser submit/resume uses the same local job, not another charge.
@@ -152,7 +166,7 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--port',type=int,default=8765);a=p.parse_args()
     server=make_server(a.root,MeshyClient(os.environ.get('MESHY_API_KEY','')),a.port)
-    print(f'AIG FastModel 3.6: http://127.0.0.1:{server.server_port} (Meshy account configured: {server.pipeline.client.configured}; optional opt-in dialogue LLM)',flush=True)
+    print(f'AIG FastModel 3.9: http://127.0.0.1:{server.server_port} (Meshy account configured: {server.pipeline.client.configured}; optional opt-in dialogue LLM)',flush=True)
     try:server.serve_forever()
     except KeyboardInterrupt:pass
     finally:server.server_close()
