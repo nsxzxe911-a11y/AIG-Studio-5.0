@@ -74,6 +74,23 @@ jobs:
           path: artifacts/school-3d-rig-phase5/
           retention-days: 14
           if-no-files-found: error
+      - name: Phase6 build 2-bone IK contact GLB (NOT VISUAL AUTHORITY)
+        run: |
+          mkdir -p artifacts/school-3d-phase6-ik
+          python formal-web/school-3d/tools/build_rig_phase6.py --source artifacts/school-3d-prototype-pbr --output artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb > artifacts/school-3d-phase6-ik/phase6-build-report.json
+          python formal-web/school-3d/tools/verify_prototype.py artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb > artifacts/school-3d-phase6-ik/glb-structure-report.json
+          python formal-web/school-3d/tools/verify_foot_contact_phase6.py artifacts/school-3d-phase6-ik/hero-rig-Phase6-TECHNICAL-ONLY.glb > artifacts/school-3d-phase6-ik/ik-stance-evidence.json
+      - name: Test Phase6 deterministic rig and encoded ankle contact
+        env:
+          AIG_PHASE6_PBR_DIR: artifacts/school-3d-prototype-pbr
+        run: python -m unittest discover -s formal-web/school-3d/tools -p 'test_phase6_ik.py' -v
+      - name: Upload only unapproved Phase6 technical GLB
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School-3D-Phase6-IK-NOT-APPROVED
+          path: artifacts/school-3d-phase6-ik/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
