@@ -502,6 +502,8 @@ jobs:
           print('Offline true wire modes source inclusion PASS; no GPU FPS inference')
           PY
       - name: FastModel 1.3 NO-GRID main surface and safe soft edit guidance
+        env:
+          AIG_FASTMODEL_GLB: artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb
         run: |
           node --check formal-web/school-3d/fastmodel/web/surface-guides.mjs
           node --check formal-web/school-3d/fastmodel/web/renderer.mjs
