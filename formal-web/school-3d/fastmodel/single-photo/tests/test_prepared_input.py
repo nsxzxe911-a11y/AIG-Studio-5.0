@@ -40,7 +40,7 @@ class PreparedForegroundTests(unittest.TestCase):
         original_bytes=self.orig.read_bytes()
         Image.new('RGBA',self.size,(1,2,3,255)).save(self.prep)
         with self.assertRaisesRegex(ValueError,'PREPARED_ALPHA_COVERAGE_UNSAFE'):self.verify()
-        Image.new('RGBA',(20,30),(1,2,3,128)).save(self.prep)
+        Image.effect_noise((20,30),50).convert('RGBA').save(self.prep)
         with self.assertRaisesRegex(ValueError,'PREPARED_SIZE_OR_ALPHA_INVALID'):self.verify()
         self.assertEqual(self.orig.read_bytes(),original_bytes)
 
