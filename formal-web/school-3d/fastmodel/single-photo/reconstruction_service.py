@@ -5,6 +5,8 @@ NOT a new inference engine, nor a mock geometric generator.
 import re
 
 SERVICE_ID='meshy-image-to-3d'
+MULTIVIEW_ID='meshy-multi-image-to-3d'
+VALID_SERVICES={SERVICE_ID,MULTIVIEW_ID}
 SCHEMA='AIG_FASTMODEL_RECONSTRUCTION_SERVICE_3_9'
 STAGES=('QUEUED','PRECHECK','RECONSTRUCTING','TEXTURING','RIGGING','EXPORTING',
         'COMPLETE','FAILED','SUBMISSION_UNKNOWN')
@@ -25,6 +27,16 @@ def capabilities(client):
             'providerCreditsRequired':True,'automaticPaidSubmission':False,
             'separateTexturingStatusAvailable':False,
             'nativeFrameRateVerified':False,'visualIdentityVerified':False
+        },{
+            'id':MULTIVIEW_ID,'title':'Meshy Multi-Image-to-3D (最多四張)',
+            'configured':bool(client.configured),'accepts':['image/jpeg','image/png','image/webp'],
+            'outputFormats':['glb'],'supportsPBR':True,'supportsRigging':True,
+            'supportsBasicWalk':True,'supportsExplicitActionId':True,
+            'modelServiceIsReal':True,'liveGenerationVerified':False,
+            'providerCreditsRequired':True,'automaticPaidSubmission':False,
+            'maxViews':4,'mainViewMustBeFront':True,
+            'separateTexturingStatusAvailable':False,
+            'nativeFrameRateVerified':False,'visualIdentityVerified':False
         }],
         'futureProviders':[{'id':name,'configured':False,'implemented':False}
                            for name in FUTURE_BACKENDS],
@@ -33,7 +45,7 @@ def capabilities(client):
     }
 
 def require_service(service_id,client):
-    if service_id!=SERVICE_ID:raise ValueError('RECONSTRUCTION_SERVICE_UNSUPPORTED')
+    if service_id not in VALID_SERVICES:raise ValueError('RECONSTRUCTION_SERVICE_UNSUPPORTED')
     if not client.configured:raise ValueError('MESHY_API_KEY_NOT_CONFIGURED')
     return service_id
 
@@ -77,7 +89,10 @@ def project_job(job):
         progress[stage]={'status':row.get('status','NEW'),
                          'progress':row.get('progress') if isinstance(row.get('progress'),(int,float)) else None,
                          'taskAssigned':bool(row.get('taskId'))}
-    return {'schema':SCHEMA,'jobId':job['id'],'serviceId':SERVICE_ID,
+    return {'schema':SCHEMA,'jobId':job['id'],
+            'serviceId':job.get('reconstructionService',SERVICE_ID),
+            'extraViewEvidence':job.get('additionalImageEvidence',[]),
+            'multiViewConsistencyApproved':False,
             'phase':phase,'mode':job.get('mode'),'stages':progress,
             'sourceSHA256':job.get('sourceSHA256'),
             'providerInputSHA256':job.get('uploadSHA256'),
