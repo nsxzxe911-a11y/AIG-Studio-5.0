@@ -32,11 +32,19 @@ def polygon_mesh_mask(g,blob,meshids,size):
 def composite_shells(img,g,blob):
  W,H=img.size
  dst=Image.new('RGB',(W,H),(10,23,34))
- # Actual Phase13 source-image-UV face mesh and visible rear hair source geometry.
- frontmask=polygon_mesh_mask(g,blob,[12,15],(W,H))
- dst.paste(img,(0,0),frontmask)
- # Phase17 transparent cropped PNG is read from actual GLB, not recomputed here.
- tex=g['images'][-1]; v=g['bufferViews'][tex['bufferView']];off=v.get('byteOffset',0)
+ # Phase13 original face geometry remains untouched, exact source UV pixels.
+ face_mask=polygon_mesh_mask(g,blob,[0,3,6,9,12,110],(W,H))
+ dst.paste(img,(0,0),face_mask)
+ # Existing source hair geometry is retained, but ONLY hair pixels survive its
+ # newly attached full-resolution GLB RGBA matte (sky/face cutout).
+ full=g['images'][-1];vf=g['bufferViews'][full['bufferView']];of=vf.get('byteOffset',0)
+ hair=Image.open(io.BytesIO(blob[of:of+vf['byteLength']])).convert('RGBA')
+ import PIL.ImageChops
+ hair_mask=polygon_mesh_mask(g,blob,[15],(W,H))
+ hair.putalpha(PIL.ImageChops.multiply(hair.getchannel('A'),hair_mask))
+ dst=Image.alpha_composite(dst.convert('RGBA'),hair).convert('RGB')
+ # Phase17 extra transparent cropped scalp shells also read from REAL GLB.
+ tex=g['images'][-2]; v=g['bufferViews'][tex['bufferView']];off=v.get('byteOffset',0)
  png=Image.open(io.BytesIO(blob[off:off+v['byteLength']])).convert('RGBA')
  shellmask=polygon_mesh_mask(g,blob,range(106,110),(W,H))
  layer=Image.new('RGBA',(W,H));layer.paste(png,(365,30))
