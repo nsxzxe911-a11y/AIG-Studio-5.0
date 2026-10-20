@@ -19,12 +19,20 @@ export function validateVoiceScript(plan,voice){
 export function validateVoiceWav(bytes){
  if(!(bytes instanceof ArrayBuffer)||bytes.byteLength<44||bytes.byteLength>MAX_FILE)throw Error('TTS_WAV_SIZE_INVALID');
  const v=new DataView(bytes);
- const ascii=(offset,count)=>String.fromCharCode(...new Uint8Array(bytes,offset,count));
- if(ascii(0,4)!=='RIFF'||ascii(8,4)!=='WAVE'||v.getUint32(4,true)+8!==bytes.byteLength)
+ const ascii=(offset)=>String.fromCharCode(...new Uint8Array(bytes,offset,4));
+ if(ascii(0)!=='RIFF'||ascii(8)!=='WAVE'||v.getUint32(4,true)+8!==bytes.byteLength)
   throw Error('TTS_WAV_HEADER_INVALID');
- if(!ascii(12,Math.min(bytes.byteLength-12,128)).includes('fmt ')||
-    !ascii(12,bytes.byteLength-12).includes('data'))
-  throw Error('TTS_WAV_STRUCTURE_INVALID');
+ // Read RIFF chunk headers only: expanding an entire multi-MB WAV via
+ // String.fromCharCode(...bytes) overflows the JS argument stack on phones.
+ let offset=12,format=false,audio=false;
+ while(offset+8<=bytes.byteLength){
+  const tag=ascii(offset),length=v.getUint32(offset+4,true);
+  if(length>bytes.byteLength-offset-8)throw Error('TTS_WAV_STRUCTURE_INVALID');
+  if(tag==='fmt '&&length>=16)format=true;
+  if(tag==='data'&&length>0)audio=true;
+  offset+=8+length+(length&1);
+ }
+ if(!format||!audio||offset!==bytes.byteLength)throw Error('TTS_WAV_STRUCTURE_INVALID');
  return bytes;
 }
 export async function generateVoiceBatch(plan,{
