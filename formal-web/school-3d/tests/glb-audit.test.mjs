@@ -34,3 +34,10 @@ test("new stage remains BLOCKED until true assets exist",()=>{
  assert.equal(manifest.deploymentState,"PREVIEW_ONLY_NOT_PRODUCTION");
  assert.equal(Object.values(manifest.assets).every(a=>a.approval.startsWith("PENDING")),true);
 });
+
+test("reject explicitly unapproved rig asset even when parseable",()=>{
+ const marked=makeGLB({...doc,asset:{version:"2.0",generator:"AIG skinned prototype / NOT VISUAL AUTHORITY"}});
+ const x=auditGLB(marked,"character");
+ assert.equal(x.pass,false);
+ assert.ok(x.errors.some(x=>x.includes("未核准")));
+});
