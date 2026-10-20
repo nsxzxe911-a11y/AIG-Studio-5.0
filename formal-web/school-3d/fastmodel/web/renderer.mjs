@@ -71,7 +71,7 @@ function getImageBytes(file,idx){const im=file.g.images[idx];if(!im||im.bufferVi
 export class FastModelView {
  constructor(canvas,onStats=()=>{}){assertRasterOnly(GRAPHICS_POLICY);this.graphicsPolicy=GRAPHICS_POLICY;this.canvas=canvas;this.onStats=onStats;this.gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});if(!this.gl)throw Error('WebGL2 GPU unavailable on this device');const gl=this.gl;const ext=gl.getExtension('EXT_color_buffer_float');this.program=program(gl);this.u={};for(const k of ['zoom','angle','center','aspect','boneTexture','colorTexture','colorFactor','hasTexture','linePass','editHighlight','surfaceGuide','exposure'])this.u[k]=gl.getUniformLocation(this.program,k);this.textures=[];this.boneTex=[];this.entries=[];this.mode='full';this.angle=0;this.zoomFactor=1;this.wind=true;this.width=1920;this.height=1080;this.frames=[];this.last=0;this.running=false;this.autoQuality=false;this.qualityDown=0;this.qualityUp=0;gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);this.gpu=gl.getParameter(gl.RENDERER);
  this.governor=new ResourceGovernor({budgets:makeBudgets({deviceMemoryGiB:typeof navigator!=='undefined'?navigator.deviceMemory:4})});
- this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;this.lastPressure=null;this.baseWidth=1920;this.baseHeight=1080;this.frameOrdinal=0;this.detailMode='auto';this.detailState=initialDetailState();this.activeDrawEntries=[];this.staticWorld=null;this.staticPoseUploaded=false;this.surfaceGuide='clean';this.lightPreset='soft';this.lightSetting=LIGHT_PRESETS.soft;this.onGuideFrame=null;this.wireMode='off';this.wireDensity='balanced';this.wireState={suppressed:false,hot:0,cool:0};this.wireStats={segments:0,drawCalls:0,gpuBytes:0};this.drawEntries=[];this.inverseBindCache=[];
+ this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;this.lastPressure=null;this.baseWidth=1920;this.baseHeight=1080;this.frameOrdinal=0;this.detailMode='auto';this.detailState=initialDetailState();this.activeDrawEntries=[];this.staticWorld=null;this.staticPoseUploaded=false;this.surfaceGuide='clean';this.lightPreset='soft';this.lightSetting=LIGHT_PRESETS.soft;this.onGuideFrame=null;this.onScanFrame=null;this.scanWorldCache=null;this.scanOverlayTelemetry=null;this.wireMode='off';this.wireDensity='balanced';this.wireState={suppressed:false,hot:0,cool:0};this.wireStats={segments:0,drawCalls:0,gpuBytes:0};this.drawEntries=[];this.inverseBindCache=[];
  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();this.stop();this.onStats({status:'GPU_CONTEXT_LOST',message:'顯示裝置中斷：保留來源模型，停止GPU繪圖。請重新載入，絕不自動清空編輯資料。'});});}
  async load(arrayBuffer,mode='full'){
   // Refuse excessive source assets BEFORE destroying a previously displayed scene.
@@ -177,7 +177,7 @@ export class FastModelView {
   this.wireStats=this.countWireStats();this.gpuAllocatedEstimateBytes+=(this.wireStats.gpuBytes||0);
   return {...this.wireStats,mode,density,changed:true};
  }
- disposeMeshes(){const gl=this.gl;this.clearWireBuffers();this.drawEntries=[];this.activeDrawEntries=[];this.staticWorld=null;this.staticPoseUploaded=false;this.poseEvaluator=null;this.anatomyAudit=null;this.boneMatrixScratch=[];this.inverseBindCache=[];this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;for(const b of this.entries||[]){gl.deleteVertexArray(b.vao);gl.deleteBuffer(b.vb);gl.deleteBuffer(b.ib);}for(let t of this.textures||[])gl.deleteTexture(t);for(let t of this.boneTex||[])gl.deleteTexture(t);this.entries=[];this.textures=[];this.boneTex=[];}
+ disposeMeshes(){const gl=this.gl;this.clearWireBuffers();this.drawEntries=[];this.activeDrawEntries=[];this.staticWorld=null;this.staticPoseUploaded=false;this.scanWorldCache=null;this.scanOverlayTelemetry=null;this.poseEvaluator=null;this.anatomyAudit=null;this.boneMatrixScratch=[];this.inverseBindCache=[];this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;for(const b of this.entries||[]){gl.deleteVertexArray(b.vao);gl.deleteBuffer(b.vb);gl.deleteBuffer(b.ib);}for(let t of this.textures||[])gl.deleteTexture(t);for(let t of this.boneTex||[])gl.deleteTexture(t);this.entries=[];this.textures=[];this.boneTex=[];}
  resize(w,h,automatic=false){
   // Preflight dimensions and working-set allowance BEFORE touching the canvas or existing GLB.
   const gl=this.gl;
@@ -210,6 +210,7 @@ export class FastModelView {
  gl.useProgram(this.program);
  if(animated||!this.staticPoseUploaded){
    const world=this.poseEvaluator.evaluate(animated?ts*.001:0,animated);
+   this.scanWorldCache=world;
    this.boneTex.forEach((texture,i)=>{
      let {out,n}=matsFor(this.file,world,i,this.inverseBindCache[i],this.boneMatrixScratch[i]);
      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);
@@ -238,6 +239,11 @@ export class FastModelView {
    gl.uniform1i(this.u.linePass,0);
  }
  gl.bindVertexArray(null);gl.depthMask(true);gl.disable(gl.BLEND);gl.flush();this.lastCPU=performance.now()-start;if(this.onGuideFrame&&this.frameOrdinal%2===0)this.onGuideFrame();
+  // 2D scan overlay only; preserve WebGL scene on overlay failure.
+  if(this.onScanFrame&&this.scanWorldCache&&this.frameOrdinal%3===0){
+    try{this.scanOverlayTelemetry=this.onScanFrame(this.scanWorldCache,ts)||null;}
+    catch(error){this.scanOverlayTelemetry={status:'SCAN_DISPLAY_BLOCKED',reason:String(error)};this.onScanFrame=null;}
+  }
  if(this.last){const dt=ts-this.last;if(dt>0&&dt<250){this.frames.push(dt);if(this.frames.length>180)this.frames.shift();}}
  this.last=ts;
  // Sample only periodically; avoids adding GC/StorageManager overhead to every frame.
@@ -262,7 +268,7 @@ export class FastModelView {
  this.onStats({...this.stats,status:'running',drawCalls:this.activeDrawEntries.length,fps:+(1000/avg).toFixed(1),p95FrameMs:+p95.toFixed(2),jsSubmitMs:+this.lastCPU.toFixed(2),resolution:[this.width,this.height],sampleCount:this.frames.length,
    stability:this.lastPressure?.status||'unmeasured',memoryPressure:this.lastPressure,
    gpuEstimateMiB:+(this.gpuAllocatedEstimateBytes/1048576).toFixed(1),cpuDerivedMiB:+(this.cpuDerivedEstimateBytes/1048576).toFixed(1),
-   frameBudget:decision,cacheEvictedMiB:+(this.governor.cache.totalEvictedBytes/1048576).toFixed(1),optionalHairRelease:this.lastOptionalRelease||null,gpuUtilizationPercent:null,animationPose:{topologyCached:!!this.poseEvaluator?.topologyCached,tracks:this.poseEvaluator?.trackCount??0,poseMatrixScratchReused:true,animated:!!(this.wind&&this.tracks?.length),actualDeviceGpuTimed:false},headNeckAudit:{status:this.anatomyAudit?.status||'UNVERIFIED',continuityVerified:false,explicitProtectedNodes:this.anatomyAudit?.protectedNodes.length||0,protectedMaterialCount:this.anatomyAudit?.protectedMaterials.size||0},surfaceGuide:this.surfaceGuide,wireMode:this.wireMode,wireDensity:this.wireDensity,wireLines:this.wireStats.segments,wireSkippedForLag:this.wireState.suppressed,previewDetail:{mode:this.detailMode,hidden:this.detailState.hidden,activeDrawCalls:this.activeDrawEntries.length,hiddenOptional:this.drawEntries.length-this.activeDrawEntries.length,optionalMarked:this.drawEntries.filter(x=>x.optionalDetail).length,displayOnly:true}});
+   frameBudget:decision,cacheEvictedMiB:+(this.governor.cache.totalEvictedBytes/1048576).toFixed(1),optionalHairRelease:this.lastOptionalRelease||null,gpuUtilizationPercent:null,scanOverlay:this.scanOverlayTelemetry||null,animationPose:{topologyCached:!!this.poseEvaluator?.topologyCached,tracks:this.poseEvaluator?.trackCount??0,poseMatrixScratchReused:true,animated:!!(this.wind&&this.tracks?.length),actualDeviceGpuTimed:false},headNeckAudit:{status:this.anatomyAudit?.status||'UNVERIFIED',continuityVerified:false,explicitProtectedNodes:this.anatomyAudit?.protectedNodes.length||0,protectedMaterialCount:this.anatomyAudit?.protectedMaterials.size||0},surfaceGuide:this.surfaceGuide,wireMode:this.wireMode,wireDensity:this.wireDensity,wireLines:this.wireStats.segments,wireSkippedForLag:this.wireState.suppressed,previewDetail:{mode:this.detailMode,hidden:this.detailState.hidden,activeDrawCalls:this.activeDrawEntries.length,hiddenOptional:this.drawEntries.length-this.activeDrawEntries.length,optionalMarked:this.drawEntries.filter(x=>x.optionalDetail).length,displayOnly:true}});
 
  }
  }
