@@ -151,22 +151,44 @@ export class StoryAudio{
  playRecordedVoice(audioBuffer){
   if(!this.enabled||!this.audio||!this.captureDestination)throw Error('MOVIE_VOICE_BUS_REQUIRED');
   if(!audioBuffer||!Number.isFinite(audioBuffer.duration))throw Error('MOVIE_VOICE_BUFFER_INVALID');
-  if(this.recordedVoice)throw Error('MOVIE_VOICE_ALREADY_PLAYING');
+  // Successive numbered cue files take over exactly at their action beat.
+  if(this.recordedVoice)this.stopRecordedVoice();
   const src=this.audio.createBufferSource(),gain=this.audio.createGain();
   src.buffer=audioBuffer;gain.gain.value=Math.max(0,Math.min(1,this.options.volume));
   src.connect(gain);gain.connect(this.audio.destination);gain.connect(this.captureDestination);
-  this.recordedVoice={src,gain};src.onended=()=>{if(this.recordedVoice?.src===src)this.recordedVoice=null;
-   try{src.disconnect();gain.disconnect();}catch{}};
+  // A real decoded voice waveform drives mouth RMS; never use text length
+  // or an invented audio envelope as phoneme evidence.
+  let analyser=null,levelData=null;
+  if(typeof this.audio.createAnalyser==='function'){
+   analyser=this.audio.createAnalyser();analyser.fftSize=512;
+   gain.connect(analyser);levelData=new Uint8Array(analyser.fftSize);
+  }
+  this.recordedVoice={src,gain,analyser,levelData};
+  src.onended=()=>{if(this.recordedVoice?.src===src)this.recordedVoice=null;
+   try{src.disconnect();gain.disconnect();analyser?.disconnect();}catch{}};
   src.start();
   return {recordedVoiceRoutedToMux:true,voiceDuration:audioBuffer.duration,
     dialogueSpeechSynthRecorded:false,lipSyncConfirmed:false};
  }
+ getVoiceLevel(){
+  const r=this.recordedVoice;
+  if(!r?.analyser||!r.levelData||typeof r.analyser.getByteTimeDomainData!=='function')return 0;
+  try{
+   r.analyser.getByteTimeDomainData(r.levelData);
+   let sum=0;
+   for(const b of r.levelData){const v=(b-128)/128;sum+=v*v;}
+   // RMS of the actual imported voice buffer, not an invented phoneme map.
+   return Math.min(1,Math.sqrt(sum/r.levelData.length)*3);
+  }catch{return 0;}
+ }
+ stopRecordedVoice(){
+  if(!this.recordedVoice)return;
+  const {src,gain,analyser}=this.recordedVoice;this.recordedVoice=null;
+  try{src.stop();}catch{}
+  try{src.disconnect();gain.disconnect();analyser?.disconnect();}catch{}
+ }
  releaseRecordingBus(){
-  if(this.recordedVoice){
-   try{this.recordedVoice.src.stop();}catch{}
-   try{this.recordedVoice.src.disconnect();this.recordedVoice.gain.disconnect();}catch{}
-   this.recordedVoice=null;
-  }
+  this.stopRecordedVoice();
   this.captureDestination=null;
  }
  pause(){
