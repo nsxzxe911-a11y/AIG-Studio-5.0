@@ -86,8 +86,8 @@ test('optional depth and contour insertion cannot evict protected cached joint s
  const f=file(),cache=createScanDerivedCache({limitBytes:1024});
  const bones=topology('bones');
  assert.equal(cache.putTopology(f,bones,{geometry:'bones',density:'eco'}),true);
- const depthCandidate={status:'SAMPLED_SOURCE_TRIANGLE_DEPTH',width:8,height:6,
-   grid:new Float32Array(48),triangles:2};
+ const depthCandidate={status:'SAMPLED_SOURCE_TRIANGLE_DEPTH',width:8,height:8,
+   grid:new Float32Array(64),triangles:2};
  // Each optional insert is below the limit individually but exceeds it
  // when combined with the protected bone topology.
  const d=cache.putDepth({file:f,view:view(f),topology:topology('all'),
