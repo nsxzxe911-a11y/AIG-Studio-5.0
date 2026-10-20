@@ -15,6 +15,7 @@ import {appearanceFor,auditHairNeck,Aig44TimingEvidence} from './aig-qa-4-4.mjs'
 import {AIG45_POSES,AIG45_MARKERS,AIG45_SCHEMA,recognizePose,normalizeMark,auditMarks,reviewPoseSet} from './aig-calibration-4-5.mjs';
 import {AIG46_SCHEMA,normalizePoseSet,buildHeadNeckPonytail,exportOBJ} from './aig-head-neck-4-6.mjs';
 import {AIG47_SCHEMA,buildAIG47Draft,exportAIG47GLB} from './aig-welded-4-7.mjs';
+import {AIG48_SCHEMA,buildAIG48Draft,exportAIG48GLB,auditAIG48Poses} from './aig-skin-motion-4-8.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -452,8 +453,16 @@ $('aig45-export').addEventListener('click',()=>{
 
 // 4.6 independent native geometry path: no paid APIs or overwrite of 4.0 GLB.
 let aig46Profile=null,aig46Draft=null,aig47Draft=null;
+let aig48Draft=null,aig48QA=null,aig48Busy=false;
+function aig48Reset(message='4.8 來源或 4.7 網格已變更；請重新產生骨架動畫。'){
+ aig48Draft=null;aig48QA=null;
+ $('aig48-download').disabled=true;$('aig48-evidence').disabled=true;
+ $('aig48-build').disabled=aig48Busy||!aig47Draft;
+ $('aig48-status').textContent=message;
+}
 function aig47Reset(message='4.7 來源或馬尾參數已變更；請重新建立共享頂點技術網格。'){
  aig47Draft=null;
+ aig48Reset('4.7 來源失效，4.8 先前技術骨架／動作證據已隔離。');
  for(const id of ['aig47-download','aig47-evidence'])$(id).disabled=true;
  $('aig47-build').disabled=!aig46Profile||!aig46Draft;
  $('aig47-status').textContent=message;
@@ -551,6 +560,7 @@ $('aig47-build').addEventListener('click',()=>{
   const glb=exportAIG47GLB(draft);
   if(!glb.bytes?.length||!draft.topologyQA)throw Error('AIG47_GLTF_EXPORT_GATE');
   aig47Draft=draft;
+  aig48Reset('4.7 已建立。可產生 4.8 真骨架技術動畫。');
   $('aig47-download').disabled=false;$('aig47-evidence').disabled=false;
   $('aig47-build').disabled=false;
   $('aig47-status').textContent='已建立真正共享頂點的頭頸封閉網格（'+
@@ -582,6 +592,45 @@ $('aig47-evidence').addEventListener('click',()=>{
   originalPhotosAndPreviousGlbUnchanged:true,noPaidGeneration:true,releaseAllowed:false};
  aig47Download(JSON.stringify(evidence,null,2),'AIG-4.7-head-neck-hair-Gate-NOT-APPROVED.json','application/json');
 });
+
+$('aig48-build').addEventListener('click',async()=>{
+ if(aig48Busy||!aig47Draft)return;
+ const source=aig47Draft;
+ aig48Busy=true;aig48Reset('4.8 正在回讀真正 GLB 骨架並逐姿態驗證；不代表已還原真人。');
+ try{
+  const rig=buildAIG48Draft(source);
+  const qa=await auditAIG48Poses(rig);
+  if(aig47Draft!==source)return; // Never certify stale source.
+  if(qa.sampledClips.length!==3||!qa.glbRoundtrip||qa.minSampledTriangleArea<=1e-10)
+   throw Error('AIG48_SAMPLED_POSE_GATE');
+  aig48Draft=rig;aig48QA=qa;
+  $('aig48-download').disabled=false;$('aig48-evidence').disabled=false;
+  $('aig48-status').textContent='真技術骨架 5 節點／2 個 SkinnedMesh／3 個動畫：'+
+   qa.sampledClips.map(x=>x.clip+' '+x.maxVertexDisplacement.toFixed(4)).join('／')+
+   '。已測試 15 個姿態，最小三角面積 '+qa.minSampledTriangleArea.toExponential(2)+
+   '。真實臉型、髮束三角碰撞、完整人體及 Android／Windows 60 FPS 仍 BLOCKED。';
+ }catch(error){
+  if(aig47Draft===source)aig48Reset('4.8 Rig QA BLOCKED：'+error.message+'；4.7 GLB、劇情與影片功能不變。');
+ }finally{
+  aig48Busy=false;$('aig48-build').disabled=!aig47Draft;
+ }
+});
+$('aig48-download').addEventListener('click',()=>{
+ if(!aig48Draft||!aig48QA)return;
+ try{
+  aig47Download(exportAIG48GLB(aig48Draft).bytes,
+   'AIG-4.8-skinned-motion-TECHNICAL-NOT-HEROINE.glb','model/gltf-binary');
+ }catch(error){$('aig48-status').textContent='4.8 GLB BLOCKED：'+error.message;}
+});
+$('aig48-evidence').addEventListener('click',()=>{
+ if(!aig48Draft||!aig48QA)return;
+ const report={...aig48QA,skinBones:aig48Draft.boneNames,
+  inputHeadNeckTriangleCount:aig48Draft.sourceTopology[0].triangleCount,
+  headNeckOneIndexedConnectedSurface:true,sourcePonytailClearance:aig48Draft.sourceHairClearance,
+  original4_7AndOlderOutputsRetained:true,thirdPartyInferenceUsed:false,creditsSpent:0};
+ aig47Download(JSON.stringify(report,null,2),'AIG-4.8-bone-pose-risk-NOT-HEROINE.json','application/json');
+});
+
 $('aig46-build').addEventListener('click',()=>{
  try{
   aig46Profile=normalizePoseSet([...aig45Accepted.values()]);
