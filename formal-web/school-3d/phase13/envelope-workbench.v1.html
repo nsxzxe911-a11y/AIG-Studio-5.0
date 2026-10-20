@@ -11,8 +11,8 @@
 <label>頭部轉向 <input id="headYaw" type="range" min="-12" max="12" step="1" value="0"><output id="headVal">0°</output></label>
 <label>左肩 <input id="leftArm" type="range" min="-12" max="12" value="0"><output id="leftVal">0°</output></label>
 <label>右肩 <input id="rightArm" type="range" min="-12" max="12" value="0"><output id="rightVal">0°</output></label>
-<label><input id="wire" type="checkbox" checked>網格</label><label><input id="bones" type="checkbox" checked>細骨架</label>
-<button id="reset" type="button">重設姿勢</button><small id="stats">等待原圖</small></div>
+<label><input id="wire" type="checkbox" checked>網格</label><label><input id="edit" type="checkbox">編輯輪廓</label><label><input id="bones" type="checkbox" checked>細骨架</label>
+<button id="reset" type="button">重設姿勢</button><button id="save" type="button">匯出輪廓 JSON</button><small id="stats">等待原圖</small></div>
 <div id="status" class="status" role="status">等待原圖</div></section>
 <p class="notes"><strong>真實完成：</strong>可重建的網格包覆、權重、GLB 結構與骨架旋轉測試。<strong>尚未完成：</strong>從單一圖片還原真 3D 臉部、背面、完整雙腿及自然物理動畫。推定背面不可當成核准模型；不連接任何第三方建模平台。</p></main>
 <script id="spec" type="application/json">
@@ -366,96 +366,132 @@
       "bone": "Head",
       "polygon": [
         [
-          425,
-          128
+          580,
+          51
         ],
         [
-          493,
-          72
+          633,
+          38
         ],
         [
-          605,
-          44
+          693,
+          57
         ],
         [
-          671,
-          42
+          728,
+          88
         ],
         [
-          736,
-          79
+          749,
+          143
         ],
         [
-          769,
-          160
+          752,
+          214
         ],
         [
-          758,
-          268
+          747,
+          273
+        ],
+        [
+          767,
+          325
         ],
         [
           791,
-          364
+          366
         ],
         [
-          873,
-          415
+          848,
+          407
         ],
         [
-          961,
-          487
+          928,
+          459
         ],
         [
           953,
-          527
+          488
         ],
         [
-          877,
-          515
+          946,
+          510
         ],
         [
-          832,
-          480
+          893,
+          488
+        ],
+        [
+          843,
+          463
+        ],
+        [
+          793,
+          417
+        ],
+        [
+          769,
+          392
         ],
         [
           785,
-          419
+          494
         ],
         [
-          783,
-          515
+          766,
+          557
         ],
         [
-          742,
-          571
+          740,
+          572
         ],
         [
-          653,
-          567
+          696,
+          554
         ],
         [
-          575,
-          549
+          603,
+          556
         ],
         [
-          487,
-          537
+          532,
+          534
         ],
         [
-          425,
-          550
+          455,
+          531
         ],
         [
-          384,
-          516
+          409,
+          546
         ],
         [
-          402,
-          394
+          389,
+          520
         ],
         [
-          415,
-          296
+          405,
+          462
+        ],
+        [
+          427,
+          371
+        ],
+        [
+          444,
+          297
+        ],
+        [
+          466,
+          217
+        ],
+        [
+          493,
+          154
+        ],
+        [
+          529,
+          101
         ]
       ]
     }
