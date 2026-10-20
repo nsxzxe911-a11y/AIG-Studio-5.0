@@ -198,7 +198,12 @@ async function load(bytes,orbit){
 function show(d){
  if(d.status==='COMPLETE'||d.status==='FAILED')journal?.finish(d.id);
  for(const stage of ['model','rig','animation']){const s=d.stages[stage];$('stage-'+stage).textContent=(labels[s.status]||s.status)+(s.progress!=null&&s.status!=='SUCCEEDED'?' '+s.progress+'%':'');}
- if(d.status==='COMPLETE'){busy=false;status.textContent=d.mode==='object'?'3D 物件已完成；相機環繞展示可用。':'3D 模型與骨架動畫已完成；請檢查造型、頭頸及髮束。';}
+ if(d.status==='COMPLETE'){
+  busy=false;
+  status.textContent=(d.mode==='object'?'3D 物件已完成；相機環繞展示可用。':'3D 模型與骨架動畫已完成；請檢查造型、頭頸及髮束。')+
+   (d.preparedForegroundEvidence?
+    ' 已使用 SHA 繫結的 3.8 前景草稿；遮罩、髮束、衣裙與人物真實外觀仍需人工驗收，不能視為正式女主角已完成。':'');
+ }
  else if(d.status==='FAILED'){busy=false;status.textContent='此階段未完成：'+errorText(d.message||'服務拒絕此模型')+'。已生成的模型與原圖保留；再次按生成會建立新任務。';}
  else if(d.status==='SUBMISSION_UNKNOWN'){busy=false;status.textContent='送出後連線中斷，正在保留受理待確認狀態；不會重複送出計費。可在服務端找回任務 ID 後續接。';}
  else{busy=true;status.textContent='自動接續處理中；可重新開啟此頁繼續查詢。'+(d.message?'\n'+errorText(d.message):'');}
@@ -305,18 +310,45 @@ $('photo').addEventListener('change',async()=>{
    $('heroine-source-status').textContent='照片核對失敗：'+err.message+'。不會以副檔名冒充原始內容。';
  }
 });
+$('prepared-foreground').addEventListener('change',()=>{
+ const file=$('prepared-foreground').files?.[0];
+ $('prepared-foreground-status').textContent=file
+  ?'已選取 '+file.name+'；將在按「生成」時驗證其 JPEG 原圖 SHA、RGBA 透明度與來源色彩。來源與前景未實際驗收，將由伺服器阻擋不合規輸入。'
+  :'未選擇前景 PNG；預設使用原始照片。';
+});
 $('subject').addEventListener('change',()=>{$('action').disabled=$('subject').value==='object';});
 $('action').addEventListener('change',()=>{});
 $('generate').addEventListener('click',async()=>{
- const file=$('photo').files[0];if(!file)return;if(file.size>20*1024*1024){status.textContent='請選擇 20 MB 以內的照片。';return;}
+ const file=$('photo').files[0];
+ if(!file)return;
+ const prepared=$('prepared-foreground').files?.[0]||null;
+ if(file.size>20*1024*1024||prepared?.size>20*1024*1024){
+  status.textContent='原始照片與前景 PNG 各不得超過 20 MB。';return;
+ }
  busy=true;updateButton();status.textContent='正在建立可續接的圖片生成任務…';
  try{
   const sha=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await file.arrayBuffer())),v=>v.toString(16).padStart(2,'0')).join('');
   const mode=$('subject').value,actionId=mode==='humanoid'&&$('action').value!==''?Number($('action').value):null;
-  const fingerprint=sha+'|'+mode+'|'+(actionId??'default');
+  let preparedImage=null,preparedHash='NONE';
+  const readData=file=>new Promise((resolve,reject)=>{
+   const r=new FileReader();r.onload=()=>resolve(r.result);
+   r.onerror=()=>reject(Error('來源圖片讀取失敗'));r.readAsDataURL(file);
+  });
+  if(prepared){
+   if(mode!=='humanoid')throw Error('前景草稿只允許人物生成；物件模式請移除草稿。');
+   const check=await inspectHeroineImage(file,{decodeImage:decodeHeroineImage});
+   if(!check.sourceMatched)throw Error('原圖 SHA 不是指定女主角；前景草稿禁止連結其他來源。');
+   if(!prepared.name.toLowerCase().endsWith('.png'))throw Error('前景草稿須是 RGBA PNG');
+   preparedHash=await sha256Bytes(await prepared.arrayBuffer());
+   preparedImage=await readData(prepared);
+   $('prepared-foreground-status').textContent='前景草稿已提交來源比對；伺服器必須再次核對實際 PNG alpha 與每個不透明像素。';
+  }
+  const fingerprint=sha+'|'+mode+'|'+(actionId??'default')+'|'+preparedHash;
   const requestId=journal.begin(fingerprint);
-  const image=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('照片讀取失敗'));r.readAsDataURL(file);});
-  const d=await api('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json','X-AIG-Request':'1'},body:JSON.stringify({image,requestId,mode,actionId})});
+  const image=await readData(file);
+  const payload={image,requestId,mode,actionId};
+  if(preparedImage)payload.preparedImage=preparedImage;
+  const d=await api('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json','X-AIG-Request':'1'},body:JSON.stringify(payload)});
   journal.accept(fingerprint,d.id);follow(d.id);
  }catch(e){busy=false;status.textContent=errorText(e.message);updateButton();}
 });
