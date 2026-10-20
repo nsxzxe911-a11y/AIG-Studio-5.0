@@ -154,6 +154,36 @@
         0.294368
       ],
       "pixelCrop": "setting_campus.png"
+    },
+    "secondary_profile_candidate": {
+      "xyxy": [
+        1181,
+        4,
+        1576,
+        255
+      ],
+      "normalized_xywh": [
+        0.70634,
+        0.004251,
+        0.236244,
+        0.266738
+      ],
+      "pixelCrop": "secondary_profile_candidate.png"
+    },
+    "rear_hair_outfit_candidate": {
+      "xyxy": [
+        1230,
+        711,
+        1438,
+        939
+      ],
+      "normalized_xywh": [
+        0.735646,
+        0.755579,
+        0.124402,
+        0.242295
+      ],
+      "pixelCrop": "rear_hair_outfit_candidate.png"
     }
   },
   "estimatedVisibleKeypoints": {
@@ -358,6 +388,18 @@
         566,
         750
       ]
+    }
+  },
+  "auxiliaryViews": {
+    "secondary_profile_candidate": {
+      "angle": "additional oblique face from same generated collage",
+      "identityMatch": "UNVERIFIED",
+      "geometryUse": "visual reference only; check consistency before 3D fitting"
+    },
+    "rear_hair_outfit_candidate": {
+      "angle": "back view in same generated collage",
+      "identityMatch": "UNVERIFIED",
+      "geometryUse": "candidate hair length, backpack and skirt silhouette; do not infer hidden topology"
     }
   },
   "unobservableFromSingleImage": [
