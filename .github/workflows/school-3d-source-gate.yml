@@ -776,6 +776,33 @@ jobs:
           PY
           node --check /tmp/fastmodel-2-3-standalone.js
           echo "FastModel 2.3 sampled occlusion Gate is source QA only; Windows/Android 60FPS remains BLOCKED."
+      - name: FastModel 2.4 extreme scan staged bones and automatic throttling Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/scan-turbo.mjs
+          node --check formal-web/school-3d/fastmodel/web/scan-overlay.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/scan-turbo.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-2-4-TURBO-BONES-FIRST-NOT-APPROVED.html
+          python - <<'PY'
+          from pathlib import Path
+          h=Path('artifacts/fastmodel-technical/CI-FASTMODEL-2-4-TURBO-BONES-FIRST-NOT-APPROVED.html').read_text()
+          for token in ['id="scan-speed"','id="scan-speed-status"',
+                        '啟動極速掃描 GLB','function createTurboScanController(',
+                        "geometry:speed==='turbo'?'bones':'all'",
+                        "scanRequestContours(f,density,revision)",
+                        'actualDeviceFpsVerified:false','window.AIG_EMBEDDED_GLB',
+                        '光線追蹤：關閉']:
+              assert token in h,token
+          assert 'value="turbo" selected' in h
+          assert 'value="1920x1080" selected' in h
+          js='window.AIG_EMBEDDED_GLB='+h.split('window.AIG_EMBEDDED_GLB=',1)[1].split('</script>',1)[0]
+          Path('/tmp/fastmodel-2-4-turbo-standalone.js').write_text(js)
+          print('2.4 ultra-fast source joint first; bounded optional contour/depth enabled')
+          PY
+          node --check /tmp/fastmodel-2-4-turbo-standalone.js
+          echo "FastModel 2.4 SOURCE Gate only; no verified native Windows/Android GPU FPS claim."
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
