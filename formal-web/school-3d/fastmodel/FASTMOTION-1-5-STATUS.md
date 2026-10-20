@@ -9,6 +9,7 @@ Incremental from FastModel 1.4 on GitHub Draft PR #12, without a merge/deploymen
 - Manual button to release hair GPU cache is restricted to **explicitly tagged fine-hair only**; auto memory pressure no longer deletes skin===1 meshes. Face/neck/unknown hair cannot be destructively removed because of skin numbering. Optional manual release is not instantly restorable; reimport original GLB to recreate optional visual buffers, and no editable batches are eligible.
 - Static pose cache: when wind/animation off (or no rotation tracks), recompute and upload bone matrices only on pose transition; animated scene still updates per frame.
 - Browser tab visibility stops rAF rendering in hidden tab and resumes only when not user-paused.
+- Fast GLB scan now uses sampleVec3Accessor to read only bounded sparse POSITION values directly from GLB DataView, including interleaved buffers; the Scan button no longer reads an entire POSITION accessor before downsampling. It still reports sampled/approximate extents, NOT an exact 3D depth or photo scan.
 - Added on-page session-only Browser rAF FPS and p95 baseline/compare after >=60 frame samples, explicitly NOT a GPU timestamp or proof of device 60FPS. Active draw-call count and marked/hidden batch telemetry are exported.
 
 ## Not implemented / release BLOCK
