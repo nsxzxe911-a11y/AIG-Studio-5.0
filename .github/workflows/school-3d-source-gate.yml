@@ -750,6 +750,32 @@ jobs:
           PY
           node --check /tmp/aig-fastmodel-2-2-rgb-bundle.js
           echo "FastModel 2.2 RGB scan source Gate PASS; GPU hardware, real face/head/hair remains unverified."
+      - name: FastModel 2.3 posed source-triangle occlusion and mobile scan budget Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/scan-depth.mjs
+          node --check formal-web/school-3d/fastmodel/web/scan-overlay.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/scan-depth.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-2-3-SAMPLED-OCCLUSION-NOT-RELEASE.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMODEL-2-3-SAMPLED-OCCLUSION-NOT-RELEASE.html').read_text()
+          for token in ['id="scan-depth"','id="scan-depth-status"',
+                        'function sampleSourceDepth(','function classifySourceOcclusion(',
+                        'function scanDepthCoordinate(','behind-sampled-surface',
+                        'sampledDepthCellTests','occludedSegments','smallViewport?90:50',
+                        'actualAnimatedCollisionProved:false','window.AIG_EMBEDDED_GLB']:
+              assert token in s,token
+          assert 'value="sampled" selected' in s
+          assert 'value="1920x1080" selected' in s
+          script='window.AIG_EMBEDDED_GLB='+s.split('window.AIG_EMBEDDED_GLB=',1)[1].split('</script>',1)[0]
+          Path('/tmp/fastmodel-2-3-standalone.js').write_text(script)
+          print('2.3 source triangle sampling, capped scan and offline JS assembled')
+          PY
+          node --check /tmp/fastmodel-2-3-standalone.js
+          echo "FastModel 2.3 sampled occlusion Gate is source QA only; Windows/Android 60FPS remains BLOCKED."
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
