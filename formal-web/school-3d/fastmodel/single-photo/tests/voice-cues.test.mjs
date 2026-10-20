@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {StoryAudio} from '../story-audio.mjs';
 import {mapVoiceFiles,voiceTimecodes,RmsMouthDriver,VOICE_CUES_VERSION} from '../voice-cues.mjs';
 const plan={ready:true,timeline:[{beat:0,seconds:1.2,dialogue:'你好'},{beat:1,seconds:1.4,dialogue:'出拳！'}]};
 const file=(name,size=1000,type='audio/wav')=>({name,size,type,arrayBuffer:async()=>new ArrayBuffer(size)});
@@ -47,4 +48,35 @@ test('UI explicitly binds timed recordings and evidence avoids phoneme or heroin
  assert.match(movie,/mouth\.restore\(\)/);
  assert.match(movie,/phonemeLipSyncVerified:false/);
  assert.match(audio,/getByteTimeDomainData/);
+});
+
+test('actual decoded voice waveform supplies RMS; adjacent cue replaces source and cleanup stops it',()=>{
+ const sources=[];
+ class Source{
+  connect(){}disconnect(){}start(){this.running=true;}
+  stop(){this.running=false;this.onended?.();}
+ }
+ class Gain{constructor(){this.gain={value:1};}connect(){}disconnect(){}}
+ class Analyser{constructor(){this.fftSize=512;}connect(){}disconnect(){}
+  getByteTimeDomainData(data){data.fill(160);}
+ }
+ class Ctx{
+  constructor(){this.currentTime=0;this.state='running';this.destination={};}
+  createBufferSource(){const s=new Source();sources.push(s);return s;}
+  createGain(){return new Gain();}
+  createAnalyser(){return new Analyser();}
+  createMediaStreamDestination(){return {stream:{getAudioTracks:()=>[{}]}};}
+  resume(){return Promise.resolve();}
+  suspend(){return Promise.resolve();}
+ }
+ const sound=new StoryAudio({env:{AudioContext:Ctx},options:{voice:false,sfx:true,music:false}});
+ sound.start();sound.createRecordingBus();
+ sound.playRecordedVoice({duration:.3});
+ assert.ok(sound.getVoiceLevel()>.5,'sample-derived voice energy is not hardcoded zero');
+ sound.playRecordedVoice({duration:.2});
+ assert.equal(sources[0].running,false,'previous line cannot overlap new line');
+ sound.releaseRecordingBus();
+ assert.equal(sources[1].running,false);
+ assert.equal(sound.getVoiceLevel(),0);
+ sound.stop();
 });
