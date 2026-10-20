@@ -1,31 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {RENDER_POLICY,enforceRasterPolicy} from '../web/render-policy.mjs';
-const read=(p)=>readFileSync(new URL(p,import.meta.url),'utf8');
-
-test('raster-only is locked OFF without RTX requirement',()=>{
- assert.equal(RENDER_POLICY.renderer,'WEBGL2_RASTER');
- for(const key of ['rayTracing','pathTracing','dxr','rtHardwareRequired'])assert.equal(RENDER_POLICY[key],false,key);
- assert.equal(enforceRasterPolicy(),RENDER_POLICY);
- assert.equal(Object.isFrozen(RENDER_POLICY),true);
+import {GRAPHICS_POLICY,assertRasterOnly} from '../web/graphics-policy.mjs';
+const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
+test('single canonical policy forbids all RT modes with no RTX hardware requirement',()=>{
+ assert.equal(assertRasterOnly(),true);
+ assert.equal(GRAPHICS_POLICY.renderer,'WEBGL2_RASTER');
+ for(const key of ['rayTracingEnabled','dxrEnabled','vulkanRayTracingEnabled','rayQueryEnabled','pathTracingEnabled','requiredRTXGPU','hardwareRayTracingRequired']) assert.equal(GRAPHICS_POLICY[key],false);
+ assert.equal(Object.isFrozen(GRAPHICS_POLICY),true);
 });
-test('attempt to enable any ray or path tracing is refused without changing policy',()=>{
- for(const option of ['rayTracing','pathTracing','dxr'])assert.throws(()=>enforceRasterPolicy({[option]:true}),/RAY_TRACING_DISABLED/);
- assert.equal(RENDER_POLICY.rayTracing,false);
+test('incorrect future raster modes fail closed',()=>{
+ assert.throws(()=>assertRasterOnly({...GRAPHICS_POLICY,rayQueryEnabled:true}),/RAY_TRACING_DISABLED/);
+ assert.throws(()=>assertRasterOnly({...GRAPHICS_POLICY,renderer:'DXR'}),/ONLY_RASTER/);
 });
-test('real WebGL2 raster and no DXR are wired, not a decorative toggle',()=>{
- const renderer=read('../web/renderer.mjs'),main=read('../web/main.mjs'),html=read('../web/index.html');
- assert.match(renderer,/this\.renderPolicy=enforceRasterPolicy\(\)/);
- assert.match(renderer,/getContext\('webgl2'/);
- assert.match(renderer,/gl\.drawElements/);
- assert.match(html,/id="raster-only"/);
- assert.match(html,/光線追蹤：關閉（OFF）/);
- assert.match(main,/renderPolicy:RENDER_POLICY/);
+test('actual view and UI report canonical raster-only policy; no fake switch',()=>{
+ const r=read('../web/renderer.mjs'),main=read('../web/main.mjs'),html=read('../web/index.html');
+ assert.match(r,/assertRasterOnly\(GRAPHICS_POLICY\)/);
+ assert.match(r,/getContext\('webgl2'/);
+ assert.match(r,/gl\.drawElements/);
+ assert.match(html,/id="raytrace-status"/);
+ assert.match(main,/光線追蹤：關閉/);
+ assert.match(main,/renderPolicy:GRAPHICS_POLICY/);
+ assert.doesNotMatch(html,/id="enable-raytracing"/);
 });
-test('offline bundler includes the exact render policy without ESM imports',()=>{
- const pack=read('../tools/build_standalone.py');
- assert.match(pack,/render_policy=/);
- assert.match(pack,/\+render_policy\+/);
- assert.match(pack,/import \{enforceRasterPolicy\}/);
+test('offline packer shares exactly one policy in front of renderer',()=>{
+ const p=read('../tools/build_standalone.py');
+ assert.match(p,/graphics-policy\.mjs/);
+ assert.match(p,/resolution\+'\\n'\+graphics\+'\\n'\+render/);
+ assert.doesNotMatch(p,/render-policy\.mjs/);
 });

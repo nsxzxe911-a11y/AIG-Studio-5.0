@@ -1,13 +1,9 @@
-# AIG FastModel Cinema 1.2 — No-Ray-Tracing Policy
+# AIG FastModel Cinema 1.2 — raster-only policy, no DXR
 
-Current runtime path is WebGL2/GLSL rasterization. No native DX12 or Android Vulkan renderer has been implemented yet; **no DXR, RTX, hardware ray-tracing or path-tracing feature is active or required**. Existing shader uses texture + base color, **not a finished physically accurate PBR or movie-grade lighting system**.
+Existing branch already had `web/graphics-policy.mjs` and its fail-closed tests. Rather than create an overlapping second controller, **this update reuses the existing canonical `GRAPHICS_POLICY` and `assertRasterOnly`** in the live WebGL2 renderer, UI and offline bundle. The duplicate experimental `render-policy.mjs` is removed from GitHub.
 
-To enforce the user's decision:
-- `web/render-policy.mjs` fixes all ray/path/DXR features to OFF and rejects requests to turn them on.
-- `web/renderer.mjs` enforces this at construction before acquiring the real WebGL2 raster context.
-- `web/index.html` clearly shows “光線追蹤：關閉（OFF）”. It is truthful status, not a fake button.
-- Offline bundled HTML includes the exact enforced module.
-- `tests/no-raytrace.test.mjs` and CI test implementation; no requirement for a named GPU generation.
-- The newly generated character still is only a 2D image conveying a 3D-rendered look; recorded SHA in `references/hero-3d-still-REFERENCE-ONLY.json`. It does not replace the Phase17 3D GLB until real mesh visual Gate passes.
-
-This does not assert GPU 60fps/2K/4K has passed. Original CNC, Android APK and Windows EXE remain untouched; PR stays draft.
+- Ray tracing, DXR, Vulkan RT, ray-query, path-tracing, and RTX GPU requirements remain OFF.
+- Default remains WebGL2 raster, 1080p target with optional 720p/QHD/4K settings. No native DX12/Vulkan renderer yet.
+- The female hero's new high-fidelity still is **reference only** (`references/hero-3d-still-REFERENCE-ONLY.json`), not a real 3D GLB, animation or movie.
+- GPU FPS, cinematic identity and real S23/Windows device benchmarking remain unverified.
+- PR #12 remains Draft and is not deployed to the original AIG CNC Runtime, APK or EXE.

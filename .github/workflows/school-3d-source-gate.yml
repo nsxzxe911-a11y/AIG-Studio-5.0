@@ -449,24 +449,23 @@ jobs:
             assert size in s
           print('Offline graphics guard and RGB 1080p/2K/4K preserved')
           PY
-      - name: FastModel raster-only GPU policy and 3D-style image authority guard
+      - name: FastModel one canonical raster-only GPU policy and 3D-style authority guard
         run: |
-          node --check formal-web/school-3d/fastmodel/web/render-policy.mjs
+          node --check formal-web/school-3d/fastmodel/web/graphics-policy.mjs
           node --test formal-web/school-3d/fastmodel/tests/no-raytrace.test.mjs
           python - <<'PY'
           import json
           from pathlib import Path
           root=Path('formal-web/school-3d/fastmodel')
-          s=(root/'web/render-policy.mjs').read_text()
+          s=(root/'web/graphics-policy.mjs').read_text()
           manifest=json.loads((root/'references/hero-3d-still-REFERENCE-ONLY.json').read_text())
-          assert "rayTracing: false" in s
-          assert "pathTracing: false" in s
-          assert "dxr: false" in s
+          for flag in ['rayTracingEnabled', 'dxrEnabled', 'vulkanRayTracingEnabled', 'rayQueryEnabled', 'pathTracingEnabled', 'requiredRTXGPU', 'hardwareRayTracingRequired']:
+            assert flag+': false' in s,flag
           assert manifest['releaseAllowed'] is False
           assert manifest['authorityStatus']=='REFERENCE_ONLY_NOT_APPROVED'
           assert manifest['kind']=='GENERATED_STILL_2D_SIMULATING_3D_RENDER'
           assert len(manifest['sha256'])==64
-          print('FastModel raster only; generated character still is not 3D mesh - PASS')
+          print('Single compatibility-first raster policy PASS — no fake 3D heroine')
           PY
       - name: Explicit release status
         run: |
