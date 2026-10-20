@@ -163,6 +163,22 @@ jobs:
         run: |
           python -m unittest discover -s formal-web/school-3d/tools -p 'test_phase11_projection_gate.py' -v
           python -c "import json; r=json.load(open('formal-web/school-3d/PHASE11-VISUAL-EVIDENCE.json')); a=json.load(open('formal-web/school-3d/reverse-authority.v1.json')); assert r['referenceSHA256']==a['source']['sha256']; assert r['releaseAllowed'] is False and r['visualAuthorityPassed'] is False and r['isRealCalibratedCamera'] is False; assert len(r['pairs'])==8 and r['meanErrorPx']>0; print('GLB projection diagnostic only, not visual approval')"
+      - name: Phase12 matchstick-slim skeleton cannot deform reverse mesh
+        run: |
+          node --check formal-web/school-3d/matchstick-rig.v1.js
+          python -m unittest discover -s formal-web/school-3d/tools -p 'test_matchstick_rig.py' -v
+          mkdir -p artifacts/school-3d-phase12-matchstick
+          python formal-web/school-3d/tools/build_matchstick_spec.py \
+            --reverse formal-web/school-3d/reverse-authority.v1.json \
+            --out artifacts/school-3d-phase12-matchstick/matchstick-rig.v1.json
+          cmp artifacts/school-3d-phase12-matchstick/matchstick-rig.v1.json formal-web/school-3d/matchstick-rig.v1.json
+      - name: Archive Phase12 thin-bone contract only (NOT A CHARACTER)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School-3D-Phase12-Matchstick-REVERSE-QA-ONLY
+          path: artifacts/school-3d-phase12-matchstick/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
