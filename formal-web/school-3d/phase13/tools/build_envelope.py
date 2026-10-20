@@ -227,8 +227,8 @@ def build(image,output,spec_path=SPEC):
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--source',required=True);p.add_argument('--out',required=True)
-    p.add_argument('--report');args=p.parse_args()
-    report=build(args.source,args.out)
+    p.add_argument('--report');p.add_argument('--spec',default=str(SPEC),help='Edited envelope JSON from AIG workbench');args=p.parse_args()
+    report=build(args.source,args.out,args.spec)
     if args.report:
         Path(args.report).parent.mkdir(parents=True,exist_ok=True)
         Path(args.report).write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
