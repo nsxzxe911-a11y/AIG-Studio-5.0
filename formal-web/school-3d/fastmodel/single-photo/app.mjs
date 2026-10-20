@@ -4,7 +4,7 @@ import {reviewEvidenceManifest} from './heroine-review.mjs';
 import {timelineEvidenceManifest} from './timeline-review.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
-const reviewObjectUrls=[],timelineObjectUrls=[];
+const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set();
 function clearTimelineEvidence(){
  for(const u of timelineObjectUrls)URL.revokeObjectURL(u);
  timelineObjectUrls.length=0;
@@ -34,6 +34,9 @@ async function load(bytes,orbit){
  if(!view)return;
  const clips=await view.load(bytes,{orbit});$('clip').replaceChildren();
  clearReviewEvidence();clearTimelineEvidence();
+ importedActionHashes.clear();
+ $('action-glb').disabled=false;
+ $('action-import-status').textContent='已載入人物 GLB。可選擇另一個骨架相符、含真實動畫的外部 GLB（不會將來源網格重疊渲染）。';
  sourceSha=null;
  try{sourceSha=await sha256Bytes(bytes);}catch(e){$('review-status').textContent='GLB 已載入，但 SHA-256 無法取得：'+e.message+'。證據匯出 BLOCKED。';}
  $('review-capture').disabled=!sourceSha;
@@ -72,6 +75,44 @@ async function follow(id){
   if(d.status==='RUNNING')setTimeout(()=>follow(id),3000);
  }catch(e){status.textContent='連線暫停：'+errorText(e.message)+'。既有任務保留；重新開啟頁面可續接。';busy=false;updateButton();}
 }
+$('action-glb').addEventListener('change',async()=>{
+ const input=$('action-glb'),f=input.files?.[0];
+ if(!f)return;
+ if(!view?.model||!sourceSha){
+  $('action-import-status').textContent='請先匯入正式人物 GLB 並取得來源 SHA。';input.value='';return;
+ }
+ if(f.size>200*1024*1024||f.size<20){
+  $('action-import-status').textContent='外部動作 GLB 大小不合法（須少於 200 MB）。';input.value='';return;
+ }
+ input.disabled=true;
+ $('action-import-status').textContent='核對外部 GLB 骨架、bind pose 與原人物的相容性；不合格時保留原動畫。';
+ try{
+  const buffer=await f.arrayBuffer(),actionSha=await sha256Bytes(buffer);
+  const fingerprint=sourceSha+':'+actionSha;
+  if(importedActionHashes.has(fingerprint))throw Error('ACTION_ALREADY_IMPORTED');
+  const originalSha=sourceSha;
+  const result=await view.importExternalAction(buffer);
+  if(sourceSha!==originalSha)throw Error('ACTION_TARGET_CHANGED');
+  importedActionHashes.add(fingerprint);
+  clearReviewEvidence();clearTimelineEvidence();
+  const clips=view.animation.clips;
+  $('clip').replaceChildren();
+  clips.forEach((clip,index)=>{
+   const option=document.createElement('option');option.value=String(index);
+   option.textContent=clip.name||'動作 '+(index+1);$('clip').append(option);
+  });
+  $('clip').value=String(result.selectedIndex);
+  $('clip').disabled=false;$('pause').disabled=false;$('pause').textContent='暫停動畫';
+  $('timeline-capture').disabled=!sourceSha;
+  $('action-import-status').textContent=
+   '已讀入相容外部動作：'+result.clipCount+' 片段／'+result.boneCount+' 個骨架關節，'+
+   '來源檔 SHA-256 '+actionSha.slice(0,16)+'…。人物本體沒有增加第二層網格。'+
+   '已選取第一個新動作，可執行 16 格動畫／皮膚檢查；**打鬥劇情與實機效果仍未核准**。';
+ }catch(err){
+  $('action-import-status').textContent='外部動作未接入：'+err.message+
+   '。原本 GLB、骨架與動作保持不變；不做猜測性自動重定向。';
+ }finally{input.disabled=!view?.model;input.value='';}
+});
 $('local-glb').addEventListener('change',async()=>{
  const f=$('local-glb').files?.[0];
  if(!f)return;
