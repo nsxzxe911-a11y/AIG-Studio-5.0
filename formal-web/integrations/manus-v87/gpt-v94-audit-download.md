@@ -9,3 +9,5 @@ Downloads come ONLY from existing published (not draft/prerelease) GitHub Releas
 4K + S23 Chromium Gate checks native HOME core preserved, simulated API fixtures for CI stability, historical-version warning, 4 real Release URL links, CPC output locked, navigation still works. The test uses fixtures, not a proof of live GitHub API CORS.
 
 Render release requires matching V94 formal-branch test pass + exact deployed SHA. No real CNC machine-output privilege is granted.
+
+Security correction: AIG-II repository is PRIVATE. The homepage does not request its private Releases anonymously and does not expose private asset URLs; it offers an authenticated GitHub Releases link. Only public AIG Studio 5.0 release APK/EXE assets are direct download links. Browser Gate asserts this.
