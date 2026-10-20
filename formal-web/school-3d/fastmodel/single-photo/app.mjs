@@ -9,6 +9,7 @@ import {MovieWorkspace} from './movie-ui.mjs';
 import {generateVoiceBatch,TTS_VERSION} from './voice-generator.mjs';
 import {inspectHeroineImage,evaluateHeroineJob,HEROINE_REFERENCE} from './heroine-authority-3-7.mjs';
 import {createImplicitScene,AigImplicitRenderer,AIG_SDF_VERSION} from './aig-sdf-4-1.mjs';
+import {Aig42Governor,Aig42FrameCoalescer,AIG42_SCHEMA} from './aig-performance-4-2.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -306,39 +307,71 @@ $('local-glb').addEventListener('change',async()=>{
   $('skin-check-status').textContent='本機 GLB 未載入：'+err.message+'。原有模型仍保留。';
  }
 });
-let aig41Renderer=null,aig41Scene=null;
+let aig41Renderer=null,aig41Scene=null,aig42FrameQueue=null;
+let aig42Governor=null,aig42Epoch=0,aig42CanvasLost=false;
 const AIG41_QUALITY={fast:{pixelScale:.5,maxSteps:48},
  balanced:{pixelScale:.75,maxSteps:64},quality:{pixelScale:1,maxSteps:88}};
+const aig41Canvas=$('aig41-canvas');
+aig41Canvas.addEventListener('webglcontextlost',event=>{
+ event.preventDefault();
+ aig42CanvasLost=true;
+ releaseAig41();
+ $('aig41-status').textContent='GPU context 已中斷；SDF 暫停，來源與 4.0 GLB 保留。恢復後需手動重新載入。';
+});
+aig41Canvas.addEventListener('webglcontextrestored',()=>{
+ aig42CanvasLost=false;
+ $('aig41-status').textContent='GPU 已恢復；請重新生成／驗證 4.0 來源後啟動 SDF，避免舊資產混用。';
+});
 function releaseAig41(){
- aig41Renderer?.dispose();aig41Renderer=null;aig41Scene=null;
+ aig42Epoch++;
+ aig42FrameQueue?.dispose();aig42FrameQueue=null;
+ aig41Renderer?.dispose();aig41Renderer=null;aig41Scene=null;aig42Governor=null;
  for(const id of ['aig41-yaw','aig41-quality','aig41-preview','aig41-release'])
   $(id).disabled=true;
 }
-function aig41Preview(){
- if(!aig41Scene)return;
- const canvas=$('aig41-canvas'), quality=AIG41_QUALITY[$('aig41-quality').value]||
-  AIG41_QUALITY.balanced;
+function aig42Draw(request){
+ if(!aig41Scene||aig42CanvasLost||!request||request.epoch!==aig42Epoch)return;
+ const canvas=$('aig41-canvas'), selection=$('aig41-quality').value;
+ const automatic=selection==='auto';
+ const config=automatic?aig42Governor.quality:(AIG41_QUALITY[selection]||AIG41_QUALITY.fast);
  try{
-  if(!aig41Renderer||aig41Renderer.pixelScale!==quality.pixelScale||
-    aig41Renderer.maxSteps!==quality.maxSteps){
-   aig41Renderer?.dispose();
-   aig41Renderer=new AigImplicitRenderer(canvas,aig41Scene,quality);
-  }
-  const yaw=Number($('aig41-yaw').value)*Math.PI/180;
-  // elapsed time is JS submit time only, NOT GPU completion/FPS.
+  if(!aig41Renderer)aig41Renderer=new AigImplicitRenderer(canvas,aig41Scene,config);
+  else aig41Renderer.configure(config);
   const t0=performance.now();
-  const r=aig41Renderer.draw(yaw);
+  const result=aig41Renderer.draw(request.yaw);
   const submitMs=performance.now()-t0;
-  $('aig41-status').textContent='SDF '+$('aig41-yaw').value+'°／'+
-   r.renderPixels+' 畫素／'+r.rayStepsLimit+' 步上限；'+
-   'JS 指令提交 '+submitMs.toFixed(2)+'ms（非 GPU FPS）。'+
-   ' 頭頸採連續距離場，手腳／髮束／裙子仍為推估體塊；'+
-   '目前只有預覽，未完成骨架或正式女主角。';
- }catch(err){
-  $('aig41-status').textContent='SDF WebGL2 預覽無法啟用：'+err.message+
-   '；4.0 真三角面 GLB 可保留使用。';
+  let gpuText='GPU 計時尚未取得（非 60 FPS 證據）';
+  let changeResult=null;
+  if(automatic&&result.gpuSample){
+   changeResult=aig42Governor.observe(result.gpuSample);
+  }
+  if(result.gpuSample?.disjoint){
+   gpuText='GPU 時鐘失真／不採用樣本';
+  }else if(result.gpuSample&&Number.isFinite(result.gpuSample.gpuMs)){
+   gpuText='GPU '+result.gpuSample.gpuMs.toFixed(2)+'ms／筆有效樣本';
+  }
+  const tierText=automatic?'自動 '+aig42Governor.quality.id:selection;
+  $('aig41-status').textContent='AIG 4.2 SDF '+$('aig41-yaw').value+'° · '+tierText+
+   ' · '+result.renderPixels+' 像素 · '+result.rayStepsLimit+' 步；'+gpuText+
+   '；JS 提交 '+submitMs.toFixed(2)+'ms（非實際畫面 FPS）。'+
+   (changeResult?.status==='MINIMUM_WORKLOAD_STILL_SLOW_USE_CACHED_GLB'?
+    ' 已降到最低仍偏慢：請改用已快取的 4.0 低面數 GLB 預覽。':'')+
+   ' 頭頸與衣物仍為推估 SDF，不代表完成的人物。';
+  if(changeResult?.changed){
+   // Just one follow-up draw to show lower GPU workload; no endless render loop.
+   aig42FrameQueue?.schedule({yaw:request.yaw,epoch:request.epoch});
+  }
+ }catch(error){
+  $('aig41-status').textContent='AIG 4.2 SDF 預覽 BLOCKED：'+error.message+
+   '。保留 4.0 GLB 與來源，不自動改用付費服務。';
+  aig42FrameQueue?.dispose();aig42FrameQueue=null;
   aig41Renderer?.dispose();aig41Renderer=null;
  }
+}
+function aig41Preview(){
+ if(!aig41Scene||aig42CanvasLost)return;
+ const yaw=Number($('aig41-yaw').value)*Math.PI/180;
+ aig42FrameQueue?.schedule({yaw,epoch:aig42Epoch});
 }
 async function aig41FromScaffold(prefix,expectedSHA){
  releaseAig41();
@@ -347,10 +380,18 @@ async function aig41FromScaffold(prefix,expectedSHA){
  const scaffold=await response.json();
  if(scaffold.sourceSHA256!==expectedSHA)throw Error('AIG41_SCAFFOLD_IMAGE_SHA_MISMATCH');
  const scene=createImplicitScene(scaffold);
+ if(aig42CanvasLost)throw Error('AIG42_WEBGL_CONTEXT_LOST');
  aig41Scene=scene;
+ aig42Governor=new Aig42Governor({targetGpuMs:12,initialTier:1});
+ aig42FrameQueue=new Aig42FrameCoalescer({
+  requestFrame:callback=>requestAnimationFrame(callback),
+  cancelFrame:handle=>cancelAnimationFrame(handle),
+  draw:aig42Draw
+ });
  for(const id of ['aig41-yaw','aig41-quality','aig41-preview','aig41-release'])
   $(id).disabled=false;
  $('aig41-yaw').value='0';
+ $('aig41-quality').value='auto';
  aig41Preview();
 }
 $('aig41-yaw').addEventListener('input',aig41Preview);
@@ -358,7 +399,7 @@ $('aig41-quality').addEventListener('change',aig41Preview);
 $('aig41-preview').addEventListener('click',aig41Preview);
 $('aig41-release').addEventListener('click',()=>{
  releaseAig41();
- $('aig41-status').textContent='SDF GPU 資源已釋放。原始來源與 4.0 真 GLB 仍保留，不重設既有 3D 工作區。';
+ $('aig41-status').textContent='4.2 GPU 與排程已釋放。原始照片及 4.0 技術 GLB 保留。';
 });
 let aig4Busy=false;
 function aig4RefreshButton(){
