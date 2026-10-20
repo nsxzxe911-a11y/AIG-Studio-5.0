@@ -84,7 +84,7 @@ test('palette UI swatch callback, safe hair-risk opt in, JSON export and standal
  assert.ok(m.includes("highlightRoles:hairReview?['hair']:[]"));
  assert.ok(m.includes('scanColorLegend(selected)'));
  assert.ok(m.includes("palette:el('scan-palette').value"));
- assert.ok(m.includes("palette:el('scan-palette').value,warningOptIn:"));
+ assert.ok(m.includes("palette:el('scan-palette').value,depthMode:el('scan-depth').value,warningOptIn:"));
  assert.ok(p.includes('scan-colors.mjs'));
  assert.ok(p.includes("'\\n'+scanColors+'\\n'+scanOverlay"));
 });
