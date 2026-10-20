@@ -104,3 +104,46 @@ export function copyCompatibleClips(clips,{prefix='外部動作'}={}){
   return fresh;
  });
 }
+
+
+/** Atomically install a verified/CLONED clip array in the target's existing
+ * AnimationMixer. If first playback fails, remove every staged clip and
+ * restore the previous clip, playback time and pause setting.
+ * This function never attaches external meshes/materials to the target model.
+ */
+export function commitCompatibleClips(controller,copied){
+ if(!controller||!Array.isArray(controller.clips)||typeof controller.select!=='function'||
+    !Array.isArray(copied)||!copied.length||
+    copied.some(clip=>!clip||typeof clip.clone!=='function'))
+  throw Error('ACTION_COMMIT_INVALID_INPUT');
+ const base=controller.clips.length;
+ if(base+copied.length>MAX_CLIPS)throw Error('ACTION_CLIP_LIBRARY_LIMIT');
+ const previousIndex=controller.index,previousTime=controller.mixer?.time??0;
+ const previousPaused=controller.paused;
+ try{
+  controller.clips.push(...copied);
+  controller.select(base);
+  if(controller.index!==base)throw Error('ACTION_PLAYBACK_NOT_SELECTED');
+  return {selectedIndex:base,installedCount:copied.length,committed:true};
+ }catch(error){
+  controller.clips.splice(base,copied.length);
+  for(const clip of copied){
+   try{controller.mixer?.uncacheClip?.(clip);}catch{}
+  }
+  let restored=previousIndex===null;
+  try{
+   if(previousIndex!==null){
+    controller.select(previousIndex);
+    controller.mixer?.setTime?.(previousTime);
+    restored=controller.index===previousIndex;
+   }
+   controller.paused=previousPaused;
+  }catch{
+   // Hard BLOCK: do not falsely report that the previous animation survived.
+   restored=false;
+  }
+  const e=new Error('ACTION_COMMIT_ROLLED_BACK: '+(error?.message||String(error)));
+  e.priorPlaybackRestored=restored;
+  throw e;
+ }
+}
