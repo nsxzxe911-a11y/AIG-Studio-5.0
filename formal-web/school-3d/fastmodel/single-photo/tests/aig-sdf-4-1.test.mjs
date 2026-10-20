@@ -19,7 +19,7 @@ test('4.1 exact source SHA proportions, no body anatomy or photorealism approval
  assert.equal(scene.skinWeightsPresent,false);
  assert.equal(scene.exportTriangulationNeeded,true);
  assert.equal(scene.parameterCount,8);
- assert.equal(scene.primitiveCount,12);
+ assert.equal(scene.primitiveCount,10);
  assert.equal(AIG_SDF_VERSION,scene.schema);
  assert.throws(()=>createImplicitScene({...scaffold,sourceSHA256:'b'}),/SCAFFOLD_REQUIRED/);
  assert.throws(()=>createImplicitScene({...scaffold,
