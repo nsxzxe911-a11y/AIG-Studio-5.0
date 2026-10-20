@@ -59,7 +59,7 @@ export function createScanDerivedCache({limitBytes=SCAN_CACHE_LIMITS.mobile}={})
   let released=0;
   for(const [key,item] of eligible){
    items.delete(key);bytes-=item.bytes;released+=item.bytes;evictions++;evictedBytes+=item.bytes;
-   if(where==='pressure'&&bytes<=limitBytes*.35)break;
+   // Clear all optional depth/contour entries; even a small retained one could hold large typed arrays.
   }
   return released;
  }
