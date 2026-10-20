@@ -14,7 +14,11 @@
 <p id="prepared-foreground-status" class="status" role="status">尚未選前景草稿；預設仍使用原照片。此處不會自動呼叫付費服務。</p><h3>FastModel 3.9｜一鍵自動 3D 重建服務</h3>
 <p>先選擇真正可用的重建服務。按下「生成」後，背景任務會自動接續：原圖檢查 → 真 3D 網格／PBR → 人物骨架 → 動作 → 下載 GLB 與 SHA 報告。Meshy 可能按階段消耗點數；連線失敗或受理不明時不會自動重送。模型完成不代表女主角外觀、頭頸或動畫品質已驗收。</p>
 <label for="reconstruction-service">3D 重建服務（目前只有實際接通的 Meshy）</label>
-<select id="reconstruction-service"><option value="meshy-image-to-3d">Meshy · Image-to-3D／Rigging</option></select>
+<select id="reconstruction-service"><option value="meshy-image-to-3d">Meshy · 單張照片 3D 重建</option><option value="meshy-multi-image-to-3d">Meshy · 1～4 張多視角 3D 重建</option></select>
+<label for="reconstruction-secondary">多視角輔助圖（選用：最多 3 張，建議左側、背面、右側；主圖必須是正面）</label>
+<input id="reconstruction-secondary" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+<p>多圖模式請將上方「原圖」選為洋裝正面照，再選 3 張補角度，主圖不應同時選擇 3.8 前景草稿。Meshy 最多接受四張；本次八張獨立生成參考仍須做臉型、髮束、裙子與尺寸一致性審核，不能保證能產生相同人物。</p>
+<p id="reconstruction-multiview-status" class="status" role="status">未選輔助視角，單張重建模式。</p>
 <p id="reconstruction-service-status" class="status" role="status">正在檢查可用服務。未連接時仍可本機匯入 GLB。</p>
 <p id="reconstruction-phase-status" class="status" role="status">尚無自動重建任務；每次都需要主動點擊「生成」。</p>
 <div id="reconstruction-evidence-downloads" class="downloads"></div><label for="subject">主體與動畫方式</label><select id="subject"><option value="humanoid">單一完整人物 · 自動綁骨架與步行</option><option value="object">一般物件 · 3D 模型＋相機環繞展示</option></select><label for="action">動作</label><select id="action"><option value="">自動步行（使用骨架服務附帶動作）</option></select><button id="generate" class="primary" disabled>一鍵自動 3D 重建＋骨架＋動畫（可能計費）</button><p>人物最好完整入鏡、四肢清楚。動物、多人或局部臉像可能無法自動綁定；一般物件的環繞展示不代表物件有骨架動作。</p></div><div id="status" class="status" role="status" aria-live="polite">正在確認重建服務連接…</div><div id="stages"><div class="stage">3D 網格與 PBR 材質<span id="stage-model">等待</span></div><div class="stage">人物骨架<span id="stage-rig">等待</span></div><div class="stage">動畫檔案<span id="stage-animation">等待</span></div></div><h3>直接載入現有 3D 人物 GLB · 不消耗生成點數</h3>
