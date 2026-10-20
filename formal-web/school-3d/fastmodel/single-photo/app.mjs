@@ -3,13 +3,78 @@ import {SubmissionJournal} from './submission.mjs';
 import {reviewEvidenceManifest} from './heroine-review.mjs';
 import {timelineEvidenceManifest} from './timeline-review.mjs';
 import {parseStory,resolveStoryClips,STORY_PIPELINE_VERSION} from './story-to-animation.mjs';
+import {composeDialogue,updateDialogueCue,annotateDialoguePlan,DIALOGUE_VERSION} from './story-dialogue.mjs';
+import {StoryAudio,AUDIO_CUE_VERSION} from './story-audio.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
-let storyPlan=null,storyOutputUrl=null;
+let storyPlan=null,storyOutputUrl=null,storyDialogue=null,storyParsed=null;
+const storySound=new StoryAudio({onStatus:m=>{$('story-audio-status').textContent=m;}});
+function soundOptions(){return {
+ voice:$('voice-enabled').checked,sfx:$('sfx-enabled').checked,
+ music:$('music-enabled').checked,mood:$('music-mood').value,
+ volume:Number($('audio-volume').value)/100
+};}
+function clearSubtitle(){
+ $('story-subtitle').textContent='';$('story-subtitle').hidden=true;
+}
+function showSubtitle(text){
+ $('story-subtitle').textContent=text||'';$('story-subtitle').hidden=!text;
+}
+function exportStoryEvidence(){
+ if(storyOutputUrl){URL.revokeObjectURL(storyOutputUrl);storyOutputUrl=null;}
+ $('story-downloads').replaceChildren();
+ if(!storyPlan||!storyParsed)return;
+ const evidence={
+  schema:STORY_PIPELINE_VERSION,dialogueSchema:DIALOGUE_VERSION,audioSchema:AUDIO_CUE_VERSION,
+  originalText:storyParsed.originalText,sourceCharacterSha256:sourceSha||null,
+  steps:storyPlan.timeline.map(part=>({...part,
+    sourceActionSha256:actionShaByClipIndex.get(part.index)||sourceSha||null
+  })),dialogueStyle:storyDialogue?.style||null,
+  dialogueLines:storyDialogue?.cues||[],audioSettings:soundOptions(),
+  unmapped:storyParsed.unmapped,missing:storyPlan.missing,blocking:storyPlan.blocking,
+  ready:storyPlan.ready&&!!sourceSha,realGLBClipPlaybackOnly:true,
+  generatedMotionFromText:false,cloudLLMDialogueGenerated:false,
+  originalWebAudioMusic:true,browserSpeechOnly:true,
+  exportedSoundTrack:false,createdMp4:false,actualCombatSceneApproved:false,
+  physicalGPU60FPSVerified:false
+ };
+ storyOutputUrl=URL.createObjectURL(new Blob([JSON.stringify(evidence,null,2)],{type:'application/json'}));
+ const link=document.createElement('a');link.className='download';link.href=storyOutputUrl;
+ link.download='AIG-3-3-Story-Dialogue-Audio-Cue-Sheet.json';
+ link.textContent='下載劇情／台詞／聲音提示與素材缺口 JSON';
+ $('story-downloads').append(link);
+}
+function renderDialogueEditor(){
+ const parent=$('story-dialogues');parent.replaceChildren();
+ for(const cue of storyDialogue?.cues||[]){
+  const outer=document.createElement('div');outer.className='story-dialogue';
+  const title=document.createElement('label');title.textContent='第 '+(cue.beat+1)+' 段：'+cue.actionId+'｜'+cue.speaker;
+  const edit=document.createElement('textarea');edit.rows=2;edit.maxLength=240;
+  edit.value=cue.text;edit.setAttribute('aria-label','台詞 '+(cue.beat+1));
+  edit.addEventListener('input',()=>{
+   try{
+    if(view?.animation?.story?.playing){
+     view.animation.stopStory();view.animation.mixer.stopAllAction();
+     $('story-play').disabled=!storyPlan?.ready;$('story-stop').disabled=true;
+     $('clip').disabled=false;storySound.stop();clearSubtitle();
+    }
+    storyDialogue=updateDialogueCue(storyDialogue,cue.beat,edit.value);
+    if(storyPlan?.ready)storyPlan=annotateDialoguePlan(storyPlan,storyDialogue);
+    exportStoryEvidence();
+    $('story-status').textContent='台詞已更新，播放時使用新內容；語音品質依瀏覽器可用聲音決定。';
+   }catch(e){$('story-status').textContent='台詞未更新：'+e.message;}
+  });
+  outer.append(title,edit);parent.append(outer);
+ }
+}
+const refreshStoryAudioEvidence=()=>{if(storyPlan)exportStoryEvidence();};
+
 function clearStoryPlan(reason='劇情或 GLB 動作已改變，請重新解析。'){
  view?.animation?.stopStory();
- storyPlan=null;
+ storySound.stop();clearSubtitle();
+ storyPlan=null;storyDialogue=null;storyParsed=null;
+ $('story-dialogues').replaceChildren();
  $('story-play').disabled=true;$('story-stop').disabled=true;
  if(storyOutputUrl){URL.revokeObjectURL(storyOutputUrl);storyOutputUrl=null;}
  $('story-downloads').replaceChildren();$('story-timeline').replaceChildren();
@@ -189,6 +254,13 @@ function renderSkinReport(r){
   $('skin-check-downloads').append(a);
  }
 }
+$('audio-volume').addEventListener('input',()=>{
+ $('audio-volume-value').textContent=$('audio-volume').value+'%';
+ refreshStoryAudioEvidence();
+});
+for(const id of ['voice-enabled','sfx-enabled','music-enabled','music-mood'])
+ $(''+id).addEventListener('change',refreshStoryAudioEvidence);
+$('dialogue-style').addEventListener('change',()=>$('story-build').click());
 $('story-text').addEventListener('input',()=>clearStoryPlan('劇情已修改；請重新解析並檢查真實動作清單。'));
 $('story-build').addEventListener('click',()=>{
  clearStoryPlan('解析劇情中……');
@@ -196,7 +268,10 @@ $('story-build').addEventListener('click',()=>{
   const story=parseStory($('story-text').value);
   const clips=view?.animation?.clips||[];
   const plan=resolveStoryClips(story,clips);
-  storyPlan=plan;storyBeatsVisible(plan);
+  storyParsed=story;
+  storyDialogue=composeDialogue(story,{style:$('dialogue-style').value});
+  storyPlan=plan.ready?annotateDialoguePlan(plan,storyDialogue):plan;
+  storyBeatsVisible(storyPlan);renderDialogueEditor();
   const blockers=plan.blocking.map(x=>x.reason);
   const coverage=plan.timeline.length+'/'+plan.inputBeats;
   $('story-status').textContent=plan.ready&&sourceSha
@@ -206,18 +281,23 @@ $('story-build').addEventListener('click',()=>{
      ([...new Set(blockers)].join('、')||'尚未載入有動畫的正式 GLB 與來源 SHA')+
      '。請匯入缺少的相容動作片段後重試；不以照片晃動充數。';
   $('story-play').disabled=!(plan.ready&&sourceSha&&view?.model);
-  const evidence={schema:STORY_PIPELINE_VERSION,originalText:story.originalText,
-   sourceCharacterSha256:sourceSha||null,steps:plan.timeline.map(part=>({
-    ...part,sourceActionSha256:actionShaByClipIndex.get(part.index)||sourceSha||null
-   })),unmapped:story.unmapped,missing:plan.missing,blocking:plan.blocking,
-   ready:plan.ready&&!!sourceSha,realGLBClipPlaybackOnly:true,
-   generatedMotionFromText:false,createdMp4:false,actualCombatSceneApproved:false,
-   physicalGPU60FPSVerified:false};
-  storyOutputUrl=URL.createObjectURL(new Blob([JSON.stringify(evidence,null,2)],{type:'application/json'}));
-  const link=document.createElement('a');link.className='download';link.href=storyOutputUrl;
-  link.download='AIG-3-2-Story-Action-Timeline-Evidence.json';
-  link.textContent='下載劇情分鏡／動作缺口 JSON';$('story-downloads').append(link);
+  exportStoryEvidence();
  }catch(e){clearStoryPlan('劇情解析 BLOCKED：'+e.message);}
+});
+$('dialogue-preview').addEventListener('click',()=>{
+ if(!storyDialogue?.cues.length){
+  $('story-build').click();
+ }
+ const cue=storyDialogue?.cues?.[0];
+ if(!cue){$('story-audio-status').textContent='沒有可試聽的台詞。';return;}
+ try{
+  storySound.configure({...soundOptions(),music:false});
+  storySound.start();
+  showSubtitle(cue.speaker+'：'+cue.text);
+  storySound.previewDialogue(cue.text,cue.actionId);
+  $('story-audio-status').textContent='試聽第一句：'+cue.text+
+    (storySound.voiceAvailable?'（瀏覽器語音）':'（本機無繁中語音，僅顯示字幕／音效）');
+ }catch(e){$('story-audio-status').textContent='試聽失敗：'+e.message+'；字幕保留。';}
 });
 $('story-play').addEventListener('click',()=>{
  if(!storyPlan?.ready||!view?.model||!sourceSha){
@@ -225,25 +305,37 @@ $('story-play').addEventListener('click',()=>{
  }
  if(view.reviewBusy||view.actionImportBusy){$('story-status').textContent='驗收／匯入進行中，不能同時播放劇情。';return;}
  try{
+  storySound.configure(soundOptions());
+  storySound.start();
+  view.onFrame=(dt)=>{
+   if(view?.animation?.story?.playing&&!view.animation.paused)storySound.tick(dt);
+  };
   view.animation.startStory(storyPlan,{
    onStep:({position,beat,total})=>{
+    showSubtitle(beat.dialogue);
+    storySound.step(beat);
     $('story-status').textContent='真 3D 劇情播放 '+(position+1)+'/'+total+'：'+beat.label+
       '（'+beat.clipName+'，'+beat.seconds.toFixed(2)+'秒）。';
     [...$('story-timeline').children].forEach(x=>{x.style.borderColor=x.dataset.storyBeat===String(beat.beat)?'#73dfea':'#26455a';});
    },
    onFinish:()=>{
-    $('story-status').textContent='劇情真實 GLB 動作已依序播放完畢；這不是已生成的 MP4，也不是打鬥安全驗收。';
+    storySound.stop();clearSubtitle();
+    $('story-status').textContent='劇情真實 GLB 動作與本機對白／音效已播放完畢；目前不是已輸出的 MP4，也不是打鬥安全驗收。';
     $('story-stop').disabled=true;$('story-play').disabled=false;
     $('clip').disabled=false;$('pause').textContent='繼續動畫';
    }
   });
   $('story-stop').disabled=false;$('story-play').disabled=true;
   $('clip').disabled=true;$('pause').textContent='暫停動畫';
- }catch(e){$('story-status').textContent='劇情播放 BLOCKED：'+e.message+'，原人物資料保留。';}
+ }catch(e){
+  storySound.stop();clearSubtitle();
+  $('story-status').textContent='劇情播放 BLOCKED：'+e.message+'，原人物資料保留。';
+ }
 });
 $('story-stop').addEventListener('click',()=>{
  if(!view?.animation)return;
  view.animation.stopStory();view.animation.mixer.stopAllAction();view.animation.paused=true;
+ storySound.stop();clearSubtitle();
  $('story-stop').disabled=true;$('story-play').disabled=!storyPlan?.ready;
  $('clip').disabled=!view.animation.clips?.length;
  $('pause').textContent='繼續動畫';
@@ -348,7 +440,7 @@ $('clip').addEventListener('change',()=>{
   $('timeline-status').textContent='已切換真實 GLB 動畫片段；舊的四方向與 16 格圖片失效，請重新擷取。';
  }catch(e){status.textContent='片段未切換：'+e.message;}
 });
-$('pause').addEventListener('click',()=>{if(!view?.animation)return;view.animation.paused=!view.animation.paused;$('pause').textContent=view.animation.paused?'繼續動畫':'暫停動畫';});
+$('pause').addEventListener('click',()=>{if(!view?.animation)return;view.animation.paused=!view.animation.paused;if(view.animation.story?.playing){if(view.animation.paused)storySound.pause();else storySound.resume();}$('pause').textContent=view.animation.paused?'繼續動畫':'暫停動畫';});
 if(window.AIG_OFFLINE){
  $('generation').hidden=true;$('stages').hidden=true;status.textContent='本機離線播放 · 原始 GLB 與 PBR 材質保留；造型與實機效能尚未正式驗收。';
  const bytes=Uint8Array.from(atob(window.AIG_OFFLINE.glb),c=>c.charCodeAt(0));
