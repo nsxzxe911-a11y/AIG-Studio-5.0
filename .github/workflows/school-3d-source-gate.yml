@@ -868,7 +868,7 @@ jobs:
             if(!source.includes(s))throw Error('SKIN_QA_UI_MISSING_'+s);
           for(const s of ["view.startSkinInspection(", "new Blob([JSON.stringify(r,null,2)]", "'local-glb'"])
             if(!app.includes(s))throw Error('SKIN_QA_CALLBACK_MISSING_'+s);
-          if(!viewer.includes('this.skinProbe.capture(this.model,t'))
+          if(!viewer.includes('this.skinProbe.capture(this.model,t')
             ||!viewer.includes('GLB_EXTERNAL_ASSETS_NOT_ALLOWED'))throw Error('SKIN_QA_VIEWER_MISSING');
           console.log('FastModel 2.8 source-only skin overlap/weight/pose Gate PASS; actual approved heroine and GPU pixels remain unverified.');
           JS
