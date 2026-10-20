@@ -49,7 +49,10 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:no
 <option value="balanced">平衡 · 輪廓優先，深度適時加入</option>
 <option value="precise">精細 · 保留最高可用掃描細節</option>
 </select></label>
-<p class="small small-status" id="scan-speed-status" role="status">極速模式預設：先顯示 GLB 真骨架，不等待高成本輪廓計算；CPU 負荷過高自動降低掃描工作。正式 3D 模型本體、全彩材質、頭頸資料都不刪除。</p>
+<p class="small small-status" id="scan-speed-status" role="status">極速模式預設：先顯示 GLB 真骨架，不等待高成本輪廓計算；CPU 負荷過高自動降低掃描工作。正式 3D 模型本體、全彩材質、頭頸資料都不刪除。</p><div class="divider"></div><h3>FastModel 2.5 · 智慧記憶體快取</h3>
+<p id="scan-cache-status" class="small small-status" role="status">記憶體層級：尚未使用快取。啟動極速掃描後顯示骨架／輪廓／深度的真實 HIT、MISS、失效及容量估計。</p>
+<div class="btns"><button id="scan-cache-clear" type="button" class="action">清除可重建快取（保留骨架與原始模型）</button></div>
+<p class="small">手機掃描快取預算 8 MiB，桌面 32 MiB；只清理可重建的掃描資料。快取命中不是 GPU 60 FPS 實測。</p>
 <div class="divider"></div><h3>FastModel 2.1 · 骨架實線／外型隱藏虛線</h3>
 <label for="scan-mode">掃描顯示層<select id="scan-mode">
 <option value="off" selected>關閉 · 正式純表面／效能優先</option>
