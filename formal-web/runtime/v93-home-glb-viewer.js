@@ -4,7 +4,10 @@
  */
 (function(w,d){"use strict";
 const src="./zoo-6ax/local-glb/aig_6ax_machine_v9.glb";
-const skip=/^(?:STATIC_LEFT_|STATIC_BRIDGE|STATIC_BACK_WALL|STATIC_LEFT_INNER_WALL|STATIC_RIGHT_INNER_WALL|B_SUPPORT_REAR|B_BEARING_REAR|B_JOURNAL_REAR|B_CRADLE_LEFT_|A_SUPPORT_LEFT|A_BEARING_LEFT|A_SHAFT_LEFT|A_DRIVE_COVER_LEFT|A_BEARING_CAP_LEFT|A_BOLT_L_|WORKPIECE)/;
+/* Hide only the SECOND moving cradle arm for the approved single-arm direction.
+ * The original left structural column, roof crossbeam, B bearings, and real
+ * A-axis workpiece MUST remain visible; removing them caused broken silhouettes. */
+const skip=/^(?:B_CRADLE_LEFT_ARM|B_CRADLE_LEFT_FOOT|A_SUPPORT_LEFT|A_BEARING_LEFT|A_SHAFT_LEFT|A_DRIVE_COVER_LEFT|A_BEARING_CAP_LEFT|A_BOLT_L_)/;
 let started=false,canvas=null,frame=null,ready=false,program=null,gl=null;
 const I=()=>{const m=new Float32Array(16);m[0]=m[5]=m[10]=m[15]=1;return m};
 function mul(a,b){const o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)o[c*4+r]+=a[k*4+r]*b[c*4+k];return o}
@@ -21,11 +24,11 @@ function look(eye,target){
 function perspective(ratio){const f=1/Math.tan(.83/2),m=new Float32Array(16),near=3,far=7000;m[0]=f/ratio;m[5]=f;m[10]=(far+near)/(near-far);m[11]=-1;m[14]=2*far*near/(near-far);return m}
 function compile(type,code){const s=gl.createShader(type);gl.shaderSource(s,code);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error("SHADER: "+gl.getShaderInfoLog(s));return s}
 function createShader(){
- const v=compile(gl.VERTEX_SHADER,"attribute vec3 p;attribute vec3 n;uniform mat4 mvp;uniform mat4 model;varying vec3 normal;varying float height;void main(){vec4 w=model*vec4(p,1.);normal=mat3(model)*n;height=w.z;gl_Position=mvp*vec4(p,1.);}");
- const f=compile(gl.FRAGMENT_SHADER,"precision mediump float;varying vec3 normal;varying float height;uniform vec3 color;void main(){vec3 N=normalize(normal);float lite=.48+.75*max(0.,dot(N,normalize(vec3(.35,-.68,.68))));float spec=pow(max(0.,dot(N,normalize(vec3(.7,-.3,.6)))),18.)*.42;float rim=pow(1.-abs(dot(N,normalize(vec3(0.,-.6,.75)))),3.)*.2;vec3 c=mix(color,vec3(.42,.63,.82),.38)*(.62+lite)+vec3(.55,.83,1.)*(spec+rim);gl_FragColor=vec4(c,1.);}");
+ const v=compile(gl.VERTEX_SHADER,"attribute vec3 p;attribute vec3 n;uniform mat4 mvp;uniform mat4 model;uniform mat3 normalMatrix;varying vec3 normal;varying float height;void main(){vec4 w=model*vec4(p,1.);normal=normalize(normalMatrix*n);height=w.z;gl_Position=mvp*vec4(p,1.);}");
+ const f=compile(gl.FRAGMENT_SHADER,"precision mediump float;varying vec3 normal;varying float height;uniform vec3 color;void main(){vec3 N=normalize(normal);vec3 key=normalize(vec3(.43,-.65,.63));float lit=.24+.64*max(0.,dot(N,key))+.14*max(0.,dot(N,normalize(vec3(-.6,.3,.7))));float shine=pow(max(0.,dot(N,normalize(vec3(.45,-.35,.81)))),28.)*.17;vec3 outColor=color*lit+vec3(.7,.85,.97)*shine;gl_FragColor=vec4(min(outColor,vec3(1.)),1.);}");
  program=gl.createProgram();gl.attachShader(program,v);gl.attachShader(program,f);gl.linkProgram(program);
  if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error("LINK "+gl.getProgramInfoLog(program));
- gl.useProgram(program);return{p:gl.getAttribLocation(program,"p"),n:gl.getAttribLocation(program,"n"),mvp:gl.getUniformLocation(program,"mvp"),model:gl.getUniformLocation(program,"model"),color:gl.getUniformLocation(program,"color")};
+ gl.useProgram(program);return{p:gl.getAttribLocation(program,"p"),n:gl.getAttribLocation(program,"n"),mvp:gl.getUniformLocation(program,"mvp"),model:gl.getUniformLocation(program,"model"),normalMatrix:gl.getUniformLocation(program,"normalMatrix"),color:gl.getUniformLocation(program,"color")};
 }
 function unpack(bytes){
  const dv=new DataView(bytes),size=dv.byteLength;
@@ -51,18 +54,46 @@ function unpack(bytes){
   const position=gl.createBuffer(),normal=gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER,position);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.STATIC_DRAW);
   gl.bindBuffer(gl.ARRAY_BUFFER,normal);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(b),gl.STATIC_DRAW);
-  return{position,normal,count:a.length/3,color:json.materials[p.material]?.pbrMetallicRoughness?.baseColorFactor?.slice(0,3)||[.55,.72,.8]};
+  return{position,normal,count:a.length/3,
+   color:json.materials[p.material]?.pbrMetallicRoughness?.baseColorFactor?.slice(0,3)||[.55,.72,.8],
+   extents:[json.accessors[p.attributes.POSITION].min,json.accessors[p.attributes.POSITION].max]};
  }));
  if(!["A_GROUP","B_GROUP","C_GROUP"].every(name=>json.nodes.some(n=>n.name===name)))throw Error("GLB_AXES_MISSING");
  const scene=json.scenes[json.scene||0];
- const all=[];function walk(id,parent){
+ const all=[],min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+ function includeCorners(part,m){
+  const [lo,hi]=part.extents;
+  if(!lo||!hi)throw Error("GLB_MESH_BOUNDS_MISSING");
+  for(const x of [lo[0],hi[0]])for(const y of [lo[1],hi[1]])for(const z of [lo[2],hi[2]]){
+   const pt=[m[0]*x+m[4]*y+m[8]*z+m[12],
+             m[1]*x+m[5]*y+m[9]*z+m[13],
+             m[2]*x+m[6]*y+m[10]*z+m[14]];
+   for(let k=0;k<3;k++){min[k]=Math.min(min[k],pt[k]);max[k]=Math.max(max[k],pt[k]);}
+  }
+ }
+ function walk(id,parent){
   const n=json.nodes[id];if(!n||skip.test(n.name||""))return;
   const m=mul(parent,mul(translate(n.translation||[0,0,0]),mul(quat(n.rotation),scale(n.scale||[1,1,1]))));
-  if(n.mesh!==undefined)for(const part of mesh[n.mesh])all.push({...part,world:m});
+  if(n.mesh!==undefined)for(const part of mesh[n.mesh]){includeCorners(part,m);all.push({...part,world:m,name:n.name});}
   for(const child of n.children||[])walk(child,m);
  }
  for(const id of scene.nodes)walk(id,I());
- return all;
+ if(!all.length||min.some(v=>!Number.isFinite(v)))throw Error("GLB_NO_VISIBLE_MESH");
+ const names=new Set(all.map(x=>x.name));
+ for(const key of ["STATIC_BED","STATIC_LEFT_COLUMN","STATIC_RIGHT_COLUMN","STATIC_BRIDGE",
+     "SPINDLE_HEAD","B_CRADLE_RIGHT_ARM","A_BODY","CHUCK","WORKPIECE"]){
+  if(!names.has(key))throw Error("GLB_COMPONENT_MISSING_"+key);
+ }
+ return {parts:all,names:[...names],center:min.map((v,i)=>(v+max[i])/2),
+   radius:Math.hypot(...max.map((v,i)=>v-min[i]))/2,bounds:{min,max}};
+}
+function normalMatrix(m){
+ const a=[m[0],m[1],m[2]],b=[m[4],m[5],m[6]],c=[m[8],m[9],m[10]];
+ const cross=(u,v)=>[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];
+ const ab=cross(b,c),bc=cross(c,a),ca=cross(a,b);
+ const det=a[0]*ab[0]+a[1]*ab[1]+a[2]*ab[2];
+ if(Math.abs(det)<1e-9)return new Float32Array([1,0,0,0,1,0,0,0,1]);
+ return new Float32Array([...ab,...bc,...ca].map(v=>v/det));
 }
 function start(){
  if(started)return;canvas=d.querySelector('.screen[data-page="HOME"] [data-aig93-glb]');
@@ -72,8 +103,10 @@ function start(){
   if(!gl)throw Error("WEBGL_UNAVAILABLE");
   const uniforms=createShader();
   fetch(src,{cache:"force-cache"}).then(r=>{if(!r.ok)throw Error("GLB_HTTP_"+r.status);return r.arrayBuffer()}).then(data=>{
-   const parts=unpack(data);ready=true;canvas.dataset.aig93Glb="ready";
-   if(label)label.textContent="真實 GLB V9.3 · 模型外觀預覽（非切削結果）";
+   const geometry=unpack(data),parts=geometry.parts;ready=true;
+   canvas.dataset.aig93Glb="ready";canvas.dataset.aig95Structure="verified";
+   canvas.dataset.aig95Workpiece="visible";
+   if(label)label.textContent="6AX · 完整機殼／工件／單臂搖籃預覽 · 非切削證據";
    let last=0;
    const loop=now=>{
     frame=null;
@@ -85,18 +118,44 @@ function start(){
     if(canvas.width!==wpx||canvas.height!==hpx){canvas.width=wpx;canvas.height=hpx}
     gl.viewport(0,0,wpx,hpx);gl.enable(gl.DEPTH_TEST);
     gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-    const a=now*.00010,eye=[1660*Math.cos(a)-950*Math.sin(a),1660*Math.sin(a)+950*Math.cos(a),1080];
-    const pv=mul(perspective(wpx/hpx),look(eye,[0,0,360]));
+    // Auto-fit the REAL GLB mesh bounds, not a guessed origin/scale.
+    // Keep the spindle vertical and do not spin the entire machine endlessly.
+    const c=geometry.center,aspect=wpx/hpx,fov=.83,tanHalf=Math.tan(fov/2);
+    const sway=wpx>720?Math.sin(now*.00012)*.035:0;
+    const direction=[.56+sway,-.69,.48],dn=Math.hypot(...direction);
+    const dir=direction.map(x=>x/dn),basis=look(dir,[0,0,0]);
+    const lo=geometry.bounds.min,hi=geometry.bounds.max;
+    let maxX=0,maxY=0,nearExtent=0;
+    for(const x of [lo[0],hi[0]])for(const y of [lo[1],hi[1]])for(const z of [lo[2],hi[2]]){
+     const a=[x-c[0],y-c[1],z-c[2]];
+     maxX=Math.max(maxX,Math.abs(a[0]*basis[0]+a[1]*basis[4]+a[2]*basis[8]));
+     maxY=Math.max(maxY,Math.abs(a[0]*basis[1]+a[1]*basis[5]+a[2]*basis[9]));
+     nearExtent=Math.max(nearExtent,a[0]*basis[2]+a[1]*basis[6]+a[2]*basis[10]);
+    }
+    // Camera distance derived from the actual projected machine extents, not
+    // only bounding-sphere radius: complete machine fills the viewport safely.
+    const distance=(Math.max(maxY/tanHalf,maxX/(tanHalf*Math.max(.3,aspect)))+nearExtent)*1.14;
+    const eye=c.map((v,i)=>v+dir[i]*distance);
+    const pv=mul(perspective(aspect),look(eye,c));
     for(const item of parts){
      gl.uniformMatrix4fv(uniforms.model,false,item.world);
+     gl.uniformMatrix3fv(uniforms.normalMatrix,false,normalMatrix(item.world));
      gl.uniformMatrix4fv(uniforms.mvp,false,mul(pv,item.world));
      gl.uniform3fv(uniforms.color,new Float32Array(item.color));
      gl.bindBuffer(gl.ARRAY_BUFFER,item.position);gl.enableVertexAttribArray(uniforms.p);gl.vertexAttribPointer(uniforms.p,3,gl.FLOAT,false,0,0);
      gl.bindBuffer(gl.ARRAY_BUFFER,item.normal);gl.enableVertexAttribArray(uniforms.n);gl.vertexAttribPointer(uniforms.n,3,gl.FLOAT,false,0,0);
      gl.drawArrays(gl.TRIANGLES,0,item.count);
     }
+    const err=gl.getError();
+    if(err!==gl.NO_ERROR){canvas.dataset.aig95Rendered="error_"+err;return}
+    canvas.dataset.aig95Rendered="true";
    };
-   w.AIG_HOME_V93_VIEWER=Object.freeze({inspect:()=>({ready,parts:parts.length,source:src,visualOnly:true})});
+   w.AIG_HOME_V93_VIEWER=Object.freeze({inspect:()=>({
+    ready,parts:parts.length,source:src,visualOnly:true,
+    structuralParts:geometry.names,workpieceVisible:geometry.names.includes("WORKPIECE"),
+    leftColumnVisible:geometry.names.includes("STATIC_LEFT_COLUMN"),
+    bridgeVisible:geometry.names.includes("STATIC_BRIDGE"),
+    autoFramed:true,bounds:geometry.bounds})});
    frame=requestAnimationFrame(loop);
    w.addEventListener("hashchange",()=>{if(!frame&&ready)frame=requestAnimationFrame(loop)});
   }).catch(e=>{canvas.dataset.aig93Glb="error";if(label)label.textContent="GLB 外觀預覽未就緒 · 請進入 6AX 真工作區";});
