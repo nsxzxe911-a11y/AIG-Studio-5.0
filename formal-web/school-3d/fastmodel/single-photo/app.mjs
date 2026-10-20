@@ -165,6 +165,27 @@ async function sha256Bytes(bytes){
  const hash=new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));
  return Array.from(hash,x=>x.toString(16).padStart(2,'0')).join('');
 }
+let reconstructionEvidenceUrl=null,reconstructionEvidenceId=null;
+const phaseZh={QUEUED:'等待排程',PRECHECK:'來源檢查',RECONSTRUCTING:'3D 網格與 PBR 建模',TEXTURING:'材質階段',RIGGING:'自動綁定骨架',EXPORTING:'動作生成／GLB 匯出',COMPLETE:'生成任務完成',FAILED:'階段失敗',SUBMISSION_UNKNOWN:'服務可能已受理，待人工確認'};
+function renderReconstruction(job){
+ if(!job?.schema?.includes('RECONSTRUCTION_SERVICE_3_9'))return;
+ const phase=phaseZh[job.phase]||job.phase,files=job.artifacts||[];
+ $('reconstruction-phase-status').textContent='3D 自動化：'+phase+
+  '。原圖 SHA '+(job.sourceSHA256||'尚未取得').slice(0,16)+'…／輸入 SHA '+
+  (job.providerInputSHA256||'尚未取得').slice(0,16)+'…。'+
+  (job.phase==='SUBMISSION_UNKNOWN'?'未知受理狀態，不會自動重新付費提交。':'')+
+  (job.phase==='COMPLETE'?' 仍須人工核對頭頸、髮束、衣服與真動作；不是正式女主角驗收 PASS。':'')+
+  (job.lastError?' '+job.lastError:'');
+ if(reconstructionEvidenceId===job.jobId && !['COMPLETE','FAILED','SUBMISSION_UNKNOWN'].includes(job.phase))return;
+ if(reconstructionEvidenceUrl)URL.revokeObjectURL(reconstructionEvidenceUrl);
+ reconstructionEvidenceUrl=URL.createObjectURL(new Blob([JSON.stringify(job,null,2)],{type:'application/json'}));
+ reconstructionEvidenceId=job.jobId;
+ const el=$('reconstruction-evidence-downloads');el.replaceChildren();
+ const link=document.createElement('a');link.href=reconstructionEvidenceUrl;
+ link.download='AIG-FastModel-3-9-reconstruction-'+job.jobId+'-NOT-RELEASE.json';
+ link.className='download';link.textContent='下載 3D 任務與 SHA 證據';
+ el.append(link);
+}
 const journal=window.AIG_OFFLINE?null:new SubmissionJournal(localStorage);
 try{view=new PhotoViewer($('view'),m=>{$('viewport-status').textContent='顯示已隔離：'+m+'；生成檔案保留。';});}catch(e){$('viewport-status').textContent='此裝置暫時不能啟用 GPU 預覽；仍可生成與下載 GLB。';}
 const labels={NEW:'等待',SUBMITTING:'送出中',PENDING:'排程中',IN_PROGRESS:'生成中',SUCCEEDED:'完成',SKIPPED:'不適用',BASIC_WALK_PENDING:'下載動作',SUBMISSION_UNKNOWN:'受理待確認',FAILED:'未完成',CANCELED:'已取消'};
@@ -215,6 +236,9 @@ function show(d){
 async function follow(id){
  try{
   const d=await api('/api/jobs/'+id);show(d);
+  try{
+   renderReconstruction(await api('/api/reconstruction/jobs/'+id));
+  }catch(err){$('reconstruction-phase-status').textContent='3D 任務狀態暫時無法取得：'+err.message+'；原任務仍保留。';}
   const name=d.artifacts['animated.glb']?'animated.glb':d.artifacts['model.glb']?'model.glb':'';
   if(name&&loadedFile!==id+'/'+name){
    try{
@@ -343,12 +367,14 @@ $('generate').addEventListener('click',async()=>{
    preparedImage=await readData(prepared);
    $('prepared-foreground-status').textContent='前景草稿已提交來源比對；伺服器必須再次核對實際 PNG alpha 與每個不透明像素。';
   }
-  const fingerprint=sha+'|'+mode+'|'+(actionId??'default')+'|'+preparedHash;
+  const serviceId=$('reconstruction-service').value;
+  if(serviceId!=='meshy-image-to-3d')throw Error('未實際實作的 3D 重建服務不得送出。');
+  const fingerprint=sha+'|'+mode+'|'+(actionId??'default')+'|'+preparedHash+'|'+serviceId;
   const requestId=journal.begin(fingerprint);
   const image=await readData(file);
-  const payload={image,requestId,mode,actionId};
+  const payload={image,requestId,mode,actionId,serviceId};
   if(preparedImage)payload.preparedImage=preparedImage;
-  const d=await api('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json','X-AIG-Request':'1'},body:JSON.stringify(payload)});
+  const d=await api('/api/reconstruction/jobs',{method:'POST',headers:{'Content-Type':'application/json','X-AIG-Request':'1'},body:JSON.stringify(payload)});
   journal.accept(fingerprint,d.id);follow(d.id);
  }catch(e){busy=false;status.textContent=errorText(e.message);updateButton();}
 });
@@ -673,7 +699,17 @@ if(window.AIG_OFFLINE){
  load(bytes.buffer,window.AIG_OFFLINE.orbit).catch(e=>{status.textContent='預覽未完成：'+e.message;});
 }else{
  api('/api/config').then(async c=>{
-  ready=c.configured;status.textContent=ready?'重建服務已連接；選圖後按一次生成。':'重建服務未連接；請先在主機設定服務帳戶。';updateButton();
+  ready=c.configured;status.textContent=ready?'重建服務已連接；選圖後按一次生成，後續步驟自動接續。':'重建服務未連接；請先在主機設定服務帳戶。';updateButton();
+  api('/api/reconstruction/services').then(config=>{
+   const service=config.providers?.find(p=>p.id==='meshy-image-to-3d'&&p.modelServiceIsReal);
+   $('reconstruction-service').disabled=!service?.configured;
+   $('reconstruction-service-status').textContent=service?.configured
+    ?'真實 Meshy 服務已設定；一鍵連續執行模型／PBR／Rig／動作／GLB，可能消耗點數。未設定其他備援服務，送出不明不重送。'
+    :'目前沒有已設定的真實 3D 重建服務；可離線匯入 GLB。任何未實作服務不可選。';
+  }).catch(err=>{
+   $('reconstruction-service').disabled=true;
+   $('reconstruction-service-status').textContent='重建服務查詢失敗：'+err.message;
+  });
   dialogueCloudConfigured=!!c.dialogueAIConfigured;
   speechAIConfigured=!!c.speechAIConfigured;refreshTtsButton();
   $('ai-tts-status').textContent=speechAIConfigured
