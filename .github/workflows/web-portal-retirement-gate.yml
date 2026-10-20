@@ -1,0 +1,18 @@
+name: AIG Portal No Low-grade Web Runtime Gate
+on:
+  push:
+    branches: [web/aig-dual-formal-runtime-20261016]
+    paths: ['formal-web/**','.github/workflows/web-portal-retirement-gate.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  retired-portal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node formal-web/qa/web-retirement-verify.cjs
+      - run: echo "No Web machining code served; existing APK and Windows sources remain untouched."

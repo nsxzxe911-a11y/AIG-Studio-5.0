@@ -1,0 +1,54 @@
+{
+  "status": "RETIRED_WEB_RUNTIME_USER_REQUEST",
+  "time": "2026-10-20",
+  "sourceCommit": "cd4e19b102d67678b7048575c79beb4c8e5ff4d3",
+  "archiveBranch": "archive/retired-lowgrade-web-v95-20261020",
+  "scope": "Low-grade Web runtime removed from LIVE static site, not the whole AIG website",
+  "disabledWebRuntimePaths": [
+    "formal-web/runtime/v88-manus-runtime-adapter.js",
+    "formal-web/runtime/v89-nc-first-state.js",
+    "formal-web/runtime/v90-cad-cam-sim-runtime.js",
+    "formal-web/runtime/v92-6ax-authority-layout.js",
+    "formal-web/runtime/v93-home-glb-viewer.js",
+    "formal-web/runtime/v93-home-rgb-layout.js",
+    "formal-web/runtime/v94-home-audit-download.js",
+    "formal-web/v88-manus-runtime-adapter.css",
+    "formal-web/v89-nc-first-state.css",
+    "formal-web/v90-cad-cam-sim-runtime.css",
+    "formal-web/v91-rgb-desktop.css",
+    "formal-web/v92-6ax-authority-layout.css",
+    "formal-web/v93-home-rgb.css",
+    "formal-web/v94-home-audit-download.css",
+    "formal-web/studio-375-skin.css",
+    "formal-web/studio-375-overlay.js",
+    "formal-web/studio-375-diagnostics.js",
+    ".github/workflows/v86-browser-visual-gate.yml",
+    ".github/workflows/v91-formal-rgb-glb.yml",
+    ".github/workflows/v92-6ax-region-gate.yml",
+    ".github/workflows/v93-home-gate.yml",
+    ".github/workflows/v94-home-audit-download.yml",
+    ".github/workflows/v95-model-gate.yml",
+    ".github/workflows/v83-formal-ui-gate.yml"
+  ],
+  "retiredEntryPoints": [
+    "mobile-runtime.html",
+    "mobile-runtime-v86.html",
+    "mobile-runtime-v90.html",
+    "studio-375.html"
+  ],
+  "preserved": [
+    "Original dual-project public site",
+    "native Android source",
+    "native Windows source",
+    "GitHub release binaries and workflows",
+    "approved RGB authority material",
+    "client localStorage and IndexedDB, no automatic deletion"
+  ],
+  "deploymentPolicy": "Must pass portal gate and verify Render LIVE exact SHA",
+  "noClaims": [
+    "Native Android+Windows fully integrated into Web",
+    "Native latest APK/EXE verified",
+    "Web machining safety approved"
+  ],
+  "machineOutput": "BLOCKED"
+}
