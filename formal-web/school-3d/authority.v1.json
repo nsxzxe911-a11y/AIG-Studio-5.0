@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "authorityId": "AIG_SCHOOL_3D_HERO_V1_20261020",
+  "target": "AIG original Render homepage; isolated preview first",
+  "platforms": [
+    "Android S23-class",
+    "Windows 4K"
+  ],
+  "visualReference": "User-approved high-quality 3D cherry-blossom schoolgirl preview from 2026-10-20, NOT previous low-poly VTK test",
+  "approvalPolicy": "NO_FALLBACK_MODEL; SHA256_REQUIRED; per-asset and per-platform approval; don't publish until confirmed",
+  "deploymentState": "PREVIEW_ONLY_NOT_PRODUCTION",
+  "assets": {
+    "poster": {
+      "path": "./assets/approved-poster.png",
+      "sha256": null,
+      "approval": "PENDING_BINARY_INGEST",
+      "role": "static preview; no animation claims"
+    },
+    "character": {
+      "path": "./assets/character-rigged.glb",
+      "sha256": null,
+      "approval": "PENDING_MODEL_RIG_PBR_QA",
+      "role": "18-year-old adult female 3D skinned rig with animated morph targets"
+    },
+    "campus": {
+      "path": "./assets/sakura-campus.glb",
+      "sha256": null,
+      "approval": "PENDING_3D_SCENE_QA",
+      "role": "high-quality PBR school/campus/cherry blossom scene"
+    },
+    "animations": {
+      "path": "./assets/character-motion.glb",
+      "sha256": null,
+      "approval": "PENDING_ANIMATION_QA",
+      "role": "natural idle/walk/blink breathing root motion"
+    }
+  },
+  "runtime": {
+    "entry": "./scene-runtime.v1.js",
+    "approval": "PENDING_IMPLEMENTATION",
+    "dependencies": [
+      "Three.js vendored locally",
+      "GLTFLoader vendored locally"
+    ],
+    "maxInitialNetworkRequests": 2
+  },
+  "gate": {
+    "requireExactSHA": true,
+    "allowPlaceholderGeometry": false,
+    "requireRiggedMesh": true,
+    "requireSkinPBR": true,
+    "requireMotion": true,
+    "requireDeviceEvidence": [
+      "S23",
+      "4K Desktop"
+    ],
+    "requireHomeNavUnchanged": true
+  }
+}
