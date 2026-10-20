@@ -102,7 +102,28 @@
         readAndVerify(assets.campus, 90 * 1024 * 1024),
         readAndVerify(assets.animations, 35 * 1024 * 1024)
       ]);
-      const runtime = await import("./scene-runtime.v1.js"); // Exists only after Stage 3 gate.
+      // Passing SHA means 'unchanged bytes', NOT 'valid rigged character'.
+      // Structural verification prevents a mislabeled mannequin GLB from becoming the runtime model.
+      const validator = await import("./glb-audit.v1.mjs");
+      const checks = [
+        validator.auditGLB(character, "character"),
+        validator.auditGLB(campus, "campus"),
+        validator.auditGLB(animations, "animations")
+      ];
+      const failed = checks.find((result) => !result.pass);
+      if (failed) {
+        throw new Error(`3D 結構驗收失敗（${failed.role}）：${failed.errors[0]}`);
+      }
+      const characterDoc = validator.parseGLB(character);
+      const animationDoc = validator.parseGLB(animations);
+      const rigNames = new Set((characterDoc.nodes || []).map(n => String(n.name || "").toLowerCase()).filter(Boolean));
+      const driven = new Set((animationDoc.animations || []).flatMap(a => a.channels || [])
+        .map(ch => String(animationDoc.nodes?.[ch.target?.node]?.name || "").toLowerCase()).filter(Boolean));
+      const matched = [...driven].filter(n => rigNames.has(n)).length;
+      if (driven.size < 3 || matched / driven.size < 0.7) {
+        throw new Error("動作骨架與角色骨架節點名稱匹配率不足（需 ≥70%）");
+      }
+      const runtime = await import("./scene-runtime.v1.js"); // Added only after Stage 3 visual gate.
       if (typeof runtime.mountScene !== "function") throw new Error("正式 3D 引擎接口缺失");
       if (mounted?.dispose) mounted.dispose();
       mounted = await runtime.mountScene({ viewport, character, campus, animations, manifest: verified });
