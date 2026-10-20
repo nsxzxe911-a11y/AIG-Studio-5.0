@@ -78,3 +78,18 @@ test('bounded sampling and truthful UI/offline wiring',()=>{
  assert.ok(packer.includes('animated-integrity.mjs'));
  assert.ok(packer.includes("'\\n'+animationAudit+'\\n'"));
 });
+
+test('separate named animation clips are not accidentally merged into fake animation',()=>{
+ const {file,reader}=realFixture();
+ file.g.animations.push({...file.g.animations[0]});
+ const result=inspectAnimatedIntegrity(file,reader);
+ assert.equal(result.status,'BLOCKED');
+ assert.equal(result.reason,'MULTIPLE_ANIMATION_CLIPS_NEED_EXPLICIT_SELECTION');
+});
+test('same joint multiple conflicting channels cannot fake a stable sampled pose',()=>{
+ const {file,reader}=realFixture();
+ file.g.animations[0].channels.push({...file.g.animations[0].channels[0]});
+ const result=inspectAnimatedIntegrity(file,reader);
+ assert.equal(result.status,'BLOCKED');
+ assert.equal(result.reason,'DUPLICATE_NODE_ANIMATION_TRACK');
+});
