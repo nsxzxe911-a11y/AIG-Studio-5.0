@@ -43,7 +43,8 @@ function matrixProduct(a,b){
 /** A draw-ready snapshot created from actual GLB before frames start.
  * Large/unrigged primitives are omitted, not approximated using invented edges.
  */
-export function buildScanOverlay(file,readAccessor,{density='balanced'}={}){
+export function buildScanOverlay(file,readAccessor,{density='balanced',geometry='all'}={}){
+ if(!['all','bones'].includes(geometry))throw Error('SCAN_GEOMETRY_MODE_INVALID');
  if(!file?.g?.nodes||!file.g.skins?.length||typeof readAccessor!=='function')return {status:'BLOCKED_NO_SKIN',bones:[],surfaces:[],realSource:false};
  const g=file.g,b=scanBudget(density),parents=parentsFor(g.nodes),bones=[],surfaces=[],inverse=[];
  if(g.skins.length>32)return {status:'BLOCKED_SKIN_LIMIT',bones:[],surfaces:[],realSource:false};
@@ -60,6 +61,7 @@ export function buildScanOverlay(file,readAccessor,{density='balanced'}={}){
    if(parent>=0&&lookup.has(parent))bones.push({parent,child,role:g.nodes[child].extras?.aigSkeletonRegion||g.nodes[child].extras?.aigAnatomyPart||null});
   }
  }
+ if(geometry==='bones')return {status:bones.length?'SOURCE_READY':'BLOCKED_NO_DRAWABLE_TOPOLOGY',bones,surfaces:[],inverse,triangles:0,omitted:0,realSource:true,density,geometry};
  let totalTriangles=0,omitted=0;
  for(const n of g.nodes){
   if(n.mesh===undefined)continue;
@@ -96,7 +98,7 @@ export function buildScanOverlay(file,readAccessor,{density='balanced'}={}){
   }
  }
  return {status:bones.length||surfaces.length?'SOURCE_READY':'BLOCKED_NO_DRAWABLE_TOPOLOGY',bones,surfaces,inverse,
-   triangles:totalTriangles,omitted,realSource:true,density};
+   triangles:totalTriangles,omitted,realSource:true,density,geometry};
 }
 export function scanProject(p,view,width,height){
  if(!view||!(width>0&&height>0))throw Error('SCAN_VIEWPORT_INVALID');
