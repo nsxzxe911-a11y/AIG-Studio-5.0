@@ -49,7 +49,7 @@ class SpeechAITests(unittest.TestCase):
     def test_http_requires_local_origin_click_and_json(self):
         ai=SpeechAI('FAKE_KEY',transport=lambda *_:wav_bytes())
         with tempfile.TemporaryDirectory() as d:
-            server=make_server(Path(d)/'jobs',MeshyClient(''),port=0,speech_client=ai)
+            server=make_server(Path(d)/'jobs',MeshyClient(''),port=0,speech_client=ai,allow_paid_3d=True)
             thread=threading.Thread(target=server.serve_forever,daemon=True)
             thread.start()
             try:
