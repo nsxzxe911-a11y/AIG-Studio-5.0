@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from pipeline import PhotoPipeline
 from provider import MeshyClient
 from dialogue_ai import DialogueAI
+from tts_voice import SpeechAI
 
 HERE=Path(__file__).resolve().parent
 
@@ -19,8 +20,9 @@ def offline_document(pipe,job):
     return html.replace('<script src="/app.js"></script>','<script>window.AIG_OFFLINE='+json.dumps(payload)+';\n'+js+'</script>')
 
 
-def make_server(root,client,port=8765,dialogue_client=None):
+def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
     dialogue_client=dialogue_client or DialogueAI(os.environ.get('OPENAI_API_KEY',''))
+    speech_client=speech_client or SpeechAI(os.environ.get('OPENAI_API_KEY',''))
     pipe=PhotoPipeline(root,client);active=set();guard=threading.Lock();create_guard=threading.Lock();stopping=threading.Event()
     def begin(job):
         with guard:
@@ -55,7 +57,7 @@ def make_server(root,client,port=8765,dialogue_client=None):
             if not self.valid_origin():self.send({'error':'ORIGIN_BLOCKED'},403);return
             path=urlparse(self.path).path
             try:
-                if path=='/api/config':self.send({'configured':client.configured,'provider':'Meshy','liveGenerationVerified':False,'dialogueAIConfigured':dialogue_client.configured});return
+                if path=='/api/config':self.send({'configured':client.configured,'provider':'Meshy','liveGenerationVerified':False,'dialogueAIConfigured':dialogue_client.configured,'speechAIConfigured':speech_client.configured});return
                 if path=='/api/actions':self.send(client.request('/animations/library'));return
                 request_match=re.fullmatch(r'/api/requests/([0-9a-f]{32})',path)
                 if request_match:
@@ -82,8 +84,20 @@ def make_server(root,client,port=8765,dialogue_client=None):
             except Exception as e:self.send({'error':str(e)[:180]},409)
         def do_POST(self):
             if not self.valid_origin() or self.headers.get('X-AIG-Request')!='1':self.send({'error':'ORIGIN_BLOCKED'},403);return
-            if self.path not in ('/api/jobs','/api/story/dialogue'):
+            if self.path not in ('/api/jobs','/api/story/dialogue','/api/story/voice'):
                 self.send({'error':'NOT_FOUND'},404);return
+            if self.path=='/api/story/voice':
+                try:
+                    if self.headers.get('Content-Type')!='application/json':
+                        raise ValueError('TTS_JSON_REQUIRED')
+                    length=int(self.headers.get('Content-Length','0'))
+                    if not 0<length<=4*1024:raise ValueError('TTS_REQUEST_LIMIT')
+                    payload=json.loads(self.rfile.read(length))
+                    # Explicit user click only; may incur per-line billing, never retry.
+                    wav=speech_client.generate(payload)
+                    self.send(wav,kind='audio/wav');return
+                except Exception as error:
+                    self.send({'error':str(error)[:160]},409);return
             if self.path=='/api/story/dialogue':
                 try:
                     if self.headers.get('Content-Type')!='application/json':
@@ -125,7 +139,7 @@ def make_server(root,client,port=8765,dialogue_client=None):
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--port',type=int,default=8765);a=p.parse_args()
     server=make_server(a.root,MeshyClient(os.environ.get('MESHY_API_KEY','')),a.port)
-    print(f'AIG FastModel 3.3: http://127.0.0.1:{server.server_port} (Meshy account configured: {server.pipeline.client.configured}; optional opt-in dialogue LLM)',flush=True)
+    print(f'AIG FastModel 3.6: http://127.0.0.1:{server.server_port} (Meshy account configured: {server.pipeline.client.configured}; optional opt-in dialogue LLM)',flush=True)
     try:server.serve_forever()
     except KeyboardInterrupt:pass
     finally:server.server_close()
