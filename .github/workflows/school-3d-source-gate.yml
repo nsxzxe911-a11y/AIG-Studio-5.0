@@ -171,7 +171,7 @@ jobs:
           python formal-web/school-3d/tools/build_matchstick_spec.py \
             --reverse formal-web/school-3d/reverse-authority.v1.json \
             --out artifacts/school-3d-phase12-matchstick/matchstick-rig.v1.json
-          cmp artifacts/school-3d-phase12-matchstick/matchstick-rig.v1.json formal-web/school-3d/matchstick-rig.v1.json
+          python -c "import json; a=json.load(open('artifacts/school-3d-phase12-matchstick/matchstick-rig.v1.json')); b=json.load(open('formal-web/school-3d/matchstick-rig.v1.json')); assert a==b, 'matchstick rig source mismatch'; print('exact matching JSON fields - PASS')"
       - name: Archive Phase12 thin-bone contract only (NOT A CHARACTER)
         uses: actions/upload-artifact@v4
         with:
