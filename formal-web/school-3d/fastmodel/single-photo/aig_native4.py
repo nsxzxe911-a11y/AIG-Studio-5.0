@@ -167,7 +167,7 @@ def volume(front,side=None):
     for i in range(RINGS-1):
         for j in range(SIDES):
             k=i*SIDES+j;n=i*SIDES+(j+1)%SIDES
-            triangles.extend([k,k+SIDES,n,n,k+SIDES,n+SIDES])
+            triangles.extend([k,n,k+SIDES,n,n+SIDES,k+SIDES])
     # End caps: actual closed volume, not a flat depthless card.
     ctop=len(vertices);vertices.append((0,.5,0));normals.append((0,1,0))
     colors.append((.4,.4,.4,1));confidence.append(.10);levels.append("UNCERTAIN_CAP")
