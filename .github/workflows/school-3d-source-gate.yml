@@ -803,6 +803,31 @@ jobs:
           PY
           node --check /tmp/fastmodel-2-4-turbo-standalone.js
           echo "FastModel 2.4 SOURCE Gate only; no verified native Windows/Android GPU FPS claim."
+      - name: FastModel 2.5 exact-pose scan cache HIT MISS source safety Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/scan-cache.mjs
+          node --check formal-web/school-3d/fastmodel/web/scan-overlay.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/scan-cache.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-2-5-CACHE-HITS-NO-GPU-PROOF.html
+          python - <<'PY'
+          from pathlib import Path
+          t=Path('artifacts/fastmodel-technical/CI-FASTMODEL-2-5-CACHE-HITS-NO-GPU-PROOF.html').read_text()
+          for token in ['id="scan-cache-clear"','id="scan-cache-status"',
+                        'function createScanDerivedCache(',
+                        'function scanTopologyBytes(', 'identicalWorld(',
+                        'scanCache.relievePressure()','scanCache.clearDerived(',
+                        'derivedCache:scanCache','bytesApproximate:true',
+                        'measuredGpuSpeedup:false','window.AIG_EMBEDDED_GLB']:
+              assert token in t,token
+          js='window.AIG_EMBEDDED_GLB='+t.split('window.AIG_EMBEDDED_GLB=',1)[1].split('</script>',1)[0]
+          Path('/tmp/fastmodel-2-5-cache-standalone.js').write_text(js)
+          print('2.5 cache honest UI, source isolation and offline script packaged')
+          PY
+          node --check /tmp/fastmodel-2-5-cache-standalone.js
+          echo "FastModel 2.5 source cache logic Gate PASS; native Windows/Android FPS and GPU timing still UNVERIFIED"
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
