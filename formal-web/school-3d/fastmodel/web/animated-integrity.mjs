@@ -66,7 +66,7 @@ function tracks(file,reader){
  }
  return {arr,duration};
 }
-function bounds(points){
+function posedMeshBounds(points){
  const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];
  for(const p of points)for(let j=0;j<3;j++){lo[j]=Math.min(lo[j],p[j]);hi[j]=Math.max(hi[j],p[j]);}
  return {lo,hi};
@@ -125,7 +125,7 @@ export function inspectAnimatedIntegrity(file,reader,{frames=25,maxVerticesPerRo
   const head=roles.head.map(deform),neck=roles.neck.map(deform),hair=roles.hair.map(deform);
   if(lastHair)motion=Math.max(motion,Math.hypot(hair[0][0]-lastHair[0],hair[0][1]-lastHair[1],hair[0][2]-lastHair[2]));
   lastHair=hair[0];
-  const h=bounds(hair),n=bounds(neck),nearestHeadNeck=nearest(head,neck,maxPairsPerFrame),
+  const h=posedMeshBounds(hair),n=posedMeshBounds(neck),nearestHeadNeck=nearest(head,neck,maxPairsPerFrame),
    nearestHairNeck=nearest(hair,neck,maxPairsPerFrame);
   const front=overlap(h,n,0)*overlap(h,n,1),side=overlap(h,n,2)*overlap(h,n,1);
   readings.push({frame:step,timeSec:+seconds.toFixed(5),
