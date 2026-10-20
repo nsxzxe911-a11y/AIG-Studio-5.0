@@ -5,8 +5,8 @@
 (function(w,d){"use strict";
 const BASE="https://api.github.com/repos/",GH="https://github.com/";
 const PROJECTS=[
- Object.freeze({label:"AIG-II",repo:"nsxzxe911-a11y/AIG-II"}),
- Object.freeze({label:"AIG Studio 5.0",repo:"nsxzxe911-a11y/AIG-Studio-5.0"})
+ Object.freeze({label:"AIG-II",repo:"nsxzxe911-a11y/AIG-II",private:true}),
+ Object.freeze({label:"AIG Studio 5.0",repo:"nsxzxe911-a11y/AIG-Studio-5.0",private:false})
 ];
 const BRANCH="web/aig-dual-formal-runtime-20261016";
 const PERIOD=15*60*1000;
@@ -44,7 +44,7 @@ async function audit(){
  try{
   const headPromise=api(BASE+PROJECTS[1].repo+"/git/ref/heads/"+BRANCH);
   const runsPromise=api(BASE+PROJECTS[1].repo+"/actions/runs?branch="+encodeURIComponent(BRANCH)+"&per_page=25");
-  const releasePromises=PROJECTS.map(p=>api(BASE+p.repo+"/releases?per_page=30")
+  const releasePromises=PROJECTS.map(p=>p.private?Promise.resolve({project:p,private:true}):api(BASE+p.repo+"/releases?per_page=30")
    .then(data=>({project:p,data})).catch(e=>({project:p,error:String(e)})));
   const [headRaw,runRaw,...releases]=await Promise.all([headPromise,runsPromise,...releasePromises]);
   const sha=headRaw?.object?.sha;
@@ -53,7 +53,8 @@ async function audit(){
   const validRuns=runs.filter(r=>r?.head_sha===sha&&/AIG V9[34].*(?:HOME|Formal|RGB)/i.test(r.name||""));
   validRuns.sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||"")));
   const run=validRuns[0]||null;
-  const downloads=releases.map(({project,data,error})=>{
+  const downloads=releases.map(({project,data,error,private:restricted})=>{
+   if(restricted)return {project,private:true,error:null,assets:[],release:null};
    if(error)return {project,error,assets:[],release:null};
    const publicReleases=(Array.isArray(data)?data:[]).filter(r=>!r.draft&&!r.prerelease&&r.published_at);
    publicReleases.sort((a,b)=>String(b.published_at).localeCompare(String(a.published_at)));
@@ -115,7 +116,8 @@ function render(){
  dl.append(el("p","aig94-hint","目前網頁 V94 不等於 APK／EXE 的建置版本。僅出示 GitHub 已發布、有實體資產的安裝檔；歷史版本不會冒充新版。"));
  for(const record of state.downloads){
   const project=el("div","aig94-project");project.append(el("h4","",record.project.label));
-  if(record.error)project.append(el("p","aig94-warning","Release 查詢失敗，下載狀態未核對："+record.error));
+  if(record.private)project.append(el("p","aig94-warning","AIG-II 為私人 GitHub 倉庫。須登入有權限的 GitHub 帳號，從 Release 頁下載；本站不會要求或保存 Token。"));
+  else if(record.error)project.append(el("p","aig94-warning","Release 查詢失敗，下載狀態未核對："+record.error));
   else if(!record.assets.length)project.append(el("p","aig94-warning","沒有可確認的已發布 APK／EXE"));
   else{
    const items=el("div","aig94-files");
@@ -132,7 +134,7 @@ function render(){
   dl.append(project);
  }
  if(state.valid&&state.downloads.length===0)dl.append(el("p","aig94-hint","等待正式 Release 資料。"));
- dl.append(link("查看 AIG-II Release ↗",GH+"nsxzxe911-a11y/AIG-II/releases","aig94-releases"));
+ dl.append(link("登入 GitHub 查看 AIG-II 私人 Release ↗",GH+"nsxzxe911-a11y/AIG-II/releases","aig94-releases"));
  dl.append(link("查看 AIG Studio Release ↗",GH+"nsxzxe911-a11y/AIG-Studio-5.0/releases","aig94-releases"));
  content.append(dl);
  const foot=panel.querySelector(".aig94-foot-info");
