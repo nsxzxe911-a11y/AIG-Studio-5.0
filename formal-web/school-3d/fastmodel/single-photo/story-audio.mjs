@@ -155,7 +155,7 @@ export class StoryAudio{
   if(this.recordedVoice)this.stopRecordedVoice();
   const src=this.audio.createBufferSource(),gain=this.audio.createGain();
   src.buffer=audioBuffer;gain.gain.value=Math.max(0,Math.min(1,this.options.volume));
-  src.connect(gain);gain.connect(this.audio.destination);gain.connect(this.captureDestination);
+  src.connect(gain);
   // A real decoded voice waveform drives mouth RMS; never use text length
   // or an invented audio envelope as phoneme evidence.
   let analyser=null,levelData=null;
@@ -163,6 +163,11 @@ export class StoryAudio{
    analyser=this.audio.createAnalyser();analyser.fftSize=512;
    gain.connect(analyser);levelData=new Uint8Array(analyser.fftSize);
   }
+  // Keep analyser IN the audible/muxed signal path, otherwise an unconnected
+  // analyser branch may be unprocessed by some mobile WebAudio backends.
+  const source=analyser||gain;
+  source.connect(this.audio.destination);
+  source.connect(this.captureDestination);
   this.recordedVoice={src,gain,analyser,levelData};
   src.onended=()=>{if(this.recordedVoice?.src===src)this.recordedVoice=null;
    try{src.disconnect();gain.disconnect();analyser?.disconnect();}catch{}};
