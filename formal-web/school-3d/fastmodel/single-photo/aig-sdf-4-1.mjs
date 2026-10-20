@@ -23,8 +23,7 @@ export function createImplicitScene(scaffold){
    skirtRadius:skirt,neckRadius:Math.max(.022,head*.32),
    hairRadius:Math.min(.17,head*1.29),
    armRadius:Math.max(.025,shoulder*.23),
-   legRadius:Math.max(.032,hip*.32),
-   facingYaw:0};
+   legRadius:Math.max(.032,hip*.32)};
  return {schema:AIG_SDF_VERSION,sourceSHA256:scaffold.sourceSHA256,
   scaffoldSchema:scaffold.schema||null,
   primitiveCount:10,parameterCount:Object.keys(params).length,
