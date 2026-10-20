@@ -2,9 +2,9 @@
  * The failed V90-V95 Web CNC workspaces are deliberately retired.
  * This Service Worker does NOT touch localStorage/IndexedDB/CNC work copies.
  */
-const CACHE="aig-ii-native-release-portal-only-20261020";
+const CACHE="aig-ii-curated-image-library-20261020";
 const SHELL=[
- "./","./index.html","./native-download.html","./mobile-runtime.html",
+ "./","./index.html","./image-library.html","./visual-library.css","./visual-library.js","./visual-library/manifest.json","./native-download.html","./mobile-runtime.html",
  "./studio-375.html","./site.css","./site-v2.css","./site-v21.css",
  "./site-phase4.css","./site-dual-v2.css","./site-dual-latest.css",
  "./site-frontpage-v3.css","./site-v4.css","./site-nature-v24.css",
