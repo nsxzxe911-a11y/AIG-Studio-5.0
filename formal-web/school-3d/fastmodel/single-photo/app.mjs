@@ -8,6 +8,7 @@ import {StoryAudio,AUDIO_CUE_VERSION} from './story-audio.mjs';
 import {MovieWorkspace} from './movie-ui.mjs';
 import {generateVoiceBatch,TTS_VERSION} from './voice-generator.mjs';
 import {inspectHeroineImage,evaluateHeroineJob,HEROINE_REFERENCE} from './heroine-authority-3-7.mjs';
+import {createImplicitScene,AigImplicitRenderer,AIG_SDF_VERSION} from './aig-sdf-4-1.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -305,6 +306,60 @@ $('local-glb').addEventListener('change',async()=>{
   $('skin-check-status').textContent='本機 GLB 未載入：'+err.message+'。原有模型仍保留。';
  }
 });
+let aig41Renderer=null,aig41Scene=null;
+const AIG41_QUALITY={fast:{pixelScale:.5,maxSteps:48},
+ balanced:{pixelScale:.75,maxSteps:64},quality:{pixelScale:1,maxSteps:88}};
+function releaseAig41(){
+ aig41Renderer?.dispose();aig41Renderer=null;aig41Scene=null;
+ for(const id of ['aig41-yaw','aig41-quality','aig41-preview','aig41-release'])
+  $(id).disabled=true;
+}
+function aig41Preview(){
+ if(!aig41Scene)return;
+ const canvas=$('aig41-canvas'), quality=AIG41_QUALITY[$('aig41-quality').value]||
+  AIG41_QUALITY.balanced;
+ try{
+  if(!aig41Renderer||aig41Renderer.pixelScale!==quality.pixelScale||
+    aig41Renderer.maxSteps!==quality.maxSteps){
+   aig41Renderer?.dispose();
+   aig41Renderer=new AigImplicitRenderer(canvas,aig41Scene,quality);
+  }
+  const yaw=Number($('aig41-yaw').value)*Math.PI/180;
+  // elapsed time is JS submit time only, NOT GPU completion/FPS.
+  const t0=performance.now();
+  const r=aig41Renderer.draw(yaw);
+  const submitMs=performance.now()-t0;
+  $('aig41-status').textContent='SDF '+$('aig41-yaw').value+'°／'+
+   r.renderPixels+' 畫素／'+r.rayStepsLimit+' 步上限；'+
+   'JS 指令提交 '+submitMs.toFixed(2)+'ms（非 GPU FPS）。'+
+   ' 頭頸採連續距離場，手腳／髮束／裙子仍為推估體塊；'+
+   '目前只有預覽，未完成骨架或正式女主角。';
+ }catch(err){
+  $('aig41-status').textContent='SDF WebGL2 預覽無法啟用：'+err.message+
+   '；4.0 真三角面 GLB 可保留使用。';
+  aig41Renderer?.dispose();aig41Renderer=null;
+ }
+}
+async function aig41FromScaffold(prefix,expectedSHA){
+ releaseAig41();
+ const response=await fetch(prefix+'scaffold.json');
+ if(!response.ok)throw Error('AIG41_SCAFFOLD_FETCH_FAILED');
+ const scaffold=await response.json();
+ if(scaffold.sourceSHA256!==expectedSHA)throw Error('AIG41_SCAFFOLD_IMAGE_SHA_MISMATCH');
+ const scene=createImplicitScene(scaffold);
+ aig41Scene=scene;
+ for(const id of ['aig41-yaw','aig41-quality','aig41-preview','aig41-release'])
+  $(id).disabled=false;
+ $('aig41-yaw').value='0';
+ aig41Preview();
+}
+$('aig41-yaw').addEventListener('input',aig41Preview);
+$('aig41-quality').addEventListener('change',aig41Preview);
+$('aig41-preview').addEventListener('click',aig41Preview);
+$('aig41-release').addEventListener('click',()=>{
+ releaseAig41();
+ $('aig41-status').textContent='SDF GPU 資源已釋放。原始來源與 4.0 真 GLB 仍保留，不重設既有 3D 工作區。';
+});
 let aig4Busy=false;
 function aig4RefreshButton(){
  $('aig4-build').disabled=aig4Busy||!$('aig4-front').files?.length;
@@ -335,6 +390,8 @@ $('aig4-build').addEventListener('click',async()=>{
  if(front.size>20*1024*1024||side?.size>20*1024*1024){
   $('aig4-status').textContent='單張圖片不可超過 20 MB。';return;
  }
+ releaseAig41();
+ $('aig41-status').textContent='新圖片來源處理中，先釋放舊 SDF；已保存的 4.0 GLB 不變。';
  aig4Busy=true;aig4RefreshButton();
  $('aig4-view-gallery').replaceChildren();
  $('aig4-downloads').replaceChildren();
@@ -367,6 +424,12 @@ $('aig4-build').addEventListener('click',async()=>{
   aig4Link('下載真 3D 草模 GLB',prefix+'model.glb','AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb');
   aig4Link('下載比例／信心／來源 SHA 報告',prefix+'scaffold.json','AIG-4.0-SCAFFOLD-NOT-APPROVED.json');
   aig4Link('下載信心圖',prefix+'confidence.png','AIG-4.0-confidence.png');
+  // Only validated source-linked 4.0 scaffold may drive 4.1 preview.
+  try{await aig41FromScaffold(prefix,frontSHA);}
+  catch(error){
+   $('aig41-status').textContent='4.1 SDF 預覽仍 BLOCKED：'+error.message+
+    '；已通過的 4.0 輸出不受影響。';
+  }
   for(const angle of [0,45,90,135,180,225,270,315]){
    const code=String(angle).padStart(3,'0');
    const img=document.createElement('img');
