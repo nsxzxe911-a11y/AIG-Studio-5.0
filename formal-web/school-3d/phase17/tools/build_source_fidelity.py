@@ -193,6 +193,21 @@ def make_reconstruction(phase16_glb,source_image,hair_spec,envelope_spec,out_glb
  gl.g['materials'].append({'name':'Phase17_SelfDevelopedHairMatte_SOURCEPIXELS_NOT_RECONSTRUCTED_3D',
   'doubleSided':True,'alphaMode':'BLEND','pbrMetallicRoughness':{'baseColorTexture':{'index':texidx},
   'metallicFactor':0.,'roughnessFactor':.94},'extensions':{'KHR_materials_unlit':{}}})
+ # The original Photo-UV hair shell was opaque and kept patches of SKY BLUE.
+ # Keep its original vertex positions and weights; rebind ONLY visible hair material
+ # to the deterministic RGB image alpha mask (source-known front, inferred elsewhere).
+ full=img.convert('RGBA');full.putalpha(alpha)
+ file=io.BytesIO();full.save(file,format='PNG',compress_level=7)
+ full_id=len(gl.g['images']);gl.g['images'].append({'name':'PHASE17_RGBA_FULL_REFERENCE_HAIR_CUTOUT_NOT_AUTHORITY',
+  'bufferView':gl.view(file.getvalue()),'mimeType':'image/png'})
+ fulltex=len(gl.g['textures']);gl.g['textures'].append({'sampler':sampler_idx,'source':full_id})
+ front_hair=gl.g['meshes'][15]['primitives'][0]
+ if front_hair['material']!=0:raise ValueError('Phase13 front hair material unexpectedly changed')
+ front_hair['material']=len(gl.g['materials'])
+ gl.g['materials'].append({'name':'PHASE17_VISIBLE_OLD_HAIR_SOURCE_RGB_TRANSPARENT_SKY',
+  'doubleSided':True,'alphaMode':'BLEND',
+  'pbrMetallicRoughness':{'baseColorTexture':{'index':fulltex},'metallicFactor':0.,'roughnessFactor':.94},
+  'extensions':{'KHR_materials_unlit':{}}})
  # Add exact-source RGB-mapped 2.5D scalp shells with alpha cutout, skin 0 HEAD.
  # The reference face remains UNALTERED in old Phase13 body mesh.
  for name,poly in REGIONS.items():
@@ -216,20 +231,45 @@ def make_reconstruction(phase16_glb,source_image,hair_spec,envelope_spec,out_glb
   gl.g['meshes'].append({'name':'Phase17_SourceUVHairShell_'+name,'primitives':[prim]})
   ni=len(gl.g['nodes']);gl.g['nodes'].append({'name':'Phase17_ScalpShell_'+name,'mesh':len(gl.g['meshes'])-1,'skin':0});gl.g['scenes'][0]['nodes'].append(ni)
   source_alpha+=len(poly)
- if json.dumps(g['meshes'][:18],sort_keys=True)!=old_mesh:raise ValueError('changed original heroine mesh')
+ # Fill the visibly observed neck/jaw-to-shirt gap in the old Phase13 PHOTO
+ # mesh using exact source UV. No new 3D anatomy is inferred here.
+ neckpoly=[(616,303),(637,313),(691,310),(709,300),(720,328),
+           (709,345),(696,363),(671,378),(647,371),(628,349),(613,327)]
+ neckpts,neckfaces=core.triangulate(neckpoly)
+ neckpos=[];neckuv=[];neckjoint=[];neckweight=[];necknorm=[]
+ for x,y in neckpoly:
+  wx,wy=a.pixel_world(x,y,scale)
+  neckpos.append((wx,wy,.0241))
+  neckuv.append((x/img.width,1-y/img.height))
+  neckjoint.append((3,0,0,0));neckweight.append((1.,0.,0.,0.));necknorm.append((0.,0.,1.))
+ neckmesh={'name':'Phase17_SourceUV_NeckBridge_Not3DAnatomy','primitives':[{'attributes':{
+  'POSITION':gl.accessor('f',neckpos,'VEC3',34962,True),
+  'NORMAL':gl.accessor('f',necknorm,'VEC3',34962),
+  'TEXCOORD_0':gl.accessor('f',neckuv,'VEC2',34962),
+  'JOINTS_0':gl.accessor('H',neckjoint,'VEC4',34962),
+  'WEIGHTS_0':gl.accessor('f',neckweight,'VEC4',34962)},
+  'indices':gl.accessor('I',[int(q) for tri in neckfaces for q in tri],'SCALAR',34963),
+  'material':0,'mode':4,'extras':{'sourceUVOnly':True,'unseenNeckDepthEstimated':True}}]}
+ gl.g['meshes'].append(neckmesh)
+ ni=len(gl.g['nodes']);gl.g['nodes'].append({'name':'Phase17_Neck_SourceUV_VisibleOnly','mesh':len(gl.g['meshes'])-1,'skin':0})
+ gl.g['scenes'][0]['nodes'].append(ni)
+ old_desc=json.loads(old_mesh)
+ current_desc=json.loads(json.dumps(g['meshes'][:18],sort_keys=True))
+ current_desc[15]['primitives'][0]['material']=old_desc[15]['primitives'][0]['material']
+ if current_desc!=old_desc:raise ValueError('modified original heroine vertices, skin or topology')
  bupport=sum(x['sourceColorSupportBefore'] for x in quality)/len(quality)
  aport=sum(x['sourceColorSupportAfter'] for x in quality)/len(quality)
  gl.g['asset']['generator']='AIG Original Phase17 Source-Guided UV Hair-Scalp Silhouette Restoration / NOT VISUAL AUTHORITY'
- gl.g['extras'].update({'phase17':True,'phase17NewUVHairShells':4,'phase17FittedFineStrands':528,
+ gl.g['extras'].update({'phase17':True,'phase17NewUVHairShells':4,'phase17ObservedNeckUVBridge':1,'phase17FittedFineStrands':528,
  'phase17SourceColorSupportBefore':round(bupport,5),'phase17SourceColorSupportAfter':round(aport,5),
  'phase17HairGuides':88,'sourceImageSHA256':sha,'legacyDollGeometryUsed':False,
  'visualAuthorityApproved':False,'releasedToHomepage':False,'releaseAllowed':False,
- 'cameraCalibrated':False,'frontSideOnly':True,'backGeometryInferred':True,'sourceSegmentationFullyAutomatic':False,'hairRGBAOriginalColors':True,'faceRegionExcludedFromHairMatte':True,'hairFiberAlphaUsesOriginalSourceMatte':True,
+ 'cameraCalibrated':False,'frontSideOnly':True,'backGeometryInferred':True,'sourceSegmentationFullyAutomatic':False,'hairRGBAOriginalColors':True,'faceRegionExcludedFromHairMatte':True,'hairFiberAlphaUsesOriginalSourceMatte':True,'phase17OpaqueOldHairSkyRemoved':True,
  'qualityMetricIsHairPixelProxyNot3DFidelity':True})
  dest=Path(out_glb);dest.parent.mkdir(parents=True,exist_ok=True);digest=gl.write(dest)
  out={'output':str(dest),'sha256':digest,'bytes':dest.stat().st_size,
  'sourceSHA256':sha,'originalBodyMeshesUnchanged':18,'fitted3DFibers':528,'hairBoneChannelsPreserved':176,
- 'uvTexturedScalpShellMeshes':4,'newMeshCount':len(g['meshes']),
+ 'uvTexturedScalpShellMeshes':4,'observedNeckUVBridge':1,'newMeshCount':len(g['meshes']),'originalHairMaterialTransparencyReplaced':True,
  'meanSourceColorSupportBefore':round(bupport,5),'meanSourceColorSupportAfter':round(aport,5),
  'evaluation':'SOURCE-COLOR-PROXY-ONLY-NOT-CINEMATIC-3D-FIDELITY',
  'visualApproval':False,'bodyGeometryApproved':False,'trueFaceDepthRecovered':False,
