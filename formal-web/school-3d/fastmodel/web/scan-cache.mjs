@@ -63,10 +63,13 @@ export function createScanDerivedCache({limitBytes=SCAN_CACHE_LIMITS.mobile}={})
   }
   return released;
  }
- function reserve(n,except=null){
+ function reserve(n,except=null,incomingKind='contour'){
   if(n>limitBytes)return false;
   if(bytes+n<=limitBytes)return true;
-  const eligible=[...items.entries()].filter(([key])=>key!==except);
+  // Optional contour/depth entries are never allowed to evict a cached
+  // skeleton, even when their own individual size is under the byte cap.
+  const eligible=[...items.entries()].filter(([key,item])=>
+    key!==except&&(incomingKind==='skeleton'||item.kind!=='skeleton'));
   const order={depth:0,contour:1,skeleton:2};
   eligible.sort((a,b)=>(order[a[1].kind]-order[b[1].kind])||(a[1].last-b[1].last));
   for(const [key,item] of eligible){
@@ -96,7 +99,7 @@ export function createScanDerivedCache({limitBytes=SCAN_CACHE_LIMITS.mobile}={})
   const key='topo:'+topologyKey(geometry,density),n=scanTopologyBytes(topology);
   if(!topology||!['bones','all'].includes(geometry))throw Error('SCAN_CACHE_TOPOLOGY_INVALID');
   if(items.has(key)){const old=items.get(key);items.delete(key);bytes-=old.bytes;}
-  if(!reserve(n)){lastEvent='SKIP_OVER_BUDGET';return false;}
+  if(!reserve(n,null,kindFor(geometry))){lastEvent='SKIP_OVER_BUDGET';return false;}
   items.set(key,{kind:kindFor(geometry),last:++clock,bytes:n,value:topology});
   bytes+=n;if(scanCacheFinite(buildMs)){lastBuildMs=buildMs;knownBuildReferenceMs=buildMs;}
   lastEvent='STORE_'+kindFor(geometry).toUpperCase();return true;
@@ -124,7 +127,7 @@ export function createScanDerivedCache({limitBytes=SCAN_CACHE_LIMITS.mobile}={})
   const n=scanCacheSize(depth.grid.byteLength+snap.bytes+384);
   const old=items.get('depth');
   if(old){items.delete('depth');bytes-=old.bytes;}
-  if(!reserve(n)){lastEvent='SKIP_OVER_BUDGET';return false;}
+  if(!reserve(n,null,'depth')){lastEvent='SKIP_OVER_BUDGET';return false;}
   items.set('depth',{kind:'depth',last:++clock,bytes:n,value:depth,
     pose:snap.matrices,signature,topology});
   bytes+=n;
