@@ -340,13 +340,27 @@ $('prepared-foreground').addEventListener('change',()=>{
   ?'已選取 '+file.name+'；將在按「生成」時驗證其 JPEG 原圖 SHA、RGBA 透明度與來源色彩。來源與前景未實際驗收，將由伺服器阻擋不合規輸入。'
   :'未選擇前景 PNG；預設使用原始照片。';
 });
+$('reconstruction-secondary').addEventListener('change',()=>{
+ const files=Array.from($('reconstruction-secondary').files||[]);
+ $('reconstruction-multiview-status').textContent=files.length>3
+  ?'超過 Meshy 多圖服務上限：主圖 1 張加輔助圖最多 3 張，已阻擋送出。'
+  :files.length
+   ?'已選擇 '+files.length+' 張輔助角度。請切換「Meshy 多視角」服務；它們是尚未對齊的 2D 圖，不是已驗收的 3D。'
+   :'沒有選輔助角度。使用單張原圖重建。';
+ if(files.length&&files.length<=3)$('reconstruction-service').value='meshy-multi-image-to-3d';
+});
 $('subject').addEventListener('change',()=>{$('action').disabled=$('subject').value==='object';});
 $('action').addEventListener('change',()=>{});
 $('generate').addEventListener('click',async()=>{
  const file=$('photo').files[0];
  if(!file)return;
  const prepared=$('prepared-foreground').files?.[0]||null;
- if(file.size>20*1024*1024||prepared?.size>20*1024*1024){
+ const extraFiles=Array.from($('reconstruction-secondary').files||[]);
+ if(extraFiles.length>3){
+  status.textContent='Meshy 多圖服務最多四張：正面主圖加最多三張補角度。';return;
+ }
+ if(file.size>20*1024*1024||prepared?.size>20*1024*1024||extraFiles.some(f=>f.size>7*1024*1024)){
+
   status.textContent='原始照片與前景 PNG 各不得超過 20 MB。';return;
  }
  busy=true;updateButton();status.textContent='正在建立可續接的圖片生成任務…';
@@ -368,12 +382,18 @@ $('generate').addEventListener('click',async()=>{
    $('prepared-foreground-status').textContent='前景草稿已提交來源比對；伺服器必須再次核對實際 PNG alpha 與每個不透明像素。';
   }
   const serviceId=$('reconstruction-service').value;
-  if(serviceId!=='meshy-image-to-3d')throw Error('未實際實作的 3D 重建服務不得送出。');
-  const fingerprint=sha+'|'+mode+'|'+(actionId??'default')+'|'+preparedHash+'|'+serviceId;
+  if(!['meshy-image-to-3d','meshy-multi-image-to-3d'].includes(serviceId))
+   throw Error('未實際接通的 3D 重建服務不得送出。');
+  if(extraFiles.length&&serviceId!=='meshy-multi-image-to-3d')throw Error('多視角圖片需選 Meshy 多圖模式。');
+  if(extraFiles.length&&prepared)throw Error('多視角不能與單張前景遮罩混用，請選其一。');
+  const extraHashes=[];
+  for(const f of extraFiles)extraHashes.push(await sha256Bytes(await f.arrayBuffer()));
+  const fingerprint=sha+'|'+mode+'|'+(actionId??'default')+'|'+preparedHash+'|'+serviceId+'|'+extraHashes.join(',');
   const requestId=journal.begin(fingerprint);
   const image=await readData(file);
   const payload={image,requestId,mode,actionId,serviceId,autoStages:true};
   if(preparedImage)payload.preparedImage=preparedImage;
+  if(extraFiles.length)payload.additionalImages=await Promise.all(extraFiles.map(readData));
   const d=await api('/api/reconstruction/jobs',{method:'POST',headers:{'Content-Type':'application/json','X-AIG-Request':'1'},body:JSON.stringify(payload)});
   journal.accept(fingerprint,d.id);follow(d.id);
  }catch(e){busy=false;status.textContent=errorText(e.message);updateButton();}
@@ -701,10 +721,13 @@ if(window.AIG_OFFLINE){
  api('/api/config').then(async c=>{
   ready=c.configured;status.textContent=ready?'重建服務已連接；選圖後按一次生成，後續步驟自動接續。':'重建服務未連接；請先在主機設定服務帳戶。';updateButton();
   api('/api/reconstruction/services').then(config=>{
-   const service=config.providers?.find(p=>p.id==='meshy-image-to-3d'&&p.modelServiceIsReal);
-   $('reconstruction-service').disabled=!service?.configured;
-   $('reconstruction-service-status').textContent=service?.configured
-    ?'真實 Meshy 服務已設定；一鍵連續執行模型／PBR／Rig／動作／GLB，可能消耗點數。未設定其他備援服務，送出不明不重送。'
+   const connected=(config.providers||[]).filter(p=>p.modelServiceIsReal&&p.configured);
+   $('reconstruction-service').disabled=!connected.length;
+   for(const option of $('reconstruction-service').options){
+    option.disabled=!(config.providers||[]).some(p=>p.id===option.value&&p.modelServiceIsReal&&p.configured);
+   }
+   $('reconstruction-service-status').textContent=connected.length
+    ?'已接通 Meshy 單圖＋多圖 (1～4 張) 真實服務。按一次生成後自動接續模型／PBR／Rig／動作／GLB，可能消耗點數；不明受理不重送。'
     :'目前沒有已設定的真實 3D 重建服務；可離線匯入 GLB。任何未實作服務不可選。';
   }).catch(err=>{
    $('reconstruction-service').disabled=true;
