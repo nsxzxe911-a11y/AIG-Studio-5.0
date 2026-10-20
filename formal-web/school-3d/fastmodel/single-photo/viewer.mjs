@@ -6,7 +6,21 @@ import {inspectSkinPose,SkinAnomalyMonitor} from './skin-anomaly.mjs';
 
 export async function parseRiggedGLB(buffer){
  if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>200*1024*1024)throw Error('GLB_SIZE_LIMIT');
- return new GLTFLoader().parseAsync(buffer,'');
+ const dv=new DataView(buffer);
+ if(buffer.byteLength<20||dv.getUint32(0,true)!==0x46546c67||
+    dv.getUint32(4,true)!==2||dv.getUint32(8,true)!==buffer.byteLength||
+    dv.getUint32(16,true)!==0x4e4f534a)throw Error('GLB_HEADER_INVALID');
+ const len=dv.getUint32(12,true);
+ if(len>buffer.byteLength-20||len>16*1024*1024)throw Error('GLB_JSON_INVALID');
+ const json=JSON.parse(new TextDecoder().decode(new Uint8Array(buffer,20,len)));
+ for(const ref of [...(json.buffers||[]),...(json.images||[])])
+  if(ref.uri&&!/^data:/i.test(ref.uri))throw Error('GLB_EXTERNAL_ASSETS_NOT_ALLOWED');
+ const manager=new THREE.LoadingManager();
+ manager.setURLModifier(url=>{
+  if(!/^(blob:|data:)/i.test(url))throw Error('GLB_EXTERNAL_ASSETS_NOT_ALLOWED');
+  return url;
+ });
+ return new GLTFLoader(manager).parseAsync(buffer,'');
 }
 export class AnimationController{
  constructor(root,clips=[]){this.mixer=new THREE.AnimationMixer(root);this.clips=clips;this.index=null;this.paused=false;}
