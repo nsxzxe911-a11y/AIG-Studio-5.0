@@ -61,7 +61,7 @@ function reportExtremeGeometry(file,revision){
    el('scan-status').textContent='極速掃描頂點抽樣：'+lastScan.samples.toLocaleString()+
      '/'+lastScan.vertices.toLocaleString()+' 點，'+lastScan.triangles.toLocaleString()+
      ' 三角面；抽樣範圍 '+dims+'（GLB 本機單位）。模式 '+profile+
-     '；使用有限數量來源資料，未完成完整 3D 形狀／碰撞證明。';
+     '；使用有限數量來源資料，未完成完整 3D 形狀／碰撞證明。非照片、LiDAR 或光照深度掃描。';
  }catch(e){lastScan=null;el('scan-status').textContent='幾何摘要失敗：'+e.message+'；來源模型保留。';}
 }
 function scanRequestContours(f,density,revision){
