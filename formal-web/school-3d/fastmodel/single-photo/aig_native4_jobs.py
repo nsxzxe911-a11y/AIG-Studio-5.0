@@ -6,11 +6,14 @@ import json
 import hashlib
 import re
 import shutil
+import subprocess
+import sys
+import os
 import threading
 import uuid
 from pathlib import Path
 from PIL import Image
-from aig_native4 import foreground,build,digest,SCHEMA,ANGLES
+from aig_native4 import foreground,digest,SCHEMA,ANGLES
 
 def safe_json(path,doc):
     next_path=path.with_suffix('.tmp')
@@ -22,6 +25,11 @@ class AigNative4Jobs:
         self.root=Path(root).resolve()/'native-aig4'
         self.guard=threading.RLock()
         self.running=set()
+        # Two reserved slots: one actual compute process + one queued job.
+        # Unlike CPU-bound Python threads, inference geometry runs in a separate
+        # interpreter so HTTP UI polling stays responsive to the GIL.
+        self.compute_guard=threading.Lock()
+        self.capacity=threading.BoundedSemaphore(2)
     def directory(self,job_id):
         if not re.fullmatch(r'[a-f0-9]{32}',str(job_id)):
             raise ValueError('AIG4_JOB_ID_INVALID')
@@ -86,7 +94,9 @@ class AigNative4Jobs:
                 d['phase']='INTERRUPTED_MUST_START_NEW_JOB'
                 safe_json(self.directory(job_id)/'job.json',d)
                 return
-            d['phase']='GEOMETRIC_VOLUME_BUILDING'
+            if not self.capacity.acquire(blocking=False):
+                raise ValueError('AIG42_COMPUTE_BUSY_RETRY_LATER')
+            d['phase']='QUEUED_NATIVE_4_2'
             safe_json(self.directory(job_id)/'job.json',d)
             self.running.add(job_id)
         def task():
@@ -97,20 +107,46 @@ class AigNative4Jobs:
                 side=job/'side-input' if prior.get('sideSourceSHA256') else None
                 if digest(a)!=prior['sourceSHA256'] or (side and digest(side)!=prior['sideSourceSHA256']):
                     raise ValueError('AIG4_IMAGE_CHANGED')
-                result=build(a,job/'generated',side=side)
-                model=job/'generated'/'AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb'
-                d=self.read(job_id)
-                d['phase']='GEOMETRIC_DRAFT_COMPLETE'
-                d['status']='COMPLETE'
-                d['real3DMeshProduced']=True
-                d['confidenceMean']=result['confidenceMean']
-                d['meshType']=result['meshType']
-                d['artifacts']={
-                    'model.glb':{'file':'AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb',
-                         'sha256':result['meshGLBSHA256'],'bytes':model.stat().st_size,
-                         'downloadPath':'/api/aig4/jobs/'+job_id+'/files/model.glb'},
-                    'scaffold.json':{'sha256':digest(job/'generated'/'scaffold.json')}}
-                safe_json(job/'job.json',d)
+                with self.compute_guard:
+                    d=self.read(job_id)
+                    d['phase']='GEOMETRIC_VOLUME_BUILDING'
+                    safe_json(job/'job.json',d)
+                    script=Path(__file__).with_name('aig_native4.py')
+                    args=[sys.executable,'-B',str(script),'--source',str(a),
+                          '--out',str(job/'generated')]
+                    if side:args+=['--side',str(side)]
+                    env=os.environ.copy()
+                    # Never pass provider secrets or enable online inference.
+                    for name in tuple(env):
+                        if any(fragment in name.upper() for fragment in
+                               ('MESHY','OPENAI_API_KEY','HF_TOKEN','HUGGING_FACE_HUB_TOKEN')):
+                            env.pop(name,None)
+                    env['HF_HUB_OFFLINE']='1'
+                    env['TRANSFORMERS_OFFLINE']='1'
+                    done=subprocess.run(args,cwd=str(script.parent),
+                                        env=env,capture_output=True,text=True,
+                                        timeout=180,check=False)
+                    if done.returncode:
+                        raise ValueError('AIG42_ISOLATED_GEOMETRY_FAILED_'+str(done.returncode))
+                    result=json.loads(done.stdout.strip().splitlines()[-1])
+                    if result.get('sourceSHA256')!=prior['sourceSHA256']:
+                        raise ValueError('AIG42_WORKER_SOURCE_MISMATCH')
+                    model=job/'generated'/'AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb'
+                    if digest(model)!=result.get('meshGLBSHA256'):
+                        raise ValueError('AIG42_WORKER_MODEL_SHA_MISMATCH')
+                    d=self.read(job_id)
+                    d['phase']='GEOMETRIC_DRAFT_COMPLETE'
+                    d['status']='COMPLETE'
+                    d['real3DMeshProduced']=True
+                    d['isolatedProcessVerified']=True
+                    d['confidenceMean']=result['confidenceMean']
+                    d['meshType']=result['meshType']
+                    d['artifacts']={
+                        'model.glb':{'file':'AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb',
+                             'sha256':result['meshGLBSHA256'],'bytes':model.stat().st_size,
+                             'downloadPath':'/api/aig4/jobs/'+job_id+'/files/model.glb'},
+                        'scaffold.json':{'sha256':digest(job/'generated'/'scaffold.json')}}
+                    safe_json(job/'job.json',d)
             except Exception as error:
                 d=self.read(job_id);d['status']='FAILED'
                 d['phase']='GEOMETRIC_BUILD_FAILED'
@@ -118,6 +154,7 @@ class AigNative4Jobs:
                 safe_json(job/'job.json',d)
             finally:
                 with self.guard:self.running.discard(job_id)
+                self.capacity.release()
         threading.Thread(target=task,daemon=True).start()
     def asset(self,job_id,name):
         d=self.read(job_id)
