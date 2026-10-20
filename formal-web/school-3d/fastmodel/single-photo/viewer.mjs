@@ -3,6 +3,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {inspectSkinPose,SkinAnomalyMonitor} from './skin-anomaly.mjs';
+import {REVIEW_DIRECTIONS,reviewCameraPose,reviewPoseTime} from './heroine-review.mjs';
 
 export async function parseRiggedGLB(buffer){
  if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>200*1024*1024)throw Error('GLB_SIZE_LIMIT');
@@ -58,6 +59,71 @@ export class PhotoViewer{
   this.scene.add(file.scene);if(old){this.scene.remove(old);this.release(old);}
   const radius=Math.max(size.x,size.y,size.z,.01);this.camera.position.copy(center).add(new THREE.Vector3(0,radius*.12,radius*1.7));this.camera.near=radius/1000;this.camera.far=radius*100;this.camera.updateProjectionMatrix();this.controls.target.copy(center);this.controls.update();
   return file.animations.map((c,i)=>({index:i,name:c.name||'片段 '+(i+1),duration:c.duration}));
+ }
+ async captureHeroineReview({fraction=.5}={}){
+  if(!this.model)throw Error('REVIEW_MODEL_NOT_LOADED');
+  const clip=this.animation?.clips?.[this.animation.index]||null;
+  const {timeSeconds,animated}=reviewPoseTime(clip,fraction);
+  const bounds=new THREE.Box3().setFromObject(this.model);
+  if(bounds.isEmpty())throw Error('REVIEW_EMPTY_MODEL');
+  const previousCamera={position:this.camera.position.clone(),quaternion:this.camera.quaternion.clone(),
+    near:this.camera.near,far:this.camera.far,aspect:this.camera.aspect};
+  const previousControls={target:this.controls.target.clone(),enabled:this.controls.enabled,
+    damping:this.controls.enableDamping,autoRotate:this.controls.autoRotate};
+  const previousPaused=this.animation?.paused;
+  const previousTime=this.animation?.mixer?.time||0;
+  const size=this.renderer.getSize(new THREE.Vector2());
+  const tileW=480,tileH=360,contact=document.createElement('canvas');
+  contact.width=tileW*2;contact.height=tileH*2;
+  const paint=contact.getContext('2d');
+  if(!paint)throw Error('REVIEW_2D_CANVAS_UNAVAILABLE');
+  const snapshots=[];
+  let audit=null;
+  try{
+   this.controls.enabled=false;
+   this.controls.enableDamping=false;this.controls.autoRotate=false;
+   if(this.animation){
+    this.animation.paused=true;
+    if(animated)this.animation.mixer.setTime(timeSeconds);
+   }
+   // Save real posed geometry audit at the specific user-selected animation time.
+   audit=inspectSkinPose(this.model,{maxTriangles:2400,maxVertices:12000,maxIssues:24});
+   this.renderer.setSize(tileW,tileH,false);
+   this.camera.aspect=tileW/tileH;
+   this.camera.updateProjectionMatrix();
+   for(let i=0;i<REVIEW_DIRECTIONS.length;i++){
+    const direction=REVIEW_DIRECTIONS[i];
+    const pose=reviewCameraPose(bounds,direction.key);
+    this.camera.position.copy(pose.position);
+    this.camera.near=pose.near;this.camera.far=pose.far;
+    this.controls.target.copy(pose.target);
+    this.camera.lookAt(pose.target);this.camera.updateProjectionMatrix();
+    this.model.updateMatrixWorld(true);
+    this.renderer.render(this.scene,this.camera);
+    const x=(i%2)*tileW,y=Math.floor(i/2)*tileH;
+    paint.drawImage(this.renderer.domElement,x,y,tileW,tileH);
+    paint.fillStyle='rgba(2,4,7,.87)';paint.fillRect(x+6,y+6,tileW-12,28);
+    paint.fillStyle='#e5f2fc';paint.font='bold 14px sans-serif';
+    paint.fillText(pose.label+' · '+timeSeconds.toFixed(3)+'s',x+14,y+25);
+    snapshots.push({key:direction.key,label:pose.label,poseTimeSeconds:timeSeconds});
+   }
+  }finally{
+   this.renderer.setSize(size.x,size.y,false);
+   this.camera.position.copy(previousCamera.position);
+   this.camera.quaternion.copy(previousCamera.quaternion);
+   this.camera.near=previousCamera.near;this.camera.far=previousCamera.far;
+   this.camera.aspect=previousCamera.aspect;this.camera.updateProjectionMatrix();
+   this.controls.target.copy(previousControls.target);
+   this.controls.enabled=previousControls.enabled;
+   this.controls.enableDamping=previousControls.damping;
+   this.controls.autoRotate=previousControls.autoRotate;
+   if(this.animation){this.animation.mixer.setTime(previousTime);this.animation.paused=previousPaused;}
+   this.controls.update();
+   this.renderer.render(this.scene,this.camera);
+  }
+  const image=await new Promise((resolve,reject)=>contact.toBlob(b=>b?resolve(b):reject(Error('REVIEW_IMAGE_ENCODING_FAILED')),'image/png'));
+  return {image,views:snapshots,audit,clipName:clip?.name||null,timeSeconds,
+    originalSourceModified:false,deviceGpuFpsMeasured:false};
  }
  startSkinInspection(onUpdate,{frames=12,minIntervalMs=100}={}){
   if(!this.model)throw Error('SKIN_MODEL_NOT_LOADED');
