@@ -723,6 +723,33 @@ jobs:
           python - <<'PY'
           print('FastModel 2.1 GLB skeleton SOLID + source outline DASHED visualization SOURCE Gate PASS; not native GPU/real approved girl Authority.')
           PY
+      - name: FastModel 2.2 RGB scan colors and source material protection Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/scan-colors.mjs
+          node --check formal-web/school-3d/fastmodel/web/scan-overlay.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/scan-colors.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-2-2-RGB-COLORS-NOT-HEROINE-AUTHORITY.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMODEL-2-2-RGB-COLORS-NOT-HEROINE-AUTHORITY.html').read_text()
+          for token in ['id="scan-palette"','id="scan-risk-color"','id="scan-color-legend"',
+                        'id="scan-color-status"','function scanColor(',
+                        'function scanPalette(','function scanColorLegend(',
+                        "scanPalette(palette)","highlightRoles:hairReview?['hair']:[]",
+                        'sourceMaterialColorsUntouched:true','window.AIG_EMBEDDED_GLB',
+                        '光線追蹤：關閉']:
+              assert token in s,token
+          assert 'value="aig-rgb" selected' in s
+          assert 'value="1920x1080" selected' in s
+          script='window.AIG_EMBEDDED_GLB='+s.split('window.AIG_EMBEDDED_GLB=',1)[1].split('</script>',1)[0]
+          Path('/tmp/aig-fastmodel-2-2-rgb-bundle.js').write_text(script)
+          print('2.2 palette controls, original material contract and standalone JS assembled')
+          PY
+          node --check /tmp/aig-fastmodel-2-2-rgb-bundle.js
+          echo "FastModel 2.2 RGB scan source Gate PASS; GPU hardware, real face/head/hair remains unverified."
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
