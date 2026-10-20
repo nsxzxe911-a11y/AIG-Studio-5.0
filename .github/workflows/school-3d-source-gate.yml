@@ -713,7 +713,7 @@ jobs:
               assert token in s,token
           assert 'value="1920x1080" selected' in s
           assert 'value="off" selected' in s
-          embedded=s.split('<script>\\nwindow.AIG_EMBEDDED_GLB=',1)
+          embedded=s.split('window.AIG_EMBEDDED_GLB=',1)
           assert len(embedded)==2, 'offline script missing'
           script='window.AIG_EMBEDDED_GLB='+embedded[1].split('</script>',1)[0]
           Path('/tmp/aig-fastmodel-2-1-standalone-runtime.js').write_text(script)
