@@ -113,7 +113,7 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
                 if not client.configured:raise ValueError('MESHY_API_KEY_NOT_CONFIGURED')
                 if self.headers.get('Content-Type')!='application/json':raise ValueError('JSON_REQUIRED')
                 length=int(self.headers.get('Content-Length','0'))
-                if not 0<length<=29*1024*1024:raise ValueError('REQUEST_SIZE_LIMIT')
+                if not 0<length<=58*1024*1024:raise ValueError('REQUEST_SIZE_LIMIT')
                 data=json.loads(self.rfile.read(length));request_id=data.get('requestId','')
                 if not re.fullmatch('[0-9a-f]{32}',request_id):raise ValueError('REQUEST_ID_INVALID')
                 with create_guard:
@@ -126,7 +126,20 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
                     raw=base64.b64decode(encoded,validate=True)
                     if len(raw)>20*1024*1024:raise ValueError('IMAGE_SIZE_LIMIT_20MB')
                     with tempfile.TemporaryDirectory(prefix='aig-upload-') as temporary:
-                        file=Path(temporary)/'source';file.write_bytes(raw);d=pipe.create(file,data.get('mode','humanoid'),data.get('actionId'))
+                        file=Path(temporary)/'source';file.write_bytes(raw)
+                        prepared=None
+                        if 'preparedImage' in data:
+                            if data.get('mode','humanoid')!='humanoid':
+                                raise ValueError('PREPARED_REQUIRES_HUMANOID')
+                            uri=data['preparedImage']
+                            if not isinstance(uri,str) or not uri.startswith('data:image/png;base64,'):
+                                raise ValueError('PREPARED_PNG_DATA_URI_REQUIRED')
+                            encoded=uri[len('data:image/png;base64,'):]
+                            if len(encoded)>28*1024*1024:raise ValueError('PREPARED_IMAGE_TOO_LARGE')
+                            prep_bytes=base64.b64decode(encoded,validate=True)
+                            if len(prep_bytes)>20*1024*1024:raise ValueError('PREPARED_IMAGE_SIZE_INVALID')
+                            prepared=Path(temporary)/'prepared.png';prepared.write_bytes(prep_bytes)
+                        d=pipe.create(file,data.get('mode','humanoid'),data.get('actionId'),prepared_source=prepared)
                     d['requestId']=request_id;pipe.save(d['id'],d)
                     begin(d['id']);self.send(d,202)
             except Exception as e:self.send({'error':str(e)[:180]},409)
