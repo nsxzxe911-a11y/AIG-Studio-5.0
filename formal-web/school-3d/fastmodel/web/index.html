@@ -40,9 +40,16 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:no
 <label for="patch">局部網格推拉<input id="patch" type="range" min="-100" max="100" value="0"></label><p class="small small-status" id="patchstat">修改時僅更新 256 個頂點</p>
 </section>
 <section id="panel-scan" role="tabpanel" aria-labelledby="tab-scan" data-panel="scan" class="panel" hidden>
-<h2 class="panel-title">快速掃描 · 光線 · 虛線支架</h2>
+<h2 class="panel-title">極速掃描 · RGB 骨架 · 虛線支架</h2>
 <p class="panel-sub">離線分析已載入 GLB 的頂點及幾何外包圍；場景類型由你指定，不假稱 AI 語意辨識或手機 LiDAR。</p>
 <label for="scene-kind">掃描對象分類<select id="scene-kind"><option value="person" selected>人物</option><option value="animal">動物</option><option value="plant">植物</option><option value="tree">樹木</option><option value="environment">環境／建築</option><option value="water">水面</option><option value="sky">天空</option></select></label>
+<div class="divider"></div><h3>FastModel 2.4 · 極速掃描</h3>
+<label for="scan-speed">掃描速度與細節策略<select id="scan-speed">
+<option value="turbo" selected>極速 · 真骨架優先，輪廓／深度逐步加入</option>
+<option value="balanced">平衡 · 輪廓優先，深度適時加入</option>
+<option value="precise">精細 · 保留最高可用掃描細節</option>
+</select></label>
+<p class="small small-status" id="scan-speed-status" role="status">極速模式預設：先顯示 GLB 真骨架，不等待高成本輪廓計算；CPU 負荷過高自動降低掃描工作。正式 3D 模型本體、全彩材質、頭頸資料都不刪除。</p>
 <div class="divider"></div><h3>FastModel 2.1 · 骨架實線／外型隱藏虛線</h3>
 <label for="scan-mode">掃描顯示層<select id="scan-mode">
 <option value="off" selected>關閉 · 正式純表面／效能優先</option>
@@ -71,7 +78,7 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:no
 </div>
 <p id="scan-color-status" class="small small-status" role="status">模型本體使用 GLB 原有膚色、髮色、服裝貼圖與材質。RGB 顏色僅用於掃描輔助線，不替人物自動上色；紅色保留給確認後的警示，不靠接近距離直接判定穿模。</p>
 <p id="scan-layer-status" class="small small-status" role="status">掃描覆蓋層關閉；來源 GLB 不變。骨架採真 joints 父子關係實線，外型採來源網格邊界／投影輪廓的淡化虛線，並非 GPU 真深度遮擋。</p>
-<div class="btns" style="margin-top:12px"><button class="action primary" type="button" id="scan-btn">快速抽樣掃描 GLB</button></div>
+<div class="btns" style="margin-top:12px"><button class="action primary" type="button" id="scan-btn">啟動極速掃描 GLB</button></div>
 <div id="scan-status" class="detail" role="status">請先載入 GLB。掃描採有限頂點抽樣，不修改原始模型。</div>
 <div class="divider"></div><h3>角色防撞臉 · 女主角／其他同學</h3>
 <p class="panel-sub">比較明確標註的虛構 3D 角色臉部幾何，提醒過於相似的角色；不識別真人，也不會自動修改臉型。每次開啟頁面重新建立角色名單。</p>
