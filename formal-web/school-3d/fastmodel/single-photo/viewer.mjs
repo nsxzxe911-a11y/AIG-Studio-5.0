@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {inspectSkinPose,SkinAnomalyMonitor} from './skin-anomaly.mjs';
 
 export async function parseRiggedGLB(buffer){
  if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>200*1024*1024)throw Error('GLB_SIZE_LIMIT');
@@ -27,8 +28,10 @@ export class PhotoViewer{
   this.scene.add(new THREE.HemisphereLight(0xcdeaff,0x242035,1.5));
   const light=new THREE.DirectionalLight(0xffffff,3);light.position.set(2,4,3);this.scene.add(light);
   const pmrem=new THREE.PMREMGenerator(this.renderer),room=new RoomEnvironment();this.env=pmrem.fromScene(room).texture;this.scene.environment=this.env;room.dispose();pmrem.dispose();
-  this.resize=new ResizeObserver(()=>this.fitCanvas());this.resize.observe(canvas.parentElement);this.fitCanvas();this.previous=0;this.orbit=false;
-  this.renderer.setAnimationLoop(t=>{try{const dt=this.previous?Math.min(.1,(t-this.previous)/1000):0;this.previous=t;this.animation?.update(dt);this.controls.autoRotate=this.orbit;this.controls.update();this.renderer.render(this.scene,this.camera);}catch(e){this.renderer.setAnimationLoop(null);onError(e.message);}});
+  this.resize=new ResizeObserver(()=>this.fitCanvas());this.resize.observe(canvas.parentElement);this.fitCanvas();this.previous=0;this.orbit=false;this.skinProbe=null;this.skinReport=null;
+  this.renderer.setAnimationLoop(t=>{try{const dt=this.previous?Math.min(.1,(t-this.previous)/1000):0;this.previous=t;this.animation?.update(dt);
+    if(this.skinProbe&&this.model){this.skinProbe.capture(this.model,t,{animationName:this.animation?.clips?.[this.animation?.index]?.name||null});if(this.skinProbe.done)this.skinProbe=null;}
+    this.controls.autoRotate=this.orbit;this.controls.update();this.renderer.render(this.scene,this.camera);}catch(e){this.renderer.setAnimationLoop(null);onError(e.message);}});
  }
  fitCanvas(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);this.camera.aspect=Math.max(1,r.width)/Math.max(1,r.height);this.camera.updateProjectionMatrix();}
  async load(buffer,{orbit=false}={}){
@@ -37,10 +40,21 @@ export class PhotoViewer{
   const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
   if(![...size,...center].every(Number.isFinite))throw Error('GLB_NONFINITE_SCENE');
   const controller=new AnimationController(file.scene,file.animations);if(file.animations.length)controller.select(0);
-  const old=this.model;this.animation?.dispose();this.model=file.scene;this.animation=controller;this.orbit=orbit;
+  const old=this.model;this.animation?.dispose();this.skinProbe=null;this.skinReport=null;this.model=file.scene;this.animation=controller;this.orbit=orbit;
   this.scene.add(file.scene);if(old){this.scene.remove(old);this.release(old);}
   const radius=Math.max(size.x,size.y,size.z,.01);this.camera.position.copy(center).add(new THREE.Vector3(0,radius*.12,radius*1.7));this.camera.near=radius/1000;this.camera.far=radius*100;this.camera.updateProjectionMatrix();this.controls.target.copy(center);this.controls.update();
   return file.animations.map((c,i)=>({index:i,name:c.name||'片段 '+(i+1),duration:c.duration}));
+ }
+ startSkinInspection(onUpdate,{frames=12,minIntervalMs=100}={}){
+  if(!this.model)throw Error('SKIN_MODEL_NOT_LOADED');
+  const initial=inspectSkinPose(this.model,{maxTriangles:1200,maxVertices:4500,maxIssues:16});
+  this.skinReport=initial;
+  const probe=new SkinAnomalyMonitor({frames,minIntervalMs,onUpdate:summary=>{
+    this.skinReport={...initial,poseSampling:summary};
+    onUpdate(this.skinReport);
+  }});
+  this.skinProbe=probe;
+  return initial;
  }
  release(root){const textures=new Set();root.traverse(n=>{n.geometry?.dispose();for(const m of (Array.isArray(n.material)?n.material:[n.material]))if(m){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}});textures.forEach(t=>t.dispose());}
 }
