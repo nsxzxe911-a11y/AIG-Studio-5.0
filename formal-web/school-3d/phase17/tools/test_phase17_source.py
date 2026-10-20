@@ -30,14 +30,22 @@ class FittedTest(unittest.TestCase):
   h=hashlib.sha256(SRC.read_bytes()).hexdigest()
   self.assertEqual(h,self.ref['source']['sha256']);self.assertEqual(h,self.g['extras']['sourceImageSHA256'])
  def test_02_original_mesh_unmodified(self):
-  self.assertEqual(self.old['meshes'][:18],self.g['meshes'][:18]);self.assertEqual(self.g['skins'],self.old['skins'])
+  for i in range(18):
+   prev=json.loads(json.dumps(self.old['meshes'][i]))
+   curr=json.loads(json.dumps(self.g['meshes'][i]))
+   if i==15:
+    self.assertNotEqual(prev['primitives'][0]['material'],curr['primitives'][0]['material'])
+    curr['primitives'][0]['material']=prev['primitives'][0]['material']
+   self.assertEqual(prev,curr)
+  self.assertTrue(self.g['extras']['phase17OpaqueOldHairSkyRemoved'])
+  self.assertEqual(self.g['skins'],self.old['skins'])
   self.assertEqual(self.g['animations'],self.old['animations']);self.assertEqual(self.bin[:len(self.oldbin)],self.oldbin)
  def test_03_recon_identity_is_not_self_approved(self):
   self.assertFalse(self.g['extras']['visualAuthorityApproved']);self.assertFalse(self.g['extras']['releaseAllowed'])
   self.assertFalse(self.g['extras']['cameraCalibrated']);self.assertTrue(self.g['extras']['qualityMetricIsHairPixelProxyNot3DFidelity'])
  def test_04_existing_528_beams_retopologized(self):
   self.assertEqual(self.g['extras']['phase17FittedFineStrands'],528)
-  self.assertEqual(len(self.g['meshes']),110)
+  self.assertEqual(len(self.g['meshes']),111)
   self.assertEqual(len([p for mesh in self.g['meshes'][18:106] for p in mesh['primitives']]),528)
   self.assertEqual(self.g['extras']['phase17HairGuides'],88)
  def test_05_all_528_contain_alpha_suppression(self):
@@ -53,10 +61,14 @@ class FittedTest(unittest.TestCase):
   else:self.assertGreater(active,50)
   self.assertGreater(trans,100)
  def test_06_actual_png_alpha_in_glb(self):
-  g=self.g;last=g['images'][-1];v=g['bufferViews'][last['bufferView']];z=self.bin[v.get('byteOffset',0):v.get('byteOffset',0)+v['byteLength']]
+  g=self.g;last=g['images'][-2];v=g['bufferViews'][last['bufferView']];z=self.bin[v.get('byteOffset',0):v.get('byteOffset',0)+v['byteLength']]
   from io import BytesIO
   im=Image.open(BytesIO(z));self.assertEqual(im.mode,'RGBA');self.assertEqual(im.size,(625,590))
   self.assertLess(im.getpixel((660-365,210-30))[3],30) # face should never be hair
+  full=g['images'][-1];v2=g['bufferViews'][full['bufferView']]
+  imfull=Image.open(BytesIO(self.bin[v2.get('byteOffset',0):v2.get('byteOffset',0)+v2['byteLength']]))
+  self.assertEqual(imfull.size,(1672,941))
+  self.assertEqual(imfull.getpixel((520,105))[3],0) # blue sky must not be opaque hair
   if self.synthetic:self.assertEqual(im.getpixel((650-365,80-30))[3],0)
   else:self.assertGreater(im.getpixel((650-365,80-30))[3],0) # actual scalp color
  def test_07_fitted_guide_proxy_improves(self):
@@ -65,14 +77,14 @@ class FittedTest(unittest.TestCase):
   if self.synthetic:self.assertGreaterEqual(new,old) # no photo fidelity claim for a white CI image
   else:self.assertGreater(new,old) # must improve on exact approved pixels
  def test_08_uv_shells_are_real_meshes(self):
-  for mesh in self.g['meshes'][-4:]:
+  for mesh in self.g['meshes'][106:110]:
    p=mesh['primitives'][0];self.assertTrue(mesh['name'].startswith('Phase17_SourceUVHairShell_'))
    self.assertIn('TEXCOORD_0',p['attributes']);self.assertIn('JOINTS_0',p['attributes']);self.assertEqual(p['mode'],4)
-  self.assertEqual(len(self.g['scenes'][0]['nodes'])-len(self.old['scenes'][0]['nodes']),4)
+  self.assertEqual(len(self.g['scenes'][0]['nodes'])-len(self.old['scenes'][0]['nodes']),5)
  def test_09_bone_animation_not_reset(self):
   self.assertEqual(self.g['extras']['phase17FittedFineStrands'],528)
   self.assertEqual(len(self.g['animations'][-1]['channels']),176)
-  self.assertEqual(len(self.g['nodes']),len(self.old['nodes'])+4)
+  self.assertEqual(len(self.g['nodes']),len(self.old['nodes'])+5)
  def test_10_geometry_does_change_but_scaffold_not(self):
   prev=self.old['meshes'][23]['primitives'][2];new=self.g['meshes'][23]['primitives'][2]
   self.assertNotEqual(prev['attributes']['POSITION'],new['attributes']['POSITION'])
