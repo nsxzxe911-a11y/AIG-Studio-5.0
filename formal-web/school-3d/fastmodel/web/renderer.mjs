@@ -4,6 +4,7 @@ import {buildEdgeIndex,wireCap,WIRE_MODES,WIRE_DENSITIES,adaptiveWireStep} from 
 import {surfaceGuideId} from './surface-guides.mjs';
 import {LIGHT_PRESETS} from './scene-tools.mjs';
 import {createPoseEvaluator} from './pose-evaluator.mjs';
+import {selectAnimationTracks} from './animation-clips.mjs';
 import {auditAnatomyMetadata} from './anatomy-guard.mjs';
 import {DETAIL_MODES,optionalDetailGroup,initialDetailState,nextDetailState,visiblePreviewEntries} from './adaptive-detail.mjs';
 import {ResourceGovernor,makeBudgets,RebuildableCache} from './resource-governor.mjs';
@@ -47,7 +48,7 @@ function unitMat(){return [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];}
 function mul(a,b){const o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++){let sum=0;for(let k=0;k<4;k++)sum+=a[k*4+r]*b[c*4+k];o[c*4+r]=sum;}return o;}
 function fromTRS(n,rotation){const t=n.translation||[0,0,0],q=rotation||n.rotation||[0,0,0,1],s=n.scale||[1,1,1];let [x,y,z,w]=q;return new Float32Array([(1-2*y*y-2*z*z)*s[0],(2*x*y+2*z*w)*s[0],(2*x*z-2*y*w)*s[0],0,(2*x*y-2*z*w)*s[1],(1-2*x*x-2*z*z)*s[1],(2*y*z+2*x*w)*s[1],0,(2*x*z+2*y*w)*s[2],(2*y*z-2*x*w)*s[2],(1-2*x*x-2*y*y)*s[2],0,t[0],t[1],t[2],1]);}
 function interpQuat(a,b,f){let dot=a.reduce((s,x,i)=>s+x*b[i],0),end=dot<0?b.map(x=>-x):b;let q=a.map((x,i)=>x*(1-f)+end[i]*f),len=Math.hypot(...q)||1;return q.map(x=>x/len);}
-function tracksFor(file){let g=file.g,list=[];for(const a of g.animations||[])for(const ch of a.channels||[]){if(ch.target?.path!=='rotation')continue;const sm=a.samplers[ch.sampler];if(sm.interpolation&&sm.interpolation!=='LINEAR')continue;let times=readAccessor(file,sm.input),values=readAccessor(file,sm.output);list.push({node:ch.target.node,times,values});}return list;}
+function tracksFor(file){return selectAnimationTracks(file,readAccessor,0).tracks;}
 function animatedWorld(nodes,tracks,t){const rotation=new Map();for(const tr of tracks){let times=tr.times,index=0,tt=t%(times[times.length-1]||1);while(index<times.length-2&&times[index+1]<tt)index++;let f=(tt-times[index])/Math.max(1e-9,times[index+1]-times[index]);f=Math.min(1,Math.max(0,f));let a=Array.from(tr.values.slice(index*4,index*4+4)),b=Array.from(tr.values.slice((index+1)*4,(index+2)*4));rotation.set(tr.node,interpQuat(a,b,f));}
  const parent=Array(nodes.length).fill(-1);nodes.forEach((n,i)=>(n.children||[]).forEach(j=>parent[j]=i));let done=new Array(nodes.length);
  function world(i){if(done[i])return done[i];let n=nodes[i],m=n.matrix?new Float32Array(n.matrix):fromTRS(n,rotation.get(i));return done[i]=parent[i]>=0?mul(world(parent[i]),m):m;}
@@ -81,7 +82,7 @@ export class FastModelView {
  const start=performance.now();const nextFile=decodeGLB(arrayBuffer),nextTracks=tracksFor(nextFile),nextPose=createPoseEvaluator(nextFile.g.nodes,nextTracks),nextAnatomy=auditAnatomyMetadata(nextFile),assembled=buildBatches(nextFile,mode);
  const requiredGPU=assembled.batches.reduce((acc,b)=>acc+b.vertices.byteLength+b.indices.byteLength,0);
  if(requiredGPU>this.governor.b.gpuWorkingSetEstimateBytes)throw Error('GPU 繪圖網格推估超過本次預算，保留原有工作區。');
- this.disposeMeshes();this.file=nextFile;this.tracks=nextTracks;this.poseEvaluator=nextPose;this.anatomyAudit=nextAnatomy;this.mode=mode;this.patchStats=null;this.detailState=this.detailMode==='eco'?nextDetailState(initialDetailState(),{mode:'eco'}):initialDetailState();this.staticWorld=null;this.staticPoseUploaded=false;
+ this.disposeMeshes();this.file=nextFile;this.tracks=nextTracks;this.poseEvaluator=nextPose;this.animationClipIndex=nextFile.g.animations?.length?0:null;this.anatomyAudit=nextAnatomy;this.mode=mode;this.patchStats=null;this.detailState=this.detailMode==='eco'?nextDetailState(initialDetailState(),{mode:'eco'}):initialDetailState();this.staticWorld=null;this.staticPoseUploaded=false;
  this.stats={sourceMeshes:this.file.g.meshes.length,sourcePrimitives:this.file.g.meshes.reduce((s,m)=>s+m.primitives.length,0),...{drawCalls:assembled.drawCalls,triangles:assembled.indices/3,vertices:assembled.vertices,skipped:assembled.skipped},gpu:this.gpu};
  this.gpuAllocatedEstimateBytes=requiredGPU;
  this.bound=assembled.bound;this.center=this.bound.min.map((a,i)=>(a+this.bound.max[i])*.5);this.zoom=2/Math.max(this.bound.max[1]-this.bound.min[1],(this.bound.max[0]-this.bound.min[0])*1080/1920)*.93;
@@ -271,6 +272,14 @@ export class FastModelView {
    frameBudget:decision,cacheEvictedMiB:+(this.governor.cache.totalEvictedBytes/1048576).toFixed(1),optionalHairRelease:this.lastOptionalRelease||null,gpuUtilizationPercent:null,scanOverlay:this.scanOverlayTelemetry||null,animationPose:{topologyCached:!!this.poseEvaluator?.topologyCached,tracks:this.poseEvaluator?.trackCount??0,poseMatrixScratchReused:true,animated:!!(this.wind&&this.tracks?.length),actualDeviceGpuTimed:false},headNeckAudit:{status:this.anatomyAudit?.status||'UNVERIFIED',continuityVerified:false,explicitProtectedNodes:this.anatomyAudit?.protectedNodes.length||0,protectedMaterialCount:this.anatomyAudit?.protectedMaterials.size||0},surfaceGuide:this.surfaceGuide,wireMode:this.wireMode,wireDensity:this.wireDensity,wireLines:this.wireStats.segments,wireSkippedForLag:this.wireState.suppressed,previewDetail:{mode:this.detailMode,hidden:this.detailState.hidden,activeDrawCalls:this.activeDrawEntries.length,hiddenOptional:this.drawEntries.length-this.activeDrawEntries.length,optionalMarked:this.drawEntries.filter(x=>x.optionalDetail).length,displayOnly:true}});
 
  }
+ }
+ setAnimationClip(index){
+  if(!this.file)throw Error('NO_LOADED_GLB');
+  const selected=selectAnimationTracks(this.file,readAccessor,index);
+  const evaluator=createPoseEvaluator(this.file.g.nodes,selected.tracks);
+  this.tracks=selected.tracks;this.poseEvaluator=evaluator;this.animationClipIndex=selected.clipIndex;
+  this.staticWorld=null;this.staticPoseUploaded=false;this.scanWorldCache=null;this.frames=[];this.last=0;
+  return {clipIndex:selected.clipIndex,name:selected.name,duration:selected.duration};
  }
  start(){if(this.running)return;this.running=true;const fn=(ts)=>{if(!this.running)return;
   try{this.draw(ts);}catch(e){this.stop();this.onStats({status:'RENDER_ACTION_BLOCKED',message:String(e),gpu:this.gpu});return;}

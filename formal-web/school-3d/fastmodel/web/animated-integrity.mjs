@@ -3,6 +3,7 @@
  * No geometry or original GLB is changed.
  */
 import {createPoseEvaluator} from './pose-evaluator.mjs';
+import {selectAnimationTracks} from './animation-clips.mjs';
 export const ANIMATED_QA_VERSION='FASTMOTION_2_0_POSED_POINTS_NON_AUTHORITATIVE';
 const blocked=(reason)=>({status:'BLOCKED',reason,source:ANIMATED_QA_VERSION,actualSeamFixed:false,
  animatedCollisionProved:false,actualVisualApproval:false,realDeviceTest:false});
@@ -46,25 +47,12 @@ function gather(file,reader,role,budget){
  }
  return {vertices,role,error:null};
 }
-function tracks(file,reader){
+function tracks(file,reader,clipIndex){
  // Different glTF animation clips are alternatives, not simultaneous rotations.
  // Fail closed rather than mixing every clip into one physically nonexistent pose.
- if((file.g.animations?.length||0)>1)throw Error('MULTIPLE_ANIMATION_CLIPS_NEED_EXPLICIT_SELECTION');
- const arr=[];let duration=0;const trackNodes=new Set();
- for(const animation of file.g.animations||[]){
-  for(const channel of animation.channels||[]){
-   if(channel.target?.path!=='rotation')throw Error('UNSUPPORTED_ANIMATION_CHANNEL');
-   if(trackNodes.has(channel.target.node))throw Error('DUPLICATE_NODE_ANIMATION_TRACK');
-   trackNodes.add(channel.target.node);
-   const sampler=animation.samplers?.[channel.sampler];
-   if(!sampler||sampler.interpolation&&sampler.interpolation!=='LINEAR')throw Error('UNSUPPORTED_ANIMATION_INTERPOLATION');
-   const times=reader(file,sampler.input),values=reader(file,sampler.output);
-   if(!times.length||!Number.isFinite(times[times.length-1]))throw Error('BAD_ANIMATION_DURATION');
-   duration=Math.max(duration,times[times.length-1]);
-   arr.push({node:channel.target.node,times,values});
-  }
- }
- return {arr,duration};
+ if((file.g.animations?.length||0)>1&&clipIndex===null)throw Error('MULTIPLE_ANIMATION_CLIPS_NEED_EXPLICIT_SELECTION');
+ const selected=selectAnimationTracks(file,reader,clipIndex??0);
+ return {arr:selected.tracks,duration:selected.duration,clipIndex:selected.clipIndex};
 }
 function posedMeshBounds(points){
  const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];
@@ -81,13 +69,13 @@ function nearest(a,b,maxPairs){
  }
  return {distance:best,attempts,subsampled:stride>1};
 }
-export function inspectAnimatedIntegrity(file,reader,{frames=25,maxVerticesPerRole=480,maxPairsPerFrame=25000}={}){
+export function inspectAnimatedIntegrity(file,reader,{frames=25,maxVerticesPerRole=480,maxPairsPerFrame=25000,clipIndex=null}={}){
  if(!file?.g?.nodes||!file.g.skins||typeof reader!=='function')return blocked('MISSING_REAL_SKINNED_GLB');
  if(!Number.isInteger(frames)||frames<3||frames>61||
     !Number.isInteger(maxVerticesPerRole)||maxVerticesPerRole<32||maxVerticesPerRole>1500||
     !Number.isInteger(maxPairsPerFrame)||maxPairsPerFrame<100||maxPairsPerFrame>100000)throw Error('ANIMATION_AUDIT_BUDGET');
  let source;
- try{source=tracks(file,reader);}catch(e){return blocked(e.message);}
+ try{source=tracks(file,reader,clipIndex);}catch(e){return blocked(e.message);}
  if(!source.arr.length||source.duration<=0||source.duration>120)return blocked('NO_SUPPORTED_ROTATION_ANIMATION');
  const roles={};
  for(const role of ['head','neck','hair']){
@@ -138,7 +126,7 @@ export function inspectAnimatedIntegrity(file,reader,{frames=25,maxVerticesPerRo
    minHair=Math.min(...readings.map(x=>x.hairNeckNearestSample)),
    hairOverlapFrames=readings.filter(x=>x.frontBoxAreaOverlap>0||x.sideBoxAreaOverlap>0).map(x=>x.frame);
  return {status:'POSED_SAMPLE_RISK_REVIEW_REQUIRED',source:ANIMATED_QA_VERSION,
-   sampledFrames:frames,clipDurationSec:source.duration,skinMatricesComputed:true,
+   sampledFrames:frames,clipDurationSec:source.duration,clipIndex:source.clipIndex,skinMatricesComputed:true,
    movementObserved:motion>1e-6,headNeckMaxNearestSample:maxGap,
    hairNeckMinNearestSample:minHair,hairOverlapFrames,readings,
    sourceVertexSampled:{head:roles.head.length,neck:roles.neck.length,hair:roles.hair.length},

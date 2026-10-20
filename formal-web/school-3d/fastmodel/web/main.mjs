@@ -7,6 +7,7 @@ import {auditAnatomyMetadata} from './anatomy-guard.mjs';
 import {inspectHeadNeckGeometry,inspectHairNeckOcclusion,assessAnimationDeviceEvidence} from './character-integrity.mjs';
 import {createHeadNeckBridgeCandidate} from './seam-bridge.mjs';
 import {inspectAnimatedIntegrity} from './animated-integrity.mjs';
+import {selectAnimationTracks} from './animation-clips.mjs';
 import {SCAN_MODES,SCAN_DENSITIES,buildScanOverlay,paintScanOverlay} from './scan-overlay.mjs';
 import {SCAN_PALETTE_MODES,scanColorLegend} from './scan-colors.mjs';
 import {SCAN_SPEED_MODES,createTurboScanController} from './scan-turbo.mjs';
@@ -345,11 +346,40 @@ el('seam-check').addEventListener('click',()=>{
     :'頭頸接縫 BLOCKED：'+latestSeam.reason+'；保留原模型。';
  }catch(e){latestSeam=null;el('seam-status').textContent='頭頸幾何診斷中止：'+e.message+'；原模型保留。';}
 });
+let selectedClipIndex=null;
+function refreshAnimationClips(file){
+ const select=el('animation-clip');select.replaceChildren();
+ const clips=file.g.animations||[];
+ selectedClipIndex=clips.length?0:null;
+ for(let i=0;i<clips.length;i++){
+  const option=document.createElement('option');option.value=String(i);
+  option.textContent=clips[i].name||('片段 '+(i+1));select.append(option);
+ }
+ select.disabled=!clips.length;
+ el('animation-clip-status').textContent=clips.length
+  ?'目前只播放片段 1／'+clips.length+'；切換後逐幀稽核使用同一片段，不混播。'
+  :'此 GLB 沒有動畫片段；保留原靜態模型。';
+}
+el('animation-clip').addEventListener('change',()=>{
+ const f=view?.file||scanFile;if(!f)return;
+ try{
+  const index=Number(el('animation-clip').value);
+  const selected=view?.file?view.setAnimationClip(index):selectAnimationTracks(f,readAccessor,index);
+  selectedClipIndex=selected.clipIndex;lastAnimatedAudit=null;
+  scanCache.clearDerived('animation-clip-change');scanCacheReport();scanOverlayLast=0;
+  el('animated-status').textContent='動畫片段已變更；請重新逐幀檢查此片段。';
+  el('animation-clip-status').textContent='正在使用：'+selected.name+'；播放與頭頸稽核相同片段。';
+  if(view?.file&&paused)view.draw(performance.now());
+ }catch(e){
+  el('animation-clip').value=String(selectedClipIndex??0);
+  el('animation-clip-status').textContent='片段未切換：'+e.message+'；原模型與有效動畫保留。';
+ }
+});
 el('animated-check').addEventListener('click',()=>{
  const f=view?.file||scanFile;
  if(!f){el('animated-status').textContent='動畫驗收 BLOCKED：請先載入有頭／頸／髮束標記及骨架旋轉動畫的 GLB。';return;}
  try{
-   lastAnimatedAudit=inspectAnimatedIntegrity(f,readAccessor,{frames:25,maxVerticesPerRole:480,maxPairsPerFrame:25000});
+   lastAnimatedAudit=inspectAnimatedIntegrity(f,readAccessor,{frames:25,maxVerticesPerRole:480,maxPairsPerFrame:25000,clipIndex:selectedClipIndex});
    if(lastAnimatedAudit.status==='BLOCKED'){
     el('animated-status').textContent='逐幀骨架檢查 BLOCKED：'+lastAnimatedAudit.reason+'。不修改原模型。';
    }else{
@@ -444,7 +474,7 @@ try{view=new FastModelView(el('view'),stats=>{lastStats=stats;let now=performanc
  detail.textContent=`${stats.vertices?.toLocaleString()||0} 頂點 / ${stats.triangles?.toLocaleString()||0} 三角面\n${stats.sourcePrimitives} 原始 primitives → ${stats.drawCalls} draw calls\n尺寸 ${res} / 讀檔建置 ${stats.loadMs}ms\n${stats.skipped} 低層細髮略過（preview mode）`;
  overlay.textContent=`${res}  |  ${stats.fps??'量測中'} FPS\nGPU ${stats.gpu||'unknown'}\n僅技術候選，不可上正式首頁`;
  });view.onGuideFrame=paintCurrentScaffold;view.autoQuality=el('auto').checked;applyDetailChoice();view.setWireMode(el('mesh-lines').value,el('mesh-density').value);setSurfaceChoice();applyLightPreset();showResolutionResult({ok:true,actual:[view.width,view.height]});}catch(err){overlay.textContent='裝置不支援 WebGL2 預覽：'+err.message;quickStatus.textContent='GPU 不可用';el('scan-status').textContent='WebGL2 GPU 不可用；仍可選取 GLB 執行 CPU 幾何掃描。';showResolutionResult();}
-async function importGLB(ab){if(!view){try{const f=decodeGLB(ab);scanFile=f;scanCache.useSource(f);scanCacheReport();buffer=ab;lastScan=null;el('scan-status').textContent='GLB 已讀取（CPU 模式）；可執行幾何快速掃描，但此裝置不能 GPU 預覽。';}catch(e){el('scan-status').textContent='GLB 解析失敗：'+e.message;}return;}const beforeRunning=view.running,hadScene=!!view.file;el('demo').disabled=true;el('file').disabled=true;overlay.textContent='正在解析 GLB 和批次網格，請稍候…';try{view.stop();view.frames=[];view.last=0;await view.load(ab,el('quality').value);applyWireChoice();setSurfaceChoice();applyDetailChoice();buffer=ab;scanFile=view.file;scanCache.useSource(view.file);scanCacheReport();lastScan=null;latestSeam=null;latestHair=null;lastAnimatedAudit=null;applyScanMode();el('animated-status').textContent='新模型尚未逐幀驗證動畫。';el('seam-status').textContent='新 GLB 尚未量測頭頸接縫。';el('bridge-status').textContent='新 GLB 尚未建立橋接候選。';el('hair-status').textContent='新 GLB 尚未量測髮束遮擋。';el('anatomy-status').textContent='已載入新模型，請重新檢查頭頸標記；不自動宣稱連續。';el('scan-status').textContent='GLB 已載入，按「快速抽樣掃描 GLB」讀取幾何資料。';refreshScaffold();showResolutionResult({ok:true,actual:[view.width,view.height]});view.start();el('pause').disabled=false;paused=false;el('pause').textContent='暫停';}catch(e){overlay.textContent='GLB 載入失敗：'+e.message;if(hadScene&&view.entries.length&&beforeRunning)view.start();console.error(e);}finally{el('demo').disabled=false;el('file').disabled=false;}}
+async function importGLB(ab){if(!view){try{const f=decodeGLB(ab);scanFile=f;scanCache.useSource(f);scanCacheReport();buffer=ab;lastScan=null;refreshAnimationClips(f);el('scan-status').textContent='GLB 已讀取（CPU 模式）；可執行幾何快速掃描，但此裝置不能 GPU 預覽。';}catch(e){el('scan-status').textContent='GLB 解析失敗：'+e.message;}return;}const beforeRunning=view.running,hadScene=!!view.file;el('demo').disabled=true;el('file').disabled=true;overlay.textContent='正在解析 GLB 和批次網格，請稍候…';try{view.stop();view.frames=[];view.last=0;await view.load(ab,el('quality').value);applyWireChoice();setSurfaceChoice();applyDetailChoice();buffer=ab;scanFile=view.file;refreshAnimationClips(view.file);scanCache.useSource(view.file);scanCacheReport();lastScan=null;latestSeam=null;latestHair=null;lastAnimatedAudit=null;applyScanMode();el('animated-status').textContent='新模型尚未逐幀驗證動畫。';el('seam-status').textContent='新 GLB 尚未量測頭頸接縫。';el('bridge-status').textContent='新 GLB 尚未建立橋接候選。';el('hair-status').textContent='新 GLB 尚未量測髮束遮擋。';el('anatomy-status').textContent='已載入新模型，請重新檢查頭頸標記；不自動宣稱連續。';el('scan-status').textContent='GLB 已載入，按「快速抽樣掃描 GLB」讀取幾何資料。';refreshScaffold();showResolutionResult({ok:true,actual:[view.width,view.height]});view.start();el('pause').disabled=false;paused=false;el('pause').textContent='暫停';}catch(e){overlay.textContent='GLB 載入失敗：'+e.message;if(hadScene&&view.entries.length&&beforeRunning)view.start();console.error(e);}finally{el('demo').disabled=false;el('file').disabled=false;}}
 el('file').addEventListener('change',async()=>{const f=el('file').files?.[0];if(f)await importGLB(await f.arrayBuffer());});
 el('demo').addEventListener('click',async()=>{try{let r=await fetch('../assets/phase17-visual-NOT-APPROVED.glb');if(!r.ok)throw Error('工程包內的 GLB 需要以 HTTP 開啟，或使用上方檔案選擇器');await importGLB(await r.arrayBuffer());}catch(e){overlay.textContent=e.message+'；請改選擇本機 GLB。';}});
 el('pause').addEventListener('click',()=>{if(!view?.file)return;paused=!paused;if(paused)view.stop();else view.start();el('pause').textContent=paused?'繼續':'暫停';});
@@ -475,4 +505,4 @@ document.addEventListener('visibilitychange',()=>{
  else if(!paused)view.start();
 });
 c.addEventListener('wheel',e=>{if(!view)return;e.preventDefault();view.zoomFactor=Math.max(.6,Math.min(1.6,view.zoomFactor-e.deltaY*.001));el('zoom').value=String(view.zoomFactor*100);},{passive:false});
-el('export').addEventListener('click',async()=>{if(!lastStats)return;await updateDisk();let out={schema:'AIG_FastModel_1080p60_Preview_1',scanCache:scanCache.stats(),scanDisplay:{mode:el('scan-mode').value,density:el('scan-density').value,speed:el('scan-speed').value,palette:el('scan-palette').value,depthMode:el('scan-depth').value,warningOptIn:el('scan-risk-color').checked,overlay:view.scanOverlayTelemetry||null,realDepthHiddenVerified:false,realSkinJointsOnly:true,sourceGLBUnchanged:true},source:'WEBGL2_BROWSER_ONLY',date:new Date().toISOString(),userAgent:navigator.userAgent,webglGpu:view.gpu,visualAuthority:'NOT_APPROVED',nativeDX12Tested:false,nativeVulkanTested:false,renderPolicy:GRAPHICS_POLICY,...lastStats,localMeshEdit:view.patchStats,surfaceInspection:{mode:view.surfaceGuide,additionalDrawCalls:0,additionalLineBuffers:0},previewDetail:lastStats.previewDetail||null,frameBaseline,latestBrowserFrameSummary:latestFrameSummary(),geometryScan:lastScan,headNeckGeometryInspection:latestSeam,hairNeckOcclusionInspection:latestHair,animatedPoseAudit:lastAnimatedAudit,requiredNativeDeviceGate:assessAnimationDeviceEvidence([]),scanKind:el('scene-kind').value,rasterLightPreset:view.lightPreset,referenceScaffold:{enabled:el('scaffold-enabled').checked,yaw:Number(el('scaffold-yaw').value),pitch:Number(el('scaffold-pitch').value),limit:Number(el('scaffold-limit').value),referenceOnly:true},meshLineDisplay:{mode:view.wireMode,density:view.wireDensity,segments:view.wireStats.segments,autoSuppressed:view.wireState.suppressed},resourcePolicy:{...lastStats.memoryPressure,gpuUsagePercentReliable:false},diskEstimate:diskInfo,warning:'browser storage quota is not entire device disk or storage write throughput'};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='AIG-FastModel-device-benchmark.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);});
+el('export').addEventListener('click',async()=>{if(!lastStats)return;await updateDisk();let out={schema:'AIG_FastModel_1080p60_Preview_1',scanCache:scanCache.stats(),scanDisplay:{mode:el('scan-mode').value,density:el('scan-density').value,speed:el('scan-speed').value,palette:el('scan-palette').value,depthMode:el('scan-depth').value,warningOptIn:el('scan-risk-color').checked,overlay:view.scanOverlayTelemetry||null,realDepthHiddenVerified:false,realSkinJointsOnly:true,sourceGLBUnchanged:true},source:'WEBGL2_BROWSER_ONLY',date:new Date().toISOString(),userAgent:navigator.userAgent,webglGpu:view.gpu,visualAuthority:'NOT_APPROVED',nativeDX12Tested:false,nativeVulkanTested:false,renderPolicy:GRAPHICS_POLICY,...lastStats,localMeshEdit:view.patchStats,surfaceInspection:{mode:view.surfaceGuide,additionalDrawCalls:0,additionalLineBuffers:0},previewDetail:lastStats.previewDetail||null,frameBaseline,latestBrowserFrameSummary:latestFrameSummary(),geometryScan:lastScan,headNeckGeometryInspection:latestSeam,hairNeckOcclusionInspection:latestHair,animatedPoseAudit:lastAnimatedAudit,animationSelection:{clipIndex:selectedClipIndex,implicitClipMixing:false},requiredNativeDeviceGate:assessAnimationDeviceEvidence([]),scanKind:el('scene-kind').value,rasterLightPreset:view.lightPreset,referenceScaffold:{enabled:el('scaffold-enabled').checked,yaw:Number(el('scaffold-yaw').value),pitch:Number(el('scaffold-pitch').value),limit:Number(el('scaffold-limit').value),referenceOnly:true},meshLineDisplay:{mode:view.wireMode,density:view.wireDensity,segments:view.wireStats.segments,autoSuppressed:view.wireState.suppressed},resourcePolicy:{...lastStats.memoryPressure,gpuUsagePercentReliable:false},diskEstimate:diskInfo,warning:'browser storage quota is not entire device disk or storage write throughput'};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='AIG-FastModel-device-benchmark.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);});

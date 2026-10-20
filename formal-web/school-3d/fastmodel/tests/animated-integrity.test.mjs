@@ -30,6 +30,19 @@ const realFixture=()=>{
  const reader=(_file,id)=>data.get(id);
  return {file,reader};
 };
+test('explicit selected clip audits the same source pose without mixing alternatives',()=>{
+ const {file,reader}=realFixture();
+ file.g.animations.push(structuredClone(file.g.animations[0]));
+ file.g.animations[1].channels[0].target.node=3;
+ const before=JSON.stringify(file.g);
+ const hair=inspectAnimatedIntegrity(file,reader,{clipIndex:0});
+ const body=inspectAnimatedIntegrity(file,reader,{clipIndex:1});
+ assert.equal(hair.clipIndex,0);assert.equal(body.clipIndex,1);
+ assert.equal(hair.movementObserved,true);assert.equal(body.movementObserved,false);
+ assert.equal(inspectAnimatedIntegrity(file,reader).reason,'MULTIPLE_ANIMATION_CLIPS_NEED_EXPLICIT_SELECTION');
+ assert.equal(inspectAnimatedIntegrity(file,reader,{clipIndex:7}).reason,'ANIMATION_CLIP_INDEX');
+ assert.equal(JSON.stringify(file.g),before);
+});
 test('reads real animated joints, samples moving hair and reports per-frame risk, no fake collision approval',()=>{
  const {file,reader}=realFixture();
  const s=inspectAnimatedIntegrity(file,reader,{frames:13});

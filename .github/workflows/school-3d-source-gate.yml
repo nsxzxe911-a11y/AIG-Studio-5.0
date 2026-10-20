@@ -828,6 +828,23 @@ jobs:
           PY
           node --check /tmp/fastmodel-2-5-cache-standalone.js
           echo "FastModel 2.5 source cache logic Gate PASS; native Windows/Android FPS and GPU timing still UNVERIFIED"
+      - name: FastModel 2.6 source-image to animated GLB pipeline and explicit clip Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/animation-clips.mjs
+          node --test formal-web/school-3d/fastmodel/tests/animation-clips.test.mjs formal-web/school-3d/fastmodel/tests/animated-integrity.test.mjs
+          python -m unittest discover -s formal-web/school-3d/fastmodel/tests -p 'test_image_to_animation.py' -v
+          python formal-web/school-3d/fastmodel/tools/image_to_animation.py \
+            --source artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png \
+            --envelope-spec artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json \
+            --hair-spec artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json \
+            --out artifacts/fastmodel-26-pipeline-SYNTHETIC-NOT-APPROVED
+      - name: Archive FastModel 2.6 synthetic animation pipeline outputs and hashes
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-FastModel-2-6-Image-Animation-SYNTHETIC-NOT-APPROVED
+          path: artifacts/fastmodel-26-pipeline-SYNTHETIC-NOT-APPROVED/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
