@@ -67,6 +67,8 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:no
 <p class="small small-status" id="anatomy-status" role="status">尚未檢查；沒有明確來源標記時只顯示未驗證，不宣稱頭頸已連通。</p>
 <div class="btns"><button id="seam-check" class="action" type="button">檢查真 GLB 頭頸開放邊距離</button><button id="hair-check" class="action" type="button">檢查髮束與脖子投影遮擋</button></div>
 <p id="seam-status" class="small small-status" role="status">頭頸接縫幾何尚未量測，不能證明真正接合。</p>
+<div class="btns" style="margin-top:10px"><button id="bridge-candidate" class="action" type="button">產生可另存的頭頸橋接候選 GLB</button></div>
+<p id="bridge-status" class="small small-status" role="status">需載入具明確 head／neck 標記、相同骨架及簡單對應開放邊的 GLB。只輸出獨立候選，不更動原模型；不等於網格焊接或動畫通過。</p>
 <p id="hair-status" class="small small-status" role="status">髮束遮擋尚未量測；需正面／側面／背面及動畫實圖。</p>
 <p class="info">只保護有明確頭、頸、臉、頭皮標記的材質，其餘未確認批次也不會因為骨架編號被誤刪。這不是自動補面、拓樸縫合、模型接合或動畫碰撞驗證。</p>
 <div class="divider"></div><p class="info">動態預覽與 60 FPS 測速依裝置 GPU 能力運作；模型外觀仍屬技術候選。</p></section>
