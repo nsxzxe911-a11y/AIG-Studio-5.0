@@ -579,6 +579,32 @@ jobs:
           assert "e.optionalDetail===true&&e.detailGroup==='fine-hair'" in renderer
           print('FastModel1.5 no-fake source + synthetic offline PASS; FPS and hardware approval still BLOCKED')
           PY
+      - name: FastModel 1.6 animation pose and head neck preservation source Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/pose-evaluator.mjs
+          node --check formal-web/school-3d/fastmodel/web/anatomy-guard.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/pose-evaluator.test.mjs formal-web/school-3d/fastmodel/tests/anatomy-guard.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-1-6-POSE-NECK-UNVERIFIED.html
+          python - <<'PY'
+          from pathlib import Path
+          b=Path('formal-web/school-3d/fastmodel')
+          html=Path('artifacts/fastmodel-technical/CI-FASTMODEL-1-6-POSE-NECK-UNVERIFIED.html').read_text()
+          for token in ['id="anatomy-check"','id="anatomy-status"',
+                        'function createPoseEvaluator(', 'function auditAnatomyMetadata(',
+                        'this.poseEvaluator.evaluate', 'this.boneMatrixScratch',
+                        '光線追蹤：關閉','window.AIG_EMBEDDED_GLB']:
+              assert token in html,token
+          code=(b/'web/renderer.mjs').read_text()
+          assert 'const nextPose=createPoseEvaluator(' not in code or 'nextPose=createPoseEvaluator(nextFile.g.nodes,nextTracks)' in code
+          assert '!protectedMaterials.has(b.mat)' in code
+          assert 'this.lastOptionalRelease=this.releaseOptionalHair();' not in code
+          assert 'gl.drawElements(gl.TRIANGLES' in code
+          print('1.6 pose and explicit anatomy tags source/packager PASS; GPU and real head-neck continuity still UNVERIFIED')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
