@@ -1,7 +1,7 @@
 import {PhotoViewer} from './viewer.mjs';
 import {SubmissionJournal} from './submission.mjs';
 const $=id=>document.getElementById(id),status=$('status');
-let view=null,loadedFile='',ready=false,busy=false;
+let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null;
 const journal=window.AIG_OFFLINE?null:new SubmissionJournal(localStorage);
 try{view=new PhotoViewer($('view'),m=>{$('viewport-status').textContent='顯示已隔離：'+m+'；生成檔案保留。';});}catch(e){$('viewport-status').textContent='此裝置暫時不能啟用 GPU 預覽；仍可生成與下載 GLB。';}
 const labels={NEW:'等待',SUBMITTING:'送出中',PENDING:'排程中',IN_PROGRESS:'生成中',SUCCEEDED:'完成',SKIPPED:'不適用',BASIC_WALK_PENDING:'下載動作',SUBMISSION_UNKNOWN:'受理待確認',FAILED:'未完成',CANCELED:'已取消'};
@@ -12,6 +12,10 @@ function addLink(label,url,name){const a=document.createElement('a');a.className
 async function load(bytes,orbit){
  if(!view)return;
  const clips=await view.load(bytes,{orbit});$('clip').replaceChildren();
+ $('skin-check').disabled=false;
+ $('skin-check-status').textContent='GLB 已載入。可按「檢查」掃描當前皮膚重疊，並在動畫播放時收集 12 個真實姿態。';
+ $('skin-check-downloads').replaceChildren();
+ if(skinReportUrl){URL.revokeObjectURL(skinReportUrl);skinReportUrl=null;}
  for(const c of clips){const o=document.createElement('option');o.value=String(c.index);o.textContent=c.name;$('clip').append(o);}
  $('clip').disabled=!clips.length;$('pause').disabled=!clips.length;$('pause').textContent='暫停動畫';
  $('viewport-status').textContent=orbit?'真 3D 物件 · 相機環繞展示（非骨架動作）':'真 GLB 動畫 · 可旋轉縮放 · PBR 材質';
@@ -54,6 +58,36 @@ $('generate').addEventListener('click',async()=>{
   const d=await api('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json','X-AIG-Request':'1'},body:JSON.stringify({image,requestId,mode,actionId})});
   journal.accept(fingerprint,d.id);follow(d.id);
  }catch(e){busy=false;status.textContent=errorText(e.message);updateButton();}
+});
+function renderSkinReport(r){
+ const counts=r.poseSampling?.sampledFrames;
+ const risky=(r.coincidentTrianglePairs||0)+(r.skinningVertexIssues||0)+(r.degenerateTriangles||0);
+ $('skin-check-status').textContent='已檢查 '+r.checkedTriangles+' 個來源三角面、'+r.checkedMeshCount+
+  ' 個網格；疑似雙層三角面 '+r.coincidentTrianglePairs+' 組，退化面 '+r.degenerateTriangles+
+  ' 個，權重異常 '+r.skinningVertexIssues+' 個。'+
+  (r.anatomyTagsAvailable?('髮束／脖子包圍盒重疊：'+(r.hairNeckBoxOverlap?'需人工複查':'未觀察到')):'缺少明確髮束／脖子標記，該項不能判定。')+
+  (r.incomplete?' 取樣達上限，未涵蓋全部模型。':'')+
+  (counts!==undefined?' 動畫姿態已抽樣 '+counts+'/'+r.poseSampling.targetFrames+' 幀。':'')+
+  (risky?' 存在疑點，不能自動修復或直接判定穿模。':' 未發現上述抽樣異常；不代表已證明無穿模。');
+ if(r.poseSampling?.status==='SAMPLED_POSES_REVIEW_REQUIRED'){
+  $('skin-check-downloads').replaceChildren();
+  if(skinReportUrl)URL.revokeObjectURL(skinReportUrl);
+  skinReportUrl=URL.createObjectURL(new Blob([JSON.stringify(r,null,2)],{type:'application/json'}));
+  const a=document.createElement('a');a.className='download';a.href=skinReportUrl;
+  a.download='AIG-Skin-Overlap-POSE-SAMPLE-NOT-APPROVED.json';a.textContent='下載皮膚／重疊檢查報告';
+  $('skin-check-downloads').append(a);
+ }
+}
+$('skin-check').addEventListener('click',()=>{
+ if(!view?.model)return;
+ $('skin-check').disabled=true;
+ try{
+  const initial=view.startSkinInspection(r=>{
+   renderSkinReport(r);
+   if(r.poseSampling?.status==='SAMPLED_POSES_REVIEW_REQUIRED')$('skin-check').disabled=false;
+  },{frames:12,minIntervalMs:100});
+  renderSkinReport(initial);
+ }catch(e){$('skin-check-status').textContent='皮膚／重疊掃描 BLOCKED：'+e.message+'；模型保留。';$('skin-check').disabled=false;}
 });
 $('clip').addEventListener('change',()=>{try{view.animation.select(Number($('clip').value));}catch(e){status.textContent='片段未切換：'+e.message;}});
 $('pause').addEventListener('click',()=>{if(!view?.animation)return;view.animation.paused=!view.animation.paused;$('pause').textContent=view.animation.paused?'繼續動畫':'暫停動畫';});
