@@ -53,6 +53,10 @@ class ReconstructionServiceTests(unittest.TestCase):
   self.assertTrue(out['actualGLBProduced'])
   self.assertFalse(out['verifiedSourceGeometry'])
   self.assertFalse(out['releaseAllowed'])
+  self.assertFalse(out['automaticStagesEnabled'])
+  row['automation']={'enabled':True}
+  self.assertTrue(project_job(row)['automaticStagesEnabled'])
+  self.assertEqual(project_job(row)['automaticStages'],['model','rig','animation'])
   row['artifacts']['model.glb']['sha256']='invalid'
   self.assertEqual(len(project_job(row)['artifacts']),1)
  def test_http_service_discovery_poll_and_explicit_create_guard(self):
@@ -68,6 +72,14 @@ class ReconstructionServiceTests(unittest.TestCase):
     req=Request(base+'/api/reconstruction/jobs',data=json.dumps({'serviceId':SERVICE_ID,'requestId':'a'*32}).encode(),headers={'Content-Type':'application/json','X-AIG-Request':'1'},method='POST')
     with self.assertRaises(HTTPError) as e:urlopen(req)
     self.assertEqual(e.exception.code,409)
+    # Even if credentials exist, opt-in needs explicit auto-stage confirmation.
+    server.pipeline.client.key='fake-local-key'
+    missing=Request(base+'/api/reconstruction/jobs',data=json.dumps({
+     'serviceId':SERVICE_ID,'requestId':'b'*32}).encode(),headers={
+      'Content-Type':'application/json','X-AIG-Request':'1'},method='POST')
+    with self.assertRaises(HTTPError) as e:urlopen(missing)
+    self.assertEqual(e.exception.code,409)
+    self.assertIn('RECONSTRUCTION_AUTOMATION_CONFIRMATION_REQUIRED',e.exception.read().decode())
     invalid=Request(base+'/api/reconstruction/jobs',data=b'{}',headers={'Content-Type':'application/json','X-AIG-Request':'1','Origin':'http://attacker.example'},method='POST')
     with self.assertRaises(HTTPError) as e:urlopen(invalid)
     self.assertEqual(e.exception.code,403)
