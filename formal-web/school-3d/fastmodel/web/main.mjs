@@ -5,6 +5,7 @@ import {decodeGLB,readAccessor,sampleVec3Accessor} from './fastmodel-data.mjs';
 import {SCAN_KINDS,scanGeometry,limitAngle,paintScaffold} from './scene-tools.mjs';
 import {auditAnatomyMetadata} from './anatomy-guard.mjs';
 import {inspectHeadNeckGeometry,inspectHairNeckOcclusion,assessAnimationDeviceEvidence} from './character-integrity.mjs';
+import {createHeadNeckBridgeCandidate} from './seam-bridge.mjs';
 import {faceShapeSignature,CharacterFaceRoster} from './character-face.mjs';
 import {measuredFrameSummary} from './adaptive-detail.mjs';
 import {DiskPressureGuard} from './resource-governor.mjs';
@@ -109,6 +110,17 @@ el('anatomy-check').addEventListener('click',()=>{
 });
 // FastModel 1.8: manual on-demand geometry QA; no automatic mesh edits.
 let latestSeam=null,latestHair=null;
+el('bridge-candidate').addEventListener('click',()=>{
+ if(!(buffer instanceof ArrayBuffer)){el('bridge-status').textContent='未載入 GLB，無法建立候選橋接。';return;}
+ try{
+   const result=createHeadNeckBridgeCandidate(buffer);
+   const blob=new Blob([result.buffer],{type:'model/gltf-binary'});
+   const url=URL.createObjectURL(blob),link=document.createElement('a');
+   link.href=url;link.download='AIG-FastModel-HEAD-NECK-VISUAL-BRIDGE-CANDIDATE-NOT-APPROVED.glb';
+   link.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
+   el('bridge-status').textContent='已產生獨立候選：新增 '+result.newTriangleCount+' 個三角面，原 GLB 與目前編輯不變。注意：未焊接來源頂點、未驗證法線／動畫骨架；不作正式角色。';
+ }catch(e){el('bridge-status').textContent='候選橋接 BLOCKED：'+e.message+'。原始 GLB 完整保留，不產生假修補。';}
+});
 el('seam-check').addEventListener('click',()=>{
  const f=view?.file||scanFile;
  if(!f){el('seam-status').textContent='未載入 GLB：頭頸接縫未驗證。';return;}
@@ -202,7 +214,7 @@ try{view=new FastModelView(el('view'),stats=>{lastStats=stats;let now=performanc
  detail.textContent=`${stats.vertices?.toLocaleString()||0} 頂點 / ${stats.triangles?.toLocaleString()||0} 三角面\n${stats.sourcePrimitives} 原始 primitives → ${stats.drawCalls} draw calls\n尺寸 ${res} / 讀檔建置 ${stats.loadMs}ms\n${stats.skipped} 低層細髮略過（preview mode）`;
  overlay.textContent=`${res}  |  ${stats.fps??'量測中'} FPS\nGPU ${stats.gpu||'unknown'}\n僅技術候選，不可上正式首頁`;
  });view.onGuideFrame=paintCurrentScaffold;view.autoQuality=el('auto').checked;applyDetailChoice();view.setWireMode(el('mesh-lines').value,el('mesh-density').value);setSurfaceChoice();applyLightPreset();showResolutionResult({ok:true,actual:[view.width,view.height]});}catch(err){overlay.textContent='裝置不支援 WebGL2 預覽：'+err.message;quickStatus.textContent='GPU 不可用';el('scan-status').textContent='WebGL2 GPU 不可用；仍可選取 GLB 執行 CPU 幾何掃描。';showResolutionResult();}
-async function importGLB(ab){if(!view){try{const f=decodeGLB(ab);scanFile=f;buffer=ab;lastScan=null;el('scan-status').textContent='GLB 已讀取（CPU 模式）；可執行幾何快速掃描，但此裝置不能 GPU 預覽。';}catch(e){el('scan-status').textContent='GLB 解析失敗：'+e.message;}return;}const beforeRunning=view.running,hadScene=!!view.file;el('demo').disabled=true;el('file').disabled=true;overlay.textContent='正在解析 GLB 和批次網格，請稍候…';try{view.stop();view.frames=[];view.last=0;await view.load(ab,el('quality').value);applyWireChoice();setSurfaceChoice();applyDetailChoice();buffer=ab;scanFile=view.file;lastScan=null;latestSeam=null;latestHair=null;el('seam-status').textContent='新 GLB 尚未量測頭頸接縫。';el('hair-status').textContent='新 GLB 尚未量測髮束遮擋。';el('anatomy-status').textContent='已載入新模型，請重新檢查頭頸標記；不自動宣稱連續。';el('scan-status').textContent='GLB 已載入，按「快速抽樣掃描 GLB」讀取幾何資料。';refreshScaffold();showResolutionResult({ok:true,actual:[view.width,view.height]});view.start();el('pause').disabled=false;paused=false;el('pause').textContent='暫停';}catch(e){overlay.textContent='GLB 載入失敗：'+e.message;if(hadScene&&view.entries.length&&beforeRunning)view.start();console.error(e);}finally{el('demo').disabled=false;el('file').disabled=false;}}
+async function importGLB(ab){if(!view){try{const f=decodeGLB(ab);scanFile=f;buffer=ab;lastScan=null;el('scan-status').textContent='GLB 已讀取（CPU 模式）；可執行幾何快速掃描，但此裝置不能 GPU 預覽。';}catch(e){el('scan-status').textContent='GLB 解析失敗：'+e.message;}return;}const beforeRunning=view.running,hadScene=!!view.file;el('demo').disabled=true;el('file').disabled=true;overlay.textContent='正在解析 GLB 和批次網格，請稍候…';try{view.stop();view.frames=[];view.last=0;await view.load(ab,el('quality').value);applyWireChoice();setSurfaceChoice();applyDetailChoice();buffer=ab;scanFile=view.file;lastScan=null;latestSeam=null;latestHair=null;el('seam-status').textContent='新 GLB 尚未量測頭頸接縫。';el('bridge-status').textContent='新 GLB 尚未建立橋接候選。';el('hair-status').textContent='新 GLB 尚未量測髮束遮擋。';el('anatomy-status').textContent='已載入新模型，請重新檢查頭頸標記；不自動宣稱連續。';el('scan-status').textContent='GLB 已載入，按「快速抽樣掃描 GLB」讀取幾何資料。';refreshScaffold();showResolutionResult({ok:true,actual:[view.width,view.height]});view.start();el('pause').disabled=false;paused=false;el('pause').textContent='暫停';}catch(e){overlay.textContent='GLB 載入失敗：'+e.message;if(hadScene&&view.entries.length&&beforeRunning)view.start();console.error(e);}finally{el('demo').disabled=false;el('file').disabled=false;}}
 el('file').addEventListener('change',async()=>{const f=el('file').files?.[0];if(f)await importGLB(await f.arrayBuffer());});
 el('demo').addEventListener('click',async()=>{try{let r=await fetch('../assets/phase17-visual-NOT-APPROVED.glb');if(!r.ok)throw Error('工程包內的 GLB 需要以 HTTP 開啟，或使用上方檔案選擇器');await importGLB(await r.arrayBuffer());}catch(e){overlay.textContent=e.message+'；請改選擇本機 GLB。';}});
 el('pause').addEventListener('click',()=>{if(!view?.file)return;paused=!paused;if(paused)view.stop();else view.start();el('pause').textContent=paused?'繼續':'暫停';});
