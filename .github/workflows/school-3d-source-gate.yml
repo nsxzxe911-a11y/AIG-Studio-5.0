@@ -344,6 +344,45 @@ jobs:
           path: artifacts/fastmodel-technical/
           retention-days: 14
           if-no-files-found: error
+      - name: FastModel 1.1 native resource + cache + disk probe policy Gate
+        run: |
+          cmake -S formal-web/school-3d/fastmodel/core -B artifacts/fastmodel-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build artifacts/fastmodel-build -j2
+          ctest --test-dir artifacts/fastmodel-build --output-on-failure
+      - name: FastModel 1.1 JS pressure + no-data-loss + GPU release Gate (15 tests)
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/resource-governor.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/resource-governor.test.mjs formal-web/school-3d/fastmodel/tests/renderer-resource.test.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('formal-web/school-3d/fastmodel')
+          e=json.loads((p/'STABILITY-EVIDENCE.json').read_text())
+          assert e['realDevice1080p60Verified'] is False
+          assert e['androidNativeVulkanImplemented'] is False
+          assert e['windowsNativeDX12Implemented'] is False
+          assert e['dirtyModelPreserved'] is True
+          assert e['neverDeletesUserFiles'] is True
+          assert e['GPUutilizationPercentMeasured'] is False
+          print('FastModel adaptive stability SOURCE PASS; native device/GPU FPS still BLOCKED')
+          PY
+      - name: FastModel 1.1 synthetic offline packaging and resource policy inclusion
+        run: |
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/AIG-FastModel-1-1-SYNTHETIC-NOT-60FPS.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/AIG-FastModel-1-1-SYNTHETIC-NOT-60FPS.html').read_text()
+          assert 'class ResourceGovernor' in s
+          assert 'class DiskPressureGuard' in s
+          assert 'releaseOptionalHair' in s
+          assert 'window.AIG_EMBEDDED_GLB' in s
+          assert 'gl.bufferSubData' in s
+          print('Embedded adaptive resource governor is present')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"

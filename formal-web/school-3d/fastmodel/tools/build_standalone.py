@@ -11,14 +11,15 @@ def build(glb,out):
     if raw[:4]!=b'glTF':raise ValueError('Expected glTF 2 binary asset')
     html=(ROOT/'web/index.html').read_text('utf8')
     data=(ROOT/'web/fastmodel-data.mjs').read_text('utf8').replace('export ','')
-    render=(ROOT/'web/renderer.mjs').read_text('utf8').replace("import {decodeGLB,readAccessor,buildBatches} from './fastmodel-data.mjs';",'').replace('export ','')
-    main=(ROOT/'web/main.mjs').read_text('utf8').replace("import {FastModelView} from './renderer.mjs';",'')
+    policy=(ROOT/'web/resource-governor.mjs').read_text('utf8').replace('export ','')
+    render=(ROOT/'web/renderer.mjs').read_text('utf8').replace("import {decodeGLB,readAccessor,buildBatches} from './fastmodel-data.mjs';",'').replace("import {ResourceGovernor,makeBudgets,RebuildableCache} from './resource-governor.mjs';",'').replace('export ','')
+    main=(ROOT/'web/main.mjs').read_text('utf8').replace("import {FastModelView} from './renderer.mjs';",'').replace("import {DiskPressureGuard} from './resource-governor.mjs';",'')
     old="let r=await fetch('../assets/phase17-visual-NOT-APPROVED.glb');"
     new="if(window.AIG_EMBEDDED_GLB){const bytes=Uint8Array.from(atob(window.AIG_EMBEDDED_GLB),c=>c.charCodeAt(0));await importGLB(bytes.buffer);return;}let r=await fetch('../assets/phase17-visual-NOT-APPROVED.glb');"
     if old not in main:raise ValueError('Page load contract changed')
     main=main.replace(old,new)
     encoded=base64.b64encode(raw).decode('ascii')
-    payload='<script>\nwindow.AIG_EMBEDDED_GLB="'+encoded+'";\n'+data+'\n'+render+'\n'+main+'\n</script>'
+    payload='<script>\nwindow.AIG_EMBEDDED_GLB="'+encoded+'";\n'+data+'\n'+policy+'\n'+render+'\n'+main+'\n</script>'
     marker='<script type="module" src="./main.mjs"></script>'
     if html.count(marker)!=1:raise ValueError('Expected exactly one script tag')
     html=html.replace(marker,payload)

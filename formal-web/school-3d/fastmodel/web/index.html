@@ -8,14 +8,14 @@
 </style></head><body><main class="shell"><header><div><div class="name">AIG <b>FASTMODEL</b> Cinema 1.0</div><p>Windows / Android 共用幾何資料 · 自研 WebGL2 GPU 預覽測速 · 繁體中文</p></div><span class="pill">TECHNICAL PREVIEW · 非正式人物</span></header><section class="workspace">
 <div><div class="viewport"><canvas id="view" aria-label="AIG 3D 角色技術預覽"></canvas><div id="overlay" class="overlay">載入 Phase17 GLB 後開始量測\n拖曳旋轉 · 雙指縮放</div><div class="watermark">PHASE17 VISUAL NOT APPROVED</div></div><div class="legend"><span>1080p 60FPS 目標，非宣稱達標</span><span>GPU 骨架蒙皮</span><span>合批減少 draw calls</span><span>本地 GLB，不上傳</span></div></div>
 <aside><h2>1080p／60 FPS 測速工作台</h2><label>讀取 Phase17 角色 GLB（可從工程包解壓取得）<input id="file" type="file" accept=".glb,model/gltf-binary"></label><div class="btns" style="margin-top:10px"><button id="demo">載入附帶測試 GLB</button><button id="pause" disabled>暫停</button></div>
-<h3>實際 FPS（瀏覽器 requestAnimationFrame）</h3><div class="metric"><div><strong id="fps">—</strong><small>平均 FPS</small></div><div><strong id="p95">—</strong><small>Frame p95 ms</small></div><div><strong id="draw">—</strong><small>合批 draw calls</small></div><div><strong id="cpu">—</strong><small>JS 提交 ms（非 GPU）</small></div></div><div id="detail" class="detail">尚未載入 GLB</div>
+<h3>實際 FPS（瀏覽器 requestAnimationFrame）</h3><div class="metric"><div><strong id="fps">—</strong><small>平均 FPS</small></div><div><strong id="p95">—</strong><small>Frame p95 ms</small></div><div><strong id="draw">—</strong><small>合批 draw calls</small></div><div><strong id="cpu">—</strong><small>JS 提交 ms（非 GPU）</small></div></div><div id="detail" class="detail">尚未載入 GLB</div><div id="stability" class="detail" aria-live="polite">資源調節：待開始</div><div id="balance" class="detail">CPU/GPU 幀預算：待測</div><div id="disk" class="detail">磁碟配額：待查</div>
 <h3>畫面／效能策略</h3><label>內部渲染尺寸<select id="resolution"><option value="1920x1080">1920 × 1080（1080p）</option><option value="1280x720">1280 × 720（省電備援）</option></select></label>
 <label>幾何層級<select id="quality"><option value="full">完整 528 細髮束＋頭部包覆</option><option value="preview">主角色＋原圖貼圖，低負荷預覽</option></select></label>
-<label><input id="auto" type="checkbox"> 慢速時自動降至 720p（可再提升）</label>
-<label><input id="wave" type="checkbox" checked> 髮束骨架動畫</label>
+<label><input id="auto" type="checkbox" checked> 自動 CPU/GPU 幀預算調節與記憶體保護（慢速降階）</label>
+<label><input id="wave" type="checkbox" checked> 髮束骨架動畫</label><div class="btns" style="margin-top:8px"><button id="reclaim">釋放可重建的髮片 GPU 資源</button></div><p class="small" id="reclaimstat">保留原 GLB，還原細髮需重新載入</p>
 <label>縮放 <input id="zoom" type="range" min="60" max="160" value="100"></label>
 <label>局部網格推拉（只更新 256 個頂點，示範用）<input id="patch" type="range" min="-100" max="100" value="0"></label><p class="small" id="patchstat">尚未修改網格</p>
 <div class="btns" style="margin-top:12px"><button id="turnl">左轉</button><button id="reset">正面</button><button id="turnr">右轉</button></div>
 <div class="btns" style="margin-top:9px"><button id="export">匯出測速 JSON</button></div>
-<div class="warning">僅為跨平台 WebGL2 技術預覽。C++ 建模核心已做 Linux 測速；原生 DX12／Vulkan 尚未接通。角色仍是 Phase17 2.5D 逆向候選，正側背面外觀未通過，不代表 1080p／60 FPS 已達標。</div></aside></section><footer>© AIG-II / AIG Studio 5.0 · 本測試頁獨立於 CNC Runtime。未合併正式網站，不會連線上傳使用者選取的 GLB。</footer></main>
+<div class="warning">資源保護只清除可重建快取；未儲存模型與原圖不自動刪除。CPU/GPU 不強制相同使用率，僅按幀預算協調。瀏覽器無法直接得知可靠 GPU 利用率或整顆磁碟剩餘容量。僅為跨平台 WebGL2 技術預覽。C++ 建模核心已做 Linux 測速；原生 DX12／Vulkan 尚未接通。角色仍是 Phase17 2.5D 逆向候選，正側背面外觀未通過，不代表 1080p／60 FPS 已達標。</div></aside></section><footer>© AIG-II / AIG Studio 5.0 · 本測試頁獨立於 CNC Runtime。未合併正式網站，不會連線上傳使用者選取的 GLB。</footer></main>
 <script type="module" src="./main.mjs"></script></body></html>
