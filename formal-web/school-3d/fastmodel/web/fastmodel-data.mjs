@@ -31,6 +31,26 @@ export function readAccessor(file,id){
  for(let i=0;i<a.count;i++)for(let j=0;j<n;j++)arr[i*n+j]=bin[fn](off+i*stride+j*bytes, true);
  return arr;
 }
+/** FastModel 1.5: read only sparse sample points; do not allocate/decode whole POSITION accessor.
+ * Supports existing GLB2 numeric types and interleaved bufferViews, matching readAccessor.
+ */
+export function sampleVec3Accessor(file,id,sampleStride=1){
+ const {g,bin}=file,a=g?.accessors?.[id],bv=g?.bufferViews?.[a?.bufferView];
+ if(!a||!bv||a.type!=='VEC3'||!(a.componentType in COMPONENT)||a.sparse)throw Error('Unsupported POSITION accessor '+id);
+ if(!Number.isInteger(sampleStride)||sampleStride<1||!Number.isSafeInteger(a.count)||a.count<1)throw RangeError('Invalid scan sample stride/count');
+ const [bytes,fn]=COMPONENT[a.componentType];
+ const byteStride=bv.byteStride||bytes*3,off=(bv.byteOffset||0)+(a.byteOffset||0);
+ if(byteStride<bytes*3||byteStride%bytes||off<0||off+byteStride*(a.count-1)+3*bytes>bin.byteLength)throw Error('GLB sampled buffer bounds');
+ const n=Math.ceil(a.count/sampleStride);
+ if(n>100000)throw Error('Scan accessor budget exceeded');
+ const out=new Float32Array(n*3);let sampled=0;
+ for(let i=0;i<a.count;i+=sampleStride){
+   const base=off+i*byteStride;
+   for(let j=0;j<3;j++)out[sampled*3+j]=bin[fn](base+j*bytes,true);
+   sampled++;
+ }
+ return out;
+}
 export function buildBatches(file,detail='full'){
  const g=file.g, groups=new Map(),bound={min:[Infinity,Infinity,Infinity],max:[-Infinity,-Infinity,-Infinity]};let primitives=0,skipped=0;
  for(const node of g.nodes){if(node.mesh===undefined)continue;const skin=node.skin??0,mesh=g.meshes[node.mesh];
