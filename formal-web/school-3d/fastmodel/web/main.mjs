@@ -4,6 +4,7 @@ import {SURFACE_GUIDES} from './surface-guides.mjs';
 import {decodeGLB,readAccessor,sampleVec3Accessor} from './fastmodel-data.mjs';
 import {SCAN_KINDS,scanGeometry,limitAngle,paintScaffold} from './scene-tools.mjs';
 import {auditAnatomyMetadata} from './anatomy-guard.mjs';
+import {faceShapeSignature,CharacterFaceRoster} from './character-face.mjs';
 import {measuredFrameSummary} from './adaptive-detail.mjs';
 import {DiskPressureGuard} from './resource-governor.mjs';
 import {RESOLUTION_PRESETS} from './resolution-policy.mjs';
@@ -36,6 +37,23 @@ el('surface-guide').addEventListener('change',setSurfaceChoice);
 el('mesh-lines').addEventListener('change',applyWireChoice);el('mesh-density').addEventListener('change',applyWireChoice);
 
 // FastModel 1.4: bounded CPU analysis and real UI-to-renderer raster controls.
+const faceRoster=new CharacterFaceRoster();
+el('face-compare').addEventListener('click',()=>{
+ const file=scanFile||view?.file;
+ if(!file){el('face-status').textContent='請先載入含臉部 face 標記的 GLB。';return;}
+ try{
+   const signature=faceShapeSignature(file,sampleVec3Accessor);
+   const result=faceRoster.add({id:el('character-id').value.trim(),role:el('character-role').value,signature});
+   el('face-status').textContent=result.warnings.length
+    ?'防撞臉提醒：'+result.id+' 與 '+result.warnings.map(x=>x.id+'（相似分數 '+x.score+'）').join('、')+
+      ' 3D 幾何過度相似；請人工調整臉型、眼鼻嘴比例與髮型後重新匯入檢查。已比對 '+result.compared+' 名角色。'
+    :'已收錄角色 '+result.id+'；和 '+result.compared+' 名既有角色完成幾何比對。'+(result.closest?' 最近角色 '+result.closest.id+'，啟發式相似分數 '+result.closest.score+'。':' 名單中的第一位角色。')+' 不是真人臉辨識，仍需人工看正／側面。';
+ }catch(err){el('face-status').textContent='角色臉型比對未完成：'+err.message+'。未更改原模型或既有名單。';}
+});
+el('face-clear').addEventListener('click',()=>{
+ faceRoster.clear();
+ el('face-status').textContent='本次角色對照已清空；不影響來源 GLB 與編輯資料。';
+});
 const guideCanvas=el('guide-overlay');
 function paintCurrentScaffold(){
  if(!el('scaffold-enabled').checked||!view?.bound)return;
