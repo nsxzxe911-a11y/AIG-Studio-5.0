@@ -27,7 +27,7 @@ function parentsFor(nodes){
  return parents;
 }
 function roleAllowed(role,mode){
- if(mode==='head-neck')return ['head','neck','scalp','face'].includes(role);
+ if(mode==='head-neck')return ['head','neck','scalp','face','head-neck'].includes(role);
  if(mode==='hair')return role==='hair';
  return true;
 }
