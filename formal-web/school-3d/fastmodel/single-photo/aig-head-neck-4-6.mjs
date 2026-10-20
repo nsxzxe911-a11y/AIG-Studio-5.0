@@ -89,9 +89,9 @@ function ellipsoid(name,c,r,rings=12,sides=16){
   ix.push(a,b,d,b,e,d);
  }
  for(let j=0;j<sides;j++){
-  ix.push(top,j,(j+1)%sides);
+  ix.push(top,(j+1)%sides,j);
   const last=(rings-2)*sides;
-  ix.push(bottom,last+(j+1)%sides,last+j);
+  ix.push(bottom,last+j,last+(j+1)%sides);
  }
  return createMesh(name,v,ix,'INFERRED_PARAMETERIZED_ELLIPSOID');
 }
@@ -111,18 +111,18 @@ function cappedTube(name,path,radii,sides=12){
  for(let i=0;i<path.length-1;i++)for(let j=0;j<sides;j++){
   const a=i*sides+j,b=i*sides+(j+1)%sides,
    d=(i+1)*sides+j,e=(i+1)*sides+(j+1)%sides;
-  ix.push(a,d,b,b,d,e);
+  ix.push(a,b,d,b,e,d);
  }
  const first=v.length/3;v.push(...path[0]);
  const last=v.length/3;v.push(...path[path.length-1]);
  for(let j=0;j<sides;j++){
-  ix.push(first,j,(j+1)%sides);
-  const n=(path.length-1)*sides;ix.push(last,n+(j+1)%sides,n+j);
+  ix.push(first,(j+1)%sides,j);
+  const n=(path.length-1)*sides;ix.push(last,n+j,n+(j+1)%sides);
  }
  return createMesh(name,v,ix,'INFERRED_CAPSULE_TUBE_WITH_CAPS');
 }
 export function meshTopology(mesh){
- const counts=new Map(),positions=mesh.positions,index=mesh.indices;
+ const counts=new Map(),oriented=new Map(),positions=mesh.positions,index=mesh.indices;
  let invalid=0,volume=0;
  for(let i=0;i<index.length;i+=3){
   const a=index[i],b=index[i+1],c=index[i+2];
@@ -130,6 +130,7 @@ export function meshTopology(mesh){
   for(const [u,v] of [[a,b],[b,c],[c,a]]){
    const key=Math.min(u,v)+':'+Math.max(u,v);
    counts.set(key,(counts.get(key)||0)+1);
+   const d=u+'>'+v;oriented.set(d,(oriented.get(d)||0)+1);
   }
   const p=[a,b,c].map(j=>Array.from(positions.slice(3*j,3*j+3)));
   const cp=cross(vecSub(p[1],p[0]),vecSub(p[2],p[0]));
@@ -137,8 +138,12 @@ export function meshTopology(mesh){
   volume+=(p[0][0]*cp[0]+p[0][1]*cp[1]+p[0][2]*cp[2])/6;
  }
  const unmatched=[...counts.values()].filter(count=>count!==2).length;
+ const orientationConflicts=[...oriented].filter(([edge,num])=>{
+  const [a,b]=edge.split('>');return oriented.get(b+'>'+a)!==num;
+ }).length;
  return {part:mesh.name,vertexCount:positions.length/3,triangleCount:index.length/3,
-  degenerateTriangles:invalid,nonManifoldEdges:unmatched,closed:invalid===0&&unmatched===0,
+  degenerateTriangles:invalid,nonManifoldEdges:unmatched,orientationConflicts,
+  closed:invalid===0&&unmatched===0&&orientationConflicts===0,
   signedVolume:volume,normalOrientationVerified:volume>1e-8};
 }
 export function buildHeadNeckPonytail(profile,{ponytailSwing=0,ponytailBack=.09}={}){
