@@ -25,12 +25,15 @@ export function validateTimelineSamples(samples,{clipName,sourceSha256}={}){
   };
  });
 }
-export function timelineEvidenceManifest({sourceSha256,clipName,samples}={}){
+export function timelineEvidenceManifest({sourceSha256,actionSha256=null,clipName,samples}={}){
+ if(actionSha256!==null&&!/^[0-9a-f]{64}$/i.test(actionSha256))throw Error('TIMELINE_ACTION_SHA_INVALID');
  const rows=validateTimelineSamples(samples,{clipName,sourceSha256});
  if(rows.some(row=>row.clipName!==clipName))throw Error('TIMELINE_CLIP_CHANGED');
  return {
   schema:'AIG_FASTMODEL_3_0_REAL_ANIMATED_16_FRAME_QA',
-  sourceSha256:sourceSha256.toLowerCase(),selectedClipName:clipName,
+  sourceSha256:sourceSha256.toLowerCase(),actionSha256:(actionSha256||sourceSha256).toLowerCase(),
+  externalActionGLBUsed:!!actionSha256&&actionSha256.toLowerCase()!==sourceSha256.toLowerCase(),
+  selectedClipName:clipName,
   sampleCount:rows.length,viewCount:rows.length*4,
   fractions:[...TIMELINE_FRACTIONS],worldAxisViews:[...TIMELINE_VIEW_KEYS],
   rows,visualEvidenceType:'ACTUAL_GLTF_ANIMATION_AND_WEBGL_CAPTURE',
