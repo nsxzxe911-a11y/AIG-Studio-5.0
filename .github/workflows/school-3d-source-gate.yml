@@ -790,7 +790,7 @@ jobs:
           h=Path('artifacts/fastmodel-technical/CI-FASTMODEL-2-4-TURBO-BONES-FIRST-NOT-APPROVED.html').read_text()
           for token in ['id="scan-speed"','id="scan-speed-status"',
                         '啟動極速掃描 GLB','function createTurboScanController(',
-                        "geometry:speed==='turbo'?'bones':'all'",
+                        "scanCachedTopology(f,density,'bones')",
                         "scanRequestContours(f,density,revision)",
                         'actualDeviceFpsVerified:false','window.AIG_EMBEDDED_GLB',
                         '光線追蹤：關閉']:
