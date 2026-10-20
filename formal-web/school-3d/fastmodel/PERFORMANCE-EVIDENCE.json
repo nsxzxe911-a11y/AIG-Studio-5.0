@@ -1,0 +1,55 @@
+{
+  "schema": "AIG_FASTMODEL_CINEMA_1_0_PERFORMANCE_EVIDENCE",
+  "date": "2026-10-20",
+  "phase17GitCommit": "893cfdef38b37d36a2d40a03f4bae0cee6f68de6",
+  "hostPlatform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "nativeCoreCompiled": true,
+  "nativeCAbiCompiled": true,
+  "nativeDX12Implemented": false,
+  "nativeVulkanImplemented": false,
+  "androidAPKBuilt": false,
+  "windowsEXEBuilt": false,
+  "webgl2GpuDrawVerified": false,
+  "1080p60Verified": false,
+  "webgl2HostBrowser": {
+    "browser": "Chromium local headless",
+    "webgl2": false,
+    "status": "GPU_PREVIEW_NOT_TESTABLE_IN_HOSTED_BROWSER",
+    "errors": []
+  },
+  "benchmarks": {
+    "nativeCpp": {
+      "baseline": "LINUX_HOST_ONLY_NOT_WINDOWS_OR_ANDROID",
+      "vertices": 300000,
+      "patchedVertices": 256,
+      "samples": 1000,
+      "fullRebuildMedianMs": 0.418797,
+      "fullRebuildP95Ms": 0.642643,
+      "patchMedianMs": 0.000591,
+      "patchP95Ms": 0.000951,
+      "patchUploadBytes": 3072,
+      "fullUploadBytes": 3600000,
+      "speedupIllustrative": 708.62,
+      "checksum": 994.995,
+      "assertions": "PASS"
+    },
+    "phase17RealSourceGLB": {
+      "sha256": "63562888c49692ec0fe2d36932f02286ebbf5c0e644c2796f0178b4949eee51f",
+      "bytes": 10811332,
+      "meshes": 111,
+      "primitives": 551,
+      "skins": 2,
+      "animations": 4,
+      "unapprovedVisual": true
+    },
+    "webBatch": {
+      "phase17SourcePrimitives": 551,
+      "batchedFullDrawCalls": 9,
+      "batchedPreviewDrawCalls": 4,
+      "fullVertices": 35833,
+      "triangles": 63867,
+      "gpuRasterPerformanceMeasured": false
+    }
+  },
+  "validity": "Native timing is Linux-host CPU only. Full and patch workloads differ; speedup ratio is not application acceleration. Browser source GLB batching count is not GPU FPS. Model remains not visually approved."
+}

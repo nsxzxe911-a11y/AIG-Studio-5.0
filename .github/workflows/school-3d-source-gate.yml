@@ -311,6 +311,39 @@ jobs:
           path: artifacts/school-3d-phase17-synthetic/
           retention-days: 14
           if-no-files-found: error
+      - name: FastModel 1.0 native portable C++ incremental mesh C ABI Gate
+        run: |
+          cmake -S formal-web/school-3d/fastmodel/core -B artifacts/fastmodel-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build artifacts/fastmodel-build -j2
+          ctest --test-dir artifacts/fastmodel-build --output-on-failure
+          mkdir -p artifacts/fastmodel-technical
+          ./artifacts/fastmodel-build/fastmodel_test | tee artifacts/fastmodel-technical/native-LINUX-NOT-GPU-benchmark.json
+      - name: FastModel real GLB batch importer — synthetic input, zero third-party models
+        env:
+          AIG_FASTMODEL_GLB: artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/web-core.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb "$AIG_FASTMODEL_GLB" \
+            --out artifacts/fastmodel-technical/AIG-FastModel-CI-SYNTHETIC-OFFLINE-NOT-PRODUCTION.html
+          python - <<'PY'
+          import json
+          e=json.load(open('formal-web/school-3d/fastmodel/PERFORMANCE-EVIDENCE.json'))
+          assert e['1080p60Verified'] is False
+          assert e['nativeDX12Implemented'] is False
+          assert e['nativeVulkanImplemented'] is False
+          assert e['webgl2GpuDrawVerified'] is False
+          print('PASS: no false GPU or mobile deployment claims')
+          PY
+      - name: Upload FastModel synthetic technical preview, NOT native 60fps
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-FastModel-1-SYNTHETIC-WebPreview-NOT-1080p60-Proven
+          path: artifacts/fastmodel-technical/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"

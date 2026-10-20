@@ -1,0 +1,20 @@
+import {FastModelView} from './renderer.mjs';
+const el=id=>document.getElementById(id),overlay=el('overlay'),detail=el('detail');let view=null,buffer=null,paused=false,lastStats=null;
+let lastUI=0;
+try{view=new FastModelView(el('view'),stats=>{lastStats=stats;let now=performance.now();if(now-lastUI<300&&stats.status==='running')return;lastUI=now;
+ el('fps').textContent=stats.fps??'—';el('p95').textContent=stats.p95FrameMs??'—';el('draw').textContent=stats.drawCalls??'—';el('cpu').textContent=stats.jsSubmitMs??'—';let res=stats.resolution?.join('×')||'1920×1080';detail.textContent=`${stats.vertices?.toLocaleString()||0} 頂點 / ${stats.triangles?.toLocaleString()||0} 三角面\n${stats.sourcePrimitives} 原始 primitives → ${stats.drawCalls} draw calls\n尺寸 ${res} / 讀檔建置 ${stats.loadMs}ms\n${stats.skipped} 低層細髮略過（preview mode）`;
+ overlay.textContent=`${res}  |  ${stats.fps??'量測中'} FPS\nGPU ${stats.gpu||'unknown'}\n僅技術候選，不可上正式首頁`;
+ });}catch(err){overlay.textContent='目前裝置不能啟動 WebGL2 GPU 預覽：'+err.message;el('demo').disabled=true;}
+async function importGLB(ab){if(!view)return;el('demo').disabled=true;el('file').disabled=true;overlay.textContent='正在解析 GLB 和批次網格，請稍候…';try{buffer=ab;view.stop();view.frames=[];view.last=0;await view.load(ab,el('quality').value);view.start();el('pause').disabled=false;paused=false;el('pause').textContent='暫停';}catch(e){overlay.textContent='GLB 載入失敗：'+e.message;console.error(e);}finally{el('demo').disabled=false;el('file').disabled=false;}}
+el('file').addEventListener('change',async()=>{const f=el('file').files?.[0];if(f)await importGLB(await f.arrayBuffer());});
+el('demo').addEventListener('click',async()=>{try{let r=await fetch('../assets/phase17-visual-NOT-APPROVED.glb');if(!r.ok)throw Error('工程包內的 GLB 需要以 HTTP 開啟，或使用上方檔案選擇器');await importGLB(await r.arrayBuffer());}catch(e){overlay.textContent=e.message+'；請改選擇本機 GLB。';}});
+el('pause').addEventListener('click',()=>{if(!view?.file)return;paused=!paused;if(paused)view.stop();else view.start();el('pause').textContent=paused?'繼續':'暫停';});
+el('quality').addEventListener('change',async()=>{if(buffer)await importGLB(buffer);});
+el('resolution').addEventListener('change',()=>{if(!view)return;let [w,h]=el('resolution').value.split('x').map(Number);view.resize(w,h);});
+el('auto').addEventListener('change',()=>{if(view)view.autoQuality=el('auto').checked;});
+el('wave').addEventListener('change',()=>{if(view)view.wind=el('wave').checked;});
+el('zoom').addEventListener('input',()=>{if(view)view.zoomFactor=Number(el('zoom').value)/100;});
+el('turnl').addEventListener('click',()=>{if(view)view.angle=Math.max(-1.2,view.angle-.15);});el('turnr').addEventListener('click',()=>{if(view)view.angle=Math.min(1.2,view.angle+.15);});el('reset').addEventListener('click',()=>{if(view){view.angle=0;view.zoomFactor=1;el('zoom').value='100';}});
+let pointerX=null;const c=el('view');c.addEventListener('pointerdown',e=>{pointerX=e.clientX;c.setPointerCapture?.(e.pointerId);});c.addEventListener('pointermove',e=>{if(pointerX===null||!view)return;view.angle=Math.max(-1.2,Math.min(1.2,view.angle+(e.clientX-pointerX)*.006));pointerX=e.clientX;});c.addEventListener('pointerup',()=>pointerX=null);c.addEventListener('pointercancel',()=>pointerX=null);
+c.addEventListener('wheel',e=>{if(!view)return;e.preventDefault();view.zoomFactor=Math.max(.6,Math.min(1.6,view.zoomFactor-e.deltaY*.001));el('zoom').value=String(view.zoomFactor*100);},{passive:false});
+el('export').addEventListener('click',()=>{if(!lastStats)return;let out={schema:'AIG_FastModel_1080p60_Preview_1',source:'WEBGL2_BROWSER_ONLY',date:new Date().toISOString(),userAgent:navigator.userAgent,webglGpu:view.gpu,visualAuthority:'NOT_APPROVED',nativeDX12Tested:false,nativeVulkanTested:false,...lastStats};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='AIG-FastModel-device-benchmark.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);});
