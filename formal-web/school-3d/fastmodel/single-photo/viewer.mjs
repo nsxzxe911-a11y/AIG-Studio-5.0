@@ -5,6 +5,7 @@ import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {inspectSkinPose,SkinAnomalyMonitor} from './skin-anomaly.mjs';
 import {REVIEW_DIRECTIONS,reviewCameraPose,reviewPoseTime} from './heroine-review.mjs';
 import {TIMELINE_FRACTIONS,composeTimelineImage} from './timeline-review.mjs';
+import {inspectExternalAction,copyCompatibleClips} from './action-compatibility.mjs';
 
 export async function parseRiggedGLB(buffer){
  if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>200*1024*1024)throw Error('GLB_SIZE_LIMIT');
@@ -52,6 +53,7 @@ export class PhotoViewer{
  fitCanvas(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);this.camera.aspect=Math.max(1,r.width)/Math.max(1,r.height);this.camera.updateProjectionMatrix();}
  async load(buffer,{orbit=false}={}){
   if(this.reviewBusy)throw Error('TIMELINE_REVIEW_IN_PROGRESS');
+  if(this.actionImportBusy)throw Error('ACTION_IMPORT_IN_PROGRESS');
   const file=await parseRiggedGLB(buffer),box=new THREE.Box3().setFromObject(file.scene);
   if(box.isEmpty())throw Error('GLB_EMPTY_SCENE');
   const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
@@ -61,6 +63,33 @@ export class PhotoViewer{
   this.scene.add(file.scene);if(old){this.scene.remove(old);this.release(old);}
   const radius=Math.max(size.x,size.y,size.z,.01);this.camera.position.copy(center).add(new THREE.Vector3(0,radius*.12,radius*1.7));this.camera.near=radius/1000;this.camera.far=radius*100;this.camera.updateProjectionMatrix();this.controls.target.copy(center);this.controls.update();
   return file.animations.map((c,i)=>({index:i,name:c.name||'片段 '+(i+1),duration:c.duration}));
+ }
+ async importExternalAction(buffer){
+  if(!this.model||!this.animation)throw Error('ACTION_TARGET_MODEL_REQUIRED');
+  if(this.reviewBusy)throw Error('ACTION_REVIEW_IN_PROGRESS');
+  if(this.actionImportBusy)throw Error('ACTION_IMPORT_IN_PROGRESS');
+  this.actionImportBusy=true;
+  const currentModel=this.model,controller=this.animation;
+  let file=null;
+  try{
+   file=await parseRiggedGLB(buffer);
+   if(currentModel!==this.model||controller!==this.animation)throw Error('ACTION_TARGET_CHANGED');
+   const result=inspectExternalAction(currentModel,file.scene,file.animations);
+   if(controller.clips.length+file.animations.length>32)throw Error('ACTION_CLIP_LIBRARY_LIMIT');
+   const copied=copyCompatibleClips(file.animations);
+   // Animation only. DO NOT add the source GLB mesh to the displayed heroine.
+   // This avoids a second translucent head/skin being rendered over the target.
+   const firstIndex=controller.clips.length;
+   controller.clips.push(...copied);
+   controller.select(firstIndex);
+   this.skinProbe=null;
+   return {...result,status:'COMPATIBLE_CLIP_LOADED_SOURCE_QA_ONLY',
+    selectedIndex:firstIndex,importedNames:copied.map(x=>x.name),
+    actionClipImported:true,originalCharacterMeshModified:false};
+  }finally{
+   if(file?.scene)this.release(file.scene);
+   this.actionImportBusy=false;
+  }
  }
  async captureTimelineReview({onProgress=()=>{}}={}){
   if(!this.model)throw Error('TIMELINE_MODEL_NOT_LOADED');
