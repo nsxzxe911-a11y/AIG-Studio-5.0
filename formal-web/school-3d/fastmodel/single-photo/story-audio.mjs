@@ -32,7 +32,7 @@ export class StoryAudio{
   this.env=env;this.onStatus=onStatus;this.options={voice:true,sfx:true,music:true,mood:'playful',volume:.28,...options};
   validOptions(this.options);this.audio=null;this.ownsAudio=false;this.enabled=false;
   this.lastCue=null;this.musicStep=0;this.musicClock=0;this.speechUtterance=null;
-  this.voiceAvailable=false;this.effectsAvailable=false;this.musicEnabled=false;this.activeNodes=new Set();
+  this.voiceAvailable=false;this.effectsAvailable=false;this.musicEnabled=false;this.activeNodes=new Set();this.captureDestination=null;this.recordedVoice=null;
  }
  configure(opts){
   const updated={...this.options,...opts};validOptions(updated);
@@ -92,6 +92,7 @@ export class StoryAudio{
   vol.gain.exponentialRampToValueAtTime(Math.max(.0001,gain),begin+.008);
   vol.gain.exponentialRampToValueAtTime(.0001,begin+secs);
   osc.connect(vol);vol.connect(ctx.destination);
+  if(this.captureDestination)vol.connect(this.captureDestination);
   const node={osc,vol};this.activeNodes.add(node);
   osc.onended=()=>{this.activeNodes.delete(node);osc.disconnect();vol.disconnect();};
   osc.start(begin);osc.stop(begin+secs+.01);return true;
@@ -133,6 +134,41 @@ export class StoryAudio{
    this._tone({hz,end:hz,secs:.27,wave:'sine',gain:.045*this.options.volume});
   }
  }
+ createRecordingBus(){
+  if(!this.enabled||!this.audio||this.audio.state==='closed')throw Error('MOVIE_AUDIO_CONTEXT_UNAVAILABLE');
+  if(typeof this.audio.createMediaStreamDestination!=='function')throw Error('MOVIE_AUDIO_BUS_UNSUPPORTED');
+  this.captureDestination=this.audio.createMediaStreamDestination();
+  return this.captureDestination;
+ }
+ async decodeVoiceFile(buffer){
+  if(!this.audio?.decodeAudioData||!(buffer instanceof ArrayBuffer)||buffer.byteLength>20*1024*1024||buffer.byteLength<100)
+   throw Error('MOVIE_VOICE_DECODE_UNSUPPORTED');
+  const voice=await this.audio.decodeAudioData(buffer.slice(0));
+  if(!Number.isFinite(voice.duration)||voice.duration<=0||voice.duration>180)
+   throw Error('MOVIE_VOICE_DURATION_UNSUPPORTED');
+  return voice;
+ }
+ playRecordedVoice(audioBuffer){
+  if(!this.enabled||!this.audio||!this.captureDestination)throw Error('MOVIE_VOICE_BUS_REQUIRED');
+  if(!audioBuffer||!Number.isFinite(audioBuffer.duration))throw Error('MOVIE_VOICE_BUFFER_INVALID');
+  if(this.recordedVoice)throw Error('MOVIE_VOICE_ALREADY_PLAYING');
+  const src=this.audio.createBufferSource(),gain=this.audio.createGain();
+  src.buffer=audioBuffer;gain.gain.value=Math.max(0,Math.min(1,this.options.volume));
+  src.connect(gain);gain.connect(this.audio.destination);gain.connect(this.captureDestination);
+  this.recordedVoice={src,gain};src.onended=()=>{if(this.recordedVoice?.src===src)this.recordedVoice=null;
+   try{src.disconnect();gain.disconnect();}catch{}};
+  src.start();
+  return {recordedVoiceRoutedToMux:true,voiceDuration:audioBuffer.duration,
+    dialogueSpeechSynthRecorded:false,lipSyncConfirmed:false};
+ }
+ releaseRecordingBus(){
+  if(this.recordedVoice){
+   try{this.recordedVoice.src.stop();}catch{}
+   try{this.recordedVoice.src.disconnect();this.recordedVoice.gain.disconnect();}catch{}
+   this.recordedVoice=null;
+  }
+  this.captureDestination=null;
+ }
  pause(){
   if(!this.enabled)return;
   this.paused=true;
@@ -158,7 +194,7 @@ export class StoryAudio{
    try{item.osc.stop();}catch{}
    try{item.osc.disconnect();item.vol.disconnect();}catch{}
   }
-  this.activeNodes.clear();
+  this.activeNodes.clear();this.releaseRecordingBus();
   if(this.env?.speechSynthesis&&this.speechUtterance){
    try{this.env.speechSynthesis.cancel();}catch{}
    this.speechUtterance=null;
