@@ -32,7 +32,7 @@ export class StoryAudio{
   this.env=env;this.onStatus=onStatus;this.options={voice:true,sfx:true,music:true,mood:'playful',volume:.28,...options};
   validOptions(this.options);this.audio=null;this.ownsAudio=false;this.enabled=false;
   this.lastCue=null;this.musicStep=0;this.musicClock=0;this.speechUtterance=null;
-  this.voiceAvailable=false;this.effectsAvailable=false;this.musicEnabled=false;
+  this.voiceAvailable=false;this.effectsAvailable=false;this.musicEnabled=false;this.activeNodes=new Set();
  }
  configure(opts){
   const updated={...this.options,...opts};validOptions(updated);
@@ -54,8 +54,13 @@ export class StoryAudio{
      const pending=this.audio.resume?.();
      const markReady=()=>{
       if(!this.enabled||this.audio?.state==='suspended')return;
+      const missedFirstSound=!this.effectsAvailable&&this.lastCue?.actionId;
       this.effectsAvailable=this.options.sfx;
       this.musicEnabled=this.options.music;
+      if(missedFirstSound&&this.effectsAvailable){
+       const sfx=audioCueForAction(this.lastCue.actionId);
+       if(sfx)try{this._tone({...sfx,gain:.10*this.options.volume});}catch{}
+      }
       this.onStatus('本機 WebAudio 已啟動；使用原創合成音效與配樂。');
      };
      this.effectsAvailable=this.options.sfx&&this.audio.state==='running';
@@ -87,7 +92,8 @@ export class StoryAudio{
   vol.gain.exponentialRampToValueAtTime(Math.max(.0001,gain),begin+.008);
   vol.gain.exponentialRampToValueAtTime(.0001,begin+secs);
   osc.connect(vol);vol.connect(ctx.destination);
-  osc.onended=()=>{osc.disconnect();vol.disconnect();};
+  const node={osc,vol};this.activeNodes.add(node);
+  osc.onended=()=>{this.activeNodes.delete(node);osc.disconnect();vol.disconnect();};
   osc.start(begin);osc.stop(begin+secs+.01);return true;
  }
  step(beat){
@@ -108,7 +114,10 @@ export class StoryAudio{
   }
   if(this.effectsAvailable){
    const sfx=audioCueForAction(beat.actionId);
-   if(sfx)this._tone({...sfx,gain:.10*this.options.volume});
+   if(sfx){
+    try{this._tone({...sfx,gain:.10*this.options.volume});}
+    catch(err){this.effectsAvailable=false;this.onStatus('音效不可用：'+String(err.message||err).slice(0,80)+'；字幕與 GLB 動畫持續。');}
+   }
   }
  }
  tick(dt){
@@ -145,6 +154,11 @@ export class StoryAudio{
  }
  stop(){
   this.enabled=false;this.paused=false;this.lastCue=null;
+  for(const item of this.activeNodes){
+   try{item.osc.stop();}catch{}
+   try{item.osc.disconnect();item.vol.disconnect();}catch{}
+  }
+  this.activeNodes.clear();
   if(this.env?.speechSynthesis&&this.speechUtterance){
    try{this.env.speechSynthesis.cancel();}catch{}
    this.speechUtterance=null;
