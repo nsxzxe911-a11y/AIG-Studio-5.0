@@ -16,3 +16,10 @@ This new offline feature supplements FastScan with a character role-aware compar
 - No approved female heroine model, validated head/neck seam or GPU/thermal FPS measurements. Synthetic CI tests and standalone packaging are **source verification** only.
 
 The feature stays inside GitHub Draft PR #12 until explicit acceptance.
+
+## 1.7 cast separation refinement
+- The main character is **one unique lead role** in a bounded in-memory roster (max 120 by default). A second lead is blocked, rather than silently replacing the approved heroine. Student/supporting characters compare against every earlier member, including heroine; an identical shape descriptor gives an `EXACT_DESCRIPTOR_DUPLICATE` alert, and near-matches give `SIMILAR_REVIEW`. These labels are still heuristic, not biometric proof.
+- Character ID remains stable when editing and reimporting one GLB. **重新掃描已登錄角色** uses `replace:true` and only changes that ID after all checks pass, preserving the original lead and other students. Role change/duplicate non-rescan/new ID in rescan mode fails closed.
+- For cast GLBs with explicit `nodes[].extras.aigCharacterId`, matching `characterId` scans exactly that tagged character. Mixed tagged/untagged face nodes are refused, and multiple faces without a character selector cannot be merged. For separate GLB files, `extras.aigAnatomyPart='face'` is still required; choosing an arbitrary label does not prove a real individual.
+- UI / standalone packer / 1.7 source Gate now include lead/classmate controls, compare, rescan, clear, explicit fail reasons, and synthetic regression coverage. The routine does not upload or retain reference photographs or external biometric templates.
+- **Known limitation:** facial shape descriptors use raw mesh-local positions, not node transforms or blendshape/expression neutralization. Scores are not statistically calibrated; must review hairstyle, eyes, nose, mouth and expression visually in front/side views before authoritative character acceptance.
