@@ -39,11 +39,11 @@ export function scanSemanticGroup(role){
  if(['hair','hair-root','strand','hair-strand'].includes(label))return 'hair';
  return 'unknown';
 }
-export function scanColor(role,{palette='aig-rgb',line='bone',warning='none'}={}){
+export function scanColor(role,{palette='aig-rgb',line='bone',warning='none',highlightRoles=[]}={}){
  if(!SCAN_WARNING_LEVELS.includes(warning))throw Error('SCAN_WARNING_INVALID');
  const p=scanPalette(palette),group=scanSemanticGroup(role);
  if(line!=='bone'&&line!=='outline')throw Error('SCAN_COLOR_LINE_INVALID');
- if(warning!=='none'&&(group==='head'||group==='hair'))return p[warning];
+ if(warning!=='none'&&Array.isArray(highlightRoles)&&highlightRoles.includes(group))return p[warning];
  if(line==='outline')return group==='head'?p.headOutline:group==='hair'?p.hairOutline:p.outline;
  return p[group]||p.unknown;
 }
