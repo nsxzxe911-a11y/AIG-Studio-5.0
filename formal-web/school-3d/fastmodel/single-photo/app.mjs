@@ -206,7 +206,18 @@ $('skin-check').addEventListener('click',()=>{
   renderSkinReport(initial);
  }catch(e){$('skin-check-status').textContent='皮膚／重疊掃描 BLOCKED：'+e.message+'；模型保留。';$('skin-check').disabled=false;}
 });
-$('clip').addEventListener('change',()=>{try{view.animation.select(Number($('clip').value));}catch(e){status.textContent='片段未切換：'+e.message;}});
+$('clip').addEventListener('change',()=>{
+ if(view?.reviewBusy){
+  $('timeline-status').textContent='16 格擷取正在使用原動畫片段；不得中途切換片段。';
+  if(view.animation?.index!==null)$('clip').value=String(view.animation.index);
+  return;
+ }
+ try{
+  view.animation.select(Number($('clip').value));
+  clearReviewEvidence();clearTimelineEvidence();
+  $('timeline-status').textContent='已切換真實 GLB 動畫片段；舊的四方向與 16 格圖片失效，請重新擷取。';
+ }catch(e){status.textContent='片段未切換：'+e.message;}
+});
 $('pause').addEventListener('click',()=>{if(!view?.animation)return;view.animation.paused=!view.animation.paused;$('pause').textContent=view.animation.paused?'繼續動畫':'暫停動畫';});
 if(window.AIG_OFFLINE){
  $('generation').hidden=true;$('stages').hidden=true;status.textContent='本機離線播放 · 原始 GLB 與 PBR 材質保留；造型與實機效能尚未正式驗收。';
