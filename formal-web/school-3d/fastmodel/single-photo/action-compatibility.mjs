@@ -35,7 +35,7 @@ function collectRig(root){
 }
 function boneParent(bone){let p=bone.parent;while(p&&!p.isBone)p=p.parent;return p?.name||null;}
 function inspectTrack(track,source,target){
- if(typeof track.name!=='string'||!Array.isArray(Array.from(track.times||[]))||track.times.length===0)
+ if(typeof track?.name!=='string'||!track.times||!track.values||track.times.length===0)
   throw Error('ACTION_TRACK_INVALID');
  // Only direct named skeleton-bone tracks can be transferred safely.
  // Armature.bones[...], UUID paths, generic root motion or morph targets require
@@ -77,7 +77,7 @@ export function inspectExternalAction(targetScene,sourceScene,clips,{bindToleran
  const reports=[];
  let allTracks=0;
  for(const clip of clips){
-  if(!clip?.isAnimationClip||!Number.isFinite(clip.duration)||clip.duration<=0||clip.duration>600)
+  if(!clip||typeof clip.clone!=='function'||!Array.isArray(clip.tracks)||!Number.isFinite(clip.duration)||clip.duration<=0||clip.duration>600)
    throw Error('ACTION_CLIP_INVALID');
   if(!clip.tracks?.length)throw Error('ACTION_EMPTY_CLIP');
   allTracks+=clip.tracks.length;
