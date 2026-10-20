@@ -95,6 +95,17 @@ jobs:
         run: |
           python -m unittest discover -s formal-web/school-3d/tools -p 'test_reverse_authority.py' -v
           python -c "import json; m=json.load(open('formal-web/school-3d/reverse-authority.v1.json')); assert m['reverseGate']=='REFERENCE_EXTRACTED_ONLY_NOT_3D_MODEL'; assert not m['releasedToHomepage']; print('PHASE7 2D REFERENCE ONLY - 3D NOT APPROVED')"
+      - name: Phase8 old skeleton sizing must not override Reverse Authority
+        run: |
+          python -m unittest discover -s formal-web/school-3d/tools -p 'test_reverse_rig_fit.py' -v
+          python formal-web/school-3d/tools/normalize_rig_for_reverse.py --out artifacts/school-3d-proportion-handoff/rig-fit-NOT-APPROVED.json
+      - name: Archive normalized bones, NEVER claim new character
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School3D-Phase8-Proportion-Handoff-NOT-APPROVED
+          path: artifacts/school-3d-proportion-handoff/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
