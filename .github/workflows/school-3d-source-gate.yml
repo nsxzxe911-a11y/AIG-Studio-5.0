@@ -1014,6 +1014,23 @@ jobs:
             if(!bundle.includes(token))throw Error('MOVIE_ENGINE_NOT_IN_BUILT_JS '+token);
           console.log('FastModel 3.4 SOURCE QA: real MediaRecorder canvas+procedural WebAudio mux, uploaded voice, 1080p target, honest codec and no approval claim. No actual GLB/hardware video evidence in CI.');
           JS
+      - name: FastModel 4.7 shared head neck technical GLB source Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/single-photo/aig-welded-4-7.mjs
+          node --test formal-web/school-3d/fastmodel/single-photo/tests/aig-welded-4-7.test.mjs
+          node - <<'JS'
+          const fs=require('fs');
+          const root='formal-web/school-3d/fastmodel/single-photo/';
+          const html=fs.readFileSync(root+'dist/index.html','utf8');
+          const js=fs.readFileSync(root+'dist/app.js','utf8');
+          for(const t of ['id="aig47-build"','id="aig47-download"','id="aig47-evidence"','id="aig47-status"'])
+            if(!html.includes(t))throw Error('AIG47_RGB_UI_MISSING '+t);
+          for(const t of ['AIG_FASTMODEL_4_7_SHARED_HEAD_NECK_GLTF_DRAFT',
+            'AIG47_WATERTIGHT_ORIENTATION_BLOCKED','AIG-4.7-technical-shared-head-neck-NOT-HEROINE.glb',
+            'headNeckSharedVertexJoin','releaseAllowed'])
+            if(!js.includes(t))throw Error('AIG47_SOURCE_GLTF_NOT_BUNDLED '+t);
+          console.log('AIG 4.7 SOURCE QA only: one connected shared-index head-neck technical surface, real glTF 2.0 binary, measured hair-neck proxy, no approved heroine mesh or real-device rendering.');
+          JS
       - name: Archive FastModel 2.7 source and synthetic offline animation evidence
         uses: actions/upload-artifact@v4
         with:
