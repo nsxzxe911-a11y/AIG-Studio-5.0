@@ -1,0 +1,47 @@
+/* V95 S23 mobile: 26% tool rail / 74% original live drawing canvas.
+   Native V50 tools tab exposes full inspector; no screenshot image is used. */
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"] .aig95-workgrid{
+ display:grid!important;grid-template-columns:minmax(76px,27%) minmax(0,73%)!important;
+ grid-template-rows:minmax(0,1fr)!important;gap:4px!important;min-height:0!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"][data-aig50-pane="view"] .aig95-workgrid>.panel[data-aig95-region="PROPERTIES"]{
+ display:none!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"][data-aig50-pane="tools"] .aig95-workgrid{
+ grid-template-columns:minmax(0,1fr)!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"][data-aig50-pane="tools"] .aig95-workgrid>.aig95-rail,
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"][data-aig50-pane="tools"] .aig95-workgrid>.panel[data-aig95-region="DRAW_CANVAS"]{
+ display:none!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"][data-aig50-pane="tools"] .aig95-workgrid>.panel[data-aig95-region="PROPERTIES"]{
+ display:flex!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"] .aig95-rail-title{
+ min-height:28px!important;flex-basis:28px!important;padding:5px 4px!important;font-size:11px!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"] .aig95-rail>.toolstrip{
+ grid-template-columns:minmax(0,1fr)!important;grid-auto-rows:36px!important;
+ gap:4px!important;padding:4px!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"] .aig95-rail>.toolstrip>.btn{
+ height:34px!important;min-height:34px!important;padding:3px!important;font-size:11px!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"] .aig95-workgrid>.panel>.head{
+ min-height:28px!important;max-height:28px!important;flex-basis:28px!important;padding:3px 6px!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"] .aig95-workgrid>.panel>.head small{display:none!important}
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"] .aig95-workgrid .controls{
+ flex-basis:37px!important;max-height:37px!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"] .aig95-live-footer{
+ max-height:40px!important;font-size:10px!important
+}
+@media(orientation:landscape) and (max-height:540px){
+ html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"] .aig95-workgrid{
+  grid-template-columns:minmax(85px,21%) minmax(0,79%)!important
+ }
+ html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"] .aig95-rail-title{display:none!important}
+ html[data-aig95-cad="true"][data-aig95-platform="android"] .screen.active[data-page="CAD"] .aig95-live-footer{display:none!important}
+}
+

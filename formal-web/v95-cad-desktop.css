@@ -1,0 +1,25 @@
+/* V95 Windows 4K uses live CAD center and original property inspector.
+   No 438 Desktop images: explicit MISSING_AUTHORITY. */
+html[data-aig95-cad="true"][data-aig95-platform="windows"] .screen.active[data-page="CAD"] .aig95-workgrid{
+ display:grid!important;grid-template-columns:minmax(175px,19fr) minmax(0,60fr) minmax(250px,21fr)!important;
+ grid-template-rows:minmax(0,1fr)!important;gap:9px!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="windows"] .screen.active[data-page="CAD"] .aig95-rail>.toolstrip{
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ grid-auto-rows:minmax(47px,6vh)!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="windows"] .screen.active[data-page="CAD"] .aig95-rail>.toolstrip>.btn{
+ min-height:40px!important;height:100%!important;font-size:clamp(11px,.8vw,16px)!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="windows"] .screen.active[data-page="CAD"] .aig95-workgrid>.panel[data-aig95-region="DRAW_CANVAS"]{
+ min-height:0!important
+}
+html[data-aig95-cad="true"][data-aig95-platform="windows"] .screen.active[data-page="CAD"]>.aig49-dock{
+ display:none!important
+}
+@media(max-width:1050px){
+ html[data-aig95-cad="true"][data-aig95-platform="windows"] .screen.active[data-page="CAD"] .aig95-workgrid{
+  grid-template-columns:minmax(110px,22fr) minmax(0,51fr) minmax(190px,27fr)!important
+ }
+}
+

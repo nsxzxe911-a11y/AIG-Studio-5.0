@@ -1,0 +1,115 @@
+{
+  "schema": "AIG_V95_CAD_MOBILE_REGION_REVERSE_MAPPING_CANDIDATE",
+  "status": "CANDIDATE_ONLY_NOT_MERGED_NOT_LIVE",
+  "source": {
+    "authorityId": "AIGII-MOBILE-CAD-CURRENT-20261016",
+    "fileName": "02_CAD.png",
+    "sha256": "dc528b399e6a756d1bb76fc9260ae3361cf2437487236725dd0ee8ea2cbcaa75",
+    "width": 941,
+    "height": 1672,
+    "verifiedBytes": 2153296,
+    "role": "REFERENCE_ONLY_NO_BITMAP_UI"
+  },
+  "desktop": {
+    "status": "MISSING_AUTHORITY",
+    "rejected": "438_REVOKED_20",
+    "sourceFallback": false
+  },
+  "regions": [
+    {
+      "id": "REG_CAD_NAV",
+      "rect": [
+        16,
+        154,
+        909,
+        100
+      ],
+      "bind": "ORIGINAL_GLOBAL_NAV"
+    },
+    {
+      "id": "REG_CAD_TOOLS",
+      "rect": [
+        16,
+        268,
+        208,
+        951
+      ],
+      "bind": "ORIGINAL_10_NATIVE_TOOLSTRIP_BUTTONS",
+      "commandAuthority": "CAD_ROOT_DELEGATED"
+    },
+    {
+      "id": "REG_CAD_CANVAS",
+      "rect": [
+        231,
+        268,
+        480,
+        951
+      ],
+      "bind": "ORIGINAL_CANVAS[data-cad-canvas]",
+      "renderer": "NATIVE_2D_CAD"
+    },
+    {
+      "id": "REG_CAD_PROPERTIES",
+      "rect": [
+        716,
+        268,
+        209,
+        951
+      ],
+      "bind": "ORIGINAL_CAD_PROPERTY_PANEL"
+    },
+    {
+      "id": "REG_CAD_BOTTOM_CONTROLS",
+      "rect": [
+        16,
+        1228,
+        909,
+        220
+      ],
+      "bind": "ORIGINAL_UNDO_REDO_SELECT_PAN_FIT_SNAP"
+    },
+    {
+      "id": "REG_CAD_LIVE_STATUS",
+      "rect": [
+        16,
+        1455,
+        909,
+        180
+      ],
+      "bind": "ORIGINAL_[data-cad-msg]_AND_[data-cad-count]"
+    }
+  ],
+  "actualControls": {
+    "tools": 7,
+    "actions": 13,
+    "total": 20,
+    "stableIds": "EXISTING_V58_BTN_CAD_*"
+  },
+  "originalCore": [
+    "CAD_canvas_draw",
+    "CAD_select",
+    "CAD_snap",
+    "CAD_undo_redo",
+    "CAD_autosave_recovery"
+  ],
+  "unavailable": [
+    "NATIVE_FILE_OPEN",
+    "NATIVE_FILE_SAVE",
+    "NATIVE_IMPORT",
+    "NATIVE_EXPORT",
+    "DIMENSION_UI_BEYOND_ORIGINAL_CORE"
+  ],
+  "safety": {
+    "noBitmapUI": true,
+    "noFakeValues": true,
+    "noDataWrites": true,
+    "noMachineOutput": true
+  },
+  "gates": {
+    "source": "PRECHECK_ONLY",
+    "browser4K": "PENDING",
+    "browserS23": "PENDING",
+    "visualComparison": "PENDING",
+    "native": "NOT_BUILT"
+  }
+}
