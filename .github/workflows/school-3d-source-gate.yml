@@ -46,6 +46,19 @@ jobs:
           path: artifacts/school-3d-prototype-pbr/
           retention-days: 14
           if-no-files-found: error
+      - name: Build rigged humanoid GLB QA fixture (NOT APPROVED)
+        run: |
+          python formal-web/school-3d/tools/build_rig_prototype.py --source artifacts/school-3d-prototype-pbr --output artifacts/school-3d-rig-technical/hero-rig-CANDIDATE-NOT-APPROVED.glb
+          python formal-web/school-3d/tools/verify_prototype.py artifacts/school-3d-rig-technical/hero-rig-CANDIDATE-NOT-APPROVED.glb
+      - name: Test deterministic rig + morph + skeletal clips
+        run: python -m unittest discover -s formal-web/school-3d/tools -p 'test_rig_prototype.py' -v
+      - name: Upload explicit non-authority technical fixture
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School-3D-Rig-CANDIDATE-NOT-APPROVED
+          path: artifacts/school-3d-rig-technical/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
