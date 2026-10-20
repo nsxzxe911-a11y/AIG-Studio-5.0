@@ -19,7 +19,7 @@ test('explicit head and neck semantic tags protect shared materials',()=>{
  assert.deepEqual([...a.protectedMaterials].sort((x,y)=>x-y),[3,9]);
  assert.equal(a.actualGeometricContinuityVerified,false);
 });
-test('renderer preflight integrates anatomy guard and does not trust skin=1',()=>{
+test('renderer preflight integrates anatomy guard and does not trust skin=1',async()=>{
  const fs=await import('node:fs');
  const r=fs.readFileSync(new URL('../web/renderer.mjs',import.meta.url),'utf8');
  assert.match(r,/auditAnatomyMetadata\(nextFile\)/);
