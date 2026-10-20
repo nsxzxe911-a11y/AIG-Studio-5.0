@@ -44,6 +44,12 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:no
 <label for="scene-kind">掃描對象分類<select id="scene-kind"><option value="person" selected>人物</option><option value="animal">動物</option><option value="plant">植物</option><option value="tree">樹木</option><option value="environment">環境／建築</option><option value="water">水面</option><option value="sky">天空</option></select></label>
 <div class="btns" style="margin-top:12px"><button class="action primary" type="button" id="scan-btn">快速抽樣掃描 GLB</button></div>
 <div id="scan-status" class="detail" role="status">請先載入 GLB。掃描採有限頂點抽樣，不修改原始模型。</div>
+<div class="divider"></div><h3>角色防撞臉 · 女主角／其他同學</h3>
+<p class="panel-sub">比較明確標註的虛構 3D 角色臉部幾何，提醒過於相似的角色；不識別真人，也不會自動修改臉型。每次開啟頁面重新建立角色名單。</p>
+<label for="character-id">角色 ID<input id="character-id" type="text" maxlength="48" placeholder="例如 HERO_01 或 CLASSMATE_02"></label>
+<label for="character-role">角色身份<select id="character-role"><option value="lead">主角</option><option value="classmate" selected>同學</option><option value="supporting">其他配角</option></select></label>
+<div class="btns" style="margin-top:12px"><button id="face-compare" class="action primary" type="button">掃描臉型並加入角色對照</button><button id="face-clear" class="action" type="button">清空本次對照</button></div>
+<div id="face-status" class="detail" role="status">尚未比對：請載入含 face 標記的 GLB。這是 3D 幾何相似提醒，無法判定真人身分或保證角色不撞臉。</div>
 <h3>光線與場景明暗 · 光柵／無光追</h3>
 <label for="light-preset">預覽光線<select id="light-preset"><option value="soft" selected>柔和光 · 人物／通用</option><option value="daylight">日光 · 動物／樹木</option><option value="dusk">黃昏 · 自然環境</option><option value="water">水色背景 · 水面檢視</option><option value="sky">天空背景 · 天空檢視</option></select></label>
 <p id="light-status" class="small small-status" role="status">柔和光 · 原 GLB 材質保留；僅調整光柵曝光與背景。</p>
