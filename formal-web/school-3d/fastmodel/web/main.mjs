@@ -38,18 +38,22 @@ el('mesh-lines').addEventListener('change',applyWireChoice);el('mesh-density').a
 
 // FastModel 1.4: bounded CPU analysis and real UI-to-renderer raster controls.
 const faceRoster=new CharacterFaceRoster();
-el('face-compare').addEventListener('click',()=>{
- const file=scanFile||view?.file;
- if(!file){el('face-status').textContent='請先載入含臉部 face 標記的 GLB。';return;}
+function compareLoadedFace(replace=false){
+ const file=scanFile||view?.file, id=el('character-id').value.trim(),role=el('character-role').value;
+ if(!file){el('face-status').textContent='請先載入含 face 標記的 GLB。';return;}
  try{
-   const signature=faceShapeSignature(file,sampleVec3Accessor);
-   const result=faceRoster.add({id:el('character-id').value.trim(),role:el('character-role').value,signature});
-   el('face-status').textContent=result.warnings.length
-    ?'防撞臉提醒：'+result.id+' 與 '+result.warnings.map(x=>x.id+'（相似分數 '+x.score+'）').join('、')+
-      ' 3D 幾何過度相似；請人工調整臉型、眼鼻嘴比例與髮型後重新匯入檢查。已比對 '+result.compared+' 名角色。'
-    :'已收錄角色 '+result.id+'；和 '+result.compared+' 名既有角色完成幾何比對。'+(result.closest?' 最近角色 '+result.closest.id+'，啟發式相似分數 '+result.closest.score+'。':' 名單中的第一位角色。')+' 不是真人臉辨識，仍需人工看正／側面。';
- }catch(err){el('face-status').textContent='角色臉型比對未完成：'+err.message+'。未更改原模型或既有名單。';}
-});
+   const signature=faceShapeSignature(file,sampleVec3Accessor,{characterId:id});
+   const result=faceRoster.add({id,role,signature,replace});
+   const duplicates=result.warnings.filter(x=>x.level==='EXACT_DESCRIPTOR_DUPLICATE');
+   const similar=result.warnings.filter(x=>x.level!=='EXACT_DESCRIPTOR_DUPLICATE');
+   const msg='角色 '+result.id+' '+(replace?'重新掃描':'登錄')+'成功；女主角 '+(result.leadId||'尚未建立')+'，已比較 '+result.compared+' 名。';
+   el('face-status').textContent=duplicates.length?msg+' 完全相同的臉型特徵：'+duplicates.map(x=>x.id).join('、')+'；可能複製臉型，需人工修改。'
+     :similar.length?msg+' 相似提醒：'+similar.map(x=>x.id+'（'+x.score+'）').join('、')+'；建議查看正、側面與表情。'
+     :msg+' 尚無相似提醒（不保證完全不撞臉）；非真人身分辨識。';
+ }catch(err){el('face-status').textContent='比對失敗：'+err.message+'。原模型與既有角色資料保留。';}
+}
+el('face-compare').addEventListener('click',()=>compareLoadedFace(false));
+el('face-rescan').addEventListener('click',()=>compareLoadedFace(true));
 el('face-clear').addEventListener('click',()=>{
  faceRoster.clear();
  el('face-status').textContent='本次角色對照已清空；不影響來源 GLB 與編輯資料。';
