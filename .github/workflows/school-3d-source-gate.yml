@@ -501,6 +501,40 @@ jobs:
           assert '光線追蹤：關閉' in s
           print('Offline true wire modes source inclusion PASS; no GPU FPS inference')
           PY
+      - name: FastModel 1.3 NO-GRID main surface and safe soft edit guidance
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/surface-guides.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/*.test.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('formal-web/school-3d/fastmodel')
+          e=json.loads((p/'NO-GRID-EVIDENCE.json').read_text())
+          assert e['defaultSurfaceGuide']=='clean'
+          assert e['defaultWireMode']=='off'
+          assert e['surfaceGuides']==['clean','edit-tint','soft-contrast']
+          assert e['extraLineBufferAllocatedByDefault'] is False
+          assert e['extraDrawCallsInSurfaceMode']==0
+          assert e['1080p60DeviceVerified'] is False
+          assert e['gpuWebGL2AvailableInTestEnvironment'] is False
+          assert e['formalSiteDeployed'] is False
+          print('NO-GRID source policy PASS; hardware FPS remains UNVERIFIED')
+          PY
+      - name: FastModel 1.3 synthetic NO-GRID standalone contract
+        run: |
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMESH-NO-GRID-RGB-NOT-APPROVED.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMESH-NO-GRID-RGB-NOT-APPROVED.html').read_text()
+          for token in ['id="surface-guide"','value="clean" selected','<details id="advanced-wire"',
+                        'surfaceGuideId','setSurfaceGuide','window.AIG_EMBEDDED_GLB','光線追蹤：關閉']:
+            assert token in s,token
+          print('NO-GRID standalone embeds real surface modes and Phase17 synthetic GLB')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"

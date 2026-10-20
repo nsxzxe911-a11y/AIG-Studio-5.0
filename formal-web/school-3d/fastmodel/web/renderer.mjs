@@ -1,6 +1,7 @@
 import {assertRasterOnly,GRAPHICS_POLICY} from './graphics-policy.mjs';
 import {decodeGLB,readAccessor,buildBatches} from './fastmodel-data.mjs';
 import {buildEdgeIndex,wireCap,WIRE_MODES,WIRE_DENSITIES,adaptiveWireStep} from './mesh-lines.mjs';
+import {surfaceGuideId} from './surface-guides.mjs';
 import {ResourceGovernor,makeBudgets,RebuildableCache} from './resource-governor.mjs';
 import {checkRenderTarget} from './resolution-policy.mjs';
 const VERTEX=`#version 300 es
@@ -15,20 +16,25 @@ uniform float zoom;
 uniform float angle;
 uniform vec3 center;
 uniform float aspect;
-out vec2 fUv;out vec4 fColor;
+out vec2 fUv;out vec4 fColor;out float fEditWeight;
+uniform int editHighlight;
 mat4 bone(int k){return mat4(texelFetch(boneTexture,ivec2(0,k),0),texelFetch(boneTexture,ivec2(1,k),0),texelFetch(boneTexture,ivec2(2,k),0),texelFetch(boneTexture,ivec2(3,k),0));}
 void main(){ivec4 j=ivec4(joints+.01);vec4 p=weights.x*(bone(j.x)*vec4(pos,1.))+weights.y*(bone(j.y)*vec4(pos,1.))+weights.z*(bone(j.z)*vec4(pos,1.))+weights.w*(bone(j.w)*vec4(pos,1.));
- float co=cos(angle),si=sin(angle);p.xyz-=center;p.xz=vec2(co*p.x+si*p.z,-si*p.x+co*p.z);gl_Position=vec4(p.x*zoom/aspect,p.y*zoom,clamp(p.z*.1,-.95,.95),1.);fUv=uv;fColor=vColor;
+ float co=cos(angle),si=sin(angle);p.xyz-=center;p.xz=vec2(co*p.x+si*p.z,-si*p.x+co*p.z);gl_Position=vec4(p.x*zoom/aspect,p.y*zoom,clamp(p.z*.1,-.95,.95),1.);fUv=uv;fColor=vColor;fEditWeight=(editHighlight==1&&gl_VertexID<256)?1.0:0.0;
 }`;
 const FRAGMENT=`#version 300 es
 precision highp float;
-in vec2 fUv;in vec4 fColor;
+in vec2 fUv;in vec4 fColor;in float fEditWeight;
 uniform sampler2D colorTexture;
 uniform vec4 colorFactor;
 uniform int hasTexture;
 uniform int linePass;
+uniform int surfaceGuide;
 out vec4 result;
-void main(){if(linePass==1){result=vec4(.34,.89,1.0,.46);return;}vec4 c=colorFactor*fColor;if(hasTexture==1)c*=texture(colorTexture,fUv);if(c.a<0.025)discard;result=vec4(c.rgb,c.a);}
+void main(){if(linePass==1){result=vec4(.34,.89,1.0,.46);return;}vec4 c=colorFactor*fColor;if(hasTexture==1)c*=texture(colorTexture,fUv);if(c.a<0.025)discard;vec3 rgb=c.rgb;
+ if(surfaceGuide==1)rgb=mix(rgb,vec3(.08,.80,.89),.28*clamp(fEditWeight,0.0,1.0));
+ else if(surfaceGuide==2)rgb=pow(clamp(rgb,0.0,1.0),vec3(.86));
+ result=vec4(rgb,c.a);}
 `;
 function compile(gl,type,src){let sh=gl.createShader(type);gl.shaderSource(sh,src);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(sh));return sh;}
 function program(gl){let p=gl.createProgram();gl.attachShader(p,compile(gl,gl.VERTEX_SHADER,VERTEX));gl.attachShader(p,compile(gl,gl.FRAGMENT_SHADER,FRAGMENT));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p));return p;}
@@ -51,9 +57,9 @@ function chunkedUpload(gl,target,typed,maxBytes){
 }
 function getImageBytes(file,idx){const im=file.g.images[idx];if(!im||im.bufferView===undefined)throw Error('GLB embedded image missing');const bv=file.g.bufferViews[im.bufferView],start=file.bin.byteOffset+(bv.byteOffset||0),bytes=file.arrayBuffer.slice(start,start+bv.byteLength);return new Blob([bytes],{type:im.mimeType||'image/png'});}
 export class FastModelView {
- constructor(canvas,onStats=()=>{}){assertRasterOnly(GRAPHICS_POLICY);this.graphicsPolicy=GRAPHICS_POLICY;this.canvas=canvas;this.onStats=onStats;this.gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});if(!this.gl)throw Error('WebGL2 GPU unavailable on this device');const gl=this.gl;const ext=gl.getExtension('EXT_color_buffer_float');this.program=program(gl);this.u={};for(const k of ['zoom','angle','center','aspect','boneTexture','colorTexture','colorFactor','hasTexture','linePass'])this.u[k]=gl.getUniformLocation(this.program,k);this.textures=[];this.boneTex=[];this.entries=[];this.mode='full';this.angle=0;this.zoomFactor=1;this.wind=true;this.width=1920;this.height=1080;this.frames=[];this.last=0;this.running=false;this.autoQuality=false;this.qualityDown=0;this.qualityUp=0;gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);this.gpu=gl.getParameter(gl.RENDERER);
+ constructor(canvas,onStats=()=>{}){assertRasterOnly(GRAPHICS_POLICY);this.graphicsPolicy=GRAPHICS_POLICY;this.canvas=canvas;this.onStats=onStats;this.gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});if(!this.gl)throw Error('WebGL2 GPU unavailable on this device');const gl=this.gl;const ext=gl.getExtension('EXT_color_buffer_float');this.program=program(gl);this.u={};for(const k of ['zoom','angle','center','aspect','boneTexture','colorTexture','colorFactor','hasTexture','linePass','editHighlight','surfaceGuide'])this.u[k]=gl.getUniformLocation(this.program,k);this.textures=[];this.boneTex=[];this.entries=[];this.mode='full';this.angle=0;this.zoomFactor=1;this.wind=true;this.width=1920;this.height=1080;this.frames=[];this.last=0;this.running=false;this.autoQuality=false;this.qualityDown=0;this.qualityUp=0;gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);this.gpu=gl.getParameter(gl.RENDERER);
  this.governor=new ResourceGovernor({budgets:makeBudgets({deviceMemoryGiB:typeof navigator!=='undefined'?navigator.deviceMemory:4})});
- this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;this.lastPressure=null;this.baseWidth=1920;this.baseHeight=1080;this.frameOrdinal=0;this.wireMode='off';this.wireDensity='balanced';this.wireState={suppressed:false,hot:0,cool:0};this.wireStats={segments:0,drawCalls:0,gpuBytes:0};this.drawEntries=[];this.inverseBindCache=[];
+ this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;this.lastPressure=null;this.baseWidth=1920;this.baseHeight=1080;this.frameOrdinal=0;this.surfaceGuide='clean';this.wireMode='off';this.wireDensity='balanced';this.wireState={suppressed:false,hot:0,cool:0};this.wireStats={segments:0,drawCalls:0,gpuBytes:0};this.drawEntries=[];this.inverseBindCache=[];
  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();this.stop();this.onStats({status:'GPU_CONTEXT_LOST',message:'顯示裝置中斷：保留來源模型，停止GPU繪圖。請重新載入，絕不自動清空編輯資料。'});});}
  async load(arrayBuffer,mode='full'){
   // Refuse excessive source assets BEFORE destroying a previously displayed scene.
@@ -72,7 +78,7 @@ export class FastModelView {
   const ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);chunkedUpload(gl,gl.ELEMENT_ARRAY_BUFFER,b.indices,this.governor.b.maxSingleUploadBytes);
   const stride=17*4;for(const [loc,count,offset] of [[0,3,0],[1,2,12],[2,4,20],[3,4,36],[4,4,52]]){gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,count,gl.FLOAT,false,stride,offset);}gl.bindVertexArray(null);
   const editable=b.skin===0&&b.mat===0;
-  return {vao,vb,ib,count:b.indices.length,skin:b.skin,material:b.mat,vertexCount:b.vertexCount,gpuBytes:b.vertices.byteLength+b.indices.byteLength,
+  return {vao,vb,ib,editable,count:b.indices.length,skin:b.skin,material:b.mat,vertexCount:b.vertexCount,gpuBytes:b.vertices.byteLength+b.indices.byteLength,
     positionsPacked:editable?b.vertices:null,firstPositions:editable?b.vertices.slice(0,Math.min(256,b.vertexCount)*17):null,
     lineSource:b.indices,lineIB:null,lineCount:0};
  });
@@ -117,6 +123,7 @@ export class FastModelView {
  }
  clearWireBuffers(){const gl=this.gl;for(const b of this.entries||[]){if(b.lineIB){gl.deleteBuffer(b.lineIB);b.lineIB=null;b.lineCount=0;}}this.gpuAllocatedEstimateBytes=Math.max(0,this.gpuAllocatedEstimateBytes-(this.wireStats?.gpuBytes||0));this.wireStats={segments:0,drawCalls:0,gpuBytes:0};}
  countWireStats(){let segments=0,drawCalls=0,gpuBytes=0;for(const b of this.entries){if(b.lineIB&&b.lineCount){segments+=b.lineCount/2;drawCalls++;gpuBytes+=b.lineCount*4;}}return {segments,drawCalls,gpuBytes};}
+ setSurfaceGuide(mode='clean'){surfaceGuideId(mode);this.surfaceGuide=mode;return {mode,extraDrawCalls:0,extraLineBuffers:0,preservesMesh:true};}
  setWireMode(mode='off',density='balanced'){
   if(!WIRE_MODES.includes(mode)||!WIRE_DENSITIES.includes(density))throw Error('Invalid mesh line mode');
   this.clearWireBuffers();this.wireMode=mode;this.wireDensity=density;this.wireState={suppressed:false,hot:0,cool:0};
@@ -168,16 +175,16 @@ export class FastModelView {
  this.boneTex.forEach((texture,i)=>{let {out,n}=matsFor(this.file,world,i,this.inverseBindCache[i]);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,4,n,gl.RGBA,gl.FLOAT,out);});
  gl.clearColor(.012,.017,.035,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
  gl.uniform1f(this.u.zoom,this.zoom*this.zoomFactor);gl.uniform1f(this.u.angle,this.angle);gl.uniform3fv(this.u.center,this.center);gl.uniform1f(this.u.aspect,this.width/this.height);gl.uniform1i(this.u.boneTexture,0);gl.uniform1i(this.u.colorTexture,1);
- const ordered=this.drawEntries;gl.uniform1i(this.u.linePass,0);
+ const ordered=this.drawEntries;gl.uniform1i(this.u.linePass,0);gl.uniform1i(this.u.surfaceGuide,surfaceGuideId(this.surfaceGuide||'clean'));
  if(this.wireMode!=='off'&&!this.wireState.suppressed){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1,1);}
  let oldSkin=-1;for(const b of ordered){const mat=this.materials[b.material]||{},texid=mat.pbrMetallicRoughness?.baseColorTexture?.index,has=texid!==undefined,color=mat.pbrMetallicRoughness?.baseColorFactor||[1,1,1,1];
   if(oldSkin!==b.skin){gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.boneTex[b.skin]);oldSkin=b.skin;}
-  gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,has?this.textures[texid]:null);gl.uniform1i(this.u.hasTexture,has?1:0);gl.uniform4fv(this.u.colorFactor,color);
+  gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,has?this.textures[texid]:null);gl.uniform1i(this.u.hasTexture,has?1:0);gl.uniform4fv(this.u.colorFactor,color);gl.uniform1i(this.u.editHighlight,this.surfaceGuide==='edit-tint'&&b.editable?1:0);
   const blend=mat.alphaMode==='BLEND';if(blend){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);}else{gl.disable(gl.BLEND);gl.depthMask(true);}gl.bindVertexArray(b.vao);gl.drawElements(gl.TRIANGLES,b.count,gl.UNSIGNED_INT,0);
  }
  gl.disable(gl.POLYGON_OFFSET_FILL);
  if(this.wireMode!=='off'&&!this.wireState.suppressed&&this.wireStats.segments){
-   gl.uniform1i(this.u.linePass,1);gl.uniform1i(this.u.hasTexture,0);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
+   gl.uniform1i(this.u.linePass,1);gl.uniform1i(this.u.editHighlight,0);gl.uniform1i(this.u.hasTexture,0);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
    let wireSkin=-1;for(const b of this.entries){if(!b.lineIB||!b.lineCount)continue;
      if(wireSkin!==b.skin){gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.boneTex[b.skin]);wireSkin=b.skin;}
      gl.bindVertexArray(b.vao);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,b.lineIB);
@@ -210,7 +217,7 @@ export class FastModelView {
  this.onStats({...this.stats,status:'running',fps:+(1000/avg).toFixed(1),p95FrameMs:+p95.toFixed(2),jsSubmitMs:+this.lastCPU.toFixed(2),resolution:[this.width,this.height],sampleCount:this.frames.length,
    stability:this.lastPressure?.status||'unmeasured',memoryPressure:this.lastPressure,
    gpuEstimateMiB:+(this.gpuAllocatedEstimateBytes/1048576).toFixed(1),cpuDerivedMiB:+(this.cpuDerivedEstimateBytes/1048576).toFixed(1),
-   frameBudget:decision,cacheEvictedMiB:+(this.governor.cache.totalEvictedBytes/1048576).toFixed(1),optionalHairRelease:this.lastOptionalRelease||null,gpuUtilizationPercent:null,wireMode:this.wireMode,wireDensity:this.wireDensity,wireLines:this.wireStats.segments,wireSkippedForLag:this.wireState.suppressed});
+   frameBudget:decision,cacheEvictedMiB:+(this.governor.cache.totalEvictedBytes/1048576).toFixed(1),optionalHairRelease:this.lastOptionalRelease||null,gpuUtilizationPercent:null,surfaceGuide:this.surfaceGuide,wireMode:this.wireMode,wireDensity:this.wireDensity,wireLines:this.wireStats.segments,wireSkippedForLag:this.wireState.suppressed});
 
  }
  }
