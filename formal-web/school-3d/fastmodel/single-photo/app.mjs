@@ -8,7 +8,7 @@ import {StoryAudio,AUDIO_CUE_VERSION} from './story-audio.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
-let storyPlan=null,storyOutputUrl=null,storyDialogue=null,storyParsed=null;
+let storyPlan=null,storyOutputUrl=null,storyDialogue=null,storyParsed=null,storyRevision=0,cloudBusy=false,dialogueCloudConfigured=false;
 const storySound=new StoryAudio({onStatus:m=>{$('story-audio-status').textContent=m;}});
 function soundOptions(){return {
  voice:$('voice-enabled').checked,sfx:$('sfx-enabled').checked,
@@ -34,8 +34,8 @@ function exportStoryEvidence(){
   dialogueLines:storyDialogue?.cues||[],audioSettings:soundOptions(),
   unmapped:storyParsed.unmapped,missing:storyPlan.missing,blocking:storyPlan.blocking,
   ready:storyPlan.ready&&!!sourceSha,realGLBClipPlaybackOnly:true,
-  generatedMotionFromText:false,cloudLLMDialogueGenerated:false,
-  originalWebAudioMusic:true,browserSpeechOnly:true,
+  generatedMotionFromText:false,cloudLLMDialogueGenerated:storyDialogue?.generatedByCloudLLM===true,
+  originalWebAudioMusic:true,browserSpeechOnly:true,dialogueProvider:storyDialogue?.provider||'OFFLINE_TEMPLATE',
   exportedSoundTrack:false,createdMp4:false,actualCombatSceneApproved:false,
   physicalGPU60FPSVerified:false
  };
@@ -72,7 +72,7 @@ const refreshStoryAudioEvidence=()=>{if(storyPlan)exportStoryEvidence();};
 
 function clearStoryPlan(reason='劇情或 GLB 動作已改變，請重新解析。'){
  view?.animation?.stopStory();
- storySound.stop();clearSubtitle();
+ storySound.stop();clearSubtitle();storyRevision++;
  storyPlan=null;storyDialogue=null;storyParsed=null;
  $('story-dialogues').replaceChildren();
  $('story-play').disabled=true;$('story-stop').disabled=true;
@@ -261,6 +261,39 @@ $('audio-volume').addEventListener('input',()=>{
 for(const id of ['voice-enabled','sfx-enabled','music-enabled','music-mood'])
  $(''+id).addEventListener('change',refreshStoryAudioEvidence);
 $('dialogue-style').addEventListener('change',()=>$('story-build').click());
+$('cloud-dialogue').addEventListener('click',async()=>{
+ if(cloudBusy||!dialogueCloudConfigured)return;
+ if(!storyParsed?.beats?.length)$('story-build').click();
+ if(!storyParsed?.beats?.length)return;
+ cloudBusy=true;$('cloud-dialogue').disabled=true;
+ const rev=storyRevision,script=storyParsed.originalText,style=storyDialogue?.style||'witty';
+ $('cloud-dialogue-status').textContent='雲端 AI 台詞請求已由使用者主動啟動。只傳送劇情與動作 IDs，不傳 GLB 或照片。';
+ try{
+  const result=await api('/api/story/dialogue',{
+   method:'POST',headers:{'Content-Type':'application/json','X-AIG-Request':'1'},
+   body:JSON.stringify({story:script,style,beats:storyParsed.beats.map(x=>({index:x.index,actionId:x.actionId}))})
+  });
+  if(rev!==storyRevision||!storyParsed||storyParsed.originalText!==script||storyDialogue?.style!==style)
+   throw Error('AI_DIALOGUE_STORY_CHANGED_DISCARDED');
+  if(result.source!=='CLOUD_LLM_PROVIDER_OUTPUT'||result.lines?.length!==storyDialogue.cues.length)
+   throw Error('AI_DIALOGUE_RESPONSE_INVALID');
+  const ordered=result.lines.map((line,i)=>{
+   if(line.beat!==i||typeof line.text!=='string'||!line.text.trim()||line.text.length>240)
+    throw Error('AI_DIALOGUE_LINE_INVALID');
+   return {...storyDialogue.cues[i],text:line.text.trim(),edited:false,origin:'CLOUD_LLM_PROVIDER_OUTPUT'};
+  });
+  storyDialogue={...storyDialogue,cues:ordered,generatedByCloudLLM:true,provider:'OpenAI',model:result.model};
+  if(storyPlan?.ready)storyPlan=annotateDialoguePlan(storyPlan,storyDialogue);
+  renderDialogueEditor();exportStoryEvidence();
+  $('cloud-dialogue-status').textContent='真正雲端 AI 台詞已產生，共 '+ordered.length+
+    ' 段；提供者 '+result.provider+'，模型 '+result.model+
+    '。可逐句編輯。沒有憑空生成 GLB 動作或影片。';
+ }catch(e){
+  $('cloud-dialogue-status').textContent='雲端 AI 台詞未完成：'+e.message+
+   '；保留本機台詞。不自動重送，避免重複計費。';
+ }finally{cloudBusy=false;$('cloud-dialogue').disabled=!dialogueCloudConfigured;}
+});
+
 $('story-text').addEventListener('input',()=>clearStoryPlan('劇情已修改；請重新解析並檢查真實動作清單。'));
 $('story-build').addEventListener('click',()=>{
  clearStoryPlan('解析劇情中……');
@@ -449,6 +482,11 @@ if(window.AIG_OFFLINE){
 }else{
  api('/api/config').then(async c=>{
   ready=c.configured;status.textContent=ready?'重建服務已連接；選圖後按一次生成。':'重建服務未連接；請先在主機設定服務帳戶。';updateButton();
+  dialogueCloudConfigured=!!c.dialogueAIConfigured;
+  $('cloud-dialogue').disabled=!dialogueCloudConfigured;
+  $('cloud-dialogue-status').textContent=dialogueCloudConfigured
+   ?'已連接可選雲端 AI 台詞服務。只有主動點擊才傳送劇情與動作 IDs；可能計費，人物 GLB／照片不傳送。'
+   :'雲端 AI 尚未連接。仍可使用本機台詞、系統朗讀、原創合成音效與配樂。';
   if(ready)api('/api/actions').then(actions=>{for(const a of actions){const o=document.createElement('option');o.value=String(a.action_id);o.textContent=a.name;$('action').append(o);}}).catch(()=>{});
   const pending=journal.pending().at(-1);
   if(pending){
