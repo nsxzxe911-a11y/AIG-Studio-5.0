@@ -3,6 +3,7 @@ import {decodeGLB,readAccessor,buildBatches} from './fastmodel-data.mjs';
 import {buildEdgeIndex,wireCap,WIRE_MODES,WIRE_DENSITIES,adaptiveWireStep} from './mesh-lines.mjs';
 import {surfaceGuideId} from './surface-guides.mjs';
 import {LIGHT_PRESETS} from './scene-tools.mjs';
+import {DETAIL_MODES,optionalDetailGroup,initialDetailState,nextDetailState,visiblePreviewEntries} from './adaptive-detail.mjs';
 import {ResourceGovernor,makeBudgets,RebuildableCache} from './resource-governor.mjs';
 import {checkRenderTarget} from './resolution-policy.mjs';
 const VERTEX=`#version 300 es
@@ -61,7 +62,7 @@ function getImageBytes(file,idx){const im=file.g.images[idx];if(!im||im.bufferVi
 export class FastModelView {
  constructor(canvas,onStats=()=>{}){assertRasterOnly(GRAPHICS_POLICY);this.graphicsPolicy=GRAPHICS_POLICY;this.canvas=canvas;this.onStats=onStats;this.gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});if(!this.gl)throw Error('WebGL2 GPU unavailable on this device');const gl=this.gl;const ext=gl.getExtension('EXT_color_buffer_float');this.program=program(gl);this.u={};for(const k of ['zoom','angle','center','aspect','boneTexture','colorTexture','colorFactor','hasTexture','linePass','editHighlight','surfaceGuide','exposure'])this.u[k]=gl.getUniformLocation(this.program,k);this.textures=[];this.boneTex=[];this.entries=[];this.mode='full';this.angle=0;this.zoomFactor=1;this.wind=true;this.width=1920;this.height=1080;this.frames=[];this.last=0;this.running=false;this.autoQuality=false;this.qualityDown=0;this.qualityUp=0;gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);this.gpu=gl.getParameter(gl.RENDERER);
  this.governor=new ResourceGovernor({budgets:makeBudgets({deviceMemoryGiB:typeof navigator!=='undefined'?navigator.deviceMemory:4})});
- this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;this.lastPressure=null;this.baseWidth=1920;this.baseHeight=1080;this.frameOrdinal=0;this.surfaceGuide='clean';this.lightPreset='soft';this.lightSetting=LIGHT_PRESETS.soft;this.onGuideFrame=null;this.wireMode='off';this.wireDensity='balanced';this.wireState={suppressed:false,hot:0,cool:0};this.wireStats={segments:0,drawCalls:0,gpuBytes:0};this.drawEntries=[];this.inverseBindCache=[];
+ this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;this.lastPressure=null;this.baseWidth=1920;this.baseHeight=1080;this.frameOrdinal=0;this.detailMode='auto';this.detailState=initialDetailState();this.activeDrawEntries=[];this.staticWorld=null;this.staticPoseUploaded=false;this.surfaceGuide='clean';this.lightPreset='soft';this.lightSetting=LIGHT_PRESETS.soft;this.onGuideFrame=null;this.wireMode='off';this.wireDensity='balanced';this.wireState={suppressed:false,hot:0,cool:0};this.wireStats={segments:0,drawCalls:0,gpuBytes:0};this.drawEntries=[];this.inverseBindCache=[];
  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();this.stop();this.onStats({status:'GPU_CONTEXT_LOST',message:'顯示裝置中斷：保留來源模型，停止GPU繪圖。請重新載入，絕不自動清空編輯資料。'});});}
  async load(arrayBuffer,mode='full'){
   // Refuse excessive source assets BEFORE destroying a previously displayed scene.
@@ -71,7 +72,7 @@ export class FastModelView {
  const start=performance.now();const nextFile=decodeGLB(arrayBuffer),nextTracks=tracksFor(nextFile),assembled=buildBatches(nextFile,mode);
  const requiredGPU=assembled.batches.reduce((acc,b)=>acc+b.vertices.byteLength+b.indices.byteLength,0);
  if(requiredGPU>this.governor.b.gpuWorkingSetEstimateBytes)throw Error('GPU 繪圖網格推估超過本次預算，保留原有工作區。');
- this.disposeMeshes();this.file=nextFile;this.tracks=nextTracks;this.mode=mode;this.patchStats=null;
+ this.disposeMeshes();this.file=nextFile;this.tracks=nextTracks;this.mode=mode;this.patchStats=null;this.detailState=initialDetailState();this.staticWorld=null;this.staticPoseUploaded=false;
  this.stats={sourceMeshes:this.file.g.meshes.length,sourcePrimitives:this.file.g.meshes.reduce((s,m)=>s+m.primitives.length,0),...{drawCalls:assembled.drawCalls,triangles:assembled.indices/3,vertices:assembled.vertices,skipped:assembled.skipped},gpu:this.gpu};
  this.gpuAllocatedEstimateBytes=requiredGPU;
  this.bound=assembled.bound;this.center=this.bound.min.map((a,i)=>(a+this.bound.max[i])*.5);this.zoom=2/Math.max(this.bound.max[1]-this.bound.min[1],(this.bound.max[0]-this.bound.min[0])*1080/1920)*.93;
@@ -79,12 +80,12 @@ export class FastModelView {
   const vao=gl.createVertexArray();gl.bindVertexArray(vao);const vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vb);chunkedUpload(gl,gl.ARRAY_BUFFER,b.vertices,this.governor.b.maxSingleUploadBytes);
   const ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);chunkedUpload(gl,gl.ELEMENT_ARRAY_BUFFER,b.indices,this.governor.b.maxSingleUploadBytes);
   const stride=17*4;for(const [loc,count,offset] of [[0,3,0],[1,2,12],[2,4,20],[3,4,36],[4,4,52]]){gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,count,gl.FLOAT,false,stride,offset);}gl.bindVertexArray(null);
-  const editable=b.skin===0&&b.mat===0;
-  return {vao,vb,ib,editable,count:b.indices.length,skin:b.skin,material:b.mat,vertexCount:b.vertexCount,gpuBytes:b.vertices.byteLength+b.indices.byteLength,
+  const editable=b.skin===0&&b.mat===0;const detailGroup=optionalDetailGroup(this.file.g.materials?.[b.mat],editable);
+  return {vao,vb,ib,editable,detailGroup,optionalDetail:!!detailGroup,count:b.indices.length,skin:b.skin,material:b.mat,vertexCount:b.vertexCount,gpuBytes:b.vertices.byteLength+b.indices.byteLength,
     positionsPacked:editable?b.vertices:null,firstPositions:editable?b.vertices.slice(0,Math.min(256,b.vertexCount)*17):null,
     lineSource:b.indices,lineIB:null,lineCount:0};
  });
- this.drawEntries=[...this.entries].sort((a,b)=>{const aa=this.file.g.materials?.[a.material]?.alphaMode==='BLEND',bb=this.file.g.materials?.[b.material]?.alphaMode==='BLEND';return Number(aa)-Number(bb);});
+ this.drawEntries=[...this.entries].sort((a,b)=>{const aa=this.file.g.materials?.[a.material]?.alphaMode==='BLEND',bb=this.file.g.materials?.[b.material]?.alphaMode==='BLEND';return Number(aa)-Number(bb);});this.refreshDetailEntries();
  this.inverseBindCache=(this.file.g.skins||[]).map(sk=>readAccessor(this.file,sk.inverseBindMatrices));
  if(this.wireMode!=='off')this.setWireMode(this.wireMode,this.wireDensity);
  this.materials=this.file.g.materials||[];this.textures=await Promise.all((this.file.g.textures||[]).map(async t=>{
@@ -95,17 +96,37 @@ export class FastModelView {
  this.cpuDerivedEstimateBytes=this.entries.reduce((s,e)=>s+(e.positionsPacked?.byteLength||0)+(e.firstPositions?.byteLength||0)+(e.lineSource?.byteLength||0),0);
  this.resize(this.baseWidth*this.governor.recommendedScale,this.baseHeight*this.governor.recommendedScale,true);this.stats.loadMs=+(performance.now()-start).toFixed(1);this.onStats({...this.stats,status:'loaded'});return this.stats;
  }
- // Under pressure, release only auxiliary GPU hair-display geometry. The source GLB and editable mesh are untouched.
+ // Manual cache release ONLY for explicitly marked reconstructible fine hair.
+ // skin=1 is NOT a safe proxy: never remove unknown head/neck/scalp geometry.
  releaseOptionalHair(){
    const gl=this.gl;let released=0,count=0;const keep=[];
    for(const e of this.entries){
-     if(e.skin===1){gl.deleteVertexArray(e.vao);gl.deleteBuffer(e.vb);gl.deleteBuffer(e.ib);if(e.lineIB){gl.deleteBuffer(e.lineIB);released+=e.lineCount*4;}released+=e.gpuBytes||0;count++;}
-     else keep.push(e);
+     if(e.optionalDetail===true&&e.detailGroup==='fine-hair'&&!e.editable){
+       gl.deleteVertexArray(e.vao);gl.deleteBuffer(e.vb);gl.deleteBuffer(e.ib);
+       if(e.lineIB){gl.deleteBuffer(e.lineIB);released+=e.lineCount*4;}
+       released+=e.gpuBytes||0;count++;
+     } else keep.push(e);
    }
-   if(count){this.entries=keep;if(this.drawEntries)this.drawEntries=this.drawEntries.filter(e=>e.skin!==1);if(this.countWireStats)this.wireStats=this.countWireStats();this.gpuAllocatedEstimateBytes=Math.max(0,this.gpuAllocatedEstimateBytes-released);
-     this.stats.drawCalls=this.entries.length;this.stats.skipped=(this.stats.skipped||0)+count;}
+   if(count){
+     this.entries=keep;
+     this.drawEntries=this.drawEntries.filter(e=>!(!e.editable&&e.optionalDetail===true&&e.detailGroup==='fine-hair'));
+     if(this.countWireStats)this.wireStats=this.countWireStats();
+     this.gpuAllocatedEstimateBytes=Math.max(0,this.gpuAllocatedEstimateBytes-released);
+     this.refreshDetailEntries();
+   }
    return {requestedGpuReleaseBytes:released,releasedHairBatches:count,preservedWorkingCopy:true,
-     note:'WebGL requests deletion; exact physical memory reclamation not measurable'};
+     note:count?'Only explicitly tagged optional fine-hair GPU buffers requested for deletion; source GLB kept. Reimport to restore these display buffers.':'No tagged fine-hair cache to release; unknown structural geometry kept.'};
+ }
+ refreshDetailEntries(){
+   this.activeDrawEntries=visiblePreviewEntries(this.drawEntries||[],!!this.detailState?.hidden);
+   const activeDrawCalls=this.activeDrawEntries.length,hiddenOptional=(this.drawEntries?.length||0)-activeDrawCalls;
+   return {mode:this.detailMode,activeDrawCalls,hiddenOptional,reversible:true};
+ }
+ setDetailMode(mode='auto'){
+   if(!DETAIL_MODES.includes(mode))throw Error('Unknown detail mode');
+   this.detailMode=mode;
+   this.detailState=mode==='eco'?nextDetailState(initialDetailState(),{mode:'eco'}):initialDetailState();
+   return this.refreshDetailEntries();
  }
  patchLocal(amount){
   if(!this.entries.length)return null;
@@ -146,7 +167,7 @@ export class FastModelView {
   this.wireStats=this.countWireStats();this.gpuAllocatedEstimateBytes+=(this.wireStats.gpuBytes||0);
   return {...this.wireStats,mode,density,changed:true};
  }
- disposeMeshes(){const gl=this.gl;this.clearWireBuffers();this.drawEntries=[];this.inverseBindCache=[];this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;for(const b of this.entries||[]){gl.deleteVertexArray(b.vao);gl.deleteBuffer(b.vb);gl.deleteBuffer(b.ib);}for(let t of this.textures||[])gl.deleteTexture(t);for(let t of this.boneTex||[])gl.deleteTexture(t);this.entries=[];this.textures=[];this.boneTex=[];}
+ disposeMeshes(){const gl=this.gl;this.clearWireBuffers();this.drawEntries=[];this.activeDrawEntries=[];this.staticWorld=null;this.staticPoseUploaded=false;this.inverseBindCache=[];this.gpuAllocatedEstimateBytes=0;this.cpuDerivedEstimateBytes=0;for(const b of this.entries||[]){gl.deleteVertexArray(b.vao);gl.deleteBuffer(b.vb);gl.deleteBuffer(b.ib);}for(let t of this.textures||[])gl.deleteTexture(t);for(let t of this.boneTex||[])gl.deleteTexture(t);this.entries=[];this.textures=[];this.boneTex=[];}
  resize(w,h,automatic=false){
   // Preflight dimensions and working-set allowance BEFORE touching the canvas or existing GLB.
   const gl=this.gl;
@@ -174,11 +195,17 @@ export class FastModelView {
     estimatedFramebufferMiB:+(verdict.framebufferEstimateBytes/1048576).toFixed(1),automatic};
  }
 
- draw(ts){if(!this.file||!this.entries.length)return;const gl=this.gl;let start=performance.now();let world=animatedWorld(this.file.g.nodes,this.wind?this.tracks:[],ts*.001);gl.useProgram(this.program);
- this.boneTex.forEach((texture,i)=>{let {out,n}=matsFor(this.file,world,i,this.inverseBindCache[i]);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,4,n,gl.RGBA,gl.FLOAT,out);});
+ draw(ts){if(!this.file||!this.entries.length)return;const gl=this.gl;let start=performance.now();
+ const animated=this.wind&&this.tracks?.length>0;
+ const world=animated?animatedWorld(this.file.g.nodes,this.tracks,ts*.001):(this.staticWorld??=animatedWorld(this.file.g.nodes,[],0));
+ gl.useProgram(this.program);
+ if(animated||!this.staticPoseUploaded){
+   this.boneTex.forEach((texture,i)=>{let {out,n}=matsFor(this.file,world,i,this.inverseBindCache[i]);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,4,n,gl.RGBA,gl.FLOAT,out);});
+   this.staticPoseUploaded=!animated;
+ }
  gl.clearColor(...this.lightSetting.background,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
  gl.uniform1f(this.u.zoom,this.zoom*this.zoomFactor);gl.uniform1f(this.u.angle,this.angle);gl.uniform3fv(this.u.center,this.center);gl.uniform1f(this.u.aspect,this.width/this.height);gl.uniform1i(this.u.boneTexture,0);gl.uniform1i(this.u.colorTexture,1);gl.uniform1f(this.u.exposure,this.lightSetting.exposure);
- const ordered=this.drawEntries;gl.uniform1i(this.u.linePass,0);gl.uniform1i(this.u.surfaceGuide,surfaceGuideId(this.surfaceGuide||'clean'));
+ const ordered=this.activeDrawEntries;gl.uniform1i(this.u.linePass,0);gl.uniform1i(this.u.surfaceGuide,surfaceGuideId(this.surfaceGuide||'clean'));
  if(this.wireMode!=='off'&&!this.wireState.suppressed){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1,1);}
  let oldSkin=-1;for(const b of ordered){const mat=this.materials[b.material]||{},texid=mat.pbrMetallicRoughness?.baseColorTexture?.index,has=texid!==undefined,color=mat.pbrMetallicRoughness?.baseColorFactor||[1,1,1,1];
   if(oldSkin!==b.skin){gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.boneTex[b.skin]);oldSkin=b.skin;}
@@ -188,7 +215,7 @@ export class FastModelView {
  gl.disable(gl.POLYGON_OFFSET_FILL);
  if(this.wireMode!=='off'&&!this.wireState.suppressed&&this.wireStats.segments){
    gl.uniform1i(this.u.linePass,1);gl.uniform1i(this.u.editHighlight,0);gl.uniform1i(this.u.hasTexture,0);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
-   let wireSkin=-1;for(const b of this.entries){if(!b.lineIB||!b.lineCount)continue;
+   let wireSkin=-1;for(const b of this.activeDrawEntries){if(!b.lineIB||!b.lineCount)continue;
      if(wireSkin!==b.skin){gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.boneTex[b.skin]);wireSkin=b.skin;}
      gl.bindVertexArray(b.vao);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,b.lineIB);
      gl.drawElements(gl.LINES,b.lineCount,gl.UNSIGNED_INT,0);
@@ -206,12 +233,13 @@ export class FastModelView {
     heapUsedBytes:mem?.usedJSHeapSize??null,heapLimitBytes:mem?.jsHeapSizeLimit??null,
     cpuDerivedBytes:this.cpuDerivedEstimateBytes,gpuAllocatedEstimateBytes:this.gpuAllocatedEstimateBytes
   });
-  if((this.lastPressure.status==='critical'||this.lastPressure.status==='pressure')&&this.entries.some(e=>e.skin===1)){
-    this.lastOptionalRelease=this.releaseOptionalHair();
-  }
+  // Memory pressure only changes reversible preview LOD/resolution; no automatic GPU mesh deletion.
  }
  if(this.frames.length>=20){const avg=this.frames.reduce((a,b)=>a+b,0)/this.frames.length;let sorted=[...this.frames].sort((a,b)=>a-b),p95=sorted[Math.floor(sorted.length*.95)];
  const decision=this.governor.recordFrame({frameMs:avg,cpuSubmitMs:this.lastCPU});
+ const next=nextDetailState(this.detailState,{mode:this.detailMode,p95Ms:p95,targetMs:this.governor.b.targetFrameMs,
+   pressure:this.lastPressure?.status==='critical'||this.lastPressure?.status==='pressure'});
+ if(next.hidden!==this.detailState.hidden){this.detailState=next;this.refreshDetailEntries();}else this.detailState=next;
  if(this.wireMode!=='off')this.wireState=adaptiveWireStep(this.wireState,p95);
  if(this.autoQuality){
    const scale=decision.resolutionScale;
@@ -220,7 +248,7 @@ export class FastModelView {
  this.onStats({...this.stats,status:'running',fps:+(1000/avg).toFixed(1),p95FrameMs:+p95.toFixed(2),jsSubmitMs:+this.lastCPU.toFixed(2),resolution:[this.width,this.height],sampleCount:this.frames.length,
    stability:this.lastPressure?.status||'unmeasured',memoryPressure:this.lastPressure,
    gpuEstimateMiB:+(this.gpuAllocatedEstimateBytes/1048576).toFixed(1),cpuDerivedMiB:+(this.cpuDerivedEstimateBytes/1048576).toFixed(1),
-   frameBudget:decision,cacheEvictedMiB:+(this.governor.cache.totalEvictedBytes/1048576).toFixed(1),optionalHairRelease:this.lastOptionalRelease||null,gpuUtilizationPercent:null,surfaceGuide:this.surfaceGuide,wireMode:this.wireMode,wireDensity:this.wireDensity,wireLines:this.wireStats.segments,wireSkippedForLag:this.wireState.suppressed});
+   frameBudget:decision,cacheEvictedMiB:+(this.governor.cache.totalEvictedBytes/1048576).toFixed(1),optionalHairRelease:this.lastOptionalRelease||null,gpuUtilizationPercent:null,surfaceGuide:this.surfaceGuide,wireMode:this.wireMode,wireDensity:this.wireDensity,wireLines:this.wireStats.segments,wireSkippedForLag:this.wireState.suppressed,previewDetail:{mode:this.detailMode,hidden:this.detailState.hidden,activeDrawCalls:this.activeDrawEntries.length,hiddenOptional:this.drawEntries.length-this.activeDrawEntries.length,optionalMarked:this.drawEntries.filter(x=>x.optionalDetail).length,displayOnly:true}});
 
  }
  }
