@@ -5,7 +5,8 @@ const $=sel=>document.querySelector(sel);
 const canvas=$('#model'),ctx=canvas.getContext('2d',{alpha:false}),file=$('#source'),status=$('#status');
 const spec=JSON.parse($('#spec').textContent),W=spec.source.width,H=spec.source.height;
 const head=$('#headYaw'),left=$('#leftArm'),right=$('#rightArm'),grid=$('#wire'),bones=$('#bones');
-const stat=$('#stats'),reset=$('#reset');
+const stat=$('#stats'),reset=$('#reset'),edit=$('#edit'),save=$('#save');
+let dragging=null,edited=false;
 let img=null,verts=[],faces=[],request=0,verified=false;
 function report(s){status.textContent=s;}
 function rot(x,y,cx,cy,a){let co=Math.cos(a),si=Math.sin(a);return [cx+(x-cx)*co-(y-cy)*si,cy+(x-cx)*si+(y-cy)*co];}
@@ -89,6 +90,12 @@ function render(){
   ctx.lineWidth=0.45;ctx.strokeStyle='rgba(95,240,242,.60)';
   for(const tri of faces){ctx.beginPath();ctx.moveTo(...transformed[tri[0]]);ctx.lineTo(...transformed[tri[1]]);ctx.lineTo(...transformed[tri[2]]);ctx.closePath();ctx.stroke();}
  }
+ if(edit.checked){
+  ctx.lineWidth=1.75;ctx.strokeStyle='#ffc773';ctx.fillStyle='#fff0b8';
+  for(const region of spec.regions){for(const p of region.polygon){
+   ctx.beginPath();ctx.arc(p[0],p[1],5,0,Math.PI*2);ctx.fill();ctx.stroke();
+  }}
+ }
  if(bones.checked){
   const nodes=spec.skeleton.joints;
   ctx.lineWidth=2;ctx.strokeStyle='#fbc773';ctx.fillStyle='#a0faff';
@@ -141,6 +148,34 @@ file.addEventListener('change',async()=>{
 });
 for(const el of [head,left,right,grid,bones])el.addEventListener('input',drawSoon);
 reset.addEventListener('click',()=>{head.value=0;left.value=0;right.value=0;grid.checked=true;drawSoon();});
+edit.addEventListener('change',()=>{
+ if(edit.checked){head.value=0;left.value=0;right.value=0;report('輪廓編輯中：拖曳黃色節點，右鍵不會修改骨架位置。匯出 JSON 後可用自研 Python 程式重建 GLB。');}
+ drawSoon();
+});
+function pointerPixel(ev){const b=canvas.getBoundingClientRect();return [(ev.clientX-b.left)/b.width*W,(ev.clientY-b.top)/b.height*H];}
+canvas.addEventListener('pointerdown',ev=>{
+ if(!edit.checked||!verified)return;const [x,y]=pointerPixel(ev);let best=null,err=21;
+ for(const region of spec.regions){region.polygon.forEach((p,i)=>{
+  const dist=Math.hypot(p[0]-x,p[1]-y);if(dist<err){err=dist;best={region,i};}
+ });}
+ if(!best)return;dragging=best;canvas.setPointerCapture(ev.pointerId);
+});
+canvas.addEventListener('pointermove',ev=>{
+ if(!dragging)return;const [x,y]=pointerPixel(ev);
+ dragging.region.polygon[dragging.i]=[Math.round(Math.max(0,Math.min(W,x))),Math.round(Math.max(0,Math.min(H,y)))];
+ try{build();edited=true;drawSoon();}catch(e){report('幾何錯誤，請把節點移回原輪廓順序：'+e.message);}
+});
+for(const name of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,()=>{dragging=null;});
+save.addEventListener('click',()=>{
+ if(!verified){report('請先載入並驗證原始核准 PNG，才可以匯出');return;}
+ const result=structuredClone(spec);
+ result.approved3DModel=false;result.releaseAllowed=false;
+ result.mesh.reviewStatus='USER_EDITED_VISIBLE_CONTOUR_ONLY_NOT_3D_APPROVAL';
+ result.editedWith='AIG_SELF_DEVELOPED_PHASE13_BROWSER_WORKBENCH';
+ const url=URL.createObjectURL(new Blob([JSON.stringify(result,null,2)+'\n'],{type:'application/json'}));
+ const a=document.createElement('a');a.href=url;a.download='AIG-Phase13-edited-envelope-NOT-APPROVED.json';a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),800);report('已匯出輪廓 JSON。仍是 2.5D 技術候選；請另行做三維與多視角驗收。');
+});
 // Visible safety contract: the source image is never submitted anywhere.
 if(spec.releaseAllowed!==false||spec.approved3DModel!==false||spec.legacyDollGeometryUsed!==false)throw Error('Phase13 Authority Gate broken');
 report('選擇已核准的原始 PNG 以離線驗證，圖片只在瀏覽器本機處理。');
