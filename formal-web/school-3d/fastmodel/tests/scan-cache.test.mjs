@@ -82,6 +82,29 @@ test('manual safe clear, source invalidate and oversized geometry cannot force c
  assert.equal(c.stats().reason,'SOURCE_WORKING_COPY_EDIT');
  assert.throws(()=>createScanDerivedCache({limitBytes:12}),/SCAN_CACHE_LIMIT_INVALID/);
 });
+test('optional depth and contour insertion cannot evict protected cached joint skeleton',()=>{
+ const f=file(),cache=createScanDerivedCache({limitBytes:1024});
+ const bones=topology('bones');
+ assert.equal(cache.putTopology(f,bones,{geometry:'bones',density:'eco'}),true);
+ const depthCandidate={status:'SAMPLED_SOURCE_TRIANGLE_DEPTH',width:8,height:6,
+   grid:new Float32Array(48),triangles:2};
+ // Each optional insert is below the limit individually but exceeds it
+ // when combined with the protected bone topology.
+ const d=cache.putDepth({file:f,view:view(f),topology:topology('all'),
+   world:[eye()],depth:depthCandidate});
+ assert.equal(d,false);
+ assert.strictEqual(cache.getTopology(f,{geometry:'bones',density:'eco'}),bones);
+ const contour={...topology('all'),surfaces:[{
+   positions:new Float32Array(60),joints:new Uint16Array(40),
+   weights:new Float32Array(40),indices:new Uint16Array(40),edges:[{a:0,c:1,faces:[0]}]
+ }]};
+ assert.ok(scanTopologyBytes(contour)<1024);
+ assert.equal(cache.putTopology(f,contour,{geometry:'all',density:'eco'}),false);
+ assert.strictEqual(cache.getTopology(f,{geometry:'bones',density:'eco'}),bones);
+ assert.equal(cache.stats().byLayer.skeleton.hit,2);
+ assert.equal(cache.stats().bytes,scanTopologyBytes(bones));
+ assert.equal(cache.stats().sourceGLBUnchanged,true);
+});
 test('real canvas source-depth cache first MISS then HIT, on pose change MISS',()=>{
  const f=file(),c=createScanDerivedCache({limitBytes:8192}),v=view(f);
  const surf={skin:0,role:'neck',positions:Float32Array.from([0,0,-1,.2,0,-1,0,.2,-1]),
