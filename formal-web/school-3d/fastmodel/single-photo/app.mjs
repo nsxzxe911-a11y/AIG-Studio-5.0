@@ -43,6 +43,19 @@ async function follow(id){
   if(d.status==='RUNNING')setTimeout(()=>follow(id),3000);
  }catch(e){status.textContent='連線暫停：'+errorText(e.message)+'。既有任務保留；重新開啟頁面可續接。';busy=false;updateButton();}
 }
+$('local-glb').addEventListener('change',async()=>{
+ const f=$('local-glb').files?.[0];
+ if(!f)return;
+ if(f.size>200*1024*1024||f.size<20){$('skin-check-status').textContent='本機 GLB 檔案大小不合法；模型未修改。';return;}
+ if(!view){$('skin-check-status').textContent='此裝置沒有可用的 WebGL 預覽；無法對本機 GLB 做完整蒙皮姿態檢查。';return;}
+ try{
+  await load(await f.arrayBuffer(),false);
+  loadedFile='LOCAL:'+f.name;
+  status.textContent='已在本機載入 GLB，可檢查皮膚雙層重疊、骨架異常及目前動畫姿態。不會使用 Meshy 點數或上傳檔案。';
+ }catch(err){
+  $('skin-check-status').textContent='本機 GLB 未載入：'+err.message+'。原有模型仍保留。';
+ }
+});
 $('photo').addEventListener('change',()=>{updateButton();});
 $('subject').addEventListener('change',()=>{$('action').disabled=$('subject').value==='object';});
 $('action').addEventListener('change',()=>{});
