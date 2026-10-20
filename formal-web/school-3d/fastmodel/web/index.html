@@ -24,6 +24,7 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:no
 @media(max-width:980px){.workspace{grid-template-columns:minmax(0,1fr)}.viewport{max-height:none}.control-pane{margin-top:2px}.belowbar{margin-bottom:4px}.stage-mode{font-size:10px}}
 @media(max-width:530px){.shell{padding:0 9px 16px}.appbar{min-height:67px;padding:8px 0}.brand{gap:9px}.brand-mark{width:42px;height:42px;border-radius:11px;font-size:15px}.brand-mark:after{border-radius:13px}.brand-name{font-size:17px;letter-spacing:.03em}.brand-caption{font-size:9px;max-width:200px}.top-status{gap:6px}.screen-tag{font-size:9px;padding:5px}.top-stat-text{max-width:none;overflow:visible;text-overflow:clip;font-size:10px;white-space:nowrap}.screen-tag{display:none}.workspace{margin-top:10px;gap:10px}.stage-header{padding:1px 3px 8px}.stage-title{font-size:12px}.stage-mode{font-size:9px}.viewport{border-radius:11px}.hud{top:5px;left:6px;padding:5px 7px;max-width:68%;border-radius:6px}.hud-title{font-size:8px}.overlay{font-size:9px}.viewport-bottom{bottom:5px;left:5px;gap:4px}.viewport-bottom span{font-size:8px;padding:3px 5px}.viewport-bottom .unsafe{display:none}.belowbar{margin-top:8px}.mini-caption{font-size:10px}.performance-note{font-size:10px}.pane-heading{padding:12px 11px 10px}.panel{padding:13px 11px}.panel-tabs{padding:0 8px 8px}.tab{font-size:11px;min-height:45px}.app-foot{font-size:9px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.scan-color-legend{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.scan-swatch{display:inline-flex;align-items:center;gap:5px;border-radius:8px;padding:5px 8px;border:1px solid #24415488;background:#04111a;color:#c5d8e9;font-size:10px}.scan-swatch:before{content:"";display:inline-block;width:17px;height:4px;border-radius:2px;background:var(--swatch-color,#66e5ff)}.scan-swatch.dashed:before{background:repeating-linear-gradient(90deg,var(--swatch-color,#99bbcc) 0 4px,transparent 4px 8px)}
 </style></head><body>
 <main class="shell"><header class="appbar"><div class="brand"><div class="brand-mark" aria-label="AIG">AIG</div><div><div class="brand-name">AIG <span>CINEMA</span></div><p class="brand-caption">FASTMODEL · 黑色 RGB 幻彩建模工作區</p></div></div><div class="top-status"><i class="status-led" aria-hidden="true"></i><span class="top-stat-text" id="quick-status">本機待機</span><span class="screen-tag" id="resolution-tag">1080p · 60 FPS 目標</span></div></header>
 <section class="workspace" aria-label="3D 建模工作區">
@@ -51,6 +52,19 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:no
 <option value="hair">髮束重點 · 明確標記區域</option>
 </select></label>
 <label for="scan-density">掃描線段負荷<select id="scan-density"><option value="eco">低負荷 · 手機</option><option value="balanced" selected>平衡 · 預設</option><option value="detail">細節 · Windows</option></select></label>
+<div class="divider"></div><h3>FastModel 2.2 · RGB 彩色骨架與虛線</h3>
+<label for="scan-palette">快速掃描配色<select id="scan-palette">
+<option value="aig-rgb" selected>AIG RGB · 幻彩分區（推薦）</option>
+<option value="inspection">技術檢查 · 高對比</option>
+<option value="low-glare">護眼低眩光 · 行動裝置</option>
+</select></label>
+<label class="check-label"><input type="checkbox" id="scan-risk-color">只在有逐幀檢查風險資料時，將相關部位標示琥珀色（預設關閉）</label>
+<div id="scan-color-legend" class="scan-color-legend" aria-label="骨架與輪廓配色圖例">
+<span class="scan-swatch" data-color-role="head">頭／頸</span><span class="scan-swatch" data-color-role="spine">軀幹</span>
+<span class="scan-swatch" data-color-role="arm">手臂</span><span class="scan-swatch" data-color-role="leg">腿部</span>
+<span class="scan-swatch dashed" data-color-role="outline">外型虛線</span><span class="scan-swatch" data-color-role="review">待檢查</span>
+</div>
+<p id="scan-color-status" class="small small-status" role="status">模型本體使用 GLB 原有膚色、髮色、服裝貼圖與材質。RGB 顏色僅用於掃描輔助線，不替人物自動上色；紅色保留給確認後的警示，不靠接近距離直接判定穿模。</p>
 <p id="scan-layer-status" class="small small-status" role="status">掃描覆蓋層關閉；來源 GLB 不變。骨架採真 joints 父子關係實線，外型採來源網格邊界／投影輪廓的淡化虛線，並非 GPU 真深度遮擋。</p>
 <div class="btns" style="margin-top:12px"><button class="action primary" type="button" id="scan-btn">快速抽樣掃描 GLB</button></div>
 <div id="scan-status" class="detail" role="status">請先載入 GLB。掃描採有限頂點抽樣，不修改原始模型。</div>
