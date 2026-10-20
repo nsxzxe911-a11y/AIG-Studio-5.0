@@ -537,6 +537,24 @@ jobs:
             assert token in s,token
           print('NO-GRID standalone embeds real surface modes and Phase17 synthetic GLB')
           PY
+      - name: FastModel 1.4 bounded scan and dashed reference scaffold — no-fake source gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/scene-tools.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/scene-tools.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMESH-1-4-SCENE-NOT-AI-OR-GPU-VERIFIED.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('artifacts/fastmodel-technical/CI-FASTMESH-1-4-SCENE-NOT-AI-OR-GPU-VERIFIED.html').read_text()
+          for token in ['id="scan-btn"','id="light-preset"','id="scaffold-limit"',
+                        'function scanGeometry(','function paintScaffold(','function limitAngle(',
+                        'setLighting(preset=','光線追蹤：關閉','window.AIG_EMBEDDED_GLB']:
+              assert token in s, token
+          print('FastModel1.4 source and offline feature inclusion PASS; actual GPU/semantic AI/photogrammetry not proved')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
