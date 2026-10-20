@@ -21,6 +21,18 @@
 <button type="button" id="aig41-release" disabled>釋放 SDF GPU 資源</button>
 <p>4.2 優化：滑動／觸控連續事件合併成單幀，保留已編輯畫面；背景像素先判定是否落在角色範圍，降低空白區計算。支援非阻塞 GPU 計時的裝置才依實測自動升降畫質；缺少計時擴充時維持安全畫質，不冒充 60 FPS。需要輸出或 SDF 太慢時可改用下方已保存的 4.0 GLB 低面數草模。</p>
 <p id="aig41-status" class="status" role="status">等待 4.0 來源比對成功後取得比例資料。WebGL2 可用才啟動，無付費 AI、無光線追蹤。</p>
+<h3>AIG FastModel 4.3｜骨架優先＋局部 SDF／Mesh 快取（零點數）</h3>
+<p>調整單一手臂或腿的推估關節角度，僅更新該部位膠囊體參數和獨立低面數 Mesh 快取；GPU 預覽沿用同一套 shader，不重新建立整個人物。這不是已通過的人體辨識、完整蒙皮或真實打鬥動畫。</p>
+<label for="aig43-part">操作部位</label>
+<select id="aig43-part" disabled>
+ <option value="leftArm">左手臂</option><option value="rightArm">右手臂</option>
+ <option value="leftLeg">左腿</option><option value="rightLeg">右腿</option>
+</select>
+<label for="aig43-angle">關節角度（±55° 推估範圍）</label>
+<input id="aig43-angle" type="range" min="-55" max="55" step="1" value="0" disabled>
+<button type="button" id="aig43-reset" disabled>還原目前部位角度</button>
+<text id="aig43-cache" class="status">等待來源 SHA 驗證與 4.0 架構。Mesh 部位快取不是正式皮膚／骨架輸出。</text>
+
 
 <p>4.0 Gate：真 3D 幾何體塊、8 個角度、比例報告與不確定性標記；尚未建立獨立手腳／五官／髮束拓樸、Rig、精準材質或正式動畫，不能當完成模型放行。</p>
 <h3>FastModel 3.7 · 正式女主角來源校驗</h3>
