@@ -209,7 +209,7 @@ jobs:
         run: |
           node --check formal-web/school-3d/phase14/beauty-engine.v1.js
           node --check formal-web/school-3d/phase14/hair-face-workbench.v1.js
-          node formal-web/school-3d/phase14/tools/test_beauty_engine.js
+          node formal-web/school-3d/phase14/tools/test_beauty_engine.cjs
           python -m unittest discover -s formal-web/school-3d/phase14/tools -p 'test_phase14_contract.py' -v
           python formal-web/school-3d/phase14/tools/make_hair_spec.py
           python - <<'PY'
