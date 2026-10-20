@@ -8,6 +8,7 @@ from provider import MeshyClient
 from dialogue_ai import DialogueAI
 from tts_voice import SpeechAI
 from reconstruction_service import SERVICE_ID,MULTIVIEW_ID,capabilities,require_service,project_job
+from aig_native4_jobs import AigNative4Jobs
 
 HERE=Path(__file__).resolve().parent
 
@@ -24,7 +25,7 @@ def offline_document(pipe,job):
 def make_server(root,client,port=8765,dialogue_client=None,speech_client=None,allow_paid_3d=False):
     dialogue_client=dialogue_client or DialogueAI(os.environ.get('OPENAI_API_KEY',''))
     speech_client=speech_client or SpeechAI(os.environ.get('OPENAI_API_KEY',''))
-    pipe=PhotoPipeline(root,client);active=set();guard=threading.Lock();create_guard=threading.Lock();stopping=threading.Event()
+    pipe=PhotoPipeline(root,client);native4=AigNative4Jobs(root);active=set();guard=threading.Lock();create_guard=threading.Lock();stopping=threading.Event()
     def begin(job):
         with guard:
             if job in active:return
@@ -59,6 +60,22 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None,al
             path=urlparse(self.path).path
             try:
                 if path=='/api/config':self.send({'configured':bool(allow_paid_3d and client.configured),'provider':'AIG_INTERNAL_NO_PAID_FALLBACK','zeroCreditsMode':not allow_paid_3d,'liveGenerationVerified':False,'dialogueAIConfigured':dialogue_client.configured,'speechAIConfigured':speech_client.configured});return
+                if path=='/api/aig4/capabilities':
+                    self.send({'id':'aig-native-volume-4.0','implemented':True,
+                       'zeroCredits':True,'networkRequestsMade':0,
+                       'supportedSource':['RGBA foreground PNG','uniform-background photo'],
+                       'complexBackgroundRequiresMask':True,'supportsOptionalSide':True,
+                       'eightViewProjections':True,'draftGLB':True,
+                       'autoRigging':False,'heroineIdentityVerified':False,
+                       'releaseAllowed':False});return
+                native_match=re.fullmatch(r'/api/aig4/jobs/([0-9a-f]{32})(?:/files/(model\.glb|scaffold\.json|confidence\.png|view-(?:000|045|090|135|180|225|270|315)\.png))?',path)
+                if native_match:
+                    job_id,name=native_match.groups()
+                    if name:
+                        raw,kind=native4.asset(job_id,name)
+                        self.send(raw,kind=kind)
+                    else:self.send(native4.read(job_id))
+                    return
                 if path=='/api/reconstruction/services':
                     report=capabilities(client)
                     report['providerPolicy']='AIG_NATIVE_ONLY_ZERO_CREDITS'
@@ -98,8 +115,32 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None,al
             except Exception as e:self.send({'error':str(e)[:180]},409)
         def do_POST(self):
             if not self.valid_origin() or self.headers.get('X-AIG-Request')!='1':self.send({'error':'ORIGIN_BLOCKED'},403);return
-            if self.path not in ('/api/jobs','/api/reconstruction/jobs','/api/story/dialogue','/api/story/voice'):
+            if self.path not in ('/api/jobs','/api/reconstruction/jobs','/api/story/dialogue','/api/story/voice','/api/aig4/jobs'):
                 self.send({'error':'NOT_FOUND'},404);return
+            if self.path=='/api/aig4/jobs':
+                try:
+                    if self.headers.get('Content-Type')!='application/json':
+                        raise ValueError('AIG4_JSON_REQUIRED')
+                    length=int(self.headers.get('Content-Length','0'))
+                    if not 0<length<=56*1024*1024:raise ValueError('AIG4_REQUEST_TOO_LARGE')
+                    payload=json.loads(self.rfile.read(length))
+                    if not isinstance(payload,dict) or not set(payload).issubset({'image','sideImage','requestId'}):
+                        raise ValueError('AIG4_FIELDS_INVALID')
+                    if not {'image','requestId'}.issubset(payload):
+                        raise ValueError('AIG4_FIELDS_MISSING')
+                    def decoded(uri):
+                        if not isinstance(uri,str) or len(uri)>28*1024*1024:
+                            raise ValueError('AIG4_DATA_URI_INVALID')
+                        match=re.fullmatch(r'data:image/(png|jpeg|webp);base64,([a-zA-Z0-9+/=]+)',uri)
+                        if not match:raise ValueError('AIG4_DATA_URI_INVALID')
+                        return base64.b64decode(match.group(2),validate=True)
+                    original=decoded(payload['image'])
+                    secondary=decoded(payload['sideImage']) if payload.get('sideImage') else None
+                    job=native4.create(original,payload['requestId'],secondary)
+                    native4.begin(job['id'])
+                    self.send(native4.read(job['id']),202);return
+                except Exception as error:
+                    self.send({'error':str(error)[:160]},409);return
             if self.path=='/api/story/voice':
                 try:
                     if self.headers.get('Content-Type')!='application/json':
@@ -196,7 +237,7 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None,al
             except Exception as e:self.send({'error':str(e)[:180]},409)
     class LocalServer(ThreadingHTTPServer):
         def server_close(self):stopping.set();super().server_close()
-    server=LocalServer(('127.0.0.1',port),Handler);server.pipeline=pipe
+    server=LocalServer(('127.0.0.1',port),Handler);server.pipeline=pipe;server.native4=native4
     return server
 
 
