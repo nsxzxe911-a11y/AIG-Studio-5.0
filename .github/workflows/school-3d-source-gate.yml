@@ -967,6 +967,30 @@ jobs:
             if(!source.includes(token))throw Error('STORY_REAL_ANIMATION_MIXER_MISSING '+token);
           console.log('FastModel 3.2 SOURCE QA PASS: real loaded GLB animation clip timeline only, no fabricated fight motion, CGI text-to-motion model or MP4 claim.');
           JS
+      - name: FastModel 3.3 witty dialogues, real speech and procedural sound track source Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/single-photo/story-dialogue.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/story-audio.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/app.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/viewer.mjs
+          node --test formal-web/school-3d/fastmodel/single-photo/tests/story-dialogue-audio.test.mjs
+          node - <<'JS'
+          const fs=require('fs');
+          const root='formal-web/school-3d/fastmodel/single-photo/';
+          const html=fs.readFileSync(root+'dist/index.html','utf8');
+          const bundle=fs.readFileSync(root+'dist/app.js','utf8');
+          const viewer=fs.readFileSync(root+'viewer.mjs','utf8');
+          for(const token of ['id="story-subtitle"','id="dialogue-style"','id="story-dialogues"',
+              'id="voice-enabled"','id="sfx-enabled"','id="music-enabled"','id="audio-volume"',
+              'id="dialogue-preview"','id="music-mood"'])
+            if(!html.includes(token))throw Error('STORY_AUDIO_UI_NOT_BUNDLED '+token);
+          for(const token of ['AIG_FASTMODEL_3_3_LOCAL_DIALOGUE_TEMPLATES_NOT_LLM',
+              'AIG_FASTMODEL_3_3_PROCEDURAL_AUDIO_BROWSER_SPEECH','cloudLLMDialogueGenerated',
+              'USER_EDITED_DIALOGUE','OFFLINE_HANDWRITTEN_TEMPLATE'])
+            if(!bundle.includes(token))throw Error('STORY_AUDIO_ENGINE_NOT_BUNDLED '+token);
+          if(!viewer.includes('this.onFrame?.(dt,t)'))throw Error('MUSIC_FRAME_TICK_NOT_WIRED');
+          console.log('3.3 source-only: honest authored witty dialogue, true WebAudio tones, opt-in browser zh-TW TTS, no fake AI model or copyrighted soundtrack.');
+          JS
       - name: Archive FastModel 2.7 source and synthetic offline animation evidence
         uses: actions/upload-artifact@v4
         with:
