@@ -7,7 +7,7 @@ from pipeline import PhotoPipeline
 from provider import MeshyClient
 from dialogue_ai import DialogueAI
 from tts_voice import SpeechAI
-from reconstruction_service import SERVICE_ID,capabilities,require_service,project_job
+from reconstruction_service import SERVICE_ID,MULTIVIEW_ID,capabilities,require_service,project_job
 
 HERE=Path(__file__).resolve().parent
 
@@ -155,7 +155,26 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
                             prep_bytes=base64.b64decode(encoded,validate=True)
                             if len(prep_bytes)>20*1024*1024:raise ValueError('PREPARED_IMAGE_SIZE_INVALID')
                             prepared=Path(temporary)/'prepared.png';prepared.write_bytes(prep_bytes)
-                        d=pipe.create(file,data.get('mode','humanoid'),data.get('actionId'),prepared_source=prepared)
+                        extra=data.get('additionalImages',[])
+                        if not isinstance(extra,list) or len(extra)>3:
+                            raise ValueError('MULTIVIEW_MAX_FOUR_IMAGES')
+                        if extra and data.get('serviceId')!=MULTIVIEW_ID:
+                            raise ValueError('MULTIVIEW_PROVIDER_REQUIRED')
+                        if extra and prepared is not None:
+                            raise ValueError('PREPARED_FOREGROUND_AND_MULTIVIEW_CONFLICT')
+                        source_files=[]
+                        for i,uri in enumerate(extra,1):
+                            if not isinstance(uri,str) or len(uri)>10*1024*1024:
+                                raise ValueError('MULTIVIEW_IMAGE_BYTES_INVALID')
+                            match=re.fullmatch(r'data:image/(png|jpeg|webp);base64,([a-zA-Z0-9+/=]+)',uri)
+                            if not match:raise ValueError('MULTIVIEW_IMAGE_FORMAT_UNSUPPORTED')
+                            image_bytes=base64.b64decode(match.group(2),validate=True)
+                            if not 100<=len(image_bytes)<=7*1024*1024:raise ValueError('MULTIVIEW_IMAGE_BYTES_INVALID')
+                            path=Path(temporary)/('extra-'+str(i));path.write_bytes(image_bytes)
+                            source_files.append(path)
+                        d=pipe.create(file,data.get('mode','humanoid'),data.get('actionId'),
+                                      prepared_source=prepared,additional_sources=source_files,
+                                      reconstruction_service=data.get('serviceId',SERVICE_ID))
                     d['requestId']=request_id
                     if self.path=='/api/reconstruction/jobs':
                         d['automation']={'enabled':True,'stages':['model','rig','animation'],
