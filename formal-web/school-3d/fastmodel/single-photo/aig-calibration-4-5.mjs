@@ -54,6 +54,7 @@ export function auditMarks(source,marks){
  const height=ankles.y-a.headTop.y;
  if(!(a.headTop.y<a.chin.y&&a.chin.y<shoulders.y&&shoulders.y<hips.y&&hips.y<ankles.y&&
       height>=.36&&height<=.97&&
+      a.leftAnkle.y>hips.y&&a.rightAnkle.y>hips.y&&
       a.leftShoulder.x<a.rightShoulder.x&&a.leftHip.x<a.rightHip.x&&
       a.leftAnkle.x<a.rightAnkle.x))
   throw Error('AIG45_LANDMARK_ORDER_OR_CROP_INVALID');
