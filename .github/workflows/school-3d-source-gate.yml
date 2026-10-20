@@ -1,0 +1,33 @@
+name: AIG School 3D Source Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/school-3d/**'
+      - '.github/workflows/school-3d-source-gate.yml'
+  push:
+    branches:
+      - feature/aig-school-3d-hero-v1-20261020
+    paths:
+      - 'formal-web/school-3d/**'
+      - '.github/workflows/school-3d-source-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify JS syntax
+        run: |
+          node --check formal-web/school-3d/school-hero.v1.js
+          node --check formal-web/school-3d/glb-audit.v1.mjs
+      - name: Run fake-model rejection tests
+        run: node --test formal-web/school-3d/tests/glb-audit.test.mjs
+      - name: Explicit release status
+        run: |
+          node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
