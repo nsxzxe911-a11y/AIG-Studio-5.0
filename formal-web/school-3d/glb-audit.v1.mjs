@@ -56,6 +56,11 @@ function pbr(g,mat){
 export function auditGLB(input,role){
  const errors=[],warnings=[];let g;
  try{g=parseGLB(input);}catch(e){return {pass:false,role,errors:[e.message],warnings,metrics:{}};}
+ // A technically valid rig can still be visually rejected. Never promote known fixtures.
+ const provenance=String(g.asset?.generator||"")+" "+String(g.asset?.copyright||"");
+ if (/NOT[ _-]*(VISUAL[ _-]*)?APPROVED|NOT[ _-]*VISUAL[ _-]*AUTHORITY|REJECTED[ _-]*VISUAL|TECHNICAL[ _-]*FIXTURE/i.test(provenance)) {
+   errors.push("原始資產自我標示未核准／僅供技術測試，禁止正式載入");
+ }
  const tri=triCount(g), names=(g.nodes||[]).map(n=>norm(n.name));
  const clips=(g.animations||[]).map(a=>norm(a.name));
  const metrics={triangles:tri,nodes:names.length,materials:(g.materials||[]).length,
