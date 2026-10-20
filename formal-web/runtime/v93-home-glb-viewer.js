@@ -120,10 +120,22 @@ function start(){
     gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     // Auto-fit the REAL GLB mesh bounds, not a guessed origin/scale.
     // Keep the spindle vertical and do not spin the entire machine endlessly.
-    const c=geometry.center,r=geometry.radius,aspect=wpx/hpx,fov=.83;
-    const distance=Math.max(r/Math.tan(fov/2),r/(Math.tan(fov/2)*Math.max(.3,aspect)))*1.27;
+    const c=geometry.center,aspect=wpx/hpx,fov=.83,tanHalf=Math.tan(fov/2);
     const sway=wpx>720?Math.sin(now*.00012)*.035:0;
-    const eye=[c[0]+distance*(.56+sway),c[1]-distance*.69,c[2]+distance*.48];
+    const direction=[.56+sway,-.69,.48],dn=Math.hypot(...direction);
+    const dir=direction.map(x=>x/dn),basis=look(dir,[0,0,0]);
+    const lo=geometry.bounds.min,hi=geometry.bounds.max;
+    let maxX=0,maxY=0,nearExtent=0;
+    for(const x of [lo[0],hi[0]])for(const y of [lo[1],hi[1]])for(const z of [lo[2],hi[2]]){
+     const a=[x-c[0],y-c[1],z-c[2]];
+     maxX=Math.max(maxX,Math.abs(a[0]*basis[0]+a[1]*basis[4]+a[2]*basis[8]));
+     maxY=Math.max(maxY,Math.abs(a[0]*basis[1]+a[1]*basis[5]+a[2]*basis[9]));
+     nearExtent=Math.max(nearExtent,a[0]*basis[2]+a[1]*basis[6]+a[2]*basis[10]);
+    }
+    // Camera distance derived from the actual projected machine extents, not
+    // only bounding-sphere radius: complete machine fills the viewport safely.
+    const distance=(Math.max(maxY/tanHalf,maxX/(tanHalf*Math.max(.3,aspect)))+nearExtent)*1.14;
+    const eye=c.map((v,i)=>v+dir[i]*distance);
     const pv=mul(perspective(aspect),look(eye,c));
     for(const item of parts){
      gl.uniformMatrix4fv(uniforms.model,false,item.world);
@@ -133,7 +145,9 @@ function start(){
      gl.bindBuffer(gl.ARRAY_BUFFER,item.position);gl.enableVertexAttribArray(uniforms.p);gl.vertexAttribPointer(uniforms.p,3,gl.FLOAT,false,0,0);
      gl.bindBuffer(gl.ARRAY_BUFFER,item.normal);gl.enableVertexAttribArray(uniforms.n);gl.vertexAttribPointer(uniforms.n,3,gl.FLOAT,false,0,0);
      gl.drawArrays(gl.TRIANGLES,0,item.count);
+     if(gl.getError()!==gl.NO_ERROR)throw Error("GL_DRAW_ERROR");
     }
+    canvas.dataset.aig95Rendered="true";
    };
    w.AIG_HOME_V93_VIEWER=Object.freeze({inspect:()=>({
     ready,parts:parts.length,source:src,visualOnly:true,
