@@ -6,6 +6,7 @@ from PIL import Image, ImageOps
 from provider import MeshyClient, RequestRejected
 from glb import audit_glb
 from prepared_input import verify_prepared_foreground
+from reconstruction_service import SERVICE_ID,MULTIVIEW_ID,VALID_SERVICES
 
 
 def digest(path):
@@ -44,9 +45,15 @@ class PhotoPipeline:
         return self.root/job
     def read(self,job):return json.loads((self.directory(job)/'job.json').read_text(encoding='utf8'))
     def save(self,job,data):atomic_json(self.directory(job)/'job.json',data)
-    def create(self,source,mode='humanoid',action_id=None,prepared_source=None):
+    def create(self,source,mode='humanoid',action_id=None,prepared_source=None,additional_sources=None,reconstruction_service=SERVICE_ID):
         if not self.client.configured:raise ValueError('MESHY_API_KEY_NOT_CONFIGURED')
         if mode not in ('humanoid','object'):raise ValueError('SUBJECT_MODE_INVALID')
+        if reconstruction_service not in VALID_SERVICES:raise ValueError('RECONSTRUCTION_SERVICE_UNSUPPORTED')
+        extra=list(additional_sources or [])
+        if len(extra)>3:raise ValueError('MULTIVIEW_MAX_FOUR_IMAGES')
+        if extra and reconstruction_service!=MULTIVIEW_ID:raise ValueError('MULTIVIEW_PROVIDER_REQUIRED')
+        if prepared_source is not None and extra:raise ValueError('PREPARED_FOREGROUND_AND_MULTIVIEW_CONFLICT')
+        if extra and mode!='humanoid':raise ValueError('MULTIVIEW_HUMANOID_ONLY')
         if action_id is not None and (type(action_id) is not int or action_id<0 or mode!='humanoid'):raise ValueError('ACTION_ID_INVALID')
         source=Path(source)
         if not 0<source.stat().st_size<=20*1024*1024:raise ValueError('IMAGE_SIZE_LIMIT_20MB')
@@ -61,6 +68,19 @@ class PhotoPipeline:
             if image.width*image.height>40_000_000:raise ValueError('IMAGE_PIXEL_BUDGET')
             extension={'PNG':'.png','JPEG':'.jpg','WEBP':'.webp'}[image.format]
             normalized=ImageOps.exif_transpose(image).convert('RGBA');normalized.thumbnail((2048,2048))
+        # Validate every extra source before creating a job or performing a
+        # billable Meshy call. Extra views are only DRAFT independent images.
+        prepared_extras=[]
+        for index,p in enumerate(extra,1):
+            path=Path(p)
+            if not 100<=path.stat().st_size<=7*1024*1024:raise ValueError('MULTIVIEW_IMAGE_BYTES_INVALID')
+            with Image.open(path) as image:
+                if image.format not in ('PNG','JPEG','WEBP') or image.width*image.height>20_000_000:
+                    raise ValueError('MULTIVIEW_IMAGE_FORMAT_OR_PIXEL_BUDGET')
+                im=ImageOps.exif_transpose(image).convert('RGBA')
+                im.thumbnail((2048,2048))
+                fmt=image.format
+            prepared_extras.append((path,index,fmt,im,digest(path)))
         self.root.mkdir(parents=True,exist_ok=True);job=uuid.uuid4().hex;work=self.directory(job);work.mkdir()
         shutil.copyfile(source,work/('source-original'+extension))
         if foreground_evidence:
@@ -70,8 +90,24 @@ class PhotoPipeline:
                 image.save(work/'source-upload.png',format='PNG')
         else:
             normalized.save(work/'source-upload.png')
+        extra_evidence=[]
+        for path,index,fmt,img,source_hash in prepared_extras:
+            ext={'PNG':'.png','JPEG':'.jpg','WEBP':'.webp'}[fmt]
+            original_name='additional-original-'+str(index)+ext
+            upload_name='additional-upload-'+str(index)+'.png'
+            shutil.copyfile(path,work/original_name)
+            img.save(work/upload_name,format='PNG')
+            if digest(path)!=source_hash or digest(work/original_name)!=source_hash:
+                raise ValueError('MULTIVIEW_SOURCE_CHANGED')
+            extra_evidence.append({'position':index,'originalFile':original_name,
+                                   'originalSHA256':source_hash,'uploadFile':upload_name,
+                                   'uploadSHA256':digest(work/upload_name),
+                                   'unverifiedSameCharacter':True})
         if digest(source)!=original or digest(work/('source-original'+extension))!=original:raise ValueError('SOURCE_CHANGED')
-        report={'schema':'AIG_SINGLE_PHOTO_3D_2_7','id':job,'status':'RUNNING','provider':'Meshy','mode':mode,'actionId':action_id,'sourceSHA256':original,'uploadSHA256':digest(work/'source-upload.png'),'originalFile':'source-original'+extension,'uploadFile':'source-upload.png','imageSize':list(normalized.size),'stages':{k:{'status':'NEW'} for k in ('model','rig','animation')},'artifacts':{},'inferredUnseenSurfaces':True,'photorealismVerified':False,'releaseAllowed':False,
+        report={'schema':'AIG_SINGLE_PHOTO_3D_2_7','id':job,'status':'RUNNING','provider':'Meshy','mode':mode,'actionId':action_id,'sourceSHA256':original,'uploadSHA256':digest(work/'source-upload.png'),'originalFile':'source-original'+extension,'uploadFile':'source-upload.png','imageSize':list(normalized.size),
+                'reconstructionService':reconstruction_service,
+                'modelEndpoint':'/multi-image-to-3d' if reconstruction_service==MULTIVIEW_ID else '/image-to-3d',
+                'additionalImageEvidence':extra_evidence,'stages':{k:{'status':'NEW'} for k in ('model','rig','animation')},'artifacts':{},'inferredUnseenSurfaces':True,'photorealismVerified':False,'releaseAllowed':False,
             'preparedForegroundEvidence':foreground_evidence,'originalImageStillAvailable':True,
             'foregroundAndHairEdgesApproved':False,'actualHeroineAnimationReviewed':False}
         self.save(job,report);return report
@@ -87,7 +123,11 @@ class PhotoPipeline:
             d=self.read(job)
             if d['status'] in ('COMPLETE','FAILED','SUBMISSION_UNKNOWN'):return d
             work=self.directory(job)
-            if digest(work/d['uploadFile'])!=d['uploadSHA256'] or digest(work/d['originalFile'])!=d['sourceSHA256']:raise ValueError('SOURCE_CHANGED')
+            if digest(work/d['uploadFile'])!=d['uploadSHA256'] or digest(work/d['originalFile'])!=d['sourceSHA256']:
+                raise ValueError('SOURCE_CHANGED')
+            for entry in d.get('additionalImageEvidence',[]):
+                if digest(work/entry['uploadFile'])!=entry['uploadSHA256'] or digest(work/entry['originalFile'])!=entry['originalSHA256']:
+                    raise ValueError('MULTIVIEW_SOURCE_CHANGED')
             for stage in ('model','rig','animation'):
                 s=d['stages'][stage]
                 if s['status']=='SUCCEEDED':continue
@@ -102,13 +142,24 @@ class PhotoPipeline:
                     self._download(job,d,walk,'animated.glb',True)
                     s.update(status='SUCCEEDED',source='rig-basic-walk');s.pop('assetUrl',None)
                     d['status']='COMPLETE';d['animationKind']='skeletal-basic-walk';self.save(job,d);return d
-                endpoint={'model':'/image-to-3d','rig':'/rigging','animation':'/animations'}[stage]
+                endpoint={'model':d.get('modelEndpoint','/image-to-3d'),'rig':'/rigging','animation':'/animations'}[stage]
                 if s['status'] in ('SUBMITTING','SUBMISSION_UNKNOWN'):
                     s['status']=d['status']='SUBMISSION_UNKNOWN';self.save(job,d);return d
                 if s['status']=='NEW':
                     if stage=='model':
                         uri='data:image/png;base64,'+base64.b64encode((work/d['uploadFile']).read_bytes()).decode()
-                        payload={'image_url':uri,'model_type':'standard','ai_model':'meshy-7.1','should_texture':True,'enable_pbr':True,'should_remesh':True,'target_polycount':30000,'pose_mode':'a-pose' if d['mode']=='humanoid' else '', 'image_enhancement':False,'target_formats':['glb']}
+                        payload={'model_type':'standard','ai_model':'meshy-7.1',
+                                 'should_texture':True,'enable_pbr':True,'should_remesh':True,
+                                 'target_polycount':30000,
+                                 'pose_mode':'a-pose' if d['mode']=='humanoid' else '',
+                                 'image_enhancement':False,'target_formats':['glb']}
+                        if d.get('reconstructionService')==MULTIVIEW_ID:
+                            urls=[uri]+['data:image/png;base64,'+
+                                base64.b64encode((work/entry['uploadFile']).read_bytes()).decode()
+                                for entry in d.get('additionalImageEvidence',[])]
+                            if not 1<=len(urls)<=4:raise ValueError('MULTIVIEW_MAX_FOUR_IMAGES')
+                            payload['image_urls']=urls
+                        else:payload['image_url']=uri
                     elif stage=='rig':payload={'input_task_id':d['stages']['model']['taskId']}
                     else:payload={'rig_task_id':d['stages']['rig']['taskId'],'action_id':d['actionId']}
                     s['status']='SUBMITTING';self.save(job,d)
