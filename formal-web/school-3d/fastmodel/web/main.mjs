@@ -96,7 +96,7 @@ function applyScanMode(){
    status.textContent='掃描層設定無效，保留原模型。';return;
  }
  if(mode==='off'){
-   scanTopology=null;scanOverlayLast=0;clearScanOverlay();el('scan-depth-status').textContent='掃描層關閉；沒有額外深度抽樣 CPU 負荷。';
+   scanTopology=null;scanOverlayLast=0;clearScanOverlay();el('scan-depth-status').textContent='掃描層關閉；沒有額外深度抽樣 CPU 負荷。';el('scan-speed-status').textContent='極速掃描已關閉；沒有額外網格分析負荷。';
    if(view){view.onScanFrame=null;view.scanOverlayTelemetry=null;applyWireChoice();}
    status.textContent='掃描覆蓋層關閉；保留原表面與你的線框設定。';return;
  }
@@ -141,6 +141,10 @@ function applyScanMode(){
      result.turboScan={speed:choice.speed,phase:choice.phase,throttled:choice.throttled,
        updateIntervalMs:choice.intervalMs,overlayMs:+overlayMs.toFixed(2),
        originalModelIntact:true,actualDeviceFpsVerified:false};
+     el('scan-speed-status').textContent='掃描階段 '+choice.phase+
+       ' · 更新間隔 ≥'+Math.round(choice.intervalMs)+'ms · 覆蓋層 CPU '+overlayMs.toFixed(1)+'ms'+
+       (choice.throttled?' · CPU 過載，暫時只顯示真骨架（可自動恢復）。':' · 人物網格／頭頸保留。')+
+       ' 這不是實機 GPU FPS 量測。';
      if(speed==='turbo'&&scanTopology?.geometry==='bones'&&choice.frameSamples===1){
        scanRequestContours(f,density,revision);
      }
