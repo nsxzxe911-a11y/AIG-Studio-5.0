@@ -12,7 +12,7 @@
 - `prepare_qa_mesh.py`: creates scaled technical target + anchors as a deliberately unapproved reproducibility fixture.
 - `verify_mesh_first.py`: byte-for-byte vertex POSITION attribute checks on 195 primitives; verifies all 48,015 vertex weight sums and glTF inverse bind rest transform cancelation (max absolute matrix error below 6e-8).
 - `verify_fit_foot_contact.py`: separately measures the **encoded skeleton ankle contact**, with foot clearance thresholds normalized to target joint-size scale; does NOT claim grounded shoe soles or visually natural walking.
-- `test_mesh_first.py`: 11 unit tests, covering unchanged mesh, weights, SHA mismatch, pixel-as-depth rejection, rest inverse binds, IK stance, unacceptable nonuniform retarget, missing bone, false approval and deterministic binary.
+- `test_mesh_first.py`: 12 unit tests, covering unchanged mesh, weights, SHA mismatch, pixel-as-depth rejection, rest inverse binds, IK stance, unacceptable nonuniform retarget, missing bone, false approval, reverse-source SHA drift and deterministic binary.
 - `character-rig-MESH-FIRST-TECHNICAL-ONLY.glb`: actual exported GLB. Explicit `NOT APPROVED` metadata and materials. Its appearance still inherits the old rejected Phase6 mesh and must never be substituted for the approved heroine.
 
 ## Gate status
