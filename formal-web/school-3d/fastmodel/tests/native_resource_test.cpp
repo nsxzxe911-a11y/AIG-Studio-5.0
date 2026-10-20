@@ -1,10 +1,19 @@
 #include "resource_policy.hpp"
 #include "cache_io_probe.hpp"
+#include "fastmodel_c_api.h"
 #include <filesystem>
 #include <cassert>
 #include <iostream>
 using namespace aig;
 int main(){
+  auto* abi=aig_scheduler_create();assert(abi);
+  AIG_FramePolicy pd{};
+  for(int i=0;i<18;i++)assert(aig_scheduler_record(abi,27,4.9,-1,&pd)==0);
+  assert(pd.recommended_render_scale==.75&&pd.gpu_time_measured==0);
+  assert(aig_scheduler_allow_upload(abi,17ull<<20,0)==0);
+  assert(aig_scheduler_allow_disk_write(abi,250ull<<20,1ull<<20)==0);
+  assert(aig_scheduler_record(abi,-1,2,-1,&pd)==-1);
+  aig_scheduler_destroy(abi);
   BalancedScheduler g;
   FrameDecision d;
   for(int i=0;i<20;i++)d=g.push(27,4.8);

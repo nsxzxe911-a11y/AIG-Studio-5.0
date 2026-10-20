@@ -40,5 +40,7 @@
   "formalWebsiteDeployed": false,
   "apkBuilt": false,
   "exeBuilt": false,
-  "sourceVisualAuthorityBlocked": true
+  "sourceVisualAuthorityBlocked": true,
+  "nativeFrameSchedulerCAbiImplemented": true,
+  "nativeSchedulerCAbiUnitTestPassed": true
 }
