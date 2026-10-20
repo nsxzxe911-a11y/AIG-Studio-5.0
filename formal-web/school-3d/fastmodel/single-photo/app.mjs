@@ -7,11 +7,13 @@ import {composeDialogue,updateDialogueCue,annotateDialoguePlan,DIALOGUE_VERSION}
 import {StoryAudio,AUDIO_CUE_VERSION} from './story-audio.mjs';
 import {MovieWorkspace} from './movie-ui.mjs';
 import {generateVoiceBatch,TTS_VERSION} from './voice-generator.mjs';
+import {inspectHeroineImage,evaluateHeroineJob,HEROINE_REFERENCE} from './heroine-authority-3-7.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
 let storyPlan=null,storyOutputUrl=null,storyDialogue=null,storyParsed=null,storyRevision=0,cloudBusy=false,dialogueCloudConfigured=false,movieUI=null;
 let speechAIConfigured=false,ttsBusy=false,ttsGeneration=0,ttsFiles=[],ttsDownloadUrls=[];
+let heroineSourceRevision=0,heroinePreviewUrl=null,heroineEvidenceUrl=null,heroineSourceMatch=false;
 const storySound=new StoryAudio({onStatus:m=>{$('story-audio-status').textContent=m;}});
 function soundOptions(){return {
  voice:$('voice-enabled').checked,sfx:$('sfx-enabled').checked,
@@ -134,6 +136,31 @@ function clearReviewEvidence(){
  $('review-image').hidden=true;$('review-image').removeAttribute('src');
  $('review-status').textContent='目前尚無已擷取的真正 GLB 四方向圖片；不能判定頭頸或髮束是否通過。';
 }
+function saveHeroineEvidence(result){
+ if(heroineEvidenceUrl)URL.revokeObjectURL(heroineEvidenceUrl);
+ heroineEvidenceUrl=URL.createObjectURL(new Blob([JSON.stringify(result,null,2)],{type:'application/json'}));
+ const area=$('heroine-evidence-downloads');area.replaceChildren();
+ const link=document.createElement('a');link.className='download';link.href=heroineEvidenceUrl;
+ link.download='AIG-3-7-heroine-source-and-model-audit-NOT-APPROVED.json';
+ link.textContent='下載來源與 GLB 核對報告（非通過證明）';
+ area.append(link);
+ $('heroine-glb-status').textContent=result.sourceChainMatched
+  ?'真 GLB 與指定來源照片的本機生成任務 SHA 已核對一致。但頭頸、髮束、五官、裙裝與 3D 動作仍需人工驗收，不能自動批准。'
+  :'目前沒有真正由指定女主角照片產生、且來源與 GLB SHA 都一致的正式人物動畫。保持 BLOCKED。';
+}
+async function decodeHeroineImage(file){
+ if(typeof createImageBitmap==='function'){
+  const image=await createImageBitmap(file);
+  try{return {width:image.width,height:image.height};}finally{image.close();}
+ }
+ return await new Promise((resolve,reject)=>{
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onload=()=>{const shape={width:img.naturalWidth,height:img.naturalHeight};
+   URL.revokeObjectURL(url);resolve(shape);};
+  img.onerror=()=>{URL.revokeObjectURL(url);reject(Error('HEROINE_IMAGE_DECODE_FAILED'));};
+  img.src=url;
+ });
+}
 async function sha256Bytes(bytes){
  const hash=new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));
  return Array.from(hash,x=>x.toString(16).padStart(2,'0')).join('');
@@ -147,6 +174,7 @@ function updateButton(){$('generate').disabled=!ready||busy||!$('photo').files.l
 function addLink(label,url,name){const a=document.createElement('a');a.className='download';a.textContent=label;a.href=url;if(name)a.download=name;$('downloads').append(a);}
 async function load(bytes,orbit){
  if(!view)return;
+ saveHeroineEvidence(evaluateHeroineJob({}));
  const clips=await view.load(bytes,{orbit});$('clip').replaceChildren();
  clearReviewEvidence();clearTimelineEvidence();clearStoryPlan('新人物已載入，請重新解析劇情。');
  importedActionHashes.clear();actionShaByClipIndex.clear();
@@ -184,7 +212,13 @@ async function follow(id){
   const d=await api('/api/jobs/'+id);show(d);
   const name=d.artifacts['animated.glb']?'animated.glb':d.artifacts['model.glb']?'model.glb':'';
   if(name&&loadedFile!==id+'/'+name){
-   try{const r=await fetch('/api/jobs/'+id+'/files/'+name);if(!r.ok)throw Error('模型下載暫時失敗');await load(await r.arrayBuffer(),d.mode==='object');loadedFile=id+'/'+name;}
+   try{
+    const r=await fetch('/api/jobs/'+id+'/files/'+name);
+    if(!r.ok)throw Error('模型下載暫時失敗');
+    const bytes=await r.arrayBuffer(),modelHash=await sha256Bytes(bytes);
+    await load(bytes,d.mode==='object');loadedFile=id+'/'+name;
+    saveHeroineEvidence(evaluateHeroineJob({job:d,modelSha256:modelHash,assetName:name}));
+   }
    catch(e){$('viewport-status').textContent='預覽未完成：'+e.message+'；生成任務與下載檔案保留。';}
   }
   if(d.status==='RUNNING')setTimeout(()=>follow(id),3000);
@@ -242,7 +276,35 @@ $('local-glb').addEventListener('change',async()=>{
   $('skin-check-status').textContent='本機 GLB 未載入：'+err.message+'。原有模型仍保留。';
  }
 });
-$('photo').addEventListener('change',()=>{updateButton();});
+$('photo').addEventListener('change',async()=>{
+ updateButton();
+ const revision=++heroineSourceRevision,file=$('photo').files?.[0];
+ heroineSourceMatch=false;
+ if(heroinePreviewUrl){URL.revokeObjectURL(heroinePreviewUrl);heroinePreviewUrl=null;}
+ $('heroine-source-preview').hidden=true;$('heroine-source-preview').removeAttribute('src');
+ if(!file){$('heroine-source-status').textContent='尚未選擇正式女主角照片。';return;}
+ $('heroine-source-status').textContent='核對照片實際內容 SHA-256 與 JPEG 像素尺寸中…';
+ try{
+  const result=await inspectHeroineImage(file,{decodeImage:decodeHeroineImage});
+  if(revision!==heroineSourceRevision)return;
+  heroineSourceMatch=result.sourceMatched;
+  if(result.sourceMatched){
+   heroinePreviewUrl=URL.createObjectURL(file);
+   $('heroine-source-preview').src=heroinePreviewUrl;
+   $('heroine-source-preview').hidden=false;
+   $('heroine-source-status').textContent=
+    '指定女主角原始 JPEG SHA 與 1152×1536 尺寸匹配。這只是圖片來源驗證，' +
+    '下半身未完整入鏡／髮束遮頸仍須在真正 GLB 建模後檢查。' +
+    '如使用外部 Meshy 服務，須自行按生成且可能消耗點數。';
+  }else{
+   $('heroine-source-status').textContent='這是其他照片或已裁切／重新壓縮檔，' +
+    '可另行生成但不能認定為本次指定女主角的唯一正式來源。';
+  }
+ }catch(err){
+  if(revision===heroineSourceRevision)
+   $('heroine-source-status').textContent='照片核對失敗：'+err.message+'。不會以副檔名冒充原始內容。';
+ }
+});
 $('subject').addEventListener('change',()=>{$('action').disabled=$('subject').value==='object';});
 $('action').addEventListener('change',()=>{});
 $('generate').addEventListener('click',async()=>{
