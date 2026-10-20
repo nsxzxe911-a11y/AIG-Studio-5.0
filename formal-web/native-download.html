@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407">
+<title>AIG｜原生版本與下載核對</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif}
+*{box-sizing:border-box}body{margin:0;color:#edf9ff;background:radial-gradient(ellipse 65% 45% at 40% 0%,#13405c66,transparent 80%),#020407}
+main{max-width:1100px;margin:auto;padding:clamp(18px,4vw,48px)}h1{font-size:clamp(27px,4vw,42px);margin:10px 0 12px}h2{font-size:20px;margin:0 0 13px}
+.kicker{color:#7ce7f8;font-weight:850;letter-spacing:.12em}.description{color:#afcfdf;line-height:1.7}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:22px 0}
+.card{background:linear-gradient(145deg,#0b2338,#07111b);border:1px solid #326c91;border-radius:15px;padding:20px;min-width:0}
+.card p{color:#acc9d8;line-height:1.6}.line{border-top:1px solid #28506d;margin:17px 0}
+.status{display:inline-block;padding:6px 9px;border:1px solid #8b7946;border-radius:7px;background:#30291a;color:#ffe1a9;font-size:12px;font-weight:750}
+.actions{display:flex;gap:10px;flex-wrap:wrap}.actions a,.actions button{display:inline-flex;min-height:46px;align-items:center;justify-content:center;background:linear-gradient(140deg,#0c486a,#1d2a55);border:1px solid #4cb9df;border-radius:9px;padding:9px 14px;color:#fff;text-decoration:none;cursor:pointer;font:750 13px/1.3 system-ui,"Noto Sans TC",sans-serif}
+a:focus-visible,button:focus-visible{outline:3px solid #a4f6ff;outline-offset:3px}.notice{background:#101c2a;border-left:3px solid #4bdaf6;padding:13px 17px;border-radius:8px;color:#bcdbea;line-height:1.7}
+.out{min-height:28px;font-size:13px;color:#a8ffe7}.muted{font-size:12px;color:#86aabc}
+@media(max-width:680px){.grid{grid-template-columns:1fr}.actions a,.actions button{width:100%}}
+</style>
+</head>
+<body><main>
+<p class="kicker">AIG · DUAL PROJECT / SINGLE SOURCE GOVERNANCE</p>
+<h1>原生版本與下載核對</h1>
+<p class="description">已撤除後續低階 Web 工作區；**不會把 Web V95 當成 Android 或 Windows 主程式版本。** 原生程式保留在各自 GitHub 專案中，只有存在可驗證的 APK／EXE 建置產物與 Gate 證據才能列為正式可下載版本。</p>
+<div class="grid">
+<section class="card"><h2>AIG-II</h2>
+<span class="status">原生 APK／EXE：最高版本尚待核實</span>
+<p>GitHub 私人專案。若你已登入獲授權的帳號，可查看其原生來源、工作流程及 Release。本站不提供未經確認的安裝檔。</p>
+<div class="actions"><a href="https://github.com/nsxzxe911-a11y/AIG-II/releases" target="_blank" rel="noopener noreferrer">登入 GitHub 查看 Release ↗</a>
+<a href="https://github.com/nsxzxe911-a11y/AIG-II/actions" target="_blank" rel="noopener noreferrer">查看建置紀錄 ↗</a></div></section>
+<section class="card"><h2>AIG Studio 5.0</h2>
+<span class="status">原生 APK／EXE：目前不宣稱與 Web 同版</span>
+<p>可查閱公開 Release 與 Android／Windows Actions。歷史檔案只代表該次建置，不等於目前 400／500 階段最高版本。</p>
+<div class="actions"><a href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/releases" target="_blank" rel="noopener noreferrer">查看實際 Release ↗</a>
+<a href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions" target="_blank" rel="noopener noreferrer">查看建置紀錄 ↗</a></div></section>
+</div>
+<section class="card"><h2>原 Web 本機資料保護</h2>
+<p>撤除的是網站工作區程式，<strong>不包含瀏覽器的 CAD／CAM／NC 工作副本</strong>。如果本裝置曾在原網域編輯 CNC 工作資料，可自行匯出符合 CAD／CAM／NC 相關命名的本機儲存項目備份；不會傳送到任何伺服器，也不會清空原資料。</p>
+<div class="actions"><button type="button" id="export-local">匯出這台裝置的本機 CNC 工作備份</button><a href="./index.html#dual-projects">返回 AIG 網站</a></div>
+<output role="status" id="export-status" class="out"></output>
+<p class="muted">只讀取本站同源 localStorage 中名稱含 CAD、CAM、NC、GCODE、DRAFT 或 WORKING 的項目，並排除帳號、憑證、Token 等項目。不同裝置的資料需在該裝置操作。</p>
+</section>
+</main>
+<script>
+(function(){
+"use strict";
+var button=document.getElementById("export-local"),out=document.getElementById("export-status");
+button.addEventListener("click",function(){
+ try{
+  var drafts={};
+  for(var i=0;i<localStorage.length;i++){
+   var k=localStorage.key(i);
+   if(!k||!/(?:aig|cad|cam|nc|gcode|draft|working)/i.test(k)||!/(?:cad|cam|nc|gcode|draft|working)/i.test(k))continue;
+   if(/(?:token|auth|login|password|secret|credential|api[_-]?key|session)/i.test(k))continue;
+   drafts[k]=localStorage.getItem(k);
+  }
+  var names=Object.keys(drafts);
+  if(names.length===0){out.textContent="這台裝置未找到符合條件的本機 CNC 工作副本；未變更任何資料。";return}
+  var blob=new Blob([JSON.stringify({schema:"AIG_WEB_LEGACY_LOCAL_DRAFT_BACKUP",createdAt:new Date().toISOString(),drafts:drafts},null,2)],{type:"application/json"});
+  var url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download="AIG-local-CNC-drafts-backup.json";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(function(){URL.revokeObjectURL(url)},30000);
+  out.textContent="已要求下載 "+names.length+" 筆本機 CNC 工作資料；原內容未清除。";
+ }catch(e){out.textContent="無法匯出本機資料："+String(e&&e.message||e)}
+});
+})();
+</script>
+</body></html>

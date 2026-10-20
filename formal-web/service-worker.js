@@ -1,84 +1,44 @@
-/* AIG-II public website + separately routed CNC workbench.
-   Cache the actual portal and runtime; no engineering gallery in the startup path. */
-const REVOKED_CACHE="aig-ii-authority-revocation-20261018-v18";
-const PREVIOUS_CACHE="aig-ii-original-render-v4-20261018-v20";
-const CACHE="aig-ii-original-render-v94-home-audit-download-20261020";
+/* AIG dual-project public information site.
+ * The failed V90-V95 Web CNC workspaces are deliberately retired.
+ * This Service Worker does NOT touch localStorage/IndexedDB/CNC work copies.
+ */
+const CACHE="aig-ii-native-release-portal-only-20261020";
 const SHELL=[
-  "./","./index.html","./image-library.html","./visual-library.css","./visual-library.js","./visual-library/manifest.json","./visual-library/authority-revocations-438.json","./runtime-visual-reference.css","./runtime/visual-reference-v1.js","./guide.html","./updates.html","./faq.html","./project-sync.html","./site.css","./site-v2.css","./site-v21.css","./site-phase4.css","./project-sync.css","./site.js","./site-v21.js","./project-transfer.js","./project-sync.js","./phase4.css","./mobile-runtime.html","./mobile-runtime-v86.html","./v91-rgb-desktop.css","./v88-manus-runtime-adapter.css","./runtime/v88-manus-runtime-adapter.js","./v89-nc-first-state.css","./runtime/v89-nc-first-state.js","./v90-cad-cam-sim-runtime.css","./runtime/v90-cad-cam-sim-runtime.js","./zoo-6ax/local-glb/aig_6ax_machine_v9.glb","./v92-6ax-authority-layout.css","./runtime/v92-6ax-authority-layout.js","./authority/v92-6ax-source-region-manifest.json","./v93-home-rgb.css","./runtime/v93-home-rgb-layout.js","./runtime/v93-home-glb-viewer.js","./authority/v93-home-region-manifest.json","./v94-home-audit-download.css","./runtime/v94-home-audit-download.js","./manifest.webmanifest",
-  "./runtime/page-runtime-router.js","./runtime/ai-page-runtime.js","./runtime/cam-manual-path-v1.js","./runtime/cam-nc-preflight-v52.js","./runtime/cam-nc-preflight-v52.css",
-  "./runtime/layout-mode.js",
-  "./runtime-nav-v27.js","./runtime-nav-v27.css",
-  "./runtime-actions-v28.js","./runtime-actions-v28.css","./runtime-actions-v28-manifest.json",
-  "./runtime-quick-v29.js","./runtime-quick-v29.css",
-  "./axis-hud-v30.js","./axis-hud-v30.css",
-  "./axis-evidence-v31.js","./axis-evidence-v31.css",
-  "./axis-performance-v32.js","./axis-performance-v32.css",
-  "./dual-web-v34.js","./dual-web-v34.css","./dual-web-v34.json",
-  "./axis-machine-v35.js","./axis-machine-v35.css",
-  "./dual-web-v35.js","./dual-web-v35.css","./dual-web-v35.json",
-  "./dual-web-v36.js","./dual-web-v36.css","./dual-web-v36.json","./mobile-layout-v36.js","./mobile-layout-v36.css",
-  "./dual-web-v37.js","./dual-web-v37.css","./dual-web-v37.json","./mobile-layout-v37.js","./mobile-layout-v37.css",
-  "./dual-web-v38.js","./dual-web-v38.css","./dual-web-v38.json","./layout-switch-v38.js","./layout-switch-v38.css",
-  "./dual-web-v39.js","./dual-web-v39.css","./dual-web-v39.json","./axis-playback-v39.css",
-  "./dual-web-v40.js","./dual-web-v40.css","./dual-web-v40.json","./axis-playback-v40.css",
-  "./dual-web-v41.js","./dual-web-v41.css","./dual-web-v41.json","./axis-workspace-v41.js","./axis-workspace-v41.css",
-  "./dual-web-v42.js","./dual-web-v42.css","./dual-web-v42.json","./skin-platform-v42.js","./skin-mobile-v42.css","./skin-desktop-v42.css",
-  "./dual-web-v43.js","./dual-web-v43.css","./dual-web-v43.json","./ai-page-contract-v43.json","./ai-page-v43.js","./ai-page-v43.css","./ai-page-mobile-v43.css","./ai-page-desktop-v43.css","./ai-page-v44.js","./ai-page-v44.css","./axis-cutting-v45.css","./dual-web-v45.json","./dual-web-v46.json","./dual-web-v47.json","./dual-web-v48.json","./dual-web-v49.json","./workspace-fit-v49.css","./workspace-fit-v49.js","./workspace-fit-v50.css","./workspace-fit-v50.js","./dual-web-v50.json","./dual-web-v51.json","./dual-web-v52.json","./dual-web-v53.json","./dual-web-v54.json","./dual-web-v55.json","./dual-web-v56.json","./dual-web-v56.0.1.json","./dual-web-v57.json","./dual-web-v58.json","./dual-web-v59.json","./dual-web-v59.0.1.json","./dual-web-v60.json","./dual-web-v61.json","./dual-web-v62.json","./dual-web-v63.json","./dual-web-v64.json","./dual-web-v65.json","./dual-web-v66.json","./axis-6ax-common-v65.css","./axis-6ax-android-v65.css","./axis-6ax-windows-v65.css","./axis-6ax-v65.js","./axis-5ax-common-v64.css","./axis-5ax-android-v64.css","./axis-5ax-windows-v64.css","./axis-5ax-v64.js","./axis-4ax-common-v63.css","./axis-4ax-android-v63.css","./axis-4ax-windows-v63.css","./axis-4ax-v63.js","./axis-3ax-common-v62.css","./axis-3ax-android-v62.css","./axis-3ax-windows-v62.css","./axis-3ax-v62.js","./sim-common-v61.css","./sim-android-v61.css","./sim-windows-v61.css","./sim-page-v61.js","./cam-common-v60.css","./cam-android-v60.css","./cam-windows-v60.css","./cam-page-v60.js","./cad-common-v58.css","./cad-android-v58.css","./cad-windows-v58.css","./cad-page-v58.js","./home-common-v57.css","./home-android-v57.css","./home-windows-v57.css","./home-stage-v57.js","./simulator-priority-v56.css","./simulator-shell-v55.css","./simulator-shell-v55.js","./workspace-fit-v54.css","./workspace-fit-v54.js","./workspace-fit-v53.css","./workspace-fit-v53.js","./ai-page-contract-v44.json","./dual-web-v44.json",
-  "./runtime-uiux-v25.js","./runtime-uiux-v25.css","./uiux-settings.html","./uiux-control-v26.js","./uiux-control-v26.css","./uiux-module-contract-v25.json",
-  "./studio-375.html","./studio-375-skin.css","./studio-375-overlay.js","./studio-375-diagnostics.js","./dual-project-latest.html","./dual-latest-binding.json","./site-dual-latest.css",
-  "./assets/authority/home_desktop.jpg","./assets/authority/home_mobile.jpg",
-  "./site-nature-v24.css","./site-nature-v24.js","./site-themes/forest-dawn.svg","./site-themes/alpine-morning.svg","./site-themes/coastal-twilight.svg",
-  "./site-frontpage-v3.css","./site-v4.css","./insights.html","./insights-v4.js","./status.html","./status-v4.js",
-  "./ai-updates.html","./ai-updates.js","./ai-update-manifest.json","./site-ai-updates-v1.css",
-  "./authority/cam-unified-rgb-v1.css",
-  "./authority/desktop-mobile-layout-v1.css",
-  "./authority/aigii-rgb-glass-runtime-20261018-v1.css",
-  "./authority/aigii-runtime-visual-v2.css",
-  "./authority/aigii-axis-module-v3.css",
-  "./authority/aigii-axis-fidelity-v4.css",
-  "./authority/aigii-ai-cockpit-v2.css",
-  "./authority/aigii-cam-sim-workbench-v1.css",
-  "./site-dual-v2.css",
-  "./authority/aigii-rgb-glass-style-20261018-v1.json"
+ "./","./index.html","./native-download.html","./mobile-runtime.html",
+ "./studio-375.html","./site.css","./site-v2.css","./site-v21.css",
+ "./site-phase4.css","./site-dual-v2.css","./site-dual-latest.css",
+ "./site-frontpage-v3.css","./site-v4.css","./site-nature-v24.css",
+ "./site-nature-v24.js","./manifest.webmanifest"
 ];
 self.addEventListener("install",event=>{
-  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));
+ event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));
 });
 self.addEventListener("activate",event=>{
-  event.waitUntil(caches.keys().then(keys=>Promise.all(
-    keys.filter(k=>k.startsWith("aig-")&&k!==CACHE).map(k=>caches.delete(k))
-  )).then(()=>self.clients.claim()));
+ event.waitUntil(caches.keys().then(keys=>Promise.all(
+  keys.filter(k=>k.startsWith("aig-")&&k!==CACHE).map(k=>caches.delete(k))
+ )).then(()=>self.clients.claim()));
 });
 self.addEventListener("fetch",event=>{
-  if(event.request.method!=="GET")return;
-  const url=new URL(event.request.url);
-  if(url.origin!==self.location.origin)return;
-  const isNavigation=event.request.mode==="navigate";
-  event.respondWith(
-    fetch(event.request).then(response=>{
-      if(response.ok){
-        const copy=response.clone();
-        // Keep navigation plus static Runtime assets available after network loss.
-        event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{}));
-      }
-      return response;
-    }).catch(async()=>{
-      const cached=await caches.match(event.request,{ignoreSearch:true});
-      if(cached)return cached;
-      if(isNavigation){
-        const path=url.pathname;
-        const last=path.split("/").pop();
-        // Preserve the requested offline page, especially the Studio 375 workspace and UI/UX control center.
-        const target="./"+last;
-        if(SHELL.includes(target)){
-          const requested=await caches.match(target);
-          if(requested)return requested;
-        }
-        const fallback=await caches.match("./index.html");
-        if(fallback)return fallback;
-      }
-      return Response.error();
-    })
-  );
+ if(event.request.method!=="GET")return;
+ const url=new URL(event.request.url);if(url.origin!==self.location.origin)return;
+ const old=/^\/(?:mobile-runtime-v\d+\.html)$/;
+ if(old.test(url.pathname)){
+  event.respondWith(Response.redirect(new URL("./mobile-runtime.html",self.registration.scope),302));return;
+ }
+ event.respondWith(fetch(event.request).then(response=>{
+  if(response.ok&&event.request.mode==="navigate"){
+   const copy=response.clone();
+   event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{}));
+  }
+  return response;
+ }).catch(async()=>{
+  const cached=await caches.match(event.request,{ignoreSearch:true});if(cached)return cached;
+  if(event.request.mode==="navigate"){
+   const page=url.pathname.split("/").pop();
+   const target="./"+page;
+   if(SHELL.includes(target)){const file=await caches.match(target);if(file)return file}
+   return await caches.match("./index.html")||Response.error();
+  }
+  return Response.error();
+ }));
 });
-
