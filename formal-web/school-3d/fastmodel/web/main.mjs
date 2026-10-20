@@ -7,13 +7,14 @@ import {auditAnatomyMetadata} from './anatomy-guard.mjs';
 import {inspectHeadNeckGeometry,inspectHairNeckOcclusion,assessAnimationDeviceEvidence} from './character-integrity.mjs';
 import {createHeadNeckBridgeCandidate} from './seam-bridge.mjs';
 import {inspectAnimatedIntegrity} from './animated-integrity.mjs';
+import {SCAN_MODES,SCAN_DENSITIES,buildScanOverlay,paintScanOverlay} from './scan-overlay.mjs';
 import {faceShapeSignature,CharacterFaceRoster} from './character-face.mjs';
 import {measuredFrameSummary} from './adaptive-detail.mjs';
 import {DiskPressureGuard} from './resource-governor.mjs';
 import {RESOLUTION_PRESETS} from './resolution-policy.mjs';
 import {GRAPHICS_POLICY,assertRasterOnly} from './graphics-policy.mjs';
 assertRasterOnly(GRAPHICS_POLICY);
-const el=id=>document.getElementById(id),overlay=el('overlay'),detail=el('detail');let view=null,buffer=null,paused=false,lastStats=null,scanFile=null,lastScan=null;
+const el=id=>document.getElementById(id),overlay=el('overlay'),detail=el('detail');let view=null,buffer=null,paused=false,lastStats=null,scanFile=null,lastScan=null,scanTopology=null,scanOverlayLast=0;
 // RGB cockpit: tabs switch only REAL existing controls; no decorative/fake buttons.
 const controls=[...document.querySelectorAll('[data-panel-target]')];
 function selectPanel(name){
@@ -34,11 +35,64 @@ function updateWireStatus(value){el('meshline-status').textContent=value;}
 el('helper-grid').addEventListener('change',()=>{el('viewport-frame').classList.toggle('show-helper-grid',el('helper-grid').checked);});
 function applyWireChoice(){
  if(!view){updateWireStatus('GPU 尚未啟動，設定將在載入模型後生效。');return;}
+ if(el('scan-mode')?.value!=='off'){
+   view.setWireMode('off','balanced');
+   updateWireStatus('快速掃描已接管線條：原密集網格線關閉；選擇關閉掃描後恢復你原有的線框設定。');return;
+ }
  try{const r=view.setWireMode(el('mesh-lines').value,el('mesh-density').value);updateWireStatus(r.mode==='off'?'線框關閉 · 預覽效能優先':`實際網格線 ${r.segments.toLocaleString()} 段 · 最多 ${r.drawCalls} 次額外繪圖呼叫`);}catch(e){updateWireStatus('線框未切換：'+e.message);} }
 function setSurfaceChoice(){const mode=el('surface-guide').value;if(!SURFACE_GUIDES.includes(mode))return;const status=el('surface-status');try{const result=view?.setSurfaceGuide(mode);status.textContent=mode==='clean'?'純表面 · 不額外繪製網格線':mode==='edit-tint'?'實際局部修改頂點柔光 · 無額外 Draw Call':'表面材質對比 · 無額外 Draw Call';}catch(e){status.textContent='切換失敗：'+e.message;}}
 el('surface-guide').addEventListener('change',setSurfaceChoice);
 el('mesh-lines').addEventListener('change',applyWireChoice);el('mesh-density').addEventListener('change',applyWireChoice);
 
+// FastModel 2.1 scan display: real joint parent edges = solid; source mesh
+// boundary/projected silhouette = faint dashed (NOT actual depth-tested occlusion).
+const scanCanvas=el('scan-overlay');
+function clearScanOverlay(){
+ const ctx=scanCanvas.getContext('2d');ctx?.clearRect(0,0,scanCanvas.width,scanCanvas.height);
+}
+function applyScanMode(){
+ const mode=el('scan-mode').value,density=el('scan-density').value;
+ const status=el('scan-layer-status');
+ if(!SCAN_MODES.includes(mode)||!SCAN_DENSITIES.includes(density)){
+   status.textContent='掃描層設定無效，保留原模型。';return;
+ }
+ if(mode==='off'){
+   scanTopology=null;scanOverlayLast=0;clearScanOverlay();
+   if(view){view.onScanFrame=null;view.scanOverlayTelemetry=null;applyWireChoice();}
+   status.textContent='掃描覆蓋層關閉；保留原表面與你的線框設定。';return;
+ }
+ const f=view?.file||scanFile;
+ if(!f){status.textContent='請先載入有真實 bones/skin 的 GLB；掃描層不會假造骨架。';return;}
+ try{
+   scanTopology=buildScanOverlay(f,readAccessor,{density});
+   if(!view){
+     status.textContent='已有 GLB，但無 WebGL2 畫面；骨架及虛線不能冒充即時 GPU 預覽。';return;
+   }
+   // Scan lines are distinct from full triangular wire mode; no duplicate mesh grid.
+   view.setWireMode('off','balanced');
+   if(scanTopology.status.startsWith('BLOCKED')){
+     view.onScanFrame=null;clearScanOverlay();
+     status.textContent='掃描層 BLOCKED：'+scanTopology.status+'；需有真實骨架關係和有效網格來源。';return;
+   }
+   scanOverlayLast=0;
+   view.onScanFrame=(world,ts)=>{
+     if(ts-scanOverlayLast<50)return view.scanOverlayTelemetry;
+     scanOverlayLast=ts;
+     const result=paintScanOverlay(scanCanvas,view,scanTopology,world,{mode:el('scan-mode').value,density:el('scan-density').value});
+     if(result.status==='SCAN_DISPLAY_BLOCKED')status.textContent=result.reason;
+     else if(ts%350<60)status.textContent='骨架實線 '+result.bonesDrawn+' 段 · 外型低亮虛線 '+result.dashedSegments+
+       ' 段 · '+(scanTopology.omitted||0)+' 個來源批次超出預算/不相容；無滿版三角線／無深度遮擋保證。';
+     return result;
+   };
+   status.textContent='掃描層啟用：'+mode+'；真實骨段 '+scanTopology.bones.length+
+    ' 條、可選來源輪廓 '+scanTopology.surfaces.length+' 批。隨動畫姿態更新，純顯示層。';
+ }catch(e){
+   scanTopology=null;if(view)view.onScanFrame=null;clearScanOverlay();
+   status.textContent='掃描層 BLOCKED：'+e.message+'；來源 GLB 不變。';
+ }
+}
+el('scan-mode').addEventListener('change',applyScanMode);
+el('scan-density').addEventListener('change',applyScanMode);
 // FastModel 1.4: bounded CPU analysis and real UI-to-renderer raster controls.
 const faceRoster=new CharacterFaceRoster();
 function compareLoadedFace(replace=false){
@@ -165,6 +219,7 @@ el('scan-btn').addEventListener('click',()=>{
  if(!file){el('scan-status').textContent='無可掃描的 GLB。請選擇本機 GLB 檔案。';return;}
  try{
    lastScan=scanGeometry(file,readAccessor,{kind:el('scene-kind').value,maxSamples:12000,sampleReader:sampleVec3Accessor});
+   if(el('scan-mode').value==='off'){el('scan-mode').value='bones-outline';applyScanMode();}
    const e=lastScan.sampledExtent.map(x=>x.toFixed(3)).join(' × ');
    el('scan-status').textContent='真實 GLB 頂點抽樣 PASS：'+lastScan.samples.toLocaleString()+
      '/'+lastScan.vertices.toLocaleString()+' 點，'+lastScan.triangles.toLocaleString()+
@@ -231,7 +286,7 @@ try{view=new FastModelView(el('view'),stats=>{lastStats=stats;let now=performanc
  detail.textContent=`${stats.vertices?.toLocaleString()||0} 頂點 / ${stats.triangles?.toLocaleString()||0} 三角面\n${stats.sourcePrimitives} 原始 primitives → ${stats.drawCalls} draw calls\n尺寸 ${res} / 讀檔建置 ${stats.loadMs}ms\n${stats.skipped} 低層細髮略過（preview mode）`;
  overlay.textContent=`${res}  |  ${stats.fps??'量測中'} FPS\nGPU ${stats.gpu||'unknown'}\n僅技術候選，不可上正式首頁`;
  });view.onGuideFrame=paintCurrentScaffold;view.autoQuality=el('auto').checked;applyDetailChoice();view.setWireMode(el('mesh-lines').value,el('mesh-density').value);setSurfaceChoice();applyLightPreset();showResolutionResult({ok:true,actual:[view.width,view.height]});}catch(err){overlay.textContent='裝置不支援 WebGL2 預覽：'+err.message;quickStatus.textContent='GPU 不可用';el('scan-status').textContent='WebGL2 GPU 不可用；仍可選取 GLB 執行 CPU 幾何掃描。';showResolutionResult();}
-async function importGLB(ab){if(!view){try{const f=decodeGLB(ab);scanFile=f;buffer=ab;lastScan=null;el('scan-status').textContent='GLB 已讀取（CPU 模式）；可執行幾何快速掃描，但此裝置不能 GPU 預覽。';}catch(e){el('scan-status').textContent='GLB 解析失敗：'+e.message;}return;}const beforeRunning=view.running,hadScene=!!view.file;el('demo').disabled=true;el('file').disabled=true;overlay.textContent='正在解析 GLB 和批次網格，請稍候…';try{view.stop();view.frames=[];view.last=0;await view.load(ab,el('quality').value);applyWireChoice();setSurfaceChoice();applyDetailChoice();buffer=ab;scanFile=view.file;lastScan=null;latestSeam=null;latestHair=null;lastAnimatedAudit=null;el('animated-status').textContent='新模型尚未逐幀驗證動畫。';el('seam-status').textContent='新 GLB 尚未量測頭頸接縫。';el('bridge-status').textContent='新 GLB 尚未建立橋接候選。';el('hair-status').textContent='新 GLB 尚未量測髮束遮擋。';el('anatomy-status').textContent='已載入新模型，請重新檢查頭頸標記；不自動宣稱連續。';el('scan-status').textContent='GLB 已載入，按「快速抽樣掃描 GLB」讀取幾何資料。';refreshScaffold();showResolutionResult({ok:true,actual:[view.width,view.height]});view.start();el('pause').disabled=false;paused=false;el('pause').textContent='暫停';}catch(e){overlay.textContent='GLB 載入失敗：'+e.message;if(hadScene&&view.entries.length&&beforeRunning)view.start();console.error(e);}finally{el('demo').disabled=false;el('file').disabled=false;}}
+async function importGLB(ab){if(!view){try{const f=decodeGLB(ab);scanFile=f;buffer=ab;lastScan=null;el('scan-status').textContent='GLB 已讀取（CPU 模式）；可執行幾何快速掃描，但此裝置不能 GPU 預覽。';}catch(e){el('scan-status').textContent='GLB 解析失敗：'+e.message;}return;}const beforeRunning=view.running,hadScene=!!view.file;el('demo').disabled=true;el('file').disabled=true;overlay.textContent='正在解析 GLB 和批次網格，請稍候…';try{view.stop();view.frames=[];view.last=0;await view.load(ab,el('quality').value);applyWireChoice();setSurfaceChoice();applyDetailChoice();buffer=ab;scanFile=view.file;lastScan=null;latestSeam=null;latestHair=null;lastAnimatedAudit=null;applyScanMode();el('animated-status').textContent='新模型尚未逐幀驗證動畫。';el('seam-status').textContent='新 GLB 尚未量測頭頸接縫。';el('bridge-status').textContent='新 GLB 尚未建立橋接候選。';el('hair-status').textContent='新 GLB 尚未量測髮束遮擋。';el('anatomy-status').textContent='已載入新模型，請重新檢查頭頸標記；不自動宣稱連續。';el('scan-status').textContent='GLB 已載入，按「快速抽樣掃描 GLB」讀取幾何資料。';refreshScaffold();showResolutionResult({ok:true,actual:[view.width,view.height]});view.start();el('pause').disabled=false;paused=false;el('pause').textContent='暫停';}catch(e){overlay.textContent='GLB 載入失敗：'+e.message;if(hadScene&&view.entries.length&&beforeRunning)view.start();console.error(e);}finally{el('demo').disabled=false;el('file').disabled=false;}}
 el('file').addEventListener('change',async()=>{const f=el('file').files?.[0];if(f)await importGLB(await f.arrayBuffer());});
 el('demo').addEventListener('click',async()=>{try{let r=await fetch('../assets/phase17-visual-NOT-APPROVED.glb');if(!r.ok)throw Error('工程包內的 GLB 需要以 HTTP 開啟，或使用上方檔案選擇器');await importGLB(await r.arrayBuffer());}catch(e){overlay.textContent=e.message+'；請改選擇本機 GLB。';}});
 el('pause').addEventListener('click',()=>{if(!view?.file)return;paused=!paused;if(paused)view.stop();else view.start();el('pause').textContent=paused?'繼續':'暫停';});
@@ -250,4 +305,4 @@ document.addEventListener('visibilitychange',()=>{
  else if(!paused)view.start();
 });
 c.addEventListener('wheel',e=>{if(!view)return;e.preventDefault();view.zoomFactor=Math.max(.6,Math.min(1.6,view.zoomFactor-e.deltaY*.001));el('zoom').value=String(view.zoomFactor*100);},{passive:false});
-el('export').addEventListener('click',async()=>{if(!lastStats)return;await updateDisk();let out={schema:'AIG_FastModel_1080p60_Preview_1',source:'WEBGL2_BROWSER_ONLY',date:new Date().toISOString(),userAgent:navigator.userAgent,webglGpu:view.gpu,visualAuthority:'NOT_APPROVED',nativeDX12Tested:false,nativeVulkanTested:false,renderPolicy:GRAPHICS_POLICY,...lastStats,localMeshEdit:view.patchStats,surfaceInspection:{mode:view.surfaceGuide,additionalDrawCalls:0,additionalLineBuffers:0},previewDetail:lastStats.previewDetail||null,frameBaseline,latestBrowserFrameSummary:latestFrameSummary(),geometryScan:lastScan,headNeckGeometryInspection:latestSeam,hairNeckOcclusionInspection:latestHair,animatedPoseAudit:lastAnimatedAudit,requiredNativeDeviceGate:assessAnimationDeviceEvidence([]),scanKind:el('scene-kind').value,rasterLightPreset:view.lightPreset,referenceScaffold:{enabled:el('scaffold-enabled').checked,yaw:Number(el('scaffold-yaw').value),pitch:Number(el('scaffold-pitch').value),limit:Number(el('scaffold-limit').value),referenceOnly:true},meshLineDisplay:{mode:view.wireMode,density:view.wireDensity,segments:view.wireStats.segments,autoSuppressed:view.wireState.suppressed},resourcePolicy:{...lastStats.memoryPressure,gpuUsagePercentReliable:false},diskEstimate:diskInfo,warning:'browser storage quota is not entire device disk or storage write throughput'};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='AIG-FastModel-device-benchmark.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);});
+el('export').addEventListener('click',async()=>{if(!lastStats)return;await updateDisk();let out={schema:'AIG_FastModel_1080p60_Preview_1',scanDisplay:{mode:el('scan-mode').value,density:el('scan-density').value,overlay:view.scanOverlayTelemetry||null,realDepthHiddenVerified:false,realSkinJointsOnly:true,sourceGLBUnchanged:true},source:'WEBGL2_BROWSER_ONLY',date:new Date().toISOString(),userAgent:navigator.userAgent,webglGpu:view.gpu,visualAuthority:'NOT_APPROVED',nativeDX12Tested:false,nativeVulkanTested:false,renderPolicy:GRAPHICS_POLICY,...lastStats,localMeshEdit:view.patchStats,surfaceInspection:{mode:view.surfaceGuide,additionalDrawCalls:0,additionalLineBuffers:0},previewDetail:lastStats.previewDetail||null,frameBaseline,latestBrowserFrameSummary:latestFrameSummary(),geometryScan:lastScan,headNeckGeometryInspection:latestSeam,hairNeckOcclusionInspection:latestHair,animatedPoseAudit:lastAnimatedAudit,requiredNativeDeviceGate:assessAnimationDeviceEvidence([]),scanKind:el('scene-kind').value,rasterLightPreset:view.lightPreset,referenceScaffold:{enabled:el('scaffold-enabled').checked,yaw:Number(el('scaffold-yaw').value),pitch:Number(el('scaffold-pitch').value),limit:Number(el('scaffold-limit').value),referenceOnly:true},meshLineDisplay:{mode:view.wireMode,density:view.wireDensity,segments:view.wireStats.segments,autoSuppressed:view.wireState.suppressed},resourcePolicy:{...lastStats.memoryPressure,gpuUsagePercentReliable:false},diskEstimate:diskInfo,warning:'browser storage quota is not entire device disk or storage write throughput'};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='AIG-FastModel-device-benchmark.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);});
