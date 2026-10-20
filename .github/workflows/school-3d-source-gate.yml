@@ -560,7 +560,7 @@ jobs:
           node --check formal-web/school-3d/fastmodel/web/adaptive-detail.mjs
           node --check formal-web/school-3d/fastmodel/web/renderer.mjs
           node --check formal-web/school-3d/fastmodel/web/main.mjs
-          node --test formal-web/school-3d/fastmodel/tests/adaptive-detail.test.mjs formal-web/school-3d/fastmodel/tests/renderer-resource.test.mjs
+          node --test formal-web/school-3d/fastmodel/tests/adaptive-detail.test.mjs formal-web/school-3d/fastmodel/tests/renderer-resource.test.mjs formal-web/school-3d/fastmodel/tests/sparse-scan.test.mjs
           python formal-web/school-3d/fastmodel/tools/build_standalone.py \
             --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
             --out artifacts/fastmodel-technical/CI-FASTMODEL-1-5-REVERSIBLE-LOD-NOT-GPU-VERIFIED.html
@@ -569,8 +569,8 @@ jobs:
           root=Path('formal-web/school-3d/fastmodel')
           s=Path('artifacts/fastmodel-technical/CI-FASTMODEL-1-5-REVERSIBLE-LOD-NOT-GPU-VERIFIED.html').read_text()
           for token in ['id="detail-mode"', 'id="baseline"', 'id="compare"',
-                        'function optionalDetailGroup(', 'function nextDetailState(',
-                        'function measuredFrameSummary(', 'window.AIG_EMBEDDED_GLB',
+                        'function sampleVec3Accessor(', 'function optionalDetailGroup(', 'function nextDetailState(',
+                        'function measuredFrameSummary(', 'sampleReader:sampleVec3Accessor', 'window.AIG_EMBEDDED_GLB',
                         '光線追蹤：關閉', 'value="1920x1080" selected', 'value="off" selected']:
               assert token in s,token
           renderer=(root/'web/renderer.mjs').read_text()
