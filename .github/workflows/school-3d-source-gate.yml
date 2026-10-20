@@ -555,6 +555,30 @@ jobs:
               assert token in s, token
           print('FastModel1.4 source and offline feature inclusion PASS; actual GPU/semantic AI/photogrammetry not proved')
           PY
+      - name: FastModel 1.5 reversible performance and head-neck-safe optional LOD Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/adaptive-detail.mjs
+          node --check formal-web/school-3d/fastmodel/web/renderer.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/adaptive-detail.test.mjs formal-web/school-3d/fastmodel/tests/renderer-resource.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-1-5-REVERSIBLE-LOD-NOT-GPU-VERIFIED.html
+          python - <<'PY'
+          from pathlib import Path
+          root=Path('formal-web/school-3d/fastmodel')
+          s=Path('artifacts/fastmodel-technical/CI-FASTMODEL-1-5-REVERSIBLE-LOD-NOT-GPU-VERIFIED.html').read_text()
+          for token in ['id="detail-mode"', 'id="baseline"', 'id="compare"',
+                        'function optionalDetailGroup(', 'function nextDetailState(',
+                        'function measuredFrameSummary(', 'window.AIG_EMBEDDED_GLB',
+                        '光線追蹤：關閉', 'value="1920x1080" selected', 'value="off" selected']:
+              assert token in s,token
+          renderer=(root/'web/renderer.mjs').read_text()
+          assert 'skin===1){gl.deleteVertexArray' not in renderer
+          assert 'this.lastOptionalRelease=this.releaseOptionalHair();' not in renderer
+          assert "e.optionalDetail===true&&e.detailGroup==='fine-hair'" in renderer
+          print('FastModel1.5 no-fake source + synthetic offline PASS; FPS and hardware approval still BLOCKED')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
