@@ -1,0 +1,34 @@
+name: FastModel website gate
+on:
+  push:
+    branches: [web/aig-dual-formal-runtime-20261016]
+    paths:
+      - formal-web/fastmodel/**
+      - formal-web/school-3d/fastmodel/single-photo/**
+      - .github/workflows/fastmodel-web-gate.yml
+  pull_request:
+    paths:
+      - formal-web/fastmodel/**
+      - formal-web/school-3d/fastmodel/single-photo/**
+      - .github/workflows/fastmodel-web-gate.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-photo-animation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: formal-web/school-3d/fastmodel/single-photo/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: git diff --exit-code -- formal-web/fastmodel
+        working-directory: .
