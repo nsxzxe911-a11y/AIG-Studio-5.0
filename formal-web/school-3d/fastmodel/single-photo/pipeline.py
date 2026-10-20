@@ -5,6 +5,7 @@ from pathlib import Path
 from PIL import Image, ImageOps
 from provider import MeshyClient, RequestRejected
 from glb import audit_glb
+from prepared_input import verify_prepared_foreground
 
 
 def digest(path):
@@ -43,22 +44,36 @@ class PhotoPipeline:
         return self.root/job
     def read(self,job):return json.loads((self.directory(job)/'job.json').read_text(encoding='utf8'))
     def save(self,job,data):atomic_json(self.directory(job)/'job.json',data)
-    def create(self,source,mode='humanoid',action_id=None):
+    def create(self,source,mode='humanoid',action_id=None,prepared_source=None):
         if not self.client.configured:raise ValueError('MESHY_API_KEY_NOT_CONFIGURED')
         if mode not in ('humanoid','object'):raise ValueError('SUBJECT_MODE_INVALID')
         if action_id is not None and (type(action_id) is not int or action_id<0 or mode!='humanoid'):raise ValueError('ACTION_ID_INVALID')
         source=Path(source)
         if not 0<source.stat().st_size<=20*1024*1024:raise ValueError('IMAGE_SIZE_LIMIT_20MB')
         original=digest(source)
+        foreground_evidence=None
+        if prepared_source is not None:
+            # Only user-provided alpha masks tied to the exact original bytes;
+            # the visible color samples must originate in the source JPEG.
+            foreground_evidence=verify_prepared_foreground(source,prepared_source)
         with Image.open(source) as image:
             if image.format not in ('PNG','JPEG','WEBP'):raise ValueError('IMAGE_FORMAT_UNSUPPORTED')
             if image.width*image.height>40_000_000:raise ValueError('IMAGE_PIXEL_BUDGET')
             extension={'PNG':'.png','JPEG':'.jpg','WEBP':'.webp'}[image.format]
             normalized=ImageOps.exif_transpose(image).convert('RGBA');normalized.thumbnail((2048,2048))
         self.root.mkdir(parents=True,exist_ok=True);job=uuid.uuid4().hex;work=self.directory(job);work.mkdir()
-        shutil.copyfile(source,work/('source-original'+extension));normalized.save(work/'source-upload.png')
+        shutil.copyfile(source,work/('source-original'+extension))
+        if foreground_evidence:
+            with Image.open(prepared_source) as image:
+                # Preserve full-resolution RGBA alpha. Conversion / rescaling
+                # of the original still remains separate and untouched.
+                image.save(work/'source-upload.png',format='PNG')
+        else:
+            normalized.save(work/'source-upload.png')
         if digest(source)!=original or digest(work/('source-original'+extension))!=original:raise ValueError('SOURCE_CHANGED')
-        report={'schema':'AIG_SINGLE_PHOTO_3D_2_7','id':job,'status':'RUNNING','provider':'Meshy','mode':mode,'actionId':action_id,'sourceSHA256':original,'uploadSHA256':digest(work/'source-upload.png'),'originalFile':'source-original'+extension,'uploadFile':'source-upload.png','imageSize':list(normalized.size),'stages':{k:{'status':'NEW'} for k in ('model','rig','animation')},'artifacts':{},'inferredUnseenSurfaces':True,'photorealismVerified':False,'releaseAllowed':False}
+        report={'schema':'AIG_SINGLE_PHOTO_3D_2_7','id':job,'status':'RUNNING','provider':'Meshy','mode':mode,'actionId':action_id,'sourceSHA256':original,'uploadSHA256':digest(work/'source-upload.png'),'originalFile':'source-original'+extension,'uploadFile':'source-upload.png','imageSize':list(normalized.size),'stages':{k:{'status':'NEW'} for k in ('model','rig','animation')},'artifacts':{},'inferredUnseenSurfaces':True,'photorealismVerified':False,'releaseAllowed':False,
+            'preparedForegroundEvidence':foreground_evidence,'originalImageStillAvailable':True,
+            'foregroundAndHairEdgesApproved':False,'actualHeroineAnimationReviewed':False}
         self.save(job,report);return report
     def attach(self,job,stage,task_id):
         if stage not in ('model','rig','animation') or not re.fullmatch('[a-zA-Z0-9_-]{1,128}',task_id):raise ValueError('ATTACH_INVALID')
