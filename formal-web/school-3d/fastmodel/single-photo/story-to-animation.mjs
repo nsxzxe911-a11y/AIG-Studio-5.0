@@ -86,6 +86,7 @@ export function resolveStoryClips(story,clips){
  const blocking=[...missing];
  if(story.requiresAdditionalCharacter)blocking.push({reason:'SECOND_ACTOR_MODEL_MISSING'});
  if(story.requiresCameraDirector)blocking.push({reason:'DIRECTED_CAMERA_NOT_IMPLEMENTED'});
+ for(const extra of story.unmapped.filter(x=>x.reason==='NO_SUPPORTED_ACTION_KEYWORD'))blocking.push({reason:'UNSUPPORTED_SCENE_OR_DIALOGUE',text:extra.text});
  const available=timeline.length>0&&missing.length===0&&blocking.length===0;
  return {version:STORY_PIPELINE_VERSION,status:available?'READY_REAL_GLTF_CLIP_SEQUENCE':'BLOCKED_ACTION_ASSETS_MISSING',
   timeline,missing,blocking,unmapped:[...story.unmapped],inputBeats:story.beats.length,
