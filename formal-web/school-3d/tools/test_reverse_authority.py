@@ -13,8 +13,9 @@ class ReverseAuthorityTests(unittest.TestCase):
  def test_manifest_and_approval_guard(self):
   m=json.loads(MANIFEST.read_text('utf8'))
   self.assertEqual(m['source']['sha256'],'83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910')
-  self.assertEqual(len(m['regionRectangles']),9)
+  self.assertEqual(len(m['regionRectangles']),11)
   self.assertFalse(m['releasedToHomepage'])
+  self.assertTrue(all(v['identityMatch']=='UNVERIFIED' for v in m['auxiliaryViews'].values()))
   self.assertEqual(m['reverseGate'],'REFERENCE_EXTRACTED_ONLY_NOT_3D_MODEL')
   self.assertTrue(m['noFake3D'])
   self.assertGreaterEqual(len(m['unobservableFromSingleImage']),8)
