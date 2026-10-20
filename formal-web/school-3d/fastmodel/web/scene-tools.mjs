@@ -14,7 +14,8 @@ export function limitAngle(value,limit=60){
  if(!Number.isFinite(value)||!Number.isFinite(limit)||limit<0||limit>180)throw Error('Invalid angle or range');
  return Math.max(-limit,Math.min(limit,value));
 }
-export function scanGeometry(file,readAccessor,{kind='person',maxSamples=12000}={}){
+export function scanGeometry(file,readAccessor,{kind='person',maxSamples=12000,sampleReader=null}={}){
+ if(sampleReader!==null&&typeof sampleReader!=='function')throw Error('Invalid POSITION sample reader');
  if(!SCAN_KINDS.includes(kind))throw Error('Unknown scan kind');
  if(!Number.isInteger(maxSamples)||maxSamples<1||maxSamples>100000)throw Error('Unsafe scan budget');
  if(!file?.g?.meshes||typeof readAccessor!=='function')throw Error('No loaded GLB geometry');
@@ -27,13 +28,18 @@ export function scanGeometry(file,readAccessor,{kind='person',maxSamples=12000}=
  for(const p of primitives){
    const acc=file.g.accessors[p.attributes.POSITION];
    if(!acc||acc.type!=='VEC3')throw Error('Unsupported position accessor');
-   const pos=readAccessor(file,p.attributes.POSITION);
-   for(let i=0;i<acc.count;i+=stride){
-     let good=true;
-     for(let j=0;j<3;j++)if(!Number.isFinite(pos[3*i+j]))good=false;
-     if(!good){invalid++;continue;}
-     for(let j=0;j<3;j++){lo[j]=Math.min(lo[j],pos[3*i+j]);hi[j]=Math.max(hi[j],pos[3*i+j]);}
-     samples++;
+   const remaining=Math.max(0,maxSamples-samples-invalid);
+   if(remaining&&acc.count>0){
+     const pos=sampleReader?sampleReader(file,p.attributes.POSITION,stride):readAccessor(file,p.attributes.POSITION);
+     let attempt=0;
+     for(let i=0;i<acc.count&&attempt<remaining;i+=stride){
+       const base=sampleReader?attempt*3:i*3;attempt++;
+       let good=true;
+       for(let j=0;j<3;j++)if(!Number.isFinite(pos[base+j]))good=false;
+       if(!good){invalid++;continue;}
+       for(let j=0;j<3;j++){lo[j]=Math.min(lo[j],pos[base+j]);hi[j]=Math.max(hi[j],pos[base+j]);}
+       samples++;
+     }
    }
    const indices=p.indices===undefined?acc.count:(file.g.accessors[p.indices]?.count||0);
    if((p.mode??4)===4)triangles+=Math.floor(indices/3);
