@@ -3,6 +3,7 @@ import {WIRE_MODES,WIRE_DENSITIES} from './mesh-lines.mjs';
 import {SURFACE_GUIDES} from './surface-guides.mjs';
 import {decodeGLB,readAccessor,sampleVec3Accessor} from './fastmodel-data.mjs';
 import {SCAN_KINDS,scanGeometry,limitAngle,paintScaffold} from './scene-tools.mjs';
+import {auditAnatomyMetadata} from './anatomy-guard.mjs';
 import {measuredFrameSummary} from './adaptive-detail.mjs';
 import {DiskPressureGuard} from './resource-governor.mjs';
 import {RESOLUTION_PRESETS} from './resolution-policy.mjs';
@@ -72,6 +73,16 @@ el('scene-kind').addEventListener('change',()=>{
  const recommended={person:'soft',animal:'daylight',plant:'daylight',tree:'daylight',water:'water',sky:'sky',environment:'dusk'};
  el('light-preset').value=recommended[k];applyLightPreset();
  el('scan-status').textContent='已選擇 '+el('scene-kind').selectedOptions[0].textContent+'。請按快速掃描以更新幾何數據（此分類是手動標籤）。';
+});
+el('anatomy-check').addEventListener('click',()=>{
+ const f=view?.file||scanFile;
+ if(!f){el('anatomy-status').textContent='請先載入 GLB，才可稽核頭頸標記。';return;}
+ try{
+   const r=auditAnatomyMetadata(f);
+   el('anatomy-status').textContent=r.status==='HEAD_NECK_METADATA_FOUND_CONTINUITY_NOT_PROVEN'
+    ?'已找到明確頭／頸標記；保護 '+r.protectedMaterials.size+' 種關聯材質，不參與可選細節隱藏。實際幾何縫合仍未驗證。'
+    :'沒有完整頭／頸語意標記；保留全部未分類主體批次，不假稱頭頸連續。請以模型旋轉、正側面和動畫實圖進一步驗收。';
+ }catch(e){el('anatomy-status').textContent='頭頸稽核失敗：'+e.message+'；模型不變。';}
 });
 el('scan-btn').addEventListener('click',()=>{
  const file=scanFile||view?.file;
@@ -144,7 +155,7 @@ try{view=new FastModelView(el('view'),stats=>{lastStats=stats;let now=performanc
  detail.textContent=`${stats.vertices?.toLocaleString()||0} 頂點 / ${stats.triangles?.toLocaleString()||0} 三角面\n${stats.sourcePrimitives} 原始 primitives → ${stats.drawCalls} draw calls\n尺寸 ${res} / 讀檔建置 ${stats.loadMs}ms\n${stats.skipped} 低層細髮略過（preview mode）`;
  overlay.textContent=`${res}  |  ${stats.fps??'量測中'} FPS\nGPU ${stats.gpu||'unknown'}\n僅技術候選，不可上正式首頁`;
  });view.onGuideFrame=paintCurrentScaffold;view.autoQuality=el('auto').checked;applyDetailChoice();view.setWireMode(el('mesh-lines').value,el('mesh-density').value);setSurfaceChoice();applyLightPreset();showResolutionResult({ok:true,actual:[view.width,view.height]});}catch(err){overlay.textContent='裝置不支援 WebGL2 預覽：'+err.message;quickStatus.textContent='GPU 不可用';el('scan-status').textContent='WebGL2 GPU 不可用；仍可選取 GLB 執行 CPU 幾何掃描。';showResolutionResult();}
-async function importGLB(ab){if(!view){try{const f=decodeGLB(ab);scanFile=f;buffer=ab;lastScan=null;el('scan-status').textContent='GLB 已讀取（CPU 模式）；可執行幾何快速掃描，但此裝置不能 GPU 預覽。';}catch(e){el('scan-status').textContent='GLB 解析失敗：'+e.message;}return;}const beforeRunning=view.running,hadScene=!!view.file;el('demo').disabled=true;el('file').disabled=true;overlay.textContent='正在解析 GLB 和批次網格，請稍候…';try{view.stop();view.frames=[];view.last=0;await view.load(ab,el('quality').value);applyWireChoice();setSurfaceChoice();applyDetailChoice();buffer=ab;scanFile=view.file;lastScan=null;el('scan-status').textContent='GLB 已載入，按「快速抽樣掃描 GLB」讀取幾何資料。';refreshScaffold();showResolutionResult({ok:true,actual:[view.width,view.height]});view.start();el('pause').disabled=false;paused=false;el('pause').textContent='暫停';}catch(e){overlay.textContent='GLB 載入失敗：'+e.message;if(hadScene&&view.entries.length&&beforeRunning)view.start();console.error(e);}finally{el('demo').disabled=false;el('file').disabled=false;}}
+async function importGLB(ab){if(!view){try{const f=decodeGLB(ab);scanFile=f;buffer=ab;lastScan=null;el('scan-status').textContent='GLB 已讀取（CPU 模式）；可執行幾何快速掃描，但此裝置不能 GPU 預覽。';}catch(e){el('scan-status').textContent='GLB 解析失敗：'+e.message;}return;}const beforeRunning=view.running,hadScene=!!view.file;el('demo').disabled=true;el('file').disabled=true;overlay.textContent='正在解析 GLB 和批次網格，請稍候…';try{view.stop();view.frames=[];view.last=0;await view.load(ab,el('quality').value);applyWireChoice();setSurfaceChoice();applyDetailChoice();buffer=ab;scanFile=view.file;lastScan=null;el('anatomy-status').textContent='已載入新模型，請重新檢查頭頸標記；不自動宣稱連續。';el('scan-status').textContent='GLB 已載入，按「快速抽樣掃描 GLB」讀取幾何資料。';refreshScaffold();showResolutionResult({ok:true,actual:[view.width,view.height]});view.start();el('pause').disabled=false;paused=false;el('pause').textContent='暫停';}catch(e){overlay.textContent='GLB 載入失敗：'+e.message;if(hadScene&&view.entries.length&&beforeRunning)view.start();console.error(e);}finally{el('demo').disabled=false;el('file').disabled=false;}}
 el('file').addEventListener('change',async()=>{const f=el('file').files?.[0];if(f)await importGLB(await f.arrayBuffer());});
 el('demo').addEventListener('click',async()=>{try{let r=await fetch('../assets/phase17-visual-NOT-APPROVED.glb');if(!r.ok)throw Error('工程包內的 GLB 需要以 HTTP 開啟，或使用上方檔案選擇器');await importGLB(await r.arrayBuffer());}catch(e){overlay.textContent=e.message+'；請改選擇本機 GLB。';}});
 el('pause').addEventListener('click',()=>{if(!view?.file)return;paused=!paused;if(paused)view.stop();else view.start();el('pause').textContent=paused?'繼續':'暫停';});
