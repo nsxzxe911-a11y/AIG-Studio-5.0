@@ -255,6 +255,33 @@ jobs:
           path: artifacts/school-3d-phase15-synthetic/
           retention-days: 14
           if-no-files-found: error
+      - name: Phase16 original fine alpha hair rebuild — SYNTHETIC INPUT ONLY
+        run: |
+          mkdir -p artifacts/school-3d-phase16-fine
+          python formal-web/school-3d/phase16/tools/build_fine_hair.py \
+            --base artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-TRUE-3D-HAIR-NOT-APPROVED.glb \
+            --source artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png \
+            --hair-spec artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json \
+            --envelope-spec artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json \
+            --phase13-builder formal-web/school-3d/phase13/tools/build_envelope.py \
+            --out artifacts/school-3d-phase16-fine/CI-SYNTHETIC-528-FINE-HAIR-NOT-APPROVED.glb \
+            --report artifacts/school-3d-phase16-fine/CI-STRUCTURAL-EVIDENCE.json
+      - name: Phase16 fine strands, PNG transparency and skin integrity — 12 hard gates
+        env:
+          AIG_P16_BASE: artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-TRUE-3D-HAIR-NOT-APPROVED.glb
+          AIG_P16_OUT: artifacts/school-3d-phase16-fine/CI-SYNTHETIC-528-FINE-HAIR-NOT-APPROVED.glb
+          AIG_P16_IMAGE: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-NOT-AUTHORITY.png
+          AIG_P16_HAIR: artifacts/school-3d-phase15-synthetic/CI-SYNTHETIC-HAIR-SPEC.json
+          AIG_P16_ENV: artifacts/school-3d-phase13-synthetic/CI-SYNTHETIC-SPEC.json
+          AIG_P16_BUILDER: formal-web/school-3d/phase13/tools/build_envelope.py
+        run: python -m unittest discover -s formal-web/school-3d/phase16/tools -p 'test_phase16_fine_hair.py' -v
+      - name: Archive Phase16 synthetic technical GLB, NOT cinematic approval
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School3D-Phase16-SYNTHETIC-FineHair528-NOT-APPROVED
+          path: artifacts/school-3d-phase16-fine/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
