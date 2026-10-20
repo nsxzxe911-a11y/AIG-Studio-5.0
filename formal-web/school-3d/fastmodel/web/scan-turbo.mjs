@@ -29,7 +29,7 @@ export function createTurboScanController({speed='turbo',small=false}={}){
    const slow=mainSubmitMs>policy.slowSubmitMs||overlayMs>policy.slowOverlayMs;
    if(slow){hot++;cool=0;}else{hot=Math.max(0,hot-1);cool++;}
    if(hot>=2){throttled=true;cool=0;}
-   if(throttled&&cool>=policy.recoverFrames){throttled=false;hot=0;cool=0;frames=0;}
+   if(throttled&&cool>=policy.recoverFrames){throttled=false;hot=0;cool=0;frames=policy.bonesFrames+1;}
    const hasOutline=topologyReady&&frames>policy.bonesFrames&&!throttled;
    const allowDepth=hasOutline&&frames>policy.outlineFrames&&policy.depthAllowed&&
      requestedDepth==='sampled'&&requestedMode!=='bones';
