@@ -1044,7 +1044,7 @@ jobs:
             if(!html.includes('id="'+id+'"'))throw Error('AIG48_RGB_BUTTON_ID_MISSING '+id);
           for(const term of ['AIG_FASTMODEL_4_8_SKINNED_POSE_TECHNICAL_DRAFT',
             'AIG48_TURN_HEAD','AIG48_NOD_HEAD','AIG48_SWING_PONYTAIL',
-            'AIG-4.8-skinned-motion-TECHNICAL-NOT-HEROINE.glb','auditAIG48Poses'])
+            'AIG-4.8-skinned-motion-TECHNICAL-NOT-HEROINE.glb','AIG48_POSE_DEFORMATION_GATE_BLOCKED'])
             if(!js.includes(term))throw Error('AIG48_ANIMATION_SOURCE_NOT_BUNDLED '+term);
           if(!js.includes('native60FpsVerified:false')&&!js.includes('native60FpsVerified:!1'))
             console.log('AIG48 FPS status should remain explicitly BLOCKED; see source QA.');
