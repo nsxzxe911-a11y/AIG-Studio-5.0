@@ -9,9 +9,9 @@ export function faceShapeSignature(file,sampleVec3Accessor,{maxSamples=1500,char
  const allFaces=file.g.nodes.filter(n=>n.mesh!==undefined&&n.extras?.aigAnatomyPart==='face');
  const owners=new Set(allFaces.map(n=>n.extras?.aigCharacterId).filter(x=>x!==undefined));
  if(owners.size>1&&!characterId)throw Error('CHARFACE_MULTIPLE_CHARACTERS_REQUIRE_ID');
- if(owners.size>0&&owners.has(undefined))throw Error('CHARFACE_OWNER_UNCLEAR');
+ if(owners.size>0&&allFaces.some(n=>n.extras?.aigCharacterId===undefined))throw Error('CHARFACE_OWNER_UNCLEAR');
  if(owners.size===1&&characterId!==null&&!owners.has(characterId))throw Error('CHARFACE_CHARACTER_TAG_MISMATCH');
- const nodes=characterId===null?allFaces:allFaces.filter(n=>n.extras?.aigCharacterId===undefined||n.extras?.aigCharacterId===characterId);
+ const nodes=characterId===null?allFaces:allFaces.filter(n=>owners.size===0||n.extras?.aigCharacterId===characterId);
  if(characterId!==null&&owners.size>0&&!nodes.some(n=>n.extras?.aigCharacterId===characterId))throw Error('CHARFACE_CHARACTER_NOT_FOUND');
  if(!nodes.length)throw Error('CHARFACE_NO_EXPLICIT_FACE_TAG');
  if(nodes.some(n=>n.extras?.aigCharacterId!==undefined&&typeof n.extras.aigCharacterId!=='string'))throw Error('CHARFACE_OWNER_UNCLEAR');
