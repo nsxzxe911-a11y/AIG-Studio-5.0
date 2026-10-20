@@ -97,6 +97,11 @@ uniform vec4 uSizeB; // neck, hair, arm, leg
 uniform float uRigEnabled;
 uniform vec3 uArmJoints[4]; // left elbow/wrist; right elbow/wrist
 uniform vec3 uLegJoints[4]; // left knee/ankle; right knee/ankle
+uniform float uHairBackOffset;
+uniform float uMaterialEnabled;
+uniform vec3 uSkinColor;
+uniform vec3 uDressColor;
+uniform vec3 uHairColor;
 float ellipsoid(vec3 p,vec3 r) {
   float k0=length(p/r);
   float k1=length(p/(r*r));
@@ -137,7 +142,7 @@ vec2 map(vec3 p){
     }
   }
   float skirt=ellipsoid(p-vec3(0.,-.17,-.005),vec3(uSizeA.w,.17,.13));
-  float hair=ellipsoid(p-vec3(0.,.25,-.075),vec3(uSizeB.y,.235,.072));
+  float hair=ellipsoid(p-vec3(0.,.25,-.075-uHairBackOffset),vec3(uSizeB.y,.235,.072));
   float d=min(min(body,skirt),hair);
   float m=d==hair?2.:d==skirt?1.:0.;
   return vec2(d,m);
@@ -180,7 +185,9 @@ void main(){
   vec3 n=normalAt(pos);
   vec3 light=normalize(vec3(-.4,.8,1.));
   float brightness=.20+.8*max(0.,dot(n,light));
-  vec3 skin=vec3(.80,.63,.61),dress=vec3(.55,.68,.79),hair=vec3(.29,.18,.13);
+  vec3 skin=uMaterialEnabled>.5?uSkinColor:vec3(.80,.63,.61);
+  vec3 dress=uMaterialEnabled>.5?uDressColor:vec3(.55,.68,.79);
+  vec3 hair=uMaterialEnabled>.5?uHairColor:vec3(.29,.18,.13);
   vec3 surface=hit.y>1.5?hair:(hit.y>.5?dress:skin);
   fragColor=vec4(pow(surface*brightness,vec3(.88)),1.);
 }`;
@@ -208,9 +215,11 @@ export class AigImplicitRenderer {
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
   this.loc=gl.getAttribLocation(this.program,'aPosition');
   this.uniforms=Object.fromEntries(['uResolution','uYaw','uStepLimit','uSizeA','uSizeB',
-    'uRigEnabled','uArmJoints[0]','uLegJoints[0]']
+    'uRigEnabled','uArmJoints[0]','uLegJoints[0]',
+    'uHairBackOffset','uMaterialEnabled','uSkinColor','uDressColor','uHairColor']
     .map(k=>[k,gl.getUniformLocation(this.program,k)]));
   this.rigPose=null;
+  this.appearance=null;
   this.pixelScale=Math.max(.35,Math.min(1,pixelScale));
   this.maxSteps=Math.max(24,Math.min(96,maxSteps|0));
   this.gpuTimer=new Aig42GpuTimer(gl);
@@ -232,6 +241,20 @@ export class AigImplicitRenderer {
   // Keep independent buffers, so edits cannot mutate submitted GPU state.
   this.rigPose={arms:new Float32Array(pose.arms),legs:new Float32Array(pose.legs)};
  }
+ setAppearance(value){
+  if(this.disposed)throw Error('AIG41_RENDERER_DISPOSED');
+  if(value===null){this.appearance=null;return;}
+  const keys=['skinColor','dressColor','hairColor'];
+  if(typeof value?.hairBackOffset!=='number'||!Number.isFinite(value.hairBackOffset)||
+     value.hairBackOffset<0||value.hairBackOffset>.08||
+     !keys.every(k=>Array.isArray(value[k])&&value[k].length===3&&
+       value[k].every(c=>Number.isFinite(c)&&c>=0&&c<=1)))
+    throw Error('AIG44_APPEARANCE_INVALID');
+  this.appearance={hairBackOffset:value.hairBackOffset,
+   skinColor:new Float32Array(value.skinColor),
+   dressColor:new Float32Array(value.dressColor),
+   hairColor:new Float32Array(value.hairColor)};
+ }
  draw(yaw=0){
   if(this.disposed)throw Error('AIG41_RENDERER_DISPOSED');
   const gl=this.gl;
@@ -249,6 +272,13 @@ export class AigImplicitRenderer {
   gl.uniform4f(this.uniforms.uSizeA,p.headRadius,p.shoulderRadius,p.hipRadius,p.skirtRadius);
   gl.uniform4f(this.uniforms.uSizeB,p.neckRadius,p.hairRadius,p.armRadius,p.legRadius);
   gl.uniform1f(this.uniforms.uRigEnabled,this.rigPose?1:0);
+  gl.uniform1f(this.uniforms.uHairBackOffset,this.appearance?.hairBackOffset??0);
+  gl.uniform1f(this.uniforms.uMaterialEnabled,this.appearance?1:0);
+  if(this.appearance){
+   gl.uniform3fv(this.uniforms.uSkinColor,this.appearance.skinColor);
+   gl.uniform3fv(this.uniforms.uDressColor,this.appearance.dressColor);
+   gl.uniform3fv(this.uniforms.uHairColor,this.appearance.hairColor);
+  }
   if(this.rigPose){
    gl.uniform3fv(this.uniforms['uArmJoints[0]'],this.rigPose.arms);
    gl.uniform3fv(this.uniforms['uLegJoints[0]'],this.rigPose.legs);
