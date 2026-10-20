@@ -991,6 +991,29 @@ jobs:
           if(!viewer.includes('this.onFrame?.(dt,t)'))throw Error('MUSIC_FRAME_TICK_NOT_WIRED');
           console.log('3.3 source-only: honest authored witty dialogue, true WebAudio tones, opt-in browser zh-TW TTS, no fake AI model or copyrighted soundtrack.');
           JS
+      - name: FastModel 3.4 real 1080p MediaRecorder AV mux and codec-honest source Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/single-photo/movie-recorder.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/movie-ui.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/story-audio.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/viewer.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/app.mjs
+          node --test formal-web/school-3d/fastmodel/single-photo/tests/movie-recorder.test.mjs
+          node - <<'JS'
+          const fs=require('fs');
+          const root='formal-web/school-3d/fastmodel/single-photo/';
+          const html=fs.readFileSync(root+'dist/index.html','utf8');
+          const bundle=fs.readFileSync(root+'dist/app.js','utf8');
+          for(const field of ['id="movie-record"','id="movie-stop"','id="movie-preview"',
+            'id="movie-downloads"','id="movie-voice-file"','id="movie-status"'])
+            if(!html.includes(field))throw Error('MOVIE_UI_NOT_IN_BUILT_HTML '+field);
+          for(const token of ['AIG_FASTMODEL_3_4_ACTUAL_CANVAS_MEDIARECORDER',
+            'MOVIE_CODEC_UNAVAILABLE','MOVIE_REAL_ACTION_TIMELINE_REQUIRED',
+            'MOVIE_EMPTY_CAPTURE','systemSpeechSynthCaptured',
+            'createMediaStreamDestination','captureStream','drawImage'])
+            if(!bundle.includes(token))throw Error('MOVIE_ENGINE_NOT_IN_BUILT_JS '+token);
+          console.log('FastModel 3.4 SOURCE QA: real MediaRecorder canvas+procedural WebAudio mux, uploaded voice, 1080p target, honest codec and no approval claim. No actual GLB/hardware video evidence in CI.');
+          JS
       - name: Archive FastModel 2.7 source and synthetic offline animation evidence
         uses: actions/upload-artifact@v4
         with:
