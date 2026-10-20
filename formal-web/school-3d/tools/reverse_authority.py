@@ -16,7 +16,9 @@ REGIONS={
     'shirt': (493,356,755,705),
     'plaid_skirt': (385,650,892,940),
     'setting_sakura': (0,0,353,357),
-    'setting_campus': (275,142,462,419)
+    'setting_campus': (275,142,462,419),
+    'secondary_profile_candidate': (1181,4,1576,255),
+    'rear_hair_outfit_candidate': (1230,711,1438,939)
 }
 # Estimates for tracking contours and matching the *visible front-quarter view* only.
 # Coordinates are image pixels in the original 1672x941 collage.
@@ -64,6 +66,10 @@ def create(original,out):
        'regionRectangles':{name:{'xyxy':list(bb),'normalized_xywh':[round(bb[0]/im.width,6),round(bb[1]/im.height,6),round((bb[2]-bb[0])/im.width,6),round((bb[3]-bb[1])/im.height,6)],'pixelCrop':name+'.png'} for name,bb in REGIONS.items()},
        'estimatedVisibleKeypoints':{k: {'xy':list(v),'confidence':'manual approximate — requires landmark QA'} for k,v in KEYPOINTS.items()},
        'colorSamples':palette,
+       'auxiliaryViews':{
+          'secondary_profile_candidate':{'angle':'additional oblique face from same generated collage','identityMatch':'UNVERIFIED','geometryUse':'visual reference only; check consistency before 3D fitting'},
+          'rear_hair_outfit_candidate':{'angle':'back view in same generated collage','identityMatch':'UNVERIFIED','geometryUse':'candidate hair length, backpack and skirt silhouette; do not infer hidden topology'}
+       },
        'unobservableFromSingleImage':UNKNOWN,
        'nextRequiredEvidence':['character neutral front 3D render','side 3D render','back 3D render','same face in rotation','walk foot-ground & face-expression renders','skin hair cloth PBR shaders','mobile desktop acceptance'],
        'noFake3D':True,'allowCurrentProceduralPhase6ToBecomeAuthority':False,'releasedToHomepage':False,
@@ -88,10 +94,15 @@ def make_sheet(im,palette,sha,out):
     fit(im,c,(53,145,1041,757))
     d.text((50,787),'ORIGINAL CINEMATIC REFERENCE  /  1672 × 941',font=font(19),fill='#d3edf6')
     face=im.crop(REGIONS['face_identity']);hair=im.crop(REGIONS['hair_silhouette']);bow=im.crop(REGIONS['ribbon'])
+    alt=im.crop(REGIONS['secondary_profile_candidate']);back=im.crop(REGIONS['rear_hair_outfit_candidate'])
     for nm,cr,bb in [('FACE / LOOK',face,(1091,132,1481,532)),('HAIR SILHOUETTE',hair,(1500,132,1860,532)),('BOW / UNIFORM',bow,(1091,574,1470,906))]:
         d.rounded_rectangle(bb,radius=13,outline='#335d70',width=2)
         d.text((bb[0]+12,bb[1]+10),nm,font=font(17),fill='#cde7fb')
         fit(cr,c,(bb[0]+14,bb[1]+47,bb[2]-14,bb[3]-10))
+    for nm,cr,bb in [('ALT PROFILE / UNVERIFIED',alt,(1500,574,1682,906)),('BACK VIEW / UNVERIFIED',back,(1692,574,1867,906))]:
+        d.rounded_rectangle(bb,radius=13,outline='#335d70',width=2)
+        d.text((bb[0]+6,bb[1]+8),nm,font=font(10),fill='#ffd1a2')
+        fit(cr,c,(bb[0]+7,bb[1]+36,bb[2]-7,bb[3]-10))
     d.text((38,842),'REFERENCE PALETTE (samples from original pixels, not invented shader values)',font=font(20),fill='#dceef5')
     for i,(name,px) in enumerate(palette.items()):
         col=i%4;row=i//4;x=44+col*257;y=892+row*122;rgb=tuple(px['rgb'])
