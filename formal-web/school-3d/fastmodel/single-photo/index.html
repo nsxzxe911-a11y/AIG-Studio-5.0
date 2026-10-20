@@ -32,6 +32,20 @@
 <input id="aig43-angle" type="range" min="-55" max="55" step="1" value="0" disabled>
 <button type="button" id="aig43-reset" disabled>還原目前部位角度</button>
 <text id="aig43-cache" class="status">等待來源 SHA 驗證與 4.0 架構。Mesh 部位快取不是正式皮膚／骨架輸出。</text>
+<h3>AIG FastModel 4.4｜頭頸＋髮束安全／局部材質／實際效能證據</h3>
+<p>用真 SDF 距離取樣檢查頭頸連續與髮量體積是否穿過頸部，必要時調整髮量的後移距離。這只能檢查技術體積，不能當作真髮絲與皮膚網格穿模已修復。材質為預覽顏色，尚未貼上人物照片的真 UV。</p>
+<label for="aig44-hair">髮量後移：<span id="aig44-hair-value">0.050</span>（正規化幾何單位）</label>
+<input id="aig44-hair" type="range" min="0" max="80" step="5" value="50" disabled>
+<label for="aig44-palette">局部預覽材質</label>
+<select id="aig44-palette" disabled>
+ <option value="natural">自然 · 皮膚／洋裝／棕髮</option>
+ <option value="warm">暖色 · 粉紅洋裝</option>
+ <option value="night">夜色 · 藍色洋裝</option>
+</select>
+<button type="button" id="aig44-check" disabled>重新檢查頭頸與髮量距離</button>
+<button type="button" id="aig44-evidence" disabled>下載本機品質／GPU 計時證據 JSON</button>
+<p id="aig44-status" class="status" role="status">等待來源圖片與 4.0 草模。GPU FPS、真髮絲與頭頸網格仍未驗收。</p>
+
 
 
 <p>4.0 Gate：真 3D 幾何體塊、8 個角度、比例報告與不確定性標記；尚未建立獨立手腳／五官／髮束拓樸、Rig、精準材質或正式動畫，不能當完成模型放行。</p>
