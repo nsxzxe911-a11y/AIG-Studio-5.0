@@ -69,6 +69,10 @@ test('real viewer timeline pipeline uses chosen clip, true mixer pose, restores 
  assert.ok(app.includes('timelineEvidenceManifest({sourceSha256:sourceSha'));
  assert.ok(app.includes('JSON.stringify(manifest,null,2)'));
  assert.ok(app.includes('clearTimelineEvidence();'));
+ assert.ok(app.includes("if(view?.reviewBusy)"));
+ assert.ok(app.includes("clearReviewEvidence();clearTimelineEvidence();"));
+ assert.ok(app.includes("舊的四方向與 16 格圖片失效"));
+
  assert.ok(app.includes("!sourceSha||!clips.length"));
  assert.ok(viewer.includes('if(!clip)throw Error('+"'TIMELINE_REAL_ACTION_MISSING'"+')'));
  assert.ok(viewer.includes('const currentModel=this.model'));
