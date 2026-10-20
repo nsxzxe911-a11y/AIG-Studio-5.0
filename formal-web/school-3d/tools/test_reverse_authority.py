@@ -7,7 +7,7 @@ from reverse_authority import create,REGIONS
 
 HERE=Path(__file__).resolve().parents[1]
 SOURCE=Path(os.environ.get('AIG_SCHOOL_APPROVED_STILL',HERE/'approved-still.png'))
-MANIFEST=HERE/'authority'/'reverse-authority.json'
+MANIFEST=(HERE/'reverse-authority.v1.json' if (HERE/'reverse-authority.v1.json').exists() else HERE/'authority'/'reverse-authority.json')
 
 class ReverseAuthorityTests(unittest.TestCase):
  def test_manifest_and_approval_guard(self):
