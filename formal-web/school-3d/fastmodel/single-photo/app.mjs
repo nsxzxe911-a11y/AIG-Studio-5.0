@@ -1,7 +1,20 @@
 import {PhotoViewer} from './viewer.mjs';
 import {SubmissionJournal} from './submission.mjs';
+import {reviewEvidenceManifest} from './heroine-review.mjs';
 const $=id=>document.getElementById(id),status=$('status');
-let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null;
+let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
+const reviewObjectUrls=[];
+function clearReviewEvidence(){
+ for(const url of reviewObjectUrls)URL.revokeObjectURL(url);
+ reviewObjectUrls.length=0;
+ $('review-downloads').replaceChildren();
+ $('review-image').hidden=true;$('review-image').removeAttribute('src');
+ $('review-status').textContent='目前尚無已擷取的真正 GLB 四方向圖片；不能判定頭頸或髮束是否通過。';
+}
+async function sha256Bytes(bytes){
+ const hash=new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));
+ return Array.from(hash,x=>x.toString(16).padStart(2,'0')).join('');
+}
 const journal=window.AIG_OFFLINE?null:new SubmissionJournal(localStorage);
 try{view=new PhotoViewer($('view'),m=>{$('viewport-status').textContent='顯示已隔離：'+m+'；生成檔案保留。';});}catch(e){$('viewport-status').textContent='此裝置暫時不能啟用 GPU 預覽；仍可生成與下載 GLB。';}
 const labels={NEW:'等待',SUBMITTING:'送出中',PENDING:'排程中',IN_PROGRESS:'生成中',SUCCEEDED:'完成',SKIPPED:'不適用',BASIC_WALK_PENDING:'下載動作',SUBMISSION_UNKNOWN:'受理待確認',FAILED:'未完成',CANCELED:'已取消'};
@@ -12,6 +25,10 @@ function addLink(label,url,name){const a=document.createElement('a');a.className
 async function load(bytes,orbit){
  if(!view)return;
  const clips=await view.load(bytes,{orbit});$('clip').replaceChildren();
+ clearReviewEvidence();
+ sourceSha=null;
+ try{sourceSha=await sha256Bytes(bytes);}catch(e){$('review-status').textContent='GLB 已載入，但 SHA-256 無法取得：'+e.message+'。證據匯出 BLOCKED。';}
+ $('review-capture').disabled=!sourceSha;
  $('skin-check').disabled=false;
  $('skin-check-status').textContent='GLB 已載入。可按「檢查」掃描當前皮膚重疊，並在動畫播放時收集 12 個真實姿態。';
  $('skin-check-downloads').replaceChildren();
@@ -91,6 +108,40 @@ function renderSkinReport(r){
   $('skin-check-downloads').append(a);
  }
 }
+$('review-capture').addEventListener('click',async()=>{
+ if(!view?.model||!sourceSha)return;
+ const button=$('review-capture');
+ button.disabled=true;
+ $('review-status').textContent='正在截取載入 GLB 的真實動畫姿態及四方向畫面。正式驗收狀態仍為 BLOCKED。';
+ try{
+  const fraction=Number($('review-pose').value);
+  const result=await view.captureHeroineReview({fraction});
+  const manifest=reviewEvidenceManifest({sourceSha256:sourceSha,clipName:result.clipName,
+    timeSeconds:result.timeSeconds,views:result.views,audit:result.audit});
+  clearReviewEvidence();
+  const png=URL.createObjectURL(result.image);
+  const json=URL.createObjectURL(new Blob([JSON.stringify(manifest,null,2)],{type:'application/json'}));
+  reviewObjectUrls.push(png,json);
+  $('review-image').src=png;$('review-image').hidden=false;
+  const items=[
+   {label:'下載四方向真 GLB 檢查圖（PNG）',url:png,name:'AIG-Real-GLB-4-Axis-Not-Approved.png'},
+   {label:'下載 SHA／動畫時間／皮膚 QA 證據（JSON）',url:json,name:'AIG-Real-GLB-Inspection-Blocked.json'}
+  ];
+  for(const item of items){
+   const link=document.createElement('a');link.className='download';link.href=item.url;
+   link.download=item.name;link.textContent=item.label;$('review-downloads').append(link);
+  }
+  $('review-status').textContent='已從當前 GLB 擷取四方向圖片：'+
+   (result.clipName||'靜止模型')+' · '+result.timeSeconds.toFixed(3)+'s · SHA-256 '+sourceSha.slice(0,16)+
+   '…。皮膚疑似重合面 '+(result.audit?.coincidentTrianglePairs??'?')+
+   ' 組；仍需人工核對哪一面是臉、頭頸有無缺口及髮束是否穿模。'+
+   ' 正式模型核准與 Windows／Android 60 FPS 均未通過；圖片不能自行證明合格。';
+ }catch(e){
+  $('review-status').textContent='四方向擷取未完成：'+e.message+'；原始 GLB 不變，不能使用舊圖驗收。';
+  clearReviewEvidence();
+  $('review-status').textContent='四方向擷取 BLOCKED：'+e.message+'。請保持原始 GLB 後再試。';
+ }finally{button.disabled=!sourceSha;}
+});
 $('skin-check').addEventListener('click',()=>{
  if(!view?.model)return;
  $('skin-check').disabled=true;
