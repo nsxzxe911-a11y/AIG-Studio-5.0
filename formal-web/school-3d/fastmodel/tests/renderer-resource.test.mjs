@@ -13,3 +13,10 @@ test('high pressure optional GPU release deletes only hair buffers not edited ge
   assert.deepEqual(deleted,[['vao',4],['buf',5],['buf',6]]);
   assert.equal(FastModelView.prototype.releaseOptionalHair.call(pretend).requestedGpuReleaseBytes,0);
 });
+
+test('malformed incoming GLB cannot destroy existing render scene',async()=>{
+  let released=false;
+  const fake={governor:{b:{gpuWorkingSetEstimateBytes:128*1024*1024}},disposeMeshes(){released=true;}};
+  await assert.rejects(FastModelView.prototype.load.call(fake,new Uint8Array(120).buffer));
+  assert.equal(released,false);
+});

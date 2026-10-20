@@ -6,7 +6,7 @@
   "glbVisualApproval": false,
   "nativeCoreCxx20LinuxCompiled": true,
   "nativeCTestExecutablesPassed": 2,
-  "jsNodeTestsPassed": 22,
+  "jsNodeTestsPassed": 23,
   "hostedChromiumStandaloneHtmlParsed": true,
   "hostedChromiumJavascriptErrors": 0,
   "hostedChromiumWebGL2": false,
@@ -42,5 +42,6 @@
   "exeBuilt": false,
   "sourceVisualAuthorityBlocked": true,
   "nativeFrameSchedulerCAbiImplemented": true,
-  "nativeSchedulerCAbiUnitTestPassed": true
+  "nativeSchedulerCAbiUnitTestPassed": true,
+  "invalidGlbPreservesLiveSceneVerified": true
 }

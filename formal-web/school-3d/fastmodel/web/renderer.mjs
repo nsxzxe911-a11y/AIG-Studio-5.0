@@ -55,9 +55,13 @@ export class FastModelView {
   // Refuse excessive source assets BEFORE destroying a previously displayed scene.
   if(arrayBuffer.byteLength>this.governor.b.gpuWorkingSetEstimateBytes/2)
     throw Error('模型來源超出保守記憶體預算；原工作區不變。可先建立低 LOD 或在 RAM 更大的裝置載入。');
-  this.disposeMeshes();const start=performance.now();this.file=decodeGLB(arrayBuffer);this.file.g.asset?.generator?.includes('NOT_APPROVED');this.tracks=tracksFor(this.file);this.mode=mode;let assembled=buildBatches(this.file,mode);this.patchStats=null;this.stats={sourceMeshes:this.file.g.meshes.length,sourcePrimitives:this.file.g.meshes.reduce((s,m)=>s+m.primitives.length,0),...{drawCalls:assembled.drawCalls,triangles:assembled.indices/3,vertices:assembled.vertices,skipped:assembled.skipped},gpu:this.gpu};
- this.gpuAllocatedEstimateBytes=assembled.batches.reduce((acc,b)=>acc+b.vertices.byteLength+b.indices.byteLength,0);
- if(this.gpuAllocatedEstimateBytes>this.governor.b.gpuWorkingSetEstimateBytes)throw Error('GPU 繪圖網格推估超過本次預算，已阻止繼續分配；原始 GLB 仍保留。');
+  // Two-phase load: parse/build/preflight first. Invalid or too large GLB CANNOT clear a live scene.
+ const start=performance.now();const nextFile=decodeGLB(arrayBuffer),nextTracks=tracksFor(nextFile),assembled=buildBatches(nextFile,mode);
+ const requiredGPU=assembled.batches.reduce((acc,b)=>acc+b.vertices.byteLength+b.indices.byteLength,0);
+ if(requiredGPU>this.governor.b.gpuWorkingSetEstimateBytes)throw Error('GPU 繪圖網格推估超過本次預算，保留原有工作區。');
+ this.disposeMeshes();this.file=nextFile;this.tracks=nextTracks;this.mode=mode;this.patchStats=null;
+ this.stats={sourceMeshes:this.file.g.meshes.length,sourcePrimitives:this.file.g.meshes.reduce((s,m)=>s+m.primitives.length,0),...{drawCalls:assembled.drawCalls,triangles:assembled.indices/3,vertices:assembled.vertices,skipped:assembled.skipped},gpu:this.gpu};
+ this.gpuAllocatedEstimateBytes=requiredGPU;
  this.bound=assembled.bound;this.center=this.bound.min.map((a,i)=>(a+this.bound.max[i])*.5);this.zoom=2/Math.max(this.bound.max[1]-this.bound.min[1],(this.bound.max[0]-this.bound.min[0])*1080/1920)*.93;
  const gl=this.gl;this.program&&gl.useProgram(this.program);this.entries=assembled.batches.map(b=>{
   const vao=gl.createVertexArray();gl.bindVertexArray(vao);const vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vb);chunkedUpload(gl,gl.ARRAY_BUFFER,b.vertices,this.governor.b.maxSingleUploadBytes);
