@@ -205,6 +205,25 @@ jobs:
           path: artifacts/school-3d-phase13-synthetic/
           retention-days: 14
           if-no-files-found: error
+      - name: Phase14 ORIGINAL hair-spring face-geometry and sketch-color QA (NO AI model)
+        run: |
+          node --check formal-web/school-3d/phase14/beauty-engine.v1.js
+          node --check formal-web/school-3d/phase14/hair-face-workbench.v1.js
+          node formal-web/school-3d/phase14/tools/test_beauty_engine.js
+          python -m unittest discover -s formal-web/school-3d/phase14/tools -p 'test_phase14_contract.py' -v
+          python formal-web/school-3d/phase14/tools/make_hair_spec.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          a=Path('formal-web/school-3d/phase14/hair-face-spec.v1.json')
+          s=json.loads(a.read_text())
+          r=json.loads(Path('formal-web/school-3d/reverse-authority.v1.json').read_text())
+          assert s['source']['sha256']==r['source']['sha256']
+          assert len(s['hair']['strands'])==88 and s['hair']['segmentsPerStrand']==9
+          assert s['gate']['aiModelAvailable'] is False
+          assert s['approved3DModel'] is False and s['releasedToHomepage'] is False
+          print('Phase14 hair spring and color source QA PASS — 3D/AI visual gate remains BLOCKED')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
