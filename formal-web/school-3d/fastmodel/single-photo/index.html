@@ -58,6 +58,19 @@
 <button id="aig45-accept" type="button" disabled>確認本張比例資料</button>
 <button id="aig45-export" type="button" disabled>下載四圖來源／比例校正 JSON</button>
 <p id="aig45-status" class="status" role="status">等待來源原圖 SHA 驗證；這是二維比例校正，不是已重建的 3D 人體或八視角。</p>
+<h3>AIG FastModel 4.6｜自研頭／頸／馬尾獨立 3D 幾何</h3>
+<p>使用已核對 SHA 的 4.5 手動標點資料，先正規化不同姿勢的 2D 比例，再產生頭部、頸部、馬尾三塊可各自修改的<strong>真三角面技術模型</strong>。輪廓、背面深度與髮束路徑仍為推估；不能宣稱已還原女主角真實臉型或完成蒙皮。</p>
+<button id="aig46-build" type="button" disabled>以校正比例生成頭頸＋馬尾 3D 草模（0 點數）</button>
+<label for="aig46-swing">馬尾左右位置：<span id="aig46-swing-value">0.000</span></label>
+<input id="aig46-swing" type="range" min="-80" max="80" step="10" value="0" disabled>
+<label for="aig46-back">馬尾向後距離：<span id="aig46-back-value">0.090</span>（正規化單位）</label>
+<input id="aig46-back" type="range" min="40" max="190" step="10" value="90" disabled>
+<label for="aig46-yaw">3D 草模旋轉視角：<span id="aig46-yaw-value">0°</span></label>
+<input id="aig46-yaw" type="range" min="0" max="315" step="45" value="0" disabled>
+<canvas id="aig46-canvas" width="480" height="400" style="display:block;max-width:480px;width:100%;aspect-ratio:6/5;background:#020407;border:1px solid #36556e;border-radius:8px" aria-label="頭頸馬尾三塊獨立三角面草模旋轉預覽"></canvas>
+<div id="aig46-downloads" class="downloads"></div>
+<p id="aig46-status" class="status" role="status">先完成至少一張原圖的 4.5 八點手動比例校正。此模式仍非正式人物 GLB、不是準確的背面／人臉重建。</p>
+
 
 
 
