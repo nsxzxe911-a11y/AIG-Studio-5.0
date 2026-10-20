@@ -94,6 +94,9 @@ uniform float uYaw;
 uniform float uStepLimit;
 uniform vec4 uSizeA; // head, shoulder, hip, skirt
 uniform vec4 uSizeB; // neck, hair, arm, leg
+uniform float uRigEnabled;
+uniform vec3 uArmJoints[4]; // left elbow/wrist; right elbow/wrist
+uniform vec3 uLegJoints[4]; // left knee/ankle; right knee/ankle
 float ellipsoid(vec3 p,vec3 r) {
   float k0=length(p/r);
   float k1=length(p/(r*r));
@@ -117,9 +120,21 @@ vec2 map(vec3 p){
     float side=i==0?-1.:1.;
     vec3 a=vec3(side*uSizeA.y*.95,.18,0.);
     vec3 b=vec3(side*(uSizeA.y+uSizeB.z*.9),-.15,0.);
-    body=min(body,capsule(p,a,b,uSizeB.z));
-    body=min(body,capsule(p,vec3(side*uSizeA.z*.45,-.1,0.),
-      vec3(side*uSizeA.z*.45,-.46,0.),uSizeB.w));
+    if(uRigEnabled>.5){
+      vec3 joint=i==0?uArmJoints[0]:uArmJoints[2];
+      vec3 tip=i==0?uArmJoints[1]:uArmJoints[3];
+      body=min(body,capsule(p,a,joint,uSizeB.z));
+      body=min(body,capsule(p,joint,tip,uSizeB.z));
+      vec3 root=vec3(side*uSizeA.z*.45,-.1,0.);
+      vec3 knee=i==0?uLegJoints[0]:uLegJoints[2];
+      vec3 ankle=i==0?uLegJoints[1]:uLegJoints[3];
+      body=min(body,capsule(p,root,knee,uSizeB.w));
+      body=min(body,capsule(p,knee,ankle,uSizeB.w));
+    }else{
+      body=min(body,capsule(p,a,b,uSizeB.z));
+      body=min(body,capsule(p,vec3(side*uSizeA.z*.45,-.1,0.),
+        vec3(side*uSizeA.z*.45,-.46,0.),uSizeB.w));
+    }
   }
   float skirt=ellipsoid(p-vec3(0.,-.17,-.005),vec3(uSizeA.w,.17,.13));
   float hair=ellipsoid(p-vec3(0.,.25,-.075),vec3(uSizeB.y,.235,.072));
@@ -192,8 +207,10 @@ export class AigImplicitRenderer {
   this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
   this.loc=gl.getAttribLocation(this.program,'aPosition');
-  this.uniforms=Object.fromEntries(['uResolution','uYaw','uStepLimit','uSizeA','uSizeB']
+  this.uniforms=Object.fromEntries(['uResolution','uYaw','uStepLimit','uSizeA','uSizeB',
+    'uRigEnabled','uArmJoints[0]','uLegJoints[0]']
     .map(k=>[k,gl.getUniformLocation(this.program,k)]));
+  this.rigPose=null;
   this.pixelScale=Math.max(.35,Math.min(1,pixelScale));
   this.maxSteps=Math.max(24,Math.min(96,maxSteps|0));
   this.gpuTimer=new Aig42GpuTimer(gl);
@@ -204,6 +221,16 @@ export class AigImplicitRenderer {
   if(!Number.isFinite(pixelScale)||!Number.isFinite(maxSteps))throw Error('AIG41_QUALITY_INVALID');
   this.pixelScale=Math.max(.35,Math.min(1,pixelScale));
   this.maxSteps=Math.max(24,Math.min(96,maxSteps|0));
+ }
+ setRigPose(pose){
+  if(this.disposed)throw Error('AIG41_RENDERER_DISPOSED');
+  if(pose===null){this.rigPose=null;return;}
+  if(!(pose?.arms instanceof Float32Array)||pose.arms.length!==12||
+     !(pose?.legs instanceof Float32Array)||pose.legs.length!==12||
+     ![...pose.arms,...pose.legs].every(Number.isFinite))
+   throw Error('AIG43_RIG_POSE_INVALID');
+  // Keep independent buffers, so edits cannot mutate submitted GPU state.
+  this.rigPose={arms:new Float32Array(pose.arms),legs:new Float32Array(pose.legs)};
  }
  draw(yaw=0){
   if(this.disposed)throw Error('AIG41_RENDERER_DISPOSED');
@@ -221,6 +248,11 @@ export class AigImplicitRenderer {
   const p=this.scene.parameters;
   gl.uniform4f(this.uniforms.uSizeA,p.headRadius,p.shoulderRadius,p.hipRadius,p.skirtRadius);
   gl.uniform4f(this.uniforms.uSizeB,p.neckRadius,p.hairRadius,p.armRadius,p.legRadius);
+  gl.uniform1f(this.uniforms.uRigEnabled,this.rigPose?1:0);
+  if(this.rigPose){
+   gl.uniform3fv(this.uniforms['uArmJoints[0]'],this.rigPose.arms);
+   gl.uniform3fv(this.uniforms['uLegJoints[0]'],this.rigPose.legs);
+  }
   const queryStarted=this.gpuTimer.begin();
   try{gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}
   finally{if(queryStarted)this.gpuTimer.end();}
