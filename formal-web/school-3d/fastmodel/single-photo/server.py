@@ -8,6 +8,7 @@ from provider import MeshyClient
 from dialogue_ai import DialogueAI
 from tts_voice import SpeechAI
 from reconstruction_service import SERVICE_ID,MULTIVIEW_ID,capabilities,require_service,project_job
+from offline3d_service import FreeLocalEngine,FreeLocalJobs
 
 HERE=Path(__file__).resolve().parent
 
@@ -21,10 +22,12 @@ def offline_document(pipe,job):
     return html.replace('<script src="/app.js"></script>','<script>window.AIG_OFFLINE='+json.dumps(payload)+';\n'+js+'</script>')
 
 
-def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
+def make_server(root,client,port=8765,dialogue_client=None,speech_client=None,free_engine=None,allow_paid_3d=False):
     dialogue_client=dialogue_client or DialogueAI(os.environ.get('OPENAI_API_KEY',''))
     speech_client=speech_client or SpeechAI(os.environ.get('OPENAI_API_KEY',''))
-    pipe=PhotoPipeline(root,client);active=set();guard=threading.Lock();create_guard=threading.Lock();stopping=threading.Event()
+    pipe=PhotoPipeline(root,client)
+    free=FreeLocalJobs(root,free_engine or FreeLocalEngine())
+    active=set();guard=threading.Lock();create_guard=threading.Lock();stopping=threading.Event()
     def begin(job):
         with guard:
             if job in active:return
@@ -58,7 +61,26 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
             if not self.valid_origin():self.send({'error':'ORIGIN_BLOCKED'},403);return
             path=urlparse(self.path).path
             try:
-                if path=='/api/config':self.send({'configured':client.configured,'provider':'Meshy','liveGenerationVerified':False,'dialogueAIConfigured':dialogue_client.configured,'speechAIConfigured':speech_client.configured});return
+                if path=='/api/config':self.send({'configured':bool(allow_paid_3d and client.configured),
+                 'provider':'LocalSF3D','noCreditsMode':not allow_paid_3d,
+                 'freeLocalConfigured':free.engine.configured,'liveGenerationVerified':False,
+                 'dialogueAIConfigured':bool(allow_paid_3d and dialogue_client.configured),
+                 'speechAIConfigured':bool(allow_paid_3d and speech_client.configured)});return
+                if path=='/api/free3d/config':
+                    self.send({'service':free.engine.capabilities(),'defaultServiceId':'local-stable-fast-3d',
+                               'creditsAllowed':False,'remoteFallback':False});return
+                free_match=re.fullmatch(r'/api/free3d/jobs/([0-9a-f]{32})(?:/files/(model\.glb|job\.json))?',path)
+                if free_match:
+                    job,name=free_match.groups()
+                    d=free.read(job)
+                    if name=='model.glb':self.send(free.asset(job,'model.glb'),kind='model/gltf-binary')
+                    elif name=='job.json':self.send(d)
+                    else:self.send(d)
+                    return
+                free_request=re.fullmatch(r'/api/free3d/requests/([0-9a-f]{32})',path)
+                if free_request:
+                    d=free.lookup_request(free_request[1])
+                    self.send(d if d else {'error':'REQUEST_NOT_FOUND'},200 if d else 404);return
                 if path=='/api/reconstruction/services':self.send(capabilities(client));return
                 reconstruction_match=re.fullmatch(r'/api/reconstruction/jobs/([0-9a-f]{32})',path)
                 if reconstruction_match:
@@ -91,9 +113,29 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
             except Exception as e:self.send({'error':str(e)[:180]},409)
         def do_POST(self):
             if not self.valid_origin() or self.headers.get('X-AIG-Request')!='1':self.send({'error':'ORIGIN_BLOCKED'},403);return
-            if self.path not in ('/api/jobs','/api/reconstruction/jobs','/api/story/dialogue','/api/story/voice'):
+            if self.path not in ('/api/jobs','/api/reconstruction/jobs','/api/story/dialogue','/api/story/voice','/api/free3d/jobs'):
                 self.send({'error':'NOT_FOUND'},404);return
+            if self.path=='/api/free3d/jobs':
+                try:
+                    if self.headers.get('Content-Type')!='application/json':raise ValueError('FREE_3D_JSON_REQUIRED')
+                    length=int(self.headers.get('Content-Length','0'))
+                    if not 0<length<=28*1024*1024:raise ValueError('FREE_3D_REQUEST_LIMIT')
+                    d=json.loads(self.rfile.read(length))
+                    if not isinstance(d,dict) or set(d)!={'image','requestId'}:
+                        raise ValueError('FREE_3D_FIELDS_INVALID')
+                    uri=d['image']
+                    match=re.fullmatch(r'data:image/(png|jpeg|webp);base64,([a-zA-Z0-9+/=]+)',uri) if isinstance(uri,str) else None
+                    if not match:raise ValueError('FREE_3D_IMAGE_URI_INVALID')
+                    raw=base64.b64decode(match.group(2),validate=True)
+                    with create_guard:
+                        report=free.create(raw,d['requestId'])
+                        free.start(report['id'])
+                    self.send(free.read(report['id']),202);return
+                except Exception as error:
+                    self.send({'error':str(error)[:160]},409);return
             if self.path=='/api/story/voice':
+                if not allow_paid_3d:
+                    self.send({'error':'ZERO_CREDITS_CLOUD_SPEECH_BLOCKED'},409);return
                 try:
                     if self.headers.get('Content-Type')!='application/json':
                         raise ValueError('TTS_JSON_REQUIRED')
@@ -106,6 +148,8 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
                 except Exception as error:
                     self.send({'error':str(error)[:160]},409);return
             if self.path=='/api/story/dialogue':
+                if not allow_paid_3d:
+                    self.send({'error':'ZERO_CREDITS_CLOUD_DIALOGUE_BLOCKED'},409);return
                 try:
                     if self.headers.get('Content-Type')!='application/json':
                         raise ValueError('AI_DIALOGUE_JSON_REQUIRED')
@@ -117,6 +161,7 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
                 except Exception as error:
                     self.send({'error':str(error)[:160]},409);return
             try:
+                if not allow_paid_3d:raise ValueError('ZERO_CREDITS_REMOTE_3D_BLOCKED')
                 if not client.configured:raise ValueError('MESHY_API_KEY_NOT_CONFIGURED')
                 if self.headers.get('Content-Type')!='application/json':raise ValueError('JSON_REQUIRED')
                 length=int(self.headers.get('Content-Length','0'))
@@ -185,14 +230,14 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None):
             except Exception as e:self.send({'error':str(e)[:180]},409)
     class LocalServer(ThreadingHTTPServer):
         def server_close(self):stopping.set();super().server_close()
-    server=LocalServer(('127.0.0.1',port),Handler);server.pipeline=pipe
+    server=LocalServer(('127.0.0.1',port),Handler);server.pipeline=pipe;server.free_jobs=free
     return server
 
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--port',type=int,default=8765);a=p.parse_args()
     server=make_server(a.root,MeshyClient(os.environ.get('MESHY_API_KEY','')),a.port)
-    print(f'AIG FastModel 3.9: http://127.0.0.1:{server.server_port} (Meshy account configured: {server.pipeline.client.configured}; optional opt-in dialogue LLM)',flush=True)
+    print(f'AIG FastModel 3.9 FREE: http://127.0.0.1:{server.server_port} (local SF3D ready: {server.free_jobs.engine.configured}; remote credits disabled)',flush=True)
     try:server.serve_forever()
     except KeyboardInterrupt:pass
     finally:server.server_close()
