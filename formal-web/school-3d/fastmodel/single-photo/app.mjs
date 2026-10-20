@@ -2,9 +2,36 @@ import {PhotoViewer} from './viewer.mjs';
 import {SubmissionJournal} from './submission.mjs';
 import {reviewEvidenceManifest} from './heroine-review.mjs';
 import {timelineEvidenceManifest} from './timeline-review.mjs';
+import {parseStory,resolveStoryClips,STORY_PIPELINE_VERSION} from './story-to-animation.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
+let storyPlan=null,storyOutputUrl=null;
+function clearStoryPlan(reason='劇情或 GLB 動作已改變，請重新解析。'){
+ view?.animation?.stopStory();
+ storyPlan=null;
+ $('story-play').disabled=true;$('story-stop').disabled=true;
+ if(storyOutputUrl){URL.revokeObjectURL(storyOutputUrl);storyOutputUrl=null;}
+ $('story-downloads').replaceChildren();$('story-timeline').replaceChildren();
+ $('story-status').textContent=reason;
+ if(view?.animation)$('clip').disabled=!view.animation.clips?.length;
+}
+function storyBeatsVisible(plan){
+ const parent=$('story-timeline');parent.replaceChildren();
+ const matched=new Map(plan.timeline.map(x=>[x.beat,x]));
+ const missed=new Map(plan.missing.map(x=>[x.beat,x]));
+ for(let i=0;i<plan.inputBeats;i++){
+  const beat=matched.get(i),gap=missed.get(i);
+  const row=document.createElement('div');row.className='beat'+(gap?' missing':'');
+  row.textContent=beat?(i+1)+'. '+beat.label+' → 真 GLB 動作「'+beat.clipName+'」｜'+beat.seconds.toFixed(2)+' 秒':
+   (i+1)+'. 缺少 '+(gap?.actionId||'未知')+' 動作：'+(gap?.reason||'BLOCKED');
+  row.dataset.storyBeat=String(i);parent.append(row);
+ }
+ for(const block of plan.blocking.filter(x=>x.beat===undefined)){
+  const row=document.createElement('div');row.className='beat missing';
+  row.textContent='場景限制：'+block.reason;parent.append(row);
+ }
+}
 function clearTimelineEvidence(){
  for(const u of timelineObjectUrls)URL.revokeObjectURL(u);
  timelineObjectUrls.length=0;
@@ -33,7 +60,7 @@ function addLink(label,url,name){const a=document.createElement('a');a.className
 async function load(bytes,orbit){
  if(!view)return;
  const clips=await view.load(bytes,{orbit});$('clip').replaceChildren();
- clearReviewEvidence();clearTimelineEvidence();
+ clearReviewEvidence();clearTimelineEvidence();clearStoryPlan('新人物已載入，請重新解析劇情。');
  importedActionHashes.clear();actionShaByClipIndex.clear();
  $('action-glb').disabled=false;
  $('action-import-status').textContent='已載入人物 GLB。可選擇另一個骨架相符、含真實動畫的外部 GLB（不會將來源網格重疊渲染）。';
@@ -95,7 +122,7 @@ $('action-glb').addEventListener('change',async()=>{
   if(sourceSha!==originalSha)throw Error('ACTION_TARGET_CHANGED');
   importedActionHashes.add(fingerprint);
   result.importedNames.forEach((_,offset)=>actionShaByClipIndex.set(result.selectedIndex+offset,actionSha));
-  clearReviewEvidence();clearTimelineEvidence();
+  clearReviewEvidence();clearTimelineEvidence();clearStoryPlan('新外部動作已匯入，請重新解析劇情以使用新增片段。');
   const clips=view.animation.clips;
   $('clip').replaceChildren();
   clips.forEach((clip,index)=>{
@@ -162,6 +189,66 @@ function renderSkinReport(r){
   $('skin-check-downloads').append(a);
  }
 }
+$('story-text').addEventListener('input',()=>clearStoryPlan('劇情已修改；請重新解析並檢查真實動作清單。'));
+$('story-build').addEventListener('click',()=>{
+ clearStoryPlan('解析劇情中……');
+ try{
+  const story=parseStory($('story-text').value);
+  const clips=view?.animation?.clips||[];
+  const plan=resolveStoryClips(story,clips);
+  storyPlan=plan;storyBeatsVisible(plan);
+  const blockers=plan.blocking.map(x=>x.reason);
+  const coverage=plan.timeline.length+'/'+plan.inputBeats;
+  $('story-status').textContent=plan.ready&&sourceSha
+   ?'真 GLB 動作已全部對應：'+coverage+' 段，共 '+plan.seconds.toFixed(2)+
+     ' 秒。按播放即可在原本 3D 人物上依時間軸播放；沒有生成新骨架或 MP4。'
+   :'劇情已辨識 '+plan.inputBeats+' 個動作，配對 '+coverage+'。缺口：'+
+     ([...new Set(blockers)].join('、')||'尚未載入有動畫的正式 GLB 與來源 SHA')+
+     '。請匯入缺少的相容動作片段後重試；不以照片晃動充數。';
+  $('story-play').disabled=!(plan.ready&&sourceSha&&view?.model);
+  const evidence={schema:STORY_PIPELINE_VERSION,originalText:story.originalText,
+   sourceCharacterSha256:sourceSha||null,steps:plan.timeline.map(part=>({
+    ...part,sourceActionSha256:actionShaByClipIndex.get(part.index)||sourceSha||null
+   })),unmapped:story.unmapped,missing:plan.missing,blocking:plan.blocking,
+   ready:plan.ready&&!!sourceSha,realGLBClipPlaybackOnly:true,
+   generatedMotionFromText:false,createdMp4:false,actualCombatSceneApproved:false,
+   physicalGPU60FPSVerified:false};
+  storyOutputUrl=URL.createObjectURL(new Blob([JSON.stringify(evidence,null,2)],{type:'application/json'}));
+  const link=document.createElement('a');link.className='download';link.href=storyOutputUrl;
+  link.download='AIG-3-2-Story-Action-Timeline-Evidence.json';
+  link.textContent='下載劇情分鏡／動作缺口 JSON';$('story-downloads').append(link);
+ }catch(e){clearStoryPlan('劇情解析 BLOCKED：'+e.message);}
+});
+$('story-play').addEventListener('click',()=>{
+ if(!storyPlan?.ready||!view?.model||!sourceSha){
+  $('story-status').textContent='動畫播放 BLOCKED：缺少模型或真 GLB 動作，不能假動畫。';return;
+ }
+ if(view.reviewBusy||view.actionImportBusy){$('story-status').textContent='驗收／匯入進行中，不能同時播放劇情。';return;}
+ try{
+  view.animation.startStory(storyPlan,{
+   onStep:({position,beat,total})=>{
+    $('story-status').textContent='真 3D 劇情播放 '+(position+1)+'/'+total+'：'+beat.label+
+      '（'+beat.clipName+'，'+beat.seconds.toFixed(2)+'秒）。';
+    [...$('story-timeline').children].forEach(x=>{x.style.borderColor=x.dataset.storyBeat===String(beat.beat)?'#73dfea':'#26455a';});
+   },
+   onFinish:()=>{
+    $('story-status').textContent='劇情真實 GLB 動作已依序播放完畢；這不是已生成的 MP4，也不是打鬥安全驗收。';
+    $('story-stop').disabled=true;$('story-play').disabled=false;
+    $('clip').disabled=false;$('pause').textContent='繼續動畫';
+   }
+  });
+  $('story-stop').disabled=false;$('story-play').disabled=true;
+  $('clip').disabled=true;$('pause').textContent='暫停動畫';
+ }catch(e){$('story-status').textContent='劇情播放 BLOCKED：'+e.message+'，原人物資料保留。';}
+});
+$('story-stop').addEventListener('click',()=>{
+ if(!view?.animation)return;
+ view.animation.stopStory();view.animation.mixer.stopAllAction();view.animation.paused=true;
+ $('story-stop').disabled=true;$('story-play').disabled=!storyPlan?.ready;
+ $('clip').disabled=!view.animation.clips?.length;
+ $('pause').textContent='繼續動畫';
+ $('story-status').textContent='已停止劇情動畫。原始 GLB、骨架、動作片段仍保留。';
+});
 $('timeline-capture').addEventListener('click',async()=>{
  if(!sourceSha||!view?.model||!view.animation?.clips?.[view.animation.index]){
   $('timeline-status').textContent='缺少 GLB SHA 或真實動畫片段，不能產生 16 格驗收畫面。';return;
@@ -257,7 +344,7 @@ $('clip').addEventListener('change',()=>{
  }
  try{
   view.animation.select(Number($('clip').value));
-  clearReviewEvidence();clearTimelineEvidence();
+  clearReviewEvidence();clearTimelineEvidence();clearStoryPlan('手動切換動作後，請重新解析劇情。');
   $('timeline-status').textContent='已切換真實 GLB 動畫片段；舊的四方向與 16 格圖片失效，請重新擷取。';
  }catch(e){status.textContent='片段未切換：'+e.message;}
 });
