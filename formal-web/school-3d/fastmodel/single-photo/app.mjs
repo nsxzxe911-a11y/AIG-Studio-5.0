@@ -11,6 +11,7 @@ import {inspectHeroineImage,evaluateHeroineJob,HEROINE_REFERENCE} from './heroin
 import {createImplicitScene,AigImplicitRenderer,AIG_SDF_VERSION} from './aig-sdf-4-1.mjs';
 import {Aig42Governor,Aig42FrameCoalescer,AIG42_SCHEMA} from './aig-performance-4-2.mjs';
 import {createRig,Aig43RigController,Aig43PatchCache,poseUniforms} from './aig-hybrid-4-3.mjs';
+import {appearanceFor,auditHairNeck,Aig44TimingEvidence} from './aig-qa-4-4.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -310,6 +311,7 @@ $('local-glb').addEventListener('change',async()=>{
 });
 let aig41Renderer=null,aig41Scene=null,aig42FrameQueue=null;
 let aig43Controller=null,aig43Cache=null;
+let aig44Appearance=null,aig44LastAudit=null,aig44Timing=null,aig44SourceSHA=null;
 let aig42Governor=null,aig42Epoch=0,aig42CanvasLost=false;
 const AIG41_QUALITY={fast:{pixelScale:.5,maxSteps:48},
  balanced:{pixelScale:.75,maxSteps:64},quality:{pixelScale:1,maxSteps:88}};
@@ -334,6 +336,10 @@ function releaseAig41(){
  for(const id of ['aig43-part','aig43-angle','aig43-reset'])$(id).disabled=true;
  $('aig43-angle').value='0';
  $('aig43-cache').textContent='4.3 GPU 參數已釋放；原圖與成功的 4.0 GLB 保留。';
+ aig44Appearance=null;aig44LastAudit=null;aig44Timing=null;aig44SourceSHA=null;
+ for(const id of ['aig44-hair','aig44-palette','aig44-check','aig44-evidence'])
+  $(id).disabled=true;
+ $('aig44-status').textContent='4.4 品質檢查已卸載；原始模型與已完成的 GLB 不受影響。';
 }
 function aig43UpdateCache(part){
  if(!aig43Controller||!aig43Cache)return;
@@ -365,6 +371,42 @@ $('aig43-reset').addEventListener('click',()=>{
  aig43UpdateCache(part);
  aig41Preview();
 });
+function aig44Refresh(){
+ if(!aig41Scene||!aig44Appearance)return;
+ aig44LastAudit=auditHairNeck(aig41Scene,{hairBackOffset:aig44Appearance.hairBackOffset});
+ const r=aig44LastAudit;
+ $('aig44-hair-value').textContent=r.hairBackOffset.toFixed(3);
+ $('aig44-status').textContent='4.4 頭頸 SDF '+(r.technicalNeckSdfContinuous?'連續':'可能不連續')+
+  '；髮量／頸後最小距離 '+r.minHairNeckSignedDistance.toFixed(4)+
+  ' 正規化單位。'+(r.proxyClearanceWithinSafetyMargin?' 發現代理體積交疊／安全間距不足。':
+  ' 代理體積未偵測到近距離交疊。')+
+  ' 這不是髮絲、皮膚和實體 Mesh 穿模 PASS；實機 GPU FPS 仍需驗證。';
+ aig41Preview();
+}
+$('aig44-hair').addEventListener('input',()=>{
+ if(!aig41Scene)return;
+ aig44Appearance=appearanceFor($('aig44-palette').value,Number($('aig44-hair').value)/1000);
+ aig44Refresh();
+});
+$('aig44-palette').addEventListener('change',()=>{
+ if(!aig41Scene)return;
+ aig44Appearance=appearanceFor($('aig44-palette').value,Number($('aig44-hair').value)/1000);
+ aig44Refresh();
+});
+$('aig44-check').addEventListener('click',aig44Refresh);
+$('aig44-evidence').addEventListener('click',()=>{
+ if(!aig44LastAudit||!aig44SourceSHA)return;
+ const evidence={schema:'AIG_FASTMODEL_4_4_LOCAL_QA',
+   sourceSHA256:aig44SourceSHA,materialPreview:aig44Appearance,
+   hairNeck:aig44LastAudit,timing:aig44Timing?.summary()||null,
+   thirdPartyInferenceUsed:false,creditsSpent:0,formalReleaseAllowed:false,
+   actualHumanHairMeshValidated:false,deviceVideoFPSVerified:false};
+ const url=URL.createObjectURL(new Blob([JSON.stringify(evidence,null,2)],
+   {type:'application/json'}));
+ const a=document.createElement('a');a.href=url;
+ a.download='AIG-4.4-Hair-Neck-GPU-DRAFT-NOT-APPROVED.json';a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),30000);
+});
 function aig42Draw(request){
  if(!aig41Scene||aig42CanvasLost||!request||request.epoch!==aig42Epoch)return;
  const canvas=$('aig41-canvas'), selection=$('aig41-quality').value;
@@ -375,9 +417,11 @@ function aig42Draw(request){
   else aig41Renderer.configure(config);
   // Pose uniforms update only positions, not GLB mesh or full-screen GPU shader.
   if(aig43Controller)aig41Renderer.setRigPose(poseUniforms(aig43Controller.rig));
+  if(aig44Appearance)aig41Renderer.setAppearance(aig44Appearance);
   const t0=performance.now();
   const result=aig41Renderer.draw(request.yaw);
   const submitMs=performance.now()-t0;
+  aig44Timing?.record({jsSubmitMs:submitMs,gpuSample:result.gpuSample});
   let gpuText='GPU 計時尚未取得（非 60 FPS 證據）';
   let changeResult=null;
   if(automatic&&result.gpuSample){
@@ -426,6 +470,13 @@ async function aig41FromScaffold(prefix,expectedSHA){
  for(const part of ['leftArm','rightArm','leftLeg','rightLeg'])
   aig43Cache.get(aig43Controller,part);
  aig41Scene=scene;
+ aig44SourceSHA=scaffold.sourceSHA256;
+ aig44Timing=new Aig44TimingEvidence();
+ $('aig44-hair').value='50';$('aig44-palette').value='natural';
+ aig44Appearance=appearanceFor('natural',.05);
+ for(const id of ['aig44-hair','aig44-palette','aig44-check','aig44-evidence'])
+  $(id).disabled=false;
+ aig44Refresh();
  aig42Governor=new Aig42Governor({targetGpuMs:12,initialTier:1});
  aig42FrameQueue=new Aig42FrameCoalescer({
   requestFrame:callback=>requestAnimationFrame(callback),
