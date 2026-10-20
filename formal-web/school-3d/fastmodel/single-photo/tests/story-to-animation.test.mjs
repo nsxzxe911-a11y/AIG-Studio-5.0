@@ -100,7 +100,8 @@ test('scene change or mutated clip invalidates plan, never plays a clip with wro
 test('malformed story, oversized scripts, and empty animation inventory fail closed',()=>{
  assert.throws(()=>parseStory(''),/STORY_TEXT_REQUIRED/);
  assert.throws(()=>parseStory('我只講話'),/STORY_NO_RECOGNIZED_ACTIONS/);
- assert.throws(()=>parseStory('出拳。'.repeat(1000)),/STORY_BUDGET_EXCEEDED/);
+ assert.throws(()=>parseStory('出拳。'.repeat(1001)),/STORY_BUDGET_EXCEEDED/);
+ assert.throws(()=>parseStory('出拳。'.repeat(100)),/STORY_TOO_MANY_CLAUSES/);
  const data=parseStory('女主角走路');
  const p=resolveStoryClips(data,[]);
  assert.equal(p.ready,false);
