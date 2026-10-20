@@ -605,6 +605,24 @@ jobs:
           assert 'gl.drawElements(gl.TRIANGLES' in code
           print('1.6 pose and explicit anatomy tags source/packager PASS; GPU and real head-neck continuity still UNVERIFIED')
           PY
+      - name: FastModel 1.7 fictional character face anti-clone geometry Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/web/character-face.mjs
+          node --check formal-web/school-3d/fastmodel/web/main.mjs
+          node --test formal-web/school-3d/fastmodel/tests/character-face.test.mjs
+          python formal-web/school-3d/fastmodel/tools/build_standalone.py \
+            --glb artifacts/school-3d-phase17-synthetic/CI-PHASE17-SYNTHETIC-SOURCE-MATTE-NOT-AUTHORITY.glb \
+            --out artifacts/fastmodel-technical/CI-FASTMODEL-1-7-CAST-COLLISION-NOT-REAL-FACE-ID.html
+          python - <<'PY'
+          from pathlib import Path
+          text=Path('artifacts/fastmodel-technical/CI-FASTMODEL-1-7-CAST-COLLISION-NOT-REAL-FACE-ID.html').read_text()
+          for token in ['id="character-id"','id="face-compare"','id="face-clear"',
+                        'function faceShapeSignature(', 'function compareFaceShapes(',
+                        'class CharacterFaceRoster', 'biometricIdentityRecognized:false',
+                        'window.AIG_EMBEDDED_GLB']:
+              assert token in text, token
+          print('1.7 fictional GLB face-collision SOURCE Gate PASS; not real-person face recognition or visual approval')
+          PY
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
