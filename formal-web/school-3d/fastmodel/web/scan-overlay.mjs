@@ -118,7 +118,7 @@ function skinned(v,surface,matrices){
 /** Can be called by the same draw frame that evaluated the renderer skeleton.
  * Do not use model name, color or skin 1 as an anatomical guess.
  */
-export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline',density='balanced',palette='aig-rgb',warning='none',highlightRoles=[],depthMode='off'}={}){
+export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline',density='balanced',palette='aig-rgb',warning='none',highlightRoles=[],depthMode='off',derivedCache=null}={}){
  if(!SCAN_MODES.includes(mode))throw Error('SCAN_MODE_INVALID');
  const b=scanBudget(density);scanPalette(palette);
  if(!SCAN_DEPTH_MODES.includes(depthMode))throw Error('SCAN_DEPTH_MODE_INVALID');
@@ -171,7 +171,14 @@ export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline
   }
   const depthDensity=cssW<650&&density!=='eco'?'eco':density;
   if(depthMode==='sampled'&&topology.surfaces?.length){
-   sampledDepth=sampleSourceDepth(topology.surfaces,projectedVertex,{density:depthDensity});
+   sampledDepth=derivedCache?.getDepth({file:view.file,view,topology,density:depthDensity,world})||null;
+   if(!sampledDepth){
+     const depthStarted=typeof performance!=='undefined'&&performance.now?performance.now():0;
+     sampledDepth=sampleSourceDepth(topology.surfaces,projectedVertex,{density:depthDensity});
+     const depthEnded=typeof performance!=='undefined'&&performance.now?performance.now():0;
+     derivedCache?.putDepth({file:view.file,view,topology,density:depthDensity,world,depth:sampledDepth,
+       buildMs:Math.max(0,depthEnded-depthStarted)});
+   }
   }
   for(const surface of topology.surfaces||[]){
    if(dashedSegments>=b.segments)break;
@@ -216,7 +223,7 @@ export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline
   ctx.restore();
  }
  return {status:topology.status,bonesDrawn,dashedSegments,palette,warningStyle:warning,sourceMaterialColorsUntouched:true,
-  scanDepthMode:depthMode,occludedSegments,visibleSegments,unknownDepthSegments,
+  scanDepthMode:depthMode,depthCache:derivedCache?.stats()||null,occludedSegments,visibleSegments,unknownDepthSegments,
   sampledDepthTriangles:sampledDepth?.triangles||0,sampledDepthCellTests:sampledDepth?.cellTests||0,
   sampledDepthIncomplete:sampledDepth?.incomplete??true,realGpuDepthVerified:false,
   actualAnimatedCollisionProved:false,
