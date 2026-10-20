@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DETAIL_MODES,optionalDetailGroup,initialDetailState,nextDetailState,visiblePreviewEntries} from '../web/adaptive-detail.mjs';
+import {DETAIL_MODES,optionalDetailGroup,initialDetailState,nextDetailState,visiblePreviewEntries,measuredFrameSummary} from '../web/adaptive-detail.mjs';
 import {FastModelView} from '../web/renderer.mjs';
 import fs from 'node:fs';
 const read=x=>fs.readFileSync(new URL('../'+x,import.meta.url),'utf8');
@@ -45,4 +45,17 @@ test('actual UI/render pipeline, raster and 1080p default all retained',()=>{
  assert.ok(m.includes("view.setDetailMode(el('detail-mode').value)"));
  assert.ok(p.includes('adaptive-detail.mjs'));assert.ok(p.includes("+'\\n'+adaptive+'\\n'"));
  assert.ok(h.includes('光線追蹤：關閉')||m.includes('光線追蹤：關閉'));
+});
+
+test('browser frame statistics require enough valid samples and never claim GPU timing',()=>{
+ assert.equal(measuredFrameSummary([16,17,18]),null);
+ const data=Array(65).fill(16);
+ const r=measuredFrameSummary(data);
+ assert.equal(r.samples,65);assert.equal(r.fps,62.5);assert.equal(r.p95Ms,16);
+ assert.equal(r.source,'BROWSER_RAF_FRAME_DELTA_NOT_GPU_TIME');
+ assert.equal(measuredFrameSummary(Array(60).fill(Infinity)),null);
+});
+test('even an all-optional scene cannot turn into a blank viewport',()=>{
+ const optional={optionalDetail:true,vao:9};
+ assert.deepEqual(visiblePreviewEntries([optional],true),[optional]);
 });
