@@ -6,10 +6,12 @@ import {parseStory,resolveStoryClips,STORY_PIPELINE_VERSION} from './story-to-an
 import {composeDialogue,updateDialogueCue,annotateDialoguePlan,DIALOGUE_VERSION} from './story-dialogue.mjs';
 import {StoryAudio,AUDIO_CUE_VERSION} from './story-audio.mjs';
 import {MovieWorkspace} from './movie-ui.mjs';
+import {generateVoiceBatch,TTS_VERSION} from './voice-generator.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
 let storyPlan=null,storyOutputUrl=null,storyDialogue=null,storyParsed=null,storyRevision=0,cloudBusy=false,dialogueCloudConfigured=false,movieUI=null;
+let speechAIConfigured=false,ttsBusy=false,ttsGeneration=0,ttsFiles=[],ttsDownloadUrls=[];
 const storySound=new StoryAudio({onStatus:m=>{$('story-audio-status').textContent=m;}});
 function soundOptions(){return {
  voice:$('voice-enabled').checked,sfx:$('sfx-enabled').checked,
@@ -46,6 +48,16 @@ function exportStoryEvidence(){
  link.textContent='下載劇情／台詞／聲音提示與素材缺口 JSON';
  $('story-downloads').append(link);
 }
+function clearGeneratedTts(reason='台詞或動作已改變；舊語音已隔離。'){
+ ttsGeneration++;ttsFiles=[];
+ for(const u of ttsDownloadUrls)URL.revokeObjectURL(u);
+ ttsDownloadUrls=[];$('ai-tts-downloads').replaceChildren();
+ $('ai-tts-status').textContent=reason;refreshTtsButton();
+}
+function refreshTtsButton(){
+ $('ai-tts-generate').disabled=ttsBusy||movieUI?.isBusy||!speechAIConfigured||
+  !storyPlan?.ready||!sourceSha||!view?.model;
+}
 function renderDialogueEditor(){
  const parent=$('story-dialogues');parent.replaceChildren();
  for(const cue of storyDialogue?.cues||[]){
@@ -62,6 +74,7 @@ function renderDialogueEditor(){
     }
     storyDialogue=updateDialogueCue(storyDialogue,cue.beat,edit.value);
     if(storyPlan?.ready)storyPlan=annotateDialoguePlan(storyPlan,storyDialogue);
+    clearGeneratedTts('台詞已更新，先前合成的聲音已隔離。');
     exportStoryEvidence();
     $('story-status').textContent='台詞已更新，播放時使用新內容；語音品質依瀏覽器可用聲音決定。';
    }catch(e){$('story-status').textContent='台詞未更新：'+e.message;}
@@ -82,6 +95,7 @@ function clearStoryPlan(reason='劇情或 GLB 動作已改變，請重新解析�
   $('pause').textContent='繼續動畫';
  }
  storySound.stop();clearSubtitle();storyRevision++;
+ clearGeneratedTts('人物／劇情改變；已隔離可能不相符的逐句配音。');
  storyPlan=null;storyDialogue=null;storyParsed=null;
  $('story-dialogues').replaceChildren();
  $('story-play').disabled=true;$('story-stop').disabled=true;
@@ -297,6 +311,7 @@ $('cloud-dialogue').addEventListener('click',async()=>{
   });
   storyDialogue={...storyDialogue,cues:ordered,generatedByCloudLLM:true,provider:'OpenAI',model:result.model};
   if(storyPlan?.ready)storyPlan=annotateDialoguePlan(storyPlan,storyDialogue);
+  clearGeneratedTts('AI 已改寫劇情台詞，舊音檔已隔離。');
   renderDialogueEditor();exportStoryEvidence();
   $('cloud-dialogue-status').textContent='真正雲端 AI 台詞已產生，共 '+ordered.length+
     ' 段；提供者 '+result.provider+'，模型 '+result.model+
@@ -307,6 +322,68 @@ $('cloud-dialogue').addEventListener('click',async()=>{
  }finally{cloudBusy=false;$('cloud-dialogue').disabled=!dialogueCloudConfigured;}
 });
 
+$('ai-tts-voice').addEventListener('change',()=>clearGeneratedTts('聲線已改變，請重新產生 WAV。'));
+$('ai-tts-generate').addEventListener('click',async()=>{
+ if(ttsBusy||movieUI?.isBusy||!speechAIConfigured)return;
+ if(!storyPlan?.ready||!sourceSha||!view?.model){
+  $('ai-tts-status').textContent='BLOCKED：尚未取得真 GLB 動作來源。';return;
+ }
+ if($('movie-voice-file').files?.length||$('movie-voice-lines').files?.length){
+  $('ai-tts-status').textContent='請先清除手動選擇的配音檔，再產生 AI 聲音，避免混用。';return;
+ }
+ const revision=storyRevision;
+ const signature=()=>storyPlan?.timeline?.map(p=>[p.beat,p.clipName,p.seconds,p.dialogue].join('|')).join('~')+'|'+sourceSha;
+ const snapshot=signature();
+ ttsBusy=true;const generation=++ttsGeneration;
+ $('ai-tts-generate').disabled=true;$('movie-record').disabled=true;
+ $('ai-tts-status').textContent='逐句產生真正 AI WAV，每句可能計費，不自動重試。';
+ let decoder=null;
+ try{
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  if(!Ctx)throw Error('TTS_BROWSER_DECODER_UNAVAILABLE');
+  decoder=new Ctx();
+  const output=await generateVoiceBatch(storyPlan,{
+   voice:$('ai-tts-voice').value,
+   post:async payload=>{
+    const r=await fetch('/api/story/voice',{method:'POST',
+     headers:{'Content-Type':'application/json','X-AIG-Request':'1'},
+     body:JSON.stringify(payload)});
+    if(!r.ok){
+     let detail='TTS_HTTP_'+r.status;
+     try{detail=(await r.json()).error||detail;}catch{}
+     throw Error(detail);
+    }
+    if(!(r.headers.get('content-type')||'').startsWith('audio/wav'))throw Error('TTS_RESPONSE_NOT_WAV');
+    return r.arrayBuffer();
+   },
+   decode:async bytes=>(await decoder.decodeAudioData(bytes)).duration,
+   makeFile:(bytes,name)=>new File([bytes],name,{type:'audio/wav'}),
+   stillCurrent:()=>generation===ttsGeneration&&revision===storyRevision&&signature()===snapshot,
+   onProgress:({position,total,status})=>{
+    if(generation===ttsGeneration)$('ai-tts-status').textContent='第 '+(position+1)+'/'+total+
+     ' 句：'+(status==='READY'?'真 WAV 已收到':'正在生成（可能計費）');
+   }
+  });
+  if(generation!==ttsGeneration||revision!==storyRevision||signature()!==snapshot)
+   throw Error('TTS_STORY_CHANGED_DISCARDED');
+  for(const u of ttsDownloadUrls)URL.revokeObjectURL(u);
+  ttsDownloadUrls=[];ttsFiles=output.files;$('ai-tts-downloads').replaceChildren();
+  for(const file of ttsFiles){
+   const url=URL.createObjectURL(file);ttsDownloadUrls.push(url);
+   const link=document.createElement('a');link.href=url;link.download=file.name;
+   link.className='download';link.textContent='下載 '+file.name;
+   $('ai-tts-downloads').append(link);
+  }
+  $('ai-tts-status').textContent='已產生 '+ttsFiles.length+
+   ' 句真實 WAV（'+TTS_VERSION+'）；已對照真 GLB 動作秒數，可錄進 1080p 影片。未驗證音素級口型。';
+ }catch(err){
+  $('ai-tts-status').textContent='沒有完成整組配音：'+err.message+
+   '。失敗時保留之前完整結果，不自動重送；已送出的請求可能計費。';
+ }finally{
+  try{await decoder?.close();}catch{}
+  ttsBusy=false;refreshTtsButton();movieUI?.refresh();
+ }
+});
 $('story-text').addEventListener('input',()=>clearStoryPlan('劇情已修改；請重新解析並檢查真實動作清單。'));
 $('story-build').addEventListener('click',()=>{
  clearStoryPlan('解析劇情中……');
@@ -327,7 +404,7 @@ $('story-build').addEventListener('click',()=>{
      ([...new Set(blockers)].join('、')||'尚未載入有動畫的正式 GLB 與來源 SHA')+
      '。請匯入缺少的相容動作片段後重試；不以照片晃動充數。';
   $('story-play').disabled=!(plan.ready&&sourceSha&&view?.model);
-  movieUI?.refresh();
+  movieUI?.refresh();refreshTtsButton();
   exportStoryEvidence();
  }catch(e){clearStoryPlan('劇情解析 BLOCKED：'+e.message);}
 });
@@ -492,7 +569,7 @@ movieUI=new MovieWorkspace({
  document,getContext:()=>({
   plan:storyPlan,sourceSha,view,sound:storySound,sourceName:loadedFile,
   dialogueOrigin:storyDialogue?.provider||'OFFLINE_TEMPLATE',
-  soundOptions,dialogueCloudConfigured
+  soundOptions,dialogueCloudConfigured,generatedVoiceFiles:ttsFiles,ttsBusy
  }),showSubtitle,clearSubtitle
 });
 if(window.AIG_OFFLINE){
@@ -504,6 +581,10 @@ if(window.AIG_OFFLINE){
  api('/api/config').then(async c=>{
   ready=c.configured;status.textContent=ready?'重建服務已連接；選圖後按一次生成。':'重建服務未連接；請先在主機設定服務帳戶。';updateButton();
   dialogueCloudConfigured=!!c.dialogueAIConfigured;
+  speechAIConfigured=!!c.speechAIConfigured;refreshTtsButton();
+  $('ai-tts-status').textContent=speechAIConfigured
+   ?'AI 語音服務已連接；只在主動點擊生成時送出台詞，可能計費。'
+   :'AI 語音尚未連線，仍可手動匯入 WAV／MP3。';
   $('cloud-dialogue').disabled=!dialogueCloudConfigured;
   $('cloud-dialogue-status').textContent=dialogueCloudConfigured
    ?'已連接可選雲端 AI 台詞服務。只有主動點擊才傳送劇情與動作 IDs；可能計費，人物 GLB／照片不傳送。'
