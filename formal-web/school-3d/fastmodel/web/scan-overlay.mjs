@@ -3,6 +3,7 @@
  * Faint dashed strokes = source triangle boundary / projected silhouette candidates.
  * This is NOT true depth-tested hidden-line removal or collision verification.
  */
+import {scanPalette,scanColor,scanColorLegend} from './scan-colors.mjs';
 export const SCAN_MODES=Object.freeze(['off','bones','bones-outline','head-neck','hair']);
 export const SCAN_DENSITIES=Object.freeze(['eco','balanced','detail']);
 export function scanBudget(density='balanced'){
@@ -114,9 +115,9 @@ function skinned(v,surface,matrices){
 /** Can be called by the same draw frame that evaluated the renderer skeleton.
  * Do not use model name, color or skin 1 as an anatomical guess.
  */
-export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline',density='balanced'}={}){
+export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline',density='balanced',palette='aig-rgb',warning='none'}={}){
  if(!SCAN_MODES.includes(mode))throw Error('SCAN_MODE_INVALID');
- const b=scanBudget(density);
+ const b=scanBudget(density);scanPalette(palette);
  if(!canvas||!view||!topology||mode==='off'||!Array.isArray(world)){
   if(canvas?.getContext){const c=canvas.getContext('2d');c?.clearRect(0,0,canvas.width,canvas.height);}
   return {status:'SCAN_OFF',bonesDrawn:0,dashedSegments:0,trueDepthHiddenVerified:false};
@@ -130,17 +131,26 @@ export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cssW,cssH);
  const project=p=>scanProject(p,view,cssW,cssH),g=topology.bones||[];
  let bonesDrawn=0,dashedSegments=0;
- ctx.save();ctx.lineWidth=b.pixels;ctx.strokeStyle='#8df4ff';ctx.setLineDash([]);ctx.beginPath();
+ // Color-separated SOLID paths; bounded strokes, no dense extra WebGL draw calls.
+ const linesByColor=new Map();
  for(const bone of g){
   if(!roleAllowed(bone.role,mode))continue;
   const from=world[bone.parent],to=world[bone.child];if(!from||!to)continue;
   const p=project(jointPoint(from)),q=project(jointPoint(to));
   if(![...p,...q].every(Number.isFinite))continue;
-  ctx.moveTo(...p);ctx.lineTo(...q);bonesDrawn++;
+  const color=scanColor(bone.role,{palette,line:'bone',warning});
+  if(!linesByColor.has(color))linesByColor.set(color,[]);
+  linesByColor.get(color).push([p,q]);bonesDrawn++;
  }
- ctx.stroke();ctx.restore();
+ ctx.save();ctx.lineWidth=b.pixels;ctx.setLineDash([]);
+ for(const [color,segments] of linesByColor){
+  ctx.strokeStyle=color;ctx.beginPath();
+  for(const [a,z] of segments){ctx.moveTo(...a);ctx.lineTo(...z);}
+  ctx.stroke();
+ }
+ ctx.restore();
  if(mode!=='bones'){
-  ctx.save();ctx.lineWidth=1;ctx.strokeStyle='rgba(171,201,222,.43)';ctx.setLineDash([5,6]);ctx.beginPath();
+  ctx.save();ctx.lineWidth=1;ctx.setLineDash([5,6]);const outlinesByColor=new Map();
   const jointMatrices=(topology.inverse||[]).map((set,si)=>set.map((ib,j)=>matrixProduct(world[view.file.g.skins[si].joints[j]],ib)));
   for(const surface of topology.surfaces||[]){
    if(dashedSegments>=b.segments)break;
@@ -165,12 +175,19 @@ export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline
     if(!visibleEdge)continue;
     const p=projected(edge.a),q=projected(edge.c);
     if(![...p,...q].every(Number.isFinite))continue;
-    ctx.moveTo(...p);ctx.lineTo(...q);dashedSegments++;
+    const color=scanColor(surface.role,{palette,line:'outline',warning});
+    if(!outlinesByColor.has(color))outlinesByColor.set(color,[]);
+    outlinesByColor.get(color).push([p,q]);dashedSegments++;
    }
   }
-  ctx.stroke();ctx.restore();
+  for(const [color,segments] of outlinesByColor){
+   ctx.strokeStyle=color;ctx.beginPath();
+   for(const [p,q] of segments){ctx.moveTo(...p);ctx.lineTo(...q);}
+   ctx.stroke();
+  }
+  ctx.restore();
  }
- return {status:topology.status,bonesDrawn,dashedSegments,
+ return {status:topology.status,bonesDrawn,dashedSegments,palette,warningStyle:warning,sourceMaterialColorsUntouched:true,
   sourceBones:true,sourceSurfaceEdges:true,meshTrianglesDrawn:0,
   trueDepthHiddenVerified:false,occlusionGuessOnly:true,
   dottedSegmentsCapped:b.segments,scanLayersSeparate:true};
