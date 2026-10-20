@@ -8,6 +8,7 @@ export const MOVIE_SOURCE_VERSION='AIG_FASTMODEL_3_4_ACTUAL_CANVAS_MEDIARECORDER
 export const MOVIE_SIZE=Object.freeze({width:1920,height:1080,fps:30});
 const MOVIE_MIMES=Object.freeze([
  {mime:'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',ext:'mp4'},
+ {mime:'video/mp4',ext:'mp4'},
  {mime:'video/webm;codecs=vp9,opus',ext:'webm'},
  {mime:'video/webm;codecs=vp8,opus',ext:'webm'},
  {mime:'video/webm',ext:'webm'}
@@ -75,6 +76,9 @@ export class RealMovieCapture{
   this.source=sourceCanvas;this.startedAt=sourceTimeNow();
   this.lastRenderedTime=-Infinity;
   this._finished=new Promise((resolve,reject)=>{this._resolve=resolve;this._reject=reject;});
+  // The encoder may fail asynchronously before the UI awaits stop(). Keep a
+  // handled promise to avoid browser-level unhandled rejection noise.
+  this._finished.catch(()=>{});
   let recorder;
   try{
    recorder=new MediaRecorderImpl(mix,{mimeType:format.mime,
