@@ -28,7 +28,7 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:no
 <main class="shell"><header class="appbar"><div class="brand"><div class="brand-mark" aria-label="AIG">AIG</div><div><div class="brand-name">AIG <span>CINEMA</span></div><p class="brand-caption">FASTMODEL · 黑色 RGB 幻彩建模工作區</p></div></div><div class="top-status"><i class="status-led" aria-hidden="true"></i><span class="top-stat-text" id="quick-status">本機待機</span><span class="screen-tag" id="resolution-tag">1080p · 60 FPS 目標</span></div></header>
 <section class="workspace" aria-label="3D 建模工作區">
 <div class="workstage"><div class="stage-header"><div class="stage-title">角色建模視窗</div><span class="stage-mode">視角拖曳 · 雙指縮放</span></div>
-<div class="viewport" id="viewport-frame"><canvas id="view" aria-label="AIG 3D 角色建模及骨架動畫"></canvas><canvas id="guide-overlay" class="guide-overlay" aria-hidden="true"></canvas><div class="hud"><div class="hud-title">AIG LIVE VIEWPORT</div><div id="overlay" class="overlay" role="status">載入角色後開始預覽</div></div><div class="viewport-bottom"><span>RGB · 3D</span><span>本機模型</span><span class="unsafe">外觀候選 · 未發布</span></div></div>
+<div class="viewport" id="viewport-frame"><canvas id="view" aria-label="AIG 3D 角色建模及骨架動畫"></canvas><canvas id="guide-overlay" class="guide-overlay" aria-hidden="true"></canvas><canvas id="scan-overlay" class="guide-overlay" aria-hidden="true" style="z-index:2;pointer-events:none"></canvas><div class="hud"><div class="hud-title">AIG LIVE VIEWPORT</div><div id="overlay" class="overlay" role="status">載入角色後開始預覽</div></div><div class="viewport-bottom"><span>RGB · 3D</span><span>本機模型</span><span class="unsafe">外觀候選 · 未發布</span></div></div>
 <div class="belowbar"><span class="mini-caption">工作中保留原模型及未儲存修改</span><span class="performance-note">來源模型尚未外觀驗收</span></div></div>
 <aside class="control-pane" aria-label="AIG 建模控制"><div class="pane-heading"><strong>建模控制台</strong><small>按頁切換 · 真功能</small></div>
 <div class="panel-tabs" role="tablist" aria-label="建模功能分類"><button id="tab-model" class="tab" type="button" role="tab" data-panel-target="model" aria-controls="panel-model" aria-selected="true">建模</button><button id="tab-scan" class="tab" type="button" role="tab" data-panel-target="scan" aria-controls="panel-scan" aria-selected="false">掃描</button><button id="tab-motion" class="tab" type="button" role="tab" data-panel-target="motion" aria-controls="panel-motion" aria-selected="false">動畫</button><button id="tab-display" class="tab" type="button" role="tab" data-panel-target="display" aria-controls="panel-display" aria-selected="false">畫質</button><button id="tab-resource" class="tab" type="button" role="tab" data-panel-target="resource" aria-controls="panel-resource" aria-selected="false">資源</button></div>
@@ -42,6 +42,16 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:no
 <h2 class="panel-title">快速掃描 · 光線 · 虛線支架</h2>
 <p class="panel-sub">離線分析已載入 GLB 的頂點及幾何外包圍；場景類型由你指定，不假稱 AI 語意辨識或手機 LiDAR。</p>
 <label for="scene-kind">掃描對象分類<select id="scene-kind"><option value="person" selected>人物</option><option value="animal">動物</option><option value="plant">植物</option><option value="tree">樹木</option><option value="environment">環境／建築</option><option value="water">水面</option><option value="sky">天空</option></select></label>
+<div class="divider"></div><h3>FastModel 2.1 · 骨架實線／外型隱藏虛線</h3>
+<label for="scan-mode">掃描顯示層<select id="scan-mode">
+<option value="off" selected>關閉 · 正式純表面／效能優先</option>
+<option value="bones-outline">骨架實線 ＋ 外輪廓低亮虛線</option>
+<option value="bones">只看真骨架實線</option>
+<option value="head-neck">頭頸重點 · 明確標記區域</option>
+<option value="hair">髮束重點 · 明確標記區域</option>
+</select></label>
+<label for="scan-density">掃描線段負荷<select id="scan-density"><option value="eco">低負荷 · 手機</option><option value="balanced" selected>平衡 · 預設</option><option value="detail">細節 · Windows</option></select></label>
+<p id="scan-layer-status" class="small small-status" role="status">掃描覆蓋層關閉；來源 GLB 不變。骨架採真 joints 父子關係實線，外型採來源網格邊界／投影輪廓的淡化虛線，並非 GPU 真深度遮擋。</p>
 <div class="btns" style="margin-top:12px"><button class="action primary" type="button" id="scan-btn">快速抽樣掃描 GLB</button></div>
 <div id="scan-status" class="detail" role="status">請先載入 GLB。掃描採有限頂點抽樣，不修改原始模型。</div>
 <div class="divider"></div><h3>角色防撞臉 · 女主角／其他同學</h3>
