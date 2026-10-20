@@ -113,7 +113,7 @@ export class StoryAudio{
     speech.speak(spoken);this.speechUtterance=spoken;
    }catch(err){this.voiceAvailable=false;this.onStatus('此裝置無法朗讀台詞；字幕仍顯示。');}
   }
-  if(this.effectsAvailable){
+  if(this.effectsAvailable&&this.options.sfx){
    const sfx=audioCueForAction(beat.actionId);
    if(sfx){
     try{this._tone({...sfx,gain:.10*this.options.volume});}
@@ -122,7 +122,7 @@ export class StoryAudio{
   }
  }
  tick(dt){
-  if(!this.enabled||this.paused||!this.musicEnabled||!this.audio)return;
+  if(!this.enabled||this.paused||!this.musicEnabled||!this.options.music||!this.audio)return;
   if(!Number.isFinite(dt)||dt<0||dt>10)return;
   // Browser audio clock creates true tones, not a user-supplied music file.
   // Bound work per frame on mobile: max two notes after frame drops.
