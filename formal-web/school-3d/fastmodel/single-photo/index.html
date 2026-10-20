@@ -10,15 +10,16 @@
 <button id="aig4-build" type="button" disabled>自研生成 3D 體積架構＋八方位（0 點數）</button>
 <p id="aig4-status" class="status" role="status">尚未選擇可分割的前景圖。正面／背面資訊不足處會標為推估或未知。</p>
 <div id="aig4-downloads" class="downloads"></div>
-<div id="aig4-view-gallery" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-width:100%"></div><h3>AIG FastModel 4.1｜極速 SDF 隱式體積預覽（自研／零點數）</h3>
+<div id="aig4-view-gallery" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-width:100%"></div><h3>AIG FastModel 4.2｜免卡頓漸進 SDF（自研／零點數）</h3>
 <p>先以解析式頭／頸／身體／手腳／裙擺／髮量的連續距離場快速預覽：每次旋轉不重新建立網格，只有正式匯出 GLB 才轉三角面。部位仍是按比例推估，<strong>不是</strong>已驗證的女主角臉、頭髮、衣服或人體骨架。</p>
 <canvas id="aig41-canvas" width="480" height="360" style="display:block;width:100%;height:auto;aspect-ratio:4 / 3;max-width:700px;background:#030911;border:1px solid #36556e;border-radius:8px" aria-label="自研 WebGL2 SDF 人物技術草模 3D 預覽"></canvas>
 <label for="aig41-yaw">即時觀看角度（不重建網格）</label>
 <input type="range" id="aig41-yaw" min="0" max="315" step="45" value="0" disabled>
 <label for="aig41-quality">SDF 預覽畫質／效能</label>
-<select id="aig41-quality" disabled><option value="fast" selected>極速 50% 像素</option><option value="balanced">均衡 75%</option><option value="quality">品質 100%</option></select>
+<select id="aig41-quality" disabled><option value="auto" selected>自動調整（GPU 計時，預設）</option><option value="fast">手動極速 50%</option><option value="balanced">手動均衡 75%</option><option value="quality">手動品質 100%</option></select>
 <button type="button" id="aig41-preview" disabled>重新渲染 SDF 即時預覽</button>
 <button type="button" id="aig41-release" disabled>釋放 SDF GPU 資源</button>
+<p>4.2 優化：滑動／觸控連續事件合併成單幀，保留已編輯畫面；背景像素先判定是否落在角色範圍，降低空白區計算。支援非阻塞 GPU 計時的裝置才依實測自動升降畫質；缺少計時擴充時維持安全畫質，不冒充 60 FPS。需要輸出或 SDF 太慢時可改用下方已保存的 4.0 GLB 低面數草模。</p>
 <p id="aig41-status" class="status" role="status">等待 4.0 來源比對成功後取得比例資料。WebGL2 可用才啟動，無付費 AI、無光線追蹤。</p>
 
 <p>4.0 Gate：真 3D 幾何體塊、8 個角度、比例報告與不確定性標記；尚未建立獨立手腳／五官／髮束拓樸、Rig、精準材質或正式動畫，不能當完成模型放行。</p>
