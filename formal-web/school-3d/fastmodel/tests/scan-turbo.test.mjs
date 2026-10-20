@@ -73,10 +73,10 @@ test('extreme scan UI and programmatic callbacks + offline module integration ar
  assert.ok(handler.includes("pendingExtremeStats={revision,file}"));
  assert.ok(!handler.includes('scanGeometry('),'must not scan thousands of vertices before first real bone overlay');
 
- assert.ok(main.includes("geometry:speed==='turbo'?'bones':'all'"));
+ assert.ok(main.includes("scanCachedTopology(f,density,'bones')"));
  assert.ok(main.includes('turboScan.sample({mainSubmitMs:'));
  assert.ok(main.includes("result.turboScan={speed:choice.speed"));
  assert.ok(main.includes('overlayMs:'));
  assert.ok(pack.includes('scan-turbo.mjs'));
- assert.ok(pack.includes("'\\n'+scanDepth+'\\n'+turbo+'\\n'+scanOverlay"));
+ assert.ok(pack.includes("'\\n'+scanDepth+'\\n'+turbo+'\\n'+scanCache+'\\n'+scanOverlay"));
 });
