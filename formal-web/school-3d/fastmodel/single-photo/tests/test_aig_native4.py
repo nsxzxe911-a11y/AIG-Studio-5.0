@@ -52,6 +52,26 @@ class AigNative4Tests(unittest.TestCase):
   self.assertEqual(audit['skins'],0)
   self.assertEqual(audit['animationClips'],0)
   self.assertEqual(digest(model),result['meshGLBSHA256'])
+  # Oriented closed shell must have POSITIVE signed volume, not inward normals.
+  raw=model.read_bytes()
+  length=int.from_bytes(raw[12:16],'little')
+  gltf=json.loads(raw[20:20+length])
+  offset=20+length+8
+  def values(accessor_id,fmt):
+   acc=gltf['accessors'][accessor_id]
+   bv=gltf['bufferViews'][acc['bufferView']]
+   start=offset+bv['byteOffset']
+   return [tuple(__import__('struct').unpack_from('<'+fmt,raw,start+i*__import__('struct').calcsize('<'+fmt)))
+           for i in range(acc['count'])]
+  primitive=gltf['meshes'][0]['primitives'][0]
+  xyz=values(primitive['attributes']['POSITION'],'3f')
+  inds=[row[0] for row in values(primitive['indices'],'I')]
+  signed=0.0
+  for k in range(0,len(inds),3):
+   a,b,c=(xyz[inds[k+j]] for j in (0,1,2))
+   cross=(b[1]*c[2]-b[2]*c[1],b[2]*c[0]-b[0]*c[2],b[0]*c[1]-b[1]*c[0])
+   signed+=(a[0]*cross[0]+a[1]*cross[1]+a[2]*cross[2])/6
+  self.assertGreater(signed,0,'AIG4_GLB_INWARD_FACE_WINDING')
   self.assertGreater(audit['extentXYZ'][2],.001)
   self.assertEqual(len(list((folder/'unknown-views').glob('*.png'))),8)
   self.assertTrue((folder/'confidence-2D-HEURISTIC.png').is_file())
