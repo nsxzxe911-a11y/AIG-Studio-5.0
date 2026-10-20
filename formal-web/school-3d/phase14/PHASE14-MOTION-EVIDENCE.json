@@ -1,0 +1,15 @@
+{
+  "frames": 19,
+  "res": [
+    960,
+    540
+  ],
+  "fps": 12,
+  "realCanvasCapture": true,
+  "nonidenticalFrames": 18,
+  "maxMeanBgrDelta": 0.301,
+  "hairTelemetry": "88 髮絲引導線 · 位移 19.2px · 非完整3D髮束",
+  "browserJSErrors": [],
+  "visualAuthority": "NOT_APPROVED",
+  "kind": "2.5D hair spring and self-developed face warp"
+}
