@@ -115,7 +115,7 @@ function skinned(v,surface,matrices){
 /** Can be called by the same draw frame that evaluated the renderer skeleton.
  * Do not use model name, color or skin 1 as an anatomical guess.
  */
-export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline',density='balanced',palette='aig-rgb',warning='none'}={}){
+export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline',density='balanced',palette='aig-rgb',warning='none',highlightRoles=[]}={}){
  if(!SCAN_MODES.includes(mode))throw Error('SCAN_MODE_INVALID');
  const b=scanBudget(density);scanPalette(palette);
  if(!canvas||!view||!topology||mode==='off'||!Array.isArray(world)){
@@ -138,7 +138,7 @@ export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline
   const from=world[bone.parent],to=world[bone.child];if(!from||!to)continue;
   const p=project(jointPoint(from)),q=project(jointPoint(to));
   if(![...p,...q].every(Number.isFinite))continue;
-  const color=scanColor(bone.role,{palette,line:'bone',warning});
+  const color=scanColor(bone.role,{palette,line:'bone',warning,highlightRoles});
   if(!linesByColor.has(color))linesByColor.set(color,[]);
   linesByColor.get(color).push([p,q]);bonesDrawn++;
  }
@@ -175,7 +175,7 @@ export function paintScanOverlay(canvas,view,topology,world,{mode='bones-outline
     if(!visibleEdge)continue;
     const p=projected(edge.a),q=projected(edge.c);
     if(![...p,...q].every(Number.isFinite))continue;
-    const color=scanColor(surface.role,{palette,line:'outline',warning});
+    const color=scanColor(surface.role,{palette,line:'outline',warning,highlightRoles});
     if(!outlinesByColor.has(color))outlinesByColor.set(color,[]);
     outlinesByColor.get(color).push([p,q]);dashedSegments++;
    }
