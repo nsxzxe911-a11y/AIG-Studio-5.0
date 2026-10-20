@@ -51,10 +51,26 @@ export function sampleVec3Accessor(file,id,sampleStride=1){
  }
  return out;
 }
+export function previewOptionalMaterials(g){
+ const protectedMat=new Set();
+ for(const node of g.nodes||[]){
+  if(!['head','neck','face','scalp'].includes(node.extras?.aigAnatomyPart)||node.mesh===undefined)continue;
+  for(const p of g.meshes[node.mesh]?.primitives||[])protectedMat.add(p.material??0);
+ }
+ return protectedMat;
+}
+export function maySkipPreviewPrimitive(g,node,p,protectedMat=previewOptionalMaterials(g)){
+ const mat=p.material??0,extras=g.materials?.[mat]?.extras;
+ if(['head','neck','face','scalp'].includes(node.extras?.aigAnatomyPart))return false;
+ return extras?.aigOptionalRenderDetail===true &&
+   ['fine-hair','foliage','water-foam'].includes(extras?.aigOptionalGroup) &&
+   !protectedMat.has(mat);
+}
 export function buildBatches(file,detail='full'){
  const g=file.g, groups=new Map(),bound={min:[Infinity,Infinity,Infinity],max:[-Infinity,-Infinity,-Infinity]};let primitives=0,skipped=0;
+ const protectedMat=previewOptionalMaterials(g);
  for(const node of g.nodes){if(node.mesh===undefined)continue;const skin=node.skin??0,mesh=g.meshes[node.mesh];
- for(const p of mesh.primitives){const mat=p.material??0;if(detail==='preview'&&skin===1){skipped++;continue;}
+ for(const p of mesh.primitives){const mat=p.material??0;if(detail==='preview'&&maySkipPreviewPrimitive(g,node,p,protectedMat)){skipped++;continue;}
   const attr=p.attributes;let vertex=readAccessor(file,attr.POSITION),uv=attr.TEXCOORD_0===undefined?null:readAccessor(file,attr.TEXCOORD_0), joints=readAccessor(file,attr.JOINTS_0),weights=readAccessor(file,attr.WEIGHTS_0),col=attr.COLOR_0===undefined?null:readAccessor(file,attr.COLOR_0),idx=readAccessor(file,p.indices);
   const vCount=vertex.length/3;if(idx.length%3)throw Error('Nontriangle GLB primitive');const key=skin+'/'+mat;
   if(!groups.has(key))groups.set(key,{skin,mat,vertices:[],indices:[],vertexCount:0,primitives:0});const b=groups.get(key),offset=b.vertexCount;
