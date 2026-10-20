@@ -4,14 +4,18 @@ from urllib.error import HTTPError
 from urllib.request import Request,urlopen
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from provider import MeshyClient
-from reconstruction_service import capabilities,require_service,project_job,SCHEMA,SERVICE_ID
+from reconstruction_service import capabilities,require_service,project_job,SCHEMA,SERVICE_ID,MULTIVIEW_ID
 from server import make_server
 
 class ReconstructionServiceTests(unittest.TestCase):
  def test_only_real_provider_available_and_future_backends_are_not_implemented(self):
   config=capabilities(MeshyClient(''))
   self.assertEqual(config['schema'],SCHEMA)
-  self.assertEqual(len(config['providers']),1)
+  self.assertEqual(len(config['providers']),2)
+  self.assertTrue(all(p['modelServiceIsReal'] for p in config['providers']))
+  self.assertEqual(config['providers'][1]['id'],MULTIVIEW_ID)
+  self.assertEqual(config['providers'][1]['maxViews'],4)
+  self.assertFalse(config['providers'][1]['liveGenerationVerified'])
   self.assertFalse(config['providers'][0]['configured'])
   self.assertFalse(config['providers'][0]['liveGenerationVerified'])
   self.assertFalse(config['providers'][0]['separateTexturingStatusAvailable'])
@@ -22,6 +26,7 @@ class ReconstructionServiceTests(unittest.TestCase):
   with self.assertRaisesRegex(ValueError,'RECONSTRUCTION_SERVICE_UNSUPPORTED'):
    require_service('local-onnx-3d',MeshyClient('ABC'))
   self.assertEqual(require_service(SERVICE_ID,MeshyClient('ABC')),SERVICE_ID)
+  self.assertEqual(require_service(MULTIVIEW_ID,MeshyClient('ABC')),MULTIVIEW_ID)
  def sample(self,status='RUNNING',**stages):
   return {'id':'a'*32,'status':status,'stages':{k:{'status':v} for k,v in stages.items()},
     'artifacts':{},'sourceSHA256':'b'*64,'uploadSHA256':'c'*64,'originalImageStillAvailable':True}
