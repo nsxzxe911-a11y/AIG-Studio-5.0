@@ -5,7 +5,7 @@ import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {inspectSkinPose,SkinAnomalyMonitor} from './skin-anomaly.mjs';
 import {REVIEW_DIRECTIONS,reviewCameraPose,reviewPoseTime} from './heroine-review.mjs';
 import {TIMELINE_FRACTIONS,composeTimelineImage} from './timeline-review.mjs';
-import {inspectExternalAction,copyCompatibleClips} from './action-compatibility.mjs';
+import {inspectExternalAction,copyCompatibleClips,commitCompatibleClips} from './action-compatibility.mjs';
 
 export async function parseRiggedGLB(buffer){
  if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>200*1024*1024)throw Error('GLB_SIZE_LIMIT');
@@ -79,13 +79,11 @@ export class PhotoViewer{
    const copied=copyCompatibleClips(file.animations);
    // Animation only. DO NOT add the source GLB mesh to the displayed heroine.
    // This avoids a second translucent head/skin being rendered over the target.
-   const firstIndex=controller.clips.length;
-   controller.clips.push(...copied);
-   controller.select(firstIndex);
+   const commit=commitCompatibleClips(controller,copied);
    this.skinProbe=null;
    return {...result,status:'COMPATIBLE_CLIP_LOADED_SOURCE_QA_ONLY',
-    selectedIndex:firstIndex,importedNames:copied.map(x=>x.name),
-    actionClipImported:true,originalCharacterMeshModified:false};
+    selectedIndex:commit.selectedIndex,importedNames:copied.map(x=>x.name),
+    actionClipImported:commit.committed,originalCharacterMeshModified:false};
   }finally{
    if(file?.scene)this.release(file.scene);
    this.actionImportBusy=false;
