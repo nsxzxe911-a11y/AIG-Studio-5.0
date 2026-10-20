@@ -13,6 +13,7 @@ import {Aig42Governor,Aig42FrameCoalescer,AIG42_SCHEMA} from './aig-performance-
 import {createRig,Aig43RigController,Aig43PatchCache,poseUniforms} from './aig-hybrid-4-3.mjs';
 import {appearanceFor,auditHairNeck,Aig44TimingEvidence} from './aig-qa-4-4.mjs';
 import {AIG45_POSES,AIG45_MARKERS,AIG45_SCHEMA,recognizePose,normalizeMark,auditMarks,reviewPoseSet} from './aig-calibration-4-5.mjs';
+import {AIG46_SCHEMA,normalizePoseSet,buildHeadNeckPonytail,exportOBJ} from './aig-head-neck-4-6.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -365,6 +366,7 @@ async function aig45ImageFromFile(file){
 $('aig45-input').addEventListener('change',async()=>{
  // Do not carry landmarks or hashes across a different upload batch.
  aig45Entries=[];aig45Active=null;aig45Marks=[];aig45Accepted.clear();
+ aig46Reset();
  $('aig45-selector').replaceChildren();
  aig45Draw();aig45Controls();
  const files=Array.from($('aig45-input').files||[]);
@@ -422,6 +424,7 @@ $('aig45-accept').addEventListener('click',()=>{
   const points=Object.fromEntries(AIG45_MARKERS.map((name,i)=>[name,aig45Marks[i]]));
   const evidence=auditMarks(aig45Active.source,points);
   aig45Accepted.set(aig45Active.id,evidence);
+  aig46Reset();
   aig45SetStatus('校正已保存（僅本頁）：'+aig45Active.id+
    '；肩寬／身高比例 '+evidence.ratios.apparentShoulderWidthOverBody.toFixed(3)+
    '。深度與背面未實測，不會生成假 3D。');
@@ -444,6 +447,125 @@ $('aig45-export').addEventListener('click',()=>{
   aig45SetStatus('來源 SHA＋手動比例資料已匯出。'+images.length+
    ' 張不同站姿不構成多角度 3D 觀測；背面仍是未知。');
  }catch(error){aig45SetStatus('校正報告 BLOCKED：'+error.message);}
+});
+
+// 4.6 independent native geometry path: no paid APIs or overwrite of 4.0 GLB.
+let aig46Profile=null,aig46Draft=null;
+const aig46Canvas=$('aig46-canvas'),aig46Ctx=aig46Canvas.getContext('2d');
+function aig46Reset(){
+ aig46Draft=null;aig46Profile=null;
+ $('aig46-downloads').replaceChildren();
+ for(const id of ['aig46-swing','aig46-back','aig46-yaw'])$(id).disabled=true;
+ $('aig46-build').disabled=!aig45Accepted.size;
+ $('aig46-status').textContent='4.6 等待校正報告。已存在的原圖、4.0 GLB 與其餘 Runtime 工作區保持不變。';
+ aig46Draw();
+}
+function aig46Draw(){
+ const ctx=aig46Ctx,c=aig46Canvas;
+ if(!ctx)return;
+ ctx.fillStyle='#020407';ctx.fillRect(0,0,c.width,c.height);
+ ctx.fillStyle='#b3d6ea';ctx.font='13px sans-serif';
+ ctx.fillText('AIG 4.6 · 推估幾何，不是擬真人物',12,22);
+ if(!aig46Draft)return;
+ const yaw=Number($('aig46-yaw').value)*Math.PI/180;
+ const cos=Math.cos(yaw),sin=Math.sin(yaw);
+ const scale=690,cy=c.height*.66;
+ const colorByPart={head:'#d3a9a1',neck:'#8dc6e8',ponytail:'#684a44'};
+ const tris=[];
+ for(const part of aig46Draft.parts){
+  const points=[];
+  for(let i=0;i<part.positions.length;i+=3){
+   const x=part.positions[i],y=part.positions[i+1],z=part.positions[i+2];
+   const rx=x*cos+z*sin,rz=-x*sin+z*cos;
+   points.push({x:c.width/2+rx*scale,y:cy-(y-.22)*scale,z:rz});
+  }
+  for(let i=0;i<part.indices.length;i+=3){
+   const a=points[part.indices[i]],b=points[part.indices[i+1]],
+    d=points[part.indices[i+2]];
+   // Camera projection with back-to-front painter ordering for technical preview.
+   tris.push({a,b,d,z:(a.z+b.z+d.z)/3,color:colorByPart[part.name]||'#a9b6c4'});
+  }
+ }
+ tris.sort((a,b)=>a.z-b.z);
+ ctx.lineWidth=.5;
+ for(const t of tris){
+  ctx.fillStyle=t.color;ctx.strokeStyle='rgba(2,4,7,.28)';
+  ctx.beginPath();ctx.moveTo(t.a.x,t.a.y);ctx.lineTo(t.b.x,t.b.y);
+  ctx.lineTo(t.d.x,t.d.y);ctx.closePath();ctx.fill();ctx.stroke();
+ }
+ ctx.fillStyle='#f3c47a';
+ ctx.fillText('3 個獨立封閉網格 · 無骨架／背面照片',12,c.height-16);
+}
+function aig46Status(){
+ if(!aig46Draft)return;
+ const summary=aig46Draft.topology.map(q=>q.part+': '+q.triangleCount+' 面').join(' / ');
+ const profile=aig46Profile;
+ $('aig46-status').textContent='來源 '+profile.poses.length+' 張已校正正面姿勢。'+
+  summary+'。封閉網格：'+(aig46Draft.topologyQA?'PASS':'BLOCKED')+
+  '；頭頸代理交疊：'+(aig46Draft.headNeckProxyTouchByGeometry?'存在':'需複查')+
+  '。個別網格尚未焊成真皮膚、馬尾髮絲未驗證，不可作正式人物。';
+}
+function aig46Rebuild(){
+ if(!aig46Profile)return;
+ try{
+  const swing=Number($('aig46-swing').value)/1000,
+   back=Number($('aig46-back').value)/1000;
+  const candidate=buildHeadNeckPonytail(aig46Profile,
+   {ponytailSwing:swing,ponytailBack:back});
+  if(!candidate.topologyQA)throw Error('AIG46_WATERTIGHT_OR_OUTWARD_NORMAL_FAILED');
+  aig46Draft=candidate;
+  $('aig46-swing-value').textContent=swing.toFixed(3);
+  $('aig46-back-value').textContent=back.toFixed(3);
+  aig46Draw();aig46Status();
+ }catch(error){
+  aig46Draft=null;
+  $('aig46-status').textContent='4.6 幾何 BLOCKED：'+error.message+
+   '。保留來源圖與既有 4.0 GLB。';
+  aig46Draw();
+ }
+}
+$('aig46-build').addEventListener('click',()=>{
+ try{
+  aig46Profile=normalizePoseSet([...aig45Accepted.values()]);
+  for(const id of ['aig46-swing','aig46-back','aig46-yaw'])$(id).disabled=false;
+  aig46Rebuild();
+  if(aig46Draft){
+   $('aig46-downloads').replaceChildren();
+   for(const [id,label] of [['obj','下載頭頸馬尾技術 OBJ'],['report','下載 4.6 幾何 QA JSON']]){
+    const button=document.createElement('button');button.type='button';button.textContent=label;
+    button.addEventListener('click',()=>{
+     if(!aig46Draft||!aig46Profile)return;
+     const report={schema:AIG46_SCHEMA,sourceSHA256:aig46Draft.sourceSHA256,
+      source2DProfiles:aig46Profile.poses,medianRatios:aig46Profile.medianRatios,
+      topology:aig46Draft.topology,headNeckProxyTouchByGeometry:aig46Draft.headNeckProxyTouchByGeometry,
+      ponytailRootNearHeadProxy:aig46Draft.ponytailRootNearHeadProxy,
+      ponytailNeckProxyIntersectionRisk:aig46Draft.ponytailNeckProxyIntersectionRisk,
+      rearDepthKnown:false,headNeckMeshSeamWelded:false,
+      realPhoto3DVerified:false,zeroCredits:true,releaseAllowed:false};
+     const isOBJ=id==='obj';
+     const data=isOBJ?exportOBJ(aig46Draft):JSON.stringify(report,null,2);
+     const uri=URL.createObjectURL(new Blob([data],
+      {type:isOBJ?'text/plain':'application/json'}));
+     const link=document.createElement('a');
+     link.href=uri;link.download=isOBJ?'AIG-4.6-head-neck-ponytail-TECHNICAL-DRAFT.obj':
+      'AIG-4.6-source-part-QA-NOT-APPROVED.json';
+     link.click();setTimeout(()=>URL.revokeObjectURL(uri),30000);
+    });
+    $('aig46-downloads').append(button);
+   }
+  }
+ }catch(error){
+  aig46Draft=null;aig46Profile=null;
+  $('aig46-status').textContent='4.6 多姿勢校正 BLOCKED：'+error.message+
+   '。有不同透視／比例時須先回 4.5 修正標點，不會捏造背面。';
+  aig46Draw();
+ }
+});
+for(const id of ['aig46-swing','aig46-back'])
+ $(id).addEventListener('input',aig46Rebuild);
+$('aig46-yaw').addEventListener('input',()=>{
+ $('aig46-yaw-value').textContent=$('aig46-yaw').value+'°';
+ aig46Draw();
 });
 
 let aig41Renderer=null,aig41Scene=null,aig42FrameQueue=null;
