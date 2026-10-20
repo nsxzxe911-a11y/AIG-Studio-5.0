@@ -57,6 +57,11 @@ class TestMeshFirstRetarget(unittest.TestCase):
   q.write_text(json.dumps(d))
   with self.assertRaisesRegex(ValueError,'2D pixel landmarks'):
    bind_to_target(SRC,self.mesh,q,self.path/'bad2.glb')
+ def test_reverse_authority_sha_cannot_drift(self):
+  q=self.path/'wrongref.json';d=json.loads(self.anchors.read_text());d['reverseAuthoritySHA256']='f'*64
+  q.write_text(json.dumps(d))
+  with self.assertRaisesRegex(ValueError,'reverse Authority SHA mismatch'):
+   bind_to_target(SRC,self.mesh,q,self.path/'wrong_ref.glb')
  def test_missing_bone_fails_closed(self):
   q=self.path/'missing.json';d=json.loads(self.anchors.read_text());d['3dJointPositionsUnitless'].pop('Head')
   q.write_text(json.dumps(d))
