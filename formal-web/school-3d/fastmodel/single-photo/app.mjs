@@ -1,9 +1,17 @@
 import {PhotoViewer} from './viewer.mjs';
 import {SubmissionJournal} from './submission.mjs';
 import {reviewEvidenceManifest} from './heroine-review.mjs';
+import {timelineEvidenceManifest} from './timeline-review.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
-const reviewObjectUrls=[];
+const reviewObjectUrls=[],timelineObjectUrls=[];
+function clearTimelineEvidence(){
+ for(const u of timelineObjectUrls)URL.revokeObjectURL(u);
+ timelineObjectUrls.length=0;
+ $('timeline-downloads').replaceChildren();
+ $('timeline-image').hidden=true;$('timeline-image').removeAttribute('src');
+ $('timeline-status').textContent='尚無這個真實 GLB 的 16 格動畫檢查證據；正式女主角與打鬥動作尚未核准。';
+}
 function clearReviewEvidence(){
  for(const url of reviewObjectUrls)URL.revokeObjectURL(url);
  reviewObjectUrls.length=0;
@@ -25,10 +33,14 @@ function addLink(label,url,name){const a=document.createElement('a');a.className
 async function load(bytes,orbit){
  if(!view)return;
  const clips=await view.load(bytes,{orbit});$('clip').replaceChildren();
- clearReviewEvidence();
+ clearReviewEvidence();clearTimelineEvidence();
  sourceSha=null;
  try{sourceSha=await sha256Bytes(bytes);}catch(e){$('review-status').textContent='GLB 已載入，但 SHA-256 無法取得：'+e.message+'。證據匯出 BLOCKED。';}
  $('review-capture').disabled=!sourceSha;
+ $('timeline-capture').disabled=!sourceSha||!clips.length;
+ $('timeline-status').textContent=clips.length
+  ?'此模型已有 '+clips.length+' 個實際動畫片段，可選擇片段並擷取四時間點 × 四方向畫面；不代表具有打鬥劇情。'
+  :'GLB 已載入，但沒有任何真實動畫片段；不能假裝打架或產生動畫 16 格，請提供有骨架動作的 GLB。';
  $('skin-check').disabled=false;
  $('skin-check-status').textContent='GLB 已載入。可按「檢查」掃描當前皮膚重疊，並在動畫播放時收集 12 個真實姿態。';
  $('skin-check-downloads').replaceChildren();
@@ -108,6 +120,47 @@ function renderSkinReport(r){
   $('skin-check-downloads').append(a);
  }
 }
+$('timeline-capture').addEventListener('click',async()=>{
+ if(!sourceSha||!view?.model||!view.animation?.clips?.[view.animation.index]){
+  $('timeline-status').textContent='缺少 GLB SHA 或真實動畫片段，不能產生 16 格驗收畫面。';return;
+ }
+ $('timeline-capture').disabled=true;$('review-capture').disabled=true;
+ clearTimelineEvidence();
+ $('timeline-status').textContent='開始從真實 GLB 動畫擷取；0／25／50／75% × 四方向。';
+ try{
+  const startedSha=sourceSha;
+  const result=await view.captureTimelineReview({onProgress:p=>{
+   $('timeline-status').textContent='實際姿態已擷取 '+p.capturedPoses+'/'+p.targetPoses+
+     '，畫面 '+p.frames+'/16。來源模型與動畫不修改。';
+  }});
+  if(sourceSha!==startedSha)throw Error('TIMELINE_SOURCE_CHANGED');
+  const manifest=timelineEvidenceManifest({sourceSha256:sourceSha,
+    clipName:result.clipName,samples:result.samples});
+  const png=URL.createObjectURL(result.image);
+  const json=URL.createObjectURL(new Blob([JSON.stringify(manifest,null,2)],{type:'application/json'}));
+  timelineObjectUrls.push(png,json);
+  $('timeline-image').src=png;$('timeline-image').hidden=false;
+  for(const link of [
+   {url:png,text:'下載真正動畫的 16 格檢查圖 PNG',file:'AIG-FastModel-3-0-GLB-Timeline-16-Frames.png'},
+   {url:json,text:'下載 SHA／逐段皮膚異常 JSON',file:'AIG-FastModel-3-0-Animate-QA-BLOCKED.json'}
+  ]){
+   const a=document.createElement('a');a.className='download';a.href=link.url;
+   a.download=link.file;a.textContent=link.text;$('timeline-downloads').append(a);
+  }
+  const risky=manifest.rows.filter(row=>
+    row.duplicateSurfacePairs>0||row.collapsedTriangles>0||row.badRigWeights>0);
+  $('timeline-status').textContent='實際動畫片段「'+manifest.selectedClipName+'」已擷取 16 格。'+
+   '可疑姿態 '+risky.length+'/4；SHA-256 '+sourceSha.slice(0,16)+'…。'+
+   '結果只涵蓋四個取樣時間，不能確認女主角已修復、全段無穿模或片段包含打鬥。';
+ }catch(e){
+  clearTimelineEvidence();
+  $('timeline-status').textContent='全段 16 格檢查 BLOCKED：'+e.message+
+   '。先前圖片已清空，避免將失敗或不同來源的圖片當成正式通過。';
+ }finally{
+  $('timeline-capture').disabled=!sourceSha||!view?.animation?.clips?.length;
+  $('review-capture').disabled=!sourceSha;
+ }
+});
 $('review-capture').addEventListener('click',async()=>{
  if(!view?.model||!sourceSha)return;
  const button=$('review-capture');
