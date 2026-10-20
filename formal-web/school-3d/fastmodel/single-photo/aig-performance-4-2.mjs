@@ -82,7 +82,7 @@ export class Aig42FrameCoalescer {
   this.pending=false;this.latest=null;
  }
 }
-// Nonblocking WebGL2 timer: no gl.finish(), readPixels(), or spin/poll loops.
+// Nonblocking WebGL2 timer: never waits synchronously on GPU execution.
 export class Aig42GpuTimer {
  constructor(gl){
   this.gl=gl;
