@@ -179,6 +179,32 @@ jobs:
           path: artifacts/school-3d-phase12-matchstick/
           retention-days: 14
           if-no-files-found: error
+      - name: Phase13 ORIGINAL envelope source-code QA (synthetic image only)
+        run: |
+          node --check formal-web/school-3d/phase13/envelope-workbench.v1.js
+          python -m unittest discover -s formal-web/school-3d/phase13/tools -p 'test_envelope_ci.py' -v
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          a=Path('formal-web/school-3d/phase13')
+          manifest=json.loads((a/'mesh-envelope.v1.json').read_text())
+          html=(a/'envelope-workbench.v1.html').read_text()
+          embedded=json.loads(re.search(r'<script id="spec" type="application/json">\s*(.*?)\s*</script>',html,re.S).group(1))
+          reverse=json.loads(Path('formal-web/school-3d/reverse-authority.v1.json').read_text())
+          assert embedded==manifest, 'HTML embedded envelope manifest drift'
+          assert manifest['source']['sha256']==reverse['source']['sha256']
+          assert manifest['releaseAllowed'] is False and manifest['approved3DModel'] is False
+          print('Phase13 source contract passes; no real heroine model approved')
+          PY
+      - name: Generate Phase13 SYNTHETIC mesh artifact for QA, NOT original girl
+        run: python formal-web/school-3d/phase13/tools/build_envelope_synthetic_fixture.py --outdir artifacts/school-3d-phase13-synthetic
+      - name: Archive explicitly synthetic Phase13 GLB (NOT visual Authority)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-School-3D-Phase13-SYNTHETIC-Skin-Envelope-NOT-APPROVED
+          path: artifacts/school-3d-phase13-synthetic/
+          retention-days: 14
+          if-no-files-found: error
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
