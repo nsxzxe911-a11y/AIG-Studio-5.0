@@ -10,6 +10,7 @@ import {generateVoiceBatch,TTS_VERSION} from './voice-generator.mjs';
 import {inspectHeroineImage,evaluateHeroineJob,HEROINE_REFERENCE} from './heroine-authority-3-7.mjs';
 import {createImplicitScene,AigImplicitRenderer,AIG_SDF_VERSION} from './aig-sdf-4-1.mjs';
 import {Aig42Governor,Aig42FrameCoalescer,AIG42_SCHEMA} from './aig-performance-4-2.mjs';
+import {createRig,Aig43RigController,Aig43PatchCache,poseUniforms} from './aig-hybrid-4-3.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -308,6 +309,7 @@ $('local-glb').addEventListener('change',async()=>{
  }
 });
 let aig41Renderer=null,aig41Scene=null,aig42FrameQueue=null;
+let aig43Controller=null,aig43Cache=null;
 let aig42Governor=null,aig42Epoch=0,aig42CanvasLost=false;
 const AIG41_QUALITY={fast:{pixelScale:.5,maxSteps:48},
  balanced:{pixelScale:.75,maxSteps:64},quality:{pixelScale:1,maxSteps:88}};
@@ -328,7 +330,41 @@ function releaseAig41(){
  aig41Renderer?.dispose();aig41Renderer=null;aig41Scene=null;aig42Governor=null;
  for(const id of ['aig41-yaw','aig41-quality','aig41-preview','aig41-release'])
   $(id).disabled=true;
+ aig43Controller=null;aig43Cache?.invalidateAll();aig43Cache=null;
+ for(const id of ['aig43-part','aig43-angle','aig43-reset'])$(id).disabled=true;
+ $('aig43-angle').value='0';
+ $('aig43-cache').textContent='4.3 GPU 參數已釋放；原圖與成功的 4.0 GLB 保留。';
 }
+function aig43UpdateCache(part){
+ if(!aig43Controller||!aig43Cache)return;
+ const entry=aig43Cache.get(aig43Controller,part);
+ const info=aig43Cache.report();
+ $('aig43-cache').textContent='4.3 '+part+
+  ' · '+(entry.cacheHit?'Mesh 快取命中':'局部 Mesh 更新')+
+  ' · '+entry.mesh.indices.length/3+' 個技術三角面 · 累積命中 '+info.hits+
+  '／重建 '+info.misses+'；四肢與皮膚比例仍為推估。';
+}
+$('aig43-part').addEventListener('change',()=>{
+ if(!aig43Controller)return;
+ const part=$('aig43-part').value;
+ $('aig43-angle').value=String(aig43Controller.rig.angles[part]);
+ aig43UpdateCache(part);
+});
+$('aig43-angle').addEventListener('input',()=>{
+ if(!aig43Controller)return;
+ const part=$('aig43-part').value;
+ aig43Controller.setAngle(part,Number($('aig43-angle').value));
+ aig43UpdateCache(part);
+ aig41Preview();
+});
+$('aig43-reset').addEventListener('click',()=>{
+ if(!aig43Controller)return;
+ const part=$('aig43-part').value;
+ aig43Controller.reset(part);
+ $('aig43-angle').value='0';
+ aig43UpdateCache(part);
+ aig41Preview();
+});
 function aig42Draw(request){
  if(!aig41Scene||aig42CanvasLost||!request||request.epoch!==aig42Epoch)return;
  const canvas=$('aig41-canvas'), selection=$('aig41-quality').value;
@@ -337,6 +373,8 @@ function aig42Draw(request){
  try{
   if(!aig41Renderer)aig41Renderer=new AigImplicitRenderer(canvas,aig41Scene,config);
   else aig41Renderer.configure(config);
+  // Pose uniforms update only positions, not GLB mesh or full-screen GPU shader.
+  if(aig43Controller)aig41Renderer.setRigPose(poseUniforms(aig43Controller.rig));
   const t0=performance.now();
   const result=aig41Renderer.draw(request.yaw);
   const submitMs=performance.now()-t0;
@@ -381,6 +419,12 @@ async function aig41FromScaffold(prefix,expectedSHA){
  if(scaffold.sourceSHA256!==expectedSHA)throw Error('AIG41_SCAFFOLD_IMAGE_SHA_MISMATCH');
  const scene=createImplicitScene(scaffold);
  if(aig42CanvasLost)throw Error('AIG42_WEBGL_CONTEXT_LOST');
+ const rig=createRig(scaffold);
+ aig43Controller=new Aig43RigController(rig);
+ aig43Cache=new Aig43PatchCache();
+ // Prewarm the four bounded limb patches for independent LOD/export tasks.
+ for(const part of ['leftArm','rightArm','leftLeg','rightLeg'])
+  aig43Cache.get(aig43Controller,part);
  aig41Scene=scene;
  aig42Governor=new Aig42Governor({targetGpuMs:12,initialTier:1});
  aig42FrameQueue=new Aig42FrameCoalescer({
@@ -390,6 +434,10 @@ async function aig41FromScaffold(prefix,expectedSHA){
  });
  for(const id of ['aig41-yaw','aig41-quality','aig41-preview','aig41-release'])
   $(id).disabled=false;
+ for(const id of ['aig43-part','aig43-angle','aig43-reset'])$(id).disabled=false;
+ $('aig43-part').value='leftArm';
+ $('aig43-angle').value='0';
+ aig43UpdateCache('leftArm');
  $('aig41-yaw').value='0';
  $('aig41-quality').value='auto';
  aig41Preview();
