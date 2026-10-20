@@ -484,7 +484,7 @@ $('photo').addEventListener('change',async()=>{
    $('heroine-source-status').textContent=
     '指定女主角原始 JPEG SHA 與 1152×1536 尺寸匹配。這只是圖片來源驗證，' +
     '下半身未完整入鏡／髮束遮頸仍須在真正 GLB 建模後檢查。' +
-    '如使用外部 Meshy 服務，須自行按生成且可能消耗點數。';
+    '零點數模式不會呼叫第三方 3D 服務。';
   }else{
    $('heroine-source-status').textContent='這是其他照片或已裁切／重新壓縮檔，' +
     '可另行生成但不能認定為本次指定女主角的唯一正式來源。';
@@ -503,9 +503,9 @@ $('prepared-foreground').addEventListener('change',()=>{
 $('reconstruction-secondary').addEventListener('change',()=>{
  const files=Array.from($('reconstruction-secondary').files||[]);
  $('reconstruction-multiview-status').textContent=files.length>3
-  ?'超過 Meshy 多圖服務上限：主圖 1 張加輔助圖最多 3 張，已阻擋送出。'
+  ?'AIG 目前僅允許最多三張輔助角度作來源比對，已阻擋送出。'
   :files.length
-   ?'已選擇 '+files.length+' 張輔助角度。請切換「Meshy 多視角」服務；它們是尚未對齊的 2D 圖，不是已驗收的 3D。'
+   ?'已選擇 '+files.length+' 張輔助角度；AIG 尚未完成這些圖片的相機校正與來源比例比對。'
    :'沒有選輔助角度。使用單張原圖重建。';
  // 自研多視角校正尚未完成；禁止切換至 Meshy。
 });
