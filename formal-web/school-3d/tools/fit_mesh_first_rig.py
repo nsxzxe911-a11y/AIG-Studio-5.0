@@ -163,6 +163,17 @@ def bind_to_target(source, target, anchors_file, output):
     anchors_doc=json.loads(Path(anchors_file).read_text(encoding='utf-8'))
     if anchors_doc.get('visualApproval')=='APPROVED' and not anchors_doc.get('approvedMeshSHA256'):
         raise ValueError('cannot approve unverified target')
+    # The 3D landmarks must explicitly belong to this same reverse-approved VISUAL SOURCE.
+    # This does not pretend the cropped 2D image gives depth or a human's absolute height.
+    reference_path=Path(__file__).resolve().parent.parent/'reverse-authority.v1.json'
+    if not reference_path.exists():
+        reference_path=Path(__file__).resolve().parent/'reverse-authority.v1.json'
+    if not reference_path.exists():
+        raise ValueError('missing reverse Authority manifest — cannot rebind without source identity')
+    reverse=json.loads(reference_path.read_text(encoding='utf-8'))
+    source_hash=reverse.get('source',{}).get('sha256')
+    if not source_hash or anchors_doc.get('reverseAuthoritySHA256')!=source_hash:
+        raise ValueError('reverse Authority SHA mismatch')
     expected=anchors_doc.get('targetMeshSHA256')
     if not expected or hashlib.sha256(Path(target).read_bytes()).hexdigest()!=expected:
         raise ValueError('target mesh SHA mismatch / unsigned target')
