@@ -46,6 +46,20 @@
 <button type="button" id="aig44-evidence" disabled>下載本機品質／GPU 計時證據 JSON</button>
 <p id="aig44-status" class="status" role="status">等待來源圖片與 4.0 草模。GPU FPS、真髮絲與頭頸網格仍未驗收。</p>
 
+<h3>AIG FastModel 4.5｜女主角四圖入庫＋比例標點（零點數）</h3>
+<p>本套白色兩件式、馬尾女主角四張圖，已註冊來源 SHA；均為不同姿勢的正面／近正面照。可一次匯入四張，逐張在圖上點選八個比例點校正。不會把四種姿勢假裝成正／側／背四視角，未知深度繼續標為推估。</p>
+<label for="aig45-input">載入入庫的四張原始 PNG（最多四張）</label>
+<input id="aig45-input" type="file" accept="image/png" multiple>
+<label for="aig45-selector">選擇當前校正照片</label>
+<select id="aig45-selector" disabled><option value="">請先載入來源 PNG</option></select>
+<canvas id="aig45-canvas" width="450" height="562" style="display:block;width:100%;height:auto;max-width:450px;aspect-ratio:450/562;background:#050b11;border:1px solid #3a5970;border-radius:8px;touch-action:manipulation" aria-label="點選女主角照片的八個二維比例標記"></canvas>
+<p id="aig45-next-point" class="status">待標記：頭頂 → 下巴 → 左右肩 → 左右髖 → 左右腳踝</p>
+<button id="aig45-undo" type="button" disabled>撤回上一個標記</button>
+<button id="aig45-accept" type="button" disabled>確認本張比例資料</button>
+<button id="aig45-export" type="button" disabled>下載四圖來源／比例校正 JSON</button>
+<p id="aig45-status" class="status" role="status">等待來源原圖 SHA 驗證；這是二維比例校正，不是已重建的 3D 人體或八視角。</p>
+
+
 
 
 <p>4.0 Gate：真 3D 幾何體塊、8 個角度、比例報告與不確定性標記；尚未建立獨立手腳／五官／髮束拓樸、Rig、精準材質或正式動畫，不能當完成模型放行。</p>
