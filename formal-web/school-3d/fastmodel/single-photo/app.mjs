@@ -12,6 +12,7 @@ import {createImplicitScene,AigImplicitRenderer,AIG_SDF_VERSION} from './aig-sdf
 import {Aig42Governor,Aig42FrameCoalescer,AIG42_SCHEMA} from './aig-performance-4-2.mjs';
 import {createRig,Aig43RigController,Aig43PatchCache,poseUniforms} from './aig-hybrid-4-3.mjs';
 import {appearanceFor,auditHairNeck,Aig44TimingEvidence} from './aig-qa-4-4.mjs';
+import {AIG45_POSES,AIG45_MARKERS,AIG45_SCHEMA,recognizePose,normalizeMark,auditMarks,reviewPoseSet} from './aig-calibration-4-5.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -309,6 +310,142 @@ $('local-glb').addEventListener('change',async()=>{
   $('skin-check-status').textContent='本機 GLB 未載入：'+err.message+'。原有模型仍保留。';
  }
 });
+// 4.5 offline-only source registry & manual normalized 2D landmark marking.
+let aig45Entries=[],aig45Active=null,aig45Marks=[],aig45Accepted=new Map();
+const aig45Canvas=$('aig45-canvas'),aig45Ctx=aig45Canvas.getContext('2d');
+const aig45Names={
+ headTop:'頭頂',chin:'下巴',leftShoulder:'畫面左肩',rightShoulder:'畫面右肩',
+ leftHip:'畫面左髖',rightHip:'畫面右髖',leftAnkle:'畫面左腳踝',rightAnkle:'畫面右腳踝'};
+function aig45SetStatus(message){$('aig45-status').textContent=message;}
+function aig45Controls(){
+ $('aig45-selector').disabled=!aig45Entries.length;
+ $('aig45-undo').disabled=!aig45Marks.length;
+ $('aig45-accept').disabled=!aig45Active||aig45Marks.length!==AIG45_MARKERS.length;
+ $('aig45-export').disabled=!aig45Accepted.size;
+ const next=AIG45_MARKERS[aig45Marks.length];
+ $('aig45-next-point').textContent=next?'下一個標記：'+aig45Names[next]:
+  '八個標記已完成；請按「確認本張比例資料」。';
+}
+function aig45Draw(){
+ if(!aig45Ctx)return;
+ const c=aig45Canvas;const ctx=aig45Ctx;
+ ctx.clearRect(0,0,c.width,c.height);
+ ctx.fillStyle='#030811';ctx.fillRect(0,0,c.width,c.height);
+ if(!aig45Active)return;
+ const image=aig45Active.image;
+ ctx.drawImage(image,0,0,c.width,c.height);
+ ctx.font='bold 14px sans-serif';ctx.textBaseline='top';
+ aig45Marks.forEach((point,i)=>{
+  const x=point.x*c.width,y=point.y*c.height;
+  ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);
+  ctx.fillStyle='#02e7fd';ctx.fill();
+  ctx.strokeStyle='#030811';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#fff';ctx.fillText(String(i+1),x+9,y+2);
+ });
+}
+function aig45Activate(id){
+ const entry=aig45Entries.find(e=>e.id===id)||null;
+ aig45Active=entry;aig45Marks=[];
+ if(entry){
+  aig45SetStatus('來源 SHA 已匹配：'+entry.id+'。請依序點選八個清楚可見的二維點；若腳踝被遮擋，禁止猜測標記。');
+ }else aig45SetStatus('請選擇入庫來源圖片。');
+ aig45Draw();aig45Controls();
+}
+async function aig45ImageFromFile(file){
+ const objectURL=URL.createObjectURL(file);
+ try{
+  return await new Promise((resolve,reject)=>{
+   const im=new Image();
+   im.onload=()=>resolve(im);
+   im.onerror=()=>reject(Error('AIG45_IMAGE_DECODE_FAILED'));
+   im.src=objectURL;
+  });
+ }finally{URL.revokeObjectURL(objectURL);}
+}
+$('aig45-input').addEventListener('change',async()=>{
+ // Do not carry landmarks or hashes across a different upload batch.
+ aig45Entries=[];aig45Active=null;aig45Marks=[];aig45Accepted.clear();
+ $('aig45-selector').replaceChildren();
+ aig45Draw();aig45Controls();
+ const files=[...$('aig45-input').files||[]];
+ if(!files.length){aig45SetStatus('未選照片。');return;}
+ if(files.length>4){aig45SetStatus('AIG45_MAX_FOUR_IMAGES');return;}
+ const seen=new Set(),entries=[];
+ try{
+  for(const file of files){
+   if(file.size>20*1024*1024||file.size<100)throw Error('AIG45_SOURCE_SIZE_INVALID');
+   const sha=await sha256Bytes(await file.arrayBuffer());
+   const image=await aig45ImageFromFile(file);
+   const result=recognizePose({sha256:sha,width:image.naturalWidth,height:image.naturalHeight});
+   if(!result.matched)throw Error('AIG45_UNREGISTERED_OR_RESIZED_PNG_'+file.name);
+   if(seen.has(result.matchedRecord))throw Error('AIG45_DUPLICATE_POSE_SOURCE');
+   seen.add(result.matchedRecord);
+   entries.push({id:result.matchedRecord,source:result,image,file});
+  }
+  aig45Entries=entries;
+  for(const entry of entries){
+   const p=AIG45_POSES.find(v=>v.id===entry.id);
+   const opt=document.createElement('option');opt.value=entry.id;
+   opt.textContent=entry.id+' · '+p.description;
+   $('aig45-selector').append(opt);
+  }
+  $('aig45-selector').value=entries[0].id;
+  aig45Activate(entries[0].id);
+ }catch(error){
+  aig45Entries=[];aig45Active=null;
+  $('aig45-selector').replaceChildren();
+  aig45SetStatus('4.5 入庫驗證 BLOCKED：'+error.message+'。圖片被改碼或不是原本四張時不接受。');
+  aig45Draw();aig45Controls();
+ }
+});
+$('aig45-selector').addEventListener('change',()=>{
+ const id=$('aig45-selector').value;
+ aig45Activate(id);
+});
+aig45Canvas.addEventListener('click',event=>{
+ if(!aig45Active||aig45Marks.length>=AIG45_MARKERS.length)return;
+ const rect=aig45Canvas.getBoundingClientRect();
+ if(!rect.width||!rect.height)return;
+ const x=(event.clientX-rect.left)/rect.width;
+ const y=(event.clientY-rect.top)/rect.height;
+ try{
+  aig45Marks.push(normalizeMark({x,y},1,1));
+  aig45Draw();aig45Controls();
+ }catch(error){aig45SetStatus('標記位置超界：'+error.message);}
+});
+$('aig45-undo').addEventListener('click',()=>{
+ aig45Marks.pop();aig45Draw();aig45Controls();
+});
+$('aig45-accept').addEventListener('click',()=>{
+ if(!aig45Active||aig45Marks.length!==8)return;
+ try{
+  const points=Object.fromEntries(AIG45_MARKERS.map((name,i)=>[name,aig45Marks[i]]));
+  const evidence=auditMarks(aig45Active.source,points);
+  aig45Accepted.set(aig45Active.id,evidence);
+  aig45SetStatus('校正已保存（僅本頁）：'+aig45Active.id+
+   '；肩寬／身高比例 '+evidence.ratios.apparentShoulderWidthOverBody.toFixed(3)+
+   '。深度與背面未實測，不會生成假 3D。');
+  aig45Controls();
+ }catch(error){aig45SetStatus('校正 BLOCKED：'+error.message+'。請撤回／修正不合理的點。');}
+});
+$('aig45-export').addEventListener('click',()=>{
+ if(!aig45Accepted.size)return;
+ try{
+  const images=[...aig45Accepted.values()];
+  const review=reviewPoseSet(images);
+  const report={schema:AIG45_SCHEMA,sourceSet:AIG45_POSES.map(({id,sha256,width,height,view})=>
+   ({id,sha256,width,height,view})),calibrations:images,review,
+   cloudCreditsSpent:0,thirdParty3DInferenceUsed:false,
+   manualMarksOnly:true,realWomanMeshVerified:false,formalReleaseAllowed:false};
+  const uri=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));
+  const a=document.createElement('a');
+  a.href=uri;a.download='AIG-4.5-POSE-CALIBRATION-DRAFT-NOT-3D.json';
+  a.click();setTimeout(()=>URL.revokeObjectURL(uri),30000);
+  aig45SetStatus('來源 SHA＋手動比例資料已匯出。'+images.length+
+   ' 張不同站姿不構成多角度 3D 觀測；背面仍是未知。');
+ }catch(error){aig45SetStatus('校正報告 BLOCKED：'+error.message);}
+});
+
 let aig41Renderer=null,aig41Scene=null,aig42FrameQueue=null;
 let aig43Controller=null,aig43Cache=null;
 let aig44Appearance=null,aig44LastAudit=null,aig44Timing=null,aig44SourceSHA=null;
