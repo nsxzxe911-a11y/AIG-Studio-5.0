@@ -10,6 +10,7 @@ import {inspectAnimatedIntegrity} from './animated-integrity.mjs';
 import {SCAN_MODES,SCAN_DENSITIES,buildScanOverlay,paintScanOverlay} from './scan-overlay.mjs';
 import {SCAN_PALETTE_MODES,scanColorLegend} from './scan-colors.mjs';
 import {SCAN_SPEED_MODES,createTurboScanController} from './scan-turbo.mjs';
+import {SCAN_CACHE_LIMITS,createScanDerivedCache} from './scan-cache.mjs';
 import {faceShapeSignature,CharacterFaceRoster} from './character-face.mjs';
 import {measuredFrameSummary} from './adaptive-detail.mjs';
 import {DiskPressureGuard} from './resource-governor.mjs';
@@ -50,6 +51,44 @@ el('mesh-lines').addEventListener('change',applyWireChoice);el('mesh-density').a
 // boundary/projected silhouette = faint dashed (NOT actual depth-tested occlusion).
 const scanCanvas=el('scan-overlay');
 let turboScan=createTurboScanController(),scanLoadRevision=0,scanDeferredBuildPending=false,pendingExtremeStats=null;
+const scanCache=createScanDerivedCache({limitBytes:SCAN_CACHE_LIMITS.mobile});
+let scanCachePressure=false;
+function scanCacheReport(){
+ const x=scanCache.stats(),mib=n=>(n/1048576).toFixed(2);
+ const fmt=p=>p.hit+' HIT / '+p.miss+' MISS';
+ el('scan-cache-status').textContent='記憶體層級：'+x.status+
+  ' · 命中率 '+(x.hitRate*100).toFixed(1)+'%'+
+  ' · 骨架 '+fmt(x.byLayer.skeleton)+' · 輪廓 '+fmt(x.byLayer.contour)+
+  ' · 深度 '+fmt(x.byLayer.depth)+' · 失效 '+x.invalidations+
+  ' · 已清除 '+x.evictions+' 筆 · 快取容量（估算）'+mib(x.bytes)+'/'+mib(x.limitBytes)+' MiB。'+
+  '上次重建 '+(x.lastBuildMs===null?'尚無':x.lastBuildMs.toFixed(2)+'ms')+
+  '、上次查找 '+(x.lastLookupMs===null?'尚無':x.lastLookupMs.toFixed(3)+'ms')+
+  '；這不是實測節省時間或 GPU 加速。';
+}
+function scanCachedTopology(f,density,geometry){
+ const hit=scanCache.getTopology(f,{density,geometry});
+ if(hit)return hit;
+ const start=performance.now();
+ const created=buildScanOverlay(f,readAccessor,{density,geometry});
+ created.scanFile=f;
+ scanCache.putTopology(f,created,{density,geometry,buildMs:Math.max(0,performance.now()-start)});
+ return created;
+}
+function scanForceBones(f,density){
+ const topology=scanCachedTopology(f,density,'bones');
+ if(topology.status.startsWith('BLOCKED'))return false;
+ scanTopology=topology;return true;
+}
+el('scan-cache-clear').addEventListener('click',()=>{
+ const cleared=scanCache.clearDerived('USER_CLEAR');
+ const f=view?.file||scanFile;
+ if(f&&el('scan-mode').value!=='off')scanForceBones(f,el('scan-density').value);
+ turboScan.reset(el('scan-speed').value,scanCanvas.clientWidth<650);
+ scanCacheReport();
+ el('scan-layer-status').textContent='已清理可重建輪廓／深度快取約 '+(cleared/1048576).toFixed(2)+
+   ' MiB；骨架快取與原始 GLB 保留。輪廓可在極速掃描的下一輪重建。';
+});
+scanCacheReport();
 function reportExtremeGeometry(file,revision){
  if(revision!==scanLoadRevision||file!==(scanFile||view?.file))return;
  const profile=el('scan-speed').value;
@@ -74,10 +113,11 @@ function scanRequestContours(f,density,revision){
   if(scanTopology?.geometry==='all')return;
   const started=performance.now();
   try{
-   const full=buildScanOverlay(f,readAccessor,{density,geometry:'all'});
+   const full=scanCachedTopology(f,density,'all');
    if(revision!==scanLoadRevision||view.file!==f)return;
-   full.scanFile=f;scanTopology=full;
+   scanTopology=full;
    turboScan.recordOverlayMs(performance.now()-started);
+   scanCacheReport();
    el('scan-layer-status').textContent='極速掃描：骨架已顯示，來源外輪廓已完成有上限的建立；深度取樣依效能逐步啟用。';
   }catch(err){
    el('scan-layer-status').textContent='外輪廓建立受阻：'+err.message+'；真骨架和模型表面仍保持可用。';
@@ -104,6 +144,7 @@ function clearScanOverlay(){
 function applyScanMode(){
  const mode=el('scan-mode').value,density=el('scan-density').value,depthChoice=el('scan-depth').value,speed=el('scan-speed').value;
  const revision=++scanLoadRevision;scanDeferredBuildPending=false;pendingExtremeStats=null;turboScan.reset(speed,scanCanvas.clientWidth<650);
+ scanCache.setLimitBytes(scanCanvas.clientWidth<650?SCAN_CACHE_LIMITS.mobile:SCAN_CACHE_LIMITS.desktop);
  const status=el('scan-layer-status');
  updateScanColorLegend();
  if(!SCAN_MODES.includes(mode)||!SCAN_DENSITIES.includes(density)||!['off','sampled'].includes(depthChoice)||!SCAN_SPEED_MODES.includes(speed)){
@@ -117,12 +158,20 @@ function applyScanMode(){
  const f=view?.file||scanFile;
  if(!f){status.textContent='請先載入有真實 bones/skin 的 GLB；掃描層不會假造骨架。';return;}
  try{
+   // Reuse real scan topology per GLB identity and density; GLB edits/imports invalidate.
+   scanCache.useSource(f);
    if(scanTopology?.scanFile===f&&scanTopology.density===density){
-     // Palette/region changes reuse previously bounded topology; no re-read of GLB.
+     const topologyKind=scanTopology.geometry||'all';
+     scanTopology=scanCache.getTopology(f,{density,geometry:topologyKind})||
+       scanCachedTopology(f,density,speed==='turbo'?'bones':'all');
    }else{
-     scanTopology=buildScanOverlay(f,readAccessor,{density,geometry:speed==='turbo'?'bones':'all'});
-     scanTopology.scanFile=f;
+     // If an already-built outline exists, use its HIT immediately even in Turbo.
+     scanTopology=speed==='turbo'?
+       (scanCache.getTopology(f,{density,geometry:'all'})||
+         scanCachedTopology(f,density,'bones')):
+       scanCachedTopology(f,density,'all');
    }
+   scanCacheReport();
    if(!view){
      status.textContent='已有 GLB，但無 WebGL2 畫面；骨架及虛線不能冒充即時 GPU 預覽。';return;
    }
@@ -135,6 +184,12 @@ function applyScanMode(){
    scanOverlayLast=0;
    view.onScanFrame=(world,ts)=>{
      const smallViewport=scanCanvas.clientWidth<650;
+     const underMemoryPressure=view.lastPressure?.status==='critical'||view.lastPressure?.status==='pressure';
+     if(underMemoryPressure&&!scanCachePressure){
+       scanCache.relievePressure();scanCachePressure=true;
+       scanForceBones(f,smallViewport?'eco':density);
+       scanCacheReport();
+     }else if(!underMemoryPressure)scanCachePressure=false;
      const choice=turboScan.sample({mainSubmitMs:Math.max(0,view.lastCPU||0),
        requestedMode:el('scan-mode').value,requestedDensity:el('scan-density').value,
        requestedDepth:el('scan-depth').value,topologyReady:scanTopology?.geometry==='all'});
@@ -146,12 +201,13 @@ function applyScanMode(){
        Array.isArray(lastAnimatedAudit.hairOverlapFrames)&&lastAnimatedAudit.hairOverlapFrames.length>0;
      const depthMode=el('scan-depth').value==='sampled'&&view.lastCPU>25?'off':choice.depthMode;
      const result=paintScanOverlay(scanCanvas,view,scanTopology,world,{
-       mode:choice.renderMode,density:choice.density,depthMode,
+       mode:choice.renderMode,density:choice.density,depthMode,derivedCache:scanCache,
        palette:el('scan-palette').value,warning:hairReview?'review':'none',
        highlightRoles:hairReview?['hair']:[]
      });
      const overlayMs=performance.now()-scanStarted;
      turboScan.recordOverlayMs(overlayMs);
+     scanCacheReport();
      result.turboScan={speed:choice.speed,phase:choice.phase,throttled:choice.throttled,
        updateIntervalMs:choice.intervalMs,overlayMs:+overlayMs.toFixed(2),
        originalModelIntact:true,actualDeviceFpsVerified:false};
@@ -159,7 +215,8 @@ function applyScanMode(){
        ' · 更新間隔 ≥'+Math.round(choice.intervalMs)+'ms · 覆蓋層 CPU '+overlayMs.toFixed(1)+'ms'+
        (choice.throttled?' · CPU 過載，暫時只顯示真骨架（可自動恢復）。':' · 人物網格／頭頸保留。')+
        ' 這不是實機 GPU FPS 量測。';
-     if(speed==='turbo'&&scanTopology?.geometry==='bones'&&choice.frameSamples===1){
+     if(speed==='turbo'&&scanTopology?.geometry==='bones'&&
+       (choice.frameSamples===1||(!underMemoryPressure&&!choice.throttled&&choice.frameSamples%30===0))){
        scanRequestContours(f,density,revision);
      }
      // Never block the first real bone overlay with the 2,000-12,000 vertex summary.
@@ -184,6 +241,7 @@ function applyScanMode(){
  }catch(e){
    scanTopology=null;if(view)view.onScanFrame=null;clearScanOverlay();
    status.textContent='掃描層 BLOCKED：'+e.message+'；來源 GLB 不變。';
+   scanCacheReport();
  }
 }
 el('scan-mode').addEventListener('change',applyScanMode);
@@ -385,7 +443,7 @@ try{view=new FastModelView(el('view'),stats=>{lastStats=stats;let now=performanc
  detail.textContent=`${stats.vertices?.toLocaleString()||0} 頂點 / ${stats.triangles?.toLocaleString()||0} 三角面\n${stats.sourcePrimitives} 原始 primitives → ${stats.drawCalls} draw calls\n尺寸 ${res} / 讀檔建置 ${stats.loadMs}ms\n${stats.skipped} 低層細髮略過（preview mode）`;
  overlay.textContent=`${res}  |  ${stats.fps??'量測中'} FPS\nGPU ${stats.gpu||'unknown'}\n僅技術候選，不可上正式首頁`;
  });view.onGuideFrame=paintCurrentScaffold;view.autoQuality=el('auto').checked;applyDetailChoice();view.setWireMode(el('mesh-lines').value,el('mesh-density').value);setSurfaceChoice();applyLightPreset();showResolutionResult({ok:true,actual:[view.width,view.height]});}catch(err){overlay.textContent='裝置不支援 WebGL2 預覽：'+err.message;quickStatus.textContent='GPU 不可用';el('scan-status').textContent='WebGL2 GPU 不可用；仍可選取 GLB 執行 CPU 幾何掃描。';showResolutionResult();}
-async function importGLB(ab){if(!view){try{const f=decodeGLB(ab);scanFile=f;buffer=ab;lastScan=null;el('scan-status').textContent='GLB 已讀取（CPU 模式）；可執行幾何快速掃描，但此裝置不能 GPU 預覽。';}catch(e){el('scan-status').textContent='GLB 解析失敗：'+e.message;}return;}const beforeRunning=view.running,hadScene=!!view.file;el('demo').disabled=true;el('file').disabled=true;overlay.textContent='正在解析 GLB 和批次網格，請稍候…';try{view.stop();view.frames=[];view.last=0;await view.load(ab,el('quality').value);applyWireChoice();setSurfaceChoice();applyDetailChoice();buffer=ab;scanFile=view.file;lastScan=null;latestSeam=null;latestHair=null;lastAnimatedAudit=null;applyScanMode();el('animated-status').textContent='新模型尚未逐幀驗證動畫。';el('seam-status').textContent='新 GLB 尚未量測頭頸接縫。';el('bridge-status').textContent='新 GLB 尚未建立橋接候選。';el('hair-status').textContent='新 GLB 尚未量測髮束遮擋。';el('anatomy-status').textContent='已載入新模型，請重新檢查頭頸標記；不自動宣稱連續。';el('scan-status').textContent='GLB 已載入，按「快速抽樣掃描 GLB」讀取幾何資料。';refreshScaffold();showResolutionResult({ok:true,actual:[view.width,view.height]});view.start();el('pause').disabled=false;paused=false;el('pause').textContent='暫停';}catch(e){overlay.textContent='GLB 載入失敗：'+e.message;if(hadScene&&view.entries.length&&beforeRunning)view.start();console.error(e);}finally{el('demo').disabled=false;el('file').disabled=false;}}
+async function importGLB(ab){if(!view){try{const f=decodeGLB(ab);scanFile=f;scanCache.useSource(f);scanCacheReport();buffer=ab;lastScan=null;el('scan-status').textContent='GLB 已讀取（CPU 模式）；可執行幾何快速掃描，但此裝置不能 GPU 預覽。';}catch(e){el('scan-status').textContent='GLB 解析失敗：'+e.message;}return;}const beforeRunning=view.running,hadScene=!!view.file;el('demo').disabled=true;el('file').disabled=true;overlay.textContent='正在解析 GLB 和批次網格，請稍候…';try{view.stop();view.frames=[];view.last=0;await view.load(ab,el('quality').value);applyWireChoice();setSurfaceChoice();applyDetailChoice();buffer=ab;scanFile=view.file;scanCache.useSource(view.file);scanCacheReport();lastScan=null;latestSeam=null;latestHair=null;lastAnimatedAudit=null;applyScanMode();el('animated-status').textContent='新模型尚未逐幀驗證動畫。';el('seam-status').textContent='新 GLB 尚未量測頭頸接縫。';el('bridge-status').textContent='新 GLB 尚未建立橋接候選。';el('hair-status').textContent='新 GLB 尚未量測髮束遮擋。';el('anatomy-status').textContent='已載入新模型，請重新檢查頭頸標記；不自動宣稱連續。';el('scan-status').textContent='GLB 已載入，按「快速抽樣掃描 GLB」讀取幾何資料。';refreshScaffold();showResolutionResult({ok:true,actual:[view.width,view.height]});view.start();el('pause').disabled=false;paused=false;el('pause').textContent='暫停';}catch(e){overlay.textContent='GLB 載入失敗：'+e.message;if(hadScene&&view.entries.length&&beforeRunning)view.start();console.error(e);}finally{el('demo').disabled=false;el('file').disabled=false;}}
 el('file').addEventListener('change',async()=>{const f=el('file').files?.[0];if(f)await importGLB(await f.arrayBuffer());});
 el('demo').addEventListener('click',async()=>{try{let r=await fetch('../assets/phase17-visual-NOT-APPROVED.glb');if(!r.ok)throw Error('工程包內的 GLB 需要以 HTTP 開啟，或使用上方檔案選擇器');await importGLB(await r.arrayBuffer());}catch(e){overlay.textContent=e.message+'；請改選擇本機 GLB。';}});
 el('pause').addEventListener('click',()=>{if(!view?.file)return;paused=!paused;if(paused)view.stop();else view.start();el('pause').textContent=paused?'繼續':'暫停';});
@@ -404,4 +462,4 @@ document.addEventListener('visibilitychange',()=>{
  else if(!paused)view.start();
 });
 c.addEventListener('wheel',e=>{if(!view)return;e.preventDefault();view.zoomFactor=Math.max(.6,Math.min(1.6,view.zoomFactor-e.deltaY*.001));el('zoom').value=String(view.zoomFactor*100);},{passive:false});
-el('export').addEventListener('click',async()=>{if(!lastStats)return;await updateDisk();let out={schema:'AIG_FastModel_1080p60_Preview_1',scanDisplay:{mode:el('scan-mode').value,density:el('scan-density').value,speed:el('scan-speed').value,palette:el('scan-palette').value,depthMode:el('scan-depth').value,warningOptIn:el('scan-risk-color').checked,overlay:view.scanOverlayTelemetry||null,realDepthHiddenVerified:false,realSkinJointsOnly:true,sourceGLBUnchanged:true},source:'WEBGL2_BROWSER_ONLY',date:new Date().toISOString(),userAgent:navigator.userAgent,webglGpu:view.gpu,visualAuthority:'NOT_APPROVED',nativeDX12Tested:false,nativeVulkanTested:false,renderPolicy:GRAPHICS_POLICY,...lastStats,localMeshEdit:view.patchStats,surfaceInspection:{mode:view.surfaceGuide,additionalDrawCalls:0,additionalLineBuffers:0},previewDetail:lastStats.previewDetail||null,frameBaseline,latestBrowserFrameSummary:latestFrameSummary(),geometryScan:lastScan,headNeckGeometryInspection:latestSeam,hairNeckOcclusionInspection:latestHair,animatedPoseAudit:lastAnimatedAudit,requiredNativeDeviceGate:assessAnimationDeviceEvidence([]),scanKind:el('scene-kind').value,rasterLightPreset:view.lightPreset,referenceScaffold:{enabled:el('scaffold-enabled').checked,yaw:Number(el('scaffold-yaw').value),pitch:Number(el('scaffold-pitch').value),limit:Number(el('scaffold-limit').value),referenceOnly:true},meshLineDisplay:{mode:view.wireMode,density:view.wireDensity,segments:view.wireStats.segments,autoSuppressed:view.wireState.suppressed},resourcePolicy:{...lastStats.memoryPressure,gpuUsagePercentReliable:false},diskEstimate:diskInfo,warning:'browser storage quota is not entire device disk or storage write throughput'};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='AIG-FastModel-device-benchmark.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);});
+el('export').addEventListener('click',async()=>{if(!lastStats)return;await updateDisk();let out={schema:'AIG_FastModel_1080p60_Preview_1',scanCache:scanCache.stats(),scanDisplay:{mode:el('scan-mode').value,density:el('scan-density').value,speed:el('scan-speed').value,palette:el('scan-palette').value,depthMode:el('scan-depth').value,warningOptIn:el('scan-risk-color').checked,overlay:view.scanOverlayTelemetry||null,realDepthHiddenVerified:false,realSkinJointsOnly:true,sourceGLBUnchanged:true},source:'WEBGL2_BROWSER_ONLY',date:new Date().toISOString(),userAgent:navigator.userAgent,webglGpu:view.gpu,visualAuthority:'NOT_APPROVED',nativeDX12Tested:false,nativeVulkanTested:false,renderPolicy:GRAPHICS_POLICY,...lastStats,localMeshEdit:view.patchStats,surfaceInspection:{mode:view.surfaceGuide,additionalDrawCalls:0,additionalLineBuffers:0},previewDetail:lastStats.previewDetail||null,frameBaseline,latestBrowserFrameSummary:latestFrameSummary(),geometryScan:lastScan,headNeckGeometryInspection:latestSeam,hairNeckOcclusionInspection:latestHair,animatedPoseAudit:lastAnimatedAudit,requiredNativeDeviceGate:assessAnimationDeviceEvidence([]),scanKind:el('scene-kind').value,rasterLightPreset:view.lightPreset,referenceScaffold:{enabled:el('scaffold-enabled').checked,yaw:Number(el('scaffold-yaw').value),pitch:Number(el('scaffold-pitch').value),limit:Number(el('scaffold-limit').value),referenceOnly:true},meshLineDisplay:{mode:view.wireMode,density:view.wireDensity,segments:view.wireStats.segments,autoSuppressed:view.wireState.suppressed},resourcePolicy:{...lastStats.memoryPressure,gpuUsagePercentReliable:false},diskEstimate:diskInfo,warning:'browser storage quota is not entire device disk or storage write throughput'};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='AIG-FastModel-device-benchmark.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);});
