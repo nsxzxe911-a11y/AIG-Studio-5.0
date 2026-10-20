@@ -91,6 +91,10 @@ jobs:
           path: artifacts/school-3d-phase6-ik/
           retention-days: 14
           if-no-files-found: error
+      - name: Phase7 reverse identity reference QA (no fictional rear geometry)
+        run: |
+          python -m unittest discover -s formal-web/school-3d/tools -p 'test_reverse_authority.py' -v
+          python -c "import json; m=json.load(open('formal-web/school-3d/reverse-authority.v1.json')); assert m['reverseGate']=='REFERENCE_EXTRACTED_ONLY_NOT_3D_MODEL'; assert not m['releasedToHomepage']; print('PHASE7 2D REFERENCE ONLY - 3D NOT APPROVED')"
       - name: Explicit release status
         run: |
           node -e "const m = require('./formal-web/school-3d/authority.v1.json'); if (m.deploymentState !== 'PREVIEW_ONLY_NOT_PRODUCTION') process.exit(1); console.log('SOURCE QA ONLY: real female rig/PBR/walk/poster 3D authority is NOT approved');"
