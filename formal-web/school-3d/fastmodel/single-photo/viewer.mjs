@@ -58,16 +58,41 @@ export class PhotoViewer{
   this.scene.add(new THREE.HemisphereLight(0xcdeaff,0x242035,1.5));
   const light=new THREE.DirectionalLight(0xffffff,3);light.position.set(2,4,3);this.scene.add(light);
   const pmrem=new THREE.PMREMGenerator(this.renderer),room=new RoomEnvironment();this.env=pmrem.fromScene(room).texture;this.scene.environment=this.env;room.dispose();pmrem.dispose();
-  this.resize=new ResizeObserver(()=>this.fitCanvas());this.resize.observe(canvas.parentElement);this.fitCanvas();this.previous=0;this.orbit=false;this.skinProbe=null;this.skinReport=null;this.onFrame=null;
+  this.resize=new ResizeObserver(()=>this.fitCanvas());this.resize.observe(canvas.parentElement);this.fitCanvas();this.previous=0;this.orbit=false;this.skinProbe=null;this.skinReport=null;this.onFrame=null;this.onAfterRender=null;this.movieMode=false;this.movieOriginalViewport=null;
   this.renderer.setAnimationLoop(t=>{try{const dt=this.previous?Math.min(.1,(t-this.previous)/1000):0;this.previous=t;this.animation?.update(dt);
     try{this.onFrame?.(dt,t);}catch(audioError){this.onFrame=null;this.onError('音訊已隔離：'+audioError.message);}
     if(this.skinProbe&&this.model){this.skinProbe.capture(this.model,t,{animationName:this.animation?.clips?.[this.animation?.index]?.name||null});if(this.skinProbe.done)this.skinProbe=null;}
-    this.controls.autoRotate=this.orbit;this.controls.update();this.renderer.render(this.scene,this.camera);}catch(e){this.renderer.setAnimationLoop(null);onError(e.message);}});
+    this.controls.autoRotate=this.orbit;this.controls.update();this.renderer.render(this.scene,this.camera);
+    try{this.onAfterRender?.(t);}catch(movieError){this.onAfterRender=null;this.onError('錄影已隔離：'+movieError.message);}}catch(e){this.renderer.setAnimationLoop(null);onError(e.message);}});
  }
- fitCanvas(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);this.camera.aspect=Math.max(1,r.width)/Math.max(1,r.height);this.camera.updateProjectionMatrix();}
+ fitCanvas(){if(this.movieMode)return;const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);this.camera.aspect=Math.max(1,r.width)/Math.max(1,r.height);this.camera.updateProjectionMatrix();}
+ beginMovie1080p(){
+  if(this.movieMode||this.reviewBusy||this.actionImportBusy||!this.model||!this.animation)
+   throw Error('MOVIE_VIEWER_NOT_READY');
+  const size=this.renderer.getSize(new THREE.Vector2());
+  this.movieOriginalViewport={size:size.clone(),aspect:this.camera.aspect,pixelRatio:this.renderer.getPixelRatio()};
+  try{
+   this.movieMode=true;this.renderer.setPixelRatio(1);
+   this.renderer.setSize(1920,1080,false);this.camera.aspect=1920/1080;
+   this.camera.updateProjectionMatrix();
+   return {actualCanvasWidth:this.canvas.width,actualCanvasHeight:this.canvas.height};
+  }catch(err){this.endMovie1080p();throw err;}
+ }
+ endMovie1080p(){
+  if(!this.movieMode)return;
+  this.movieMode=false;
+  const old=this.movieOriginalViewport;this.movieOriginalViewport=null;
+  this.onAfterRender=null;
+  if(old){
+   this.renderer.setPixelRatio(old.pixelRatio);
+   this.renderer.setSize(old.size.x,old.size.y,false);
+   this.camera.aspect=old.aspect;this.camera.updateProjectionMatrix();
+  }
+ }
  async load(buffer,{orbit=false}={}){
   if(this.reviewBusy)throw Error('TIMELINE_REVIEW_IN_PROGRESS');
   if(this.actionImportBusy)throw Error('ACTION_IMPORT_IN_PROGRESS');
+  if(this.movieMode)throw Error('MOVIE_RECORDING_IN_PROGRESS');
   const file=await parseRiggedGLB(buffer),box=new THREE.Box3().setFromObject(file.scene);
   if(box.isEmpty())throw Error('GLB_EMPTY_SCENE');
   const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
