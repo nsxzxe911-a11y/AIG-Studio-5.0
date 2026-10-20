@@ -191,7 +191,7 @@ try{view=new PhotoViewer($('view'),m=>{$('viewport-status').textContent='顯示�
 const labels={NEW:'等待',SUBMITTING:'送出中',PENDING:'排程中',IN_PROGRESS:'生成中',SUCCEEDED:'完成',SKIPPED:'不適用',BASIC_WALK_PENDING:'下載動作',SUBMISSION_UNKNOWN:'受理待確認',FAILED:'未完成',CANCELED:'已取消'};
 function errorText(m){if(String(m).includes('MESHY_API_KEY'))return '重建服務未連接；請先在主機設定服務帳戶。';return String(m);}
 async function api(path,options){const r=await fetch(path,options),d=await r.json();if(!r.ok)throw Error(d.error||'服務暫時無法回應');return d;}
-function updateButton(){$('generate').disabled=!ready||busy||!$('photo').files.length;}
+function updateButton(){/* AIG native full single-photo 3D is not ready; never call credits. */ $('generate').disabled=true;}
 function addLink(label,url,name){const a=document.createElement('a');a.className='download';a.textContent=label;a.href=url;if(name)a.download=name;$('downloads').append(a);}
 async function load(bytes,orbit){
  if(!view)return;
@@ -347,11 +347,12 @@ $('reconstruction-secondary').addEventListener('change',()=>{
   :files.length
    ?'已選擇 '+files.length+' 張輔助角度。請切換「Meshy 多視角」服務；它們是尚未對齊的 2D 圖，不是已驗收的 3D。'
    :'沒有選輔助角度。使用單張原圖重建。';
- if(files.length&&files.length<=3)$('reconstruction-service').value='meshy-multi-image-to-3d';
+ // 自研多視角校正尚未完成；禁止切換至 Meshy。
 });
 $('subject').addEventListener('change',()=>{$('action').disabled=$('subject').value==='object';});
 $('action').addEventListener('change',()=>{});
 $('generate').addEventListener('click',async()=>{
+ status.textContent='AIG 自研任意照片 3D 核心尚未完成 Gate，禁止外部付費呼叫及假 GLB。';return;
  const file=$('photo').files[0];
  if(!file)return;
  const prepared=$('prepared-foreground').files?.[0]||null;
@@ -719,16 +720,14 @@ if(window.AIG_OFFLINE){
  load(bytes.buffer,window.AIG_OFFLINE.orbit).catch(e=>{status.textContent='預覽未完成：'+e.message;});
 }else{
  api('/api/config').then(async c=>{
-  ready=c.configured;status.textContent=ready?'重建服務已連接；選圖後按一次生成，後續步驟自動接續。':'重建服務未連接；請先在主機設定服務帳戶。';updateButton();
+  ready=false;status.textContent='AIG 自研：零點數、無第三方付費呼叫。現有 GLB 可匯入／播放／檢查；任意照片自動完整 3D 尚未完成。';updateButton();
   api('/api/reconstruction/services').then(config=>{
-   const connected=(config.providers||[]).filter(p=>p.modelServiceIsReal&&p.configured);
+   const connected=[]; // Third-party providers explicitly unavailable in native zero-credit mode.
    $('reconstruction-service').disabled=!connected.length;
    for(const option of $('reconstruction-service').options){
     option.disabled=!(config.providers||[]).some(p=>p.id===option.value&&p.modelServiceIsReal&&p.configured);
    }
-   $('reconstruction-service-status').textContent=connected.length
-    ?'已接通 Meshy 單圖＋多圖 (1～4 張) 真實服務。按一次生成後自動接續模型／PBR／Rig／動作／GLB，可能消耗點數；不明受理不重送。'
-    :'目前沒有已設定的真實 3D 重建服務；可離線匯入 GLB。任何未實作服務不可選。';
+   $('reconstruction-service-status').textContent='AIG 自研專用，第三方生成已停用且不扣點數。任意照片完整 3D 重建尚未通過驗收；可匯入真正的 GLB。';
   }).catch(err=>{
    $('reconstruction-service').disabled=true;
    $('reconstruction-service-status').textContent='重建服務查詢失敗：'+err.message;
