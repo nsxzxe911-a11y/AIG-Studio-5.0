@@ -52,7 +52,8 @@ export function createScanDerivedCache({limitBytes=SCAN_CACHE_LIMITS.mobile}={})
  const topologyKey=(geometry,density)=>geometry+':'+density;
  const kindFor=g=>g==='bones'?'skeleton':'contour';
  function evict(where='all',except=null){
-  const eligible=[...items.entries()].filter(([key,item])=>key!==except&&(where==='all'||item.kind===where));
+  const eligible=[...items.entries()].filter(([key,item])=>key!==except&&(where==='all'||item.kind===where||
+    (where==='pressure'&&item.kind!=='skeleton')));
   const order={depth:0,contour:1,skeleton:2};
   eligible.sort((a,b)=>(order[a[1].kind]-order[b[1].kind])||(a[1].last-b[1].last));
   let released=0;
@@ -130,9 +131,13 @@ export function createScanDerivedCache({limitBytes=SCAN_CACHE_LIMITS.mobile}={})
   if(finite(buildMs)){lastBuildMs=buildMs;knownBuildReferenceMs=buildMs;}
   lastEvent='STORE_DEPTH';return true;
  }
+ function clearDerived(reason='USER_CLEAR'){
+  const released=evict('pressure');invalidations++;lastReason=reason;
+  lastEvent=released?'DERIVED_EVICTED':'DERIVED_ALREADY_EMPTY';return released;
+ }
  function relievePressure(){
-  const released=evict('pressure');lastEvent=released?'PRESSURE_EVICTION':'PRESSURE_NO_DERIVED_CACHE';
-  lastReason='MEMORY_PRESSURE';return released;
+  const released=clearDerived('MEMORY_PRESSURE');
+  lastEvent=released?'PRESSURE_EVICTION':'PRESSURE_NO_DERIVED_CACHE';return released;
  }
  function setLimitBytes(next){
   if(!Number.isInteger(next)||next<1024||next>134217728)throw Error('SCAN_CACHE_LIMIT_INVALID');
@@ -149,5 +154,5 @@ export function createScanDerivedCache({limitBytes=SCAN_CACHE_LIMITS.mobile}={})
    measuredGpuSpeedup:false,sourceGLBUnchanged:true};
  }
  return {useSource,invalidate,getTopology,putTopology,getDepth,putDepth,
-  relievePressure,setLimitBytes,stats,get source(){return currentSource;}};
+  relievePressure,clearDerived,setLimitBytes,stats,get source(){return currentSource;}};
 }
