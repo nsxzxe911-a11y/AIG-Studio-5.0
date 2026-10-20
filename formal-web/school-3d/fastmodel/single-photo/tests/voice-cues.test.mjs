@@ -45,7 +45,7 @@ test('UI explicitly binds timed recordings and evidence avoids phoneme or heroin
  assert.match(html,/id="movie-voice-lines"/);
  assert.match(movie,/mapVoiceFiles\(/);assert.match(movie,/sound\.getVoiceLevel\(\)/);
  assert.match(movie,/sound\.playRecordedVoice\(cueBuffers\[position\]\)/);
- assert.match(movie,/mouth\.restore\(\)/);
+ assert.match(movie,/this\.mouth\?\.restore\(\)/);
  assert.match(movie,/phonemeLipSyncVerified:false/);
  assert.match(audio,/getByteTimeDomainData/);
 });
