@@ -918,6 +918,31 @@ jobs:
             if(!viewer.includes(s))throw Error('TIMELINE_SOURCE_POSE_NOT_WIRED '+s);
           console.log('FastModel 3.0 SOURCE QA: 16 real poses/views composition, original clip proof, source hash and fail-closed acceptance. NO real heroine or native FPS certificate.');
           JS
+      - name: FastModel 3.1 heroine and external action GLB exact-rig source Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/single-photo/action-compatibility.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/viewer.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/app.mjs
+          node --test formal-web/school-3d/fastmodel/single-photo/tests/action-compatibility.test.mjs
+          node - <<'JS'
+          const fs=require('fs');
+          const root='formal-web/school-3d/fastmodel/single-photo/';
+          const html=fs.readFileSync(root+'dist/index.html','utf8');
+          const js=fs.readFileSync(root+'dist/app.js','utf8');
+          const viewer=fs.readFileSync(root+'viewer.mjs','utf8');
+          for(const token of ['id="action-glb"','id="action-import-status"']){
+            if(!html.includes(token))throw Error('ACTION_HTML_MISSING_'+token);
+          }
+          for(const token of ['AIG_3_1_EXACT_RIG_ACTION_BRIDGE_SOURCE_ONLY',
+            'ACTION_RIG_BIND_POSE_MISMATCH','ACTION_RIG_HIERARCHY_MISMATCH',
+            'ACTION_RIG_BONE_NAME_MISMATCH','ACTION_CLIP_LIBRARY_LIMIT',
+            'externalActionGLBUsed','TIMELINE_ACTION_SHA_INVALID']){
+            if(!js.includes(token))throw Error('ACTION_BUNDLED_RUNTIME_MISSING_'+token);
+          }
+          if(!viewer.includes('const copied=copyCompatibleClips(file.animations)')||
+             !viewer.includes('this.release(file.scene)'))throw Error('ACTION_MESH_DISCARD_MISSING');
+          console.log('FastModel 3.1 exact skeleton bind and external action source QA, no double skin, preserved PBR. Real fight visual and heroine identity still BLOCKED.');
+          JS
       - name: Archive FastModel 2.7 source and synthetic offline animation evidence
         uses: actions/upload-artifact@v4
         with:
