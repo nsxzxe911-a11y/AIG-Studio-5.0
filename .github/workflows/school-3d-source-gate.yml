@@ -943,6 +943,30 @@ jobs:
              !viewer.includes('this.release(file.scene)'))throw Error('ACTION_MESH_DISCARD_MISSING');
           console.log('FastModel 3.1 exact skeleton bind and external action source QA, no double skin, preserved PBR. Real fight visual and heroine identity still BLOCKED.');
           JS
+      - name: FastModel 3.2 Chinese screenplay real-clip storyboard playback source Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/single-photo/story-to-animation.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/viewer.mjs
+          node --check formal-web/school-3d/fastmodel/single-photo/app.mjs
+          node --test formal-web/school-3d/fastmodel/single-photo/tests/story-to-animation.test.mjs
+          node - <<'JS'
+          const fs=require('fs');
+          const root='formal-web/school-3d/fastmodel/single-photo/';
+          const html=fs.readFileSync(root+'dist/index.html','utf8');
+          const app=fs.readFileSync(root+'dist/app.js','utf8');
+          const source=fs.readFileSync(root+'viewer.mjs','utf8');
+          for(const token of ['id="story-text"','id="story-build"','id="story-play"','id="story-stop"',
+            'id="story-timeline"'])if(!html.includes(token))throw Error('STORY_UI_NOT_BUNDLED '+token);
+          for(const token of ['AIG_FASTMODEL_3_2_TEXT_TO_REAL_CLIP_SEQUENCE',
+            'BLOCKED_ACTION_ASSETS_MISSING','SECOND_ACTOR_MODEL_MISSING',
+            'AMBIGUOUS_ACTION_CLIPS','STORY_CLIP_CHANGED','sourceActionSha256',
+            'UNSUPPORTED_SCENE_OR_DIALOGUE'])
+            if(!app.includes(token))throw Error('STORY_ENGINE_NOT_BUNDLED '+token);
+          for(const token of ['const playback=new StoryPlayback(this,callbacks)',
+            'this.story.update(Math.max(0,seconds))','if(!keepStory)this.story?.stop()'])
+            if(!source.includes(token))throw Error('STORY_REAL_ANIMATION_MIXER_MISSING '+token);
+          console.log('FastModel 3.2 SOURCE QA PASS: real loaded GLB animation clip timeline only, no fabricated fight motion, CGI text-to-motion model or MP4 claim.');
+          JS
       - name: Archive FastModel 2.7 source and synthetic offline animation evidence
         uses: actions/upload-artifact@v4
         with:
