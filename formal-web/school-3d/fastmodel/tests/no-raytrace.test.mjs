@@ -26,6 +26,11 @@ test('actual view and UI report canonical raster-only policy; no fake switch',()
 test('offline packer shares exactly one policy in front of renderer',()=>{
  const p=read('../tools/build_standalone.py');
  assert.match(p,/graphics-policy\.mjs/);
- assert.match(p,/resolution\+'\\n'\+graphics\+'\\n'\+edges\+'\\n'\+render/);
+ assert.match(p,/graphics-policy\.mjs/);
+ const payload=p.slice(p.indexOf("payload='<script>"));
+ for(const token of ['+graphics+', '+surface+', '+render+', '+main+'])assert.ok(payload.includes(token),token);
+ assert.ok(payload.indexOf('+graphics+')<payload.indexOf('+surface+'));
+ assert.ok(payload.indexOf('+surface+')<payload.indexOf('+render+'));
+ assert.ok(payload.indexOf('+render+')<payload.indexOf('+main+'));
  assert.doesNotMatch(p,/render-policy\.mjs/);
 });
