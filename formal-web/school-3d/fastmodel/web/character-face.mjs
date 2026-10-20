@@ -50,7 +50,7 @@ export function faceShapeSignature(file,sampleVec3Accessor,{maxSamples=1500,char
  const descriptor=[...range.map(v=>v/maxRange),...centroid,...spread,...bins.map(n=>n/pts.length)];
  return {method:'TAGGED_FICTIONAL_3D_FACE_GEOMETRY',source:'GLB_FACE_NODE_POSITIONS',
   descriptor,pointCount:pts.length,faceNodeCount:nodes.length,biometricIdentityRecognized:false,
-  poseInvariant:false,similarityProof:false,characterTag:owners.size===1?[...owners][0]:null,explicitFaceNodesRequired:true};
+  poseInvariant:false,similarityProof:false,characterTag:characterId!==null&&owners.has(characterId)?characterId:owners.size===1?[...owners][0]:null,explicitFaceNodesRequired:true};
 }
 export function compareFaceShapes(a,b){
  if(a?.method!=='TAGGED_FICTIONAL_3D_FACE_GEOMETRY'||b?.method!==a.method||!Array.isArray(a.descriptor)||a.descriptor.length!==b.descriptor?.length)throw Error('CHARFACE_SIGNATURE_MISMATCH');
