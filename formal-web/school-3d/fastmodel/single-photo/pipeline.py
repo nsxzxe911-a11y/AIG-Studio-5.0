@@ -132,6 +132,9 @@ class PhotoPipeline:
                 if stage=='model':url=result['model_urls']['glb'];filename='model.glb'
                 elif stage=='rig':url=result['result']['rigged_character_glb_url'];filename='rigged.glb'
                 else:url=result['result']['animation_glb_url'];filename='animated.glb'
+                # Persist the actual export/download phase; a restart can GET
+                # the already-assigned task instead of creating a new charge.
+                s['status']='DOWNLOADING';self.save(job,d)
                 self._download(job,d,url,filename,stage=='animation')
                 s['status']='SUCCEEDED';s['consumedCredits']=result.get('consumed_credits')
                 if stage=='rig' and d['actionId'] is None:
