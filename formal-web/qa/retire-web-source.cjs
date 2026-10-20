@@ -31,5 +31,5 @@ for(const f of shell){const local=f.replace(/^\.\//,"");if(!local)continue;
  assert(fs.existsSync(path.join(dir,local)),"Service worker precache missing: "+f);
 }
 assert(!shell.some(x=>/v9[0-5]-.*(?:css|js)|runtime-v9[0-5]\.html/.test(x)),"Old Web cached by SW");
-assert(sw.includes("caches.delete")&&!sw.includes("localStorage"),"Service Worker must only clear stale runtime caches");
+assert(sw.includes("caches.delete")&&!sw.includes("localStorage.clear")&&!sw.includes("indexedDB.deleteDatabase"),"Service Worker must not delete user drafts");
 console.log("AIG_WEB_DECOMMISSION_STATIC_PASS | 12 V90-V95 FILES REMOVED | FIVE-NATIVE-VERSION-PORTAL_SAFE");
