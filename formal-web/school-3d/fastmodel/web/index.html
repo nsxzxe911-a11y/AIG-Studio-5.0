@@ -52,6 +52,11 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:no
 <option value="hair">髮束重點 · 明確標記區域</option>
 </select></label>
 <label for="scan-density">掃描線段負荷<select id="scan-density"><option value="eco">低負荷 · 手機</option><option value="balanced" selected>平衡 · 預設</option><option value="detail">細節 · Windows</option></select></label>
+<label for="scan-depth">外型前後遮擋<select id="scan-depth">
+<option value="sampled" selected>來源模型三角面深度取樣 · 前後虛線區分</option>
+<option value="off">關閉深度取樣 · 更省電</option>
+</select></label>
+<p id="scan-depth-status" class="small small-status" role="status">掃描預設關閉。啟動後才進行有上限的來源 GLB 三角面深度抽樣；小螢幕自動降至低負荷。這不是完整 GPU 深度緩衝區讀回或精確遮擋驗收。</p>
 <div class="divider"></div><h3>FastModel 2.2 · RGB 彩色骨架與虛線</h3>
 <label for="scan-palette">快速掃描配色<select id="scan-palette">
 <option value="aig-rgb" selected>AIG RGB · 幻彩分區（推薦）</option>
