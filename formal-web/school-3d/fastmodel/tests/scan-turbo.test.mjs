@@ -67,6 +67,12 @@ test('extreme scan UI and programmatic callbacks + offline module integration ar
  assert.ok(html.includes('啟動極速掃描 GLB'));
  assert.ok(main.includes("el('scan-speed').addEventListener('change',applyScanMode)"));
  assert.ok(main.includes("scanRequestContours(f,density,revision)"));
+ assert.ok(main.includes('setTimeout(()=>reportExtremeGeometry(job.file,job.revision),30)'));
+ assert.ok(main.includes("maxSamples:limit,sampleReader:sampleVec3Accessor"));
+ const handler=main.slice(main.indexOf("el('scan-btn').addEventListener"),main.indexOf("refreshScaffold();",main.indexOf("el('scan-btn').addEventListener")));
+ assert.ok(handler.includes("pendingExtremeStats={revision,file}"));
+ assert.ok(!handler.includes('scanGeometry('),'must not scan thousands of vertices before first real bone overlay');
+
  assert.ok(main.includes("geometry:speed==='turbo'?'bones':'all'"));
  assert.ok(main.includes('turboScan.sample({mainSubmitMs:'));
  assert.ok(main.includes("result.turboScan={speed:choice.speed"));
