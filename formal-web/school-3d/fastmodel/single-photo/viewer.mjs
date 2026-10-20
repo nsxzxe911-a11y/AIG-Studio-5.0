@@ -64,8 +64,8 @@ export class PhotoViewer{
   if(!this.model)throw Error('REVIEW_MODEL_NOT_LOADED');
   const clip=this.animation?.clips?.[this.animation.index]||null;
   const {timeSeconds,animated}=reviewPoseTime(clip,fraction);
-  const bounds=new THREE.Box3().setFromObject(this.model);
-  if(bounds.isEmpty())throw Error('REVIEW_EMPTY_MODEL');
+  // Camera bounds must come from the selected ACTION POSE, not a stale rest pose.
+  let bounds=null;
   const previousCamera={position:this.camera.position.clone(),quaternion:this.camera.quaternion.clone(),
     near:this.camera.near,far:this.camera.far,aspect:this.camera.aspect};
   const previousControls={target:this.controls.target.clone(),enabled:this.controls.enabled,
@@ -86,6 +86,9 @@ export class PhotoViewer{
     this.animation.paused=true;
     if(animated)this.animation.mixer.setTime(timeSeconds);
    }
+   this.model.updateMatrixWorld(true);
+   bounds=new THREE.Box3().setFromObject(this.model);
+   if(bounds.isEmpty())throw Error('REVIEW_EMPTY_MODEL');
    // Save real posed geometry audit at the specific user-selected animation time.
    audit=inspectSkinPose(this.model,{maxTriangles:2400,maxVertices:12000,maxIssues:24});
    this.renderer.setSize(tileW,tileH,false);
