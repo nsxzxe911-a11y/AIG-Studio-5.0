@@ -82,5 +82,5 @@ test('2.3 UI live callback, mobile cadence, offline import and benchmark export 
  assert.ok(main.includes("view.lastCPU>25?'off'"));
  assert.ok(main.includes("depthMode:el('scan-depth').value"));
  assert.ok(packer.includes('scan-depth.mjs'));
- assert.ok(packer.includes("'\\n'+scanColors+'\\n'+scanDepth+'\\n'+scanOverlay"));
+ assert.ok(packer.includes("'\\n'+scanColors+'\\n'+scanDepth+'\\n'+turbo+'\\n'+scanOverlay"));
 });
