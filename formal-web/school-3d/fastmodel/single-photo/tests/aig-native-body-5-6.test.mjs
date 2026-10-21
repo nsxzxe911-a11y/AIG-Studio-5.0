@@ -19,6 +19,7 @@ test('5.6 produces real indexed oriented closed human-body skin GLB and retains 
  assert.equal(d.schema,AIG56_SCHEMA);
  assert.equal(d.fullyWatertightJunctionsVerified,true);
  assert.equal(d.indexedSurfaceClosureVerified,true);
+ assert.equal(d.orphanedPatchInteriorVerticesPruned,12);
  assert.ok(d.bodyManifoldEdges>1000);
  assert.ok(d.bodyTriangleCount>900);
  assert.equal(d.boneCount,17);
