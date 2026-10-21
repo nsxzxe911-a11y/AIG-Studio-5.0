@@ -1306,7 +1306,12 @@ internal fun testRuntimeLinkStateSyncContract() {
     check(RuntimeLinkStatus.DISCONNECTED.colorToken=="GRAY")
     check(RuntimeLinkStatus.WARNING.colorToken=="YELLOW")
     check(RuntimeLinkStatus.ALARM.colorToken=="RED")
-    check(RuntimeLinkContract.managedLinks.all{state.status(it)==RuntimeLinkStatus.CONNECTED})
+    check(RuntimeLinkContract.cockpitLinks.all{state.status(it)==RuntimeLinkStatus.CONNECTED})
+    check(state.status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.DISCONNECTED) { "Machine has not passed transport handshake" }
+    check(RuntimeLinkContract.MACHINE_LINK_POLICY=="PHYSICAL_HANDSHAKE_REQUIRED_NO_UI_TOGGLE")
+    check(runCatching{state.set(RuntimeLinkId.MACHINE,RuntimeLinkStatus.CONNECTED)}.isFailure)
+    check(runCatching{state.toggle(RuntimeLinkId.MACHINE)}.isFailure)
+    check(state.status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.DISCONNECTED)
     val cockpit=mutableListOf<RuntimeLinkSnapshot>()
     val manager=mutableListOf<RuntimeLinkSnapshot>()
     state.observe{cockpit+=it}
@@ -1325,7 +1330,7 @@ internal fun testRuntimeLinkStateSyncContract() {
     val preserved=RuntimeLinkContract.PRESERVED_DOMAINS.toSet()
     state.toggle(RuntimeLinkId.SIM_NC)
     check(RuntimeLinkContract.PRESERVED_DOMAINS.toSet()==preserved)
-    println("RUNTIME_LINK_STATE_SYNC_GATE_PASS|COCKPIT_MANAGER_SHARED_STATE|DATA_FLOW_ONLY|PRESERVE_CAD_CAM_SIM_NC|4_STATE_COLORS")
+    println("RUNTIME_LINK_STATE_SYNC_GATE_PASS|COCKPIT_MANAGER_SHARED_STATE|DATA_FLOW_ONLY|PRESERVE_CAD_CAM_SIM_NC|4_STATE_COLORS|NO_FAKE_MACHINE_CONNECTION")
 }
 fun main() {
     testRuntimeLinkStateSyncContract()
