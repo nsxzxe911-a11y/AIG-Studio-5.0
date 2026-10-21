@@ -222,8 +222,22 @@ export function verifyClosedIndexManifold(indices,vertexCount){
  let open=0,winding=0;
  for(const x of edges.values()){if(x.count!==2)open++;else if(x.sum!==0)winding++;}
  if(open||winding)throw Error('AIG56_INDEX_NOT_CLOSED_OR_ORIENTED_'+open+'_'+winding);
- return {closedIndexedTwoManifold:true,uniqueEdges:edges.size,
-  openBoundaryEdges:0,incorrectWindingEdges:0,
+ // A set of disconnected closed shells can have zero open edges.
+ // Confirm all indexed vertices are in ONE body component, not separated
+ // mannequin arms or invisible overlapping primitive shells.
+ const parent=Array.from({length:vertexCount},(_,i)=>i),used=new Set();
+ function root(i){while(i!==parent[i]){parent[i]=parent[parent[i]];i=parent[i];}return i;}
+ function union(a,b){const x=root(a),y=root(b);if(x!==y)parent[y]=x;}
+ for(let i=0;i<indices.length;i+=3){
+  const [a,b,c]=indices.slice(i,i+3);
+  used.add(a);used.add(b);used.add(c);
+  union(a,b);union(b,c);
+ }
+ const components=new Set([...used].map(root));
+ if(used.size!==vertexCount||components.size!==1)
+  throw Error('AIG56_INDEX_BODY_DISCONNECTED_'+components.size+'_'+(vertexCount-used.size));
+ return {closedIndexedTwoManifold:true,connectedIndexedComponents:1,uniqueEdges:edges.size,
+  indexedVertices:used.size,openBoundaryEdges:0,incorrectWindingEdges:0,
   actualSurfaceSelfIntersectionTested:false};
 }
 
@@ -316,6 +330,7 @@ function packGLB(surface,points,source){
    sidePhotoObserved:source.sidePhotoObserved,
    anatomicalTopologyJunctionsAreWatertight:true,
    closedIndexedTwoManifoldVerified:true,
+   singleConnectedIndexedBodyShellVerified:true,
    surfaceSelfIntersectionsExcluded:false,
    rigBones:AIG56_BONES.length,actualSkinnedMeshes:2,actualAnimationClips:4,
    source3DDepthMeasured:false,photorealFemaleFaceReconstructed:false,
@@ -348,7 +363,8 @@ export function generateAIG56NativeHumanoid(scaffold){
    'leftLeg','rightLeg','leftFoot','rightFoot','ponytail'],
   ratioConstraintFromRealSource:true,anatomicalPartDimensionsEstimated:true,
   originalHeroineFaceTexturePresent:false,fullyWatertightJunctionsVerified:true,
-  indexedSurfaceClosureVerified:true,surfaceSelfIntersectionsExcluded:false,
+  indexedSurfaceClosureVerified:true,singleConnectedIndexedBodyShellVerified:true,
+  surfaceSelfIntersectionsExcluded:false,
   photoReconstructedTrue3d:false,nativeAndroidWindows60FpsVerified:false,
   formalHeroineApproved:false,releaseAllowed:false};
 }
