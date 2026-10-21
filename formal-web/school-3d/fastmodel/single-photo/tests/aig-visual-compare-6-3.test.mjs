@@ -68,7 +68,7 @@ test('6.3 forbids wrong crop, transparent/fake pixels, wrong GLB SHA and mistake
  const alpha=args();alpha.renderedImage.data[3]=0;
  // Some bad pixels outside ROI do not affect measured pixels; reject a
  // transparent pixel precisely inside the selected real front tile.
- alpha.renderedImage.data[(70*960+80)*4+3]=0;
+ alpha.renderedImage.data[(70*960+76)*4+3]=0;
  assert.throws(()=>compareAIG63ActualImages(alpha),/AIG63_TRANSPARENT/);
 });
 test('6.3 verifies the 7 REAL added school uniform / hair SkinnedMeshes in parsed 5.7 GLB',async()=>{
