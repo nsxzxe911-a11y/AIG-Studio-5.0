@@ -29,3 +29,39 @@ jobs:
           echo "WINDOWS_EXE=UNVERIFIED"
           echo "6AX_MACHINE_MOTION=NOT_CERTIFIED"
           echo "CONTROL_BINDINGS=DEFERRED_UNTIL_CORE_GATES_PASS"
+
+  native-android-windows-compile:
+    name: Verify real Android UI + Windows JVM compilation (NOT a release)
+    needs: restore-core-before-ui
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preserve locked native cores
+        run: python3 ci/verify_core_recovery_lock.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.7.0'
+      - name: Verify Android API 36 installed, install only if absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -d "$ANDROID_HOME/platforms/android-36" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+            test -x "$SDKMANAGER"
+            "$SDKMANAGER" "platforms;android-36"
+          fi
+          test -d "$ANDROID_HOME/platforms/android-36"
+      - name: Compile native Android and Windows runtime entrypoints
+        run: gradle --no-daemon :app:assembleDebug :desktop:jar
+      - name: Verify actual compiled APK/JAR bytes exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          find desktop/build/libs -maxdepth 1 -name '*.jar' -size +0c -print -quit | grep -q '.'
+          echo 'NATIVE_SOURCE_COMPILE_ONLY_PASS|ANDROID_DEBUG_APK|WINDOWS_JVM_JAR|NOT_EXE|NOT_DEVICE_UI|NOT_RELEASE'
