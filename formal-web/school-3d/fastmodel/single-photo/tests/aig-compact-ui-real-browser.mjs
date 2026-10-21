@@ -11,10 +11,27 @@ try{
  for(const device of [{name:'phone',viewport:{width:360,height:780},isMobile:true,hasTouch:true},
   {name:'desktop',viewport:{width:1440,height:900}}]){
   const page=await browser.newPage({...device,deviceScaleFactor:1});
-  page.on('pageerror',e=>failures.push(device.name+': '+e.message));
+  page.on('pageerror',e=>{failures.push(device.name+': '+e.message);console.log('AIG Browser page error:',e.message);});
+  page.on('requestfailed',r=>console.log('AIG Browser failed request:',r.url(),r.failure()?.errorText));
+  page.on('response',r=>{if(r.status()>=400)console.log('AIG Browser HTTP',r.status(),r.url());});
   const url=process.env.AIG_UI_TEST_URL||'http://127.0.0.1:8765/index.html';
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
-  await page.waitForSelector('#aig-unified-tabs',{timeout:16000});
+  try{await page.waitForSelector('#aig-unified-tabs',{timeout:16000});}
+  catch(e){
+   console.log('AIG SHELL DIAGNOSTICS:',JSON.stringify({
+    device:device.name,url:page.url(),title:await page.title(),
+    tabCount:await page.locator('#aig-unified-tabs').count(),
+    status:await page.locator('#status').textContent().catch(()=>null),
+    body:await page.locator('body').innerText().then(t=>t.slice(0,450)).catch(()=>null),
+    errors:failures,
+    scriptSources:await page.evaluate(()=>[...document.scripts].map(s=>s.src)),
+    uiProbe:await page.evaluate(()=>({
+     generation:!!document.getElementById('generation'),
+     appScript:!!document.querySelector('script[src="/app.js"]'),
+     appError:!!document.querySelector('#aig65-build')
+    }))
+   }));throw e;
+  }
   const evidence=await page.evaluate(()=>{
    const q=x=>document.querySelector(x);
    return {
