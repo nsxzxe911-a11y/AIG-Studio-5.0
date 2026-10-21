@@ -60,3 +60,19 @@ test('old generation/version markers and assets are retained, one formal program
  assert.equal(JSON.parse(read('AIG62-SCHOOL-VISUAL-ASSETS.json')).otherCostumesAndSwimwearStillAvailable,true);
  assert.ok(!read('aig-unified-shell-6-9.mjs').includes('fetch('));
 });
+
+test('6.9.2: no WAV is an optional enhancement, not a prerequisite for photo, preview or video',()=>{
+ const app=read('app.mjs'),html=read('index.html'),shell=read('aig-unified-shell-6-9.mjs');
+ assert.ok(html.includes('配音 WAV（完全選填，沒有也可以生成動畫）'));
+ assert.ok(html.includes('聲音檔非必要')||shell.includes('聲音檔非必要'));
+ assert.ok(shell.includes('aig-unified-auto-sound'));
+ assert.ok(shell.includes('story-sound-options'));
+ assert.ok(app.includes('if(voice){'));
+ assert.ok(app.includes('aig67Audio=decodedVoice?{decoded:decodedVoice,sha:voiceSha}:null'));
+ assert.ok(app.includes('try{storySound.start();}catch(audioError)'));
+ assert.ok(app.includes('未提供音檔也可生成'));
+ assert.ok(!html.includes('id="aig67-voice" type="file" required'));
+ assert.ok(html.includes('id="voice-enabled"'));
+ assert.ok(html.includes('id="sfx-enabled"'));
+ assert.ok(html.includes('id="music-enabled"'));
+});
