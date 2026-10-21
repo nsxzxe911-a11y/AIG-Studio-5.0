@@ -54,6 +54,11 @@ test('6.4 ONLY ONE face image estimates complete normal human proportions withou
  assert.equal(model.inputCoverage,'FACE_OR_HEAD_ONLY_VISIBLE');
  assert.equal(model.noBackOrSidePhotoRequired,true);
  assert.equal(model.riggedBoneCount,17);
+ assert.ok(model.actualTechnicalHeadToBodyRatio>7.4&&
+  model.actualTechnicalHeadToBodyRatio<7.6,
+  'real mesh head-to-body geometry must use ~7.5 heads, not metadata only');
+ assert.ok(model.actuallyRemeshedVertexCount>200);
+ assert.ok(model.actualLegLengthStretchFactor>1.1);
  assert.equal(model.skinnedMeshCount,9);
  assert.equal(model.animationClipCount,5);
  assert.equal(model.originalPhotoFullbodyLikenessVerified,false);
@@ -79,6 +84,7 @@ test('6.4 one upper-body photo can constrain width but still invents unseen legs
  assert.equal(generated.originalPhotoFaceIdentityReconstructed,false);
  assert.equal(generated.generatedWholeBodyParts.includes('rightLeg'),true);
  assert.equal(generated.noBackOrSidePhotoRequired,true);
+ assert.ok(Math.abs(generated.actualTechnicalHeadToBodyRatio-7.5)<.05);
 });
 test('6.4 rejects no person, forged SHA, bad image, forced multi-person or fabricated approved scaffold',()=>{
  assert.throws(()=>analyzeAIG64PartialPortrait(inputs('blank')),
