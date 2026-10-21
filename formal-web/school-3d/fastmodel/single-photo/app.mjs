@@ -16,6 +16,7 @@ import {AIG45_POSES,AIG45_MARKERS,AIG45_SCHEMA,recognizePose,normalizeMark,audit
 import {AIG46_SCHEMA,normalizePoseSet,buildHeadNeckPonytail,exportOBJ} from './aig-head-neck-4-6.mjs';
 import {AIG47_SCHEMA,buildAIG47Draft,exportAIG47GLB} from './aig-welded-4-7.mjs';
 import {AIG48_SCHEMA,buildAIG48Draft,exportAIG48GLB,auditAIG48Poses} from './aig-skin-motion-4-8.mjs';
+import {AIG49_SCHEMA,auditAIG49DynamicContacts} from './aig-dynamic-collision-4-9.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -454,8 +455,16 @@ $('aig45-export').addEventListener('click',()=>{
 // 4.6 independent native geometry path: no paid APIs or overwrite of 4.0 GLB.
 let aig46Profile=null,aig46Draft=null,aig47Draft=null;
 let aig48Draft=null,aig48QA=null,aig48Busy=false;
+let aig49Audit=null,aig49Rig=null,aig49Busy=false,aig49Epoch=0;
+function aig49Reset(message='4.9 技術骨架來源已變更，舊碰撞採樣不可再使用。'){
+ aig49Epoch++;aig49Audit=null;aig49Rig=null;
+ for(const id of ['aig49-load','aig49-evidence'])$(id).disabled=true;
+ $('aig49-audit').disabled=aig49Busy||!aig48Draft||!aig48QA;
+ $('aig49-status').textContent=message;
+}
 function aig48Reset(message='4.8 來源或 4.7 網格已變更；請重新產生骨架動畫。'){
  aig48Draft=null;aig48QA=null;
+ aig49Reset('4.8 來源失效；4.9 已清除舊動態三角碰撞報告。');
  $('aig48-download').disabled=true;$('aig48-evidence').disabled=true;
  $('aig48-build').disabled=aig48Busy||!aig47Draft;
  $('aig48-status').textContent=message;
@@ -604,6 +613,7 @@ $('aig48-build').addEventListener('click',async()=>{
   if(qa.sampledClips.length!==3||!qa.glbRoundtrip||qa.minSampledTriangleArea<=1e-10)
    throw Error('AIG48_SAMPLED_POSE_GATE');
   aig48Draft=rig;aig48QA=qa;
+  aig49Reset('4.8 骨架動畫來源已驗證。可執行 4.9 動態三角面接觸掃描。');
   $('aig48-download').disabled=false;$('aig48-evidence').disabled=false;
   $('aig48-status').textContent='真技術骨架 5 節點／2 個 SkinnedMesh／3 個動畫：'+
    qa.sampledClips.map(x=>x.clip+' '+x.maxVertexDisplacement.toFixed(4)).join('／')+
@@ -615,6 +625,58 @@ $('aig48-build').addEventListener('click',async()=>{
   aig48Busy=false;$('aig48-build').disabled=!aig47Draft;
  }
 });
+
+$('aig49-audit').addEventListener('click',async()=>{
+ if(aig49Busy||!aig48Draft||!aig48QA||movieUI?.isBusy)return;
+ const rig=aig48Draft,epoch=++aig49Epoch;
+ aig49Audit=null;aig49Rig=null;aig49Busy=true;
+ for(const id of ['aig49-audit','aig49-load','aig49-evidence'])$(id).disabled=true;
+ $('aig49-status').textContent='從真骨架 GLB 取出 15 個姿態的頭頸／馬尾三角面，進行有預算上限的碰撞計算。';
+ try{
+  const report=await auditAIG49DynamicContacts(rig);
+  if(aig48Draft!==rig||aig49Epoch!==epoch)return;
+  if(report.posesChecked!==15||report.testedFacePairs<1)throw Error('AIG49_INCOMPLETE_POSE_AUDIT');
+  aig49Audit=report;aig49Rig=rig;
+  $('aig49-evidence').disabled=false;$('aig49-load').disabled=!view;
+  $('aig49-status').textContent='4.9 已從真 GLB 採樣 '+report.posesChecked+
+   ' 個姿態，實際檢查 '+report.testedFacePairs+' 組三角面，接觸／相交 '+report.confirmedSurfaceContactPairs+
+   ' 組。'+(report.confirmedSurfaceContactPairs>0?
+    '檢測到頭頸／馬尾交疊風險：正式角色仍 BLOCKED；先調整 4.6 馬尾，再重新產生 4.7～4.9。':
+    '取樣時刻未發現三角面相交，但無法證明兩幀之間不穿模、髮絲沒有碰撞或正式人物可發佈。')+
+   ' 可下載有來源 SHA 的報告，或載入技術 GLB 試播劇情／配音／錄影。';
+ }catch(error){
+  if(aig48Draft===rig&&aig49Epoch===epoch)
+   aig49Reset('4.9 真三角面掃描 BLOCKED：'+error.message+'。原 4.8 GLB、來源照片及影片功能不變。');
+ }finally{
+  aig49Busy=false;
+  $('aig49-audit').disabled=!aig48Draft||!aig48QA;
+ }
+});
+$('aig49-evidence').addEventListener('click',()=>{
+ if(!aig49Audit||aig49Rig!==aig48Draft)return;
+ aig47Download(JSON.stringify(aig49Audit,null,2),
+  'AIG-4.9-15-real-skinned-poses-INTERSECTION-QA-NOT-RELEASE.json','application/json');
+});
+$('aig49-load').addEventListener('click',async()=>{
+ if(!aig49Audit||aig49Rig!==aig48Draft||!view||movieUI?.isBusy)return;
+ const rig=aig49Rig,epoch=aig49Epoch,report=aig49Audit;
+ $('aig49-load').disabled=true;
+ try{
+  const glb=exportAIG48GLB(rig);
+  if(!glb.bytes?.length||report.posesChecked!==15)throw Error('AIG49_UNVERIFIED_TECHNICAL_GLB');
+  await load(glb.bytes.buffer,false);
+  if(aig49Epoch!==epoch||aig49Rig!==rig)throw Error('AIG49_SOURCE_CHANGED_DURING_LOAD');
+  $('aig49-status').textContent='4.9 技術 GLB 已載入可旋轉動畫工作區；轉頭、低頭、甩馬尾可由劇本文字匹配實際 Clip。'+
+   '可沿用台詞／音效／音樂／1080p 錄影操作，但錄製仍由使用者啟動。'+
+   (report.confirmedSurfaceContactPairs?'注意：仍有 '+report.confirmedSurfaceContactPairs+' 組碰撞風險。':'')+
+   '這仍不是完整人體、真實女主角或正式影片驗收。';
+ }catch(error){
+  $('aig49-status').textContent='4.9 技術 GLB 預覽未完成：'+error.message+'；可保留檢測 JSON 與原 4.8 GLB。';
+ }finally{
+  $('aig49-load').disabled=!aig49Audit||aig49Rig!==aig48Draft||!view;
+ }
+});
+
 $('aig48-download').addEventListener('click',()=>{
  if(!aig48Draft||!aig48QA)return;
  try{
