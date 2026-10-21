@@ -11,7 +11,7 @@
   "modules": [
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/app.mjs",
-      "gitBlobSha": "a6ad50209c25cee6e80fab74bf242ae7211fbc69"
+      "gitBlobSha": "a18e3f133daa4e8436ecc2e77ec6a967347719bf"
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-auto-animation-6-5.mjs",
@@ -28,7 +28,12 @@
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-portrait-audio-6-7.mjs",
       "gitBlobSha": "b05871cdb04ea93e80f4e189fa0a239d99a652dd"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-live-control-manifest.mjs",
+      "gitBlobSha": "cc0ed87b483a4b21646d6bfff1c77cd1f2f492ce"
     }
   ],
-  "ghostOverlayPolicy": "NO_DOUBLE_PERSON_ONE_PASS_VISIBLE_PAN_ZOOM_WITHOUT_CLEAN_BACKGROUND"
+  "ghostOverlayPolicy": "NO_DOUBLE_PERSON_ONE_PASS_VISIBLE_PAN_ZOOM_WITHOUT_CLEAN_BACKGROUND",
+  "controlChain": "EXISTING_DOM_BUTTONS_STABLE_IDS_TO_EXISTING_REAL_CALLBACKS_NO_REPLACEMENT"
 }
