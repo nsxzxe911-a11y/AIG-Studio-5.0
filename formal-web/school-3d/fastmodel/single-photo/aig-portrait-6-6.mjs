@@ -121,7 +121,7 @@ function paintPatch(ctx,source,r,scaleY){
  ctx.drawImage(source,x,y,w,h,x,cy,w,used);
 }
 export function createAIG66Portrait(doc,image,layered){
- const original=imageCanvas(doc,layered?.foreground||image);
+ const original=imageCanvas(doc,image);
  const ctx=original.context,photo=ctx.getImageData(0,0,
   original.canvas.width,original.canvas.height);
  const seg=segmentAIG66BorderRGBA(photo),w=original.canvas.width,
