@@ -59,7 +59,23 @@ try{
   // Tests real user interactions on original callbacks rather than just
   // checking HTML placeholders. Text-only 2D needs no photo or cloud.
   await page.locator('#aig65-story').fill('女主角轉頭，微笑。');
-  await page.locator('#aig65-mode').selectOption('2D');
+  // Reproduce actual Android screenshot: invalid/empty duration and
+  // unexpectedly unselected mode. Valid browser normalization must repair
+  // the form BEFORE calling the existing animation planner.
+  await page.evaluate(()=>{
+   document.getElementById('aig65-mode').selectedIndex=-1;
+   document.getElementById('aig65-duration').value='';
+  });
+  if(!await page.locator('#aig693-progress').isVisible())
+   throw Error('AIG693_REAL_PROGRESS_MISSING');
+  const order=await page.evaluate(()=>{
+   const a=document.getElementById('aig65-duration'),
+    b=document.getElementById('aig65-build'),
+    c=document.getElementById('aig-unified-auto-sound');
+   return !!(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING)&&
+    !!(b.compareDocumentPosition(c)&Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+  if(!order)throw Error('AIG693_REQUIRED_FORM_BELOW_OPTIONAL_AUDIO');
   await page.locator('#aig65-build').click();
   await page.waitForTimeout(900);
   console.log('AIG AFTER REAL BUILD CLICK',JSON.stringify({
@@ -76,6 +92,16 @@ try{
   },{timeout:15000});
   const buildStatus=await page.locator('#aig65-status').innerText();
   if(buildStatus.includes('BLOCKED'))throw Error('AIG_COMPACT_USER_BUILD_BLOCKED '+buildStatus);
+  if(await page.locator('#aig65-mode').inputValue()!=='AUTO'||
+     await page.locator('#aig65-duration').inputValue()!=='8')
+   throw Error('AIG693_MOBILE_MODE_DURATION_NOT_RESTORED');
+  const progress=await page.locator('#aig693-progress').evaluate(el=>({
+   value:el.getAttribute('aria-valuenow'),state:el.getAttribute('data-aig-state'),
+   text:el.textContent
+  }));
+  if(progress.value!=='4'||progress.state!=='complete')
+   throw Error('AIG693_SOURCE_GENERATED_BUT_PROGRESS_STUCK '+JSON.stringify(progress));
+  await page.screenshot({path:out+'/'+device.name+'-02a-restored-mode-8-seconds.png'});
   await page.waitForFunction(()=>!document.querySelector('#aig-unified-panel-output').hidden,
    {timeout:5000});
   if(await page.locator('#aig65-play').isDisabled())throw Error('AIG_COMPACT_PLAY_CALLBACK_NOT_READY');
