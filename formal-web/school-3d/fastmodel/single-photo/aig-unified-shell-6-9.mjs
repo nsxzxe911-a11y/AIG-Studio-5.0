@@ -137,18 +137,24 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  // Only switch after successful AUTO plan, preserving the genuine input
  // state and avoiding switching to a fake ready output after BLOCKED.
  let buildPending=false;
- byId(doc,'aig65-build').addEventListener('click',()=>{buildPending=true;});
+ function reflectAutoStatus(){
+  if(!buildPending)return;
+  const t=status.textContent;
+  if(/BLOCKED|失敗|錯誤/.test(t)){buildPending=false;return;}
+  if(/AUTO 選定/.test(t)){
+   buildPending=false;
+   if(/真 3D/.test(t))activate('model');
+   else activate('output');
+  }
+ }
+ // Capture phase wins even when a text-only AUTO build finishes
+ // synchronously before the original bubble-phase build callback returns.
+ byId(doc,'aig65-build').addEventListener('click',()=>{
+  buildPending=true;
+  doc.defaultView?.setTimeout?.(reflectAutoStatus,0);
+ },true);
  if(typeof doc.defaultView?.MutationObserver==='function'){
-  const observer=new doc.defaultView.MutationObserver(()=>{
-   if(!buildPending)return;
-   const t=status.textContent;
-   if(/BLOCKED|失敗|錯誤/.test(t)){buildPending=false;return;}
-   if(/AUTO 選定/.test(t)){
-    buildPending=false;
-    if(/真 3D/.test(t))activate('model');
-    else activate('output');
-   }
-  });
+  const observer=new doc.defaultView.MutationObserver(reflectAutoStatus);
   observer.observe(status,{subtree:true,childList:true,characterData:true});
  }
  return {ready:true,schema:AIG_UNIFIED_SHELL_SCHEMA,
