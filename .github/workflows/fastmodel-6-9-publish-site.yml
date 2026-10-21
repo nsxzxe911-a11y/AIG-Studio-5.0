@@ -1,4 +1,4 @@
-name: Publish FastModel 6.9.4 3D AUTHORITY FIX to ORIGINAL AIG website
+name: Publish FastModel 6.9.4 VERIFIED 3D UI and Cache to ORIGINAL AIG website
 on:
   push:
     branches:
@@ -69,7 +69,7 @@ jobs:
           if(!html.includes('AIG FastModel 6.9')||!html.includes('id="aig65-record"')||
              !html.includes('id="aig68-review"'))throw Error('FASTMOTION_69_BUILD_NOT_ACTUAL_UI');
           if(!html.includes('src="/app.js"'))throw Error('FASTMOTION_69_BUNDLE_PATH_UNEXPECTED');
-          html=html.replace('src="/app.js"','src="./app.js"');
+          html=html.replace('src="/app.js"','src="./app.js?v='+version+'"');
           for(const target of ['fastmodel','school-3d/fastmodel/single-photo']){
             const dir=path.join(production,target);
             fs.mkdirSync(dir,{recursive:true});
