@@ -70,7 +70,20 @@ class AigNative4JobsTests(unittest.TestCase):
     self.assertFalse(attestation['generatorHasHumanoidRig'])
     self.assertFalse(attestation['realHeroineAppearanceApproved'])
     self.assertFalse(attestation['releaseAllowed'])
-    self.assertRegex(attestation['nativeEngineSourceSHA256AtBuild'],r'^[a-f0-9]{64}
+    self.assertEqual(len(attestation['nativeEngineSourceSHA256AtBuild']),64)
+    self.assertRegex(attestation['nativeEngineSourceSHA256AtBuild'],r'^[a-f0-9]{64}')
+    # Byte tampering of a persisted model must fail closed with no silent repair.
+    glb_source=self.jobs.directory(first['id'])/'generated'/'AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb'
+    backup=glb_source.read_bytes()
+    try:
+        glb_source.write_bytes(backup+b'X')
+        with self.assertRaisesRegex(ValueError,'AIG54_PERSISTED_DIGEST_MISMATCH'):
+            audit_native_aig4_job(self.jobs.directory(first['id']),last)
+    finally:
+        glb_source.write_bytes(backup)
+    self.assertEqual(audit_native_aig4_job(self.jobs.directory(first['id']),last)['status'],
+                     'SOURCE_CHAIN_INTEGRITY_PASS_TECHNICAL_DRAFT_ONLY')
+    for name in ('scaffold.json','confidence.png','view-000.png','view-315.png'):
         contents,_=self.jobs.asset(first['id'],name)
         self.assertGreater(len(contents),100)
     with self.assertRaisesRegex(ValueError,'AIG4_ASSET_NAME_INVALID'):
