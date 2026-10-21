@@ -25,6 +25,7 @@ export function prepareAIG65Layers(doc,image){
  if(!evidence.hasDistinctForeground)return {
   image,background:image,foreground:null,evidence,
   visualMethod:'FLAT_IMAGE_CAMERA_ONLY_NO_DEPTH_SEPARATION',
+  backgroundPlateVerified:false,
   exactObjectMaskVerified:false
  };
  const front=doc.createElement('canvas');front.width=c.width;front.height=c.height;
@@ -46,12 +47,18 @@ export function prepareAIG65Layers(doc,image){
  if(retained<c.width*c.height*.025)return {
   image,background:image,foreground:null,evidence,
   visualMethod:'NO_RELIABLE_MATTE_FALLBACK_FLAT',
+  backgroundPlateVerified:false,
   exactObjectMaskVerified:false
  };
  fgCtx.putImageData(new ImageData(pixels,c.width,c.height),0,0);
+ // The photographed person is still inside the original background plate.
+ // Drawing an extracted person on top would produce a ghost/double body.
+ // Preserve the extracted technical candidate for future plate reconstruction,
+ // but do not claim a clean, physically measured 2.5D image.
  return {image,background:image,foreground:front,evidence,
-  visualMethod:back?'HEURISTIC_2_5D_RGB_MATTE_PARALLAX':
-   'ACTUAL_ALPHA_LAYER_PARALLAX',
+  visualMethod:'FOREGROUND_CANDIDATE_ONLY_BACKGROUND_NOT_RECOVERED',
+  backgroundPlateVerified:false,
+  requiresIndependentOcclusionFreeBackground:true,
   exactObjectMaskVerified:false
  };
 }
@@ -82,7 +89,9 @@ export function drawAIG65CanvasFrame({
   fillImage(ctx,layered.background||layered.image,w,h,
    -motion.depthOffset*w*.65,0,1.055);
   ctx.restore();
-  if(plan.selectedMode==='2.5D'&&layered.foreground){
+  if(plan.selectedMode==='2.5D'&&layered.foreground&&
+     layered.backgroundPlateVerified===true&&
+     layered.background!==layered.image){
    ctx.save();ctx.translate(w/2,h/2);
    ctx.scale(motion.transform.zoom*1.09,motion.transform.zoom*1.09);
    ctx.rotate(motion.transform.angle);
@@ -134,7 +143,10 @@ export function drawAIG65CanvasFrame({
  ctx.restore();
  return {...motion,
   actualImagePixelFrameProduced:true,
-  layeredParallaxActive:!!(plan.selectedMode==='2.5D'&&layered?.foreground),
+  layeredParallaxActive:!!(plan.selectedMode==='2.5D'&&layered?.foreground&&
+   layered?.backgroundPlateVerified===true&&layered?.background!==layered?.image),
+  duplicatedForegroundOnUnrecoveredBackgroundBlocked:!!(
+   plan.selectedMode==='2.5D'&&layered?.foreground&&!layered?.backgroundPlateVerified),
   localFacePixelsActuallyWarped:!!portraitFrame,
   actualHumanJointPositionsComputed:false,
   stillPhotoMotionCannotBeCalledRealWalk:isStillPhotoWalk};
