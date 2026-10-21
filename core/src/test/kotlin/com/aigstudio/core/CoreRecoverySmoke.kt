@@ -41,6 +41,33 @@ fun main() {
     val cam3x=CamModel.fromCad(90003L,DrawingSnapshot(emptyList()),safe3x)
     val posted=CncPost.generate(cam3x,FanucPostSettings())
     check("G0" in posted && "G1" in posted) { "Verified 3-axis Fanuc G0/G1 must generate NC" }
+    // True CAD → AUTO CAM → removal → supported 3AX Fanuc NC.
+    val cadDoc=DrawingDocument()
+    val corners=listOf(Vec2(-15.0,-10.0),Vec2(15.0,-10.0),
+        Vec2(15.0,10.0),Vec2(-15.0,10.0))
+    for(i in corners.indices)cadDoc.put(Line(
+        id="RECT_"+i,a=corners[i],b=corners[(i+1)%corners.size]
+    ))
+    check(cadDoc.size()==4)
+    val cadSettings=CamSettings(toolDiameter=6.0,depth=-2.0,safeZ=8.0,feedMmMin=160.0)
+    val autoCam=CamModel.fromCad(90004L,cadDoc.snapshot(),cadSettings)
+    check(autoCam.toolpaths.flatMap{it.moves}.count{!it.rapid}>=4) {
+        "CAD AUTO CAM must generate actual cutting segments"
+    }
+    val autoStock=Stock3D.fromSnapshot(cadDoc.snapshot())
+    val autoRemoval=MaterialRemoval3D.simulate(autoCam.toolpaths,cadSettings,autoStock)
+    check(autoRemoval.depth.any{it<0.0}) {
+        "CAD AUTO→SIM must remove numeric material, not only render lines"
+    }
+    val cadNc=CncPost.generate(autoCam,FanucPostSettings())
+    check("G0" in cadNc && "G1" in cadNc) { "CAD AUTO needs real 3AX Fanuc NC" }
+    // NC-first event parser can run alone without a CAD file. This is
+    // *not* a proof that full 6AX NC-first physical stock removal is ready.
+    val directNc=NcExecutionTimeline.build(
+        "G90 G54\nG0 X0. Y0. Z8.\nG1 Z-2. F160.\nG1 X10.",
+        CncControllerProfile.FANUC
+    )
+    check(directNc.any{it.action=="CUT_LINEAR" && it.executable})
     val doc=DrawingDocument()
     val source=StudioProjectRepository.capture(
         doc,ready,axisA=15.0,axisB=-10.0,axisMode="6AX",
@@ -57,5 +84,5 @@ fun main() {
               loaded.axisB == -10.0&&loaded.axisC==45.0)
         check(loaded.ncText==source.ncText)
     } finally { file.delete() }
-    println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|3AX_FANUC_G0_G1|6AX_C_NC_BLOCKED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE")
+    println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|3AX_FANUC_G0_G1|6AX_C_NC_BLOCKED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE|CAD_AUTO_SIM_NC|NC_FIRST_EVENTS")
 }
