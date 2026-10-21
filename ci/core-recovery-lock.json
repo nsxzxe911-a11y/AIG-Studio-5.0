@@ -31,7 +31,8 @@
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/RuntimeLinks.kt",
-      "gitBlobSha": "76aada2f2d9ec83fb6343fb7f4734e7ce73f4ca5"
+      "gitBlobSha": "55521727fd81347ff25388ffaed775570cc71727"
     }
-  ]
+  ],
+  "machineTransportVerification": "NO_REAL_HANDSHAKE_LINK_STARTS_DISCONNECTED_CLICK_WARNING"
 }
