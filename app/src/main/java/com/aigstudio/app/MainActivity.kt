@@ -947,18 +947,26 @@ class MainActivity : Activity() {
         }
         fun addProductionUi(id:String, action:()->Unit) {
             val normalized=ProductionUiSwitchContract.normalize(id)
+            val navId="NAV_"+normalized
+            val entry=UiButtonManifestContract.byButtonId(navId)
+            require(entry.surfaceId==normalized) { "NAV_BIND_SURFACE_MISMATCH: "+navId }
             val button=RgbGlowButton(this).apply {
                 text=normalized
-                contentDescription="UI $normalized"
+                tag=navId
+                contentDescription="UI $normalized • VIEW.NAV.$normalized • $navId"
                 textSize=StudioDisplayPolicy.sp(this,9.5f)
                 minWidth=dp(68)
                 minHeight=dp(42)
                 maxLines=1
                 setRgbState(productionUiColors[normalized] ?: StudioProductionTheme.accent,false)
                 setOnClickListener {
-                    selectProductionUi(normalized)
-                    refreshVisibleMode(normalized)
-                    action()
+                    UiButtonManifestContract.dispatchNavigation(navId,normalized) { command ->
+                        require(command==entry.command) { "NAV_BIND_CALLBACK_DRIFT: "+navId }
+                        // The original real Runtime callback, not a label-only simulator.
+                        action()
+                        selectProductionUi(normalized)
+                        refreshVisibleMode(normalized)
+                    }
                 }
             }
             productionUiButtons[normalized]=button
@@ -984,7 +992,13 @@ class MainActivity : Activity() {
             minHeight=dp(42)
             maxLines=1
             setRgbState(0xFF3DEBFF.toInt(),false)
-            setOnClickListener { showRuntimeHome?.invoke() }
+            tag="NAV_HOME"
+            setOnClickListener {
+                UiButtonManifestContract.dispatchNavigation("NAV_HOME","HOME") { command ->
+                    require(command==SharedUiCommand.OPEN_HOME)
+                    showRuntimeHome?.invoke()
+                }
+            }
         })
         selectProductionUi(ProductionUiSwitchContract.initialMode)
         productionUiSwitch.visibility=View.VISIBLE
