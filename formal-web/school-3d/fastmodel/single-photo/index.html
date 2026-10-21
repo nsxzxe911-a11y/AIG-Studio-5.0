@@ -1,26 +1,94 @@
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AIG FastModel 6.9 · AUTO 動畫、影片錄製與品質驗證</title>
 <style>
 :root{color-scheme:dark;font-family:system-ui,"Microsoft JhengHei",sans-serif;background:#020407;color:#e5f2fc}*{box-sizing:border-box}body{margin:0;height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr)}header{padding:16px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #193349;background:#07111b}h1{font-size:18px;margin:0}h1 span{color:#7ceaf2}header small{color:#a8c1d0}main{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;padding:14px}.workspace{min-height:260px;position:relative;background:radial-gradient(ellipse at 50% 60%,#0b1824,#020407 65%);border:1px solid #24455b;border-radius:14px;overflow:hidden}canvas{width:100%;height:100%;display:block;touch-action:none}.hint{position:absolute;top:16px;left:16px;font-size:12px;background:#06111cd9;border:1px solid #254a60;border-radius:10px;padding:10px 13px;pointer-events:none;max-width:85%}aside{overflow:auto;background:#07111b;border:1px solid #233d53;border-radius:14px;padding:18px}h2{font-size:16px;margin:0 0 14px}h3{font-size:13px;margin:20px 0 8px;color:#b8e0ef}label{display:block;font-size:12px;color:#b7cddb;margin:12px 0 6px}input,select,button,.download{font:inherit;width:100%;border-radius:9px;padding:11px;border:1px solid #34546a;background:#0b1d2c;color:#deeff9;min-height:44px}button{cursor:pointer;font-size:13px;font-weight:750}textarea{font:inherit;width:100%;color:#e5f2fc;background:#0b1d2c;border:1px solid #34546a;border-radius:9px;padding:11px;resize:vertical;line-height:1.5}#story-timeline{display:grid;gap:7px;margin:10px 0}#story-timeline .beat{padding:9px 10px;border:1px solid #26455a;border-radius:8px;background:#0b1928;font-size:12px;color:#c9e6ee}#story-timeline .beat.missing{border-color:#97714a;color:#efce95}.story-sound-options{display:grid;grid-template-columns:1fr;gap:4px;margin:8px 0}.story-sound-options label{margin:0;display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #25465c;border-radius:8px}.story-sound-options input{width:20px;min-height:auto;height:20px}.story-dialogue{padding:9px;border:1px solid #26455a;border-radius:9px;background:#091827;margin:7px 0}.story-dialogue textarea{min-height:65px;margin-top:6px}.story-subtitle{position:absolute;z-index:4;bottom:18px;left:6%;width:88%;background:#020407dc;border:1px solid #356e94;border-radius:12px;padding:13px;color:#fff;font-size:clamp(15px,2.5vw,24px);font-weight:700;text-align:center;pointer-events:none;text-shadow:0 1px 3px black;line-height:1.5}button.primary{margin-top:14px;background:linear-gradient(120deg,#10536a,#3f285f);border-color:#7ee4f0;box-shadow:0 0 16px #3e9be329}button:disabled{opacity:.45;cursor:default}p{font-size:12px;line-height:1.7;color:#9db9cb}.status{padding:12px;margin:12px 0;border:1px solid #755b34;border-radius:10px;background:#201a11;color:#f3d49d;font-size:12px;line-height:1.7;overflow-wrap:anywhere;white-space:pre-line}.stage{padding:8px 0;border-bottom:1px solid #183246;display:flex;justify-content:space-between;font-size:12px}.stage span{color:#7ec6d9}.downloads{display:flex;flex-wrap:wrap;gap:8px}.download{width:auto;text-decoration:none;font-size:12px;flex:1 1 100px;text-align:center}[hidden]{display:none!important}.tag{font-size:11px;color:#7ae6d0;padding:5px 9px;border:1px solid #2c665e;border-radius:20px}.footer{font-size:11px;color:#7792a6;margin-top:20px}@media(max-width:760px){body{height:auto;min-height:100dvh}header{padding:13px 15px}header small{display:none}main{grid-template-columns:1fr;grid-template-rows:55dvh auto;padding:9px;gap:9px}.workspace{min-height:260px}aside{overflow:visible}h1{font-size:16px}}
-</style></head><body><header><h1><span>AIG</span> FastModel <small>6.4 · 一張臉照／上半身照 → 全身真 3D（技術模型）</small></h1><span class="tag">原彩 · PBR · 光柵</span></header><main><section class="workspace"><canvas id="view" aria-label="3D 模型與動畫預覽"></canvas><div id="story-subtitle" class="story-subtitle" hidden aria-live="polite"></div><div class="hint" id="viewport-status" role="status">生成後在這裡旋轉、縮放及播放真正的 3D 模型。</div></section><aside><div id="generation"><h2>AIG 自動 3D 建模工作區</h2><p>只需要一張清楚的臉或上半身照片，即可開始補全正常比例全身 3D。無側面／背面照片及手動標點要求；使用 AIG 本地幾何、17 骨架與五段動畫。看不到的全身部位屬先驗推估，非照片精確還原。下方舊版進階技術工具仍保留，不需要逐級完成。</p>
+
+/* 6.9.1: unified one-window presentation; ALL real controls and cores remain */
+body{height:100dvh;overflow:hidden}
+main{min-height:0;grid-template-columns:minmax(0,1fr) minmax(325px,410px)}
+.workspace{min-height:0;display:flex;align-items:center;justify-content:center}
+.workspace[data-aig-unified-stage="canvas"]>#view,
+.workspace[data-aig-unified-stage="canvas"]>.hint,
+.workspace[data-aig-unified-stage="canvas"]>.story-subtitle{display:none!important}
+.workspace[data-aig-unified-stage="3d"]>#aig65-canvas{display:none!important}
+.workspace>#aig65-canvas{width:100%!important;height:auto!important;max-height:100%!important;
+ aspect-ratio:16/9!important;object-fit:contain;touch-action:manipulation!important;
+ border:0!important;border-radius:8px!important;flex:0 1 auto}
+aside{min-height:0;overflow:auto;padding:10px;overscroll-behavior:contain}
+#aig-unified-shell{display:block;min-width:0}
+#aig-unified-tabs{position:sticky;top:0;z-index:25;display:grid;
+ grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:5px 0 9px;
+ background:#07111bf5;border-bottom:1px solid #25465d;backdrop-filter:blur(10px)}
+#aig-unified-tabs button{width:100%;min-height:40px;font-size:12px;font-weight:750;
+ padding:8px 2px;border:1px solid #355a71;border-radius:9px;
+ white-space:nowrap;overflow:hidden;text-overflow:clip}
+#aig-unified-tabs [aria-selected="true"]{background:linear-gradient(115deg,#15465d,#39335b);
+ color:#baf9ff;border-color:#80ddef;box-shadow:0 0 10px #209abd36}
+#aig-unified-tabs button:focus-visible{outline:2px solid #91efff;outline-offset:2px}
+.aig-unified-mini{margin:7px 0}
+#aig-unified-panel-box{min-height:0}
+#aig-unified-panel-box>[role="tabpanel"]{padding:10px 3px 6px;min-width:0}
+#aig-unified-panel-box>[role="tabpanel"][hidden]{display:none!important}
+#aig-unified-panel-create h2,#aig-unified-panel-output h2,
+#aig-unified-panel-model h2,#aig-unified-panel-advanced h2{margin:0 0 8px;font-size:15px}
+#aig-unified-panel-create label{margin:8px 0 4px}
+#aig-unified-panel-create label[for="aig66-face"]{
+ display:flex;align-items:flex-start;gap:7px;font-size:11px;line-height:1.45}
+#aig-unified-panel-create #aig66-face{width:18px;height:18px;min-height:18px;flex:0 0 18px}
+#aig-unified-panel-create textarea{min-height:64px}
+#aig-unified-panel-create input,#aig-unified-panel-create select,
+#aig-unified-panel-create textarea{min-height:39px;padding:8px}
+#aig-unified-panel-create #aig65-build{margin-top:12px;
+ background:linear-gradient(115deg,#0c586a,#344070);border-color:#70e1eb;
+ font-size:15px;min-height:46px}
+#aig-unified-panel-output button{margin-top:8px}
+#aig-unified-panel-output #aig65-play,#aig-unified-panel-output #aig65-record{
+ background:linear-gradient(110deg,#0c475e,#303060);border-color:#5088aa}
+#aig-unified-panel-output #aig65-video{height:auto!important;max-height:240px!important;
+ border-radius:8px;margin-top:10px}
+#aig-unified-help{margin:0 0 10px;font-size:12px;color:#a6c9d9}
+#aig-unified-help summary{cursor:pointer;padding:5px 0;font-weight:650}
+#aig-unified-help p{margin:8px 0}
+#aig-unified-live-status{position:sticky;bottom:-10px;z-index:15;
+ background:linear-gradient(0deg,#07111b 88%,transparent);padding:4px 0 0}
+#aig-unified-live-status #aig65-status{margin:6px 0;max-height:84px;overflow:auto}
+
+@media(max-width:760px){
+ body{height:100dvh!important;min-height:0!important;overflow:hidden!important}
+ main{height:calc(100dvh - 55px)!important;min-height:0!important;
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:minmax(165px,43%) minmax(0,1fr)!important;
+  gap:7px!important;padding:7px!important}
+ .workspace{min-height:0!important;overflow:hidden}
+ aside{min-height:0!important;overflow:auto!important;padding:7px 9px!important}
+ header{min-height:55px;max-height:55px;padding:8px 12px}
+ header .tag{font-size:9px;padding:3px 6px}
+ #aig-unified-tabs{padding-top:3px}
+ #aig-unified-tabs button{font-size:11px;padding:8px 1px}
+}
+@media(max-width:380px){
+ #aig-unified-tabs button{font-size:10px;letter-spacing:-.02em}
+ header h1{font-size:15px}
+}
+</style></head><body><header><h1><span>AIG</span> FastModel <small>6.9 · 單一動畫工作區</small></h1><span class="tag">原彩 · PBR · 光柵</span></header><main><section class="workspace"><canvas id="view" aria-label="3D 模型與動畫預覽"></canvas><div id="story-subtitle" class="story-subtitle" hidden aria-live="polite"></div><div class="hint" id="viewport-status" role="status">生成後在這裡旋轉、縮放及播放真正的 3D 模型。</div></section><aside><div id="generation"><h2>AIG 自動 3D 建模工作區</h2><p>只需要一張清楚的臉或上半身照片，即可開始補全正常比例全身 3D。無側面／背面照片及手動標點要求；使用 AIG 本地幾何、17 骨架與五段動畫。看不到的全身部位屬先驗推估，非照片精確還原。下方舊版進階技術工具仍保留，不需要逐級完成。</p>
 <p>本階沿用 AIG FastModel 6.7｜真 WAV 波形配音與本機臉部定位，AIG FastModel 6.5｜AUTO Canvas 真影片核心；AIG FastModel 6.6｜本機前景連通分層與人物局部動畫持續保留。6.7 新增選用本機 WAV 振幅嘴型與瀏覽器單臉方框定位；均不冒稱完整人體骨架或音素級精準口型。</p>\n<h3>AIG FastModel 6.9｜AUTO：照片／劇情直接製作動畫</h3>
 <p>6.9 網站預覽版：保留 6.8 真影片解碼檢查；新增 GitHub Chromium 實際錄影與 WAV 音軌封裝測試。測試治具不等於核准女主角；正式 1080p 影片、人工嘴型與穿模檢查及 Windows／Android 仍需另行驗收。</p>
 <h3>AIG FastModel 6.8｜AUTO：照片／插畫／文字劇情 → 2D・2.5D・3D 動畫</h3>
 <p>先選一張圖片或輸入一句劇情，即可由 AIG 自動判斷適合的動畫方法。<strong>2D／2.5D 不要求建立 GLB</strong>：本機 Canvas 直接對真圖片畫素做平移、縮放、推鏡、層次視差；如有可信的人物透明背景／可分離前景才開啟景深層，否則維持平面運鏡。<strong>真正 3D 動畫</strong>只能用已有骨架和可配對的真 GLB 動作；只靠一張圖片不能假造精確走路／踢擊／打鬥。錄影直接使用實際 Canvas 1920×1080 加原創 WebAudio（支援時），瀏覽器若僅支援 WebM 不會冒充 MP4，系統朗讀 TTS 不會進錄影音軌。先前校園女主角與其他泳裝／動畫服裝全部保留。</p>
-<label for="aig65-image">選用一張照片、插畫或漫畫；也可以只輸入劇情做文字卡動畫</label>
+<label for="aig65-image">選照片或插畫（也可只用劇情）</label>
 <input id="aig65-image" type="file" accept="image/png,image/jpeg,image/webp">
-<label for="aig65-story">動畫劇情（可使用下方故事文字）</label>
+<label for="aig65-story">劇情描述</label>
 <textarea id="aig65-story" rows="3" maxlength="3000" placeholder="女主角在櫻花校園走路，突然轉頭。">女主角在櫻花校園走路，突然轉頭。</textarea>
-<label for="aig65-mode">動畫引擎</label>
+<label for="aig65-mode">動畫模式</label>
 <select id="aig65-mode">
 <option value="AUTO" selected>AUTO 自動選擇 2D／2.5D／3D</option>
 <option value="2D">2D 圖像與分鏡動畫</option>
 <option value="2.5D">2.5D 景深／圖層視差</option>
 <option value="3D">3D 真骨架動作（須載入 GLB）</option>
 </select>
-<label for="aig65-duration">動畫時長：秒</label>
+<label for="aig65-duration">影片長度（秒）</label>
 <input id="aig65-duration" type="number" min="2" max="60" value="8">
-<label for="aig66-face"><input id="aig66-face" type="checkbox" checked> 6.7 開啟本機前景連通分層與人物臉部局部動畫（若無可信人像輪廓就自動退回 6.5，非真實五官追蹤）</label>
-<label for="aig67-voice">選用真實配音 WAV（本機 PCM16、單／雙聲道，錄影會包含音軌；非雲端配音）</label>
+<label for="aig66-face"><input id="aig66-face" type="checkbox" checked> 人物分層與臉部局部動作（無可信輪廓會自動回退）</label>
+<label for="aig67-voice">配音 WAV（選填，需本機 PCM16）</label>
 <input id="aig67-voice" type="file" accept=".wav,audio/wav,audio/wave">
 <p id="aig67-status" class="status" role="status">沒有配音 WAV 時沿用舊動畫；有配音時由真波形音量驅動近似嘴部開合。支援時利用本機 FaceDetector 定位單一臉部，非每個五官的精準追蹤。</p>
 <button id="aig65-build" type="button">AUTO 解析劇情、選擇引擎並建立真 Canvas 動畫</button>
