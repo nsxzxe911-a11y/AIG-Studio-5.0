@@ -38,6 +38,7 @@ import {AIG66_SCHEMA,createAIG66Portrait} from './aig-portrait-6-6.mjs';
 import {AIG67_SCHEMA,detectAIG67BrowserFace,decodeAIG67PCM16Wav,sampleAIG67AudioMouth,buildAIG67AudioBuffer} from './aig-portrait-audio-6-7.mjs';
 import {AIG68_SCHEMA,AIG68FramePacing,probeAIG68EncodedPlayback} from './aig-video-evidence-6-8.mjs';
 import {initAIGUnifiedShell} from './aig-unified-shell-6-9.mjs';
+import {normalizeAIG693AutoInputs} from './aig-auto-inputs-6-9.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -2501,6 +2502,16 @@ let aig65Current=null,aig65Playing=false,aig65Recording=false,aig65Finalizing=fa
  aig65CaptureError=null;
 const aig65Canvas=$('aig65-canvas');
 function aig65Show(text){$('aig65-status').textContent=text;}
+function aig693Progress(step,message,{error=false}={}){
+ const el=$('aig693-progress');
+ if(!el)return;
+ const value=Math.max(0,Math.min(4,Number.isFinite(step)?step:0));
+ el.setAttribute('aria-valuenow',String(value));
+ el.setAttribute('data-aig-state',error?'error':value===4?'complete':'working');
+ el.textContent=(error?'無法生成：':value===4?'動畫已生成：':
+  value===0?'等待生成：':'實際步驟 '+value+'／4：')+message;
+}
+
 function aig65Refresh(){
  const busy=aig65Playing||aig65Recording||aig65Finalizing,
   sourceReady=aig65Current?.plan?.ready===true;
@@ -2522,7 +2533,7 @@ function aig65Invalidate(reason='來源或劇情變更，請重新計算 AUTO �
  aig65DecodedImage?.close?.();aig65DecodedImage=null;
  aig68LastRecordedUrl=null;aig68PlaybackProof=null;aig68OutputForRevision=null;
  $('aig68-status').textContent='圖片或劇情已改變：舊影片仍可下載，但不代表新來源驗收。';
- aig65Show(reason);aig65Refresh();
+ aig65Show(reason);aig693Progress(0,'來源已改變，請重新生成');aig65Refresh();
 }
 for(const id of ['aig65-image','aig65-story','aig65-mode','aig65-duration','aig66-face','aig67-voice'])
  $(id).addEventListener(id==='aig65-story'?'input':'change',()=>{
@@ -2564,13 +2575,28 @@ $('aig65-build').addEventListener('click',async()=>{
  aig68LastRecordedUrl=null;aig68PlaybackProof=null;aig68OutputForRevision=null;
  $('aig68-status').textContent='已更換動畫來源，6.8 編碼影片驗收需重新錄製。';
  const photo=$('aig65-image').files?.[0]||null,
-  voice=$('aig67-voice').files?.[0]||null,
-  story=$('aig65-story').value,selected=$('aig65-mode').value,
-  duration=Number($('aig65-duration').value),rev=++aig65Revision;
+  voice=$('aig67-voice').files?.[0]||null;
+ const inputReady=normalizeAIG693AutoInputs({
+  mode:$('aig65-mode').value,
+  duration:$('aig65-duration').value,
+  story:$('aig65-story').value,
+  hasImage:!!photo
+ });
+ const story=inputReady.storyText,
+  selected=inputReady.requestedMode,
+  duration=inputReady.durationSeconds,rev=++aig65Revision;
+ if(inputReady.corrections.includes('MODE_DEFAULT_AUTO'))
+  $('aig65-mode').value='AUTO';
+ if(inputReady.corrections.includes('DURATION_DEFAULT_8_SECONDS'))
+  $('aig65-duration').value='8';
  $('aig65-build').disabled=true;
- aig65Show('正在核對來源與劇情，選擇真正可提供的 2D／2.5D／3D 動畫技術。');
+ aig693Progress(1,'檢查照片、劇情、模式與秒數');
+ aig65Show('正在確認動畫來源。'+
+  (inputReady.corrections.length?'已將無效欄位恢復為 AUTO／8 秒。':'')+
+  ' 不需要配音檔，也不需要第三方服務。');
  let bitmap=null;
  try{
+  if(!inputReady.ready)throw Error(inputReady.blockingReason);
   let imageSha=null,dimensions=null,photoLayer=null;
   // Sound files are OPTIONAL. Text and photo animation never require WAV.
   // Existing device TTS + locally synthesized original SFX/music are usable
@@ -2603,6 +2629,7 @@ $('aig65-build').addEventListener('click',async()=>{
    // arbitrary backgrounds even if a clean 2.5D matte cannot be measured.
    photoLayer=prepareAIG65Layers(document,bitmap);
   }
+  aig693Progress(2,'已確認輸入與來源圖片');
   const modelReady=!!(view?.model&&sourceSha);
   const plan=planAIG65AutoAnimation({
    storyText:story,hasImage:!!photo,imageSHA256:imageSha,
@@ -2611,6 +2638,7 @@ $('aig65-build').addEventListener('click',async()=>{
    durationSeconds:duration
   });
   if(!plan.ready)throw Error('AIG65_AUTO_PLAN_BLOCKED: '+plan.blockers.join('、'));
+  aig693Progress(3,'已確定 '+plan.selectedMode+' 動畫引擎');
   if(decodedVoice&&plan.selectedMode==='3D')
    throw Error('AIG67_IMPORTED_WAV_ONLY_SUPPORTED_IN_2D_2_5D_RECORDING');
   if(rev!==aig65Revision||photo!==($('aig65-image').files?.[0]||null)||
@@ -2657,10 +2685,15 @@ $('aig65-build').addEventListener('click',async()=>{
     (decodedVoice?'已載入 WAV 配音；':'未提供音檔也可生成：播放時可用裝置朗讀、音效及配樂；錄影時可錄入本機音效與配樂（依瀏覽器支援）。')+
     ' 照片裡的手腳不會自行變成關節動畫。');
   }
+  aig693Progress(4,'已有實際動畫預覽；可切換播放／錄製');
  }catch(err){
   aig65Current=null;aig65Layers=null;aig66Portrait=null;aig67Audio=null;aig67VoiceSha=null;aig67FaceEvidence=null;
-  aig65Show('6.7 AUTO BLOCKED：'+err.message+
-   '。原始照片、3D GLB、其他服裝及原音影片保持不變。');
+  const reason=String(err.message||err);
+  aig693Progress(0,reason,{error:true});
+  aig65Show('6.9.3 無法生成：'+
+   (reason.includes('MODE_DURATION_OR_CLIPS_INVALID')?
+    '動畫模式或秒數無效，請將模式設為 AUTO、秒數設為 8 後重新生成。':reason)+
+   '；原始照片、GLB、服裝及已產生的影片不受影響。');
  }finally{bitmap?.close?.();aig65Refresh();}
 });
 function aig65StopSound(){
