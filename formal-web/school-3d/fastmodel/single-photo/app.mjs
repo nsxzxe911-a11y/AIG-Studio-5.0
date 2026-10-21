@@ -31,6 +31,7 @@ import {AIG60_SCHEMA,AIG60_MARKS,calibrateAIG60FaceMarks,fitAIG60MeasuredFaceGLB
 import {AIG61_SCHEMA,proposeAIG61LocalLandmarks,acceptAIG61ReviewedProposal} from './aig-face-scan-assist-6-1.mjs';
 import {AIG62_SCHEMA,AIG62_REFERENCES,verifyAIG62ReferenceFile} from './aig-school-visual-6-2.mjs';
 import {AIG63_SCHEMA,compareAIG63ActualImages,auditAIG63SchoolModelActualGLTF,bindAIG63Evidence} from './aig-visual-compare-6-3.mjs';
+import {AIG64_AUTOBODY_SCHEMA,analyzeAIG64PartialPortrait,generateAIG64SinglePartialFullbody} from './aig-single-photo-autobody-6-4.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -2348,6 +2349,139 @@ $('aig63-report').addEventListener('click',()=>{
   aig47Download(JSON.stringify(aig63Report,null,2),
    'AIG-6.3-SCHOOL-2D-REAL-3D-PIXEL-SHA-QA-NOT-APPROVED.json','application/json');
  else $('aig63-status').textContent='6.3 參考圖／GLB SHA 已改變，不能沿用舊外觀報告。';
+});
+
+
+let aig64SingleBytes=null,aig64SingleReport=null,aig64SingleBusy=false,aig64SingleRevision=0;
+function aig64SingleInvalidate(message='已變更輸入照片，上一個全身 GLB 不可再當成目前的來源。'){
+ ++aig64SingleRevision;aig64SingleBytes=null;aig64SingleReport=null;
+ $('aig64-single-download').disabled=true;
+ $('aig64-single-report').disabled=true;
+ $('aig64-single-status').textContent=message;
+}
+$('aig64-single-photo').addEventListener('change',()=>{
+ aig64SingleInvalidate();
+ $('aig64-single-build').disabled=aig64SingleBusy||
+  !$('aig64-single-photo').files?.length;
+});
+$('aig64-single-build').addEventListener('click',async()=>{
+ if(aig64SingleBusy||!$('aig64-single-photo').files?.length)return;
+ if(view?.movieMode){
+  $('aig64-single-status').textContent='正在錄製影片。請在錄製完成後生成新全身模型，以免插入動作時間軸。';return;
+ }
+ const input=$('aig64-single-photo').files[0],revision=++aig64SingleRevision;
+ aig64SingleBusy=true;aig64SingleBytes=null;aig64SingleReport=null;
+ $('aig64-single-build').disabled=true;$('aig64-single-report').disabled=true;
+ $('aig64-single-download').disabled=true;
+ $('aig64-single-status').textContent='正在只用一張照片的本機像素推估可見頭肩、補齊看不見的軀幹四肢與背面，製作 17 骨／5 動畫真 GLB。';
+ let bitmap=null;
+ try{
+  if(input.size<100||input.size>20*1024*1024)
+   throw Error('AIG64_PHOTO_FILE_SIZE_OUT_OF_BOUNDS');
+  const raw=await input.arrayBuffer(),sha=await sha256Bytes(raw);
+  const sig=new Uint8Array(raw,0,Math.min(raw.byteLength,16));
+  const jpeg=sig[0]===255&&sig[1]===216&&sig[2]===255,
+   png=[137,80,78,71,13,10,26,10].every((v,i)=>sig[i]===v),
+   webp=sig[0]===82&&sig[1]===73&&sig[2]===70&&sig[3]===70&&
+    sig[8]===87&&sig[9]===69&&sig[10]===66&&sig[11]===80;
+  if(!jpeg&&!png&&!webp)throw Error('AIG64_ONLY_ACTUAL_JPEG_PNG_WEBP');
+  bitmap=await createImageBitmap(input);
+  if(bitmap.width<128||bitmap.height<128||bitmap.width>12000||
+   bitmap.height>12000)
+   throw Error('AIG64_IMAGE_DIMENSION_OUT_OF_BOUNDS');
+  // Work on the ORIGINAL decoded photo (optionally downscaled for memory).
+  // Full-source SHA is never replaced by the smaller canvas SHA.
+  const shrink=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
+  const cw=Math.max(128,Math.round(bitmap.width*shrink)),
+   ch=Math.max(128,Math.round(bitmap.height*shrink));
+  const raster=document.createElement('canvas');raster.width=cw;raster.height=ch;
+  const ctx=raster.getContext('2d',{willReadFrequently:true});
+  if(!ctx)throw Error('AIG64_ORIGINAL_IMAGE_PIXELS_NOT_READABLE');
+  ctx.drawImage(bitmap,0,0,cw,ch);
+  const image=ctx.getImageData(0,0,cw,ch);
+  const analysis=analyzeAIG64PartialPortrait({
+   pixels:image.data,imageWidth:cw,imageHeight:ch,
+   sourceImageSHA256:sha
+  });
+  const output=generateAIG64SinglePartialFullbody({analysis});
+  const actualSHA=await sha256Bytes(output.bytes);
+  const parsed=await parseRiggedGLB(output.bytes.buffer);
+  const qa=await auditAIG50FullBody(parsed,{sourceSHA256:actualSHA});
+  const schools=auditAIG63SchoolModelActualGLTF(parsed,{modelGLBSHA256:actualSHA});
+  if(qa.outcome!=='STRUCTURAL_QA_PASS_ONLY'||qa.boneCount!==17||
+   qa.skinnedMeshCount!==9||qa.clipsAvailable!==5||
+   !schools.schoolOutfitMeshesPresent)
+   throw Error('AIG64_FULL_BODY_SKINNED_GLB_GEOMETRY_GATE_BLOCKED');
+  if(revision!==aig64SingleRevision||
+   input!==$('aig64-single-photo').files?.[0])
+   throw Error('AIG64_INPUT_PHOTO_CHANGED_DURING_GENERATION');
+  const {scaffold,...analysisForReport}=analysis;
+  const report={
+   schema:AIG64_AUTOBODY_SCHEMA,
+   originalSinglePhotoSHA256:sha,
+   originalPixelSize:[bitmap.width,bitmap.height],
+   imagePixelsActuallySampled:[cw,ch],
+   detectedPartialCoverage:analysis.photoCoverage,
+   portraitAndHeadBoundsFromPixelContrast:analysis.detectedForegroundThumbnailBox,
+   uncertainObservedShoulderWidth:analysis.widthToHeightModelRatio,
+   estimatedHeadToWholeBodyRatio:analysis.headToBodyRatioPrior,
+   inferredBodySectionsNotInOriginalPhoto:true,
+   manuallyRequiredViews:0,manualFaceLandmarksRequired:0,
+   automaticFullBodyGeneratedFromOnePhoto:true,
+   generatedRealGLBSHA256:actualSHA,GLBBytes:output.bytes.byteLength,
+   fullbodyQAOutcome:qa.outcome,realBoneCount:qa.boneCount,
+   realSkinnedMeshes:qa.skinnedMeshCount,realAnimationClips:qa.clipsAvailable,
+   realUniformAndHairParts:schools.visibleSchoolAccessories,
+   sourceAnalysis:analysisForReport,
+   sourceHeadShapeAndIdentityExact:false,
+   allUnseenProportionsEstimatedNotPhotographicallyMeasured:true,
+   allOriginalMovieVoiceAndOtherCostumesPreserved:true,
+   nativeAndroidWindows60FPSMeasured:false,
+   releaseAllowed:false
+  };
+  // Produce a usable GLB even on a mobile browser without a functioning GPU.
+  // Renderer errors are isolated and do not destroy the successful file.
+  let preview='真 GLB 可下載；尚未取得目前裝置 GPU 的 3D 預覽。';
+  if(view){
+   try{
+    await load(output.bytes.buffer,false);
+    if(sourceSha!==actualSHA)throw Error('AIG64_VIEWER_WRONG_GLBSHA');
+    aig50Revision++;aig50Report=qa;aig50Parsed=parsed;
+    aig51Reset('6.4 自動補全模型已載入；接縫、馬尾穿模須重新對新 GLB 取樣。');
+    aig52Invalidate('6.4 單張照片模型已載入，16 幀動畫畫面及 FPS 請重新取樣。');
+    aig52RefreshAvailable();$('aig52-load').disabled=true;
+    $('aig50-report').disabled=false;
+    preview='已載入真 3D 工作區，五段骨架動畫可操作。';
+   }catch(err){preview='GPU 預覽隔離：'+err.message+'；GLB 仍可下載。';}
+  }
+  if(revision!==aig64SingleRevision||input!==$('aig64-single-photo').files?.[0])
+   throw Error('AIG64_SOURCE_CHANGED_AFTER_PREVIEW');
+  aig64SingleBytes=output.bytes;aig64SingleReport=report;
+  $('aig64-single-download').disabled=false;
+  $('aig64-single-report').disabled=false;
+  $('aig64-single-status').textContent='6.4 已從單張 '+(
+   analysis.photoCoverage==='HEAD_AND_UPPER_BODY_VISIBLE'?'上半身':'臉／頭部')+
+   '照自動生完整全身 GLB：17 骨、9 個真蒙皮網格、5 段真動畫；不需要四面照片。'+
+   preview+' 未拍到的真實身材及人物身份仍屬估算，非完全 3D 相貌還原。';
+ }catch(err){
+  aig64SingleBytes=null;aig64SingleReport=null;
+  $('aig64-single-status').textContent='6.4 單張照片自動建模 BLOCKED：'+err.message+
+   '。清楚的臉部或上半身照片即可重試，不必提供四視角；原動畫與服裝未更動。';
+ }finally{
+  bitmap?.close?.();aig64SingleBusy=false;
+  $('aig64-single-build').disabled=!$('aig64-single-photo').files?.length;
+ }
+});
+$('aig64-single-download').addEventListener('click',()=>{
+ if(aig64SingleBytes&&aig64SingleReport)
+  aig47Download(aig64SingleBytes,
+   'AIG-6.4-ONE-FACE-OR-UPPERBODY-TO-FULL-RIGGED-TECHNICAL.glb','model/gltf-binary');
+});
+$('aig64-single-report').addEventListener('click',()=>{
+ if(aig64SingleReport)
+  aig47Download(JSON.stringify(aig64SingleReport,null,2),
+   'AIG-6.4-SINGLE-PARTIAL-PHOTO-ANATOMICAL-ESTIMATE-SHA.json',
+   'application/json');
 });
 
 let aig4Busy=false;
