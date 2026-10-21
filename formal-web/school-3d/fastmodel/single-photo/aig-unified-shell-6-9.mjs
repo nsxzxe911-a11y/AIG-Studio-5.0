@@ -26,7 +26,8 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  const original=byId(doc,'generation');
  const status=byId(doc,'aig65-status');
  const stillCanvas=byId(doc,'aig65-canvas');
- if(!aside||!stage||!original||!status||!stillCanvas)
+ const viewCanvas=byId(doc,'view');
+ if(!aside||!stage||!original||!status||!stillCanvas||!viewCanvas)
   return {ready:false,reason:'REQUIRED_RUNTIME_ELEMENTS_MISSING'};
  const children=Array.from(original.children),
    auto=findHeading(children,'AIG FastModel 6.9'),
@@ -34,6 +35,15 @@ export function initAIGUnifiedShell(doc=globalThis.document){
    advanced=findHeading(children,'進階／舊版');
  if(auto<0||model<=auto||advanced<=model)
   return {ready:false,reason:'RUNTIME_SECTION_ORDER_CHANGED'};
+ // The big viewport is reserved for real user imagery, never the
+ // distorted technical body from the old procedural demo.
+ const stageInfo=node(doc,'div',{id:'aig-unified-stage-info',role:'status',
+  'aria-live':'polite'});
+ const caption=node(doc,'strong',{},'AIG FastModel · 等待素材');
+ const desc=node(doc,'p',{},'在「創作」選照片或輸入劇情，按「生成動畫」後顯示真預覽。不需要聲音檔。');
+ const stageAction=node(doc,'button',{id:'aig-unified-stage-action',type:'button'},'開始創作');
+ stageInfo.append(caption,desc,stageAction);
+ stage.append(stageInfo);
  const shell=node(doc,'div',{id:'aig-unified-shell'});
  const tabs=node(doc,'nav',{id:'aig-unified-tabs','aria-label':'AIG FastModel 功能切換','role':'tablist'});
  const paneBox=node(doc,'div',{id:'aig-unified-panel-box'});
@@ -124,7 +134,14 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  const originalTail=Array.from(aside.children).filter(el=>el!==original&&el!==shell);
  for(const el of children.slice(model,advanced))panels.model.append(el);
  for(const el of originalTail)panels.model.append(el);
- panels.model.insertBefore(node(doc,'h2',{},'真正的 3D、骨架與影片'),panels.model.firstChild);
+ panels.model.insertBefore(node(doc,'h2',{},'3D 模型檢視與來源驗證'),panels.model.firstChild);
+ const modelNotice=node(doc,'p',{id:'aig-unified-model-notice',
+  'data-aig-model-status':'none',role:'status'},
+  '尚未載入可顯示的使用者 GLB。技術模型不等於正式女主角。');
+ const returnCreate=node(doc,'button',{type:'button',
+  id:'aig-unified-model-back'},'返回創作：照片／劇情動畫');
+ panels.model.insertBefore(returnCreate,panels.model.children[1]||null);
+ panels.model.insertBefore(modelNotice,returnCreate);
  panels.advanced.append(original); // retains entire legacy DOM and IDs
  panels.advanced.insertBefore(node(doc,'h2',{},'進階工具與來源 Gate'),original);
  const inlineStatus=node(doc,'div',{id:'aig-unified-live-status'});
@@ -145,7 +162,39 @@ export function initAIGUnifiedShell(doc=globalThis.document){
   const el=byId(doc,id);
   if(el){el.title=el.textContent.trim();el.textContent=title;}
  }
- let active='create';
+ let active='create',modelEvidence='none',canvasReady=false;
+ function renderStage(){
+  const isModel=active==='model'||active==='advanced';
+  const allow3D=isModel&&modelEvidence==='imported';
+  const showPlaceholder=isModel?!allow3D:!canvasReady;
+  stage.dataset.aigUnifiedStage=isModel?'3d':'canvas';
+  stage.dataset.aigModelState=modelEvidence;
+  stage.dataset.aigPreviewReady=showPlaceholder?'false':'true';
+  stageInfo.hidden=!showPlaceholder;
+  viewCanvas.hidden=!allow3D;
+  if(isModel){
+   const msg=modelEvidence==='technical'?
+    '此為未通過人物外觀 Gate 的技術 GLB；已停止將錯位的人偶當正式女主角展示。模型仍保留在記憶體，進階分析與下載不受影響。':
+    modelEvidence==='imported'?
+    '已載入使用者 GLB；可查看真模型，不等於臉部、材質或碰撞已通過正式驗收。':
+    '尚未載入 GLB。可先用照片做 2D／2.5D 動畫，再決定是否匯入自己的 3D 模型。';
+   modelNotice.textContent=msg;
+   modelNotice.dataset.aigModelStatus=modelEvidence;
+   caption.textContent=modelEvidence==='technical'?'技術模型已隔離':'3D 模型尚未就緒';
+   desc.textContent=msg;
+   stageAction.textContent='返回創作';
+  }else{
+   caption.textContent='AIG FastModel · 等待素材';
+   desc.textContent='選照片或輸入劇情 → 生成動畫 → 播放／錄製。音訊檔為選填。';
+   stageAction.textContent='開始創作';
+  }
+ }
+ function setModelEvidence(kind){
+  if(!['none','technical','imported'].includes(kind))return false;
+  modelEvidence=kind;renderStage();return true;
+ }
+ function setCanvasReady(ready){canvasReady=ready===true;renderStage();}
+
  function activate(id,{focus=false}={}){
   if(!panels[id])return false;
   active=id;
@@ -155,7 +204,7 @@ export function initAIGUnifiedShell(doc=globalThis.document){
    tabsById[key].setAttribute('aria-selected',String(selected));
    tabsById[key].tabIndex=selected?0:-1;
   }
-  stage.dataset.aigUnifiedStage=(id==='model'||id==='advanced')?'3d':'canvas';
+  renderStage();
   aside.scrollTop=0;
   if(focus)tabsById[id].focus();
   try{doc.defaultView?.dispatchEvent(new Event('resize'));}catch{}
@@ -173,6 +222,8 @@ export function initAIGUnifiedShell(doc=globalThis.document){
    if(next!==null){event.preventDefault();activate(AIG_UNIFIED_TABS[next].id,{focus:true});}
   });
  }
+ stageAction.addEventListener('click',()=>activate('create'));
+ returnCreate.addEventListener('click',()=>activate('create'));
  activate('create');
  // Only switch after successful AUTO plan, preserving the genuine input
  // state and avoiding switching to a fake ready output after BLOCKED.
@@ -199,5 +250,7 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  }
  return {ready:true,schema:AIG_UNIFIED_SHELL_SCHEMA,
   preservedStableButtonIDs:true,legacyModulesStillInDOM:true,
-  panels:AIG_UNIFIED_TABS.map(x=>x.id),activate,get active(){return active;}};
+  panels:AIG_UNIFIED_TABS.map(x=>x.id),activate,setModelEvidence,setCanvasReady,
+  get modelEvidence(){return modelEvidence;},
+  get active(){return active;}};
 }
