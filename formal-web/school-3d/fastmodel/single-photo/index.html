@@ -154,6 +154,18 @@
 <button id="aig59-report" type="button" disabled>下載 5.9 自動避讓、接觸差異、圖片 SHA 證據 JSON</button>
 <p id="aig59-status" class="status" role="status">請先完成 4.0 自研來源草模和 5.4 真實檔案 SHA 核對。5.9 不會覆寫 5.8，也不會把程序式五官當成原照的精確 3D 臉。</p>
 
+<h3>AIG FastModel 6.0｜照片六點臉部校準 → 真 GLB 臉部幾何，動畫密集穿模取樣</h3>
+<p>先用 5.4 核對相同原始照片、生成 5.9 真 GLB，然後在來源照片上依序標記<strong>額頭、左眼、右眼、鼻尖、嘴部、下巴</strong>六點。程式從<strong>照片實際像素比例</strong>修改 3D 臉部特徵的網格位置與法向，重新匯出帶 17 骨／9 網格／5 段動畫的 GLB；衣裙／馬尾仍使用原 5.9 驗證過的模型。另以全部五段動畫共 45 個不同時間點（50 次三角面取樣）檢查裙裝／髮束接觸。<strong>只校準二維比例，不會把未拍到的臉部深度當成測量值，也不證明連續時間無穿模。</strong></p>
+<input id="aig60-photo" type="file" accept="image/jpeg,image/png" aria-label="選擇與 5.4 原始來源相同的照片">
+<button id="aig60-photo-load" type="button" disabled>核對原圖 SHA 並開啟六點像素校準</button>
+<button id="aig60-reset" type="button" disabled>重設六點標記</button>
+<canvas id="aig60-marks" width="900" height="1100" style="display:none;max-width:100%;height:auto;touch-action:none;cursor:crosshair" aria-label="在照片上依序點選額頭、左眼、右眼、鼻子、嘴、下巴"></canvas>
+<button id="aig60-build" type="button" disabled>依真照片像素比例改造 3D 臉部 → 真 GLB／動畫檢查</button>
+<button id="aig60-capture" type="button" disabled>擷取校準後真動畫四方向 × 四姿態 16 格 PNG</button>
+<button id="aig60-report" type="button" disabled>下載 6.0 來源 SHA／像素標記／密集穿模 JSON</button>
+<p id="aig60-status" class="status" role="status">請先在此頁完成 5.4 真來源核對及 5.9 真模型生成，再提供同 SHA 原圖、標記六點。照片尚未校準、實際女主角相貌驗收和原生 60 FPS 仍 BLOCKED。</p>
+
+
 
 
 
