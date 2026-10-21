@@ -67,3 +67,20 @@ jobs:
           test -s app/build/outputs/apk/debug/app-debug.apk
           find desktop/build/libs -maxdepth 1 -name '*.jar' -size +0c -print -quit | grep -q '.'
           echo 'NATIVE_SOURCE_COMPILE_ONLY_PASS|ANDROID_DEBUG_APK|WINDOWS_JVM_JAR|NOT_EXE|NOT_DEVICE_UI|NOT_RELEASE'
+
+      # QA-only native debug artifacts. No signature/release/EXE is claimed.
+      # Publish only after full JVM regression and native compilation PASS.
+      - name: QA-only native debug artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aig-studio-core-control-android-debug-NOT-RELEASE
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+      - name: QA-only Windows JVM evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: aig-studio-core-control-windows-jar-NOT-EXE
+          path: desktop/build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 7
