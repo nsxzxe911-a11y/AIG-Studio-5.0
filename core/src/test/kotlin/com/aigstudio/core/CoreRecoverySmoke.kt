@@ -1,0 +1,40 @@
+package com.aigstudio.core
+
+import java.nio.file.Files
+
+/** Focused existing-core execution. Does not certify 6-axis machine motion. */
+fun main() {
+    val settings=CamSettings(toolDiameter=6.0,depth=-2.0,safeZ=8.0,feedMmMin=160.0)
+    val draft=ManualCamPathEngine.startBlank(settings,0.0,0.0)
+    check(draft.pathMode==CamPathMode.MANUAL)
+    check(draft.manualPath.all{it.rapid})
+    check(runCatching{CamModel.fromCad(90001L,DrawingSnapshot(emptyList()),draft)}.isFailure) {
+        "All-G0 manual draft is NOT machined geometry"
+    }
+    val ready=ManualCamPathEngine.replacePoint(
+        draft,index=1,x=12.0,y=3.0,z=-2.0,rapid=false,
+        axisA=15.0,axisB=-10.0,axisC=45.0
+    )
+    val cam=CamModel.fromCad(90002L,DrawingSnapshot(emptyList()),ready)
+    val moves=cam.toolpaths.flatMap{it.moves}
+    check(moves.size>=2 && moves.any{!it.rapid})
+    check(moves.last().axisA==15.0 && moves.last().axisB == -10.0 &&
+          moves.last().axisC==45.0) { "MANUAL A/B/C motion disappeared" }
+    val doc=DrawingDocument()
+    val source=StudioProjectRepository.capture(
+        doc,ready,axisA=15.0,axisB=-10.0,axisMode="6AX",
+        ncText="G90 G54\nG0 X0. Y0. Z8.\nG1 Z-2. F160.",
+        axisC=45.0
+    )
+    val file=Files.createTempFile("aig-studio-core-recovery-", ".aigp").toFile()
+    try {
+        StudioProjectRepository.save(source,file)
+        val loaded=StudioProjectRepository.load(file)
+        check(loaded.camSettings.pathMode==CamPathMode.MANUAL)
+        check(loaded.camSettings.manualPath==ready.manualPath)
+        check(loaded.axisMode=="6AX"&&loaded.axisA==15.0&&
+              loaded.axisB == -10.0&&loaded.axisC==45.0)
+        check(loaded.ncText==source.ncText)
+    } finally { file.delete() }
+    println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE")
+}
