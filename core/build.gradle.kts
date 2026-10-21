@@ -73,3 +73,12 @@ tasks.register<JavaExec>("coreDeepRecoveryRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.CoreRegressionTestKt")
 }
+
+
+tasks.register<JavaExec>("uiNavigationBindingRegression") {
+    group = "verification"
+    description = "Run ten-page real Button ID / Shared Command callback chain and reject mismatch"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.UiNavigationBindingRegressionKt")
+}
