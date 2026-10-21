@@ -6,6 +6,7 @@ import {HEROINE_REFERENCE} from './heroine-authority-3-7.mjs';
 import {AIG50_SCHEMA} from './aig-fullbody-5-0.mjs';
 import {AIG51_SCHEMA} from './aig-seam-contact-5-1.mjs';
 import {AIG52_SCHEMA} from './aig-runtime-evidence-5-2.mjs';
+import {AIG54_SCHEMA} from './aig-native-source-5-4.mjs';
 
 export const AIG53_SCHEMA='AIG_FASTMODEL_5_3_UNIFIED_EVIDENCE_NONRELEASE_DRAFT';
 export const AIG53_CHECK_IDS=Object.freeze([
@@ -28,7 +29,7 @@ function decision(id,pass,reason,evidence={}) {
  */
 export function compileAIG53Evidence({
  sourceImageEvidence=null,heroineSourceChain=null,rig50=null,seams51=null,
- visual52=null,fps52=null,currentViewerSourceSHA256=null,currentClipName=null,
+ visual52=null,fps52=null,nativeTechnical54=null,currentViewerSourceSHA256=null,currentClipName=null,
  storyReady=false
 }={}){
  const model=validHex(rig50?.sourceSHA256),viewer=validHex(currentViewerSourceSHA256);
@@ -78,6 +79,21 @@ export function compileAIG53Evidence({
   typeof fps52?.environment?.userAgent==='string'&&
   fps52.environment.userAgent.length>0&&
   fps52.clipName===selectedClip&&viewerSame;
+ const technicalNative4Proof=nativeTechnical54?.schema===AIG54_SCHEMA&&
+  nativeTechnical54?.outcome==='NATIVE_SOURCE_INTEGRITY_ONLY'&&
+  nativeTechnical54?.serverPersistedOriginalScaffoldAndGLBHashVerified===true&&
+  nativeTechnical54?.clientDownloadedGLBHashVerified===true&&
+  nativeTechnical54?.only4_0InferredVolumeMesh===true&&
+  nativeTechnical54?.releaseAllowed===false;
+ const native4Integrity54={
+  status:technicalNative4Proof?'SOURCE_INTEGRITY_PASS_TECHNICAL_DRAFT_ONLY':'BLOCKED',
+  modelSHA256:technicalNative4Proof?nativeTechnical54.modelGLBSHA256:null,
+  sourceImageSHA256:technicalNative4Proof?nativeTechnical54.sourceImageSHA256:null,
+  matchesSpecifiedHeroineOriginalImage:technicalNative4Proof&&
+   nativeTechnical54.sourceImageSHA256===HEROINE_REFERENCE.sha256,
+  canReplace5_0FullbodyGLB:false,canClear3_7HeroineSourceProvenance:false,
+  doesNotCertifyHeroineIdentity:true
+ };
  const checks=[
   decision('AUTHORITY_PHOTO_SHA',imageMatched,'指定櫻花校園 JPEG 的來源位元 SHA/像素核對；不證明 3D'),
   decision('GLB_SOURCE_PROVENANCE',chainMatch,'原圖 → 正式生成任務 → 完整 GLB 的可核查 SHA 鏈；僅匯入 GLB 不算'),
@@ -102,6 +118,7 @@ export function compileAIG53Evidence({
   modelSHA256:model,currentViewerSourceSHA256:viewer,selectedClipName:selectedClip,
   sourceChainProviderJobId:chainMatch?heroineSourceChain.providerJobId:null,
   sourceChainAvailable:chainMatch,
+  native4TechnicalIntegrity54:native4Integrity54,
   checks,passedChecks:passed,totalChecks:checks.length,blockedChecks:checks.length-passed,
   technicalEvidenceReadyForReview:verifiedTechnicalBundle,
   outcome:verifiedTechnicalBundle?'TECHNICAL_BUNDLE_READY_FOR_HUMAN_REVIEW_ONLY':'BLOCKED',
