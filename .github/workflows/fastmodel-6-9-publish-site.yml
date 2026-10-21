@@ -31,7 +31,7 @@ jobs:
         run: |
           npm ci
           npm run build
-          node --test tests/aig-video-evidence-6-8.test.mjs tests/aig-portrait-audio-6-7.test.mjs tests/aig-auto-animation-6-5.test.mjs
+          node --test tests/aig-unified-shell-6-9.test.mjs tests/aig-video-evidence-6-8.test.mjs tests/aig-portrait-audio-6-7.test.mjs tests/aig-auto-animation-6-5.test.mjs
           test -s dist/app.js && test -s dist/index.html
       - name: Verify actual mobile and desktop Chromium compact UI
         working-directory: feature/formal-web/school-3d/fastmodel/single-photo
