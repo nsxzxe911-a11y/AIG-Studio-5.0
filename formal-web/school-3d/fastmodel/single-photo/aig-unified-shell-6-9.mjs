@@ -38,6 +38,9 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  const tabs=node(doc,'nav',{id:'aig-unified-tabs','aria-label':'AIG FastModel 功能切換','role':'tablist'});
  const paneBox=node(doc,'div',{id:'aig-unified-panel-box'});
  shell.append(tabs,paneBox);
+ // Insert the actual panel host before moving any controls: moving a node
+ // to a detached panel makes getElementById() fail even though it exists.
+ aside.prepend(shell);
  const panels={};
  const tabsById={};
  for(const {id,title,hint} of AIG_UNIFIED_TABS){
@@ -79,7 +82,7 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  }
  // Runtime keeps the SAME physical preview canvas and Three/WebGL canvas.
  stage.append(stillCanvas);
- const originalTail=Array.from(aside.children).filter(el=>el!==original);
+ const originalTail=Array.from(aside.children).filter(el=>el!==original&&el!==shell);
  for(const el of children.slice(model,advanced))panels.model.append(el);
  for(const el of originalTail)panels.model.append(el);
  panels.model.insertBefore(node(doc,'h2',{},'真正的 3D、骨架與影片'),panels.model.firstChild);
@@ -87,7 +90,6 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  panels.advanced.insertBefore(node(doc,'h2',{},'進階工具與來源 Gate'),original);
  shell.append(node(doc,'div',{id:'aig-unified-live-status'}));
  byId(doc,'aig-unified-live-status').append(status);
- aside.prepend(shell);
  const head=doc.querySelector('header h1');
  if(head)head.innerHTML='<span>AIG</span> FastModel <small>6.9 · 單一動畫工作區</small>';
  const displayLabels={
