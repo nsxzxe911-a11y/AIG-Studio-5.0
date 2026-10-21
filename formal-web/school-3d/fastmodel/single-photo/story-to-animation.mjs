@@ -4,6 +4,9 @@
  */
 export const STORY_PIPELINE_VERSION='AIG_FASTMODEL_3_2_TEXT_TO_REAL_CLIP_SEQUENCE';
 export const STORY_ACTIONS=Object.freeze([
+ Object.freeze({id:'headTurn',label:'轉頭',text:['轉頭','扭頭','左右看','look left','look right','turn head'],clips:['aig48_turn_head','headturn','turn_head']}),
+ Object.freeze({id:'headNod',label:'低頭／點頭',text:['低頭','點頭','抬頭','nod head','look down'],clips:['aig48_nod_head','headnod','nod_head']}),
+ Object.freeze({id:'ponySwing',label:'馬尾擺動',text:['甩馬尾','甩頭髮','馬尾擺動','馬尾甩動','swing ponytail'],clips:['aig48_swing_ponytail','swingponytail','ponytail_swing']}),
  Object.freeze({id:'walk',label:'行走',text:['走進','走向','走路','走過','走出','行走','步行','散步','前進','walk'],clips:['walk','walking','步行','行走','走路','forward']}),
  Object.freeze({id:'idle',label:'站立／等待',text:['站著','站立','等待','待命','靜止','idle','stand'],clips:['idle','stand','站立','待機']}),
  Object.freeze({id:'turn',label:'轉身',text:['轉身','回頭','轉向','迴轉','turn','rotate'],clips:['turn','轉身','rotation']}),
