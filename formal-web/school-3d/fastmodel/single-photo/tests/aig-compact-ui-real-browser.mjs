@@ -195,7 +195,10 @@ try{
   console.log('AIG actual PHOTO camera pixel-frame motion',device.name,
    JSON.stringify({differentRGBAValues:changed,valuesSampled:sampleA.length,
     actualHumanLimbAnimationVerified:false}));
-  await page.locator('#aig65-stop').click();
+  // A 2-second clip can reach its real end before the second screenshot
+  // is sampled. Stop only if still running; natural completion is valid.
+  if(await page.locator('#aig65-stop').isEnabled())
+   await page.locator('#aig65-stop').click();
   await page.waitForFunction(()=>!document.querySelector('#aig65-record').disabled,
    null,{timeout:10000});
   await page.screenshot({path:out+'/'+device.name+'-03-photo-no-wav-playing.png'});
