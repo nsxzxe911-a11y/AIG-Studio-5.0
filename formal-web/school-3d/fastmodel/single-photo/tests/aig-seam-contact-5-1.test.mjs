@@ -96,7 +96,7 @@ test('5.1 RGB has unique real button IDs, isolated GLB source callback, original
  for(const id of ['aig51-run','aig51-report','aig51-status']){
   assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
  }
- assert.ok(app.includes('auditAIG51PosedSeamsAndHair(aig50Parsed,'));
+ assert.ok(app.includes('auditAIG51PosedSeamsAndHair(source,'));
  assert.ok(app.includes('aig50Report:aig50Report'));
  assert.ok(app.includes("$('aig51-run').addEventListener('click'"));
  assert.ok(app.includes("$('aig51-report').addEventListener('click'"));
