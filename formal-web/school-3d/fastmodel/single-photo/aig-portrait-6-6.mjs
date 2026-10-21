@@ -147,7 +147,7 @@ export function createAIG66Portrait(doc,image,layered){
  }
  // This is a bounding-envelope estimate, never a verified anatomical face.
  const subject=seg.valid?seg.subjectBox:null;
- const box=inferAIG66FaceBox(subject,w,h);
+ let box=inferAIG66FaceBox(subject,w,h);
  const source=imageCanvas(doc,outputLayers?.foreground||image);
  const work=doc.createElement('canvas');work.width=w;work.height=h;
  const wc=work.getContext('2d');
@@ -162,9 +162,31 @@ export function createAIG66Portrait(doc,image,layered){
    visemesOrAudioLipsync:false,semanticSegmentation:false,
    maskMethod:seg.method,backgroundHoleIsSynthesized:!!seg.valid,
    true3DDepth:false,releaseAllowed:false},
-  sample(timeSeconds,beat){
+  setDetectedFaceBox(rect,sourceWidth,sourceHeight){
+   if(!rect||!Number.isFinite(sourceWidth)||!Number.isFinite(sourceHeight)||
+    sourceWidth<=0||sourceHeight<=0||
+    ![rect.x,rect.y,rect.width,rect.height].every(Number.isFinite)||
+    rect.width<=0||rect.height<=0)throw Error('AIG66_DETECTED_RECT_INVALID');
+   const bx=rect.x*w/sourceWidth,by=rect.y*h/sourceHeight,
+    bw=rect.width*w/sourceWidth,bh=rect.height*h/sourceHeight;
+   if(bx<0||by<0||bx+bw>w+.01||by+bh>h+.01)
+    throw Error('AIG66_DETECTED_RECT_OUT_OF_BOUNDS');
+   box={x:bx,y:by,width:bw,height:bh};this.box=box;
+   this.evidence.faceMethod='BROWSER_NATIVE_SINGLE_FACE_BOUNDING_RECTANGLE';
+   this.evidence.localNodesAvailable=true;
+   this.evidence.localEyesAndMouthPixelsDeformed=true;
+   this.evidence.nativeFaceRectangleUsed=true;
+   this.evidence.realFaceTracking=false;
+   return true;
+  },
+  sample(timeSeconds,beat,{audioAmplitude=undefined}={}){
    if(!box)return null;
    const pose=sampleAIG66LocalRig(timeSeconds,beat);
+   if(Number.isFinite(audioAmplitude)){
+    pose.mouth=clamp(audioAmplitude,0,.92);
+    pose.mouthDrivenByRealAudioRMS=true;
+    pose.lipMotionSyncedToAudio=false;
+   }
    wc.clearRect(0,0,w,h);
    wc.drawImage(source.canvas,0,0,w,h);
    const {x,y,width:fw,height:fh}=box;
