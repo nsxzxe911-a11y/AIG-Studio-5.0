@@ -1,0 +1,13 @@
+{
+  "product": "AIG FastModel",
+  "version": "6.9.0",
+  "sourceSha": "0098c30c96e0340cb30529e26dd2d5de56cdd04f",
+  "sourceBranch": "feature/aig-school-3d-hero-v1-20261020",
+  "distribution": "AIG Original Render Website Preview",
+  "exactSourceGateStatus": "separate",
+  "draft": true,
+  "approvedHeroineFilm": false,
+  "actual1080pHumanSceneVerified": false,
+  "actualAndroidWindowsFPSVerified": false,
+  "otherCNCProjectsUnchanged": true
+}
