@@ -30,7 +30,7 @@ test('6.9.3: runtime and compact UI use real normalized inputs and actual progre
  const read=f=>fs.readFileSync(new URL('../'+f,import.meta.url),'utf8');
  const app=read('app.mjs'),html=read('index.html'),shell=read('aig-unified-shell-6-9.mjs');
  for(const token of ['normalizeAIG693AutoInputs(', 'inputReady.durationSeconds',
-  'inputReady.requestedMode','aig693Progress(', 'AIG693_INPUTS_READY',
+  'inputReady.requestedMode','aig693Progress(', 'if(!inputReady.ready)',
   'aig693-progress','MODE_DURATION_OR_CLIPS_INVALID'])
   assert.ok(app.includes(token)||html.includes(token),token);
  for(const name of ['aig65-image','aig65-story','aig65-mode','aig65-duration'])
