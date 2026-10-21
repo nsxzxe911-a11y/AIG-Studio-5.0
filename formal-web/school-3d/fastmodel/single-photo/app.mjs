@@ -37,6 +37,7 @@ import {AIG65_CAPTURE_SCHEMA,prepareAIG65Layers,drawAIG65CanvasFrame,AIG65Canvas
 import {AIG66_SCHEMA,createAIG66Portrait} from './aig-portrait-6-6.mjs';
 import {AIG67_SCHEMA,detectAIG67BrowserFace,decodeAIG67PCM16Wav,sampleAIG67AudioMouth,buildAIG67AudioBuffer} from './aig-portrait-audio-6-7.mjs';
 import {AIG68_SCHEMA,AIG68FramePacing,probeAIG68EncodedPlayback} from './aig-video-evidence-6-8.mjs';
+import {initAIGUnifiedShell} from './aig-unified-shell-6-9.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -3420,3 +3421,8 @@ if(window.AIG_OFFLINE){
   }else{const job=localStorage.getItem('aig-photo-job');if(job)follow(job);}
  }).catch(e=>{status.textContent='本機服務未啟動：'+errorText(e.message);});
 }
+
+// Presentation-only mounting after original event/callback initialization.
+// This moves original DOM elements without cloning IDs or losing listeners.
+const aigUnifiedShell=initAIGUnifiedShell(document);
+if(!aigUnifiedShell.ready)console.warn('AIG compact workspace unavailable:',aigUnifiedShell.reason);
