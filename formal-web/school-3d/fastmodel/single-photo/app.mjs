@@ -2538,6 +2538,7 @@ function aig65Invalidate(reason='來源或劇情變更，請重新計算 AUTO �
  aig65Current=null;aig65Layers=null;aig66Portrait=null;aig67Audio=null;aig67FaceEvidence=null;aig67VoiceSha=null;
  aig65DecodedImage?.close?.();aig65DecodedImage=null;
  aig68LastRecordedUrl=null;aig68PlaybackProof=null;aig68OutputForRevision=null;
+ $('aig695-need-real-3d').hidden=true;
  $('aig68-status').textContent='圖片或劇情已改變：舊影片仍可下載，但不代表新來源驗收。';
  aig65Show(reason);aig693Progress(0,'來源已改變，請重新生成');aig65Refresh();
 }
@@ -2580,6 +2581,7 @@ $('aig65-build').addEventListener('click',async()=>{
  if(aig65Playing||aig65Recording||aig65Finalizing||movieUI?.isBusy)return;
  aig68LastRecordedUrl=null;aig68PlaybackProof=null;aig68OutputForRevision=null;
  $('aig68-status').textContent='已更換動畫來源，6.8 編碼影片驗收需重新錄製。';
+ $('aig695-need-real-3d').hidden=true;
  const photo=$('aig65-image').files?.[0]||null,
   voice=$('aig67-voice').files?.[0]||null;
  const inputReady=normalizeAIG693AutoInputs({
@@ -2695,9 +2697,16 @@ $('aig65-build').addEventListener('click',async()=>{
  }catch(err){
   aig65Current=null;aig65Layers=null;aig66Portrait=null;aig67Audio=null;aig67VoiceSha=null;aig67FaceEvidence=null;
   const reason=String(err.message||err);
-  aig693Progress(0,reason,{error:true});
-  aig65Show('6.9.3 無法生成：'+
-   (reason.includes('MODE_DURATION_OR_CLIPS_INVALID')?
+  if(reason.includes('VERIFIED_REAL_GLB_CLIPS_REQUIRED')){
+   $('aig695-need-real-3d').hidden=false;
+   aigUnifiedShell?.activate('create');
+  }
+  aig693Progress(0,reason.includes('VERIFIED_REAL_GLB_CLIPS_REQUIRED')?
+    '缺少匹配的真 GLB 骨架動作；請匯入模型或選擇照片運鏡。':reason,{error:true});
+  aig65Show('6.9.5 無法生成：'+
+   (reason.includes('VERIFIED_REAL_GLB_CLIPS_REQUIRED')?
+    '缺少可匹配的 3D GLB 骨架動畫，不能把照片推鏡冒充人物走路；下方提供匯入 GLB 或自行選擇 AUTO 照片運鏡。':
+    reason.includes('MODE_DURATION_OR_CLIPS_INVALID')?
     '動畫模式或秒數無效，請將模式設為 AUTO、秒數設為 8 後重新生成。':reason)+
    '；原始照片、GLB、服裝及已產生的影片不受影響。');
  }finally{bitmap?.close?.();aig65Refresh();}
@@ -3477,3 +3486,17 @@ if(window.AIG_OFFLINE){
 // This moves original DOM elements without cloning IDs or losing listeners.
 aigUnifiedShell=initAIGUnifiedShell(document);
 if(!aigUnifiedShell.ready)console.warn('AIG compact workspace unavailable:',aigUnifiedShell.reason);
+$('aig695-switch-auto').addEventListener('click',()=>{
+ // Explicit user choice, never a silent downgrade to fake 3D.
+ $('aig65-mode').value='AUTO';
+ $('aig65-mode').dispatchEvent(new Event('change',{bubbles:true}));
+ $('aig695-need-real-3d').hidden=true;
+ aigUnifiedShell?.activate('create');
+ $('aig65-build').click();
+});
+$('aig695-import-glb').addEventListener('click',()=>{
+ $('aig695-need-real-3d').hidden=true;
+ aigUnifiedShell?.activate('model');
+ $('aig-unified-model-technical')?.setAttribute('open','');
+ $('local-glb').click();
+});
