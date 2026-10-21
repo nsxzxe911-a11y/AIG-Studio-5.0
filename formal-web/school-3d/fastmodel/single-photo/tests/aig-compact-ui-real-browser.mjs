@@ -89,6 +89,63 @@ try{
   await page.locator('#aig-unified-tab-create').click();
   if(!await page.locator('#aig65-image').isVisible())
    throw Error('AIG_COMPACT_RETURN_TO_EDIT_BROKEN');
+  // Real file/no-WAV regression on phone AND desktop: the normal AUTO path
+  // must create image animation, actually play it and record it to Blob
+  // without a user-supplied audio file.
+  const syntheticPNG=Buffer.from(await page.evaluate(()=>{
+    const c=document.createElement('canvas');c.width=240;c.height=320;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#e5f6fa';ctx.fillRect(0,0,240,320);
+    ctx.fillStyle='#484c67';ctx.fillRect(48,100,144,190);
+    ctx.fillStyle='#cfae92';ctx.beginPath();ctx.ellipse(120,85,42,52,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#39253a';ctx.beginPath();ctx.arc(120,52,48,Math.PI,Math.PI*2);ctx.fill();
+    return c.toDataURL('image/png').split(',')[1];
+  }),'base64');
+  await page.locator('#aig65-image').setInputFiles({
+   name:'6-9-2-SYNTHETIC-NOT-HEROINE.png',mimeType:'image/png',buffer:syntheticPNG
+  });
+  await page.locator('#aig65-story').fill('她微笑，抬頭看著天空。');
+  await page.locator('#aig65-mode').selectOption('AUTO');
+  await page.locator('#aig65-duration').fill('2');
+  if(await page.locator('#aig67-voice').evaluate(el=>el.files.length)!==0)
+   throw Error('AIG692_WAV_NOT_OPTIONAL');
+  await page.locator('#aig65-build').click();
+  await page.waitForFunction(()=>{
+   const t=document.querySelector('#aig65-status')?.textContent||'';
+   return t.includes('AUTO 選定')||t.includes('BLOCKED');
+  },null,{timeout:15000});
+  const noWavBuilt=await page.locator('#aig65-status').innerText();
+  if(noWavBuilt.includes('BLOCKED')||await page.locator('#aig65-play').isDisabled())
+   throw Error('AIG692_PHOTO_AUTO_NO_WAV_FAILED '+noWavBuilt);
+  if(!await page.locator('#aig-unified-panel-output').isVisible())
+   throw Error('AIG692_NO_WAV_OUTPUT_TAB_NOT_OPENED');
+  await page.locator('#aig65-play').click();
+  await page.waitForFunction(()=>{
+   const t=document.querySelector('#aig65-status')?.textContent||'';
+   return t.includes('正在播放')||t.includes('BLOCKED');
+  },null,{timeout:10000});
+  const playing=await page.locator('#aig65-status').innerText();
+  if(playing.includes('BLOCKED'))throw Error('AIG692_PLAY_WITHOUT_AUDIO_FILE_BLOCKED '+playing);
+  await page.waitForTimeout(250);
+  await page.locator('#aig65-stop').click();
+  await page.waitForFunction(()=>!document.querySelector('#aig65-record').disabled,
+   null,{timeout:10000});
+  await page.screenshot({path:out+'/'+device.name+'-03-photo-no-wav-playing.png'});
+  await page.locator('#aig65-record').click();
+  await page.waitForFunction(()=>{
+   const t=document.querySelector('#aig65-status')?.textContent||'';
+   return document.querySelector('#aig65-video').src.startsWith('blob:')||
+    t.includes('BLOCKED');
+  },null,{timeout:20000});
+  const recordedNoWav=await page.locator('#aig65-status').innerText();
+  const blobVideo=await page.locator('#aig65-video').getAttribute('src');
+  if(!blobVideo?.startsWith('blob:')||recordedNoWav.includes('BLOCKED'))
+   throw Error('AIG692_VIDEO_WITHOUT_WAV_FAILED '+recordedNoWav);
+  await page.screenshot({path:out+'/'+device.name+'-04-recorded-no-wav.png'});
+  console.log('AIG 6.9.2 no WAV real '+device.name+' PASS',JSON.stringify({
+    wavInputs:0,selected:'AUTO',source:'synthetic PNG NOT heroine',
+    generated:true,played:true,recordedBlob:true,videoUrl:blobVideo.slice(0,12)
+  }));
   console.log('AIG compact real Chromium '+device.name+' PASS',JSON.stringify(evidence));
   await page.close();
  }
