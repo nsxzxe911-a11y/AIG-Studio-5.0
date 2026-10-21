@@ -26,6 +26,7 @@ import {AIG55_SCHEMA,generateAIG55NativeHumanoid} from './aig-native-humanoid-5-
 import {AIG56_SCHEMA,generateAIG56NativeHumanoid} from './aig-native-body-5-6.mjs';
 import {AIG57_SCHEMA,generateAIG57SchoolHeroineTechnical} from './aig-native-appearance-5-7.mjs';
 import {AIG58_SCHEMA,generateAIG58FittedTechnical,auditAIG58RealPoseContacts} from './aig-appearance-fit-5-8.mjs';
+import {AIG59_SCHEMA,runAIG59BoundedAutoFit} from './aig-auto-fit-5-9.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -1222,7 +1223,7 @@ $('aig54-check').addEventListener('click',async()=>{
   if(jobId!==aig54NativeJobId||imageSHA!==aig54ExpectedSourceSHA)
    throw Error('AIG54_SOURCE_CHANGED_DURING_READ');
   aig54Report=report;$('aig54-download').disabled=false;
-  aig56RefreshEnabled();aig57RefreshEnabled();aig58RefreshEnabled();
+  aig56RefreshEnabled();aig57RefreshEnabled();aig58RefreshEnabled();aig59RefreshEnabled();
   $('aig55-build').disabled=!aig55Scaffold||aig55Scaffold.sourceSHA256!==imageSHA;
   $('aig55-status').textContent=$('aig55-build').disabled?'5.5 缺少已核對的自研人體比例來源。':
    '5.4 真來源完整性通過；可用相同原圖 SHA 產生帶骨架、蒙皮與真動畫的自研技術 GLB。';
@@ -1485,6 +1486,7 @@ $('aig57-report').addEventListener('click',()=>{
 
 let aig58Report=null,aig58Busy=false,aig58Epoch=0;
 function aig58Invalidate(message='5.8 來源已改變，原有裙裝／馬尾三角面取樣報告無效。'){
+ aig59Invalidate('來源草模或 5.8 模型參數已更換，舊 5.9 自動修整來源失效。');
  ++aig58Epoch;aig58Report=null;
  $('aig58-report').disabled=true;$('aig58-build').disabled=true;
  $('aig58-status').textContent=message;
@@ -1593,6 +1595,137 @@ $('aig58-report').addEventListener('click',()=>{
  else $('aig58-status').textContent='真播放器 GLB 來源 SHA 已改變，5.8 舊證據不可使用。';
 });
 
+
+let aig59Report=null,aig59Busy=false,aig59Epoch=0;
+function aig59Invalidate(message='5.9 原始 GLB 或來源 SHA 改變，自動修整證據失效。'){
+ ++aig59Epoch;aig59Report=null;
+ $('aig59-build').disabled=true;$('aig59-capture').disabled=true;
+ $('aig59-report').disabled=true;
+ $('aig59-status').textContent=message;
+}
+function aig59RefreshEnabled(){
+ const valid=!!aig55Scaffold&&!!aig54Report&&!aig59Busy&&!aig58Busy&&
+  !aig57Busy&&!aig56Busy&&!aig55Busy&&
+  aig55Scaffold.sourceSHA256===aig54Report.sourceImageSHA256&&
+  aig55Scaffold.meshGLBSHA256===aig54Report.modelGLBSHA256;
+ $('aig59-build').disabled=!valid;
+ return valid;
+}
+$('aig59-build').addEventListener('click',async()=>{
+ if(!aig59RefreshEnabled())return;
+ if(movieUI?.isBusy||view?.movieMode){
+  $('aig59-status').textContent='目前正在錄製，不能混合自動修整與影片時間軸。';return;
+ }
+ const scaffold=aig55Scaffold,upstream=aig54Report,revision=++aig59Epoch;
+ aig59Busy=true;$('aig59-build').disabled=true;
+ $('aig59-report').disabled=true;$('aig59-capture').disabled=true;
+ $('aig59-status').textContent='5.9 開始用實際 GLB 真三角面測量多組裙襬／馬尾候選；不能使用假的幀數或估算接觸量。';
+ try{
+  const selected=await runAIG59BoundedAutoFit(scaffold,{
+   parseGLB:arraybuffer=>parseRiggedGLB(arraybuffer),
+   hashBytes:bytes=>sha256Bytes(bytes),
+   onProgress:p=>{
+    $('aig59-status').textContent=p.phase==='measure'?
+     '5.9 正以實際 3D 骨架取樣三角面：第 '+p.current+'/'+p.total+' 組候選。':
+     '5.9 正以全部五段動畫共 25 姿態複核；任何接觸退步自動返回 5.8。';
+   }
+  });
+  const bytes=selected.bytes,sha=await sha256Bytes(bytes);
+  const parsed=await parseRiggedGLB(bytes.buffer);
+  const qa=await auditAIG50FullBody(parsed,{sourceSHA256:sha});
+  if(qa.outcome!=='STRUCTURAL_QA_PASS_ONLY'||qa.skinnedMeshCount!==9||
+   qa.clipsAvailable!==5||sha!==selected.selectedGLBSHA256)
+   throw Error('AIG59_SOURCE_OR_ACTUAL_SKIN_QA_BLOCKED');
+  if(selected.actualMeasuredSkirtDelta>0||selected.actualMeasuredHairDelta>0)
+   throw Error('AIG59_FULL_POSE_COLLISION_REGRESSION_NOT_ROLLED_BACK');
+  if(revision!==aig59Epoch||scaffold!==aig55Scaffold||upstream!==aig54Report)
+   throw Error('AIG59_SOURCE_CHANGED_DURING_AUTO_FIT');
+  const {bytes:discardBytes,...publicEvidence}=selected;
+  const report={...publicEvidence,
+   sourceNative54GLBSHA256:upstream.modelGLBSHA256,
+   fullbody50Outcome:qa.outcome,actualRealSkinnedMeshes:qa.skinnedMeshCount,
+   actualAnimationClips:qa.clipsAvailable,
+   actualWebGL16FrameCapture:null,
+   originalPhotoFaceLandmarksNotMeasured:true,
+   realApprovedHeroine:false,formalReleaseAllowed:false,releaseAllowed:false};
+  aig47Download(bytes,'AIG-5.9-AUTO-FIT-SKINNED-SCHOOL-UNIFORM-TECHNICAL.glb',
+   'model/gltf-binary');
+  let viewerStatus='真 GLB 已建立但無瀏覽器 GPU 畫面；16 格視覺證據不可假造。';
+  if(view){
+   try{
+    await load(bytes.buffer,false);
+    if(sourceSha!==sha)throw Error('AIG59_VIEWER_SHA_MISMATCH');
+    aig50Revision++;aig50Report=qa;aig50Parsed=parsed;
+    aig51Reset('5.9 對新 GLB 的 5.1 頭頸／髮束檢查須另外重跑，原有 SHA 無法沿用。');
+    aig52Invalidate('5.9 新 GLB 已載入；先前 FPS、16 格動畫資料失效。');
+    aig52RefreshAvailable();$('aig52-load').disabled=true;
+    $('aig50-report').disabled=false;
+    $('aig50-status').textContent='5.9 自動避讓＋五段真動畫 '+qa.outcome+
+      '；裙裝髮束離散接觸與外觀核准分開驗證。';
+    viewerStatus='已載入真 3D 工作區，可直接播放五段骨架動畫與擷取四方向 16 格。';
+   }catch(error){viewerStatus='真 GLB 已下載，3D 預覽隔離：'+error.message;}
+  }
+  if(revision!==aig59Epoch||scaffold!==aig55Scaffold)
+   throw Error('AIG59_SOURCE_CHANGED_AFTER_VIEWER_LOAD');
+  aig59Report=report;
+  $('aig59-report').disabled=false;
+  $('aig59-capture').disabled=!view||sourceSha!==sha||
+   !view.animation?.clips?.length;
+  $('aig59-status').textContent='5.9 '+selected.outcome+
+    '；五段 25 姿態：裙裝接觸 Δ '+selected.actualMeasuredSkirtDelta+
+    '，馬尾接觸 Δ '+selected.actualMeasuredHairDelta+
+    '。候選 '+selected.profileCandidates.length+' 組，採用第 '+(selected.selectedProfileIndex+1)+
+    ' 組，完整回退：'+(selected.selectionAfterFullClipFallback?'有':'無')+
+    '。'+viewerStatus+' 人臉相似度、完整髮絲物理、原生 60 FPS 仍 BLOCK。';
+ }catch(err){
+  aig59Report=null;$('aig59-report').disabled=true;
+  $('aig59-capture').disabled=true;
+  $('aig59-status').textContent='5.9 真動畫自動避讓 BLOCKED：'+err.message+
+   '；原 5.8、5.7 GLB 與故事／聲音／錄影來源均保留。';
+ }finally{aig59Busy=false;aig59RefreshEnabled();}
+});
+$('aig59-capture').addEventListener('click',async()=>{
+ if(aig59Busy||!aig59Report||!view||
+  sourceSha!==aig59Report.selectedGLBSHA256){
+  $('aig59-status').textContent='5.9 來源 SHA／模型或 GPU 不一致，禁止擷取冒用畫面。';return;
+ }
+ const report=aig59Report,sha=sourceSha,revision=aig59Epoch;
+ aig59Busy=true;$('aig59-capture').disabled=true;
+ $('aig59-status').textContent='5.9 正從真 GLB 的真正 WebGL 畫面擷取四姿態 × 四方向，非合成的平面假照片。';
+ try{
+  const result=await view.captureTimelineReview();
+  if(revision!==aig59Epoch||report!==aig59Report||sourceSha!==sha||
+     result.frames!==16||!result.image||result.image.type!=='image/png')
+   throw Error('AIG59_VISUAL_SOURCE_OR_TRUE_FRAME_COUNT_CHANGED');
+  report.actualWebGL16FrameCapture={
+   sourceSHA256:sha,animationClipName:result.clipName,
+   frameCount:result.frames,viewCount:4,
+   poseFractions:[0,.25,.5,.75],captureFromRealGlTFAndWebGL:true,
+   framePoseAudits:result.samples.map(v=>({timeSeconds:v.timeSeconds,
+    views:v.views?.map(x=>x.key),actualGeometryAudit:v.audit})),
+   originalReferenceFacePhotographicMatchNotVerified:true,
+   visualHumanApproval:false};
+  aig47Download(result.image,
+   'AIG-5.9-ACTUAL-GLB-ANIMATION-16-VIEW-NOT-HEROINE-APPROVED.png','image/png');
+  $('aig59-status').textContent='5.9 已擷取真 WebGL 動畫 16 格 PNG，含同源 SHA 與姿態檢查；沒有宣稱臉型還原、零穿模或手機／Windows 60 FPS。';
+ }catch(err){
+  if(report===aig59Report)report.actualWebGL16FrameCapture=null;
+  $('aig59-status').textContent='5.9 真 WebGL 截圖 BLOCKED：'+err.message+
+   '；先前來源 GLB／接觸量測未變。';
+ }finally{
+  aig59Busy=false;aig59RefreshEnabled();
+  $('aig59-capture').disabled=!aig59Report||!view||
+   sourceSha!==aig59Report.selectedGLBSHA256;
+ }
+});
+$('aig59-report').addEventListener('click',()=>{
+ if(aig59Report&&(!view||sourceSha===aig59Report.selectedGLBSHA256))
+  aig47Download(JSON.stringify(aig59Report,null,2),
+   'AIG-5.9-REAL-POSE-AUTO-FIT-25-POSE-GLB-SHA-NOT-APPROVED.json',
+   'application/json');
+ else $('aig59-status').textContent='工作區 GLB SHA 已改變，5.9 上次風險報告不可再沿用。';
+});
+
 let aig4Busy=false;
 function aig4RefreshButton(){
  $('aig4-build').disabled=aig4Busy||!$('aig4-front').files?.length;
@@ -1664,7 +1797,7 @@ $('aig4-build').addEventListener('click',async()=>{
      bodyScaffold.meshGLBSHA256!==end.artifacts['model.glb'].sha256)
    throw Error('AIG55_NATIVE4_SCAFFOLD_SOURCE_OR_GLB_MISMATCH');
   aig55Scaffold=bodyScaffold;
-  aig56RefreshEnabled();aig57RefreshEnabled();aig58RefreshEnabled();
+  aig56RefreshEnabled();aig57RefreshEnabled();aig58RefreshEnabled();aig59RefreshEnabled();
   const prefix='/api/aig4/jobs/'+job.id+'/files/';
   aig4Link('下載真 3D 草模 GLB',prefix+'model.glb','AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb');
   aig4Link('下載比例／信心／來源 SHA 報告',prefix+'scaffold.json','AIG-4.0-SCAFFOLD-NOT-APPROVED.json');
