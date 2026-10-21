@@ -32,7 +32,12 @@
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/RuntimeLinks.kt",
       "gitBlobSha": "55521727fd81347ff25388ffaed775570cc71727"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/Document.kt",
+      "gitBlobSha": "0e9655012fb9612c45c0bd56967cbf878736901c"
     }
   ],
-  "machineTransportVerification": "NO_REAL_HANDSHAKE_LINK_STARTS_DISCONNECTED_CLICK_WARNING"
+  "machineTransportVerification": "NO_REAL_HANDSHAKE_LINK_STARTS_DISCONNECTED_CLICK_WARNING",
+  "cadSafetyNote": "Finite-but-impossible Double.MAX_VALUE coordinates blocked before geometry command; same bound as project repository"
 }
