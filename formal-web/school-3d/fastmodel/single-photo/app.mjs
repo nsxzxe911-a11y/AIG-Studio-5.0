@@ -28,6 +28,7 @@ import {AIG57_SCHEMA,generateAIG57SchoolHeroineTechnical} from './aig-native-app
 import {AIG58_SCHEMA,generateAIG58FittedTechnical,auditAIG58RealPoseContacts} from './aig-appearance-fit-5-8.mjs';
 import {AIG59_SCHEMA,runAIG59BoundedAutoFit} from './aig-auto-fit-5-9.mjs';
 import {AIG60_SCHEMA,AIG60_MARKS,calibrateAIG60FaceMarks,fitAIG60MeasuredFaceGLB,auditAIG60DenseAnimation} from './aig-face-alignment-6-0.mjs';
+import {AIG61_SCHEMA,proposeAIG61LocalLandmarks,acceptAIG61ReviewedProposal} from './aig-face-scan-assist-6-1.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -1735,6 +1736,7 @@ let aig60Report=null,aig60Revision=0,aig60Busy=false,aig60ImageFile=null,
  aig60SourceSha=null,aig60Dimensions=null,aig60Bitmap=null,aig60Marks={};
 const aig60Photo=$('aig60-marks');
 function aig60Invalidate(message='6.0 原始照片或 5.9 GLB 已更改，臉部校準驗收失效。'){
+ aig61Invalidate('原圖或 5.9 模型已變更，6.1 快速掃描建議點與人工審查失效。');
  ++aig60Revision;aig60Report=null;aig60ImageFile=null;
  aig60SourceSha=null;aig60Dimensions=null;aig60Marks={};
  if(aig60Bitmap){aig60Bitmap.close?.();aig60Bitmap=null;}
@@ -1749,7 +1751,9 @@ function aig60RefreshEnabled(){
   aig55Scaffold?.sourceSHA256===aig54Report.sourceImageSHA256;
  $('aig60-photo-load').disabled=!valid;
  $('aig60-build').disabled=!valid||!aig60Bitmap||
-  Object.keys(aig60Marks).length!==AIG60_MARKS.length;
+  Object.keys(aig60Marks).length!==AIG60_MARKS.length||
+  (!!aig61Proposal&&!aig61Review);
+ aig61RefreshEnabled();
  return valid;
 }
 function aig60DrawSourceMarks(){
@@ -1827,6 +1831,9 @@ $('aig60-photo-load').addEventListener('click',async()=>{
  }finally{aig60Busy=false;aig60RefreshEnabled();}
 });
 aig60Photo.addEventListener('pointerdown',event=>{
+ if(aig61Capturing!==null||aig61EditKey){
+  aig61HandleCanvasPointer(event);return;
+ }
  if(aig60Busy||!aig60Bitmap||Object.keys(aig60Marks).length>=AIG60_MARKS.length)return;
  const box=aig60Photo.getBoundingClientRect();
  if(box.width<=0||box.height<=0)return;
@@ -1841,6 +1848,7 @@ aig60Photo.addEventListener('pointerdown',event=>{
 });
 $('aig60-reset').addEventListener('click',()=>{
  if(!aig60Bitmap)return;
+ aig61Invalidate('已重設原圖六點，6.1 快速掃描建議點不再有效。');
  aig60Marks={};aig60Report=null;
  $('aig60-capture').disabled=true;$('aig60-report').disabled=true;
  aig60DrawSourceMarks();aig60MarkStatus();
@@ -1886,6 +1894,12 @@ $('aig60-build').addEventListener('click',async()=>{
    parent59GLBSHA256:sourceGLBSHA,generatedGLBSHA256:fittedSHA,
    generatedGLBBytes:fitted.bytes.byteLength,
    measuredOriginalPhotoLandmarks:measured,
+   candidateAssistant61UserReview:aig61Review ? {schema:AIG61_SCHEMA,
+    sourceImageSHA256:aig61Review.sourceImageSHA256,
+    manualCorrections:aig61Review.manualCorrections,
+    sourceApproval:aig61Review.sourceApproval,
+    priorUnapprovedPixelConfidence:aig61Proposal?.pixelEvidence,
+    originalPhotoIdentityAnd3DDepthNotApproved:true}:null,
    actualReal3DFaceMeshEvidence:sourceEvidence,
    bodyBoneAndSkinQA:{outcome:boneAudit.outcome,
     bones:boneAudit.boneCount,meshes:boneAudit.skinnedMeshCount,
@@ -1959,6 +1973,125 @@ $('aig60-report').addEventListener('click',()=>{
   aig47Download(JSON.stringify(aig60Report,null,2),
    'AIG-6.0-REAL-PHOTO-PIXEL-FACE-POSE-GLB-SHA-NOT-APPROVED.json','application/json');
  else $('aig60-status').textContent='6.0 真播放器 GLB SHA 不一致，舊來源校準報告已隔離。';
+});
+
+
+let aig61Capturing=null,aig61Proposal=null,aig61Review=null,aig61EditKey=null,
+ aig61Corrections={},aig61Task=0;
+function aig61Invalidate(message='6.1 已清除舊照片像素候選；可用原圖重新掃描。'){
+ ++aig61Task;aig61Capturing=null;aig61Proposal=null;aig61Review=null;
+ aig61EditKey=null;aig61Corrections={};
+ for(const id of ['aig61-edit','aig61-accept','aig61-edit-select'])$(id).disabled=true;
+ $('aig61-status').textContent=message;
+}
+function aig61RefreshEnabled(){
+ const ready=!!aig60Bitmap&&!!aig60SourceSha&&!!aig54Report&&!!aig59Report&&
+  !aig60Busy&&!aig59Busy&&
+  aig60SourceSha===aig54Report.sourceImageSHA256&&
+  aig60SourceSha===aig59Report.sourceImageSHA256;
+ $('aig61-assist').disabled=!ready;
+ const reviewing=ready&&!!aig61Proposal;
+ $('aig61-edit-select').disabled=!reviewing;
+ $('aig61-edit').disabled=!reviewing;
+ $('aig61-accept').disabled=!reviewing||!!aig61EditKey||!!aig61Capturing;
+ return ready;
+}
+function aig61HandleCanvasPointer(event){
+ if(aig60Busy||!aig60Bitmap||!aig61RefreshEnabled())return;
+ const rect=aig60Photo.getBoundingClientRect();
+ if(rect.width<=0||rect.height<=0)return;
+ const x=(event.clientX-rect.left)/rect.width*aig60Photo.width;
+ const y=(event.clientY-rect.top)/rect.height*aig60Photo.height;
+ if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||y<0||
+    x>=aig60Photo.width||y>=aig60Photo.height)return;
+ event.preventDefault();
+ if(aig61EditKey){
+  const key=aig61EditKey;aig61EditKey=null;
+  aig61Corrections[key]={x,y};aig60Marks[key]={x,y};aig61Review=null;
+  aig60Report=null;$('aig60-report').disabled=true;
+  $('aig60-capture').disabled=true;
+  aig60DrawSourceMarks();
+  $('aig61-status').textContent='已人工修正 '+key+
+   ' 的實際原圖像素位置；須重新按「已逐點檢視並確認六點」才可生成新 GLB。';
+  aig61RefreshEnabled();aig60RefreshEnabled();return;
+ }
+ if(aig61Capturing===null||aig61Capturing.length>=2)return;
+ aig61Capturing.push({x,y});
+ if(aig61Capturing.length===1){
+  const ctx=aig60Photo.getContext('2d');
+  ctx.beginPath();ctx.arc(x,y,Math.max(6,aig60Photo.width*.009),0,Math.PI*2);
+  ctx.strokeStyle='#72f6df';ctx.lineWidth=5;ctx.stroke();
+  $('aig61-status').textContent='已標記額頭，請點原照片下巴位置。';
+  return;
+ }
+ const anchors=[...aig61Capturing];aig61Capturing=null;
+ // Reload the original unannotated bitmap before reading any pixels;
+ // UI cursor strokes must NEVER influence the face contrast detector.
+ aig60DrawSourceMarks();
+ try{
+  const pixels=aig60Photo.getContext('2d',{willReadFrequently:true})
+   .getImageData(0,0,aig60Photo.width,aig60Photo.height);
+  const proposed=proposeAIG61LocalLandmarks({
+   imageData:pixels.data,imageWidth:pixels.width,imageHeight:pixels.height,
+   sourceImageSHA256:aig60SourceSha,forehead:anchors[0],chin:anchors[1]
+  });
+  aig61Proposal=proposed;aig61Corrections={};aig61Review=null;
+  aig60Marks=Object.fromEntries(AIG60_MARKS.map(k=>[
+   k,{...proposed.suggestedMarks[k]}
+  ]));
+  aig60DrawSourceMarks();
+  $('aig61-status').textContent='依原圖對比找到六個候選點，低對比候選：'+
+   (proposed.weakMarkKeys.join('、')||'無')+
+   '。請逐點看圖，必要時選擇標記進行修正，再人工確認；尚未核准臉部相貌。';
+ }catch(error){
+  aig61Proposal=null;aig61Review=null;aig60Marks={};
+  aig60DrawSourceMarks();
+  $('aig61-status').textContent='6.1 自動輔助 BLOCKED：'+error.message+
+   '。原圖可改用 6.0 手動六點標記，沒有採用猜測的照片特徵。';
+ }
+ aig61RefreshEnabled();aig60RefreshEnabled();
+}
+$('aig61-assist').addEventListener('click',()=>{
+ if(!aig61RefreshEnabled())return;
+ ++aig61Task;aig61Capturing=[];aig61Proposal=null;aig61Review=null;
+ aig61EditKey=null;aig61Corrections={};aig60Marks={};aig60Report=null;
+ $('aig60-report').disabled=true;$('aig60-capture').disabled=true;
+ aig60DrawSourceMarks();aig61RefreshEnabled();aig60RefreshEnabled();
+ $('aig61-status').textContent='6.1 本機掃描模式：請先點照片額頭，再點下巴。' +
+  '只會在兩點限定的臉部區域分析照片原始像素，不呼叫付費或雲端服務。';
+});
+$('aig61-edit').addEventListener('click',()=>{
+ if(!aig61Proposal||!aig61RefreshEnabled())return;
+ aig61EditKey=$('aig61-edit-select').value;
+ if(!AIG60_MARKS.includes(aig61EditKey)){aig61EditKey=null;return;}
+ aig61Review=null;$('aig60-build').disabled=true;
+ $('aig61-accept').disabled=true;
+ $('aig61-status').textContent='請在真照片重新點選 '+aig61EditKey+
+  '，取代偵測的陰影／眼鼻嘴候選；完成後還須重新人工確認。';
+});
+$('aig61-accept').addEventListener('click',async()=>{
+ if(!aig61Proposal||!aig61RefreshEnabled()||aig61EditKey||aig61Capturing)return;
+ const task=++aig61Task,source=aig60SourceSha,file=aig60ImageFile;
+ $('aig61-accept').disabled=true;
+ try{
+  if(!file||await sha256Bytes(await file.arrayBuffer())!==source)
+   throw Error('AIG61_VERIFIED_ORIGINAL_BYTES_CHANGED');
+  const reviewed=acceptAIG61ReviewedProposal(aig61Proposal,{
+   imageWidth:aig60Dimensions.width,imageHeight:aig60Dimensions.height,
+   sourceImageSHA256:source,userConfirmed:true,corrections:aig61Corrections
+  });
+  if(task!==aig61Task||source!==aig60SourceSha)
+   throw Error('AIG61_REVIEW_SOURCE_CHANGED');
+  aig61Review=reviewed;
+  aig60Marks=structuredClone(reviewed.reviewedMarks);
+  aig60DrawSourceMarks();aig60MarkStatus();
+  $('aig61-status').textContent='已由使用者逐點檢視確認六點（人工修正 '+
+   reviewed.manualCorrections.length+' 點），接回 6.0 真照片比例→真 GLB 校準。' +
+   '自動建議的準確度未經人工標準資料集驗證；仍非正式人物相貌核准。';
+ }catch(error){
+  aig61Review=null;$('aig61-status').textContent='6.1 人工審查 BLOCKED：'+error.message+
+   '。可修正六點或恢復 6.0 手動標記。';
+ }finally{aig61RefreshEnabled();aig60RefreshEnabled();}
 });
 
 let aig4Busy=false;
