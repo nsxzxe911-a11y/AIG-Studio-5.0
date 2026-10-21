@@ -122,4 +122,24 @@ object UiButtonManifestContract {
     fun byButtonId(buttonId: String): UiButtonManifestEntry =
         PRODUCTION_NAVIGATION.firstOrNull { it.buttonId == buttonId }
             ?: error("Unknown Button ID: $buttonId")
+
+    /** Runtime-side navigation authority. An actual callback is required;
+     * a Button ID/manifest/string status alone cannot count as an action.
+     * Every native platform calls this from its real click listener.
+     */
+    fun dispatchNavigation(
+        buttonId:String,
+        expectedSurface:String,
+        runtimeCallback:(SharedUiCommand)->Unit
+    ):SharedUiCommand {
+        val entry=byButtonId(buttonId)
+        require(entry.surfaceId==expectedSurface) {
+            "NAV_SURFACE_ID_MISMATCH: $buttonId / $expectedSurface"
+        }
+        require(entry.command.name=="OPEN_"+entry.surfaceId) {
+            "NAV_COMMAND_ID_MISMATCH: $buttonId / ${entry.command}"
+        }
+        runtimeCallback(entry.command)
+        return entry.command
+    }
 }
