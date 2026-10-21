@@ -34,6 +34,7 @@ import {AIG63_SCHEMA,compareAIG63ActualImages,auditAIG63SchoolModelActualGLTF,bi
 import {AIG64_AUTOBODY_SCHEMA,analyzeAIG64PartialPortrait,generateAIG64SinglePartialFullbody} from './aig-single-photo-autobody-6-4.mjs';
 import {AIG65_SCHEMA,planAIG65AutoAnimation,publicAIG65Plan} from './aig-auto-animation-6-5.mjs';
 import {AIG65_CAPTURE_SCHEMA,prepareAIG65Layers,drawAIG65CanvasFrame,AIG65CanvasRecorder} from './aig-canvas-movie-6-5.mjs';
+import {AIG66_SCHEMA,createAIG66Portrait} from './aig-portrait-6-6.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -2487,6 +2488,7 @@ $('aig64-single-report').addEventListener('click',()=>{
 });
 
 
+let aig66Portrait=null;
 let aig65Current=null,aig65Playing=false,aig65Recording=false,aig65Finalizing=false,
  aig65FrameId=null,aig65StartedAt=0,aig65LastBeat=-1,aig65LastClock=0,
  aig65Recorder=null,aig65FilmCanvas=null,aig65DecodedImage=null,aig65Layers=null,
@@ -2503,17 +2505,17 @@ function aig65Refresh(){
   aig65Current.plan.selectedMode==='3D';
  $('aig65-stop').disabled=!busy;
  $('aig65-report').disabled=!sourceReady;
- for(const id of ['aig65-image','aig65-story','aig65-mode','aig65-duration'])
+ for(const id of ['aig65-image','aig65-story','aig65-mode','aig65-duration','aig66-face'])
   $(id).disabled=busy;
 }
 function aig65Invalidate(reason='來源或劇情變更，請重新計算 AUTO 動畫。'){
  if(aig65Playing||aig65Recording||aig65Finalizing)return;
  ++aig65Revision;
- aig65Current=null;aig65Layers=null;
+ aig65Current=null;aig65Layers=null;aig66Portrait=null;
  aig65DecodedImage?.close?.();aig65DecodedImage=null;
  aig65Show(reason);aig65Refresh();
 }
-for(const id of ['aig65-image','aig65-story','aig65-mode','aig65-duration'])
+for(const id of ['aig65-image','aig65-story','aig65-mode','aig65-duration','aig66-face'])
  $(id).addEventListener(id==='aig65-story'?'input':'change',()=>{
   aig65Invalidate('圖片、劇情或模式已變更；舊播放計畫不可冒用，按 AUTO 重新生成。');
  });
@@ -2524,6 +2526,7 @@ function aig65ReportObject(){
   originalImageSHA256:aig65Current.imageSha,
   originalImageDimensions:aig65Current.imageDimensions,
   pixelImageLayerReport:aig65Layers?.evidence||null,
+  localPortraitEvidence:aig66Portrait?.evidence||null,
   compositorMethod:aig65Layers?.visualMethod||
    (aig65Current.plan.selectedMode==='3D'?'GLB_EXISTING_RIG':'TEXT_CARD'),
   actualRealMediaRecorderResult:aig65VideoEvidence,
@@ -2574,6 +2577,10 @@ $('aig65-build').addEventListener('click',async()=>{
   if(!plan.ready)throw Error('AIG65_AUTO_PLAN_BLOCKED: '+plan.blockers.join('、'));
   if(rev!==aig65Revision||photo!==($('aig65-image').files?.[0]||null))
    throw Error('AIG65_SOURCE_CHANGED_DURING_BUILD');
+  if(plan.selectedMode!=='3D'&&bitmap&&$('aig66-face').checked){
+   aig66Portrait=createAIG66Portrait(document,bitmap,photoLayer);
+   photoLayer=aig66Portrait.layers;
+  }else aig66Portrait=null;
   aig65DecodedImage?.close?.();aig65DecodedImage=bitmap;bitmap=null;
   aig65Layers=plan.selectedMode==='3D'?null:photoLayer;
   aig65Current={plan,imageSha,imageDimensions:dimensions,
@@ -2586,7 +2593,7 @@ $('aig65-build').addEventListener('click',async()=>{
   }else{
    const note=drawAIG65CanvasFrame({
     ctx:aig65Canvas.getContext('2d'),canvas:aig65Canvas,
-    plan,timeSeconds:0,layered:aig65Layers
+    plan,timeSeconds:0,layered:aig65Layers,portrait:aig66Portrait
    });
    aig65Show('6.5 AUTO 選定 '+plan.selectedMode+
     '：真 Canvas 畫面已建立；'+plan.timeline.length+' 段、'+
@@ -2596,7 +2603,7 @@ $('aig65-build').addEventListener('click',async()=>{
     ' 可播放或錄製真 1080p；照片裡的手腳不會自行變成關節動畫。');
   }
  }catch(err){
-  aig65Current=null;aig65Layers=null;
+  aig65Current=null;aig65Layers=null;aig66Portrait=null;
   aig65Show('6.5 AUTO BLOCKED：'+err.message+
    '。原始照片、3D GLB、其他服裝及原音影片保持不變。');
  }finally{bitmap?.close?.();aig65Refresh();}
@@ -2682,7 +2689,7 @@ function aig65PlayOrRecord(recording){
    aig65FilmCanvas=document.createElement('canvas');
    aig65FilmCanvas.width=1920;aig65FilmCanvas.height=1080;
    drawAIG65CanvasFrame({ctx:aig65FilmCanvas.getContext('2d'),
-    canvas:aig65FilmCanvas,plan:current.plan,timeSeconds:0,layered:aig65Layers});
+    canvas:aig65FilmCanvas,plan:current.plan,timeSeconds:0,layered:aig65Layers,portrait:aig66Portrait});
    aig65Recorder=new AIG65CanvasRecorder({
     onStatus:m=>aig65Show(m)
    });
@@ -2697,10 +2704,10 @@ function aig65PlayOrRecord(recording){
       (!aig65Playing&&!aig65Recording))return;
    const t=Math.min(current.plan.seconds,(now-aig65StartedAt)/1000);
    const stamp=drawAIG65CanvasFrame({ctx:aig65Canvas.getContext('2d'),
-    canvas:aig65Canvas,plan:current.plan,timeSeconds:t,layered:aig65Layers});
+    canvas:aig65Canvas,plan:current.plan,timeSeconds:t,layered:aig65Layers,portrait:aig66Portrait});
    if(aig65Recording){
     drawAIG65CanvasFrame({ctx:aig65FilmCanvas.getContext('2d'),
-     canvas:aig65FilmCanvas,plan:current.plan,timeSeconds:t,layered:aig65Layers});
+     canvas:aig65FilmCanvas,plan:current.plan,timeSeconds:t,layered:aig65Layers,portrait:aig66Portrait});
     aig65Recorder?.frame();
    }
    if(stamp.beat.beat!==aig65LastBeat){
