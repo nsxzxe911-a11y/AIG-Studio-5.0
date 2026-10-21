@@ -2572,6 +2572,9 @@ $('aig65-build').addEventListener('click',async()=>{
  let bitmap=null;
  try{
   let imageSha=null,dimensions=null,photoLayer=null;
+  // Sound files are OPTIONAL. Text and photo animation never require WAV.
+  // Existing device TTS + locally synthesized original SFX/music are usable
+  // during preview even when no external audio file is supplied.
   let decodedVoice=null,voiceSha=null;
   if(voice){
    if(voice.size<44||voice.size>16*1024*1024)
@@ -2630,7 +2633,7 @@ $('aig65-build').addEventListener('click',async()=>{
   $('aig67-status').textContent=decodedVoice?
     '已解碼真 PCM16 WAV '+decodedVoice.durationSeconds.toFixed(2)+
     ' 秒；嘴部動態來自真波形 RMS，不是音素辨識。':
-    '未上傳 WAV：使用原 6.6 嘴部示意動畫或靜態照片。';
+    '未上傳 WAV（正常）：仍能生成動畫、播放裝置語音及原創音效／音樂；有聲影像不需要外部音檔。系統語音 TTS 不能直接封入錄影。';
   aig65DecodedImage?.close?.();aig65DecodedImage=bitmap;bitmap=null;
   aig65Layers=plan.selectedMode==='3D'?null:photoLayer;
   aig65Current={plan,imageSha,imageDimensions:dimensions,
@@ -2645,12 +2648,14 @@ $('aig65-build').addEventListener('click',async()=>{
     ctx:aig65Canvas.getContext('2d'),canvas:aig65Canvas,
     plan,timeSeconds:0,layered:aig65Layers,portrait:aig66Portrait
    });
-   aig65Show('6.5 AUTO 選定 '+plan.selectedMode+
+   aig65Show('6.9.2 AUTO 選定 '+plan.selectedMode+
     '：真 Canvas 畫面已建立；'+plan.timeline.length+' 段、'+
     plan.seconds.toFixed(2)+' 秒，'+
     (note.layeredParallaxActive?'已套用來源像素的近似前景視差。':
       '未證明可信景深分層，採真 2D 圖片平移／推鏡。')+
-    ' 可播放或錄製真 1080p；照片裡的手腳不會自行變成關節動畫。');
+    ' 可播放或錄製真 1080p。'+
+    (decodedVoice?'已載入 WAV 配音；':'未提供音檔也可生成：播放時可用裝置朗讀、音效及配樂；錄影時可錄入本機音效與配樂（依瀏覽器支援）。')+
+    ' 照片裡的手腳不會自行變成關節動畫。');
   }
  }catch(err){
   aig65Current=null;aig65Layers=null;aig66Portrait=null;aig67Audio=null;aig67VoiceSha=null;aig67FaceEvidence=null;
@@ -2744,7 +2749,11 @@ function aig65PlayOrRecord(recording){
   }
   const hasRealWav=!!aig67Audio?.decoded;
   storySound.configure({...soundOptions(),voice:!hasRealWav&&!recording&&soundOptions().voice});
-  storySound.start(); // DIRECT CLICK: unlock AudioContext and real SFX/music.
+  // Optional audio errors must never gate the visual animation:
+  // a silent preview/movie is valid if this device has no audio support.
+  try{storySound.start();}catch(audioError){
+   $('story-audio-status').textContent='裝置聲音不可用，先執行無聲動畫：'+String(audioError.message||audioError).slice(0,90);
+  }
   let mediaBus=null;
   if(hasRealWav)storySound.ensureVoiceContext();
   if(recording||hasRealWav){
@@ -2806,7 +2815,7 @@ function aig65PlayOrRecord(recording){
  }catch(err){
   aig65CancelRAF();aig65Playing=false;aig65Recording=false;
   aig65StopSound();
-  aig65Show('6.5 Canvas 啟動 BLOCKED：'+err.message+
+  aig65Show('6.9.2 Canvas 啟動 BLOCKED：'+err.message+
    '。若裝置不支援 MediaRecorder，仍可選擇播放。');
   aig65Refresh();
  }
