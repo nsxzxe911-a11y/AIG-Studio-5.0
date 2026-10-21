@@ -81,32 +81,32 @@ export function drawAIG65CanvasFrame({
   portraitFrame=portrait?.sample(timeSeconds,motion.beat,{audioAmplitude})||null;
  ctx.save();ctx.fillStyle='#020407';ctx.fillRect(0,0,w,h);
  if(layered?.image){
-  // Background is an image, NOT a generated 3D environmental scene.
-  // Foreground depth is unverified even when a true alpha mask is present.
-  ctx.save();ctx.translate(w/2,h/2);
-  ctx.scale(motion.transform.zoom,motion.transform.zoom);
-  ctx.translate(-w/2,-h/2);
-  fillImage(ctx,layered.background||layered.image,w,h,
-   -motion.depthOffset*w*.65,0,1.055);
-  ctx.restore();
-  if(plan.selectedMode==='2.5D'&&layered.foreground&&
-     layered.backgroundPlateVerified===true&&
-     layered.background!==layered.image){
+  const verifiedPlate=plan.selectedMode==='2.5D'&&layered.foreground&&
+   layered.backgroundPlateVerified===true&&layered.background!==layered.image;
+  if(verifiedPlate){
+   // Genuine separate plate and foreground: no subject duplicated in backdrop.
+   ctx.save();ctx.translate(w/2,h/2);
+   ctx.scale(motion.transform.zoom,motion.transform.zoom);
+   ctx.translate(-w/2,-h/2);
+   fillImage(ctx,layered.background,w,h,-motion.depthOffset*w*.65,0,1.055);
+   ctx.restore();
    ctx.save();ctx.translate(w/2,h/2);
    ctx.scale(motion.transform.zoom*1.09,motion.transform.zoom*1.09);
    ctx.rotate(motion.transform.angle);
    ctx.translate(-w/2,-h/2);
    fillImage(ctx,portraitFrame?.canvas||layered.foreground,w,h,
-    (motion.transform.x+motion.depthOffset)*w,
-    motion.transform.y*h,1);
+    (motion.transform.x+motion.depthOffset)*w,motion.transform.y*h,1);
    ctx.restore();
   }else{
+   // No recovered occlusion-free plate from one portrait.
+   // Draw the source exactly ONCE, with visible 2D camera motion.
+   // This is not a depth reconstruction or actual body articulation.
    ctx.save();ctx.translate(w/2,h/2);
+   ctx.scale(motion.transform.zoom,motion.transform.zoom);
    ctx.rotate(motion.transform.angle);
    ctx.translate(-w/2,-h/2);
-   // 2D route uses the real photo's transformed pixel sheet.
-   if(plan.selectedMode==='2D')fillImage(ctx,portraitFrame?.canvas||layered.image,w,h,
-    motion.transform.x*w,motion.transform.y*h,motion.transform.zoom);
+   fillImage(ctx,portraitFrame?.canvas||layered.image,w,h,
+    motion.transform.x*w*3,motion.transform.y*h*2,1.06);
    ctx.restore();
   }
  }else{
