@@ -199,6 +199,14 @@
 <button id="aig63-report" type="button" disabled>下載 6.3 真影像像素差異／GLB SHA JSON</button>
 <p id="aig63-status" class="status" role="status">等待 6.2 參考圖實體 SHA 核對與已載入的真骨架 GLB。此階僅量測外觀差異，並不自動建立符合參考圖的新模型；原本所有服裝動畫保留。</p>
 
+<h3>AIG FastModel 6.4｜依已選定的自動生成女主角造型，直接修正真正 3D 模型</h3>
+<p>不再要求反覆人工畫五官、單獨挑顏色。以 6.2 核對的<strong>最新版女主角 2D 模型展示圖</strong>，由 AIG 本機分析人物輪廓區與棕髮、深灰制服、白襯衫、紅色蝴蝶結等色系，再真正生成新版 17 骨／5 段動畫的 GLB，保留舊模型作安全回退。若 GPU 可用，會自動把原技術模型和新模型都用<strong>真 WebGL 正面畫面</strong>對照，只有實測未退步才採用；無 GPU 不宣稱外觀改善。圖片是 3D 風格展示，並非可直接拆出的精確 3D 網格；來源相貌／未見背面仍須後續實際驗收。其他泳裝與原動畫服裝全部保留。</p>
+<button id="aig64-auto-build" type="button" disabled>照選定女主角造型 → 自動生真 3D GLB → 實際渲染擇優</button>
+<button id="aig64-download" type="button" disabled>下載 6.4 自動造型真 GLB</button>
+<button id="aig64-report" type="button" disabled>下載 6.4 來源／顏色／模型／實拍差異 JSON</button>
+<p id="aig64-status" class="status" role="status">先核對 6.2 校園制服展示圖及 5.4 自研真人體草模來源。完成後只需按一次，會直接改真 3D 蒙皮網格的頂點顏色；不能把 2D 設計展示圖誤稱為現成 3D 模型。</p>
+
+
 
 
 
