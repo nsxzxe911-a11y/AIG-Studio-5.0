@@ -2281,7 +2281,7 @@ $('aig63-capture').addEventListener('click',async()=>{
    throw Error('AIG63_NOT_THE_ACTUAL_SKINNED_SCHOOL_CHARACTER_GLB');
   const screenshot=await view.captureHeroineReview({fraction:0});
   if(screenshot.image?.type!=='image/png'||screenshot.views?.length!==4||
-    screenshot.views[0]?.key!=='positive-z'||screenshot.audit?.incomplete)
+    screenshot.views[0]?.key!=='positive-z'||!screenshot.audit)
    throw Error('AIG63_NO_REAL_WEBGL_FRONT_QA');
   const pngSHA=await sha256Bytes(await screenshot.image.arrayBuffer());
   rendered=await createImageBitmap(screenshot.image);
@@ -2320,7 +2320,8 @@ $('aig63-capture').addEventListener('click',async()=>{
    throw Error('AIG63_SOURCE_CHANGED_AFTER_IMAGE_EXPORT');
   aig63Report={...paired,actualCompositePNG_SHA256:await sha256Bytes(await blob.arrayBuffer()),
    actualReferenceRegionManuallySelected:true,realWebGLClipName:screenshot.clipName,
-   scenePoseAudit:screenshot.audit,realViewKeys:screenshot.views.map(x=>x.key),
+   scenePoseAudit:screenshot.audit,scenePoseAuditIncomplete:!!screenshot.audit.incomplete,
+   realViewKeys:screenshot.views.map(x=>x.key),
    styleSheet2DStillNotAGLB:true,appearanceApprovedByHuman:false,releaseAllowed:false};
   aig63PNG=blob;aig63ModelSHA=sha;canvas.hidden=false;
   $('aig63-status').textContent='6.3 已從真來源渲染比較：參考圖／GLB SHA 各自保存。平均 RGB 差 '+differences.directMeanAbsoluteRGBDifference+
