@@ -176,6 +176,20 @@
 <button id="aig61-accept" type="button" disabled>已逐點檢視並確認六點；接回 6.0 真 GLB 校準</button>
 <p id="aig61-status" class="status" role="status">先完成 6.0 原始照片 SHA 核對。此功能只提供需人工確認的影像對比候選，不能自行核准人物相貌或發布。</p>
 
+<h3>AIG FastModel 6.2｜校園女主角新版圖資對照（保留所有原有動畫服裝）</h3>
+<p>2026/10/21 入庫的櫻花校園女主角原始情境圖和兩張 3D 風格角色設計圖，均為<strong>2D 視覺參考</strong>，不是 GLB。請從圖資庫選擇圖片檔，AIG 驗證實際 SHA、原始尺寸與檔案格式，才允許載入作為當前校園女主角視覺對照。既有泳裝及其他動畫服裝<strong>一律保留</strong>；不修改、限制或刪除原有劇情服裝。</p>
+<select id="aig62-select">
+<option value="SCHOOL_3D_STYLE_SHEET_APPROVED_20261021">最新校園制服 3D 風格設計圖</option>
+<option value="SCHOOL_3D_STYLE_SHEET_V1_20261021">校園制服 3D 風格展示初版</option>
+<option value="SCHOOL_CAMPUS_COLLAGE_20261021">櫻花校園原始情境圖</option>
+</select>
+<input id="aig62-file" type="file" accept="image/png,image/jpeg" aria-label="選擇對應入庫的校園女主角參考圖">
+<button id="aig62-verify" type="button">核對來源 SHA／尺寸並載入 2D 對照</button>
+<button id="aig62-report" type="button" disabled>下載 6.2 圖資來源／模型區分證據</button>
+<img id="aig62-preview" hidden alt="僅供造型對照的校園制服 2D 展示圖，不是 3D 模型" style="display:block;max-height:400px;max-width:100%;margin:10px auto;object-fit:contain;border:1px solid #34546a;border-radius:8px">
+<p id="aig62-status" class="status" role="status">圖資已入庫，正式網站分支暫未內建圖片位元組；請選擇圖資庫中同 SHA 的照片。核對成功僅能代表視覺參考來源正確，不代表正式人物 GLB 或動作已核准。</p>
+
+
 
 
 
