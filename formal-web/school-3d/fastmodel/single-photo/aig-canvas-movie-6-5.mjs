@@ -62,7 +62,7 @@ function fillImage(ctx,bitmap,w,h,ox=0,oy=0,scale=1){
  ctx.drawImage(bitmap,(w-bw)/2+ox,(h-bh)/2+oy,bw,bh);
 }
 export function drawAIG65CanvasFrame({
- ctx,canvas,plan,timeSeconds,layered=null,caption='',portrait=null
+ ctx,canvas,plan,timeSeconds,layered=null,caption='',portrait=null,audioAmplitude=undefined
 }={}){
  if(!ctx||typeof ctx.fillRect!=='function'||!canvas||
   !Number.isFinite(canvas.width)||!Number.isFinite(canvas.height)||
@@ -71,7 +71,7 @@ export function drawAIG65CanvasFrame({
   throw Error('AIG65_REAL_CANVAS_2D_PLAN_REQUIRED');
  const motion=sampleAIG65FlatMotion(plan,timeSeconds),
   w=canvas.width,h=canvas.height,t=motion.timeSeconds,
-  portraitFrame=portrait?.sample(timeSeconds,motion.beat)||null;
+  portraitFrame=portrait?.sample(timeSeconds,motion.beat,{audioAmplitude})||null;
  ctx.save();ctx.fillStyle='#020407';ctx.fillRect(0,0,w,h);
  if(layered?.image){
   // Background is an image, NOT a generated 3D environmental scene.
