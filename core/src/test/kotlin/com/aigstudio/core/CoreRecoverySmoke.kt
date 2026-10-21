@@ -20,6 +20,14 @@ fun main() {
     check(moves.size>=2 && moves.any{!it.rapid})
     check(moves.last().axisA==15.0 && moves.last().axisB == -10.0 &&
           moves.last().axisC==45.0) { "MANUAL A/B/C motion disappeared" }
+    val stock=Stock3D.fromSnapshot(
+        DrawingSnapshot(emptyList()),margin=8.0,thickness=20.0,
+        manualPath=ready.manualPath
+    )
+    val removal=MaterialRemoval3D.simulate(cam.toolpaths,ready,stock)
+    check(removal.depth.any{it<0.0}) { "Simulation must remove material, not only draw a path" }
+    val posted=CncPost.generate(cam,FanucPostSettings())
+    check("G0" in posted && "G1" in posted) { "Fanuc post must contain actual G0/G1 motion" }
     val doc=DrawingDocument()
     val source=StudioProjectRepository.capture(
         doc,ready,axisA=15.0,axisB=-10.0,axisMode="6AX",
@@ -36,5 +44,5 @@ fun main() {
               loaded.axisB == -10.0&&loaded.axisC==45.0)
         check(loaded.ncText==source.ncText)
     } finally { file.delete() }
-    println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE")
+    println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|FANUC_G0_G1|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE")
 }
