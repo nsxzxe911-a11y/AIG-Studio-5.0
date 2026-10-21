@@ -1509,6 +1509,34 @@ $('aig58-build').addEventListener('click',async()=>{
   if(qa.outcome!=='STRUCTURAL_QA_PASS_ONLY'||qa.skinnedMeshCount!==9||
     qa.clipsAvailable!==5)throw Error('AIG58_TRUE_GLTF_SKIN_QA_BLOCKED');
   const contact=await auditAIG58RealPoseContacts(parsed,{sourceSHA256:sha,maxClips:5});
+  // Compare the same first two real animation clips on the UNMODIFIED 5.7
+  // GLB. Never claim fitted geometry reduced intersections without a true
+  // source-to-source triangle result. Keep the default 25-pose full gate.
+  const prior=generateAIG57SchoolHeroineTechnical(scaffold);
+  const priorSHA=await sha256Bytes(prior.bytes);
+  const priorGLTF=await parseRiggedGLB(prior.bytes.buffer);
+  const priorContacts=await auditAIG58RealPoseContacts(priorGLTF,{
+   sourceSHA256:priorSHA,maxClips:2
+  });
+  const twoClips=contact.clips.slice(0,2);
+  const fittedSkirtContacts=twoClips.reduce((sum,clip)=>sum+
+   clip.samples.reduce((total,s)=>total+s.skirtBodyTriangleContacts,0),0);
+  const fittedHairContacts=twoClips.reduce((sum,clip)=>sum+
+   clip.samples.reduce((total,s)=>total+s.hairBodyTriangleContacts,0),0);
+  const contactComparison={
+   source57GLBSHA256:priorSHA,source58GLBSHA256:sha,
+   comparedClipNames:twoClips.map(c=>c.name),
+   samplesCompared:priorContacts.posesChecked,
+   original57SkirtBodyContacts:priorContacts.skirtBodyConfirmedTriangleContacts,
+   fitted58SkirtBodyContacts:fittedSkirtContacts,
+   original57HairBodyContacts:priorContacts.hairBodyConfirmedTriangleContacts,
+   fitted58HairBodyContacts:fittedHairContacts,
+   skirtContactDelta:fittedSkirtContacts-priorContacts.skirtBodyConfirmedTriangleContacts,
+   hairContactDelta:fittedHairContacts-priorContacts.hairBodyConfirmedTriangleContacts,
+   possibleFittingRegression:fittedSkirtContacts>priorContacts.skirtBodyConfirmedTriangleContacts||
+    fittedHairContacts>priorContacts.hairBodyConfirmedTriangleContacts,
+   comparisonOnlyTwoClips:true
+  };
   if(revision!==aig58Epoch||scaffold!==aig55Scaffold||upstream!==aig54Report)
    throw Error('AIG58_SOURCE_CHANGED_DURING_AUDIT');
   const report={schema:AIG58_SCHEMA,sourceImageSHA256:scaffold.sourceSHA256,
@@ -1520,6 +1548,7 @@ $('aig58-build').addEventListener('click',async()=>{
    bodyBoneCount:qa.boneCount,realSkinnedMeshes:qa.skinnedMeshCount,
    animationClips:qa.clipsAvailable,skinAudit50Outcome:qa.outcome,
    realPosedTriangleContactQA:contact,
+   comparisonToUnmodified57SameTenPoses:contactComparison,
    finalPoseSampleContactFree:contact.sampledBodyGarmentAndHairContactFree,
    sampledCollisionOutcome:contact.outcome,
    independentlyAnimatedClothPhysics:false,independentlyAnimatedHairPhysics:false,
@@ -1547,7 +1576,9 @@ $('aig58-build').addEventListener('click',async()=>{
   $('aig58-status').textContent='5.8 真 GLB '+qa.outcome+
    '；裙裝接觸 '+contact.skirtBodyConfirmedTriangleContacts+
    '、髮束接觸 '+contact.hairBodyConfirmedTriangleContacts+
-   '（'+contact.posesChecked+' 個離散姿態）；三角面風險：'+contact.outcome+
+   '（'+contact.posesChecked+' 個離散姿態）；與 5.7 相同前十姿態比較裙裝 Δ '+
+   contactComparison.skirtContactDelta+'／馬尾 Δ '+contactComparison.hairContactDelta+
+   '；三角面風險：'+contact.outcome+
    '。'+preview+' 照片臉型、布料髮絲物理及原生 60 FPS 仍未核准。';
  }catch(err){
   aig58Report=null;$('aig58-report').disabled=true;
