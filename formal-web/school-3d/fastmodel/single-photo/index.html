@@ -76,6 +76,15 @@
 <button id="aig47-download" type="button" disabled>下載實際 glTF 2.0 技術 GLB</button>
 <button id="aig47-evidence" type="button" disabled>下載頭頸拓樸／髮尾風險 JSON</button>
 <p id="aig47-status" class="status" role="status">請先在 4.5／4.6 產生已校正頭頸技術草模。GLB 無皮膚貼圖、無骨架，不得冒稱女主角完成。</p>
+<h3>AIG FastModel 4.8｜頭頸真蒙皮＋動畫姿態</h3>
+<p>4.7 連續頭頸與馬尾輸出含四關節局部骨架及四段動畫的真正 glTF GLB；透過 GLTFLoader 讀回並抽樣蒙皮後三角面，檢查塌面與異常拉伸。保留劇情、配音、音效、配樂與影片錄製；不是正式女主角，也不宣稱精確髮絲碰撞。</p>
+<button id="aig48-build" type="button" disabled>建立真骨架蒙皮（零點數）</button>
+<label for="aig48-clip">動作</label><select id="aig48-clip" disabled><option value="AIG48_HEAD_YAW">左右轉頭</option><option value="AIG48_HEAD_NOD">低頭抬頭</option><option value="AIG48_PONYTAIL_SWING">甩馬尾</option><option value="AIG48_COMBINED">頭與馬尾組合</option></select>
+<label for="aig48-time">動作時間 0～2 秒</label><input id="aig48-time" type="range" min="0" max="100" step="5" value="25" disabled>
+<button id="aig48-preview" type="button" disabled>重繪真蒙皮姿態</button>
+<button id="aig48-download" type="button" disabled>下載局部骨架動畫 GLB</button>
+<button id="aig48-audit" type="button" disabled>驗證 20 姿態及下載 JSON</button>
+<p id="aig48-status" class="status" role="status">請先完成 4.7 技術頭頸共享網格，實機 60 FPS 未驗證。</p>
 <h3>AIG FastModel 4.8｜骨架蒙皮與三動作變形測試</h3>
 <p>只針對 4.7 SHA 綁定的共享頭頸技術網格建立真 glTF Skin／五個骨骼節點與轉頭、低頭、甩馬尾三組動畫。逐一回讀檢查頂點位移、退化三角面。這仍是技術頭頸，不是實際女主角臉型、全身骨架或真髮束碰撞。下載技術 GLB 後，可在本機 GLB 播放器匯入檢視動作。</p>
 <button id="aig48-build" type="button" disabled>建立並檢查骨架動畫（零點數）</button>
