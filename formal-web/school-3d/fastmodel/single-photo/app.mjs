@@ -2007,6 +2007,7 @@ function aig61HandleCanvasPointer(event){
  event.preventDefault();
  if(aig61EditKey){
   const key=aig61EditKey;aig61EditKey=null;
+  ++aig61Task;
   aig61Corrections[key]={x,y};aig60Marks[key]={x,y};aig61Review=null;
   aig60Report=null;$('aig60-report').disabled=true;
   $('aig60-capture').disabled=true;
@@ -2062,6 +2063,7 @@ $('aig61-assist').addEventListener('click',()=>{
 });
 $('aig61-edit').addEventListener('click',()=>{
  if(!aig61Proposal||!aig61RefreshEnabled())return;
+ ++aig61Task;
  aig61EditKey=$('aig61-edit-select').value;
  if(!AIG60_MARKS.includes(aig61EditKey)){aig61EditKey=null;return;}
  aig61Review=null;$('aig60-build').disabled=true;
