@@ -77,6 +77,7 @@ class AigNative4Jobs:
                   'sourceSHA256':front['originalSHA256'],
                   'sideSourceSHA256':digest(side) if side else None,
                   'mode':'SCULPTURAL_VOLUME_NOT_HUMANOID_RIG',
+                  'nativeEngineSourceSHA256':digest(Path(__file__).with_name('aig_native4.py')),
                   'artifacts':{},'noCreditsSpent':True,'networkRequestsMade':0,
                   'real3DMeshProduced':False,'formalHeroineApproved':False,
                   'releaseAllowed':False}
@@ -112,6 +113,8 @@ class AigNative4Jobs:
                     d['phase']='GEOMETRIC_VOLUME_BUILDING'
                     safe_json(job/'job.json',d)
                     script=Path(__file__).with_name('aig_native4.py')
+                    if digest(script)!=prior.get('nativeEngineSourceSHA256'):
+                        raise ValueError('AIG54_NATIVE_ENGINE_SHA_CHANGED_BEFORE_WORKER')
                     args=[sys.executable,'-B',str(script),'--source',str(a),
                           '--out',str(job/'generated')]
                     if side:args+=['--side',str(side)]
@@ -128,6 +131,8 @@ class AigNative4Jobs:
                                         timeout=180,check=False)
                     if done.returncode:
                         raise ValueError('AIG42_ISOLATED_GEOMETRY_FAILED_'+str(done.returncode))
+                    if digest(script)!=prior.get('nativeEngineSourceSHA256'):
+                        raise ValueError('AIG54_NATIVE_ENGINE_SHA_CHANGED_DURING_WORKER')
                     result=json.loads(done.stdout.strip().splitlines()[-1])
                     if result.get('sourceSHA256')!=prior['sourceSHA256']:
                         raise ValueError('AIG42_WORKER_SOURCE_MISMATCH')
