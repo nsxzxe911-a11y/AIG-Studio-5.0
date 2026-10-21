@@ -68,6 +68,20 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  for(const el of Array.from(panels.create.children).filter(e=>e.tagName==='H3'||
    (e.tagName==='P'&&!e.id)))info.append(el);
  panels.create.insertBefore(info,panels.create.children[1]||null);
+ // Actual main controls FIRST. Original inputs are moved, not cloned.
+ // Optional voice/advanced settings must never push them out of view.
+ const primary=node(doc,'div',{id:'aig-unified-primary'});
+ const essentialIds=['aig65-image','aig65-story','aig65-mode',
+  'aig65-duration','aig65-build','aig693-progress'];
+ for(const id of essentialIds){
+  const control=byId(doc,id);
+  const label=doc.querySelector('label[for="'+id+'"]');
+  if(!control)throw Error('AIG_UNIFIED_MISSING_ESSENTIAL_'+id);
+  if(label)primary.append(label);
+  primary.append(control);
+ }
+ panels.create.insertBefore(primary,info);
+
  // Audio is an optional enhancement; make existing local sound toggles
  // accessible in the main Create page instead of hidden under the 3D tab.
  // Move the ORIGINAL controls, never duplicate IDs or handlers.
@@ -83,12 +97,16 @@ export function initAIGUnifiedShell(doc=globalThis.document){
   byId(doc,'audio-volume')
  ];
  for(const el of [liveSoundOptions,...moveControls])if(el)soundHelp.append(el);
- const createButton=byId(doc,'aig65-build');
- if(createButton)panels.create.insertBefore(soundHelp,createButton);
- const noWavTip=node(doc,'p',{id:'aig-unified-no-wav-tip',class:'aig-unified-mini'},
-  '聲音檔非必要！直接按「生成動畫」即可。');
+ // All supplemental controls belong AFTER the essential form, collapsed.
+ const faceOption=doc.querySelector('label[for="aig66-face"]');
+ if(faceOption)soundHelp.append(faceOption);
+ const wavLabel=doc.querySelector('label[for="aig67-voice"]');
  const wavInput=byId(doc,'aig67-voice');
- if(wavInput)panels.create.insertBefore(noWavTip,wavInput);
+ if(wavLabel)soundHelp.append(wavLabel);
+ if(wavInput)soundHelp.append(wavInput);
+ const wavStatus=byId(doc,'aig67-status');
+ if(wavStatus)soundHelp.append(wavStatus);
+ panels.create.insertBefore(soundHelp,info);
  // Move real callbacks, outputs and downloads — never clone input elements.
  const outputElements=['aig65-play','aig65-stop','aig65-record',
   'aig68-review','aig68-status','aig65-report',
@@ -109,10 +127,11 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  panels.model.insertBefore(node(doc,'h2',{},'真正的 3D、骨架與影片'),panels.model.firstChild);
  panels.advanced.append(original); // retains entire legacy DOM and IDs
  panels.advanced.insertBefore(node(doc,'h2',{},'進階工具與來源 Gate'),original);
- shell.append(node(doc,'div',{id:'aig-unified-live-status'}));
- byId(doc,'aig-unified-live-status').append(status);
+ const inlineStatus=node(doc,'div',{id:'aig-unified-live-status'});
+ primary.append(inlineStatus);
+ inlineStatus.append(status);
  const head=doc.querySelector('header h1');
- if(head)head.innerHTML='<span>AIG</span> FastModel <small>6.9.2 · 單一動畫工作區</small>';
+ if(head)head.innerHTML='<span>AIG</span> FastModel <small>6.9.3 · 單一動畫工作區</small>';
  const displayLabels={
   'aig65-build':'生成動畫',
   'aig65-play':'▶ 播放',
