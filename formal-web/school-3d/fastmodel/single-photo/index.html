@@ -189,6 +189,17 @@
 <img id="aig62-preview" hidden alt="僅供造型對照的校園制服 2D 展示圖，不是 3D 模型" style="display:block;max-height:400px;max-width:100%;margin:10px auto;object-fit:contain;border:1px solid #34546a;border-radius:8px">
 <p id="aig62-status" class="status" role="status">圖資已入庫，正式網站分支暫未內建圖片位元組；請選擇圖資庫中同 SHA 的照片。核對成功僅能代表視覺參考來源正確，不代表正式人物 GLB 或動作已核准。</p>
 
+<h3>AIG FastModel 6.3｜核准校園圖 × 真 GLB 正面渲染：外觀差異實測</h3>
+<p>先在 6.2 選擇並完成校園參考圖 SHA 核對，再載入真正含制服與骨架的 GLB。按「選取參考範圍」，在參考圖框選<strong>完整女主角本體</strong>，然後讓 AIG 以同一 GLB SHA 擷取真正的 WebGL 正面首姿態。左、右並排保留真原圖局部與真 3D 渲染，可輸出差異圖／來源報告。程式會量測亮度、色彩、輪廓邊緣差異，但<strong>拍攝構圖與光照不同，不可把分數當照片身份相似度，正式女主角須人工目視確認</strong>。不更換模型、不刪除任何動畫服裝。</p>
+<button id="aig63-prepare" type="button" disabled>開啟 6.2 同 SHA 校園參考圖，框選人物範圍</button>
+<canvas id="aig63-reference-canvas" width="800" height="550" hidden style="display:block;max-width:100%;height:auto;touch-action:none;cursor:crosshair;border:1px solid #34546a;border-radius:8px" aria-label="拖曳選取校園女主角參考圖的本體範圍"></canvas>
+<button id="aig63-capture" type="button" disabled>真 GLB WebGL 正面渲染 → 與參考圖局部並排比對</button>
+<canvas id="aig63-compare-canvas" width="900" height="500" hidden style="display:block;max-width:100%;height:auto;touch-action:none;border:1px solid #34546a;border-radius:8px" aria-label="校園女主角參考圖與真正 3D GLB 渲染並排比較"></canvas>
+<button id="aig63-image" type="button" disabled>下載真參考圖 × 真 GLB 並排比較 PNG</button>
+<button id="aig63-report" type="button" disabled>下載 6.3 真影像像素差異／GLB SHA JSON</button>
+<p id="aig63-status" class="status" role="status">等待 6.2 參考圖實體 SHA 核對與已載入的真骨架 GLB。此階僅量測外觀差異，並不自動建立符合參考圖的新模型；原本所有服裝動畫保留。</p>
+
+
 
 
 
