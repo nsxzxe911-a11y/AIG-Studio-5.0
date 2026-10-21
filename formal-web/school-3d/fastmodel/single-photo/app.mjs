@@ -1,4 +1,4 @@
-import {PhotoViewer} from './viewer.mjs';
+import {PhotoViewer,parseRiggedGLB} from './viewer.mjs';
 import {SubmissionJournal} from './submission.mjs';
 import {reviewEvidenceManifest} from './heroine-review.mjs';
 import {timelineEvidenceManifest} from './timeline-review.mjs';
@@ -17,6 +17,7 @@ import {AIG46_SCHEMA,normalizePoseSet,buildHeadNeckPonytail,exportOBJ} from './a
 import {AIG47_SCHEMA,buildAIG47Draft,exportAIG47GLB} from './aig-welded-4-7.mjs';
 import {AIG48_SCHEMA,buildAIG48Draft,exportAIG48GLB,auditAIG48Poses} from './aig-skin-motion-4-8.mjs';
 import {AIG49_SCHEMA,auditAIG49DynamicContacts} from './aig-dynamic-collision-4-9.mjs';
+import {AIG50_SCHEMA,auditAIG50FullBody} from './aig-fullbody-5-0.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -694,6 +695,51 @@ $('aig48-evidence').addEventListener('click',()=>{
  aig47Download(JSON.stringify(report,null,2),'AIG-4.8-bone-pose-risk-NOT-HEROINE.json','application/json');
 });
 
+
+// 5.0 isolated source-hashed full-body inspection. No mutation of existing runtime or character GLB.
+let aig50Report=null,aig50Revision=0,aig50Busy=false;
+$('aig50-input').addEventListener('change',()=>{
+ aig50Revision++;aig50Report=null;$('aig50-report').disabled=true;
+ $('aig50-run').disabled=aig50Busy||!$('aig50-input').files?.length;
+ $('aig50-status').textContent='新本機 GLB 已選擇；須驗證真人體骨架、頭頸胸共享索引網格和真蒙皮動作。不會覆蓋舊人物、劇情或聲音。';
+});
+$('aig50-run').addEventListener('click',async()=>{
+ if(aig50Busy)return;
+ const input=$('aig50-input'),file=input.files?.[0];
+ if(!file)return;
+ if(file.size<20||file.size>40*1024*1024){
+  $('aig50-status').textContent='5.0 檔案超出本機 QA 上限（40MB），未讀入。';return;
+ }
+ const revision=++aig50Revision;
+ aig50Busy=true;aig50Report=null;$('aig50-report').disabled=true;
+ $('aig50-run').disabled=true;input.disabled=true;
+ $('aig50-status').textContent='獨立 GLTFLoader 檢查真 GLB：完整人體骨架、三角面連接、蒙皮權重與真動作。';
+ try{
+  const bytes=await file.arrayBuffer();
+  const sha=await sha256Bytes(bytes);
+  const parsed=await parseRiggedGLB(bytes);
+  const report=await auditAIG50FullBody(parsed,{sourceSHA256:sha});
+  if(revision!==aig50Revision)throw Error('AIG50_SOURCE_CHANGED');
+  aig50Report=report;
+  $('aig50-report').disabled=false;
+  $('aig50-status').textContent='5.0 '+report.outcome+'；真骨架 '+report.boneCount+
+   ' 節點、SkinnedMesh '+report.skinnedMeshCount+' 件；缺少必需關節 '+report.missingBones.length+
+   '、階層風險 '+report.hierarchyProblems.length+'；同一索引網格頭／頸／胸 '+(report.shoulderNeckHeadActualSharedIndexedComponent?'存在':'未證實')+
+   '；動作變形 '+(report.animationHasRealSkinnedVertexMotion?'有':'未通過')+
+   '。結構成功不等於真女主角或正式 Release；下載 JSON 查看完整原因。';
+ }catch(error){
+  aig50Report=null;
+  $('aig50-status').textContent='5.0 全身骨架 QA BLOCKED：'+error.message+'。來源未寫回、既有 4.9 劇情／影片仍保留。';
+ }finally{
+  aig50Busy=false;input.disabled=false;
+  $('aig50-run').disabled=!input.files?.length;
+ }
+});
+$('aig50-report').addEventListener('click',()=>{
+ if(!aig50Report)return;
+ aig47Download(JSON.stringify(aig50Report,null,2),
+  'AIG-5.0-FULLBODY-SHOULDER-NECK-STRUCTURE-ONLY-NOT-APPROVED.json','application/json');
+});
 
 $('aig46-build').addEventListener('click',()=>{
  try{
