@@ -19,6 +19,7 @@ import {AIG48_SCHEMA,buildAIG48Draft,exportAIG48GLB,auditAIG48Poses} from './aig
 import {AIG49_SCHEMA,auditAIG49DynamicContacts} from './aig-dynamic-collision-4-9.mjs';
 import {AIG50_SCHEMA,auditAIG50FullBody} from './aig-fullbody-5-0.mjs';
 import {AIG51_SCHEMA,auditAIG51PosedSeamsAndHair} from './aig-seam-contact-5-1.mjs';
+import {AIG52_SCHEMA,Aig52FrameEvidence} from './aig-runtime-evidence-5-2.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -700,6 +701,23 @@ $('aig48-evidence').addEventListener('click',()=>{
 // 5.0 isolated source-hashed full-body inspection. No mutation of existing runtime or character GLB.
 let aig50Report=null,aig50Parsed=null,aig50Revision=0,aig50Busy=false;
 let aig51Report=null,aig51Busy=false;
+
+let aig52Report=null,aig52VisualReport=null,aig52Busy=false,aig52Monitor=null;
+function aig52Invalidate(message='5.2 GLB 已變更，舊畫面與 FPS 結果失效。'){
+ if(view)view.onFrameMeasured=null;
+ aig52Monitor=null;aig52Report=null;aig52VisualReport=null;
+ for(const id of ['aig52-fps','aig52-visual','aig52-fps-report','aig52-visual-report'])$(id).disabled=true;
+ $('aig52-load').disabled=aig52Busy||aig50Report?.outcome!=='STRUCTURAL_QA_PASS_ONLY';
+ $('aig52-status').textContent=message;
+}
+function aig52RefreshAvailable(){
+ const ready=!!view?.model&&!!view?.animation?.clips?.length&&
+  sourceSha===aig50Report?.sourceSHA256&&!!aig50Parsed;
+ $('aig52-fps').disabled=!ready||!!aig52Monitor||aig52Busy;
+ $('aig52-visual').disabled=!ready||!!aig52Monitor||aig52Busy;
+ return ready;
+}
+
 function aig51Reset(message='5.1 來源或 5.0 驗證結果變更；舊穿模報告已隔離。'){
  aig51Report=null;$('aig51-report').disabled=true;
  $('aig51-run').disabled=aig51Busy||!aig50Parsed||aig50Report?.outcome!=='STRUCTURAL_QA_PASS_ONLY';
@@ -708,6 +726,7 @@ function aig51Reset(message='5.1 來源或 5.0 驗證結果變更；舊穿模報
 $('aig50-input').addEventListener('change',()=>{
  aig50Revision++;aig50Report=null;$('aig50-report').disabled=true;
  aig50Parsed=null;aig51Reset('5.1 等待最新 GLB 通過 5.0，舊動態接縫／髮束檢查已失效。');
+ aig52Invalidate('GLB 來源已變更，5.2 畫面／FPS 原證據失效。');
  $('aig50-run').disabled=aig50Busy||!$('aig50-input').files?.length;
  $('aig50-status').textContent='新本機 GLB 已選擇；須驗證真人體骨架、頭頸胸共享索引網格和真蒙皮動作。不會覆蓋舊人物、劇情或聲音。';
 });
@@ -721,6 +740,7 @@ $('aig50-run').addEventListener('click',async()=>{
  const revision=++aig50Revision;
  aig50Busy=true;aig50Report=null;$('aig50-report').disabled=true;
  aig50Parsed=null;aig51Reset('5.0 重新檢查來源，5.1 上一次結果已失效。');
+ aig52Invalidate('5.0 重新驗證中，5.2 只能使用相同來源 SHA 的實際 GLB。');
  $('aig50-run').disabled=true;input.disabled=true;
  $('aig50-status').textContent='獨立 GLTFLoader 檢查真 GLB：完整人體骨架、三角面連接、蒙皮權重與真動作。';
  try{
@@ -731,6 +751,7 @@ $('aig50-run').addEventListener('click',async()=>{
   if(revision!==aig50Revision)throw Error('AIG50_SOURCE_CHANGED');
   aig50Report=report;
   aig50Parsed=report.outcome==='STRUCTURAL_QA_PASS_ONLY'?parsed:null;
+  $('aig52-load').disabled=report.outcome!=='STRUCTURAL_QA_PASS_ONLY';
   aig51Reset(report.outcome==='STRUCTURAL_QA_PASS_ONLY'?
    '5.0 結構層通過；可執行 5.1 真動畫胸頸肩接縫與真髮束／身體碰撞取樣。':
    '5.0 尚未通過，5.1 不可繞過骨架與來源檢查。');
@@ -743,6 +764,7 @@ $('aig50-run').addEventListener('click',async()=>{
  }catch(error){
   aig50Report=null;aig50Parsed=null;
   aig51Reset('5.0 失敗，5.1 禁止運行。');
+  aig52Invalidate('5.0 來源 BLOCKED：5.2 不可冒用正式人物或效能證據。');
   $('aig50-status').textContent='5.0 全身骨架 QA BLOCKED：'+error.message+'。來源未寫回、既有 4.9 劇情／影片仍保留。';
  }finally{
   aig50Busy=false;input.disabled=false;
@@ -785,6 +807,104 @@ $('aig51-report').addEventListener('click',()=>{
  if(!aig51Report)return;
  aig47Download(JSON.stringify(aig51Report,null,2),
   'AIG-5.1-POSED-SEAM-HAIR-CONTACT-SAMPLED-NOT-APPROVED.json','application/json');
+});
+
+// 5.2: real browser WebGL viewer, actual pose contact sheets, and measured frame pacing.
+$('aig52-load').addEventListener('click',async()=>{
+ if(aig52Busy||!aig50Parsed||aig50Report?.outcome!=='STRUCTURAL_QA_PASS_ONLY'||!view)return;
+ const input=$('aig50-input'),file=input.files?.[0],revision=aig50Revision;
+ if(!file)return;
+ aig52Busy=true;aig52Invalidate('5.2 由已驗證的同一 SHA 來源載入真 GLB；使用者明確選擇替換當前預覽，原始 GLB 不修改。');
+ $('aig52-load').disabled=true;
+ try{
+  if(movieUI?.isBusy)throw Error('AIG52_MOVIE_IS_RECORDING');
+  const bytes=await file.arrayBuffer(),sha=await sha256Bytes(bytes);
+  if(sha!==aig50Report.sourceSHA256||revision!==aig50Revision)throw Error('AIG52_SOURCE_SHA_CHANGED');
+  await load(bytes,false);
+  if(sourceSha!==sha||revision!==aig50Revision)throw Error('AIG52_VIEWER_SOURCE_MISMATCH');
+  aig52RefreshAvailable();
+  $('aig52-status').textContent='5.2 已載入與 5.0 來源 SHA 一致的真 GLB；可操作相機、動畫、16 格截圖或畫面 FPS 實測。此動作會重設目前播放的劇情／錄影時間軸，但原檔保留。';
+ }catch(e){
+  $('aig52-status').textContent='5.2 真 GLB 載入 BLOCKED：'+e.message+'。未產生 FPS 或虛構人物證據。';
+ }finally{
+  aig52Busy=false;
+  $('aig52-load').disabled=aig50Report?.outcome!=='STRUCTURAL_QA_PASS_ONLY';
+ }
+});
+$('aig52-visual').addEventListener('click',async()=>{
+ if(aig52Busy||!aig52RefreshAvailable()||!view)return;
+ aig52Busy=true;$('aig52-visual').disabled=true;
+ const sha=sourceSha,revision=aig50Revision;
+ $('aig52-status').textContent='從真 GLB 的所選動作擷取四個時間點 × 四方向實際 WebGL 像素，檢查姿態與模型。';
+ try{
+  const result=await view.captureTimelineReview();
+  if(sha!==sourceSha||revision!==aig50Revision||!aig52RefreshAvailable())
+   throw Error('AIG52_VISUAL_SOURCE_CHANGED');
+  const report={schema:AIG52_SCHEMA,sourceSHA256:sha,sourceMatchesCurrentViewer:true,
+   visualEvidenceSource:'ACTUAL_BROWSER_WEBGL_CAPTURE_16_VIEWS',
+   clipName:result.clipName,frameCount:result.frames,
+   frames:result.samples.map(s=>({timeSeconds:s.timeSeconds,views:s.views,
+    actualSkinPoseAudit:s.audit})),gpuFpsNotMeasuredByScreenshots:true,
+   automaticPhotoIdentityApproval:false,realHeroineApproved:false,releaseAllowed:false};
+  aig52VisualReport=report;
+  aig47Download(result.image,'AIG-5.2-REAL-GLB-ANIMATION-16-VIEW-NOT-APPROVED.png','image/png');
+  $('aig52-visual-report').disabled=false;
+  $('aig52-status').textContent='5.2 真 GLB 16 格動畫／四方向 PNG 已擷取，並可下載來源 SHA＋各姿態幾何 QA JSON；這不是人工核准的女主角，也不是 60 FPS 驗收。';
+ }catch(error){aig52VisualReport=null;
+  $('aig52-status').textContent='5.2 真 GLB 影像檢查 BLOCKED：'+error.message+'；原劇情和檔案未改動。';
+ }finally{aig52Busy=false;aig52RefreshAvailable();}
+});
+$('aig52-visual-report').addEventListener('click',()=>{
+ if(aig52VisualReport)aig47Download(JSON.stringify(aig52VisualReport,null,2),
+  'AIG-5.2-REAL-GLB-16-VIEW-SHA-POSE-ONLY.json','application/json');
+});
+function aig52FinishMeasured(){
+ if(!aig52Monitor)return;
+ const data=aig52Monitor,environment={
+  userAgent:navigator.userAgent.slice(0,220),pixelRatio:view?.renderer?.getPixelRatio()||null,
+  measurementOnlyWithinActiveVisibleBrowser:true
+ };
+ if(view)view.onFrameMeasured=null;
+ aig52Monitor=null;
+ aig52Report=data.summary({environment,clipName:view?.animation?.clips?.[view.animation.index]?.name||null,
+  verifiedSource:sourceSha});
+ $('aig52-fps-report').disabled=false;
+ $('aig52-status').textContent='5.2 真瀏覽器 FPS：'+aig52Report.outcome+
+  '；平均 '+aig52Report.framesPerSecond.toFixed(2)+' FPS／p95 '+
+  (aig52Report.p95FrameMs?.toFixed(2)||'無')+' ms／卡頓比例 '+
+  ((aig52Report.hitchRatio||0)*100).toFixed(2)+'%。'+
+  '這是實際 WebGL 畫面更新節奏，並非 GPU 完成耗時，也不是 Android／Windows 原生 60FPS 驗證。';
+ aig52RefreshAvailable();
+}
+$('aig52-fps').addEventListener('click',()=>{
+ if(!aig52RefreshAvailable()||!view?.animation?.clips?.length||aig52Monitor)return;
+ if(view.movieMode||view.reviewBusy||view.actionImportBusy){
+  $('aig52-status').textContent='錄影／截圖／外部動作操作中，不可混算 FPS。';return;
+ }
+ aig52Report=null;$('aig52-fps-report').disabled=true;
+ const data=new Aig52FrameEvidence({sourceSHA256:sourceSha,targetFrames:240,minimumSeconds:2});
+ const revision=aig50Revision,sha=sourceSha;
+ aig52Monitor=data;
+ view.animation.paused=false;
+ view.onFrameMeasured=frame=>{
+  if(revision!==aig50Revision||sourceSha!==sha||view.movieMode||view.reviewBusy||
+     view.actionImportBusy){
+   data.invalidReason='AIG52_SOURCE_OR_VIEWER_MODE_CHANGED';data.done=true;
+  }else data.addFrame(frame);
+  if(data.done)aig52FinishMeasured();
+ };
+ $('aig52-fps').disabled=true;$('aig52-visual').disabled=true;
+ $('aig52-status').textContent='5.2 正在測量此裝置瀏覽器的 240 個真 WebGL 動畫畫面間隔；請保持頁面可見，不切換模型或視窗大小。';
+});
+$('aig52-fps-report').addEventListener('click',()=>{
+ if(aig52Report)aig47Download(JSON.stringify(aig52Report,null,2),
+  'AIG-5.2-ACTUAL-BROWSER-FRAME-TIMING-SHA-NOT-NATIVE-FPS.json','application/json');
+});
+document.addEventListener('visibilitychange',()=>{
+ if(document.visibilityState!=='visible'&&aig52Monitor){
+  aig52Monitor.invalidReason='AIG52_PAGE_NOT_VISIBLE';aig52Monitor.done=true;
+  aig52FinishMeasured();
+ }
 });
 
 $('aig46-build').addEventListener('click',()=>{
