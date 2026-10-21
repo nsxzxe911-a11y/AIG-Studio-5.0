@@ -236,10 +236,10 @@ function packGLB(surface,points,source){
    5126,'VEC4',times.length)
  });
  const CLIPS=[
-  {name:'AIG55_TURN_HEAD',tracks:[rotation(3,'y',[0,5,0,-5,0]),rotation(4,'y',[0,12,0,-12,0])]},
-  {name:'AIG55_NOD_HEAD',tracks:[rotation(4,'x',[0,-13,0,8,0])]},
-  {name:'AIG55_WAVE_LEFT_ARM',tracks:[rotation(5,'z',[0,-15,0,11,0]),rotation(6,'z',[0,16,0,-8,0])]},
-  {name:'AIG55_PONYTAIL_SWING',tracks:[rotation(15,'y',[0,5,0,-5,0]),rotation(16,'x',[0,16,0,-13,0])]}
+  {name:'AIG55_TURN_HEAD',tracks:[rotation(3,'y',[0,5,6,-5,0]),rotation(4,'y',[0,12,13,-12,0])]},
+  {name:'AIG55_NOD_HEAD',tracks:[rotation(4,'x',[0,-13,-9,8,0])]},
+  {name:'AIG55_WAVE_LEFT_ARM',tracks:[rotation(5,'z',[0,-15,-11,11,0]),rotation(6,'z',[0,16,9,-8,0])]},
+  {name:'AIG55_PONYTAIL_SWING',tracks:[rotation(15,'y',[0,5,6,-5,0]),rotation(16,'x',[0,16,11,-13,0])]}
  ];
  const animations=CLIPS.map(clip=>({
   name:clip.name,
