@@ -102,7 +102,7 @@ export function generateAIG58FittedTechnical(scaffold,{skirtExpansion=1.16,
  for(const v of garment.values){
   // Keep waistband anchored to the hips. Expand the fabric progressively
   // below it so the legs can move without immediate skirt intersection.
-  const w=Math.max(0,Math.min(1,(1.12-v[1])/.32));
+  const w=Math.max(0,Math.min(1,(1.115-v[1])/.325));
   const factor=1+(skirtExpansion-1)*w;
   v[0]*=factor;v[2]*=factor;
   if(w>.01)adjustedSkirtVertices++;
