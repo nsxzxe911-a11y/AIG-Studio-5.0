@@ -9,6 +9,7 @@ from dialogue_ai import DialogueAI
 from tts_voice import SpeechAI
 from reconstruction_service import SERVICE_ID,MULTIVIEW_ID,capabilities,require_service,project_job
 from aig_native4_jobs import AigNative4Jobs
+from aig_native_provenance_5_4 import audit_native_aig4_job
 
 HERE=Path(__file__).resolve().parent
 
@@ -68,9 +69,13 @@ def make_server(root,client,port=8765,dialogue_client=None,speech_client=None,al
                        'eightViewProjections':True,'draftGLB':True,
                        'autoRigging':False,'heroineIdentityVerified':False,
                        'releaseAllowed':False});return
-                native_match=re.fullmatch(r'/api/aig4/jobs/([0-9a-f]{32})(?:/files/(model\.glb|scaffold\.json|confidence\.png|view-(?:000|045|090|135|180|225|270|315)\.png))?',path)
+                native_match=re.fullmatch(r'/api/aig4/jobs/([0-9a-f]{32})(?:/(provenance)|/files/(model\.glb|scaffold\.json|confidence\.png|view-(?:000|045|090|135|180|225|270|315)\.png))?',path)
                 if native_match:
-                    job_id,name=native_match.groups()
+                    job_id,provenance,name=native_match.groups()
+                    if provenance:
+                        self.send(audit_native_aig4_job(native4.directory(job_id),
+                            native4.read(job_id)))
+                        return
                     if name:
                         raw,kind=native4.asset(job_id,name)
                         self.send(raw,kind=kind)
