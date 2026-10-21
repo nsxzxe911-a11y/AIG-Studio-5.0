@@ -1,4 +1,4 @@
-name: Publish FastModel 6.9.3 ANDROID AUTO FIX to ORIGINAL AIG website
+name: Publish FastModel 6.9.3 VERIFIED ANDROID AUTO to ORIGINAL AIG website
 on:
   push:
     branches:
