@@ -2786,7 +2786,10 @@ function aig65PlayOrRecord(recording){
   function animate(now){
    if(rev!==aig65Revision||!aig65Current||
       (!aig65Playing&&!aig65Recording))return;
-   const t=Math.min(current.plan.seconds,(now-aig65StartedAt)/1000);
+   // rAF's frame timestamp can precede performance.now() from the click
+   // handler by a few milliseconds. Never dispatch negative animation
+   // time (especially on 120Hz phones and WebView cold-start frames).
+   const t=Math.max(0,Math.min(current.plan.seconds,(now-aig65StartedAt)/1000));
    const aig67Mouth=aig67Audio?.decoded?
     sampleAIG67AudioMouth(aig67Audio.decoded,t).openness:undefined;
    const stamp=drawAIG65CanvasFrame({ctx:aig65Canvas.getContext('2d'),
