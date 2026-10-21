@@ -29,6 +29,7 @@ data class RuntimeLinkSnapshot(
 
 object RuntimeLinkContract {
     const val DISCONNECT_POLICY="DATA_FLOW_ONLY_PRESERVE_RUNTIME_DATA"
+    const val MACHINE_LINK_POLICY="PHYSICAL_HANDSHAKE_REQUIRED_NO_UI_TOGGLE"
     val PRESERVED_DOMAINS=setOf("CAD_GEOMETRY","CAM_TOOLPATH","SIM_STATE","NC_GCODE")
     val cockpitLinks=listOf(RuntimeLinkId.CAD_CAM,RuntimeLinkId.CAM_SIM,RuntimeLinkId.SIM_NC)
     val managedLinks=listOf(
@@ -39,7 +40,9 @@ object RuntimeLinkContract {
 
 class RuntimeLinkStore {
     private val values=linkedMapOf<RuntimeLinkId,RuntimeLinkStatus>().apply {
-        RuntimeLinkContract.managedLinks.forEach { put(it,RuntimeLinkStatus.CONNECTED) }
+        RuntimeLinkContract.managedLinks.forEach { id ->
+            put(id,if(id==RuntimeLinkId.MACHINE) RuntimeLinkStatus.DISCONNECTED else RuntimeLinkStatus.CONNECTED)
+        }
     }
     private val observers=linkedSetOf<(RuntimeLinkSnapshot)->Unit>()
 
@@ -55,6 +58,9 @@ class RuntimeLinkStore {
     }
 
     fun set(id:RuntimeLinkId,status:RuntimeLinkStatus):RuntimeLinkStatus {
+        require(id!=RuntimeLinkId.MACHINE || status!=RuntimeLinkStatus.CONNECTED) {
+            "MACHINE_LINK_UNVERIFIED_HANDSHAKE_BLOCKED"
+        }
         val targets:List<(RuntimeLinkSnapshot)->Unit>
         val snap:RuntimeLinkSnapshot
         synchronized(this) {
@@ -68,6 +74,9 @@ class RuntimeLinkStore {
     }
 
     fun toggle(id:RuntimeLinkId):RuntimeLinkStatus {
+        require(id!=RuntimeLinkId.MACHINE) {
+            "MACHINE_LINK_CANNOT_BE_TOGGLED_WITHOUT_TRANSPORT"
+        }
         val next=if(status(id)==RuntimeLinkStatus.CONNECTED)
             RuntimeLinkStatus.DISCONNECTED else RuntimeLinkStatus.CONNECTED
         return set(id,next)
