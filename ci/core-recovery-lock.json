@@ -1,0 +1,33 @@
+{
+  "schema": "aig-core-recovery-lock-v1",
+  "project": "FastModel",
+  "phase": "CORE_FIRST_CONTROL_LATER",
+  "sourceBranch": "fix/fastmodel-real-motion-and-generation-state-20261021",
+  "immutableUserAssetsNotModified": true,
+  "neverTreatVersionAsGate": true,
+  "machineOutputEnabled": false,
+  "nativeApkExeCertified": false,
+  "photoHuman3DCertified": false,
+  "modules": [
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/app.mjs",
+      "gitBlobSha": "a6ad50209c25cee6e80fab74bf242ae7211fbc69"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-auto-animation-6-5.mjs",
+      "gitBlobSha": "1998c5e08352d2df84cbd0af995b38f569051fa4"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-canvas-movie-6-5.mjs",
+      "gitBlobSha": "85abb3011c284629349b6954c1aac1227231f386"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/viewer.mjs",
+      "gitBlobSha": "3bf3701a23ad510f747b96e78b0f99408c3f338c"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-portrait-audio-6-7.mjs",
+      "gitBlobSha": "b05871cdb04ea93e80f4e189fa0a239d99a652dd"
+    }
+  ]
+}
