@@ -140,15 +140,26 @@ export function initAIGUnifiedShell(doc=globalThis.document){
   '尚未載入可顯示的使用者 GLB。技術模型不等於正式女主角。');
  const returnCreate=node(doc,'button',{type:'button',
   id:'aig-unified-model-back'},'返回創作：照片／劇情動畫');
- panels.model.insertBefore(returnCreate,panels.model.children[1]||null);
+ const importGLB=node(doc,'button',{type:'button',
+  id:'aig-unified-import-glb'},'匯入自己的 GLB（檢視與播放）');
+ panels.model.insertBefore(importGLB,panels.model.children[1]||null);
+ panels.model.insertBefore(returnCreate,importGLB);
  panels.model.insertBefore(modelNotice,returnCreate);
+ const technicalHelp=node(doc,'details',{id:'aig-unified-model-technical'});
+ technicalHelp.append(node(doc,'summary',{},'技術模型與舊版測試工具（不代表正式人物）'));
+ for(const el of Array.from(panels.model.children)){
+  if(el===modelNotice||el===returnCreate||el===importGLB||
+   el.tagName==='H2')continue;
+  technicalHelp.append(el);
+ }
+ panels.model.append(technicalHelp);
  panels.advanced.append(original); // retains entire legacy DOM and IDs
  panels.advanced.insertBefore(node(doc,'h2',{},'進階工具與來源 Gate'),original);
  const inlineStatus=node(doc,'div',{id:'aig-unified-live-status'});
  primary.append(inlineStatus);
  inlineStatus.append(status);
  const head=doc.querySelector('header h1');
- if(head)head.innerHTML='<span>AIG</span> FastModel <small>6.9.3 · 單一動畫工作區</small>';
+ if(head)head.innerHTML='<span>AIG</span> FastModel <small>6.9.4 · 單一動畫工作區</small>';
  const displayLabels={
   'aig65-build':'生成動畫',
   'aig65-play':'▶ 播放',
@@ -224,6 +235,10 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  }
  stageAction.addEventListener('click',()=>activate('create'));
  returnCreate.addEventListener('click',()=>activate('create'));
+ importGLB.addEventListener('click',()=>{
+  const file=byId(doc,'local-glb');
+  if(file){technicalHelp.open=true;file.click();}
+ });
  activate('create');
  // Only switch after successful AUTO plan, preserving the genuine input
  // state and avoiding switching to a fake ready output after BLOCKED.
