@@ -3,7 +3,7 @@
  * reconstruction of unseen body, likeness, clothing, or physical hair.
  * Generates true indexed SkinnedMesh glTF/GLB with actual joint animations.
  */
-export const AIG56_SCHEMA='AIG_FASTMODEL_5_5_NATIVE_HUMANOID_SKIN_TECHNICAL_DRAFT';
+export const AIG56_SCHEMA='AIG_FASTMODEL_5_6_CONNECTED_INDEXED_HUMANOID_SKIN_TECHNICAL_DRAFT';
 export const AIG56_BONES=Object.freeze([
  'hips','spine','chest','neck','head',
  'leftUpperArm','leftForeArm','rightUpperArm','rightForeArm',
