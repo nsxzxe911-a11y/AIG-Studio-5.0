@@ -932,7 +932,7 @@ $('aig53-review').addEventListener('click',()=>{
    sourceImageEvidence:aig53ImageAdmission,
    heroineSourceChain:aig53HeroineSourceChain,
    rig50:aig50Report,seams51:aig51Report,
-   visual52:aig52VisualReport,fps52:aig52Report,
+   visual52:aig52VisualReport,fps52:aig52Report,nativeTechnical54:aig54Report,
    currentViewerSourceSHA256:sourceSha,currentClipName,
    storyReady:storyPlan?.ready===true
   });
