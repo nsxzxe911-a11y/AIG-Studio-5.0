@@ -1,4 +1,4 @@
-name: Publish FastModel 6.9.2 WAV OPTIONAL to ORIGINAL AIG website
+name: Publish FastModel 6.9.2 NO-WAV REAL VIDEO to ORIGINAL AIG website
 on:
   push:
     branches:
