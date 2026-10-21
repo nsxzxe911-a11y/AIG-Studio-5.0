@@ -1693,6 +1693,7 @@ $('clip').addEventListener('change',()=>{
  }
  try{
   view.animation.select(Number($('clip').value));
+  aig53Invalidate('真 GLB 動畫片段已切換，5.3 舊片段的視覺/FPS 統一報告失效。');
   clearReviewEvidence();clearTimelineEvidence();clearStoryPlan('手動切換動作後，請重新解析劇情。');
   $('timeline-status').textContent='已切換真實 GLB 動畫片段；舊的四方向與 16 格圖片失效，請重新擷取。';
  }catch(e){status.textContent='片段未切換：'+e.message;}
