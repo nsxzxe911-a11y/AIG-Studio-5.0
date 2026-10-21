@@ -96,6 +96,11 @@
 <button id="aig50-run" type="button" disabled>驗證真骨架／肩頸共享網格與動作</button>
 <button id="aig50-report" type="button" disabled>下載 5.0 來源 SHA／骨架與變形證據 JSON</button>
 <p id="aig50-status" class="status" role="status">請選擇實際全身 GLB。4.7～4.9 技術頭頸模型不能被誤判為完整人體；不具人臉照片貼圖或真髮束的來源仍不可通過正式人物 Gate。</p>
+<h3>AIG FastModel 5.1｜動畫接縫／真髮束與身體穿模取樣（草稿）</h3>
+<p>先通過 5.0 真完整人體骨架，再對來源 GLB 的實際動作進行最多三個 Clip × 每段五個姿態的網格取樣。檢查胸／頸、頸／頭、雙側肩部的蒙皮面積拉伸／塌陷，以及已命名馬尾或髮束網格與身體表面的真正三角面接觸。缺少髮束、超過幾何預算、接縫不連貫或有接觸都不會宣告成功。本檢查不會自動生成女主角或改掉原始模型。</p>
+<button id="aig51-run" type="button" disabled>檢查真動畫接縫／馬尾與身體三角面接觸</button>
+<button id="aig51-report" type="button" disabled>下載 5.1 姿態／接縫／碰撞來源證據 JSON</button>
+<p id="aig51-status" class="status" role="status">等待 5.0 完整人體結構驗證通過。離散 15 姿態只能作風險檢查，無法證明全部動作毫無穿模，也不代表 60 FPS 實機驗收。</p>
 
 
 
