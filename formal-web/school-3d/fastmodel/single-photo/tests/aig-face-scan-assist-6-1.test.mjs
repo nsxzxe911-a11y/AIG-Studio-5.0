@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {AIG61_SCHEMA,proposeAIG61LocalLandmarks,
  acceptAIG61ReviewedProposal} from '../aig-face-scan-assist-6-1.mjs';
-import {calibrateAIG60FaceMarks} from '../aig-face-alignment-6-0.mjs';
+import {calibrateAIG60FaceMarks,fitAIG60MeasuredFaceGLB} from '../aig-face-alignment-6-0.mjs';
+import {generateAIG58FittedTechnical} from '../aig-appearance-fit-5-8.mjs';
+import {auditAIG50FullBody} from '../aig-fullbody-5-0.mjs';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createHash} from 'node:crypto';
 
 const source='a'.repeat(64),width=640,height=640;
 function syntheticPhoto({flat=false,eyes=true}={}){
@@ -86,6 +90,46 @@ test('6.1 proposal is never sufficient for 3D: explicit review and corrected poi
  assert.equal(validation.photoIdentityVerified,false);
  assert.throws(()=>acceptAIG61ReviewedProposal(proposal,{...options,userConfirmed:true,
   corrections:{nose:{x:320,y:590}}}),/AIG60_LANDMARK_POSE/);
+});
+test('6.1 reviewed original pixel candidates reach genuine 6.0 GLB FACE skinned triangles without changing full-body bones',async()=>{
+ const pixels=syntheticPhoto(),proposal=proposeAIG61LocalLandmarks(params(pixels));
+ const reviewed=acceptAIG61ReviewedProposal(proposal,{
+  imageWidth:width,imageHeight:height,sourceImageSHA256:source,
+  userConfirmed:true,corrections:{nose:{x:320,y:335}}
+ });
+ const sourceScaffold={
+  sourceSHA256:source,meshType:'CLOSED_ELLIPTICAL_SECTION_VOLUME',
+  autoRiggingAvailable:false,unseenSurfacesInferred:true,releaseAllowed:false,
+  proportions:{widthHeightRatio:.50,ratiosByImageHeight:Array.from({length:11},(_,i)=>({
+   atHeight:i/10,widthRatio:.24,centerRatio:.5,source:'OBSERVED_FRONT_SILHOUETTE'
+  }))}
+ };
+ const base=generateAIG58FittedTechnical(sourceScaffold);
+ const hash=x=>createHash('sha256').update(x).digest('hex');
+ const built=fitAIG60MeasuredFaceGLB({
+  baseGLB:base.bytes,baseGLBSHA256:hash(base.bytes),
+  sourceImageSHA256:source,calibration:reviewed.calibration
+ });
+ const loader=new GLTFLoader(),before=await loader.parseAsync(base.bytes.buffer,''),
+  after=await loader.parseAsync(built.bytes.buffer,'');
+ const skin=(g,name)=>{let m;g.scene.traverse(x=>{if(x.isSkinnedMesh&&x.name===name)m=x});return m};
+ const faceName='AIG57_FACE_FEATURES';
+ const x=skin(before,faceName),y=skin(after,faceName);
+ assert.ok(x&&y);
+ const a=x.geometry.getAttribute('position'),b=y.geometry.getAttribute('position');
+ let adjusted=0;
+ for(let i=0;i<a.count;i++)
+  if(Math.abs(a.getX(i)-b.getX(i))+Math.abs(a.getY(i)-b.getY(i))>1e-5)adjusted++;
+ assert.ok(adjusted>100,'human-reviewed actual-pixel marks must change genuine GLB face triangles');
+ const bodyName='AIG56_NATIVE_FULLBODY_TECHNICAL_SKIN';
+ for(const attr of ['position','skinIndex','skinWeight'])
+  assert.deepEqual(Array.from(skin(before,bodyName).geometry.getAttribute(attr).array),
+   Array.from(skin(after,bodyName).geometry.getAttribute(attr).array));
+ const fullbody=await auditAIG50FullBody(after,{sourceSHA256:hash(built.bytes)});
+ assert.equal(fullbody.outcome,'STRUCTURAL_QA_PASS_ONLY');
+ assert.equal(fullbody.clipsAvailable,5);
+ assert.equal(fullbody.skinnedMeshCount,9);
+ assert.equal(built.releaseAllowed,false);
 });
 test('6.1 strict RGB real callback, source hash, manual 6.0 fallback, no regressions of voice/movie/GLB pipelines',()=>{
  const read=n=>fs.readFileSync(new URL('../'+n,import.meta.url),'utf8');
