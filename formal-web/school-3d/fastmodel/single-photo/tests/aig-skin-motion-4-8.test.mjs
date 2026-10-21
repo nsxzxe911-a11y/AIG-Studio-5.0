@@ -101,5 +101,6 @@ test('4.8 UI controls, source invalidation and existing 4.7 and 3.4 AV paths are
  assert.ok(app.includes("$('aig47-download').addEventListener"));
  assert.ok(app.includes("new MovieWorkspace("));
  assert.ok(app.includes('exportAIG47GLB(aig47Draft)'));
- const [major,minor]=JSON.parse(read('../package.json')).version.split('.').map(Number); assert.equal(major,4); assert.ok(minor>=8);
+ const [major,minor]=JSON.parse(read('../package.json')).version.split('.').map(Number);
+ assert.ok(major>4||(major===4&&minor>=8),'version must be >=4.8, never downgraded');
 });
