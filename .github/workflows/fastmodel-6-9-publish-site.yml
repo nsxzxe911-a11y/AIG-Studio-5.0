@@ -1,0 +1,103 @@
+name: Publish FastModel 6.9 preview to ORIGINAL AIG website
+on:
+  push:
+    branches:
+      - feature/aig-school-3d-hero-v1-20261020
+    paths:
+      - '.github/workflows/fastmodel-6-9-publish-site.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: aig-fastmodel-single-page-original-render
+  cancel-in-progress: false
+jobs:
+  publish:
+    name: Build and publish isolated FastModel page only
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact FastModel source
+        uses: actions/checkout@v4
+        with:
+          ref: feature/aig-school-3d-hero-v1-20261020
+          path: feature
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build actual 6.9 browser JavaScript and test existing source
+        working-directory: feature/formal-web/school-3d/fastmodel/single-photo
+        run: |
+          npm ci
+          npm run build
+          node --test tests/aig-video-evidence-6-8.test.mjs tests/aig-portrait-audio-6-7.test.mjs tests/aig-auto-animation-6-5.test.mjs
+          test -s dist/app.js && test -s dist/index.html
+      - name: Checkout original production website (not changing any other branch)
+        uses: actions/checkout@v4
+        with:
+          ref: web/aig-dual-formal-runtime-20261016
+          path: production
+          fetch-depth: 1
+          persist-credentials: true
+      - name: Sync only the FastModel published page and the existing homepage entry
+        env:
+          FASTMODEL_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          node <<'JS'
+          const fs=require('fs'),path=require('path');
+          const src='feature/formal-web/school-3d/fastmodel/single-photo/dist';
+          const production='production/formal-web';
+          const version='6.9.0';
+          let html=fs.readFileSync(path.join(src,'index.html'),'utf8');
+          if(!html.includes('AIG FastModel 6.9')||!html.includes('id="aig65-record"')||
+             !html.includes('id="aig68-review"'))throw Error('FASTMOTION_69_BUILD_NOT_ACTUAL_UI');
+          if(!html.includes('src="/app.js"'))throw Error('FASTMOTION_69_BUNDLE_PATH_UNEXPECTED');
+          html=html.replace('src="/app.js"','src="./app.js"');
+          for(const target of ['fastmodel','school-3d/fastmodel/single-photo']){
+            const dir=path.join(production,target);
+            fs.mkdirSync(dir,{recursive:true});
+            fs.writeFileSync(path.join(dir,'index.html'),html);
+            fs.copyFileSync(path.join(src,'app.js'),path.join(dir,'app.js'));
+            fs.copyFileSync(path.join(src,'THREE-LICENSE.txt'),path.join(dir,'THREE-LICENSE.txt'));
+            fs.writeFileSync(path.join(dir,'PREVIEW-EVIDENCE.json'),JSON.stringify({
+              product:'AIG FastModel',version,sourceSha:process.env.FASTMODEL_SOURCE_SHA,
+              sourceBranch:'feature/aig-school-3d-hero-v1-20261020',
+              distribution:'AIG Original Render Website Preview',
+              exactSourceGateStatus:'separate',
+              draft:true,approvedHeroineFilm:false,
+              actual1080pHumanSceneVerified:false,
+              actualAndroidWindowsFPSVerified:false,
+              otherCNCProjectsUnchanged:true
+            },null,2)+'\n');
+          }
+          const homepage=path.join(production,'index.html');
+          let site=fs.readFileSync(homepage,'utf8');
+          const originalHeading='一張照片，立即建立 2.5D 動畫';
+          const originalDesc='直接在網站選圖、預覽左右擺動並下載動畫 GLB；照片留在此裝置。支援載入已有的 3D GLB 與原有動畫。完整 3D 重建與自動骨架的雲端服務尚未連接。';
+          if(!site.includes(originalHeading)||!site.includes(originalDesc)||
+             !site.includes('href="./fastmodel/"'))
+            throw Error('AIG_ORIGINAL_HOME_FASTMODEL_ENTRY_CHANGED_BLOCK');
+          site=site.replace(originalHeading,'FastModel 6.9｜照片、劇情與動畫影片');
+          site=site.replace(originalDesc,'已接入 6.9 RGB 預覽工作區：選擇照片或輸入劇情，使用 AUTO／2D／2.5D／3D 動畫、WAV 配音與 1080p 錄影。來源功能和正式作品分開驗證；正式女主角影片及手機／Windows 效能尚未核准。');
+          fs.writeFileSync(homepage,site);
+          console.log('Only two FastModel entry directories and the one existing homepage FastModel description changed.');
+          JS
+          cd production
+          git add formal-web/index.html formal-web/fastmodel formal-web/school-3d/fastmodel/single-photo
+          git diff --check
+          git diff --cached --name-only | tee /tmp/aig69-files-changed
+          if grep -Ev '^formal-web/index\.html$|^formal-web/fastmodel/|^formal-web/school-3d/fastmodel/single-photo/' /tmp/aig69-files-changed; then
+            echo "Refusing to modify other AIG CNC or website files"
+            exit 1
+          fi
+          if git diff --cached --quiet; then
+            echo "Identical preview already present, no branch rewrite"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "site(fastmodel): publish isolated 6.9 preview on original AIG Render"
+          git push origin HEAD:web/aig-dual-formal-runtime-20261016
+      - name: Explicit publication status
+        run: echo "Published preview only to original AIG website branch. Render auto deploy must still be checked. No heroine film or device release Gate claimed."
