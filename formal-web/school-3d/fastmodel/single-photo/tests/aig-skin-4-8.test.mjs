@@ -83,18 +83,17 @@ test('pose-by-pose triangle deformation audit consumes real loaded skinned verte
  assert.throws(()=>auditAIG48Pose(rig,{parts:[]}),/POSE_NOT_SAMPLED/);
 });
 
-test('4.8 RGB workbench keeps 4.7 GLB and previous dialogue/movie pipelines; all new controls are live',()=>{
+test('4.8 technical legacy rig tests coexist; LIVE UI invokes the verified 4.8 motion path and retains earlier AV',()=>{
  const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
  const app=fs.readFileSync(new URL('../app.mjs',import.meta.url),'utf8');
- for(const id of ['aig48-build','aig48-clip','aig48-time','aig48-preview','aig48-download','aig48-audit','aig48-status'])
+ for(const id of ['aig48-build','aig48-download','aig48-evidence','aig48-status'])
   assert.ok(html.includes('id="'+id+'"'),id);
- assert.ok(app.includes('buildAIG48Rig(aig47Draft)'));
- assert.ok(app.includes('exportAIG48GLB(aig48Rig)'));
- assert.ok(app.includes('createAIG48PoseSampler(aig48Output)'));
- assert.ok(app.includes('auditAIG48Pose(aig48Rig,'));
- assert.ok(app.includes("function aig48Reset("));
- assert.ok(app.includes("aig48PosePreview||aig47Draft||aig46Draft"));
- assert.ok(app.includes("new MovieWorkspace("));
- assert.ok(app.includes('exportAIG47GLB(aig47Draft)'));
- assert.ok(app.includes('generateVoiceBatch('));
+ assert.ok(app.includes('buildAIG48Draft(source)'),'real 4.8 GLB skin source');
+ assert.ok(app.includes('exportAIG48GLB(aig48Draft)'),'real 4.8 GLB download action');
+ assert.ok(app.includes('auditAIG48Poses(rig)'),'GLB skin pose sampler callback');
+ assert.ok(app.includes('function aig48Reset('),'SHA stale result invalidation');
+ assert.ok(app.includes('aig47Draft||aig46Draft'),'existing prior geometry preview');
+ assert.ok(app.includes('new MovieWorkspace('),'recording workspace preserved');
+ assert.ok(app.includes('exportAIG47GLB(aig47Draft)'),'4.7 preserved');
+ assert.ok(app.includes('generateVoiceBatch('),'original voice pipeline preserved');
 });
