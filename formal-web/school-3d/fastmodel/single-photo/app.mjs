@@ -24,6 +24,7 @@ import {AIG53_SCHEMA,compileAIG53Evidence} from './aig-unified-gate-5-3.mjs';
 import {AIG54_SCHEMA,verifyAIG54NativeChain} from './aig-native-source-5-4.mjs';
 import {AIG55_SCHEMA,generateAIG55NativeHumanoid} from './aig-native-humanoid-5-5.mjs';
 import {AIG56_SCHEMA,generateAIG56NativeHumanoid} from './aig-native-body-5-6.mjs';
+import {AIG57_SCHEMA,generateAIG57SchoolHeroineTechnical} from './aig-native-appearance-5-7.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -1220,7 +1221,7 @@ $('aig54-check').addEventListener('click',async()=>{
   if(jobId!==aig54NativeJobId||imageSHA!==aig54ExpectedSourceSHA)
    throw Error('AIG54_SOURCE_CHANGED_DURING_READ');
   aig54Report=report;$('aig54-download').disabled=false;
-  aig56RefreshEnabled();
+  aig56RefreshEnabled();aig57RefreshEnabled();
   $('aig55-build').disabled=!aig55Scaffold||aig55Scaffold.sourceSHA256!==imageSHA;
   $('aig55-status').textContent=$('aig55-build').disabled?'5.5 缺少已核對的自研人體比例來源。':
    '5.4 真來源完整性通過；可用相同原圖 SHA 產生帶骨架、蒙皮與真動畫的自研技術 GLB。';
@@ -1246,6 +1247,7 @@ $('aig54-download').addEventListener('click',()=>{
 let aig55Scaffold=null,aig55Report=null,aig55Busy=false,aig55Epoch=0;
 let aig56Report=null,aig56Busy=false,aig56Epoch=0;
 function aig56Invalidate(message='5.6 肩髖拓樸來源已變更，舊的網格驗收失效。'){
+ aig57Invalidate('來源或 5.4 驗證變更，5.7 校園造型證據失效。');
  ++aig56Epoch;aig56Report=null;
  $('aig56-build').disabled=true;$('aig56-report').disabled=true;
  $('aig56-status').textContent=message;
@@ -1397,6 +1399,87 @@ $('aig56-report').addEventListener('click',()=>{
   'AIG-5.6-REAL-INDEX-MANIFOLD-SKIN-GLB-SHA-NOT-HEROINE.json','application/json');
 });
 
+
+let aig57Report=null,aig57Busy=false,aig57Epoch=0;
+function aig57Invalidate(message='5.7 來源已變更，之前的校園服裝／人物幾何證據失效。'){
+ ++aig57Epoch;aig57Report=null;
+ $('aig57-build').disabled=true;$('aig57-report').disabled=true;
+ $('aig57-status').textContent=message;
+}
+function aig57RefreshEnabled(){
+ const available=!!aig54Report&&!!aig55Scaffold&&!aig57Busy&&
+  !aig55Busy&&!aig56Busy&&
+  aig55Scaffold.sourceSHA256===aig54Report.sourceImageSHA256&&
+  aig55Scaffold.meshGLBSHA256===aig54Report.modelGLBSHA256;
+ $('aig57-build').disabled=!available;
+ return available;
+}
+$('aig57-build').addEventListener('click',async()=>{
+ if(!aig57RefreshEnabled())return;
+ const scaffold=aig55Scaffold,sourceProof=aig54Report,revision=++aig57Epoch;
+ aig57Busy=true;$('aig57-build').disabled=true;$('aig57-report').disabled=true;
+ $('aig57-status').textContent='5.7 正建立真人體積式臉部、制服、裙褶、蝴蝶結、背包、骨架馬尾髮束，再由 GLTFLoader 實際回讀及 5.0 骨架動畫 QA。';
+ try{
+  const output=generateAIG57SchoolHeroineTechnical(scaffold),bytes=output.bytes;
+  const glbSHA=await sha256Bytes(bytes);
+  const parsed=await parseRiggedGLB(bytes.buffer);
+  const qa=await auditAIG50FullBody(parsed,{sourceSHA256:glbSHA});
+  if(revision!==aig57Epoch||scaffold!==aig55Scaffold||
+   sourceProof!==aig54Report)throw Error('AIG57_NATIVE4_SOURCE_CHANGED');
+  if(qa.outcome!=='STRUCTURAL_QA_PASS_ONLY'||qa.skinnedMeshCount!==9||
+   qa.clipsAvailable!==5||output.extraParts.length!==7)
+   throw Error('AIG57_REAL_GLTF_SKIN_CLOTHING_OR_ANIMATION_QA_BLOCKED');
+  const report={
+   schema:AIG57_SCHEMA,sourceNative54:sourceProof,
+   sourceImageSHA256:scaffold.sourceSHA256,sourceNative4GLBSHA256:sourceProof.modelGLBSHA256,
+   generatedGLBSHA256:glbSHA,generatedGLBBytes:bytes.byteLength,
+   original56BodyMeshPreserved:output.bodyMeshPreserved,
+   selfAuthoredIndexedSkinned3DParts:output.extraParts,
+   skeletonBoneCount:qa.boneCount,realSkinnedMeshes:qa.skinnedMeshCount,
+   quaternionAnimationClips:qa.poseReports,
+   clipCount:qa.clipsAvailable,fullbodySkinQA:qa,
+   originalPhotoFaceLikenessVerified:false,
+   exactImageTextureReconstructed:false,
+   nativeHairPhysicsVerified:false,garmentSelfCollisionVerified:false,
+   geometricSurfaceSelfIntersectionFreeProven:false,
+   realHeroineVisualAuthorityApproved:false,
+   nativeAndroidWindows60FPSVerified:false,formalReleaseAllowed:false,
+   releaseAllowed:false,outcome:'3D_SCHOOL_STYLE_TECHNICAL_SKIN_QA_ONLY'
+  };
+  aig47Download(bytes,'AIG-5.7-NATIVE-SCHOOL-UNIFORM-SKINNED-TECHNICAL.glb',
+   'model/gltf-binary');
+  let preview='可下載真 GLB，裝置 GPU 預覽暫時不可用。';
+  if(view){
+   try{
+    await load(bytes.buffer,false);
+    if(sourceSha!==glbSHA)throw Error('AIG57_VIEWER_SOURCE_SHA_MISMATCH');
+    aig50Revision++;aig50Report=qa;aig50Parsed=parsed;
+    aig51Reset('5.7 自研制服、臉部與馬尾為真 3D 網格；5.1 穿模仍須逐段獨立抽樣。');
+    aig52Invalidate('5.7 已載入真 GLB，可用現有 16 格真動畫和瀏覽器 FPS 取樣。');
+    aig52RefreshAvailable();$('aig52-load').disabled=true;
+    $('aig50-report').disabled=false;
+    $('aig50-status').textContent='5.7 真人體模型 '+qa.outcome+
+      '：17 骨、9 個真 SkinnedMesh 與五段 Clip；來源臉型、服裝真實性未核准。';
+    preview='已載入 RGB 3D 工作區，五段真骨架 Clip 可切換播放；原檔與影音工具保留。';
+   }catch(error){preview='GLB 源檔已保留；3D 預覽隔離：'+error.message;}
+  }
+  if(revision!==aig57Epoch||scaffold!==aig55Scaffold)throw Error('AIG57_SOURCE_CHANGED_AFTER_PREVIEW');
+  aig57Report=report;$('aig57-report').disabled=false;
+  $('aig57-status').textContent='5.7 真 GLB '+qa.outcome+'；9 網格（原 2＋新 7）、17 骨、5 Clip，SHA '+glbSHA.slice(0,12)+
+   '。'+preview+' 面容與衣裙、馬尾仍為技術造型／關鍵影格，非原圖外觀核准或實機 60 FPS。';
+ }catch(error){
+  aig57Report=null;$('aig57-report').disabled=true;
+  $('aig57-status').textContent='5.7 真造型／動畫 GLB BLOCKED：'+error.message+
+   '。原版 5.5／5.6、原照片、故事、配音與音樂檔不會被覆蓋。';
+ }finally{aig57Busy=false;aig57RefreshEnabled();}
+});
+$('aig57-report').addEventListener('click',()=>{
+ if(aig57Report&&(!view||sourceSha===aig57Report.generatedGLBSHA256))
+  aig47Download(JSON.stringify(aig57Report,null,2),
+   'AIG-5.7-REAL-3D-FACE-UNIFORM-HAIR-SHA-NOT-APPROVED.json','application/json');
+ else $('aig57-status').textContent='目前工作區模型 SHA 已不同，5.7 報告不可冒用，請重新生成／載入。';
+});
+
 let aig4Busy=false;
 function aig4RefreshButton(){
  $('aig4-build').disabled=aig4Busy||!$('aig4-front').files?.length;
@@ -1468,7 +1551,7 @@ $('aig4-build').addEventListener('click',async()=>{
      bodyScaffold.meshGLBSHA256!==end.artifacts['model.glb'].sha256)
    throw Error('AIG55_NATIVE4_SCAFFOLD_SOURCE_OR_GLB_MISMATCH');
   aig55Scaffold=bodyScaffold;
-  aig56RefreshEnabled();
+  aig56RefreshEnabled();aig57RefreshEnabled();
   const prefix='/api/aig4/jobs/'+job.id+'/files/';
   aig4Link('下載真 3D 草模 GLB',prefix+'model.glb','AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb');
   aig4Link('下載比例／信心／來源 SHA 報告',prefix+'scaffold.json','AIG-4.0-SCAFFOLD-NOT-APPROVED.json');
