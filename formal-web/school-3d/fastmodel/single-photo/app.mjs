@@ -2596,6 +2596,8 @@ $('aig65-build').addEventListener('click',async()=>{
    durationSeconds:duration
   });
   if(!plan.ready)throw Error('AIG65_AUTO_PLAN_BLOCKED: '+plan.blockers.join('、'));
+  if(decodedVoice&&plan.selectedMode==='3D')
+   throw Error('AIG67_IMPORTED_WAV_ONLY_SUPPORTED_IN_2D_2_5D_RECORDING');
   if(rev!==aig65Revision||photo!==($('aig65-image').files?.[0]||null)||
     voice!==($('aig67-voice').files?.[0]||null))
    throw Error('AIG65_SOURCE_CHANGED_DURING_BUILD');
@@ -2669,6 +2671,8 @@ async function aig65StopRun(natural=false){
     voiceFileSHA256:aig67VoiceSha,
     actualVoicePCMDecoded:!!aig67Audio?.decoded,
     voiceAmplitudeLipMotionNotPhonemeVisemes:true,
+    actualVoiceMuxPlaybackConfirmedOnDevice:false,
+    measuredPhonemeLipSync:false,
     narrationSpeechSynthesisNotInRecordedAudio:true,
     originalPhotoMotionIs2D2_5DNotRiggedLimbAnimation:true
    };
@@ -2676,7 +2680,7 @@ async function aig65StopRun(natural=false){
    aig65VideoUrls.push(url);
    const video=$('aig65-video');video.src=url;video.hidden=false;
    const link=document.createElement('a');link.href=url;
-   link.className='download';link.download=result.filename;
+   link.className='download';link.download=result.filename.replace('AIG-6.5-','AIG-6.7-');
    link.textContent='下載已編碼 '+result.evidence.container.toUpperCase()+
     ' 1080p 動畫（'+result.evidence.actualFramesDrawn+' 幀）';
    $('aig65-downloads').append(link);
@@ -2728,10 +2732,10 @@ function aig65PlayOrRecord(recording){
     try{mediaBus=storySound.createRecordingBus();}catch{mediaBus=null;}
    }
   }
+  let preparedVoiceBuffer=null;
   if(hasRealWav){
    if(!mediaBus)throw Error('AIG67_VOICE_MEDIASTREAM_BUS_REQUIRED');
-   const voiceBuffer=buildAIG67AudioBuffer(storySound.audio,aig67Audio.decoded);
-   storySound.playRecordedVoice(voiceBuffer);
+   preparedVoiceBuffer=buildAIG67AudioBuffer(storySound.audio,aig67Audio.decoded);
   }
   if(recording){
    aig65FilmCanvas=document.createElement('canvas');
@@ -2746,6 +2750,7 @@ function aig65PlayOrRecord(recording){
    aig65Recording=true;
   }else aig65Playing=true;
   aig65StartedAt=performance.now();
+  if(preparedVoiceBuffer)storySound.playRecordedVoice(preparedVoiceBuffer);
   const rev=aig65Revision;
   function animate(now){
    if(rev!==aig65Revision||!aig65Current||
@@ -2773,8 +2778,8 @@ function aig65PlayOrRecord(recording){
    aig65FrameId=requestAnimationFrame(animate);
   }
   aig65FrameId=requestAnimationFrame(animate);aig65Refresh();
-  aig65Show(recording?'6.5 正在錄製真 1920×1080 '+current.plan.selectedMode+
-   ' Canvas 動畫，WebAudio 有提供時接入音軌。':'6.5 正在播放 '+current.plan.selectedMode+' 真 Canvas 動畫。');
+  aig65Show(recording?'6.7 正在錄製真 1920×1080 '+current.plan.selectedMode+
+   ' Canvas 動畫，WAV／WebAudio 有提供時接入音軌。':'6.7 正在播放 '+current.plan.selectedMode+' 真 Canvas 動畫。');
  }catch(err){
   aig65CancelRAF();aig65Playing=false;aig65Recording=false;
   aig65StopSound();
