@@ -36,6 +36,7 @@ import {AIG65_SCHEMA,planAIG65AutoAnimation,publicAIG65Plan} from './aig-auto-an
 import {AIG65_CAPTURE_SCHEMA,prepareAIG65Layers,drawAIG65CanvasFrame,AIG65CanvasRecorder} from './aig-canvas-movie-6-5.mjs';
 import {AIG66_SCHEMA,createAIG66Portrait} from './aig-portrait-6-6.mjs';
 import {AIG67_SCHEMA,detectAIG67BrowserFace,decodeAIG67PCM16Wav,sampleAIG67AudioMouth,buildAIG67AudioBuffer} from './aig-portrait-audio-6-7.mjs';
+import {AIG68_SCHEMA,AIG68FramePacing,probeAIG68EncodedPlayback} from './aig-video-evidence-6-8.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -2490,6 +2491,8 @@ $('aig64-single-report').addEventListener('click',()=>{
 
 
 let aig66Portrait=null,aig67Audio=null,aig67FaceEvidence=null,aig67VoiceSha=null;
+let aig68FramePacing=null,aig68PlaybackProof=null,aig68LastRecordedUrl=null,
+ aig68QaBusy=false,aig68OutputForRevision=null;
 let aig65Current=null,aig65Playing=false,aig65Recording=false,aig65Finalizing=false,
  aig65FrameId=null,aig65StartedAt=0,aig65LastBeat=-1,aig65LastClock=0,
  aig65Recorder=null,aig65FilmCanvas=null,aig65DecodedImage=null,aig65Layers=null,
@@ -2506,6 +2509,8 @@ function aig65Refresh(){
   aig65Current.plan.selectedMode==='3D';
  $('aig65-stop').disabled=!busy;
  $('aig65-report').disabled=!sourceReady;
+ $('aig68-review').disabled=busy||aig68QaBusy||!aig68LastRecordedUrl||
+  $('aig65-video').src!==aig68LastRecordedUrl||!sourceReady;
  for(const id of ['aig65-image','aig65-story','aig65-mode','aig65-duration','aig66-face','aig67-voice'])
   $(id).disabled=busy;
 }
@@ -2514,6 +2519,8 @@ function aig65Invalidate(reason='來源或劇情變更，請重新計算 AUTO �
  ++aig65Revision;
  aig65Current=null;aig65Layers=null;aig66Portrait=null;aig67Audio=null;aig67FaceEvidence=null;aig67VoiceSha=null;
  aig65DecodedImage?.close?.();aig65DecodedImage=null;
+ aig68LastRecordedUrl=null;aig68PlaybackProof=null;aig68OutputForRevision=null;
+ $('aig68-status').textContent='圖片或劇情已改變：舊影片仍可下載，但不代表新來源驗收。';
  aig65Show(reason);aig65Refresh();
 }
 for(const id of ['aig65-image','aig65-story','aig65-mode','aig65-duration','aig66-face','aig67-voice'])
@@ -2540,6 +2547,8 @@ function aig65ReportObject(){
   compositorMethod:aig65Layers?.visualMethod||
    (aig65Current.plan.selectedMode==='3D'?'GLB_EXISTING_RIG':'TEXT_CARD'),
   actualRealMediaRecorderResult:aig65VideoEvidence,
+  realEncodedPlaybackProof:aig68PlaybackProof,
+  videoEvidenceSchema:AIG68_SCHEMA,
   voiceAndMusicEngine:'EXISTING_LOCAL_STORY_AUDIO',
   systemTtsNeverCapturedInVideo:true,
   original3DMoviePipelineUnchanged:true,
@@ -2551,6 +2560,8 @@ function aig65ReportObject(){
 }
 $('aig65-build').addEventListener('click',async()=>{
  if(aig65Playing||aig65Recording||aig65Finalizing||movieUI?.isBusy)return;
+ aig68LastRecordedUrl=null;aig68PlaybackProof=null;aig68OutputForRevision=null;
+ $('aig68-status').textContent='已更換動畫來源，6.8 編碼影片驗收需重新錄製。';
  const photo=$('aig65-image').files?.[0]||null,
   voice=$('aig67-voice').files?.[0]||null,
   story=$('aig65-story').value,selected=$('aig65-mode').value,
@@ -2665,6 +2676,8 @@ async function aig65StopRun(natural=false){
     evidence=aig65ReportObject();
    const data={
     ...result.evidence,mode:aig65Current?.plan.selectedMode,
+    canvasFramePacing:aig68FramePacing?.report()||null,
+    decodedPlaybackFpsNotYetMeasured:true,
     completeTimelineRecorded:natural,
     imageSourceSHA256:aig65Current?.imageSha,
     textStoryShaNotProvided:true,
@@ -2677,30 +2690,33 @@ async function aig65StopRun(natural=false){
     originalPhotoMotionIs2D2_5DNotRiggedLimbAnimation:true
    };
    aig65VideoEvidence=data;
+   aig68PlaybackProof=null;aig68LastRecordedUrl=url;
+   aig68OutputForRevision=aig65Revision;
+   $('aig68-status').textContent='6.8 真影片已編碼完成。請按下方「檢查編碼影片」實際解碼驗證解析度與幀率；配音是否可聽仍需人工確認。';
    aig65VideoUrls.push(url);
    const video=$('aig65-video');video.src=url;video.hidden=false;
    const link=document.createElement('a');link.href=url;
-   link.className='download';link.download=result.filename.replace('AIG-6.5-','AIG-6.7-');
+   link.className='download';link.download=result.filename;
    link.textContent='下載已編碼 '+result.evidence.container.toUpperCase()+
-    ' 1080p 動畫（'+result.evidence.actualFramesDrawn+' 幀）';
+    ' 1080p 動畫（'+result.evidence.actualFramesDrawn+' 次 Canvas 繪製，實際編碼幀待驗）';
    $('aig65-downloads').append(link);
    const manifestURL=URL.createObjectURL(new Blob([
     JSON.stringify({...evidence,realVideoFile:data},null,2)
    ],{type:'application/json'}));
    aig65VideoUrls.push(manifestURL);
    const a=document.createElement('a');a.href=manifestURL;
-   a.download='AIG-6.5-REAL-CANVAS-1080p-ENCODED-VIDEO-SHA.json';
+   a.download='AIG-6.8-REAL-CANVAS-1080p-CAPTURE-EVIDENCE.json';
    a.className='download';a.textContent='影片與原圖 SHA 記錄';
    $('aig65-downloads').append(a);
-   aig65Show('6.5 真 '+result.evidence.container.toUpperCase()+
-    ' 影片已由此瀏覽器實際編碼，真 Canvas 更新幀 '+data.actualFramesDrawn+
-    '、容器 '+data.outputMimeType+'、音軌 '+data.audioTracksRecorded+
+   aig65Show('6.8 真 '+result.evidence.container.toUpperCase()+
+    ' 影片已由此瀏覽器實際編碼，Canvas 繪製次數 '+data.actualFramesDrawn+
+    '、容器 '+data.outputMimeType+'、接入串流的音軌 '+data.audioTracksAttachedToCaptureStream+
     '。'+(natural?'完整劇情':'手動中斷片段')+
-    '。目標 30 FPS 非實測保證；系統 TTS 未錄進影片。');
+    '。編碼幀數、音軌封裝與播放品質仍需 6.8 真影片檢查；系統 TTS 未錄進影片。');
   }else aig65Show('6.7 AUTO Canvas 動畫已停止；原照片／影片與 GLB 不改動。');
  }catch(err){
   aig65CaptureError=String(err.message||err);
-  aig65Show('6.5 本次影片編碼 BLOCKED：'+aig65CaptureError+
+  aig65Show('6.8 本次影片編碼 BLOCKED：'+aig65CaptureError+
    '。不提供假檔案，先前真影片仍保留。');
  }finally{
   aig65StopSound();aig65Recorder=null;aig65FilmCanvas=null;
@@ -2720,6 +2736,11 @@ function aig65PlayOrRecord(recording){
  }
  try{
   aig65LastBeat=-1;aig65LastClock=0;aig65CaptureError=null;
+  if(recording){
+   aig68FramePacing=new AIG68FramePacing({targetFps:30});
+   aig68LastRecordedUrl=null;aig68PlaybackProof=null;
+   $('aig68-status').textContent='正在錄製並觀測 Canvas 幀間隔，尚非編碼影片幀率。';
+  }
   const hasRealWav=!!aig67Audio?.decoded;
   storySound.configure({...soundOptions(),voice:!hasRealWav&&!recording&&soundOptions().voice});
   storySound.start(); // DIRECT CLICK: unlock AudioContext and real SFX/music.
@@ -2764,6 +2785,7 @@ function aig65PlayOrRecord(recording){
     drawAIG65CanvasFrame({ctx:aig65FilmCanvas.getContext('2d'),
      canvas:aig65FilmCanvas,plan:current.plan,timeSeconds:t,layered:aig65Layers,portrait:aig66Portrait,audioAmplitude:aig67Mouth});
     aig65Recorder?.frame();
+    aig68FramePacing?.mark(now);
    }
    if(stamp.beat.beat!==aig65LastBeat){
     aig65LastBeat=stamp.beat.beat;
@@ -2793,6 +2815,39 @@ $('aig65-record').addEventListener('click',()=>aig65PlayOrRecord(true));
 $('aig65-stop').addEventListener('click',()=>{
  if(aig65Recording||aig65Playing)void aig65StopRun(false);
 });
+$('aig68-review').addEventListener('click',async()=>{
+ if(aig68QaBusy||aig65Recording||aig65Playing||aig65Finalizing||
+    !aig68LastRecordedUrl||aig68OutputForRevision!==aig65Revision)return;
+ const video=$('aig65-video'),target=aig68LastRecordedUrl;
+ if(video.src!==target)return;
+ aig68QaBusy=true;aig65Refresh();
+ $('aig68-status').textContent='正在用瀏覽器播放真正的錄製影片，測試解碼後畫面的寬高與幀間隔。';
+ try{
+  const evidence=await probeAIG68EncodedPlayback(video,{maxFrames:42,timeoutMs:6500});
+  if(video.src!==target||aig68OutputForRevision!==aig65Revision)
+   throw Error('AIG68_SOURCE_CHANGED_DURING_VIDEO_PROBE');
+  aig68PlaybackProof=evidence;
+  aig68VideoStatus(evidence);
+  aig47Download(JSON.stringify(aig65ReportObject(),null,2),
+   'AIG-6.8-ACTUAL-ENCODED-VIDEO-BROWSER-QA.json','application/json');
+ }catch(err){
+  $('aig68-status').textContent='6.8 編碼影片檢測未通過：'+String(err.message||err).slice(0,140)+
+   '。既有影片仍可下載，不能以來源測試當成真影片驗證。';
+ }finally{aig68QaBusy=false;aig65Refresh();}
+});
+function aig68VideoStatus(e){
+ if(e.realBrowserPlaybackSampleVerified){
+  $('aig68-status').textContent='6.8 已確認真正錄製影片的解碼畫面 '+e.encodedVideoMetadataResolution.join('×')+
+   '，解碼回放取樣幀 '+e.actualDecodedFramesSampled+
+   '，觀察回放 FPS '+String(e.observedDecodedPlaybackFps)+
+   '。聲音有無成功封裝、口型精準度、頭髮／脖子穿模仍需實際觀看聆聽，不可自動 Release PASS。';
+ }else{
+  $('aig68-status').textContent='6.8 尚未確認真 1080p 回放：'+
+   e.encodedVideoMetadataResolution.join('×')+
+   '，解碼幀樣本 '+e.actualDecodedFramesSampled+
+   '；該影片保留，但正式驗收 BLOCKED。';
+ }
+}
 $('aig65-report').addEventListener('click',()=>{
  const report=aig65ReportObject();if(!report)return;
  aig47Download(JSON.stringify(report,null,2),
