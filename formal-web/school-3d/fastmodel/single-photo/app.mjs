@@ -18,6 +18,7 @@ import {AIG47_SCHEMA,buildAIG47Draft,exportAIG47GLB} from './aig-welded-4-7.mjs'
 import {AIG48_SCHEMA,buildAIG48Draft,exportAIG48GLB,auditAIG48Poses} from './aig-skin-motion-4-8.mjs';
 import {AIG49_SCHEMA,auditAIG49DynamicContacts} from './aig-dynamic-collision-4-9.mjs';
 import {AIG50_SCHEMA,auditAIG50FullBody} from './aig-fullbody-5-0.mjs';
+import {AIG51_SCHEMA,auditAIG51PosedSeamsAndHair} from './aig-seam-contact-5-1.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -697,9 +698,16 @@ $('aig48-evidence').addEventListener('click',()=>{
 
 
 // 5.0 isolated source-hashed full-body inspection. No mutation of existing runtime or character GLB.
-let aig50Report=null,aig50Revision=0,aig50Busy=false;
+let aig50Report=null,aig50Parsed=null,aig50Revision=0,aig50Busy=false;
+let aig51Report=null,aig51Busy=false;
+function aig51Reset(message='5.1 來源或 5.0 驗證結果變更；舊穿模報告已隔離。'){
+ aig51Report=null;$('aig51-report').disabled=true;
+ $('aig51-run').disabled=aig51Busy||!aig50Parsed||aig50Report?.outcome!=='STRUCTURAL_QA_PASS_ONLY';
+ $('aig51-status').textContent=message;
+}
 $('aig50-input').addEventListener('change',()=>{
  aig50Revision++;aig50Report=null;$('aig50-report').disabled=true;
+ aig50Parsed=null;aig51Reset('5.1 等待最新 GLB 通過 5.0，舊動態接縫／髮束檢查已失效。');
  $('aig50-run').disabled=aig50Busy||!$('aig50-input').files?.length;
  $('aig50-status').textContent='新本機 GLB 已選擇；須驗證真人體骨架、頭頸胸共享索引網格和真蒙皮動作。不會覆蓋舊人物、劇情或聲音。';
 });
@@ -712,6 +720,7 @@ $('aig50-run').addEventListener('click',async()=>{
  }
  const revision=++aig50Revision;
  aig50Busy=true;aig50Report=null;$('aig50-report').disabled=true;
+ aig50Parsed=null;aig51Reset('5.0 重新檢查來源，5.1 上一次結果已失效。');
  $('aig50-run').disabled=true;input.disabled=true;
  $('aig50-status').textContent='獨立 GLTFLoader 檢查真 GLB：完整人體骨架、三角面連接、蒙皮權重與真動作。';
  try{
@@ -721,6 +730,10 @@ $('aig50-run').addEventListener('click',async()=>{
   const report=await auditAIG50FullBody(parsed,{sourceSHA256:sha});
   if(revision!==aig50Revision)throw Error('AIG50_SOURCE_CHANGED');
   aig50Report=report;
+  aig50Parsed=report.outcome==='STRUCTURAL_QA_PASS_ONLY'?parsed:null;
+  aig51Reset(report.outcome==='STRUCTURAL_QA_PASS_ONLY'?
+   '5.0 結構層通過；可執行 5.1 真動畫胸頸肩接縫與真髮束／身體碰撞取樣。':
+   '5.0 尚未通過，5.1 不可繞過骨架與來源檢查。');
   $('aig50-report').disabled=false;
   $('aig50-status').textContent='5.0 '+report.outcome+'；真骨架 '+report.boneCount+
    ' 節點、SkinnedMesh '+report.skinnedMeshCount+' 件；缺少必需關節 '+report.missingBones.length+
@@ -728,7 +741,8 @@ $('aig50-run').addEventListener('click',async()=>{
    '；動作變形 '+(report.animationHasRealSkinnedVertexMotion?'有':'未通過')+
    '。結構成功不等於真女主角或正式 Release；下載 JSON 查看完整原因。';
  }catch(error){
-  aig50Report=null;
+  aig50Report=null;aig50Parsed=null;
+  aig51Reset('5.0 失敗，5.1 禁止運行。');
   $('aig50-status').textContent='5.0 全身骨架 QA BLOCKED：'+error.message+'。來源未寫回、既有 4.9 劇情／影片仍保留。';
  }finally{
   aig50Busy=false;input.disabled=false;
@@ -739,6 +753,38 @@ $('aig50-report').addEventListener('click',()=>{
  if(!aig50Report)return;
  aig47Download(JSON.stringify(aig50Report,null,2),
   'AIG-5.0-FULLBODY-SHOULDER-NECK-STRUCTURE-ONLY-NOT-APPROVED.json','application/json');
+});
+
+$('aig51-run').addEventListener('click',async()=>{
+ if(aig51Busy||!aig50Parsed||aig50Report?.outcome!=='STRUCTURAL_QA_PASS_ONLY')return;
+ const revision=aig50Revision,source=aig50Parsed,upstream=aig50Report;
+ aig51Busy=true;aig51Report=null;
+ $('aig51-run').disabled=true;$('aig51-report').disabled=true;
+ $('aig51-status').textContent='5.1 正從真 GLB 的動畫姿態檢查胸／頸／頭／雙肩三角接縫，以及馬尾對身體的 SAT 交叉檢測。';
+ try{
+  const report=await auditAIG51PosedSeamsAndHair(source,{
+   sourceSHA256:upstream.sourceSHA256,aig50Report:aig50Report
+  });
+  if(revision!==aig50Revision||source!==aig50Parsed||
+    upstream!==aig50Report)throw Error('AIG51_SOURCE_CHANGED');
+  aig51Report=report;$('aig51-report').disabled=false;
+  $('aig51-status').textContent='5.1 '+report.outcome+'：已取樣 '+report.posesChecked+
+   ' 個動畫姿態；真髮束／身體三角接觸 '+report.confirmedBodyHairContacts+
+   '；肩頸動畫接縫變形 '+(report.sampledShoulderNeckSeamsInRange?'在限制內':'異常')+
+   '。只是離散取樣的幾何 QA，不代表全時間無穿模、正式女主角或實機 60 FPS。';
+ }catch(error){
+  aig51Report=null;
+  $('aig51-status').textContent='5.1 動畫接縫／髮束碰撞 BLOCKED：'+error.message+
+   '。未更改原 GLB、4.9 動畫、故事、聲音或錄影。';
+ }finally{
+  aig51Busy=false;
+  $('aig51-run').disabled=!aig50Parsed||aig50Report?.outcome!=='STRUCTURAL_QA_PASS_ONLY';
+ }
+});
+$('aig51-report').addEventListener('click',()=>{
+ if(!aig51Report)return;
+ aig47Download(JSON.stringify(aig51Report,null,2),
+  'AIG-5.1-POSED-SEAM-HAIR-CONTACT-SAMPLED-NOT-APPROVED.json','application/json');
 });
 
 $('aig46-build').addEventListener('click',()=>{
