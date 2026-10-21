@@ -11,10 +11,10 @@ test('real 3D cannot silently become a fake walking image when GLB clips are mis
  assert.equal(r.selectedMode,'3D');
  assert.deepEqual(r.blockers,['VERIFIED_REAL_GLB_CLIPS_REQUIRED']);
 });
-test('AUTO photo is explicitly camera motion and does not imply moving human joints',()=>{
+test('explicit photo mode is camera motion and does not imply moving human joints',()=>{
  const r=planAIG65AutoAnimation({
   storyText:'女主角在校園走路',hasImage:true,imageSHA256:sha,
-  hasGLB:false,clips:[],requestedMode:'AUTO',durationSeconds:8});
+  hasGLB:false,clips:[],requestedMode:'2.5D',durationSeconds:8});
  assert.equal(r.ready,true);
  assert.equal(r.selectedMode,'2.5D');
  assert.equal(r.timeline[0].photoHasArticulatedLimbs,false);
@@ -36,4 +36,24 @@ test('live visible controls explicitly separate photo camera moves and true 3D c
  assert.ok(movie.includes('照片運鏡（非真'));
  assert.ok(movie.includes('actualHumanJointPositionsComputed:false'));
  assert.ok(movie.includes('stillPhotoMotionCannotBeCalledRealWalk'));
+});
+
+test('AUTO refuses to replace requested body actions with camera transforms',()=>{
+ for(const action of ['走路','奔跑','跳躍','轉頭','點頭','鞠躬']){
+  const result=planAIG65AutoAnimation({storyText:'女主角'+action,
+   hasImage:true,imageSHA256:sha,requestedMode:'AUTO'});
+  assert.equal(result.ready,false,action);
+  assert.ok(result.blockers.includes('VERIFIED_REAL_GLB_CLIPS_REQUIRED'),action);
+  assert.equal(result.timeline.some(b=>b.armsAndLegsActuallyAnimated),false);
+ }
+});
+test('explicit photographic camera mode remains separate from requested character motion',()=>{
+ const camera=planAIG65AutoAnimation({storyText:'鏡頭緩慢推近照片',
+  hasImage:true,imageSHA256:sha,requestedMode:'AUTO'});
+ assert.equal(camera.ready,true);
+ assert.equal(camera.flatImageOnlyHasCameraOrCardMotion,true);
+ const chosen=planAIG65AutoAnimation({storyText:'女主角走路',
+  hasImage:true,imageSHA256:sha,requestedMode:'2D'});
+ assert.equal(chosen.ready,true);
+ assert.equal(chosen.timeline[0].armsAndLegsActuallyAnimated,false);
 });

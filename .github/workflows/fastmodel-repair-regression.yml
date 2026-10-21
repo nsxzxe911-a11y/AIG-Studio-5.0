@@ -1,0 +1,44 @@
+name: FastModel repair regression (not character approval)
+on:
+  pull_request:
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/**'
+      - '.github/workflows/fastmodel-repair-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: npm ci
+      - run: python -m pip install -r requirements.txt
+      - run: npm test
+      - run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - run: npm run build
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real browser workflows and independent output evidence
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/fastmodel-http.log 2>&1 &
+          aig_http_pid=$!
+          trap 'kill "$aig_http_pid" 2>/dev/null || true' EXIT
+          node tests/aig-compact-ui-real-browser.mjs
+          node tests/aig-generation-state-real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-browser-regression-not-heroine-approval
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-compact-ui/
+          if-no-files-found: warn

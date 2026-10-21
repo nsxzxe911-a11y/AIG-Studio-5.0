@@ -123,7 +123,7 @@ test('6.4 independent RGB direct-entry without 4.0/5.4/6.0 source, no wardrobe l
  assert.ok(app.includes('generateAIG64SinglePartialFullbody({analysis})'));
  assert.ok(app.includes('await parseRiggedGLB(output.bytes.buffer)'));
  assert.ok(app.includes('await auditAIG50FullBody(parsed,'));
- assert.ok(app.includes('await load(output.bytes.buffer,false)'));
+ assert.ok(app.includes('await load(output.bytes.buffer,false,{technical:true})'));
  assert.ok(app.includes("aig64SingleBytes=output.bytes"));
  assert.ok(app.includes("aig64-single-photo').files"));
  assert.ok(app.includes('new MovieWorkspace('));

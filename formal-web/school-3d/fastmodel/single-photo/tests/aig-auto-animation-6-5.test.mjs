@@ -9,7 +9,7 @@ import {AIG65_CAPTURE_SCHEMA,drawAIG65CanvasFrame,
  from '../aig-canvas-movie-6-5.mjs';
 const id='a'.repeat(64),glb='b'.repeat(64);
 const options=(over={})=>({hasImage:true,imageSHA256:id,
- storyText:'女主角在櫻花校園走路，突然轉頭。',requestedMode:'AUTO',
+ storyText:'鏡頭沿著櫻花校園照片緩慢推近。',requestedMode:'AUTO',
  durationSeconds:8,...over});
 function mockImage(kind='alpha'){
  const width=100,height=100,data=new Uint8ClampedArray(width*height*4);
@@ -23,13 +23,13 @@ function mockImage(kind='alpha'){
  }
  return {width,height,data};
 }
-test('6.5 AUTO routes a single photo and story to real 2.5D Canvas even without GLB, four photos or manual landmarks',()=>{
+test('AUTO routes explicitly requested camera motion to photo compositing',()=>{
  const p=planAIG65AutoAnimation(options());
  assert.equal(p.schema,AIG65_SCHEMA);
  assert.equal(p.selectedMode,'2.5D');
  assert.equal(p.ready,true);
  assert.equal(p.sourceSHA256,id);
- assert.ok(p.timeline.length>=2);
+ assert.ok(p.timeline.length>=1);
  assert.ok(p.timeline.every(x=>x.visualTechnique==='REAL_CANVAS_IMAGE_PARALLAX_ESTIMATED_DEPTH'));
  assert.ok(p.timeline.every(x=>!x.armsAndLegsActuallyAnimated));
  assert.equal(p.formalReleaseAllowed,false);
@@ -186,4 +186,12 @@ test('6.5 RGB top-page true callbacks, WebAudio SFX/music and existing 3D/other 
  assert.ok(html.indexOf('AIG FastModel 6.5｜')<html.indexOf('AIG FastModel 6.4｜'));
  const m=JSON.parse(read('AIG62-SCHOOL-VISUAL-ASSETS.json'));
  assert.equal(m.otherCostumesAndSwimwearStillAvailable,true);
+});
+
+test('camera plan preserves requested duration instead of silently truncating a single scene to 20 seconds',()=>{
+ for(const seconds of [1,8,30,60,180]){
+  const plan=planAIG65AutoAnimation(options({durationSeconds:seconds}));
+  assert.equal(plan.seconds,seconds);
+  assert.equal(plan.timeline.at(-1).startSeconds+plan.timeline.at(-1).seconds,seconds);
+ }
 });

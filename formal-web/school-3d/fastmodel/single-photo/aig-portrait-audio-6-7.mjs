@@ -5,15 +5,22 @@
  */
 export const AIG67_SCHEMA='AIG_FASTMODEL_6_7_LOCAL_FACE_AUDIO_EVIDENCE';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-export async function detectAIG67BrowserFace(image,{env=globalThis}={}){
+export async function detectAIG67BrowserFace(image,{env=globalThis,timeoutMs=1800}={}){
  const unavailable=reason=>({verified:false,reason,box:null,
   method:'NO_VERIFIED_FACE_DETECTION',faceCount:0});
  if(!image||!Number.isFinite(image.width)||!Number.isFinite(image.height)||
   image.width<48||image.height<48)return unavailable('INVALID_IMAGE');
  if(typeof env.FaceDetector!=='function')return unavailable('NATIVE_FACE_DETECTOR_UNAVAILABLE');
+ let timer=null;
  try{
   const detector=new env.FaceDetector({fastMode:true,maxDetectedFaces:2});
-  const faces=await detector.detect(image);
+  const expired=Symbol('face-detector-timeout');
+  const faces=await Promise.race([
+   detector.detect(image),
+   new Promise(resolve=>{timer=setTimeout(()=>resolve(expired),
+    Number.isFinite(timeoutMs)?Math.max(1,Math.min(5000,timeoutMs)):1800);})
+  ]);
+  if(faces===expired)return unavailable('NATIVE_FACE_DETECTOR_TIMEOUT');
   if(!Array.isArray(faces)||faces.length!==1)
    return unavailable(faces?.length>1?'MULTIPLE_FACES_AMBIGUOUS':'NO_DETECTED_FACE');
   const r=faces[0]?.boundingBox,{width:w,height:h}=image;
@@ -26,6 +33,7 @@ export async function detectAIG67BrowserFace(image,{env=globalThis}={}){
    box:{x:r.x,y:r.y,width:r.width,height:r.height},
    landmarksDetected:false,identityConfirmed:false};
  }catch(e){return unavailable('NATIVE_FACE_DETECTOR_REJECTED');}
+ finally{if(timer!==null)clearTimeout(timer);}
 }
 /** Strict RIFF PCM16 LE decoder, suitable for real local recordings.
  * Rejects mislabeled compressed audio/oversize/truncated WAV rather than
