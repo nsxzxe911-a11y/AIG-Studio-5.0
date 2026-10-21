@@ -1,1 +1,1 @@
-{"name":"aig-fastmodel-single-photo","version":"6.4.0","private":true,"type":"module","scripts":{"build":"node build.mjs","test":"node --test tests/*.test.mjs"},"dependencies":{"three":"0.180.0"},"devDependencies":{"esbuild":"0.25.12"}}
+{"name":"aig-fastmodel-single-photo","version":"6.5.0","private":true,"type":"module","scripts":{"build":"node build.mjs","test":"node --test tests/*.test.mjs"},"dependencies":{"three":"0.180.0"},"devDependencies":{"esbuild":"0.25.12"}}
