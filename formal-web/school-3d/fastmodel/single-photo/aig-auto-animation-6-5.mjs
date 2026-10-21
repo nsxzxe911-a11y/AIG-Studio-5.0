@@ -88,7 +88,7 @@ export function planAIG65AutoAnimation({
   hasImage,hasGLB,seconds:timeline.length*beatSeconds,
   timeline,storyInput:storyText,storyParsed:story!==null,
   storyFallbackReason:unsupportedStory,
-  3dPlan:plan3d,
+  threeDPlan:plan3d,
   blockers:blocking,
   flatImageOnlyHasCameraOrCardMotion:selectedMode!=='3D',
   parallaxDepthIsHeuristicNotMeasured:true,
