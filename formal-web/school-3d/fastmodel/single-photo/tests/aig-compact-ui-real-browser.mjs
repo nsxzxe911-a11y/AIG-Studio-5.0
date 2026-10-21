@@ -122,6 +122,25 @@ try{
   await page.locator('#aig-unified-tab-create').click();
   if(!await page.locator('#aig65-image').isVisible())
    throw Error('AIG_COMPACT_RETURN_TO_EDIT_BROKEN');
+  // Explicit 3D without a verified matching GLB clip must report the
+  // limitation, not masquerade as real person animation or a mute button.
+  await page.locator('#aig65-story').fill('女主角在校園走路');
+  await page.locator('#aig65-mode').selectOption('3D');
+  await page.locator('#aig65-build').click();
+  await page.locator('#aig695-need-real-3d').waitFor({state:'visible',timeout:10000});
+  const blocked=await page.locator('#aig65-status').innerText();
+  if(!blocked.includes('缺少可匹配的 3D GLB')||
+     !await page.locator('#aig695-switch-auto').isVisible())
+   throw Error('AIG695_TRUE_3D_MISSING_CLIPS_NOT_EXPLAINED '+blocked);
+  await page.screenshot({path:out+'/'+device.name+'-06-real-3d-unavailable-no-fake-success.png'});
+  // User authorizes a separate photographic camera motion mode explicitly.
+  await page.locator('#aig695-switch-auto').click();
+  await page.waitForFunction(()=>
+   (document.querySelector('#aig65-status')?.textContent||'').includes('AUTO 選定'),
+   null,{timeout:13000});
+  if(await page.locator('#aig65-mode').inputValue()!=='AUTO')
+   throw Error('AIG695_MANUAL_PHOTO_FALLBACK_NOT_BOUND');
+  await page.locator('#aig-unified-tab-create').click();
   // Real file/no-WAV regression on phone AND desktop: the normal AUTO path
   // must create image animation, actually play it and record it to Blob
   // without a user-supplied audio file.
@@ -159,7 +178,23 @@ try{
   },null,{timeout:10000});
   const playing=await page.locator('#aig65-status').innerText();
   if(playing.includes('BLOCKED'))throw Error('AIG692_PLAY_WITHOUT_AUDIO_FILE_BLOCKED '+playing);
-  await page.waitForTimeout(250);
+  // Actual pixel frame differences, NOT just Play button presence.
+  // This detects source Canvas motion and explicitly does not certify
+  // articulated human walking, punching or facial identity.
+  const samplePixels=()=>page.locator('#aig65-canvas').evaluate(canvas=>{
+   const probe=document.createElement('canvas');probe.width=64;probe.height=36;
+   const ctx=probe.getContext('2d',{willReadFrequently:true});
+   ctx.drawImage(canvas,0,0,64,36);
+   return Array.from(ctx.getImageData(0,0,64,36).data);
+  });
+  const sampleA=await samplePixels();
+  await page.waitForTimeout(700);
+  const sampleB=await samplePixels();
+  const changed=sampleA.filter((v,i)=>Math.abs(v-sampleB[i])>12).length;
+  if(changed<80)throw Error('AIG695_PLAYING_BUT_CANVAS_PIXEL_FRAMES_NEARLY_IDENTICAL '+changed);
+  console.log('AIG actual PHOTO camera pixel-frame motion',device.name,
+   JSON.stringify({differentRGBAValues:changed,valuesSampled:sampleA.length,
+    actualHumanLimbAnimationVerified:false}));
   await page.locator('#aig65-stop').click();
   await page.waitForFunction(()=>!document.querySelector('#aig65-record').disabled,
    null,{timeout:10000});
