@@ -4807,22 +4807,37 @@ private fun showApp(showWindow:Boolean=true):JFrame {
     linkTools.add(button("全部斷開", Color(239,68,68)) { cad.disconnectAllTopology() })
     fun productionUiButton(id:String,color:Color,action:()->Unit):GlassActionButton {
         val normalized=ProductionUiSwitchContract.normalize(id)
+        val navId="NAV_"+normalized
+        val entry=UiButtonManifestContract.byButtonId(navId)
+        require(entry.surfaceId==normalized) { "NAV_BIND_SURFACE_MISMATCH: "+navId }
         return GlassActionButton(normalized,color).apply {
-            toolTipText="正式 UI 切換 • "+normalized
+            name="VIEW.NAV."+normalized
+            toolTipText="正式 UI 切換 • "+name+" • "+navId
+            putClientProperty("aig.buttonId",navId)
+            putClientProperty("aig.commandId",entry.command.name)
             productionUiButtons[normalized]=this
             addActionListener {
-                productionUiButtons.forEach { (key,b) -> b.active=(key==normalized) }
-                action()
+                UiButtonManifestContract.dispatchNavigation(navId,normalized) { command ->
+                    require(command==entry.command) { "NAV_BIND_CALLBACK_DRIFT: "+navId }
+                    action()
+                    productionUiButtons.forEach { (key,b) -> b.active=(key==normalized) }
+                }
             }
         }
     }
     val productionHomeButton=GlassActionButton("首頁",Color(39,233,255)).apply {
-        toolTipText="正式 Runtime HOME • first surface"
+        name="VIEW.NAV.HOME"
+        toolTipText="正式 Runtime HOME • NAV_HOME • first surface"
+        putClientProperty("aig.buttonId","NAV_HOME")
+        putClientProperty("aig.commandId",SharedUiCommand.OPEN_HOME.name)
         preferredSize=Dimension(96,48)
         addActionListener {
-            productionUiButtons.forEach { (_,button) -> button.active=false }
-            mainCardLayout.show(mainCardHost,"HOME")
-            status.text="HOME • PRODUCTION RUNTIME • OFFLINE READY • "+MasterRuntimeChainContract.masterOriginLabel()
+            UiButtonManifestContract.dispatchNavigation("NAV_HOME","HOME") { command ->
+                require(command==SharedUiCommand.OPEN_HOME)
+                productionUiButtons.forEach { (_,button) -> button.active=false }
+                mainCardLayout.show(mainCardHost,"HOME")
+                status.text="HOME • PRODUCTION RUNTIME • OFFLINE READY • "+MasterRuntimeChainContract.masterOriginLabel()
+            }
         }
     }
     moduleButtons.add(productionHomeButton)
