@@ -39,6 +39,7 @@ export function planAIG65AutoAnimation({
  const extraBlockers=story?.unmapped?.filter(x=>x.reason!=='NO_SUPPORTED_ACTION_KEYWORD')||[];
  const isCamera=/(鏡頭|攝影機|運鏡|推近|拉遠|特寫|camera|zoom|景深|視差)/i.test(storyText);
  const dynamic=beats.some(b=>['walk','run','jump','turn','dodge','ponySwing'].includes(b.actionId));
+ const requiresCharacterMotion=beats.some(b=>allowedCanvas.has(b.actionId)&&b.actionId!=='idle');
  let selectedMode=requestedMode;
  if(selectedMode==='AUTO'){
   // Only choose true 3D when verified existing model/entire clip plan can
@@ -47,8 +48,10 @@ export function planAIG65AutoAnimation({
    hasImage&&(isCamera||dynamic)?'2.5D':'2D';
  }
  const blocking=[];
+ if(requestedMode==='AUTO'&&requiresCharacterMotion&&!isCamera&&!plan3d?.ready)
+  blocking.push('VERIFIED_REAL_GLB_CLIPS_REQUIRED');
  if(selectedMode==='3D'){
-  if(!hasGLB||!plan3d?.ready)blocking.push('VERIFIED_REAL_GLB_CLIPS_REQUIRED');
+  if((!hasGLB||!plan3d?.ready)&&!blocking.includes('VERIFIED_REAL_GLB_CLIPS_REQUIRED'))blocking.push('VERIFIED_REAL_GLB_CLIPS_REQUIRED');
  }else{
   if(!hasImage&&!storyText.trim())blocking.push('IMAGE_OR_TEXT_REQUIRED');
   if(complex.length)blocking.push('ARTICULATED_FIGHTING_NOT_AVAILABLE_IN_FLAT_IMAGE');
@@ -69,7 +72,7 @@ export function planAIG65AutoAnimation({
  }
  if(!normalized.length)normalized.push({beat:0,actionId:'idle',
    label:'靜態照片／鏡頭',text:''});
- const beatSeconds=clamp(durationSeconds/normalized.length,.35,20);
+ const beatSeconds=durationSeconds/normalized.length;
  const timeline=normalized.map((b,i)=>({...b,
   startSeconds:+(i*beatSeconds).toFixed(4),
   seconds:beatSeconds,
@@ -77,7 +80,7 @@ export function planAIG65AutoAnimation({
    selectedMode==='2.5D'?'REAL_CANVAS_IMAGE_PARALLAX_ESTIMATED_DEPTH':
    hasImage?'REAL_2D_IMAGE_TRANSLATE_SCALE_ROTATE':'TEXT_TITLE_CARD_ANIMATION',
   photoHasArticulatedLimbs:false,
-  armsAndLegsActuallyAnimated:selectedMode==='3D'
+  armsAndLegsActuallyAnimated:selectedMode==='3D'&&plan3d?.ready===true
  }));
  const sourceSHA256=selectedMode==='3D'?glbSHA256:imageSHA256;
  return {schema:AIG65_SCHEMA,requestedMode,selectedMode,

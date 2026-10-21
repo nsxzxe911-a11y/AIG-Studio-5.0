@@ -2,7 +2,7 @@ import {chromium} from 'playwright';
 import {mkdir} from 'node:fs/promises';
 const out=process.env.AIG_UI_SCREENSHOTS||'artifacts/fastmodel-compact-ui';
 await mkdir(out,{recursive:true});
-const browser=await chromium.launch({headless:true,args:[
+const browser=await chromium.launch({headless:true,executablePath:process.env.AIG_CHROMIUM_EXECUTABLE||undefined,args:[
  '--no-sandbox','--disable-dev-shm-usage',
  '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'
 ]});
@@ -58,7 +58,7 @@ try{
   await page.screenshot({path:out+'/'+device.name+'-01-create.png'});
   // Tests real user interactions on original callbacks rather than just
   // checking HTML placeholders. Text-only 2D needs no photo or cloud.
-  await page.locator('#aig65-story').fill('女主角轉頭，微笑。');
+  await page.locator('#aig65-story').fill('鏡頭緩慢推近照片。');
   // Reproduce actual Android screenshot: invalid/empty duration and
   // unexpectedly unselected mode. Valid browser normalization must repair
   // the form BEFORE calling the existing animation planner.
@@ -138,7 +138,7 @@ try{
   await page.waitForFunction(()=>
    (document.querySelector('#aig65-status')?.textContent||'').includes('AUTO 選定'),
    null,{timeout:13000});
-  if(await page.locator('#aig65-mode').inputValue()!=='AUTO')
+  if(await page.locator('#aig65-mode').inputValue()!=='2D')
    throw Error('AIG695_MANUAL_PHOTO_FALLBACK_NOT_BOUND');
   await page.locator('#aig-unified-tab-create').click();
   // Real file/no-WAV regression on phone AND desktop: the normal AUTO path
@@ -156,7 +156,7 @@ try{
   await page.locator('#aig65-image').setInputFiles({
    name:'6-9-2-SYNTHETIC-NOT-HEROINE.png',mimeType:'image/png',buffer:syntheticPNG
   });
-  await page.locator('#aig65-story').fill('她微笑，抬頭看著天空。');
+  await page.locator('#aig65-story').fill('鏡頭緩慢推近照片中的天空。');
   await page.locator('#aig65-mode').selectOption('AUTO');
   await page.locator('#aig65-duration').fill('2');
   if(await page.locator('#aig67-voice').evaluate(el=>el.files.length)!==0)

@@ -72,3 +72,13 @@ test('6.7 true wav, local face, audio playback, preview and mux wiring are prese
  assert.ok(!read('aig-portrait-audio-6-7.mjs').includes('fetch('));
  assert.equal(JSON.parse(read('AIG62-SCHOOL-VISUAL-ASSETS.json')).otherCostumesAndSwimwearStillAvailable,true);
 });
+
+test('optional face detector that never responds cannot hold generation indefinitely',async()=>{
+ class StalledDetector{detect(){return new Promise(()=>{});}}
+ const result=await Promise.race([
+  detectAIG67BrowserFace({width:400,height:800},{env:{FaceDetector:StalledDetector},timeoutMs:15}),
+  new Promise(resolve=>setTimeout(()=>resolve({reason:'TEST_DEADLINE_EXCEEDED'}),150))
+ ]);
+ assert.equal(result.reason,'NATIVE_FACE_DETECTOR_TIMEOUT');
+ assert.equal(result.verified,false);
+});

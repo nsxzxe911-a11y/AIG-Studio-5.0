@@ -89,7 +89,7 @@ test('4.9 RGB controls and technical GLB direct player handoff retain prior vide
   assert.ok(html.includes('id="'+id+'"'),id);
  assert.match(app,/auditAIG49DynamicContacts\(rig\)/);
  assert.match(app,/aig49Reset\(/);
- assert.match(app,/await load\(glb\.bytes\.buffer,false\)/);
+ assert.match(app,/await load\(glb\.bytes\.buffer,false,\{technical:true\}\)/);
  assert.ok(app.includes('new MovieWorkspace('));
  assert.ok(app.includes('exportAIG47GLB(aig47Draft)'));
  assert.ok(app.includes('exportAIG48GLB(aig48Draft)'));
