@@ -58,10 +58,13 @@ test('5.4 wrong downloaded SHA, input SHA, job id, embedded SHA or fake rig must
  const corrupt=new Uint8Array(glb);corrupt[0]=0;
  await assert.rejects(verifyAIG54NativeChain({...opt,glbBytes:corrupt,manifest:manifest(corrupt)}),/GLB_HEADER_MISMATCH/);
 });
-test('5.4 source integrity cannot circumvent the 5.3 required full-body, heroine and native FPS release gates',()=>{
- const report=compileAIG53Evidence({nativeEvidence54:{
-  ...manifest(nativeGLB()),releaseAllowed:false
- }});
+test('5.4 source integrity cannot circumvent the 5.3 required full-body, heroine and native FPS release gates',async()=>{
+ const glb=nativeGLB();
+ const proof=await verifyAIG54NativeChain({manifest:manifest(glb),glbBytes:glb,
+  expectedImageSHA256:source,expectedJobId:id,cryptoImpl:webcrypto});
+ const report=compileAIG53Evidence({nativeTechnical54:proof});
+ assert.equal(report.native4TechnicalIntegrity54.status,'SOURCE_INTEGRITY_PASS_TECHNICAL_DRAFT_ONLY');
+ assert.equal(report.native4TechnicalIntegrity54.canReplace5_0FullbodyGLB,false);
  assert.equal(report.outcome,'BLOCKED');
  assert.equal(report.passedChecks,0);
  assert.equal(report.releaseAllowed,false);
@@ -79,6 +82,8 @@ test('5.4 UI controls and persisted nonpaid local backend route are real and uni
  assert.ok(app.includes('verifyAIG54NativeChain({'));
  assert.ok(app.includes("aig54NativeJobId=job.id"));
  assert.ok(app.includes('sha256Bytes(original)'));
+ assert.ok(app.includes('nativeTechnical54:aig54Report'));
+ assert.ok(read('aig-unified-gate-5-3.mjs').includes('native4TechnicalIntegrity54'));
  assert.ok(app.includes("aig53Invalidate('已取得新的 5.4"));
  assert.ok(server.includes("from aig_native_provenance_5_4 import audit_native_aig4_job"));
  assert.ok(server.includes("if provenance:"));
