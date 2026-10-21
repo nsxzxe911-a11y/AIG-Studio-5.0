@@ -18,7 +18,6 @@ test('6.8 distinguishes actual Canvas draw timestamps from encoded frame counts'
 test('6.8 frame drops, duplicate timestamps and missing frames fail quality without deleting movie',()=>{
  const a=new AIG68FramePacing();
  for(let n=0;n<25;n++)a.mark(n*1000/15);
- a.mark(1600);
  assert.equal(a.mark(1600),false);
  const r=a.report();
  assert.equal(r.drawPacingWithinTarget,false);
