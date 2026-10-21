@@ -74,8 +74,12 @@ class RuntimeLinkStore {
     }
 
     fun toggle(id:RuntimeLinkId):RuntimeLinkStatus {
-        require(id!=RuntimeLinkId.MACHINE) {
-            "MACHINE_LINK_CANNOT_BE_TOGGLED_WITHOUT_TRANSPORT"
+        if(id==RuntimeLinkId.MACHINE) {
+            // A UI click may request a handshake, but cannot certify transport.
+            // Preserve an existing ALARM and show WARNING otherwise.
+            val current=status(id)
+            return if(current==RuntimeLinkStatus.ALARM) current
+                   else set(id,RuntimeLinkStatus.WARNING)
         }
         val next=if(status(id)==RuntimeLinkStatus.CONNECTED)
             RuntimeLinkStatus.DISCONNECTED else RuntimeLinkStatus.CONNECTED
