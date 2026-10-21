@@ -37,7 +37,7 @@ test('single app JS mounts tabs after old real callbacks, not before',()=>{
  assert.ok(app.includes('movieUI=new MovieWorkspace({'));
  assert.ok(app.includes('buildAIG67AudioBuffer('));
  assert.ok(app.includes('new AIG68FramePacing('));
- assert.ok(shell.includes("role:'tablist'")&&shell.includes("role:'tabpanel'"));
+ assert.ok(shell.includes("'role':'tablist'")&&shell.includes("'role':'tabpanel'"));
  assert.ok(shell.includes("key==='ArrowRight'")&&shell.includes("key==='ArrowLeft'"));
 });
 test('mobile layout uses one fixed preview and scrollable controls, not an endlessly scrolling webpage',()=>{
