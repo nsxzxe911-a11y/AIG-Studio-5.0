@@ -26,9 +26,28 @@ jobs:
           python -m pip install -r requirements.txt
           npm test
           npm run build
+      - name: Chromium native video decode engine
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Real browser encoded movie frames, recording and controls
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig-fastmodel-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-compact-ui-real-browser.mjs
+          node tests/aig-generation-state-real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fastmodel-core-recovery-real-browser-images
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-compact-ui/
+          if-no-files-found: warn
       - name: Core-only verdict
         run: |
-          echo "FASTMOTION_CORE_SMOKE=SOURCE_AND_HEADLESS_ONLY"
+          echo "FASTMOTION_CORE_SMOKE=SOURCE_AND_REAL_CHROME_DECODED_VIDEO_ONLY"
           echo "HUMAN_3D_RECONSTRUCTION=NOT_CERTIFIED"
           echo "REAL_HEROINE_MOTION=NOT_CERTIFIED"
           echo "1080P_CHARACTER_FILM=NOT_CERTIFIED"
