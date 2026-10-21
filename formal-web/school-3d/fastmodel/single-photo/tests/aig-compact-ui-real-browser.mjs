@@ -107,8 +107,15 @@ try{
   if(await page.locator('#aig65-play').isDisabled())throw Error('AIG_COMPACT_PLAY_CALLBACK_NOT_READY');
   await page.screenshot({path:out+'/'+device.name+'-02-output.png'});
   await page.locator('#aig-unified-tab-model').click();
+  if(!await page.locator('#aig-unified-stage-info').isVisible()||
+     await page.locator('#view').isVisible()||
+     !await page.locator('#aig-unified-import-glb').isVisible()||
+     !await page.locator('#aig-unified-model-back').isVisible())
+   throw Error('AIG694_3D_TECHNICAL_AVATAR_MISREPRESENTED_AS_APPROVED');
+  await page.screenshot({path:out+'/'+device.name+'-05-no-fake-3d-model.png'});
+  await page.locator('#aig-unified-model-technical summary').click();
   if(!await page.locator('#aig64-single-build').isVisible())
-   throw Error('AIG_COMPACT_3D_CONTROL_HIDDEN');
+   throw Error('AIG694_LEGACY_TECHNICAL_GENERATOR_MISSING');
   await page.locator('#aig-unified-tab-advanced').click();
   if(!await page.locator('#aig4-build').isVisible())
    throw Error('AIG_COMPACT_LEGACY_FUNCTION_MISSING');
