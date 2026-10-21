@@ -22,6 +22,7 @@ import {AIG51_SCHEMA,auditAIG51PosedSeamsAndHair} from './aig-seam-contact-5-1.m
 import {AIG52_SCHEMA,Aig52FrameEvidence} from './aig-runtime-evidence-5-2.mjs';
 import {AIG53_SCHEMA,compileAIG53Evidence} from './aig-unified-gate-5-3.mjs';
 import {AIG54_SCHEMA,verifyAIG54NativeChain} from './aig-native-source-5-4.mjs';
+import {AIG55_SCHEMA,generateAIG55NativeHumanoid} from './aig-native-humanoid-5-5.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -1192,6 +1193,7 @@ $('aig41-release').addEventListener('click',()=>{
 });
 let aig54NativeJobId=null,aig54ExpectedSourceSHA=null,aig54Report=null,aig54Busy=false;
 function aig54Invalidate(message='自研來源已變更；5.4 來源完整性證據已失效。'){
+ aig55Invalidate('自研原圖或 5.4 來源鏈已失效，5.5 需重新確認。');
  aig54NativeJobId=null;aig54ExpectedSourceSHA=null;aig54Report=null;
  $('aig54-download').disabled=true;$('aig54-check').disabled=true;
  $('aig54-status').textContent=message;
@@ -1217,12 +1219,16 @@ $('aig54-check').addEventListener('click',async()=>{
   if(jobId!==aig54NativeJobId||imageSHA!==aig54ExpectedSourceSHA)
    throw Error('AIG54_SOURCE_CHANGED_DURING_READ');
   aig54Report=report;$('aig54-download').disabled=false;
+  $('aig55-build').disabled=!aig55Scaffold||aig55Scaffold.sourceSHA256!==imageSHA;
+  $('aig55-status').textContent=$('aig55-build').disabled?'5.5 缺少已核對的自研人體比例來源。':
+   '5.4 真來源完整性通過；可用相同原圖 SHA 產生帶骨架、蒙皮與真動畫的自研技術 GLB。';
   aig53Invalidate('已取得新的 5.4 自研來源鏈技術證據；不自動解除 5.3 正式人物 Gate。');
   $('aig54-status').textContent='5.4 '+report.outcome+'：原始檔／生成器／GLB／Scaffold 已比對，'+
    '瀏覽器下載 GLB 的 SHA 也一致。來源真實性≠完整全身人物；4.0 草模無 Rig，'+
    '5.0～5.3 正式女主角 Gate 仍 BLOCKED。';
  }catch(error){
   aig54Report=null;
+  aig55Invalidate('5.4 實體來源核對失敗，5.5 不可拿舊的生成器或照片假裝新的來源。');
   $('aig54-status').textContent='5.4 來源完整性 BLOCKED：'+error.message+
    '。未改寫原圖、GLB、劇情、聲音或錄影資料。';
  }finally{
@@ -1233,6 +1239,80 @@ $('aig54-check').addEventListener('click',async()=>{
 $('aig54-download').addEventListener('click',()=>{
  if(aig54Report)aig47Download(JSON.stringify(aig54Report,null,2),
   'AIG-5.4-NATIVE-SOURCE-GLB-SHA-INTEGRITY-TECHNICAL-ONLY.json','application/json');
+});
+
+let aig55Scaffold=null,aig55Report=null,aig55Busy=false,aig55Epoch=0;
+function aig55Invalidate(message='5.5 技術來源已變更，骨架 GLB 證據失效。'){
+ ++aig55Epoch;aig55Report=null;aig55Scaffold=null;
+ $('aig55-build').disabled=true;$('aig55-report').disabled=true;
+ $('aig55-status').textContent=message;
+}
+$('aig55-build').addEventListener('click',async()=>{
+ if(aig55Busy||!aig54Report||!aig55Scaffold)return;
+ if(aig55Scaffold.sourceSHA256!==aig54Report.sourceImageSHA256||
+  aig55Scaffold.meshGLBSHA256!==aig54Report.modelGLBSHA256){
+  aig55Invalidate('5.4 的真 GLB 與 5.5 輪廓來源不同，已阻擋生成。');return;
+ }
+ const epoch=++aig55Epoch,scaffold=aig55Scaffold,proof=aig54Report;
+ aig55Busy=true;$('aig55-build').disabled=true;$('aig55-report').disabled=true;
+ $('aig55-status').textContent='以自研已核對原圖比例建立真三維人體，輸出 17 骨架 SKIN GLB，回讀真動畫與 5.0 骨架 Gate。';
+ try{
+  const output=generateAIG55NativeHumanoid(scaffold);
+  const bytes=output.bytes,sha=await sha256Bytes(bytes);
+  const parsed=await parseRiggedGLB(bytes.buffer);
+  const qa=await auditAIG50FullBody(parsed,{sourceSHA256:sha});
+  if(epoch!==aig55Epoch||scaffold!==aig55Scaffold||
+     proof!==aig54Report)throw Error('AIG55_SOURCE_CHANGED_WHILE_GENERATING');
+  const report={schema:AIG55_SCHEMA,
+   originalImageSHA256:scaffold.sourceSHA256,
+   sourceNative54:proof,modelGLBSHA256:sha,actualSourceConstrainedSilhouette:scaffold.proportions,
+   nativeTechnicalBuild:output,
+   outputGLBByteLength:bytes.byteLength,
+   actualGLTFLoaderParsedSkinnedMeshes:qa.skinnedMeshCount,
+   actualGLTFLoaderParsedBones:qa.boneCount,actualGLTFLoaderParsedClips:qa.clipsAvailable,
+   fullBody50Audit:qa,
+   sourceOriginalFaceTextureReproduced:false,
+   headNeckSkinNotPhysicallyCertified:true,shoulderAndHipNotFullyWatertight:true,
+   garmentPBRFromImageVerified:false,hiddenGeometryMeasured:false,
+   faceIdentityHumanApproved:false,formalHeroineApproved:false,
+   nativeAndroidWindows60FPSVerified:false,releaseAllowed:false};
+  delete report.nativeTechnicalBuild.bytes;
+  if(qa.outcome!=='STRUCTURAL_QA_PASS_ONLY')throw Error('AIG55_REAL_SKIN_GLTF_AUDIT_BLOCKED');
+  aig55Report=report;
+  aig47Download(bytes,'AIG-5.5-NATIVE-HUMANOID-SKINNED-TECHNICAL.glb','model/gltf-binary');
+  $('aig55-report').disabled=false;
+  let previewStatus='技術 GLB 已產生但裝置 GPU 工作區不可用；可下載原始 GLB。';
+  if(view){
+   try{
+    await load(bytes.buffer,false);
+    if(sha!==sourceSha)throw Error('AIG55_VIEWER_SHA_MISMATCH');
+    // Generated technical humanoid can use the existing isolated QA and 5.2 measurements.
+    aig50Revision++;aig50Report=qa;aig50Parsed=parsed;
+    aig51Reset('5.5 自研骨架技術模型已生成；5.1 真人髮束／接縫必須另行跑真動畫取樣。');
+    aig52Invalidate('5.5 真 GLB 已載入；可擷取動畫或實測瀏覽器 FPS，不代表正式女主角。');
+    aig52RefreshAvailable();
+    $('aig52-load').disabled=true;
+    $('aig50-report').disabled=false;
+    $('aig50-status').textContent='5.0 '+qa.outcome+'：5.5 自研技術人體有真 17 節骨架及蒙皮；來源外觀、衣物、全部接縫未核准。';
+    previewStatus='已載入真 GLB，四段骨架動畫可在工作區切換與播放。';
+   }catch(e){previewStatus='預覽未通過：'+e.message+'；GLB 原檔與 QA 證據已保留。';}
+  }
+  $('aig55-status').textContent='5.5 真 GLB '+qa.outcome+
+   '；來源 SHA '+scaffold.sourceSHA256.slice(0,12)+
+   '，GLB SHA '+sha.slice(0,12)+'；17 骨＋4 Clip。'+previewStatus+
+   ' 全身比例與背面仍推估、肩髖未證明水密，正式人物／實機 FPS BLOCKED。';
+ }catch(e){
+  aig55Report=null;$('aig55-report').disabled=true;
+  $('aig55-status').textContent='5.5 自研全身骨架 GLB BLOCKED：'+e.message+
+   '。不清空原始草模、音樂、台詞、影片或其他分頁。';
+ }finally{
+  aig55Busy=false;$('aig55-build').disabled=
+   !aig55Scaffold||!aig54Report||aig55Scaffold.sourceSHA256!==aig54Report.sourceImageSHA256;
+ }
+});
+$('aig55-report').addEventListener('click',()=>{
+ if(aig55Report)aig47Download(JSON.stringify(aig55Report,null,2),
+  'AIG-5.5-NATIVE-HUMANOID-REAL-SKIN-GLB-TECHNICAL-NOT-HEROINE.json','application/json');
 });
 
 let aig4Busy=false;
@@ -1300,6 +1380,12 @@ $('aig4-build').addEventListener('click',async()=>{
   aig54NativeJobId=job.id;aig54ExpectedSourceSHA=frontSHA;
   $('aig54-check').disabled=false;
   $('aig54-status').textContent='AIG 自研技術 GLB 已完成，可讀取硬碟原圖／GLB／生成器並重新驗證 SHA。';
+  // 5.5 only accepts the exact scaffold from the verified native job, not stale ratios.
+  const bodyScaffold=await api('/api/aig4/jobs/'+job.id+'/files/scaffold.json');
+  if(bodyScaffold.sourceSHA256!==frontSHA||
+     bodyScaffold.meshGLBSHA256!==end.artifacts['model.glb'].sha256)
+   throw Error('AIG55_NATIVE4_SCAFFOLD_SOURCE_OR_GLB_MISMATCH');
+  aig55Scaffold=bodyScaffold;
   const prefix='/api/aig4/jobs/'+job.id+'/files/';
   aig4Link('下載真 3D 草模 GLB',prefix+'model.glb','AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb');
   aig4Link('下載比例／信心／來源 SHA 報告',prefix+'scaffold.json','AIG-4.0-SCAFFOLD-NOT-APPROVED.json');
