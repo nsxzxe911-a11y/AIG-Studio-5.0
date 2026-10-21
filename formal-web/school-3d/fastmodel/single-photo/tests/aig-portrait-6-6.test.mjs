@@ -79,7 +79,8 @@ test('6.6 renders true pixels into local patch canvas while preserving 6.5 Canva
  const note=drawAIG65CanvasFrame({ctx,canvas:{width:960,height:540},
   plan:p,timeSeconds:1.26,layered:face.layers,portrait:face});
  assert.equal(note.localFacePixelsActuallyWarped,true);
- assert.ok(drawn.length>=2);
+ assert.equal(drawn.length,1,
+  'Single image/face warp must not create a duplicate ghost under unverified background');
  assert.equal(note.actualHumanJointPositionsComputed,false);
 });
 test('6.6 RGB toggle and actual preview+film frame paths are wired; no new APIs or wardrobe removal',()=>{
