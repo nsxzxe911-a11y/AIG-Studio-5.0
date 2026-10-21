@@ -23,6 +23,7 @@ import {AIG52_SCHEMA,Aig52FrameEvidence} from './aig-runtime-evidence-5-2.mjs';
 import {AIG53_SCHEMA,compileAIG53Evidence} from './aig-unified-gate-5-3.mjs';
 import {AIG54_SCHEMA,verifyAIG54NativeChain} from './aig-native-source-5-4.mjs';
 import {AIG55_SCHEMA,generateAIG55NativeHumanoid} from './aig-native-humanoid-5-5.mjs';
+import {AIG56_SCHEMA,generateAIG56NativeHumanoid} from './aig-native-body-5-6.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -1219,6 +1220,7 @@ $('aig54-check').addEventListener('click',async()=>{
   if(jobId!==aig54NativeJobId||imageSHA!==aig54ExpectedSourceSHA)
    throw Error('AIG54_SOURCE_CHANGED_DURING_READ');
   aig54Report=report;$('aig54-download').disabled=false;
+  aig56RefreshEnabled();
   $('aig55-build').disabled=!aig55Scaffold||aig55Scaffold.sourceSHA256!==imageSHA;
   $('aig55-status').textContent=$('aig55-build').disabled?'5.5 缺少已核對的自研人體比例來源。':
    '5.4 真來源完整性通過；可用相同原圖 SHA 產生帶骨架、蒙皮與真動畫的自研技術 GLB。';
@@ -1242,7 +1244,22 @@ $('aig54-download').addEventListener('click',()=>{
 });
 
 let aig55Scaffold=null,aig55Report=null,aig55Busy=false,aig55Epoch=0;
+let aig56Report=null,aig56Busy=false,aig56Epoch=0;
+function aig56Invalidate(message='5.6 肩髖拓樸來源已變更，舊的網格驗收失效。'){
+ ++aig56Epoch;aig56Report=null;
+ $('aig56-build').disabled=true;$('aig56-report').disabled=true;
+ $('aig56-status').textContent=message;
+}
+function aig56RefreshEnabled(){
+ const valid=!!aig54Report&&!!aig55Scaffold&&!aig56Busy&&!aig55Busy&&
+  aig55Scaffold.sourceSHA256===aig54Report.sourceImageSHA256&&
+  aig55Scaffold.meshGLBSHA256===aig54Report.modelGLBSHA256;
+ $('aig56-build').disabled=!valid;
+ return valid;
+}
+
 function aig55Invalidate(message='5.5 技術來源已變更，骨架 GLB 證據失效。'){
+ aig56Invalidate('來源照片、scaffold 或 5.4 SHA 已改變，舊 5.6 網格報告失效。');
  ++aig55Epoch;aig55Report=null;aig55Scaffold=null;
  $('aig55-build').disabled=true;$('aig55-report').disabled=true;
  $('aig55-status').textContent=message;
@@ -1313,6 +1330,71 @@ $('aig55-build').addEventListener('click',async()=>{
 $('aig55-report').addEventListener('click',()=>{
  if(aig55Report)aig47Download(JSON.stringify(aig55Report,null,2),
   'AIG-5.5-NATIVE-HUMANOID-REAL-SKIN-GLB-TECHNICAL-NOT-HEROINE.json','application/json');
+});
+
+
+$('aig56-build').addEventListener('click',async()=>{
+ if(!aig56RefreshEnabled())return;
+ const scaffold=aig55Scaffold,proof=aig54Report,epoch=++aig56Epoch;
+ aig56Busy=true;$('aig56-build').disabled=true;$('aig56-report').disabled=true;
+ $('aig56-status').textContent='5.6 正在從自研比例來源生成真肩髖挖孔接合／手掌輪廓，回讀 GLB 真骨架與網格結構。';
+ try{
+  const product=generateAIG56NativeHumanoid(scaffold);
+  const bytes=product.bytes,sha=await sha256Bytes(bytes);
+  const parsed=await parseRiggedGLB(bytes.buffer);
+  const qa=await auditAIG50FullBody(parsed,{sourceSHA256:sha});
+  if(epoch!==aig56Epoch||scaffold!==aig55Scaffold||proof!==aig54Report)
+   throw Error('AIG56_NATIVE_SOURCE_CHANGED_DURING_BUILD');
+  if(!product.indexedSurfaceClosureVerified||!product.fullyWatertightJunctionsVerified||
+   qa.outcome!=='STRUCTURAL_QA_PASS_ONLY')
+   throw Error('AIG56_REAL_INDEX_MANIFOLD_OR_ANIMATED_SKIN_QA_BLOCKED');
+  // This proves oriented topological closure, NOT physical mesh intersections.
+  const report={schema:AIG56_SCHEMA,sourceImageSHA256:scaffold.sourceSHA256,
+   native4ModelSHA256:proof.modelGLBSHA256,modelGLBSHA256:sha,
+   indexedOrientedClosedBody:true,bodyManifoldEdges:product.bodyManifoldEdges,
+   bodyTriangleCount:product.bodyTriangleCount,boneCount:product.boneCount,
+   animationClips:product.animationClipNames,
+   realGLTFLoaderAnd5_0SkinAudit:qa,
+   technicalGeometryFromOverallPhotoRatioOnly:true,
+   continuousCollisionFreeProven:false,facePhotoMatched:false,
+   geometricSurfaceSelfIntersectionVerified:false,
+   shoulderHipRealSkinPhysicalStretchVerified:false,
+   allHairAndGarmentCollisionsVerified:false,
+   realHeroineAppearanceApproved:false,nativeAndroidWindows60FPSVerified:false,
+   formalReleaseAllowed:false,releaseAllowed:false,
+   outcome:'CLOSED_INDEXED_HUMANOID_TECHNICAL_QA_ONLY'};
+  aig56Report=report;
+  aig47Download(bytes,'AIG-5.6-NATIVE-JOINT-WELDED-SKINNED-TECHNICAL.glb','model/gltf-binary');
+  $('aig56-report').disabled=false;
+  let preview='目前 3D 預覽不可用；已提供真 GLB 檔與結構證據下載。';
+  if(view){
+   try{
+    await load(bytes.buffer,false);
+    if(sourceSha!==sha)throw Error('AIG56_VIEWER_SOURCE_SHA_MISMATCH');
+    // Same source GLB accepted by existing 5.0/5.1/5.2 runtime validation.
+    aig50Revision++;aig50Report=qa;aig50Parsed=parsed;
+    aig51Reset('5.6 肩髖 index 閉合並非 5.1 動態穿模 PASS；請另外取樣檢查。');
+    aig52Invalidate('5.6 已載入真 GLB，可重新擷取 16 格並測試瀏覽器 FPS。');
+    aig52RefreshAvailable();
+    $('aig52-load').disabled=true;$('aig50-report').disabled=false;
+    $('aig50-status').textContent='5.6 真人工草模 17 骨／4 Clip '+qa.outcome+
+     '，肩髖閉合索引面已驗證；人臉、衣服及碰撞仍未核准。';
+    preview='已載入原 RGB 3D 播放工作區，可實際播放四段骨架動作。';
+   }catch(error){preview='真 GLB 已產生，預覽被隔離：'+error.message;}
+  }
+  $('aig56-status').textContent='5.6 真 GLB '+qa.outcome+'；骨架 '+product.boneCount+
+   '／Clip '+product.animationClipNames.length+'／索引網格邊 '+product.bodyManifoldEdges+
+   '／GLB SHA '+sha.slice(0,12)+'。'+preview+
+   ' 這是索引拓樸閉合，不是幾何零交疊、寫實女主角或原生 60 FPS。';
+ }catch(error){
+  aig56Report=null;$('aig56-report').disabled=true;
+  $('aig56-status').textContent='5.6 肩髖閉合／真動畫 QA BLOCKED：'+error.message+
+   '；保留 5.5、4.0 原 GLB 及劇情／音效／錄影資料。';
+ }finally{aig56Busy=false;aig56RefreshEnabled();}
+});
+$('aig56-report').addEventListener('click',()=>{
+ if(aig56Report)aig47Download(JSON.stringify(aig56Report,null,2),
+  'AIG-5.6-REAL-INDEX-MANIFOLD-SKIN-GLB-SHA-NOT-HEROINE.json','application/json');
 });
 
 let aig4Busy=false;
@@ -1386,6 +1468,7 @@ $('aig4-build').addEventListener('click',async()=>{
      bodyScaffold.meshGLBSHA256!==end.artifacts['model.glb'].sha256)
    throw Error('AIG55_NATIVE4_SCAFFOLD_SOURCE_OR_GLB_MISMATCH');
   aig55Scaffold=bodyScaffold;
+  aig56RefreshEnabled();
   const prefix='/api/aig4/jobs/'+job.id+'/files/';
   aig4Link('下載真 3D 草模 GLB',prefix+'model.glb','AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb');
   aig4Link('下載比例／信心／來源 SHA 報告',prefix+'scaffold.json','AIG-4.0-SCAFFOLD-NOT-APPROVED.json');
