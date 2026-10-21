@@ -38,6 +38,7 @@ import {AIG66_SCHEMA,createAIG66Portrait} from './aig-portrait-6-6.mjs';
 import {AIG67_SCHEMA,detectAIG67BrowserFace,decodeAIG67PCM16Wav,sampleAIG67AudioMouth,buildAIG67AudioBuffer} from './aig-portrait-audio-6-7.mjs';
 import {AIG68_SCHEMA,AIG68FramePacing,probeAIG68EncodedPlayback} from './aig-video-evidence-6-8.mjs';
 import {initAIGUnifiedShell} from './aig-unified-shell-6-9.mjs';
+import {bindFastModelLiveControls} from './aig-live-control-manifest.mjs';
 import {normalizeAIG693AutoInputs} from './aig-auto-inputs-6-9.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
@@ -3486,6 +3487,9 @@ if(window.AIG_OFFLINE){
 // This moves original DOM elements without cloning IDs or losing listeners.
 aigUnifiedShell=initAIGUnifiedShell(document);
 if(!aigUnifiedShell.ready)console.warn('AIG compact workspace unavailable:',aigUnifiedShell.reason);
+const aigLiveControlBindings=bindFastModelLiveControls(document);
+if(!aigLiveControlBindings.ready)
+ console.error('AIG live command ID binding unavailable:',aigLiveControlBindings.reason);
 $('aig695-switch-auto').addEventListener('click',()=>{
  // Explicit user choice, never a silent downgrade to fake 3D.
  $('aig65-mode').value='2D';
