@@ -260,8 +260,14 @@ object CadEditEngine {
         )
     }
 
+    // Consistent with StudioProjectRepository.finite(): a finite Float/Double
+    // can still be far outside any safe CAD/CAM execution envelope (e.g.
+    // Double.MAX_VALUE). Preflight *before* undo mutation or user callbacks.
+    private const val MAX_CAD_COORDINATE_MM=1_000_000.0
     private fun requireFiniteEntity(entity:Entity,label:String) {
-        require(bounds(entity).all{it.isFinite()}) { "$label result is non-finite" }
+        require(bounds(entity).all{it.isFinite() && abs(it)<=MAX_CAD_COORDINATE_MM}) {
+            "$label result exceeds finite +/-1000000 mm CAD safety envelope"
+        }
     }
 
     private fun nonZeroTranslation(dx:Double,dy:Double,label:String) {
