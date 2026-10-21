@@ -41,6 +41,7 @@ import {initAIGUnifiedShell} from './aig-unified-shell-6-9.mjs';
 import {normalizeAIG693AutoInputs} from './aig-auto-inputs-6-9.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
+let aigUnifiedShell=null,aigTechnicalModelUnapproved=false;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
 let storyPlan=null,storyOutputUrl=null,storyDialogue=null,storyParsed=null,storyRevision=0,cloudBusy=false,dialogueCloudConfigured=false,movieUI=null;
 let speechAIConfigured=false,ttsBusy=false,ttsGeneration=0,ttsFiles=[],ttsDownloadUrls=[];
@@ -226,11 +227,15 @@ function errorText(m){if(String(m).includes('MESHY_API_KEY'))return '重建服�
 async function api(path,options){const r=await fetch(path,options),d=await r.json();if(!r.ok)throw Error(d.error||'服務暫時無法回應');return d;}
 function updateButton(){/* AIG native full single-photo 3D is not ready; never call credits. */ $('generate').disabled=true;}
 function addLink(label,url,name){const a=document.createElement('a');a.className='download';a.textContent=label;a.href=url;if(name)a.download=name;$('downloads').append(a);}
-async function load(bytes,orbit){
+async function load(bytes,orbit,{technical=false}={}){
  if(!view)return;
  aig53Invalidate('3D 播放器模型已切換，5.3 須重新整合相同來源 SHA 的證據。');
  saveHeroineEvidence(evaluateHeroineJob({}));
  const clips=await view.load(bytes,{orbit});$('clip').replaceChildren();
+ // Real GLB parsing does not prove the original photo's face or skin quality.
+ // Technical rigs must not be displayed as a finished heroine by default.
+ aigTechnicalModelUnapproved=technical===true;
+ aigUnifiedShell?.setModelEvidence(technical?'technical':'imported');
  clearReviewEvidence();clearTimelineEvidence();clearStoryPlan('新人物已載入，請重新解析劇情。');
  importedActionHashes.clear();actionShaByClipIndex.clear();
  $('action-glb').disabled=false;
@@ -694,7 +699,7 @@ $('aig49-load').addEventListener('click',async()=>{
  try{
   const glb=exportAIG48GLB(rig);
   if(!glb.bytes?.length||report.posesChecked!==15)throw Error('AIG49_UNVERIFIED_TECHNICAL_GLB');
-  await load(glb.bytes.buffer,false);
+  await load(glb.bytes.buffer,false,{technical:true});
   if(aig49Epoch!==epoch||aig49Rig!==rig)throw Error('AIG49_SOURCE_CHANGED_DURING_LOAD');
   $('aig49-status').textContent='4.9 技術 GLB 已載入可旋轉動畫工作區；轉頭、低頭、甩馬尾可由劇本文字匹配實際 Clip。'+
    '可沿用台詞／音效／音樂／1080p 錄影操作，但錄製仍由使用者啟動。'+
@@ -1321,7 +1326,7 @@ $('aig55-build').addEventListener('click',async()=>{
   let previewStatus='技術 GLB 已產生但裝置 GPU 工作區不可用；可下載原始 GLB。';
   if(view){
    try{
-    await load(bytes.buffer,false);
+    await load(bytes.buffer,false,{technical:true});
     if(sha!==sourceSha)throw Error('AIG55_VIEWER_SHA_MISMATCH');
     // Generated technical humanoid can use the existing isolated QA and 5.2 measurements.
     aig50Revision++;aig50Report=qa;aig50Parsed=parsed;
@@ -1389,7 +1394,7 @@ $('aig56-build').addEventListener('click',async()=>{
   let preview='目前 3D 預覽不可用；已提供真 GLB 檔與結構證據下載。';
   if(view){
    try{
-    await load(bytes.buffer,false);
+    await load(bytes.buffer,false,{technical:true});
     if(sourceSha!==sha)throw Error('AIG56_VIEWER_SOURCE_SHA_MISMATCH');
     // Same source GLB accepted by existing 5.0/5.1/5.2 runtime validation.
     aig50Revision++;aig50Report=qa;aig50Parsed=parsed;
@@ -1470,7 +1475,7 @@ $('aig57-build').addEventListener('click',async()=>{
   let preview='可下載真 GLB，裝置 GPU 預覽暫時不可用。';
   if(view){
    try{
-    await load(bytes.buffer,false);
+    await load(bytes.buffer,false,{technical:true});
     if(sourceSha!==glbSHA)throw Error('AIG57_VIEWER_SOURCE_SHA_MISMATCH');
     aig50Revision++;aig50Report=qa;aig50Parsed=parsed;
     aig51Reset('5.7 自研制服、臉部與馬尾為真 3D 網格；5.1 穿模仍須逐段獨立抽樣。');
@@ -1579,7 +1584,7 @@ $('aig58-build').addEventListener('click',async()=>{
   let preview='模型 GLB 已下載，現有 GPU 工作區不可用；檢查報告仍可下載。';
   if(view){
    try{
-    await load(bytes.buffer,false);
+    await load(bytes.buffer,false,{technical:true});
     if(sourceSha!==sha)throw Error('AIG58_VIEWER_SHA_MISMATCH');
     aig50Revision++;aig50Report=qa;aig50Parsed=parsed;
     aig51Reset('5.8 須以這份 GLB 重新執行原 5.1 骨架／髮束 QA；原有報告不可直接沿用。');
@@ -1671,7 +1676,7 @@ $('aig59-build').addEventListener('click',async()=>{
   let viewerStatus='真 GLB 已建立但無瀏覽器 GPU 畫面；16 格視覺證據不可假造。';
   if(view){
    try{
-    await load(bytes.buffer,false);
+    await load(bytes.buffer,false,{technical:true});
     if(sourceSha!==sha)throw Error('AIG59_VIEWER_SHA_MISMATCH');
     aig50Revision++;aig50Report=qa;aig50Parsed=parsed;
     aig51Reset('5.9 對新 GLB 的 5.1 頭頸／髮束檢查須另外重跑，原有 SHA 無法沿用。');
@@ -1929,7 +1934,7 @@ $('aig60-build').addEventListener('click',async()=>{
   let preview='真 GLB 已產出；瀏覽器 3D GPU 目前無法驗證。';
   if(view){
    try{
-    await load(fitted.bytes.buffer,false);
+    await load(fitted.bytes.buffer,false,{technical:true});
     if(sourceSha!==fittedSHA)throw Error('AIG60_VIEWER_GLBSHA_CHANGED');
     aig50Revision++;aig50Report=boneAudit;aig50Parsed=parsed;
     aig51Reset('6.0 已更換校準後真 GLB，原 5.1 穿模／接縫報告失效。');
@@ -2451,7 +2456,7 @@ $('aig64-single-build').addEventListener('click',async()=>{
   let preview='真 GLB 可下載；尚未取得目前裝置 GPU 的 3D 預覽。';
   if(view){
    try{
-    await load(output.bytes.buffer,false);
+    await load(output.bytes.buffer,false,{technical:true});
     if(sourceSha!==actualSHA)throw Error('AIG64_VIEWER_WRONG_GLBSHA');
     aig50Revision++;aig50Report=qa;aig50Parsed=parsed;
     aig51Reset('6.4 自動補全模型已載入；接縫、馬尾穿模須重新對新 GLB 取樣。');
@@ -2516,6 +2521,7 @@ function aig65Refresh(){
  const busy=aig65Playing||aig65Recording||aig65Finalizing,
   sourceReady=aig65Current?.plan?.ready===true;
  $('aig65-build').disabled=busy;
+ aigUnifiedShell?.setCanvasReady(sourceReady&&aig65Current?.plan?.selectedMode!=='3D');
  $('aig65-play').disabled=busy||!sourceReady;
  $('aig65-record').disabled=busy||!sourceReady||
   aig65Current.plan.selectedMode==='3D';
@@ -2630,7 +2636,7 @@ $('aig65-build').addEventListener('click',async()=>{
    photoLayer=prepareAIG65Layers(document,bitmap);
   }
   aig693Progress(2,'已確認輸入與來源圖片');
-  const modelReady=!!(view?.model&&sourceSha);
+  const modelReady=!!(view?.model&&sourceSha)&&!aigTechnicalModelUnapproved;
   const plan=planAIG65AutoAnimation({
    storyText:story,hasImage:!!photo,imageSHA256:imageSha,
    hasGLB:modelReady,glbSHA256:modelReady?sourceSha:null,
@@ -3002,7 +3008,7 @@ $('aig4-build').addEventListener('click',async()=>{
     const bytes=await resp.arrayBuffer();
     if(await sha256Bytes(bytes)!==end.artifacts['model.glb'].sha256)
      throw Error('AIG4_GLB_SHA_MISMATCH');
-    await load(bytes,true);
+    await load(bytes,true,{technical:true});
     loadedFile='AIG_4_0_VOLUME_DRAFT_'+job.id;
     status.textContent='AIG 4.0 真體積網格草模已載入；四肢、頭頸、髮束、Rig、動畫均未驗收。';
    }catch(err){status4.textContent='GLB 預覽阻擋：'+err.message;}
@@ -3469,5 +3475,5 @@ if(window.AIG_OFFLINE){
 
 // Presentation-only mounting after original event/callback initialization.
 // This moves original DOM elements without cloning IDs or losing listeners.
-const aigUnifiedShell=initAIGUnifiedShell(document);
+aigUnifiedShell=initAIGUnifiedShell(document);
 if(!aigUnifiedShell.ready)console.warn('AIG compact workspace unavailable:',aigUnifiedShell.reason);
