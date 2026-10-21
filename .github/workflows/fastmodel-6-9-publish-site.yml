@@ -15,7 +15,7 @@ jobs:
   publish:
     name: Build and publish isolated FastModel page only
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
     steps:
       - name: Checkout exact FastModel source
         uses: actions/checkout@v4
@@ -33,6 +33,22 @@ jobs:
           npm run build
           node --test tests/aig-video-evidence-6-8.test.mjs tests/aig-portrait-audio-6-7.test.mjs tests/aig-auto-animation-6-5.test.mjs
           test -s dist/app.js && test -s dist/index.html
+      - name: Verify actual mobile and desktop Chromium compact UI
+        working-directory: feature/formal-web/school-3d/fastmodel/single-photo
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig69-http.log 2>&1 &
+          sleep 2
+          node tests/aig-compact-ui-real-browser.mjs
+      - name: Archive actual Chromium responsive UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIG-FastModel-6-9-Compact-UI-REAL-BROWSER-NOT-HEROINE
+          path: feature/formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-compact-ui/
+          retention-days: 14
+          if-no-files-found: warn
       - name: Checkout original production website (not changing any other branch)
         uses: actions/checkout@v4
         with:
