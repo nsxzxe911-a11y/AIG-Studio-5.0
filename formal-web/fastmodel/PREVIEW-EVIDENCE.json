@@ -1,7 +1,7 @@
 {
   "product": "AIG FastModel",
-  "version": "6.9.3",
-  "sourceSha": "4a3411e2c0095793129e86cb572007b66372b908",
+  "version": "6.9.4",
+  "sourceSha": "c7951c33abe7418bc7b303c4d4e44f8af7b0ddad",
   "sourceBranch": "feature/aig-school-3d-hero-v1-20261020",
   "distribution": "AIG Original Render Website Preview",
   "exactSourceGateStatus": "separate",
