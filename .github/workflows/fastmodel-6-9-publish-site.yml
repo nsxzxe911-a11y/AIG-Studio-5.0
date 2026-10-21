@@ -1,4 +1,4 @@
-name: Publish FastModel 6.9.2 NO-WAV REAL VIDEO to ORIGINAL AIG website
+name: Publish FastModel 6.9.3 ANDROID AUTO FIX to ORIGINAL AIG website
 on:
   push:
     branches:
@@ -31,7 +31,7 @@ jobs:
         run: |
           npm ci
           npm run build
-          node --test tests/aig-unified-shell-6-9.test.mjs tests/aig-video-evidence-6-8.test.mjs tests/aig-portrait-audio-6-7.test.mjs tests/aig-auto-animation-6-5.test.mjs
+          node --test tests/aig-auto-inputs-6-9.test.mjs tests/aig-unified-shell-6-9.test.mjs tests/aig-video-evidence-6-8.test.mjs tests/aig-portrait-audio-6-7.test.mjs tests/aig-auto-animation-6-5.test.mjs
           test -s dist/app.js && test -s dist/index.html
       - name: Verify actual mobile and desktop Chromium compact UI
         working-directory: feature/formal-web/school-3d/fastmodel/single-photo
@@ -64,7 +64,7 @@ jobs:
           const fs=require('fs'),path=require('path');
           const src='feature/formal-web/school-3d/fastmodel/single-photo/dist';
           const production='production/formal-web';
-          const version='6.9.2';
+          const version='6.9.3';
           let html=fs.readFileSync(path.join(src,'index.html'),'utf8');
           if(!html.includes('AIG FastModel 6.9')||!html.includes('id="aig65-record"')||
              !html.includes('id="aig68-review"'))throw Error('FASTMOTION_69_BUILD_NOT_ACTUAL_UI');
@@ -96,17 +96,19 @@ jobs:
           const titles=['一張照片，立即建立 2.5D 動畫',
             'FastModel 6.9｜照片、劇情與動畫影片',
             'FastModel 6.9.1｜單一動畫工作區',
-            'FastModel 6.9.2｜免聲音檔動畫工作區'];
+            'FastModel 6.9.2｜免聲音檔動畫工作區',
+            'FastModel 6.9.3｜手機創作工作區'];
           const previous='已接入 6.9 RGB 預覽工作區：選擇照片或輸入劇情，使用 AUTO／2D／2.5D／3D 動畫、WAV 配音與 1080p 錄影。來源功能和正式作品分開驗證；正式女主角影片及手機／Windows 效能尚未核准。';
           const old='直接在網站選圖、預覽左右擺動並下載動畫 GLB；照片留在此裝置。支援載入已有的 3D GLB 與原有動畫。完整 3D 重建與自動骨架的雲端服務尚未連接。';
           const newer='新版 FastModel 6.9.1 已整合為單一動畫工作區，手機固定預覽與四個功能頁籤：創作、預覽／輸出、3D 模型、進階。舊核心與服裝保留；正式女主角影片及實機效能仍待驗收。';
           const audioNoFile='FastModel 6.9.2 無需聲音檔：上傳照片或直接輸入劇情即可生成、播放及錄製動畫。可使用本機裝置朗讀與原創音效／配樂；TTS 系統朗讀不會自動錄入影片，正式女主角和實機效能尚待驗收。';
+          const mobileFix='FastModel 6.9.3 已修正手機創作頁：照片、劇情、模式、影片秒數固定優先，空白秒數自動設為 8，無效模式設為 AUTO，顯示真正的生成步驟。WAV 完全選填。正式女主角影片與實機效能仍待驗收。';
           const heading=card.match(/<h2>([^<]+)<\/h2>/)?.[1];
           if(!titles.includes(heading)||!card.includes('href="./fastmodel/"')||
-             ![old,previous,newer,audioNoFile].some(d=>card.includes(d)))
+             ![old,previous,newer,audioNoFile,mobileFix].some(d=>card.includes(d)))
             throw Error('AIG_ORIGINAL_HOME_FASTMODEL_ENTRY_CHANGED_BLOCK');
-          card=card.replace('<h2>'+heading+'</h2>','<h2>'+titles[3]+'</h2>');
-          card=card.replace(/<p>[^<]*<\/p>/,'<p>'+audioNoFile+'</p>');
+          card=card.replace('<h2>'+heading+'</h2>','<h2>'+titles[4]+'</h2>');
+          card=card.replace(/<p>[^<]*<\/p>/,'<p>'+mobileFix+'</p>');
           site=site.slice(0,regionStart)+card+site.slice(regionEnd);
           fs.writeFileSync(homepage,site);
           console.log('Only two FastModel entry directories and the one existing homepage FastModel description changed.');
@@ -125,7 +127,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "site(fastmodel): 6.9.2 optional WAV photo and story animation"
+          git commit -m "site(fastmodel): 6.9.3 Android mode and duration fix and real steps"
           git push origin HEAD:web/aig-dual-formal-runtime-20261016
       - name: Explicit publication status
         run: echo "Published preview only to original AIG website branch. Render auto deploy must still be checked. No heroine film or device release Gate claimed."
