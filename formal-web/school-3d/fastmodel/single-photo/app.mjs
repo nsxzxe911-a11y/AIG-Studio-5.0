@@ -30,6 +30,7 @@ import {AIG59_SCHEMA,runAIG59BoundedAutoFit} from './aig-auto-fit-5-9.mjs';
 import {AIG60_SCHEMA,AIG60_MARKS,calibrateAIG60FaceMarks,fitAIG60MeasuredFaceGLB,auditAIG60DenseAnimation} from './aig-face-alignment-6-0.mjs';
 import {AIG61_SCHEMA,proposeAIG61LocalLandmarks,acceptAIG61ReviewedProposal} from './aig-face-scan-assist-6-1.mjs';
 import {AIG62_SCHEMA,AIG62_REFERENCES,verifyAIG62ReferenceFile} from './aig-school-visual-6-2.mjs';
+import {AIG63_SCHEMA,compareAIG63ActualImages,auditAIG63SchoolModelActualGLTF,bindAIG63Evidence} from './aig-visual-compare-6-3.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -2100,6 +2101,7 @@ $('aig61-accept').addEventListener('click',async()=>{
 
 let aig62Evidence=null,aig62ObjectURL=null,aig62Revision=0;
 function aig62Reset(message='6.2 請重新核對入庫校園制服視覺圖資。'){
+ aig63Reset('6.2 圖片或 SHA 已改變，6.3 畫面與校園參考比對失效。');
  ++aig62Revision;aig62Evidence=null;
  $('aig62-report').disabled=true;
  if(aig62ObjectURL){URL.revokeObjectURL(aig62ObjectURL);aig62ObjectURL=null;}
@@ -2115,6 +2117,7 @@ $('aig62-verify').addEventListener('click',async()=>{
  }
  const rev=++aig62Revision;
  $('aig62-verify').disabled=true;$('aig62-report').disabled=true;
+ aig63Reset('重新核對校園圖資，原 6.3 參考裁切與真畫面不能沿用。');
  let decoded=null;
  try{
   const raw=await file.arrayBuffer(),sha=await sha256Bytes(raw);
@@ -2133,6 +2136,7 @@ $('aig62-verify').addEventListener('click',async()=>{
   aig62ObjectURL=URL.createObjectURL(file);
   const image=$('aig62-preview');image.src=aig62ObjectURL;image.hidden=false;
   $('aig62-report').disabled=false;
+  aig63Refresh();
   $('aig62-status').textContent='校園女主角 2D 視覺參考已核對：'+
    sha.slice(0,12)+'，'+decoded.width+'×'+decoded.height+
    '。這不是 3D GLB；其他動畫服裝（含泳裝）均保留。';
@@ -2151,6 +2155,194 @@ $('aig62-report').addEventListener('click',()=>{
   currentSwimwearAssetsDeleted:false,
   releaseAllowed:false
  },null,2),'AIG-6.2-SCHOOL-VISUAL-REFERENCE-NOT-GLB.json','application/json');
+});
+
+
+let aig63Revision=0,aig63Busy=false,aig63Bitmap=null,aig63ReferencePixels=null,
+ aig63ROI=null,aig63Drag=null,aig63Report=null,aig63PNG=null,aig63ModelSHA=null;
+const aig63Canvas=$('aig63-reference-canvas'),aig63Compare=$('aig63-compare-canvas');
+function aig63Reset(message='6.3 參考圖／GLB 已改變，請重新建立真渲染比較。'){
+ ++aig63Revision;aig63Busy=false;aig63ROI=null;aig63Drag=null;
+ aig63Report=null;aig63PNG=null;aig63ModelSHA=null;
+ if(aig63Bitmap){aig63Bitmap.close?.();aig63Bitmap=null;}
+ aig63ReferencePixels=null;
+ aig63Canvas.hidden=true;aig63Compare.hidden=true;
+ for(const id of ['aig63-capture','aig63-image','aig63-report'])$(id).disabled=true;
+ $('aig63-status').textContent=message;
+ aig63Refresh();
+}
+function aig63Refresh(){
+ const valid=!!aig62Evidence&&!!aig62ObjectURL&&!aig63Busy;
+ $('aig63-prepare').disabled=!valid;
+ $('aig63-capture').disabled=!valid||!aig63ROI||!view?.model||
+  !view.animation?.clips?.length||view.reviewBusy||view.movieMode;
+ $('aig63-image').disabled=!aig63PNG||aig63ModelSHA!==sourceSha;
+ $('aig63-report').disabled=!aig63Report||aig63ModelSHA!==sourceSha;
+ return valid;
+}
+function aig63PaintROI(){
+ if(!aig63Bitmap)return;
+ const ctx=aig63Canvas.getContext('2d');
+ ctx.clearRect(0,0,aig63Canvas.width,aig63Canvas.height);
+ ctx.drawImage(aig63Bitmap,0,0);
+ const box=aig63Drag?.box||aig63ROI;
+ if(box){
+  ctx.strokeStyle='#7cf9f3';ctx.lineWidth=Math.max(3,aig63Canvas.width*.0035);
+  ctx.setLineDash([12,7]);ctx.strokeRect(box.x,box.y,box.width,box.height);
+  ctx.setLineDash([]);
+ }
+}
+function aig63PointerPoint(e){
+ const r=aig63Canvas.getBoundingClientRect();
+ if(r.width<1||r.height<1)return null;
+ const x=(e.clientX-r.left)/r.width*aig63Canvas.width;
+ const y=(e.clientY-r.top)/r.height*aig63Canvas.height;
+ if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||y<0||
+    x>=aig63Canvas.width||y>=aig63Canvas.height)return null;
+ return {x,y};
+}
+aig63Canvas.addEventListener('pointerdown',e=>{
+ if(aig63Busy||!aig63Bitmap)return;
+ const p=aig63PointerPoint(e);if(!p)return;
+ aig63Drag={start:p,box:{x:p.x,y:p.y,width:0,height:0}};
+ aig63ROI=null;aig63Report=null;aig63PNG=null;
+ aig63Canvas.setPointerCapture?.(e.pointerId);
+ aig63Refresh();e.preventDefault();
+});
+aig63Canvas.addEventListener('pointermove',e=>{
+ if(!aig63Drag)return;
+ const point=aig63PointerPoint(e);if(!point)return;
+ const start=aig63Drag.start;
+ aig63Drag.box={x:Math.min(start.x,point.x),y:Math.min(start.y,point.y),
+  width:Math.abs(start.x-point.x),height:Math.abs(start.y-point.y)};
+ aig63PaintROI();e.preventDefault();
+});
+aig63Canvas.addEventListener('pointerup',e=>{
+ if(!aig63Drag)return;
+ const box=aig63Drag.box;aig63Drag=null;
+ if(box.width>=24&&box.height>=24){
+  aig63ROI={x:Math.floor(box.x),y:Math.floor(box.y),
+   width:Math.floor(box.width),height:Math.floor(box.height)};
+  $('aig63-status').textContent='已框選真 2D 圖資：'+
+   aig63ROI.width+'×'+aig63ROI.height+
+   ' 原始像素；請確保是完整人物而非同張圖中多個人／多個模型。';
+ }else $('aig63-status').textContent='框選區域太小；請拖曳至少 24×24 像素的人物範圍。';
+ aig63PaintROI();aig63Refresh();e.preventDefault();
+});
+aig63Canvas.addEventListener('pointercancel',()=>{
+ aig63Drag=null;aig63PaintROI();aig63Refresh();
+});
+$('aig63-prepare').addEventListener('click',async()=>{
+ if(!aig63Refresh())return;
+ const revision=++aig63Revision,id=aig62Evidence.referenceId,
+  visual=aig62Evidence,file=$('aig62-file').files?.[0];
+ if(!file)return;
+ aig63Busy=true;$('aig63-prepare').disabled=true;
+ $('aig63-status').textContent='6.3 正核對校園圖資原始檔案並讀取原始像素，供人物局部框選。';
+ let bitmap=null;
+ try{
+  const digest=await sha256Bytes(await file.arrayBuffer());
+  if(digest!==visual.sourceImageSHA256)
+   throw Error('AIG63_REFERENCE_SOURCE_SHA_MISMATCH');
+  bitmap=await createImageBitmap(file);
+  if(bitmap.width!==visual.pixelDimensions[0]||
+   bitmap.height!==visual.pixelDimensions[1])
+   throw Error('AIG63_REFERENCE_SOURCE_DIMENSIONS_CHANGED');
+  if(revision!==aig63Revision||id!==aig62Evidence?.referenceId)
+   throw Error('AIG63_REFERENCE_CHANGED_WHILE_DECODING');
+  aig63Bitmap?.close?.();aig63Bitmap=bitmap;bitmap=null;
+  aig63ROI=null;aig63ReferencePixels=null;
+  aig63Canvas.width=aig63Bitmap.width;aig63Canvas.height=aig63Bitmap.height;
+  aig63Canvas.hidden=false;aig63PaintROI();
+  // Snapshot ONLY the original, unannotated pixels; future ROI borders
+  // must not influence the actual image-difference metrics.
+  aig63ReferencePixels=aig63Canvas.getContext('2d',{willReadFrequently:true})
+   .getImageData(0,0,aig63Canvas.width,aig63Canvas.height);
+  $('aig63-status').textContent='已核對 '+id+
+   ' 的來源 SHA；請在原圖拖曳框選一個完整人物，再比對真 GLB 正面。';
+ }catch(err){
+  $('aig63-status').textContent='6.3 2D 原圖核對 BLOCKED：'+err.message;
+  aig63Canvas.hidden=true;
+ }finally{bitmap?.close?.();aig63Busy=false;aig63Refresh();}
+});
+$('aig63-capture').addEventListener('click',async()=>{
+ if(!aig63Refresh()||!aig63ROI||!aig63ReferencePixels||!view?.model||
+    !/^[a-f0-9]{64}$/i.test(sourceSha||''))return;
+ const currentReference=aig62Evidence,roi={...aig63ROI},
+  currentModel=view.model,sha=sourceSha,revision=++aig63Revision;
+ aig63Busy=true;$('aig63-capture').disabled=true;
+ $('aig63-status').textContent='正在核對真正 SkinnedMesh、擷取實際 WebGL 正面姿態，計算兩張真影像的像素色彩與輪廓差異。';
+ let rendered=null;
+ try{
+  const geometry=auditAIG63SchoolModelActualGLTF({
+   scene:view.model,animations:view.animation?.clips||[]
+  },{modelGLBSHA256:sha});
+  if(!geometry.schoolOutfitMeshesPresent)
+   throw Error('AIG63_NOT_THE_ACTUAL_SKINNED_SCHOOL_CHARACTER_GLB');
+  const screenshot=await view.captureHeroineReview({fraction:0});
+  if(screenshot.image?.type!=='image/png'||screenshot.views?.length!==4||
+    screenshot.views[0]?.key!=='positive-z'||screenshot.audit?.incomplete)
+   throw Error('AIG63_NO_REAL_WEBGL_FRONT_QA');
+  const pngSHA=await sha256Bytes(await screenshot.image.arrayBuffer());
+  rendered=await createImageBitmap(screenshot.image);
+  if(rendered.width!==960||rendered.height!==720)
+   throw Error('AIG63_UNEXPECTED_RENDER_TILE_LAYOUT');
+  const raster=document.createElement('canvas');
+  raster.width=rendered.width;raster.height=rendered.height;
+  const ctx=raster.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(rendered,0,0);
+  const renderedROI={x:14,y:36,width:452,height:307};
+  const differences=compareAIG63ActualImages({
+   referenceImage:aig63ReferencePixels,
+   renderedImage:ctx.getImageData(0,0,raster.width,raster.height),
+   referenceROI:roi,renderedROI,
+   referenceSHA256:currentReference.sourceImageSHA256,
+   modelGLBSHA256:sha,capturedPngSHA256:pngSHA
+  });
+  if(revision!==aig63Revision||sha!==sourceSha||view.model!==currentModel||
+   currentReference!==aig62Evidence)
+   throw Error('AIG63_IMAGE_OR_GLB_CHANGED_WHILE_CAPTURING');
+  const paired=bindAIG63Evidence({visual:differences,geometry,
+    verifiedReference:currentReference});
+  const canvas=aig63Compare;
+  canvas.width=960;canvas.height=550;
+  const c=canvas.getContext('2d');
+  c.fillStyle='#020407';c.fillRect(0,0,canvas.width,canvas.height);
+  c.drawImage(aig63Bitmap,roi.x,roi.y,roi.width,roi.height,12,45,462,480);
+  c.drawImage(rendered,renderedROI.x,renderedROI.y,renderedROI.width,
+   renderedROI.height,486,45,462,480);
+  c.fillStyle='#e5f2fc';c.font='bold 20px sans-serif';
+  c.fillText('6.2 核對 2D 圖片人物局部',12,30);
+  c.fillText('6.3 真 GLB WebGL 正面渲染',486,30);
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?
+   resolve(b):reject(Error('AIG63_COMPARE_PNG_EXPORT_FAILED')),'image/png'));
+  if(revision!==aig63Revision||sha!==sourceSha||view.model!==currentModel)
+   throw Error('AIG63_SOURCE_CHANGED_AFTER_IMAGE_EXPORT');
+  aig63Report={...paired,actualCompositePNG_SHA256:await sha256Bytes(await blob.arrayBuffer()),
+   actualReferenceRegionManuallySelected:true,realWebGLClipName:screenshot.clipName,
+   scenePoseAudit:screenshot.audit,realViewKeys:screenshot.views.map(x=>x.key),
+   styleSheet2DStillNotAGLB:true,appearanceApprovedByHuman:false,releaseAllowed:false};
+  aig63PNG=blob;aig63ModelSHA=sha;canvas.hidden=false;
+  $('aig63-status').textContent='6.3 已從真來源渲染比較：參考圖／GLB SHA 各自保存。平均 RGB 差 '+differences.directMeanAbsoluteRGBDifference+
+   '、輪廓梯度差 '+differences.edgeDensityDifference+
+   '。此數字受背景／光照／姿勢影響，不是臉型相似率；尚待人工逐項檢查。';
+ }catch(err){
+  aig63Report=null;aig63PNG=null;aig63ModelSHA=null;
+  aig63Compare.hidden=true;
+  $('aig63-status').textContent='6.3 真校園 GLB 外觀比對 BLOCKED：'+err.message+
+   '。原始動畫／服裝／照片不受影響。';
+ }finally{rendered?.close?.();aig63Busy=false;aig63Refresh();}
+});
+$('aig63-image').addEventListener('click',()=>{
+ if(aig63PNG&&aig63ModelSHA===sourceSha)
+  aig47Download(aig63PNG,'AIG-6.3-VERIFIED-2D-VS-ACTUAL-SCHOOL-GLB.png','image/png');
+});
+$('aig63-report').addEventListener('click',()=>{
+ if(aig63Report&&aig63ModelSHA===sourceSha&&aig62Evidence?.sourceImageSHA256===
+  aig63Report.verifiedReferenceSHA256)
+  aig47Download(JSON.stringify(aig63Report,null,2),
+   'AIG-6.3-SCHOOL-2D-REAL-3D-PIXEL-SHA-QA-NOT-APPROVED.json','application/json');
+ else $('aig63-status').textContent='6.3 參考圖／GLB SHA 已改變，不能沿用舊外觀報告。';
 });
 
 let aig4Busy=false;
