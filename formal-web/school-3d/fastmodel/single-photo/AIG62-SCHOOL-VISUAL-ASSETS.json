@@ -1,0 +1,40 @@
+{
+  "schema": "AIG_FASTMODEL_6_2_SCHOOL_VISUAL_REFERENCES",
+  "date": "2026-10-21",
+  "currentCharacterVisualReference": "SCHOOL_UNIFORM",
+  "otherCostumesAndSwimwearStillAvailable": true,
+  "userCancelledSwimwearDeletion": true,
+  "imagesInGitHubRepository": false,
+  "libraryFolder": "/AIG FastModel/女主角正式圖資/2026-10-21",
+  "assets": [
+    {
+      "id": "SCHOOL_CAMPUS_COLLAGE_20261021",
+      "filename": "00_原始校園情境參考.jpg",
+      "sha256": "ed5ed4ad139605344d67bf0a865e0a82f486fed63665cf503820811569c0b31f",
+      "width": 1536,
+      "height": 864
+    },
+    {
+      "id": "SCHOOL_3D_STYLE_SHEET_V1_20261021",
+      "filename": "01_校園制服3D展示板_v1.png",
+      "sha256": "5604014bbcd476078b2f738e34155d9273df61085e1bf4e2deb8719a73d47b22",
+      "width": 1448,
+      "height": 1086
+    },
+    {
+      "id": "SCHOOL_3D_STYLE_SHEET_APPROVED_20261021",
+      "filename": "02_校園制服3D展示板_最新版.png",
+      "sha256": "1deed212a2adcdc821e4291c6021fd1db490644da9a9c9b497f8243a7da296c1",
+      "width": 1448,
+      "height": 1086
+    }
+  ],
+  "claimsNotProven": [
+    "actual3DGLB",
+    "photoLikeness",
+    "fullbodyRigVisualMatch",
+    "native60FPS",
+    "productionSiteDeployed"
+  ],
+  "formalReleaseAllowed": false
+}
