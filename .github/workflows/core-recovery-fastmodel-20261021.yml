@@ -26,6 +26,17 @@ jobs:
           python -m pip install -r requirements.txt
           npm test
           npm run build
+      - name: Python source/photo reconstruction preflight and negative tests
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+        run: |
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          python3 -m unittest discover -s ../tests -p 'test_*.py' -v
+      - name: Native C++ cache, incremental rebuild and resource tests
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+        run: |
+          cmake -S ../core -B /tmp/aig-fastmodel-core-recovery -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/aig-fastmodel-core-recovery --parallel 2
+          ctest --test-dir /tmp/aig-fastmodel-core-recovery --output-on-failure
       - name: Chromium native video decode engine
         working-directory: formal-web/school-3d/fastmodel/single-photo
         run: |
