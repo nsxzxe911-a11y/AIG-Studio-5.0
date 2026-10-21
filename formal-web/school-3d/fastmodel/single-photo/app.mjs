@@ -229,6 +229,10 @@ async function load(bytes,orbit){
  $('action-import-status').textContent='已載入人物 GLB。可選擇另一個骨架相符、含真實動畫的外部 GLB（不會將來源網格重疊渲染）。';
  sourceSha=null;
  try{sourceSha=await sha256Bytes(bytes);}catch(e){$('review-status').textContent='GLB 已載入，但 SHA-256 無法取得：'+e.message+'。證據匯出 BLOCKED。';}
+ // A new actual GLB invalidates 6.3 render evidence, but preserves the
+ // independently verified 2D user crop for an easy second model comparison.
+ ++aig63Revision;aig63Report=null;aig63PNG=null;aig63ModelSHA=null;
+ aig63Compare.hidden=true;aig63Refresh();
  $('review-capture').disabled=!sourceSha;
  $('timeline-capture').disabled=!sourceSha||!clips.length;
  $('timeline-status').textContent=clips.length
