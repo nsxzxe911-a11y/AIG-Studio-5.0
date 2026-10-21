@@ -27,6 +27,7 @@ import {AIG56_SCHEMA,generateAIG56NativeHumanoid} from './aig-native-body-5-6.mj
 import {AIG57_SCHEMA,generateAIG57SchoolHeroineTechnical} from './aig-native-appearance-5-7.mjs';
 import {AIG58_SCHEMA,generateAIG58FittedTechnical,auditAIG58RealPoseContacts} from './aig-appearance-fit-5-8.mjs';
 import {AIG59_SCHEMA,runAIG59BoundedAutoFit} from './aig-auto-fit-5-9.mjs';
+import {AIG60_SCHEMA,AIG60_MARKS,calibrateAIG60FaceMarks,fitAIG60MeasuredFaceGLB,auditAIG60DenseAnimation} from './aig-face-alignment-6-0.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -1223,7 +1224,7 @@ $('aig54-check').addEventListener('click',async()=>{
   if(jobId!==aig54NativeJobId||imageSHA!==aig54ExpectedSourceSHA)
    throw Error('AIG54_SOURCE_CHANGED_DURING_READ');
   aig54Report=report;$('aig54-download').disabled=false;
-  aig56RefreshEnabled();aig57RefreshEnabled();aig58RefreshEnabled();aig59RefreshEnabled();
+  aig56RefreshEnabled();aig57RefreshEnabled();aig58RefreshEnabled();aig59RefreshEnabled();aig60RefreshEnabled();
   $('aig55-build').disabled=!aig55Scaffold||aig55Scaffold.sourceSHA256!==imageSHA;
   $('aig55-status').textContent=$('aig55-build').disabled?'5.5 缺少已核對的自研人體比例來源。':
    '5.4 真來源完整性通過；可用相同原圖 SHA 產生帶骨架、蒙皮與真動畫的自研技術 GLB。';
@@ -1598,6 +1599,7 @@ $('aig58-report').addEventListener('click',()=>{
 
 let aig59Report=null,aig59Busy=false,aig59Epoch=0;
 function aig59Invalidate(message='5.9 原始 GLB 或來源 SHA 改變，自動修整證據失效。'){
+ aig60Invalidate('5.9 GLB／來源 SHA 已變更，6.0 照片臉部標定與舊報告失效。');
  ++aig59Epoch;aig59Report=null;
  $('aig59-build').disabled=true;$('aig59-capture').disabled=true;
  $('aig59-report').disabled=true;
@@ -1617,6 +1619,7 @@ $('aig59-build').addEventListener('click',async()=>{
   $('aig59-status').textContent='目前正在錄製，不能混合自動修整與影片時間軸。';return;
  }
  const scaffold=aig55Scaffold,upstream=aig54Report,revision=++aig59Epoch;
+ aig60Invalidate('開始新一輪 5.9 自動避讓，6.0 須重新核對同一 GLB 與照片。');
  aig59Busy=true;$('aig59-build').disabled=true;
  $('aig59-report').disabled=true;$('aig59-capture').disabled=true;
  $('aig59-status').textContent='5.9 開始用實際 GLB 真三角面測量多組裙襬／馬尾候選；不能使用假的幀數或估算接觸量。';
@@ -1668,6 +1671,7 @@ $('aig59-build').addEventListener('click',async()=>{
   if(revision!==aig59Epoch||scaffold!==aig55Scaffold)
    throw Error('AIG59_SOURCE_CHANGED_AFTER_VIEWER_LOAD');
   aig59Report=report;
+  aig60RefreshEnabled();
   $('aig59-report').disabled=false;
   $('aig59-capture').disabled=!view||sourceSha!==sha||
    !view.animation?.clips?.length;
@@ -1724,6 +1728,237 @@ $('aig59-report').addEventListener('click',()=>{
    'AIG-5.9-REAL-POSE-AUTO-FIT-25-POSE-GLB-SHA-NOT-APPROVED.json',
    'application/json');
  else $('aig59-status').textContent='工作區 GLB SHA 已改變，5.9 上次風險報告不可再沿用。';
+});
+
+
+let aig60Report=null,aig60Revision=0,aig60Busy=false,aig60ImageFile=null,
+ aig60SourceSha=null,aig60Dimensions=null,aig60Bitmap=null,aig60Marks={};
+const aig60Photo=$('aig60-marks');
+function aig60Invalidate(message='6.0 原始照片或 5.9 GLB 已更改，臉部校準驗收失效。'){
+ ++aig60Revision;aig60Report=null;aig60ImageFile=null;
+ aig60SourceSha=null;aig60Dimensions=null;aig60Marks={};
+ if(aig60Bitmap){aig60Bitmap.close?.();aig60Bitmap=null;}
+ aig60Photo.style.display='none';
+ for(const id of ['aig60-build','aig60-report','aig60-capture','aig60-reset'])
+  $(id).disabled=true;
+ $('aig60-status').textContent=message;
+}
+function aig60RefreshEnabled(){
+ const valid=!!aig54Report&&!!aig59Report&&!aig60Busy&&!aig59Busy&&
+  aig59Report.sourceImageSHA256===aig54Report.sourceImageSHA256&&
+  aig55Scaffold?.sourceSHA256===aig54Report.sourceImageSHA256;
+ $('aig60-photo-load').disabled=!valid;
+ $('aig60-build').disabled=!valid||!aig60Bitmap||
+  Object.keys(aig60Marks).length!==AIG60_MARKS.length;
+ return valid;
+}
+function aig60DrawSourceMarks(){
+ if(!aig60Bitmap||!aig60Dimensions)return;
+ const canvas=aig60Photo,ctx=canvas.getContext('2d');
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ ctx.drawImage(aig60Bitmap,0,0,canvas.width,canvas.height);
+ const r=Math.max(5,Math.min(canvas.width,canvas.height)*.008);
+ ctx.lineWidth=r*.55;ctx.font='bold '+Math.round(r*2.8)+'px sans-serif';
+ for(const [i,label] of AIG60_MARKS.entries()){
+  const p=aig60Marks[label];if(!p)continue;
+  ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);
+  ctx.strokeStyle='#05070d';ctx.stroke();
+  ctx.fillStyle='#6ff5f9';ctx.fill();
+  ctx.fillStyle='#05070d';ctx.fillText((i+1)+':'+label,p.x+r+3,p.y-r-4);
+ }
+}
+function aig60MarkStatus(){
+ const count=Object.keys(aig60Marks).length;
+ const next=AIG60_MARKS[count];
+ if(next){
+  $('aig60-status').textContent='照片已在本機核對同一 SHA。請點照片的「'+next+
+   '」位置（'+(count+1)+'/6）。標定座標取自原始像素，不是 AI 猜測。';
+ }else{
+  try{
+   const measured=calibrateAIG60FaceMarks({
+    imageWidth:aig60Dimensions.width,imageHeight:aig60Dimensions.height,
+    sourceImageSHA256:aig60SourceSha,marks:aig60Marks
+   });
+   $('aig60-status').textContent='六點真照片比例已核對，眼距／臉長 '+
+    measured.realPixelMeasured2DProportions.eyeSpanByFaceHeight.toFixed(3)+
+    '。可生成 3D 臉部校準 GLB；未測到的背面深度仍為推估。';
+  }catch(e){
+   $('aig60-status').textContent='六點順序或比例不合法：'+e.message+
+    '。請按「重設六點標記」，重新從額頭點起，不會造假或自動修正量測。';
+  }
+ }
+ aig60RefreshEnabled();
+}
+$('aig60-photo').addEventListener('change',()=>{
+ aig60Invalidate('來源照片選取已變更，舊六點／GLB 報告隔離。請重新核對同源 SHA。');
+ aig60RefreshEnabled();
+});
+$('aig60-photo-load').addEventListener('click',async()=>{
+ if(!aig60RefreshEnabled())return;
+ const file=$('aig60-photo').files?.[0];
+ if(!file||file.size<100||file.size>20*1024*1024){
+  $('aig60-status').textContent='請選擇原照片 JPEG/PNG，檔案大小不得超過 20 MB。';return;
+ }
+ const revision=++aig60Revision;
+ aig60Busy=true;$('aig60-photo-load').disabled=true;
+ try{
+  const bytes=await file.arrayBuffer(),photoSha=await sha256Bytes(bytes);
+  if(photoSha!==aig54Report.sourceImageSHA256||
+   photoSha!==aig59Report.sourceImageSHA256)
+   throw Error('AIG60_ORIGINAL_PHOTO_SHA_DOES_NOT_MATCH_VERIFIED_SOURCE');
+  const image=await createImageBitmap(file);
+  if(image.width<128||image.height<128||image.width>12000||image.height>12000){
+   image.close?.();throw Error('AIG60_IMAGE_DIMENSIONS_INVALID');
+  }
+  if(revision!==aig60Revision||photoSha!==aig54Report?.sourceImageSHA256){
+   image.close?.();throw Error('AIG60_IMAGE_CHANGED_DURING_LOAD');
+  }
+  if(aig60Bitmap)aig60Bitmap.close?.();
+  aig60Bitmap=image;aig60ImageFile=file;aig60SourceSha=photoSha;
+  aig60Dimensions={width:image.width,height:image.height};
+  aig60Marks={};
+  aig60Photo.width=image.width;aig60Photo.height=image.height;
+  aig60Photo.style.display='block';
+  $('aig60-reset').disabled=false;
+  aig60DrawSourceMarks();aig60MarkStatus();
+ }catch(e){
+  aig60ImageFile=null;aig60Bitmap=null;
+  $('aig60-status').textContent='6.0 原照片校準 BLOCKED：'+e.message;
+ }finally{aig60Busy=false;aig60RefreshEnabled();}
+});
+aig60Photo.addEventListener('pointerdown',event=>{
+ if(aig60Busy||!aig60Bitmap||Object.keys(aig60Marks).length>=AIG60_MARKS.length)return;
+ const box=aig60Photo.getBoundingClientRect();
+ if(box.width<=0||box.height<=0)return;
+ const x=(event.clientX-box.left)/box.width*aig60Photo.width;
+ const y=(event.clientY-box.top)/box.height*aig60Photo.height;
+ if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||y<0||
+  x>=aig60Photo.width||y>=aig60Photo.height)return;
+ const key=AIG60_MARKS[Object.keys(aig60Marks).length];
+ aig60Marks[key]={x,y};
+ aig60DrawSourceMarks();aig60MarkStatus();
+ event.preventDefault();
+});
+$('aig60-reset').addEventListener('click',()=>{
+ if(!aig60Bitmap)return;
+ aig60Marks={};aig60Report=null;
+ $('aig60-capture').disabled=true;$('aig60-report').disabled=true;
+ aig60DrawSourceMarks();aig60MarkStatus();
+});
+$('aig60-build').addEventListener('click',async()=>{
+ if(!aig60RefreshEnabled()||!aig60ImageFile||
+  Object.keys(aig60Marks).length!==AIG60_MARKS.length)return;
+ const revision=++aig60Revision,source=aig54Report,base59=aig59Report;
+ const scaffold=aig55Scaffold,originalFile=aig60ImageFile;
+ aig60Busy=true;$('aig60-build').disabled=true;
+ $('aig60-report').disabled=true;$('aig60-capture').disabled=true;
+ $('aig60-status').textContent='從原照片六點像素量測更新真 3D 臉部網格、骨架回讀，再執行 45 個不同時間點的三角面取樣。';
+ try{
+  const originalBytes=await originalFile.arrayBuffer();
+  if(await sha256Bytes(originalBytes)!==source.sourceImageSHA256)
+   throw Error('AIG60_IMAGE_BYTES_CHANGED');
+  const measured=calibrateAIG60FaceMarks({
+   imageWidth:aig60Dimensions.width,imageHeight:aig60Dimensions.height,
+   sourceImageSHA256:source.sourceImageSHA256,marks:aig60Marks
+  });
+  const sourceModel=generateAIG58FittedTechnical(scaffold,base59.selectedProfile);
+  const sourceGLBSHA=await sha256Bytes(sourceModel.bytes);
+  if(sourceGLBSHA!==base59.selectedGLBSHA256)
+   throw Error('AIG60_PARENT59_GLBSHA_CHANGED');
+  const fitted=fitAIG60MeasuredFaceGLB({
+   baseGLB:sourceModel.bytes,baseGLBSHA256:sourceGLBSHA,
+   sourceImageSHA256:source.sourceImageSHA256,calibration:measured
+  });
+  const fittedSHA=await sha256Bytes(fitted.bytes);
+  const parsed=await parseRiggedGLB(fitted.bytes.buffer);
+  const boneAudit=await auditAIG50FullBody(parsed,{sourceSHA256:fittedSHA});
+  if(boneAudit.outcome!=='STRUCTURAL_QA_PASS_ONLY'||
+   boneAudit.clipsAvailable!==5||boneAudit.skinnedMeshCount!==9)
+   throw Error('AIG60_REAL_GLTF_SKIN_QA_BLOCKED');
+  const denser=await auditAIG60DenseAnimation(parsed,{
+   sourceSHA256:fittedSHA,maxClips:5
+  });
+  if(revision!==aig60Revision||source!==aig54Report||
+    base59!==aig59Report||scaffold!==aig55Scaffold)
+   throw Error('AIG60_SOURCE_OR_MARKS_CHANGED_DURING_BUILD');
+  const {bytes:discardBytes,...sourceEvidence}=fitted;
+  const report={schema:AIG60_SCHEMA,sourceImageSHA256:source.sourceImageSHA256,
+   parent59GLBSHA256:sourceGLBSHA,generatedGLBSHA256:fittedSHA,
+   generatedGLBBytes:fitted.bytes.byteLength,
+   measuredOriginalPhotoLandmarks:measured,
+   actualReal3DFaceMeshEvidence:sourceEvidence,
+   bodyBoneAndSkinQA:{outcome:boneAudit.outcome,
+    bones:boneAudit.boneCount,meshes:boneAudit.skinnedMeshCount,
+    clips:boneAudit.clipsAvailable},
+   dense45TimePoseTriangleSAT:denser,
+   visual16Frame:null,
+   originalPhotoImagePerspectiveAndDepthUnmeasured:true,
+   face2DProportionMeasuredNotPhotorealLikenessCertified:true,
+   nativeAndroidWindows60FPSMeasured:false,
+   formalHeroineAppearanceApproved:false,releaseAllowed:false};
+  aig47Download(fitted.bytes,
+   'AIG-6.0-MEASURED-PHOTO-FACE-17BONE-SKIN-TECHNICAL.glb','model/gltf-binary');
+  let preview='真 GLB 已產出；瀏覽器 3D GPU 目前無法驗證。';
+  if(view){
+   try{
+    await load(fitted.bytes.buffer,false);
+    if(sourceSha!==fittedSHA)throw Error('AIG60_VIEWER_GLBSHA_CHANGED');
+    aig50Revision++;aig50Report=boneAudit;aig50Parsed=parsed;
+    aig51Reset('6.0 已更換校準後真 GLB，原 5.1 穿模／接縫報告失效。');
+    aig52Invalidate('6.0 真 GLB 已載入，16 格視覺與 FPS 須重新實測。');
+    aig52RefreshAvailable();$('aig52-load').disabled=true;
+    $('aig50-report').disabled=false;
+    preview='已載入真 WebGL 3D 工作區，可播放原五段動畫並擷取真畫面。';
+   }catch(e){preview='真 GLB 已保存；播放器驗證隔離：'+e.message;}
+  }
+  if(revision!==aig60Revision||source!==aig54Report||
+   base59!==aig59Report)throw Error('AIG60_SOURCE_CHANGED_AFTER_PREVIEW');
+  aig60Report=report;$('aig60-report').disabled=false;
+  $('aig60-capture').disabled=!view||sourceSha!==fittedSHA;
+  $('aig60-status').textContent='6.0 '+boneAudit.outcome+
+   '；照片六點已對位真臉部三角面 '+fitted.geometryMovedRealSkinnedFaceVertices+
+   ' 頂點。動畫 45 時點的裙裝接觸 '+denser.skirtBodyContactsAcrossDistinctSamples+
+   '、馬尾接觸 '+denser.hairBodyContactsAcrossDistinctSamples+
+   '；結果 '+denser.outcome+'。'+preview+
+   ' 人物身份／未見深度／原生 60 FPS 仍未核准。';
+ }catch(e){
+  aig60Report=null;$('aig60-report').disabled=true;
+  $('aig60-status').textContent='6.0 真照片臉型／3D GLB QA BLOCKED：'+e.message+
+   '；原照片、5.9 GLB、台詞、聲音、影片資料不覆蓋。';
+ }finally{aig60Busy=false;aig60RefreshEnabled();}
+});
+$('aig60-capture').addEventListener('click',async()=>{
+ if(!aig60Report||!view||sourceSha!==aig60Report.generatedGLBSHA256)return;
+ const report=aig60Report,revision=aig60Revision,sha=sourceSha;
+ aig60Busy=true;$('aig60-capture').disabled=true;
+ try{
+  const images=await view.captureTimelineReview();
+  if(report!==aig60Report||revision!==aig60Revision||sha!==sourceSha||
+     images.frames!==16||images.image?.type!=='image/png')
+   throw Error('AIG60_REAL_GLTF_VISUAL_SOURCE_CHANGED');
+  report.visual16Frame={sourceGLBSHA256:sha,
+   animationClipName:images.clipName,
+   actualRenderedViews:16,
+   sampledPositions:[0,.25,.5,.75],actualWebGLCapture:true,
+   referencePhotoPhotorealFaceReviewCompleted:false,
+   nativeGpu60fpsVerified:false};
+  aig47Download(images.image,
+   'AIG-6.0-REAL-PHOTO-CALIBRATED-GLB-16-VIEWS-NOT-APPROVED.png','image/png');
+  $('aig60-status').textContent='6.0 校準 GLB 真 16 格 PNG 已擷取；照片比對仍須人工外觀審查，這不代表完整動畫零穿模。';
+ }catch(e){
+  if(report===aig60Report)report.visual16Frame=null;
+  $('aig60-status').textContent='6.0 真 WebGL 影像驗證 BLOCKED：'+e.message;
+ }finally{
+  aig60Busy=false;
+  $('aig60-capture').disabled=!aig60Report||!view||
+   sourceSha!==aig60Report.generatedGLBSHA256;
+ }
+});
+$('aig60-report').addEventListener('click',()=>{
+ if(aig60Report&&(!view||sourceSha===aig60Report.generatedGLBSHA256))
+  aig47Download(JSON.stringify(aig60Report,null,2),
+   'AIG-6.0-REAL-PHOTO-PIXEL-FACE-POSE-GLB-SHA-NOT-APPROVED.json','application/json');
+ else $('aig60-status').textContent='6.0 真播放器 GLB SHA 不一致，舊來源校準報告已隔離。';
 });
 
 let aig4Busy=false;
@@ -1797,7 +2032,7 @@ $('aig4-build').addEventListener('click',async()=>{
      bodyScaffold.meshGLBSHA256!==end.artifacts['model.glb'].sha256)
    throw Error('AIG55_NATIVE4_SCAFFOLD_SOURCE_OR_GLB_MISMATCH');
   aig55Scaffold=bodyScaffold;
-  aig56RefreshEnabled();aig57RefreshEnabled();aig58RefreshEnabled();aig59RefreshEnabled();
+  aig56RefreshEnabled();aig57RefreshEnabled();aig58RefreshEnabled();aig59RefreshEnabled();aig60RefreshEnabled();
   const prefix='/api/aig4/jobs/'+job.id+'/files/';
   aig4Link('下載真 3D 草模 GLB',prefix+'model.glb','AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb');
   aig4Link('下載比例／信心／來源 SHA 報告',prefix+'scaffold.json','AIG-4.0-SCAFFOLD-NOT-APPROVED.json');
