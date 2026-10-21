@@ -94,5 +94,6 @@ test('4.9 RGB controls and technical GLB direct player handoff retain prior vide
  assert.ok(app.includes('exportAIG47GLB(aig47Draft)'));
  assert.ok(app.includes('exportAIG48GLB(aig48Draft)'));
  assert.ok(!/MeshyClient|fetch\(|https:\/\//.test(report));
- assert.equal(JSON.parse(get('../package.json')).version,'4.9.0');
+ const v=JSON.parse(get('../package.json')).version.split('.').map(Number);
+ assert.ok(v[0]>4||(v[0]===4&&v[1]>=9),'version must be >=4.9, never downgraded');
 });
