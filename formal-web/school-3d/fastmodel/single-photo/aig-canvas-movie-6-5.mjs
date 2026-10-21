@@ -62,7 +62,7 @@ function fillImage(ctx,bitmap,w,h,ox=0,oy=0,scale=1){
  ctx.drawImage(bitmap,(w-bw)/2+ox,(h-bh)/2+oy,bw,bh);
 }
 export function drawAIG65CanvasFrame({
- ctx,canvas,plan,timeSeconds,layered=null,caption=''
+ ctx,canvas,plan,timeSeconds,layered=null,caption='',portrait=null
 }={}){
  if(!ctx||typeof ctx.fillRect!=='function'||!canvas||
   !Number.isFinite(canvas.width)||!Number.isFinite(canvas.height)||
@@ -70,7 +70,8 @@ export function drawAIG65CanvasFrame({
   !plan.ready||plan.selectedMode==='3D')
   throw Error('AIG65_REAL_CANVAS_2D_PLAN_REQUIRED');
  const motion=sampleAIG65FlatMotion(plan,timeSeconds),
-  w=canvas.width,h=canvas.height,t=motion.timeSeconds;
+  w=canvas.width,h=canvas.height,t=motion.timeSeconds,
+  portraitFrame=portrait?.sample(timeSeconds,motion.beat)||null;
  ctx.save();ctx.fillStyle='#020407';ctx.fillRect(0,0,w,h);
  if(layered?.image){
   // Background is an image, NOT a generated 3D environmental scene.
@@ -86,7 +87,7 @@ export function drawAIG65CanvasFrame({
    ctx.scale(motion.transform.zoom*1.09,motion.transform.zoom*1.09);
    ctx.rotate(motion.transform.angle);
    ctx.translate(-w/2,-h/2);
-   fillImage(ctx,layered.foreground,w,h,
+   fillImage(ctx,portraitFrame?.canvas||layered.foreground,w,h,
     (motion.transform.x+motion.depthOffset)*w,
     motion.transform.y*h,1);
    ctx.restore();
@@ -95,7 +96,7 @@ export function drawAIG65CanvasFrame({
    ctx.rotate(motion.transform.angle);
    ctx.translate(-w/2,-h/2);
    // 2D route uses the real photo's transformed pixel sheet.
-   if(plan.selectedMode==='2D')fillImage(ctx,layered.image,w,h,
+   if(plan.selectedMode==='2D')fillImage(ctx,portraitFrame?.canvas||layered.image,w,h,
     motion.transform.x*w,motion.transform.y*h,motion.transform.zoom);
    ctx.restore();
   }
@@ -131,6 +132,7 @@ export function drawAIG65CanvasFrame({
  return {...motion,
   actualImagePixelFrameProduced:true,
   layeredParallaxActive:!!(plan.selectedMode==='2.5D'&&layered?.foreground),
+  localFacePixelsActuallyWarped:!!portraitFrame,
   actualHumanJointPositionsComputed:false};
 }
 export class AIG65CanvasRecorder{
