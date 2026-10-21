@@ -197,10 +197,30 @@ function buildSurface(width){
   [[15,.3],[16,.7]],[[16,1]]];
  makeTube(hair,pony,[.058,.071,.060,.025],ponyWeights,hairColor,{closeStart:true});
  
+ // The interior of each removed 2x4 torso patch includes three old
+ // vertices no longer referenced by any face (4 patches × 3 = 12).
+ // Compact ALL parallel attributes and remap indices deterministically.
+ // Do not weaken the no-orphan-vertex Gate to conceal these remnants.
+ const originalCount=body.v.length/3;
+ const referenced=[...new Set(body.indices)].sort((a,b)=>a-b);
+ const remap=new Int32Array(originalCount).fill(-1);
+ for(let i=0;i<referenced.length;i++)remap[referenced[i]]=i;
+ for(const [key,stride] of [['v',3],['j',4],['w',4],['c',4]]){
+  const before=body[key],after=[];
+  for(const id of referenced){
+   for(let k=0;k<stride;k++)after.push(before[id*stride+k]);
+  }
+  body[key]=after;
+ }
+ body.indices=body.indices.map(old=>remap[old]);
+ const compactedUnusedVertices=originalCount-referenced.length;
+ if(compactedUnusedVertices!==12)
+  throw Error('AIG56_PATCH_COMPACTION_UNEXPECTED_'+compactedUnusedVertices);
  const manifold=verifyClosedIndexManifold(body.indices,body.v.length/3);
  return {body,hair,explicitShoulderAndHipIndexStitch:true,
   watertightMultiLimbJunctionsVerified:manifold.closedIndexedTwoManifold,
   bodyManifoldEdges:manifold.uniqueEdges,bodyTriangleCount:body.indices.length/3,
+  orphanedPatchInteriorVerticesPruned:compactedUnusedVertices,
   meshSelfIntersectionFreeProven:false,actualSkinTextureKnown:false};
 }
 
@@ -358,6 +378,7 @@ export function generateAIG56NativeHumanoid(scaffold){
  return {schema:AIG56_SCHEMA,sourceImageSHA256:source.sourceImageSHA256,
   bytes:exported.bytes,skinnedMeshCount:2,boneCount:points.length,
   bodyManifoldEdges:surface.bodyManifoldEdges,bodyTriangleCount:surface.bodyTriangleCount,
+  orphanedPatchInteriorVerticesPruned:surface.orphanedPatchInteriorVerticesPruned,
   animationClipNames:exported.clips,
   anthropomorphicBodyPartsGenerated:['torso','head','neck','leftArm','rightArm',
    'leftLeg','rightLeg','leftFoot','rightFoot','ponytail'],
