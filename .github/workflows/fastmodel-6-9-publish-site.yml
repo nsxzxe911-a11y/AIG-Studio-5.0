@@ -89,13 +89,23 @@ jobs:
           }
           const homepage=path.join(production,'index.html');
           let site=fs.readFileSync(homepage,'utf8');
-          const originalHeading='一張照片，立即建立 2.5D 動畫';
-          const originalDesc='直接在網站選圖、預覽左右擺動並下載動畫 GLB；照片留在此裝置。支援載入已有的 3D GLB 與原有動畫。完整 3D 重建與自動骨架的雲端服務尚未連接。';
-          if(!site.includes(originalHeading)||!site.includes(originalDesc)||
-             !site.includes('href="./fastmodel/"'))
+          const regionStart=site.indexOf('<section class="v4-dual-latest-entry" id="fastmodel"');
+          const regionEnd=site.indexOf('</section>',regionStart);
+          if(regionStart<0||regionEnd<0)throw Error('AIG_HOME_FASTMODEL_REGION_MISSING');
+          let card=site.slice(regionStart,regionEnd);
+          const titles=['一張照片，立即建立 2.5D 動畫',
+            'FastModel 6.9｜照片、劇情與動畫影片',
+            'FastModel 6.9.1｜單一動畫工作區'];
+          const previous='已接入 6.9 RGB 預覽工作區：選擇照片或輸入劇情，使用 AUTO／2D／2.5D／3D 動畫、WAV 配音與 1080p 錄影。來源功能和正式作品分開驗證；正式女主角影片及手機／Windows 效能尚未核准。';
+          const old='直接在網站選圖、預覽左右擺動並下載動畫 GLB；照片留在此裝置。支援載入已有的 3D GLB 與原有動畫。完整 3D 重建與自動骨架的雲端服務尚未連接。';
+          const newer='新版 FastModel 6.9.1 已整合為單一動畫工作區，手機固定預覽與四個功能頁籤：創作、預覽／輸出、3D 模型、進階。舊核心與服裝保留；正式女主角影片及實機效能仍待驗收。';
+          const heading=card.match(/<h2>([^<]+)<\/h2>/)?.[1];
+          if(!titles.includes(heading)||!card.includes('href="./fastmodel/"')||
+             ![old,previous,newer].some(d=>card.includes(d)))
             throw Error('AIG_ORIGINAL_HOME_FASTMODEL_ENTRY_CHANGED_BLOCK');
-          site=site.replace(originalHeading,'FastModel 6.9｜照片、劇情與動畫影片');
-          site=site.replace(originalDesc,'已接入 6.9 RGB 預覽工作區：選擇照片或輸入劇情，使用 AUTO／2D／2.5D／3D 動畫、WAV 配音與 1080p 錄影。來源功能和正式作品分開驗證；正式女主角影片及手機／Windows 效能尚未核准。');
+          card=card.replace('<h2>'+heading+'</h2>','<h2>'+titles[2]+'</h2>');
+          card=card.replace(/<p>[^<]*<\/p>/,'<p>'+newer+'</p>');
+          site=site.slice(0,regionStart)+card+site.slice(regionEnd);
           fs.writeFileSync(homepage,site);
           console.log('Only two FastModel entry directories and the one existing homepage FastModel description changed.');
           JS
@@ -113,7 +123,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "site(fastmodel): publish isolated 6.9 preview on original AIG Render"
+          git commit -m "site(fastmodel): 6.9.1 compact original AIG single-workspace preview"
           git push origin HEAD:web/aig-dual-formal-runtime-20261016
       - name: Explicit publication status
         run: echo "Published preview only to original AIG website branch. Render auto deploy must still be checked. No heroine film or device release Gate claimed."
