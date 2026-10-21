@@ -62,3 +62,14 @@ tasks.register<JavaExec>("coreRecoverySmoke") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.CoreRecoverySmokeKt")
 }
+
+/** Explicit user-requested full core regression; original disabled
+ * coreRegression task remains unchanged for historical policy accuracy.
+ */
+tasks.register<JavaExec>("coreDeepRecoveryRegression") {
+    group = "verification"
+    description = "Execute the full original core Regression main in core-first repair PR"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.CoreRegressionTestKt")
+}
