@@ -32,6 +32,23 @@ try{
     }))
    }));throw e;
   }
+  const controls=await page.evaluate(()=>{
+   const spec=[
+    ['aig65-build','FASTM.CREATE.BUILD','ANIMATION.BUILD'],
+    ['aig65-play','FASTM.OUTPUT.PLAY','ANIMATION.PLAY'],
+    ['aig65-stop','FASTM.OUTPUT.STOP','ANIMATION.STOP'],
+    ['aig65-record','FASTM.OUTPUT.RECORD','MOVIE.RECORD'],
+    ['aig68-review','FASTM.OUTPUT.REVIEW','MOVIE.REVIEW'],
+    ['aig65-report','FASTM.OUTPUT.REPORT','EVIDENCE.REPORT']
+   ];
+   return spec.map(([id,button,command])=>{
+    const el=document.getElementById(id);
+    return {id,ok:!!el&&el.dataset.aigButtonId===button&&
+     el.dataset.aigCommandId===command&&el.tagName==='BUTTON'};
+   });
+  });
+  if(controls.length!==6||controls.some(x=>!x.ok))
+   throw Error('FASTM_REAL_COMMAND_ID_NOT_BOUND_TO_EXISTING_CALLBACK '+JSON.stringify(controls));
   const evidence=await page.evaluate(()=>{
    const q=x=>document.querySelector(x);
    return {
