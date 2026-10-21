@@ -99,7 +99,7 @@ export function planAIG65AutoAnimation({
 // Strip internal 3dPlan from user facing flat timeline reports.
 export function publicAIG65Plan(plan){
  if(plan?.schema!==AIG65_SCHEMA)throw Error('AIG65_INVALID_PLAN');
- const {3dPlan:internal,...report}=plan;
+ const {threeDPlan:internal,...report}=plan;
  return {...report,threeDClipPlanPresent:!!internal,
   native60FPSVerified:false,mediaRecorderOutputVerified:false};
 }
