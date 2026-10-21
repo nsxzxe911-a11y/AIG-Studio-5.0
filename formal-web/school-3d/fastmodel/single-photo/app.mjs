@@ -21,6 +21,7 @@ import {AIG50_SCHEMA,auditAIG50FullBody} from './aig-fullbody-5-0.mjs';
 import {AIG51_SCHEMA,auditAIG51PosedSeamsAndHair} from './aig-seam-contact-5-1.mjs';
 import {AIG52_SCHEMA,Aig52FrameEvidence} from './aig-runtime-evidence-5-2.mjs';
 import {AIG53_SCHEMA,compileAIG53Evidence} from './aig-unified-gate-5-3.mjs';
+import {AIG54_SCHEMA,verifyAIG54NativeChain} from './aig-native-source-5-4.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -1189,12 +1190,58 @@ $('aig41-release').addEventListener('click',()=>{
  releaseAig41();
  $('aig41-status').textContent='4.2 GPU 與排程已釋放。原始照片及 4.0 技術 GLB 保留。';
 });
+let aig54NativeJobId=null,aig54ExpectedSourceSHA=null,aig54Report=null,aig54Busy=false;
+function aig54Invalidate(message='自研來源已變更；5.4 來源完整性證據已失效。'){
+ aig54NativeJobId=null;aig54ExpectedSourceSHA=null;aig54Report=null;
+ $('aig54-download').disabled=true;$('aig54-check').disabled=true;
+ $('aig54-status').textContent=message;
+}
+$('aig54-check').addEventListener('click',async()=>{
+ if(aig54Busy||!aig54NativeJobId||!aig54ExpectedSourceSHA)return;
+ const jobId=aig54NativeJobId,imageSHA=aig54ExpectedSourceSHA;
+ const file=$('aig4-front').files?.[0];
+ if(!file){aig54Invalidate('原來源圖片已遺失，不能證明 GLB 由本張原圖產生。');return;}
+ aig54Busy=true;$('aig54-check').disabled=true;$('aig54-download').disabled=true;
+ $('aig54-status').textContent='5.4 正重新讀取來源照片及後端硬碟檔，然後下載真 GLB 以 SHA-256 重驗。';
+ try{
+  const original=await file.arrayBuffer();
+  if(await sha256Bytes(original)!==imageSHA)throw Error('AIG54_SOURCE_INPUT_CHANGED');
+  const base='/api/aig4/jobs/'+jobId;
+  const manifest=await api(base+'/provenance');
+  const response=await fetch(base+'/files/model.glb',{cache:'no-store'});
+  if(!response.ok)throw Error('AIG54_GLB_DOWNLOAD_FAILED');
+  const glbBytes=await response.arrayBuffer();
+  const report=await verifyAIG54NativeChain({
+   manifest,glbBytes,expectedImageSHA256:imageSHA,expectedJobId:jobId
+  });
+  if(jobId!==aig54NativeJobId||imageSHA!==aig54ExpectedSourceSHA)
+   throw Error('AIG54_SOURCE_CHANGED_DURING_READ');
+  aig54Report=report;$('aig54-download').disabled=false;
+  aig53Invalidate('已取得新的 5.4 自研來源鏈技術證據；不自動解除 5.3 正式人物 Gate。');
+  $('aig54-status').textContent='5.4 '+report.outcome+'：原始檔／生成器／GLB／Scaffold 已比對，'+
+   '瀏覽器下載 GLB 的 SHA 也一致。來源真實性≠完整全身人物；4.0 草模無 Rig，'+
+   '5.0～5.3 正式女主角 Gate 仍 BLOCKED。';
+ }catch(error){
+  aig54Report=null;
+  $('aig54-status').textContent='5.4 來源完整性 BLOCKED：'+error.message+
+   '。未改寫原圖、GLB、劇情、聲音或錄影資料。';
+ }finally{
+  aig54Busy=false;
+  $('aig54-check').disabled=!aig54NativeJobId;
+ }
+});
+$('aig54-download').addEventListener('click',()=>{
+ if(aig54Report)aig47Download(JSON.stringify(aig54Report,null,2),
+  'AIG-5.4-NATIVE-SOURCE-GLB-SHA-INTEGRITY-TECHNICAL-ONLY.json','application/json');
+});
+
 let aig4Busy=false;
 function aig4RefreshButton(){
  $('aig4-build').disabled=aig4Busy||!$('aig4-front').files?.length;
 }
 for(const id of ['aig4-front','aig4-side'])
  $(''+id).addEventListener('change',()=>{
+  aig54Invalidate('AIG 自研照片或輔助角度已變更，原 5.4 來源證據失效。');
   $('aig4-status').textContent='來源已改變。4.0 只會依前景畫素建立自研封閉體積草模，未知背面／五官不會偽裝成真照片。';
   aig4RefreshButton();
  });
@@ -1213,6 +1260,7 @@ async function aig4ReadData(file){
 }
 $('aig4-build').addEventListener('click',async()=>{
  if(aig4Busy)return;
+ aig54Invalidate('開始新的 AIG 自研幾何工作，5.4 等待完成後核對來源。');
  const front=$('aig4-front').files?.[0]||null;
  const side=$('aig4-side').files?.[0]||null;
  if(!front)return;
@@ -1249,6 +1297,9 @@ $('aig4-build').addEventListener('click',async()=>{
   if(!end||end.status!=='COMPLETE')throw Error(end?.lastError||'AIG4_JOB_INCOMPLETE_OR_TIMEOUT');
   if(!end.real3DMeshProduced||!end.artifacts?.['model.glb']?.sha256)
    throw Error('AIG4_TECHNICAL_GLB_NOT_VERIFIED');
+  aig54NativeJobId=job.id;aig54ExpectedSourceSHA=frontSHA;
+  $('aig54-check').disabled=false;
+  $('aig54-status').textContent='AIG 自研技術 GLB 已完成，可讀取硬碟原圖／GLB／生成器並重新驗證 SHA。';
   const prefix='/api/aig4/jobs/'+job.id+'/files/';
   aig4Link('下載真 3D 草模 GLB',prefix+'model.glb','AIG-4.0-VOLUME-TECHNICAL-NOT-APPROVED.glb');
   aig4Link('下載比例／信心／來源 SHA 報告',prefix+'scaffold.json','AIG-4.0-SCAFFOLD-NOT-APPROVED.json');
