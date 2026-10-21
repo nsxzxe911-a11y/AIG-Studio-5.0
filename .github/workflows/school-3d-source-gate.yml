@@ -1050,6 +1050,22 @@ jobs:
             console.log('AIG48 FPS status should remain explicitly BLOCKED; see source QA.');
           console.log('AIG 4.8 technical GLB skin/3-clip source Gate only; actual heroine, hair collisions and device 60 FPS BLOCKED.');
           JS
+      - name: FastModel 4.9 posed triangle collision and script-to-real-clip Gate
+        run: |
+          node --check formal-web/school-3d/fastmodel/single-photo/aig-dynamic-collision-4-9.mjs
+          node --test formal-web/school-3d/fastmodel/single-photo/tests/aig-dynamic-collision-4-9.test.mjs
+          node - <<'JS'
+          const fs=require('fs'),root='formal-web/school-3d/fastmodel/single-photo/';
+          const html=fs.readFileSync(root+'dist/index.html','utf8');
+          const js=fs.readFileSync(root+'dist/app.js','utf8');
+          for(const id of ['aig49-audit','aig49-load','aig49-evidence','aig49-status'])
+            if(!html.includes('id="'+id+'"'))throw Error('AIG49_RGB_BUTTON_ID_MISSING '+id);
+          for(const label of ['AIG_FASTMODEL_4_9_POSED_SURFACE_TRIANGLE_QA_DRAFT',
+            'AIG49_TOTAL_PAIR_BUDGET_EXCEEDED','AIG48_TURN_HEAD','AIG48_NOD_HEAD',
+            'AIG48_SWING_PONYTAIL','AIG-4.9-15-real-skinned-poses-INTERSECTION-QA-NOT-RELEASE.json'])
+            if(!js.includes(label))throw Error('AIG49_SOURCE_NOT_BUNDLED '+label);
+          console.log('AIG 4.9 SOURCE QA ONLY: 15 sampled skinned poses and triangle contact risks, with playback routing. Real heroine, full-hair physics and native FPS remain BLOCKED.');
+          JS
       - name: Archive FastModel 2.7 source and synthetic offline animation evidence
         uses: actions/upload-artifact@v4
         with:
