@@ -68,6 +68,27 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  for(const el of Array.from(panels.create.children).filter(e=>e.tagName==='H3'||
    (e.tagName==='P'&&!e.id)))info.append(el);
  panels.create.insertBefore(info,panels.create.children[1]||null);
+ // Audio is an optional enhancement; make existing local sound toggles
+ // accessible in the main Create page instead of hidden under the 3D tab.
+ // Move the ORIGINAL controls, never duplicate IDs or handlers.
+ const soundHelp=node(doc,'details',{id:'aig-unified-auto-sound'});
+ soundHelp.append(node(doc,'summary',{},'自動聲音（選填；免上傳音檔）'));
+ soundHelp.append(node(doc,'p',{class:'aig-unified-mini'},
+  '不提供 WAV 也可生成、播放與錄製。播放可使用裝置繁中朗讀與 AIG 原創音效／配樂；影片可封入原創音效／配樂，但系統朗讀不會自動錄到影片。'));
+ const liveSoundOptions=doc.querySelector('.story-sound-options');
+ const moveControls=[
+  doc.querySelector('label[for="music-mood"]'),
+  byId(doc,'music-mood'),
+  doc.querySelector('label[for="audio-volume"]'),
+  byId(doc,'audio-volume')
+ ];
+ for(const el of [liveSoundOptions,...moveControls])if(el)soundHelp.append(el);
+ const createButton=byId(doc,'aig65-build');
+ if(createButton)panels.create.insertBefore(soundHelp,createButton);
+ const noWavTip=node(doc,'p',{id:'aig-unified-no-wav-tip',class:'aig-unified-mini'},
+  '聲音檔非必要！直接按「生成動畫」即可。');
+ const wavInput=byId(doc,'aig67-voice');
+ if(wavInput)panels.create.insertBefore(noWavTip,wavInput);
  // Move real callbacks, outputs and downloads — never clone input elements.
  const outputElements=['aig65-play','aig65-stop','aig65-record',
   'aig68-review','aig68-status','aig65-report',
@@ -91,7 +112,7 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  shell.append(node(doc,'div',{id:'aig-unified-live-status'}));
  byId(doc,'aig-unified-live-status').append(status);
  const head=doc.querySelector('header h1');
- if(head)head.innerHTML='<span>AIG</span> FastModel <small>6.9 · 單一動畫工作區</small>';
+ if(head)head.innerHTML='<span>AIG</span> FastModel <small>6.9.2 · 單一動畫工作區</small>';
  const displayLabels={
   'aig65-build':'生成動畫',
   'aig65-play':'▶ 播放',
