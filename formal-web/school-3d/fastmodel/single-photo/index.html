@@ -125,6 +125,15 @@ aside{min-height:0;overflow:auto;padding:10px;overscroll-behavior:contain}
  #aig-unified-stage-info p{max-width:260px}
  #aig-unified-model-notice{font-size:12px}
 }
+
+.aig695-honest-motion{border:1px solid #39617a;background:#092031;color:#bcd9e5;border-radius:10px;
+ padding:10px 12px;font-size:12px;line-height:1.6;margin:8px 0}
+#aig695-need-real-3d{border-color:#916839;background:#251c10;color:#ffe3b5}
+#aig695-need-real-3d[hidden]{display:none!important}
+#aig695-need-real-3d strong{display:block;font-size:12px;margin-bottom:5px}
+#aig695-need-real-3d p{color:#ffdcac;margin:4px 0 10px}
+#aig695-need-real-3d button{margin:6px 0;font-size:12px}
+#aig695-switch-auto{background:#12475a;border-color:#51a9b8}
 </style></head><body><header><h1><span>AIG</span> FastModel <small>6.9.4 · 單一動畫工作區</small></h1><span class="tag">原彩 · PBR · 光柵</span></header><main><section class="workspace"><canvas id="view" aria-label="3D 模型與動畫預覽"></canvas><div id="story-subtitle" class="story-subtitle" hidden aria-live="polite"></div><div class="hint" id="viewport-status" role="status">生成後在這裡旋轉、縮放及播放真正的 3D 模型。</div></section><aside><div id="generation"><h2>AIG 自動 3D 建模工作區</h2><p>只需要一張清楚的臉或上半身照片，即可開始補全正常比例全身 3D。無側面／背面照片及手動標點要求；使用 AIG 本地幾何、17 骨架與五段動畫。看不到的全身部位屬先驗推估，非照片精確還原。下方舊版進階技術工具仍保留，不需要逐級完成。</p>
 <p>本階沿用 AIG FastModel 6.7｜真 WAV 波形配音與本機臉部定位，AIG FastModel 6.5｜AUTO Canvas 真影片核心；AIG FastModel 6.6｜本機前景連通分層與人物局部動畫持續保留。6.7 新增選用本機 WAV 振幅嘴型與瀏覽器單臉方框定位；均不冒稱完整人體骨架或音素級精準口型。</p>\n<h3>AIG FastModel 6.9｜AUTO：照片／劇情直接製作動畫</h3>
 <p>6.9 網站預覽版：保留 6.8 真影片解碼檢查；新增 GitHub Chromium 實際錄影與 WAV 音軌封裝測試。測試治具不等於核准女主角；正式 1080p 影片、人工嘴型與穿模檢查及 Windows／Android 仍需另行驗收。</p>
@@ -147,6 +156,13 @@ aside{min-height:0;overflow:auto;padding:10px;overscroll-behavior:contain}
 <label for="aig67-voice">配音 WAV（完全選填，沒有也可以生成動畫）</label>
 <input id="aig67-voice" type="file" accept=".wav,audio/wav,audio/wave">
 <p id="aig67-status" class="status" role="status">不必提供配音檔！生成動畫與播放不依賴 WAV；有 WAV 才由真波形驅動近似嘴型。支援時利用本機 FaceDetector 定位單一臉部，非每個五官的精準追蹤。</p>
+<div id="aig695-real-motion-info" role="note" class="aig695-honest-motion">目前照片模式只能做影像平移、縮放與近似景深，不能將靜態人物變成真走路或打鬥。要全身關節動作，必須有經驗證的 3D 骨架及動畫片段。</div>
+<div id="aig695-need-real-3d" class="aig695-honest-motion" hidden role="alert">
+ <strong>你選擇了真正 3D 動畫，但目前沒有可用的 GLB 骨架動作。</strong>
+ <p>我不會假裝平面圖片正在走路或打架。你可以匯入有動畫的 GLB，或主動選擇以下照片運鏡模式。</p>
+ <button id="aig695-switch-auto" type="button">改用照片運鏡 AUTO 並生成</button>
+ <button id="aig695-import-glb" type="button">匯入真 GLB 模型</button>
+</div>
 <button id="aig65-build" type="button">生成動畫</button>
 <div id="aig693-progress" class="aig693-progress" role="progressbar" aria-label="實際生成步驟" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0" data-aig-state="idle" aria-live="polite">等待生成：選擇照片或輸入劇情，無需聲音檔。</div>
 <canvas id="aig65-canvas" width="960" height="540" style="display:block;width:100%;height:auto;aspect-ratio:16/9;max-width:100%;background:#020407;border:1px solid #356e94;border-radius:9px" aria-label="2D 或 2.5D 真圖片 Canvas 動畫預覽"></canvas>
