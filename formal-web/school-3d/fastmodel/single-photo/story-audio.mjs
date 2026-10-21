@@ -134,6 +134,18 @@ export class StoryAudio{
    this._tone({hz,end:hz,secs:.27,wave:'sine',gain:.045*this.options.volume});
   }
  }
+ ensureVoiceContext(){
+  if(!this.enabled)throw Error('AIG67_AUDIO_NOT_STARTED');
+  if(!this.audio){
+   const Context=this.env.AudioContext||this.env.webkitAudioContext;
+   if(typeof Context!=='function')throw Error('AIG67_WEBAUDIO_UNSUPPORTED');
+   this.audio=new Context();this.ownsAudio=true;
+  }
+  if(this.audio.state==='closed')throw Error('AIG67_WEBAUDIO_CLOSED');
+  try{this.audio.resume?.()?.catch?.(()=>{this.onStatus('裝置拒絕啟動真實配音，請檢查音效權限。');});}
+  catch{throw Error('AIG67_WEBAUDIO_RESUME_REJECTED');}
+  return this.audio;
+ }
  createRecordingBus(){
   if(!this.enabled||!this.audio||this.audio.state==='closed')throw Error('MOVIE_AUDIO_CONTEXT_UNAVAILABLE');
   if(typeof this.audio.createMediaStreamDestination!=='function')throw Error('MOVIE_AUDIO_BUS_UNSUPPORTED');
