@@ -126,7 +126,10 @@ export function createAIG66Portrait(doc,image,layered){
   original.canvas.width,original.canvas.height);
  const seg=segmentAIG66BorderRGBA(photo),w=original.canvas.width,
   h=original.canvas.height;
- let outputLayers=layered;
+ let outputLayers=seg.valid?layered:{...layered,image,foreground:null,
+  background:image,evidence:{schema:AIG66_SCHEMA,method:seg.method,
+   fallbackReason:seg.reason,depthWasMeasured:false},
+  visualMethod:'AIG66_SAFE_FLAT_NO_UNPROVEN_MATTE'};
  if(seg.valid){
   const front=doc.createElement('canvas'),bg=doc.createElement('canvas');
   front.width=bg.width=w;front.height=bg.height=h;
