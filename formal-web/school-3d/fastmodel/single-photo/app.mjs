@@ -20,12 +20,14 @@ import {AIG49_SCHEMA,auditAIG49DynamicContacts} from './aig-dynamic-collision-4-
 import {AIG50_SCHEMA,auditAIG50FullBody} from './aig-fullbody-5-0.mjs';
 import {AIG51_SCHEMA,auditAIG51PosedSeamsAndHair} from './aig-seam-contact-5-1.mjs';
 import {AIG52_SCHEMA,Aig52FrameEvidence} from './aig-runtime-evidence-5-2.mjs';
+import {AIG53_SCHEMA,compileAIG53Evidence} from './aig-unified-gate-5-3.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
 let storyPlan=null,storyOutputUrl=null,storyDialogue=null,storyParsed=null,storyRevision=0,cloudBusy=false,dialogueCloudConfigured=false,movieUI=null;
 let speechAIConfigured=false,ttsBusy=false,ttsGeneration=0,ttsFiles=[],ttsDownloadUrls=[];
 let heroineSourceRevision=0,heroinePreviewUrl=null,heroineEvidenceUrl=null,heroineSourceMatch=false;
+let aig53ImageAdmission=null,aig53HeroineSourceChain=null,aig53Report=null;
 const storySound=new StoryAudio({onStatus:m=>{$('story-audio-status').textContent=m;}});
 function soundOptions(){return {
  voice:$('voice-enabled').checked,sfx:$('sfx-enabled').checked,
@@ -149,6 +151,7 @@ function clearReviewEvidence(){
  $('review-status').textContent='目前尚無已擷取的真正 GLB 四方向圖片；不能判定頭頸或髮束是否通過。';
 }
 function saveHeroineEvidence(result){
+ aig53HeroineSourceChain=result;aig53Invalidate('正式人物 GLB 來源鏈已更新，5.3 原驗收表失效。');
  if(heroineEvidenceUrl)URL.revokeObjectURL(heroineEvidenceUrl);
  heroineEvidenceUrl=URL.createObjectURL(new Blob([JSON.stringify(result,null,2)],{type:'application/json'}));
  const area=$('heroine-evidence-downloads');area.replaceChildren();
@@ -207,6 +210,7 @@ function updateButton(){/* AIG native full single-photo 3D is not ready; never c
 function addLink(label,url,name){const a=document.createElement('a');a.className='download';a.textContent=label;a.href=url;if(name)a.download=name;$('downloads').append(a);}
 async function load(bytes,orbit){
  if(!view)return;
+ aig53Invalidate('3D 播放器模型已切換，5.3 須重新整合相同來源 SHA 的證據。');
  saveHeroineEvidence(evaluateHeroineJob({}));
  const clips=await view.load(bytes,{orbit});$('clip').replaceChildren();
  clearReviewEvidence();clearTimelineEvidence();clearStoryPlan('新人物已載入，請重新解析劇情。');
@@ -704,6 +708,7 @@ let aig51Report=null,aig51Busy=false;
 
 let aig52Report=null,aig52VisualReport=null,aig52Busy=false,aig52Monitor=null;
 function aig52Invalidate(message='5.2 GLB 已變更，舊畫面與 FPS 結果失效。'){
+ aig53Invalidate('5.2 證據來源已變更，5.3 驗收報告已失效。');
  if(view)view.onFrameMeasured=null;
  aig52Monitor=null;aig52Report=null;aig52VisualReport=null;
  for(const id of ['aig52-fps','aig52-visual','aig52-fps-report','aig52-visual-report'])$(id).disabled=true;
@@ -719,6 +724,7 @@ function aig52RefreshAvailable(){
 }
 
 function aig51Reset(message='5.1 來源或 5.0 驗證結果變更；舊穿模報告已隔離。'){
+ aig53Invalidate('5.1 或上游來源變更，5.3 驗收報告已失效。');
  aig51Report=null;$('aig51-report').disabled=true;
  $('aig51-run').disabled=aig51Busy||!aig50Parsed||aig50Report?.outcome!=='STRUCTURAL_QA_PASS_ONLY';
  $('aig51-status').textContent=message;
@@ -780,6 +786,7 @@ $('aig50-report').addEventListener('click',()=>{
 $('aig51-run').addEventListener('click',async()=>{
  if(aig51Busy||!aig50Parsed||aig50Report?.outcome!=='STRUCTURAL_QA_PASS_ONLY')return;
  const revision=aig50Revision,source=aig50Parsed,upstream=aig50Report;
+ aig53Invalidate('5.1 重新檢查真動畫接縫與髮束，統一 Gate 須重新計算。');
  aig51Busy=true;aig51Report=null;
  $('aig51-run').disabled=true;$('aig51-report').disabled=true;
  $('aig51-status').textContent='5.1 正從真 GLB 的動畫姿態檢查胸／頸／頭／雙肩三角接縫，以及馬尾對身體的 SAT 交叉檢測。';
@@ -834,6 +841,7 @@ $('aig52-load').addEventListener('click',async()=>{
 $('aig52-visual').addEventListener('click',async()=>{
  if(aig52Busy||!aig52RefreshAvailable()||!view)return;
  aig52Busy=true;$('aig52-visual').disabled=true;
+ aig53Invalidate('5.2 16 格真動畫畫面重新擷取中。');
  const sha=sourceSha,revision=aig50Revision;
  $('aig52-status').textContent='從真 GLB 的所選動作擷取四個時間點 × 四方向實際 WebGL 像素，檢查姿態與模型。';
  try{
@@ -868,6 +876,7 @@ function aig52FinishMeasured(){
  aig52Monitor=null;
  aig52Report=data.summary({environment,clipName:view?.animation?.clips?.[view.animation.index]?.name||null,
   verifiedSource:sourceSha});
+ aig53Invalidate('5.2 瀏覽器 FPS 新紀錄完成，5.3 須重新整合。');
  $('aig52-fps-report').disabled=false;
  $('aig52-status').textContent='5.2 真瀏覽器 FPS：'+aig52Report.outcome+
   '；平均 '+aig52Report.framesPerSecond.toFixed(2)+' FPS／p95 '+
@@ -882,6 +891,7 @@ $('aig52-fps').addEventListener('click',()=>{
   $('aig52-status').textContent='錄影／截圖／外部動作操作中，不可混算 FPS。';return;
  }
  aig52Report=null;$('aig52-fps-report').disabled=true;
+ aig53Invalidate('開始 5.2 FPS 新測量；原有 5.3 FPS Gate 已失效。');
  const data=new Aig52FrameEvidence({sourceSHA256:sourceSha,targetFrames:240,minimumSeconds:2});
  const revision=aig50Revision,sha=sourceSha;
  aig52Monitor=data;
@@ -905,6 +915,43 @@ document.addEventListener('visibilitychange',()=>{
   aig52Monitor.invalidReason='AIG52_PAGE_NOT_VISIBLE';aig52Monitor.done=true;
   aig52FinishMeasured();
  }
+});
+
+// 5.3 compound evidence manifest never permits automatic release.
+function aig53Invalidate(message='5.3 一項來源改變；請重新產生統一 Gate 證據。'){
+ aig53Report=null;
+ $('aig53-download').disabled=true;
+ $('aig53-status').textContent=message;
+}
+$('aig53-review').addEventListener('click',()=>{
+ // Collect ONLY live audit objects; never trust separately imported JSON as a certificate.
+ try{
+  const currentClipName=view?.animation?.clips?.[view.animation.index]?.name||null;
+  const report=compileAIG53Evidence({
+   sourceImageEvidence:aig53ImageAdmission,
+   heroineSourceChain:aig53HeroineSourceChain,
+   rig50:aig50Report,seams51:aig51Report,
+   visual52:aig52VisualReport,fps52:aig52Report,
+   currentViewerSourceSHA256:sourceSha,currentClipName,
+   storyReady:storyPlan?.ready===true
+  });
+  aig53Report=report;
+  $('aig53-download').disabled=false;
+  const missing=report.checks.filter(x=>x.status!=='PASS');
+  $('aig53-status').textContent='5.3 '+report.outcome+'；'+
+   report.passedChecks+'/'+report.totalChecks+' 項通過，'+
+   report.blockedChecks+' 項 BLOCKED。阻擋：'+
+   missing.map(x=>x.id).join('、')+
+   '。同 SHA 技術證據只能送人工複核；沒有正式人物外觀簽核、Android/Windows 原生 FPS 與有聲成片驗收，releaseAllowed 永遠 false。';
+ }catch(e){
+  aig53Report=null;$('aig53-download').disabled=true;
+  $('aig53-status').textContent='5.3 統一 Gate BLOCKED：'+e.message+'。未修改任何前階段或已錄製檔案。';
+ }
+});
+$('aig53-download').addEventListener('click',()=>{
+ if(!aig53Report)return;
+ aig47Download(JSON.stringify(aig53Report,null,2),
+  'AIG-5.3-UNIFIED-SHA-RELEASE-GATE-BLOCKED-NOT-APPROVED.json','application/json');
 });
 
 $('aig46-build').addEventListener('click',()=>{
@@ -1250,7 +1297,8 @@ $('aig4-build').addEventListener('click',async()=>{
 $('photo').addEventListener('change',async()=>{
  updateButton();
  const revision=++heroineSourceRevision,file=$('photo').files?.[0];
- heroineSourceMatch=false;
+ heroineSourceMatch=false;aig53ImageAdmission=null;
+ aig53Invalidate('正式女主角來源圖片已變更，5.3 必須重驗。');
  if(heroinePreviewUrl){URL.revokeObjectURL(heroinePreviewUrl);heroinePreviewUrl=null;}
  $('heroine-source-preview').hidden=true;$('heroine-source-preview').removeAttribute('src');
  if(!file){$('heroine-source-status').textContent='尚未選擇正式女主角照片。';return;}
@@ -1259,6 +1307,8 @@ $('photo').addEventListener('change',async()=>{
   const result=await inspectHeroineImage(file,{decodeImage:decodeHeroineImage});
   if(revision!==heroineSourceRevision)return;
   heroineSourceMatch=result.sourceMatched;
+  aig53ImageAdmission=result;
+  aig53Invalidate('正式女主角照片核對有新結果，5.3 驗收表須重新計算。');
   if(result.sourceMatched){
    heroinePreviewUrl=URL.createObjectURL(file);
    $('heroine-source-preview').src=heroinePreviewUrl;
