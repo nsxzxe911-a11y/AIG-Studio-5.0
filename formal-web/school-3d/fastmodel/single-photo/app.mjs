@@ -32,6 +32,8 @@ import {AIG61_SCHEMA,proposeAIG61LocalLandmarks,acceptAIG61ReviewedProposal} fro
 import {AIG62_SCHEMA,AIG62_REFERENCES,verifyAIG62ReferenceFile} from './aig-school-visual-6-2.mjs';
 import {AIG63_SCHEMA,compareAIG63ActualImages,auditAIG63SchoolModelActualGLTF,bindAIG63Evidence} from './aig-visual-compare-6-3.mjs';
 import {AIG64_AUTOBODY_SCHEMA,analyzeAIG64PartialPortrait,generateAIG64SinglePartialFullbody} from './aig-single-photo-autobody-6-4.mjs';
+import {AIG65_SCHEMA,planAIG65AutoAnimation,publicAIG65Plan} from './aig-auto-animation-6-5.mjs';
+import {AIG65_CAPTURE_SCHEMA,prepareAIG65Layers,drawAIG65CanvasFrame,AIG65CanvasRecorder} from './aig-canvas-movie-6-5.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -2482,6 +2484,258 @@ $('aig64-single-report').addEventListener('click',()=>{
   aig47Download(JSON.stringify(aig64SingleReport,null,2),
    'AIG-6.4-SINGLE-PARTIAL-PHOTO-ANATOMICAL-ESTIMATE-SHA.json',
    'application/json');
+});
+
+
+let aig65Current=null,aig65Playing=false,aig65Recording=false,aig65Finalizing=false,
+ aig65FrameId=null,aig65StartedAt=0,aig65LastBeat=-1,aig65LastClock=0,
+ aig65Recorder=null,aig65FilmCanvas=null,aig65DecodedImage=null,aig65Layers=null,
+ aig65Revision=0,aig65VideoUrls=[],aig65VideoEvidence=null,aig65Interrupted=false,
+ aig65CaptureError=null;
+const aig65Canvas=$('aig65-canvas');
+function aig65Show(text){$('aig65-status').textContent=text;}
+function aig65Refresh(){
+ const busy=aig65Playing||aig65Recording||aig65Finalizing,
+  sourceReady=aig65Current?.plan?.ready===true;
+ $('aig65-build').disabled=busy;
+ $('aig65-play').disabled=busy||!sourceReady;
+ $('aig65-record').disabled=busy||!sourceReady||
+  aig65Current.plan.selectedMode==='3D';
+ $('aig65-stop').disabled=!busy;
+ $('aig65-report').disabled=!sourceReady;
+ for(const id of ['aig65-image','aig65-story','aig65-mode','aig65-duration'])
+  $(id).disabled=busy;
+}
+function aig65Invalidate(reason='來源或劇情變更，請重新計算 AUTO 動畫。'){
+ if(aig65Playing||aig65Recording||aig65Finalizing)return;
+ ++aig65Revision;
+ aig65Current=null;aig65Layers=null;
+ aig65DecodedImage?.close?.();aig65DecodedImage=null;
+ aig65Show(reason);aig65Refresh();
+}
+for(const id of ['aig65-image','aig65-story','aig65-mode','aig65-duration'])
+ $(id).addEventListener(id==='aig65-story'?'input':'change',()=>{
+  aig65Invalidate('圖片、劇情或模式已變更；舊播放計畫不可冒用，按 AUTO 重新生成。');
+ });
+function aig65ReportObject(){
+ if(!aig65Current?.plan)return null;
+ return {schema:AIG65_SCHEMA,
+  plan:publicAIG65Plan(aig65Current.plan),
+  originalImageSHA256:aig65Current.imageSha,
+  originalImageDimensions:aig65Current.imageDimensions,
+  pixelImageLayerReport:aig65Layers?.evidence||null,
+  compositorMethod:aig65Layers?.visualMethod||
+   (aig65Current.plan.selectedMode==='3D'?'GLB_EXISTING_RIG':'TEXT_CARD'),
+  actualRealMediaRecorderResult:aig65VideoEvidence,
+  voiceAndMusicEngine:'EXISTING_LOCAL_STORY_AUDIO',
+  systemTtsNeverCapturedInVideo:true,
+  original3DMoviePipelineUnchanged:true,
+  imageActionMayBeCameraTransformRatherThanTrueLimbMotion:true,
+  otherExistingCostumesPreserved:true,
+  originalPhoto3DDepthNotInferred:true,
+  nativeAndroidWindows60FPSUnverified:true,
+  releaseAllowed:false};
+}
+$('aig65-build').addEventListener('click',async()=>{
+ if(aig65Playing||aig65Recording||aig65Finalizing||movieUI?.isBusy)return;
+ const photo=$('aig65-image').files?.[0]||null,
+  story=$('aig65-story').value,selected=$('aig65-mode').value,
+  duration=Number($('aig65-duration').value),rev=++aig65Revision;
+ $('aig65-build').disabled=true;
+ aig65Show('正在核對來源與劇情，選擇真正可提供的 2D／2.5D／3D 動畫技術。');
+ let bitmap=null;
+ try{
+  let imageSha=null,dimensions=null,photoLayer=null;
+  if(photo){
+   if(photo.size<100||photo.size>20*1024*1024)
+    throw Error('AIG65_IMAGE_SIZE_LIMIT');
+   const bytes=await photo.arrayBuffer();imageSha=await sha256Bytes(bytes);
+   const sig=new Uint8Array(bytes,0,Math.min(bytes.byteLength,16));
+   const jpg=sig[0]===255&&sig[1]===216&&sig[2]===255;
+   const png=[137,80,78,71,13,10,26,10].every((v,i)=>sig[i]===v);
+   const webp=[82,73,70,70].every((v,i)=>sig[i]===v)&&
+    [87,69,66,80].every((v,i)=>sig[i+8]===v);
+   if(!jpg&&!png&&!webp)throw Error('AIG65_ACTUAL_IMAGE_FORMAT_INVALID');
+   bitmap=await createImageBitmap(photo);
+   if(bitmap.width<64||bitmap.height<64||bitmap.width>12000||
+      bitmap.height>12000)throw Error('AIG65_IMAGE_DIMENSIONS_INVALID');
+   dimensions=[bitmap.width,bitmap.height];
+   // Foreground sampling is optional: image animation can work with
+   // arbitrary backgrounds even if a clean 2.5D matte cannot be measured.
+   photoLayer=prepareAIG65Layers(document,bitmap);
+  }
+  const modelReady=!!(view?.model&&sourceSha);
+  const plan=planAIG65AutoAnimation({
+   storyText:story,hasImage:!!photo,imageSHA256:imageSha,
+   hasGLB:modelReady,glbSHA256:modelReady?sourceSha:null,
+   clips:view?.animation?.clips||[],requestedMode:selected,
+   durationSeconds:duration
+  });
+  if(!plan.ready)throw Error('AIG65_AUTO_PLAN_BLOCKED: '+plan.blockers.join('、'));
+  if(rev!==aig65Revision||photo!==($('aig65-image').files?.[0]||null))
+   throw Error('AIG65_SOURCE_CHANGED_DURING_BUILD');
+  aig65DecodedImage?.close?.();aig65DecodedImage=bitmap;bitmap=null;
+  aig65Layers=plan.selectedMode==='3D'?null:photoLayer;
+  aig65Current={plan,imageSha,imageDimensions:dimensions,
+   modelSha:modelReady?sourceSha:null,storyText:story};
+  if(plan.selectedMode==='3D'){
+   $('story-text').value=story;
+   $('story-build').click();
+   if(!storyPlan?.ready)throw Error('AIG65_3D_CLIPS_FAILED_SECOND_CHECK');
+   aig65Show('6.5 AUTO 選定真 3D：已接原有骨架劇情時間軸。按「播放 AUTO」即走原真 GLB 動畫；錄影請使用下方 3D 1080p 原錄影器。');
+  }else{
+   const note=drawAIG65CanvasFrame({
+    ctx:aig65Canvas.getContext('2d'),canvas:aig65Canvas,
+    plan,timeSeconds:0,layered:aig65Layers
+   });
+   aig65Show('6.5 AUTO 選定 '+plan.selectedMode+
+    '：真 Canvas 畫面已建立；'+plan.timeline.length+' 段、'+
+    plan.seconds.toFixed(2)+' 秒，'+
+    (note.layeredParallaxActive?'已套用來源像素的近似前景視差。':
+      '未證明可信景深分層，採真 2D 圖片平移／推鏡。')+
+    ' 可播放或錄製真 1080p；照片裡的手腳不會自行變成關節動畫。');
+  }
+ }catch(err){
+  aig65Current=null;aig65Layers=null;
+  aig65Show('6.5 AUTO BLOCKED：'+err.message+
+   '。原始照片、3D GLB、其他服裝及原音影片保持不變。');
+ }finally{bitmap?.close?.();aig65Refresh();}
+});
+function aig65StopSound(){
+ try{storySound.stop();}catch{}
+}
+function aig65CancelRAF(){
+ if(aig65FrameId!==null){cancelAnimationFrame(aig65FrameId);aig65FrameId=null;}
+}
+async function aig65StopRun(natural=false){
+ if(aig65Finalizing)return;
+ aig65Finalizing=true;aig65CancelRAF();
+ const recorder=aig65Recorder,wasRecording=aig65Recording;
+ aig65Playing=false;aig65Recording=false;
+ try{
+  if(wasRecording&&recorder){
+   const result=await recorder.stop();
+   if(!result?.blob?.size)throw Error('AIG65_EMPTY_MEDIARECORDER_OUTPUT');
+   const url=URL.createObjectURL(result.blob),
+    evidence=aig65ReportObject();
+   const data={
+    ...result.evidence,mode:aig65Current?.plan.selectedMode,
+    completeTimelineRecorded:natural,
+    imageSourceSHA256:aig65Current?.imageSha,
+    textStoryShaNotProvided:true,
+    narrationSpeechSynthesisNotInRecordedAudio:true,
+    originalPhotoMotionIs2D2_5DNotRiggedLimbAnimation:true
+   };
+   aig65VideoEvidence=data;
+   aig65VideoUrls.push(url);
+   const video=$('aig65-video');video.src=url;video.hidden=false;
+   const link=document.createElement('a');link.href=url;
+   link.className='download';link.download=result.filename;
+   link.textContent='下載已編碼 '+result.evidence.container.toUpperCase()+
+    ' 1080p 動畫（'+result.evidence.actualFramesDrawn+' 幀）';
+   $('aig65-downloads').append(link);
+   const manifestURL=URL.createObjectURL(new Blob([
+    JSON.stringify({...evidence,realVideoFile:data},null,2)
+   ],{type:'application/json'}));
+   aig65VideoUrls.push(manifestURL);
+   const a=document.createElement('a');a.href=manifestURL;
+   a.download='AIG-6.5-REAL-CANVAS-1080p-ENCODED-VIDEO-SHA.json';
+   a.className='download';a.textContent='影片與原圖 SHA 記錄';
+   $('aig65-downloads').append(a);
+   aig65Show('6.5 真 '+result.evidence.container.toUpperCase()+
+    ' 影片已由此瀏覽器實際編碼，真 Canvas 更新幀 '+data.actualFramesDrawn+
+    '、容器 '+data.outputMimeType+'、音軌 '+data.audioTracksRecorded+
+    '。'+(natural?'完整劇情':'手動中斷片段')+
+    '。目標 30 FPS 非實測保證；系統 TTS 未錄進影片。');
+  }else aig65Show('6.5 AUTO Canvas 動畫已停止；原照片／影片與 GLB 不改動。');
+ }catch(err){
+  aig65CaptureError=String(err.message||err);
+  aig65Show('6.5 本次影片編碼 BLOCKED：'+aig65CaptureError+
+   '。不提供假檔案，先前真影片仍保留。');
+ }finally{
+  aig65StopSound();aig65Recorder=null;aig65FilmCanvas=null;
+  aig65Finalizing=false;aig65Refresh();
+ }
+}
+function aig65PlayOrRecord(recording){
+ const current=aig65Current;
+ if(!current?.plan?.ready||aig65Playing||aig65Recording||aig65Finalizing||
+    movieUI?.isBusy)return;
+ if(current.plan.selectedMode==='3D'){
+  if(recording){aig65Show('真 3D 錄影請使用原 3D 錄影工作區。');return;}
+  $('story-play').click();aig65Show('已交由原 GLB 骨架劇情播放器，不使用平面圖片假動作。');return;
+ }
+ if(current.modelSha&&current.plan.modelGLBSHA256!==current.modelSha){
+  aig65Show('原有 GLB 已切換，請重新分析劇情和來源。');return;
+ }
+ try{
+  aig65LastBeat=-1;aig65LastClock=0;aig65CaptureError=null;
+  storySound.configure({...soundOptions(),voice:!recording&&soundOptions().voice});
+  storySound.start(); // DIRECT CLICK: unlock AudioContext and real SFX/music.
+  let mediaBus=null;
+  if(recording){
+   // Audio is optional: no audio destination is recorded as silent video;
+   // browser SpeechSynthesis is intentionally not claimed as captured.
+   if((soundOptions().sfx||soundOptions().music)&&storySound.audio?.state!=='closed'){
+    try{mediaBus=storySound.createRecordingBus();}catch{mediaBus=null;}
+   }
+   aig65FilmCanvas=document.createElement('canvas');
+   aig65FilmCanvas.width=1920;aig65FilmCanvas.height=1080;
+   drawAIG65CanvasFrame({ctx:aig65FilmCanvas.getContext('2d'),
+    canvas:aig65FilmCanvas,plan:current.plan,timeSeconds:0,layered:aig65Layers});
+   aig65Recorder=new AIG65CanvasRecorder({
+    onStatus:m=>aig65Show(m)
+   });
+   aig65Recorder.begin({canvas:aig65FilmCanvas,plan:current.plan,
+    sourceSHA256:current.plan.sourceSHA256,audioDestination:mediaBus});
+   aig65Recording=true;
+  }else aig65Playing=true;
+  aig65StartedAt=performance.now();
+  const rev=aig65Revision;
+  function animate(now){
+   if(rev!==aig65Revision||!aig65Current||
+      (!aig65Playing&&!aig65Recording))return;
+   const t=Math.min(current.plan.seconds,(now-aig65StartedAt)/1000);
+   const stamp=drawAIG65CanvasFrame({ctx:aig65Canvas.getContext('2d'),
+    canvas:aig65Canvas,plan:current.plan,timeSeconds:t,layered:aig65Layers});
+   if(aig65Recording){
+    drawAIG65CanvasFrame({ctx:aig65FilmCanvas.getContext('2d'),
+     canvas:aig65FilmCanvas,plan:current.plan,timeSeconds:t,layered:aig65Layers});
+    aig65Recorder?.frame();
+   }
+   if(stamp.beat.beat!==aig65LastBeat){
+    aig65LastBeat=stamp.beat.beat;
+    storySound.step({beat:stamp.beat.beat,actionId:stamp.beat.actionId,
+     dialogue:stamp.beat.text});
+   }
+   const dt=Math.max(0,Math.min(.2,t-aig65LastClock));
+   aig65LastClock=t;storySound.tick(dt);
+   if(t>=current.plan.seconds){
+    void aig65StopRun(true);return;
+   }
+   aig65FrameId=requestAnimationFrame(animate);
+  }
+  aig65FrameId=requestAnimationFrame(animate);aig65Refresh();
+  aig65Show(recording?'6.5 正在錄製真 1920×1080 '+current.plan.selectedMode+
+   ' Canvas 動畫，WebAudio 有提供時接入音軌。':'6.5 正在播放 '+current.plan.selectedMode+' 真 Canvas 動畫。');
+ }catch(err){
+  aig65CancelRAF();aig65Playing=false;aig65Recording=false;
+  aig65StopSound();
+  aig65Show('6.5 Canvas 啟動 BLOCKED：'+err.message+
+   '。若裝置不支援 MediaRecorder，仍可選擇播放。');
+  aig65Refresh();
+ }
+}
+$('aig65-play').addEventListener('click',()=>aig65PlayOrRecord(false));
+$('aig65-record').addEventListener('click',()=>aig65PlayOrRecord(true));
+$('aig65-stop').addEventListener('click',()=>{
+ if(aig65Recording||aig65Playing)void aig65StopRun(false);
+});
+$('aig65-report').addEventListener('click',()=>{
+ const report=aig65ReportObject();if(!report)return;
+ aig47Download(JSON.stringify(report,null,2),
+  'AIG-6.5-AUTO-2D-2.5D-3D-TRUE-SOURCE-TIMELINE.json',
+  'application/json');
 });
 
 let aig4Busy=false;
