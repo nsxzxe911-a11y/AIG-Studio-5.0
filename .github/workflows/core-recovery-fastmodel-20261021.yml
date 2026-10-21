@@ -23,6 +23,7 @@ jobs:
         working-directory: formal-web/school-3d/fastmodel/single-photo
         run: |
           npm ci
+          python -m pip install -r requirements.txt
           npm test
           npm run build
       - name: Core-only verdict
