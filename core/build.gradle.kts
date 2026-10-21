@@ -53,3 +53,12 @@ tasks.register<JavaExec>("rgbGlobalSkinRegression") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.aigstudio.core.AigRgbGlobalSkinRegressionKt")
 }
+
+
+tasks.register<JavaExec>("coreRecoverySmoke") {
+    group = "verification"
+    description = "Focused REAL Studio core: MANUAL CAM, A/B/C, empty CAD, NC/project persistence"
+    dependsOn("testClasses")
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.aigstudio.core.CoreRecoverySmokeKt")
+}
