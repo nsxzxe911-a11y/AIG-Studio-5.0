@@ -212,6 +212,35 @@ try{
   const blobVideo=await page.locator('#aig65-video').getAttribute('src');
   if(!blobVideo?.startsWith('blob:')||recordedNoWav.includes('BLOCKED'))
    throw Error('AIG692_VIDEO_WITHOUT_WAV_FAILED '+recordedNoWav);
+  // The recorder returning a Blob does not prove that browsers can decode
+  // moving video. Decode the *recorded WebM*, sample two frames and compare.
+  const decoded=await page.evaluate(async()=>{
+   const v=document.querySelector('#aig65-video');
+   v.muted=true;v.playsInline=true;v.preload='auto';
+   const bounded=(promise,ms,label)=>Promise.race([promise,
+    new Promise((_,reject)=>setTimeout(()=>reject(Error(label)),ms))]);
+   if(v.readyState<2)await bounded(new Promise((resolve,reject)=>{
+    v.addEventListener('loadeddata',resolve,{once:true});
+    v.addEventListener('error',()=>reject(Error('ENCODED_VIDEO_DECODER_ERROR')),{once:true});
+   }),6000,'ENCODED_VIDEO_LOAD_TIMEOUT');
+   if(v.videoWidth<128||v.videoHeight<72)throw Error('VIDEO_HAS_NO_DECODABLE_PIXELS');
+   await bounded(v.play(),5000,'ENCODED_VIDEO_CANNOT_PLAY');
+   const c=document.createElement('canvas');c.width=64;c.height=36;
+   const ctx=c.getContext('2d',{willReadFrequently:true});
+   const sample=()=>{ctx.drawImage(v,0,0,64,36);
+    return Array.from(ctx.getImageData(0,0,64,36).data);};
+   await new Promise(resolve=>setTimeout(resolve,180));
+   const t0=v.currentTime,first=sample();
+   await new Promise(resolve=>setTimeout(resolve,650));
+   const t1=v.currentTime,second=sample();v.pause();
+   const n=first.reduce((acc,v,i)=>acc+(Math.abs(v-second[i])>9?1:0),0);
+   return {width:v.videoWidth,height:v.videoHeight,timeA:t0,timeB:t1,
+    changedRGBA:n,pixelsCompared:first.length,codecConfirmed:true,
+    humanJointAnimationCertified:false};
+  });
+  if(decoded.timeB<=decoded.timeA+0.1||decoded.changedRGBA<20)
+   throw Error('AIG_FASTMODEL_ENCODED_VIDEO_STATIC_OR_INVALID '+JSON.stringify(decoded));
+  console.log('FASTMODEL_REAL_ENCODED_VIDEO_DECODED_MOVING_FRAMES',device.name,JSON.stringify(decoded));
   await page.screenshot({path:out+'/'+device.name+'-04-recorded-no-wav.png'});
   console.log('AIG 6.9.2 no WAV real '+device.name+' PASS',JSON.stringify({
     wavInputs:0,selected:'AUTO',source:'synthetic PNG NOT heroine',
