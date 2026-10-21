@@ -12,7 +12,8 @@
 5. 保留原本單一連通人體 Indexed Mesh、17 節 Skeleton、9 組 SkinnedMesh、5 段 quaternion clip。即使避讓造成新的三角面自交或不合法法向，應 BLOCK 並保留原 5.7。
 6. 新 `auditAIG58RealPoseContacts` 透過真的 Three.js `AnimationMixer`、`getVertexPosition` 取得身體、裙裝、分束髮絲三個獨立網格，在 5 段動作 × 5 個時間點（預設 25 姿態）逐三角面做網格 broadphase + 真 SAT 細測，紀錄 source SHA、Clip、動作時間、實際 triangle contacts 數／候選數與前八筆相交面例子。超過網格／索引或 Pair 預算時 BLOCK，不得把「沒檢查完」當作 0 碰撞。
 7. UI 新 `aig58-build`、`aig58-report`、`aig58-status` 都由真 callback 執行，前置必須有自研 4.0／5.4 硬碟來源 SHA 验證。可下載 `AIG-5.8-POSE-FITTED-SCHOOL-UNIFORM-TECHNICAL.glb`，真回讀 GLTFLoader，執行 5.0 骨架 QA、5.8 接觸 Gate，之後可載入既有 3D 播放器、重做 5.1／5.2 取樣；JSON 報告與當前 source SHA 綁定。
-8. 技術生成成功後，即使 5.8 偵測接觸風險，也會在報告與 UI 顯示 `CONTACT_RISK_BLOCKED`，**不會自動標示 collision-free 或正式角色可發布**。技術 GLB 可供後續調修與差異對照。
+8. **真差異比對**：除了修整後的 25 個動作姿態，工作區會重新生成未修改過的 5.7 GLB，兩份皆由真 GLTFLoader 解析，在相同前 2 Clip × 5 姿態進行實際三角面 SAT，分開計算裙裝接觸 Δ、馬尾接觸 Δ。增加的接觸數會列為 `possibleFittingRegression`；只有來源相同且動作名稱一致的採樣可比較。此比較不是跨全部五段 Clip 的安全保證。
+9. 技術生成成功後，即使 5.8 偵測接觸風險，也會在報告與 UI 顯示 `CONTACT_RISK_BLOCKED`，**不會自動標示 collision-free 或正式角色可發布**。技術 GLB 可供後續調修與差異對照。
 
 ## 結論限制
 - 這階有真正的裙裝與髮束幾何調整 + 真離散姿態 SAT 接觸量測，不是完整的布料動力學、持續時間碰撞、髮絲自交／服裝自交與穿模修復。
