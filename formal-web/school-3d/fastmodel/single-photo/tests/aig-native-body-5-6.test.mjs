@@ -36,7 +36,10 @@ test('5.6 produces real indexed oriented closed human-body skin GLB and retains 
  assert.ok(body);
  assert.equal(body.skeleton.bones.length,17);
  const ids=Array.from(body.geometry.index.array);
- assert.deepEqual(verifyClosedIndexManifold(ids,body.geometry.getAttribute('position').count).openBoundaryEdges,0);
+ const topology=verifyClosedIndexManifold(ids,body.geometry.getAttribute('position').count);
+ assert.equal(topology.openBoundaryEdges,0);
+ assert.equal(topology.connectedIndexedComponents,1);
+ assert.equal(topology.indexedVertices,body.geometry.getAttribute('position').count);
  assert.ok(body.geometry.getAttribute('skinWeight').count>250);
  assert.ok(body.geometry.getAttribute('skinIndex').count>250);
 });
@@ -64,6 +67,12 @@ test('5.6 independently samples real shoulder/hair collision; a skin PASS is not
 });
 test('5.6 reject non-manifold primitives, bad triangles, false source, and keep 5.5 separate',()=>{
  assert.throws(()=>verifyClosedIndexManifold([0,1,2],3),/AIG56_INDEX_INPUT_INVALID/);
+ // Ten individually closed tetrahedra have no open edges but are not
+ // a single human mesh. Must reject instead of returning a fake seam PASS.
+ const tetra=[[0,2,1],[0,1,3],[0,3,2],[1,2,3]];
+ const disjoint=[];
+ for(let x=0;x<10;x++)for(const face of tetra)disjoint.push(...face.map(i=>i+x*4));
+ assert.throws(()=>verifyClosedIndexManifold(disjoint,40),/AIG56_INDEX_BODY_DISCONNECTED/);
  assert.throws(()=>generateAIG56NativeHumanoid({...scaffold(),releaseAllowed:true}),/AIG56_/);
  const d=generateAIG56NativeHumanoid(scaffold()),d2=generateAIG56NativeHumanoid(scaffold());
  assert.equal(hash(d.bytes),hash(d2.bytes));
