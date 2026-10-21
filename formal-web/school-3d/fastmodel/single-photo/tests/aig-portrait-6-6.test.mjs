@@ -29,7 +29,7 @@ test('6.6 flood fill removes only border-connected RGB, preserving isolated same
 test('6.6 rejects non-uniform border or non-portrait object; avoids fake facial landmarks',()=>{
  const pix=portrait(),w=pix.width,h=pix.height;
  for(let y=0;y<7;y++)for(let x=0;x<7;x++){
-  const p=(y*w+x)*4;pix.data[p]=5;pix.data[p+1]=15;pix.data[p+2]=30;
+  for(const xx of [x,w-1-x]){const p=(y*w+xx)*4;pix.data[p]=5;pix.data[p+1]=15;pix.data[p+2]=30;}
  }
  const r=segmentAIG66BorderRGBA(pix);
  assert.equal(r.valid,false);
