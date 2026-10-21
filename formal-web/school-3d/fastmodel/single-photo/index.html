@@ -89,6 +89,14 @@
 <button id="aig49-load" type="button" disabled>將 4.8 技術 GLB 直接載入動畫／劇情／錄影工作區</button>
 <p id="aig49-status" class="status" role="status">先完成 4.8 骨架蒙皮檢查，再執行 4.9。劇情例：「女主角轉頭，接著低頭，最後甩馬尾。」需要已載入真 GLB 動作，不會憑空生成打架。</p>
 
+<h3>AIG FastModel 5.0｜完整人體骨架／肩頸連續性驗證（草稿）</h3>
+<p>選擇真正的全身 GLB，5.0 會在本機獨立回讀檔案 SHA、真 SkinnedMesh、15 個必要人體骨骼、父子關係、有效權重，以及胸／頸／頭是否位於同一索引連通曲面。還會驗證 GLB 內實際動作是否讓網格變形。未符合時會 BLOCK，並不自動創造或冒用女主角真 3D、照片紋理或打鬥動作。<strong>上限 40 MB，不改動原人物工作區。</strong></p>
+<label for="aig50-input">匯入需驗證的實際全身 GLB</label>
+<input id="aig50-input" type="file" accept=".glb,model/gltf-binary">
+<button id="aig50-run" type="button" disabled>驗證真骨架／肩頸共享網格與動作</button>
+<button id="aig50-report" type="button" disabled>下載 5.0 來源 SHA／骨架與變形證據 JSON</button>
+<p id="aig50-status" class="status" role="status">請選擇實際全身 GLB。4.7～4.9 技術頭頸模型不能被誤判為完整人體；不具人臉照片貼圖或真髮束的來源仍不可通過正式人物 Gate。</p>
+
 
 
 
