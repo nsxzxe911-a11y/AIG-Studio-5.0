@@ -1,0 +1,37 @@
+{
+  "schema": "aig-core-recovery-lock-v1",
+  "project": "AIG Studio 5.0 CNC",
+  "phase": "CORE_FIRST_CONTROL_LATER",
+  "sourceBranch": "release/studio-592-web-authority-core-closure",
+  "immutableUserAssetsNotModified": true,
+  "neverTreatVersionAsGate": true,
+  "machineOutputEnabled": false,
+  "nativeApkExeCertified": false,
+  "photoHuman3DCertified": false,
+  "modules": [
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/Cam.kt",
+      "gitBlobSha": "6ffce02f6cb877fec27d1a2e280dc862766f69d7"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CamWorkflowEngine.kt",
+      "gitBlobSha": "098468ebc94b9db1e666da6fb163392637da25ca"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/FanucNc.kt",
+      "gitBlobSha": "58ee32a94773650ee9a5657f76aa93c62e491b6b"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/Machining3D.kt",
+      "gitBlobSha": "15874cae7a8c42d00746dbdb247794b497b6c363"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/ProjectRepository.kt",
+      "gitBlobSha": "d11587a8e130c349de617feb17cb162c4f382f50"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/RuntimeLinks.kt",
+      "gitBlobSha": "76aada2f2d9ec83fb6343fb7f4734e7ce73f4ca5"
+    }
+  ]
+}
