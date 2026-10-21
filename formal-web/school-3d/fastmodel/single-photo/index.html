@@ -165,6 +165,18 @@
 <button id="aig60-report" type="button" disabled>下載 6.0 來源 SHA／像素標記／密集穿模 JSON</button>
 <p id="aig60-status" class="status" role="status">請先在此頁完成 5.4 真來源核對及 5.9 真模型生成，再提供同 SHA 原圖、標記六點。照片尚未校準、實際女主角相貌驗收和原生 60 FPS 仍 BLOCKED。</p>
 
+<h3>AIG FastModel 6.1｜本機原圖臉部特徵快速掃描輔助／人工校正</h3>
+<p>確認 6.0 同 SHA 原始照片後，只需先在照片上點選額頭與下巴兩點，AIG 使用<strong>真正的原始像素對比</strong>，在限定臉部範圍提出雙眼、鼻子與嘴巴候選。候選並非 AI 人臉辨識證書；光影、髮束遮擋或背景可能造成誤判，低可信度會提示重新手動六點校準。請<strong>檢視每個建議點、修正錯誤點，再明確確認</strong>，才允許延用 6.0 真 GLB 臉部校準。無外部辨識 API、沒有背景上傳、仍保留完整手動校準。</p>
+<button id="aig61-assist" type="button" disabled>在照片點額頭／下巴兩點，開始本機快速掃描</button>
+<label for="aig61-edit-select">修正建議點</label>
+<select id="aig61-edit-select" disabled>
+<option value="forehead">額頭</option><option value="leftEye">左眼</option><option value="rightEye">右眼</option><option value="nose">鼻子</option><option value="mouth">嘴巴</option><option value="chin">下巴</option>
+</select>
+<button id="aig61-edit" type="button" disabled>選擇此點，回照片點正確位置</button>
+<button id="aig61-accept" type="button" disabled>已逐點檢視並確認六點；接回 6.0 真 GLB 校準</button>
+<p id="aig61-status" class="status" role="status">先完成 6.0 原始照片 SHA 核對。此功能只提供需人工確認的影像對比候選，不能自行核准人物相貌或發布。</p>
+
+
 
 
 
