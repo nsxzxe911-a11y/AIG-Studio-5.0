@@ -29,6 +29,7 @@ import {AIG58_SCHEMA,generateAIG58FittedTechnical,auditAIG58RealPoseContacts} fr
 import {AIG59_SCHEMA,runAIG59BoundedAutoFit} from './aig-auto-fit-5-9.mjs';
 import {AIG60_SCHEMA,AIG60_MARKS,calibrateAIG60FaceMarks,fitAIG60MeasuredFaceGLB,auditAIG60DenseAnimation} from './aig-face-alignment-6-0.mjs';
 import {AIG61_SCHEMA,proposeAIG61LocalLandmarks,acceptAIG61ReviewedProposal} from './aig-face-scan-assist-6-1.mjs';
+import {AIG62_SCHEMA,AIG62_REFERENCES,verifyAIG62ReferenceFile} from './aig-school-visual-6-2.mjs';
 const $=id=>document.getElementById(id),status=$('status');
 let view=null,loadedFile='',ready=false,busy=false,skinReportUrl=null,sourceSha=null;
 const reviewObjectUrls=[],timelineObjectUrls=[],importedActionHashes=new Set(),actionShaByClipIndex=new Map();
@@ -2094,6 +2095,62 @@ $('aig61-accept').addEventListener('click',async()=>{
   aig61Review=null;$('aig61-status').textContent='6.1 人工審查 BLOCKED：'+error.message+
    '。可修正六點或恢復 6.0 手動標記。';
  }finally{aig61RefreshEnabled();aig60RefreshEnabled();}
+});
+
+
+let aig62Evidence=null,aig62ObjectURL=null,aig62Revision=0;
+function aig62Reset(message='6.2 請重新核對入庫校園制服視覺圖資。'){
+ ++aig62Revision;aig62Evidence=null;
+ $('aig62-report').disabled=true;
+ if(aig62ObjectURL){URL.revokeObjectURL(aig62ObjectURL);aig62ObjectURL=null;}
+ const img=$('aig62-preview');img.hidden=true;img.removeAttribute('src');
+ $('aig62-status').textContent=message;
+}
+$('aig62-file').addEventListener('change',()=>aig62Reset());
+$('aig62-select').addEventListener('change',()=>aig62Reset());
+$('aig62-verify').addEventListener('click',async()=>{
+ const file=$('aig62-file').files?.[0],id=$('aig62-select').value;
+ if(!file||!AIG62_REFERENCES.some(x=>x.id===id)){
+  $('aig62-status').textContent='請選擇入庫的原始圖檔，不能用不同圖片冒充造型來源。';return;
+ }
+ const rev=++aig62Revision;
+ $('aig62-verify').disabled=true;$('aig62-report').disabled=true;
+ let decoded=null;
+ try{
+  const raw=await file.arrayBuffer(),sha=await sha256Bytes(raw);
+  const sig=new Uint8Array(raw,0,Math.min(raw.byteLength,12));
+  const jpg=sig[0]===255&&sig[1]===216&&sig[2]===255;
+  const png=[137,80,78,71,13,10,26,10].every((v,i)=>sig[i]===v);
+  if(!jpg&&!png)throw Error('AIG62_UNSUPPORTED_FILE_SIGNATURE');
+  decoded=await createImageBitmap(file);
+  const evidence=verifyAIG62ReferenceFile({id,fileSHA256:sha,
+   fileBytes:raw.byteLength,width:decoded.width,height:decoded.height,
+   mime:jpg?'image/jpeg':'image/png'});
+  if(rev!==aig62Revision||id!==$('aig62-select').value||
+     file!==$('aig62-file').files?.[0])throw Error('AIG62_STALE_REFERENCE_SELECTION');
+  aig62Evidence=evidence;
+  if(aig62ObjectURL)URL.revokeObjectURL(aig62ObjectURL);
+  aig62ObjectURL=URL.createObjectURL(file);
+  const image=$('aig62-preview');image.src=aig62ObjectURL;image.hidden=false;
+  $('aig62-report').disabled=false;
+  $('aig62-status').textContent='校園女主角 2D 視覺參考已核對：'+
+   sha.slice(0,12)+'，'+decoded.width+'×'+decoded.height+
+   '。這不是 3D GLB；其他動畫服裝（含泳裝）均保留。';
+ }catch(e){
+  aig62Reset('6.2 來源核對 BLOCKED：'+e.message+
+   '。不會改動角色 GLB、任何服裝、劇情或動畫。');
+ }finally{decoded?.close?.();$('aig62-verify').disabled=false;}
+});
+$('aig62-report').addEventListener('click',()=>{
+ if(!aig62Evidence)return;
+ aig47Download(JSON.stringify({schema:AIG62_SCHEMA,reference:aig62Evidence,
+  libraryFolder:'/AIG FastModel/女主角正式圖資/2026-10-21',
+  actualImageBinaryEmbeddedInDeployedSite:false,
+  modelGLBAutomaticallyApproved:false,
+  otherAnimationCostumesPreserved:true,
+  currentSwimwearAssetsDeleted:false,
+  releaseAllowed:false
+ },null,2),'AIG-6.2-SCHOOL-VISUAL-REFERENCE-NOT-GLB.json','application/json');
 });
 
 let aig4Busy=false;
