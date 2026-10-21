@@ -64,7 +64,7 @@ test('old generation/version markers and assets are retained, one formal program
 test('6.9.2: no WAV is an optional enhancement, not a prerequisite for photo, preview or video',()=>{
  const app=read('app.mjs'),html=read('index.html'),shell=read('aig-unified-shell-6-9.mjs');
  assert.ok(html.includes('配音 WAV（完全選填，沒有也可以生成動畫）'));
- assert.ok(html.includes('聲音檔非必要')||shell.includes('聲音檔非必要'));
+ assert.ok(html.includes('配音 WAV（完全選填')&&shell.includes('不提供 WAV 也可生成'));
  assert.ok(shell.includes('aig-unified-auto-sound'));
  assert.ok(shell.includes('story-sound-options'));
  assert.ok(app.includes('if(voice){'));
