@@ -61,6 +61,15 @@ try{
   await page.locator('#aig65-story').fill('女主角轉頭，微笑。');
   await page.locator('#aig65-mode').selectOption('2D');
   await page.locator('#aig65-build').click();
+  await page.waitForTimeout(900);
+  console.log('AIG AFTER REAL BUILD CLICK',JSON.stringify({
+   device:device.name,
+   status:await page.locator('#aig65-status').innerText(),
+   model:await page.locator('#aig65-mode').inputValue(),
+   outputVisible:await page.locator('#aig-unified-panel-output').isVisible(),
+   playDisabled:await page.locator('#aig65-play').isDisabled(),
+   errors:failures
+  }));
   await page.waitForFunction(()=>{
    const t=document.querySelector('#aig65-status')?.textContent||'';
    return t.includes('AUTO 選定')||t.includes('BLOCKED');
