@@ -159,7 +159,7 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  primary.append(inlineStatus);
  inlineStatus.append(status);
  const head=doc.querySelector('header h1');
- if(head)head.innerHTML='<span>AIG</span> FastModel <small>6.9.4 · 單一動畫工作區</small>';
+ if(head)head.innerHTML='<span>AIG</span> FastModel <small>6.9.5 · 單一動畫工作區</small>';
  const displayLabels={
   'aig65-build':'生成動畫',
   'aig65-play':'▶ 播放',
