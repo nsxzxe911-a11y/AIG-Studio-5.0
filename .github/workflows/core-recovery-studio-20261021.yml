@@ -1,0 +1,31 @@
+name: AIG Studio CNC core-first REAL recovery gate (no release)
+on:
+  push:
+    branches: [repair/core-first-studio-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  restore-core-before-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail closed if native CAD/CAM/SIM/NC source vanished
+        run: python3 ci/verify_core_recovery_lock.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.7.0'
+      - name: Run real MANUAL CAM with A/B/C and project/NC persistence
+        run: gradle --no-daemon :core:coreRecoverySmoke :core:camManualMachiningContractRegression
+      - name: Core-only verdict
+        run: |
+          echo "STUDIO_CORE_SMOKE=SOURCE_AND_JVM_ONLY"
+          echo "ANDROID_APK=UNVERIFIED"
+          echo "WINDOWS_EXE=UNVERIFIED"
+          echo "6AX_MACHINE_MOTION=NOT_CERTIFIED"
+          echo "CONTROL_BINDINGS=DEFERRED_UNTIL_CORE_GATES_PASS"
