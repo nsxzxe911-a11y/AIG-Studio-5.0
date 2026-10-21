@@ -21,7 +21,7 @@ jobs:
         with:
           gradle-version: '9.7.0'
       - name: Run real MANUAL CAM with A/B/C and project/NC persistence
-        run: gradle --no-daemon :core:coreRecoverySmoke :core:camManualMachiningContractRegression
+        run: gradle --no-daemon :core:coreRecoverySmoke :core:camManualMachiningContractRegression :core:runtimeLinkRegression
       - name: Core-only verdict
         run: |
           echo "STUDIO_CORE_SMOKE=SOURCE_AND_JVM_ONLY"
