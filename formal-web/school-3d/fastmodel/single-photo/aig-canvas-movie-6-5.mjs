@@ -124,7 +124,10 @@ export function drawAIG65CanvasFrame({
  ctx.fillStyle='rgba(2,4,7,.77)';ctx.fillRect(w*.045,h*.815,w*.91,h*.145);
  ctx.fillStyle='#d5faff';ctx.textAlign='left';
  ctx.font='bold '+Math.round(w*.024)+'px sans-serif';
- ctx.fillText('AIG '+plan.selectedMode+' · '+action,w*.075,h*.861,w*.81);
+ const isStillPhotoWalk=!!plan.hasImage&&plan.selectedMode!=='3D'&&
+  ['walk','run','jump','dodge','turn','headTurn','ponySwing'].includes(motion.beat.actionId);
+ ctx.fillText('AIG '+plan.selectedMode+' · '+
+  (isStillPhotoWalk?'照片運鏡（非真'+action+'）':action),w*.075,h*.861,w*.81);
  const line=String(caption||motion.beat.text||'').slice(0,180);
  if(line){ctx.fillStyle='#fff';ctx.font=Math.round(w*.022)+'px sans-serif';
   ctx.fillText(line,w*.075,h*.927,w*.82);}
@@ -133,7 +136,8 @@ export function drawAIG65CanvasFrame({
   actualImagePixelFrameProduced:true,
   layeredParallaxActive:!!(plan.selectedMode==='2.5D'&&layered?.foreground),
   localFacePixelsActuallyWarped:!!portraitFrame,
-  actualHumanJointPositionsComputed:false};
+  actualHumanJointPositionsComputed:false,
+  stillPhotoMotionCannotBeCalledRealWalk:isStillPhotoWalk};
 }
 export class AIG65CanvasRecorder{
  constructor({env=globalThis,onStatus=()=>{}}={}){
