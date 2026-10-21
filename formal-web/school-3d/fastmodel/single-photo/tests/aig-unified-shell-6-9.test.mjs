@@ -76,3 +76,10 @@ test('6.9.2: no WAV is an optional enhancement, not a prerequisite for photo, pr
  assert.ok(html.includes('id="sfx-enabled"'));
  assert.ok(html.includes('id="music-enabled"'));
 });
+
+test('6.9.2 initial rAF timestamp is clamped to 0 before renderer, never negative',()=>{
+ const app=read('app.mjs');
+ assert.ok(app.includes('Math.max(0,Math.min(current.plan.seconds,(now-aig65StartedAt)/1000))'));
+ assert.ok(app.includes('aig65FrameId=requestAnimationFrame(animate)'));
+ assert.ok(!app.includes('const t=Math.min(current.plan.seconds,(now-aig65StartedAt)/1000);'));
+});
