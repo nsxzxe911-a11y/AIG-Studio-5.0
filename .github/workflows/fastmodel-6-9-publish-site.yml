@@ -1,4 +1,4 @@
-name: Publish FastModel 6.9.1 COMPACT to ORIGINAL AIG website
+name: Publish FastModel 6.9.1 UNIFIED WORKSPACE to ORIGINAL AIG website
 on:
   push:
     branches:
