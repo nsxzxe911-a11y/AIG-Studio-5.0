@@ -189,20 +189,26 @@ export class AIG65CanvasRecorder{
   if(size===0||this.frames<2){this.fail(Error('AIG65_EMPTY_OR_UNRENDERED_VIDEO'));return;}
   const blob=new Blob(this.chunks,{type:this.format.mime});
   this.state='COMPLETE';
-  const output={blob,filename:'AIG-6.5-REAL-2D-2.5D-1080p.'+this.format.ext,
+  const output={blob,filename:'AIG-6.8-REAL-2D-2.5D-1080p.'+this.format.ext,
    evidence:{schema:AIG65_CAPTURE_SCHEMA,
     sourceSHA256:this.sourceSHA256,
     outputMimeType:this.format.mime,container:this.format.ext,
     actualBytes:blob.size,actualFramesDrawn:this.frames,
+    canvasDrawCallsDuringRecording:this.frames,
+    measuredEncodedFrameCount:false,
     targetResolution:[1920,1080],targetFps:30,
+    actualEncodedVideoResolutionVerified:false,
     audioTracksRecorded:this.audioTracks,
+    audioTracksAttachedToCaptureStream:this.audioTracks,
+    encodedAudioTracksVerified:false,
+    actualAudioVideoSyncVerified:false,
     systemSpeechSynthesisCaptured:false,
     actualMeasuredFpsStable30:false,
     trueHumanLimbAnimation:false,actual3DDepthReconstructed:false,
     originalGLBMoviePipelineUnmodified:true,
     releaseAllowed:false}};
   this.cleanup();this.resolve?.(output);
-  this.onStatus('真正的影像編碼完成：'+blob.size+' bytes／'+this.frames+' Canvas 更新幀。');
+  this.onStatus('真正的影像編碼完成：'+blob.size+' bytes／'+this.frames+' Canvas 繪圖更新次數（非編碼影片幀數）。');
  }
  fail(error){
   if(this.state==='FAILED'||this.state==='COMPLETE')return;
