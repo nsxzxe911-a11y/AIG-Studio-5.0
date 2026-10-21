@@ -125,6 +125,24 @@ test('6.5 actually draws 2D transformed bitmap and text story frames, not a time
  drawAIG65CanvasFrame({ctx:a.ctx,canvas,plan:card,timeSeconds:.5});
  assert.ok(a.calls.includes('text'));
 });
+test('2.5D does not draw an extracted duplicate person onto the original photo without clean background',()=>{
+ const photo={width:320,height:480};
+ const p=planAIG65AutoAnimation(options({requestedMode:'2.5D'}));
+ const canvas={width:960,height:540};
+ const a=contextMock();
+ const noPlate=drawAIG65CanvasFrame({ctx:a.ctx,canvas,plan:p,timeSeconds:1,
+  layered:{image:photo,background:photo,foreground:photo,backgroundPlateVerified:false}});
+ assert.equal(a.calls.filter(x=>x==='drawImage').length,1,
+  'one photographed person, no duplicate/ghost foreground');
+ assert.equal(noPlate.layeredParallaxActive,false);
+ assert.equal(noPlate.duplicatedForegroundOnUnrecoveredBackgroundBlocked,true);
+ const b=contextMock();
+ const otherBackdrop={width:320,height:480};
+ const realPlate=drawAIG65CanvasFrame({ctx:b.ctx,canvas,plan:p,timeSeconds:1,
+  layered:{image:photo,background:otherBackdrop,foreground:photo,backgroundPlateVerified:true}});
+ assert.equal(b.calls.filter(x=>x==='drawImage').length,2);
+ assert.equal(realPlate.layeredParallaxActive,true);
+});
 test('6.5 recorder only allows actual 1080p source and browser-encoded chunks; fake GLB source rejected',async()=>{
  const plan=planAIG65AutoAnimation(options());
  const fakeStream={
