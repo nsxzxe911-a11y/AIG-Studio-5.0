@@ -1310,7 +1310,11 @@ internal fun testRuntimeLinkStateSyncContract() {
     check(state.status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.DISCONNECTED) { "Machine has not passed transport handshake" }
     check(RuntimeLinkContract.MACHINE_LINK_POLICY=="PHYSICAL_HANDSHAKE_REQUIRED_NO_UI_TOGGLE")
     check(runCatching{state.set(RuntimeLinkId.MACHINE,RuntimeLinkStatus.CONNECTED)}.isFailure)
-    check(runCatching{state.toggle(RuntimeLinkId.MACHINE)}.isFailure)
+    check(state.toggle(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.WARNING)
+    check(state.status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.WARNING) {
+        "UI may show pending, never fake a physical connection"
+    }
+    state.set(RuntimeLinkId.MACHINE,RuntimeLinkStatus.DISCONNECTED)
     check(state.status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.DISCONNECTED)
     val cockpit=mutableListOf<RuntimeLinkSnapshot>()
     val manager=mutableListOf<RuntimeLinkSnapshot>()
