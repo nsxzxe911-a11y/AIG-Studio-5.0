@@ -58,11 +58,16 @@ export class PhotoViewer{
   this.scene.add(new THREE.HemisphereLight(0xcdeaff,0x242035,1.5));
   const light=new THREE.DirectionalLight(0xffffff,3);light.position.set(2,4,3);this.scene.add(light);
   const pmrem=new THREE.PMREMGenerator(this.renderer),room=new RoomEnvironment();this.env=pmrem.fromScene(room).texture;this.scene.environment=this.env;room.dispose();pmrem.dispose();
-  this.resize=new ResizeObserver(()=>this.fitCanvas());this.resize.observe(canvas.parentElement);this.fitCanvas();this.previous=0;this.orbit=false;this.skinProbe=null;this.skinReport=null;this.onFrame=null;this.onAfterRender=null;this.movieMode=false;this.movieOriginalViewport=null;
+  this.resize=new ResizeObserver(()=>this.fitCanvas());this.resize.observe(canvas.parentElement);this.fitCanvas();this.previous=0;this.orbit=false;this.skinProbe=null;this.skinReport=null;this.onFrame=null;this.onAfterRender=null;this.onFrameMeasured=null;this.movieMode=false;this.movieOriginalViewport=null;
   this.renderer.setAnimationLoop(t=>{try{const dt=this.previous?Math.min(.1,(t-this.previous)/1000):0;this.previous=t;this.animation?.update(dt);
     try{this.onFrame?.(dt,t);}catch(audioError){this.onFrame=null;this.onError('音訊已隔離：'+audioError.message);}
     if(this.skinProbe&&this.model){this.skinProbe.capture(this.model,t,{animationName:this.animation?.clips?.[this.animation?.index]?.name||null});if(this.skinProbe.done)this.skinProbe=null;}
-    this.controls.autoRotate=this.orbit;this.controls.update();this.renderer.render(this.scene,this.camera);
+    this.controls.autoRotate=this.orbit;this.controls.update();
+    const renderStart=performance.now();this.renderer.render(this.scene,this.camera);
+    try{this.onFrameMeasured?.({timeMs:t,renderCpuMs:performance.now()-renderStart,
+     width:this.canvas.width,height:this.canvas.height,
+     drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,
+     visibility:document.visibilityState});}catch(e){this.onFrameMeasured=null;this.onError('5.2 畫面採樣已隔離：'+e.message);}
     try{this.onAfterRender?.(t);}catch(movieError){this.onAfterRender=null;this.onError('錄影已隔離：'+movieError.message);}}catch(e){this.renderer.setAnimationLoop(null);onError(e.message);}});
  }
  fitCanvas(){if(this.movieMode)return;const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);this.camera.aspect=Math.max(1,r.width)/Math.max(1,r.height);this.camera.updateProjectionMatrix();}
