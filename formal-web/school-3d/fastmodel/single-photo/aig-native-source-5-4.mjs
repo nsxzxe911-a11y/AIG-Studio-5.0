@@ -60,7 +60,7 @@ export async function verifyAIG54NativeChain({manifest,glbBytes,expectedImageSHA
   actualGLBAndSourceByteDigestLinked:true,
   only4_0InferredVolumeMesh:true,
   identityMatchUnverified:true,characterSourcePhotoSHAAloneInsufficient:true,
-  5_0FullBodySkinNotVerified:true,
+  fullBody5_0SkinNotVerified:true,
   hairBodyCollisionNotVerified:true,
   noPaidThirdPartyUsed:true,formalHeroineApproved:false,
   releaseAllowed:false,outcome:'NATIVE_SOURCE_INTEGRITY_ONLY'};
