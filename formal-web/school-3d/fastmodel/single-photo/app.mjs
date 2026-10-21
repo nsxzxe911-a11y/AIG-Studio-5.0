@@ -15,6 +15,7 @@ import {appearanceFor,auditHairNeck,Aig44TimingEvidence} from './aig-qa-4-4.mjs'
 import {AIG45_POSES,AIG45_MARKERS,AIG45_SCHEMA,recognizePose,normalizeMark,auditMarks,reviewPoseSet} from './aig-calibration-4-5.mjs';
 import {AIG46_SCHEMA,normalizePoseSet,buildHeadNeckPonytail,exportOBJ} from './aig-head-neck-4-6.mjs';
 import {AIG47_SCHEMA,buildAIG47Draft,exportAIG47GLB} from './aig-welded-4-7.mjs';
+import {AIG48_SCHEMA,buildAIG48Rig,exportAIG48GLB,createAIG48PoseSampler,auditAIG48Pose} from './aig-skin-4-8.mjs';
 import {AIG48_SCHEMA,buildAIG48Draft,exportAIG48GLB,auditAIG48Poses} from './aig-skin-motion-4-8.mjs';
 import {AIG49_SCHEMA,auditAIG49DynamicContacts} from './aig-dynamic-collision-4-9.mjs';
 const $=id=>document.getElementById(id),status=$('status');
@@ -454,6 +455,14 @@ $('aig45-export').addEventListener('click',()=>{
 
 // 4.6 independent native geometry path: no paid APIs or overwrite of 4.0 GLB.
 let aig46Profile=null,aig46Draft=null,aig47Draft=null;
+let aig48Rig=null,aig48Output=null,aig48Sampler=null,aig48PosePreview=null;
+function aig48Reset(message='4.8 來源或馬尾參數變更；已隔離舊骨架與動畫樣本。'){
+ aig48Rig=null;aig48Output=null;aig48Sampler=null;aig48PosePreview=null;
+ for(const id of ['aig48-download','aig48-audit','aig48-preview','aig48-clip','aig48-time'])$(id).disabled=true;
+ $('aig48-build').disabled=!aig47Draft;
+ $('aig48-status').textContent=message;
+}
+
 let aig48Draft=null,aig48QA=null,aig48Busy=false;
 let aig49Audit=null,aig49Rig=null,aig49Busy=false,aig49Epoch=0;
 function aig49Reset(message='4.9 技術骨架來源已變更，舊碰撞採樣不可再使用。'){
@@ -471,6 +480,7 @@ function aig48Reset(message='4.8 來源或 4.7 網格已變更；請重新產生
 }
 function aig47Reset(message='4.7 來源或馬尾參數已變更；請重新建立共享頂點技術網格。'){
  aig47Draft=null;
+  aig48Reset();
  aig48Reset('4.7 來源失效，4.8 先前技術骨架／動作證據已隔離。');
  for(const id of ['aig47-download','aig47-evidence'])$(id).disabled=true;
  $('aig47-build').disabled=!aig46Profile||!aig46Draft;
@@ -492,7 +502,7 @@ function aig46Draw(){
  ctx.fillStyle='#020407';ctx.fillRect(0,0,c.width,c.height);
  ctx.fillStyle='#b3d6ea';ctx.font='13px sans-serif';
  ctx.fillText('AIG 4.6 · 推估幾何，不是擬真人物',12,22);
- const draft=aig47Draft||aig46Draft;
+ const draft=aig48PosePreview||aig47Draft||aig46Draft;
  if(!draft)return;
  const yaw=Number($('aig46-yaw').value)*Math.PI/180;
  const cos=Math.cos(yaw),sin=Math.sin(yaw);
@@ -521,7 +531,7 @@ function aig46Draw(){
   ctx.lineTo(t.d.x,t.d.y);ctx.closePath();ctx.fill();ctx.stroke();
  }
  ctx.fillStyle='#f3c47a';
- ctx.fillText(aig47Draft?'4.7 頭頸一體共享頂點 · 技術 GLB · 非正式人物':'4.6 三個獨立封閉網格 · 無骨架／背面照片',12,c.height-16);
+ ctx.fillText(aig48PosePreview?'4.8 技術蒙皮姿態 · 非正式人物':aig47Draft?'4.7 頭頸一體共享頂點 · 技術 GLB · 非正式人物':'4.6 三個獨立封閉網格 · 無骨架／背面照片',12,c.height-16);
 }
 function aig46Status(){
  if(!aig46Draft)return;
@@ -569,6 +579,7 @@ $('aig47-build').addEventListener('click',()=>{
   const glb=exportAIG47GLB(draft);
   if(!glb.bytes?.length||!draft.topologyQA)throw Error('AIG47_GLTF_EXPORT_GATE');
   aig47Draft=draft;
+  aig48Reset('4.7 已完成；可執行 4.8 骨架建立。');
   aig48Reset('4.7 已建立。可產生 4.8 真骨架技術動畫。');
   $('aig47-download').disabled=false;$('aig47-evidence').disabled=false;
   $('aig47-build').disabled=false;
@@ -691,6 +702,49 @@ $('aig48-evidence').addEventListener('click',()=>{
   headNeckOneIndexedConnectedSurface:true,sourcePonytailClearance:aig48Draft.sourceHairClearance,
   original4_7AndOlderOutputsRetained:true,thirdPartyInferenceUsed:false,creditsSpent:0};
  aig47Download(JSON.stringify(report,null,2),'AIG-4.8-bone-pose-risk-NOT-HEROINE.json','application/json');
+});
+
+
+function aig48RefreshPose(){
+ if(!aig48Sampler||!aig48Rig)return;
+ const clip=$('aig48-clip').value,sec=Number($('aig48-time').value)/50;
+ const pose=aig48Sampler.sample(clip,sec),qa=auditAIG48Pose(aig48Rig,pose);
+ aig48PosePreview=pose;aig46Draw();
+ $('aig48-status').textContent='真 GLB 局部骨架：'+clip+' / '+sec.toFixed(2)+'秒；頭頸塌面 '+qa.parts[0].collapsedTriangles+
+ '、拉伸風險 '+qa.parts[0].highStretchTriangles+'；馬尾塌面 '+qa.parts[1].collapsedTriangles+
+ '、拉伸風險 '+qa.parts[1].highStretchTriangles+'。真臉、精確髮絲碰撞、實機 FPS 未驗證。';
+}
+$('aig48-build').addEventListener('click',async()=>{
+ if(!aig47Draft||!aig46Profile)return;
+ const source=aig47Draft;$('aig48-build').disabled=true;
+ try{
+  const rig=buildAIG48Rig(source),glb=exportAIG48GLB(rig),sampler=await createAIG48PoseSampler(glb);
+  if(source!==aig47Draft)throw Error('SOURCE_CHANGED');
+  aig48Rig=rig;aig48Output=glb;aig48Sampler=sampler;
+  for(const id of ['aig48-download','aig48-audit','aig48-preview','aig48-clip','aig48-time'])$(id).disabled=false;
+  $('aig48-build').disabled=false;$('aig48-clip').value='AIG48_HEAD_YAW';$('aig48-time').value='25';
+  aig48RefreshPose();
+ }catch(error){aig48Reset('4.8 蒙皮 BLOCKED：'+error.message+'。4.7、劇情、聲音、錄影未更動。');aig46Draw();}
+});
+$('aig48-clip').addEventListener('change',()=>{if(aig48Sampler)aig48RefreshPose();});
+$('aig48-time').addEventListener('input',()=>{if(aig48Sampler)aig48RefreshPose();});
+$('aig48-preview').addEventListener('click',()=>{if(aig48Sampler)aig48RefreshPose();});
+$('aig48-download').addEventListener('click',()=>{
+ if(aig48Output)aig47Download(aig48Output.bytes,'AIG-4.8-PARTIAL-SKIN-NOT-HEROINE.glb','model/gltf-binary');
+});
+$('aig48-audit').addEventListener('click',()=>{
+ if(!aig48Sampler||!aig48Rig)return;
+ try{
+  const samples=[];
+  for(const clip of aig48Sampler.clipNames)for(const t of [0,.5,1,1.5,2])
+   samples.push(auditAIG48Pose(aig48Rig,aig48Sampler.sample(clip,t)));
+  aig47Download(JSON.stringify({schema:AIG48_SCHEMA,sourceSHA256:aig48Rig.sourceSHA256,
+   boneNames:aig48Rig.boneNames,samples,original47Preserved:true,storyAudioMoviePreserved:true,
+   realPhotoFaceVerified:false,exactHairCollisionVerified:false,
+   windowsAndroid60FPSVerified:false,releaseAllowed:false},null,2),
+   'AIG-4.8-20-pose-QA-NOT-APPROVED.json','application/json');
+  aig48RefreshPose();
+ }catch(error){$('aig48-status').textContent='動態 QA BLOCKED：'+error.message;}
 });
 
 $('aig46-build').addEventListener('click',()=>{
