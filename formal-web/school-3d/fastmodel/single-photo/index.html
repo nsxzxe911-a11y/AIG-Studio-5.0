@@ -102,6 +102,16 @@
 <button id="aig51-report" type="button" disabled>下載 5.1 姿態／接縫／碰撞來源證據 JSON</button>
 <p id="aig51-status" class="status" role="status">等待 5.0 完整人體結構驗證通過。離散 15 姿態只能作風險檢查，無法證明全部動作毫無穿模，也不代表 60 FPS 實機驗收。</p>
 
+<h3>AIG FastModel 5.2｜真 GLB 動畫畫面／瀏覽器實測 FPS（Draft）</h3>
+<p>將已通過 5.0 的同一來源 GLB <strong>明確載入既有 3D 播放工作區</strong>，即可產生真實動畫四方向 × 四時間點 16 格截圖，或測試 240 幀真 WebGL 畫面更新節奏。載入會替換目前預覽並重設播放中劇情時間軸，<strong>不修改原始 GLB 或刪掉台詞、音效、音樂／影片功能</strong>。5.1 若有風險仍維持 BLOCK，5.2 不會消除或掩蓋。</p>
+<button id="aig52-load" type="button" disabled>載入 5.0 驗證過的同源 GLB 到 3D 工作區</button>
+<button id="aig52-visual" type="button" disabled>實拍真 GLB 動畫 16 格／四方向 PNG</button>
+<button id="aig52-visual-report" type="button" disabled>下載 16 格來源 SHA／姿態 QA JSON</button>
+<button id="aig52-fps" type="button" disabled>實測本機瀏覽器 240 幀 FPS／卡頓</button>
+<button id="aig52-fps-report" type="button" disabled>下載實測 FPS、p95、解析度及來源 SHA JSON</button>
+<p id="aig52-status" class="status" role="status">等待真實 GLB 通過 5.0 並載入播放器。FPS 是瀏覽器 WebGL 畫面更新率，不等於原生 Android／Windows 效能，也無法單靠 16 格圖核准女主角外觀。</p>
+
+
 
 
 
