@@ -19,7 +19,7 @@
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-canvas-movie-6-5.mjs",
-      "gitBlobSha": "b58ff69152388437f5c73efe95f9622130f3d565"
+      "gitBlobSha": "9d267fc6c0111b7a10c841d39a86e0c7c181bd97"
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/viewer.mjs",
@@ -30,5 +30,5 @@
       "gitBlobSha": "b05871cdb04ea93e80f4e189fa0a239d99a652dd"
     }
   ],
-  "ghostOverlayPolicy": "NO_EXTRACTED_FOREGROUND_OVER_ORIGINAL_WITHOUT_VERIFIED_CLEAN_BACKGROUND_PLATE"
+  "ghostOverlayPolicy": "NO_DOUBLE_PERSON_ONE_PASS_VISIBLE_PAN_ZOOM_WITHOUT_CLEAN_BACKGROUND"
 }
