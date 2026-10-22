@@ -172,5 +172,40 @@ fun main() {
         }
     }
     println("STUDIO_FINITE_CAM_INPUT_GATE_PASS|TOOL|DEPTH|SAFE_Z|FEED|LEAD_IN|LEAD_OUT")
+    // Shared wire-level golden hash must match FastModel's JSON fixture.
+    val goldenPoints=listOf(
+        AigReadOnlyMotionPoint(0.0,0.0,8.0,rapid=true),
+        AigReadOnlyMotionPoint(0.0,0.0,-2.0),
+        AigReadOnlyMotionPoint(20.0,0.0,-2.0),
+        AigReadOnlyMotionPoint(20.0,0.0,8.0,rapid=true)
+    )
+    val golden=AigReadOnlyMotionPreview.export(goldenPoints,"3AX",1500.0)
+    check("\"sha256\":\"371e8f78e51a412294300e7f832fd0c315041ee69d8d66723fde8541d276f99e\"" in golden){
+        "Kotlin CNC exporter and FastModel importer must agree byte-for-byte"
+    }
+    check(runCatching {
+        AigReadOnlyMotionPreview.export(goldenPoints.map{it.copy(rapid=true)},"3AX",1500.0)
+    }.isFailure)
+    check(runCatching {
+        AigReadOnlyMotionPreview.export(goldenPoints.map{it.copy(x=1.0)},"3AX",1500.0)
+    }.isFailure)
+    check(runCatching {
+        AigReadOnlyMotionPreview.export(goldenPoints.mapIndexed { index,p->
+            if(index==1)p.copy(c=45.0) else p
+        },"5AX",1500.0)
+    }.isFailure)
+    check(runCatching {
+        AigReadOnlyMotionPreview.export(goldenPoints.mapIndexed { index,p->
+            if(index==1)p.copy(x=Double.NaN) else p
+        },"3AX",1500.0)
+    }.isFailure)
+    val realPreview=AigReadOnlyMotionPreview.fromCam(cam3x,"3AX")
+    check(realPreview.contains("\"sourceDomain\":\"CNC_CAM_SIM\"") &&
+        realPreview.contains("\"machineExecutionAllowed\":false") &&
+        realPreview.contains("\"humanRiggedAnimation\":false"))
+    check(runCatching{AigReadOnlyMotionPreview.fromCam(cam,"5AX")}.isFailure) {
+        "A/B/C trajectory must not be mislabeled as verified five-axis motion"
+    }
+    println("AIG_READONLY_MOTION_INTEROP_CORE_PASS|SHA256_GOLDEN|G0_G1|REAL_TOOLPOINTS|MACHINE_BLOCKED|NO_FAKE_HUMAN_RIG|INVALID_BLOCKED")
     println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|3AX_FANUC_G0_G1|6AX_C_NC_BLOCKED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE|CAD_AUTO_SIM_NC|NC_FIRST_EVENTS")
 }
