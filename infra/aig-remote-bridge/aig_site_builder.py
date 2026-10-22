@@ -42,6 +42,9 @@ app.add_middleware(CORSMiddleware, allow_origins=[PUBLIC_ORIGIN],
                    allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type"])
 LOCK = threading.Lock()
 REQUESTS = {}
+RUN_MATCH_WINDOW_SEC = 300
+RUN_ACTIVE_LIMIT_SEC = 4 * 60 * 60
+RUN_TITLE_PREFIX = 'AIG verified native build / '
 
 
 class BuildRequest(BaseModel):
@@ -136,7 +139,8 @@ def launch(request: BuildRequest, authorization: str | None = Header(default=Non
         REQUESTS[run_id] = record
         try:
             github("POST", "/repos/" + repo + "/actions/workflows/" +
-                   info["workflow"] + "/dispatches", {"ref": info["branch"]})
+                   info["workflow"] + "/dispatches", {"ref": info["branch"],
+                                                  "inputs": {"aig_request_id": run_id}})
         except Exception:
             del REQUESTS[run_id]
             raise
@@ -159,23 +163,40 @@ def run_status(record):
                 "&event=workflow_dispatch&per_page=30")
         runs = (github("GET", path) or {}).get("workflow_runs", [])
         after = datetime.fromisoformat(record["started"].replace("Z", "+00:00")).timestamp() - 4
+        # Correlate by unique server-generated ID and exact immutable SHA;
+        # matching only time+branch+SHA can hijack a different user's run.
         matching = [
             r for r in runs if r.get("head_sha") == record["sha"] and
+            r.get("display_title") == RUN_TITLE_PREFIX + record["id"] and
             datetime.fromisoformat(r["created_at"].replace("Z", "+00:00")).timestamp() >= after
         ]
         if matching:
             matching.sort(key=lambda r: r.get("created_at", ""), reverse=True)
             record["runId"] = matching[0]["id"]
     if not record["runId"]:
-        return {"id": record["id"], "state": "WAITING_FOR_GITHUB_RUN",
-                "sourceSHA": record["sha"], "releaseCertified": False}
+        elapsed = (datetime.now(timezone.utc) - datetime.fromisoformat(
+            record["started"].replace("Z", "+00:00"))).total_seconds()
+        if elapsed > RUN_MATCH_WINDOW_SEC:
+            record["state"] = "BLOCKED_DISPATCH_TIMEOUT"
+        return {"id": record["id"], "state": record["state"] if elapsed > RUN_MATCH_WINDOW_SEC else "WAITING_FOR_GITHUB_RUN",
+                "sourceSHA": record["sha"], "downloadReady": False,
+                "reason": "GITHUB_RUN_CORRELATION_NOT_FOUND" if elapsed > RUN_MATCH_WINDOW_SEC else None,
+                "releaseCertified": False}
     run = github("GET", "/repos/" + repo + "/actions/runs/" + str(record["runId"]))
     # Fail closed: no result from a different branch or source SHA.
     if run.get("head_sha") != record["sha"] or run.get("head_branch") != info["branch"]:
         raise HTTPException(409, "GITHUB_BUILD_SOURCE_IDENTITY_CHANGED")
+    if run.get("display_title") != RUN_TITLE_PREFIX + record["id"]:
+        raise HTTPException(409, "GITHUB_BUILD_REQUEST_IDENTITY_CHANGED")
     state = run.get("status")
     result = run.get("conclusion")
-    record["state"] = "FINISHED" if state == "completed" else "RUNNING"
+    run_created = run.get("created_at") or record["started"]
+    run_age = (datetime.now(timezone.utc) - datetime.fromisoformat(
+        run_created.replace("Z", "+00:00"))).total_seconds()
+    if state != "completed" and run_age > RUN_ACTIVE_LIMIT_SEC:
+        record["state"] = "BLOCKED_BUILD_STALLED"
+    else:
+        record["state"] = "FINISHED" if state == "completed" else "RUNNING"
     record["conclusion"] = result
     output = {"id": record["id"], "project": record["project"],
               "state": record["state"], "sourceSHA": record["sha"],
@@ -183,6 +204,13 @@ def run_status(record):
               "runUrl": run.get("html_url"), "workflowConclusion": result,
               "releaseCertified": False, "androidAndWindowsRequested": True,
               "artifacts": [], "downloadReady": False}
+    if record["state"] == "BLOCKED_BUILD_STALLED":
+        output["reason"] = "RUN_EXCEEDED_WATCHDOG_LIMIT_VERIFY_IN_GITHUB"
+        return output
+    if state == "completed" and result != "success":
+        output["state"] = "BLOCKED_WORKFLOW_FAILED"
+        output["reason"] = "GITHUB_ACTIONS_" + str(result or "UNKNOWN")
+        return output
     if state == "completed" and result == "success":
         artifacts = (github("GET", "/repos/" + repo +
                      "/actions/runs/" + str(record["runId"]) +
