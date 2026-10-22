@@ -19,6 +19,8 @@
   - 兩平台均是實際 GLB + quaternion animation / indexed WebGL triangles。此 `samples` 為 browser frame callback 次數；不等同有效 GPU timer query 筆數，須查看個別 proof JSON 才能引用真 GPU p95。
   - 1.6 資源管理真 WebGL browser PASS（手機/電腦 G0/G1 Buffer created=2、mesh evictions=11），既有 1.3 G0/G1 數值回歸亦 PASS。
   - 真動畫 1.7 evidence artifact #12448412550。
+  - 原生 Artifact ZIP 已取回逐檔檢查：手機 84 個實際渲染 callback 中有 **15 筆**有效 async GPU timer，p95=**48.991295ms**；桌面 65 幀 callback 有 **9 筆**有效 GPU timer，p95=**55.573801ms**。這些發生在 GitHub Headless Chromium／SwiftShader **軟體 WebGL 測試環境**，絕不能稱為真 Android 或 Windows 獨顯 GPU 效能，也不能宣稱比 1.6 快多少百分比。
+  - 原測試在 GPU renderer dispose 後才截圖，造成**空白 Canvas 截圖證據缺陷**；真幾何、Quaternion 動畫與 Render draw calls 數值 Gate PASS。已修成先獨立擷取正在顯示的 WebGL Canvas 再 cleanup，必須等新版 #39832016004 CI 實際 SUCCESS 和檢視其 PNG 才算視覺截圖 Gate PASS。
 - 完整 FastModel 7.x 專案 regression #39831083940 在建檔時未全部完成，**不可宣稱 8/8 PASS**。
 - 原 Render LIVE branch `web/aig-dual-formal-runtime-20261016` 與本修復 branch 的 `app.mjs` / `viewer.mjs` 大幅分歧。**不得整包覆蓋網頁程式**；以 isolated integration / exact source diff 加入網站，在 LIVE browser Gate PASS 前仍維持現網站版本。
 
