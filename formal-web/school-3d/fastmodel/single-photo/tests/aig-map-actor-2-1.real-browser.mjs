@@ -173,6 +173,11 @@ try{
    assert.equal(storyboard.events[0].clipName,'walk');
    assert.equal(storyboard.generatedMotion,false);
    assert.equal(storyboard.generatedVoice,false);
+   // Real3D 2.5 NO-FAKE gate: an original but UNSKINNED triangle actor
+   // cannot be recorded as a fully articulated human movie.
+   await page.locator('#movie25-record').click();
+   assert.match(await page.locator('#movie25-status').textContent(),
+    /BLOCKED/);
    await page.locator('#story-save').click();
    await page.waitForFunction(()=>document.getElementById('story-status')
     .textContent.includes('已另存劇本'),null,{timeout:12000});
@@ -257,6 +262,48 @@ try{
      worldActors:threeActors.objects.length,
      chineseStoryClip:rigStory.events[0].clipName,
      actualSourceNotVerifiedIdentity:true},null,2));
+   // Real3D 2.5: actual source-derived SkinnedMesh film, not a moving
+   // picture. After verifying 2.3 real 17-bone geometry, record its original
+   // head clip via 2.2 Chinese timeline, with subtitles burnt into pixels.
+   await page.locator('#story-stop').click();
+   await page.locator('#story-text').fill(
+    '0秒 node-3：轉頭\\n0秒 字幕：真正的 3D 骨架電影');
+   await page.locator('#story-compile').click();
+   await page.waitForFunction(()=>!document.getElementById('story-play').disabled);
+   const filmStory=JSON.parse(await page.locator('#story-proof').textContent());
+   assert.equal(filmStory.generatedMotion,false);
+   await page.locator('#movie25-record').click();
+   await page.waitForFunction(()=>{
+    const s=document.getElementById('movie25-status').textContent;
+    return s.includes('已實際錄製')||s.includes('BLOCKED')||s.includes('失敗');
+   },null,{timeout:120000});
+   const filmStatus=await page.locator('#movie25-status').textContent();
+   assert.match(filmStatus,/已實際錄製/,filmStatus);
+   const film=JSON.parse(await page.locator('#movie25-proof').textContent());
+   assert.equal(film.schema,'AIG_FASTMODEL_REAL3D_2_5_ACTUAL_WEBGL_WORLD_MOVIE');
+   assert.equal(film.movieWritten,true);
+   assert.ok(film.actualFramesComposited>=2);
+   assert.equal(film.actualSourceAnimatedActorCount,1);
+   assert.equal(film.flatPhotoCameraOnlyRejected,true);
+   assert.equal(film.generatedHumanMovement,false);
+   assert.equal(film.sourceSubtitlePixelsBurnedIntoCanvas,true);
+   assert.equal(film.recordedAudioTracks,0);
+   assert.equal(film.sourceSceneId,threeActors.id);
+   const movieLink=page.locator('#movie25-download');
+   assert.equal(await movieLink.isVisible(),true);
+   const [download]=await Promise.all([
+    page.waitForEvent('download',{timeout:30000}),
+    movieLink.click()
+   ]);
+   assert.match(download.suggestedFilename(),/AIG-Real3D-2-5-World-Movie\\.(webm|mp4)$/);
+   const moviePath=storyOut+'/'+device.name+'-real3d-2-5-world-movie.'+
+    download.suggestedFilename().split('.').at(-1);
+   await download.saveAs(moviePath);
+   await page.screenshot({path:storyOut+'/'+device.name+
+    '-real3d-2-5-true-3d-film-ready.png',fullPage:true});
+   await writeFile(storyOut+'/'+device.name+'-real3d-2-5-movie-proof.json',
+    JSON.stringify({device:device.name,...film,sourceVideoFile:moviePath,
+     actualBrowserMediaRecorder:true},null,2));
    console.log('AIG21_TRUE_GLTF_SOURCE_MOTION_AND_MAP_ANCHOR_BROWSER_PASS',
     device.name);
   }catch(e){
