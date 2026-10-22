@@ -5,6 +5,7 @@
  * NOT detected facial landmarks or claimed human anatomy.
  */
 import {raycastImplicitVolume} from './aig-implicit-volume-7-1.mjs';
+import {raycastAIG72Volume,sampleAIG72DeformedVolume} from './aig-volumetric-deform-7-2.mjs';
 export const AIG73_SCHEMA='AIG_FASTMODEL_7_3_REVIEWED_FACE_2D_UV_ON_3D_SURFACE_MATERIAL';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const finite=Number.isFinite;
@@ -81,7 +82,7 @@ export function shadeAIG73Surface({image,field,roi,makeup,point,normal,light=[.4
  const lighting=clamp(.48+.56*nd,.3,1.12);
  return {rgb:rgb.map(v=>Math.round(clamp(v*lighting,0,255))),source:'SOURCE_PHOTO_FRONT_PROJECTION',cosmeticOpacity:opacity,uv:[u,v]};
 }
-export function renderAIG73FaceMaterial(field,image,{roi=null,makeup=makeAIG73Makeup(),width=96,height=96,yaw=0,pitch=0,maxSteps=88}={}){
+export function renderAIG73FaceMaterial(field,image,{roi=null,makeup=makeAIG73Makeup(),width=96,height=96,yaw=0,pitch=0,maxSteps=88,body=null}={}){
  if(!validRGBA(image)||!field||!Number.isInteger(width)||!Number.isInteger(height)||width<16||height<16||width*height>12000||
   ![yaw,pitch].every(finite)||Math.abs(pitch)>1.35||!Number.isInteger(maxSteps)||maxSteps<12||maxSteps>160)throw Error('AIG73_RENDER_INPUT_INVALID');
  const pixels=new Uint8ClampedArray(width*height*4),eye=[2*Math.sin(yaw)*Math.cos(pitch),2*Math.sin(pitch),2*Math.cos(yaw)*Math.cos(pitch)],fwd=eye.map(v=>-v/2);
@@ -92,11 +93,13 @@ export function renderAIG73FaceMaterial(field,image,{roi=null,makeup=makeAIG73Ma
  for(let j=0;j<height;j++)for(let i=0;i<width;i++){
   const at=(j*width+i)*4,dx=((i+.5)/width-.5)*1.45*width/height,dy=(.5-(j+.5)/height)*1.45,
    origin=eye.map((v,k)=>v+right[k]*dx+up[k]*dy);
-  const ray=raycastImplicitVolume(field,origin,fwd,{maxSteps,maxDistance:4});
+  const ray=body?raycastAIG72Volume(body,origin,fwd,{maxSteps,maxDistance:4}):
+    raycastImplicitVolume(field,origin,fwd,{maxSteps,maxDistance:4});
   let rgb=[3,10,19];
   if(ray.hit){
    hitPixels++;
-   const shaded=shadeAIG73Surface({image,field,roi,makeup,point:ray.point,normal:ray.normal});
+   const referencePoint=body?sampleAIG72DeformedVolume(body,ray.point).referencePoint:ray.point;
+   const shaded=shadeAIG73Surface({image,field,roi,makeup,point:referencePoint,normal:ray.normal});
    rgb=shaded.rgb;
    if(shaded.source==='SOURCE_PHOTO_FRONT_PROJECTION'){photoPixels++;if(shaded.cosmeticOpacity>.01)cosmeticPixels++;}
    else if(shaded.source==='SOURCE_ALPHA_TRANSPARENT_NEUTRAL')alphaFallbackPixels++;
@@ -105,6 +108,6 @@ export function renderAIG73FaceMaterial(field,image,{roi=null,makeup=makeAIG73Ma
   pixels[at]=rgb[0];pixels[at+1]=rgb[1];pixels[at+2]=rgb[2];pixels[at+3]=255;
  }
  return {schema:'AIG_FASTMODEL_7_3_PHOTO_PROJECTED_TRUE_SDF_RENDER',pixels,width,height,hitPixels,photoPixels,inferredPixels,alphaFallbackPixels,cosmeticPixels,
-  source:'REAL_IMAGE_FRONT_ONLY',faceBoxReviewed:roi?.reviewed===true,sideAndRearEstimated:true,
+  source:'REAL_IMAGE_FRONT_ONLY',faceBoxReviewed:roi?.reviewed===true,sideAndRearEstimated:true,xyzDeformationSampled:body!==null,
   actualPhotoFaceRecovered3D:false,verifiedFaceLandmarks:false,skeletalFaceAnimation:false,photorealCharacterApproved:false};
 }
