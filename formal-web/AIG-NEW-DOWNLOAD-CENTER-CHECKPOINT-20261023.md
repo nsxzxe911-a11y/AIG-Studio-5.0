@@ -6,7 +6,7 @@
 ## 已實際落盤至原 Render GitHub branch
 - formal-web/aig-download-center.html：新版 RGB 黑底下載中心。3 個快速入口（Android Studio QA APK ZIP、Windows Release、真實雲端編譯）；AIG-II／Studio／FastModel QA 卡片；保留來源 SHA、artifact ID、ZIP SHA-256、2026-10-29 QA 到期時間並置於折疊詳細資訊；對每一類檔案明確限制正式 Release Gate；原專案有據可查，沒有捏造下載按鈕。
 - formal-web/aig-download-center.js：移植原生網頁之本機 CNC 匯出功能，在按鈕 click 時讀取 localStorage 中符合 CAD/CAM/NC/GCODE/DRAFT/WORKING 且非密鑰的項目；生成 AIG_WEB_LEGACY_LOCAL_DRAFT_BACKUP JSON，不發送網路、不修改/刪除原資料。
-- formal-web/aig-new-home.html：頂部「下載狀態」與第三張「版本與下載」卡片都接到新 a ig-download-center.html（實際正確檔名：aig-download-center.html）。
+- formal-web/aig-new-home.html：頂部「下載狀態」與第三張「版本與下載」卡片都接到新 aig-download-center.html。
 - formal-web/3ax-nc-workbench.html：原生 APK/EXE 驗證快捷亦改指新下載中心。
 - formal-web/native-download.html：保留舊版內容與舊資料備份，新增清楚的「進入新版下載中心」入口。
 - formal-web/qa-downloads.html：加上新版下載中心返回入口，不破壞舊版 QA 證據。
