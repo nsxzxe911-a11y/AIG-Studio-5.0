@@ -7,3 +7,13 @@ for(const resource of ['reverse-lab.html','reverse-lab.mjs','aig-reverse-geometr
 }
 fs.copyFileSync('node_modules/three/LICENSE','dist/THREE-LICENSE.txt');
 console.log('Local bundled PBR viewer built; no CDN or third-party character assets.');
+
+const sharedPath='../../../shared-3d/';
+fs.mkdirSync('dist/shared-3d',{recursive:true});
+for(const resource of [
+ 'aig-real3d-core.mjs','aig-real3d-webgl.mjs',
+ 'aig-real3d-adapters.mjs','aig-real3d-lab.html','aig-real3d-lab.mjs'
+]){
+ fs.copyFileSync(sharedPath+resource,'dist/shared-3d/'+resource);
+}
+console.log('Shared AIG Real3D 1.0 copied into local offline package; no external CDN or NC writes.');
