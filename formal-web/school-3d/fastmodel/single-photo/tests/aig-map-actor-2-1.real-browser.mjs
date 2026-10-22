@@ -332,7 +332,7 @@ try{
     page.waitForEvent('download',{timeout:30000}),
     movieLink.click()
    ]);
-   assert.match(download.suggestedFilename(),/AIG-Real3D-2-5-World-Movie\\.(webm|mp4)$/);
+   assert.match(download.suggestedFilename(),/AIG-Real3D-2-5-World-Movie\.(webm|mp4)$/);
    const moviePath=storyOut+'/'+device.name+'-real3d-2-5-world-movie.'+
     download.suggestedFilename().split('.').at(-1);
    await download.saveAs(moviePath);
