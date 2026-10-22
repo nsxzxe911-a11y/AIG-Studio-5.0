@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407">
+<meta name="description" content="AIG-II / AIG Studio 真正雲端 Android APK 與 Windows EXE 建置入口；即時 GitHub 工作節點回報，無授權安全封鎖。">
+<title>AIG｜真實 APK／EXE 雲端編譯</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;background:#020407;color:#e9f6ff}
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;background:radial-gradient(ellipse at 40% 0%,#193a5a77,transparent 55%),#020407}
+main{max-width:1040px;padding:clamp(16px,3vw,40px);margin:auto}header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:1px solid #274761;padding-bottom:16px}
+a{color:#8ae8ff}h1{font-size:clamp(25px,3vw,37px);margin:28px 0 15px}h2{font-size:19px;margin:0 0 12px}
+p{line-height:1.65;color:#b9d0df}.small{font-size:12px;color:#9bbacb}section{padding:20px;margin:16px 0;background:#07111b;border:1px solid #30516b;border-radius:13px}
+label{display:block;margin:12px 0 6px;font-weight:700;font-size:14px}
+input,select,button{width:100%;min-height:46px;padding:10px 12px;border:1px solid #466d89;border-radius:9px;font:inherit;background:#0a2336;color:#eef9ff}
+button{cursor:pointer;font-weight:750;background:linear-gradient(130deg,#126078,#323b74)}
+button:disabled{opacity:.45;cursor:not-allowed}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #93eeff}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.status{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #916e3c;background:#221e14;color:#ffe1ad;padding:12px;border-radius:9px;line-height:1.6}
+code{overflow-wrap:anywhere;color:#b9faff;font-size:12px}
+#artifacts{display:grid;gap:9px}#artifacts button{background:#14384a}
+.info{border-left:3px solid #59b3d2;padding-left:13px;font-size:13px}
+.warn{border-left:3px solid #efb869;padding-left:13px}
+footer{padding:18px 0;border-top:1px solid #274761;font-size:12px;color:#92acc0}
+@media(max-width:700px){.grid{grid-template-columns:1fr}section{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div><b>AIG RGB · 真編譯中心</b><div class="small" data-i18n="subtitle">AIG-II／Studio 原生 Android＋Windows</div></div>
+<div><label for="language" data-i18n="language">操作語言</label>
+<select id="language" aria-label="操作語言 / UI language">
+<option value="zh-TW">繁體中文</option><option value="en">English</option>
+</select></div>
+<nav><a href="./index.html#dual-projects" data-i18n="home">返回 AIG 正式網站</a> · <a href="./qa-downloads.html" data-i18n="qa">QA 下載紀錄</a></nav>
+</header>
+<h1 data-i18n="title">真正的 APK／EXE 雲端編譯</h1>
+<p data-i18n="intro">按下建置後，後端會真的通知 GitHub Actions，以 Linux Android 與 Windows 2025 編譯節點工作；顯示來源 SHA、執行結果與通過 Gate 的檔案，不用虛假的進度動畫或空下載按鈕。</p>
+<p class="warn" data-i18n="warning">測試建置 ≠ 正式發行：只在 APK／EXE 真正產生、GitHub Gate 成功且附件存在時開放測試檔 ZIP。物理 CNC、安全、原生簽章與完整 UI 另行驗證。</p>
+<section>
+<h2 data-i18n="access">建置授權與雲端狀態</h2>
+<p class="small" data-i18n="accessInfo">建置金鑰僅在這個瀏覽器頁面的記憶體中使用，不寫入網址或 localStorage。請在 Render 的服務環境中設好後端權限和 GitHub Token；不要把金鑰貼在公開網頁或聊天。</p>
+<div class="grid">
+<div>
+<label for="admin-token" data-i18n="token">建置管理金鑰</label>
+<input id="admin-token" type="password" autocomplete="off" spellcheck="false" placeholder="僅授權管理者輸入">
+</div>
+<div>
+<label for="backend-health" data-i18n="health">編譯服務狀態</label>
+<output id="backend-health" role="status" class="status">檢查中……</output>
+</div>
+</div>
+<div style="margin-top:12px"><button id="health-check" type="button" data-i18n="check">重新檢查連線與授權</button></div>
+</section>
+<section>
+<h2 data-i18n="buildTitle">選擇真實編譯來源</h2>
+<label for="project" data-i18n="project">專案</label>
+<select id="project">
+<option value="aigii">AIG-II｜CNC 主控（固定原始碼修復分支）</option>
+<option value="studio">AIG Studio 5.0｜CNC 核心（固定修復分支）</option>
+</select>
+<p class="info" data-i18n="locked">只能編譯預先鎖定的 AIG 專案分支，不接受任意 Git URL、shell 命令、外部程式碼或非授權呼叫。這個按鈕會同時要求 Android APK 和真正 Windows EXE 建置。</p>
+<button id="build" type="button" disabled data-i18n="build">開始實際編譯 APK ＋ EXE</button>
+<div style="margin-top:12px"><output id="result" role="status" class="status">尚未開始，不會假裝成功。</output></div>
+<div id="run-link" style="margin-top:10px"></div>
+</section>
+<section>
+<h2 data-i18n="downloadTitle">真實建置產物下載</h2>
+<p class="small" data-i18n="downloadNote">只有工作流程 SUCCESS，且 APK 與 Windows EXE 附件都確實存在時才啟用下載。GitHub Actions 附件是暫存 ZIP，下載前後仍須核對 SHA、簽章與版本；目前不等於 Render 永久鏡像。</p>
+<div id="artifacts" aria-live="polite"><p data-i18n="empty">目前沒有可下載的已驗證編譯產物。</p></div>
+</section>
+<footer data-i18n="footer">保留原 AIG 網站、核准 RGB 圖、CAD／CAM／NC 工作副本及 FastModel。網站中文字是真實的介面在地化，不會假裝把機械圖或 G-code 自動翻譯成其他可執行程式。</footer>
+</main>
+<script>
+(()=>{'use strict';
+const API='https://aig-cloud-builder.onrender.com';
+const $=id=>document.getElementById(id);
+const T={
+ 'zh-TW':{
+ subtitle:'AIG-II／Studio 原生 Android＋Windows',language:'操作語言',home:'返回 AIG 正式網站',qa:'QA 下載紀錄',
+ title:'真正的 APK／EXE 雲端編譯',intro:'按下建置後，後端會真的通知 GitHub Actions，以 Linux Android 與 Windows 2025 編譯節點工作；顯示來源 SHA、執行結果與通過 Gate 的檔案，不用虛假的進度動畫或空下載按鈕。',
+ warning:'測試建置 ≠ 正式發行：只在 APK／EXE 真正產生、GitHub Gate 成功且附件存在時開放測試檔 ZIP。物理 CNC、安全、原生簽章與完整 UI 另行驗證。',
+ access:'建置授權與雲端狀態',accessInfo:'建置金鑰僅在這個瀏覽器頁面的記憶體中使用，不寫入網址或 localStorage。請在 Render 的服務環境中設好後端權限和 GitHub Token；不要把金鑰貼在公開網頁或聊天。',
+ token:'建置管理金鑰',health:'編譯服務狀態',check:'重新檢查連線與授權',buildTitle:'選擇真實編譯來源',project:'專案',
+ locked:'只能編譯預先鎖定的 AIG 專案分支，不接受任意 Git URL、shell 命令、外部程式碼或非授權呼叫。這個按鈕會同時要求 Android APK 和真正 Windows EXE 建置。',
+ build:'開始實際編譯 APK ＋ EXE',downloadTitle:'真實建置產物下載',
+ downloadNote:'只有工作流程 SUCCESS，且 APK 與 Windows EXE 附件都確實存在時才啟用下載。GitHub Actions 附件是暫存 ZIP，下載前後仍須核對 SHA、簽章與版本；目前不等於 Render 永久鏡像。',
+ empty:'目前沒有可下載的已驗證編譯產物。',footer:'保留原 AIG 網站、核准 RGB 圖、CAD／CAM／NC 工作副本及 FastModel。網站中文字是真實的介面在地化，不會假裝把機械圖或 G-code 自動翻譯成其他可執行程式。',
+ notReady:'後端未配置或無法連線，已安全禁止建置。',ready:'授權後端已配置；可送出真實編譯要求。',noKey:'請先輸入建置管理金鑰。',
+ pending:'GitHub 已收到要求，正在等待真正的 Windows／Android 工作節點。',
+ running:'GitHub Actions 正在執行，請看工作流程的真實進度。',
+ fail:'真編譯未通過或缺少產物，不開放下載。請檢查 GitHub 執行錯誤。',
+ success:'建置流程成功且 APK、Windows EXE 附件存在，可下載測試 ZIP。',
+ save:'下載測試 ZIP：',getRun:'開啟 GitHub 真實編譯紀錄',error:'操作遭拒或後端失敗：'
+ },
+ en:{
+ subtitle:'AIG-II / Studio native Android + Windows',language:'Interface language',home:'Back to AIG main site',qa:'QA download evidence',
+ title:'Real APK / EXE Cloud Compilation',intro:'This page actually dispatches GitHub Actions to Linux Android and Windows 2025 build runners. Source SHA, execution outcomes and verified archives come from the compiler, not a simulated progress indicator.',
+ warning:'QA build is not a release. Archives only unlock after real GitHub success and both APK and EXE artifacts exist. Physical CNC safety, signing and UI require separate Gates.',
+ access:'Authorization and backend status',accessInfo:'The administrative token remains only in page memory, never in the URL or localStorage. Configure backend secrets in Render; do not publish tokens.',
+ token:'Build authorization token',health:'Compiler backend status',check:'Check backend and authorization',buildTitle:'Select real build source',project:'Project',
+ locked:'Only pre-approved AIG branches can be built. Arbitrary Git repositories, commands or shell execution are forbidden. This command requests both a real Android APK and Windows EXE.',
+ build:'Run real APK + EXE build',downloadTitle:'Download real build outputs',
+ downloadNote:'Downloads unlock only on complete workflow success with both APK and EXE archives. GitHub artifacts are expiring ZIPs, not permanent Render mirrors or an approved release.',
+ empty:'No verified download is ready.',footer:'Existing AIG website, RGB Authority, CNC working copies and FastModel are preserved. Language switching translates UI strings, not CAD or executable code.',
+ notReady:'Backend is unconfigured/unreachable; build is blocked.',ready:'Backend is configured; authorized build requests can run.',noKey:'Enter your build token first.',
+ pending:'GitHub accepted the request; waiting for a real build run.',running:'GitHub Actions is compiling on real runners.',
+ fail:'Compilation failed or verified archives are missing. Download is blocked.',success:'Both APK and EXE artifacts are present after successful compilation.',
+ save:'Download QA ZIP: ',getRun:'Open actual GitHub build log',error:'Authorization or backend error: '
+ }};
+let current=null,ready=false,busy=false,timer=null;
+const lang=()=>T[$('language').value]||T['zh-TW'];
+const message=m=>{$('result').textContent=m;};
+function translate(){
+ const tr=lang();
+ document.querySelectorAll('[data-i18n]').forEach(el=>{const str=tr[el.dataset.i18n];if(str)el.textContent=str;});
+ if(!current){message($('language').value==='en'?'No build was requested.': '尚未開始，不會假裝成功。');}
+ $('build').disabled=!ready||busy||!$('admin-token').value.trim();
+}
+$('language').addEventListener('change',translate);
+$('admin-token').addEventListener('input',translate);
+async function call(path,method='GET',body=null){
+ const headers={};if(path!=='/api/health')headers.Authorization='Bearer '+$('admin-token').value.trim();
+ if(body)headers['Content-Type']='application/json';
+ const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),20000);
+ try{
+ const res=await fetch(API+path,{method,headers,body:body?JSON.stringify(body):undefined,
+  cache:'no-store',signal:controller.signal});
+ const data=await res.json().catch(()=>({detail:'INVALID_BACKEND_RESPONSE'}));
+ if(!res.ok)throw Error(String(data.detail||'HTTP '+res.status));
+ return data;
+ }finally{clearTimeout(timeout);}
+}
+async function check(){
+ try{const out=await call('/api/health');ready=out.ready===true;
+  $('backend-health').textContent=(ready?lang().ready:lang().notReady)+
+   '\n'+String(out.state||'BLOCKED');
+ }catch(e){ready=false;$('backend-health').textContent=lang().notReady+' '+e.message;}
+ translate();
+}
+$('health-check').addEventListener('click',check);
+function setBusy(v){busy=v;translate();}
+async function poll(){
+ if(!current||!$('admin-token').value)return;
+ try{
+  const data=await call('/api/builds/'+encodeURIComponent(current));
+  const tr=lang();
+  message((data.state==='WAITING_FOR_GITHUB_RUN'?tr.pending:
+   data.state==='RUNNING'?tr.running:
+   data.downloadReady?tr.success:tr.fail)+'\n'+
+   'SOURCE SHA: '+(data.sourceSHA||'?')+'\n'+
+   'GitHub: '+(data.workflowConclusion||data.state));
+  $('run-link').replaceChildren();
+  if(data.runUrl){
+   const link=document.createElement('a');link.href=data.runUrl;link.target='_blank';
+   link.rel='noopener noreferrer';link.textContent=tr.getRun;$('run-link').append(link);
+  }
+  if(data.state==='FINISHED'||data.state==='BLOCKED_ARTIFACTS_MISSING_OR_QUOTA'){
+   clearInterval(timer);timer=null;setBusy(false);
+   const parent=$('artifacts');parent.replaceChildren();
+   if(data.downloadReady){
+    for(const artifact of data.artifacts){
+     const button=document.createElement('button');button.type='button';
+     button.textContent=tr.save+artifact.type+' · '+artifact.name;
+     button.addEventListener('click',()=>downloadFile(artifact));parent.append(button);
+    }
+   }else parent.textContent=tr.fail;
+  }
+ }catch(e){clearInterval(timer);timer=null;setBusy(false);message(lang().error+e.message);}
+}
+async function downloadFile(file){
+ if(!current)return;
+ const key=$('admin-token').value.trim();
+ try{
+  const res=await fetch(API+file.downloadPath,{headers:{Authorization:'Bearer '+key},cache:'no-store'});
+  if(!res.ok)throw Error('DOWNLOAD_BLOCKED_HTTP_'+res.status);
+  const zip=await res.blob();if(!zip.size)throw Error('EMPTY_FILE');
+  const url=URL.createObjectURL(zip);const a=document.createElement('a');
+  a.href=url;a.download='AIG-'+$('project').value+'-'+file.type+'-QA-NOT-RELEASE.zip';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+ }catch(e){message(lang().error+e.message);}
+}
+$('build').addEventListener('click',async()=>{
+ if(!ready||busy)return;
+ if(!$('admin-token').value.trim()){message(lang().noKey);return;}
+ setBusy(true);$('artifacts').replaceChildren();
+ try{
+  const data=await call('/api/builds','POST',{project:$('project').value});
+  if(data.state!=='DISPATCH_ACCEPTED'||!data.id)throw Error('DISPATCH_NOT_CONFIRMED');
+  current=data.id;message(lang().pending+'\nSOURCE SHA: '+data.sourceSHA);
+  timer=setInterval(poll,8000);await poll();
+ }catch(e){setBusy(false);message(lang().error+e.message);}
+});
+window.addEventListener('pagehide',()=>{if(timer)clearInterval(timer);});
+translate();check();
+})();
+</script>
+</body>
+</html>
