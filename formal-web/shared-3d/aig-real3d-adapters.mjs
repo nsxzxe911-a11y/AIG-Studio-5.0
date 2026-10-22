@@ -15,11 +15,11 @@ function vec(v){
 }
 const hex=s=>typeof s==='string'&&/^[a-fA-F0-9]{64}$/.test(s);
 export function createAIG3DCNCReadOnlyScene({
- axisPage,sourceKind='DEMO_PROCEDURAL',
+ axisPage,consumer='AIG-II',sourceKind='DEMO_PROCEDURAL',
  snapshotDigest=null,revision=null,solids=[],toolpath=[],axisValues={},
  units='MM'
 }={}){
- if(!axes[axisPage]||units!=='MM'||!['DEMO_PROCEDURAL','RUNTIME_SNAPSHOT'].includes(sourceKind)||
+ if(!axes[axisPage]||!['AIG-II','AIG-Studio-5.0'].includes(consumer)||units!=='MM'||!['DEMO_PROCEDURAL','RUNTIME_SNAPSHOT'].includes(sourceKind)||
  (sourceKind==='RUNTIME_SNAPSHOT'&&(!hex(snapshotDigest)||
   !Number.isInteger(revision)||revision<1))||
  !Array.isArray(solids)||solids.length>180||!Array.isArray(toolpath)||
@@ -32,7 +32,7 @@ export function createAIG3DCNCReadOnlyScene({
   axisState[axis]=raw;
  }
  const scene=createAIG3DScene({id:'cnc-'+axisPage.toLowerCase(),
-  consumer:'AIG-II',units:'MM',source:sourceKind==='DEMO_PROCEDURAL'?
+  consumer,units:'MM',source:sourceKind==='DEMO_PROCEDURAL'?
    'DEMO_NOT_MACHINE_RUNTIME':'UNVERIFIED_RUNTIME_SNAPSHOT_SHA256_'+snapshotDigest});
  let rootCount=0;
  for(const item of solids){
@@ -99,6 +99,7 @@ export function demoAIG3DScene(profile='3AX'){
  }
  const cradle=profile==='5AX';
  return createAIG3DCNCReadOnlyScene({axisPage:profile,
+  consumer:cradle?'AIG-Studio-5.0':'AIG-II',
   solids:[
    {id:'bed',kind:'machine',geometry:'box',position:[0,-1.75,0],size:[8,.45,6],color:[.09,.2,.24,1]},
    {id:'table',kind:'machine',geometry:'box',position:[0,-1.3,0],size:[5.7,.27,4.3],color:[.18,.35,.39,1]},
