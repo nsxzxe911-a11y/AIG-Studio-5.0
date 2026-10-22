@@ -143,10 +143,9 @@ object CamFeatureRecognizer {
         }
         val rings=loops.map{loop->
             val ordered=CadAdvancedGeometry.orderClosed(loop)
-            require(ordered!=null && CadClosedContourTopology.inspect(ordered)!=null){
-                "CAD_CLOSED_LINEWORK_TOPOLOGY_BLOCKED"
-            }
-            CadClosedContourTopology.inspect(ordered)!!
+                ?: error("CAD_CLOSED_LINEWORK_TOPOLOGY_BLOCKED")
+            CadClosedContourTopology.inspect(ordered)
+                ?: error("CAD_CLOSED_LINEWORK_TOPOLOGY_BLOCKED")
         }
         for(i in rings.indices)for(j in i+1 until rings.size){
             require(!CadClosedContourTopology.edgesTouch(rings[i],rings[j])){
