@@ -68,6 +68,25 @@ try{
    await page.locator('[data-3ax-rate="200"]').click();
    assert.equal(await page.locator('[data-3ax-rate="200"]').getAttribute('aria-pressed'),'true');
    assert.equal(await page.locator('[data-3ax-rate="100"]').getAttribute('aria-pressed'),'false');
+   // Physical CAD XY is allowed ONLY after four independently measured
+   // coplanar anchors. Neither sample dimensions nor source PNG are depth.
+   await page.locator('#cad-plane-anchors').evaluate(x=>{x.closest('details').open=true;});
+   await page.locator('#cad-plane-calibrate').click();
+   assert.match(await page.locator('#cad-calibration-status').textContent(),/BLOCKED/);
+   const anchors=[
+    {imagePixel:[100,250],cadMm:[-50,20]},
+    {imagePixel:[600,250],cadMm:[50,20]},
+    {imagePixel:[600,800],cadMm:[50,130]},
+    {imagePixel:[100,800],cadMm:[-50,130]}
+   ];
+   await page.locator('#cad-plane-anchors').fill(JSON.stringify(anchors));
+   await page.locator('#cad-plane-calibrate').click();
+   assert.equal(await page.locator('#cad-plane-project').isEnabled(),true);
+   await page.locator('#cad-source-pixel-x').fill('350');
+   await page.locator('#cad-source-pixel-y').fill('525');
+   await page.locator('#cad-plane-project').click();
+   assert.match(await page.locator('#cad-plane-projection').textContent(),/X=0.000 mm、Y=75.000 mm；Z=未知/);
+   assert.equal((await proof()).replay.cumulativeRemovedMm3,0);
    await page.locator('#next').click();
    await page.waitForFunction(()=>JSON.parse(document.getElementById('evidence').textContent).replay.blockIndex===1);
    await page.locator('#next').click();
