@@ -37,6 +37,12 @@ footer{padding:18px 0;border-top:1px solid #274761;font-size:12px;color:#92acc0}
 <nav><a href="./index.html#dual-projects" data-i18n="home">返回 AIG 正式網站</a> · <a href="./qa-downloads.html" data-i18n="qa">QA 下載紀錄</a></nav>
 </header>
 <h1 data-i18n="title">真正的 APK／EXE 雲端編譯</h1>
+<section aria-label="自動防偽與斷線保護" style="border-color:#3b95af">
+<h2 data-i18n="guardTitle">AIG 自動防偽與斷線保護</h2>
+<p data-i18n="guardDetail">版本、編譯狀態和下載連結由真實 GitHub 執行證據決定，不由按鈕顏色或翻譯文字決定。長時間找不到工作、執行超時、SHA 不一致、缺 APK 或 EXE，統一顯示 BLOCKED，不會出現假完成。</p>
+<p data-i18n="guardNoWork">網站不會在你離線、睡覺或長期未操作時自行產生新版本，也不會清空原本 CAD／CAM／NC 與動畫成果。工作紀錄以 GitHub 為準；網站控制器重啟不代表工程成功或失敗。</p>
+<a href="./qa-downloads.html" data-i18n="guardCheck">查看真正的工作紀錄和已驗證檔案</a>
+</section>
 <p data-i18n="intro">按下建置後，後端會真的通知 GitHub Actions，以 Linux Android 與 Windows 2025 編譯節點工作；顯示來源 SHA、執行結果與通過 Gate 的檔案，不用虛假的進度動畫或空下載按鈕。</p>
 <p class="warn" data-i18n="warning">測試建置 ≠ 正式發行：只在 APK／EXE 真正產生、GitHub Gate 成功且附件存在時開放測試檔 ZIP。物理 CNC、安全、原生簽章與完整 UI 另行驗證。</p>
 <section class="easy" aria-labelledby="easy-title" style="border-color:#4294af;background:#092334">
@@ -101,6 +107,7 @@ const $=id=>document.getElementById(id);
 const T={
  'zh-TW':{
  subtitle:'AIG-II／Studio 原生 Android＋Windows',language:'操作語言',home:'返回 AIG 正式網站',qa:'QA 下載紀錄',
+ guardTitle:'AIG 自動防偽與斷線保護',guardDetail:'只有 GitHub 真實工作、正確來源 SHA、APK 和 EXE 附件全部成立，才顯示測試完成。塞車、逾時、來源變更或缺檔一律 BLOCKED；不靠翻譯文字或按鈕顏色冒充成功。',guardNoWork:'長期不操作不會自動刪除 CAD／CAM／NC、模型與動畫成果。網站控制服務重啟後，請以 GitHub 的真實工作紀錄為準。',guardCheck:'查看真實工作紀錄與 QA 檔案',
  title:'真正的 APK／EXE 雲端編譯',intro:'按下建置後，後端會真的通知 GitHub Actions，以 Linux Android 與 Windows 2025 編譯節點工作；顯示來源 SHA、執行結果與通過 Gate 的檔案，不用虛假的進度動畫或空下載按鈕。',
  warning:'測試建置 ≠ 正式發行：只在 APK／EXE 真正產生、GitHub Gate 成功且附件存在時開放測試檔 ZIP。物理 CNC、安全、原生簽章與完整 UI 另行驗證。',
  access:'建置授權與雲端狀態',accessInfo:'建置金鑰僅在這個瀏覽器頁面的記憶體中使用，不寫入網址或 localStorage。請在 Render 的服務環境中設好後端權限和 GitHub Token；不要把金鑰貼在公開網頁或聊天。',
@@ -118,6 +125,7 @@ const T={
  },
  en:{
  subtitle:'AIG-II / Studio native Android + Windows',language:'Interface language',home:'Back to AIG main site',qa:'QA download evidence',
+ guardTitle:'Authentic execution and disconnect safeguards',guardDetail:'A test build is ready only with a real GitHub run, exact source SHA, and both APK and EXE artifacts. A stalled, timed-out, modified or incomplete build is BLOCKED; translated labels and button appearance never prove completion.',guardNoWork:'Inactivity never authorizes deletion of CAD/CAM/NC, models or animation. After a controller restart the durable GitHub run is the source of truth.',guardCheck:'Inspect actual build runs and verified QA artifacts',
  title:'Real APK / EXE Cloud Compilation',intro:'This page actually dispatches GitHub Actions to Linux Android and Windows 2025 build runners. Source SHA, execution outcomes and verified archives come from the compiler, not a simulated progress indicator.',
  warning:'QA build is not a release. Archives only unlock after real GitHub success and both APK and EXE artifacts exist. Physical CNC safety, signing and UI require separate Gates.',
  access:'Authorization and backend status',accessInfo:'The administrative token remains only in page memory, never in the URL or localStorage. Configure backend secrets in Render; do not publish tokens.',
@@ -187,7 +195,7 @@ async function poll(){
    const link=document.createElement('a');link.href=data.runUrl;link.target='_blank';
    link.rel='noopener noreferrer';link.textContent=tr.getRun;$('run-link').append(link);
   }
-  if(data.state==='FINISHED'||data.state==='BLOCKED_ARTIFACTS_MISSING_OR_QUOTA'){
+  if(data.state==='FINISHED'||String(data.state).startsWith('BLOCKED_')){
    clearInterval(timer);timer=null;setBusy(false);
    const parent=$('artifacts');parent.replaceChildren();
    if(data.downloadReady){
