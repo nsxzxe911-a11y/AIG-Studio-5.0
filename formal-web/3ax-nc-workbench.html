@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407">
+<meta name="description" content="AIG 新版 3AX NC-first 真 3D 數值模擬工作頁。獨立於舊版 Web 工作區，限受支援的 G0/G1，絕不發送 CNC 機台命令。">
+<title>AIG｜新版 3AX NC-first 真 3D 工作頁</title>
+<link rel="stylesheet" href="./3ax-nc-workbench.css">
+</head>
+<body>
+<a class="skip" href="#workspace">跳至加工視窗</a>
+<header class="app-header">
+ <a class="brand" href="./index.html#dual-projects" aria-label="返回 AIG 網站">
+  <span class="brand-mark" aria-hidden="true">AIG</span>
+  <span><strong>AIG <em>STUDIO</em></strong><small>REAL 3D / CNC WORKSPACE</small></span>
+ </a>
+ <nav aria-label="工作區主導覽" class="top-nav">
+  <a href="./index.html#dual-projects" data-button-id="NAV_HOME">HOME</a>
+  <a href="#workspace" aria-current="page" data-button-id="NAV_3AX">3AX</a>
+  <a href="#nc-panel" data-button-id="NAV_NC">NC</a>
+  <a href="#proof-panel" data-button-id="NAV_EVIDENCE">驗證資訊</a>
+ </nav>
+ <span class="header-pill"><span class="led" aria-hidden="true"></span>本機模擬 · MACHINE DISCONNECTED</span>
+</header>
+<div class="app-strip">
+ <span class="eyebrow">AIG-II × AIG STUDIO 5.0</span>
+ <strong>3AX / NC-first</strong>
+ <span class="strip-note">新工作頁 · Real3D 1.3 數值核心</span>
+ <span class="strip-spacer"></span>
+ <span class="strip-warn">只讀模擬　|　0.5 mm 體素預設　|　非機台驗證</span>
+</div>
+<main id="workspace" class="workspace">
+ <section class="viewport-panel" aria-label="三軸真 3D 加工視窗">
+  <div class="panel-title">
+   <div><span class="eyebrow">LIVE NUMERICAL WORKPIECE</span><h1>3AX 真 3D 加工視窗</h1></div>
+   <span class="preview-tag">工件／刀具技術預覽 · 非核准機台外型</span>
+  </div>
+  <div class="scene-frame">
+    <canvas id="view" width="960" height="540" aria-label="由 NC G0 G1 工作副本計算的實際 WebGL 3D 體素工件。拖曳旋轉，滾輪縮放。"></canvas>
+    <span class="scene-corner scene-top">XYZ / REAL WEBGL</span>
+    <span class="scene-corner scene-bottom">拖曳旋轉 • 滾輪縮放　／　原始 NC 驅動</span>
+    <div class="view-badge">READ ONLY</div>
+  </div>
+  <div class="axis-hud" aria-label="刀尖 XYZ 坐標">
+   <span class="axis-caption">TOOL POSITION <small>mm</small></span>
+   <div class="axis-item"><span>X</span><output id="axis-x">—</output></div>
+   <div class="axis-item"><span>Y</span><output id="axis-y">—</output></div>
+   <div class="axis-item"><span>Z</span><output id="axis-z">—</output></div>
+   <span class="axis-caption axis-gate">A / B / C <strong>未接通</strong></span>
+  </div>
+  <div class="metrics" aria-label="真實材料移除數值">
+   <div class="metric"><span>REMOVED VOLUME</span><strong id="removed">0.000</strong><small>mm³ · 移除體積</small></div>
+   <div class="metric"><span>REMAINING STOCK</span><strong id="remain">0.000</strong><small>mm³ · 剩餘材料</small></div>
+   <div class="metric"><span>3D TRIANGLES</span><strong id="triangle">0</strong><small>三角網格面數</small></div>
+  </div>
+  <div id="block-status" class="block-status" role="status" aria-live="polite">等待解析 NC 工作副本</div>
+  <details id="proof-panel" class="proof-panel">
+   <summary>展開真 3D 數值／來源驗證資訊</summary>
+   <pre id="evidence">尚未解析 NC 工作副本</pre>
+  </details>
+ </section>
+ <aside class="controls" id="nc-panel" aria-label="NC-first 工作控制台">
+  <div class="panel-title">
+   <div><span class="eyebrow">SOURCE / SHARED CORE</span><h2>NC 編輯與單節模擬</h2></div>
+   <span class="control-status">G0/G1 SUBSET</span>
+  </div>
+  <p class="control-hint">來源文字可直接修改；修改後會使舊切削證據失效，必須重新解析。不會連接 CNC 機台。</p>
+  <label for="nc">NC WORKING COPY <small>｜G21 / G90 / G54</small></label>
+  <textarea id="nc" spellcheck="false" autocomplete="off">(AIG local 3AX preview - NOT CNC executable)
+G21 G90 G54
+S2300 M3
+G0 X-6 Y0 Z10
+G1 Z1 F150
+G1 X6 Y0 Z1
+G0 Z10
+M5
+M30</textarea>
+  <div class="file-actions">
+    <input id="nc-upload" type="file" accept=".nc,.txt,text/plain" class="sr-only" aria-label="讀入本機 NC 程式">
+    <button type="button" id="import-nc" data-button-id="NC_IMPORT_LOCAL">讀入本機 NC</button>
+    <button type="button" id="export-nc" data-button-id="NC_EXPORT_LOCAL">匯出 NC 副本</button>
+  </div>
+  <div class="command-grid">
+   <button id="parse" type="button" class="primary" data-button-id="NC_PARSE" data-command-id="NC.PARSE">解析 NC</button>
+   <button id="simulate" type="button" disabled data-button-id="NC_RUN_READONLY" data-command-id="NC.REPLAY.ALL">整段模擬</button>
+   <button id="prev" type="button" disabled data-button-id="NC_SINGLE_PREV" data-command-id="NC.REPLAY.PREV">上一節</button>
+   <button id="next" type="button" disabled class="primary" data-button-id="NC_SINGLE_NEXT" data-command-id="NC.REPLAY.NEXT">下一節</button>
+  </div>
+  <label for="block">SOURCE BLOCK · 單節進度</label>
+  <input id="block" type="range" min="0" max="1" step="1" value="0" disabled>
+  <div class="command-grid auxiliary">
+   <button id="reset" type="button" data-button-id="NC_REPLAY_RESET" data-command-id="NC.REPLAY.RESET">還原工件</button>
+   <button id="camera" type="button" data-button-id="VIEW_CAMERA_RESET" data-command-id="VIEW.CAMERA.RESET">相機回正</button>
+  </div>
+  <label for="voxel">VOXEL SIZE · 模擬解析度</label>
+  <select id="voxel" data-button-id="SIM_VOXEL_SIZE">
+   <option value="1">1.00 mm · 低 GPU 負荷</option>
+   <option value=".5" selected>0.50 mm · 預設</option>
+   <option value=".25">0.25 mm · 高負荷</option>
+  </select>
+  <div id="status" class="runtime-status" role="status" aria-live="polite">等待 NC 解析，所有資料僅在本機運算。</div>
+  <div id="file-message" class="file-message" role="status" aria-live="polite"></div>
+  <div class="guardrail">
+   <strong>安全模式 · 真機輸出已停用</strong>
+   <p>僅驗證有限 G0／G1 絕對座標路徑與體素數值材料移除。G2/G3、G43、G34、G81/G83、M6、O4/O5、A/B/C 及不支援指令均 BLOCK，不會略過。</p>
+   <p>0.5 mm 體素<strong>不是</strong> 0.001 mm 加工精度；刀具／工件外觀為技術預覽，尚非核准的 3AX Authority 真機模型。</p>
+  </div>
+ </aside>
+</main>
+<footer class="footer">
+ <span>© AIG · 新版獨立 Web 工作頁，非舊 V90–V95 Runtime</span>
+ <a href="./index.html#dual-projects">雙專案首頁</a>
+ <a href="./native-download.html">原生 APK／EXE 驗證</a>
+ <a href="./shared-3d/aig-real3d-replay-lab.html">數值核心測試頁</a>
+</footer>
+<script type="module" src="./shared-3d/aig-real3d-replay-lab.mjs"></script>
+<script type="module" src="./3ax-nc-workbench-ui.mjs"></script>
+</body>
+</html>
