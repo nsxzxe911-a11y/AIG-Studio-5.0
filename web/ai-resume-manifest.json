@@ -36,11 +36,11 @@
       "id": "AIG FastModel",
       "repository": "nsxzxe911-a11y/AIG-Studio-5.0",
       "reference": "repair/core-first-fastmodel-20261021",
-      "source_sha": "5db9a7fed128a8a2fd727a5beed5d0996b8da91d",
+      "source_sha": "8d732072804408e438e6c5e627f1afcb55881228",
       "visibility": "PUBLIC",
       "source_checked": true,
       "runtime_gate": "NOT_VERIFIED",
-      "checkpoint_note": "FastModel 7.2 source passed GitHub 39743968559: Node 285/285, Python 49/49, offline build, synthetic PNG phone/desktop Chromium XYZ deformation/collision (140 nodes, 432 tetras, 5 collision projections). Original source appearance and authentic 3D human anatomy, material properties, native APK/EXE and Render LIVE NOT_VERIFIED."
+      "checkpoint_note": "FastModel 7.3 numerical source photo UV on XYZ SDF with reviewed cosmetic ROI passed GitHub regression 39745871813: Node 292/292, Python 49/49, offline build and Chromium phone/desktop synthetic RGBA makeup, neutral rear, and 7.2 deformation. Authentic heroine 3D face, anatomical landmarks, calibrated skin physics, Android/Windows packages and Render LIVE unverified."
     }
   ],
   "checks": {
@@ -66,7 +66,12 @@
     "fastmodel_7_2_ci": "PASS_GITHUB_PR_RUN_39743968559_NODE_285_PYTHON_49_CHROMIUM_PHONE_DESKTOP",
     "fastmodel_7_2_source_gate": "PASS_GITHUB_PR_RUN_39743968573",
     "fastmodel_7_2_artifact": "GITHUB_RUN_39743968559_ARTIFACT_12410975546_SOURCE_TEST_EVIDENCE_ONLY",
-    "fastmodel_real_3d_character": "NOT_VERIFIED"
+    "fastmodel_real_3d_character": "NOT_VERIFIED",
+    "fastmodel_7_3": "SOURCE_3D_PHOTO_MATERIAL_COSMETIC_REVIEWED_ROI_NUMERIC_PASS",
+    "fastmodel_7_3_ci": "PASS_GITHUB_PR_RUN_39745871813_NODE_292_PYTHON_49_OFFLINE_BUILD_CHROMIUM_PHONE_DESKTOP",
+    "fastmodel_7_3_browser": "SYNTHETIC_TEST_PHONE_AND_DESKTOP_MAKEUP_PIXELS_188_NEUTRAL_REAR_936_NO_BACK_FACE_CLONE",
+    "fastmodel_7_3_anatomical_human": "NOT_VERIFIED",
+    "fastmodel_7_3_native_android_windows": "NOT_VERIFIED"
   },
   "approved_invariants": [
     "Do not delete/overwrite original geometry, CAD/CAM/NC, approved RGB Authority, or FastModel assets.",
@@ -76,9 +81,10 @@
     "No automatic rollback/downgrade; no destructive repair; create a new checkpoint after validation."
   ],
   "next_steps": [
+    "Compare deployed Render SHA to website source and check /fastmodel/face-material-lab.html plus imported JS before publishing live claims.",
+    "For real portrait reconstruction, add verified original-photo feature landmarks/depth fitting, real facial rig morph and deformable skin, reference appearance scoring and hair/neck no-ghost multi-angle QA.",
+    "Do not treat confirmed makeup region or mirror-free back material as authentic 3D face geometry; native APK/EXE/60FPS validation remains blocked.",
     "Independently verify Render LIVE SHA and actually load /fastmodel/volume-lab.html with both 7.2 imported modules; site source existence is not proof of deployment.",
-    "Replace ghost-like procedural character appearance only after calibrated source-photo multi-view shape/face/hair/skin evidence; 7.2 deforms estimated SDF volume but does not reconstruct authentic human features.",
-    "Proceed to anatomical bone/skin volumetric mapping, robust self-contact and artifact SHA plus Android/Windows native gates; fail closed on inverted tetrahedra.",
     "Re-read live FastModel repair/core-first-fastmodel-20261021 head SHA and exact source before any changes.",
     "Verify AIG Render has deployed HTML, JS and exact module SHA before claiming the link is usable.",
     "Continue reverse 3D SDF, actual articulated geometry and deformation with distinct 3D skeleton/skin/runtime evidence; no static-photo fake motion.",
@@ -87,5 +93,5 @@
     "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
   ],
   "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
-  "last_action": "FastModel 7.2 true numerical XYZ tetra PBD branch source 5db9a7fed128a8a2fd727a5beed5d0996b8da91d with actual Node 285/285, Python 49/49 and Chromium phone/desktop PASS in GitHub run 39743968559. Source mirrored to original AIG site /fastmodel/volume-lab.html, but Render LIVE and true human character are NOT_VERIFIED."
+  "last_action": "FastModel 7.3 source 8d732072804408e438e6c5e627f1afcb55881228 submitted. Source-photo makeup on actual SDF XYZ ray hits follows 7.2 PBD deformation; explicit user face-box review; no cloned rear face; GitHub run 39745871813 passed 292 Node, 49 Python, offline build and phone/desktop Chromium synthetic image checks. Original site source mirrored; Render live and authentic character NOT_VERIFIED."
 }
