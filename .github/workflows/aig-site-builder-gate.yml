@@ -1,0 +1,50 @@
+name: AIG website real APK EXE builder API and bilingual UI source gate
+
+on:
+  push:
+    branches: [web/aig-dual-formal-runtime-20261016]
+    paths:
+      - 'infra/aig-site-builder/**'
+      - 'formal-web/cloud-builder.html'
+      - 'formal-web/qa-downloads.html'
+      - 'formal-web/native-download.html'
+      - '.github/workflows/aig-site-builder-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-api-and-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install actual ASGI dependencies
+        run: python -m pip install -r infra/aig-site-builder/requirements.txt
+      - name: Python syntax and test suite
+        run: |
+          python -m py_compile infra/aig-site-builder/app.py infra/aig-site-builder/test_app.py
+          python -m unittest discover -s infra/aig-site-builder -p 'test_*.py' -v
+      - name: Verify real authenticated builder and original formal site contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          site=Path('formal-web/cloud-builder.html').read_text()
+          api=Path('infra/aig-site-builder/app.py').read_text()
+          assert 'https://aig-dual-formal-runtime.onrender.com' in api
+          assert 'build-download.yml' in api
+          assert 'actions/workflows/' in api and 'dispatches' in api
+          assert 'actions/artifacts/' in api
+          assert 'workflowConclusion' in site
+          assert 'aig-cloud-builder.onrender.com' in site
+          assert 'GitHub' in site
+          assert 'data-i18n' in site and "'zh-TW'" in site and 'en:' in site
+          assert 'password' in site and "localStorage" not in site.split('<script>')[-1]
+          assert 'releaseCertified": False' in api
+          assert '<a' in Path('formal-web/native-download.html').read_text()
+          print('AIG_SITE_REAL_BUILDER_GATE_PASS|AUTH|GITHUB_DISPATCH|SOURCE_SHA|ANDROID_WINDOWS|ARTIFACT_DOWNLOAD|BILINGUAL_UI|NO_FAKE_EXECUTION')
+          PY
