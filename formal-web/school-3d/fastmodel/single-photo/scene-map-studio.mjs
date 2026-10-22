@@ -5,6 +5,7 @@ import {
  createAIG712SceneMap,addAIG712SceneFeature,summarizeAIG712SceneMap,
  compareAIG712SceneFeaturePercent,importAIG712GeoJSON,exportAIG712SceneMap
 } from './aig-scene-map-7-12.mjs';
+import {openAIG716AssetLibrary} from './aig-external-asset-library-7-16.mjs';
 const $=id=>document.getElementById(id),canvas=$('map'),ctx=canvas.getContext('2d');
 const colors={building:'#72cfff',house:'#98daff',tree:'#80eca0',road:'#ffce78',
  sports_facility:'#dc94ff',water:'#6aaaff',vehicle:'#ff999a',
@@ -171,7 +172,7 @@ $('file').addEventListener('change',async()=>{
  }catch(e){status('BLOCKED：GeoJSON 不合法或座標範圍不支援：'+String(e.message||e));}
  finally{$('file').value='';}
 });
-$('export').addEventListener('click',()=>{
+$('export').addEventListener('click',async()=>{
  if(!map.features.length)return;
  const blob=new Blob([JSON.stringify(exportAIG712SceneMap(map),null,2)+'\n'],
   {type:'application/json'});
@@ -179,6 +180,16 @@ $('export').addEventListener('click',()=>{
  link.href=url;link.download='FastModel-7-12-source-scene-map.json';
  document.body.append(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1500);
- status('本機圖資 JSON 已輸出；不含照片、影片、人物 3D 模型或未經授權的網路地圖。',true);
+ let lib=null;
+ try{
+  lib=await openAIG716AssetLibrary();
+  await lib.importBlob(blob,{category:'map',title:'FastModel 7.12 場景地圖圖資',
+   tags:['場景','地圖','建築','地理圖資'],
+   source:'GENERATED_DERIVED',modelAccuracy:'NOT_VERIFIED',
+   coordinateUnits:'UNKNOWN'});
+  status('已輸出地圖圖資並自動保存在主程式外的分類素材庫；原 GeoJSON／座標來源保持不變。',true);
+ }catch(e){
+  status('已下載來源圖資；外部素材庫未能儲存：'+String(e.message||e),true);
+ }finally{lib?.close()}
 });
 refresh();
