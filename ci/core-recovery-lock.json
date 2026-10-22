@@ -123,7 +123,7 @@
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-unified-shell-6-9.mjs",
-      "gitBlobSha": "c735f9530b733e9908859477946b8afbac826a02"
+      "gitBlobSha": "479add4d4d64af93b1df1a2085b780de196a6714"
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig_native4.py",
@@ -159,7 +159,11 @@
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/index.html",
-      "gitBlobSha": "63bab03d0e04cafb8dccf30cae74c64fd95d0154"
+      "gitBlobSha": "555a5f9ffae89d63d10785447768fbe452153304"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-motion-preview-readonly.mjs",
+      "gitBlobSha": "7264e3a2bf7bb9c442ae40761ac6333e5a003104"
     }
   ],
   "ghostOverlayPolicy": "NO_DOUBLE_PERSON_ONE_PASS_VISIBLE_PAN_ZOOM_WITHOUT_CLEAN_BACKGROUND",
@@ -170,5 +174,6 @@
   "releaseGateBlockedUntilRuntimeAndNativeEvidence": true,
   "movieFinalizeFailureProof": "Blob finalization failure rejects pending stop, frees owned canvas tracks, leaves caller-owned audio alive; executable Node test",
   "unifiedRgbGlassEvidence": "Formal native CNC and FastModel RGB token parity source, original DOM callbacks unchanged, Playwright computed CSS at 360x780 and 1440x900 + original real movie playback tests",
-  "engineeringShellFallbackForbidden": true
+  "engineeringShellFallbackForbidden": true,
+  "readOnlyMotionSceneIntegration": "Model tab local JSON import → SHA256 → real Canvas tool-center animation → play/stop; no CNC machine APIs, no human GLB impersonation, no user model deletion; tested with matched native Kotlin hash"
 }
