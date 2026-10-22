@@ -130,6 +130,17 @@ def launch(request: BuildRequest, authorization: str | None = Header(default=Non
                      quote(info["branch"], safe=""))["sha"]
         if len(sha) != 40:
             raise HTTPException(502, "SOURCE_SHA_NOT_VERIFIABLE")
+        # Workflow concurrency uses cancel-in-progress. NEVER dispatch a
+        # duplicate project while a real GitHub run is queued or running,
+        # even if this Render service restarted and lost its in-memory queue.
+        recent = (github("GET", "/repos/" + repo +
+                 "/actions/workflows/" + info["workflow"] + "/runs?branch=" +
+                 quote(info["branch"], safe="") + "&per_page=30") or {}).get(
+                     "workflow_runs", [])
+        if any(run.get("status") in (
+            "queued", "waiting", "pending", "requested", "in_progress")
+               for run in recent):
+            raise HTTPException(409, "GITHUB_BUILD_ALREADY_ACTIVE_DO_NOT_CANCEL")
         run_id = uuid.uuid4().hex[:22]
         # Save queue before dispatch, but drop record if API dispatch fails.
         record = {"id": run_id, "project": request.project, "sha": sha,
