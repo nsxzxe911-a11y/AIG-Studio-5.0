@@ -1,7 +1,7 @@
 <!doctype html><html lang="zh-Hant"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#020407">
-<title>AIG FastModel Real3D 1.9｜場景與 GPU 管理</title>
+<title>AIG Real3D 2.5｜真 3D 世界與電影（待驗收）</title>
 <style>
 :root{font:14px/1.5 system-ui,"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#e5f8ff;background:#020407}
 *{box-sizing:border-box}body{margin:0;padding:12px;background:radial-gradient(ellipse at 45% 0,#102b46,#020407 72%)}
@@ -27,8 +27,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:580px){.world-grid{grid-template-columns:1fr}#world-saved{width:100%}}
 </style></head><body><main>
 <header>
-<small>AIG FastModel · Real3D 1.9 · Local-first · GPU 工作頁</small>
-<h1>人物／建築／場景：單一 3D 引擎與 GPU 資源管理</h1>
+<small>AIG Real3D 2.5 · 真骨架電影研發 · Gate 待驗收 · Local-first</small>
+<h1>Real3D 2.5｜人物、建築、真 3D 世界與電影工作區</h1>
 <p>同一時間只保留一個活動的 3D GLB 工作場景。切換時先核對本機素材 SHA，成功解析新來源後才釋放舊場景的 GPU 資源；失敗則保留原畫面。人物與場景原始資料不會因清快取而刪除。</p>
 <a href="./asset-library-studio.html">← 返回人物／地圖／場景外部素材庫</a>
 </header>
@@ -50,7 +50,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 </section>
 <section class="panel" id="stage" aria-label="真正 WebGL 工作視窗">
 <canvas id="viewport" aria-label="可旋轉縮放的真實 GLB 3D 場景"></canvas>
-<p>3D 场景優先佔用畫面空間；控制面板縮於周邊。單場景切換不重新初始化整個 FastModel 工作區。</p>
+<p>3D 场景優先佔用畫面空間；控制面板縮於周邊。單場景切換不重新初始化 Real3D 工作區。</p>
 </section>
 </div>
 
