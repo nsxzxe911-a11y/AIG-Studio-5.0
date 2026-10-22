@@ -27,6 +27,51 @@ export function inspectAIG25EncodedContainer(bytes,ext){
   bytes[6]===0x79&&bytes[7]===0x70;
  return false;
 }
+/**
+ * Decoder validation is separate from EBML/MP4 header sniffing. Browser
+ * must successfully decode an actual frame at the advertised 1080p size.
+ * Never delete or overwrite a previous good film when this fails.
+ */
+export async function verifyAIG25DecodedFrame(blob,{env=globalThis,timeoutMs=12000}={}){
+ if(!blob||blob.size<12||typeof blob.arrayBuffer!=='function'||
+  !Number.isInteger(timeoutMs)||timeoutMs<1000||timeoutMs>30000)
+  fail('NONEMPTY_REAL_VIDEO_BLOB_REQUIRED');
+ if(!env.document?.createElement||!env.URL?.createObjectURL||
+  !env.URL?.revokeObjectURL)
+  fail('VIDEO_DECODER_AND_OBJECT_URL_REQUIRED');
+ const video=env.document.createElement('video');
+ if(!video||typeof video.addEventListener!=='function')
+  fail('REAL_HTML_VIDEO_REQUIRED');
+ const url=env.URL.createObjectURL(blob);
+ let timer=null,loaded=false;
+ try{
+  video.muted=true;video.playsInline=true;video.preload='auto';
+  const result=await new Promise((resolve,reject)=>{
+   const finish=(err,value)=>{
+    if(loaded)return;loaded=true;
+    if(err)reject(err);else resolve(value);
+   };
+   video.addEventListener('loadeddata',()=>{
+    const w=video.videoWidth,h=video.videoHeight;
+    if(w!==AIG25_RENDER.width||h!==AIG25_RENDER.height)
+     finish(Error('AIG25_DECODED_VIDEO_IS_NOT_REAL_1080P'));
+    else finish(null,{decodedFirstFrame:true,actualVideoWidth:w,
+     actualVideoHeight:h,decoderIsNativeBrowser:true});
+   },{once:true});
+   video.addEventListener('error',()=>finish(
+    Error('AIG25_VIDEO_DECODER_CANNOT_PLAY_ENCODED_CONTAINER')),{once:true});
+   timer=(env.setTimeout||setTimeout)(()=>finish(
+    Error('AIG25_VIDEO_FRAME_DECODING_TIMEOUT')),timeoutMs);
+   video.src=url;
+   video.load?.();
+  });
+  return result;
+ }finally{
+  if(timer!==null)(env.clearTimeout||clearTimeout)(timer);
+  try{video.pause?.();video.removeAttribute?.('src');video.load?.()}catch{}
+  env.URL.revokeObjectURL(url);
+ }
+}
 export function validateAIG25TrueWorldMovie({plan,scene,actors,viewer}={}){
  verifyAIG22Story(plan,scene,actors);
  if(!Number.isFinite(plan.durationSeconds)||plan.durationSeconds<.5||
@@ -189,7 +234,8 @@ export class AIG25WorldMovieRecorder{
     throw Error('AIG25_ENCODED_CONTAINER_SIGNATURE_INVALID');
    const evidence={...this.evidence,
    status:'ENCODED_ACTUAL_WEBGL_MOVIE',
-   movieWritten:true,outputMimeType:this.format.mime,
+   movieWritten:true,encodedContainerSignatureChecked:true,
+   browserDecodedFrameVerified:false,outputMimeType:this.format.mime,
    containerExtension:this.format.ext,actualFramesComposited:this.frameCount,
    bytesEncoded:blob.size,sourceGLBsUnmodified:true,
    sourceSubtitlePixelsBurnedIntoCanvas:true,
