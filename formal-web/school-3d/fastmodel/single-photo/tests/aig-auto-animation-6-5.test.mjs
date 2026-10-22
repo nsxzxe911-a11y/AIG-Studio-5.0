@@ -184,6 +184,36 @@ test('6.5 recorder only allows actual 1080p source and browser-encoded chunks; f
  assert.equal(output.evidence.trueHumanLimbAnimation,false);
  assert.equal(AIG65_MOVIE_SIZE.fpsTarget,30);
 });
+test('6.5 releases owned video tracks on stream initialization failure, keeps caller audio intact',()=>{
+ const plan=planAIG65AutoAnimation(options());
+ let stoppedVideo=0,stoppedAudio=0;
+ const videoTrack={stop:()=>{stoppedVideo++;}};
+ const audioTrack={stop:()=>{stoppedAudio++;}};
+ const canvas={width:1920,height:1080,
+  captureStream:()=>({getVideoTracks:()=>[videoTrack]})};
+ class BadMediaStream{
+  constructor(){throw Error('BROWSER_STREAM_CONSTRUCTION_FAILED');}
+ }
+ class MediaRecorderFake{
+  static isTypeSupported(mime){return mime==='video/webm';}
+ }
+ const rec=new AIG65CanvasRecorder({env:{
+  MediaStream:BadMediaStream,MediaRecorder:MediaRecorderFake
+ }});
+ assert.throws(()=>rec.begin({canvas,plan,sourceSHA256:id,
+  audioDestination:{stream:{getAudioTracks:()=>[audioTrack]}}}),
+  /BROWSER_STREAM_CONSTRUCTION_FAILED/);
+ assert.equal(stoppedVideo,1);
+ assert.equal(stoppedAudio,0,'audio source belongs to caller');
+ assert.equal(rec.state,'IDLE','failed initialization must not look like a running capture');
+ let captureCount=0;
+ const unsupported=new AIG65CanvasRecorder({env:{MediaRecorder:MediaRecorderFake}});
+ assert.throws(()=>unsupported.begin({canvas:{...canvas,
+  captureStream:()=>{captureCount++;return canvas.captureStream();}},
+  plan,sourceSHA256:id}),/AIG65_MEDIA_STREAM_UNAVAILABLE/);
+ assert.equal(captureCount,0,'unsupported browser must not acquire tracks');
+});
+
 test('6.5 RGB top-page true callbacks, WebAudio SFX/music and existing 3D/other wardrobes preserved',()=>{
  const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
  const html=read('index.html'),app=read('app.mjs');
