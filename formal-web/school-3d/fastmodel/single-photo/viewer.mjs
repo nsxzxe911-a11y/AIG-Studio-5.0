@@ -66,7 +66,9 @@ export class PhotoViewer{
   this.gpu17Timer=null;this.gpu17Governor=null;this.gpu17Enabled=false;
   this.gpu17LastSample=null;this.gpu17Frames=0;this.gpu17Status='DISABLED_OR_NO_GL_BUNDLE';
   this.gpu18Instances=null;this.gpu18Status='DISABLED';this.gpu18SkipHiddenFrames=0;
+  this.worldActorMixers=new Map();
   this.renderer.setAnimationLoop(t=>{try{const dt=this.previous?Math.min(.1,(t-this.previous)/1000):0;this.previous=t;this.animation?.update(dt);
+    for(const actor of this.worldActorMixers.values())if(!actor.paused)actor.mixer.update(dt);
     try{this.onFrame?.(dt,t);}catch(audioError){this.onFrame=null;this.onError('音訊已隔離：'+audioError.message);}
     if(this.skinProbe&&this.model){this.skinProbe.capture(this.model,t,{animationName:this.animation?.clips?.[this.animation?.index]?.name||null});if(this.skinProbe.done)this.skinProbe=null;}
     this.controls.autoRotate=this.orbit;this.controls.update();
@@ -228,6 +230,7 @@ export class PhotoViewer{
   if(this.gpu17Enabled)this.setGpuAccelerationEnabled(false);
   if(this.gpu18Instances)this.setStaticInstancingEnabled(false);
   const old=this.model;
+  this.disposeWorldActorMotion();
   this.animation?.dispose();this.animation=null;
   this.skinProbe=null;this.skinReport=null;this.model=null;
   this.orbit=false;
@@ -245,7 +248,63 @@ export class PhotoViewer{
   * All objects are parented into one source-locked THREE.Group; original
   * GLB buffers stay in the outside-app library, not in this scene graph.
   */
- mountVerifiedWorld(root,{animationClips=[],orbit=false}={}){
+ /**
+  * True independently playable SOURCE-GLB animation clips for each loaded
+  * actor, never synthesized from prose or guessed from a still image.
+  */
+ setWorldActorMotion(descriptors=[]){
+  if(!Array.isArray(descriptors)||descriptors.length>12)
+   throw Error('AIG21_ACTOR_MOTION_DESCRIPTOR_INVALID');
+  const next=new Map();
+  try{
+   for(const desc of descriptors){
+    if(typeof desc?.nodeId!=='string'||!desc.nodeId||
+     next.has(desc.nodeId)||!desc.root?.isObject3D||
+     !Array.isArray(desc.clips)||desc.clips.length>64||
+     !Number.isInteger(desc.selectedClip)||desc.selectedClip<0||
+     desc.selectedClip>=desc.clips.length)
+     throw Error('AIG21_ACTOR_SOURCE_CLIP_INVALID');
+    const mixer=new THREE.AnimationMixer(desc.root);
+    const action=mixer.clipAction(desc.clips[desc.selectedClip]);
+    action.reset().play();
+    next.set(desc.nodeId,{mixer,root:desc.root,clips:desc.clips,
+     index:desc.selectedClip,paused:false});
+   }
+  }catch(error){
+   for(const a of next.values()){
+    a.mixer.stopAllAction();a.mixer.uncacheRoot(a.root);
+   }
+   throw error;
+  }
+  this.disposeWorldActorMotion();
+  this.worldActorMixers=next;
+  return {actors:[...next.keys()],sourceClipCount:[...next.values()]
+   .reduce((n,a)=>n+a.clips.length,0),inventedClips:0};
+ }
+ setWorldActorClip(nodeId,index){
+  const actor=this.worldActorMixers.get(nodeId);
+  if(!actor||!Number.isInteger(index)||!actor.clips[index])
+   throw Error('AIG21_SOURCE_ANIMATION_CLIP_NOT_FOUND');
+  actor.mixer.stopAllAction();actor.index=index;
+  actor.mixer.clipAction(actor.clips[index]).reset().play();
+  actor.paused=false;
+  return {nodeId,index,sourceClipName:actor.clips[index].name,
+   sourceDurationSeconds:actor.clips[index].duration,
+   synthesisedMotion:false};
+ }
+ setWorldActorPaused(nodeId,paused){
+  const actor=this.worldActorMixers.get(nodeId);
+  if(!actor||typeof paused!=='boolean')throw Error('AIG21_ACTOR_NOT_FOUND');
+  actor.paused=paused;
+  return {nodeId,paused,actualSourceAnimationOnly:true};
+ }
+ disposeWorldActorMotion(){
+  for(const a of this.worldActorMixers.values()){
+   a.mixer.stopAllAction();a.mixer.uncacheRoot(a.root);
+  }
+  this.worldActorMixers.clear();
+ }
+ mountVerifiedWorld(root,{animationClips=[],actorClips=[],orbit=false}={}){
   if(!root?.isGroup||root.children.length===0||
    !Array.isArray(animationClips)||typeof orbit!=='boolean)
    throw Error('AIG20_VALIDATED_THREE_SCENE_REQUIRED');
@@ -267,6 +326,15 @@ export class PhotoViewer{
    if(animationClips.length)nextController.select(0);
   }catch(e){nextController.dispose();throw e}
   const old=this.model,oldAnimation=this.animation;
+  // Stage source animation mixers BEFORE replacing the previous model.
+  // Keep the old scene if an actor clip cannot be attached.
+  const oldActors=this.worldActorMixers;
+  this.worldActorMixers=new Map();
+  try{this.setWorldActorMotion(actorClips)}
+  catch(e){this.worldActorMixers=oldActors;nextController.dispose();throw e}
+  for(const a of oldActors.values()){
+   a.mixer.stopAllAction();a.mixer.uncacheRoot(a.root);
+  }
   this.scene.add(root);
   this.model=root;this.animation=nextController;
   this.orbit=orbit;this.skinProbe=null;this.skinReport=null;
