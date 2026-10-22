@@ -47,6 +47,7 @@ try{
    await page.locator('#review').check();
    assert.equal(await page.locator('#confirm').isEnabled(),true);
    await page.locator('#confirm').click();
+   console.log('AIG75_CONFIRM_DIAGNOSTIC',device.name,await page.locator('#status').textContent(),await page.locator('#evidence').textContent());
    await page.waitForFunction(()=>{
     try{const p=JSON.parse(document.getElementById('evidence').textContent);return p.quality.passed&&p.render?.rayHits>65;}
     catch{return false;}
@@ -81,7 +82,8 @@ try{
    console.log('AIG_FASTMODEL_7_5_MANUAL_LANDMARK_3D_FACE_JACOBIAN_BROWSER_PASS',device.name,atRest.render.rayHits,rear.render.neutralSideBackPixels);
   }catch(e){
    await page.screenshot({path:out+'/'+device.name+'-FAIL.png'}).catch(()=>{});
-   throw Error(device.name+' '+e.message+' jsErrors='+JSON.stringify(errors));
+   const diag={status:await page.locator('#status').textContent().catch(()=>null),evidence:(await page.locator('#evidence').textContent().catch(()=>''))?.slice(0,2500),marked:await page.locator('#point-status').textContent().catch(()=>null)};
+   throw Error(device.name+' '+e.message+' jsErrors='+JSON.stringify(errors)+' diagnostic='+JSON.stringify(diag));
   }finally{await page.close();}
  }
 }finally{await browser.close();}
