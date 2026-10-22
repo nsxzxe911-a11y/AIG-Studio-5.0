@@ -25,6 +25,10 @@ jobs:
       - run: npm ci
       - name: Syntax and true numerical source reparse
         run: |
+          node --check aig-world-scene-2-0.mjs
+          node --check aig-world-runtime-2-0.mjs
+          node --check tests/aig-world-scene-2-0.real-browser.mjs
+          node --test tests/aig-world-scene-2-0.test.mjs
           node --check aig-scene-lifecycle-1-9.mjs
           node --check scene-runtime-studio.mjs
           node --check tests/aig-scene-lifecycle-1-9.real-browser.mjs
@@ -104,6 +108,7 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig-nc13-http.log 2>&1 &
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-world-scene-2-0.real-browser.mjs
           node tests/aig-scene-lifecycle-1-9.real-browser.mjs
           node tests/aig-asset-library-7-16.real-browser.mjs
           node tests/aig-real3d-replay-v1-3.real-browser.mjs
@@ -140,6 +145,12 @@ jobs:
         with:
           name: AIG-Real3D-1-9-Single-Scene-GPU-Lifecycle-Browser-Evidence
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-scene-lifecycle-1-9/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-Real3D-2-0-Actual-Multi-GLB-World-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-world-scene-2-0/
           if-no-files-found: warn
       - name: Exact proof boundary
         if: always()
@@ -179,4 +190,10 @@ jobs:
             echo 'FASTMODEL_REAL3D_1_9_ORIGINAL_GLB_INDEXEDDB=IMMUTABLE_ON_GPU_UNLOAD'
             echo 'FASTMODEL_REAL3D_1_9_GPU_VRAM_ACTUAL_BYTES=NOT_MEASURED'
             echo 'FASTMODEL_REAL3D_1_9_ANDROID_WINDOWS_NATIVE=NOT_YET_INTEGRATED'
+            echo 'FASTMODEL_REAL3D_2_0_MULTI_GLTF_WORLD=SINGLE_THREE_RENDERER_SOURCE_LOCKED'
+            echo 'FASTMODEL_REAL3D_2_0_MAP=SHA_REFERENCED_READ_ONLY_7_12_GEODATA'
+            echo 'FASTMODEL_REAL3D_2_0_CAMERA=SOURCE_KEYFRAMES_NOT_AI_GENERATED_MOTION'
+            echo 'FASTMODEL_REAL3D_2_0_ESTIMATED_ONE_PHOTO_SCALE=NOT_MEASURED_METRES'
+            echo 'FASTMODEL_REAL3D_2_0_ORIGINAL_GLB_IMMUTABLE=TRUE'
+            echo 'FASTMODEL_REAL3D_2_0_RENDER_NATIVE_ANDROID_WINDOWS=NOT_VERIFIED'
           } >> "$GITHUB_STEP_SUMMARY"
