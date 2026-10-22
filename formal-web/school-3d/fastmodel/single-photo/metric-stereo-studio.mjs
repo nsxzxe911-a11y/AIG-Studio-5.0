@@ -58,6 +58,7 @@ function releaseCandidatePreview(){
  if(model)model.visible=true;
 }
 function renderCandidatePreview(candidate){
+ if(candidate===null){releaseCandidatePreview();return;}
  if(!candidate?.geometryGroups)throw Error('AIG715_MISSING_REAL_CANDIDATE_GEOMETRY');
  const sourceCanvas=document.getElementById('heroine-photo');
  const group=new THREE.Group();
