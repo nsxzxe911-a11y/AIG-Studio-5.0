@@ -239,6 +239,49 @@ export class PhotoViewer{
   }
   return {status:'NO_ACTIVE_GPU_SCENE',originalGLBDeleted:false};
  }
+ /**
+  * Real3D 2.0 single-renderer multi-source world commit.
+  * Call ONLY after source/geometry/scale validation and asset loading.
+  * All objects are parented into one source-locked THREE.Group; original
+  * GLB buffers stay in the outside-app library, not in this scene graph.
+  */
+ mountVerifiedWorld(root,{animationClips=[],orbit=false}={}){
+  if(!root?.isGroup||root.children.length===0||
+   !Array.isArray(animationClips)||typeof orbit!=='boolean)
+   throw Error('AIG20_VALIDATED_THREE_SCENE_REQUIRED');
+  if(this.movieMode||this.reviewBusy||this.actionImportBusy||
+   this.skinProbe||this.animation?.story?.playing)
+   throw Error('AIG20_SCENE_SWITCH_DURING_RECORDING_BLOCKED');
+  const box=new THREE.Box3().setFromObject(root);
+  if(box.isEmpty())throw Error('AIG20_EMPTY_SOURCE_WORLD_BLOCKED');
+  const size=box.getSize(new THREE.Vector3()),
+   center=box.getCenter(new THREE.Vector3());
+  if(![...size,...center].every(Number.isFinite))
+   throw Error('AIG20_NONFINITE_WORLD_BOUNDS');
+  const radius=Math.max(size.x,size.y,size.z,.01);
+  // This workbench has ONE renderer; only the active source group changes.
+  if(this.gpu17Enabled)this.setGpuAccelerationEnabled(false);
+  if(this.gpu18Instances)this.setStaticInstancingEnabled(false);
+  const nextController=new AnimationController(root,animationClips);
+  try{
+   if(animationClips.length)nextController.select(0);
+  }catch(e){nextController.dispose();throw e}
+  const old=this.model,oldAnimation=this.animation;
+  this.scene.add(root);
+  this.model=root;this.animation=nextController;
+  this.orbit=orbit;this.skinProbe=null;this.skinReport=null;
+  this.camera.position.copy(center).add(
+   new THREE.Vector3(radius*.2,radius*.3,radius*1.9));
+  this.camera.near=Math.max(.001,radius/1000);
+  this.camera.far=Math.max(10,radius*100);
+  this.camera.updateProjectionMatrix();
+  this.controls.target.copy(center);this.controls.update();
+  oldAnimation?.dispose();
+  if(old){this.scene.remove(old);this.release(old)}
+  return Object.freeze({status:'WORLD_2_0_SINGLE_RENDERER_COMMITTED',
+   objects:root.children.length,clipCount:animationClips.length,
+   actualMetricProvenanceStillSourceDependent:true});
+ }
  async load(buffer,{orbit=false}={}){
   if(this.reviewBusy)throw Error('TIMELINE_REVIEW_IN_PROGRESS');
   if(this.actionImportBusy)throw Error('ACTION_IMPORT_IN_PROGRESS');
