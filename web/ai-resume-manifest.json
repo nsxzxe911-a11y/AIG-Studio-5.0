@@ -9,7 +9,7 @@
     "source_branch": "web/aig-dual-formal-runtime-20261016",
     "source_sha_before_handoff": "d6d431002a0238476fb3d4b4a2d2f415bf26b57c",
     "render_live_sha": "89b4fe4080c24b970adf7a577c492ffa2755cb71",
-    "deployment": "LIVE_OLDER_RENDER_DEPLOY_dep-dbd035cs728c738egrn0_SHA_89b4fe4080c24b970adf7a577c492ffa2755cb71_REAL3D_1_1_NOT_YET_PUBLISHED"
+    "deployment": "PENDING_RENDER_DEPLOY_NEW_1_2_SITE_BRANCH_WITH_EXACT_SOURCE"
   },
   "projects": [
     {
@@ -36,11 +36,11 @@
       "id": "AIG FastModel",
       "repository": "nsxzxe911-a11y/AIG-Studio-5.0",
       "reference": "repair/core-first-fastmodel-20261021",
-      "source_sha": "9e75caac29c761d5f08d60a2d09b1c7d3d5f33c6",
+      "source_sha": "e109d56d02be93eef9e7ef1f1573c43551ccff70",
       "visibility": "PUBLIC",
       "source_checked": true,
       "runtime_gate": "SHARED_REAL3D_V1_1_NUMERIC_WEBGL_BROWSER_PASS_SITE_MIRRORED_RENDER_OUTDATED_NATIVE_AND_CNC_BLOCKED",
-      "checkpoint_note": "AIG Three-Project Shared Real3D 1.1 source 9e75caac29c761d5f08d60a2d09b1c7d3d5f33c6: true 3D voxel stock 12x8x6 mm, pitch .5mm, Ø2 flute, synthetic G1 continuous cylinder sweep removes 736 occupancy cells=92 mm³; G0 removes 0; changed GPU WebGL canvas real pixels and 4352 triangles phone+desktop. Independent GitHub run 39788702235 PASS: 16/16 numeric/unit and both Chromium synthetic hardware/software WebGL device profiles. Original Real3D 1.0 run 39785540820 PASS. All six core/mirror website blobs exact. Full FastModel legacy regression after 1.1 still queued, no native Android Windows real GPU or CNC 0.001/Fanuc verification. Latest Render LIVE 89b4fe4080c24b970adf7a577c492ffa2755cb71 predates 1.1 source and is NOT 1.1 LIVE."
+      "checkpoint_note": "Shared Real3D 1.2 verified on e109d56d02be93eef9e7ef1f1573c43551ccff70 independent GH run 39791437496: 22/22 numerical/safety Node tests, real phone desktop Chromium WebGL, parsed local NC G21 G90 G54 G0 G1 with 54 mm3 true discrete voxel G1 stock removal and zero G0. Rejected G83 and all unsupported Fanuc commands; no machine output, no CNC production certification, no 0.001mm or native Android/Windows. New original AIG website source /shared-3d/aig-real3d-nc-lab.html and dependencies exact. Render live not yet confirmed."
     }
   ],
   "checks": {
@@ -185,7 +185,18 @@
     "shared_real3d_v1_1_full_legacy_regression": "QUEUED_GITHUB_RUN_39788706333",
     "shared_real3d_v1_1_real_001_precision": "NOT_VERIFIED_VOXEL_APPROXIMATION_ONLY",
     "shared_real3d_v1_1_native_android_windows_gpu": "NOT_VERIFIED_SOFTWARE_CHROMIUM_FIXTURE",
-    "shared_real3d_v1_1_real_fanuc_nc_and_axis_abc": "NOT_VERIFIED_CNC_READ_ONLY_NO_MACHINE_CONTROL"
+    "shared_real3d_v1_1_real_fanuc_nc_and_axis_abc": "NOT_VERIFIED_CNC_READ_ONLY_NO_MACHINE_CONTROL",
+    "shared_real3d_v1_2_core_sha": "e109d56d02be93eef9e7ef1f1573c43551ccff70",
+    "shared_real3d_v1_2_numeric": "PASS_GITHUB_39791437496_22_OF_22_NODE",
+    "shared_real3d_v1_2_browser": "PASS_GITHUB_39791437496_ACTUAL_PHONE_AND_DESKTOP_WEBGL",
+    "shared_real3d_v1_2_removed_volume": "54_MM3_DETERMINISTIC_G1_VOXEL_HALF_MM_NOT_MACHINE",
+    "shared_real3d_v1_2_g0": "0_MM3_NO_RAPID_CUT",
+    "shared_real3d_v1_2_unsupported_nc": "G2_G3_G43_G34_G81_G83_M6_M98_ABC_BLOCKED",
+    "shared_real3d_v1_2_cnc_machine_connection": "DISABLED_NO_NC_OUTPUT",
+    "shared_real3d_v1_2_native_apk_exe": "NOT_TESTED",
+    "shared_real3d_v1_2_source_site": "PASS_EXACT_3_NEW_FILES_AND_4_ENGINE_DEPENDENCIES",
+    "shared_real3d_v1_2_render_live": "NOT_YET_DEPLOYED",
+    "shared_real3d_v1_2_exact_toolpath": "G21_G90_G54_G0_G1_SOURCE_SUBSET_ONLY_NOT_FANUC_FULL"
   },
   "approved_invariants": [
     "Do not delete/overwrite original geometry, CAD/CAM/NC, approved RGB Authority, or FastModel assets.",
@@ -195,9 +206,11 @@
     "No automatic rollback/downgrade; no destructive repair; create a new checkpoint after validation."
   ],
   "next_steps": [
+    "Deploy original Render site web/aig-dual-formal-runtime-20261016 exact SHA after mirroring Real3D 1.2 source; record Render LIVE commit and HTTP readback if possible.",
+    "Real3D 1.3: controlled runtime NC token mapping for verified G0/G1 source coordinates before expanding production Fanuc parser; keep advanced G34/G83/O4/O5/machine instructions BLOCKED for preview until verified.",
+    "Maintain AIG-II / AIG Studio 5.0 CNC code and UI separation; new 1.2 has no real machine bridge, native app FPS or certified simulation accuracy.",
     "Original Render site autoDeploy=yes but currently older live 89b4fe4080c24b970adf7a577c492ffa2755cb71; confirm actual next Render deploy exact GitHub site branch and HTTP serve /shared-3d/aig-real3d-stock-lab.html plus modules, do not claim live before verified.",
     "Verify complete FastModel legacy regression run 39788706333 after 1.1 additive engine change; BLOCK release on any regression.",
-    "Phase Real3D 1.2: integrate source-provenance CAM/NC G90 input with explicit transforms and audit, maintain read-only CNC, pursue genuine 3AX stock material removal then 4-6AX verified kinematics.",
     "Actual 0.001 mm numeric geometric precision and machine collisions remain independent Gates; 0.5mm voxel mm3 material-volume proof is not equivalent.",
     "Protect authentic 10/5 Android and Desktop Authority machine visuals; do not confuse shared procedure demo meshes with official machines.",
     "Verify full legacy core locked inventory + Android/Windows separately before APK/EXE release.",
@@ -225,5 +238,5 @@
     "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
   ],
   "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
-  "last_action": "FastModel core 9e75caac29c761d5f08d60a2d09b1c7d3d5f33c6 new Real3D 1.1: exact 3D voxel stock and WebGL actual GPU surface PASS 16/16 Node numeric+mobile desktop browser run 39788702235; 92mm3 G1, G0 zero, scene 4352 triangles, original 1.0 remains passed. Real3D core+site source exact mirror across 6 files, independent experimental /shared-3d/aig-real3d-stock-lab.html link. Original Render live 89b4fe4080c24b970adf7a577c492ffa2755cb71 is older, do not claim 1.1 live. Full legacy regression 39788706333 queued. Native device FPS, Fanuc NC, 3-6 AX kinematics and 0.001 mm precision remain blocked."
+  "last_action": "Real3D 1.2 core e109d56d02be93eef9e7ef1f1573c43551ccff70 PASS independent GitHub run 39791437496 (22 Node, real browser phone & desktop) after fixed drawing-buffer screenshot evidence; source NC working-copy whitelisted parse, true G1 54mm3 voxel subtraction with actual changed mesh, G0 zero, G83 fail-closed. Three original site source files mirrored byte-identical plus four older engine dependency blobs, navigation added. Need exact Render LIVE deploy and HTTP check separately; existing AIG-II/CNC runtime untouched, no native APK/EXE."
 }
