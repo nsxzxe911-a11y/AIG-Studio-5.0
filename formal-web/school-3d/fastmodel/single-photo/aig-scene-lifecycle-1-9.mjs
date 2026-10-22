@@ -125,6 +125,15 @@ export class AIG19SceneRuntime{
   this._queue=r.then(()=>undefined,()=>undefined);
   return r;
  }
+ clearActiveReferenceAfterExternalCommit(){
+  if(this._closed)fail('RUNTIME_CLOSED');
+  // A Real3D 2.0 world was already committed in the SAME viewer.
+  // Forget the former single-GLB identity, but do not unload the new
+  // composite model or erase cached/approved original asset bytes.
+  ++this._generation;this._active=null;
+  return {status:'PREVIOUS_SINGLE_SCENE_REFERENCE_RELEASED',
+   originalAssetBlobsPreserved:true};
+ }
  clearCache(){
   if(this._closed)fail('RUNTIME_CLOSED');
   this._cache.clear();
