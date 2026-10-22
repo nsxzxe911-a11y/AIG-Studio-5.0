@@ -184,7 +184,10 @@ try{
   const motionChanged=motionA.filter((v,i)=>Math.abs(v-motionB[i])>20).length;
   if(motionChanged<12)throw Error('AIG_CNC_MODEL_PLAY_BUTTON_BUT_NO_REAL_PIXEL_MOTION '+
    motionChanged);
-  await motionStop.click();
+  // The 1.4s fixture can naturally finish during CI pixel sampling.
+  // Re-play the real callback if needed; then stop while capture is active.
+  if(await motionStop.isDisabled())await motionPlay.click();
+  await motionStop.click({timeout:4000});
   const stopped=await page.locator('#aig-cnc-motion-status').innerText();
   if(!stopped.includes('沒有發送任何 CNC 指令')||await motionPlay.isDisabled())
    throw Error('AIG_CNC_PREVIEW_STOP_DID_NOT_RETAIN_READONLY_STATE');
