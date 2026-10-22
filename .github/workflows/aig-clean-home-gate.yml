@@ -5,6 +5,9 @@ on:
       - web/aig-dual-formal-runtime-20261016
     paths:
       - 'formal-web/aig-new-home.html'
+      - 'formal-web/aig-download-center.html'
+      - 'formal-web/aig-download-center.js'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-download-center.real-browser.mjs'
       - 'formal-web/index.html'
       - 'formal-web/3ax-nc-workbench.html'
       - 'formal-web/3ax-nc-workbench.css'
@@ -29,6 +32,11 @@ jobs:
       - name: Verify new entry and real destinations exist
         run: |
           test -s ../../../aig-new-home.html
+          test -s ../../../aig-download-center.html
+          test -s ../../../aig-download-center.js
+          test -s ../../../qa-artifacts-manifest.json
+          node --check ../../../aig-download-center.js
+          node --check tests/aig-download-center.real-browser.mjs
           test -s ../../../3ax-nc-workbench.html
           test -s ../../../3ax-nc-workbench.css
           test -s ../../../fastmodel/index.html
@@ -46,17 +54,22 @@ jobs:
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           node tests/aig-clean-home.real-browser.mjs
+          node tests/aig-download-center.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: AIG-New-Home-Phone-Landscape-Desktop-Layout-Evidence
-          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-clean-home/
+          path: |
+            formal-web/school-3d/fastmodel/single-photo/artifacts/aig-clean-home/
+            formal-web/school-3d/fastmodel/single-photo/artifacts/aig-new-download-center/
           if-no-files-found: warn
       - name: Exact release boundary
         if: always()
         run: |
           {
             echo 'NEW_HOMEPAGE=SEPARATE_STARTER_UI_WITH_EXISTING_LINK_DESTINATIONS'
+            echo 'NEW_DOWNLOAD_CENTER=ORIGINAL_QA_AND_BUILD_LINKS_MOVED_PLUS_LOCAL_JSON_BACKUP'
+            echo 'NO_NATIVE_BINARY_CLAIM=TRUE'
             echo 'OLD_SITE_AND_LOCAL_STORAGE=NOT_MODIFIED_BY_NEW_HOME'
             echo 'NEW_3AX_WORKSPACE=LIMITED_NC_NUMERICAL_WEBGL'
             echo 'AUTHORITY_RGB_AND_AUTHENTIC_MACHINE_3D=NOT_VERIFIED'
