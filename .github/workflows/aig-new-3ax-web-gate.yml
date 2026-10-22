@@ -9,6 +9,11 @@ on:
       - 'formal-web/shared-3d/aig-real3d-replay-lab.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-3ax-new-workbench.real-browser.mjs'
       - '.github/workflows/aig-new-3ax-web-gate.yml'
+  pull_request:
+    branches:
+      - web/aig-dual-formal-runtime-20261016
+    paths:
+      - '.github/workflows/aig-new-3ax-web-gate.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -34,6 +39,7 @@ jobs:
           python3 -m json.tool ../../../3ax-authority-source.json >/dev/null
           node --check ../../../shared-3d/aig-real3d-replay-lab.mjs
           node --check tests/aig-3ax-new-workbench.real-browser.mjs
+          node --check tests/aig-public-3ax-authority-live.real-browser.mjs
           node --test tests/aig-real3d-replay-v1-3.test.mjs
           python3 - <<'PY'
           from html.parser import HTMLParser
@@ -61,11 +67,14 @@ jobs:
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           node tests/aig-3ax-new-workbench.real-browser.mjs
+          node tests/aig-public-3ax-authority-live.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: AIG-New-3AX-Real-NC-First-Web-Mobile-Desktop-Evidence
-          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-new-3ax-web/
+          path: |
+            formal-web/school-3d/fastmodel/single-photo/artifacts/aig-new-3ax-web/
+            formal-web/school-3d/fastmodel/single-photo/artifacts/aig-public-3ax-authority-live/
           if-no-files-found: warn
       - name: Explicit release bounds
         if: always()
