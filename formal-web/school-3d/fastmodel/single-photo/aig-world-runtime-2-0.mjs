@@ -71,7 +71,7 @@ export class AIG20WorldRuntime{
    }
    // Prepare child groups off-screen, do not touch the current GPU scene
    // until every asset and map has passed its provenance contract.
-   let animate=null;
+   const sourceActors=[];
    for(const item of scene.objects){
     const src=parsed.get(item.assetId);
     const child=cloneSkeleton(src.scene);
@@ -83,18 +83,17 @@ export class AIG20WorldRuntime{
      sourceSHA256:item.sourceSha256,sourceAssetId:item.assetId,
      category:item.category,physicalScaleReviewed:item.physicalScaleReviewed};
     root.add(child);
-    if(item.category==='character'&&!animate&&src.animations.length){
+    if(item.category==='character'&&src.animations.length){
      const clip=item.selectedClip===null?0:item.selectedClip;
      if(!src.animations[clip])fail('SELECTED_CHARACTER_CLIP_NOT_FOUND');
-     // Only ONE actor's verified source GLB clip is active in 2.0.
-     // This does not synthesize walking/running from text.
-     animate=src.animations[clip];
+     sourceActors.push({nodeId:item.nodeId,root:child,
+      clips:src.animations,selectedClip:clip});
     }
    }
    root.updateMatrixWorld(true);
    if(gen!==this._generation)return {status:'SUPERSEDED_BEFORE_COMMIT'};
    const state=this.viewer.mountVerifiedWorld(root,{
-    animationClips:animate?[animate]:[],orbit:false});
+    animationClips:[],actorClips:sourceActors,orbit:false});
    committed=true;
    this.scene=JSON.parse(JSON.stringify(scene));
    this._map=mapData;this._activeSourceCount=source.assets.length;
@@ -102,7 +101,9 @@ export class AIG20WorldRuntime{
    return {status:'COMPOSITED_WORLD_GPU_READY',
     objects:scene.objects.length,distinctGlbSources:source.assets.length,
     mapReadOnly:mapData,render:state,
-    clipPlaying:animate?.name??null,
+    sourceActorClips:sourceActors.map(a=>({nodeId:a.nodeId,
+     selectedIndex:a.selectedClip,
+     names:a.clips.map(c=>c.name),sourceAnimationOnly:true})),
     physicalUnitsCertified:source.realWorldScaleCertified,
     multipleRenderersCreated:false};
   }catch(e){
@@ -123,6 +124,59 @@ export class AIG20WorldRuntime{
     // All shared GPU resources are released by viewer.unloadCurrent().
    }
   }
+ }
+ /**
+  * Live re-alignment of a source GLB to a user-selected 7.12 ground feature.
+  * Geometry, SHA refs, model scale and material remain unchanged. Position
+  * only; no GLB parse, upload or renderer reinitialization.
+  */
+ updateWorldPositions(scene){
+  this._checkOpen();assertAIG20Document(scene);
+  if(!this.scene||!this.viewer.model)
+   fail('NO_SOURCE_WORLD_TO_ALIGN');
+  const old=this.scene;
+  if(scene.id!==old.id||scene.coordinateMode!==old.coordinateMode||
+   JSON.stringify(scene.mapRef)!==JSON.stringify(old.mapRef)||
+   scene.objects.length!==old.objects.length)
+   fail('CHANGED_SOURCE_WORLD_REQUIRES_RELOAD');
+  for(let i=0;i<old.objects.length;i++){
+   const a=old.objects[i],b=scene.objects[i];
+   if(a.nodeId!==b.nodeId||a.assetId!==b.assetId||
+    a.sourceSha256!==b.sourceSha256||a.category!==b.category||
+    JSON.stringify(a.quaternion)!==JSON.stringify(b.quaternion)||
+    JSON.stringify(a.scale)!==JSON.stringify(b.scale)||
+    a.physicalScaleReviewed!==b.physicalScaleReviewed||
+    a.selectedClip!==b.selectedClip)
+    fail('SOURCE_OR_MESH_GEOMETRY_CHANGED');
+  }
+  // Validate all target children before mutating any of their positions.
+  const nodes=scene.objects.map(o=>this.viewer.model.children.find(n=>
+   n.userData.nodeId===o.nodeId));
+  if(nodes.some(n=>!n))fail('SOURCE_NODE_MISSING_IN_SCENE');
+  for(let i=0;i<nodes.length;i++){
+   nodes[i].position.fromArray(scene.objects[i].position);
+   nodes[i].updateMatrixWorld(true);
+  }
+  this.scene=JSON.parse(JSON.stringify(scene));
+  return {status:'MAP_ALIGNED_ORIGINAL_GLTF_GEOMETRY_UNTOUCHED',
+   nodesAligned:nodes.length,sourceShaPreserved:true,
+   gpuSceneReloads:0,physicalHeightNotInvented:true};
+ }
+ listSourceActorClips(){
+  this._checkOpen();
+  return [...this.viewer.worldActorMixers.entries()].map(([nodeId,a])=>({
+   nodeId,clipIndex:a.index,paused:a.paused,
+   clips:a.clips.map((c,i)=>({index:i,name:c.name,durationSeconds:c.duration,
+    source:'ORIGINAL_SIGNED_GLB_CLIP_NOT_AI_GENERATED'}))
+  }));
+ }
+ selectSourceActorClip(nodeId,index){
+  this._checkOpen();if(!this.scene)fail('NO_WORLD_ACTOR_READY');
+  return this.viewer.setWorldActorClip(nodeId,index);
+ }
+ pauseSourceActor(nodeId,paused){
+  this._checkOpen();if(!this.scene)fail('NO_WORLD_ACTOR_READY');
+  return this.viewer.setWorldActorPaused(nodeId,paused);
  }
  updateCameraTrack(scene){
   this._checkOpen();assertAIG20Document(scene);
