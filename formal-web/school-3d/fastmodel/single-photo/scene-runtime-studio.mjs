@@ -953,8 +953,16 @@ $('story-play').addEventListener('click',()=>{
    worldRuntime.listSourceActorClips());
   stopWorldPlayback();
   stopAIG22Storyboard('準備新劇本');
+  // Durable proof of a source-GLB cue actually dispatched, rather than
+  // a transient "開始播放" string overwritten by the next animation frame.
+  $('story-status').dataset.actualSourceClipPlayed='false';
+  $('story-status').dataset.actualSourceClipName='';
   story22Player=new AIG22StoryPlayer({
    worldRuntime,onEvent:e=>{
+    if(e.type==='ACTOR_SOURCE_CLIP'){
+     $('story-status').dataset.actualSourceClipPlayed='true';
+     $('story-status').dataset.actualSourceClipName=e.clipName;
+    }
     $('story-status').textContent='執行第 '+e.line+' 行：'+e.type+
      (e.nodeId?' '+e.nodeId+'／'+e.clipName:'');
     if(e.type==='SUBTITLE')$('story-subtitle').textContent=e.text;
