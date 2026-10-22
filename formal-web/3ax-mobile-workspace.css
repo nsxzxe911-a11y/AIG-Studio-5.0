@@ -50,3 +50,15 @@ summary{cursor:pointer;padding:13px 14px;color:#a6eff7;font-weight:800;font-size
 @media(max-width:400px){.logo strong{font-size:20px}.head-status span:last-child{max-width:112px;line-height:1.2;text-align:center}.data-sidebar{grid-template-columns:repeat(2,minmax(0,1fr))}.transport button{font-size:15px;min-height:55px}.transport button small{font-size:9px}.canvas-wrap canvas{height:clamp(275px,47dvh,445px)}.axis-overlay{bottom:93px}.axis-overlay span{font-size:10px}.run-metrics span{font-size:9px}.run-metrics output{font-size:14px}.control-grid{gap:5px}.control-grid fieldset{padding:5px}.control-grid fieldset button{font-size:10px;padding:3px}}
 @media(orientation:landscape) and (max-width:1000px) and (min-width:641px){.machine-layout{grid-template-columns:minmax(0,70fr) minmax(0,30fr)}.canvas-wrap canvas{height:clamp(300px,75dvh,550px)}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+
+/* Evidence-based image-to-CAD planar XY calibration, never machine depth. */
+.plane-calibration{padding:9px 12px 13px;border:1px solid #2f6982;border-radius:10px;background:#061b2b;margin:10px}
+.plane-calibration label{display:block;margin:4px 0 7px;color:#acdeeb;font-size:11px}
+.plane-calibration textarea{display:block;width:100%;min-height:82px;resize:vertical;background:#020e19;border:1px solid #4785a5;border-radius:7px;color:#d8f6ff;padding:9px;font:11px/1.6 ui-monospace,monospace}
+.plane-calibration button{min-height:44px;padding:8px 12px;border:1px solid #478db1;color:#effcff;background:#10456e;border-radius:7px;margin:8px 0;font-size:11px;font-weight:790}
+.plane-calibration button:disabled{opacity:.4}
+.plane-calibration output{display:block;margin:7px 0;padding:10px;border:1px solid #85714e;background:#261f1a;border-radius:7px;color:#ffdaaa;font-size:11px}
+.plane-calibration output[data-ok=true]{background:#0a3025;border-color:#47957c;color:#c0ffe7}
+.plane-projection{display:flex;flex-wrap:wrap;gap:7px;align-items:end}.plane-projection label{flex:1 1 105px}
+.plane-projection input{display:block;width:100%;height:43px;background:#051c2b;color:#f3fcff;border:1px solid #3f86a6;padding:6px;border-radius:7px}
