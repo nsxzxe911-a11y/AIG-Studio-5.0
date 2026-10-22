@@ -96,6 +96,7 @@ jobs:
       # Publish only after full JVM regression and native compilation PASS.
       - id: android_upload
         name: QA-only native debug artifacts
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: aig-studio-core-control-android-debug-NOT-RELEASE
@@ -104,6 +105,7 @@ jobs:
           retention-days: 7
       - id: windows_upload
         name: QA-only Windows JVM evidence
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: aig-studio-core-control-windows-jar-NOT-EXE
@@ -129,8 +131,11 @@ jobs:
             else
               echo 'NATIVE_COMPILE=BLOCKED; inspect compiler and byte-verification logs'
             fi
-            if [ "$ANDROID_UPLOAD" != success ] || [ "$WINDOWS_UPLOAD" != success ]; then
-              echo 'DELIVERY=BLOCKED; inspect upload quota/storage logs'
+            if [ "$ANDROID_UPLOAD" = skipped ] && [ "$WINDOWS_UPLOAD" = skipped ]; then
+              echo 'QA_ARTIFACT_UPLOAD=SKIPPED_INTENTIONALLY_TO_SAVE_QUOTA'
+              echo 'Exact SHA + compilation logs remain; manually dispatch for needed QA packages.'
+            elif [ "$ANDROID_UPLOAD" != success ] || [ "$WINDOWS_UPLOAD" != success ]; then
+              echo 'DELIVERY=BLOCKED; inspect artifact upload quota/storage logs'
             else
               echo 'QA_ARTIFACT_UPLOAD=PASS (NOT A SIGNED RELEASE)'
             fi
