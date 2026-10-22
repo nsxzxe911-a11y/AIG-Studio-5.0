@@ -158,3 +158,72 @@ export function mapAIG712RelativeXYZToCAD(calibrated,xyz){
   precisionMm:.001,sourceReferenceOnly:true
  };
 }
+
+
+/**
+ * CAD 1:2 / 1:4 / 1:10 drawing reduction. Deliberately separate from
+ * physical video-grid calibration. A printed/rendered grid at 1:10 has
+ * 1/10 the length on the drawing, not 1/10 the *real-world* mm/mesh size.
+ * NC/CAM true world XYZ and source calibration NEVER use drawing ratio.
+ */
+export const AIG712_CAD_DRAWING_SCALE_SCHEMA='AIG_FASTMODEL_7_12_CAD_DRAWING_VIEW_SCALE';
+export const AIG712_CAD_DRAWING_SCALES=Object.freeze([
+ Object.freeze({label:'1:1',denominator:1,factor:1}),
+ Object.freeze({label:'1:2',denominator:2,factor:.5}),
+ Object.freeze({label:'1:4',denominator:4,factor:.25}),
+ Object.freeze({label:'1:10',denominator:10,factor:.1})
+]);
+export function createAIG712CADDrawingScale(gridOrCalibrated,{denominator=2}={}){
+ const drawingRatio=AIG712_CAD_DRAWING_SCALES.find(x=>x.denominator===denominator);
+ if(!drawingRatio||
+  gridOrCalibrated?.schema!==AIG712_CAD_GRID_SCHEMA||
+  !finite(gridOrCalibrated.cellMm)||gridOrCalibrated.cellMm<=0||
+  !gridOrCalibrated.physicalReferenceReviewed&&!gridOrCalibrated.realCadCoordinatesEnabled)
+  throw Error('AIG712_CAD_SCALE_REQUIRES_PHYSICAL_GRID_AND_APPROVED_RATIO');
+ const grid=gridOrCalibrated.cellMm,
+  originXmm=gridOrCalibrated.originXmm??0,originYmm=gridOrCalibrated.originYmm??0;
+ return Object.freeze({
+  schema:AIG712_CAD_DRAWING_SCALE_SCHEMA,
+  ...drawingRatio,
+  physicalCellMm:grid,
+  drawingCellMm:grid* drawingRatio.factor,
+  originXmm,originYmm,
+  precisionMm:.001,
+  physicallyCalibrated:gridOrCalibrated.realCadCoordinatesEnabled===true,
+  physicalCalibrationUnmodified:true,
+  trueWorldXYZImmutable:true,
+  drawingScaleCannotEstablishPhysicalMeasurement:true,
+  metricLabel:'縮尺圖面尺寸；實際物體尺寸不變'
+ });
+}
+export function projectAIG712CADCoordinatesForDrawing(scale,point){
+ if(scale?.schema!==AIG712_CAD_DRAWING_SCALE_SCHEMA||
+  !point||![point.xMm,point.yMm,point.zMm].every(finite))
+  throw Error('AIG712_CAD_DRAWING_POINT_INVALID');
+ const ratio=scale.factor;
+ return {
+  actualMm:{x:point.xMm,y:point.yMm,z:point.zMm},
+  plotMm:{
+   x:(point.xMm-scale.originXmm)*ratio,
+   y:(point.yMm-scale.originYmm)*ratio,
+   z:point.zMm*ratio
+  },
+  reducedCellMm:scale.drawingCellMm,
+  dimensionLabelMm:{
+   x:point.xMm,y:point.yMm,z:point.zMm
+  },
+  drawingRatio:scale.label,
+  worldMmUnmodified:true
+ };
+}
+export function recoverAIG712CADWorldFromDrawing(scale,drawPoint){
+ if(scale?.schema!==AIG712_CAD_DRAWING_SCALE_SCHEMA||!drawPoint||
+ ![drawPoint.x,drawPoint.y,drawPoint.z].every(finite))
+  throw Error('AIG712_CAD_SCALED_COORDINATE_INVALID');
+ return {
+  xMm:scale.originXmm+drawPoint.x/scale.factor,
+  yMm:scale.originYmm+drawPoint.y/scale.factor,
+  zMm:drawPoint.z/scale.factor,
+  usedDrawingOnly:true
+ };
+}
