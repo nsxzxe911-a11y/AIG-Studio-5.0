@@ -66,10 +66,11 @@ try{
    const after=await page.locator('#view').evaluate(c=>c.toDataURL());
    assert.notEqual(after,before,'real XYZ facial geometry changes rendered pixels');
    await page.locator('#yaw').evaluate(el=>{el.value='3.14';el.dispatchEvent(new Event('input',{bubbles:true}));});
+   await page.locator('#view').scrollIntoViewIfNeeded();
    await page.waitForFunction(()=>{
-    try{const r=JSON.parse(document.getElementById('evidence').textContent).render;return r.neutralSideBackPixels>70&&r.originalFrontPhotoPixels===0;}
+    try{const r=JSON.parse(document.getElementById('evidence').textContent).render;return Math.abs(r.cameraYaw-3.14)<.02&&r.neutralSideBackPixels>70&&r.originalFrontPhotoPixels===0;}
     catch{return false;}
-   },null,{timeout:45000});
+   },null,{timeout:45000,polling:200});
    const rear=await report();
    assert.equal(rear.hairNeckLikenessVerified,false);
    assert.equal(rear.nativeAndroidWindowsVerified,false);
