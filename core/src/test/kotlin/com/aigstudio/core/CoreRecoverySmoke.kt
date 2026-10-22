@@ -187,7 +187,7 @@ fun main() {
         AigReadOnlyMotionPreview.export(goldenPoints.map{it.copy(rapid=true)},"3AX",1500.0)
     }.isFailure)
     check(runCatching {
-        AigReadOnlyMotionPreview.export(goldenPoints.map{it.copy(x=1.0)},"3AX",1500.0)
+        AigReadOnlyMotionPreview.export(goldenPoints.map{it.copy(x=1.0,y=0.0,z=8.0)},"3AX",1500.0)
     }.isFailure)
     check(runCatching {
         AigReadOnlyMotionPreview.export(goldenPoints.mapIndexed { index,p->
