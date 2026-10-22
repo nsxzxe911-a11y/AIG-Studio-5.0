@@ -89,6 +89,8 @@ try{
    };
    await choose('world-map','校園來源地圖');
    await page.locator('#world-new').click();
+   await page.waitForFunction(()=>document.getElementById('world-status')
+    .textContent.includes('已建立來源座標一致'));
    await choose('world-asset','女主角來源模型');
    await page.locator('#world-x').fill('0');
    await page.locator('#world-add').click();
@@ -97,6 +99,10 @@ try{
    await choose('world-asset','校園建築來源');
    await page.locator('#world-x').fill('3.5');
    await page.locator('#world-add').click();
+   await page.waitForFunction(()=>{
+    try{return JSON.parse(document.getElementById('world-proof')
+     .textContent).objects.length===2}catch{return false}
+   });
    const before=JSON.parse(await page.locator('#world-proof').textContent());
    assert.equal(before.objects.length,2);
    assert.equal(before.sourceMode,'LOCAL_RELATIVE');
@@ -152,6 +158,10 @@ try{
    assert.equal(JSON.parse(await page.locator('#metrics').textContent()).activeWorld,goodId);
    await choose('world-asset','破損 GLB 來源');
    await page.locator('#world-add').click();
+   await page.waitForFunction(()=>{
+    try{return JSON.parse(document.getElementById('world-proof')
+     .textContent).objects.length===3}catch{return false}
+   });
    await page.locator('#world-preview').click();
    await page.waitForFunction(()=>document.getElementById('world-status')
     .textContent.includes('BLOCKED'),null,{timeout:18000});
