@@ -156,6 +156,10 @@
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-hybrid-4-3.mjs",
       "gitBlobSha": "3869d2b3ed230b1bdd4935703ee0ed6d60beabd7"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/index.html",
+      "gitBlobSha": "63bab03d0e04cafb8dccf30cae74c64fd95d0154"
     }
   ],
   "ghostOverlayPolicy": "NO_DOUBLE_PERSON_ONE_PASS_VISIBLE_PAN_ZOOM_WITHOUT_CLEAN_BACKGROUND",
@@ -164,5 +168,7 @@
   "sourceIdentityIsNotExecutableProof": true,
   "controlGateBlockedUntilFullCoreOutcomeEvidence": true,
   "releaseGateBlockedUntilRuntimeAndNativeEvidence": true,
-  "movieFinalizeFailureProof": "Blob finalization failure rejects pending stop, frees owned canvas tracks, leaves caller-owned audio alive; executable Node test"
+  "movieFinalizeFailureProof": "Blob finalization failure rejects pending stop, frees owned canvas tracks, leaves caller-owned audio alive; executable Node test",
+  "unifiedRgbGlassEvidence": "Formal native CNC and FastModel RGB token parity source, original DOM callbacks unchanged, Playwright computed CSS at 360x780 and 1440x900 + original real movie playback tests",
+  "engineeringShellFallbackForbidden": true
 }
