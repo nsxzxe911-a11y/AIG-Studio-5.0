@@ -8,6 +8,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
 import {createAIG713StereoCalibration,reconstructAIG713StereoSurface}
  from './aig-metric-stereo-7-13.mjs';
+import {mountAIG714HeroineScan} from './aig-heroine-scan-ui-7-14.mjs';
 const $=id=>document.getElementById(id);
 const status=$('status'),proof=$('proof'),screen=$('view'),download=$('export'),
  evidence=$('evidence'),start=$('reconstruct');
@@ -171,6 +172,7 @@ start.addEventListener('click',async()=>{
    GLBFromStereoRealTriangles:true};
   proof.textContent=JSON.stringify(report,null,2);
   download.disabled=false;evidence.disabled=false;
+  document.dispatchEvent(new CustomEvent('aig713:surface-ready'));
   state('已生成可旋轉的毫米座標真 3D 前表面：'+
    surface.vertexCount+' 個立體頂點、'+surface.triangleCount+
    ' 個三角面。背面及無足夠特徵的區域保持未知。',true);
@@ -224,6 +226,10 @@ evidence.addEventListener('click',()=>{
   excludesCNCMachineOutput:true
  },null,2),'AIG-FASTMODEL-7-13-METRIC-3D-PROVENANCE.json','application/json');
 });
+mountAIG714HeroineScan(()=>result&&leftCanvas&&sourceInfo?{
+ surface:result,leftCanvas,sourceInfo,
+ imageWidth:leftCanvas.width,imageHeight:leftCanvas.height
+}:null);
 window.addEventListener('pagehide',()=>{
  renderer.setAnimationLoop(null);cleanupModel();controls.dispose();renderer.dispose();
 },{once:true});
