@@ -413,6 +413,43 @@ try{
   console.log('AIG_REAL_ONE_PHOTO_FULLBODY_MOTION_BROWSER_PASS',device.name,
    JSON.stringify({bytes:finalGlb.size,clips:7,bones:17,meshes:9,
     realBothArmsAndLegs:true,photoIdentityCertified:false}));
+  // Same original bytes, different declared species: never substitute human
+  // bones/GLB for actual animals or plants. Verify real report Blob+schema.
+  for(const selected of ['PLANT','ANIMAL']){
+   await page.locator('#aig64-subject-kind').selectOption(selected);
+   if(!await page.locator('#aig64-single-download').isDisabled())
+    throw Error('AIG612_STALE_HUMAN_GLB_AFTER_BIO_DOMAIN_CHANGE');
+   await page.locator('#aig64-single-build').click();
+   await page.waitForFunction(domain=>{
+    const t=document.querySelector('#aig64-single-status')?.textContent||'';
+    return t.includes('BLOCKED')||t.includes('照片分析已完成');
+   },selected,{timeout:15000});
+   const status=await page.locator('#aig64-single-status').innerText();
+   if(!status.includes('照片分析已完成')||
+      !await page.locator('#aig64-single-download').isDisabled()||
+      !await page.locator('#aig64-single-motion-upgrade').isDisabled()||
+      await page.locator('#aig64-single-report').isDisabled())
+    throw Error('AIG612_FALSE_'+selected+'_GLB_OR_NO_REAL_EVIDENCE '+status);
+   await page.evaluate(()=>window.__aigTrue7ClipBlob=null);
+   await page.locator('#aig64-single-report').click();
+   const obs=await page.evaluate(async()=>{
+    const blob=window.__aigTrue7ClipBlob;
+    return blob?JSON.parse(await blob.text()):null;
+   });
+   if(obs?.schema!=='AIG_FASTMODEL_6_12_REAL_PIXEL_OBSERVATION'||
+      obs?.requestedDomain!==selected ||
+      obs?.observedPixels?.domain!==selected ||
+      obs?.humanSkeletonMayNotBeSubstituted!==true ||
+      obs?.actualAnimalOrPlant3DModelProduced!==false ||
+      obs?.releaseAllowed!==false ||
+      !Array.isArray(obs?.observedPixels?.measuredForegroundMedianRGB))
+    throw Error('AIG612_EVIDENCE_NOT_ACTUAL_BOUNDED_PIXEL_DATA '+selected);
+   console.log('AIG612_TRUE_'+selected+'_PIXEL_ANALYSIS_ONLY_BROWSER_PASS',
+    device.name,JSON.stringify({
+     domain:selected,rgb:obs.observedPixels.measuredForegroundMedianRGB,
+     humanSkeletonGenerated:false,evidenceJsonDownloaded:true
+    }));
+  }
   }catch(error){
    // Synthetic CI fixture only; do not capture private uploaded portraits.
    const ids=['aig65-build','aig65-play','aig65-stop','aig65-record',
