@@ -36,11 +36,11 @@
       "id": "AIG FastModel",
       "repository": "nsxzxe911-a11y/AIG-Studio-5.0",
       "reference": "repair/core-first-fastmodel-20261021",
-      "source_sha": "60a06ace2b7a4fcaa8df3a8ca426c49995ad931b",
+      "source_sha": "53c6a45d51a97f0332873cc7113e7202351a4022",
       "visibility": "PUBLIC",
       "source_checked": true,
-      "runtime_gate": "SPARSE_XYZ_SOURCE_AND_BROWSER_VERIFIED_NATIVE_AND_RENDER_PENDING",
-      "checkpoint_note": "FastModel 7.10 source 60a06ace2b7a4fcaa8df3a8ca426c49995ad931b: real source video A/B frame extraction, user-reviewed matched points, calibrated rectified stereo and sparse physically triangulated XYZ mm. Latest GH 39764970685 ALL JOBS PASS: 336/336 Node, 49/49 Python, independent 7.5-7.10 and full Chromium synthetic video phone+desktop. Source audit 39764970634 PASS. Still NOT VERIFIED: automatically solved camera pose on arbitrary video, dense mesh/full anatomy, authentic heroine likeness, native APK/EXE and Render LIVE."
+      "runtime_gate": "SOURCE_COMMITTED_7_11_REAL_CI_QUEUED_NATIVE_AND_RENDER_NOT_VERIFIED",
+      "checkpoint_note": "FastModel 7.11 user-reviewed real RGB pixel Shi-Tomasi corner matching, normalized patch bidirectional uniqueness and horizontal epipolar source gate; reviewed candidate labels feed existing 7.10 physical triangulated XYZ only after user verified calibration. Local V8 fresh engine functional check 119 mutual candidates, 8/8 source-approved synthetic matches fused to XYZ with Z=800mm. Source core 53c6a45d51a97f0332873cc7113e7202351a4022. GitHub final 7.11 regression 39767175524 and audit 39767175539 queued; no PASS claim until run concludes. No automatic arbitrary video pose, no dense human mesh, no native APK/EXE, no Render LIVE."
     }
   ],
   "checks": {
@@ -135,7 +135,16 @@
     "fastmodel_7_10_real_character_likeness": "NOT_VERIFIED",
     "fastmodel_7_10_native_apk_exe": "NOT_VERIFIED",
     "fastmodel_7_10_latest_source_audit": "PASS_GITHUB_RUN_39764970634",
-    "fastmodel_7_10_latest_independent": "PASS_GITHUB_RUN_39764970685_6_NUMERIC_AND_PHONE_DESKTOP_BROWSER"
+    "fastmodel_7_10_latest_independent": "PASS_GITHUB_RUN_39764970685_6_NUMERIC_AND_PHONE_DESKTOP_BROWSER",
+    "fastmodel_7_11": "IMPLEMENTED_SOURCE_REAL_PIXEL_AUTO_CORRESPONDENCE_REVIEW_GATED_7_10_XYZ",
+    "fastmodel_7_11_source_sha": "53c6a45d51a97f0332873cc7113e7202351a4022",
+    "fastmodel_7_11_local_numerical": "PASS_SYNTHETIC_320X240_SHIFT_18PX_119_MUTUAL_CANDIDATES_8_REVIEWED_XYZ_Z_800_MM",
+    "fastmodel_7_11_full_ci": "QUEUED_GITHUB_RUN_39767175524",
+    "fastmodel_7_11_source_audit": "QUEUED_GITHUB_RUN_39767175539",
+    "fastmodel_7_11_automatic_camera_pose": "NOT_IMPLEMENTED",
+    "fastmodel_7_11_dense_volumetric_character": "NOT_IMPLEMENTED",
+    "fastmodel_7_11_actual_real_user_character": "NOT_VERIFIED",
+    "fastmodel_7_11_native_apk_exe": "NOT_VERIFIED"
   },
   "approved_invariants": [
     "Do not delete/overwrite original geometry, CAD/CAM/NC, approved RGB Authority, or FastModel assets.",
@@ -145,9 +154,11 @@
     "No automatic rollback/downgrade; no destructive repair; create a new checkpoint after validation."
   ],
   "next_steps": [
-    "Confirm final GitHub run 39764970685 passes after additive navigation/docs and pin its exact commit; maintain 7.5-7.9 prior Gated inventory.",
+    "Check GH workflow 39767175524 independent 7.11 and full regression, and source gate 39767175539; any RED BLOCK. Record final SHA and audited browser evidence only when real tests pass.",
+    "Original aig-dual-formal-runtime Render LIVE must be deployed exact site SHA and served /fastmodel/tracking-studio.html + dependencies verified before claiming online.",
+    "7.12: robust essential/fundamental camera pose and feature inliers, then source-provenance constrained actual 3D SDF region fusion. Absolute scale unknown without measurements.",
+    "Never substitute synthetic images for actual heroine face/head/hair appearance approval; native Android Windows APK/EXE and real FPS still separate gates.",
     "Render original aig-dual-formal-runtime static site remains stale unless deployed exact website branch HEAD and HTTP verified /fastmodel/multiview-studio.html. Don't confuse GitHub source mirroring with production deployment.",
-    "FastModel 7.11: candidate feature matching and robust camera pose/intrinsic calibration with reprojection + confidence, then incremental sparse-to-SDF volume constraints; no uncalibrated video hallucination.",
     "Real heroine references, true neck/hair skin, GPU/native Android Windows FPS and deliverable APK/EXE remain distinct blocked verification tasks.",
     "Real original heroine and production phone/Windows hardware testing remain required before claiming realistic character, full animation, native FPS or MMO online.",
     "Keep explicit distinction between real mathematical XYZ articulating estimated geometry and complete authentic single-photo anatomical reconstruction; require actual source-photo likeness and movement screenshots.",
@@ -165,5 +176,5 @@
     "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
   ],
   "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
-  "last_action": "7.10 verified core 60a06ace2b7a4fcaa8df3a8ca426c49995ad931b and mirrored original website source. GH 39764970685 ALL JOBS PASS 336 Node, 49 Python, phone and desktop with real decoded synthetic video, independent calibrated stereo 6/6; audit 39764970634 PASS. Original Render LIVE remains older; no native full-figure mesh, auto-tracking, likeness or physical hair verification."
+  "last_action": "FastModel 7.11 source 53c6a45d51a97f0332873cc7113e7202351a4022 and original AIG GitHub website branch /fastmodel/tracking-studio.html added. Source-image Shi Tomasi corners with mutual normalized patch match, explicit user review to 7.10 stereo calibrated XYZ. Local numerical V8 synthetic source test 119 candidates, 8/8 reviewed xyz Z800 mm. GH queued independent 7.11 and full legacy+phone desktop browser run 39767175524, audit 39767175539. Original Render remains old deployed SHA and cannot be marked live."
 }
