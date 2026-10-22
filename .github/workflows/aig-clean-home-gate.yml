@@ -1,0 +1,65 @@
+name: AIG Clean New Homepage Phone Desktop Gate
+on:
+  push:
+    branches:
+      - web/aig-dual-formal-runtime-20261016
+    paths:
+      - 'formal-web/aig-new-home.html'
+      - 'formal-web/index.html'
+      - 'formal-web/3ax-nc-workbench.html'
+      - 'formal-web/3ax-nc-workbench.css'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-clean-home.real-browser.mjs'
+      - '.github/workflows/aig-clean-home-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  three-click-new-home:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Verify new entry and real destinations exist
+        run: |
+          test -s ../../../aig-new-home.html
+          test -s ../../../3ax-nc-workbench.html
+          test -s ../../../3ax-nc-workbench.css
+          test -s ../../../fastmodel/index.html
+          test -s ../../../native-download.html
+          test -s ../../../mobile-runtime.html
+          grep -q 'aig-new-home.html' ../../../index.html
+          grep -q 'shared-3d/aig-real3d-replay-lab.mjs' ../../../3ax-nc-workbench.html
+          node --check tests/aig-clean-home.real-browser.mjs
+          echo AIG_NEW_HOME_LINKS_AND_ORIGINAL_CORE_PRESERVED
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real phone landscape desktop page, overflow and links
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory ../../../ >/tmp/aig-clean-home-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-clean-home.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-New-Home-Phone-Landscape-Desktop-Layout-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-clean-home/
+          if-no-files-found: warn
+      - name: Exact release boundary
+        if: always()
+        run: |
+          {
+            echo 'NEW_HOMEPAGE=SEPARATE_STARTER_UI_WITH_EXISTING_LINK_DESTINATIONS'
+            echo 'OLD_SITE_AND_LOCAL_STORAGE=NOT_MODIFIED_BY_NEW_HOME'
+            echo 'NEW_3AX_WORKSPACE=LIMITED_NC_NUMERICAL_WEBGL'
+            echo 'AUTHORITY_RGB_AND_AUTHENTIC_MACHINE_3D=NOT_VERIFIED'
+            echo 'ANDROID_APK_WINDOWS_EXE=NOT_PROVEN'
+            echo 'NO_MACHINE_OUTPUT'
+          } >> "$GITHUB_STEP_SUMMARY"
