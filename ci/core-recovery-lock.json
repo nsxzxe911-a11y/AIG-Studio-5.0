@@ -32,8 +32,136 @@
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-live-control-manifest.mjs",
       "gitBlobSha": "cc0ed87b483a4b21646d6bfff1c77cd1f2f492ce"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/action-compatibility.mjs",
+      "gitBlobSha": "a889e88293b445dee02f7ed7a0a5e76060b21cb6"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-auto-style-6-4.mjs",
+      "gitBlobSha": "f25d7e16e99bdaff78420b6820df92854a140dd6"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-native-humanoid-5-5.mjs",
+      "gitBlobSha": "86ef112220e8ff45df33ae8b60bfa240ab67f115"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-native-body-5-6.mjs",
+      "gitBlobSha": "88e69f86fb85c69ca0d85d15cdd7b2774940e8c4"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-native-appearance-5-7.mjs",
+      "gitBlobSha": "b17f6a53aa96cf30d0d6ef877d587c0bf38afc66"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-single-photo-autobody-6-4.mjs",
+      "gitBlobSha": "f2a6af7ffb4b38912569c664687140d4878ea778"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-skin-4-8.mjs",
+      "gitBlobSha": "96c95b41f84141034c880ced52695bd0d877e649"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-skin-motion-4-8.mjs",
+      "gitBlobSha": "7263dd5f9392b4021feadef4f1f528888ed6cb86"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-head-neck-4-6.mjs",
+      "gitBlobSha": "1339cdbb265bc0fa7618c94723271c65f5d1d4be"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-dynamic-collision-4-9.mjs",
+      "gitBlobSha": "9fb1f55ed0b3801fc5efec9d8e454d4f2e97ee6c"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-seam-contact-5-1.mjs",
+      "gitBlobSha": "24929fba5f85b84104ad59e8aa7ddce1f7d194a2"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-face-alignment-6-0.mjs",
+      "gitBlobSha": "05d1637a1169e82f83f73a163e711390f11d01ab"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-portrait-6-6.mjs",
+      "gitBlobSha": "d1068e6d1367d6fa771d5beb6f2edc9e5139ae0f"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-video-evidence-6-8.mjs",
+      "gitBlobSha": "eb8607507a2e77c5c5e531e6e2c69297312ac0da"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/movie-recorder.mjs",
+      "gitBlobSha": "3a4b8167bb9b8c8fd6ee6cbb762c10073106624d"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/movie-ui.mjs",
+      "gitBlobSha": "671eaf6e3be315a3469dc7f01ab2901c30cdfb0b"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/story-to-animation.mjs",
+      "gitBlobSha": "2f9ad9aa070b4eaca8c2e5f264c2c96dc5e12bf1"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/story-audio.mjs",
+      "gitBlobSha": "5f4fc822935b735ea80a66098c8725a4bf0fad13"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/voice-cues.mjs",
+      "gitBlobSha": "efe1e3798bddcaa9343d9622c2d9a3d253253137"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/voice-generator.mjs",
+      "gitBlobSha": "56f45c787a35efec7316bdf6261c25b29e4027b2"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/skin-anomaly.mjs",
+      "gitBlobSha": "a83d7aa1230c2d093a577e096c0373f1e6dd1d5d"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-unified-gate-5-3.mjs",
+      "gitBlobSha": "3a4b7dcce5810696893aefcebd9525218c1131a0"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-unified-shell-6-9.mjs",
+      "gitBlobSha": "c735f9530b733e9908859477946b8afbac826a02"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig_native4.py",
+      "gitBlobSha": "4f61438bbfeb128219183aa4ca2264fc80fc3428"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/pipeline.py",
+      "gitBlobSha": "b8f52c3c14a84241a5f083f4b06408382f4ad564"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/reconstruction_service.py",
+      "gitBlobSha": "09728dd25bba9899e74b1663c17d21480d49f0cf"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/server.py",
+      "gitBlobSha": "b79972e1ca9d759a96fbd02743566e7b8172623a"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig_native_provenance_5_4.py",
+      "gitBlobSha": "5603c2474f11723d0ecd90c53a51883647b8d41b"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-performance-4-2.mjs",
+      "gitBlobSha": "bb070bd3311519b4d860be1f39401f4cb501e0b1"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-sdf-4-1.mjs",
+      "gitBlobSha": "576a54f35843c4ac4082c183d4f887db3ba27741"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-hybrid-4-3.mjs",
+      "gitBlobSha": "3869d2b3ed230b1bdd4935703ee0ed6d60beabd7"
     }
   ],
   "ghostOverlayPolicy": "NO_DOUBLE_PERSON_ONE_PASS_VISIBLE_PAN_ZOOM_WITHOUT_CLEAN_BACKGROUND",
-  "controlChain": "EXISTING_DOM_BUTTONS_STABLE_IDS_TO_EXISTING_REAL_CALLBACKS_NO_REPLACEMENT"
+  "controlChain": "EXISTING_DOM_BUTTONS_STABLE_IDS_TO_EXISTING_REAL_CALLBACKS_NO_REPLACEMENT",
+  "coreInventoryReview": "2026-10-22 phase one: verified source blob inventory to prevent disappearing or silently replaced core; exact SHA is NOT functional validation",
+  "sourceIdentityIsNotExecutableProof": true,
+  "controlGateBlockedUntilFullCoreOutcomeEvidence": true,
+  "releaseGateBlockedUntilRuntimeAndNativeEvidence": true
 }
