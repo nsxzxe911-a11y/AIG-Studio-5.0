@@ -1,0 +1,57 @@
+name: AIG Real3D 1.4 Source-Bound 3AX Visual Bridge Gate
+on:
+  push:
+    branches:
+      - repair/core-first-fastmodel-20261021
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-axis-bridge-1-4.mjs'
+      - 'formal-web/shared-3d/aig-real3d-*.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-real3d-axis-bridge-v1-4.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/build.mjs'
+      - '.github/workflows/aig-shared-real3d-v1-4.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  axis-bridge-source-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Source syntax + exact XYZ mapping + stale source + real numeric stock
+        run: |
+          node --check ../../../shared-3d/aig-real3d-axis-bridge-1-4.mjs
+          node --check ../../../shared-3d/aig-real3d-rig-integrity-1-5.mjs
+          node --check tests/aig-real3d-rig-integrity-v1-5.test.mjs
+          node --check tests/aig-real3d-axis-bridge-v1-4.test.mjs
+          node --test tests/aig-real3d-axis-bridge-v1-4.test.mjs
+          node --test tests/aig-real3d-rig-integrity-v1-5.test.mjs
+          node --test tests/aig-real3d-replay-v1-3.test.mjs
+      - name: Keep 1.4 code in offline app without replacing original engine
+        run: |
+          npm run build
+          test -s dist/shared-3d/aig-real3d-axis-bridge-1-4.mjs
+          test -s dist/shared-3d/aig-real3d-rig-integrity-1-5.mjs
+          cmp ../../../shared-3d/aig-real3d-rig-integrity-1-5.mjs dist/shared-3d/aig-real3d-rig-integrity-1-5.mjs
+          cmp ../../../shared-3d/aig-real3d-axis-bridge-1-4.mjs dist/shared-3d/aig-real3d-axis-bridge-1-4.mjs
+      - name: Strict evidence labels
+        if: always()
+        run: |
+          {
+            echo 'REAL_NC_WORKING_COPY=LIMITED_G0_G1_SOURCE_REPARSED'
+            echo 'REAL_STOCK_OCCUPANCY=V1_3_VOXEL_BOUNDARY_NO_FAKE_REMOVAL'
+            echo 'VISUAL_XYZ_CONTRACT=CNC_X_Z_NEG_Y'
+            echo 'AUTHORITY_MESH_HASH_VERIFICATION=NOT_PERFORMED'
+            echo 'FORMAL_3AX_RUNTIME_UI_CONNECTED=NOT_YET'
+            echo '4AX_5AX_6AX_KINEMATICS=BLOCKED_NOT_VERIFIED'
+            echo 'FANUC_MACHINE_OUTPUT=DISABLED'
+            echo 'PRECISION_0_001MM=NOT_VERIFIED'
+            echo 'ANDROID_APK_WINDOWS_EXE=NOT_VERIFIED'
+          } >> "$GITHUB_STEP_SUMMARY"

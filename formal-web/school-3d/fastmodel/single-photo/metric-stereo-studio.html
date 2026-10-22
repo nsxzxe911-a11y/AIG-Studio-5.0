@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-Hant"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020407">
+<title>AIG FastModel｜1:1 真尺寸 3D 立體重建</title>
+<style>
+:root{font:14px/1.5 system-ui,"Noto Sans TC",sans-serif;color:#ddf8ff;background:#020407}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#102f50,#020407 70%);padding:12px}
+main{max-width:1180px;margin:auto}a{color:#76dfff}h1{font-size:clamp(20px,4vw,31px);margin:10px 0 7px}
+p{color:#b4cfdf}header{border-bottom:1px solid #326b8d;padding:14px}
+.layout{display:grid;grid-template-columns:minmax(260px,380px) minmax(0,1fr);gap:12px;margin:14px 0}
+fieldset,.stage,details{background:#091a2c;border:1px solid #36749d;border-radius:12px;padding:14px;min-width:0}
+fieldset{margin:0 0 12px}legend{color:#7ddffa;font-weight:800;padding:0 6px}
+label{display:block;font-size:12px;color:#d0eaff;margin:9px 0}
+input:not([type=checkbox]){display:block;width:100%;min-height:41px;background:#06111e;border:1px solid #417e9c;border-radius:7px;color:#fff;padding:8px}
+input[type=checkbox]{accent-color:#2ad5cc;width:17px;height:17px;vertical-align:middle}
+button{cursor:pointer;border:1px solid #60b5df;border-radius:9px;min-height:47px;color:white;background:#134d75;font-weight:800;padding:10px 15px;margin:5px 5px 5px 0}
+button:disabled{opacity:.4;cursor:not-allowed}.stage{min-height:560px;display:flex;flex-direction:column;padding:10px}
+#view{width:100%;min-height:400px;flex:1;display:block;border-radius:9px;background:#061321;touch-action:none}
+#proof{margin:12px 0;padding:13px;background:#02111e;border:1px solid #456a80;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.6 ui-monospace,monospace;max-height:240px;overflow:auto}
+#status{padding:12px;background:#171a20;border:1px solid #8c7350;border-radius:8px;color:#ffdcaa}
+#status[data-pass=true]{color:#9dffe1;border-color:#2e8e83;background:#0a251f}
+small{font-size:11px;color:#a9bec9}.flag{display:inline-block;border:1px solid #b08344;border-radius:7px;color:#ffdca3;padding:3px 7px;font-size:11px}
+@media(max-width:720px){.layout{grid-template-columns:1fr}.stage{min-height:400px}#view{min-height:350px}}
+.heroine-panel{margin:15px 0;padding:14px;border:1px solid #397e9c;border-radius:12px;background:#081c30}
+.heroine-views{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.heroine-views figure{min-width:0;margin:0}.heroine-views figcaption{font-size:12px;color:#aeddf0;margin-bottom:6px}
+#heroine-canvas-wrap{position:relative;cursor:crosshair;line-height:0;user-select:none}
+#heroine-photo,#heroine-mask,#heroine-depth{width:100%;max-height:430px;object-fit:contain;border:1px solid #4286a9;border-radius:8px;display:block}
+#heroine-mask{position:absolute;inset:0;pointer-events:none;border-color:transparent}
+#heroine-part{min-height:44px;background:#071b30;color:white;border:1px solid #397c9c;border-radius:8px;padding:8px}
+#heroine-seeds{color:#96eaf4;font-size:11px;overflow-wrap:anywhere}
+#heroine-status{display:block;margin:10px 0;padding:10px;border:1px solid #a07949;border-radius:8px;color:#ffdb9f}
+#heroine-status[data-ok=true]{color:#9fffe1;border-color:#389f8b}
+#heroine-proof{max-height:300px;background:#020e18;border:1px solid #3a647d;border-radius:8px;padding:12px;overflow:auto;white-space:pre-wrap;font:11px/1.55 ui-monospace,monospace}
+@media(max-width:680px){.heroine-views{grid-template-columns:1fr}}
+.plane-projection{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end;margin:14px 0}
+.plane-projection>label{min-width:0;margin:0;position:relative;display:flex;flex-direction:column;gap:5px}
+.plane-projection>label>input,.plane-projection>label>select{display:block;position:static;width:100%;min-width:0;max-width:100%;margin:0;min-height:46px}
+.plane-projection>#heroine-joint-save{grid-column:1/-1;display:block;width:100%;margin:4px 0 0;position:relative;z-index:1;touch-action:manipulation}
+@media(max-width:720px){.plane-projection{grid-template-columns:1fr;gap:14px}.plane-projection>#heroine-joint-save{min-height:52px}}
+</style>
+</head><body><main>
+<header>
+<small>AIG FastModel · Real3D 7.13 · 離線本機運算</small>
+<h1>1:1 真尺寸 3D 立體重建</h1>
+<p>兩張拍攝方向平行且已校正的照片、真實量測的相機水平位移與相機焦距 → 自動視差配對 → 毫米 XYZ → 真三角面模型。三維位置以左側相機光心為原點。未提供真實尺度則不能宣稱實體 1:1。</p>
+<p><span class="flag">只還原相機真正看得到的前表面</span> 看不到的背面、頭髮內側、衣服後側與無紋理區不補假模型；仍可另用 7.6 單照估計 3D 草模。</p>
+<a href="./index.html">返回 FastModel 主工作區</a>
+</header>
+<div class="layout">
+<div>
+<fieldset><legend>01 · 真實照片來源</legend>
+<label>左側照片（照片 A）<input id="left-photo" type="file" accept="image/png,image/jpeg,image/webp" aria-label="左側真照片"></label>
+<label>右側照片（照片 B，同焦距、相機平行並經極線校正）<input id="right-photo" type="file" accept="image/png,image/jpeg,image/webp" aria-label="右側真照片"></label>
+<small>照片只在本機瀏覽器讀取，不傳到伺服器。處理時依比例縮至 320～480px，原始圖片 SHA-256 另行保存。</small>
+</fieldset>
+<fieldset><legend>02 · 物理尺度／相機校正</legend>
+<label>實際測得相機水平位移（mm）<input id="baseline" type="number" min=".01" max="100000" step=".01" placeholder="例如：60（必須是真的量測）"></label>
+<label>原始照片焦距 fx（原圖像素，來自校正）<input id="focal" type="number" min="15" max="100000" step=".1" placeholder="請填入實際標定的 fx 像素"></label>
+<label><input type="checkbox" id="physical-reviewed"> 已用實物尺、標定板或測量工具確認位移（不是猜的）</label>
+<label><input type="checkbox" id="camera-reviewed"> 已校正兩張照片的鏡頭內參／焦距</label>
+<label><input type="checkbox" id="rectified-reviewed"> 兩張照片已完成極線校正，相機平行同視角</label>
+</fieldset>
+<fieldset><legend>03 · 自動重建與輸出</legend>
+<button id="reconstruct" type="button">開始計算真實 3D XYZ</button>
+<button id="export" type="button" disabled>輸出 GLB（使用公尺，符合 glTF 2.0）</button>
+<button id="evidence" type="button" disabled>匯出毫米／來源 SHA JSON</button>
+<p id="status" role="status" aria-live="polite">請載入兩張真實照片，並填入經量測的尺寸校正。</p>
+</fieldset>
+</div>
+<section class="stage" aria-label="真正 WebGL 可旋轉三維實體表面">
+<canvas id="view" aria-label="FastModel 7.13 真正 XYZ 三角面 / 原照片貼圖，拖曳旋轉縮放"></canvas>
+<p>旋轉可看到實際表面深度；黑色缺口代表無法由照片可靠推算的部分，不會生成虛構背面。</p>
+<pre id="proof">尚無經校正的重建資料</pre>
+</section></div>
+<details><summary>1:1 尺度說明</summary><p>這裡的 1:1 是幾何座標中的 1 mm 對應實物 1 mm，並不代表所有表面都達 0.001 mm 精度。任意兩張一般手機照片若沒有相機位姿、相機基線與鏡頭校準，深度無法唯一決定。標準 glTF/GLB 使用公尺，所以輸出時會將毫米座標除以 1000，並保留來源 SHA 與校正紀錄。</p></details>
+<section class="heroine-panel" id="heroine-3d-scan">
+<h2>07.14｜女主角：深淺數值 × 原色 × 部位分層 × 真 3D</h2>
+<p>可直接先讀女主角的<strong>單張原圖</strong>，完成來源色彩、外輪廓及部位分類；但這種模式的 Z 深度保持未知，不能輸出假裝是 1:1 的 GLB。取得標定雙照後再使用上方的 7.13 真實毫米 XYZ。選取部位後在照片點代表性色彩，<strong>請人工審查分類</strong>。</p>
+<label>單張女主角照片（僅 RGB／型體，不具實測深度）
+<input id="heroine-photo-only" type="file" accept="image/png,image/jpeg,image/webp"></label>
+<button id="heroine-mask-export" type="button" disabled>輸出已核對的 RGB 部位與來源 JSON（不含假 Z）</button>
+<div class="heroine-views">
+<figure><figcaption>女主角原始色彩 / 部位候選遮罩（點圖取樣）</figcaption><div id="heroine-canvas-wrap"><canvas id="heroine-photo" width="320" height="240"></canvas><canvas id="heroine-mask" width="320" height="240"></canvas></div></figure>
+<figure><figcaption>實測立體深度圖（Z：毫米；黑色／空白表示未量測）</figcaption><canvas id="heroine-depth" width="320" height="240"></canvas><p id="heroine-depth-range">尚未取得可量測的雙圖深度</p></figure>
+</div>
+<label for="heroine-part">要標記的真實部位</label>
+<select id="heroine-part">
+<option value="HAIR">頭髮</option><option value="FACE">臉部</option>
+<option value="NECK">脖子</option><option value="JACKET">制服外套</option>
+<option value="SHIRT">襯衫</option><option value="SKIRT">裙子</option>
+<option value="SKIN">其他皮膚</option><option value="BAG">背包</option>
+<option value="ACCESSORY">飾品</option>
+</select>
+<p id="heroine-seeds">尚無已確認部位種子點</p>
+<button id="heroine-grow" type="button">01｜依來源色彩延伸部位候選區</button>
+<button id="heroine-clear" type="button">清除本次標記</button>
+<label><input id="heroine-reviewed" type="checkbox"> 我已檢查色彩部位分界，接受這次分類（沒有宣稱背面已掃描）</label>
+<button id="heroine-build" type="button">02｜結合毫米深度、RGB、法線、部位與可信度</button>
+<button id="heroine-export" type="button" disabled>03｜輸出女主角可見表面分區 GLB</button>
+<output id="heroine-status" role="status" aria-live="polite">請先完成上方雙照片 3D 深度重建。單張照片無法直接證實人體背面。</output>
+<pre id="heroine-proof">等待 7.13 真實照片和 3D 表面來源</pre>
+</section>
+<section class="heroine-panel" id="heroine-715-workspace">
+<h2>07.15-A｜女主角可編輯 3D 草模／頭頸分離／骨架與衣物</h2>
+<p>使用上方<strong>已人工核對的頭髮、臉、脖子、服裝 RGB 分區</strong>建立相對深度草模。單張圖的估計 Z 使用無單位相對值；只有經過相機校正的 7.13 雙圖才會另外記錄實測 Z（mm）。兩者不互相覆蓋。</p>
+<button id="heroine-candidate-build" type="button">01｜建立分區 3D 草模與骨架候選</button>
+<button id="heroine-depth-save" type="button" disabled>02｜保存估計／實測雙深度 JSON</button>
+<button id="heroine-rig-save" type="button" disabled>03｜保存骨架／衣物幾何結構 JSON</button>
+<button id="heroine-candidate-glb" type="button" disabled>04｜輸出可編輯 3D 草模 GLB（非 1:1）</button>
+<div style="margin:12px 0;padding:12px;border-radius:10px;border:1px solid #548fb0;background:#061627">
+<strong>Real3D 2.3｜真正骨骼蒙皮變形</strong>
+<p>從目前 7.15 單張照片可見區域，自動生成胸／頸／頭候選骨骼與真 SkinnedMesh 蒙皮；可預覽轉頭／點頭和匯出附動畫的 GLB。這是<strong>未審核的相對深度草模動作</strong>，不是真實人體掃描或已訓練的全身 AI 動畫。</p>
+<button id="heroine-23-build" type="button" disabled>05｜自動生成骨骼蒙皮＋預覽轉頭</button>
+<button id="heroine-23-export" type="button" disabled>06｜匯出真 SkinnedMesh 動畫 GLB</button>
+<button id="heroine-23-reset" type="button">還原 7.15 可編輯草模</button>
+<output id="heroine-23-status" role="status" aria-live="polite" style="display:block;margin-top:8px;color:#b0f4dd">等待生成 7.15 可見前表面草模。</output>
+<pre id="heroine-23-proof" style="white-space:pre-wrap;overflow:auto;max-height:190px;font:12px/1.5 ui-monospace,monospace">尚未建立蒙皮權重</pre>
+</div>
+<div class="plane-projection">
+<label>可編輯的骨架節點
+<select id="heroine-joint" style="width:100%;min-height:42px;background:#051525;color:#e7f9ff;border:1px solid #5292b0;border-radius:7px"></select></label>
+<label>畫面 X（0～1）<input id="heroine-joint-x" type="number" value=".5" min="0" max="1" step=".001"></label>
+<label>畫面 Y（0～1）<input id="heroine-joint-y" type="number" value=".5" min="0" max="1" step=".001"></label>
+<button id="heroine-joint-save" type="button" disabled>套用關節位置</button>
+</div>
+<output id="heroine-candidate-status" role="status" aria-live="polite">等待已核對的部位分區。生成後會在上方 3D 視窗顯示獨立網格草模；未實測部分不標示 mm。</output>
+<pre id="heroine-candidate-proof">尚無 7.15 女主角骨架／衣物草模</pre>
+<p><small>估計深度不是毫米測量；骨架是可編輯定位候選，尚不是完整蒙皮權重。未知的背面、腿部與髮根不會自動填成已驗證人體。</small></p>
+</section>
+</main><script src="./metric-stereo-studio.js"></script></body></html>

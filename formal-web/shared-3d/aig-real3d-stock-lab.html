@@ -1,0 +1,65 @@
+<!doctype html><html lang="zh-Hant"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407"><title>AIG Real3D 1.1｜真 3D 工件材料移除驗證</title>
+<style>
+:root{color-scheme:dark;background:#020407;color:#dbf2ff;font:14px system-ui,"Microsoft JhengHei",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0%,#132e48,#020407 67%);min-height:100dvh}
+header{padding:14px 18px;background:#07111b;border-bottom:1px solid #38627c;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:21px}h1 span{color:#91f6d4}a{color:#a0edff}
+main{max-width:1520px;margin:auto;padding:10px;display:grid;grid-template-columns:minmax(0,1.65fr) minmax(300px,.65fr);gap:10px}
+section{padding:13px;border-radius:12px;background:#07111b;border:1px solid #31516a;margin:0 0 10px;min-width:0}
+h2{margin:0 0 7px;font-size:17px}p{color:#b9cbd9;line-height:1.6;font-size:12px}
+canvas{width:100%;height:auto;aspect-ratio:16/9;background:#020c15;border:1px solid #35586d;border-radius:8px;touch-action:none}
+button,input,select{width:100%;min-height:44px;border-radius:8px;background:#0c2839;color:#e2f7ff;border:1px solid #36637b;padding:9px;font:inherit}
+button{cursor:pointer;background:linear-gradient(120deg,#126d81,#29416d);font-weight:650}
+button:disabled{opacity:.45;cursor:default}label{display:block;font-size:12px;margin:10px 0 4px;color:#c0e4f4}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric>div{background:#031a27;border:1px solid #2c5670;border-radius:8px;padding:12px}
+.metric b{font-size:19px;color:#9ff3d0}
+.state{border:1px solid #977448;background:#34291b;color:#ffe4c7;border-radius:8px;padding:10px;font-size:12px;line-height:1.6}
+.state[data-pass=true]{border-color:#409b79;background:#09271c;color:#b6f6d9}
+pre{border-radius:8px;background:#03111d;border:1px solid #2c5067;padding:10px;white-space:pre-wrap;word-break:break-word;font:11px/1.6 ui-monospace,monospace;max-height:290px;overflow:auto}
+@media(max-width:850px){main{grid-template-columns:1fr;padding:7px}.metric b{font-size:16px}}
+</style></head><body>
+<header><h1>AIG Real 3D <span>1.1 真數值材料移除</span></h1>
+<nav><a href="./aig-real3d-lab.html">共用 3D 核心</a> · <a href="../fastmodel/index.html">FastModel</a> · <a href="../index.html#dual-projects">AIG 雙專案</a></nav></header>
+<main>
+<div>
+<section>
+<h2>XYZ 工件材料移除｜離線 GPU 預覽</h2>
+<canvas id="view" width="900" height="520" aria-label="WebGL 3D 體素工件切削後重新生成的幾何模型"></canvas>
+<p>實際 3D 工件會因 G1 進給而移除體積單元、重新生成三角形表面。G0 只移動刀具，不會切除材料。本頁刀具與刀路為明確標示的數值測試治具，不可用於控制機台。</p>
+</section>
+<section><h2>真材料移除數值證據</h2>
+<div class="metric">
+<div><span>累積已移除</span><p><b id="removed">0.000</b> mm³</p></div>
+<div><span>目前剩餘</span><p><b id="remaining">576.000</b> mm³</p></div>
+<div><span>剩餘 3D 單元</span><p><b id="voxels">4608</b> cells</p></div>
+<div><span>工件表面三角形</span><p><b id="triangles">0</b> triangles</p></div>
+</div>
+<pre id="proof">等待真正的 WebGL 工件驗證。</pre></section>
+</div>
+<aside>
+<section>
+<h2>切削控制｜測試來源</h2>
+<label for="pitch">體積單元邊長</label><select id="pitch">
+<option value="1">1.0 mm（省記憶體）</option>
+<option value=".5" selected>0.5 mm（一般）</option>
+<option value=".25">0.25 mm（細緻、記憶體較多）</option>
+</select>
+<label for="diameter">示範刀具直徑</label><select id="diameter"><option value="2" selected>Ø2.0 mm</option><option value="1">Ø1.0 mm</option></select>
+<div class="cols" style="margin-top:12px">
+<button id="rapid">G0 快移測試</button><button id="feed">G1 真切削下一段</button>
+<button id="reset">重建原始工件</button><button id="orbit">切換視角</button>
+</div>
+<div id="status" role="status" class="state">初始化 3D 數值核心與 WebGL。</div>
+<p>沒有伺服器計算、沒有第三方雲端、沒有外部 NC 輸出。切削通過體素中心取樣；**0.5 mm 體素不是 0.001 mm 刀具加工精度**。</p>
+</section>
+<section><h2>正式整合邊界</h2>
+<p>這一階驗證的是「實際 3D 體積占用 → 刀具連續進給掃過 → 工件表面更新 → 體積證據」。接回 AIG-II／Studio 5.0 真 CAM／NC，需要另外驗證 G90、軸姿態、刀補、機台碰撞及 Fanuc Post，仍為 BLOCK。</p>
+</section>
+</aside>
+</main>
+<script type="module" src="./aig-real3d-stock-lab.mjs"></script>
+</body></html>

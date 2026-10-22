@@ -1,0 +1,67 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#020407"><title>FastModel 7.10｜多視角校準三角測量與增量三維點雲</title>
+<style>
+:root{color-scheme:dark;background:#020407;color:#e9f5ff;font:14px system-ui,"Microsoft JhengHei",sans-serif}*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#13374b,#020407 68%);min-height:100dvh}
+header{padding:13px 19px;background:#07111b;border-bottom:1px solid #2b506b;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+h1{font-size:clamp(18px,2.4vw,24px);margin:0}h1 span{color:#84f5da}a{color:#93e8ff}
+main{max-width:1480px;margin:auto;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,.68fr);gap:11px;padding:11px}
+section{background:#07111b;border:1px solid #31546b;border-radius:11px;padding:14px;min-width:0;margin-bottom:10px}
+h2{font-size:17px;margin:0 0 12px}h3{font-size:14px;color:#a1deed;margin:14px 0 8px}
+p,small{font-size:12px;line-height:1.7;color:#b7ceda}label{display:block;font-size:12px;font-weight:650;color:#d1e6f2;margin:9px 0 6px}
+input:not([type=checkbox]),button,select{width:100%;border:1px solid #325a73;border-radius:8px;min-height:40px;background:#0b2637;color:#ebf7ff;padding:7px;font:inherit}
+button{font-weight:700;cursor:pointer;background:linear-gradient(120deg,#12647a,#283d73)}button:disabled{opacity:.44;cursor:default}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.frames{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.frame{border:1px solid #345a76;border-radius:9px;padding:7px;background:#030d17}
+.frame canvas{width:100%;aspect-ratio:4/3;display:block;background:#01060e;object-fit:contain;touch-action:manipulation}
+.caption{font-size:12px;color:#bde1ec;padding:7px 2px;min-height:30px}.checkline{display:flex;gap:8px;align-items:center;margin:9px 0}.checkline input{width:18px;height:18px}
+#cloud{display:block;background:#020b16;width:100%;max-height:380px;aspect-ratio:16/9;border:1px solid #365774;border-radius:8px;touch-action:none}
+.state{font-size:12px;line-height:1.6;border-radius:8px;padding:10px;border:1px solid #986a45;background:#2a2115;color:#ffe4ba;overflow-wrap:anywhere}
+.state[data-ok=true]{background:#092620;border-color:#38846e;color:#9eeed0}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:290px;overflow:auto;background:#020d17;border:1px solid #31546b;border-radius:8px;padding:10px;font:11px/1.6 ui-monospace,monospace}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:8px 5px;border-bottom:1px solid #204054;text-align:left}
+nav{display:flex;gap:9px;flex-wrap:wrap}
+@media(max-width:850px){main{grid-template-columns:1fr;padding:8px}}
+@media(max-width:410px){.frames{grid-template-columns:1fr}}
+</style></head><body>
+<header><h1>AIG FastModel <span>7.10</span>｜影片多視角 XYZ 融合</h1><nav><a href="./tracking-studio.html">7.11 AI 自動追蹤候選 ↗</a> · <a href="./continuous-studio.html">7.9 連續掃描</a><a href="./spatial-studio.html">7.8 3D 姿態</a><a href="./index.html">首頁</a></nav></header>
+<main><div>
+<section>
+<h2>影片關鍵影格 A／B</h2>
+<p>從同一段影片選兩個已校準的拍攝位置。每個特徵在 A、B 各點一次，即可按實際視差計算空間 XYZ。不同影格的同名特徵能繼續增量融合。</p>
+<label for="source">本機影片（WebM、MP4 或瀏覽器支援格式）</label><input id="source" type="file" accept="video/*">
+<video id="video" muted playsinline preload="metadata" style="display:none"></video>
+<div class="frames">
+<div class="frame"><strong>影格 A｜相機原點</strong><canvas id="frame-a" width="320" height="240" aria-label="請在影格 A 點選特徵"></canvas>
+<div class="cols"><div><label for="time-a">影片時間（秒）</label><input id="time-a" type="number" min="0" step=".05" value=".10"></div><div><label>擷取</label><button id="capture-a" type="button" disabled>擷取 A</button></div></div><div class="caption" id="label-a">尚未擷取</div></div>
+<div class="frame"><strong>影格 B｜已測量平移位置</strong><canvas id="frame-b" width="320" height="240" aria-label="請在影格 B 點選對應特徵"></canvas>
+<div class="cols"><div><label for="time-b">影片時間（秒）</label><input id="time-b" type="number" min="0" step=".05" value="1.00"></div><div><label>擷取</label><button id="capture-b" type="button" disabled>擷取 B</button></div></div><div class="caption" id="label-b">尚未擷取</div></div>
+</div>
+<p>要求：兩影格的鏡頭朝向平行、影像已校正／對齊、曝光期間主體不動，且相機 B 相對 A 沿水平向右移動。僅靠一般手持轉頭影片通常**不符合**此條件，會阻擋正式量測。</p>
+</section>
+<section>
+<h2>真 XYZ 三維點雲（毫米，視校準可信度而定）</h2>
+<canvas id="cloud" width="780" height="440" aria-label="從已核准雙視角視差三角測量的 XYZ 點雲"></canvas>
+<div class="cols"><div><label for="orbit">旋轉三維觀察角度</label><input type="range" id="orbit" min="-3.14" max="3.14" step=".03" value=".35"></div>
+<div><label for="scale">點雲縮放</label><input type="range" id="scale" min=".25" max="2.5" step=".05" value="1"></div></div>
+<table><thead><tr><th>特徵</th><th>X mm</th><th>Y mm</th><th>Z mm</th><th>匹配次數</th></tr></thead><tbody id="point-table"><tr><td colspan="5">尚無通過幾何 Gate 的量測點</td></tr></tbody></table>
+</section>
+</div>
+<aside><section>
+<h2>量測校準（必填）</h2>
+<p>本階可以建立真三維的稀疏點，但**焦距與相機移動距離必須有可查證的校準值**；填入猜測數字不能視為真實模型驗收。</p>
+<div class="cols">
+<div><label for="focal">相機焦距（像素 px）</label><input id="focal" type="number" min="20" step=".1" placeholder="由相機標定取得"></div>
+<div><label for="baseline">相機 B 向右平移（mm）</label><input id="baseline" type="number" min=".01" step=".01" placeholder="由實測取得"></div>
+</div>
+<div class="checkline"><input id="calibrated" type="checkbox"><label for="calibrated" style="margin:0">我已核對焦距、物理平移距離及影片來源</label></div>
+<div class="checkline"><input id="rectified" type="checkbox"><label for="rectified" style="margin:0">兩影格確實平行、影像已對齊且主體未移動</label></div>
+<h3>原始特徵對應</h3>
+<label for="feature">特徵編號（A、B 必須是同一個實際點）</label><input id="feature" type="text" maxlength="56" value="nose" placeholder="例如 nose、leftEye、detail01">
+<p id="match-status">尚未點選 A 與 B 的同一個可確認位置。</p>
+<button id="add" type="button" disabled>加入一組校準 XYZ 測量</button>
+<div class="cols" style="margin-top:9px"><button id="save" type="button" disabled>匯出三維證據 JSON</button><button id="clear" type="button">清空三維工作副本</button></div>
+<label for="restore">讀回同來源三維證據 JSON</label><input id="restore" type="file" accept=".json,application/json">
+<div id="status" role="status" class="state">尚未提供來源與校準。預設封鎖 3D 量測，不會推測相機焦距／深度。</div>
+<h3>幾何驗收資料</h3><pre id="evidence">NO_CALIBRATED_3D_OBSERVATIONS</pre>
+<p>此頁是可稽核的多影格稀疏三角測量。不是自動完整人像重建、真實骨架、皮膚、頭髮或 7.8 模型融合。後續需真正相機追蹤與足夠面積覆蓋才可建立密集表面。</p>
+</section></aside></main><script type="module" src="./multiview-studio.mjs"></script></body></html>

@@ -1,0 +1,86 @@
+name: AIG Three-Project Shared Real3D True WebGL V1 Gate
+on:
+  push:
+    branches:
+      - repair/core-first-fastmodel-20261021
+    paths:
+      - 'formal-web/shared-3d/**'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-real3d-shared-v1*'
+      - 'formal-web/school-3d/fastmodel/single-photo/build.mjs'
+      - '.github/workflows/aig-shared-real3d-v1.yml'
+  workflow_dispatch:
+jobs:
+  shared-real3d-v1:
+    name: Real XYZ Geometry and Independent Phone Desktop GPU Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Geometry, camera and CNC contract syntax
+        run: |
+          node --check ../../../shared-3d/aig-real3d-core.mjs
+          node --check ../../../shared-3d/aig-real3d-webgl.mjs
+          node --check ../../../shared-3d/aig-real3d-quality.mjs
+          node --check tests/aig-real3d-quality-v1.test.mjs
+          node --check tests/aig-real3d-quality-v1.real-browser.mjs
+          node --check ../../../shared-3d/aig-real3d-adapters.mjs
+          node --check ../../../shared-3d/aig-real3d-lab.mjs
+          node --check tests/aig-real3d-shared-v1.real-browser.mjs
+      - name: Real indexed XYZ, hierarchy, units, NC isolation and budget tests
+        run: node --test tests/aig-real3d-shared-v1.test.mjs tests/aig-real3d-quality-v1.test.mjs
+      - name: Offline shipping copies source exact and preserves legacy 7.0 to 7.12
+        run: |
+          npm run build
+          test -s dist/shared-3d/aig-real3d-lab.html
+          test -s dist/shared-3d/aig-real3d-lab.mjs
+          test -s dist/shared-3d/aig-real3d-webgl.mjs
+          cmp ../../../shared-3d/aig-real3d-core.mjs dist/shared-3d/aig-real3d-core.mjs
+          cmp ../../../shared-3d/aig-real3d-adapters.mjs dist/shared-3d/aig-real3d-adapters.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install chromium
+      - name: Verify Playwright browser is installed before visual Gate
+        run: |
+          test -d "$HOME/.cache/ms-playwright"
+          ls "$HOME/.cache/ms-playwright" | grep -E 'chromium|chrome'
+      - name: Actual WebGL indexed material-lit 3D meshes and camera action on phone desktop
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig3d-web.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-real3d-shared-v1.real-browser.mjs
+          node tests/aig-real3d-quality-v1.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Shared-Real3D-V1-True-WebGL-Phone-Desktop-Not-CNC-Material-Removal
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-shared-real3d-v1/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-True-GPU-MSAA-SSAA-Quality-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-anti-alias/
+          if-no-files-found: warn
+      - name: Explicit evidence and CNC safety boundary
+        if: always()
+        run: |
+          {
+            echo 'XYZ_GEOMETRY=INDEXED_TRIANGLES_REAL_WEBGL'
+            echo 'WEBGL_MATERIAL=DIFFUSE_SPECULAR_NOT_RAY_TRACED_PBR'
+            echo 'ANTIALIASING=DEVICE_REPORTED_MSAA_PLUS_GPU_BUDGETED_SSAA_1_1_25_1_75_2_25'
+            echo 'ACTUAL_SSAA_BACKBUFFER_DIMENSIONS=REAL_PHONE_DESKTOP_CHROMIUM_TEST'
+            echo 'FULL_ENVIRONMENT_MIRROR_REFLECTION=NOT_IMPLEMENTED'
+            echo 'CNC_TOOLPATH=READ_ONLY_VISUAL_G0_G1_DEMO'
+            echo 'REAL_STOCK_MATERIAL_REMOVAL=NOT_IMPLEMENTED'
+            echo 'REAL_AXIS_AB_C_KINEMATICS=NOT_VERIFIED'
+            echo 'REAL_MACHINE_GLB_10_5_AUTHORITY=NOT_APPROVED'
+            echo 'PRODUCTION_AIG_II_STUDIO_APK_EXE=NOT_VERIFIED'
+            echo 'NATIVE_ANDROID_WINDOWS_GPU_FPS=NOT_VERIFIED'
+          } >> "$GITHUB_STEP_SUMMARY"

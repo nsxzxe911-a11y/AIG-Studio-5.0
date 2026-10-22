@@ -1,0 +1,80 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#020407">
+<title>FastModel 7.6｜來源五官深度估計與三維頭部側面品質</title>
+<style>
+:root{color-scheme:dark;font:14px system-ui,"Noto Sans TC",sans-serif;color:#e9f5ff;background:#020407}
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;background:radial-gradient(ellipse at top,#15394c,#020407 64%)}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#07111b;padding:13px 19px;border-bottom:1px solid #2e5166}
+h1{font-size:clamp(18px,2.5vw,23px);margin:0}a{color:#88edff}main{display:grid;grid-template-columns:minmax(0,1fr) 375px;gap:12px;max-width:1510px;margin:auto;padding:12px}
+section{background:#07111b;border:1px solid #294e65;border-radius:12px;padding:14px;min-width:0}
+section.viewer{position:relative;min-height:510px;padding:0;overflow:hidden;touch-action:none;background:#020b13}
+#view{width:100%;height:100%;display:block;touch-action:none}
+.info{position:absolute;left:12px;top:12px;max-width:90%;font-size:12px;line-height:1.65;padding:9px;border:1px solid #3b6578;background:#061522e8;border-radius:8px;pointer-events:none}
+h2{font-size:17px;margin:0 0 12px}h3{font-size:14px;margin:17px 0 9px;color:#b9d9e9}p{font-size:12px;color:#b5cbd6;line-height:1.7}
+label{display:block;font-size:12px;color:#c5dfeb;font-weight:650;margin:10px 0 5px}
+input,select,button{font:inherit;color:#e6f8ff;background:#0a2537;border:1px solid #315b76;border-radius:8px;padding:8px;width:100%;min-height:40px}
+button{cursor:pointer;font-weight:700;background:linear-gradient(112deg,#106480,#313d6e)}
+button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #83e7ff;outline-offset:2px}
+#photo{display:block;width:100%;height:auto;max-height:280px;background:#02080e;border:1px solid #416783;border-radius:8px;touch-action:manipulation;object-fit:contain}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.cols label{margin:10px 0 5px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
+.state{padding:10px;border-radius:8px;background:#261e13;border:1px solid #966b45;color:#fce3c1;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;font-size:12px;margin:12px 0}
+.state[data-ok=true]{background:#0a2521;color:#a0f4db;border-color:#388872}
+pre{font:11px/1.6 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:205px;overflow:auto;background:#030f1a;border:1px solid #2e4e64;border-radius:8px;padding:10px}
+.check{display:flex;align-items:center;gap:8px;margin:10px 0}.check input{width:18px;min-height:18px;height:18px}
+small{color:#a9c4d3}
+@media(max-width:860px){main{grid-template-columns:1fr;grid-template-rows:minmax(42dvh,345px) auto;padding:8px}section.viewer{min-height:325px}}
+</style></head><body>
+<header><h1>AIG FastModel <span style="color:#78eacb">7.6</span>｜來源五官深度估計／三維表情</h1><nav><a href="./occlusion-studio.html">7.7 頭髮／脖子真 3D 遮擋 ↗</a> · <a href="./landmark-studio.html">7.5 五官定位</a> · <a href="./avatar-studio.html">7.4 角色</a> · <a href="./index.html">FastModel 首頁</a></nav></header>
+<main><section class="viewer"><canvas id="view" aria-label="受照片五官定位約束的真 XYZ 三維表情表面"></canvas><div class="info">拖曳旋轉 3D 照片來源輪廓<br>十個照片五官點核對後可控制真 XYZ 估計深度<br>背面不會生成另一張鬼臉</div></section>
+<section>
+<h2>照片來源與十點定位</h2>
+<p>這階採遊戲角色捏臉思路，但不用任意拼貼技術人偶。照片五官候選位置只是引導，需逐點在原照片上標記後才能讓三維表情生效。</p>
+<label for="source">照片（只在本機處理）</label><input id="source" type="file" accept="image/png,image/jpeg,image/webp">
+<div class="cols">
+<div><label for="method">前景擷取</label><select id="method"><option value="alpha">透明 Alpha</option><option value="background">指定背景顏色</option></select></div>
+<div><label for="threshold">背景容差</label><input id="threshold" type="number" value="35" min="0" max="255"></div>
+</div>
+<label for="photo">來源照片與五官點</label><canvas id="photo" width="320" height="240" aria-label="點選指定的五官位置"></canvas>
+<div class="cols">
+<div><label for="point">正在定位</label><select id="point">
+<option value="leftEye">左眼中心</option><option value="rightEye">右眼中心</option>
+<option value="leftBrow">左眉</option><option value="rightBrow">右眉</option>
+<option value="nose">鼻尖</option><option value="upperLip">上唇</option>
+<option value="lowerLip">下唇</option><option value="mouthLeft">左嘴角</option>
+<option value="mouthRight">右嘴角</option><option value="chin">下巴</option>
+</select></div>
+<div><label for="pick-bg">背景取樣</label><button id="pick-bg" type="button">改點照片背景</button></div>
+</div>
+<p id="point-status">已標記 0／10；藍框是未驗證的參考點。</p>
+<div class="check"><input id="review" type="checkbox"><label for="review">我已逐一檢查照片的十個位置</label></div>
+<button type="button" id="confirm" disabled>確認照片五官，建立三維深度工作模型</button>
+<h3>頭部 Z 深度估計（不是測量結果）</h3>
+<p>單張照片沒有真正的鼻樑／眼窩／側臉深度。以下是以已確認的照片位置為錨點的三維深度設定，改動的是數值幾何，而不只是改皮膚顏色。</p>
+<div class="cols">
+<div><label for="nose-depth">鼻尖凸出</label><input id="nose-depth" type="range" min="0" max=".07" step=".002" value=".025"></div>
+<div><label for="bridge-depth">鼻樑凸出</label><input id="bridge-depth" type="range" min="0" max=".07" step=".002" value=".010"></div>
+<div><label for="eye-depth">眼窩內凹</label><input id="eye-depth" type="range" min="0" max=".07" step=".002" value=".009"></div>
+<div><label for="lips-depth">嘴唇凸出</label><input id="lips-depth" type="range" min="0" max=".07" step=".002" value=".014"></div>
+<div><label for="chin-depth">下巴凸出</label><input id="chin-depth" type="range" min="0" max=".07" step=".002" value=".008"></div>
+<div><label for="depth-scale">深度比例</label><input id="depth-scale" type="range" min="0" max="1.5" step=".05" value="1"></div>
+</div>
+<p id="depth-status">目前沒有臉部深度證據。對未觀察到的側面與後腦一律標示推估。</p>
+<h3>實際 XYZ 表情／動作</h3>
+<div class="cols">
+<div><label for="jawOpen">張嘴</label><input type="range" id="jawOpen" min="0" max="1" step=".05" value="0"></div>
+<div><label for="smile">微笑</label><input type="range" id="smile" min="0" max="1" step=".05" value="0"></div>
+<div><label for="blinkLeft">左眨眼</label><input type="range" id="blinkLeft" min="0" max="1" step=".05" value="0"></div>
+<div><label for="blinkRight">右眨眼</label><input type="range" id="blinkRight" min="0" max="1" step=".05" value="0"></div>
+<div><label for="browRaise">抬眉</label><input type="range" id="browRaise" min="0" max="1" step=".05" value="0"></div>
+<div><label for="clip">動作片段</label><select id="clip"><option value="idle">待機</option><option value="blink">眨眼</option><option value="smile">微笑</option><option value="talk">說話嘴型</option></select></div>
+</div>
+<div class="actions"><button id="play" disabled type="button">播放表情</button><button id="reset" disabled type="button">表情清零</button></div>
+<div class="cols">
+<div><label for="yaw">旋轉 Y</label><input type="range" id="yaw" min="-3.14" max="3.14" value="0" step=".04"></div>
+<div><label for="pitch">旋轉 X</label><input type="range" id="pitch" min="-1.2" max="1.2" value="0" step=".04"></div>
+</div>
+<button id="evidence-download" disabled type="button">下載幾何驗證 JSON</button>
+<div id="status" class="state" role="status">尚未讀取照片，不得聲稱已完成真實人物重建。</div>
+<pre id="evidence">NO_REVIEWED_FEATURE_POINTS</pre>
+<p><small>Gate：照片 2D 五官點必須人工核對；深度前後映射、Z 局部翻轉與表情變形需通過。真實臉部深度、人體解剖骨架、自然皮膚、頭髮遮擋與 APK／EXE 尚未驗證。</small></p>
+</section></main><script type="module" src="./depth-studio.mjs"></script></body></html>

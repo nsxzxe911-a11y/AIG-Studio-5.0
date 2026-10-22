@@ -1,0 +1,43 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#020407">
+<title>AIG FastModel 7.1｜原生 3D 隱式體積與碰撞</title>
+<style>
+:root{color-scheme:dark;font:15px system-ui,"Noto Sans TC",sans-serif;color:#e6f3ff;background:#020407}*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;background:radial-gradient(ellipse at 50% 0,#18364d77,transparent 64%),#020407}
+header{background:#07111b;border-bottom:1px solid #2a4d66;padding:13px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+h1{font-size:clamp(17px,2.4vw,24px);margin:0}h2{font-size:18px;margin:0 0 12px}a{color:#82e9ff}
+main{max-width:1440px;margin:auto;padding:12px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:13px;min-height:calc(100dvh - 75px)}
+.workspace{min-height:440px;position:relative;background:#020b13;border:1px solid #285574;border-radius:13px;overflow:hidden;touch-action:none}
+#screen{width:100%;height:100%;display:block;touch-action:none}
+.hint{position:absolute;top:12px;left:12px;background:#031421df;border:1px solid #315970;padding:10px;border-radius:9px;font-size:12px;color:#b0deef;pointer-events:none;max-width:87%}
+.panel{border:1px solid #2a4a61;border-radius:13px;padding:17px;background:#07111b;min-width:0}
+p{font-size:12px;line-height:1.65;color:#b0c8d7}
+label{font-size:12px;font-weight:650;color:#c6e2ef;display:block;margin:12px 0 5px}
+button,input,select{width:100%;min-height:42px;border:1px solid #386782;border-radius:8px;background:#0a2537;color:#e9f4ff;padding:8px 10px;font:inherit}
+button{background:linear-gradient(115deg,#0c607d,#363b70);cursor:pointer;font-weight:750}
+button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #86eaff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#source-preview{width:100%;height:110px;object-fit:contain;background:#020407;border:1px solid #2b526a;display:block;border-radius:8px;touch-action:manipulation}
+.state{padding:11px;background:#221b12;border:1px solid #937348;color:#ffe1b5;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.65;border-radius:9px;margin:13px 0}
+.state[data-level=ok]{background:#09241e;color:#a3eee4;border-color:#348077}
+pre{font:11px/1.55 monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto;border:1px solid #35586f;background:#020d16;border-radius:9px;padding:10px}
+@media(max-width:800px){main{grid-template-columns:1fr;grid-template-rows:minmax(44dvh,360px) auto;padding:8px}.workspace{min-height:320px}header{padding:10px}}
+</style></head><body>
+<header><h1>AIG FastModel <span style="color:#8deaff">7.1</span>｜自研真正 3D 體積</h1><nav><a href="./volume-lab.html">7.2 三維變形／碰撞 ↗</a> · <a href="./reverse-lab.html">7.0 逆向繪圖</a> · <a href="./index.html">返回 FastModel</a></nav></header>
+<main><section class="workspace"><canvas id="screen" aria-label="三維 SDF 表面光線求交；可拖曳改變觀察角度"></canvas><div class="hint">拖曳旋轉真正的 X/Y/Z 體積<br>藍色＝來源 XY 輪廓＋明示推估 Z 厚度<br>不是完整人體掃描，不是照片平移動畫</div></section>
+<aside class="panel"><h2>來源輪廓 → 三維體積</h2>
+<p>每次渲染計算真實的三維表面交點與法線。Z 厚度由使用者指定，不能推論照片未看到的背面、肌肉或皮膚。</p>
+<label for="source">照片來源（只在本機處理）</label><input id="source" type="file" accept="image/png,image/jpeg,image/webp">
+<div class="grid"><div><label for="method">前景識別</label><select id="method"><option value="alpha">透明 Alpha</option><option value="background">指定背景顏色</option></select></div>
+<div><label for="threshold">背景色容差</label><input id="threshold" type="number" value="35" min="0" max="255" step="1"></div></div>
+<p>不透明照片先選「指定背景顏色」，再點擊以下來源圖的背景區。複雜照片可能分割錯誤，必須目視核對。</p>
+<canvas id="source-preview" aria-label="點選照片背景顏色取樣" width="320" height="110"></canvas>
+<div class="grid"><div><label for="depth">Z 半厚度（推估）</label><input id="depth" type="number" min="0.025" max="0.65" step="0.01" value="0.13"></div>
+<div><label for="bend">三維幾何彎曲</label><input id="bend" type="range" min="-0.35" max="0.35" value="0" step="0.01"></div></div>
+<button id="build" disabled type="button">建立有真實深度的 SDF 體積</button>
+<div class="grid"><div><label for="yaw">Y 軸旋轉</label><input id="yaw" type="range" min="-3.14" max="3.14" value="0.55" step="0.03"></div>
+<div><label for="pitch">X 軸旋轉</label><input id="pitch" type="range" min="-1.2" max="1.2" value="0.20" step="0.03"></div></div>
+<button id="probe" disabled type="button">3D 球形探針碰撞量測</button>
+<div id="status" class="state" role="status">等待照片。沒有來源就不能宣稱生成 3D。</div>
+<h2>實際三維運算證據</h2><pre id="evidence" aria-live="polite">NO_3D_VOLUME</pre>
+<p>通過範圍：隱式 X/Y/Z 體積、表面光線交點、三維幾何碰撞。未驗證：自然人體外觀、真蒙皮骨架、彈性材料 FEM、Android／Windows 實機。</p>
+</aside></main><script type="module" src="./implicit-lab.mjs"></script></body></html>

@@ -1,0 +1,80 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#020407">
+<title>FastModel 7.9｜影片與相機連續掃描／關鍵影格模型記憶</title>
+<style>
+:root{color-scheme:dark;background:#020407;color:#e5f6ff;font:14px system-ui,"Microsoft JhengHei",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0,#123348,#020407 62%);min-height:100dvh}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;background:#07111b;border-bottom:1px solid #284b60}h1{font-size:clamp(18px,2.7vw,24px);margin:0}h1 em{color:#77f2d6;font-style:normal}a{color:#8ceaff}
+main{max-width:1440px;margin:auto;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(305px,.75fr);gap:12px;padding:12px}
+section{background:#07111b;border:1px solid #2c5167;border-radius:13px;padding:15px;min-width:0}
+.viewport{padding:0;overflow:hidden}.viewport canvas{display:block;width:100%;aspect-ratio:16/9;background:#020b14;object-fit:contain}
+video{display:none}.notice{font-size:12px;line-height:1.7;color:#b9d1dc;padding:8px 14px}
+h2{font-size:17px;margin:0 0 12px}h3{font-size:14px;color:#a7e5f5;margin:16px 0 8px}
+label{font-weight:650;font-size:12px;display:block;color:#c8dbe8;margin:10px 0 6px}
+button,input,select{font:inherit;min-height:42px;border-radius:8px;border:1px solid #346078;background:#0c2536;color:#e6f9ff;padding:9px;max-width:100%}
+input:not([type="checkbox"]),select,button{width:100%}input[type="range"]{padding:0;min-height:26px}
+button{background:linear-gradient(112deg,#126a84,#283c6b);font-weight:700;cursor:pointer}
+button:disabled{opacity:.42;cursor:default}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.state{margin:12px 0;padding:11px;border:1px solid #91683e;border-radius:8px;background:#2a2116;color:#ffe4bd;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.state[data-ok="true"]{border-color:#368e75;background:#09281f;color:#9ff1d4}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0}
+.metric{border:1px solid #2f5066;border-radius:8px;padding:10px;background:#091925;min-width:0}
+.metric strong{font-size:20px;display:block;color:#a0f1ff;font-variant-numeric:tabular-nums}.metric small{color:#b3c5d0;font-size:11px}
+#keyframes{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;max-height:330px;overflow:auto;padding:5px}
+.frame{background:#091725;border:1px solid #30536b;border-radius:7px;padding:5px;overflow:hidden;font-size:11px;line-height:1.5}
+.frame img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#03111b}
+.frame small{color:#adcbd6}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.6 ui-monospace,monospace;max-height:230px;overflow:auto;background:#020e19;border:1px solid #315165;border-radius:7px;padding:9px}
+.checkbox-line{display:flex;gap:8px;align-items:center;margin-top:10px}
+.checkbox-line input{width:18px;height:18px;min-height:18px}
+@media(max-width:800px){main{grid-template-columns:1fr;padding:8px}.stats{grid-template-columns:repeat(4,minmax(0,1fr))}.buttons{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:380px){.buttons{grid-template-columns:1fr 1fr}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style></head><body><header><h1>AIG FastModel <em>7.9</em>｜連續影片／相機掃描</h1><nav><a href="./multiview-studio.html">7.10 影片多視角 XYZ ↗</a> · <a href="./spatial-studio.html">7.8 真三度空間</a> · <a href="./index.html">FastModel 首頁</a></nav></header>
+<main>
+<div>
+<section class="viewport">
+<canvas id="preview" width="640" height="360" aria-label="影片或相機連續掃描的即時來源畫面"></canvas>
+<video id="video" playsinline muted preload="metadata"></video>
+<div class="notice">畫面在本機解碼；掃描會自動挑選具有新視覺資訊的關鍵影格，不會每一格都重新建模。相機／影片的顏色與幾何仍屬 2D 觀測證據。</div>
+</section>
+<section style="margin-top:12px">
+<h2>增量模型觀測記憶</h2>
+<div class="stats">
+<div class="metric"><strong id="seen">0</strong><small>分析影格</small></div>
+<div class="metric"><strong id="accepted">0</strong><small>有效影格</small></div>
+<div class="metric"><strong id="rejected">0</strong><small>略過重複／低品質</small></div>
+<div class="metric"><strong id="capacity">0/24</strong><small>快取容量</small></div>
+</div>
+<div id="keyframes" aria-label="本機保留的關鍵影格預覽"></div>
+<h3>可重用的記憶證據</h3>
+<p style="color:#bdd1dc;font-size:12px">只將特徵摘要、品質分數、來源識別碼及人工核對角度存入 JSON；不會把照片、影片或人臉圖片隱藏上傳到伺服器。原始影格縮圖只存於目前瀏覽器工作階段。</p>
+<pre id="evidence">尚未開始連續掃描</pre>
+</section>
+</div>
+<section>
+<h2>掃描來源</h2>
+<label for="file">影片（MP4／WebM／瀏覽器支援格式）</label><input type="file" id="file" accept="video/mp4,video/webm,video/quicktime,video/*">
+<div class="buttons">
+<button id="video-start" type="button" disabled>掃描影片</button>
+<button id="camera-start" type="button">即時相機</button>
+<button id="pause" type="button" disabled>暫停／續掃</button>
+<button id="stop" type="button" disabled>停止</button>
+<button id="clear" type="button">清除本輪</button>
+<button id="save" type="button" disabled>匯出記憶</button>
+</div>
+<label for="load">讀回同來源的記憶 JSON</label><input type="file" id="load" accept=".json,application/json">
+<h3>掃描效率設定</h3>
+<div class="two">
+<div><label for="period">影格檢查間隔（毫秒）</label><select id="period"><option value="200">200｜細緻</option><option value="400" selected>400｜快速</option><option value="750">750｜省電</option></select></div>
+<div><label for="max">保留關鍵影格</label><select id="max"><option value="12">12｜低記憶體</option><option value="24" selected>24｜平衡</option><option value="48">48｜細節</option></select></div>
+<div><label for="novelty">新畫面門檻</label><select id="novelty"><option value=".035">靈敏</option><option value=".065" selected>平衡</option><option value=".11">去重優先</option></select></div>
+<div><label for="scale">處理解析度</label><select id="scale"><option value="64">64｜快取優先</option><option value="96" selected>96｜標準</option><option value="128">128｜較細緻</option></select></div>
+</div>
+<h3>人工確認角度（可選）</h3>
+<p style="color:#b9cad6;font-size:12px;line-height:1.6">單靠畫面變化不能證明相機旋轉角度。只有你確認的角度，才算有根據的多視角證據；未確認影格仍可用來去重、找清晰畫面。</p>
+<div class="checkbox-line"><input type="checkbox" id="angle-approved"><label for="angle-approved" style="margin:0">我已核對目前取景角度</label></div>
+<div class="two">
+<div><label for="yaw">水平角度（度）</label><input id="yaw" type="number" min="-180" max="180" value="0" step="5"></div>
+<div><label for="pitch">俯仰角度（度）</label><input id="pitch" type="number" min="-90" max="90" value="0" step="5"></div>
+</div>
+<div id="status" class="state" role="status">本機離線就能掃描；相機需要瀏覽器授權。請選影片或啟動相機。</div>
+<p style="font-size:12px;color:#b4cbd7;line-height:1.8">驗收界線：目前記住的是「有用的多影格觀測」，不是已經自動生成真實後腦、骨架、3D 權重或人像辨識模型。若要融合到 7.8 真 XYZ 引擎，還必須驗證相機角度、對齊與深度。</p>
+</section></main><script type="module" src="./continuous-studio.mjs"></script></body></html>

@@ -1,5 +1,6 @@
 import {RealMovieCapture,validateMovieSource,MOVIE_SOURCE_VERSION} from './movie-recorder.mjs';
 import {mapVoiceFiles,voiceTimecodes,RmsMouthDriver,VOICE_CUES_VERSION} from './voice-cues.mjs';
+import {openAIG716AssetLibrary} from './aig-external-asset-library-7-16.mjs';
 
 /** Build buttons, actual recorded video and evidence only when a source-backed
  * GLB clip sequence is playable. No source GLB is modified or uploaded.
@@ -198,6 +199,23 @@ export class MovieWorkspace {
     (completedStory?'完整劇情片段已由瀏覽器實際錄製。':'僅錄製使用者提前中止前的部分片段。')+
     ' 格式 '+metadata.container.toUpperCase()+'，解析度 1920×1080，錄得 '+metadata.actualFramesDrawn+
     ' 幀，音訊軌 '+metadata.audioTracksInFile+'；不含系統 TTS。實際 FPS／完整女主角質量仍待實機驗收。';
+   let lib=null;
+   try{
+    lib=await openAIG716AssetLibrary();
+    const videoType=output.evidence.container==='mp4'?'video/mp4':'video/webm';
+    const payload=output.blob.type===videoType?output.blob:
+     new Blob([output.blob],{type:videoType});
+    await lib.importBlob(payload,{
+     category:'animation',title:'FastModel 劇情動畫與場景轉場',
+     tags:['動畫','場景','轉場','劇情'],
+     source:'GENERATED_DERIVED',modelAccuracy:'NOT_VERIFIED',
+     coordinateUnits:'UNKNOWN',derivedFrom:this.lockedSource.sha
+    });
+    this.el('movie-status').textContent+=' 已另外儲存到主程式外素材庫，待使用者核准重用。';
+   }catch(error){
+    this.el('movie-status').textContent+=' 錄影成功；外部素材庫尚未保存：'+
+     String(error.message||error)+'。';
+   }finally{lib?.close()}
   }catch(err){
    // A failed new recording must not delete the previous successful export.
    this.el('movie-status').textContent='本次影片未能輸出：'+err.message+'；無新檔案，保留先前已完成的錄影。';

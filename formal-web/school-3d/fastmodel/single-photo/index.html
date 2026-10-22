@@ -134,7 +134,96 @@ aside{min-height:0;overflow:auto;padding:10px;overscroll-behavior:contain}
 #aig695-need-real-3d p{color:#ffdcac;margin:4px 0 10px}
 #aig695-need-real-3d button{margin:6px 0;font-size:12px}
 #aig695-switch-auto{background:#12475a;border-color:#51a9b8}
-</style></head><body><header><h1><span>AIG</span> FastModel <small>6.9.5 · 單一動畫工作區</small></h1><span class="tag">原彩 · PBR · 光柵</span></header><main><section class="workspace"><canvas id="view" aria-label="3D 模型與動畫預覽"></canvas><div id="story-subtitle" class="story-subtitle" hidden aria-live="polite"></div><div class="hint" id="viewport-status" role="status">生成後在這裡旋轉、縮放及播放真正的 3D 模型。</div></section><aside><div id="generation"><h2>AIG 自動 3D 建模工作區</h2><p>只需要一張清楚的臉或上半身照片，即可開始補全正常比例全身 3D。無側面／背面照片及手動標點要求；使用 AIG 本地幾何、17 骨架與五段動畫。看不到的全身部位屬先驗推估，非照片精確還原。下方舊版進階技術工具仍保留，不需要逐級完成。</p>
+
+/* AIG RGB Glass formal family: shared with BOTH native CNC projects.
+ * Presentation only — original DOM IDs, verified artwork and callbacks stay.
+ * Never display a fake 3D character or engineer-shell on missing assets.
+ */
+:root{
+ --aig-rgb-background:#020407;
+ --aig-rgb-panel:#07111b;
+ --aig-rgb-text:#f4fbff;
+ --aig-rgb-accent:#27e9ff;
+ --aig-rgb-cutting:#33f39b;
+ --aig-rgb-rapid:#ff4da6;
+ --aig-rgb-warning:#ffb326;
+ --aig-rgb-alarm:#ff465f;
+ --aig-rgb-disabled:#54606a;
+ --aig-rgb-glass:rgba(7,17,27,.94);
+ --aig-rgb-edge:rgba(39,233,255,.28);
+}
+html,body{background:var(--aig-rgb-background);color:var(--aig-rgb-text)}
+header,aside,#aig-unified-tabs{background:var(--aig-rgb-panel);
+ color:var(--aig-rgb-text)}
+.workspace{background:radial-gradient(ellipse at 50% 58%,#0b2534,var(--aig-rgb-background) 70%);
+ border-color:var(--aig-rgb-edge)}
+aside{border-color:var(--aig-rgb-edge)}
+input,select,textarea,button,.download{
+ color:var(--aig-rgb-text);border-color:var(--aig-rgb-edge);
+ background-color:#0b1d2c}
+button:not(:disabled):hover,#aig-unified-tabs button:hover{
+ border-color:var(--aig-rgb-accent)}
+button:not(:disabled):active{box-shadow:inset 0 0 0 1px var(--aig-rgb-accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,
+textarea:focus-visible,.download:focus-visible{
+ outline:2px solid var(--aig-rgb-accent);outline-offset:2px}
+button:disabled{border-color:var(--aig-rgb-disabled);opacity:.47;cursor:not-allowed}
+#aig-unified-tabs [aria-selected="true"]{
+ color:var(--aig-rgb-text);border-color:var(--aig-rgb-accent);
+ background:linear-gradient(120deg,#0b4050,#263457)}
+button.primary,#aig-unified-panel-create #aig65-build{
+ background:linear-gradient(115deg,#095061,#29345d);
+ color:var(--aig-rgb-text);border-color:var(--aig-rgb-accent)}
+#aig693-progress[data-aig-state="complete"]{
+ border-color:var(--aig-rgb-cutting);color:var(--aig-rgb-cutting)}
+.status,#aig693-progress[data-aig-state="error"],#aig695-need-real-3d{
+ border-color:var(--aig-rgb-warning);color:#ffe1ad;background:#21190e}
+#aig-unified-model-notice[data-aig-model-status="technical"]{
+ border-color:var(--aig-rgb-warning);color:#ffe1ad;background:#21190e}
+/* A warning/status never turns into a fake destructive or machine action. */
+@media(max-width:760px){
+ #aig-unified-tabs button{min-height:44px}
+ #aig-unified-panel-create #aig65-build{min-height:48px}
+ .workspace{min-width:0;max-width:100%}
+}
+
+/* Cross-project actual CNC animation viewer: optional, read-only source. */
+#aig-cnc-motion-preview{margin:12px 0;padding:10px;border:1px solid var(--aig-rgb-edge);
+ background:var(--aig-rgb-glass);border-radius:12px;min-width:0}
+#aig-cnc-motion-title{margin:4px 0 8px;font-size:14px;color:var(--aig-rgb-accent)}
+#aig-cnc-motion-help{margin:4px 0 9px;line-height:1.55}
+#aig-cnc-motion-preview button,#aig-cnc-motion-preview input{
+ width:100%;min-height:44px;margin:5px 0}
+#aig-cnc-motion-status{border:1px solid var(--aig-rgb-edge);
+ border-radius:8px;padding:9px;background:var(--aig-rgb-panel);
+ overflow-wrap:anywhere;line-height:1.5}
+#aig-cnc-motion-canvas{display:block;width:100%;height:auto!important;
+ aspect-ratio:16/9;min-height:0;max-height:360px;object-fit:contain;
+ border:1px solid var(--aig-rgb-edge);border-radius:8px}
+#aig-cnc-motion-canvas[hidden]{display:none!important}
+
+/* 2026-10-22: keep compact phone tab hit targets within their own grid cells.
+ * The advanced tab must remain clickable even when neighboring selected model
+ * tabs have overlapping visual/paint bounds. Does not modify any callback. */
+#aig-unified-tabs{isolation:isolate}
+#aig-unified-tabs [role="tab"]{
+ position:relative;min-width:0;max-width:100%;box-sizing:border-box;overflow:hidden
+}
+#aig-unified-tabs #aig-unified-tab-advanced{z-index:4}
+
+
+/* 7.6: prevent ever-growing version shortcuts from stretching mobile viewport.
+ * Keep every old version link, but isolate them in a keyboard/touch scroll row. */
+header{min-width:0;max-width:100%;overflow:hidden;gap:8px}
+header h1{min-width:0;max-width:100%;flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header>.tag{flex:0 0 auto}
+#aig-fastmodel-version-nav{min-width:0;max-width:100%;flex:1 1 0;
+ display:flex;align-items:center;gap:6px;overflow-x:auto;overflow-y:hidden;
+ white-space:nowrap;scrollbar-width:thin;overscroll-behavior-x:contain}
+#aig-fastmodel-version-nav a{flex:0 0 auto;min-height:32px;display:inline-flex;align-items:center}
+@media(max-width:760px){header h1{flex-basis:118px}header .tag{display:none}}
+
+</style></head><body><header><h1><span>AIG</span> FastModel <small>6.9.5 · 單一動畫工作區</small></h1><span class="tag">原彩 · PBR · 光柵</span><nav id="aig-fastmodel-version-nav" aria-label="FastModel 開發工作頁"><a href="./scene-runtime-studio.html" style="font-size:12px;color:#a4e9ff;text-decoration:underline;margin-right:8px">Real3D 1.9｜GPU 場景管理 ↗</a><a href="./asset-library-studio.html" style="font-size:12px;color:#a0ffe1;text-decoration:underline;margin-right:8px">素材庫｜人物／建築／地圖／場景／轉場 ↗</a><a href="./metric-stereo-studio.html" style="font-size:12px;color:#96ffdf;text-decoration:underline;margin-right:8px">7.14 女主角 RGB／深度／真 3D 掃描 ↗</a><a href="./scene-map-studio.html" style="font-size:12px;color:#9fead1;text-decoration:underline;margin-right:8px">場景地圖／GeoJSON 圖資 ↗</a><a href="./tracking-studio.html" style="font-size:12px;color:#afffc9;text-decoration:underline;margin-right:8px">7.11 自動對應追蹤／XYZ ↗</a><a href="./multiview-studio.html" style="font-size:12px;color:#9ce9ff;text-decoration:underline;margin-right:8px">7.10 校準影片 XYZ 三維融合 ↗</a><a href="./continuous-studio.html" style="font-size:12px;color:#afffc9;text-decoration:underline;margin-right:8px">7.9 影片／相機連續掃描 ↗</a><a href="./spatial-studio.html" style="font-size:12px;color:#a9ffdd;text-decoration:underline;margin-right:8px">7.8 三維空間頭頸轉動 ↗</a><a href="./occlusion-studio.html" style="font-size:12px;color:#8effcb;text-decoration:underline;margin-right:8px">7.7 頭髮／脖子 3D 遮擋 ↗</a><a href="./depth-studio.html" style="font-size:12px;color:#a2e9ff;text-decoration:underline;margin-right:8px">7.6 3D 臉部深度／側面 ↗</a><a href="./landmark-studio.html" style="font-size:12px;color:#80edbf;text-decoration:underline;margin-right:8px">7.5 來源五官定位／真 3D 表情 ↗</a><a href="./avatar-studio.html" style="font-size:12px;color:#abffdf;text-decoration:underline;margin-right:8px">7.4 遊戲角色編輯器 ↗</a><a href="./face-material-lab.html" style="font-size:12px;color:#ffd5f0;text-decoration:underline;margin-right:8px">7.3 3D 人臉化妝 ↗</a><a href="./volume-lab.html" style="font-size:12px;color:#8cf4bd;text-decoration:underline;margin-right:8px">7.2 三維變形／碰撞 ↗</a><a href="./implicit-lab.html" style="font-size:12px;color:#8af4d4;text-decoration:underline;margin-right:8px">7.1 真 3D 隱式體積 ↗</a><a href="./reverse-lab.html" style="font-size:12px;color:#91e9ff;text-decoration:underline;white-space:nowrap">7.0 逆向繪圖／真數值模擬 ↗</a></nav></header><main><section class="workspace"><canvas id="view" aria-label="3D 模型與動畫預覽"></canvas><div id="story-subtitle" class="story-subtitle" hidden aria-live="polite"></div><div class="hint" id="viewport-status" role="status">生成後在這裡旋轉、縮放及播放真正的 3D 模型。</div></section><aside><div id="generation"><h2>AIG 自動 3D 建模工作區</h2><p>只需要一張清楚的臉或上半身照片，即可開始補全正常比例全身 3D。無側面／背面照片及手動標點要求；使用 AIG 本地幾何、17 骨架與五段動畫。看不到的全身部位屬先驗推估，非照片精確還原。下方舊版進階技術工具仍保留，不需要逐級完成。</p>
 <p>本階沿用 AIG FastModel 6.7｜真 WAV 波形配音與本機臉部定位，AIG FastModel 6.5｜AUTO Canvas 真影片核心；AIG FastModel 6.6｜本機前景連通分層與人物局部動畫持續保留。6.7 新增選用本機 WAV 振幅嘴型與瀏覽器單臉方框定位；均不冒稱完整人體骨架或音素級精準口型。</p>\n<h3>AIG FastModel 6.9｜AUTO：照片／劇情直接製作動畫</h3>
 <p>6.9 網站預覽版：保留 6.8 真影片解碼檢查；新增 GitHub Chromium 實際錄影與 WAV 音軌封裝測試。測試治具不等於核准女主角；正式 1080p 影片、人工嘴型與穿模檢查及 Windows／Android 仍需另行驗收。</p>
 <h3>AIG FastModel 6.8｜AUTO：照片／插畫／文字劇情 → 2D・2.5D・3D 動畫</h3>
@@ -178,8 +267,16 @@ aside{min-height:0;overflow:auto;padding:10px;overscroll-behavior:contain}
 <div style="border-top:1px solid #2e4357;margin:19px 0 13px"></div>
 <h3>AIG FastModel 6.4｜只需一張臉部或上半身照，自動生成正常比例全身 3D</h3>
 <p><strong>不用正／側／背面四張照片，不用先拍到腿，也不必手動標六點。</strong>直接選擇一張可看清楚人物臉部或上半身的圖片，AIG 在本機掃描照片輪廓；可見的肩寬只作有限約束，未拍到的四肢、腰、腿、足部與背面依正常比例自動推估。立即生成完整真 GLB：含可變形人體、臉部、校園制服、馬尾、17 節骨架和 5 段真動畫。未知身高、真實身材、背面與臉部深度不能從一張圖精確測得，會明確記為估算。舊有所有其他服裝與動畫原樣保留。</p>
+<label for="aig64-subject-kind">主體分析類型（目前不以色差猜測人／動物／植物）</label>
+<select id="aig64-subject-kind" aria-label="選擇人類動物或植物來源分類">
+<option value="HUMAN" selected>人類｜觀測像素＋技術人體 GLB</option>
+<option value="ANIMAL">動物｜只輸出原圖幾何／色彩分析，不冒充人體模型</option>
+<option value="PLANT">植物｜只輸出枝葉前景／色彩分析，不冒充人體骨架</option>
+</select>
+<p id="aig64-observation-status" class="status" role="status">6.12 分析：主體前景、原色證據、輪廓觀測；不代表物種自動識別、真皮膚材料或真實體型已被測量。</p>
 <input id="aig64-single-photo" type="file" accept="image/jpeg,image/png,image/webp" aria-label="直接選一張臉部或上半身照片自動補出全身3D">
 <button id="aig64-single-build" type="button">單張照片 → 自動補全正常人體比例 → 真 GLB＋動畫</button>
+<button id="aig64-single-motion-upgrade" type="button" disabled data-aig-page-id="model" data-aig-button-id="FASTM.MODEL.FULLBODY_MOTION" data-aig-command-id="ANIMATION.FULLBODY_BILATERAL" title="真正增加左右四肢的骨架動作，驗證蒙皮變形後才可下載">強化 3D：雙腿交替＋雙臂動作（真 GLB，驗證後下載）</button>
 <button id="aig64-single-download" type="button" disabled>下載自動生成的全身 3D GLB</button>
 <button id="aig64-single-report" type="button" disabled>下載自動推估來源／身體比例與 GLB SHA 證據</button>
 <p id="aig64-single-status" class="status" role="status">選擇單張臉部／上半身照片即可開始。無需先使用 4.0、5.4、6.0、6.1 或 6.2 操作。所產生的是按正常比例推估的完整可動 3D 技術人體，不宣稱單圖真實身材還原。</p>
@@ -293,6 +390,18 @@ aside{min-height:0;overflow:auto;padding:10px;overscroll-behavior:contain}
 <button id="aig52-fps" type="button" disabled>實測本機瀏覽器 240 幀 FPS／卡頓</button>
 <button id="aig52-fps-report" type="button" disabled>下載實測 FPS、p95、解析度及來源 SHA JSON</button>
 <p id="aig52-status" class="status" role="status">等待真實 GLB 通過 5.0 並載入播放器。FPS 是瀏覽器 WebGL 畫面更新率，不等於原生 Android／Windows 效能，也無法單靠 16 格圖核准女主角外觀。</p>
+
+<h3>AIG FastModel Real3D 1.7｜真 GLB GPU 計時／自適應畫質</h3>
+<p>先載入可追蹤來源的真 GLB，再按「啟動」。只在 WebGL2 GPU 非同步計時擴充回傳可靠數值時調整<strong>預覽渲染解析度</strong>；不更動 GLB、動作、材質、CAD／CNC。無 GPU 計時支援就保持原畫質，不會拿 JS 耗時冒稱 GPU 耗時。錄影／來源審核過程不執行自動降畫質。</p>
+<button id="aig17-gpu-toggle" type="button">啟用 GPU 量測與智慧預覽（需先載入真 GLB）</button>
+<button id="aig17-gpu-report" type="button" disabled>下載本機 GPU 診斷與來源 SHA JSON</button>
+<p id="aig17-gpu-status" class="status" role="status" aria-live="polite">尚未啟用 Real3D 1.7。不能以合成模型或瀏覽器 FPS 宣稱手機／Windows 60 FPS。</p>
+
+<h3>AIG FastModel Real3D 1.8｜真正 GPU 靜態物件合批</h3>
+<p>針對建築、樹木、場景道具等<strong>共享相同幾何和材質</strong>的靜態物件，以 Three.js <code>InstancedMesh</code> 將多個 draw call 合為一組。保護角色蒙皮、Morph、動作軌、動態模型與 CNC 來源：以上絕不自動合批。功能可隨時恢復 GLB 原視圖，模型資料不被重寫；沒有可安全合批的物件會明確顯示「無可合批物件」。隱藏分頁時減少非必要 GPU 畫面提交。</p>
+<button id="aig18-instance-toggle" type="button">啟用 1.8 靜態 GPU 合批（需載入 GLB）</button>
+<button id="aig18-instance-report" type="button" disabled>下載 GPU 合批數量／來源狀態 JSON</button>
+<p id="aig18-instance-status" class="status" role="status" aria-live="polite">等待真實 GLB；不降低 3D 幾何解析度，不更改任何人物骨架或動畫。</p>
 
 <h3>AIG FastModel 5.3｜女主角來源 × 真 3D × 動畫 × FPS 統一驗收 Gate</h3>
 <p>以本機已有的正式照片 SHA、真實人物生成來源鏈、5.0 骨架、5.1 接縫／馬尾、5.2 的真 16 格圖及瀏覽器實際 240 幀記錄，對照<strong>同一個 GLB SHA 與同一動畫 Clip</strong>，生成 11 項可追溯驗收表。沒有的證據保持 BLOCKED，不會因前一項通過就自動放行。正式人物外觀人工核准、Android／Windows 原生 60 FPS 及有聲成片驗收目前仍未完成。</p>

@@ -25,6 +25,7 @@ export function prepareAIG65Layers(doc,image){
  if(!evidence.hasDistinctForeground)return {
   image,background:image,foreground:null,evidence,
   visualMethod:'FLAT_IMAGE_CAMERA_ONLY_NO_DEPTH_SEPARATION',
+  backgroundPlateVerified:false,
   exactObjectMaskVerified:false
  };
  const front=doc.createElement('canvas');front.width=c.width;front.height=c.height;
@@ -46,12 +47,18 @@ export function prepareAIG65Layers(doc,image){
  if(retained<c.width*c.height*.025)return {
   image,background:image,foreground:null,evidence,
   visualMethod:'NO_RELIABLE_MATTE_FALLBACK_FLAT',
+  backgroundPlateVerified:false,
   exactObjectMaskVerified:false
  };
  fgCtx.putImageData(new ImageData(pixels,c.width,c.height),0,0);
+ // The photographed person is still inside the original background plate.
+ // Drawing an extracted person on top would produce a ghost/double body.
+ // Preserve the extracted technical candidate for future plate reconstruction,
+ // but do not claim a clean, physically measured 2.5D image.
  return {image,background:image,foreground:front,evidence,
-  visualMethod:back?'HEURISTIC_2_5D_RGB_MATTE_PARALLAX':
-   'ACTUAL_ALPHA_LAYER_PARALLAX',
+  visualMethod:'FOREGROUND_CANDIDATE_ONLY_BACKGROUND_NOT_RECOVERED',
+  backgroundPlateVerified:false,
+  requiresIndependentOcclusionFreeBackground:true,
   exactObjectMaskVerified:false
  };
 }
@@ -74,30 +81,32 @@ export function drawAIG65CanvasFrame({
   portraitFrame=portrait?.sample(timeSeconds,motion.beat,{audioAmplitude})||null;
  ctx.save();ctx.fillStyle='#020407';ctx.fillRect(0,0,w,h);
  if(layered?.image){
-  // Background is an image, NOT a generated 3D environmental scene.
-  // Foreground depth is unverified even when a true alpha mask is present.
-  ctx.save();ctx.translate(w/2,h/2);
-  ctx.scale(motion.transform.zoom,motion.transform.zoom);
-  ctx.translate(-w/2,-h/2);
-  fillImage(ctx,layered.background||layered.image,w,h,
-   -motion.depthOffset*w*.65,0,1.055);
-  ctx.restore();
-  if(plan.selectedMode==='2.5D'&&layered.foreground){
+  const verifiedPlate=plan.selectedMode==='2.5D'&&layered.foreground&&
+   layered.backgroundPlateVerified===true&&layered.background!==layered.image;
+  if(verifiedPlate){
+   // Genuine separate plate and foreground: no subject duplicated in backdrop.
+   ctx.save();ctx.translate(w/2,h/2);
+   ctx.scale(motion.transform.zoom,motion.transform.zoom);
+   ctx.translate(-w/2,-h/2);
+   fillImage(ctx,layered.background,w,h,-motion.depthOffset*w*.65,0,1.055);
+   ctx.restore();
    ctx.save();ctx.translate(w/2,h/2);
    ctx.scale(motion.transform.zoom*1.09,motion.transform.zoom*1.09);
    ctx.rotate(motion.transform.angle);
    ctx.translate(-w/2,-h/2);
    fillImage(ctx,portraitFrame?.canvas||layered.foreground,w,h,
-    (motion.transform.x+motion.depthOffset)*w,
-    motion.transform.y*h,1);
+    (motion.transform.x+motion.depthOffset)*w,motion.transform.y*h,1);
    ctx.restore();
   }else{
+   // No recovered occlusion-free plate from one portrait.
+   // Draw the source exactly ONCE, with visible 2D camera motion.
+   // This is not a depth reconstruction or actual body articulation.
    ctx.save();ctx.translate(w/2,h/2);
+   ctx.scale(motion.transform.zoom,motion.transform.zoom);
    ctx.rotate(motion.transform.angle);
    ctx.translate(-w/2,-h/2);
-   // 2D route uses the real photo's transformed pixel sheet.
-   if(plan.selectedMode==='2D')fillImage(ctx,portraitFrame?.canvas||layered.image,w,h,
-    motion.transform.x*w,motion.transform.y*h,motion.transform.zoom);
+   fillImage(ctx,portraitFrame?.canvas||layered.image,w,h,
+    motion.transform.x*w*3,motion.transform.y*h*2,1.06);
    ctx.restore();
   }
  }else{
@@ -134,7 +143,10 @@ export function drawAIG65CanvasFrame({
  ctx.restore();
  return {...motion,
   actualImagePixelFrameProduced:true,
-  layeredParallaxActive:!!(plan.selectedMode==='2.5D'&&layered?.foreground),
+  layeredParallaxActive:!!(plan.selectedMode==='2.5D'&&layered?.foreground&&
+   layered?.backgroundPlateVerified===true&&layered?.background!==layered?.image),
+  duplicatedForegroundOnUnrecoveredBackgroundBlocked:!!(
+   plan.selectedMode==='2.5D'&&layered?.foreground&&!layered?.backgroundPlateVerified),
   localFacePixelsActuallyWarped:!!portraitFrame,
   actualHumanJointPositionsComputed:false,
   stillPhotoMotionCannotBeCalledRealWalk:isStillPhotoWalk};
@@ -156,12 +168,21 @@ export class AIG65CanvasRecorder{
    throw Error('AIG65_REAL_1080P_FLAT_SOURCE_REQUIRED');
   if(sourceSHA256!==null&&!hex(sourceSHA256))throw Error('AIG65_VIDEO_SHA_INVALID');
   const MediaRecorderImpl=this.env.MediaRecorder,format=chooseMovieFormat(MediaRecorderImpl);
+  // Reject unsupported recording environments before acquiring camera/canvas tracks.
+  if(typeof this.env.MediaStream!=='function')throw Error('AIG65_MEDIA_STREAM_UNAVAILABLE');
   const video=canvas.captureStream(AIG65_MOVIE_SIZE.fpsTarget);
   const tracks=video.getVideoTracks?.()||[];
   if(!tracks.length)throw Error('AIG65_REAL_VIDEO_TRACK_REQUIRED');
-  const audio=audioDestination?.stream?.getAudioTracks?.()||[];
-  if(typeof this.env.MediaStream!=='function')throw Error('AIG65_MEDIA_STREAM_UNAVAILABLE');
-  const stream=new this.env.MediaStream([...tracks,...audio]);
+  // Canvas video tracks are owned by this attempt; an audioDestination supplied
+  // by the caller is NOT ours to stop if stream construction fails.
+  let audio=[],stream;
+  try {
+   audio=audioDestination?.stream?.getAudioTracks?.()||[];
+   stream=new this.env.MediaStream([...tracks,...audio]);
+  } catch(error) {
+   for(const track of tracks)try{track.stop();}catch{}
+   throw error;
+  }
   this.state='RECORDING';this.frames=0;this.chunks=[];
   this.canvas=canvas;this.tracks=tracks;this.stream=stream;
   this.sourceSHA256=sourceSHA256;this.format=format;this.audioTracks=audio.length;
@@ -191,7 +212,17 @@ export class AIG65CanvasRecorder{
   if(this.state==='FAILED'||this.state==='COMPLETE')return;
   const size=this.chunks.reduce((sum,x)=>sum+x.size,0);
   if(size===0||this.frames<2){this.fail(Error('AIG65_EMPTY_OR_UNRENDERED_VIDEO'));return;}
-  const blob=new Blob(this.chunks,{type:this.format.mime});
+  let blob;
+  try {
+   const BlobImpl=this.env.Blob||Blob;
+   blob=new BlobImpl(this.chunks,{type:this.format.mime});
+   if(!blob||blob.size<=0)throw Error('AIG65_ENCODED_BLOB_EMPTY');
+  } catch(error) {
+   // MediaRecorder may emit chunks but browser Blob finalization can still
+   // fail. Reject the pending stop promise and release owned canvas tracks.
+   this.fail(error);
+   return;
+  }
   this.state='COMPLETE';
   const output={blob,filename:'AIG-6.8-REAL-2D-2.5D-1080p.'+this.format.ext,
    evidence:{schema:AIG65_CAPTURE_SCHEMA,

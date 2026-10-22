@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407"><title>AIG FastModel 7.0｜像素逆向繪圖與數值彈性模擬</title>
+<style>
+:root{color-scheme:dark;font:15px system-ui,"Noto Sans TC",sans-serif;color:#e8f3fb;background:#020407}
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;background:radial-gradient(ellipse at top,#102c40,#020407 65%)}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;border-bottom:1px solid #28465b;background:#07111b}
+h1{font-size:clamp(17px,2.4vw,24px);margin:0}h2{font-size:17px;margin:0 0 13px}
+a{color:#79e0f5}p{color:#acc4d0;line-height:1.65;margin:9px 0}
+main{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;max-width:1500px;margin:auto;padding:14px;min-height:calc(100dvh - 82px)}
+.workspace{position:relative;min-height:460px;border-radius:14px;border:1px solid #2e5267;overflow:hidden;background:#020911;touch-action:none}
+canvas{width:100%;height:100%;display:block;touch-action:none}
+.hint{position:absolute;left:12px;top:12px;max-width:80%;border-radius:10px;border:1px solid #315672;background:#06111ce8;padding:9px 12px;font-size:12px;pointer-events:none}
+aside{overflow:auto;border-radius:14px;border:1px solid #26475c;background:#07111b;padding:18px}
+label{display:block;font-weight:600;font-size:12px;color:#c6dfe9;margin-top:13px;margin-bottom:6px}
+input,select,button{font:inherit;color:#e5f3fb;background:#0c2332;border:1px solid #39637b;border-radius:8px;padding:9px;min-height:44px;width:100%;max-width:100%}
+button{cursor:pointer;font-weight:700;background:linear-gradient(110deg,#12607b,#343770)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #7bddef;outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.button-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+small,.muted{font-size:12px;color:#a8c2d0}
+.state{margin-top:12px;white-space:pre-line;overflow-wrap:anywhere;border:1px solid #966f40;border-radius:8px;background:#231c13;color:#ffddac;padding:11px;font-size:12px;line-height:1.65}
+.state[data-level=ok]{border-color:#246c65;color:#9de8dc;background:#082522}
+#evidence{font:12px/1.6 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto;padding:11px;background:#030e17;border:1px solid #274153;border-radius:8px}
+hr{border:0;border-top:1px solid #294759;margin:18px 0}
+#evidence-title{margin:10px 0;font-size:13px}
+@media(max-width:850px){main{grid-template-columns:1fr;grid-template-rows:minmax(48dvh,420px) auto;padding:9px}aside{overflow:visible}header{padding:10px 14px}.workspace{min-height:350px}}
+</style></head><body>
+<header><h1>AIG <span style="color:#71e1ec">FastModel 7.0</span>｜照片逆向繪圖 · 數值模擬</h1><a href="./implicit-lab.html">7.1 真 3D 體積 ↗</a> · <a href="./index.html">← 返回 FastModel 動畫工作區</a></header>
+<main>
+<section class="workspace" id="stage"><canvas id="drawing" aria-label="原圖、逆向輪廓與真正數值變形預覽"></canvas><div class="hint">藍色＝原始像素輪廓　綠色＝數值模擬後輪廓<br>背景取樣模式：點擊照片的背景位置，再按「逆向輪廓」</div></section>
+<aside>
+<h2>逆向繪圖與模擬工作區</h2>
+<p>本機讀取照片原始像素，分離前景後建立真正可匯出的 2D 輪廓；模擬會逐步計算彈性約束、重力及地板碰撞。<strong>不是人體 3D 蒙皮、不是經校準的材料物理，也不會將照片平移宣稱人物動作。</strong></p>
+<label for="source">來源照片（PNG/JPEG/WebP，僅本機）</label>
+<input id="source" type="file" accept="image/png,image/jpeg,image/webp">
+<div class="row">
+<div><label for="segmentation">前景來源</label><select id="segmentation"><option value="alpha">透明像素 Alpha</option><option value="background">指定背景顏色</option></select></div>
+<div><label for="threshold">背景色容差</label><input id="threshold" type="number" min="0" max="255" step="1" value="35"></div>
+</div>
+<p id="pick-label" class="muted">非透明照片請選「指定背景顏色」，點擊背景後人工核對擷取輪廓；複雜場景可能不適用。</p>
+<button type="button" id="extract" disabled>逆向照片像素 → 2D 幾何輪廓</button>
+<hr>
+<h2>真數值彈性模擬（2D）</h2>
+<div class="row"><div><label for="gravity">重力加速度（畫素/秒²）</label><input id="gravity" type="number" min="0" max="500" step="10" value="180"></div><div><label for="nodes">輪廓取樣節點</label><select id="nodes"><option value="64">64</option><option value="96" selected>96</option><option value="128">128</option></select></div></div>
+<div class="button-row"><button type="button" id="play" disabled>開始模擬</button><button type="button" id="reset" disabled>重設工作副本</button></div>
+<p class="muted">啟動後可拖動綠色節點，檢查數值變形。上端節點固定、地板限制有效。原始照片與幾何輪廓保持不變。</p>
+<div class="button-row"><button type="button" id="export-svg" disabled>匯出來源輪廓 SVG</button><button type="button" id="export-json" disabled>匯出模擬證據 JSON</button></div>
+<div id="status" role="status" class="state">尚未載入照片。影像推論與真 3D 重建仍需獨立驗證。</div>
+<h3 id="evidence-title">量測及驗證紀錄</h3><pre id="evidence" aria-live="polite">等待來源資料...</pre>
+<p class="muted">Gate：OBSERVED_2D = 可檢查像素輪廓；NUMERICAL_2D = 真正計算節點位移；TRUE_3D_CHARACTER = BLOCKED；NATIVE_ANDROID_WINDOWS = 未驗證。</p>
+</aside>
+</main>
+<script type="module" src="./reverse-lab.mjs"></script>
+</body></html>

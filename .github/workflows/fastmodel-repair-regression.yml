@@ -29,16 +29,486 @@ jobs:
       - run: npm run build
       - run: npm install --no-save playwright@1.55.0
       - run: npx playwright install --with-deps chromium
-      - name: Real browser workflows and independent output evidence
+      - id: browser_runtime
+        name: Real browser workflows and independent output evidence
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/fastmodel-http.log 2>&1 &
           aig_http_pid=$!
           trap 'kill "$aig_http_pid" 2>/dev/null || true' EXIT
           node tests/aig-compact-ui-real-browser.mjs
           node tests/aig-generation-state-real-browser.mjs
+          node tests/aig-reverse-7-0-real-browser.mjs
+          node tests/aig-implicit-volume-7-1.real-browser.mjs
+          node tests/aig-volumetric-deform-7-2.real-browser.mjs
+          node tests/aig-face-material-7-3.real-browser.mjs
+          node tests/aig-avatar-rig-7-4.real-browser.mjs
+          node tests/aig-landmark-rig-7-5.real-browser.mjs
+          node tests/aig-face-depth-7-6.real-browser.mjs
+          node tests/aig-hair-neck-7-7.real-browser.mjs
+          node tests/aig-spatial-rig-7-8.real-browser.mjs
+          node tests/aig-continuous-scan-7-9.real-browser.mjs
+          node tests/aig-multiview-fusion-7-10.real-browser.mjs
+          node tests/aig-auto-correspondence-7-11.real-browser.mjs
+          node tests/aig-scene-map-7-12.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: FastModel-browser-regression-not-heroine-approval
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-compact-ui/
           if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-0-real-pixel-numeric-browser-not-character-approval
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-reverse-7-0/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-1-implicit-volume-not-human-3D
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-implicit-7-1/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-2-XYZ-Tetra-PBD-Not-Human-Approval
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-volumetric-7-2/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-3-Reviewed-Photo-Makeup-Not-Human-3D
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-face-makeup-7-3/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-4-Game-Avatar-3D-Expression-Not-MMO-Live
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-avatar-7-4/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-5-Reviewed-Photo-Landmark-XYZ-Not-Human-Approval
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-landmarks-7-5/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-6-3D-Depth-Prior-Not-Photogrammetry
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-depth-7-6/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-8-XYZ-Spatial-Head-Neck-Not-Real-Human-Certification
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-spatial-7-8/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-9-Video-Camera-Continuous-Scan-Not-3D-Anatomy
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-continuous-7-9/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-10-Calibrated-Video-Stereo-XYZ-Not-Dense-3D
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-multiview-7-10/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-11-Source-Auto-Feature-Tracking-Not-3D-Character
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-auto-correspondence-7-11/
+          if-no-files-found: warn
+
+      - name: Distinguish real video playback from unverified character animation
+        if: always()
+        env:
+          BROWSER_RESULT: ${{ steps.browser_runtime.outcome }}
+        run: |
+          {
+            echo '### FastModel browser regression at SHA ${{ github.sha }}'
+            echo "Browser / independent output: $BROWSER_RESULT"
+            echo 'On failure inspect matching phone/desktop failure-evidence.json and failure.png.'
+            echo 'CANVAS_PIXEL_MOVEMENT_NE_HUMAN_BODY_JOINT_MOVEMENT'
+            echo 'REAL_HEROINE_3D=NOT_CERTIFIED'
+            echo 'RELEASE=BLOCKED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  landmark-7-5:
+    name: Independent reviewed-photo XYZ rig gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Real manual photo point and XYZ numerical geometry tests
+        run: |
+          node --check aig-landmark-rig-7-5.mjs
+          node --check landmark-studio.mjs
+          node --test tests/aig-landmark-rig-7-5.test.mjs
+      - name: Verify offline viewer source
+        run: |
+          npm run build
+          test -s dist/landmark-studio.html
+          test -s dist/landmark-studio.mjs
+          test -s dist/aig-landmark-rig-7-5.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Phone/desktop Chromium 10-point source review and 3D ray Gate
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig75-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          node tests/aig-landmark-rig-7-5.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-5-Isolated-Photo-XYZ-Validation
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-landmarks-7-5/
+          if-no-files-found: warn
+      - name: Distinguish 3D numerical proof from true face quality and legacy suite
+        if: always()
+        run: |
+          {
+            echo 'FastModel 7.5 independent 3D reviewed-landmark test, separate from legacy UI regression.'
+            echo 'ORIGINAL_PHOTO_LANDMARKS_USER_REVIEWED=REQUIRED'
+            echo 'TRUE_ANATOMICAL_HEAD=NOT_VERIFIED'
+            echo 'REAL_HEROINE_FACE=NOT_CERTIFIED'
+            echo 'MMO_MULTIPLAYER=NOT_IMPLEMENTED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  depth-7-6:
+    name: Independent source-photo estimated-depth XYZ gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Real estimated depth numerical shape/roundtrip tests
+        run: |
+          node --check aig-face-depth-7-6.mjs
+          node --check depth-studio.mjs
+          node --test tests/aig-face-depth-7-6.test.mjs
+      - name: Offline viewer production source copy
+        run: |
+          npm run build
+          test -s dist/depth-studio.html
+          test -s dist/depth-studio.mjs
+          test -s dist/aig-face-depth-7-6.mjs
+          cmp aig-face-depth-7-6.mjs dist/aig-face-depth-7-6.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real phone/desktop estimated nose/eye/lip Z depth browser checks
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig76-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-face-depth-7-6.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-6-Isolated-Estimated-Z-Depth-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-depth-7-6/
+          if-no-files-found: warn
+      - name: Truth gate
+        if: always()
+        run: |
+          {
+            echo 'SOURCE_PHOTO_2D_POINTS=MANUALLY_REVIEWED'
+            echo 'THREE_DIMENSIONAL_Z_PRIORS=EXPLICIT_ESTIMATES_NOT_CAMERA_MEASUREMENTS'
+            echo 'REAL_ANATOMICAL_HUMAN_FACE=NOT_VERIFIED'
+            echo 'REAL_HAIR_NECK_CONTINUITY=NOT_VERIFIED'
+            echo 'FASTMODEL_NATIVE_APK_EXE=NOT_VERIFIED'
+            echo 'MMO_ONLINE=NOT_IMPLEMENTED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  hair-neck-7-7:
+    name: Independent 7.7 hair-neck source/XYZ occlusion gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Real binary source hair/neck region and XYZ occlusion tests
+        run: |
+          node --check aig-hair-neck-7-7.mjs
+          node --check occlusion-studio.mjs
+          node --check tests/aig-hair-neck-7-7.real-browser.mjs
+          node --test tests/aig-hair-neck-7-7.test.mjs
+      - name: Standalone offline renderer includes hair-neck UI
+        run: |
+          npm run build
+          test -s dist/occlusion-studio.html
+          test -s dist/occlusion-studio.mjs
+          test -s dist/aig-hair-neck-7-7.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real phone and desktop local photo hair/neck brush test
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig77-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-hair-neck-7-7.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-7-Source-Hair-Neck-XYZ-Not-Final-Human
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-hair-neck-7-7/
+          if-no-files-found: warn
+      - name: Explicit anti-fake gate
+        if: always()
+        run: |
+          {
+            echo 'SOURCE_HAIR_NECK_REGION=USER_REVIEW_REQUIRED'
+            echo 'SOURCE_CONNECTED_HEAD_NECK_MASK=TESTED'
+            echo 'TRUE_WORLD_XYZ_LAYER_DEPTH=ESTIMATED'
+            echo 'ORIGINAL_HAIR_FIBERS_SKIN_PHYSICS=NOT_VERIFIED'
+            echo 'APPROVED_USER_CHARACTER=NOT_VERIFIED'
+            echo 'NATIVE_APK_EXE=NOT_VERIFIED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  spatial-7-8:
+    name: Independent 7.8 spatial XYZ head/neck articulated Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Catch syntax mistakes before running head/neck browser
+        run: |
+          node --check aig-spatial-rig-7-8.mjs
+          node --check spatial-studio.mjs
+          node --check tests/aig-spatial-rig-7-8.test.mjs
+          node --check tests/aig-spatial-rig-7-8.real-browser.mjs
+      - name: Test actual head/world geometry, joint blend and collision Gate
+        run: node --test tests/aig-spatial-rig-7-8.test.mjs
+      - name: Offline package keeps source and prior versions
+        run: |
+          npm run build
+          test -s dist/spatial-studio.html
+          test -s dist/spatial-studio.mjs
+          test -s dist/aig-spatial-rig-7-8.mjs
+          cmp aig-spatial-rig-7-8.mjs dist/aig-spatial-rig-7-8.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Actual phone desktop source-mask to XYZ head-turn browser evidence
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig78-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          node tests/aig-spatial-rig-7-8.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-8-Independent-Spatial-XYZ-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-spatial-7-8/
+          if-no-files-found: warn
+      - name: Truth labels
+        if: always()
+        run: |
+          {
+            echo 'VERIFIED_TRUE_SPATIAL_XYZ_HEAD_NECK_MOTION=SYNTHETIC_NUMERIC'
+            echo 'ACTUAL_HUMAN_3D_HEAD_DEPTH=NOT_VERIFIED'
+            echo 'REAL_HAIR_STRAND_PHYSICS=NOT_VERIFIED'
+            echo 'FULL_CHARACTER_AND_REFERENCE_LIKENESS=NOT_APPROVED'
+            echo 'NATIVE_APK_EXE_GPU_FPS=NOT_VERIFIED'
+            echo 'MMO_MULTIPLAYER=NOT_IMPLEMENTED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  continuous-scan-7-9:
+    name: Independent 7.9 local video camera continuous scan Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Native source syntax and deterministic continuous memory
+        run: |
+          node --check aig-continuous-scan-7-9.mjs
+          node --check continuous-studio.mjs
+          node --check tests/aig-continuous-scan-7-9.real-browser.mjs
+          node --test tests/aig-continuous-scan-7-9.test.mjs
+      - name: Full offline viewer copies intact 7.9 artifacts
+        run: |
+          npm run build
+          test -s dist/continuous-studio.html
+          test -s dist/continuous-studio.mjs
+          test -s dist/aig-continuous-scan-7-9.mjs
+          cmp aig-continuous-scan-7-9.mjs dist/aig-continuous-scan-7-9.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real local WebM and getUserMedia continuous capture on phone desktop
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig79-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-continuous-scan-7-9.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-9-Independent-Real-Video-Camera-Keyframe-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-continuous-7-9/
+          if-no-files-found: warn
+      - name: Explicit 3D-reconstruction truth gate
+        if: always()
+        run: |
+          {
+            echo 'VIDEO_CAMERA_FRAME_CAPTURE=REAL_BROWSER_API'
+            echo 'KEYFRAME_MEMORY=LOCAL_BOUNDED_FRAME_DESCRIPTORS'
+            echo 'ACTUAL_AUTO_CAMERA_POSE_SOLVED=NO'
+            echo 'UNSEEN_TRUE_3D_FACE_RECOVERED=NO'
+            echo 'USER_HEROINE_LIKENESS=NOT_VERIFIED'
+            echo 'NATIVE_APK_EXE=NOT_VERIFIED'
+            echo 'MMO_ONLINE=NOT_IMPLEMENTED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  multiview-7-10:
+    name: Independent 7.10 calibrated multi-video-frame XYZ fusion gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Syntax and genuine stereo geometry numeric tests
+        run: |
+          node --check aig-multiview-fusion-7-10.mjs
+          node --check multiview-studio.mjs
+          node --check tests/aig-multiview-fusion-7-10.test.mjs
+          node --check tests/aig-multiview-fusion-7-10.real-browser.mjs
+          node --test tests/aig-multiview-fusion-7-10.test.mjs
+      - name: Offline production bundle includes new standalone editor
+        run: |
+          npm run build
+          test -s dist/aig-multiview-fusion-7-10.mjs
+          test -s dist/multiview-studio.html
+          test -s dist/multiview-studio.mjs
+          cmp aig-multiview-fusion-7-10.mjs dist/aig-multiview-fusion-7-10.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real two decoded video frames and physical XYZ phone desktop evidence
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig710-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-multiview-fusion-7-10.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-10-Independent-Real-Browser-Stereo-XYZ-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-multiview-7-10/
+          if-no-files-found: warn
+      - name: Truth gate after actual stereo test
+        if: always()
+        run: |
+          {
+            echo 'CALIBRATED_STEREO_XYZ_NUMERIC=USER_CALIBRATION_REQUIRED'
+            echo 'RECTIFIED_CAMERA_TRANSLATION=USER_VERIFIED_NOT_SOLVED'
+            echo 'AUTOMATIC_CAMERA_POSE_ESTIMATION=NOT_IMPLEMENTED'
+            echo 'TRIANGULATED_SPARSE_POINTS=GEOMETRY_ONLY'
+            echo 'DENSE_HUMAN_HEAD_SURFACE=NOT_BUILT'
+            echo 'NATIVE_APK_EXE_REAL_FPS=NOT_VERIFIED'
+            echo 'REAL_USER_HEROINE_LIKENESS=NOT_APPROVED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  auto-correspondence-7-11:
+    name: Independent 7.11 pixel feature and review-gated XYZ gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Real RGB source feature matching syntax and numeric checks
+        run: |
+          node --check aig-auto-correspondence-7-11.mjs
+          node --check tracking-studio.mjs
+          node --check tests/aig-auto-correspondence-7-11.test.mjs
+          node --check tests/aig-auto-correspondence-7-11.real-browser.mjs
+          node --test tests/aig-auto-correspondence-7-11.test.mjs
+      - name: Offline production package contains genuine matching source
+        run: |
+          npm run build
+          test -s dist/tracking-studio.html
+          test -s dist/tracking-studio.mjs
+          test -s dist/aig-auto-correspondence-7-11.mjs
+          cmp aig-auto-correspondence-7-11.mjs dist/aig-auto-correspondence-7-11.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Actual phone desktop source video patch tracking and reviewed XYZ
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig711-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-auto-correspondence-7-11.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-11-Independent-Real-Video-Patch-Match-XYZ-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-auto-correspondence-7-11/
+          if-no-files-found: warn
+      - name: Explicit source/3D trust boundary
+        if: always()
+        run: |
+          {
+            echo 'MATCHED_SOURCE_VIDEO_PIXELS=ACTUAL_BIDIRECTIONAL_PATCH_MATCH'
+            echo 'CAMERA_MOTION_ESTIMATION=NOT_SOLVED'
+            echo 'CAMERA_INTRINSICS=USER_VERIFIED_NOT_AUTO_ESTIMATED'
+            echo 'XYZ_FUSION=ONLY_HUMAN_REVIEWED_WITH_7_10_STEREO_CALIBRATION'
+            echo 'COMPLETE_HUMAN_FACE_OR_SKIN=NOT_APPROVED'
+            echo 'NATIVE_APK_EXE_FPS=NOT_VERIFIED'
+            echo 'LIVE_MULTIPLAYER=NOT_IMPLEMENTED'
+          } >> "$GITHUB_STEP_SUMMARY"

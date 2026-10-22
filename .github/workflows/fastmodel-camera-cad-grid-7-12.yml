@@ -1,0 +1,42 @@
+name: FastModel 7.12 Real Camera Pose + CAD Grid Physical Scale Gate
+on:
+  push:
+    branches:
+      - repair/core-first-fastmodel-20261021
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-camera-pose-7-12.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-cad-grid-scale-7-12.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-camera-cad-grid-7-12.test.mjs'
+      - '.github/workflows/fastmodel-camera-cad-grid-7-12.yml'
+  workflow_dispatch:
+jobs:
+  calibrated-camera-and-physical-grid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check source and physical CAD grid Gate
+        run: |
+          node --check aig-camera-pose-7-12.mjs
+          node --check aig-cad-grid-scale-7-12.mjs
+          node --check tests/aig-camera-cad-grid-7-12.test.mjs
+          node --test tests/aig-camera-cad-grid-7-12.test.mjs
+      - name: No fabricated mm from virtual grid
+        if: always()
+        run: |
+          {
+            echo 'KNOWN_CAD_CELL_SIZE=USER_VERIFIED_MM'
+            echo 'PHYSICAL_GRID_IN_SOURCE=REQUIRED'
+            echo 'VIRTUAL_IMAGE_GRID=NOT_A_PHYSICAL_SCALE_REFERENCE'
+            echo 'AUTOMATIC_CAMERA_INTRINSIC_CALIBRATION=NOT_IMPLEMENTED'
+            echo 'ESSENTIAL_RELATIVE_CAMERA_POSE=NUMERIC_GATE'
+            echo 'ABSOLUTE_SCALE_FROM_UNCALIBRATED_VIDEO=BLOCKED'
+            echo 'REAL_PERSON_LIKENESS_AND_RIGGING=NOT_APPROVED'
+            echo 'NATIVE_ANDROID_WINDOWS_GPU=NOT_VERIFIED'
+          } >> "$GITHUB_STEP_SUMMARY"

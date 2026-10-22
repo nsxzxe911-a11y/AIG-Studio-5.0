@@ -1,0 +1,140 @@
+<!doctype html><html lang="zh-Hant"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020407">
+<title>AIG FastModel Real3D 1.9｜場景與 GPU 管理</title>
+<style>
+:root{font:14px/1.5 system-ui,"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#e5f8ff;background:#020407}
+*{box-sizing:border-box}body{margin:0;padding:12px;background:radial-gradient(ellipse at 45% 0,#102b46,#020407 72%)}
+main{max-width:1350px;margin:auto}a{color:#90e9ee}h1{font-size:clamp(20px,3vw,31px);margin:7px 0}
+p{color:#b6d0df}header{border-bottom:1px solid #245875;padding:12px 0 16px;margin-bottom:13px}
+.layout{display:grid;grid-template-columns:minmax(240px,310px) minmax(0,1fr);gap:12px}
+.panel{background:#09182a;border:1px solid #336584;border-radius:12px;padding:13px;min-width:0}
+label{display:block;margin:11px 0;color:#d7eff9;font-size:13px}
+select{width:100%;color:#e6ffff;background:#061222;border:1px solid #4b92ad;min-height:45px;border-radius:8px;padding:8px}
+button{border-radius:9px;background:#135476;border:1px solid #61b8d5;color:white;cursor:pointer;min-height:45px;padding:8px 14px;margin:6px 6px 5px 0}
+button:disabled{opacity:.45;cursor:not-allowed}
+#stage{min-height:550px;display:flex;flex-direction:column;padding:8px}
+#stage canvas{width:100%;height:min(66vh,600px);min-height:355px;display:block;touch-action:none;border-radius:9px;background:#02070e}
+#status{white-space:pre-wrap;background:#081422;border:1px solid #467a96;border-radius:8px;display:block;padding:12px;overflow-wrap:anywhere}
+#status[data-error=true]{color:#ffd9a6;border-color:#b48745}
+#metrics{font:12px/1.6 ui-monospace,monospace;white-space:pre-wrap;color:#a7e9df;max-height:240px;overflow:auto}
+.hint{font-size:12px;color:#a8c9de}
+@media(max-width:760px){.layout{grid-template-columns:1fr}#stage{min-height:390px}#stage canvas{height:55vh;min-height:310px}main{max-width:100%}}
+.world-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.world-grid label{min-width:0;margin:4px 0}.world-grid input,.world-grid select{width:100%;min-height:43px;background:#061222;color:white;border:1px solid #4983a2;border-radius:8px;padding:8px}
+#world-saved{max-width:440px}#world-status{padding:9px;border-left:3px solid #609cb8;color:#d4f3fa}
+@media(max-width:950px){.world-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:580px){.world-grid{grid-template-columns:1fr}#world-saved{width:100%}}
+</style></head><body><main>
+<header>
+<small>AIG FastModel · Real3D 1.9 · Local-first · GPU 工作頁</small>
+<h1>人物／建築／場景：單一 3D 引擎與 GPU 資源管理</h1>
+<p>同一時間只保留一個活動的 3D GLB 工作場景。切換時先核對本機素材 SHA，成功解析新來源後才釋放舊場景的 GPU 資源；失敗則保留原畫面。人物與場景原始資料不會因清快取而刪除。</p>
+<a href="./asset-library-studio.html">← 返回人物／地圖／場景外部素材庫</a>
+</header>
+<div class="layout">
+<section class="panel">
+<h2>場景來源</h2>
+<label>選擇 GLB 人物、建築或場景
+<select id="scene-choice" aria-label="選擇本機 GLB 場景">
+<option value="">請先從外部素材庫匯入 GLB</option></select></label>
+<p class="hint">地圖 JSON、影片與轉場資料由對應模組處理，不會被錯誤當成 GLB 送入 GPU。未人工核准的模型只能預覽，不代表已核准人物或真 1:1。</p>
+<button id="scene-load">按需開啟 3D 場景</button>
+<button id="scene-unload">結束場景／釋放 GPU</button>
+<button id="scene-clear">清除暫存 RAM（不刪模型）</button>
+<button id="scene-refresh">更新來源索引</button>
+<h2>資源狀態</h2>
+<pre id="metrics">讀取中…</pre>
+<p class="hint">RAM 暫存預設不超過 48MiB／4 個來源；這是來源二進位的 CPU 暫存，不是 GPU VRAM 的實測占用。GPU 釋放為 Three.js 資源 dispose 要求。</p>
+<output id="status" role="status" aria-live="polite">場景待命。按「按需開啟」才建立 3D 渲染工作區。</output>
+</section>
+<section class="panel" id="stage" aria-label="真正 WebGL 工作視窗">
+<canvas id="viewport" aria-label="可旋轉縮放的真實 GLB 3D 場景"></canvas>
+<p>3D 场景優先佔用畫面空間；控制面板縮於周邊。單場景切換不重新初始化整個 FastModel 工作區。</p>
+</section>
+</div>
+
+<section class="panel" id="world20-editor" style="grid-column:1/-1">
+<h2>Real3D 2.0｜人物 × 建築 × 地圖 × 真實來源轉場</h2>
+<p>多個來源 GLB 組成一個世界，沒有重新生成原模型。所有位置／比例可編輯；單照片估計草模預設使用相對座標，不能直接升格為真實公尺。地圖 JSON 只作真來源圖資，不會偽造道路與建築的 3D 厚度。</p>
+<div class="world-grid">
+<label>場景名稱<input id="world-title" value="櫻花校園場景" maxlength="100"></label>
+<label>世界座標來源
+<select id="world-mode">
+<option value="LOCAL_RELATIVE">相對場景（未確認真實公尺）</option>
+<option value="MEASURED_LOCAL_METRES">已核准實測公尺（僅實測素材）</option>
+<option value="WGS84_APPROX_LOCAL_METRES">地理局部近似公尺（非測量級）</option>
+</select></label>
+<label>地圖來源（選填）
+<select id="world-map"><option value="">不載入地圖</option></select></label>
+<label>人物／建築／環境 GLB 來源
+<select id="world-asset"><option value="">請先匯入素材庫</option></select></label>
+<label>X 位置（目前座標模式）<input id="world-x" type="number" value="0" min="-10000" max="10000" step=".1"></label>
+<label>Y 高度<input id="world-y" type="number" value="0" min="-10000" max="10000" step=".1"></label>
+<label>Z 位置<input id="world-z" type="number" value="0" min="-10000" max="10000" step=".1"></label>
+<label>模型縮放（未審核不等於公尺）<input id="world-scale" type="number" value="1" min=".01" max="30" step=".05"></label>
+</div>
+<label style="display:inline-flex;align-items:center;gap:7px"><input type="checkbox" id="world-metric-reviewed" style="width:20px;height:20px">實測場景：我已審核此模型比例與真實公尺</label>
+<button id="world-new">建立新場景（保留已存原場景）</button>
+<button id="world-add">加入同一個世界</button>
+<button id="world-preview">合成真正的 3D 世界並顯示</button>
+<button id="world-save">儲存場景到外部素材庫</button>
+<button id="world-load">讀取已儲存的場景</button>
+<select id="world-saved" aria-label="已儲存的世界場景"><option value="">尚無已儲存場景</option></select>
+<div class="world-grid">
+<label>鏡頭時間（秒）<input id="world-time" type="number" min="0" max="3600" value="0" step=".1"></label>
+<label>鏡頭座標 X, Y, Z（逗號分隔）<input id="world-camera-position" value="1,1,5"></label>
+<label>目標座標 X, Y, Z（逗號分隔）<input id="world-camera-target" value="0,0,0"></label>
+<label>轉場方法
+<select id="world-ease"><option value="LINEAR">平滑位移線性</option>
+<option value="SMOOTHSTEP">平滑漸入漸出</option>
+<option value="CUT">直接切鏡頭</option></select></label>
+</div>
+<button id="world-key-add">加入鏡頭關鍵格</button>
+<label>轉場預覽時間軸<input type="range" id="world-scrub" min="0" max="10" value="0" step=".1"></label>
+<h2>Real3D 2.1｜地圖對位與人物真 GLB 動作</h2>
+<p>選取已驗證地圖的建築、道路或地標，再指定既有 GLB 模型。程式僅移動模型 X/Z，不自動改變高低 Y、體積、骨架或源檔。人物動作只能播放 GLB 裡真正存在的 clip。</p>
+<div class="world-grid">
+<label>要對位的 3D 物件<select id="world-align-object"><option value="">先建立場景物件</option></select></label>
+<label>來源地圖圖徵<select id="world-map-feature"><option value="">先接來源地圖</option></select></label>
+<label>水平 X 偏移<input id="world-align-offset-x" type="number" value="0" step=".1"></label>
+<label>水平 Z 偏移<input id="world-align-offset-z" type="number" value="0" step=".1"></label>
+</div>
+<button id="world-align">從地圖對齊模型 XZ（保留原 Y／原 GLB）</button>
+<div class="world-grid">
+<label>人物原始 GLB Actor<select id="world-actor-choice"><option value="">請先開啟含動畫的 GLB 人物</option></select></label>
+<label>來源動畫 Clip<select id="world-actor-clip"><option value="">此 GLB 沒有可用動畫</option></select></label>
+</div>
+<button id="world-actor-play">播放來源原始動作</button>
+<button id="world-actor-pause">暫停這個角色</button>
+<p id="world-actor-status" role="status" aria-live="polite">未載入任何已驗證 GLB 動畫片段；不會憑空生成跑跳。</p>
+<section id="story-2-2" style="border:1px solid #447c95;border-radius:12px;padding:14px;margin-top:15px;background:#061727">
+<h2>Real3D 2.2｜中文劇情 → 原始 GLB 動作／鏡頭／字幕</h2>
+<p>先在上方載入真正含 AnimationClip 的人物，再輸入敘述。單一角色可省略代號；多角色必須填實際 node ID，例如 node-1。鏡頭必須先在「鏡頭關鍵格」設好時間及位置。人物缺少跑、跳、蹲、轉頭等原始 GLB 動作會明確 BLOCKED，絕不偽裝成已生成 3D 骨架。</p>
+<label>中文劇本（每行一個動作／鏡頭／字幕，選填「0秒」時間）
+<textarea id="story-text" rows="6" maxlength="1800" style="width:100%;min-height:130px;resize:vertical;border-radius:8px;padding:12px;background:#03101b;color:#e1f6ff;border:1px solid #4f8bab" placeholder="0秒 node-1：走路&#10;1秒 鏡頭：切到校園&#10;2秒 旁白：她來到校園。"></textarea></label>
+<button id="story-compile">01｜解析並綁定真動作／鏡頭</button>
+<button id="story-play" disabled>02｜播放劇情時間軸</button>
+<button id="story-stop">停止劇情（模型保留）</button>
+<button id="story-save" disabled>03｜保存劇本與來源 SHA</button>
+<label>已保存劇情資料
+<select id="story-saved" aria-label="外部素材庫的劇情文件"><option value="">尚無已保存劇本</option></select></label>
+<button id="story-load">重新載入已保存劇本</button>
+<output id="story-status" role="status" aria-live="polite" style="display:block;padding:9px;color:#a5eee7">目前沒有可播放的來源動作劇本。</output>
+<div id="story-subtitle" aria-live="polite" style="margin:8px 0;padding:14px;min-height:52px;text-align:center;border:1px solid #31596d;border-radius:8px;color:#fff;background:#07121f">字幕／旁白只顯示文字，未進行語音合成</div>
+<pre id="story-proof" style="white-space:pre-wrap;max-height:250px;overflow:auto;color:#b0dfed;font:12px/1.6 ui-monospace,monospace">尚未產生劇情來源證據。</pre>
+</section>
+<button id="world-play">播放實際鏡頭轉場</button>
+<button id="world-pause">停止播放</button>
+<p id="world-status" role="status" aria-live="polite">世界工作區已建立，尚無核准來源。</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;align-items:start">
+<div>
+<p><strong>7.12 真來源平面地圖</strong>（僅 XY，非虛構建築高度）</p>
+<canvas id="world-map-preview" width="420" height="260" style="width:100%;max-width:520px;background:#030d19;border:1px solid #447592;border-radius:8px"></canvas>
+<p id="world-map-caption" style="font-size:12px">尚未連接已驗證的地圖來源</p>
+</div>
+<pre id="world-proof" style="max-height:270px;overflow:auto;color:#9fe0f2;font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap">尚未新增來源</pre>
+</div>
+</section>
+
+</main><script src="./scene-runtime-studio.js"></script></body></html>

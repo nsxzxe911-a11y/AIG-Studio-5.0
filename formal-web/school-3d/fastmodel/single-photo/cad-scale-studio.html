@@ -1,0 +1,48 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#020407">
+<title>FastModel｜CAD 格線縮小比例 1:2／1:4／1:10</title>
+<style>
+:root{color-scheme:dark;background:#020407;color:#e5f7ff;font:14px system-ui,"Microsoft JhengHei",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#15374b,#020407 62%);min-height:100dvh}
+header{background:#07111b;border-bottom:1px solid #346078;padding:14px 18px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+header h1{font-size:20px;margin:0}header h1 span{color:#76f4d6}a{color:#9deaff}
+main{max-width:1260px;margin:12px auto;padding:0 10px;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(315px,.7fr);gap:12px}
+section{background:#07111b;border:1px solid #2e506b;border-radius:12px;padding:13px;min-width:0}
+h2{font-size:17px;margin:0 0 8px}p,small{color:#b5cfde;font-size:12px;line-height:1.8}
+canvas{width:100%;height:auto;display:block;background:#020a14;border-radius:7px}
+label{display:block;font-size:12px;font-weight:650;color:#bfe3f1;margin:11px 0 6px}
+input,select,button{width:100%;border:1px solid #356077;border-radius:8px;min-height:42px;background:#0c2335;color:#e3f7ff;font:inherit;padding:8px}
+button{cursor:pointer;background:linear-gradient(100deg,#12657a,#334270);font-weight:650}
+fieldset{border:0;margin:0;padding:0}.check{display:flex;gap:8px;align-items:center}.check input{width:18px;height:18px;min-height:18px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.state{border-radius:8px;border:1px solid #8c6b40;background:#30231b;color:#ffe4bd;padding:10px;margin:13px 0;font-size:12px;line-height:1.6}
+.state[data-pass=true]{border-color:#3a876d;background:#07251d;color:#93f0d0}
+pre{background:#02101c;padding:10px;border-radius:8px;border:1px solid #27465d;font:12px/1.7 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:800px){main{grid-template-columns:1fr;margin:7px auto;padding:0 7px}}
+</style></head><body>
+<header><h1>AIG FastModel <span>CAD 格線縮尺</span></h1><nav><a href="./multiview-studio.html">多視角 3D</a> · <a href="./tracking-studio.html">影格自動匹配</a> · <a href="./index.html">FastModel 首頁</a></nav></header>
+<main>
+<section>
+<h2>正式 CAD 原點與格線</h2>
+<canvas id="grid" width="760" height="460" aria-label="物理 CAD 格線與縮尺圖面預覽"></canvas>
+<p>格線會依 1:2、1:4、1:10 真正縮小圖面間距；尺寸標註仍顯示原始毫米。這是 CAD 縮尺預覽，不能代替照片裡真實格線的量測。</p>
+<h2>尺寸對照</h2>
+<pre id="details">請設定實物格距並核對實物格線。</pre>
+</section>
+<section>
+<h2>尺寸／比例控制</h2>
+<label for="cell-mm">實物 CAD 格線間距（mm／格）</label>
+<input id="cell-mm" type="number" min=".001" max="2000" step=".001" value="35">
+<label for="ratio">縮小比例</label>
+<select id="ratio"><option value="2">1/2 → 1:2</option><option value="4">1/4 → 1:4</option><option value="10">1/10 → 1:10</option></select>
+<div class="cols">
+<div><label for="xmm">原始 X（mm）</label><input id="xmm" type="number" step=".001" value="70"></div>
+<div><label for="ymm">原始 Y（mm）</label><input id="ymm" type="number" step=".001" value="35"></div>
+<div><label for="zmm">原始 Z（mm）</label><input id="zmm" type="number" step=".001" value="60"></div>
+<div><label for="pxmm">每圖面 mm 對應像素</label><input id="pxmm" type="number" min="1" max="16" value="8" step="1"></div>
+</div>
+<div class="check"><input id="reviewed" type="checkbox"><label for="reviewed">已確認這是來源實物／影片內可量測的格線，不是疊圖</label></div>
+<button id="apply" type="button">套用縮尺預覽</button>
+<div id="status" class="state" role="status">需要實物格線尺寸與核對後才能產生已標記的 CAD 縮尺資料。</div>
+<p><strong>尺寸安全：</strong>縮小的是繪圖表示，不是 CAM、NC、人體實物或已量測的 XYZ 幾何。1:10 不會把真實 70 mm 誤判成 7 mm。</p>
+</section>
+</main><script type="module" src="./cad-scale-studio.mjs"></script></body></html>

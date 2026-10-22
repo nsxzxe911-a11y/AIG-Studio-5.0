@@ -1,0 +1,48 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#020407">
+<title>AIG FastModel 7.2｜三維彈性體積與碰撞實驗</title>
+<style>
+:root{color-scheme:dark;font:15px system-ui,"Noto Sans TC",sans-serif;color:#e9f5ff;background:#020407}
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;background:radial-gradient(ellipse at top,#103049,#020407 60%)}
+header{display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center;padding:13px 19px;background:#07111b;border-bottom:1px solid #28516c}
+h1{font-size:clamp(16px,2.7vw,23px);margin:0}a{color:#75e5ff}main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:13px;max-width:1420px;margin:0 auto;padding:12px}
+.stage{position:relative;min-height:475px;background:#020b13;border:1px solid #2f5168;border-radius:12px;overflow:hidden;touch-action:none}
+canvas{width:100%;height:100%;display:block;touch-action:none}
+.hint{position:absolute;left:12px;top:12px;pointer-events:none;border-radius:8px;background:#031322e0;border:1px solid #284e65;padding:9px;color:#b9e3f1;font-size:12px;max-width:85%}
+.panel{border:1px solid #264e65;background:#07111b;border-radius:12px;padding:17px}
+p{font-size:12px;line-height:1.7;color:#b7d2e0}h2{font-size:17px;margin:0 0 10px}
+label{display:block;margin:10px 0 5px;font-size:12px;color:#d2e6f1;font-weight:650}
+input,select,button{width:100%;min-height:42px;background:#0b2437;border:1px solid #3a6178;color:#f0faff;border-radius:7px;padding:8px;font:inherit}
+button{font-weight:750;background:linear-gradient(110deg,#116582,#353970);cursor:pointer}
+button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #8ae6fa}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:9px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+.status{padding:10px;margin:12px 0;border:1px solid #b8864e;color:#f8dcba;background:#211912;border-radius:8px;font-size:12px;white-space:pre-wrap;line-height:1.6}
+.status[data-level=ok]{border-color:#327d68;background:#09221f;color:#a3f0df}
+pre{font:11px/1.55 ui-monospace,monospace;border:1px solid #31516c;border-radius:8px;background:#020b16;color:#afd8ed;padding:9px;max-height:218px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:820px){main{grid-template-columns:1fr;grid-template-rows:minmax(45dvh,355px) auto;padding:9px}.stage{min-height:330px}.panel{padding:12px}}
+</style></head><body>
+<header><h1>AIG FastModel <span style="color:#82e2ed">7.2</span>｜三維體積物理與逆向變形</h1><nav><a href="./face-material-lab.html">7.3 照片材質／人臉化妝 ↗</a> · <a href="./implicit-lab.html">7.1 真 3D 體積</a> · <a href="./index.html">返回 FastModel</a></nav></header>
+<main><section class="stage"><canvas id="volume-view" aria-label="動態三維幾何變形的逐光線數值預覽"></canvas><div class="hint">拖曳旋轉 3D　·　此處是真 XYZ 體積變形，不是照片平移<br>技術體積不等於真實人臉、皮膚或骨架動畫</div></section>
+<aside class="panel">
+<h2>照片輪廓 → 3D SDF → 物理約束</h2>
+<p>7.2 依照已量測的照片輪廓建立推估厚度的實體，採用四面體 PBD 體積約束、節點力學與球形幾何碰撞。**未**使用程序假人偶代替照片人物。</p>
+<label for="source">照片（只在本機讀取）</label><input id="source" type="file" accept="image/png,image/jpeg,image/webp">
+<div class="cols"><div><label for="segment">前景分割</label><select id="segment"><option value="alpha">透明 Alpha</option><option value="background">邊界背景顏色</option></select></div>
+<div><label for="tolerance">背景色容差</label><input id="tolerance" type="number" value="35" min="0" max="255"></div></div>
+<p id="segment-note">不透明照片目前需要背景色和輪廓人工核對，複雜遮擋無法保證辨識準確。</p>
+<div class="cols">
+<div><label for="thickness">推估 Z 半厚度</label><input id="thickness" type="number" value="0.12" step="0.01" min="0.02" max="0.5"></div>
+<div><label for="gravity">重力參數</label><input id="gravity" type="number" value="0.22" min="0" max="4" step="0.05"></div>
+</div>
+<button type="button" id="create" disabled>建立 XYZ 體積與四面體約束</button>
+<div class="cols"><div><label for="tip-x">上端 X 位移（驅動）</label><input id="tip-x" type="range" min="-0.12" max="0.12" step="0.005" value="0.06"></div>
+<div><label for="tip-z">上端 Z 位移（驅動）</label><input id="tip-z" type="range" min="-0.10" max="0.10" step="0.005" value="0.02"></div></div>
+<div class="actions"><button type="button" id="step" disabled>計算一步</button><button type="button" id="play" disabled>連續模擬</button><button type="button" id="reset" disabled>重設工作副本</button><button type="button" id="contact" disabled>3D 碰撞一步</button></div>
+<div class="cols"><div><label for="yaw">旋轉 Y</label><input id="yaw" type="range" min="-3.14" max="3.14" step="0.04" value="0.7"></div>
+<div><label for="pitch">旋轉 X</label><input id="pitch" type="range" min="-1.20" max="1.20" step="0.04" value="0.15"></div></div>
+<button type="button" id="download" disabled>下載數值證據 JSON</button>
+<div id="status" class="status" role="status">請先上傳照片。尚無任何真 3D 人物外觀認證。</div>
+<pre id="evidence" aria-live="polite">NO_VERIFIED_VOLUME</pre>
+<p>技術 Gate：三維節點、四面體體積與變形後光線求交。人體外觀／3D 骨架／真皮膚物理／Android、Windows 實機仍未驗證。若四面體翻轉，停止顯示 PASS。</p>
+</aside></main>
+<script type="module" src="./volume-lab.mjs"></script>
+</body></html>

@@ -1,0 +1,75 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#020407">
+<title>AIG FastModel 7.4｜遊戲式 3D 角色表情編輯器與角色預設</title>
+<style>
+:root{color-scheme:dark;font:14px system-ui,"Noto Sans TC",sans-serif;color:#e9f4ff;background:#020407}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 55% -15%,#12395577,transparent 60%),#020407;min-height:100dvh}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#07111b;border-bottom:1px solid #294c64;padding:14px 19px}
+h1{font-size:clamp(18px,2.6vw,24px);margin:0}a{color:#8be9ff;text-decoration:none}a:hover{text-decoration:underline}
+main{max-width:1480px;margin:auto;display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:13px;padding:12px}
+.workspace{position:relative;min-height:510px;background:#030e18;border:1px solid #2e5369;border-radius:13px;overflow:hidden;touch-action:none}
+#screen{width:100%;height:100%;display:block;touch-action:none}
+.hint{position:absolute;top:13px;left:13px;padding:10px 12px;border:1px solid #3b6276;background:#031421e4;border-radius:9px;color:#b8e8ef;font-size:12px;line-height:1.5;pointer-events:none;max-width:88%}
+.panel{background:#07111b;border-radius:13px;border:1px solid #29465b;padding:17px;min-width:0}
+h2{font-size:17px;margin:0 0 11px}h3{font-size:14px;color:#bddae8;margin:18px 0 8px}
+p{color:#adcad7;line-height:1.6;font-size:12px;margin:9px 0}
+label{display:block;font-size:12px;font-weight:650;color:#c8e5f2;margin:11px 0 5px}
+input,button,select{font:inherit;width:100%;min-height:40px;border-radius:8px;border:1px solid #345f78;padding:8px;color:#e7faff;background:#0c2131}
+input[type=color]{height:40px;padding:4px}input[type=range]{padding:5px}
+button{background:linear-gradient(115deg,#126580,#303e77);font-weight:750;cursor:pointer}
+button:disabled{opacity:.44;cursor:default}button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #8aebfa;outline-offset:2px}
+.columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
+#photo-view{display:block;width:100%;height:auto;max-height:280px;object-fit:contain;border:1px solid #416b80;border-radius:8px;background:#020b14;touch-action:manipulation}
+.status{margin:12px 0;padding:12px;border:1px solid #936f49;background:#231b12;border-radius:9px;color:#f8dcb9;font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.status[data-level=ok]{background:#06251f;color:#a7e9d7;border-color:#2e8d79}
+pre{background:#030d17;border:1px solid #28495f;border-radius:8px;padding:11px;font:11px/1.6 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:215px;overflow:auto}
+.note{color:#91acbb;font-size:11px}hr{border:0;border-top:1px solid #29465c;margin:17px 0}
+.checkline{display:flex;align-items:center;gap:9px}.checkline input{width:19px;height:19px;min-height:19px}
+@media(max-width:850px){main{grid-template-columns:1fr;grid-template-rows:minmax(42dvh,360px) auto;padding:8px}.workspace{min-height:320px}.panel{padding:13px}}
+</style></head><body>
+<header><h1>AIG FastModel <span style="color:#75ebc9">7.3</span>｜角色捏臉 · 表情動畫 · 妝容</h1><nav><a href="./landmark-studio.html">7.5 五官定位／真 3D 表情 ↗</a> · <a href="./face-material-lab.html">7.3 人臉化妝</a> · <a href="./index.html">返回動畫工作區</a></nav></header>
+<main><section class="workspace"><canvas id="screen" aria-label="由照片像素貼合的真 3D SDF 化妝材質，可拖曳旋轉"></canvas><div class="hint">拖曳旋轉三維角色　·　實際 XYZ 表情幾何變形<br>只有確認來源臉部範圍，眼影／腮紅／唇彩才會啟用</div></section>
+<aside class="panel">
+<h2>照片原色 → 3D 顏色 → 妝容</h2>
+<p>保留原照片色彩，不再使用制式的程序假臉。眼影、腮紅、唇色疊在你確認的臉部範圍內；五官位置目前是<strong>可調的妝容預設</strong>，不是可靠的人臉關鍵點偵測或真實 3D 頭部還原。</p>
+<label for="source">來源照片（本機 PNG／JPG／WebP）</label><input id="source" type="file" accept="image/png,image/jpeg,image/webp">
+<div class="columns"><div><label for="segment">前景識別</label><select id="segment"><option value="alpha">透明 Alpha</option><option value="background">指定背景顏色</option></select></div>
+<div><label for="tolerance">背景色容差</label><input id="tolerance" type="number" min="0" max="255" value="35"></div></div>
+<canvas id="photo-view" width="320" height="240" aria-label="來源照片與可審核的臉部範圍"></canvas>
+<p class="note">不透明照片：選「指定背景顏色」，在上圖點背景位置。臉框可用下方位置／寬高調整。</p>
+<div class="columns"><div><label for="face-x">臉框左側</label><input id="face-x" type="range" min="0" max="0.8" value="0.27" step="0.01"></div>
+<div><label for="face-y">臉框頂部</label><input id="face-y" type="range" min="0" max="0.8" value="0.16" step="0.01"></div>
+<div><label for="face-w">臉框寬</label><input id="face-w" type="range" min="0.12" max="0.85" value="0.46" step="0.01"></div>
+<div><label for="face-h">臉框高</label><input id="face-h" type="range" min="0.12" max="0.9" value="0.64" step="0.01"></div></div>
+<button type="button" id="confirm" disabled>確認臉框位置（啟用妝容）</button>
+<p id="face-evidence" class="note">目前沒有臉部偵測證據。未確認前不套用妝容。</p>
+<hr><h3>化妝配色</h3>
+<div class="columns"><div><label for="foundation-color">粉底色</label><input id="foundation-color" type="color" value="#d7b69d"></div><div><label for="foundation-strength">粉底程度</label><input id="foundation-strength" type="range" min="0" max="1" step=".05" value="0"></div>
+<div><label for="blush-color">腮紅</label><input id="blush-color" type="color" value="#d46886"></div><div><label for="blush-strength">腮紅程度</label><input id="blush-strength" type="range" min="0" max="1" step=".05" value=".36"></div>
+<div><label for="eyes-color">眼影</label><input id="eyes-color" type="color" value="#6d527d"></div><div><label for="eyes-strength">眼影程度</label><input id="eyes-strength" type="range" min="0" max="1" step=".05" value=".28"></div>
+<div><label for="lips-color">唇色</label><input id="lips-color" type="color" value="#bc365f"></div><div><label for="lips-strength">唇色程度</label><input id="lips-strength" type="range" min="0" max="1" step=".05" value=".6"></div></div>
+<div class="columns"><div><label for="eye-height">眼影上下微調</label><input id="eye-height" type="range" min="-0.12" max=".12" step=".01" value="0"></div>
+<div><label for="lip-height">唇彩上下微調</label><input id="lip-height" type="range" min="-0.12" max=".12" step=".01" value="0"></div></div>
+<hr><h3>角色表情控制（真 3D 幾何）</h3>
+<div class="columns">
+<div><label for="jawOpen">張嘴</label><input id="jawOpen" type="range" min="0" max="1" step=".05" value="0"></div>
+<div><label for="smile">微笑</label><input id="smile" type="range" min="0" max="1" step=".05" value="0"></div>
+<div><label for="blinkLeft">左眼眨眼</label><input id="blinkLeft" type="range" min="0" max="1" step=".05" value="0"></div>
+<div><label for="blinkRight">右眼眨眼</label><input id="blinkRight" type="range" min="0" max="1" step=".05" value="0"></div>
+<div><label for="browRaise">抬眉</label><input id="browRaise" type="range" min="0" max="1" step=".05" value="0"></div>
+<div><label for="clip">表情動畫片段</label>
+<select id="clip"><option value="idle">待機／眨眼</option><option value="blink">眨眼</option><option value="smile">微笑</option><option value="talk">說話嘴型測試</option></select></div>
+</div>
+<div class="buttons"><button id="play-clip" disabled type="button">播放表情片段</button><button id="reset-expression" type="button">表情歸零</button></div>
+<hr><h3>遊戲角色預設（本機）</h3>
+<label for="avatar-name">角色名稱</label><input id="avatar-name" maxlength="64" value="AIG Game Avatar" autocomplete="off">
+<p class="note">角色 JSON 只記錄照片 SHA、臉框、妝容與表情，不包含原照片、個資或伺服器登入資料。匯入必須匹配相同來源照片 SHA。</p>
+<div class="buttons"><button id="save-preset" disabled type="button">匯出角色 JSON</button><label style="margin:0">匯入角色 JSON<input id="load-preset" type="file" accept="application/json,.json"></label></div>
+<div class="columns"><div><label for="yaw">三維 Y 軸角度</label><input id="yaw" type="range" min="-3.14" max="3.14" step=".03" value="0"></div>
+<div><label for="pitch">三維 X 軸角度</label><input id="pitch" type="range" min="-1.1" max="1.1" step=".03" value="0"></div></div>
+<div class="buttons"><button type="button" id="build" disabled>建立三維來源材質</button><button type="button" id="clear">恢復原色妝容</button></div>
+<button type="button" id="export" disabled>匯出來源與妝容驗證 JSON</button>
+<div id="status" class="status" role="status">尚未讀取照片。不得顯示已辨識女主角或擬真 3D 人物。</div>
+<pre id="evidence" aria-live="polite">NO_SOURCE_PHOTO_OR_VERIFIED_3D_FACE</pre>
+<p class="note">正式限制：這是離線 MMORPG 風格角色編輯器原型；沒有多人連線、伺服器持久化、真實臉部骨架定位或已驗收的人類皮膚物理。</p>
+</aside></main><script type="module" src="./avatar-studio.mjs"></script>
+</body></html>

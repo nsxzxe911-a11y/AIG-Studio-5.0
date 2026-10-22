@@ -125,6 +125,24 @@ test('6.5 actually draws 2D transformed bitmap and text story frames, not a time
  drawAIG65CanvasFrame({ctx:a.ctx,canvas,plan:card,timeSeconds:.5});
  assert.ok(a.calls.includes('text'));
 });
+test('2.5D does not draw an extracted duplicate person onto the original photo without clean background',()=>{
+ const photo={width:320,height:480};
+ const p=planAIG65AutoAnimation(options({requestedMode:'2.5D'}));
+ const canvas={width:960,height:540};
+ const a=contextMock();
+ const noPlate=drawAIG65CanvasFrame({ctx:a.ctx,canvas,plan:p,timeSeconds:1,
+  layered:{image:photo,background:photo,foreground:photo,backgroundPlateVerified:false}});
+ assert.equal(a.calls.filter(x=>x==='drawImage').length,1,
+  'one photographed person, no duplicate/ghost foreground');
+ assert.equal(noPlate.layeredParallaxActive,false);
+ assert.equal(noPlate.duplicatedForegroundOnUnrecoveredBackgroundBlocked,true);
+ const b=contextMock();
+ const otherBackdrop={width:320,height:480};
+ const realPlate=drawAIG65CanvasFrame({ctx:b.ctx,canvas,plan:p,timeSeconds:1,
+  layered:{image:photo,background:otherBackdrop,foreground:photo,backgroundPlateVerified:true}});
+ assert.equal(b.calls.filter(x=>x==='drawImage').length,2);
+ assert.equal(realPlate.layeredParallaxActive,true);
+});
 test('6.5 recorder only allows actual 1080p source and browser-encoded chunks; fake GLB source rejected',async()=>{
  const plan=planAIG65AutoAnimation(options());
  const fakeStream={
@@ -165,6 +183,74 @@ test('6.5 recorder only allows actual 1080p source and browser-encoded chunks; f
  assert.equal(output.evidence.systemSpeechSynthesisCaptured,false);
  assert.equal(output.evidence.trueHumanLimbAnimation,false);
  assert.equal(AIG65_MOVIE_SIZE.fpsTarget,30);
+});
+test('6.5 releases owned video tracks on stream initialization failure, keeps caller audio intact',()=>{
+ const plan=planAIG65AutoAnimation(options());
+ let stoppedVideo=0,stoppedAudio=0;
+ const videoTrack={stop:()=>{stoppedVideo++;}};
+ const audioTrack={stop:()=>{stoppedAudio++;}};
+ const canvas={width:1920,height:1080,
+  captureStream:()=>({getVideoTracks:()=>[videoTrack]})};
+ class BadMediaStream{
+  constructor(){throw Error('BROWSER_STREAM_CONSTRUCTION_FAILED');}
+ }
+ class MediaRecorderFake{
+  static isTypeSupported(mime){return mime==='video/webm';}
+ }
+ const rec=new AIG65CanvasRecorder({env:{
+  MediaStream:BadMediaStream,MediaRecorder:MediaRecorderFake
+ }});
+ assert.throws(()=>rec.begin({canvas,plan,sourceSHA256:id,
+  audioDestination:{stream:{getAudioTracks:()=>[audioTrack]}}}),
+  /BROWSER_STREAM_CONSTRUCTION_FAILED/);
+ assert.equal(stoppedVideo,1);
+ assert.equal(stoppedAudio,0,'audio source belongs to caller');
+ assert.equal(rec.state,'IDLE','failed initialization must not look like a running capture');
+ let captureCount=0;
+ const unsupported=new AIG65CanvasRecorder({env:{MediaRecorder:MediaRecorderFake}});
+ assert.throws(()=>unsupported.begin({canvas:{...canvas,
+  captureStream:()=>{captureCount++;return canvas.captureStream();}},
+  plan,sourceSHA256:id}),/AIG65_MEDIA_STREAM_UNAVAILABLE/);
+ assert.equal(captureCount,0,'unsupported browser must not acquire tracks');
+});
+
+test('6.5 failed encoded Blob creation rejects stop and releases owned video tracks',async()=>{
+ const plan=planAIG65AutoAnimation(options());
+ let videoStops=0,callerAudioStops=0;
+ const videoTrack={stop:()=>{videoStops++;}};
+ const callerAudioTrack={stop:()=>{callerAudioStops++;}};
+ class MediaStreamFake{
+  constructor(tracks){this.tracks=tracks;}
+ }
+ class MediaRecorderFake{
+  static isTypeSupported(mime){return mime==='video/webm';}
+  constructor(){this.state='inactive';}
+  start(){this.state='recording';}
+  stop(){
+   this.state='inactive';
+   this.ondataavailable?.({data:new Blob(['nonempty encoded bytes'])});
+   this.onstop?.();
+  }
+ }
+ class BrokenBlob{
+  constructor(){throw Error('BROWSER_BLOB_FINALIZATION_FAILED');}
+ }
+ const rec=new AIG65CanvasRecorder({env:{
+  MediaStream:MediaStreamFake,MediaRecorder:MediaRecorderFake,Blob:BrokenBlob
+ }});
+ const canvas={width:1920,height:1080,
+  captureStream:()=>({getVideoTracks:()=>[videoTrack]})};
+ rec.begin({canvas,plan,sourceSHA256:id,audioDestination:{
+  stream:{getAudioTracks:()=>[callerAudioTrack]}
+ }});
+ rec.frame();rec.frame();
+ await assert.rejects(rec.stop(),/BROWSER_BLOB_FINALIZATION_FAILED/);
+ assert.equal(rec.state,'FAILED');
+ assert.equal(videoStops,1,'canvas video track must be released exactly once');
+ assert.equal(callerAudioStops,0,'caller-owned voice/music bus must remain alive');
+ assert.equal(rec.stream,null);
+ assert.equal(rec.recorder,null);
+ assert.equal(rec.lastError.message,'BROWSER_BLOB_FINALIZATION_FAILED');
 });
 test('6.5 RGB top-page true callbacks, WebAudio SFX/music and existing 3D/other wardrobes preserved',()=>{
  const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');

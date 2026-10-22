@@ -1,0 +1,19 @@
+{
+  "schema": "AIG_READONLY_MOTION_PREVIEW_V1",
+  "sourceDomain": "CNC_CAM_SIM",
+  "representation": "CNC_TOOL_CENTER_PREVIEW",
+  "axisMode": "3AX",
+  "positionUnit": "mm",
+  "angleUnit": "deg",
+  "timeUnit": "s",
+  "interpolation": "LINEAR_TOOL_CENTER_ONLY",
+  "sourceMotion": "G0_G1_ONLY",
+  "pointCount": 4,
+  "previewOnly": true,
+  "machineExecutionAllowed": false,
+  "physicalKinematicsCertified": false,
+  "numericalMaterialRemovalCertified": false,
+  "humanRiggedAnimation": false,
+  "sha256": "371e8f78e51a412294300e7f832fd0c315041ee69d8d66723fde8541d276f99e",
+  "data": "tSeconds,xMm,yMm,zMm,aDeg,bDeg,cDeg,rapid\n0.0000,0.000,0.000,8.000,0.000,0.000,0.000,1\n0.4000,0.000,0.000,-2.000,0.000,0.000,0.000,0\n1.2000,20.000,0.000,-2.000,0.000,0.000,0.000,0\n1.4000,20.000,0.000,8.000,0.000,0.000,0.000,1"
+}

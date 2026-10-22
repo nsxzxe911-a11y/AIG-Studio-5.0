@@ -55,7 +55,7 @@ export function analyzeAIG64PartialPortrait({
  if(foreground<140)throw Error('AIG64_NO_OBSERVABLE_SUBJECT_CONTRAST');
  // Connected-components on the thumbnail; favor a coherent foreground
  // region rather than an unrelated separate text/logo/background patch.
- let best=null;
+ let best=null,bestPixels=null;
  for(let start=0;start<mask.length;start++){
   if(!mask[start]||visited[start])continue;
   const queue=[start];visited[start]=1;
@@ -73,16 +73,23 @@ export function analyzeAIG64PartialPortrait({
   const count=queue.length,centerX=sumX/count,centerY=sumY/count;
   // Penalize peripheral unrelated objects, not photographed hairstyle.
   const score=count*(1-.12*Math.abs(centerX-w/2)/(w/2));
-  if(!best||score>best.score)best={x0,x1,y0,y1,count,score,
-   centerX,centerY};
+  if(!best||score>best.score){
+   best={x0,x1,y0,y1,count,score,centerX,centerY};
+   bestPixels=queue;
+  }
  }
  if(!best||best.count<100||best.y1-best.y0<8||best.x1-best.x0<5)
   throw Error('AIG64_PARTIAL_PERSON_BOUNDARY_UNCERTAIN');
+ // Critical: row width must be measured only on the SELECTED connected
+ // component. Previous implementation read other foreground pixels within
+ // its bounding box and inflated head/shoulder width estimates.
+ const connected=new Uint8Array(w*h);
+ for(const index of bestPixels)connected[index]=1;
  const bandWidth=(low,high)=>{
   const left=[],right=[];
   for(let y=clamp(Math.floor(low),0,h-1);y<=clamp(Math.ceil(high),0,h-1);y++){
    let min=w,max=-1;
-   for(let x=0;x<w;x++)if(mask[y*w+x]&&
+   for(let x=0;x<w;x++)if(connected[y*w+x]&&
      x>=best.x0&&x<=best.x1){min=Math.min(min,x);max=Math.max(max,x);}
    if(max>=min&&max-min>=3){left.push(min);right.push(max);}
   }

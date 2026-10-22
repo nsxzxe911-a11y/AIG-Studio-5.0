@@ -1,0 +1,53 @@
+{
+  "schema": "AIG_FASTMODEL_HEROINE_REFERENCE_SOURCE_BINDING_V1",
+  "type": "USER_PREVIOUSLY_PROVIDED_REFERENCE_IMAGE",
+  "referenceName": "櫻花校園的青春時光.png",
+  "sourceSha256": "83b5728f34f6d3cc266d33e17fe259c44314b265fbf24d6d7a8eb971c316e910",
+  "sourceBytes": 2463534,
+  "width": 1672,
+  "height": 941,
+  "encoding": "PNG_RGB",
+  "contentDescription": "Cherry-blossom campus heroine illustration collage; main large front/three-quarter school-uniform protagonist on left; smaller illustrated narrative views on right",
+  "mainCharacterRegionPixels": {
+    "x": 340,
+    "y": 25,
+    "width": 662,
+    "height": 916
+  },
+  "observedVisualParts": [
+    "long dark-brown hair",
+    "face",
+    "neck",
+    "uniform jacket",
+    "white shirt",
+    "red-plaid bow",
+    "plaid skirt",
+    "backpack straps",
+    "hands"
+  ],
+  "sourceProperties": {
+    "singlePhysicalCameraImage": false,
+    "collageMultipleIllustratedViews": true,
+    "multiplePanelsAreNotCalibratedStereo": true,
+    "physicalScaleAndFocalLengthAbsent": true,
+    "visibleLegsPartiallyCropped": true,
+    "actualBacksideNotVerified": true,
+    "intrinsicAlbedoNotMeasured": true
+  },
+  "permittedUses": [
+    "visual identity reference",
+    "source color sampling",
+    "foreground segmentation candidate",
+    "human reviewed semantic seeds",
+    "non-metric editable 3D draft"
+  ],
+  "disallowedClaims": [
+    "certified 1-to-1 metric full human",
+    "true stereo disparity between narrative panels",
+    "verified hairstyle thickness at back",
+    "reconstructed physically correct hidden legs and feet",
+    "complete skinned human rig derived from original image"
+  ],
+  "status": "IMAGE_SHA_AND_DIMENSIONS_VERIFIED;GLB_FULL_HEROINE_NOT_YET_CERTIFIED",
+  "notes": "Do not commit the private raw illustration or replace real 7.13 calibrated geometry with guessed depth; source may be selected locally in 7.14 studio. Image SHA is identity, not photographic depth evidence."
+}

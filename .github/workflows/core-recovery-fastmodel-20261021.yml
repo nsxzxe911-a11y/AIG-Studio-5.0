@@ -1,0 +1,92 @@
+name: FastModel core-first real generation gate (not heroine approval)
+on:
+  push:
+    branches: [repair/core-first-fastmodel-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  restore-core-before-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - id: source_gate
+        name: Fail closed on missing/replaced animation source
+        run: python3 ci/verify_core_recovery_lock.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - id: node_engine
+        name: Test actual offline animation internals
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+        run: |
+          npm ci
+          python -m pip install -r requirements.txt
+          npm test
+          npm run build
+      - id: python_engine
+        name: Python source/photo reconstruction preflight and negative tests
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+        run: |
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          python3 -m unittest discover -s ../tests -p 'test_*.py' -v
+      - id: native_engine
+        name: Native C++ cache, incremental rebuild and resource tests
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+        run: |
+          cmake -S ../core -B /tmp/aig-fastmodel-core-recovery -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/aig-fastmodel-core-recovery --parallel 2
+          ctest --test-dir /tmp/aig-fastmodel-core-recovery --output-on-failure
+      - name: Chromium native video decode engine
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - id: browser_runtime
+        name: Real browser encoded movie frames, recording and controls
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig-fastmodel-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-compact-ui-real-browser.mjs
+          node tests/aig-generation-state-real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fastmodel-core-recovery-real-browser-images
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-compact-ui/
+          if-no-files-found: warn
+      - name: Core-only verdict
+        run: |
+          echo "FASTMOTION_CORE_SMOKE=SOURCE_AND_REAL_CHROME_DECODED_VIDEO_ONLY"
+          echo "HUMAN_3D_RECONSTRUCTION=NOT_CERTIFIED"
+          echo "REAL_HEROINE_MOTION=NOT_CERTIFIED"
+          echo "1080P_CHARACTER_FILM=NOT_CERTIFIED"
+          echo "CONTROL_BINDINGS=DEFERRED_UNTIL_CORE_GATES_PASS"
+
+      - name: Honest per-stage animation quality summary
+        if: always()
+        env:
+          LOCK_RESULT: ${{ steps.source_gate.outcome }}
+          NODE_RESULT: ${{ steps.node_engine.outcome }}
+          PYTHON_RESULT: ${{ steps.python_engine.outcome }}
+          NATIVE_RESULT: ${{ steps.native_engine.outcome }}
+          BROWSER_RESULT: ${{ steps.browser_runtime.outcome }}
+        run: |
+          {
+            echo '### FastModel evidence at SHA ${{ github.sha }}'
+            echo "Exact source lock: $LOCK_RESULT"
+            echo "GLB/skin/movie Node tests: $NODE_RESULT"
+            echo "Python reconstruction tests: $PYTHON_RESULT"
+            echo "C++ engine tests: $NATIVE_RESULT"
+            echo "Real browser with evidence capture: $BROWSER_RESULT"
+            echo 'Inspect failure-evidence.json and failure.png on browser errors.'
+            echo 'FULL_BODY_CHARACTER_FROM_PHOTO=NOT_CERTIFIED'
+            echo 'HAIR_COLLISION_AND_DEVICE_FPS=NOT_CERTIFIED'
+            echo 'RELEASE=BLOCKED'
+          } >> "$GITHUB_STEP_SUMMARY"

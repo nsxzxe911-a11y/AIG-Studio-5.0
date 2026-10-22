@@ -1,0 +1,70 @@
+name: FastModel 7.12 Source Map and GeoJSON Gate
+on:
+  push:
+    branches:
+      - repair/core-first-fastmodel-20261021
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-scene-map-7-12.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-map-studio.html'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-map-studio.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-cad-grid-scale-7-12.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-scene-map-7-12.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-scene-map-7-12.real-browser.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-cad-grid-drawing-scales-7-12.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/build.mjs'
+      - '.github/workflows/fastmodel-scene-map-7-12.yml'
+  workflow_dispatch:
+jobs:
+  scene-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Source map, coordinate trust, and 1:2 1:4 1:10 CAD ratios
+        run: |
+          node --check aig-scene-map-7-12.mjs
+          node --check scene-map-studio.mjs
+          node --check tests/aig-scene-map-7-12.test.mjs
+          node --check tests/aig-scene-map-7-12.real-browser.mjs
+          node --test tests/aig-scene-map-7-12.test.mjs tests/aig-cad-grid-drawing-scales-7-12.test.mjs
+      - name: Offline bundle preserves all 7.0 through 7.12 workspaces
+        run: |
+          npm run build
+          test -s dist/scene-map-studio.html
+          test -s dist/scene-map-studio.mjs
+          test -s dist/aig-scene-map-7-12.mjs
+          test -s dist/aig-scene-percent-7-12.mjs
+          test -s dist/cad-scale-studio.html
+          cmp aig-scene-map-7-12.mjs dist/aig-scene-map-7-12.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Actual mobile and desktop GeoJSON import and drawing browser Gate
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig-map-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-scene-map-7-12.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-12-Source-Map-GeoJSON-Real-Browser-Not-Real-Heroine
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-map-7-12/
+          if-no-files-found: warn
+      - name: Honest source and metric boundary
+        if: always()
+        run: |
+          {
+            echo 'MAP_FEATURES=SOURCE_USER_SUPPLIED_OR_ANNOTATED'
+            echo 'WGS84_PROJECTION=SMALL_LOCAL_APPROX_NOT_CADASTRAL'
+            echo 'UNKNOWN_TREE_BUILDING_ROAD_REAL_SIZE=DO_NOT_INVENT'
+            echo 'AUTO_PHOTO_GEOLOCATION=NOT_IMPLEMENTED'
+            echo 'MODEL_HUMAN_3D_GENERATION=NOT_IMPLEMENTED'
+            echo 'ANDROID_WINDOWS_NATIVE=NOT_VERIFIED'
+          } >> "$GITHUB_STEP_SUMMARY"

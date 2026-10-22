@@ -2,6 +2,7 @@
  * Presentation only: existing nodes retain stable IDs, callbacks and state.
  * No core, media, assets, or original 3D runtime is deleted or cloned.
  */
+import {initAigReadOnlyMotionControls} from './aig-motion-preview-readonly.mjs';
 export const AIG_UNIFIED_SHELL_SCHEMA='AIG_FASTMODEL_SINGLE_WORKSPACE_6_9_1';
 export const AIG_UNIFIED_TABS=Object.freeze([
  {id:'create',title:'創作',hint:'照片與劇情'},
@@ -147,12 +148,26 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  panels.model.insertBefore(modelNotice,returnCreate);
  const technicalHelp=node(doc,'details',{id:'aig-unified-model-technical'});
  technicalHelp.append(node(doc,'summary',{},'技術模型與舊版測試工具（不代表正式人物）'));
+ let keepSinglePhotoPrimary=false;
  for(const el of Array.from(panels.model.children)){
   if(el===modelNotice||el===returnCreate||el===importGLB||
    el.tagName==='H2')continue;
+  // The tested ONE-PHOTO 17-bone + bilateral real 3D action belongs in
+  // the actual 3D Model workbench. Keep the original nodes/listeners visible,
+  // while genuinely older technology remains inside the disclosure panel.
+  if(el.tagName==='H3'&&el.textContent.trim().startsWith('AIG FastModel 6.4'))
+   keepSinglePhotoPrimary=true;
+  if(keepSinglePhotoPrimary){
+   if(el.id==='aig64-single-status')keepSinglePhotoPrimary=false;
+   continue;
+  }
   technicalHelp.append(el);
  }
  panels.model.append(technicalHelp);
+ // Genuine optional cross-product preview: this adds new standalone
+ // file/play/stop controls, without moving/cloning any original 3D or 2D UI.
+ const motionBridge=initAigReadOnlyMotionControls(doc,panels.model);
+ if(!motionBridge.ready)throw Error('AIG_MOTION_PREVIEW_BINDING_MISSING');
  panels.advanced.append(original); // retains entire legacy DOM and IDs
  panels.advanced.insertBefore(node(doc,'h2',{},'進階工具與來源 Gate'),original);
  const inlineStatus=node(doc,'div',{id:'aig-unified-live-status'});

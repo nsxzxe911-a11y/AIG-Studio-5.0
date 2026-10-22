@@ -1,0 +1,209 @@
+{
+  "schema": "aig-core-recovery-lock-v1",
+  "project": "FastModel",
+  "phase": "CORE_FIRST_CONTROL_LATER",
+  "sourceBranch": "fix/fastmodel-real-motion-and-generation-state-20261021",
+  "immutableUserAssetsNotModified": true,
+  "neverTreatVersionAsGate": true,
+  "machineOutputEnabled": false,
+  "nativeApkExeCertified": false,
+  "photoHuman3DCertified": false,
+  "modules": [
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/app.mjs",
+      "gitBlobSha": "0c49cf653cb6023295e0e2b99e380d119669cfa5"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-auto-animation-6-5.mjs",
+      "gitBlobSha": "1998c5e08352d2df84cbd0af995b38f569051fa4"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-canvas-movie-6-5.mjs",
+      "gitBlobSha": "42387749dc908d513bcfc44a0b7be79c31bbf4e1"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/viewer.mjs",
+      "gitBlobSha": "3bf3701a23ad510f747b96e78b0f99408c3f338c"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-portrait-audio-6-7.mjs",
+      "gitBlobSha": "b05871cdb04ea93e80f4e189fa0a239d99a652dd"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-live-control-manifest.mjs",
+      "gitBlobSha": "cc0ed87b483a4b21646d6bfff1c77cd1f2f492ce"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/action-compatibility.mjs",
+      "gitBlobSha": "a889e88293b445dee02f7ed7a0a5e76060b21cb6"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-auto-style-6-4.mjs",
+      "gitBlobSha": "f25d7e16e99bdaff78420b6820df92854a140dd6"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-native-humanoid-5-5.mjs",
+      "gitBlobSha": "86ef112220e8ff45df33ae8b60bfa240ab67f115"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-native-body-5-6.mjs",
+      "gitBlobSha": "88e69f86fb85c69ca0d85d15cdd7b2774940e8c4"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-native-appearance-5-7.mjs",
+      "gitBlobSha": "b17f6a53aa96cf30d0d6ef877d587c0bf38afc66"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-single-photo-autobody-6-4.mjs",
+      "gitBlobSha": "4ea019af04e4f26ef540ce49aa9ca8e282b96e15"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-skin-4-8.mjs",
+      "gitBlobSha": "96c95b41f84141034c880ced52695bd0d877e649"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-skin-motion-4-8.mjs",
+      "gitBlobSha": "7263dd5f9392b4021feadef4f1f528888ed6cb86"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-head-neck-4-6.mjs",
+      "gitBlobSha": "1339cdbb265bc0fa7618c94723271c65f5d1d4be"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-dynamic-collision-4-9.mjs",
+      "gitBlobSha": "9fb1f55ed0b3801fc5efec9d8e454d4f2e97ee6c"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-seam-contact-5-1.mjs",
+      "gitBlobSha": "24929fba5f85b84104ad59e8aa7ddce1f7d194a2"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-face-alignment-6-0.mjs",
+      "gitBlobSha": "05d1637a1169e82f83f73a163e711390f11d01ab"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-portrait-6-6.mjs",
+      "gitBlobSha": "d1068e6d1367d6fa771d5beb6f2edc9e5139ae0f"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-video-evidence-6-8.mjs",
+      "gitBlobSha": "eb8607507a2e77c5c5e531e6e2c69297312ac0da"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/movie-recorder.mjs",
+      "gitBlobSha": "3a4b8167bb9b8c8fd6ee6cbb762c10073106624d"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/movie-ui.mjs",
+      "gitBlobSha": "671eaf6e3be315a3469dc7f01ab2901c30cdfb0b"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/story-to-animation.mjs",
+      "gitBlobSha": "2f9ad9aa070b4eaca8c2e5f264c2c96dc5e12bf1"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/story-audio.mjs",
+      "gitBlobSha": "5f4fc822935b735ea80a66098c8725a4bf0fad13"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/voice-cues.mjs",
+      "gitBlobSha": "efe1e3798bddcaa9343d9622c2d9a3d253253137"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/voice-generator.mjs",
+      "gitBlobSha": "56f45c787a35efec7316bdf6261c25b29e4027b2"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/skin-anomaly.mjs",
+      "gitBlobSha": "a83d7aa1230c2d093a577e096c0373f1e6dd1d5d"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-unified-gate-5-3.mjs",
+      "gitBlobSha": "3a4b7dcce5810696893aefcebd9525218c1131a0"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-unified-shell-6-9.mjs",
+      "gitBlobSha": "8906e425b3ad9f5f7e28d43360970cfc3f7f8aa2"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig_native4.py",
+      "gitBlobSha": "4f61438bbfeb128219183aa4ca2264fc80fc3428"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/pipeline.py",
+      "gitBlobSha": "b8f52c3c14a84241a5f083f4b06408382f4ad564"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/reconstruction_service.py",
+      "gitBlobSha": "09728dd25bba9899e74b1663c17d21480d49f0cf"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/server.py",
+      "gitBlobSha": "b79972e1ca9d759a96fbd02743566e7b8172623a"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig_native_provenance_5_4.py",
+      "gitBlobSha": "5603c2474f11723d0ecd90c53a51883647b8d41b"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-performance-4-2.mjs",
+      "gitBlobSha": "bb070bd3311519b4d860be1f39401f4cb501e0b1"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-sdf-4-1.mjs",
+      "gitBlobSha": "576a54f35843c4ac4082c183d4f887db3ba27741"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-hybrid-4-3.mjs",
+      "gitBlobSha": "3869d2b3ed230b1bdd4935703ee0ed6d60beabd7"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/index.html",
+      "gitBlobSha": "e962aa50dd928cd2f71b89c4e4f114896a575c62"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-motion-preview-readonly.mjs",
+      "gitBlobSha": "eaee565f28191ad3aaa3af647427f40c3557b824"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-fullbody-motion-6-11.mjs",
+      "gitBlobSha": "ae3b7bcb21a51c58505bcd6bd6a759a28bbbcd75"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-source-observation-6-12.mjs",
+      "gitBlobSha": "3132707b0b13007e359099cd536ff03706ca94f0"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-multiclass-domain-router-v1.mjs",
+      "gitBlobSha": "ef888049a5f76effbf2014d1d1ebb6a262b3ab34"
+    }
+  ],
+  "ghostOverlayPolicy": "NO_DOUBLE_PERSON_ONE_PASS_VISIBLE_PAN_ZOOM_WITHOUT_CLEAN_BACKGROUND",
+  "controlChain": "EXISTING_DOM_BUTTONS_STABLE_IDS_TO_EXISTING_REAL_CALLBACKS_NO_REPLACEMENT",
+  "coreInventoryReview": "2026-10-22 phase one: verified source blob inventory to prevent disappearing or silently replaced core; exact SHA is NOT functional validation",
+  "sourceIdentityIsNotExecutableProof": true,
+  "controlGateBlockedUntilFullCoreOutcomeEvidence": true,
+  "releaseGateBlockedUntilRuntimeAndNativeEvidence": true,
+  "movieFinalizeFailureProof": "Blob finalization failure rejects pending stop, frees owned canvas tracks, leaves caller-owned audio alive; executable Node test",
+  "unifiedRgbGlassEvidence": "Formal native CNC and FastModel RGB token parity source, original DOM callbacks unchanged, Playwright computed CSS at 360x780 and 1440x900 + original real movie playback tests",
+  "engineeringShellFallbackForbidden": true,
+  "readOnlyMotionSceneIntegration": "Model tab local JSON import → SHA256 → real Canvas tool-center animation → play/stop; no CNC machine APIs, no human GLB impersonation, no user model deletion; tested with matched native Kotlin hash",
+  "axisVisualizationSafety": "Linear interpolation for XYZ tool center only. A/B/C waypoint pose held until next sample; 6-axis kinematics not certified. Not machine control.",
+  "motionImportRaceIntegrity": "Incrementing import token prevents slow earlier File.text/crypto.digest from repainting after user selects newer CNC motion file. Browser test awaits SHA failure and checks canvas hidden/play disabled.",
+  "temporalRigQualityGate": "Real technical GLB loaded via Three GLTFLoader, samples skinned mesh vertices at 30Hz across three animation clips, validates finite coordinates and non-static deformation; full-body/photo identity/physical collisions stay unapproved",
+  "auditedLiveAppLockDrift": "2026-10-22 reviewed historical commit 96f617eca78927fd8bbe91a91cccd1c366a3332d installing stable Button ID binding; source app.mjs matches pre-existing PR code and is now locked. No app code changed.",
+  "realFullBodyLimbUpgrade": "Existing single partial image->technical 17 bone 9 skinned mesh 5 clip GLB retained; adds two genuine bilateral arm/leg GLB quaternion clips, 31-frame skinned vertex motion audits; not verified heroine likeness, foot contacts or garment physics",
+  "fullBodyMotionControlClosure": "After core 252/252 PASS, independent AIG64→AIG61 REAL upgrade action binds ButtonID/CommandID to existing single-photo generated GLB, audits bilateral limb vertex deformation before SHA/new output, preserves old 5-clip source on blocked action, all production likeness and collision claims remain false.",
+  "fullBodyFormalModelUiLocation": "Single photo / native 17-bone + seven clip upgrade controls remain original DOM+callbacks and are no longer hidden inside technical <details>; older testing tools are disclosure-only.",
+  "pixelObservationRoute20261022": "Source-image SHA + transparent alpha/uniform background colour key + connected component count + sampled RGB and silhouette measurements; user-selected HUMAN/ANIMAL/PLANT domain; plants/animals evidence-only, never fake human GLB; human technical GLB preserved, real media likeness/skin physics still unverified",
+  "multiclassDomainRoutingV1": "Eleven top-level class hierarchy (house/building, vehicle, sports, mechanical CAD), color independently tagged; classifier missing/low confidence/ambiguous/unknown classes fail closed; no model inference or 3D production claimed",
+  "auditedFastModelIndexPresentationOnly20261022": {
+    "originalLockedBlobSHA": "4d4859ce985a1bae5c4ec7de473370f0677ff191",
+    "newLockedBlobSHA": "e962aa50dd928cd2f71b89c4e4f114896a575c62",
+    "independentByteEqualityVerified": true,
+    "exactDifference": "Only additive 2026-10-22 CSS to constrain mobile tab/nav overflow and one FastModel 7.0–7.12 navigation link row. Removing CSS and nav produces byte-identical prior locked index.html, as verified; zero core runtime JS modifications.",
+    "changesCoreRuntimeCode": false,
+    "doesNotCertifyAnimationsOrNativeBinaries": true,
+    "lockStillFailClosed": true
+  }
+}
