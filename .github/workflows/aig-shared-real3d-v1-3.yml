@@ -25,6 +25,11 @@ jobs:
       - run: npm ci
       - name: Syntax and true numerical source reparse
         run: |
+          node --check ../../../shared-3d/aig-real3d-gpu-budget-1-6.mjs
+          node --check ../../../shared-3d/aig-real3d-webgl.mjs
+          node --check tests/aig-real3d-gpu-v1-6.test.mjs
+          node --check tests/aig-real3d-gpu-v1-6.real-browser.mjs
+          node --test tests/aig-real3d-gpu-v1-6.test.mjs
           node --check ../../../shared-3d/aig-real3d-step-replay-1-3.mjs
           node --check ../../../shared-3d/aig-real3d-axis-bridge-1-4.mjs
           node --check ../../../shared-3d/aig-real3d-rig-integrity-1-5.mjs
@@ -40,6 +45,9 @@ jobs:
       - name: Offline build retains 1.0 1.1 1.2 and 1.3 source exact
         run: |
           npm run build
+          test -s dist/shared-3d/aig-real3d-gpu-budget-1-6.mjs
+          cmp ../../../shared-3d/aig-real3d-gpu-budget-1-6.mjs dist/shared-3d/aig-real3d-gpu-budget-1-6.mjs
+          cmp ../../../shared-3d/aig-real3d-webgl.mjs dist/shared-3d/aig-real3d-webgl.mjs
           test -s dist/shared-3d/aig-real3d-step-replay-1-3.mjs
           test -s dist/shared-3d/aig-real3d-axis-bridge-1-4.mjs
           test -s dist/shared-3d/aig-real3d-rig-integrity-1-5.mjs
@@ -56,11 +64,18 @@ jobs:
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           node tests/aig-real3d-replay-v1-3.real-browser.mjs
+          node tests/aig-real3d-gpu-v1-6.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: AIG-Real3D-1-3-NC-G0G1-True-Single-Block-Voxel-WebGL
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-replay-v1-3/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-Real3D-1-6-WebGL-GPU-Resource-Bounded-Not-Native-FPS
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-gpu-v1-6/
           if-no-files-found: warn
       - name: Exact proof boundary
         if: always()
@@ -74,4 +89,7 @@ jobs:
             echo 'FULL_FANUC_3_6_AXIS_POST_AND_COLLISION=NOT_VERIFIED'
             echo 'CONTINUOUS_0_001_MM_SURFACE=NOT_VERIFIED'
             echo 'ANDROID_APK_WINDOWS_EXE_GPU=NOT_VERIFIED'
+            echo 'GPU_RESIDENT_BUFFER_BUDGET=REAL_BUFFER_HANDLE_COUNT_AND_BYTES_NOT_GPU_TIMING'
+            echo 'WEBGL_STREAMED_G0_G1_LINE_BUFFERS=REUSED_BOUNDED_NOT_RECREATED_EACH_FRAME'
+            echo 'FASTMODEL_1_6_NATIVE_60FPS=NOT_VERIFIED'
           } >> "$GITHUB_STEP_SUMMARY"
