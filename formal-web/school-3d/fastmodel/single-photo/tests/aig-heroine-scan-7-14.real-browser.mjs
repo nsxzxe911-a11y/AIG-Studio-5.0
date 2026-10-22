@@ -64,8 +64,12 @@ try{
    assert.ok(source.vertices>300);
    for(const [label,y] of [['HAIR',15],['FACE',38],['JACKET',64]]){
     await page.locator('#heroine-part').selectOption(label);
-    const rect=await page.locator('#heroine-photo').boundingBox();
-    await page.mouse.click(rect.x+rect.width*35/112,rect.y+rect.height*y/80);
+    // Locator.click scrolls the distant heroine editor into view before
+    // the exact source-pixel touch. page.mouse.click alone does not scroll.
+    const photo=page.locator('#heroine-photo');
+    await photo.scrollIntoViewIfNeeded();
+    const rect=await photo.boundingBox();
+    await photo.click({position:{x:rect.width*35/112,y:rect.height*y/80}});
    }
    await page.locator('#heroine-grow').click();
    assert.match(await page.locator('#heroine-status').textContent(),/RGB 色域延展建議/);
