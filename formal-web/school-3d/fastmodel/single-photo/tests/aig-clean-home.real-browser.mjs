@@ -53,9 +53,14 @@ try{
    assert.equal(await page.locator('#simulate').count(),1);
    await page.goto(base+'aig-new-home.html',{waitUntil:'load'});
    const fastUrl=await page.locator('a[href="./fastmodel/"]').getAttribute('href');
-   const nativeUrl=await page.locator('a.link[href="./native-download.html"]').getAttribute('href');
+   const nativeUrl=await page.locator('a.link[href="./aig-download-center.html"]').getAttribute('href');
    assert.equal((await page.request.get(base+fastUrl)).status(),200);
    assert.equal((await page.request.get(base+nativeUrl)).status(),200);
+   await page.locator('a.link[href="./aig-download-center.html"]').click();
+   await page.waitForURL('**/aig-download-center.html');
+   assert.equal(await page.locator('#export-local').count(),1);
+   assert.equal(await page.locator('.cards .card').count(),4);
+   await page.goto(base+'aig-new-home.html',{waitUntil:'load'});
    // Retired Web pages must not masquerade as the workbench.
    assert.equal((await page.request.get(base+'mobile-runtime.html')).status(),200);
    assert.ok(await page.locator('details').count()>=1,'advanced maintenance stays collapsed');
@@ -64,7 +69,7 @@ try{
    await page.screenshot({path:dir+'/'+d.name+'-clean-home.png',fullPage:true});
    await writeFile(dir+'/'+d.name+'-proof.json',JSON.stringify({
     device:d.name,layout:stats,
-    destinations:{cnc:'3ax-nc-workbench.html',fastModel:'fastmodel/',downloads:'native-download.html'},
+    destinations:{cnc:'3ax-nc-workbench.html',fastModel:'fastmodel/',downloads:'aig-download-center.html'},
     existingProjectStorageDeleted:false,
     authenticMachineVisualApproved:false,
     cncMachineCommandsSent:0,nativeAPKorEXEApproved:false
