@@ -20,6 +20,10 @@ let parsed=null,replay=null,scene=null,busy=false,epoch=0,drag=null,previousMesh
 const displayToolMesh=createAIG3DCylinder({radius:1,height:6,segments:20,
  provenance:'READ_ONLY_TOOL_TIP_CYLINDER_FROM_LIMITED_NC_SOURCE_NOT_HOLDER_CHECKED'});
 const num=x=>Number(x).toFixed(3);
+const show3AXLayer=name=>{
+ const input=document.querySelector('[data-3ax-layer="'+name+'"]');
+ return input?input.checked:true;
+};
 const opts=()=>({
  stockOriginMm:[-8,-5,-2],stockSizeMm:[16,10,5],
  voxelMm:Number($('voxel').value),cutterDiameterMm:2,fluteLengthMm:6,maxFaces:42000
@@ -46,20 +50,20 @@ function paint(why='READY'){
   surface=currentAIG13ReplayBoundary(replay);
  const nextScene=createAIG3DScene({id:'real3d-v1-3-block-replay',
   consumer:'AIG-II',units:'MM',source});
- if(surface.mesh){
+ if(surface.mesh&&show3AXLayer('stock')){
   addAIG3DNode(nextScene,{
    id:'true_voxel_stock',kind:'stock',mesh:surface.mesh,source,
    material:{baseColor:[.64,.67,.72,1],metallic:.28,roughness:.57}
   });
  }
  const pos=audit.toolpathPositionMm;
- if(pos){
+ if(pos&&show3AXLayer('tool')){
   addAIG3DNode(nextScene,{id:'current_tool_preview',kind:'tool',
    mesh:displayToolMesh,source,
    transform:{position:[pos[0],pos[1],pos[2]+3],rotationDeg:[90,0,0]},
    material:{baseColor:[.25,.8,.95,1],metallic:.52,roughness:.35}});
  }
- addAIG3DToolpathOverlay(nextScene,{
+ if(show3AXLayer('path'))addAIG3DToolpathOverlay(nextScene,{
   id:'nc_preview_path',segments:replay.source.segments,source,units:'MM'
  });
  const oldMesh=previousMesh;
@@ -85,6 +89,7 @@ function paint(why='READY'){
   schema:'AIG_REAL3D_V1_3_VISUAL_NUMERICAL_REPLAY',
   source,reason:why,replay:audit,rendered:result,
   stockHasActualVoxelOccupancy:true,
+  visible3DLayers:{stock:show3AXLayer('stock'),tool:show3AXLayer('tool'),path:show3AXLayer('path')},
   exactMaterialRemovalThroughOriginalVoxelEngine:true,
   originCoordinatesMm:[-8,-5,-2],
   sourceAcceptedCommands:'G21,G90,G54,G0,G1,S,F,M3,M5,M30',
@@ -171,7 +176,11 @@ async function runAll(){
   while(token===epoch&&!auditAIG13SingleBlockReplay(replay).finished){
    advanceAIG13SingleBlockReplay(replay);
    paint('EACH_NC_BLOCK_NUMERICALLY_ADVANCED');
-   await new Promise(requestAnimationFrame);
+   const selected=document.querySelector('[data-3ax-rate][aria-pressed="true"]');
+   const rate=selected?Number(selected.getAttribute('data-3ax-rate')):100;
+   if(selected&&[25,50,100,200].includes(rate))
+    await new Promise(resolve=>setTimeout(resolve,Math.ceil(4600/rate)));
+   else await new Promise(requestAnimationFrame);
   }
   if(token!==epoch)return;
   status('完整單節數值模擬完成；最終體積與工件網格依各節真實更新。',true);
@@ -195,6 +204,63 @@ $('camera').addEventListener('click',()=>{
  renderer.setCamera({yaw:.65,pitch:.4,distance:28,focus:[0,0,0]});
  try{paint('CAMERA_ONLY_NO_STOCK_CHANGE');}catch(e){status('BLOCKED：'+String(e.message||e));}
 });
+// Optional mobile 3AX controls use the SAME real renderer/replay working copy;
+// the normal desktop NC-first page does not need to expose these selectors.
+const cameraPreset={
+ iso:{yaw:.65,pitch:.4,distance:28},
+ top:{yaw:0,pitch:1.42,distance:28},
+ front:{yaw:0,pitch:0,distance:28},
+ left:{yaw:-Math.PI/2,pitch:0,distance:28},
+ right:{yaw:Math.PI/2,pitch:0,distance:28},
+ reset:{yaw:.65,pitch:.4,distance:28},
+ fit:{yaw:.65,pitch:.4,distance:24}
+};
+for(const button of document.querySelectorAll('[data-3ax-camera]')){
+ button.addEventListener('click',()=>{
+  if(renderer.status!=='READY'||!replay||busy)return;
+  const key=button.getAttribute('data-3ax-camera');
+  try{
+   const current=renderer.getCamera();
+   if(key==='zoom-in'||key==='zoom-out'){
+    const factor=key==='zoom-in'?.78:1.28;
+    renderer.setCamera({distance:Math.max(5,Math.min(80,current.distance*factor))});
+   }else if(cameraPreset[key]){
+    renderer.setCamera(cameraPreset[key]);
+   }else throw Error('UNSUPPORTED_CAMERA_PRESET');
+   paint('MOBILE_AUTHENTIC_3D_CAMERA_'+key.toUpperCase().replace('-','_'));
+  }catch(error){status('BLOCKED：視角命令未完成：'+String(error.message||error));}
+ });
+}
+for(const input of document.querySelectorAll('[data-3ax-layer]')){
+ input.addEventListener('change',()=>{
+  if(!replay||busy)return;
+  if(!show3AXLayer('stock')&&!show3AXLayer('tool')){
+   input.checked=true;
+   status('保留至少一個真正 3D 幾何圖層，避免把空畫面當成真 3D。');
+   return;
+  }
+  try{paint('MOBILE_REAL_WEBGL_LAYER_CHANGED');}
+  catch(error){status('BLOCKED：圖層變更無法確認：'+String(error.message||error));}
+ });
+}
+for(const button of document.querySelectorAll('[data-3ax-rate]')){
+ button.addEventListener('click',()=>{
+  const value=Number(button.getAttribute('data-3ax-rate'));
+  if(![25,50,100,200].includes(value))return;
+  for(const other of document.querySelectorAll('[data-3ax-rate]'))
+   other.setAttribute('aria-pressed',String(other===button));
+  status('單節回放倍率設定 '+value+'%（僅本機模擬速度，不會修改 CNC Feed F）。',true);
+ });
+}
+for(const button of document.querySelectorAll('[data-3ax-stop]')){
+ button.addEventListener('click',()=>{
+  if(busy){
+   cancel();
+   status('已暫停本機 NC 回放，保留目前真體素材料狀態；這不是 CNC 控制器急停。',true);
+  }else status('本機數值回放未運行；CNC MACHINE DISCONNECTED。',true);
+  gates();
+ });
+}
 const canvas=$('view');
 let pageDisposed=false;
 // WebGL context loss is a GPU lifecycle event, NOT an instruction to clear
