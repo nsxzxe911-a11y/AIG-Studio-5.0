@@ -15,7 +15,7 @@
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/CamWorkflowEngine.kt",
-      "gitBlobSha": "4d470260d8cf1d7d900fc1370953282a3659fa6a"
+      "gitBlobSha": "f64cd0ca238e39be66d6b3a8ecaca84e4757bef7"
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/FanucNc.kt",
@@ -114,5 +114,6 @@
   "controlGateBlockedUntilFullCoreOutcomeEvidence": true,
   "releaseGateBlockedUntilRuntimeAndNativeEvidence": true,
   "observerIsolationVerification": "Core Regression: initial/update observer exception fails softly and preserves MACHINE fail-closed status",
-  "commonPocketContourProof": "CoreRecoverySmoke rejects ignored CAD entities, open/duplicate rectangle edges and non-finite circles; checks valid rectangle Fanuc G1"
+  "commonPocketContourProof": "CoreRecoverySmoke rejects ignored CAD entities, open/duplicate rectangle edges and non-finite circles; checks valid rectangle Fanuc G1",
+  "manualEntryExitRepairEvidence": "Vertical Safe-Z rapid point follows edited G1 entry/exit XY; fail-closed without verified approach/retract; tested in executable CoreRecoverySmoke"
 }
