@@ -48,3 +48,19 @@
 - 原 AIG Render 網站 branch `web/aig-dual-formal-runtime-20261016` 中 `formal-web/shared-3d/aig-real3d-replay-lab.mjs` 已按原修復核心 blob exact 鏡像，提交 `c778ad3ddaeafd982ce7a0d305ffbf48ebb85d09`；**Render LIVE 仍為舊 SHA `89b4fe4080c24b970adf7a577c492ffa2755cb71`**，無新 deploy 證據，禁止宣稱線上 GPU 修復已生效。
 - **不在本次 PASS 範圍**：真 Android 手機實機 GPU driver / Surface 問題、Windows EXE native 60 FPS、所有 Fanuc G 碼、4AX/5AX/6AX 實機運動學及 0.001 mm 工件真材料移除。保持 gate BLOCKED。
 - 下一可執行步驟：核對原 Render 站確實部署最新 source 並讀回 `/shared-3d/aig-real3d-replay-lab.html` 與模組資源；之後在源資料完整對接情況下逐頁驗證 3～6 軸正式 Authority 模型，不能以簡化示範幾何替代。
+
+## 2026-10-22 23:33 Asia/Taipei — 使用者「接回最後更新點」；最新現場核證
+
+- **唯一最新可信 Real3D 修復核心 SHA：** `1f93fbeae097858fa9a9fffe786c0e2bd353d000`。核心 GPU `uniformMatrix4fv` 先前傳入函式的問題已改成 `identity()`；GPU framebuffer 像素上限、三角形預算與 context loss/restoration 保持，無新工程殼／圖片替身。
+- **CI on this exact commit:**
+  - [共享 WebGL 1.0](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39803490604) completed/success；Node 11/11；真 Chromium phone+desktop GPU XYZ triangles：3AX **252**、FastModel **216**、5AX **264**；MSAA/SSAA 各設備 PASS。
+  - [體素材料移除 1.1](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39803490498) completed/success；16/16 Node；phone+desktop 均有實際占據格數值與 WebGL 畫面證據。
+  - [受限 NC-first 1.2](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39803490502) completed/success；phone+desktop 受限 G0/G1 原文輸入，**54 mm³、5152 mesh triangles**。
+  - [單節執行及倒回 1.3](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39803490560) completed/success；6/6 + 22/22 Node；phone+desktop 都回報單節總去除 **54 mm³**，並保留數值工件副本。
+  - [FastModel 核心鎖](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39803490452) completed/success；[來源稽核](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39803500660) completed/success。
+  - [完整 FastModel 回歸](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39803500929) 的 regression job **cancelled**（其餘多個獨立 job PASS）；不要將 cancelled 說成全部 PASS。前一次已成功的整套 regression 屬不同 SHA。
+- **原 AIG Render LIVE：** 部署 `dep-dbd2mq8473hc73alhl60`，commit `c778ad3ddaeafd982ce7a0d305ffbf48ebb85d09`，Render confirmed LIVE。直接以該 *部署 commit* 取回 `formal-web/shared-3d` 的 `aig-real3d-webgl.mjs`、`aig-real3d-replay-lab.html`、`aig-real3d-replay-lab.mjs`、`aig-real3d-step-replay-1-3.mjs` 和 `aig-real3d-nc-preview-1-2.mjs`，每個 Git blob SHA **精確匹配**最新核心中的同名檔案。
+- 最新網站來源分支 `web/aig-dual-formal-runtime-20261016` 的 HEAD `a02c92aea57440f465d31842413bd17718458e79` 比 Render LIVE 更新，但 [FastModel website Gate 39805556875](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39805556875) **failure**（source build 後 `git diff --exit-code -- formal-web/fastmodel` 未通過）。本斷點**不將失敗的新 website HEAD 部署或覆蓋現有 LIVE**。
+- 外部 HTTP 工具讀取 `/shared-3d/aig-real3d-replay-lab.html` 回報 inaccessible；GitHub blob ＋ Render 部署 SHA 可驗證來源，但**正式線上頁實際互動與原生 Android／Windows 實機效能仍是未驗證事項**。
+- **Release Gate 保持 BLOCK**：現有模擬只有受限 G21/G90/G54/G0/G1、預設 0.5 mm 體素；Fanuc G2/G3、G34/G81/G83、A/B/C 4～6 軸運動學、碰撞、0.001 mm 切削精度、10/5 Authority 正式機台視覺與 native APK/EXE 尚未通過。
+- 下一實際工作斷點：維持部署 SHA `c778ad3d` 不回退，先排除網站分支「建置產物產生 diff」的 Gate FAIL、補完同 SHA FastModel 總回歸及正式 HTTP 手機頁面測試；在確保正式 Runtime 主程式與 Safety Gate 不被動到前，才進行 3AX→6AX Source Geometry/Kinematics 分頁接軌。
