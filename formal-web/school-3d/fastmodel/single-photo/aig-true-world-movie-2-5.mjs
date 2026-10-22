@@ -16,6 +16,17 @@ export const AIG25_SCHEMA='AIG_FASTMODEL_REAL3D_2_5_ACTUAL_WEBGL_WORLD_MOVIE';
 export const AIG25_RENDER=Object.freeze({width:1920,height:1080,targetFPS:30,maxSeconds:120});
 const fail=s=>{throw Error('AIG25_'+s)};
 const isHex=s=>typeof s==='string'&&/^[0-9a-f]{64}$/i.test(s);
+/** MediaRecorder.isTypeSupported is NOT proof that its bytes match the label. */
+export function inspectAIG25EncodedContainer(bytes,ext){
+ if(!(bytes instanceof Uint8Array)||bytes.length<12||
+  !['webm','mp4'].includes(ext))return false;
+ if(ext==='webm')return bytes[0]===0x1a&&bytes[1]===0x45&&
+  bytes[2]===0xdf&&bytes[3]===0xa3;
+ // ISO BMFF: uint32 box size then mandatory ASCII "ftyp".
+ if(ext==='mp4')return bytes[4]===0x66&&bytes[5]===0x74&&
+  bytes[6]===0x79&&bytes[7]===0x70;
+ return false;
+}
 export function validateAIG25TrueWorldMovie({plan,scene,actors,viewer}={}){
  verifyAIG22Story(plan,scene,actors);
  if(!Number.isFinite(plan.durationSeconds)||plan.durationSeconds<.5||
@@ -120,7 +131,7 @@ export class AIG25WorldMovieRecorder{
    this._finished.catch(()=>{});
    recorder.ondataavailable=e=>{if(e?.data?.size>0)this.records.push(e.data)};
    recorder.onerror=e=>this.abort(e?.error||Error('ENCODER_ERROR'));
-   recorder.onstop=()=>{if(this.state!=='FAILED')this._finish()};
+   recorder.onstop=()=>{if(this.state!=='FAILED')void this._finish()};
    recorder.start(200);
    this.onState({state:'RECORDING',real3D:true,
     targetFPS:AIG25_RENDER.targetFPS,actualAudioTracks:0});
@@ -161,18 +172,22 @@ export class AIG25WorldMovieRecorder{
   this.state='FINALIZING';
   try{
    if(this.recorder?.state!=='inactive')this.recorder.stop();
-   else this._finish();
+   else void this._finish();
   }catch(err){this.abort(err)}
   return this._finished;
  }
- _finish(){
+ async _finish(){
   if(this.state==='COMPLETE'||this.state==='FAILED')return;
-  const n=this.records.reduce((s,b)=>s+b.size,0);
-  if(!n||this.frameCount<2){
-   this.abort(Error('NO_NONEMPTY_ACTUAL_3D_VIDEO_FRAMES'));return;
-  }
-  const blob=new Blob(this.records,{type:this.format.mime});
-  const evidence={...this.evidence,
+  try{
+   const n=this.records.reduce((s,b)=>s+b.size,0);
+   if(n<12||this.frameCount<2)
+    throw Error('NO_NONEMPTY_ACTUAL_3D_VIDEO_FRAMES');
+   const blob=new Blob(this.records,{type:this.format.mime});
+   const magic=new Uint8Array(await blob.slice(0,32).arrayBuffer());
+   if(this.state==='FAILED')return;
+   if(!inspectAIG25EncodedContainer(magic,this.format.ext))
+    throw Error('AIG25_ENCODED_CONTAINER_SIGNATURE_INVALID');
+   const evidence={...this.evidence,
    status:'ENCODED_ACTUAL_WEBGL_MOVIE',
    movieWritten:true,outputMimeType:this.format.mime,
    containerExtension:this.format.ext,actualFramesComposited:this.frameCount,
@@ -188,6 +203,7 @@ export class AIG25WorldMovieRecorder{
   this.state='COMPLETE';this._cleanup();
   this._resolve?.(this.output);
   this.onState({state:'COMPLETE',bytes:blob.size,frames:this.frameCount});
+  }catch(error){this.abort(error)}
  }
  abort(error=Error('USER_CANCELLED')){
   if(this.state==='COMPLETE'||this.state==='FAILED')return;
