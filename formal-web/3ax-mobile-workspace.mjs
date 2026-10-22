@@ -3,7 +3,8 @@
  * independently pinned source SHA. This is DOM control verification, not a
  * camera/physical machine geometry assertion.
  */
-import {validateAIG3AXMobileMap} from './3ax-mobile-reverse-core.mjs';
+import {validateAIG3AXMobileMap,buildAIG3AXCADPlaneCalibration,
+ projectAIG3AXPixelToCADXY} from './3ax-mobile-reverse-core.mjs';
 const root=document.getElementById('mobile-3ax-workspace'),
  status=document.getElementById('reverse-status');
 const forbidden=['NAV_4AX','NAV_5AX','NAV_6AX','JOG','NAV_AI','NAV_CAD','NAV_CAM','NAV_SIM'];
@@ -50,3 +51,49 @@ try{
   .forEach(el=>{el.disabled=true;});
 }
 // Inform the user that no pixel-to-physical depth estimate was silently created.
+
+
+let xyCalibration=null;
+const calibStatus=document.getElementById('cad-calibration-status'),
+ projection=document.getElementById('cad-plane-projection'),
+ calibrate=document.getElementById('cad-plane-calibrate'),
+ project=document.getElementById('cad-plane-project'),
+ anchorsInput=document.getElementById('cad-plane-anchors');
+function resetPlane(){
+ xyCalibration=null;project.disabled=true;
+ projection.textContent='校準資料已變更，舊的 CAD X/Y 投影無效；Z 深度仍未量測。';
+}
+anchorsInput.addEventListener('input',resetPlane);
+calibrate.addEventListener('click',()=>{
+ resetPlane();
+ try{
+  const anchors=JSON.parse(anchorsInput.value);
+  const proven=buildAIG3AXCADPlaneCalibration(anchors);
+  xyCalibration=proven;
+  project.disabled=false;
+  calibStatus.textContent='已建立同平面 X/Y 投影，使用 '+proven.calibrationAnchors+
+   ' 個已量測對照點；平均重投影殘差 '+proven.rmsReprojectionMm.toFixed(3)+
+   ' mm。注意：這不是獨立精度驗收，Z 未知，嚴禁轉為 CNC 刀路。';
+  calibStatus.dataset.ok='true';
+ }catch(error){
+  calibStatus.dataset.ok='false';
+  calibStatus.textContent='BLOCKED：CAD 圖像比例無法驗證：'+String(error.message||error)+
+   '。原 NC 與 3D 數值工件保持不變。';
+ }
+});
+project.addEventListener('click',()=>{
+ if(!xyCalibration)return;
+ try{
+  const xInput=document.getElementById('cad-source-pixel-x'),
+   yInput=document.getElementById('cad-source-pixel-y');
+  if(xInput.value.trim()===''||yInput.value.trim()==='')
+   throw Error('SOURCE_PIXEL_COORDINATES_REQUIRED');
+  const pixel=[Number(xInput.value),Number(yInput.value)];
+  const cad=projectAIG3AXPixelToCADXY(xyCalibration,pixel);
+  projection.textContent='同平面 CAD X='+cad.xMm.toFixed(3)+
+   ' mm、Y='+cad.yMm.toFixed(3)+
+   ' mm；Z=未知。僅幾何量測對照，沒有寫入 NC 或更改材料。';
+ }catch(error){
+  projection.textContent='BLOCKED：像素投影失敗：'+String(error.message||error);
+ }
+});
