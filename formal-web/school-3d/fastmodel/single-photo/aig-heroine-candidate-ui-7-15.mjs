@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
+import {openAIG716AssetLibrary} from './aig-external-asset-library-7-16.mjs';
 import {AIG714_LABELS} from './aig-heroine-scan-7-14.mjs';
 import {buildAIG715HeroineCandidate,editAIG715Joint,
  summarizeAIG715Candidate} from './aig-heroine-candidate-7-15.mjs';
@@ -157,7 +158,27 @@ export function mountAIG715CandidateStudio(readState,onPreview){
     a=document.createElement('a');a.href=url;
    a.download='AIG-FastModel-7-15-Heroine-Editable-Candidate-NOT-1TO1.glb';
    a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-   mark('已輸出可編輯髮型、臉頸、衣物獨立網格的真正 GLB 草模，含關節候選節點。所有 Z 為單圖相對估計，不是毫米或真正蒙皮。',true);
+   // User explicitly requested export. Autosave a SECOND indexed copy in
+   // per-origin user data, not under the HTML/JS/app installation path.
+   // The original downloaded GLB remains usable even if storage is denied.
+   let stored=false,reason='';
+   let library=null;
+   try{
+    library=await openAIG716AssetLibrary();
+    await library.importBlob(new Blob([glb],{type:'model/gltf-binary'}),{
+     category:'character',title:'女主角 7.15 可編輯相對深度草模',
+     tags:['女主角','草模','頭髮','服裝','骨架候選'],
+     source:'GENERATED_DERIVED',
+     modelAccuracy:'ESTIMATED',coordinateUnits:'RELATIVE',
+     derivedFrom:current.sourceDigest
+    });
+    stored=true;
+   }catch(e){reason=String(e.message||e)}
+   finally{library?.close()}
+   mark(stored?
+    '已輸出真正 GLB 草模，並自動保存到主程式外的素材庫。未量測的 Z 仍為相對估計，素材需審核才可推薦重用。':
+    '已下載真正 GLB 草模；本機外部素材庫尚未保存（'+reason+
+    '），模型本身不受影響。',true);
   }catch(error){
    mark('BLOCKED：草模 GLB 匯出失敗：'+String(error.message||error));
   }finally{
