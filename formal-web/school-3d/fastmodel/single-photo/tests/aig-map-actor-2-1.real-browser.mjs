@@ -312,13 +312,20 @@ try{
    await page.locator('#movie25-record').click();
    await page.waitForFunction(()=>{
     const s=document.getElementById('movie25-status').textContent;
-    return s.includes('已實際錄製')||s.includes('BLOCKED')||s.includes('失敗');
+    return s.includes('SHA 回讀通過')||
+     s.includes('外部素材庫未保存')||s.includes('BLOCKED')||
+     s.includes('影片錄製失敗');
    },null,{timeout:120000});
    const filmStatus=await page.locator('#movie25-status').textContent();
    assert.match(filmStatus,/已實際錄製/,filmStatus);
    const film=JSON.parse(await page.locator('#movie25-proof').textContent());
    assert.equal(film.schema,'AIG_FASTMODEL_REAL3D_2_5_ACTUAL_WEBGL_WORLD_MOVIE');
    assert.equal(film.movieWritten,true);
+   assert.equal(film.browserDecodedFrameVerified,true);
+   assert.equal(film.localVaultVideoRoundtripVerified,true,
+    'actual video must be stored and SHA rechecked in independent IndexedDB');
+   assert.match(film.localVaultSHA256,/^sha256:[a-f0-9]{64}$/);
+   assert.equal(film.outputMimeType,film.containerExtension==='webm'?'video/webm':'video/mp4');
    assert.ok(film.actualFramesComposited>=2);
    assert.equal(film.actualSourceAnimatedActorCount,1);
    assert.equal(film.flatPhotoCameraOnlyRejected,true);
