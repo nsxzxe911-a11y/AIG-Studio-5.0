@@ -12,7 +12,8 @@ const sharedPath='../../../shared-3d/';
 fs.mkdirSync('dist/shared-3d',{recursive:true});
 for(const resource of [
  'aig-real3d-core.mjs','aig-real3d-webgl.mjs',
- 'aig-real3d-adapters.mjs','aig-real3d-lab.html','aig-real3d-lab.mjs'
+ 'aig-real3d-adapters.mjs','aig-real3d-lab.html','aig-real3d-lab.mjs',
+ 'aig-real3d-stock-removal-1-1.mjs','aig-real3d-stock-lab.html','aig-real3d-stock-lab.mjs'
 ]){
  fs.copyFileSync(sharedPath+resource,'dist/shared-3d/'+resource);
 }
