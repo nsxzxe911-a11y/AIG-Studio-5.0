@@ -1,0 +1,67 @@
+{
+  "schema": "AIG_QA_ARTIFACT_DIRECTORY_V1",
+  "recordedAt": "2026-10-22",
+  "provenance": "GitHub Actions artifact and exact source SHA checks; NOT a Render-hosted APK or EXE",
+  "releaseGate": "BLOCKED",
+  "binaryMirroredToRender": false,
+  "site": {
+    "name": "aig-dual-formal-runtime",
+    "renderServiceId": "srv-db8v565g1s2s738paemg",
+    "branch": "web/aig-dual-formal-runtime-20261016"
+  },
+  "projects": [
+    {
+      "id": "AIG-II",
+      "headSha": "8b241ec89c4991a3ef258a2d34709f77ab64325d",
+      "branch": "repair/core-first-aigii-20261021",
+      "runUrl": "https://github.com/nsxzxe911-a11y/AIG-II/actions/runs/39727007100",
+      "coreStatus": "PASS",
+      "nativeCompileStatus": "NOT_CERTIFIED_AT_RECORD_TIME",
+      "binaryStatus": "NO_VERIFIED_DOWNLOAD",
+      "notes": "Previous native compile succeeded; artifacts were blocked by GitHub Actions artifact quota."
+    },
+    {
+      "id": "AIG-Studio-5.0",
+      "headSha": "573e5903bbaf6c72e0d6b0ad6290e7dd60a9ec4b",
+      "branch": "repair/core-first-studio-20261021",
+      "runUrl": "https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39727014731",
+      "coreStatus": "PASS",
+      "nativeCompileStatus": "PASS",
+      "binaryStatus": "QA_ONLY",
+      "artifacts": [
+        {
+          "id": 12403442426,
+          "type": "ANDROID_DEBUG_APK",
+          "name": "aig-studio-core-control-android-debug-NOT-RELEASE",
+          "bytes": 5535995,
+          "archiveSha256": "6cfee816179959bde93d161b736d08002b692c190c7bc449c282d5636100c70e",
+          "expiresAt": "2026-10-29T05:19:47Z",
+          "archiveUrl": "https://api.github.com/repos/nsxzxe911-a11y/AIG-Studio-5.0/actions/artifacts/12403442426/zip"
+        },
+        {
+          "id": 12403247658,
+          "type": "WINDOWS_JVM_JAR_NOT_EXE",
+          "name": "aig-studio-core-control-windows-jar-NOT-EXE",
+          "bytes": 3986259,
+          "archiveSha256": "0322bfd8d2c27e9b332771b8876c18d5331f5fa5ad37701a64b37396e5a7ec54",
+          "expiresAt": "2026-10-29T05:19:48Z",
+          "archiveUrl": "https://api.github.com/repos/nsxzxe911-a11y/AIG-Studio-5.0/actions/artifacts/12403247658/zip"
+        }
+      ]
+    },
+    {
+      "id": "AIG-FastModel",
+      "headSha": "6b6e2a8b92b98187dcdf300952791e93c362523c",
+      "branch": "repair/core-first-fastmodel-20261021",
+      "runUrl": "https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39724426133",
+      "coreStatus": "PASS",
+      "binaryStatus": "NO_RELEASE_APK_EXE",
+      "notes": "Technical one-photo 17 bones, 9 skinned meshes and 7 clips are not approved photo likeness/character."
+    }
+  ],
+  "distributionPlan": {
+    "proposed": "Keep QA binaries in versioned immutable storage or QA prerelease assets, publish only verified links through this website with SHA/expiry, and reserve signed release channel for all Gates PASS.",
+    "blockedUntil": "Trusted durable binary storage plus readback SHA and full release verification.",
+    "doNotUse": "GitHub Actions upload-artifact for durable storage; committing large binaries directly to the Git source tree without retention."
+  }
+}
