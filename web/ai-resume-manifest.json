@@ -40,7 +40,7 @@
       "visibility": "PUBLIC",
       "source_checked": true,
       "runtime_gate": "SPARSE_XYZ_SOURCE_AND_BROWSER_VERIFIED_NATIVE_AND_RENDER_PENDING",
-      "checkpoint_note": "FastModel 7.10: physically triangulated sparse XYZ from manually matched local video A/B frames, reviewed parallel/rectified stereo, measured baseline, focal px, reprojection/parallax/inconsistent track Gate; no uncalibrated handheld video 3D claims. GitHub run 39764618930 independent 7.10 and full regression PASS: 336/336 Node 49/49 Python, 360x780 phone and 1440x900 desktop Chromium with real encoded WebM, source SHA evidence and sparse XYZ. Latest nav/docs source SHA 60a06ace2b7a4fcaa8df3a8ca426c49995ad931b full follow-up run 39764970685 checked separately. Dense human mesh, pose automation, authentic original character, native APK/EXE and Render LIVE not verified."
+      "checkpoint_note": "FastModel 7.10: physically triangulated sparse XYZ from manually matched local video A/B frames, reviewed parallel/rectified stereo, measured baseline, focal px, reprojection/parallax/inconsistent track Gate; no uncalibrated handheld video 3D claims. GitHub run 39764618930 independent 7.10 and full regression PASS: 336/336 Node 49/49 Python, 360x780 phone and 1440x900 desktop Chromium with real encoded WebM, source SHA evidence and sparse XYZ. Latest nav/docs source SHA 60a06ace2b7a4fcaa8df3a8ca426c49995ad931b full regression PASS run 39764970685 and source audit PASS 39764970634; latest independent 7.10 job still in browser dependency setup, prior 7.10 independent PASS 39764618930. Dense human mesh, pose automation, authentic original character, native APK/EXE and Render LIVE not verified."
     }
   ],
   "checks": {
@@ -129,11 +129,13 @@
     "fastmodel_7_10": "PASS_CONDITIONAL_CALIBRATED_SOURCE_VIDEO_SPARSE_3D_XYZ",
     "fastmodel_7_10_latest_core_sha": "60a06ace2b7a4fcaa8df3a8ca426c49995ad931b",
     "fastmodel_7_10_regression": "PASS_GITHUB_RUN_39764618930_NODE_336_336_PYTHON_49_49_PHONE_DESKTOP_VIDEO",
-    "fastmodel_7_10_latest_regression": "IN_PROGRESS_GITHUB_RUN_39764970685_FOR_FINAL_NAV_DOC_SHA",
+    "fastmodel_7_10_latest_regression": "PASS_GITHUB_RUN_39764970685_FULL_REGRESSION_WITH_NAV_AND_DOCS",
     "fastmodel_7_10_3d_provenance": "CALIBRATED_PARALLEL_STEREO_USER_REVIEWED_NOT_AUTOMATIC_CAMERA_TRACKING",
     "fastmodel_7_10_3d_mesh": "NOT_BUILT_SPARSE_POINTS_ONLY",
     "fastmodel_7_10_real_character_likeness": "NOT_VERIFIED",
-    "fastmodel_7_10_native_apk_exe": "NOT_VERIFIED"
+    "fastmodel_7_10_native_apk_exe": "NOT_VERIFIED",
+    "fastmodel_7_10_latest_source_audit": "PASS_GITHUB_RUN_39764970634",
+    "fastmodel_7_10_latest_independent": "PREVIOUS_PASS_GITHUB_39764618930_LATEST_39764970685_PENDING_CHROMIUM_SETUP"
   },
   "approved_invariants": [
     "Do not delete/overwrite original geometry, CAD/CAM/NC, approved RGB Authority, or FastModel assets.",
@@ -163,5 +165,5 @@
     "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
   ],
   "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
-  "last_action": "FastModel 7.10 core 60a06ace2b7a4fcaa8df3a8ca426c49995ad931b source plus original AIG site's /fastmodel/multiview-studio.html mirrored. Verified physically conditional stereo XYZ sparse point cloud, real video decode and clicked source matches, source bound JSON re-triangulation. GH 39764618930 PASS Node 336 Python 49 independent and full Chromium phone/desktop; final nav/docs run 39764970685 still in progress. No general monocular camera pose/volumetric 3D mesh or original portrait certified."
+  "last_action": "7.10 core 60a06ace2b7a4fcaa8df3a8ca426c49995ad931b and mirrored original site source. Both full source/browser regression runs 39764618930 and 39764970685 PASS (336 Node, 49 Python, real Chromium mobile and desktop synthetic video stereo XYZ); source audit 39764970634 PASS. Latest independent 7.10 run waiting for Playwright dependencies, earlier independent run 39764618930 PASS. No real auto camera calibration or complete 3D model; original Render LIVE still older."
 }
