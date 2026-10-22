@@ -106,11 +106,12 @@ $('scene-load').addEventListener('click',async()=>{
   }else say('本次載入被較新的場景請求取代，不覆蓋目前模型。');
   if(result.status==='ACTIVE_SOURCE_BOUND_GPU_SCENE'||
      result.status==='ALREADY_ACTIVE_NO_REPARSE'){
-   worldRuntime?.close();worldRuntime=null;stopWorldPlayback();
+   invalidateAIG22Storyboard('單 GLB 工作區取代來源世界，文字時間軸已停用');
+    worldRuntime?.close();worldRuntime=null;stopWorldPlayback();
   }
   report();
  }catch(error){
-  say('BLOCKED：+String(error.message||error)+
+  say('BLOCKED：'+String(error.message||error)+
    '；已保留上一個可用場景及本機原始素材。',true);report();
  }finally{loading=false;$('scene-load').disabled=false}
 });
