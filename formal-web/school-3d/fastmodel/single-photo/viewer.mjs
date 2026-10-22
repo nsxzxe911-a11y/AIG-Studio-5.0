@@ -306,7 +306,7 @@ export class PhotoViewer{
  }
  mountVerifiedWorld(root,{animationClips=[],actorClips=[],orbit=false}={}){
   if(!root?.isGroup||root.children.length===0||
-   !Array.isArray(animationClips)||typeof orbit!=='boolean)
+   !Array.isArray(animationClips)||typeof orbit!=='boolean')
    throw Error('AIG20_VALIDATED_THREE_SCENE_REQUIRED');
   if(this.movieMode||this.reviewBusy||this.actionImportBusy||
    this.skinProbe||this.animation?.story?.playing)
