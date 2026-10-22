@@ -310,6 +310,23 @@ fun main() {
     check(runCatching {
         AigTriangleShellTopology.requireClosed(vertices,faces.dropLast(1)+Triple(1,3,2))
     }.isFailure)
+    val nativeCross=AigNativeCadGeometryQueries.intersections(
+        Line(id="NCROSS_A",a=Vec2(0.0,0.0),b=Vec2(10.0,10.0)),
+        Line(id="NCROSS_B",a=Vec2(0.0,10.0),b=Vec2(10.0,0.0)))
+    check(nativeCross.size==1 && near(nativeCross.single().x,5.0))
+    val nativeTangent=AigNativeCadGeometryQueries.intersections(
+        Line(id="TANGENT",a=Vec2(-5.0,5.0),b=Vec2(5.0,5.0)),
+        Circle(id="NCIRCLE",center=Vec2(0.0,0.0),radius=5.0))
+    check(nativeTangent.size==1 && near(nativeTangent.single().y,5.0))
+    val edges=(0..3).map { i ->
+        val p=listOf(Vec2(0.0,0.0),Vec2(10.0,0.0),
+            Vec2(10.0,10.0),Vec2(0.0,10.0))
+        Line(id="OFFSET_$i",a=p[i],b=p[(i+1)%4])
+    }
+    val nativeOffset=AigNativeCadGeometryQueries.offsetClosedLineContour(edges,1.5)
+    check(nativeOffset.size==5 && near(nativeOffset[0].x,-1.5))
+    check(runCatching{AigNativeCadGeometryQueries.offsetClosedLineContour(edges,-6.0)}.isFailure)
+    println("AIG_NATIVE_CAD_ENTITY_BRIDGE_PASS|LINE_LINE|LINE_CIRCLE|CLOSED_OFFSET|COLLAPSE_BLOCK")
     println("AIG_ANALYTIC_GEOMETRY_GATE_PASS|LINE_LINE|LINE_CIRCLE|CIRCLE_TANGENT|ARC_SWEEP|CONVEX_OFFSET|INSIDE_COLLAPSE_BLOCK|CONCAVE_BLOCK|3D_CLOSED_SHELL|OPEN_OR_INVERTED_SHELL_BLOCK")
     println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|3AX_FANUC_G0_G1|6AX_C_NC_BLOCKED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE|CAD_AUTO_SIM_NC|NC_FIRST_EVENTS")
 }
