@@ -31,7 +31,7 @@
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/RuntimeLinks.kt",
-      "gitBlobSha": "55521727fd81347ff25388ffaed775570cc71727"
+      "gitBlobSha": "65e4cc6bb670bf7adaabcd398564974aae52922b"
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/Document.kt",
@@ -112,5 +112,6 @@
   "coreInventoryReview": "2026-10-22 phase one: verified source blob inventory to prevent disappearing or silently replaced core; exact SHA is NOT functional validation",
   "sourceIdentityIsNotExecutableProof": true,
   "controlGateBlockedUntilFullCoreOutcomeEvidence": true,
-  "releaseGateBlockedUntilRuntimeAndNativeEvidence": true
+  "releaseGateBlockedUntilRuntimeAndNativeEvidence": true,
+  "observerIsolationVerification": "Core Regression: initial/update observer exception fails softly and preserves MACHINE fail-closed status"
 }
