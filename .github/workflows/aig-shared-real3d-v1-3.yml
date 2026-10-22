@@ -25,6 +25,9 @@ jobs:
       - run: npm ci
       - name: Syntax and true numerical source reparse
         run: |
+          node --check aig-heroine-candidate-7-15.mjs
+          node --check aig-heroine-candidate-ui-7-15.mjs
+          node --test tests/aig-heroine-candidate-7-15.test.mjs
           node --check aig-heroine-scan-7-14.mjs
           node --check aig-heroine-scan-ui-7-14.mjs
           node --check tests/aig-heroine-scan-7-14.real-browser.mjs
@@ -131,4 +134,9 @@ jobs:
             echo 'FASTMODEL_7_13_SINGLE_PHOTO_BACKSIDE_OR_FULL_HUMAN_ACCURACY=NOT_VERIFIED'
             echo 'FASTMODEL_7_14_ACTUAL_RGB_DEPTH_NORMAL_CONFIDENCE=REQUIRES_MEASURED_STEREO_AND_REVIEWED_COLOR_SEEDS'
             echo 'FASTMODEL_7_14_REAL_APPROVED_HEROINE_FULL_BODY_AND_BACKSIDE=NOT_YET_SCANNED'
+            echo 'FASTMODEL_7_15_EDITABLE_HAIR_FACE_NECK_CLOTH_GEOMETRY=SOURCE_SEMANTIC_DRAFT'
+            echo 'FASTMODEL_7_15_ESTIMATED_DEPTH=RELATIVE_NOT_MM'
+            echo 'FASTMODEL_7_15_MEASURED_DEPTH=INDEPENDENT_CALIBRATED_STEREO_MM'
+            echo 'FASTMODEL_7_15_SKELETON=EDITABLE_ANCHORS_NOT_FULL_SKINNING'
+            echo 'FASTMODEL_7_15_GLTF=REAL_GEOMETRY_NOT_VERIFIED_1_TO_1'
           } >> "$GITHUB_STEP_SUMMARY"
