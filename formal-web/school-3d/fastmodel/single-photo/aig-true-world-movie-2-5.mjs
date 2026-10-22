@@ -138,6 +138,7 @@ export class AIG25WorldMovieRecorder{
   this.env=env;this.onState=onState;this.state='IDLE';
   this.records=[];this.recorder=null;this.captureCanvas=null;
   this.output=null;this.frameCount=0;this.videoTracks=[];
+  this.explicitRequestedFrameCount=0;this.manualFrameCaptureSupported=false;
   this._finished=null;this._resolve=null;this._reject=null;
   this.evidence=null;this.format=null;this.lastTime=-Infinity;
   this.videoStream=null;this.sourceCanvas=null;
@@ -168,6 +169,11 @@ export class AIG25WorldMovieRecorder{
    this.recorder=recorder;this.records=[];this.frameCount=0;
    this.captureCanvas=canvas;this.ctx=ctx;this.sourceCanvas=sourceCanvas;
    this.format=format;this.videoTracks=video;this.videoStream=mixed;
+   // Chromium implements CanvasCaptureMediaStreamTrack.requestFrame().
+   // In headless/desktop environments relying ONLY on periodic stream
+   // sampling can produce zero encoded frames despite a moving GLB.
+   this.manualFrameCaptureSupported=typeof video[0].requestFrame==='function';
+   this.explicitRequestedFrameCount=0;
    this.evidence={...proof,status:'LIVE_REAL_WEBGL_CAPTURE',movieWritten:false};
    this.state='RECORDING';this.lastTime=-Infinity;
    this._finished=new Promise((resolve,reject)=>{
@@ -205,6 +211,13 @@ export class AIG25WorldMovieRecorder{
     ctx.font='bold 41px sans-serif';
     const lines=content.match(/.{1,34}/gu)?.slice(0,2)||[];
     lines.forEach((x,i)=>ctx.fillText(x,960,969+i*43,1580));
+   }
+   // Request a real capture of freshly drawn WebGL canvas pixels, never
+   // a synthetic frame or a blank keep-alive. Ordinary 30 FPS captureStream
+   // remains the fallback on browsers without requestFrame().
+   if(this.manualFrameCaptureSupported){
+    this.videoTracks[0].requestFrame();
+    this.explicitRequestedFrameCount++;
    }
    this.lastTime=timeMs;this.frameCount++;
    return true;
@@ -244,6 +257,8 @@ export class AIG25WorldMovieRecorder{
    browserDecodedFrameVerified:false,outputMimeType:storedContentType,
    actualEncoderCodecMimeType:this.format.mime,
    containerExtension:this.format.ext,actualFramesComposited:this.frameCount,
+   manualCanvasFrameCaptureSupported:this.manualFrameCaptureSupported,
+   explicitCanvasCaptureRequests:this.explicitRequestedFrameCount,
    bytesEncoded:blob.size,sourceGLBsUnmodified:true,
    sourceSubtitlePixelsBurnedIntoCanvas:true,
    generatedHumanMovement:false,generatedVoice:false,
