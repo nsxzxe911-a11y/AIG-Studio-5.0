@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
+import {createAIG23SkinnedCandidate}
+ from './aig-heroine-skin-three-2-3.mjs';
 import {openAIG716AssetLibrary} from './aig-external-asset-library-7-16.mjs';
 import {AIG714_LABELS} from './aig-heroine-scan-7-14.mjs';
 import {buildAIG715HeroineCandidate,editAIG715Joint,
@@ -19,7 +21,7 @@ const serializeDepth=d=>{
  return {source_type:d.source_type,units:d.units,
   validPixels:d.validPixels,valuesAsSparseIndexDepthConfidence:observed};
 };
-export function mountAIG715CandidateStudio(readState,onPreview){
+export function mountAIG715CandidateStudio(readState,onPreview,onSkinnedPreview=()=>{}){
  if(typeof readState!=='function'||typeof onPreview!=='function')
   throw Error('AIG715_WORKSPACE_SOURCE_BINDING_REQUIRED');
  const build=$('heroine-candidate-build'),jointSelect=$('heroine-joint'),
@@ -28,10 +30,22 @@ export function mountAIG715CandidateStudio(readState,onPreview){
   info=$('heroine-candidate-proof'),saveDepth=$('heroine-depth-save'),
   saveRig=$('heroine-rig-save'),glbButton=$('heroine-candidate-glb');
  let current=null,lastIdentity=null;
+ const skinBuild=$('heroine-23-build'),skinExport=$('heroine-23-export'),
+  skinReset=$('heroine-23-reset'),skinStatus=$('heroine-23-status'),
+  skinProof=$('heroine-23-proof');
+ let skin23=null;
+ function resetSkin(reason='目前沒有已核准的 2.3 蒙皮草模'){
+  onSkinnedPreview(null);skin23=null;skinExport.disabled=true;
+  skinProof.textContent='未生成蒙皮權重';
+  skinStatus.textContent=reason;
+ }
+
  const mark=(msg,success=false)=>{
   status.textContent=msg;status.dataset.ok=String(success);
  };
  const clear=(reason='請先用上方原圖完成人工審核的 RGB 區域分離')=>{
+  resetSkin('來源已變更，先前 2.3 蒙皮預覽已釋放；原始資料保留。');
+  skinBuild.disabled=true;
   current=null;lastIdentity=null;saveDepth.disabled=true;
   saveRig.disabled=true;glbButton.disabled=true;jointSave.disabled=true;
   info.textContent=reason;
@@ -51,7 +65,7 @@ export function mountAIG715CandidateStudio(readState,onPreview){
   if(!current)return;
   info.textContent=JSON.stringify(summarizeAIG715Candidate(current),null,2);
   saveDepth.disabled=false;saveRig.disabled=false;glbButton.disabled=false;
-  refreshJoint();
+  refreshJoint();skinBuild.disabled=false;
  }
  build.addEventListener('click',()=>{
   try{
@@ -63,6 +77,7 @@ export function mountAIG715CandidateStudio(readState,onPreview){
    const sourceDigest=state.sourceInfo?.singleImageSha256??null;
    const newCandidate=buildAIG715HeroineCandidate(image,state.regions,
     {stereo:state.stereo??null,sourceDigest});
+   resetSkin('草模已重建，2.3 骨架權重需重新計算');
    current=newCandidate;
    lastIdentity=sourceDigest;
    show();onPreview(current);
@@ -81,6 +96,7 @@ export function mountAIG715CandidateStudio(readState,onPreview){
    const x=Number(xInput.value),y=Number(yInput.value);
    if(xInput.value.trim()===''||yInput.value.trim()==='')
     throw Error('JOINT_COORDINATES_REQUIRED');
+   resetSkin('使用者已修正關節位置，舊蒙皮草模已作廢');
    current=editAIG715Joint(current,jointSelect.value,{x,y,confirmed:true});
    show();onPreview(current);
    mark('已更新 '+jointSelect.value+' 骨架候選節點；這是編輯過的圖片比例座標，不是完成的 3D 蒙皮權重。',true);
@@ -104,6 +120,74 @@ export function mountAIG715CandidateStudio(readState,onPreview){
    sourceDigest:lastIdentity,
    editingDoesNotRigMeshOrInferUnknownLegs:true},
   'AIG-FastModel-7-15-Heroine-Editable-Skeleton-Garments.json');
+ });
+ skinBuild.addEventListener('click',()=>{
+  if(!current)return;
+  try{
+   resetSkin();
+   skin23=createAIG23SkinnedCandidate(current);
+   onPreview(null);onSkinnedPreview(skin23);
+   skinExport.disabled=false;
+   skinProof.textContent=JSON.stringify({
+    sourceSha:skin23.plan.sourceDigest,
+    visibleMeshGroups:Object.keys(skin23.plan.groups),
+    skinVertices:skin23.plan.vertexCount,
+    sourceTriangles:skin23.plan.triangles,
+    sharedDeformingBoneCount:skin23.bones.length,
+    realThreeSkinnedMeshCount:skin23.verifiedActualSkinnedMeshCount,
+    unreviewedJointCandidates:skin23.plan.reviewRequired,
+    boneAnimationClips:skin23.clips.map(x=>x.name),
+    measuredMillimetreDepthExcluded:true,
+    realUserAnatomyAndBacksideNotVerified:true,
+    preserveOriginalSourceFiles:true
+   },null,2);
+   skinStatus.textContent='已在既有 WebGL 畫面真實生成 '+skin23.plan.meshes+
+    ' 組獨立蒙皮、'+skin23.plan.vertexCount+' 個有權重的可見表面頂點，'+
+    '胸／頸／頭可做骨骼變形。未審核關節：'+
+    skin23.plan.reviewRequired.join('、')+
+    '。這是單照估計動畫草模，非人體 1:1 掃描。';
+  }catch(e){
+   skinExport.disabled=true;skinStatus.textContent='BLOCKED：'+
+    String(e.message||e)+'。原始圖、RGB 分區與 7.13 實測深度保留。';
+  }
+ });
+ skinReset.addEventListener('click',()=>{
+  resetSkin('已還原 7.15 工作草模；原始圖片、分區及關節編輯仍保留。');
+  if(current)onPreview(current);
+ });
+ skinExport.addEventListener('click',async()=>{
+  if(!skin23)return;
+  skinExport.disabled=true;
+  try{
+   const result=await new GLTFExporter().parseAsync(skin23.scene,{
+    binary:true,onlyVisible:true,trs:true,animations:skin23.clips
+   });
+   if(!(result instanceof ArrayBuffer)||result.byteLength<100)
+    throw Error('SKINNED_GLTF2_BINARY_MISSING');
+   const blob=new Blob([result],{type:'model/gltf-binary'}),
+    url=URL.createObjectURL(blob),link=document.createElement('a');
+   link.href=url;link.download='AIG-Real3D-2-3-Visible-Source-Skinned-Draft-NOT-1TO1.glb';
+   link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   let stored=false,why='',vault=null;
+   try{
+    vault=await openAIG716AssetLibrary();
+    await vault.importBlob(blob,{
+     category:'character',title:'Real3D 2.3 可變形女主角相對深度骨架草模',
+     tags:['女主角','蒙皮','來源照片','骨骼','2_3_動作草模'],
+     source:'GENERATED_DERIVED',modelAccuracy:'ESTIMATED',
+     coordinateUnits:'RELATIVE',derivedFrom:skin23.plan.sourceDigest
+    });
+    stored=true;
+   }catch(e){why=String(e.message||e)}
+   finally{vault?.close()}
+   skinStatus.textContent=stored?
+    '已匯出真 SkinnedMesh 骨架動畫 GLB 並保存至主程式外素材庫。仍屬使用者需審核的單照草模。':
+    '真 SkinnedMesh 動畫 GLB 已下載，外部素材庫未存入（'+why+
+    '）；來源草模和原圖未受影響。';
+  }catch(e){
+   skinStatus.textContent='BLOCKED：'+String(e.message||e)+
+    '，原本 7.15 模型及 7.13 實測表面未被覆蓋。';
+  }finally{skinExport.disabled=false}
  });
  glbButton.addEventListener('click',async()=>{
   if(!current)return;
