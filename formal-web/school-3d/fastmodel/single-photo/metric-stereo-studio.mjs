@@ -41,9 +41,44 @@ resize();
 let prior=0;
 renderer.setAnimationLoop(t=>{
  const dt=Math.min(.1,Math.max(0,(t-prior)/1000));prior=t;
- controls.update(dt);renderer.render(scene,camera);
+ controls.update(dt);skin23Mixer?.update(dt);renderer.render(scene,camera);
 });
-let candidatePreview=null;
+let candidatePreview=null,skin23Preview=null,skin23Mixer=null;
+function releaseSkinnedPreview(){
+ if(!skin23Preview)return;
+ if(skin23Mixer){
+  skin23Mixer.stopAllAction();skin23Mixer.uncacheRoot(skin23Preview);
+ }
+ scene.remove(skin23Preview);
+ const geo=new Set(),mat=new Set(),skeletons=new Set();
+ skin23Preview.traverse(node=>{
+  if(node.geometry)geo.add(node.geometry);
+  for(const m of Array.isArray(node.material)?node.material:
+   node.material?[node.material]:[])mat.add(m);
+  if(node.isSkinnedMesh&&node.skeleton)skeletons.add(node.skeleton);
+ });
+ for(const s of skeletons)s.dispose();
+ for(const g of geo)g.dispose();
+ for(const m of mat)m.dispose();
+ skin23Preview=null;skin23Mixer=null;
+ if(model)model.visible=true;
+}
+function renderAIG23SkinPreview(result){
+ releaseSkinnedPreview();
+ if(!result)return;
+ releaseCandidatePreview();
+ skin23Preview=result.scene;
+ scene.add(skin23Preview);
+ if(model)model.visible=false;
+ skin23Mixer=new THREE.AnimationMixer(skin23Preview);
+ const action=skin23Mixer.clipAction(result.clips[0]);
+ action.reset().play();
+ controls.target.set(0,0,0);
+ camera.position.set(.23,.14,1.8);
+ camera.near=.001;camera.far=1000;camera.updateProjectionMatrix();
+ controls.update();
+}
+
 function releaseCandidatePreview(){
  if(!candidatePreview)return;
  scene.remove(candidatePreview);
@@ -58,6 +93,7 @@ function releaseCandidatePreview(){
  if(model)model.visible=true;
 }
 function renderCandidatePreview(candidate){
+ if(candidate!==null)releaseSkinnedPreview();
  if(candidate===null){releaseCandidatePreview();return;}
  if(!candidate?.geometryGroups)throw Error('AIG715_MISSING_REAL_CANDIDATE_GEOMETRY');
  const sourceCanvas=document.getElementById('heroine-photo');
@@ -292,7 +328,8 @@ const heroine714=mountAIG714HeroineScan(()=>result&&leftCanvas&&sourceInfo?{
  surface:result,leftCanvas,sourceInfo,
  imageWidth:leftCanvas.width,imageHeight:leftCanvas.height
 }:null);
-mountAIG715CandidateStudio(()=>heroine714.getCandidateInputs(),renderCandidatePreview);
+mountAIG715CandidateStudio(()=>heroine714.getCandidateInputs(),
+ renderCandidatePreview,renderAIG23SkinPreview);
 window.addEventListener('pagehide',()=>{
- renderer.setAnimationLoop(null);releaseCandidatePreview();cleanupModel();controls.dispose();renderer.dispose();
+ renderer.setAnimationLoop(null);releaseSkinnedPreview();releaseCandidatePreview();cleanupModel();controls.dispose();renderer.dispose();
 },{once:true});
