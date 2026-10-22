@@ -136,6 +136,24 @@ object CamFeatureRecognizer {
         val arcs=c.filterIsInstance<Arc>();if(abs(arcs[0].radius-arcs[1].radius)>CNC_RESOLUTION_MM)return false
         return arcs.all{abs(it.start.distanceTo(it.end)-2.0*it.radius)<=CNC_RESOLUTION_MM*2.0}
     }
+    fun requireSafeAutoCamProfiles(entities:List<Entity>) {
+        val loops=CadAdvancedGeometry.components(entities).filter{component->
+            component.size>=3 && component.all{it is Line} &&
+                CadProfileTools.analyze(component).closed
+        }
+        val rings=loops.map{loop->
+            val ordered=CadAdvancedGeometry.orderClosed(loop)
+            require(ordered!=null && CadClosedContourTopology.inspect(ordered)!=null){
+                "CAD_CLOSED_LINEWORK_TOPOLOGY_BLOCKED"
+            }
+            CadClosedContourTopology.inspect(ordered)!!
+        }
+        for(i in rings.indices)for(j in i+1 until rings.size){
+            require(!CadClosedContourTopology.edgesTouch(rings[i],rings[j])){
+                "CAD_OVERLAPPING_CONTOURS_BLOCKED"
+            }
+        }
+    }
     fun recognize(entities:List<Entity>):List<CamRecognizedFeature>{
         val components=CadAdvancedGeometry.components(entities)
             .filter{c->CadProfileTools.analyze(c).closed}
