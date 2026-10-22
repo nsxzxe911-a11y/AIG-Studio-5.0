@@ -62,7 +62,10 @@ try{
    });
    const prev=await evidence();
    assert.equal(prev.replay.cumulativeRemovedMm3,second.replay.cumulativeRemovedMm3);
-   await page.locator('#block').fill('0');
+   await page.locator('#block').evaluate(input=>{
+    input.value='0';
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+   });
    await page.locator('#block').dispatchEvent('change');
    await page.waitForFunction(()=>{
     try{return JSON.parse(document.getElementById('evidence').textContent).replay.blockIndex===0;}
