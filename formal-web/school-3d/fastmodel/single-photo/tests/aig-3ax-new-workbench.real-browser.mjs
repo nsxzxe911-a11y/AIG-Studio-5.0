@@ -48,6 +48,26 @@ try{
     const frac=sizes.panel/(sizes.panel+sizes.controls);
     assert.ok(frac>=.65&&frac<=.75,'3D viewport requires roughly 70% desktop width, got '+frac);
    }
+   // Source verification is separate from numeric stock and never provides
+   // fake buttons, fake machine geometry or a revoked 438 screenshot.
+   assert.equal(await page.locator('#authority-panel').count(),1);
+   assert.equal(await page.locator('#authority-preview').isVisible(),false);
+   await page.locator('#authority-panel').evaluate(e=>{e.open=true;});
+   await page.route('**/visual-authority/mobile/05_3AX.png',route=>
+    route.fulfill({status:200,contentType:'image/png',body:Buffer.from('FORGED_PREVIEW_IMAGE')}));
+   await page.locator('#authority-check').click();
+   await page.waitForFunction(()=>document.getElementById('authority-status').textContent
+    .includes('AIG_3AX_ORIGINAL_BYTE_LENGTH_MISMATCH'));
+   assert.equal(await page.locator('#authority-preview').isVisible(),false);
+   await page.unroute('**/visual-authority/mobile/05_3AX.png');
+   await page.locator('#authority-file').setInputFiles({
+    name:'05_3AX.png',mimeType:'image/png',buffer:Buffer.from('REVOKED_OR_UNVERIFIED')
+   });
+   await page.waitForFunction(()=>document.getElementById('authority-status').textContent
+    .includes('本機圖片驗證 BLOCKED'));
+   assert.equal(await page.locator('#authority-preview').isVisible(),false);
+   assert.equal((await evidence()).replay.cumulativeRemovedMm3,0,
+    'visual Authority verification must never mutate numeric CNC stock');
    const before=await page.locator('#view').evaluate(c=>c.toDataURL('image/png'));
    await page.locator('#next').click();
    await page.waitForFunction(()=>JSON.parse(document.getElementById('evidence').textContent).replay.blockIndex===1);
@@ -114,7 +134,8 @@ try{
     scope:'Real3D 1.3 limited read-only NC + new independent web layout',
     device:device.name,sizes,removedMm3:54,realWebGL:true,
     originalNCMutatedBySimulation:false,actualMachineCommandsSent:0,
-    localFileImportAndExport:true,localNCReloadRecoveryVerified:true,
+    localFileImportAndExport:true,authoritySourceFailClosed:true,
+    noUnverifiedOriginalAsRuntimeSkin:true,localNCReloadRecoveryVerified:true,
     conflictingNCWriteBlocked:true,unsupportedFanucG43Blocked:true,
     productionAuthorityModelApproved:false,nativeAPKEXEApproved:false
    },null,2));
