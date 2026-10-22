@@ -25,6 +25,13 @@ jobs:
       - run: npm ci
       - name: Syntax and true numerical source reparse
         run: |
+          node --check aig-external-asset-library-7-16.mjs
+          node --check aig-native-asset-library-7-16.mjs
+          node --check asset-library-studio.mjs
+          node --check scene-map-studio.mjs
+          node --check movie-ui.mjs
+          node --check tests/aig-asset-library-7-16.real-browser.mjs
+          node --test tests/aig-asset-library-7-16.native.test.mjs
           node --check aig-heroine-candidate-7-15.mjs
           node --check aig-heroine-candidate-ui-7-15.mjs
           node --test tests/aig-heroine-candidate-7-15.test.mjs
@@ -63,6 +70,9 @@ jobs:
       - name: Offline build retains 1.0 1.1 1.2 and 1.3 source exact
         run: |
           npm run build
+          test -s dist/asset-library-studio.html
+          test -s dist/asset-library-studio.js
+          node --check dist/asset-library-studio.js
           test -s dist/metric-stereo-studio.html
           test -s dist/metric-stereo-studio.js
           npx esbuild tests/aig-glb-gpu-1-7-lab.mjs --bundle --format=iife --platform=browser --target=chrome100 --outfile=dist/aig17-browser-bundle.js
@@ -92,6 +102,7 @@ jobs:
           node tests/aig-glb-gpu-v1-7.real-browser.mjs
           node tests/aig-metric-stereo-7-13.real-browser.mjs
           node tests/aig-heroine-scan-7-14.real-browser.mjs
+          node tests/aig-asset-library-7-16.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -109,6 +120,12 @@ jobs:
         with:
           name: FastModel-Real3D-1-7-Actual-GLTF2-Animation-GPU-Not-Heroine-Or-Native-FPS
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-gpu-v1-7/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-16-External-UserData-Asset-Vault-Real-Browser-Not-Native-APK
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-external-asset-library-7-16/
           if-no-files-found: warn
       - name: Exact proof boundary
         if: always()
@@ -139,4 +156,8 @@ jobs:
             echo 'FASTMODEL_7_15_MEASURED_DEPTH=INDEPENDENT_CALIBRATED_STEREO_MM'
             echo 'FASTMODEL_7_15_SKELETON=EDITABLE_ANCHORS_NOT_FULL_SKINNING'
             echo 'FASTMODEL_7_15_GLTF=REAL_GEOMETRY_NOT_VERIFIED_1_TO_1'
+            echo 'FASTMODEL_7_16_PERSON_BUILDING_MAP_SCENE_TRANSITION_ASSETS=CONTENT_ADDRESSED_LOCAL_USER_DATA'
+            echo 'FASTMODEL_7_16_REUSE=APPROVED_TAG_AND_HISTORY_ONLY_NOT_MODEL_TRAINING'
+            echo 'FASTMODEL_7_16_NATIVE_APPDATA_AND_ANDROID_FILESDIR=ADAPTER_IMPLEMENTED_NATIVE_APP_WIRING_NOT_VERIFIED'
+            echo 'FASTMODEL_7_16_EAGER_READING_ALL_MODELS_AT_STARTUP=DISABLED'
           } >> "$GITHUB_STEP_SUMMARY"
