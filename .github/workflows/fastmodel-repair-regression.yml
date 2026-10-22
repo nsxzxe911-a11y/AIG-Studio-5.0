@@ -46,6 +46,7 @@ jobs:
           node tests/aig-face-depth-7-6.real-browser.mjs
           node tests/aig-hair-neck-7-7.real-browser.mjs
           node tests/aig-spatial-rig-7-8.real-browser.mjs
+          node tests/aig-continuous-scan-7-9.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -106,6 +107,13 @@ jobs:
         with:
           name: FastModel-7-8-XYZ-Spatial-Head-Neck-Not-Real-Human-Certification
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-spatial-7-8/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-9-Video-Camera-Continuous-Scan-Not-3D-Anatomy
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-continuous-7-9/
           if-no-files-found: warn
 
       - name: Distinguish real video playback from unverified character animation
@@ -325,4 +333,57 @@ jobs:
             echo 'FULL_CHARACTER_AND_REFERENCE_LIKENESS=NOT_APPROVED'
             echo 'NATIVE_APK_EXE_GPU_FPS=NOT_VERIFIED'
             echo 'MMO_MULTIPLAYER=NOT_IMPLEMENTED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  continuous-scan-7-9:
+    name: Independent 7.9 local video camera continuous scan Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Native source syntax and deterministic continuous memory
+        run: |
+          node --check aig-continuous-scan-7-9.mjs
+          node --check continuous-studio.mjs
+          node --check tests/aig-continuous-scan-7-9.real-browser.mjs
+          node --test tests/aig-continuous-scan-7-9.test.mjs
+      - name: Full offline viewer copies intact 7.9 artifacts
+        run: |
+          npm run build
+          test -s dist/continuous-studio.html
+          test -s dist/continuous-studio.mjs
+          test -s dist/aig-continuous-scan-7-9.mjs
+          cmp aig-continuous-scan-7-9.mjs dist/aig-continuous-scan-7-9.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real local WebM and getUserMedia continuous capture on phone desktop
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig79-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-continuous-scan-7-9.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-9-Independent-Real-Video-Camera-Keyframe-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-continuous-7-9/
+          if-no-files-found: warn
+      - name: Explicit 3D-reconstruction truth gate
+        if: always()
+        run: |
+          {
+            echo 'VIDEO_CAMERA_FRAME_CAPTURE=REAL_BROWSER_API'
+            echo 'KEYFRAME_MEMORY=LOCAL_BOUNDED_FRAME_DESCRIPTORS'
+            echo 'ACTUAL_AUTO_CAMERA_POSE_SOLVED=NO'
+            echo 'UNSEEN_TRUE_3D_FACE_RECOVERED=NO'
+            echo 'USER_HEROINE_LIKENESS=NOT_VERIFIED'
+            echo 'NATIVE_APK_EXE=NOT_VERIFIED'
+            echo 'MMO_ONLINE=NOT_IMPLEMENTED'
           } >> "$GITHUB_STEP_SUMMARY"
