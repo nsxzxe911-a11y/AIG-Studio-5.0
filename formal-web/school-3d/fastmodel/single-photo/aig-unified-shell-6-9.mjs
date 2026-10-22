@@ -148,9 +148,19 @@ export function initAIGUnifiedShell(doc=globalThis.document){
  panels.model.insertBefore(modelNotice,returnCreate);
  const technicalHelp=node(doc,'details',{id:'aig-unified-model-technical'});
  technicalHelp.append(node(doc,'summary',{},'技術模型與舊版測試工具（不代表正式人物）'));
+ let keepSinglePhotoPrimary=false;
  for(const el of Array.from(panels.model.children)){
   if(el===modelNotice||el===returnCreate||el===importGLB||
    el.tagName==='H2')continue;
+  // The tested ONE-PHOTO 17-bone + bilateral real 3D action belongs in
+  // the actual 3D Model workbench. Keep the original nodes/listeners visible,
+  // while genuinely older technology remains inside the disclosure panel.
+  if(el.tagName==='H3'&&el.textContent.trim().startsWith('AIG FastModel 6.4'))
+   keepSinglePhotoPrimary=true;
+  if(keepSinglePhotoPrimary){
+   if(el.id==='aig64-single-status')keepSinglePhotoPrimary=false;
+   continue;
+  }
   technicalHelp.append(el);
  }
  panels.model.append(technicalHelp);
