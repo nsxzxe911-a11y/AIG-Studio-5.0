@@ -43,6 +43,7 @@ jobs:
           node tests/aig-face-material-7-3.real-browser.mjs
           node tests/aig-avatar-rig-7-4.real-browser.mjs
           node tests/aig-landmark-rig-7-5.real-browser.mjs
+          node tests/aig-face-depth-7-6.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -89,6 +90,13 @@ jobs:
         with:
           name: FastModel-7-5-Reviewed-Photo-Landmark-XYZ-Not-Human-Approval
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-landmarks-7-5/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-6-3D-Depth-Prior-Not-Photogrammetry
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-depth-7-6/
           if-no-files-found: warn
 
       - name: Distinguish real video playback from unverified character animation
@@ -152,4 +160,55 @@ jobs:
             echo 'TRUE_ANATOMICAL_HEAD=NOT_VERIFIED'
             echo 'REAL_HEROINE_FACE=NOT_CERTIFIED'
             echo 'MMO_MULTIPLAYER=NOT_IMPLEMENTED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  depth-7-6:
+    name: Independent source-photo estimated-depth XYZ gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Real estimated depth numerical shape/roundtrip tests
+        run: |
+          node --check aig-face-depth-7-6.mjs
+          node --check depth-studio.mjs
+          node --test tests/aig-face-depth-7-6.test.mjs
+      - name: Offline viewer production source copy
+        run: |
+          npm run build
+          test -s dist/depth-studio.html
+          test -s dist/depth-studio.mjs
+          test -s dist/aig-face-depth-7-6.mjs
+          cmp aig-face-depth-7-6.mjs dist/aig-face-depth-7-6.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real phone/desktop estimated nose/eye/lip Z depth browser checks
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig76-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-face-depth-7-6.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-6-Isolated-Estimated-Z-Depth-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-depth-7-6/
+          if-no-files-found: warn
+      - name: Truth gate
+        if: always()
+        run: |
+          {
+            echo 'SOURCE_PHOTO_2D_POINTS=MANUALLY_REVIEWED'
+            echo 'THREE_DIMENSIONAL_Z_PRIORS=EXPLICIT_ESTIMATES_NOT_CAMERA_MEASUREMENTS'
+            echo 'REAL_ANATOMICAL_HUMAN_FACE=NOT_VERIFIED'
+            echo 'REAL_HAIR_NECK_CONTINUITY=NOT_VERIFIED'
+            echo 'FASTMODEL_NATIVE_APK_EXE=NOT_VERIFIED'
+            echo 'MMO_ONLINE=NOT_IMPLEMENTED'
           } >> "$GITHUB_STEP_SUMMARY"
