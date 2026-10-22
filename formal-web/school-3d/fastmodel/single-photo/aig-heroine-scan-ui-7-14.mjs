@@ -24,6 +24,47 @@ function clear(){
  evidence.textContent='等待已校正的雙照 3D 網格與人物色彩分區';
  const c=overlay.getContext('2d');c.clearRect(0,0,overlay.width,overlay.height);
 }
+function paintMetricDepth(){
+ const canvas=$('heroine-depth'),caption=$('heroine-depth-range');
+ if(!source?.surface){
+  caption.textContent='沒有實測立體深度；單張色彩不能推算 Z 的真值';
+  return;
+ }
+ const w=source.imageWidth,h=source.imageHeight;
+ canvas.width=w;canvas.height=h;
+ const ctx=canvas.getContext('2d',{willReadFrequently:true}),
+  image=ctx.createImageData(w,h),zs=new Float32Array(w*h),
+  counts=new Uint8Array(w*h),s=source.surface;
+ let near=Infinity,far=-Infinity;
+ for(let i=0;i<s.vertexCount;i++){
+  const u=s.uvs[2*i],v=s.uvs[2*i+1],
+   x=Math.min(w-1,Math.max(0,Math.round(u*(w-1)))),
+   y=Math.min(h-1,Math.max(0,Math.round((1-v)*(h-1)))),
+   z=s.positions[i*3+2],at=y*w+x;
+  if(!Number.isFinite(z)||z<=0||s.confidence[i]<.1)continue;
+  zs[at]=z;counts[at]=1;near=Math.min(near,z);far=Math.max(far,z);
+ }
+ if(!Number.isFinite(near)){
+  caption.textContent='這組照片沒有可靠的已量測 Z 值，深度圖維持空白';
+  return;
+ }
+ const span=Math.max(far-near,.001);
+ for(let i=0;i<zs.length;i++){
+  const p=4*i;
+  if(!counts[i]){
+   image.data[p]=4;image.data[p+1]=11;image.data[p+2]=20;image.data[p+3]=255;
+   continue;
+  }
+  const t=Math.max(0,Math.min(1,(zs[i]-near)/span));
+  image.data[p]=Math.round(235*(1-t)+25*t);
+  image.data[p+1]=Math.round(100+90*(1-Math.abs(2*t-1)));
+  image.data[p+2]=Math.round(35*(1-t)+245*t);
+  image.data[p+3]=255;
+ }
+ ctx.putImageData(image,0,0);
+ caption.textContent='實測 Z '+near.toFixed(2)+'～'+far.toFixed(2)+
+  ' mm；橘紅=近，藍=遠，暗色=未可靠重建。這是左相機光心距離，不是皮膚厚度。';
+}
 function preview(){
  if(!source)return;
  src.width=overlay.width=source.leftCanvas.width;
@@ -59,7 +100,7 @@ function attachSource(readCurrent){
  }
  if(source.leftCanvas.width!==source.imageWidth||source.leftCanvas.height!==source.imageHeight)
   throw Error('AIG714_SOURCE_IMAGE_DIMENSIONS_MISMATCH');
- preview();info('已接回經校正的雙照毫米 XYZ。選擇女主角部位並在原照片點選真實顏色；每種色域需經你確認。');
+ preview();paintMetricDepth();info('已接回經校正的雙照毫米 XYZ。選擇女主角部位並在原照片點選真實顏色；每種色域需經你確認。');
 }
 export function mountAIG714HeroineScan(readCurrent){
  if(typeof readCurrent!=='function'||!src||!overlay||!stage)
@@ -74,6 +115,7 @@ export function mountAIG714HeroineScan(readCurrent){
   const x=Math.min(src.width-1,Math.max(0,Math.floor((e.clientX-r.left)/r.width*src.width))),
    y=Math.min(src.height-1,Math.max(0,Math.floor((e.clientY-r.top)/r.height*src.height)));
   seeds.push({label,x,y,reviewed:true});
+  $('heroine-reviewed').checked=false;
   regions=null;product=null;exportButton.disabled=true;
   preview();
   info('已選取 '+label+' 的實際來源像素 ('+x+','+y+
@@ -81,6 +123,7 @@ export function mountAIG714HeroineScan(readCurrent){
  });
  $('heroine-clear').addEventListener('click',()=>{
   seeds=[];regions=null;product=null;exportButton.disabled=true;
+  $('heroine-reviewed').checked=false;
   preview();info('已清除本輪分區錨點，原始圖片與 3D 核心保持不變。');
  });
  $('heroine-grow').addEventListener('click',()=>{
@@ -89,6 +132,7 @@ export function mountAIG714HeroineScan(readCurrent){
    const ctx=source.leftCanvas.getContext('2d',{willReadFrequently:true});
    const image=ctx.getImageData(0,0,src.width,src.height);
    regions=growAIG714ReviewedColorRegions(image,seeds);
+   $('heroine-reviewed').checked=false;
    product=null;exportButton.disabled=true;preview();
    info('已完成來源 RGB 色域延展建議；尚需審查分割邊緣，不能直接推算深度或宣稱自動語意正確。',true);
   }catch(e){info('BLOCKED：'+String(e.message||e));}
