@@ -11,9 +11,10 @@ import {createAIG13SingleBlockReplay,advanceAIG13SingleBlockReplay,
  seekAIG13SingleBlockReplay,auditAIG13SingleBlockReplay,
  currentAIG13ReplayBoundary} from './aig-real3d-step-replay-1-3.mjs';
 const $=id=>document.getElementById(id);
-const renderer=createAIG3DRenderer($('view'),{
+const GPU_RENDER_OPTIONS=Object.freeze({
  pixelRatio:1.05,maxFramePixels:680000,preserveDrawingBuffer:true
 });
+let renderer=createAIG3DRenderer($('view'),GPU_RENDER_OPTIONS);
 const source='LOCAL_REPARSED_LIMITED_NC_WORKING_COPY_NO_MACHINE_OUTPUT';
 let parsed=null,replay=null,scene=null,busy=false,epoch=0,drag=null,previousMesh=null;
 const displayToolMesh=createAIG3DCylinder({radius:1,height:6,segments:20,
@@ -195,6 +196,38 @@ $('camera').addEventListener('click',()=>{
  try{paint('CAMERA_ONLY_NO_STOCK_CHANGE');}catch(e){status('BLOCKED：'+String(e.message||e));}
 });
 const canvas=$('view');
+let pageDisposed=false;
+// WebGL context loss is a GPU lifecycle event, NOT an instruction to clear
+// NC, CAD state, voxel occupancy or the last verified simulation working copy.
+canvas.addEventListener('webglcontextlost',event=>{
+ event.preventDefault(); // browser may restore this WebGL context
+ cancel(); // halt in-flight replay/rewind at the last committed block
+ status('GPU_CONTEXT_LOST：已停止繪圖，保留原 NC 與已驗證的材料工作副本；等待 WebGL 恢復。');
+ gates();
+});
+canvas.addEventListener('webglcontextrestored',()=>{
+ if(pageDisposed)return;
+ const oldRenderer=renderer,camera=oldRenderer.getCamera?.();
+ try{
+  // The previous programs, uniform locations and GPU buffers are invalid
+  // after restoration. Construct a NEW renderer; never reuse old handles.
+  const candidate=createAIG3DRenderer(canvas,GPU_RENDER_OPTIONS);
+  if(candidate.status!=='READY')throw Error('GPU_REINIT_NOT_READY');
+  if(camera)candidate.setCamera(camera);
+  renderer=candidate;
+  oldRenderer.destroy();
+  previousMesh=null; // the replacement renderer has its own mesh cache
+  if(replay){
+   paint('WEBGL_CONTEXT_RESTORED_SAME_NUMERICAL_NC_WORKING_COPY');
+   status('GPU 已恢復：重新建立 WebGL 網格，保留 NC 來源與先前材料移除數值。',true);
+  }else status('GPU 已恢復；尚無已解析的 NC 工作副本。',true);
+  gates();
+ }catch(error){
+  status('BLOCKED：GPU 重建失敗，保留原 NC 工作副本；無法認證目前 3D 畫面：'+
+   String(error.message||error));
+  gates();
+ }
+});
 canvas.addEventListener('pointerdown',e=>{
  if(renderer.status!=='READY')return;canvas.setPointerCapture(e.pointerId);
  drag={id:e.pointerId,x:e.clientX,y:e.clientY};
@@ -218,6 +251,7 @@ canvas.addEventListener('wheel',e=>{
  try{paint('CAMERA_ZOOM_ONLY');}catch(err){status('BLOCKED：'+err.message);}
 },{passive:false});
 window.addEventListener('pagehide',()=>{
+ pageDisposed=true;
  cancel();if(previousMesh)renderer.releaseMesh?.(previousMesh);
  renderer.destroy();
 },{once:true});
