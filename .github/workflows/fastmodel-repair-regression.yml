@@ -40,6 +40,7 @@ jobs:
           node tests/aig-reverse-7-0-real-browser.mjs
           node tests/aig-implicit-volume-7-1.real-browser.mjs
           node tests/aig-volumetric-deform-7-2.real-browser.mjs
+          node tests/aig-face-material-7-3.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -65,6 +66,13 @@ jobs:
         with:
           name: FastModel-7-2-XYZ-Tetra-PBD-Not-Human-Approval
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-volumetric-7-2/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-3-Reviewed-Photo-Makeup-Not-Human-3D
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-face-makeup-7-3/
           if-no-files-found: warn
 
       - name: Distinguish real video playback from unverified character animation
