@@ -25,6 +25,8 @@ jobs:
       - run: npm ci
       - name: Syntax and true numerical source reparse
         run: |
+          node --check viewer.mjs
+          node --check scene-runtime-studio.mjs
           node --check aig-text-world-storyboard-2-2.mjs
           node --test tests/aig-text-world-storyboard-2-2.test.mjs
           node --check aig-map-model-alignment-2-1.mjs
