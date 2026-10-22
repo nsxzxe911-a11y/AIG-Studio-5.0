@@ -108,6 +108,10 @@
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/AiLayoutComposer.kt",
       "gitBlobSha": "46ea3c618d9c6a9f12fc08f13331d79b7dec5adc"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/AigReadOnlyMotionPreview.kt",
+      "gitBlobSha": "6781564a705e1db97c2630a28e1bc5e1ee2aceba"
     }
   ],
   "machineTransportVerification": "NO_REAL_HANDSHAKE_LINK_STARTS_DISCONNECTED_CLICK_WARNING",
@@ -121,5 +125,6 @@
   "commonPocketContourProof": "CoreRecoverySmoke rejects ignored CAD entities, open/duplicate rectangle edges and non-finite circles; checks valid rectangle Fanuc G1",
   "manualEntryExitRepairEvidence": "Vertical Safe-Z rapid point follows edited G1 entry/exit XY; fail-closed without verified approach/retract; tested in executable CoreRecoverySmoke",
   "finiteCamConfigurationProof": "CNC core CAM settings rejects NaN/Inf for diameter, depth, safeZ, feed, lead in/out; executable CoreRecoverySmoke",
-  "formalRgbUnifiedContract": "Core-first UI phase: 10-page order HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC/AI; verified source theme parity and fail-closed surface ID; approved assets must be separately proven by byte SHA and screenshots"
+  "formalRgbUnifiedContract": "Core-first UI phase: 10-page order HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC/AI; verified source theme parity and fail-closed surface ID; approved assets must be separately proven by byte SHA and screenshots",
+  "readOnlyInteroperabilityContract": "G0/G1 tool-center preview exported from real native CNC path; golden SHA256 shared with FastModel; no machine execution or rig / collision approval"
 }
