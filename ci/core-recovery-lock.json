@@ -127,7 +127,7 @@
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/AigMechanicalDrawingCore.kt",
-      "gitBlobSha": "f0ba9519441b54bc407cf61ef5e1161be3ed6f0c"
+      "gitBlobSha": "a4a4e8dcdcfdad3775cc530f3ee28eb567b53497"
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/AigMechanicalNativeBridge.kt",
@@ -151,5 +151,6 @@
   "cadActualCamSafetyGate": "Real AUTO CAM Engine requires validated closed linework before G1/NC; bowtie/overlapping reject; independent open-line paths preserved in smoke test.",
   "analyticCadCoreGate": "Bounded exact 2D line/arc/circle intersections, convex polygon signed offsets with inward collapse rejection, and 3D oriented closed triangle shell proof; not a complete 3D B-rep or NC tool compensation",
   "realDrawingEntityAnalyticQuery": "Real CAD Entity bridges to analytic line-line, line-circle, circle-circle, segment-arc; +native rectangular/closed-line convex offset with safety rejects, tested before UI wiring.",
-  "mechanicalDrawingGate": "Real native CAD geometry to drawing dimension links; validated features/views/sections/datum/GD&T reference/BOM/hole patterns, no NC authority; smoke positive and adversarial cases"
+  "mechanicalDrawingGate": "Real native CAD geometry to drawing dimension links; validated features/views/sections/datum/GD&T reference/BOM/hole patterns, no NC authority; smoke positive and adversarial cases",
+  "mechanicalDrawingLiveMeasurementGate": "Inspected native dimensions require actual live CAD measured values keyed by dimension ID, <=0.0005 mm display rounding; CAD changing 50→48 mm with same ID or deleted measurement rejects, no NC output."
 }
