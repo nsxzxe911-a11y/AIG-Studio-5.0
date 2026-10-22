@@ -313,6 +313,7 @@ object CamEngine {
             "Unsafe CAM A/B/C orientation"
         }
         if (snapshot.entities.isEmpty()) return emptyList()
+        CamFeatureRecognizer.requireSafeAutoCamProfiles(snapshot.entities)
         val radiusComp = settings.toolDiameter / 2.0
         val radialSign = if (settings.contourSide == ContourSide.OUTSIDE) 1.0 else -1.0
         val lineNormalSign = if (settings.contourSide == ContourSide.OUTSIDE) -1.0 else 1.0
