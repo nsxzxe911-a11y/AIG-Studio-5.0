@@ -12,7 +12,7 @@ import {createAIG13SingleBlockReplay,advanceAIG13SingleBlockReplay,
  currentAIG13ReplayBoundary} from './aig-real3d-step-replay-1-3.mjs';
 const $=id=>document.getElementById(id);
 const renderer=createAIG3DRenderer($('view'),{
- pixelRatio:1.05,maxFramePixels:680000
+ pixelRatio:1.05,maxFramePixels:680000,preserveDrawingBuffer:true
 });
 const source='LOCAL_REPARSED_LIMITED_NC_WORKING_COPY_NO_MACHINE_OUTPUT';
 let parsed=null,replay=null,scene=null,busy=false,epoch=0,drag=null,previousMesh=null;
