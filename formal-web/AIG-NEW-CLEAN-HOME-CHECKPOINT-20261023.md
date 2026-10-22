@@ -22,3 +22,16 @@
 3. 手機/桌面 UI UX 實圖驗收；檢查導覽、按鈕位置、主要 viewport 65–75%、無水平擠壓，數值 G1 切削有真材料移除而 G0 為 0。
 4. 正式 Authority 圖和 3AX 真實機台幾何獨立 SHA 驗證後，才將 1.4/1.5 來源綁定的真 3AX 模型接上新工作頁。
 5. 一頁一頁接 CAD/CAM/SIM/4AX/5AX/6AX/NC/AI，保留 Button ID→Shared Command→Runtime/Core 的真鏈路，不把工程殼重新貼回來。
+
+
+## 2026-10-23 continuation — local-first 3AX NC source recovery
+- Confirmed via GitHub source readback: aig-new-home.html, 3ax-nc-workbench.html, 3ax-nc-workbench.css, 3ax-nc-workbench-ui.mjs, original 1.3 numerical WebGL renderer, and legacy main site all exist on the intended original Render branch.
+- Read-only source contract check: 43 UI selector occurrences resolved against DOM IDs, 0 duplicate IDs, index.html links to the new home, and the 3AX home link points back to the clean entry.
+- New 3AX local-first Working Copy saves only under isolated key AIG_V2_3AX_NC_WORKING_COPY_LOCAL, keeping old app storage untouched; only saves nonblank text smaller than contract budget.
+- On reload, restores exact NC text and fires input to invalidate old replay/evidence. The operator must parse again; unsafe G43 remains blocked.
+- Detects localStorage changes from other tabs / races, freezes automatic writes to prevent overwriting external edits and directs users to export NC text; storage API failure does not clear edit buffer.
+- Updated real Chromium test aig-3ax-new-workbench.real-browser.mjs checks persistence across reload, unsupported G43 remains BLOCKED, conflict cannot overwrite storage.
+- Do not equate static selector checks with runtime browser Gate. Phone/desktop Playwright workflow completion is not established. Deployment still shows original Render LIVE c778ad3ddaeafd982ce7a0d305ffbf48ebb85d09, NOT this new site. The public Render pages and WebGL controls have not been validated live.
+- Render service autoDeploy is configured yes; GitHub API source commits have not yet yielded an observed new live deployment. Do not claim the new home is online or silently swap the original site's live content.
+- Preserve old site and original CAD/CAM/NC data; do not restore retired lower-tier mobile-runtime.html/studio-375.html.
+- Next exact bridge: validate GitHub Actions + actual Render publish source SHA, then HTTP/phone/desktop screenshots; only afterward connect verified 3AX Authority mesh (not screenshot placeholder), and CAD/CAM/SIM/4-6AX.
