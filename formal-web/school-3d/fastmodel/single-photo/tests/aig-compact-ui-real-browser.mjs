@@ -1,6 +1,6 @@
 import {chromium} from 'playwright';
 import {readFileSync} from 'node:fs';
-import {mkdir} from 'node:fs/promises';
+import {mkdir,writeFile} from 'node:fs/promises';
 const out=process.env.AIG_UI_SCREENSHOTS||'artifacts/fastmodel-compact-ui';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.AIG_CHROMIUM_EXECUTABLE||undefined,args:[
@@ -15,6 +15,7 @@ try{
   page.on('pageerror',e=>{failures.push(device.name+': '+e.message);console.log('AIG Browser page error:',e.message);});
   page.on('requestfailed',r=>console.log('AIG Browser failed request:',r.url(),r.failure()?.errorText));
   page.on('response',r=>{if(r.status()>=400)console.log('AIG Browser HTTP',r.status(),r.url());});
+  try{
   const url=process.env.AIG_UI_TEST_URL||'http://127.0.0.1:8765/index.html';
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
   try{await page.waitForSelector('#aig-unified-tabs',{timeout:16000});}
@@ -297,8 +298,15 @@ try{
     actualHumanLimbAnimationVerified:false}));
   // A 2-second clip can reach its real end before the second screenshot
   // is sampled. Stop only if still running; natural completion is valid.
-  if(await page.locator('#aig65-stop').isEnabled())
-   await page.locator('#aig65-stop').click();
+  // Playback may finish between isEnabled and a delayed Playwright click.
+  // Use the REAL STOP callback in a single browser task, or recognize that
+  // natural completion already disabled this control.
+  const stopResult=await page.evaluate(()=>{
+   const button=document.getElementById('aig65-stop');
+   if(!button||button.disabled)return 'NATURAL_COMPLETION';
+   button.click();return 'REAL_STOP_CALLBACK';
+  });
+  console.log('AIG_ANIMATION_STOP_TRANSITION',device.name,stopResult);
   await page.waitForFunction(()=>!document.querySelector('#aig65-record').disabled,
    null,{timeout:10000});
   await page.screenshot({path:out+'/'+device.name+'-03-photo-no-wav-playing.png'});
@@ -347,7 +355,33 @@ try{
     generated:true,played:true,recordedBlob:true,videoUrl:blobVideo.slice(0,12)
   }));
   console.log('AIG compact real Chromium '+device.name+' PASS',JSON.stringify(evidence));
-  await page.close();
+  }catch(error){
+   // Synthetic CI fixture only; do not capture private uploaded portraits.
+   const ids=['aig65-build','aig65-play','aig65-stop','aig65-record',
+    'aig-cnc-motion-load','aig-cnc-motion-play','aig-cnc-motion-stop'];
+   const diagnostic=await page.evaluate(ids=>({
+    controls:ids.map(id=>{const el=document.getElementById(id);
+     return {id,exists:!!el,disabled:el?.disabled??null,
+      visible:!!el&&getComputedStyle(el).display!=='none'};}),
+    animationStatus:document.getElementById('aig65-status')?.textContent?.slice(0,220),
+    motionStatus:document.getElementById('aig-cnc-motion-status')?.textContent?.slice(0,220),
+    activeTab:[...document.querySelectorAll('#aig-unified-tabs [aria-selected="true"]')]
+     .map(x=>x.id),
+    canvasReady:!document.getElementById('aig-cnc-motion-canvas')?.hidden
+   }),ids).catch(e=>({captureError:String(e)}));
+   const evidence={schema:'AIG_UI_FAILURE_EVIDENCE_V1',device:device.name,
+    viewport:device.viewport,errorCode:error?.name||'UNKNOWN',
+    message:String(error?.message||error).slice(0,900),
+    diagnostic,jsErrors:failures.slice(-8),
+    status:'FAIL_REQUIRES_TRIAGE',releaseCertified:false};
+   await writeFile(out+'/'+device.name+'-failure-evidence.json',
+    JSON.stringify(evidence,null,2)+'\n')
+    .catch(e=>console.error('AIG_EVIDENCE_WRITE_BLOCKED',e.message));
+   await page.screenshot({path:out+'/'+device.name+'-failure.png',fullPage:false})
+    .catch(e=>console.error('AIG_FAILURE_SCREENSHOT_BLOCKED',e.message));
+   console.error('AIG_UI_FAILURE_EVIDENCE',JSON.stringify(evidence));
+   throw error;
+  }finally{await page.close();}
  }
  if(failures.length)throw Error('AIG_BROWSER_JS_ERRORS: '+failures.join(' | '));
 }finally{await browser.close();}
