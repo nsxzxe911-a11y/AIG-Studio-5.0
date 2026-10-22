@@ -64,7 +64,7 @@ $('source').addEventListener('change',async()=>{
 });
 source.addEventListener('click',e=>{
  if(!photo||$('method').value!=='background')return;
- const box=source.getBoundingClientRect(),x=Math.floor((e.clientX-box.left)*photo.width/box.width),y=Math.floor((e.clientY-box.top)*photo.height/box.height);
+ const box=source.getBoundingClientRect(),factor=Math.min(box.width/photo.width,box.height/photo.height),left=(box.width-photo.width*factor)/2,top=(box.height-photo.height*factor)/2,x=Math.floor((e.clientX-box.left-left)/factor),y=Math.floor((e.clientY-box.top-top)/factor);
  bg=[Math.max(0,Math.min(photo.width-1,x)),Math.max(0,Math.min(photo.height-1,y))];
  state('背景點已設定為 '+bg.join(',')+'，請按建立 3D 體積。');
 });
