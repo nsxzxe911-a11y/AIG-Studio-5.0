@@ -2,6 +2,10 @@ import {build} from 'esbuild';
 import fs from 'node:fs';
 await build({entryPoints:['app.mjs'],bundle:true,format:'iife',platform:'browser',target:['chrome100','edge100'],outfile:'dist/app.js',minify:true,legalComments:'eof'});
 fs.copyFileSync('index.html','dist/index.html');
+await build({entryPoints:['asset-library-studio.mjs'],bundle:true,
+ format:'iife',platform:'browser',target:['chrome100','edge100'],
+ outfile:'dist/asset-library-studio.js',minify:true,legalComments:'eof'});
+fs.copyFileSync('asset-library-studio.html','dist/asset-library-studio.html');
 await build({entryPoints:['metric-stereo-studio.mjs'],bundle:true,
  format:'iife',platform:'browser',target:['chrome100','edge100'],
  outfile:'dist/metric-stereo-studio.js',minify:true,legalComments:'eof'});
