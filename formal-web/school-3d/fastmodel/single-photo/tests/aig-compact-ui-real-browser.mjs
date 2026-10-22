@@ -355,6 +355,61 @@ try{
     generated:true,played:true,recordedBlob:true,videoUrl:blobVideo.slice(0,12)
   }));
   console.log('AIG compact real Chromium '+device.name+' PASS',JSON.stringify(evidence));
+  // Real phone+desktop local single upper-body photo → 17-bone base
+  // GLB → click true full-body action → inspect downloaded 7-clip GLB.
+  await page.locator('#aig-unified-tab-advanced').click();
+  const encoded=await page.evaluate(()=>{
+   const c=document.createElement('canvas');c.width=320;c.height=480;
+   const x=c.getContext('2d');x.fillStyle='#eeebe6';x.fillRect(0,0,320,480);
+   x.fillStyle='#443536';
+   x.beginPath();x.ellipse(160,110,39,70,0,0,Math.PI*2);x.fill();
+   x.beginPath();x.ellipse(160,291,85,145,0,0,Math.PI*2);x.fill();
+   return c.toDataURL('image/png').split(',')[1];
+  });
+  await page.locator('#aig64-single-photo').setInputFiles({
+   name:'SYNTHETIC_CI_UPPERBODY.png',mimeType:'image/png',
+   buffer:Buffer.from(encoded,'base64')});
+  await page.locator('#aig64-single-build').click();
+  await page.waitForFunction(()=>{
+   const t=document.getElementById('aig64-single-status')?.textContent||'';
+   return t.includes('BLOCKED')||(!document.getElementById(
+    'aig64-single-motion-upgrade').disabled&&t.includes('17 骨'));
+  },null,{timeout:45000});
+  const status=page.locator('#aig64-single-status');
+  if((await status.innerText()).includes('BLOCKED'))
+   throw Error('AIG_ONE_PHOTO_BASE_GLB_BLOCKED '+await status.innerText());
+  await page.locator('#aig64-single-motion-upgrade').click();
+  await page.waitForFunction(()=>{
+   const t=document.getElementById('aig64-single-status')?.textContent||'';
+   return t.includes('BLOCKED')||t.includes('7 段真 GLB');
+  },null,{timeout:45000});
+  if((await status.innerText()).includes('BLOCKED')||
+     await page.locator('#aig64-single-download').isDisabled())
+   throw Error('AIG_REAL_BILATERAL_LIMB_CONTROL_BLOCKED '+await status.innerText());
+  await page.evaluate(()=>{
+   const old=URL.createObjectURL.bind(URL);
+   URL.createObjectURL=blob=>{window.__aigTrue7ClipBlob=blob;return old(blob);};
+  });
+  await page.locator('#aig64-single-download').click();
+  const finalGlb=await page.evaluate(async()=>{
+   const blob=window.__aigTrue7ClipBlob;if(!blob)return null;
+   const buf=await blob.arrayBuffer(),v=new DataView(buf);
+   const gltf=JSON.parse(new TextDecoder().decode(
+    new Uint8Array(buf,20,v.getUint32(12,true))));
+   return {size:buf.byteLength,magic:v.getUint32(0,true),
+    clips:gltf.animations?.length,skinnedBones:gltf.skins?.[0]?.joints?.length,
+    meshes:gltf.meshes?.length,motionSchema:gltf.extras?.motionSchema,
+    release:gltf.extras?.releaseAllowed};
+  });
+  if(finalGlb?.magic!==0x46546c67||finalGlb.clips!==7||
+     finalGlb.skinnedBones!==17||finalGlb.meshes!==9||
+     finalGlb.release!==false||
+     finalGlb.motionSchema!=='AIG_FASTMODEL_REAL_TECHNICAL_FULLBODY_MOTION_V1')
+   throw Error('AIG_REAL_DOWNLOAD_SEVEN_CLIP_GLB_INVALID '+JSON.stringify(finalGlb));
+  await page.screenshot({path:out+'/'+device.name+'-06-real-3d-body-motion.png'});
+  console.log('AIG_REAL_ONE_PHOTO_FULLBODY_MOTION_BROWSER_PASS',device.name,
+   JSON.stringify({bytes:finalGlb.size,clips:7,bones:17,meshes:9,
+    realBothArmsAndLegs:true,photoIdentityCertified:false}));
   }catch(error){
    // Synthetic CI fixture only; do not capture private uploaded portraits.
    const ids=['aig65-build','aig65-play','aig65-stop','aig65-record',
