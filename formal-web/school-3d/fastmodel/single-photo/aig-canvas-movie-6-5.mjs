@@ -168,12 +168,21 @@ export class AIG65CanvasRecorder{
    throw Error('AIG65_REAL_1080P_FLAT_SOURCE_REQUIRED');
   if(sourceSHA256!==null&&!hex(sourceSHA256))throw Error('AIG65_VIDEO_SHA_INVALID');
   const MediaRecorderImpl=this.env.MediaRecorder,format=chooseMovieFormat(MediaRecorderImpl);
+  // Reject unsupported recording environments before acquiring camera/canvas tracks.
+  if(typeof this.env.MediaStream!=='function')throw Error('AIG65_MEDIA_STREAM_UNAVAILABLE');
   const video=canvas.captureStream(AIG65_MOVIE_SIZE.fpsTarget);
   const tracks=video.getVideoTracks?.()||[];
   if(!tracks.length)throw Error('AIG65_REAL_VIDEO_TRACK_REQUIRED');
-  const audio=audioDestination?.stream?.getAudioTracks?.()||[];
-  if(typeof this.env.MediaStream!=='function')throw Error('AIG65_MEDIA_STREAM_UNAVAILABLE');
-  const stream=new this.env.MediaStream([...tracks,...audio]);
+  // Canvas video tracks are owned by this attempt; an audioDestination supplied
+  // by the caller is NOT ours to stop if stream construction fails.
+  let audio=[],stream;
+  try {
+   audio=audioDestination?.stream?.getAudioTracks?.()||[];
+   stream=new this.env.MediaStream([...tracks,...audio]);
+  } catch(error) {
+   for(const track of tracks)try{track.stop();}catch{}
+   throw error;
+  }
   this.state='RECORDING';this.frames=0;this.chunks=[];
   this.canvas=canvas;this.tracks=tracks;this.stream=stream;
   this.sourceSHA256=sourceSHA256;this.format=format;this.audioTracks=audio.length;
