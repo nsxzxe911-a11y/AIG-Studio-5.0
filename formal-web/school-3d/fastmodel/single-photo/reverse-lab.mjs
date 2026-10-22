@@ -74,7 +74,7 @@ function draw(){
  offsetX=(canvas.width-image.width*scale)/2;
  offsetY=(canvas.height-image.height*scale)/2;
  ctx.save();ctx.translate(offsetX,offsetY);ctx.scale(scale,scale);
- ctx.globalAlpha=contours?.rings?.length?.62:1;
+ ctx.globalAlpha=contours && contours.rings.length ? 0.62 : 1;
  ctx.drawImage(image.bitmap,0,0,image.width,image.height);
  ctx.globalAlpha=1;
  if(contours){
