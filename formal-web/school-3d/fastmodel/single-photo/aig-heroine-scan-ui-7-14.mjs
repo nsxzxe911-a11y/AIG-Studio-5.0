@@ -314,6 +314,10 @@ export function mountAIG714HeroineScan(readCurrent){
  });
  document.addEventListener('aig713:surface-ready',()=>attachSource(readCurrent));
  return Object.freeze({refresh:()=>attachSource(readCurrent),
+  getCandidateInputs:()=>source?.leftCanvas&&regions?{
+   canvas:source.leftCanvas,regions,sourceInfo:source.sourceInfo,
+   stereo:source.surface??null,reviewed:!!$('heroine-reviewed').checked
+  }:null,
   getEvidence:()=>product?{
    schema:product.schema,vertices:product.physicallyMeasuredVertexCount,
    triangles:product.triangleCount,colorsAndSemanticsReviewed:true,
