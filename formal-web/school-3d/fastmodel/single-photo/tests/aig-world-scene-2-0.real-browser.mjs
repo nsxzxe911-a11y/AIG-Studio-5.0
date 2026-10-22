@@ -115,12 +115,13 @@ try{
    await page.locator('#world-key-add').click();
    await page.waitForFunction(()=>document.getElementById('world-proof')
     .textContent.includes('"keyId": "camera-2"'));
-   await page.locator('#world-scrub').fill('1');
+   await page.locator('#world-scrub').evaluate(el=>{el.value='1';el.dispatchEvent(new Event('input',{bubbles:true}));});
    assert.match(await page.locator('#world-status').textContent(),/預覽真實相機軌跡/);
    await page.locator('#world-play').click();
    await page.waitForFunction(()=>document.getElementById('world-status')
     .textContent.includes('正在以同一個'),null,{timeout:5000});
    await page.locator('#world-pause').click();
+   await page.waitForFunction(()=>document.querySelectorAll('#world-saved option').length>=4);
    // Invalid third model does not destroy successful two-model GPU world.
    const goodId=before.id;
    await page.screenshot({path:out+'/'+device.name+'-two-source-world.png',fullPage:true});
@@ -128,6 +129,7 @@ try{
     {waitUntil:'load'});
    await page.waitForFunction(()=>document.getElementById('stats')
     .textContent.includes('儲存項目 6 筆'));
+   count=6;
    await importAsset('corrupt.glb','model/gltf-binary','building',
     '破損 GLB 來源（需阻擋）',Buffer.from('this is not a gltf2'),'錯誤,來源');
    await page.goto('http://127.0.0.1:8765/scene-runtime-studio.html',
