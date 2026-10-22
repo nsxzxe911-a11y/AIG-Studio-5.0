@@ -72,13 +72,13 @@ const lineVs=[
 ].join('\n');
 const lineFs=['precision mediump float;uniform vec4 uColor;',
  'void main(){gl_FragColor=uColor;}'].join('\n');
-export function createAIG3DRenderer(canvas,{pixelRatio=1.25,maxFramePixels=1050000,background=[.004,.012,.024,1]}={}){
+export function createAIG3DRenderer(canvas,{pixelRatio=1.25,maxFramePixels=1050000,preserveDrawingBuffer=false,background=[.004,.012,.024,1]}={}){
  if(!canvas||typeof canvas.getContext!=='function'||!finite(pixelRatio)||pixelRatio<.5||
  !Number.isInteger(maxFramePixels)||maxFramePixels<200000||maxFramePixels>3200000||
  pixelRatio>3||!Array.isArray(background)||background.length!==4||
  !background.every(v=>finite(v)&&v>=0&&v<=1))throw Error('AIG3D_RENDER_TARGET_INVALID');
- const gl=canvas.getContext('webgl2',{alpha:false,antialias:true,depth:true})||
-  canvas.getContext('webgl',{alpha:false,antialias:true,depth:true});
+ const gl=canvas.getContext('webgl2',{alpha:false,antialias:true,depth:true,preserveDrawingBuffer})||
+  canvas.getContext('webgl',{alpha:false,antialias:true,depth:true,preserveDrawingBuffer});
  if(!gl)return {status:'WEBGL_UNAVAILABLE',
   render(){return{status:'WEBGL_UNAVAILABLE'};},destroy(){},releaseMesh(){return false;},getCamera(){return null;},
   setCamera(){throw Error('WEBGL_UNAVAILABLE');}};
