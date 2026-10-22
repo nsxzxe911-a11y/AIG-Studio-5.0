@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407">
+<meta name="description" content="AIG-II 3AX 手機版原圖 47 區域逆向重建，真 WebGL G0/G1 NC-first 3D 工件，暫不接 CNC 真機。">
+<title>AIG-II｜手機 3AX 真 3D 逆向工程</title>
+<link rel="stylesheet" href="./3ax-mobile-workspace.css">
+</head>
+<body>
+<a class="skip" href="#live-view">跳至 3D 加工視窗</a>
+<div class="device" id="mobile-3ax-workspace" data-authority-id="AIGII-MOBILE-3AX-CURRENT-20261016">
+  <header class="aig-head">
+   <a href="./aig-new-home.html" class="logo" data-button-id="NAV_HOME" data-command-id="SITE.HOME">
+    <strong>AIG<span> II</span></strong><span class="cnc-text">CNC</span>
+    <small>智慧加工 · 3D 工作區</small>
+   </a>
+   <div class="head-status" role="status"><span class="status-led" aria-hidden="true"></span><strong>離線模擬</strong><span>MACHINE DISCONNECTED</span></div>
+   <a class="head-link" href="#nc-panel" data-button-id="NAV_NC" data-command-id="VIEW.NC_WORKING_COPY">NC</a>
+  </header>
+  <nav class="module-nav" aria-label="手機 CNC 頁面">
+   <a href="./aig-new-home.html" data-button-id="NAV_HOME" data-command-id="SITE.HOME">首頁</a>
+   <button type="button" disabled title="CAD 頁尚未完成正式接線" data-button-id="NAV_CAD">CAD</button>
+   <button type="button" disabled title="CAM 頁尚未完成正式接線" data-button-id="NAV_CAM">CAM</button>
+   <button type="button" disabled title="SIM 頁尚未完成正式接線" data-button-id="NAV_SIM">SIM</button>
+   <a href="#live-view" aria-current="page" class="selected" data-button-id="NAV_3AX" data-command-id="VIEW.3AX">3AX</a>
+   <button type="button" disabled title="A 軸運動學未驗證" data-button-id="NAV_4AX">4AX</button>
+   <button type="button" disabled title="A/B 軸運動學未驗證" data-button-id="NAV_5AX">5AX</button>
+   <button type="button" disabled title="A/B/C 軸運動學未驗證" data-button-id="NAV_6AX">6AX</button>
+   <a href="#nc-panel" data-button-id="NAV_NC" data-command-id="VIEW.NC_WORKING_COPY">NC</a>
+   <button type="button" disabled data-button-id="NAV_AI">AI</button>
+  </nav>
+  <main>
+   <section class="machine-layout" aria-label="3AX 大型加工視窗與即時資訊">
+    <div id="live-view" class="machine-view">
+     <div class="view-heading"><strong>3AX · 真數值 3D</strong><span>NC-first / G0-G1</span></div>
+     <div class="canvas-wrap">
+      <canvas id="view" width="960" height="800" aria-label="NC 數值體素真正移除後的 WebGL 三維工件，非原圖機台模型；拖曳旋轉視角"></canvas>
+      <div class="stage-caption">真 WebGL 工件 · 非核准真機外殼</div>
+      <div class="axis-overlay"><span>X <output id="axis-x">—</output></span><span>Y <output id="axis-y">—</output></span><span>Z <output id="axis-z">—</output></span></div>
+      <div class="camera-toolbar" aria-label="3D 真相機視角控制">
+       <button type="button" data-3ax-camera="iso" data-button-id="CAM_ISO" data-command-id="VIEW.CAMERA.ISO">模視</button>
+       <button type="button" data-3ax-camera="top" data-button-id="CAM_TOP" data-command-id="VIEW.CAMERA.TOP">上視</button>
+       <button type="button" data-3ax-camera="front" data-button-id="CAM_FRONT" data-command-id="VIEW.CAMERA.FRONT">前視</button>
+       <button type="button" data-3ax-camera="left" data-button-id="CAM_LEFT" data-command-id="VIEW.CAMERA.LEFT">左視</button>
+       <button type="button" data-3ax-camera="right" data-button-id="CAM_RIGHT" data-command-id="VIEW.CAMERA.RIGHT">右視</button>
+       <button type="button" data-3ax-camera="reset" data-button-id="CAM_RESET" data-command-id="VIEW.CAMERA.RESET">重置</button>
+       <button type="button" data-3ax-camera="fit" data-button-id="CAM_FIT" data-command-id="VIEW.CAMERA.FIT">適合</button>
+       <button type="button" data-3ax-camera="zoom-in" data-button-id="CAM_ZOOM_IN" data-command-id="VIEW.CAMERA.ZOOM_IN">＋</button>
+       <button type="button" data-3ax-camera="zoom-out" data-button-id="CAM_ZOOM_OUT" data-command-id="VIEW.CAMERA.ZOOM_OUT">－</button>
+      </div>
+     </div>
+     <div class="progress-row">
+      <label for="block">NC 單節進度</label><input id="block" type="range" min="0" max="1" value="0" disabled step="1">
+     </div>
+     <div class="transport" aria-label="3AX NC 回放">
+      <button type="button" id="reset" data-button-id="NC_RESET" data-command-id="NC.REPLAY.RESET">|◀<small>首節</small></button>
+      <button type="button" id="prev" disabled data-button-id="NC_PREV" data-command-id="NC.REPLAY.PREV">◀<small>上一節</small></button>
+      <button type="button" id="stop-replay" data-3ax-stop data-button-id="NC_PAUSE" data-command-id="NC.REPLAY.PAUSE">Ⅱ<small>暫停</small></button>
+      <button type="button" id="next" disabled data-button-id="NC_NEXT" data-command-id="NC.REPLAY.NEXT">▶<small>下一節</small></button>
+      <button type="button" id="simulate" disabled data-button-id="NC_LAST" data-command-id="NC.REPLAY.ALL">▶▶<small>整段</small></button>
+     </div>
+     <div class="run-metrics">
+      <div><span>移除體積</span><output id="removed">0.000</output><small>mm³</small></div>
+      <div><span>剩餘材料</span><output id="remain">0.000</output><small>mm³</small></div>
+      <div><span>網格面數</span><output id="triangle">0</output><small>Triangles</small></div>
+     </div>
+     <p id="block-status" class="source-progress" role="status">等待 NC 解析</p>
+    </div>
+    <aside class="data-sidebar" aria-label="真數值狀態資訊">
+     <section><h2>機台座標 <small>非機台實測</small></h2><p>X/Y/Z 取自 NC 工作副本；未連接控制器。</p><div class="side-value">XYZ / SIM ONLY</div></section>
+     <section><h2>工作座標 G54</h2><p>僅接受目前解析器支援的 G21／G90／G54。</p><div class="side-value">LOCAL SOURCE</div></section>
+     <section><h2>刀具資訊</h2><p>目前為數值圓柱刀具 Ø2 mm 的切削近似；非真實刀柄／機台幾何。</p><div class="side-value">Ø2 / VOXEL</div></section>
+     <section><h2>加工參數</h2><p>G0 不移除材料；G1 從原 NC 逐節計算。刀長 H、五軸碰撞尚未認證。</p><div class="side-value">READ ONLY</div></section>
+     <section><h2>素材資訊</h2><p>Stock 16×10×5 mm · 原始 0.5 mm 體素，可切換解析度重新演算。</p><div class="side-value">NUMERICAL STOCK</div></section>
+    </aside>
+   </section>
+   <section class="display-layers" aria-label="真正的 WebGL 顯示圖層">
+    <strong>顯示圖層</strong>
+    <label><input type="checkbox" data-3ax-layer="stock" data-button-id="LAYER_STOCK" checked>工件</label>
+    <label><input type="checkbox" data-3ax-layer="tool" data-button-id="LAYER_TOOL" checked>刀具</label>
+    <label><input type="checkbox" data-3ax-layer="path" data-button-id="LAYER_PATH" checked>刀路</label>
+    <span class="blocked">夾具：無核准模型</span>
+   </section>
+   <section class="control-grid" aria-label="手機 CNC 模擬控制">
+    <div class="jog-disabled"><button type="button" disabled data-button-id="JOG">JOG<br>真機移動未連接</button></div>
+    <fieldset class="speed-options"><legend>數值回放速度</legend>
+     <button data-3ax-rate="25" type="button" aria-pressed="false" data-button-id="SPEED25">25%</button>
+     <button data-3ax-rate="50" type="button" aria-pressed="false" data-button-id="SPEED50">50%</button>
+     <button data-3ax-rate="100" type="button" aria-pressed="true" data-button-id="SPEED100">100%</button>
+     <button data-3ax-rate="200" type="button" aria-pressed="false" data-button-id="SPEED200">200%</button>
+    </fieldset>
+    <fieldset class="quality-options"><legend>體素品質 / 真數值</legend>
+     <select id="voxel" data-button-id="SIM_VOXEL_SIZE" aria-label="切削體素尺寸">
+      <option value="1">快速 · 1.00 mm</option>
+      <option value=".5" selected>標準 · 0.50 mm</option>
+      <option value=".25">精細 · 0.25 mm</option>
+     </select>
+     <button type="button" disabled>真機模型 · 未驗證</button>
+    </fieldset>
+    <button type="button" id="emergency-pause" data-3ax-stop class="safe-stop" data-button-id="EMERGENCY_STOP" data-command-id="NC.REPLAY.PAUSE">■ 暫停模擬<small>非真機急停</small></button>
+   </section>
+   <details class="nc-source" open id="nc-panel">
+    <summary>NC 編輯與來源檔案</summary>
+    <div class="nc-inner">
+     <p>Working Copy 由本機保存；輸入變更後必須重新解析，不能使用舊切削數值。真機通訊已封鎖。</p>
+     <label for="nc">G21 / G90 / G54 · G0/G1 有限語法</label>
+     <textarea id="nc" autocomplete="off" spellcheck="false">(AIG phone NC-first numerical preview - not Fanuc executable)
+G21 G90 G54
+S2300 M3
+G0 X-6 Y0 Z10
+G1 Z1 F150
+G1 X6 Y0 Z1
+G0 Z10
+M5
+M30</textarea>
+     <input type="file" id="nc-upload" accept=".nc,.txt,text/plain" hidden aria-label="選擇本機 NC 副本">
+     <div class="nc-buttons">
+      <button id="parse" type="button" data-button-id="NC_PARSE" data-command-id="NC.PARSE">重新解析 NC</button>
+      <button id="import-nc" type="button" data-button-id="NC_IMPORT_LOCAL" data-command-id="NC.IMPORT.LOCAL">讀入 NC</button>
+      <button id="export-nc" type="button" data-button-id="NC_EXPORT_LOCAL" data-command-id="NC.EXPORT.LOCAL">匯出 NC</button>
+      <button id="camera" type="button" data-button-id="CAMERA_CORE_RESET" data-command-id="VIEW.CAMERA.RESET">相機回正</button>
+     </div>
+     <p id="status" class="status" role="status" aria-live="polite">等待解析 NC 副本</p>
+     <output id="file-message" aria-live="polite"></output>
+    </div>
+   </details>
+   <details class="advanced">
+    <summary>3AX RGB 原圖逆向區域／CAD 平面尺度校準</summary>
+    <p>原圖 SHA 已鎖定，建立 47 區域比例對應；只把原圖當作設計基準。圖片沒有真實機台深度，不能由它自行推算 Z 或刀具／夾具安全距離。</p>
+    <p id="reverse-status" role="status">正在驗證 47 個逆向區域與來源 SHA……</p>
+    <p>CAD 比例須另外提供至少四個同平面「圖片像素 ↔ CAD X/Y 毫米」量測點；目前未提供，不做任意比例的 3D 機台輸出。</p>
+    <a href="./3ax-nc-workbench.html">原 3AX 桌面／技術工作頁</a>
+   </details>
+   <details class="advanced" id="authority-panel">
+    <summary>手機正版原圖查核（非可按介面）</summary>
+    <p>來源 AIGII-MOBILE-3AX-CURRENT-20261016，864×1536，實際檔案為 JPEG 編碼但名稱為 05_3AX.png。原生 4K、Windows 和真機 GLB 尚未驗收。</p>
+    <div class="authority-actions">
+     <button id="authority-check" type="button" data-button-id="3AX_AUTHORITY_CHECK_SOURCE">核對網站原圖</button>
+     <button id="authority-pick" type="button" data-button-id="3AX_AUTHORITY_COMPARE_LOCAL">比對本機原圖</button>
+     <input id="authority-file" type="file" accept="image/png,image/jpeg,.png,.jpg" hidden>
+    </div>
+    <output id="authority-status">等待核對正式原圖實體檔。</output>
+    <img id="authority-preview" alt="已通過 SHA 核對的原始 RGB 參考圖，不可點擊" hidden>
+   </details>
+   <details class="advanced" id="proof-panel">
+    <summary>技術驗證／原始數值證據</summary>
+    <pre id="evidence">尚未解析</pre>
+   </details>
+  </main>
+  <footer class="bottom-nav">
+   <a href="./aig-new-home.html">首頁</a><a aria-current="page" href="#live-view">3AX</a><a href="#nc-panel">NC</a>
+   <a href="./aig-download-center.html">下載</a><button type="button" disabled>JOG 未接機</button>
+  </footer>
+</div>
+<script type="module" src="./shared-3d/aig-real3d-replay-lab.mjs"></script>
+<script type="module" src="./3ax-nc-workbench-ui.mjs"></script>
+<script type="module" src="./3ax-authority-visual-ui.mjs"></script>
+<script type="module" src="./3ax-mobile-workspace.mjs"></script>
+</body>
+</html>
