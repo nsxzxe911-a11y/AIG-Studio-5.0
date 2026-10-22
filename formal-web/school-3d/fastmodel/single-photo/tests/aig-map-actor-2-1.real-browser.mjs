@@ -120,10 +120,20 @@ try{
    };
    await choose('world-map','校園真 XY 地圖');
    await page.locator('#world-new').click();
+   await page.waitForFunction(()=>document.getElementById('world-status')
+    .textContent.includes('已建立來源座標一致'));
    await choose('world-asset','角色測試模型');
    await page.locator('#world-add').click();
+   await page.waitForFunction(()=>{
+    try{return JSON.parse(document.getElementById('world-proof')
+     .textContent).objects.length===1}catch{return false}
+   });
    await choose('world-asset','建築真 GLB');
    await page.locator('#world-add').click();
+   await page.waitForFunction(()=>{
+    try{return JSON.parse(document.getElementById('world-proof')
+     .textContent).objects.length===2}catch{return false}
+   });
    const before=JSON.parse(await page.locator('#world-proof').textContent());
    assert.equal(before.objects.length,2);
    await page.locator('#world-preview').click();
