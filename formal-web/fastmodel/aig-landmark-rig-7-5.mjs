@@ -204,7 +204,7 @@ export function renderAIG75LandmarkAvatar(rig,image,{expression={},cosmetics={},
   pixels.set([...rgb,255],at);
  }
  return {schema:'AIG_FASTMODEL_7_5_LANDMARK_ANCHORED_XYZ_RENDER',
-  width,height,pixels,hitPixels,photoPixels,neutralRearPixels,makeupPixels,expression:expr,
+  width,height,pixels,hitPixels,photoPixels,neutralRearPixels,makeupPixels,expression:expr,cameraYaw:yaw,cameraPitch:pitch,
   quality,sourceDepthEstimated:true,landmarksManuallyReviewed:true,
   truePhotographic3DHeadRecovered:false,actualMultiplayerServer:false};
 }
