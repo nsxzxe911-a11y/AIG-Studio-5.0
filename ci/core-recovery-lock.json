@@ -159,7 +159,7 @@
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/index.html",
-      "gitBlobSha": "4d4859ce985a1bae5c4ec7de473370f0677ff191"
+      "gitBlobSha": "e962aa50dd928cd2f71b89c4e4f114896a575c62"
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-motion-preview-readonly.mjs",
@@ -196,5 +196,14 @@
   "fullBodyMotionControlClosure": "After core 252/252 PASS, independent AIG64→AIG61 REAL upgrade action binds ButtonID/CommandID to existing single-photo generated GLB, audits bilateral limb vertex deformation before SHA/new output, preserves old 5-clip source on blocked action, all production likeness and collision claims remain false.",
   "fullBodyFormalModelUiLocation": "Single photo / native 17-bone + seven clip upgrade controls remain original DOM+callbacks and are no longer hidden inside technical <details>; older testing tools are disclosure-only.",
   "pixelObservationRoute20261022": "Source-image SHA + transparent alpha/uniform background colour key + connected component count + sampled RGB and silhouette measurements; user-selected HUMAN/ANIMAL/PLANT domain; plants/animals evidence-only, never fake human GLB; human technical GLB preserved, real media likeness/skin physics still unverified",
-  "multiclassDomainRoutingV1": "Eleven top-level class hierarchy (house/building, vehicle, sports, mechanical CAD), color independently tagged; classifier missing/low confidence/ambiguous/unknown classes fail closed; no model inference or 3D production claimed"
+  "multiclassDomainRoutingV1": "Eleven top-level class hierarchy (house/building, vehicle, sports, mechanical CAD), color independently tagged; classifier missing/low confidence/ambiguous/unknown classes fail closed; no model inference or 3D production claimed",
+  "auditedFastModelIndexPresentationOnly20261022": {
+    "originalLockedBlobSHA": "4d4859ce985a1bae5c4ec7de473370f0677ff191",
+    "newLockedBlobSHA": "e962aa50dd928cd2f71b89c4e4f114896a575c62",
+    "independentByteEqualityVerified": true,
+    "exactDifference": "Only additive 2026-10-22 CSS to constrain mobile tab/nav overflow and one FastModel 7.0–7.12 navigation link row. Removing CSS and nav produces byte-identical prior locked index.html, as verified; zero core runtime JS modifications.",
+    "changesCoreRuntimeCode": false,
+    "doesNotCertifyAnimationsOrNativeBinaries": true,
+    "lockStillFailClosed": true
+  }
 }
