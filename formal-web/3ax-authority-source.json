@@ -1,0 +1,33 @@
+{
+  "schema": "AIG_3AX_AUTHORITY_SOURCE_GATE_V1",
+  "scope": "REFERENCE_ASSET_IDENTITY_NOT_INTERACTIVE_RUNTIME",
+  "recordedFrom": "AIGII_RGB_MASTER_REGISTRY_V4 + formal-web/image-library.html",
+  "mobile": {
+    "authorityId": "AIGII-MOBILE-3AX-CURRENT-20261016",
+    "fileName": "05_3AX.png",
+    "width": 864,
+    "height": 1536,
+    "bytes": 431467,
+    "sha256": "4f46a4c1f1ed7c71165108ed13f4809201794c16ebc397987d06d1be1f773e28",
+    "candidateUrl": "./visual-authority/mobile/05_3AX.png",
+    "approval": "IDENTITY_APPROVED_NON_4K",
+    "webAssetGate": "BLOCK_UNTIL_RAW_SHA_AND_DIMENSIONS_MATCH",
+    "native4K": false
+  },
+  "desktop": {
+    "authorityId": null,
+    "sha256": null,
+    "approval": "BLOCK_DESKTOP_APPROVED_ORIGINAL_NOT_VERIFIED"
+  },
+  "machineGeometry": {
+    "assetType": "GLB_REAL_MACHINE_MESH",
+    "sourceSha256": null,
+    "kinematics": "UNVERIFIED",
+    "toolHolderAndMachineCollision": "UNVERIFIED",
+    "status": "BLOCK_AUTHENTIC_MACHINE_ASSET_MISSING"
+  },
+  "runtimeAuthority": "BLOCK_PRODUCTION_UI_UNTIL_NATIVE_4K_AND_BUTTON_REGION_GATE",
+  "previewUsage": "INDEPENDENT_SOURCE_COMPARISON_ONLY_NEVER_BACKGROUND_FAKE_CONTROLS",
+  "oldRevoked438Allowed": false,
+  "cncMachineOutputEnabled": false
+}
