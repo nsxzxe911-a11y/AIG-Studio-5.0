@@ -115,7 +115,7 @@ export function createAIG3DCylinder({radius=.5,height=1,segments=24,
    [u[0]*radius,height/2,u[1]*radius]];
   const ns=[[u[0],0,u[1]],[v[0],0,v[1]],[v[0],0,v[1]],[u[0],0,u[1]]];
   for(let k=0;k<4;k++){positions.push(...corners[k]);normals.push(...ns[k]);}
-  indices.push(i,i+1,i+2,i,i+2,i+3);
+  indices.push(i,i+2,i+1,i,i+3,i+2);
  }
  for(const direction of [1,-1]){
   const normal=[0,direction,0];
