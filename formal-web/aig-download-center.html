@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407">
+<meta name="description" content="AIG 新版下載中心，集中 Android APK、Windows EXE、三專案 QA 驗證、真實編譯及本機 CAD CAM NC 備份。">
+<title>AIG｜新版下載與版本中心</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<style>
+:root{color-scheme:dark;background:#020407;color:#eaf7ff;font:14px/1.6 system-ui,-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif;--panel:#07111b;--edge:#2a5268;--soft:#a4c6d8;--aqua:#91eaff;--mint:#93f9dd;--warn:#f2ce99}
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;background:radial-gradient(ellipse 68% 32% at 35% 0,#184e665e,transparent 95%),#020407;overflow-wrap:anywhere}
+h1,h2,h3,p{margin-top:0}a{color:#91eaff;text-underline-offset:3px}button{font:inherit;cursor:pointer}a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid #9cffff;outline-offset:3px}
+.skip{position:absolute;top:-80px;left:14px;background:#14384e;padding:9px}.skip:focus{top:10px}
+.site-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;min-height:74px;background:#07111bdc;border-bottom:1px solid var(--edge);padding:11px clamp(16px,4vw,52px)}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:#f7fdff}.brand-mark{height:45px;width:50px;display:grid;place-items:center;border-radius:11px;border:1px solid #64d8f1;font-size:20px;font-weight:950;background:linear-gradient(125deg,#192d5c,#063a48 55%,#321d53);box-shadow:0 0 18px #1b9dcf35}
+.brand-text{display:flex;flex-direction:column;line-height:1.3}.brand-text strong{font-size:19px}.brand-text small{font-size:10px;letter-spacing:.14em;color:#90aebe}
+nav{display:flex;gap:6px;flex-wrap:wrap;align-items:center}nav a{padding:8px 13px;text-decoration:none;color:#b9d6e6;font-weight:750;font-size:12px;border:1px solid transparent;border-radius:9px}
+nav a[aria-current=page],nav a:hover{color:white;background:#102c41;border-color:#367390}
+main{max-width:1370px;padding:clamp(17px,3vw,40px) clamp(14px,3.5vw,42px) 50px;margin:auto}
+.eyebrow{font-size:11px;color:#6de1fa;font-weight:850;letter-spacing:.16em;margin:0 0 8px}
+h1{font-size:clamp(26px,3.8vw,43px);margin:0 0 10px;letter-spacing:-.025em}h1 em{font-style:normal;color:#98ffe0}.intro{font-size:clamp(13px,1.3vw,16px);color:#b8d4e3;max-width:950px;margin:0 0 18px}
+.release{border:1px solid #856a43;border-left:4px solid #e5ac68;border-radius:12px;padding:14px 17px;background:#221d18;margin:17px 0 24px}.release strong{font-size:14px;color:#ffe2b1}.release p{color:#dbbe9c;margin:4px 0 0;font-size:12px}
+.section-label{font-size:17px;margin:26px 0 11px;color:#e8f6ff}
+.quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.quick{padding:20px 18px;background:linear-gradient(145deg,#0b2536,#07111b);border:1px solid #345e78;border-radius:15px;min-width:0;display:flex;flex-direction:column;gap:10px;min-height:219px}
+.quick .smalltag{font-size:10px;letter-spacing:.15em;color:#91dafa;font-weight:850}.quick h2{font-size:21px;margin:0;line-height:1.25}.quick p{font-size:12px;color:#b4cbd9;line-height:1.75;margin:0;flex:1}
+.action{display:inline-flex;align-items:center;justify-content:space-between;gap:7px;min-height:44px;background:linear-gradient(120deg,#0c587a,#1c3566);border:1px solid #51accb;border-radius:8px;text-decoration:none;color:#f7ffff;padding:9px 12px;font-size:12px;font-weight:780}
+.action.secondary{background:#102b3c;border-color:#437187}.action[aria-disabled=true]{pointer-events:none}
+.action:hover,button:hover{filter:brightness(1.14)}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card{background:linear-gradient(145deg,#0a1d2e,#07111b 75%);border:1px solid #2b536b;border-radius:15px;padding:20px;min-width:0}
+.card .top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.card h3{font-size:19px;margin:0}
+.state{font-size:11px;color:#f9d8a3;background:#292218;border:1px solid #7d603b;padding:4px 8px;border-radius:6px;font-weight:720}
+.card p{font-size:12px;color:#b6cede;margin:12px 0}
+.mini{color:#a6c7d8;font-size:12px}.minor-links{display:flex;flex-wrap:wrap;gap:9px}.minor-links a{font-size:12px;font-weight:740}
+details{border:1px solid #29495b;background:#061521;border-radius:8px;margin:10px 0 0}summary{cursor:pointer;font-weight:700;color:#bee5f3;font-size:12px;padding:10px 12px}
+details dl{margin:0;padding:4px 12px 12px;font-size:11px;display:grid;gap:6px}details div{display:grid;grid-template-columns:100px minmax(0,1fr);gap:9px}dt{color:#93b8cb}dd{margin:0;color:#d8f2fd;overflow-wrap:anywhere}code{font-size:11px;color:#9df1f6;overflow-wrap:anywhere}
+.qa-notice{font-size:12px;color:#b5cbd7;margin:6px 0 16px}.soft{color:#84a4b6;font-size:11px}
+.backup{border:1px solid #2e5b71;border-radius:15px;background:#091c29;padding:20px;margin-top:24px}
+.backup h2{font-size:18px;margin:0 0 7px}.backup p{font-size:12px;color:#bad4e1;margin:0 0 12px}
+button.backup-btn{min-height:46px;border:1px solid #4dacc9;border-radius:9px;background:linear-gradient(120deg,#0e6881,#183f6e);color:#f1fdff;font-weight:750;padding:10px 15px;font-size:12px}
+#export-status{display:block;color:#9be8dc;font-size:12px;min-height:1.6em;margin-top:9px}
+.private{font-size:11px;color:#96bdcc}
+.advanced{margin-top:22px}.advanced summary{padding:14px}.advanced .links{padding:0 14px 14px;display:flex;flex-wrap:wrap;gap:10px}.advanced .links a{font-size:12px}
+footer{margin-top:25px;padding:16px 0;border-top:1px solid #23495d;font-size:11px;color:#86a8b8;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+@media(max-width:930px){.quick-grid{grid-template-columns:1fr 1fr}.quick:last-child{grid-column:1/-1;min-height:140px}}
+@media(max-width:680px){.site-head{align-items:flex-start;gap:8px;padding:10px 14px}nav{width:100%;justify-content:space-between}nav a{font-size:11px;padding:7px 8px}main{padding:19px 12px 30px}.quick-grid,.cards{grid-template-columns:1fr}.quick,.quick:last-child{grid-column:auto;min-height:0;padding:17px}.card{padding:16px}.card h3{font-size:17px}details div{grid-template-columns:80px minmax(0,1fr)}.release{padding:12px}footer{flex-direction:column}}
+</style>
+</head>
+<body>
+<a class="skip" href="#downloads">跳至下載中心</a>
+<header class="site-head">
+ <a class="brand" href="./aig-new-home.html">
+  <span class="brand-mark" aria-hidden="true">AIG</span>
+  <span class="brand-text"><strong>AIG 工作平台</strong><small>DOWNLOAD & VERIFICATION</small></span>
+ </a>
+ <nav aria-label="新版工作站導覽">
+  <a href="./aig-new-home.html">首頁</a>
+  <a href="./3ax-nc-workbench.html">3AX 工作頁</a>
+  <a href="./fastmodel/">FastModel</a>
+  <a href="#downloads" aria-current="page">下載中心</a>
+ </nav>
+</header>
+<main id="downloads">
+ <p class="eyebrow">AIG-II · AIG STUDIO 5.0 · FASTMODEL</p>
+ <h1>版本與<em>下載中心</em></h1>
+ <p class="intro">手機、電腦與動畫專案的版本及 QA 測試紀錄，現在集中在新版網站。你可以查核已存在的安裝檔附件、查看真編譯入口，或先備份這台裝置的 CNC 工作資料。</p>
+ <div class="release" role="status">
+  <strong>正式 APK／EXE：仍待完整驗收</strong>
+  <p>不把 Web 版本、Debug APK、JVM JAR 或測試附件標示成完整安裝程式。QA 附件可能過期或需要登入 GitHub；連結先指向真實的建置／測試紀錄，不提供假的下載。</p>
+ </div>
+ <h2 class="section-label" id="quick-access">快速進入</h2>
+ <div class="quick-grid">
+  <section class="quick" aria-labelledby="android-title">
+   <span class="smalltag">ANDROID</span><h2 id="android-title">手機 APK</h2>
+   <p>Studio 曾產生 Android Debug APK 測試 ZIP；AIG-II 最新正式 APK 尚待核實。</p>
+   <a class="action" href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39727014731" target="_blank" rel="noopener noreferrer">查看 Android QA 附件 <span aria-hidden="true">↗</span></a>
+  </section>
+  <section class="quick" aria-labelledby="windows-title">
+   <span class="smalltag">WINDOWS</span><h2 id="windows-title">電腦 EXE</h2>
+   <p>目前列出的 Studio Windows QA 附件是 JVM JAR，不是正式 PE/MZ EXE。</p>
+   <a class="action secondary" href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/releases" target="_blank" rel="noopener noreferrer">查看 Windows Release <span aria-hidden="true">↗</span></a>
+  </section>
+  <section class="quick" aria-labelledby="builder-title">
+   <span class="smalltag">BUILD / REAL WORKFLOW</span><h2 id="builder-title">實際編譯</h2>
+   <p>開啟既有的 GitHub／雲端編譯工作流程。建置成功不代表 CNC Safety Gate 已通過。</p>
+   <a class="action secondary" href="./cloud-builder.html">前往 APK／EXE 真編譯 <span aria-hidden="true">→</span></a>
+  </section>
+ </div>
+ <h2 class="section-label" id="qa">三專案 QA／來源紀錄</h2>
+ <p class="qa-notice">以下是 <strong>2026-10-22</strong> 的來源快照，非即時 GitHub 狀態。原始 SHA 與附件保留期限可展開查看。</p>
+ <div class="cards">
+  <section class="card" aria-label="AIG-II 主控">
+   <div class="top"><h3>AIG-II · 主控 CNC</h3><span class="state">正式下載待核實</span></div>
+   <p>既有幾何與機械圖核心有測試證據；此紀錄沒有可核實的最新 APK／EXE 直接下載。舊有 GitHub Artifact 配額問題不等於核心消失。</p>
+   <div class="minor-links"><a href="https://github.com/nsxzxe911-a11y/AIG-II/actions/runs/39727007100" target="_blank" rel="noopener noreferrer">查看驗證紀錄 ↗</a><a href="https://github.com/nsxzxe911-a11y/AIG-II/releases" target="_blank" rel="noopener noreferrer">查看 Release ↗</a></div>
+   <details><summary>查看來源 SHA／狀態</summary><dl><div><dt>來源 SHA</dt><dd><code>8b241ec89c4991a3ef258a2d34709f77ab64325d</code></dd></div><div><dt>核心</dt><dd>來源時點 PASS</dd></div><div><dt>下載</dt><dd>沒有可核實最新版 APK／EXE</dd></div></dl></details>
+  </section>
+  <section class="card" aria-label="AIG Studio 5.0">
+   <div class="top"><h3>AIG Studio 5.0</h3><span class="state">QA 附件 · 非正式版</span></div>
+   <p>有 Android Debug APK ZIP 與 Windows JVM JAR ZIP 測試附件；兩者都不能代替雙平台正式 Gate。GitHub 附件可能需登入。</p>
+   <div class="minor-links"><a href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39727014731" target="_blank" rel="noopener noreferrer">查看 Studio QA APK／JAR ↗</a><a href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/releases" target="_blank" rel="noopener noreferrer">查看 Release ↗</a></div>
+   <details><summary>查看 APK／JAR 測試附件明細</summary><dl>
+    <div><dt>來源 SHA</dt><dd><code>573e5903bbaf6c72e0d6b0ad6290e7dd60a9ec4b</code></dd></div>
+    <div><dt>Android</dt><dd>Debug APK ZIP · Artifact <code>12403442426</code><br>ZIP SHA-256 <code>6cfee816179959bde93d161b736d08002b692c190c7bc449c282d5636100c70e</code></dd></div>
+    <div><dt>Windows</dt><dd>JVM JAR ZIP · Artifact <code>12403247658</code><br>ZIP SHA-256 <code>0322bfd8d2c27e9b332771b8876c18d5331f5fa5ad37701a64b37396e5a7ec54</code></dd></div>
+    <div><dt>有效期限</dt><dd>紀錄顯示 2026-10-29 13:19（台灣時間）；請在 GitHub 確認是否仍存在。</dd></div>
+   </dl></details>
+  </section>
+  <section class="card" aria-label="AIG FastModel">
+   <div class="top"><h3>AIG FastModel</h3><span class="state">核心驗證 · 非安裝檔</span></div>
+   <p>已有技術建模、骨架與動畫相關測試；不代表已完成擬真人物或手機／電腦正式安裝檔。</p>
+   <div class="minor-links"><a href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39724426133" target="_blank" rel="noopener noreferrer">查看 FastModel 測試 ↗</a><a href="./fastmodel/">進入 FastModel 工作區 →</a></div>
+   <details><summary>查看來源 SHA</summary><dl><div><dt>來源 SHA</dt><dd><code>6b6e2a8b92b98187dcdf300952791e93c362523c</code></dd></div><div><dt>安裝檔</dt><dd>沒有已核准正式 APK／EXE</dd></div></dl></details>
+  </section>
+  <section class="card" aria-label="QA 檔案治理">
+   <div class="top"><h3>來源與正式發行 Gate</h3><span class="state">未放行</span></div>
+   <p>所有下載需要分開確認來源 SHA、附件本體、簽章、原生啟動、RGB Authority、數值模擬及 CNC Safety Gate。GitHub ZIP SHA 不等於 APK/JAR 本體 SHA。</p>
+   <div class="minor-links"><a href="./qa-artifacts-manifest.json">檢視來源 Manifest →</a><a href="./qa-downloads.html">歷史 QA 詳細頁 →</a></div>
+  </section>
+ </div>
+ <section class="backup" id="backup">
+  <h2>本機 CNC 工作資料備份</h2>
+  <p>這項功能直接保留自舊下載頁。僅在你按下按鈕時，讀取<strong>這個網域、這台裝置</strong>的 CAD／CAM／NC／G-code 工作副本並匯出 JSON；不傳到伺服器、不修改或清除原資料。</p>
+  <button type="button" id="export-local" class="backup-btn">匯出這台裝置的 CNC 工作備份</button>
+  <output id="export-status" role="status" aria-live="polite"></output>
+  <p class="private">只匯出符合工作資料名稱的本機項目，排除 Token、帳號、密碼、憑證與其他驗證資訊。不同手機／電腦必須在各自裝置備份。</p>
+ </section>
+ <details class="advanced">
+  <summary>進階資訊／舊版資料查核（一般操作不必開啟）</summary>
+  <div class="links"><a href="./native-download.html">原版下載說明</a><a href="./qa-downloads.html">舊 QA 資料頁</a><a href="./status.html">專案狀態</a><a href="./index.html">原 AIG 網站</a></div>
+ </details>
+ <footer><span>AIG 新版下載中心 · 歷史狀態於 2026-10-22 記錄；安裝檔實際可用性以 GitHub 最新資料為準。</span><a href="./aig-new-home.html">回新版首頁 →</a></footer>
+</main>
+<script src="./aig-download-center.js" defer></script>
+</body>
+</html>
