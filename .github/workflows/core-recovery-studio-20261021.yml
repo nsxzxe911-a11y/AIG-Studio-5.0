@@ -11,9 +11,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Fail closed if native CAD/CAM/SIM/NC source vanished
+      - id: source_lock
+        name: Fail closed if native CAD/CAM/SIM/NC source vanished
         run: python3 ci/verify_core_recovery_lock.py
-      - name: Verify Android and Windows callbacks actually use navigation IDs
+      - id: source_controls
+        name: Verify Android and Windows callbacks actually use navigation IDs
         run: python3 ci/verify_native_control_bindings.py
       - uses: actions/setup-java@v4
         with:
@@ -22,7 +24,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.7.0'
-      - name: Run real MANUAL CAM with A/B/C and project/NC persistence
+      - id: native_core
+        name: Run real MANUAL CAM with A/B/C and project/NC persistence
         run: gradle --no-daemon :core:coreRecoverySmoke :core:camManualMachiningContractRegression :core:runtimeLinkRegression :core:coreDeepRecoveryRegression :core:uiNavigationBindingRegression :core:rgbGlobalSkinRegression
       - name: Core-only verdict
         run: |
@@ -31,6 +34,25 @@ jobs:
           echo "WINDOWS_EXE=UNVERIFIED"
           echo "6AX_MACHINE_MOTION=NOT_CERTIFIED"
           echo "CONTROL_BINDINGS=DEFERRED_UNTIL_CORE_GATES_PASS"
+
+      - name: Classify core/source/control gates without fake release claims
+        if: always()
+        env:
+          SOURCE_GATE: ${{ steps.source_lock.outcome }}
+          CONTROL_GATE: ${{ steps.source_controls.outcome }}
+          CORE_GATE: ${{ steps.native_core.outcome }}
+        run: |
+          {
+            echo '### AIG evidence: exact commit ${{ github.sha }}'
+            echo "Source SHA integrity: \`$SOURCE_GATE\`"
+            echo "Control source-ID binding: \`$CONTROL_GATE\` (not real UI callbacks)"
+            echo "Real JVM regression: \`$CORE_GATE\`"
+            echo 'Android device / Nox screenshots: NOT_TESTED'
+            echo 'Windows EXE / installer: NOT_TESTED'
+            echo 'Physical CNC / full 6AX kinematics: BLOCKED'
+            echo 'RELEASE_GATE=BLOCKED until native UI and full output evidence'
+            echo 'Inspect the failing step and its raw logs before editing geometry.'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   native-android-windows-compile:
     name: Verify real Android UI + Windows JVM compilation (NOT a release)
@@ -58,9 +80,11 @@ jobs:
             "$SDKMANAGER" "platforms;android-36"
           fi
           test -d "$ANDROID_HOME/platforms/android-36"
-      - name: Compile native Android and Windows runtime entrypoints
+      - id: native_compile
+        name: Compile native Android and Windows runtime entrypoints
         run: gradle --no-daemon :app:assembleDebug :desktop:jar
-      - name: Verify actual compiled APK/JAR bytes exist
+      - id: compiled_bytes
+        name: Verify actual compiled APK/JAR bytes exist
         shell: bash
         run: |
           set -euo pipefail
@@ -70,17 +94,45 @@ jobs:
 
       # QA-only native debug artifacts. No signature/release/EXE is claimed.
       # Publish only after full JVM regression and native compilation PASS.
-      - name: QA-only native debug artifacts
+      - id: android_upload
+        name: QA-only native debug artifacts
         uses: actions/upload-artifact@v4
         with:
           name: aig-studio-core-control-android-debug-NOT-RELEASE
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 7
-      - name: QA-only Windows JVM evidence
+      - id: windows_upload
+        name: QA-only Windows JVM evidence
         uses: actions/upload-artifact@v4
         with:
           name: aig-studio-core-control-windows-jar-NOT-EXE
           path: desktop/build/libs/*.jar
           if-no-files-found: error
           retention-days: 7
+      - name: Classify native build separately from artifact delivery
+        if: always()
+        env:
+          COMPILE_GATE: ${{ steps.native_compile.outcome }}
+          BYTES_GATE: ${{ steps.compiled_bytes.outcome }}
+          ANDROID_UPLOAD: ${{ steps.android_upload.outcome }}
+          WINDOWS_UPLOAD: ${{ steps.windows_upload.outcome }}
+        run: |
+          {
+            echo '### AIG native/delivery evidence: ${{ github.sha }}'
+            echo "Android APK + Windows JVM compilation: \`$COMPILE_GATE\`"
+            echo "APK/JAR bytes verified: \`$BYTES_GATE\`"
+            echo "QA Android artifact upload: \`$ANDROID_UPLOAD\`"
+            echo "QA Windows JAR artifact upload: \`$WINDOWS_UPLOAD\`"
+            if [ "$COMPILE_GATE" = success ] && [ "$BYTES_GATE" = success ]; then
+              echo 'NATIVE_COMPILE=PASS; do not classify upload failure as CAD source bug'
+            else
+              echo 'NATIVE_COMPILE=BLOCKED; inspect compiler and byte-verification logs'
+            fi
+            if [ "$ANDROID_UPLOAD" != success ] || [ "$WINDOWS_UPLOAD" != success ]; then
+              echo 'DELIVERY=BLOCKED; inspect upload quota/storage logs'
+            else
+              echo 'QA_ARTIFACT_UPLOAD=PASS (NOT A SIGNED RELEASE)'
+            fi
+            echo 'NO_WINDOWS_EXE; NO_DEVICE_RGB_SCREENSHOTS; RELEASE=BLOCKED'
+          } >> "$GITHUB_STEP_SUMMARY"
