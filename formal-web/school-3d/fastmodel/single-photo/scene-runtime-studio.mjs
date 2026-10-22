@@ -4,6 +4,7 @@ import {AIG19SceneRuntime} from './aig-scene-lifecycle-1-9.mjs';
 import {createAIG20WorldScene,addAIG20WorldObject,addAIG20CameraKey,
  assertAIG20Document,resolveAIG20WorldSources} from './aig-world-scene-2-0.mjs';
 import {AIG20WorldRuntime} from './aig-world-runtime-2-0.mjs';
+import {importAIG712SceneMap} from './aig-scene-map-7-12.mjs';
 const $=id=>document.getElementById(id);
 let library=null,viewer=null,runtime=null,closed=false,loading=false;
 let worldRuntime=null,worldDoc=null,worldMetas=new Map(),worldSaved=[];
@@ -200,11 +201,8 @@ async function selectedMapRef(){
  if(!loaded?.blob||loaded.asset?.sha256!==m.sha256)
   throw Error('地圖來源 SHA 不符');
  if(loaded.blob.size>8*1024*1024)throw Error('地圖檔太大');
- const map=JSON.parse(await loaded.blob.text());
- if(map.schema!=='AIG_FASTMODEL_7_12_SOURCE_SCENE_MAP_DATA'||
-  !['LOCAL_RELATIVE','MEASURED_LOCAL_METERS','WGS84_APPROX_LOCAL_METERS']
-   .includes(map.coordinateMode))
-  throw Error('必須使用經 7.12 來源記錄的場景地圖，不能拿一般 JSON 冒充地圖');
+ const snapshot=JSON.parse(await loaded.blob.text());
+ const map=importAIG712SceneMap(snapshot);
  // FastModel 7.12 used the suffix METERS while the 2.0 composer uses
  // METRES; normalize names WITHOUT changing the underlying source.
  const original=map.coordinateMode;
