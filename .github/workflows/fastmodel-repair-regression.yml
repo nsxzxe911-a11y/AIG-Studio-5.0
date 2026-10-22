@@ -29,7 +29,8 @@ jobs:
       - run: npm run build
       - run: npm install --no-save playwright@1.55.0
       - run: npx playwright install --with-deps chromium
-      - name: Real browser workflows and independent output evidence
+      - id: browser_runtime
+        name: Real browser workflows and independent output evidence
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/fastmodel-http.log 2>&1 &
           aig_http_pid=$!
@@ -42,3 +43,17 @@ jobs:
           name: FastModel-browser-regression-not-heroine-approval
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-compact-ui/
           if-no-files-found: warn
+
+      - name: Distinguish real video playback from unverified character animation
+        if: always()
+        env:
+          BROWSER_RESULT: ${{ steps.browser_runtime.outcome }}
+        run: |
+          {
+            echo '### FastModel browser regression at SHA ${{ github.sha }}'
+            echo "Browser / independent output: $BROWSER_RESULT"
+            echo 'On failure inspect matching phone/desktop failure-evidence.json and failure.png.'
+            echo 'CANVAS_PIXEL_MOVEMENT_NE_HUMAN_BODY_JOINT_MOVEMENT'
+            echo 'REAL_HEROINE_3D=NOT_CERTIFIED'
+            echo 'RELEASE=BLOCKED'
+          } >> "$GITHUB_STEP_SUMMARY"
