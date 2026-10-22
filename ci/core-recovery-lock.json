@@ -163,7 +163,7 @@
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-motion-preview-readonly.mjs",
-      "gitBlobSha": "111e5ba10253e0f9fc3bd312cc376f960942a701"
+      "gitBlobSha": "eaee565f28191ad3aaa3af647427f40c3557b824"
     }
   ],
   "ghostOverlayPolicy": "NO_DOUBLE_PERSON_ONE_PASS_VISIBLE_PAN_ZOOM_WITHOUT_CLEAN_BACKGROUND",
@@ -176,5 +176,6 @@
   "unifiedRgbGlassEvidence": "Formal native CNC and FastModel RGB token parity source, original DOM callbacks unchanged, Playwright computed CSS at 360x780 and 1440x900 + original real movie playback tests",
   "engineeringShellFallbackForbidden": true,
   "readOnlyMotionSceneIntegration": "Model tab local JSON import → SHA256 → real Canvas tool-center animation → play/stop; no CNC machine APIs, no human GLB impersonation, no user model deletion; tested with matched native Kotlin hash",
-  "axisVisualizationSafety": "Linear interpolation for XYZ tool center only. A/B/C waypoint pose held until next sample; 6-axis kinematics not certified. Not machine control."
+  "axisVisualizationSafety": "Linear interpolation for XYZ tool center only. A/B/C waypoint pose held until next sample; 6-axis kinematics not certified. Not machine control.",
+  "motionImportRaceIntegrity": "Incrementing import token prevents slow earlier File.text/crypto.digest from repainting after user selects newer CNC motion file. Browser test awaits SHA failure and checks canvas hidden/play disabled."
 }
