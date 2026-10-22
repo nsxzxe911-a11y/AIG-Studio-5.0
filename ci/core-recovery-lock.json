@@ -15,7 +15,7 @@
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/CamWorkflowEngine.kt",
-      "gitBlobSha": "098468ebc94b9db1e666da6fb163392637da25ca"
+      "gitBlobSha": "4d470260d8cf1d7d900fc1370953282a3659fa6a"
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/FanucNc.kt",
@@ -113,5 +113,6 @@
   "sourceIdentityIsNotExecutableProof": true,
   "controlGateBlockedUntilFullCoreOutcomeEvidence": true,
   "releaseGateBlockedUntilRuntimeAndNativeEvidence": true,
-  "observerIsolationVerification": "Core Regression: initial/update observer exception fails softly and preserves MACHINE fail-closed status"
+  "observerIsolationVerification": "Core Regression: initial/update observer exception fails softly and preserves MACHINE fail-closed status",
+  "commonPocketContourProof": "CoreRecoverySmoke rejects ignored CAD entities, open/duplicate rectangle edges and non-finite circles; checks valid rectangle Fanuc G1"
 }
