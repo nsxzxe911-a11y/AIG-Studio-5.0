@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407"><meta name="description" content="AIG 三專案 AI 跨對話續接中心：來源 SHA、封鎖狀態、正式交接檔與可複製的接續指令。">
+<title>AIG｜AI 施工接續中心</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;color:#e7f2ff;background:#020407}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 60% -20%,#193e5f88,transparent 65%),#020407}
+main{width:min(1060px,100%);padding:clamp(16px,3vw,36px);margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid #284b65;padding-bottom:15px}
+a{color:#78e5fa;overflow-wrap:anywhere}h1{font-size:clamp(25px,4vw,38px);margin:24px 0 9px}h2{font-size:19px;margin:0 0 10px}
+p{line-height:1.7;color:#b2cfdd}section{border-radius:13px;border:1px solid #294d64;background:#07111b;padding:clamp(15px,3vw,22px);margin:18px 0}
+strong{color:#fff}code{font-size:12px;overflow-wrap:anywhere;color:#9bebfc}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.project{border-radius:10px;border:1px solid #345568;background:#0a1b2a;padding:13px;min-width:0}
+.label{font-size:12px;color:#a4bfce} .value{overflow-wrap:anywhere;margin:6px 0;font-weight:600}
+.warn{color:#ffc77e}.ok{color:#83e5c4}.muted{color:#a4bbc9}
+#message{min-height:28px}button{border-radius:9px;border:1px solid #42738a;background:linear-gradient(135deg,#105b7d,#263b69);color:white;min-height:46px;padding:10px 15px;font:700 15px system-ui;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid #84eaff;outline-offset:3px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}textarea{width:100%;min-height:178px;background:#03101c;color:#d9f4ff;border:1px solid #365a75;border-radius:10px;padding:13px;resize:vertical;line-height:1.6}
+ul{line-height:1.8;padding-left:21px}small{color:#a7c3d1}footer{padding:25px 0;color:#9baebe;border-top:1px solid #284b65}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.actions button{width:100%}}
+</style>
+</head>
+<body>
+<main>
+<header><a href="./index.html">← AIG 正式網站</a><nav><a href="./project-sync.html">CAD 專案續接</a> · <a href="./cloud-builder.html">原生編譯入口</a></nav></header>
+<h1>AI 施工接續中心</h1>
+<p>換對話時，先讀這份「最後保存的交接點」，而不是靠 AI 猜測昨天的版本。<strong>這是來源交接與證據入口，不是自動通過 CNC Gate 的證明。</strong></p>
+<section aria-live="polite">
+ <h2>目前來源與網站狀態</h2>
+ <p id="message" class="warn">正在讀取已發布交接檔；讀取失敗將顯示 BLOCKED。</p>
+ <div class="grid" id="projects"></div>
+ <p class="label" id="snapshot"></p>
+ <p class="warn" id="live-status">正式 Render 部署與 APK／EXE 尚未在此確認。</p>
+</section>
+<section>
+ <h2>換新 ChatGPT 對話時</h2>
+ <p>按「複製 AI 接續指令」，貼到新對話。它會帶上交接檔網址、各專案來源、已確認／未確認事項，要求新 AI 先重新查證、再施工。網站不會自行讀取你的聊天內容，也不會自動上傳手機內的 CAD／NC 檔案。</p>
+ <textarea id="handoff" readonly aria-label="可複製的 AI 交接指令" placeholder="讀取來源交接檔後會顯示接續指令。"></textarea>
+ <div class="actions"><button id="copy" type="button" disabled>複製 AI 接續指令</button><button id="download" type="button" disabled>下載唯讀交接快照 JSON</button><button id="refresh" type="button">重新核對交接檔</button></div>
+ <p id="feedback" class="label" role="status"></p>
+</section>
+<section>
+ <h2>永久保存與防假成功規則</h2>
+ <ul>
+ <li>程式版本與歷史紀錄以 GitHub 提交 SHA 為依據；不得只用版本號宣稱完成。</li>
+ <li>保留原始檔與可核對的提交歷史，不因換 AI、斷線或頁面重新載入而自動清空。</li>
+ <li>這份交接快照需要每次工程施工後<strong>實際提交更新</strong>；未來自動寫入、後端持久佇列及完整權限 Gate 尚未部署。</li>
+ <li>私人 AIG-II 不會由公開網頁讀取敏感來源；FastModel 最新程式位置未確認之前禁止猜測。</li>
+ <li>GitHub commit、網站 Render LIVE、APK/EXE 真產物及 CAD/CAM/SIM/NC 功能各自獨立驗證；未有證據一律未驗證。</li>
+ </ul>
+ <p><a href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/blob/web/aig-dual-formal-runtime-20261016/formal-web/ai-resume-manifest.json" rel="noopener" target="_blank">查看公開的交接檔來源與歷史 →</a></p>
+</section>
+<footer>AIG 三專案 AI Continuity v1 · 不含機台連線、無自動修改或刪除功能 · 交接來源 ≠ Runtime PASS</footer>
+</main>
+<script>
+(function(){
+"use strict";
+var url="./ai-resume-manifest.json",data=null;
+var byId=function(id){return document.getElementById(id)};
+var githubBase="https://github.com/";
+function text(el,msg){byId(el).textContent=msg}
+function clean(){byId("projects").replaceChildren()}
+function makePrompt(m){
+ var out=["AIG 三專案最後斷點接回（先核對、後修改，不得降級或重設）：",
+ "交接檔正式網址："+new URL(url,location.href).href,
+ "GitHub 來源："+githubBase+"nsxzxe911-a11y/AIG-Studio-5.0/blob/web/aig-dual-formal-runtime-20261016/formal-web/ai-resume-manifest.json",
+ "交接紀錄日期："+m.snapshot_date,
+ "這是來源快照，不是軟體已通過測試的證明。"];
+ m.projects.forEach(function(p){out.push(p.id+"｜"+p.repository+"｜"+p.reference+"｜SHA "+(p.source_sha||"待查")+"｜Runtime "+p.runtime_gate)});
+ out.push("Render LIVE："+m.website.deployment,
+ "先重新從 GitHub 查各 branch 的實際 SHA、最新修復點、核心與測試證據。未確認的功能、簽章、原生 APK/EXE 請標示 BLOCKED/未驗證；不要把圖片、版本升級或測試模擬說成修復完成。",
+ "禁止刪除／覆蓋現存幾何、CAD/CAM/SIM/NC、正式 RGB Authority 或 FastModel 資料；逐頁真 callback 與產物數據要有證據。",
+ "此次操作後請把新的真實施工斷點回寫 GitHub 正式交接檔，並區分來源提交與正式 Render LIVE，無法回寫請明說。",
+ "注意：新對話並不會自動登入或讀取這份交接資料，必須由本指令或已授權連接器提供入口。");
+ return out.join("\n");
+}
+function render(m){
+ clean();
+ m.projects.forEach(function(p){
+  var card=document.createElement("article");card.className="project";
+  var title=document.createElement("strong");title.textContent=p.id;card.append(title);
+  [
+   ["來源倉庫",p.repository],["分支／來源",p.reference],["最後紀錄 SHA",p.source_sha||"尚未定位"],["真正核心驗證",p.runtime_gate]
+  ].forEach(function(pair){var a=document.createElement("div"),b=document.createElement("div");a.className="label";b.className="value";a.textContent=pair[0];b.textContent=pair[1];card.append(a,b)});
+  var foot=document.createElement("small");foot.textContent=p.checkpoint_note;card.append(foot);byId("projects").append(card);
+ });
+ text("snapshot","保存日期："+m.snapshot_date+"｜紀錄性質："+m.record_kind);
+ text("message","交接檔已讀取。程式版本須再核對，未完成的 Gate 不得顯示 PASS。");
+ byId("message").className="warn";text("live-status","Render LIVE："+m.website.deployment+"；APK/EXE："+m.checks.native_artifacts+"；完整功能："+m.checks.all_runtime_functions);
+ byId("handoff").value=makePrompt(m);byId("copy").disabled=false;byId("download").disabled=false;
+}
+async function load(){
+ data=null;clean();byId("copy").disabled=true;byId("download").disabled=true;
+ text("message","正在讀取正式交接 JSON…");text("feedback","");byId("handoff").value="";
+ try{
+  var response=await fetch(url,{cache:"no-store"});
+  if(!response.ok)throw new Error("HTTP "+response.status);
+  var m=await response.json();
+  if(m.schema!=="aig.ai-continuity.v1"||m.record_kind!=="SOURCE_CHECKPOINT_NOT_RUNTIME_PASS"||!Array.isArray(m.projects)||m.projects.length!==3||!m.website||!m.checks)throw new Error("INVALID_HANDOFF_SCHEMA");
+  data=m;render(m);
+ }catch(e){text("message","BLOCKED：交接檔無法驗證或讀取（"+String(e.message||e)+"）。禁止依舊版本盲目修改。");byId("message").className="warn";text("live-status","尚未驗證網站來源、APK/EXE 或完整核心。")}
+}
+byId("copy").addEventListener("click",async function(){
+ if(!data)return;
+ var prompt=byId("handoff").value;
+ try{if(!navigator.clipboard||!window.isSecureContext)throw new Error("Clipboard unavailable");await navigator.clipboard.writeText(prompt);text("feedback","已複製。請貼到新對話中。")}
+ catch(_){byId("handoff").focus();byId("handoff").select();text("feedback","無法自動複製，請長按文字框選取全部並複製。")}
+});
+byId("download").addEventListener("click",function(){
+ if(!data)return;
+ var blob=new Blob([JSON.stringify(data,null,2)+"\n"],{type:"application/json"});
+ var objectUrl=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=objectUrl;a.download="AIG-AI-CONTINUITY-"+data.snapshot_date+".json";document.body.append(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(objectUrl)},1000);
+ text("feedback","已產生交接快照下載。此檔不包含私人 CAD/NC 資料。");
+});
+byId("refresh").addEventListener("click",load);
+load();
+})();
+</script>
+</body></html>
