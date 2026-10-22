@@ -163,7 +163,7 @@
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-motion-preview-readonly.mjs",
-      "gitBlobSha": "7264e3a2bf7bb9c442ae40761ac6333e5a003104"
+      "gitBlobSha": "d63876468c1eaedec01c0c070df4ca7293de8f1d"
     }
   ],
   "ghostOverlayPolicy": "NO_DOUBLE_PERSON_ONE_PASS_VISIBLE_PAN_ZOOM_WITHOUT_CLEAN_BACKGROUND",
@@ -175,5 +175,6 @@
   "movieFinalizeFailureProof": "Blob finalization failure rejects pending stop, frees owned canvas tracks, leaves caller-owned audio alive; executable Node test",
   "unifiedRgbGlassEvidence": "Formal native CNC and FastModel RGB token parity source, original DOM callbacks unchanged, Playwright computed CSS at 360x780 and 1440x900 + original real movie playback tests",
   "engineeringShellFallbackForbidden": true,
-  "readOnlyMotionSceneIntegration": "Model tab local JSON import → SHA256 → real Canvas tool-center animation → play/stop; no CNC machine APIs, no human GLB impersonation, no user model deletion; tested with matched native Kotlin hash"
+  "readOnlyMotionSceneIntegration": "Model tab local JSON import → SHA256 → real Canvas tool-center animation → play/stop; no CNC machine APIs, no human GLB impersonation, no user model deletion; tested with matched native Kotlin hash",
+  "axisVisualizationSafety": "Linear interpolation for XYZ tool center only. A/B/C waypoint pose held until next sample; 6-axis kinematics not certified. Not machine control."
 }
