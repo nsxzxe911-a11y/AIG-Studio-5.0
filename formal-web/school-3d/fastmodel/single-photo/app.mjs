@@ -940,6 +940,53 @@ $('aig52-fps-report').addEventListener('click',()=>{
  if(aig52Report)aig47Download(JSON.stringify(aig52Report,null,2),
   'AIG-5.2-ACTUAL-BROWSER-FRAME-TIMING-SHA-NOT-NATIVE-FPS.json','application/json');
 });
+const aig17Toggle=$('aig17-gpu-toggle'),
+ aig17Download=$('aig17-gpu-report'),
+ aig17Status=$('aig17-gpu-status');
+function aig17Show(report){
+ if(!report){aig17Status.textContent='GPU 主檢視器尚未建立，未更改任何模型或畫質。';return;}
+ aig17Toggle.textContent=report.enabled?'關閉智慧畫質並恢復原預覽':'啟用 GPU 量測與智慧預覽（需先載入真 GLB）';
+ aig17Download.disabled=!report.loadedGLBScenePresent;
+ const governor=report.governor;
+ if(report.enabled){
+  aig17Status.textContent='Real3D 1.7：真 GLB 的 WebGL2 GPU 計時已開啟；'+
+   '已接收 '+(governor?.gpuSamplesAccepted??0)+' 筆有效 GPU 時間，'+
+   'p95 '+(governor?.p95GpuMs?.toFixed(2)??'尚無')+' ms，'+
+   '預覽像素比 '+report.previewPixelRatio.toFixed(2)+'×。'+
+   '不改動動畫／骨架／原始材質；非 Android／Windows 原生 FPS。';
+ }else if(report.reason==='GPU_TIMER_UNAVAILABLE_NO_QUALITY_DOWNGRADE'){
+  aig17Status.textContent='此 WebGL 裝置沒有可靠的 GPU 執行計時擴充；'+
+   '已保留原畫質與原動畫，不用 JS／CPU 時間冒充 GPU 測量。';
+ }else{
+  aig17Status.textContent='Real3D 1.7：'+report.reason+
+   '；原 GLB／動畫均保留，像素比 '+report.previewPixelRatio.toFixed(2)+'×。';
+ }
+}
+aig17Toggle.addEventListener('click',()=>{
+ if(!view){aig17Show(null);return;}
+ try{
+  const existing=view.getGpuAccelerationReport();
+  const next=view.setGpuAccelerationEnabled(!existing.enabled);
+  aig17Show(next);
+ }catch(error){
+  aig17Status.textContent='BLOCKED：GPU 智能畫質操作尚不可執行：'+
+   String(error?.message||error)+'；原始 GLB／動畫／檔案未修改。';
+ }
+});
+aig17Download.addEventListener('click',()=>{
+ if(!view?.model){aig17Status.textContent='BLOCKED：沒有載入真 GLB。';return;}
+ const report=view.getGpuAccelerationReport();
+ const evidence={...report,sourceSHA256:sourceSha??null,
+  sourceDigestAuditedInSeparateGate:sourceSha!==null,
+  browserUserAgent:navigator.userAgent.slice(0,220),
+  devicePixelRatio:window.devicePixelRatio,
+  animationClipName:view.animation?.clips?.[view.animation.index]?.name??null,
+  modelPhotorealCharacterIdentityNotVerified:true,
+  platformNativeGpuPerformanceCertified:false};
+ aig47Download(JSON.stringify(evidence,null,2),
+  'AIG-FASTMODEL-REAL3D-1-7-ACTUAL-GPU-TIMER-OR-UNSUPPORTED-NOT-NATIVE-FPS.json','application/json');
+ aig17Show(report);
+});
 document.addEventListener('visibilitychange',()=>{
  if(document.visibilityState!=='visible'&&aig52Monitor){
   aig52Monitor.invalidReason='AIG52_PAGE_NOT_VISIBLE';aig52Monitor.done=true;
