@@ -11,7 +11,7 @@
   "modules": [
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/app.mjs",
-      "gitBlobSha": "a18e3f133daa4e8436ecc2e77ec6a967347719bf"
+      "gitBlobSha": "db95b7f366a9e49ec06f1dd4e4892083ade0150e"
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-auto-animation-6-5.mjs",
@@ -159,7 +159,7 @@
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/index.html",
-      "gitBlobSha": "555a5f9ffae89d63d10785447768fbe452153304"
+      "gitBlobSha": "229c3733c6f9e3ac8bf745cf444a093ce0a1a5f8"
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-motion-preview-readonly.mjs",
@@ -184,5 +184,6 @@
   "motionImportRaceIntegrity": "Incrementing import token prevents slow earlier File.text/crypto.digest from repainting after user selects newer CNC motion file. Browser test awaits SHA failure and checks canvas hidden/play disabled.",
   "temporalRigQualityGate": "Real technical GLB loaded via Three GLTFLoader, samples skinned mesh vertices at 30Hz across three animation clips, validates finite coordinates and non-static deformation; full-body/photo identity/physical collisions stay unapproved",
   "auditedLiveAppLockDrift": "2026-10-22 reviewed historical commit 96f617eca78927fd8bbe91a91cccd1c366a3332d installing stable Button ID binding; source app.mjs matches pre-existing PR code and is now locked. No app code changed.",
-  "realFullBodyLimbUpgrade": "Existing single partial image->technical 17 bone 9 skinned mesh 5 clip GLB retained; adds two genuine bilateral arm/leg GLB quaternion clips, 31-frame skinned vertex motion audits; not verified heroine likeness, foot contacts or garment physics"
+  "realFullBodyLimbUpgrade": "Existing single partial image->technical 17 bone 9 skinned mesh 5 clip GLB retained; adds two genuine bilateral arm/leg GLB quaternion clips, 31-frame skinned vertex motion audits; not verified heroine likeness, foot contacts or garment physics",
+  "fullBodyMotionControlClosure": "After core 252/252 PASS, independent AIG64→AIG61 REAL upgrade action binds ButtonID/CommandID to existing single-photo generated GLB, audits bilateral limb vertex deformation before SHA/new output, preserves old 5-clip source on blocked action, all production likeness and collision claims remain false."
 }
