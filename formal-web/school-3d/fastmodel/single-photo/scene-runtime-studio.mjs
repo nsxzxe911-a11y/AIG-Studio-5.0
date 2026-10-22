@@ -794,6 +794,12 @@ $('movie25-record').addEventListener('click',()=>{
   if(loading||worldBuildMutation||!viewer||!worldRuntime?.scene||
    !story22Plan?.ready||!worldDoc)
    throw Error('請先建立真正的 3D 世界並完成中文劇情編譯');
+  if(worldDoc.id!==worldRuntime.scene.id||
+   worldDoc.revision!==worldRuntime.scene.revision||
+   JSON.stringify(worldDoc.objects)!==JSON.stringify(worldRuntime.scene.objects)||
+   JSON.stringify(worldDoc.cameraKeys)!==
+    JSON.stringify(worldRuntime.scene.cameraKeys))
+   throw Error('編輯中的世界與 GPU 實際場景不同；請先重新合成預覽');
   if(viewer.movieMode||viewer.onFrame||viewer.onAfterRender||
    viewer.reviewBusy||worldPlaying)
    throw Error('3D 工作視窗／劇情播放已占用，停止後才可錄影');
