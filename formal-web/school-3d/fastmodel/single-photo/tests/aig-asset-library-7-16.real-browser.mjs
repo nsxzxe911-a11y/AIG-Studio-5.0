@@ -59,13 +59,14 @@ try{
    // No silent learned approval or autoload:
    await page.locator('#asset-reuse-tags').fill('女主角,校園');
    await page.locator('#asset-reuse').click();
-   assert.match(await page.locator('#reuse-results').textContent(),
-    /尚無已核准/);
+   await page.waitForFunction(()=>document.getElementById('reuse-results')
+    .textContent.includes('尚無已核准'));
    page.once('dialog',d=>d.accept());
    await card.getByRole('button',{name:'審核通過'}).click();
    await page.waitForFunction(()=>document.querySelector('.asset')?.textContent.includes('approved'));
    await page.locator('#asset-reuse').click();
-   assert.match(await page.locator('#reuse-results').textContent(),/櫻花校園女主角/);
+   await page.waitForFunction(()=>document.getElementById('reuse-results')
+    .textContent.includes('櫻花校園女主角'));
    await page.locator('#reuse-results').getByRole('button',{name:/使用 櫻花校園女主角/}).click();
    await page.waitForFunction(()=>document.querySelector('.asset')?.textContent.includes('使用 1 次'));
    // Load only the selected payload when explicitly downloading.
