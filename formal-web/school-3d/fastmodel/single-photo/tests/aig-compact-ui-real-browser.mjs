@@ -1,4 +1,5 @@
 import {chromium} from 'playwright';
+import {readFileSync} from 'node:fs';
 import {mkdir} from 'node:fs/promises';
 const out=process.env.AIG_UI_SCREENSHOTS||'artifacts/fastmodel-compact-ui';
 await mkdir(out,{recursive:true});
@@ -154,6 +155,56 @@ try{
      !await page.locator('#aig-unified-model-back').isVisible())
    throw Error('AIG694_3D_TECHNICAL_AVATAR_MISREPRESENTED_AS_APPROVED');
   await page.screenshot({path:out+'/'+device.name+'-05-no-fake-3d-model.png'});
+  // Real cross-product control: import local CNC proof, verify SHA, render
+  // moving pixels in the model workspace. NEVER send CNC machine commands.
+  const motionFile=readFileSync(new URL('../fixtures/aig-readonly-motion-3ax.json',import.meta.url));
+  await page.locator('#aig-cnc-motion-file').setInputFiles({
+   name:'AIG-CNC-READONLY-MOTION.json',mimeType:'application/json',buffer:motionFile
+  });
+  const motionLoad=page.locator('#aig-cnc-motion-load');
+  const motionPlay=page.locator('#aig-cnc-motion-play');
+  const motionStop=page.locator('#aig-cnc-motion-stop');
+  await motionLoad.click();
+  await page.waitForFunction(()=>document.querySelector('#aig-cnc-motion-status')?.
+   textContent.includes('驗證通過'),null,{timeout:7000});
+  if(await motionPlay.isDisabled()||
+     !await page.locator('#aig-cnc-motion-canvas').isVisible())
+   throw Error('AIG_READONLY_CNC_IMPORT_NOT_CONNECTED');
+  const sampleMotion=()=>page.locator('#aig-cnc-motion-canvas').evaluate(c=>{
+   const out=document.createElement('canvas');out.width=256;out.height=144;
+   const ctx=out.getContext('2d',{willReadFrequently:true});
+   ctx.drawImage(c,0,0,256,144);
+   return Array.from(ctx.getImageData(0,0,256,144).data);
+  });
+  await motionPlay.click();
+  await page.waitForTimeout(110);
+  const motionA=await sampleMotion();
+  await page.waitForTimeout(720);
+  const motionB=await sampleMotion();
+  const motionChanged=motionA.filter((v,i)=>Math.abs(v-motionB[i])>20).length;
+  if(motionChanged<12)throw Error('AIG_CNC_MODEL_PLAY_BUTTON_BUT_NO_REAL_PIXEL_MOTION '+
+   motionChanged);
+  await motionStop.click();
+  const stopped=await page.locator('#aig-cnc-motion-status').innerText();
+  if(!stopped.includes('沒有發送任何 CNC 指令')||await motionPlay.isDisabled())
+   throw Error('AIG_CNC_PREVIEW_STOP_DID_NOT_RETAIN_READONLY_STATE');
+  await page.screenshot({path:out+'/'+device.name+'-05b-readonly-cnc-motion-verified.png'});
+  // Tampered source is blocked, not painted as CNC machine output.
+  const tampered=JSON.parse(motionFile.toString('utf8'));
+  tampered.data=tampered.data.replace('20.000','21.000');
+  await page.locator('#aig-cnc-motion-file').setInputFiles({
+   name:'AIG-CNC-TAMPERED.json',mimeType:'application/json',
+   buffer:Buffer.from(JSON.stringify(tampered))
+  });
+  await motionLoad.click();
+  const rejected=await page.locator('#aig-cnc-motion-status').innerText();
+  if(!rejected.includes('BLOCKED')||!rejected.includes('TAMPERED_SHA256')||
+     !await motionPlay.isDisabled())
+   throw Error('AIG_CNC_TAMPERED_MOTION_DID_NOT_FAIL_CLOSED '+rejected);
+  console.log('AIG_READONLY_CNC_MOTION_REAL_BROWSER_PASS',device.name,
+   JSON.stringify({pixelValuesChanged:motionChanged,sourceShaVerified:true,
+    tamperedBlocked:true,machineCommandsSent:false,humanRigCertified:false}));
+
   await page.locator('#aig-unified-model-technical summary').click();
   if(!await page.locator('#aig64-single-build').isVisible())
    throw Error('AIG694_LEGACY_TECHNICAL_GENERATOR_MISSING');
