@@ -21,7 +21,8 @@
 - `tests/aig-scene-lifecycle-1-9.test.mjs`：來源不變、綁定單 scene、RAM LRU、cache reuse、壞 GLB 留舊場景、source select 多重競爭避免舊請求覆蓋新、地圖/影片 GLB 路徑 fail-closed。
 - `tests/aig-scene-lifecycle-1-9.real-browser.mjs`：Chromium phone+desktop 從真 IndexedDB 匯入合法 GLTF2 A/B 和壞 GLB，載入 WebGL → 切換 → 壞來源維持原 3D → 清 RAM 而保留 B → unload GPU → 導回外部素材庫原三份資料仍在；保留 screenshot/artifact。
 - 維持既有 1.3 NC 真數值、1.6–1.8 GPU、7.13 真毫米 XYZ、7.14 人物 RGB/深度、7.15 可編輯骨架、7.16 外部資料庫 Gate。這些 Gate 是防回退，不是 CNC 真機 Gate。
-- 隔離驗證 [PR #36](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/pull/36)，初始 Action [#39850317457](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39850317457) 於建立之際仍 queued。**未看到 completed/success 不可宣稱整套 PASS**。
+- 隔離驗證 [PR #36](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/pull/36)：第一輪 [#39850317457](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39850317457) **RED**，Chromium phone 真 GLB A 場景已在 WebGL 成功載入，但測試將 UI JSON `cacheSources` 誤寫為 `cachedSources`，導致斷言 `undefined!==1`，並非模型無法載入。已修測試欄位並同步 repair + verification 分支；最新 [#39851496997](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39851496997) 在此檢查點仍 queued。**未看到 completed/success 不可宣稱整套 PASS**。
+- 經 7.16 舊 regression [#39848194866](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39848194866) 發現 test 計數等待使用前一項的「已保存」文字，會在新 import IndexedDB transaction 尚未完成時提早進入斷言，造成 2 筆而非 3 筆的假 RED；已調整每次直接等待 `儲存項目 N 筆` 真實更新。記憶體壓力與真儲存完整性仍需最新 Gate。
 
 ## 下一個技術焦點（尚未完成）
 
@@ -29,3 +30,8 @@
 2. 地圖 GeoJSON／建築/道路/植被模型綁定真世界比例與本機 scene graph，動畫轉場使用共用 renderer 時仍保留來源 SHA，使用不同模組按需讀取。
 3. 與正式 AIG 網站和原生 APK/EXE 的差異合併及手機橫向 RGB 主視窗逐頁真圖片驗收；**不可整個 app.mjs 覆蓋網站，亦不可把網站工程殼當正式 Runtime**。
 4. 前一輪核准的 2D→2.5D/3D→使用者敘述動畫與真角色 1:1 多角度掃描仍在待執行技術佇列；不因本次 GPU 場景管理而刪除。
+
+## 最新微升級（同輪，只向前）
+- 與活動 GPU scene SHA 完全相同時直接 `ALREADY_ACTIVE_NO_REPARSE`，保留目前鏡頭／動畫姿態，不再重傳同一套頂點至 GPU；額外單元測試已納入。
+- 真實 SkinnedMesh 的 Skeleton/bone texture 於結束 scene 時也採獨立集合只釋放一次，避免髮束／骨架動畫切換時累積 GPU 資源。
+- 新版來源檔本身以隔離 PR #36 最後一個核對 SHA 為準，不使用早期的失敗畫面當成功證據。
