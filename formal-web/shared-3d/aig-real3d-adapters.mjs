@@ -99,6 +99,7 @@ export function demoAIG3DScene(profile='3AX'){
  }
  const cradle=profile==='5AX';
  return createAIG3DCNCReadOnlyScene({axisPage:profile,
+  consumer:profile==='5AX'?'AIG-Studio-5.0':'AIG-II',
   consumer:cradle?'AIG-Studio-5.0':'AIG-II',
   solids:[
    {id:'bed',kind:'machine',geometry:'box',position:[0,-1.75,0],size:[8,.45,6],color:[.09,.2,.24,1]},
