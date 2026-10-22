@@ -10,6 +10,12 @@ on:
       - 'formal-web/shared-3d/aig-real3d-replay-lab.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-3ax-new-workbench.real-browser.mjs'
       - '.github/workflows/aig-new-3ax-web-gate.yml'
+  pull_request:
+    branches:
+      - web/aig-dual-formal-runtime-20261016
+    paths:
+      - '.github/workflows/aig-new-3ax-web-gate.yml'
+      - 'formal-web/3ax-mobile-*'
   workflow_dispatch:
 permissions:
   contents: read
