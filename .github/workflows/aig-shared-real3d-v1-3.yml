@@ -25,6 +25,10 @@ jobs:
       - run: npm ci
       - name: Syntax and true numerical source reparse
         run: |
+          node --check aig-metric-stereo-7-13.mjs
+          node --check metric-stereo-studio.mjs
+          node --check tests/aig-metric-stereo-7-13.real-browser.mjs
+          node --test tests/aig-metric-stereo-7-13.test.mjs
           node --check aig-static-instancing-1-8.mjs
           node --test tests/aig-static-instancing-1-8.test.mjs
           node --check aig-glb-gpu-adaptive-1-7.mjs
@@ -52,6 +56,8 @@ jobs:
       - name: Offline build retains 1.0 1.1 1.2 and 1.3 source exact
         run: |
           npm run build
+          test -s dist/metric-stereo-studio.html
+          test -s dist/metric-stereo-studio.js
           npx esbuild tests/aig-glb-gpu-1-7-lab.mjs --bundle --format=iife --platform=browser --target=chrome100 --outfile=dist/aig17-browser-bundle.js
           cp tests/aig-glb-gpu-1-7-lab.html dist/aig17-gpu-browser-lab.html
           test -s dist/aig17-browser-bundle.js
@@ -77,6 +83,7 @@ jobs:
           node tests/aig-real3d-replay-v1-3.real-browser.mjs
           node tests/aig-real3d-gpu-v1-6.real-browser.mjs
           node tests/aig-glb-gpu-v1-7.real-browser.mjs
+          node tests/aig-metric-stereo-7-13.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -115,4 +122,6 @@ jobs:
             echo 'FASTMODEL_1_8_REAL_STATIC_INSTANCING=TRUE_THREE_GPU_DRAW_CALLS_ONLY'
             echo 'FASTMODEL_1_8_SKINNED_MORPH_ANIMATED_AND_CNC_SOURCE=UNCHANGED'
             echo 'FASTMODEL_1_8_NATIVE_DEVICE_FPS_UPLIFT=NOT_YET_MEASURED'
+            echo 'FASTMODEL_7_13_METRIC_XYZ=ONLY_WITH_REVIEWED_PHYSICAL_CAMERA_BASELINE_AND_FOCAL'
+            echo 'FASTMODEL_7_13_SINGLE_PHOTO_BACKSIDE_OR_FULL_HUMAN_ACCURACY=NOT_VERIFIED'
           } >> "$GITHUB_STEP_SUMMARY"
