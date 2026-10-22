@@ -164,6 +164,10 @@
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-motion-preview-readonly.mjs",
       "gitBlobSha": "eaee565f28191ad3aaa3af647427f40c3557b824"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-fullbody-motion-6-11.mjs",
+      "gitBlobSha": "ae3b7bcb21a51c58505bcd6bd6a759a28bbbcd75"
     }
   ],
   "ghostOverlayPolicy": "NO_DOUBLE_PERSON_ONE_PASS_VISIBLE_PAN_ZOOM_WITHOUT_CLEAN_BACKGROUND",
@@ -179,5 +183,6 @@
   "axisVisualizationSafety": "Linear interpolation for XYZ tool center only. A/B/C waypoint pose held until next sample; 6-axis kinematics not certified. Not machine control.",
   "motionImportRaceIntegrity": "Incrementing import token prevents slow earlier File.text/crypto.digest from repainting after user selects newer CNC motion file. Browser test awaits SHA failure and checks canvas hidden/play disabled.",
   "temporalRigQualityGate": "Real technical GLB loaded via Three GLTFLoader, samples skinned mesh vertices at 30Hz across three animation clips, validates finite coordinates and non-static deformation; full-body/photo identity/physical collisions stay unapproved",
-  "auditedLiveAppLockDrift": "2026-10-22 reviewed historical commit 96f617eca78927fd8bbe91a91cccd1c366a3332d installing stable Button ID binding; source app.mjs matches pre-existing PR code and is now locked. No app code changed."
+  "auditedLiveAppLockDrift": "2026-10-22 reviewed historical commit 96f617eca78927fd8bbe91a91cccd1c366a3332d installing stable Button ID binding; source app.mjs matches pre-existing PR code and is now locked. No app code changed.",
+  "realFullBodyLimbUpgrade": "Existing single partial image->technical 17 bone 9 skinned mesh 5 clip GLB retained; adds two genuine bilateral arm/leg GLB quaternion clips, 31-frame skinned vertex motion audits; not verified heroine likeness, foot contacts or garment physics"
 }
