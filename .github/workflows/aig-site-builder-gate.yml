@@ -40,7 +40,7 @@ jobs:
           assert 'actions/workflows/' in api and 'dispatches' in api
           assert 'actions/artifacts/' in api
           assert 'workflowConclusion' in site
-          assert 'aig-cloud-builder.onrender.com' in site
+          assert 'aig-remote-bridge.onrender.com/builder' in site
           assert 'GitHub' in site
           assert 'data-i18n' in site and "'zh-TW'" in site and 'en:' in site
           assert 'password' in site and "localStorage" not in site.split('<script>')[-1]
