@@ -56,3 +56,34 @@ Open newest 2.5 PR and branch SHA, inspect GitHub Actions job logs and actual re
 - Fix: `scene-runtime-studio.mjs` now queues world-new/add operations transactionally and snapshots exact asset ID, SHA metadata, map selection, coordinate mode, scale, XYZ and reviewed status at click time. No silent `if(worldBuildMutation)return` drop; queued source additions commit in order. Preview now awaits queued mutation completion before 3D GPU loading. Original GLBs are not modified.
 - Browser regression now waits for first actual source-world and actor commit (1 character) before adding the building, then verifies (2) before material/GPU/world-actor checks. Relevant commits include `77b718aa`, `8ebb0b0e`, `07bb5a07`, `1f966fc4`.
 - **Do not claim Gate GREEN** until latest actual GitHub Actions *push* run on `verify/real3d-true-world-movie-2-5-20261023` completes and provides saved Chromium phone+desktop true 1080p decoded movie evidence. `fetch_commit_workflow_runs` only lists PR runs; use GitHub GET `/actions/runs?branch=verify%2Freal3d-true-world-movie-2-5-20261023` for branch push runs.
+
+
+## AI-adopted film-quality completion contract (2026-10-23)
+
+### Priority 0: actual RED test first, no downgrade
+
+- Continue **this same branch and PR #43**. Do not merge or deploy while `aig-map-actor-2-1.real-browser.mjs` fails (current observed RED: actual mobile 3-source world after 2.3, then waitForFunction timeout).
+- Preserve original source GLBs and source photo SHA, original project revision and independent CNC/Fanuc no-write gates. Source world edits are transactional, copy-on-write, with matching SHA.
+- Browser test now records stages and real DOM proof on failure to identify whether photo-rig generation, original-source character clip, storyboard or movie encoding is blocked.
+- Rebuild and run **complete** node tests + esbuild + Chromium **phone and desktop**. A PR being created or a source test being green is NOT a film gate.
+
+### Priority 1: exact appearance and true self-articulation
+
+- Real segmentation must identify and track person/animal/plant/environment; a lightweight connected-component silhouette is **not semantic identity recognition**. It can be used as candidate preprocessing only.
+- A one-photo inferred rear body is a clearly labeled prior, not a measured 1:1 scan. Measurements, inferred attributes and confidence must be independent; require end-user visual approval for heroine identity.
+- Source photo hidden during verification. Turn model >120 degrees with fixed camera; a planar card, moving camera only, rigid entire-body sway or morphing the whole frame must FAIL.
+- Certified skinned body (nonplanar actual vertices), weighted bones, per-clip bone changes and internal vertex pair deformation; new motions include walk/run/jump/crouch/stand, with time-domain foot contacts, IK, self-collision and clothing/hair contact checks. These remain **unimplemented/new Gate**, not silently passed based on 2.4 metrics.
+
+### Priority 2: true cinematic edit and recorded film
+
+- Reuse one WebGL/Three renderer, loaded source 3D world and exact model IDs/SHA; 2.2 source-provenance dialogue, actor cue, camera and Chinese subtitle timeline.
+- 1080p 1920×1080, **30 FPS target**, no ray-tracing requirement; GPU raster/PBR default, auto-LOD with protected world coordinates and source identity. Not a claim of measured locked 30 FPS.
+- Captured video must contain real post-render frames, burn subtitle pixels, match codec/filename via EBML WebM or MP4 ftyp, decode an actual 1080p HTMLVideo frame, count real processed frames and present downloadable browser-supported artifact. No fake/static movie data.
+- Audio milestone must add **actual** recorded voice/dialogue, effects/music, sample-level sync and browser decoder validation. Until implemented output is SILENT, and TTS playback without capture is not an audio track.
+- 2K/4K and 60 FPS optional **later**, only after memory/GPU sustained-load, encoder support, dropped-frame and phone/desktop evidence passes. No auto-enable or implied universal hardware support.
+
+### Priority 3: release from source, not an engineer shell
+
+- Public old FastModel 6.9.5 parallax product entry remains retired. Public site only after full source film gate + independent Render deploy SHA and visible full page validation.
+- Android APK and Windows EXE only after actual signed/package/build, offline production runtime, responsive interface, true model, verified media output and existing AIG-II CNC safety tests. Do not claim three-project delivery from Web.
+- **No auto-upgrades across red gates**. No new version name used as a substitute for features, no old Photo / 2.5D show passed as real animation.
