@@ -32,6 +32,7 @@ import {AIG61_SCHEMA,proposeAIG61LocalLandmarks,acceptAIG61ReviewedProposal} fro
 import {AIG62_SCHEMA,AIG62_REFERENCES,verifyAIG62ReferenceFile} from './aig-school-visual-6-2.mjs';
 import {AIG63_SCHEMA,compareAIG63ActualImages,auditAIG63SchoolModelActualGLTF,bindAIG63Evidence} from './aig-visual-compare-6-3.mjs';
 import {AIG64_AUTOBODY_SCHEMA,analyzeAIG64PartialPortrait,generateAIG64SinglePartialFullbody} from './aig-single-photo-autobody-6-4.mjs';
+import {upgradeAig64FullBodyMotion,auditAig61FullBodyLimbMotion} from './aig-fullbody-motion-6-11.mjs';
 import {AIG65_SCHEMA,planAIG65AutoAnimation,publicAIG65Plan} from './aig-auto-animation-6-5.mjs';
 import {AIG65_CAPTURE_SCHEMA,prepareAIG65Layers,drawAIG65CanvasFrame,AIG65CanvasRecorder} from './aig-canvas-movie-6-5.mjs';
 import {AIG66_SCHEMA,createAIG66Portrait} from './aig-portrait-6-6.mjs';
@@ -2368,6 +2369,7 @@ $('aig63-report').addEventListener('click',()=>{
 let aig64SingleBytes=null,aig64SingleReport=null,aig64SingleBusy=false,aig64SingleRevision=0;
 function aig64SingleInvalidate(message='已變更輸入照片，上一個全身 GLB 不可再當成目前的來源。'){
  ++aig64SingleRevision;aig64SingleBytes=null;aig64SingleReport=null;
+ $('aig64-single-motion-upgrade').disabled=true;
  $('aig64-single-download').disabled=true;
  $('aig64-single-report').disabled=true;
  $('aig64-single-status').textContent=message;
@@ -2384,6 +2386,7 @@ $('aig64-single-build').addEventListener('click',async()=>{
  }
  const input=$('aig64-single-photo').files[0],revision=++aig64SingleRevision;
  aig64SingleBusy=true;aig64SingleBytes=null;aig64SingleReport=null;
+ $('aig64-single-motion-upgrade').disabled=true;
  $('aig64-single-build').disabled=true;$('aig64-single-report').disabled=true;
  $('aig64-single-download').disabled=true;
  $('aig64-single-status').textContent='正在只用一張照片的本機像素推估可見頭肩、補齊看不見的軀幹四肢與背面，製作 17 骨／5 動畫真 GLB。';
@@ -2470,6 +2473,7 @@ $('aig64-single-build').addEventListener('click',async()=>{
   if(revision!==aig64SingleRevision||input!==$('aig64-single-photo').files?.[0])
    throw Error('AIG64_SOURCE_CHANGED_AFTER_PREVIEW');
   aig64SingleBytes=output.bytes;aig64SingleReport=report;
+  $('aig64-single-motion-upgrade').disabled=false;
   $('aig64-single-download').disabled=false;
   $('aig64-single-report').disabled=false;
   $('aig64-single-status').textContent='6.4 已從單張 '+(
@@ -2478,6 +2482,7 @@ $('aig64-single-build').addEventListener('click',async()=>{
    preview+' 未拍到的真實身材及人物身份仍屬估算，非完全 3D 相貌還原。';
  }catch(err){
   aig64SingleBytes=null;aig64SingleReport=null;
+  $('aig64-single-motion-upgrade').disabled=true;
   $('aig64-single-status').textContent='6.4 單張照片自動建模 BLOCKED：'+err.message+
    '。清楚的臉部或上半身照片即可重試，不必提供四視角；原動畫與服裝未更動。';
  }finally{
@@ -2488,13 +2493,87 @@ $('aig64-single-build').addEventListener('click',async()=>{
 $('aig64-single-download').addEventListener('click',()=>{
  if(aig64SingleBytes&&aig64SingleReport)
   aig47Download(aig64SingleBytes,
-   'AIG-6.4-ONE-FACE-OR-UPPERBODY-TO-FULL-RIGGED-TECHNICAL.glb','model/gltf-binary');
+   aig64SingleReport.realAnimationClips===7?
+    'AIG-6.11-ONE-PHOTO-REAL-BILATERAL-RIGGED-MOTION-TECHNICAL.glb':
+    'AIG-6.4-ONE-FACE-OR-UPPERBODY-TO-FULL-RIGGED-TECHNICAL.glb',
+   'model/gltf-binary');
 });
 $('aig64-single-report').addEventListener('click',()=>{
  if(aig64SingleReport)
   aig47Download(JSON.stringify(aig64SingleReport,null,2),
    'AIG-6.4-SINGLE-PARTIAL-PHOTO-ANATOMICAL-ESTIMATE-SHA.json',
    'application/json');
+});
+/** On-demand control is wired to the already verified single-photo GLB.
+ * Existing generation and downloaded original five clips remain intact.
+ */
+$('aig64-single-motion-upgrade').addEventListener('click',async()=>{
+ if(aig64SingleBusy||!aig64SingleBytes||!aig64SingleReport||
+   aig64SingleReport.realAnimationClips!==5)return;
+ if(view?.movieMode){
+  $('aig64-single-status').textContent='錄影時不能替換真 GLB；請先結束錄影。';return;
+ }
+ const revision=aig64SingleRevision;
+ const source=aig64SingleReport.originalSinglePhotoSHA256;
+ const base=aig64SingleBytes;
+ const reportBefore=aig64SingleReport;
+ aig64SingleBusy=true;
+ $('aig64-single-motion-upgrade').disabled=true;
+ $('aig64-single-build').disabled=true;
+ $('aig64-single-status').textContent='正在真正增加雙腿與雙臂 3D 骨架動畫，逐幀檢查實際蒙皮頂點；沒有用 2D 推鏡冒充。';
+ try{
+  const upgraded=upgradeAig64FullBodyMotion({
+   schema:AIG64_AUTOBODY_SCHEMA,bytes:base,
+   sourceImageSHA256:source,riggedBoneCount:reportBefore.realBoneCount,
+   generatedCompleteTechnicalBody:true,releaseAllowed:false
+  });
+  const proof=await auditAig61FullBodyLimbMotion(upgraded);
+  if(!proof.actualSkinVertexMotionVerified||
+     !proof.leftAndRightLegMotionVerified||!proof.leftAndRightArmMotionVerified||
+     upgraded.animationClipCount!==7)
+   throw Error('AIG61_REAL_BILATERAL_SKIN_MOTION_NOT_VERIFIED');
+  const sha=await sha256Bytes(upgraded.bytes);
+  if(revision!==aig64SingleRevision ||
+     source!==aig64SingleReport?.originalSinglePhotoSHA256 ||
+     base!==aig64SingleBytes)
+   throw Error('AIG61_SOURCE_CHANGED_DURING_MOTION_UPGRADE');
+  let preview='7 段真 GLB 可以下載；此裝置尚未驗證 3D GPU 預覽。';
+  if(view){
+   try{
+    await load(upgraded.bytes.buffer,false,{technical:true});
+    if(sourceSha!==sha)throw Error('AIG61_RENDERER_SOURCE_SHA_MISMATCH');
+    aig50Report=null;aig50Parsed=null;
+    $('aig50-report').disabled=true;
+    aig51Reset('已換成 7 動作全身技術 GLB；接縫與碰撞請重新驗證。');
+    preview='真 3D 工作區已載入 7 段骨架動畫。';
+   }catch(err){preview='GPU 隔離：'+err.message+'；真 GLB 仍可下載。';}
+  }
+  if(revision!==aig64SingleRevision || base!==aig64SingleBytes)
+   throw Error('AIG61_SOURCE_CHANGED_AFTER_RENDER');
+  aig64SingleBytes=upgraded.bytes;
+  aig64SingleReport={...reportBefore,
+   upgradedMotionSchema:upgraded.schema,
+   originalFiveClipGLBSHA256:reportBefore.generatedRealGLBSHA256,
+   generatedRealGLBSHA256:sha,GLBBytes:upgraded.bytes.length,
+   realAnimationClips:7,
+   realBilateralLimbMotionEvidence:proof,
+   sourceIdentityExact:false,physicalFootContactCertified:false,
+   hairAndClothPhysicsCertified:false,releaseAllowed:false
+  };
+  $('aig64-single-download').disabled=false;
+  $('aig64-single-report').disabled=false;
+  $('aig64-single-status').textContent='雙腿與雙臂真蒙皮動作已逐幀驗證：17 骨／9 網格／7 段真 GLB；'+
+   preview+' 未拍到的身材與人臉身份仍是推估，髮絲碰撞及真走路接地尚未通過。';
+ }catch(err){
+  // NEVER destroy the original successfully generated GLB or its 5 clips.
+  aig64SingleBytes=base;aig64SingleReport=reportBefore;
+  $('aig64-single-motion-upgrade').disabled=false;
+  $('aig64-single-status').textContent='全身動作升級 BLOCKED：'+err.message+
+   '。原來已驗證的 5 段 GLB 和全部照片、動畫未被清空。';
+ }finally{
+  aig64SingleBusy=false;
+  $('aig64-single-build').disabled=!$('aig64-single-photo').files?.length;
+ }
 });
 
 
