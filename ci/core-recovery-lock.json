@@ -36,8 +36,29 @@
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/Document.kt",
       "gitBlobSha": "0e9655012fb9612c45c0bd56967cbf878736901c"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/SixAxisToolDirection.kt",
+      "gitBlobSha": "4e63e897cc0cf846a9b4ed0e7ebb9d46cc537966"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CamWorkflowSafeZ.kt",
+      "gitBlobSha": "e220c97ff61c1c4b2e3b817fa42c05acdf464eb9"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/ProjectSync.kt",
+      "gitBlobSha": "09d6b9e0ab66b77df16b371a1d94d297e13e1d3c"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/RuntimeIssueRouting.kt",
+      "gitBlobSha": "a4eb1f3cf0bef8b3ab242e5fda512d64976dcd28"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/UiButtonManifestContract.kt",
+      "gitBlobSha": "f2a1bcca5e02541236aea8e70dea026cab7db62b"
     }
   ],
   "machineTransportVerification": "NO_REAL_HANDSHAKE_LINK_STARTS_DISCONNECTED_CLICK_WARNING",
-  "cadSafetyNote": "Finite-but-impossible Double.MAX_VALUE coordinates blocked before geometry command; same bound as project repository"
+  "cadSafetyNote": "Finite-but-impossible Double.MAX_VALUE coordinates blocked before geometry command; same bound as project repository",
+  "coreInventoryExtension": "2026-10-22 audited retention of six-axis safety, Safe-Z, offline project sync, issue isolation and typed navigation (SOURCE IDENTITY ONLY)"
 }
