@@ -62,11 +62,11 @@ try{
    await importAsset('campus.glb','model/gltf-binary','building',
     '校園建築來源（測試）',triangleGLB('CampusGeometry',1.8),'建築,校園');
    const map=Buffer.from(JSON.stringify({
-    schema:'AIG_FASTMODEL_7_12_SOURCE_SCENE_MAP_DATA',
-    id:'campus-map',coordinateMode:'LOCAL_RELATIVE',
-    physicalDimensionsKnown:false,
-    sourceLabel:'TECHNICAL_MAP_FIXTURE_NOT_GEO_SURVEY',
-    features:[]
+    schema:'AIG_FASTMODEL_7_12_SOURCE_SCENE_MAP_DATA',revision:1,
+    map:{id:'campus-map',coordinateMode:'LOCAL_RELATIVE',
+     metresPerUnit:null,sourceLabel:'TECHNICAL_MAP_FIXTURE_NOT_GEO_SURVEY',
+     sourceRights:'USER_TEST_FIXTURE',geoOrigin:null,features:[]},
+    originalPhotosOrVideosIncluded:false,actual3DMeshCreated:false
    }));
    await importAsset('map.geojson','application/json','map',
     '校園來源地圖 JSON（測試）',map,'地圖,校園');
