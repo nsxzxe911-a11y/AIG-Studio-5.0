@@ -19,7 +19,7 @@
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-canvas-movie-6-5.mjs",
-      "gitBlobSha": "6b3ff41174a14d3d5efb6d564c02dd7c89828a7f"
+      "gitBlobSha": "42387749dc908d513bcfc44a0b7be79c31bbf4e1"
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/viewer.mjs",
@@ -163,5 +163,6 @@
   "coreInventoryReview": "2026-10-22 phase one: verified source blob inventory to prevent disappearing or silently replaced core; exact SHA is NOT functional validation",
   "sourceIdentityIsNotExecutableProof": true,
   "controlGateBlockedUntilFullCoreOutcomeEvidence": true,
-  "releaseGateBlockedUntilRuntimeAndNativeEvidence": true
+  "releaseGateBlockedUntilRuntimeAndNativeEvidence": true,
+  "movieFinalizeFailureProof": "Blob finalization failure rejects pending stop, frees owned canvas tracks, leaves caller-owned audio alive; executable Node test"
 }
