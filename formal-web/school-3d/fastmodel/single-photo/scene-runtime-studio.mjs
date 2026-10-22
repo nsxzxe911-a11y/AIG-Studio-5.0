@@ -68,7 +68,10 @@ $('scene-load').addEventListener('click',async()=>{
   }
   say('正在按需核對來源 SHA、解析真 GLB 並建立 GPU 工作場景…');
   const result=await runtime.activate(id);
-  if(result.status==='ACTIVE_SOURCE_BOUND_GPU_SCENE'){
+  if(result.status==='ALREADY_ACTIVE_NO_REPARSE'){
+   say('此 GLB 已在 GPU 工作場景中：'+result.asset.title+
+    '。來源 SHA 未變，直接重用目前模型與鏡頭，不重建網格。');
+  }else if(result.status==='ACTIVE_SOURCE_BOUND_GPU_SCENE'){
    say('已開啟 '+result.asset.title+
     '。上一個模型的 GPU 資源已釋放；'+
     (result.asset.reviewStatus==='approved'?'此模型已審核。':
