@@ -34,6 +34,8 @@ try{
    assert.equal(first.materialRemovalMm3,null);
    assert.equal(first.renderer.actualStockRemovedMm3,null);
    assert.equal(first.renderer.removalNotImplemented,true);
+   assert.ok(first.renderer.allocatedFramePixels<=first.renderer.maxFramePixels,
+    'Android GPU canvas pixel budget must block excessive frame allocation');
    assert.equal(first.renderer.feed,3);
    const getPix=()=>page.locator('#view').evaluate(c=>{
     const gl=c.getContext('webgl2')||c.getContext('webgl');
