@@ -216,6 +216,29 @@ export class PhotoViewer{
    this.camera.aspect=old.aspect;this.camera.updateProjectionMatrix();
   }
  }
+ /**
+  * Real3D 1.9 — explicitly release the current working GLB from GPU.
+  * Does not erase the IndexedDB original asset, scene-map metadata,
+  * the separate heroine depth/rig source, or the reusable renderer.
+  */
+ unloadCurrent(){
+  if(this.movieMode||this.reviewBusy||this.actionImportBusy||
+   this.skinProbe||this.animation?.story?.playing)
+   throw Error('AIG19_BUSY_ANIMATION_OR_EVIDENCE_BLOCKED');
+  if(this.gpu17Enabled)this.setGpuAccelerationEnabled(false);
+  if(this.gpu18Instances)this.setStaticInstancingEnabled(false);
+  const old=this.model;
+  this.animation?.dispose();this.animation=null;
+  this.skinProbe=null;this.skinReport=null;this.model=null;
+  this.orbit=false;
+  this.onFrame=null;
+  if(old){
+   this.scene.remove(old);
+   return {status:'GPU_SCENE_DISPOSE_REQUESTED',
+    ...this.release(old),originalGLBDeleted:false};
+  }
+  return {status:'NO_ACTIVE_GPU_SCENE',originalGLBDeleted:false};
+ }
  async load(buffer,{orbit=false}={}){
   if(this.reviewBusy)throw Error('TIMELINE_REVIEW_IN_PROGRESS');
   if(this.actionImportBusy)throw Error('ACTION_IMPORT_IN_PROGRESS');
@@ -374,5 +397,28 @@ export class PhotoViewer{
   this.skinProbe=probe;
   return initial;
  }
- release(root){const textures=new Set();root.traverse(n=>{n.geometry?.dispose();for(const m of (Array.isArray(n.material)?n.material:[n.material]))if(m){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}});textures.forEach(t=>t.dispose());}
+ release(root){
+  // Shared GLB nodes frequently reference the same geometry, material and
+  // texture. Each GPU resource gets ONE disposal request; the immutable
+  // source bytes in the external asset vault are never modified.
+  const geometries=new Set(),materials=new Set(),textures=new Set();
+  root.traverse(node=>{
+   if(node.geometry?.isBufferGeometry)geometries.add(node.geometry);
+   const mats=Array.isArray(node.material)?node.material:
+    node.material?[node.material]:[];
+   for(const material of mats)if(material){
+    materials.add(material);
+    for(const value of Object.values(material))
+     if(value?.isTexture)textures.add(value);
+   }
+  });
+  for(const geometry of geometries)geometry.dispose();
+  for(const material of materials)material.dispose();
+  for(const texture of textures)texture.dispose();
+  return Object.freeze({uniqueGeometriesDisposed:geometries.size,
+   uniqueMaterialsDisposed:materials.size,
+   uniqueTexturesDisposed:textures.size,
+   actualVRAMFreedBytesUnmeasured:true,
+   persistentSourceAssetsPreserved:true});
+ }
 }
