@@ -37,6 +37,10 @@ jobs:
           node --test tests/aig-text-world-storyboard-2-2.test.mjs
           node --check aig-photo-rig-world-2-3.mjs
           node --test tests/aig-photo-rig-world-2-3.test.mjs
+          node --check aig-auto-image-detect-2-4.mjs
+          node --test tests/aig-auto-image-detect-2-4.test.mjs
+          node --check aig-motion-integrity-2-4.mjs
+          node --test tests/aig-motion-integrity-2-4.test.mjs
           node --check aig-map-model-alignment-2-1.mjs
           node --check tests/aig-map-actor-2-1.real-browser.mjs
           node --test tests/aig-map-model-alignment-2-1.test.mjs
@@ -241,4 +245,8 @@ jobs:
             echo 'FASTMODEL_REAL3D_2_2_VOICE_GENERATION=NOT_IMPLEMENTED'
             echo 'FASTMODEL_REAL3D_2_2_STILL_IMAGE_FULL_RIG=NOT_YET_GENERATED'
             echo 'FASTMODEL_REAL3D_2_2_STORYBOARD=EXTERNAL_SOURCE_SHA_REVISION_LOCKED'
+            echo 'FASTMODEL_REAL3D_2_4_IMAGE_AUTOSCAN=REAL_RGB_SOURCE_PIXELS_NO_CLOUD'
+            echo 'FASTMODEL_REAL3D_2_4_SEMANTIC_IDENTITY=NOT_TRAINED_OR_CLAIMED'
+            echo 'FASTMODEL_REAL3D_2_4_MOTION_GATE=REJECT_FLAT_CARD_AND_RIGID_SWAY'
+            echo 'FASTMODEL_REAL3D_2_4_RELEASE_GATE=NOT_YET_APPROVED'
           } >> "$GITHUB_STEP_SUMMARY"
