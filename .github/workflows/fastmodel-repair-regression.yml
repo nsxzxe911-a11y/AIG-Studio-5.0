@@ -230,6 +230,8 @@ jobs:
       - name: Real binary source hair/neck region and XYZ occlusion tests
         run: |
           node --check aig-hair-neck-7-7.mjs
+          node --check occlusion-studio.mjs
+          node --check tests/aig-hair-neck-7-7.real-browser.mjs
           node --test tests/aig-hair-neck-7-7.test.mjs
       - name: Standalone offline renderer includes hair-neck UI
         run: |
