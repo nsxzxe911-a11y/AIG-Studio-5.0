@@ -244,9 +244,15 @@ export class PhotoViewer{
   if(this.actionImportBusy)throw Error('ACTION_IMPORT_IN_PROGRESS');
   if(this.movieMode)throw Error('MOVIE_RECORDING_IN_PROGRESS');
   const file=await parseRiggedGLB(buffer),box=new THREE.Box3().setFromObject(file.scene);
-  if(box.isEmpty())throw Error('GLB_EMPTY_SCENE');
+  if(box.isEmpty()){
+   this.release(file.scene);
+   throw Error('GLB_EMPTY_SCENE');
+  }
   const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-  if(![...size,...center].every(Number.isFinite))throw Error('GLB_NONFINITE_SCENE');
+  if(![...size,...center].every(Number.isFinite)){
+   this.release(file.scene);
+   throw Error('GLB_NONFINITE_SCENE');
+  }
   const controller=new AnimationController(file.scene,file.animations);if(file.animations.length)controller.select(0);
   // Commit only after new file parses and validates. A corrupted GLB must
   // not clear the existing optimizer or remove the last verified scene.
