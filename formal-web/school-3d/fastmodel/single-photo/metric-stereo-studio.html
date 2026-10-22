@@ -97,4 +97,21 @@ small{font-size:11px;color:#a9bec9}.flag{display:inline-block;border:1px solid #
 <output id="heroine-status" role="status" aria-live="polite">請先完成上方雙照片 3D 深度重建。單張照片無法直接證實人體背面。</output>
 <pre id="heroine-proof">等待 7.13 真實照片和 3D 表面來源</pre>
 </section>
+<section class="heroine-panel" id="heroine-715-workspace">
+<h2>07.15-A｜女主角可編輯 3D 草模／頭頸分離／骨架與衣物</h2>
+<p>使用上方<strong>已人工核對的頭髮、臉、脖子、服裝 RGB 分區</strong>建立相對深度草模。單張圖的估計 Z 使用無單位相對值；只有經過相機校正的 7.13 雙圖才會另外記錄實測 Z（mm）。兩者不互相覆蓋。</p>
+<button id="heroine-candidate-build" type="button">01｜建立分區 3D 草模與骨架候選</button>
+<button id="heroine-depth-save" type="button" disabled>02｜保存估計／實測雙深度 JSON</button>
+<button id="heroine-rig-save" type="button" disabled>03｜保存骨架／衣物幾何結構 JSON</button>
+<div class="plane-projection">
+<label>可編輯的骨架節點
+<select id="heroine-joint" style="width:100%;min-height:42px;background:#051525;color:#e7f9ff;border:1px solid #5292b0;border-radius:7px"></select></label>
+<label>畫面 X（0～1）<input id="heroine-joint-x" type="number" value=".5" min="0" max="1" step=".001"></label>
+<label>畫面 Y（0～1）<input id="heroine-joint-y" type="number" value=".5" min="0" max="1" step=".001"></label>
+<button id="heroine-joint-save" type="button" disabled>套用關節位置</button>
+</div>
+<output id="heroine-candidate-status" role="status" aria-live="polite">等待已核對的部位分區。生成後會在上方 3D 視窗顯示獨立網格草模；未實測部分不標示 mm。</output>
+<pre id="heroine-candidate-proof">尚無 7.15 女主角骨架／衣物草模</pre>
+<p><small>估計深度不是毫米測量；骨架是可編輯定位候選，尚不是完整蒙皮權重。未知的背面、腿部與髮根不會自動填成已驗證人體。</small></p>
+</section>
 </main><script src="./metric-stereo-studio.js"></script></body></html>
