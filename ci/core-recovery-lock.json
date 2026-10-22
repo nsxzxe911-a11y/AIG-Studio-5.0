@@ -56,9 +56,61 @@
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/UiButtonManifestContract.kt",
       "gitBlobSha": "f2a1bcca5e02541236aea8e70dea026cab7db62b"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/AiAssist.kt",
+      "gitBlobSha": "3ff18be6faefac2eac1f964a17dd4e6db1e9e93f"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CadAdvancedTools.kt",
+      "gitBlobSha": "ff33d09451ec600435cbb75df4538acb40ea9758"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CadExactInput.kt",
+      "gitBlobSha": "14825f2e38c5015c0d8ef76e6a55f3657d8e8b38"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CadProfileTools.kt",
+      "gitBlobSha": "303abc085c486eb5ff5d1a4f1a135c2bd313d895"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/EnvironmentSettings.kt",
+      "gitBlobSha": "4f64a2c793d548570db989a26016db98a55f939a"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/Geometry.kt",
+      "gitBlobSha": "5e91b181930b7de73b7acb9091bd9f2afa134645"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/PackageBundle.kt",
+      "gitBlobSha": "8ad3750cc41d653d0688c985f642131b6a6d63b0"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/RenderCompatibility.kt",
+      "gitBlobSha": "a7e383c47f7709fd32ecbaed8c0430645d2bca42"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt",
+      "gitBlobSha": "2a8a49ee2560d4ece9eedb01691f5f60be99aea4"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/Transform.kt",
+      "gitBlobSha": "19cbfa60fd2aa3ef6d8e9f2ab7e2ef33f9d332b8"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/AigRgbGlobalSkin.kt",
+      "gitBlobSha": "c42d766d1ffdc3788f7ca20de1b2d813afa2ca43"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CamWorkflowUiContract.kt",
+      "gitBlobSha": "1fd7342c38b9432dc3f64a1706bcd88e072aacdd"
     }
   ],
   "machineTransportVerification": "NO_REAL_HANDSHAKE_LINK_STARTS_DISCONNECTED_CLICK_WARNING",
   "cadSafetyNote": "Finite-but-impossible Double.MAX_VALUE coordinates blocked before geometry command; same bound as project repository",
-  "coreInventoryExtension": "2026-10-22 audited retention of six-axis safety, Safe-Z, offline project sync, issue isolation and typed navigation (SOURCE IDENTITY ONLY)"
+  "coreInventoryExtension": "2026-10-22 audited retention of six-axis safety, Safe-Z, offline project sync, issue isolation and typed navigation (SOURCE IDENTITY ONLY)",
+  "coreInventoryReview": "2026-10-22 phase one: verified source blob inventory to prevent disappearing or silently replaced core; exact SHA is NOT functional validation",
+  "sourceIdentityIsNotExecutableProof": true,
+  "controlGateBlockedUntilFullCoreOutcomeEvidence": true,
+  "releaseGateBlockedUntilRuntimeAndNativeEvidence": true
 }
