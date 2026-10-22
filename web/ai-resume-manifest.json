@@ -36,11 +36,11 @@
       "id": "AIG FastModel",
       "repository": "nsxzxe911-a11y/AIG-Studio-5.0",
       "reference": "repair/core-first-fastmodel-20261021",
-      "source_sha": "df0be21c9cfab1d1d5eb45761677b63f1900f8d1",
+      "source_sha": "60c987302b8fb75d8d101b3402911de8e8bee590",
       "visibility": "PUBLIC",
       "source_checked": true,
       "runtime_gate": "SOURCE_AND_BROWSER_VERIFIED_NATIVE_AND_RENDER_NOT_VERIFIED",
-      "checkpoint_note": "FastModel 7.7 hair/neck semantic photo-mask source user review, connected-head/neck Gate, real world XYZ Z layers and inverse sample; GitHub run 39757060595 fully PASS: Node 318/318, Python 49/49, phone+desktop full browser, isolated 7.5/7.6/7.7 gates and source audit PASS. Synthetic photo hair 657/neck 284 pixels. True human hair fibers/skin/contact/appearance and native APK/EXE, actual Render LIVE not verified."
+      "checkpoint_note": "FastModel 7.8 real XYZ head yaw pitch roll with smooth neck anchoring, photo user-reviewed hair/neck 3D layers, bounded sway and source-anchored 3D inverse+collision checks. GH run 39759628139 fully PASS: 324/324 Node, 49/49 Python, full phone+desktop browser and independent 7.5-7.8 jobs; source audit run 39759628176 PASS. Synthetics NOT real heroine face or native Android/Windows. Render LIVE not deployed/verified."
     }
   ],
   "checks": {
@@ -106,7 +106,16 @@
     "fastmodel_7_7_verified_core_sha": "df0be21c9cfab1d1d5eb45761677b63f1900f8d1",
     "fastmodel_7_7_original_character_likeness": "NOT_VERIFIED",
     "fastmodel_7_7_native_android_windows": "NOT_VERIFIED",
-    "fastmodel_7_7_skin_and_hair_physics": "NOT_IMPLEMENTED"
+    "fastmodel_7_7_skin_and_hair_physics": "NOT_IMPLEMENTED",
+    "fastmodel_7_8": "SOURCE_NUMERIC_AND_CHROMIUM_PASS_ARTICULATED_SPATIAL_XYZ",
+    "fastmodel_7_8_source_sha": "60c987302b8fb75d8d101b3402911de8e8bee590",
+    "fastmodel_7_8_full_gate": "PASS_GITHUB_39759628139_NODE_324_324_PYTHON_49_49_INDEPENDENT_7_5_7_6_7_7_7_8_CHROMIUM_PHONE_DESKTOP",
+    "fastmodel_7_8_source_gate": "PASS_GITHUB_39759628176",
+    "fastmodel_7_8_authentic_head_back": "NOT_RECONSTRUCTED",
+    "fastmodel_7_8_real_hair_collision_fem": "NOT_IMPLEMENTED",
+    "fastmodel_7_8_real_user_character": "NOT_VERIFIED",
+    "fastmodel_7_8_native_apk_exe": "NOT_VERIFIED",
+    "fastmodel_7_8_mmo_server": "NOT_IMPLEMENTED"
   },
   "approved_invariants": [
     "Do not delete/overwrite original geometry, CAD/CAM/NC, approved RGB Authority, or FastModel assets.",
@@ -116,14 +125,14 @@
     "No automatic rollback/downgrade; no destructive repair; create a new checkpoint after validation."
   ],
   "next_steps": [
-    "Verify AIG Render exact live deployment SHA matches latest website source and served /fastmodel/occlusion-studio.html imported JS; do not trigger duplicate manual deploy on autoDeploy service.",
-    "FastModel 7.8: source-conditioned deforming hair/neck continuity across actual head-turn clips, robust collision sampling and volumetric skin weights, real reference image similarity Gate, mobile/desktop real GPU benchmarks.",
+    "Compare latest original Render deployed SHA against site branch, verify served /fastmodel/spatial-studio.html and its imported modules before claiming LIVE. Do not deploy or replace unrelated CNC production without safety gates.",
+    "FastModel 7.9: proper multi-layer full 3D volumetric skinning/contact, camera-independent adaptive LOD, 3D hair-neck collision, reference heroine multiangle visual fidelity and true device FPS gate.",
+    "Keep explicit distinction between real mathematical XYZ articulating estimated geometry and complete authentic single-photo anatomical reconstruction; require actual source-photo likeness and movement screenshots.",
     "Only promote authentic real-photo character after original heroine reference images and moving frames pass visual, source fidelity and no-clipping checks; synthetic RGB photo region CI is numeric only.",
     "Confirm exact Render deployed SHA for original aig-dual-formal-runtime service; webpage source sync is not proof of live deploy. Static service configured autoDeploy; do not trigger duplicate manual build.",
     "Signed Android APK and Windows EXE plus offline launch/native FPS require separate Gate; CI browser tests are not native release evidence.",
     "Next 7.7 authentic hair/neck semantic occlusion and volumetric skin/joint continuity, plus reference photo fidelity evidence and real native device performance.",
     "Only after real reference portrait passes source similarity, facial depth, hair/neck contact and natural joint skinning may 7.5 be promoted beyond a numeric rig prototype.",
-    "Check AIG Render exact LIVE deployment commit and served /fastmodel/avatar-studio.html plus imported scripts; source commit is not web deployment proof.",
     "After credible offline 3D character and native device gates, consider server-authoritative online game sessions, asset streaming and authenticated sync. No current MMO service exists.",
     "Independently verify Render LIVE SHA and actually load /fastmodel/volume-lab.html with both 7.2 imported modules; site source existence is not proof of deployment.",
     "Re-read live FastModel repair/core-first-fastmodel-20261021 head SHA and exact source before any changes.",
@@ -133,5 +142,5 @@
     "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
   ],
   "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
-  "last_action": "FastModel 7.7 source df0be21c9cfab1d1d5eb45761677b63f1900f8d1 committed and mirrored to /formal-web/fastmodel/occlusion-studio.html. Real photo hair/neck annotated masks, source connected neck, estimated hair-forward and neck-back Z occlusion, existing 7.5/7.6 and new 7.7 Jacobian Gate. Full GH run 39757060595 PASS Node 318, Python 49, phone/desktop Chromium and independent gates. Actual original heroine appearance/skin and APK/EXE and Render live not verified."
+  "last_action": "FastModel 7.8 source 60c987302b8fb75d8d101b3402911de8e8bee590 delivered, numerical source-reviewed neck joint XYZ yaw/pitch/roll and hair layer sway. Full GitHub run 39759628139 PASS 324 Node, 49 Python, 7.5/7.6/7.7/7.8 dedicated phone+desktop synthetic Chromium; source audit 39759628176 PASS. Original site source at /fastmodel/spatial-studio.html mirrored exact, not deployed. No authentic human head depth, scalp hair physics or native FPS proof."
 }
