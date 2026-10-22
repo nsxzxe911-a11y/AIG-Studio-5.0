@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {parseRiggedGLB} from './viewer.mjs';
+import {importAIG712SceneMap} from './aig-scene-map-7-12.mjs';
 import {assertAIG20Document,resolveAIG20WorldSources,
  sampleAIG20Camera} from './aig-world-scene-2-0.mjs';
 const fail=s=>{throw Error('AIG20_RUNTIME_'+s)};
@@ -57,11 +58,11 @@ export class AIG20WorldRuntime{
     if(!loaded?.blob||loaded.asset?.sha256!==source.map.sha256)
      fail('ORIGINAL_MAP_SHA_CHANGED');
     if(loaded.blob.size>8*1024*1024)fail('BOUNDED_GEO_SOURCE_REQUIRED');
-    const doc=JSON.parse(await loaded.blob.text());
-    if(doc.schema!=='AIG_FASTMODEL_7_12_SOURCE_SCENE_MAP_DATA'||
-     doc.coordinateMode.replace('METERS','METRES')!==scene.coordinateMode||
-     !Array.isArray(doc.features)||
-     doc.features.length>256)
+    // 7.12 exports a versioned {schema,revision,map:{...}} snapshot.
+    // Use the original import validator, not an invented flat GeoJSON shape.
+    const snapshot=JSON.parse(await loaded.blob.text());
+    const doc=importAIG712SceneMap(snapshot);
+    if(doc.coordinateMode.replace('METERS','METRES')!==scene.coordinateMode)
      fail('SOURCE_MAP_COORDINATE_CONTRACT_MISMATCH');
     mapData={id:doc.id,features:doc.features.length,
      coordinateMode:doc.coordinateMode,physicalDimensionsKnown:
