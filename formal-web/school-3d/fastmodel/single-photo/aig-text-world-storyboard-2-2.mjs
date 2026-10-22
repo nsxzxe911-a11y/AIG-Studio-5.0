@@ -148,6 +148,13 @@ export function verifyAIG22Story(plan,scene,actors){
   JSON.stringify(plan.cameraKeyframesReferenced)!==JSON.stringify(
    scene.cameraKeys.map(k=>({keyId:k.keyId,timeSeconds:k.timeSeconds}))))
   fail('SCENE_REVISION_OR_SHA_CHANGED_RECOMPILE_REQUIRED');
+ // A stored storyboard must reproduce exactly the same deterministic
+ // cues from its original text and the current source scene. Neither
+ // manually edited playback JSON nor stale source clip labels are trusted.
+ const rebuilt=compileAIG22Story(plan.sourceText,{scene,actors});
+ if(!rebuilt.ready||JSON.stringify(rebuilt.events)!==
+  JSON.stringify(plan.events)||rebuilt.durationSeconds!==plan.durationSeconds)
+  fail('STORED_TIMELINE_TAMPERED_OR_STALE');
  const available=new Map(actors.map(a=>[a.nodeId,a]));
  for(const event of plan.events.filter(e=>e.type==='ACTOR_SOURCE_CLIP')){
   const clips=available.get(event.nodeId)?.clips;
@@ -195,12 +202,13 @@ export class AIG22StoryPlayer{
    this.worldRuntime.applyCamera(Math.min(
     this.elapsed,this.plan.cameraKeyframesReferenced.at(-1).timeSeconds));
   }
+  const elapsedBeforeCallback=this.elapsed,completedCount=this.cursor;
   if(this.elapsed+1e-6>=this.plan.durationSeconds){
    this.running=false;
    this.onEnd({status:'STORY_COMPLETE_REAL_CUES',seconds:this.elapsed});
   }
   return {status:this.running?'RUNNING_SOURCE_CLIPS':'COMPLETE',
-   elapsedSeconds:this.elapsed,appliedEvents:this.cursor};
+   elapsedSeconds:elapsedBeforeCallback,appliedEvents:completedCount};
  }
  stop(){
   this.running=false;this.plan=null;this.elapsed=0;this.cursor=0;
