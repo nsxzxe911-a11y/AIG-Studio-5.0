@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {parseRiggedGLB} from './viewer.mjs';
 import {importAIG712SceneMap} from './aig-scene-map-7-12.mjs';
+import {assertAIG21AlignmentProvenance} from './aig-map-model-alignment-2-1.mjs';
 import {assertAIG20Document,resolveAIG20WorldSources,
  sampleAIG20Camera} from './aig-world-scene-2-0.mjs';
 const fail=s=>{throw Error('AIG20_RUNTIME_'+s)};
@@ -22,7 +23,7 @@ export class AIG20WorldRuntime{
    fail('SOURCE_VAULT_AND_SINGLE_VIEWER_REQUIRED');
   this.library=library;this.viewer=viewer;
   this.scene=null;this._generation=0;this._closed=false;
-  this._lastError=null;this._map=null;this._activeSourceCount=0;
+  this._lastError=null;this._map=null;this._mapSnapshot=null;this._activeSourceCount=0;
  }
  _checkOpen(){if(this._closed)fail('CLOSED')}
  async load(scene){
@@ -38,7 +39,7 @@ export class AIG20WorldRuntime{
    mapIsMetadataNotSynthesized3D:true,
    originalAssetsUntouched:true};
   const parsed=new Map();
-  let mapData=null,committed=false;
+  let mapData=null,mapSnapshot=null,committed=false;
   try{
    for(const meta of source.assets){
     if(gen!==this._generation)return {status:'SUPERSEDED_BEFORE_COMMIT'};
@@ -62,6 +63,8 @@ export class AIG20WorldRuntime{
     // Use the original import validator, not an invented flat GeoJSON shape.
     const snapshot=JSON.parse(await loaded.blob.text());
     const doc=importAIG712SceneMap(snapshot);
+    assertAIG21AlignmentProvenance(scene,snapshot);
+    mapSnapshot=snapshot;
     if(doc.coordinateMode.replace('METERS','METRES')!==scene.coordinateMode)
      fail('SOURCE_MAP_COORDINATE_CONTRACT_MISMATCH');
     mapData={id:doc.id,features:doc.features.length,
@@ -96,7 +99,8 @@ export class AIG20WorldRuntime{
     animationClips:[],actorClips:sourceActors,orbit:false});
    committed=true;
    this.scene=JSON.parse(JSON.stringify(scene));
-   this._map=mapData;this._activeSourceCount=source.assets.length;
+   this._map=mapData;this._mapSnapshot=mapSnapshot;
+   this._activeSourceCount=source.assets.length;
    this._lastError=null;
    return {status:'COMPOSITED_WORLD_GPU_READY',
     objects:scene.objects.length,distinctGlbSources:source.assets.length,
@@ -148,6 +152,10 @@ export class AIG20WorldRuntime{
     a.physicalScaleReviewed!==b.physicalScaleReviewed||
     a.selectedClip!==b.selectedClip)
     fail('SOURCE_OR_MESH_GEOMETRY_CHANGED');
+  }
+  if(scene.objects.some(o=>o.mapPlacement)){
+   if(!this._mapSnapshot)fail('VERIFIED_MAP_SNAPSHOT_REQUIRED');
+   assertAIG21AlignmentProvenance(scene,this._mapSnapshot);
   }
   // Validate all target children before mutating any of their positions.
   const nodes=scene.objects.map(o=>this.viewer.model.children.find(n=>
@@ -216,7 +224,7 @@ export class AIG20WorldRuntime{
  }
  close(){
   ++this._generation;this._closed=true;
-  this.scene=null;this._map=null;
+  this.scene=null;this._map=null;this._mapSnapshot=null;
   // Caller owns the shared Three renderer and external IndexedDB vault.
  }
 }
