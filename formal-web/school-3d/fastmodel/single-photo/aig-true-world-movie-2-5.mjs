@@ -227,7 +227,13 @@ export class AIG25WorldMovieRecorder{
    const n=this.records.reduce((s,b)=>s+b.size,0);
    if(n<12||this.frameCount<2)
     throw Error('NO_NONEMPTY_ACTUAL_3D_VIDEO_FRAMES');
-   const blob=new Blob(this.records,{type:this.format.mime});
+   // MediaRecorder uses the full codec MIME; IndexedDB 7.16 validates
+   // the standard bare media type. Blob metadata can be normalized without
+   // touching the actual recorded codec bytes or lying about the container.
+   const storedContentType=this.format.mime.split(';',1)[0].trim().toLowerCase();
+   if(!['video/webm','video/mp4'].includes(storedContentType))
+    throw Error('AIG25_ENCODED_VIDEO_MIME_UNSUPPORTED');
+   const blob=new Blob(this.records,{type:storedContentType});
    const magic=new Uint8Array(await blob.slice(0,32).arrayBuffer());
    if(this.state==='FAILED')return;
    if(!inspectAIG25EncodedContainer(magic,this.format.ext))
@@ -235,7 +241,8 @@ export class AIG25WorldMovieRecorder{
    const evidence={...this.evidence,
    status:'ENCODED_ACTUAL_WEBGL_MOVIE',
    movieWritten:true,encodedContainerSignatureChecked:true,
-   browserDecodedFrameVerified:false,outputMimeType:this.format.mime,
+   browserDecodedFrameVerified:false,outputMimeType:storedContentType,
+   actualEncoderCodecMimeType:this.format.mime,
    containerExtension:this.format.ext,actualFramesComposited:this.frameCount,
    bytesEncoded:blob.size,sourceGLBsUnmodified:true,
    sourceSubtitlePixelsBurnedIntoCanvas:true,
