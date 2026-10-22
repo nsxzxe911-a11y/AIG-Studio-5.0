@@ -72,7 +72,10 @@ small{font-size:11px;color:#a9bec9}.flag{display:inline-block;border:1px solid #
 <details><summary>1:1 尺度說明</summary><p>這裡的 1:1 是幾何座標中的 1 mm 對應實物 1 mm，並不代表所有表面都達 0.001 mm 精度。任意兩張一般手機照片若沒有相機位姿、相機基線與鏡頭校準，深度無法唯一決定。標準 glTF/GLB 使用公尺，所以輸出時會將毫米座標除以 1000，並保留來源 SHA 與校正紀錄。</p></details>
 <section class="heroine-panel" id="heroine-3d-scan">
 <h2>07.14｜女主角：深淺數值 × 原色 × 部位分層 × 真 3D</h2>
-<p>先執行上方的雙照片實測深度重建；這裡使用同一份來源照片與 XYZ。選取部位後在左圖點幾個代表性的像素，系統依鄰近 RGB 提出候選區，<strong>請人工檢查後確認</strong>。頭髮、脖子和裙子等不會只靠深淺顏色就被宣稱自動辨認正確。</p>
+<p>可直接先讀女主角的<strong>單張原圖</strong>，完成來源色彩、外輪廓及部位分類；但這種模式的 Z 深度保持未知，不能輸出假裝是 1:1 的 GLB。取得標定雙照後再使用上方的 7.13 真實毫米 XYZ。選取部位後在照片點代表性色彩，<strong>請人工審查分類</strong>。</p>
+<label>單張女主角照片（僅 RGB／型體，不具實測深度）
+<input id="heroine-photo-only" type="file" accept="image/png,image/jpeg,image/webp"></label>
+<button id="heroine-mask-export" type="button" disabled>輸出已核對的 RGB 部位與來源 JSON（不含假 Z）</button>
 <div class="heroine-views">
 <figure><figcaption>女主角原始色彩 / 部位候選遮罩（點圖取樣）</figcaption><div id="heroine-canvas-wrap"><canvas id="heroine-photo" width="320" height="240"></canvas><canvas id="heroine-mask" width="320" height="240"></canvas></div></figure>
 <figure><figcaption>實測立體深度圖（Z：毫米；黑色／空白表示未量測）</figcaption><canvas id="heroine-depth" width="320" height="240"></canvas><p id="heroine-depth-range">尚未取得可量測的雙圖深度</p></figure>
