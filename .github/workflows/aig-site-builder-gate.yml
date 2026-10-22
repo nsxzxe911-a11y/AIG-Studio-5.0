@@ -29,6 +29,8 @@ jobs:
         run: |
           python -m py_compile infra/aig-site-builder/app.py infra/aig-site-builder/test_app.py
           python -m unittest discover -s infra/aig-site-builder -p 'test_*.py' -v
+      - name: Verify no fake buttons, stable command bindings and bilingual labels
+        run: python infra/aig-site-builder/verify_ui_contract.py
       - name: Verify real authenticated builder and original formal site contract
         run: |
           python - <<'PY'
