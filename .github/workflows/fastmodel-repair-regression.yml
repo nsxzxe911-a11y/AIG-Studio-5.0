@@ -44,6 +44,7 @@ jobs:
           node tests/aig-avatar-rig-7-4.real-browser.mjs
           node tests/aig-landmark-rig-7-5.real-browser.mjs
           node tests/aig-face-depth-7-6.real-browser.mjs
+          node tests/aig-hair-neck-7-7.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -230,6 +231,26 @@ jobs:
         run: |
           node --check aig-hair-neck-7-7.mjs
           node --test tests/aig-hair-neck-7-7.test.mjs
+      - name: Standalone offline renderer includes hair-neck UI
+        run: |
+          npm run build
+          test -s dist/occlusion-studio.html
+          test -s dist/occlusion-studio.mjs
+          test -s dist/aig-hair-neck-7-7.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real phone and desktop local photo hair/neck brush test
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig77-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-hair-neck-7-7.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-7-Source-Hair-Neck-XYZ-Not-Final-Human
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-hair-neck-7-7/
+          if-no-files-found: warn
       - name: Explicit anti-fake gate
         if: always()
         run: |
