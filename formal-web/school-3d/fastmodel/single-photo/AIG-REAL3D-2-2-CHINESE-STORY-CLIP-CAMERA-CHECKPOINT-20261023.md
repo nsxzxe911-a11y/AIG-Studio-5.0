@@ -23,3 +23,10 @@
 - 將 7.15 **2D→相對 2.5D→GLB 草模** 的髮／臉／脖子／衣物／骨架候選，逐步升級為經約束可編輯的真人關節、skin weights、角色 clip，與 2.2 真劇本 cue 連上；不能因為目前缺 walk clip 就偷偷造線框人偶冒充真 3D 完成。
 - 下一個階段可接使用者指定的 2D/2.5D 視差運鏡與透明度轉場，不從一張人物插畫自動推論實測體積或用短片假替代 3D scene。
 - AIG-II CNC / AIG Studio 的真 0.001mm、正確 Fanuc 座標、G0/G1 材料移除與 3–6AX Authority Gate 均不得因 FastModel 開發降低；正式 RGB Mobile/Desktop 頁面與新的 FastModel 源碼是獨立 version chain，需逐頁驗證才能正式發布。
+
+## 同輪實際整合修正（不能回退）
+
+- 依 GitHub 來源逐行檢查發現舊 `scene-runtime-studio.mjs` 有 `say('BLOCKED：+String(...)` 的**未結束字串**，導致場景工作頁主程式根本不能解析。已修回正確 JavaScript 字串，並在切換單一 GLB／多 GLB 時解除過期劇本時間軸，保留原工作場景。
+- 原 `viewer.mjs` 的 `mountVerifiedWorld()` 也有 `typeof orbit!=='boolean)` 少一個引號，已真正修復。使用 V8 對 FastModel 2.2 核心、2.0/2.1 地圖場景核心、Viewer、正式工作頁進行無副作用 JavaScript 語法解析：以上全部成功。另已把 `node --check viewer.mjs` 和 `node --check scene-runtime-studio.mjs` 納入 CI 前置硬 Gate。
+- 劇本文檔重新載入前除 scene revision、每來源 SHA、真 GLB clip ID 外，現在會重新用原始中文全文重編譯並與儲存的 cues 精確比對；任一事後改動都 BLOCKED，沒有隱性可執行假動畫。
+- 更新後隔離 PR #39 驗收 [#39860112621](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39860112621)；先前工具查詢仍 queued，**不得宣稱 Chrome PASS、網站 LIVE 或 S23/Windows 真機 GPU 指標已完成**。
