@@ -7,7 +7,7 @@ const {subtle}=webcrypto;
 const fixtureJPEG=(w=864,h=1536)=>{
  // Synthetic JPEG marker sequence, deliberately not a decodable photo.
  // This exercises the byte gate only; browser createImageBitmap is separate.
- const b=new Uint8Array(20);
+ const b=new Uint8Array(40);
  b.set([255,216,255,224,0,4,0,0,255,192,0,8,8,h>>8,h&255,w>>8,w&255,1,255,217]);
  return b;
 };
