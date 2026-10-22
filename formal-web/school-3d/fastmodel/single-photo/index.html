@@ -247,6 +247,7 @@ button.primary,#aig-unified-panel-create #aig65-build{
 <p><strong>不用正／側／背面四張照片，不用先拍到腿，也不必手動標六點。</strong>直接選擇一張可看清楚人物臉部或上半身的圖片，AIG 在本機掃描照片輪廓；可見的肩寬只作有限約束，未拍到的四肢、腰、腿、足部與背面依正常比例自動推估。立即生成完整真 GLB：含可變形人體、臉部、校園制服、馬尾、17 節骨架和 5 段真動畫。未知身高、真實身材、背面與臉部深度不能從一張圖精確測得，會明確記為估算。舊有所有其他服裝與動畫原樣保留。</p>
 <input id="aig64-single-photo" type="file" accept="image/jpeg,image/png,image/webp" aria-label="直接選一張臉部或上半身照片自動補出全身3D">
 <button id="aig64-single-build" type="button">單張照片 → 自動補全正常人體比例 → 真 GLB＋動畫</button>
+<button id="aig64-single-motion-upgrade" type="button" disabled data-aig-page-id="model" data-aig-button-id="FASTM.MODEL.FULLBODY_MOTION" data-aig-command-id="ANIMATION.FULLBODY_BILATERAL" title="真正增加左右四肢的骨架動作，驗證蒙皮變形後才可下載">強化 3D：雙腿交替＋雙臂動作（真 GLB，驗證後下載）</button>
 <button id="aig64-single-download" type="button" disabled>下載自動生成的全身 3D GLB</button>
 <button id="aig64-single-report" type="button" disabled>下載自動推估來源／身體比例與 GLB SHA 證據</button>
 <p id="aig64-single-status" class="status" role="status">選擇單張臉部／上半身照片即可開始。無需先使用 4.0、5.4、6.0、6.1 或 6.2 操作。所產生的是按正常比例推估的完整可動 3D 技術人體，不宣稱單圖真實身材還原。</p>
