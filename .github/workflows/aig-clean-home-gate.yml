@@ -13,6 +13,11 @@ on:
       - 'formal-web/3ax-nc-workbench.css'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-clean-home.real-browser.mjs'
       - '.github/workflows/aig-clean-home-gate.yml'
+  pull_request:
+    branches:
+      - web/aig-dual-formal-runtime-20261016
+    paths:
+      - '.github/workflows/aig-clean-home-gate.yml'
   workflow_dispatch:
 permissions:
   contents: read
