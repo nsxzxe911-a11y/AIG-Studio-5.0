@@ -55,6 +55,17 @@
    <div class="metric"><span>3D TRIANGLES</span><strong id="triangle">0</strong><small>三角網格面數</small></div>
   </div>
   <div id="block-status" class="block-status" role="status" aria-live="polite">等待解析 NC 工作副本</div>
+  <details id="authority-panel" class="authority-panel">
+   <summary>3AX 正式 RGB 原圖查核（非操作按鈕／非機台 3D 模型）</summary>
+   <p>已登錄的手機核准來源：<strong>AIGII-MOBILE-3AX-CURRENT-20261016</strong>，864×1536、431467 bytes。網站未驗證原始 PNG 前不會顯示任何替代圖。Windows 核准原圖及真實機台 GLB 另行驗收。</p>
+   <div class="authority-actions">
+    <button type="button" id="authority-check" data-button-id="3AX_AUTHORITY_CHECK_SOURCE" data-command-id="AUTHORITY.VERIFY.REGISTERED">檢查網站核准原圖</button>
+    <button type="button" id="authority-pick" data-button-id="3AX_AUTHORITY_COMPARE_LOCAL" data-command-id="AUTHORITY.VERIFY.LOCAL">比對本機原圖</button>
+    <input type="file" id="authority-file" accept="image/png,.png" class="sr-only" aria-label="僅在本機讀取原始 3AX Authority PNG，不上傳">
+   </div>
+   <output id="authority-status" role="status" aria-live="polite">正式手機原圖尚未完成網站實體檔驗證；原生 4K、Windows 與真機幾何仍未核准。</output>
+   <img id="authority-preview" alt="已逐位元比對核准來源的 3AX 手機 RGB 原圖，僅供被動參考，畫面內像素不是可以點擊的操作元件" hidden>
+  </details>
   <details id="proof-panel" class="proof-panel">
    <summary>展開真 3D 數值／來源驗證資訊</summary>
    <pre id="evidence">尚未解析 NC 工作副本</pre>
@@ -117,5 +128,6 @@ M30</textarea>
 </footer>
 <script type="module" src="./shared-3d/aig-real3d-replay-lab.mjs"></script>
 <script type="module" src="./3ax-nc-workbench-ui.mjs"></script>
+<script type="module" src="./3ax-authority-visual-ui.mjs"></script>
 </body>
 </html>
