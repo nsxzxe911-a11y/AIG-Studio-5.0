@@ -18,7 +18,7 @@
 - Draft PR #27: https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/pull/27 ，僅隔離 CI，不合併、不部署。
 - Real3D + NC original Gate #39828363834：`completed/success`，真 Chromium phone / desktop；兩種畫面皆輸出 `AIG_REAL3D_1_6_REAL_GPU_RESIDENCY_BROWSER_PASS`，GPU G0/G1 path buffer create **2**（不是每 frame 兩個新 buffer），14 次網格更新當中 cache eviction **11**；記錄 GPU resident bytes 與釋放狀態；artifact #12447284090。NC 1.3 G0/G1 原回歸同時 PASS。
 - 第二輪 #39828547497：`completed/success`。原 1.3 NC evidence 未被破壞。
-- 完整 FastModel 7.x regression #39828547488 仍需核對所有八個工作完成；**不能把前兩項 PASS 當全套動畫模組 PASS**。
+- 完整 FastModel 7.x regression #39828547488：**8/8 jobs completed/success**（regression、7.7 Hair/Neck、7.8 Head/Neck XYZ、7.9 video scan、7.10 multi-frame fusion、7.11 tracking、source-photo depth、reviewed-photo XYZ rig）。此證據只涵蓋合成／來源測試範圍，不保證已驗證真實女主角或原生 Android/Windows 60 FPS。
 
 ## 不得冒稱
 - Real GPU device completion timing、手機／Windows 原生 60／120 FPS、所有硬體顯示卡穩定性**沒有測試證據**。Buffer 管理降低 allocation churn 不等於已證明 FPS 提升幅度。
@@ -26,6 +26,6 @@
 - 這次更新只在修復來源分支 `repair/core-first-fastmodel-20261021` 完成；原 Render 網站來源在 `web/aig-dual-formal-runtime-20261016` 分支。**尚未將 FastModel 1.6 GPU 核心發佈到 Render 生產或原生 APK/EXE。** 不應因多一個 Git commit/數字而視為交付。
 
 ## 下一斷點
-1. 確認 FastModel full regression #39828547488 全八工作 completed/success，如 RED 先修保留可靠證據。
+1. FastModel full regression #39828547488 已完成 8/8 SUCCESS；後續只針對新更動差異再 Gate。
 2. 在真實 GLB／動畫入口建立資源診斷與不同顯卡壓力測試；量測手機／桌面 frame-time 分位數、GPU 計時（若 extension 支援）與 FPS，不能以模擬器／合成圖替代。
 3. 以保護原核准手機／Windows RGB 工作區為前提，與正式網頁 branch 協調，完成真 browser/Render Gate 後才能獨立上線；不得將 shared geometry/axis 改動默默回寫 CNC 真機。
