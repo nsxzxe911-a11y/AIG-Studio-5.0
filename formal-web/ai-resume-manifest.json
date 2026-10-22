@@ -36,11 +36,11 @@
       "id": "AIG FastModel",
       "repository": "nsxzxe911-a11y/AIG-Studio-5.0",
       "reference": "repair/core-first-fastmodel-20261021",
-      "source_sha": "e94e300e0386eb92d1f2ca6df0f5d2a9389aafa6",
+      "source_sha": "042b4a5cc6fde12073d13f73b1b3bb8f4d47d0ae",
       "visibility": "PUBLIC",
       "source_checked": true,
       "runtime_gate": "NOT_VERIFIED",
-      "checkpoint_note": "7.5 verified source with manual 10 photo landmarks + XYZ Jacobian gate; independent job in run 39751931608 PASS on phone and desktop synthetic PNG. Full regression FAIL: existing 6.9.5 mobile Advanced tab click intercepted by 3D Model tab. No true anatomical 3D face, no signed native APK/EXE, no Render LIVE deployment."
+      "checkpoint_note": "FastModel 7.6 reviewed 2D photo XY landmarks with adjustable explicitly estimated 3D face Z nose/bridge/eyes/lips/chin profile. 6/6 numerical and real Chromium phone+desktop synthetic PNG PASS in run 39754076362, repeated independent jobs PASS 39754577003. Full older FastModel combined regression being checked for legacy mobile tab. Actual hair/neck/skin fidelity, native APK/EXE, 60FPS and Render LIVE NOT_VERIFIED."
     }
   ],
   "checks": {
@@ -86,7 +86,15 @@
     "fastmodel_7_5_native": "NOT_VERIFIED",
     "fastmodel_7_5_online_mmo": "NOT_IMPLEMENTED",
     "fastmodel_7_5_latest_independent": "PASS_GITHUB_RUN_39751931608_JOB_119734376383",
-    "fastmodel_7_5_full_release": "BLOCKED"
+    "fastmodel_7_5_full_release": "BLOCKED",
+    "fastmodel_7_6": "PASS_NUMERIC_3D_ESTIMATED_FACE_Z_PROFILE_WITH_SOURCE_XY_REVIEW",
+    "fastmodel_7_6_source_sha": "042b4a5cc6fde12073d13f73b1b3bb8f4d47d0ae",
+    "fastmodel_7_6_ci": "PASS_GITHUB_RUN_39754076362_NUMERIC_6_6_REAL_CHROMIUM_PHONE_DESKTOP",
+    "fastmodel_7_6_latest_independent": "PASS_GITHUB_RUN_39754577003",
+    "fastmodel_7_6_true_depth_capture": "NOT_MEASURED",
+    "fastmodel_7_6_authentic_character": "NOT_VERIFIED",
+    "fastmodel_7_6_native_android_windows": "NOT_VERIFIED",
+    "fastmodel_7_6_online_mmo": "NOT_IMPLEMENTED"
   },
   "approved_invariants": [
     "Do not delete/overwrite original geometry, CAD/CAM/NC, approved RGB Authority, or FastModel assets.",
@@ -96,8 +104,10 @@
     "No automatic rollback/downgrade; no destructive repair; create a new checkpoint after validation."
   ],
   "next_steps": [
+    "Check final combined FastModel full mobile UI regression after horizontal header overflow repair; any failures BLOCK full release while independent 7.6 source tests remain PASS.",
+    "Verify AIG Render deployed exact SHA and fetched /fastmodel/depth-studio.html plus JS. GitHub site branch copy alone is NOT a live deploy.",
+    "Next 7.7 authentic hair/neck semantic occlusion and volumetric skin/joint continuity, plus reference photo fidelity evidence and real native device performance.",
     "Verify latest FastModel core source SHA and new full regression result after compact mobile Advanced tab hit-target fix; do not mark full source PASS from independent run alone.",
-    "Confirm Render deployed SHA and fetch /fastmodel/landmark-studio.html and imported modules, as GitHub site commit is not live deployment.",
     "Only after real reference portrait passes source similarity, facial depth, hair/neck contact and natural joint skinning may 7.5 be promoted beyond a numeric rig prototype.",
     "Check AIG Render exact LIVE deployment commit and served /fastmodel/avatar-studio.html plus imported scripts; source commit is not web deployment proof.",
     "After credible offline 3D character and native device gates, consider server-authoritative online game sessions, asset streaming and authenticated sync. No current MMO service exists.",
@@ -110,5 +120,5 @@
     "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
   ],
   "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
-  "last_action": "7.5 core and original site source committed; latest GitHub run 39751931608 independent reviewed-landmark XYZ phone/desktop Chromium job PASS, but legacy FastModel 6.9.5 compact-mobile Advanced tab click interception still FAILS full regression even after hit-target CSS patch. Source-only, not all gates PASS. Render remains older LIVE SHA."
+  "last_action": "FastModel 7.6 source 042b4a5cc6fde12073d13f73b1b3bb8f4d47d0ae committed. Numeric real XYZ facial Z prior with source reviewed features, dual 7.5/7.6 Jacobian quality, true camera-ray pixels and source original texture. Real synthetic PNG Chromium phone desktop and 6 Node tests PASS (39754076362 and 39754577003). Legacy mobile nav header repaired with horizontal version link rail, combined Gate still subject to independent final verification. Original AIG Render live remains older commit."
 }
