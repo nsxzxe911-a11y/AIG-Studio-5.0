@@ -14,6 +14,14 @@ let library=null,viewer=null,runtime=null,closed=false,loading=false;
 let worldRuntime=null,worldDoc=null,worldMetas=new Map(),worldSaved=[];
 let worldFrame=0,worldPlaying=false,worldPlaybackStart=0;
 let worldMapSnapshot=null;
+// Serialize async scene creation/add operations. UI clicks are not awaited
+// by browsers: two rapid actions must not commit documents from stale state.
+let worldBuildMutation=false;
+function setWorldBuildMutation(busy){
+ worldBuildMutation=busy;
+ $('world-new').disabled=busy;
+ $('world-add').disabled=busy;
+}
 let story22Plan=null,story22Player=null,story22FrameHook=null,story22PriorFrame=null;
 const say=(message,bad=false)=>{
  $('status').textContent=message;$('status').dataset.error=bad?'true':'false';
@@ -286,14 +294,19 @@ function beginNewWorld(mapRef=null){
  return worldDoc;
 }
 $('world-new').addEventListener('click',async()=>{
+ if(worldBuildMutation)return;
+ setWorldBuildMutation(true);
  try{
   const mapRef=await selectedMapRef();
   beginNewWorld(mapRef);
   invalidateAIG22Storyboard('新世界場景已建立，故事需重新核對');
   updateWorldStatus('已建立來源座標一致的空白世界場景；已存外部來源與原模型完全保留。');
  }catch(e){updateWorldStatus('BLOCKED：'+String(e.message||e),true)}
+ finally{setWorldBuildMutation(false)}
 });
 $('world-add').addEventListener('click',async()=>{
+ if(worldBuildMutation)return;
+ setWorldBuildMutation(true);
  try{
   if(loading)throw Error('前次場景載入尚未結束');
   const sourceId=$('world-asset').value;
@@ -319,6 +332,7 @@ $('world-add').addEventListener('click',async()=>{
   updateWorldStatus('已加入 '+source.title+'：真正來源 GLB，沒有生成替身。');
   worldEvidence();
  }catch(e){updateWorldStatus('BLOCKED：'+String(e.message||e),true)}
+ finally{setWorldBuildMutation(false)}
 });
 async function ensureWorldViewer(){
  if(!library)throw Error('本機資產庫尚未開啟');
