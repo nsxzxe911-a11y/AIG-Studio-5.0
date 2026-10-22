@@ -80,7 +80,7 @@ export function createAIG3DRenderer(canvas,{pixelRatio=1.25,maxFramePixels=10500
  const gl=canvas.getContext('webgl2',{alpha:false,antialias:true,depth:true})||
   canvas.getContext('webgl',{alpha:false,antialias:true,depth:true});
  if(!gl)return {status:'WEBGL_UNAVAILABLE',
-  render(){return{status:'WEBGL_UNAVAILABLE'};},destroy(){},getCamera(){return null;},
+  render(){return{status:'WEBGL_UNAVAILABLE'};},destroy(){},releaseMesh(){return false;},getCamera(){return null;},
   setCamera(){throw Error('WEBGL_UNAVAILABLE');}};
  const webgl2=typeof WebGL2RenderingContext!=='undefined'&&gl instanceof WebGL2RenderingContext,
  uintExt=webgl2||gl.getExtension('OES_element_index_uint'),
@@ -208,6 +208,19 @@ export function createAIG3DRenderer(canvas,{pixelRatio=1.25,maxFramePixels=10500
  }
  const contextLost=e=>{e.preventDefault();lost=true;};
  canvas.addEventListener('webglcontextlost',contextLost);
+ function releaseMesh(mesh){
+  if(dead||!mesh)return false;
+  const old=cache.get(mesh);
+  if(!old)return false;
+  const toDelete=[old.pos,old.norm,old.indices];
+  for(const buffer of toDelete){
+   gl.deleteBuffer(buffer);
+   const at=buffers.indexOf(buffer);
+   if(at>=0)buffers.splice(at,1);
+  }
+  cache.delete(mesh);
+  return true;
+ }
  function destroy(){
   if(dead)return;dead=true;
   canvas.removeEventListener('webglcontextlost',contextLost);
@@ -216,5 +229,5 @@ export function createAIG3DRenderer(canvas,{pixelRatio=1.25,maxFramePixels=10500
   buffers=[];cache=new WeakMap();
  }
  return {status:'READY',contextVersion:webgl2?2:1,render,destroy,
-  setCamera,getCamera,getLastStats:()=>last?{...last}:null};
+  setCamera,getCamera,releaseMesh,getLastStats:()=>last?{...last}:null};
 }
