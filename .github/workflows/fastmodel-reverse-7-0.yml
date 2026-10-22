@@ -1,0 +1,52 @@
+name: FastModel 7.0 reverse geometry source gate
+on:
+  push:
+    branches:
+      - repair/core-first-fastmodel-20261021
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-reverse-geometry-7-0.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/reverse-lab.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/reverse-lab.html'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-reverse-geometry-7-0.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/build.mjs'
+      - '.github/workflows/fastmodel-reverse-7-0.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax, no fake 3D
+        run: |
+          node --check aig-reverse-geometry-7-0.mjs
+          node --check reverse-lab.mjs
+          node --check tests/aig-reverse-geometry-7-0.test.mjs
+      - name: Actual pixel, topology and elastic numeric tests
+        run: node --test tests/aig-reverse-geometry-7-0.test.mjs
+      - name: Verify offline viewer includes the reverse geometry lab
+        run: |
+          npm ci
+          npm run build
+          test -s dist/reverse-lab.html
+          test -s dist/reverse-lab.mjs
+          test -s dist/aig-reverse-geometry-7-0.mjs
+          cmp aig-reverse-geometry-7-0.mjs dist/aig-reverse-geometry-7-0.mjs
+      - name: Distinguish numerical 2D from unverified 3D character
+        if: always()
+        run: |
+          {
+            echo '## FastModel 7.0 numerical source check'
+            echo 'Observed pixel contour and numerical elastic 2D only.'
+            echo 'REAL_3D_CHARACTER=NOT_VERIFIED'
+            echo 'PHOTO_TO_ANATOMICAL_3D=BLOCKED'
+            echo 'ANDROID_WINDOWS_DEVICE_GATE=NOT_VERIFIED'
+          } >> "$GITHUB_STEP_SUMMARY"
