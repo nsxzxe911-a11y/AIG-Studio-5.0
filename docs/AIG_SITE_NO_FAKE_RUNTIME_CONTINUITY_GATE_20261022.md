@@ -34,3 +34,11 @@
 5. 經獨立 Android/Windows 原生 Gate、簽章、實際啟動及安裝/解除安裝之後才開放正式下載；其餘只顯示 QA/未交付。
 
 **政策：不要要求不熟悉開發工具的 AIG 使用者自行修 token、選分支或判斷工程殼真假。工具鏈和證據應由系統自動執行；沒有權限或缺依賴即如實停用。**
+
+## 2026-10-22 AI 跨對話接續 V1｜實際新增的來源，不代表已部署
+- 已新增 `formal-web/ai-resume.html`、`web/ai-resume.html` 與各自的 `ai-resume-manifest.json`，並在兩個首頁加入「AI 斷線接續」。
+- 交接快照含 AIG-II、AIG Studio 5.0 與 FastModel 三專案。來源 SHA、真正 Runtime、Render LIVE、APK/EXE 各自獨立顯示。FastModel 的正式來源路徑未查證，因此保持 NOT_VERIFIED。
+- 頁面可複製新對話交接指令、下載 JSON，並嘗試向 GitHub 公開 API 檢查 Studio 修復分支來源是否過期；私人 AIG-II 不能由匿名瀏覽器核對。
+- 來源檔比對與格式檢查 `AIG_AI_HANDOFF_SOURCE_GATE_PASS`；**網站部署、每輪自動回寫、持久後端佇列、原生功能驗收依舊未完成**，不可從 Source PASS 推論 Live PASS。
+- 往後新增可信斷點時，應更新兩套 JSON，附差異 SHA 與回歸證據，不得只更新對話文字或更換版本號。
+- 施工細則見 `docs/AIG_AI_CONTINUITY_HANDOFF_V1_20261022.md` 與 `ci/verify_ai_continuity_source.py`。
