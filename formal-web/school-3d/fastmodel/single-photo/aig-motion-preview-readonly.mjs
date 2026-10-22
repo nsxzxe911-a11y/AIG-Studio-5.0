@@ -79,6 +79,9 @@ export function sampleAigReadOnlyMotionFrame(preview,seconds){
  while(lo<hi){const mid=(lo+hi)>>1;
   if(frames[mid].timeSeconds<seconds)lo=mid+1;else hi=mid;}
  const to=frames[lo],from=frames[lo-1];
+ // At an exact sampled waypoint show the exact supplied ABC pose; only
+ // intervals between waypoints hold the previous unverified rotary pose.
+ if(seconds>=to.timeSeconds)return {...to};
  const alpha=Math.max(0,Math.min(1,
   (seconds-from.timeSeconds)/(to.timeSeconds-from.timeSeconds)));
  const output={timeSeconds:seconds,rapid:to.rapid};
