@@ -47,6 +47,35 @@ try{
     }
     return {left:await png('left'),right:await png('right')};
    });
+   // 7.14 actually starts from one image: color and source labels are valid;
+   // physical Z and full-body GLB MUST remain blocked without calibrated pair.
+   await page.locator('#heroine-photo-only').setInputFiles({
+    name:'test-left-source-not-real-heroine.png',mimeType:'image/png',
+    buffer:Buffer.from(images.left,'base64')
+   });
+   await page.waitForFunction(()=>document.getElementById('heroine-depth-range')
+    .textContent.includes('Z 深度 UNKNOWN'));
+   assert.equal(await page.locator('#heroine-export').isDisabled(),true);
+   await page.locator('#heroine-part').selectOption('HAIR');
+   const initialPhoto=page.locator('#heroine-photo');
+   await initialPhoto.scrollIntoViewIfNeeded();
+   let photoRect=await initialPhoto.boundingBox();
+   await initialPhoto.click({position:{x:photoRect.width*35/112,
+    y:photoRect.height*15/80}});
+   await page.locator('#heroine-grow').click();
+   assert.match(await page.locator('#heroine-status').textContent(),/RGB 色域延展建議/);
+   await page.locator('#heroine-reviewed').check();
+   const singleDownload=page.waitForEvent('download');
+   await page.locator('#heroine-mask-export').click();
+   const onlyRGB=await singleDownload;
+   const json=JSON.parse((await readFile(await onlyRGB.path())).toString('utf8'));
+   assert.equal(json.physicallyMeasuredZ,false);
+   assert.equal(json.metricOneToOne,false);
+   assert.equal(json.backsideUnknown,true);
+   assert.equal(json.candidateHasColorSemanticsOnly,true);
+   await page.locator('#heroine-build').click();
+   assert.match(await page.locator('#heroine-status').textContent(),/BLOCKED/);
+   assert.equal(await page.locator('#heroine-export').isDisabled(),true);
    for(const side of ['left','right'])await page.locator('#'+side+'-photo')
     .setInputFiles({name:side+'-CALIBRATED-SYNTHETIC.png',
      mimeType:'image/png',buffer:Buffer.from(images[side],'base64')});
