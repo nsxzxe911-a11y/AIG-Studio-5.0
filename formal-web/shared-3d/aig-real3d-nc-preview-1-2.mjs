@@ -128,3 +128,54 @@ export function parseAIG12NCWorkingCopy(text,{
   rawSourcePreserved:text
  };
 }
+
+
+/** Executes only against a fresh local numerical voxel stock.
+ * This module has NO code path to an external machine. Any parse or
+ * geometry failure aborts and returns no partial simulated artifact.
+ */
+import {createAIGVoxelStock,createAIGCylindricalCutter,applyAIGFeedCut,
+ auditAIGVoxelStock,meshAIGVoxelStock} from './aig-real3d-stock-removal-1-1.mjs';
+export function simulateAIG12NCWorkingCopy(program,{
+ stockOriginMm=[-8,-5,-2],stockSizeMm=[16,10,5],voxelMm=.5,
+ cutterDiameterMm=2,fluteLengthMm=6,maxFaces=42000
+}={}){
+ if(!program||program.schema!==AIG12_NC_SCHEMA||
+ !Array.isArray(program.segments)||program.segments.length===0||
+ program.segments.length>1000||program.verifiedForMachineUse!==false||
+ program.machineCommandAuthority!==false||
+ !program.segments.every(s=>s&&['G0','G1'].includes(s.motion)&&
+  Array.isArray(s.from)&&s.from.length===3&&s.from.every(finite)&&
+  Array.isArray(s.to)&&s.to.length===3&&s.to.every(finite)))
+  throw Error('AIG12_NC_VERIFIED_PARSER_OUTPUT_REQUIRED');
+ const stock=createAIGVoxelStock({
+  originMm:stockOriginMm,sizeMm:stockSizeMm,voxelMm,maxCells:150000
+ });
+ const cutter=createAIGCylindricalCutter({
+  diameterMm:cutterDiameterMm,fluteLengthMm
+ });
+ const steps=[];
+ for(const segment of program.segments){
+  const result=applyAIGFeedCut(stock,cutter,{
+   from:segment.from,to:segment.to,motion:segment.motion,
+   source:'AIG12_UNVERIFIED_NC_WORKING_COPY_PREVIEW_ONLY'
+  });
+  steps.push({line:segment.line,motion:segment.motion,
+   from:[...segment.from],to:[...segment.to],
+   removedCells:result.removedCells,removedMm3:result.removedMm3,
+   revision:result.revision});
+ }
+ const audit=auditAIGVoxelStock(stock);
+ const boundary=meshAIGVoxelStock(stock,{maxFaces});
+ return {
+  schema:AIG12_NC_SCHEMA,stock,cutter,steps,audit,
+  boundaryMesh:boundary.mesh,
+  boundaryTriangleCount:boundary.triangleCount,
+  actualNumericalVoxelCutting:audit.materialRemovalByFeedNumericallyVerified,
+  actualRemovedVolumeMm3:audit.removedMm3,
+  rapidNeverCuts:steps.filter(x=>x.motion==='G0').every(x=>x.removedMm3===0),
+  realMachineInstructionsSent:0,
+  sourceNotCertifiedForFanuc:true,realNativeHardwareValidated:false,
+  geometricResolutionMm:stock.voxelMm,precision0001NotVerified:true
+ };
+}
