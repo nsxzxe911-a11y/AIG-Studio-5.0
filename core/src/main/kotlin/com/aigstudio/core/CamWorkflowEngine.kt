@@ -234,8 +234,27 @@ object CamWorkflowEngine {
         val index=if(entry) settings.manualPath.indexOfFirst{!it.rapid} else settings.manualPath.indexOfLast{!it.rapid}
         require(index>=0){"Manual path has no cutting point"}
         val old=settings.manualPath[index]
+        val xyChanged=abs(x-old.x)>EPS || abs(y-old.y)>EPS
+        val neighborIndex=if(entry) index-1 else index+1
+        val neighbor=settings.manualPath.getOrNull(neighborIndex)
+        if(xyChanged && entry) {
+            require(neighbor!=null && neighbor.rapid &&
+                neighbor.z+EPS>=settings.safeZ) {
+                "Moving cut entry requires an existing Safe-Z rapid approach"
+            }
+        }
+        if(xyChanged && !entry && neighbor!=null) {
+            require(neighbor.rapid && neighbor.z+EPS>=settings.safeZ &&
+                abs(neighbor.x-old.x)<=EPS && abs(neighbor.y-old.y)<=EPS) {
+                "Moving cut exit requires a vertical Safe-Z retract"
+            }
+        }
         val list=settings.manualPath.toMutableList()
         list[index]=old.copy(x=x,y=y,z=z,rapid=false,arcI=null,arcJ=null,clockwise=null)
+        if(xyChanged && neighbor!=null) {
+            // Keep existing A/B/C pose while aligning retract/approach XY.
+            list[neighborIndex]=neighbor.copy(x=x,y=y)
+        }
         return settings.copy(pathMode=CamPathMode.MANUAL,manualPath=list)
     }
 }
