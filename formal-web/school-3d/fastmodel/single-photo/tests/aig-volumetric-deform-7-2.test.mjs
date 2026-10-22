@@ -36,7 +36,7 @@ test('7.2 top kinematic control is applied to REAL 3D node positions and anchors
  }
 });
 test('7.2 colliding sphere actively pushes free 3D nodes out of collision volume',()=>{
- const b=body(),target=b.positions.findIndex((p,i)=>b.inverseMass[i]>0&&Math.abs(p[0])<.1&&Math.abs(p[2])<.1);
+ const b=body(),target=b.positions.findIndex((p,i)=>b.inverseMass[i]>0&&Math.abs(p[2])<.01);
  assert.notEqual(target,-1);
  const c=[...b.positions[target]],radius=.075;
  const a=stepAIG72Volume(b,{gravity:0,sphere:{center:c,radius},iterations:9});
