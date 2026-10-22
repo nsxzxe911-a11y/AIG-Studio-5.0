@@ -333,8 +333,8 @@ $('world-add').addEventListener('click',()=>{
   position:['world-x','world-y','world-z'].map(k=>Number($(k).value)),
   reviewed:$('world-metric-reviewed').checked
  };
+ const source=worldMetas.get(spec.sourceId);
  void enqueueWorldEdit(async()=>{
-  const source=worldMetas.get(spec.sourceId);
   if(!source||source.mime!=='model/gltf-binary')
    throw Error('請選擇真實 GLB 人物／建築／環境');
   if(!Number.isFinite(spec.scale)||spec.position.some(x=>!Number.isFinite(x)))
@@ -653,6 +653,9 @@ $('world-align').addEventListener('click',async()=>{
   '；已核准來源與上一個工作場景保持不變。',true)}
 });
 $('world-preview').addEventListener('click',async()=>{
+ // Do not render a partially committed document when multiple source edits
+ // are queued. Wait for their exact transactional completion first.
+ await worldEditTail;
  if(loading){updateWorldStatus('已有載入操作，請勿重覆切換',true);return}
  loading=true;$('world-preview').disabled=true;
  try{
