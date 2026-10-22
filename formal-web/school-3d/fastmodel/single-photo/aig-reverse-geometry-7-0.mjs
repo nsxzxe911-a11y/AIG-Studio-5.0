@@ -52,6 +52,9 @@ export function traceMaskContours(source,{minArea=12,maxEdges=250000}={}){
   if(y===h-1||!mask[(y+1)*w+x])add(x+1,y+1,x,y+1);
   if(x===0||!mask[y*w+x-1])add(x,y+1,x,y);
  }
+ // Four-connected pixel silhouettes can meet diagonally at one vertex. Reject
+ // that topological ambiguity rather than silently stitch two separate bodies.
+ if([...branches.values()].some(exits=>exits.length!==1))throw Error('AIG70_AMBIGUOUS_DIAGONAL_TOUCH_REFINE_MASK');
  const rings=[],area=points=>points.reduce((acc,p,i)=>{const q=points[(i+1)%points.length];return acc+(p[0]*q[1]-q[0]*p[1]);},0)/2;
  while(branches.size){
   const first=branches.keys().next().value,[a,b]=first.split(",").map(Number),points=[[a,b]];
