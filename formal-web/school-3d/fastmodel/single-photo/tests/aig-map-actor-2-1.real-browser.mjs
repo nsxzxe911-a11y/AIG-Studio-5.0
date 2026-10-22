@@ -122,7 +122,7 @@ try{
    await page.locator('#world-new').click();
    await page.waitForFunction(()=>document.getElementById('world-status')
     .textContent.includes('已建立來源座標一致的空白世界場景')&&
-    !document.getElementById('world-add').disabled,{timeout:10000});
+    !document.getElementById('world-add').disabled,null,{timeout:10000});
    await choose('world-asset','角色測試模型');
    await page.locator('#world-add').click();
    await page.waitForFunction(()=>{
