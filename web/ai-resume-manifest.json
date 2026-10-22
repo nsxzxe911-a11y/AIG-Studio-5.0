@@ -40,7 +40,7 @@
       "visibility": "PUBLIC",
       "source_checked": true,
       "runtime_gate": "NOT_VERIFIED",
-      "checkpoint_note": "Source verified for FastModel 7.0 pixel-derived 2D vector contours and numerical elastic outline simulation. Authentic 3D human/animal animation, browser release and native Android/Windows remain unverified."
+      "checkpoint_note": "Verified 7/7 FastModel 7.0 synthetic numerical contour/physics tests inside GitHub PR regression run 39738963313 (272 Node tests total, 49 Python, offline build). Authenticated real-photo segmentation, 3D character, native device and website LIVE not verified."
     }
   ],
   "checks": {
@@ -50,9 +50,9 @@
     "native_artifacts": "NOT_VERIFIED",
     "all_runtime_functions": "NOT_VERIFIED",
     "tampering": "NO_UNAUTHORIZED_MODIFICATION_CONFIRMED",
-    "fastmodel_reverse_geometry_7_0": "SOURCE_COMPONENT_PRESENT_NUMERICAL_SANITY_CHECK_ONLY",
+    "fastmodel_reverse_geometry_7_0": "SEVEN_NUMERICAL_TESTS_PASS_PR_WORKFLOW_39738963313_NOT_REAL_PHOTO_CHARACTER",
     "fastmodel_real_3d": "NOT_VERIFIED",
-    "fastmodel_ci": "PENDING_VERIFIED_WORKFLOW_RESULT",
+    "fastmodel_ci": "PASS_GITHUB_PR_REGRESSION_39738963313_272_NODE_49_PYTHON_BUILD",
     "fastmodel_site_live": "NOT_VERIFIED"
   },
   "approved_invariants": [
@@ -72,5 +72,5 @@
     "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
   ],
   "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
-  "last_action": "FastModel 7.0 real-source pixel silhouette extraction, SVG and numerical 2D elastic outline module committed to repair branch; isolated reverse-lab page copied into site source. Source-only; true 3D character and Render deployment not verified."
+  "last_action": "FastModel 7.0 reverse drawing & physical outline source merged into repair CI verification: GitHub PR regression 39738963313 SUCCESS (Node 272/272, Python 49/49, offline build); exact source SHA e74449a374ea7e92986475036e3f21143a909a09. Site source uploaded, Render live unverified."
 }
