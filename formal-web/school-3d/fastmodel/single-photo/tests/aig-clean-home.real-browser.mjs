@@ -1,6 +1,6 @@
 /**
  * New AIG user-facing entry Gate. Does not imply CNC/native release approval.
- * Browser verifies simple three-destination navigation and mobile overflow.
+ * Browser verifies two verified destinations and mobile overflow; fake photo app retired.
  */
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
@@ -28,21 +28,23 @@ try{
       return {x:b.x,y:b.y,width:b.width,height:b.height};};
     return {viewport:innerWidth,document:document.documentElement.scrollWidth,
       homeCards:document.querySelectorAll('#choose .card').length,
-      cnc:box('.card.cnc'),fast:box('.card.fast'),manage:box('.card.tools')};
+      retiredFastModelLinks:document.querySelectorAll('a[href="./fastmodel/"]').length,
+      cnc:box('.card.cnc'),manage:box('.card.tools')};
    });
-   assert.equal(stats.homeCards,3);
+   assert.equal(stats.homeCards,2);
+   assert.equal(stats.retiredFastModelLinks,0);
    assert.ok(stats.document<=stats.viewport+3,
     'new clean home cannot scroll horizontally: '+JSON.stringify(stats));
-   for(const card of ['cnc','fast','manage']){
+   for(const card of ['cnc','manage']){
     assert.ok(stats[card].width>200,'card remains readable: '+card);
     assert.ok(stats[card].x>=-1&&stats[card].x+stats[card].width<=stats.viewport+2,
       'card must stay in viewport: '+card);
    }
    if(d.name==='phone')
-    assert.ok(stats.cnc.y<stats.fast.y&&stats.fast.y<stats.manage.y,
+    assert.ok(stats.cnc.y<stats.manage.y,
       'on phone cards must stack without squeezing');
    if(d.name==='desktop')
-    assert.ok(Math.abs(stats.cnc.y-stats.fast.y)<5,
+    assert.ok(Math.abs(stats.cnc.y-stats.manage.y)<5,
       'on desktop cards should be aligned in the first row');
    await page.locator('a[href="./3ax-nc-workbench.html"]').first().click();
    await page.waitForURL('**/3ax-nc-workbench.html');
@@ -52,9 +54,9 @@ try{
    assert.equal(await page.locator('#parse').count(),1);
    assert.equal(await page.locator('#simulate').count(),1);
    await page.goto(base+'aig-new-home.html',{waitUntil:'load'});
-   const fastUrl=await page.locator('a[href="./fastmodel/"]').getAttribute('href');
    const nativeUrl=await page.locator('a.link[href="./aig-download-center.html"]').getAttribute('href');
-   assert.equal((await page.request.get(base+fastUrl)).status(),200);
+   assert.equal((await page.request.get(base+'fastmodel/index.html')).status(),404,
+    'retired fake 6.9.5 public homepage must not be re-published');
    assert.equal((await page.request.get(base+nativeUrl)).status(),200);
    await page.locator('a.link[href="./aig-download-center.html"]').click();
    await page.waitForURL('**/aig-download-center.html');
@@ -69,7 +71,8 @@ try{
    await page.screenshot({path:dir+'/'+d.name+'-clean-home.png',fullPage:true});
    await writeFile(dir+'/'+d.name+'-proof.json',JSON.stringify({
     device:d.name,layout:stats,
-    destinations:{cnc:'3ax-nc-workbench.html',fastModel:'fastmodel/',downloads:'aig-download-center.html'},
+    destinations:{cnc:'3ax-nc-workbench.html',downloads:'aig-download-center.html'},
+    oldFakeFastModelPublicEntryRemoved:true,
     existingProjectStorageDeleted:false,
     authenticMachineVisualApproved:false,
     cncMachineCommandsSent:0,nativeAPKorEXEApproved:false
