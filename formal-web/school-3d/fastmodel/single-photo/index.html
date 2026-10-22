@@ -397,6 +397,12 @@ header>.tag{flex:0 0 auto}
 <button id="aig17-gpu-report" type="button" disabled>下載本機 GPU 診斷與來源 SHA JSON</button>
 <p id="aig17-gpu-status" class="status" role="status" aria-live="polite">尚未啟用 Real3D 1.7。不能以合成模型或瀏覽器 FPS 宣稱手機／Windows 60 FPS。</p>
 
+<h3>AIG FastModel Real3D 1.8｜真正 GPU 靜態物件合批</h3>
+<p>針對建築、樹木、場景道具等<strong>共享相同幾何和材質</strong>的靜態物件，以 Three.js <code>InstancedMesh</code> 將多個 draw call 合為一組。保護角色蒙皮、Morph、動作軌、動態模型與 CNC 來源：以上絕不自動合批。功能可隨時恢復 GLB 原視圖，模型資料不被重寫；沒有可安全合批的物件會明確顯示「無可合批物件」。隱藏分頁時減少非必要 GPU 畫面提交。</p>
+<button id="aig18-instance-toggle" type="button">啟用 1.8 靜態 GPU 合批（需載入 GLB）</button>
+<button id="aig18-instance-report" type="button" disabled>下載 GPU 合批數量／來源狀態 JSON</button>
+<p id="aig18-instance-status" class="status" role="status" aria-live="polite">等待真實 GLB；不降低 3D 幾何解析度，不更改任何人物骨架或動畫。</p>
+
 <h3>AIG FastModel 5.3｜女主角來源 × 真 3D × 動畫 × FPS 統一驗收 Gate</h3>
 <p>以本機已有的正式照片 SHA、真實人物生成來源鏈、5.0 骨架、5.1 接縫／馬尾、5.2 的真 16 格圖及瀏覽器實際 240 幀記錄，對照<strong>同一個 GLB SHA 與同一動畫 Clip</strong>，生成 11 項可追溯驗收表。沒有的證據保持 BLOCKED，不會因前一項通過就自動放行。正式人物外觀人工核准、Android／Windows 原生 60 FPS 及有聲成片驗收目前仍未完成。</p>
 <button id="aig53-review" type="button">彙整 5.3 十一項真實來源／動畫／效能 Gate</button>
