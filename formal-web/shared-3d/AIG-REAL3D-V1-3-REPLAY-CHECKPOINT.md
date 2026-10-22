@@ -24,3 +24,17 @@
 - 沒有設備通訊、Fanuc 真機輸出、正式 APK/EXE GPU、夜神真 Authority 或原始女主角畫面認證。
 - 本次只改共享 Real3D 模組與獨立頁、離線打包／新測試，不替換 Android/Windows CNC 真加工核心。
 - GitHub CI 顯示若 queued/in_progress，先明確標記待驗收；不要將本地數值測試說成正式 WebGL 手機／電腦通過。
+
+## 2026-10-22 22:54 Asia/Taipei — 斷線續接實測與最新 CI 鎖定
+
+- 使用者指令：「接回最後 更新點」。實際 GitHub 修復分支最新可信程式來源 `4fc722a2266879f9b93da3cc1345c357cd1e289b`，不是原先卡住的 `be60b262`。
+- 前一輪手機 WebGL 的 `uniformMatrix4fv` 函式誤傳參數已在此來源修正為 `identity()`。針對 4K/GPU 卡頓已有畫布像素上限、三角形預算、畫面抗鋸齒分級；仍需要真正 Android/Windows 裝置的硬體穩定與 FPS 測試。
+- **Real3D 1.0 / 真 XYZ + WebGL**：GitHub run [39798552406](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39798552406) completed/success，11/11 Node，真正 Chromium 手機／電腦 WebGL XYZ 畫面：3AX 252、FastModel 216、5AX 264 三角形。
+- **MSAA/SSAA 分級**：同一 run 真 Chromium 手機／電腦 PASS；預算標記 `performance 1×`、`balanced 1.25×`、`smooth 1.75×`、`ultra 2.25×`，都受個別 framebuffer 像素限額約束，不冒稱光追或真鏡射。
+- **Real3D 1.1 真占據格材料移除**：GitHub run [39798552429](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39798552429) workflow success，Node 16/16，手機／桌面各有 `AIG_SHARED_REAL3D_V1_1_VOXEL_G1_G0_TRUE_3D_BROWSER_PASS`；個別 job API 曾短暫仍顯示 in_progress，依 workflow 真實結論與完整 log 判斷。
+- **Real3D 1.2 受限 NC-first**：GitHub run [39798552344](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39798552344) completed/success，手機＋桌面受限 G0/G1、真 3D 料移除 54 mm³ 及 5152 網格量測 PASS。
+- **Real3D 1.3 NC 單節與倒回**：GitHub run [39798552487](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39798552487) completed/success，手機＋桌面測試回報 54 mm³，22/22 與 6/6 數值測試 PASS。
+- **現有 FastModel 原程式完整回歸**：run [39798561828](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39798561828) 當下 queued，絕不將其稱作完成。
+- 最新 Render 正式網站仍部署較舊提交 `89b4fe4080c24b970adf7a577c492ffa2755cb71`；目前六個共享引擎核心檔的 GitHub 網站分支 blob 與修復分支完全相同，但**不代表新版已在 Render 生效**。先完成正式站部署／HTTP 頁面 Gate 再認證線上交付。
+- **明確未通過**：完全 Fanuc G2/G3、G34、G81/G83、O4/O5、4/5/6 軸 A/B/C 運動學、真碰撞、0.001 mm 切削幾何、已核准 Authority 機台模型、真機 NC 輸出及 Android APK/Windows EXE GPU/FPS。這些不可從受限 0.5 mm 占據格測試推定成功。
+- **下一斷點**：先取得完整 FastModel 舊核心回歸結論、檢查 Render 最新部署與網站頁面；其後以嚴格分開的 Gate 把真 NC 軸態、刀具幾何和視覺轉接到 3AX→6AX，不能以程序化 DEMO 改寫正式 Runtime。
