@@ -104,3 +104,52 @@ jobs:
             echo 'REAL_HEROINE_3D=NOT_CERTIFIED'
             echo 'RELEASE=BLOCKED'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  landmark-7-5:
+    name: Independent reviewed-photo XYZ rig gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Real manual photo point and XYZ numerical geometry tests
+        run: |
+          node --check aig-landmark-rig-7-5.mjs
+          node --check landmark-studio.mjs
+          node --test tests/aig-landmark-rig-7-5.test.mjs
+      - name: Verify offline viewer source
+        run: |
+          npm run build
+          test -s dist/landmark-studio.html
+          test -s dist/landmark-studio.mjs
+          test -s dist/aig-landmark-rig-7-5.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Phone/desktop Chromium 10-point source review and 3D ray Gate
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig75-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          node tests/aig-landmark-rig-7-5.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-5-Isolated-Photo-XYZ-Validation
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-landmarks-7-5/
+          if-no-files-found: warn
+      - name: Distinguish 3D numerical proof from true face quality and legacy suite
+        if: always()
+        run: |
+          {
+            echo 'FastModel 7.5 independent 3D reviewed-landmark test, separate from legacy UI regression.'
+            echo 'ORIGINAL_PHOTO_LANDMARKS_USER_REVIEWED=REQUIRED'
+            echo 'TRUE_ANATOMICAL_HEAD=NOT_VERIFIED'
+            echo 'REAL_HEROINE_FACE=NOT_CERTIFIED'
+            echo 'MMO_MULTIPLAYER=NOT_IMPLEMENTED'
+          } >> "$GITHUB_STEP_SUMMARY"
