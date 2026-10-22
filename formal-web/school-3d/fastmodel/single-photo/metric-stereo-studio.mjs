@@ -48,10 +48,11 @@ function cleanupModel(){
  texture?.dispose();model=null;texture=null;
 }
 function resetOutput(){
- download.disabled=true;evidence.disabled=true;
- result=null;calibration=null;sourceInfo=null;
- // Preserve last visible model when a new input is invalid, until replaced
- // by a successfully constructed new 3D surface.
+ // Transactional replacement: keep the previous valid measurements AND
+ // 3D mesh until a new stereo pair has actually produced a new surface.
+ // A failed file, missing camera calibration or low-confidence match
+ // must never destroy the last usable model or its GLB download.
+ download.disabled=!result;evidence.disabled=!result;
 }
 async function readImage(input,label){
  const file=input.files?.[0];
@@ -177,7 +178,8 @@ start.addEventListener('click',async()=>{
    surface.vertexCount+' 個立體頂點、'+surface.triangleCount+
    ' 個三角面。背面及無足夠特徵的區域保持未知。',true);
  }catch(err){
-  state('BLOCKED：'+String(err.message||err)+'。保留上一份可見 3D 模型，不偽造 1:1 深度。');
+  download.disabled=!result;evidence.disabled=!result;
+  state('BLOCKED：'+String(err.message||err)+'。上一份已完成的 3D 模型、深度證據和下載維持可用。');
  }finally{
   L?.bitmap.close();R?.bitmap.close();busy=false;start.disabled=false;
  }
