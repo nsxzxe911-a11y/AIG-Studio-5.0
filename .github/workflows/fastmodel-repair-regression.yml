@@ -38,6 +38,7 @@ jobs:
           node tests/aig-compact-ui-real-browser.mjs
           node tests/aig-generation-state-real-browser.mjs
           node tests/aig-reverse-7-0-real-browser.mjs
+          node tests/aig-implicit-volume-7-1.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -49,6 +50,13 @@ jobs:
         with:
           name: FastModel-7-0-real-pixel-numeric-browser-not-character-approval
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-reverse-7-0/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-1-implicit-volume-not-human-3D
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-implicit-7-1/
           if-no-files-found: warn
 
       - name: Distinguish real video playback from unverified character animation
