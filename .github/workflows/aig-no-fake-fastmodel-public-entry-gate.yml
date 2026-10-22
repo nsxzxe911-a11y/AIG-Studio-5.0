@@ -1,0 +1,32 @@
+name: AIG Formal Website No-Fake FastModel Retirement Gate
+on:
+  push:
+    branches:
+      - web/aig-dual-formal-runtime-20261016
+    paths:
+      - formal-web/index.html
+      - formal-web/aig-new-home.html
+      - formal-web/fastmodel/**
+      - formal-web/qa/fastmodel-legacy-retirement.cjs
+      - .github/workflows/aig-no-fake-fastmodel-public-entry-gate.yml
+  pull_request:
+    branches:
+      - web/aig-dual-formal-runtime-20261016
+    paths:
+      - formal-web/index.html
+      - formal-web/aig-new-home.html
+      - formal-web/fastmodel/**
+      - formal-web/qa/fastmodel-legacy-retirement.cjs
+      - .github/workflows/aig-no-fake-fastmodel-public-entry-gate.yml
+  workflow_dispatch:
+jobs:
+  fake-entry-removed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: No fake old FastModel public page, without erasing engine sources
+        run: node formal-web/qa/fastmodel-legacy-retirement.cjs
