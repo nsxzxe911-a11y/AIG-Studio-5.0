@@ -39,6 +39,26 @@ footer{padding:18px 0;border-top:1px solid #274761;font-size:12px;color:#92acc0}
 <h1 data-i18n="title">真正的 APK／EXE 雲端編譯</h1>
 <p data-i18n="intro">按下建置後，後端會真的通知 GitHub Actions，以 Linux Android 與 Windows 2025 編譯節點工作；顯示來源 SHA、執行結果與通過 Gate 的檔案，不用虛假的進度動畫或空下載按鈕。</p>
 <p class="warn" data-i18n="warning">測試建置 ≠ 正式發行：只在 APK／EXE 真正產生、GitHub Gate 成功且附件存在時開放測試檔 ZIP。物理 CNC、安全、原生簽章與完整 UI 另行驗證。</p>
+<section class="easy" aria-labelledby="easy-title" style="border-color:#4294af;background:#092334">
+<h2 id="easy-title">簡易模式｜不用 Token、不必懂程式</h2>
+<p id="easy-intro">先選好專案，開啟真正的 GitHub 編譯頁即可。這是已存在的編譯器，不是模擬動畫；需要登入有建置權限的 GitHub 帳號。</p>
+<label for="easy-project">① 選專案</label>
+<select id="easy-project" aria-label="選擇要編譯的 AIG 專案">
+<option value="aigii">AIG-II｜CNC 主控</option>
+<option value="studio">AIG Studio 5.0｜CNC 工作區</option>
+</select>
+<a id="easy-open" href="https://github.com/nsxzxe911-a11y/AIG-II/actions/workflows/build-download.yml"
+ target="_blank" rel="noopener noreferrer"
+ style="display:block;text-align:center;background:#14627c;color:#fff;padding:14px;margin:16px 0;border-radius:9px;text-decoration:none;font-weight:800">
+② 開啟 GitHub 真正編譯 ↗</a>
+<p id="easy-step">③ 登入 GitHub → 找到 Run workflow → 選下方分支 → 再按 Run workflow。<br>④ 出現綠色 Success，才能在該次紀錄底下 Artifacts 下載 APK／Windows EXE 的 ZIP。</p>
+<label for="easy-branch">應選的版本分支（不能直接選舊 main）</label>
+<input id="easy-branch" value="repair/core-first-aigii-20261021" readonly>
+<button id="easy-copy" type="button" style="margin-top:9px">複製分支名稱</button>
+<output id="easy-feedback" role="status" class="small" style="display:block;margin-top:10px">若 GitHub 沒有 Run workflow，表示帳號權限尚未開啟；不會假裝編譯成功。</output>
+</section>
+<details id="builder-advanced" style="border:1px solid #355772;border-radius:12px;margin:16px 0;padding:16px">
+<summary id="advanced-title" style="cursor:pointer;font-weight:700">進階模式｜有網站管理金鑰才展開（一般不用）</summary>
 <section>
 <h2 data-i18n="access">建置授權與雲端狀態</h2>
 <p class="small" data-i18n="accessInfo">建置金鑰僅在這個瀏覽器頁面的記憶體中使用，不寫入網址或 localStorage。請在 Render 的服務環境中設好後端權限和 GitHub Token；不要把金鑰貼在公開網頁或聊天。</p>
@@ -66,6 +86,7 @@ footer{padding:18px 0;border-top:1px solid #274761;font-size:12px;color:#92acc0}
 <div style="margin-top:12px"><output id="result" role="status" class="status">尚未開始，不會假裝成功。</output></div>
 <div id="run-link" style="margin-top:10px"></div>
 </section>
+</details>
 <section>
 <h2 data-i18n="downloadTitle">真實建置產物下載</h2>
 <p class="small" data-i18n="downloadNote">只有工作流程 SUCCESS，且 APK 與 Windows EXE 附件都確實存在時才啟用下載。GitHub Actions 附件是暫存 ZIP，下載前後仍須核對 SHA、簽章與版本；目前不等於 Render 永久鏡像。</p>
@@ -205,6 +226,62 @@ $('build').addEventListener('click',async()=>{
 });
 window.addEventListener('pagehide',()=>{if(timer)clearInterval(timer);});
 translate();check();
+})();
+</script>
+<script>
+(()=>{'use strict';
+ const repo={
+  aigii:{branch:'repair/core-first-aigii-20261021',url:'https://github.com/nsxzxe911-a11y/AIG-II/actions/workflows/build-download.yml'},
+  studio:{branch:'repair/core-first-studio-20261021',url:'https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/workflows/build-download.yml'}
+ };
+ const $=id=>document.getElementById(id);
+ const zh={
+  title:'簡易模式｜不用 Token、不必懂程式',
+  intro:'先選專案，再開啟真正的 GitHub 編譯流程。不用設定 Render，也不用學寫程式，但要用具有建置權限的 GitHub 帳號登入。',
+  select:'① 選專案',open:'② 開啟 GitHub 真正編譯 ↗',
+  step:'③ 登入 GitHub → 找到 Run workflow → 選下方分支 → 再按 Run workflow。④ 出現綠色 Success，才能在該次紀錄的 Artifacts 下載 APK／Windows EXE ZIP。',
+  branch:'應選的版本分支（不要選舊 main）',copy:'複製分支名稱',
+  feedback:'若看不到 Run workflow，請停止：通常是 GitHub 帳號沒有執行權限。沒有成功以前不會提供假下載。',
+  advanced:'進階模式｜有網站管理金鑰才展開（一般不用）',copied:'已複製分支。',fallback:'已反白分支，可長按複製。'
+ };
+ const en={
+  title:'Simple mode | No token or programming required',
+  intro:'Choose a project and open its actual GitHub Actions compiler. No Render setup or coding. Sign in to a GitHub account with repository build permissions.',
+  select:'① Choose project',open:'② Open real GitHub compiler ↗',
+  step:'③ Sign in → Run workflow → choose the repair branch below → Run workflow again. ④ Only after green Success, download APK and Windows EXE ZIPs under Artifacts.',
+  branch:'Build source branch (not older main)',copy:'Copy branch name',
+  feedback:'If Run workflow is missing, stop: your GitHub account may lack permission. No fake downloads are offered.',
+  advanced:'Advanced mode | Administrator token only (optional)',copied:'Branch copied.',fallback:'Branch selected; copy highlighted text.'
+ };
+ function update(){
+  const t=$('language').value==='en'?en:zh;
+  const v=repo[$('easy-project').value];
+  $('easy-open').href=v.url;
+  $('easy-branch').value=v.branch;
+  for(const [k,id] of Object.entries({title:'easy-title',intro:'easy-intro',select:'easy-project-label',
+   open:'easy-open',step:'easy-step',branch:'easy-branch-label',copy:'easy-copy',
+   feedback:'easy-feedback',advanced:'advanced-title'})){
+   const e=$(id);if(e)e.textContent=t[k];
+  }
+  $('easy-project').options[0].textContent=$('language').value==='en'?'AIG-II · CNC controller':'AIG-II｜CNC 主控';
+  $('easy-project').options[1].textContent=$('language').value==='en'?'AIG Studio 5.0 · CNC workspace':'AIG Studio 5.0｜CNC 工作區';
+ }
+ // Labels are linked to the same IDs used in the translated page.
+ const lab=document.querySelector('label[for="easy-project"]');lab.id='easy-project-label';
+ const bLab=document.querySelector('label[for="easy-branch"]');bLab.id='easy-branch-label';
+ $('easy-project').addEventListener('change',update);
+ $('language').addEventListener('change',update);
+ $('easy-copy').addEventListener('click',async()=>{
+  const text=$('easy-branch').value;const t=$('language').value==='en'?en:zh;
+  try{
+   if(navigator.clipboard&&window.isSecureContext){
+    await navigator.clipboard.writeText(text);$('easy-feedback').textContent=t.copied;
+   }else{
+    $('easy-branch').focus();$('easy-branch').select();$('easy-feedback').textContent=t.fallback;
+   }
+  }catch(_){$('easy-branch').focus();$('easy-branch').select();$('easy-feedback').textContent=t.fallback;}
+ });
+ update();
 })();
 </script>
 </body>
