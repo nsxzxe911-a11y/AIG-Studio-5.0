@@ -9,6 +9,7 @@ import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
 import {createAIG713StereoCalibration,reconstructAIG713StereoSurface}
  from './aig-metric-stereo-7-13.mjs';
 import {mountAIG714HeroineScan} from './aig-heroine-scan-ui-7-14.mjs';
+import {mountAIG715CandidateStudio} from './aig-heroine-candidate-ui-7-15.mjs';
 const $=id=>document.getElementById(id);
 const status=$('status'),proof=$('proof'),screen=$('view'),download=$('export'),
  evidence=$('evidence'),start=$('reconstruct');
@@ -42,6 +43,63 @@ renderer.setAnimationLoop(t=>{
  const dt=Math.min(.1,Math.max(0,(t-prior)/1000));prior=t;
  controls.update(dt);renderer.render(scene,camera);
 });
+let candidatePreview=null;
+function releaseCandidatePreview(){
+ if(!candidatePreview)return;
+ scene.remove(candidatePreview);
+ candidatePreview.traverse(node=>{
+  if(node.geometry?.dispose)node.geometry.dispose();
+  if(node.material){
+   const mats=Array.isArray(node.material)?node.material:[node.material];
+   for(const m of mats){m.map?.dispose();m.dispose();}
+  }
+ });
+ candidatePreview=null;
+ if(model)model.visible=true;
+}
+function renderCandidatePreview(candidate){
+ if(!candidate?.geometryGroups)throw Error('AIG715_MISSING_REAL_CANDIDATE_GEOMETRY');
+ const sourceCanvas=document.getElementById('heroine-photo');
+ const group=new THREE.Group();
+ group.name='AIG715_Editable_Relative_Depth_Not_Physical_Measurement';
+ const palette={HAIR:0xc58e6a,FACE:0xf7b5a1,NECK:0xe8ac94,
+  JACKET:0x597594,SHIRT:0xe9f2f7,SKIRT:0x9b6070,
+  SKIN:0xf9c2a6,BAG:0x9a714b,ACCESSORY:0xcab071};
+ try{
+  for(const [part,p] of Object.entries(candidate.geometryGroups)){
+   if(!p.triangles)continue;
+   const geo=new THREE.BufferGeometry();
+   geo.setAttribute('position',new THREE.Float32BufferAttribute(p.positions,3));
+   geo.setAttribute('uv',new THREE.Float32BufferAttribute(p.uv,2));
+   geo.computeVertexNormals();
+   const texture=new THREE.CanvasTexture(sourceCanvas);
+   texture.colorSpace=THREE.SRGBColorSpace;
+   const material=new THREE.MeshStandardMaterial({map:texture,color:0xffffff,
+    side:THREE.DoubleSide,roughness:1,metalness:0});
+   const m=new THREE.Mesh(geo,material);
+   m.name='AIG715_'+part+'_INDEPENDENT_RELATIVE_SURFACE';
+   m.userData={semantic:part,source:'SINGLE_IMAGE_ESTIMATE',
+    physicalDepthInMillimetres:false,sourceClothThicknessKnown:false};
+   group.add(m);
+  }
+  if(!group.children.length)throw Error('AIG715_NO_RELIABLE_EDITABLE_TRIANGLES');
+  releaseCandidatePreview();
+  scene.add(group);candidatePreview=group;
+  if(model)model.visible=false; // Existing measured stereo model remains intact.
+  controls.target.set(0,0,0);
+  camera.position.set(.25,.11,1.75);
+  camera.near=.001;camera.far=1000;camera.updateProjectionMatrix();
+  controls.update();
+ }catch(e){
+  if(candidatePreview!==group){
+   group.traverse(n=>{
+    n.geometry?.dispose();
+    const m=n.material;if(m){m.map?.dispose();m.dispose();}
+   });
+  }
+  throw e;
+ }
+}
 function cleanupModel(){
  if(!model)return;
  scene.remove(model);model.geometry.dispose();model.material.dispose();
@@ -147,6 +205,7 @@ start.addEventListener('click',async()=>{
    minCorrespondences:32,maxPixelComparisons:95000000
   });
   const {mesh,tex}=makeMesh(surface,left.canvas);
+  releaseCandidatePreview();
   cleanupModel();
   model=mesh;texture=tex;scene.add(model);
   const box=new THREE.Box3().setFromObject(model),
@@ -228,10 +287,11 @@ evidence.addEventListener('click',()=>{
   excludesCNCMachineOutput:true
  },null,2),'AIG-FASTMODEL-7-13-METRIC-3D-PROVENANCE.json','application/json');
 });
-mountAIG714HeroineScan(()=>result&&leftCanvas&&sourceInfo?{
+const heroine714=mountAIG714HeroineScan(()=>result&&leftCanvas&&sourceInfo?{
  surface:result,leftCanvas,sourceInfo,
  imageWidth:leftCanvas.width,imageHeight:leftCanvas.height
 }:null);
+mountAIG715CandidateStudio(()=>heroine714.getCandidateInputs(),renderCandidatePreview);
 window.addEventListener('pagehide',()=>{
- renderer.setAnimationLoop(null);cleanupModel();controls.dispose();renderer.dispose();
+ renderer.setAnimationLoop(null);releaseCandidatePreview();cleanupModel();controls.dispose();renderer.dispose();
 },{once:true});
