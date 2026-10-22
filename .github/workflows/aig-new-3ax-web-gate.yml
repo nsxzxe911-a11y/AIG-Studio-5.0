@@ -5,6 +5,7 @@ on:
       - web/aig-dual-formal-runtime-20261016
     paths:
       - 'formal-web/3ax-nc-workbench.*'
+      - 'formal-web/3ax-authority-*'
       - 'formal-web/shared-3d/aig-real3d-replay-lab.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-3ax-new-workbench.real-browser.mjs'
       - '.github/workflows/aig-new-3ax-web-gate.yml'
@@ -27,6 +28,10 @@ jobs:
       - name: Validate all new HTML selectors and real core source
         run: |
           node --check ../../../3ax-nc-workbench-ui.mjs
+          node --check ../../../3ax-authority-source-gate.mjs
+          node --check ../../../3ax-authority-visual-ui.mjs
+          node --test tests/aig-3ax-authority-source.test.mjs
+          python3 -m json.tool ../../../3ax-authority-source.json >/dev/null
           node --check ../../../shared-3d/aig-real3d-replay-lab.mjs
           node --check tests/aig-3ax-new-workbench.real-browser.mjs
           node --test tests/aig-real3d-replay-v1-3.test.mjs
@@ -42,7 +47,9 @@ jobs:
           p=IDs(); p.feed(Path('../../../3ax-nc-workbench.html').read_text())
           required=['view','removed','remain','triangle','evidence','nc',
                     'parse','next','prev','simulate','reset','camera','block',
-                    'voxel','status','block-status','nc-upload','import-nc','export-nc']
+                    'voxel','status','block-status','nc-upload','import-nc','export-nc',
+                    'authority-panel','authority-check','authority-pick',
+                    'authority-file','authority-preview','authority-status']
           assert all(p.ids.count(i)==1 for i in required),(required,p.ids)
           print('NEW_3AX_HTML_REAL_CORE_ID_CONTRACT_PASS')
           PY
@@ -70,6 +77,8 @@ jobs:
             echo 'G1_CUTTING=NUMERICAL'
             echo 'NC_LOCAL_FILE_IMPORT_EXPORT=WORKING_COPY_ONLY'
             echo 'AUTHORITY_APPROVED_MACHINE_3D=NOT_VERIFIED'
+            echo '3AX_APPROVED_MOBILE_ORIGINAL_SOURCE=SHA256_PINNED_NON4K_NOT_HOSTED_VERIFIED'
+            echo '3AX_DESKTOP_AUTHORITY_AND_GLB=BLOCKED'
             echo 'FULL_FANUC_AND_4_TO_6_AX=BLOCKED'
             echo 'TRUE_0_001MM_AND_APK_EXE_NATIVE=NOT_VERIFIED'
             echo 'NO_CNC_MACHINE_COMMAND_OUTPUT'
