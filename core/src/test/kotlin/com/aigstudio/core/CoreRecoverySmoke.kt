@@ -207,5 +207,48 @@ fun main() {
         "A/B/C trajectory must not be mislabeled as verified five-axis motion"
     }
     println("AIG_READONLY_MOTION_INTEROP_CORE_PASS|SHA256_GOLDEN|G0_G1|REAL_TOOLPOINTS|MACHINE_BLOCKED|NO_FAKE_HUMAN_RIG|INVALID_BLOCKED")
+    // Existing size-ranking misclassified a separate small workpiece as an
+    // inner hole. Nesting and cross-contour collision now drive CAM labels.
+    val farCircles=listOf<Entity>(
+        Circle(id="OUTER_A",center=Vec2(0.0,0.0),radius=20.0),
+        Circle(id="OUTER_B",center=Vec2(60.0,0.0),radius=5.0)
+    )
+    check(CamFeatureRecognizer.recognize(farCircles).count{
+        it.kind==CamFeatureKind.OUTER
+    }==2)
+    val nestedCircles=listOf<Entity>(
+        Circle(id="RING_1",center=Vec2(0.0,0.0),radius=30.0),
+        Circle(id="RING_2",center=Vec2(0.0,0.0),radius=12.0),
+        Circle(id="RING_3",center=Vec2(0.0,0.0),radius=3.0)
+    )
+    val nesting=CamFeatureRecognizer.recognize(nestedCircles)
+    check(nesting.count{it.kind==CamFeatureKind.OUTER}==2 &&
+        nesting.count{it.kind==CamFeatureKind.INNER}==1)
+    val bowtie=listOf(
+        Vec2(0.0,0.0),Vec2(10.0,10.0),Vec2(0.0,10.0),
+        Vec2(10.0,0.0),Vec2(0.0,0.0)
+    )
+    check(CadClosedContourTopology.inspect(bowtie)==null)
+    val crossedLines=(0..3).map{index->
+        Line(id="BOWTIE_$index",a=bowtie[index],b=bowtie[index+1])
+    }
+    check(CamFeatureRecognizer.recognize(crossedLines).isEmpty()) {
+        "Self-intersecting CAD may not be recognized as a cut profile"
+    }
+    check(CadClosedContourTopology.inspect(listOf(Vec2(0.0,0.0),
+        Vec2(10.0,0.0),Vec2(Double.NaN,10.0),Vec2(0.0,0.0)))==null)
+    val overlappingRectangles=(0..3).map{ i->
+        val a=listOf(Vec2(0.0,0.0),Vec2(20.0,0.0),
+            Vec2(20.0,20.0),Vec2(0.0,20.0))
+        Line(id="A_$i",a=a[i],b=a[(i+1)%4])
+    }+(0..3).map{ i->
+        val b=listOf(Vec2(10.0,10.0),Vec2(30.0,10.0),
+            Vec2(30.0,30.0),Vec2(10.0,30.0))
+        Line(id="B_$i",a=b[i],b=b[(i+1)%4])
+    }
+    check(runCatching{CamFeatureRecognizer.recognize(overlappingRectangles)}.isFailure) {
+        "Intersecting CAD contours must not be assigned CAM roles"
+    }
+    println("STUDIO_CAD_TOPOLOGY_GATE_PASS|SEPARATE_OUTER|NESTED_HOLE|ISLAND|SELF_INTERSECTION_BLOCK|OVERLAP_BLOCK|NONFINITE_BLOCK")
     println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|3AX_FANUC_G0_G1|6AX_C_NC_BLOCKED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE|CAD_AUTO_SIM_NC|NC_FIRST_EVENTS")
 }
