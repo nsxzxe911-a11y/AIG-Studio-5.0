@@ -1,7 +1,7 @@
 {
   "schema": "AIG_3AX_AUTHORITY_SOURCE_GATE_V1",
   "scope": "REFERENCE_ASSET_IDENTITY_NOT_INTERACTIVE_RUNTIME",
-  "recordedFrom": "AIGII_RGB_MASTER_REGISTRY_V4 + formal-web/image-library.html",
+  "recordedFrom": "AIGII_RGB_MASTER_REGISTRY_V4 + formal-web/image-library.html + Library raw-byte SHA-256/format verification 2026-10-23",
   "mobile": {
     "authorityId": "AIGII-MOBILE-3AX-CURRENT-20261016",
     "fileName": "05_3AX.png",
@@ -11,8 +11,12 @@
     "sha256": "4f46a4c1f1ed7c71165108ed13f4809201794c16ebc397987d06d1be1f773e28",
     "candidateUrl": "./visual-authority/mobile/05_3AX.png",
     "approval": "IDENTITY_APPROVED_NON_4K",
-    "webAssetGate": "BLOCK_UNTIL_RAW_SHA_AND_DIMENSIONS_MATCH",
-    "native4K": false
+    "webAssetGate": "BLOCK_UNTIL_EXACT_RAW_SHA_JPEG_DECODE_AND_DIMENSIONS_MATCH",
+    "native4K": false,
+    "encoding": "JPEG_JFIF_DESPITE_PNG_FILENAME",
+    "decodedMime": "image/jpeg",
+    "fileExtensionIsActualFormat": false,
+    "rawBytesVerifiedInLibrary": true
   },
   "desktop": {
     "authorityId": null,
