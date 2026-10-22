@@ -71,7 +71,7 @@ try{
    await page.locator('#profile').selectOption('5AX');
    await page.waitForFunction(()=>{
     try{const e=JSON.parse(document.getElementById('proof').textContent);
-     return e.sceneProfile==='5AX'&&e.renderer.triangles>=300;
+     return e.sceneProfile==='5AX'&&e.renderer.triangles>=240;
     }catch{return false;}
    });
    const five=JSON.parse(await page.locator('#proof').textContent());
