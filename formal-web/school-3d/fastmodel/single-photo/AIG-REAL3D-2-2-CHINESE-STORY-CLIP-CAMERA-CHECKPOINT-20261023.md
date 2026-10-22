@@ -35,3 +35,8 @@
 
 - [#39860112621](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39860112621)：前置 syntax + numerical Gate `completed/failure`，真正的失敗發生在新 `tests/aig-text-world-storyboard-2-2.test.mjs` 的兩個斷言，不是語法不能解析。第一個期待 `ORIGINAL_SOURCE_CLIP_CHANGED`，現在加入更嚴格的「原始文字重新編譯→確切事件比對」防竄改時已先回 `AIG22_STORED_TIMELINE_TAMPERED_OR_STALE`。第二個播放測試把 `advance(0.5)` 當成已推進 0.5 秒，但真正設計會限每次最大 `0.25` 秒（避免背景頁一次跳幀），所以鏡頭 Cue 尚未到 1 秒。兩者均已更新測試斷言和四次真 0.25 秒 tick，沒有刪掉 Gate 或移除 clip/SHA 防護。
 - 最新隔離 [#39860336433](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39860336433) 已被 GitHub 接收，於此斷點寫入時 queued。 `FastModel repair regression` [#39860336176](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39860336176) 及 `AIG School 3D Source Gate` [#39860336266](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39860336266) 亦排隊，**不可搶先宣稱完整通過**。
+
+## 2.0 舊回歸條件的後續源修復
+
+- [#39860336433](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39860336433) 在 2.2 兩項測試修好後，前置 Gate 再發現舊 2.0 `tests/aig-world-scene-2-0.test.mjs` 的重複相機關鍵格斷言仍預期 `WORLD_CAMERA_TRACK_INVALID`。2.0 核心此前已加上更嚴格的提前拒絕 `AIG20_CAMERA_KEY_INVALID`；本輪將該項舊測試改成核對正確的新安全錯誤，**沒有解除任何場景 Key 限制**。
+- 隔離 PR #39 新 [#39860581728](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39860581728) 已被排程，建立此斷點時仍 queued；真 WebGL Chromium 證據尚未完成驗收，Native Android/Windows 也未發布。
