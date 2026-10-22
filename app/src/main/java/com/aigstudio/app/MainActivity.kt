@@ -994,9 +994,15 @@ class MainActivity : Activity() {
             setRgbState(0xFF3DEBFF.toInt(),false)
             tag="NAV_HOME"
             setOnClickListener {
-                UiButtonManifestContract.dispatchNavigation("NAV_HOME","HOME") { command ->
-                    require(command==SharedUiCommand.OPEN_HOME)
-                    showRuntimeHome?.invoke()
+                val homeAction=showRuntimeHome
+                if(homeAction==null) {
+                    // Never claim a completed page command when callback is absent.
+                    Toast.makeText(this@MainActivity,"HOME 尚未就緒；工作資料保持不變",Toast.LENGTH_SHORT).show()
+                } else {
+                    UiButtonManifestContract.dispatchNavigation("NAV_HOME","HOME") { command ->
+                        require(command==SharedUiCommand.OPEN_HOME)
+                        homeAction()
+                    }
                 }
             }
         })
