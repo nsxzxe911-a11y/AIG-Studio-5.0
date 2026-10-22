@@ -15,7 +15,7 @@
 - `tests/aig-map-actor-2-1.real-browser.mjs`：技術 fixture 為**真合法二進位 glTF2 + AnimationClip**（不是核准真人模型），真 Chromium phone 390×844 + desktop 1280×900；入庫角色+建築+真地圖，單一 WebGL 場景兩模型，actor source clip 播放/暫停，建築來源 footprint XY 經偏移對位 XZ，原檔 SHA/height/scale 不改，外部 scene 自動保存與真 HTML screenshot。
 - `.github/workflows/aig-shared-real3d-v1-3.yml` 保留全部舊 Real3D 1.x、1.9、2.0、7.13–7.16 及 NC 1.3 numerical Gate，新增 2.1 unit/browser 和獨立 proof artifact。
 - 隔離 PR [#38](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/pull/38)，驗收 [#39857199578](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39857199578) 建此斷點時**仍 queued**；未得到完成成功不可宣稱 PASS。
-- 前一次 2.0 [#39854567894](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39854567894) 前次亦 queued；較早 1.9 [#39851721793](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39851721793) GitHub 最終為 completed/failure，失敗 job 為舊材料移除回歸，故仍須確定 CNC 1.3 不回退；不可把 2.1 完成源碼當整體雙專案 Gate 過關。
+- 前一次 2.0 [#39854567894](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39854567894) 前次亦 queued。較早 1.9 [#39851721793](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39851721793) GitHub completed/failure 的 step 雖名為「Real phone desktop incremental stock material removal and rewind」，**真日誌失敗點實為 7.16 瀏覽器資產庫的非同步重用搜尋尚未更新 UI（舊字「尚未搜尋」）**；不能因此稱 CNC 材料移除數值 FAIL，亦不能把本 Gate 直接標 PASS。已將等待條件改為查詢結果真正出現再斷言，維持 NC 數值 Gate 不降級。
 
 ## 明確未完成／下一個已入庫的 2.5D / 3D AI 動畫方向
 
