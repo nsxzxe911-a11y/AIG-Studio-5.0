@@ -212,3 +212,32 @@ jobs:
             echo 'FASTMODEL_NATIVE_APK_EXE=NOT_VERIFIED'
             echo 'MMO_ONLINE=NOT_IMPLEMENTED'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  hair-neck-7-7:
+    name: Independent 7.7 hair-neck source/XYZ occlusion gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Real binary source hair/neck region and XYZ occlusion tests
+        run: |
+          node --check aig-hair-neck-7-7.mjs
+          node --test tests/aig-hair-neck-7-7.test.mjs
+      - name: Explicit anti-fake gate
+        if: always()
+        run: |
+          {
+            echo 'SOURCE_HAIR_NECK_REGION=USER_REVIEW_REQUIRED'
+            echo 'SOURCE_CONNECTED_HEAD_NECK_MASK=TESTED'
+            echo 'TRUE_WORLD_XYZ_LAYER_DEPTH=ESTIMATED'
+            echo 'ORIGINAL_HAIR_FIBERS_SKIN_PHYSICS=NOT_VERIFIED'
+            echo 'APPROVED_USER_CHARACTER=NOT_VERIFIED'
+            echo 'NATIVE_APK_EXE=NOT_VERIFIED'
+          } >> "$GITHUB_STEP_SUMMARY"
