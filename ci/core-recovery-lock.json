@@ -111,7 +111,7 @@
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/AigReadOnlyMotionPreview.kt",
-      "gitBlobSha": "6781564a705e1db97c2630a28e1bc5e1ee2aceba"
+      "gitBlobSha": "b82f64a5a03006bc641480e1303ae70880c860a0"
     }
   ],
   "machineTransportVerification": "NO_REAL_HANDSHAKE_LINK_STARTS_DISCONNECTED_CLICK_WARNING",
