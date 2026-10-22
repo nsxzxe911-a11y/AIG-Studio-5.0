@@ -83,6 +83,32 @@ try{
    assert.equal(final.true0001MmPrecision,false);
    assert.ok(final.rendered.triangles>100);
    assert.ok(final.rendered.allocatedFramePixels<=680000);
+   // Explicit GPU lifecycle regression: no NC source reset or erased voxels
+   // when SwiftShader exposes WEBGL_lose_context.
+   const gpuLossAvailable=await page.locator('#view').evaluate(canvas=>{
+    const gl=canvas.getContext('webgl2')||canvas.getContext('webgl');
+    const ext=gl?.getExtension('WEBGL_lose_context');
+    if(!ext)return false;
+    window.__aigTestWebglLossExtension=ext;
+    ext.loseContext();
+    return true;
+   });
+   if(gpuLossAvailable){
+    await page.waitForFunction(()=>document.getElementById('status').textContent
+     .includes('GPU_CONTEXT_LOST'),null,{timeout:10000});
+    await page.locator('#view').evaluate(()=>window.__aigTestWebglLossExtension.restoreContext());
+    await page.waitForFunction(()=>{
+     try{const e=JSON.parse(document.getElementById('evidence').textContent);
+      return e.reason==='WEBGL_CONTEXT_RESTORED_SAME_NUMERICAL_NC_WORKING_COPY'&&
+       e.rendered.status==='WEBGL_XYZ_TRIANGLES_RENDERED';}
+     catch{return false;}
+    },null,{timeout:15000});
+    const restored=await evidence();
+    assert.equal(restored.replay.cumulativeRemovedMm3,final.replay.cumulativeRemovedMm3);
+    assert.equal(restored.replay.blockIndex,final.replay.blockIndex);
+    assert.equal(restored.realFanucControllerCommandsSent,0);
+    await page.screenshot({path:dir+'/'+device.name+'-gpu-restore-preserves-stock.png',fullPage:true});
+   }
    await page.screenshot({path:dir+'/'+device.name+'-real-3d-finished-stock.png',fullPage:true});
    await page.locator('#nc').fill('G21 G90 G54\nG43 Z2 H1\nM30');
    assert.equal(await page.locator('#next').isDisabled(),true);
@@ -97,6 +123,8 @@ try{
     intermediate:second.replay,finish:final.replay,
     blockIndexAfterRewind:prev.replay.blockIndex,
     sourceEditInvalidatesReplay:true,
+    simulatedWebGLLossRecoveryValidated:gpuLossAvailable,
+    restoredNumericVoxelStockPreserved:gpuLossAvailable,
     unsupportedG43CorrectlyBlocked:true,
     nativeAPKAndEXENotCertified:true
    },null,2)+'\n');
