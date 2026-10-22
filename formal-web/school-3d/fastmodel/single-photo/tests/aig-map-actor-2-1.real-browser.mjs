@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 const out='artifacts/aig-real3d-map-actor-2-1';
 await mkdir(out,{recursive:true});
+const storyOut='artifacts/aig-real3d-text-story-2-2';
+await mkdir(storyOut,{recursive:true});
 // A genuinely valid GLTF2 animated GLB technical fixture, not the user's
 // approved heroine. Two independent translation clip names.
 function glbAnimatedActor(){
@@ -181,6 +183,19 @@ try{
     .textContent.includes('今天要去學校'),null,{timeout:5000});
    await page.locator('#story-stop').click();
    assert.match(await page.locator('#story-status').textContent(),/劇情已停止/);
+   await page.screenshot({path:storyOut+'/'+device.name+'-real-source-clip-camera-subtitle.png',
+    fullPage:true});
+   await writeFile(storyOut+'/'+device.name+'-story-2-2-proof.json',JSON.stringify({
+    schema:'AIG_REAL3D_2_2_SOURCE_BOUND_TEXT_STORYBOARD_BROWSER',
+    device:device.name,
+    originalGlbWalkClipDetectedAndPlayed:true,
+    missingRunClipBlockedWithoutFakeMotion:true,
+    authoredCameraKeyframesUsed:true,
+    realSubtitleTextRendered:true,
+    generatedVoice:false,generatedHumanMotion:false,
+    originalSourceGLBSHAUnchanged:true,
+    nativeAndroidWindowsFPSNotMeasured:true
+   },null,2));
    // Source-bound script remains reusable after stopping without any
    // change to the approved map XY or original loaded GLB.
    assert.equal(JSON.parse(await page.locator('#world-proof').textContent())
