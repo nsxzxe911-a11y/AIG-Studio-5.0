@@ -37,11 +37,18 @@ jobs:
           trap 'kill "$aig_http_pid" 2>/dev/null || true' EXIT
           node tests/aig-compact-ui-real-browser.mjs
           node tests/aig-generation-state-real-browser.mjs
+          node tests/aig-reverse-7-0-real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: FastModel-browser-regression-not-heroine-approval
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-compact-ui/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-0-real-pixel-numeric-browser-not-character-approval
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-reverse-7-0/
           if-no-files-found: warn
 
       - name: Distinguish real video playback from unverified character animation
