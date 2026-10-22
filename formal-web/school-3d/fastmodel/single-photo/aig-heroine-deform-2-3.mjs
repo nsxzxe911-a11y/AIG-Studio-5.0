@@ -18,7 +18,8 @@ const regionAnchors={
 };
 const xyz=j=>[j.x-.5,.5-j.y,0];
 const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
-export function buildAIG23DeformationPlan(candidate,{headAngleDegrees=14}={}){
+export function buildAIG23DeformationPlan(candidate,{headAngleDegrees=14,
+ requireConfirmed=false}={}){
  if(candidate?.schema!==AIG715_SCHEMA||
   !OK.test(candidate.sourceDigest||'')||
   !Array.isArray(candidate.skeletonCandidate)||
@@ -28,7 +29,7 @@ export function buildAIG23DeformationPlan(candidate,{headAngleDegrees=14}={}){
  const joints=new Map(candidate.skeletonCandidate.map(j=>[j.name,j]));
  for(const name of BONES){
   const j=joints.get(name);
-  if(!j?.confirmed||!Number.isFinite(j.x)||!Number.isFinite(j.y)||
+  if(!j||requireConfirmed&&!j.confirmed||!Number.isFinite(j.x)||!Number.isFinite(j.y)||
    j.x<0||j.x>1||j.y<0||j.y>1)
    fail('HEAD_NECK_CHEST_USER_CONFIRMED_JOINTS_REQUIRED');
  }
@@ -84,10 +85,12 @@ export function buildAIG23DeformationPlan(candidate,{headAngleDegrees=14}={}){
    name,worldXY:boneLocations[i].slice(0,2),
    position:boneLocations[i],
    parent:i===0?null:BONES[i-1],
-   userConfirmed:true,depthMM:null
+   userConfirmed:Boolean(joints.get(name)?.confirmed),depthMM:null
   })),groups,
   meshes,vertexCount,triangles:originalTriangles,
   requestedHeadAngleDegrees:headAngleDegrees,
+  reviewRequired:BONES.filter(name=>!joints.get(name)?.confirmed),
+  autoInitialisedFrom7_15DraftJointHints:true,
   originalGeometryColorPreserved:true,
   onlyObservedFrontSurface:true,
   geometryUnits:'SINGLE_IMAGE_RELATIVE_NOT_MM',
