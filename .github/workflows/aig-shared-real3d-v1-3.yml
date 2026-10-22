@@ -25,6 +25,9 @@ jobs:
       - run: npm ci
       - name: Syntax and true numerical source reparse
         run: |
+          node --check aig-map-model-alignment-2-1.mjs
+          node --check tests/aig-map-actor-2-1.real-browser.mjs
+          node --test tests/aig-map-model-alignment-2-1.test.mjs
           node --check aig-world-scene-2-0.mjs
           node --check aig-world-runtime-2-0.mjs
           node --check tests/aig-world-scene-2-0.real-browser.mjs
@@ -108,6 +111,7 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig-nc13-http.log 2>&1 &
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-map-actor-2-1.real-browser.mjs
           node tests/aig-world-scene-2-0.real-browser.mjs
           node tests/aig-scene-lifecycle-1-9.real-browser.mjs
           node tests/aig-asset-library-7-16.real-browser.mjs
@@ -151,6 +155,12 @@ jobs:
         with:
           name: FastModel-Real3D-2-0-Actual-Multi-GLB-World-Phone-Desktop
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-world-scene-2-0/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-Real3D-2-1-Source-Map-Actor-Motion-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-map-actor-2-1/
           if-no-files-found: warn
       - name: Exact proof boundary
         if: always()
@@ -196,4 +206,9 @@ jobs:
             echo 'FASTMODEL_REAL3D_2_0_ESTIMATED_ONE_PHOTO_SCALE=NOT_MEASURED_METRES'
             echo 'FASTMODEL_REAL3D_2_0_ORIGINAL_GLB_IMMUTABLE=TRUE'
             echo 'FASTMODEL_REAL3D_2_0_RENDER_NATIVE_ANDROID_WINDOWS=NOT_VERIFIED'
+            echo 'FASTMODEL_REAL3D_2_1_MAP_TO_GLTF=SOURCE_GEOMETRY_XY_TO_GROUND_XZ_NO_FAKE_HEIGHT'
+            echo 'FASTMODEL_REAL3D_2_1_ACTOR_CLIPS=ORIGINAL_GLTF2_ONLY_NO_SYNTHETIC_TEXT_MOTION'
+            echo 'FASTMODEL_REAL3D_2_1_METRIC_SCALE=SOURCE_REVIEW_REQUIRED'
+            echo 'FASTMODEL_REAL3D_2_1_SOURCE_SHA=UNCHANGED_AND_VALIDATED'
+            echo 'FASTMODEL_REAL3D_2_1_REAL_HEROINE_FULL_RIG=NOT_VERIFIED'
           } >> "$GITHUB_STEP_SUMMARY"
