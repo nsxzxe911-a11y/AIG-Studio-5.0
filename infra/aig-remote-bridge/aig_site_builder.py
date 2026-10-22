@@ -251,7 +251,7 @@ def download(build_id: str, artifact_id: int,
     return StreamingResponse(chunks(), media_type="application/zip",
              headers={"Content-Disposition": 'attachment; filename="AIG-' +
                       record["project"] + "-" + item["type"] +
-                      "-QA-NOT-RELEASE.zip"',
+                      '-QA-NOT-RELEASE.zip"',
                       "Cache-Control": "no-store"})
 
 
