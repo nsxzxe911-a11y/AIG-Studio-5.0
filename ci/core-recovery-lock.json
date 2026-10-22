@@ -116,6 +116,10 @@
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/CadClosedContourTopology.kt",
       "gitBlobSha": "cd19ef64deb41cf5133eff91ea4970b37b88c195"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/AigAnalyticCadKernel.kt",
+      "gitBlobSha": "17633a4f088a30675acc2cb546995658c95cb5de"
     }
   ],
   "machineTransportVerification": "NO_REAL_HANDSHAKE_LINK_STARTS_DISCONNECTED_CLICK_WARNING",
@@ -132,5 +136,6 @@
   "formalRgbUnifiedContract": "Core-first UI phase: 10-page order HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC/AI; verified source theme parity and fail-closed surface ID; approved assets must be separately proven by byte SHA and screenshots",
   "readOnlyInteroperabilityContract": "G0/G1 tool-center preview exported from real native CNC path; golden SHA256 shared with FastModel; no machine execution or rig / collision approval",
   "cadTopologyUpgrade": "Disjoint OUTER, nesting parity, self-intersecting and overlapping contours fail closed; executable real CAD feature recovery smoke tests",
-  "cadActualCamSafetyGate": "Real AUTO CAM Engine requires validated closed linework before G1/NC; bowtie/overlapping reject; independent open-line paths preserved in smoke test."
+  "cadActualCamSafetyGate": "Real AUTO CAM Engine requires validated closed linework before G1/NC; bowtie/overlapping reject; independent open-line paths preserved in smoke test.",
+  "analyticCadCoreGate": "Bounded exact 2D line/arc/circle intersections, convex polygon signed offsets with inward collapse rejection, and 3D oriented closed triangle shell proof; not a complete 3D B-rep or NC tool compensation"
 }
