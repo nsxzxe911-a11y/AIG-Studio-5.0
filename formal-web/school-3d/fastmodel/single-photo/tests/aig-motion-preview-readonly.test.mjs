@@ -46,6 +46,10 @@ test('modified source, fake machine permission, injected C axis, all-G0 and bad 
  await assert.rejects(parseAigReadOnlyMotionPreview({...sixAxis,axisMode:'3AX'}),/UNSAFE_FRAME/);
  const preview6=await parseAigReadOnlyMotionPreview(sixAxis);
  assert.equal(preview6.frames[1].c,45);
+ assert.equal(sampleAigReadOnlyMotionFrame(preview6,.2).c,0,
+  'unverified C-axis rotation must not be interpolated into fake continuous kinematics');
+ assert.equal(sampleAigReadOnlyMotionFrame(preview6,.4).c,45,
+  'measured posture is visible only at its actual sampled waypoint');
  assert.equal(preview6.machineExecutionAllowed,false,'C-axis preview is not verified machining');
  const allRapid=withData(fixture,fixture.data.replace(/,0(?=\n|$)/g,',1'));
  await assert.rejects(parseAigReadOnlyMotionPreview(allRapid),/EMPTY_MOVEMENT_OR_CUT/);
