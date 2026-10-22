@@ -43,6 +43,10 @@ object AigReadOnlyMotionPreview {
         require(points.size in 2..4000) { "A real bounded motion path is required" }
         require(cuttingFeedMmMin.isFinite() && cuttingFeedMmMin in 0.001..100000.0)
         require(rapidRateMmMin.isFinite() && rapidRateMmMin in 0.001..100000.0)
+        require(points.any{!it.rapid}){"All-rapid draft is not a cutting animation"}
+        require(points.zipWithNext().any{(a,b)->
+            a.x!=b.x || a.y!=b.y || a.z!=b.z
+        }){"Stationary points cannot be advertised as moving animation"}
         points.forEach { p->
             require(listOf(p.x,p.y,p.z,p.a,p.b,p.c).all{it.isFinite() && abs(it)<=1000000.0}){
                 "Invalid preview coordinate"
