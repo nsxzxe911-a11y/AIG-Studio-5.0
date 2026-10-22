@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020407">
+<title>AIG FastModel｜1:1 真尺寸 3D 立體重建</title>
+<style>
+:root{font:14px/1.5 system-ui,"Noto Sans TC",sans-serif;color:#ddf8ff;background:#020407}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#102f50,#020407 70%);padding:12px}
+main{max-width:1180px;margin:auto}a{color:#76dfff}h1{font-size:clamp(20px,4vw,31px);margin:10px 0 7px}
+p{color:#b4cfdf}header{border-bottom:1px solid #326b8d;padding:14px}
+.layout{display:grid;grid-template-columns:minmax(260px,380px) minmax(0,1fr);gap:12px;margin:14px 0}
+fieldset,.stage,details{background:#091a2c;border:1px solid #36749d;border-radius:12px;padding:14px;min-width:0}
+fieldset{margin:0 0 12px}legend{color:#7ddffa;font-weight:800;padding:0 6px}
+label{display:block;font-size:12px;color:#d0eaff;margin:9px 0}
+input:not([type=checkbox]){display:block;width:100%;min-height:41px;background:#06111e;border:1px solid #417e9c;border-radius:7px;color:#fff;padding:8px}
+input[type=checkbox]{accent-color:#2ad5cc;width:17px;height:17px;vertical-align:middle}
+button{cursor:pointer;border:1px solid #60b5df;border-radius:9px;min-height:47px;color:white;background:#134d75;font-weight:800;padding:10px 15px;margin:5px 5px 5px 0}
+button:disabled{opacity:.4;cursor:not-allowed}.stage{min-height:560px;display:flex;flex-direction:column;padding:10px}
+#view{width:100%;min-height:400px;flex:1;display:block;border-radius:9px;background:#061321;touch-action:none}
+#proof{margin:12px 0;padding:13px;background:#02111e;border:1px solid #456a80;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.6 ui-monospace,monospace;max-height:240px;overflow:auto}
+#status{padding:12px;background:#171a20;border:1px solid #8c7350;border-radius:8px;color:#ffdcaa}
+#status[data-pass=true]{color:#9dffe1;border-color:#2e8e83;background:#0a251f}
+small{font-size:11px;color:#a9bec9}.flag{display:inline-block;border:1px solid #b08344;border-radius:7px;color:#ffdca3;padding:3px 7px;font-size:11px}
+@media(max-width:720px){.layout{grid-template-columns:1fr}.stage{min-height:400px}#view{min-height:350px}}
+</style>
+</head><body><main>
+<header>
+<small>AIG FastModel · Real3D 7.13 · 離線本機運算</small>
+<h1>1:1 真尺寸 3D 立體重建</h1>
+<p>兩張拍攝方向平行且已校正的照片、真實量測的相機水平位移與相機焦距 → 自動視差配對 → 毫米 XYZ → 真三角面模型。三維位置以左側相機光心為原點。未提供真實尺度則不能宣稱實體 1:1。</p>
+<p><span class="flag">只還原相機真正看得到的前表面</span> 看不到的背面、頭髮內側、衣服後側與無紋理區不補假模型；仍可另用 7.6 單照估計 3D 草模。</p>
+<a href="./index.html">返回 FastModel 主工作區</a>
+</header>
+<div class="layout">
+<div>
+<fieldset><legend>01 · 真實照片來源</legend>
+<label>左側照片（照片 A）<input id="left-photo" type="file" accept="image/png,image/jpeg,image/webp" aria-label="左側真照片"></label>
+<label>右側照片（照片 B，同焦距、相機平行並經極線校正）<input id="right-photo" type="file" accept="image/png,image/jpeg,image/webp" aria-label="右側真照片"></label>
+<small>照片只在本機瀏覽器讀取，不傳到伺服器。處理時依比例縮至 320～480px，原始圖片 SHA-256 另行保存。</small>
+</fieldset>
+<fieldset><legend>02 · 物理尺度／相機校正</legend>
+<label>實際測得相機水平位移（mm）<input id="baseline" type="number" min=".01" max="100000" step=".01" placeholder="例如：60（必須是真的量測）"></label>
+<label>原始照片焦距 fx（原圖像素，來自校正）<input id="focal" type="number" min="15" max="100000" step=".1" placeholder="請填入實際標定的 fx 像素"></label>
+<label><input type="checkbox" id="physical-reviewed"> 已用實物尺、標定板或測量工具確認位移（不是猜的）</label>
+<label><input type="checkbox" id="camera-reviewed"> 已校正兩張照片的鏡頭內參／焦距</label>
+<label><input type="checkbox" id="rectified-reviewed"> 兩張照片已完成極線校正，相機平行同視角</label>
+</fieldset>
+<fieldset><legend>03 · 自動重建與輸出</legend>
+<button id="reconstruct" type="button">開始計算真實 3D XYZ</button>
+<button id="export" type="button" disabled>輸出 GLB（使用公尺，符合 glTF 2.0）</button>
+<button id="evidence" type="button" disabled>匯出毫米／來源 SHA JSON</button>
+<p id="status" role="status" aria-live="polite">請載入兩張真實照片，並填入經量測的尺寸校正。</p>
+</fieldset>
+</div>
+<section class="stage" aria-label="真正 WebGL 可旋轉三維實體表面">
+<canvas id="view" aria-label="FastModel 7.13 真正 XYZ 三角面 / 原照片貼圖，拖曳旋轉縮放"></canvas>
+<p>旋轉可看到實際表面深度；黑色缺口代表無法由照片可靠推算的部分，不會生成虛構背面。</p>
+<pre id="proof">尚無經校正的重建資料</pre>
+</section></div>
+<details><summary>1:1 尺度說明</summary><p>這裡的 1:1 是幾何座標中的 1 mm 對應實物 1 mm，並不代表所有表面都達 0.001 mm 精度。任意兩張一般手機照片若沒有相機位姿、相機基線與鏡頭校準，深度無法唯一決定。標準 glTF/GLB 使用公尺，所以輸出時會將毫米座標除以 1000，並保留來源 SHA 與校正紀錄。</p></details>
+</main><script src="./metric-stereo-studio.js"></script></body></html>
