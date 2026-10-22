@@ -31,7 +31,10 @@ function glbAnimatedActor(){
   nodes:[{mesh:0,name:'OriginalActorNode'}],scenes:[{nodes:[0]}],scene:0,
   animations:[{name:'source-short-step',samplers:[{
    input:2,output:3,interpolation:'LINEAR'}],
-   channels:[{sampler:0,target:{node:0,path:'translation'}}]}]};
+   channels:[{sampler:0,target:{node:0,path:'translation'}}]},
+   {name:'walk',samplers:[{
+    input:2,output:3,interpolation:'LINEAR'}],
+    channels:[{sampler:0,target:{node:0,path:'translation'}}]}]};
  const json=Buffer.from(JSON.stringify(gltf));
  const p=(json.length+3)&~3,j=Buffer.alloc(p,0x20);json.copy(j);
  const length=12+8+p+8+all.length,b=Buffer.alloc(length);
@@ -142,6 +145,46 @@ try{
    assert.equal(after.objects[1].sourceSHA,before.objects[1].sourceSHA);
    assert.deepEqual(after.objects[1].scale,before.objects[1].scale);
    assert.equal(JSON.parse(await page.locator('#metrics').textContent()).modelObjects,2);
+   // Real3D 2.2: only a real named GLTF animation "walk" can satisfy
+   // this user-written walking cue; authored camera + text subtitles.
+   await page.locator('#world-time').fill('0');
+   await page.locator('#world-camera-position').fill('0,2,7');
+   await page.locator('#world-key-add').click();
+   await page.waitForFunction(()=>document.getElementById('world-proof')
+    .textContent.includes('"keyId": "camera-1"'));
+   await page.locator('#world-time').fill('1');
+   await page.locator('#world-camera-position').fill('2,2,6');
+   await page.locator('#world-key-add').click();
+   await page.waitForFunction(()=>document.getElementById('world-proof')
+    .textContent.includes('"keyId": "camera-2"'));
+   await page.locator('#story-text').fill('0秒 node-1：跑步');
+   await page.locator('#story-compile').click();
+   assert.match(await page.locator('#story-status').textContent(),
+    /BLOCKED/,'run is not a real source clip, never hallucinate');
+   await page.locator('#story-text').fill(
+    '0秒 node-1：走路\n1秒 鏡頭：校門口\n1秒 字幕：今天要去學校');
+   await page.locator('#story-compile').click();
+   await page.waitForFunction(()=>document.getElementById('story-play').disabled===false);
+   const storyboard=JSON.parse(await page.locator('#story-proof').textContent());
+   assert.equal(storyboard.ready,true);
+   assert.equal(storyboard.events.length,3);
+   assert.equal(storyboard.events[0].clipName,'walk');
+   assert.equal(storyboard.generatedMotion,false);
+   assert.equal(storyboard.generatedVoice,false);
+   await page.locator('#story-save').click();
+   await page.waitForFunction(()=>document.getElementById('story-status')
+    .textContent.includes('已另存劇本'),null,{timeout:12000});
+   await page.locator('#story-play').click();
+   await page.waitForFunction(()=>document.getElementById('story-status')
+    .textContent.includes('開始播放'),null,{timeout:5000});
+   await page.waitForFunction(()=>document.getElementById('story-subtitle')
+    .textContent.includes('今天要去學校'),null,{timeout:5000});
+   await page.locator('#story-stop').click();
+   assert.match(await page.locator('#story-status').textContent(),/劇情已停止/);
+   // Source-bound script remains reusable after stopping without any
+   // change to the approved map XY or original loaded GLB.
+   assert.equal(JSON.parse(await page.locator('#world-proof').textContent())
+    .objects[1].sourceSHA,before.objects[1].sourceSHA);
    await page.screenshot({path:out+'/'+device.name+'-source-aligned-actor-clips.png',
     fullPage:true});
    assert.deepEqual(errors,[]);
