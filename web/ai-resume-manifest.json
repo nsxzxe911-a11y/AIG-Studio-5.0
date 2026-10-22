@@ -35,12 +35,12 @@
     {
       "id": "AIG FastModel",
       "repository": "nsxzxe911-a11y/AIG-Studio-5.0",
-      "reference": "NOT_ESTABLISHED",
-      "source_sha": null,
+      "reference": "repair/core-first-fastmodel-20261021",
+      "source_sha": "e74449a374ea7e92986475036e3f21143a909a09",
       "visibility": "PUBLIC",
-      "source_checked": false,
+      "source_checked": true,
       "runtime_gate": "NOT_VERIFIED",
-      "checkpoint_note": "Project is discussed as part of AIG Studio; authoritative source path and checkpoint must be verified before modification."
+      "checkpoint_note": "Source verified for FastModel 7.0 pixel-derived 2D vector contours and numerical elastic outline simulation. Authentic 3D human/animal animation, browser release and native Android/Windows remain unverified."
     }
   ],
   "checks": {
@@ -49,7 +49,11 @@
     "site_deployment": "NOT_VERIFIED",
     "native_artifacts": "NOT_VERIFIED",
     "all_runtime_functions": "NOT_VERIFIED",
-    "tampering": "NO_UNAUTHORIZED_MODIFICATION_CONFIRMED"
+    "tampering": "NO_UNAUTHORIZED_MODIFICATION_CONFIRMED",
+    "fastmodel_reverse_geometry_7_0": "SOURCE_COMPONENT_PRESENT_NUMERICAL_SANITY_CHECK_ONLY",
+    "fastmodel_real_3d": "NOT_VERIFIED",
+    "fastmodel_ci": "PENDING_VERIFIED_WORKFLOW_RESULT",
+    "fastmodel_site_live": "NOT_VERIFIED"
   },
   "approved_invariants": [
     "Do not delete/overwrite original geometry, CAD/CAM/NC, approved RGB Authority, or FastModel assets.",
@@ -59,11 +63,14 @@
     "No automatic rollback/downgrade; no destructive repair; create a new checkpoint after validation."
   ],
   "next_steps": [
-    "Verify FastModel authoritative repository path and exact checkpoint; do not infer it from conversation.",
+    "Re-read live FastModel repair/core-first-fastmodel-20261021 head SHA and exact source before any changes.",
+    "Check FastModel reverse 7.0 Node + offline build CI outcome; never mark complete from code existence alone.",
+    "Verify AIG Render has deployed HTML, JS and exact module SHA before claiming the link is usable.",
+    "Continue reverse 3D SDF, actual articulated geometry and deformation with distinct 3D skeleton/skin/runtime evidence; no static-photo fake motion.",
     "Create durable authenticated update ledger for every engineering handoff, and append history instead of replacing source.",
     "Tie actual Render deployment to precise git commit and confirm live page before labeling released.",
     "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
   ],
   "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
-  "last_action": "AI continuity source and user-accessible handoff page added; does not change core or deploy status."
+  "last_action": "FastModel 7.0 real-source pixel silhouette extraction, SVG and numerical 2D elastic outline module committed to repair branch; isolated reverse-lab page copied into site source. Source-only; true 3D character and Render deployment not verified."
 }
