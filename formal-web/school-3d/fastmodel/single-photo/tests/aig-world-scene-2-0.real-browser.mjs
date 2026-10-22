@@ -65,7 +65,13 @@ try{
     schema:'AIG_FASTMODEL_7_12_SOURCE_SCENE_MAP_DATA',revision:1,
     map:{id:'campus-map',coordinateMode:'LOCAL_RELATIVE',
      metresPerUnit:null,sourceLabel:'TECHNICAL_MAP_FIXTURE_NOT_GEO_SURVEY',
-     sourceRights:'USER_TEST_FIXTURE',geoOrigin:null,features:[]},
+     sourceRights:'USER_TEST_FIXTURE',geoOrigin:null,
+     features:[{id:'building_1',category:'building',
+      name:'有來源的校園建築平面',sourceFrameId:null,
+      measuredHeightM:null,heightReviewed:false,
+      geometry:{type:'Polygon',coordinates:[[
+       [0,0],[10,0],[10,5],[0,5],[0,0]
+      ]]}}]},
     originalPhotosOrVideosIncluded:false,actual3DMeshCreated:false
    }));
    await importAsset('map.geojson','application/json','map',
@@ -102,7 +108,8 @@ try{
    assert.equal(status.activeWorld,before.id);
    assert.equal(status.modelObjects,2);
    assert.equal(status.viewerContexts,1);
-   assert.equal(status.map.features,0);
+   assert.equal(status.map.features,1);
+   assert.match(await page.locator('#world-map-caption').textContent(),/1 個來源圖徵/);
    assert.equal(status.gpuVRAMBytesVerified,false);
    // Camera keys added to same already-loaded Three scene, no reparse.
    await page.locator('#world-time').fill('0');
