@@ -25,6 +25,8 @@ jobs:
       - run: npm ci
       - name: Syntax and true numerical source reparse
         run: |
+          node --check aig-static-instancing-1-8.mjs
+          node --test tests/aig-static-instancing-1-8.test.mjs
           node --check aig-glb-gpu-adaptive-1-7.mjs
           node --check viewer.mjs
           node --check app.mjs
@@ -110,4 +112,7 @@ jobs:
             echo 'FASTMODEL_1_6_NATIVE_60FPS=NOT_VERIFIED'
             echo 'FASTMODEL_1_7_REAL_GLB_ANIMATED_AND_GPU_TIMER=TRUST_ONLY_EXT_DISJOINT_IF_AVAILABLE'
             echo 'FASTMODEL_1_7_GPU_NATIVE_PERFORMANCE_AND_PHOTOREAL_HEROINE=NOT_VERIFIED'
+            echo 'FASTMODEL_1_8_REAL_STATIC_INSTANCING=TRUE_THREE_GPU_DRAW_CALLS_ONLY'
+            echo 'FASTMODEL_1_8_SKINNED_MORPH_ANIMATED_AND_CNC_SOURCE=UNCHANGED'
+            echo 'FASTMODEL_1_8_NATIVE_DEVICE_FPS_UPLIFT=NOT_YET_MEASURED'
           } >> "$GITHUB_STEP_SUMMARY"
