@@ -56,9 +56,9 @@ try{
    },null,{timeout:25000});
    const sideBefore=await page.locator('#view').evaluate(cv=>cv.toDataURL('image/png'));
    assert.notEqual(sideBefore,prior);
-   await page.locator('#nose-depth').evaluate(e=>{e.value='.065';e.dispatchEvent(new Event('input',{bubbles:true}));});
+   await page.locator('#nose-depth').evaluate(e=>{e.value='.066';e.dispatchEvent(new Event('input',{bubbles:true}));});
    await page.waitForFunction(()=>{
-    try{const t=JSON.parse(document.getElementById('evidence').textContent);return t.depthSettings.nose===.065&&t.depthZJacobian.passed;}catch{return false;}
+    try{const t=JSON.parse(document.getElementById('evidence').textContent);return t.depthSettings.nose===.066&&t.depthZJacobian.passed;}catch{return false;}
    },null,{timeout:25000});
    const sideAfter=await page.locator('#view').evaluate(cv=>cv.toDataURL('image/png'));
    assert.notEqual(sideBefore,sideAfter,'actual XYZ depth change must update rendered camera pixels');
