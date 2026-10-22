@@ -2540,7 +2540,9 @@ $('aig64-single-download').addEventListener('click',()=>{
 $('aig64-single-report').addEventListener('click',()=>{
  if(aig64SingleReport)
   aig47Download(JSON.stringify(aig64SingleReport,null,2),
-   'AIG-6.4-SINGLE-PARTIAL-PHOTO-ANATOMICAL-ESTIMATE-SHA.json',
+   aig64SingleReport.schema===AIG_SOURCE_OBSERVATION_SCHEMA?
+    'AIG-6.12-PIXEL-COLOUR-SHAPE-ONLY-NO-BIOLOGICAL-MODEL.json':
+    'AIG-6.4-SINGLE-PARTIAL-PHOTO-ANATOMICAL-ESTIMATE-SHA.json',
    'application/json');
 });
 /** On-demand control is wired to the already verified single-photo GLB.
