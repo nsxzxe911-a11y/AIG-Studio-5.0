@@ -14,6 +14,7 @@ function update(x){
  $('status').textContent=JSON.stringify(window.__aig17lab,null,2);
 }
 function delay(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+(async()=>{
 try{
  const canvas=$('viewer'),viewer=new PhotoViewer(canvas,message=>{
   window.__aig17lab.errors.push(message);
@@ -82,3 +83,4 @@ try{
 }catch(error){
  update({status:'FAIL',exception:String(error.stack||error)});
 }
+})();
