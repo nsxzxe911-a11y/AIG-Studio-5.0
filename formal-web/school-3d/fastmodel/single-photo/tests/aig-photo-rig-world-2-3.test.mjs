@@ -27,6 +27,10 @@ test('Real3D 2.3 one still image makes source-bound REAL 17 bone skinned GLB usa
  assert.equal(proof.realBones,17);
  assert.equal(proof.realSkinnedMeshes,9);
  assert.equal(proof.genuineSkinningWeightsValidated,true);
+ assert.equal(proof.internal3DArticulationDetected,true);
+ assert.ok(proof.nonPlanar3DDepthRatio>=.015);
+ assert.ok(proof.realInternalArticulatedClipCount>=1);
+ assert.equal(proof.rigidImageOrCameraSwayRejected,true);
  assert.equal(proof.realSourceClips.length,5);
  assert.equal(proof.separateSkinnedGarmentAndHairMeshes.length,7);
  assert.ok(proof.realSourceClips.some(x=>/turn.head|head.turn/i.test(x.name)));
