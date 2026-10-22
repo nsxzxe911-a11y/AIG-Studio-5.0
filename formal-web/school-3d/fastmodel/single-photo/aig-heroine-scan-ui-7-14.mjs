@@ -22,6 +22,7 @@ const info=(s,ok=false)=>{stage.textContent=s;stage.dataset.ok=String(ok);};
 function clear(){
  seeds=[];regions=null;product=null;source=null;
  exportButton.disabled=true;$('heroine-mask-export').disabled=true;
+ $('heroine-reviewed').checked=false;
  seedControls.textContent='尚無已確認部位種子點';
  evidence.textContent='等待已校正的雙照 3D 網格與人物色彩分區';
  const c=overlay.getContext('2d');c.clearRect(0,0,overlay.width,overlay.height);
