@@ -122,6 +122,19 @@ export class AIG20WorldRuntime{
    }
   }
  }
+ updateCameraTrack(scene){
+  this._checkOpen();assertAIG20Document(scene);
+  if(!this.scene)fail('NO_COMMITTED_WORLD_TO_UPDATE');
+  const unchanged=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+  if(scene.id!==this.scene.id||
+   scene.coordinateMode!==this.scene.coordinateMode||
+   !unchanged(scene.objects,this.scene.objects)||
+   !unchanged(scene.mapRef,this.scene.mapRef))
+   fail('WORLD_SOURCE_CHANGED_REQUIRES_RELOAD');
+  this.scene=JSON.parse(JSON.stringify(scene));
+  return {status:'CAMERA_KEYS_UPDATED_WITHOUT_GLTF_RELOAD',
+   keyframes:scene.cameraKeys.length,originalGeometryPreserved:true};
+ }
  applyCamera(seconds){
   this._checkOpen();if(!this.scene)fail('NO_WORLD_TO_ANIMATE_CAMERA');
   const key=sampleAIG20Camera(this.scene,seconds);
