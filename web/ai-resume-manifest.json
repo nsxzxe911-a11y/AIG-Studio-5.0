@@ -36,11 +36,11 @@
       "id": "AIG FastModel",
       "repository": "nsxzxe911-a11y/AIG-Studio-5.0",
       "reference": "repair/core-first-fastmodel-20261021",
-      "source_sha": "9df98d0471ebfdb3c25f3ca5948e48e60eb77e57",
+      "source_sha": "60a06ace2b7a4fcaa8df3a8ca426c49995ad931b",
       "visibility": "PUBLIC",
       "source_checked": true,
-      "runtime_gate": "SOURCE_AND_BROWSER_VERIFIED_NATIVE_AND_RENDER_PENDING",
-      "checkpoint_note": "FastModel 7.9 continuous camera and uploaded local WebM video frame scanning: adaptive quality/novelty keyframes, cache capped, pause/resume/stop, exact-source SHA-256 observation-memory JSON roundtrip, camera tracks released. GitHub full run 39762605302 PASS 330/330 Node, 49/49 Python, phone+desktop Chromium real encoded WebM and getUserMedia fake camera, and 7.5-7.9 independent regression; source audit 39762605297 PASS. No real 3D multi-view pose fusion/anatomical reconstruction, no native APK/EXE evidence; original website live SHA independently required."
+      "runtime_gate": "SPARSE_XYZ_SOURCE_AND_BROWSER_VERIFIED_NATIVE_AND_RENDER_PENDING",
+      "checkpoint_note": "FastModel 7.10: physically triangulated sparse XYZ from manually matched local video A/B frames, reviewed parallel/rectified stereo, measured baseline, focal px, reprojection/parallax/inconsistent track Gate; no uncalibrated handheld video 3D claims. GitHub run 39764618930 independent 7.10 and full regression PASS: 336/336 Node 49/49 Python, 360x780 phone and 1440x900 desktop Chromium with real encoded WebM, source SHA evidence and sparse XYZ. Latest nav/docs source SHA 60a06ace2b7a4fcaa8df3a8ca426c49995ad931b full follow-up run 39764970685 checked separately. Dense human mesh, pose automation, authentic original character, native APK/EXE and Render LIVE not verified."
     }
   ],
   "checks": {
@@ -125,7 +125,15 @@
     "fastmodel_7_9_resume_memory": "PASS_LOCAL_SHA_256_SOURCE_BOUND_META_ONLY",
     "fastmodel_7_9_3d_visual_hull": "NOT_IMPLEMENTED",
     "fastmodel_7_9_automatic_camera_pose": "NOT_IMPLEMENTED",
-    "fastmodel_7_9_native_apk_exe": "NOT_VERIFIED"
+    "fastmodel_7_9_native_apk_exe": "NOT_VERIFIED",
+    "fastmodel_7_10": "PASS_CONDITIONAL_CALIBRATED_SOURCE_VIDEO_SPARSE_3D_XYZ",
+    "fastmodel_7_10_latest_core_sha": "60a06ace2b7a4fcaa8df3a8ca426c49995ad931b",
+    "fastmodel_7_10_regression": "PASS_GITHUB_RUN_39764618930_NODE_336_336_PYTHON_49_49_PHONE_DESKTOP_VIDEO",
+    "fastmodel_7_10_latest_regression": "IN_PROGRESS_GITHUB_RUN_39764970685_FOR_FINAL_NAV_DOC_SHA",
+    "fastmodel_7_10_3d_provenance": "CALIBRATED_PARALLEL_STEREO_USER_REVIEWED_NOT_AUTOMATIC_CAMERA_TRACKING",
+    "fastmodel_7_10_3d_mesh": "NOT_BUILT_SPARSE_POINTS_ONLY",
+    "fastmodel_7_10_real_character_likeness": "NOT_VERIFIED",
+    "fastmodel_7_10_native_apk_exe": "NOT_VERIFIED"
   },
   "approved_invariants": [
     "Do not delete/overwrite original geometry, CAD/CAM/NC, approved RGB Authority, or FastModel assets.",
@@ -135,8 +143,10 @@
     "No automatic rollback/downgrade; no destructive repair; create a new checkpoint after validation."
   ],
   "next_steps": [
-    "Publish latest website source only to original aig-dual-formal-runtime Render static site and verify deployed SHA, /fastmodel/continuous-studio.html plus imported JS, and preserved HOME/navigation.",
-    "FastModel 7.10: source-verified multiview camera calibration, stable 2D feature correspondence and incremental 3D SDF/visual-hull fusion, reject uncalibrated angles or poor parallax; link observed frame IDs to model revisions.",
+    "Confirm final GitHub run 39764970685 passes after additive navigation/docs and pin its exact commit; maintain 7.5-7.9 prior Gated inventory.",
+    "Render original aig-dual-formal-runtime static site remains stale unless deployed exact website branch HEAD and HTTP verified /fastmodel/multiview-studio.html. Don't confuse GitHub source mirroring with production deployment.",
+    "FastModel 7.11: candidate feature matching and robust camera pose/intrinsic calibration with reprojection + confidence, then incremental sparse-to-SDF volume constraints; no uncalibrated video hallucination.",
+    "Real heroine references, true neck/hair skin, GPU/native Android Windows FPS and deliverable APK/EXE remain distinct blocked verification tasks.",
     "Real original heroine and production phone/Windows hardware testing remain required before claiming realistic character, full animation, native FPS or MMO online.",
     "Keep explicit distinction between real mathematical XYZ articulating estimated geometry and complete authentic single-photo anatomical reconstruction; require actual source-photo likeness and movement screenshots.",
     "Only promote authentic real-photo character after original heroine reference images and moving frames pass visual, source fidelity and no-clipping checks; synthetic RGB photo region CI is numeric only.",
@@ -153,5 +163,5 @@
     "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
   ],
   "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
-  "last_action": "7.9 core 9df98d0471ebfdb3c25f3ca5948e48e60eb77e57 commits real HTMLVideoElement WebM frame decoding, live camera getUserMedia continuous capture, adaptive keyframe quality and 144-dimensional bounded descriptive keyframes, privacy-safe stop, pause/resume, same-source local JSON checkpoint. Full GH 39762605302 PASS Node 330, Python 49, Chromium phone/desktop; source gate 39762605297 PASS. Site branch mirrored; original Render still prior commit until deployed/verified. Native devices and actual multiview 3D geometry remain independent Gate."
+  "last_action": "FastModel 7.10 core 60a06ace2b7a4fcaa8df3a8ca426c49995ad931b source plus original AIG site's /fastmodel/multiview-studio.html mirrored. Verified physically conditional stereo XYZ sparse point cloud, real video decode and clicked source matches, source bound JSON re-triangulation. GH 39764618930 PASS Node 336 Python 49 independent and full Chromium phone/desktop; final nav/docs run 39764970685 still in progress. No general monocular camera pose/volumetric 3D mesh or original portrait certified."
 }
