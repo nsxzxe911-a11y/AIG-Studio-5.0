@@ -45,6 +45,10 @@ class RuntimeLinkStore {
         }
     }
     private val observers=linkedSetOf<(RuntimeLinkSnapshot)->Unit>()
+    // A bad UI renderer must not abort status propagation to other subscribers.
+    // Exposed for amber diagnostics; this does not certify a machine handshake.
+    @Volatile private var observerFailure:String?=null
+    fun lastObserverFailure():String?=observerFailure
 
     @Synchronized fun status(id:RuntimeLinkId):RuntimeLinkStatus=
         values[id] ?: RuntimeLinkStatus.DISCONNECTED
@@ -53,7 +57,12 @@ class RuntimeLinkStore {
 
     fun observe(observer:(RuntimeLinkSnapshot)->Unit):()->Unit {
         val first= synchronized(this) { observers += observer; RuntimeLinkSnapshot(values.toMap()) }
-        observer(first)
+        try {
+            observer(first)
+        } catch(error:Exception) {
+            synchronized(this) { observers -= observer }
+            observerFailure="RUNTIME_LINK_OBSERVER_WARNING:"+error.javaClass.simpleName
+        }
         return { synchronized(this) { observers -= observer } }
     }
 
@@ -69,7 +78,16 @@ class RuntimeLinkStore {
             snap=RuntimeLinkSnapshot(values.toMap())
             targets=observers.toList()
         }
-        targets.forEach { it(snap) }
+        targets.forEach { observer ->
+            try {
+                observer(snap)
+            } catch(error:Exception) {
+                // Remove only the failing UI observer; keep the new link state
+                // and continue delivering the same snapshot to healthy views.
+                synchronized(this) { observers -= observer }
+                observerFailure="RUNTIME_LINK_OBSERVER_WARNING:"+error.javaClass.simpleName
+            }
+        }
         return status
     }
 
