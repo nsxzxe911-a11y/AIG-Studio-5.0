@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
 import {AIG714_LABELS} from './aig-heroine-scan-7-14.mjs';
 import {buildAIG715HeroineCandidate,editAIG715Joint,
  summarizeAIG715Candidate} from './aig-heroine-candidate-7-15.mjs';
@@ -23,14 +25,14 @@ export function mountAIG715CandidateStudio(readState,onPreview){
   xInput=$('heroine-joint-x'),yInput=$('heroine-joint-y'),
   jointSave=$('heroine-joint-save'),status=$('heroine-candidate-status'),
   info=$('heroine-candidate-proof'),saveDepth=$('heroine-depth-save'),
-  saveRig=$('heroine-rig-save');
+  saveRig=$('heroine-rig-save'),glbButton=$('heroine-candidate-glb');
  let current=null,lastIdentity=null;
  const mark=(msg,success=false)=>{
   status.textContent=msg;status.dataset.ok=String(success);
  };
  const clear=(reason='請先用上方原圖完成人工審核的 RGB 區域分離')=>{
   current=null;lastIdentity=null;saveDepth.disabled=true;
-  saveRig.disabled=true;jointSave.disabled=true;
+  saveRig.disabled=true;glbButton.disabled=true;jointSave.disabled=true;
   info.textContent=reason;
  };
  const getJoint=()=>current?.skeletonCandidate.find(j=>j.name===jointSelect.value);
@@ -44,7 +46,7 @@ export function mountAIG715CandidateStudio(readState,onPreview){
  function show(){
   if(!current)return;
   info.textContent=JSON.stringify(summarizeAIG715Candidate(current),null,2);
-  saveDepth.disabled=false;saveRig.disabled=false;
+  saveDepth.disabled=false;saveRig.disabled=false;glbButton.disabled=false;
   refreshJoint();
  }
  build.addEventListener('click',()=>{
@@ -98,6 +100,67 @@ export function mountAIG715CandidateStudio(readState,onPreview){
    sourceDigest:lastIdentity,
    editingDoesNotRigMeshOrInferUnknownLegs:true},
   'AIG-FastModel-7-15-Heroine-Editable-Skeleton-Garments.json');
+ });
+ glbButton.addEventListener('click',async()=>{
+  if(!current)return;
+  glbButton.disabled=true;
+  const root=new THREE.Group();
+  root.name='FastModel_7_15A_Heroine_Editable_ESTIMATED_NO_METRIC_SCALE';
+  root.userData={
+   sourceDigest:current.sourceDigest,
+   estimatedDepthUnits:'NORMALIZED_RELATIVE_NOT_MM',
+   calibratedMetricDepthExportedSeparately:true,
+   actualPhysicalHeightUnknown:true,
+   trueBacksideNeverScanned:true,
+   genuineSkinnedRig:false
+  };
+  try{
+   for(const [name,p] of Object.entries(current.geometryGroups)){
+    if(p.triangles===0)continue;
+    const geometry=new THREE.BufferGeometry();
+    geometry.setAttribute('position',new THREE.BufferAttribute(p.positions.slice(),3));
+    geometry.setAttribute('uv',new THREE.BufferAttribute(p.uv.slice(),2));
+    const rgb=new Float32Array(p.rgb.length);
+    for(let i=0;i<rgb.length;i++)rgb[i]=p.rgb[i]/255;
+    geometry.setAttribute('color',new THREE.BufferAttribute(rgb,3));
+    geometry.computeVertexNormals();
+    const material=new THREE.MeshStandardMaterial({vertexColors:true,
+     side:THREE.DoubleSide,metalness:0,roughness:1});
+    material.name='Reviewed_Source_RGB_'+name;
+    const mesh=new THREE.Mesh(geometry,material);
+    mesh.name='Editable_'+name+'_ESTIMATED_GEOMETRY';
+    mesh.userData={region:name,
+     geometryClassification:p.category,
+     depthSourceType:'SINGLE_IMAGE_ESTIMATE',
+     physicallyVerifiedClothThickness:false};
+    root.add(mesh);
+   }
+   if(!root.children.length)throw Error('EMPTY_EDITABLE_MESH_BLOCKED');
+   for(const joint of current.skeletonCandidate){
+    const node=new THREE.Object3D();
+    node.name='JOINT_CANDIDATE_'+joint.name;
+    node.position.set(joint.x-.5,.5-joint.y,0);
+    node.userData={parentHint:joint.parent,
+     isEditable2DPosition:true,confirmedByUser:joint.confirmed,
+     physicalDepthUnknown:true,actualSkinningWeights:false};
+    root.add(node);
+   }
+   const glb=await new GLTFExporter().parseAsync(root,{
+    binary:true,onlyVisible:true,trs:true
+   });
+   if(!(glb instanceof ArrayBuffer)||glb.byteLength<100)
+    throw Error('INVALID_DRAFT_GLTF2_BINARY');
+   const url=URL.createObjectURL(new Blob([glb],{type:'model/gltf-binary'})),
+    a=document.createElement('a');a.href=url;
+   a.download='AIG-FastModel-7-15-Heroine-Editable-Candidate-NOT-1TO1.glb';
+   a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   mark('已輸出可編輯髮型、臉頸、衣物獨立網格的真正 GLB 草模，含關節候選節點。所有 Z 為單圖相對估計，不是毫米或真正蒙皮。',true);
+  }catch(error){
+   mark('BLOCKED：草模 GLB 匯出失敗：'+String(error.message||error));
+  }finally{
+   root.traverse(node=>{node.geometry?.dispose();node.material?.dispose();});
+   glbButton.disabled=false;
+  }
  });
  document.addEventListener('aig713:surface-ready',()=>{
   clear('有新的實測掃描表面，舊草模候選暫停使用。請重新確認分區後再生成。');
