@@ -215,7 +215,7 @@ try{
    stage='STORY_2_3_PLAY_ACTUAL_SOURCE_HEAD_TURN';
    await page.locator('#story-play').click();
    await page.waitForFunction(()=>document.getElementById('story-status')
-    .textContent.includes('開始播放'),null,{timeout:5000});
+    .dataset.actualSourceClipPlayed==='true',null,{timeout:5000});
    await page.waitForFunction(()=>document.getElementById('story-subtitle')
     .textContent.includes('今天要去學校'),null,{timeout:5000});
    await page.locator('#story-stop').click();
@@ -288,7 +288,9 @@ try{
    assert.match(rigStory.events[0].clipName,/TURN_HEAD/i);
    await page.locator('#story-play').click();
    await page.waitForFunction(()=>document.getElementById('story-status')
-    .textContent.includes('開始播放'),null,{timeout:10000});
+    .dataset.actualSourceClipPlayed==='true',null,{timeout:10000});
+   assert.ok((await page.locator('#story-status').getAttribute('data-actual-source-clip-name'))?.length,
+    'Real original GLB clip must have been dispatched, not camera or card sway');
    await page.screenshot({path:storyOut+'/'+device.name+
     '-real3d-2-3-photo-rigged-actor-story.png',fullPage:true});
    await writeFile(storyOut+'/'+device.name+'-real3d-2-3-proof.json',
