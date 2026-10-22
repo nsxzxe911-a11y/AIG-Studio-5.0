@@ -2,6 +2,7 @@
  * No CDN. No ray tracing; no material removal or production CNC writes.
  */
 import {getAIG3DWorldMatrix,auditAIG3DScene} from './aig-real3d-core.mjs';
+import {getAIG3DQuality,resolveAIG3DFrameBudget} from './aig-real3d-quality.mjs';
 const finite=Number.isFinite;
 const dot=(a,b)=>a.reduce((v,x,i)=>v+x*b[i],0);
 const norm=v=>{const l=Math.hypot(...v)||1;return v.map(x=>x/l);};
@@ -72,11 +73,12 @@ const lineVs=[
 ].join('\n');
 const lineFs=['precision mediump float;uniform vec4 uColor;',
  'void main(){gl_FragColor=uColor;}'].join('\n');
-export function createAIG3DRenderer(canvas,{pixelRatio=1.25,maxFramePixels=1050000,preserveDrawingBuffer=false,background=[.004,.012,.024,1]}={}){
+export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,maxFramePixels=3100000,preserveDrawingBuffer=false,background=[.004,.012,.024,1]}={}){
  if(!canvas||typeof canvas.getContext!=='function'||!finite(pixelRatio)||pixelRatio<.5||
  !Number.isInteger(maxFramePixels)||maxFramePixels<200000||maxFramePixels>3200000||
  pixelRatio>3||!Array.isArray(background)||background.length!==4||
  !background.every(v=>finite(v)&&v>=0&&v<=1))throw Error('AIG3D_RENDER_TARGET_INVALID');
+ getAIG3DQuality(quality);
  const gl=canvas.getContext('webgl2',{alpha:false,antialias:true,depth:true,preserveDrawingBuffer})||
   canvas.getContext('webgl',{alpha:false,antialias:true,depth:true,preserveDrawingBuffer});
  if(!gl)return {status:'WEBGL_UNAVAILABLE',
@@ -101,6 +103,12 @@ export function createAIG3DRenderer(canvas,{pixelRatio=1.25,maxFramePixels=10500
  const camera={projection:'perspective',yaw:.7,pitch:.36,distance:14,
   focus:[0,0,0],fovDeg:48,orthoSpan:9,near:.01,far:20000};
  let dead=false,lost=false,cache=new WeakMap(),buffers=[],last=null;
+ let currentQuality=quality,lastFrameBudget=null;
+ const requestedHardwareAA=gl.getContextAttributes()?.antialias===true;
+ const activeMSAASamples=()=>{
+  try{return requestedHardwareAA?Math.max(0,Number(gl.getParameter(gl.SAMPLES))||0):0;}
+  catch{return 0;}
+ };
  function createBuffer(target,arr){
   const b=gl.createBuffer();gl.bindBuffer(target,b);gl.bufferData(target,arr,gl.STATIC_DRAW);
   buffers.push(b);return b;
@@ -130,16 +138,31 @@ export function createAIG3DRenderer(canvas,{pixelRatio=1.25,maxFramePixels=10500
   return getCamera();
  }
  function getCamera(){return {...camera,focus:[...camera.focus]};}
- function resize(){
-  const ratio=Math.min(pixelRatio,typeof devicePixelRatio==='number'?devicePixelRatio:1),
-   requestedW=Math.max(1,Math.round((canvas.clientWidth||canvas.width||640)*ratio)),
-   requestedH=Math.max(1,Math.round((canvas.clientHeight||canvas.height||420)*ratio)),
-   safeScale=Math.min(1,Math.sqrt(maxFramePixels/(requestedW*requestedH))),
-   w=Math.max(1,Math.floor(requestedW*safeScale)),
-   h=Math.max(1,Math.floor(requestedH*safeScale));
-  if(canvas.width!==w)canvas.width=w;if(canvas.height!==h)canvas.height=h;
-  gl.viewport(0,0,w,h);
+ function setQuality(next){
+  if(dead)throw Error('AIG3D_RENDERER_DESTROYED');
+  getAIG3DQuality(next);
+  currentQuality=next;
+  return getQuality();
  }
+ function getQuality(){return {preset:currentQuality,
+  ...getAIG3DQuality(currentQuality),lastFrameBudget:lastFrameBudget?
+  {...lastFrameBudget}:null,hardwareMSAAContextEnabled:requestedHardwareAA,
+  reportedMSAASamples:activeMSAASamples(),hardwareMSAASampleCountNotPromised:true};}
+ function resize(){
+  const maxTexture=Math.min(gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)||4096,
+   gl.getParameter(gl.MAX_TEXTURE_SIZE)||4096,8192);
+  const budget=resolveAIG3DFrameBudget({
+   cssWidth:canvas.clientWidth||canvas.width||640,
+   cssHeight:canvas.clientHeight||canvas.height||420,
+   preset:currentQuality,deviceLimit:maxTexture,
+   maxFramePixels
+  });
+  if(canvas.width!==budget.width)canvas.width=budget.width;
+  if(canvas.height!==budget.height)canvas.height=budget.height;
+  gl.viewport(0,0,budget.width,budget.height);
+  lastFrameBudget=budget;
+ }
+
  function eyeAndVP(){
   const {focus:f,yaw:y,pitch:p,distance:d}=camera;
   const eye=[f[0]+d*Math.sin(y)*Math.cos(p),f[1]+d*Math.sin(p),
@@ -201,7 +224,14 @@ export function createAIG3DRenderer(canvas,{pixelRatio=1.25,maxFramePixels=10500
   }
   last={status:'WEBGL_XYZ_TRIANGLES_RENDERED',webglVersion:webgl2?2:1,
    triangles,nodes,rapid,feed,cameraProjection:camera.projection,
-   allocatedFramePixels:canvas.width*canvas.height,maxFramePixels,
+   allocatedFramePixels:canvas.width*canvas.height,maxFramePixels:lastFrameBudget.maxFramePixels,
+   antialiasProfile:currentQuality,effectiveSuperSampleScale:lastFrameBudget.effectiveScale,
+   requestedSuperSampleScale:lastFrameBudget.targetScale,
+   safetyClamped:lastFrameBudget.cappedBySafety,
+   hardwareMSAAContextEnabled:requestedHardwareAA,
+   reportedMSAASamples:activeMSAASamples(),
+   framebufferRGBBits:[gl.RED_BITS,gl.GREEN_BITS,gl.BLUE_BITS].map(v=>gl.getParameter(v)),
+   finalDisplayPixelOneBlendedRGBColor:true,realMirrorReflection:false,
    actualStockRemovedMm3:null,removalNotImplemented:true,
    source:auditAIG3DScene(scene).source};
   return {...last};
@@ -229,5 +259,5 @@ export function createAIG3DRenderer(canvas,{pixelRatio=1.25,maxFramePixels=10500
   buffers=[];cache=new WeakMap();
  }
  return {status:'READY',contextVersion:webgl2?2:1,render,destroy,
-  setCamera,getCamera,releaseMesh,getLastStats:()=>last?{...last}:null};
+  setCamera,getCamera,setQuality,getQuality,releaseMesh,getLastStats:()=>last?{...last}:null};
 }
