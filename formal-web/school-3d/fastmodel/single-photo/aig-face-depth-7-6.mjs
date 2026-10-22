@@ -4,7 +4,7 @@
  * Inverse mapping of Z plus 7.5 XYZ expressions returns ORIGINAL photo UV.
  * No fabricated hair, backside face, production skin or anatomical head claim.
  */
-import {sampleAIG75SDF,prepareAIG75Pose} from './aig-landmark-rig-7-5.mjs';
+import {sampleAIG75SDF,prepareAIG75Pose,auditAIG75Rig} from './aig-landmark-rig-7-5.mjs';
 import {shadeAIG73Surface,makeAIG73Makeup} from './aig-face-material-7-3.mjs';
 export const AIG76_SCHEMA='AIG_FASTMODEL_7_6_REVIEWED_XY_ESTIMATED_DEPTH_PRIORS';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -132,8 +132,8 @@ export function renderAIG76DepthAvatar(profile,image,{expression={},cosmetics={}
  if(profile?.schema!==AIG76_SCHEMA||!image||!Number.isInteger(width)||!Number.isInteger(height)||
  width<16||height<16||width*height>10000||![yaw,pitch].every(finite)||Math.abs(pitch)>1.35||
  !Number.isInteger(maxSteps)||maxSteps<8||maxSteps>180)throw Error('AIG76_RENDER_INPUT_INVALID');
- const pose=prepareAIG75Pose(profile.rig,expression),audit=auditAIG76Depth(profile,pose,{grid:5});
- if(!audit.passed)throw Error('AIG76_DEPTH_FOLD_BLOCKED');
+ const pose=prepareAIG75Pose(profile.rig,expression),facialGate=auditAIG75Rig(profile.rig,pose,{grid:5}),audit=auditAIG76Depth(profile,pose,{grid:5});
+ if(!audit.passed||!facialGate.passed)throw Error('AIG76_DEPTH_OR_FACE_FOLD_BLOCKED');
  const makeup=makeAIG73Makeup(cosmetics),pixels=new Uint8ClampedArray(width*height*4);
  const eye=[2*Math.sin(yaw)*Math.cos(pitch),2*Math.sin(pitch),2*Math.cos(yaw)*Math.cos(pitch)],
   fwd=norm(mul(eye,-1)),right=norm(cross(fwd,[0,1,0])),up=norm(cross(right,fwd));
@@ -155,6 +155,6 @@ export function renderAIG76DepthAvatar(profile,image,{expression={},cosmetics={}
  }
  return {schema:'AIG_FASTMODEL_7_6_DEPTH_AWARE_3D_RAY_RENDER',
   width,height,pixels,hitPixels,photoPixels,neutralRearPixels,cosmeticPixels,cameraYaw:yaw,cameraPitch:pitch,
-  audit,sourcePhotoFaceFrontOnly:true,estimatedHeadDepth:true,
+  audit,facialGate,sourcePhotoFaceFrontOnly:true,estimatedHeadDepth:true,
   measuredPhotoGeometryZ:false,hairNeckContinuityApproved:false,realCharacterAppearanceApproved:false};
 }
