@@ -136,11 +136,45 @@ object CamFeatureRecognizer {
         val arcs=c.filterIsInstance<Arc>();if(abs(arcs[0].radius-arcs[1].radius)>CNC_RESOLUTION_MM)return false
         return arcs.all{abs(it.start.distanceTo(it.end)-2.0*it.radius)<=CNC_RESOLUTION_MM*2.0}
     }
+    fun requireSafeAutoCamProfiles(entities:List<Entity>) {
+        val loops=CadAdvancedGeometry.components(entities).filter{component->
+            component.size>=3 && component.all{it is Line} &&
+                CadProfileTools.analyze(component).closed
+        }
+        val rings=loops.map{loop->
+            val ordered=CadAdvancedGeometry.orderClosed(loop)
+                ?: error("CAD_CLOSED_LINEWORK_TOPOLOGY_BLOCKED")
+            CadClosedContourTopology.inspect(ordered)
+                ?: error("CAD_CLOSED_LINEWORK_TOPOLOGY_BLOCKED")
+        }
+        for(i in rings.indices)for(j in i+1 until rings.size){
+            require(!CadClosedContourTopology.edgesTouch(rings[i],rings[j])){
+                "CAD_OVERLAPPING_CONTOURS_BLOCKED"
+            }
+        }
+    }
     fun recognize(entities:List<Entity>):List<CamRecognizedFeature>{
-        val components=CadAdvancedGeometry.components(entities).filter{c->CadProfileTools.analyze(c).closed}
-        data class Raw(val c:List<Entity>,val area:Double,val slot:Boolean)
-        val raw=components.map{c->Raw(c,CadMeasurementEngine.area(c),isSlot(c))}
-        val nonSlot=raw.filterNot{it.slot};val outer=nonSlot.maxByOrNull{it.area}
-        return raw.map{r->CamRecognizedFeature(when{r.slot->CamFeatureKind.SLOT;r===outer->CamFeatureKind.OUTER;else->CamFeatureKind.INNER},r.c.map{it.id}.toSet(),r.area)}
+        val components=CadAdvancedGeometry.components(entities)
+            .filter{c->CadProfileTools.analyze(c).closed}
+        data class Candidate(
+            val entities:List<Entity>,
+            val ring:CadClosedContourTopology.Ring,
+            val slot:Boolean
+        )
+        val candidates=components.mapNotNull{component->
+            val points=CadAdvancedGeometry.orderClosed(component)?:return@mapNotNull null
+            val ring=CadClosedContourTopology.inspect(points)?:return@mapNotNull null
+            Candidate(component,ring,isSlot(component))
+        }
+        val rings=candidates.map{it.ring}
+        return candidates.map{candidate->
+            val depth=CadClosedContourTopology.nestingDepth(candidate.ring,rings)
+            CamRecognizedFeature(when{
+                candidate.slot->CamFeatureKind.SLOT
+                depth%2==1->CamFeatureKind.INNER
+                else->CamFeatureKind.OUTER
+            },candidate.entities.map{it.id}.toSet(),
+                CadMeasurementEngine.area(candidate.entities))
+        }
     }
 }

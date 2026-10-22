@@ -1306,7 +1306,16 @@ internal fun testRuntimeLinkStateSyncContract() {
     check(RuntimeLinkStatus.DISCONNECTED.colorToken=="GRAY")
     check(RuntimeLinkStatus.WARNING.colorToken=="YELLOW")
     check(RuntimeLinkStatus.ALARM.colorToken=="RED")
-    check(RuntimeLinkContract.managedLinks.all{state.status(it)==RuntimeLinkStatus.CONNECTED})
+    check(RuntimeLinkContract.cockpitLinks.all{state.status(it)==RuntimeLinkStatus.CONNECTED})
+    check(state.status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.DISCONNECTED) { "Machine has not passed transport handshake" }
+    check(RuntimeLinkContract.MACHINE_LINK_POLICY=="PHYSICAL_HANDSHAKE_REQUIRED_NO_UI_TOGGLE")
+    check(runCatching{state.set(RuntimeLinkId.MACHINE,RuntimeLinkStatus.CONNECTED)}.isFailure)
+    check(state.toggle(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.WARNING)
+    check(state.status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.WARNING) {
+        "UI may show pending, never fake a physical connection"
+    }
+    state.set(RuntimeLinkId.MACHINE,RuntimeLinkStatus.DISCONNECTED)
+    check(state.status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.DISCONNECTED)
     val cockpit=mutableListOf<RuntimeLinkSnapshot>()
     val manager=mutableListOf<RuntimeLinkSnapshot>()
     state.observe{cockpit+=it}
@@ -1325,7 +1334,32 @@ internal fun testRuntimeLinkStateSyncContract() {
     val preserved=RuntimeLinkContract.PRESERVED_DOMAINS.toSet()
     state.toggle(RuntimeLinkId.SIM_NC)
     check(RuntimeLinkContract.PRESERVED_DOMAINS.toSet()==preserved)
-    println("RUNTIME_LINK_STATE_SYNC_GATE_PASS|COCKPIT_MANAGER_SHARED_STATE|DATA_FLOW_ONLY|PRESERVE_CAD_CAM_SIM_NC|4_STATE_COLORS")
+    // A broken screen/status renderer must not interrupt core link state
+    // changes or suppress other subscribers.
+    val fragile=RuntimeLinkStore()
+    var faultyCalls=0
+    fragile.observe {
+        faultyCalls++
+        if(faultyCalls==2) throw IllegalStateException("SIMULATED_RGB_RENDER_FAILURE")
+    }
+    val healthyUpdates=mutableListOf<RuntimeLinkSnapshot>()
+    fragile.observe { healthyUpdates+=it }
+    check(fragile.toggle(RuntimeLinkId.CAM_SIM)==RuntimeLinkStatus.DISCONNECTED)
+    check(healthyUpdates.last().status(RuntimeLinkId.CAM_SIM)==RuntimeLinkStatus.DISCONNECTED)
+    check(fragile.lastObserverFailure()?.contains("IllegalStateException")==true)
+    check(fragile.toggle(RuntimeLinkId.CAM_SIM)==RuntimeLinkStatus.CONNECTED)
+    check(healthyUpdates.last().status(RuntimeLinkId.CAM_SIM)==RuntimeLinkStatus.CONNECTED)
+    check(faultyCalls==2) { "Broken UI observer must be isolated after throwing" }
+    // Initial paint failures are isolated too, not re-fired every transition.
+    val initialFailure=RuntimeLinkStore()
+    var initialCalls=0
+    initialFailure.observe { initialCalls++;throw IllegalArgumentException("INITIAL_RGB_FAILURE") }
+    check(initialFailure.lastObserverFailure()?.contains("IllegalArgumentException")==true)
+    initialFailure.toggle(RuntimeLinkId.CAD_CAM)
+    check(initialCalls==1)
+    check(initialFailure.status(RuntimeLinkId.MACHINE)==RuntimeLinkStatus.DISCONNECTED)
+    println("RUNTIME_LINK_OBSERVER_ISOLATION_PASS|INITIAL_PAINT|UPDATE|HEALTHY_OBSERVER|MACHINE_FAIL_CLOSED")
+    println("RUNTIME_LINK_STATE_SYNC_GATE_PASS|COCKPIT_MANAGER_SHARED_STATE|DATA_FLOW_ONLY|PRESERVE_CAD_CAM_SIM_NC|4_STATE_COLORS|NO_FAKE_MACHINE_CONNECTION")
 }
 fun main() {
     testRuntimeLinkStateSyncContract()

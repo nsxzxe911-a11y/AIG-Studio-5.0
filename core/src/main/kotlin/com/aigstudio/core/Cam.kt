@@ -33,11 +33,12 @@ data class CamSettings(
     val leadOutMm: Double = 2.0
 ) {
     init {
-        require(toolDiameter > 0.0) { "Tool diameter must be positive" }
-        require(depth < 0.0) { "Cut depth must be below Z0" }
-        require(safeZ > 0.0) { "Safe-Z must be positive" }
-        require(feedMmMin > 0.0) { "Feed must be positive" }
-        require(leadInMm >= 0.0 && leadOutMm >= 0.0) { "Lead-in/out must be non-negative" }
+        require(toolDiameter.isFinite() && toolDiameter > 0.0) { "Tool diameter must be finite and positive" }
+        require(depth.isFinite() && depth < 0.0) { "Cut depth must be finite and below Z0" }
+        require(safeZ.isFinite() && safeZ > 0.0) { "Safe-Z must be finite and positive" }
+        require(feedMmMin.isFinite() && feedMmMin > 0.0) { "Feed must be finite and positive" }
+        require(leadInMm.isFinite() && leadOutMm.isFinite() &&
+            leadInMm >= 0.0 && leadOutMm >= 0.0) { "Lead-in/out must be finite and non-negative" }
         if(pathMode==CamPathMode.MANUAL) require(manualPath.size>=2) {
             "Manual CAM path requires at least two points"
         }
@@ -312,6 +313,7 @@ object CamEngine {
             "Unsafe CAM A/B/C orientation"
         }
         if (snapshot.entities.isEmpty()) return emptyList()
+        CamFeatureRecognizer.requireSafeAutoCamProfiles(snapshot.entities)
         val radiusComp = settings.toolDiameter / 2.0
         val radialSign = if (settings.contourSide == ContourSide.OUTSIDE) 1.0 else -1.0
         val lineNormalSign = if (settings.contourSide == ContourSide.OUTSIDE) -1.0 else 1.0

@@ -1,0 +1,157 @@
+{
+  "schema": "aig-core-recovery-lock-v1",
+  "project": "AIG Studio 5.0 CNC",
+  "phase": "CORE_FIRST_CONTROL_LATER",
+  "sourceBranch": "release/studio-592-web-authority-core-closure",
+  "immutableUserAssetsNotModified": true,
+  "neverTreatVersionAsGate": true,
+  "machineOutputEnabled": false,
+  "nativeApkExeCertified": false,
+  "photoHuman3DCertified": false,
+  "modules": [
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/Cam.kt",
+      "gitBlobSha": "389bc751e6da183e722f14e1de12142d91bbd3f8"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CamWorkflowEngine.kt",
+      "gitBlobSha": "f64cd0ca238e39be66d6b3a8ecaca84e4757bef7"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/FanucNc.kt",
+      "gitBlobSha": "58ee32a94773650ee9a5657f76aa93c62e491b6b"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/Machining3D.kt",
+      "gitBlobSha": "15874cae7a8c42d00746dbdb247794b497b6c363"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/ProjectRepository.kt",
+      "gitBlobSha": "d11587a8e130c349de617feb17cb162c4f382f50"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/RuntimeLinks.kt",
+      "gitBlobSha": "65e4cc6bb670bf7adaabcd398564974aae52922b"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/Document.kt",
+      "gitBlobSha": "0e9655012fb9612c45c0bd56967cbf878736901c"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/SixAxisToolDirection.kt",
+      "gitBlobSha": "4e63e897cc0cf846a9b4ed0e7ebb9d46cc537966"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CamWorkflowSafeZ.kt",
+      "gitBlobSha": "e220c97ff61c1c4b2e3b817fa42c05acdf464eb9"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/ProjectSync.kt",
+      "gitBlobSha": "09d6b9e0ab66b77df16b371a1d94d297e13e1d3c"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/RuntimeIssueRouting.kt",
+      "gitBlobSha": "a4eb1f3cf0bef8b3ab242e5fda512d64976dcd28"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/UiButtonManifestContract.kt",
+      "gitBlobSha": "f2a1bcca5e02541236aea8e70dea026cab7db62b"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/AiAssist.kt",
+      "gitBlobSha": "3ff18be6faefac2eac1f964a17dd4e6db1e9e93f"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CadAdvancedTools.kt",
+      "gitBlobSha": "7080a637e048ca4fad65f3395e73d134211f6215"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CadExactInput.kt",
+      "gitBlobSha": "14825f2e38c5015c0d8ef76e6a55f3657d8e8b38"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CadProfileTools.kt",
+      "gitBlobSha": "303abc085c486eb5ff5d1a4f1a135c2bd313d895"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/EnvironmentSettings.kt",
+      "gitBlobSha": "4f64a2c793d548570db989a26016db98a55f939a"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/Geometry.kt",
+      "gitBlobSha": "5e91b181930b7de73b7acb9091bd9f2afa134645"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/PackageBundle.kt",
+      "gitBlobSha": "8ad3750cc41d653d0688c985f642131b6a6d63b0"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/RenderCompatibility.kt",
+      "gitBlobSha": "a7e383c47f7709fd32ecbaed8c0430645d2bca42"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/RollingUpdatePolicy.kt",
+      "gitBlobSha": "2a8a49ee2560d4ece9eedb01691f5f60be99aea4"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/Transform.kt",
+      "gitBlobSha": "19cbfa60fd2aa3ef6d8e9f2ab7e2ef33f9d332b8"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/AigRgbGlobalSkin.kt",
+      "gitBlobSha": "1afba3ed366559e0bd5b9d3d2ed021f0b66bc14c"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CamWorkflowUiContract.kt",
+      "gitBlobSha": "1fd7342c38b9432dc3f64a1706bcd88e072aacdd"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/AiLayoutComposer.kt",
+      "gitBlobSha": "46ea3c618d9c6a9f12fc08f13331d79b7dec5adc"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/AigReadOnlyMotionPreview.kt",
+      "gitBlobSha": "b82f64a5a03006bc641480e1303ae70880c860a0"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/CadClosedContourTopology.kt",
+      "gitBlobSha": "cd19ef64deb41cf5133eff91ea4970b37b88c195"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/AigAnalyticCadKernel.kt",
+      "gitBlobSha": "17633a4f088a30675acc2cb546995658c95cb5de"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/AigNativeCadGeometryQueries.kt",
+      "gitBlobSha": "9cced10919f8d00df11bdc71dffa9ef27da410af"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/AigMechanicalDrawingCore.kt",
+      "gitBlobSha": "a4a4e8dcdcfdad3775cc530f3ee28eb567b53497"
+    },
+    {
+      "path": "core/src/main/kotlin/com/aigstudio/core/AigMechanicalNativeBridge.kt",
+      "gitBlobSha": "17a044a6c7dc0fd0e0b0edff7f965dcffaa4b994"
+    }
+  ],
+  "machineTransportVerification": "NO_REAL_HANDSHAKE_LINK_STARTS_DISCONNECTED_CLICK_WARNING",
+  "cadSafetyNote": "Finite-but-impossible Double.MAX_VALUE coordinates blocked before geometry command; same bound as project repository",
+  "coreInventoryExtension": "2026-10-22 audited retention of six-axis safety, Safe-Z, offline project sync, issue isolation and typed navigation (SOURCE IDENTITY ONLY)",
+  "coreInventoryReview": "2026-10-22 phase one: verified source blob inventory to prevent disappearing or silently replaced core; exact SHA is NOT functional validation",
+  "sourceIdentityIsNotExecutableProof": true,
+  "controlGateBlockedUntilFullCoreOutcomeEvidence": true,
+  "releaseGateBlockedUntilRuntimeAndNativeEvidence": true,
+  "observerIsolationVerification": "Core Regression: initial/update observer exception fails softly and preserves MACHINE fail-closed status",
+  "commonPocketContourProof": "CoreRecoverySmoke rejects ignored CAD entities, open/duplicate rectangle edges and non-finite circles; checks valid rectangle Fanuc G1",
+  "manualEntryExitRepairEvidence": "Vertical Safe-Z rapid point follows edited G1 entry/exit XY; fail-closed without verified approach/retract; tested in executable CoreRecoverySmoke",
+  "finiteCamConfigurationProof": "CNC core CAM settings rejects NaN/Inf for diameter, depth, safeZ, feed, lead in/out; executable CoreRecoverySmoke",
+  "formalRgbUnifiedContract": "Core-first UI phase: 10-page order HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC/AI; verified source theme parity and fail-closed surface ID; approved assets must be separately proven by byte SHA and screenshots",
+  "readOnlyInteroperabilityContract": "G0/G1 tool-center preview exported from real native CNC path; golden SHA256 shared with FastModel; no machine execution or rig / collision approval",
+  "cadTopologyUpgrade": "Disjoint OUTER, nesting parity, self-intersecting and overlapping contours fail closed; executable real CAD feature recovery smoke tests",
+  "cadActualCamSafetyGate": "Real AUTO CAM Engine requires validated closed linework before G1/NC; bowtie/overlapping reject; independent open-line paths preserved in smoke test.",
+  "analyticCadCoreGate": "Bounded exact 2D line/arc/circle intersections, convex polygon signed offsets with inward collapse rejection, and 3D oriented closed triangle shell proof; not a complete 3D B-rep or NC tool compensation",
+  "realDrawingEntityAnalyticQuery": "Real CAD Entity bridges to analytic line-line, line-circle, circle-circle, segment-arc; +native rectangular/closed-line convex offset with safety rejects, tested before UI wiring.",
+  "mechanicalDrawingGate": "Real native CAD geometry to drawing dimension links; validated features/views/sections/datum/GD&T reference/BOM/hole patterns, no NC authority; smoke positive and adversarial cases",
+  "mechanicalDrawingLiveMeasurementGate": "Inspected native dimensions require actual live CAD measured values keyed by dimension ID, <=0.0005 mm display rounding; CAD changing 50→48 mm with same ID or deleted measurement rejects, no NC output.",
+  "mechanicalDrawingDirectLiveNativeAuditGate": "actual current native Line/Hole/Circle geometry is sampled by AigMechanicalNativeBridge.auditLive; same-ID 50-to-48mm line and moved/diameter-edited/deleted hole must BLOCK; drawing is not machine NC"
+}

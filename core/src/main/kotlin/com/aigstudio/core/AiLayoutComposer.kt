@@ -17,7 +17,8 @@ data class AiLayoutPlan(
 
 object AiLayoutComposerContract {
     const val PROFILE="AIG_AI_LAYOUT_COMPOSER_V1"
-    val MODE_ORDER=listOf("CAD","CAM","SIM","3AX","4AX","5AX","NC","AI")
+    // Never silently omit HOME or 6AX from generated responsive UI.
+    val MODE_ORDER=AigRgbGlobalSkinV1.FORMAL_MODE_ORDER
     val CAD_TOOL_ORDER=listOf("LINE","RECT","CIRCLE","ARC","HOLE")
     val DESTRUCTIVE_ACTIONS=setOf("DELETE","CLEAR","RESET","DISCONNECT","NC_DESTRUCTIVE")
     val IMMUTABLE_RUNTIME_DOMAINS=setOf(

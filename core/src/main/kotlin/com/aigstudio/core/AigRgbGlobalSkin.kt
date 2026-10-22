@@ -25,6 +25,11 @@ data class AigRgbSurfaceSpec(
 
 object AigRgbGlobalSkinV1 {
     const val ID="aig_rgb_global_v1"
+    // Identical navigation authority for AIG-II and Studio CNC.
+    val FORMAL_MODE_ORDER=listOf("HOME","CAD","CAM","SIM","3AX","4AX","5AX","6AX","NC","AI")
+    const val FORMAL_THEME_FAMILY="AIG_RGB_GLASS_020407_07111B"
+    const val CONTROL_ID_SKIN_INDEPENDENT=true
+    const val NO_ENGINEERING_SHELL_ON_MISSING_ASSET=true
     const val VERSION="1.0.0"
     const val BACKGROUND_RGB=0x020407
     const val PANEL_RGB=0x07111B
@@ -93,6 +98,21 @@ object AigRgbGlobalSkinV1 {
     )
 
     fun formalSurfaceIds():List<String> = ordered.map { it.id }
+
+    /**
+     * Logical registry key only, never evidence of an image file or an
+     * authority SHA. Missing files remain WARN + approved procedural skin,
+     * not an engineering screen and never a substituted machine image.
+     */
+    fun authorityAssetKey(raw:String):String {
+        val id=normalizeSurface(raw).id
+        return if(id=="HOME") "rgb_wallpaper" else id.lowercase(Locale.US)
+    }
+    fun checkedNavigationSurface(raw:String):AigRgbSurfaceSpec {
+        val target=raw.trim().uppercase(Locale.US)
+        require(target in FORMAL_MODE_ORDER) { "UNKNOWN_FORMAL_UI_SURFACE: $raw" }
+        return surface(target)
+    }
 
     fun normalizeSurface(raw:String):AigRgbSurfaceId {
         val key=raw.trim().uppercase(Locale.US).replace('-', '_').replace(Regex("\\s+")," ")
