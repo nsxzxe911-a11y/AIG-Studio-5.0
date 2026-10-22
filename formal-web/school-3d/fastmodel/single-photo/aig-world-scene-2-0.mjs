@@ -66,7 +66,7 @@ export function addAIG20CameraKey(scene,{
 }={}){
  assertAIG20Document(scene);
  if(scene.cameraKeys.length>=48||!id(keyId)||
-  scene.cameraKeys.some(k=>k.keyId===keyId)||
+  scene.cameraKeys.some(k=>k.keyId===keyId||k.timeSeconds===timeSeconds)||
   !num(timeSeconds)||timeSeconds<0||timeSeconds>3600||
   !vec(position,3,10000)||!vec(target,3,10000)||
   Math.hypot(...position.map((v,i)=>v-target[i]))<.02||
