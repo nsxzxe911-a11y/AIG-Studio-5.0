@@ -43,7 +43,8 @@ jobs:
           assert 'aig-remote-bridge.onrender.com/builder' in site
           assert 'GitHub' in site
           assert 'data-i18n' in site and "'zh-TW'" in site and 'en:' in site
-          assert 'password' in site and "localStorage" not in site.split('<script>')[-1]
+          assert 'password' in site
+          assert 'localStorage.setItem' not in site and 'sessionStorage.setItem' not in site
           assert 'releaseCertified": False' in api
           assert '<a' in Path('formal-web/native-download.html').read_text()
           print('AIG_SITE_REAL_BUILDER_GATE_PASS|AUTH|GITHUB_DISPATCH|SOURCE_SHA|ANDROID_WINDOWS|ARTIFACT_DOWNLOAD|BILINGUAL_UI|NO_FAKE_EXECUTION')
