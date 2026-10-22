@@ -217,8 +217,6 @@ export class PhotoViewer{
   }
  }
  async load(buffer,{orbit=false}={}){
-  if(this.gpu17Enabled)this.setGpuAccelerationEnabled(false);
-  if(this.gpu18Instances)this.setStaticInstancingEnabled(false);
   if(this.reviewBusy)throw Error('TIMELINE_REVIEW_IN_PROGRESS');
   if(this.actionImportBusy)throw Error('ACTION_IMPORT_IN_PROGRESS');
   if(this.movieMode)throw Error('MOVIE_RECORDING_IN_PROGRESS');
@@ -227,6 +225,8 @@ export class PhotoViewer{
   const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
   if(![...size,...center].every(Number.isFinite))throw Error('GLB_NONFINITE_SCENE');
   const controller=new AnimationController(file.scene,file.animations);if(file.animations.length)controller.select(0);
+  if(this.gpu17Enabled)this.setGpuAccelerationEnabled(false);
+  if(this.gpu18Instances)this.setStaticInstancingEnabled(false);
   const old=this.model;this.animation?.dispose();this.skinProbe=null;this.skinReport=null;this.model=file.scene;this.animation=controller;this.orbit=orbit;
   this.scene.add(file.scene);if(old){this.scene.remove(old);this.release(old);}
   const radius=Math.max(size.x,size.y,size.z,.01);this.camera.position.copy(center).add(new THREE.Vector3(0,radius*.12,radius*1.7));this.camera.near=radius/1000;this.camera.far=radius*100;this.camera.updateProjectionMatrix();this.controls.target.copy(center);this.controls.update();
