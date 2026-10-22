@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {AIG25_SCHEMA,AIG25WorldMovieRecorder,AIG25_RENDER,
- validateAIG25TrueWorldMovie,inspectAIG25EncodedContainer}
+ validateAIG25TrueWorldMovie,inspectAIG25EncodedContainer,
+ verifyAIG25DecodedFrame}
  from '../aig-true-world-movie-2-5.mjs';
 const sourceSHA='b'.repeat(64);
 const proof={
@@ -53,6 +54,32 @@ const env={
   return {...fakeCanvas};
  }}
 };
+test('2.5 only accepts a movie after browser decodes an actual 1080p frame',async()=>{
+ let released=0;
+ const createEnv=({w=1920,h=1080,error=false}={})=>({
+  URL:{createObjectURL:()=> 'blob:verified-local-movie',
+   revokeObjectURL:url=>{assert.equal(url,'blob:verified-local-movie');released++}},
+  document:{createElement:type=>{
+   assert.equal(type,'video');
+   const events={};
+   return {videoWidth:w,videoHeight:h,
+    addEventListener:(key,cb)=>{events[key]=cb},
+    load(){queueMicrotask(()=>events[error?'error':'loadeddata']?.())},
+    pause(){},removeAttribute(){}};
+  }}
+ });
+ const movie=new Blob([new Uint8Array([0x1a,0x45,0xdf,0xa3,
+  0,0,0,0,0,0,0,0,0])],{type:'video/webm'});
+ const success=await verifyAIG25DecodedFrame(movie,{env:createEnv()});
+ assert.equal(success.decodedFirstFrame,true);
+ assert.equal(success.actualVideoWidth,1920);
+ assert.equal(success.actualVideoHeight,1080);
+ await assert.rejects(()=>verifyAIG25DecodedFrame(movie,{
+  env:createEnv({w:1280,h:720})}),/AIG25_DECODED_VIDEO_IS_NOT_REAL_1080P/);
+ await assert.rejects(()=>verifyAIG25DecodedFrame(movie,{
+  env:createEnv({error:true})}),/AIG25_VIDEO_DECODER_CANNOT_PLAY/);
+ assert.equal(released,3);
+});
 test('2.5 proves real encoded WebM/MP4 headers, not just nonempty bytes',()=>{
  const webm=new Uint8Array([0x1a,0x45,0xdf,0xa3,1,2,3,4,5,6,7,8]);
  const mp4=new Uint8Array([0,0,0,24,0x66,0x74,0x79,0x70,0,0,0,0]);
