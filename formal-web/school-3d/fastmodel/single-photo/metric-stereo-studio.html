@@ -109,6 +109,15 @@ small{font-size:11px;color:#a9bec9}.flag{display:inline-block;border:1px solid #
 <button id="heroine-depth-save" type="button" disabled>02｜保存估計／實測雙深度 JSON</button>
 <button id="heroine-rig-save" type="button" disabled>03｜保存骨架／衣物幾何結構 JSON</button>
 <button id="heroine-candidate-glb" type="button" disabled>04｜輸出可編輯 3D 草模 GLB（非 1:1）</button>
+<div style="margin:12px 0;padding:12px;border-radius:10px;border:1px solid #548fb0;background:#061627">
+<strong>Real3D 2.3｜真正骨骼蒙皮變形</strong>
+<p>從目前 7.15 單張照片可見區域，自動生成胸／頸／頭候選骨骼與真 SkinnedMesh 蒙皮；可預覽轉頭／點頭和匯出附動畫的 GLB。這是<strong>未審核的相對深度草模動作</strong>，不是真實人體掃描或已訓練的全身 AI 動畫。</p>
+<button id="heroine-23-build" type="button" disabled>05｜自動生成骨骼蒙皮＋預覽轉頭</button>
+<button id="heroine-23-export" type="button" disabled>06｜匯出真 SkinnedMesh 動畫 GLB</button>
+<button id="heroine-23-reset" type="button">還原 7.15 可編輯草模</button>
+<output id="heroine-23-status" role="status" aria-live="polite" style="display:block;margin-top:8px;color:#b0f4dd">等待生成 7.15 可見前表面草模。</output>
+<pre id="heroine-23-proof" style="white-space:pre-wrap;overflow:auto;max-height:190px;font:12px/1.5 ui-monospace,monospace">尚未建立蒙皮權重</pre>
+</div>
 <div class="plane-projection">
 <label>可編輯的骨架節點
 <select id="heroine-joint" style="width:100%;min-height:42px;background:#051525;color:#e7f9ff;border:1px solid #5292b0;border-radius:7px"></select></label>
