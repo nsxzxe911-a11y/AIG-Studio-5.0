@@ -114,6 +114,11 @@ button:disabled{opacity:.45;cursor:not-allowed}
 </p>
 <label>來源照片（JPG／PNG／WebP，上限 12 MiB）
 <input id="photo23-source" type="file" accept="image/png,image/jpeg,image/webp" style="display:block;width:100%;padding:10px;min-height:45px;background:#05111c;color:#d9f7ff;border:1px solid #467f98;border-radius:8px"></label>
+<output id="photo24-auto-status" role="status" aria-live="polite"
+style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光線、主體輪廓與可用性；不需手動標點。</output>
+<details style="margin:6px 0 12px"><summary>查看自動圖片分析與來源證據</summary>
+<pre id="photo24-auto-proof" style="white-space:pre-wrap;max-height:250px;overflow:auto;font:12px/1.5 ui-monospace,monospace">尚未分析圖片。</pre>
+</details>
 <button id="photo23-build" type="button">建立真骨架＋驗證衣物／動畫＋載入 3D 世界</button>
 <output id="photo23-status" role="status" aria-live="polite" style="display:block;color:#b3efe6;padding:8px">尚未處理照片，既有場景保持不變。</output>
 <pre id="photo23-proof" style="overflow:auto;max-height:200px;white-space:pre-wrap;font:12px/1.5 ui-monospace,monospace">尚無 2.3 來源與蒙皮證據。</pre>
