@@ -25,6 +25,10 @@ jobs:
       - run: npm ci
       - name: Syntax and true numerical source reparse
         run: |
+          node --check aig-heroine-scan-7-14.mjs
+          node --check aig-heroine-scan-ui-7-14.mjs
+          node --check tests/aig-heroine-scan-7-14.real-browser.mjs
+          node --test tests/aig-heroine-scan-7-14.test.mjs
           node --check aig-metric-stereo-7-13.mjs
           node --check metric-stereo-studio.mjs
           node --check tests/aig-metric-stereo-7-13.real-browser.mjs
@@ -84,6 +88,7 @@ jobs:
           node tests/aig-real3d-gpu-v1-6.real-browser.mjs
           node tests/aig-glb-gpu-v1-7.real-browser.mjs
           node tests/aig-metric-stereo-7-13.real-browser.mjs
+          node tests/aig-heroine-scan-7-14.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -124,4 +129,6 @@ jobs:
             echo 'FASTMODEL_1_8_NATIVE_DEVICE_FPS_UPLIFT=NOT_YET_MEASURED'
             echo 'FASTMODEL_7_13_METRIC_XYZ=ONLY_WITH_REVIEWED_PHYSICAL_CAMERA_BASELINE_AND_FOCAL'
             echo 'FASTMODEL_7_13_SINGLE_PHOTO_BACKSIDE_OR_FULL_HUMAN_ACCURACY=NOT_VERIFIED'
+            echo 'FASTMODEL_7_14_ACTUAL_RGB_DEPTH_NORMAL_CONFIDENCE=REQUIRES_MEASURED_STEREO_AND_REVIEWED_COLOR_SEEDS'
+            echo 'FASTMODEL_7_14_REAL_APPROVED_HEROINE_FULL_BODY_AND_BACKSIDE=NOT_YET_SCANNED'
           } >> "$GITHUB_STEP_SUMMARY"
