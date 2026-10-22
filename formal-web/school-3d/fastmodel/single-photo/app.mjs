@@ -2382,6 +2382,10 @@ $('aig64-single-photo').addEventListener('change',()=>{
 });
 $('aig64-subject-kind').addEventListener('change',()=>{
  aig64SingleInvalidate('生物來源已切換，之前的 GLB／分析報告已隔離，需重新計算。');
+ const domain=$('aig64-subject-kind').value;
+ $('aig64-single-build').textContent=domain==='HUMAN'?
+  '單張照片 → 自動補全正常人體比例 → 真 GLB＋動畫':
+  (domain==='ANIMAL'?'動物':'植物')+'｜只做真色彩／輪廓分析，禁止假人體 GLB';
  $('aig64-observation-status').textContent='主體類型已切換；不會自動把動物、植物當作人體模型。';
 });
 $('aig64-single-build').addEventListener('click',async()=>{
@@ -2394,7 +2398,9 @@ $('aig64-single-build').addEventListener('click',async()=>{
  $('aig64-single-motion-upgrade').disabled=true;
  $('aig64-single-build').disabled=true;$('aig64-single-report').disabled=true;
  $('aig64-single-download').disabled=true;
- $('aig64-single-status').textContent='正在只用一張照片的本機像素推估可見頭肩、補齊看不見的軀幹四肢與背面，製作 17 骨／5 動畫真 GLB。';
+ $('aig64-single-status').textContent=$('aig64-subject-kind').value==='HUMAN'?
+  '正在從照片真像素推估可見頭肩，再依人體比例補齊技術模型；會明示推估部分。':
+  '正在分析原始照片前景／色彩／輪廓，非人體不生成預設人體 GLB。';
  let bitmap=null;
  try{
   if(input.size<100||input.size>20*1024*1024)
