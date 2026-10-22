@@ -117,6 +117,7 @@ $('scene-load').addEventListener('click',async()=>{
 $('scene-unload').addEventListener('click',async()=>{
  if(worldRuntime?.scene){
   try{
+   invalidateAIG22Storyboard('世界場景已卸載，故事時間軸停用');
    viewer.unloadCurrent();worldRuntime.close();worldRuntime=null;
    refreshWorldActorControls();
    stopWorldPlayback();say('已卸載整個 2.0 世界的 GPU 來源；已保存的人物、建築與地圖資料不變。');
@@ -287,6 +288,7 @@ $('world-new').addEventListener('click',async()=>{
  try{
   const mapRef=await selectedMapRef();
   beginNewWorld(mapRef);
+  invalidateAIG22Storyboard('新世界場景已建立，故事需重新核對');
   updateWorldStatus('已建立來源座標一致的空白世界場景；已存外部來源與原模型完全保留。');
  }catch(e){updateWorldStatus('BLOCKED：'+String(e.message||e),true)}
 });
@@ -306,6 +308,7 @@ $('world-add').addEventListener('click',async()=>{
    pos=['world-x','world-y','world-z'].map(k=>Number($(k).value));
   if(!Number.isFinite(scale)||pos.some(x=>!Number.isFinite(x)))
    throw Error('模型比例與位置必須是實際數值');
+  invalidateAIG22Storyboard('場景增加模型，劇情來源需重新核對');
   worldDoc=addAIG20WorldObject(worldDoc,{
    nodeId:'node-'+(worldDoc.objects.length+1),assetId:sourceId,
    sourceSha256:source.sha256,category:source.category,
