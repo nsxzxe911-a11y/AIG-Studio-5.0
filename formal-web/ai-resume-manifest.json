@@ -1,0 +1,69 @@
+{
+  "schema": "aig.ai-continuity.v1",
+  "snapshot_date": "2026-10-22",
+  "record_kind": "SOURCE_CHECKPOINT_NOT_RUNTIME_PASS",
+  "authority": "GitHub checkpoint and linked verification evidence; never infer runtime PASS from this file",
+  "website": {
+    "url": "https://aig-dual-formal-runtime.onrender.com/ai-resume.html",
+    "source_repository": "nsxzxe911-a11y/AIG-Studio-5.0",
+    "source_branch": "web/aig-dual-formal-runtime-20261016",
+    "source_sha_before_handoff": "d6d431002a0238476fb3d4b4a2d2f415bf26b57c",
+    "render_live_sha": "UNVERIFIED",
+    "deployment": "NOT_VERIFIED_LIVE"
+  },
+  "projects": [
+    {
+      "id": "AIG-II",
+      "repository": "nsxzxe911-a11y/AIG-II",
+      "reference": "repair/core-first-aigii-20261021",
+      "source_sha": "b1a1bff05a65818cb021c57423b15b4ef0c5c7e9",
+      "visibility": "PRIVATE",
+      "source_checked": true,
+      "runtime_gate": "NOT_VERIFIED",
+      "checkpoint_note": "GitHub source SHA verified; APK/EXE, CAD/CAM/SIM/axis/NC runtime not certified here."
+    },
+    {
+      "id": "AIG Studio 5.0",
+      "repository": "nsxzxe911-a11y/AIG-Studio-5.0",
+      "reference": "repair/core-first-studio-20261021",
+      "source_sha": "9184c0f132ab8cc4ef43376e5b0d05edeee13580",
+      "visibility": "PUBLIC",
+      "source_checked": true,
+      "runtime_gate": "NOT_VERIFIED",
+      "checkpoint_note": "GitHub source SHA verified; site deployment and native deliverables require independent proof."
+    },
+    {
+      "id": "AIG FastModel",
+      "repository": "nsxzxe911-a11y/AIG-Studio-5.0",
+      "reference": "NOT_ESTABLISHED",
+      "source_sha": null,
+      "visibility": "PUBLIC",
+      "source_checked": false,
+      "runtime_gate": "NOT_VERIFIED",
+      "checkpoint_note": "Project is discussed as part of AIG Studio; authoritative source path and checkpoint must be verified before modification."
+    }
+  ],
+  "checks": {
+    "remote_trigger_test": "PASS_GITHUB_WORKFLOW_TEST_ONLY:39732701476",
+    "builder_ui_test": "PASS_GITHUB_WORKFLOW_TEST_ONLY:39732706583",
+    "site_deployment": "NOT_VERIFIED",
+    "native_artifacts": "NOT_VERIFIED",
+    "all_runtime_functions": "NOT_VERIFIED",
+    "tampering": "NO_UNAUTHORIZED_MODIFICATION_CONFIRMED"
+  },
+  "approved_invariants": [
+    "Do not delete/overwrite original geometry, CAD/CAM/NC, approved RGB Authority, or FastModel assets.",
+    "Keep Mobile and Desktop Authority sources separate; preserve approved page/button/command IDs.",
+    "CNC geometric coordinates and simulation must retain signed absolute coordinate truth and 0.001 mm output precision.",
+    "Do not mark PASS without an actual command output, artifact digest, and reproducible test evidence.",
+    "No automatic rollback/downgrade; no destructive repair; create a new checkpoint after validation."
+  ],
+  "next_steps": [
+    "Verify FastModel authoritative repository path and exact checkpoint; do not infer it from conversation.",
+    "Create durable authenticated update ledger for every engineering handoff, and append history instead of replacing source.",
+    "Tie actual Render deployment to precise git commit and confirm live page before labeling released.",
+    "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
+  ],
+  "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
+  "last_action": "AI continuity source and user-accessible handoff page added; does not change core or deploy status."
+}
