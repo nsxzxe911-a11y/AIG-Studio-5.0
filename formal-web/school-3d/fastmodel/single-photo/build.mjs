@@ -2,6 +2,10 @@ import {build} from 'esbuild';
 import fs from 'node:fs';
 await build({entryPoints:['app.mjs'],bundle:true,format:'iife',platform:'browser',target:['chrome100','edge100'],outfile:'dist/app.js',minify:true,legalComments:'eof'});
 fs.copyFileSync('index.html','dist/index.html');
+await build({entryPoints:['metric-stereo-studio.mjs'],bundle:true,
+ format:'iife',platform:'browser',target:['chrome100','edge100'],
+ outfile:'dist/metric-stereo-studio.js',minify:true,legalComments:'eof'});
+fs.copyFileSync('metric-stereo-studio.html','dist/metric-stereo-studio.html');
 for(const resource of ['reverse-lab.html','reverse-lab.mjs','aig-reverse-geometry-7-0.mjs','implicit-lab.html','implicit-lab.mjs','aig-implicit-volume-7-1.mjs','volume-lab.html','volume-lab.mjs','aig-volumetric-deform-7-2.mjs','face-material-lab.html','face-material-lab.mjs','aig-face-material-7-3.mjs','aig-portrait-audio-6-7.mjs','avatar-studio.html','avatar-studio.mjs','aig-avatar-rig-7-4.mjs','aig-landmark-rig-7-5.mjs','landmark-studio.html','landmark-studio.mjs','aig-face-depth-7-6.mjs','depth-studio.html','depth-studio.mjs','aig-hair-neck-7-7.mjs','occlusion-studio.html','occlusion-studio.mjs','aig-spatial-rig-7-8.mjs','spatial-studio.html','spatial-studio.mjs','aig-continuous-scan-7-9.mjs','continuous-studio.html','continuous-studio.mjs','aig-multiview-fusion-7-10.mjs','multiview-studio.html','multiview-studio.mjs','aig-auto-correspondence-7-11.mjs','tracking-studio.html','tracking-studio.mjs','aig-camera-pose-7-12.mjs','aig-cad-grid-scale-7-12.mjs','aig-scene-percent-7-12.mjs','cad-scale-studio.html','cad-scale-studio.mjs','aig-scene-map-7-12.mjs','scene-map-studio.html','scene-map-studio.mjs']){
  fs.copyFileSync(resource,'dist/'+resource);
 }
