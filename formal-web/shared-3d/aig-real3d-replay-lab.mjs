@@ -235,7 +235,7 @@ canvas.addEventListener('pointerdown',e=>{
 canvas.addEventListener('pointermove',e=>{
  if(!drag||drag.id!==e.pointerId||!replay)return;
  const c=renderer.getCamera();
- renderer.setCamera({yaw:c.y+(e.clientX-drag.x)*.008,
+ renderer.setCamera({yaw:c.yaw+(e.clientX-drag.x)*.008,
   pitch:Math.max(-1.4,Math.min(1.4,c.pitch+(e.clientY-drag.y)*.007))});
  drag.x=e.clientX;drag.y=e.clientY;
  try{paint('CAMERA_DRAG_ONLY');}catch(err){status('BLOCKED：'+err.message);}
