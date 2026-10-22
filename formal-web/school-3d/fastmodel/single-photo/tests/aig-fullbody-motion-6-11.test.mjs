@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {analyzeAIG64PartialPortrait,generateAIG64SinglePartialFullbody}
  from '../aig-single-photo-autobody-6-4.mjs';
@@ -56,6 +57,20 @@ test('6.11 single partial photo retains original 17-joint 9-mesh 5-clip model an
  assert.ok(proof.appendedClipsProven.every(p=>
   p.framesEvaluated===31 && p.cameraMotionUsed===false));
  console.log('AIG61_FULLBODY_SKINNED_LIMB_ANIMATION_PASS|ONE_PARTIAL_PHOTO|17_BONES|9_MESHES|7_CLIPS|BOTH_ARMS_AND_LEGS|31_REAL_GLTF_FRAMES|HEROINE_IDENTITY_NOT_CERTIFIED');
+});
+test('6.11 real controller is uniquely mounted and bound to verified limb-skin engine, original clip source remains',()=>{
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const app=readFileSync(new URL('../app.mjs',import.meta.url),'utf8');
+ assert.equal((html.match(/id="aig64-single-motion-upgrade"/g)||[]).length,1);
+ assert.ok(html.includes('data-aig-button-id="FASTM.MODEL.FULLBODY_MOTION"'));
+ assert.ok(html.includes('data-aig-command-id="ANIMATION.FULLBODY_BILATERAL"'));
+ assert.ok(app.includes("$('aig64-single-motion-upgrade').addEventListener('click',async()=>"));
+ assert.ok(app.includes('const upgraded=upgradeAig64FullBodyMotion({'));
+ assert.ok(app.includes('const proof=await auditAig61FullBodyLimbMotion(upgraded);'));
+ assert.ok(app.includes('realAnimationClips:7'));
+ assert.ok(app.includes('aig64SingleBytes=base;aig64SingleReport=reportBefore;'));
+ assert.ok(app.includes('generateAIG64SinglePartialFullbody({analysis})'));
+ assert.ok(app.includes('await load(output.bytes.buffer,false,{technical:true})'));
 });
 test('6.11 rejects imaginary verified model, corrupt source and fake release flags',()=>{
  const {original}=make();
