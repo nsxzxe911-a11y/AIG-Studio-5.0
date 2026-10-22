@@ -1,4 +1,4 @@
-package ${x.pkg}
+package com.aigstudio.core
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
