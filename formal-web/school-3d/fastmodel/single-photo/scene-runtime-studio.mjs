@@ -1,4 +1,5 @@
 import {PhotoViewer} from './viewer.mjs';
+import {buildAIG23PhotoActor} from './aig-photo-rig-world-2-3.mjs';
 import {openAIG716AssetLibrary} from './aig-external-asset-library-7-16.mjs';
 import {AIG19SceneRuntime} from './aig-scene-lifecycle-1-9.mjs';
 import {createAIG20WorldScene,addAIG20WorldObject,addAIG20CameraKey,
@@ -333,6 +334,103 @@ $('world-add').addEventListener('click',async()=>{
   worldEvidence();
  }catch(e){updateWorldStatus('BLOCKED：'+String(e.message||e),true)}
  finally{setWorldBuildMutation(false)}
+});
+// Real3D 2.3 — the one-photo action uses only the already implemented
+// 6.4 rig/GLB generator. Original image is separately preserved by SHA in
+// the outside-app IndexedDB library, not written into the JS bundle.
+$('photo23-build').addEventListener('click',async()=>{
+ if(loading||worldBuildMutation){
+  $('photo23-status').textContent='BLOCKED：場景正更新中；未動原圖或模型。';
+  return;
+ }
+ loading=true;setWorldBuildMutation(true);
+ $('photo23-build').disabled=true;
+ try{
+  const file=$('photo23-source').files?.[0];
+  if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)||
+   file.size<100||file.size>12*1024*1024)
+   throw Error('請選擇 12 MiB 以下的單張 JPG／PNG／WebP 人物照片');
+  if(!library)throw Error('本機素材庫尚未啟動');
+  // Original bytes are independently content-addressed before any derived
+  // model work. A geometry/GLB failure must never erase this input.
+  const original=await library.importBlob(file,{
+   category:'character',title:'Real3D 2.3 原始照片：'+file.name,
+   tags:['Real3D23','原圖','單照片'],source:'USER_LOCAL',
+   modelAccuracy:'NOT_VERIFIED',coordinateUnits:'UNKNOWN'
+  });
+  $('photo23-status').textContent='原圖已保存 SHA，正在解析單張照片及真 17 骨模型…';
+  const image=await createImageBitmap(file);
+  let data;
+  try{
+   const factor=Math.min(1,1024/image.width,1024/image.height);
+   const width=Math.floor(image.width*factor),
+    height=Math.floor(image.height*factor);
+   if(width<128||height<128)throw Error('照片尺寸太小，無法建立比例約束');
+   const scan=document.createElement('canvas');
+   scan.width=width;scan.height=height;
+   const ctx=scan.getContext('2d',{willReadFrequently:true});
+   if(!ctx)throw Error('無法讀取來源 RGB 像素');
+   ctx.drawImage(image,0,0,width,height);
+   data=ctx.getImageData(0,0,width,height);
+  }finally{image.close?.()}
+  const {bytes,proof}=await buildAIG23PhotoActor({
+   pixels:data.data,width:data.width,height:data.height,
+   sourceImageSHA256:original.sha256.replace(/^sha256:/,'')
+  });
+  const model=await library.importBlob(
+   new Blob([bytes],{type:'model/gltf-binary'}),{
+    category:'character',title:'Real3D 2.3 單照片真骨架技術角色',
+    tags:['Real3D23','真骨架','衣物蒙皮','動作'],
+    source:'GENERATED_DERIVED',modelAccuracy:'ESTIMATED',
+    coordinateUnits:'RELATIVE',derivedFrom:original.id
+   });
+  if(model.sha256!=='sha256:'+proof.modelGLBSHA256)
+   throw Error('GLB 保存後來源 SHA 不符，不提交工作場景');
+  await refreshWorldAssets();
+  $('world-asset').value=model.id;
+  if(worldDoc&&worldDoc.coordinateMode!==$('world-mode').value)
+   throw Error('既有場景座標模式已更改，原世界保持不變');
+  const draft=worldDoc||createAIG20WorldScene({
+   id:'world-'+crypto.randomUUID(),
+   title:$('world-title').value.trim()||'Real3D 2.3 單照片場景',
+   coordinateMode:$('world-mode').value,mapRef:await selectedMapRef()
+  });
+  const next=addAIG20WorldObject(draft,{
+   nodeId:'node-'+(draft.objects.length+1),
+   category:'character',assetId:model.id,sourceSha256:model.sha256,
+   position:[0,0,0],scale:[1,1,1],physicalScaleReviewed:false
+  });
+  const active=await ensureWorldViewer();
+  const mounted=await active.load(next);
+  if(mounted.status!=='COMPOSITED_WORLD_GPU_READY')
+   throw Error('新世界載入已被較新操作取代');
+  runtime?.clearActiveReferenceAfterExternalCommit();
+  worldDoc=next;stopWorldPlayback();
+  invalidateAIG22Storyboard('新單照片真骨架來源已加入，需重新解析中文劇情');
+  refreshWorldActorControls();worldEvidence();report();
+  $('photo23-proof').textContent=JSON.stringify({
+   ...proof,originalAssetId:original.id,generatedGLBAssetId:model.id,
+   worldSceneId:worldDoc.id,sourceNodeId:next.objects.at(-1).nodeId,
+   originalFilePreserved:true
+  },null,2);
+  $('photo23-status').textContent=
+   '已真正加入 '+next.objects.at(-1).nodeId+'：'+
+   proof.realBones+' 骨、'+proof.realSkinnedMeshes+' 個真蒙皮網格、'+
+   proof.realSourceClips.length+' 段原始骨架動畫；'+
+   (proof.contactRiskNeedsRepair?'衣物/髮束接觸仍有風險，禁止發布。':
+    '離散姿態接觸檢查通過，但連續時間仍待驗證。')+
+   ' 可以在下方 2.2 依真正存在的 Clip 撰寫劇情。';
+  updateWorldStatus('2.3 來源模型已載入同一個正式 3D 工作視窗。');
+  try{await saveWorld(true)}
+  catch(e){$('photo23-status').textContent+=' 世界文件未保存：'+
+   String(e.message||e)+'；現有 GPU 模型不刪除。'}
+ }catch(e){
+  $('photo23-status').textContent='BLOCKED：'+String(e.message||e)+
+   '。不覆蓋原照片、已存 GLB 或上一次可用工作場景。';
+ }finally{
+  loading=false;setWorldBuildMutation(false);
+  $('photo23-build').disabled=false;
+ }
 });
 async function ensureWorldViewer(){
  if(!library)throw Error('本機資產庫尚未開啟');
