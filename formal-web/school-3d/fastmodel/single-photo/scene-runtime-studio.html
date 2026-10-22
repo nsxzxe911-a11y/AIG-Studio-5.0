@@ -20,6 +20,11 @@ button:disabled{opacity:.45;cursor:not-allowed}
 #metrics{font:12px/1.6 ui-monospace,monospace;white-space:pre-wrap;color:#a7e9df;max-height:240px;overflow:auto}
 .hint{font-size:12px;color:#a8c9de}
 @media(max-width:760px){.layout{grid-template-columns:1fr}#stage{min-height:390px}#stage canvas{height:55vh;min-height:310px}main{max-width:100%}}
+.world-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.world-grid label{min-width:0;margin:4px 0}.world-grid input,.world-grid select{width:100%;min-height:43px;background:#061222;color:white;border:1px solid #4983a2;border-radius:8px;padding:8px}
+#world-saved{max-width:440px}#world-status{padding:9px;border-left:3px solid #609cb8;color:#d4f3fa}
+@media(max-width:950px){.world-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:580px){.world-grid{grid-template-columns:1fr}#world-saved{width:100%}}
 </style></head><body><main>
 <header>
 <small>AIG FastModel · Real3D 1.9 · Local-first · GPU 工作頁</small>
@@ -48,4 +53,47 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <p>3D 场景優先佔用畫面空間；控制面板縮於周邊。單場景切換不重新初始化整個 FastModel 工作區。</p>
 </section>
 </div>
+
+<section class="panel" id="world20-editor" style="grid-column:1/-1">
+<h2>Real3D 2.0｜人物 × 建築 × 地圖 × 真實來源轉場</h2>
+<p>多個來源 GLB 組成一個世界，沒有重新生成原模型。所有位置／比例可編輯；單照片估計草模預設使用相對座標，不能直接升格為真實公尺。地圖 JSON 只作真來源圖資，不會偽造道路與建築的 3D 厚度。</p>
+<div class="world-grid">
+<label>場景名稱<input id="world-title" value="櫻花校園場景" maxlength="100"></label>
+<label>世界座標來源
+<select id="world-mode">
+<option value="LOCAL_RELATIVE">相對場景（未確認真實公尺）</option>
+<option value="MEASURED_LOCAL_METRES">已核准實測公尺（僅實測素材）</option>
+<option value="WGS84_APPROX_LOCAL_METRES">地理局部近似公尺（非測量級）</option>
+</select></label>
+<label>地圖來源（選填）
+<select id="world-map"><option value="">不載入地圖</option></select></label>
+<label>人物／建築／環境 GLB 來源
+<select id="world-asset"><option value="">請先匯入素材庫</option></select></label>
+<label>X 位置（目前座標模式）<input id="world-x" type="number" value="0" min="-10000" max="10000" step=".1"></label>
+<label>Y 高度<input id="world-y" type="number" value="0" min="-10000" max="10000" step=".1"></label>
+<label>Z 位置<input id="world-z" type="number" value="0" min="-10000" max="10000" step=".1"></label>
+<label>模型縮放（未審核不等於公尺）<input id="world-scale" type="number" value="1" min=".01" max="30" step=".05"></label>
+</div>
+<button id="world-add">加入同一個世界</button>
+<button id="world-preview">合成真正的 3D 世界並顯示</button>
+<button id="world-save">儲存場景到外部素材庫</button>
+<button id="world-load">讀取已儲存的場景</button>
+<select id="world-saved" aria-label="已儲存的世界場景"><option value="">尚無已儲存場景</option></select>
+<div class="world-grid">
+<label>鏡頭時間（秒）<input id="world-time" type="number" min="0" max="3600" value="0" step=".1"></label>
+<label>鏡頭座標 X, Y, Z（逗號分隔）<input id="world-camera-position" value="1,1,5"></label>
+<label>目標座標 X, Y, Z（逗號分隔）<input id="world-camera-target" value="0,0,0"></label>
+<label>轉場方法
+<select id="world-ease"><option value="LINEAR">平滑位移線性</option>
+<option value="SMOOTHSTEP">平滑漸入漸出</option>
+<option value="CUT">直接切鏡頭</option></select></label>
+</div>
+<button id="world-key-add">加入鏡頭關鍵格</button>
+<label>轉場預覽時間軸<input type="range" id="world-scrub" min="0" max="10" value="0" step=".1"></label>
+<button id="world-play">播放實際鏡頭轉場</button>
+<button id="world-pause">停止播放</button>
+<p id="world-status" role="status" aria-live="polite">世界工作區已建立，尚無核准來源。</p>
+<pre id="world-proof" style="max-height:270px;overflow:auto;color:#9fe0f2;font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap">尚未新增來源</pre>
+</section>
+
 </main><script src="./scene-runtime-studio.js"></script></body></html>
