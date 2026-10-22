@@ -91,6 +91,7 @@ data class AigMechanicalDrawingAudit(
     val nativeGeometryReferencesVerified:Boolean,
     val numericToleranceFieldsValidated:Boolean,
     val gdtCrossReferencesValidated:Boolean,
+    val nativeDimensionValuesVerified:Boolean=false,
     val gdtStandardFullyCertified:Boolean=false,
     val manufacturingInstructionsGenerated:Boolean=false,
     val machineExecutionAllowed:Boolean=false
@@ -108,7 +109,8 @@ object AigMechanicalDrawingCore {
      * CAD entities. Never interprets drawing annotations as NC output.
      */
     fun audit(sheet:AigMechanicalDrawingSheet,
-              liveNativeEntityIds:Set<String>):AigMechanicalDrawingAudit{
+              liveNativeEntityIds:Set<String>,
+              liveMeasuredDimensionsMm:Map<String,Double>):AigMechanicalDrawingAudit{
         require(validId(sheet.drawingNumber)&&validId(sheet.partNumber)&&
             validId(sheet.revision)&&sheet.material.isNotBlank()&&
             sheet.material.length<=100){"MECH_TITLE_BLOCK_INVALID"}
@@ -177,8 +179,17 @@ object AigMechanicalDrawingCore {
                 (d.plusTolerance==0.0&&d.minusTolerance==0.0)){
                 "MECH_REFERENCE_DIMENSION_IS_NOT_TOLERANCED"
             }
-            // A reported dimension is a measurement only if bound to
-            // live native geometry and separately checked by the caller.
+            // The caller must supply a FRESH measurement from the live CAD
+            // entity at the same drawing revision. A matching ID alone is
+            // insufficient when CAD geometry has been modified.
+            if(d.evidence==AigMechanicalEvidenceKind.CAD_ENTITY_MEASURED){
+                val measured=liveMeasuredDimensionsMm[d.id]
+                require(measured!=null&&validMm(measured)&&
+                    abs(measured-d.nominal)<=DISPLAY_RESOLUTION_MM/2+1e-9){
+                    "MECH_STALE_OR_UNVERIFIED_NATIVE_DIMENSION"
+                }
+            }
+
         }
         require(sheet.datums.map{it.symbol}.all{
             it.matches(Regex("[A-Z]"))}&&
@@ -210,7 +221,7 @@ object AigMechanicalDrawingCore {
         }
         return AigMechanicalDrawingAudit(
             sheet.drawingNumber,sheet.features.size,sheet.views.size,
-            sheet.dimensions.size,true,true,true
+            sheet.dimensions.size,true,true,true,true
         )
     }
 
