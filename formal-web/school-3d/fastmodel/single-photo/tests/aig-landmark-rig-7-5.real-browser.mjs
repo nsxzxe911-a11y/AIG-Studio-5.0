@@ -68,7 +68,7 @@ try{
    await page.locator('#yaw').evaluate(el=>{el.value='3.14';el.dispatchEvent(new Event('input',{bubbles:true}));});
    await page.locator('#view').scrollIntoViewIfNeeded();
    await page.waitForFunction(()=>{
-    try{const r=JSON.parse(document.getElementById('evidence').textContent).render;return Math.abs(r.cameraYaw-3.14)<.02&&r.neutralSideBackPixels>70&&r.originalFrontPhotoPixels===0;}
+    try{const r=JSON.parse(document.getElementById('evidence').textContent).render;return Math.abs(r.cameraYaw-3.14)<.02&&r.estimatedNeutralRearPixels>70&&r.originalFrontPhotoPixels===0;}
     catch{return false;}
    },null,{timeout:45000,polling:200});
    const rear=await report();
@@ -80,7 +80,7 @@ try{
     device:device.name,fixture:'SYNTHETIC_RGBA_NOT_REAL_FACE',manualPoints:true,atRest,rear,
     actualHuman3DFaceApproved:false,realMMOOnline:false
    },null,2)+'\n');
-   console.log('AIG_FASTMODEL_7_5_MANUAL_LANDMARK_3D_FACE_JACOBIAN_BROWSER_PASS',device.name,atRest.render.rayHits,rear.render.neutralSideBackPixels);
+   console.log('AIG_FASTMODEL_7_5_MANUAL_LANDMARK_3D_FACE_JACOBIAN_BROWSER_PASS',device.name,atRest.render.rayHits,rear.render.estimatedNeutralRearPixels);
   }catch(e){
    await page.screenshot({path:out+'/'+device.name+'-FAIL.png'}).catch(()=>{});
    const diag={status:await page.locator('#status').textContent().catch(()=>null),evidence:(await page.locator('#evidence').textContent().catch(()=>''))?.slice(0,2500),marked:await page.locator('#point-status').textContent().catch(()=>null)};
