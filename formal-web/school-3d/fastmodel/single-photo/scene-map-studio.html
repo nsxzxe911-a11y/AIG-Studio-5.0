@@ -1,0 +1,72 @@
+<!doctype html><html lang="zh-Hant"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407"><title>AIG FastModel｜地圖與圖資工作區</title>
+<style>
+:root{color-scheme:dark;background:#020407;color:#d9f5ff;font:14px system-ui,"Microsoft JhengHei",sans-serif}
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;background:radial-gradient(ellipse at 50% 0,#17354a,#020407 65%)}
+header{background:#07111b;border-bottom:1px solid #34536c;padding:14px 18px;display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+h1{font-size:21px;margin:0}h1 em{color:#82efc9;font-style:normal}a{color:#9cefff}
+main{max-width:1480px;margin:auto;padding:12px;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(310px,.7fr);gap:12px}
+section{background:#07111b;border:1px solid #30516a;border-radius:12px;padding:13px;min-width:0;margin-bottom:10px}
+h2{font-size:16px;margin:0 0 9px}h3{font-size:14px;color:#afe2f4;margin:12px 0 5px}
+p,small{font-size:12px;line-height:1.6;color:#bed1db}label{font-size:12px;font-weight:650;display:block;margin:9px 0 5px}
+button,input:not([type=checkbox]),select{width:100%;font:inherit;min-height:39px;padding:8px;border:1px solid #325a70;border-radius:8px;background:#092336;color:#e3f7ff}
+button{font-weight:650;background:linear-gradient(120deg,#12637b,#273f71);cursor:pointer}
+button:disabled{opacity:.42;cursor:default}
+canvas{width:100%;height:auto;background:#030f1b;border:1px solid #2e4f61;border-radius:8px;display:block;touch-action:manipulation}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.check{display:flex;align-items:center;gap:9px;margin:8px 0}.check input{width:18px;height:18px}
+.state{font-size:12px;border-radius:7px;padding:10px;background:#2b2115;border:1px solid #9c7344;color:#ffe4c0;line-height:1.6;overflow-wrap:anywhere}
+.state[data-pass=true]{background:#07271f;border-color:#438d7a;color:#a1f1d2}
+#entities{max-height:280px;overflow:auto}
+#entities>div{border-bottom:1px solid #24465a;padding:8px 4px;font-size:12px}
+#map-details{white-space:pre-wrap;overflow-wrap:anywhere;background:#02111c;padding:10px;border-radius:7px;font:11px/1.6 ui-monospace,monospace;max-height:250px;overflow:auto}
+.legend{display:flex;flex-wrap:wrap;gap:7px;font-size:11px;color:#b7d0dd;margin:8px 0}
+.legend span{padding:4px 7px;border:1px solid #315d73;border-radius:5px}
+@media(max-width:850px){main{grid-template-columns:1fr;padding:8px}}
+</style></head><body>
+<header><h1>AIG FastModel <em>場景地圖／圖資</em></h1>
+<nav><a href="./continuous-studio.html">影片連續掃描</a> · <a href="./tracking-studio.html">影格特徵</a> · <a href="./index.html">首頁</a></nav></header>
+<main>
+<div>
+<section>
+<h2>本機場景地圖</h2>
+<canvas id="map" width="960" height="580" aria-label="本機地圖圖層，點擊標記房屋建物樹木道路運動設施"></canvas>
+<div class="legend"><span>建築／房屋</span><span>樹木</span><span>道路</span><span>運動設施</span><span>水域</span><span>其他</span></div>
+<p>空白地圖不包含任何虛構的真實地址。你可以自己標點／畫線／圈出區域，或匯入有來源的 GeoJSON。未測量的本機場景座標只能比較相對百分比。</p>
+</section>
+<section>
+<h2>場景圖資清單</h2><div id="entities"><small>尚無來源圖資，請標註或匯入。</small></div>
+<h3>座標與量測證據</h3><pre id="map-details">尚未建立來源地圖</pre>
+</section>
+</div>
+<aside><section>
+<h2>新增地圖標註</h2>
+<label for="category">類別</label><select id="category">
+<option value="building">建築物</option><option value="house">房屋</option>
+<option value="tree">樹木</option><option value="road">馬路／道路</option>
+<option value="sports_facility">運動設施</option><option value="water">水域</option>
+<option value="vehicle">車輛</option><option value="landmark">地標</option>
+<option value="other">其他</option></select>
+<label for="feature-name">圖資名稱</label>
+<input id="feature-name" value="來源標註" maxlength="128">
+<p>選「樹木／車輛／地標」點一次；「建築／房屋／運動設施／水域」點兩次形成矩形；「道路」可點多次，再按完成。</p>
+<div class="cols"><button id="finish" disabled>完成道路／標註</button><button id="cancel">取消本次點選</button></div>
+<label for="source-label">圖資來源／授權說明</label>
+<input id="source-label" maxlength="160" value="USER_ANNOTATED_SCENE">
+<label for="file">匯入真實 GeoJSON 圖資</label><input id="file" type="file" accept=".geojson,.json,application/geo+json,application/json">
+<p>GeoJSON 可帶真實經緯度；這裡使用約 5 公里範圍內的局部投影，不是地籍測量或 0.001 mm 精度地圖。</p>
+<div class="cols"><button id="export" disabled>匯出圖資 JSON</button><button id="clear">清空工作圖層</button></div>
+<div id="status" class="state" role="status">本機離線地圖就緒；尚無已核准的地理定位來源。</div>
+</section>
+<section><h2>以場景物件換算百分比例</h2>
+<label for="reference">參考物</label><select id="reference"></select>
+<label for="target">比較物</label><select id="target"></select>
+<label for="axis">比較量</label><select id="axis">
+<option value="width">寬度</option><option value="height">高度（地圖 Y 範圍）</option>
+<option value="length">道路／邊線長度</option><option value="area">面積</option></select>
+<button id="compare">計算百分比</button>
+<pre id="comparison">請先建立至少兩項圖資。</pre>
+<p>**注意：**圖上 50% 的物件大小只代表同一座標系中的相對比例；無已知距離／視角校正就不能推出人物的實際身高或三維深度。</p>
+</section></aside>
+</main><script type="module" src="./scene-map-studio.mjs"></script></body></html>
