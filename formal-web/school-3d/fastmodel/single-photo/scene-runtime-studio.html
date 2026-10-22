@@ -95,7 +95,14 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <button id="world-play">播放實際鏡頭轉場</button>
 <button id="world-pause">停止播放</button>
 <p id="world-status" role="status" aria-live="polite">世界工作區已建立，尚無核准來源。</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;align-items:start">
+<div>
+<p><strong>7.12 真來源平面地圖</strong>（僅 XY，非虛構建築高度）</p>
+<canvas id="world-map-preview" width="420" height="260" style="width:100%;max-width:520px;background:#030d19;border:1px solid #447592;border-radius:8px"></canvas>
+<p id="world-map-caption" style="font-size:12px">尚未連接已驗證的地圖來源</p>
+</div>
 <pre id="world-proof" style="max-height:270px;overflow:auto;color:#9fe0f2;font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap">尚未新增來源</pre>
+</div>
 </section>
 
 </main><script src="./scene-runtime-studio.js"></script></body></html>
