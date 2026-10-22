@@ -5,7 +5,13 @@ import {updateAIG3DNodeTransform,auditAIG3DScene}
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 
 const $=id=>document.getElementById(id);
-const canvas=$('view'),renderer=createAIG3DRenderer(canvas);
+const canvas=$('view');
+let renderer,initializationError=null;
+try{renderer=createAIG3DRenderer(canvas);}
+catch(e){
+ initializationError=String(e.message||e);
+ renderer={status:'WEBGL_INIT_BLOCKED',getCamera(){return null;},destroy(){}};
+}
 let dataset=null,baseNode=null,profile=null,lastEvidence=null;
 function status(v,ok=false){$('status').textContent=v;$('status').dataset.ok=ok?'true':'false';}
 function evidence(render){
@@ -121,6 +127,7 @@ window.addEventListener('resize',resize);
 window.addEventListener('pagehide',()=>renderer.destroy(),{once:true});
 if(renderer.status==='READY')change();
 else {
- status('BLOCKED：此瀏覽器沒有可用 WebGL。無法把空白畫面當成 3D 成功。');
- evidence({status:'WEBGL_UNAVAILABLE'});
+ status('BLOCKED：WebGL 無法初始化（'+(initializationError||'GPU 不支援')+
+  '）。既有模型資料保持不變，不進行假 3D 動畫。');
+ evidence({status:renderer.status,initializationError});
 }
