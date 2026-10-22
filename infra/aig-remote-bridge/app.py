@@ -126,3 +126,9 @@ def create_app(store: Any = None) -> FastAPI:
 
 
 app = create_app(build_default_store())
+
+# Keep the existing command/agent routes untouched. /builder is a separately
+# authenticated, exact-source-branch cloud compiler, not a shell endpoint.
+from aig_site_builder import app as aig_compiler_app
+app.mount("/builder", aig_compiler_app)
+
