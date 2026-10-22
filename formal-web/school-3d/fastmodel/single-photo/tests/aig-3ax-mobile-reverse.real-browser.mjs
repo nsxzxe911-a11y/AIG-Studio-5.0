@@ -25,7 +25,7 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const proof=async()=>JSON.parse(await page.locator('#evidence').textContent());
   try{
-   const response=await page.goto('http://127.0.0.1:8765/3ax-mobile-workspace.html',
+   const response=await page.goto((process.env.AIG_3AX_PUBLIC_RENDER_URL||'http://127.0.0.1:8765/3ax-mobile-workspace.html'),
     {waitUntil:'load'});
    assert.equal(response?.status(),200);
    await page.waitForFunction(()=>{

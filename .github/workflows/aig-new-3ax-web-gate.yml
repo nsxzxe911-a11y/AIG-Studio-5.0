@@ -10,6 +10,12 @@ on:
       - 'formal-web/shared-3d/aig-real3d-replay-lab.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-3ax-new-workbench.real-browser.mjs'
       - '.github/workflows/aig-new-3ax-web-gate.yml'
+  pull_request:
+    branches:
+      - web/aig-dual-formal-runtime-20261016
+    paths:
+      - '.github/workflows/aig-new-3ax-web-gate.yml'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-3ax-mobile-reverse.real-browser.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -79,6 +85,7 @@ jobs:
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           node tests/aig-3ax-new-workbench.real-browser.mjs
           node tests/aig-3ax-mobile-reverse.real-browser.mjs
+          AIG_3AX_PUBLIC_RENDER_URL='https://aig-dual-formal-runtime.onrender.com/3ax-mobile-workspace.html' node tests/aig-3ax-mobile-reverse.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
