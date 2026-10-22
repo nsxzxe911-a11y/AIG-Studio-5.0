@@ -108,6 +108,22 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <button id="world-actor-play">播放來源原始動作</button>
 <button id="world-actor-pause">暫停這個角色</button>
 <p id="world-actor-status" role="status" aria-live="polite">未載入任何已驗證 GLB 動畫片段；不會憑空生成跑跳。</p>
+<section id="story-2-2" style="border:1px solid #447c95;border-radius:12px;padding:14px;margin-top:15px;background:#061727">
+<h2>Real3D 2.2｜中文劇情 → 原始 GLB 動作／鏡頭／字幕</h2>
+<p>先在上方載入真正含 AnimationClip 的人物，再輸入敘述。單一角色可省略代號；多角色必須填實際 node ID，例如 node-1。鏡頭必須先在「鏡頭關鍵格」設好時間及位置。人物缺少跑、跳、蹲、轉頭等原始 GLB 動作會明確 BLOCKED，絕不偽裝成已生成 3D 骨架。</p>
+<label>中文劇本（每行一個動作／鏡頭／字幕，選填「0秒」時間）
+<textarea id="story-text" rows="6" maxlength="1800" style="width:100%;min-height:130px;resize:vertical;border-radius:8px;padding:12px;background:#03101b;color:#e1f6ff;border:1px solid #4f8bab" placeholder="0秒 node-1：走路&#10;1秒 鏡頭：切到校園&#10;2秒 旁白：她來到校園。"></textarea></label>
+<button id="story-compile">01｜解析並綁定真動作／鏡頭</button>
+<button id="story-play" disabled>02｜播放劇情時間軸</button>
+<button id="story-stop">停止劇情（模型保留）</button>
+<button id="story-save" disabled>03｜保存劇本與來源 SHA</button>
+<label>已保存劇情資料
+<select id="story-saved" aria-label="外部素材庫的劇情文件"><option value="">尚無已保存劇本</option></select></label>
+<button id="story-load">重新載入已保存劇本</button>
+<output id="story-status" role="status" aria-live="polite" style="display:block;padding:9px;color:#a5eee7">目前沒有可播放的來源動作劇本。</output>
+<div id="story-subtitle" aria-live="polite" style="margin:8px 0;padding:14px;min-height:52px;text-align:center;border:1px solid #31596d;border-radius:8px;color:#fff;background:#07121f">字幕／旁白只顯示文字，未進行語音合成</div>
+<pre id="story-proof" style="white-space:pre-wrap;max-height:250px;overflow:auto;color:#b0dfed;font:12px/1.6 ui-monospace,monospace">尚未產生劇情來源證據。</pre>
+</section>
 <button id="world-play">播放實際鏡頭轉場</button>
 <button id="world-pause">停止播放</button>
 <p id="world-status" role="status" aria-live="polite">世界工作區已建立，尚無核准來源。</p>
