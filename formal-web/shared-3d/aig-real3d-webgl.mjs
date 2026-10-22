@@ -72,8 +72,9 @@ const lineVs=[
 ].join('\n');
 const lineFs=['precision mediump float;uniform vec4 uColor;',
  'void main(){gl_FragColor=uColor;}'].join('\n');
-export function createAIG3DRenderer(canvas,{pixelRatio=1.5,background=[.004,.012,.024,1]}={}){
+export function createAIG3DRenderer(canvas,{pixelRatio=1.25,maxFramePixels=1050000,background=[.004,.012,.024,1]}={}){
  if(!canvas||typeof canvas.getContext!=='function'||!finite(pixelRatio)||pixelRatio<.5||
+ !Number.isInteger(maxFramePixels)||maxFramePixels<200000||maxFramePixels>3200000||
  pixelRatio>3||!Array.isArray(background)||background.length!==4||
  !background.every(v=>finite(v)&&v>=0&&v<=1))throw Error('AIG3D_RENDER_TARGET_INVALID');
  const gl=canvas.getContext('webgl2',{alpha:false,antialias:true,depth:true})||
@@ -131,8 +132,11 @@ export function createAIG3DRenderer(canvas,{pixelRatio=1.5,background=[.004,.012
  function getCamera(){return {...camera,focus:[...camera.focus]};}
  function resize(){
   const ratio=Math.min(pixelRatio,typeof devicePixelRatio==='number'?devicePixelRatio:1),
-   w=Math.max(1,Math.round((canvas.clientWidth||canvas.width||640)*ratio)),
-   h=Math.max(1,Math.round((canvas.clientHeight||canvas.height||420)*ratio));
+   requestedW=Math.max(1,Math.round((canvas.clientWidth||canvas.width||640)*ratio)),
+   requestedH=Math.max(1,Math.round((canvas.clientHeight||canvas.height||420)*ratio)),
+   safeScale=Math.min(1,Math.sqrt(maxFramePixels/(requestedW*requestedH))),
+   w=Math.max(1,Math.floor(requestedW*safeScale)),
+   h=Math.max(1,Math.floor(requestedH*safeScale));
   if(canvas.width!==w)canvas.width=w;if(canvas.height!==h)canvas.height=h;
   gl.viewport(0,0,w,h);
  }
@@ -188,6 +192,8 @@ export function createAIG3DRenderer(canvas,{pixelRatio=1.5,background=[.004,.012
   const {eye,vp}=eyeAndVP();
   let triangles=0,nodes=0,rapid=0,feed=0;
   for(const node of scene.nodes)if(node.visible){
+   if(triangles+node.mesh.triangleCount>200000)
+    throw Error('AIG3D_GPU_TRIANGLE_BUDGET_BLOCKED');
    triangles+=meshDraw(node,getAIG3DWorldMatrix(scene,node.id),vp,eye);nodes++;
   }
   for(const overlay of scene.overlays){
@@ -195,6 +201,7 @@ export function createAIG3DRenderer(canvas,{pixelRatio=1.5,background=[.004,.012
   }
   last={status:'WEBGL_XYZ_TRIANGLES_RENDERED',webglVersion:webgl2?2:1,
    triangles,nodes,rapid,feed,cameraProjection:camera.projection,
+   allocatedFramePixels:canvas.width*canvas.height,maxFramePixels,
    actualStockRemovedMm3:null,removalNotImplemented:true,
    source:auditAIG3DScene(scene).source};
   return {...last};
