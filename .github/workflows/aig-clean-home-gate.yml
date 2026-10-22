@@ -13,6 +13,12 @@ on:
       - 'formal-web/3ax-nc-workbench.css'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-clean-home.real-browser.mjs'
       - '.github/workflows/aig-clean-home-gate.yml'
+  pull_request:
+    branches:
+      - web/aig-dual-formal-runtime-20261016
+    paths:
+      - '.github/workflows/aig-clean-home-gate.yml'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-public-render-live.real-browser.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -37,6 +43,7 @@ jobs:
           test -s ../../../qa-artifacts-manifest.json
           node --check ../../../aig-download-center.js
           node --check tests/aig-download-center.real-browser.mjs
+          node --check tests/aig-public-render-live.real-browser.mjs
           test -s ../../../3ax-nc-workbench.html
           test -s ../../../3ax-nc-workbench.css
           test -s ../../../fastmodel/index.html
@@ -55,6 +62,7 @@ jobs:
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           node tests/aig-clean-home.real-browser.mjs
           node tests/aig-download-center.real-browser.mjs
+          node tests/aig-public-render-live.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -62,6 +70,7 @@ jobs:
           path: |
             formal-web/school-3d/fastmodel/single-photo/artifacts/aig-clean-home/
             formal-web/school-3d/fastmodel/single-photo/artifacts/aig-new-download-center/
+            formal-web/school-3d/fastmodel/single-photo/artifacts/aig-public-render-live-20261023/
           if-no-files-found: warn
       - name: Exact release boundary
         if: always()
