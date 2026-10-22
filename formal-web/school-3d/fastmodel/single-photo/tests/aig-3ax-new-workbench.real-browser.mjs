@@ -84,13 +84,38 @@ try{
    await page.locator('#parse').click();
    assert.match(await page.locator('#status').textContent(),/BLOCKED/);
    assert.equal(await page.locator('#next').isDisabled(),true);
+   // Local-first must persist the source NC, NEVER a fabricated cut result.
+   await page.waitForFunction(()=>{
+    const s=localStorage.getItem('AIG_V2_3AX_NC_WORKING_COPY_LOCAL');
+    if(!s)return false;
+    try{return JSON.parse(s).source.includes('G43');}catch{return false;}
+   });
+   await page.reload({waitUntil:'load'});
+   await page.waitForFunction(()=>document.getElementById('nc').value.includes('G43'));
+   assert.equal(await page.locator('#nc').inputValue(),edited);
+   assert.equal(await page.locator('#next').isDisabled(),true,
+    'recovered NC source must never silently reuse stale numerical stock');
+   await page.locator('#parse').click();
+   assert.match(await page.locator('#status').textContent(),/BLOCKED/);
+   // One-tab or two-tab conflicting writes cannot silently replace old NC.
+   await page.evaluate(()=>{
+    const key='AIG_V2_3AX_NC_WORKING_COPY_LOCAL';
+    const s=JSON.parse(localStorage.getItem(key));
+    s.revision+=1;s.source='G21 G90 G54\nS1900 M3\nG0 X0 Y0 Z5\nM5\nM30';
+    localStorage.setItem(key,JSON.stringify(s));
+   });
+   await page.locator('#nc').fill('G21 G90 G54\nG43 Z1 H1\nM30');
+   await page.waitForFunction(()=>document.getElementById('file-message').textContent.includes('另一分頁'));
+   assert.equal((await page.evaluate(()=>JSON.parse(
+    localStorage.getItem('AIG_V2_3AX_NC_WORKING_COPY_LOCAL')).source)).includes('G43'),false);
    assert.deepEqual(errors,[]);
-   await page.screenshot({path:dir+'/'+device.name+'-G43-blocked.png',fullPage:true});
+   await page.screenshot({path:dir+'/'+device.name+'-local-recovery-and-conflict-blocked.png',fullPage:true});
    await writeFile(dir+'/'+device.name+'-evidence.json',JSON.stringify({
     scope:'Real3D 1.3 limited read-only NC + new independent web layout',
     device:device.name,sizes,removedMm3:54,realWebGL:true,
     originalNCMutatedBySimulation:false,actualMachineCommandsSent:0,
-    localFileImportAndExport:true,unsupportedFanucG43Blocked:true,
+    localFileImportAndExport:true,localNCReloadRecoveryVerified:true,
+    conflictingNCWriteBlocked:true,unsupportedFanucG43Blocked:true,
     productionAuthorityModelApproved:false,nativeAPKEXEApproved:false
    },null,2));
    console.log('AIG_NEW_3AX_WEB_REAL_NC_WORKSPACE_BROWSER_PASS',device.name,'54mm3');
