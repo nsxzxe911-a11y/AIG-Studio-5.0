@@ -172,6 +172,10 @@
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-source-observation-6-12.mjs",
       "gitBlobSha": "3132707b0b13007e359099cd536ff03706ca94f0"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-multiclass-domain-router-v1.mjs",
+      "gitBlobSha": "ef888049a5f76effbf2014d1d1ebb6a262b3ab34"
     }
   ],
   "ghostOverlayPolicy": "NO_DOUBLE_PERSON_ONE_PASS_VISIBLE_PAN_ZOOM_WITHOUT_CLEAN_BACKGROUND",
@@ -191,5 +195,6 @@
   "realFullBodyLimbUpgrade": "Existing single partial image->technical 17 bone 9 skinned mesh 5 clip GLB retained; adds two genuine bilateral arm/leg GLB quaternion clips, 31-frame skinned vertex motion audits; not verified heroine likeness, foot contacts or garment physics",
   "fullBodyMotionControlClosure": "After core 252/252 PASS, independent AIG64→AIG61 REAL upgrade action binds ButtonID/CommandID to existing single-photo generated GLB, audits bilateral limb vertex deformation before SHA/new output, preserves old 5-clip source on blocked action, all production likeness and collision claims remain false.",
   "fullBodyFormalModelUiLocation": "Single photo / native 17-bone + seven clip upgrade controls remain original DOM+callbacks and are no longer hidden inside technical <details>; older testing tools are disclosure-only.",
-  "pixelObservationRoute20261022": "Source-image SHA + transparent alpha/uniform background colour key + connected component count + sampled RGB and silhouette measurements; user-selected HUMAN/ANIMAL/PLANT domain; plants/animals evidence-only, never fake human GLB; human technical GLB preserved, real media likeness/skin physics still unverified"
+  "pixelObservationRoute20261022": "Source-image SHA + transparent alpha/uniform background colour key + connected component count + sampled RGB and silhouette measurements; user-selected HUMAN/ANIMAL/PLANT domain; plants/animals evidence-only, never fake human GLB; human technical GLB preserved, real media likeness/skin physics still unverified",
+  "multiclassDomainRoutingV1": "Eleven top-level class hierarchy (house/building, vehicle, sports, mechanical CAD), color independently tagged; classifier missing/low confidence/ambiguous/unknown classes fail closed; no model inference or 3D production claimed"
 }
