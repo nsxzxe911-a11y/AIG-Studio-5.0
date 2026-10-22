@@ -5,10 +5,13 @@ import {createAIG20WorldScene,addAIG20WorldObject,addAIG20CameraKey,
  assertAIG20Document,resolveAIG20WorldSources} from './aig-world-scene-2-0.mjs';
 import {AIG20WorldRuntime} from './aig-world-runtime-2-0.mjs';
 import {importAIG712SceneMap} from './aig-scene-map-7-12.mjs';
+import {listAIG21MapAnchors,alignAIG21ObjectToMap}
+ from './aig-map-model-alignment-2-1.mjs';
 const $=id=>document.getElementById(id);
 let library=null,viewer=null,runtime=null,closed=false,loading=false;
 let worldRuntime=null,worldDoc=null,worldMetas=new Map(),worldSaved=[];
 let worldFrame=0,worldPlaying=false,worldPlaybackStart=0;
+let worldMapSnapshot=null;
 const say=(message,bad=false)=>{
  $('status').textContent=message;$('status').dataset.error=bad?'true':'false';
 };
@@ -112,6 +115,7 @@ $('scene-unload').addEventListener('click',async()=>{
  if(worldRuntime?.scene){
   try{
    viewer.unloadCurrent();worldRuntime.close();worldRuntime=null;
+   refreshWorldActorControls();
    stopWorldPlayback();say('已卸載整個 2.0 世界的 GPU 來源；已保存的人物、建築與地圖資料不變。');
    report();
   }catch(e){say('轉場／驗收中不可清空：'+String(e.message||e),true)}
@@ -152,6 +156,7 @@ function stopWorldPlayback(){
  if(worldFrame){cancelAnimationFrame(worldFrame);worldFrame=0}
 }
 function worldEvidence(){
+ refreshWorldPlacementChoices();
  $('world-proof').textContent=worldDoc?JSON.stringify({
   id:worldDoc.id,sourceMode:worldDoc.coordinateMode,revision:worldDoc.revision,
   objects:worldDoc.objects.map(x=>({node:x.nodeId,
@@ -244,7 +249,7 @@ function drawAIG20Map(map){
 }
 async function selectedMapRef(){
  const id=$('world-map').value;
- if(!id)return null;
+ if(!id){worldMapSnapshot=null;refreshWorldPlacementChoices();return null;}
  const m=worldMetas.get(id);
  if(!m)throw Error('地圖資產索引已更新，請重新整理');
  const loaded=await library.get(id,{includePayload:true});
@@ -254,6 +259,7 @@ async function selectedMapRef(){
  const snapshot=JSON.parse(await loaded.blob.text());
  const map=importAIG712SceneMap(snapshot);
  drawAIG20Map(map);
+ worldMapSnapshot=snapshot;refreshWorldPlacementChoices();
  // FastModel 7.12 used the suffix METERS while the 2.0 composer uses
  // METRES; normalize names WITHOUT changing the underlying source.
  const original=map.coordinateMode;
@@ -329,6 +335,111 @@ async function saveWorld(auto=false){
   ' 個，原始 GLB 不會被重新編碼。已存文件仍須人工審核才能推薦重用。');
  return meta;
 }
+function refreshWorldPlacementChoices(){
+ function populate(id,items,prev){
+  const select=$(id),remember=select.value;
+  select.replaceChildren();
+  const empty=document.createElement('option');
+  empty.value='';empty.textContent=prev;select.append(empty);
+  for(const item of items){
+   const option=document.createElement('option');
+   option.value=item.value;option.textContent=item.label;
+   select.append(option);
+  }
+  if(items.some(i=>i.value===remember))select.value=remember;
+ }
+ populate('world-align-object',(worldDoc?.objects||[]).map(x=>({
+  value:x.nodeId,label:x.nodeId+' — '+x.category
+ })), '選擇現有 3D 物件');
+ let anchors=[];
+ if(worldMapSnapshot){
+  try{anchors=listAIG21MapAnchors(worldMapSnapshot).anchors.map(x=>({
+   value:x.featureId,label:x.featureId+' — '+x.category+' ('+x.name+')'
+  }))}catch{anchors=[]}
+ }
+ populate('world-map-feature',anchors,'選擇來源地圖圖徵');
+}
+function refreshWorldActorControls(){
+ const list=worldRuntime?.listSourceActorClips()||[];
+ const element=$('world-actor-choice'),previous=element.value;
+ element.replaceChildren();
+ const empty=document.createElement('option');empty.value='';
+ empty.textContent='選擇有來源動畫的角色';element.append(empty);
+ for(const item of list){
+  const option=document.createElement('option');option.value=item.nodeId;
+  option.textContent=item.nodeId+' · '+item.clips.length+' clips';
+  element.append(option);
+ }
+ if(list.some(x=>x.nodeId===previous))element.value=previous;
+ if(!element.value&&list.length)element.value=list[0].nodeId;
+ const clips=$('world-actor-clip'),actor=list.find(x=>x.nodeId===element.value),
+  selected=clips.value;
+ clips.replaceChildren();
+ const filler=document.createElement('option');filler.value='';
+ filler.textContent='目前沒有來源 GLB 動作';clips.append(filler);
+ for(const clip of actor?.clips||[]){
+  const option=document.createElement('option');option.value=String(clip.index);
+  option.textContent=clip.name+' ('+clip.durationSeconds.toFixed(2)+' 秒)';
+  clips.append(option);
+ }
+ if((actor?.clips||[]).some(c=>String(c.index)===selected))
+  clips.value=selected;
+ else if(actor?.clips.length)clips.value=String(actor.clipIndex);
+ $('world-actor-status').textContent=actor?
+  '角色 '+actor.nodeId+' 正使用來源 GLB Clip；無自動偽造動作。':
+  '沒有已驗證來源動畫；單張圖的靜態模型不會冒充會跑跳。';
+}
+$('world-actor-choice').addEventListener('change',refreshWorldActorControls);
+$('world-actor-play').addEventListener('click',()=>{
+ try{
+  const actor=$('world-actor-choice').value,index=Number($('world-actor-clip').value);
+  if(!actor||!$('world-actor-clip').value)throw Error('請先選真正的 GLB 角色和 Clip');
+  const result=worldRuntime?.selectSourceActorClip(actor,index);
+  if(!result)throw Error('尚未載入世界場景');
+  $('world-actor-status').textContent='正在播放 '+actor+' 的原始 GLB 動作 '+
+   result.sourceClipName+'，片長 '+result.sourceDurationSeconds.toFixed(2)+
+   ' 秒；不是 AI 虛構動作。';
+ }catch(e){$('world-actor-status').textContent='BLOCKED：'+String(e.message||e)}
+});
+$('world-actor-pause').addEventListener('click',()=>{
+ try{
+  const actor=$('world-actor-choice').value;
+  if(!actor)throw Error('選擇已載入來源動畫的角色');
+  worldRuntime.pauseSourceActor(actor,true);
+  $('world-actor-status').textContent='已暫停角色 '+actor+
+   ' 的原始 GLB 動作，場景與其他模型不受影響。';
+ }catch(e){$('world-actor-status').textContent='BLOCKED：'+String(e.message||e)}
+});
+$('world-align').addEventListener('click',async()=>{
+ try{
+  if(loading)throw Error('前次場景載入中');
+  if(!worldDoc||!worldMapSnapshot)throw Error('請先從 7.12 載入並確認來源地圖');
+  const nodeId=$('world-align-object').value,
+   featureId=$('world-map-feature').value;
+  if(!nodeId||!featureId)throw Error('選擇來源模型及真實地圖圖徵');
+  const ox=Number($('world-align-offset-x').value),
+   oz=Number($('world-align-offset-z').value);
+  if(!$('world-align-offset-x').value.trim()||
+   !$('world-align-offset-z').value.trim())
+   throw Error('請填寫有效水平偏移數字');
+  const next=alignAIG21ObjectToMap(worldDoc,worldMapSnapshot,{
+   nodeId,featureId,offsetXZ:[ox,oz]
+  });
+  // Check original source IDs and SHA are still present before
+  // committing any live geometry position or new scene document.
+  await resolveAIG20WorldSources(next,library);
+  if(worldRuntime?.scene)worldRuntime.updateWorldPositions(next);
+  worldDoc=next;worldEvidence();
+  updateWorldStatus('已將 '+nodeId+' 對齊地圖 '+featureId+
+   ' 的候選 XY→場景 XZ，保留 Y、原 GLB、骨架及比例。'+
+   (worldRuntime?.scene?'畫面已直接移位，沒有重新載入 GPU。':'按合成預覽顯示。'));
+  try{await saveWorld(true)}catch(e){
+   updateWorldStatus('對位已保存於工作模型，但外部資產庫存檔受限：'+
+    String(e.message||e),true);
+  }
+ }catch(e){updateWorldStatus('BLOCKED：'+String(e.message||e)+
+  '；已核准來源與上一個工作場景保持不變。',true)}
+});
 $('world-preview').addEventListener('click',async()=>{
  if(loading){updateWorldStatus('已有載入操作，請勿重覆切換',true);return}
  loading=true;$('world-preview').disabled=true;
@@ -340,6 +451,7 @@ $('world-preview').addEventListener('click',async()=>{
   if(result.status!=='COMPOSITED_WORLD_GPU_READY')
    throw Error('本輪載入已被新來源取代');
   runtime?.clearActiveReferenceAfterExternalCommit();
+  refreshWorldActorControls();
   updateWorldStatus('已在同一個 WebGL 3D 畫面載入 '+
    result.objects+' 個原始模型來源，'+
    (result.mapReadOnly?'已連接真地圖來源記錄。':'地圖未連接。')+
