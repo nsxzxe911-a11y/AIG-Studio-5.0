@@ -44,26 +44,52 @@ object CamWorkflowEngine {
      * The result is an ordinary MANUAL path, so SIM/NC consume the same points.
      */
     fun buildCommonPocket(entities:List<Entity>,settings:CamSettings):CamSettings {
-        val circle=entities.filterIsInstance<Circle>().singleOrNull()
-        if(circle!=null) return circlePocket(circle,settings)
+        // A single contour must own the entire operation. Silently ignoring
+        // other CAD entities can remove material from the wrong region.
+        val circle=entities.singleOrNull() as? Circle
+        if(circle!=null) {
+            require(listOf(circle.center.x,circle.center.y,circle.radius).all{it.isFinite()}){
+                "Circle pocket coordinates must be finite"
+            }
+            return circlePocket(circle,settings)
+        }
 
         val lines=entities.filterIsInstance<Line>()
         require(lines.size==4 && entities.size==4){
-            "Pocket clearing currently requires one Circle or one 4-line rectangular contour"
+            "Pocket clearing requires exactly one Circle or one closed four-line rectangle"
         }
         val xs=lines.flatMap{listOf(it.a.x,it.b.x)}
         val ys=lines.flatMap{listOf(it.a.y,it.b.y)}
+        require((xs+ys).all{it.isFinite()}){
+            "Pocket rectangle coordinates must be finite"
+        }
         val minX=xs.minOrNull() ?: error("Rectangle pocket missing X")
         val maxX=xs.maxOrNull() ?: error("Rectangle pocket missing X")
         val minY=ys.minOrNull() ?: error("Rectangle pocket missing Y")
         val maxY=ys.maxOrNull() ?: error("Rectangle pocket missing Y")
-        require(lines.all { line ->
-            val horizontal=abs(line.a.y-line.b.y)<=EPS &&
-                (abs(line.a.y-minY)<=EPS || abs(line.a.y-maxY)<=EPS)
-            val vertical=abs(line.a.x-line.b.x)<=EPS &&
-                (abs(line.a.x-minX)<=EPS || abs(line.a.x-maxX)<=EPS)
-            horizontal || vertical
-        }){"Pocket rectangle must be axis-aligned and closed"}
+        require(maxX-minX>EPS && maxY-minY>EPS){
+            "Pocket rectangle must have positive area"
+        }
+        // Four border-aligned segments are not necessarily a closed rectangle:
+        // reject gaps, duplicate edges and partial edges before generating NC.
+        val bottomLeft=Vec2(minX,minY);val bottomRight=Vec2(maxX,minY)
+        val topRight=Vec2(maxX,maxY);val topLeft=Vec2(minX,maxY)
+        val expected=listOf(
+            bottomLeft to bottomRight,
+            bottomRight to topRight,
+            topRight to topLeft,
+            topLeft to bottomLeft
+        )
+        fun samePoint(a:Vec2,b:Vec2)=abs(a.x-b.x)<=EPS && abs(a.y-b.y)<=EPS
+        val matched=lines.map { line ->
+            expected.indexOfFirst { (start,end) ->
+                (samePoint(line.a,start)&&samePoint(line.b,end)) ||
+                (samePoint(line.a,end)&&samePoint(line.b,start))
+            }
+        }
+        require(matched.all{it>=0} && matched.distinct().size==4){
+            "Pocket rectangle must have four unique, full-length, connected edges"
+        }
         return rectanglePocket(minX,minY,maxX,maxY,settings)
     }
 
