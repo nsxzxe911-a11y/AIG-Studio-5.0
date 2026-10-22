@@ -49,6 +49,7 @@ jobs:
           node tests/aig-continuous-scan-7-9.real-browser.mjs
           node tests/aig-multiview-fusion-7-10.real-browser.mjs
           node tests/aig-auto-correspondence-7-11.real-browser.mjs
+          node tests/aig-scene-map-7-12.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
