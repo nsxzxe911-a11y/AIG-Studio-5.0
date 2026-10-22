@@ -213,6 +213,50 @@ try{
     source3DIsNotApprovedUserHeroine:true,
     nativeS23WindowsFPSNotProven:true
    },null,2));
+   // Real3D 2.3: photo + true generated rig joins the EXISTING two-object
+   // world; 2.2 text uses the actual 6.4 head-turn clip, not fake run/jump.
+   const portrait=await page.evaluate(()=>{
+    const c=document.createElement('canvas');c.width=320;c.height=480;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#eeebe6';ctx.fillRect(0,0,320,480);
+    ctx.fillStyle='#443534';ctx.beginPath();
+    ctx.ellipse(160,105,39,74,0,0,Math.PI*2);ctx.fill();
+    return c.toDataURL('image/png').split(',')[1];
+   });
+   await page.locator('#photo23-source').setInputFiles({
+    name:'single-face.png',mimeType:'image/png',
+    buffer:Buffer.from(portrait,'base64')
+   });
+   await page.locator('#photo23-build').click();
+   await page.waitForFunction(()=>document.getElementById('photo23-status')
+    .textContent.includes('已真正加入'),null,{timeout:120000});
+   const rig23=JSON.parse(await page.locator('#photo23-proof').textContent());
+   assert.equal(rig23.realBones,17);
+   assert.equal(rig23.realSkinnedMeshes,9);
+   assert.equal(rig23.realSourceClips.length,5);
+   assert.equal(rig23.originalFilePreserved,true);
+   assert.equal(rig23.candidate715GeometryAutomaticallySkinned,false);
+   assert.equal(rig23.releaseAllowed,false);
+   const threeActors=JSON.parse(await page.locator('#world-proof').textContent());
+   assert.equal(threeActors.objects.length,3);
+   assert.equal(threeActors.objects[0].sourceSHA,before.objects[0].sourceSHA);
+   assert.equal(threeActors.objects[1].sourceSHA,before.objects[1].sourceSHA);
+   await page.locator('#story-text').fill('0秒 node-3：轉頭');
+   await page.locator('#story-compile').click();
+   await page.waitForFunction(()=>!document.getElementById('story-play').disabled);
+   const rigStory=JSON.parse(await page.locator('#story-proof').textContent());
+   assert.equal(rigStory.events[0].nodeId,'node-3');
+   assert.match(rigStory.events[0].clipName,/TURN_HEAD/i);
+   await page.locator('#story-play').click();
+   await page.waitForFunction(()=>document.getElementById('story-status')
+    .textContent.includes('開始播放'),null,{timeout:10000});
+   await page.screenshot({path:storyOut+'/'+device.name+
+    '-real3d-2-3-photo-rigged-actor-story.png',fullPage:true});
+   await writeFile(storyOut+'/'+device.name+'-real3d-2-3-proof.json',
+    JSON.stringify({device:device.name,...rig23,
+     worldActors:threeActors.objects.length,
+     chineseStoryClip:rigStory.events[0].clipName,
+     actualSourceNotVerifiedIdentity:true},null,2));
    console.log('AIG21_TRUE_GLTF_SOURCE_MOTION_AND_MAP_ANCHOR_BROWSER_PASS',
     device.name);
   }catch(e){
