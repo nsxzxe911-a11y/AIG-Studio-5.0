@@ -214,6 +214,44 @@ test('6.5 releases owned video tracks on stream initialization failure, keeps ca
  assert.equal(captureCount,0,'unsupported browser must not acquire tracks');
 });
 
+test('6.5 failed encoded Blob creation rejects stop and releases owned video tracks',async()=>{
+ const plan=planAIG65AutoAnimation(options());
+ let videoStops=0,callerAudioStops=0;
+ const videoTrack={stop:()=>{videoStops++;}};
+ const callerAudioTrack={stop:()=>{callerAudioStops++;}};
+ class MediaStreamFake{
+  constructor(tracks){this.tracks=tracks;}
+ }
+ class MediaRecorderFake{
+  static isTypeSupported(mime){return mime==='video/webm';}
+  constructor(){this.state='inactive';}
+  start(){this.state='recording';}
+  stop(){
+   this.state='inactive';
+   this.ondataavailable?.({data:new Blob(['nonempty encoded bytes'])});
+   this.onstop?.();
+  }
+ }
+ class BrokenBlob{
+  constructor(){throw Error('BROWSER_BLOB_FINALIZATION_FAILED');}
+ }
+ const rec=new AIG65CanvasRecorder({env:{
+  MediaStream:MediaStreamFake,MediaRecorder:MediaRecorderFake,Blob:BrokenBlob
+ }});
+ const canvas={width:1920,height:1080,
+  captureStream:()=>({getVideoTracks:()=>[videoTrack]})};
+ rec.begin({canvas,plan,sourceSHA256:id,audioDestination:{
+  stream:{getAudioTracks:()=>[callerAudioTrack]}
+ }});
+ rec.frame();rec.frame();
+ await assert.rejects(rec.stop(),/BROWSER_BLOB_FINALIZATION_FAILED/);
+ assert.equal(rec.state,'FAILED');
+ assert.equal(videoStops,1,'canvas video track must be released exactly once');
+ assert.equal(callerAudioStops,0,'caller-owned voice/music bus must remain alive');
+ assert.equal(rec.stream,null);
+ assert.equal(rec.recorder,null);
+ assert.equal(rec.lastError.message,'BROWSER_BLOB_FINALIZATION_FAILED');
+});
 test('6.5 RGB top-page true callbacks, WebAudio SFX/music and existing 3D/other wardrobes preserved',()=>{
  const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
  const html=read('index.html'),app=read('app.mjs');
