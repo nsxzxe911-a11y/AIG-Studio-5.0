@@ -23,7 +23,8 @@ object AigMechanicalNativeBridge {
             circle.center.x.isFinite()&&circle.center.y.isFinite()){
             "MECH_NATIVE_HOLE_INVALID"
         }
-        val entityId=circle.id,diameter=circle.radius*2
+        val entityId=circle.id
+        val diameter=circle.radius*2
         val feature=AigMechanicalFeature(featureId,AigMechanicalFeatureKind.HOLE,
             setOf(entityId),circle.center,diameter,depthMm)
         val dim=AigMechanicalDimension(
