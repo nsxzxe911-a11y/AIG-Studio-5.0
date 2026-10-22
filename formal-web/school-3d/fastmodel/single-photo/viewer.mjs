@@ -9,6 +9,7 @@ import {inspectExternalAction,copyCompatibleClips,commitCompatibleClips} from '.
 import {StoryPlayback} from './story-to-animation.mjs';
 import {Aig42GpuTimer} from './aig-performance-4-2.mjs';
 import {Aig17GLBGpuGovernor} from './aig-glb-gpu-adaptive-1-7.mjs';
+import {prepareAIG18StaticInstancing,activateAIG18StaticInstancing} from './aig-static-instancing-1-8.mjs';
 
 export async function parseRiggedGLB(buffer){
  if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>200*1024*1024)throw Error('GLB_SIZE_LIMIT');
@@ -64,10 +65,17 @@ export class PhotoViewer{
   this.resize=new ResizeObserver(()=>this.fitCanvas());this.resize.observe(canvas.parentElement);this.fitCanvas();this.previous=0;this.orbit=false;this.skinProbe=null;this.skinReport=null;this.onFrame=null;this.onAfterRender=null;this.onFrameMeasured=null;this.movieMode=false;this.movieOriginalViewport=null;
   this.gpu17Timer=null;this.gpu17Governor=null;this.gpu17Enabled=false;
   this.gpu17LastSample=null;this.gpu17Frames=0;this.gpu17Status='DISABLED_OR_NO_GL_BUNDLE';
+  this.gpu18Instances=null;this.gpu18Status='DISABLED';this.gpu18SkipHiddenFrames=0;
   this.renderer.setAnimationLoop(t=>{try{const dt=this.previous?Math.min(.1,(t-this.previous)/1000):0;this.previous=t;this.animation?.update(dt);
     try{this.onFrame?.(dt,t);}catch(audioError){this.onFrame=null;this.onError('音訊已隔離：'+audioError.message);}
     if(this.skinProbe&&this.model){this.skinProbe.capture(this.model,t,{animationName:this.animation?.clips?.[this.animation?.index]?.name||null});if(this.skinProbe.done)this.skinProbe=null;}
     this.controls.autoRotate=this.orbit;this.controls.update();
+    // Animation/story state continues when hidden, but avoid GPU submission
+    // when recording, explicit evidence or visual QA is not active.
+    if(document.visibilityState==='hidden'&&!this.movieMode&&
+      !this.reviewBusy&&!this.skinProbe&&!this.onFrameMeasured&&!this.onAfterRender){
+     this.gpu18SkipHiddenFrames++;return;
+    }
     const gpuMeasure=this.gpu17Enabled&&this.model&&!this.movieMode&&
       !this.reviewBusy&&!this.actionImportBusy&&document.visibilityState==='visible'&&
       this.gpu17Timer?.supported;
@@ -96,6 +104,46 @@ export class PhotoViewer{
      drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,
      visibility:document.visibilityState});}catch(e){this.onFrameMeasured=null;this.onError('5.2 畫面採樣已隔離：'+e.message);}
     try{this.onAfterRender?.(t);}catch(movieError){this.onAfterRender=null;this.onError('錄影已隔離：'+movieError.message);}}catch(e){this.renderer.setAnimationLoop(null);onError(e.message);}});
+ }
+ /** 1.8 source-safe GPU instancing for repeated genuinely static GLB nodes.
+  * Changes only reversible runtime visibility and draw-call representation.
+  */
+ setStaticInstancingEnabled(enabled){
+  if(typeof enabled!=='boolean')throw Error('AIG18_STATIC_INSTANCE_TOGGLE_INVALID');
+  if(this.movieMode||this.reviewBusy||this.actionImportBusy||this.skinProbe)
+   throw Error('AIG18_STATIC_INSTANCE_RECORDING_OR_QA_LOCK');
+  if(!enabled){
+   this.gpu18Instances?.restore();this.gpu18Instances=null;
+   this.gpu18Status='DISABLED_SOURCE_RESTORED';
+   return this.getStaticInstancingReport();
+  }
+  if(!this.model)throw Error('AIG18_REAL_LOADED_GLB_REQUIRED');
+  if(this.gpu18Instances)return this.getStaticInstancingReport();
+  const planned=prepareAIG18StaticInstancing(this.model,
+   this.animation?.clips||[],{minInstances:3,maxInstancesPerGroup:2048});
+  if(!planned.instanceDrawGroups){
+   this.gpu18Status='NO_IDENTICAL_SAFE_STATIC_GROUPS_SOURCE_UNCHANGED';
+   return this.getStaticInstancingReport({plan:planned});
+  }
+  this.gpu18Instances=activateAIG18StaticInstancing(planned);
+  this.gpu18Status='TRUE_THREE_GPU_INSTANCING_ACTIVE';
+  return this.getStaticInstancingReport();
+ }
+ getStaticInstancingReport({plan=null}={}){
+  const state=this.gpu18Instances?.report();
+  return Object.freeze({
+   schema:'AIG_FASTMODEL_REAL3D_1_8_STATIC_GPU_INSTANCING',
+   reason:this.gpu18Status,loadedGLBPresent:!!this.model,
+   active:Boolean(state?.active),
+   groupedStaticMeshes:state?.groupedStaticMeshes??plan?.groupedStaticMeshes??0,
+   instanceDrawGroups:state?.instanceDrawGroups??plan?.instanceDrawGroups??0,
+   theoreticalDrawCallsSaved:state?.theoreticalDrawCallsSaved??plan?.theoreticalDrawCallsSaved??0,
+   skippedHiddenGPUFrames:this.gpu18SkipHiddenFrames,
+   originalGeometryBytesUnchanged:true,
+   skinMorphAndAnimationTracksPreserved:true,
+   noGeometryDecimation:true,actualFPSGainMeasured:false,
+   nativeAndroidWindowsGPUVerified:false
+  });
  }
  /**
   * Opt-in on actual loaded GLB only; NEVER changes GLB or animation.
@@ -170,6 +218,7 @@ export class PhotoViewer{
  }
  async load(buffer,{orbit=false}={}){
   if(this.gpu17Enabled)this.setGpuAccelerationEnabled(false);
+  if(this.gpu18Instances)this.setStaticInstancingEnabled(false);
   if(this.reviewBusy)throw Error('TIMELINE_REVIEW_IN_PROGRESS');
   if(this.actionImportBusy)throw Error('ACTION_IMPORT_IN_PROGRESS');
   if(this.movieMode)throw Error('MOVIE_RECORDING_IN_PROGRESS');
