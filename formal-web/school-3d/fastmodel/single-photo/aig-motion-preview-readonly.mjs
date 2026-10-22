@@ -153,7 +153,7 @@ export function initAigReadOnlyMotionControls(doc,host){
  canvas.width=640;canvas.height=360;canvas.hidden=true;
  section.append(title,help,input,load,play,stop,status,canvas);
  host.append(section);
- let preview=null,playing=false,frameHandle=null,generation=0;
+ let preview=null,playing=false,frameHandle=null,generation=0,importGeneration=0;
  const ctx=canvas.getContext('2d'),view=doc.defaultView;
  function halt(){
   playing=false;generation++;
@@ -161,17 +161,24 @@ export function initAigReadOnlyMotionControls(doc,host){
   frameHandle=null;stop.disabled=true;play.disabled=!preview;
  }
  load.addEventListener('click',async()=>{
+  const importTicket=++importGeneration;
   halt();preview=null;play.disabled=true;canvas.hidden=true;
+  status.textContent='驗證中｜正在計算來源 SHA-256；不執行 CNC 機台命令。';
   const file=input.files?.[0];
   if(!file){status.textContent='請先選擇 AIG 唯讀動畫 JSON。';return;}
   try{
    if(file.size>700000)throw Error('AIG_MOTION_PREVIEW_FILE_TOO_LARGE');
-   const parsed=await parseAigReadOnlyMotionPreview(await file.text());
+   const bytes=await file.text();
+   if(importTicket!==importGeneration)return;
+   const parsed=await parseAigReadOnlyMotionPreview(bytes);
+   // An earlier slow file digest must never replace a newer verified input.
+   if(importTicket!==importGeneration)return;
    preview=parsed;canvas.hidden=false;play.disabled=false;
    drawAigReadOnlyMotionFrame(ctx,preview,0);
    status.textContent='驗證通過｜'+preview.axisMode+'｜'+preview.frames.length+
     ' 個刀心點｜SHA-256 已核對；僅供預覽，不可驅動機台。';
   }catch(error){
+   if(importTicket!==importGeneration)return;
    status.textContent='BLOCKED｜'+error.message;
   }
  });
