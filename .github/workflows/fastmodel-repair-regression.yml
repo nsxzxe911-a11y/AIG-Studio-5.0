@@ -25,6 +25,8 @@ jobs:
       - run: npm ci
       - run: python -m pip install -r requirements.txt
       - run: npm test
+      - name: Preserve Real3D 1.6 finite mesh residency against FastModel prior-core regression
+        run: node --test tests/aig-real3d-gpu-v1-6.test.mjs
       - run: python -m unittest discover -s tests -p 'test_*.py' -v
       - run: npm run build
       - run: npm install --no-save playwright@1.55.0

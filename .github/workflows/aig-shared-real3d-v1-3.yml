@@ -8,6 +8,13 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-real3d-replay-v1-3*'
       - 'formal-web/school-3d/fastmodel/single-photo/build.mjs'
       - '.github/workflows/aig-shared-real3d-v1-3.yml'
+  pull_request:
+    branches:
+      - repair/core-first-fastmodel-20261021
+    paths:
+      - '.github/workflows/aig-shared-real3d-v1-3.yml'
+      - 'formal-web/shared-3d/**'
+      - 'formal-web/school-3d/fastmodel/single-photo/**'
   workflow_dispatch:
 jobs:
   real-blockwise-geometry:
