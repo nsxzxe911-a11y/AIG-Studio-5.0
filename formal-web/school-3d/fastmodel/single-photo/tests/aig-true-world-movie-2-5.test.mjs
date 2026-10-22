@@ -33,8 +33,9 @@ class MockMediaStream{
  getAudioTracks(){return []}
 }
 const events=[];
-let stopped=0;
-const videoTrack={kind:'video',stop:()=>{stopped++}};
+let stopped=0,requestedRealFrames=0;
+const videoTrack={kind:'video',stop:()=>{stopped++},
+ requestFrame:()=>{requestedRealFrames++}};
 const fakeCanvas={
  width:0,height:0,
  captureStream:fps=>{assert.equal(fps,30);return {
@@ -102,7 +103,7 @@ test('2.5 refuses to record non-source story, camera-only movie or flat photo',(
  assert.equal(r.state,'IDLE');
 });
 test('2.5 actual canvas frames are composed, subtitles pixel-burnt and real codec is kept',async()=>{
- stopped=0;events.length=0;
+ stopped=0;requestedRealFrames=0;events.length=0;
  const source={width:1920,height:1080};
  const rec=new AIG25WorldMovieRecorder({env});
  const started=rec.begin({sourceCanvas:source,proof});
@@ -116,6 +117,9 @@ test('2.5 actual canvas frames are composed, subtitles pixel-burnt and real code
  assert.equal(rec.state,'COMPLETE');
  assert.equal(done.evidence.movieWritten,true);
  assert.equal(done.evidence.actualFramesComposited,2);
+ assert.equal(done.evidence.manualCanvasFrameCaptureSupported,true);
+ assert.equal(done.evidence.explicitCanvasCaptureRequests,2);
+ assert.equal(requestedRealFrames,2);
  assert.equal(done.evidence.sourceSubtitlePixelsBurnedIntoCanvas,true);
  assert.equal(done.evidence.generatedHumanMovement,false);
  assert.equal(done.evidence.recordedAudioTracks,0);
