@@ -786,6 +786,7 @@ async function finishMovie25({cancel=false,reason=''}={}){
   output.evidence.browserDecodedFrameVerified=true;
   output.evidence.decodedFrameResolution=[
    decoded.actualVideoWidth,decoded.actualVideoHeight];
+  output.evidence.localVaultVideoRoundtripVerified=false;
   const url=URL.createObjectURL(output.blob);
   const old=movie25DownloadUrl;movie25DownloadUrl=url;
   const a=$('movie25-download');
@@ -803,8 +804,19 @@ async function finishMovie25({cancel=false,reason=''}={}){
     source:'GENERATED_DERIVED',modelAccuracy:'NOT_VERIFIED',
     coordinateUnits:'UNKNOWN',derivedFrom:session.plan.sceneId
    });
+   const reopened=await library.get(saved.id,{includePayload:true});
+   if(!reopened?.blob||reopened.asset?.sha256!==saved.sha256||
+    reopened.blob.size!==output.blob.size||
+    reopened.blob.type!==output.blob.type)
+    throw Error('AIG25_VAULT_VIDEO_SHA_ROUNDTRIP_INVALID');
+   // The existing 7.16 IndexedDB vault verified the actual encoded Blob SHA
+   // after reopening. This is not a claim of cloud sync or Android file IO.
+   output.evidence.localVaultVideoRoundtripVerified=true;
+   output.evidence.localVaultAssetId=saved.id;
+   output.evidence.localVaultSHA256=saved.sha256;
+   $('movie25-proof').textContent=JSON.stringify(output.evidence,null,2);
    film25Status($('movie25-status').textContent+
-    '；影片已獨立保存本機素材庫 '+saved.id+'。');
+    '；影片已獨立保存本機素材庫 '+saved.id+'（SHA 回讀通過）。');
   }catch(saveError){
    film25Status($('movie25-status').textContent+
     '；外部素材庫未保存（可能超過 64 MiB）：'+
