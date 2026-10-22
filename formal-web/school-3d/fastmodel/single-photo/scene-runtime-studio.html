@@ -108,6 +108,16 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <button id="world-actor-play">播放來源原始動作</button>
 <button id="world-actor-pause">暫停這個角色</button>
 <p id="world-actor-status" role="status" aria-live="polite">未載入任何已驗證 GLB 動畫片段；不會憑空生成跑跳。</p>
+<section id="photo-2-3" class="panel" style="margin:14px 0;padding:14px;background:#071827;border-color:#39788b">
+<h2>Real3D 2.3｜單張照片 → 真骨架角色 → 同一個 3D 世界</h2>
+<p>只需一張人物臉部或上半身照片；沿用 FastModel 6.4 的 17 骨架、9 個真蒙皮網格（含制服／髮束）及 5 個來源動作。生成後會先驗證骨架、衣物及動畫來源，保存原始照片與 GLB 各自的 SHA，再加入目前 Real3D 工作場景；上方 2.2 中文劇情可使用實際存在的動作。不會把單張照片猜測的背面視為真人 1:1 掃描，也不會冒充已生成跑跳。
+</p>
+<label>來源照片（JPG／PNG／WebP，上限 12 MiB）
+<input id="photo23-source" type="file" accept="image/png,image/jpeg,image/webp" style="display:block;width:100%;padding:10px;min-height:45px;background:#05111c;color:#d9f7ff;border:1px solid #467f98;border-radius:8px"></label>
+<button id="photo23-build" type="button">建立真骨架＋驗證衣物／動畫＋載入 3D 世界</button>
+<output id="photo23-status" role="status" aria-live="polite" style="display:block;color:#b3efe6;padding:8px">尚未處理照片，既有場景保持不變。</output>
+<pre id="photo23-proof" style="overflow:auto;max-height:200px;white-space:pre-wrap;font:12px/1.5 ui-monospace,monospace">尚無 2.3 來源與蒙皮證據。</pre>
+</section>
 <section id="story-2-2" style="border:1px solid #447c95;border-radius:12px;padding:14px;margin-top:15px;background:#061727">
 <h2>Real3D 2.2｜中文劇情 → 原始 GLB 動作／鏡頭／字幕</h2>
 <p>先在上方載入真正含 AnimationClip 的人物，再輸入敘述。單一角色可省略代號；多角色必須填實際 node ID，例如 node-1。鏡頭必須先在「鏡頭關鍵格」設好時間及位置。人物缺少跑、跳、蹲、轉頭等原始 GLB 動作會明確 BLOCKED，絕不偽裝成已生成 3D 骨架。</p>
