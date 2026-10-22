@@ -9,7 +9,7 @@
     "source_branch": "web/aig-dual-formal-runtime-20261016",
     "source_sha_before_handoff": "d6d431002a0238476fb3d4b4a2d2f415bf26b57c",
     "render_live_sha": "UNVERIFIED",
-    "deployment": "NOT_VERIFIED_LIVE"
+    "deployment": "LIVE_RENDER_DEPLOY_dep-dbd00iqfngtc73b6tl4g_SHA_272dceb187151a30845977e86b0fdaeddd8b7a42_EXTERNAL_HTTP_READBACK_PENDING"
   },
   "projects": [
     {
@@ -39,8 +39,8 @@
       "source_sha": "aa36ccea3807f4e17afbb698f67535c25cfa4766",
       "visibility": "PUBLIC",
       "source_checked": true,
-      "runtime_gate": "7_11_ALL_PASS_SCENE_MAP_SOURCE_COMMITTED_BROWSER_GATE_PENDING_NATIVE_AND_RENDER_NOT_VERIFIED",
-      "checkpoint_note": "FastModel 7.11 real source features PASS and stable; user paused further camera-pose and CAD grid work and prioritized source-backed scene map from buildings, trees, roads. 7.12 map source aa36ccea3807f4e17afbb698f67535c25cfa4766 implements local GUI map layers, user-supplied WGS84 GeoJSON import, building/road/trees/sports symbols, provenance, relative percent lengths/areas, explicit unknown metric physical scale. Core source created and V8 local geometry sample PASS; full GitHub mobile desktop real browser new map gate queued/not-yet-confirmed. AutoRig AI walk/run/jump/crouch/stand formally queued only, not implemented. Render LIVE and native binaries NOT VERIFIED."
+      "runtime_gate": "SOURCE_NUMERIC_BROWSER_AND_RENDER_DEPLOY_LIVE_EXACT_SHA_PUBLIC_HTTP_INTERACTION_NOT_VERIFIED",
+      "checkpoint_note": "FastModel 7.12 scene map original Render deployed dep-dbd00iqfngtc73b6tl4g success as of Oct 22 2026, exact deployed SHA 272dceb187151a30845977e86b0fdaeddd8b7a42. New scene map GeoJSON backend and UI; run 39776235902 Node 357/357 Python 49/49 and phone/desktop map 4 features PASS. External direct HTTP readback unverified; no true real-world map catalog, person 3D, native APK/EXE or AI motion engine. Camera and grid additional engineering paused; AutoRig queued."
     }
   ],
   "checks": {
@@ -53,7 +53,7 @@
     "fastmodel_reverse_geometry_7_0": "SEVEN_NUMERICAL_TESTS_PASS_PR_WORKFLOW_39738963313_NOT_REAL_PHOTO_CHARACTER",
     "fastmodel_real_3d": "NOT_VERIFIED",
     "fastmodel_ci": "PASS_GITHUB_PR_REGRESSION_39739507776_272_NODE_49_PYTHON_BUILD_BROWSER_PHONE_DESKTOP",
-    "fastmodel_site_live": "NOT_VERIFIED",
+    "fastmodel_site_live": "PASS_RENDER_DEPLOYED_SHA_272dceb187151a30845977e86b0fdaeddd8b7a42_BUT_EXTERNAL_HTTP_READBACK_UNVERIFIED",
     "fastmodel_browser_7_0": "PASS_SYNTHETIC_SOURCE_IMAGE_ALPHA_TO_VECTOR_AND_REAL_NUMERICAL_2D_ONLY_PHONE_AND_DESKTOP",
     "fastmodel_source_audit": "PASS_GITHUB_SOURCE_GATE_39739507672",
     "fastmodel_implicit_7_1": "PASS_NUMERIC_3D_SDF_WITH_EXPLICIT_UNOBSERVED_DEPTH",
@@ -150,15 +150,19 @@
     "fastmodel_7_11_original_heroine": "NOT_VERIFIED_SYNTHETIC_VIDEO_ONLY",
     "fastmodel_7_11_arbitrary_video_auto_camera_pose": "NOT_IMPLEMENTED",
     "fastmodel_7_11_dense_3d_avatar": "NOT_IMPLEMENTED",
-    "fastmodel_7_12_scene_map": "SOURCE_COMMITTED_GITHUB_GATE_PENDING",
+    "fastmodel_7_12_scene_map": "PASS_SOURCE_AND_BROWSER_TEST_DEPLOYED_RENDER_LIVE",
     "fastmodel_7_12_scene_map_core_sha": "aa36ccea3807f4e17afbb698f67535c25cfa4766",
     "fastmodel_7_12_source_geometry_sanity": "PASS_LOCAL_6_25_PERCENT_ROUNDTRIP_AND_WGS84_GEOJSON",
-    "fastmodel_7_12_scene_map_browser": "PENDING_GITHUB_CI",
+    "fastmodel_7_12_scene_map_browser": "PASS_GITHUB_39776235902_PHONE_DESKTOP_4_GEOJSON_FEATURES",
     "fastmodel_7_12_scene_geolocation": "ONLY_SOURCE_SUPPLIED_GEOJSON_NOT_AUTO_PHOTO_GPS",
     "fastmodel_7_12_scene_map_real_external_geodata": "NO_USER_DATA_IMPORTED_YET",
     "fastmodel_7_12_physical_dimensions": "UNKNOWN_UNLESS_SOURCE_CALIBRATED",
     "fastmodel_7_12_native_apk_exe": "NOT_VERIFIED",
-    "fastmodel_autorig_ai_motion": "APPROVED_QUEUED_NOT_EXECUTED"
+    "fastmodel_autorig_ai_motion": "APPROVED_QUEUED_NOT_EXECUTED",
+    "fastmodel_7_12_regression": "PASS_GITHUB_39776235902_NODE_357_357_PYTHON_49_49",
+    "fastmodel_last_render_deploy_id": "dep-dbd00iqfngtc73b6tl4g",
+    "fastmodel_last_render_deployed_commit": "272dceb187151a30845977e86b0fdaeddd8b7a42",
+    "fastmodel_official_http_scene_map_readback": "NOT_VERIFIED_NETWORK_ACCESS_BLOCKED"
   },
   "approved_invariants": [
     "Do not delete/overwrite original geometry, CAD/CAM/NC, approved RGB Authority, or FastModel assets.",
@@ -168,10 +172,10 @@
     "No automatic rollback/downgrade; no destructive repair; create a new checkpoint after validation."
   ],
   "next_steps": [
-    "Check new GitHub 7.12 Scene Map Source Gate and full 7.0-7.11 regression; if failure, repair without overwriting other cores. No PASS for queued test.",
+    "Independent browser HTTP open on original Render /fastmodel/scene-map-studio.html and module resource URLs; do not claim verified rendered production actions until checked.",
+    "Continue source-provenanced map and scene percentages; no invented building/tree/road physical dimensions or fake GPS.",
+    "Resume AutoRig and AI motion only after user-directed priority; currently approved backlog not implemented.",
     "Add source GeoJSON or actual user-uploaded site/facility map data with attribution; do not fabricate real building/tree/road physical sizes from class.",
-    "Verify exact original Render site's published commit and HTTP served /fastmodel/scene-map-studio.html and JS dependencies before claiming LIVE; avoid replacement site or fake UI.",
-    "After scene map geometry and source provenance Gate, link map observations to 7.9 video frames and 7.11 tracked features via reviewed correspondences. Keep camera 7.12 and CAD grid further R&D paused pending user signal.",
     "Keep AutoRig + AI motion queued, not implemented or native-verified.",
     "Only claim 7.11 officially on original Render website after exact deployment SHA of web/aig-dual-formal-runtime-20261016 and HTTP serving /fastmodel/tracking-studio.html, /fastmodel/tracking-studio.mjs and core module; preserve original AIG UI/navigation.",
     "After verified sparse XYZ mapping build gradual source-dependent SDF constraints and deformation skinning, then real heroine reference image/video side-by-side and native device FPS Gate.",
@@ -194,5 +198,5 @@
     "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
   ],
   "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
-  "last_action": "FastModel source aa36ccea3807f4e17afbb698f67535c25cfa4766 implemented standalone local scene map / GeoJSON / percentage feature database and UI. 7.12 camera/CAD grid further work paused by user. AutoRig AI motion pending in PENDING-AUTORIG-AI-MOTION.md; 7.11 full source/browser gates remain PASS (342 Node/49 Python). Scene map browser gate new CI started but NOT VERIFIED PASS. Site source mirrored scene-map-studio.html mjs and core exact; production Render LIVE remains old."
+  "last_action": "FastModel 7.12 scene map original Render site deployment dep-dbd00iqfngtc73b6tl4g LIVE exact published SHA 272dceb187151a30845977e86b0fdaeddd8b7a42 on 2026-10-22T12:23:52Z; 357/357 Node and 49/49 Python, source GeoJSON real Chromium phone and desktop PASS run 39776235902. Public HTTP content readback unavailable in tool environment; map source matches exact blobs. AutoRig AI motion still only queued; camera and CAD further work paused as directed."
 }
