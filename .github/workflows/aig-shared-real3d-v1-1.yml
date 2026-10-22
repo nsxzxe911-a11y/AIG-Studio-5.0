@@ -1,0 +1,69 @@
+name: AIG Three-Project Real3D Numerical Stock Removal V1.1 Gate
+on:
+  push:
+    branches:
+      - repair/core-first-fastmodel-20261021
+    paths:
+      - 'formal-web/shared-3d/**'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-real3d-stock-v1-1*'
+      - 'formal-web/school-3d/fastmodel/single-photo/build.mjs'
+      - '.github/workflows/aig-shared-real3d-v1-1.yml'
+  workflow_dispatch:
+jobs:
+  stock-v1-1:
+    name: Actual Numerical 3D Stock Voxel and Independent Phone Desktop WebGL Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Compile stock and renderer, preserve strict CNC isolation
+        run: |
+          node --check ../../../shared-3d/aig-real3d-core.mjs
+          node --check ../../../shared-3d/aig-real3d-webgl.mjs
+          node --check ../../../shared-3d/aig-real3d-stock-removal-1-1.mjs
+          node --check ../../../shared-3d/aig-real3d-stock-lab.mjs
+          node --check tests/aig-real3d-stock-v1-1.test.mjs
+          node --check tests/aig-real3d-stock-v1-1.real-browser.mjs
+      - name: Real 3D voxel feed material removal volume and G0 no removal
+        run: node --test tests/aig-real3d-stock-v1-1.test.mjs tests/aig-real3d-shared-v1.test.mjs
+      - name: Offline package copies canonical exact engine and preserves old resources
+        run: |
+          npm run build
+          test -s dist/shared-3d/aig-real3d-stock-removal-1-1.mjs
+          test -s dist/shared-3d/aig-real3d-stock-lab.mjs
+          test -s dist/shared-3d/aig-real3d-stock-lab.html
+          cmp ../../../shared-3d/aig-real3d-stock-removal-1-1.mjs dist/shared-3d/aig-real3d-stock-removal-1-1.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Actual GPU phone desktop stock changes, screen pixels and G0 safety
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig3d-stock.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-real3d-stock-v1-1.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-V1-1-True-Voxel-Stock-Volume-And-WebGL-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-shared-real3d-stock-v1-1/
+          if-no-files-found: warn
+      - name: Explicit trust boundary
+        if: always()
+        run: |
+          {
+            echo 'XYZ_VOLUME=TRUE_NUMERICAL_3D_VOXEL_OCCUPANCY'
+            echo 'MATERIAL_REMOVED_MM3=COUNTED_VOXEL_VOLUME'
+            echo 'G0=ZERO_MATERIAL_REMOVAL'
+            echo 'G1=ANALYTIC_CYLINDER_VOXEL_CENTER_SWEEP'
+            echo 'TRUE_MILLING_TOLERANCE_0_001_MM=NOT_VERIFIED'
+            echo 'AXIS_AB_C_KINEMATICS=NOT_IMPLEMENTED'
+            echo 'REAL_FANUC_NC_POST_AND_COLLISION=NOT_VERIFIED'
+            echo 'ANDROID_WINDOWS_NATIVE_GPU_PERFORMANCE=NOT_VERIFIED'
+          } >> "$GITHUB_STEP_SUMMARY"
