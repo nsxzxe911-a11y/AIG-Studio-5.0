@@ -23,6 +23,7 @@ try{
    await page.waitForFunction(()=>document.getElementById('status').textContent.includes('本機資產庫已開啟'));
    const original=Buffer.from('glTF_TEST_BLOB_PERSON_SOURCE_IMMUTABLE');
    const checksum='sha256:'+createHash('sha256').update(original).digest('hex');
+   let expectedRecords=0;
    const add=async(cat,title,tags,bytes=original)=>{
     await page.locator('#asset-file').setInputFiles({
      name:'asset.glb',mimeType:'model/gltf-binary',buffer:bytes});
@@ -30,7 +31,9 @@ try{
     await page.locator('#asset-title').fill(title);
     await page.locator('#asset-tags').fill(tags);
     await page.locator('#asset-import').click();
-    await page.waitForFunction(()=>document.getElementById('status').textContent.includes('已保存'));
+    const expected=++expectedRecords;
+    await page.waitForFunction(n=>document.getElementById('stats')
+     .textContent.includes('儲存項目 '+n+' 筆'),expected);
    };
    await add('character','櫻花校園女主角','女主角,校園');
    await add('scene','校園同材質場景','校園,場景');
@@ -40,7 +43,8 @@ try{
    await page.locator('#asset-title').fill('校園 GeoJSON');
    await page.locator('#asset-tags').fill('校園,圖資');
    await page.locator('#asset-import').click();
-   await page.waitForFunction(()=>document.getElementById('status').textContent.includes('已保存'));
+   await page.waitForFunction(()=>document.getElementById('stats')
+    .textContent.includes('儲存項目 3 筆'));
    const info=await page.locator('#stats').textContent();
    assert.match(info,/儲存項目 3 筆/);
    assert.match(info,/獨立檔案 2 份/);
