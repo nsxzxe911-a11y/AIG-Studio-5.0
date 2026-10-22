@@ -17,13 +17,13 @@ object AigAnalyticCadKernel {
     private fun mul(a:Vec2,k:Double)=Vec2(a.x*k,a.y*k)
     private fun cross(a:Vec2,b:Vec2)=a.x*b.y-a.y*b.x
     private fun dot(a:Vec2,b:Vec2)=a.x*b.x+a.y*b.y
-    private fun d(a:Vec2,b:Vec2)=hypot(a.x-b.x,a.y-b.y)
+    private fun distance(a:Vec2,b:Vec2)=hypot(a.x-b.x,a.y-b.y)
     private fun valid(a:Vec2,b:Vec2){
-        require(finite(a)&&finite(b)&&d(a,b)>TOL){"CAD_DEGENERATE_OR_NONFINITE_LINE"}
+        require(finite(a)&&finite(b)&&distance(a,b)>TOL){"CAD_DEGENERATE_OR_NONFINITE_LINE"}
     }
     private fun dedupe(items:List<Vec2>):List<Vec2> {
         val out=mutableListOf<Vec2>()
-        items.forEach{p->if(out.none{d(it,p)<=TOL})out+=p}
+        items.forEach{p->if(out.none{distance(it,p)<=TOL})out+=p}
         return out
     }
     fun segmentSegment(a:Vec2,b:Vec2,c:Vec2,d:Vec2):List<Vec2>{
@@ -34,7 +34,7 @@ object AigAnalyticCadKernel {
             if(abs(cross(diff,r))<=TOL*hypot(r.x,r.y)){
                 val overlap=listOf(a,b,c,d).filter{p->
                     fun on(x:Vec2,y:Vec2)=
-                        abs(cross(sub(y,x),sub(p,x)))<=TOL*d(x,y) &&
+                        abs(cross(sub(y,x),sub(p,x)))<=TOL*distance(x,y) &&
                         dot(sub(p,x),sub(p,y))<=TOL
                     on(a,b)&&on(c,d)
                 }
@@ -66,7 +66,7 @@ object AigAnalyticCadKernel {
     fun circleCircle(c1:Vec2,r1:Double,c2:Vec2,r2:Double):List<Vec2>{
         require(finite(c1)&&finite(c2)&&
             r1.isFinite()&&r2.isFinite()&&r1>TOL&&r2>TOL){ "CAD_INVALID_CIRCLES" }
-        val distance=d(c1,c2)
+        val distance=distance(c1,c2)
         require(distance>TOL || abs(r1-r2)>TOL){"CAD_COINCIDENT_CIRCLES"}
         if(distance>TOL && (distance>r1+r2+TOL||distance<abs(r1-r2)-TOL))
             return emptyList()
