@@ -35,6 +35,10 @@ test('2.2 Chinese text compiles real signed original GLB clips + authored camera
  assert.equal(timeline.generatedHumanMotion,false);
  assert.equal(timeline.originalAssetBlobsUnchanged,true);
  assert.equal(verifyAIG22Story(timeline,scene,actors()),true);
+ const tampered=structuredClone(timeline);
+ tampered.events[0].clipIndex=57;
+ assert.throws(()=>verifyAIG22Story(tampered,scene,actors()),
+  /STORED_TIMELINE_TAMPERED_OR_STALE/);
  const changed={...scene,revision:scene.revision+1};
  assert.throws(()=>verifyAIG22Story(timeline,changed,actors()),
   /SCENE_REVISION_OR_SHA_CHANGED/);
