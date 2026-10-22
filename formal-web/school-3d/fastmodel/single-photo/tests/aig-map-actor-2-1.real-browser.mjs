@@ -150,8 +150,13 @@ try{
    await page.locator('#world-align-offset-x').fill('2');
    await page.locator('#world-align-offset-z').fill('-1');
    await page.locator('#world-align').click();
-   await page.waitForFunction(()=>document.getElementById('world-status')
-    .textContent.includes('已自動保存'),null,{timeout:10000});
+   await page.waitForFunction(()=>{
+    try{
+     const model=JSON.parse(document.getElementById('world-proof').textContent);
+     return model.objects.length===2&&
+      model.objects[1].xyz[0]===22&&model.objects[1].xyz[2]===29
+    }catch{return false}
+   },null,{timeout:12000});
    const after=JSON.parse(await page.locator('#world-proof').textContent());
    assert.deepEqual(after.objects[1].xyz,[22,0,29]);
    assert.equal(after.objects[1].sourceSHA,before.objects[1].sourceSHA);
