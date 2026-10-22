@@ -82,8 +82,12 @@ export function sampleAigReadOnlyMotionFrame(preview,seconds){
  const alpha=Math.max(0,Math.min(1,
   (seconds-from.timeSeconds)/(to.timeSeconds-from.timeSeconds)));
  const output={timeSeconds:seconds,rapid:to.rapid};
- for(const key of ['x','y','z','a','b','c'])
+ // Only tool-center XYZ linear interpolation is supported by this protocol.
+ // Rotary-axis kinematics/indexing MUST NOT be invented as smooth A/B/C
+ // motion; keep the previous sampled pose until the next verified waypoint.
+ for(const key of ['x','y','z'])
   output[key]=from[key]+(to[key]-from[key])*alpha;
+ for(const key of ['a','b','c'])output[key]=from[key];
  return output;
 }
 export function drawAigReadOnlyMotionFrame(ctx,preview,seconds=0){
