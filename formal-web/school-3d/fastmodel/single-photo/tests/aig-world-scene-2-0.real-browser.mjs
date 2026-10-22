@@ -89,14 +89,34 @@ try{
    };
    await choose('world-map','校園來源地圖');
    await page.locator('#world-new').click();
+   await page.waitForFunction(()=>{
+    const st=document.getElementById('world-status')?.textContent||'';
+    return st.includes('已建立來源座標一致的空白世界場景')&&
+      !document.getElementById('world-add').disabled;
+   },null,{timeout:12000});
    await choose('world-asset','女主角來源模型');
    await page.locator('#world-x').fill('0');
    await page.locator('#world-add').click();
-   await page.waitForFunction(()=>document.getElementById('world-proof')
-    .textContent.includes('"node": "node-1"'));
+   await page.waitForFunction(()=>{
+    try{
+     const doc=JSON.parse(document.getElementById('world-proof').textContent);
+     return doc.objects.length===1&&doc.objects[0].node==='node-1'&&
+      doc.objects[0].category==='character'&&
+      !document.getElementById('world-add').disabled;
+    }catch{return false}
+   },null,{timeout:12000});
    await choose('world-asset','校園建築來源');
    await page.locator('#world-x').fill('3.5');
    await page.locator('#world-add').click();
+   await page.waitForFunction(()=>{
+    try{
+     const doc=JSON.parse(document.getElementById('world-proof').textContent);
+     return doc.objects.length===2&&doc.objects[1].node==='node-2'&&
+      doc.objects[1].category==='building'&&
+      doc.objects[1].xyz[0]===3.5&&
+      !document.getElementById('world-add').disabled;
+    }catch{return false}
+   },null,{timeout:12000});
    const before=JSON.parse(await page.locator('#world-proof').textContent());
    assert.equal(before.objects.length,2);
    assert.equal(before.sourceMode,'LOCAL_RELATIVE');
