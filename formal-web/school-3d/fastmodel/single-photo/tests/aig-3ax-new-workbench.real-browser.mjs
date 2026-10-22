@@ -57,7 +57,7 @@ try{
     route.fulfill({status:200,contentType:'image/png',body:Buffer.from('FORGED_PREVIEW_IMAGE')}));
    await page.locator('#authority-check').click();
    await page.waitForFunction(()=>document.getElementById('authority-status').textContent
-    .includes('AIG_3AX_ORIGINAL_BYTE_LENGTH_MISMATCH'));
+    .includes('SOURCE_PNG_BYTE_LENGTH_OR_SIZE_BLOCKED'));
    assert.equal(await page.locator('#authority-preview').isVisible(),false);
    await page.unroute('**/visual-authority/mobile/05_3AX.png');
    await page.locator('#authority-file').setInputFiles({
