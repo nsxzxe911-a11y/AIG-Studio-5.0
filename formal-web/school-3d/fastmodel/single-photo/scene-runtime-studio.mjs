@@ -1,6 +1,8 @@
 import {PhotoViewer} from './viewer.mjs';
 import {buildAIG23PhotoActor} from './aig-photo-rig-world-2-3.mjs';
 import {detectAIG24Image} from './aig-auto-image-detect-2-4.mjs';
+import {AIG25WorldMovieRecorder,validateAIG25TrueWorldMovie}
+ from './aig-true-world-movie-2-5.mjs';
 import {openAIG716AssetLibrary} from './aig-external-asset-library-7-16.mjs';
 import {AIG19SceneRuntime} from './aig-scene-lifecycle-1-9.mjs';
 import {createAIG20WorldScene,addAIG20WorldObject,addAIG20CameraKey,
@@ -705,6 +707,161 @@ $('world-scrub').addEventListener('input',()=>{
  }catch(e){updateWorldStatus('轉場尚不可播放：'+String(e.message||e),true)}
 });
 
+// Real3D 2.5 — film is created by the SAME WebGL world renderer.
+// Never use 6.5 flat-image parallax/zoom as 3D or fabricate unseen GLB clips.
+let movie25Session=null,movie25Busy=false,movie25DownloadUrl=null;
+let movie25LastOutput=null,movie25DisabledSnapshot=null;
+const movie25LockIds=[
+ 'world-new','world-add','world-preview','world-key-add',
+ 'world-load','world-align','scene-load','scene-unload','scene-clear',
+ 'story-compile','story-play','story-stop','story-load',
+ 'story-save','world-play','world-pause','photo23-build'
+];
+function lockMovie25(locked){
+ if(locked){
+  movie25DisabledSnapshot=new Map(movie25LockIds.map(id=>[id,$(id)?.disabled]));
+  for(const id of movie25LockIds){const el=$(id);if(el)el.disabled=true}
+  $('movie25-record').disabled=true;
+  $('movie25-stop').disabled=false;
+ }else{
+  for(const [id,wasDisabled] of movie25DisabledSnapshot||[])
+   if($(id))$(id).disabled=wasDisabled;
+  movie25DisabledSnapshot=null;
+  $('movie25-record').disabled=false;
+  $('movie25-stop').disabled=true;
+ }
+}
+const film25Status=(message,error=false)=>{
+ $('movie25-status').textContent=message;
+ $('movie25-status').style.color=error?'#efc18a':'#98e8dd';
+};
+async function finishMovie25({cancel=false,reason=''}={}){
+ const session=movie25Session;
+ if(!session)return;
+ movie25Session=null;
+ if(viewer?.onFrame===session.frameHook)viewer.onFrame=session.oldOnFrame;
+ if(viewer?.onAfterRender===session.afterHook)
+  viewer.onAfterRender=session.oldAfterRender;
+ try{session.player.stop()}catch{}
+ try{if(viewer?.movieMode)viewer.endMovie1080p()}catch{}
+ if(cancel){
+  session.recorder.abort(Error(reason||'USER_CANCELLED'));
+  film25Status('本次錄影已取消。原始 GLB、劇本與上一份成功的影片均保留。');
+  movie25Busy=false;loading=false;lockMovie25(false);return;
+ }
+ try{
+  const output=await session.recorder.stop();
+  // Source manifest remains immutable across any onFrame callbacks.
+  if(worldRuntime?.scene)
+   verifyAIG22Story(session.plan,worldRuntime.scene,
+    worldRuntime.listSourceActorClips());
+  const url=URL.createObjectURL(output.blob);
+  const old=movie25DownloadUrl;movie25DownloadUrl=url;
+  const a=$('movie25-download');
+  a.href=url;a.download=output.filename;a.hidden=false;
+  movie25LastOutput=output;
+  if(old)URL.revokeObjectURL(old);
+  $('movie25-proof').textContent=JSON.stringify(output.evidence,null,2);
+  film25Status('已實際錄製 '+output.evidence.actualFramesComposited+
+   ' 幀真 WebGL 3D 畫面，已編碼 '+output.evidence.containerExtension+
+   '，大小 '+mib(output.blob.size)+'。字幕已燒入影片，沒有假人物影像。');
+  try{
+   const saved=await library.importBlob(output.blob,{
+    category:'animation',title:'Real3D 2.5 來源世界 1080p 真 3D 電影',
+    tags:['Real3D25','來源3D','世界場景','影片','真骨架'],
+    source:'GENERATED_DERIVED',modelAccuracy:'NOT_VERIFIED',
+    coordinateUnits:'UNKNOWN',derivedFrom:session.plan.sceneId
+   });
+   film25Status($('movie25-status').textContent+
+    '；影片已獨立保存本機素材庫 '+saved.id+'。');
+  }catch(saveError){
+   film25Status($('movie25-status').textContent+
+    '；外部素材庫未保存（可能超過 64 MiB）：'+
+    String(saveError.message||saveError)+
+    '。影片下載連結仍保留。',true);
+  }
+ }catch(error){
+  film25Status('影片錄製失敗：'+String(error.message||error)+
+   '。不改動原來源；之前成功影片仍可下載。',true);
+ }finally{
+  movie25Busy=false;loading=false;lockMovie25(false);
+ }
+}
+$('movie25-record').addEventListener('click',()=>{
+ if(movie25Busy)return;
+ let record=null,frameHook=null,afterHook=null;
+ try{
+  if(loading||worldBuildMutation||!viewer||!worldRuntime?.scene||
+   !story22Plan?.ready||!worldDoc)
+   throw Error('請先建立真正的 3D 世界並完成中文劇情編譯');
+  if(viewer.movieMode||viewer.onFrame||viewer.onAfterRender||
+   viewer.reviewBusy||worldPlaying)
+   throw Error('3D 工作視窗／劇情播放已占用，停止後才可錄影');
+  const proof=validateAIG25TrueWorldMovie({
+   plan:story22Plan,scene:worldRuntime.scene,
+   actors:worldRuntime.listSourceActorClips(),viewer
+  });
+  movie25Busy=true;loading=true;lockMovie25(true);
+  const viewport=viewer.beginMovie1080p();
+  if(viewport.actualCanvasWidth!==1920||
+   viewport.actualCanvasHeight!==1080)
+   throw Error('實際 WebGL 畫布未達 1920×1080');
+  record=new AIG25WorldMovieRecorder({
+   onState:data=>{
+    if(data.state==='FAILED'&&movie25Session)
+     void finishMovie25({cancel:true,reason:data.message});
+   }
+  });
+  record.begin({sourceCanvas:viewer.canvas,proof});
+  const session={
+   recordStart:performance.now(),oldOnFrame:viewer.onFrame,
+   oldAfterRender:viewer.onAfterRender,plan:story22Plan,
+   recorder:record,player:null,subtitle:'',subtitleUntil:0,
+   readyToFinish:false,frameHook:null,afterHook:null
+  };
+  session.player=new AIG22StoryPlayer({
+   worldRuntime,onEvent:e=>{
+    if(e.type==='SUBTITLE'){
+     session.subtitle=e.text;
+     session.subtitleUntil=e.timeSeconds+e.durationSeconds;
+    }
+   },onEnd:()=>{session.readyToFinish=true}
+  });
+  frameHook=(dt,t)=>{
+   session.oldOnFrame?.(dt,t);
+   const result=session.player.advance(dt);
+   if(session.subtitle&&result.elapsedSeconds>=session.subtitleUntil)
+    session.subtitle='';
+  };
+  afterHook=t=>{
+   session.oldAfterRender?.(t);
+   session.recorder.draw(t,session.subtitle);
+   if(session.readyToFinish)void finishMovie25();
+  };
+  session.frameHook=frameHook;session.afterHook=afterHook;
+  movie25Session=session;
+  viewer.onFrame=frameHook;viewer.onAfterRender=afterHook;
+  session.player.start(story22Plan);
+  film25Status('正在從唯一 WebGL 世界渲染並錄製真 3D 電影：'+
+   story22Plan.durationSeconds.toFixed(2)+
+   ' 秒，1080p／目標 30 FPS；來源動作與字幕按真時間軸播放。');
+ }catch(error){
+  if(movie25Session){
+   void finishMovie25({cancel:true,reason:String(error.message||error)});
+  }else{
+   record?.abort(error);
+   if(viewer?.onFrame===frameHook)viewer.onFrame=null;
+   if(viewer?.onAfterRender===afterHook)viewer.onAfterRender=null;
+   try{if(viewer?.movieMode)viewer.endMovie1080p()}catch{}
+   if(movie25Busy){movie25Busy=false;loading=false;lockMovie25(false)}
+  }
+  film25Status('BLOCKED：'+String(error.message||error)+
+   '。不會以照片運鏡取代真 3D。',true);
+ }
+});
+$('movie25-stop').addEventListener('click',()=>{
+ void finishMovie25({cancel:true,reason:'USER_CANCELLED'});
+});
 function showAIG22Plan(plan){
  $('story-proof').textContent=plan?JSON.stringify({
   status:plan.status,ready:plan.ready,sourceScene:plan.sceneId,
@@ -845,6 +1002,8 @@ $('world-pause').addEventListener('click',()=>{
  stopWorldPlayback();updateWorldStatus('已停止鏡頭轉場。來源與場景保留。');
 });
 window.addEventListener('pagehide',()=>{
+ if(movie25Session)void finishMovie25({cancel:true,reason:'PAGE_CLOSED'});
+ if(movie25DownloadUrl){URL.revokeObjectURL(movie25DownloadUrl);movie25DownloadUrl=null}
  stopAIG22Storyboard('工作頁已關閉');
  closed=true;stopWorldPlayback();worldRuntime?.close();
  viewer?.renderer?.setAnimationLoop(null);
