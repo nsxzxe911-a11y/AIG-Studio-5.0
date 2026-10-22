@@ -139,6 +139,17 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <div id="story-subtitle" aria-live="polite" style="margin:8px 0;padding:14px;min-height:52px;text-align:center;border:1px solid #31596d;border-radius:8px;color:#fff;background:#07121f">字幕／旁白只顯示文字，未進行語音合成</div>
 <pre id="story-proof" style="white-space:pre-wrap;max-height:250px;overflow:auto;color:#b0dfed;font:12px/1.6 ui-monospace,monospace">尚未產生劇情來源證據。</pre>
 </section>
+<section id="real3d25-movie" style="margin:16px 0;padding:14px;border:1px solid #417c98;border-radius:12px;background:#061524">
+<h2>Real3D 2.5｜真 3D 電影製作（世界＋動作＋字幕）</h2>
+<p>先在上方完成來源 GLB 角色、世界場景及中文劇情，再從真 WebGL 畫面錄製 1920×1080 影片（目標 30 FPS）。必須有真正可變形的骨架、經過驗證的 3D 動作及來源 SHA；只有照片運鏡、平面貼圖或模型整體搖擺，會被拒絕。字幕直接合成於影片像素。此階段為靜音錄製，不冒稱已有配音或音樂。</p>
+<button id="movie25-record" type="button">錄製真 3D 電影／依中文劇本播放</button>
+<button id="movie25-stop" type="button" disabled>取消本次錄製（保留原模型）</button>
+<a id="movie25-download" hidden download style="display:inline-block;padding:12px;color:#a3f3ff;text-decoration:underline">下載上一份已編碼的真 3D 電影</a>
+<output id="movie25-status" role="status" aria-live="polite" style="display:block;padding:9px;color:#9de8d8">尚未開始錄製；必須有含實際非剛性骨架動作的已載入 3D 世界。</output>
+<details><summary>來源完整性、真骨架變形、編碼與影片證據</summary>
+<pre id="movie25-proof" style="max-height:260px;overflow:auto;white-space:pre-wrap;font:12px/1.6 ui-monospace,monospace">尚無真 3D 電影來源。</pre>
+</details>
+</section>
 <button id="world-play">播放實際鏡頭轉場</button>
 <button id="world-pause">停止播放</button>
 <p id="world-status" role="status" aria-live="polite">世界工作區已建立，尚無核准來源。</p>
