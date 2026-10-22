@@ -34,6 +34,9 @@ export function mountAIG715CandidateStudio(readState,onPreview){
   current=null;lastIdentity=null;saveDepth.disabled=true;
   saveRig.disabled=true;glbButton.disabled=true;jointSave.disabled=true;
   info.textContent=reason;
+  // Remove only this derived preview. The original 7.13 3D evidence is
+  // untouched and becomes visible again.
+  onPreview(null);
  };
  const getJoint=()=>current?.skeletonCandidate.find(j=>j.name===jointSelect.value);
  function refreshJoint(){
@@ -166,6 +169,12 @@ export function mountAIG715CandidateStudio(readState,onPreview){
   clear('有新的實測掃描表面，舊草模候選暫停使用。請重新確認分區後再生成。');
  });
  $('heroine-clear').addEventListener('click',()=>clear());
+ $('heroine-canvas-wrap').addEventListener('click',()=>clear(
+  '原始標記已變更，之前的草模已暫停；請重新審核 RGB 區域後再生成。'));
+ $('heroine-reviewed').addEventListener('change',()=>{
+  if(!$('heroine-reviewed').checked)clear(
+   '已取消分類審核，舊草模不再顯示，但原 7.13 真數值模型仍保留。');
+ });
  $('heroine-photo-only').addEventListener('change',()=>clear());
  $('heroine-grow').addEventListener('click',()=>clear('色彩候選區已更新，請完成新的人工審核再建立草模。'));
  const optionNames={
