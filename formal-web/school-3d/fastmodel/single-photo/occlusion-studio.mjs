@@ -250,7 +250,7 @@ for(const id of ['nose-depth','bridge-depth','eye-depth','lips-depth','chin-dept
    if(!gate.passed)throw Error('FOLD_OR_DEPTH_INVERSION_BLOCKED');
    const previous=depthProfile;depthProfile=proposed;
    try{updateApprovedLayers();}catch(err){depthProfile=previous;throw err;}
-   $('depth-status'.textContent='已更新估計深度。局部最小 Z 導數 '+gate.minZDerivative.toFixed(3)+'；最大往返誤差 '+gate.maxRoundtripError.toExponential(2)+'。';
+   $('depth-status').textContent='已更新估計深度。局部最小 Z 導數 '+gate.minZDerivative.toFixed(3)+'；最大往返誤差 '+gate.maxRoundtripError.toExponential(2)+'。';
    schedule();
   }catch(e){status('BLOCKED：保留上一個有效的深度工作副本；'+String(e.message||e));}
  });
