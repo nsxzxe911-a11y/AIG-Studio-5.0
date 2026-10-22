@@ -337,6 +337,10 @@ fun main() {
     val (mechanicalHole,measuredDiameter)=AigMechanicalNativeBridge.designatedHole(
         drawingHole,"FEAT-HOLE","DIM-10",12.0,0.005,-0.005)
     val nativeMechanicalEntities=setOf(drawingLine.id,drawingHole.id)
+    val nativeMeasuredValues=mapOf(
+        "DIM-50" to drawingLine.length,
+        "DIM-10" to drawingHole.radius*2
+    )
     check(kotlin.math.abs(measuredLength.nominal-50.0)<1e-9)
     check(kotlin.math.abs(measuredDiameter.nominal-10.0)<1e-9)
     check(kotlin.math.abs(mechanicalHole.nominalDepthMm!!-12.0)<1e-9)
@@ -359,10 +363,11 @@ fun main() {
         notes=listOf("G90 master X0.000 Y0.000; datum A is design intent")
     )
     val mechanicalAudit=AigMechanicalDrawingCore.audit(
-        mechanicalSheet,nativeMechanicalEntities)
+        mechanicalSheet,nativeMechanicalEntities,nativeMeasuredValues)
     check(mechanicalAudit.featureCount==2&&mechanicalAudit.viewCount==2&&
         mechanicalAudit.dimensionCount==2&&
         mechanicalAudit.nativeGeometryReferencesVerified&&
+        mechanicalAudit.nativeDimensionValuesVerified&&
         mechanicalAudit.gdtCrossReferencesValidated&&
         !mechanicalAudit.gdtStandardFullyCertified&&
         !mechanicalAudit.manufacturingInstructionsGenerated&&
@@ -378,27 +383,35 @@ fun main() {
             Vec2(0.0,0.0),3,2,-30.0,15.0)
     }.isFailure)
     check(runCatching{AigMechanicalDrawingCore.audit(
-        mechanicalSheet,nativeMechanicalEntities-setOf(measuredDiameter.nativeEntityId)
+        mechanicalSheet,nativeMechanicalEntities-setOf(measuredDiameter.nativeEntityId),nativeMeasuredValues
     )}.isFailure){"Must block drawing on deleted native CAD geometry"}
     check(runCatching{AigMechanicalDrawingCore.audit(mechanicalSheet.copy(
         dimensions=mechanicalSheet.dimensions+measuredDiameter.copy(
-            id="DUP-FAIL",nativeEntityId="NOT-AN-ENTITY")),nativeMechanicalEntities
+            id="DUP-FAIL",nativeEntityId="NOT-AN-ENTITY")),nativeMechanicalEntities,nativeMeasuredValues
     )}.isFailure)
     check(runCatching{AigMechanicalDrawingCore.audit(mechanicalSheet.copy(
         dimensions=mechanicalSheet.dimensions.map {d->
             if(d.id=="DIM-10")d.copy(plusTolerance=-0.001) else d
-        }),nativeMechanicalEntities
+        }),nativeMechanicalEntities,nativeMeasuredValues
     )}.isFailure)
     check(runCatching{AigMechanicalDrawingCore.audit(mechanicalSheet.copy(
-        datums=emptyList()),nativeMechanicalEntities
+        datums=emptyList()),nativeMechanicalEntities,nativeMeasuredValues
     )}.isFailure){"Dangling datum references may not be called valid GD&T"}
     check(runCatching{AigMechanicalDrawingCore.audit(mechanicalSheet.copy(
         views=listOf(AigMechanicalView("BAD-SECTION",AigMechanicalViewKind.SECTION,
-            setOf("FEAT-HOLE")))),nativeMechanicalEntities
+            setOf("FEAT-HOLE")))),nativeMechanicalEntities,nativeMeasuredValues
     )}.isFailure)
     check(runCatching{AigMechanicalDrawingCore.audit(mechanicalSheet.copy(
-        features=listOf(mechanicalLine,mechanicalLine)),nativeMechanicalEntities
+        features=listOf(mechanicalLine,mechanicalLine)),nativeMechanicalEntities,nativeMeasuredValues
     )}.isFailure)
+    check(runCatching{AigMechanicalDrawingCore.audit(
+        mechanicalSheet,nativeMechanicalEntities,
+        nativeMeasuredValues+("DIM-50" to 48.0)
+    )}.isFailure){"Stale drawing 50 mm must not be accepted after CAD line becomes 48 mm"}
+    check(runCatching{AigMechanicalDrawingCore.audit(
+        mechanicalSheet,nativeMechanicalEntities,
+        nativeMeasuredValues-"DIM-10"
+    )}.isFailure){"Missing live hole measurement must block annotation approval"}
     println("AIG_MECHANICAL_DRAWING_CORE_GATE_PASS|ACTUAL_NATIVE_LINE_50MM|ACTUAL_HOLE_D10|DEPTH_12|FRONT_SECTION|DATUM_GDT_REFERENCES|BOM|HOLE_GRID|DANGLING_BLOCKED|TOLERANCE_BLOCKED|NO_FAKE_FANUC_NC")
     println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|3AX_FANUC_G0_G1|6AX_C_NC_BLOCKED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE|CAD_AUTO_SIM_NC|NC_FIRST_EVENTS")
 }
