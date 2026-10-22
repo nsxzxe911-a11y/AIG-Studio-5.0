@@ -147,6 +147,11 @@ export async function openAIG716AssetLibrary(){
    const p=await req(db.transaction('payloads','readonly')
     .objectStore('payloads').get(x.sha256));
    if(!p?.blob)fail('MISSING_PAYLOAD_NO_FAKE_RECOVERY');
+   // Digest is verified on-demand only, not at main program startup.
+   // A corrupted or mismatched source cannot silently replace Authority.
+   const bytes=await p.blob.arrayBuffer();
+   const digest='sha256:'+shaHex(await crypto.subtle.digest('SHA-256',bytes));
+   if(digest!==x.sha256)fail('PAYLOAD_SHA_MISMATCH_SOURCE_BLOCKED');
    return {asset:cloneAsset(x),blob:p.blob};
   },
   async approve(id,{reviewed=false}={}){
