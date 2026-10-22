@@ -27,3 +27,12 @@
 
 ## Next-chat exact continuation
 Open newest 2.5 PR and branch SHA, inspect GitHub Actions job logs and actual recorded movie evidence. Fix red step without deleting any older features or changing CNC geometry/NC. Only then proceed forward to 2.6 (genuine film audio, procedural body motion, authored camera cuts and real multi-character cinematic timing).
+
+
+## Real3D 2.5 follow-up repairs — 2026-10-23
+
+- Root cause of PR #43 missing PR-triggered gate: the **base** workflow `.github/workflows/aig-shared-real3d-v1-3.yml` only has `push` on `repair/core-first-fastmodel-20261021`; it has no `pull_request` trigger. The proposed new `pull_request` entry does not exist on the base until merged, so creating a draft PR did not provide a current PR-triggered test result.
+- On the isolated 2.5 branch, the same complete workflow now enables **push** on `verify/real3d-true-world-movie-2-5-20261023` and extends its `paths` to include all `single-photo/**` source/test files. This must trigger the full existing CNC + FastModel source Gate on subsequent branch pushes. GitHub connector's `fetch_commit_workflow_runs` lists **only PR-event runs**, so `[]` cannot by itself determine the outcome of any push-event run. **Do not claim a green workflow or completed film artifact without an actual run/job and bytes.**
+- `aig-true-world-movie-2-5.mjs` now checks magic bytes on final encoded movie: WebM `1a 45 df a3` EBML and MP4 `ftyp` brand at offsets 4-7. Nonempty MediaRecorder chunks alone are not a true successful film. Invalid container fails closed, keeping previous download/model untouched.
+- The source tests include negative false-video header and positive matching container cases. In isolated JavaScript runtime, real image foreground/rigid-vs-deform maths and browser recorder state/media-signature logic were exercised, including invalid WebM header FAIL. Such isolated tests **do not** replace Chromium GPU real encoded movie and native device gates.
+- New continuation should inspect PR #43 latest actual SHA and push-event Actions run. The verified gate must keep 2.2 storyboard and 2.4 nonrigid-body source checks, validate proper video signature and that file plays. If fail, repair exact failing line, do not regenerate whole application, downgrade or delete AIG-II CNC cores.
