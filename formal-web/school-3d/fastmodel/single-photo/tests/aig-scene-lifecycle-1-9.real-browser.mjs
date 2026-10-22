@@ -54,6 +54,7 @@ try{
     {waitUntil:'load'});assert.equal(r?.status(),200);
    await page.waitForFunction(()=>document.getElementById('status')
     .textContent.includes('本機資產庫已開啟'),null,{timeout:12000});
+   let savedRecords=0;
    const upload=async(name,title,bytes)=>{
     await page.locator('#asset-file').setInputFiles({
      name,mimeType:'model/gltf-binary',buffer:bytes});
@@ -61,8 +62,9 @@ try{
     await page.locator('#asset-title').fill(title);
     await page.locator('#asset-tags').fill('場景,3D');
     await page.locator('#asset-import').click();
-    await page.waitForFunction(()=>document.getElementById('status')
-     .textContent.includes('已保存'));
+    const count=++savedRecords;
+    await page.waitForFunction(n=>document.getElementById('stats')
+     .textContent.includes('儲存項目 '+n+' 筆'),count);
    };
    await upload('a.glb','校園場景 A',glb('CampusA',0));
    await upload('b.glb','校園場景 B',glb('CampusB',1.5));
