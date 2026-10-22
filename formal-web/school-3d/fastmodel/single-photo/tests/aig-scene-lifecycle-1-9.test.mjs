@@ -46,6 +46,10 @@ test('1.9 loads one verified GLB scene at a time, original vault never deleted',
  const x=fixtures(),rt=new AIG19SceneRuntime({library:x.library,viewer:x.viewer});
  const first=await rt.activate('a');
  assert.equal(first.status,'ACTIVE_SOURCE_BOUND_GPU_SCENE');
+ const same=await rt.activate('a');
+ assert.equal(same.status,'ALREADY_ACTIVE_NO_REPARSE');
+ assert.equal(same.preservedGpuSceneAndCamera,true);
+ assert.deepEqual(x.calls.loaded,[56],'identical SHA does not reload GPU');
  assert.equal(first.asset.title,'女主角');
  const second=await rt.activate('b');
  assert.equal(second.asset.category,'building');
