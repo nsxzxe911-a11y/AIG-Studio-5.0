@@ -47,6 +47,7 @@ jobs:
           node tests/aig-hair-neck-7-7.real-browser.mjs
           node tests/aig-spatial-rig-7-8.real-browser.mjs
           node tests/aig-continuous-scan-7-9.real-browser.mjs
+          node tests/aig-multiview-fusion-7-10.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -114,6 +115,13 @@ jobs:
         with:
           name: FastModel-7-9-Video-Camera-Continuous-Scan-Not-3D-Anatomy
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-continuous-7-9/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-10-Calibrated-Video-Stereo-XYZ-Not-Dense-3D
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-multiview-7-10/
           if-no-files-found: warn
 
       - name: Distinguish real video playback from unverified character animation
@@ -386,4 +394,58 @@ jobs:
             echo 'USER_HEROINE_LIKENESS=NOT_VERIFIED'
             echo 'NATIVE_APK_EXE=NOT_VERIFIED'
             echo 'MMO_ONLINE=NOT_IMPLEMENTED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  multiview-7-10:
+    name: Independent 7.10 calibrated multi-video-frame XYZ fusion gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Syntax and genuine stereo geometry numeric tests
+        run: |
+          node --check aig-multiview-fusion-7-10.mjs
+          node --check multiview-studio.mjs
+          node --check tests/aig-multiview-fusion-7-10.test.mjs
+          node --check tests/aig-multiview-fusion-7-10.real-browser.mjs
+          node --test tests/aig-multiview-fusion-7-10.test.mjs
+      - name: Offline production bundle includes new standalone editor
+        run: |
+          npm run build
+          test -s dist/aig-multiview-fusion-7-10.mjs
+          test -s dist/multiview-studio.html
+          test -s dist/multiview-studio.mjs
+          cmp aig-multiview-fusion-7-10.mjs dist/aig-multiview-fusion-7-10.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real two decoded video frames and physical XYZ phone desktop evidence
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig710-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-multiview-fusion-7-10.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-10-Independent-Real-Browser-Stereo-XYZ-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-multiview-7-10/
+          if-no-files-found: warn
+      - name: Truth gate after actual stereo test
+        if: always()
+        run: |
+          {
+            echo 'CALIBRATED_STEREO_XYZ_NUMERIC=USER_CALIBRATION_REQUIRED'
+            echo 'RECTIFIED_CAMERA_TRANSLATION=USER_VERIFIED_NOT_SOLVED'
+            echo 'AUTOMATIC_CAMERA_POSE_ESTIMATION=NOT_IMPLEMENTED'
+            echo 'TRIANGULATED_SPARSE_POINTS=GEOMETRY_ONLY'
+            echo 'DENSE_HUMAN_HEAD_SURFACE=NOT_BUILT'
+            echo 'NATIVE_APK_EXE_REAL_FPS=NOT_VERIFIED'
+            echo 'REAL_USER_HEROINE_LIKENESS=NOT_APPROVED'
           } >> "$GITHUB_STEP_SUMMARY"
