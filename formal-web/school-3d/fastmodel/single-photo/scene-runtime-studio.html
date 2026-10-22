@@ -92,6 +92,22 @@ button:disabled{opacity:.45;cursor:not-allowed}
 </div>
 <button id="world-key-add">加入鏡頭關鍵格</button>
 <label>轉場預覽時間軸<input type="range" id="world-scrub" min="0" max="10" value="0" step=".1"></label>
+<h2>Real3D 2.1｜地圖對位與人物真 GLB 動作</h2>
+<p>選取已驗證地圖的建築、道路或地標，再指定既有 GLB 模型。程式僅移動模型 X/Z，不自動改變高低 Y、體積、骨架或源檔。人物動作只能播放 GLB 裡真正存在的 clip。</p>
+<div class="world-grid">
+<label>要對位的 3D 物件<select id="world-align-object"><option value="">先建立場景物件</option></select></label>
+<label>來源地圖圖徵<select id="world-map-feature"><option value="">先接來源地圖</option></select></label>
+<label>水平 X 偏移<input id="world-align-offset-x" type="number" value="0" step=".1"></label>
+<label>水平 Z 偏移<input id="world-align-offset-z" type="number" value="0" step=".1"></label>
+</div>
+<button id="world-align">從地圖對齊模型 XZ（保留原 Y／原 GLB）</button>
+<div class="world-grid">
+<label>人物原始 GLB Actor<select id="world-actor-choice"><option value="">請先開啟含動畫的 GLB 人物</option></select></label>
+<label>來源動畫 Clip<select id="world-actor-clip"><option value="">此 GLB 沒有可用動畫</option></select></label>
+</div>
+<button id="world-actor-play">播放來源原始動作</button>
+<button id="world-actor-pause">暫停這個角色</button>
+<p id="world-actor-status" role="status" aria-live="polite">未載入任何已驗證 GLB 動畫片段；不會憑空生成跑跳。</p>
 <button id="world-play">播放實際鏡頭轉場</button>
 <button id="world-pause">停止播放</button>
 <p id="world-status" role="status" aria-live="polite">世界工作區已建立，尚無核准來源。</p>
