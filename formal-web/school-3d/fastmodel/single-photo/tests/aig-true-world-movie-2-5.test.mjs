@@ -122,7 +122,10 @@ test('2.5 actual canvas frames are composed, subtitles pixel-burnt and real code
  assert.equal(done.evidence.constantFramerateVerified,false);
  assert.equal(done.evidence.releaseAllowed,false);
  assert.equal(done.filename,'AIG-Real3D-2-5-World-Movie.webm');
- assert.equal(done.blob.type,'video/webm;codecs=vp9,opus');
+ assert.equal(done.blob.type,'video/webm',
+  'store canonical media type in unchanged external 7.16 vault');
+ assert.equal(done.evidence.outputMimeType,'video/webm');
+ assert.equal(done.evidence.actualEncoderCodecMimeType,'video/webm;codecs=vp9,opus');
  assert.ok(done.blob.size>0);
  assert.ok(events.some(e=>e[0]==='draw'));
  assert.ok(events.some(e=>e[0]==='text'&&
