@@ -73,6 +73,35 @@ try{
    assert.equal(json.metricOneToOne,false);
    assert.equal(json.backsideUnknown,true);
    assert.equal(json.candidateHasColorSemanticsOnly,true);
+   // Real 7.15 single-photo draft: independent 3D candidate, not true mm.
+   await page.locator('#heroine-candidate-build').click();
+   await page.waitForFunction(()=>document.getElementById('heroine-depth-save').disabled===false);
+   const c1=JSON.parse(await page.locator('#heroine-candidate-proof').textContent());
+   assert.equal(c1.depthEstimated.source_type,'SINGLE_IMAGE_ESTIMATE');
+   assert.equal(c1.depthEstimated.units,'NORMALIZED_RELATIVE_NOT_MM');
+   assert.ok(c1.depthEstimated.validPixels>20);
+   assert.equal(c1.depthMeasured.validPixels,0);
+   assert.ok(c1.meshParts.HAIR?.triangles>1);
+   assert.equal(c1.realHumanOneToOneVerified,false);
+   await page.locator('#heroine-joint').selectOption('neck');
+   await page.locator('#heroine-joint-x').fill('.43');
+   await page.locator('#heroine-joint-y').fill('.29');
+   await page.locator('#heroine-joint-save').click();
+   const edited=JSON.parse(await page.locator('#heroine-candidate-proof').textContent());
+   assert.equal(edited.skeleton.find(j=>j.name==='neck').x,.43);
+   assert.equal(edited.skeleton.find(j=>j.name==='neck').confirmed,true);
+   const depthDownload=page.waitForEvent('download');
+   await page.locator('#heroine-depth-save').click();
+   const depthJson=JSON.parse((await readFile(await (await depthDownload).path())).toString('utf8'));
+   assert.equal(depthJson.depth_estimated.units,'NORMALIZED_RELATIVE_NOT_MM');
+   assert.equal(depthJson.depth_measured.validPixels,0);
+   assert.equal(depthJson.measuredDepthNeverReplacedBySinglePhotoGuess,true);
+   const draftDownload=page.waitForEvent('download');
+   await page.locator('#heroine-candidate-glb').click();
+   const draftGLB=await draftDownload, draftData=await readFile(await draftGLB.path());
+   assert.ok(draftGLB.suggestedFilename().includes('NOT-1TO1'));
+   assert.equal(draftData.subarray(0,4).toString(),'glTF');
+   assert.ok(draftData.length>1000);
    await page.locator('#heroine-build').click();
    assert.match(await page.locator('#heroine-status').textContent(),/BLOCKED/);
    assert.equal(await page.locator('#heroine-export').isDisabled(),true);
@@ -115,6 +144,16 @@ try{
    assert.ok(proof.semanticPartTriangles.FACE>0);
    assert.equal(proof.hiddenBodyAndBackUnknown,true);
    assert.equal(proof.noFakeSkeletonOrSkinWeight,true);
+   await page.locator('#heroine-candidate-build').click();
+   await page.waitForFunction(()=>document.getElementById('heroine-rig-save').disabled===false);
+   const calibratedCandidate=JSON.parse(await page.locator('#heroine-candidate-proof').textContent());
+   assert.ok(calibratedCandidate.depthEstimated.validPixels>30);
+   assert.ok(calibratedCandidate.depthMeasured.validPixels>20);
+   assert.equal(calibratedCandidate.depthMeasured.units,'MM_LEFT_CAMERA_DEPTH');
+   assert.equal(calibratedCandidate.depthEstimated.units,'NORMALIZED_RELATIVE_NOT_MM');
+   await page.screenshot({path:dir+'/'+device.name+'-REAL_7_15_EDITABLE_GEOMETRY.png',
+    fullPage:true});
+
    await page.screenshot({path:dir+'/'+device.name+'-REAL_STEREO_RGB_DEPTH_PARTS.png',
     fullPage:true});
    const upcoming=page.waitForEvent('download');
