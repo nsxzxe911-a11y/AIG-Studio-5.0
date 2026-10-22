@@ -44,7 +44,8 @@ test('2.2 Chinese text compiles real signed original GLB clips + authored camera
   /SCENE_REVISION_OR_SHA_CHANGED/);
  const changedClip=[{nodeId:'node-1',clips:[clip('fakerun')]}];
  assert.throws(()=>verifyAIG22Story(timeline,scene,changedClip),
-  /ORIGINAL_SOURCE_CLIP_CHANGED/);
+  /STORED_TIMELINE_TAMPERED_OR_STALE/,
+  'original GLB clip mismatch is detected during stronger deterministic storyboard recompilation');
 });
 test('2.2 rejects missing run/jump/squat from still photo model, never fabricates actions',()=>{
  const scene=world();
@@ -100,8 +101,8 @@ test('2.2 player schedules real-source actions, text subtitle and camera indepen
  const state=player.start(plan);
  assert.equal(state.status,'PLAYING_REAL_SOURCE_CUES');
  assert.equal(observed[0],'ACTOR_SOURCE_CLIP');
- assert.equal(player.advance(.5).status,'RUNNING_SOURCE_CLIPS');
- assert.equal(player.advance(.5).status,'RUNNING_SOURCE_CLIPS');
+ for(let i=0;i<4;i++)
+  assert.equal(player.advance(.25).status,'RUNNING_SOURCE_CLIPS');
  assert.ok(observed.includes('CAMERA'));
  assert.ok(observed.includes('SUBTITLE'));
  for(let i=0;i<12;i++)player.advance(.25);
