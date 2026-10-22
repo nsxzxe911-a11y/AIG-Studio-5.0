@@ -90,8 +90,9 @@ project.addEventListener('click',()=>{
    throw Error('SOURCE_PIXEL_COORDINATES_REQUIRED');
   const pixel=[Number(xInput.value),Number(yInput.value)];
   const cad=projectAIG3AXPixelToCADXY(xyCalibration,pixel);
-  projection.textContent='同平面 CAD X='+cad.xMm.toFixed(3)+
-   ' mm、Y='+cad.yMm.toFixed(3)+
+  const displayMm=n=>(Math.abs(n)<0.0005?0:n).toFixed(3);
+  projection.textContent='同平面 CAD X='+displayMm(cad.xMm)+
+   ' mm、Y='+displayMm(cad.yMm)+
    ' mm；Z=未知。僅幾何量測對照，沒有寫入 NC 或更改材料。';
  }catch(error){
   projection.textContent='BLOCKED：像素投影失敗：'+String(error.message||error);
