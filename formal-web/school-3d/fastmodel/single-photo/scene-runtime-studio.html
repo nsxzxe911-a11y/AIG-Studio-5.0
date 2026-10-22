@@ -74,6 +74,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <label>Z 位置<input id="world-z" type="number" value="0" min="-10000" max="10000" step=".1"></label>
 <label>模型縮放（未審核不等於公尺）<input id="world-scale" type="number" value="1" min=".01" max="30" step=".05"></label>
 </div>
+<label style="display:inline-flex;align-items:center;gap:7px"><input type="checkbox" id="world-metric-reviewed" style="width:20px;height:20px">實測場景：我已審核此模型比例與真實公尺</label>
+<button id="world-new">建立新場景（保留已存原場景）</button>
 <button id="world-add">加入同一個世界</button>
 <button id="world-preview">合成真正的 3D 世界並顯示</button>
 <button id="world-save">儲存場景到外部素材庫</button>
