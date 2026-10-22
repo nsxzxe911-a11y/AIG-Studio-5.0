@@ -178,6 +178,7 @@ export class AIG25WorldMovieRecorder{
    containerExtension:this.format.ext,actualFramesComposited:this.frameCount,
    bytesEncoded:blob.size,sourceGLBsUnmodified:true,
    sourceSubtitlePixelsBurnedIntoCanvas:true,
+   generatedHumanMovement:false,generatedVoice:false,
    recordedAudioTracks:0,browserTTSIncluded:false,
    targetFPS:AIG25_RENDER.targetFPS,constantFramerateVerified:false,
    exactOneToOnePhysicalScaleUnverified:true,identityApproved:false,
