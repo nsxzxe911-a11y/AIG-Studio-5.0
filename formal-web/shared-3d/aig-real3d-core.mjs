@@ -178,8 +178,10 @@ export function addAIG3DToolpathOverlay(scene,{id,segments,source='DEMO_NOT_NC_P
  !Array.isArray(segments)||segments.length<1||segments.length>25000||
  typeof source!=='string'||source.length<3)throw Error('AIG3D_TOOLPATH_OVERLAY_INVALID');
  const parsed=segments.map((s,i)=>{
-  if(!s||!finite3(s.from)||!finite3(s.to)||!['G0','G1','G2','G3'].includes(s.motion)||
-  ['G2','G3'].includes(s.motion))throw Error('AIG3D_ONLY_EXPLICIT_LINEAR_SEGMENTS_SUPPORTED');
+  if(!s||!finite3(s.from)||!finite3(s.to))
+   throw Error('AIG3D_VECTOR_INVALID');
+  if(!['G0','G1'].includes(s.motion))
+   throw Error('AIG3D_ONLY_EXPLICIT_LINEAR_SEGMENTS_SUPPORTED');
   return {from:array3(s.from),to:array3(s.to),motion:s.motion,index:i};
  });
  const entry={id,segments:parsed,source,kind:'TOOLPATH_VISUAL_ONLY',
