@@ -83,30 +83,49 @@ function handleDelta(rig,expr,key){
   default:return [0,0,0];
  }
 }
-export function warpAIG75World(rig,expression,point){
- if(rig?.schema!==AIG75_SCHEMA||!Array.isArray(point)||point.length!==3||!point.every(finite))throw Error('AIG75_WORLD_POINT_INVALID');
- const expr=createAIG74Expression(expression),field=rig.field,fh=rig.faceHeight,fw=rig.faceWidth;
- // Exclude the estimated rear from front-specific morph influence.
- const zFade=clamp((point[2]+field.halfDepth)/(.85*field.halfDepth),0,1);
- if(zFade===0)return [...point];
- const shifts=[0,0,0];let maxWeight=0;
+/** Prepare a pose ONCE per frame: precompute active 3D handle deltas/radii.
+ * Ray marching then avoids normalizing expression and recomputing 10 delta maps
+ * on every inverse iteration/pixel. Compiled pose is tied to this exact rig.
+ */
+export function prepareAIG75Pose(rig,expression={}){
+ if(rig?.schema!==AIG75_SCHEMA)throw Error('AIG75_POSE_RIG_REQUIRED');
+ if(expression?._aig75Prepared===true){
+  if(expression.rig!==rig)throw Error('AIG75_CROSS_RIG_POSE_BLOCKED');
+  return expression;
+ }
+ const expr=createAIG74Expression(expression),handles=[];
  for(const key of AIG75_KEYS){
   const delta=handleDelta(rig,expr,key);
   if(Math.abs(delta[0])+Math.abs(delta[1])+Math.abs(delta[2])<1e-12)continue;
-  const anchor=rig.handles[key],rx=key.includes('Brow')?fw*.20:fw*.16,ry=key==='chin'?fh*.20:fh*.115;
-  const dx=(point[0]-anchor[0])/rx,dy=(point[1]-anchor[1])/ry;
-  const w=Math.exp(-2*(dx*dx+dy*dy))*zFade;
-  maxWeight+=w;
-  for(let i=0;i<3;i++)shifts[i]+=w*delta[i];
+  const rx=key.includes('Brow')?rig.faceWidth*.20:rig.faceWidth*.16,
+   ry=key==='chin'?rig.faceHeight*.20:rig.faceHeight*.115;
+  handles.push({anchor:rig.handles[key],delta,rx2:1/(rx*rx),ry2:1/(ry*ry)});
+ }
+ return {_aig75Prepared:true,rig,expression:expr,handles};
+}
+export function warpAIG75World(rig,expression,point){
+ if(rig?.schema!==AIG75_SCHEMA||!Array.isArray(point)||point.length!==3||!point.every(finite))throw Error('AIG75_WORLD_POINT_INVALID');
+ const pose=prepareAIG75Pose(rig,expression),halfDepth=rig.field.halfDepth;
+ const zFade=clamp((point[2]+halfDepth)/(.85*halfDepth),0,1);
+ if(zFade===0||pose.handles.length===0)return [...point];
+ const shifts=[0,0,0];let maxWeight=0;
+ for(const handle of pose.handles){
+  const dx=point[0]-handle.anchor[0],dy=point[1]-handle.anchor[1];
+  const weight=Math.exp(-2*(dx*dx*handle.rx2+dy*dy*handle.ry2))*zFade;
+  maxWeight+=weight;
+  shifts[0]+=weight*handle.delta[0];
+  shifts[1]+=weight*handle.delta[1];
+  shifts[2]+=weight*handle.delta[2];
  }
  const attenuation=maxWeight>1?1/maxWeight:1;
- return add(point,scale(shifts,attenuation));
+ return [point[0]+shifts[0]*attenuation,point[1]+shifts[1]*attenuation,point[2]+shifts[2]*attenuation];
 }
 export function inverseAIG75World(rig,expression,world,{iterations=7}={}){
  if(!Array.isArray(world)||world.length!==3||!world.every(finite)||
  !Number.isInteger(iterations)||iterations<1||iterations>14)throw Error('AIG75_INVERSE_INVALID');
+ const pose=prepareAIG75Pose(rig,expression);
  let p=[...world];
- for(let i=0;i<iterations;i++){const projected=warpAIG75World(rig,expression,p);p=add(p,sub(world,projected));}
+ for(let i=0;i<iterations;i++){const projected=warpAIG75World(rig,pose,p);p=add(p,sub(world,projected));}
  return p;
 }
 export function sampleAIG75SDF(rig,expression,world){
@@ -125,7 +144,7 @@ export function normalAIG75SDF(rig,expression,point,delta=.002){
 export function auditAIG75Rig(rig,expression,{grid=6,delta=.002}={}){
  if(rig?.schema!==AIG75_SCHEMA||!Number.isInteger(grid)||grid<3||grid>12||
   !finite(delta)||delta<=0||delta>.02)throw Error('AIG75_AUDIT_INPUT_INVALID');
- const expr=createAIG74Expression(expression),land=rig.landmarks.roi,
+ const expr=prepareAIG75Pose(rig,expression),land=rig.landmarks.roi,
   [hx,hy]=rig.field.xyBounds;
  let minJacobian=Infinity,maxDisplacement=0,invalid=0;
  for(let y=0;y<grid;y++)for(let x=0;x<grid;x++){
@@ -151,11 +170,11 @@ export function raycastAIG75(rig,expression,origin,direction,{maxSteps=104,epsil
  if(![origin,direction].every(v=>Array.isArray(v)&&v.length===3&&v.every(finite))||
   Math.hypot(...direction)<1e-9||!Number.isInteger(maxSteps)||maxSteps<10||maxSteps>230||
   !finite(epsilon)||epsilon<=0||!finite(maxDistance)||maxDistance<=0)throw Error('AIG75_RAY_INPUT_INVALID');
- const dir=norm(direction);let t=0;
+ const pose=prepareAIG75Pose(rig,expression),dir=norm(direction);let t=0;
  for(let step=0;step<maxSteps&&t<=maxDistance;step++){
-  const p=add(origin,scale(dir,t)),result=sampleAIG75SDF(rig,expression,p);
+  const p=add(origin,scale(dir,t)),result=sampleAIG75SDF(rig,pose,p);
   if(result.distance<=epsilon)return {hit:true,point:p,referencePoint:result.referencePoint,
-    normal:normalAIG75SDF(rig,expression,p),steps:step+1,distance:t};
+    normal:normalAIG75SDF(rig,pose,p),steps:step+1,distance:t};
   t+=clamp(result.distance*.40,.002,.08);
  }
  return {hit:false,point:null,referencePoint:null,normal:null,distance:null,steps:maxSteps};
@@ -163,7 +182,7 @@ export function raycastAIG75(rig,expression,origin,direction,{maxSteps=104,epsil
 export function renderAIG75LandmarkAvatar(rig,image,{expression={},cosmetics={},width=56,height=56,yaw=0,pitch=0,maxSteps=100}={}){
  if(rig?.schema!==AIG75_SCHEMA||!image||![width,height].every(n=>Number.isInteger(n)&&n>=16&&n<=160)||
   width*height>10000||![yaw,pitch].every(finite)||Math.abs(pitch)>1.35)throw Error('AIG75_RENDER_INPUT_INVALID');
- const expr=createAIG74Expression(expression),quality=auditAIG75Rig(rig,expr,{grid:5});
+ const pose=prepareAIG75Pose(rig,expression),expr=pose.expression,quality=auditAIG75Rig(rig,pose,{grid:5});
  if(!quality.passed)throw Error('AIG75_INVERTED_FACE_GEOMETRY_BLOCKED');
  const makeup=makeAIG73Makeup(cosmetics),pixels=new Uint8ClampedArray(width*height*4),
   eye=[2*Math.sin(yaw)*Math.cos(pitch),2*Math.sin(pitch),2*Math.cos(yaw)*Math.cos(pitch)],
@@ -172,7 +191,7 @@ export function renderAIG75LandmarkAvatar(rig,image,{expression={},cosmetics={},
  for(let j=0;j<height;j++)for(let i=0;i<width;i++){
   const at=(j*width+i)*4,dx=((i+.5)/width-.5)*1.45*width/height,dy=(.5-(j+.5)/height)*1.45,
    origin=add(eye,add(scale(right,dx),scale(up,dy))),
-   result=raycastAIG75(rig,expr,origin,forward,{maxSteps});
+   result=raycastAIG75(rig,pose,origin,forward,{maxSteps});
   let rgb=[3,10,19];
   if(result.hit){
    hitPixels++;
