@@ -3,6 +3,7 @@
  */
 import {getAIG3DWorldMatrix,auditAIG3DScene} from './aig-real3d-core.mjs';
 import {getAIG3DQuality,resolveAIG3DFrameBudget} from './aig-real3d-quality.mjs';
+import {createAIG16GpuResidency} from './aig-real3d-gpu-budget-1-6.mjs';
 const finite=Number.isFinite;
 const dot=(a,b)=>a.reduce((v,x,i)=>v+x*b[i],0);
 const norm=v=>{const l=Math.hypot(...v)||1;return v.map(x=>x/l);};
@@ -73,10 +74,12 @@ const lineVs=[
 ].join('\n');
 const lineFs=['precision mediump float;uniform vec4 uColor;',
  'void main(){gl_FragColor=uColor;}'].join('\n');
-export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,maxFramePixels=3100000,preserveDrawingBuffer=false,background=[.004,.012,.024,1]}={}){
+export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,maxFramePixels=3100000,maxResidentGpuBytes=32*1024*1024,maxTransientPathBytes=8*1024*1024,preserveDrawingBuffer=false,background=[.004,.012,.024,1]}={}){
  if(!canvas||typeof canvas.getContext!=='function'||!finite(pixelRatio)||pixelRatio<.5||
  !Number.isInteger(maxFramePixels)||maxFramePixels<200000||maxFramePixels>3200000||
- pixelRatio>3||!Array.isArray(background)||background.length!==4||
+ pixelRatio>3||!Number.isSafeInteger(maxTransientPathBytes)||
+ maxTransientPathBytes<1024||maxTransientPathBytes>16*1024*1024||
+ !Array.isArray(background)||background.length!==4||
  !background.every(v=>finite(v)&&v>=0&&v<=1))throw Error('AIG3D_RENDER_TARGET_INVALID');
  getAIG3DQuality(quality);
  const gl=canvas.getContext('webgl2',{alpha:false,antialias:true,depth:true,preserveDrawingBuffer})||
@@ -102,7 +105,10 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   color:gl.getUniformLocation(lineProg,'uColor')};
  const camera={projection:'perspective',yaw:.7,pitch:.36,distance:14,
   focus:[0,0,0],fovDeg:48,orthoSpan:9,near:.01,far:20000};
- let dead=false,lost=false,cache=new WeakMap(),buffers=[],last=null;
+ let dead=false,lost=false,buffers=[],last=null;
+ const residency=createAIG16GpuResidency({maxResidentBytes:maxResidentGpuBytes});
+ const pathGpu={rapid:{buffer:null,capacity:0},feed:{buffer:null,capacity:0}};
+ let pathBufferCreations=0,pathGpuReallocations=0,pathUploads=0;
  let currentQuality=quality,lastFrameBudget=null;
  const requestedHardwareAA=gl.getContextAttributes()?.antialias===true;
  const activeMSAASamples=()=>{
@@ -113,16 +119,35 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   const b=gl.createBuffer();gl.bindBuffer(target,b);gl.bufferData(target,arr,gl.STATIC_DRAW);
   buffers.push(b);return b;
  }
+ function removeTrackedBuffer(buffer){
+  if(!buffer)return;
+  gl.deleteBuffer(buffer);
+  const at=buffers.indexOf(buffer);
+  if(at>=0)buffers.splice(at,1);
+ }
  function bufferMesh(mesh){
-  let m=cache.get(mesh);if(m)return m;
+  const cached=residency.get(mesh);if(cached)return cached;
   const n=mesh.positions.length/3;
   if(n>65535&&!uintExt)throw Error('AIG3D_UINT_INDEX_EXTENSION_REQUIRED');
   const idx=n>65535?new Uint32Array(mesh.indices):new Uint16Array(mesh.indices);
-  m={pos:createBuffer(gl.ARRAY_BUFFER,new Float32Array(mesh.positions)),
-   norm:createBuffer(gl.ARRAY_BUFFER,new Float32Array(mesh.normals)),
-   indices:createBuffer(gl.ELEMENT_ARRAY_BUFFER,idx),
-   count:idx.length,type:n>65535?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT};
-  cache.set(mesh,m);return m;
+  const pos=new Float32Array(mesh.positions),norm=new Float32Array(mesh.normals);
+  const bytes=pos.byteLength+norm.byteLength+idx.byteLength;
+  return residency.reserve(mesh,bytes,()=>{
+   const created=[];
+   try{
+    const add=(target,array)=>{
+     const buffer=createBuffer(target,array);created.push(buffer);return buffer;
+    };
+    return {pos:add(gl.ARRAY_BUFFER,pos),norm:add(gl.ARRAY_BUFFER,norm),
+     indices:add(gl.ELEMENT_ARRAY_BUFFER,idx),count:idx.length,
+     type:n>65535?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT};
+   }catch(error){
+    for(const b of created)removeTrackedBuffer(b);
+    throw error;
+   }
+  },gpu=>{
+   for(const b of [gpu.pos,gpu.norm,gpu.indices])removeTrackedBuffer(b);
+  });
  }
  function setCamera(patch={}){
   if(dead)throw Error('AIG3D_RENDERER_DESTROYED');
@@ -196,13 +221,32 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   for(const s of segments)(s.motion==='G0'?rapid:feed).push(...s.from,...s.to);
   gl.useProgram(lineProg);gl.uniformMatrix4fv(lu.model,false,identity());
   gl.uniformMatrix4fv(lu.vp,false,vp);gl.disable(gl.CULL_FACE);
-  for(const [points,col] of [[rapid,[.57,.65,.71,1]],[feed,[.09,.75,1,1]]]){
+  for(const [kind,points,col] of [
+   ['rapid',rapid,[.57,.65,.71,1]],['feed',feed,[.09,.75,1,1]]
+  ]){
    if(!points.length)continue;
-   const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);
-   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(points),gl.STREAM_DRAW);
-   gl.enableVertexAttribArray(lu.pos);gl.vertexAttribPointer(lu.pos,3,gl.FLOAT,false,0,0);
-   gl.uniform4fv(lu.color,new Float32Array(col));gl.drawArrays(gl.LINES,0,points.length/3);
-   gl.deleteBuffer(b);
+   const data=new Float32Array(points),needed=data.byteLength;
+   if(needed>maxTransientPathBytes)
+    throw Error('AIG16_GPU_PATH_BUFFER_SAFETY_LIMIT_BLOCKED');
+   const record=pathGpu[kind];
+   if(!record.buffer){
+    record.buffer=createBuffer(gl.ARRAY_BUFFER,new Float32Array(0));
+    pathBufferCreations++;
+   }
+   gl.bindBuffer(gl.ARRAY_BUFFER,record.buffer);
+   // WebGL buffer storage only grows, never allocates/deletes a GL Buffer per
+   // frame. bufferSubData updates the true NC source segments every frame.
+   if(needed>record.capacity){
+    record.capacity=Math.min(maxTransientPathBytes,
+     Math.max(needed,record.capacity?record.capacity*2:1024));
+    gl.bufferData(gl.ARRAY_BUFFER,record.capacity,gl.DYNAMIC_DRAW);
+    pathGpuReallocations++;
+   }
+   gl.bufferSubData(gl.ARRAY_BUFFER,0,data);pathUploads++;
+   gl.enableVertexAttribArray(lu.pos);
+   gl.vertexAttribPointer(lu.pos,3,gl.FLOAT,false,0,0);
+   gl.uniform4fv(lu.color,new Float32Array(col));
+   gl.drawArrays(gl.LINES,0,points.length/3);
   }
   return {rapid:rapid.length/6,feed:feed.length/6};
  }
@@ -210,6 +254,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   if(dead)throw Error('AIG3D_RENDERER_DESTROYED');
   if(lost)return {status:'WEBGL_CONTEXT_LOST'};
   if(scene?.schema!=='AIG_REAL3D_SCENE_V1')throw Error('AIG3D_SCENE_SCHEMA_INVALID');
+  residency.beginFrame();
   resize();gl.clearColor(...background);gl.clearDepth(1);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   const {eye,vp}=eyeAndVP();
@@ -233,31 +278,33 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    framebufferRGBBits:[gl.RED_BITS,gl.GREEN_BITS,gl.BLUE_BITS].map(v=>gl.getParameter(v)),
    finalDisplayPixelOneBlendedRGBColor:true,realMirrorReflection:false,
    actualStockRemovedMm3:null,removalNotImplemented:true,
-   source:auditAIG3DScene(scene).source};
+   source:auditAIG3DScene(scene).source,
+   gpuResidency:residency.stats(),
+   gpuPathBuffers:{created:pathBufferCreations,reallocations:pathGpuReallocations,
+    updates:pathUploads,rapidCapacityBytes:pathGpu.rapid.capacity,
+    feedCapacityBytes:pathGpu.feed.capacity},
+   gpuExecutionMsMeasured:false,measuredNativeFps:false};
   return {...last};
  }
  const contextLost=e=>{e.preventDefault();lost=true;};
  canvas.addEventListener('webglcontextlost',contextLost);
  function releaseMesh(mesh){
   if(dead||!mesh)return false;
-  const old=cache.get(mesh);
-  if(!old)return false;
-  const toDelete=[old.pos,old.norm,old.indices];
-  for(const buffer of toDelete){
-   gl.deleteBuffer(buffer);
-   const at=buffers.indexOf(buffer);
-   if(at>=0)buffers.splice(at,1);
-  }
-  cache.delete(mesh);
-  return true;
+  return residency.release(mesh);
  }
  function destroy(){
   if(dead)return;dead=true;
   canvas.removeEventListener('webglcontextlost',contextLost);
+  residency.clear();
   for(const b of buffers)gl.deleteBuffer(b);
   gl.deleteProgram(meshProg);gl.deleteProgram(lineProg);
-  buffers=[];cache=new WeakMap();
+  buffers=[];
+  pathGpu.rapid.buffer=null;pathGpu.feed.buffer=null;
  }
  return {status:'READY',contextVersion:webgl2?2:1,render,destroy,
-  setCamera,getCamera,setQuality,getQuality,releaseMesh,getLastStats:()=>last?{...last}:null};
+  setCamera,getCamera,setQuality,getQuality,releaseMesh,
+  getGpuResources:()=>Object.freeze({...residency.stats(),
+   pathBufferCreations,pathGpuReallocations,pathUploads,
+   transientPathBytes:pathGpu.rapid.capacity+pathGpu.feed.capacity}),
+  getLastStats:()=>last?{...last}:null};
 }
