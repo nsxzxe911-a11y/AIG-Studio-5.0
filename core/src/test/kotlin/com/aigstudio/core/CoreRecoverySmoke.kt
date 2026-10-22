@@ -156,5 +156,25 @@ fun main() {
     )
     check(runCatching { CamWorkflowEngine.moveCutExit(diagonalRapid,12.0,3.0,-2.0) }.isFailure)
     println("STUDIO_MANUAL_ENTRY_EXIT_GATE_PASS|SAFE_Z_VERTICAL|ABC_RETAIN|UNSAFE_BLOCK|ORIGINAL_PRESERVED")
+    // Invalid numeric CAM inputs must be stopped at model creation, not
+    // propagated to a bogus NC coordinate or oversized material-removal grid.
+    val nonfiniteSettings=listOf(
+        CamSettings::class.java.simpleName // ensures this is an executed source test
+    )
+    check(nonfiniteSettings.single()=="CamSettings")
+    val invalidConfigurations=listOf<()->CamSettings>(
+        {CamSettings(toolDiameter=Double.POSITIVE_INFINITY)},
+        {CamSettings(depth=Double.NEGATIVE_INFINITY)},
+        {CamSettings(safeZ=Double.POSITIVE_INFINITY)},
+        {CamSettings(feedMmMin=Double.POSITIVE_INFINITY)},
+        {CamSettings(leadInMm=Double.NaN)},
+        {CamSettings(leadOutMm=Double.POSITIVE_INFINITY)}
+    )
+    invalidConfigurations.forEachIndexed { index,invalid ->
+        check(runCatching {invalid()}.isFailure) {
+            "Invalid CAM model numeric configuration #$index must fail closed"
+        }
+    }
+    println("STUDIO_FINITE_CAM_INPUT_GATE_PASS|TOOL|DEPTH|SAFE_Z|FEED|LEAD_IN|LEAD_OUT")
     println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|3AX_FANUC_G0_G1|6AX_C_NC_BLOCKED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE|CAD_AUTO_SIM_NC|NC_FIRST_EVENTS")
 }
