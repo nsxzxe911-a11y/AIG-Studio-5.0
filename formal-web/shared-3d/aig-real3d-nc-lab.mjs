@@ -7,7 +7,7 @@ import {createAIGVoxelStock,auditAIGVoxelStock,meshAIGVoxelStock}
 import {parseAIG12NCWorkingCopy,simulateAIG12NCWorkingCopy}
  from './aig-real3d-nc-preview-1-2.mjs';
 const $=id=>document.getElementById(id),canvas=$('view'),
- renderer=createAIG3DRenderer(canvas,{pixelRatio:1.1,maxFramePixels:780000});
+ renderer=createAIG3DRenderer(canvas,{pixelRatio:1.1,maxFramePixels:780000,preserveDrawingBuffer:true});
 const SOURCE='AIG12_NC_LOCAL_USER_SOURCE_UNVERIFIED_NOT_MACHINE';
 let parsed=null,scene=null,stockNode=null,result=null,drag=null;
 const format=v=>Number(v).toFixed(3);
