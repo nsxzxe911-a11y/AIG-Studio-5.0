@@ -1,0 +1,51 @@
+<!doctype html><html lang="zh-Hant"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020407">
+<title>AIG FastModel Real3D 1.9｜場景與 GPU 管理</title>
+<style>
+:root{font:14px/1.5 system-ui,"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#e5f8ff;background:#020407}
+*{box-sizing:border-box}body{margin:0;padding:12px;background:radial-gradient(ellipse at 45% 0,#102b46,#020407 72%)}
+main{max-width:1350px;margin:auto}a{color:#90e9ee}h1{font-size:clamp(20px,3vw,31px);margin:7px 0}
+p{color:#b6d0df}header{border-bottom:1px solid #245875;padding:12px 0 16px;margin-bottom:13px}
+.layout{display:grid;grid-template-columns:minmax(240px,310px) minmax(0,1fr);gap:12px}
+.panel{background:#09182a;border:1px solid #336584;border-radius:12px;padding:13px;min-width:0}
+label{display:block;margin:11px 0;color:#d7eff9;font-size:13px}
+select{width:100%;color:#e6ffff;background:#061222;border:1px solid #4b92ad;min-height:45px;border-radius:8px;padding:8px}
+button{border-radius:9px;background:#135476;border:1px solid #61b8d5;color:white;cursor:pointer;min-height:45px;padding:8px 14px;margin:6px 6px 5px 0}
+button:disabled{opacity:.45;cursor:not-allowed}
+#stage{min-height:550px;display:flex;flex-direction:column;padding:8px}
+#stage canvas{width:100%;height:min(66vh,600px);min-height:355px;display:block;touch-action:none;border-radius:9px;background:#02070e}
+#status{white-space:pre-wrap;background:#081422;border:1px solid #467a96;border-radius:8px;display:block;padding:12px;overflow-wrap:anywhere}
+#status[data-error=true]{color:#ffd9a6;border-color:#b48745}
+#metrics{font:12px/1.6 ui-monospace,monospace;white-space:pre-wrap;color:#a7e9df;max-height:240px;overflow:auto}
+.hint{font-size:12px;color:#a8c9de}
+@media(max-width:760px){.layout{grid-template-columns:1fr}#stage{min-height:390px}#stage canvas{height:55vh;min-height:310px}main{max-width:100%}}
+</style></head><body><main>
+<header>
+<small>AIG FastModel · Real3D 1.9 · Local-first · GPU 工作頁</small>
+<h1>人物／建築／場景：單一 3D 引擎與 GPU 資源管理</h1>
+<p>同一時間只保留一個活動的 3D GLB 工作場景。切換時先核對本機素材 SHA，成功解析新來源後才釋放舊場景的 GPU 資源；失敗則保留原畫面。人物與場景原始資料不會因清快取而刪除。</p>
+<a href="./asset-library-studio.html">← 返回人物／地圖／場景外部素材庫</a>
+</header>
+<div class="layout">
+<section class="panel">
+<h2>場景來源</h2>
+<label>選擇 GLB 人物、建築或場景
+<select id="scene-choice" aria-label="選擇本機 GLB 場景">
+<option value="">請先從外部素材庫匯入 GLB</option></select></label>
+<p class="hint">地圖 JSON、影片與轉場資料由對應模組處理，不會被錯誤當成 GLB 送入 GPU。未人工核准的模型只能預覽，不代表已核准人物或真 1:1。</p>
+<button id="scene-load">按需開啟 3D 場景</button>
+<button id="scene-unload">結束場景／釋放 GPU</button>
+<button id="scene-clear">清除暫存 RAM（不刪模型）</button>
+<button id="scene-refresh">更新來源索引</button>
+<h2>資源狀態</h2>
+<pre id="metrics">讀取中…</pre>
+<p class="hint">RAM 暫存預設不超過 48MiB／4 個來源；這是來源二進位的 CPU 暫存，不是 GPU VRAM 的實測占用。GPU 釋放為 Three.js 資源 dispose 要求。</p>
+<output id="status" role="status" aria-live="polite">場景待命。按「按需開啟」才建立 3D 渲染工作區。</output>
+</section>
+<section class="panel" id="stage" aria-label="真正 WebGL 工作視窗">
+<canvas id="viewport" aria-label="可旋轉縮放的真實 GLB 3D 場景"></canvas>
+<p>3D 场景優先佔用畫面空間；控制面板縮於周邊。單場景切換不重新初始化整個 FastModel 工作區。</p>
+</section>
+</div>
+</main><script src="./scene-runtime-studio.js"></script></body></html>
