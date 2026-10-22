@@ -36,11 +36,11 @@
       "id": "AIG FastModel",
       "repository": "nsxzxe911-a11y/AIG-Studio-5.0",
       "reference": "repair/core-first-fastmodel-20261021",
-      "source_sha": "60c987302b8fb75d8d101b3402911de8e8bee590",
+      "source_sha": "9df98d0471ebfdb3c25f3ca5948e48e60eb77e57",
       "visibility": "PUBLIC",
       "source_checked": true,
-      "runtime_gate": "SOURCE_AND_BROWSER_VERIFIED_NATIVE_AND_RENDER_NOT_VERIFIED",
-      "checkpoint_note": "FastModel 7.8 real XYZ head yaw pitch roll with smooth neck anchoring, photo user-reviewed hair/neck 3D layers, bounded sway and source-anchored 3D inverse+collision checks. GH run 39759628139 fully PASS: 324/324 Node, 49/49 Python, full phone+desktop browser and independent 7.5-7.8 jobs; source audit run 39759628176 PASS. Synthetics NOT real heroine face or native Android/Windows. Render LIVE not deployed/verified."
+      "runtime_gate": "SOURCE_AND_BROWSER_VERIFIED_NATIVE_AND_RENDER_PENDING",
+      "checkpoint_note": "FastModel 7.9 continuous camera and uploaded local WebM video frame scanning: adaptive quality/novelty keyframes, cache capped, pause/resume/stop, exact-source SHA-256 observation-memory JSON roundtrip, camera tracks released. GitHub full run 39762605302 PASS 330/330 Node, 49/49 Python, phone+desktop Chromium real encoded WebM and getUserMedia fake camera, and 7.5-7.9 independent regression; source audit 39762605297 PASS. No real 3D multi-view pose fusion/anatomical reconstruction, no native APK/EXE evidence; original website live SHA independently required."
     }
   ],
   "checks": {
@@ -115,7 +115,17 @@
     "fastmodel_7_8_real_hair_collision_fem": "NOT_IMPLEMENTED",
     "fastmodel_7_8_real_user_character": "NOT_VERIFIED",
     "fastmodel_7_8_native_apk_exe": "NOT_VERIFIED",
-    "fastmodel_7_8_mmo_server": "NOT_IMPLEMENTED"
+    "fastmodel_7_8_mmo_server": "NOT_IMPLEMENTED",
+    "fastmodel_7_9": "PASS_REAL_BROWSER_LOCAL_CONTINUOUS_VIDEO_CAMERA_INCREMENTAL_KEYFRAME_MEMORY",
+    "fastmodel_7_9_verified_core_sha": "9df98d0471ebfdb3c25f3ca5948e48e60eb77e57",
+    "fastmodel_7_9_full_ci": "PASS_GITHUB_RUN_39762605302_NODE_330_330_PYTHON_49_49_CHROMIUM_PHONE_DESKTOP_AND_7_5_TO_7_9",
+    "fastmodel_7_9_source_audit": "PASS_GITHUB_RUN_39762605297",
+    "fastmodel_7_9_video": "PASS_CHROMIUM_DECODED_REAL_WEBM_12_FRAMES_2_KEYFRAMES_PHONE_DESKTOP",
+    "fastmodel_7_9_camera": "PASS_CHROMIUM_REAL_GETUSERMEDIA_API_FAKE_DEVICE_6_FRAMES_EACH_DEVICE",
+    "fastmodel_7_9_resume_memory": "PASS_LOCAL_SHA_256_SOURCE_BOUND_META_ONLY",
+    "fastmodel_7_9_3d_visual_hull": "NOT_IMPLEMENTED",
+    "fastmodel_7_9_automatic_camera_pose": "NOT_IMPLEMENTED",
+    "fastmodel_7_9_native_apk_exe": "NOT_VERIFIED"
   },
   "approved_invariants": [
     "Do not delete/overwrite original geometry, CAD/CAM/NC, approved RGB Authority, or FastModel assets.",
@@ -125,8 +135,9 @@
     "No automatic rollback/downgrade; no destructive repair; create a new checkpoint after validation."
   ],
   "next_steps": [
-    "Compare latest original Render deployed SHA against site branch, verify served /fastmodel/spatial-studio.html and its imported modules before claiming LIVE. Do not deploy or replace unrelated CNC production without safety gates.",
-    "FastModel 7.9: proper multi-layer full 3D volumetric skinning/contact, camera-independent adaptive LOD, 3D hair-neck collision, reference heroine multiangle visual fidelity and true device FPS gate.",
+    "Publish latest website source only to original aig-dual-formal-runtime Render static site and verify deployed SHA, /fastmodel/continuous-studio.html plus imported JS, and preserved HOME/navigation.",
+    "FastModel 7.10: source-verified multiview camera calibration, stable 2D feature correspondence and incremental 3D SDF/visual-hull fusion, reject uncalibrated angles or poor parallax; link observed frame IDs to model revisions.",
+    "Real original heroine and production phone/Windows hardware testing remain required before claiming realistic character, full animation, native FPS or MMO online.",
     "Keep explicit distinction between real mathematical XYZ articulating estimated geometry and complete authentic single-photo anatomical reconstruction; require actual source-photo likeness and movement screenshots.",
     "Only promote authentic real-photo character after original heroine reference images and moving frames pass visual, source fidelity and no-clipping checks; synthetic RGB photo region CI is numeric only.",
     "Confirm exact Render deployed SHA for original aig-dual-formal-runtime service; webpage source sync is not proof of live deploy. Static service configured autoDeploy; do not trigger duplicate manual build.",
@@ -142,5 +153,5 @@
     "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
   ],
   "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
-  "last_action": "FastModel 7.8 source 60c987302b8fb75d8d101b3402911de8e8bee590 delivered, numerical source-reviewed neck joint XYZ yaw/pitch/roll and hair layer sway. Full GitHub run 39759628139 PASS 324 Node, 49 Python, 7.5/7.6/7.7/7.8 dedicated phone+desktop synthetic Chromium; source audit 39759628176 PASS. Original site source at /fastmodel/spatial-studio.html mirrored exact, not deployed. No authentic human head depth, scalp hair physics or native FPS proof."
+  "last_action": "7.9 core 9df98d0471ebfdb3c25f3ca5948e48e60eb77e57 commits real HTMLVideoElement WebM frame decoding, live camera getUserMedia continuous capture, adaptive keyframe quality and 144-dimensional bounded descriptive keyframes, privacy-safe stop, pause/resume, same-source local JSON checkpoint. Full GH 39762605302 PASS Node 330, Python 49, Chromium phone/desktop; source gate 39762605297 PASS. Site branch mirrored; original Render still prior commit until deployed/verified. Native devices and actual multiview 3D geometry remain independent Gate."
 }
