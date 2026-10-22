@@ -357,7 +357,10 @@ try{
   console.log('AIG compact real Chromium '+device.name+' PASS',JSON.stringify(evidence));
   // Real phone+desktop local single upper-body photo → 17-bone base
   // GLB → click true full-body action → inspect downloaded 7-clip GLB.
-  await page.locator('#aig-unified-tab-advanced').click();
+  await page.locator('#aig-unified-tab-model').click();
+  if(!await page.locator('#aig64-single-build').isVisible()||
+     !await page.locator('#aig64-single-motion-upgrade').isVisible())
+   throw Error('AIG_PRIMARY_REAL_FULLBODY_BUTTONS_HIDDEN_IN_TECHNICAL_DISCLOSURE');
   const encoded=await page.evaluate(()=>{
    const c=document.createElement('canvas');c.width=320;c.height=480;
    const x=c.getContext('2d');x.fillStyle='#eeebe6';x.fillRect(0,0,320,480);
