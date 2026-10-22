@@ -7,7 +7,7 @@ import {createAIGVoxelStock,createAIGCylindricalCutter,applyAIGFeedCut,
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 const $=id=>document.getElementById(id);
 const canvas=$('view'),renderer=createAIG3DRenderer(canvas,{
- pixelRatio:1.2,maxFramePixels:780000
+ pixelRatio:1.2,maxFramePixels:780000,preserveDrawingBuffer:true
 });
 let stock=null,cutter=null,scene=null,stockNode=null,toolNode=null,feedCount=0,cutLog=[];
 const source='PROCEDURAL_G1_VOXEL_TEST_FIXTURE_NOT_LIVE_NC';
