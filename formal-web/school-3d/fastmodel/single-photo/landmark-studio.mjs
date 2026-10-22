@@ -73,7 +73,7 @@ function evidence(render=lastFrame){
   estimatedDepth:field.halfDepth*2,expression:expression(),quality,
   imageSourceUnchanged:true,render:render?{
    rayHits:render.hitPixels,originalFrontPhotoPixels:render.photoPixels,
-   estimatedNeutralRearPixels:render.neutralRearPixels
+   estimatedNeutralRearPixels:render.neutralRearPixels,cameraYaw:render.cameraYaw
   }:null,
   anatomicalFaceDepthVerified:false,hairNeckLikenessVerified:false,
   physicalSkinMaterialVerified:false,nativeAndroidWindowsVerified:false,actualOnlineGameServer:false
