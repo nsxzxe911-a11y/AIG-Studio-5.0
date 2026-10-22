@@ -158,10 +158,6 @@ fun main() {
     println("STUDIO_MANUAL_ENTRY_EXIT_GATE_PASS|SAFE_Z_VERTICAL|ABC_RETAIN|UNSAFE_BLOCK|ORIGINAL_PRESERVED")
     // Invalid numeric CAM inputs must be stopped at model creation, not
     // propagated to a bogus NC coordinate or oversized material-removal grid.
-    val nonfiniteSettings=listOf(
-        CamSettings::class.java.simpleName // ensures this is an executed source test
-    )
-    check(nonfiniteSettings.single()=="CamSettings")
     val invalidConfigurations=listOf<()->CamSettings>(
         {CamSettings(toolDiameter=Double.POSITIVE_INFINITY)},
         {CamSettings(depth=Double.NEGATIVE_INFINITY)},
