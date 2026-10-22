@@ -31,9 +31,14 @@ export function inspectAigSourceObservation({
  const alpha=clear>=100&&clear>rim.length;
  if(!alpha&&rim.length<140)throw Error('AIG612_BACKGROUND_NOT_OBSERVABLE');
  const background=alpha?null:[0,1,2].map(k=>median(rim.map(c=>c[k])));
- const variance=alpha?null:median(rim.map(v=>
-  Math.hypot(...v.map((n,k)=>(n-background[k])/255))));
- if(variance!==null&&variance>.22)
+ const deviations=alpha?[]:rim.map(v=>
+  Math.hypot(...v.map((n,k)=>(n-background[k])/255)))
+  .sort((a,b)=>a-b);
+ const variance=alpha?null:median(deviations);
+ // A median alone can miss two-tone border clutter if one colour has a
+ // slight majority. Require both typical and 90th-percentile consistency.
+ const p90=alpha?null:deviations[Math.floor((deviations.length-1)*.90)];
+ if((variance!==null&&variance>.22)||(p90!==null&&p90>.45))
   throw Error('AIG612_COMPLEX_BACKGROUND_REQUIRES_REAL_SEGMENTATION');
  const mask=new Uint8Array(N),visited=new Uint8Array(N);
  for(let y=2;y<h-2;y++)for(let x=2;x<w-2;x++){
@@ -95,6 +100,7 @@ export function inspectAigSourceObservation({
   domain,domainDecisionSource:'EXPLICIT_USER_CHOICE_NOT_AI_SPECIES_RECOGNITION',
   segmentationMethod:alpha?'ORIGINAL_IMAGE_ALPHA':'UNIFORM_BORDER_COLOUR_KEY',
   backgroundMedianRGB:background,backgroundMedianColourDistance:variance,
+  backgroundP90ColourDistance:p90,
   mainForegroundAreaFraction:+(first.size/N).toFixed(6),
   separateForegroundComponents:components.length,
   secondToMainAreaRatio:second?+(second.size/first.size).toFixed(6):0,
