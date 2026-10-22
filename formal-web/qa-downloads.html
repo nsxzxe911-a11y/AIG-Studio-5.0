@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020407">
+<meta name="description" content="AIG-II / AIG Studio / FastModel 原生測試產物與下載狀態，明確列出來源 SHA、GitHub Actions 暫存檔與正式 Release Gate。">
+<title>AIG｜QA 產物與來源下載中心</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;background:#020407;color:#eaf6ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#123b5355,transparent 60%),#020407;min-height:100dvh}
+main{max-width:1070px;margin:auto;padding:clamp(15px,3vw,35px)}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding-bottom:17px;border-bottom:1px solid #23475b}
+a{color:#7ce6ff;text-underline-offset:3px}a:hover{color:#c2f9ff}
+.nav{display:flex;gap:15px;flex-wrap:wrap}.nav a{font-size:13px}
+h1{font-size:clamp(25px,3vw,38px);margin:30px 0 12px}h2{font-size:19px;margin:0 0 9px}
+p,li{line-height:1.7;color:#bdd5e3;font-size:14px}
+.lead{max-width:820px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:22px 0}
+.card{background:linear-gradient(140deg,#091b29,#07111b);border:1px solid #34556c;border-radius:13px;padding:18px;min-width:0}
+.card strong{color:#f7ffff}.card p{margin:10px 0}
+.badge{display:inline-block;padding:4px 8px;background:#262315;color:#ffdea2;border:1px solid #8a6c31;border-radius:5px;font-size:11px;font-weight:750}
+.ok{background:#102a24;color:#a0ffe1;border-color:#388272}.small{font-size:12px;color:#a4c0d4}
+code{font-size:12px;color:#c3fbff;overflow-wrap:anywhere}
+.line{border-top:1px solid #24455b;margin:14px 0}
+.link{display:inline-flex;padding:10px 13px;margin-top:6px;border:1px solid #4b95ac;border-radius:8px;background:#102e44;text-decoration:none;font-weight:700;font-size:13px;color:#f1fdff}
+.notice{padding:12px 16px;border-left:3px solid #ffc16a;background:#221e15;color:#ffdfac;border-radius:7px;font-size:13px;line-height:1.7}
+ul{padding-left:19px}.proof{display:grid;gap:9px}
+footer{border-top:1px solid #204258;padding-top:18px;font-size:12px;color:#84aabc;margin-top:30px}
+@media(max-width:690px){.grid{grid-template-columns:1fr}.card{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div><strong>AIG RGB · 檔案與驗證中心</strong><div class="small">Android／Windows／FastModel · 各自獨立 Gate</div></div>
+<div class="nav"><a href="./index.html#dual-projects">AIG 首頁</a><a href="./native-download.html">原生下載核對</a><a href="./qa-artifacts-manifest.json">機器可讀來源表</a></div>
+</header>
+<h1>QA 產物與下載狀態</h1>
+<p class="lead">以同一個 AIG 網站查核三專案的最新可驗證來源、Android／Windows 建置、下載資格及 GitHub 儲存配額。此頁是<strong>真實查核入口</strong>，不是假的 APK／EXE 下載按鈕，也不把來源核心 PASS 當作完整機台交付。</p>
+<p class="notice"><strong>正式版尚未放行。</strong> Render 現在是靜態網站，這一頁<strong>沒有聲稱 APK／EXE 已鏡像到 Render</strong>。目前可取得的 Studio QA 附件仍在 GitHub Actions，可能需要登入且將於 2026-10-29 到期。原網站和本機工作副本不會被覆蓋或清除。</p>
+<div class="grid">
+<section class="card" aria-label="AIG Studio 5.0 QA Android">
+<h2>AIG Studio 5.0 · Android</h2>
+<span class="badge ok">核心與 QA 原生編譯 PASS</span>
+<p>Debug APK 測試附件（<strong>不是簽章正式發行版</strong>）；ZIP 附件大小約 5.5 MB。Android 模擬器/真機 RGB 逐頁及 CNC 安全仍須另外驗收。</p>
+<div class="proof">
+<div class="small">來源提交 <code>573e5903bbaf6c72e0d6b0ad6290e7dd60a9ec4b</code></div>
+<div class="small">GitHub Artifact ID <code>12403442426</code></div>
+<div class="small">ZIP SHA-256 <code>6cfee816179959bde93d161b736d08002b692c190c7bc449c282d5636100c70e</code></div>
+<div class="small">預計到期：2026-10-29 05:19:47 UTC（台灣時間 13:19）</div>
+</div>
+<a class="link" href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39727014731" target="_blank" rel="noopener noreferrer">到 GitHub 下載 Studio QA APK ZIP ↗</a>
+</section>
+<section class="card" aria-label="AIG Studio 5.0 QA Windows">
+<h2>AIG Studio 5.0 · Windows</h2>
+<span class="badge">JVM JAR · 不是 EXE</span>
+<p>Windows JVM 編譯及測試附件（ZIP 約 4 MB），<strong>不能冒充 Windows 安裝程式、Repair／Uninstall、或 PE/MZ EXE 的驗收</strong>。</p>
+<div class="proof">
+<div class="small">來源提交 <code>573e5903bbaf6c72e0d6b0ad6290e7dd60a9ec4b</code></div>
+<div class="small">GitHub Artifact ID <code>12403247658</code></div>
+<div class="small">ZIP SHA-256 <code>0322bfd8d2c27e9b332771b8876c18d5331f5fa5ad37701a64b37396e5a7ec54</code></div>
+<div class="small">預計到期：2026-10-29 05:19:48 UTC（台灣時間 13:19）</div>
+</div>
+<a class="link" href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39727014731" target="_blank" rel="noopener noreferrer">查看 Studio Windows QA 附件 ↗</a>
+</section>
+<section class="card" aria-label="AIG-II 狀態">
+<h2>AIG-II · 主控 CNC</h2>
+<span class="badge ok">幾何／機械圖核心 PASS</span>
+<p>Android／Windows 來源編譯與下載附件各有獨立驗收。先前 GitHub Actions 顯示失敗的明確原因是 <strong>artifact 儲存配額已滿</strong>，不是 CAD 核心消失。此處目前<strong>沒有可證實的最新 APK／EXE 直接下載檔</strong>。</p>
+<div class="small">來源提交 <code>8b241ec89c4991a3ef258a2d34709f77ab64325d</code></div>
+<a class="link" href="https://github.com/nsxzxe911-a11y/AIG-II/actions/runs/39727007100" target="_blank" rel="noopener noreferrer">查看 AIG-II 建置與驗證 ↗</a>
+</section>
+<section class="card" aria-label="FastModel 狀態">
+<h2>AIG FastModel · 動畫核心</h2>
+<span class="badge ok">來源與技術動畫核心 PASS</span>
+<p>單張照片技術全身 GLB、17 骨／9 蒙皮網格／7 段動作及多類別安全分流均有測試；這些<strong>不等於擬真人物外觀、動植物模型和 Windows／Android 正式安裝檔已交付</strong>。</p>
+<div class="small">來源提交 <code>6b6e2a8b92b98187dcdf300952791e93c362523c</code></div>
+<a class="link" href="https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39724426133" target="_blank" rel="noopener noreferrer">查看 FastModel 真核心測試 ↗</a>
+</section>
+</div>
+<section class="card">
+<h2>怎麼真正省下 GitHub Actions 配額？</h2>
+<p>網站應當做<strong>版本目錄與快速下載入口</strong>；APK／EXE 檔案則放在有保留期限、完整性與存取控制的<strong>持久物件儲存</strong>或經標記的 QA prerelease 資產。只有實際完成二進位檔上傳、從新位置重新下載並驗證 SHA-256，才將連結改成「AIG 網站可直接下載」。</p>
+<ul>
+<li>測試日常：不要每次都上傳 APK／JAR／EXE；只保存來源 SHA、core/UI Gate、失敗證據與必要 log。</li>
+<li>頁面驗收與可用交付：才生成 APK／Windows EXE；QA 產物與正式 Release 獨立。</li>
+<li>正式檔案：以可驗證 SHA、簽章、實際啟動圖、CAD→CAM→SIM→NC 及 3～6AX 安全為放行條件。</li>
+<li>Render 靜態網站不會自動編譯 Android／Windows，也不等於持久二進位檔倉庫。</li>
+</ul>
+<div class="small">本頁證據紀錄：2026-10-22；狀態不會自動反映 GitHub 後續提交，最新結果請點擊原始 GitHub 測試連結。ZIP SHA-256 是附件壓縮檔的雜湊，不是解壓後 APK/JAR 的獨立雜湊。</div>
+</section>
+<footer>保留 AIG RGB 正式介面 · 不改動本機 CAD、CAM、NC、照片及動畫 Working Copy · 不以網頁版本號取代 APK／EXE 或實體機台證據。</footer>
+</main>
+</body>
+</html>
