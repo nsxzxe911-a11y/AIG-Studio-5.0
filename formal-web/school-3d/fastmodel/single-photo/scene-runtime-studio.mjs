@@ -7,11 +7,14 @@ import {AIG20WorldRuntime} from './aig-world-runtime-2-0.mjs';
 import {importAIG712SceneMap} from './aig-scene-map-7-12.mjs';
 import {listAIG21MapAnchors,alignAIG21ObjectToMap}
  from './aig-map-model-alignment-2-1.mjs';
+import {compileAIG22Story,verifyAIG22Story,AIG22StoryPlayer}
+ from './aig-text-world-storyboard-2-2.mjs';
 const $=id=>document.getElementById(id);
 let library=null,viewer=null,runtime=null,closed=false,loading=false;
 let worldRuntime=null,worldDoc=null,worldMetas=new Map(),worldSaved=[];
 let worldFrame=0,worldPlaying=false,worldPlaybackStart=0;
 let worldMapSnapshot=null;
+let story22Plan=null,story22Player=null,story22FrameHook=null,story22PriorFrame=null;
 const say=(message,bad=false)=>{
  $('status').textContent=message;$('status').dataset.error=bad?'true':'false';
 };
@@ -196,6 +199,9 @@ async function refreshWorldAssets(){
   x.mime==='application/json'&&x.tags.includes('world20'));
  rebuild('world-saved',x=>worldSaved.some(y=>y.id===x.id),
   '尚無已保存世界場景');
+ rebuild('story-saved',x=>x.mime==='application/json'&&
+  x.category==='animation'&&x.tags.includes('story22'),
+  '尚無已保存來源劇本');
 }
 function drawAIG20Map(map){
  const canvas=$('world-map-preview'),ctx=canvas?.getContext('2d');
@@ -433,6 +439,7 @@ $('world-align').addEventListener('click',async()=>{
   await resolveAIG20WorldSources(next,library);
   if(worldRuntime?.scene)worldRuntime.updateWorldPositions(next);
   worldDoc=next;worldEvidence();
+  invalidateAIG22Storyboard('地圖對位與場景 revision 已變更，請重新編譯');
   updateWorldStatus('已將 '+nodeId+' 對齊地圖 '+featureId+
    ' 的候選 XY→場景 XZ，保留 Y、原 GLB、骨架及比例。'+
    (worldRuntime?.scene?'畫面已直接移位，沒有重新載入 GPU。':'按合成預覽顯示。'));
@@ -454,6 +461,7 @@ $('world-preview').addEventListener('click',async()=>{
   if(result.status!=='COMPOSITED_WORLD_GPU_READY')
    throw Error('本輪載入已被新來源取代');
   runtime?.clearActiveReferenceAfterExternalCommit();
+  invalidateAIG22Storyboard('世界來源已重新載入，請重新解析文字動作');
   refreshWorldActorControls();
   updateWorldStatus('已在同一個 WebGL 3D 畫面載入 '+
    result.objects+' 個原始模型來源，'+
@@ -479,6 +487,7 @@ $('world-load').addEventListener('click',async()=>{
   assertAIG20Document(document);
   await resolveAIG20WorldSources(document,library);
   worldDoc=document;
+  invalidateAIG22Storyboard('載入另一份場景，劇情來源須重新核對');
   $('world-title').value=document.title;
   $('world-mode').value=document.coordinateMode;
   $('world-map').value=document.mapRef?.assetId??'';
@@ -502,6 +511,7 @@ $('world-key-add').addEventListener('click',async()=>{
   });
   if(worldRuntime?.scene)worldRuntime.updateCameraTrack(next);
   worldDoc=next;worldEvidence();
+  invalidateAIG22Storyboard('已修改鏡頭來源，請重新編譯劇本');
   updateWorldStatus('鏡頭關鍵影格已加入，可拖動時間軸預覽。已載入模型無需再次上傳 GPU。');
   try{await saveWorld(true)}catch(e){
    updateWorldStatus('鏡頭已加入，但自動儲存受限：'+String(e.message||e),true)
@@ -515,6 +525,122 @@ $('world-scrub').addEventListener('input',()=>{
   updateWorldStatus(result?'正在預覽真實相機軌跡 '+Number($('world-scrub').value).toFixed(1)+' 秒':
    '此場景尚未加入鏡頭影格。');
  }catch(e){updateWorldStatus('轉場尚不可播放：'+String(e.message||e),true)}
+});
+
+function showAIG22Plan(plan){
+ $('story-proof').textContent=plan?JSON.stringify({
+  status:plan.status,ready:plan.ready,sourceScene:plan.sceneId,
+  revision:plan.sceneRevision,events:plan.events,
+  missing:plan.blocked,seconds:plan.durationSeconds,
+  generatedMotion:false,generatedVoice:false,
+  originalAssetsModified:false
+ },null,2):'沒有來源已驗證的可播放劇本';
+ $('story-play').disabled=!plan?.ready;
+ $('story-save').disabled=!plan?.ready;
+}
+function stopAIG22Storyboard(reason='劇情已停止，原模型未清空'){
+ if(story22Player){
+  if(worldRuntime?.scene)for(const a of worldRuntime.listSourceActorClips())
+   try{worldRuntime.pauseSourceActor(a.nodeId,true)}catch{}
+  story22Player.stop();story22Player=null;
+ }
+ if(viewer&&story22FrameHook&&viewer.onFrame===story22FrameHook)
+  viewer.onFrame=story22PriorFrame;
+ story22FrameHook=null;story22PriorFrame=null;
+ $('story-status').textContent=reason;
+}
+function invalidateAIG22Storyboard(reason){
+ stopAIG22Storyboard(reason);
+ story22Plan=null;showAIG22Plan(null);
+}
+$('story-compile').addEventListener('click',()=>{
+ try{
+  if(!worldRuntime?.scene||!worldDoc)
+   throw Error('請先載入真正包含原始人物 GLB 的世界場景');
+  const plan=compileAIG22Story($('story-text').value,{
+   scene:worldRuntime.scene,actors:worldRuntime.listSourceActorClips()
+  });
+  story22Plan=plan;showAIG22Plan(plan);
+  $('story-status').textContent=plan.ready?
+   '已解析 '+plan.events.length+' 個真正來源時間軸事件，可播放。'+
+   '字幕只有文字，人物動作只有 GLB 內已有 Clip。':
+   'BLOCKED：'+plan.blocked.map(x=>'第'+(x.line||'?')+
+    '行 '+x.reason).join('；')+'。沒有產生假動畫。';
+ }catch(e){
+  story22Plan=null;showAIG22Plan(null);
+  $('story-status').textContent='BLOCKED：'+String(e.message||e);
+ }
+});
+$('story-play').addEventListener('click',()=>{
+ try{
+  if(!story22Plan?.ready||!worldRuntime?.scene||!viewer)
+   throw Error('請先完成有真來源動作的劇本驗證');
+  if(loading||viewer.movieMode||viewer.reviewBusy||viewer.onFrame)
+   throw Error('目前工作頁正在載入／錄影／占用影格回呼，禁止搶用時間軸');
+  verifyAIG22Story(story22Plan,worldRuntime.scene,
+   worldRuntime.listSourceActorClips());
+  stopWorldPlayback();
+  stopAIG22Storyboard('準備新劇本');
+  story22Player=new AIG22StoryPlayer({
+   worldRuntime,onEvent:e=>{
+    $('story-status').textContent='執行第 '+e.line+' 行：'+e.type+
+     (e.nodeId?' '+e.nodeId+'／'+e.clipName:'');
+    if(e.type==='SUBTITLE')$('story-subtitle').textContent=e.text;
+   },onEnd:()=>{
+    $('story-status').textContent='已依原始 GLB Clip／已設定鏡頭／文字字幕完成劇本。';
+    stopAIG22Storyboard('劇情已完成；模型、鏡頭與來源保留。');
+   }
+  });
+  story22PriorFrame=viewer.onFrame;
+  story22FrameHook=(dt,t)=>{
+   story22PriorFrame?.(dt,t);
+   story22Player?.advance(dt);
+  };
+  viewer.onFrame=story22FrameHook;
+  $('story-subtitle').textContent='來源劇情正在播放（沒有合成語音）';
+  const result=story22Player.start(story22Plan);
+  $('story-status').textContent='開始播放 '+result.events+
+   ' 個真來源時間軸事件，沿用同一個 GLB 世界視窗。';
+ }catch(e){
+  stopAIG22Storyboard('BLOCKED：'+String(e.message||e));
+ }
+});
+$('story-stop').addEventListener('click',()=>stopAIG22Storyboard());
+$('story-save').addEventListener('click',async()=>{
+ try{
+  if(!story22Plan?.ready)throw Error('只有來源已確認的劇本可入庫');
+  verifyAIG22Story(story22Plan,worldRuntime.scene,
+   worldRuntime.listSourceActorClips());
+  const blob=new Blob([JSON.stringify(story22Plan,null,2)],{
+   type:'application/json'});
+  const item=await library.importBlob(blob,{
+   category:'animation',title:'FastModel 2.2 劇情／動作／鏡頭時間軸',
+   tags:['story22','劇情','來源動畫','鏡頭','字幕'],
+   source:'GENERATED_DERIVED',modelAccuracy:'NOT_VERIFIED',
+   coordinateUnits:'UNKNOWN',derivedFrom:story22Plan.sceneId
+  });
+  await refreshWorldAssets();
+  $('story-status').textContent='已另存劇本 '+item.id+
+   ' 到主程式外素材庫。GLB、角色圖與場景原始來源未被改寫。';
+ }catch(e){$('story-status').textContent='劇本尚未保存：'+String(e.message||e)}
+});
+$('story-load').addEventListener('click',async()=>{
+ try{
+  const id=$('story-saved').value;
+  if(!id||!worldRuntime?.scene)throw Error('請先開啟對應的原始世界場景及已保存劇本');
+  const got=await library.get(id,{includePayload:true});
+  if(!got?.blob||got.asset?.mime!=='application/json')
+   throw Error('劇本原始資料不存在');
+  const plan=JSON.parse(await got.blob.text());
+  verifyAIG22Story(plan,worldRuntime.scene,
+   worldRuntime.listSourceActorClips());
+  stopAIG22Storyboard('載入原始劇本來源');
+  story22Plan=plan;$('story-text').value=plan.sourceText;
+  showAIG22Plan(plan);
+  $('story-status').textContent='已核對世界來源 SHA、revision 和 GLB 動作，'+
+   '此劇本可播放；未重新產生人物模型。';
+ }catch(e){$('story-status').textContent='BLOCKED：'+String(e.message||e)+
+  '。不清空正在使用的模型或既有劇本。'}
 });
 $('world-play').addEventListener('click',()=>{
  if(!worldRuntime?.scene||worldDoc?.cameraKeys.length<2){
@@ -541,6 +667,7 @@ $('world-pause').addEventListener('click',()=>{
  stopWorldPlayback();updateWorldStatus('已停止鏡頭轉場。來源與場景保留。');
 });
 window.addEventListener('pagehide',()=>{
+ stopAIG22Storyboard('工作頁已關閉');
  closed=true;stopWorldPlayback();worldRuntime?.close();
  viewer?.renderer?.setAnimationLoop(null);
  try{viewer?.unloadCurrent()}catch{}
