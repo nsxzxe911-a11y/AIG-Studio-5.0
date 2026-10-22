@@ -328,5 +328,77 @@ fun main() {
     check(runCatching{AigNativeCadGeometryQueries.offsetClosedLineContour(edges,-6.0)}.isFailure)
     println("AIG_NATIVE_CAD_ENTITY_BRIDGE_PASS|LINE_LINE|LINE_CIRCLE|CLOSED_OFFSET|COLLAPSE_BLOCK")
     println("AIG_ANALYTIC_GEOMETRY_GATE_PASS|LINE_LINE|LINE_CIRCLE|CIRCLE_TANGENT|ARC_SWEEP|CONVEX_OFFSET|INSIDE_COLLAPSE_BLOCK|CONCAVE_BLOCK|3D_CLOSED_SHELL|OPEN_OR_INVERTED_SHELL_BLOCK")
+    val drawingLine=Line(id="DRAWING-LINE-86001",
+        a=Vec2(0.0,0.0),b=Vec2(30.0,40.0))
+    val drawingHole=Circle(id="DRAWING-HOLE-86002",
+        center=Vec2(20.0,10.0),radius=5.0)
+    val (mechanicalLine,measuredLength)=AigMechanicalNativeBridge.line(
+        drawingLine,"FEAT-LINE","DIM-50",0.01,-0.02)
+    val (mechanicalHole,measuredDiameter)=AigMechanicalNativeBridge.designatedHole(
+        drawingHole,"FEAT-HOLE","DIM-10",12.0,0.005,-0.005)
+    val nativeMechanicalEntities=setOf(drawingLine.id,drawingHole.id)
+    check(kotlin.math.abs(measuredLength.nominal-50.0)<1e-9)
+    check(kotlin.math.abs(measuredDiameter.nominal-10.0)<1e-9)
+    check(kotlin.math.abs(mechanicalHole.nominalDepthMm!!-12.0)<1e-9)
+    val mechanicalSheet=AigMechanicalDrawingSheet(
+        drawingNumber="AIG-PLATE-01",revision="R1",partNumber="PLATE-01",
+        material="S45C",projectionStandard=AigMechanicalStandard.ISO_GPS,
+        features=listOf(mechanicalLine,mechanicalHole),
+        views=listOf(
+            AigMechanicalView("VIEW-FRONT",AigMechanicalViewKind.FRONT,
+                setOf("FEAT-LINE","FEAT-HOLE")),
+            AigMechanicalView("VIEW-SECTION-A",AigMechanicalViewKind.SECTION,
+                setOf("FEAT-HOLE"),sectionReference="A-A")
+        ),
+        dimensions=listOf(measuredLength,measuredDiameter),
+        datums=listOf(AigMechanicalDatum("A","FEAT-LINE")),
+        frames=listOf(AigMechanicalGdtFrame("GDT-HOLE",
+            AigMechanicalGdtKind.POSITION,"FEAT-HOLE",0.02,listOf("A"))),
+        billOfMaterials=listOf(
+            AigMechanicalBomRow("PLATE-01","Machined plate",1)),
+        notes=listOf("G90 master X0.000 Y0.000; datum A is design intent")
+    )
+    val mechanicalAudit=AigMechanicalDrawingCore.audit(
+        mechanicalSheet,nativeMechanicalEntities)
+    check(mechanicalAudit.featureCount==2&&mechanicalAudit.viewCount==2&&
+        mechanicalAudit.dimensionCount==2&&
+        mechanicalAudit.nativeGeometryReferencesVerified&&
+        mechanicalAudit.gdtCrossReferencesValidated&&
+        !mechanicalAudit.gdtStandardFullyCertified&&
+        !mechanicalAudit.manufacturingInstructionsGenerated&&
+        !mechanicalAudit.machineExecutionAllowed){
+        "Drawing evidence MUST NOT masquerade as GD&T validation or Fanuc NC"
+    }
+    val holeGrid=AigMechanicalDrawingCore.rectangularHoleCenters(
+        Vec2(10.0,20.0),3,2,30.0,15.0)
+    check(holeGrid.size==6&&holeGrid.first()==Vec2(10.0,20.0)&&
+        holeGrid.last()==Vec2(70.0,35.0))
+    check(runCatching {
+        AigMechanicalDrawingCore.rectangularHoleCenters(
+            Vec2(0.0,0.0),3,2,-30.0,15.0)
+    }.isFailure)
+    check(runCatching{AigMechanicalDrawingCore.audit(
+        mechanicalSheet,nativeMechanicalEntities-setOf(measuredDiameter.nativeEntityId)
+    )}.isFailure){"Must block drawing on deleted native CAD geometry"}
+    check(runCatching{AigMechanicalDrawingCore.audit(mechanicalSheet.copy(
+        dimensions=mechanicalSheet.dimensions+measuredDiameter.copy(
+            id="DUP-FAIL",nativeEntityId="NOT-AN-ENTITY")),nativeMechanicalEntities
+    )}.isFailure)
+    check(runCatching{AigMechanicalDrawingCore.audit(mechanicalSheet.copy(
+        dimensions=mechanicalSheet.dimensions.map {d->
+            if(d.id=="DIM-10")d.copy(plusTolerance=-0.001) else d
+        }),nativeMechanicalEntities
+    )}.isFailure)
+    check(runCatching{AigMechanicalDrawingCore.audit(mechanicalSheet.copy(
+        datums=emptyList()),nativeMechanicalEntities
+    )}.isFailure){"Dangling datum references may not be called valid GD&T"}
+    check(runCatching{AigMechanicalDrawingCore.audit(mechanicalSheet.copy(
+        views=listOf(AigMechanicalView("BAD-SECTION",AigMechanicalViewKind.SECTION,
+            setOf("FEAT-HOLE")))),nativeMechanicalEntities
+    )}.isFailure)
+    check(runCatching{AigMechanicalDrawingCore.audit(mechanicalSheet.copy(
+        features=listOf(mechanicalLine,mechanicalLine)),nativeMechanicalEntities
+    )}.isFailure)
+    println("AIG_MECHANICAL_DRAWING_CORE_GATE_PASS|ACTUAL_NATIVE_LINE_50MM|ACTUAL_HOLE_D10|DEPTH_12|FRONT_SECTION|DATUM_GDT_REFERENCES|BOM|HOLE_GRID|DANGLING_BLOCKED|TOLERANCE_BLOCKED|NO_FAKE_FANUC_NC")
     println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|3AX_FANUC_G0_G1|6AX_C_NC_BLOCKED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE|CAD_AUTO_SIM_NC|NC_FIRST_EVENTS")
 }
