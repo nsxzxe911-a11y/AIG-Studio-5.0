@@ -58,7 +58,14 @@ def validate():
     assert "document.querySelectorAll('[data-i18n]')" in scripts, "LOCALE_NOT_CONNECTED"
     assert ".innerHTML=" not in scripts, "TRANSLATED_LABEL_MAY_INJECT_HTML"
     assert "function downloadFile(file)" in scripts, "NO_REAL_DOWNLOAD_CALLBACK"
-    assert "releaseCertified" not in PAGE.read_text() or "releaseCertified:false" in scripts or True
+    api = (ROOT / "infra" / "aig-site-builder" / "app.py").read_text()
+    for required in (
+        'RUN_TITLE_PREFIX', 'BLOCKED_DISPATCH_TIMEOUT',
+        'BLOCKED_BUILD_STALLED', 'GITHUB_BUILD_REQUEST_IDENTITY_CHANGED',
+        'GITHUB_BUILD_ALREADY_ACTIVE_DO_NOT_CANCEL',
+        'releaseCertified": False', '"downloadReady": False',
+        'BINARY_NOT_VERIFIED_OR_GATE_BLOCKED'):
+        assert required in api, "NO_ACTUAL_GATE_FOR_" + required
     for js in parser.scripts:
         with tempfile.NamedTemporaryFile("w",suffix=".js",encoding="utf-8") as f:
             f.write(js)
