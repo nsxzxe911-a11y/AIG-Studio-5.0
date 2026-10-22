@@ -11,7 +11,7 @@ console.log('Local bundled PBR viewer built; no CDN or third-party character ass
 const sharedPath='../../../shared-3d/';
 fs.mkdirSync('dist/shared-3d',{recursive:true});
 for(const resource of [
- 'aig-real3d-core.mjs','aig-real3d-quality.mjs','aig-real3d-webgl.mjs',
+ 'aig-real3d-core.mjs','aig-real3d-quality.mjs','aig-real3d-gpu-budget-1-6.mjs','aig-real3d-webgl.mjs',
  'aig-real3d-adapters.mjs','aig-real3d-lab.html','aig-real3d-lab.mjs',
  'aig-real3d-stock-removal-1-1.mjs','aig-real3d-stock-lab.html','aig-real3d-stock-lab.mjs','aig-real3d-nc-preview-1-2.mjs','aig-real3d-nc-lab.html','aig-real3d-nc-lab.mjs','aig-real3d-step-replay-1-3.mjs','aig-real3d-replay-lab.html','aig-real3d-replay-lab.mjs','aig-real3d-axis-bridge-1-4.mjs','aig-real3d-rig-integrity-1-5.mjs'
 ]){
