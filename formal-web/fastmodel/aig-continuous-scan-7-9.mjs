@@ -80,7 +80,9 @@ function reject(s,reason,quality={}) {
  return {accepted:false,reason,quality};
 }
 function poseLabel(pose){
- if(pose===null||pose===undefined)return {yaw:null,pitch:null,reviewed:false};
+ if(pose===null||pose===undefined||
+  (typeof pose==='object'&&pose.reviewed===false&&pose.yaw===null&&pose.pitch===null))
+  return {yaw:null,pitch:null,reviewed:false};
  if(typeof pose!=='object'||pose.reviewed!==true||
   ![pose.yaw,pose.pitch].every(finite)||Math.abs(pose.yaw)>3.142||
   Math.abs(pose.pitch)>1.571)throw Error('AIG79_POSE_REVIEW_INVALID');
