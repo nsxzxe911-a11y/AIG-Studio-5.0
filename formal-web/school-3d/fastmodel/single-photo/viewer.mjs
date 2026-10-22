@@ -7,6 +7,8 @@ import {REVIEW_DIRECTIONS,reviewCameraPose,reviewPoseTime} from './heroine-revie
 import {TIMELINE_FRACTIONS,composeTimelineImage} from './timeline-review.mjs';
 import {inspectExternalAction,copyCompatibleClips,commitCompatibleClips} from './action-compatibility.mjs';
 import {StoryPlayback} from './story-to-animation.mjs';
+import {Aig42GpuTimer} from './aig-performance-4-2.mjs';
+import {Aig17GLBGpuGovernor} from './aig-glb-gpu-adaptive-1-7.mjs';
 
 export async function parseRiggedGLB(buffer){
  if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>200*1024*1024)throw Error('GLB_SIZE_LIMIT');
@@ -51,7 +53,8 @@ export class AnimationController{
 export class PhotoViewer{
  constructor(canvas,onError){
   this.canvas=canvas;this.onError=onError;this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
-  this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1;
+  this.originalPreviewPixelRatio=Math.min(devicePixelRatio||1,1.5);
+  this.renderer.setPixelRatio(this.originalPreviewPixelRatio);this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1;
   this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#020407');
   this.camera=new THREE.PerspectiveCamera(40,1,.01,1000);this.camera.position.set(0,1,3);
   this.controls=new OrbitControls(this.camera,canvas);this.controls.enableDamping=true;
@@ -59,19 +62,90 @@ export class PhotoViewer{
   const light=new THREE.DirectionalLight(0xffffff,3);light.position.set(2,4,3);this.scene.add(light);
   const pmrem=new THREE.PMREMGenerator(this.renderer),room=new RoomEnvironment();this.env=pmrem.fromScene(room).texture;this.scene.environment=this.env;room.dispose();pmrem.dispose();
   this.resize=new ResizeObserver(()=>this.fitCanvas());this.resize.observe(canvas.parentElement);this.fitCanvas();this.previous=0;this.orbit=false;this.skinProbe=null;this.skinReport=null;this.onFrame=null;this.onAfterRender=null;this.onFrameMeasured=null;this.movieMode=false;this.movieOriginalViewport=null;
+  this.gpu17Timer=null;this.gpu17Governor=null;this.gpu17Enabled=false;
+  this.gpu17LastSample=null;this.gpu17Frames=0;this.gpu17Status='DISABLED_OR_NO_GL_BUNDLE';
   this.renderer.setAnimationLoop(t=>{try{const dt=this.previous?Math.min(.1,(t-this.previous)/1000):0;this.previous=t;this.animation?.update(dt);
     try{this.onFrame?.(dt,t);}catch(audioError){this.onFrame=null;this.onError('音訊已隔離：'+audioError.message);}
     if(this.skinProbe&&this.model){this.skinProbe.capture(this.model,t,{animationName:this.animation?.clips?.[this.animation?.index]?.name||null});if(this.skinProbe.done)this.skinProbe=null;}
     this.controls.autoRotate=this.orbit;this.controls.update();
-    const renderStart=performance.now();this.renderer.render(this.scene,this.camera);
-    try{this.onFrameMeasured?.({timeMs:t,renderCpuMs:performance.now()-renderStart,
+    const gpuMeasure=this.gpu17Enabled&&this.model&&!this.movieMode&&
+      !this.reviewBusy&&!this.actionImportBusy&&document.visibilityState==='visible'&&
+      this.gpu17Timer?.supported;
+    if(gpuMeasure)this.gpu17Timer.begin();
+    const renderStart=performance.now();
+    try{this.renderer.render(this.scene,this.camera);}
+    finally{if(gpuMeasure)this.gpu17Timer.end();}
+    const cpuSubmitMs=performance.now()-renderStart;
+    const completedGpuSample=gpuMeasure?this.gpu17Timer.poll():null;
+    if(completedGpuSample){
+     this.gpu17LastSample=completedGpuSample;
+     const decision=this.gpu17Governor.observe(completedGpuSample);
+     if(decision.changed){
+      const nextRatio=this.originalPreviewPixelRatio*decision.pixelRatioFactor;
+      this.renderer.setPixelRatio(nextRatio);
+      this.fitCanvas();
+      this.gpu17Status=decision.reason;
+     }
+    }
+    this.gpu17Frames++;
+    try{this.onFrameMeasured?.({timeMs:t,renderCpuMs:cpuSubmitMs,
+     gpuMs:completedGpuSample?.disjoint===false?completedGpuSample.gpuMs:null,
+     gpuMeasurementSource:completedGpuSample?.disjoint===false?
+       'EXT_disjoint_timer_query_webgl2':null,
      width:this.canvas.width,height:this.canvas.height,
      drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,
      visibility:document.visibilityState});}catch(e){this.onFrameMeasured=null;this.onError('5.2 畫面採樣已隔離：'+e.message);}
     try{this.onAfterRender?.(t);}catch(movieError){this.onAfterRender=null;this.onError('錄影已隔離：'+movieError.message);}}catch(e){this.renderer.setAnimationLoop(null);onError(e.message);}});
  }
+ /**
+  * Opt-in on actual loaded GLB only; NEVER changes GLB or animation.
+  * A WebGL2 disjoint timer extension is mandatory for automatic decisions.
+  */
+ setGpuAccelerationEnabled(enabled){
+  if(typeof enabled!=='boolean')throw Error('AIG17_GPU_TOGGLE_INVALID');
+  if(this.movieMode||this.reviewBusy||this.actionImportBusy)
+   throw Error('AIG17_MOVIE_OR_REVIEW_GPU_POLICY_BLOCKED');
+  if(enabled&&!this.model)throw Error('AIG17_TRUE_LOADED_GLB_REQUIRED');
+  if(!enabled){
+   this.gpu17Enabled=false;this.gpu17Timer?.dispose();
+   this.gpu17Timer=null;this.gpu17Governor=null;
+   this.gpu17Status='DISABLED_RESTORE_ORIGINAL_PREVIEW';
+   this.renderer.setPixelRatio(this.originalPreviewPixelRatio);
+   this.fitCanvas();
+   return this.getGpuAccelerationReport();
+  }
+  if(this.gpu17Enabled)return this.getGpuAccelerationReport();
+  const timer=new Aig42GpuTimer(this.renderer.getContext());
+  if(!timer.supported){
+   timer.dispose();
+   this.gpu17Enabled=false;this.gpu17Status='GPU_TIMER_UNAVAILABLE_NO_QUALITY_DOWNGRADE';
+   return this.getGpuAccelerationReport();
+  }
+  this.gpu17Timer=timer;this.gpu17Governor=new Aig17GLBGpuGovernor();
+  this.gpu17Enabled=true;this.gpu17Frames=0;this.gpu17LastSample=null;
+  this.gpu17Status='REAL_GPU_TIMER_ACTIVE_AWAIT_VALID_SAMPLES';
+  return this.getGpuAccelerationReport();
+ }
+ getGpuAccelerationReport(){
+  return Object.freeze({
+   schema:'AIG_FASTMODEL_REAL_GLB_GPU_ADAPTIVE_1_7',
+   enabled:this.gpu17Enabled,reason:this.gpu17Status,
+   loadedGLBScenePresent:Boolean(this.model),
+   loadedAnimationClipCount:this.animation?.clips?.length??0,
+   lastGpuSample:this.gpu17LastSample,
+   framesObserved:this.gpu17Frames,
+   previewPixelRatio:this.renderer.getPixelRatio(),
+   gpuTimerSupported:Boolean(this.gpu17Timer?.supported),
+   governor:this.gpu17Governor?.report??null,
+   liveFramesAreNotNativeFPS:true,
+   changesOnlyPreviewPixelRatio:true,
+   noGLBMutation:true,syntheticCharacterNotAuthorityApproved:true,
+   nativeAndroidWindows60FPSVerified:false
+  });
+ }
  fitCanvas(){if(this.movieMode)return;const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);this.camera.aspect=Math.max(1,r.width)/Math.max(1,r.height);this.camera.updateProjectionMatrix();}
  beginMovie1080p(){
+  if(this.gpu17Enabled)this.setGpuAccelerationEnabled(false);
   if(this.movieMode||this.reviewBusy||this.actionImportBusy||!this.model||!this.animation)
    throw Error('MOVIE_VIEWER_NOT_READY');
   const size=this.renderer.getSize(new THREE.Vector2());
@@ -95,6 +169,7 @@ export class PhotoViewer{
   }
  }
  async load(buffer,{orbit=false}={}){
+  if(this.gpu17Enabled)this.setGpuAccelerationEnabled(false);
   if(this.reviewBusy)throw Error('TIMELINE_REVIEW_IN_PROGRESS');
   if(this.actionImportBusy)throw Error('ACTION_IMPORT_IN_PROGRESS');
   if(this.movieMode)throw Error('MOVIE_RECORDING_IN_PROGRESS');
