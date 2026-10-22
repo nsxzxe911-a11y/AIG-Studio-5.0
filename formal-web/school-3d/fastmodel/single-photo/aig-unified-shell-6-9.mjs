@@ -2,6 +2,7 @@
  * Presentation only: existing nodes retain stable IDs, callbacks and state.
  * No core, media, assets, or original 3D runtime is deleted or cloned.
  */
+import {initAigReadOnlyMotionControls} from './aig-motion-preview-readonly.mjs';
 export const AIG_UNIFIED_SHELL_SCHEMA='AIG_FASTMODEL_SINGLE_WORKSPACE_6_9_1';
 export const AIG_UNIFIED_TABS=Object.freeze([
  {id:'create',title:'創作',hint:'照片與劇情'},
@@ -153,6 +154,10 @@ export function initAIGUnifiedShell(doc=globalThis.document){
   technicalHelp.append(el);
  }
  panels.model.append(technicalHelp);
+ // Genuine optional cross-product preview: this adds new standalone
+ // file/play/stop controls, without moving/cloning any original 3D or 2D UI.
+ const motionBridge=initAigReadOnlyMotionControls(doc,panels.model);
+ if(!motionBridge.ready)throw Error('AIG_MOTION_PREVIEW_BINDING_MISSING');
  panels.advanced.append(original); // retains entire legacy DOM and IDs
  panels.advanced.insertBefore(node(doc,'h2',{},'進階工具與來源 Gate'),original);
  const inlineStatus=node(doc,'div',{id:'aig-unified-live-status'});
