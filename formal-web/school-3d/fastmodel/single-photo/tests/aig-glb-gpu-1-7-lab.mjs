@@ -29,6 +29,17 @@ try{
  const mesh=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),
   new THREE.MeshStandardMaterial({color:0x84b6f3,roughness:.58,metalness:.12}));
  mesh.name='TestCube';root.add(mesh);
+ // Eight identical authored static environmental objects in an actual GLB;
+ // heroine/character's rotating clip is deliberately not instanced.
+ const staticGeometry=new THREE.BoxGeometry(.18,.8,.18);
+ const staticMaterial=new THREE.MeshStandardMaterial({color:0x5bd199});
+ for(let i=0;i<8;i++){
+  const staticMesh=new THREE.Mesh(staticGeometry,staticMaterial);
+  staticMesh.name='EnvironmentalStaticPole_'+i;
+  staticMesh.userData.aigStaticInstanceSafe=true;
+  staticMesh.position.set((i%4-1.5)*.7,-.1,Math.floor(i/4)*-.7-.3);
+  root.add(staticMesh);
+ }
  const clip=new THREE.AnimationClip('REAL_QUATERNION_GLTF_CLIP',2,[
   new THREE.QuaternionKeyframeTrack('TestCube.quaternion',[0,1,2],
    [0,0,0,1,0,Math.SQRT1_2,0,Math.SQRT1_2,0,1,0,0])
@@ -49,7 +60,20 @@ try{
  const quaternionBefore=loadedModel.getObjectByName('TestCube')?.quaternion.toArray();
  const frames=[];viewer.onFrameMeasured=f=>frames.push(f);
  const on=viewer.setGpuAccelerationEnabled(true);
- await delay(1400);
+ await delay(110);
+ const originalDrawCalls=viewer.renderer.info.render.calls;
+ const batch=viewer.setStaticInstancingEnabled(true);
+ await delay(110);
+ const instancedDrawCalls=viewer.renderer.info.render.calls;
+ const instancedModel=loadedModel.children.find(x=>x.isInstancedMesh);
+ const actualInstances=batch.groupedStaticMeshes,
+  expectedSavings=batch.theoreticalDrawCallsSaved;
+ const heroWhileInstanced=loadedModel.getObjectByName('TestCube');
+ const heroNeverBatched=heroWhileInstanced?.visible===true;
+ const restoreBatch=viewer.setStaticInstancingEnabled(false);
+ await delay(110);
+ const restoredDrawCalls=viewer.renderer.info.render.calls;
+ await delay(1070);
  const enabled=viewer.getGpuAccelerationReport();
  const quaternionAfter=loadedModel.getObjectByName('TestCube')?.quaternion.toArray();
  const rendered=frames.some(f=>f.drawCalls>0&&f.triangles>0&&f.width>0&&f.height>0);
@@ -73,6 +97,14 @@ try{
   noTimerKeepsFullOriginalQuality:qualityUnchangedWhenUnsupported,
   pixelRatioRestoredAfterToggle:after.previewPixelRatio===before.previewPixelRatio,
   originalTrianglePositionsUnchanged:sourceUnchanged,modelObjectRetained:viewer.model===loadedModel,
+  gpu18StaticInstances:actualInstances,
+  gpu18SavedDrawCallsExpected:expectedSavings,
+  gpu18RealInstancedMeshDrawGroup:!!instancedModel,
+  gpu18DrawCallsBefore:originalDrawCalls,
+  gpu18DrawCallsDuring:instancedDrawCalls,
+  gpu18DrawCallsRestored:restoredDrawCalls,
+  gpu18CharacterAnimationSourceNeverBatched:heroNeverBatched,
+  gpu18OriginalGLBMeshesRestored:!restoreBatch.active,
   noCharacterLikenessApproval:true,noAndroidOrWindowsNativeFpsClaim:true,
   runtimeSource:'ACTUAL_VALID_GLB_GENERATED_IN_ISOLATED_TEST_NOT_HUMAN_GLTF'
  };
