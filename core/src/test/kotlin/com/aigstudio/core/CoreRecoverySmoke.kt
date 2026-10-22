@@ -84,5 +84,51 @@ fun main() {
               loaded.axisB == -10.0&&loaded.axisC==45.0)
         check(loaded.ncText==source.ncText)
     } finally { file.delete() }
+    // Common-pocket core: malformed CAD must never be reduced to a valid
+    // looking toolpath. Only a single circle or exactly four closed full edges.
+    val pocketSettings=CamSettings(toolDiameter=6.0,depth=-2.0,safeZ=8.0,feedMmMin=160.0)
+    val pocketCorners=listOf(Vec2(-15.0,-10.0),Vec2(15.0,-10.0),
+        Vec2(15.0,10.0),Vec2(-15.0,10.0))
+    val fullEdges=(0..3).map { i ->
+        Line(id="POCKET_$i",a=pocketCorners[i],b=pocketCorners[(i+1)%4])
+    }
+    val pocket=CamWorkflowEngine.buildCommonPocket(fullEdges,pocketSettings)
+    check(pocket.pathMode==CamPathMode.MANUAL)
+    check(pocket.manualPath.count{!it.rapid}>4) {
+        "Closed rectangle must produce an actual multi-pass clearing path"
+    }
+    val pocketCam=CamModel.fromCad(
+        90005L,DrawingSnapshot(emptyList()),pocket
+    )
+    check(pocketCam.toolpaths.flatMap{it.moves}.any{!it.rapid})
+    check("G1" in CncPost.generate(pocketCam,FanucPostSettings())) {
+        "Valid closed pocket needs real Fanuc cutting motion"
+    }
+    val circle=Circle(id="POCKET_CIRCLE",center=Vec2(0.0,0.0),radius=14.0)
+    check(CamWorkflowEngine.buildCommonPocket(listOf(circle),pocketSettings)
+        .manualPath.any{!it.rapid})
+    check(runCatching {
+        CamWorkflowEngine.buildCommonPocket(
+            listOf(circle,fullEdges[0]),pocketSettings
+        )
+    }.isFailure) { "Mixed CAD entities must not be silently ignored" }
+    val missingSide=listOf(fullEdges[0],fullEdges[1],fullEdges[2],
+        Line(id="BROKEN_EDGE",a=Vec2(-15.0,10.0),b=Vec2(-15.0,1.0)))
+    check(runCatching {
+        CamWorkflowEngine.buildCommonPocket(missingSide,pocketSettings)
+    }.isFailure) { "Open rectangle must not generate cutting NC" }
+    check(runCatching {
+        CamWorkflowEngine.buildCommonPocket(
+            listOf(fullEdges[0],fullEdges[0].copy(id="DUPLICATE"),
+                fullEdges[1],fullEdges[2]),pocketSettings
+        )
+    }.isFailure) { "Duplicate rectangle edge must fail closed" }
+    check(runCatching {
+        CamWorkflowEngine.buildCommonPocket(
+            listOf(Circle(id="NAN_CIRCLE",center=Vec2(Double.NaN,0.0),radius=14.0)),
+            pocketSettings
+        )
+    }.isFailure) { "Nonfinite cutting coordinates must fail closed" }
+    println("STUDIO_COMMON_POCKET_CONTOUR_GATE_PASS|CLOSED_RECT|CIRCLE|FANUC_G1|MIXED_BLOCK|GAP_BLOCK|DUPLICATE_BLOCK|NONFINITE_BLOCK")
     println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|3AX_FANUC_G0_G1|6AX_C_NC_BLOCKED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE|CAD_AUTO_SIM_NC|NC_FIRST_EVENTS")
 }
