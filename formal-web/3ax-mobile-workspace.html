@@ -131,6 +131,18 @@ M30</textarea>
     <p>原圖 SHA 已鎖定，建立 47 區域比例對應；只把原圖當作設計基準。圖片沒有真實機台深度，不能由它自行推算 Z 或刀具／夾具安全距離。</p>
     <p id="reverse-status" role="status">正在驗證 47 個逆向區域與來源 SHA……</p>
     <p>CAD 比例須另外提供至少四個同平面「圖片像素 ↔ CAD X/Y 毫米」量測點；目前未提供，不做任意比例的 3D 機台輸出。</p>
+    <div class="plane-calibration" aria-label="影像到 CAD XY 平面量測契約">
+     <label for="cad-plane-anchors">已量測的四組以上 CAD 平面對照點（JSON：imagePixel / cadMm）</label>
+     <textarea id="cad-plane-anchors" rows="4" spellcheck="false" placeholder='[{"imagePixel":[…,…],"cadMm":[…,…]}, …]'></textarea>
+     <button type="button" id="cad-plane-calibrate">驗證真實對照點並建立 XY 平面映射</button>
+     <output id="cad-calibration-status" role="status" aria-live="polite">等待真實 CAD 比例／原點量測資料。未提供就不能自動校準。</output>
+     <div class="plane-projection">
+      <label>來源圖像素 X <input id="cad-source-pixel-x" type="number" min="0" max="864" step=".001" placeholder="0～864"></label>
+      <label>來源圖像素 Y <input id="cad-source-pixel-y" type="number" min="0" max="1536" step=".001" placeholder="0～1536"></label>
+      <button type="button" id="cad-plane-project" disabled>查詢同平面 CAD X/Y</button>
+     </div>
+     <output id="cad-plane-projection" role="status">Z 深度未知；本工具不會更新 NC、工件體素或真機。</output>
+    </div>
     <a href="./3ax-nc-workbench.html">原 3AX 桌面／技術工作頁</a>
    </details>
    <details class="advanced" id="authority-panel">
