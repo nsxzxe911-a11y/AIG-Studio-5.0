@@ -45,6 +45,7 @@ jobs:
           node tests/aig-landmark-rig-7-5.real-browser.mjs
           node tests/aig-face-depth-7-6.real-browser.mjs
           node tests/aig-hair-neck-7-7.real-browser.mjs
+          node tests/aig-spatial-rig-7-8.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -98,6 +99,13 @@ jobs:
         with:
           name: FastModel-7-6-3D-Depth-Prior-Not-Photogrammetry
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-depth-7-6/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-8-XYZ-Spatial-Head-Neck-Not-Real-Human-Certification
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-spatial-7-8/
           if-no-files-found: warn
 
       - name: Distinguish real video playback from unverified character animation
@@ -263,4 +271,58 @@ jobs:
             echo 'ORIGINAL_HAIR_FIBERS_SKIN_PHYSICS=NOT_VERIFIED'
             echo 'APPROVED_USER_CHARACTER=NOT_VERIFIED'
             echo 'NATIVE_APK_EXE=NOT_VERIFIED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  spatial-7-8:
+    name: Independent 7.8 spatial XYZ head/neck articulated Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Catch syntax mistakes before running head/neck browser
+        run: |
+          node --check aig-spatial-rig-7-8.mjs
+          node --check spatial-studio.mjs
+          node --check tests/aig-spatial-rig-7-8.test.mjs
+          node --check tests/aig-spatial-rig-7-8.real-browser.mjs
+      - name: Test actual head/world geometry, joint blend and collision Gate
+        run: node --test tests/aig-spatial-rig-7-8.test.mjs
+      - name: Offline package keeps source and prior versions
+        run: |
+          npm run build
+          test -s dist/spatial-studio.html
+          test -s dist/spatial-studio.mjs
+          test -s dist/aig-spatial-rig-7-8.mjs
+          cmp aig-spatial-rig-7-8.mjs dist/aig-spatial-rig-7-8.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Actual phone desktop source-mask to XYZ head-turn browser evidence
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig78-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          node tests/aig-spatial-rig-7-8.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-8-Independent-Spatial-XYZ-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-spatial-7-8/
+          if-no-files-found: warn
+      - name: Truth labels
+        if: always()
+        run: |
+          {
+            echo 'VERIFIED_TRUE_SPATIAL_XYZ_HEAD_NECK_MOTION=SYNTHETIC_NUMERIC'
+            echo 'ACTUAL_HUMAN_3D_HEAD_DEPTH=NOT_VERIFIED'
+            echo 'REAL_HAIR_STRAND_PHYSICS=NOT_VERIFIED'
+            echo 'FULL_CHARACTER_AND_REFERENCE_LIKENESS=NOT_APPROVED'
+            echo 'NATIVE_APK_EXE_GPU_FPS=NOT_VERIFIED'
+            echo 'MMO_MULTIPLAYER=NOT_IMPLEMENTED'
           } >> "$GITHUB_STEP_SUMMARY"
