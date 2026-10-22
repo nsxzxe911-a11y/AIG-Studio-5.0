@@ -80,6 +80,12 @@ export class AIG19SceneRuntime{
   const meta=await this.library.get(id);
   if(!meta)fail('SOURCE_NOT_FOUND');
   checkMeta(meta,id);
+  // Reopening the same unchanged GLB should not parse/re-upload an entire
+  // GPU model again. Preserve current camera and animation pose.
+  if(this._active?.id===id&&this._active.sha256===meta.sha256){
+   return {status:'ALREADY_ACTIVE_NO_REPARSE',asset:{...this._active},
+    clips:[],preservedGpuSceneAndCamera:true};
+  }
   const bytes=await this._loadBytes(id,meta);
   if(generation!==this._generation)return {status:'SUPERSEDED_BEFORE_GPU_LOAD'};
   const task=async()=>{
