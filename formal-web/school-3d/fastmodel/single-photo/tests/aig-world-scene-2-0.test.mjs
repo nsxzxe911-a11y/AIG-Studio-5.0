@@ -98,7 +98,7 @@ test('2.0 real camera keys interpolate and hard cut without inventing animation'
  assert.deepEqual(sampleAIG20Camera(s,7).position,[4,2,8]);
  assert.deepEqual(sampleAIG20Camera(s,8).position,[6,2,5]);
  assert.throws(()=>addAIG20CameraKey(s,{keyId:'duplicate',timeSeconds:8,
-  position:[0,2,8],target:[0,0,0]}),/WORLD_CAMERA_TRACK_INVALID/);
+  position:[0,2,8],target:[0,0,0]}),/CAMERA_KEY_INVALID/);
  const tampered={...s,objects:[],cameraKeys:[
   {...s.cameraKeys[0],fov:0}]};
  assert.throws(()=>assertAIG20Document(tampered),/WORLD_CAMERA_TRACK_INVALID/);
