@@ -78,18 +78,18 @@
    </section>
    <section class="display-layers" aria-label="真正的 WebGL 顯示圖層">
     <strong>顯示圖層</strong>
-    <label><input type="checkbox" data-3ax-layer="stock" data-button-id="LAYER_STOCK" checked>工件</label>
-    <label><input type="checkbox" data-3ax-layer="tool" data-button-id="LAYER_TOOL" checked>刀具</label>
-    <label><input type="checkbox" data-3ax-layer="path" data-button-id="LAYER_PATH" checked>刀路</label>
+    <label><input type="checkbox" data-3ax-layer="stock" data-button-id="LAYER_STOCK" data-command-id="VIEW.LAYER.STOCK" checked>工件</label>
+    <label><input type="checkbox" data-3ax-layer="tool" data-button-id="LAYER_TOOL" data-command-id="VIEW.LAYER.TOOL" checked>刀具</label>
+    <label><input type="checkbox" data-3ax-layer="path" data-button-id="LAYER_PATH" data-command-id="VIEW.LAYER.PATH" checked>刀路</label>
     <span class="blocked">夾具：無核准模型</span>
    </section>
    <section class="control-grid" aria-label="手機 CNC 模擬控制">
     <div class="jog-disabled"><button type="button" disabled data-button-id="JOG">JOG<br>真機移動未連接</button></div>
     <fieldset class="speed-options"><legend>數值回放速度</legend>
-     <button data-3ax-rate="25" type="button" aria-pressed="false" data-button-id="SPEED25">25%</button>
-     <button data-3ax-rate="50" type="button" aria-pressed="false" data-button-id="SPEED50">50%</button>
-     <button data-3ax-rate="100" type="button" aria-pressed="true" data-button-id="SPEED100">100%</button>
-     <button data-3ax-rate="200" type="button" aria-pressed="false" data-button-id="SPEED200">200%</button>
+     <button data-3ax-rate="25" type="button" aria-pressed="false" data-button-id="SPEED25" data-command-id="NC.REPLAY.SPEED25">25%</button>
+     <button data-3ax-rate="50" type="button" aria-pressed="false" data-button-id="SPEED50" data-command-id="NC.REPLAY.SPEED50">50%</button>
+     <button data-3ax-rate="100" type="button" aria-pressed="true" data-button-id="SPEED100" data-command-id="NC.REPLAY.SPEED100">100%</button>
+     <button data-3ax-rate="200" type="button" aria-pressed="false" data-button-id="SPEED200" data-command-id="NC.REPLAY.SPEED200">200%</button>
     </fieldset>
     <fieldset class="quality-options"><legend>體素品質 / 真數值</legend>
      <select id="voxel" data-button-id="SIM_VOXEL_SIZE" aria-label="切削體素尺寸">
