@@ -120,10 +120,28 @@ try{
    };
    await choose('world-map','校園真 XY 地圖');
    await page.locator('#world-new').click();
+   await page.waitForFunction(()=>document.getElementById('world-status')
+    .textContent.includes('已建立來源座標一致的空白世界場景')&&
+    !document.getElementById('world-add').disabled,{timeout:10000});
    await choose('world-asset','角色測試模型');
    await page.locator('#world-add').click();
+   await page.waitForFunction(()=>{
+    const e=document.getElementById('world-proof');
+    try{
+     const doc=JSON.parse(e.textContent);
+     return doc.objects.length===1&&doc.objects[0].category==='character'&&
+       !document.getElementById('world-add').disabled;
+    }catch{return false}
+   },null,{timeout:10000});
    await choose('world-asset','建築真 GLB');
    await page.locator('#world-add').click();
+   await page.waitForFunction(()=>{
+    try{
+     const doc=JSON.parse(document.getElementById('world-proof').textContent);
+     return doc.objects.length===2&&doc.objects[1].category==='building'&&
+       !document.getElementById('world-add').disabled;
+    }catch{return false}
+   },null,{timeout:10000});
    const before=JSON.parse(await page.locator('#world-proof').textContent());
    assert.equal(before.objects.length,2);
    await page.locator('#world-preview').click();
