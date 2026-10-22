@@ -87,7 +87,7 @@ try{
     .textContent.includes('已開啟 校園場景 A'),null,{timeout:25000});
    let state=JSON.parse(await page.locator('#metrics').textContent());
    assert.equal(state.activeScene.id,firstId);
-   assert.equal(state.cachedSources,1);
+   assert.equal(state.cacheSources,1);
    assert.equal(state.actualGpuVRAMBytesKnown,false);
    await page.locator('#scene-choice').selectOption(secondId);
    await page.locator('#scene-load').click();
@@ -95,7 +95,7 @@ try{
     .textContent.includes('已開啟 校園場景 B'),null,{timeout:25000});
    state=JSON.parse(await page.locator('#metrics').textContent());
    assert.equal(state.activeScene.id,secondId);
-   assert.equal(state.cachedSources,2);
+   assert.equal(state.cacheSources,2);
    // Invalid new geometry may NEVER erase the previous valid 3D scene.
    await page.locator('#scene-choice').selectOption(badId);
    await page.locator('#scene-load').click();
@@ -105,14 +105,14 @@ try{
    assert.equal(state.activeScene.id,secondId);
    await page.locator('#scene-clear').click();
    state=JSON.parse(await page.locator('#metrics').textContent());
-   assert.equal(state.cachedSources,0);
+   assert.equal(state.cacheSources,0);
    assert.equal(state.activeScene.id,secondId);
    await page.locator('#scene-unload').click();
    await page.waitForFunction(()=>document.getElementById('status')
     .textContent.includes('已卸載'));
    state=JSON.parse(await page.locator('#metrics').textContent());
    assert.equal(state.activeScene,null);
-   assert.equal(state.cachedSources,0);
+   assert.equal(state.cacheSources,0);
    await page.screenshot({path:out+'/'+device.name+'-scene-lifecycle-real-workspace.png',
     fullPage:true});
    await page.goto('http://127.0.0.1:8765/asset-library-studio.html',{waitUntil:'load'});
