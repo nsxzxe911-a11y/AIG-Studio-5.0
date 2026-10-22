@@ -1,5 +1,6 @@
 import {PhotoViewer} from './viewer.mjs';
 import {buildAIG23PhotoActor} from './aig-photo-rig-world-2-3.mjs';
+import {detectAIG24Image} from './aig-auto-image-detect-2-4.mjs';
 import {openAIG716AssetLibrary} from './aig-external-asset-library-7-16.mjs';
 import {AIG19SceneRuntime} from './aig-scene-lifecycle-1-9.mjs';
 import {createAIG20WorldScene,addAIG20WorldObject,addAIG20CameraKey,
@@ -335,6 +336,59 @@ $('world-add').addEventListener('click',async()=>{
  }catch(e){updateWorldStatus('BLOCKED：'+String(e.message||e),true)}
  finally{setWorldBuildMutation(false)}
 });
+// Real3D 2.4 — automatically inspect actual source RGBA on file selection
+// without creating a false billboard animation, rerendering the 3D canvas,
+// or silently trusting a person/animal classification from color heuristics.
+let photo24Sequence=0,photo24Latest=null;
+async function autoInspectPhoto24(file){
+ if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)||
+  file.size<100||file.size>12*1024*1024)
+  throw Error('圖片必須為 12 MiB 以下的 JPG、PNG 或 WebP');
+ const hash=new Uint8Array(await crypto.subtle.digest('SHA-256',
+  await file.arrayBuffer()));
+ const sha=[...hash].map(n=>n.toString(16).padStart(2,'0')).join('');
+ const image=await createImageBitmap(file);
+ let pixels,w,h;
+ try{
+  const scale=Math.min(1,1024/image.width,1024/image.height);
+  w=Math.floor(image.width*scale);h=Math.floor(image.height*scale);
+  if(w<128||h<128)throw Error('可分析的照片像素太小');
+  const canvas=document.createElement('canvas');
+  canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  if(!ctx)throw Error('無法解碼來源 RGB 畫素');
+  ctx.drawImage(image,0,0,w,h);
+  pixels=ctx.getImageData(0,0,w,h).data;
+ }finally{image.close?.()}
+ return detectAIG24Image({
+  pixels,width:w,height:h,sourceImageSHA256:sha
+ });
+}
+$('photo23-source').addEventListener('change',async()=>{
+ const serial=++photo24Sequence;
+ photo24Latest=null;
+ const file=$('photo23-source').files?.[0];
+ if(!file){
+  $('photo24-auto-status').textContent='尚未選擇圖片。';
+  $('photo24-auto-proof').textContent='尚無自動圖片分析。';
+  return;
+ }
+ $('photo24-auto-status').textContent='正自動掃描來源 RGB、主體輪廓、對比、像素與比例…';
+ try{
+  const proof=await autoInspectPhoto24(file);
+  if(serial!==photo24Sequence)return;
+  photo24Latest={file,proof};
+  $('photo24-auto-proof').textContent=JSON.stringify(proof,null,2);
+  $('photo24-auto-status').textContent=proof.autoTechnicalRigAllowed?
+   '已取得單一長形主體候選，可試建真 3D 技術骨架；這不是 AI 人臉辨識，也不是 1:1 身分還原。':
+   '分析完成，但不能可靠判斷是單一人物：'+proof.autoProcessReason+
+   '。不會把整張圖片晃動當成 3D 動畫。';
+ }catch(e){
+  if(serial!==photo24Sequence)return;
+  $('photo24-auto-status').textContent='BLOCKED：'+String(e.message||e);
+  $('photo24-auto-proof').textContent='分析失敗；原圖不清空。';
+ }
+});
 // Real3D 2.3 — the one-photo action uses only the already implemented
 // 6.4 rig/GLB generator. Original image is separately preserved by SHA in
 // the outside-app IndexedDB library, not written into the JS bundle.
@@ -351,6 +405,11 @@ $('photo23-build').addEventListener('click',async()=>{
    file.size<100||file.size>12*1024*1024)
    throw Error('請選擇 12 MiB 以下的單張 JPG／PNG／WebP 人物照片');
   if(!library)throw Error('本機素材庫尚未啟動');
+  const candidate=photo24Latest?.file===file?
+   photo24Latest.proof:await autoInspectPhoto24(file);
+  if(!candidate.autoTechnicalRigAllowed)
+   throw Error('自動圖片偵測不支持直接製成人形：'+candidate.autoProcessReason+
+    '。需要更可靠的語義與輪廓證據，不生成假人物。');
   // Original bytes are independently content-addressed before any derived
   // model work. A geometry/GLB failure must never erase this input.
   const original=await library.importBlob(file,{
@@ -373,6 +432,8 @@ $('photo23-build').addEventListener('click',async()=>{
    ctx.drawImage(image,0,0,width,height);
    data=ctx.getImageData(0,0,width,height);
   }finally{image.close?.()}
+  if(original.sha256!=='sha256:'+candidate.sourceImageSHA256)
+   throw Error('來源圖片已改變，禁止用舊分析結果建模');
   const {bytes,proof}=await buildAIG23PhotoActor({
    pixels:data.data,width:data.width,height:data.height,
    sourceImageSHA256:original.sha256.replace(/^sha256:/,'')
@@ -409,7 +470,8 @@ $('photo23-build').addEventListener('click',async()=>{
   invalidateAIG22Storyboard('新單照片真骨架來源已加入，需重新解析中文劇情');
   refreshWorldActorControls();worldEvidence();report();
   $('photo23-proof').textContent=JSON.stringify({
-   ...proof,originalAssetId:original.id,generatedGLBAssetId:model.id,
+   ...proof,automaticImageInspection:candidate,
+   originalAssetId:original.id,generatedGLBAssetId:model.id,
    worldSceneId:worldDoc.id,sourceNodeId:next.objects.at(-1).nodeId,
    originalFilePreserved:true
   },null,2);
