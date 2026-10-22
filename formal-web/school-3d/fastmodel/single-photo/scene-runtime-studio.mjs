@@ -192,6 +192,56 @@ async function refreshWorldAssets(){
  rebuild('world-saved',x=>worldSaved.some(y=>y.id===x.id),
   '尚無已保存世界場景');
 }
+function drawAIG20Map(map){
+ const canvas=$('world-map-preview'),ctx=canvas?.getContext('2d');
+ if(!ctx)return;
+ const w=canvas.width,h=canvas.height;
+ ctx.clearRect(0,0,w,h);ctx.fillStyle='#06111e';ctx.fillRect(0,0,w,h);
+ if(!map){
+  $('world-map-caption').textContent='尚未連接 7.12 來源圖資';
+  return;
+ }
+ const items=[];
+ for(const feature of map.features){
+  const g=feature.geometry;
+  if(!g)continue;
+  const points=g.type==='Point'?[g.coordinates]:
+   g.type==='Polygon'?g.coordinates[0]:g.coordinates;
+  if(!Array.isArray(points)||points.length>2048||
+   !points.every(p=>Array.isArray(p)&&p.length===2&&
+    p.every(Number.isFinite)))continue;
+  items.push({feature,type:g.type,points});
+ }
+ if(!items.length){
+  ctx.fillStyle='#b8dfeb';ctx.font='15px sans-serif';
+  ctx.fillText('有來源地圖，但無已存圖徵',20,h/2);
+ }else{
+  const all=items.flatMap(v=>v.points),
+   loX=Math.min(...all.map(v=>v[0])),hiX=Math.max(...all.map(v=>v[0])),
+   loY=Math.min(...all.map(v=>v[1])),hiY=Math.max(...all.map(v=>v[1])),
+   scale=Math.min((w-36)/Math.max(hiX-loX,1),
+    (h-36)/Math.max(hiY-loY,1)),
+   xy=p=>[w/2+(p[0]-(loX+hiX)/2)*scale,
+    h/2-(p[1]-(loY+hiY)/2)*scale];
+  const colors={building:'#83e0f1',road:'#dcd8bf',tree:'#90d5a0',
+   water:'#6ebfff',house:'#9cb4ec',sports_facility:'#cc9ce5'};
+  for(const item of items){
+   const color=colors[item.feature.category]||'#bacdd8';
+   ctx.beginPath();const first=xy(item.points[0]);ctx.moveTo(...first);
+   for(const pt of item.points.slice(1))ctx.lineTo(...xy(pt));
+   if(item.type==='Point'){
+    ctx.arc(first[0],first[1],4,0,Math.PI*2);
+    ctx.fillStyle=color;ctx.fill();
+   }else{
+    if(item.type==='Polygon'){ctx.closePath();ctx.fillStyle=color+'33';ctx.fill()}
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+   }
+  }
+ }
+ $('world-map-caption').textContent=map.id+' · '+items.length+
+  ' 個來源圖徵 · '+map.coordinateMode+
+  ' · 只有 2D 俯視圖資，未自動建立建築 3D 高度';
+}
 async function selectedMapRef(){
  const id=$('world-map').value;
  if(!id)return null;
@@ -203,6 +253,7 @@ async function selectedMapRef(){
  if(loaded.blob.size>8*1024*1024)throw Error('地圖檔太大');
  const snapshot=JSON.parse(await loaded.blob.text());
  const map=importAIG712SceneMap(snapshot);
+ drawAIG20Map(map);
  // FastModel 7.12 used the suffix METERS while the 2.0 composer uses
  // METRES; normalize names WITHOUT changing the underlying source.
  const original=map.coordinateMode;
@@ -316,6 +367,8 @@ $('world-load').addEventListener('click',async()=>{
   $('world-title').value=document.title;
   $('world-mode').value=document.coordinateMode;
   $('world-map').value=document.mapRef?.assetId??'';
+  if(document.mapRef)await selectedMapRef();
+  else drawAIG20Map(null);
   stopWorldPlayback();worldEvidence();
   updateWorldStatus('已從外部素材庫讀取 '+document.title+
    '；尚未重新載入 GPU。按「合成真正的 3D 世界並顯示」。');
