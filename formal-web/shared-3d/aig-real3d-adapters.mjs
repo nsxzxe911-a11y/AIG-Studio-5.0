@@ -6,8 +6,8 @@ import {createAIG3DScene,createAIG3DBox,createAIG3DCylinder,
  addAIG3DNode,addAIG3DToolpathOverlay,auditAIG3DScene}
  from './aig-real3d-core.mjs';
 const finite=Number.isFinite;
-const axes={3AX:['X','Y','Z'],4AX:['X','Y','Z','A'],
- 5AX:['X','Y','Z','A','B'],6AX:['X','Y','Z','A','B','C']};
+const axes={'3AX':['X','Y','Z'],'4AX':['X','Y','Z','A'],
+ '5AX':['X','Y','Z','A','B'],'6AX':['X','Y','Z','A','B','C']};
 function vec(v){
  if(!Array.isArray(v)||v.length!==3||!v.every(x=>finite(x)&&Math.abs(x)<1e7))
   throw Error('AIG3D_ADAPTER_VECTOR_INVALID');
@@ -49,7 +49,7 @@ export function createAIG3DCNCReadOnlyScene({
     segments:24,provenance:'CNC_SOURCE_'+sourceKind});
   addAIG3DNode(scene,{id:item.id,kind:item.kind,mesh,
    transform:{position:vec(item.position),rotationDeg:item.rotationDeg||[0,0,0]},
-   material:{baseColor:item.color,metallic:item.kind==='stock'?.45:.3,roughness:.42},
+   material:{baseColor:item.color,metallic:item.kind==='stock'?0.45:0.3,roughness:.42},
    source:sourceKind});rootCount++;
  }
  if(toolpath.length){
