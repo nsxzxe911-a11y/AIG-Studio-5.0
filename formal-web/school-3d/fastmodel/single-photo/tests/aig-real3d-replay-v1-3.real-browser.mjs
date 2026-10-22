@@ -83,13 +83,14 @@ try{
    assert.equal(final.true0001MmPrecision,false);
    assert.ok(final.rendered.triangles>100);
    assert.ok(final.rendered.allocatedFramePixels<=680000);
+   await page.screenshot({path:dir+'/'+device.name+'-real-3d-finished-stock.png',fullPage:true});
    await page.locator('#nc').fill('G21 G90 G54\nG43 Z2 H1\nM30');
    assert.equal(await page.locator('#next').isDisabled(),true);
    await page.locator('#parse').click();
    assert.match(await page.locator('#status').textContent(),/BLOCKED/);
    assert.equal(await page.locator('#next').isDisabled(),true);
    assert.deepEqual(errors,[]);
-   await page.screenshot({path:dir+'/'+device.name+'-true-single-block-xyz.png',fullPage:true});
+   await page.screenshot({path:dir+'/'+device.name+'-unsupported-NC-BLOCKED.png',fullPage:true});
    await writeFile(dir+'/'+device.name+'-replay-proof.json',JSON.stringify({
     device:device.name,source:'synthetic limited NC fixture, not Fanuc approved',
     actualWebGLAndNumericalStock:true,initial:first.replay,
