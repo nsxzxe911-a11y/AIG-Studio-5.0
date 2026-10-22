@@ -1,0 +1,120 @@
+import {AIG714_LABELS} from './aig-heroine-scan-7-14.mjs';
+import {buildAIG715HeroineCandidate,editAIG715Joint,
+ summarizeAIG715Candidate} from './aig-heroine-candidate-7-15.mjs';
+const $=id=>document.getElementById(id);
+const save=(value,name)=>{
+ const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],
+  {type:'application/json'})),link=document.createElement('a');
+ link.href=url;link.download=name;link.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+const serializeDepth=d=>{
+ const observed=[];
+ for(let i=0;i<d.valid.length;i++)if(d.valid[i])
+  observed.push([i,Math.round(d.values[i]*1e6)/1e6,
+   Math.round(d.confidence[i]*1e4)/1e4]);
+ return {source_type:d.source_type,units:d.units,
+  validPixels:d.validPixels,valuesAsSparseIndexDepthConfidence:observed};
+};
+export function mountAIG715CandidateStudio(readState,onPreview){
+ if(typeof readState!=='function'||typeof onPreview!=='function')
+  throw Error('AIG715_WORKSPACE_SOURCE_BINDING_REQUIRED');
+ const build=$('heroine-candidate-build'),jointSelect=$('heroine-joint'),
+  xInput=$('heroine-joint-x'),yInput=$('heroine-joint-y'),
+  jointSave=$('heroine-joint-save'),status=$('heroine-candidate-status'),
+  info=$('heroine-candidate-proof'),saveDepth=$('heroine-depth-save'),
+  saveRig=$('heroine-rig-save');
+ let current=null,lastIdentity=null;
+ const mark=(msg,success=false)=>{
+  status.textContent=msg;status.dataset.ok=String(success);
+ };
+ const clear=(reason='請先用上方原圖完成人工審核的 RGB 區域分離')=>{
+  current=null;lastIdentity=null;saveDepth.disabled=true;
+  saveRig.disabled=true;jointSave.disabled=true;
+  info.textContent=reason;
+ };
+ const getJoint=()=>current?.skeletonCandidate.find(j=>j.name===jointSelect.value);
+ function refreshJoint(){
+  const j=getJoint();jointSave.disabled=!j;
+  if(!j)return;
+  xInput.value=String(Math.round(j.x*1000)/1000);
+  yInput.value=String(Math.round(j.y*1000)/1000);
+ }
+ jointSelect.addEventListener('change',refreshJoint);
+ function show(){
+  if(!current)return;
+  info.textContent=JSON.stringify(summarizeAIG715Candidate(current),null,2);
+  saveDepth.disabled=false;saveRig.disabled=false;
+  refreshJoint();
+ }
+ build.addEventListener('click',()=>{
+  try{
+   const state=readState();
+   if(!state?.reviewed||!state.regions||!state.canvas)
+    throw Error('SOURCE_AND_REVIEWED_REGIONS_REQUIRED');
+   const ctx=state.canvas.getContext('2d',{willReadFrequently:true});
+   const image=ctx.getImageData(0,0,state.canvas.width,state.canvas.height);
+   const sourceDigest=state.sourceInfo?.singleImageSha256??null;
+   const newCandidate=buildAIG715HeroineCandidate(image,state.regions,
+    {stereo:state.stereo??null,sourceDigest});
+   current=newCandidate;
+   lastIdentity=sourceDigest;
+   show();onPreview(current);
+   mark('已生成女主角可編輯前表面草模：'+
+    Object.keys(current.geometryGroups).length+' 個獨立模型部位、'+
+    current.skeletonCandidate.length+' 個可編輯關節候選。單照相對深度 '+
+    current.depth_estimated.validPixels+' 點；已校正的真毫米深度 '+
+    current.depth_measured.validPixels+
+    ' 點。兩者不混用，不能認定完整 1:1 人體。',true);
+  }catch(e){mark('BLOCKED：'+String(e.message||e)+
+   '。原始照片、7.13 實測表面和 7.14 分區均不清空。');}
+ });
+ jointSave.addEventListener('click',()=>{
+  if(!current)return;
+  try{
+   const x=Number(xInput.value),y=Number(yInput.value);
+   if(xInput.value.trim()===''||yInput.value.trim()==='')
+    throw Error('JOINT_COORDINATES_REQUIRED');
+   current=editAIG715Joint(current,jointSelect.value,{x,y,confirmed:true});
+   show();onPreview(current);
+   mark('已更新 '+jointSelect.value+' 骨架候選節點；這是編輯過的圖片比例座標，不是完成的 3D 蒙皮權重。',true);
+  }catch(e){mark('BLOCKED：'+String(e.message||e));}
+ });
+ saveDepth.addEventListener('click',()=>{
+  if(!current)return;
+  save({schema:'AIG715_HEROINE_TWO_DEPTH_LAYERS',
+   imageWidth:current.width,imageHeight:current.height,
+   sourceDigest:current.sourceDigest,
+   depth_estimated:serializeDepth(current.depth_estimated),
+   depth_measured:serializeDepth(current.depth_measured),
+   measuredDepthNeverReplacedBySinglePhotoGuess:true,
+   estimatedHasNoPhysicalMillimetreUnits:true,
+   unknownBacksideNotFilled:true
+  },'AIG-FastModel-7-15-Heroine-Estimated-vs-Measured-Depth.json');
+ });
+ saveRig.addEventListener('click',()=>{
+  if(!current)return;
+  save({...summarizeAIG715Candidate(current),
+   sourceDigest:lastIdentity,
+   editingDoesNotRigMeshOrInferUnknownLegs:true},
+  'AIG-FastModel-7-15-Heroine-Editable-Skeleton-Garments.json');
+ });
+ document.addEventListener('aig713:surface-ready',()=>{
+  clear('有新的實測掃描表面，舊草模候選暫停使用。請重新確認分區後再生成。');
+ });
+ $('heroine-clear').addEventListener('click',()=>clear());
+ $('heroine-photo-only').addEventListener('change',()=>clear());
+ $('heroine-grow').addEventListener('click',()=>clear('色彩候選區已更新，請完成新的人工審核再建立草模。'));
+ const optionNames={
+  pelvis:'骨盆',spine:'脊椎',chest:'胸腔',neck:'頸部',head:'頭部',
+  shoulderL:'左肩',elbowL:'左肘',wristL:'左腕',
+  shoulderR:'右肩',elbowR:'右肘',wristR:'右腕',
+  hipL:'左臀',kneeL:'左膝',ankleL:'左踝',
+  hipR:'右臀',kneeR:'右膝',ankleR:'右踝'
+ };
+ for(const [id,name] of Object.entries(optionNames)){
+  const o=document.createElement('option');o.value=id;o.textContent=name+' ('+id+')';
+  jointSelect.appendChild(o);
+ }
+ return Object.freeze({getCurrent:()=>current,reset:clear});
+}
