@@ -41,6 +41,8 @@ jobs:
           node --test tests/aig-auto-image-detect-2-4.test.mjs
           node --check aig-motion-integrity-2-4.mjs
           node --test tests/aig-motion-integrity-2-4.test.mjs
+          node --check aig-true-world-movie-2-5.mjs
+          node --test tests/aig-true-world-movie-2-5.test.mjs
           node --check aig-map-model-alignment-2-1.mjs
           node --check tests/aig-map-actor-2-1.real-browser.mjs
           node --test tests/aig-map-model-alignment-2-1.test.mjs
@@ -191,6 +193,13 @@ jobs:
           name: FastModel-Real3D-2-3-Photo-To-Skinned-Actor-Story-Phone-Desktop
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-text-story-2-2/*real3d-2-3*
           if-no-files-found: warn
+      - name: Upload Real3D 2.5 recorded actual WebGL film and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FastModel-Real3D-2-5-True-Multi-GLB-1080p-Encoded-Movie-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-text-story-2-2/*real3d-2-5*
+          if-no-files-found: warn
       - name: Exact proof boundary
         if: always()
         run: |
@@ -249,4 +258,9 @@ jobs:
             echo 'FASTMODEL_REAL3D_2_4_SEMANTIC_IDENTITY=NOT_TRAINED_OR_CLAIMED'
             echo 'FASTMODEL_REAL3D_2_4_MOTION_GATE=REJECT_FLAT_CARD_AND_RIGID_SWAY'
             echo 'FASTMODEL_REAL3D_2_4_RELEASE_GATE=NOT_YET_APPROVED'
+            echo 'FASTMODEL_REAL3D_2_5_MOVIE=WEBGL_ONE_RENDERER_MULTI_ACTOR_1080P_CODEC_REAL'
+            echo 'FASTMODEL_REAL3D_2_5_FLAT_PHOTO_MOVIE=BLOCKED'
+            echo 'FASTMODEL_REAL3D_2_5_SUBTITLES=COMPOSITED_ACTUAL_VIDEO_PIXELS'
+            echo 'FASTMODEL_REAL3D_2_5_AUDIO=SILENT_NO_TTS_CLAIM'
+            echo 'FASTMODEL_REAL3D_2_5_RELEASE=GATE_NOT_NATIVE_CERTIFIED'
           } >> "$GITHUB_STEP_SUMMARY"
