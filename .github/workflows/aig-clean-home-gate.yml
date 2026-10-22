@@ -39,7 +39,9 @@ jobs:
           node --check tests/aig-download-center.real-browser.mjs
           test -s ../../../3ax-nc-workbench.html
           test -s ../../../3ax-nc-workbench.css
-          test -s ../../../fastmodel/index.html
+          test ! -e ../../../fastmodel/index.html
+          test ! -e ../../../fastmodel/app.js
+          node ../../../qa/fastmodel-legacy-retirement.cjs
           test -s ../../../native-download.html
           test -s ../../../mobile-runtime.html
           grep -q 'aig-new-home.html' ../../../index.html
@@ -70,6 +72,7 @@ jobs:
             echo 'NEW_HOMEPAGE=SEPARATE_STARTER_UI_WITH_EXISTING_LINK_DESTINATIONS'
             echo 'NEW_DOWNLOAD_CENTER=ORIGINAL_QA_AND_BUILD_LINKS_MOVED_PLUS_LOCAL_JSON_BACKUP'
             echo 'NO_NATIVE_BINARY_CLAIM=TRUE'
+            echo 'OLD_6_9_5_FAKE_FASTMODEL_PUBLIC_PAGE=RETIRED_NOT_REDEPLOYED'
             echo 'OLD_SITE_AND_LOCAL_STORAGE=NOT_MODIFIED_BY_NEW_HOME'
             echo 'NEW_3AX_WORKSPACE=LIMITED_NC_NUMERICAL_WEBGL'
             echo 'AUTHORITY_RGB_AND_AUTHENTIC_MACHINE_3D=NOT_VERIFIED'
