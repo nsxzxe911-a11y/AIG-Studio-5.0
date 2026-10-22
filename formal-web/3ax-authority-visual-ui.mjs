@@ -1,9 +1,9 @@
 /**
- * 3AX Authority reference viewer: only displays a proven original PNG in
+ * 3AX Authority reference viewer: only displays a proven original image (file named PNG but encoded JPEG) in
  * a separate, non-interactive comparison panel. Never makes controls out
  * of a screenshot. No upload or CNC output.
  */
-import {validateAIG3AXManifest,verifyAIG3AXPNGBytes}
+import {validateAIG3AXManifest,verifyAIG3AXImageBytes}
  from './3ax-authority-source-gate.mjs';
 const $=id=>document.getElementById(id);
 const status=$('authority-status'),preview=$('authority-preview');
@@ -29,19 +29,21 @@ async function accept(blob,pin){
  clear();
  if(blob.size>16000000||blob.size!==pin.bytes)
   throw Error('SOURCE_PNG_BYTE_LENGTH_OR_SIZE_BLOCKED');
- const result=await verifyAIG3AXPNGBytes(new Uint8Array(await blob.arrayBuffer()),pin);
+ const originalBytes=new Uint8Array(await blob.arrayBuffer());
+ const result=await verifyAIG3AXImageBytes(originalBytes,pin);
  if(!result.ok)throw Error(result.reason);
  // Hash match verifies exact registered bytes. Decode independently to reject
  // broken/invalid browser image data, then display as passive reference only.
- const bitmap=await createImageBitmap(blob);
+ const imageBlob=new Blob([originalBytes],{type:'image/jpeg'});
+ const bitmap=await createImageBitmap(imageBlob);
  try{
   if(bitmap.width!==pin.width||bitmap.height!==pin.height)
    throw Error('IMAGE_DECODE_DIMENSIONS_NOT_APPROVED');
  }finally{bitmap.close();}
- objectUrl=URL.createObjectURL(blob);
+ objectUrl=URL.createObjectURL(imageBlob);
  preview.src=objectUrl;
  preview.hidden=false;
- state('原圖比對通過：核准手機 3AX PNG 的 SHA-256／864×1536／431467 bytes 完全符合。此圖僅供對照，不等於原生 4K、真機 3D 模型或 CNC 正式介面驗收。',true);
+ state('原圖比對通過：核准手機 3AX 原圖（原檔名 .png、內容 JPEG）的 SHA-256／864×1536／431467 bytes 完全符合。此圖僅供對照，不等於原生 4K、真機 3D 模型或 CNC 正式介面驗收。',true);
 }
 check.addEventListener('click',async()=>{
  check.disabled=true;clear();
