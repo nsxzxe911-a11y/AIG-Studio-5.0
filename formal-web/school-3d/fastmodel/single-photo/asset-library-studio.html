@@ -1,0 +1,85 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020407">
+<title>AIG FastModel · 獨立素材資產庫</title>
+<style>
+:root{font:14px/1.55 system-ui,"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#e2faff;background:#020407}
+*{box-sizing:border-box}body{margin:0;padding:16px;background:radial-gradient(ellipse at top,#10283f,#020407 67%);min-height:100vh}
+main{max-width:1140px;margin:auto}header{border-bottom:1px solid #296781;margin-bottom:18px;padding:10px 0 15px}
+h1{font-size:clamp(22px,3vw,35px);line-height:1.25;margin:8px 0}
+h2{font-size:17px;color:#9fe9fc}p{color:#b7d6e5}a{color:#86e6f9}
+.columns{display:grid;grid-template-columns:minmax(280px,400px) minmax(0,1fr);gap:14px}
+.panel{background:#091b2d;border:1px solid #316d93;border-radius:13px;padding:16px;margin:0 0 12px;min-width:0}
+label{display:block;margin:10px 0;color:#d5f5ff}
+input,select{width:100%;min-height:40px;background:#040e19;color:white;border:1px solid #4b92b4;border-radius:8px;padding:8px}
+button{min-height:40px;margin:5px 6px 5px 0;padding:8px 13px;background:#135778;border:1px solid #60b9cd;border-radius:9px;color:white;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}
+.asset{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;border:1px solid #31586e;padding:10px;margin:8px 0;border-radius:9px;background:#061524}
+.asset strong{font-size:14px}.asset small{display:block;color:#a6c6dc;overflow-wrap:anywhere}
+.help{font-size:12px;color:#a9c8d6}.warn{border-left:3px solid #c99643;padding:10px;background:#211b0d;color:#ffdead}
+#status,#stats,#reuse-results{white-space:pre-wrap;overflow-wrap:anywhere}
+#status{background:#091521;border:1px solid #547a95;border-radius:8px;padding:12px}
+#status[data-state=error]{border-color:#c88942;color:#ffdbac}
+#status[data-state=ok]{border-color:#40a9a2;color:#aaffdf}
+@media(max-width:760px){.columns{grid-template-columns:1fr}body{padding:9px}}
+</style></head><body><main>
+<header><small>AIG FastModel · 7.16 · Local-first · 按需載入</small>
+<h1>人物、建築、地圖、場景、轉場｜獨立素材資產庫</h1>
+<p>程式與素材分開：網頁將資料保存在此網站來源專屬的 IndexedDB，而非 HTML/JavaScript 包內。影片、GLB、圖資不會在首頁全部載入。Windows 原生版可用使用者 AppData，Android 原生版可用 App 專屬資料夾（需原生版本接入）。</p>
+<p class="warn">「自動學習」目前是<strong>已核准素材的標籤索引和重用習慣</strong>，不是自動訓練 3D AI，也不會自行改寫你已核准的真模型。瀏覽器儲存可能被清理，正式作品需另外備份到外部資料夾。</p>
+<a href="./index.html">← 返回 FastModel 主工作區</a>
+</header>
+<div class="columns">
+<div>
+<section class="panel">
+<h2>01｜匯入分類並儲存在主程式外</h2>
+<label>素材檔案（GLB、PNG、JPG、WebP、GeoJSON／JSON、MP4 等）
+<input id="asset-file" type="file" accept=".glb,.gltf,.png,.jpg,.jpeg,.webp,.json,.geojson,.mp4,.webm,.bin"></label>
+<label>資產類型
+<select id="asset-category">
+<option value="character">人物／動物</option>
+<option value="building">建築／房屋</option>
+<option value="map">地圖／圖資</option>
+<option value="scene">3D 場景</option>
+<option value="transition">轉場／特效</option>
+<option value="environment">樹木／環境／道路</option>
+<option value="animation">動畫／動作</option>
+</select></label>
+<label>名稱<input id="asset-title" type="text" placeholder="例如：櫻花校園女主角、校園地圖、轉場"></label>
+<label>標籤（使用半形逗號分開）<input id="asset-tags" type="text" placeholder="女主角,校園,動畫"></label>
+<button id="asset-import">儲存到本機外部資產庫</button>
+<p class="help">若同一個 GLB 在不同場景引用，使用 SHA 只存一次內容，避免重複佔容量。新匯入素材一律「尚未核准」。</p>
+</section>
+<section class="panel">
+<h2>02｜儲存空間與外部資料夾</h2>
+<p id="stats">讀取本機素材索引…</p>
+<button id="storage-persist">要求瀏覽器保留本機資料</button>
+<button id="asset-folder-backup">備份選定資產至外部資料夾</button>
+<p class="help">支援的桌面瀏覽器可由你授權選擇資料夾；手機瀏覽器可能沒有此功能。網頁不能自行寫入任意 Windows/Android 路徑。</p>
+</section>
+</div>
+<div>
+<section class="panel">
+<h2>03｜素材列表（只讀索引，不預載模型）</h2>
+<label>分類篩選
+<select id="asset-filter">
+<option value="">全部</option><option value="character">人物／動物</option>
+<option value="building">建築</option><option value="map">地圖</option>
+<option value="scene">場景</option><option value="transition">轉場</option>
+<option value="environment">環境</option><option value="animation">動畫</option>
+</select></label>
+<div id="asset-list" role="list">目前沒有資料</div>
+</section>
+<section class="panel">
+<h2>04｜重用既有場景／人物（核准才推薦）</h2>
+<p class="help">自動尋找已核准的同分類／相同標籤素材，不做不明來源模型替換。</p>
+<label>欲搜尋的標籤<input id="asset-reuse-tags" type="text" placeholder="校園,女主角"></label>
+<button id="asset-reuse">搜尋可重用素材</button>
+<div id="reuse-results">尚未搜尋</div>
+</section>
+<section class="panel">
+<h2>執行狀態</h2><output id="status" role="status" aria-live="polite">離線外部資產庫就緒後，可以匯入並管理本機素材。</output>
+</section>
+</div>
+</div>
+</main><script src="./asset-library-studio.js"></script></body></html>
