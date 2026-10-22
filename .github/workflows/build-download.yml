@@ -2,6 +2,12 @@ name: AIG Studio direct release validation
 
 on:
   workflow_dispatch:
+    inputs:
+      aig_request_id:
+        description: 'Optional unique build correlation ID for AIG site real build watchdog'
+        required: false
+        type: string
+run-name: AIG verified native build / ${{ inputs.aig_request_id || 'MANUAL' }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
