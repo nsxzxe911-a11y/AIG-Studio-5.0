@@ -33,6 +33,7 @@ ul{line-height:1.8;padding-left:21px}small{color:#a7c3d1}footer{padding:25px 0;c
  <p id="message" class="warn">正在讀取已發布交接檔；讀取失敗將顯示 BLOCKED。</p>
  <div class="grid" id="projects"></div>
  <p class="label" id="snapshot"></p>
+ <p class="warn" id="freshness">尚未重新核對 GitHub 來源。</p>
  <p class="warn" id="live-status">正式 Render 部署與 APK／EXE 尚未在此確認。</p>
 </section>
 <section>
@@ -92,6 +93,23 @@ function render(m){
  byId("message").className="warn";text("live-status","Render LIVE："+m.website.deployment+"；APK/EXE："+m.checks.native_artifacts+"；完整功能："+m.checks.all_runtime_functions);
  byId("handoff").value=makePrompt(m);byId("copy").disabled=false;byId("download").disabled=false;
 }
+async function checkSourceFreshness(m){
+ var p=m.projects.filter(function(item){return item.id==="AIG Studio 5.0"})[0];
+ if(!p||!p.source_sha||!p.reference)return;
+ text("freshness","核對公開 Studio 修復分支的 GitHub 最新 SHA 中…（AIG-II 私有來源須由有權限的 AI 接手檢查）");
+ var controller=typeof AbortController!=="undefined"?new AbortController():null;
+ var timeout=controller?setTimeout(function(){controller.abort()},6500):null;
+ try{
+  var address="https://api.github.com/repos/"+p.repository+"/commits/"+encodeURIComponent(p.reference);
+  var response=await fetch(address,{cache:"no-store",signal:controller?controller.signal:undefined,headers:{"Accept":"application/vnd.github+json"}});
+  if(!response.ok)throw new Error("HTTP "+response.status);
+  var body=await response.json();
+  if(!body.sha||!/^[a-f0-9]{40}$/.test(body.sha))throw new Error("INVALID_HEAD_SHA");
+  if(body.sha===p.source_sha)text("freshness","Studio 公開分支來源 SHA 與交接快照一致（僅代表來源一致，不代表建置成功）。");
+  else text("freshness","注意：Studio 已有不同 SHA。交接快照過期，請先核對最新提交："+body.sha+"；禁止沿用舊斷點直接覆蓋！");
+ }catch(_){text("freshness","暫時無法確認 GitHub 最新 SHA（可能離線或 API 限流）。目前只能使用已保存的來源快照。")}
+ finally{if(timeout!==null)clearTimeout(timeout)}
+}
 async function load(){
  data=null;clean();byId("copy").disabled=true;byId("download").disabled=true;
  text("message","正在讀取正式交接 JSON…");text("feedback","");byId("handoff").value="";
@@ -100,7 +118,7 @@ async function load(){
   if(!response.ok)throw new Error("HTTP "+response.status);
   var m=await response.json();
   if(m.schema!=="aig.ai-continuity.v1"||m.record_kind!=="SOURCE_CHECKPOINT_NOT_RUNTIME_PASS"||!Array.isArray(m.projects)||m.projects.length!==3||!m.website||!m.checks)throw new Error("INVALID_HANDOFF_SCHEMA");
-  data=m;render(m);
+  data=m;render(m);checkSourceFreshness(m);
  }catch(e){text("message","BLOCKED：交接檔無法驗證或讀取（"+String(e.message||e)+"）。禁止依舊版本盲目修改。");byId("message").className="warn";text("live-status","尚未驗證網站來源、APK/EXE 或完整核心。")}
 }
 byId("copy").addEventListener("click",async function(){
