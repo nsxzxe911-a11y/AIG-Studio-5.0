@@ -212,7 +212,17 @@ export class AIG65CanvasRecorder{
   if(this.state==='FAILED'||this.state==='COMPLETE')return;
   const size=this.chunks.reduce((sum,x)=>sum+x.size,0);
   if(size===0||this.frames<2){this.fail(Error('AIG65_EMPTY_OR_UNRENDERED_VIDEO'));return;}
-  const blob=new Blob(this.chunks,{type:this.format.mime});
+  let blob;
+  try {
+   const BlobImpl=this.env.Blob||Blob;
+   blob=new BlobImpl(this.chunks,{type:this.format.mime});
+   if(!blob||blob.size<=0)throw Error('AIG65_ENCODED_BLOB_EMPTY');
+  } catch(error) {
+   // MediaRecorder may emit chunks but browser Blob finalization can still
+   // fail. Reject the pending stop promise and release owned canvas tracks.
+   this.fail(error);
+   return;
+  }
   this.state='COMPLETE';
   const output={blob,filename:'AIG-6.8-REAL-2D-2.5D-1080p.'+this.format.ext,
    evidence:{schema:AIG65_CAPTURE_SCHEMA,
