@@ -33,6 +33,16 @@ try{
    assert.equal(r.noTimerKeepsFullOriginalQuality,true);
    assert.equal(r.pixelRatioRestoredAfterToggle,true);
    assert.equal(r.originalTrianglePositionsUnchanged,true);
+   // Real draw-call reduction, not theoretical-only cost estimates.
+   assert.equal(r.gpu18StaticInstances,8);
+   assert.equal(r.gpu18SavedDrawCallsExpected,7);
+   assert.equal(r.gpu18RealInstancedMeshDrawGroup,true);
+   assert.equal(r.gpu18CharacterAnimationSourceNeverBatched,true);
+   assert.equal(r.gpu18OriginalGLBMeshesRestored,true);
+   assert.ok(r.gpu18DrawCallsBefore-r.gpu18DrawCallsDuring>=6,
+    'Real GPU draw calls must decrease using InstancedMesh');
+   assert.equal(r.gpu18DrawCallsBefore,r.gpu18DrawCallsRestored,
+    'Original GLB draw-calls must be restored without deleting meshes');
    assert.equal(r.modelObjectRetained,true);
    assert.equal(r.noAndroidOrWindowsNativeFpsClaim,true);
    assert.deepEqual(errors,[]);
