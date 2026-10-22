@@ -14,12 +14,14 @@ checks={
  "android":["UiButtonManifestContract.byButtonId(navId)",
             "UiButtonManifestContract.dispatchNavigation(navId,normalized)",
             "UiButtonManifestContract.dispatchNavigation(\"NAV_HOME\",\"HOME\")",
-            "action()","refreshVisibleMode(normalized)"],
+            "action()","refreshVisibleMode(normalized)",
+            "val homeAction=showRuntimeHome","homeAction()"],
  "windows":["UiButtonManifestContract.byButtonId(navId)",
             "UiButtonManifestContract.dispatchNavigation(navId,normalized)",
             "UiButtonManifestContract.dispatchNavigation(\"NAV_HOME\",\"HOME\")",
             "putClientProperty(\"aig.buttonId\",navId)",
-            "action()"],
+            "action()","6AX • SIM PREVIEW ONLY",
+            '"MACHINE" to "NOT CONNECTED"'],
  "core":["fun dispatchNavigation(","runtimeCallback(entry.command)",
          "NAV_SURFACE_ID_MISMATCH","NAV_COMMAND_ID_MISMATCH"]
 }
