@@ -11,7 +11,7 @@
   "modules": [
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/app.mjs",
-      "gitBlobSha": "a18e3f133daa4e8436ecc2e77ec6a967347719bf"
+      "gitBlobSha": "352aa1f1f286d112b1678b86c7c681f33796cead"
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-auto-animation-6-5.mjs",
@@ -177,5 +177,6 @@
   "engineeringShellFallbackForbidden": true,
   "readOnlyMotionSceneIntegration": "Model tab local JSON import → SHA256 → real Canvas tool-center animation → play/stop; no CNC machine APIs, no human GLB impersonation, no user model deletion; tested with matched native Kotlin hash",
   "axisVisualizationSafety": "Linear interpolation for XYZ tool center only. A/B/C waypoint pose held until next sample; 6-axis kinematics not certified. Not machine control.",
-  "motionImportRaceIntegrity": "Incrementing import token prevents slow earlier File.text/crypto.digest from repainting after user selects newer CNC motion file. Browser test awaits SHA failure and checks canvas hidden/play disabled."
+  "motionImportRaceIntegrity": "Incrementing import token prevents slow earlier File.text/crypto.digest from repainting after user selects newer CNC motion file. Browser test awaits SHA failure and checks canvas hidden/play disabled.",
+  "temporalRigQualityGate": "Real technical GLB loaded via Three GLTFLoader, samples skinned mesh vertices at 30Hz across three animation clips, validates finite coordinates and non-static deformation; full-body/photo identity/physical collisions stay unapproved"
 }
