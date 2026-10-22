@@ -110,6 +110,35 @@ test('2.2 player schedules real-source actions, text subtitle and camera indepen
  assert.ok(observed.includes('STORY_COMPLETE_REAL_CUES'));
  assert.equal(player.stop().status,'STOPPED_NO_ORIGINAL_ASSET_MUTATION');
 });
+test('2.5 native 5.6 head turn is not confused with 5.7 accessory follow-through',()=>{
+ const scene=world();
+ const native=[{nodeId:'node-1',clips:[
+  {index:0,name:'AIG56_TURN_HEAD',durationSeconds:1.5},
+  {index:1,name:'AIG56_NOD_HEAD',durationSeconds:1.5},
+  {index:2,name:'AIG56_WAVE_LEFT_ARM',durationSeconds:1.5},
+  {index:3,name:'AIG56_PONYTAIL_SWING',durationSeconds:1.5},
+  {index:4,name:'AIG57_HEAD_TURN_PONYTAIL_FOLLOW_THROUGH',durationSeconds:1.5}
+ ]}];
+ const result=compileAIG22Story('0秒 node-1：轉頭',{scene,actors:native});
+ assert.equal(result.ready,true,JSON.stringify(result.blocked));
+ assert.equal(result.events.length,1);
+ assert.equal(result.events[0].clipIndex,0);
+ assert.equal(result.events[0].clipName,'AIG56_TURN_HEAD');
+ assert.equal(verifyAIG22Story(result,scene,native),true);
+ // An arbitrary extra motion also matching "轉頭" is NOT auto-selected.
+ const unknown=structuredClone(native);
+ unknown[0].clips.push({index:5,name:'UNREVIEWED_HEAD_TURN',durationSeconds:1.5});
+ const blocked=compileAIG22Story('0秒 node-1：轉頭',{scene,actors:unknown});
+ assert.equal(blocked.ready,false);
+ assert.equal(blocked.blocked[0].reason,'AMBIGUOUS_ORIGINAL_CLIPS');
+ // The accessory is not automatically promoted when main motion is absent.
+ const onlyAccessory=compileAIG22Story('0秒 node-1：轉頭',{
+  scene,actors:[{nodeId:'node-1',clips:[native[0].clips[4]]}]
+ });
+ assert.equal(onlyAccessory.ready,true);
+ assert.equal(onlyAccessory.events[0].clipName,'AIG57_HEAD_TURN_PONYTAIL_FOLLOW_THROUGH');
+ assert.equal(onlyAccessory.generatedHumanMotion,false);
+});
 test('2.2 overlapping clips on same actor and ambiguous source Clip names are blocked',()=>{
  const scene=world();
  const both=compileAIG22Story(
