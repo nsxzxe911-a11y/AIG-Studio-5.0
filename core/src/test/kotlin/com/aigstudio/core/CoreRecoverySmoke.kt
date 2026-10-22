@@ -130,5 +130,31 @@ fun main() {
         )
     }.isFailure) { "Nonfinite cutting coordinates must fail closed" }
     println("STUDIO_COMMON_POCKET_CONTOUR_GATE_PASS|CLOSED_RECT|CIRCLE|FANUC_G1|MIXED_BLOCK|GAP_BLOCK|DUPLICATE_BLOCK|NONFINITE_BLOCK")
+    // Source A/B/C posture must survive entry/exit XY correction; only
+    // verified Safe-Z neighbors may be moved, never an arbitrary rapid.
+    val axisPoints=listOf(
+        ManualCamPoint(0.0,0.0,8.0,true,axisA=15.0,axisB=-10.0,axisC=45.0),
+        ManualCamPoint(5.0,0.0,-2.0,false,axisA=15.0,axisB=-10.0,axisC=45.0),
+        ManualCamPoint(10.0,0.0,-2.0,false,axisA=15.0,axisB=-10.0,axisC=45.0),
+        ManualCamPoint(10.0,0.0,8.0,true,axisA=15.0,axisB=-10.0,axisC=45.0)
+    )
+    val axisManual=pocketSettings.copy(pathMode=CamPathMode.MANUAL,manualPath=axisPoints)
+    val movedEntry=CamWorkflowEngine.moveCutEntry(axisManual,6.0,2.0,-2.0)
+    check(movedEntry.manualPath[0].let{
+        it.rapid && it.x==6.0 && it.y==2.0 && it.z==8.0 && it.axisC==45.0
+    })
+    val movedExit=CamWorkflowEngine.moveCutExit(movedEntry,12.0,3.0,-2.0)
+    check(movedExit.manualPath[3].let{
+        it.rapid && it.x==12.0 && it.y==3.0 && it.z==8.0 &&
+        it.axisA==15.0 && it.axisB== -10.0 && it.axisC==45.0
+    })
+    check(axisManual.manualPath==axisPoints) { "Immutable original CAM path must be preserved" }
+    val noApproach=axisManual.copy(manualPath=axisPoints.drop(1))
+    check(runCatching { CamWorkflowEngine.moveCutEntry(noApproach,8.0,2.0,-2.0) }.isFailure)
+    val diagonalRapid=axisManual.copy(
+        manualPath=axisPoints.dropLast(1)+ManualCamPoint(20.0,0.0,8.0,true)
+    )
+    check(runCatching { CamWorkflowEngine.moveCutExit(diagonalRapid,12.0,3.0,-2.0) }.isFailure)
+    println("STUDIO_MANUAL_ENTRY_EXIT_GATE_PASS|SAFE_Z_VERTICAL|ABC_RETAIN|UNSAFE_BLOCK|ORIGINAL_PRESERVED")
     println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|3AX_FANUC_G0_G1|6AX_C_NC_BLOCKED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE|CAD_AUTO_SIM_NC|NC_FIRST_EVENTS")
 }
