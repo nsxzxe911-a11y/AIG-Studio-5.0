@@ -158,8 +158,18 @@ export class AIG25WorldMovieRecorder{
   canvas.width=AIG25_RENDER.width;canvas.height=AIG25_RENDER.height;
   const ctx=canvas.getContext('2d',{alpha:false});
   if(!ctx)fail('PIXEL_COMPOSITOR_UNAVAILABLE');
-  const stream=canvas.captureStream(AIG25_RENDER.targetFPS);
-  const video=stream?.getVideoTracks?.()||[];
+  // With explicit frame requests, captureStream(0) avoids the browser's
+  // hidden-window/desktop periodic sampling race; each requestFrame() below
+  // captures the real finished WebGL compositor. Keep a 30fps clocked
+  // fallback only if this browser has no requestFrame().
+  const explicitStream=canvas.captureStream(0);
+  const explicitTracks=explicitStream?.getVideoTracks?.()||[];
+  if(explicitTracks.length!==1)fail('EXACT_ONE_ACTUAL_VIDEO_TRACK_REQUIRED');
+  const useExplicit=typeof explicitTracks[0].requestFrame==='function';
+  const stream=useExplicit?explicitStream:
+   canvas.captureStream(AIG25_RENDER.targetFPS);
+  const video=useExplicit?explicitTracks:stream?.getVideoTracks?.()||[];
+  if(!useExplicit)for(const track of explicitTracks)try{track.stop()}catch{}
   if(video.length!==1)fail('EXACT_ONE_ACTUAL_VIDEO_TRACK_REQUIRED');
   const mixed=new this.env.MediaStream(video);
   let recorder;
@@ -259,6 +269,7 @@ export class AIG25WorldMovieRecorder{
    containerExtension:this.format.ext,actualFramesComposited:this.frameCount,
    manualCanvasFrameCaptureSupported:this.manualFrameCaptureSupported,
    explicitCanvasCaptureRequests:this.explicitRequestedFrameCount,
+   canvasStreamMode:this.manualFrameCaptureSupported?'EXPLICIT_SOURCE_PIXEL_FRAMES':'CLOCKED_SOURCE_PIXEL_FRAMES',
    bytesEncoded:blob.size,sourceGLBsUnmodified:true,
    sourceSubtitlePixelsBurnedIntoCanvas:true,
    generatedHumanMovement:false,generatedVoice:false,
