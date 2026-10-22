@@ -35,3 +35,14 @@
 - Render service autoDeploy is configured yes; GitHub API source commits have not yet yielded an observed new live deployment. Do not claim the new home is online or silently swap the original site's live content.
 - Preserve old site and original CAD/CAM/NC data; do not restore retired lower-tier mobile-runtime.html/studio-375.html.
 - Next exact bridge: validate GitHub Actions + actual Render publish source SHA, then HTTP/phone/desktop screenshots; only afterward connect verified 3AX Authority mesh (not screenshot placeholder), and CAD/CAM/SIM/4-6AX.
+
+
+## 2026-10-23 — actual new site CI recovery and mobile header correction
+- Original source branch HEAD after the prior checkpoint was c8771f43; the Render official site still independently reported LIVE c778ad3d. AutoDeploy configuration says yes, but the Render event feed contains no deploy after c778ad3d. Cause of missing auto deploy is unverified; historical deploy events are API-triggered.
+- Added **isolated draft PR #16**, head verify/new-clean-home-gates-20261023 into original site branch. No merge, no deployment. Only purpose is to enable independent pull_request test runs without changing the currently approved production branch's workflows.
+- Test workflows were actually created: AIG Clean New Homepage Phone Desktop Gate run 39815341803 and AIG New 3AX Real3D Workspace Gate run 39815341840; another clean home run 39815534208 was created after syncing the verification test. They were queued at last inspection; DO NOT call them PASS.
+- Static workflow preflight found the 3AX browser Gate referred to missing test aig-real3d-replay-v1-3.test.mjs on web branch. Copied the EXACT prior tested 1.3 source test blob b90699b961d56e28ada9bc9d52b1301f1dcce236 from FastModel repair branch into verification branch (commit adf45bffa). This test file is not yet in the original web source branch; do not claim merge complete.
+- Fix in original web source branch: new home small-screen header now wraps into two rows and navigation fills width (commit 916f8925); 3AX workspace app-header wraps instead of creating 360 px viewport horizontal overflow (commit ad01b540).
+- Previous FastModel Real3D 1.5 source Gate run 39809665288 completed SUCCESS; FastModel full regression run 39809665408 all eight jobs completed SUCCESS. These certify legacy test scope, not the new homepage.
+- Local-first NC source save and conflict guard remains in original web source branch. Need actual browser-Gate check of reload/save and numerical G0/G1 after CI runners start.
+- CURRENT PRIORITY: Check PR #16 run jobs, repair any failure using logs, then verify Render commit deploy and real HTTP/browser screenshots. Do not update original website's published status to LIVE until Render reports the actual source SHA.
