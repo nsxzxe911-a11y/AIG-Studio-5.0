@@ -51,7 +51,7 @@ def validate():
     assert set(parser.locale) <= z, "VISIBLE_LABEL_NOT_TRANSLATED "+repr(set(parser.locale)-z)
     for key in ("build", "health-check", "easy-copy"):
         assert key in parser.buttons, "BUTTON_ID_MISSING_"+key
-        assert re.search(r"\\$\\('"+re.escape(key)+r"'\\)\\.addEventListener\\('click'",scripts), "FAKE_BUTTON_NO_CLICK_CALLBACK_"+key
+        assert re.search(r"\$\('"+re.escape(key)+r"'\\)\\.addEventListener\\('click'",scripts), "FAKE_BUTTON_NO_CLICK_CALLBACK_"+key
     assert "data.downloadReady" in scripts, "DOWNLOAD_NOT_GATED_BY_BACKEND"
     assert "String(data.state).startsWith('BLOCKED_')" in scripts, "STALLED_BUILD_STUCK_IN_FAKE_PROGRESS"
     assert "current=data.id" in scripts and "SOURCE SHA:" in scripts, "NO_ACTUAL_BUILD_IDENTITY"
