@@ -93,6 +93,9 @@ try{
     ext.loseContext();
     return true;
    });
+   assert.equal(gpuLossAvailable,true,
+    'GPU loss/restore evidence requires WEBGL_lose_context, no silent skip');
+   const ncBeforeGPU=await page.locator('#nc').inputValue();
    if(gpuLossAvailable){
     await page.waitForFunction(()=>document.getElementById('status').textContent
      .includes('GPU_CONTEXT_LOST'),null,{timeout:10000});
@@ -107,6 +110,8 @@ try{
     assert.equal(restored.replay.cumulativeRemovedMm3,final.replay.cumulativeRemovedMm3);
     assert.equal(restored.replay.blockIndex,final.replay.blockIndex);
     assert.equal(restored.realFanucControllerCommandsSent,0);
+    assert.equal(await page.locator('#nc').inputValue(),ncBeforeGPU,
+     'GPU context reinitialization may never rewrite source NC');
     await page.screenshot({path:dir+'/'+device.name+'-gpu-restore-preserves-stock.png',fullPage:true});
    }
    await page.screenshot({path:dir+'/'+device.name+'-real-3d-finished-stock.png',fullPage:true});
