@@ -200,9 +200,14 @@ try{
    buffer:Buffer.from(JSON.stringify(tampered))
   });
   await motionLoad.click();
+  await page.waitForFunction(()=>{
+   const status=document.querySelector('#aig-cnc-motion-status')?.textContent||'';
+   return status.includes('BLOCKED')&&status.includes('TAMPERED_SHA256');
+  },null,{timeout:10000});
   const rejected=await page.locator('#aig-cnc-motion-status').innerText();
   if(!rejected.includes('BLOCKED')||!rejected.includes('TAMPERED_SHA256')||
-     !await motionPlay.isDisabled())
+     !await motionPlay.isDisabled()||
+     await page.locator('#aig-cnc-motion-canvas').isVisible())
    throw Error('AIG_CNC_TAMPERED_MOTION_DID_NOT_FAIL_CLOSED '+rejected);
   console.log('AIG_READONLY_CNC_MOTION_REAL_BROWSER_PASS',device.name,
    JSON.stringify({pixelValuesChanged:motionChanged,sourceShaVerified:true,
