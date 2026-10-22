@@ -48,6 +48,7 @@ jobs:
           node tests/aig-spatial-rig-7-8.real-browser.mjs
           node tests/aig-continuous-scan-7-9.real-browser.mjs
           node tests/aig-multiview-fusion-7-10.real-browser.mjs
+          node tests/aig-auto-correspondence-7-11.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -122,6 +123,13 @@ jobs:
         with:
           name: FastModel-7-10-Calibrated-Video-Stereo-XYZ-Not-Dense-3D
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-multiview-7-10/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-11-Source-Auto-Feature-Tracking-Not-3D-Character
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-auto-correspondence-7-11/
           if-no-files-found: warn
 
       - name: Distinguish real video playback from unverified character animation
@@ -448,4 +456,58 @@ jobs:
             echo 'DENSE_HUMAN_HEAD_SURFACE=NOT_BUILT'
             echo 'NATIVE_APK_EXE_REAL_FPS=NOT_VERIFIED'
             echo 'REAL_USER_HEROINE_LIKENESS=NOT_APPROVED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  auto-correspondence-7-11:
+    name: Independent 7.11 pixel feature and review-gated XYZ gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Real RGB source feature matching syntax and numeric checks
+        run: |
+          node --check aig-auto-correspondence-7-11.mjs
+          node --check tracking-studio.mjs
+          node --check tests/aig-auto-correspondence-7-11.test.mjs
+          node --check tests/aig-auto-correspondence-7-11.real-browser.mjs
+          node --test tests/aig-auto-correspondence-7-11.test.mjs
+      - name: Offline production package contains genuine matching source
+        run: |
+          npm run build
+          test -s dist/tracking-studio.html
+          test -s dist/tracking-studio.mjs
+          test -s dist/aig-auto-correspondence-7-11.mjs
+          cmp aig-auto-correspondence-7-11.mjs dist/aig-auto-correspondence-7-11.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Actual phone desktop source video patch tracking and reviewed XYZ
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig711-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-auto-correspondence-7-11.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-11-Independent-Real-Video-Patch-Match-XYZ-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-auto-correspondence-7-11/
+          if-no-files-found: warn
+      - name: Explicit source/3D trust boundary
+        if: always()
+        run: |
+          {
+            echo 'MATCHED_SOURCE_VIDEO_PIXELS=ACTUAL_BIDIRECTIONAL_PATCH_MATCH'
+            echo 'CAMERA_MOTION_ESTIMATION=NOT_SOLVED'
+            echo 'CAMERA_INTRINSICS=USER_VERIFIED_NOT_AUTO_ESTIMATED'
+            echo 'XYZ_FUSION=ONLY_HUMAN_REVIEWED_WITH_7_10_STEREO_CALIBRATION'
+            echo 'COMPLETE_HUMAN_FACE_OR_SKIN=NOT_APPROVED'
+            echo 'NATIVE_APK_EXE_FPS=NOT_VERIFIED'
+            echo 'LIVE_MULTIPLAYER=NOT_IMPLEMENTED'
           } >> "$GITHUB_STEP_SUMMARY"
