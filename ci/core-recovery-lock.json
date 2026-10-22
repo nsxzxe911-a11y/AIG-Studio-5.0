@@ -11,7 +11,7 @@
   "modules": [
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/app.mjs",
-      "gitBlobSha": "db95b7f366a9e49ec06f1dd4e4892083ade0150e"
+      "gitBlobSha": "240fcc058dbb6c31eb0f0ed135c9f80e9a3eb800"
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-auto-animation-6-5.mjs",
@@ -159,7 +159,7 @@
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/index.html",
-      "gitBlobSha": "229c3733c6f9e3ac8bf745cf444a093ce0a1a5f8"
+      "gitBlobSha": "4d4859ce985a1bae5c4ec7de473370f0677ff191"
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-motion-preview-readonly.mjs",
@@ -168,6 +168,10 @@
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-fullbody-motion-6-11.mjs",
       "gitBlobSha": "ae3b7bcb21a51c58505bcd6bd6a759a28bbbcd75"
+    },
+    {
+      "path": "formal-web/school-3d/fastmodel/single-photo/aig-source-observation-6-12.mjs",
+      "gitBlobSha": "4a30896aa20fd2a623531231a8daa1bef0f6ba19"
     }
   ],
   "ghostOverlayPolicy": "NO_DOUBLE_PERSON_ONE_PASS_VISIBLE_PAN_ZOOM_WITHOUT_CLEAN_BACKGROUND",
@@ -186,5 +190,6 @@
   "auditedLiveAppLockDrift": "2026-10-22 reviewed historical commit 96f617eca78927fd8bbe91a91cccd1c366a3332d installing stable Button ID binding; source app.mjs matches pre-existing PR code and is now locked. No app code changed.",
   "realFullBodyLimbUpgrade": "Existing single partial image->technical 17 bone 9 skinned mesh 5 clip GLB retained; adds two genuine bilateral arm/leg GLB quaternion clips, 31-frame skinned vertex motion audits; not verified heroine likeness, foot contacts or garment physics",
   "fullBodyMotionControlClosure": "After core 252/252 PASS, independent AIG64→AIG61 REAL upgrade action binds ButtonID/CommandID to existing single-photo generated GLB, audits bilateral limb vertex deformation before SHA/new output, preserves old 5-clip source on blocked action, all production likeness and collision claims remain false.",
-  "fullBodyFormalModelUiLocation": "Single photo / native 17-bone + seven clip upgrade controls remain original DOM+callbacks and are no longer hidden inside technical <details>; older testing tools are disclosure-only."
+  "fullBodyFormalModelUiLocation": "Single photo / native 17-bone + seven clip upgrade controls remain original DOM+callbacks and are no longer hidden inside technical <details>; older testing tools are disclosure-only.",
+  "pixelObservationRoute20261022": "Source-image SHA + transparent alpha/uniform background colour key + connected component count + sampled RGB and silhouette measurements; user-selected HUMAN/ANIMAL/PLANT domain; plants/animals evidence-only, never fake human GLB; human technical GLB preserved, real media likeness/skin physics still unverified"
 }
