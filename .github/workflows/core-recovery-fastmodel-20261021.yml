@@ -11,7 +11,8 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - name: Fail closed on missing/replaced animation source
+      - id: source_gate
+        name: Fail closed on missing/replaced animation source
         run: python3 ci/verify_core_recovery_lock.py
       - uses: actions/setup-node@v4
         with:
@@ -19,19 +20,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Test actual offline animation internals
+      - id: node_engine
+        name: Test actual offline animation internals
         working-directory: formal-web/school-3d/fastmodel/single-photo
         run: |
           npm ci
           python -m pip install -r requirements.txt
           npm test
           npm run build
-      - name: Python source/photo reconstruction preflight and negative tests
+      - id: python_engine
+        name: Python source/photo reconstruction preflight and negative tests
         working-directory: formal-web/school-3d/fastmodel/single-photo
         run: |
           python3 -m unittest discover -s tests -p 'test_*.py' -v
           python3 -m unittest discover -s ../tests -p 'test_*.py' -v
-      - name: Native C++ cache, incremental rebuild and resource tests
+      - id: native_engine
+        name: Native C++ cache, incremental rebuild and resource tests
         working-directory: formal-web/school-3d/fastmodel/single-photo
         run: |
           cmake -S ../core -B /tmp/aig-fastmodel-core-recovery -DCMAKE_BUILD_TYPE=Release
@@ -42,7 +46,8 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Real browser encoded movie frames, recording and controls
+      - id: browser_runtime
+        name: Real browser encoded movie frames, recording and controls
         working-directory: formal-web/school-3d/fastmodel/single-photo
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig-fastmodel-http.log 2>&1 &
@@ -63,3 +68,25 @@ jobs:
           echo "REAL_HEROINE_MOTION=NOT_CERTIFIED"
           echo "1080P_CHARACTER_FILM=NOT_CERTIFIED"
           echo "CONTROL_BINDINGS=DEFERRED_UNTIL_CORE_GATES_PASS"
+
+      - name: Honest per-stage animation quality summary
+        if: always()
+        env:
+          LOCK_RESULT: ${{ steps.source_gate.outcome }}
+          NODE_RESULT: ${{ steps.node_engine.outcome }}
+          PYTHON_RESULT: ${{ steps.python_engine.outcome }}
+          NATIVE_RESULT: ${{ steps.native_engine.outcome }}
+          BROWSER_RESULT: ${{ steps.browser_runtime.outcome }}
+        run: |
+          {
+            echo '### FastModel evidence at SHA ${{ github.sha }}'
+            echo "Exact source lock: $LOCK_RESULT"
+            echo "GLB/skin/movie Node tests: $NODE_RESULT"
+            echo "Python reconstruction tests: $PYTHON_RESULT"
+            echo "C++ engine tests: $NATIVE_RESULT"
+            echo "Real browser with evidence capture: $BROWSER_RESULT"
+            echo 'Inspect failure-evidence.json and failure.png on browser errors.'
+            echo 'FULL_BODY_CHARACTER_FROM_PHOTO=NOT_CERTIFIED'
+            echo 'HAIR_COLLISION_AND_DEVICE_FPS=NOT_CERTIFIED'
+            echo 'RELEASE=BLOCKED'
+          } >> "$GITHUB_STEP_SUMMARY"
