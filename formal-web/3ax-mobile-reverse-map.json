@@ -1,0 +1,931 @@
+{
+  "schema": "AIG_MOBILE_3AX_REVERSE_REGION_V1",
+  "source": {
+    "authorityId": "AIGII-MOBILE-3AX-CURRENT-20261016",
+    "sha256": "4f46a4c1f1ed7c71165108ed13f4809201794c16ebc397987d06d1be1f773e28",
+    "originalFilename": "05_3AX.png",
+    "actualEncoding": "image/jpeg",
+    "width": 864,
+    "height": 1536,
+    "native4k": false
+  },
+  "coordinateSystem": "SOURCE_PIXELS_864x1536_ORIGIN_TOP_LEFT; NORMALIZED_XYWH_FOR_LAYOUT",
+  "viewport": {
+    "sourcePixels": [
+      84,
+      202,
+      568,
+      820
+    ],
+    "normalized": [
+      0.09722222222222222,
+      0.13151041666666666,
+      0.6574074074074074,
+      0.5338541666666666
+    ],
+    "role": "NUMERIC_WEBGL_REPLAY_NOT_PHOTOREAL_MACHINE"
+  },
+  "safety": {
+    "pixelMapIsOnlyReference": true,
+    "hotspotsBecomeSeparateDOMControls": true,
+    "cncMachineOutputEnabled": false,
+    "noPhysicalXYZDerivedFromPixels": true,
+    "real3DModelAssetsVerified": false,
+    "fullPrecision0001Mm": false
+  },
+  "regions": [
+    {
+      "id": "NAV_HOME",
+      "label": "首頁",
+      "role": "NAVIGATION",
+      "commandId": "SITE.HOME",
+      "sourcePixels": [
+        13,
+        104,
+        90,
+        89
+      ],
+      "normalized": [
+        0.015046,
+        0.067708,
+        0.104167,
+        0.057943
+      ],
+      "enabled": true
+    },
+    {
+      "id": "NAV_CAD",
+      "label": "CAD",
+      "role": "DISABLED_NAV",
+      "commandId": "BLOCK.MODULE.NOT_CONNECTED",
+      "sourcePixels": [
+        105,
+        104,
+        83,
+        89
+      ],
+      "normalized": [
+        0.121528,
+        0.067708,
+        0.096065,
+        0.057943
+      ],
+      "enabled": false
+    },
+    {
+      "id": "NAV_CAM",
+      "label": "CAM",
+      "role": "DISABLED_NAV",
+      "commandId": "BLOCK.MODULE.NOT_CONNECTED",
+      "sourcePixels": [
+        192,
+        104,
+        85,
+        89
+      ],
+      "normalized": [
+        0.222222,
+        0.067708,
+        0.09838,
+        0.057943
+      ],
+      "enabled": false
+    },
+    {
+      "id": "NAV_SIM",
+      "label": "SIM",
+      "role": "DISABLED_NAV",
+      "commandId": "BLOCK.MODULE.NOT_CONNECTED",
+      "sourcePixels": [
+        279,
+        104,
+        85,
+        89
+      ],
+      "normalized": [
+        0.322917,
+        0.067708,
+        0.09838,
+        0.057943
+      ],
+      "enabled": false
+    },
+    {
+      "id": "NAV_3AX",
+      "label": "3AX",
+      "role": "SELECTED_NAV",
+      "commandId": "VIEW.3AX",
+      "sourcePixels": [
+        365,
+        104,
+        83,
+        89
+      ],
+      "normalized": [
+        0.422454,
+        0.067708,
+        0.096065,
+        0.057943
+      ],
+      "enabled": true
+    },
+    {
+      "id": "NAV_4AX",
+      "label": "4AX",
+      "role": "DISABLED_NAV",
+      "commandId": "BLOCK.MULTIAXIS.NOT_VERIFIED",
+      "sourcePixels": [
+        450,
+        104,
+        86,
+        89
+      ],
+      "normalized": [
+        0.520833,
+        0.067708,
+        0.099537,
+        0.057943
+      ],
+      "enabled": false
+    },
+    {
+      "id": "NAV_5AX",
+      "label": "5AX",
+      "role": "DISABLED_NAV",
+      "commandId": "BLOCK.MULTIAXIS.NOT_VERIFIED",
+      "sourcePixels": [
+        537,
+        104,
+        85,
+        89
+      ],
+      "normalized": [
+        0.621528,
+        0.067708,
+        0.09838,
+        0.057943
+      ],
+      "enabled": false
+    },
+    {
+      "id": "NAV_6AX",
+      "label": "6AX",
+      "role": "DISABLED_NAV",
+      "commandId": "BLOCK.MULTIAXIS.NOT_VERIFIED",
+      "sourcePixels": [
+        624,
+        104,
+        83,
+        89
+      ],
+      "normalized": [
+        0.722222,
+        0.067708,
+        0.096065,
+        0.057943
+      ],
+      "enabled": false
+    },
+    {
+      "id": "NAV_NC",
+      "label": "NC",
+      "role": "ANCHOR",
+      "commandId": "VIEW.NC_WORKING_COPY",
+      "sourcePixels": [
+        711,
+        104,
+        81,
+        89
+      ],
+      "normalized": [
+        0.822917,
+        0.067708,
+        0.09375,
+        0.057943
+      ],
+      "enabled": true
+    },
+    {
+      "id": "NAV_AI",
+      "label": "AI",
+      "role": "DISABLED_NAV",
+      "commandId": "BLOCK.MODULE.NOT_CONNECTED",
+      "sourcePixels": [
+        794,
+        104,
+        69,
+        89
+      ],
+      "normalized": [
+        0.918981,
+        0.067708,
+        0.079861,
+        0.057943
+      ],
+      "enabled": false
+    },
+    {
+      "id": "CAM_ISO",
+      "label": "俯視角",
+      "role": "CAMERA",
+      "commandId": "VIEW.CAMERA.ISO",
+      "sourcePixels": [
+        12,
+        226,
+        72,
+        83
+      ],
+      "normalized": [
+        0.013889,
+        0.147135,
+        0.083333,
+        0.054036
+      ],
+      "enabled": true
+    },
+    {
+      "id": "CAM_TOP",
+      "label": "上視",
+      "role": "CAMERA",
+      "commandId": "VIEW.CAMERA.TOP",
+      "sourcePixels": [
+        12,
+        311,
+        72,
+        75
+      ],
+      "normalized": [
+        0.013889,
+        0.202474,
+        0.083333,
+        0.048828
+      ],
+      "enabled": true
+    },
+    {
+      "id": "CAM_FRONT",
+      "label": "前視",
+      "role": "CAMERA",
+      "commandId": "VIEW.CAMERA.FRONT",
+      "sourcePixels": [
+        12,
+        389,
+        72,
+        74
+      ],
+      "normalized": [
+        0.013889,
+        0.253255,
+        0.083333,
+        0.048177
+      ],
+      "enabled": true
+    },
+    {
+      "id": "CAM_LEFT",
+      "label": "左視",
+      "role": "CAMERA",
+      "commandId": "VIEW.CAMERA.LEFT",
+      "sourcePixels": [
+        12,
+        464,
+        72,
+        74
+      ],
+      "normalized": [
+        0.013889,
+        0.302083,
+        0.083333,
+        0.048177
+      ],
+      "enabled": true
+    },
+    {
+      "id": "CAM_RIGHT",
+      "label": "右視",
+      "role": "CAMERA",
+      "commandId": "VIEW.CAMERA.RIGHT",
+      "sourcePixels": [
+        12,
+        540,
+        72,
+        72
+      ],
+      "normalized": [
+        0.013889,
+        0.351563,
+        0.083333,
+        0.046875
+      ],
+      "enabled": true
+    },
+    {
+      "id": "CAM_RESET",
+      "label": "重置視角",
+      "role": "CAMERA",
+      "commandId": "VIEW.CAMERA.RESET",
+      "sourcePixels": [
+        12,
+        612,
+        72,
+        76
+      ],
+      "normalized": [
+        0.013889,
+        0.398438,
+        0.083333,
+        0.049479
+      ],
+      "enabled": true
+    },
+    {
+      "id": "CAM_FIT",
+      "label": "適合",
+      "role": "CAMERA",
+      "commandId": "VIEW.CAMERA.FIT",
+      "sourcePixels": [
+        12,
+        688,
+        72,
+        74
+      ],
+      "normalized": [
+        0.013889,
+        0.447917,
+        0.083333,
+        0.048177
+      ],
+      "enabled": true
+    },
+    {
+      "id": "CAM_ZOOM_IN",
+      "label": "放大",
+      "role": "CAMERA",
+      "commandId": "VIEW.CAMERA.ZOOM_IN",
+      "sourcePixels": [
+        12,
+        761,
+        72,
+        75
+      ],
+      "normalized": [
+        0.013889,
+        0.495443,
+        0.083333,
+        0.048828
+      ],
+      "enabled": true
+    },
+    {
+      "id": "CAM_ZOOM_OUT",
+      "label": "縮小",
+      "role": "CAMERA",
+      "commandId": "VIEW.CAMERA.ZOOM_OUT",
+      "sourcePixels": [
+        12,
+        838,
+        72,
+        76
+      ],
+      "normalized": [
+        0.013889,
+        0.545573,
+        0.083333,
+        0.049479
+      ],
+      "enabled": true
+    },
+    {
+      "id": "LAYER_STOCK",
+      "label": "工件",
+      "role": "LAYER",
+      "commandId": "VIEW.LAYER.STOCK",
+      "sourcePixels": [
+        364,
+        1195,
+        60,
+        45
+      ],
+      "normalized": [
+        0.421296,
+        0.777995,
+        0.069444,
+        0.029297
+      ],
+      "enabled": true
+    },
+    {
+      "id": "LAYER_FIXTURE",
+      "label": "夾具",
+      "role": "DISABLED_LAYER",
+      "commandId": "BLOCK.NO_VERIFIED_FIXTURE_MODEL",
+      "sourcePixels": [
+        440,
+        1195,
+        57,
+        45
+      ],
+      "normalized": [
+        0.509259,
+        0.777995,
+        0.065972,
+        0.029297
+      ],
+      "enabled": false
+    },
+    {
+      "id": "LAYER_TOOL",
+      "label": "刀具",
+      "role": "LAYER",
+      "commandId": "VIEW.LAYER.TOOL",
+      "sourcePixels": [
+        514,
+        1195,
+        58,
+        45
+      ],
+      "normalized": [
+        0.594907,
+        0.777995,
+        0.06713,
+        0.029297
+      ],
+      "enabled": true
+    },
+    {
+      "id": "LAYER_PATH",
+      "label": "刀路",
+      "role": "LAYER",
+      "commandId": "VIEW.LAYER.PATH",
+      "sourcePixels": [
+        589,
+        1195,
+        58,
+        45
+      ],
+      "normalized": [
+        0.681713,
+        0.777995,
+        0.06713,
+        0.029297
+      ],
+      "enabled": true
+    },
+    {
+      "id": "LAYER_REMOVED",
+      "label": "材料移除",
+      "role": "EVIDENCE",
+      "commandId": "VIEW.EVIDENCE.REMOVED",
+      "sourcePixels": [
+        663,
+        1195,
+        101,
+        45
+      ],
+      "normalized": [
+        0.767361,
+        0.777995,
+        0.116898,
+        0.029297
+      ],
+      "enabled": true
+    },
+    {
+      "id": "NC_PREV",
+      "label": "上一節",
+      "role": "REPLAY",
+      "commandId": "NC.REPLAY.PREV",
+      "sourcePixels": [
+        148,
+        1075,
+        112,
+        76
+      ],
+      "normalized": [
+        0.171296,
+        0.69987,
+        0.12963,
+        0.049479
+      ],
+      "enabled": true
+    },
+    {
+      "id": "NC_PAUSE",
+      "label": "暫停",
+      "role": "REPLAY",
+      "commandId": "NC.REPLAY.PAUSE",
+      "sourcePixels": [
+        270,
+        1075,
+        112,
+        76
+      ],
+      "normalized": [
+        0.3125,
+        0.69987,
+        0.12963,
+        0.049479
+      ],
+      "enabled": true
+    },
+    {
+      "id": "NC_NEXT",
+      "label": "下一節",
+      "role": "REPLAY",
+      "commandId": "NC.REPLAY.NEXT",
+      "sourcePixels": [
+        394,
+        1075,
+        112,
+        76
+      ],
+      "normalized": [
+        0.456019,
+        0.69987,
+        0.12963,
+        0.049479
+      ],
+      "enabled": true
+    },
+    {
+      "id": "NC_RESET",
+      "label": "首節",
+      "role": "REPLAY",
+      "commandId": "NC.REPLAY.RESET",
+      "sourcePixels": [
+        28,
+        1075,
+        110,
+        76
+      ],
+      "normalized": [
+        0.032407,
+        0.69987,
+        0.127315,
+        0.049479
+      ],
+      "enabled": true
+    },
+    {
+      "id": "NC_LAST",
+      "label": "尾節",
+      "role": "REPLAY",
+      "commandId": "NC.REPLAY.ALL",
+      "sourcePixels": [
+        517,
+        1075,
+        110,
+        76
+      ],
+      "normalized": [
+        0.59838,
+        0.69987,
+        0.127315,
+        0.049479
+      ],
+      "enabled": true
+    },
+    {
+      "id": "NC_SOURCE",
+      "label": "NC 工作副本",
+      "role": "SOURCE_PANEL",
+      "commandId": "VIEW.NC_WORKING_COPY",
+      "sourcePixels": [
+        659,
+        386,
+        201,
+        174
+      ],
+      "normalized": [
+        0.762731,
+        0.251302,
+        0.232639,
+        0.113281
+      ],
+      "enabled": true
+    },
+    {
+      "id": "NC_TOOL_DATA",
+      "label": "刀具資訊",
+      "role": "INFO",
+      "commandId": "VIEW.EVIDENCE.TOOL",
+      "sourcePixels": [
+        659,
+        569,
+        201,
+        195
+      ],
+      "normalized": [
+        0.762731,
+        0.370443,
+        0.232639,
+        0.126953
+      ],
+      "enabled": true
+    },
+    {
+      "id": "NC_FEED",
+      "label": "加工參數",
+      "role": "INFO",
+      "commandId": "VIEW.EVIDENCE.FEED",
+      "sourcePixels": [
+        659,
+        770,
+        201,
+        203
+      ],
+      "normalized": [
+        0.762731,
+        0.501302,
+        0.232639,
+        0.132161
+      ],
+      "enabled": true
+    },
+    {
+      "id": "NC_STOCK",
+      "label": "素材資訊",
+      "role": "INFO",
+      "commandId": "VIEW.EVIDENCE.STOCK",
+      "sourcePixels": [
+        659,
+        984,
+        201,
+        154
+      ],
+      "normalized": [
+        0.762731,
+        0.640625,
+        0.232639,
+        0.10026
+      ],
+      "enabled": true
+    },
+    {
+      "id": "JOG",
+      "label": "移動 / JOG",
+      "role": "DANGEROUS_DISABLED",
+      "commandId": "BLOCK.CNC.MACHINE.DISCONNECTED",
+      "sourcePixels": [
+        10,
+        1257,
+        107,
+        134
+      ],
+      "normalized": [
+        0.011574,
+        0.818359,
+        0.123843,
+        0.08724
+      ],
+      "enabled": false
+    },
+    {
+      "id": "SPEED25",
+      "label": "25%",
+      "role": "SPEED",
+      "commandId": "NC.REPLAY.SPEED25",
+      "sourcePixels": [
+        126,
+        1295,
+        56,
+        68
+      ],
+      "normalized": [
+        0.145833,
+        0.843099,
+        0.064815,
+        0.044271
+      ],
+      "enabled": true
+    },
+    {
+      "id": "SPEED50",
+      "label": "50%",
+      "role": "SPEED",
+      "commandId": "NC.REPLAY.SPEED50",
+      "sourcePixels": [
+        183,
+        1295,
+        56,
+        68
+      ],
+      "normalized": [
+        0.211806,
+        0.843099,
+        0.064815,
+        0.044271
+      ],
+      "enabled": true
+    },
+    {
+      "id": "SPEED100",
+      "label": "100%",
+      "role": "SPEED",
+      "commandId": "NC.REPLAY.SPEED100",
+      "sourcePixels": [
+        240,
+        1295,
+        56,
+        68
+      ],
+      "normalized": [
+        0.277778,
+        0.843099,
+        0.064815,
+        0.044271
+      ],
+      "enabled": true
+    },
+    {
+      "id": "SPEED200",
+      "label": "200%",
+      "role": "SPEED",
+      "commandId": "NC.REPLAY.SPEED200",
+      "sourcePixels": [
+        296,
+        1295,
+        56,
+        68
+      ],
+      "normalized": [
+        0.342593,
+        0.843099,
+        0.064815,
+        0.044271
+      ],
+      "enabled": true
+    },
+    {
+      "id": "QUALITY_FAST",
+      "label": "快速",
+      "role": "QUALITY",
+      "commandId": "SIM.VOXEL.1",
+      "sourcePixels": [
+        368,
+        1295,
+        56,
+        67
+      ],
+      "normalized": [
+        0.425926,
+        0.843099,
+        0.064815,
+        0.04362
+      ],
+      "enabled": true
+    },
+    {
+      "id": "QUALITY_NORMAL",
+      "label": "標準",
+      "role": "QUALITY",
+      "commandId": "SIM.VOXEL.0_5",
+      "sourcePixels": [
+        429,
+        1295,
+        56,
+        67
+      ],
+      "normalized": [
+        0.496528,
+        0.843099,
+        0.064815,
+        0.04362
+      ],
+      "enabled": true
+    },
+    {
+      "id": "QUALITY_FINE",
+      "label": "精細",
+      "role": "QUALITY",
+      "commandId": "SIM.VOXEL.0_25",
+      "sourcePixels": [
+        487,
+        1295,
+        56,
+        67
+      ],
+      "normalized": [
+        0.563657,
+        0.843099,
+        0.064815,
+        0.04362
+      ],
+      "enabled": true
+    },
+    {
+      "id": "QUALITY_REAL",
+      "label": "真實",
+      "role": "DISABLED_QUALITY",
+      "commandId": "BLOCK.GEOMETRY.REAL_MACHINE_NOT_APPROVED",
+      "sourcePixels": [
+        544,
+        1295,
+        58,
+        67
+      ],
+      "normalized": [
+        0.62963,
+        0.843099,
+        0.06713,
+        0.04362
+      ],
+      "enabled": false
+    },
+    {
+      "id": "RENDER_SOLID",
+      "label": "實體",
+      "role": "RENDER",
+      "commandId": "VIEW.RENDER.SOLID",
+      "sourcePixels": [
+        624,
+        1295,
+        53,
+        67
+      ],
+      "normalized": [
+        0.722222,
+        0.843099,
+        0.061343,
+        0.04362
+      ],
+      "enabled": true
+    },
+    {
+      "id": "RENDER_XRAY",
+      "label": "透明",
+      "role": "DISABLED_RENDER",
+      "commandId": "BLOCK.RENDER.MODE_NOT_VERIFIED",
+      "sourcePixels": [
+        681,
+        1295,
+        53,
+        67
+      ],
+      "normalized": [
+        0.788194,
+        0.843099,
+        0.061343,
+        0.04362
+      ],
+      "enabled": false
+    },
+    {
+      "id": "RENDER_WIREFRAME",
+      "label": "線框",
+      "role": "DISABLED_RENDER",
+      "commandId": "BLOCK.RENDER.MODE_NOT_VERIFIED",
+      "sourcePixels": [
+        735,
+        1295,
+        53,
+        67
+      ],
+      "normalized": [
+        0.850694,
+        0.843099,
+        0.061343,
+        0.04362
+      ],
+      "enabled": false
+    },
+    {
+      "id": "RENDER_RAYTRACE",
+      "label": "光影",
+      "role": "DISABLED_RENDER",
+      "commandId": "BLOCK.GPU.RAYTRACE_NOT_SUPPORTED",
+      "sourcePixels": [
+        788,
+        1295,
+        68,
+        67
+      ],
+      "normalized": [
+        0.912037,
+        0.843099,
+        0.078704,
+        0.04362
+      ],
+      "enabled": false
+    },
+    {
+      "id": "EMERGENCY_STOP",
+      "label": "停止",
+      "role": "SAFE_REPLAY_STOP",
+      "commandId": "NC.REPLAY.PAUSE",
+      "sourcePixels": [
+        722,
+        1398,
+        132,
+        96
+      ],
+      "normalized": [
+        0.835648,
+        0.910156,
+        0.152778,
+        0.0625
+      ],
+      "enabled": true
+    }
+  ]
+}
