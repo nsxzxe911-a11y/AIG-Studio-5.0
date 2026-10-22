@@ -41,7 +41,11 @@ jobs:
           cmp ../../../shared-3d/aig-real3d-core.mjs dist/shared-3d/aig-real3d-core.mjs
           cmp ../../../shared-3d/aig-real3d-adapters.mjs dist/shared-3d/aig-real3d-adapters.mjs
       - run: npm install --no-save playwright@1.55.0
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install chromium
+      - name: Verify Playwright browser is installed before visual Gate
+        run: |
+          test -d "$HOME/.cache/ms-playwright"
+          ls "$HOME/.cache/ms-playwright" | grep -E 'chromium|chrome'
       - name: Actual WebGL indexed material-lit 3D meshes and camera action on phone desktop
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig3d-web.log 2>&1 &
