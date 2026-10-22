@@ -85,7 +85,7 @@ function draw(){
  if(!rig)return;
  try{
   const output=renderAIG75LandmarkAvatar(rig,source,{
-   expression:expression(),width:44,height:42,maxSteps:76,
+   expression:expression(),width:30,height:28,maxSteps:64,
    yaw:value('yaw'),pitch:value('pitch')
   });
   const temp=document.createElement('canvas');temp.width=output.width;temp.height=output.height;
