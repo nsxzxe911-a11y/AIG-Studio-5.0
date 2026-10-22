@@ -34,6 +34,11 @@ small{font-size:11px;color:#a9bec9}.flag{display:inline-block;border:1px solid #
 #heroine-status[data-ok=true]{color:#9fffe1;border-color:#389f8b}
 #heroine-proof{max-height:300px;background:#020e18;border:1px solid #3a647d;border-radius:8px;padding:12px;overflow:auto;white-space:pre-wrap;font:11px/1.55 ui-monospace,monospace}
 @media(max-width:680px){.heroine-views{grid-template-columns:1fr}}
+.plane-projection{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end;margin:14px 0}
+.plane-projection>label{min-width:0;margin:0;position:relative;display:flex;flex-direction:column;gap:5px}
+.plane-projection>label>input,.plane-projection>label>select{display:block;position:static;width:100%;min-width:0;max-width:100%;margin:0;min-height:46px}
+.plane-projection>#heroine-joint-save{grid-column:1/-1;display:block;width:100%;margin:4px 0 0;position:relative;z-index:1;touch-action:manipulation}
+@media(max-width:720px){.plane-projection{grid-template-columns:1fr;gap:14px}.plane-projection>#heroine-joint-save{min-height:52px}}
 </style>
 </head><body><main>
 <header>
