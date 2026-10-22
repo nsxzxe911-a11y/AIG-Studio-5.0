@@ -42,6 +42,7 @@ jobs:
           node tests/aig-volumetric-deform-7-2.real-browser.mjs
           node tests/aig-face-material-7-3.real-browser.mjs
           node tests/aig-avatar-rig-7-4.real-browser.mjs
+          node tests/aig-landmark-rig-7-5.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -81,6 +82,13 @@ jobs:
         with:
           name: FastModel-7-4-Game-Avatar-3D-Expression-Not-MMO-Live
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-avatar-7-4/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-5-Reviewed-Photo-Landmark-XYZ-Not-Human-Approval
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-landmarks-7-5/
           if-no-files-found: warn
 
       - name: Distinguish real video playback from unverified character animation
