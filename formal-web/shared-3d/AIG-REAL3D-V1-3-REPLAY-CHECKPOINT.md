@@ -38,3 +38,13 @@
 - 最新 Render 正式網站仍部署較舊提交 `89b4fe4080c24b970adf7a577c492ffa2755cb71`；目前六個共享引擎核心檔的 GitHub 網站分支 blob 與修復分支完全相同，但**不代表新版已在 Render 生效**。先完成正式站部署／HTTP 頁面 Gate 再認證線上交付。
 - **明確未通過**：完全 Fanuc G2/G3、G34、G81/G83、O4/O5、4/5/6 軸 A/B/C 運動學、真碰撞、0.001 mm 切削幾何、已核准 Authority 機台模型、真機 NC 輸出及 Android APK/Windows EXE GPU/FPS。這些不可從受限 0.5 mm 占據格測試推定成功。
 - **下一斷點**：先取得完整 FastModel 舊核心回歸結論、檢查 Render 最新部署與網站頁面；其後以嚴格分開的 Gate 把真 NC 軸態、刀具幾何和視覺轉接到 3AX→6AX，不能以程序化 DEMO 改寫正式 Runtime。
+
+## 2026-10-22 23:xx Asia/Taipei — GPU context loss / restore confirmed
+
+- 最後可信實際程式（含 GPU 恢復）：`531881ae2984a645ddb1b35047099384d6e39650`; 最新 **嚴格 Gate 測試**修改來源 `da6b8baa692d7e0d8ebf4c1258540952dbf633a9`。
+- 修正 `aig-real3d-replay-lab.mjs`：當 WebGL context lost，取消尚在執行的單節/倒回排程，**原 NC 工作副本與已完成的體素材料狀態保持原位**；context restored 時重新建立 shader、uniform、VBO、GPU cache 與 renderer，重繪同一工件，不用靜態圖片偽裝結果。
+- 強化 `tests/aig-real3d-replay-v1-3.real-browser.mjs`：在 **手機 Chromium 360×780 與電腦 1440×900** 兩種環境中，強制要求 `WEBGL_lose_context` 存在、實際呼叫 loseContext / restoreContext，確認重新渲染、原始 NC 文字不變、source blockIndex 不變、removed mm³ 不變、不發真機命令；不允許 extension 缺失時悄悄跳過測試。
+- GitHub Actions [39803197133](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39803197133) **completed/success**；真 WebGL phone/desktop browser prints `AIG_REAL3D_V1_3_SINGLE_BLOCK_REPLAY_BROWSER_PASS phone 54` / `desktop 54`；數值 **6/6 + 22/22 PASS**。前一版 [39802479705](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39802479705) 亦 success。
+- 原 AIG Render 網站 branch `web/aig-dual-formal-runtime-20261016` 中 `formal-web/shared-3d/aig-real3d-replay-lab.mjs` 已按原修復核心 blob exact 鏡像，提交 `c778ad3ddaeafd982ce7a0d305ffbf48ebb85d09`；**Render LIVE 仍為舊 SHA `89b4fe4080c24b970adf7a577c492ffa2755cb71`**，無新 deploy 證據，禁止宣稱線上 GPU 修復已生效。
+- **不在本次 PASS 範圍**：真 Android 手機實機 GPU driver / Surface 問題、Windows EXE native 60 FPS、所有 Fanuc G 碼、4AX/5AX/6AX 實機運動學及 0.001 mm 工件真材料移除。保持 gate BLOCKED。
+- 下一可執行步驟：核對原 Render 站確實部署最新 source 並讀回 `/shared-3d/aig-real3d-replay-lab.html` 與模組資源；之後在源資料完整對接情況下逐頁驗證 3～6 軸正式 Authority 模型，不能以簡化示範幾何替代。
