@@ -32,6 +32,7 @@ import {AIG61_SCHEMA,proposeAIG61LocalLandmarks,acceptAIG61ReviewedProposal} fro
 import {AIG62_SCHEMA,AIG62_REFERENCES,verifyAIG62ReferenceFile} from './aig-school-visual-6-2.mjs';
 import {AIG63_SCHEMA,compareAIG63ActualImages,auditAIG63SchoolModelActualGLTF,bindAIG63Evidence} from './aig-visual-compare-6-3.mjs';
 import {AIG64_AUTOBODY_SCHEMA,analyzeAIG64PartialPortrait,generateAIG64SinglePartialFullbody} from './aig-single-photo-autobody-6-4.mjs';
+import {inspectAigSourceObservation,AIG_SOURCE_OBSERVATION_SCHEMA} from './aig-source-observation-6-12.mjs';
 import {upgradeAig64FullBodyMotion,auditAig61FullBodyLimbMotion} from './aig-fullbody-motion-6-11.mjs';
 import {AIG65_SCHEMA,planAIG65AutoAnimation,publicAIG65Plan} from './aig-auto-animation-6-5.mjs';
 import {AIG65_CAPTURE_SCHEMA,prepareAIG65Layers,drawAIG65CanvasFrame,AIG65CanvasRecorder} from './aig-canvas-movie-6-5.mjs';
@@ -2379,6 +2380,10 @@ $('aig64-single-photo').addEventListener('change',()=>{
  $('aig64-single-build').disabled=aig64SingleBusy||
   !$('aig64-single-photo').files?.length;
 });
+$('aig64-subject-kind').addEventListener('change',()=>{
+ aig64SingleInvalidate('生物來源已切換，之前的 GLB／分析報告已隔離，需重新計算。');
+ $('aig64-observation-status').textContent='主體類型已切換；不會自動把動物、植物當作人體模型。';
+});
 $('aig64-single-build').addEventListener('click',async()=>{
  if(aig64SingleBusy||!$('aig64-single-photo').files?.length)return;
  if(view?.movieMode){
@@ -2415,6 +2420,37 @@ $('aig64-single-build').addEventListener('click',async()=>{
   if(!ctx)throw Error('AIG64_ORIGINAL_IMAGE_PIXELS_NOT_READABLE');
   ctx.drawImage(bitmap,0,0,cw,ch);
   const image=ctx.getImageData(0,0,cw,ch);
+  const domain=$('aig64-subject-kind').value;
+  const observation=inspectAigSourceObservation({
+   pixels:image.data,imageWidth:cw,imageHeight:ch,
+   sourceImageSHA256:sha,domain
+  });
+  $('aig64-observation-status').textContent=
+   '真像素分析｜'+domain+'｜'+observation.segmentationMethod+
+   '｜取樣原色 RGB '+observation.measuredForegroundMedianRGB.join('/')+
+   '｜可見輪廓 '+observation.observedSilhouetteBands.filter(
+    v=>v.widthPixels!==null).length+'/11 列；身高／物種／材質彈性無法僅靠照片證實。';
+  if(domain!=='HUMAN'){
+   if(revision!==aig64SingleRevision||
+      input!==$('aig64-single-photo').files?.[0])
+    throw Error('AIG612_SOURCE_CHANGED_DURING_ANALYSIS');
+   aig64SingleBytes=null;
+   aig64SingleReport={
+    schema:AIG_SOURCE_OBSERVATION_SCHEMA,sourceImageSHA256:sha,
+    observedPixels:observation,requestedDomain:domain,
+    actualAnimalOrPlant3DModelProduced:false,
+    animalPlantPoseAndElasticPhysicsApproved:false,
+    humanSkeletonMayNotBeSubstituted:true,releaseAllowed:false
+   };
+   $('aig64-single-motion-upgrade').disabled=true;
+   $('aig64-single-download').disabled=true;
+   $('aig64-single-report').disabled=false;
+   $('aig64-single-status').textContent=
+    '6.12 '+(domain==='PLANT'?'植物':'動物')+
+    '照片分析已完成，可下載真像素／色彩／輪廓資料。該物種獨立建模與彈性引擎仍 BLOCKED；' +
+    '不產生假人體 GLB，也不宣稱已識別物種或恢復看不見的構造。';
+   return;
+  }
   const analysis=analyzeAIG64PartialPortrait({
    pixels:image.data,imageWidth:cw,imageHeight:ch,
    sourceImageSHA256:sha
@@ -2449,6 +2485,8 @@ $('aig64-single-build').addEventListener('click',async()=>{
    realSkinnedMeshes:qa.skinnedMeshCount,realAnimationClips:qa.clipsAvailable,
    realUniformAndHairParts:schools.visibleSchoolAccessories,
    sourceAnalysis:analysisForReport,
+   actualPixelColourAndShapeObservation:observation,
+   imageAnalysisMethod:'LOCAL_PIXEL_OBSERVATION_PLUS_HUMAN_TECHNICAL_PRIORS',
    sourceHeadShapeAndIdentityExact:false,
    allUnseenProportionsEstimatedNotPhotographicallyMeasured:true,
    allOriginalMovieVoiceAndOtherCostumesPreserved:true,
@@ -2483,6 +2521,7 @@ $('aig64-single-build').addEventListener('click',async()=>{
  }catch(err){
   aig64SingleBytes=null;aig64SingleReport=null;
   $('aig64-single-motion-upgrade').disabled=true;
+  $('aig64-observation-status').textContent='照片分析／生成 BLOCKED：'+err.message;
   $('aig64-single-status').textContent='6.4 單張照片自動建模 BLOCKED：'+err.message+
    '。清楚的臉部或上半身照片即可重試，不必提供四視角；原動畫與服裝未更動。';
  }finally{
