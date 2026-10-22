@@ -28,9 +28,28 @@ function resolveSourceClip(actionId,actor){
   typeof c.name==='string'&&Number.isFinite(c.durationSeconds)&&
   c.durationSeconds>0&&action.clips.some(alias=>
    clean(c.name).includes(clean(alias))));
- if(found.length!==1)return {error:found.length?
-  'AMBIGUOUS_ORIGINAL_CLIPS':'ORIGINAL_GLTF_CLIP_MISSING',
-  candidates:found.map(x=>x.name)};
+ if(found.length!==1){
+  // The native 5.7 character preserves the 5.6 head turn AND adds a
+  // separately authored ponytail follow-through, both containing "headturn".
+  // The user's "轉頭" must dispatch the canonical body-head source motion,
+  // not an arbitrary secondary accessory clip or an invented merged action.
+  // This is deliberately narrow: any unknown extra candidate stays BLOCKED.
+  const approvedSourcePairs={
+   headTurn:{
+    primary:'AIG56_TURN_HEAD',
+    complementary:['AIG57_HEAD_TURN_PONYTAIL_FOLLOW_THROUGH']
+   }
+  };
+  const pair=approvedSourcePairs[actionId];
+  if(pair&&found.length===2&&
+   found.filter(c=>c.name===pair.primary).length===1&&
+   found.filter(c=>pair.complementary.includes(c.name)).length===1)
+   return {clip:found.find(c=>c.name===pair.primary),
+    selectionPolicy:'CANONICAL_SOURCE_BONE_MOTION_NOT_ACCESSORY_FOLLOW_THROUGH'};
+  return {error:found.length?
+   'AMBIGUOUS_ORIGINAL_CLIPS':'ORIGINAL_GLTF_CLIP_MISSING',
+   candidates:found.map(x=>x.name)};
+ }
  return {clip:found[0]};
 }
 export function compileAIG22Story(text,{scene,actors=[]}={}){
