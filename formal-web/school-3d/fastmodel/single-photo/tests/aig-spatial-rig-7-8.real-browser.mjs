@@ -68,7 +68,7 @@ try{
    await page.locator('#apply-layers').click();
    await page.waitForFunction(()=>{
     try{const o=JSON.parse(document.getElementById('evidence').textContent);
-     return o.quality.passed&&o.quality.sourceNeckConnected&&o.render?.rayHits>40;
+     return o.quality.passed&&o.quality.parent7_7Passed&&o.render?.rayHits>40;
     }catch{return false;}
    },null,{timeout:55000});
    const initial=await evidence();
