@@ -39,7 +39,7 @@ export function resolveAIG716NativePath({
   outsideApplicationBinary:true,androidRequiresHostFilesDir:platform==='android'
  });
 }
-const legal=s=>typeof s==='string'&&/^[a-zA-Z0-9_-]{1,64}$/.test(s);
+const validTitle=s=>typeof s==='string'&&s.trim().length>0&&s.length<=160&&!/\u0000/.test(s);
 const mimeExt={
  'image/png':'.png','image/jpeg':'.jpg','image/webp':'.webp',
  'model/gltf-binary':'.glb','application/json':'.json',
@@ -84,7 +84,7 @@ export async function createAIG716NativeLibrary(rootSpec){
   schema:AIG716_NATIVE_SCHEMA,root:base,
   async importBuffer(data,{category,title,mime,source='USER_LOCAL'}={}){
    if(!Buffer.isBuffer(data)||data.length<1||data.length>64*1024*1024||
-    !categories.has(category)||!legal(title?.replace(/ /g,'_')||'')||
+    !categories.has(category)||!validTitle(title)||
     !mimeExt[mime]||!['USER_LOCAL','GENERATED_DERIVED'].includes(source))
     err('BOUNDED_NATIVE_IMPORT_REQUIRED');
    const sha='sha256:'+createHash('sha256').update(data).digest('hex'),
