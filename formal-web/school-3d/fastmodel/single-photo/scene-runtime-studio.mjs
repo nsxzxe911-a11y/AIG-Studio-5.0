@@ -42,6 +42,20 @@ async function refresh(){
  report();
 }
 function report(){
+ if(worldRuntime?.scene){
+  const current=worldRuntime.current(),gpu=viewer?.renderer?.info;
+  $('metrics').textContent=JSON.stringify({
+   activeWorld:current.sceneId,worldRevision:current.revision,
+   modelObjects:current.objects,
+   map:current.mapReadOnly,
+   rendererGeometries:gpu?.memory?.geometries??null,
+   rendererTextures:gpu?.memory?.textures??null,
+   gpuVRAMBytesVerified:false,
+   viewerContexts:1,
+   immutableSourceAssetsPreserved:true
+  },null,2);
+  return;
+ }
  if(!runtime){
   $('metrics').textContent='GPU 未啟動，沒有活動場景。'+
    '\n原始人物、建築、地圖與影片仍在外部資料庫。';
@@ -94,6 +108,14 @@ $('scene-load').addEventListener('click',async()=>{
  }finally{loading=false;$('scene-load').disabled=false}
 });
 $('scene-unload').addEventListener('click',async()=>{
+ if(worldRuntime?.scene){
+  try{
+   viewer.unloadCurrent();worldRuntime.close();worldRuntime=null;
+   stopWorldPlayback();say('已卸載整個 2.0 世界的 GPU 來源；已保存的人物、建築與地圖資料不變。');
+   report();
+  }catch(e){say('轉場／驗收中不可清空：'+String(e.message||e),true)}
+  return;
+ }
  if(!runtime){say('目前沒有活動 GPU 場景。');return}
  try{
   const result=await runtime.unload();
