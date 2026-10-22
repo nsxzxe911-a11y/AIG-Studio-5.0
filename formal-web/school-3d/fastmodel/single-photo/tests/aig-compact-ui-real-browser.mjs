@@ -72,6 +72,30 @@ try{
      !evidence.outputHidden||!evidence.fixedViewport||
      evidence.screenshotWidth>evidence.windowWidth+2)
    throw Error('AIG_COMPACT_UI_LAYOUT_FAILED '+JSON.stringify({device:device.name,evidence}));
+  // Measure REAL rendered CSS on phone and desktop, not just theme strings
+  // in documentation. Keep full viewport and original command callbacks.
+  const rgb=await page.evaluate(()=>{
+   const root=getComputedStyle(document.documentElement);
+   const color=k=>root.getPropertyValue('--aig-rgb-'+k).trim().toLowerCase();
+   return {
+    background:color('background'),panel:color('panel'),text:color('text'),
+    accent:color('accent'),cutting:color('cutting'),rapid:color('rapid'),
+    warning:color('warning'),alarm:color('alarm'),disabled:color('disabled'),
+    asideBg:getComputedStyle(document.querySelector('aside')).backgroundColor,
+    selectedBorder:getComputedStyle(
+     document.querySelector('#aig-unified-tabs [aria-selected="true"]')).borderTopColor,
+    bodyBg:getComputedStyle(document.body).backgroundColor
+   };
+  });
+  const expectedRGB={background:'#020407',panel:'#07111b',text:'#f4fbff',
+   accent:'#27e9ff',cutting:'#33f39b',rapid:'#ff4da6',warning:'#ffb326',
+   alarm:'#ff465f',disabled:'#54606a'};
+  if(Object.entries(expectedRGB).some(([k,v])=>rgb[k]!==v)||
+    rgb.bodyBg!=='rgb(2, 4, 7)'||rgb.asideBg!=='rgb(7, 17, 27)'||
+    rgb.selectedBorder!=='rgb(39, 233, 255)')
+   throw Error('AIG_THREE_PROJECT_RGB_GLASS_PARITY_FAILED '+
+    JSON.stringify({device:device.name,rgb}));
+  console.log('AIG_RGB_FORMAL_THEME_BROWSER_PASS',device.name,JSON.stringify(rgb));
   await page.screenshot({path:out+'/'+device.name+'-01-create.png'});
   // Tests real user interactions on original callbacks rather than just
   // checking HTML placeholders. Text-only 2D needs no photo or cloud.
