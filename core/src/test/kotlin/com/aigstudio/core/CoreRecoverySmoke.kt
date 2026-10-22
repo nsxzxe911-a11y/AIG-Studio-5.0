@@ -374,6 +374,26 @@ fun main() {
         !mechanicalAudit.machineExecutionAllowed){
         "Drawing evidence MUST NOT masquerade as GD&T validation or Fanuc NC"
     }
+
+    val liveDrawingAudit=AigMechanicalNativeBridge.auditLive(
+        mechanicalSheet,listOf(drawingLine,drawingHole))
+    check(liveDrawingAudit.nativeDimensionValuesVerified &&
+        !liveDrawingAudit.machineExecutionAllowed){
+        "Native drawing geometry must be audited without accepting caller's stale map"
+    }
+    check(runCatching{AigMechanicalNativeBridge.auditLive(
+        mechanicalSheet,listOf(drawingLine.copy(b=Vec2(48.0,0.0)),drawingHole))
+    }.isFailure){"Native line with same ID changed from 50 to 48 mm must be BLOCKED"}
+    check(runCatching{AigMechanicalNativeBridge.auditLive(
+        mechanicalSheet,listOf(drawingLine,drawingHole.copy(center=Vec2(21.0,10.0))))
+    }.isFailure){"Hole center moved but drawing dimensions stayed stale"}
+    check(runCatching{AigMechanicalNativeBridge.auditLive(
+        mechanicalSheet,listOf(drawingLine,drawingHole.copy(radius=6.0)))
+    }.isFailure){"Hole diameter changed but drawing dimensions stayed stale"}
+    check(runCatching{AigMechanicalNativeBridge.auditLive(
+        mechanicalSheet,listOf(drawingLine))
+    }.isFailure){"Missing live hole must not validate a drawing"}
+    println("AIG_NATIVE_MECHANICAL_DRAWING_LIVE_AUDIT_PASS|FRESH_CAD_ENTITIES|EDITED_LENGTH_BLOCK|MOVED_HOLE_BLOCK|CHANGED_DIAMETER_BLOCK|DELETED_HOLE_BLOCK|NO_NC")
     val holeGrid=AigMechanicalDrawingCore.rectangularHoleCenters(
         Vec2(10.0,20.0),3,2,30.0,15.0)
     check(holeGrid.size==6&&holeGrid.first()==Vec2(10.0,20.0)&&
