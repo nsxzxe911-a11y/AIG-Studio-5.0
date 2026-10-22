@@ -22,6 +22,19 @@ let worldMapSnapshot=null;
 // Serialize async scene creation/add operations. UI clicks are not awaited
 // by browsers: two rapid actions must not commit documents from stale state.
 let worldBuildMutation=false;
+// World edits must be serialized INSTEAD of silently throwing away rapid
+// source-add clicks. Snapshot each click's inputs before the first await.
+let worldEditTail=Promise.resolve();
+function enqueueWorldEdit(operation){
+ const next=worldEditTail.then(async()=>{
+  if(loading)throw Error('AIG20_WORKSPACE_BUSY_NO_WORLD_MUTATION');
+  worldBuildMutation=true;
+  try{return await operation()}
+  finally{worldBuildMutation=false}
+ });
+ worldEditTail=next.catch(()=>{});
+ return next;
+}
 function setWorldBuildMutation(busy){
  worldBuildMutation=busy;
  $('world-new').disabled=busy;
@@ -268,8 +281,7 @@ function drawAIG20Map(map){
   ' 個來源圖徵 · '+map.coordinateMode+
   ' · 只有 2D 俯視圖資，未自動建立建築 3D 高度';
 }
-async function selectedMapRef(){
- const id=$('world-map').value;
+async function selectedMapRef({id=$('world-map').value,mode=$('world-mode').value}={}){
  if(!id){worldMapSnapshot=null;refreshWorldPlacementChoices();return null;}
  const m=worldMetas.get(id);
  if(!m)throw Error('地圖資產索引已更新，請重新整理');
@@ -285,59 +297,68 @@ async function selectedMapRef(){
  // METRES; normalize names WITHOUT changing the underlying source.
  const original=map.coordinateMode;
  const coordinateMode=original.replace('METERS','METRES');
- if(coordinateMode!==$('world-mode').value)
+ if(coordinateMode!==mode)
   throw Error('地圖與世界的相對／實測／WGS84 座標模式不一致');
  return {assetId:id,sha256:m.sha256,coordinateMode};
 }
-function beginNewWorld(mapRef=null){
+function beginNewWorld(mapRef=null,{title=$('world-title').value.trim(),mode=$('world-mode').value}={}){
  worldDoc=createAIG20WorldScene({
   id:'world-'+crypto.randomUUID(),
-  title:$('world-title').value.trim()||'新場景',
-  coordinateMode:$('world-mode').value,mapRef
+  title:title||'新場景',
+  coordinateMode:mode,mapRef
  });
  stopWorldPlayback();worldEvidence();
  return worldDoc;
 }
-$('world-new').addEventListener('click',async()=>{
- if(worldBuildMutation)return;
- setWorldBuildMutation(true);
- try{
-  const mapRef=await selectedMapRef();
-  beginNewWorld(mapRef);
+// No dropped actor clicks: each user event captures its own source ID,
+// coordinates, source SHA and map selection BEFORE joining the transaction
+// queue. Only a successfully resolved edit commits worldDoc.
+$('world-new').addEventListener('click',()=>{
+ const opts={
+  title:$('world-title').value.trim(),mode:$('world-mode').value,
+  mapId:$('world-map').value
+ };
+ void enqueueWorldEdit(async()=>{
+  const mapRef=await selectedMapRef({id:opts.mapId,mode:opts.mode});
+  beginNewWorld(mapRef,opts);
   invalidateAIG22Storyboard('新世界場景已建立，故事需重新核對');
   updateWorldStatus('已建立來源座標一致的空白世界場景；已存外部來源與原模型完全保留。');
- }catch(e){updateWorldStatus('BLOCKED：'+String(e.message||e),true)}
- finally{setWorldBuildMutation(false)}
+ }).catch(e=>updateWorldStatus('BLOCKED：'+String(e.message||e),true));
 });
-$('world-add').addEventListener('click',async()=>{
- if(worldBuildMutation)return;
- setWorldBuildMutation(true);
- try{
-  if(loading)throw Error('前次場景載入尚未結束');
-  const sourceId=$('world-asset').value;
-  const source=worldMetas.get(sourceId);
+$('world-add').addEventListener('click',()=>{
+ const spec={
+  sourceId:$('world-asset').value,mode:$('world-mode').value,
+  mapId:$('world-map').value,title:$('world-title').value.trim(),
+  scale:Number($('world-scale').value),
+  position:['world-x','world-y','world-z'].map(k=>Number($(k).value)),
+  reviewed:$('world-metric-reviewed').checked
+ };
+ void enqueueWorldEdit(async()=>{
+  const source=worldMetas.get(spec.sourceId);
   if(!source||source.mime!=='model/gltf-binary')
    throw Error('請選擇真實 GLB 人物／建築／環境');
-  const mapRef=await selectedMapRef();
-  if(!worldDoc)beginNewWorld(mapRef);
-  if(worldDoc.coordinateMode!==$('world-mode').value||
-   JSON.stringify(worldDoc.mapRef)!==JSON.stringify(mapRef))
-   throw Error('地圖或座標系已更改。請先按「建立新場景」；不覆蓋既有來源');
-  const scale=Number($('world-scale').value),
-   pos=['world-x','world-y','world-z'].map(k=>Number($(k).value));
-  if(!Number.isFinite(scale)||pos.some(x=>!Number.isFinite(x)))
+  if(!Number.isFinite(spec.scale)||spec.position.some(x=>!Number.isFinite(x)))
    throw Error('模型比例與位置必須是實際數值');
-  invalidateAIG22Storyboard('場景增加模型，劇情來源需重新核對');
-  worldDoc=addAIG20WorldObject(worldDoc,{
-   nodeId:'node-'+(worldDoc.objects.length+1),assetId:sourceId,
-   sourceSha256:source.sha256,category:source.category,
-   position:pos,scale:[scale,scale,scale],
-   physicalScaleReviewed:$('world-metric-reviewed').checked
+  const mapRef=await selectedMapRef({id:spec.mapId,mode:spec.mode});
+  const current=worldDoc||createAIG20WorldScene({
+   id:'world-'+crypto.randomUUID(),title:spec.title||'新場景',
+   coordinateMode:spec.mode,mapRef
   });
+  if(current.coordinateMode!==spec.mode||
+   JSON.stringify(current.mapRef)!==JSON.stringify(mapRef))
+   throw Error('地圖或座標系已更改；不覆蓋既有來源');
+  const next=addAIG20WorldObject(current,{
+   nodeId:'node-'+(current.objects.length+1),assetId:spec.sourceId,
+   sourceSha256:source.sha256,category:source.category,
+   position:spec.position,scale:[spec.scale,spec.scale,spec.scale],
+   physicalScaleReviewed:spec.reviewed
+  });
+  // Atomic scene replacement AFTER exact immutable source-ID validation.
+  worldDoc=next;
+  invalidateAIG22Storyboard('場景增加模型，劇情來源需重新核對');
   updateWorldStatus('已加入 '+source.title+'：真正來源 GLB，沒有生成替身。');
   worldEvidence();
- }catch(e){updateWorldStatus('BLOCKED：'+String(e.message||e),true)}
- finally{setWorldBuildMutation(false)}
+ }).catch(e=>updateWorldStatus('BLOCKED：'+String(e.message||e),true));
 });
 // Real3D 2.4 — automatically inspect actual source RGBA on file selection
 // without creating a false billboard animation, rerendering the 3D canvas,
