@@ -820,7 +820,7 @@ async function finishMovie25({cancel=false,reason=''}={}){
 }
 $('movie25-record').addEventListener('click',()=>{
  if(movie25Busy)return;
- let record=null,frameHook=null,afterHook=null;
+ let record=null,frameHook=null,afterHook=null,movie25ViewportAcquired=false;
  try{
   if(loading||worldBuildMutation||!viewer||!worldRuntime?.scene||
    !story22Plan?.ready||!worldDoc)
@@ -840,6 +840,7 @@ $('movie25-record').addEventListener('click',()=>{
   });
   movie25Busy=true;loading=true;lockMovie25(true);
   const viewport=viewer.beginMovie1080p();
+  movie25ViewportAcquired=true;
   if(viewport.actualCanvasWidth!==1920||
    viewport.actualCanvasHeight!==1080)
    throw Error('實際 WebGL 畫布未達 1920×1080');
@@ -889,7 +890,8 @@ $('movie25-record').addEventListener('click',()=>{
    record?.abort(error);
    if(viewer?.onFrame===frameHook)viewer.onFrame=null;
    if(viewer?.onAfterRender===afterHook)viewer.onAfterRender=null;
-   try{if(viewer?.movieMode)viewer.endMovie1080p()}catch{}
+   // Do not end a *different* owner's running movie on a blocked start.
+   try{if(movie25ViewportAcquired&&viewer?.movieMode)viewer.endMovie1080p()}catch{}
    if(movie25Busy){movie25Busy=false;loading=false;lockMovie25(false)}
   }
   film25Status('BLOCKED：'+String(error.message||error)+
