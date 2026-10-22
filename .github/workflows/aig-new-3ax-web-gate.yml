@@ -5,6 +5,7 @@ on:
       - web/aig-dual-formal-runtime-20261016
     paths:
       - 'formal-web/3ax-nc-workbench.*'
+      - 'formal-web/3ax-mobile-*'
       - 'formal-web/3ax-authority-*'
       - 'formal-web/shared-3d/aig-real3d-replay-lab.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-3ax-new-workbench.real-browser.mjs'
@@ -28,12 +29,17 @@ jobs:
       - name: Validate all new HTML selectors and real core source
         run: |
           node --check ../../../3ax-nc-workbench-ui.mjs
+          node --check ../../../3ax-mobile-workspace.mjs
+          node --check ../../../3ax-mobile-reverse-core.mjs
+          node --test tests/aig-3ax-mobile-reverse.test.mjs
+          python3 -m json.tool ../../../3ax-mobile-reverse-map.json >/dev/null
           node --check ../../../3ax-authority-source-gate.mjs
           node --check ../../../3ax-authority-visual-ui.mjs
           node --test tests/aig-3ax-authority-source.test.mjs
           python3 -m json.tool ../../../3ax-authority-source.json >/dev/null
           node --check ../../../shared-3d/aig-real3d-replay-lab.mjs
           node --check tests/aig-3ax-new-workbench.real-browser.mjs
+          node --check tests/aig-3ax-mobile-reverse.real-browser.mjs
           node --test tests/aig-real3d-replay-v1-3.test.mjs
           python3 - <<'PY'
           from html.parser import HTMLParser
@@ -45,6 +51,17 @@ jobs:
               def handle_starttag(self,t,attrs):
                   self.ids.extend(v for k,v in attrs if k=='id')
           p=IDs(); p.feed(Path('../../../3ax-nc-workbench.html').read_text())
+          mobile=IDs();mobile.feed(Path('../../../3ax-mobile-workspace.html').read_text())
+          ids=mobile.ids
+          for required_id in ('view','removed','remain','triangle','evidence','nc',
+                              'parse','next','prev','simulate','reset','camera','block',
+                              'voxel','status','block-status','nc-upload','import-nc',
+                              'export-nc','authority-panel','authority-check','authority-pick',
+                              'authority-file','authority-preview','authority-status',
+                              'reverse-status','emergency-pause','stop-replay'):
+              assert ids.count(required_id)==1, (required_id,ids)
+          print('AIG_MOBILE_3AX_TRUE_DOM_CALLBACK_ID_CONTRACT_PASS')
+
           required=['view','removed','remain','triangle','evidence','nc',
                     'parse','next','prev','simulate','reset','camera','block',
                     'voxel','status','block-status','nc-upload','import-nc','export-nc',
@@ -61,11 +78,14 @@ jobs:
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           node tests/aig-3ax-new-workbench.real-browser.mjs
+          node tests/aig-3ax-mobile-reverse.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: AIG-New-3AX-Real-NC-First-Web-Mobile-Desktop-Evidence
-          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-new-3ax-web/
+          path: |
+            formal-web/school-3d/fastmodel/single-photo/artifacts/aig-new-3ax-web/
+            formal-web/school-3d/fastmodel/single-photo/artifacts/aig-3ax-mobile-reverse/
           if-no-files-found: warn
       - name: Explicit release bounds
         if: always()
@@ -79,6 +99,8 @@ jobs:
             echo 'AUTHORITY_APPROVED_MACHINE_3D=NOT_VERIFIED'
             echo '3AX_APPROVED_MOBILE_ORIGINAL_SOURCE=SHA256_PINNED_NON4K_NOT_HOSTED_VERIFIED'
             echo '3AX_DESKTOP_AUTHORITY_AND_GLB=BLOCKED'
+            echo 'MOBILE_SOURCE_ROI_BUTTON_ID_COUNT=47'
+            echo 'IMAGE_PIXELS_DO_NOT_CERTIFY_3D_DEPTH_OR_MACHINE'
             echo 'FULL_FANUC_AND_4_TO_6_AX=BLOCKED'
             echo 'TRUE_0_001MM_AND_APK_EXE_NATIVE=NOT_VERIFIED'
             echo 'NO_CNC_MACHINE_COMMAND_OUTPUT'
