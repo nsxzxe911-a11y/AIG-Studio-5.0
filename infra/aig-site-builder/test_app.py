@@ -49,14 +49,38 @@ class BuilderTests(unittest.TestCase):
             result = builder.launch(builder.BuildRequest(project="studio"), authorization="Bearer secure-admin")
             self.assertEqual(result["state"], "DISPATCH_ACCEPTED")
             self.assertEqual(result["sourceSHA"], "f" * 40)
-            self.assertEqual(len(calls), 2)
-            self.assertEqual(calls[1][0], "POST")
-            self.assertIn("/actions/workflows/build-download.yml/dispatches", calls[1][1])
-            self.assertEqual(calls[1][2]["ref"], "repair/core-first-studio-20261021")
-            self.assertEqual(calls[1][2]["inputs"]["aig_request_id"], result["id"])
+            self.assertEqual(len(calls), 3)
+            self.assertEqual(calls[1][0], "GET")
+            self.assertEqual(calls[2][0], "POST")
+            self.assertIn("/actions/workflows/build-download.yml/dispatches", calls[2][1])
+            self.assertEqual(calls[2][2]["ref"], "repair/core-first-studio-20261021")
+            self.assertEqual(calls[2][2]["inputs"]["aig_request_id"], result["id"])
             with self.assertRaises(HTTPException) as x:
                 builder.launch(builder.BuildRequest(project="studio"), authorization="Bearer secure-admin")
             self.assertEqual(x.exception.status_code, 409)
+
+    def test_busy_actual_github_run_blocks_duplicate_dispatch_after_server_restart(self):
+        call_history = []
+        def mock_github(method,path,payload=None):
+            call_history.append((method,path))
+            if "/commits/" in path:
+                return {"sha": "a" * 40}
+            if "/runs?branch=" in path:
+                return {"workflow_runs": [
+                    {"id": 93, "status": "in_progress",
+                     "head_sha": "a"*40, "display_title": "another active build"}]}
+            raise AssertionError("must not dispatch into active workflow")
+        with patch.dict(os.environ, {
+            "AIG_BUILDER_ADMIN_TOKEN":"admin-token",
+            "AIG_BUILDER_GITHUB_TOKEN":"github-token",
+        }, clear=True), patch.object(builder,"github",side_effect=mock_github):
+            with self.assertRaises(HTTPException) as ex:
+                builder.launch(builder.BuildRequest(project="studio"),
+                               authorization="Bearer admin-token")
+        self.assertEqual(ex.exception.status_code, 409)
+        self.assertEqual(ex.exception.detail,"GITHUB_BUILD_ALREADY_ACTIVE_DO_NOT_CANCEL")
+        self.assertEqual(len(call_history),2)
+        self.assertEqual(builder.REQUESTS, {})
 
     def test_workflow_success_without_both_android_and_windows_artifacts_is_blocked(self):
         record = {"id": "id3", "project": "aigii", "sha": "b"*40,
