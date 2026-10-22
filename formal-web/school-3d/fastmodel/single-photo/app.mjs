@@ -940,6 +940,46 @@ $('aig52-fps-report').addEventListener('click',()=>{
  if(aig52Report)aig47Download(JSON.stringify(aig52Report,null,2),
   'AIG-5.2-ACTUAL-BROWSER-FRAME-TIMING-SHA-NOT-NATIVE-FPS.json','application/json');
 });
+const aig18Toggle=$('aig18-instance-toggle'),
+ aig18Download=$('aig18-instance-report'),
+ aig18Status=$('aig18-instance-status');
+function aig18Show(report){
+ if(!report){aig18Status.textContent='GPU 檢視器未建立，來源 GLB 未變動。';return;}
+ aig18Toggle.textContent=report.active?'還原原始 GLB 物件顯示':
+  '啟用 1.8 靜態 GPU 合批（需載入 GLB）';
+ aig18Download.disabled=!report.loadedGLBPresent;
+ if(report.reason==='NO_IDENTICAL_SAFE_STATIC_GROUPS_SOURCE_UNCHANGED'){
+  aig18Status.textContent='此模型沒有符合安全條件的重複靜態物件，沒有強制刪除、簡化或合併人物 3D。';
+ }else{
+  aig18Status.textContent='Real3D 1.8 '+report.reason+
+   '；來源共 '+report.groupedStaticMeshes+' 個安全靜態網格 → '+
+   report.instanceDrawGroups+' 組 GPU Instance；估計可省 '+
+   report.theoreticalDrawCallsSaved+
+   ' 次 draw call。真正 FPS 改善需以實機測量，GLB／動畫源檔不變。';
+ }
+}
+aig18Toggle.addEventListener('click',()=>{
+ if(!view){aig18Show(null);return;}
+ try{
+  const old=view.getStaticInstancingReport();
+  const next=view.setStaticInstancingEnabled(!old.active);
+  aig18Show(next);
+ }catch(error){
+  aig18Status.textContent='BLOCKED：'+String(error.message||error)+
+   '；原始 GLB 及動作未修改。';
+ }
+});
+aig18Download.addEventListener('click',()=>{
+ if(!view?.model){aig18Status.textContent='BLOCKED：尚未載入 GLB。';return;}
+ const evidence={...view.getStaticInstancingReport(),
+  sourceSHA256:sourceSha??null,
+  animationClipNames:view.animation?.clips?.map(x=>x.name)||[],
+  downloadIsSourceEvidenceNotFpsProof:true,
+  modelTextureBonesMorphTargetsUnchanged:true,
+  nativeAndroidWindowsRealFpsMeasured:false};
+ aig47Download(JSON.stringify(evidence,null,2),
+  'AIG-FASTMODEL-REAL3D-1-8-STATIC-GLB-INSTANCING-NOT-FPS.json','application/json');
+});
 const aig17Toggle=$('aig17-gpu-toggle'),
  aig17Download=$('aig17-gpu-report'),
  aig17Status=$('aig17-gpu-status');
