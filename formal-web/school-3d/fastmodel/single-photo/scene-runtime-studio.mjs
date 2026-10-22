@@ -277,9 +277,12 @@ function beginNewWorld(mapRef=null){
  stopWorldPlayback();worldEvidence();
  return worldDoc;
 }
-$('world-new').addEventListener('click',()=>{
- try{beginNewWorld();updateWorldStatus('已建立新的空白場景文件；已存外部來源完全保留。')}
- catch(e){updateWorldStatus('BLOCKED：'+String(e.message||e),true)}
+$('world-new').addEventListener('click',async()=>{
+ try{
+  const mapRef=await selectedMapRef();
+  beginNewWorld(mapRef);
+  updateWorldStatus('已建立來源座標一致的空白世界場景；已存外部來源與原模型完全保留。');
+ }catch(e){updateWorldStatus('BLOCKED：'+String(e.message||e),true)}
 });
 $('world-add').addEventListener('click',async()=>{
  try{
