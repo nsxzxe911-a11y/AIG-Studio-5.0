@@ -91,6 +91,7 @@ try{
   const context=await browser.newContext({...device,acceptDownloads:true});
   const page=await context.newPage();page.setDefaultTimeout(45000);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  let stage='START';
   try{
    await page.goto('http://127.0.0.1:8765/asset-library-studio.html');
    await page.waitForFunction(()=>document.getElementById('status')
@@ -204,12 +205,14 @@ try{
    assert.equal(storyboard.generatedVoice,false);
    // Real3D 2.5 NO-FAKE gate: an original but UNSKINNED triangle actor
    // cannot be recorded as a fully articulated human movie.
+   stage='MOVIE_2_5_BROWSER_RECORDER_AND_DECODE';
    await page.locator('#movie25-record').click();
    assert.match(await page.locator('#movie25-status').textContent(),
     /BLOCKED/);
    await page.locator('#story-save').click();
    await page.waitForFunction(()=>document.getElementById('story-status')
     .textContent.includes('已另存劇本'),null,{timeout:12000});
+   stage='STORY_2_3_PLAY_ACTUAL_SOURCE_HEAD_TURN';
    await page.locator('#story-play').click();
    await page.waitForFunction(()=>document.getElementById('story-status')
     .textContent.includes('開始播放'),null,{timeout:5000});
@@ -261,6 +264,7 @@ try{
     name:'single-face.png',mimeType:'image/png',
     buffer:Buffer.from(portrait,'base64')
    });
+   stage='PHOTO_2_3_GENERATE_SOURCE_GLTF';
    await page.locator('#photo23-build').click();
    await page.waitForFunction(()=>document.getElementById('photo23-status')
     .textContent.includes('已真正加入'),null,{timeout:120000});
@@ -275,6 +279,7 @@ try{
    assert.equal(threeActors.objects.length,3);
    assert.equal(threeActors.objects[0].sourceSHA,before.objects[0].sourceSHA);
    assert.equal(threeActors.objects[1].sourceSHA,before.objects[1].sourceSHA);
+   stage='STORY_2_3_COMPILE_ACTUAL_SOURCE_HEAD_TURN';
    await page.locator('#story-text').fill('0秒 node-3：轉頭');
    await page.locator('#story-compile').click();
    await page.waitForFunction(()=>!document.getElementById('story-play').disabled);
@@ -295,6 +300,7 @@ try{
    // picture. After verifying 2.3 real 17-bone geometry, record its original
    // head clip via 2.2 Chinese timeline, with subtitles burnt into pixels.
    await page.locator('#story-stop').click();
+   stage='MOVIE_2_5_COMPILE_ACTUAL_RIGGED_STORY';
    await page.locator('#story-text').fill(
     '0秒 node-3：轉頭\\n0秒 字幕：真正的 3D 骨架電影');
    await page.locator('#story-compile').click();
@@ -337,10 +343,26 @@ try{
     device.name);
   }catch(e){
    await page.screenshot({path:out+'/'+device.name+'-FAIL.png',fullPage:true}).catch(()=>{});
-   throw Error(device.name+' '+String(e.message||e)+' source='+
-    await page.locator('#world-status').textContent().catch(()=>null)+
+   const diagnostic=await page.evaluate(()=>{
+    const txt=id=>document.getElementById(id)?.textContent?.slice(0,420);
+    const proof=id=>{
+     try{const x=JSON.parse(txt(id));return {
+      ready:x.ready,revision:x.revision,sceneId:x.sceneId,
+      eventCount:x.events?.length,blocked:x.blocked,
+      objectCount:x.objects?.length,clipNames:x.events?.map(e=>e.clipName)
+     }}catch{return null}
+    };
+    return {
+     story:txt('story-status'),storyProof:proof('story-proof'),
+     photo:txt('photo23-status'),movie:txt('movie25-status'),
+     storyPlayDisabled:document.getElementById('story-play')?.disabled,
+     worldProof:proof('world-proof')
+    };
+   }).catch(e=>({diagnosticsFailed:String(e.message||e)}));
+   throw Error(device.name+' stage='+stage+' '+String(e.message||e)+
+    ' source='+await page.locator('#world-status').textContent().catch(()=>null)+
     ' actor='+await page.locator('#world-actor-status').textContent().catch(()=>null)+
-    ' browserErrors='+JSON.stringify(errors));
+    ' extra='+JSON.stringify(diagnostic)+' browserErrors='+JSON.stringify(errors));
   }finally{await context.close()}
  }
 }finally{await browser.close()}
