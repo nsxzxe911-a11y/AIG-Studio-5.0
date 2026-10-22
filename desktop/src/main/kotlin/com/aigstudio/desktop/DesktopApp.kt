@@ -2245,7 +2245,8 @@ private fun runSmoke() {
             preferredSize=Dimension(158,0)
             border=BorderFactory.createEmptyBorder(6,6,6,6)
             listOf(
-                "MACHINE" to "READY",
+                // Local UI state != a Fanuc transport handshake.
+                "MACHINE" to "NOT CONNECTED",
                 "ORIGIN" to "X0.000 Y0.000 Z0.000",
                 "PRECISION" to "0.001 mm",
                 "ENTITIES" to doc.size().toString(),
