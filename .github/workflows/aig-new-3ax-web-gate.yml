@@ -1,0 +1,76 @@
+name: AIG New 3AX Real3D Workspace Gate
+on:
+  push:
+    branches:
+      - web/aig-dual-formal-runtime-20261016
+    paths:
+      - 'formal-web/3ax-nc-workbench.*'
+      - 'formal-web/shared-3d/aig-real3d-replay-lab.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-3ax-new-workbench.real-browser.mjs'
+      - '.github/workflows/aig-new-3ax-web-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  new-3ax-real-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 23
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Validate all new HTML selectors and real core source
+        run: |
+          node --check ../../../3ax-nc-workbench-ui.mjs
+          node --check ../../../shared-3d/aig-real3d-replay-lab.mjs
+          node --check tests/aig-3ax-new-workbench.real-browser.mjs
+          node --test tests/aig-real3d-replay-v1-3.test.mjs
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class IDs(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.ids=[]
+              def handle_starttag(self,t,attrs):
+                  self.ids.extend(v for k,v in attrs if k=='id')
+          p=IDs(); p.feed(Path('../../../3ax-nc-workbench.html').read_text())
+          required=['view','removed','remain','triangle','evidence','nc',
+                    'parse','next','prev','simulate','reset','camera','block',
+                    'voxel','status','block-status','nc-upload','import-nc','export-nc']
+          assert all(p.ids.count(i)==1 for i in required),(required,p.ids)
+          print('NEW_3AX_HTML_REAL_CORE_ID_CONTRACT_PASS')
+          PY
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Phone desktop and landscape numerical WebGL responsive Gate
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory ../../../ >/tmp/aig-3ax-new-web-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-3ax-new-workbench.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-New-3AX-Real-NC-First-Web-Mobile-Desktop-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-new-3ax-web/
+          if-no-files-found: warn
+      - name: Explicit release bounds
+        if: always()
+        run: |
+          {
+            echo 'NEW_3AX_WORKSPACE=INDEPENDENT_REAL_WEBGL_V1_3_LIMITED_NC'
+            echo 'NUMERICAL_VOXEL_REMOVAL=REAL_0_5MM_APPROXIMATION'
+            echo 'G0_CUTTING=DISABLED'
+            echo 'G1_CUTTING=NUMERICAL'
+            echo 'NC_LOCAL_FILE_IMPORT_EXPORT=WORKING_COPY_ONLY'
+            echo 'AUTHORITY_APPROVED_MACHINE_3D=NOT_VERIFIED'
+            echo 'FULL_FANUC_AND_4_TO_6_AX=BLOCKED'
+            echo 'TRUE_0_001MM_AND_APK_EXE_NATIVE=NOT_VERIFIED'
+            echo 'NO_CNC_MACHINE_COMMAND_OUTPUT'
+          } >> "$GITHUB_STEP_SUMMARY"
