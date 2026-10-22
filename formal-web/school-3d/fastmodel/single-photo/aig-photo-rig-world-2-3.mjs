@@ -11,6 +11,7 @@ import {auditAIG50FullBody} from './aig-fullbody-5-0.mjs';
 import {auditAIG63SchoolModelActualGLTF}
  from './aig-visual-compare-6-3.mjs';
 import {auditAIG58RealPoseContacts} from './aig-appearance-fit-5-8.mjs';
+import {auditAIG24ArticulatedAnimation} from './aig-motion-integrity-2-4.mjs';
 export const AIG23_SCHEMA='AIG_FASTMODEL_REAL3D_2_3_SOURCE_PHOTO_TRUE_SKINNED_ACTOR';
 const fail=s=>{throw Error('AIG23_'+s)};
 const hex=bytes=>Array.from(new Uint8Array(bytes),
@@ -50,6 +51,9 @@ export async function buildAIG23PhotoActor({pixels,width,height,sourceImageSHA25
  const contacts=await auditAIG58RealPoseContacts(gltf,{
   sourceSHA256:modelSHA256,maxClips:5
  });
+ const articulation=auditAIG24ArticulatedAnimation(gltf);
+ if(articulation.status!=='ARTICULATED_GEOMETRY_DETECTED_TECHNICAL_ONLY')
+  fail('STATIC_OR_RIGID_PHOTO_SWAY_NOT_ANIMATED_3D');
  const proof={
   schema:AIG23_SCHEMA,sourceImageSHA256:sourceImageSHA256.toLowerCase(),
   modelGLBSHA256:modelSHA256,sourceCoverage:analysis.photoCoverage,
@@ -60,6 +64,11 @@ export async function buildAIG23PhotoActor({pixels,width,height,sourceImageSHA25
   })),
   genuineSkinningWeightsValidated:rig.skeletonTopologyGate,
   actuallyAnimatedGeometry:rig.animationHasRealSkinnedVertexMotion,
+  internal3DArticulationDetected:articulation.bodyMovementIsNotGlobalPhotoSway,
+  nonPlanar3DDepthRatio:articulation.nonPlanarVolume,
+  realInternalArticulatedClipCount:articulation.realArticulatedClipCount,
+  sourceClipArticulationEvidence:articulation.clips,
+  rigidImageOrCameraSwayRejected:true,
   separateSkinnedGarmentAndHairMeshes:garments.visibleSchoolAccessories.map(x=>x.name),
   sampledPoseCount:contacts.posesChecked,
   sampledSkirtBodyTriangleContacts:contacts.skirtBodyConfirmedTriangleContacts,
