@@ -148,7 +148,12 @@ try{
    await page.goto('http://127.0.0.1:8765/scene-runtime-studio.html',
     {waitUntil:'load'});
    await page.waitForFunction(()=>document.querySelectorAll('#world-saved option').length>1);
-   await choose('world-saved','櫻花校園場景');
+   // Content-addressed saved revisions share a human-friendly scene title;
+   // select a concrete version, not a non-unique text locator.
+   const savedWorldId=await page.locator('#world-saved option')
+    .filter({hasText:'櫻花校園場景'}).last().getAttribute('value');
+   assert.ok(savedWorldId);
+   await page.locator('#world-saved').selectOption(savedWorldId);
    await page.locator('#world-load').click();
    await page.waitForFunction(()=>document.getElementById('world-status')
     .textContent.includes('已從外部素材庫讀取'));
