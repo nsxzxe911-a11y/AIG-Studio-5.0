@@ -115,11 +115,20 @@ const lang=()=>T[$('language').value]||T['zh-TW'];
 const message=m=>{$('result').textContent=m;};
 function translate(){
  const tr=lang();
+ document.documentElement.lang=$('language').value==='en'?'en':'zh-Hant';
+ $('project').options[0].textContent=$('language').value==='en'?
+  'AIG-II · CNC controller (pinned repair branch)':
+  'AIG-II｜CNC 主控（固定原始碼修復分支）';
+ $('project').options[1].textContent=$('language').value==='en'?
+  'AIG Studio 5.0 · CNC core (pinned repair branch)':
+  'AIG Studio 5.0｜CNC 核心（固定修復分支）';
+ $('admin-token').placeholder=$('language').value==='en'?
+  'Authorized administrators only':'僅授權管理者輸入';
  document.querySelectorAll('[data-i18n]').forEach(el=>{const str=tr[el.dataset.i18n];if(str)el.textContent=str;});
  if(!current){message($('language').value==='en'?'No build was requested.': '尚未開始，不會假裝成功。');}
  $('build').disabled=!ready||busy||!$('admin-token').value.trim();
 }
-$('language').addEventListener('change',translate);
+$('language').addEventListener('change',()=>{translate();check();if(current)poll();});
 $('admin-token').addEventListener('input',translate);
 async function call(path,method='GET',body=null){
  const headers={};if(path!=='/api/health')headers.Authorization='Bearer '+$('admin-token').value.trim();
