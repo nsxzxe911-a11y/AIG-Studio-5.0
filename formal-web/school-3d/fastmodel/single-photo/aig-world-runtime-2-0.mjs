@@ -59,7 +59,8 @@ export class AIG20WorldRuntime{
     if(loaded.blob.size>8*1024*1024)fail('BOUNDED_GEO_SOURCE_REQUIRED');
     const doc=JSON.parse(await loaded.blob.text());
     if(doc.schema!=='AIG_FASTMODEL_7_12_SOURCE_SCENE_MAP_DATA'||
-     doc.coordinateMode!==scene.coordinateMode||!Array.isArray(doc.features)||
+     doc.coordinateMode.replace('METERS','METRES')!==scene.coordinateMode||
+     !Array.isArray(doc.features)||
      doc.features.length>256)
      fail('SOURCE_MAP_COORDINATE_CONTRACT_MISMATCH');
     mapData={id:doc.id,features:doc.features.length,
