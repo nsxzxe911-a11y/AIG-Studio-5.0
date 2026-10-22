@@ -401,8 +401,9 @@ export class PhotoViewer{
   // Shared GLB nodes frequently reference the same geometry, material and
   // texture. Each GPU resource gets ONE disposal request; the immutable
   // source bytes in the external asset vault are never modified.
-  const geometries=new Set(),materials=new Set(),textures=new Set();
+  const geometries=new Set(),materials=new Set(),textures=new Set(),skeletons=new Set();
   root.traverse(node=>{
+   if(node.isSkinnedMesh&&node.skeleton?.dispose)skeletons.add(node.skeleton);
    if(node.geometry?.isBufferGeometry)geometries.add(node.geometry);
    const mats=Array.isArray(node.material)?node.material:
     node.material?[node.material]:[];
@@ -415,7 +416,9 @@ export class PhotoViewer{
   for(const geometry of geometries)geometry.dispose();
   for(const material of materials)material.dispose();
   for(const texture of textures)texture.dispose();
-  return Object.freeze({uniqueGeometriesDisposed:geometries.size,
+  for(const skeleton of skeletons)skeleton.dispose();
+  return Object.freeze({uniqueSkeletonsDisposed:skeletons.size,
+   uniqueGeometriesDisposed:geometries.size,
    uniqueMaterialsDisposed:materials.size,
    uniqueTexturesDisposed:textures.size,
    actualVRAMFreedBytesUnmeasured:true,
