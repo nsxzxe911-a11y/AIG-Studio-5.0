@@ -36,11 +36,11 @@
       "id": "AIG FastModel",
       "repository": "nsxzxe911-a11y/AIG-Studio-5.0",
       "reference": "repair/core-first-fastmodel-20261021",
-      "source_sha": "aa36ccea3807f4e17afbb698f67535c25cfa4766",
+      "source_sha": "78eb5d06fec05b54462a6c113d3640458c12eb46",
       "visibility": "PUBLIC",
       "source_checked": true,
-      "runtime_gate": "SOURCE_NUMERIC_BROWSER_AND_RENDER_DEPLOY_LIVE_EXACT_SHA_PUBLIC_HTTP_INTERACTION_NOT_VERIFIED",
-      "checkpoint_note": "FastModel 7.12 scene map original Render deployed dep-dbd00iqfngtc73b6tl4g success as of Oct 22 2026, exact deployed SHA 272dceb187151a30845977e86b0fdaeddd8b7a42. New scene map GeoJSON backend and UI; run 39776235902 Node 357/357 Python 49/49 and phone/desktop map 4 features PASS. External direct HTTP readback unverified; no true real-world map catalog, person 3D, native APK/EXE or AI motion engine. Camera and grid additional engineering paused; AutoRig queued."
+      "runtime_gate": "SHARED_REAL3D_GPU_INDEPENDENT_BROWSER_PASS_SITE_SOURCE_EXACT_MIRROR_NATIVE_CNC_GATES_BLOCKED",
+      "checkpoint_note": "2026-10-22 original AIG Real3D shared Phase 1 trusted source 78eb5d06fec05b54462a6c113d3640458c12eb46. Fixed actual phone WebGL matrix-call error discovered GH 39783984279; fast standalone shared Real3D Chromium gate 39785540820 PASS 7/7 numeric + phone and desktop actual rendered XYZ geometry (3AX 252, 5AX 264, FastModel 216 triangles), GPU canvas pixel cap, camera and geometry screenshot changes. GH FastModel core lock baseline separately audited CSS/navigation-only byte comparison, older lock/full core success 39784761596; latest lock recheck still running. Five source files exact mirrored to original site branch, but Render live is previous commit 89b4fe4080c24b970adf7a577c492ffa2755cb71 until new deploy verified. No real production CNC stock removal/machine motion/3-6AX original authority models, or native APK/EXE success."
     }
   ],
   "checks": {
@@ -162,7 +162,18 @@
     "fastmodel_7_12_regression": "PASS_GITHUB_39776235902_NODE_357_357_PYTHON_49_49",
     "fastmodel_last_render_deploy_id": "dep-dbd00iqfngtc73b6tl4g",
     "fastmodel_last_render_deployed_commit": "272dceb187151a30845977e86b0fdaeddd8b7a42",
-    "fastmodel_official_http_scene_map_readback": "NOT_VERIFIED_NETWORK_ACCESS_BLOCKED"
+    "fastmodel_official_http_scene_map_readback": "NOT_VERIFIED_NETWORK_ACCESS_BLOCKED",
+    "shared_real3d_v1_source_sha": "78eb5d06fec05b54462a6c113d3640458c12eb46",
+    "shared_real3d_v1_numeric": "PASS_7_OF_7_GITHUB_39785540820",
+    "shared_real3d_v1_phone_desktop": "PASS_REAL_WEBGL_XYZ_GPU_SCREENSHOTS_39785540820",
+    "shared_real3d_v1_evidence_artifact": "12429320548",
+    "shared_real3d_v1_actual_pbr": "BASIC_DIFFUSE_SPECULAR_ONLY_NOT_REAL_PHOTO_PBR",
+    "shared_real3d_v1_hardware_crash": "NOT_VERIFIED_REAL_ANDROID_S23_NATIVE_APK",
+    "shared_real3d_v1_stock_removal": "NOT_IMPLEMENTED",
+    "shared_real3d_v1_cnc_control": "READ_ONLY_NO_MACHINE_COMMANDS",
+    "shared_real3d_v1_site_source": "EXACT_FIVE_FILES_MIRRORED_ON_ORIGINAL_AIG_SITE_BRANCH",
+    "shared_real3d_v1_render_live": "NOT_VERIFIED_FOR_NEW_SOURCE_LAST_CONFIRMED_LIVE_89b4fe4080c2",
+    "shared_real3d_v1_fastmodel_lock": "AUDITED_ADDITIVE_CSS_NAV_ONLY_LOCK_PRESERVED"
   },
   "approved_invariants": [
     "Do not delete/overwrite original geometry, CAD/CAM/NC, approved RGB Authority, or FastModel assets.",
@@ -172,6 +183,10 @@
     "No automatic rollback/downgrade; no destructive repair; create a new checkpoint after validation."
   ],
   "next_steps": [
+    "Check original Render static site's new deploy SHA equals latest original website branch HEAD; test /shared-3d/aig-real3d-lab.html and JS by direct HTTP browser before marking LIVE.",
+    "Protect authentic 10/5 Android and Desktop Authority machine visuals; do not confuse shared procedure demo meshes with official machines.",
+    "Next Real3D core gate: source-bound imported geometry format, true CAM/SIM machine-state read-only snapshots, and numerical material removal bridge without changing machine commands.",
+    "Verify full legacy core locked inventory + Android/Windows separately before APK/EXE release.",
     "Independent browser HTTP open on original Render /fastmodel/scene-map-studio.html and module resource URLs; do not claim verified rendered production actions until checked.",
     "Continue source-provenanced map and scene percentages; no invented building/tree/road physical dimensions or fake GPS.",
     "Resume AutoRig and AI motion only after user-directed priority; currently approved backlog not implemented.",
@@ -198,5 +213,5 @@
     "Verify each real runtime callback and native APK/EXE artifact independently; publish evidence URLs and SHA digests."
   ],
   "ai_resume_contract": "Before any write: read THIS latest manifest by live URL or source GitHub branch; re-fetch each repository branch/head SHA; compare previous checkpoint; identify unresolved gates. Do not treat chat memory, version labels or this snapshot as a successful build. If unavailable, stop destructive edits and mark BLOCKED. ChatGPT cannot auto-attach this site to new chats; user must provide URL or copied handoff unless an authorized connector is used.",
-  "last_action": "FastModel 7.12 scene map original Render site deployment dep-dbd00iqfngtc73b6tl4g LIVE exact published SHA 272dceb187151a30845977e86b0fdaeddd8b7a42 on 2026-10-22T12:23:52Z; 357/357 Node and 49/49 Python, source GeoJSON real Chromium phone and desktop PASS run 39776235902. Public HTTP content readback unavailable in tool environment; map source matches exact blobs. AutoRig AI motion still only queued; camera and CAD further work paused as directed."
+  "last_action": "Recovered crash breakpoint and built AIG Real3D v1 true WebGL shared engine. Exact latest core 78eb5d06fec05b54462a6c113d3640458c12eb46. GH run 39785540820 PASS numeric 7/7 phone desktop true renderer screenshot changes and GPU budget; artifact 12429320548. Five canonical assets byte-identical mirrored original site, nav linked. Older Render live commit 89b4fe4080c2 (new site branch source NOT confirmed deployed). FastModel original core locked UI drift audited exact CSS/nav only. Native GPU/real stock removal/true 6AX CNC remain blocked."
 }
