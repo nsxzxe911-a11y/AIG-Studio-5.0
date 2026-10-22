@@ -4878,8 +4878,11 @@ private fun showApp(showWindow:Boolean=true):JFrame {
             .onFailure { status.text="5AX WARNING • "+(it.message?:"error") }
     })
     moduleButtons.add(productionUiButton("6AX", Color(159,114,255)) {
-        showSixAxisRuntimeStage()
-        status.text="UX • "+RuntimeUxFlowContract.title("6AX")+" • XYZABC • "+WorkstationChromeContract.PRECISION
+        // User-visible result must reflect the real core interlock, not a
+        // success-looking label unconditionally overwriting a warning.
+        status.text="6AX • SIM PREVIEW ONLY • C AXIS NC POST BLOCKED UNTIL VERIFIED"
+        runCatching { showSixAxisRuntimeStage() }
+            .onFailure { status.text="6AX SIM BLOCKED • "+(it.message?:"error") }
     })
     moduleButtons.add(productionUiButton("NC", Color(80,170,255)) {
         runCatching { showNcEditor(
