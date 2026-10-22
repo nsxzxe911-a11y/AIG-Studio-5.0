@@ -61,7 +61,7 @@ export function compileAIG22Story(text,{scene,actors=[]}={}){
     durationSeconds:2,text:message,voiceSynthesized:false});
    sequential=Math.max(sequential,time+2);continue;
   }
-  if(/^(鏡頭|攝影機|運鏡|切鏡)\b?/u.test(body)){
+  if(/^(鏡頭|攝影機|運鏡|切鏡)/u.test(body)){
    if(!scene.cameraKeys.length){
     blocked.push({line:index+1,reason:'AUTHORED_CAMERA_KEYFRAMES_REQUIRED'});continue;
    }
