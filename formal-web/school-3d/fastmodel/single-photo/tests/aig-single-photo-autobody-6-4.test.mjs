@@ -86,6 +86,24 @@ test('6.4 one upper-body photo can constrain width but still invents unseen legs
  assert.equal(generated.noBackOrSidePhotoRequired,true);
  assert.ok(Math.abs(generated.actualTechnicalHeadToBodyRatio-7.5)<.05);
 });
+test('6.4 selected connected human silhouette excludes floating background object from measured head/shoulder widths',()=>{
+ const base=inputs('upper');
+ const noisy={...base,pixels:new Uint8ClampedArray(base.pixels)};
+ // Detached object inside the main person's BOUNDING BOX, but not connected
+ // to that person. Bounding-box-only masking previously poisoned widths.
+ for(let y=70;y<=161;y++)for(let x=83;x<=98;x++){
+  const k=(y*w+x)*4;
+  noisy.pixels[k]=68;noisy.pixels[k+1]=53;
+  noisy.pixels[k+2]=52;noisy.pixels[k+3]=255;
+ }
+ const a=analyzeAIG64PartialPortrait(base);
+ const b=analyzeAIG64PartialPortrait(noisy);
+ assert.equal(b.photoCoverage,a.photoCoverage);
+ assert.equal(b.widthToHeightModelRatio,a.widthToHeightModelRatio);
+ assert.deepEqual(b.detectedForegroundThumbnailBox,a.detectedForegroundThumbnailBox);
+ assert.deepEqual(b.scaffold.proportions.ratiosByImageHeight,
+  a.scaffold.proportions.ratiosByImageHeight);
+});
 test('6.4 rejects no person, forged SHA, bad image, forced multi-person or fabricated approved scaffold',()=>{
  assert.throws(()=>analyzeAIG64PartialPortrait(inputs('blank')),
   /AIG64_NO_OBSERVABLE_SUBJECT_CONTRAST/);
