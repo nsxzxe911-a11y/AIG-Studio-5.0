@@ -2,7 +2,7 @@
  * One bounded G0/G1 block per browser frame during full run; cancel on edits.
  * Never sends, schedules or approves machine movement.
  */
-import {createAIG3DScene,addAIG3DNode,addAIG3DToolpathOverlay}
+import {createAIG3DScene,createAIG3DCylinder,addAIG3DNode,addAIG3DToolpathOverlay}
  from './aig-real3d-core.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {parseAIG12NCWorkingCopy}
@@ -16,6 +16,8 @@ const renderer=createAIG3DRenderer($('view'),{
 });
 const source='LOCAL_REPARSED_LIMITED_NC_WORKING_COPY_NO_MACHINE_OUTPUT';
 let parsed=null,replay=null,scene=null,busy=false,epoch=0,drag=null,previousMesh=null;
+const displayToolMesh=createAIG3DCylinder({radius:1,height:6,segments:20,
+ provenance:'READ_ONLY_TOOL_TIP_CYLINDER_FROM_LIMITED_NC_SOURCE_NOT_HOLDER_CHECKED'});
 const num=x=>Number(x).toFixed(3);
 const opts=()=>({
  stockOriginMm:[-8,-5,-2],stockSizeMm:[16,10,5],
@@ -48,6 +50,13 @@ function paint(why='READY'){
    id:'true_voxel_stock',kind:'stock',mesh:surface.mesh,source,
    material:{baseColor:[.64,.67,.72,1],metallic:.28,roughness:.57}
   });
+ }
+ const pos=audit.toolpathPositionMm;
+ if(pos){
+  addAIG3DNode(nextScene,{id:'current_tool_preview',kind:'tool',
+   mesh:displayToolMesh,source,
+   transform:{position:[pos[0],pos[1],pos[2]+3],rotationDeg:[90,0,0]},
+   material:{baseColor:[.25,.8,.95,1],metallic:.52,roughness:.35}});
  }
  addAIG3DToolpathOverlay(nextScene,{
   id:'nc_preview_path',segments:replay.source.segments,source,units:'MM'
@@ -96,6 +105,14 @@ function invalidate(text='NC 工作副本已修改，必須重新完整解析才
  cancel();parsed=null;replay=null;
  if(previousMesh)renderer.releaseMesh?.(previousMesh);
  previousMesh=null;
+ // Do not leave a stale successfully cut surface visible under edited NC
+ // input. Render an intentionally empty scene with no trusted workpiece.
+ if(renderer.status==='READY'){
+  try{renderer.render(createAIG3DScene({id:'uncertified-source-empty',
+   consumer:'AIG-II',units:'MM',source:'INVALIDATED_NC_WORKING_COPY_NOT_RENDERED'}));}
+  catch{} 
+ }
+ scene=null;
  $('next').disabled=true;$('prev').disabled=true;
  $('simulate').disabled=true;$('block').disabled=true;
  $('removed').textContent='0.000';
