@@ -123,7 +123,7 @@
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig-unified-shell-6-9.mjs",
-      "gitBlobSha": "479add4d4d64af93b1df1a2085b780de196a6714"
+      "gitBlobSha": "8906e425b3ad9f5f7e28d43360970cfc3f7f8aa2"
     },
     {
       "path": "formal-web/school-3d/fastmodel/single-photo/aig_native4.py",
@@ -185,5 +185,6 @@
   "temporalRigQualityGate": "Real technical GLB loaded via Three GLTFLoader, samples skinned mesh vertices at 30Hz across three animation clips, validates finite coordinates and non-static deformation; full-body/photo identity/physical collisions stay unapproved",
   "auditedLiveAppLockDrift": "2026-10-22 reviewed historical commit 96f617eca78927fd8bbe91a91cccd1c366a3332d installing stable Button ID binding; source app.mjs matches pre-existing PR code and is now locked. No app code changed.",
   "realFullBodyLimbUpgrade": "Existing single partial image->technical 17 bone 9 skinned mesh 5 clip GLB retained; adds two genuine bilateral arm/leg GLB quaternion clips, 31-frame skinned vertex motion audits; not verified heroine likeness, foot contacts or garment physics",
-  "fullBodyMotionControlClosure": "After core 252/252 PASS, independent AIG64→AIG61 REAL upgrade action binds ButtonID/CommandID to existing single-photo generated GLB, audits bilateral limb vertex deformation before SHA/new output, preserves old 5-clip source on blocked action, all production likeness and collision claims remain false."
+  "fullBodyMotionControlClosure": "After core 252/252 PASS, independent AIG64→AIG61 REAL upgrade action binds ButtonID/CommandID to existing single-photo generated GLB, audits bilateral limb vertex deformation before SHA/new output, preserves old 5-clip source on blocked action, all production likeness and collision claims remain false.",
+  "fullBodyFormalModelUiLocation": "Single photo / native 17-bone + seven clip upgrade controls remain original DOM+callbacks and are no longer hidden inside technical <details>; older testing tools are disclosure-only."
 }
