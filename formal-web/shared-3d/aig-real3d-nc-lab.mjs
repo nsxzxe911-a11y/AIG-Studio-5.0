@@ -53,7 +53,7 @@ function redraw(){
     verifiedForMachineUse:false,workOffsetResolvedFromMachine:false}:null,
    rendered:r,actualNumericalVoxelRemoval:result?.actualNumericalVoxelCutting??false,
    removedMm3:result?.actualRemovedVolumeMm3??0,
-   3DStockMeshChangedFromFeed:result?.audit?.removedMm3>0,
+   stockMeshChangedAfterG1Feed:result?.audit?.removedMm3>0,
    G0NeverCuts:result?.rapidNeverCuts??true,
    machineCommandsSent:0,realMachineKinematicsVerified:false,
    completeFanucNCParsing:false,sourceValidatedAsProductionNC:false,
