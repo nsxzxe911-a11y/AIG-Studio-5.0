@@ -369,7 +369,7 @@ export class PhotoViewer{
   // not clear the existing optimizer or remove the last verified scene.
   if(this.gpu17Enabled)this.setGpuAccelerationEnabled(false);
   if(this.gpu18Instances)this.setStaticInstancingEnabled(false);
-  const old=this.model;this.animation?.dispose();this.skinProbe=null;this.skinReport=null;this.model=file.scene;this.animation=controller;this.orbit=orbit;
+  const old=this.model;this.disposeWorldActorMotion();this.animation?.dispose();this.skinProbe=null;this.skinReport=null;this.model=file.scene;this.animation=controller;this.orbit=orbit;
   this.scene.add(file.scene);if(old){this.scene.remove(old);this.release(old);}
   const radius=Math.max(size.x,size.y,size.z,.01);this.camera.position.copy(center).add(new THREE.Vector3(0,radius*.12,radius*1.7));this.camera.near=radius/1000;this.camera.far=radius*100;this.camera.updateProjectionMatrix();this.controls.target.copy(center);this.controls.update();
   return file.animations.map((c,i)=>({index:i,name:c.name||'片段 '+(i+1),duration:c.duration}));
