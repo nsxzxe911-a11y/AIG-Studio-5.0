@@ -1,0 +1,71 @@
+name: AIG Three-Project Real3D NC-First Numerical Simulation V1.2 Gate
+on:
+  push:
+    branches:
+      - repair/core-first-fastmodel-20261021
+    paths:
+      - 'formal-web/shared-3d/**'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-real3d-nc-v1-2*'
+      - 'formal-web/school-3d/fastmodel/single-photo/build.mjs'
+      - '.github/workflows/aig-shared-real3d-v1-2.yml'
+  workflow_dispatch:
+jobs:
+  nc-read-only:
+    name: Limited NC working copy, real voxel geometry and browser phone desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Syntax of NC source parser, genuine mesh update and browser UI
+        run: |
+          node --check ../../../shared-3d/aig-real3d-nc-preview-1-2.mjs
+          node --check ../../../shared-3d/aig-real3d-nc-lab.mjs
+          node --check tests/aig-real3d-nc-v1-2.test.mjs
+          node --check tests/aig-real3d-nc-v1-2.real-browser.mjs
+      - name: Atomic limited NC parser, G0 G1 stock volume and unsupported Fanuc safety
+        run: |
+          node --test tests/aig-real3d-nc-v1-2.test.mjs
+          node --test tests/aig-real3d-stock-v1-1.test.mjs
+          node --test tests/aig-real3d-shared-v1.test.mjs
+      - name: Source-exact offline package without deleting older workspaces
+        run: |
+          npm run build
+          test -s dist/shared-3d/aig-real3d-nc-preview-1-2.mjs
+          test -s dist/shared-3d/aig-real3d-nc-lab.html
+          test -s dist/shared-3d/aig-real3d-nc-lab.mjs
+          cmp ../../../shared-3d/aig-real3d-nc-preview-1-2.mjs dist/shared-3d/aig-real3d-nc-preview-1-2.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real on-screen phone and desktop NC copy to WebGL stock erosion
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig-nc1-2.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-real3d-nc-v1-2.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-1-2-Limited-NC-Working-Copy-Genuine-3D-Voxel-GPU-Evidence
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-nc-v1-2/
+          if-no-files-found: warn
+      - name: Explicit production safety limits
+        if: always()
+        run: |
+          {
+            echo 'NC_PARSER=ONLY_G21_G90_G54_G0_G1_AND_M3_M5_M30'
+            echo 'G2_G3_G43_G34_G81_G83_M6_SUBPROGRAMS=BLOCKED'
+            echo 'G0=ZERO_VOXEL_MATERIAL_REMOVAL'
+            echo 'G1=DISCRETE_NUMERICAL_3D_VOXEL_REMOVAL'
+            echo 'PHYSICAL_0_001_MM_SURFACE_ACCURACY=NOT_VERIFIED'
+            echo 'FANUC_PRODUCTION_NC_SAFETY=NOT_CERTIFIED'
+            echo '3_TO_6_AXIS_MACHINE_ROTARY_KINEMATICS=NOT_VERIFIED'
+            echo 'LIVE_MACHINE_COMMUNICATION=DISABLED'
+            echo 'ANDROID_WINDOWS_NATIVE_FPS=NOT_VERIFIED'
+          } >> "$GITHUB_STEP_SUMMARY"
