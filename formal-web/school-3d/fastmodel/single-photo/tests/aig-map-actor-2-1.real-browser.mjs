@@ -157,10 +157,21 @@ try{
    await choose('world-map-feature','school');
    await page.locator('#world-align-offset-x').fill('2');
    await page.locator('#world-align-offset-z').fill('-1');
+   const preAlignRevision=before.revision;
    await page.locator('#world-align').click();
+   // The preceding preview already said "已自動保存". Never reuse that stale
+   // message as evidence that this async map alignment has committed.
+   await page.waitForFunction(previous=>{
+    try{
+     const doc=JSON.parse(document.getElementById('world-proof').textContent);
+     const pos=doc.objects[1]?.xyz||[];
+     return doc.revision>previous&&pos.length===3&&
+      pos[0]===22&&pos[1]===0&&pos[2]===29;
+    }catch{return false}
+   },preAlignRevision,{timeout:10000});
+   const after=JSON.parse(await page.locator('#world-proof').textContent());
    await page.waitForFunction(()=>document.getElementById('world-status')
     .textContent.includes('已自動保存'),null,{timeout:10000});
-   const after=JSON.parse(await page.locator('#world-proof').textContent());
    assert.deepEqual(after.objects[1].xyz,[22,0,29]);
    assert.equal(after.objects[1].sourceSHA,before.objects[1].sourceSHA);
    assert.deepEqual(after.objects[1].scale,before.objects[1].scale);
