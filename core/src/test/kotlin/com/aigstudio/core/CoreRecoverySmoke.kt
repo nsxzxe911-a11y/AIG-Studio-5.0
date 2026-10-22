@@ -249,6 +249,19 @@ fun main() {
     check(runCatching{CamFeatureRecognizer.recognize(overlappingRectangles)}.isFailure) {
         "Intersecting CAD contours must not be assigned CAM roles"
     }
+    check(runCatching{
+        CamModel.fromCad(90009L,DrawingSnapshot(crossedLines),CamSettings())
+    }.isFailure) { "Actual AUTO CAM must block bowtie before NC post" }
+    check(runCatching{
+        CamModel.fromCad(90010L,DrawingSnapshot(overlappingRectangles),CamSettings())
+    }.isFailure) { "Actual AUTO CAM must block overlapping closed profiles" }
+    val validOpen=CamModel.fromCad(90011L,
+        DrawingSnapshot(listOf(Line(id="OPEN_LINE",a=Vec2(0.0,0.0),
+            b=Vec2(25.0,0.0)))),CamSettings())
+    check(validOpen.toolpaths.flatMap{it.moves}.any{!it.rapid}) {
+        "Legitimate open CAD line workflow must remain operational"
+    }
+    println("STUDIO_CAD_TO_CAM_SAFETY_GATE_PASS|BOWTIE_BLOCKS_NC|OVERLAP_BLOCKS_NC|OPEN_LINE_RETAINED")
     println("STUDIO_CAD_TOPOLOGY_GATE_PASS|SEPARATE_OUTER|NESTED_HOLE|ISLAND|SELF_INTERSECTION_BLOCK|OVERLAP_BLOCK|NONFINITE_BLOCK")
     println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|3AX_FANUC_G0_G1|6AX_C_NC_BLOCKED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE|CAD_AUTO_SIM_NC|NC_FIRST_EVENTS")
 }
