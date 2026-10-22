@@ -38,7 +38,7 @@ const videoTrack={kind:'video',stop:()=>{stopped++},
  requestFrame:()=>{requestedRealFrames++}};
 const fakeCanvas={
  width:0,height:0,
- captureStream:fps=>{assert.equal(fps,30);return {
+ captureStream:fps=>{assert.equal(fps,0);return {
   getVideoTracks:()=>[videoTrack]
  }},
  getContext:()=>({
@@ -119,6 +119,7 @@ test('2.5 actual canvas frames are composed, subtitles pixel-burnt and real code
  assert.equal(done.evidence.actualFramesComposited,2);
  assert.equal(done.evidence.manualCanvasFrameCaptureSupported,true);
  assert.equal(done.evidence.explicitCanvasCaptureRequests,2);
+ assert.equal(done.evidence.canvasStreamMode,'EXPLICIT_SOURCE_PIXEL_FRAMES');
  assert.equal(requestedRealFrames,2);
  assert.equal(done.evidence.sourceSubtitlePixelsBurnedIntoCanvas,true);
  assert.equal(done.evidence.generatedHumanMovement,false);
