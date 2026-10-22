@@ -171,7 +171,7 @@ export function createAIG3DRenderer(canvas,{pixelRatio=1.25,maxFramePixels=10500
  function renderPaths(segments,vp){
   const rapid=[],feed=[];
   for(const s of segments)(s.motion==='G0'?rapid:feed).push(...s.from,...s.to);
-  gl.useProgram(lineProg);gl.uniformMatrix4fv(lu.model,false,identity);
+  gl.useProgram(lineProg);gl.uniformMatrix4fv(lu.model,false,identity());
   gl.uniformMatrix4fv(lu.vp,false,vp);gl.disable(gl.CULL_FACE);
   for(const [points,col] of [[rapid,[.57,.65,.71,1]],[feed,[.09,.75,1,1]]]){
    if(!points.length)continue;
