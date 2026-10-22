@@ -20,8 +20,8 @@
   - 1.6 資源管理真 WebGL browser PASS（手機/電腦 G0/G1 Buffer created=2、mesh evictions=11），既有 1.3 G0/G1 數值回歸亦 PASS。
   - 真動畫 1.7 evidence artifact #12448412550。
   - 原生 Artifact ZIP 已取回逐檔檢查：手機 84 個實際渲染 callback 中有 **15 筆**有效 async GPU timer，p95=**48.991295ms**；桌面 65 幀 callback 有 **9 筆**有效 GPU timer，p95=**55.573801ms**。這些發生在 GitHub Headless Chromium／SwiftShader **軟體 WebGL 測試環境**，絕不能稱為真 Android 或 Windows 獨顯 GPU 效能，也不能宣稱比 1.6 快多少百分比。
-  - 原測試在 GPU renderer dispose 後才截圖，造成**空白 Canvas 截圖證據缺陷**；真幾何、Quaternion 動畫與 Render draw calls 數值 Gate PASS。已修成先獨立擷取正在顯示的 WebGL Canvas 再 cleanup，必須等新版 #39832016004 CI 實際 SUCCESS 和檢視其 PNG 才算視覺截圖 Gate PASS。
-- 完整 FastModel 7.x 專案 regression #39831083940 在建檔時未全部完成，**不可宣稱 8/8 PASS**。
+  - 原測試在 GPU renderer dispose 後才截圖，造成**空白 Canvas 截圖證據缺陷**；真幾何、Quaternion 動畫與 Render draw calls 數值 Gate PASS。已改成先獨立擷取仍在渲染的 WebGL Canvas 再 cleanup；新版 [#39832016004](https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39832016004) 已 **completed/success** 並下載 Artifact **#12449815943**，實際打開桌面 PNG 確認 WebGL 立體技術 GLB 可見、非黑畫面；手機同樣通過獨立 Canvas 畫面檢查。
+- 完整 FastModel 7.x 專案 regression #39831083940 已有 7/8 個工作 completed/success，僅 7.11 獨立特徵對應 Gate 在 2026-10-23 仍 in_progress；**不能提前標示整套 FastModel 8/8 PASS**。
 - 原 Render LIVE branch `web/aig-dual-formal-runtime-20261016` 與本修復 branch 的 `app.mjs` / `viewer.mjs` 大幅分歧。**不得整包覆蓋網頁程式**；以 isolated integration / exact source diff 加入網站，在 LIVE browser Gate PASS 前仍維持現網站版本。
 
 ## 明確未通過
@@ -33,3 +33,8 @@
 1. 完成 #39831083940 全部原 FastModel 7.x 回歸；任何 RED 都先排除。
 2. 以核准的真 GLB 在 Android/Windows（或真機對應 Chromium）測 GPU 有效毫秒、FPS p50/p95、卡頓比例、畫質切換前後比較，記下裝置條件；合成 GLB Gate 不代表實用速度提升。
 3. 保持正式 AIG 網站原版本，先做 branch-by-branch module delta 和原 UI Authority 逐頁 Gate，再部署獨立的新 FastModel GPU 1.7 頁，不跨案覆寫。
+
+## 最新完整截圖 Gate 補充
+- 修正版 1.7 Chromium 手機：85 個 UI frame callbacks／15 個有效 `EXT_disjoint_timer_query_webgl2` GPU samples，p95 = 59.385669 ms；Desktop：54 幀／6 個有效 GPU samples，p95 = 66.249576 ms。均是在 GitHub **SwiftShader 軟體後端**，不是原生裝置效能。
+- 兩種測試皆將真 GLTF 2.0 動畫 GLB 送入既有 Three.js PhotoViewer，保持 1 個 Quaternion Clip、原 vertex positions 無修改、GLB 來源物件不被替換；資料是技術立方體不是使用者正式女主角。測試來源與截圖可在 PR #28 的 Artifact #12449815943 查核。
+- 以後的接續以 **新版視覺及數值 Gate #39832016004** 為可信來源，首輪測試的黑圖不能當作通過證據。
