@@ -34,7 +34,8 @@ function paint(){
   const result=renderer.render(dataset.scene);
   evidence(result);
   if(result.status==='WEBGL_XYZ_TRIANGLES_RENDERED')
-   status('真 WebGL 正在顯示 '+result.triangles+' 個 XYZ 三角形；'+
+   status('真 WebGL 正在顯示 '+result.triangles+' 個 XYZ 三角形（'+
+    result.antialiasProfile+'／'+result.effectiveSuperSampleScale.toFixed(2)+'× 抗鋸齒）；'+
     '刀路 G0 '+result.rapid+'／G1 '+result.feed+
     ' 為明確標記的示範疊層；未連接機台。',true);
   else status('目前無可用 GPU 繪圖介面：'+result.status);
@@ -53,6 +54,20 @@ function change(){
  paint();
 }
 $('profile').addEventListener('change',change);
+$('quality').addEventListener('change',()=>{
+ if(renderer.status!=='READY')return;
+ try{
+  renderer.setQuality($('quality').value);
+  paint();
+  const budget=renderer.getQuality().lastFrameBudget;
+  $('quality-hint').textContent='抗鋸齒：'+$('quality').selectedOptions[0].text+
+   '；有效渲染倍率 '+budget.effectiveScale.toFixed(2)+'×；'+
+   (budget.cappedBySafety?'已依顯存上限自動降低實際取樣尺寸。':'目前未觸發像素上限。')+
+   ' MSAA '+(renderer.getQuality().hardwareMSAAContextEnabled?
+    '裝置回報可用，樣本數 '+renderer.getQuality().reportedMSAASamples:'未啟用或不支援')+
+   '。原始 3D 幾何與 NC 未修改。';
+ }catch(e){status('BLOCKED：畫質切換失敗：'+String(e.message||e));}
+});
 $('projection').addEventListener('change',()=>{
  if(renderer.status!=='READY')return;
  try{renderer.setCamera({projection:$('projection').value});paint();}
