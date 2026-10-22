@@ -36,8 +36,16 @@ try{
    assert.equal(r.modelObjectRetained,true);
    assert.equal(r.noAndroidOrWindowsNativeFpsClaim,true);
    assert.deepEqual(errors,[]);
+   const actualFrame=await page.locator('#viewer').screenshot({
+    path:dir+'/'+device.name+'-ACTUAL-WEBGL-GLB-CANVAS.png'
+   });
+   // Black/cleared canvas compresses to a tiny PNG. Preserve a genuine
+   // submitted model frame before releasing WebGL resources.
+   assert.ok(actualFrame.byteLength>3000,
+    'AIG17_GPU_EVIDENCE_CANVAS_BLANK_OR_DISPOSED_'+actualFrame.byteLength);
    await page.screenshot({path:dir+'/'+device.name+'-animated-real-GLB-gpu-evidence.png',
     fullPage:true});
+   await page.evaluate(()=>window.__aig17Cleanup?.());
    await writeFile(dir+'/'+device.name+'-realGLB-gpu-proof.json',JSON.stringify({
     device:device.name,actualRealGLTF2Binary:true,verifiedOnlySyntheticTestAsset:true,
     realGPUFramesSubmitted:r.samples,
