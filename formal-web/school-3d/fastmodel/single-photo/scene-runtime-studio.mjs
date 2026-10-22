@@ -1,7 +1,8 @@
 import {PhotoViewer} from './viewer.mjs';
 import {buildAIG23PhotoActor} from './aig-photo-rig-world-2-3.mjs';
 import {detectAIG24Image} from './aig-auto-image-detect-2-4.mjs';
-import {AIG25WorldMovieRecorder,validateAIG25TrueWorldMovie}
+import {AIG25WorldMovieRecorder,validateAIG25TrueWorldMovie,
+ verifyAIG25DecodedFrame}
  from './aig-true-world-movie-2-5.mjs';
 import {openAIG716AssetLibrary} from './aig-external-asset-library-7-16.mjs';
 import {AIG19SceneRuntime} from './aig-scene-lifecycle-1-9.mjs';
@@ -755,6 +756,12 @@ async function finishMovie25({cancel=false,reason=''}={}){
   if(worldRuntime?.scene)
    verifyAIG22Story(session.plan,worldRuntime.scene,
     worldRuntime.listSourceActorClips());
+  // A correct EBML/MP4 magic is necessary but not sufficient.
+  // Decode a TRUE first video frame before replacing the last good film.
+  const decoded=await verifyAIG25DecodedFrame(output.blob);
+  output.evidence.browserDecodedFrameVerified=true;
+  output.evidence.decodedFrameResolution=[
+   decoded.actualVideoWidth,decoded.actualVideoHeight];
   const url=URL.createObjectURL(output.blob);
   const old=movie25DownloadUrl;movie25DownloadUrl=url;
   const a=$('movie25-download');
@@ -763,7 +770,7 @@ async function finishMovie25({cancel=false,reason=''}={}){
   if(old)URL.revokeObjectURL(old);
   $('movie25-proof').textContent=JSON.stringify(output.evidence,null,2);
   film25Status('已實際錄製 '+output.evidence.actualFramesComposited+
-   ' 幀真 WebGL 3D 畫面，已編碼 '+output.evidence.containerExtension+
+   ' 幀真 WebGL 3D 畫面，已編碼並解碼確認 '+output.evidence.containerExtension+
    '，大小 '+mib(output.blob.size)+'。字幕已燒入影片，沒有假人物影像。');
   try{
    const saved=await library.importBlob(output.blob,{
