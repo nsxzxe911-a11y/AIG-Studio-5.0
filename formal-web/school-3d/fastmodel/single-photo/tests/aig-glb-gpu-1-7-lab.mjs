@@ -77,9 +77,14 @@ try{
   runtimeSource:'ACTUAL_VALID_GLB_GENERATED_IN_ISOLATED_TEST_NOT_HUMAN_GLTF'
  };
  update(report);
- viewer.onFrameMeasured=null;
- viewer.renderer.setAnimationLoop(null);viewer.resize.disconnect();
- viewer.animation?.dispose();viewer.controls.dispose();viewer.renderer.dispose();
+ // Keep the real submitted GPU frame visible until Playwright takes its
+ // screenshot; otherwise the evidence can show a black, disposed canvas.
+ window.__aig17Cleanup=()=>{
+  viewer.onFrameMeasured=null;
+  viewer.renderer.setAnimationLoop(null);
+  viewer.resize.disconnect();
+  viewer.animation?.dispose();viewer.controls.dispose();viewer.renderer.dispose();
+ };
 }catch(error){
  update({status:'FAIL',exception:String(error.stack||error)});
 }
