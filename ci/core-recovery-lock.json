@@ -11,7 +11,7 @@
   "modules": [
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/Cam.kt",
-      "gitBlobSha": "4c1da1ff89d1e53f5c3c90f1cf7264dd56f998bc"
+      "gitBlobSha": "389bc751e6da183e722f14e1de12142d91bbd3f8"
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/CamWorkflowEngine.kt",
@@ -63,7 +63,7 @@
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/CadAdvancedTools.kt",
-      "gitBlobSha": "b1907c399e177df965cbac755d0505111ccd93ff"
+      "gitBlobSha": "7080a637e048ca4fad65f3395e73d134211f6215"
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/CadExactInput.kt",
@@ -131,5 +131,6 @@
   "finiteCamConfigurationProof": "CNC core CAM settings rejects NaN/Inf for diameter, depth, safeZ, feed, lead in/out; executable CoreRecoverySmoke",
   "formalRgbUnifiedContract": "Core-first UI phase: 10-page order HOME/CAD/CAM/SIM/3AX/4AX/5AX/6AX/NC/AI; verified source theme parity and fail-closed surface ID; approved assets must be separately proven by byte SHA and screenshots",
   "readOnlyInteroperabilityContract": "G0/G1 tool-center preview exported from real native CNC path; golden SHA256 shared with FastModel; no machine execution or rig / collision approval",
-  "cadTopologyUpgrade": "Disjoint OUTER, nesting parity, self-intersecting and overlapping contours fail closed; executable real CAD feature recovery smoke tests"
+  "cadTopologyUpgrade": "Disjoint OUTER, nesting parity, self-intersecting and overlapping contours fail closed; executable real CAD feature recovery smoke tests",
+  "cadActualCamSafetyGate": "Real AUTO CAM Engine requires validated closed linework before G1/NC; bowtie/overlapping reject; independent open-line paths preserved in smoke test."
 }
