@@ -43,14 +43,14 @@ try{
     gl.readPixels(x,y,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);
     return Array.from(px);
    });
-   const original=await page.locator('#view').evaluate(c=>c.toDataURL('image/png'));
+   const original=await page.locator('#view').screenshot();
    await page.locator('#front').click();
    await page.waitForFunction(()=>{
     try{return JSON.parse(document.getElementById('proof').textContent)
       .renderer.cameraProjection==='orthographic';}catch{return false;}
    });
-   const changed=await page.locator('#view').evaluate(c=>c.toDataURL('image/png'));
-   assert.notEqual(original,changed,'Real GPU projection must change rendered pixels');
+   const changed=await page.locator('#view').screenshot();
+   assert.notDeepEqual(original,changed,'Real GPU projection must change rendered pixels');
    await page.locator('#profile').selectOption('FastModel');
    await page.waitForFunction(()=>{
     try{const e=JSON.parse(document.getElementById('proof').textContent);
@@ -60,7 +60,7 @@ try{
    const fast=JSON.parse(await page.locator('#proof').textContent());
    assert.equal(fast.audit.units,'RELATIVE');
    assert.equal(fast.audit.verifiedNCFeedOrStockRemoval,false);
-   const preMove=await page.locator('#view').evaluate(c=>c.toDataURL('image/png'));
+   const preMove=await page.locator('#view').screenshot();
    await page.locator('#spindle-y').evaluate(e=>{
     e.value='.7';e.dispatchEvent(new Event('input',{bubbles:true}));
    });
@@ -68,8 +68,8 @@ try{
     try{return JSON.parse(document.getElementById('proof').textContent).audit.revision>=5;}
     catch{return false;}
    },null,{timeout:5000});
-   const afterMove=await page.locator('#view').evaluate(c=>c.toDataURL('image/png'));
-   assert.notEqual(preMove,afterMove,'Actual world XYZ building movement changes 3D pixels');
+   const afterMove=await page.locator('#view').screenshot();
+   assert.notDeepEqual(preMove,afterMove,'Actual world XYZ building movement changes 3D pixels');
    await page.locator('#profile').selectOption('5AX');
    await page.waitForFunction(()=>{
     try{const e=JSON.parse(document.getElementById('proof').textContent);
@@ -84,8 +84,8 @@ try{
     JSON.stringify({device:d.name,
      actualGLRender:true,source:'procedural demonstration only',
      initial:first,FastModel:fast,fiveAX:five,
-     GPUCanvasChangedOnCameraSwitch:original!==changed,
-     GPUCanvasChangedOnGeometryTransform:preMove!==afterMove,
+     GPUCanvasChangedOnCameraSwitch:!original.equals(changed),
+     GPUCanvasChangedOnGeometryTransform:!preMove.equals(afterMove),
      noMaterialRemovalOrCNCCommands:true,
      actualNativeAPKAndEXEVerified:false},null,2)+'\n');
    assert.deepEqual(errors,[]);
