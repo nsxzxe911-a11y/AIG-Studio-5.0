@@ -131,7 +131,7 @@
     },
     {
       "path": "core/src/main/kotlin/com/aigstudio/core/AigMechanicalNativeBridge.kt",
-      "gitBlobSha": "b15825e683bc95c0d5aadeb8143839ad2f8dcf55"
+      "gitBlobSha": "a208a7d001f45cebe09524ed6005eb9d8fec48b3"
     }
   ],
   "machineTransportVerification": "NO_REAL_HANDSHAKE_LINK_STARTS_DISCONNECTED_CLICK_WARNING",
