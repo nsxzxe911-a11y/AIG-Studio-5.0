@@ -111,6 +111,20 @@ export function suggestAIG711StereoMatches(frameA,frameB,options={}){
  const opt=config(options),a=luminance(frameA),b=luminance(frameB);
  if(a.width!==b.width||a.height!==b.height)
   throw Error('AIG711_SAME_RECTIFIED_IMAGE_DIMENSIONS_REQUIRED');
+ // No physical baseline is observable if source images contain no meaningful
+ // photometric change. A same-frame pair must never create false depth merely
+ // because similar hair/skin textures repeat at other image X positions.
+ let globalDiff=0,globalN=0;
+ for(let i=0;i<a.gray.length;i+=11){globalDiff+=Math.abs(a.gray[i]-b.gray[i]);globalN++;}
+ globalDiff/=Math.max(1,globalN);
+ if(globalDiff<.012)return {schema:AIG711_SCHEMA,config:opt,width:a.width,height:a.height,
+  cornersA:0,cornersB:0,forwardProposals:0,backwardProposals:0,
+  mutualMatches:0,rawMutualMatches:0,coherentDisparityMatches:0,
+  photometricDifference:globalDiff,candidates:[],previewOnly:true,sourcePixelGeometry:true,
+  cameraIntrinsicsSolved:false,cameraExtrinsicsSolved:false,
+  epipolarModel:'USER_ASSERTED_HORIZONTAL_RECTIFICATION',
+  realXYZReconstructed:false,complete3DHumanReconstructed:false,
+  rejectedReason:'INSUFFICIENT_FRAME_CHANGE'};
  const left=detect(a,opt),right=detect(b,opt),
   forward=bestMatch(left,right,opt,1),
   backward=bestMatch(right,left,opt,-1),
@@ -130,11 +144,30 @@ export function suggestAIG711StereoMatches(frameA,frameB,options={}){
    source:'AUTO_PHOTO_PATCH_MATCH_BIDIRECTIONAL_RECTIFIED_ONLY'
   });
  }
- accepted.sort((a,b)=>b.confidence-a.confidence);
+ // Patch appearance on two valid views should be mutually strong.
+ // Distinct repeated motifs can otherwise "match" faraway textures.
+ // A dominant coherent horizontal stereo-parallax set must exist; reject
+ // split/repeated texture modes instead of inventing a pseudo surface.
+ const rawMutualMatches=accepted.length;
+ const reliable=accepted.filter(p=>p.confidence>=.72&&p.patchError<=.18);
+ const bins=new Map();
+ for(const p of reliable){
+  const key=Math.round(p.disparityPx/3);
+  bins.set(key,(bins.get(key)||0)+1);
+ }
+ const strongest=[...bins.entries()].sort((a,b)=>b[1]-a[1])[0];
+ const disparityPeak=strongest?strongest[0]*3:null;
+ const inliers=disparityPeak===null?[]:reliable.filter(p=>
+  Math.abs(p.disparityPx-disparityPeak)<=Math.max(2.5,disparityPeak*.16));
+ const stable=inliers.length>=4&&inliers.length/Math.max(1,reliable.length)>=.60;
+ const final=stable?inliers:[],
+  coherence=stable?'COHERENT_HORIZONTAL_STEREO_CANDIDATES':'NO_DOMINANT_PARALLAX_BLOCKED';
+ final.sort((a,b)=>b.confidence-a.confidence);
  return {schema:AIG711_SCHEMA,config:opt,width:a.width,height:a.height,
   cornersA:left.length,cornersB:right.length,
   forwardProposals:forward.length,backwardProposals:backward.length,
-  mutualMatches:accepted.length,candidates:accepted,
+  mutualMatches:final.length,rawMutualMatches,coherentDisparityMatches:final.length,
+  photometricDifference:globalDiff,disparityPeakPx:disparityPeak,coherence,candidates:final,
   previewOnly:true,sourcePixelGeometry:true,
   cameraIntrinsicsSolved:false,cameraExtrinsicsSolved:false,
   epipolarModel:'USER_ASSERTED_HORIZONTAL_RECTIFICATION',
