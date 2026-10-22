@@ -111,7 +111,7 @@ export function inverseAIG75World(rig,expression,world,{iterations=7}={}){
 }
 export function sampleAIG75SDF(rig,expression,world){
  const ref=inverseAIG75World(rig,expression,world);
- return {distance:sampleImplicitVolume(rig.field,ref),referencePoint:ref,3d:true};
+ return {distance:sampleImplicitVolume(rig.field,ref),referencePoint:ref,threeD:true};
 }
 export function normalAIG75SDF(rig,expression,point,delta=.002){
  if(!finite(delta)||delta<=0||delta>.02)throw Error('AIG75_NORMAL_DELTA_INVALID');
