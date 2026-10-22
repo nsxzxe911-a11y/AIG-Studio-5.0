@@ -103,12 +103,12 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig-nc13-http.log 2>&1 &
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-asset-library-7-16.real-browser.mjs
           node tests/aig-real3d-replay-v1-3.real-browser.mjs
           node tests/aig-real3d-gpu-v1-6.real-browser.mjs
           node tests/aig-glb-gpu-v1-7.real-browser.mjs
           node tests/aig-metric-stereo-7-13.real-browser.mjs
           node tests/aig-heroine-scan-7-14.real-browser.mjs
-          node tests/aig-asset-library-7-16.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
