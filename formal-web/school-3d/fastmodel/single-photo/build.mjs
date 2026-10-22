@@ -6,6 +6,10 @@ await build({entryPoints:['asset-library-studio.mjs'],bundle:true,
  format:'iife',platform:'browser',target:['chrome100','edge100'],
  outfile:'dist/asset-library-studio.js',minify:true,legalComments:'eof'});
 fs.copyFileSync('asset-library-studio.html','dist/asset-library-studio.html');
+await build({entryPoints:['scene-runtime-studio.mjs'],bundle:true,
+ format:'iife',platform:'browser',target:['chrome100','edge100'],
+ outfile:'dist/scene-runtime-studio.js',minify:true,legalComments:'eof'});
+fs.copyFileSync('scene-runtime-studio.html','dist/scene-runtime-studio.html');
 await build({entryPoints:['metric-stereo-studio.mjs'],bundle:true,
  format:'iife',platform:'browser',target:['chrome100','edge100'],
  outfile:'dist/metric-stereo-studio.js',minify:true,legalComments:'eof'});
