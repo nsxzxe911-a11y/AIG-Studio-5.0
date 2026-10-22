@@ -29,7 +29,7 @@ function normalMatrix(m){
  const A=e*i-f*h,B=f*g-d*i,C=d*h-e*g,D=c*h-b*i,E=a*i-c*g,F=b*g-a*h,
   G=b*f-c*e,H=c*d-a*f,I=a*e-b*d,det=a*A+b*B+c*C;
  if(Math.abs(det)<1e-10)throw Error('AIG3D_NORMAL_MATRIX_SINGULAR');
- return new Float32Array([A,B,C,D,E,F,G,H,I].map(v=>v/det));
+ return new Float32Array([A,D,G,B,E,H,C,F,I].map(v=>v/det));
 }
 function shader(gl,t,src){
  const sh=gl.createShader(t);gl.shaderSource(sh,src);gl.compileShader(sh);
