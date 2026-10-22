@@ -263,5 +263,53 @@ fun main() {
     }
     println("STUDIO_CAD_TO_CAM_SAFETY_GATE_PASS|BOWTIE_BLOCKS_NC|OVERLAP_BLOCKS_NC|OPEN_LINE_RETAINED")
     println("STUDIO_CAD_TOPOLOGY_GATE_PASS|SEPARATE_OUTER|NESTED_HOLE|ISLAND|SELF_INTERSECTION_BLOCK|OVERLAP_BLOCK|NONFINITE_BLOCK")
+    // Analytic CAD rather than raster pixels or sampled intersections.
+    fun near(actual:Double,expected:Double)=kotlin.math.abs(actual-expected)<1e-8
+    val analytic=AigAnalyticCadKernel
+    val crossing=analytic.segmentSegment(Vec2(0.0,0.0),Vec2(10.0,10.0),
+        Vec2(0.0,10.0),Vec2(10.0,0.0))
+    check(crossing.size==1 && near(crossing[0].x,5.0) && near(crossing[0].y,5.0))
+    check(analytic.segmentSegment(Vec2(0.0,0.0),Vec2(1.0,0.0),
+        Vec2(0.0,1.0),Vec2(1.0,1.0)).isEmpty())
+    check(runCatching{analytic.segmentSegment(Vec2(0.0,0.0),Vec2(5.0,0.0),
+        Vec2(2.0,0.0),Vec2(8.0,0.0))}.isFailure)
+    val circleHits=analytic.segmentCircle(Vec2(-10.0,0.0),Vec2(10.0,0.0),
+        Vec2(0.0,0.0),5.0)
+    check(circleHits.size==2 && near(circleHits[0].x,-5.0) &&
+        near(circleHits[1].x,5.0))
+    val tangent=analytic.segmentCircle(Vec2(-5.0,5.0),Vec2(5.0,5.0),
+        Vec2(0.0,0.0),5.0)
+    check(tangent.size==1 && near(tangent[0].y,5.0))
+    val circles=analytic.circleCircle(Vec2(0.0,0.0),5.0,
+        Vec2(10.0,0.0),5.0)
+    check(circles.size==1 && near(circles[0].x,5.0))
+    val onlyQuarter=analytic.segmentArc(Vec2(-2.0,0.0),Vec2(2.0,0.0),
+        AigAnalyticCadKernel.ArcSpec(Vec2(0.0,0.0),1.0,0.0,Math.PI/2))
+    check(onlyQuarter.size==1 && near(onlyQuarter[0].x,1.0))
+    val square=listOf(Vec2(0.0,0.0),Vec2(10.0,0.0),
+        Vec2(10.0,10.0),Vec2(0.0,10.0),Vec2(0.0,0.0))
+    val outside=analytic.offsetClosedConvex(square,2.0)
+    val inside=analytic.offsetClosedConvex(square,-2.0)
+    check(outside.size==5 && near(outside[0].x,-2.0) &&
+        near(outside[0].y,-2.0) && near(outside[2].x,12.0))
+    check(inside.size==5 && near(inside[0].x,2.0) &&
+        near(inside[0].y,2.0) && near(inside[2].x,8.0))
+    check(runCatching{analytic.offsetClosedConvex(square,-6.0)}.isFailure)
+    val concave=listOf(Vec2(0.0,0.0),Vec2(4.0,0.0),
+        Vec2(4.0,4.0),Vec2(2.0,1.0),Vec2(0.0,4.0),Vec2(0.0,0.0))
+    check(runCatching{analytic.offsetClosedConvex(concave,1.0)}.isFailure)
+    val vertices=listOf(Triple(0.0,0.0,0.0),Triple(1.0,0.0,0.0),
+        Triple(0.0,1.0,0.0),Triple(0.0,0.0,1.0))
+    val faces=listOf(Triple(0,2,1),Triple(0,1,3),Triple(0,3,2),Triple(1,2,3))
+    val shell=AigTriangleShellTopology.requireClosed(vertices,faces)
+    check(shell.uniqueEdges==6 && shell.faceCount==4 &&
+        near(shell.absVolumeMm3,1.0/6.0))
+    check(runCatching {
+        AigTriangleShellTopology.requireClosed(vertices,faces.dropLast(1))
+    }.isFailure)
+    check(runCatching {
+        AigTriangleShellTopology.requireClosed(vertices,faces.dropLast(1)+Triple(1,3,2))
+    }.isFailure)
+    println("AIG_ANALYTIC_GEOMETRY_GATE_PASS|LINE_LINE|LINE_CIRCLE|CIRCLE_TANGENT|ARC_SWEEP|CONVEX_OFFSET|INSIDE_COLLAPSE_BLOCK|CONCAVE_BLOCK|3D_CLOSED_SHELL|OPEN_OR_INVERTED_SHELL_BLOCK")
     println("STUDIO_CORE_RECOVERY_SMOKE_PASS|EMPTY_CAD_MANUAL|NO_FAKE_G0_ONLY|REAL_FEED|REMOVAL_CELLS|3AX_FANUC_G0_G1|6AX_C_NC_BLOCKED|ABC_PERSIST|NC_PERSIST|V3_ATOMIC_SAVE|CAD_AUTO_SIM_NC|NC_FIRST_EVENTS")
 }
