@@ -52,7 +52,8 @@ class BuilderTests(unittest.TestCase):
             self.assertEqual(len(calls), 2)
             self.assertEqual(calls[1][0], "POST")
             self.assertIn("/actions/workflows/build-download.yml/dispatches", calls[1][1])
-            self.assertEqual(calls[1][2], {"ref": "repair/core-first-studio-20261021"})
+            self.assertEqual(calls[1][2]["ref"], "repair/core-first-studio-20261021")
+            self.assertEqual(calls[1][2]["inputs"]["aig_request_id"], result["id"])
             with self.assertRaises(HTTPException) as x:
                 builder.launch(builder.BuildRequest(project="studio"), authorization="Bearer secure-admin")
             self.assertEqual(x.exception.status_code, 409)
@@ -66,6 +67,7 @@ class BuilderTests(unittest.TestCase):
             if path.endswith("/runs/1234"):
                 return {"head_sha": "b"*40,
                         "head_branch": "repair/core-first-aigii-20261021",
+                        "display_title": builder.RUN_TITLE_PREFIX + "id3",
                         "status": "completed", "conclusion": "success",
                         "html_url": "https://github.com/real/build"}
             if path.endswith("/artifacts?per_page=100"):
@@ -87,6 +89,7 @@ class BuilderTests(unittest.TestCase):
             if path.endswith("/runs/1234"):
                 return {"head_sha": "c"*40,
                         "head_branch": "repair/core-first-studio-20261021",
+                        "display_title": builder.RUN_TITLE_PREFIX + "id4",
                         "status": "completed", "conclusion": "success",
                         "html_url": "https://github.com/real/build"}
             if path.endswith("/artifacts?per_page=100"):
@@ -106,10 +109,43 @@ class BuilderTests(unittest.TestCase):
         with patch.object(builder,"github",return_value={
                 "head_sha": "different"*5,
                 "head_branch": "repair/core-first-studio-20261021",
+                        "display_title": builder.RUN_TITLE_PREFIX + "id4",
                 "status": "completed", "conclusion": "success"}):
             with self.assertRaises(HTTPException) as x:
                 builder.run_status(record)
             self.assertEqual(x.exception.status_code, 409)
+
+
+
+    def test_no_ghost_success_when_dispatch_run_does_not_match_unique_request_id(self):
+        record = {"id": "my-request", "project": "studio", "sha": "c"*40,
+                  "branch": "repair/core-first-studio-20261021",
+                  "started": "2026-10-22T00:00:00+00:00", "runId": None,
+                  "state": "QUEUED", "conclusion": None}
+        unrelated = {"id": 444, "head_sha": "c"*40,
+                     "created_at": "2026-10-22T00:00:10Z",
+                     "display_title": builder.RUN_TITLE_PREFIX + "someone-else"}
+        with patch.object(builder,"github",return_value={"workflow_runs": [unrelated]}):
+            status=builder.run_status(record)
+        self.assertEqual(status["state"], "BLOCKED_DISPATCH_TIMEOUT")
+        self.assertFalse(status["downloadReady"])
+        self.assertEqual(record["runId"], None)
+
+    def test_real_concluded_workflow_failure_never_unlocks_download(self):
+        record = {"id": "failed-req", "project": "studio", "sha": "d"*40,
+                  "branch": "repair/core-first-studio-20261021",
+                  "started": "2026-10-22T00:00:00+00:00", "runId": 555,
+                  "state": "RUNNING", "conclusion": None}
+        with patch.object(builder,"github",return_value={
+                 "head_sha": "d"*40,
+                 "head_branch": "repair/core-first-studio-20261021",
+                 "display_title": builder.RUN_TITLE_PREFIX + "failed-req",
+                 "created_at": "2026-10-22T00:00:00Z",
+                 "status": "completed", "conclusion": "failure"}):
+            status = builder.run_status(record)
+        self.assertEqual(status["state"], "BLOCKED_WORKFLOW_FAILED")
+        self.assertFalse(status["downloadReady"])
+        self.assertFalse(status["releaseCertified"])
 
 
 if __name__ == "__main__":
