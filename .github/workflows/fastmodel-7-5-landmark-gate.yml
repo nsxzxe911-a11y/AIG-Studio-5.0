@@ -1,0 +1,69 @@
+name: FastModel 7.5 photo landmarks XYZ source and browser
+on:
+  push:
+    branches:
+      - repair/core-first-fastmodel-20261021
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-landmark-rig-7-5.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/landmark-studio.html'
+      - 'formal-web/school-3d/fastmodel/single-photo/landmark-studio.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-landmark-rig-7-5.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-landmark-rig-7-5.real-browser.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/build.mjs'
+      - '.github/workflows/fastmodel-7-5-landmark-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reviewed-source-xyz-rig:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Dedicated source syntax
+        run: |
+          node --check aig-landmark-rig-7-5.mjs
+          node --check landmark-studio.mjs
+          node --check tests/aig-landmark-rig-7-5.test.mjs
+          node --check tests/aig-landmark-rig-7-5.real-browser.mjs
+      - name: Actual reviewed XY to XYZ numeric rig tests
+        run: node --test tests/aig-landmark-rig-7-5.test.mjs
+      - name: Offline standalone viewer build
+        run: |
+          npm run build
+          test -s dist/landmark-studio.html
+          test -s dist/landmark-studio.mjs
+          test -s dist/aig-landmark-rig-7-5.mjs
+          cmp aig-landmark-rig-7-5.mjs dist/aig-landmark-rig-7-5.mjs
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Actual smartphone and desktop Chromium source review
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/aig-7-5-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-landmark-rig-7-5.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FastModel-7-5-Manual-Landmarks-XYZ-Only
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/fastmodel-landmarks-7-5/
+          if-no-files-found: warn
+      - name: Explicit truth label
+        if: always()
+        run: |
+          {
+            echo 'AIG75_SOURCE_XY_LANDMARK_MANUAL_REVIEW_REQUIRED'
+            echo 'AIG75_RAYMARCHED_3D_NUMERIC_FACE_ONLY'
+            echo 'PHOTO_ANATOMICAL_3D_HEAD=NOT_VERIFIED'
+            echo 'ANDROID_WINDOWS_NATIVE_FPS=NOT_VERIFIED'
+            echo 'MMO_ONLINE_SERVICE=NOT_IMPLEMENTED'
+            echo 'REAL_HEROINE_APPROVAL=BLOCKED'
+          } >> "$GITHUB_STEP_SUMMARY"
