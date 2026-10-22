@@ -105,16 +105,18 @@ function jacobian(pose,p,d=.002){
 }
 function maskSamples(pose,type,maximum=30){
  const r=pose.layers.regions,mask=type==='hair'?r.hairMask:r.neckMask,
+  count=type==='hair'?r.hairPixels:r.neckPixels,
   field=pose.layers.profile.rig.field,[hx,hy]=field.xyBounds,
-  jump=Math.max(1,Math.floor(Math.sqrt(r.width*r.height/maximum)));
- const points=[];
- for(let y=0;y<r.height;y+=jump)for(let x=0;x<r.width;x+=jump){
-  if(mask[y*r.width+x]){
+  interval=Math.max(1,Math.floor(count/maximum));
+ const points=[];let matched=0;
+ for(let y=0;y<r.height&&points.length<maximum;y++)
+  for(let x=0;x<r.width&&points.length<maximum;x++){
+   if(!mask[y*r.width+x])continue;
+   if(matched++%interval!==0)continue;
    const q=[(x/(r.width-1)-.5)*2*hx,(.5-y/(r.height-1))*2*hy,field.halfDepth];
    points.push(warpAIG78Spatial(pose,q));
   }
- }
- return points.slice(0,maximum);
+ return points;
 }
 export function auditAIG78Spatial(pose,expression={}, {grid=6,spacing=.002}={}){
  if(pose?.schema!==AIG78_SCHEMA||!Number.isInteger(grid)||grid<3||grid>14||
@@ -149,7 +151,7 @@ export function auditAIG78Spatial(pose,expression={}, {grid=6,spacing=.002}={}){
  for(const a of hair)for(const b of neck)
   closestHairNeck=Math.min(closestHairNeck,Math.hypot(...sub(a,b)));
  const collisionThreshold=field.cellSize*.55;
- const collisionDetected=closestHairNeck<collisionThreshold;
+ const collisionDetected=hair.length<3||neck.length<3||!finite(closestHairNeck)||closestHairNeck<collisionThreshold;
  return {schema:'AIG_FASTMODEL_7_8_SPATIAL_NECK_HAIR_CONTINUITY_GATE',
   passed:parent.passed&&folds===0&&nonConverged===0&&neckSeamJumps===0&&!collisionDetected,
   parent7_7Passed:parent.passed,sampleCount:grid*grid,minimumJacobian:minJacobian,
