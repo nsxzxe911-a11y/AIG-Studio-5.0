@@ -181,7 +181,7 @@ export async function executeAIGReal3DDual19200({
  if(wasAborted(signal))fail('CANCELLED_BEFORE_DRAWING');
  const start=safeNow(),metrics={drawingChunks:0,drawingVisitedTriangles:0,
   drawingActualVerticesChecked:0,renderPasses:0};
- let scene;
+ let scene,generated=null;
  if(plan.drawingKernel.selectedMethod==='existing-mesh'){
   if(stats.sourceType!=='indexed-scene')fail('RENDERABLE_SCENE_REQUIRED');
   scene=source.scene;
@@ -191,7 +191,12 @@ export async function executeAIGReal3DDual19200({
   const built=await build({source,plan,signal,yieldControl});
   if(!built?.scene||!Array.isArray(built.scene.nodes))
    fail('ALGORITHM_NO_RENDERABLE_SCENE');
-  scene=built.scene;
+  if((plan.drawingKernel.selectedMethod==='sdf'||
+    plan.drawingKernel.selectedMethod==='metaball')&&
+   (built.geometryEvidence?.actualContinuousSurfaceTopologicalPASS!==true||
+    built.geometryEvidence?.surfaceConnectedComponents!==1))
+   fail('GENERATED_SURFACE_NOT_ONE_CLOSED_SHELL');
+  scene=built.scene;generated=built;
  }
  // If available, send a STRUCTURED COPY of real indexed positions to ONE
  // actual browser Worker. GPU remains on the main thread. If unavailable,
@@ -202,9 +207,10 @@ export async function executeAIGReal3DDual19200({
   if(typeof drawingWorkerFactory!=='function')
    fail('CPU_WORKER_FACTORY_MUST_BE_FUNCTION');
   workerProof=await drawingWorkerFactory({scene,plan,signal});
+  const generatedTriangles=nodes.reduce((v,n)=>v+n.mesh.triangleCount,0);
   if(!workerProof||workerProof.actualWorkerThreadsUsed!==1||
    workerProof.actualGpuContextsCreated!==0||
-   workerProof.actualSourceTrianglesInspected!==stats.realWorkUnits)
+   workerProof.actualSourceTrianglesInspected!==generatedTriangles)
    fail('REAL_DRAWING_WORKER_INTEGRITY_FAILED');
   inspected=workerProof.actualSourceVerticesInspected;
   metrics.drawingVisitedTriangles=workerProof.actualSourceTrianglesInspected;
@@ -251,6 +257,9 @@ export async function executeAIGReal3DDual19200({
   gpuEvidence:frame,
   drawingElapsedMs:safeNow()-start,
   verifiedPipelineTraversal:true,
+  renderedScene:scene,
+  generatedGeometryEvidence:generated?.geometryEvidence??null,
+  selectedRealAlgorithm:plan.drawingKernel.selectedMethod,
   appearanceVisuallyApproved:false,
   noHumanPhotoLikenessClaim:true,
   didNotReplaceSourceGeometry:true
