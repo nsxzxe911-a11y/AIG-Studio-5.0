@@ -66,7 +66,7 @@ function samplesFrom(e,ids,{limit=512}={}){
  return training;
 }
 export function trainAIG28PixelModel({
- examples,classIds,epochs=160,learningRate=.15,
+ examples,classIds,epochs=160,learningRate=.40,
  sourceReviewAuthority='EXPLICIT_HUMAN_REVIEW'
 }={}){
  validateClasses(classIds);
@@ -120,6 +120,9 @@ export function trainAIG28PixelModel({
   sourceReviewAuthority,trainSourceSha256:[...sourceIds],
   trainingExamples:examplesStats,epochs,learningRate,
   actualOptimizedWeightCount:weights.length,
+  // Explicit training hyperparameters are part of the SHA'd model.
+  // A small high-learning-rate source-specific fit cannot substitute for
+  // independently reviewed natural-scene IoU; abstain rather than fake it.
   trainingLossInitial:+firstLoss.toFixed(7),
   trainingLossFinal:+lastLoss.toFixed(7),
   trainedWithActualPhotoPixels:true,
