@@ -94,7 +94,12 @@ try{
    await page.locator('#viewport').screenshot({
     path:out+'/'+device.name+'-actual-3d-curved-surface.png'
    });
+   console.log('AIG31_BEFORE_ACTIVATION',device.name,
+    await page.locator('#rig31-status').textContent());
    await page.locator('#rig31-activate').click();
+   console.log('AIG31_AFTER_ACTIVATION',device.name,
+    await page.locator('#rig31-status').textContent(),
+    (await page.locator('#rig31-proof').textContent()).slice(0,650));
    await page.waitForFunction(()=>{
     try{return JSON.parse(document.getElementById('rig31-proof').textContent)
      .rigJointCount===16}catch{return false}
@@ -210,7 +215,9 @@ try{
     path:out+'/'+device.name+'-FAIL-full-page.png',fullPage:true
    }).catch(()=>{});
    throw Error(device.name+': '+String(e.message||e)+
-    ' status='+await page.locator('#scan29-status').textContent().catch(()=>null)+
+    ' scanStatus='+await page.locator('#scan29-status').textContent().catch(()=>null)+
+    ' rigStatus='+await page.locator('#rig31-status').textContent().catch(()=>null)+
+    ' rigProof='+(await page.locator('#rig31-proof').textContent().catch(()=>''))?.slice(0,1400)+
     ' browserErrors='+JSON.stringify(errors));
   }finally{await context.close()}
  }
