@@ -5,6 +5,7 @@ import {installAIG28LocalLearning} from './aig-local-learner-2-8-ui.mjs';
 import {installAIG28BMultiSource} from './aig-multisource-occlusion-2-8b-ui.mjs';
 import {installAIG29ContinuousScan} from './aig-continuous-surface-scan-2-9-ui.mjs';
 import {installAIG31HeadBodyControls} from './aig-articulated-view-3-1-ui.mjs';
+import {installAIG32DigitControls} from './aig-20-digit-articulation-3-2-ui.mjs';
 import {buildAIG23PhotoActor} from './aig-photo-rig-world-2-3.mjs';
 import {detectAIG24Image} from './aig-auto-image-detect-2-4.mjs';
 import {AIG25WorldMovieRecorder,validateAIG25TrueWorldMovie,
@@ -1100,5 +1101,13 @@ const aig30Scan=installAIG29ContinuousScan({
  getSegmentation:()=>aig27Source,
  getSharedViewer:async()=>{await ensureWorldViewer();return viewer}
 });
-installAIG31HeadBodyControls({getFusedScan:()=>aig30Scan});
+let aig32Digits=null;
+const aig31Body=installAIG31HeadBodyControls({
+ getFusedScan:()=>aig30Scan,
+ onPoseApplied:()=>aig32Digits?.refreshFromHeadBodyPose()
+});
+aig32Digits=installAIG32DigitControls({
+ getFusedScan:()=>aig30Scan,
+ getBodyPose:()=>aig31Body.pose
+});
 init();
