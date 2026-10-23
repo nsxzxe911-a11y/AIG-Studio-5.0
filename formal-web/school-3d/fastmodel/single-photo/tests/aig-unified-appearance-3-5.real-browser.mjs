@@ -189,6 +189,19 @@ try{
    assert.ok(posedClothes.real39GarmentActuallyFollowingBodyPose
     .realHairVerticesMoved>0,
     'actual separate ponytail geometry must follow real joint vertex movements');
+   // 3.11 contact gate reads the actual posed source-labelled body, not an
+   // arbitrary fake sphere or a screenshot-only decorative 3D preview.
+   const contacts=posedClothes.real311CoarseRealContactConstraints;
+   assert.equal(contacts.schema,'AIG_REAL3D_3_11_REAL_POSE_CONTACT_PROXY');
+   assert.ok(contacts.actuallyProcessedSeparateMeshes>=2,
+    'actual skirt and hair tail geometries must enter contact solver');
+   assert.ok(Number.isInteger(contacts.actualContactCandidates));
+   assert.ok(Number.isInteger(contacts.actualCorrected3DVertices));
+   assert.ok(Number.isInteger(contacts.remainingCoarseProxyPenetrations));
+   assert.equal(contacts.originalBodyAndRestGarmentUnmodified,true);
+   assert.equal(contacts.fullSelfCollisionOrNaturalPhysicsCertified,false);
+   assert.ok(contacts.actualContactCandidates>=contacts.actualCorrected3DVertices);
+
    await page.locator('#viewport').screenshot({
     path:out+'/'+device.name+'-real3d-3-10-posed-hair-and-clothes.png'
    });
@@ -198,6 +211,12 @@ try{
      .real39GarmentActuallyFollowingBodyPose;
     return layer?.realGarmentVerticesMoved===0&&layer?.realHairVerticesMoved===0;
    },null,{timeout:20000});
+   const restContact=JSON.parse(await page.locator('#scan29-proof').textContent())
+    .real311CoarseRealContactConstraints;
+   assert.equal(restContact.actuallyProcessedSeparateMeshes,0,
+    'zero joint pose must not permanently displace rest clothing or hair');
+   assert.equal(restContact.safeRestPoseRecovery,true);
+
    await page.locator('#scan310-hair').selectOption('short');
    await page.waitForFunction(()=>{
     const h=JSON.parse(document.getElementById('scan29-proof').textContent)
