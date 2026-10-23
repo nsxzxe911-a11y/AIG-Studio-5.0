@@ -75,6 +75,15 @@ export function installAIG29ContinuousScan({
    real39RuntimeStability:stability39.snapshot(),
    real39GarmentActuallyFollowingBodyPose:motion39Proof,
    real310RemovableHair:hair310Proof,
+   real310OneKernel19200LogicalWorkProfile:core36Proof?{
+    configuredLogicalSlots:core36Proof.plan.logicalSlotsConfigured,
+    actualDispatchedVertexShards:core36Proof.vertexColourWork.effectiveSlotsUsed,
+    actualSourceVertices:core36Proof.vertexColourWork.actualVerticesColoured,
+    logicalShardsUpperBoundByVertexCount:true,
+    sameSharedWebGLContext:true,
+    physical19200CpuGpuCoresProven:false,
+    actualRenderingPerformanceGainMeasured:false
+   }:null,
    real37ScalableCoreAndWardrobe:core36Proof?.plan?.schema===
     'AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS'?{
      selectedLogicalSlots:core36Proof.plan.logicalSlotsConfigured,
