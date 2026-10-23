@@ -153,7 +153,8 @@ try{
    assert.equal(crowd.oneSharedWebGLContext,true);
    assert.equal(crowd.technicalClonesDoNotCountAsIndependentClassmates,true);
    assert.equal(crowd.originalActive3DSourceSHA,proof.originalSourcePhotoSHA);
-   await page.locator('#viewport').screenshot({
+   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+   await page.screenshot({animations:'disabled',timeout:15000,
     path:out+'/'+device.name+'-real3d-3-13-four-technical-crowd-people.png'
    });
    await page.locator('#scan313-bench').click();
@@ -173,7 +174,8 @@ try{
    await page.waitForFunction(()=>JSON.parse(
     document.getElementById('scan313-proof').textContent
    ).crowdTechnicalPreviewClones===16);
-   await page.locator('#viewport').screenshot({
+   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+   await page.screenshot({animations:'disabled',timeout:15000,
     path:out+'/'+device.name+'-real3d-3-13-sixteen-technical-crowd-people.png'
    });
    crowd=JSON.parse(await page.locator('#scan313-proof').textContent());
