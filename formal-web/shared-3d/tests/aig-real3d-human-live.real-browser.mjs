@@ -68,8 +68,11 @@ try{
  }
  assert.notEqual(captures[0].sha256,captures[1].sha256);
  await page.locator('#human-age').selectOption('child');
- await page.locator('#human-height').fill('1200');
- await page.locator('#human-build').fill('80');
+ for(const [id,value] of [['human-height','1200'],['human-build','80']]){
+  await page.locator('#'+id).evaluate((el,v)=>{
+   el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));
+  },value);
+ }
  await page.waitForFunction(()=>{
   try{
    const p=JSON.parse(document.getElementById('proof').textContent);
