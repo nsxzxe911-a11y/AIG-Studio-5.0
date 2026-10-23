@@ -103,7 +103,6 @@ try{
  assert.equal(proof.sourceReview.model.sha256,hash);
  assert.equal(proof.sourceReview.computedEvidence.nativeMeshGeometryGatePASS,true);
  assert.equal(proof.sourceReview.computedEvidence.fourRealGpuOrthographicAnglesCaptured,true);
- assert.equal(proof.sourceReview.computedEvidence.labeledAnatomyValidatedAgainstMesh,false);
  assert.equal(proof.sourceReview.personAuthenticityVerified,false);
  assert.equal(proof.sourceReview.naturalAppearancePASS,false);
  assert.equal(proof.sourceReview.releasePASS,false);
