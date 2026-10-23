@@ -47,3 +47,16 @@
 - **成功實測版本**：GitHub Actions run `40020951943` 的 WebM (500KB) 已由 ffprobe 確認 VP9 video + Opus audio；FFmpeg volumedetect audio 有效（約 5.14 秒、mean -15.2dB，並非只有靜音 track）。此 run 僅用 220Hz 與 660Hz 合成測試聲音，**不是使用者指定的正式電影配樂**。
 - 後續另新增「真人錄製對白」第三軌，其測試狀態要以最新 GitHub run 為準，不能從上述兩軌證據推論三軌已 PASS。
 - **尚 BLOCK**：AI 音樂生成、文字配音 TTS、任意照片真 3D 身體、影片原生音訊抽取、精確分鏡對白對位、成品影片配音與音效完整業務驗收。
+
+## 2026-10-24｜劇情分鏡轉真 2D 動畫（V2 研發）
+
+使用者要求進入下一階（原手機與桌面 RGB Glass Authority 不變），新增「劇情→分鏡」真可執行管線：
+
+- `storyboard-engine.mjs`：繁中劇情／對白逐行拆成順序分鏡，針對星門、太空港、星艦、行星、星雲關鍵詞安排場景、鏡頭、特效、字幕、角色欄位、起訖秒數；限制文字與幕數。**明確標示為本機規則分析，並非大型語言模型 AI 內容生成。**
+- `cinematic-scene-renderer.mjs`：直接在 Canvas 繪製星空、星雲、行星、星門、太空港與飛船形狀；真 2D 運鏡、光暈與每幕淡入淡出，無外部素材依賴。這是**程式原創 2D 科幻插畫動畫**，不是實拍、照片 1:1 或真人 3D。
+- RGB 工作頁控制：載入範例、建立分鏡、分鏡 JSON 匯出。新場景真正加進 timeline，可點選、拖進度、播放、PNG 截圖並經 Canvas/MediaRecorder 輸出 WebM；如已有匯入圖片／影片，保留其原始素材，分鏡放在其前面。
+- Mobile 仍用已核准的「畫面／控制／時間軸」分頁，劇情編輯放控制頁，不將桌面全介面硬縮到手機。Desktop 原分區不回退。
+- `storyboard-engine.test.mjs`：本機場景/時間/字串上限/非 AI 宣稱的 Node Gate。
+- `starjourney-storyboard.real-browser.mjs`：真 Chrome 生成幕次、輸出原生 Canvas 不同場景 PNG 與真正 WebM、下載 JSON、手機 3 分頁操作並留快照證據。若 CI 沒通過，整輪不能宣稱 PASS。
+- 既有配樂、音效、上傳真人對白錄音真 PCM → Opus 的功能保留。新場景能沿用原影音匯出通道，但**AI 自動產生真人配音、AI 原創背景音樂、照片→真實 3D 人體、角色動作與口型同步仍 BLOCK**。
+- PR 為 Draft，原 Render LIVE 首頁/CNC 核心/3AX～6AX/NC 均不改，不聲稱已產正式 APK/EXE。
