@@ -10,6 +10,8 @@ import {inspectAIG30FusedFiveAxisSurface}
  from './aig-fused-manifold-surface-3-0.mjs';
 import {buildAIG35UnifiedAppearance}
  from './aig-unified-appearance-3-5.mjs';
+import {buildAIG37Outfit,separateAIG37BodyColours}
+ from './aig-modular-outfits-3-7.mjs';
 const $=id=>document.getElementById(id);
 export function installAIG29ContinuousScan({
  getImage,getSegmentation,getSharedViewer
@@ -20,6 +22,7 @@ export function installAIG29ContinuousScan({
  let overlay=null,scan=null,probeLines=null,rendererSource=null;
  let drawProof=null,scanStamp=null,appearanceProof=null;
  let core36Proof=null,lighting36Proof=null,restore36Lighting=null;
+ let wardrobe37Proof=null,wardrobe37Layer=null,body37Proof=null;
  const status=(message,bad=false)=>{
   $('scan29-status').textContent=(bad?'BLOCKED：':'')+message;
   $('scan29-status').style.color=bad?'#ffd298':'#aef5e6';
@@ -37,6 +40,7 @@ export function installAIG29ContinuousScan({
   disposeGroup(overlay);overlay=null;probeLines=null;
   scan=null;rendererSource=null;drawProof=null;scanStamp=null;
   appearanceProof=null;core36Proof=null;lighting36Proof=null;
+  wardrobe37Proof=null;wardrobe37Layer=null;body37Proof=null;
   if(restore36Lighting){restore36Lighting();restore36Lighting=null}
   const label=$('scan36-visible');
   if(label)label.textContent='尚未建立 3D 曲面；原照片與其他 GLB 保留。';
@@ -52,6 +56,12 @@ export function installAIG29ContinuousScan({
    unifiedReal35AppearancePipeline:appearanceProof,
    unifiedReal36OneKernel120LogicalSlots:core36Proof,
    real36Lighting:lighting36Proof,
+   real37ScalableCoreAndWardrobe:core36Proof?.plan?.schema===
+    'AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS'?{
+     selectedLogicalSlots:core36Proof.plan.logicalSlotsConfigured,
+     effectiveLogicalSlots:core36Proof.vertexColourWork.effectiveSlotsUsed,
+     wardrobe:wardrobe37Proof,bodyProxy:body37Proof
+    }:null,
    visualReleaseBlocker:scan?.visualReleaseGate??'NOT_EVALUATED',
    physical3DPrintScaleCertified:scan?.production3DPrintApproved??false,
    actualSourceManifoldAudit:scan?.manifoldAudit??null,
@@ -148,6 +158,54 @@ export function installAIG29ContinuousScan({
    actualShadowMapActive:!!key&&selected.shadows,
    physicalRayTracingVerified:false};
  }
+ function prepareWardrobe37(shell,bodyHeightUnits,outfitId){
+  const result=buildAIG37Outfit(shell,{bodyHeightUnits,outfitId});
+  const layer=new THREE.Group();
+  layer.name='AIG37_INTERCHANGEABLE_OUTFIT_LAYER_NOT_THE_BODY';
+  layer.userData={originalPhotoUntouched:true,
+   outfitId,actualSeparateGarmentMeshes:result.garmentMeshCount};
+  for(const piece of result.pieces){
+   const geo=new THREE.BufferGeometry();
+   geo.setAttribute('position',
+    new THREE.BufferAttribute(piece.geometry.positions,3));
+   geo.setAttribute('normal',
+    new THREE.BufferAttribute(piece.geometry.normals,3));
+   geo.setIndex(new THREE.BufferAttribute(piece.geometry.indices,1));
+   const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({
+    color:piece.color,roughness:piece.roughness,metalness:0,
+    side:THREE.DoubleSide
+   }));
+   mesh.name='AIG37_CLOTHING_'+piece.name;
+   mesh.userData={role:piece.role,generatedSurface:true,
+    notSourceMeasuredTailoredGarment:true};
+   layer.add(mesh);
+  }
+  return {layer,result};
+ }
+ const update37Wardrobe=()=>{
+  if(!scan||!overlay?.parent||!rendererSource)
+   throw Error('請先建立來源真 3D 人體素模，再選每日服裝');
+  if(rendererSource.movieMode||rendererSource.reviewBusy)
+   throw Error('共用畫面正在錄影或檢查，暫停服裝更新');
+  const outfitId=$('scan37-outfit').value;
+  const next=prepareWardrobe37(scan.fusedOnePieceMesh,
+   scan.bodyHeightUnits,outfitId);
+  const previous=wardrobe37Layer;
+  overlay.add(next.layer);wardrobe37Layer=next.layer;
+  wardrobe37Proof={...next.result,pieces:next.result.pieces.map(
+   item=>({role:item.role,name:item.name,
+    triangleCount:item.geometry.triangleCount})),
+   sourcePhotoUnmodified:true,bodySourceMeshNeverRescanned:true,
+   outfitsUsedAsSeparateMesh:true,sourceSha256:scan.sourceSha256};
+  disposeGroup(previous);
+  fitExistingViewer(rendererSource,overlay);
+  lighting36Proof=apply36Lighting(rendererSource,overlay,
+   $('scan36-light')?.value||'balanced');
+  $('scan37-status').textContent='已套用 '+outfitId+'：'+
+   wardrobe37Proof.garmentMeshCount+' 個獨立真 3D 服裝元件，人體幾何未重建或修改。'+
+   '目前是程序化衣型，不是女主角真實裁縫版。';
+  proof();
+ };
  const buildPreview=async()=>{
   const data=source(),radialSegments=Number($('scan29-radial').value),
    sliceStep=Number($('scan29-step').value),
@@ -177,7 +235,7 @@ export function installAIG29ContinuousScan({
    viewer.reviewBusy||viewer.renderer.getContext()?.isContextLost?.())
    throw Error('唯一共用 WebGL 核心不可用，保留上次成功模型');
   const plan=planAIG36UnifiedCore({
-   requestedLogicalSlots:120,
+   requestedLogicalSlots:Number($('scan37-slot-count').value),
    hardwareConcurrency:navigator.hardwareConcurrency??2,
    deviceMemoryGb:navigator.deviceMemory??null,
    mobile:matchMedia('(pointer:coarse)').matches,
@@ -197,7 +255,13 @@ export function installAIG29ContinuousScan({
     shell,source:data,bodyHeightUnits:reconstruction.bodyHeightUnits,
     colourGain:newAppearanceProof.finalControls.colourGain,plan
    });
-   geometry.setAttribute('color',new THREE.BufferAttribute(shaded.colours,3));
+   const bodyColours=separateAIG37BodyColours(shaded.colours,shell);
+   geometry.setAttribute('color',
+    new THREE.BufferAttribute(bodyColours.colours,3));
+   body37Proof={neutralMannequinVertices:bodyColours.neutralizedVertices,
+    clothingDyeNotBakedIntoBody:true,
+    originalObservedSkinMayRemainOnFaceAndArms:true,
+    underClothesAnatomyEstimatedOnly:true};
    group.userData.core36Shaded=shaded;
    geometry.computeBoundingSphere();
    const material=new THREE.MeshStandardMaterial({
@@ -211,19 +275,40 @@ export function installAIG29ContinuousScan({
     actualTriangleCount:shell.triangleCount};
    group.add(mesh);
   }
+  let stagedWardrobe=null;
+  try{
+   stagedWardrobe=prepareWardrobe37(reconstruction.fusedOnePieceMesh,
+    reconstruction.bodyHeightUnits,$('scan37-outfit').value);
+   group.add(stagedWardrobe.layer);
+  }catch(e){
+   // Clothing errors never remove a successfully reconstructed base body.
+   const safe=prepareWardrobe37(reconstruction.fusedOnePieceMesh,
+    reconstruction.bodyHeightUnits,'body-proxy');
+   stagedWardrobe=safe;
+   $('scan37-status').textContent='服裝暫時隔離：'+String(e.message||e)+
+    '；已保留中性人體素模。';
+  }
   // Only swap the old 2.9 overlay AFTER the new geometry & viewer exist.
   try{
    viewer.scene.add(group);
    // Never reset scene, source GLBs, bone mixer, vault or textures.
    const prev=overlay;
    overlay=group;scan=reconstruction;rendererSource=viewer;
+   wardrobe37Layer=stagedWardrobe.layer;
    appearanceProof=newAppearanceProof;
    probeLines=null;scanStamp=scan.sourceSha256;
+   wardrobe37Proof={...stagedWardrobe.result,
+    pieces:stagedWardrobe.result.pieces.map(item=>({
+     role:item.role,name:item.name,
+     triangleCount:item.geometry.triangleCount
+    })),sourcePhotoUnmodified:true,bodySourceMeshNeverRescanned:true,
+    outfitsUsedAsSeparateMesh:true,sourceSha256:data.sourceSha256};
    const cameraFit=fitExistingViewer(viewer,group);
    core36Proof={
     plan,vertexColourWork:{
      actualVerticesColoured:group.userData.core36Shaded.actualVerticesColoured,
      completedIdenticalKernelSlots:group.userData.core36Shaded.completedIdenticalKernelSlots,
+     effectiveSlotsUsed:group.userData.core36Shaded.effectiveSlotsUsed,
      trueParallelCPUWorkers:0},
     cameraFit,sourceReferenceVisible:drawSourceReference(data),
     realModelShownOnExistingCanvas:true,
@@ -245,12 +330,16 @@ export function installAIG29ContinuousScan({
     originalViewerRendererReused:true,
     compositorNotBillboard:true
    };
+   $('scan37-status').textContent='目前服裝：'+
+    stagedWardrobe.result.outfitId+'；'+
+    stagedWardrobe.result.garmentMeshCount+' 件真正獨立 3D 衣物。'+
+    '原照片／中性人體基礎幾何均保留；尚未驗證衣物貼合。';
    const visible=!!overlay.parent&&
     drawProof.realActiveWebGLContext&&drawProof.actualSubmittedTriangles>0;
    $('scan36-visible').textContent=visible?
     '已在同一個真 WebGL 視窗提交 '+drawProof.actualSubmittedTriangles+
     ' 個三角面；120 邏輯工作槽已完成 '+core36Proof.vertexColourWork.completedIdenticalKernelSlots+
-    ' 個真著色分塊。這不是 120 顆硬體核心，也不是外觀驗收。':
+    ' 個真著色分塊。工作槽非實體 CPU/GPU，亦非外觀驗收。':
     '顯示證據不足：請查看 WebGL／相機診斷；保留原來源與 GLB。';
    proof();
    status('3.0 網格連通／封閉驗收 PASS；3.5 統一外觀引擎已建立真實 3D 曲面，採用 '+
@@ -265,6 +354,13 @@ export function installAIG29ContinuousScan({
  };
  $('scan29-build').addEventListener('click',async()=>{
   try{await buildPreview()}catch(e){status(String(e.message||e),true)}
+ });
+ $('scan37-outfit').addEventListener('change',()=>{
+  try{update37Wardrobe()}catch(e){
+   $('scan37-status').textContent='服裝未套用：'+String(e.message||e)+
+    '。已保留上一套衣服與人體模型。';
+   status(String(e.message||e),true);
+  }
  });
  $('scan36-fit').addEventListener('click',()=>{
   try{
