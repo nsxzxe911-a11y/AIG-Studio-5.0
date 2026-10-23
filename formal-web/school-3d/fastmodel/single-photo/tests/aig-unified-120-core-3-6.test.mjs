@@ -7,7 +7,7 @@ test('120 identical LOGICAL slots do not impersonate hardware cores or GPU conte
  const p=planAIG36UnifiedCore({hardwareConcurrency:16,
   deviceMemoryGb:8,requestedLogicalSlots:120});
  assert.equal(p.schema,AIG36_SCHEMA);
- assert.equal(AIG36_SLOT_LIMIT,120);
+ assert.equal(AIG36_SLOT_LIMIT,120000);
  assert.equal(p.kernelImplementationCount,1);
  assert.equal(p.logicalSlotsConfigured,120);
  assert.ok(p.schedulingLanes<=4);
@@ -40,7 +40,8 @@ test('real per-vertex RGB values are computed in 120 identical bounded shards',a
  for(let i=0;i<w*h;i++)pixels.set([190,110,80,255],i*4);
  const pixelsBefore=pixels.slice(),labelsBefore=labels.slice(),
   positionsBefore=positions.slice();
- const plan=planAIG36UnifiedCore({hardwareConcurrency:12});
+ const plan=planAIG36UnifiedCore({hardwareConcurrency:12,
+  requestedLogicalSlots:120});
  let yields=0;
  const actual=await colourAIG36VertexShards({
   shell:{positions,vertexSourceLabelIds:ids,sourceClassColorRGB:
