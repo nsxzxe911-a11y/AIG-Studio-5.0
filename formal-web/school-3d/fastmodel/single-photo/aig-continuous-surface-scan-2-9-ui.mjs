@@ -20,6 +20,8 @@ import {deformAIG39AttachedGarment}
  from './aig-garment-pose-follow-3-9.mjs';
 import {buildAIG310ModularHair}
  from './aig-modular-hair-3-10.mjs';
+import {resolveAIG311PoseContacts}
+ from './aig-contact-constraints-3-11.mjs';
 const $=id=>document.getElementById(id);
 export function installAIG29ContinuousScan({
  getImage,getSegmentation,getSharedViewer,getBodyPose=()=>null
@@ -33,6 +35,7 @@ export function installAIG29ContinuousScan({
  let wardrobe37Proof=null,wardrobe37Layer=null,body37Proof=null;
  let motion39Proof=null,lastPose39=null;
  let hair310Layer=null,hair310Proof=null;
+ let contact311Proof=null;
  const wardrobe38=createAIG38CharacterCatalog();
  const stability39=createAIG39StabilitySession();
  let browse38Offset=0;
@@ -55,7 +58,7 @@ export function installAIG29ContinuousScan({
   appearanceProof=null;core36Proof=null;lighting36Proof=null;
   wardrobe37Proof=null;wardrobe37Layer=null;body37Proof=null;
   motion39Proof=null;lastPose39=null;
-  hair310Layer=null;hair310Proof=null;
+  hair310Layer=null;hair310Proof=null;contact311Proof=null;
   if(restore36Lighting){restore36Lighting();restore36Lighting=null}
   const label=$('scan36-visible');
   if(label)label.textContent='尚未建立 3D 曲面；原照片與其他 GLB 保留。';
@@ -75,6 +78,7 @@ export function installAIG29ContinuousScan({
    real39RuntimeStability:stability39.snapshot(),
    real39GarmentActuallyFollowingBodyPose:motion39Proof,
    real310RemovableHair:hair310Proof,
+   real311CoarseRealContactConstraints:contact311Proof,
    real310OneKernel19200LogicalWorkProfile:core36Proof?{
     configuredLogicalSlots:core36Proof.plan.logicalSlotsConfigured,
     actualDispatchedVertexShards:core36Proof.vertexColourWork.effectiveSlotsUsed,
@@ -335,20 +339,48 @@ export function installAIG29ContinuousScan({
     bodyRest:base.positions,bodyPosed:value.positions,
     sourceVertexIndices:mesh.userData.sourceBodyVertexIndices
    });
-   prepared.push({mesh,result});
+   const mode=mesh.name.includes('HAIR_FOLLOW_TAILS')?'hair':
+    mesh.name.includes('PLEATED_UNIFORM_SKIRT')?'skirt':null;
+   // Static/rest poses must recover the true immutable rest garment. A
+   // collision proxy is only active on an actually moved body pose.
+   const moved=Number(value.actualMovedVertexCount)>0;
+   const contact=mode&&moved?resolveAIG311PoseContacts({
+    posedAttachment:result.positions,bodyPosed:value.positions,
+    sourceLabels:base.vertexSourceLabelIds,mode,
+    maxCorrectionRatio:.06,marginRatio:.005,passes:2
+   }):null;
+   prepared.push({mesh,result,contact,
+    positions:contact?.positions??result.positions});
   }
   // Commit only after EVERY attached garment validates against this body.
-  for(const {mesh,result} of prepared){
+  for(const {mesh,result,positions} of prepared){
    const geo=mesh.geometry;
    geo.setAttribute('position',
-    new THREE.BufferAttribute(result.positions,3));
+    new THREE.BufferAttribute(positions,3));
    geo.computeVertexNormals();geo.computeBoundingSphere();
    geo.attributes.position.needsUpdate=true;
    geo.attributes.normal.needsUpdate=true;
   }
   lastPose39=value;
+  const measured311=prepared.filter(x=>x.contact);
+  contact311Proof={
+   schema:'AIG_REAL3D_3_11_REAL_POSE_CONTACT_PROXY',
+   actuallyProcessedSeparateMeshes:measured311.length,
+   actualContactCandidates:measured311.reduce(
+    (s,x)=>s+x.contact.actualCollisionCandidateVertices,0),
+   actualCorrected3DVertices:measured311.reduce(
+    (s,x)=>s+x.contact.actualCorrectedVertices,0),
+   remainingCoarseProxyPenetrations:measured311.reduce(
+    (s,x)=>s+x.contact.remainingCoarseProxyPenetrations,0),
+   missingSourceRegions:[...new Set(measured311.flatMap(
+    x=>x.contact.unavailableSourceRegions))],
+   originalBodyAndRestGarmentUnmodified:true,
+   fullSelfCollisionOrNaturalPhysicsCertified:false,
+   safeRestPoseRecovery:Number(value.actualMovedVertexCount)===0
+  };
   motion39Proof={
-   actualGarmentMeshesFollowingRig:prepared.length,
+   actualGarmentMeshesFollowingRig:prepared.filter(x=>
+    x.mesh.parent===wardrobe37Layer).length,
    realGarmentVerticesMoved:prepared.filter(x=>
     x.mesh.parent===wardrobe37Layer).reduce(
     (s,x)=>s+x.result.actualGarmentVerticesMoved,0),
@@ -366,7 +398,9 @@ export function installAIG29ContinuousScan({
    motion39Proof.actualGarmentMeshesFollowingRig+' 件獨立 3D 衣物；'+
    motion39Proof.realGarmentVerticesMoved+' 個衣物頂點、'+
    motion39Proof.realHairVerticesMoved+' 個髮型頂點隨人體真正關節位移。'+
-   '布料碰撞、髮絲及裙擺物理尚未通過。';
+   '3.11 實際接觸修正 '+contact311Proof.actualCorrected3DVertices+
+   ' 點，剩餘粗略碰撞 '+contact311Proof.remainingCoarseProxyPenetrations+
+   ' 點。這不是完整布料或髮絲物理驗收。';
   proof();
   return motion39Proof;
  };
@@ -549,7 +583,7 @@ export function installAIG29ContinuousScan({
     originalBodyMeshReconstructed:false,
     physicallyAccurateStrandsAndCollisions:false
    };
-   motion39Proof=null;lastPose39=null;
+   motion39Proof=null;lastPose39=null;contact311Proof=null;
    appearanceProof=newAppearanceProof;
    probeLines=null;scanStamp=scan.sourceSha256;
    wardrobe37Proof={...stagedWardrobe.result,
