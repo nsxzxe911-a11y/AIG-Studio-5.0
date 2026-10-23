@@ -6,6 +6,8 @@ import {installAIG28BMultiSource} from './aig-multisource-occlusion-2-8b-ui.mjs'
 import {installAIG29ContinuousScan} from './aig-continuous-surface-scan-2-9-ui.mjs';
 import {installAIG313ClassroomCapacity}
  from './aig-classmates-crowd-3-13-ui.mjs';
+import {installAIGStage1DualAdultRuntime}
+ from './aig-stage1-dual-adult-runtime.mjs';
 import {installAIG31HeadBodyControls} from './aig-articulated-view-3-1-ui.mjs';
 import {installAIG32DigitControls} from './aig-20-digit-articulation-3-2-ui.mjs';
 import {installAIG34PhotoDigitPanel} from './aig-photo-digit-silhouette-3-4-ui.mjs';
@@ -30,6 +32,7 @@ let worldRuntime=null,worldDoc=null,worldMetas=new Map(),worldSaved=[];
 let worldFrame=0,worldPlaying=false,worldPlaybackStart=0;
 let worldMapSnapshot=null;
 let aig313Classroom=null;
+let aigStage1BaseAdults=null;
 // Serialize async scene creation/add operations. UI clicks are not awaited
 // by browsers: two rapid actions must not commit documents from stale state.
 let worldBuildMutation=false;
@@ -1077,6 +1080,7 @@ $('world-pause').addEventListener('click',()=>{
  stopWorldPlayback();updateWorldStatus('已停止鏡頭轉場。來源與場景保留。');
 });
 window.addEventListener('pagehide',()=>{
+ aigStage1BaseAdults?.stop?.();
  if(movie25Session)void finishMovie25({cancel:true,reason:'PAGE_CLOSED'});
  if(movie25DownloadUrl){URL.revokeObjectURL(movie25DownloadUrl);movie25DownloadUrl=null}
  stopAIG22Storyboard('工作頁已關閉');
@@ -1131,6 +1135,12 @@ aig32Digits=installAIG32DigitControls({
  getBodyPose:()=>aig31Body.pose,
  getOriginalPhoto:()=>aig26Source,
  getPhotoDigitConstraints:()=>aig34Photo.active
+});
+aigStage1BaseAdults=installAIGStage1DualAdultRuntime({
+ getSharedViewer:async()=>{
+  await ensureWorldViewer();
+  return viewer;
+ }
 });
 aig313Classroom=installAIG313ClassroomCapacity({
  getFusedScan:()=>aig30Scan,
