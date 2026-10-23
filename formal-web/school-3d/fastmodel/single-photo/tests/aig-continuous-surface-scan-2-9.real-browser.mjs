@@ -118,7 +118,7 @@ try{
     },null,2));
    await page.locator('#scan29-hide').click();
    await page.waitForFunction(()=>document.getElementById('scan29-status')
-    .textContent.includes('已移除 2.9 曲面預覽'));
+    .textContent.includes('已移除 3.0 融合曲面預覽'));
    assert.equal(JSON.parse(await page.locator('#scan29-proof').textContent())
     .actualWebGLSceneObjectActive,false);
    assert.deepEqual(errors,[]);
