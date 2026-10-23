@@ -3,6 +3,10 @@ import {buildAIGReal3DScanNative} from './aig-real3d-scan-native-mesh.mjs';
 import {buildAIGReal3DSourceReview,validateAIGReal3DLandmarkSidecar} from './aig-real3d-source-review-gate.mjs';
 import {compareAIGReal3DReferencePNGs} from './aig-real3d-reference-silhouette-browser.mjs';
 import {evaluateAIGReal3DFourViewComparisons} from './aig-real3d-reference-silhouette.mjs';
+import {projectAIGNativeOBJLandmarks,summarizeAIGLandmarkHeightRegions}
+ from './aig-real3d-native-anatomy-projection.mjs';
+import {createAIGNativeAnatomyAnnotation}
+ from './aig-real3d-native-anatomy-annotation.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {
  auditAIG3DSourceSilhouette,validateAIGInspectionCapturePlan,
@@ -80,6 +84,8 @@ $('inspect').addEventListener('click',async()=>{
  }
  running=true;$('inspect').disabled=true;$('report-download').disabled=true;report=null;
  release();gallery.replaceChildren();$('reference-gallery').replaceChildren();
+ $('anatomy-gallery').replaceChildren();$('anatomy-region-table').replaceChildren();
+ $('anatomy-stats').textContent='來源標記尚未通過貼合檢查；真人自然外觀 BLOCK。';
  profiles=[];$('profile-angle').disabled=true;
  $('profile-table').replaceChildren();
  $('reference-stats').textContent='尚未比對四方向透明輪廓；自然人體外觀 BLOCK。';
@@ -103,8 +109,9 @@ $('inspect').addEventListener('click',async()=>{
    catch{throw Error('解剖標記 JSON 無法解析');}
    validateAIGReal3DLandmarkSidecar(landmarks);
   }
+  const objText=isOBJ?new TextDecoder('utf-8',{fatal:true}).decode(bytes):null;
   const {scene,evidence}=isOBJ?buildAIGReal3DScanNative({
-    objText:new TextDecoder('utf-8',{fatal:true}).decode(bytes),
+    objText,
     heightMm,upAxis:axis,landmarks,sourceName:file.name,sourceSha256:hash
   }):buildAIGReal3DGLBStatic({
     bytes,heightMm,sourceName:file.name,sourceSha256:hash
@@ -200,6 +207,79 @@ $('inspect').addEventListener('click',async()=>{
     silhouetteResults.push(data.diagnostic);
    }catch(e){silhouetteProblems.push({angle,error:e.message});}
   }
+  let anatomicalProjection=null;
+  const markerGateOK=isOBJ&&evidence.landmarkAudit?.complete===true&&
+   landmarks!==null;
+  if(markerGateOK){
+   const views=[],annotations=[],regions=[];
+   for(const angle of ['front','side','back','threeQuarter']){
+    const projection=projectAIGNativeOBJLandmarks({
+     objText,landmarks,heightMm,upAxis:axis,angle,
+     sourceSha256:hash,landmarkAuditComplete:true
+    });
+    const annotated=await createAIGNativeAnatomyAnnotation({
+     sourcePNG:sourceFrames.get(angle),projection
+    });
+    const href=URL.createObjectURL(annotated.blob);urlPool.add(href);
+    const fig=document.createElement('figure'),img=document.createElement('img');
+    img.src=href;img.alt=angle+' 原始 OBJ XYZ 標記投影在真正 GPU 咖啡色畫面';
+    const cap=document.createElement('figcaption');
+    const label=document.createElement('span');
+    label.textContent=angle+' · '+annotated.actuallyVisibleLandmarks+' 個畫面內標記';
+    const dl=document.createElement('a');dl.href=href;
+    dl.download='AIG-Real3D-SOURCE-LANDMARKS-'+angle+'.png';
+    dl.textContent='下載標記定位 PNG';
+    cap.append(label,dl);fig.append(img,cap);$('anatomy-gallery').append(fig);
+    views.push(projection);
+    annotations.push({...annotated,blob:undefined});
+    const comparison=silhouetteResults.find(x=>x.angle===angle);
+    if(comparison?.verticalScanlineProfile)
+     regions.push(summarizeAIGLandmarkHeightRegions({
+      projection,profile:comparison.verticalScanlineProfile
+     }));
+   }
+   anatomicalProjection={
+    schema:'AIG_REAL3D_NATIVE_OBJ_MARKER_4_VIEW_SOURCE_REVIEW_V1',
+    sourceSha256:hash,originalObjMarkerMeshAuditComplete:true,
+    fourAngleProjectedPoints:views,
+    fourSourceGPUAnnotations:annotations,
+    localized12BandWeightedErrors:regions,
+    regionComparisonCount:regions.length,
+    sourceHumanAuthenticityVerified:false,
+    naturalHumanAppearancePASS:false,
+    automatedFacialOrFingerReconstruction:false,
+    noSourceGeometryModified:true,releasePASS:false
+   };
+   $('anatomy-stats').textContent='OBJ 21 個原始 XYZ 標記已通過貼合檢查；四視角定位已輸出。'+
+    ' 有透明參考輪廓的方向：'+regions.length+'/4。真人外觀仍 BLOCK。';
+   if(regions.length){
+    const table=document.createElement('table'),thead=document.createElement('thead'),
+     header=document.createElement('tr');
+    for(const label of ['方向','標記高度範圍','影像 Y(px)','平均輪廓差(px/列)','中心偏移(px)']){
+     const th=document.createElement('th');th.textContent=label;header.append(th);
+    }
+    thead.append(header);table.append(thead);
+    const tbody=document.createElement('tbody');
+    for(const region of regions)for(const segment of region.segments){
+     const tr=document.createElement('tr');
+     for(const value of [
+      region.angle,segment.id,
+      segment.topPx+'–'+segment.bottomPx,
+      segment.meanSignedCoverageDeltaPxPerRow??'缺少參考',
+      segment.meanCentroidXDeltaPx??'缺少參考'
+     ]){
+      const td=document.createElement('td');td.textContent=String(value);tr.append(td);
+     }
+     tbody.append(tr);
+    }
+    table.append(tbody);$('anatomy-region-table').append(table);
+   }
+  }else{
+   $('anatomy-stats').textContent='BLOCK：'+
+    (isOBJ?'需提供 21 個通過原始網格貼合審核的標記。':
+     'GLB 原始標記局部映射尚未驗證；先用 OBJ 來源。')+
+    ' 不能根據橢圓輪廓自動猜測人體部位。';
+  }
   const summary=evaluateAIGReal3DFourViewComparisons(silhouetteResults);
   profiles=silhouetteResults;
   $('profile-angle').disabled=profiles.length===0;
@@ -213,7 +293,7 @@ $('inspect').addEventListener('click',async()=>{
    '已比對 '+summary.count+'/4 視角；平均重合率：'+
    (summary.averageIoU===null?'無法計算':(summary.averageIoU*100).toFixed(2)+'%')+
    '；失敗：'+silhouetteProblems.length+'；這不是人體自然度自動驗收。';
-  report={...result,sourceReview,silhouetteComparison:{
+  report={...result,sourceReview,anatomicalProjection,silhouetteComparison:{
    ...summary,images:silhouetteResults,errors:silhouetteProblems,
    transparentReferencesUploaded:selected.length,
    fourViewSilhouetteComparePASS:summary.allFourAnglesCompared&&

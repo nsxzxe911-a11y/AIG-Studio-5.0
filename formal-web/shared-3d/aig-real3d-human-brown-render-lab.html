@@ -13,10 +13,10 @@ button:disabled{opacity:.5;cursor:not-allowed}input{min-height:40px;max-width:10
 select,input[type=text]{padding:7px;background:#091b2d;border:1px solid #356886;border-radius:7px;min-height:40px}input[type=number]{width:115px;padding:7px;background:#091b2d;border:1px solid #356886;border-radius:7px}
 .row{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
 code{color:#a4d8ff;overflow-wrap:anywhere}
-#gallery,#reference-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+#gallery,#reference-gallery,#anatomy-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 figure{border:1px solid #2a6c85;border-radius:11px;padding:9px;margin:0;background:#06111f;min-width:0}
 figure img{width:100%;height:400px;max-height:52vh;object-fit:contain;display:block;background:#020407}
-#profile-table{overflow-x:auto;margin-top:12px}#profile-table table{width:100%;border-collapse:collapse;min-width:520px;font-size:12px}#profile-table td,#profile-table th{padding:8px 6px;text-align:left;border-bottom:1px solid #2d4059}#profile-table th{color:#a3deed}#profile-table tr[data-worst=true]{background:#4f331d88}#local-width-review{padding-top:12px}
+#profile-table,#anatomy-region-table{overflow-x:auto;margin-top:12px}#profile-table table,#anatomy-region-table table{width:100%;border-collapse:collapse;min-width:520px;font-size:12px}#profile-table td,#profile-table th,#anatomy-region-table td,#anatomy-region-table th{padding:8px 6px;text-align:left;border-bottom:1px solid #2d4059}#profile-table th{color:#a3deed}#profile-table tr[data-worst=true]{background:#4f331d88}#local-width-review{padding-top:12px}
 #reference-stats{display:block;margin:11px 0;padding:8px;border:1px solid #8f683d;border-radius:8px;color:#efcca5}
 figcaption{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:9px}
 a{color:#7fe7fb}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:290px;overflow-y:auto;font-size:11px}
@@ -64,6 +64,13 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <div id="profile-table" role="region" aria-label="逐高度輪廓誤差表">
 <p>完成透明參考圖比對後顯示分段結果。</p></div>
 </section>
+</section>
+<section class="panel" id="anatomy-projection">
+<h2>原始 3D 解剖標記 → 四視角畫面位置（OBJ 限定）</h2>
+<p>只有 21 點 XYZ 標記確實貼合 OBJ 原始網格，才能輸出前、側、背、45° 真 GPU 的標記圖。GLB 的原始標記映射與真人來源未驗證，會保持 BLOCK。</p>
+<div class="status" id="anatomy-stats" role="status" aria-live="polite">來源標記尚未通過網格對應驗證。不得自動辨識頭頸、肩膀、骨盆與四肢。</div>
+<div id="anatomy-gallery"></div>
+<div id="anatomy-region-table" role="region" aria-label="來源標記界定的影像高度區段誤差"></div>
 </section>
 <section class="panel"><h2>原始三維網格／來源聲明／解剖標記 Gate 報告</h2><pre id="evidence">尚無來源。</pre></section>
 <section class="panel"><h2>真正 WebGL 畫面證據（不是 AI 示意圖）</h2><div id="gallery"></div></section>
