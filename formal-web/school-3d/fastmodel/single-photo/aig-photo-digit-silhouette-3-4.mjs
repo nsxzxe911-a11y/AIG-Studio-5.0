@@ -56,7 +56,7 @@ export function detectAIG34FiveDigitContours({
  // Five disconnected runs of sufficient width, separated by true background.
  // If the real photo is perspective-rotated or fingers are occluded, fail
  // conservatively rather than assigning false individual fingers.
- for(let y=minY+Math.floor(h*.39);y<=maxY-Math.max(3,Math.floor(h*.05));y++){
+ for(let y=minY+Math.floor(h*.39);y<=maxY-Math.max(10,Math.ceil(h*.13));y++){
   const all=rowRuns(labels,width,y,id,minX,maxX);
   const candidates=all.filter(([a,b])=>b-a+1>=2&&
    b-a+1<=Math.floor(span*.29));
