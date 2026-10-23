@@ -10,6 +10,7 @@ test('12,000 is a real executed logical-shard profile, not 12,000 physical cores
  assert.equal(AIG38_FIXED_WORK_PROFILE,12000);
  assert.ok(AIG37_SLOT_PRESETS.includes(12000));
  const plan=planAIG36UnifiedCore({
+  requestedLogicalSlots:AIG38_FIXED_WORK_PROFILE,
   hardwareConcurrency:8,deviceMemoryGb:4,mobile:true
  });
  assert.equal(plan.logicalSlotsConfigured,12000);
