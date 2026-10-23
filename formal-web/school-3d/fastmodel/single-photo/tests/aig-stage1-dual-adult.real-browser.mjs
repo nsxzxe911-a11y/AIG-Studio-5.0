@@ -53,6 +53,13 @@ try{
      'AIG_STAGE1_ADULT_MALE_FEMALE_ANATOMY_V1');
     assert.equal(state.sharedExistingWebGLRenderer,true);
     assert.equal(state.automaticGeometryGate,true);
+    assert.equal(state.actualBodySurfaceAudit.actualBodySurfaceNumericPASS,true);
+    assert.equal(state.actualBodySurfaceAudit.footGroundContactMm,0);
+    assert.ok(state.actualBodySurfaceAudit.upperThighInnerGapMm>20,
+     'real model legs must not be fused at the upper thigh');
+    assert.ok(state.actualBodySurfaceAudit.actualHeadHeightToWidth>=1.18);
+    assert.ok(state.actualBodySurfaceAudit.shoulderTorsoLeftOverlapMm>10);
+    assert.ok(state.actualBodySurfaceAudit.shoulderTorsoRightOverlapMm>10);
     assert.equal(state.realAnatomicalJointCount,21);
     assert.ok(state.realTriangleCount>4800);
     assert.equal(state.noHairOrSchoolClothing,true);
@@ -221,6 +228,10 @@ try{
     physicalUnits:'mm',precisionMm:.001,
     maleHeightMm:1780,femaleHeightMm:1680,
     conversionToWebGL:'explicit 1mm=0.001 world meters; preserve renderer',
+    shapeAuditStage1:['actual 3D upper-thigh gap mm',
+     'head vertical-to-horizontal aspect from real indexed mesh',
+     'shoulder-to-torso surface overlap',
+     'actual foot contact at Y=0.000 mm'],
     fixedThreeIssues:['actual pelvis mesh silhouette width in mm',
      'full-body auto camera framing with distance mm',
      'fresh SHA for all four camera snapshots after each model load'],
