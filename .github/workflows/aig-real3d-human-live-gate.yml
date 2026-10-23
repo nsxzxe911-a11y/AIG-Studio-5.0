@@ -1,0 +1,67 @@
+name: AIG Real3D Human Genuine XYZ WebGL & Front PNG Gate
+on:
+  push:
+    branches:
+      - work/aig-real3d-human-live-entry-20261024
+      - web/aig-dual-formal-runtime-20261016
+    paths:
+      - formal-web/shared-3d/**
+      - formal-web/aig-new-home.html
+      - .github/workflows/aig-real3d-human-live-gate.yml
+  workflow_dispatch:
+jobs:
+  actual-human-source:
+    name: Original Stage1 male/female 3D mesh plus visible sliders
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and 0.001 mm sourced real geometry
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-human-anatomy.mjs
+          node --check formal-web/shared-3d/aig-real3d-human-bridge.mjs
+          node --check formal-web/shared-3d/aig-real3d-lab.mjs
+          node --check formal-web/shared-3d/aig-real3d-webgl.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-human-live.test.mjs
+      - name: Verify actual website link without breaking AIG CNC
+        run: |
+          grep -q 'profile=HumanMale' formal-web/aig-new-home.html
+          grep -q '3ax-nc-workbench.html' formal-web/aig-new-home.html
+          grep -q '3ax-mobile-workspace.html' formal-web/aig-new-home.html
+          grep -q 'aig-download-center.html' formal-web/aig-new-home.html
+          grep -q 'human-photo' formal-web/shared-3d/aig-real3d-lab.html
+          grep -q 'captureNativePNG' formal-web/shared-3d/aig-real3d-webgl.mjs
+          grep -q 'createAIGReal3DHumanScene' formal-web/shared-3d/aig-real3d-lab.mjs
+  actual-human-browser-gpu:
+    name: Real browser GPU renders two front-view human PNGs
+    needs: actual-human-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real 1080x1920 male and female frontal browser PNGs
+        run: |
+          python3 -m http.server 8770 --bind 127.0.0.1 --directory formal-web >/tmp/aig-real3d-human-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:8770/aig-new-home.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-human-live.real-browser.mjs
+          test -s artifacts/aig-real3d-human-live/REAL3D-male-true-front-1080x1920.png
+          test -s artifacts/aig-real3d-human-live/REAL3D-female-true-front-1080x1920.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-REAL3D-MALE-FEMALE-LIVE-GPU-FRONT-1080x1920-VISUAL-BLOCK
+          path: artifacts/aig-real3d-human-live/
+          if-no-files-found: warn
