@@ -123,6 +123,7 @@ try{
    assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.bodyGeometryIdentityPreserved,true);
    // 3.13: the hero remains source-bound. Additional crowd bodies are
    // explicitly SAME-mesh technical test instances, NOT distinct classmates.
+   await page.locator('#scan313-classroom > summary').click();
    await page.locator('#scan313-count').selectOption('4');
    await page.locator('#scan313-show').click();
    await page.waitForFunction(()=>{
