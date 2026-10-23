@@ -35,7 +35,7 @@ jobs:
           grep -q 'aig-download-center.html' formal-web/aig-new-home.html
           grep -q 'stage1ReleasePASS:false' formal-web/shared-3d/aig-real3d-scan-native-mesh.mjs
           grep -q 'sourceNotProvenHumanScan:true' formal-web/shared-3d/aig-real3d-scan-native-mesh.mjs
-          grep -q 'REAL3D' formal-web/shared-3d/aig-real3d-scan-native-lab.html
+          grep -q 'Scan-Native' formal-web/shared-3d/aig-real3d-scan-native-lab.html
   browser-gate:
     runs-on: ubuntu-latest
     needs: source-gate
