@@ -36,6 +36,10 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-large-wardrobe-3-8.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-120-core-3-6.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-continuous-surface-scan-2-9-ui.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-anatomy.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-runtime.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-dual-adult.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-dual-adult.real-browser.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.html'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-appearance-3-5.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-appearance-3-5.real-browser.mjs'
@@ -148,4 +152,41 @@ jobs:
         with:
           name: AIG-Real3D-3-16-Per-Stage-Phone-Desktop-Actual-WebGL-Snapshots
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-3-5-unified-appearance/
+          if-no-files-found: warn
+
+  stage1-dual-adult-true-webgl:
+    name: Stage1 male briefs female one-piece; 16 true phone/desktop WebGL views
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Two adults and joint geometry strict unit tests
+        run: |
+          node --check aig-stage1-dual-adult-runtime.mjs
+          node --check aig-stage1-dual-adult-anatomy.mjs
+          node --test tests/aig-stage1-dual-adult.test.mjs
+      - name: Build existing one-context WebGL runtime
+        run: npm run build
+      - name: Install Chromium for real HTML canvas rendering
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Actual male/female four-view WebGL screenshots for phone and desktop
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/stage1-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-stage1-dual-adult.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Stage1-Male-Briefs-Female-Onepiece-Real-WebGL-16-Views
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-stage1-adult-male-female-swim-geometry/
           if-no-files-found: warn
