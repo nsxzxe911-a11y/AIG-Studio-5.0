@@ -23,13 +23,13 @@ footer{font-size:12px;padding:14px 20px;color:#adc7d6}
 .small{font-size:11px;color:#a8c3d1}.mode{background:#08202f;padding:6px 10px;border:1px solid #376a80;border-radius:8px;color:#abf5dd;font-size:12px}
 @media(max-width:820px){main{grid-template-columns:1fr;padding:7px}.cols{grid-template-columns:1fr 1fr}canvas{min-height:180px}}
 </style></head><body>
-<header><h1>AIG <span>Real 3D Drawing Engine</span> 1.0</h1>
-<nav><a href="../fastmodel/index.html">FastModel</a><a href="../index.html#dual-projects">AIG 雙專案</a></nav></header>
+<header><h1>AIG <span>Real3D｜真實人體比例研發</span> 1.1</h1>
+<nav><a href="../aig-new-home.html">AIG 新版首頁</a><a href="../fastmodel/index.html">FastModel</a><a href="../index.html#dual-projects">舊資料</a></nav></header>
 <main>
 <div>
 <section>
 <div class="cols" style="align-items:center">
-<h2>共用 XYZ 真 3D 工作視窗</h2>
+<h2>共用 XYZ 真 3D 工作視窗｜人體／機台</h2>
 <div id="mode" class="mode">獨立驗證｜示範幾何</div>
 </div>
 <canvas id="view" width="960" height="540" aria-label="AIG 共用真 3D indexed geometry WebGL 繪圖視窗"></canvas>
@@ -50,10 +50,33 @@ footer{font-size:12px;padding:14px 20px;color:#adc7d6}
 <h2>三專案共用場景測試</h2>
 <label for="profile">驗證場景</label>
 <select id="profile">
+<option value="HumanMale" selected>REAL3D｜男性基礎人體（真三角網格）</option>
+<option value="HumanFemale">REAL3D｜女性基礎人體（真三角網格）</option>
 <option value="3AX">AIG-II／CNC｜3AX 三軸機台示範</option>
 <option value="5AX">AIG Studio 5.0｜5AX 搖籃示範</option>
 <option value="FastModel">FastModel｜建物／樹木三維場景示範</option>
 </select>
+<section id="human-controls" aria-label="人體比例實際調整與正面照" style="border-color:#467d95;background:#071b2a">
+<h2>真人比例技術模型｜Stage 1</h2>
+<p>真正的 3D 網格，可調年齡、高矮和胖瘦。尚未達到自然人體／照片還原驗收；小孩、中年、老人為未校準的比例技術預設。</p>
+<label for="human-age">年齡外型預設</label>
+<select id="human-age">
+<option value="adult">成人</option>
+<option value="child">小孩（比例推估，未驗收）</option>
+<option value="middle">中年（比例推估，未驗收）</option>
+<option value="elder">老人（比例推估，未驗收）</option>
+</select>
+<label for="human-height">身高：<output id="human-height-value">1780 mm</output></label>
+<input id="human-height" type="range" min="900" max="2200" step="10" value="1780">
+<label for="human-build">體型：<output id="human-build-value">標準（50）</output></label>
+<input id="human-build" type="range" min="0" max="100" step="1" value="50">
+<div class="cols" style="margin-top:10px">
+<button type="button" id="human-front">正面正交（0°）</button>
+<button type="button" id="human-photo">拍攝真 1080×1920 正面 PNG</button>
+</div>
+<p id="human-source-status" role="status" aria-live="polite">等待生成真實 indexed XYZ 人體來源。</p>
+<div id="human-photo-result" style="display:grid;gap:8px;margin-top:10px"></div>
+</section>
 <label for="quality">GPU 抗鋸齒／畫面圓滑度</label>
 <select id="quality">
 <option value="performance">效能優先｜1× · 低記憶體</option>
@@ -68,10 +91,10 @@ footer{font-size:12px;padding:14px 20px;color:#adc7d6}
 <option value="orthographic">Orthographic 正交</option>
 </select>
 <label for="zoom">視角距離</label><input id="zoom" type="range" min="5" max="28" step=".1" value="14">
-<label for="spindle-y">真 3D 模型局部位移 Y（僅展示）</label>
+<label for="spindle-y">示範機台／場景局部位移 Y（僅展示；人體模式停用）</label>
 <input id="spindle-y" type="range" min="-1.1" max="1.1" step=".05" value="0">
 <div id="status" class="state" role="status">等待 WebGL 初始化。</div>
-<p>顯示的機台、工件、建物與樹木都屬<strong>清楚標記的程序化示範幾何</strong>，不是原本 10/5 Authority 正式機台，也不是從真機取得的模型。</p>
+<p>人體來源為真正的 indexed XYZ 三角網格（Stage 1 技術基礎體），不是建物／樹木方塊，也不是照片貼圖。但尚未達到自然人體、完整蒙皮／動作、任意單張照片 1:1 或手機 60 FPS 的正式驗收。機台、建物與樹木仍屬程序化示範。</p>
 </section>
 <section>
 <h2>已接入的繪圖能力</h2>
@@ -81,6 +104,6 @@ footer{font-size:12px;padding:14px 20px;color:#adc7d6}
 </section>
 </aside>
 </main>
-<footer>AIG Dual-Project Single-Gate · Local-first · Shared Real3D v1 · 實際 WebGL，非影片偽裝</footer>
+<footer>AIG Real3D 1.1 · 真人比例技術網格仍為外觀 BLOCK · 三專案共用既有 WebGL 繪圖核心 · 原 CNC 專案資料不變</footer>
 <script type="module" src="./aig-real3d-lab.mjs"></script>
 </body></html>
