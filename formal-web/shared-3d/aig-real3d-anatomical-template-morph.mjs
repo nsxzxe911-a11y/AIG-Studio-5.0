@@ -35,6 +35,7 @@ function landmarks(gender,options={}){
   head:s=>spec.head*s,
   shoulder:s=>spec.shoulder*s,
   upper:s=>spec.shoulder*s,
+  chest:s=>spec.chest*s,
   waist:s=>spec.waist*s*(1+mass*.19),
   hip:s=>spec.hip*s*(1+mass*.135),
   leg:s=>s*(1+mass*.08),
