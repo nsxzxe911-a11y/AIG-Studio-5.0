@@ -1,0 +1,181 @@
+{
+  "schema": "AIG_REAL3D_HUMAN_BROWN_RENDER_CONTRACT_V1",
+  "version": "1.0.0",
+  "approved_on": "2026-10-24",
+  "approval": {
+    "user_approved_order": true,
+    "priority": "AI_BASELINE_FIRST",
+    "user_extended_multi_pass_crease_shading": "DEFERRED_PRESERVED",
+    "technical_implementation_fully_complete": false,
+    "human_visual_acceptance_pass": false
+  },
+  "authority": {
+    "id": "AUTH.REAL3D.HUMAN.BROWN_RENDER.V1",
+    "phase": "FORMAL_SPECIFICATION_NOT_FINISHED_IMPLEMENTATION",
+    "downstream_projects": [
+      "AIG FastModel Cinema",
+      "AIG-II",
+      "AIG Studio 5.0"
+    ],
+    "source_mesh_requirement": "AUTHORIZED_TRACEABLE_NATIVE_HUMAN_OBJ_OR_GLB",
+    "previously_rejected_generators": [
+      "SDF",
+      "METABALL",
+      "TEMPLATE_MORPH",
+      "SUBDIVISION_REPAIR"
+    ],
+    "forbid_reclassification_of_legacy_fixture_as_authentic_human": true
+  },
+  "palette": {
+    "human_only": true,
+    "skin_base": "#946B4C",
+    "skin_shadow": "#583C2E",
+    "skin_mid": "#A97D5A",
+    "skin_highlight": "#C89A74",
+    "outline": "#17110E",
+    "comparison_background": "#C4BEB3",
+    "film_fx_separate_from_human": true,
+    "white_human_base_forbidden": true,
+    "rgb_human_base_forbidden": true,
+    "opaque_base_alpha": 1,
+    "prohibits_bloom_on_human_silhouette": true
+  },
+  "render_graph": [
+    {
+      "id": "REAL3D.GATE.GEOMETRY",
+      "order": 0,
+      "status": "REQUIRED_BLOCKING",
+      "enabled_in_v1": true,
+      "kind": "AUDIT",
+      "input": "LOCAL_NATIVE_OBJ_GLB_WITH_MEASURED_HEIGHT_AND_SOURCE_SHA",
+      "output": "SOURCE_XYZ_BOUNDS_AND_PROVENANCE_RECORD",
+      "notes": "Camera orthographic reference; no fake completed human claims"
+    },
+    {
+      "id": "REAL3D.PASS.OUTLINE",
+      "order": 1,
+      "status": "SPEC_APPROVED_NOT_IMPLEMENTED",
+      "enabled_in_v1": true,
+      "kind": "SCREEN_SPACE_SILHOUETTE_BORDER",
+      "outline_width_px_at_1080p": 2,
+      "min_width_px": 1,
+      "max_width_px": 3,
+      "background_color": "#C4BEB3",
+      "output": "ONE_BLACK_OUTER_CONTOUR_ONLY",
+      "forbidden": [
+        "INTERIOR_TRIANGLE_WIREFRAME",
+        "MODEL_VERTEX_MODIFICATION",
+        "BLOOM"
+      ]
+    },
+    {
+      "id": "REAL3D.PASS.BROWN_BASE",
+      "order": 2,
+      "status": "SPEC_APPROVED_NOT_IMPLEMENTED",
+      "enabled_in_v1": true,
+      "kind": "OPAQUE_UNLIT_MATERIAL",
+      "base_color": "#946B4C",
+      "output": "COFFEE_BROWN_SOLID_BODY",
+      "forbidden": [
+        "WHITE_BODY",
+        "RAINBOW_BODY",
+        "WIREFRAME_ONLY"
+      ]
+    },
+    {
+      "id": "REAL3D.PASS.VOLUME_SHADOW",
+      "order": 3,
+      "status": "SPEC_APPROVED_NOT_IMPLEMENTED",
+      "enabled_in_v1": true,
+      "kind": "NORMAL_DRIVEN_DIFFUSE_AND_AMBIENT",
+      "single_key_light": true,
+      "soft_fill": true,
+      "roughness_min": 0.72,
+      "roughness_max": 1,
+      "affect_geometry": false,
+      "output": "SOFT_LARGE_VOLUME_GRADIENT"
+    },
+    {
+      "id": "REAL3D.PASS.HIGHLIGHT",
+      "order": 4,
+      "status": "SPEC_APPROVED_NOT_IMPLEMENTED",
+      "enabled_in_v1": true,
+      "kind": "CLAMPED_LOW_SPECULAR",
+      "limit_peak_luminance": 0.8,
+      "output": "SUBTLE_NON_PLASTIC_HIGHLIGHT",
+      "forbidden": [
+        "EDGE_GLOW",
+        "CHROMATIC_RGB_HUMAN"
+      ]
+    },
+    {
+      "id": "REAL3D.GATE.VISUAL_HUMAN",
+      "order": 5,
+      "status": "REQUIRED_BLOCKING",
+      "enabled_in_v1": true,
+      "kind": "HUMAN_REFERENCE_COMPARISON",
+      "output": "HUMAN_OUTLINE_FACE_HAND_FOOT_REVIEW_AND_APPROVAL",
+      "reviews": [
+        "HEAD_NECK_JOIN",
+        "NATURAL_FACE_FEATURES",
+        "SHOULDER_WAIST_HIP_OUTLINE",
+        "HAND_WITH_FIVE_FINGERS",
+        "KNEE_ANKLE_FOOT_TOES",
+        "SIDE_BODY_DEPTH"
+      ],
+      "cannot_be_passed_by_synthetic_nonhuman_fixture": true
+    },
+    {
+      "id": "REAL3D.PASS.SCENE_FX",
+      "order": 6,
+      "status": "DEFERRED_UNTIL_VISUAL_HUMAN_PASS",
+      "enabled_in_v1": false,
+      "kind": "SCENE_ONLY_EMISSIVE_COMPOSITE",
+      "output": "STARGATE_SHIP_ENGINE_LIGHTS_ONLY",
+      "forbidden": [
+        "HUMAN_BODY_BLOOM",
+        "SOURCE_VERTEX_CHANGE"
+      ]
+    }
+  ],
+  "followup_user_idea": {
+    "id": "REAL3D.FOLLOWUP.MULTIPASS_GRADIENT_CAVITY",
+    "priority": "AFTER_AI_BASELINE_ALL_4_PASSES",
+    "preserved": true,
+    "approved_as_immediate_implementation": false,
+    "separate_passes": [
+      "MICRO_CAVITY",
+      "SUBTLE_CREASE_SHADOW",
+      "LOCAL_OCCLUSION",
+      "MATERIAL_MICROGRADIENT"
+    ],
+    "no_geometry_invention_from_shading": true,
+    "prerequisite": "PASS_BASE_GEOMETRY_AND_NATURAL_SHAPE"
+  },
+  "fixed_camera": {
+    "projection": "orthographic",
+    "angles": [
+      "front",
+      "side",
+      "back",
+      "threeQuarter"
+    ],
+    "stable_source_hash": true,
+    "stable_height_and_focal_scale": true,
+    "no_perspective_for_morphology_gate": true
+  },
+  "acceptance": {
+    "standard_qa_use_real_source_hash": true,
+    "source_unit_and_orientation_required": true,
+    "no_false_pass_from_gpu_success": true,
+    "no_fake_human_from_synthetic_ellipsoid": true,
+    "production_visual_gate": "BLOCK_PENDING_REAL_HUMAN_SOURCE_AND_4_VIEW_REVIEW",
+    "live_deploy": false,
+    "apks_exes_claimed_built": false,
+    "original_aig_home_untouched": true,
+    "cnc_3_to_6_ax_and_nc_untouched": true,
+    "rgb_glass_ui_only": true,
+    "outline_is_not_3d_surface_replacement": true
+  },
+  "status": "FORMAL_SPEC_APPROVED_RUNTIME_PENDING"
+}
