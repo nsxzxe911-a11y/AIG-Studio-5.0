@@ -313,6 +313,8 @@ export function buildAIG30FusedSDF(source,{
   sourceLabelId:1,positions:pos,normals,indices:idx,
   vertexSourceLabelIds:ids,sourceClassColorRGB:Object.fromEntries(palette),
   vertexCount:pos.length/3,triangleCount:idx.length/3,
+  degeneracyCount:audit.degenerateTriangleCount,
+  closedManifoldVerified:audit.closedManifold,
   originalPhotoSilhouetteSources:profiles.map(p=>p.id),
   physicallyMeasuredFrontDepth:false,
   physicallyMeasuredBackDepth:false,
