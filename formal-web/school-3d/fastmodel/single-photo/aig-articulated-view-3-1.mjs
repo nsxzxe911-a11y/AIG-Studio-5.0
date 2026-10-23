@@ -211,7 +211,7 @@ export function poseAIG31FusedMesh(rig,angles={}){
  let displaced=0,maxDisplacement=0,skullDisplaced=0,
   neckDisplaced=0,torsoDisplaced=0,armDisplaced=0;
  for(let i=0;i<pts.length;i++){
-  const k=i*3,d=norm(positions[k]-rig.restPositions[k],
+  const k=i*3,d=Math.hypot(positions[k]-rig.restPositions[k],
    positions[k+1]-rig.restPositions[k+1],
    positions[k+2]-rig.restPositions[k+2]);
   if(d>1e-8)displaced++;
