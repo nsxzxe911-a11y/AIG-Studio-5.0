@@ -192,6 +192,9 @@ export function installAIGStage1DualAdultRuntime({
   const ratio=ratioEvidence?.proportions;
   const statusText=ratio?[
    '共用核心：19,200 邏輯工作槽（不是 19,200 個實體核心）',
+   '身高 '+ratio.actualAdultHeightMm.toFixed(3)+' mm',
+   '頭高 '+ratio.headHeightMm.toFixed(3)+' mm',
+   '骨盆表面 '+ratio.truePelvicBodyWidthMm.toFixed(3)+' mm',
    '頭身比 '+ratio.headToBodyRatio.toFixed(3),
    '肩寬／頭寬 '+ratio.shoulderToHeadRatio.toFixed(3),
    '骨盆／肩寬 '+ratio.hipToShoulderRatio.toFixed(3),
