@@ -81,6 +81,28 @@ try{
     .textContent.includes('3.0 網格連通／封閉驗收 PASS'),null,{timeout:25000});
    const proof=JSON.parse(await page.locator('#scan29-proof').textContent());
    assert.equal(proof.actualWebGLSceneObjectActive,true);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots?.plan?.schema,
+    'AIG_REAL3D_3_6_ONE_KERNEL_120_LOGICAL_SLOTS');
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.logicalSlotsConfigured,120);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.kernelImplementationCount,1);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.realWebWorkersSpawned,0);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.sharedWebGLContextCount,1);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.vertexColourWork.completedIdenticalKernelSlots,120);
+   assert.ok(proof.unifiedReal36OneKernel120LogicalSlots.vertexColourWork.actualVerticesColoured>5000);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.cameraFit.cameraFitFromRealMesh,true);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.sourceReferenceVisible,true);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.appearanceGatePassed,false);
+   assert.equal(proof.real36Lighting.active,'BALANCED_PBR');
+   assert.ok((await page.locator('#scan36-visible').textContent()).includes('120 邏輯工作槽'));
+   await page.locator('#scan36-fit').click();
+   assert.ok((await page.locator('#scan29-status').textContent()).includes('重新置中'));
+   await page.locator('#scan36-light').selectOption('raytrace');
+   const rayProof=JSON.parse(await page.locator('#scan29-proof').textContent());
+   assert.equal(rayProof.real36Lighting.active,'QUALITY_PBR_FALLBACK');
+   assert.equal(rayProof.real36Lighting.rayTracing,false);
+   assert.equal(rayProof.unifiedReal36OneKernel120LogicalSlots.plan.parallelHardwareCoresCertified,0);
+   await page.locator('#scan36-light').selectOption('balanced');
+
    assert.equal(proof.unifiedReal35AppearancePipeline?.schema,
     'AIG_REAL3D_3_5_UNIFIED_SOURCE_APPEARANCE_GATE');
    assert.deepEqual(proof.unifiedReal35AppearancePipeline.finalControls,
@@ -127,6 +149,8 @@ try{
      measuredRGBImageDepth:false,sensorEchoClaimed:false,
      provenHuman1To1:false,syntheticSourceFixtureNotRealHeroine:true,
      unifiedReal35PhotoXY:proof.unifiedReal35AppearancePipeline,
+     unifiedReal36OneKernel120Slots:proof.unifiedReal36OneKernel120LogicalSlots,
+     real36RayTracingFallbackProven:true,
      originalUserReferenceNotAvailableToThisSyntheticTest:true,
      existingWorldAndGLBAndCNCLeftIntact:true
     },null,2));
