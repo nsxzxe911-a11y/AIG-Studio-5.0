@@ -206,11 +206,25 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   }
   return {rapid:rapid.length/6,feed:feed.length/6};
  }
- function render(scene){
+ function render(scene,exactOutput=null){
   if(dead)throw Error('AIG3D_RENDERER_DESTROYED');
   if(lost)return {status:'WEBGL_CONTEXT_LOST'};
   if(scene?.schema!=='AIG_REAL3D_SCENE_V1')throw Error('AIG3D_SCENE_SCHEMA_INVALID');
-  resize();gl.clearColor(...background);gl.clearDepth(1);
+  if(exactOutput){
+   const {width,height}=exactOutput;
+   const glLimit=Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE),
+    gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
+   if(!Number.isInteger(width)||!Number.isInteger(height)||
+    width<320||height<320||width*height>3200000||
+    Math.max(width,height)>glLimit)
+    throw Error('AIG3D_NATIVE_GPU_IMAGE_DIMENSIONS_BLOCKED');
+   if(canvas.width!==width)canvas.width=width;
+   if(canvas.height!==height)canvas.height=height;
+   gl.viewport(0,0,width,height);
+   lastFrameBudget={maxFramePixels:3200000,effectiveScale:1,
+    targetScale:1,cappedBySafety:false};
+  }else resize();
+  gl.clearColor(...background);gl.clearDepth(1);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   const {eye,vp}=eyeAndVP();
   let triangles=0,nodes=0,rapid=0,feed=0;
@@ -236,6 +250,63 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    source:auditAIG3DScene(scene).source};
   return {...last};
  }
+ /**
+  * Capture ACTUAL current shared-WebGL 3D scene at genuine target pixel size.
+  * The same GPU renderer is reused; canvas dimensions are restored before
+  * yielding asynchronously to the PNG encoder. Never resize a smaller bitmap.
+  */
+ async function captureNativePNG(scene,{width=1080,height=1920}={}){
+  if(dead||lost)throw Error('AIG3D_CAPTURE_CONTEXT_UNAVAILABLE');
+  if(!globalThis.crypto?.subtle)throw Error('AIG3D_SHA256_UNAVAILABLE');
+  let raw,frame;
+  try{
+   frame=render(scene,{width,height});
+   if(frame.status!=='WEBGL_XYZ_TRIANGLES_RENDERED'||frame.triangles<2000)
+    throw Error('AIG3D_NO_REAL_HUMAN_INDEXED_TRIANGLES');
+   raw=new Uint8Array(width*height*4);
+   gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,raw);
+   if(gl.getError()!==gl.NO_ERROR||lost)
+    throw Error('AIG3D_WEBGL_PIXEL_READBACK_FAILED');
+  }finally{
+   // Restore user-viewer native canvas/viewport even on capture errors.
+   try{render(scene);}catch{}
+  }
+  const unique=new Set();
+  for(let y=0;y<height;y+=Math.max(1,Math.floor(height/23)))
+   for(let x=0;x<width;x+=Math.max(1,Math.floor(width/15))){
+    const i=(y*width+x)*4;
+    unique.add(raw[i]+','+raw[i+1]+','+raw[i+2]);
+   }
+  if(unique.size<8)throw Error('AIG3D_GPU_SNAPSHOT_BLANK');
+  const temp=document.createElement('canvas');
+  temp.width=width;temp.height=height;
+  const ctx=temp.getContext('2d');
+  if(!ctx)throw Error('AIG3D_PNG_CANVAS_UNAVAILABLE');
+  const pixels=new Uint8ClampedArray(raw.length);
+  for(let y=0;y<height;y++){
+   const start=(height-1-y)*width*4;
+   pixels.set(raw.subarray(start,start+width*4),y*width*4);
+  }
+  ctx.putImageData(new ImageData(pixels,width,height),0,0);
+  const blob=await new Promise((resolve,reject)=>
+   temp.toBlob(v=>v?resolve(v):reject(Error('AIG3D_PNG_ENCODE_FAILED')),
+    'image/png'));
+  const bytes=await blob.arrayBuffer();
+  if(bytes.byteLength<12000)throw Error('AIG3D_PNG_TOO_SMALL');
+  const png=new DataView(bytes);
+  if(png.getUint32(0,false)!==0x89504e47||
+   png.getUint32(12,false)!==0x49484452||
+   png.getUint32(16,false)!==width||
+   png.getUint32(20,false)!==height)
+   throw Error('AIG3D_NATIVE_PNG_IHDR_MISMATCH');
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  const sha256=Array.from(new Uint8Array(digest),
+   a=>a.toString(16).padStart(2,'0')).join('');
+  return {blob,width,height,sha256,genuineGpuReadback:true,
+   sourceView:'front',rendererKind:'existing shared AIG3D WebGL',
+   originalGeometryUnchanged:true,visualHumanAcceptancePASS:false,
+   actualColorSamples:unique.size};
+ }
  const contextLost=e=>{e.preventDefault();lost=true;};
  canvas.addEventListener('webglcontextlost',contextLost);
  function releaseMesh(mesh){
@@ -259,5 +330,6 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   buffers=[];cache=new WeakMap();
  }
  return {status:'READY',contextVersion:webgl2?2:1,render,destroy,
-  setCamera,getCamera,setQuality,getQuality,releaseMesh,getLastStats:()=>last?{...last}:null};
+  setCamera,getCamera,setQuality,getQuality,releaseMesh,captureNativePNG,
+  getLastStats:()=>last?{...last}:null};
 }
