@@ -39,6 +39,31 @@ small{font-size:11px;color:#a9bec9}.flag{display:inline-block;border:1px solid #
 .plane-projection>label>input,.plane-projection>label>select{display:block;position:static;width:100%;min-width:0;max-width:100%;margin:0;min-height:46px}
 .plane-projection>#heroine-joint-save{grid-column:1/-1;display:block;width:100%;margin:4px 0 0;position:relative;z-index:1;touch-action:manipulation}
 @media(max-width:720px){.plane-projection{grid-template-columns:1fr;gap:14px}.plane-projection>#heroine-joint-save{min-height:52px}}
+/* The edit joint button must own a real stacking surface on narrow Android.
+   Source browser evidence found sibling buttons and labels intercepting clicks.
+   Do not bypass this with Playwright force click or hide any existing controls. */
+#heroine-715-workspace{position:relative;isolation:isolate}
+#heroine-715-workspace>.plane-projection{
+ position:relative;isolation:isolate;z-index:3;clear:both;
+ min-width:0;overflow:visible
+}
+#heroine-715-workspace>.plane-projection>label{
+ position:relative;z-index:1;min-width:0
+}
+#heroine-715-workspace>.plane-projection>#heroine-joint-save{
+ position:relative;isolation:isolate;z-index:5;
+ display:block;width:100%;max-width:100%;min-width:0;
+ margin-top:10px;min-height:54px;
+ background:#135476;border-color:#6ce3ec
+}
+@media(max-width:720px){
+ #heroine-715-workspace>button{
+  position:relative;display:block;width:100%;max-width:100%;
+  margin:9px 0;min-height:48px
+ }
+ #heroine-715-workspace>.plane-projection{grid-template-columns:minmax(0,1fr)}
+}
+
 </style>
 </head><body><main>
 <header>
