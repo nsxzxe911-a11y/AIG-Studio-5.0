@@ -275,7 +275,7 @@ export function poseAIG32AllDigits(rig,poses={},opts={}){
   anatomicalVisibleSourceDigitCount:0,
   originalRestSDFAndGLBUnmodified:true,
   exactHumanAnatomyVerified:false,
-  3DPrintabilityVerified:false,
+  physical3DPrintabilityVerified:false,
   realMeasured1to1:false,
   digitSummary:summary,meshes
  };
