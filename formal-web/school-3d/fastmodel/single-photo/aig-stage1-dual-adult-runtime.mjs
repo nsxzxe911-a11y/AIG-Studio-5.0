@@ -7,6 +7,9 @@
 import * as THREE from 'three';
 import {buildAIGStage1AdultAnatomy,auditAIGStage1Anatomy,
  AIG_STAGE1_SCHEMA} from './aig-stage1-dual-adult-anatomy.mjs';
+import {planAIGStage1OneCore19200,runStage1UnifiedRenderLogicCore,
+ fitHumanToView}
+ from './aig-stage1-unified-19200-ratio-core.mjs';
 export const AIG_STAGE1_RUNTIME='AIG_STAGE1_DUAL_ADULT_TRUE_WEBGL_VIEWS';
 const el=id=>document.getElementById(id);
 const views=['front','profile','rear','quarter45'];
@@ -78,6 +81,8 @@ export function installAIGStage1DualAdultRuntime({
  let stageScene=null,stageCamera=null,viewer=null,priorFrame=null;
  let active=false,selected='male',currentView='front',model=null;
  let renderCount=0,session=0,lastAudit=null,proofState=null;
+ let ratioEvidence=null,snapshotsByGender=new Map(),lastCameraPlan=null;
+ const singleCore19200=planAIGStage1OneCore19200();
  const status=(text,blocked=false)=>{
   el('stage1-status').textContent=text;
   el('stage1-status').dataset.error=blocked?'true':'false';
@@ -99,22 +104,49 @@ export function installAIGStage1DualAdultRuntime({
   stageScene.add(floor);
   stageCamera=new THREE.PerspectiveCamera(40,1,.01,20);
  };
+ const actualCanvasViewport=()=>{
+  if(!viewer?.canvas||!viewer?.renderer||!stageCamera)return null;
+  const box=viewer.canvas.getBoundingClientRect();
+  const w=box.width,h=box.height;
+  return w>1&&h>1?{
+   cssWidth:w,cssHeight:h,gpuWidth:viewer.canvas.width,
+   gpuHeight:viewer.canvas.height,cameraAspect:stageCamera.aspect
+  }:null;
+ };
  const viewCamera=(view,aspect)=>{
-  if(!model||!views.includes(view))error('INVALID_VIEW_OR_UNINITIALIZED_MODEL');
-  const h=model.source.heightMeters,target=new THREE.Vector3(0,h*.53,0);
+  if(!model)error('NO_ACTIVE_SOURCE_MODEL');
+  const fit=fitHumanToView(model.source,{
+   view,aspect,verticalFovDeg:stageCamera.fov,targetHeight:.82
+  });
+  stageCamera.position.set(...fit.cameraPosition);
   stageCamera.aspect=aspect;
-  // Keep even long arms and feet inside frame across mobile/desktop.
-  const d=Math.max(h*1.55,(h*.55)/Math.tan(THREE.MathUtils.degToRad(20))*1.22);
-  const v=view==='front'?[0,0,-1]:view==='profile'?[1,0,0]:
-   view==='rear'?[0,0,1]:[Math.SQRT1_2,.16,-Math.SQRT1_2];
-  stageCamera.position.set(
-   target.x+d*v[0],target.y+d*v[1],target.z+d*v[2]);
-  stageCamera.lookAt(target);stageCamera.updateProjectionMatrix();
-  currentView=view;
+  stageCamera.near=Math.max(.005,fit.cameraDistanceMeters/1000);
+  stageCamera.far=Math.max(20,fit.cameraDistanceMeters*8);
+  stageCamera.lookAt(new THREE.Vector3(...fit.target));
+  stageCamera.updateProjectionMatrix();
+  currentView=view;lastCameraPlan=fit;
   return Object.freeze({name:view,position:stageCamera.position.toArray(),
-   target:target.toArray(),fov:stageCamera.fov,aspect});
+   target:fit.target,fov:stageCamera.fov,aspect,
+   humanProjectedHeightRatio:fit.actualProjectedBodyHeightRatio,
+   humanProjectedWidthRatio:fit.actualProjectedBodyWidthRatio,
+   actualFitPass:fit.framingNumericContractPASS});
  };
  const publish=()=>{
+  if(model){
+   try{
+    ratioEvidence=runStage1UnifiedRenderLogicCore({
+     model:model.source,view:currentView,
+     aspect:stageCamera?.aspect||1,
+     verticalFovDeg:stageCamera?.fov||40,
+     viewport:actualCanvasViewport(),
+     snapshots:snapshotsByGender.get(selected)||[]
+    });
+   }catch(e){
+    ratioEvidence={schema:'AIG_STAGE1_ONE_CORE_19200_PROPORTION_GATE',
+     error:String(e?.message||e),
+     numericAndEvidenceGatePASS:false,stage1ReleasePASS:false};
+   }
+  }else ratioEvidence=null;
   proofState={
    schema:AIG_STAGE1_RUNTIME,modelGender:selected,
    actualStage1SourceSchema:AIG_STAGE1_SCHEMA,
@@ -138,7 +170,11 @@ export function installAIGStage1DualAdultRuntime({
    fullSkinnedBlendWeightsVerified:false,
    noPhotoIdentityReconstructionClaim:true,
    formalFemaleHeroineAppearancePASS:false,
-   stage1PASS:false
+   stage1PASS:false,
+   oneSingleCore19200:singleCore19200,
+   realAnatomyRatioGate:ratioEvidence,
+   observedFourViewSnapshotCount:(snapshotsByGender.get(selected)||[]).length,
+   cameraFitMeasurements:lastCameraPlan
   };
   el('stage1-proof').textContent=JSON.stringify(proofState,null,2);
   return proofState;
@@ -166,6 +202,7 @@ export function installAIGStage1DualAdultRuntime({
   }
   model={source,object:next};
   selected=gender;lastAudit=audit;active=true;renderCount=0;session++;
+  lastCameraPlan=null;
   if(priorFrame===null){
    priorFrame=viewer.onAfterRender??(()=>{});
    viewer.onAfterRender=(t)=>{
@@ -230,8 +267,12 @@ export function installAIGStage1DualAdultRuntime({
     if(saw.has(sha))error('IDENTICAL_3D_CAMERA_FRAMES_'+view);
     saw.add(sha);
     shot.push({gender,view,width:w,height:h,png,
-     rgbaSHA256:sha,realRendererPixels:true,camera});
+     rgbaSHA256:sha,sha256:sha,realWebGLRendererPixels:true,
+     realRendererPixels:true,camera});
    }
+   snapshotsByGender.set(gender,shot.map(({view,sha256,
+    realWebGLRendererPixels,camera})=>({view,sha256,realWebGLRendererPixels,
+    camera})));
    currentView='front';
    viewCamera('front',(viewer.canvas.width||800)/(viewer.canvas.height||600));
    publish();
@@ -289,6 +330,7 @@ export function installAIGStage1DualAdultRuntime({
    }
   }
   stageScene=null;stageCamera=null;viewer=null;
+  snapshotsByGender=new Map();ratioEvidence=null;lastCameraPlan=null;
   status('已退出 Stage 1 基礎人體，原始 3D 工作場景仍保留。');
   publish();
  };
