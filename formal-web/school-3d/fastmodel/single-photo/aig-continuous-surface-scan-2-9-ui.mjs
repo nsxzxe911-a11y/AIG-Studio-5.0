@@ -26,6 +26,9 @@ import {createAIG312SecondaryMotion}
  from './aig-secondary-motion-3-12.mjs';
 import {buildAIG314BodyTriangleGrid,resolveAIG314TriangleContacts}
  from './aig-triangle-contact-3-14.mjs';
+import {getAIG314VerifiedAuthorityPalette,
+ applyAIG314ObservedPaletteToBody}
+ from './aig-heroine-authority-3-14.mjs';
 const $=id=>document.getElementById(id);
 export function installAIG29ContinuousScan({
  getImage,getSegmentation,getSharedViewer,getBodyPose=()=>null
@@ -41,6 +44,7 @@ export function installAIG29ContinuousScan({
  let hair310Layer=null,hair310Proof=null;
  let contact311Proof=null,motion312Proof=null,contact314Proof=null;
  let poseGrid314=null,poseGrid314Source=null;
+ let heroine314Proof=null;
  const dynamics312=new Map();
  let simulation312Frame=null,simulation312Id=0;
  const cancelSimulation312=()=>{
@@ -76,6 +80,7 @@ export function installAIG29ContinuousScan({
   hair310Layer=null;hair310Proof=null;contact311Proof=null;
   motion312Proof=null;contact314Proof=null;
   poseGrid314=null;poseGrid314Source=null;
+  heroine314Proof=null;
   if(restore36Lighting){restore36Lighting();restore36Lighting=null}
   const label=$('scan36-visible');
   if(label)label.textContent='尚未建立 3D 曲面；原照片與其他 GLB 保留。';
@@ -99,6 +104,7 @@ export function installAIG29ContinuousScan({
    real310RemovableHair:hair310Proof,
    real311CoarseRealContactConstraints:contact311Proof,
    real314ActualTriangleContact:contact314Proof,
+   real314HeroineApprovedVisualReferenceFit:heroine314Proof,
    real312ContinuousSecondaryMovement:motion312Proof,
    real310OneKernel19200LogicalWorkProfile:core36Proof?{
     configuredLogicalSlots:core36Proof.plan.logicalSlotsConfigured,
@@ -342,6 +348,82 @@ export function installAIG29ContinuousScan({
    '已切換 '+style+'：'+hair310Proof.actualIndependentHairMeshes+
    ' 個獨立真 3D 技術髮型網格，跟隨頭骨移動；尚未有真髮絲物理。';
   proof();
+ };
+ const apply314HeroineColourFit=()=>{
+  if(!scan?.manifoldAudit?.closedManifold||!overlay?.parent||
+   !rendererSource||rendererSource.movieMode||rendererSource.reviewBusy)
+   throw Error('需要先有可見真 3D 人體模型；錄影中不可更改');
+  const authority=getAIG314VerifiedAuthorityPalette();
+  const shell=scan.fusedOnePieceMesh;
+  const base=overlay.children.find(x=>x.name===
+   'AIG30_ONE_PIECE_FUSED_HUMANOID_CURVED_SURFACE');
+  if(!base?.isMesh||!base.geometry.getAttribute('color'))
+   throw Error('3.14 找不到可驗證來源分類的真 3D 人體頂點');
+  if(!base.userData.base314Colours)
+   base.userData.base314Colours=
+    new Float32Array(base.geometry.getAttribute('color').array);
+  const recolour=applyAIG314ObservedPaletteToBody({
+   colours:base.userData.base314Colours,
+   sourceClassIds:shell.vertexSourceLabelIds,authority
+  });
+  if(recolour.actualRecolouredVertices<15)
+   throw Error('來源分割沒有足夠的人臉／頭髮／布料頂點，拒絕假擬合');
+  base.geometry.setAttribute('color',new THREE.BufferAttribute(
+   recolour.colours,3));
+  const garmentParts=[],hairParts=[];
+  const change=(group,role,color)=>{
+   if(!group?.parent)return;
+   for(const mesh of group.children){
+    if(!mesh.isMesh||!role(mesh.name))continue;
+    mesh.material.color.setRGB(
+     color[0],color[1],color[2],THREE.SRGBColorSpace
+    );
+    mesh.material.needsUpdate=true;
+    return mesh.name;
+   }
+  };
+  if($('scan37-outfit').value==='uniform'){
+   for(const [fn,color] of [
+    [n=>n.includes('UNIFORM_JACKET'),authority.palette.blazer.srgb01],
+    [n=>n.includes('PLEATED_UNIFORM_SKIRT'),authority.palette.skirt.srgb01]
+   ]){
+    const name=change(wardrobe37Layer,fn,color);
+    if(name)garmentParts.push(name);
+   }
+  }
+  if($('scan310-hair').value!=='none'){
+   for(const mesh of hair310Layer?.children??[]){
+    if(!mesh.isMesh)continue;
+    const colour=authority.palette.hair.srgb01;
+    mesh.material.color.setRGB(
+     colour[0],colour[1],colour[2],THREE.SRGBColorSpace
+    );
+    mesh.material.needsUpdate=true;
+    hairParts.push(mesh.name);
+   }
+  }
+  heroine314Proof={
+   schema:'AIG_REAL3D_3_14_HEROINE_APPROVED_REFERENCE_LEDGER',
+   approvedReferenceSheetSHA256:authority.verifiedApprovedSheetSHA256,
+   actualBodyVertexColoursChanged:recolour.actualRecolouredVertices,
+   actualIndependentUniformMeshesRecoloured:garmentParts.length,
+   actualIndependentHairMeshesRecoloured:hairParts.length,
+   actualFaceEyeNoseMouth3DShapeMatched:false,
+   actualHairStyleSilhouetteMatched:false,
+   realPlaidFabricAndBowUVCreated:false,
+   frontProfileRear3DShapeCompared:false,
+   noOriginalSourcePixelsStoredOrUploaded:true,
+   sourceBodyMeshTopologyAndRigPreserved:true,
+   realUserApprovedHeroineAppearancePASS:false,
+   requiredNext:'Source-registered face geometry, hairstyle and cloth textures'
+  };
+  $('scan314-authority-status').textContent=
+   '已根據核准展示圖 SHA 的實際色彩樣本調整 '+
+   heroine314Proof.actualBodyVertexColoursChanged+' 個真 3D 頂點、'+
+   garmentParts.length+' 件制服與 '+hairParts.length+
+   ' 件髮型技術網格。臉部幾何／髮絲／格紋尚未重建，正式外觀 FAIL。';
+  proof();
+  return heroine314Proof;
  };
  const apply39BodyPose=(value,{secondaryTick=false}={})=>{
   if(!scan?.manifoldAudit?.closedManifold||!overlay?.parent||
@@ -719,6 +801,7 @@ export function installAIG29ContinuousScan({
    cancelSimulation312();dynamics312.clear();
    motion39Proof=null;lastPose39=null;contact311Proof=null;
    contact314Proof=null;poseGrid314=null;poseGrid314Source=null;
+   heroine314Proof=null;
    motion312Proof=null;
    appearanceProof=newAppearanceProof;
    probeLines=null;scanStamp=scan.sourceSha256;
@@ -819,6 +902,14 @@ export function installAIG29ContinuousScan({
  });
  $('scan38-next').addEventListener('click',()=>{
   browse38Offset+=8;refresh38Browser();
+ });
+ $('scan314-apply-reference').addEventListener('click',()=>{
+  try{apply314HeroineColourFit()}
+  catch(e){
+   $('scan314-authority-status').textContent=
+    '未套用：'+String(e?.message||e)+
+    '；原人物及正式來源保留。';
+  }
  });
  $('scan310-hair').addEventListener('change',()=>{
   let token=null;
