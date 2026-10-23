@@ -41,6 +41,8 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-unified-19200-ratio-core.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-mm-coordinate-contract.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-4k-adaptive-render.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-resolution-ladder.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-resolution-ladder.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-true4k-capture.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-4k-adaptive-render.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-mm-coordinate-contract.test.mjs'
@@ -181,6 +183,8 @@ jobs:
           node --check aig-stage1-unified-19200-ratio-core.mjs
           node --check aig-stage1-mm-coordinate-contract.mjs
           node --check aig-stage1-4k-adaptive-render.mjs
+          node --check aig-stage1-resolution-ladder.mjs
+          node --test tests/aig-stage1-resolution-ladder.test.mjs
           node --check aig-stage1-true4k-capture.mjs
           node --test tests/aig-stage1-4k-adaptive-render.test.mjs
           node --test tests/aig-stage1-mm-coordinate-contract.test.mjs
@@ -192,6 +196,8 @@ jobs:
           grep -q 'AIG_STAGE1_ONE_CORE_19200_PROPORTION_GATE' dist/scene-runtime-studio.js
           grep -q 'AIG_STAGE1_CANONICAL_MM_0_001_V1' dist/scene-runtime-studio.js
           grep -q 'AIG_STAGE1_SINGLE_WEBGL_ADAPTIVE_TRUE_4K' dist/scene-runtime-studio.js
+          grep -q 'AIG_STAGE1_SINGLE_RENDERER_4K_TO_1080P_LADDER_V1' dist/scene-runtime-studio.js
+          grep -q 'stage1-output-resolution' dist/scene-runtime-studio.html
           grep -q 'stage1-4k-current' dist/scene-runtime-studio.html
       - name: Install Chromium for real HTML canvas rendering
         run: |
@@ -206,6 +212,7 @@ jobs:
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           node tests/aig-stage1-dual-adult.real-browser.mjs
           test -s artifacts/aig-stage1-adult-male-female-swim-geometry/desktop-male-front-ACTUAL-GPU-3840x2160-4K.png
+          test -s artifacts/aig-stage1-adult-male-female-swim-geometry/desktop-male-front-ACTUAL-GPU-1920x1080-1080p.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:
