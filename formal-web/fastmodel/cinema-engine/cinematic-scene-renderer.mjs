@@ -170,7 +170,7 @@ export function renderAIGStarJourneyShot(ctx,shot,offset,width,height){
  }
  ctx.restore();
  // Fade only at shot edges, preserving actual visible footage frames.
- const fadeIn=Math.min(1,offset/.38);
+ const fadeIn=.68+.32*Math.min(1,offset/.38);
  const fadeOut=Math.min(1,(duration-offset)/.38);
  ctx.fillStyle='#020407';
  ctx.globalAlpha=1-Math.max(0,Math.min(fadeIn,fadeOut));
