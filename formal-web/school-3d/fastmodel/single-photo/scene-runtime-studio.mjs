@@ -1,4 +1,5 @@
 import {PhotoViewer} from './viewer.mjs';
+import {installAIG26VisionPanel} from './aig-vision-metric-color-2-6-ui.mjs';
 import {buildAIG23PhotoActor} from './aig-photo-rig-world-2-3.mjs';
 import {detectAIG24Image} from './aig-auto-image-detect-2-4.mjs';
 import {AIG25WorldMovieRecorder,validateAIG25TrueWorldMovie,
@@ -1071,4 +1072,5 @@ window.addEventListener('pagehide',()=>{
  viewer?.env?.dispose();viewer?.renderer?.dispose();
  library?.close();
 },{once:true});
+installAIG26VisionPanel({getLibrary:()=>library});
 init();
