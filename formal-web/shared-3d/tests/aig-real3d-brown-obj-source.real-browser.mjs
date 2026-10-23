@@ -115,6 +115,16 @@ try{
  assert.equal(proof.anatomicalProjection.regionComparisonCount,4);
  assert.equal(proof.anatomicalProjection.naturalHumanAppearancePASS,false);
  assert.equal(proof.anatomicalProjection.releasePASS,false);
+ assert.equal(proof.localSurfaceTopology.schema,'AIG_REAL3D_NATIVE_5_REGION_SURFACE_TOPOLOGY_V1');
+ assert.equal(proof.localSurfaceTopology.regionCount,5);
+ assert.equal(proof.localSurfaceTopology.sourceSha256,hash);
+ assert.equal(proof.localSurfaceTopology.originalSourceVerticesChanged,false);
+ assert.equal(proof.localSurfaceTopology.naturalAnatomyAndFingersApproved,false);
+ assert.equal(proof.localSurfaceTopology.releasePASS,false);
+ assert.equal(proof.localSurfaceTopology.globallyOpenEdges,0);
+ assert.equal(await page.locator('#surface-table tbody tr').count(),5);
+ assert.match(await page.locator('#surface-table').textContent(),/頭頸附近/);
+ assert.match(await page.locator('#surface-table').textContent(),/右腳附近/);
  assert.equal(await page.locator('#anatomy-gallery figure').count(),4);
  assert.equal(await page.locator('#anatomy-region-table tbody tr').count(),16);
  for(let i=0;i<4;i++){
@@ -177,6 +187,7 @@ try{
   alphaReferenceOverlayFourViewCompared:true,
   twelveBandActualPixelWidthProfilesFourView:true,
   meshAudited21SourceLandmarksProjectedOverTrueGpuFourViews:true,
+  nativeFiveAreaTopologyChecksSourceTrianglesTrue:true,
   referencePictureWasSyntheticNotHuman:true,
   automaticHumanAppearanceApproval:false,
   noSyntheticHumanReconstruction:true,
