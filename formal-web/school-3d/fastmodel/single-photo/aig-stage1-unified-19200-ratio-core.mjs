@@ -9,6 +9,9 @@
 import {AIG_STAGE1_SCHEMA} from './aig-stage1-dual-adult-anatomy.mjs';
 import {planAIG36UnifiedCore}
  from './aig-unified-120-core-3-6.mjs';
+import {makeAIGStage1CanonicalMM,auditAIGStage1MMConversion,
+ aigStage1MmFromTicks}
+ from './aig-stage1-mm-coordinate-contract.mjs';
 export const AIG_STAGE1_RATIO_SCHEMA='AIG_STAGE1_ONE_CORE_19200_PROPORTION_GATE';
 export const AIG_STAGE1_LOGICAL_SLOTS=19200;
 export const AIG_STAGE1_SLOT_BUDGET=Object.freeze({
@@ -85,9 +88,16 @@ export function measureAIGStage1Bounds(model){
    mn[k]=Math.min(mn[k],p[i+k]);mx[k]=Math.max(mx[k],p[i+k]);
   }
  }
- return Object.freeze({min:Object.freeze(mn),max:Object.freeze(mx),
-  size:Object.freeze(mx.map((v,i)=>round(v-mn[i]))),
-  center:Object.freeze(mx.map((v,i)=>round((v+mn[i])/2))),
+ const min=mn.map(v=>round(v)),max=mx.map(v=>round(v));
+ const size=mx.map((v,i)=>round(v-mn[i])),center=
+  mx.map((v,i)=>round((v+mn[i])/2));
+ return Object.freeze({min:Object.freeze(min),max:Object.freeze(max),
+  size:Object.freeze(size),center:Object.freeze(center),
+  minMM:Object.freeze(mn.map(v=>Math.round(v*1000000)/1000)),
+  maxMM:Object.freeze(mx.map(v=>Math.round(v*1000000)/1000)),
+  sizeMM:Object.freeze(size.map(v=>Math.round(v*1000000)/1000)),
+  centerMM:Object.freeze(center.map(v=>Math.round(v*1000000)/1000)),
+  coordinateMeasurementUnit:'mm',measurementPrecisionMM:.001,
   actualMeasuredXYZVertices:positionsCount});
 }
 export function auditHumanProportion(model){
@@ -124,9 +134,12 @@ export function auditHumanProportion(model){
   hipToShoulderRatio:round(hip/shoulder),
   truePelvicSilhouetteSamples:pelvisSamples,
   truePelvicBodyWidthMeters:round(hip),
+  truePelvicBodyWidthMm:Math.round(hip*1000000)/1000,
   hipJointDistanceMeters:round(diff(J.leftHip.position,J.rightHip.position)),
+  hipJointDistanceMm:Math.round(diff(J.leftHip.position,J.rightHip.position)*1000000)/1000,
   thighToCalfRatio:round(ll/lr),
   legSeparationAtKneeMeters:round(legGapAtKnee),
+  legSeparationAtKneeMm:Math.round(legGapAtKnee*1000000)/1000,
   legSeparationNormalized:round(legGapAtKnee/H),
   leftArmLengthNormalized:round((
    diff(J.leftShoulder.position,J.leftElbow.position)+
@@ -134,7 +147,10 @@ export function auditHumanProportion(model){
   leftLegLengthNormalized:round((ll+lr)/H),
   headWidthMeters:round(headWidth),
   headHeightMeters:round(headHeight),
-  actualAdultHeightMeters:H,
+  headWidthMm:Math.round(headWidth*1000000)/1000,
+  headHeightMm:Math.round(headHeight*1000000)/1000,
+  actualAdultHeightMeters:H,actualAdultHeightMm:Math.round(H*1000000)/1000,
+  physicalMeasurementsUnit:'mm',precisionMm:.001,
   originalBodyGeometryUnmodified:true
  };
  const issues=[];
@@ -264,6 +280,11 @@ export function fitHumanToView(model,{view='front',aspect=1,
   actualProjectedBodyWidthRatio:round(final.width),
   targetHeightRatio:targetHeight,verticalFovDeg,aspect,
   cameraDistanceMeters:round(hi),
+  cameraDistanceMm:Math.round(hi*1000000)/1000,
+  cameraPositionMm:Object.freeze(target.map((v,i)=>
+   Math.round((v+dir[i]*hi)*1000000)/1000)),
+  targetMm:Object.freeze(target.map(v=>Math.round(v*1000000)/1000)),
+  geometryIsAuthoritativeMillimeters:true,
   framingNumericContractPASS:final.height<=targetHeight+.002&&
    final.height>=.70&&final.width<=.902,
   actualPixelSilhouetteStillRequiresWebGLSnapshot:true,
@@ -271,10 +292,12 @@ export function fitHumanToView(model,{view='front',aspect=1,
 }
 export function runStage1UnifiedRenderLogicCore({
  model,viewport=null,view='front',aspect=1,verticalFovDeg=40,
- snapshots=[]
+ snapshots=[],canonicalMM=null
 }={}){
  source(model);
  const plan=planAIGStage1OneCore19200();
+ const millimeters=canonicalMM??makeAIGStage1CanonicalMM(model);
+ const mmEvidence=auditAIGStage1MMConversion(model,millimeters);
  const bounds=measureAIGStage1Bounds(model);
  const proportion=auditHumanProportion(model);
  const skeleton=auditSkeletonAlignment(model);
@@ -290,7 +313,8 @@ export function runStage1UnifiedRenderLogicCore({
   gate:1
  };
  const violations=[
-  ...proportion.proportionIssues,...skeleton.alignmentIssues
+  ...proportion.proportionIssues,...skeleton.alignmentIssues,
+  ...mmEvidence.millimeterContractViolations
  ];
  if(!framing.framingNumericContractPASS)violations.push('FRAMING_HEIGHT_OR_WIDTH');
  if(viewportResult&&!viewportResult.viewportNumericContractPASS)
@@ -308,6 +332,20 @@ export function runStage1UnifiedRenderLogicCore({
   allocatedActualWorkUnits:Object.freeze(used),
   no19200PhysicalRendererClaim:true,
   proportions:proportion,skeleton,viewport:viewportResult,
+  canonicalMillimeters:mmEvidence,
+  dimensionsMm:Object.freeze({
+   bodyHeight:mmEvidence.verifiedMillimeterHeight,
+   headHeight:proportion.headHeightMm,
+   headWidth:proportion.headWidthMm,
+   pelvisSurfaceWidth:proportion.truePelvicBodyWidthMm,
+   hipJointSpacing:proportion.hipJointDistanceMm,
+   kneeLegClearance:proportion.legSeparationAtKneeMm
+  }),
+  threeFixes:Object.freeze({
+   actualPelvisMeshSurfaceUsed:proportion.truePelvicSilhouetteSamples>=8,
+   fullBodyCameraAutofitPassed:framing.framingNumericContractPASS,
+   freshFourViewActualPngShaVerified:viewsOK
+  }),
   camera:framing,
   numericAndEvidenceViolations:Object.freeze(violations),
   numericAndEvidenceGatePASS:violations.length===0,
