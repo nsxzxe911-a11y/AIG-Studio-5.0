@@ -35,6 +35,35 @@ export const AIG314_HEROINE_SHEET=Object.freeze({
  requiredViews:['front','profile','rear','neutralTPose']
 });
 const fail=s=>{throw Error('AIG314_HEROINE_'+s)};
+/** Real 5x5 pixel medians verified against the local 1448x1086 user
+ * authority sheet with SHA-256 above. Only AGGREGATED colours are encoded,
+ * never the user image bytes. Colour ≠ facial shape, plaid UV or likeness.
+ */
+export const AIG314_OFFLINE_AUTHORITY_COLOURS=Object.freeze({
+ skin:Object.freeze([243,192,174]),hair:Object.freeze([73,46,53]),
+ blazer:Object.freeze([58,52,63]),skirt:Object.freeze([78,64,84]),
+ bow:Object.freeze([60,51,71]),socks:Object.freeze([58,48,59])
+});
+export function getAIG314VerifiedAuthorityPalette(){
+ const palette={};
+ for(const [name,rgb] of Object.entries(AIG314_OFFLINE_AUTHORITY_COLOURS)){
+  palette[name]=Object.freeze({
+   srgb8:rgb,srgb01:Object.freeze(rgb.map(v=>+(v/255).toFixed(5))),
+   directlyReadFromApprovedReference:true
+  });
+ }
+ return Object.freeze({
+  schema:AIG314_HEROINE_SCHEMA,
+  verifiedApprovedSheetSHA256:AIG314_HEROINE_SHEET.sha256,
+  palette:Object.freeze(palette),
+  onlyExtractedAggregateColourReferenceStored:true,
+  photoBytesEmbedded:false,
+  photoSourceMatchedWhenNumbersExtracted:true,
+  individualFaceGeometryOrIdentityReconstructed:false,
+  sourceImageBytesEmittedByFunction:false
+ });
+}
+
 export function analyseAIG314ApprovedHeroineSheet({
  rgba,width,height,sha256
 }={}){
@@ -102,7 +131,8 @@ export function applyAIG314ObservedPaletteToBody({
   const rgb=map.get(sourceClassIds[i]);
   if(!rgb)continue;
   for(let k=0;k<3;k++)
-   out[i*3+k]=Math.pow((rgb[k]+.055)/1.055,2.4); // sRGB >.04045
+   out[i*3+k]=rgb[k]<=.04045?rgb[k]/12.92:
+    Math.pow((rgb[k]+.055)/1.055,2.4);
   changed++;
  }
  return Object.freeze({
